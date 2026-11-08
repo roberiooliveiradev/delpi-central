@@ -59,3 +59,13 @@ class MyWegNeedsRepositoryPort(Protocol):
         page_size: int,
     ) -> dict[str, Any]:
         ...
+
+    def lookup_delpi_codes_by_materials(
+        self, materials: list[str]
+    ) -> dict[str, dict[str, str | None]]:
+        """Mapa material_weg_tratado → códigos DELPI (verified/informed)."""
+        ...
+
+    def lookup_materials_by_delpi_code_search(self, needle: str) -> list[str]:
+        """Materiais WEG cujo código DELPI (verificado/informado) contém o termo."""
+        ...

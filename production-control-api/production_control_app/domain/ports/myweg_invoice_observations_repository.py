@@ -57,6 +57,7 @@ class MyWegInvoiceObservationsRepositoryPort(Protocol):
         search: str,
         page: int,
         page_size: int,
+        extra_materials: list[str] | None = None,
     ) -> dict[str, Any]:
         ...
 

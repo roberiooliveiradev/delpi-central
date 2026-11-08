@@ -523,6 +523,141 @@ class PostgresMyWegNeedsRepository:
             "items": [self._map_record(row) for row in rows],
         }
 
+    def lookup_delpi_codes_by_materials(
+        self, materials: list[str]
+    ) -> dict[str, dict[str, str | None]]:
+        """Resolve código DELPI por material WEG (B1_REFEREN) a partir das necessidades.
+
+        Preferência: SB1 confirmed/verified → informed (`codigo_referencia_weg`).
+        """
+        cleaned = sorted(
+            {
+                str(material or "").strip()
+                for material in materials
+                if str(material or "").strip()
+            }
+        )
+        if not cleaned:
+            return {}
+
+        query = f"""
+            WITH ranked AS (
+                SELECT
+                    r.material_weg_tratado AS material_weg,
+                    NULLIF(
+                        TRIM(
+                            COALESCE(
+                                res.verified_product_code,
+                                r.sb1_protheus_product_code,
+                                ''
+                            )
+                        ),
+                        ''
+                    ) AS verified_code,
+                    NULLIF(
+                        TRIM(
+                            COALESCE(
+                                res.informed_product_code,
+                                r.codigo_referencia_weg,
+                                ''
+                            )
+                        ),
+                        ''
+                    ) AS informed_code,
+                    CASE
+                        WHEN COALESCE(res.status, r.sb1_status) = 'confirmed'
+                             AND NULLIF(
+                                 TRIM(
+                                     COALESCE(
+                                         res.verified_product_code,
+                                         r.sb1_protheus_product_code,
+                                         ''
+                                     )
+                                 ),
+                                 ''
+                             ) IS NOT NULL
+                            THEN 0
+                        WHEN NULLIF(
+                                 TRIM(
+                                     COALESCE(
+                                         res.verified_product_code,
+                                         r.sb1_protheus_product_code,
+                                         ''
+                                     )
+                                 ),
+                                 ''
+                             ) IS NOT NULL
+                            THEN 1
+                        WHEN NULLIF(
+                                 TRIM(
+                                     COALESCE(
+                                         res.informed_product_code,
+                                         r.codigo_referencia_weg,
+                                         ''
+                                     )
+                                 ),
+                                 ''
+                             ) IS NOT NULL
+                            THEN 2
+                        ELSE 3
+                    END AS rank_score,
+                    COALESCE(res.verified_at, r.sb1_resolved_at) AS prefer_at
+                FROM {_RECORDS} r
+                LEFT JOIN {_SB1_RESOLUTIONS} res ON res.record_id = r.id
+                WHERE r.material_weg_tratado = ANY(%s)
+            )
+            SELECT DISTINCT ON (material_weg)
+                material_weg,
+                verified_code,
+                informed_code
+            FROM ranked
+            ORDER BY material_weg, rank_score ASC, prefer_at DESC NULLS LAST
+        """
+        with get_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query, (cleaned,))
+                rows = cursor.fetchall()
+
+        mapping: dict[str, dict[str, str | None]] = {}
+        for row in rows:
+            material = str(row["material_weg"] or "").strip()
+            if not material:
+                continue
+            verified = str(row["verified_code"] or "").strip() or None
+            informed = str(row["informed_code"] or "").strip() or None
+            mapping[material] = {
+                "verifiedProductCode": verified,
+                "informedProductCode": informed,
+                "delpiProductCode": verified or informed,
+            }
+        return mapping
+
+    def lookup_materials_by_delpi_code_search(self, needle: str) -> list[str]:
+        text = (needle or "").strip()
+        if not text:
+            return []
+        like = f"%{text}%"
+        query = f"""
+            SELECT DISTINCT r.material_weg_tratado AS material_weg
+            FROM {_RECORDS} r
+            LEFT JOIN {_SB1_RESOLUTIONS} res ON res.record_id = r.id
+            WHERE COALESCE(res.verified_product_code, r.sb1_protheus_product_code, '')
+                      ILIKE %s
+               OR COALESCE(res.informed_product_code, r.codigo_referencia_weg, '')
+                      ILIKE %s
+            ORDER BY r.material_weg_tratado ASC
+            LIMIT 500
+        """
+        with get_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query, (like, like))
+                rows = cursor.fetchall()
+        return [
+            str(row["material_weg"]).strip()
+            for row in rows
+            if str(row.get("material_weg") or "").strip()
+        ]
+
     @staticmethod
     def _map_batch(row: Any | None) -> dict[str, Any] | None:
         if row is None:

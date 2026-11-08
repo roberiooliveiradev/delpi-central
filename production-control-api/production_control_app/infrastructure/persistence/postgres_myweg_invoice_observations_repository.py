@@ -250,20 +250,32 @@ class PostgresMyWegInvoiceObservationsRepository:
         search: str,
         page: int,
         page_size: int,
+        extra_materials: list[str] | None = None,
     ) -> dict[str, Any]:
         offset = (page - 1) * page_size
         search_text = (search or "").strip()
         filters = ["observation_id = %s::uuid"]
         params: list[Any] = [observation_id]
+        materials = sorted(
+            {
+                str(material or "").strip()
+                for material in (extra_materials or [])
+                if str(material or "").strip()
+            }
+        )
         if search_text:
-            filters.append(
+            clause = (
                 "("
                 "invoice_number ILIKE %s OR invoice_series ILIKE %s OR "
                 "material_weg ILIKE %s OR material_description ILIKE %s"
-                ")"
             )
             like = f"%{search_text}%"
             params.extend([like, like, like, like])
+            if materials:
+                clause += " OR material_weg = ANY(%s)"
+                params.append(materials)
+            clause += ")"
+            filters.append(clause)
         where = " AND ".join(filters)
 
         count_query = f"SELECT COUNT(*) AS total FROM {_ITEMS} WHERE {where}"

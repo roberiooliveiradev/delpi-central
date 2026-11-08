@@ -1799,6 +1799,10 @@ export type MyWegInvoiceObservationItem = {
   invoiceSeries: string;
   materialWeg: string;
   materialDescription?: string | null;
+  /** Código DELPI preferido (SB1 verificado, senão informado nas necessidades). */
+  delpiProductCode?: string | null;
+  verifiedProductCode?: string | null;
+  informedProductCode?: string | null;
   quantityOriginal: string;
   sourceUnit: string;
   quantityUn: string | null;

@@ -168,15 +168,29 @@ class InMemoryInvoiceRepo:
             "items": [dict(item) for item in items[offset : offset + page_size]],
         }
 
-    def list_observation_items(self, *, observation_id, search, page, page_size) -> dict:
+    def list_observation_items(
+        self,
+        *,
+        observation_id,
+        search,
+        page,
+        page_size,
+        extra_materials=None,
+    ) -> dict:
         rows = list(self.items.get(observation_id, []))
         needle = (search or "").strip().lower()
+        materials = {
+            str(material or "").strip()
+            for material in (extra_materials or [])
+            if str(material or "").strip()
+        }
         if needle:
             rows = [
                 row
                 for row in rows
                 if needle in str(row.get("invoiceNumber") or "").lower()
                 or needle in str(row.get("materialWeg") or "").lower()
+                or str(row.get("materialWeg") or "").strip() in materials
             ]
         offset = (page - 1) * page_size
         return {
@@ -598,6 +612,44 @@ def test_auth_and_rbac_routes(monkeypatch):
     items = client.get(f"/myweg/invoice-observations/{obs_id}/items")
     assert items.status_code == 200
     assert items.json()["data"]["total"] == SAMPLE_RECORD_COUNT
+
+
+def test_list_items_enriches_delpi_product_code(monkeypatch):
+    class FakeNeedsRepo:
+        def lookup_delpi_codes_by_materials(self, materials):
+            assert "MAT-A" in materials
+            return {
+                "MAT-A": {
+                    "verifiedProductCode": "90001234",
+                    "informedProductCode": "INF-1",
+                    "delpiProductCode": "90001234",
+                }
+            }
+
+        def lookup_materials_by_delpi_code_search(self, needle):
+            return ["MAT-A"] if "9000" in (needle or "") else []
+
+    repo = InMemoryInvoiceRepo()
+    service = MyWegInvoiceObservationsService(repo, needs_repository=FakeNeedsRepo())
+    records = build_sample_2026_11_05_records()[:1]
+    records[0]["material_weg"] = "MAT-A"
+    payload = _payload_from_records(records, collection_id="col-delpi-enrich")
+    created = service.ingest_observation(payload, idempotency_key=None)
+    obs_id = created["id"]
+    monkeypatch.setattr(
+        "production_control_app.application.services.myweg_invoice_observations_service.can",
+        lambda user, permission: True,
+    )
+    listed = service.list_observation_items(
+        SimpleNamespace(),
+        observation_id=obs_id,
+        search="",
+        page=1,
+        page_size=50,
+    )
+    assert listed["items"]
+    assert listed["items"][0]["delpiProductCode"] == "90001234"
+    assert listed["items"][0]["verifiedProductCode"] == "90001234"
 
 
 def test_openapi_operation_ids_unique():

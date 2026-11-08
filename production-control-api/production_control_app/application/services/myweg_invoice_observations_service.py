@@ -26,6 +26,9 @@ from production_control_app.domain.myweg_invoice_observations_contract import (
 from production_control_app.domain.ports.myweg_invoice_observations_repository import (
     MyWegInvoiceObservationsRepositoryPort,
 )
+from production_control_app.domain.ports.myweg_needs_repository import (
+    MyWegNeedsRepositoryPort,
+)
 from production_control_app.domain.services.myweg_invoice_observations_normalization import (
     validate_ingest_observation,
 )
@@ -35,8 +38,13 @@ from production_control_app.infrastructure.persistence.postgres_myweg_invoice_ob
 
 
 class MyWegInvoiceObservationsService:
-    def __init__(self, repository: MyWegInvoiceObservationsRepositoryPort) -> None:
+    def __init__(
+        self,
+        repository: MyWegInvoiceObservationsRepositoryPort,
+        needs_repository: MyWegNeedsRepositoryPort | None = None,
+    ) -> None:
         self._repository = repository
+        self._needs_repository = needs_repository
 
     def ingest_observation(
         self,
@@ -166,11 +174,18 @@ class MyWegInvoiceObservationsService:
             raise MyWegInvoiceObservationNotFound(
                 "Observação MyWEG NF não encontrada."
             )
+        extra_materials: list[str] = []
+        needle = (search or "").strip()
+        if needle and self._needs_repository is not None:
+            extra_materials = self._needs_repository.lookup_materials_by_delpi_code_search(
+                needle
+            )
         items = self._repository.list_observation_items(
             observation_id=observation_id,
             search=search,
             page=page,
             page_size=page_size,
+            extra_materials=extra_materials,
         )
         return {
             "branch": ALLOWED_BRANCH,
@@ -181,8 +196,38 @@ class MyWegInvoiceObservationsService:
             "page": items["page"],
             "pageSize": items["pageSize"],
             "total": items["total"],
-            "items": items["items"],
+            "items": self._enrich_items_with_delpi_codes(items["items"]),
         }
+
+    def _enrich_items_with_delpi_codes(
+        self, items: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        if not items:
+            return items
+        materials = sorted(
+            {
+                str(item.get("materialWeg") or "").strip()
+                for item in items
+                if str(item.get("materialWeg") or "").strip()
+            }
+        )
+        mapping: dict[str, dict[str, str | None]] = {}
+        if self._needs_repository is not None and materials:
+            mapping = self._needs_repository.lookup_delpi_codes_by_materials(materials)
+
+        enriched: list[dict[str, Any]] = []
+        for item in items:
+            material = str(item.get("materialWeg") or "").strip()
+            codes = mapping.get(material) or {}
+            enriched.append(
+                {
+                    **item,
+                    "delpiProductCode": codes.get("delpiProductCode"),
+                    "verifiedProductCode": codes.get("verifiedProductCode"),
+                    "informedProductCode": codes.get("informedProductCode"),
+                }
+            )
+        return enriched
 
     def _resolve_existing(
         self,

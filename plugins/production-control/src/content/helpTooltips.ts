@@ -75,7 +75,7 @@ export const helpTooltips = {
   mywegNeedsAnalysisProducts:
     "Análise consolidada por produto DELPI — totais e diferença líquida considerando todas as remessas. Modo Necessidades compara só necessidades; modo Conciliação MyWEG acrescenta observações fiscais do portal para explicar a variação.",
   mywegNeedsInvoices:
-    "Lista observações de NF Emitidas importadas do portal MyWEG. Calendário mensal compacto e campo de data lado a lado: abre em D-1 e carrega as notas ao escolher o dia. Data sem observação ≠ zero NF. Observação vazia sinalizada pelo SAP ≠ ausência de coleta. Agrupamento por número/série usa apenas os dados retornados. Não executa abatimento, baixa ou alteração de pedidos. Distinto do faturamento indicativo Protheus.",
+    "Lista observações de NF Emitidas importadas do portal MyWEG. Calendário mensal compacto e campo de data lado a lado: abre em D-1 e carrega as notas ao escolher o dia. Código DELPI é enriquecido pelo vínculo SB1 das necessidades (verificado, senão informado). Data sem observação ≠ zero NF. Observação vazia sinalizada pelo SAP ≠ ausência de coleta. Agrupamento por número/série usa apenas os dados retornados. Não executa abatimento, baixa ou alteração de pedidos. Distinto do faturamento indicativo Protheus.",
   mywegNeedsTabs:
     "Workspace Necessidades WEG: Necessidade geral (coleta atual), Reprogramações (mudanças prováveis entre coletas), Análise por produto e Notas fiscais emitidas (consulta MyWEG).",
 } as const;

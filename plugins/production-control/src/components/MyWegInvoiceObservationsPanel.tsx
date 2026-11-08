@@ -256,6 +256,15 @@ export function MyWegInvoiceObservationsPanel() {
         render: (row) => row.materialWeg || "—",
       },
       {
+        key: "delpiProductCode",
+        header: texts.columns.delpiCode,
+        render: (row) =>
+          row.delpiProductCode?.trim() ||
+          row.verifiedProductCode?.trim() ||
+          row.informedProductCode?.trim() ||
+          "—",
+      },
+      {
         key: "materialDescription",
         header: texts.columns.description,
         render: (row) => row.materialDescription?.trim() || "—",

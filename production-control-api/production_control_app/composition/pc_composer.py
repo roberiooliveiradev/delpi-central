@@ -321,13 +321,14 @@ def build_myweg_invoice_observations_repository():
     return PostgresMyWegInvoiceObservationsRepository()
 
 
-def build_myweg_invoice_observations_service(repository=None):
+def build_myweg_invoice_observations_service(repository=None, needs_repository=None):
     from production_control_app.application.services.myweg_invoice_observations_service import (
         MyWegInvoiceObservationsService,
     )
 
     return MyWegInvoiceObservationsService(
-        repository or build_myweg_invoice_observations_repository()
+        repository or build_myweg_invoice_observations_repository(),
+        needs_repository=needs_repository or build_myweg_needs_repository(),
     )
 
 
