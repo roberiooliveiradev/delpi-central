@@ -9,7 +9,7 @@ import {
   NC_BOARD_PROGRESS_STEP_COUNT,
 } from "../src/utils/ncBoardProgress.ts";
 
-assert.equal(NC_BOARD_PROGRESS_STEP_COUNT, 6);
+assert.equal(NC_BOARD_PROGRESS_STEP_COUNT, 5);
 
 const empty = {
   status: "open",
@@ -32,7 +32,7 @@ const planOnly = {
   responsible_name: "Ana",
   due_date: "2026-08-20",
 };
-assert.equal(computeNcBoardProgressPct(planOnly), Math.round((5 / 6) * 100));
+assert.equal(computeNcBoardProgressPct(planOnly), 100);
 
 const withBeforeEvidence = {
   ...planOnly,
@@ -61,7 +61,7 @@ assert.equal(
     ...empty,
     description: "abc",
   }),
-  Math.round((1 / 6) * 100),
+  Math.round((1 / 5) * 100),
 );
 
 console.log("ok: progresso board NC (barra % por campos obrigatórios)");
