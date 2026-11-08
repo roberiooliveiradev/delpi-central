@@ -22,6 +22,7 @@ Plugin consumidor: `plugins/inspecoes-entrada` · Doc views: [ESPECIFICACAO-VIEW
 
 | Método | Rota | `meta.shape` | Descrição |
 |---|---|---|---|
+| GET | `/inspecoes-entrada/ncs-fornecedores` | `paged_list` | NCs TOTVS QI2 com tipo fixo Fornecedor (3), por filial autorizada |
 | GET | `/inspecoes-entrada/resumo` | `scalar` | KPIs da filial |
 | GET | `/inspecoes-entrada/pendentes` | `paged_list` | Inspeções aguardando laudo |
 | GET | `/inspecoes-entrada/pendentes-fornecedor` | `list` | Ranking fornecedor × pendências |
@@ -193,3 +194,14 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 | Validação views | `scripts/validate_inspecoes_entrada_views.py` |
 
 Testes: `tests/test_inspecoes_entrada_*`.
+
+
+## GET `/inspecoes-entrada/ncs-fornecedores`
+
+**Uso:** aba NCs de fornecedores em Inspeções de Entrada. Reutiliza a mesma consulta e mapeamento `QI2010` do Dashboard Qualidade; o filtro `type=supplier` (`QI2_TIPO=3`) é fixado no servidor e não pode ser alterado pelo cliente.
+
+**Parâmetros:** `branch` obrigatório (`01` ou `02`), `start_date` e `end_date` opcionais (`YYYY-MM-DD`, filtram ocorrência), `status` (`1` a `5`), `item_code`, `description`, `page` (padrão 1), `page_size` (máx. 200).
+
+**Autorização:** `INSPECOES_ENTRADA_READ_PERMISSIONS`, seguida de `branch_access_error(branch)` antes da consulta TOTVS; não requer permissão no Dashboard Qualidade. Não permite consultar outras filiais nem `branch=all`.
+
+**Resposta:** envelope padrão com `data = {items, page, page_size, total, total_pages}` e `meta.operationId = list_inspecoes_entrada_ncs_fornecedores`. Cada item traz os campos canônicos de NC da Qualidade: código, revisão, tipo, datas, situação, item, descrição, fornecedor, prioridade e quantidade devolvida. Somente leitura.
