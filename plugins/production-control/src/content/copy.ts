@@ -635,6 +635,7 @@ export const copy = {
     originMyweg: "MyWEG",
     originBadgeProtheus: "Protheus",
     originBadgeMyweg: "MyWEG · planejamento",
+    mywegNeedLabel: "Necessidade WEG",
     planningBanner:
       "Volumes MyWEG são planejamento do cliente. O total misturado não é demanda oficial consolidada enquanto a decisão arquitetural estiver pendente.",
     mywegUpdated: (when: string) => `Última coleta MyWEG: ${when}`,
@@ -707,6 +708,8 @@ export const copy = {
       customer: "Cliente",
       customerOrder: "Pedido do cliente",
       order: "Pedido / item",
+      mywegNeed: "Tipo",
+      mywegRecordId: "Identificador MyWEG",
       product: "Produto",
       due: "Entrega prometida",
       dispatch: "Data de emissão",

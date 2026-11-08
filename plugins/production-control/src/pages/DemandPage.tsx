@@ -18,6 +18,7 @@ import { copy } from "../content/copy";
 import { DEMAND_DEFAULT_FILTERS, useDemand, type DemandFilters } from "../hooks/useDemand";
 import type { DemandLine, PpcBranch } from "../types";
 import { downloadDemandExcel } from "../utils/demandExcel";
+import { demandOrderTableLabel } from "../utils/demandOrderLabel";
 import { demandStatusBadge, demandStatusOptions } from "../utils/demandStatus";
 import { formatIsoDate } from "../utils/formatIsoDate";
 import { formatOpQuantity } from "../utils/formatOpQuantity";
@@ -169,7 +170,7 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
     {
       key: "order",
       header: demand.columns.order,
-      render: (row: DemandLine) => `${row.sales_order}/${row.line_item}`,
+      render: (row: DemandLine) => demandOrderTableLabel(row),
     },
     {
       key: "product_code",

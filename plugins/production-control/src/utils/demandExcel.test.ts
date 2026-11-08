@@ -55,4 +55,19 @@ describe("buildDemandExcelPayload", () => {
     expect(payload.rows[0]?.dispatch).toBe("");
     expect(payload.rows[0]?.due).toBe("25/08/2026");
   });
+
+  it("exporta MyWEG como Necessidade WEG e guarda o ID só na coluna técnica", () => {
+    const recordId = "e595dda4-6ada-4132-9d73-5dac11111111";
+    const payload = buildDemandExcelPayload([
+      line({
+        source: "myweg",
+        planning: true,
+        sales_order: "MyWEG",
+        line_item: recordId,
+      }),
+    ]);
+    expect(payload.rows[0]?.order).toBe("Necessidade WEG");
+    expect(String(payload.rows[0]?.order)).not.toContain("e595dda4");
+    expect(payload.rows[0]?.mywegRecordId).toBe(recordId);
+  });
 });

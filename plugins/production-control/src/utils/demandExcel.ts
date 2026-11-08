@@ -1,5 +1,6 @@
 import { copy } from "../content/copy";
 import type { DemandLine } from "../types";
+import { demandMywegRecordId, demandOrderTableLabel, isMywegDemandLine } from "./demandOrderLabel";
 import { demandStatusBadge } from "./demandStatus";
 import { formatIsoDate } from "./formatIsoDate";
 
@@ -23,6 +24,7 @@ export function buildDemandExcelPayload(lines: readonly DemandLine[]): DemandExc
       { key: "due", label: columns.due },
       { key: "customer", label: columns.customer },
       { key: "order", label: columns.order },
+      { key: "mywegRecordId", label: detail.mywegRecordId },
       { key: "customerOrder", label: detail.customerOrder },
       { key: "product", label: columns.product },
       { key: "ordered", label: detail.ordered },
@@ -40,7 +42,8 @@ export function buildDemandExcelPayload(lines: readonly DemandLine[]): DemandExc
       dispatch: line.dispatch_date ? formatIsoDate(line.dispatch_date) : "",
       due: line.due_date ? formatIsoDate(line.due_date) : "",
       customer: line.customer_name || "",
-      order: `${line.sales_order}/${line.line_item}`,
+      order: demandOrderTableLabel(line),
+      mywegRecordId: isMywegDemandLine(line) ? demandMywegRecordId(line) : "",
       customerOrder: line.customer_order || "",
       product: line.product_code || "",
       ordered: line.ordered_quantity,

@@ -3,6 +3,7 @@ import { createDashboardStatusBadge } from "@delpi/plugin-ui/index";
 import { HostContainedWideDialog } from "./PpcConfirmModal";
 import { copy } from "../content/copy";
 import type { DemandLine, PpcBranch } from "../types";
+import { demandMywegRecordId, isMywegDemandLine } from "../utils/demandOrderLabel";
 import { demandStatusBadge } from "../utils/demandStatus";
 import { formatIsoDate } from "../utils/formatIsoDate";
 import { formatOpQuantity } from "../utils/formatOpQuantity";
@@ -91,7 +92,17 @@ export function DemandDetailModal({ line, branch, onClose }: DemandDetailModalPr
         <section className="ppc-demand-detail__block" aria-label={detail.orderSection}>
           <h3 className="ppc-demand-detail__block-title">{detail.orderSection}</h3>
           <dl className="ppc-demand-detail__grid">
-            <Field label={detail.order} value={`${line.sales_order}/${line.line_item}`} />
+            {isMywegDemandLine(line) ? (
+              <>
+                <Field label={detail.mywegNeed} value={copy.demand.mywegNeedLabel} />
+                <Field
+                  label={detail.mywegRecordId}
+                  value={demandMywegRecordId(line) || "—"}
+                />
+              </>
+            ) : (
+              <Field label={detail.order} value={`${line.sales_order}/${line.line_item}`} />
+            )}
             <Field label={detail.customerOrder} value={line.customer_order || "—"} />
             <Field label={detail.due} value={formatIsoDate(line.due_date)} />
             <Field label={detail.dispatch} value={formatIsoDate(line.dispatch_date)} />
