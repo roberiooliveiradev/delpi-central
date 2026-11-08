@@ -1677,6 +1677,34 @@ class PydanticAiInvestigationOrchestrator:
                     "could supply the missing data, call it now; "
                     "otherwise re-declare."
                 )
+            # R01 bounded correction (same one-shot budget, provider-
+            # neutral): a COMPLETE/PARTIAL declaration produced with
+            # ZERO owner calls and ZERO collected observations claims
+            # satisfaction with no evidence path exercised. When owner
+            # capabilities were actually exposed this turn, buy ONE
+            # native pass so the model can either gather evidence or
+            # honestly re-declare; it never forces a call — conceptual
+            # objectives can re-declare with limitations.
+            if (
+                output.status
+                in (
+                    InvestigationAnswerStatus.COMPLETE,
+                    InvestigationAnswerStatus.PARTIAL,
+                )
+                and not ctx.deps.collected
+                and ctx.deps.tool_calls == 0
+                and live_catalog
+                and not ctx.deps.insufficiency_retry_used
+                and ctx.deps.tool_calls < self._tool_calls_limit
+            ):
+                ctx.deps.insufficiency_retry_used = True
+                raise ModelRetry(
+                    "You answered without consulting any owner "
+                    "capability. If an objective needs operational "
+                    "data, call the authorized capability that can "
+                    "supply it now; if the question is purely "
+                    "conceptual, re-declare with honest limitations."
+                )
             # Cosmetic normalization only — the internal evidence
             # handle ``[obs:N]`` is an implementation detail, never
             # user-facing answer text. Evidence binding is unchanged.

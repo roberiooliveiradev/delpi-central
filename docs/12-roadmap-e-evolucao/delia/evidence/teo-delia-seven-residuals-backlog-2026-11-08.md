@@ -21,6 +21,13 @@ Para cada correção: RESPONSABILIDADE → OWNER → FONTE CANÔNICA → CONSUME
 - **Aceite:** causa ou fronteira divergente documentada; READ correto quando o cenário exigir e fontes autorizadas estiverem disponíveis, ou limitação honesta e causa classificada; testes de generalização/repetições; segurança e Outcome.
 - **Estado:** OPEN; `FAIL` do caminho operacional observado; root cause `INCONCLUSIVE`.
 
+### R01 — (resolução) Seleção de tools/zero-tool outcome — v. 2026-11-08
+
+- **Causa isolada:** resposta COMPLETE/PARTIAL declarada com ZERO chamadas de owner e ZERO observações coletadas passava pelo `output_validator` sem a retry de insuficiência (que só cobria INSUFFICIENT/NO_EVIDENCE/EMPTY). Primeira fronteira divergente: validação de saída / continuação.
+- **Fix mínimo (DÉLIA, provider-neutral):** extensão do `insufficiency_retry` one-shot existente em `pydantic_ai_investigation.py` — COMPLETE/PARTIAL com `tool_calls==0` + `collected==[]` + catálogo exposto → um `ModelRetry` nativo limitado, sem `tool_choice=required`, sem lógica por modelo, sem novo planner.
+- **Evidência real:** teste de contrato novo + 70 focused tests PASS; eval real Qwen: B1 passou a usar tools (3 invokes, GROUNDED, dados reais dept engenharia); C1 ainda 0-call NON_GROUNDED honesto (modelo local produziu prosa; retry bounded engajou 2ª passada sem conversão) — melhoria parcial, não eliminação; Kimi não regridido em runs anteriores.
+- **Estado:** RESOLVED_WITH_RESIDUAL — mecanismo bounded implementado e provado em B1; Qwen C1 zero-call persiste como limitação do modelo local (não fabrica, honesto). R01 não reabre R02/R03.
+
 ### R02 — Argumentos READ inválidos / possível lacuna de metadata MCP [P1]
 
 - **Evidência (PROVEN):** Qwen tentou `read(action=get)` sem `id` (três erros em B1); Kimi enviou filtros `q`, `page` ou `page_size` rejeitados como `INVALID_FIELD` (duas ocorrências registradas). A descrição diz `get uses id`, mas filtros admissíveis por entidade precisam de inventário.

@@ -277,3 +277,19 @@ def test_module_exposes_native_first_tools():
     assert "OPTIONAL" in src
     assert "run_governed_investigation" not in src
     assert "_COMPARE_INTENT" not in src
+
+
+def test_zero_tool_complete_answer_gets_bounded_retry() -> None:
+    """R01 — a COMPLETE/PARTIAL declaration with zero owner calls and
+    zero collected observations earns ONE native ModelRetry (provider-
+    neutral, existing insufficiency budget) instead of silently
+    finalizing an operational objective ungrounded."""
+    src = open(
+        "app/infrastructure/orchestration/pydantic_ai_investigation.py"
+    ).read()
+    assert "ctx.deps.tool_calls == 0" in src
+    assert "not ctx.deps.collected" in src
+    assert "and live_catalog" in src
+    assert "R01 bounded correction" in src
+    # Still bounded: reuses the one-shot insufficiency flag.
+    assert src.count("insufficiency_retry_used = True") >= 2
