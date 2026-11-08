@@ -95,9 +95,9 @@ const basePayload: MyWegCompareProductsPayload = {
     collectionId: "c1",
     branch: "02",
     status: "accepted",
-    collectedAt: "2026-11-04T08:00:00-03:00",
-    collectionDate: "2026-11-04",
-    importedAt: "2026-11-04T08:00:00-03:00",
+    collectedAt: "2026-11-06T08:00:00-03:00",
+    collectionDate: "2026-11-06",
+    importedAt: "2026-11-06T08:00:00-03:00",
     recordCount: 2,
     totals: { quantidade_original_un: "2", quantidade_mi: "0" },
   },
@@ -106,9 +106,9 @@ const basePayload: MyWegCompareProductsPayload = {
     collectionId: "c2",
     branch: "02",
     status: "accepted",
-    collectedAt: "2026-11-05T08:00:00-03:00",
-    collectionDate: "2026-11-05",
-    importedAt: "2026-11-05T08:00:00-03:00",
+    collectedAt: "2026-11-07T08:00:00-03:00",
+    collectionDate: "2026-11-07",
+    importedAt: "2026-11-07T08:00:00-03:00",
     recordCount: 2,
     totals: { quantidade_original_un: "2", quantidade_mi: "0" },
   },
@@ -119,11 +119,38 @@ const basePayload: MyWegCompareProductsPayload = {
   totalProductsChanged: 1,
   changesOnly: true,
   search: "",
-  invoiceMode: "none",
+  invoiceMode: "portal",
   totals: {
     previousQuantityUn: "2",
     currentQuantityUn: "2",
     deltaQuantityUn: "0",
+    postedQuantityUn: "0",
+    observedDeltaUn: "0",
+    adjustedPlanningDeltaUn: "0",
+    compatibleReductionUn: "0",
+  },
+  portalInvoices: {
+    status: "complete",
+    coverage: "complete",
+    period: {
+      fromDocumentDate: "2026-11-06",
+      toDocumentDateExclusive: "2026-11-07",
+      start: "2026-11-06",
+      end: "2026-11-06",
+      days: ["2026-11-06"],
+    },
+    coveredDates: ["2026-11-06"],
+    missingDates: [],
+    coveredDayCount: 1,
+    missingDayCount: 0,
+    canonicalObservations: [
+      {
+        documentDate: "2026-11-06",
+        status: "selected",
+        observationId: "obs-1",
+      },
+    ],
+    disclaimer: "Conciliação analítica",
   },
   items: [
     {
@@ -141,6 +168,13 @@ const basePayload: MyWegCompareProductsPayload = {
       currentRemessaCount: 1,
       hasRemessaChanges: true,
       situation: "stable_with_date_changes",
+      observedDeltaUn: "0",
+      postedQuantityUn: "0",
+      adjustedPlanningDeltaUn: "0",
+      compatibleReductionUn: "0",
+      invoiceMatchStatus: "none",
+      managerialStatus: "other_movement",
+      residualUnexplainedUn: null,
       remessas: [
         {
           remessa: "2026-11-12",
@@ -180,19 +214,19 @@ function portalPayload(
       status: "complete",
       coverage: "complete",
       period: {
-        fromDocumentDate: "2026-11-04",
-        toDocumentDateExclusive: "2026-11-05",
-        start: "2026-11-04",
-        end: "2026-11-04",
-        days: ["2026-11-04"],
+        fromDocumentDate: "2026-11-06",
+        toDocumentDateExclusive: "2026-11-07",
+        start: "2026-11-06",
+        end: "2026-11-06",
+        days: ["2026-11-06"],
       },
-      coveredDates: ["2026-11-04"],
+      coveredDates: ["2026-11-06"],
       missingDates: [],
       coveredDayCount: 1,
       missingDayCount: 0,
       canonicalObservations: [
         {
-          documentDate: "2026-11-04",
+          documentDate: "2026-11-06",
           status: "selected",
           observationId: "obs-1",
         },
@@ -207,6 +241,8 @@ function portalPayload(
         adjustedPlanningDeltaUn: "10",
         compatibleReductionUn: "0",
         invoiceMatchStatus: "reconciled",
+        managerialStatus: "other_movement",
+        residualUnexplainedUn: null,
         portalInvoiceMaterials: [
           {
             materialWeg: "MAT-001",
@@ -219,6 +255,84 @@ function portalPayload(
     ],
     ...overrides,
   };
+}
+
+/** Caso real: 90263746 / redução 2450 / NF 000017061. */
+function invoiced90263746Payload(): MyWegCompareProductsPayload {
+  return portalPayload({
+    totals: {
+      previousQuantityUn: "8348",
+      currentQuantityUn: "5898",
+      deltaQuantityUn: "-2450",
+      observedDeltaUn: "-2450",
+      postedQuantityUn: "2450",
+      compatibleReductionUn: "2450",
+      adjustedPlanningDeltaUn: "0",
+    },
+    items: [
+      {
+        productKey: "code:90263746",
+        identityKind: "verified_code",
+        identityConfirmed: true,
+        identityReliable: true,
+        verifiedProductCode: "90263746",
+        materialWegTratado: "17382643",
+        previousQuantityUn: "8348",
+        currentQuantityUn: "5898",
+        deltaQuantityUn: "-2450",
+        percentChange: "-29.35",
+        previousRemessaCount: 3,
+        currentRemessaCount: 2,
+        hasRemessaChanges: true,
+        situation: "decreased",
+        observedDeltaUn: "-2450",
+        postedQuantityUn: "2450",
+        compatibleReductionUn: "2450",
+        adjustedPlanningDeltaUn: "0",
+        invoiceMatchStatus: "reconciled",
+        managerialStatus: "invoiced",
+        managerialReason: "full_compatible_reduction",
+        managerialExplanation:
+          "Redução de 2450 UN integralmente compatível com a NF MyWEG observada. Nenhuma redução residual identificada.",
+        residualUnexplainedUn: "0",
+        remessaInvoicingContext: "compatible_on_reduced_lines",
+        portalInvoiceMaterials: [
+          {
+            materialWeg: "17382643",
+            postedQuantityUn: "2450",
+            attributedToProductKey: "code:90263746",
+          },
+        ],
+        portalInvoiceSources: ["obs-1"],
+        remessas: [
+          {
+            remessa: "2026-11-06",
+            previousQuantityUn: "998",
+            currentQuantityUn: "0",
+            deltaQuantityUn: "-998",
+            movement: "disappeared",
+            managerialRemessaContext: "compatible_with_invoicing",
+          },
+          {
+            remessa: "2026-11-11",
+            previousQuantityUn: "1750",
+            currentQuantityUn: "298",
+            deltaQuantityUn: "-1452",
+            movement: "decreased",
+            managerialRemessaContext: "compatible_with_invoicing",
+          },
+          {
+            remessa: "2026-11-20",
+            previousQuantityUn: "5600",
+            currentQuantityUn: "5600",
+            deltaQuantityUn: "0",
+            movement: "unchanged",
+          },
+        ],
+        probableDateShifts: [],
+      },
+    ],
+  });
 }
 
 describe("MyWegProductConsolidationPanel", () => {
@@ -237,15 +351,15 @@ describe("MyWegProductConsolidationPanel", () => {
       branch: "02",
       status: "accepted",
       observationStatus: "with_records",
-      documentDate: "2026-11-04",
+      documentDate: "2026-11-06",
       recordCount: 1,
-      totalQuantityUn: "10",
+      totalQuantityUn: "2450",
     });
     fetchObservationItems.mockResolvedValue({
       branch: "02",
       observationId: "obs-1",
       collectionId: "col-1",
-      documentDate: "2026-11-04",
+      documentDate: "2026-11-06",
       observationStatus: "with_records",
       page: 1,
       pageSize: 50,
@@ -254,14 +368,14 @@ describe("MyWegProductConsolidationPanel", () => {
         {
           id: "item-1",
           sourceLineNo: 1,
-          invoiceNumber: "000123",
-          invoiceSeries: "1",
-          materialWeg: "MAT-001",
-          quantityOriginal: "10",
+          invoiceNumber: "000017061",
+          invoiceSeries: "2",
+          materialWeg: "17382643",
+          quantityOriginal: "2450",
           sourceUnit: "UN",
-          quantityUn: "10",
+          quantityUn: "2450",
           unitComparability: "exact",
-          departureDate: "2026-11-04",
+          departureDate: "2026-11-06",
         },
         {
           id: "item-2",
@@ -273,10 +387,35 @@ describe("MyWegProductConsolidationPanel", () => {
           sourceUnit: "UN",
           quantityUn: "5",
           unitComparability: "exact",
-          departureDate: "2026-11-04",
+          departureDate: "2026-11-06",
         },
       ],
     });
+  });
+
+  it("consulta sempre com invoiceMode=portal sem toggle Necessidades/Conciliação", async () => {
+    render(
+      <MyWegProductConsolidationPanel fromId="from" toId="to" search="cabo" />,
+    );
+
+    await waitFor(() => {
+      expect(fetchProducts).toHaveBeenCalled();
+    });
+    expect(fetchProducts.mock.calls[0][0]).toMatchObject({
+      fromBatchId: "from",
+      toBatchId: "to",
+      search: "cabo",
+      invoiceMode: "portal",
+    });
+    expect(
+      screen.queryByRole("button", { name: /^Necessidades$/i }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /^Conciliação MyWEG$/i }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: /Atualizar conciliação/i }),
+    ).toBeTruthy();
   });
 
   it("abre o detalhe em modal ao clicar em Detalhes", async () => {
@@ -291,7 +430,7 @@ describe("MyWegProductConsolidationPanel", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /^detalhes$/i }));
 
-    const dialog = screen.getByRole("dialog", { name: /Detalhe · 80016354/i });
+    const dialog = screen.getByRole("dialog", { name: /Produto 80016354/i });
     expect(dialog).toBeTruthy();
     expect(screen.getByText(/Por data de remessa/i)).toBeTruthy();
     expect(screen.getByText("12/11/2026")).toBeTruthy();
@@ -315,41 +454,112 @@ describe("MyWegProductConsolidationPanel", () => {
     expect(screen.getByTestId("products-table")).toBeTruthy();
   });
 
-  it("alterna none → portal preservando o par e buscando invoiceMode=portal", async () => {
-    fetchProducts
-      .mockResolvedValueOnce(basePayload)
-      .mockResolvedValueOnce(portalPayload());
+  it("exibe Faturado no caso 90263746 sem vermelho de cancelamento", async () => {
+    fetchProducts.mockResolvedValue(invoiced90263746Payload());
+    fetchObservationItems.mockResolvedValue({
+      branch: "02",
+      observationId: "obs-1",
+      collectionId: "col-1",
+      documentDate: "2026-11-06",
+      observationStatus: "with_records",
+      page: 1,
+      pageSize: 50,
+      total: 1,
+      items: [
+        {
+          id: "item-1",
+          sourceLineNo: 1,
+          invoiceNumber: "000017061",
+          invoiceSeries: "2",
+          materialWeg: "17382643",
+          quantityOriginal: "2450",
+          sourceUnit: "UN",
+          quantityUn: "2450",
+          unitComparability: "exact",
+          departureDate: "2026-11-06",
+        },
+      ],
+    });
 
     render(
-      <MyWegProductConsolidationPanel fromId="from" toId="to" search="cabo" />,
+      <MyWegProductConsolidationPanel fromId="from" toId="to" search="" />,
     );
 
     await waitFor(() => {
-      expect(fetchProducts).toHaveBeenCalled();
+      expect(screen.getByTestId("col-managerial").textContent).toMatch(/Faturado/i);
     });
-    expect(fetchProducts.mock.calls[0][0]).toMatchObject({
-      fromBatchId: "from",
-      toBatchId: "to",
-      search: "cabo",
-      invoiceMode: "none",
-    });
+    expect(screen.getByTestId("col-posted").textContent).toContain("2.450");
+    expect(screen.getByTestId("col-residual").textContent).toContain("0");
+    expect(screen.getByTestId("col-observed").innerHTML).toContain("delta--invoiced");
 
-    fireEvent.click(screen.getByRole("button", { name: /Conciliação MyWEG/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^detalhes$/i }));
 
     await waitFor(() => {
-      expect(fetchProducts.mock.calls.at(-1)?.[0]).toMatchObject({
-        fromBatchId: "from",
-        toBatchId: "to",
-        search: "cabo",
-        invoiceMode: "portal",
-        page: 1,
-      });
+      expect(
+        screen.getByText(/integralmente compatível com a NF MyWEG/i),
+      ).toBeTruthy();
     });
+    expect(screen.getAllByText(/Compatível com faturamento/i).length).toBeGreaterThanOrEqual(
+      2,
+    );
+    expect(screen.queryByText(/cancelamento/i)).toBeNull();
 
     await waitFor(() => {
-      expect(screen.getByTestId("kpi-NF MyWEG no período").textContent).toContain(
-        "10",
+      expect(screen.getByText("000017061")).toBeTruthy();
+    });
+    expect(screen.getByText("Notas fiscais relacionadas")).toBeTruthy();
+  });
+
+  it("destaca residual em faturamento parcial", async () => {
+    fetchProducts.mockResolvedValue(
+      portalPayload({
+        items: [
+          {
+            ...basePayload.items[0],
+            productKey: "code:partial",
+            verifiedProductCode: "partial",
+            previousQuantityUn: "2450",
+            currentQuantityUn: "0",
+            deltaQuantityUn: "-2450",
+            observedDeltaUn: "-2450",
+            postedQuantityUn: "1000",
+            compatibleReductionUn: "1000",
+            adjustedPlanningDeltaUn: "-1450",
+            invoiceMatchStatus: "reconciled",
+            managerialStatus: "partial_invoicing",
+            residualUnexplainedUn: "1450",
+            managerialExplanation:
+              "Parte da redução (1000 UN) é compatível com NF MyWEG; residual de 1450 UN sem explicação fiscal.",
+            portalInvoiceMaterials: [{ materialWeg: "MAT-001" }],
+            portalInvoiceSources: ["obs-1"],
+            remessas: [
+              {
+                remessa: "2026-11-12",
+                previousQuantityUn: "2450",
+                currentQuantityUn: "0",
+                deltaQuantityUn: "-2450",
+                movement: "disappeared",
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    render(
+      <MyWegProductConsolidationPanel fromId="from" toId="to" search="" />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("col-managerial").textContent).toMatch(
+        /Faturamento parcial/i,
       );
+    });
+    expect(screen.getByTestId("col-residual").textContent).toContain("1.450");
+
+    fireEvent.click(screen.getByRole("button", { name: /^detalhes$/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/residual de 1450 UN/i)).toBeTruthy();
     });
   });
 
@@ -367,7 +577,7 @@ describe("MyWegProductConsolidationPanel", () => {
         portalInvoices: {
           status: "complete",
           coverage: "complete",
-          coveredDates: ["2026-11-04"],
+          coveredDates: ["2026-11-06"],
           missingDates: [],
           coveredDayCount: 1,
           missingDayCount: 0,
@@ -379,6 +589,7 @@ describe("MyWegProductConsolidationPanel", () => {
             postedQuantityUn: "0",
             adjustedPlanningDeltaUn: null,
             invoiceMatchStatus: "none",
+            managerialStatus: "other_movement",
             portalInvoiceMaterials: [],
             portalInvoiceSources: [],
           },
@@ -389,7 +600,6 @@ describe("MyWegProductConsolidationPanel", () => {
     render(
       <MyWegProductConsolidationPanel fromId="from" toId="to" search="" />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Conciliação MyWEG/i }));
 
     await waitFor(() => {
       expect(screen.getByTestId("kpi-Cobertura fiscal").textContent).toMatch(
@@ -415,8 +625,8 @@ describe("MyWegProductConsolidationPanel", () => {
         portalInvoices: {
           status: "partial",
           coverage: "partial",
-          coveredDates: ["2026-11-04"],
-          missingDates: ["2026-11-05"],
+          coveredDates: ["2026-11-06"],
+          missingDates: ["2026-11-07"],
           coveredDayCount: 1,
           missingDayCount: 1,
         },
@@ -427,6 +637,7 @@ describe("MyWegProductConsolidationPanel", () => {
             postedQuantityUn: null,
             adjustedPlanningDeltaUn: null,
             invoiceMatchStatus: "partial_coverage",
+            managerialStatus: "reconciliation_pending",
             portalInvoiceSources: ["obs-1"],
             portalInvoiceMaterials: [{ materialWeg: "MAT-001" }],
           },
@@ -437,7 +648,6 @@ describe("MyWegProductConsolidationPanel", () => {
     render(
       <MyWegProductConsolidationPanel fromId="from" toId="to" search="" />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Conciliação MyWEG/i }));
 
     await waitFor(() => {
       expect(screen.getByTestId("kpi-NF MyWEG no período").textContent).toContain(
@@ -446,6 +656,9 @@ describe("MyWegProductConsolidationPanel", () => {
     });
     expect(screen.getByTestId("kpi-Cobertura fiscal").textContent).toContain(
       "Cobertura parcial",
+    );
+    expect(screen.getByTestId("col-managerial").textContent).toMatch(
+      /Conciliação pendente/i,
     );
   });
 
@@ -477,7 +690,6 @@ describe("MyWegProductConsolidationPanel", () => {
       render(
         <MyWegProductConsolidationPanel fromId="from" toId="to" search="" />,
       );
-      fireEvent.click(screen.getByRole("button", { name: /Conciliação MyWEG/i }));
       await waitFor(() => {
         expect(screen.getByTestId("kpi-Cobertura fiscal").textContent).toContain(
           label,
@@ -491,12 +703,10 @@ describe("MyWegProductConsolidationPanel", () => {
     render(
       <MyWegProductConsolidationPanel fromId="from" toId="to" search="" />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Conciliação MyWEG/i }));
 
     await waitFor(() => {
       expect(screen.getByTestId("col-observed").textContent).toContain("0");
     });
-    expect(screen.getByTestId("col-adjusted").textContent).toContain("10");
     expect(screen.getByTestId("col-posted").textContent).toContain("10");
   });
 
@@ -514,6 +724,7 @@ describe("MyWegProductConsolidationPanel", () => {
             postedQuantityUn: "3",
             adjustedPlanningDeltaUn: "3",
             invoiceMatchStatus: "reconciled",
+            managerialStatus: "reconciliation_pending",
             portalInvoiceMaterials: [{ materialWeg: "MAT-ORPHAN" }],
             portalInvoiceSources: ["obs-1"],
             remessas: [],
@@ -526,6 +737,7 @@ describe("MyWegProductConsolidationPanel", () => {
             postedQuantityUn: null,
             adjustedPlanningDeltaUn: null,
             invoiceMatchStatus: "attributed_elsewhere",
+            managerialStatus: "reconciliation_pending",
             portalInvoiceMaterials: [
               {
                 materialWeg: "MAT-001",
@@ -542,7 +754,6 @@ describe("MyWegProductConsolidationPanel", () => {
     render(
       <MyWegProductConsolidationPanel fromId="from" toId="to" search="" />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Conciliação MyWEG/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/NF sem correspondência de necessidade/i)).toBeTruthy();
@@ -558,11 +769,62 @@ describe("MyWegProductConsolidationPanel", () => {
   });
 
   it("carrega detalhe NF sob demanda com filtro exato e zeros à esquerda", async () => {
-    fetchProducts.mockResolvedValue(portalPayload());
+    fetchProducts.mockResolvedValue(
+      portalPayload({
+        items: [
+          {
+            ...basePayload.items[0],
+            portalInvoiceMaterials: [
+              {
+                materialWeg: "MAT-001",
+                postedQuantityUn: "10",
+              },
+            ],
+            portalInvoiceSources: ["obs-1"],
+          },
+        ],
+      }),
+    );
+    fetchObservationItems.mockResolvedValue({
+      branch: "02",
+      observationId: "obs-1",
+      collectionId: "col-1",
+      documentDate: "2026-11-06",
+      observationStatus: "with_records",
+      page: 1,
+      pageSize: 50,
+      total: 2,
+      items: [
+        {
+          id: "item-1",
+          sourceLineNo: 1,
+          invoiceNumber: "000123",
+          invoiceSeries: "1",
+          materialWeg: "MAT-001",
+          quantityOriginal: "10",
+          sourceUnit: "UN",
+          quantityUn: "10",
+          unitComparability: "exact",
+          departureDate: "2026-11-06",
+        },
+        {
+          id: "item-2",
+          sourceLineNo: 2,
+          invoiceNumber: "000999",
+          invoiceSeries: "1",
+          materialWeg: "OUTRO",
+          quantityOriginal: "5",
+          sourceUnit: "UN",
+          quantityUn: "5",
+          unitComparability: "exact",
+          departureDate: "2026-11-06",
+        },
+      ],
+    });
+
     render(
       <MyWegProductConsolidationPanel fromId="from" toId="to" search="" />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Conciliação MyWEG/i }));
 
     await waitFor(() => {
       expect(screen.getByTestId("products-table")).toBeTruthy();
@@ -588,7 +850,7 @@ describe("MyWegProductConsolidationPanel", () => {
     expect(screen.queryByText("000999")).toBeNull();
   });
 
-  it("exibe 403 sem sobrescrever com payload antigo após troca de modo", async () => {
+  it("exibe 403 sem sobrescrever com payload antigo", async () => {
     fetchProducts
       .mockResolvedValueOnce(basePayload)
       .mockRejectedValueOnce(new HttpRequestError("forbidden", 403));
@@ -600,7 +862,7 @@ describe("MyWegProductConsolidationPanel", () => {
       expect(screen.getByTestId("products-table")).toBeTruthy();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /Conciliação MyWEG/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Atualizar conciliação/i }));
 
     await waitFor(() => {
       expect(
@@ -618,11 +880,13 @@ describe("MyWegProductConsolidationPanel", () => {
       .mockImplementationOnce(() => first)
       .mockResolvedValueOnce(portalPayload());
 
-    render(
+    const { rerender } = render(
       <MyWegProductConsolidationPanel fromId="from" toId="to" search="" />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Conciliação MyWEG/i }));
+    rerender(
+      <MyWegProductConsolidationPanel fromId="from" toId="to" search="novo" />,
+    );
 
     await waitFor(() => {
       expect(fetchProducts).toHaveBeenCalledTimes(2);

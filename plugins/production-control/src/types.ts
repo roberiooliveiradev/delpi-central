@@ -1623,6 +1623,14 @@ export type MyWegProductSituation =
   | "disappeared"
   | string;
 
+export type MyWegManagerialStatus =
+  | "invoiced"
+  | "partial_invoicing"
+  | "reduction_to_investigate"
+  | "reconciliation_pending"
+  | "other_movement"
+  | string;
+
 export type MyWegProductRemessaDetail = {
   remessa: string;
   previousQuantityUn: string;
@@ -1631,6 +1639,8 @@ export type MyWegProductRemessaDetail = {
   movement: string;
   previousLineCount?: number;
   currentLineCount?: number;
+  /** Contexto visual — não prova vínculo NF×remessa. */
+  managerialRemessaContext?: "compatible_with_invoicing" | string | null;
 };
 
 export type MyWegInvoiceMode = "none" | "portal";
@@ -1727,6 +1737,11 @@ export type MyWegProductConsolidation = {
   portalInvoiceMaterials?: MyWegPortalInvoiceMaterial[];
   portalInvoiceSources?: string[];
   portalInvoiceOrphan?: boolean;
+  managerialStatus?: MyWegManagerialStatus | null;
+  managerialReason?: string | null;
+  managerialExplanation?: string | null;
+  residualUnexplainedUn?: string | null;
+  remessaInvoicingContext?: string | null;
 };
 
 export type MyWegCompareProductsPayload = {

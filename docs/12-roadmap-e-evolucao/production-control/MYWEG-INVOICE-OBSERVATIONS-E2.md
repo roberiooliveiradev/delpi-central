@@ -33,7 +33,26 @@ compatible_reduction_un = min(max(-observed, 0), posted)
 
 Cobertura incompleta/conflito → ajuste `null` (não usa parcial como total).
 
+## Classificação gerencial (aditiva)
+
+Campos aditivos por produto (não substituem brutos):
+
+| Campo | Uso |
+|---|---|
+| `managerialStatus` | `invoiced` \| `partial_invoicing` \| `reduction_to_investigate` \| `reconciliation_pending` \| `other_movement` |
+| `managerialReason` / `managerialExplanation` | Motivo e frase operacional |
+| `residualUnexplainedUn` | Residual da redução sem NF compatível |
+| `remessaInvoicingContext` / `managerialRemessaContext` | Contexto visual nas remessas — **sem rateio** |
+
+**Faturado** exige cobertura completa + identidade confiável + NF positiva +
+`compatibleReductionUn == |observedDelta|` + `adjustedPlanningDeltaUn == 0`
+(Decimal exato). `invoiceMatchStatus=reconciled` isolado **não** basta.
+
+Remessas reduzidas só recebem `compatible_with_invoicing` quando o produto está
+Faturado, a soma das reduções fecha com o observado e **não** há aumentos
+simultâneos. Não há FIFO nem atribuição NF→data.
+
 ## Fora de escopo
 
-UI, timers, Windows, Protheus write, compare por remessa, FIFO indicativo,
-abatimento transacional, Etapas 3–5.
+Timers, Windows, Protheus write, compare por remessa, FIFO indicativo,
+abatimento transacional.

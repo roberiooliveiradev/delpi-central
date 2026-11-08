@@ -1,6 +1,7 @@
 import type {
   MyWegInvoiceCoverageStatus,
   MyWegInvoiceMatchStatus,
+  MyWegManagerialStatus,
 } from "../types";
 import { formatDecimalString } from "./formatDecimalString";
 
@@ -115,4 +116,94 @@ export function isZeroDecimal(value: string | null | undefined): boolean {
   if (value == null) return false;
   const raw = String(value).trim();
   return raw === "0" || raw === "0.0" || raw === "0.00";
+}
+
+export function managerialStatusLabel(
+  status: MyWegManagerialStatus | null | undefined,
+): string {
+  switch ((status ?? "").trim()) {
+    case "invoiced":
+      return "Faturado";
+    case "partial_invoicing":
+      return "Faturamento parcial";
+    case "reduction_to_investigate":
+      return "Redução a investigar";
+    case "reconciliation_pending":
+      return "Conciliação pendente";
+    case "other_movement":
+      return "Outro movimento";
+    default:
+      return status?.trim() ? String(status) : "—";
+  }
+}
+
+export function managerialStatusHint(
+  status: MyWegManagerialStatus | null | undefined,
+): string {
+  switch ((status ?? "").trim()) {
+    case "invoiced":
+      return "Faturamento conciliado";
+    case "partial_invoicing":
+      return "Parte da redução compatível com NF";
+    case "reduction_to_investigate":
+      return "Sem NF compatível na janela";
+    case "reconciliation_pending":
+      return "Cobertura ou identidade ainda não confiável";
+    default:
+      return "";
+  }
+}
+
+/** Classes de badge gerencial — verde/azul discreto, âmbar, vermelho só em alerta. */
+export function managerialBadgeClass(
+  status: MyWegManagerialStatus | null | undefined,
+): string {
+  switch ((status ?? "").trim()) {
+    case "invoiced":
+      return "ppc-myweg-needs__mgr-badge ppc-myweg-needs__mgr-badge--invoiced";
+    case "partial_invoicing":
+      return "ppc-myweg-needs__mgr-badge ppc-myweg-needs__mgr-badge--partial";
+    case "reduction_to_investigate":
+      return "ppc-myweg-needs__mgr-badge ppc-myweg-needs__mgr-badge--alert";
+    case "reconciliation_pending":
+      return "ppc-myweg-needs__mgr-badge ppc-myweg-needs__mgr-badge--pending";
+    default:
+      return "ppc-myweg-needs__mgr-badge";
+  }
+}
+
+/** Tom do delta observado: não usar vermelho alarmante quando faturado. */
+export function observedDeltaToneClass(params: {
+  managerialStatus?: MyWegManagerialStatus | null;
+  situationOrMovement: string;
+}): string {
+  if ((params.managerialStatus ?? "").trim() === "invoiced") {
+    return "ppc-myweg-needs__delta ppc-myweg-needs__delta--invoiced";
+  }
+  if ((params.managerialStatus ?? "").trim() === "partial_invoicing") {
+    return "ppc-myweg-needs__delta ppc-myweg-needs__delta--partial";
+  }
+  // deferred import-free: mirror nullable/situation tones via classes already used
+  const situation = params.situationOrMovement;
+  if (
+    situation === "decreased" ||
+    situation === "disappeared" ||
+    situation === "increased" ||
+    situation === "appeared"
+  ) {
+    if (situation === "decreased" || situation === "disappeared") {
+      return "ppc-myweg-needs__delta ppc-myweg-needs__delta--down";
+    }
+    return "ppc-myweg-needs__delta ppc-myweg-needs__delta--up";
+  }
+  return "ppc-myweg-needs__delta";
+}
+
+export function remessaContextLabel(
+  context: string | null | undefined,
+): string | null {
+  if ((context ?? "").trim() === "compatible_with_invoicing") {
+    return "Compatível com faturamento";
+  }
+  return null;
 }

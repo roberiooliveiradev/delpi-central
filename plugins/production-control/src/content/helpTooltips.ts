@@ -61,9 +61,9 @@ export const helpTooltips = {
   mywegNeedsProductAnalysis:
     "Consolida a necessidade do produto somando todas as remessas das duas coletas. Diferença líquida = total atual − total anterior. Mudança só de datas com total estável aparece como «quantidade mantida, com alteração nas datas». Não afirma cadastro, cancelamento, faturamento ou atendimento. Reprogramações prováveis são complementares e não alteram os totais.",
   mywegNeedsInvoiceReconciliation:
-    "A variação ajustada considera as notas fiscais registradas no MyWEG para ajudar a explicar mudanças nas necessidades. Esse cálculo é uma estimativa e não altera os pedidos ou as quantidades recebidas do cliente. A necessidade atual já incorpora descontos da WEG — a NF não é descontada de novo. Dia sem dados ≠ zero NF. Quantidade faturada não comprova abatimento por remessa. NF do portal ≠ faturamento indicativo Protheus.",
+    "Classificação gerencial da Análise por produto: Faturado só quando cobertura completa, identidade confiável, NF positiva e redução integralmente compatível (diferença ajustada zero). Faturamento parcial destaca o residual. Redução a investigar preserva a queda sem NF compatível. Conciliação pendente cobre janela incompleta, conflito, identidade ambígua ou falha. Não rateia NF por remessa nem afirma baixa reconhecida pela WEG. Dia sem dados ≠ zero NF.",
   mywegNeedsObservedDelta:
-    "Variação observada = necessidade atual − necessidade anterior (já com descontos WEG refletidos na coleta). Não é abatimento fiscal.",
+    "Variação observada = necessidade atual − necessidade anterior (já com descontos WEG refletidos na coleta). Não é abatimento fiscal. Em produto Faturado, a redução deixa de aparecer como alerta vermelho porque há NF MyWEG compatível no total.",
   mywegNeedsPostedNf:
     "Soma das quantidades de NF Emitidas observadas no MyWEG na janela entre as coletas, em UN, quando a cobertura fiscal está completa. Janela incompleta, pendente ou indisponível não deve ser lida como zero NF.",
   mywegNeedsAdjustedDelta:

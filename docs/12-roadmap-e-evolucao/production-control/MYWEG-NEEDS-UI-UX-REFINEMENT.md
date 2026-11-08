@@ -34,8 +34,10 @@ Deixar a tela **Necessidades WEG** mais minimalista, escaneável e executiva par
 - Busca duplicada removida: filtro de produto fica na barra de análise; `hideSearch` nas `DataTableSection` MyWEG.
 - Análise por produto com título mais claro, chips de resumo e colunas enxutas.
 - Detalhe do produto abre em modal central (`HostContainedWideDialog`), sem expandir na lista.
+- Análise por produto força `invoiceMode=portal` (sem toggle); classificação gerencial
+  (Faturado / parcial / investigar / pendente); remessas sem rateio NF; residual destacado.
 - Percentuais via `formatPercentDisplay` (máx. 2 casas, pt-BR).
-- Semântica visual verde/vermelho para aumentos/reduções (badges, deltas, KPIs).
+- Semântica visual: verde/azul discreto para faturado; âmbar parcial/pendente; vermelho só alerta.
 - KPIs de comparação com mais respiro e número em destaque.
 - Ajustes responsivos (≤1100px e ≤768px) nos filtros/hub.
 

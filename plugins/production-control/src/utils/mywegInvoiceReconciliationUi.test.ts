@@ -6,7 +6,11 @@ import {
   coverageStatusLabel,
   formatNullableDecimal,
   invoiceMatchStatusLabel,
+  managerialBadgeClass,
+  managerialStatusLabel,
   nullableDeltaToneClass,
+  observedDeltaToneClass,
+  remessaContextLabel,
 } from "./mywegInvoiceReconciliationUi";
 
 describe("mywegInvoiceReconciliationUi", () => {
@@ -46,5 +50,23 @@ describe("mywegInvoiceReconciliationUi", () => {
     expect(nullableDeltaToneClass(null)).toBe("ppc-myweg-needs__delta");
     expect(nullableDeltaToneClass("-5")).toContain("delta--down");
     expect(nullableDeltaToneClass("5")).toContain("delta--up");
+  });
+
+  it("rotula classificação gerencial e evita vermelho em faturado", () => {
+    expect(managerialStatusLabel("invoiced")).toBe("Faturado");
+    expect(managerialStatusLabel("partial_invoicing")).toBe("Faturamento parcial");
+    expect(managerialStatusLabel("reduction_to_investigate")).toBe(
+      "Redução a investigar",
+    );
+    expect(managerialBadgeClass("invoiced")).toContain("mgr-badge--invoiced");
+    expect(
+      observedDeltaToneClass({
+        managerialStatus: "invoiced",
+        situationOrMovement: "decreased",
+      }),
+    ).toContain("delta--invoiced");
+    expect(remessaContextLabel("compatible_with_invoicing")).toBe(
+      "Compatível com faturamento",
+    );
   });
 });

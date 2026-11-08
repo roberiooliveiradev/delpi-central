@@ -36,10 +36,14 @@ import {
   completeCoverageDetailLabel,
   coverageStatusLabel,
   formatNullableDecimal,
-  invoiceMatchStatusLabel,
   isCoverageComplete,
   lastCoveredDocumentDate,
+  managerialBadgeClass,
+  managerialStatusHint,
+  managerialStatusLabel,
   nullableDeltaToneClass,
+  observedDeltaToneClass,
+  remessaContextLabel,
 } from "../utils/mywegInvoiceReconciliationUi";
 import {
   deltaToneClass,
@@ -72,25 +76,6 @@ function formatRemessaBr(value: string | null | undefined): string {
     return `${d}/${m}/${y}`;
   }
   return text;
-}
-
-function situationLabel(situation: string): string {
-  switch (situation) {
-    case "increased":
-      return texts.situation.increased;
-    case "decreased":
-      return texts.situation.decreased;
-    case "unchanged":
-      return texts.situation.unchanged;
-    case "stable_with_date_changes":
-      return texts.situation.stableWithDateChanges;
-    case "appeared":
-      return texts.situation.appeared;
-    case "disappeared":
-      return texts.situation.disappeared;
-    default:
-      return situation;
-  }
 }
 
 function movementLabel(movement: string): string {
@@ -214,19 +199,18 @@ function ProductDetail({
   row,
   fromLabel,
   toLabel,
-  invoiceMode,
   coverageStatus,
 }: {
   row: MyWegProductConsolidation;
   fromLabel: string;
   toLabel: string;
-  invoiceMode: MyWegInvoiceMode;
   coverageStatus?: string;
 }) {
   const [fiscalLines, setFiscalLines] = useState<FiscalLine[]>([]);
   const [fiscalLoading, setFiscalLoading] = useState(false);
   const [fiscalIncomplete, setFiscalIncomplete] = useState(false);
   const [fiscalError, setFiscalError] = useState<string | null>(null);
+  const [showAudit, setShowAudit] = useState(false);
 
   const materials = useMemo(
     () =>
@@ -242,7 +226,6 @@ function ProductDetail({
   const materialsKey = materials.join("|");
   const sourcesKey = sources.join("|");
   const canLoadFiscal =
-    invoiceMode === "portal" &&
     sources.length > 0 &&
     materials.length > 0 &&
     row.invoiceMatchStatus !== "attributed_elsewhere";
@@ -280,169 +263,90 @@ function ProductDetail({
     return () => controller.abort();
   }, [canLoadFiscal, materialsKey, sourcesKey]);
 
-  const observed =
-    row.observedDeltaUn ?? row.deltaQuantityUn;
   const showPosted = canShowPostedAsFact(coverageStatus, row.postedQuantityUn);
+  const managerial = row.managerialStatus;
+  const residual = row.residualUnexplainedUn;
+  const showResidual =
+    residual != null &&
+    String(residual).trim() !== "" &&
+    String(residual).trim() !== "0" &&
+    String(residual).trim() !== "0.0" &&
+    String(residual).trim() !== "0.00";
+  const hint = managerialStatusHint(managerial);
 
   return (
     <div className="ppc-myweg-needs__product-detail">
-      <div className="ppc-myweg-needs__product-detail-meta">
-        <span>
-          <strong>{texts.detailPair}:</strong> {fromLabel} → {toLabel}
+      <header className="ppc-myweg-needs__product-detail-header">
+        <div>
+          <p className="ppc-myweg-needs__product-detail-subtitle">
+            {fromLabel} → {toLabel}
+          </p>
+          {!row.identityConfirmed ? (
+            <p className="ppc-myweg-needs__evolution-note" role="status">
+              {texts.identityUnconfirmed}
+            </p>
+          ) : null}
+          {row.portalInvoiceOrphan ? (
+            <p className="ppc-myweg-needs__evolution-note" role="status">
+              {texts.fiscalOrphanBadge}
+            </p>
+          ) : null}
+        </div>
+        <span className={managerialBadgeClass(managerial)} title={hint || undefined}>
+          {managerialStatusLabel(managerial)}
+          {hint ? (
+            <span className="ppc-myweg-needs__mgr-badge-hint">{hint}</span>
+          ) : null}
         </span>
-        <span>
-          <strong>{texts.detailTotals}:</strong>{" "}
-          {formatDecimalString(row.previousQuantityUn)} →{" "}
-          {formatDecimalString(row.currentQuantityUn)} UN (
-          <span className={deltaToneClass(row.situation)}>
-            {formatDecimalString(row.deltaQuantityUn)}
-          </span>
-          )
-        </span>
-      </div>
-      {!row.identityConfirmed ? (
-        <p className="ppc-myweg-needs__evolution-note" role="status">
-          {texts.identityUnconfirmed}
-        </p>
-      ) : null}
-      {row.portalInvoiceOrphan ? (
-        <p className="ppc-myweg-needs__evolution-note" role="status">
-          {texts.fiscalOrphanBadge}
-        </p>
-      ) : null}
+      </header>
 
-      {invoiceMode === "portal" ? (
-        <section
-          className="ppc-myweg-needs__fiscal-detail"
-          aria-label={texts.fiscalSectionTitle}
-        >
-          <h4>
-            {texts.fiscalSectionTitle}
-            <HelpTooltip
-              content={helpTooltips.mywegNeedsInvoiceReconciliation}
-              trigger="icon"
-            />
-          </h4>
-          <ul className="ppc-myweg-needs__fiscal-summary">
-            <li>
-              <strong>{texts.columns.observed}:</strong>{" "}
-              <span className={nullableDeltaToneClass(observed)}>
-                {formatNullableDecimal(observed, texts.unavailableValue)} UN
-              </span>
-            </li>
-            <li>
-              <strong>{texts.columns.posted}:</strong>{" "}
-              {showPosted
-                ? `${formatDecimalString(row.postedQuantityUn)} UN`
+      <div
+        className="ppc-myweg-needs__product-summary-kpis"
+        aria-label={texts.detailSummaryAria}
+      >
+        <div className="ppc-myweg-needs__product-summary-kpi">
+          <span>{texts.kpiPreviousNeed}</span>
+          <strong>{formatDecimalString(row.previousQuantityUn)} UN</strong>
+        </div>
+        <div className="ppc-myweg-needs__product-summary-kpi">
+          <span>{texts.kpiCurrentNeed}</span>
+          <strong>{formatDecimalString(row.currentQuantityUn)} UN</strong>
+        </div>
+        <div className="ppc-myweg-needs__product-summary-kpi">
+          <span>{texts.columns.posted}</span>
+          <strong>
+            {showPosted
+              ? `${formatDecimalString(row.postedQuantityUn)} UN`
+              : texts.unavailableValue}
+          </strong>
+        </div>
+        {showResidual || managerial === "partial_invoicing" ? (
+          <div className="ppc-myweg-needs__product-summary-kpi ppc-myweg-needs__product-summary-kpi--residual">
+            <span>{texts.kpiResidualUnexplained}</span>
+            <strong>
+              {residual != null && String(residual).trim() !== ""
+                ? `${formatDecimalString(residual)} UN`
                 : texts.unavailableValue}
-            </li>
-            <li>
-              <strong>{texts.columns.adjusted}:</strong>{" "}
-              <span className={nullableDeltaToneClass(row.adjustedPlanningDeltaUn)}>
-                {formatNullableDecimal(
-                  row.adjustedPlanningDeltaUn,
-                  texts.unavailableValue,
-                )}
-                {row.adjustedPlanningDeltaUn != null ? " UN" : ""}
-              </span>
-            </li>
-            <li>
-              <strong>{texts.columns.matchStatus}:</strong>{" "}
-              {invoiceMatchStatusLabel(row.invoiceMatchStatus)}
-            </li>
-          </ul>
+            </strong>
+          </div>
+        ) : managerial === "invoiced" ? (
+          <div className="ppc-myweg-needs__product-summary-kpi">
+            <span>{texts.kpiResidualUnexplained}</span>
+            <strong>0 UN</strong>
+          </div>
+        ) : null}
+      </div>
 
-          {row.invoiceMatchStatus === "attributed_elsewhere" ? (
-            <p className="ppc-myweg-needs__evolution-note" role="status">
-              {texts.fiscalAttributedElsewhere}
-            </p>
-          ) : null}
+      {row.managerialExplanation ? (
+        <p className="ppc-myweg-needs__product-explanation" role="status">
+          {row.managerialExplanation}
+        </p>
+      ) : null}
 
-          {materials.length > 0 ? (
-            <div className="ppc-myweg-needs__fiscal-materials">
-              <h5>{texts.fiscalMaterialsTitle}</h5>
-              <ul>
-                {(row.portalInvoiceMaterials ?? []).map((material) => (
-                  <li key={`${row.productKey}|${material.materialWeg}`}>
-                    {material.materialWeg}
-                    {material.note ? ` — ${material.note}` : null}
-                    {material.postedQuantityUn != null && showPosted
-                      ? ` · NF ${formatDecimalString(material.postedQuantityUn)} UN`
-                      : null}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          {sources.length > 0 ? (
-            <p className="ppc-myweg-needs__evolution-note ppc-myweg-needs__evolution-note--compact">
-              <strong>{texts.fiscalSourcesTitle}:</strong> {sources.length} referência
-              {sources.length === 1 ? "" : "s"}
-            </p>
-          ) : null}
-
-          {canLoadFiscal ? (
-            <div className="ppc-myweg-needs__shifts-table-wrap">
-              <table className="ppc-myweg-needs__shifts-table">
-                <caption className="ppc-myweg-needs__product-detail-caption">
-                  {texts.fiscalLinesTitle}
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">{texts.fiscalColumns.invoice}</th>
-                    <th scope="col">{texts.fiscalColumns.series}</th>
-                    <th scope="col">{texts.fiscalColumns.material}</th>
-                    <th scope="col">{texts.fiscalColumns.quantity}</th>
-                    <th scope="col">{texts.fiscalColumns.documentDate}</th>
-                    <th scope="col">{texts.fiscalColumns.departureDate}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fiscalLoading ? (
-                    <tr>
-                      <td colSpan={6}>{texts.fiscalLinesLoading}</td>
-                    </tr>
-                  ) : fiscalError ? (
-                    <tr>
-                      <td colSpan={6}>{fiscalError}</td>
-                    </tr>
-                  ) : fiscalLines.length === 0 ? (
-                    <tr>
-                      <td colSpan={6}>{texts.fiscalLinesEmpty}</td>
-                    </tr>
-                  ) : (
-                    fiscalLines.map((line) => (
-                      <tr
-                        key={`${line.observationId}|${line.id}|${line.sourceLineNo}`}
-                      >
-                        <td>{line.invoiceNumber}</td>
-                        <td>{line.invoiceSeries}</td>
-                        <td>{line.materialWeg}</td>
-                        <td>
-                          {line.quantityUn != null
-                            ? formatDecimalString(line.quantityUn)
-                            : texts.unavailableValue}
-                        </td>
-                        <td>{formatRemessaBr(line.documentDate)}</td>
-                        <td>{formatRemessaBr(line.departureDate)}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-              {fiscalIncomplete ? (
-                <p className="ppc-myweg-needs__evolution-note" role="status">
-                  {texts.fiscalLinesGap}
-                </p>
-              ) : null}
-            </div>
-          ) : invoiceMode === "portal" ? (
-            <p className="ppc-myweg-needs__evolution-note" role="status">
-              {texts.fiscalLinesGap}
-            </p>
-          ) : null}
-        </section>
+      {row.invoiceMatchStatus === "attributed_elsewhere" ? (
+        <p className="ppc-myweg-needs__evolution-note" role="status">
+          {texts.fiscalAttributedElsewhere}
+        </p>
       ) : null}
 
       <div className="ppc-myweg-needs__shifts-table-wrap">
@@ -460,26 +364,155 @@ function ProductDetail({
             </tr>
           </thead>
           <tbody>
-            {row.remessas.map((item) => (
-              <tr key={`${row.productKey}|${item.remessa}|${item.movement}`}>
-                <td>{formatRemessaBr(item.remessa)}</td>
-                <td>{formatDecimalString(item.previousQuantityUn)}</td>
-                <td>{formatDecimalString(item.currentQuantityUn)}</td>
-                <td>
-                  <span className={deltaToneClass(item.movement)}>
-                    {formatDecimalString(item.deltaQuantityUn)}
-                  </span>
-                </td>
-                <td>
-                  <span className={situationBadgeClass(item.movement)}>
-                    {movementLabel(item.movement)}
-                  </span>
-                </td>
-              </tr>
-            ))}
+            {row.remessas.map((item) => {
+              const remessaCtx = remessaContextLabel(item.managerialRemessaContext);
+              const unchanged =
+                item.movement === "unchanged" ||
+                String(item.deltaQuantityUn).trim() === "0" ||
+                String(item.deltaQuantityUn).trim() === "0.0" ||
+                String(item.deltaQuantityUn).trim() === "0.00";
+              const deltaClass = remessaCtx
+                ? "ppc-myweg-needs__delta ppc-myweg-needs__delta--invoiced"
+                : deltaToneClass(item.movement);
+              return (
+                <tr
+                  key={`${row.productKey}|${item.remessa}|${item.movement}`}
+                  className={
+                    unchanged
+                      ? "ppc-myweg-needs__remessa-row--muted"
+                      : undefined
+                  }
+                >
+                  <td>{formatRemessaBr(item.remessa)}</td>
+                  <td>{formatDecimalString(item.previousQuantityUn)}</td>
+                  <td>{formatDecimalString(item.currentQuantityUn)}</td>
+                  <td>
+                    {!unchanged || showAudit ? (
+                      <span className={deltaClass}>
+                        {formatDecimalString(item.deltaQuantityUn)}
+                      </span>
+                    ) : (
+                      <span className="ppc-myweg-needs__delta">—</span>
+                    )}
+                  </td>
+                  <td>
+                    {remessaCtx ? (
+                      <span className="ppc-myweg-needs__remessa-context">
+                        {remessaCtx}
+                      </span>
+                    ) : (
+                      <span className={situationBadgeClass(item.movement)}>
+                        {movementLabel(item.movement)}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
+        <button
+          type="button"
+          className="ppc-myweg-needs__audit-toggle"
+          aria-expanded={showAudit}
+          onClick={() => setShowAudit((value) => !value)}
+        >
+          {showAudit ? texts.hideAuditDetails : texts.showAuditDetails}
+        </button>
+        {showAudit ? (
+          <p className="ppc-myweg-needs__evolution-note ppc-myweg-needs__evolution-note--compact">
+            {texts.detailTotals}: {formatDecimalString(row.previousQuantityUn)} →{" "}
+            {formatDecimalString(row.currentQuantityUn)} UN (
+            <span
+              className={observedDeltaToneClass({
+                managerialStatus: managerial,
+                situationOrMovement: row.situation,
+              })}
+            >
+              {formatDecimalString(row.deltaQuantityUn)}
+            </span>
+            )
+            {row.percentChange != null
+              ? ` · ${formatPercentDisplay(row.percentChange)}`
+              : null}
+            {row.compatibleReductionUn != null
+              ? ` · ${texts.columns.compatible}: ${formatDecimalString(row.compatibleReductionUn)} UN`
+              : null}
+          </p>
+        ) : null}
       </div>
+
+      <section
+        className="ppc-myweg-needs__related-invoices"
+        aria-label={texts.relatedInvoicesTitle}
+      >
+        <h4>
+          {texts.relatedInvoicesTitle}
+          <HelpTooltip
+            content={helpTooltips.mywegNeedsInvoiceReconciliation}
+            trigger="icon"
+          />
+        </h4>
+        <p className="ppc-myweg-needs__related-invoices-note">
+          {texts.relatedInvoicesNote}
+        </p>
+        {canLoadFiscal ? (
+          <div className="ppc-myweg-needs__shifts-table-wrap">
+            <table className="ppc-myweg-needs__shifts-table">
+              <thead>
+                <tr>
+                  <th scope="col">{texts.fiscalColumns.invoice}</th>
+                  <th scope="col">{texts.fiscalColumns.series}</th>
+                  <th scope="col">{texts.fiscalColumns.documentDate}</th>
+                  <th scope="col">{texts.fiscalColumns.material}</th>
+                  <th scope="col">{texts.fiscalColumns.quantity}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fiscalLoading ? (
+                  <tr>
+                    <td colSpan={5}>{texts.fiscalLinesLoading}</td>
+                  </tr>
+                ) : fiscalError ? (
+                  <tr>
+                    <td colSpan={5}>{fiscalError}</td>
+                  </tr>
+                ) : fiscalLines.length === 0 ? (
+                  <tr>
+                    <td colSpan={5}>{texts.fiscalLinesEmpty}</td>
+                  </tr>
+                ) : (
+                  fiscalLines.map((line) => (
+                    <tr
+                      key={`${line.observationId}|${line.id}|${line.sourceLineNo}`}
+                    >
+                      <td>{line.invoiceNumber}</td>
+                      <td>{line.invoiceSeries}</td>
+                      <td>{formatRemessaBr(line.documentDate)}</td>
+                      <td>{line.materialWeg}</td>
+                      <td>
+                        {line.quantityUn != null
+                          ? formatDecimalString(line.quantityUn)
+                          : texts.unavailableValue}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+            {fiscalIncomplete ? (
+              <p className="ppc-myweg-needs__evolution-note" role="status">
+                {texts.fiscalLinesGap}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <p className="ppc-myweg-needs__evolution-note" role="status">
+            {texts.fiscalLinesEmpty}
+          </p>
+        )}
+      </section>
+
       {row.probableDateShifts.length > 0 ? (
         <div className="ppc-myweg-needs__product-shifts">
           <h4>{texts.relatedShiftsTitle}</h4>
@@ -508,9 +541,11 @@ function ProductDetail({
   );
 }
 
+/** UI da Análise por produto sempre consulta com conciliação portal. */
+const INVOICE_MODE: MyWegInvoiceMode = "portal";
+
 export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) {
   const [page, setPage] = useState(1);
-  const [invoiceMode, setInvoiceMode] = useState<MyWegInvoiceMode>("none");
   const [refreshToken, setRefreshToken] = useState(0);
   const [payload, setPayload] = useState<MyWegCompareProductsPayload | null>(null);
   const [loading, setLoading] = useState(false);
@@ -530,7 +565,7 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
   useEffect(() => {
     setPage(1);
     setSelectedKey(null);
-  }, [fromId, toId, search, invoiceMode]);
+  }, [fromId, toId, search]);
 
   useEffect(() => {
     if (!fromId || !toId || fromId === toId) {
@@ -549,7 +584,7 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
       page,
       pageSize: PAGE_SIZE,
       changesOnly: true,
-      invoiceMode,
+      invoiceMode: INVOICE_MODE,
       signal: controller.signal,
     })
       .then((data) => {
@@ -568,11 +603,10 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
         }
       });
     return () => controller.abort();
-  }, [fromId, toId, search, page, invoiceMode, refreshToken]);
+  }, [fromId, toId, search, page, refreshToken]);
 
   const coverageStatus = payload?.portalInvoices?.status;
-  const pendingIngestion =
-    invoiceMode === "portal" && coverageStatus === "pending_invoice_ingestion";
+  const pendingIngestion = coverageStatus === "pending_invoice_ingestion";
 
   useEffect(() => {
     if (!pendingIngestion) return;
@@ -583,7 +617,7 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
   }, [pendingIngestion]);
 
   const columns = useMemo<DataTableColumn<MyWegProductConsolidation>[]>(() => {
-    const base: DataTableColumn<MyWegProductConsolidation>[] = [
+    return [
       {
         key: "product",
         header: texts.columns.product,
@@ -604,6 +638,22 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
         ),
       },
       {
+        key: "managerial",
+        header: texts.columns.managerial,
+        headerHint: helpTooltips.mywegNeedsInvoiceReconciliation,
+        render: (row) => {
+          const hint = managerialStatusHint(row.managerialStatus);
+          return (
+            <span
+              className={managerialBadgeClass(row.managerialStatus)}
+              title={hint || undefined}
+            >
+              {managerialStatusLabel(row.managerialStatus)}
+            </span>
+          );
+        },
+      },
+      {
         key: "previous",
         header: texts.columns.previous,
         headerHint: "Necessidade total na coleta anterior (UN)",
@@ -617,148 +667,86 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
         align: "right",
         render: (row) => formatDecimalString(row.currentQuantityUn),
       },
-    ];
-
-    if (invoiceMode === "portal") {
-      base.push(
-        {
-          key: "observed",
-          header: texts.columns.observed,
-          headerHint: helpTooltips.mywegNeedsObservedDelta,
-          align: "right",
-          render: (row) => {
-            const value = row.observedDeltaUn ?? row.deltaQuantityUn;
+      {
+        key: "posted",
+        header: texts.columns.posted,
+        headerHint: helpTooltips.mywegNeedsPostedNf,
+        align: "right",
+        render: (row) =>
+          canShowPostedAsFact(coverageStatus, row.postedQuantityUn)
+            ? formatDecimalString(row.postedQuantityUn)
+            : texts.unavailableValue,
+      },
+      {
+        key: "residual",
+        header: texts.columns.residualUnexplained,
+        headerHint: helpTooltips.mywegNeedsAdjustedDelta,
+        align: "right",
+        render: (row) => {
+          const residual = row.residualUnexplainedUn;
+          if (residual == null || String(residual).trim() === "") {
+            return texts.unavailableValue;
+          }
+          const isZero =
+            String(residual).trim() === "0" ||
+            String(residual).trim() === "0.0" ||
+            String(residual).trim() === "0.00";
+          if (isZero) {
             return (
-              <span className={nullableDeltaToneClass(value)}>
-                {formatNullableDecimal(value, texts.unavailableValue)}
+              <span className="ppc-myweg-needs__delta ppc-myweg-needs__delta--invoiced">
+                0
               </span>
             );
-          },
-        },
-        {
-          key: "posted",
-          header: texts.columns.posted,
-          headerHint: helpTooltips.mywegNeedsPostedNf,
-          align: "right",
-          render: (row) =>
-            canShowPostedAsFact(coverageStatus, row.postedQuantityUn)
-              ? formatDecimalString(row.postedQuantityUn)
-              : texts.unavailableValue,
-        },
-        {
-          key: "adjusted",
-          header: texts.columns.adjusted,
-          headerHint: helpTooltips.mywegNeedsAdjustedDelta,
-          align: "right",
-          render: (row) => (
-            <span className={nullableDeltaToneClass(row.adjustedPlanningDeltaUn)}>
-              {formatNullableDecimal(
-                row.adjustedPlanningDeltaUn,
-                texts.unavailableValue,
-              )}
+          }
+          return (
+            <span className="ppc-myweg-needs__delta ppc-myweg-needs__delta--down">
+              {formatDecimalString(residual)}
             </span>
-          ),
+          );
         },
-        {
-          key: "matchStatus",
-          header: texts.columns.matchStatus,
-          headerHint: helpTooltips.mywegNeedsInvoiceReconciliation,
-          render: (row) => invoiceMatchStatusLabel(row.invoiceMatchStatus),
-        },
-        {
-          key: "delta",
-          header: texts.columns.delta,
-          headerHint: "Diferença líquida = atual − anterior (UN)",
-          align: "right",
-          render: (row) => (
-            <span className={deltaToneClass(row.situation)}>
-              {formatDecimalString(row.deltaQuantityUn)}
+      },
+      {
+        key: "observed",
+        header: texts.columns.observed,
+        headerHint: helpTooltips.mywegNeedsObservedDelta,
+        align: "right",
+        render: (row) => {
+          const value = row.observedDeltaUn ?? row.deltaQuantityUn;
+          return (
+            <span
+              className={observedDeltaToneClass({
+                managerialStatus: row.managerialStatus,
+                situationOrMovement: row.situation,
+              })}
+            >
+              {formatNullableDecimal(value, texts.unavailableValue)}
             </span>
-          ),
+          );
         },
-        {
-          key: "percent",
-          header: texts.columns.percent,
-          headerHint: "Variação percentual da necessidade total",
-          align: "right",
-          render: (row) => (
-            <span className={deltaToneClass(row.situation)}>
-              {formatPercentDisplay(row.percentChange)}
-            </span>
-          ),
-        },
-        {
-          key: "situation",
-          header: texts.columns.situation,
-          headerHint: helpTooltips.mywegNeedsProductAnalysis,
-          render: (row) => (
-            <span className={situationBadgeClass(row.situation)}>
-              {situationLabel(row.situation)}
-            </span>
-          ),
-        },
-      );
-    } else {
-      base.push(
-        {
-          key: "delta",
-          header: texts.columns.delta,
-          headerHint: "Diferença líquida = atual − anterior (UN)",
-          align: "right",
-          render: (row) => (
-            <span className={deltaToneClass(row.situation)}>
-              {formatDecimalString(row.deltaQuantityUn)}
-            </span>
-          ),
-        },
-        {
-          key: "percent",
-          header: texts.columns.percent,
-          headerHint: "Variação percentual da necessidade total",
-          align: "right",
-          render: (row) => (
-            <span className={deltaToneClass(row.situation)}>
-              {formatPercentDisplay(row.percentChange)}
-            </span>
-          ),
-        },
-        {
-          key: "situation",
-          header: texts.columns.situation,
-          headerHint: helpTooltips.mywegNeedsProductAnalysis,
-          render: (row) => (
-            <span className={situationBadgeClass(row.situation)}>
-              {situationLabel(row.situation)}
-            </span>
-          ),
-        },
-      );
-    }
-
-    base.push({
-      key: "details",
-      header: texts.columns.details,
-      interactive: true,
-      rowClick: "stop",
-      render: (row) => (
-        <button
-          type="button"
-          className="ppc-btn ppc-btn--secondary ppc-myweg-needs__details-btn"
-          aria-haspopup="dialog"
-          aria-expanded={selectedKey === row.productKey}
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            openDetail(row.productKey);
-          }}
-        >
-          {texts.showDetails}
-        </button>
-      ),
-    });
-
-    return base;
-  }, [coverageStatus, invoiceMode, selectedKey]);
+      },
+      {
+        key: "details",
+        header: texts.columns.details,
+        interactive: true,
+        rowClick: "stop",
+        render: (row) => (
+          <button
+            type="button"
+            className="ppc-btn ppc-btn--secondary ppc-myweg-needs__details-btn"
+            aria-haspopup="dialog"
+            aria-expanded={selectedKey === row.productKey}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              openDetail(row.productKey);
+            }}
+          >
+            {texts.showDetails}
+          </button>
+        ),
+      },
+    ];
+  }, [coverageStatus, selectedKey]);
 
   if (!fromId || !toId || fromId === toId) {
     return null;
@@ -802,16 +790,12 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
               <Layers size={18} strokeWidth={1.85} aria-hidden />
               {texts.title}
               <HelpTooltip
-                content={
-                  invoiceMode === "portal"
-                    ? helpTooltips.mywegNeedsInvoiceReconciliation
-                    : helpTooltips.mywegNeedsProductAnalysis
-                }
+                content={helpTooltips.mywegNeedsInvoiceReconciliation}
                 trigger="icon"
               />
             </h3>
             <p className="ppc-myweg-needs__evolution-note ppc-myweg-needs__evolution-note--compact">
-              {invoiceMode === "portal" ? texts.invoiceModeIntro : texts.intro}
+              {texts.invoiceModeIntro}
             </p>
           </div>
 
@@ -838,47 +822,15 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
           ) : null}
         </div>
 
-        <div
-          className="ppc-myweg-needs__invoice-mode"
-          role="group"
-          aria-label={texts.invoiceModeToggleAria}
+        <button
+          type="button"
+          className="ppc-btn ppc-btn--secondary ppc-myweg-needs__refresh-btn"
+          onClick={() => setRefreshToken((value) => value + 1)}
+          disabled={loading}
         >
-          <button
-            type="button"
-            className={
-              invoiceMode === "none"
-                ? "ppc-myweg-needs__invoice-mode-btn ppc-myweg-needs__invoice-mode-btn--active"
-                : "ppc-myweg-needs__invoice-mode-btn"
-            }
-            aria-pressed={invoiceMode === "none"}
-            onClick={() => setInvoiceMode("none")}
-          >
-            {texts.invoiceModeNeeds}
-          </button>
-          <button
-            type="button"
-            className={
-              invoiceMode === "portal"
-                ? "ppc-myweg-needs__invoice-mode-btn ppc-myweg-needs__invoice-mode-btn--active"
-                : "ppc-myweg-needs__invoice-mode-btn"
-            }
-            aria-pressed={invoiceMode === "portal"}
-            onClick={() => setInvoiceMode("portal")}
-          >
-            {texts.invoiceModePortal}
-          </button>
-          {invoiceMode === "portal" ? (
-            <button
-              type="button"
-              className="ppc-btn ppc-btn--secondary ppc-myweg-needs__refresh-btn"
-              onClick={() => setRefreshToken((value) => value + 1)}
-              disabled={loading}
-            >
-              <RefreshCw size={14} aria-hidden />
-              {loading ? texts.refreshing : texts.refreshReconciliation}
-            </button>
-          ) : null}
-        </div>
+          <RefreshCw size={14} aria-hidden />
+          {loading ? texts.refreshing : texts.refreshReconciliation}
+        </button>
       </header>
 
       {status === 403 ? (
@@ -893,7 +845,7 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
       ) : null}
       {loading && !payload ? <p role="status">{texts.loading}</p> : null}
 
-      {invoiceMode === "portal" && payload && portal ? (
+      {payload && portal ? (
         <div
           className="ppc-myweg-needs__portal-kpis"
           aria-label="Resumo da conciliação fiscal"
@@ -981,18 +933,14 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
 
       {payload && status !== 403 ? (
         <DataTableSection
-          title={
-            invoiceMode === "portal"
-              ? `${texts.tableTitle} · ${texts.invoiceModePortal}`
-              : texts.tableTitle
-          }
+          title={texts.tableTitle}
           rows={payload.items}
           columns={columns}
           rowKey={(row) => row.productKey}
           emptyMessage={search ? copy.tableSection.emptyMessage : texts.empty}
           hideSearch
           interactive
-          columnPreferencesKey="production-control:myweg-products:columns:v1"
+          columnPreferencesKey="production-control:myweg-products:columns:v2"
           onRowClick={(row) => openDetail(row.productKey)}
           getRowClassName={(row) =>
             row.productKey === selectedKey
@@ -1016,7 +964,11 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
 
       <HostContainedWideDialog
         open={detailOpen}
-        title={selected ? texts.detailHeading(productLabel(selected)) : texts.title}
+        title={
+          selected
+            ? texts.detailHeading(productLabel(selected))
+            : texts.title
+        }
         onClose={closeDetail}
         closeAriaLabel={texts.detailCloseAria}
       >
@@ -1025,7 +977,6 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
             row={selected}
             fromLabel={fromLabel}
             toLabel={toLabel}
-            invoiceMode={invoiceMode}
             coverageStatus={coverageStatus}
           />
         ) : null}

@@ -23,10 +23,17 @@ from production_control_app.domain.services.myweg_invoice_reconciliation import 
     COVERAGE_CONFLICT,
     COVERAGE_PARTIAL,
     COVERAGE_PENDING_INGESTION,
+    MANAGERIAL_INVESTIGATE,
+    MANAGERIAL_INVOICED,
+    MANAGERIAL_OTHER,
+    MANAGERIAL_PARTIAL,
+    MANAGERIAL_PENDING,
     aggregate_need_quantity_by_material,
     aggregate_posted_nf_by_material,
+    apply_managerial_classification,
     build_invoice_window,
     build_reconciliations_for_materials,
+    classify_managerial_status,
     enrich_products_with_portal_invoices,
     evaluate_window_coverage,
     materials_by_product_key,
@@ -609,3 +616,155 @@ def test_non_comparable_unit_raises_in_aggregate():
                 }
             ]
         )
+
+
+def _managerial_base(**overrides):
+    row = {
+        "productKey": "code:90263746",
+        "identityReliable": True,
+        "identityConfirmed": True,
+        "deltaQuantityUn": "-2450",
+        "observedDeltaUn": "-2450",
+        "postedQuantityUn": "2450",
+        "compatibleReductionUn": "2450",
+        "adjustedPlanningDeltaUn": "0",
+        "invoiceMatchStatus": "reconciled",
+        "remessas": [
+            {
+                "remessa": "2026-11-06",
+                "previousQuantityUn": "998",
+                "currentQuantityUn": "0",
+                "deltaQuantityUn": "-998",
+                "movement": "disappeared",
+            },
+            {
+                "remessa": "2026-11-11",
+                "previousQuantityUn": "1750",
+                "currentQuantityUn": "298",
+                "deltaQuantityUn": "-1452",
+                "movement": "decreased",
+            },
+            {
+                "remessa": "2026-11-12",
+                "previousQuantityUn": "100",
+                "currentQuantityUn": "100",
+                "deltaQuantityUn": "0",
+                "movement": "unchanged",
+            },
+        ],
+    }
+    row.update(overrides)
+    return row
+
+
+def test_managerial_invoiced_case_90263746():
+    classified = apply_managerial_classification(
+        _managerial_base(), coverage_status=COVERAGE_COMPLETE
+    )
+    assert classified["managerialStatus"] == MANAGERIAL_INVOICED
+    assert classified["residualUnexplainedUn"] == "0"
+    assert classified["remessaInvoicingContext"] == "compatible_on_reduced_lines"
+    contexts = [
+        item.get("managerialRemessaContext") for item in classified["remessas"]
+    ]
+    assert contexts[0] == "compatible_with_invoicing"
+    assert contexts[1] == "compatible_with_invoicing"
+    assert contexts[2] is None
+
+
+def test_managerial_reconciled_without_nf_is_not_invoiced():
+    result = classify_managerial_status(
+        _managerial_base(
+            postedQuantityUn="0",
+            compatibleReductionUn="0",
+            adjustedPlanningDeltaUn="-2450",
+            invoiceMatchStatus="reconciled",
+        ),
+        coverage_status=COVERAGE_COMPLETE,
+    )
+    assert result["managerialStatus"] == MANAGERIAL_INVESTIGATE
+
+
+def test_managerial_partial_and_excess_nf():
+    partial = classify_managerial_status(
+        _managerial_base(
+            postedQuantityUn="1000",
+            compatibleReductionUn="1000",
+            adjustedPlanningDeltaUn="-1450",
+        ),
+        coverage_status=COVERAGE_COMPLETE,
+    )
+    assert partial["managerialStatus"] == MANAGERIAL_PARTIAL
+    assert partial["residualUnexplainedUn"] == "1450"
+
+    excess = classify_managerial_status(
+        _managerial_base(
+            postedQuantityUn="3000",
+            compatibleReductionUn="2450",
+            adjustedPlanningDeltaUn="550",
+        ),
+        coverage_status=COVERAGE_COMPLETE,
+    )
+    assert excess["managerialStatus"] != MANAGERIAL_INVOICED
+
+
+def test_managerial_pending_and_other_movements():
+    pending = classify_managerial_status(
+        _managerial_base(invoiceMatchStatus="ambiguous_identity"),
+        coverage_status=COVERAGE_COMPLETE,
+    )
+    assert pending["managerialStatus"] == MANAGERIAL_PENDING
+
+    coverage = classify_managerial_status(
+        _managerial_base(), coverage_status=COVERAGE_PARTIAL
+    )
+    assert coverage["managerialStatus"] == MANAGERIAL_PENDING
+
+    other = classify_managerial_status(
+        _managerial_base(
+            observedDeltaUn="10",
+            deltaQuantityUn="10",
+            postedQuantityUn="0",
+            compatibleReductionUn="0",
+            adjustedPlanningDeltaUn="10",
+        ),
+        coverage_status=COVERAGE_COMPLETE,
+    )
+    assert other["managerialStatus"] == MANAGERIAL_OTHER
+
+
+def test_managerial_remessa_skipped_when_increases_present():
+    classified = apply_managerial_classification(
+        _managerial_base(
+            remessas=[
+                {
+                    "remessa": "2026-11-06",
+                    "previousQuantityUn": "2000",
+                    "currentQuantityUn": "0",
+                    "deltaQuantityUn": "-2000",
+                    "movement": "decreased",
+                },
+                {
+                    "remessa": "2026-11-11",
+                    "previousQuantityUn": "450",
+                    "currentQuantityUn": "0",
+                    "deltaQuantityUn": "-450",
+                    "movement": "decreased",
+                },
+                {
+                    "remessa": "2026-11-20",
+                    "previousQuantityUn": "0",
+                    "currentQuantityUn": "100",
+                    "deltaQuantityUn": "100",
+                    "movement": "appeared",
+                },
+            ]
+        ),
+        coverage_status=COVERAGE_COMPLETE,
+    )
+    assert classified["managerialStatus"] == MANAGERIAL_INVOICED
+    assert classified["remessaInvoicingContext"] == "product_only"
+    assert all(
+        item.get("managerialRemessaContext") is None
+        for item in classified["remessas"]
+    )

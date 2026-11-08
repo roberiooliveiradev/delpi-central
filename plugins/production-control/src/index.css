@@ -7728,6 +7728,168 @@
   color: #cf222e;
 }
 
+.dashboard-production-control .ppc-myweg-needs__delta--invoiced {
+  color: #0f766e;
+  font-weight: 650;
+}
+
+.dashboard-production-control .ppc-myweg-needs__delta--partial {
+  color: #b45309;
+  font-weight: 650;
+}
+
+.dashboard-production-control .ppc-myweg-needs__mgr-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  max-width: 14rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid var(--ppc-border);
+  background: var(--ppc-surface);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ppc-title, #003866);
+}
+
+.dashboard-production-control .ppc-myweg-needs__mgr-badge-hint {
+  font-size: 0.65rem;
+  font-weight: 550;
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-myweg-needs__mgr-badge--invoiced {
+  background: color-mix(in srgb, #0f766e 12%, #fff);
+  border-color: color-mix(in srgb, #0f766e 28%, var(--ppc-border));
+  color: #0f766e;
+}
+
+.dashboard-production-control .ppc-myweg-needs__mgr-badge--partial {
+  background: color-mix(in srgb, #d97706 14%, #fff);
+  border-color: color-mix(in srgb, #d97706 30%, var(--ppc-border));
+  color: #b45309;
+}
+
+.dashboard-production-control .ppc-myweg-needs__mgr-badge--alert {
+  background: color-mix(in srgb, #dc2626 12%, #fff);
+  border-color: color-mix(in srgb, #dc2626 28%, var(--ppc-border));
+  color: #b91c1c;
+}
+
+.dashboard-production-control .ppc-myweg-needs__mgr-badge--pending {
+  background: color-mix(in srgb, #ca8a04 12%, #fff);
+  border-color: color-mix(in srgb, #ca8a04 28%, var(--ppc-border));
+  color: #a16207;
+}
+
+.dashboard-production-control .ppc-myweg-needs__product-detail-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__product-detail-subtitle {
+  margin: 0;
+  font-size: var(--ppc-font-sm);
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-myweg-needs__product-summary-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__product-summary-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--ppc-border);
+  background: color-mix(in srgb, var(--ppc-surface) 88%, #e8eef5);
+}
+
+.dashboard-production-control .ppc-myweg-needs__product-summary-kpi span {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-myweg-needs__product-summary-kpi strong {
+  font-size: 0.95rem;
+  font-weight: 750;
+  color: var(--ppc-title, #003866);
+}
+
+.dashboard-production-control .ppc-myweg-needs__product-summary-kpi--residual {
+  border-color: color-mix(in srgb, #dc2626 28%, var(--ppc-border));
+  background: color-mix(in srgb, #dc2626 8%, #fff);
+}
+
+.dashboard-production-control .ppc-myweg-needs__product-explanation {
+  margin: 0 0 0.9rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border-left: 3px solid #0f766e;
+  background: color-mix(in srgb, #0f766e 8%, #fff);
+  font-size: var(--ppc-font-sm);
+  color: var(--ppc-text);
+}
+
+.dashboard-production-control .ppc-myweg-needs__related-invoices {
+  margin-top: 1rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__related-invoices h4 {
+  margin: 0 0 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--ppc-font-sm);
+  font-weight: 650;
+  color: var(--ppc-title, #003866);
+}
+
+.dashboard-production-control .ppc-myweg-needs__related-invoices-note {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-myweg-needs__remessa-context {
+  display: inline-flex;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, #0f766e 12%, #fff);
+  color: #0f766e;
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+
+.dashboard-production-control .ppc-myweg-needs__remessa-row--muted td {
+  color: var(--ppc-text-muted);
+  opacity: 0.78;
+}
+
+.dashboard-production-control .ppc-myweg-needs__audit-toggle {
+  margin-top: 0.45rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ppc-accent, #1f6feb);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 .dashboard-production-control .ppc-myweg-needs__billing--quiet {
   padding: 8px 10px;
   background: transparent;

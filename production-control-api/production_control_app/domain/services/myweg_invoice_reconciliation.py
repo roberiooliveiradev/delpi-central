@@ -36,6 +36,23 @@ MATCH_UNAVAILABLE = "unavailable"
 MATCH_PARTIAL = "partial_coverage"
 MATCH_CONFLICT = "conflict"
 
+MANAGERIAL_INVOICED = "invoiced"
+MANAGERIAL_PARTIAL = "partial_invoicing"
+MANAGERIAL_INVESTIGATE = "reduction_to_investigate"
+MANAGERIAL_PENDING = "reconciliation_pending"
+MANAGERIAL_OTHER = "other_movement"
+
+MANAGERIAL_PENDING_MATCHES = frozenset(
+    {
+        MATCH_AMBIGUOUS,
+        MATCH_SHARED,
+        MATCH_MULTI_MATERIAL,
+        MATCH_PARTIAL,
+        MATCH_CONFLICT,
+        MATCH_UNAVAILABLE,
+    }
+)
+
 _ZERO = ZERO
 
 
@@ -376,13 +393,17 @@ def enrich_products_with_portal_invoices(
                 row.update(_portal_fields_shared(displayed, reconciliations.get(displayed)))
             else:
                 row.update(_portal_fields_empty(coverage_status))
-            enriched.append(row)
+            enriched.append(
+                apply_managerial_classification(row, coverage_status=coverage_status)
+            )
             continue
 
         recons = [reconciliations[m] for m in assigned if m in reconciliations]
         if not recons:
             row.update(_portal_fields_empty(coverage_status))
-            enriched.append(row)
+            enriched.append(
+                apply_managerial_classification(row, coverage_status=coverage_status)
+            )
             continue
 
         if coverage_status != COVERAGE_COMPLETE:
@@ -400,7 +421,9 @@ def enrich_products_with_portal_invoices(
                     "portalInvoiceSources": _unique_sources(recons),
                 }
             )
-            enriched.append(row)
+            enriched.append(
+                apply_managerial_classification(row, coverage_status=coverage_status)
+            )
             continue
 
         posted = sum((r.posted_nf_un for r in recons), _ZERO)
@@ -429,7 +452,9 @@ def enrich_products_with_portal_invoices(
                 "portalInvoiceSources": _unique_sources(recons),
             }
         )
-        enriched.append(row)
+        enriched.append(
+            apply_managerial_classification(row, coverage_status=coverage_status)
+        )
 
     # Materiais só com NF / necessidade e sem product row — anexar como itens aditivos.
     represented = {m for mats in inverse.values() for m in mats}
@@ -439,6 +464,7 @@ def enrich_products_with_portal_invoices(
         if recon.posted_nf_un == _ZERO and recon.observed_delta_un == _ZERO:
             continue
         enriched.append(
+            apply_managerial_classification(
             {
                 "productKey": f"ref:{material}",
                 "identityKind": "customer_reference",
@@ -479,7 +505,9 @@ def enrich_products_with_portal_invoices(
                 ],
                 "portalInvoiceSources": list(recon.source_observation_ids),
                 "portalInvoiceOrphan": True,
-            }
+            },
+                coverage_status=coverage_status,
+            )
         )
     return enriched
 
@@ -492,6 +520,180 @@ def product_has_invoice_signal(row: Mapping[str, Any]) -> bool:
     if adjusted is None or adjusted == "":
         return False
     return _dec(adjusted) != _ZERO
+
+
+def classify_managerial_status(
+    row: Mapping[str, Any],
+    *,
+    coverage_status: str,
+) -> dict[str, Any]:
+    """Classificação gerencial explícita — não substitui campos brutos.
+
+    ``invoiceMatchStatus=reconciled`` isolado NÃO prova Faturado.
+    """
+    match = str(row.get("invoiceMatchStatus") or "").strip()
+    identity_reliable = bool(row.get("identityReliable", True))
+    observed_raw = row.get("observedDeltaUn")
+    if observed_raw is None or observed_raw == "":
+        observed_raw = row.get("deltaQuantityUn")
+    observed = _dec(observed_raw)
+    posted_raw = row.get("postedQuantityUn")
+    compatible_raw = row.get("compatibleReductionUn")
+    adjusted_raw = row.get("adjustedPlanningDeltaUn")
+    posted_known = posted_raw is not None and str(posted_raw).strip() != ""
+    compatible_known = compatible_raw is not None and str(compatible_raw).strip() != ""
+    adjusted_known = adjusted_raw is not None and str(adjusted_raw).strip() != ""
+    posted = _dec(posted_raw) if posted_known else None
+    compatible = _dec(compatible_raw) if compatible_known else None
+    adjusted = _dec(adjusted_raw) if adjusted_known else None
+    reduction = max(-observed, _ZERO)
+
+    pending_reason = None
+    if coverage_status != COVERAGE_COMPLETE:
+        pending_reason = f"coverage:{coverage_status}"
+    elif not identity_reliable:
+        pending_reason = "identity_unreliable"
+    elif match in MANAGERIAL_PENDING_MATCHES:
+        pending_reason = f"match:{match}"
+    elif row.get("portalInvoiceOrphan"):
+        pending_reason = "orphan_invoice_signal"
+
+    if pending_reason:
+        return {
+            "managerialStatus": MANAGERIAL_PENDING,
+            "managerialReason": pending_reason,
+            "managerialExplanation": (
+                "Conciliação ainda não é confiável para concluir faturamento."
+            ),
+            "residualUnexplainedUn": (
+                decimal_to_canonical_str(reduction - compatible)
+                if compatible is not None and reduction > compatible
+                else (decimal_to_canonical_str(reduction) if reduction > _ZERO else None)
+            ),
+            "remessaInvoicingContext": "product_only",
+        }
+
+    if (
+        posted is not None
+        and posted > _ZERO
+        and observed < _ZERO
+        and compatible is not None
+        and adjusted is not None
+        and compatible == reduction
+        and adjusted == _ZERO
+    ):
+        return {
+            "managerialStatus": MANAGERIAL_INVOICED,
+            "managerialReason": "full_compatible_reduction",
+            "managerialExplanation": (
+                f"Redução de {decimal_to_canonical_str(reduction)} UN integralmente "
+                "compatível com a NF MyWEG observada. Nenhuma redução residual identificada."
+            ),
+            "residualUnexplainedUn": decimal_to_canonical_str(_ZERO),
+            "remessaInvoicingContext": "eligible",
+        }
+
+    if (
+        posted is not None
+        and posted > _ZERO
+        and observed < _ZERO
+        and compatible is not None
+        and compatible > _ZERO
+        and compatible < reduction
+    ):
+        residual = reduction - compatible
+        return {
+            "managerialStatus": MANAGERIAL_PARTIAL,
+            "managerialReason": "partial_compatible_reduction",
+            "managerialExplanation": (
+                f"Parte da redução ({decimal_to_canonical_str(compatible)} UN) é compatível "
+                f"com NF MyWEG; residual de {decimal_to_canonical_str(residual)} UN sem "
+                "explicação fiscal."
+            ),
+            "residualUnexplainedUn": decimal_to_canonical_str(residual),
+            "remessaInvoicingContext": "product_only",
+        }
+
+    if observed < _ZERO and (posted is None or posted == _ZERO or compatible == _ZERO):
+        return {
+            "managerialStatus": MANAGERIAL_INVESTIGATE,
+            "managerialReason": "reduction_without_compatible_nf",
+            "managerialExplanation": (
+                "Redução observada sem NF MyWEG compatível na janela — exige análise."
+            ),
+            "residualUnexplainedUn": decimal_to_canonical_str(reduction),
+            "remessaInvoicingContext": "product_only",
+        }
+
+    return {
+        "managerialStatus": MANAGERIAL_OTHER,
+        "managerialReason": "non_reduction_or_neutral",
+        "managerialExplanation": None,
+        "residualUnexplainedUn": None,
+        "remessaInvoicingContext": "product_only",
+    }
+
+
+def annotate_remessas_managerial_context(row: dict[str, Any]) -> dict[str, Any]:
+    """Marca remessas reduzidas como compatíveis com faturamento só no total do produto.
+
+    Sem rateio de NF por data. Se houver aumentos simultâneos, mantém só o nível produto.
+    """
+    remessas = [dict(item) for item in (row.get("remessas") or [])]
+    context = str(row.get("remessaInvoicingContext") or "")
+    if (
+        row.get("managerialStatus") != MANAGERIAL_INVOICED
+        or context != "eligible"
+        or not remessas
+    ):
+        for item in remessas:
+            item.pop("managerialRemessaContext", None)
+        row["remessas"] = remessas
+        row["remessaInvoicingContext"] = "product_only"
+        return row
+
+    deltas = [_dec(item.get("deltaQuantityUn")) for item in remessas]
+    if any(delta > _ZERO for delta in deltas):
+        for item in remessas:
+            item.pop("managerialRemessaContext", None)
+        row["remessas"] = remessas
+        row["remessaInvoicingContext"] = "product_only"
+        return row
+
+    observed = _dec(
+        row.get("observedDeltaUn")
+        if row.get("observedDeltaUn") not in (None, "")
+        else row.get("deltaQuantityUn")
+    )
+    reduction_sum = sum((delta for delta in deltas if delta < _ZERO), _ZERO)
+    if reduction_sum != observed:
+        for item in remessas:
+            item.pop("managerialRemessaContext", None)
+        row["remessas"] = remessas
+        row["remessaInvoicingContext"] = "product_only"
+        return row
+
+    for item, delta in zip(remessas, deltas):
+        if delta < _ZERO:
+            item["managerialRemessaContext"] = "compatible_with_invoicing"
+        else:
+            item.pop("managerialRemessaContext", None)
+    row["remessas"] = remessas
+    row["remessaInvoicingContext"] = "compatible_on_reduced_lines"
+    return row
+
+
+def apply_managerial_classification(
+    row: Mapping[str, Any],
+    *,
+    coverage_status: str,
+) -> dict[str, Any]:
+    enriched = dict(row)
+    classification = classify_managerial_status(
+        enriched, coverage_status=coverage_status
+    )
+    enriched.update(classification)
+    return annotate_remessas_managerial_context(enriched)
 
 
 def build_reconciliations_for_materials(
