@@ -48,6 +48,10 @@ class MyWegNeedsRepositoryPort(Protocol):
     def get_latest_batch(self) -> dict[str, Any] | None:
         ...
 
+    def list_batch_records_for_compare(self, *, batch_id: str) -> list[dict[str, Any]]:
+        """Linhas do lote + projeção SB1 para comparação/projeção (sem paginação)."""
+        ...
+
     def list_batch_items(
         self,
         *,

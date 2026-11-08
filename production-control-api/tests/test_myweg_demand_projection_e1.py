@@ -24,6 +24,7 @@ from production_control_app.domain.myweg_demand_source_contract import (
     WEG_LINHARES_CUSTOMER_NAME,
     WEG_LINHARES_CUSTOMER_STORE,
 )
+from production_control_app.domain.ports.myweg_needs_repository import MyWegNeedsRepositoryPort
 from production_control_app.domain.services.myweg_demand_projection import (
     is_coverage_eligible,
     project_myweg_demand_lines,
@@ -333,6 +334,13 @@ def test_service_requires_permissions() -> None:
         MyWegDemandSourceService(repo).project_latest(
             _user(PC_ACCESS, PC_VIEW_FILIAL_02), branch="02"
         )
+
+
+def test_repository_port_declares_list_batch_records_for_compare() -> None:
+    """AC-04 — Protocol alinhado ao PostgresMyWegNeedsRepository / DemandSource."""
+    assert hasattr(MyWegNeedsRepositoryPort, "list_batch_records_for_compare")
+    method = getattr(MyWegNeedsRepositoryPort, "list_batch_records_for_compare")
+    assert callable(method)
 
 
 def test_overlap_marker_fields_ready_for_etapa2_without_dedup() -> None:

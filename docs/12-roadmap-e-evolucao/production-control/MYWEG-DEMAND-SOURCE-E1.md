@@ -1,10 +1,12 @@
 # MyWEG → Demanda PCP — Etapa 1 (origem preparada)
 
 > **TASK_ID:** `PCP-DEMAND-MYWEG-E1-SOURCE-INTEGRATION`  
-> **Status:** implementação interna + documentação (sem wiring em `GET /demand`)  
+> **Residual:** `PCP-DEMAND-MYWEG-E1-RESIDUAL-HOMOLOGATION`  
+> **Status:** origem interna pronta · homologação live **INCONCLUSIVE** · `GET /demand` inalterado  
 > **Escopo:** filial DELPI `02` · cliente Protheus `000001` / loja `09` · MyWEG `1009`/`1106`  
 > **Owner:** `production-control-api`  
-> **EXISTING_EQUIVALENT:** `PARTIAL` · **REUSE_DECISION:** `EXTEND`
+> **EXISTING_EQUIVALENT:** `PARTIAL` · **REUSE_DECISION:** `EXTEND`  
+> **Decisão consolidação:** `ARCHITECTURE_DECISION_REQUIRED` (não `ACCEPTED`)
 
 ## 1. Objetivo
 
@@ -116,51 +118,72 @@ MyWegDemandSourceService.project_latest  ──(interno)──▶ linhas source=
 4. NF portal/indicativa **não** baixa a necessidade atual.
 5. `produto + data + cliente` **não** prova duplicidade sozinho.
 
-### Investigação carteira Protheus (somente leitura)
+### Homologação residual (amostra real) — `PCP-DEMAND-MYWEG-E1-RESIDUAL-HOMOLOGATION`
 
-Mecanismo autorizado: `ProductionOrdersGateway.fetch_open_sales_orders()` →
-api-delpi `/pedidos-venda-abertos/totvs-open-orders`, filtrando
-`filial=02`, `codigo_cadastro=000001`, `loja_cadastro=09`.
+Mecanismos autorizados (somente leitura):
 
-Nesta Etapa 1 **não** houve dump live homologado no ambiente do agente
-(`INCONCLUSIVE` para volume atual da carteira). A regra abaixo é a recomendação
-segura sustentada pelos contratos e pelo módulo de comparação; a Etapa 2 deve
-validar com amostra real antes de ligar o endpoint.
+1. MyWEG: `get_latest_batch()` + `list_batch_records_for_compare(batch_id)` (PG plugins, schema
+   `production_control`) — filtrar `branch=02`, empresa `1009`, centro `1106`.
+2. Protheus: `DelpiProductionGateway.fetch_open_sales_orders()` →
+   `/pedidos-venda-abertos/totvs-open-orders`, recorte
+   `filial=02` + `codigo_cadastro=000001` + `loja_cadastro=09` + `tipo_entidade=CLIENTE`.
 
-### Matriz de cenários
+| Leitura exigida | Resultado nesta execução |
+|---|---|
+| Última coleta MyWEG aceita + linhas SB1 | **INCONCLUSIVE** — ambiente do agente sem Docker/gateway local; SSH `operador@192.168.1.237` → `Permission denied (publickey)` |
+| Carteira aberta Protheus WEG Linhares | **INCONCLUSIVE** — mesma indisponibilidade |
+| Contagens exclusivos / overlap / não confirmados | **não fabricadas** |
 
-| # | MyWEG | Pedido Protheus aberto | NF emitida recente | Ação recomendada (Etapa 2) | Confiança |
-|---|---|---|---|---|---|
-| A | qty Q, remessa D, produto P verificado | ausente | ausente | Incluir linha MyWEG | ALTA |
-| B | ausente | saldo S, entrega D, P | — | Incluir linha Protheus (carteira clássica) | ALTA |
-| C | Q em D/P | saldo S em D′≈D / P | ausente | **Não somar** Q+S. Preferir MyWEG como previsão; marcar `overlap_pending` com pedido como compromisso comercial | MÉDIA → ADR |
-| D | Q | S | NF ≥ redução observada entre coletas | Não abater Q automaticamente; usar NF só como diagnóstico (E2) | ALTA (anti-abatimento) |
-| E | Q | S | NF sem cobertura complete | `reconciliation_pending` — sem soma/subtração | ALTA |
-| F | identidade não elegível | qualquer | — | Só diagnóstico MyWEG; Protheus segue regra B | ALTA |
-| G | provisório amostra 8… | — | — | Fora da cobertura produtiva | ALTA |
-
-### Decisão documentada
+Leituras que faltam (exatas):
 
 ```text
-ARCHITECTURE_DECISION_REQUIRED (fechamento operacional Etapa 2)
-RECOMMENDATION (mais segura):
-  - Demanda planejada WEG Linhares = projeção MyWEG elegível da última coleta
-  - Pedidos Protheus do mesmo cliente entram quando NÃO houver contraparte MyWEG
-    com product_code verificado no mesmo horizonte de entrega (regra de matching
-    a provar com amostra — não assumir igualdade produto+data)
-  - Sobreposição ambígua → pendência explícita, nunca double-count
-  - NF nunca reduz open_quantity MyWEG nesta integração
-ALTERNATIVA descartada nesta etapa: somar carteira + MyWEG por produto/data
+1. PG plugins: SELECT latest batch WHERE branch='02' ORDER BY collected_at DESC
+2. PG plugins: list_batch_records_for_compare(batch_id) com sb1_resolution
+3. api-delpi S2S/JWT: GET /pedidos-venda-abertos/totvs-open-orders
+4. Filtro em memória: filial=02, codigo_cadastro=000001, loja_cadastro=09
+5. Cruzamento por product_code verified (não por produto+data sozinho)
 ```
 
-**Etapa 1 não implementa deduplicação no motor.**
+### Matriz de classificação (modelo — volumes = INCONCLUSIVE até amostra live)
+
+| Classe | Critério | Ação E2 proposta | Estado evidência |
+|---|---|---|---|
+| Exclusivo MyWEG | P verificado na coleta; ausente na carteira filtrada | Incluir linha MyWEG | modelo |
+| Exclusivo Protheus | linha carteira; P ausente na projeção elegível | Manter linha Protheus | modelo |
+| Sobreposição comprovada | evidência documental (pedido↔necessidade) além de P | **nunca somar**; ADR decide fonte | bloqueado sem amostra |
+| Sobreposição provável | mesmo P; datas próximas; sem documento | `overlap_pending` | bloqueado sem amostra |
+| Compromisso adicional | pedido com P/data sem contraparte MyWEG confiável | incluir Protheus | modelo |
+| Inconclusivo | identidade fraca / datas divergentes | pendência explícita | modelo |
+| DELPI não confirmado | `coverage_eligible=false` | diagnóstico MyWEG; não cobre | CONFIRMADO_NO_CODIGO |
+
+**Regra essencial (CONFIRMADO_NO_CONTRATO / código comparação):** não somar MyWEG+Protheus
+sobrepostos; não abater NF da necessidade atual.
+
+### Decisão proposta (não ACCEPTED)
+
+```text
+STATUS: ARCHITECTURE_DECISION_REQUIRED
+AUTHORITY: Product Master / owner Production Control + revisão arquitetural
+RECOMMENDATION (mais segura, sem amostra live):
+  - Autoridade previsão WEG Linhares = última coleta MyWEG elegível
+  - Autoridade faturamento imediato = carteira Protheus (quando existir)
+  - Sobreposição sem prova documental → não somar; marcar overlap_pending
+  - Pedidos adicionais sem contraparte MyWEG elegível → manter Protheus
+  - Ambíguos / SB1 não elegível → fora da cobertura; rastreáveis
+  - NF → diagnóstico apenas (nunca reduz open_quantity MyWEG)
+  - Matching NÃO é produto+data sozinho
+BLOQUEIO Etapa 2: amostra live das leituras 1–5 acima + aceite da authority
+```
+
+**Etapa 1 / residual não implementa deduplicação no motor.**
 
 ## 8. Estoque — análise e estratégia Etapa 2
 
 ### Fonte atual da Demanda
 
-`DemandCoverageService` lê `no_estoque` da carteira aberta (view TOTVS),
-repetido por `(filial, produto)`, e distribui FIFO por data de entrega.
+`DemandCoverageService` lê `no_estoque` da carteira aberta (view TOTVS
+`VW_PEDIDOS_VENDA_ABERTOS_COMPRADORES`), repetido por `(filial, produto)`, e
+distribui FIFO por data de entrega.
 
 ### Fonte SB2 tipada
 
@@ -170,30 +193,30 @@ repetido por `(filial, produto)`, e distribui FIFO por data de entrega.
 |---|---|
 | Filial | `branch=02` |
 | Armazém default PCP reports | `01` (almoxarifado) — `reports.json` |
-| Campo quantidade | `quantity` ← `B2_QATU` |
-| Disponível tipado (outro contrato produto) | `B2_QATU - B2_QEMP - B2_RESERVA` em `/products/{code}/stock` — **não** é o campo de `/stock-balances/items` |
+| Campo quantidade | `quantity` ← `B2_QATU` (físico do local) |
+| Empenhos/reservas | **não** no items de stock-balances; disponível tipado só em `/products/{code}/stock` = `QATU−QEMP−RESERVA` |
 | UM | `SB1.B1_UM` |
-| Sem registro | linha ausente se `only_positive=true`; com `only_positive=false` pode retornar 0 |
-| Paginação | `page_size` máx. 500; filtro `product_codes` |
+| Sem registro | ausente se `only_positive=true`; com `false` pode retornar 0 |
+| Paginação | `page_size` máx. 500; `product_codes` |
 
 ### Equivalência `no_estoque` × SB2
 
 | Afirmação | Estado |
 |---|---|
-| Ambos descrevem físico do produto na filial | CONFIRMADO_EM_DOCUMENTACAO (view + SB2) |
-| `no_estoque` ≡ `B2_QATU` do armazém `01` | **HIPOTESE_A_VALIDAR** — view não documenta o `B2_LOCAL` agregado |
-| Usar SB2 sem validar = risco de estoque duplo ou distinto | CONFIRMADO (risco) |
+| Ambos descrevem quantidade física na filial | CONFIRMADO_EM_DOCUMENTACAO |
+| DDL da view / `B2_LOCAL` usado em `no_estoque` | **não auditado no repo** (DDL ilegível / não versionado) |
+| `no_estoque` ≡ `B2_QATU` armazém `01` | **HIPOTESE_A_VALIDAR** |
+| Comparação live produtos nas duas fontes | **INCONCLUSIVE** (mesma indisponibilidade de ambiente) |
+| Usar SB2 sem validar = risco de estoque duplo/distinto | CONFIRMADO (risco) |
 
-### Estratégia proposta (Etapa 2 — não implementar agora)
+### Estratégia segura (bloqueada até prova)
 
-1. Montar mapa `(filial, produto) → stock` a partir das linhas Protheus (`no_estoque`) **quando existirem**.
-2. Para produtos **exclusivos MyWEG** (elegíveis sem linha de carteira), buscar
-   `fetch_stock_balances_items(branch=02, warehouse=01, product_codes=[…], only_positive=false)`.
-3. Homologar amostra: para produtos presentes nas duas fontes, exigir
-   `|no_estoque - SB2.quantity| ≤ ε` antes de misturar no mesmo pool.
-4. Um único pool por `(filial, produto)` alimenta `DemandCoverageService` — **nunca**
-   somar `no_estoque` + SB2 do mesmo código.
-5. Se homologação falhar → `ARCHITECTURE_DECISION_REQUIRED` sobre armazém/agregação da view.
+1. Pool único `(filial, produto)` para o motor — **nunca** `no_estoque + SB2`.
+2. Quando o produto já vem da carteira: usar **somente** `no_estoque` (paridade Demanda atual).
+3. Produto **exclusivo MyWEG**: só após amostra live com
+   `|no_estoque − SB2(warehouse=01).quantity| ≤ ε` em produtos que existam nas duas fontes.
+4. Se divergência material → manter bloqueio; não “ajustar” valores para coincidir.
+5. Sem prova: **não** alimentar cobertura MyWEG com SB2 na Etapa 2.
 
 ## 9. Contrato interno consumível (Etapa 2)
 
@@ -212,11 +235,37 @@ MyWegDemandSourceService.project_latest(user, branch="02") →
 Composer: `build_myweg_demand_source_service()`.
 **Sem rota HTTP nesta etapa.**
 
-## 10. Segurança (RQ-08)
+Port: `MyWegNeedsRepositoryPort.list_batch_records_for_compare` declarado
+(alinhado a `PostgresMyWegNeedsRepository` e aos fakes de compare).
 
-- Exige `production-control.access` + `myweg-needs.view` + `view.filial-02` + `demand.view`.
-- Somente leitura; sem escrita Protheus/MyWEG.
-- Filial `01` rejeitada (`InvalidBranch`).
+## 10. Segurança e proposta de autorização (Etapa 2)
+
+### Inventário atual (CONFIRMADO_NO_CODIGO / manifest)
+
+| Superfície | Permissões |
+|---|---|
+| `GET /demand` | `access` + `demand.view` + filial |
+| Necessidades WEG / compare | `access` + `myweg-needs.view` + `view.filial-02` |
+| `MyWegDemandSourceService.project_latest` (interno) | `access` + `myweg-needs.view` + `view.filial-02` + `demand.view` |
+
+Códigos: `production-control.demand.view`, `production-control.myweg-needs.view`.
+
+### Proposta backend-first (não implementada; não altera Keycloak/Core/MFE)
+
+```text
+1. GET /demand permanece acessível com demand.view + filial (comportamento atual).
+2. Linhas source=myweg só entram no payload consolidado se o usuário também tiver
+   myweg-needs.view (+ view.filial-02). Sem essa permissão → Demanda = só Protheus
+   (degradação segura; sem vazamento MyWEG).
+3. Não ampliar demand.view para incluir MyWEG implicitamente.
+4. Não exigir myweg-needs.view para ver a carteira Protheus.
+5. summary/horizon/KPIs: se misturar fontes, calcular dois escopos ou documentar
+   que totais MyWEG só aparecem quando o usuário tem as duas permissões.
+6. Qualquer mudança de policy exige aprovação dos owners (Core RBAC + PCP)
+   antes da Etapa 2.
+```
+
+Estado: **proposta documentada** · Keycloak/manifest **inalterados** nesta tarefa.
 
 ## 11. Matriz de testes
 
@@ -232,6 +281,7 @@ Composer: `build_myweg_demand_source_service()`.
 | Filial 01 | `InvalidBranch` | `test_service_rejects_filial_01` |
 | Sem coleta | `MyWegNeedsBatchNotFound` | `test_service_empty_batch_raises` |
 | Permissões | `PermissionError` | `test_service_requires_permissions` |
+| Port declara compare | método no Protocol | `test_repository_port_declares_list_batch_records_for_compare` |
 
 Regressão: suíte MyWEG existente + `test_demand.py` (motor intacto).
 
@@ -240,12 +290,16 @@ Regressão: suíte MyWEG existente + `test_demand.py` (motor intacto).
 | Item | Estado |
 |---|---|
 | Projeção última coleta | **PRONTO** |
-| Identidade / amostras | **PRONTO** |
-| Contrato interno | **PRONTO** |
-| Consolidação MyWEG×Protheus | **PENDENTE** (`ARCHITECTURE_DECISION_REQUIRED` + amostra live) |
-| Estoque exclusivos MyWEG | **PENDENTE** (homologar `no_estoque`×SB2) |
-| Wiring `GET /demand` / UI / KPIs | **BLOQUEADO** até decisões acima |
+| Identidade / amostras provisórias | **PRONTO** |
+| Contrato interno + Port compare | **PRONTO** |
+| Política auth proposta | **DOCUMENTADA** (não ACCEPTED) |
+| Consolidação MyWEG×Protheus | **BLOQUEADO** — amostra live + ADR |
+| Estoque exclusivos MyWEG | **BLOQUEADO** — equivalência `no_estoque`×SB2 não demonstrada |
+| Wiring `GET /demand` / UI / KPIs | **BLOQUEADO** |
 | Pedidos fictícios / write Protheus | **FORA DE ESCOPO** |
+
+**Recomendação:** **não iniciar Etapa 2** até AC-01 e AC-03 com evidência live e
+decisão ACCEPTED pela authority.
 
 ## 13. Arquivos
 
@@ -253,12 +307,14 @@ Regressão: suíte MyWEG existente + `test_demand.py` (motor intacto).
 |---|---|
 | `domain/myweg_demand_source_contract.py` | constantes internas |
 | `domain/services/myweg_demand_projection.py` | projetor puro |
+| `domain/ports/myweg_needs_repository.py` | Protocol + `list_batch_records_for_compare` |
 | `application/services/myweg_demand_source_service.py` | orquestração + RBAC |
 | `composition/pc_composer.py` | `build_myweg_demand_source_service` |
-| `tests/test_myweg_demand_projection_e1.py` | testes E1 |
-| este documento | autoridade da Etapa 1 |
+| `tests/test_myweg_demand_projection_e1.py` | testes E1 + residual port |
+| este documento | autoridade da Etapa 1 / residual |
 
 ## 14. Fora de escopo (não executar)
 
 Alterar `GET /demand`, `DemandCoverageService`, UI/KPIs, criar pedidos,
-reprocessar coletas, migrations, timers, deploy que habilite a fonte na Demanda.
+reprocessar coletas, migrations, timers, deploy que habilite a fonte na Demanda,
+alterar Keycloak/Core/manifests.
