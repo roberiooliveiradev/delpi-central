@@ -1380,3 +1380,13 @@ O histórico de revisão da mesma página não cita esses códigos. `10081389` �
 **Custo:** ~12-25s/página (reload por filho) — bounded no budget do job. **Incidente:** probe in-container em paralelo com job real saturou RAM do host (2 pipelines ~12GB VMS) — mitigado por restart; probes agora fora de janela de jobs.
 
 **Testes:** 89/89 escopo. Prod `cf4c4362d3` healthy, `MAX_RSS_MB=16384` live. Reteste consumidor: 14 filhos sequenciais → cobertura FULL esperada ou falha tipada isolada.
+
+## 45. DEC-VAL-036 — SLANet UNAVAILABLE: singleton TableStructureRecognition
+
+**Causa (repro provada):** `_predict_table_structure` instanciava `TableStructureRecognition()` a CADA `run()` — ~1GB VMS por instância no processo uvicorn. Com 2 regiões (component_table + title_block) por job sob pressão de memória, a instanciação falhava → catch-all `except → UNAVAILABLE`, `cells=[]`, mesmo com OCR 14/14 FULL.
+
+**Provas:** SLANet isolado p9 com crop real + 162 tokens reais do worker → 68 células, `error_kind=None` — motor e associação íntegros; perda era lifecycle do modelo no processo compartilhado.
+
+**Correção (`f9d824ebb1`):** singleton `_TABLE_STRUCTURE_ENGINE` com descarte em exceção (mesmo padrão do PaddleOcrAdapter). Uma instância por processo, reutilizada por região/job — elimina recarga mid-job e falha por pressão de VMS.
+
+**Testes:** 27/27. Prod healthy. Reteste: `table_perception` deve mostrar `cells>0` e `error_kind=None` com OCR FULL.
