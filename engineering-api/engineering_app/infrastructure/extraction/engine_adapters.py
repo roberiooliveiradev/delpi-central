@@ -490,7 +490,13 @@ ENGINES["docling"] = DoclingEngine()
 
 
 def _open_pdf_document(pdf_bytes: bytes):
-    """Abre o PDF. O chamador fecha o documento e remove o arquivo."""
+    """Abre o PDF. O chamador fecha o documento e remove o arquivo.
+
+    Se ``PdfDocument`` falhar na abertura, o arquivo temporário é
+    removido aqui — antes o caller nunca recebia ``tmp`` e o arquivo
+    ficava órfão a cada tentativa inválida.
+    """
+    import os
     import tempfile
 
     import pypdfium2 as pdfium
@@ -498,7 +504,14 @@ def _open_pdf_document(pdf_bytes: bytes):
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as handle:
         handle.write(pdf_bytes)
         tmp = handle.name
-    return pdfium.PdfDocument(tmp), tmp
+    try:
+        return pdfium.PdfDocument(tmp), tmp
+    except Exception:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def _render_page(pdf, page_index: int) -> dict:
@@ -617,7 +630,45 @@ class TableStructureEngine:
         try:
             import os
 
-            pdf, tmp_pdf = _open_pdf_document(pdf_bytes)
+            # Contrato de entrada — falhas de documento são tipadas ANTES
+            # do PDFium e nunca viram UNAVAILABLE de modelo:
+            # ausência/vazio → DOCUMENT_CONTENT_MISSING; hash divergente
+            # do documento oficial → DOCUMENT_HASH_MISMATCH; conteúdo
+            # que não é PDF → DOCUMENT_CONTENT_INVALID; falha de abertura
+            # → PDF_OPEN_FAILED.
+            if not pdf_bytes:
+                return self._fail(
+                    document_hash_sha256, product_code,
+                    "DOCUMENT_CONTENT_MISSING",
+                    "Conteúdo do PDF ausente ou vazio — o documento "
+                    "oficial não foi obtido/verificado nesta execução.",
+                    t0, total_pages=0, pages=pages,
+                )
+            digest = hashlib.sha256(bytes(pdf_bytes)).hexdigest()
+            if document_hash_sha256 and digest != document_hash_sha256:
+                return self._fail(
+                    document_hash_sha256, product_code,
+                    "DOCUMENT_HASH_MISMATCH",
+                    "O conteúdo recebido diverge do documento oficial "
+                    "processado nesta execução (SHA-256 divergente).",
+                    t0, total_pages=0, pages=pages,
+                )
+            if b"%PDF-" not in bytes(pdf_bytes)[:1024]:
+                return self._fail(
+                    document_hash_sha256, product_code,
+                    "DOCUMENT_CONTENT_INVALID",
+                    "O conteúdo recebido não é um documento PDF válido.",
+                    t0, total_pages=0, pages=pages,
+                )
+            try:
+                pdf, tmp_pdf = _open_pdf_document(pdf_bytes)
+            except Exception as exc:
+                return self._fail(
+                    document_hash_sha256, product_code,
+                    "PDF_OPEN_FAILED",
+                    f"{type(exc).__name__}: {exc}",
+                    t0, total_pages=0, pages=pages,
+                )
             try:
                 page_count = len(pdf)
                 page, page_error = resolve_requested_page(pages, page_count)
@@ -775,7 +826,6 @@ class TableStructureEngine:
                             ),
                         )
                     )
-            digest = hashlib.sha256(pdf_bytes).hexdigest()
             _res = make_result(
                 provider_id=self.provider_id,
                 provider_version="slanet_7.67MB",

@@ -224,7 +224,7 @@ def test_engine_renders_requested_page_and_preserves_span(monkeypatch):
 
     monkeypatch.setattr(engine_adapters, "_open_pdf_document", open_pdf)
     monkeypatch.setattr(engine_adapters, "_predict_table_structure", predict)
-    pdf = b"page-nine"
+    pdf = b"%PDF-page-nine"
     digest = hashlib.sha256(pdf).hexdigest()
     result = engine_adapters.TableStructureEngine().run(
         pdf,
@@ -284,16 +284,18 @@ def test_engine_rejects_missing_page_invalid_crop_and_scale(monkeypatch):
 
     monkeypatch.setattr(engine_adapters, "_predict_table_structure", predict)
     engine = engine_adapters.TableStructureEngine()
-    missing = engine.run(b"x", document_hash_sha256="a" * 64, pages=[9])
+    pdf = b"%PDF-x"
+    digest = hashlib.sha256(pdf).hexdigest()
+    missing = engine.run(pdf, document_hash_sha256=digest, pages=[9])
     assert missing["error_kind"] == "PAGE_NOT_IN_DOCUMENT"
     assert "yes" not in called
     invalid = engine.run(
-        b"x", document_hash_sha256="a" * 64, pages=[1],
+        pdf, document_hash_sha256=digest, pages=[1],
         crop_box=[30, 10, 10, 20],
     )
     assert invalid["error_kind"] == "INVALID_CROP"
     mismatch = engine.run(
-        b"x", document_hash_sha256="a" * 64, pages=[1],
+        pdf, document_hash_sha256=digest, pages=[1],
         crop_box=[0, 0, 10, 10], expected_render_px=(10, 10),
     )
     assert mismatch["error_kind"] == "COORDINATE_MISMATCH"

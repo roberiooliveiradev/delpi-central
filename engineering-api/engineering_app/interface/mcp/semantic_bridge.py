@@ -1363,6 +1363,7 @@ def _table_engine_summary(result: dict) -> dict:
         "model_version": result.get("model_version"),
         "executed": not result.get("error_kind"),
         "error_kind": result.get("error_kind"),
+        "error_detail": result.get("error_detail"),
         "structure_score": table.get("structure_score"),
         "structure_consistent": table.get("structure_consistent"),
         "row_count": table.get("row_count"),
@@ -1535,17 +1536,12 @@ async def _produce_drawing_understanding(context, code: str):
     }
     # R9.8 — motor SLANet: estrutura de tabela real sobre a região
     # detectada, com associação OCR↔célula; candidate, nunca autoridade.
-    _pdf_raw = None
-    _pdf_bytes = None
-    try:
-        _pdf_raw = await bridge.build_delegated_auxiliary_source().fetch_product_drawing_pdf(  # noqa: E501
-            ctx, code=code
-        )
-        _pdf_bytes = (
-            _pdf_raw.get("content") if isinstance(_pdf_raw, dict) else None
-        )
-    except Exception:
-        _pdf_bytes = None
+    # O documento percebido é o MESMO obtido e validado pelo benchmark
+    # oficial acima, na mesma execução autorizada — sem segunda busca.
+    # Antes, um refetch redundante (após minutos de OCR, com janela de
+    # token/timeout) transformava qualquer falha em b"" silencioso e o
+    # PDFium quebrava com "Data format error" reportado como UNAVAILABLE.
+    _pdf_bytes = out.get("_pdf_bytes")
     try:
         from engineering_app.application.drawing.understanding import (
             apply_native_table_observations,
@@ -1568,7 +1564,7 @@ async def _produce_drawing_understanding(context, code: str):
         _summaries = []
         if not _regions:
             _sl = _engine.run(
-                bytes(_pdf_bytes) if _pdf_bytes else b"",
+                bytes(_pdf_bytes or b""),
                 document_hash_sha256=best.get("document_hash") or "",
                 product_code=code,
                 pages=[1],
@@ -1586,7 +1582,7 @@ async def _produce_drawing_understanding(context, code: str):
         for region in _regions:
             _page = int(region.get("page") or understanding.get("page") or 1)
             _sl = _engine.run(
-                bytes(_pdf_bytes) if _pdf_bytes else b"",
+                bytes(_pdf_bytes or b""),
                 document_hash_sha256=best.get("document_hash") or "",
                 product_code=code,
                 pages=[_page],

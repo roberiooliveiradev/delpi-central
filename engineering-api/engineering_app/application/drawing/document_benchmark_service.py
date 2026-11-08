@@ -103,6 +103,11 @@ async def run_official_document_benchmark(
         "providers_ran": [r["provider_id"] for r in runs],
         "same_document_verified": same_hash,
         "runs": runs,
+        # Bytes oficiais já validados (mesma execução autorizada) —
+        # consumidores internos da execução (ex.: percepção SLANet)
+        # reutilizam em vez de re-buscar o documento, garantindo que
+        # OCR e percepção estrutural operem sobre o MESMO conteúdo.
+        "_pdf_bytes": bytes(content),
     }
     if visual_pipelines:
         out["evidence_dedup"] = dedupe_visual_evidence(runs)

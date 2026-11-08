@@ -21,7 +21,7 @@ from typing import Any, Protocol
 SCHEMA_VERSION = "drawing_perception_candidate.v1"
 # Identidade do job: uma observação nativa nova não reutiliza
 # COMPLETED produzido pela grade artificial anterior.
-TABLE_PERCEPTION_REVISION = "native_slanet_v2"
+TABLE_PERCEPTION_REVISION = "native_slanet_v3"
 TABLE_RENDER_DPI = 200
 TABLE_RENDER_SCALE = TABLE_RENDER_DPI / 72
 
@@ -45,6 +45,10 @@ ERROR_KINDS = frozenset(
         "INCOMPLETE_COVERAGE", "UNAVAILABLE",
         "NO_TABLE_REGION", "PAGE_NOT_IN_DOCUMENT", "INVALID_CROP",
         "COORDINATE_MISMATCH",
+        # Integridade documental — falhas de ENTRADA do motor, antes de
+        # qualquer inferência. Nunca confundir com UNAVAILABLE (modelo).
+        "DOCUMENT_CONTENT_MISSING", "DOCUMENT_CONTENT_INVALID",
+        "DOCUMENT_HASH_MISMATCH", "PDF_OPEN_FAILED",
     }
 )
 QUALITY_STATES = frozenset(
