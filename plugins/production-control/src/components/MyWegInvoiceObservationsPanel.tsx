@@ -284,12 +284,7 @@ export function MyWegInvoiceObservationsPanel() {
   return (
     <section className="ppc-myweg-needs__invoices" aria-label={texts.sectionAria}>
       <div className="ppc-myweg-needs__invoice-toolbar">
-        <p className="ppc-myweg-needs__invoice-toolbar-note">
-          {texts.introCompact}{" "}
-          <HelpTooltip content={helpTooltips.mywegNeedsInvoices} trigger="icon" />
-        </p>
-
-        <div className="ppc-myweg-needs__invoice-toolbar-row">
+        <div className="ppc-myweg-needs__invoice-toolbar-cluster">
           <MyWegInvoiceMonthCalendar
             selectedIso={appliedDate}
             onSelectDate={onSelectDate}
@@ -302,20 +297,25 @@ export function MyWegInvoiceObservationsPanel() {
           />
 
           <div className="ppc-myweg-needs__invoice-toolbar-controls">
-            <label className="ppc-myweg-needs__invoice-date">
-              <span>{texts.documentDateLabel}</span>
-              <input
-                type="date"
-                value={appliedDate}
-                onChange={(event) => {
-                  const next = event.target.value;
-                  if (parseLocalIsoDate(next)) onSelectDate(next);
-                }}
-                aria-label={texts.documentDateLabel}
-              />
-            </label>
+            <p className="ppc-myweg-needs__invoice-toolbar-note">
+              {texts.introCompact}{" "}
+              <HelpTooltip content={helpTooltips.mywegNeedsInvoices} trigger="icon" />
+            </p>
 
-            <div className="ppc-myweg-needs__invoice-search-row">
+            <div className="ppc-myweg-needs__invoice-fields">
+              <label className="ppc-myweg-needs__invoice-date">
+                <span>{texts.documentDateLabel}</span>
+                <input
+                  type="date"
+                  value={appliedDate}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    if (parseLocalIsoDate(next)) onSelectDate(next);
+                  }}
+                  aria-label={texts.documentDateLabel}
+                />
+              </label>
+
               <label className="ppc-myweg-needs__invoice-search">
                 <span className="ppc-sr-only">{texts.searchLabel}</span>
                 <input
@@ -330,6 +330,7 @@ export function MyWegInvoiceObservationsPanel() {
                   disabled={!selectedObservationId}
                 />
               </label>
+
               <button
                 type="button"
                 className="ppc-btn ppc-btn--primary ppc-btn--compact"

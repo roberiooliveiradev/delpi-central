@@ -7020,49 +7020,61 @@
 }
 
 .dashboard-production-control .ppc-myweg-needs__invoice-toolbar {
-  display: grid;
-  gap: 0.55rem;
-  margin-bottom: 0.85rem;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 0.75rem;
   min-width: 0;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-toolbar-cluster {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem 0.65rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--delpi-border, #d8dee6);
+  border-radius: 12px;
+  background: var(--delpi-surface, #fff);
+  max-width: 100%;
 }
 
 .dashboard-production-control .ppc-myweg-needs__invoice-toolbar-note {
   margin: 0;
-  font-size: 0.86rem;
-  line-height: 1.35;
-  opacity: 0.9;
-}
-
-.dashboard-production-control .ppc-myweg-needs__invoice-toolbar-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 0.75rem 1rem;
-  min-width: 0;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  opacity: 0.88;
+  max-width: 22rem;
 }
 
 .dashboard-production-control .ppc-myweg-needs__invoice-toolbar-controls {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.4rem;
   align-content: start;
   min-width: 0;
-  flex: 1 1 220px;
-  max-width: 28rem;
+  width: min(22rem, 100%);
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.4rem 0.45rem;
 }
 
 .dashboard-production-control .ppc-myweg-needs__invoice-date {
   display: grid;
-  gap: 0.25rem;
-  max-width: 11.5rem;
-  font-size: 0.78rem;
+  gap: 0.15rem;
+  width: 9.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
 }
 
 .dashboard-production-control .ppc-myweg-needs__invoice-date input[type="date"] {
   width: 100%;
-  min-height: 2rem;
-  padding: 0.25rem 0.45rem;
-  border-radius: 8px;
+  min-height: 1.9rem;
+  padding: 0.2rem 0.35rem;
+  border-radius: 7px;
   border: 1px solid var(--delpi-border, #d8dee6);
   background: var(--delpi-surface, #fff);
   color: inherit;
@@ -7070,62 +7082,57 @@
   font-weight: 500;
 }
 
-.dashboard-production-control .ppc-myweg-needs__invoice-search-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  align-items: center;
-  max-width: 28rem;
-}
-
 .dashboard-production-control .ppc-myweg-needs__invoice-search {
-  flex: 1 1 10rem;
-  min-width: 0;
+  flex: 1 1 9rem;
+  min-width: 8rem;
+  max-width: 14rem;
 }
 
 .dashboard-production-control .ppc-myweg-needs__invoice-search input {
   width: 100%;
-  min-height: 2rem;
-  padding: 0.3rem 0.55rem;
-  border-radius: 8px;
+  min-height: 1.9rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 7px;
   border: 1px solid var(--delpi-border, #d8dee6);
   background: var(--delpi-surface, #fff);
   color: inherit;
 }
 
 .dashboard-production-control .ppc-btn--compact {
-  min-height: 2rem;
-  padding-inline: 0.7rem;
+  min-height: 1.9rem;
+  padding-inline: 0.65rem;
 }
 
 .dashboard-production-control .ppc-myweg-needs__month-cal {
   box-sizing: border-box;
   flex: 0 0 auto;
-  width: 12.5rem;
-  max-width: 12.5rem;
+  width: 11.25rem;
+  max-width: 11.25rem;
   overflow: hidden;
+  contain: layout paint;
+  isolation: isolate;
   border: 1px solid var(--delpi-border, #d8dee6);
-  border-radius: 10px;
-  padding: 0.4rem 0.4rem 0.45rem;
-  background: var(--delpi-surface, #fff);
+  border-radius: 8px;
+  padding: 0.3rem;
+  background: color-mix(in srgb, var(--delpi-surface, #fff) 92%, var(--delpi-border, #d8dee6));
 }
 
 .dashboard-production-control .ppc-myweg-needs__month-cal-header {
   display: grid;
-  grid-template-columns: 1.4rem minmax(0, 1fr) 1.4rem;
+  grid-template-columns: 1.25rem minmax(0, 1fr) 1.25rem;
   align-items: center;
-  gap: 0.15rem;
-  margin-bottom: 0.3rem;
+  gap: 0.1rem;
+  margin-bottom: 0.2rem;
   min-width: 0;
 }
 
 .dashboard-production-control .ppc-myweg-needs__month-cal-title {
   margin: 0;
   text-align: center;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 650;
   text-transform: capitalize;
-  line-height: 1.2;
+  line-height: 1.15;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -7135,9 +7142,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.4rem;
-  height: 1.4rem;
-  min-width: 1.4rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  min-width: 0;
+  max-width: 1.25rem;
   padding: 0;
   border: 0;
   border-radius: 999px;
@@ -7155,46 +7163,53 @@
 .dashboard-production-control .ppc-myweg-needs__month-cal-weekdays,
 .dashboard-production-control .ppc-myweg-needs__month-cal-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 0.08rem;
+  grid-template-columns: repeat(7, 1.4rem);
+  justify-content: center;
+  gap: 0.05rem;
   width: 100%;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .dashboard-production-control .ppc-myweg-needs__month-cal-weekdays {
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.1rem;
 }
 
 .dashboard-production-control .ppc-myweg-needs__month-cal-weekdays span {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
   text-align: center;
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   font-weight: 600;
   opacity: 0.7;
-  line-height: 1.2;
+  line-height: 1;
 }
 
 .dashboard-production-control .ppc-myweg-needs__month-cal-day {
   box-sizing: border-box;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  height: 1.55rem;
+  width: 1.4rem !important;
+  min-width: 0 !important;
+  max-width: 1.4rem !important;
+  height: 1.4rem !important;
+  min-height: 0 !important;
   margin: 0;
-  padding: 0;
+  padding: 0 !important;
   border: 0;
-  border-radius: 6px;
+  border-radius: 5px;
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 0.68rem;
+  font-size: 0.62rem !important;
   line-height: 1;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: none;
 }
 
 .dashboard-production-control .ppc-myweg-needs__month-cal-day:hover,
@@ -7308,11 +7323,20 @@
 }
 
 @media (max-width: 900px) {
-  .dashboard-production-control .ppc-myweg-needs__invoice-toolbar-controls {
-    max-width: none;
+  .dashboard-production-control .ppc-myweg-needs__invoice-toolbar {
+    width: 100%;
   }
 
-  .dashboard-production-control .ppc-myweg-needs__invoice-search-row {
+  .dashboard-production-control .ppc-myweg-needs__invoice-toolbar-cluster {
+    display: flex;
+    width: 100%;
+  }
+
+  .dashboard-production-control .ppc-myweg-needs__invoice-toolbar-controls {
+    width: 100%;
+  }
+
+  .dashboard-production-control .ppc-myweg-needs__invoice-search {
     max-width: none;
   }
 
