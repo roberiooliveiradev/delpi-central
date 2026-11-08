@@ -256,3 +256,36 @@ conduct, coexistence, relationships, narrative_classification,
 profile_version. **Runtime `delpi-supplies-mcp`:** catalog retorna
 character com os 12+ campos + acronym correto. Demais 6: já conformes
 (verificado pela evidência do usuário + código). Commit impl.
+
+## DELPI SPECIALIST VISUAL IDENTITY V1 (2026-11-08) — DAVI envelope + governança
+
+**Sintoma reportado:** `read(capability="avatar")` do DAVI retornava
+metadata `content_delivery="image_block"`, mas o consumidor da conversa
+não recebeu bloco de imagem acessível.
+
+**Investigação (cadeia MCP server → transport → envelope → adapter → host):**
+- Wire JSON-RPC PROVEN in-process (`streamable_http_app`):
+  `tools/call read(capability="avatar")` → `content=[text, image]`
+  (PNG 633KB base64) + `structuredContent` — backend/transporte correto,
+  paridade com os 6 irmãos.
+- **Defeito de contrato encontrado:** `structuredContent` do avatar
+  violava o `outputSchema` publicado `readOutput` (campos obrigatórios
+  `capability/status/action_id/projection/truncated/is_complete`
+  ausentes + `additionalProperties:false`). Os 6 irmãos anunciam
+  `outputSchema` permissivo (`{"type":"object"}`) — DAVI era o único
+  divergente; host que valide `structuredContent`×`outputSchema` podia
+  desconfiar do resultado.
+- **Fix (menor diff, owner-local):** metadata do avatar agora viaja no
+  campo `data` do envelope `readOutput` canônico
+  (`structuredContent.data.*`). `content=[text,image]` inalterado.
+- Teste novo `tests/test_davi_avatar_read_contract.py` (6 testes):
+  ImageContent real + sha256 do asset, conformidade `ReadOutput`,
+  escopo do asset, negativo `avatar_x`→`CAPABILITY_NOT_ALLOWED`,
+  superfície de tools inalterada (4 tools).
+- Knowledge V2: seção `VISUAL IDENTITY & OFFICIAL AVATAR` + patch de
+  Instructions (~2.6k chars) em DELPI-SPECIALIST-CONVERSATION-ACTIVATION-V2.
+
+**Gap residual host-side:** se o conector DAVI em uso for do tipo
+Plugin/app (fronteira "OpenAI Plugin adapter"), ele pode expor apenas
+`structuredContent` ao consumidor — comportamento não comprovável pelo
+repositório. `CHATGPT_VISUAL: TEST_NOT_RUN` — reteste manual V1–V12.

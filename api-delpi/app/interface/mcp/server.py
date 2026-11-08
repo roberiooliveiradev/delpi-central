@@ -436,7 +436,18 @@ def create_mcp_server() -> MCPServer:
                     content.append(delivery.image)
                 return CallToolResult(
                     content=content,
-                    structuredContent=delivery.data,
+                    structuredContent={
+                        "capability": params.capability.strip(),
+                        "status": "ok",
+                        "action_id": "avatar",
+                        "entity": "character",
+                        "shape": "static_asset",
+                        "projection": "approved_fields",
+                        "data": delivery.data,
+                        "truncated": False,
+                        "is_complete": True,
+                        "response_bytes": delivery.data.get("bytes"),
+                    },
                     isError=False,
                 )
             data = davi_read_wired(

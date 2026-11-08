@@ -70,3 +70,13 @@ Contratos `get_context` por MCP, vocabulário comum (read/analyze/execute/
 delete/knowledge/context; implemented|planned|unavailable|deprecated),
 regras de AuthZ e evolução. 6/7 conformes; DAVI PENDING (refatoração
 `external_capabilities`). Zero alteração de código — menor diff.
+
+### DELPI SPECIALIST VISUAL IDENTITY V1 (2026-11-08)
+
+Avatar oficial na apresentação conversacional: `read(entity=avatar,
+action=get)` nos 6 MCPs + `read(capability="avatar")` no DAVI →
+`[TextContent, ImageContent]` provado no wire JSON-RPC (7/7).
+Fix DAVI: metadata do avatar conforme `outputSchema readOutput`
+(`structuredContent.data.*`) — única divergência de contrato vs. irmãos.
+Playbook V2 ganhou `VISUAL IDENTITY & OFFICIAL AVATAR` + patch de
+Instructions (~2.6k). ChatGPT visual: `TEST_NOT_RUN` (V1–V12).
