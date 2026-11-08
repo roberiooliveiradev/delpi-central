@@ -280,31 +280,52 @@ class MyWegDemandCoveragePreviewService:
         )
 
         # --- Cenário 3: consolidação proposta (ADR pendente) ---
-        # Protheus (não-Linhares) com OP de paridade; MyWEG só estoque.
-        protheus_kept_lines = self._coverage.build(
-            open_sales_orders=apply_pool_stock_to_inputs(
-                consolidation["protheus_for_coverage"], stock["pool"], branch=code
-            ),
-            open_production_orders=ops_all,
+        # Um único build + pool (filial, produto). Enquanto OP_UNIT_UNVERIFIED:
+        # somente estoque — sem segundo passe que duplicaria alocação.
+        consolidated_inputs = apply_pool_stock_to_inputs(
+            list(consolidation["protheus_for_coverage"]) + list(myweg_inputs),
+            stock["pool"],
             branch=code,
         )
-        consolidated_lines = list(protheus_kept_lines) + list(myweg_lines)
+        consolidated_lines = self._coverage.build(
+            open_sales_orders=consolidated_inputs,
+            open_production_orders=[],
+            branch=code,
+        )
 
         today = self._today or date.today()
         adr_accepted = False
+        stock_data_complete = bool(sb2_meta.get("complete")) and not sb2_meta.get("error")
+        if exclusive and stock["incomplete"]:
+            stock_data_complete = False
+        sources_readable = not source_errors
+        productive_coverage_complete = False  # OP_UNIT_UNVERIFIED
         consolidation_blocked = (
             (not adr_accepted)
             or bool(consolidation["reconciliation_blocked"])
             or bool(consolidation["customer_identity_pending"])
             or bool(stock["incomplete"] and exclusive)
             or bool(protheus_units["mixed"])
+            or not stock_data_complete
         )
+        # Cobertura consolidada nunca é confiável enquanto ADR/OP pendentes.
+        integrity = {
+            "sources_readable": sources_readable,
+            "stock_data_complete": stock_data_complete,
+            "productive_coverage_complete": productive_coverage_complete,
+            "consolidation_adr_blocked": not adr_accepted,
+            "op_unit_unverified": True,
+            "consolidated_coverage_reliable": False,
+        }
+        # reliable global exige fontes + estoque completos; incomplete com error vazio → False.
+        preview_reliable = sources_readable and stock_data_complete
 
         return {
             "preview": True,
             "wired_to_demand_endpoint": False,
             "productive_activation_blocked": True,
-            "reliable": not source_errors and not sb2_meta.get("error"),
+            "reliable": preview_reliable,
+            "integrity": integrity,
             "adr_status": "ARCHITECTURE_DECISION_REQUIRED",
             "branch": code,
             "customer_scope": {
@@ -448,6 +469,9 @@ class MyWegDemandCoveragePreviewService:
                     ),
                     "definitive_total_published": False,
                     "blocked": consolidation_blocked,
+                    "reliable": False,
+                    "stock_only_partial": True,
+                    "single_pool_allocation": True,
                     "op_coverage_confirmed_for_myweg": False,
                     "block_reasons": [
                         reason
@@ -456,7 +480,8 @@ class MyWegDemandCoveragePreviewService:
                             (
                                 "unit_or_stock_incomplete",
                                 bool(consolidation["reconciliation_blocked"])
-                                or (stock["incomplete"] and exclusive),
+                                or (stock["incomplete"] and exclusive)
+                                or not stock_data_complete,
                             ),
                             (
                                 "linhares_protheus_overlap_present",
@@ -491,6 +516,14 @@ class MyWegDemandCoveragePreviewService:
             "wired_to_demand_endpoint": False,
             "productive_activation_blocked": True,
             "reliable": False,
+            "integrity": {
+                "sources_readable": False,
+                "stock_data_complete": False,
+                "productive_coverage_complete": False,
+                "consolidation_adr_blocked": True,
+                "op_unit_unverified": True,
+                "consolidated_coverage_reliable": False,
+            },
             "blocked": True,
             "block_reason": reason,
             "source_errors": source_errors[:10],
@@ -578,6 +611,8 @@ class MyWegDemandCoveragePreviewService:
             "duplicate_products": [],
             "pages_read": 0,
             "rows_accepted": 0,
+            "rows_received": 0,
+            "declared_total": None,
         }
         if not product_codes:
             return {}, meta
@@ -585,9 +620,23 @@ class MyWegDemandCoveragePreviewService:
         balances: dict[str, float | None] = {code: None for code in product_codes}
         allowed = set(product_codes)
         seen_counts: dict[str, int] = {}
+        _reject_reasons = {
+            "branch_missing",
+            "branch_mismatch",
+            "warehouse_missing",
+            "warehouse_mismatch",
+            "unit_missing",
+            "unit_incompatible",
+            "quantity_invalid",
+            "row_not_object",
+            "product_not_requested",
+            "product_missing",
+            "duplicate_product",
+        }
 
         try:
             page = 1
+            declared_total: int | None = None
             while page <= self.STOCK_MAX_PAGES:
                 payload = self._gateway.fetch_stock_balances_items(
                     branch=branch,
@@ -601,7 +650,18 @@ class MyWegDemandCoveragePreviewService:
                     payload, "items", source_name="stock_balances_items"
                 )
                 meta["pages_read"] = page
+                meta["rows_received"] += len(rows)
                 pagination = _pagination_meta(payload)
+
+                page_total = pagination.get("total")
+                if isinstance(page_total, int) and page_total >= 0:
+                    if declared_total is None:
+                        declared_total = page_total
+                        meta["declared_total"] = declared_total
+                    elif page_total != declared_total:
+                        meta["complete"] = False
+                        meta["error"] = "pagination_total_inconsistent"
+                        break
 
                 for row in rows:
                     if not isinstance(row, dict):
@@ -609,18 +669,32 @@ class MyWegDemandCoveragePreviewService:
                         meta["complete"] = False
                         continue
                     code = _text(row.get("product_code"))
-                    row_branch = _text(row.get("branch") or row.get("filial"))
-                    row_wh = _text(row.get("warehouse") or row.get("armazem"))
-                    uom = _text(row.get("unit_of_measure") or row.get("unidade")).upper()
+                    # Campos de identidade obrigatórios — ausência ≠ “bateu por omissão”.
+                    raw_branch = row.get("branch", row.get("filial", None))
+                    raw_wh = row.get("warehouse", row.get("armazem", None))
+                    raw_uom = row.get("unit_of_measure", row.get("unidade", None))
+                    row_branch = _text(raw_branch)
+                    row_wh = _text(raw_wh)
+                    uom = _text(raw_uom).upper()
                     qty = _finite_number(row.get("quantity"))
 
+                    if not code:
+                        meta["rejected_rows"].append({"reason": "product_missing"})
+                        meta["complete"] = False
+                        continue
                     if code not in allowed:
                         meta["rejected_rows"].append(
                             {"reason": "product_not_requested", "product_code": code}
                         )
                         meta["complete"] = False
                         continue
-                    if row_branch and row_branch != branch:
+                    if raw_branch is None or not row_branch:
+                        meta["rejected_rows"].append(
+                            {"reason": "branch_missing", "product_code": code}
+                        )
+                        meta["complete"] = False
+                        continue
+                    if row_branch != branch:
                         meta["rejected_rows"].append(
                             {
                                 "reason": "branch_mismatch",
@@ -630,7 +704,13 @@ class MyWegDemandCoveragePreviewService:
                         )
                         meta["complete"] = False
                         continue
-                    if row_wh and row_wh != warehouse:
+                    if raw_wh is None or not row_wh:
+                        meta["rejected_rows"].append(
+                            {"reason": "warehouse_missing", "product_code": code}
+                        )
+                        meta["complete"] = False
+                        continue
+                    if row_wh != warehouse:
                         meta["rejected_rows"].append(
                             {
                                 "reason": "warehouse_mismatch",
@@ -640,7 +720,13 @@ class MyWegDemandCoveragePreviewService:
                         )
                         meta["complete"] = False
                         continue
-                    if uom and uom != COVERAGE_UNIT_MI:
+                    if raw_uom is None or not uom:
+                        meta["rejected_rows"].append(
+                            {"reason": "unit_missing", "product_code": code}
+                        )
+                        meta["complete"] = False
+                        continue
+                    if uom != COVERAGE_UNIT_MI:
                         meta["rejected_rows"].append(
                             {
                                 "reason": "unit_incompatible",
@@ -648,7 +734,6 @@ class MyWegDemandCoveragePreviewService:
                                 "unit": uom,
                             }
                         )
-                        # Produto permanece None (ausente/inválido) — não zera.
                         meta["complete"] = False
                         continue
                     if qty is None:
@@ -660,7 +745,6 @@ class MyWegDemandCoveragePreviewService:
 
                     seen_counts[code] = seen_counts.get(code, 0) + 1
                     if seen_counts[code] > 1:
-                        # Duplicidade indevida: não soma. Marca inválido.
                         if code not in meta["duplicate_products"]:
                             meta["duplicate_products"].append(code)
                         balances[code] = None
@@ -673,34 +757,42 @@ class MyWegDemandCoveragePreviewService:
                     balances[code] = qty
                     meta["rows_accepted"] += 1
 
-                total = pagination.get("total")
-                if isinstance(total, int) and total >= 0:
-                    expected_pages = max(1, (total + self.STOCK_PAGE_SIZE - 1) // self.STOCK_PAGE_SIZE)
+                if declared_total is not None:
+                    expected_pages = max(
+                        1, (declared_total + self.STOCK_PAGE_SIZE - 1) // self.STOCK_PAGE_SIZE
+                    )
                     if page >= expected_pages:
                         break
-                    if len(rows) == 0 and page < expected_pages:
+                    if len(rows) == 0:
                         meta["complete"] = False
                         meta["error"] = "pagination_incomplete"
+                        break
+                    if len(rows) < self.STOCK_PAGE_SIZE and page < expected_pages:
+                        meta["complete"] = False
+                        meta["error"] = "pagination_short_page"
                         break
                 elif len(rows) < self.STOCK_PAGE_SIZE:
                     break
 
                 if page == self.STOCK_MAX_PAGES:
-                    meta["complete"] = False
-                    meta["error"] = "pagination_max_pages"
+                    # Ainda haveria páginas? Só incompleto se total sugere mais ou página cheia.
+                    if declared_total is not None and page * self.STOCK_PAGE_SIZE < declared_total:
+                        meta["complete"] = False
+                        meta["error"] = "pagination_max_pages"
+                    elif declared_total is None and len(rows) >= self.STOCK_PAGE_SIZE:
+                        meta["complete"] = False
+                        meta["error"] = "pagination_max_pages"
                     break
                 page += 1
 
+            if declared_total is not None and meta["rows_received"] != declared_total:
+                # Contagem recebida diverge do total declarado → consulta incompleta/inválida.
+                meta["complete"] = False
+                if not meta["error"]:
+                    meta["error"] = "pagination_count_mismatch"
+
             if meta["duplicate_products"] or any(
-                r.get("reason") in {
-                    "branch_mismatch",
-                    "warehouse_mismatch",
-                    "unit_incompatible",
-                    "quantity_invalid",
-                    "row_not_object",
-                    "product_not_requested",
-                }
-                for r in meta["rejected_rows"]
+                r.get("reason") in _reject_reasons for r in meta["rejected_rows"]
             ):
                 meta["complete"] = False
 

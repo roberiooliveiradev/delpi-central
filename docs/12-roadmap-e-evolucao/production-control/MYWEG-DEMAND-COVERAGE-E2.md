@@ -1,6 +1,6 @@
 # MyWEG → Demanda PCP — Etapa 2 (prévia de cobertura)
 
-> **TASK_ID:** `PCP-DEMAND-MYWEG-E2-COVERAGE-PREVIEW` (+ rework `…-E2-COVERAGE-PREVIEW-REWORK`)  
+> **TASK_ID:** `PCP-DEMAND-MYWEG-E2-COVERAGE-PREVIEW` (+ rework / residual)  
 > **Status:** prévia interna corrigida · **produtivo bloqueado** · `GET /demand` inalterado  
 > **Escopo:** filial `02` · WEG Linhares `000001`/`09`  
 > **Owner:** `production-control-api`  
@@ -37,14 +37,19 @@ adapter UN→MI + classify_consolidation + stock pool (SB2 validado)
         │
         ▼
 DemandCoverageService.build  (REUSE — sem segundo motor)
-  · Protheus parity: OPs como hoje
-  · MyWEG / parcela MyWEG do consolidado: OPs desligadas (OP_UNIT_UNVERIFIED)
+  · protheus_only: OPs como hoje (paridade)
+  · myweg_only: somente estoque (OP_UNIT_UNVERIFIED)
+  · consolidated_proposed: **um único build** + pool `(filial, produto)`;
+    somente estoque enquanto OP_UNIT_UNVERIFIED (sem concatenar alocações)
         │
         ▼
 MyWegDemandCoveragePreviewService.build_preview
   wired_to_demand_endpoint=false
   productive_activation_blocked=true
   adr_status=ARCHITECTURE_DECISION_REQUIRED
+  integrity.{sources_readable, stock_data_complete,
+             productive_coverage_complete, consolidation_adr_blocked,
+             op_unit_unverified, consolidated_coverage_reliable}
 ```
 
 Composer: `build_myweg_demand_coverage_preview_service()`.  
@@ -65,15 +70,17 @@ Não declarar cobertura MyWEG por OP como confirmada enquanto a unidade da OP n�
 
 | Classe | Tratamento na prévia |
 |---|---|
-| Demais clientes/lojas Protheus | entram |
+| Demais clientes/lojas Protheus | entram no **mesmo** `build` que MyWEG |
 | `000001`/`09` via **`codigo_cadastro` + `loja_cadastro`** | `overlap_pending` — **não soma** com MyWEG |
 | `codigo_cliente` (ref. produto) ≠ cadastro | nunca identifica Linhares |
 | Cadastro ausente + `codigo_cliente=000001`/`09` | `customer_identity_pending` |
 | Lojas `11` e `14` | independentes |
 | Unidade incompatível | `reconciliation_blocked` |
 | NF | **não** abatida automaticamente |
+| Estoque compartilhado | alocado **uma vez** no motor (FIFO por data); soma ≤ pool |
+| OP no consolidado | **desligada** enquanto `OP_UNIT_UNVERIFIED` |
 
-Total definitivo consolidado **não** é publicado enquanto ADR ≠ ACCEPTED.
+`scenarios.consolidated_proposed.reliable=false` e `definitive_total_published=false` enquanto ADR ≠ ACCEPTED.
 
 ## 6. Estoque SB2
 
@@ -82,9 +89,10 @@ Pool único `(filial, produto)`:
 1. Produto na carteira → só `no_estoque`.
 2. Exclusivo MyWEG → `fetch_stock_balances_items(branch=02, warehouse=01, only_positive=false)`.
 3. Nunca `no_estoque + SB2`.
-4. Distingue: zero confirmado · produto ausente · UM incompatível · duplicata · paginação incompleta · falha de comunicação.
-5. `sb2_complete=true` só sem rejeições/incompletude.
-6. Payload inválido **não** vira lista vazia silenciosa (`PreviewPayloadError`).
+4. Cada linha SB2 **exige** `branch=02`, `warehouse=01`, `unit_of_measure=MI`, produto solicitado e qty finita (ausência bloqueia o saldo).
+5. Distingue: zero confirmado · produto ausente · UM incompatível · duplicata (incl. entre páginas) · paginação incompleta/inconsistente · falha de comunicação.
+6. `sb2_complete=true` só sem rejeições/incompletude; `reliable` exige `stock_data_complete` (não basta `error` vazio).
+7. Payload inválido **não** vira lista vazia silenciosa (`PreviewPayloadError`).
 
 ## 7. Autorização operacional (CLI)
 
@@ -123,7 +131,7 @@ Não criar endpoint público só para teste. Não inventar token S2S como “usu
 
 ## 9. Testes
 
-`tests/test_myweg_demand_coverage_preview_e2.py` — auth negativa CLI, SB2 (filial/armazém/UM/duplicata/paginação/payload), OP não confirmada, MI+PC, Linhares 09/11/14, `codigo_cadastro` vs `codigo_cliente`, conservação, regressão Demanda/MyWEG.
+`tests/test_myweg_demand_coverage_preview_e2.py` — pool único consolidado, SB2 campos obrigatórios/paginação/duplicata entre páginas, `reliable` vs `integrity`, auth CLI JWT, OP não confirmada, MI+PC, Linhares, conservação, regressão Demanda/MyWEG.
 
 ## 10. Pendências
 

@@ -417,7 +417,7 @@ class _FakeGateway:
         ops: list[dict] | None = None,
         stock_rows: list[dict] | None = None,
         stock_error: bool = False,
-        stock_payload: dict[str, Any] | None = None,
+        stock_payload: Any = None,
         sales_payload: Any = None,
         ops_payload: Any = None,
     ) -> None:
@@ -444,6 +444,8 @@ class _FakeGateway:
         self.stock_calls.append(kwargs)
         if self.stock_error:
             raise RuntimeError("sb2 unavailable")
+        if callable(self.stock_payload):
+            return self.stock_payload(**kwargs)
         if self.stock_payload is not None:
             return self.stock_payload
         return {
@@ -778,3 +780,309 @@ def test_latest_batch_wins_in_source() -> None:
     service, user = _preview_service()
     preview = service.build_preview(user, branch="02")
     assert preview["batch"]["collection_id"] == "COL1"
+
+
+def test_residual_consolidated_shared_product_stock_not_double_allocated() -> None:
+    """Protheus + MyWEG no mesmo produto: pool 1 MI → soma consolidada ≤ 1."""
+    service, user = _preview_service(
+        sales=[
+            {
+                "filial": "02",
+                "pedido": "P-SHARE",
+                "linha": "01",
+                "produto": "90260001",
+                "saldo": 1.0,
+                "quantidade": 1.0,
+                "entregue": 0.0,
+                "codigo_cadastro": "000050",
+                "loja_cadastro": "01",
+                "nome_cliente": "OUTRO",
+                "tipo_entidade": "CLIENTE",
+                "unidade": "MI",
+                "data_entrega": "2026-11-10",
+                "no_estoque": 1.0,
+            }
+        ],
+        ops=[
+            {
+                "filial": "02",
+                "numero_op": "OP-IGNORE",
+                "produto": "90260001",
+                "saldo_op": 99.0,
+                "data_fim_prevista_op": "2026-11-09",
+            }
+        ],
+        stock_rows=[],
+        myweg_rows=[
+            {
+                "id": "r1",
+                "line_no": 1,
+                "material_weg_tratado": "M1",
+                "codigo_referencia_weg": "90260001",
+                "data_remessa": "2026-11-12",
+                "quantidade_original_un": "1000",
+                "quantidade_mi": "1",
+                "sb1_resolution": {
+                    "status": "confirmed",
+                    "protheus_product_code": "90260001",
+                    "matched_by": "code_and_reference",
+                },
+            }
+        ],
+    )
+    preview = service.build_preview(user, branch="02")
+    cons = preview["scenarios"]["consolidated_proposed"]
+    allocated = sum(item["allocated_stock"] for item in cons["items_sample"])
+    # Também pelo summary — motor único, sem OP na consolidação.
+    assert cons["summary"]["covered_by_stock"] == pytest.approx(1.0)
+    assert cons["summary"]["covered_by_orders"] == pytest.approx(0.0)
+    assert allocated == pytest.approx(1.0)
+    assert cons["single_pool_allocation"] is True
+    assert cons["stock_only_partial"] is True
+    assert cons["reliable"] is False
+    assert cons["blocked"] is True
+    assert "adr_not_accepted" in cons["block_reasons"]
+    # Paridade: protheus_only cobre pelo estoque (1 MI) independente da consolidação.
+    prot = preview["scenarios"]["protheus_only"]
+    assert prot["summary"]["covered_by_stock"] == pytest.approx(1.0)
+
+
+def test_residual_three_way_stock_contention() -> None:
+    """Duas remessas MyWEG + 1 Protheus concorrem pelo mesmo pool de 1,5 MI."""
+    service, user = _preview_service(
+        sales=[
+            {
+                "filial": "02",
+                "pedido": "P1",
+                "linha": "01",
+                "produto": "90260001",
+                "saldo": 1.0,
+                "quantidade": 1.0,
+                "entregue": 0.0,
+                "codigo_cadastro": "000050",
+                "loja_cadastro": "01",
+                "nome_cliente": "OUTRO",
+                "tipo_entidade": "CLIENTE",
+                "unidade": "MI",
+                "data_entrega": "2026-11-11",
+                "no_estoque": 1.5,
+            }
+        ],
+        stock_rows=[],
+        myweg_rows=[
+            {
+                "id": "a",
+                "line_no": 1,
+                "material_weg_tratado": "M",
+                "codigo_referencia_weg": "90260001",
+                "data_remessa": "2026-11-10",
+                "quantidade_original_un": "1000",
+                "quantidade_mi": "1",
+                "sb1_resolution": {
+                    "status": "confirmed",
+                    "protheus_product_code": "90260001",
+                    "matched_by": "code_and_reference",
+                },
+            },
+            {
+                "id": "b",
+                "line_no": 2,
+                "material_weg_tratado": "M",
+                "codigo_referencia_weg": "90260001",
+                "data_remessa": "2026-11-20",
+                "quantidade_original_un": "1000",
+                "quantidade_mi": "1",
+                "sb1_resolution": {
+                    "status": "confirmed",
+                    "protheus_product_code": "90260001",
+                    "matched_by": "code_and_reference",
+                },
+            },
+        ],
+    )
+    preview = service.build_preview(user, branch="02")
+    cons = preview["scenarios"]["consolidated_proposed"]
+    assert cons["summary"]["covered_by_stock"] == pytest.approx(1.5)
+    assert cons["line_count"] == 3
+    # FIFO: remessa 10/11 MyWEG (a) → 1.0; Protheus 11/11 → 0.5; remessa 20 → 0.
+    myweg_early = next(i for i in cons["items_sample"] if i["line_item"] == "a")
+    prot = next(i for i in cons["items_sample"] if i["sales_order"] == "P1")
+    myweg_late = next(i for i in cons["items_sample"] if i["line_item"] == "b")
+    assert myweg_early["allocated_stock"] == pytest.approx(1.0)
+    assert prot["allocated_stock"] == pytest.approx(0.5)
+    assert myweg_late["allocated_stock"] == pytest.approx(0.0)
+
+
+def test_residual_sb2_missing_identity_fields() -> None:
+    for missing in ("branch", "warehouse", "unit_of_measure"):
+        row = {
+            "product_code": "90260001",
+            "quantity": 1.0,
+            "unit_of_measure": "MI",
+            "branch": "02",
+            "warehouse": "01",
+        }
+        del row[missing]
+        service, user = _preview_service(stock_rows=[row])
+        preview = service.build_preview(user, branch="02")
+        reasons = {
+            r["reason"] for r in preview["stock"]["sb2_diagnostics"]["rejected_rows"]
+        }
+        assert preview["stock"]["sb2_complete"] is False
+        assert preview["reliable"] is False
+        assert preview["integrity"]["stock_data_complete"] is False
+        if missing == "branch":
+            assert "branch_missing" in reasons
+        elif missing == "warehouse":
+            assert "warehouse_missing" in reasons
+        else:
+            assert "unit_missing" in reasons
+
+
+def test_residual_sb2_pagination_total_inconsistent() -> None:
+    # total declarado 2, mas só 1 linha na única página esperada (page_size 500).
+    def _mismatch(**_kwargs: Any) -> dict[str, Any]:
+        return {
+            "data": {
+                "items": [
+                    {
+                        "product_code": "90260001",
+                        "quantity": 0.5,
+                        "unit_of_measure": "MI",
+                        "branch": "02",
+                        "warehouse": "01",
+                    }
+                ],
+                "pagination": {"total": 2},
+            }
+        }
+
+    service, user = _preview_service(stock_payload=_mismatch, stock_rows=[])
+    preview = service.build_preview(user, branch="02")
+    assert preview["stock"]["sb2_complete"] is False
+    assert preview["reliable"] is False
+    assert preview["integrity"]["stock_data_complete"] is False
+
+
+def test_residual_sb2_duplicate_across_pages() -> None:
+    original_page_size = MyWegDemandCoveragePreviewService.STOCK_PAGE_SIZE
+
+    def _dup_pages(**kwargs: Any) -> dict[str, Any]:
+        page = int(kwargs.get("page") or 1)
+        row = {
+            "product_code": "90260001",
+            "quantity": float(page),
+            "unit_of_measure": "MI",
+            "branch": "02",
+            "warehouse": "01",
+        }
+        return {"data": {"items": [row], "pagination": {"total": 2}}}
+
+    try:
+        MyWegDemandCoveragePreviewService.STOCK_PAGE_SIZE = 1
+        service, user = _preview_service(stock_payload=_dup_pages, stock_rows=[])
+        preview = service.build_preview(user, branch="02")
+    finally:
+        MyWegDemandCoveragePreviewService.STOCK_PAGE_SIZE = original_page_size
+
+    assert "90260001" in preview["stock"]["sb2_diagnostics"]["duplicate_products"]
+    assert preview["stock"]["sb2_complete"] is False
+    assert preview["scenarios"]["myweg_only"]["line_count"] == 0
+
+
+def test_residual_sb2_incomplete_without_error_is_unreliable() -> None:
+    """complete=false com error vazio (ex.: rejeição de linha) → reliable False."""
+    service, user = _preview_service(
+        stock_rows=[
+            {
+                "product_code": "90260001",
+                "quantity": 1.0,
+                "unit_of_measure": "MI",
+                "branch": "01",
+                "warehouse": "01",
+            }
+        ]
+    )
+    preview = service.build_preview(user, branch="02")
+    assert preview["stock"]["sb2_complete"] is False
+    assert preview["stock"]["sb2_error"] in (None, "")
+    assert preview["reliable"] is False
+    assert preview["integrity"]["stock_data_complete"] is False
+    assert preview["integrity"]["consolidated_coverage_reliable"] is False
+    assert preview["scenarios"]["consolidated_proposed"]["reliable"] is False
+
+
+def test_residual_sb2_zero_confirmed_is_valid_source() -> None:
+    service, user = _preview_service(
+        stock_rows=[
+            {
+                "product_code": "90260001",
+                "quantity": 0.0,
+                "unit_of_measure": "MI",
+                "branch": "02",
+                "warehouse": "01",
+            }
+        ]
+    )
+    preview = service.build_preview(user, branch="02")
+    assert preview["stock"]["sb2_complete"] is True
+    assert "90260001" in preview["stock"]["sb2_diagnostics"]["zero_vs_absent"][
+        "zero_confirmed"
+    ]
+    assert preview["integrity"]["stock_data_complete"] is True
+    assert preview["scenarios"]["myweg_only"]["line_count"] == 1
+    assert preview["scenarios"]["myweg_only"]["summary"]["covered_by_stock"] == 0
+    # ADR ainda bloqueia consolidação confiável.
+    assert preview["integrity"]["consolidation_adr_blocked"] is True
+    assert preview["scenarios"]["consolidated_proposed"]["blocked"] is True
+
+
+def test_residual_protheus_only_keeps_op_parity() -> None:
+    service, user = _preview_service(
+        sales=[
+            {
+                "filial": "02",
+                "pedido": "P-OP",
+                "linha": "01",
+                "produto": "90268888",
+                "saldo": 1.0,
+                "quantidade": 1.0,
+                "entregue": 0.0,
+                "codigo_cadastro": "000050",
+                "loja_cadastro": "01",
+                "nome_cliente": "OUTRO",
+                "tipo_entidade": "CLIENTE",
+                "unidade": "MI",
+                "data_entrega": "2026-11-20",
+                "no_estoque": 0.0,
+            }
+        ],
+        ops=[
+            {
+                "filial": "02",
+                "numero_op": "OP88",
+                "produto": "90268888",
+                "saldo_op": 1.0,
+                "data_fim_prevista_op": "2026-11-15",
+            }
+        ],
+        stock_rows=[
+            {
+                "product_code": "90260001",
+                "quantity": 0.0,
+                "unit_of_measure": "MI",
+                "branch": "02",
+                "warehouse": "01",
+            }
+        ],
+    )
+    preview = service.build_preview(user, branch="02")
+    prot = preview["scenarios"]["protheus_only"]
+    assert prot["summary"]["covered_by_orders"] == pytest.approx(1.0)
+    cons = preview["scenarios"]["consolidated_proposed"]
+    # Consolidado stock-only: Protheus 90268888 sem estoque → descoberto; sem OP.
+    prot_cons = next(
+        i for i in cons["items_sample"] if i["sales_order"] == "P-OP"
+    )
+    assert prot_cons["covering_orders"] == []
+    assert cons["summary"]["covered_by_orders"] == pytest.approx(0.0)
