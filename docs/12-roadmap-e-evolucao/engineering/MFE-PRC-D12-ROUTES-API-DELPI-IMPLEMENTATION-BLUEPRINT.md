@@ -284,3 +284,8 @@ EXECUTION_DRIFT: ...
 ```
 
 **Implementation gate:** o PO aprovou comportamento UX/semântica, mas ainda é necessário signoff técnico Engineering/integração sobre schemaVersion, identidade física SA5, completude, políticas de freshness e verificações. Antes da aprovação, Devin pode inventariar e preparar testes/PR de contrato; **não mudar authority**. A implementação nos owners existentes fica liberada apenas após fechamento desses gates conforme governança.
+
+
+## D13 supersession — edição direta e diff automático (PO, 2026-11-08)
+
+**Evolução aprovada pelo PO:** [MFE-PRC-D13-DIRECT-EDIT-AUTOMATIC-DIFF-AND-SA5-OPERATIONS.md](./MFE-PRC-D13-DIRECT-EDIT-AUTOMATIC-DIFF-AND-SA5-OPERATIONS.md). D13 substitui **o modo de interação UPDATE com checkbox + campo duplicado** por **edição in-place preenchida com valor oficial, diff automático SB1/SA5, indicadores Alterado/Adicionado/Remoção solicitada e desfazer**. O fluxo CREATE, a BFF de leitura oficial e owners permanecem. **P0 de integridade:** `supplierLinkChanges` não deriva hoje `changed_paths`, logo SA5-only exige fix e teste fail-closed antes de aceite. A proposta de `remove` SA5 é nova direção PO e requer contrato/postcondition owner; não autoriza write ERP. A nomenclatura `TARGET` das seções anteriores é histórico de design; consultar D13 para o comportamento atual aprovado. `D13_IMPLEMENTATION_PENDING / PRODUCTION_DEPLOY_SUSPENDED`.
