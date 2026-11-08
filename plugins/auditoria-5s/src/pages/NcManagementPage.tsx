@@ -276,7 +276,7 @@ export function NcManagementPage({
               setPendingForceClose(null);
               setCancelReason("");
             }
-          }
+          }}
         >
           <div
             className="a5s-confirm-dialog"
