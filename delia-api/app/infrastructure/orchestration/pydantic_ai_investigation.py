@@ -1008,7 +1008,6 @@ class PydanticAiInvestigationOrchestrator:
     ) -> GovernedCapabilityAttempt:
         os.environ.setdefault("PYDANTIC_AI_NO_BANNER", "1")
         from pydantic_ai import Agent, ModelRetry, RunContext, UsageLimits
-        from pydantic_ai.output import PromptedOutput
         from pydantic_ai.toolsets import FunctionToolset
 
         deps = InvestigationDeps(
@@ -1602,7 +1601,7 @@ class PydanticAiInvestigationOrchestrator:
             toolsets=[agent_toolset],
             instructions=instructions,
             retries=self._agent_retries,
-            output_type=PromptedOutput(InvestigationAnswer),
+            output_type=InvestigationAnswer,
             capabilities=list(agent_capabilities),
         )
 

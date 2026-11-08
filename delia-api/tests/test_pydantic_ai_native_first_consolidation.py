@@ -49,22 +49,21 @@ from tests.test_pydantic_ai_semantic_rework import (
 
 def _final_answer(answer: str = "", status: str = "insufficient",
                   refs: list | None = None) -> ModelResponse:
-    """Native prompted output — the Agent ends every run with text
-    carrying the strict InvestigationAnswer JSON shape."""
-    import json as _json
+    """Native typed output — the Agent now ends every run with a
+    ``final_result`` call carrying the strict InvestigationAnswer
+    shape instead of free text."""
     return ModelResponse(
         parts=[
-            TextPart(
-                _json.dumps(
-                    {
-                        "schema_version": "1",
-                        "status": status,
-                        "answer": answer,
-                        "evidence_refs": refs or [],
-                        "unmet_obligations": [],
-                        "limitations": [],
-                    }
-                )
+            ToolCallPart(
+                "final_result",
+                {
+                    "schema_version": "1",
+                    "status": status,
+                    "answer": answer,
+                    "evidence_refs": refs or [],
+                    "unmet_obligations": [],
+                    "limitations": [],
+                },
             )
         ]
     )

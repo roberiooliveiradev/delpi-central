@@ -142,3 +142,14 @@ NEXT_BOUNDED_STEP=
 ```
 
 **Norma de coordenação:** validação inicial pode ser sequencial para evitar risco; **a entrega e aceite final serão globais**, não uma migração opcional permanente por partes. Se G2 falhar, interromper e reportar evidência; se G2 passar, executar G3–G7 no mesmo escopo. Não aceitar documentação-only, teste de strings ou alegação de que uma saída tipada equivale a conclusão empresarial.
+
+
+## 8. RESULTADO DA EXECUÇÃO — gate G2 falhou (rollback executado)
+
+**Data:** 2026-11-08 | **Commits:** migração `b30d8b3`, rework/fixtures, rollback `ver HEAD`.
+
+- **Migração aplicada:** os 2 Agents produtivos (investigation, model_invocation) migrados para `PromptedOutput`; fixtures de teste adaptadas (final_result→texto JSON, custom_output_args→custom_output_text); suíte focada verde (~148 testes).
+- **Gate G2 — MCP×Prompted coexistência: FALHOU (PROVEN).** Em eval real (dev stack, identidade autorizada, `live_catalog=12` capabilities confirmadas ofertadas): Qwen C1×3, Kimi C1×2, Kimi B1×2, controle conceitual — **0 invokes MCP em todos os cenários**. O modelo emitia `InvestigationAnswer` tipada `insufficient`/`clarification` (narrando intenção em vez de executar) — inclusive Kimi B1 que no baseline ToolOutput fazia 6-8 invokes GROUNDED. Repetido: runs solo sem contenção, e variante `template=` com instrução tool-use-first — ainda 0 invokes. Retry bounded existente disparou (2 passes) sem conversão.
+- **Causa caracterizada:** `PromptedOutput` dá ao modelo um caminho de resposta final em texto que valida imediatamente — o modelo emite a declaração tipada no 1º turno em vez de investigar. Não é bloqueio de ferramenta (tools presentes e chamáveis — `request_user_clarification` foi usada); é âncora comportamental do modo de saída nesta família de modelos.
+- **Ação:** ROLLBACK conforme §5 stop-condition — arquivos produtivos e fixtures restaurados ao baseline `14179184` (output_type original). Nenhuma mistura parcial mantida.
+- **Veredicto:** `ARCHITECTURE_DECISION_REQUIRED` — globalização de `PromptedOutput` reprovada no gate de coexistência por evidência real. Opções para coordenação: (a) manter ToolOutput implícito e tratar o gap de prosa só quando tipado (status atual — honesto NON_GROUNDED); (b) instrução/contrato que force investigação antes de resposta tipada (risco de ancoragem provado); (c) avaliar `NativeOutput` por-provider no adapter legítimo (latência Ollama documentada); (d) combinação investigação-forçada + output nativo sob nova spike. **R01 permanece OPEN.**
