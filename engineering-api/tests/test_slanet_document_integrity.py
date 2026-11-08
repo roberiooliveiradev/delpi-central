@@ -356,17 +356,22 @@ def test_produce_understanding_never_calls_pdfium_on_fetch_failure(
     assert source.pdf_calls == 1
 
 
-def test_line_texts_distributed_across_span_rows():
-    """Célula rowspan=2 com duas bandas Y ('C 6 D 3') → duas linhas."""
+def test_line_texts_distributed_by_visual_band_rows():
+    """Célula rowspan=1 'C 6 D 3' (caso real p9) → bandas redistribuídas
+    às linhas SLANet por centroide Y das colunas confiáveis."""
     cells = [
-        {"row": 0, "col": 0, "text": "Item", "rowspan": 1, "colspan": 1},
-        {"row": 0, "col": 1, "text": "Codigo", "rowspan": 1, "colspan": 1},
-        {
-            "row": 1, "col": 0, "rowspan": 2, "colspan": 1,
-            "text": "C 6 D 3", "line_texts": ["C 6", "D 3"],
-        },
-        {"row": 1, "col": 1, "text": "10081389", "rowspan": 1, "colspan": 1},
-        {"row": 2, "col": 1, "text": "10081685", "rowspan": 1, "colspan": 1},
+        {"row": 0, "col": 0, "text": "Item", "rowspan": 1, "colspan": 1,
+         "bounding_box_px": [0, 0, 40, 0, 40, 18, 0, 18]},
+        {"row": 0, "col": 1, "text": "Codigo", "rowspan": 1, "colspan": 1,
+         "bounding_box_px": [40, 0, 120, 0, 120, 18, 40, 18]},
+        # célula real observada: rowspan=1, texto de 2 linhas visuais
+        {"row": 1, "col": 0, "text": "C 6 D 3", "rowspan": 1, "colspan": 1,
+         "line_texts": ["C 6", "D 3"], "line_centers": [30.0, 50.0],
+         "bounding_box_px": [0, 20, 40, 20, 40, 60, 0, 60]},
+        {"row": 1, "col": 1, "text": "10081389", "rowspan": 1, "colspan": 1,
+         "bounding_box_px": [40, 20, 120, 20, 120, 38, 40, 38]},
+        {"row": 2, "col": 1, "text": "10081685", "rowspan": 1, "colspan": 1,
+         "bounding_box_px": [40, 40, 120, 40, 120, 58, 40, 58]},
     ]
     from engineering_app.application.drawing.understanding import (
         rows_from_native_cells,
@@ -377,3 +382,99 @@ def test_line_texts_distributed_across_span_rows():
     assert [r["component_code"] for r in rows] == [
         "10081389", "10081685",
     ]
+
+
+def test_multiline_single_row_is_not_split():
+    """Duas bandas mapeando para a MESMA linha (descrição multilinha
+    legítima) não são divididas."""
+    cells = [
+        {"row": 0, "col": 0, "text": "Codigo", "rowspan": 1, "colspan": 1,
+         "bounding_box_px": [0, 0, 120, 0, 120, 18, 0, 18]},
+        {"row": 1, "col": 0, "text": "10081389", "rowspan": 1, "colspan": 1,
+         "bounding_box_px": [0, 20, 120, 20, 120, 38, 0, 38]},
+        {"row": 2, "col": 0, "text": "TUBO FLEX", "rowspan": 1,
+         "colspan": 1, "line_texts": ["TUBO FLEX", "ALTA PRESS"],
+         "line_centers": [50.0, 58.0],
+         "bounding_box_px": [0, 40, 120, 40, 120, 70, 0, 70]},
+        {"row": 3, "col": 0, "text": "10081685", "rowspan": 1, "colspan": 1,
+         "bounding_box_px": [0, 72, 120, 72, 120, 90, 0, 90]},
+    ]
+    from engineering_app.application.drawing.understanding import (
+        rows_from_native_cells,
+    )
+    rows, _ = rows_from_native_cells(cells, page=9)
+    # Bandas mapeiam para a mesma linha → nenhuma linha extra criada;
+    # o texto permanece junto na row 2.
+    assert len(rows) == 3
+    row2 = [r for r in rows if r["row"] == 2][0]
+    text2 = " ".join(c["text"] for c in row2["cells"])
+    assert "TUBO FLEX" in text2
+
+
+def _quad(x1, y1, x2, y2):
+    return [x1, y1, x2, y1, x2, y2, x1, y2]
+
+
+def test_engine_emits_line_texts_for_two_band_tokens(monkeypatch):
+    """Tokens quad de 2 bandas Y numa célula rowspan=1 → line_texts."""
+    class FakePdf:
+        def __len__(self):
+            return 1
+        def close(self):
+            return None
+
+    monkeypatch.setattr(
+        engine_adapters, "_open_pdf_document",
+        lambda _b: (FakePdf(), "tmp"),
+    )
+    monkeypatch.setattr(
+        engine_adapters, "_render_page",
+        lambda _p, _i: {"image": _FakeImage(120, 80), "page_index": _i},
+    )
+    # 6 <td>: header(0,1) + row1(c0 fundida cobrindo 2 bandas, c1) +
+    # row2(c0 vazia, c1) — reproduz o defeito real: rowspan=1, caixa
+    # geométrica cobrindo duas linhas visuais.
+    monkeypatch.setattr(
+        engine_adapters,
+        "_predict_table_structure",
+        lambda _crop: [
+            {
+                "structure": (
+                    "<table><tr><td></td><td></td></tr>"
+                    "<tr><td></td><td></td></tr>"
+                    "<tr><td></td><td></td></tr></table>"
+                ),
+                "bbox": [
+                    _quad(0, 0, 30, 18),
+                    _quad(40, 0, 90, 18),
+                    _quad(0, 18, 30, 62),
+                    _quad(40, 18, 90, 40),
+                    _quad(0, 62, 30, 62),
+                    _quad(40, 40, 90, 62),
+                ],
+                "structure_score": 0.9,
+            }
+        ],
+    )
+    # tokens: 2 bandas Y na col 0 (cy≈30 e ≈50), códigos separados col 1
+    toks = [
+        {"text": "X", "bounding_box_px": _quad(2, 24, 10, 36)},
+        {"text": "4", "bounding_box_px": _quad(14, 24, 22, 36)},
+        {"text": "Y", "bounding_box_px": _quad(2, 44, 10, 56)},
+        {"text": "7", "bounding_box_px": _quad(14, 44, 22, 56)},
+        {"text": "90000001", "bounding_box_px": _quad(40, 24, 80, 36)},
+        {"text": "90000002", "bounding_box_px": _quad(40, 44, 80, 56)},
+    ]
+    pdf = b"%PDF-fixture"
+    res = engine_adapters.TableStructureEngine().run(
+        pdf,
+        document_hash_sha256=_sha(pdf),
+        pages=[1],
+        crop_box=[0, 0, 120, 60],
+        ocr_tokens=toks,
+    )
+    assert res["error_kind"] is None
+    split = [c for c in res["cells"] if c.get("line_texts")]
+    assert len(split) == 1
+    assert split[0]["line_texts"] == ["X 4", "Y 7"]
+    assert len(split[0]["line_centers"]) == 2

@@ -1442,24 +1442,70 @@ def rows_from_native_cells(
     grouped: dict[int, list[dict]] = {}
     for cell in cells:
         grouped.setdefault(int(cell.get("row") or 0), []).append(cell)
-    # Célula nativa cobrindo N linhas visuais (bandas Y distintas dos
-    # tokens) com rowspan nativo igual → distribui o texto por linha
-    # na linha âncora+i. Só quando a geometria coincide com o span —
-    # divergência permanece ambígua, nunca distribuída à força.
+    # Célula nativa cobrindo múltiplas bandas Y de tokens (colunas
+    # estreitas fundidas, ex.: "C 6 D 3" com rowspan=1 OU >1): cada
+    # banda é redistribuída para a linha nativa cujo centroide Y é o
+    # mais próximo — evidência geométrica, independente do rowspan.
+    # O centroide por linha usa apenas células sem split (colunas
+    # confiáveis, ex.: códigos). Bandas que mapeiam para a MESMA
+    # linha permanecem juntas — descrição multilinha legítima não é
+    # dividida.
+    row_cy: dict[int, float] = {}
+    row_spans: dict[int, list[tuple[float, float]]] = {}
+    for row_index, row_cells in grouped.items():
+        cys = []
+        for c in row_cells:
+            if c.get("line_texts") or int(c.get("rowspan") or 1) > 1:
+                continue
+            b = c.get("bounding_box_px") or []
+            if len(b) >= 8:
+                _ys = [b[1], b[3], b[5], b[7]]
+            elif len(b) >= 4:
+                _ys = [b[1], b[3]]
+            else:
+                continue
+            lo, hi = float(min(_ys)), float(max(_ys))
+            cys.append((lo + hi) / 2.0)
+            row_spans.setdefault(row_index, []).append((lo, hi))
+        if cys:
+            row_cy[row_index] = sum(cys) / len(cys)
     for row_index, row_cells in list(grouped.items()):
         for cell in row_cells:
             lines = cell.get("line_texts") or []
-            span = int(cell.get("rowspan") or 1)
-            if len(lines) > 1 and len(lines) == span:
-                cell["_split_text"] = lines[0]
-                cell["line_texts"] = []
-                for offset in range(1, span):
-                    virtual = dict(cell)
-                    virtual["_split_text"] = lines[offset]
-                    virtual["line_texts"] = []
-                    grouped.setdefault(row_index + offset, []).append(
-                        virtual
+            centers = cell.get("line_centers") or []
+            if not (len(lines) > 1 and len(centers) == len(lines)):
+                continue
+            targets: dict[int, list[str]] = {}
+            for line, cy in zip(lines, centers):
+                # 1ª evidência: faixa-Y de célula confiável da linha
+                # contém o centro da banda (mesma linha visual).
+                hits = [
+                    r
+                    for r, spans in row_spans.items()
+                    if any(lo - 1.0 <= cy <= hi + 1.0 for lo, hi in spans)
+                ]
+                if len(hits) == 1:
+                    target = hits[0]
+                elif row_cy:
+                    target = min(
+                        row_cy, key=lambda r: abs(row_cy[r] - cy)
                     )
+                else:
+                    target = row_index
+                targets.setdefault(target, []).append(line)
+            if len(targets) < 2:
+                continue
+            cell["_split_text"] = " ".join(
+                targets.get(row_index, [])
+            ) or None
+            cell["line_texts"] = []
+            for target, tlines in targets.items():
+                if target == row_index:
+                    continue
+                virtual = dict(cell)
+                virtual["_split_text"] = " ".join(tlines)
+                virtual["line_texts"] = []
+                grouped.setdefault(target, []).append(virtual)
     header_row = None
     header_score = 0
     for row_index, row_cells in grouped.items():

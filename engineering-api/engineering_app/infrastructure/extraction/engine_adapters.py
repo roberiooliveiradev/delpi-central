@@ -810,16 +810,24 @@ class TableStructureEngine:
                         if ti >= len(page_tokens):
                             continue
                         tb = page_tokens[ti].get("bounding_box_px") or []
-                        if len(tb) >= 4:
-                            _tok_geom.append(
-                                (
-                                    (float(tb[1]) + float(tb[3])) / 2.0,
-                                    (float(tb[0]) + float(tb[2])) / 2.0,
-                                    float(tb[3]) - float(tb[1]),
-                                    ti,
-                                )
+                        if len(tb) >= 8:
+                            _ys = [tb[1], tb[3], tb[5], tb[7]]
+                            _xs = [tb[0], tb[2], tb[4], tb[6]]
+                        elif len(tb) >= 4:
+                            _ys = [tb[1], tb[3]]
+                            _xs = [tb[0], tb[2]]
+                        else:
+                            continue
+                        _tok_geom.append(
+                            (
+                                (float(min(_ys)) + float(max(_ys))) / 2.0,
+                                (float(min(_xs)) + float(max(_xs))) / 2.0,
+                                float(max(_ys)) - float(min(_ys)),
+                                ti,
                             )
+                        )
                     line_texts: list[str] = []
+                    line_centers: list[float] = []
                     if len(_tok_geom) > 1:
                         _hs = sorted(g[2] for g in _tok_geom if g[2] > 0)
                         _med = _hs[len(_hs) // 2] if _hs else 0.0
@@ -852,6 +860,9 @@ class TableStructureEngine:
                                         )
                                     ).strip()
                                 )
+                                line_centers.append(
+                                    sum(g[0] for g in band) / len(band)
+                                )
                     text = " ".join(
                         (
                             page_tokens[ti].get("raw_text")
@@ -881,6 +892,7 @@ class TableStructureEngine:
                     )
                     if len(line_texts) > 1:
                         _cell_out["line_texts"] = line_texts
+                        _cell_out["line_centers"] = line_centers
                     cells.append(_cell_out)
             _res = make_result(
                 provider_id=self.provider_id,
