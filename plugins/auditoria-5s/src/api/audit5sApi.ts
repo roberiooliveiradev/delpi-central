@@ -496,6 +496,14 @@ export async function reopenNcAction(ncId: string) {
   return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
+export async function cancelNcCandidate(auditId: string, responseId: string, reason: string) {
+  const res = await httpPost<ApiEnvelope<{ status: string; reason: string }>>(
+    `${API_BASE}/audits/${auditId}/nc-candidates/${responseId}/cancel`,
+    { reason },
+  );
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
+}
+
 export async function forceCloseNcWithoutTreatment(ncId: string) {
   const res = await httpPost<ApiEnvelope<Nonconformity>>(
     `${API_BASE}/nonconformities/${ncId.trim()}/force-close-without-treatment`,

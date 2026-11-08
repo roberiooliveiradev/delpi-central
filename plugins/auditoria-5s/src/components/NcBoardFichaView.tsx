@@ -55,7 +55,7 @@ function FichaField({ label, value }: { label: string; value: ReactNode }) {
 
 export function NcBoardFichaView({ item, treatmentItem, attachmentsByNcId, actions }: Props) {
   const rowStatus = resolveNcBoardRowStatus(item);
-  const ncStatus = item.is_registered ? item.status : "pending";
+  const ncStatus = item.status === "cancelled" ? "cancelled" : item.is_registered ? item.status : "pending";
   const attachments = item.is_registered ? attachmentsByNcId[item.id] : undefined;
   const score = treatmentItem?.score ?? item.score ?? 0;
 
@@ -69,7 +69,7 @@ export function NcBoardFichaView({ item, treatmentItem, attachmentsByNcId, actio
           <span
             className={`a5s-status-badge a5s-status-badge--${ncBoardStatusVariant(ncStatus, item.is_registered)}`}
           >
-            {item.is_registered ? ncStatusLabel(ncStatus) : "Aguardando registro"}
+            {ncStatus === "cancelled" ? "Cancelada" : item.is_registered ? ncStatusLabel(ncStatus) : "Aguardando registro"}
           </span>
           <span className={`a5s-nc-board-row-status a5s-nc-board-row-status--${rowStatus.tone}`}>
             {rowStatus.label}
@@ -114,6 +114,16 @@ export function NcBoardFichaView({ item, treatmentItem, attachmentsByNcId, actio
         </div>
       </section>
 
+      {item.status === "cancelled" && item.cancellation_reason ? (
+        <section className="a5s-nc-ficha__section">
+          <h3>Cancelamento da NC</h3>
+          <p className="a5s-nc-ficha__text">{item.cancellation_reason}</p>
+          {item.cancelled_at ? (
+            <p className="a5s-nc-ficha__hint">Registrado em {formatActionTimestamp(item.cancelled_at)}</p>
+          ) : null}
+        </section>
+      ) : null}
+
       {item.is_registered ? (
         <section className="a5s-nc-ficha__section">
           <h3>Evidências</h3>
@@ -151,8 +161,9 @@ export function NcBoardFichaView({ item, treatmentItem, attachmentsByNcId, actio
       ) : (
         <section className="a5s-nc-ficha__section">
           <p className="a5s-nc-ficha__notice">
-            O plano de ação ainda não foi registrado. Use <strong>Atualizar</strong> para iniciar o
-            tratamento.
+            {item.status === "cancelled"
+              ? "Esta não conformidade foi cancelada antes do cadastro do plano de ação."
+              : <>O plano de ação ainda não foi registrado. Use <strong>Atualizar</strong> para iniciar o tratamento.</>}
           </p>
         </section>
       )}

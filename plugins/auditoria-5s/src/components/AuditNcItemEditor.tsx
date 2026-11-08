@@ -49,7 +49,7 @@ function scoreTone(score: number): string {
 
 const WORKFLOW_STEPS = [
   { step: 1, label: "Registrar plano" },
-  { step: 2, label: "Anexar evidências" },
+  { step: 2, label: "Evidências (opcional)" },
   { step: 3, label: "Finalizar ação" },
 ];
 
@@ -218,7 +218,7 @@ export function AuditNcItemEditor({
       <div className="a5s-nc-item__footer">
         <span className="a5s-nc-item__save-hint" aria-live="polite">
           {finalized
-            ? "Ação finalizada com evidências."
+            ? "Ação finalizada."
             : saving
               ? "Salvando plano..."
               : savedFlash
@@ -234,14 +234,12 @@ export function AuditNcItemEditor({
             title={
               !planComplete
                 ? "Preencha o plano de ação completo"
-                : !canFinalize
-                  ? "Anexe foto do antes"
-                  : undefined
+                : undefined
             }
             onClick={onFinalize}
           >
             <CheckCircle2 size={15} aria-hidden />
-            {finalizing ? "Finalizando..." : "Finalizar ação com evidências"}
+            {finalizing ? "Finalizando..." : "Finalizar ação"}
           </button>
         ) : null}
       </div>

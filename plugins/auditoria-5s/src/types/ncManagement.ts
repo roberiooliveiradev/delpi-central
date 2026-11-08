@@ -47,6 +47,9 @@ export type NcBoardItem = {
   priority: string | null;
   status: string;
   is_registered?: boolean;
+  cancellation_reason?: string | null;
+  cancelled_at?: string | null;
+  cancelled_by_user_id?: string | null;
   score?: number | null;
   created_at?: string | null;
   updated_at?: string | null;

@@ -73,8 +73,7 @@ export function NcManagementTable({
     return (
       canAdmin &&
       Boolean(onForceClose) &&
-      item.is_registered !== false &&
-      canAdminForceCloseNcBoardItem(item.status)
+      (item.status === "pending" || canAdminForceCloseNcBoardItem(item.status))
     );
   }
 

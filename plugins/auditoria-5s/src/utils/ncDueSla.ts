@@ -15,14 +15,14 @@ export type NcBoardRowStatus = {
 };
 
 export function resolveNcBoardRowStatus(item: NcBoardItem): NcBoardRowStatus {
+  if (item.status === "cancelled") {
+    return { label: "Cancelada", tone: "cancelled" };
+  }
   if (item.is_registered === false || item.status === "pending") {
     return { label: "Aguardando registro", tone: "pending" };
   }
   if (item.status === "closed") {
     return { label: "Concluída", tone: "closed" };
-  }
-  if (item.status === "cancelled") {
-    return { label: "Cancelada", tone: "cancelled" };
   }
   if (item.due_sla_level === "overdue") {
     return {

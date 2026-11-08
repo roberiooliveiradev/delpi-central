@@ -1,6 +1,5 @@
 import type { NcCandidate, Nonconformity, ResponseAttachment } from "../api/audit5sApi";
 import type { NcAttachmentMap } from "../api/audit5sApi";
-import { hasNcEvidence } from "./ncAttachments";
 
 export type NcFormState = {
   description: string;
@@ -108,12 +107,10 @@ export function isNcFinalized(nc: Nonconformity | null | undefined): boolean {
 export function canFinalizeNcAction(
   form: NcFormState,
   nc: Nonconformity | null | undefined,
-  attachmentsByNcId: NcAttachmentMap,
+  _attachmentsByNcId: NcAttachmentMap,
 ): boolean {
   if (!nc || isNcFinalized(nc)) return false;
-  if (!isNcPlanComplete(form)) return false;
-  const evidence = hasNcEvidence(nc.id, attachmentsByNcId);
-  return evidence.before;
+  return isNcPlanComplete(form);
 }
 
 export function computeNcTreatmentStats(
@@ -176,6 +173,6 @@ export function formsEqual(a: NcFormState, b: NcFormState): boolean {
 
 export function ncWorkflowStep(status: string | undefined): 1 | 2 | 3 {
   if (status === "closed") return 3;
-  if (status === "in_progress") return 2;
+  if (status === "in_progress") return 3;
   return 1;
 }
