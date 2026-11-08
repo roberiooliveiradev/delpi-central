@@ -130,3 +130,8 @@ linha removida → desmontar painel e foco volta à ação apropriada
 Arquivos de partida: `plugins/engineering/src/features/product-registration/pages/PrcCreatePage.tsx`, `components/PrcSupplierLookup.tsx`, `prc.css`, `prcCopy.ts`, `engineeringUi.ts` **somente se necessário**. Preservar D7-D10 (Select TOTVS, overlay portal, busca SA2 e helps).
 
 Estados: `PO_APPROVED_VISUAL_TARGET` para design; `IMPLEMENTATION_PENDING` para código; `VISUAL_QA_PENDING` para navegador; `PRODUCTION_DEPLOY_SUSPENDED`.
+
+
+## 10. Execução integral V2 + justificativas D14
+
+**Decisão complementar PO / documento obrigatório:** [D14 — Busca colapsável e justificativas opcionais individuais](./MFE-PRC-D14-COMPLETE-SUPPLIER-LOOKUP-AND-OPTIONAL-REASONS.md). O wireframe V2 permanece aprovado e **não foi implementado por completo** enquanto a primeira célula continuar exibindo campo de busca permanente e concatenado. A primeira célula é **somente lupa**, expandindo lookup SA2 remoto por linha; Código, Loja, Razão social, Nome fantasia (quando oficial), PN e Catálogo ocupam colunas separadas. Ícones plus/search/trash/undo, portal sem clipping, acessibilidade e mobile são critérios bloqueantes. **Justificativas opcionais:** botão expansível e textarea multilinha máx. 250 para cada campo SB1, cada PN e cada Catálogo por vínculo, e cada operação ADD/REMOVE; sem supplierReason geral; backend 422 se razão >250. Fica proibido declarar PASS V2 sem browser E2E autenticado de CREATE e UPDATE com evidência do bundle DEV. Remoção oficial depende de signoff owner; nenhuma escrita ERP.
