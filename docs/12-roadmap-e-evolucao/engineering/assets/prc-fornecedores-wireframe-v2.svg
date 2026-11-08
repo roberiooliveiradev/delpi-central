@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 910" role="img" aria-label="Wireframe completo da ficha técnica com fornecedores em tabela e busca expansível">
+<rect x="0" y="0" width="1600" height="910" rx="0" fill="#080f1b" stroke="#080f1b" stroke-width="1"/>
+<rect x="0" y="0" width="1600" height="65" rx="0" fill="#101f35" stroke="#101f35" stroke-width="1"/>
+<text x="40" y="39" fill="#dbeafe" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="700">PORTAL ENGENHARIA  /  CONTROLE E CADASTRO DE PRODUTOS</text>
+<text x="1270" y="38" fill="#a7b9cb" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" font-weight="500">Ficha técnica  ·  etapa 2 de 3</text>
+<text x="44" y="104" fill="#22b3ed" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="29" font-weight="700">Nova solicitação</text>
+<text x="43" y="130" fill="#9cb4c8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400">Solicite cadastro ou alteração; a publicação oficial permanece sob responsabilidade do TOTVS.</text>
+<rect x="40" y="154" width="1520" height="168" rx="9" fill="#111a2b" stroke="#2b394b" stroke-width="1"/>
+<text x="60" y="184" fill="#f6faff" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="18" font-weight="700">Identificação e classificação</text>
+<text x="60" y="211" fill="#c7d6e8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="600">Descrição</text>
+<rect x="60" y="219" width="1480" height="33" rx="9" fill="#0c1423" stroke="#2b394b" stroke-width="1"/>
+<text x="60" y="269" fill="#c7d6e8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="600">Grupo *</text>
+<rect x="60" y="277" width="410" height="32" rx="9" fill="#0c1423" stroke="#2b394b" stroke-width="1"/>
+<text x="75" y="298" fill="#a0b5c7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400">Selecionar...</text>
+<text x="445" y="298" fill="#c7d6e8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="400">⌄</text>
+<text x="486" y="269" fill="#c7d6e8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="600">Tipo *</text>
+<rect x="486" y="277" width="410" height="32" rx="9" fill="#0c1423" stroke="#2b394b" stroke-width="1"/>
+<text x="501" y="298" fill="#a0b5c7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400">Selecionar...</text>
+<text x="871" y="298" fill="#c7d6e8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="400">⌄</text>
+<text x="912" y="269" fill="#c7d6e8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="600">Unidade *</text>
+<rect x="912" y="277" width="410" height="32" rx="9" fill="#0c1423" stroke="#2b394b" stroke-width="1"/>
+<text x="927" y="298" fill="#a0b5c7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400">Selecionar...</text>
+<text x="1297" y="298" fill="#c7d6e8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="400">⌄</text>
+<rect x="40" y="338" width="1520" height="126" rx="9" fill="#111a2b" stroke="#2b394b" stroke-width="1"/>
+<text x="60" y="367" fill="#f6faff" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="18" font-weight="700">Estoque e contabilidade</text>
+<text x="60" y="393" fill="#c7d6e8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="600">Armazém padrão *</text>
+<rect x="60" y="404" width="350" height="35" rx="9" fill="#0c1423" stroke="#2b394b" stroke-width="1"/>
+<text x="73" y="427" fill="#a0b5c7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400">Selecionar...</text>
+<text x="433" y="393" fill="#c7d6e8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="600">Conta contábil *</text>
+<rect x="433" y="404" width="350" height="35" rx="9" fill="#0c1423" stroke="#2b394b" stroke-width="1"/>
+<text x="446" y="427" fill="#a0b5c7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400">Selecionar...</text>
+<text x="806" y="393" fill="#c7d6e8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="600">Produto de terceiros *</text>
+<rect x="806" y="404" width="350" height="35" rx="9" fill="#0c1423" stroke="#2b394b" stroke-width="1"/>
+<text x="819" y="427" fill="#a0b5c7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400">Selecionar...</text>
+<text x="1179" y="393" fill="#c7d6e8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="600">Referência do cliente</text>
+<rect x="1179" y="404" width="350" height="35" rx="9" fill="#0c1423" stroke="#2b394b" stroke-width="1"/>
+<text x="1192" y="427" fill="#a0b5c7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400"></text>
+<rect x="40" y="479" width="1520" height="352" rx="11" fill="#0f1929" stroke="#1196c5" stroke-width="2"/>
+<text x="61" y="508" fill="#ffffff" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="19" font-weight="700">Fornecedores</text>
+<text x="61" y="530" fill="#bbcedc" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400">Código, loja e razão social oficiais; Part Number e catálogo opcionais.</text>
+<rect x="1320" y="491" width="217" height="35" rx="8" fill="#14263c" stroke="#446781" stroke-width="1"/>
+<text x="1342" y="513" fill="#f5fbff" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" font-weight="600">+  Adicionar fornecedor</text>
+<rect x="58" y="548" width="1484" height="36" rx="9" fill="#122338" stroke="#2b394b" stroke-width="1"/>
+<text x="72" y="571" fill="#e9f2fb" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="400"></text>
+<text x="119" y="572" fill="#cbe7f8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="700">Código</text>
+<text x="249" y="572" fill="#cbe7f8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="700">Loja</text>
+<text x="327" y="572" fill="#cbe7f8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="700">Razão social</text>
+<text x="722" y="572" fill="#cbe7f8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="700">Nome fantasia</text>
+<text x="960" y="572" fill="#cbe7f8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="700">Part Number</text>
+<text x="1198" y="572" fill="#cbe7f8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="700">Catálogo</text>
+<text x="1423" y="572" fill="#cbe7f8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="700">Ações</text>
+<rect x="58" y="586" width="1484" height="51" rx="9" fill="#123047" stroke="#2b394b" stroke-width="1"/>
+<rect x="71" y="597" width="30" height="30" rx="7" fill="#093951" stroke="#15bcef" stroke-width="1"/>
+<text x="79" y="618" fill="#e8fcff" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="600">⌕</text>
+<text x="119" y="617" fill="#e7f8ff" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" font-weight="600">001572</text>
+<text x="249" y="617" fill="#e9f2fb" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" font-weight="400">01</text>
+<text x="327" y="617" fill="#e9f2fb" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400">3RHO INTERRUPTORES AUTOMOTIVOS LTDA</text>
+<text x="722" y="617" fill="#e9f2fb" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400">3RHO</text>
+<rect x="947" y="597" width="210" height="30" rx="9" fill="#0b1425" stroke="#2b394b" stroke-width="1"/>
+<rect x="1182" y="597" width="199" height="30" rx="9" fill="#0b1425" stroke="#2b394b" stroke-width="1"/>
+<rect x="1450" y="598" width="30" height="30" rx="7" fill="#093951" stroke="#15bcef" stroke-width="1"/>
+<text x="1458" y="619" fill="#e8fcff" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="600">×</text>
+<rect x="58" y="641" width="1484" height="142" rx="5" fill="#101f33" stroke="#245a78" stroke-width="1"/>
+<rect x="72" y="649" width="5" height="126" rx="1" fill="#08a9ea" stroke="#08a9ea" stroke-width="1"/>
+<text x="97" y="667" fill="#f1fcff" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="600">Pesquisa expansível da linha selecionada</text>
+<text x="1100" y="667" fill="#a9cde2" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="400">Fechar ×</text>
+<rect x="97" y="676" width="730" height="33" rx="7" fill="#091827" stroke="#0bc5ef" stroke-width="2"/>
+<text x="114" y="697" fill="#bacfe0" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400">⌕  Buscar por código, razão social ou nome fantasia</text>
+<text x="847" y="696" fill="#9bb5c8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="400">Seleção preenche código, loja e razão social automaticamente.</text>
+<text x="98" y="731" fill="#eef8fb" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="600">TE CONNECTIVITY BRASIL IND DE ELET LTDA</text>
+<text x="98" y="748" fill="#b0c4d7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="11" font-weight="400">Código: 000002  ·  Loja: 01  ·  Fantasia: TYCO</text>
+<path d="M97 758 L1520 758" stroke="#2d3b4d" stroke-width="1"/>
+<text x="98" y="774" fill="#c4d9e7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="11" font-weight="400">BRITAGEM TRES RIOS LTDA  ·  Código e loja conforme registro SA2</text>
+<rect x="58" y="788" width="1484" height="37" rx="9" fill="#142238" stroke="#2b394b" stroke-width="1"/>
+<rect x="71" y="791" width="30" height="30" rx="7" fill="#093951" stroke="#15bcef" stroke-width="1"/>
+<text x="79" y="812" fill="#e8fcff" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="600">⌕</text>
+<text x="119" y="811" fill="#e9f2fb" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400">000002</text>
+<text x="249" y="811" fill="#e9f2fb" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400">01</text>
+<text x="327" y="811" fill="#e9f2fb" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400">TE CONNECTIVITY BRASIL IND DE ELET LTDA</text>
+<text x="722" y="811" fill="#e9f2fb" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400">TYCO</text>
+<rect x="947" y="791" width="210" height="30" rx="9" fill="#0b1425" stroke="#2b394b" stroke-width="1"/>
+<rect x="1182" y="791" width="199" height="30" rx="9" fill="#0b1425" stroke="#2b394b" stroke-width="1"/>
+<rect x="1450" y="791" width="30" height="30" rx="7" fill="#093951" stroke="#15bcef" stroke-width="1"/>
+<text x="1458" y="812" fill="#e8fcff" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="600">×</text>
+<text x="52" y="865" fill="#91a8ba" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="400">Wireframe aprovado · painel expansível é estado ilustrativo · resultados e valores são exemplos, nunca dados inventados em runtime</text>
+</svg>
