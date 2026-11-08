@@ -39,6 +39,8 @@ type Props = {
   selectedBatchId: string | null;
   analysis?: MyWegCompareAnalysis | null;
   onAnalysisChange?: (analysis: MyWegCompareAnalysis) => void;
+  /** Quando true, omite o hub interno remessa/produto (abas principais na page). */
+  hideAnalysisHub?: boolean;
 };
 
 const texts = copy.mywegNeeds.evolution;
@@ -105,6 +107,7 @@ export function MyWegPlanningEvolutionPanel({
   selectedBatchId,
   analysis,
   onAnalysisChange,
+  hideAnalysisHub = false,
 }: Props) {
   const activeAnalysis = resolveMyWegCompareAnalysis(analysis);
   const [fromId, setFromId] = useState<string>("");
@@ -320,63 +323,65 @@ export function MyWegPlanningEvolutionPanel({
         <HelpTooltip content={helpTooltips.mywegNeedsEvolution} trigger="icon" />
       </p>
 
-      <div
-        className="ppc-myweg-needs__analysis-hub"
-        role="group"
-        aria-label={texts.analysisToggleAria}
-      >
-        <button
-          type="button"
-          className={
-            activeAnalysis === "remessa"
-              ? "ppc-myweg-needs__hub-card ppc-myweg-needs__hub-card--active"
-              : "ppc-myweg-needs__hub-card"
-          }
-          aria-label={`${texts.analysisRemessa} — ${texts.analysisRemessaDesc}`}
-          aria-pressed={activeAnalysis === "remessa"}
-          onClick={() => onAnalysisChange?.("remessa")}
+      {!hideAnalysisHub ? (
+        <div
+          className="ppc-myweg-needs__analysis-hub"
+          role="group"
+          aria-label={texts.analysisToggleAria}
         >
-          <span className="ppc-myweg-needs__hub-icon" aria-hidden="true">
-            <CalendarClock size={22} strokeWidth={1.75} />
-          </span>
-          <span className="ppc-myweg-needs__hub-body">
-            <span className="ppc-myweg-needs__hub-title">
-              {texts.analysisRemessa}
-              <HelpTooltip content={helpTooltips.mywegNeedsAnalysisRemessa} trigger="icon" />
+          <button
+            type="button"
+            className={
+              activeAnalysis === "remessa"
+                ? "ppc-myweg-needs__hub-card ppc-myweg-needs__hub-card--active"
+                : "ppc-myweg-needs__hub-card"
+            }
+            aria-label={`${texts.analysisRemessa} — ${texts.analysisRemessaDesc}`}
+            aria-pressed={activeAnalysis === "remessa"}
+            onClick={() => onAnalysisChange?.("remessa")}
+          >
+            <span className="ppc-myweg-needs__hub-icon" aria-hidden="true">
+              <CalendarClock size={22} strokeWidth={1.75} />
             </span>
-            <span className="ppc-myweg-needs__hub-desc">{texts.analysisRemessaDesc}</span>
-          </span>
-          <span className="ppc-myweg-needs__hub-go" aria-hidden="true">
-            <ArrowRight size={18} strokeWidth={2} />
-          </span>
-        </button>
+            <span className="ppc-myweg-needs__hub-body">
+              <span className="ppc-myweg-needs__hub-title">
+                {texts.analysisRemessa}
+                <HelpTooltip content={helpTooltips.mywegNeedsAnalysisRemessa} trigger="icon" />
+              </span>
+              <span className="ppc-myweg-needs__hub-desc">{texts.analysisRemessaDesc}</span>
+            </span>
+            <span className="ppc-myweg-needs__hub-go" aria-hidden="true">
+              <ArrowRight size={18} strokeWidth={2} />
+            </span>
+          </button>
 
-        <button
-          type="button"
-          className={
-            activeAnalysis === "products"
-              ? "ppc-myweg-needs__hub-card ppc-myweg-needs__hub-card--active"
-              : "ppc-myweg-needs__hub-card"
-          }
-          aria-label={`${texts.analysisProducts} — ${texts.analysisProductsDesc}`}
-          aria-pressed={activeAnalysis === "products"}
-          onClick={() => onAnalysisChange?.("products")}
-        >
-          <span className="ppc-myweg-needs__hub-icon" aria-hidden="true">
-            <Package size={22} strokeWidth={1.75} />
-          </span>
-          <span className="ppc-myweg-needs__hub-body">
-            <span className="ppc-myweg-needs__hub-title">
-              {texts.analysisProducts}
-              <HelpTooltip content={helpTooltips.mywegNeedsAnalysisProducts} trigger="icon" />
+          <button
+            type="button"
+            className={
+              activeAnalysis === "products"
+                ? "ppc-myweg-needs__hub-card ppc-myweg-needs__hub-card--active"
+                : "ppc-myweg-needs__hub-card"
+            }
+            aria-label={`${texts.analysisProducts} — ${texts.analysisProductsDesc}`}
+            aria-pressed={activeAnalysis === "products"}
+            onClick={() => onAnalysisChange?.("products")}
+          >
+            <span className="ppc-myweg-needs__hub-icon" aria-hidden="true">
+              <Package size={22} strokeWidth={1.75} />
             </span>
-            <span className="ppc-myweg-needs__hub-desc">{texts.analysisProductsDesc}</span>
-          </span>
-          <span className="ppc-myweg-needs__hub-go" aria-hidden="true">
-            <ArrowRight size={18} strokeWidth={2} />
-          </span>
-        </button>
-      </div>
+            <span className="ppc-myweg-needs__hub-body">
+              <span className="ppc-myweg-needs__hub-title">
+                {texts.analysisProducts}
+                <HelpTooltip content={helpTooltips.mywegNeedsAnalysisProducts} trigger="icon" />
+              </span>
+              <span className="ppc-myweg-needs__hub-desc">{texts.analysisProductsDesc}</span>
+            </span>
+            <span className="ppc-myweg-needs__hub-go" aria-hidden="true">
+              <ArrowRight size={18} strokeWidth={2} />
+            </span>
+          </button>
+        </div>
+      ) : null}
 
       <section className="ppc-myweg-needs__filters-card" aria-label={texts.filtersAria}>
         <header className="ppc-myweg-needs__filters-header">

@@ -52,7 +52,7 @@ type PpcWorkspaceHeaderProps = {
   mywegNeedsRemessaFrom?: string | null;
   mywegNeedsRemessaTo?: string | null;
   mywegNeedsPage?: number | null;
-  mywegNeedsView?: "needs" | "compare" | null;
+  mywegNeedsView?: import("../utils/routeParser").MyWegNeedsView | null;
   mywegNeedsAnalysis?: "remessa" | "products" | null;
   /** Ações extras à direita do header (ex.: link discreto p/ área admin). */
   actions?: ReactNode;

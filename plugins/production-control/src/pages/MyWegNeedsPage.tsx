@@ -2,21 +2,20 @@ import {
   createDashboardKpiCard,
   createDashboardLoadingActivityCard,
   HelpTooltip,
+  UnderlineNav,
+  underlineNavBemClasses,
 } from "@delpi/plugin-ui/index";
 import {
-  ArrowRight,
-  Building2,
   CalendarDays,
-  ClipboardList,
   Eraser,
   Factory,
-  GitCompareArrows,
   Layers,
   Search,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { DataTableSection, type DataTableColumn } from "../components/dataTableUi";
+import { MyWegInvoiceObservationsPanel } from "../components/MyWegInvoiceObservationsPanel";
 import { MyWegNeedsHistoryChart } from "../components/MyWegNeedsHistoryChart";
 import { MyWegPlanningEvolutionPanel } from "../components/MyWegPlanningEvolutionPanel";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
@@ -24,14 +23,15 @@ import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import { useMyWegNeeds } from "../hooks/useMyWegNeeds";
 import type { MyWegNeedsRecord, PpcBranch } from "../types";
-import { formatDecimalString } from "../utils/formatDecimalString";
+import { formatDecimalStringFixed } from "../utils/formatDecimalString";
 import { formatRefreshedAt } from "../utils/formatRefreshedAt";
 import {
   buildPpcHref,
+  myWegNeedsTabToAnalysis,
   navigatePpc,
-  resolveMyWegCompareAnalysis,
-  resolveMyWegNeedsView,
+  resolveMyWegNeedsTab,
   type MyWegCompareAnalysis,
+  type MyWegNeedsTab,
   type MyWegNeedsView,
 } from "../utils/routeParser";
 
@@ -48,6 +48,8 @@ const KpiCard = createDashboardKpiCard({
   prefix: "ppc",
   labels: copy.kpi,
 });
+
+const navClassNames = underlineNavBemClasses("ppc");
 
 type MyWegNeedsPageProps = {
   branch: PpcBranch;
@@ -67,9 +69,9 @@ function syncUrl(input: {
   remessaFrom?: string | null;
   remessaTo?: string | null;
   page?: number | null;
-  view?: MyWegNeedsView | null;
-  analysis?: MyWegCompareAnalysis | null;
+  tab?: MyWegNeedsTab;
 }) {
+  const tab = input.tab ?? "needs";
   navigatePpc(
     buildPpcHref({
       subpluginId: "myweg-needs",
@@ -79,9 +81,8 @@ function syncUrl(input: {
       mywegNeedsRemessaFrom: input.remessaFrom ?? null,
       mywegNeedsRemessaTo: input.remessaTo ?? null,
       mywegNeedsPage: input.page && input.page > 1 ? input.page : null,
-      mywegNeedsView: input.view ?? null,
-      mywegNeedsAnalysis:
-        input.view === "compare" ? input.analysis ?? null : null,
+      mywegNeedsView: tab,
+      mywegNeedsAnalysis: myWegNeedsTabToAnalysis(tab),
     }),
   );
 }
@@ -139,8 +140,15 @@ export function MyWegNeedsPage({
   analysis,
 }: MyWegNeedsPageProps) {
   const texts = copy.mywegNeeds;
-  const activeView = resolveMyWegNeedsView(view);
-  const activeAnalysis = resolveMyWegCompareAnalysis(analysis);
+  const activeTab = resolveMyWegNeedsTab(view, analysis);
+  const compareAnalysis: MyWegCompareAnalysis =
+    activeTab === "products" ? "products" : "remessa";
+  const loadNeedsMeta =
+    activeTab === "needs" ||
+    activeTab === "reprogramming" ||
+    activeTab === "products";
+  const loadNeedsItems = activeTab === "needs";
+
   const [searchDraft, setSearchDraft] = useState(search ?? "");
   const [remessaFromDraft, setRemessaFromDraft] = useState(remessaFrom ?? "");
   const [remessaToDraft, setRemessaToDraft] = useState(remessaTo ?? "");
@@ -158,7 +166,10 @@ export function MyWegNeedsPage({
   );
 
   const { latest, selected, history, items, loading, refreshing, error, status, reload } =
-    useMyWegNeeds(branch, filters);
+    useMyWegNeeds(branch, filters, {
+      enabled: loadNeedsMeta,
+      loadItems: loadNeedsItems,
+    });
 
   useEffect(() => {
     setSearchDraft(search ?? "");
@@ -174,10 +185,9 @@ export function MyWegNeedsPage({
       remessaFrom: remessaFromDraft.trim() || null,
       remessaTo: remessaToDraft.trim() || null,
       page: 1,
-      view: activeView,
-      analysis: activeView === "compare" ? activeAnalysis : null,
+      tab: activeTab,
     });
-  }, [activeAnalysis, activeView, batchId, remessaFromDraft, remessaToDraft, searchDraft]);
+  }, [activeTab, batchId, remessaFromDraft, remessaToDraft, searchDraft]);
 
   const clearFilters = useCallback(() => {
     setSearchDraft("");
@@ -190,10 +200,9 @@ export function MyWegNeedsPage({
       remessaFrom: null,
       remessaTo: null,
       page: 1,
-      view: activeView,
-      analysis: activeView === "compare" ? activeAnalysis : null,
+      tab: activeTab,
     });
-  }, [activeAnalysis, activeView, batchId]);
+  }, [activeTab, batchId]);
 
   const selectBatch = useCallback(
     (nextBatchId: string) => {
@@ -204,43 +213,25 @@ export function MyWegNeedsPage({
         remessaFrom,
         remessaTo,
         page: 1,
-        view: activeView,
-        analysis: activeView === "compare" ? activeAnalysis : null,
+        tab: activeTab,
       });
     },
-    [activeAnalysis, activeView, latest?.id, remessaFrom, remessaTo, search],
+    [activeTab, latest?.id, remessaFrom, remessaTo, search],
   );
 
-  const setView = useCallback(
-    (next: MyWegNeedsView) => {
+  const setTab = useCallback(
+    (next: MyWegNeedsTab) => {
       syncUrl({
         branch: "02",
         batchId,
         search: search ?? null,
         remessaFrom,
         remessaTo,
-        page: activeView === "needs" ? page : 1,
-        view: next,
-        analysis: next === "compare" ? activeAnalysis : null,
+        page: activeTab === "needs" ? page : 1,
+        tab: next,
       });
     },
-    [activeAnalysis, batchId, remessaFrom, remessaTo, search, page, activeView],
-  );
-
-  const setAnalysis = useCallback(
-    (next: MyWegCompareAnalysis) => {
-      syncUrl({
-        branch: "02",
-        batchId,
-        search: search ?? null,
-        remessaFrom,
-        remessaTo,
-        page: 1,
-        view: "compare",
-        analysis: next,
-      });
-    },
-    [batchId, remessaFrom, remessaTo, search],
+    [activeTab, batchId, page, remessaFrom, remessaTo, search],
   );
 
   const goToFilial02 = useCallback(() => {
@@ -251,13 +242,31 @@ export function MyWegNeedsPage({
       remessaFrom: null,
       remessaTo: null,
       page: 1,
-      view: "needs",
-      analysis: null,
+      tab: "needs",
     });
   }, []);
 
   const isLatest = Boolean(selected && latest && selected.id === latest.id);
   const historyOptions = history?.items ?? [];
+
+  const tabItems = useMemo(
+    () =>
+      (
+        [
+          ["needs", texts.tabs.needs],
+          ["reprogramming", texts.tabs.reprogramming],
+          ["products", texts.tabs.products],
+          ["invoices", texts.tabs.invoices],
+        ] as const
+      ).map(([id, label]) => ({
+        id,
+        label,
+        controlId: `ppc-myweg-tabpanel-${id}`,
+        tabId: `ppc-myweg-tab-${id}`,
+        onSelect: () => setTab(id),
+      })),
+    [setTab, texts.tabs],
+  );
 
   const columns = useMemo<DataTableColumn<MyWegNeedsRecord>[]>(
     () => [
@@ -320,13 +329,13 @@ export function MyWegNeedsPage({
         key: "quantidade_original_un",
         header: texts.columns.qtyUn,
         align: "right",
-        render: (row) => formatDecimalString(row.quantidade_original_un),
+        render: (row) => formatDecimalStringFixed(row.quantidade_original_un, 3),
       },
       {
         key: "quantidade_mi",
         header: texts.columns.qtyMi,
         align: "right",
-        render: (row) => formatDecimalString(row.quantidade_mi),
+        render: (row) => formatDecimalStringFixed(row.quantidade_mi, 3),
       },
     ],
     [texts],
@@ -355,6 +364,8 @@ export function MyWegNeedsPage({
 
   const forbidden = status === 403;
   const notFound = status === 404;
+  const showCompareTabs =
+    activeTab === "reprogramming" || activeTab === "products";
 
   return (
     <div className="ppc-page-stack ppc-page-stack--myweg-needs">
@@ -364,12 +375,12 @@ export function MyWegNeedsPage({
         appearance="myweg"
         titleHint={helpTooltips.mywegNeeds}
         period={
-          selected && activeView === "needs"
+          selected && activeTab === "needs"
             ? texts.collectedAt(formatCollectedAt(selected.collectedAt))
             : null
         }
         stats={
-          selected && activeView === "needs" ? (
+          selected && activeTab === "needs" ? (
             <span className="ppc-header__stat">
               {texts.recordCount(selected.recordCount)}
             </span>
@@ -382,68 +393,33 @@ export function MyWegNeedsPage({
         mywegNeedsRemessaFrom={remessaFrom}
         mywegNeedsRemessaTo={remessaTo}
         mywegNeedsPage={page}
-        mywegNeedsView={activeView}
-        mywegNeedsAnalysis={activeView === "compare" ? activeAnalysis : null}
+        mywegNeedsView={activeTab}
+        mywegNeedsAnalysis={myWegNeedsTabToAnalysis(activeTab)}
         onRefresh={() => void reload()}
         refreshBusy={refreshing}
       />
 
       <p className="ppc-myweg-needs__planning-note">
         {texts.hubNote}{" "}
-        <HelpTooltip content={helpTooltips.mywegNeeds} trigger="icon" />
+        <HelpTooltip content={helpTooltips.mywegNeedsTabs} trigger="icon" />
       </p>
 
-      <nav className="ppc-myweg-needs__hub" aria-label={texts.hubAria}>
-        <button
-          type="button"
-          className={
-            activeView === "needs"
-              ? "ppc-myweg-needs__hub-card ppc-myweg-needs__hub-card--active"
-              : "ppc-myweg-needs__hub-card"
-          }
-          aria-label={`${texts.viewNeeds.cardTitle} — ${texts.viewNeeds.cardAction}`}
-          aria-pressed={activeView === "needs"}
-          onClick={() => setView("needs")}
-        >
-          <span className="ppc-myweg-needs__hub-icon" aria-hidden="true">
-            <ClipboardList size={22} strokeWidth={1.75} />
-          </span>
-          <span className="ppc-myweg-needs__hub-body">
-            <span className="ppc-myweg-needs__hub-title">{texts.viewNeeds.cardTitle}</span>
-            <span className="ppc-myweg-needs__hub-desc">{texts.viewNeeds.cardDescription}</span>
-          </span>
-          <span className="ppc-myweg-needs__hub-go" aria-hidden="true">
-            <ArrowRight size={18} strokeWidth={2} />
-          </span>
-        </button>
+      <UnderlineNav
+        items={tabItems}
+        activeId={activeTab}
+        mode="tabs"
+        layout="wrap"
+        density="compact"
+        classNames={navClassNames}
+        aria-label={texts.tabsAria}
+      />
 
-        <button
-          type="button"
-          className={
-            activeView === "compare"
-              ? "ppc-myweg-needs__hub-card ppc-myweg-needs__hub-card--active ppc-myweg-needs__hub-card--compare"
-              : "ppc-myweg-needs__hub-card ppc-myweg-needs__hub-card--compare"
-          }
-          aria-label={`${texts.viewCompare.cardTitle} — ${texts.viewCompare.cardAction}`}
-          aria-pressed={activeView === "compare"}
-          onClick={() => setView("compare")}
-        >
-          <span className="ppc-myweg-needs__hub-icon" aria-hidden="true">
-            <GitCompareArrows size={22} strokeWidth={1.75} />
-          </span>
-          <span className="ppc-myweg-needs__hub-body">
-            <span className="ppc-myweg-needs__hub-title">{texts.viewCompare.cardTitle}</span>
-            <span className="ppc-myweg-needs__hub-desc">{texts.viewCompare.cardDescription}</span>
-          </span>
-          <span className="ppc-myweg-needs__hub-go" aria-hidden="true">
-            <ArrowRight size={18} strokeWidth={2} />
-          </span>
-        </button>
-      </nav>
-
-      {activeView === "needs" ? (
+      {activeTab === "needs" ? (
         <section
           className="ppc-myweg-needs__view"
+          id="ppc-myweg-tabpanel-needs"
+          role="tabpanel"
+          aria-labelledby="ppc-myweg-tab-needs"
           aria-label={texts.viewNeeds.sectionAria}
         >
           {loading ? <LoadingCard title={texts.loading} description={texts.loadingHint} /> : null}
@@ -486,13 +462,7 @@ export function MyWegNeedsPage({
                   className="ppc-board-card ppc-myweg-needs__kpi-card"
                   title={texts.kpi.qtyMi}
                   icon={<Factory size={20} strokeWidth={1.75} />}
-                  value={formatDecimalString(selected.totals.quantidade_mi)}
-                />
-                <KpiCard
-                  className="ppc-board-card ppc-myweg-needs__kpi-card"
-                  title={texts.kpi.branch}
-                  icon={<Building2 size={20} strokeWidth={1.75} />}
-                  value={texts.branch02Label}
+                  value={formatDecimalStringFixed(selected.totals.quantidade_mi, 3)}
                 />
               </section>
 
@@ -603,7 +573,7 @@ export function MyWegNeedsPage({
                         remessaFrom,
                         remessaTo,
                         page: nextPage,
-                        view: "needs",
+                        tab: "needs",
                       }),
                     onPageSizeChange: () => {
                       /* pageSize fixo 50 nesta etapa */
@@ -614,10 +584,27 @@ export function MyWegNeedsPage({
             </>
           ) : null}
         </section>
-      ) : (
+      ) : null}
+
+      {showCompareTabs ? (
         <section
           className="ppc-myweg-needs__view ppc-myweg-needs__view--compare"
-          aria-label={texts.viewCompare.sectionAria}
+          id={
+            activeTab === "products"
+              ? "ppc-myweg-tabpanel-products"
+              : "ppc-myweg-tabpanel-reprogramming"
+          }
+          role="tabpanel"
+          aria-labelledby={
+            activeTab === "products"
+              ? "ppc-myweg-tab-products"
+              : "ppc-myweg-tab-reprogramming"
+          }
+          aria-label={
+            activeTab === "products"
+              ? texts.viewProducts.sectionAria
+              : texts.viewCompare.sectionAria
+          }
         >
           {forbidden ? (
             <div className="ppc-state ppc-state--error" role="alert">
@@ -635,8 +622,8 @@ export function MyWegNeedsPage({
             <MyWegPlanningEvolutionPanel
               historyItems={historyOptions}
               selectedBatchId={selected?.id ?? batchId}
-              analysis={activeAnalysis}
-              onAnalysisChange={setAnalysis}
+              analysis={compareAnalysis}
+              hideAnalysisHub
             />
           ) : null}
 
@@ -646,7 +633,18 @@ export function MyWegNeedsPage({
             </div>
           ) : null}
         </section>
-      )}
+      ) : null}
+
+      {activeTab === "invoices" ? (
+        <section
+          className="ppc-myweg-needs__view"
+          id="ppc-myweg-tabpanel-invoices"
+          role="tabpanel"
+          aria-labelledby="ppc-myweg-tab-invoices"
+        >
+          <MyWegInvoiceObservationsPanel />
+        </section>
+      ) : null}
     </div>
   );
 }

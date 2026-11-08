@@ -1502,6 +1502,33 @@ export async function fetchMyWegNeedBatchesCompareProducts(params: {
   return unwrapEnvelope(envelope, "Não foi possível consolidar a análise por produto.");
 }
 
+export async function fetchMyWegInvoiceObservations(params: {
+  documentDate?: string | null;
+  observationStatus?: string | null;
+  page?: number;
+  pageSize?: number;
+  signal?: AbortSignal;
+}): Promise<import("../types").MyWegInvoiceObservationsListPayload> {
+  const search = new URLSearchParams();
+  if (params.documentDate?.trim()) search.set("documentDate", params.documentDate.trim());
+  if (params.observationStatus?.trim()) {
+    search.set("observationStatus", params.observationStatus.trim());
+  }
+  search.set("page", String(params.page ?? 1));
+  search.set("pageSize", String(params.pageSize ?? 50));
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: import("../types").MyWegInvoiceObservationsListPayload;
+  }>(ppcApiUrl(`/myweg/invoice-observations?${search.toString()}`), {
+    signal: params.signal,
+  });
+  return unwrapEnvelope(
+    envelope,
+    "Não foi possível listar as observações fiscais MyWEG.",
+  );
+}
+
 export async function fetchMyWegInvoiceObservation(params: {
   observationId: string;
   signal?: AbortSignal;

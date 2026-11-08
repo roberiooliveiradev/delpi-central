@@ -1,9 +1,21 @@
 import { BRANCH_STORAGE_KEY, DEFAULT_BRANCH, DEFAULT_SUBPLUGIN, PPC_BASE_PATH } from "../constants/routes";
 import type { PpcBranch } from "../types";
 
-export type MyWegNeedsView = "needs" | "compare";
-/** Análise dentro de compare: remessa (padrão) | products. */
+/**
+ * Abas canônicas Necessidades WEG.
+ * `compare` permanece apenas como alias legado de URL (→ reprogramming / products).
+ */
+export type MyWegNeedsTab = "needs" | "reprogramming" | "products" | "invoices";
+export type MyWegNeedsView = MyWegNeedsTab | "compare";
+/** Análise legada dentro de compare: remessa (padrão) | products. */
 export type MyWegCompareAnalysis = "remessa" | "products";
+
+const MYWEG_NEEDS_TABS = new Set<MyWegNeedsTab>([
+  "needs",
+  "reprogramming",
+  "products",
+  "invoices",
+]);
 
 export type PpcRoute = {
   subpluginId: string;
@@ -138,16 +150,44 @@ function parseSearch(search: string): {
     mywegNeedsRemessaFrom: isoDateOrNull(params.get("remessaFrom")),
     mywegNeedsRemessaTo: isoDateOrNull(params.get("remessaTo")),
     mywegNeedsPage: Number.isFinite(pageRaw) && pageRaw >= 1 ? pageRaw : null,
-    mywegNeedsView: viewRaw === "needs" || viewRaw === "compare" ? viewRaw : null,
+    mywegNeedsView: parseMyWegNeedsView(viewRaw),
     mywegNeedsAnalysis:
       analysisRaw === "products" || analysisRaw === "remessa" ? analysisRaw : null,
     branch: isBranch(branchRaw) ? branchRaw : null,
   };
 }
 
-/** Visão efetiva MyWEG — ausência de `view` abre a consulta de necessidades. */
-export function resolveMyWegNeedsView(view: MyWegNeedsView | null | undefined): MyWegNeedsView {
-  return view === "compare" ? "compare" : "needs";
+function parseMyWegNeedsView(viewRaw: string): MyWegNeedsView | null {
+  if (viewRaw === "compare") return "compare";
+  if (MYWEG_NEEDS_TABS.has(viewRaw as MyWegNeedsTab)) {
+    return viewRaw as MyWegNeedsTab;
+  }
+  return null;
+}
+
+/**
+ * Aba efetiva Necessidades WEG.
+ * Legado: `view=compare` → reprogramming; `view=compare&analysis=products` → products.
+ */
+export function resolveMyWegNeedsTab(
+  view: MyWegNeedsView | null | undefined,
+  analysis?: MyWegCompareAnalysis | null,
+): MyWegNeedsTab {
+  if (view === "reprogramming" || view === "products" || view === "invoices") {
+    return view;
+  }
+  if (view === "compare") {
+    return analysis === "products" ? "products" : "reprogramming";
+  }
+  return "needs";
+}
+
+/** @deprecated Preferir `resolveMyWegNeedsTab` — mantido para compat. */
+export function resolveMyWegNeedsView(
+  view: MyWegNeedsView | null | undefined,
+  analysis?: MyWegCompareAnalysis | null,
+): MyWegNeedsTab {
+  return resolveMyWegNeedsTab(view, analysis);
 }
 
 /** Análise efetiva da comparação — ausência de `analysis` = por remessa. */
@@ -155,6 +195,15 @@ export function resolveMyWegCompareAnalysis(
   analysis: MyWegCompareAnalysis | null | undefined,
 ): MyWegCompareAnalysis {
   return analysis === "products" ? "products" : "remessa";
+}
+
+/** Analysis legado derivado da aba (para consumidores que ainda leem `analysis`). */
+export function myWegNeedsTabToAnalysis(
+  tab: MyWegNeedsTab,
+): MyWegCompareAnalysis | null {
+  if (tab === "products") return "products";
+  if (tab === "reprogramming") return "remessa";
+  return null;
 }
 
 export function parsePpcPath(pathname: string, search = "", storedBranch: PpcBranch = DEFAULT_BRANCH): PpcRoute {
@@ -270,10 +319,24 @@ export function buildPpcHref(input: {
   if (input.mywegNeedsPage && input.mywegNeedsPage > 1) {
     params.set("page", String(input.mywegNeedsPage));
   }
-  if (input.mywegNeedsView === "compare" || input.mywegNeedsView === "needs") {
+  if (input.mywegNeedsView === "compare") {
+    // Escrita legada explícita (bookmarks antigos / testes).
+    params.set("view", "compare");
+    if (input.mywegNeedsAnalysis === "products" || input.mywegNeedsAnalysis === "remessa") {
+      params.set("analysis", input.mywegNeedsAnalysis);
+    }
+  } else if (input.mywegNeedsView && MYWEG_NEEDS_TABS.has(input.mywegNeedsView)) {
     params.set("view", input.mywegNeedsView);
-  }
-  if (input.mywegNeedsAnalysis === "products" || input.mywegNeedsAnalysis === "remessa") {
+    // Espelha analysis só nas abas de comparação, para deep links legados.
+    if (input.mywegNeedsView === "products") {
+      params.set("analysis", "products");
+    } else if (input.mywegNeedsView === "reprogramming") {
+      params.set("analysis", "remessa");
+    }
+  } else if (
+    input.mywegNeedsAnalysis === "products" ||
+    input.mywegNeedsAnalysis === "remessa"
+  ) {
     params.set("analysis", input.mywegNeedsAnalysis);
   }
   return `${path}?${params.toString()}`;

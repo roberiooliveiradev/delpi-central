@@ -23,7 +23,12 @@ Deixar a tela **Necessidades WEG** mais minimalista, escaneável e executiva par
 
 ## O que mudou (UI)
 
-- Hub de entrada (dois cards) com menos texto, CTA alinhado ao título e hierarquia mais limpa.
+- Workspace com **4 abas**: Necessidade geral · Reprogramações · Análise por produto · Notas fiscais emitidas (`UnderlineNav`).
+- Deep links legados: `view=needs`, `view=compare`, `view=compare&analysis=products` → abas equivalentes.
+- KPI Filial removido da Necessidade geral (filial continua no seletor do Portal / RBAC 02).
+- Quantidades UN/MI da tabela e Total MI com **3 casas decimais** (`formatDecimalStringFixed`).
+- Aba Notas fiscais: listagem por `documentDate` via `GET /myweg/invoice-observations` + detalhe por NF/série.
+- Hub de cards (consulta/comparação e remessa/produto) substituído pelas abas principais.
 - Textos longos da comparação movidos/encurtados; disclaimers essenciais em linha curta + tooltips.
 - Filtros da comparação agrupados (par de coletas · filtro de produto · faturamento).
 - Busca duplicada removida: filtro de produto fica na barra de análise; `hideSearch` nas `DataTableSection` MyWEG.

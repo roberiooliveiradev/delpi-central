@@ -72,6 +72,12 @@ vi.mock("../components/MyWegPlanningEvolutionPanel", () => ({
   ),
 }));
 
+vi.mock("../components/MyWegInvoiceObservationsPanel", () => ({
+  MyWegInvoiceObservationsPanel: () => (
+    <div data-testid="myweg-invoices-panel">invoices-panel</div>
+  ),
+}));
+
 vi.mock("../components/MyWegNeedsHistoryChart", () => ({
   MyWegNeedsHistoryChart: ({
     selectedBatchId,
@@ -111,6 +117,30 @@ vi.mock("@delpi/plugin-ui/index", () => ({
     },
   DelpiLogoMark: () => null,
   HelpTooltip: () => null,
+  underlineNavBemClasses: () => ({}),
+  UnderlineNav: ({
+    items,
+    activeId,
+    "aria-label": ariaLabel,
+  }: {
+    items: Array<{ id: string; label: string; onSelect: () => void }>;
+    activeId: string;
+    "aria-label"?: string;
+  }) => (
+    <div role="tablist" aria-label={ariaLabel}>
+      {items.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          role="tab"
+          aria-selected={item.id === activeId}
+          onClick={item.onSelect}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  ),
 }));
 
 describe("MyWegNeedsPage", () => {
@@ -145,7 +175,7 @@ describe("MyWegNeedsPage", () => {
     expect(href).toContain("/myweg-needs");
   });
 
-  it("mostra consulta por padrão com KPIs, histórico e filtros", () => {
+  it("mostra necessidade geral por padrão com KPIs, histórico e filtros", () => {
     render(
       <MyWegNeedsPage
         branch="02"
@@ -158,18 +188,24 @@ describe("MyWegNeedsPage", () => {
         analysis={null}
       />,
     );
+    expect(screen.getByRole("tab", { name: /necessidade geral/i }).getAttribute("aria-selected")).toBe(
+      "true",
+    );
+    expect(screen.getByRole("tab", { name: /reprogramações/i })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: /análise por produto/i })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: /notas fiscais emitidas/i })).toBeTruthy();
     expect(screen.getByTestId("kpi-Data da coleta")).toBeTruthy();
     expect(screen.getByTestId("kpi-Registros")).toBeTruthy();
     expect(screen.queryByTestId("kpi-Total UN")).toBeNull();
     expect(screen.getByTestId("kpi-Total MI")).toBeTruthy();
-    expect(screen.getByTestId("kpi-Filial")).toBeTruthy();
+    expect(screen.queryByTestId("kpi-Filial")).toBeNull();
     expect(screen.getByTestId("myweg-history-chart")).toBeTruthy();
     expect(screen.getByRole("heading", { name: /filtros de consulta/i })).toBeTruthy();
     expect(screen.getByTestId("myweg-needs-table")).toBeTruthy();
     expect(screen.queryByTestId("myweg-compare-panel")).toBeNull();
   });
 
-  it("card Comparação navega para view=compare", () => {
+  it("aba Reprogramações navega para view=reprogramming", () => {
     render(
       <MyWegNeedsPage
         branch="02"
@@ -182,13 +218,10 @@ describe("MyWegNeedsPage", () => {
         analysis={null}
       />,
     );
-    const compareCards = screen.getAllByRole("button", {
-      name: /comparação entre coletas/i,
-    });
-    fireEvent.click(compareCards[0]);
+    fireEvent.click(screen.getByRole("tab", { name: /reprogramações/i }));
     expect(navigatePpc).toHaveBeenCalled();
     const href = String(navigatePpc.mock.calls[0]?.[0] ?? "");
-    expect(href).toContain("view=compare");
+    expect(href).toContain("view=reprogramming");
   });
 
   it("seleção no histórico atualiza batch na URL", () => {
@@ -240,7 +273,7 @@ describe("MyWegNeedsPage", () => {
     expect(href).toContain("remessaTo=2026-11-30");
   });
 
-  it("view=compare monta o painel e esconde a tabela de necessidades", () => {
+  it("view=compare legado monta reprogramações e esconde a tabela", () => {
     const { queryByTestId, getByTestId } = render(
       <MyWegNeedsPage
         branch="02"
@@ -255,5 +288,41 @@ describe("MyWegNeedsPage", () => {
     );
     expect(getByTestId("myweg-compare-panel")).toBeTruthy();
     expect(queryByTestId("myweg-needs-table")).toBeNull();
+    expect(queryByTestId("myweg-invoices-panel")).toBeNull();
+  });
+
+  it("view=compare&analysis=products abre análise por produto", () => {
+    const { getByTestId, queryByTestId } = render(
+      <MyWegNeedsPage
+        branch="02"
+        batchId={null}
+        search={null}
+        remessaFrom={null}
+        remessaTo={null}
+        page={null}
+        view="compare"
+        analysis="products"
+      />,
+    );
+    expect(getByTestId("myweg-compare-panel")).toBeTruthy();
+    expect(queryByTestId("myweg-needs-table")).toBeNull();
+  });
+
+  it("view=invoices monta o painel fiscal", () => {
+    const { getByTestId, queryByTestId } = render(
+      <MyWegNeedsPage
+        branch="02"
+        batchId={null}
+        search={null}
+        remessaFrom={null}
+        remessaTo={null}
+        page={null}
+        view="invoices"
+        analysis={null}
+      />,
+    );
+    expect(getByTestId("myweg-invoices-panel")).toBeTruthy();
+    expect(queryByTestId("myweg-needs-table")).toBeNull();
+    expect(queryByTestId("myweg-compare-panel")).toBeNull();
   });
 });

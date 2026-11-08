@@ -1763,7 +1763,7 @@ export type MyWegCompareProductsPayload = {
   referenceDate?: string;
 };
 
-export type MyWegInvoiceObservationDetail = {
+export type MyWegInvoiceObservationSummary = {
   id: string;
   collectionId: string;
   branch: string;
@@ -1778,6 +1778,18 @@ export type MyWegInvoiceObservationDetail = {
   sourceSha256?: string | null;
   payloadSha256?: string;
   semanticSha256?: string;
+};
+
+export type MyWegInvoiceObservationDetail = MyWegInvoiceObservationSummary & {
+  equivalentObservationCount?: number;
+};
+
+export type MyWegInvoiceObservationsListPayload = {
+  branch: string;
+  page: number;
+  pageSize: number;
+  total: number;
+  items: MyWegInvoiceObservationSummary[];
 };
 
 export type MyWegInvoiceObservationItem = {

@@ -7011,9 +7011,99 @@
   font-weight: 650;
 }
 
+.dashboard-production-control .ppc-myweg-needs__invoice-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-list {
+  border: 1px solid var(--delpi-border, #d8dee6);
+  border-radius: 12px;
+  padding: 0.85rem 0.9rem;
+  background: var(--delpi-surface, #fff);
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-list-title,
+.dashboard-production-control .ppc-myweg-needs__invoice-list-subtitle {
+  margin: 0 0 0.55rem;
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-list-subtitle {
+  margin-top: 0.85rem;
+  font-size: 0.84rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-obs,
+.dashboard-production-control .ppc-myweg-needs__invoice-nfs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-obs-btn,
+.dashboard-production-control .ppc-myweg-needs__invoice-nf-btn {
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  padding: 0.55rem 0.65rem;
+  display: grid;
+  gap: 0.15rem;
+  cursor: pointer;
+  color: inherit;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-obs-btn:hover,
+.dashboard-production-control .ppc-myweg-needs__invoice-nf-btn:hover,
+.dashboard-production-control .ppc-myweg-needs__invoice-obs-btn:focus-visible,
+.dashboard-production-control .ppc-myweg-needs__invoice-nf-btn:focus-visible {
+  border-color: var(--delpi-border-strong, #b7c2d0);
+  outline: none;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-obs-btn--active,
+.dashboard-production-control .ppc-myweg-needs__invoice-nf-btn--active {
+  border-color: var(--delpi-accent, #2563eb);
+  background: color-mix(in srgb, var(--delpi-accent, #2563eb) 8%, transparent);
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-obs-btn strong {
+  font-size: 0.86rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-obs-btn span,
+.dashboard-production-control .ppc-myweg-needs__invoice-nf-btn {
+  font-size: 0.78rem;
+  opacity: 0.88;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-obs-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.7rem;
+  opacity: 0.7;
+  word-break: break-all;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-detail {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .dashboard-production-control .ppc-myweg-needs__invoice-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 .dashboard-production-control .ppc-myweg-needs__summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { buildPpcHref, parsePpcPath, readMaterialsDetailDeepLink } from "./routeParser";
+import {
+  buildPpcHref,
+  parsePpcPath,
+  readMaterialsDetailDeepLink,
+  resolveMyWegNeedsTab,
+} from "./routeParser";
 
 describe("parsePpcPath", () => {
   it("defaults empty base path to home", () => {
@@ -373,5 +378,39 @@ describe("line feeder deep link", () => {
     });
     expect(href).toContain("view=compare");
     expect(href).toContain("analysis=products");
+  });
+
+  it("resolveMyWegNeedsTab maps legacy compare URLs to workspace tabs", () => {
+    expect(resolveMyWegNeedsTab(null)).toBe("needs");
+    expect(resolveMyWegNeedsTab("needs")).toBe("needs");
+    expect(resolveMyWegNeedsTab("compare")).toBe("reprogramming");
+    expect(resolveMyWegNeedsTab("compare", "products")).toBe("products");
+    expect(resolveMyWegNeedsTab("reprogramming")).toBe("reprogramming");
+    expect(resolveMyWegNeedsTab("products")).toBe("products");
+    expect(resolveMyWegNeedsTab("invoices")).toBe("invoices");
+  });
+
+  it("builds canonical tab views for the MyWEG workspace", () => {
+    expect(
+      buildPpcHref({
+        subpluginId: "myweg-needs",
+        branch: "02",
+        mywegNeedsView: "reprogramming",
+      }),
+    ).toContain("view=reprogramming");
+    expect(
+      buildPpcHref({
+        subpluginId: "myweg-needs",
+        branch: "02",
+        mywegNeedsView: "products",
+      }),
+    ).toContain("view=products");
+    expect(
+      buildPpcHref({
+        subpluginId: "myweg-needs",
+        branch: "02",
+        mywegNeedsView: "invoices",
+      }),
+    ).toContain("view=invoices");
   });
 });

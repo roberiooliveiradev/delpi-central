@@ -24,7 +24,20 @@ export type MyWegNeedsFilters = {
   pageSize: number;
 };
 
-export function useMyWegNeeds(branch: PpcBranch, filters: MyWegNeedsFilters) {
+export type UseMyWegNeedsOptions = {
+  /** Quando false, não dispara consultas de necessidades. */
+  enabled?: boolean;
+  /** Quando false, carrega latest/histórico/coleta sem itens paginados. */
+  loadItems?: boolean;
+};
+
+export function useMyWegNeeds(
+  branch: PpcBranch,
+  filters: MyWegNeedsFilters,
+  options: UseMyWegNeedsOptions = {},
+) {
+  const enabled = options.enabled !== false;
+  const loadItems = options.loadItems !== false;
   const [latest, setLatest] = useState<MyWegNeedsBatchSummary | null>(null);
   const [selected, setSelected] = useState<MyWegNeedsBatchSummary | null>(null);
   const [history, setHistory] = useState<MyWegNeedsBatchListPayload | null>(null);
@@ -37,7 +50,7 @@ export function useMyWegNeeds(branch: PpcBranch, filters: MyWegNeedsFilters) {
   const reload = useCallback(() => setReloadToken((value) => value + 1), []);
 
   useEffect(() => {
-    if (branch !== "02") {
+    if (branch !== "02" || !enabled) {
       setLatest(null);
       setSelected(null);
       setHistory(null);
@@ -85,6 +98,11 @@ export function useMyWegNeeds(branch: PpcBranch, filters: MyWegNeedsFilters) {
         if (controller.signal.aborted) return;
         setSelected(batchDetail);
 
+        if (!loadItems) {
+          setItems(null);
+          return;
+        }
+
         const itemsPayload = await fetchMyWegNeedBatchItems({
           batchId: preferredId,
           search: filters.search,
@@ -118,6 +136,8 @@ export function useMyWegNeeds(branch: PpcBranch, filters: MyWegNeedsFilters) {
     filters.remessaFrom,
     filters.remessaTo,
     filters.search,
+    enabled,
+    loadItems,
     reloadToken,
   ]);
 
