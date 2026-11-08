@@ -226,3 +226,8 @@ NEXT_SAFE_INCREMENT:
 ```
 
 **Final target:** `UI_CODE_COMPLETE` só após todas RQ funcionais, `VISUAL_QA_PASS` só com screenshots de browser real, `PO_VISUAL_ACCEPTANCE` só após aceite explícito do PO. `PRODUCTION_DEPLOY_SUSPENDED` permanece.
+
+
+## Refinamentos posteriores ao redesign — decisões PO 2026-11-07
+
+O redesign foi implementado e já recebeu primeiras capturas em localhost; **ainda não houve aceite visual final nem autorização de produção**. As novas decisões e ajustes aprovados serão acumulados em [MFE-PRODUCT-REGISTRATION-POST-REDESIGN-REFINEMENT-PLAN.md](./MFE-PRODUCT-REGISTRATION-POST-REDESIGN-REFINEMENT-PLAN.md). Primeiro item: **PRC-REF-001 — em solicitações UPDATE, o usuário não informa revisão-base; Engineering API resolve a revisão técnica atual de forma governada, preservando CAS, concorrência e auditoria**. O plano original UX0–UX5 fica como histórico de execução; este refinamento tem precedência para UX de alteração. Implementação pendente. Não fazer deploy produtivo.
