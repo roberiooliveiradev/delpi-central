@@ -275,3 +275,8 @@ Cada incremento deve apresentar before/after, componente reutilizado, lacunas re
 ## Trilha executável Devin — refatoração integral do MFE (2026-11-07)
 
 **Plano canônico de execução:** [MFE-PRODUCT-REGISTRATION-DEVIN-IMPLEMENTATION-PLAN.md](./MFE-PRODUCT-REGISTRATION-DEVIN-IMPLEMENTATION-PLAN.md), cobrindo `MFE-PRC-UX0..UX5`, componentes confirmados em `@delpi/plugin-ui`/façade `engineeringUi.ts`, wireframes 01–07, mapa de arquivos, REST real (inclusive intake CREATE/UPDATE), responsividade, testes, screenshots e critérios de aceite. O executor Devin deve implementar a trilha inteira em DEV, com backend e owners preservados, sem inventar API/export. **`PRODUCTION_DEPLOY_SUSPENDED` até refatoração + QA visual real + aceite PO e gates funcionais separados.** Este adendo é documentação/plano, não implementação nem autorização produtiva.
+
+
+## Wireframe aprovado V2 — Fornecedores em tabela com busca expansível (2026-11-08)
+
+O PO aprovou nova apresentação **sem duplicar código/loja/razão social**: colunas separadas **[Lupa] | Código | Loja | Razão social | Nome fantasia | Part Number | Catálogo | [Lixeira]**. A lupa antes do código abre pesquisa colapsável **dentro da linha** para código, razão social ou fantasia. Botões de adicionar/remover com ícones oficiais. Seleção do SA2 preenche código/loja/razão social; PN e catálogo permanecem atributos editáveis/opcionais. **Especificação canônica e critérios de aceite**: [MFE-PRC-WIREFRAME-FORNECEDORES-V2-APPROVED.md](./MFE-PRC-WIREFRAME-FORNECEDORES-V2-APPROVED.md). **Arte visual SVG**: [prc-fornecedores-wireframe-v2.svg](./assets/prc-fornecedores-wireframe-v2.svg). Escopo proposto D11; `PO_APPROVED_VISUAL_TARGET / IMPLEMENTATION_PENDING / PRODUCTION_DEPLOY_SUSPENDED`.
