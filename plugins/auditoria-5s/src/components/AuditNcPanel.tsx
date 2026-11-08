@@ -79,7 +79,7 @@ export function AuditNcPanel({
       for (const item of nextItems) {
         nextForms[item.responseId] = item.nc
           ? formFromNonconformity(item.nc)
-          : emptyNcForm();
+          : { ...emptyNcForm(), description: item.observation?.trim() ?? "" };
       }
       setForms(nextForms);
       persistedFormsRef.current = nextForms;
