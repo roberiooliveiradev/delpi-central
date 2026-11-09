@@ -1,4 +1,4 @@
-import { httpGet } from "./httpClient";
+import { httpGet, httpGetBlob } from "./httpClient";
 import { buildQuery } from "./query";
 import {
   isNonconformitySeriesData,
@@ -114,6 +114,22 @@ export async function getNcOperatorRanking(
     },
     signal
   );
+}
+
+/** Exporta TODOS os operadores que tiveram NC nos filtros, sem recorte Top 5. */
+export async function exportNcOperatorRankingExcel(
+  params: Omit<ListNonconformitiesParams, "page" | "page_size"> = {}
+): Promise<Blob> {
+  const query = buildQuery({
+    type: params.type ?? "all",
+    branch: params.branch,
+    start_date: params.start_date,
+    end_date: params.end_date,
+    status: params.status,
+    item_code: params.item_code,
+    description: params.description,
+  });
+  return httpGetBlob(`${QUALITY_API_BASE}/nonconformities/operators/export.xlsx${query}`);
 }
 
 export async function getKaizenSummary(

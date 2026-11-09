@@ -14,7 +14,7 @@ import {
 
 import { ChartCard } from "../components/ChartCard";
 import { NcOperatorRanking } from "../components/NcOperatorRanking";
-import { getNcOperatorRanking } from "../api/qualityApi";
+import { exportNcOperatorRankingExcel, getNcOperatorRanking } from "../api/qualityApi";
 import { useQualityResource } from "../hooks/useQualityResource";
 import { ChartToolbar } from "../components/ChartToolbar";
 import type { DataTableColumn } from "../components/DataTable";
@@ -67,6 +67,8 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
   const [itemCode, setItemCode] = useState("");
   const [description, setDescription] = useState("");
   const [selectedOperatorCode, setSelectedOperatorCode] = useState("");
+  const [operatorExcelExporting, setOperatorExcelExporting] = useState(false);
+  const [operatorExcelExportError, setOperatorExcelExportError] = useState<string | null>(null);
 
   const {
     dateStart,
@@ -320,6 +322,31 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
     );
   };
 
+  const handleExportOperatorExcel = async () => {
+    if (operatorExcelExporting) return;
+    setOperatorExcelExporting(true);
+    setOperatorExcelExportError(null);
+    try {
+      // Reusa exatamente os filtros do ranking; não inclui a seleção do
+      // operador nem a paginação, pois o Excel deve trazer todos os nomes.
+      const blob = await exportNcOperatorRankingExcel(chartFilters);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "nc-operadores-delpi.xlsx";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      setOperatorExcelExportError(
+        error instanceof Error ? error.message : "Falha ao exportar o arquivo."
+      );
+    } finally {
+      setOperatorExcelExporting(false);
+    }
+  };
+
   const handleRefresh = () => {
     reload();
     reloadChart();
@@ -482,6 +509,9 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
         operatorCode={selectedOperatorCode}
         onOperatorChange={setSelectedOperatorCode}
         onRetry={reloadOperatorRanking}
+        onExportExcel={handleExportOperatorExcel}
+        exportingExcel={operatorExcelExporting}
+        exportExcelError={operatorExcelExportError}
       />
 
       <DataTableSection

@@ -68,3 +68,33 @@ export async function httpGet<T>(
 
   return response.json() as Promise<T>;
 }
+
+/** GET binário autenticado; mantém os mesmos headers do cliente JSON. */
+export async function httpGetBlob(
+  url: string,
+  options: RequestOptions = {}
+): Promise<Blob> {
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "X-Delpi-Caller-App": DELPI_CALLER_APP,
+  };
+  const token = accessTokenGetter?.();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers,
+    signal: options.signal,
+  });
+  if (!response.ok) {
+    let message = `Erro HTTP ${response.status}`;
+    try {
+      const errorBody: unknown = await response.json();
+      message = formatApiDelpiErrorMessage(errorBody, message);
+    } catch {
+      // Mantém a mensagem HTTP quando não há JSON válido.
+    }
+    throw new Error(message);
+  }
+  return response.blob();
+}

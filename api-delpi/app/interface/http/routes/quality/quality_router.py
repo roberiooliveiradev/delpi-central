@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Query
+from fastapi.responses import Response
 from app.interface.http.pagination_query import (
     PAGE_SIZE_QUERY,
 )
@@ -225,6 +226,77 @@ def get_nonconformity_streak(
         log_error(f"Erro ao calcular streak de NC: {exc}")
         return error_response(
             "Erro interno ao calcular dias sem não conformidades.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/nonconformities/operators/export.xlsx",
+    operation_id="export_nonconformity_operator_ranking_excel",
+)
+@require_any_permission(KPI_QUALITY_ACCESS)
+def export_nonconformity_operator_ranking_excel_route(
+    type: str = NONCONFORMITY_TYPE_QUERY(),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
+    status: Optional[str] = NONCONFORMITY_QI2_STATUS_QUERY(),
+    item_code: Optional[str] = None,
+    description: Optional[str] = None,
+):
+    """Planilha completa dos operadores e defeitos, sem limite do Top 5."""
+    try:
+        from app.application.use_cases.nonconformity.get_operator_ranking_use_case import (
+            get_nonconformity_operator_ranking,
+        )
+        from app.application.services.quality.nonconformity_operator_excel import (
+            XLSX_MIME,
+            build_nonconformity_operator_excel,
+        )
+
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
+            date_start=date_start,
+            date_end=date_end,
+        )
+        filters = {
+            "type": type,
+            "branch": branch,
+            "date_start": start_date,
+            "date_end": end_date,
+            "status": status,
+            "item_code": item_code,
+            "description": description,
+        }
+        report = get_nonconformity_operator_ranking(
+            type=type,
+            branch=branch,
+            date_start=start_date,
+            date_end=end_date,
+            status=status,
+            item_code=item_code,
+            description=description,
+            include_all=True,
+        )
+        content = build_nonconformity_operator_excel(report, filters=filters)
+        return Response(
+            content=content,
+            media_type=XLSX_MIME,
+            headers={
+                "Content-Disposition": 'attachment; filename="nc-operadores-delpi.xlsx"',
+                "Cache-Control": "no-store",
+                "X-Content-Type-Options": "nosniff",
+            },
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao exportar NCs por operador: {exc}")
+        return error_response(
+            "Erro interno ao exportar NCs por operador.",
             status_code=500,
         )
 

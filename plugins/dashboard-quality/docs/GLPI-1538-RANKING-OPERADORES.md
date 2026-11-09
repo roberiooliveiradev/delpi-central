@@ -46,3 +46,26 @@ O `api-delpi` lê as mesmas variáveis `PORTAL_RH_API_URL`,
 6. Executar testes unitários de `api-delpi/tests/unit/infrastructure/test_nc_operator_ranking.py`, além dos builds e regressões do plugin.
 
 Nenhuma implantação em produção é realizada pelo PR.
+
+
+## Evolução — desempate e exportação Excel (09/11/2026)
+
+**Definição do principal defeito do operador**:
+
+1. Maior reincidência, definida por `COUNT(1)` de NCs vigentes com a mesma descrição `QI2_DESCR`.
+2. Quando a reincidência empatar, maior quantidade rejeitada/devolvida acumulada, informada em `QI2_QTDDEV`.
+3. Quando ambos empatarem, descrição em ordem alfabética para desempate determinístico.
+
+Importante: o campo de quantidade disponível na estrutura QI2 é `QI2_QTDDEV`, documentado como **quantidade devolvida/rejeitada** no numerador do PPM. Não deve ser apresentado como perda de material sem validação de equivalência com o processo físico. O valor é somado pela mesma conversão pt-BR/en-US já usada pelo backend de Qualidade.
+
+**Novo Excel:** botão `Exportar Excel` no cabeçalho do quadro Top 5, sem afetar a seleção do operador ou o gráfico. Exporta o universo completo dos códigos com NC nos filtros ativos (sem `page`, `page_size` e sem `operator_code`). Download autenticado via `GET /quality/nonconformities/operators/export.xlsx` com `KPI_QUALITY_ACCESS`.
+
+Abas:
+- `Resumo Operadores`: matrícula, nome oficial do RH (ou fallback pelo código), totais, tipos, principal defeito, reincidência e quantidades;
+- `Defeitos por Operador`: cada descrição de NC do colaborador, sua reincidência, quantidade rejeitada/devolvida e indicador de principal defeito.
+
+O arquivo .xlsx utiliza `openpyxl`, cabeçalhos azul-marinho, bordas finas nas células, filtros, primeira linha de registros congelada e matrícula tratada como texto. Descrições de NC recebidas do ERP são escapadas para não executar fórmulas no Excel.
+
+A exportação resolve nomes para **todos** os operadores (não só Top 5) pelo diretório S2S, com paralelismo limitado e cache de 15 min. Em caso de indisponibilidade do RH, a matrícula não é excluída; é usada como rótulo de fallback.
+
+Validar em homologação: desempates na ocorrência e na quantidade; relatório com mais de cinco operadores; códigos com zeros à esquerda; filtros; linhas e bordas; indisponibilidade do Portal RH; tempo de resposta da exportação. Nenhuma mudança em produção sem merge e deploy.
