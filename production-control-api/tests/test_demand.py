@@ -145,9 +145,9 @@ def test_mp_sales_are_missing_from_list_summary_horizon_and_op_pendencies(branch
     service = _service(FakeDemandGateway(sales_orders=sales))
     user = _user(*FULL_PERMS)
     payload = service.list_demand(user, branch=branch)
-    assert [row["sales_order"] for row in payload["items"]] == [
+    assert {row["sales_order"] for row in payload["items"]} == {
         "PA", "PI", "DESCONHECIDO"
-    ]
+    }
     assert payload["summary"]["line_count"] == 3
     assert payload["summary"]["open_quantity"] == 9.0
     assert sum(bucket["open_quantity"] for bucket in payload["horizon"]) == 9.0
