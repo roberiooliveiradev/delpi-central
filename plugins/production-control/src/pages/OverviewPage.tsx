@@ -5,19 +5,22 @@ import {
   createDashboardSegmentToggle,
   MultiTypeSeriesChart,
 } from "@delpi/plugin-ui/index";
-import { Check, Timer } from "lucide-react";
+import { AlertCircle, Check, Timer } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { ChartCard } from "../components/ChartCard";
 import { BillingDueDetailModal } from "../components/BillingDueDetailModal";
+import { OpPendencyDetailModal, formatOpPendencyQuantity } from "../components/OpPendencyDetailModal";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import { useOverview } from "../hooks/useOverview";
+import { useOpPendencies } from "../hooks/useOpPendencies";
 import type {
   BillingDueTodayCheck,
   BillingDueTodayLine,
   OverviewPayload,
+  OpPendencyItem,
   PpcBranch,
   ProblemIssue,
   VolumeView,
@@ -140,7 +143,17 @@ export function OverviewPage({
   const [selectedBillingLine, setSelectedBillingLine] = useState<BillingDueTodayLine | null>(
     null,
   );
+  const [selectedOpPendency, setSelectedOpPendency] = useState<OpPendencyItem | null>(null);
   const { data, loading, error, reload } = useOverview(branch, volumeView, startDate, endDate);
+  const {
+    data: opPendencies, loading: opLoading, error: opError, reload: reloadOpPendencies,
+  } = useOpPendencies(branch);
+
+  const refreshOverview = () => {
+    reload();
+    reloadOpPendencies();
+    setSelectedOpPendency(null);
+  };
 
   /** A fila de atraso leva ao rastreio na Carga máquina, onde a OP pode ser reprogramada. */
   const openIssue = (issue: ProblemIssue) => {
@@ -255,7 +268,7 @@ export function OverviewPage({
         startDate={startDate}
         endDate={endDate}
         onPeriodChange={applyPeriod}
-        onRefresh={reload}
+        onRefresh={refreshOverview}
       />
 
       {loading && !data ? (
@@ -429,6 +442,65 @@ export function OverviewPage({
                 </ul>
               )}
             </article>
+
+            <article className="ppc-board-list ppc-board-pendencies" aria-label={copy.home.opPendencies.title}>
+              <header className="ppc-board-list__head">
+                <div className="ppc-board-pendencies__heading">
+                  <h2 className="ppc-board-list__title">{copy.home.opPendencies.title}</h2>
+                  {!opLoading && !opError ? (
+                    <span className="ppc-board-pendencies__count">
+                      {copy.home.opPendencies.count(opPendencies?.count ?? 0)}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="ppc-board-list__hint">{copy.home.opPendencies.hint}</p>
+              </header>
+              {opLoading ? (
+                <p className="ppc-board-list__empty" role="status">{copy.home.opPendencies.loading}</p>
+              ) : opError ? (
+                <p className="ppc-board-list__empty ppc-board-pendencies__error" role="alert">
+                  {copy.home.opPendencies.error}
+                </p>
+              ) : !opPendencies?.items.length ? (
+                <p className="ppc-board-list__empty">{copy.home.opPendencies.empty}</p>
+              ) : (
+                <ul className="ppc-board-list__scroll">
+                  {opPendencies.items.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        className="ppc-board-pendencies__row"
+                        aria-label={`${copy.home.opPendencies.showDetails}: ${item.product_code}`}
+                        onClick={() => setSelectedOpPendency(item)}
+                      >
+                        <span className="ppc-board-pendencies__icon" aria-hidden="true">
+                          <AlertCircle size={17} strokeWidth={1.75} />
+                        </span>
+                        <span className="ppc-board-pendencies__text">
+                          <strong>
+                            {copy.home.opPendencies.needOp}{" "}
+                            {item.suggested_op_date ? formatIsoDate(item.suggested_op_date) : copy.home.opPendencies.needDateMissing}
+                          </strong>
+                          <span>{copy.home.opPendencies.forProduct} {item.product_code}</span>
+                          <span className="ppc-board-pendencies__qty">
+                            {formatOpPendencyQuantity(
+                              item.next_uncovered_pieces, item.next_uncovered_quantity, item.unit,
+                            )}
+                            {" · "}
+                            {copy.home.opPendencies.required} {formatIsoDate(item.required_date)}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {!opLoading && !opError && opPendencies?.source_status === "partial" ? (
+                <p className="ppc-board-pendencies__notice" role="status">
+                  {opPendencies.warning || copy.home.opPendencies.sourceWarning}
+                </p>
+              ) : null}
+            </article>
           </div>
 
           <section className="ppc-volume-section" aria-label={copy.home.volumeTitle}>
@@ -475,6 +547,11 @@ export function OverviewPage({
         line={selectedBillingLine}
         branch={branch}
         onClose={() => setSelectedBillingLine(null)}
+      />
+      <OpPendencyDetailModal
+        item={selectedOpPendency}
+        branch={branch}
+        onClose={() => setSelectedOpPendency(null)}
       />
     </div>
   );
