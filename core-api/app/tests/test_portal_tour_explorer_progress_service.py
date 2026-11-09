@@ -9,7 +9,7 @@ from app.domain.portal_tour.portal_tour_explorer_progress_service import (
 def test_resolve_explorer_progress_for_standard_user():
     context = PortalTourUserContext(permissions=frozenset(), is_superadmin=False)
     snapshot = resolve_explorer_progress_snapshot(
-        ["open-apps", "sidebar-favorites"],
+        ["open-apps", "pin-app"],
         context,
     )
 

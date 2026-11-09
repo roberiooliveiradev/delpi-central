@@ -1883,10 +1883,12 @@ services:
       # TEO: analyze -> gpt_analyze (view=summary only).
       DELIA_C4_DAVI_PRODUCT_READ_ENABLED: ${DELIA_C4_DAVI_PRODUCT_READ_ENABLED:-}
       DELIA_C4_TEO_DASHBOARD_ANALYZE_ENABLED: ${DELIA_C4_TEO_DASHBOARD_ANALYZE_ENABLED:-}
-
     volumes:
       - ../delia-api:/app
       - ../shared:/shared
+      # Test/contract artifacts (G4 fixture, presentation-v2 schema)
+      - ../docs:/docs:ro
+      - ../plugins/delia:/plugins/delia:ro
 
     depends_on:
       - keycloak

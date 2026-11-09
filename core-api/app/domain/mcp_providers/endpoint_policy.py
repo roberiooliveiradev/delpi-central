@@ -1,22 +1,20 @@
-"""MCP endpoint registration policy — structural + network trust.
+"""Pure MCP endpoint eligibility rules (no env, no DNS, no I/O).
 
-Cadastro validation is not a substitute for connection-time SSRF
-controls on redirects/rebinding. Trusted internal DELPI hosts are an
-explicit allowlist (env), never inferred from attacker-controlled names.
+Cadastro and connection-time callers supply trusted hosts and any
+resolved addresses. Infrastructure owns env loading and DNS resolution.
 """
 
 from __future__ import annotations
 
 import ipaddress
-import os
-import socket
+from collections.abc import Sequence
 from urllib.parse import urlparse
 
 from app.domain.mcp_providers.lifecycle import McpProviderLifecycleError
 
-
 # Default trusted DNS names for in-cluster DELPI MCP servers (DEV/compose).
-_DEFAULT_TRUSTED_HOSTS = frozenset(
+# Callers may extend via configuration — never via attacker-controlled names.
+DEFAULT_TRUSTED_ENDPOINT_HOSTS = frozenset(
     {
         "delpi-api-delpi",
         "api-delpi",
@@ -33,21 +31,7 @@ _DEFAULT_TRUSTED_HOSTS = frozenset(
 )
 
 
-def _trusted_hosts() -> frozenset[str]:
-    extra = (
-        os.getenv("CORE_MCP_TRUSTED_ENDPOINT_HOSTS") or ""
-    ).strip()
-    hosts = set(_DEFAULT_TRUSTED_HOSTS)
-    if extra:
-        hosts.update(
-            h.strip().lower()
-            for h in extra.split(",")
-            if h.strip()
-        )
-    return frozenset(hosts)
-
-
-def _is_blocked_ip(ip: ipaddress._BaseAddress) -> bool:
+def is_disallowed_ip(ip: ipaddress._BaseAddress) -> bool:
     return bool(
         ip.is_private
         or ip.is_loopback
@@ -58,14 +42,18 @@ def _is_blocked_ip(ip: ipaddress._BaseAddress) -> bool:
     )
 
 
-def validate_mcp_endpoint_ref(
+def evaluate_mcp_endpoint_ref(
     endpoint_ref: str,
     *,
-    resolve_dns: bool = True,
+    trusted_hosts: frozenset[str] | set[str] = DEFAULT_TRUSTED_ENDPOINT_HOSTS,
+    resolved_ips: Sequence[str] | None = None,
 ) -> str:
-    """Validate endpoint for MCP provider registration.
+    """Evaluate endpoint structure and optional resolved addresses.
 
-    Raises ``McpProviderLifecycleError`` with stable codes.
+    ``resolved_ips is None`` → structural/trust checks only (no DNS
+    evidence yet). ``resolved_ips`` provided → every resolved address
+    must be allowed (empty sequence is treated as DNS failure by the
+    caller before invoking this function).
     """
     value = str(endpoint_ref or "").strip()
     if not value:
@@ -90,9 +78,8 @@ def validate_mcp_endpoint_ref(
             "endpointRef must include a host",
         )
     host = parsed.hostname.lower().rstrip(".")
-    trusted = _trusted_hosts()
+    trusted = frozenset(h.strip().lower() for h in trusted_hosts if h)
 
-    # Literal IP hosts
     try:
         ip = ipaddress.ip_address(host)
     except ValueError:
@@ -101,12 +88,11 @@ def validate_mcp_endpoint_ref(
     if ip is not None:
         if host in trusted:
             return value
-        if _is_blocked_ip(ip):
+        if is_disallowed_ip(ip):
             raise McpProviderLifecycleError(
                 "mcp_provider.endpoint_ssrf",
                 "endpointRef resolves to a disallowed address",
             )
-        # Public literal IP allowed only over https
         if parsed.scheme != "https":
             raise McpProviderLifecycleError(
                 "mcp_provider.endpoint_https_required",
@@ -114,7 +100,6 @@ def validate_mcp_endpoint_ref(
             )
         return value
 
-    # Hostname path
     if host in {"localhost", "metadata.google.internal"} or host.startswith(
         "metadata."
     ):
@@ -124,7 +109,6 @@ def validate_mcp_endpoint_ref(
         )
 
     if host in trusted:
-        # Explicit DELPI internal/compose hosts — http allowed for DEV.
         return value
 
     if parsed.scheme != "https":
@@ -133,27 +117,38 @@ def validate_mcp_endpoint_ref(
             "external endpointRef must use https",
         )
 
-    if not resolve_dns:
+    if resolved_ips is None:
         return value
 
-    try:
-        infos = socket.getaddrinfo(host, parsed.port or 443, type=socket.SOCK_STREAM)
-    except socket.gaierror as exc:
-        raise McpProviderLifecycleError(
-            "mcp_provider.endpoint_dns",
-            f"endpointRef host could not be resolved: {host}",
-        ) from exc
-
-    for info in infos:
-        sockaddr = info[4]
-        raw_ip = sockaddr[0]
+    for raw_ip in resolved_ips:
         try:
             resolved = ipaddress.ip_address(raw_ip)
         except ValueError:
             continue
-        if _is_blocked_ip(resolved):
+        if is_disallowed_ip(resolved):
             raise McpProviderLifecycleError(
                 "mcp_provider.endpoint_ssrf",
                 "endpointRef DNS resolution points to a disallowed address",
             )
     return value
+
+
+# Backward-compatible alias used by older tests during migration.
+def validate_mcp_endpoint_ref(
+    endpoint_ref: str,
+    *,
+    resolve_dns: bool = True,
+    trusted_hosts: frozenset[str] | set[str] = DEFAULT_TRUSTED_ENDPOINT_HOSTS,
+    resolved_ips: Sequence[str] | None = None,
+) -> str:
+    """Compatibility wrapper — prefer ``evaluate_mcp_endpoint_ref``.
+
+    When ``resolve_dns=True`` and ``resolved_ips`` is omitted, this
+    wrapper only performs structural checks (DNS belongs to infrastructure).
+    """
+    del resolve_dns  # DNS is never performed in domain
+    return evaluate_mcp_endpoint_ref(
+        endpoint_ref,
+        trusted_hosts=trusted_hosts,
+        resolved_ips=resolved_ips,
+    )

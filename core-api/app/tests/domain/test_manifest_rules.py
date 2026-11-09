@@ -9,6 +9,7 @@ def base_manifest():
         "version": "1.0.0",
         "basePath": "/crm",
         "type": "microfrontend",
+        "entry": "http://localhost:3000/remoteEntry.js",
         "permissions": [
             {"code": "crm.leads.read", "module": "crm", "name": "Read leads"}
         ],
@@ -75,7 +76,10 @@ def test_route_permission_not_declared():
 
 def test_backend_required_missing_fields():
     m = base_manifest()
-    m["backend"] = {"required": True}
+    m["type"] = "backend-only"
+    m.pop("entry", None)
+    m["routes"] = []
+    m["backend"] = {"required": True, "validateJwt": True}
 
     errors = validate_manifest_rules(m)
 
@@ -86,6 +90,7 @@ def test_backend_required_missing_fields():
 def test_backend_only_requires_access_permission():
     m = base_manifest()
     m["type"] = "backend-only"
+    m.pop("entry", None)
     m["permissions"] = []  # remove access permission
 
     errors = validate_manifest_rules(m)

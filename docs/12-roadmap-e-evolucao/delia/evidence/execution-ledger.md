@@ -6073,3 +6073,12 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **RW01–RW05:** implementados no menor diff; MCPToolset nativo preservado; sem segundo registry/banco DÉLIA.
 - **Veredicto:** `REWORK_IMPLEMENTED_BOUNDED_DEV` — entrega para `T2_INDEPENDENT_REVIEW`; A-07 **não** `CLOSED_PROVEN`; T3/PRODUCTION_DEPLOY NOT_AUTHORIZED.
 
+| DELIA-C3-T2-CORE-MCP-REGISTRY-FULL-REMEDIATION-AND-REGRESSION-01 | Full remediation: universal `_invoke` revoke; domain/infra endpoint split; DÉLIA connection egress; Core 413/0; DÉLIA 1463/0; DEV E2E eligibility disable+S2S PASS; Outcome live TEST_NOT_RUN; Keycloak/prod untouched; PRODUCTION_DEPLOY=NOT_AUTHORIZED | A-07=IMPLEMENTED_BOUNDED_DEV; R04=PENDING_OPS; NEXT=T2_INDEPENDENT_REVIEW |
+
+### DELIA-C3-T2-CORE-MCP-REGISTRY-FULL-REMEDIATION-AND-REGRESSION-01 — execução (2026-11-09)
+
+- **Autorização:** PO full remediation; §2A.12; REFERENCE `ebd0a3533d`.
+- **MCP:** revoke-all-paths; CA domain purity; connection-time SSRF; suites Core/DÉLIA verdes.
+- **DEV E2E:** Core disable/restore + DÉLIA S2S guard PASS; Outcome ACT live TEST_NOT_RUN.
+- **Veredicto:** `REMEDIATION_IMPLEMENTED_BOUNDED_DEV` — `T2_INDEPENDENT_REVIEW`; A-07 não CLOSED_PROVEN.
+

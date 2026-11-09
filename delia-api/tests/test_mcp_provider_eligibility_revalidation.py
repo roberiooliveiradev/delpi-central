@@ -129,3 +129,73 @@ def test_governed_invoke_revalidates_before_wire():
     )
     assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert attempt.error_code == "mcp_provider_not_eligible"
+
+
+def test_provider_invoke_blocks_revoked_before_wire():
+    """Universal _invoke gate: PREPARE/ACT/retry share the same block."""
+    from app.application.capability_provision.contracts import (
+        CapabilityGroup,
+        CapabilityProviderError,
+        ProviderCapability,
+    )
+    from app.application.capability_provision.governed_capability_orchestrator import (
+        OperationalCapabilityOrchestrator,
+    )
+    from app.domain.evidence.model import SourceRef
+    from app.domain.specialist_interop.model import SpecialistOperationClass
+
+    wire_calls: list[str] = []
+
+    class _Prov:
+        provider_id = "mcp"
+
+        def list_groups(self, **_kwargs):
+            raise AssertionError("list_groups must not run in this unit")
+
+        def invoke(self, capability, arguments, **_kwargs):
+            wire_calls.append(capability.remote_name)
+            raise AssertionError("wire must not be reached after revoke")
+
+    group = CapabilityGroup(
+        provider_id="mcp",
+        group_id="davi",
+        owner_ref="api-delpi",
+        display_name="DAVI",
+        capabilities=(
+            ProviderCapability(
+                capability_id="davi.execute_delpi_information",
+                group_id="davi",
+                provider_id="mcp",
+                remote_name="execute_delpi_information",
+                owner="api-delpi",
+                operation_class=SpecialistOperationClass.READ,
+                description="x",
+                input_schema={"type": "object"},
+                binding={
+                    "specialist_id": "davi",
+                    "remote_name": "execute_delpi_information",
+                },
+            ),
+        ),
+        source=SourceRef(
+            source_id="api-delpi",
+            source_system="api-delpi",
+            provider_name="DAVI",
+        ),
+    )
+
+    class _Block:
+        def require_eligible(self, provider_ref: str) -> None:
+            raise McpProviderEligibilityError(
+                "mcp_provider_not_eligible", "revoked"
+            )
+
+    orch = OperationalCapabilityOrchestrator(
+        [_Prov()],
+        orchestration_instructions={"x": "y"},
+        mcp_provider_eligibility=_Block(),
+    )
+    with pytest.raises(CapabilityProviderError) as exc:
+        orch._invoke(group, "execute_delpi_information", {}, "c-revoke")
+    assert exc.value.code == "mcp_provider_not_eligible"
+    assert wire_calls == []

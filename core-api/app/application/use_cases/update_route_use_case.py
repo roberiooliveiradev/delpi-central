@@ -19,20 +19,22 @@ class UpdateRouteUseCase:
         self._uow = uow
 
     def execute(self, route_id: str, patch: Dict[str, Any]) -> UpdateRouteResult:
-
-        # 1️⃣ Regra de negócio
-        self._uow.admin_routes.update(route_id, patch)
-
-        # 2️⃣ Evento global
-        self._uow.collect_event(
-            AdminChangedEvent(
-                entity="routes",
-                action="route_updated",
-                payload={
-                    "routeId": route_id,
-                },
-                target_user_id=None,  # broadcast
+        try:
+            self._uow.admin_routes.update(route_id, patch)
+            self._uow.collect_event(
+                AdminChangedEvent(
+                    entity="routes",
+                    action="route_updated",
+                    payload={
+                        "routeId": route_id,
+                    },
+                    target_user_id=None,
+                )
             )
-        )
-
-        return UpdateRouteResult(success=True, errors=[])
+            return UpdateRouteResult(success=True, errors=[])
+        except Exception as exc:
+            self._uow.rollback()
+            return UpdateRouteResult(
+                success=False,
+                errors=[{"code": "routes.update_failed", "message": str(exc)}],
+            )

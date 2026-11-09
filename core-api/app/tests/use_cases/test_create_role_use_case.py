@@ -21,6 +21,10 @@ class FakeUoW:
     def __init__(self, exists=False):
         self.roles = FakeRolesRepo(exists)
         self.committed = False
+        self.events = []
+
+    def collect_event(self, event):
+        self.events.append(event)
 
     def commit(self):
         self.committed = True
@@ -34,7 +38,7 @@ def test_create_role_success():
 
     assert role_id == "role-id"
     assert uow.roles.created
-    assert uow.committed
+    assert uow.events
 
 
 def test_create_role_already_exists():

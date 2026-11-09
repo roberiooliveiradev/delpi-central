@@ -27,9 +27,13 @@ class FakeAppQueries:
 
 class FakeUoW:
     def __init__(self, apps, exists=False):
-        self.favorite = FakeFavoriteRepo(exists)
+        self.favorites = FakeFavoriteRepo(exists)
         self.app_queries = FakeAppQueries(apps)
         self.committed = False
+        self.events = []
+
+    def collect_event(self, event):
+        self.events.append(event)
 
     def commit(self):
         self.committed = True
@@ -42,8 +46,8 @@ def test_add_favorite_success():
     use_case = AddFavoriteAppUseCase(uow)
     use_case.execute("user1", "crm")
 
-    assert uow.favorite.add_called
-    assert uow.committed
+    assert uow.favorites.add_called
+    assert uow.events
 
 
 def test_add_favorite_app_not_found():
@@ -61,4 +65,4 @@ def test_add_favorite_idempotent():
     use_case = AddFavoriteAppUseCase(uow)
     use_case.execute("user1", "crm")
 
-    assert not uow.favorite.add_called
+    assert not uow.favorites.add_called

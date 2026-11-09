@@ -58,14 +58,18 @@ preserve subject/Policy/Decision/Domain gates.
 
 `registered != approved != enabled != authenticated != authorized`.
 
-### Endpoint policy (R1-RW03)
+### Endpoint policy (R1-RW03 / full remediation)
 
-Registration validates structure, blocks credentials-in-URL, loopback,
-link-local, metadata, and non-trusted private resolution. Trusted
-in-cluster hosts are an **explicit allowlist**
-(`CORE_MCP_TRUSTED_ENDPOINT_HOSTS` + defaults). External hosts require
-HTTPS. Cadastro validation ≠ connection-time redirect/DNS-rebinding
-proof for arbitrary proxies.
+**Domain** (`endpoint_policy.evaluate_mcp_endpoint_ref`): pure structure +
+IP classification; no `os`/`socket`.
+
+**Infrastructure** (`endpoint_network`): loads
+`CORE_MCP_TRUSTED_ENDPOINT_HOSTS`, resolves DNS, feeds resolved IPs into
+the domain evaluator at registration time.
+
+Trusted in-cluster hosts are an **explicit allowlist** (env + defaults).
+External hosts require HTTPS. Cadastro validation ≠ connection-time
+controls — DÉLIA re-checks egress on `_connect`.
 
 ## DEV seed
 

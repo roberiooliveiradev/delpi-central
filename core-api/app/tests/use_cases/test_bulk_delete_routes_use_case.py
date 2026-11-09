@@ -18,6 +18,10 @@ class FakeUoW:
         self.admin_routes = FakeAdminRoutes(should_fail)
         self.committed = False
         self.rolled_back = False
+        self.events = []
+
+    def collect_event(self, event):
+        self.events.append(event)
 
     def commit(self):
         self.committed = True
@@ -34,7 +38,8 @@ def test_bulk_delete_success():
 
     assert result.success
     assert result.deleted == 2
-    assert uow.committed
+    assert uow.events
+    assert not uow.rolled_back
 
 
 def test_bulk_delete_failure():

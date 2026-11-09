@@ -14,7 +14,12 @@ from app.domain.mcp_providers.entities import (
     eligible_record_to_dict,
     provider_record_to_dict,
 )
-from app.domain.mcp_providers.endpoint_policy import validate_mcp_endpoint_ref
+from collections.abc import Callable, Sequence
+
+from app.domain.mcp_providers.endpoint_policy import (
+    DEFAULT_TRUSTED_ENDPOINT_HOSTS,
+    evaluate_mcp_endpoint_ref,
+)
 from app.domain.mcp_providers.lifecycle import (
     PROTOCOL_MCP,
     STATUS_DISCOVERED,
@@ -31,6 +36,7 @@ from app.domain.mcp_providers.lifecycle import (
 )
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.domain.ports.mcp_provider_repository_port import McpProviderRepositoryPort
+from urllib.parse import urlparse
 
 
 class McpProviderConflictError(Exception):
@@ -69,13 +75,7 @@ def _normalize_provider_ref(provider_ref: str) -> str:
     return value
 
 
-def _validate_endpoint(endpoint_ref: str) -> str:
-    try:
-        return validate_mcp_endpoint_ref(endpoint_ref, resolve_dns=True)
-    except McpProviderLifecycleError as exc:
-        raise McpProviderValidationError(
-            exc.code, exc.message, path="endpointRef"
-        ) from exc
+DnsResolver = Callable[[str, int], Sequence[str]]
 
 
 class ManageMcpProvidersUseCase:
@@ -84,9 +84,51 @@ class ManageMcpProvidersUseCase:
         repository: McpProviderRepositoryPort,
         *,
         audit_repository: AuditRepositoryPort | None = None,
+        trusted_hosts: frozenset[str] | set[str] | None = None,
+        dns_resolver: DnsResolver | None = None,
     ) -> None:
         self._repo = repository
         self._audit = audit_repository
+        self._trusted_hosts = frozenset(
+            trusted_hosts
+            if trusted_hosts is not None
+            else DEFAULT_TRUSTED_ENDPOINT_HOSTS
+        )
+        self._dns_resolver = dns_resolver
+
+    def _validate_endpoint(self, endpoint_ref: str) -> str:
+        try:
+            evaluate_mcp_endpoint_ref(
+                endpoint_ref,
+                trusted_hosts=self._trusted_hosts,
+                resolved_ips=None,
+            )
+            parsed = urlparse(str(endpoint_ref or "").strip())
+            host = (parsed.hostname or "").lower().rstrip(".")
+            if host and host not in self._trusted_hosts and self._dns_resolver is not None:
+                try:
+                    import ipaddress
+
+                    ipaddress.ip_address(host)
+                except ValueError:
+                    port = parsed.port or (
+                        443 if parsed.scheme == "https" else 80
+                    )
+                    ips = list(self._dns_resolver(host, port))
+                    return evaluate_mcp_endpoint_ref(
+                        endpoint_ref,
+                        trusted_hosts=self._trusted_hosts,
+                        resolved_ips=ips,
+                    )
+            return evaluate_mcp_endpoint_ref(
+                endpoint_ref,
+                trusted_hosts=self._trusted_hosts,
+                resolved_ips=None,
+            )
+        except McpProviderLifecycleError as exc:
+            raise McpProviderValidationError(
+                exc.code, exc.message, path="endpointRef"
+            ) from exc
 
     def _audit_log(
         self,
@@ -142,7 +184,7 @@ class ManageMcpProvidersUseCase:
                 "ownerRef is required",
                 path="ownerRef",
             )
-        endpoint = _validate_endpoint(endpoint_ref)
+        endpoint = self._validate_endpoint(endpoint_ref)
         try:
             strategy = assert_auth_strategy(auth_strategy_ref)
         except McpProviderLifecycleError as exc:

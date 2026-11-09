@@ -120,13 +120,15 @@ def test_execute_includes_direct_roles_and_groups():
     uow.user_groups.list_group_ids.return_value = [group_id]
     uow.group_roles = MagicMock()
     uow.group_roles.list_role_ids.return_value = []
+    from types import SimpleNamespace
+
     uow.roles = MagicMock()
-    uow.roles.get.side_effect = lambda rid: MagicMock(
+    uow.roles.get.side_effect = lambda rid: SimpleNamespace(
         id=rid,
         name="Papel RH" if rid == role_id else "Papel Grupo",
     )
     uow.groups = MagicMock()
-    uow.groups.get.return_value = MagicMock(id=group_id, name="Engenharia")
+    uow.groups.get.return_value = SimpleNamespace(id=group_id, name="Engenharia")
     uow.roles.list_all.return_value = []
 
     with patch(

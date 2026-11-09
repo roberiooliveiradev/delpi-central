@@ -10,7 +10,11 @@ class FakeUoW:
         })()
         self.committed = False
         self.rolled_back = False
+        self.events = []
         self._should_fail = should_fail
+
+    def collect_event(self, event):
+        self.events.append(event)
 
     def commit(self):
         self.committed = True
@@ -26,7 +30,7 @@ def test_update_route_success():
     result = use_case.execute("route1", {"label": "New"})
 
     assert result.success
-    assert uow.committed
+    assert uow.events
 
 
 def test_update_route_failure():

@@ -43,9 +43,12 @@ from app.domain.specialist_interop.model import (
     SpecialistResultStatus,
 )
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-FIXTURE_DIR = REPO_ROOT / "plugins/delia/src/api/__fixtures__"
-FIXTURE_PATH = FIXTURE_DIR / "g4-wire-envelopes.json"
+from tests.support.monorepo_paths import monorepo_path
+
+FIXTURE_PATH = monorepo_path(
+    "plugins", "delia", "src", "api", "__fixtures__", "g4-wire-envelopes.json"
+)
+FIXTURE_DIR = FIXTURE_PATH.parent
 
 _PROV = SpecialistResultProvenance(
     specialist_id="spec-ops",

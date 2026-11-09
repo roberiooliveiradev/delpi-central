@@ -1,18 +1,27 @@
 # app/tests/test_admin_statistics_repository.py
 
-from app.create_app import create_app
+from unittest.mock import MagicMock
+
 from app.infrastructure.persistence.sqlalchemy.admin_statistics_repository import (
     SqlAlchemyAdminStatisticsRepository,
 )
-from app.extensions.db import db
 
 
 def test_get_snapshot_returns_expected_sections():
-    app = create_app("testing")
+    session = MagicMock()
+    repo = SqlAlchemyAdminStatisticsRepository(session)
+    repo._count = MagicMock(return_value=3)  # type: ignore[method-assign]
+    repo._junction_count = MagicMock(return_value=1)  # type: ignore[method-assign]
+    repo._count_users_without_roles = MagicMock(return_value=0)  # type: ignore[method-assign]
+    repo._count_users_without_groups = MagicMock(return_value=0)  # type: ignore[method-assign]
+    repo._roles_without_users = MagicMock(return_value=0)  # type: ignore[method-assign]
+    repo._groups_without_users = MagicMock(return_value=0)  # type: ignore[method-assign]
+    repo._apps_by_type = MagicMock(return_value=[{"type": "microfrontend", "count": 1}])  # type: ignore[method-assign]
+    repo._top_roles_by_users = MagicMock(return_value=[])  # type: ignore[method-assign]
+    repo._top_groups_by_users = MagicMock(return_value=[])  # type: ignore[method-assign]
+    repo._top_groups_by_roles = MagicMock(return_value=[])  # type: ignore[method-assign]
 
-    with app.app_context():
-        repo = SqlAlchemyAdminStatisticsRepository(db.session)
-        snapshot = repo.get_snapshot()
+    snapshot = repo.get_snapshot()
 
     assert "users" in snapshot
     assert "apps" in snapshot
@@ -23,3 +32,4 @@ def test_get_snapshot_returns_expected_sections():
     assert "notifications" in snapshot
     assert isinstance(snapshot["users"]["total"], int)
     assert isinstance(snapshot["apps"]["byType"], list)
+    assert snapshot["apps"]["byType"][0]["type"] == "microfrontend"

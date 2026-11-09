@@ -681,3 +681,36 @@ Provider-neutral; SSRF/redirect/DNS checks; OAuth externo fora do Keycloak DELPI
 **PRODUCTION_DEPLOY:** NOT_AUTHORIZED. **T3:** NOT_AUTHORIZED.  
 **NEXT:** `T2_INDEPENDENT_REVIEW`
 
+## T2 FULL-REMEDIATION — suites + MCP security (2026-11-09)
+
+**TASK_ID:** `DELIA-C3-T2-CORE-MCP-REGISTRY-FULL-REMEDIATION-AND-REGRESSION-01`  
+**REFERENCE:** `ebd0a3533d20d93c001a2151fd9e567e9f116f85`  
+**AUTHORIZATION:** PO full remediation; §2A.12
+
+### Correções MCP
+
+- Revogação no boundary `_invoke` (além do semantic tool path).
+- Domain `endpoint_policy` sem I/O; infra `endpoint_network` (DNS/env).
+- DÉLIA `endpoint_egress` no `_connect` (connection-time).
+- Compose DEV monta `/docs` + `/plugins/delia` para testes de contrato.
+
+### Suites
+
+| Suite | Antes | Depois |
+|---|---|---|
+| Core `app/tests/` | 382 PASS / 29 FAIL | **413 PASS / 0 FAIL** |
+| DÉLIA `tests/` | ~1387 PASS / 1 FAIL + collection errors | **1463 PASS / 0 FAIL** |
+
+### DEV E2E
+
+- Seed 7; eligible davi/teo/vista; disable davi → fora do eligible → restore: **PASS**
+- DÉLIA S2S client + guard (teo ok / caio blocked); envelope `authorizationScope=provider_approval_only`: **PASS**
+- Outcome user-facing live Domain/Keycloak ACT: **TEST_NOT_RUN**
+
+| ID | Status |
+|---|---|
+| A-07 | `IMPLEMENTED_BOUNDED_DEV` |
+| R04 | `PENDING_OPS` |
+
+**NEXT:** `T2_INDEPENDENT_REVIEW`
+

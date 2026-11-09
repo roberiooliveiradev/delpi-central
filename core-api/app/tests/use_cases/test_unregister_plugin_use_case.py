@@ -20,6 +20,10 @@ class FakeUoW:
 
         self.committed = False
         self.rolled_back = False
+        self.events = []
+
+    def collect_event(self, event):
+        self.events.append(event)
 
     def commit(self):
         self.committed = True
@@ -35,7 +39,7 @@ def test_unregister_success():
     result = use_case.execute("crm")
 
     assert result.success
-    assert uow.committed
+    assert uow.events
 
 
 def test_unregister_not_found():

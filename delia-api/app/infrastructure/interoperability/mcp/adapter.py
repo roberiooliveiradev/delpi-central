@@ -292,6 +292,13 @@ class McpSpecialistAdapter:
         budget_seconds: float | None = None,
     ) -> tuple[SpecialistConnectionProfile, Any]:
         profile = self._profile(specialist.specialist_id)
+        # Connection-time egress (R1-RW03 remediation): re-check destination
+        # before transport — registration-time Core checks are not enough.
+        from app.infrastructure.interoperability.mcp.endpoint_egress import (
+            assert_endpoint_allowed_for_connect,
+        )
+
+        assert_endpoint_allowed_for_connect(profile.endpoint)
         if self._credential_provider is None:
             # No user-delegated credential mechanism configured —
             # deterministic fail-closed before any wire activity. DÉLIA

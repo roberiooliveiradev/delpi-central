@@ -59,10 +59,17 @@ def _client_ip() -> str | None:
 
 
 def _use_case() -> ManageMcpProvidersUseCase:
-    # Composition root for HTTP: concrete repos injected into the use case.
+    # Composition root for HTTP: concrete repos + network policy injected.
+    from app.infrastructure.mcp.endpoint_network import (
+        load_trusted_endpoint_hosts,
+        resolve_endpoint_host_ips,
+    )
+
     return ManageMcpProvidersUseCase(
         SqlAlchemyMcpProviderRepository(db.session),
         audit_repository=SqlAlchemyAuditRepository(db.session),
+        trusted_hosts=load_trusted_endpoint_hosts(),
+        dns_resolver=resolve_endpoint_host_ips,
     )
 
 

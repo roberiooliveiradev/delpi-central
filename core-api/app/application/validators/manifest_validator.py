@@ -42,10 +42,21 @@ class ManifestValidator:
         # 1. Normalização automática
         manifest = ManifestNormalizer.normalize(manifest)
 
-        # 2. Resolver versão
-        ManifestVersionResolver.resolve(manifest)
-
         errors: List[ManifestError] = []
+
+        # 2. Resolver versão — unsupported/missing schemaVersion is a
+        # validation error, never an uncaught transport failure.
+        try:
+            ManifestVersionResolver.resolve(manifest)
+        except ValueError as exc:
+            errors.append(
+                ManifestError(
+                    code="schema_validation_error",
+                    message=str(exc),
+                    path="$.schemaVersion",
+                )
+            )
+            return ValidationResult(False, errors)
 
         # 3. JSON Schema
         for e in sorted(self._validator.iter_errors(manifest), key=lambda x: list(x.path)):

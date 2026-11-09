@@ -227,6 +227,28 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 **A-07:** permanece `IMPLEMENTED_BOUNDED_DEV` (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS`.  
 **NEXT:** `T2_INDEPENDENT_REVIEW`.
 
+### 2A.12 Execution stamp — Full remediation + regression (2026-11-09)
+
+**TASK:** `DELIA-C3-T2-CORE-MCP-REGISTRY-FULL-REMEDIATION-AND-REGRESSION-01`  
+**AUTHORIZATION:** PO — corrigir falhas verificadas (MCP + Core/DÉLIA full suites); PRODUCTION_DEPLOY/Keycloak prod/T3 NOT_AUTHORIZED.  
+**REFERENCE_SHA:** `ebd0a3533d20d93c001a2151fd9e567e9f116f85`.
+
+**RESULT:**
+
+| Frente | Status |
+|---|---|
+| Revogação universal (`_invoke` + semantic) | IMPLEMENTED + RED/GREEN |
+| Domain endpoint_policy puro (sem os/socket); DNS/env em infrastructure | IMPLEMENTED |
+| Connection-time egress DÉLIA (`endpoint_egress` no `_connect`) | IMPLEMENTED |
+| Core full suite | **413 PASS / 0 FAIL** (era 382/29) |
+| DÉLIA full suite | **1463 PASS / 0 FAIL** (G4 + presentation_v2 resolvidos via mounts/paths) |
+| DEV E2E Core eligibility disable→block→restore | PASS |
+| DEV E2E DÉLIA↔Core S2S eligible + guard | PASS |
+| Outcome empresarial live (Keycloak user + Domain ACT) | TEST_NOT_RUN |
+
+**A-07:** `IMPLEMENTED_BOUNDED_DEV` (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS`.  
+**NEXT:** `T2_INDEPENDENT_REVIEW`.
+
 ## 3. Política de residual ZERO e limites reais
 
 - **ZERO** significa nenhum residual material **no escopo de fechamento DÉLIA aprovado**. Resíduo externo TÉO, dependência de produção ou limitação de modelo não pode ser rotulado `PASS`; determinar explicitamente se é bloqueador da aceitação DÉLIA ou de release. Não declarar que todo monorepo foi limpo.

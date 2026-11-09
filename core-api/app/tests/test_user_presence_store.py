@@ -38,10 +38,11 @@ def test_unregister_removes_user_when_last_session_gone():
 
 
 def test_stale_session_is_pruned():
-    store = InMemoryUserPresenceStore(ttl_seconds=1)
+    # Production floor: ttl_seconds is clamped to >= 15.
+    store = InMemoryUserPresenceStore(ttl_seconds=15)
     store.register(user_id="user-1", session_id="sid-a")
 
     state = store._by_session["sid-a"]
-    state.last_seen_at = datetime.utcnow() - timedelta(seconds=5)
+    state.last_seen_at = datetime.utcnow() - timedelta(seconds=20)
 
     assert store.list_online() == []

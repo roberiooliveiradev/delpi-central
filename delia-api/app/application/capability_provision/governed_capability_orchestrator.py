@@ -3169,6 +3169,36 @@ class OperationalCapabilityOrchestrator:
                 "provider_unavailable",
                 "capability provider is not configured",
             )
+        # Universal MCP revocation gate (doc 293 R1-RW01 remediation):
+        # every provider.invoke path — semantic tool, PREPARE, ACT,
+        # retries, discovery-read — revalidates Core eligibility here,
+        # immediately before transport. Composition-time eligibility
+        # is never a durable grant.
+        if (
+            self._mcp_provider_eligibility is not None
+            and str(group.provider_id or "") == "mcp"
+        ):
+            from app.application.ports.mcp_provider_eligibility_port import (
+                McpProviderEligibilityError,
+            )
+
+            try:
+                self._mcp_provider_eligibility.require_eligible(
+                    str(group.group_id or "").strip()
+                )
+            except McpProviderEligibilityError as exc:
+                _logger.info(
+                    "orchestration stage=provider_invoke "
+                    "decision=mcp_provider_eligibility_blocked "
+                    "provider_ref=%s error=%s capability=%s.%s "
+                    "correlation_id=%s",
+                    str(group.group_id or "")[:64],
+                    exc.code,
+                    group.group_id,
+                    remote_name,
+                    correlation,
+                )
+                raise CapabilityProviderError(exc.code, str(exc)) from exc
         started = time.monotonic()
         # LOOP-03R1 (observability): declared argument KEYS only —
         # never values, tokens, or payload content.

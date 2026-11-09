@@ -1,10 +1,13 @@
-"""R1-RW03: MCP endpoint registration policy negatives."""
+"""R1-RW03: MCP endpoint registration policy negatives (pure domain)."""
 
 from __future__ import annotations
 
+import ast
+from pathlib import Path
+
 import pytest
 
-from app.domain.mcp_providers.endpoint_policy import validate_mcp_endpoint_ref
+from app.domain.mcp_providers.endpoint_policy import evaluate_mcp_endpoint_ref
 from app.domain.mcp_providers.lifecycle import McpProviderLifecycleError
 
 
@@ -22,20 +25,48 @@ from app.domain.mcp_providers.lifecycle import McpProviderLifecycleError
 )
 def test_blocked_endpoints(url, code):
     with pytest.raises(McpProviderLifecycleError) as exc:
-        validate_mcp_endpoint_ref(url, resolve_dns=False)
+        evaluate_mcp_endpoint_ref(url, resolved_ips=None)
     assert exc.value.code == code
 
 
 def test_trusted_delpi_internal_allowed():
     assert (
-        validate_mcp_endpoint_ref(
-            "http://transformometro-api:8000/mcp", resolve_dns=False
+        evaluate_mcp_endpoint_ref(
+            "http://transformometro-api:8000/mcp", resolved_ips=None
         )
         == "http://transformometro-api:8000/mcp"
     )
 
 
 def test_external_https_without_dns_ok_structurally():
-    assert validate_mcp_endpoint_ref(
-        "https://partner.example/mcp", resolve_dns=False
+    assert evaluate_mcp_endpoint_ref(
+        "https://partner.example/mcp", resolved_ips=None
     ).startswith("https://")
+
+
+def test_dns_resolution_to_private_blocked():
+    with pytest.raises(McpProviderLifecycleError) as exc:
+        evaluate_mcp_endpoint_ref(
+            "https://partner.example/mcp",
+            resolved_ips=["10.0.0.5"],
+        )
+    assert exc.value.code == "mcp_provider.endpoint_ssrf"
+
+
+def test_domain_endpoint_policy_has_no_os_or_socket_imports():
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "domain/mcp_providers/endpoint_policy.py"
+    )
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    banned: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name in {"os", "socket"} or alias.name.startswith(
+                    ("os.", "socket.")
+                ):
+                    banned.append(alias.name)
+        if isinstance(node, ast.ImportFrom) and node.module in {"os", "socket"}:
+            banned.append(node.module)
+    assert banned == [], f"Domain endpoint_policy imports I/O: {banned}"

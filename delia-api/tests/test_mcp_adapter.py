@@ -46,7 +46,8 @@ DAVI_RESOURCE = "https://minhadelpi.com.br/apps/api-delpi/mcp"
 
 def _profile(**overrides):
     values = {
-        "endpoint": "http://svc:8000/mcp",
+        # Trusted in-cluster host (connection-time egress allowlist).
+        "endpoint": "http://api-delpi:8000/mcp",
         "enabled": True,
         "timeout_seconds": 5.0,
         "exchange_audience": "mcp-api-delpi",
@@ -538,7 +539,7 @@ def _transport(canned):
         return FakeResponse(status=status, body=body, headers=headers_)
 
     transport = DelpiMcpTransport(
-        "http://svc:8000/mcp",
+        "http://api-delpi:8000/mcp",
         timeout_seconds=2.0,
         bearer_token=TOKEN,
         http_post=http_post,
@@ -623,7 +624,7 @@ def test_transport_invalid_response_and_size_bound():
     assert exc.value.code == MCP_INVALID_RESPONSE
 
     transport = DelpiMcpTransport(
-        "http://svc:8000/mcp",
+        "http://api-delpi:8000/mcp",
         timeout_seconds=2.0,
         bearer_token=TOKEN,
         http_post=lambda *a, **k: FakeResponse(body=b"x" * 100),
@@ -641,7 +642,7 @@ def test_transport_timeout_maps_semantic():
         raise requests.exceptions.ConnectTimeout("slow")
 
     transport = DelpiMcpTransport(
-        "http://svc:8000/mcp",
+        "http://api-delpi:8000/mcp",
         timeout_seconds=2.0,
         bearer_token=TOKEN,
         http_post=raising,
@@ -704,7 +705,7 @@ def test_transport_sends_host_header_only_when_configured():
         )
 
     transport = DelpiMcpTransport(
-        "http://svc:8000/mcp",
+        "http://api-delpi:8000/mcp",
         timeout_seconds=2.0,
         bearer_token=TOKEN,
         http_post=http_post,
@@ -775,7 +776,7 @@ def test_r1_transport_per_call_timeout_shortens_never_lengthens():
         return FakeResponse(status=status, body=body, headers=headers_)
 
     transport = DelpiMcpTransport(
-        "http://svc:8000/mcp",
+        "http://api-delpi:8000/mcp",
         timeout_seconds=2.0,
         bearer_token=TOKEN,
         http_post=http_post,
@@ -813,7 +814,7 @@ def test_r1_transport_nonpositive_budget_fails_truthfully():
         return FakeResponse(status=status, body=body, headers=headers_)
 
     transport = DelpiMcpTransport(
-        "http://svc:8000/mcp",
+        "http://api-delpi:8000/mcp",
         timeout_seconds=2.0,
         bearer_token=TOKEN,
         http_post=http_post,
@@ -883,7 +884,7 @@ def test_r2_initialize_notification_only_gets_remainder():
         return FakeResponse(status=status, body=body, headers=headers_)
 
     transport = DelpiMcpTransport(
-        "http://svc:8000/mcp",
+        "http://api-delpi:8000/mcp",
         timeout_seconds=30.0,
         bearer_token=TOKEN,
         http_post=http_post,
@@ -914,7 +915,7 @@ def test_r2_initialize_rpc_exhaustion_zero_notify_posts():
         )
 
     transport = DelpiMcpTransport(
-        "http://svc:8000/mcp",
+        "http://api-delpi:8000/mcp",
         timeout_seconds=30.0,
         bearer_token=TOKEN,
         http_post=http_post,
@@ -986,7 +987,7 @@ def test_r2_adapter_zero_budget_zero_wire_calls():
         {"davi": _profile()},
         credential_provider=creds,
         transport_factory=lambda p, t: DelpiMcpTransport(
-            "http://svc:8000/mcp",
+            "http://api-delpi:8000/mcp",
             timeout_seconds=2.0,
             bearer_token=t,
             http_post=http_post,

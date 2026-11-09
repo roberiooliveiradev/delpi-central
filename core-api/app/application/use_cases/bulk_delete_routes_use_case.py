@@ -20,21 +20,24 @@ class BulkDeleteRoutesUseCase:
         self._uow = uow
 
     def execute(self, route_ids: List[str]) -> BulkDeleteRoutesResult:
-
-        # 1️⃣ Regra de negócio
-        deleted = self._uow.admin_routes.bulk_delete(route_ids)
-
-        # 2️⃣ Evento administrativo (broadcast)
-        self._uow.collect_event(
-            AdminChangedEvent(
-                entity="routes",
-                action="routes_bulk_deleted",
-                payload={
-                    "routeIds": route_ids,
-                    "deleted": deleted,
-                },
-                target_user_id=None,  # broadcast
+        try:
+            deleted = self._uow.admin_routes.bulk_delete(route_ids)
+            self._uow.collect_event(
+                AdminChangedEvent(
+                    entity="routes",
+                    action="routes_bulk_deleted",
+                    payload={
+                        "routeIds": route_ids,
+                        "deleted": deleted,
+                    },
+                    target_user_id=None,
+                )
             )
-        )
-
-        return BulkDeleteRoutesResult(True, deleted, [])
+            return BulkDeleteRoutesResult(True, deleted, [])
+        except Exception as exc:
+            self._uow.rollback()
+            return BulkDeleteRoutesResult(
+                False,
+                0,
+                [{"code": "routes.bulk_delete_failed", "message": str(exc)}],
+            )

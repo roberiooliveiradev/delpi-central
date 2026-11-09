@@ -73,11 +73,14 @@ from app.domain.specialist_interop.model import (
     SpecialistResultStatus,
 )
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-SCHEMA_PATH = (
-    REPO_ROOT
-    / "docs/12-roadmap-e-evolucao/delia/contracts/"
-    "presentation-v2.proposal.schema.json"
+from tests.support.monorepo_paths import monorepo_path
+
+SCHEMA_PATH = monorepo_path(
+    "docs",
+    "12-roadmap-e-evolucao",
+    "delia",
+    "contracts",
+    "presentation-v2.proposal.schema.json",
 )
 schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
