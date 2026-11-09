@@ -194,6 +194,112 @@ def test_op_pendencies_without_myweg_permission_show_only_authorized_erp() -> No
     assert [item["product_code"] for item in payload["items"]] == ["90268888"]
 
 
+def _fiscal_weg_case(
+    qty_un: str,
+    *,
+    invoice_un: str = "6",
+    batch_hour: str = "04",
+) -> tuple[DemandService, SimpleNamespace]:
+    """Protheus SD2 0,006 MI do pedido 002792, sem confundir PV e MyWEG."""
+    row = {
+        "id": "r-90263918",
+        "line_no": 1,
+        "material_weg_tratado": "WEG-90263918",
+        "codigo_referencia_weg": "90263918",
+        "data_remessa": "2026-11-08",
+        "quantidade_original_un": qty_un,
+        "quantidade_mi": str(float(qty_un) / 1000),
+        "sb1_resolution": {
+            "status": "confirmed",
+            "protheus_product_code": "90263918",
+            "matched_by": "code_and_reference",
+        },
+    }
+    service, user = _svc(
+        sales=[],
+        myweg_rows=[row],
+        stock=[{
+            "product_code": "90263918",
+            "quantity": 0,
+            "unit_of_measure": "MI",
+            "branch": "02",
+            "warehouse": "01",
+        }],
+    )
+    source = service._myweg_coverage._myweg_source
+    source._repository.batch["collected_at"] = f"2026-11-08T{batch_hour}:00:00-03:00"
+
+    def fetch_fiscal(**kwargs: Any) -> dict:
+        assert kwargs["branch"] == "02"
+        assert kwargs["customer_code"] == "000001"
+        assert kwargs["customer_store"] == "09"
+        assert kwargs["product_codes"] == ["90263918"]
+        return {
+            "data": {
+                "branch": "02",
+                "customer_code": "000001",
+                "customer_store": "09",
+                "items": [{
+                    "branch": "02",
+                    "invoice_number": "017071",
+                    "invoice_series": "02",
+                    "item": "04",
+                    "product_code": "90263918",
+                    "quantity": "0.006",
+                    "quantity_un": invoice_un,
+                    "unit": "MI",
+                    "issue_date": "2026-11-08",
+                    "customer_code": "000001",
+                    "customer_store": "09",
+                    "situation": "emitted",
+                    "is_return": False,
+                    "comparable": True,
+                }],
+            },
+        }
+
+    service._myweg_coverage._gateway.list_customer_outbound_invoice_line_items = fetch_fiscal
+    return service, user
+
+
+def test_e3_full_fiscal_fifo_credit_removes_duplicate_op_pendency() -> None:
+    service, user = _fiscal_weg_case("6")
+    demand = service.list_demand(user, branch="02", origin=ORIGIN_MYWEG)
+    assert demand["items"] == []
+    assert demand["myweg"]["fiscal_reconciliation"]["applied_un"] == "6"
+    assert demand["myweg"]["fiscal_reconciliation"]["recognition_status"] == (
+        "weg_acknowledgment_not_proven"
+    )
+    pendencies = service.list_op_pendencies(user, branch="02")
+    assert not any(
+        item["kind"] == "include_production_order" and item["product_code"] == "90263918"
+        for item in pendencies["items"]
+    )
+
+
+def test_e3_partial_fiscal_credit_flows_to_demand_and_op_pendencies() -> None:
+    service, user = _fiscal_weg_case("11")
+    demand = service.list_demand(user, branch="02", origin=ORIGIN_MYWEG)
+    line = demand["items"][0]
+    assert line["open_quantity"] == pytest.approx(0.005)
+    assert line["raw_myweg_quantity_mi"] == pytest.approx(0.011)
+    assert line["fiscal_offset_mi"] == pytest.approx(0.006)
+    assert line["fiscal_invoice_refs"][0]["invoice"] == "017071"
+    pendencies = service.list_op_pendencies(user, branch="02")
+    op = next(item for item in pendencies["items"] if item["kind"] == "include_production_order")
+    assert op["product_code"] == "90263918"
+    assert op["next_uncovered_pieces"] == 5
+
+
+def test_e3_ambiguous_fiscal_batch_does_not_suggest_unnecessary_op() -> None:
+    service, user = _fiscal_weg_case("6", batch_hour="14")
+    demand = service.list_demand(user, branch="02", origin=ORIGIN_MYWEG)
+    assert demand["items"][0]["fiscal_coverage_incomplete"] is True
+    pendencies = service.list_op_pendencies(user, branch="02")
+    assert pendencies["op_count"] == 0
+    assert "confira as notas" in pendencies["warning"]
+
+
 def test_e3_default_origin_protheus_compatible() -> None:
     service, user = _svc(sales=[_protheus_sale()])
     data = service.list_demand(user, branch="02")
