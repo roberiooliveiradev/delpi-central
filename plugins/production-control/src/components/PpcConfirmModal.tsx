@@ -21,6 +21,14 @@ export const HostContainedWideDialog = createHostContainedModalShell({
   variant: "wide",
 });
 
+/** Modal de detalhes: altura ajustada ao conteúdo, sem área vazia em poucas OPs. */
+export const HostContainedFitDialog = createHostContainedModalShell({
+  prefix: "ppc",
+  portalScopeClassName: PPC_ROOT_CLASS,
+  containedLayout: "dialog",
+  variant: "fit",
+});
+
 const confirmClasses = confirmModalBemClasses("ppc", {
   actionsBlock: "form-actions",
   actionsAlign: "end",
