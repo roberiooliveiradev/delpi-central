@@ -574,6 +574,30 @@ def test_preview_service_stock_only_op_unverified() -> None:
     assert "op_unit_unverified_myweg" in cons["block_reasons"]
 
 
+def test_preview_verified_op_covers_myweg_without_unlocking_official_total() -> None:
+    service, user = _preview_service(
+        ops=[{
+            "filial": "02",
+            "numero_op": "OP-PC",
+            "produto": "90260001",
+            "saldo_op": 700,
+            "unidade_op": "PC",
+            "unidade_produto": "MI",
+            "unidade": "PC",
+            "data_fim_prevista_op": "2026-11-14",
+        }]
+    )
+    preview = service.build_preview(user, branch="02")
+    scenario = preview["scenarios"]["myweg_only"]
+    assert preview["productive_activation_blocked"] is True
+    assert preview["integrity"]["op_unit_unverified"] is False
+    assert scenario["op_coverage_confirmed"] is True
+    assert scenario["summary"]["covered_by_orders"] == pytest.approx(0.7)
+    assert scenario["summary"]["uncovered_quantity"] == pytest.approx(0.3)
+    assert preview["quantities_mi"]["myweg_covered_by_verified_op"] == pytest.approx(0.7)
+    assert preview["scenarios"]["consolidated_proposed"]["definitive_total_published"] is False
+
+
 def test_preview_rejects_filial_01_and_missing_myweg_perm() -> None:
     service, user = _preview_service()
     with pytest.raises(InvalidBranch):
