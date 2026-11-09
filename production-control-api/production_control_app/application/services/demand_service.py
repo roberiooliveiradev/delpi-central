@@ -524,6 +524,17 @@ class DemandService:
                 "não está confirmada."
             )
 
+        # Necessidades WEG com conciliação fiscal inconclusiva não devem
+        # virar recomendações definitivas de criar novas OPs.
+        fiscal_pending = (metadata.get("fiscal_pending_products") or [])
+        if fiscal_pending:
+            source_status = "partial"
+            fiscal_warning = (
+                "Faturamento WEG não conciliado para alguns produtos; "
+                "confira as notas antes de incluir novas OPs."
+            )
+            warning = " ".join(filter(None, (warning, fiscal_warning)))
+
         # Falha na fonte Reports não pode apagar a lista de OPs. A origem da
         # ruptura fica visivelmente indisponível, nunca tratada como zero.
         stock_status = "complete"
