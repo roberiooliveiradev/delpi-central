@@ -410,3 +410,20 @@ Amostra nova fora das 13 linhas do corpus original; **aditiva**, sem substituir 
 | `90264135` | 13 | `af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3` | Alternância de páginas de desenho e tabela, bloco principal e subconjuntos; p12 tem seis grupos `50225701/02/03/04/40/41` | `aj-1a368df473284c0d`: RUNNING na checagem inicial | **PENDING** validação estrutural do consumidor; inspeção humana parcial e não homologada. |
 
 A amostragem é exploratória, sem critério de aleatorização estatística; PDFs não usados para ajustar regras até a decisão bounded correspondente. No novo PDF 90264026, zero divergências de BOM não significa fidelidade na coluna Componente. Conclusões de estrutura são `DRAFT/CANDIDATE`, sem GT aprovado da Engenharia.
+
+
+### Resultado terminal da nova amostra — `90264135` (2026-11-09)
+
+Job autenticado `aj-1a368df473284c0d` `COMPLETED` / `result_ready=true` no mesmo PDF oficial SHA256 `af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3`. OCR `FULL 13/13`, 2.775 tokens, `quality_gate=EVAL_PENDING`; 294 linhas candidatas ao longo das páginas 2/4/6/8/10/12/13. Resumo das páginas tabulares:
+
+| Página física | Linhas candidatas | Tuplas com item+qtd+código+descrição preenchidos | Linhas sem código | Linhas com conflito tipado |
+|---:|---:|---:|---:|---:|
+| 2 | 42 | 12 | 4 | 6 |
+| 4 | 54 | 26 | 12 | 9 |
+| 6 | 53 | 20 | 13 | 7 |
+| 8 | 46 | 24 | 8 | 5 |
+| 10 | 48 | 30 | 4 | 5 |
+| 12 | 29 | 1 | 21 | 5 |
+| 13 | 22 | 3 | 7 | 6 |
+
+Métrica de preenchimento **não é precisão**; todos os status globais continuam candidatos. Exemplos verificáveis no payload MCP: p10 `component_code='10080192 10090316'`, p12 `component_code='50225702'` em linha com informação de conjunto agregada, p13 `component_code='4 5'`; p12 `A9` e `AA` têm descrição mas quantidade/código ausentes na mesma linha lógica. `bom_structure_comparison=INCONCLUSIVE` pois a fonte retornou `structure_not_provided`, não por correspondência validada. Esse desenho introduz um **residual de segmentação multipágina e de contexto de grupo** para investigação bounded em E1/VAL-01. Inspeção visual do ChatGPT foi parcial (páginas selecionadas) e não equivale a ground truth do owner. PDF oficial materializado e hash conferido localmente; não versionar binário no repositório.
