@@ -120,6 +120,59 @@ def test_g4_fused_codes_alone_still_split_without_sibling_spans():
 # ----- G4-C positivos -----
 
 
+def test_g4_sparse_pure_code_column_acts_as_group_without_rowspan():
+    """SLANet perdeu rowspan: códigos puros esparsos à esquerda ainda
+    ancoram filhos até o próximo código puro da coluna."""
+    cells = [
+        _cell(0, 0, "Codigo", _quad(0, 0, 80, 16)),
+        _cell(0, 1, "Item", _quad(90, 0, 130, 16)),
+        _cell(0, 2, "Qtd", _quad(140, 0, 180, 16)),
+        _cell(0, 3, "Comp", _quad(190, 0, 280, 16)),
+        # coluna esparsa de subconjunto (rowspan=1 em cada âncora)
+        _cell(1, 0, "50225701", _quad(0, 20, 80, 40),
+              token_centers=[[40, 30]]),
+        _cell(1, 1, "AE", _quad(90, 20, 130, 40), token_centers=[[110, 30]]),
+        _cell(1, 2, "1", _quad(140, 20, 180, 40), token_centers=[[160, 30]]),
+        _cell(1, 3, "10010028", _quad(190, 20, 280, 40),
+              token_centers=[[235, 30]]),
+        _cell(2, 1, "AH", _quad(90, 50, 130, 70), token_centers=[[110, 60]]),
+        _cell(2, 2, "2", _quad(140, 50, 180, 70), token_centers=[[160, 60]]),
+        _cell(2, 3, "10080897", _quad(190, 50, 280, 70),
+              token_centers=[[235, 60]]),
+        _cell(3, 0, "50225702", _quad(0, 80, 80, 100),
+              token_centers=[[40, 90]]),
+        _cell(3, 1, "AE", _quad(90, 80, 130, 100), token_centers=[[110, 90]]),
+        _cell(3, 2, "1", _quad(140, 80, 180, 100), token_centers=[[160, 90]]),
+        _cell(3, 3, "10010028", _quad(190, 80, 280, 100),
+              token_centers=[[235, 90]]),
+        _cell(4, 1, "AH", _quad(90, 110, 130, 130), token_centers=[[110, 120]]),
+        _cell(4, 2, "2", _quad(140, 110, 180, 130), token_centers=[[160, 120]]),
+        _cell(4, 3, "10080897", _quad(190, 110, 280, 130),
+              token_centers=[[235, 120]]),
+        _cell(5, 1, "AG", _quad(90, 140, 130, 160), token_centers=[[110, 150]]),
+        _cell(5, 2, "2", _quad(140, 140, 180, 160), token_centers=[[160, 150]]),
+        _cell(5, 3, "10110676", _quad(190, 140, 280, 160),
+              token_centers=[[235, 150]]),
+        # coluna densa de componentes (acima) — já preenchida; sem 2ª
+        # coluna densa extra: densidade de itens ancora a esparsa.
+    ]
+    rows, _ = rows_from_native_cells(cells, page=12)
+    assert all(r.get("component_code") != "50225702" for r in rows)
+    by_item = _by_item(rows)
+    assert by_item["AE"]["parent_group_candidate"] in {
+        "50225701", "50225702",
+    }
+    # filhos do segundo grupo
+    second = [
+        r for r in rows
+        if r.get("parent_group_candidate") == "50225702"
+    ]
+    assert {r.get("item") for r in second} >= {"AE", "AH", "AG"}
+    assert {r.get("component_code") for r in second} >= {
+        "10010028", "10080897", "10110676",
+    }
+
+
 def test_g4_subset_parent_links_children_when_rowspan_present():
     """Subconjunto com rowspan → parent_group; AE/AH/AG preservados."""
     cells = [

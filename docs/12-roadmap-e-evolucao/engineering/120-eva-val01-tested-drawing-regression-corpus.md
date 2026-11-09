@@ -553,3 +553,9 @@ Correção de perda silenciosa sob `span_conflict_tolerated` parcial (`reconcile
 
 **Regressão unitária:** DEC-040–043 + percepção/SLANet + G4 = 64 passed. **Corpus 13 live:** `TEST_NOT_RUN`. Não declarar generalização; GT G1 `OWNER_BLOCKED`. `VAL01_COMPLETED=false`.
 
+### Log G4 closeout — pipeline real 90264135 (2026-11-09)
+
+**TASK:** `EVA-VAL01-G4-INTEGRATION-REAL-PDF-REGRESSION-CLOSEOUT`. Sem deploy. PDF SHA `af47dd4c…edf3` MATCH via srv-api `/mnt/fileserver/desenhos`.
+
+**Real:** p10 A2/A3 códigos+qtd separados PASS; p13 sem promoção `4 5` PASS; p12 hierarquia `50225702→AE/AH/AG` **não demonstrada** no crop Understanding (RESIDUAL). Unit 82 passed. Corpus 13 live `TEST_NOT_RUN`. GT DRAFT. `VAL01_COMPLETED=false`.
+

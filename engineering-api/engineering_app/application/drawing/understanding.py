@@ -199,7 +199,11 @@ def _is_sheet_index_noise_cell(text: str) -> bool:
 
 
 def _token_is_table_content(token: dict) -> bool:
-    """Token que ancora conteúdo tabular (código/item/cabeçalho/texto)."""
+    """Token que ancora conteúdo tabular (código/item/cabeçalho).
+
+    Descrições longas isoladas não sustentam a borda do crop — no
+    rodapé geram falso 'conteúdo' e impedem excluir índices 1..N.
+    """
     text = _text_of(token)
     if not text:
         return False
@@ -209,8 +213,6 @@ def _token_is_table_content(token: dict) -> bool:
         return True
     # Item identifiers are compiled later; resolve at call time.
     if _ITEM_IDENT_RE.fullmatch(text):
-        return True
-    if len(text) > 3 and re.search(r"[A-Za-zÀ-ÿ]", text):
         return True
     return False
 
@@ -256,19 +258,24 @@ def _trim_sheet_index_margin(
 
     Exige vão demonstrável após o último token de conteúdo tabular:
     códigos, itens, cabeçalhos ou texto descritivo. Não remove a
-    última linha legítima de componentes.
+    última linha legítima de componentes. Também observa índices logo
+    abaixo/acima do crop (margem), para o pad não engolir o rodapé.
     """
     clipped = _clip_box(box, w, h)
     if not clipped:
         return None
     x1, y1, x2, y2 = clipped
-    inside = [
+    margin = max(w, h) * 0.03
+    search = _clip_box(
+        [x1, y1 - margin, x2, y2 + margin], w, h
+    ) or clipped
+    nearby = [
         t
         for t in tokens
-        if _tok_center(t) and _inside(_tok_center(t), clipped)
+        if _tok_center(t) and _inside(_tok_center(t), search)
     ]
     content_ys = [
-        _tok_center(t)[1] for t in inside if _token_is_table_content(t)
+        _tok_center(t)[1] for t in nearby if _token_is_table_content(t)
     ]
     if not content_ys:
         return clipped
@@ -276,7 +283,7 @@ def _trim_sheet_index_margin(
     first_content_y = min(content_ys)
     bottom_idxs = [
         t
-        for t in inside
+        for t in nearby
         if _is_sheet_index_text(_text_of(t))
         and _tok_center(t)[1] > last_content_y + 4.0
     ]
@@ -284,12 +291,12 @@ def _trim_sheet_index_margin(
         idx_band = min(_tok_center(t)[1] for t in bottom_idxs) - 2.0
         if not any(
             _token_is_table_content(t) and _tok_center(t)[1] >= idx_band
-            for t in inside
+            for t in nearby
         ):
             y2 = min(y2, idx_band)
     top_idxs = [
         t
-        for t in inside
+        for t in nearby
         if _is_sheet_index_text(_text_of(t))
         and _tok_center(t)[1] < first_content_y - 4.0
     ]
@@ -297,7 +304,7 @@ def _trim_sheet_index_margin(
         idx_band = max(_tok_center(t)[1] for t in top_idxs) + 2.0
         if not any(
             _token_is_table_content(t) and _tok_center(t)[1] <= idx_band
-            for t in inside
+            for t in nearby
         ):
             y1 = max(y1, idx_band)
     return _clip_box([x1, y1, x2, y2], w, h)
@@ -2036,6 +2043,88 @@ def rows_from_native_cells(
                     (row_index, m.group(1), int(c.get("rowspan") or 1))
                 )
                 group_anchor_ids.add(id(c))
+    # Coluna esparsa de códigos puros (rowspan perdido pelo SLANet):
+    # cada código puro ancora até o próximo código puro da mesma
+    # coluna quando a coluna é materialmente mais esparsa que outra
+    # coluna de códigos ou que a densidade de itens.
+    data_row_indices = sorted(
+        i for i in grouped if i != header_row
+    )
+    if len(data_row_indices) >= 4:
+        pure_by_col: dict[int, list[tuple[int, str, dict]]] = {}
+        item_row_n = 0
+        for row_index in data_row_indices:
+            has_item = False
+            for c in grouped[row_index]:
+                text = _norm(
+                    str(
+                        c.get("_split_text")
+                        if c.get("_split_done")
+                        else (c.get("text") or "")
+                    )
+                )
+                if _ITEM_IDENT_RE.fullmatch(text) or _ITEM_QTY_RE.fullmatch(
+                    text
+                ):
+                    has_item = True
+                if not _CODE_RE.match(text):
+                    continue
+                if int(c.get("rowspan") or 1) > 1:
+                    continue
+                if id(c) in group_anchor_ids:
+                    continue
+                pure_by_col.setdefault(
+                    int(c.get("col") or 0), []
+                ).append((row_index, text, c))
+            if has_item:
+                item_row_n += 1
+        densest = max(
+            (len(v) for v in pure_by_col.values()), default=0
+        )
+        denser_cols = [
+            c for c, ents in pure_by_col.items()
+            if len(ents) >= densest and densest >= 3
+        ]
+        denser_x = []
+        for dc in denser_cols:
+            for _ri, _code, cell in pure_by_col[dc]:
+                cx = _cell_cx(cell)
+                if cx is not None:
+                    denser_x.append(cx)
+        denser_mid = (
+            sorted(denser_x)[len(denser_x) // 2] if denser_x else None
+        )
+        for _col, entries in pure_by_col.items():
+            if len(entries) < 2:
+                continue
+            if len(entries) >= max(3, int(0.45 * len(data_row_indices))):
+                continue
+            # Exige coluna de componentes mais densa à direita — evita
+            # promover códigos densos de peça a âncora de grupo.
+            if densest < len(entries) + 2 or denser_mid is None:
+                continue
+            sparse_x = [
+                cx
+                for cx in (_cell_cx(cell) for _ri, _c, cell in entries)
+                if cx is not None
+            ]
+            if not sparse_x:
+                continue
+            sparse_mid = sorted(sparse_x)[len(sparse_x) // 2]
+            if sparse_mid >= denser_mid - 8.0:
+                continue
+            ordered = sorted(entries, key=lambda e: e[0])
+            for i, (row_index, code, cell) in enumerate(ordered):
+                next_row = (
+                    ordered[i + 1][0]
+                    if i + 1 < len(ordered)
+                    else (data_row_indices[-1] + 1)
+                )
+                span = int(next_row) - int(row_index)
+                if span < 2:
+                    continue
+                group_anchors.append((row_index, code, span))
+                group_anchor_ids.add(id(cell))
     group_anchors.sort()
     # Passo mediano entre linhas — escala para decidir se dois campos
     # vêm de bandas Y compatíveis (mesma linha física) ou conflitantes.

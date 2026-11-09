@@ -2192,3 +2192,34 @@ NO_GENERALIZATION_CLAIM=true
 
 Artefatos: `docs/.../eva-val01-g4/` + `.local/eva-val01-g4/replay_report.json`.
 
+### 62.3 G4 closeout — pipeline real 90264135 (2026-11-09)
+
+**TASK_ID:** `EVA-VAL01-G4-INTEGRATION-REAL-PDF-REGRESSION-CLOSEOUT`.
+
+**Integração Git:** commit G4 `e252c59784` rebased sobre `origin/main`; closeout incremental no HEAD final desta entrega. WIP alheio preservado (incl. commit Delia `1562db11de`).
+
+**Pipeline real (srv-api, docker efêmero, PDF `/mnt/fileserver/desenhos/90264135.pdf` SHA `af47dd4c…edf3` MATCH):**
+`PDF → PDFium → PaddleOCR → build_understanding(crop) → SLANet → apply_native`. Sem boxes G1; sem download de modelo novo; sem deploy.
+
+| Página | Resultado pipeline | Notas |
+|---|---|---|
+| 10 | **PASS** A2=`10080192` qtd=16; A3=`10090316` qtd=1; fusão ausente | Descrições `null` / associação `INCONCLUSIVE` residual |
+| 12 | **RESIDUAL / não PASS hierárquico** | Crop amplo → SLANet perde AE/AH do bloco `50225702`; código aparece como `component_code` sem `parent_group_candidate` estável no trio AE/AH/AG. Fixtures rowspan/coluna esparsa PASS. Sem Totus fill-in. |
+| 13 | **PASS promoção** (`4 5` não é `component_code`); crop geométrico ainda toca Y≈1616 próximo ao rodapé | Gate tipológico impede falso código; exclusão geométrica total do strip = residual menor |
+
+**Regressões unitárias no SHA closeout:** 82 passed (G4 + DEC-040–043 + slanet + table_perception + r8). Corpus 13 live: `TEST_NOT_RUN`.
+
+**Modelos:** SLANet `inference.pdiparams` SHA `9d33d47b…7a60`; RT-DETR ausente no host; G4 não instalou framework.
+
+```text
+G4_CLOSEOUT_STATUS=PASS_WITH_RESIDUAL
+P10_REAL=PASS_CODES_QTY
+P12_HIERARCHY=RESIDUAL_NOT_DEMONSTRATED
+P13_FALSE_CODE=PASS
+P13_CROP_GEOMETRY=PARTIAL
+PRODUCTION_DEPLOY=false
+G5_G6_G7=NOT_AUTHORIZED
+VAL01_COMPLETED=false
+NO_GENERALIZATION_CLAIM=true
+```
+

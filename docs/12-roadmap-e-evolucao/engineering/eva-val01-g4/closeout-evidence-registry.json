@@ -1,0 +1,23 @@
+{
+  "task_id": "EVA-VAL01-G4-INTEGRATION-REAL-PDF-REGRESSION-CLOSEOUT",
+  "gate": "G4_CLOSEOUT",
+  "base_integrated_g4_commit": "e252c59784d83bd195bc1be031bd9b2d855d76eb",
+  "origin_main_at_closeout_start": "1562db11de3d492b117ff743ebc8ec6bc1c6422b",
+  "pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+  "pdf_sha_match": true,
+  "pipeline": "PDF\u2192PDFium\u2192PaddleOCR\u2192Understanding\u2192SLANet\u2192apply_native",
+  "g1_bbox_runtime": false,
+  "results": {
+    "p10_real": "PASS_CODES_QTY",
+    "p10_descriptions": "INCONCLUSIVE_NULL",
+    "p12_hierarchy": "RESIDUAL_NOT_DEMONSTRATED",
+    "p13_false_code_promotion": "PASS",
+    "p13_crop_geometry": "PARTIAL"
+  },
+  "unit_tests": "82 passed",
+  "corpus13_live": "TEST_NOT_RUN",
+  "slanet_pdiparams_sha256": "9d33d47b174bcb9fb63f94dac54a4d01a974da6d0c56ddb51cf0e38ed43f7a60",
+  "production_deploy_executed": false,
+  "generalization_claim": false,
+  "final_head": "2540fb4aff707d7e62147f929a331c2895ef6632"
+}
