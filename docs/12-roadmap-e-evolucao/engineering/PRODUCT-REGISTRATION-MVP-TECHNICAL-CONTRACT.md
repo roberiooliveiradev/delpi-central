@@ -450,7 +450,9 @@ Decisão PO 2026-11-09: [adendo normativo D16-REF-01](./PRODUCT-REGISTRATION-D16
 
 **PROVEN:** `product_registration_info_rounds|questions|answers` (V018+V019); `POST .../request-information` com `questions[]`/`message` (legado reason+pendingFields); `GET .../information-rounds[+/{id}]`; `PATCH .../answers`; `POST .../submit-answers`; `POST .../questions/{id}/actions/accept`; `POST .../request-follow-up`; resume bloqueado com rodada aberta salvo `waiver:`; CAS/idempotência/eventos; UI modal+painel; EVA capabilities proven (request_information, rounds read, accept, follow_up, resume).
 
-**FIX-01 (aditivo, 2026-11-09):** detalhe do caso inclui `informationExchange` (`hasOpenBlocker`, `canRespond`, `canReview`, `activeRoundStatus`, `activeRoundId`). Enquanto houver blocker, `allowedActions` **não** inclui `resume` (mesmo contrato de domínio do 409 `information_round_open`). Capacidades de apresentação; AuthZ efetiva permanece nos use cases. UI dual-role não altera permissões.
+**FIX-01 (aditivo, 2026-11-09):** detalhe do caso inclui `informationExchange` (`hasOpenBlocker`, `canRespond`, `canReview`, `activeRoundStatus`, `activeRoundId`). Enquanto houver blocker, `allowedActions` **não** inclui `resume` (mesmo contrato de domínio do 409 `information_round_open`). Capacidades de apresentação; AuthZ efetiva permanece nos use cases.
+
+**FIX-02 (UX, 2026-11-09):** UI contínua sem toggle de papéis. Renderização por estado da rodada + capacidades; retomada principal no cabeçalho. Sem nova superfície de contrato.
 
 **PENDING_NOTIFICATION_OWNER / PENDING_ATTACHMENTS_CONTRACT.** **ARCHITECTURE_DECISION_REQUIRED:** gate HTTP ainda `engineering.access` — solicitante sem essa permissão Core não alcança as rotas.
 

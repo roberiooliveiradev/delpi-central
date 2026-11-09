@@ -321,29 +321,46 @@ export function isRequesterSubject(
   return current === requester;
 }
 
-export type InfoRoleView = "requester" | "analyst";
-
 /**
- * Visão inicial do painel: dual-role começa no solicitante quando há
- * rodada aguardando resposta; caso contrário, analista.
+ * Apresentação contínua do painel (FIX-02) — estado da rodada + capacidades.
+ * Não é autorização; só decide o que renderizar.
  */
-export function initialInfoRoleView(input: {
-  isRequester: boolean;
+export type InfoPresentation =
+  | "loading"
+  | "error"
+  | "empty"
+  | "awaiting_requester_form"
+  | "awaiting_requester_watch"
+  | "awaiting_review_analyst"
+  | "awaiting_review_watch"
+  | "resolved_ready"
+  | "resolved_done";
+
+export function resolveInfoPresentation(input: {
+  loadState: "loading" | "ok" | "error";
+  hasRounds: boolean;
+  activeStatus: string | null | undefined;
   canRespond: boolean;
   canReview: boolean;
-  activeRoundStatus?: string | null;
-}): InfoRoleView {
-  if (input.isRequester && input.canReview) {
-    if (
-      input.canRespond ||
-      input.activeRoundStatus === "awaiting_requester"
-    ) {
-      return "requester";
-    }
-    return "analyst";
+  canResume: boolean;
+}): InfoPresentation {
+  if (input.loadState === "loading" && !input.hasRounds) return "loading";
+  if (input.loadState === "error" && !input.hasRounds) return "error";
+  if (!input.activeStatus) {
+    if (!input.hasRounds) return "empty";
+    return input.canResume ? "resolved_ready" : "resolved_done";
   }
-  if (input.isRequester || input.canRespond) return "requester";
-  return "analyst";
+  if (input.activeStatus === "awaiting_requester") {
+    return input.canRespond
+      ? "awaiting_requester_form"
+      : "awaiting_requester_watch";
+  }
+  if (input.activeStatus === "awaiting_review") {
+    return input.canReview
+      ? "awaiting_review_analyst"
+      : "awaiting_review_watch";
+  }
+  return input.canResume ? "resolved_ready" : "resolved_done";
 }
 
 /** Mensagem funcional para 409 de rodada aberta (sem código técnico na UI). */

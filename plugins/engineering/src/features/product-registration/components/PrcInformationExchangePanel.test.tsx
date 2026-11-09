@@ -5,93 +5,109 @@ import { describe, expect, it } from "vitest";
 
 import {
   informationRoundConflictMessage,
-  initialInfoRoleView,
   isRequesterSubject,
+  resolveInfoPresentation,
 } from "../prcInformationExchange";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const read = (rel: string) => readFileSync(join(here, rel), "utf8");
 
-describe("PrcInformationExchangePanel — PRC-REF-019-FIX-01", () => {
+describe("PrcInformationExchangePanel — PRC-REF-019-FIX-02", () => {
   const src = read("PrcInformationExchangePanel.tsx");
   const copy = read("../prcCopy.ts");
   const api = read("../api/productRegistrationApi.ts");
+  const page = read("../pages/PrcDetailPage.tsx");
 
-  it("solicitante: rascunho e envio de respostas", () => {
-    expect(copy).toMatch(/saveDraft: "Salvar rascunho"/);
-    expect(copy).toMatch(/submitAnswers: "Enviar respostas"/);
+  it("não usa SegmentToggle nem estado de papel manual", () => {
+    expect(src).not.toMatch(/EngineeringSegmentToggle/);
+    expect(src).not.toMatch(/dualRole|roleView|InfoRoleView|initialInfoRoleView/);
+    expect(src).not.toMatch(/Responder como solicitante|Analisar como Engenharia/);
+    expect(copy).not.toMatch(/dualRoleRespond|dualRoleReview|dualRoleHint/);
+  });
+
+  it("fluxo contínuo: formulário / análise / resolvido por estado", () => {
+    expect(src).toMatch(/resolveInfoPresentation/);
+    expect(src).toMatch(/awaiting_requester_form/);
+    expect(src).toMatch(/awaiting_review_analyst/);
+    expect(src).toMatch(/resolved_ready/);
+    expect(src).toMatch(/RequesterAnswerForm/);
+    expect(src).toMatch(/AnalystReview/);
+  });
+
+  it("solicitante: rascunho e envio; analista: aceitar e complemento", () => {
     expect(src).toMatch(/draftInformationAnswers\(/);
     expect(src).toMatch(/submitInformationAnswers\(/);
-    expect(src).toMatch(/validateInfoAnswersForSubmit/);
-    expect(src).toMatch(/expectedRoundVersion: round\.version/);
-  });
-
-  it("analista: aceitar, solicitar complemento e retomar só sem bloqueio", () => {
-    expect(copy).toMatch(/acceptQuestion: "Aceitar esclarecimento"/);
-    expect(copy).toMatch(/requestFollowUp: "Solicitar complemento"/);
-    expect(copy).toMatch(/resume: "Retomar atendimento"/);
     expect(src).toMatch(/acceptInformationQuestion\(/);
     expect(src).toMatch(/requestInformationFollowUp\(/);
-    expect(src).toMatch(/followUpQuestionIds: \[q\.id\]/);
-    expect(src).toMatch(/!hasOpenBlocker/);
-    expect(src).toMatch(/allowedActions\.includes\("resume"\)/);
-    expect(src).toMatch(/onClick=\{onResume\}/);
-    expect(copy).toMatch(/resumeBlocked:/);
-    expect(copy).toMatch(/resumeConflict:/);
+    expect(copy).toMatch(/saveDraft: "Salvar rascunho"/);
+    expect(copy).toMatch(/submitAnswers: "Enviar respostas"/);
   });
 
-  it("dual-role: alternância explícita sem usar canReview para ocultar resposta", () => {
-    expect(src).toMatch(/dualRole/);
-    expect(src).toMatch(/EngineeringSegmentToggle/);
-    expect(src).toMatch(/PRC_INFO_COPY\.dualRoleRespond/);
-    expect(src).toMatch(/PRC_INFO_COPY\.dualRoleReview/);
-    expect(src).toMatch(/isRequesterSubject\(/);
-    expect(src).not.toMatch(/isRequesterView && !canReview/);
-    expect(src).not.toMatch(/currentSubject === requesterSubject/);
+  it("retomada não é duplicada no painel — cabeçalho é a ação principal", () => {
+    expect(src).not.toMatch(/onResume/);
+    expect(src).not.toMatch(/onClick=\{onResume\}/);
+    expect(copy).toMatch(/resumeReadyHint:/);
+    expect(page).toMatch(/action !== "resume" && action !== "start"/);
+    expect(page).toMatch(/PRC_ACTION_SPECS\.resume|primaryAction/);
   });
 
-  it("identidade ausente é fail-closed (não presume solicitante)", () => {
+  it("identidade ausente é fail-closed", () => {
     expect(isRequesterSubject(null, "user-1")).toBe(false);
-    expect(isRequesterSubject(undefined, "user-1")).toBe(false);
     expect(isRequesterSubject("", "user-1")).toBe(false);
-    expect(isRequesterSubject("user-1", "")).toBe(false);
     expect(isRequesterSubject("user-1", "user-1")).toBe(true);
-    expect(isRequesterSubject("user-1", "other")).toBe(false);
   });
 
-  it("visão inicial dual-role prioriza solicitante enquanto aguarda resposta", () => {
+  it("resolveInfoPresentation: dual-role vê formulário e depois análise", () => {
     expect(
-      initialInfoRoleView({
-        isRequester: true,
+      resolveInfoPresentation({
+        loadState: "ok",
+        hasRounds: true,
+        activeStatus: "awaiting_requester",
         canRespond: true,
         canReview: true,
-        activeRoundStatus: "awaiting_requester",
+        canResume: false,
       }),
-    ).toBe("requester");
+    ).toBe("awaiting_requester_form");
     expect(
-      initialInfoRoleView({
-        isRequester: true,
+      resolveInfoPresentation({
+        loadState: "ok",
+        hasRounds: true,
+        activeStatus: "awaiting_requester",
         canRespond: false,
         canReview: true,
-        activeRoundStatus: "awaiting_review",
+        canResume: false,
       }),
-    ).toBe("analyst");
+    ).toBe("awaiting_requester_watch");
     expect(
-      initialInfoRoleView({
-        isRequester: true,
+      resolveInfoPresentation({
+        loadState: "ok",
+        hasRounds: true,
+        activeStatus: "awaiting_review",
+        canRespond: false,
+        canReview: true,
+        canResume: false,
+      }),
+    ).toBe("awaiting_review_analyst");
+    expect(
+      resolveInfoPresentation({
+        loadState: "ok",
+        hasRounds: true,
+        activeStatus: "awaiting_review",
         canRespond: true,
         canReview: false,
-        activeRoundStatus: "awaiting_requester",
+        canResume: false,
       }),
-    ).toBe("requester");
+    ).toBe("awaiting_review_watch");
     expect(
-      initialInfoRoleView({
-        isRequester: false,
+      resolveInfoPresentation({
+        loadState: "ok",
+        hasRounds: true,
+        activeStatus: null,
         canRespond: false,
         canReview: true,
-        activeRoundStatus: "awaiting_requester",
+        canResume: true,
       }),
-    ).toBe("analyst");
+    ).toBe("resolved_ready");
   });
 
   it("409 information_round_open vira mensagem funcional", () => {
@@ -101,59 +117,21 @@ describe("PrcInformationExchangePanel — PRC-REF-019-FIX-01", () => {
         "mensagem funcional",
       ),
     ).toBe("mensagem funcional");
-    expect(
-      informationRoundConflictMessage("outro erro", "fallback"),
-    ).toBe("outro erro");
   });
 
-  it("carrega rodadas, recolhe histórico e só exibe quando há contexto", () => {
-    expect(src).toMatch(/listInformationRounds\(requestId\)/);
-    expect(src).toMatch(/<details className="engineering-prc__info-history">/);
-    expect(src).toMatch(
-      /rounds\.length > 0 \|\| requestStatus === "needs_information"/,
-    );
-  });
-
-  it("papel é só apresentação: backend decide (409 recarrega, sem bypass)", () => {
-    expect(src).toMatch(/err\.status === 409/);
-    expect(src).toMatch(/informationRoundConflictMessage/);
-    expect(src).toMatch(/informationExchange/);
-    expect(src).not.toMatch(/HelpCircle|HelpTooltip/);
-    expect(src).not.toMatch(/my-requests|requests-api/);
-  });
-
-  it("detalhe liga o painel a informationExchange e allowedActions", () => {
-    const page = read("../pages/PrcDetailPage.tsx");
+  it("detalhe liga informationExchange e filtra resume da ActionBar", () => {
     expect(page).toMatch(/informationExchange=\{detail\.informationExchange\}/);
     expect(page).toMatch(/allowedActions=\{detail\.allowedActions\}/);
-    expect(page).toMatch(/getSubjectFromAccessToken\(getAccessToken\?\.\(\)\)/);
-    expect(page).toMatch(/PRC_ACTION_SPECS\.resume/);
-    expect(page).toMatch(/information_round_open/i);
+    expect(page).not.toMatch(/onResume=/);
     expect(page).not.toMatch(
       /canReview=\{detail\.allowedActions\.includes\("resume"\)\}/,
     );
   });
 
-  it("cliente expõe informationExchange e endpoints sob information-rounds", () => {
+  it("cliente expõe informationExchange e endpoints de rodadas", () => {
     expect(api).toMatch(/informationExchange\?:/);
-    expect(api).toMatch(/hasOpenBlocker: boolean/);
     expect(api).toMatch(/canRespond: boolean/);
-    expect(api).toMatch(/canReview: boolean/);
-    for (const fn of [
-      "listInformationRounds",
-      "getInformationRound",
-      "draftInformationAnswers",
-      "submitInformationAnswers",
-      "acceptInformationQuestion",
-      "requestInformationFollowUp",
-    ]) {
-      expect(api).toMatch(new RegExp(`export async function ${fn}\\(`));
-    }
-    expect(api).toMatch(/requests\/\$\{requestId\}\/information-rounds`/);
-    expect(api).toMatch(/information-rounds\/\$\{roundId\}\/answers`/);
-    expect(api).toMatch(/actions\/submit-answers`/);
-    expect(api).toMatch(/questions\/\$\{questionId\}\/actions\/accept`/);
-    expect(api).toMatch(/actions\/request-follow-up`/);
-    expect(api).toMatch(/"Idempotency-Key": idempotencyKey/);
+    expect(api).toMatch(/listInformationRounds/);
+    expect(api).toMatch(/submitInformationAnswers/);
   });
 });

@@ -998,9 +998,7 @@
 .engineering-prc__info-round,
 .engineering-prc__info-answer-form,
 .engineering-prc__info-review,
-.engineering-prc__info-followup,
-.engineering-prc__info-resume,
-.engineering-prc__info-role-switch {
+.engineering-prc__info-followup {
   display: flex;
   flex-direction: column;
   gap: 12px;

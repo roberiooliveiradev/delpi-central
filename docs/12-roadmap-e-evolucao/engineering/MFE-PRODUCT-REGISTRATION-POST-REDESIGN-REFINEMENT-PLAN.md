@@ -651,11 +651,25 @@ O PO aprovou nova apresentação **sem duplicar código/loja/razão social**: co
 **TASK:** `ENG-PRC-REF-019-FIX-01-REQUESTER-ANALYST-UX-AND-PLUGIN-UI`. Ambiente: DEV only.
 
 **Causas raiz corrigidas:**
-- Dual-role: painel usava `isRequesterView && !canReview`, ocultando o formulário quando o solicitante também era analista. Agora distingue `isRequester` / `canRespond` / `canReview` / `canResume` e oferece `SegmentToggle` explícito (visão não concede AuthZ).
-- Resume: `allowedActions` oferecia `resume` com rodada aberta; backend 409. Owner no service filtra `resume` enquanto `hasOpenBlocker` e detalhe expõe `informationExchange{hasOpenBlocker,canRespond,canReview,activeRound*}`. Hero/ActionBar/painel usam a mesma fonte; 409 traduzido para mensagem funcional.
-- Modal: variante `delpi-ui-modal--wide` (host-contained ~92% altura); selects ricos via `EngineeringSearchableSelect` (campo/fornecedor com busca; tipo/atributo alinhados ao Portal).
+- Dual-role: painel usava `isRequesterView && !canReview`, ocultando o formulário quando o solicitante também era analista. Distingue `isRequester` / `canRespond` / `canReview` / `canResume`.
+- Resume: `allowedActions` filtrado com `hasOpenBlocker`; detalhe expõe `informationExchange`.
+- Modal wide + SearchableSelect.
 
-**Residuais:** `ARCHITECTURE_DECISION_REQUIRED` — solicitante sem `engineering.access` ainda bloqueado no gate HTTP/Core; AuthZ de objeto no service permanece. Sem bypass local. Aceite geral FIX-01: PARTIAL se esse item for exigido no go-live externo.
+**Superado por FIX-02:** o `SegmentToggle` de papéis foi rejeitado pelo PO e removido.
+
+### PRC-REF-019-FIX-02 — Fluxo contínuo sem toggle de papéis (2026-11-09)
+
+**TASK:** `ENG-PRC-REF-019-FIX-02-CONTINUOUS-INFORMATION-WORKFLOW`. Ambiente: DEV only.
+
+**Decisão funcional:** o fluxo de esclarecimentos é contínuo, orientado pelo estado da rodada e pelas capacidades autorizadas. **Não existe alternância manual de papéis.**
+
+**PROVEN:**
+- `resolveInfoPresentation` decide formulário / espera / análise / resolvido a partir de `activeRound.status` + `canRespond`/`canReview`/`canResume`.
+- Toggle, `roleView` e copy dual-role removidos.
+- Retomada executável apenas no cabeçalho (ActionBar filtra `resume`/`start`); painel mostra orientação de prontidão.
+- Dual-role conclui o ciclo sem troca de visão/conta/refresh obrigatório.
+
+**Residuais:** `ARCHITECTURE_DECISION_REQUIRED` — solicitante sem `engineering.access` (Core).
 
 ### Inventário e gap (pós-execução)
 - PROVEN: domínio `information_rounds` + tabelas V018/V019; `POST request-information` com `questions[]`/`message` (legado reason+pendingFields compatível); GET/PATCH/POST de rodadas; AuthZ objeto solicitante; gate de resume + `waiver:`; modal multi-pergunta; painel solicitante/analista; EVA read/execute parity (6 MCP tools); pytest in-memory + PG real `TestPostgresInformationRounds`; Vitest 304; migrations DEV aplicadas; bundle engineering reconstruído.

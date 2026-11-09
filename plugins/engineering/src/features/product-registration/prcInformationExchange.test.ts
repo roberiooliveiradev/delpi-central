@@ -13,8 +13,8 @@ import {
   findActiveInformationRound,
   followUpInputFor,
   informationRoundConflictMessage,
-  initialInfoRoleView,
   isRequesterSubject,
+  resolveInfoPresentation,
   pendingFieldsFromDrafts,
   questionableFieldSpecs,
   resolvedInformationRounds,
@@ -212,17 +212,19 @@ describe("prcInformationExchange — PRC-REF-019", () => {
     ).toBe(true);
   });
 
-  it("FIX-01: identidade fail-closed e visão dual-role", () => {
+  it("FIX-02: identidade fail-closed e apresentação contínua", () => {
     expect(isRequesterSubject(null, "a")).toBe(false);
     expect(isRequesterSubject("a", "a")).toBe(true);
     expect(
-      initialInfoRoleView({
-        isRequester: true,
+      resolveInfoPresentation({
+        loadState: "ok",
+        hasRounds: true,
+        activeStatus: "awaiting_requester",
         canRespond: true,
         canReview: true,
-        activeRoundStatus: "awaiting_requester",
+        canResume: false,
       }),
-    ).toBe("requester");
+    ).toBe("awaiting_requester_form");
     expect(
       informationRoundConflictMessage(
         "409 information_round_open",

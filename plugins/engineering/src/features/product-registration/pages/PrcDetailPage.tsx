@@ -408,7 +408,10 @@ export function PrcDetailPage({
         {detail.allowedActions.length ? (
           <div className="engineering-prc__hero-actions">
             <PrcActionBar
-              allowedActions={detail.allowedActions}
+              /* start/resume já saem no `actions` do hero — uma ação principal. */
+              allowedActions={detail.allowedActions.filter(
+                (action) => action !== "resume" && action !== "start",
+              )}
               busy={busy}
               officialCode={detail.officialCode || ""}
               requestType={detail.requestType}
@@ -464,7 +467,6 @@ export function PrcDetailPage({
               refreshToken={`${detail.caseVersion}:${detail.updatedAt}`}
               busy={busy}
               onChanged={load}
-              onResume={() => void runAction(PRC_ACTION_SPECS.resume, {})}
             />
 
             <EngineeringDetailCard title="Resumo da solicitação">

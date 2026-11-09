@@ -1,9 +1,8 @@
 /** Intercâmbio de informações analista ↔ solicitante — PRC-REF-019.
  *
- * FIX-01: suporte a dual-role (mesmo usuário solicitante+analista) com
- * alternância explícita; retomada só quando o backend liberar
- * ``canResume``/``allowedActions`` sem bloqueio de rodada; 409 com
- * mensagem funcional. Autorização efetiva permanece na Engineering API. */
+ * FIX-02: fluxo contínuo orientado pelo estado da rodada + capacidades
+ * do backend. Sem alternância manual de papéis. Autorização efetiva
+ * permanece na Engineering API. Retomada executável fica no cabeçalho. */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -11,7 +10,6 @@ import { HomeApiError } from "../../../api/httpClient";
 import {
   EngineeringActionButton,
   EngineeringDetailCard,
-  EngineeringSegmentToggle,
   EngineeringStateBanner,
   EngineeringStatusBadge,
   EngineeringTextAreaField,
@@ -42,10 +40,9 @@ import {
   INFO_QUESTION_TEXT_MAX,
   informationRoundConflictMessage,
   initialAnswerTexts,
-  initialInfoRoleView,
   isRequesterSubject,
+  resolveInfoPresentation,
   resolvedInformationRounds,
-  type InfoRoleView,
   validateInfoAnswersForSubmit,
 } from "../prcInformationExchange";
 
@@ -296,7 +293,6 @@ export function PrcInformationExchangePanel({
   refreshToken,
   busy,
   onChanged,
-  onResume,
 }: {
   requestId: string;
   requestStatus: string;
@@ -307,7 +303,6 @@ export function PrcInformationExchangePanel({
   refreshToken?: string | number;
   busy: boolean;
   onChanged: () => void | Promise<void>;
-  onResume: () => void;
 }) {
   const [rounds, setRounds] = useState<PrcInformationRound[]>([]);
   const [hasOpenBlocker, setHasOpenBlocker] = useState(
@@ -316,10 +311,8 @@ export function PrcInformationExchangePanel({
   const [state, setState] = useState<"loading" | "ok" | "error">("loading");
   const [acting, setActing] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
-  const [roleView, setRoleView] = useState<InfoRoleView | null>(null);
 
   const isRequester = isRequesterSubject(currentSubject, requesterSubject);
-  const canRespondFromApi = Boolean(informationExchange?.canRespond);
   const canReviewFromApi = Boolean(informationExchange?.canReview);
   const canReview =
     canReviewFromApi ||
@@ -366,37 +359,14 @@ export function PrcInformationExchangePanel({
     );
   }, [informationExchange?.canRespond, isRequester, active]);
 
-  const dualRole = isRequester && canReview;
-
-  useEffect(() => {
-    if (!dualRole) {
-      setRoleView(null);
-      return;
-    }
-    setRoleView((prev) => {
-      if (prev) return prev;
-      return initialInfoRoleView({
-        isRequester,
-        canRespond,
-        canReview,
-        activeRoundStatus:
-          active?.status ?? informationExchange?.activeRoundStatus,
-      });
-    });
-  }, [
-    dualRole,
-    isRequester,
+  const presentation = resolveInfoPresentation({
+    loadState: state,
+    hasRounds: rounds.length > 0,
+    activeStatus: active?.status ?? null,
     canRespond,
     canReview,
-    active?.status,
-    informationExchange?.activeRoundStatus,
-  ]);
-
-  const effectiveView: InfoRoleView = dualRole
-    ? roleView || "requester"
-    : canRespond || isRequester
-      ? "requester"
-      : "analyst";
+    canResume,
+  });
 
   const run = useCallback(
     async (
@@ -511,29 +481,28 @@ export function PrcInformationExchangePanel({
     );
 
   let body;
-  if (state === "loading" && !rounds.length) {
-    body = (
-      <p className="engineering-prc__muted">{PRC_INFO_COPY.panelLoading}</p>
-    );
-  } else if (state === "error" && !rounds.length) {
-    body = (
-      <EngineeringStateBanner variant="error">
-        {PRC_INFO_COPY.panelLoadError}
-      </EngineeringStateBanner>
-    );
-  } else if (!active) {
-    body = (
-      <p className="engineering-prc__muted">
-        {rounds.length ? PRC_INFO_COPY.noActiveRound : PRC_INFO_COPY.panelEmpty}
-      </p>
-    );
-  } else if (active.status === "awaiting_requester") {
-    const showResponder =
-      effectiveView === "requester" && (canRespond || canRespondFromApi);
-    body = (
-      <div className="engineering-prc__info-round">
-        <RoundHeader round={active} />
-        {showResponder ? (
+  switch (presentation) {
+    case "loading":
+      body = (
+        <p className="engineering-prc__muted">{PRC_INFO_COPY.panelLoading}</p>
+      );
+      break;
+    case "error":
+      body = (
+        <EngineeringStateBanner variant="error">
+          {PRC_INFO_COPY.panelLoadError}
+        </EngineeringStateBanner>
+      );
+      break;
+    case "empty":
+      body = (
+        <p className="engineering-prc__muted">{PRC_INFO_COPY.panelEmpty}</p>
+      );
+      break;
+    case "awaiting_requester_form":
+      body = active ? (
+        <div className="engineering-prc__info-round">
+          <RoundHeader round={active} />
           <RequesterAnswerForm
             key={`${active.id}:${active.version}`}
             round={active}
@@ -541,46 +510,79 @@ export function PrcInformationExchangePanel({
             onDraft={(texts) => void saveDraft(active, texts)}
             onSubmit={(texts) => void submitAnswers(active, texts)}
           />
-        ) : (
-          <>
-            <p className="engineering-prc__muted">
-              {PRC_INFO_COPY.requesterWaitingOther}
-            </p>
-            <ReadOnlyQuestions round={active} />
-          </>
-        )}
-      </div>
-    );
-  } else if (effectiveView === "analyst" && canReview) {
-    body = (
-      <div className="engineering-prc__info-round">
-        <RoundHeader round={active} />
-        <AnalystReview
-          key={`${active.id}:${active.version}`}
-          round={active}
-          disabled={disabled}
-          onAccept={(q) => void accept(active, q)}
-          onFollowUp={(q, text) => void followUp(active, q, text)}
-        />
-      </div>
-    );
-  } else {
-    body = (
-      <div className="engineering-prc__info-round">
-        <RoundHeader round={active} />
+        </div>
+      ) : null;
+      break;
+    case "awaiting_requester_watch":
+      body = active ? (
+        <div className="engineering-prc__info-round">
+          <RoundHeader round={active} />
+          <p className="engineering-prc__muted">
+            {PRC_INFO_COPY.requesterWaitingOther}
+          </p>
+          <ReadOnlyQuestions round={active} />
+        </div>
+      ) : null;
+      break;
+    case "awaiting_review_analyst":
+      body = active ? (
+        <div className="engineering-prc__info-round">
+          <RoundHeader round={active} />
+          <AnalystReview
+            key={`${active.id}:${active.version}`}
+            round={active}
+            disabled={disabled}
+            onAccept={(q) => void accept(active, q)}
+            onFollowUp={(q, text) => void followUp(active, q, text)}
+          />
+        </div>
+      ) : null;
+      break;
+    case "awaiting_review_watch":
+      body = active ? (
+        <div className="engineering-prc__info-round">
+          <RoundHeader round={active} />
+          <p className="engineering-prc__muted">
+            {PRC_INFO_COPY.requesterWaitingReview}
+          </p>
+          <ReadOnlyQuestions round={active} />
+        </div>
+      ) : null;
+      break;
+    case "resolved_ready":
+      body = (
+        <div className="engineering-prc__info-round">
+          <p className="engineering-prc__muted">
+            {PRC_INFO_COPY.resolvedReady}
+          </p>
+          <p className="engineering-prc__muted">
+            {PRC_INFO_COPY.resumeReadyHint}
+          </p>
+        </div>
+      );
+      break;
+    case "resolved_done":
+    default:
+      body = (
         <p className="engineering-prc__muted">
-          {PRC_INFO_COPY.requesterWaitingReview}
+          {rounds.length
+            ? PRC_INFO_COPY.resolvedSummary
+            : PRC_INFO_COPY.panelEmpty}
         </p>
-        <ReadOnlyQuestions round={active} />
-      </div>
-    );
+      );
+      break;
   }
 
-  const resumeHint = hasOpenBlocker
-    ? active?.status === "awaiting_review"
-      ? PRC_INFO_COPY.resumeBlockedReview
-      : PRC_INFO_COPY.resumeBlocked
-    : null;
+  const statusHint =
+    presentation === "awaiting_requester_form" ||
+    presentation === "awaiting_requester_watch"
+      ? hasOpenBlocker
+        ? PRC_INFO_COPY.resumeBlocked
+        : null
+      : presentation === "awaiting_review_analyst" ||
+          presentation === "awaiting_review_watch"
+        ? PRC_INFO_COPY.resumeBlockedReview
+        : null;
 
   return (
     <EngineeringDetailCard
@@ -596,27 +598,6 @@ export function PrcInformationExchangePanel({
       }
     >
       <div className="engineering-prc__info-panel">
-        {dualRole ? (
-          <div className="engineering-prc__info-role-switch">
-            <p className="engineering-prc__muted">{PRC_INFO_COPY.dualRoleHint}</p>
-            <EngineeringSegmentToggle
-              ariaLabel="Visão do esclarecimento"
-              value={effectiveView}
-              onChange={(value) => setRoleView(value as InfoRoleView)}
-              options={[
-                {
-                  value: "requester",
-                  label: PRC_INFO_COPY.dualRoleRespond,
-                },
-                {
-                  value: "analyst",
-                  label: PRC_INFO_COPY.dualRoleReview,
-                },
-              ]}
-            />
-          </div>
-        ) : null}
-
         {feedback ? (
           <EngineeringStateBanner
             variant={feedback.kind === "error" ? "error" : "success"}
@@ -627,25 +608,8 @@ export function PrcInformationExchangePanel({
 
         {body}
 
-        {requestStatus === "needs_information" ? (
-          <div className="engineering-prc__info-resume">
-            {resumeHint ? (
-              <p className="engineering-prc__muted">{resumeHint}</p>
-            ) : null}
-            {canResume ? (
-              <EngineeringActionButton
-                variant="primary"
-                disabled={disabled}
-                onClick={onResume}
-              >
-                {PRC_INFO_COPY.resume}
-              </EngineeringActionButton>
-            ) : (
-              <EngineeringActionButton variant="primary" disabled>
-                {PRC_INFO_COPY.resume}
-              </EngineeringActionButton>
-            )}
-          </div>
+        {statusHint && requestStatus === "needs_information" ? (
+          <p className="engineering-prc__muted">{statusHint}</p>
         ) : null}
 
         {history.length ? (

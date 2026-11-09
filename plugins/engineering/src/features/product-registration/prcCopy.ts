@@ -283,15 +283,15 @@ export const PRC_INFO_COPY = {
   answerLabel: "Resposta",
   noAnswerYet: "Sem resposta registrada.",
   requesterIntro:
-    "A Engenharia precisa de esclarecimentos para continuar o atendimento. Responda cada pergunta e envie.",
+    "Preencha as respostas e envie à Engenharia.",
   requesterWaitingReview:
-    "Respostas enviadas — aguardando avaliação do analista.",
+    "Respostas enviadas. A Engenharia está analisando os esclarecimentos.",
   requesterWaitingOther:
-    "Aguardando o solicitante responder às perguntas da Engenharia.",
+    "As perguntas foram encaminhadas. Aguardando respostas para prosseguir.",
   saveDraft: "Salvar rascunho",
   submitAnswers: "Enviar respostas",
   draftSaved: "Rascunho salvo.",
-  answersSubmitted: "Respostas enviadas ao analista.",
+  answersSubmitted: "Respostas enviadas. Aguardando análise.",
   reviewIntro:
     "Avalie cada resposta: aceite o esclarecimento ou solicite complemento.",
   acceptQuestion: "Aceitar esclarecimento",
@@ -299,20 +299,21 @@ export const PRC_INFO_COPY = {
   followUpQuestion: "Nova pergunta de complemento",
   followUpSubmit: "Enviar complemento",
   followUpCancel: "Cancelar complemento",
-  followUpSent: "Complemento solicitado ao solicitante.",
+  followUpSent: "A Engenharia solicitou informações complementares.",
   questionAccepted: "Esclarecimento aceito.",
+  resolvedReady: "Todas as perguntas desta rodada foram avaliadas.",
+  resolvedSummary: "Esclarecimentos aceitos.",
   resume: "Retomar atendimento",
+  resumeReadyHint:
+    "Os esclarecimentos foram avaliados. O atendimento pode ser retomado no cabeçalho da solicitação.",
   resumeBlocked:
-    "Aguardando as informações solicitadas. O atendimento poderá ser retomado após a análise dos esclarecimentos.",
+    "Aguardando informações do solicitante. O atendimento poderá ser retomado após a análise dos esclarecimentos.",
   resumeBlockedReview:
     "Há respostas aguardando avaliação. Aceite os esclarecimentos ou registre a dispensa antes de retomar.",
   resumeConflict:
     "Este atendimento ainda possui esclarecimentos pendentes. Aguarde as respostas e conclua a análise antes de retomar.",
-  dualRoleRespond: "Responder como solicitante",
-  dualRoleReview: "Analisar como Engenharia",
-  dualRoleHint:
-    "Você é o solicitante e também opera o atendimento. Escolha a visão; cada ação continua autorizada pelo backend.",
-  history: "Histórico de rodadas resolvidas",
+  resumeSuccess: "Atendimento retomado com sucesso.",
+  history: "Histórico de esclarecimentos",
 } as const;
 
 export const PRC_INFO_QUESTION_STATUS_LABELS: Record<string, string> = {
