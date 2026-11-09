@@ -37,6 +37,7 @@ from controllership_finance_app.application.clara.operation_presentation import 
 )
 from controllership_finance_app.application.clara.consent_channel import (
     CONSENT_TYPE_MCP_CONFIRMATION,
+    CONVERSATIONAL_POLICY_VERSION,
     confirmation_instruction_for_prepare,
     consent_channel,
     conversational_act_enabled,
@@ -2309,13 +2310,13 @@ class ClaraGovernedWrites:
                 "human_proof": (
                     "portal_step_up_v014"
                     if portal_required
-                    else "mcp_tool_confirmation_with_security_ack"
+                    else "mcp_tool_confirmation_owner_risk_accepted_v2"
                 ),
                 "note": (
                     "confirmation=true is a sealed-proposal ACT signal "
                     "(TÉO-shaped). It is never AuthZ and, unless the "
-                    "Security ack arms conversational ACT, never "
-                    "replaces Portal V014."
+                    "server-side channel configuration enables ACT; "
+                    "Portal V014 remains default."
                 ),
             },
             "expires_at": (
@@ -2724,10 +2725,10 @@ class ClaraGovernedWrites:
         actor_sub: str,
         confirmation: bool | None,
     ) -> dict:
-        """Attach TÉO-shaped confirmation only when Security ack arms it.
+        """Attach actor-bound TÉO-shaped consent in the selected channel.
 
-        Without the ack, confirmation=true never writes consent and
-        Portal V014 remains the only trusted proof.
+        The explicit server channel is the risk-policy decision; the
+        MCP confirmation flag is not independent host human attestation.
         """
         if self._portal_consent_ok(proposal):
             return proposal
@@ -2762,10 +2763,10 @@ class ClaraGovernedWrites:
             "plan_hash": plan_hash,
             "plan_version": 1,
             "consent_channel": consent_channel(),
-            "security_ack": True,
+            "confirmation_policy": CONVERSATIONAL_POLICY_VERSION,
             "warning": (
-                "Human proof is conversational MCP confirmation under "
-                "explicit Security acknowledgement — not Portal V014."
+                "MCP conversational confirmation is a model-provided "
+                "signal, not independent Portal V014 human proof."
             ),
         }
         self._proposals.record_consent(
@@ -2808,7 +2809,8 @@ class ClaraGovernedWrites:
             conversational_act_enabled()
             and rtype == CONSENT_TYPE_MCP_CONFIRMATION
             and record.get("confirmed_by") == proposal["actor_sub"]
-            and record.get("security_ack") is True
+            and record.get("confirmation_policy") == CONVERSATIONAL_POLICY_VERSION
+            and record.get("consent_channel") == "conversational"
         ):
             payload = proposal["payload"]
             if isinstance(payload, str):
@@ -2820,9 +2822,14 @@ class ClaraGovernedWrites:
             )
             if record.get("plan_hash") == expected:
                 return
+        if conversational_act_enabled():
+            raise ConsentRequired(
+                "Confirmação conversacional da proposta selada ausente "
+                "ou inválida; apresente a mudança e solicite confirmação "
+                "explícita antes do ACT."
+            )
         raise ConsentRequired(
-            "Consentimento humano não registrado por superfície "
-            "confiável. Abra a página de consentimento no Portal: "
+            "Consentimento V014 não registrado. Abra a página do Portal: "
             + clara_consent_url(
                 proposal_id=str(proposal["proposal_id"])
             )
