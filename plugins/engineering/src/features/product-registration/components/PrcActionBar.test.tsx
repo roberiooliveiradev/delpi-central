@@ -28,4 +28,17 @@ describe("PrcActionBar — PRC-REF-017", () => {
     expect(src).toMatch(/!isUpdate && !code/);
     expect(src).toMatch(/Informe o código oficial atribuído ao produto/);
   });
+
+  it("request_information abre formulário multi-pergunta (PRC-REF-019)", () => {
+    const src = readFileSync(join(here, "PrcActionBar.tsx"), "utf8");
+    expect(src).toMatch(/spec\.needsQuestions/);
+    expect(src).toMatch(/<PrcRequestInformationModal/);
+    expect(src).toMatch(/questions, message, pendingFields/);
+    const modal = readFileSync(
+      join(here, "PrcRequestInformationModal.tsx"),
+      "utf8",
+    );
+    expect(modal).toMatch(/PRC_INFO_COPY\.addQuestion/);
+    expect(modal).toMatch(/validateInfoQuestions/);
+  });
 });

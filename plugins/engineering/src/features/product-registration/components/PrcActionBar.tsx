@@ -11,11 +11,15 @@ import {
   EngineeringTextField,
 } from "../../../ui/engineeringUi";
 import { EngineeringConfirmDialog } from "../../../ui/EngineeringConfirmDialog";
+import type { PrcFieldSpec } from "../api/productRegistrationApi";
+import type { InfoSupplierOption } from "../prcInformationExchange";
 import {
   PRC_ACTION_ORDER,
   PRC_ACTION_SPECS,
+  type PrcActionExtras,
   type PrcActionSpec,
 } from "./prcActionSpecs";
+import { PrcRequestInformationModal } from "./PrcRequestInformationModal";
 
 type PendingAction = {
   spec: PrcActionSpec;
@@ -29,6 +33,9 @@ export function PrcActionBar({
   busy,
   officialCode,
   requestType,
+  requesterLabel,
+  fieldSpecs,
+  suppliers,
   onRunAction,
   onEditDraft,
 }: {
@@ -37,13 +44,17 @@ export function PrcActionBar({
   officialCode: string;
   /** CREATE: código editável na conclusão; UPDATE: travado no baseline. */
   requestType?: "create" | "update" | string;
-  onRunAction: (
-    spec: PrcActionSpec,
-    extras: { reason?: string; officialCode?: string },
-  ) => void;
+  /** PRC-REF-019 — destinatário exibido em "Solicitar informações". */
+  requesterLabel?: string;
+  /** Catálogo de campos (alvos FIELD das perguntas). */
+  fieldSpecs?: PrcFieldSpec[] | null;
+  /** Fornecedores da ficha técnica (atalho para alvos SUPPLIER_LINK). */
+  suppliers?: InfoSupplierOption[];
+  onRunAction: (spec: PrcActionSpec, extras: PrcActionExtras) => void;
   onEditDraft?: () => void;
 }) {
   const [pending, setPending] = useState<PendingAction | null>(null);
+  const [infoSpec, setInfoSpec] = useState<PrcActionSpec | null>(null);
   const [reasonError, setReasonError] = useState("");
   const isUpdate = requestType === "update";
 
@@ -107,6 +118,10 @@ export function PrcActionBar({
       onEditDraft?.();
       return;
     }
+    if (spec.needsQuestions) {
+      setInfoSpec(spec);
+      return;
+    }
     if (spec.confirmTitle) {
       setPending({
         spec,
@@ -144,6 +159,21 @@ export function PrcActionBar({
           </EngineeringActionButton>
         ))}
       </div>
+
+      {infoSpec ? (
+        <PrcRequestInformationModal
+          open
+          busy={busy}
+          requesterLabel={requesterLabel}
+          fieldSpecs={fieldSpecs}
+          suppliers={suppliers}
+          onCancel={() => setInfoSpec(null)}
+          onSubmit={({ questions, message, pendingFields }) => {
+            onRunAction(infoSpec, { questions, message, pendingFields });
+            setInfoSpec(null);
+          }}
+        />
+      ) : null}
 
       {pending ? (
         <EngineeringConfirmDialog

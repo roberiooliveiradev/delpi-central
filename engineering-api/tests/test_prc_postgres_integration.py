@@ -408,3 +408,63 @@ class TestPostgresIntegration:
         assert "flag.created" in types
         assert "flag.resolved" in types
         assert "flag.deleted" in types
+
+
+class TestPostgresInformationRounds:
+    """PRC-REF-019 — rodada + transição atômica no PostgreSQL real."""
+
+    def test_information_round_atomic(self, repo):
+        rid = str(uuid.uuid4())
+        _seed(repo, rid)
+        repo.apply_transition(
+            request_id=rid, expected_version=1,
+            allowed_from=frozenset({"submitted"}),
+            actor_label="Analyst", actor_subject="analyst-pg",
+            event_type="started", next_status="in_progress",
+            set_fields={"assigned_to_subject": "analyst-pg"},
+            reason=None, event_meta={},
+        )
+        result = repo.create_information_round(
+            request_id=rid,
+            expected_version=2,
+            allowed_from=frozenset({"in_progress"}),
+            next_status="needs_information",
+            actor_label="Analyst",
+            actor_subject="analyst-pg",
+            actor_email=None,
+            event_type="information_requested",
+            reason="precisa unidade",
+            event_meta={"pending_fields": ["unit"]},
+            round_row={
+                "id": str(uuid.uuid4()),
+                "origin_status": "in_progress",
+                "parent_round_id": None,
+                "requested_by_subject": "analyst-pg",
+                "requested_by_display_name": "Analyst",
+                "requester_subject": "user-pg-1",
+                "message": "Confirme a unidade",
+                "created_at": "2026-11-09T00:00:00+00:00",
+                "updated_at": "2026-11-09T00:00:00+00:00",
+            },
+            questions=[
+                {
+                    "ordinal": 1,
+                    "question_text": "A unidade correta é MI ou PC?",
+                    "status": "pending",
+                    "target_type": "FIELD",
+                    "target_path": "unit",
+                    "target_attribute": None,
+                    "supplier_key": None,
+                    "target_key": "FIELD:unit",
+                    "target_label": "Unidade",
+                }
+            ],
+        )
+        assert result["request"]["status"] == "needs_information"
+        rnd = result["round"]
+        assert rnd["status"] == "awaiting_requester"
+        assert len(rnd["questions"]) == 1
+        assert rnd["questions"][0]["target_path"] == "unit"
+        listed = repo.list_information_rounds(request_id=rid)
+        assert len(listed) == 1
+        assert listed[0]["id"] == rnd["id"]

@@ -398,10 +398,21 @@ export async function prcIntakeSubmit(
   });
 }
 
+/** Corpo de `actions/request-information` (PRC-REF-019). `questions`
+ * é o contrato novo; `reason` + `pendingFields` permanecem como
+ * compatibilidade legada no backend. */
+export type PrcRequestInformationBody = {
+  expectedVersion: number;
+  reason?: string;
+  questions?: PrcInformationQuestionInput[];
+  message?: string;
+  pendingFields?: string[];
+};
+
 export async function prcAction(
   requestId: string,
   actionPath: string,
-  body: Record<string, unknown>,
+  body: Record<string, unknown> | PrcRequestInformationBody,
   idempotencyKey?: string,
 ): Promise<Envelope<PrcRequestDetail>> {
   return postJson(
@@ -411,6 +422,182 @@ export async function prcAction(
     idempotencyKey
       ? { headers: { "Idempotency-Key": idempotencyKey } }
       : undefined,
+  );
+}
+
+/* --- PRC-REF-019 rodadas de esclarecimento ------------------------------- */
+
+export type PrcInformationTargetType = "FIELD" | "GENERAL" | "SUPPLIER_LINK";
+export type PrcInformationSupplierAttribute = "partNumber" | "catalogNumber";
+
+/** Pergunta tipada enviada ao abrir a rodada / pedir complemento. */
+export type PrcInformationQuestionInput = {
+  targetType: PrcInformationTargetType;
+  targetPath?: string | null;
+  targetAttribute?: PrcInformationSupplierAttribute | null;
+  supplierKey?: { supplierCode: string; store: string } | null;
+  questionText: string;
+};
+
+export type PrcInformationQuestionStatus =
+  | "pending"
+  | "drafted"
+  | "submitted"
+  | "accepted"
+  | "follow_up_requested";
+
+export type PrcInformationRoundStatus =
+  | "awaiting_requester"
+  | "awaiting_review"
+  | "resolved";
+
+export type PrcInformationAnswer = {
+  id?: string | null;
+  text?: string | null;
+  status?: string | null;
+  version?: number | null;
+  submittedAt?: string | null;
+  updatedAt?: string | null;
+  authorSubject?: string | null;
+};
+
+export type PrcInformationQuestion = {
+  id: string;
+  ordinal?: number | null;
+  targetType: PrcInformationTargetType;
+  targetPath?: string | null;
+  targetAttribute?: PrcInformationSupplierAttribute | null;
+  supplierKey?: { supplierCode: string; store: string } | null;
+  targetKey?: string | null;
+  targetLabel?: string | null;
+  questionText: string;
+  status: PrcInformationQuestionStatus;
+  answer?: PrcInformationAnswer | null;
+};
+
+export type PrcInformationRound = {
+  id: string;
+  requestId: string;
+  sequence?: number | null;
+  originStatus?: string | null;
+  status: PrcInformationRoundStatus;
+  requestedBy?: { subject?: string | null; displayName?: string | null };
+  requesterSubject?: string | null;
+  message?: string | null;
+  /** Versão otimista da rodada (`expectedRoundVersion`). */
+  version: number;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  resolvedAt?: string | null;
+  parentRoundId?: string | null;
+  questions: PrcInformationQuestion[];
+};
+
+export type PrcInformationRoundList = {
+  items: PrcInformationRound[];
+  total: number;
+  hasOpenBlocker: boolean;
+};
+
+export type PrcInformationAnswerInput = { questionId: string; text: string };
+
+function idempotencyHeaders(idempotencyKey?: string) {
+  return idempotencyKey
+    ? { headers: { "Idempotency-Key": idempotencyKey } }
+    : undefined;
+}
+
+export function newPrcIdempotencyKey(prefix: string): string {
+  const uuid =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `${prefix}-${uuid}`;
+}
+
+export async function listInformationRounds(
+  requestId: string,
+  signal?: AbortSignal,
+): Promise<Envelope<PrcInformationRoundList>> {
+  return getJson(`${BASE}/requests/${requestId}/information-rounds`, signal);
+}
+
+export async function getInformationRound(
+  requestId: string,
+  roundId: string,
+  signal?: AbortSignal,
+): Promise<Envelope<PrcInformationRound>> {
+  return getJson(
+    `${BASE}/requests/${requestId}/information-rounds/${roundId}`,
+    signal,
+  );
+}
+
+export async function draftInformationAnswers(
+  requestId: string,
+  roundId: string,
+  body: {
+    expectedRoundVersion: number;
+    answers: PrcInformationAnswerInput[];
+  },
+  idempotencyKey?: string,
+): Promise<Envelope<PrcInformationRound>> {
+  return patchJson(
+    `${BASE}/requests/${requestId}/information-rounds/${roundId}/answers`,
+    body,
+    undefined,
+    idempotencyHeaders(idempotencyKey),
+  );
+}
+
+export async function submitInformationAnswers(
+  requestId: string,
+  roundId: string,
+  body: {
+    expectedRoundVersion: number;
+    answers?: PrcInformationAnswerInput[];
+  },
+  idempotencyKey?: string,
+): Promise<Envelope<PrcInformationRound>> {
+  return postJson(
+    `${BASE}/requests/${requestId}/information-rounds/${roundId}/actions/submit-answers`,
+    body,
+    undefined,
+    idempotencyHeaders(idempotencyKey),
+  );
+}
+
+export async function acceptInformationQuestion(
+  requestId: string,
+  roundId: string,
+  questionId: string,
+  body: { expectedRoundVersion: number },
+  idempotencyKey?: string,
+): Promise<Envelope<PrcInformationRound>> {
+  return postJson(
+    `${BASE}/requests/${requestId}/information-rounds/${roundId}/questions/${questionId}/actions/accept`,
+    body,
+    undefined,
+    idempotencyHeaders(idempotencyKey),
+  );
+}
+
+export async function requestInformationFollowUp(
+  requestId: string,
+  roundId: string,
+  body: {
+    expectedRoundVersion: number;
+    questions: PrcInformationQuestionInput[];
+    followUpQuestionIds: string[];
+    message?: string;
+  },
+  idempotencyKey?: string,
+): Promise<Envelope<PrcInformationRound>> {
+  return postJson(
+    `${BASE}/requests/${requestId}/information-rounds/${roundId}/actions/request-follow-up`,
+    body,
+    undefined,
+    idempotencyHeaders(idempotencyKey),
   );
 }
 

@@ -1,5 +1,17 @@
 import type { ReactNode } from "react";
 
+import type { PrcInformationQuestionInput } from "../api/productRegistrationApi";
+
+/** Extras repassados pela barra ao `runAction` do detalhe. */
+export type PrcActionExtras = {
+  reason?: string;
+  officialCode?: string;
+  /** PRC-REF-019 — perguntas tipadas de `request_information`. */
+  questions?: PrcInformationQuestionInput[];
+  message?: string;
+  pendingFields?: string[];
+};
+
 /** Catálogo de apresentação das ações PRC — disponibilidade real vem
  * sempre de `allowedActions` do backend; aqui só rótulos/exigências. */
 export type PrcActionSpec = {
@@ -9,6 +21,8 @@ export type PrcActionSpec = {
   needsReason?: boolean;
   reasonLabel?: string;
   needsOfficialCode?: boolean;
+  /** Abre o formulário multi-pergunta (PrcRequestInformationModal). */
+  needsQuestions?: boolean;
   confirmTitle?: string;
   confirmMessage?: ReactNode;
   danger?: boolean;
@@ -32,8 +46,7 @@ export const PRC_ACTION_SPECS: Record<string, PrcActionSpec> = {
     action: "request_information",
     label: "Solicitar informações",
     path: "request-information",
-    needsReason: true,
-    reasonLabel: "Motivo da pendência",
+    needsQuestions: true,
     confirmTitle: "Solicitar informações",
     confirmMessage:
       "A solicitação ficará aguardando informações até ser retomada.",

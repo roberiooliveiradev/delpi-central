@@ -169,6 +169,13 @@ def _uuid_or_fail(value: str, operation_id: str):
         )
 
 
+def _unwrap_replay(data):
+    """Replay idempotente do service → (payload, replayed)."""
+    if isinstance(data, dict) and data.get("replayed"):
+        return data["response"], True
+    return data, False
+
+
 def _expected_version(body, operation_id: str):
     value = getattr(body, "expected_version", None)
     if value is None:
@@ -210,8 +217,46 @@ class ActionBody(BaseModel):
     reason: str | None = Field(default=None, max_length=1000)
 
 
+class InformationQuestionBody(BaseModel):
+    """PRC-REF-019 — pergunta tipada; o alvo é validado no domínio."""
+
+    targetType: str = Field(default="GENERAL", max_length=32)
+    targetPath: str | None = Field(default=None, max_length=120)
+    targetAttribute: str | None = Field(default=None, max_length=32)
+    supplierKey: dict | None = None
+    questionText: str = Field(..., min_length=1, max_length=1000)
+
+
 class RequestInformationBody(ActionBody):
     pendingFields: list[str] = Field(default_factory=list)
+    questions: list[InformationQuestionBody] = Field(default_factory=list)
+    message: str | None = Field(default=None, max_length=1000)
+
+
+class InformationAnswerBody(BaseModel):
+    questionId: str = Field(..., min_length=1, max_length=64)
+    text: str = Field(default="", max_length=4000)
+
+
+class InformationDraftAnswersBody(BaseModel):
+    expectedRoundVersion: int = Field(..., ge=1)
+    answers: list[InformationAnswerBody] = Field(default_factory=list)
+
+
+class InformationSubmitAnswersBody(BaseModel):
+    expectedRoundVersion: int = Field(..., ge=1)
+    answers: list[InformationAnswerBody] | None = None
+
+
+class InformationAcceptBody(BaseModel):
+    expectedRoundVersion: int = Field(..., ge=1)
+
+
+class InformationFollowUpBody(BaseModel):
+    expectedRoundVersion: int = Field(..., ge=1)
+    questions: list[InformationQuestionBody] = Field(default_factory=list)
+    followUpQuestionIds: list[str] = Field(default_factory=list)
+    message: str | None = Field(default=None, max_length=1000)
 
 
 class RejectBody(ActionBody):
@@ -524,11 +569,223 @@ async def prc_action_request_information(
             rid, actor=_actor(user),
             expected_version=body.expectedVersion,
             reason=body.reason, pending_fields=body.pendingFields,
+            questions=[q.model_dump() for q in body.questions],
+            message=body.message,
             idempotency_key=idempotency_key,
         )
     except Exception as exc:
         return _err(exc, op)
+    data, _ = _unwrap_replay(data)
     return ok(data, message="Pendência registrada.", operation_id=op)
+
+
+# --- PRC-REF-019 rodadas de esclarecimento ---------------------------------
+
+
+def _answers_payload(answers) -> list[dict]:
+    return [a.model_dump() for a in answers or []]
+
+
+@router.get(
+    "/v1/product-registration/requests/{request_id}/information-rounds",
+    operation_id="prc_information_round_list",
+    summary="PRC-REF-019 — Listar rodadas de esclarecimento do caso",
+)
+@require_any_permission(_READ_PERMS)
+async def prc_information_round_list(request_id: str = Path(...)):
+    op = "prc_information_round_list"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().list_information_rounds(
+            rid, actor=_actor(user)
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(data, message="Rodadas carregadas.", operation_id=op)
+
+
+@router.get(
+    "/v1/product-registration/requests/{request_id}/information-rounds/{round_id}",
+    operation_id="prc_information_round_get",
+    summary="PRC-REF-019 — Detalhe de uma rodada de esclarecimento",
+)
+@require_any_permission(_READ_PERMS)
+async def prc_information_round_get(
+    request_id: str = Path(...), round_id: str = Path(...),
+):
+    op = "prc_information_round_get"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    rnd_id, bad = _uuid_or_fail(round_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().get_information_round(
+            rid, rnd_id, actor=_actor(user)
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(data, message="Rodada carregada.", operation_id=op)
+
+
+@router.patch(
+    "/v1/product-registration/requests/{request_id}/information-rounds/{round_id}/answers",
+    operation_id="prc_information_round_draft_answers",
+    summary="PRC-REF-019 — Salvar rascunho de respostas (solicitante)",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_information_round_draft_answers(
+    request_id: str = Path(...),
+    round_id: str = Path(...),
+    body: InformationDraftAnswersBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_information_round_draft_answers"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    rnd_id, bad = _uuid_or_fail(round_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().draft_information_answers(
+            rid, rnd_id, actor=_actor(user),
+            expected_round_version=body.expectedRoundVersion,
+            answers=_answers_payload(body.answers),
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    data, _ = _unwrap_replay(data)
+    return ok(data, message="Rascunho salvo.", operation_id=op)
+
+
+@router.post(
+    "/v1/product-registration/requests/{request_id}/information-rounds/{round_id}/actions/submit-answers",
+    operation_id="prc_information_round_submit_answers",
+    summary="PRC-REF-019 — Enviar respostas ao analista (solicitante)",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_information_round_submit_answers(
+    request_id: str = Path(...),
+    round_id: str = Path(...),
+    body: InformationSubmitAnswersBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_information_round_submit_answers"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    rnd_id, bad = _uuid_or_fail(round_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().submit_information_answers(
+            rid, rnd_id, actor=_actor(user),
+            expected_round_version=body.expectedRoundVersion,
+            answers=(
+                None if body.answers is None
+                else _answers_payload(body.answers)
+            ),
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    data, _ = _unwrap_replay(data)
+    return ok(data, message="Respostas enviadas.", operation_id=op)
+
+
+@router.post(
+    "/v1/product-registration/requests/{request_id}/information-rounds/{round_id}/questions/{question_id}/actions/accept",
+    operation_id="prc_information_question_accept",
+    summary="PRC-REF-019 — Aceitar esclarecimento de uma pergunta (analista)",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_information_question_accept(
+    request_id: str = Path(...),
+    round_id: str = Path(...),
+    question_id: str = Path(...),
+    body: InformationAcceptBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_information_question_accept"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    rnd_id, bad = _uuid_or_fail(round_id, op)
+    if bad is not None:
+        return bad
+    qid, bad = _uuid_or_fail(question_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().accept_information_question(
+            rid, rnd_id, qid, actor=_actor(user),
+            expected_round_version=body.expectedRoundVersion,
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    data, _ = _unwrap_replay(data)
+    return ok(data, message="Esclarecimento aceito.", operation_id=op)
+
+
+@router.post(
+    "/v1/product-registration/requests/{request_id}/information-rounds/{round_id}/actions/request-follow-up",
+    operation_id="prc_information_round_request_follow_up",
+    summary="PRC-REF-019 — Solicitar complemento em nova rodada (analista)",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_information_round_request_follow_up(
+    request_id: str = Path(...),
+    round_id: str = Path(...),
+    body: InformationFollowUpBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_information_round_request_follow_up"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    rnd_id, bad = _uuid_or_fail(round_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().request_information_follow_up(
+            rid, rnd_id, actor=_actor(user),
+            expected_parent_version=body.expectedRoundVersion,
+            questions=[q.model_dump() for q in body.questions],
+            follow_up_question_ids=body.followUpQuestionIds,
+            message=body.message,
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    data, replayed = _unwrap_replay(data)
+    return ok(
+        data, message="Complemento solicitado.",
+        status_code=200 if replayed else 201, operation_id=op,
+    )
 
 
 @router.post(

@@ -644,11 +644,13 @@ O PO aprovou nova apresentação **sem duplicar código/loja/razão social**: co
 
 ## PRC-REF-019 — Solicitação formal de informações e ciclo de resposta do solicitante
 
-**Decisão PO 2026-11-09. Status PO_APPROVED_TARGET / PLANNED / DEV_ONLY.** Evoluir o botão Solicitar informações para comunicação formal analista ↔ solicitante com perguntas específicas, respostas rastreáveis, avaliação e retomada. **Não** confundir com bandeiras D16 (apontamentos internos pós-terminal). Sem novo bounded context, dependência runtime de my-requests/Chat/Controle MP, nem gravação TOTVS.
+**Decisão PO 2026-11-09. Status PO_APPROVED_TARGET / IMPLEMENTED_DEV / DEV_ONLY (2026-11-09).** Comunicação formal analista ↔ solicitante com perguntas tipadas, respostas rastreáveis, avaliação, complemento e retomada governada. **Não** confundir com bandeiras D16. Sem novo bounded context, sem my-requests/Chat runtime, sem gravação TOTVS. HML/PROD não deployados neste ciclo.
 
-### Inventário e gap
-- PROVEN: PrcActionBar possui somente motivo textual obrigatório (até 1000); PrcDetailPage envia reason e expectedVersion; a rota POST /v1/product-registration/requests/{id}/actions/request-information aceita pendingFields[] mas a UI não os seleciona; service grava evento information_requested, status in_progress|under_review → needs_information e resume → in_progress, com audit/CAS/idempotência.
-- TO_INVENTORY: resposta do solicitante, canal autenticado de leitura/resposta, notificação de destino e canal de anexos não foram comprovados; o contrato antigo permitia needs_information como espera interna. A presente decisão altera a META, não afirma que a capability já exista.
+### Inventário e gap (pós-execução)
+- PROVEN: domínio `information_rounds` + tabelas V018/V019; `POST request-information` com `questions[]`/`message` (legado reason+pendingFields compatível); GET/PATCH/POST de rodadas; AuthZ objeto solicitante; gate de resume + `waiver:`; modal multi-pergunta; painel solicitante/analista; EVA read/execute parity (6 MCP tools); pytest in-memory + PG real `TestPostgresInformationRounds`; Vitest 304; migrations DEV aplicadas; bundle engineering reconstruído.
+- PENDING_NOTIFICATION_OWNER: catálogo Core sem entradas PRC — aviso push/e-mail não implementado; rodada permanece consultável.
+- PENDING_ATTACHMENTS_CONTRACT: respostas textuais apenas.
+- ARCHITECTURE_DECISION_REQUIRED (parcial): rotas ainda exigem `engineering.access`; solicitante externo sem essa permissão não acessa — AuthZ por objeto está no service, mas o gate de rota Core permanece.
 
 ### Jornada e wireframes textuais
 ANALISTA — Solicitar informações:

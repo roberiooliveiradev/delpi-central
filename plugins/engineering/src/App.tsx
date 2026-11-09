@@ -111,6 +111,7 @@ export default function App({
         <ProductRegistrationFeature
           relativePath={resolved.relativePath}
           basePath={basePath}
+          getAccessToken={getAccessToken}
         />
       ) : null}
       {resolved.view === "help" ? <HelpPage basePath={basePath} /> : null}

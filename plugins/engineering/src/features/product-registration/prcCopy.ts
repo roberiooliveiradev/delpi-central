@@ -39,6 +39,11 @@ export const PRC_EVENT_LABELS: Record<string, string> = {
   completed: "Solicitação concluída",
   verification_attempted: "Verificação oficial executada",
   verify_and_complete: "Verificação oficial e conclusão",
+  "information.answers_drafted": "Rascunho de respostas salvo",
+  "information.answers_submitted": "Respostas enviadas ao analista",
+  "information.question_accepted": "Esclarecimento aceito",
+  "information.follow_up_requested": "Complemento solicitado",
+  "information.round_resolved": "Rodada de esclarecimento concluída",
   "flag.created": "Bandeira criada",
   "flag.updated": "Bandeira atualizada",
   "flag.resolved": "Bandeira resolvida",
@@ -235,6 +240,97 @@ export const PRC_COPY = {
   immutableRevision:
     "Revisões publicadas são imutáveis e servem apenas para consulta.",
 } as const;
+
+/** Intercâmbio de informações analista ↔ solicitante (PRC-REF-019).
+ * Ajuda no próprio texto/hint — sem ícone de interrogação. */
+export const PRC_INFO_COPY = {
+  requestTitle: "Solicitar informações",
+  requestIntro:
+    "Registre uma ou mais perguntas ao solicitante. Cada pergunta pode apontar para um campo da ficha, um vínculo de fornecedor ou ser um esclarecimento geral.",
+  recipient: "Destinatário",
+  recipientHint:
+    "O solicitante do caso recebe as perguntas e responde pela própria solicitação.",
+  recipientUnknown: "Solicitante não identificado",
+  questionsTitle: "Perguntas",
+  addQuestion: "Adicionar pergunta",
+  removeQuestion: "Remover pergunta",
+  targetType: "Tipo de alvo",
+  targetField: "Campo da ficha",
+  targetFieldPlaceholder: "Selecione o campo",
+  supplierPick: "Fornecedor da ficha",
+  supplierPickPlaceholder: "Preencher a partir da ficha (opcional)",
+  supplierCode: "Código do fornecedor",
+  supplierStore: "Loja",
+  supplierAttribute: "Atributo",
+  questionText: "Pergunta",
+  questionTextHint: "Seja objetivo: o solicitante responderá em texto livre.",
+  message: "Mensagem complementar (opcional)",
+  messageHint:
+    "Contexto adicional exibido ao solicitante junto com as perguntas.",
+  submitRequest: "Solicitar informações",
+  cancel: "Cancelar",
+
+  panelTitle: "Esclarecimentos com o solicitante",
+  panelLoading: "Carregando esclarecimentos…",
+  panelEmpty: "Nenhuma rodada de esclarecimento registrada.",
+  noActiveRound: "Nenhuma rodada de esclarecimento em aberto.",
+  panelLoadError: "Não foi possível carregar os esclarecimentos.",
+  refresh: "Atualizar esclarecimentos",
+  roundLabel: "Rodada",
+  requestedBy: "Solicitado por",
+  roundMessage: "Mensagem do analista",
+  yourAnswer: "Sua resposta",
+  answerLabel: "Resposta",
+  noAnswerYet: "Sem resposta registrada.",
+  requesterIntro:
+    "A Engenharia precisa de esclarecimentos para continuar o atendimento. Responda cada pergunta e envie.",
+  requesterWaitingReview:
+    "Respostas enviadas — aguardando avaliação do analista.",
+  requesterWaitingOther:
+    "Aguardando o solicitante responder às perguntas da Engenharia.",
+  saveDraft: "Salvar rascunho",
+  submitAnswers: "Enviar respostas",
+  draftSaved: "Rascunho salvo.",
+  answersSubmitted: "Respostas enviadas ao analista.",
+  reviewIntro:
+    "Avalie cada resposta: aceite o esclarecimento ou solicite complemento.",
+  acceptQuestion: "Aceitar esclarecimento",
+  requestFollowUp: "Solicitar complemento",
+  followUpQuestion: "Nova pergunta de complemento",
+  followUpSubmit: "Enviar complemento",
+  followUpCancel: "Cancelar complemento",
+  followUpSent: "Complemento solicitado ao solicitante.",
+  questionAccepted: "Esclarecimento aceito.",
+  resume: "Retomar atendimento",
+  resumeBlocked:
+    "Retome o atendimento depois de aceitar todos os esclarecimentos da rodada.",
+  history: "Histórico de rodadas resolvidas",
+} as const;
+
+export const PRC_INFO_QUESTION_STATUS_LABELS: Record<string, string> = {
+  pending: "Aguardando resposta",
+  drafted: "Rascunho",
+  submitted: "Respondida",
+  accepted: "Aceita",
+  follow_up_requested: "Complemento solicitado",
+};
+
+export const PRC_INFO_QUESTION_STATUS_VARIANTS: Record<
+  string,
+  "neutral" | "info" | "success" | "warning" | "danger"
+> = {
+  pending: "warning",
+  drafted: "neutral",
+  submitted: "info",
+  accepted: "success",
+  follow_up_requested: "warning",
+};
+
+export const PRC_INFO_ROUND_STATUS_LABELS: Record<string, string> = {
+  awaiting_requester: "Aguardando solicitante",
+  awaiting_review: "Aguardando análise",
+  resolved: "Resolvida",
+};
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

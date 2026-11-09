@@ -21,6 +21,9 @@ from engineering_app.application.ports.product_registration import (
 from engineering_app.domain.product_registration import baseline as sa5_baseline
 from engineering_app.domain.product_registration import catalog
 from engineering_app.domain.product_registration import flags as attendance_flags
+from engineering_app.domain.product_registration import (
+    information_rounds as info_rounds,
+)
 from engineering_app.domain.product_registration.errors import (
     PrcConcurrencyError,
     PrcDuplicateError,
@@ -675,28 +678,154 @@ class ProductRegistrationService:
 
     def request_information(
         self, request_id: str, *, actor: PrcActor, expected_version: int,
-        reason: str, pending_fields: list[str] | None = None,
+        reason: str | None = None,
+        pending_fields: list[str] | None = None,
+        questions: list[dict[str, Any]] | None = None,
+        message: str | None = None,
         idempotency_key: str | None = None,
     ) -> dict[str, Any]:
-        if not (reason or "").strip():
-            raise PrcValidationError(
-                "Motivo é obrigatório.", fields={"reason": "required"}
+        """PRC-REF-019 — abre rodada de esclarecimento tipada.
+
+        ``questions`` é o contrato novo; sem perguntas, o motivo legado
+        (+ ``pending_fields``) é convertido em perguntas FIELD/GENERAL
+        (compatibilidade com Portal/EVA anteriores). ``pending_fields`` do
+        evento continua derivado dos alvos tipados.
+        """
+        request = self._get_scoped(request_id, actor)
+        if not actor.has_action_permission("request_information"):
+            raise PrcForbiddenError(
+                "Sem permissão para a ação 'request_information'."
             )
-        meta = {"pending_fields": list(pending_fields or [])}
-        return self._apply(
-            request_id, actor=actor, action="request_information",
-            expected_version=expected_version,
-            reason=reason.strip()[:1000], event_meta=meta,
-            idempotency_key=idempotency_key,
+        reason_text = (reason or "").strip()[:1000]
+        if questions:
+            normalized = info_rounds.validate_questions_payload(questions)
+        else:
+            if not reason_text:
+                raise PrcValidationError(
+                    "Motivo é obrigatório.", fields={"reason": "required"}
+                )
+            normalized = info_rounds.legacy_questions_from_reason(
+                reason=reason_text, pending_fields=pending_fields
+            )
+        round_message = info_rounds.validate_message(
+            message if message is not None else reason_text
         )
+        derived_fields = info_rounds.pending_fields_from_questions(normalized)
+        fp = _fingerprint(
+            {
+                "action": "request_information",
+                "request_id": request_id,
+                "expected_version": expected_version,
+                "reason": reason_text,
+                "message": round_message,
+                "questions": [
+                    {
+                        "targetKey": q["target_key"],
+                        "text": q["question_text"],
+                    }
+                    for q in normalized
+                ],
+            }
+        )
+        replay = self._idempotent_replay(
+            actor=actor, operation="request_information",
+            key=idempotency_key, fingerprint=fp,
+        )
+        if replay is not None:
+            return replay
+        next_status = transition_for("request_information", request["status"])
+        if next_status is None:
+            raise PrcStateConflictError("state_conflict")
+        now = _now()
+        result = self._repo.create_information_round(
+            request_id=request_id,
+            expected_version=expected_version,
+            allowed_from=frozenset({request["status"]}),
+            next_status=next_status,
+            actor_label=actor.label or actor.user_id,
+            actor_subject=actor.user_id,
+            actor_email=actor.email,
+            event_type=_EVENT_TYPE_BY_ACTION["request_information"],
+            reason=reason_text or round_message,
+            event_meta={
+                "action": "request_information",
+                "channel": actor.channel,
+                "pending_fields": derived_fields,
+            },
+            round_row={
+                "id": _uuid(),
+                "origin_status": request["status"],
+                "parent_round_id": None,
+                "requested_by_subject": actor.user_id,
+                "requested_by_display_name": actor.label,
+                "requester_subject": request["requester_subject"],
+                "message": round_message,
+                "created_at": now,
+                "updated_at": now,
+            },
+            questions=normalized,
+        )
+        response = _request_detail(
+            {**result["request"], "verifications": []}, actor
+        )
+        response["informationRound"] = info_rounds.public_round_view(
+            result["round"], include_internal=True
+        )
+        self._idempotent_store(
+            actor=actor, operation="request_information",
+            key=idempotency_key, fingerprint=fp, request_id=request_id,
+            status=200, payload=response,
+        )
+        return response
 
     def resume_request(self, request_id: str, *, actor: PrcActor,
                        expected_version: int, reason: str | None = None,
                        idempotency_key: str | None = None) -> dict[str, Any]:
+        """Retoma o caso (``needs_information`` → ``in_progress``).
+
+        PRC-REF-019: enquanto houver rodada de esclarecimento aberta
+        (``awaiting_requester``/``awaiting_review``) o resume é bloqueado
+        com ``state_conflict``. Única exceção: dispensa explícita do
+        analista — ``reason`` iniciando com ``waiver:`` — registrada no
+        evento (``information_waiver``) para auditoria. Escopo e permissão
+        são validados antes do gate para não vazar a existência de rodadas.
+        """
+        self._get_scoped(request_id, actor)
+        if not actor.has_action_permission("resume"):
+            raise PrcForbiddenError("Sem permissão para a ação 'resume'.")
+        rounds = self._repo.list_information_rounds(request_id=request_id)
+        event_meta: dict[str, Any] | None = None
+        if info_rounds.has_open_information_blocker(rounds):
+            waiver = (reason or "").strip().lower().startswith("waiver:")
+            if not waiver:
+                raise PrcStateConflictError("information_round_open")
+            open_ids = [
+                r["id"]
+                for r in rounds
+                if r.get("status")
+                in ("awaiting_requester", "awaiting_review")
+            ]
+            self._repo.resolve_open_information_rounds(
+                request_id=request_id,
+                actor_subject=actor.user_id,
+                actor_display_name=actor.label,
+                event=self._info_event(
+                    actor,
+                    "information.round_resolved",
+                    meta={
+                        "waiver": True,
+                        "openRoundIds": open_ids,
+                    },
+                ),
+            )
+            event_meta = {
+                "information_waiver": True,
+                "open_round_ids": open_ids,
+            }
         return self._apply(
             request_id, actor=actor, action="resume",
             expected_version=expected_version, reason=reason,
-            idempotency_key=idempotency_key,
+            event_meta=event_meta, idempotency_key=idempotency_key,
         )
 
     def submit_review(self, request_id: str, *, actor: PrcActor,
@@ -1945,6 +2074,420 @@ class ProductRegistrationService:
             actor=actor, operation="flag_delete", key=idempotency_key,
             fingerprint=fp, request_id=request_id, status=200,
             payload=response,
+        )
+        return response
+
+    # --- INFORMATION ROUNDS (PRC-REF-019) --------------------------------------
+    #
+    # AuthZ (backend decide; cliente nunca é autoridade):
+    # - analista (``is_analyst``): abre rodada, aceita, pede complemento e
+    #   lista/lê todas as rodadas dos casos no seu escopo;
+    # - draft/submit: SOMENTE o solicitante do caso (``actor.user_id ==
+    #   request.requester_subject``), mesmo que o ator também seja analista,
+    #   e somente em rodada ``awaiting_requester`` destinada a ele;
+    # - leitura por solicitante (escopo do caso) devolve as rodadas; as
+    #   bandeiras D16 são recurso separado e nunca entram nesta view.
+
+    @staticmethod
+    def _require_info_analyst(actor: PrcActor) -> None:
+        _require_actor_process(actor)
+        if not actor.is_analyst:
+            raise PrcForbiddenError(
+                "Operação restrita a analistas autorizados."
+            )
+
+    def _require_info_requester(
+        self, request_id: str, actor: PrcActor
+    ) -> dict[str, Any]:
+        """Escopo + identidade do solicitante do caso (draft/submit)."""
+        _require_actor_read(actor)
+        request = self._get_scoped(request_id, actor)
+        if request["requester_subject"] != actor.user_id:
+            raise PrcForbiddenError(
+                "Somente o solicitante do caso pode responder."
+            )
+        return request
+
+    def _load_info_round_or_404(
+        self, request_id: str, round_id: str
+    ) -> dict[str, Any]:
+        rnd = self._repo.get_information_round(
+            request_id=request_id, round_id=round_id
+        )
+        if rnd is None:
+            raise PrcNotFoundError("information_round", round_id)
+        return rnd
+
+    def _load_requester_round(
+        self, request_id: str, round_id: str, actor: PrcActor
+    ) -> dict[str, Any]:
+        """Rodada aguardando o solicitante e destinada ao ator."""
+        rnd = self._load_info_round_or_404(request_id, round_id)
+        if rnd.get("requester_subject") != actor.user_id:
+            raise PrcForbiddenError("Rodada não destinada ao ator.")
+        if not info_rounds.round_allows_requester_write(rnd["status"]):
+            raise PrcStateConflictError("state_conflict")
+        return rnd
+
+    @staticmethod
+    def _info_event(
+        actor: PrcActor,
+        event_type: str,
+        meta: dict[str, Any] | None = None,
+        reason: str | None = None,
+    ) -> dict[str, Any]:
+        return {
+            "event_type": event_type,
+            "actor_subject": actor.user_id,
+            "actor_display_name": actor.label,
+            "actor_email": actor.email,
+            "reason": reason,
+            "metadata": {"channel": actor.channel, **(meta or {})},
+        }
+
+    @staticmethod
+    def _normalize_answers(
+        answers: Any, *, for_submit: bool
+    ) -> list[dict[str, str]]:
+        """Normaliza ``answers[]`` (``questionId`` + ``text``).
+
+        Rascunho aceita texto vazio (limpa a resposta); envio exige texto
+        não vazio em cada item informado — a completude por pergunta é
+        validada atomicamente pelo repositório (payload + rascunhos).
+        """
+        if answers is None:
+            answers = []
+        if not isinstance(answers, list):
+            raise PrcValidationError(
+                "answers deve ser uma lista.", fields={"answers": "type"}
+            )
+        if not answers and not for_submit:
+            raise PrcValidationError(
+                "Informe ao menos uma resposta.",
+                fields={"answers": "required"},
+            )
+        out: list[dict[str, str]] = []
+        seen: set[str] = set()
+        for idx, raw in enumerate(answers):
+            if not isinstance(raw, dict):
+                raise PrcValidationError(
+                    f"Resposta {idx + 1} inválida.",
+                    fields={f"answers[{idx}]": "type"},
+                )
+            qid = str(
+                raw.get("questionId") or raw.get("question_id") or ""
+            ).strip()
+            if not qid:
+                raise PrcValidationError(
+                    "questionId é obrigatório.",
+                    fields={f"answers[{idx}].questionId": "required"},
+                )
+            if qid in seen:
+                raise PrcValidationError(
+                    "Pergunta repetida no payload.",
+                    fields={f"answers[{idx}].questionId": "duplicate"},
+                )
+            seen.add(qid)
+            field_key = f"answers[{idx}].text"
+            if for_submit:
+                text = info_rounds.validate_answer_text(
+                    raw.get("text"), field_key=field_key
+                )
+            else:
+                text = str(raw.get("text") or "").strip()
+                if len(text) > info_rounds.ANSWER_TEXT_MAX:
+                    raise PrcValidationError(
+                        "Resposta excede "
+                        f"{info_rounds.ANSWER_TEXT_MAX} caracteres.",
+                        fields={field_key: "max_length"},
+                    )
+            out.append({"question_id": qid, "text": text})
+        return out
+
+    def list_information_rounds(
+        self, request_id: str, *, actor: PrcActor
+    ) -> dict[str, Any]:
+        _require_actor_read(actor)
+        self._get_scoped(request_id, actor)
+        rounds = self._repo.list_information_rounds(request_id=request_id)
+        return {
+            "items": [
+                info_rounds.public_round_view(
+                    r, include_internal=actor.is_analyst
+                )
+                for r in rounds
+            ],
+            "total": len(rounds),
+            "hasOpenBlocker": info_rounds.has_open_information_blocker(
+                rounds
+            ),
+        }
+
+    def get_information_round(
+        self, request_id: str, round_id: str, *, actor: PrcActor
+    ) -> dict[str, Any]:
+        _require_actor_read(actor)
+        self._get_scoped(request_id, actor)
+        rnd = self._load_info_round_or_404(request_id, round_id)
+        return info_rounds.public_round_view(
+            rnd, include_internal=actor.is_analyst
+        )
+
+    def _save_answers(
+        self,
+        request_id: str,
+        round_id: str,
+        *,
+        actor: PrcActor,
+        expected_round_version: int,
+        answers: Any,
+        idempotency_key: str | None,
+        submit: bool,
+    ) -> dict[str, Any]:
+        self._require_info_requester(request_id, actor)
+        normalized = self._normalize_answers(answers, for_submit=submit)
+        operation = "information_submit" if submit else "information_draft"
+        fp = _fingerprint(
+            {
+                "request_id": request_id,
+                "round_id": round_id,
+                "op": operation,
+                "expected_round_version": expected_round_version,
+                "answers": normalized,
+            }
+        )
+        replay = self._idempotent_replay(
+            actor=actor, operation=operation, key=idempotency_key,
+            fingerprint=fp,
+        )
+        if replay is not None:
+            return replay
+        # Replay antes do gate de estado: reenvio idempotente após sucesso.
+        self._load_requester_round(request_id, round_id, actor)
+        event = self._info_event(
+            actor,
+            "information.answers_submitted" if submit
+            else "information.answers_drafted",
+            meta={"roundId": round_id},
+        )
+        repo_fn = (
+            self._repo.submit_information_answers if submit
+            else self._repo.save_information_answers_draft
+        )
+        saved = repo_fn(
+            request_id=request_id,
+            round_id=round_id,
+            expected_round_version=expected_round_version,
+            actor_subject=actor.user_id,
+            answers=normalized,
+            event=event,
+        )
+        response = info_rounds.public_round_view(saved)
+        self._idempotent_store(
+            actor=actor, operation=operation, key=idempotency_key,
+            fingerprint=fp, request_id=request_id, status=200,
+            payload=response,
+        )
+        return response
+
+    def draft_information_answers(
+        self,
+        request_id: str,
+        round_id: str,
+        *,
+        actor: PrcActor,
+        expected_round_version: int,
+        answers: list[dict[str, Any]],
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Salva rascunho de respostas (somente o solicitante do caso)."""
+        return self._save_answers(
+            request_id, round_id, actor=actor,
+            expected_round_version=expected_round_version,
+            answers=answers, idempotency_key=idempotency_key, submit=False,
+        )
+
+    def submit_information_answers(
+        self,
+        request_id: str,
+        round_id: str,
+        *,
+        actor: PrcActor,
+        expected_round_version: int,
+        answers: list[dict[str, Any]] | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Envia respostas (todas as perguntas exigem texto não vazio)."""
+        return self._save_answers(
+            request_id, round_id, actor=actor,
+            expected_round_version=expected_round_version,
+            answers=answers, idempotency_key=idempotency_key, submit=True,
+        )
+
+    def accept_information_question(
+        self,
+        request_id: str,
+        round_id: str,
+        question_id: str,
+        *,
+        actor: PrcActor,
+        expected_round_version: int,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Analista aceita o esclarecimento de uma pergunta."""
+        self._require_info_analyst(actor)
+        self._get_scoped(request_id, actor)
+        fp = _fingerprint(
+            {
+                "request_id": request_id,
+                "round_id": round_id,
+                "question_id": question_id,
+                "op": "information_accept",
+                "expected_round_version": expected_round_version,
+            }
+        )
+        replay = self._idempotent_replay(
+            actor=actor, operation="information_accept",
+            key=idempotency_key, fingerprint=fp,
+        )
+        if replay is not None:
+            return replay
+        rnd = self._load_info_round_or_404(request_id, round_id)
+        if not info_rounds.round_allows_analyst_review(rnd["status"]):
+            raise PrcStateConflictError("state_conflict")
+        saved = self._repo.accept_information_question(
+            request_id=request_id,
+            round_id=round_id,
+            question_id=question_id,
+            expected_round_version=expected_round_version,
+            actor_subject=actor.user_id,
+            actor_display_name=actor.label,
+            event=self._info_event(
+                actor, "information.question_accepted",
+                meta={"roundId": round_id, "questionId": question_id},
+            ),
+        )
+        response = info_rounds.public_round_view(
+            saved, include_internal=True
+        )
+        self._idempotent_store(
+            actor=actor, operation="information_accept",
+            key=idempotency_key, fingerprint=fp, request_id=request_id,
+            status=200, payload=response,
+        )
+        return response
+
+    def request_information_follow_up(
+        self,
+        request_id: str,
+        parent_round_id: str,
+        *,
+        actor: PrcActor,
+        expected_parent_version: int,
+        questions: list[dict[str, Any]],
+        follow_up_question_ids: list[str],
+        message: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Analista pede complemento: marca perguntas do pai como
+        ``follow_up_requested`` e abre nova rodada (caso permanece
+        ``needs_information``)."""
+        self._require_info_analyst(actor)
+        request = self._get_scoped(request_id, actor)
+        normalized = info_rounds.validate_questions_payload(questions)
+        if not isinstance(follow_up_question_ids, list):
+            raise PrcValidationError(
+                "followUpQuestionIds deve ser uma lista.",
+                fields={"followUpQuestionIds": "type"},
+            )
+        target_ids: list[str] = []
+        for raw in follow_up_question_ids:
+            qid = str(raw or "").strip()
+            if qid and qid not in target_ids:
+                target_ids.append(qid)
+        if not target_ids:
+            raise PrcValidationError(
+                "Informe ao menos uma pergunta para complemento.",
+                fields={"followUpQuestionIds": "required"},
+            )
+        round_message = info_rounds.validate_message(message)
+        fp = _fingerprint(
+            {
+                "request_id": request_id,
+                "parent_round_id": parent_round_id,
+                "op": "information_follow_up",
+                "expected_parent_version": expected_parent_version,
+                "message": round_message,
+                "followUpQuestionIds": sorted(target_ids),
+                "questions": [
+                    {
+                        "targetKey": q["target_key"],
+                        "text": q["question_text"],
+                    }
+                    for q in normalized
+                ],
+            }
+        )
+        replay = self._idempotent_replay(
+            actor=actor, operation="information_follow_up",
+            key=idempotency_key, fingerprint=fp,
+        )
+        if replay is not None:
+            return replay
+        # Gates de estado após o replay idempotente.
+        if request["status"] != "needs_information":
+            raise PrcStateConflictError("state_conflict")
+        parent = self._load_info_round_or_404(request_id, parent_round_id)
+        if not info_rounds.round_allows_analyst_review(parent["status"]):
+            raise PrcStateConflictError("state_conflict")
+        parent_questions = {q["id"]: q for q in parent.get("questions") or []}
+        for qid in target_ids:
+            question = parent_questions.get(qid)
+            if question is None:
+                raise PrcNotFoundError("information_question", qid)
+            if question.get("status") != "submitted":
+                raise PrcStateConflictError("state_conflict")
+        now = _now()
+        created = self._repo.create_information_follow_up(
+            request_id=request_id,
+            parent_round_id=parent_round_id,
+            expected_parent_version=expected_parent_version,
+            actor_label=actor.label or actor.user_id,
+            actor_subject=actor.user_id,
+            actor_email=actor.email,
+            event=self._info_event(
+                actor, "information.follow_up_requested",
+                meta={"pending_fields": (
+                    info_rounds.pending_fields_from_questions(normalized)
+                )},
+                reason=round_message,
+            ),
+            round_row={
+                "id": _uuid(),
+                "origin_status": request["status"],
+                "parent_round_id": parent_round_id,
+                "requested_by_subject": actor.user_id,
+                "requested_by_display_name": actor.label,
+                "requester_subject": request["requester_subject"],
+                "message": round_message,
+                "created_at": now,
+                "updated_at": now,
+            },
+            questions=normalized,
+            follow_up_question_ids=target_ids,
+        )
+        response = {
+            "parentRound": info_rounds.public_round_view(
+                created["parentRound"], include_internal=True
+            ),
+            "round": info_rounds.public_round_view(
+                created["round"], include_internal=True
+            ),
+        }
+        self._idempotent_store(
+            actor=actor, operation="information_follow_up",
+            key=idempotency_key, fingerprint=fp, request_id=request_id,
+            status=201, payload=response,
         )
         return response
 

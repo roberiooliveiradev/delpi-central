@@ -26,6 +26,7 @@ from engineering_app.domain.product_registration.errors import (
     PrcRepositoryError,
     PrcStaleRevisionError,
     PrcStateConflictError,
+    PrcValidationError,
 )
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,16 @@ _T_EVT = f"{_SCHEMA}.product_registration_events"
 _T_VER = f"{_SCHEMA}.product_registration_verifications"
 _T_IDEM = f"{_SCHEMA}.product_registration_idempotency"
 _T_FLAG = f"{_SCHEMA}.product_registration_flags"
+_T_INFO_ROUND = f"{_SCHEMA}.product_registration_info_rounds"
+_T_INFO_Q = f"{_SCHEMA}.product_registration_info_questions"
+_T_INFO_A = f"{_SCHEMA}.product_registration_info_answers"
+
+# Estados de rodada que bloqueiam a abertura de nova rodada / resume.
+_INFO_OPEN_ROUND_STATUSES = ("awaiting_requester", "awaiting_review")
+# Estados terminais de pergunta (não aguardam mais ação do analista).
+_INFO_TERMINAL_QUESTION_STATUSES = frozenset(
+    {"accepted", "follow_up_requested"}
+)
 
 
 def _now() -> datetime:
@@ -1357,3 +1368,681 @@ class PostgresProductRegistrationRepository:
                 f"SELECT * FROM {_T_FLAG} WHERE id=%s", (flag_id,)
             ).fetchone()
         return self._flag_row(updated)
+
+    # --- information rounds (PRC-REF-019) --------------------------------------
+
+    @staticmethod
+    def _info_round_row(row: dict) -> dict[str, Any]:
+        out = dict(row)
+        for key in ("id", "request_id", "parent_round_id"):
+            if out.get(key) is not None:
+                out[key] = str(out[key])
+        for key in ("created_at", "updated_at", "resolved_at"):
+            out[key] = _iso(out.get(key))
+        return out
+
+    @staticmethod
+    def _info_question_row(row: dict) -> dict[str, Any]:
+        out = dict(row)
+        for key in ("id", "round_id", "request_id"):
+            out[key] = str(out[key])
+        sk = out.get("supplier_key")
+        if isinstance(sk, str):
+            try:
+                out["supplier_key"] = json.loads(sk)
+            except (TypeError, ValueError):
+                out["supplier_key"] = None
+        for key in ("created_at", "updated_at"):
+            out[key] = _iso(out.get(key))
+        return out
+
+    @staticmethod
+    def _info_answer_row(row: dict) -> dict[str, Any]:
+        out = dict(row)
+        for key in ("id", "question_id", "round_id", "request_id"):
+            out[key] = str(out[key])
+        for key in ("created_at", "updated_at", "submitted_at"):
+            out[key] = _iso(out.get(key))
+        return out
+
+    def _assemble_info_rounds(
+        self, conn, round_rows: list[dict]
+    ) -> list[dict[str, Any]]:
+        """Monta rodadas com perguntas e respostas aninhadas (mesma conexão)."""
+        if not round_rows:
+            return []
+        round_ids = [str(r["id"]) for r in round_rows]
+        question_rows = conn.execute(
+            f"SELECT * FROM {_T_INFO_Q} WHERE round_id = ANY(%s::uuid[])"
+            " ORDER BY round_id, ordinal",
+            (round_ids,),
+        ).fetchall()
+        answer_rows = conn.execute(
+            f"SELECT * FROM {_T_INFO_A} WHERE round_id = ANY(%s::uuid[])",
+            (round_ids,),
+        ).fetchall()
+        answers_by_question = {
+            str(a["question_id"]): self._info_answer_row(a)
+            for a in answer_rows
+        }
+        questions_by_round: dict[str, list[dict[str, Any]]] = {}
+        for q in question_rows:
+            question = self._info_question_row(q)
+            question["answer"] = answers_by_question.get(question["id"])
+            questions_by_round.setdefault(question["round_id"], []).append(
+                question
+            )
+        out: list[dict[str, Any]] = []
+        for row in round_rows:
+            rnd = self._info_round_row(row)
+            rnd["questions"] = questions_by_round.get(rnd["id"], [])
+            out.append(rnd)
+        return out
+
+    def _load_info_round(
+        self, conn, request_id: str, round_id: str
+    ) -> dict[str, Any] | None:
+        row = conn.execute(
+            f"SELECT * FROM {_T_INFO_ROUND} WHERE id=%s AND request_id=%s",
+            (round_id, request_id),
+        ).fetchone()
+        if row is None:
+            return None
+        return self._assemble_info_rounds(conn, [row])[0]
+
+    def _lock_request_row(self, conn, request_id: str) -> dict:
+        """Lock do caso (ordem de lock: request → rodada) sem CAS de versão."""
+        row = conn.execute(
+            f"SELECT * FROM {_T_REQ} WHERE id=%s FOR UPDATE",
+            (request_id,),
+        ).fetchone()
+        if row is None:
+            raise PrcNotFoundError("request", request_id)
+        return row
+
+    def _lock_info_round(
+        self, conn, request_id: str, round_id: str
+    ) -> dict:
+        row = conn.execute(
+            f"SELECT * FROM {_T_INFO_ROUND}"
+            " WHERE id=%s AND request_id=%s FOR UPDATE",
+            (round_id, request_id),
+        ).fetchone()
+        if row is None:
+            raise PrcNotFoundError("information_round", round_id)
+        return row
+
+    def _insert_info_questions(
+        self,
+        conn,
+        *,
+        round_id: str,
+        request_id: str,
+        questions: list[dict[str, Any]],
+    ) -> None:
+        now = _now()
+        for q in questions:
+            supplier_key = q.get("supplier_key")
+            conn.execute(
+                f"INSERT INTO {_T_INFO_Q}"
+                " (id, round_id, request_id, ordinal, target_type,"
+                "  target_path, target_attribute, supplier_key,"
+                "  target_key, target_label, question_text, status,"
+                "  created_at, updated_at)"
+                " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                (
+                    q.get("id") or _uuid(), round_id, request_id,
+                    q["ordinal"], q["target_type"],
+                    q.get("target_path"), q.get("target_attribute"),
+                    json.dumps(supplier_key)
+                    if supplier_key is not None else None,
+                    q["target_key"], q["target_label"],
+                    q["question_text"], q.get("status") or "pending",
+                    now, now,
+                ),
+            )
+
+    def _insert_info_round_row(
+        self,
+        conn,
+        *,
+        request_id: str,
+        round_row: dict[str, Any],
+    ) -> str:
+        """Insere a rodada com ``sequence`` calculada sob lock do caso."""
+        seq = conn.execute(
+            f"SELECT COALESCE(MAX(sequence),0)+1 AS s"
+            f" FROM {_T_INFO_ROUND} WHERE request_id=%s",
+            (request_id,),
+        ).fetchone()["s"]
+        round_id = round_row.get("id") or _uuid()
+        now = _now()
+        conn.execute(
+            f"INSERT INTO {_T_INFO_ROUND}"
+            " (id, request_id, sequence, origin_status, status,"
+            "  parent_round_id, requested_by_subject,"
+            "  requested_by_display_name, requester_subject, message,"
+            "  row_version, created_at, updated_at)"
+            " VALUES (%s,%s,%s,%s,'awaiting_requester',%s,%s,%s,%s,%s,"
+            "         1,%s,%s)",
+            (
+                round_id, request_id, int(seq),
+                round_row["origin_status"],
+                round_row.get("parent_round_id"),
+                round_row["requested_by_subject"],
+                round_row.get("requested_by_display_name"),
+                round_row["requester_subject"],
+                round_row.get("message"),
+                now, now,
+            ),
+        )
+        return str(round_id)
+
+    def _append_info_event(
+        self,
+        conn,
+        *,
+        request_id: str,
+        request_status: str,
+        event: dict[str, Any],
+        extra_meta: dict[str, Any] | None = None,
+    ) -> None:
+        """Evento do caso; rodadas não mudam o status do caso por si só."""
+        meta = {**(event.get("metadata") or {}), **(extra_meta or {})}
+        full = {
+            **event,
+            "metadata": meta,
+            "previous_status": event.get("previous_status", request_status),
+            "next_status": event.get("next_status", request_status),
+        }
+        self._insert_event(
+            conn, request_id, self._next_event_seq(conn, request_id), full
+        )
+
+    def create_information_round(
+        self,
+        *,
+        request_id: str,
+        expected_version: int,
+        allowed_from: frozenset[str],
+        next_status: str,
+        actor_label: str,
+        actor_subject: str,
+        actor_email: str | None,
+        event_type: str,
+        reason: str | None,
+        event_meta: dict[str, Any],
+        round_row: dict[str, Any],
+        questions: list[dict[str, Any]],
+        set_fields: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """CAS do caso + transição + rodada/perguntas + evento (1 txn).
+
+        Retorna ``{"request": <caso>, "round": <rodada aninhada>}``.
+        """
+        with self._conn() as conn:
+            req = self._lock_and_check(
+                conn, request_id, expected_version, allowed_from
+            )
+            open_round = conn.execute(
+                f"SELECT 1 FROM {_T_INFO_ROUND}"
+                " WHERE request_id=%s AND status = ANY(%s) LIMIT 1",
+                (request_id, list(_INFO_OPEN_ROUND_STATUSES)),
+            ).fetchone()
+            if open_round:
+                raise PrcStateConflictError("information_round_open")
+            prev = req["status"]
+            now = _now()
+            sets = ["row_version=row_version+1", "updated_at=%s"]
+            params: list[Any] = [now]
+            if next_status != prev:
+                sets.insert(0, "status=%s")
+                params.insert(0, next_status)
+            for key, value in (set_fields or {}).items():
+                sets.append(f"{key}=%s")
+                params.append(value)
+            params.append(request_id)
+            conn.execute(
+                f"UPDATE {_T_REQ} SET {', '.join(sets)} WHERE id=%s",
+                params,
+            )
+            round_id = self._insert_info_round_row(
+                conn, request_id=request_id, round_row=round_row
+            )
+            self._insert_info_questions(
+                conn, round_id=round_id, request_id=request_id,
+                questions=questions,
+            )
+            created = self._load_info_round(conn, request_id, round_id)
+            self._append_info_event(
+                conn,
+                request_id=request_id,
+                request_status=prev,
+                event={
+                    "event_type": event_type,
+                    "actor_subject": actor_subject,
+                    "actor_display_name": actor_label,
+                    "actor_email": actor_email,
+                    "reason": reason,
+                    "metadata": dict(event_meta),
+                    "previous_status": prev,
+                    "next_status": next_status,
+                },
+                extra_meta={
+                    "roundId": round_id,
+                    "roundSequence": created["sequence"],
+                    "questionCount": len(questions),
+                },
+            )
+        return {"request": self.get_request(request_id), "round": created}
+
+    def get_information_round(
+        self, *, request_id: str, round_id: str
+    ) -> dict[str, Any] | None:
+        with self._conn() as conn:
+            return self._load_info_round(conn, request_id, round_id)
+
+    def list_information_rounds(
+        self, *, request_id: str
+    ) -> list[dict[str, Any]]:
+        with self._conn() as conn:
+            rows = conn.execute(
+                f"SELECT * FROM {_T_INFO_ROUND} WHERE request_id=%s"
+                " ORDER BY sequence",
+                (request_id,),
+            ).fetchall()
+            return self._assemble_info_rounds(conn, rows)
+
+    def save_information_answers_draft(
+        self,
+        *,
+        request_id: str,
+        round_id: str,
+        expected_round_version: int,
+        actor_subject: str,
+        answers: list[dict[str, Any]],
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Upsert de rascunhos (``answers[]`` = ``question_id`` + ``text``)."""
+        with self._conn() as conn:
+            req = self._lock_request_row(conn, request_id)
+            rnd = self._lock_info_round(conn, request_id, round_id)
+            if int(rnd["row_version"]) != int(expected_round_version):
+                raise PrcConcurrencyError("stale_version")
+            if rnd["status"] != "awaiting_requester":
+                raise PrcStateConflictError("state_conflict")
+            question_ids = {
+                str(r["id"])
+                for r in conn.execute(
+                    f"SELECT id FROM {_T_INFO_Q} WHERE round_id=%s",
+                    (round_id,),
+                ).fetchall()
+            }
+            now = _now()
+            for ans in answers:
+                qid = str(ans["question_id"])
+                if qid not in question_ids:
+                    raise PrcNotFoundError("information_question", qid)
+                text = str(ans.get("text") or "")
+                updated = conn.execute(
+                    f"UPDATE {_T_INFO_A} SET text=%s, author_subject=%s,"
+                    " status='draft', row_version=row_version+1,"
+                    " updated_at=%s WHERE question_id=%s RETURNING id",
+                    (text, actor_subject, now, qid),
+                ).fetchone()
+                if updated is None:
+                    conn.execute(
+                        f"INSERT INTO {_T_INFO_A}"
+                        " (id, question_id, round_id, request_id,"
+                        "  author_subject, text, status, row_version,"
+                        "  created_at, updated_at)"
+                        " VALUES (%s,%s,%s,%s,%s,%s,'draft',1,%s,%s)",
+                        (
+                            _uuid(), qid, round_id, request_id,
+                            actor_subject, text, now, now,
+                        ),
+                    )
+                conn.execute(
+                    f"UPDATE {_T_INFO_Q} SET status=%s, updated_at=%s"
+                    " WHERE id=%s",
+                    ("drafted" if text.strip() else "pending", now, qid),
+                )
+            conn.execute(
+                f"UPDATE {_T_INFO_ROUND} SET row_version=row_version+1,"
+                " updated_at=%s WHERE id=%s",
+                (now, round_id),
+            )
+            self._append_info_event(
+                conn, request_id=request_id,
+                request_status=req["status"], event=event,
+                extra_meta={
+                    "roundId": round_id,
+                    "answerCount": len(answers),
+                },
+            )
+            return self._load_info_round(conn, request_id, round_id)
+
+    def submit_information_answers(
+        self,
+        *,
+        request_id: str,
+        round_id: str,
+        expected_round_version: int,
+        actor_subject: str,
+        answers: list[dict[str, Any]],
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Envia respostas: todas as perguntas exigem texto não vazio
+        (payload + rascunhos já salvos); rodada → ``awaiting_review``."""
+        with self._conn() as conn:
+            req = self._lock_request_row(conn, request_id)
+            rnd = self._lock_info_round(conn, request_id, round_id)
+            if int(rnd["row_version"]) != int(expected_round_version):
+                raise PrcConcurrencyError("stale_version")
+            if rnd["status"] != "awaiting_requester":
+                raise PrcStateConflictError("state_conflict")
+            question_ids = [
+                str(r["id"])
+                for r in conn.execute(
+                    f"SELECT id FROM {_T_INFO_Q} WHERE round_id=%s"
+                    " ORDER BY ordinal",
+                    (round_id,),
+                ).fetchall()
+            ]
+            known = set(question_ids)
+            texts: dict[str, str] = {
+                str(r["question_id"]): str(r["text"] or "")
+                for r in conn.execute(
+                    f"SELECT question_id, text FROM {_T_INFO_A}"
+                    " WHERE round_id=%s",
+                    (round_id,),
+                ).fetchall()
+            }
+            for ans in answers:
+                qid = str(ans["question_id"])
+                if qid not in known:
+                    raise PrcNotFoundError("information_question", qid)
+                texts[qid] = str(ans.get("text") or "")
+            missing = [
+                qid for qid in question_ids
+                if not texts.get(qid, "").strip()
+            ]
+            if missing:
+                raise PrcValidationError(
+                    "Todas as perguntas exigem resposta antes do envio.",
+                    fields={
+                        f"answers[{qid}].text": "required"
+                        for qid in missing
+                    },
+                )
+            now = _now()
+            for qid in question_ids:
+                text = texts[qid].strip()
+                updated = conn.execute(
+                    f"UPDATE {_T_INFO_A} SET text=%s, author_subject=%s,"
+                    " status='submitted', row_version=row_version+1,"
+                    " updated_at=%s, submitted_at=%s"
+                    " WHERE question_id=%s RETURNING id",
+                    (text, actor_subject, now, now, qid),
+                ).fetchone()
+                if updated is None:
+                    conn.execute(
+                        f"INSERT INTO {_T_INFO_A}"
+                        " (id, question_id, round_id, request_id,"
+                        "  author_subject, text, status, row_version,"
+                        "  created_at, updated_at, submitted_at)"
+                        " VALUES (%s,%s,%s,%s,%s,%s,'submitted',1,"
+                        "         %s,%s,%s)",
+                        (
+                            _uuid(), qid, round_id, request_id,
+                            actor_subject, text, now, now, now,
+                        ),
+                    )
+                conn.execute(
+                    f"UPDATE {_T_INFO_Q} SET status='submitted',"
+                    " updated_at=%s WHERE id=%s",
+                    (now, qid),
+                )
+            conn.execute(
+                f"UPDATE {_T_INFO_ROUND} SET status='awaiting_review',"
+                " row_version=row_version+1, updated_at=%s WHERE id=%s",
+                (now, round_id),
+            )
+            self._append_info_event(
+                conn, request_id=request_id,
+                request_status=req["status"], event=event,
+                extra_meta={
+                    "roundId": round_id,
+                    "answerCount": len(question_ids),
+                },
+            )
+            return self._load_info_round(conn, request_id, round_id)
+
+    def accept_information_question(
+        self,
+        *,
+        request_id: str,
+        round_id: str,
+        question_id: str,
+        expected_round_version: int,
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Aceita a pergunta; resolve a rodada quando todas as perguntas
+        estão em estado terminal (aceita ou com complemento solicitado)."""
+        with self._conn() as conn:
+            req = self._lock_request_row(conn, request_id)
+            rnd = self._lock_info_round(conn, request_id, round_id)
+            if int(rnd["row_version"]) != int(expected_round_version):
+                raise PrcConcurrencyError("stale_version")
+            if rnd["status"] != "awaiting_review":
+                raise PrcStateConflictError("state_conflict")
+            question = conn.execute(
+                f"SELECT * FROM {_T_INFO_Q}"
+                " WHERE id=%s AND round_id=%s FOR UPDATE",
+                (question_id, round_id),
+            ).fetchone()
+            if question is None:
+                raise PrcNotFoundError("information_question", question_id)
+            if question["status"] != "submitted":
+                raise PrcStateConflictError("state_conflict")
+            now = _now()
+            conn.execute(
+                f"UPDATE {_T_INFO_Q} SET status='accepted', updated_at=%s"
+                " WHERE id=%s",
+                (now, question_id),
+            )
+            statuses = {
+                r["status"]
+                for r in conn.execute(
+                    f"SELECT status FROM {_T_INFO_Q} WHERE round_id=%s",
+                    (round_id,),
+                ).fetchall()
+            }
+            resolved = statuses <= _INFO_TERMINAL_QUESTION_STATUSES
+            if resolved:
+                conn.execute(
+                    f"UPDATE {_T_INFO_ROUND} SET status='resolved',"
+                    " row_version=row_version+1, updated_at=%s,"
+                    " resolved_at=%s, resolved_by_subject=%s,"
+                    " resolved_by_display_name=%s WHERE id=%s",
+                    (
+                        now, now, actor_subject, actor_display_name,
+                        round_id,
+                    ),
+                )
+            else:
+                conn.execute(
+                    f"UPDATE {_T_INFO_ROUND} SET"
+                    " row_version=row_version+1, updated_at=%s"
+                    " WHERE id=%s",
+                    (now, round_id),
+                )
+            self._append_info_event(
+                conn, request_id=request_id,
+                request_status=req["status"], event=event,
+                extra_meta={
+                    "roundId": round_id,
+                    "questionId": question_id,
+                    "roundResolved": resolved,
+                },
+            )
+            return self._load_info_round(conn, request_id, round_id)
+
+    def create_information_follow_up(
+        self,
+        *,
+        request_id: str,
+        parent_round_id: str,
+        expected_parent_version: int,
+        actor_label: str,
+        actor_subject: str,
+        actor_email: str | None,
+        event: dict[str, Any],
+        round_row: dict[str, Any],
+        questions: list[dict[str, Any]],
+        follow_up_question_ids: list[str],
+    ) -> dict[str, Any]:
+        """Marca perguntas do pai como ``follow_up_requested`` e abre a nova
+        rodada; o caso permanece ``needs_information``.
+
+        Retorna ``{"parentRound": ..., "round": ...}`` (ambos aninhados).
+        """
+        with self._conn() as conn:
+            req = self._lock_request_row(conn, request_id)
+            parent = self._lock_info_round(conn, request_id, parent_round_id)
+            if int(parent["row_version"]) != int(expected_parent_version):
+                raise PrcConcurrencyError("stale_version")
+            if parent["status"] != "awaiting_review":
+                raise PrcStateConflictError("state_conflict")
+            if req["status"] != "needs_information":
+                raise PrcStateConflictError("state_conflict")
+            target_ids = [str(i) for i in follow_up_question_ids]
+            if not target_ids:
+                raise PrcValidationError(
+                    "Informe ao menos uma pergunta para complemento.",
+                    fields={"followUpQuestionIds": "required"},
+                )
+            parent_questions = {
+                str(q["id"]): q
+                for q in conn.execute(
+                    f"SELECT * FROM {_T_INFO_Q} WHERE round_id=%s"
+                    " FOR UPDATE",
+                    (parent_round_id,),
+                ).fetchall()
+            }
+            for qid in target_ids:
+                question = parent_questions.get(qid)
+                if question is None:
+                    raise PrcNotFoundError("information_question", qid)
+                if question["status"] != "submitted":
+                    raise PrcStateConflictError("state_conflict")
+            now = _now()
+            conn.execute(
+                f"UPDATE {_T_INFO_Q} SET status='follow_up_requested',"
+                " updated_at=%s WHERE id = ANY(%s::uuid[])",
+                (now, target_ids),
+            )
+            statuses = {
+                (
+                    "follow_up_requested"
+                    if qid in target_ids else q["status"]
+                )
+                for qid, q in parent_questions.items()
+            }
+            parent_resolved = statuses <= _INFO_TERMINAL_QUESTION_STATUSES
+            if parent_resolved:
+                conn.execute(
+                    f"UPDATE {_T_INFO_ROUND} SET status='resolved',"
+                    " row_version=row_version+1, updated_at=%s,"
+                    " resolved_at=%s, resolved_by_subject=%s,"
+                    " resolved_by_display_name=%s WHERE id=%s",
+                    (now, now, actor_subject, actor_label, parent_round_id),
+                )
+            else:
+                conn.execute(
+                    f"UPDATE {_T_INFO_ROUND} SET"
+                    " row_version=row_version+1, updated_at=%s"
+                    " WHERE id=%s",
+                    (now, parent_round_id),
+                )
+            new_id = self._insert_info_round_row(
+                conn,
+                request_id=request_id,
+                round_row={**round_row, "parent_round_id": parent_round_id},
+            )
+            self._insert_info_questions(
+                conn, round_id=new_id, request_id=request_id,
+                questions=questions,
+            )
+            created = self._load_info_round(conn, request_id, new_id)
+            updated_parent = self._load_info_round(
+                conn, request_id, parent_round_id
+            )
+            self._append_info_event(
+                conn,
+                request_id=request_id,
+                request_status=req["status"],
+                event={
+                    **event,
+                    "actor_subject": actor_subject,
+                    "actor_display_name": (
+                        event.get("actor_display_name") or actor_label
+                    ),
+                    "actor_email": event.get("actor_email") or actor_email,
+                },
+                extra_meta={
+                    "parentRoundId": parent_round_id,
+                    "roundId": new_id,
+                    "roundSequence": created["sequence"],
+                    "followUpQuestionIds": target_ids,
+                    "parentResolved": parent_resolved,
+                    "questionCount": len(questions),
+                },
+            )
+        return {"parentRound": updated_parent, "round": created}
+
+
+    def resolve_open_information_rounds(
+        self,
+        *,
+        request_id: str,
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        """Resolve todas as rodadas abertas (dispensa explícita no resume)."""
+        with self._conn() as conn:
+            req = self._lock_request_row(conn, request_id)
+            rows = conn.execute(
+                f"SELECT id FROM {_T_INFO_ROUND}"
+                " WHERE request_id=%s"
+                " AND status IN ('awaiting_requester','awaiting_review')"
+                " ORDER BY sequence FOR UPDATE",
+                (request_id,),
+            ).fetchall()
+            now = _now()
+            resolved_ids: list[str] = []
+            for row in rows:
+                rid = str(row["id"])
+                conn.execute(
+                    f"UPDATE {_T_INFO_ROUND} SET status='resolved',"
+                    " row_version=row_version+1, updated_at=%s,"
+                    " resolved_at=%s, resolved_by_subject=%s,"
+                    " resolved_by_display_name=%s WHERE id=%s",
+                    (
+                        now, now, actor_subject, actor_display_name, rid,
+                    ),
+                )
+                resolved_ids.append(rid)
+            if resolved_ids:
+                self._append_info_event(
+                    conn, request_id=request_id,
+                    request_status=req["status"], event=event,
+                    extra_meta={"resolvedRoundIds": resolved_ids, "waiver": True},
+                )
+            return [
+                self._load_info_round(conn, request_id, rid)
+                for rid in resolved_ids
+            ]

@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { HomeApiError } from "../../../api/httpClient";
+import { getSubjectFromAccessToken } from "../../../app/authDisplayName";
 import {
   EngineeringActionButton,
   EngineeringDetailCard,
@@ -52,7 +53,12 @@ import {
   prcStatusLabel,
 } from "../prcCopy";
 import { PrcActionBar } from "../components/PrcActionBar";
-import { PRC_ACTION_SPECS } from "../components/prcActionSpecs";
+import {
+  PRC_ACTION_SPECS,
+  type PrcActionExtras,
+} from "../components/prcActionSpecs";
+import { PrcInformationExchangePanel } from "../components/PrcInformationExchangePanel";
+import { supplierOptionsFromTechnicalDraft } from "../prcInformationExchange";
 import { PrcRevisionsSection } from "../components/PrcRevisionsSection";
 import { PrcStatusBadge } from "../components/PrcStatusBadge";
 import { PrcTechnicalSheet } from "../components/PrcTechnicalSheet";
@@ -86,9 +92,12 @@ function newIdemKey(prefix: string): string {
 export function PrcDetailPage({
   requestId,
   basePath,
+  getAccessToken,
 }: {
   requestId: string;
   basePath: string;
+  /** Getter do host — usado só para escolher a visão solicitante/analista. */
+  getAccessToken?: () => string | undefined;
 }) {
   const locationSearch = useLocationSearch();
   const tab = parsePrcTab(locationSearch);
@@ -171,7 +180,7 @@ export function PrcDetailPage({
   const runAction = useCallback(
     async (
       spec: { action: string; path: string },
-      extras: { reason?: string; officialCode?: string },
+      extras: PrcActionExtras,
     ) => {
       if (!detail || busy) return;
       setBusy(true);
@@ -185,6 +194,11 @@ export function PrcDetailPage({
             expectedVersion: detail.caseVersion,
             reason: extras.reason,
             officialCode: extras.officialCode,
+            ...(extras.questions ? { questions: extras.questions } : {}),
+            ...(extras.message ? { message: extras.message } : {}),
+            ...(extras.pendingFields?.length
+              ? { pendingFields: extras.pendingFields }
+              : {}),
           },
           newIdemKey(`prc-${spec.action}-${requestId}`),
         );
@@ -260,6 +274,12 @@ export function PrcDetailPage({
     }
     return null;
   }, [detail]);
+
+  const infoSuppliers = useMemo(
+    () => supplierOptionsFromTechnicalDraft(detail?.technicalDraft),
+    [detail?.technicalDraft],
+  );
+  const currentSubject = getSubjectFromAccessToken(getAccessToken?.());
 
   const backToQueue = useCallback(() => {
     navigatePrcHref(buildPrcQueueUrl(basePath, EMPTY_PRC_QUEUE_URL));
@@ -386,6 +406,9 @@ export function PrcDetailPage({
               busy={busy}
               officialCode={detail.officialCode || ""}
               requestType={detail.requestType}
+              requesterLabel={prcRequesterLabel(detail.requester)}
+              fieldSpecs={fieldSpecs}
+              suppliers={infoSuppliers}
               onRunAction={runAction}
               onEditDraft={() => selectTab("draft")}
             />
@@ -425,6 +448,19 @@ export function PrcDetailPage({
       >
         {tab === "overview" ? (
           <div className="engineering-prc__overview">
+            <PrcInformationExchangePanel
+              requestId={detail.id}
+              requestStatus={detail.status}
+              requesterSubject={detail.requester.subject}
+              currentSubject={currentSubject}
+              canReview={detail.allowedActions.includes("resume")}
+              canResume={detail.allowedActions.includes("resume")}
+              refreshToken={`${detail.caseVersion}:${detail.updatedAt}`}
+              busy={busy}
+              onChanged={load}
+              onResume={() => void runAction(PRC_ACTION_SPECS.resume, {})}
+            />
+
             <EngineeringDetailCard title="Resumo da solicitação">
               <EngineeringDetailFieldGrid
                 fields={[

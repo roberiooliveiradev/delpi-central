@@ -446,12 +446,10 @@ Decisão PO 2026-11-09: [adendo normativo D16-REF-01](./PRODUCT-REGISTRATION-D16
 
 ## PRC-REF-019 — Contrato de esclarecimentos do solicitante (2026-11-09)
 
-**PO_APPROVED_TARGET / NOT_IMPLEMENTED.** Jornada, wireframes, matrizes e testes no [PRC-REF-019 consolidado](./MFE-PRODUCT-REGISTRATION-POST-REDESIGN-REFINEMENT-PLAN.md). Owner Engineering API; não mudar sistema de verdade ou import de requests-api/my-requests.
+**PO_APPROVED_TARGET / IMPLEMENTED_DEV (2026-11-09).** Jornada e testes no [PRC-REF-019 consolidado](./MFE-PRODUCT-REGISTRATION-POST-REDESIGN-REFINEMENT-PLAN.md). Owner Engineering API; sem ownership em requests-api/my-requests.
 
-**Reuso comprovado:** POST /requests/{id}/actions/request-information com reason/pendingFields, information_requested, status in_progress|under_review → needs_information, resume → in_progress. Motivo legado permanece interpretável, sem associação de campo inventada.
+**PROVEN:** `product_registration_info_rounds|questions|answers` (V018+V019); `POST .../request-information` com `questions[]`/`message` (legado reason+pendingFields); `GET .../information-rounds[+/{id}]`; `PATCH .../answers`; `POST .../submit-answers`; `POST .../questions/{id}/actions/accept`; `POST .../request-follow-up`; resume bloqueado com rodada aberta salvo `waiver:`; CAS/idempotência/eventos; UI modal+painel; EVA capabilities proven (request_information, rounds read, accept, follow_up, resume).
 
-**Contrato TARGET:** rodada com ID e perguntas individuais por target FIELD path, SUPPLIER_LINK key+attribute ou GENERAL explícito; submissão pelo solicitante autenticado do próprio caso, rascunho e resposta por pergunta, análise/aceite ou pedido de complemento pelo analista, histórico de múltiplas rodadas, aviso por contrato oficial se disponível. Não alterar SB1/SA5 por uma resposta e não retomar automaticamente. Estender REST existente e criar somente rotas faltantes para rounds/list/detail/answer/submit/review, com DTO/erros/AuthZ/CAS/idempotência/migration antes de implementar.
+**PENDING_NOTIFICATION_OWNER / PENDING_ATTACHMENTS_CONTRACT.** **ARCHITECTURE_DECISION_REQUIRED:** gate HTTP ainda `engineering.access` — solicitante sem essa permissão Core não alcança as rotas.
 
-**Segurança:** solicitante só vê o conteúdo público de sua solicitação, sem bandeiras internas ou acesso global engineering.access. Se autorização requester exigir mudança Core: ARCHITECTURE_DECISION_REQUIRED. Notificações dependem de owner Core, com outbox/retry quando contratado; anexos dependem de contrato de armazenamento/scan. Não declarar capacidades ausentes como implementadas.
-
-**EVA:** mesmas Application Use Cases pelo dispatch de seis MCP tools, PREPARE/ACT/live AuthZ, sem responder em nome do solicitante. Testar respostas maliciosas como conteúdo não confiável. Critérios: fluxo analista→solicitante→resposta→avaliação→retomada, rodada de complemento, cruzamento de usuários, persistência/audit e Playwright real DEV; nenhum deploy HML/PROD.
+**Segurança:** AuthZ de objeto no service (`requester_subject`); analista não forja respostas; sem escrita SB1/SA5/TOTVS. HML/PROD não deployados neste ciclo.

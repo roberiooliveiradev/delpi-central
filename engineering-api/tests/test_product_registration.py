@@ -434,7 +434,12 @@ class TestWorkflow:
         resp = _post(
             client,
             f"/v1/product-registration/requests/{rid}/actions/resume",
-            tok, json={"expectedVersion": 3},
+            tok,
+            json={
+                "expectedVersion": 3,
+                # PRC-REF-019: rodada aberta bloqueia resume sem waiver.
+                "reason": "waiver: retorno interno legado",
+            },
         )
         assert resp.status_code == 200
         assert resp.json()["data"]["status"] == "in_progress"

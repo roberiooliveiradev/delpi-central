@@ -18,6 +18,7 @@ from engineering_app.domain.product_registration.errors import (
     PrcRepositoryError,
     PrcStaleRevisionError,
     PrcStateConflictError,
+    PrcValidationError,
 )
 
 
@@ -41,6 +42,10 @@ class InMemoryProductRegistrationRepository:
         self._revisions: dict[str, list[dict]] = {}
         self._idempotency: dict[tuple[str, str, str], dict] = {}
         self._flags: dict[str, dict] = {}  # flag_id → row
+        # PRC-REF-019 — rodadas de esclarecimento.
+        self._info_rounds: dict[str, dict] = {}  # round_id → row
+        self._info_questions: dict[str, dict] = {}  # question_id → row
+        self._info_answers: dict[str, dict] = {}  # question_id → row
 
     # --- helpers internos ------------------------------------------------------
 
@@ -881,3 +886,467 @@ class InMemoryProductRegistrationRepository:
         row["updated_at"] = row["deleted_at"]
         self._append_event(request_id, event)
         return copy.deepcopy(row)
+
+    # --- information rounds (PRC-REF-019) --------------------------------------
+
+    _INFO_OPEN_STATUSES = ("awaiting_requester", "awaiting_review")
+    _INFO_TERMINAL_QUESTION = frozenset({"accepted", "follow_up_requested"})
+
+    def _info_questions_of(self, round_id: str) -> list[dict]:
+        return sorted(
+            (q for q in self._info_questions.values()
+             if q["round_id"] == round_id),
+            key=lambda q: q["ordinal"],
+        )
+
+    def _assemble_info_round(self, round_id: str) -> dict[str, Any]:
+        rnd = copy.deepcopy(self._info_rounds[round_id])
+        questions = []
+        for q in self._info_questions_of(round_id):
+            item = copy.deepcopy(q)
+            answer = self._info_answers.get(q["id"])
+            item["answer"] = copy.deepcopy(answer) if answer else None
+            questions.append(item)
+        rnd["questions"] = questions
+        return rnd
+
+    def _require_info_round_cas(
+        self, request_id: str, round_id: str, expected_version: int,
+    ) -> dict:
+        rnd = self._info_rounds.get(round_id)
+        if rnd is None or rnd["request_id"] != request_id:
+            raise PrcNotFoundError("information_round", round_id)
+        if int(rnd["row_version"]) != int(expected_version):
+            raise PrcConcurrencyError("stale_version")
+        return rnd
+
+    def _insert_info_round(
+        self, request_id: str, round_row: dict[str, Any],
+        questions: list[dict[str, Any]],
+    ) -> str:
+        seq = 1 + max(
+            (r["sequence"] for r in self._info_rounds.values()
+             if r["request_id"] == request_id),
+            default=0,
+        )
+        now = _now()
+        round_id = round_row.get("id") or _uuid()
+        self._info_rounds[round_id] = {
+            "id": round_id,
+            "request_id": request_id,
+            "sequence": seq,
+            "origin_status": round_row["origin_status"],
+            "status": "awaiting_requester",
+            "parent_round_id": round_row.get("parent_round_id"),
+            "requested_by_subject": round_row["requested_by_subject"],
+            "requested_by_display_name": round_row.get(
+                "requested_by_display_name"
+            ),
+            "requester_subject": round_row["requester_subject"],
+            "message": round_row.get("message"),
+            "row_version": 1,
+            "created_at": now,
+            "updated_at": now,
+            "resolved_at": None,
+            "resolved_by_subject": None,
+            "resolved_by_display_name": None,
+        }
+        for q in questions:
+            qid = q.get("id") or _uuid()
+            self._info_questions[qid] = {
+                "id": qid,
+                "round_id": round_id,
+                "request_id": request_id,
+                "ordinal": q["ordinal"],
+                "target_type": q["target_type"],
+                "target_path": q.get("target_path"),
+                "target_attribute": q.get("target_attribute"),
+                "supplier_key": copy.deepcopy(q.get("supplier_key")),
+                "target_key": q["target_key"],
+                "target_label": q["target_label"],
+                "question_text": q["question_text"],
+                "status": q.get("status") or "pending",
+                "created_at": now,
+                "updated_at": now,
+            }
+        return round_id
+
+    def _append_info_event(
+        self, request_id: str, request_status: str, event: dict[str, Any],
+        extra_meta: dict[str, Any] | None = None,
+    ) -> None:
+        meta = {**(event.get("metadata") or {}), **(extra_meta or {})}
+        self._append_event(
+            request_id,
+            {
+                **event,
+                "metadata": meta,
+                "previous_status": event.get(
+                    "previous_status", request_status
+                ),
+                "next_status": event.get("next_status", request_status),
+            },
+        )
+
+    def create_information_round(
+        self,
+        *,
+        request_id: str,
+        expected_version: int,
+        allowed_from: frozenset[str],
+        next_status: str,
+        actor_label: str,
+        actor_subject: str,
+        actor_email: str | None,
+        event_type: str,
+        reason: str | None,
+        event_meta: dict[str, Any],
+        round_row: dict[str, Any],
+        questions: list[dict[str, Any]],
+        set_fields: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """CAS do caso + transição + rodada/perguntas + evento."""
+        req = self._require_request(request_id)
+        self._check_cas(req, expected_version, allowed_from)
+        if any(
+            r["request_id"] == request_id
+            and r["status"] in self._INFO_OPEN_STATUSES
+            for r in self._info_rounds.values()
+        ):
+            raise PrcStateConflictError("information_round_open")
+        prev = req["status"]
+        req.update(set_fields or {})
+        if next_status != prev:
+            req["status"] = next_status
+        req["row_version"] = int(req["row_version"]) + 1
+        req["updated_at"] = _now()
+        round_id = self._insert_info_round(request_id, round_row, questions)
+        created = self._assemble_info_round(round_id)
+        self._append_info_event(
+            request_id, prev,
+            {
+                "event_type": event_type,
+                "actor_subject": actor_subject,
+                "actor_display_name": actor_label,
+                "actor_email": actor_email,
+                "reason": reason,
+                "metadata": dict(event_meta),
+                "previous_status": prev,
+                "next_status": next_status,
+            },
+            {
+                "roundId": round_id,
+                "roundSequence": created["sequence"],
+                "questionCount": len(questions),
+            },
+        )
+        return {"request": self.get_request(request_id), "round": created}
+
+    def get_information_round(
+        self, *, request_id: str, round_id: str
+    ) -> dict[str, Any] | None:
+        rnd = self._info_rounds.get(round_id)
+        if rnd is None or rnd["request_id"] != request_id:
+            return None
+        return self._assemble_info_round(round_id)
+
+    def list_information_rounds(
+        self, *, request_id: str
+    ) -> list[dict[str, Any]]:
+        rounds = sorted(
+            (r for r in self._info_rounds.values()
+             if r["request_id"] == request_id),
+            key=lambda r: r["sequence"],
+        )
+        return [self._assemble_info_round(r["id"]) for r in rounds]
+
+    def save_information_answers_draft(
+        self,
+        *,
+        request_id: str,
+        round_id: str,
+        expected_round_version: int,
+        actor_subject: str,
+        answers: list[dict[str, Any]],
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        req = self._require_request(request_id)
+        rnd = self._require_info_round_cas(
+            request_id, round_id, expected_round_version
+        )
+        if rnd["status"] != "awaiting_requester":
+            raise PrcStateConflictError("state_conflict")
+        question_ids = {q["id"] for q in self._info_questions_of(round_id)}
+        for ans in answers:
+            if str(ans["question_id"]) not in question_ids:
+                raise PrcNotFoundError(
+                    "information_question", str(ans["question_id"])
+                )
+        now = _now()
+        for ans in answers:
+            qid = str(ans["question_id"])
+            text = str(ans.get("text") or "")
+            existing = self._info_answers.get(qid)
+            if existing is None:
+                self._info_answers[qid] = {
+                    "id": _uuid(),
+                    "question_id": qid,
+                    "round_id": round_id,
+                    "request_id": request_id,
+                    "author_subject": actor_subject,
+                    "text": text,
+                    "status": "draft",
+                    "row_version": 1,
+                    "created_at": now,
+                    "updated_at": now,
+                    "submitted_at": None,
+                }
+            else:
+                existing.update(
+                    text=text,
+                    author_subject=actor_subject,
+                    status="draft",
+                    row_version=int(existing["row_version"]) + 1,
+                    updated_at=now,
+                )
+            self._info_questions[qid]["status"] = (
+                "drafted" if text.strip() else "pending"
+            )
+            self._info_questions[qid]["updated_at"] = now
+        rnd["row_version"] = int(rnd["row_version"]) + 1
+        rnd["updated_at"] = now
+        self._append_info_event(
+            request_id, req["status"], event,
+            {"roundId": round_id, "answerCount": len(answers)},
+        )
+        return self._assemble_info_round(round_id)
+
+    def submit_information_answers(
+        self,
+        *,
+        request_id: str,
+        round_id: str,
+        expected_round_version: int,
+        actor_subject: str,
+        answers: list[dict[str, Any]],
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        req = self._require_request(request_id)
+        rnd = self._require_info_round_cas(
+            request_id, round_id, expected_round_version
+        )
+        if rnd["status"] != "awaiting_requester":
+            raise PrcStateConflictError("state_conflict")
+        question_ids = [q["id"] for q in self._info_questions_of(round_id)]
+        known = set(question_ids)
+        texts = {
+            qid: str(self._info_answers[qid]["text"] or "")
+            for qid in question_ids
+            if qid in self._info_answers
+        }
+        for ans in answers:
+            qid = str(ans["question_id"])
+            if qid not in known:
+                raise PrcNotFoundError("information_question", qid)
+            texts[qid] = str(ans.get("text") or "")
+        missing = [
+            qid for qid in question_ids if not texts.get(qid, "").strip()
+        ]
+        if missing:
+            raise PrcValidationError(
+                "Todas as perguntas exigem resposta antes do envio.",
+                fields={f"answers[{qid}].text": "required" for qid in missing},
+            )
+        now = _now()
+        for qid in question_ids:
+            text = texts[qid].strip()
+            existing = self._info_answers.get(qid)
+            if existing is None:
+                self._info_answers[qid] = {
+                    "id": _uuid(),
+                    "question_id": qid,
+                    "round_id": round_id,
+                    "request_id": request_id,
+                    "author_subject": actor_subject,
+                    "text": text,
+                    "status": "submitted",
+                    "row_version": 1,
+                    "created_at": now,
+                    "updated_at": now,
+                    "submitted_at": now,
+                }
+            else:
+                existing.update(
+                    text=text,
+                    author_subject=actor_subject,
+                    status="submitted",
+                    row_version=int(existing["row_version"]) + 1,
+                    updated_at=now,
+                    submitted_at=now,
+                )
+            self._info_questions[qid]["status"] = "submitted"
+            self._info_questions[qid]["updated_at"] = now
+        rnd["status"] = "awaiting_review"
+        rnd["row_version"] = int(rnd["row_version"]) + 1
+        rnd["updated_at"] = now
+        self._append_info_event(
+            request_id, req["status"], event,
+            {"roundId": round_id, "answerCount": len(question_ids)},
+        )
+        return self._assemble_info_round(round_id)
+
+    def accept_information_question(
+        self,
+        *,
+        request_id: str,
+        round_id: str,
+        question_id: str,
+        expected_round_version: int,
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        req = self._require_request(request_id)
+        rnd = self._require_info_round_cas(
+            request_id, round_id, expected_round_version
+        )
+        if rnd["status"] != "awaiting_review":
+            raise PrcStateConflictError("state_conflict")
+        question = self._info_questions.get(question_id)
+        if question is None or question["round_id"] != round_id:
+            raise PrcNotFoundError("information_question", question_id)
+        if question["status"] != "submitted":
+            raise PrcStateConflictError("state_conflict")
+        now = _now()
+        question["status"] = "accepted"
+        question["updated_at"] = now
+        resolved = {
+            q["status"] for q in self._info_questions_of(round_id)
+        } <= self._INFO_TERMINAL_QUESTION
+        if resolved:
+            rnd["status"] = "resolved"
+            rnd["resolved_at"] = now
+            rnd["resolved_by_subject"] = actor_subject
+            rnd["resolved_by_display_name"] = actor_display_name
+        rnd["row_version"] = int(rnd["row_version"]) + 1
+        rnd["updated_at"] = now
+        self._append_info_event(
+            request_id, req["status"], event,
+            {
+                "roundId": round_id,
+                "questionId": question_id,
+                "roundResolved": resolved,
+            },
+        )
+        return self._assemble_info_round(round_id)
+
+    def create_information_follow_up(
+        self,
+        *,
+        request_id: str,
+        parent_round_id: str,
+        expected_parent_version: int,
+        actor_label: str,
+        actor_subject: str,
+        actor_email: str | None,
+        event: dict[str, Any],
+        round_row: dict[str, Any],
+        questions: list[dict[str, Any]],
+        follow_up_question_ids: list[str],
+    ) -> dict[str, Any]:
+        req = self._require_request(request_id)
+        parent = self._require_info_round_cas(
+            request_id, parent_round_id, expected_parent_version
+        )
+        if parent["status"] != "awaiting_review":
+            raise PrcStateConflictError("state_conflict")
+        if req["status"] != "needs_information":
+            raise PrcStateConflictError("state_conflict")
+        target_ids = [str(i) for i in follow_up_question_ids]
+        if not target_ids:
+            raise PrcValidationError(
+                "Informe ao menos uma pergunta para complemento.",
+                fields={"followUpQuestionIds": "required"},
+            )
+        for qid in target_ids:
+            question = self._info_questions.get(qid)
+            if question is None or question["round_id"] != parent_round_id:
+                raise PrcNotFoundError("information_question", qid)
+            if question["status"] != "submitted":
+                raise PrcStateConflictError("state_conflict")
+        now = _now()
+        for qid in target_ids:
+            self._info_questions[qid]["status"] = "follow_up_requested"
+            self._info_questions[qid]["updated_at"] = now
+        parent_resolved = {
+            q["status"] for q in self._info_questions_of(parent_round_id)
+        } <= self._INFO_TERMINAL_QUESTION
+        if parent_resolved:
+            parent["status"] = "resolved"
+            parent["resolved_at"] = now
+            parent["resolved_by_subject"] = actor_subject
+            parent["resolved_by_display_name"] = actor_label
+        parent["row_version"] = int(parent["row_version"]) + 1
+        parent["updated_at"] = now
+        new_id = self._insert_info_round(
+            request_id,
+            {**round_row, "parent_round_id": parent_round_id},
+            questions,
+        )
+        created = self._assemble_info_round(new_id)
+        self._append_info_event(
+            request_id, req["status"],
+            {
+                **event,
+                "actor_subject": actor_subject,
+                "actor_display_name": (
+                    event.get("actor_display_name") or actor_label
+                ),
+                "actor_email": event.get("actor_email") or actor_email,
+            },
+            {
+                "parentRoundId": parent_round_id,
+                "roundId": new_id,
+                "roundSequence": created["sequence"],
+                "followUpQuestionIds": target_ids,
+                "parentResolved": parent_resolved,
+                "questionCount": len(questions),
+            },
+        )
+        return {
+            "parentRound": self._assemble_info_round(parent_round_id),
+            "round": created,
+        }
+
+
+    def resolve_open_information_rounds(
+        self,
+        *,
+        request_id: str,
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        self._require_request(request_id)
+        now = _now()
+        resolved: list[dict] = []
+        for rnd in self._info_rounds.values():
+            if rnd["request_id"] != request_id:
+                continue
+            if rnd["status"] not in ("awaiting_requester", "awaiting_review"):
+                continue
+            rnd["status"] = "resolved"
+            rnd["row_version"] = int(rnd["row_version"]) + 1
+            rnd["updated_at"] = now
+            rnd["resolved_at"] = now
+            rnd["resolved_by_subject"] = actor_subject
+            rnd["resolved_by_display_name"] = actor_display_name
+            resolved.append(copy.deepcopy(self.get_information_round(
+                request_id=request_id, round_id=rnd["id"]
+            )))
+        if resolved:
+            meta = dict(event.get("metadata") or {})
+            meta["resolvedRoundIds"] = [r["id"] for r in resolved]
+            meta["waiver"] = True
+            self._append_event(request_id, {**event, "metadata": meta})
+        return resolved

@@ -264,6 +264,26 @@ async def read_action(context, entry, args: dict):
                 svc.get_flag(ref, flag_id, actor=actor),
                 "Bandeira carregada.",
             )
+        if entry.action == "information_round_list":
+            if not ref:
+                return _err("request_id é obrigatório.", code="validation")
+            return _ok(
+                svc.list_information_rounds(ref, actor=actor),
+                "Rodadas de esclarecimento carregadas.",
+            )
+        if entry.action == "information_round_get":
+            round_id = str(
+                args.get("round_id") or args.get("roundId") or ""
+            ).strip()
+            if not ref or not round_id:
+                return _err(
+                    "request_id e round_id são obrigatórios.",
+                    code="validation",
+                )
+            return _ok(
+                svc.get_information_round(ref, round_id, actor=actor),
+                "Rodada de esclarecimento carregada.",
+            )
     except Exception as exc:
         return _domain_err(exc)
     return _err(f"Ação '{entry.capability}' sem handler.",
@@ -371,6 +391,14 @@ async def execute_action(
                 idempotency_key=idempotency_key,
             )
 
+        if action in ("information_question_accept", "information_follow_up"):
+            return _information_execute(
+                svc, actor, entry, phase, ref,
+                payload=payload or {},
+                expected_version=expected_version,
+                idempotency_key=idempotency_key,
+            )
+
         if not ref:
             return _err("target_ref (request_id) é obrigatório.",
                         code="validation")
@@ -398,7 +426,13 @@ async def execute_action(
             data = svc.request_information(
                 ref, actor=actor, expected_version=version,
                 reason=reason or "",
-                pending_fields=(payload or {}).get("pending_fields") or [],
+                pending_fields=(
+                    (payload or {}).get("pending_fields")
+                    or (payload or {}).get("pendingFields")
+                    or []
+                ),
+                questions=(payload or {}).get("questions") or [],
+                message=(payload or {}).get("message"),
                 idempotency_key=idempotency_key,
             )
         elif action == "update_draft":
@@ -410,12 +444,82 @@ async def execute_action(
         else:
             return _err(f"Ação '{entry.capability}' sem handler.",
                         code="not_implemented", status=501)
+        if isinstance(data, dict) and data.get("replayed"):
+            data = data["response"]
         return _ok({"entity": entry.entity, "action": action, **data},
                    "Ação aplicada.")
     except ValueError as exc:
         return _err(str(exc), code="validation")
     except Exception as exc:
         return _domain_err(exc)
+
+
+def _information_execute(
+    svc, actor, entry, phase, ref, *,
+    payload, expected_version, idempotency_key,
+):
+    """PRC-REF-019 accept/follow-up — mesmos use cases REST."""
+    action = entry.action
+    if not ref:
+        return _err("target_ref (request_id) é obrigatório.",
+                    code="validation")
+    body = payload or {}
+    round_id = str(
+        body.get("round_id") or body.get("roundId") or ""
+    ).strip()
+    if not round_id:
+        return _err("round_id é obrigatório.", code="validation")
+    version = _require_version(
+        {
+            "expected_version": (
+                body.get("expected_round_version")
+                or body.get("expectedRoundVersion")
+                or expected_version
+            )
+        }
+    )
+
+    question_id = str(
+        body.get("question_id") or body.get("questionId") or ""
+    ).strip()
+    if action == "information_question_accept" and not question_id:
+        return _err("question_id é obrigatório.", code="validation")
+
+    if phase == "prepare":
+        return _ok(
+            {
+                "phase": "prepare",
+                "request_id": ref,
+                "action": action,
+                "round_id": round_id,
+                "expected_round_version": version,
+            },
+            "Pré-validação de rodada concluída — ACT aplica a ação.",
+        )
+
+    if action == "information_question_accept":
+        data = svc.accept_information_question(
+            ref, round_id, question_id, actor=actor,
+            expected_round_version=version,
+            idempotency_key=idempotency_key,
+        )
+    else:
+        data = svc.request_information_follow_up(
+            ref, round_id, actor=actor,
+            expected_parent_version=version,
+            questions=body.get("questions") or [],
+            follow_up_question_ids=(
+                body.get("follow_up_question_ids")
+                or body.get("followUpQuestionIds")
+                or []
+            ),
+            message=body.get("message"),
+            idempotency_key=idempotency_key,
+        )
+    if isinstance(data, dict) and data.get("replayed"):
+        data = data["response"]
+    return _ok({"entity": entry.entity, "action": action, **data},
+               "Rodada de esclarecimento atualizada.")
 
 
 def _flag_execute(

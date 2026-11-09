@@ -207,6 +207,104 @@ class ProductRegistrationRepository(Protocol):
         """Soft-delete + evento flag.deleted; preserva histórico."""
         ...
 
+    # --- information rounds (PRC-REF-019) ------------------------------------
+
+    def create_information_round(
+        self,
+        *,
+        request_id: str,
+        expected_version: int,
+        allowed_from: frozenset[str],
+        next_status: str,
+        actor_label: str,
+        actor_subject: str,
+        actor_email: str | None,
+        event_type: str,
+        reason: str | None,
+        event_meta: dict[str, Any],
+        round_row: dict[str, Any],
+        questions: list[dict[str, Any]],
+        set_fields: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """CAS + transição do caso + insert rodada/perguntas + evento."""
+        ...
+
+    def get_information_round(
+        self, *, request_id: str, round_id: str
+    ) -> dict[str, Any] | None: ...
+
+    def list_information_rounds(
+        self, *, request_id: str
+    ) -> list[dict[str, Any]]: ...
+
+    def save_information_answers_draft(
+        self,
+        *,
+        request_id: str,
+        round_id: str,
+        expected_round_version: int,
+        actor_subject: str,
+        answers: list[dict[str, Any]],
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Persiste rascunhos por pergunta; CAS da rodada."""
+        ...
+
+    def submit_information_answers(
+        self,
+        *,
+        request_id: str,
+        round_id: str,
+        expected_round_version: int,
+        actor_subject: str,
+        answers: list[dict[str, Any]],
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Envia respostas; rodada → awaiting_review; CAS."""
+        ...
+
+    def accept_information_question(
+        self,
+        *,
+        request_id: str,
+        round_id: str,
+        question_id: str,
+        expected_round_version: int,
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Aceita esclarecimento de uma pergunta; resolve rodada se todas."""
+        ...
+
+    def create_information_follow_up(
+        self,
+        *,
+        request_id: str,
+        parent_round_id: str,
+        expected_parent_version: int,
+        actor_label: str,
+        actor_subject: str,
+        actor_email: str | None,
+        event: dict[str, Any],
+        round_row: dict[str, Any],
+        questions: list[dict[str, Any]],
+        follow_up_question_ids: list[str],
+    ) -> dict[str, Any]:
+        """Encerra perguntas alvo na rodada pai e abre nova rodada."""
+        ...
+
+    def resolve_open_information_rounds(
+        self,
+        *,
+        request_id: str,
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        """Resolve rodadas abertas (dispensa explícita no resume)."""
+        ...
+
 
 class OfficialProductReaderPort(Protocol):
     """Leitura oficial read-only de produto+fornecedores (TOTVS).

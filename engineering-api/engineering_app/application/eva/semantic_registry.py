@@ -563,16 +563,66 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
     ),
     _a(
         "product_registration", "request_information", "execute",
-        "Mark case needs_information with reason + pending fields.",
-        "moderate", status="planned", phases=("act", "prepare"),
+        "Open a typed clarification round (PRC-REF-019) and move the case "
+        "to needs_information. Payload: questions[] "
+        "{targetType: FIELD|SUPPLIER_LINK|GENERAL, targetPath, "
+        "targetAttribute, supplierKey, questionText} + optional message; "
+        "legacy reason + pending_fields still accepted.",
+        "moderate", status="proven", phases=("act", "prepare"),
         ref_arg="request_id",
-        requires=("reason", "expected_version"),
+        requires=("expected_version",),
+        fields=("questions", "message", "reason", "pending_fields"),
+        notes=(
+            "Provide questions[] or a legacy reason; resume stays gated "
+            "while a round is open (waiver: reason prefix resolves it).",
+        ),
+    ),
+    _a(
+        "product_registration", "information_round_list", "read",
+        "List clarification rounds of a case (PRC-REF-019) with "
+        "hasOpenBlocker; scope enforced by the service.",
+        "read", status="proven", ref_arg="request_id",
+    ),
+    _a(
+        "product_registration", "information_round_get", "read",
+        "Clarification round detail with typed questions and answers.",
+        "read", status="proven", ref_arg="request_id",
+        fields=("round_id",),
+    ),
+    _a(
+        "product_registration", "information_question_accept", "execute",
+        "Analyst accepts a submitted clarification answer (CAS on the "
+        "round version). Payload: round_id, question_id, "
+        "expected_round_version.",
+        "moderate", status="proven", phases=("act", "prepare"),
+        ref_arg="request_id",
+        requires=("round_id", "question_id", "expected_round_version"),
+    ),
+    _a(
+        "product_registration", "information_follow_up", "execute",
+        "Analyst requests a follow-up round for submitted questions "
+        "(CAS on the parent round). Payload: round_id, "
+        "expected_round_version, questions[], follow_up_question_ids[], "
+        "message.",
+        "moderate", status="proven", phases=("act", "prepare"),
+        ref_arg="request_id",
+        requires=(
+            "round_id", "expected_round_version",
+            "questions", "follow_up_question_ids",
+        ),
     ),
     _a(
         "product_registration", "resume", "execute",
-        "Resume a needs_information case back to in_progress.",
-        "moderate", status="planned", phases=("act", "prepare"),
+        "Resume a needs_information case back to in_progress "
+        "(PRC-REF-019). Blocked while an information round is open "
+        "unless reason starts with 'waiver:' (explicit dispensa).",
+        "moderate", status="proven", phases=("act", "prepare"),
         ref_arg="request_id", requires=("expected_version",),
+        fields=("reason",),
+        notes=(
+            "Gate has_open_information_blocker; waiver: resolves open "
+            "rounds before transition.",
+        ),
     ),
     _a(
         "product_registration", "submit_review", "execute",

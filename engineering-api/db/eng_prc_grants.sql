@@ -42,6 +42,14 @@ GRANT SELECT, INSERT, UPDATE
 GRANT SELECT, INSERT, UPDATE
     ON engineering.product_registration_flags TO eng_prc;
 
+-- Information rounds (PRC-REF-019): rodadas/perguntas/respostas.
+GRANT SELECT, INSERT, UPDATE
+    ON engineering.product_registration_info_rounds TO eng_prc;
+GRANT SELECT, INSERT, UPDATE
+    ON engineering.product_registration_info_questions TO eng_prc;
+GRANT SELECT, INSERT, UPDATE
+    ON engineering.product_registration_info_answers TO eng_prc;
+
 -- Records: SELECT/INSERT/UPDATE — ponteiro de revisão vigente é atualizado
 -- somente na conclusão verificada (mesma transação).
 GRANT SELECT, INSERT, UPDATE
@@ -71,6 +79,12 @@ REVOKE DELETE, TRUNCATE, TRIGGER, REFERENCES
     ON engineering.product_registration_drafts FROM eng_prc;
 REVOKE DELETE, TRUNCATE, TRIGGER, REFERENCES
     ON engineering.product_registration_flags FROM eng_prc;
+REVOKE DELETE, TRUNCATE, TRIGGER, REFERENCES
+    ON engineering.product_registration_info_rounds FROM eng_prc;
+REVOKE DELETE, TRUNCATE, TRIGGER, REFERENCES
+    ON engineering.product_registration_info_questions FROM eng_prc;
+REVOKE DELETE, TRUNCATE, TRIGGER, REFERENCES
+    ON engineering.product_registration_info_answers FROM eng_prc;
 REVOKE DELETE, TRUNCATE, TRIGGER, REFERENCES
     ON engineering.product_registration_records FROM eng_prc;
 

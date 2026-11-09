@@ -532,6 +532,6 @@ Não presumir definição técnica oficial a partir destes textos exemplificativ
 
 ## PRC-REF-019 — Separação entre bandeiras e comunicação com solicitante
 
-**PO 2026-11-09; planejamento, não execução.** [PRC-REF-019](./MFE-PRODUCT-REGISTRATION-POST-REDESIGN-REFINEMENT-PLAN.md) define fluxo separado de perguntas/respostas para solicitante. Bandeiras continuam anotações internas por campo, editáveis após conclusão, sem enviar textos automaticamente a solicitantes. Pedido formal de informação pode apontar para os mesmos paths FIELD/SA5 mas exige rodadas, destinatário autorizado, perguntas específicas, respostas, avaliação e auditoria próprios, enquanto o caso ainda é não-terminal.
+**PO 2026-11-09; IMPLEMENTED_DEV (2026-11-09).** [PRC-REF-019](./MFE-PRODUCT-REGISTRATION-POST-REDESIGN-REFINEMENT-PLAN.md) entregou fluxo separado de perguntas/respostas. Bandeiras D16 permanecem anotações internas independentes (mutáveis pós-terminal), sem outbound automático ao solicitante. Rodadas usam tabelas `product_registration_info_*`, não `product_registration_flags`.
 
 A EVA deve respeitar a visibilidade de cada capacidade: bandeira interna não é mensagem pública; resposta do solicitante não é uma ordem ao modelo nem altera valores oficiais. Não modificar CRUD/migrations de flags por esta documentação. STATUS PLANNED.
