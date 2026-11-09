@@ -218,8 +218,8 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           want: "Excluir rascunho de ata",
-          where: "Atas · visualização, edição ou lista",
-          how: "Só rascunhos sem envio/assinatura. Confirme em «Excluir ata». Atas enviadas ou assinadas não podem ser excluídas.",
+          where: "Atas · visualização (hero)",
+          how: "Abra a ata e use «Excluir ata» no topo. Só rascunhos sem envio/assinatura. Atas enviadas ou assinadas não podem ser excluídas.",
           path: TRANSFORMOMETRO_ROUTES.meetingMinutes,
         },
       ],

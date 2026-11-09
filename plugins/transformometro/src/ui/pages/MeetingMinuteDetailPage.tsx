@@ -338,17 +338,6 @@ export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNav
                     Assinar agora
                   </ActionButton>
                 ) : null}
-                {canDelete ? (
-                  <button
-                    type="button"
-                    className={dsGhostBtn("danger")}
-                    disabled={busy || deleting}
-                    onClick={() => void handleDelete()}
-                  >
-                    <Trash2 size={16} aria-hidden />
-                    {deleting ? "Excluindo…" : "Excluir ata"}
-                  </button>
-                ) : null}
               </div>
             </section>
 

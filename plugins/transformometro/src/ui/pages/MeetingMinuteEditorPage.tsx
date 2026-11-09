@@ -19,30 +19,22 @@ import {
   Save,
   Send,
   Sparkles,
-  Trash2,
   UserPlus,
   Users,
 } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { PageHeader } from "../../components/PageHeader";
-import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
-import { dsGhostBtn } from "../../components/ghostChrome";
 import { SelectControl } from "../../components/ui/SelectControl";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { buildAtaPath, TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
   createAta,
-  deleteAta,
   getAta,
   searchDirectoryUsers,
   sendAta,
   updateAta,
 } from "../../data/api/transformometroMeetingMinutesApi";
-import {
-  canDeleteMeetingMinute,
-  meetingMinuteDeleteConfirmCopy,
-} from "../meeting-minutes/meetingMinuteDeletePolicy";
 import {
   ATA_GENERATION_UNAVAILABLE_MESSAGE,
   requestAtaGenerationFromTranscript,
@@ -73,7 +65,6 @@ function isValidEmail(value: string): boolean {
 }
 
 export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: Props) {
-  const confirm = useConfirm();
   const [mode, setMode] = useState<EditorMode>("fill");
   const [title, setTitle] = useState("");
   const [unitCode, setUnitCode] = useState("01");
@@ -92,13 +83,10 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [docxTruncated, setDocxTruncated] = useState(false);
   const [currentId, setCurrentId] = useState<string | undefined>(ataId);
-  const [loadedMinute, setLoadedMinute] = useState<Record<string, unknown> | null>(null);
-  const [loadedSignatures, setLoadedSignatures] = useState<Record<string, unknown>[]>([]);
   const [postSave, setPostSave] = useState<PostSaveState>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -125,56 +113,12 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
         setParticipants(
           hydrateParticipantsFromDetail(detail.participants, detail.signers),
         );
-        setLoadedMinute(detail.minute);
-        setLoadedSignatures(detail.signatures ?? []);
         setCurrentId(String(detail.minute.id));
       })
       .catch((reason) =>
         setError(reason instanceof Error ? reason.message : "Erro ao carregar ata."),
       );
   }, [ataId, getAccessToken]);
-
-  const canDelete = Boolean(
-    currentId &&
-      canDeleteMeetingMinute(
-        {
-          ...(loadedMinute ?? {}),
-          status: loadedMinute?.status ?? "draft",
-          title,
-          minute_number: loadedMinute?.minute_number,
-        },
-        loadedSignatures,
-      ),
-  );
-
-  async function handleDelete() {
-    if (!currentId || deleting) return;
-    const copy = meetingMinuteDeleteConfirmCopy(
-      {
-        ...(loadedMinute ?? {}),
-        title,
-        minute_number: loadedMinute?.minute_number,
-      },
-      { discardUnsaved: true },
-    );
-    const confirmed = await confirm({
-      title: copy.title,
-      message: copy.message,
-      confirmLabel: copy.confirmLabel,
-      variant: "danger",
-    });
-    if (!confirmed) return;
-    setDeleting(true);
-    setError(null);
-    try {
-      await deleteAta(currentId, getAccessToken);
-      onNavigate(TRANSFORMOMETRO_ROUTES.atas);
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Não foi possível excluir a ata.");
-    } finally {
-      setDeleting(false);
-    }
-  }
 
   const searchUsers = useCallback(
     (search: string, limit = 10, signal?: AbortSignal) =>
@@ -815,21 +759,10 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
                 : "Selecione ao menos um signatário para salvar"}
           </div>
           <div className="tm-ata-editor__footer-actions">
-            {canDelete ? (
-              <button
-                type="button"
-                className={dsGhostBtn("danger")}
-                disabled={saving || deleting || sending}
-                onClick={() => void handleDelete()}
-              >
-                <Trash2 size={16} aria-hidden />
-                {deleting ? "Excluindo…" : "Excluir ata"}
-              </button>
-            ) : null}
             <ActionButton onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.atas)}>
               Cancelar
             </ActionButton>
-            <ActionButton variant="primary" disabled={saving || deleting} onClick={() => void save()}>
+            <ActionButton variant="primary" disabled={saving} onClick={() => void save()}>
               <Save size={16} aria-hidden />
               {saving ? "Salvando…" : "Salvar rascunho"}
             </ActionButton>

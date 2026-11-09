@@ -1,25 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionButton, StatusBadge } from "@delpi/plugin-ui/index";
-import { ChevronRight, FileText, PenLine, Signature, Trash2 } from "lucide-react";
+import { ChevronRight, FileText, PenLine, Signature } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
-import { dsGhostBtn } from "../../components/ghostChrome";
 import { SelectField } from "../../components/ui/SelectField";
 import { buildAtaPath, TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { PORTAL_PAGE_COPY } from "../../constants/portalExperience";
-import {
-  deleteAta,
-  listAtas,
-  type AtaListItem,
-} from "../../data/api/transformometroMeetingMinutesApi";
-import {
-  canDeleteMeetingMinute,
-  meetingMinuteDeleteConfirmCopy,
-} from "../meeting-minutes/meetingMinuteDeletePolicy";
+import { listAtas, type AtaListItem } from "../../data/api/transformometroMeetingMinutesApi";
 import { ATA_STATUS_LABELS } from "../meeting-minutes/meetingMinuteLabels";
 import {
   ataSignatureProgress,
@@ -49,13 +39,11 @@ function countByStatus(items: AtaListItem[], status: string): number {
 }
 
 export function MeetingMinutesPage({ getAccessToken, pathname, onNavigate }: Props) {
-  const confirm = useConfirm();
   const [items, setItems] = useState<AtaListItem[]>([]);
   const [unitCode, setUnitCode] = useState("");
   const [status, setStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -86,28 +74,6 @@ export function MeetingMinutesPage({ getAccessToken, pathname, onNavigate }: Pro
     }),
     [items],
   );
-
-  async function handleDelete(item: AtaListItem) {
-    if (deletingId) return;
-    const copy = meetingMinuteDeleteConfirmCopy(item);
-    const confirmed = await confirm({
-      title: copy.title,
-      message: copy.message,
-      confirmLabel: copy.confirmLabel,
-      variant: "danger",
-    });
-    if (!confirmed) return;
-    setDeletingId(item.id);
-    setError(null);
-    try {
-      await deleteAta(item.id, getAccessToken);
-      await load();
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Não foi possível excluir a ata.");
-    } finally {
-      setDeletingId(null);
-    }
-  }
 
   return (
     <TransformometroShell>
@@ -222,16 +188,14 @@ export function MeetingMinutesPage({ getAccessToken, pathname, onNavigate }: Pro
               {items.map((item) => {
                 const progress = ataSignatureProgress(item);
                 const href = buildAtaPath(item.id);
-                const showDelete = canDeleteMeetingMinute(item);
-                const rowBusy = deletingId === item.id;
                 return (
-                  <li key={item.id} className={`tm-atas-row tm-atas-row--${item.status || "draft"}`}>
-                    <span className="tm-atas-row__accent" aria-hidden />
+                  <li key={item.id}>
                     <button
                       type="button"
-                      className="tm-atas-row__open"
+                      className={`tm-atas-row tm-atas-row--${item.status || "draft"}`}
                       onClick={() => onNavigate(href)}
                     >
+                      <span className="tm-atas-row__accent" aria-hidden />
                       <span className="tm-atas-row__main">
                         <span className="tm-atas-row__title">{item.title || "Sem título"}</span>
                         <span className="tm-atas-row__meta">
@@ -261,25 +225,6 @@ export function MeetingMinutesPage({ getAccessToken, pathname, onNavigate }: Pro
                         <ChevronRight className="tm-atas-row__chevron" size={18} aria-hidden />
                       </span>
                     </button>
-                    {showDelete ? (
-                      <button
-                        type="button"
-                        className={`${dsGhostBtn("danger", "icon")} tm-atas-row__delete`}
-                        aria-label={`Excluir ata ${item.minute_number || item.title || item.id}`}
-                        title="Excluir ata"
-                        disabled={Boolean(deletingId)}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          void handleDelete(item);
-                        }}
-                      >
-                        <Trash2 size={16} aria-hidden />
-                        <span className="tm-atas-row__delete-label">
-                          {rowBusy ? "Excluindo…" : "Excluir"}
-                        </span>
-                      </button>
-                    ) : null}
                   </li>
                 );
               })}
