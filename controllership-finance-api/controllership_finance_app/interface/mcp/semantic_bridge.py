@@ -31,7 +31,11 @@ from controllership_finance_app.application.clara.agent_intelligence_service imp
     ClaraAgentIntelligenceService,
 )
 from controllership_finance_app.application.clara.consent_channel import (
+    confirmation_instruction_for_prepare,
+    conversational_act_enabled,
+    consent_channel,
     phase_policy_for_capability,
+    portal_consent_required,
 )
 from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
@@ -852,8 +856,8 @@ def _run_operations(
     """Orquestra N capabilities em uma solicitação (doc 126 §4.C).
 
     Diretas executam já (com AuthZ + idempotência); governadas
-    retornam proposta selada + confirmation_url e bloqueiam seus
-    dependentes até o ACT do usuário. Outcomes parciais são
+    retornam proposta selada + instrução do canal efetivo, bloqueando
+    dependentes até o ACT autorizado (V014 segue default). Outcomes parciais são
     reportados honestamente — sem atomicidade global implícita.
     """
     operations = batch.get("operations") or []
@@ -941,8 +945,8 @@ def _run_operations(
             outcomes.append(entry | {"status": "executed",
                                      "result": result})
             continue
-        # Governada — PREPARE selado + URL de consentimento; o ACT
-        # posterior revalida ator/escopo/estado como sempre.
+        # Governada — PREPARE selado; canal determina se o Portal V014
+        # é obrigatório. ACT revalida ator/escopo/estado como sempre.
         try:
             prepared = gw.prepare(
                 capability=capability,
@@ -966,7 +970,20 @@ def _run_operations(
                 "operation": prepared["operation"],
                 "proposal_id": prepared["proposal_id"],
                 "proposal_handle": prepared["proposal_handle"],
-                "confirmation_url": prepared["confirmation_url"],
+                "consent_channel": prepared.get("consent_channel", consent_channel()),
+                "portal_consent_required": prepared.get(
+                    "portal_consent_required", portal_consent_required()
+                ),
+                "conversational_act_armed": prepared.get(
+                    "conversational_act_armed", conversational_act_enabled()
+                ),
+                "confirmation_contract": prepared.get("confirmation_contract"),
+                **(
+                    {"confirmation_url": prepared["confirmation_url"]}
+                    if prepared.get("portal_consent_required", portal_consent_required())
+                    and prepared.get("confirmation_url")
+                    else {}
+                ),
                 "expires_at": prepared["expires_at"],
             }
         )
@@ -981,10 +998,11 @@ def _run_operations(
             "summary": counts,
             "operations": outcomes,
             "note": (
-                "Operações diretas já executadas; "
-                "pending_confirmation exige consentimento no Portal "
-                "antes do ACT. Não há transação global — outcomes são "
-                "parciais por operação."
+                "Operações diretas já executadas; governadas aguardam "
+                "confirmação conforme o canal efetivo. "
+                + confirmation_instruction_for_prepare()
+                + " Não há transação global — outcomes são parciais "
+                "por operação."
             ),
         }
     )
