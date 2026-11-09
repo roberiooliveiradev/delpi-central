@@ -12,18 +12,17 @@ from controllership_finance_app.interface.mcp import semantic_bridge as sb
 
 
 @pytest.mark.parametrize(
-    "channel,ack,portal_required",
+    "channel,portal_required",
     [
-        ("portal", "", True),
-        ("conversational", "", True),
-        ("conversational", cc.SECURITY_ACK_VALUE, False),
+        ("portal", True),
+        ("dual", True),
+        ("conversational", False),
     ],
 )
 def test_operations_batch_advertises_actual_consent_channel(
-    monkeypatch, channel, ack, portal_required
+    monkeypatch, channel, portal_required
 ):
     monkeypatch.setattr(cc.settings, "CLARA_CONSENT_CHANNEL", channel)
-    monkeypatch.setattr(cc.settings, "CLARA_CONVERSATIONAL_SECURITY_ACK", ack)
     gw = MagicMock()
     gw._capability_table.return_value = {
         "checklist.version_publish": {"direct": False}
@@ -70,7 +69,7 @@ def test_operations_batch_advertises_actual_consent_channel(
     assert operation["proposal_handle"] == "sealed-1"
     assert operation["portal_consent_required"] is portal_required
     assert operation["conversational_act_armed"] is (
-        channel == "conversational" and bool(ack)
+        channel == "conversational"
     )
     assert ("confirmation_url" in operation) is portal_required
     if portal_required:
