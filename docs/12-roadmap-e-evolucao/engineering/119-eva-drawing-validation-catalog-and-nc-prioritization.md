@@ -1762,3 +1762,145 @@ Deploy e MCP: ver evidência operacional no Doc 120 e no relatório DEC-043 (SHA
 **Pacote imediato único = G0 (inventário e baseline lock)**, sem mudança de comportamento nem deploy. Após G0, abrir G1 somente sob esta seção, com entregáveis e bloqueios; não sair implementando G4. A cada gate, executor deve retornar matriz `RQ→AC→owner→source→consumer→contract→implementation→test→outcome`, SHA/config/model/PDF, PASS/FAIL/PENDING e evidência consultável. **Até 3 ciclos de correção** por incremento; sem convergência, parar e escalar. Não expandir E2–E7/E4/VAL02.
 
 **Status ao registrar plano:** `PLAN_LOCK=ACTIVE`; `G0=NEXT`; `G1–G7=NOT_STARTED` **nesta trilha de qualidade estrutural**; DEC-043 `CONSUMER_MCP_FUNCTIONAL_ACCEPTANCE=PASS` em três desenhos críticos (evidência na Issue #131), sem implicar `M0/M1/M2_QUALITY_PASS`. `VAL01_COMPLETED=false`, `ENGINEERING_APPROVAL=NOT_APPROVED`, `BOM_RELATION_PROVEN=false`, `AUTOMATIC_NC=false`, `EVA_OUTPUT=DRAFT/CANDIDATE`.
+
+### 59.5 G0 — RESULTADO EXECUTIVO (INVENTORY + BASELINE LOCK) — 2026-11-09
+
+**TASK_ID:** `EVA-VAL01-G0-FRAMEWORK-INVENTORY-BASELINE-LOCK`. **Executor:** Cursor. **Escopo:** somente G0; `G1–G7=NOT_STARTED`; `PRODUCTION_CODE_CHANGED=false`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+#### G0-A — Estado do repositório (`PROVEN`)
+
+| Campo | Valor |
+|---|---|
+| `LOCAL_HEAD` / `ORIGIN_MAIN` / `CURRENT_CODE_SHA` | `ebd0a3533d20d93c001a2151fd9e567e9f116f85` (sincronizado) |
+| `BRANCH` | `main` |
+| `GIT_STATUS` | WIP alheio preservado (PRC e2e, DELIA battery, TV artifacts) — **fora do escopo G0**; sem diff em `engineering-api/` |
+| Worktrees | dezenas de worktrees externos/prunables; worktree principal = `main` @ HEAD acima |
+| DEC-040 | `862b12ce34` — ancestral de `HEAD` |
+| DEC-041 | `6f4ead421d` — ancestral |
+| DEC-042 | `41f2f05842` — ancestral |
+| DEC-043 | `e59a13f68885576b418dc91121b2c1ab7df53bc9` — ancestral; runtime prod ainda no digest reportado abaixo |
+| Prod image (revalidado G0) | `sha256:1c99c4bdae4aa5e6e26718d144102902c4e1b6f4e3563dadb5d9fd991f7ecf71` (`infra-engineering-api:latest`), healthy |
+| `understanding.py` SHA256 (local = prod container) | `3c06cdcfae469facc12905828899ef59c16bbaf599ab06e18079898ceca98f8b` |
+
+Referência histórica DEC-043 (`CODE_DEPLOY_SHA=e59a13f688…`, digest `1c99c4bdae…`) **reconfirmada** no runtime atual; não é prova de que jobs MCP futuros usem o mesmo PDF sem rehash.
+
+#### G0-B — `PIPELINE_OWNERSHIP_AND_CONTRACT_MAP` (`PROVEN` call graph MCP)
+
+```text
+MCP product.drawing_understanding / compose_understanding
+  → semantic_bridge._produce_drawing_understanding
+    → run_official_document_benchmark (PDFium render + PaddleOCR tokens; out["_pdf_bytes"])
+    → build_document_understanding (drawing_understanding.v1; regiões heurísticas)
+    → TableStructureEngine.run (SLANet) por região component_table/title_block
+    → apply_native_table_observations → rows_from_native_cells / native_cells_preferable / reconcile_*
+  → consumidor MCP / BOM comparator (Domain API structure; candidato)
+```
+
+| Fronteira | Owner | Arquivo / símbolo | Framework | Contrato | Status |
+|---|---|---|---|---|---|
+| Fonte PDF oficial | Domain API / Engineering API | `drawing_download` / benchmark fetch | HTTP AuthZ | bytes + SHA-256 | `PROVEN` |
+| Render PDF→raster | Infra | `pdfium_adapter` / `_render_page` em `engine_adapters` | `pypdfium2` 4.30.1 / PDFium 133.0.6899.0 | PNG/array + DPI 200 | `PROVEN` |
+| OCR tokens | Infra | `paddleocr_adapter` + `subprocess_executor` `pdfium_render_paddleocr` | PaddleOCR 3.3.0 / Paddle 3.2.2 | tokens + bbox | `PROVEN` USED_IN_RUNTIME |
+| Estrutura tabela | Infra | `TableStructureEngine` + `_predict_table_structure` | `TableStructureRecognition` → **SLANet** | `drawing_perception_candidate.v1` | `PROVEN` USED_IN_RUNTIME |
+| HTML→células | Application | `cells_from_html_structure` | parse HTML nativo SLANet | cells + limitations | `PROVEN` |
+| Token↔célula | Application | `associate_tokens_to_cells` | geometria própria (center_containment) | cell_token_map | `PROVEN` |
+| Understanding | Application | `build_document_understanding` / `apply_native_table_observations` | lógica EVA | `drawing_understanding.v1` | `PROVEN` |
+| Port multi-engine | Application | `PerceptionEnginePort` | Protocol | v1 | `PROVEN` (contrato); motores B/C **não** no path MCP |
+| PP-StructureV3 adapter | Infra | `PPStructureEngine` | paddleocr `PPStructureV3` | v1 | `IMPORTABLE`; **não** USED_IN_RUNTIME MCP |
+| Docling adapter | Infra | `DoclingEngine` | Docling | v1 | `NOT_INSTALLED` (`ModuleNotFoundError`) |
+| EvaBaseline lab | Infra | `EvaBaselineEngine` | PDFium+OCR+understanding | v1 | lab/`ENGINES`; **não** path MCP understanding |
+
+#### G0-C — `FRAMEWORK_CAPABILITY_INVENTORY`
+
+| Framework | Package | Model | Classificação | Capabilities USED | Present but UNUSED / NOT_INSTALLED |
+|---|---|---|---|---|---|
+| PDFium | `pypdfium2==4.30.1` | native 133.0.6899.0 | INSTALLED+OPERATIONAL+USED_IN_RUNTIME | render page, scale=DPI/72 | multipage batch beyond caller loop |
+| PaddlePaddle | `3.2.2` | CPU device | INSTALLED+OPERATIONAL+USED | inferência CPU | GPU |
+| PaddleOCR | `3.3.0` | PP-OCRv5_server_det/rec (+ en_mobile_rec cache) | INSTALLED+OPERATIONAL+USED | det+rec tokens | — |
+| PaddleX | `3.3.13` | model hub cache `/opt/ocr-models/paddlex/*` | INSTALLED+USED (via OCR/SLANet) | model load | — |
+| SLANet | via `TableStructureRecognition` default `SLANet` | `/opt/ocr-models/paddlex/SLANet/inference.pdiparams` sha256 `9d33d47b174bcb9fb63f94dac54a4d01a974da6d0c56ddb51cf0e38ed43f7a60` (7 666 515 B) | INSTALLED+OPERATIONAL+USED_IN_RUNTIME | HTML structure, bbox cells, rowspan/colspan attrs | — |
+| Table cls | PP-LCNet_x1_0_table_cls | sha256 `d0224afd…2db0` | INSTALLED (cache) | `TO_INVENTORY` se pipeline OCR o chama | TableMagic |
+| OpenCV | `opencv-contrib-python==4.10.0.84` | — | INSTALLED+USED | crop/array | — |
+| PP-StructureV3 | symbol in paddleocr | — | IMPORTABLE; **OPERATIONAL=INCONCLUSIVE** nesta rodada (sem predict G0); **USED_IN_RUNTIME=false** | layout/table (adapter existe) | path MCP não chama |
+| TableRecognitionPipelineV2 / TableCellsDetection / TableClassification | paddleocr public API | — | IMPORTABLE; USED_IN_RUNTIME=false | pipeline tabular alternativa | G3 |
+| PP-TableMagic / `TableMagic` | — | — | **NOT_INSTALLED** (`ImportError`) | — | G3 |
+| Docling | — | — | **NOT_INSTALLED** | — | lab only |
+
+#### G0-D — `CUSTOM_LOGIC_AND_DUPLICATION_MATRIX`
+
+| Função | Problema | Fronteira | Entrada framework? | Transforma vs reconstrói | Equivalente framework? | Produção? | Testes +/- | Provenance | Product-specific? | Camada correta? |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `cells_from_html_structure` | grade a partir do HTML SLANet | adapter→contract | sim (HTML+bbox) | transforma topologia; marca `span_conflict` | HTML já nativo; parser é EVA | sim | sim (perception/slanet) | limitations | não | sim (contract) |
+| `associate_tokens_to_cells` | OCR↔célula | contract | tokens OCR + bbox SLANet | associa (center_containment); conflito→1ª célula | possível em pipelines PaddleX não usados | sim | sim | conflicts/unassigned | não | sim |
+| bandas `line_texts`/`line_centers` em `TableStructureEngine` | célula funde linhas visuais | infra adapter | tokens+bbox | reconstrói bandas Y | SLANet não entrega bandas textuais | sim | parcial (DEC-040) | sim | não | **suspeita duplicação** `TO_INVENTORY` vs Understanding |
+| `rows_from_native_cells` | linha Understanding + redistribuição Y | understanding | cells nativas | reconstrói linhas/papéis | framework não classifica item/qty/code | sim | DEC-040/042/043 | topology_source | não (regex genéricos) | application — papéis semânticos |
+| `native_cells_preferable` | gate soft `span_conflict` | understanding | flags SLANet | política aceite | n/a | sim | DEC-042/043 | limitations | não | sim |
+| `reconcile_native_and_fallback_rows` | preservação parcial | understanding | native+fallback rows | merge seletivo | n/a | sim | DEC-043 | topology_source | não | sim |
+| `apply_native_table_observations` | orquestra substituição | understanding | observations engine | orquestra | n/a | sim | DEC-042/043 | perceptions[] | não | sim |
+| Heurísticas `build_understanding` (regiões/fallback rows) | região tabela + fallback token | understanding | só OCR | reconstrói sem SLANet | PP-Structure layout unused | sim | R8 tests | limitations | não | **fallback próprio** — gap G2/G3 |
+| `EvaBaselineEngine` / `PPStructureEngine` / `DoclingEngine` | lab multi-engine | infra | — | paralelo | — | lab registry; MCP understanding **não** usa B/C | perception tests | — | — | não misturar com path prod |
+
+#### G0-E — `RUNTIME_AND_MODEL_BASELINE` (congelado)
+
+| Recurso | Valor medido |
+|---|---|
+| Host CPU | 16 |
+| Host RAM | ~23 Gi total; ~6,5 Gi available no momento da medição; Swap 4 Gi quase cheio |
+| GPU | `NO_NVIDIA` |
+| Container MemLimit / NanoCpus | `0` / `0` (sem teto Docker explícito) |
+| Backend | CPU (`paddle.device=cpu`) |
+| DPI tabela | `TABLE_RENDER_DPI=200` (`TABLE_PERCEPTION_REVISION=native_slanet_v3`) |
+| Timeouts | OCR default 120 s; pipeline isolado 180 s; SLANet fallback OCR 190 s |
+| Model root | `/opt/ocr-models` (+ `paddlex/` subtree) |
+| `CONFIG_HASH` (fingerprint G0) | `9b2e314e82dedd5c4dea047962ab1bfba1b8a09dbe856667186252a3c2c25e77` |
+| Observabilidade | erros tipados `ERROR_KINDS`; limitations strings; **sem** métrica estrutural M1 dedicada → gap |
+
+#### G0-F — `DATASET_AND_REPRODUCIBILITY_MANIFEST`
+
+Rehash em `/mnt/fileserver/desenhos/{code}.pdf` (host `srv-api`, 2026-11-09): **13/13 corpus + 90264026 + 90264135 = 15/15 `MATCH`** aos SHA do Doc 120. Fonte: fileserver (não montado dentro do container `delpi-engineering-api` nesta inspeção). `AUTHORIZED_ACCESS_STATUS`: leitura host fileserver `PROVEN`; path MCP Domain API **não reexecutado** neste G0 (`TEST_NOT_RUN` para job novo). `GROUND_TRUTH_STATUS`: nenhum GT owner — `VISUAL_REVIEW_CANDIDATE` / `NOT_HOMOLOGATED` (G1). Holdout: Doc 120 registra split diagnóstico (`90264004`/`90264017` vs 11 holdout) em rodadas DEC-040; **split formal G0/G1 ainda sem adjudicação owner** → `HOLDOUT_GAP`. Diagnósticos adicionais: `90264026`, `90264004`, `90264017`, `90264135` (páginas conforme índice Doc 120: 1 / 1 / 14 / 13).
+
+#### G0-G — `BASELINE_REPRODUCTION_REPORT`
+
+| Item | Evidência |
+|---|---|
+| `TEST_COMMAND` | `docker exec delpi-engineering-api python3 -m pytest` suites perception/slanet/DEC-040/041/042/043 |
+| `TEST_RESULT` | **49 passed** (0,39 s) |
+| `CODE_SHA` / image | understanding sha acima; image `1c99c4bdae…`; HEAD repo `ebd0a3533d…` |
+| `CONFIG_HASH` / `MODEL_HASH` | config fingerprint + SLANet pdiparams sha acima |
+| `PDF_SHA` | 15/15 MATCH fileserver |
+| Execução MCP full / corpus OCR live | `TEST_NOT_RUN` (G0 não autoriza reprocessamento oneroso nem tuning) |
+| Jobs históricos DEC-043 | `STALE_EVIDENCE` se usados como prova de reexecução — **não** reexecutados |
+
+#### G0-H — `G0_GAP_REGISTER` (amostra material)
+
+| GAP_ID | CLASS | Boundary | Evidence | Owner | Impact | STATUS | RECOMMENDED_GATE |
+|---|---|---|---|---|---|---|---|
+| G0-GAP-01 | `FRAMEWORK_CAPABILITY_GAP` | PaddleOCR API | `TableMagic` ImportError; PipelineV2 importável mas unused | Perception/Infra | alternativa tabular não medida | `PROVEN` | G3 |
+| G0-GAP-02 | `FRAMEWORK_CONFIGURATION_GAP` | PPStructureEngine | IMPORTABLE; MCP não usa; OPERATIONAL predict `INCONCLUSIVE` G0 | Infra | benchmark B bloqueado até prova sandbox | `PROVEN`/`INCONCLUSIVE` | G3 |
+| G0-GAP-03 | `ADAPTER_RESPONSIBILITY_GAP` | line_texts vs rows_from_native | bandas Y em adapter **e** redistribuição no Understanding | Application+Infra | possível duplicação | `TO_INVENTORY` | G2 |
+| G0-GAP-04 | `TABLE_STRUCTURE_GAP` | SLANet `span_conflict` | structure_consistent=false frequente; soft gate | Perception | perda/aceitação parcial | `PROVEN` (DEC-041–043) | G2/G3 |
+| G0-GAP-05 | `TOKEN_CELL_ASSOCIATION_GAP` | associate + fused cells | 90264135 fused_codes residual | Understanding | campos multicódigo | `PROVEN` residual | G2/G6 |
+| G0-GAP-06 | `SEMANTIC_CONSUMER_GAP` | papéis item/qty/code/desc | fallback vs native projection | Understanding | completude≠precisão | `PROVEN` | G6 (após M1) |
+| G0-GAP-07 | `GROUND_TRUTH_GAP` | corpus | sem GT owner homologado | Engenharia | não declarar precisão | `PROVEN` | G1 |
+| G0-GAP-08 | `HOLDOUT_GAP` | split | holdout histórico sem adjudicação formal G0 | Coordination+Engenharia | risco de vazamento de ajuste | `PROVEN` | G1 |
+| G0-GAP-09 | `OBSERVABILITY_GAP` | métricas M1 | sem scorecard estrutural contínuo | Reliability/Perception | G5 sem baseline métrica | `PROVEN` | G5 prep |
+| G0-GAP-10 | `CONTRACT_GAP` | PerceptionEnginePort vs MCP | port existe; path MCP hardcodes TableStructureEngine | Application | OCP/lab≠prod wiring | `PROVEN` | G4 only if needed |
+| G0-GAP-11 | `RESOURCE_GAP` | host RAM/swap/GPU | ~6,5 Gi avail; no GPU; swap saturated | Delivery | VLM/PPStructure pesado bloqueados | `PROVEN` | G3 (orçamento) |
+| G0-GAP-12 | `PERMISSION_GAP` | MCP identity | jobs autenticados dependem de credencial consumidor | Security/Core | aceite MCP pode ficar PENDING | `PROVEN`/histórico | G7 |
+
+#### Aceite G0
+
+| AC | Resultado |
+|---|---|
+| G0-AC01 | `PASS` |
+| G0-AC02 | `PASS` |
+| G0-AC03 | `PASS` |
+| G0-AC04 | `PASS` (duplicações classificadas; remoção **não** feita) |
+| G0-AC05 | `PASS` |
+| G0-AC06 | `PASS` (hashes; GT/holdout formal → gaps G1) |
+| G0-AC07 | `PASS` testes unitários/contrato; live MCP corpus `TEST_NOT_RUN` documentado |
+| G0-AC08 | `PASS` |
+| G0-AC09 | `PASS` (`PRODUCTION_CODE_CHANGED=false`) |
+| G0-AC10 | `PASS` (esta seção + Doc 120 + Issue #131) |
+
+**`G0_EXIT_STATUS`:** `PASS` (baseline inventariada e congelada; **não** autoriza G1 automaticamente). **`NEXT_AUTHORIZED_GATE`:** G1 — somente após review/aceite Coordination. **`EXECUTION_DRIFT`:** nenhum. **`ARCHITECTURE_DECISION_REQUIRED`:** nenhum novo boundary proposto.

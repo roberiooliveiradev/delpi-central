@@ -476,3 +476,17 @@ Correção de perda silenciosa sob `span_conflict_tolerated` parcial (`reconcile
 **Testes:** `test_dec043_native_preservation.py` + suites 041/042/040/native + PDF/MCP auth → 39+63 passed no harness com patch.
 
 **Deploy canônico (2026-11-09):** `git pull --ff-only` → `./infra/scripts/up-prod-sequential.sh --build engineering-api` no `srv-api`. HEAD `e59a13f68885576b418dc91121b2c1ab7df53bc9`. Imagem anterior `sha256:2662390f…` tag `infra-engineering-api:pre-dec043-e59a13f688-rollback`. Imagem publicada `sha256:1c99c4bdae4aa5e6e26718d144102902c4e1b6f4e3563dadb5d9fd991f7ecf71`; container healthy; runtime prova `reconcile_native_and_fallback_rows` + `span_conflict_tolerated_partial`. Reteste na imagem publicada: 90264026 B=`10090010`+ISOLADOR, 6 linhas, topo parcial; 90264004/017 críticos PASS. MCP autenticado: `401` sem identidade → `CONSUMER_MCP_ACCEPTANCE=PENDING` (sem fabricar credencial).
+
+### Log G0 — Baseline lock / rehash corpus (2026-11-09)
+
+**TASK:** `EVA-VAL01-G0-FRAMEWORK-INVENTORY-BASELINE-LOCK`. Sem mudança de código produtivo, sem GT novo, sem benchmark de frameworks, sem deploy. Detalhe executivo: Doc 119 §59.5.
+
+**Repositório:** `HEAD=ebd0a3533d20d93c001a2151fd9e567e9f116f85` = `origin/main`. **Runtime prod revalidado:** image `sha256:1c99c4bdae4aa5e6e26718d144102902c4e1b6f4e3563dadb5d9fd991f7ecf71`; `understanding.py` sha256 `3c06cdcfae469facc12905828899ef59c16bbaf599ab06e18079898ceca98f8b` (local = container).
+
+**CONFIG_HASH (fingerprint G0):** `9b2e314e82dedd5c4dea047962ab1bfba1b8a09dbe856667186252a3c2c25e77` — paddle 3.2.2 / paddleocr 3.3.0 / paddlex 3.3.13 / pypdfium2 4.30.1 / PDFium 133.0.6899.0 / SLANet pdiparams sha256 `9d33d47b174bcb9fb63f94dac54a4d01a974da6d0c56ddb51cf0e38ed43f7a60` / DPI 200 / `TABLE_PERCEPTION_REVISION=native_slanet_v3`.
+
+**Rehash fileserver `/mnt/fileserver/desenhos`:** 13 PDFs do índice + diagnósticos `90264026` (`4d0c2e2f…fec4`) e `90264135` (`af47dd4c…edf3`) → **15/15 MATCH**. Códigos do índice oficial inalterados. PDFs **não** montados no filesystem do container nesta inspeção (`SOURCE` = host fileserver).
+
+**Baseline tests (read-only, imagem publicada):** `test_drawing_perception_r9` + `test_slanet_document_integrity` + `test_dec041_*` + `test_dec042_*` + `test_dec043_*` + `test_association_integrity_dec040` → **49 passed**. Reexecução MCP/OCR live do corpus 13: `TEST_NOT_RUN` (fora do orçamento G0).
+
+**Holdout / GT:** nenhum ground truth homologado pela Engenharia neste log; split holdout formal permanece gap para G1. `VAL01_COMPLETED=false`; `ENGINEERING_APPROVAL=NOT_APPROVED`.
