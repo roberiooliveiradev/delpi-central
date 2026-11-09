@@ -88,7 +88,26 @@ export type ClaraProposalConsentResult = {
   consented_at: string;
 };
 
+export type ClaraConsentPolicy = {
+  consent_channel: "portal" | "conversational" | "dual";
+  portal_consent_required: boolean;
+  conversational_act_armed: boolean;
+};
+
 type Envelope<T> = { data?: T };
+
+export async function getClaraConsentPolicy(
+  signal?: AbortSignal,
+): Promise<ClaraConsentPolicy> {
+  const envelope = await httpGet<Envelope<ClaraConsentPolicy>>(
+    cfApiUrl("/clara/consent-policy"),
+    { signal },
+  );
+  if (!envelope?.data) {
+    throw new Error("Política de consentimento indisponível.");
+  }
+  return envelope.data;
+}
 
 export async function getClaraBatchConsentView(
   batchId: string,

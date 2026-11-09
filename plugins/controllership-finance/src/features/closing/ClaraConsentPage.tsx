@@ -2,8 +2,9 @@
  * Superfície confiável de consentimento da CLARA (Doc 106 §3.1,
  * R-CLARA-01/02).
  *
- * O consentimento de um lote/proposta NÃO é dado no chat: esta página
- * apresenta o plano selado por inteiro (desafio emitido no PREPARE),
+ * Página LEGADA V014, disponível apenas quando a política efetiva da BFF
+ * requer Portal; no canal conversacional o usuário confirma no ChatGPT.
+ * A superfície V014 apresenta o plano selado (desafio emitido no PREPARE),
  * renova a sessão Keycloak e devolve o `challenge_id` à BFF — prova
  * de autorização vinculada ao plano exato, ao ator e à expiração.
  * Deep link: `closing/clara-consent?batch=<id>` ou `?proposal=<id>`.
@@ -15,6 +16,8 @@ import { ActionButton } from "@delpi/plugin-ui/index";
 import { ApiError } from "../../api/httpClient";
 import {
   getClaraBatchConsentView,
+  getClaraConsentPolicy,
+  type ClaraConsentPolicy,
   getClaraProposalConsentView,
   recordClaraBatchConsent,
   recordClaraProposalConsent,
@@ -171,11 +174,33 @@ export function ClaraConsentPage() {
   const [proposal, setProposal] =
     useState<ClaraProposalConsentView | null>(null);
   const [loading, setLoading] = useState(true);
+  const [consentPolicy, setConsentPolicy] = useState<ClaraConsentPolicy | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<PanelError | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
   const load = useCallback(async (signal?: AbortSignal) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const policy = await getClaraConsentPolicy(signal);
+      setConsentPolicy(policy);
+      if (!policy.portal_consent_required) {
+        setBatch(null);
+        setProposal(null);
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError({
+        status: apiErr?.status ?? 0,
+        code: apiErr?.code ?? null,
+        message: "Não foi possível verificar o canal da CLARA. A autorização foi bloqueada.",
+      });
+      setLoading(false);
+      return;
+    }
     const t = parseConsentTarget();
     if (!t) {
       setLoading(false);
@@ -211,7 +236,7 @@ export function ClaraConsentPage() {
   }, [load]);
 
   const confirm = useCallback(async () => {
-    if (!target || busy) return;
+    if (!target || busy || !consentPolicy?.portal_consent_required) return;
     const challengeId =
       target.kind === "batch"
         ? batch?.challenge?.challenge_id
@@ -258,14 +283,15 @@ export function ClaraConsentPage() {
     } finally {
       setBusy(false);
     }
-  }, [target, busy, batch, proposal]);
+  }, [target, busy, batch, proposal, consentPolicy]);
 
   const expiresLabel = (iso: string | undefined) =>
     iso ? formatDateTime(iso) : "—";
 
   const canConfirm =
+    consentPolicy?.portal_consent_required && (
     (batch && batch.status === "PREPARED" && batch.consentable) ||
-    (proposal && proposal.consentable && !proposal.consented_at);
+    (proposal && proposal.consentable && !proposal.consented_at));
 
   const consentBlockMessage = batch?.consent_block_reason
     ? CONSENT_BLOCK_MESSAGES[batch.consent_block_reason] ??
@@ -274,6 +300,22 @@ export function ClaraConsentPage() {
       ? CONSENT_BLOCK_MESSAGES[proposal.consent_block_reason] ??
         proposal.consent_block_reason
       : null;
+
+  if (consentPolicy && !consentPolicy.portal_consent_required) {
+    return (
+      <section className="cf-page-stack cf-closing-layout" aria-label="Canal conversacional CLARA">
+        <CfPageHero
+          eyebrow="Central de Fechamento"
+          title="Confirmação da CLARA no ChatGPT"
+          description="Este link de consentimento foi substituído pelo fluxo conversacional."
+        />
+        <CfFeedbackMessage intent="info" title="Volte à conversa com a CLARA">
+          O canal conversacional está habilitado. Apresente e confirme a proposta
+          diretamente no ChatGPT; nenhuma autorização é registrada nesta página.
+        </CfFeedbackMessage>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -288,7 +330,7 @@ export function ClaraConsentPage() {
             hint={CF_HELP.claraConsent.page}
           />
         }
-        description="Revisão e autorização verificável do que você pediu à CLARA — registrada aqui, nunca pelo texto do chat."
+        description="Autorização V014 de propostas legadas enquanto a BFF exigir consentimento pelo Portal."
       />
 
       <div className="cf-page-stack" aria-busy={loading}>

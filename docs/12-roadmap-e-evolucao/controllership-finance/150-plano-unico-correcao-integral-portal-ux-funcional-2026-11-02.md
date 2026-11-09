@@ -888,3 +888,19 @@ human_proof=portal_step_up_v014
 **§20.10 revalidado nesta execução:** `SECURITY_PLATFORM_DECISION` e `CONTROLLADORIA_DECISION` **continuam AUSENTES** no Git. HOST_ATTESTED secret **não** configurado.
 
 **Ação do executor:** **nenhum** novo patch de mensagens, **nenhum** preenchimento de ack, **nenhum** deploy parcial. Veredito: `DECISION_REQUIRED` — owners Segurança/Plataforma + Controladoria devem assinar §20.10 antes de qualquer cutover que produza `portal_consent_required=false`.
+
+
+### 20.14 Integração CLARA + Portal corrigida em código (branch CF-UX-053, 09/11/2026)
+
+**Autorização PO reiterada:** experiência TÉO na CLARA dentro do ChatGPT, sem segundo RBAC. Esta decisão de UX/arquitetura não será reapresentada como escolha. A BFF continua responsável por escopo, regra de negócio, proposta selada e auditoria; Core permanece authority de effective permissions. Não confundir autorização Core com prova independente de consentimento do plano.
+
+**Mudanças implementadas nesta branch (ainda não implantadas):**
+- `governed_writes.prepare`: só cria `clara_consent_challenge` V014 quando `portal_consent_required()` for verdadeiro. No canal conversacional efetivamente armado não cria desafio Portal que nunca será usado.
+- `batch_orchestrator.prepare_batch`: mesma regra para lotes.
+- BFF `GET /clara/consent-policy` autenticada expõe apenas `consent_channel`, `portal_consent_required` e `conversational_act_armed`, sem valores secretos/ack; **não autoriza nem executa ACT**.
+- Portal `ClaraConsentPage`: consulta a BFF e, quando `portal_consent_required=false`, apresenta direcionamento ao chat e impede registro de consentimento pela página legada. Quando V014 segue exigido, o fluxo anterior permanece funcional.
+- `claraConsentApi.ts`: cliente tipado da policy. `test_clara_consent_channel_integration.py`: regressão para desafio single-op e policy BFF nos modos portal, conversational sem ack e conversational armado.
+
+**Limites verificáveis:** `IMPLEMENTED_NOT_TESTED / NOT_DEPLOYED` no GitHub; testes escritos, `TEST_NOT_RUN` nesta sessão sem runtime de CI; nenhuma migração, alteração do catálogo Core, mudança de permissions, ativação de ack, deploy ou cutover foi executado. O mecanismo conversacional de ACT já existe em commits `2444de3`/`23d51e7`; esta fatia elimina diferenças residuais da BFF e do Portal. **A política R-CLARA-01 §20.10 permanece vigente até decisão formal do owner de segurança**; o registro da autorização PO não representa assinatura desse papel.
+
+**Execução Cursor:** revisar diff e testes, fazer deploy BFF antes de MFE; inspecionar schema ativo, configurar canal apenas se o gate estiver satisfeito, executar smoke ChatGPT de teste sem mutação real e documentar read-back e rollback. Atualizar/republish o plugin MCP **se a definição publicada no host estiver cacheada ou divergir do novo schema/status**. Nunca declarar `ACCEPT` do CF-UX-053 com `portal_consent_required=true`.
