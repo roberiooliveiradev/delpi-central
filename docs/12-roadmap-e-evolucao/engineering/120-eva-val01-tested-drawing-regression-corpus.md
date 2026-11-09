@@ -398,3 +398,15 @@ SHA de todos os 13 conferem com o índice. Precisão de campo: não declarada (s
 **Hipóteses separadas, não comprovadas:** H1 contraste/cor vermelha altera reconhecimento de texto; H2 células mescladas de grupo com 2 linhas alteram a estrutura nativa; H3 espaçamento e divisórias causam fusão/associação errada; H4 token A9 existe, mas é descartado na associação ou qualificação de ambiguidade. A captura não demonstra causalidade. Próximo passo: inspeção instrumentada de `PDFium → PaddleOCR(tokens/quad/conf) → SLANet(células/spans) → rows_from_native_cells → understanding/MCP`, comparando A9×AA×A8 com PDFs oficiais SHA idêntico. Experimentos controlados colorido/grayscale/contraste **apenas diagnósticos**, sem alterar produção antes de validação cruzada.
 
 **Gates futuros:** fixture real red→green, validação dos dois grupos sem achatamento, proteção de C–K no `90264017`, corpus 13 e holdouts, AuthZ/contratos/recursos, deploy canônico e reteste MCP quando houver correção e gates críticos PASS. Sem dados/GT oficiais aprovados para métricas gerais de precisão. **`A9_ROOT_CAUSE=TO_INVENTORY`; `COLOR_CAUSALITY=INCONCLUSIVE`; `CODE_CHANGED=false`; `DEPLOY_PERFORMED=false` nesta rodada; `ENGINEERING_APPROVAL=NOT_APPROVED`; `VAL01_COMPLETED=false`.**
+
+
+## Log adicional — 2026-11-09 (VAL-01, amostra exploratória inédita; ChatGPT visual vs MCP EVA)
+
+Amostra nova fora das 13 linhas do corpus original; **aditiva**, sem substituir regressão. PDFs oficiais obtidos via gateway delegado `drawing_download`, materializados e verificados por SHA no contexto de avaliação (não versionar PDF proprietário no Git). Fonte/estado de referência: Doc119 §55.
+
+| Produto | Páginas | SHA-256 | Inspeção visual direta | EVA MCP | Avaliação |
+|---|---:|---|---|---|---|
+| `90264026` | 1 | `4d0c2e2f173cb2a427bb8de9b890018f9ca496b09b803b92e52ac0bf075dfec4` | Tabela inferior com 6 itens, 6 códigos de componente e descrições | `aj-a449624cde06485d`: COMPLETED, OCR FULL 1/1, 75 tokens, 6 rows | **FAIL de projeção de campo:** linha B mistura `90264026 10090010` em `component_code`; descrições `null` em todas as seis linhas, embora células tragam texto. BOM compare INCONCLUSIVE; não é NC. |
+| `90264135` | 13 | `af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3` | Alternância de páginas de desenho e tabela, bloco principal e subconjuntos; p12 tem seis grupos `50225701/02/03/04/40/41` | `aj-1a368df473284c0d`: RUNNING na checagem inicial | **PENDING** validação estrutural do consumidor; inspeção humana parcial e não homologada. |
+
+A amostragem é exploratória, sem critério de aleatorização estatística; PDFs não usados para ajustar regras até a decisão bounded correspondente. No novo PDF 90264026, zero divergências de BOM não significa fidelidade na coluna Componente. Conclusões de estrutura são `DRAFT/CANDIDATE`, sem GT aprovado da Engenharia.
