@@ -38,6 +38,10 @@ GRANT SELECT, INSERT, UPDATE
 GRANT SELECT, INSERT, UPDATE
     ON engineering.product_registration_drafts TO eng_prc;
 
+-- Attendance flags (D16): CRUD operacional com soft-delete via UPDATE.
+GRANT SELECT, INSERT, UPDATE
+    ON engineering.product_registration_flags TO eng_prc;
+
 -- Records: SELECT/INSERT/UPDATE — ponteiro de revisão vigente é atualizado
 -- somente na conclusão verificada (mesma transação).
 GRANT SELECT, INSERT, UPDATE
@@ -65,6 +69,8 @@ REVOKE DELETE, TRUNCATE, TRIGGER, REFERENCES
     ON engineering.product_registration_requests FROM eng_prc;
 REVOKE DELETE, TRUNCATE, TRIGGER, REFERENCES
     ON engineering.product_registration_drafts FROM eng_prc;
+REVOKE DELETE, TRUNCATE, TRIGGER, REFERENCES
+    ON engineering.product_registration_flags FROM eng_prc;
 REVOKE DELETE, TRUNCATE, TRIGGER, REFERENCES
     ON engineering.product_registration_records FROM eng_prc;
 
