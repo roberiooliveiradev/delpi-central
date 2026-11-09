@@ -72,6 +72,20 @@ BASE_PERMISSIONS = [
         "description": "Criar e editar rotas",
         "module": "system",
     },
+
+    # MCP providers (Core governance)
+    {
+        "code": "mcp_providers.view",
+        "name": "Visualizar provedores MCP",
+        "description": "Listar e consultar registros governados de servidores MCP",
+        "module": "system",
+    },
+    {
+        "code": "mcp_providers.manage",
+        "name": "Gerenciar provedores MCP",
+        "description": "Registrar, aprovar, habilitar, desabilitar e revogar provedores MCP",
+        "module": "system",
+    },
 ]
 
 

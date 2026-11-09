@@ -107,6 +107,25 @@ class Settings:
             or os.getenv("DELPI_AUTH_RBAC_TIMEOUT_SECONDS")
             or "5.0"
         )
+        # Doc 293 §2A.9: MCP provider eligibility source.
+        # `settings` = legacy env enable/endpoint maps (default, safe until
+        # Core DEV seed is applied). `core` = Core
+        # GET /integrations/mcp-providers/eligible — fail closed on
+        # transport/auth/parse errors (no fallback to the seven).
+        _registry_mode = (
+            os.getenv("DELIA_MCP_PROVIDER_REGISTRY_MODE") or "settings"
+        ).strip().lower()
+        if _registry_mode not in {"settings", "core"}:
+            raise ValueError(
+                "DELIA_MCP_PROVIDER_REGISTRY_MODE must be 'settings' or "
+                f"'core', got {_registry_mode!r}"
+            )
+        self.mcp_provider_registry_mode = _registry_mode
+        self.core_integrations_service_token = (
+            os.getenv("DELIA_CORE_INTEGRATIONS_SERVICE_TOKEN")
+            or os.getenv("CORE_API_INTEGRATIONS_SERVICE_TOKEN")
+            or ""
+        ).strip()
         # Doc 243: every migrated tuning env fails closed when
         # explicitly set — the single runtime JSON owns them now.
         for retired in sorted(_RETIRED_LLM_ENV_VARS):

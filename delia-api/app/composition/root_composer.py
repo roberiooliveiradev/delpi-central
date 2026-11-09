@@ -36,7 +36,12 @@ from app.infrastructure.config.cri_instruction_resource import (
 )
 from app.infrastructure.auth.subject_bearer import current_subject_bearer
 from app.infrastructure.interoperability.config import (
+    specialist_connections_from_core_eligible,
     specialist_connections_from_settings,
+)
+from app.infrastructure.interoperability.mcp.core_provider_registry import (
+    CoreMcpProviderRegistryClient,
+    CoreMcpProviderRegistryError,
 )
 from app.infrastructure.interoperability.delegation import (
     InMemoryDelegatedTokenCache,
@@ -178,6 +183,34 @@ def _bounded_http_get(url: str, **kwargs):
     )
 
 
+def _resolve_specialist_connections(settings: Settings, logger: logging.Logger):
+    """Resolve MCP connection profiles from settings or Core registry.
+
+    When ``DELIA_MCP_PROVIDER_REGISTRY_MODE=core``, Core eligibility is
+    authoritative: transport/auth failure yields empty enablement
+    (fail closed) — never a silent fallback to env-enabled specialists.
+    """
+    if settings.mcp_provider_registry_mode != "core":
+        return specialist_connections_from_settings(settings)
+
+    client = CoreMcpProviderRegistryClient(
+        core_api_url=settings.core_api_url,
+        service_token=settings.core_integrations_service_token,
+        timeout_seconds=settings.core_timeout_seconds,
+        http_get=_bounded_http_get,
+    )
+    try:
+        eligible = client.list_eligible()
+    except CoreMcpProviderRegistryError as exc:
+        logger.error(
+            "mcp_provider_registry_core_unavailable error=%s — "
+            "fail-closed with zero enabled specialists",
+            exc,
+        )
+        eligible = []
+    return specialist_connections_from_core_eligible(settings, eligible)
+
+
 def create_application(
     *,
     testing: bool = False,
@@ -217,7 +250,7 @@ def create_application(
     # absent user-delegated credentials fail closed at call time.
     # Built before the interaction handler so the bounded C4 governed
     # read can compose on top of it (config-gated, bounded to this task).
-    connections = specialist_connections_from_settings(settings)
+    connections = _resolve_specialist_connections(settings, logger)
     # C4-MCP-GOVERNED-READS-01/02: per-binding enabled set — each
     # bounded flag contributes exactly its own authorized tuple at
     # both enforcement boundaries.

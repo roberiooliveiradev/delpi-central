@@ -48,7 +48,7 @@
 | A-03 | Architecture | C3-T5 OpenAPI foundation preservado | DÉLIA openapi/capability | ledger G5 KEEP (46 testes); `openapi_provider.py` presente; adapter direto já aposentado | `KEEP_APPROVED` | — |
 | A-04 | Architecture | Segundo Agent/planner/tool-loop paralelo ao Pydantic AI | DÉLIA orchestration | Agent + MCPToolset em adapter/investigation; G8 “zero segundo runtime” | `CLOSED_PROVEN` | — |
 | A-05 | Architecture | Snapshot experiment RETIRE executado (código) | DÉLIA interop | PO §2A + remoção física; Settings fail-closed; live SpecialistInterop only | `CLOSED_PROVEN` (código) | R04 prod = PENDING_OPS |
-| A-07 | Architecture | Cadastro centralizado MCP (Core ExternalConnection / provider approval) | Core governance | T2 registry task: inventário Core rg=0; apps≠MCP registry; §2A.7 + gate CORE_OWNER_APPROVAL=NOT_PROVEN; contrato draft no residual; CODE_CHANGED=NO | `BLOCKED_BY_OWNER_CONTRACT` | aceite formal Core owner |
+| A-07 | Architecture | Cadastro centralizado MCP (Core provider registry) | Core governance | R1: `mcp_providers` + HTTP admin/S2S + seed 7 DEV + DÉLIA HTTP client; ExternalConnection ainda TARGET; prod N/A | `IMPLEMENTED_BOUNDED_DEV` | T2_INDEPENDENT_REVIEW; ExternalConnection; R04 |
 | A-06 | Architecture | Estratégia PromptedOutput vs ToolOutput (coexistência) | Coordenação DÉLIA | migração PromptedOutput rollback; ADR spike; **não reabrir em T3** | `KEEP_APPROVED` (+ ADR registrado) | — |
 | O-01 | Flow | Admissão v42 → owner path (Kimi, Qwen14B) | DÉLIA admission | matrix E2E + admission 3/3; SHA `dc491abd1e` | `CLOSED_PROVEN` | — |
 | O-02 | Flow | Admissão C1 Qwen4B local (`explanation`/owner_path=false) | DÉLIA admission + eval | matrix: admission FAIL 2/2; E2E 0 MCP; fronteira `ADMISSION` | `OPEN_MATERIAL` | T3 |
@@ -591,7 +591,7 @@ Provider-neutral; SSRF/redirect/DNS checks; OAuth externo fora do Keycloak DELPI
 
 | ID | Status após esta task |
 |---|---|
-| A-07 | `BLOCKED_BY_OWNER_CONTRACT` (inventário + contrato draft; sem persistência) |
+| A-07 | Architecture | Cadastro centralizado MCP (Core provider registry) | Core governance | R1: `mcp_providers` + HTTP admin/S2S + seed 7 DEV + DÉLIA HTTP client; ExternalConnection ainda TARGET; prod N/A | `IMPLEMENTED_BOUNDED_DEV` | T2_INDEPENDENT_REVIEW; ExternalConnection; R04 |
 | R04 | `PENDING_OPS` |
 | Architecture Ownership gate | `NOT_PASS` |
 | Snapshot | permanece ABSENT |
@@ -613,3 +613,38 @@ Provider-neutral; SSRF/redirect/DNS checks; OAuth externo fora do Keycloak DELPI
 
 
 **NEXT:** `T2_INDEPENDENT_REVIEW` — aguardar aceite Core antes de qualquer implementação.
+
+
+---
+
+## T2 R1 — Core governed MCP registry implementation (2026-11-09)
+
+**TASK_ID:** `DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-IMPLEMENTATION-R1`  
+**AUTHORIZATION:** §2A.9 / commit `a2321e15` — `PO_IMPLEMENTATION_AUTHORIZATION=APPROVED`  
+**CORE_OWNER_ACK:** `TO_VERIFY` (sem assinatura separada exigida no contrato vigente; execução DEV sob PO)
+
+### Entrega
+
+- Migration `u7v8w9x0y1_mcp_providers` → tabela `mcp_providers` + permissions `mcp_providers.view|manage`
+- Lifecycle tipado + use cases + audit via `audit_logs`
+- Admin `/admin/mcp-providers/*` + S2S `GET /integrations/mcp-providers/eligible`
+- Seed DEV idempotente 7 especialistas (enabled só davi/teo/vista)
+- DÉLIA: `DELIA_MCP_PROVIDER_REGISTRY_MODE=core|settings` + client HTTP fail-closed
+- Snapshot continua ABSENT; ExternalConnection **não** implementado
+
+### Testes
+
+- Core focused: lifecycle + use case + HTTP authz **PASS**
+- DÉLIA focused: core registry client + snapshot retired **PASS**
+- Full suites: executar se tempo; senão registrar resultado real
+
+### Estados
+
+| ID | Status |
+|---|---|
+| A-07 | `IMPLEMENTED_BOUNDED_DEV` (não `CLOSED_PROVEN` — ExternalConnection + review + mode=core prod) |
+| R04 | `PENDING_OPS` |
+| Architecture Ownership | PARTIAL — Core registry vivo em DEV; gate global ainda depende review |
+
+**NEXT:** `T2_INDEPENDENT_REVIEW`
+

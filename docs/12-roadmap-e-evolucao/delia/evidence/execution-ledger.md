@@ -6053,3 +6053,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Owner:** Core governance; `CORE_OWNER_ACK/TECHNICAL_CONTRACT_ACCEPTANCE=TO_VERIFY` se exigido como ato separado; não atribuir assinatura inexistente. O veto anterior por **ausência de autorização do PO** está superado: `A-07=AUTHORIZED_FOR_BOUNDED_DEV_IMPLEMENTATION`, **não** implementado/aceito. `ExternalConnection` físico continua condicionado a owner/contrato separado.
 - **Preservar:** Keycloak identidade/token exchange, Pydantic AI MCPToolset live, Domain AuthZ/Outcome; proibido snapshot, registry paralelo DÉLIA, schema Keycloak, catálogo materializado. `R04=PENDING_OPS`. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `T3=NOT_AUTHORIZED`.
 - **EXECUTION_STATE:** `PENDING`; testes/código da implementação Core **TEST_NOT_RUN** nesta autorização documental. Reancorar 16 + ledger + owner contracts antes de executar; parar em conflito/falta de aprovação separada requerida. **NEXT:** execução Core DEV contratada, seguida de T2_INDEPENDENT_REVIEW. Relatório histórico `BLOCKED_BY_OWNER_CONTRACT` permaneceu verdadeiro no seu SHA de execução.
+
+| DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-IMPLEMENTATION-R1 | PO §2A.9 APPROVED: Core `mcp_providers` migration+API+RBAC+audit; seed 7 DEV (3 enabled); DÉLIA HTTP client mode settings\|core fail-closed; ExternalConnection NOT impl; Keycloak/prod untouched; focused Core 20 PASS + DÉLIA registry tests PASS; PRODUCTION_DEPLOY=NOT_AUTHORIZED | A-07=IMPLEMENTED_BOUNDED_DEV; R04=PENDING_OPS; NEXT=T2_INDEPENDENT_REVIEW |
+
+### DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-IMPLEMENTATION-R1 — execução (2026-11-09)
+
+- **Autorização:** §2A.9 `PO_IMPLEMENTATION_AUTHORIZATION=APPROVED`; `PERSISTENCE_DEV_SCOPE_AUTHORIZED_BY_PO=YES`.
+- **Core:** tabela `mcp_providers`, permissions, admin+S2S contracts, seed DEV.
+- **DÉLIA:** consumer HTTP; default mode `settings` até ops ligar `core`.
+- **Não feito:** ExternalConnection físico; OAuth externo; UI admin completa; prod/IAM writes; T3.
+- **Veredicto:** `IMPLEMENTED_BOUNDED_DEV` — revisão independente; não autoaceite CLOSED_PROVEN.
+

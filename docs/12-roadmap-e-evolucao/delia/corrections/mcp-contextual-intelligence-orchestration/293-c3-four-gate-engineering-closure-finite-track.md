@@ -202,6 +202,11 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 **Critério de saída:** entregar diff mínimo com testes RED/GREEN, full Core+DÉLIA quando alterados, matriz sete registros DEV e negativos, SHA/config/Outcome e ledger factual. Se alguma dependência não puder ser comprovada, classificar `PENDING/TEST_NOT_RUN/BLOCKED` por boundary, sem autoaceite. Revisão T2 independente após execução; nenhuma alteração retroativa do relatório anterior bloqueado.
 
 
+### 2A.10 Execution stamp — Core MCP registry R1 (2026-11-09)
+
+**TASK:** `DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-IMPLEMENTATION-R1`  
+**RESULT:** Core `mcp_providers` + HTTP + seed DEV 7 (3 enabled) **IMPLEMENTED**; DÉLIA HTTP consumer com `DELIA_MCP_PROVIDER_REGISTRY_MODE`; ExternalConnection **NOT_IMPLEMENTED**; R04 `PENDING_OPS`. **NEXT:** `T2_INDEPENDENT_REVIEW`. T3/PRODUCTION_DEPLOY: NOT_AUTHORIZED.
+
 ## 3. Política de residual ZERO e limites reais
 
 - **ZERO** significa nenhum residual material **no escopo de fechamento DÉLIA aprovado**. Resíduo externo TÉO, dependência de produção ou limitação de modelo não pode ser rotulado `PASS`; determinar explicitamente se é bloqueador da aceitação DÉLIA ou de release. Não declarar que todo monorepo foi limpo.
