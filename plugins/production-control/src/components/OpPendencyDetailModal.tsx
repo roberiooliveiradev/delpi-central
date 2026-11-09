@@ -67,6 +67,16 @@ function DemandRow({ line, unit }: { line: DemandLine; unit: string }) {
       </div>
       <div className="ppc-op-detail__demand-quantities">
         <span>{labels.stock}: {stock} · {labels.fromOps}: {fromOrders}</span>
+        {line.source === "myweg" && (line.fiscal_offset_mi ?? 0) > 0 ? (
+          <span>
+            NF considerada (provisório):{" "}
+            {formatOpPendencyQuantity(
+              Math.round((line.fiscal_offset_mi ?? 0) * 1000),
+              line.fiscal_offset_mi ?? 0,
+              "MI",
+            )}
+          </span>
+        ) : null}
         <strong>{labels.missing}: {quantity}</strong>
       </div>
     </li>
