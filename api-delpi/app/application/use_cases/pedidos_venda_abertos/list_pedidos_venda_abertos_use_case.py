@@ -50,6 +50,7 @@ def _normalize_item(row: dict) -> dict:
         "entregue": _as_float(row.get("entregue")),
         "saldo": _as_float(row.get("saldo")),
         "unidade": _as_str(row.get("unidade")),
+        "tipo_produto": _as_str(row.get("tipo_produto")).upper(),
         "data_despacho": _optional_date(row.get("data_despacho")),
         "data_entrega": _optional_date(row.get("data_entrega")),
         "no_estoque": _as_float(row.get("no_estoque")),
