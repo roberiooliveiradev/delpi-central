@@ -30,3 +30,12 @@ def test_open_orders_items_select_includes_line_unit_from_sc6_sb1() -> None:
     assert "B1.B1_UM" in src
     assert "LEFT JOIN SC6010 C6" in src
     assert "LEFT JOIN SB1010 B1" in src
+
+
+def test_open_orders_exposes_sb1_product_type_without_globally_excluding_mp() -> None:
+    """PCP filtra MP no próprio domínio, não no endpoint de vendas usado por outros setores."""
+    src = _repo_source()
+    assert "B1.B1_TIPO" in src
+    assert "AS tipo_produto" in src
+    assert "B1.B1_TIPO <> 'MP'" not in src
+    assert "B1.B1_TIPO != 'MP'" not in src
