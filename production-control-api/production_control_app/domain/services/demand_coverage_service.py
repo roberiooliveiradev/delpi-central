@@ -17,7 +17,10 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any, Iterable
 
-from production_control_app.domain.services.demand_entity_scope import is_customer_sales_entity
+from production_control_app.domain.services.demand_entity_scope import (
+    is_customer_sales_entity,
+    is_pcp_sales_order_product,
+)
 
 STATUS_LATE = "late"
 STATUS_AT_RISK = "at_risk"
@@ -176,6 +179,8 @@ class DemandCoverageService:
                 source = "myweg"
             else:
                 source = "protheus"
+                if not is_pcp_sales_order_product(item):
+                    continue
             lines.append(
                 DemandLine(
                     branch=_text(item.get("filial")),
