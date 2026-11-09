@@ -805,3 +805,11 @@ Implementação, deploy, publicação/inativação/exclusão reais, alteração 
 **Aprovações owners:** PO UX = aprovada; Segurança/Plataforma = **PENDENTE**; Controladoria risco operacional = **PENDENTE**.
 
 **Deploy permitido sem gate:** rebuild BFF/MCP com flags default (Portal ON, ack vazio). **Deploy proibido:** qualquer config que arme ACT sensível só com flag/texto do modelo.
+
+## 21. Follow-up operacional 09/11/2026 — Filial 01 outubro reaberta, revisão setembro continua
+
+**Evidência de e-mail:** resposta recebida na thread “Verificação do fechamento de estoque e custos — Filial 01 (Outubro/2026)” informa: “Na matriz o estoque teve que ser reaberto para correção de NF.” A frase é compatível com `SB9010` de outubro sem posição para Filial 01 e `MV_ULMES=20260930`; **não prova conclusão da correção nem novo fechamento**. Classificação `PROVEN_EMAIL_STATEMENT` + `PENDING` para reprocessamento/revalidação.
+
+**Decisão do PO:** continuar a revisão integral do Portal com **09/2026**, confrontando por filial e mesmo universo os resultados com os arquivos históricos privados do projeto. Não tomar a indisponibilidade de 10/2026 da Matriz como zero ou paridade negativa do Portal. **Trilha e protocolo de comparação:** [doc 159](./159-ocorrencia-reabertura-estoque-filial01-outubro-e-revisao-setembro-2026-11-09.md). Em caso de divergência de valores, filtros, fonte, autorização, UX ou exportação, registrar achado com evidência e RQ/AC neste plano antes de corrigir. Reconsultar outubro quando responsável confirmar novo fechamento.
+
+**Estado:** `PROVEN` (resposta operacional e dados anteriores), `PENDING` (outubro após correção), `PLANNED / TEST_NOT_RUN` (nova comparação setembro); `NO_RUNTIME`.
