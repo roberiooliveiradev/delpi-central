@@ -71,7 +71,7 @@ export function PrcFlagModal({
   flag: PrcAttendanceFlag | null;
   target: FlagTargetContext;
   onClose: () => void;
-  onChanged: () => void;
+  onChanged: () => void | Promise<void>;
 }) {
   const formId = useId();
   const [title, setTitle] = useState("");
@@ -106,7 +106,9 @@ export function PrcFlagModal({
     setError("");
     try {
       await fn();
-      onChanged();
+      // Aguarda reload do provider antes de fechar — evita CAS com
+      // versão obsoleta na próxima abertura do modal.
+      await onChanged();
       onClose();
     } catch (err) {
       setError(

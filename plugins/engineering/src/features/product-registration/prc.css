@@ -804,6 +804,9 @@
   font-size: 0.85rem;
 }
 
+.engineering-prc__flagged-field:hover .engineering-prc__field-flag--add,
+.engineering-prc__flagged-field:focus .engineering-prc__field-flag--add,
+.engineering-prc__flagged-field:focus-within .engineering-prc__field-flag--add,
 .engineering-prc__flagged-field-label:hover .engineering-prc__field-flag--add,
 .engineering-prc__flagged-field-label:focus-within .engineering-prc__field-flag--add,
 .engineering-prc__supplier-flag-cell:hover .engineering-prc__field-flag--add,

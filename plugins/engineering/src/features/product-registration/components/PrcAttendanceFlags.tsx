@@ -135,9 +135,7 @@ export function PrcAttendanceFlagsProvider({
         flag={modalFlag}
         target={modalTarget}
         onClose={() => setModalOpen(false)}
-        onChanged={() => {
-          void reload();
-        }}
+        onChanged={reload}
       />
     </Ctx.Provider>
   );
