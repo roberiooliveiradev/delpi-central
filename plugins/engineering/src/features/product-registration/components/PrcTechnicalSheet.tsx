@@ -9,7 +9,6 @@ import {
   EngineeringActionButton,
   EngineeringCheckboxControl,
   EngineeringDetailCard,
-  EngineeringDetailFieldGrid,
   EngineeringFormActions,
   EngineeringSelectField,
   EngineeringStateBanner,
@@ -28,7 +27,16 @@ import {
   toSupplierRows,
   type SupplierRow,
 } from "../prcSuppliers";
-import { PrcAttendanceFlags } from "./PrcAttendanceFlags";
+import {
+  PrcAttendanceFlagsProvider,
+  PrcAttendanceFlagsSummary,
+  usePrcFlagsContext,
+} from "./PrcAttendanceFlags";
+import {
+  findOpenFieldFlag,
+  findOpenSupplierFlag,
+  PrcFieldFlagTrigger,
+} from "./PrcFieldFlagTrigger";
 
 function scalarText(value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";
@@ -53,6 +61,229 @@ const FIELD_GROUPS: { title: string; paths: string[] }[] = [
 
 function fieldLabel(path: string): string {
   return PRC_FIELD_LABELS[path] || path;
+}
+
+function PrcTechnicalSheetRead({
+  detail,
+  draft,
+  changedPaths,
+  changedReasons,
+  specByPath,
+  enterEdit,
+}: {
+  detail: PrcRequestDetail;
+  draft: Record<string, unknown>;
+  changedPaths: Set<string>;
+  changedReasons: Map<string, string>;
+  specByPath: Map<string, PrcFieldSpec>;
+  enterEdit: () => void;
+}) {
+  const { flags, openTarget } = usePrcFlagsContext();
+
+  return (
+    <>
+      {FIELD_GROUPS.map((group) => {
+        const paths = group.paths.filter(
+          (p) => p in draft || p === "officialProductCode",
+        );
+        if (!paths.length) return null;
+        return (
+          <EngineeringDetailCard key={group.title} title={group.title}>
+            <div className="engineering-prc__flagged-grid">
+              {paths.map((p) => {
+                const openFlag =
+                  p === "officialProductCode"
+                    ? undefined
+                    : findOpenFieldFlag(flags, p);
+                const label = fieldLabel(p);
+                return (
+                  <div
+                    key={p}
+                    id={`prc-field-${p}`}
+                    tabIndex={-1}
+                    className={
+                      p === "description"
+                        ? "engineering-prc__flagged-field engineering-prc__flagged-field--wide"
+                        : "engineering-prc__flagged-field"
+                    }
+                  >
+                    <div className="engineering-prc__flagged-field-label">
+                      <span>{label}</span>
+                      {p !== "officialProductCode" ? (
+                        <PrcFieldFlagTrigger
+                          openFlag={openFlag}
+                          label={label}
+                          onOpen={() =>
+                            openTarget(
+                              {
+                                subject: "FIELD",
+                                targetPath: p,
+                                fieldLabel: label,
+                                currentValue: scalarText(draft[p]),
+                              },
+                              openFlag || null,
+                            )
+                          }
+                        />
+                      ) : null}
+                    </div>
+                    {specByPath.get(p)?.note ? (
+                      <p className="engineering-prc__muted">
+                        {specByPath.get(p)?.note}
+                      </p>
+                    ) : null}
+                    <div className="engineering-prc__flagged-field-value">
+                      {scalarText(draft[p])}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {group.paths.some((p) => changedPaths.has(p)) ? (
+              <ul className="engineering-prc__change-notes">
+                {group.paths
+                  .filter((p) => changedPaths.has(p))
+                  .map((p) => (
+                    <li key={p}>
+                      <strong>{fieldLabel(p)}</strong> — alterado:{" "}
+                      {changedReasons.get(p)}
+                    </li>
+                  ))}
+              </ul>
+            ) : null}
+          </EngineeringDetailCard>
+        );
+      })}
+
+      <EngineeringDetailCard
+        title="Fornecedores"
+        headerActions={
+          detail.allowedActions.includes("edit_draft") ? (
+            <EngineeringActionButton variant="ghost" onClick={enterEdit}>
+              Editar ficha
+            </EngineeringActionButton>
+          ) : undefined
+        }
+      >
+        {toSupplierRows(draft.suppliers).length ? (
+          <DataTableSection
+            title="Vínculos produto × fornecedor"
+            columns={
+              [
+                {
+                  key: "supplierCode",
+                  header: PRC_SUPPLIER_LABELS.supplierCode,
+                  render: (r: SupplierRow) => r.supplierCode,
+                },
+                {
+                  key: "store",
+                  header: PRC_SUPPLIER_LABELS.store,
+                  render: (r) => r.store,
+                },
+                {
+                  key: "supplierName",
+                  header: PRC_SUPPLIER_LABELS.supplierName,
+                  render: (r) => r.supplierName,
+                },
+                {
+                  key: "partNumber",
+                  header: `${PRC_SUPPLIER_LABELS.partNumber} (opcional)`,
+                  headerHint:
+                    "A5_CODPRF — pode ser vazio quando o TOTVS também está vazio.",
+                  render: (r) => {
+                    const openFlag = findOpenSupplierFlag(
+                      flags,
+                      r.supplierCode,
+                      r.store,
+                      "partNumber",
+                    );
+                    return (
+                      <span
+                        id={`prc-supplier-${r.supplierCode}-${r.store}-partNumber`}
+                        className="engineering-prc__supplier-flag-cell"
+                      >
+                        {r.partNumber || "—"}
+                        <PrcFieldFlagTrigger
+                          openFlag={openFlag}
+                          label={`${PRC_SUPPLIER_LABELS.partNumber} ${r.supplierCode}`}
+                          onOpen={() =>
+                            openTarget(
+                              {
+                                subject: "SUPPLIER_LINK",
+                                targetAttribute: "partNumber",
+                                supplierKey: {
+                                  supplierCode: r.supplierCode,
+                                  store: r.store,
+                                },
+                                currentValue: r.partNumber || "",
+                              },
+                              openFlag || null,
+                            )
+                          }
+                        />
+                      </span>
+                    );
+                  },
+                },
+                {
+                  key: "catalogNumber",
+                  header: PRC_SUPPLIER_LABELS.catalogNumber,
+                  render: (r) => {
+                    const openFlag = findOpenSupplierFlag(
+                      flags,
+                      r.supplierCode,
+                      r.store,
+                      "catalogNumber",
+                    );
+                    return (
+                      <span
+                        id={`prc-supplier-${r.supplierCode}-${r.store}-catalogNumber`}
+                        className="engineering-prc__supplier-flag-cell"
+                      >
+                        {r.catalogNumber || "—"}
+                        <PrcFieldFlagTrigger
+                          openFlag={openFlag}
+                          label={`${PRC_SUPPLIER_LABELS.catalogNumber} ${r.supplierCode}`}
+                          onOpen={() =>
+                            openTarget(
+                              {
+                                subject: "SUPPLIER_LINK",
+                                targetAttribute: "catalogNumber",
+                                supplierKey: {
+                                  supplierCode: r.supplierCode,
+                                  store: r.store,
+                                },
+                                currentValue: r.catalogNumber || "",
+                              },
+                              openFlag || null,
+                            )
+                          }
+                        />
+                      </span>
+                    );
+                  },
+                },
+              ] as DataTableColumn<SupplierRow>[]
+            }
+            rows={toSupplierRows(draft.suppliers)}
+            rowKey={(r) => `${r.supplierCode}.${r.store}.${r.partNumber}`}
+            hideSearch
+            emptyMessage="Nenhum fornecedor vinculado."
+          />
+        ) : (
+          <p className="engineering-prc__muted">
+            Nenhum fornecedor vinculado.
+          </p>
+        )}
+        {changedPaths.has("suppliers") ? (
+          <p className="engineering-prc__change-notes">
+            <strong>Fornecedores</strong> — alterado:{" "}
+            {changedReasons.get("suppliers")}
+          </p>
+        ) : null}
+      </EngineeringDetailCard>
+    </>
+  );
 }
 
 export function PrcTechnicalSheet({
@@ -190,99 +421,17 @@ export function PrcTechnicalSheet({
   return (
     <div className="engineering-prc__sheet">
       {!editing ? (
-        <>
-          <PrcAttendanceFlags requestId={detail.id} />
-          {FIELD_GROUPS.map((group) => {
-            const fields = group.paths
-              .filter((p) => p in draft || p === "officialProductCode")
-              .map((p) => ({
-                label: fieldLabel(p),
-                hint: specByPath.get(p)?.note || undefined,
-                value: scalarText(draft[p]),
-                wide: p === "description",
-              }));
-            if (!fields.length) return null;
-            return (
-              <EngineeringDetailCard key={group.title} title={group.title}>
-                <EngineeringDetailFieldGrid fields={fields} />
-                {group.paths.some((p) => changedPaths.has(p)) ? (
-                  <ul className="engineering-prc__change-notes">
-                    {group.paths
-                      .filter((p) => changedPaths.has(p))
-                      .map((p) => (
-                        <li key={p}>
-                          <strong>{fieldLabel(p)}</strong> — alterado:{" "}
-                          {changedReasons.get(p)}
-                        </li>
-                      ))}
-                  </ul>
-                ) : null}
-              </EngineeringDetailCard>
-            );
-          })}
-
-          <EngineeringDetailCard
-            title="Fornecedores"
-            headerActions={
-              detail.allowedActions.includes("edit_draft") ? (
-                <EngineeringActionButton variant="ghost" onClick={enterEdit}>
-                  Editar ficha
-                </EngineeringActionButton>
-              ) : undefined
-            }
-          >
-            {toSupplierRows(draft.suppliers).length ? (
-              <DataTableSection
-                title="Vínculos produto × fornecedor"
-                columns={
-                  [
-                    {
-                      key: "supplierCode",
-                      header: PRC_SUPPLIER_LABELS.supplierCode,
-                      render: (r: SupplierRow) => r.supplierCode,
-                    },
-                    {
-                      key: "store",
-                      header: PRC_SUPPLIER_LABELS.store,
-                      render: (r) => r.store,
-                    },
-                    {
-                      key: "supplierName",
-                      header: PRC_SUPPLIER_LABELS.supplierName,
-                      render: (r) => r.supplierName,
-                    },
-                    {
-                      key: "partNumber",
-                      header: `${PRC_SUPPLIER_LABELS.partNumber} (opcional)`,
-                      headerHint:
-                        "A5_CODPRF — pode ser vazio quando o TOTVS também está vazio.",
-                      render: (r) => r.partNumber || "—",
-                    },
-                    {
-                      key: "catalogNumber",
-                      header: PRC_SUPPLIER_LABELS.catalogNumber,
-                      render: (r) => r.catalogNumber || "—",
-                    },
-                  ] as DataTableColumn<SupplierRow>[]
-                }
-                rows={toSupplierRows(draft.suppliers)}
-                rowKey={(r) => `${r.supplierCode}.${r.store}.${r.partNumber}`}
-                hideSearch
-                emptyMessage="Nenhum fornecedor vinculado."
-              />
-            ) : (
-              <p className="engineering-prc__muted">
-                Nenhum fornecedor vinculado.
-              </p>
-            )}
-            {changedPaths.has("suppliers") ? (
-              <p className="engineering-prc__change-notes">
-                <strong>Fornecedores</strong> — alterado:{" "}
-                {changedReasons.get("suppliers")}
-              </p>
-            ) : null}
-          </EngineeringDetailCard>
-        </>
+        <PrcAttendanceFlagsProvider requestId={detail.id}>
+          <PrcAttendanceFlagsSummary />
+          <PrcTechnicalSheetRead
+            detail={detail}
+            draft={draft}
+            changedPaths={changedPaths}
+            changedReasons={changedReasons}
+            specByPath={specByPath}
+            enterEdit={enterEdit}
+          />
+        </PrcAttendanceFlagsProvider>
       ) : (
         <EngineeringDetailCard
           title={isUpdate ? "Edição seletiva da ficha" : "Editar ficha técnica"}

@@ -1,7 +1,8 @@
-"""D16 — bandeiras de acompanhamento do atendimento PRC.
+"""D16 / D16-REF-01 — bandeiras de acompanhamento PRC.
 
-Anotações operacionais governadas. Não alteram SB1/SA5/baseline/
-revisões técnicas nem escrevem no TOTVS. Soft-delete auditável.
+Anotações operacionais governadas por alvo técnico (FIELD path ou
+SUPPLIER_LINK+atributo). Não alteram SB1/SA5/baseline/revisões nem
+escrevem no TOTVS. Soft-delete auditável. GENERAL é somente legado.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ from engineering_app.domain.product_registration.errors import (
 
 FLAG_STATUSES = ("OPEN", "RESOLVED")
 FLAG_SUBJECTS = ("GENERAL", "FIELD", "SUPPLIER_LINK")
+SUPPLIER_FLAG_ATTRIBUTES = ("partNumber", "catalogNumber")
 
 TITLE_MAX = 120
 DESCRIPTION_MAX = 1000
@@ -23,6 +25,9 @@ DESCRIPTION_MAX = 1000
 # rejeição do caso — sem reabrir cadastro oficial.
 FLAG_MUTATION_AFTER_TERMINAL = True
 
+# Novos fluxos contextuais (UI/EVA) não criam GENERAL.
+ALLOW_NEW_GENERAL = False
+
 _FIELD_PATHS = frozenset(
     spec.path
     for spec in catalog.FIELD_SPECS
@@ -30,19 +35,79 @@ _FIELD_PATHS = frozenset(
 )
 
 
+def flaggable_field_paths() -> tuple[str, ...]:
+    """Paths SB1 sinalizáveis na Ficha técnica (ordem do catálogo)."""
+    return tuple(
+        spec.path
+        for spec in catalog.FIELD_SPECS
+        if spec.path in _FIELD_PATHS
+    )
+
+
+def normalize_target_key(
+    *,
+    subject: str,
+    target_path: str | None = None,
+    supplier_key: dict | None = None,
+    target_attribute: str | None = None,
+    flag_id: str | None = None,
+) -> str:
+    """Chave determinística para unicidade OPEN por solicitação."""
+    subj = str(subject or "").strip().upper()
+    if subj == "FIELD":
+        path = str(target_path or "").strip()
+        if not path:
+            raise PrcValidationError(
+                "targetPath é obrigatório para subject=FIELD.",
+                fields={"targetPath": "required"},
+            )
+        return f"FIELD:{path}"
+    if subj == "SUPPLIER_LINK":
+        if not isinstance(supplier_key, dict):
+            raise PrcValidationError(
+                "supplierKey é obrigatório para subject=SUPPLIER_LINK.",
+                fields={"supplierKey": "required"},
+            )
+        code = str(supplier_key.get("supplierCode") or "").strip()
+        store = str(supplier_key.get("store") or "").strip()
+        attr = str(target_attribute or "").strip()
+        if not code or not store:
+            raise PrcValidationError(
+                "supplierKey exige supplierCode e store.",
+                fields={"supplierKey": "required"},
+            )
+        if attr not in SUPPLIER_FLAG_ATTRIBUTES:
+            raise PrcValidationError(
+                "targetAttribute inválido para SUPPLIER_LINK.",
+                fields={"targetAttribute": "enum"},
+            )
+        return f"SUPPLIER:{code}|{store}|{attr}"
+    if subj == "GENERAL":
+        # Legado: cada registro mantém chave própria (não collapsa).
+        fid = str(flag_id or "").strip() or "legacy"
+        return f"GENERAL:{fid}"
+    raise PrcValidationError(
+        "subject inválido.", fields={"subject": "enum"}
+    )
+
+
 def validate_flag_payload(
     *,
     title: Any,
     description: Any,
-    subject: Any = "GENERAL",
+    subject: Any = "FIELD",
     target_path: Any = None,
     supplier_key: Any = None,
+    target_attribute: Any = None,
     partial: bool = False,
+    allow_general: bool = False,
+    flag_id: str | None = None,
 ) -> dict[str, Any]:
     """Normaliza e valida payload de create/update.
 
     ``partial=True`` permite omitir campos no PATCH (só valida os
-    presentes).
+    presentes). ``allow_general`` só para leitura/legado — criações
+    novas contextuais devem passar ``allow_general=False``.
     """
     out: dict[str, Any] = {}
 
@@ -74,11 +139,20 @@ def validate_flag_payload(
             )
         out["description"] = text
 
-    subj = str(subject or "GENERAL").strip().upper() or "GENERAL"
+    if not partial or subject is not None:
+        subj = str(subject or "FIELD").strip().upper() or "FIELD"
+    else:
+        subj = "FIELD"
     if subj not in FLAG_SUBJECTS:
         raise PrcValidationError(
             "subject inválido.",
             fields={"subject": "enum"},
+        )
+    if subj == "GENERAL" and not allow_general and not ALLOW_NEW_GENERAL:
+        raise PrcValidationError(
+            "Novas bandeiras GENERAL não são permitidas — use FIELD "
+            "ou SUPPLIER_LINK com alvo técnico.",
+            fields={"subject": "deprecated"},
         )
     out["subject"] = subj
 
@@ -92,48 +166,80 @@ def validate_flag_payload(
                 "targetPath não está no catálogo técnico.",
                 fields={"targetPath": "invalid"},
             )
-        if subj != "FIELD":
-            raise PrcValidationError(
-                "targetPath só se aplica a subject=FIELD.",
-                fields={"targetPath": "invalid"},
-            )
-    out["targetPath"] = path
+    attr = target_attribute
+    if attr is not None and str(attr).strip() == "":
+        attr = None
+    if attr is not None:
+        attr = str(attr).strip()
 
     key = supplier_key
-    if key is None or key == {}:
-        out["supplierKey"] = None
-    else:
-        if not isinstance(key, dict):
+    if key == {}:
+        key = None
+
+    if subj == "FIELD":
+        if path is None and not partial:
             raise PrcValidationError(
-                "supplierKey inválido.",
-                fields={"supplierKey": "invalid"},
+                "subject=FIELD exige targetPath.",
+                fields={"targetPath": "required"},
             )
-        code = str(key.get("supplierCode") or "").strip()
-        store = str(key.get("store") or "").strip()
-        if not code or not store:
+        if key is not None or attr is not None:
             raise PrcValidationError(
-                "supplierKey exige supplierCode e store.",
+                "supplierKey/targetAttribute não se aplicam a FIELD.",
+                fields={"targetPath": "invalid"},
+            )
+        out["targetPath"] = path
+        out["supplierKey"] = None
+        out["targetAttribute"] = None
+    elif subj == "SUPPLIER_LINK":
+        if path is not None:
+            raise PrcValidationError(
+                "targetPath não se aplica a SUPPLIER_LINK.",
+                fields={"targetPath": "invalid"},
+            )
+        if not isinstance(key, dict) and not partial:
+            raise PrcValidationError(
+                "supplierKey é obrigatório.",
                 fields={"supplierKey": "required"},
             )
-        if subj != "SUPPLIER_LINK":
+        if isinstance(key, dict):
+            code = str(key.get("supplierCode") or "").strip()
+            store = str(key.get("store") or "").strip()
+            if not code or not store:
+                raise PrcValidationError(
+                    "supplierKey exige supplierCode e store.",
+                    fields={"supplierKey": "required"},
+                )
+            out["supplierKey"] = {"supplierCode": code, "store": store}
+        elif partial:
+            out["supplierKey"] = None
+        else:
+            out["supplierKey"] = None
+        if attr is None and not partial:
             raise PrcValidationError(
-                "supplierKey só se aplica a subject=SUPPLIER_LINK.",
-                fields={"supplierKey": "invalid"},
+                "subject=SUPPLIER_LINK exige targetAttribute "
+                "(partNumber|catalogNumber).",
+                fields={"targetAttribute": "required"},
             )
-        out["supplierKey"] = {"supplierCode": code, "store": store}
-
-    if subj == "FIELD" and out.get("targetPath") is None and not partial:
-        # FIELD sem path é permitido (contexto textual); path opcional.
-        pass
-    if subj == "SUPPLIER_LINK" and out.get("supplierKey") is None and not partial:
-        raise PrcValidationError(
-            "subject=SUPPLIER_LINK exige supplierKey.",
-            fields={"supplierKey": "required"},
-        )
-    if subj == "GENERAL":
+        if attr is not None and attr not in SUPPLIER_FLAG_ATTRIBUTES:
+            raise PrcValidationError(
+                "targetAttribute inválido.",
+                fields={"targetAttribute": "enum"},
+            )
+        out["targetPath"] = None
+        out["targetAttribute"] = attr
+    else:  # GENERAL legado
         out["targetPath"] = None
         out["supplierKey"] = None
+        out["targetAttribute"] = None
 
+    if not partial or "subject" in out:
+        out["targetKey"] = normalize_target_key(
+            subject=out["subject"],
+            target_path=out.get("targetPath"),
+            supplier_key=out.get("supplierKey"),
+            target_attribute=out.get("targetAttribute"),
+            flag_id=flag_id,
+        )
     return out
 
 
@@ -147,7 +253,9 @@ def public_flag(row: dict[str, Any]) -> dict[str, Any]:
         "status": row["status"],
         "subject": row["subject"],
         "targetPath": row.get("target_path"),
+        "targetAttribute": row.get("target_attribute"),
         "supplierKey": row.get("supplier_key"),
+        "targetKey": row.get("target_key"),
         "version": int(row["row_version"]),
         "createdAt": row["created_at"],
         "createdBy": {
@@ -169,4 +277,5 @@ def public_flag(row: dict[str, Any]) -> dict[str, Any]:
             else None
         ),
         "deleted": bool(row.get("deleted_at")),
+        "legacyGeneral": row.get("subject") == "GENERAL",
     }

@@ -186,7 +186,8 @@ describe("productRegistrationApi", () => {
       {
         title: "Revisar descrição",
         description: "Confirmar com solicitante.",
-        subject: "GENERAL",
+        subject: "FIELD",
+        targetPath: "description",
       },
       "flag-idem-1",
     );

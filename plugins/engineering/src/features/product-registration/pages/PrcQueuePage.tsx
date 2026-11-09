@@ -46,6 +46,7 @@ import {
 } from "../prcCopy";
 import { PrcStatusBadge } from "../components/PrcStatusBadge";
 import { PrcPersonCell } from "../components/PrcPersonCell";
+import { PrcFlagsOpsPanel } from "../components/PrcFlagsOpsPanel";
 
 const PAGE_SIZE = 25;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -312,6 +313,8 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
           />
         </EngineeringFiltersRow>
       </EngineeringPageHero>
+
+      {!forbidden ? <PrcFlagsOpsPanel basePath={basePath} /> : null}
 
       {forbidden ? (
         <>

@@ -429,6 +429,8 @@ export async function prcUpdateDraft(
 
 /* --- D16 attendance flags ------------------------------------------------ */
 
+export type PrcFlagTargetAttribute = "partNumber" | "catalogNumber";
+
 export type PrcAttendanceFlag = {
   id: string;
   requestId: string;
@@ -437,6 +439,8 @@ export type PrcAttendanceFlag = {
   status: "OPEN" | "RESOLVED";
   subject: "GENERAL" | "FIELD" | "SUPPLIER_LINK";
   targetPath?: string | null;
+  targetAttribute?: PrcFlagTargetAttribute | null;
+  targetKey?: string | null;
   supplierKey?: { supplierCode: string; store: string } | null;
   version: number;
   createdAt: string;
@@ -446,6 +450,11 @@ export type PrcAttendanceFlag = {
   resolvedAt?: string | null;
   resolvedBy?: { subject: string; displayName?: string | null } | null;
   deleted?: boolean;
+  legacyGeneral?: boolean;
+  productCode?: string | null;
+  requestType?: string | null;
+  requestStatus?: string | null;
+  productDescription?: string | null;
 };
 
 export type PrcFlagListResult = {
@@ -456,13 +465,36 @@ export type PrcFlagListResult = {
   openCount: number;
   resolvedCount: number;
   hasMore: boolean;
+  distinctRequestCount?: number;
+  distinctProductCount?: number;
+};
+
+export type PrcFlagSummaryResult = {
+  groupBy: string;
+  items: Array<{
+    key: string;
+    flagCount: number;
+    openCount: number;
+    resolvedCount: number;
+    requestCount: number;
+    lastCreatedAt?: string | null;
+  }>;
+  page: number;
+  pageSize: number;
+  total: number;
+  openCount: number;
+  resolvedCount: number;
+  distinctRequestCount: number;
+  distinctProductCount: number;
+  hasMore: boolean;
 };
 
 export type PrcFlagCreateBody = {
   title: string;
   description: string;
-  subject?: "GENERAL" | "FIELD" | "SUPPLIER_LINK";
+  subject?: "FIELD" | "SUPPLIER_LINK";
   targetPath?: string | null;
+  targetAttribute?: PrcFlagTargetAttribute | null;
   supplierKey?: { supplierCode: string; store: string } | null;
 };
 
@@ -470,18 +502,31 @@ export type PrcFlagUpdateBody = {
   expectedVersion: number;
   title?: string;
   description?: string;
-  subject?: "GENERAL" | "FIELD" | "SUPPLIER_LINK";
-  targetPath?: string | null;
-  supplierKey?: { supplierCode: string; store: string } | null;
+};
+
+export type PrcFlagListParams = {
+  status?: "OPEN" | "RESOLVED" | "all";
+  subject?: string;
+  targetPath?: string;
+  targetAttribute?: string;
+  supplierCode?: string;
+  store?: string;
+  page?: number;
+  pageSize?: number;
 };
 
 export async function fetchPrcFlags(
   requestId: string,
-  params?: { status?: "OPEN" | "RESOLVED" | "all"; page?: number; pageSize?: number },
+  params?: PrcFlagListParams,
   signal?: AbortSignal,
 ): Promise<Envelope<PrcFlagListResult>> {
   const qs = new URLSearchParams();
   if (params?.status) qs.set("status", params.status);
+  if (params?.subject) qs.set("subject", params.subject);
+  if (params?.targetPath) qs.set("targetPath", params.targetPath);
+  if (params?.targetAttribute) qs.set("targetAttribute", params.targetAttribute);
+  if (params?.supplierCode) qs.set("supplierCode", params.supplierCode);
+  if (params?.store) qs.set("store", params.store);
   if (params?.page) qs.set("page", String(params.page));
   if (params?.pageSize) qs.set("pageSize", String(params.pageSize));
   const suffix = qs.toString() ? `?${qs}` : "";
@@ -489,6 +534,73 @@ export async function fetchPrcFlags(
     `${BASE}/requests/${requestId}/flags${suffix}`,
     signal,
   );
+}
+
+export type PrcFlagCrossParams = PrcFlagListParams & {
+  productCode?: string;
+  requestId?: string;
+  requestType?: string;
+  requestStatus?: string;
+  assignee?: string;
+  createdFrom?: string;
+  createdTo?: string;
+};
+
+export async function fetchPrcFlagsCrossCase(
+  params?: PrcFlagCrossParams,
+  signal?: AbortSignal,
+): Promise<Envelope<PrcFlagListResult>> {
+  const qs = new URLSearchParams();
+  const entries: Array<[string, string | undefined]> = [
+    ["status", params?.status],
+    ["subject", params?.subject],
+    ["targetPath", params?.targetPath],
+    ["targetAttribute", params?.targetAttribute],
+    ["productCode", params?.productCode],
+    ["requestId", params?.requestId],
+    ["requestType", params?.requestType],
+    ["requestStatus", params?.requestStatus],
+    ["assignee", params?.assignee],
+    ["supplierCode", params?.supplierCode],
+    ["store", params?.store],
+    ["createdFrom", params?.createdFrom],
+    ["createdTo", params?.createdTo],
+  ];
+  for (const [k, v] of entries) {
+    if (v) qs.set(k, v);
+  }
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.pageSize) qs.set("pageSize", String(params.pageSize));
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return getJson(`${BASE}/flags${suffix}`, signal);
+}
+
+export async function fetchPrcFlagsSummary(
+  params?: {
+    groupBy?: string;
+    status?: string;
+    subject?: string;
+    targetPath?: string;
+    targetAttribute?: string;
+    productCode?: string;
+    requestStatus?: string;
+    page?: number;
+    pageSize?: number;
+  },
+  signal?: AbortSignal,
+): Promise<Envelope<PrcFlagSummaryResult>> {
+  const qs = new URLSearchParams();
+  if (params?.groupBy) qs.set("groupBy", params.groupBy);
+  if (params?.status) qs.set("status", params.status);
+  if (params?.subject) qs.set("subject", params.subject);
+  if (params?.targetPath) qs.set("targetPath", params.targetPath);
+  if (params?.targetAttribute) qs.set("targetAttribute", params.targetAttribute);
+  if (params?.productCode) qs.set("productCode", params.productCode);
+  if (params?.requestStatus) qs.set("requestStatus", params.requestStatus);
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.pageSize) qs.set("pageSize", String(params.pageSize));
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return getJson(`${BASE}/flags/summary${suffix}`, signal);
 }
 
 export async function createPrcFlag(

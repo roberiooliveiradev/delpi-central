@@ -1351,6 +1351,11 @@ class ProductRegistrationService:
         *,
         actor: PrcActor,
         status: str | None = None,
+        subject: str | None = None,
+        target_path: str | None = None,
+        target_attribute: str | None = None,
+        supplier_code: str | None = None,
+        store: str | None = None,
         page: int = 1,
         page_size: int = 25,
     ) -> dict[str, Any]:
@@ -1364,6 +1369,11 @@ class ProductRegistrationService:
         raw = self._repo.list_flags(
             request_id=request_id,
             status=filt,
+            subject=subject,
+            target_path=target_path,
+            target_attribute=target_attribute,
+            supplier_code=supplier_code,
+            store=store,
             page=page,
             page_size=page_size,
         )
@@ -1378,6 +1388,123 @@ class ProductRegistrationService:
             "resolvedCount": raw["resolvedCount"],
             "hasMore": raw["hasMore"],
         }
+
+    def list_flags_cross_case(
+        self,
+        *,
+        actor: PrcActor,
+        status: str | None = None,
+        subject: str | None = None,
+        target_path: str | None = None,
+        target_attribute: str | None = None,
+        product_code: str | None = None,
+        request_id: str | None = None,
+        request_type: str | None = None,
+        request_status: str | None = None,
+        assignee: str | None = None,
+        supplier_code: str | None = None,
+        store: str | None = None,
+        created_from: str | None = None,
+        created_to: str | None = None,
+        page: int = 1,
+        page_size: int = 25,
+    ) -> dict[str, Any]:
+        """Consulta transversal com AuthZ por caso no servidor."""
+        self._flag_actor_gate(actor)
+        if status is not None and status not in ("OPEN", "RESOLVED", "all"):
+            raise PrcValidationError(
+                "status inválido.", fields={"status": "enum"}
+            )
+        filt = None if status in (None, "all") else status
+        accessible_ids: list[str] | None = None
+        if not actor.is_analyst:
+            # Escopo do solicitante: IDs dos próprios casos.
+            owned = self._repo.list_requests(
+                page=1, page_size=5000,
+                requester_subject=actor.user_id,
+                global_scope=False,
+            )
+            accessible_ids = [str(i["id"]) for i in owned.get("items") or []]
+        raw = self._repo.list_flags_cross_case(
+            accessible_request_ids=accessible_ids,
+            global_scope=actor.is_analyst,
+            status=filt,
+            subject=subject,
+            target_path=target_path,
+            target_attribute=target_attribute,
+            product_code=product_code,
+            request_id=request_id,
+            request_type=request_type,
+            request_status=request_status,
+            assignee=assignee,
+            supplier_code=supplier_code,
+            store=store,
+            created_from=created_from,
+            created_to=created_to,
+            page=page,
+            page_size=page_size,
+        )
+        items = []
+        for item in raw["items"]:
+            pub = attendance_flags.public_flag(item)
+            pub["productCode"] = item.get("product_code")
+            pub["requestType"] = item.get("request_type")
+            pub["requestStatus"] = item.get("request_status")
+            pub["productDescription"] = item.get("product_description")
+            items.append(pub)
+        return {
+            "items": items,
+            "page": raw["page"],
+            "pageSize": raw["pageSize"],
+            "total": raw["total"],
+            "openCount": raw["openCount"],
+            "resolvedCount": raw["resolvedCount"],
+            "distinctRequestCount": raw["distinctRequestCount"],
+            "distinctProductCount": raw["distinctProductCount"],
+            "hasMore": raw["hasMore"],
+        }
+
+    def summarize_flags_cross_case(
+        self,
+        *,
+        actor: PrcActor,
+        group_by: str = "request",
+        status: str | None = None,
+        subject: str | None = None,
+        target_path: str | None = None,
+        target_attribute: str | None = None,
+        product_code: str | None = None,
+        request_status: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> dict[str, Any]:
+        self._flag_actor_gate(actor)
+        if status is not None and status not in ("OPEN", "RESOLVED", "all"):
+            raise PrcValidationError(
+                "status inválido.", fields={"status": "enum"}
+            )
+        filt = None if status in (None, "all") else status
+        accessible_ids: list[str] | None = None
+        if not actor.is_analyst:
+            owned = self._repo.list_requests(
+                page=1, page_size=5000,
+                requester_subject=actor.user_id,
+                global_scope=False,
+            )
+            accessible_ids = [str(i["id"]) for i in owned.get("items") or []]
+        return self._repo.summarize_flags_cross_case(
+            accessible_request_ids=accessible_ids,
+            global_scope=actor.is_analyst,
+            group_by=group_by,
+            status=filt,
+            subject=subject,
+            target_path=target_path,
+            target_attribute=target_attribute,
+            product_code=product_code,
+            request_status=request_status,
+            page=page,
+            page_size=page_size,
+        )
 
     def get_flag(
         self, request_id: str, flag_id: str, *, actor: PrcActor
@@ -1396,10 +1523,12 @@ class ProductRegistrationService:
         actor: PrcActor,
         title: str,
         description: str,
-        subject: str = "GENERAL",
+        subject: str = "FIELD",
         target_path: str | None = None,
         supplier_key: dict | None = None,
+        target_attribute: str | None = None,
         idempotency_key: str | None = None,
+        allow_general: bool = False,
     ) -> dict[str, Any]:
         self._flag_actor_gate(actor)
         request = self._get_scoped(request_id, actor)
@@ -1408,12 +1537,17 @@ class ProductRegistrationService:
             and not attendance_flags.FLAG_MUTATION_AFTER_TERMINAL
         ):
             raise PrcStateConflictError("state_conflict")
+        now = _now()
+        flag_id = _uuid()
         payload = attendance_flags.validate_flag_payload(
             title=title,
             description=description,
             subject=subject,
             target_path=target_path,
             supplier_key=supplier_key,
+            target_attribute=target_attribute,
+            allow_general=allow_general,
+            flag_id=flag_id,
         )
         fp = _fingerprint(
             {
@@ -1428,8 +1562,11 @@ class ProductRegistrationService:
         )
         if replay is not None:
             return replay
-        now = _now()
-        flag_id = _uuid()
+        existing = self._repo.find_open_flag_by_target(
+            request_id=request_id, target_key=payload["targetKey"],
+        )
+        if existing is not None:
+            raise PrcStateConflictError("open_flag_exists")
         row = {
             "id": flag_id,
             "request_id": request_id,
@@ -1438,7 +1575,9 @@ class ProductRegistrationService:
             "status": "OPEN",
             "subject": payload["subject"],
             "target_path": payload.get("targetPath"),
+            "target_attribute": payload.get("targetAttribute"),
             "supplier_key": payload.get("supplierKey"),
+            "target_key": payload["targetKey"],
             "row_version": 1,
             "created_by_subject": actor.user_id,
             "created_by_display_name": actor.label,
@@ -1464,6 +1603,9 @@ class ProductRegistrationService:
                 "flagId": flag_id,
                 "title": payload["title"],
                 "subject": payload["subject"],
+                "targetPath": payload.get("targetPath"),
+                "targetAttribute": payload.get("targetAttribute"),
+                "targetKey": payload["targetKey"],
             },
             "previous_status": None,
             "next_status": "OPEN",
@@ -1489,38 +1631,65 @@ class ProductRegistrationService:
         subject: str | None = None,
         target_path: Any = ...,
         supplier_key: Any = ...,
+        target_attribute: Any = ...,
         idempotency_key: str | None = None,
     ) -> dict[str, Any]:
+        """Edita título/descrição. Alvo é imutável (REF-01)."""
         self._flag_actor_gate(actor)
         self._get_scoped(request_id, actor)
         current = self._repo.get_flag(request_id=request_id, flag_id=flag_id)
         if current is None:
             raise PrcNotFoundError("flag", flag_id)
-        kwargs: dict[str, Any] = {
-            "title": title if title is not None else current["title"],
-            "description": (
+        # Rejeitar tentativa de retarget via PATCH comum.
+        if subject is not None and subject != current.get("subject"):
+            raise PrcValidationError(
+                "Alvo da bandeira é imutável; use operação de retarget.",
+                fields={"subject": "immutable"},
+            )
+        if target_path is not ... and target_path != current.get("target_path"):
+            raise PrcValidationError(
+                "Alvo da bandeira é imutável; use operação de retarget.",
+                fields={"targetPath": "immutable"},
+            )
+        if (
+            supplier_key is not ...
+            and supplier_key != current.get("supplier_key")
+        ):
+            raise PrcValidationError(
+                "Alvo da bandeira é imutável; use operação de retarget.",
+                fields={"supplierKey": "immutable"},
+            )
+        if (
+            target_attribute is not ...
+            and target_attribute != current.get("target_attribute")
+        ):
+            raise PrcValidationError(
+                "Alvo da bandeira é imutável; use operação de retarget.",
+                fields={"targetAttribute": "immutable"},
+            )
+        payload = attendance_flags.validate_flag_payload(
+            title=title if title is not None else current["title"],
+            description=(
                 description if description is not None
                 else current["description"]
             ),
-            "subject": subject if subject is not None else current["subject"],
-            "partial": False,
-        }
-        if target_path is not ...:
-            kwargs["target_path"] = target_path
-        else:
-            kwargs["target_path"] = current.get("target_path")
-        if supplier_key is not ...:
-            kwargs["supplier_key"] = supplier_key
-        else:
-            kwargs["supplier_key"] = current.get("supplier_key")
-        payload = attendance_flags.validate_flag_payload(**kwargs)
+            subject=current["subject"],
+            target_path=current.get("target_path"),
+            supplier_key=current.get("supplier_key"),
+            target_attribute=current.get("target_attribute"),
+            allow_general=current["subject"] == "GENERAL",
+            flag_id=flag_id,
+        )
         fp = _fingerprint(
             {
                 "request_id": request_id,
                 "flag_id": flag_id,
                 "op": "flag_update",
                 "expected_version": expected_version,
-                "payload": payload,
+                "payload": {
+                    "title": payload["title"],
+                    "description": payload["description"],
+                },
             }
         )
         replay = self._idempotent_replay(
@@ -1532,9 +1701,6 @@ class ProductRegistrationService:
         patch = {
             "title": payload["title"],
             "description": payload["description"],
-            "subject": payload["subject"],
-            "target_path": payload.get("targetPath"),
-            "supplier_key": payload.get("supplierKey"),
         }
         event = {
             "event_type": "flag.updated",
@@ -1545,10 +1711,7 @@ class ProductRegistrationService:
             "metadata": {
                 "channel": actor.channel,
                 "flagId": flag_id,
-                "after": {
-                    "title": patch["title"],
-                    "subject": patch["subject"],
-                },
+                "after": {"title": patch["title"]},
             },
             "previous_status": current["status"],
             "next_status": current["status"],

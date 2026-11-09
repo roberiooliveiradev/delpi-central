@@ -15,6 +15,7 @@ from typing import Any
 from engineering_app.domain.product_registration.errors import (
     PrcConcurrencyError,
     PrcNotFoundError,
+    PrcRepositoryError,
     PrcStaleRevisionError,
     PrcStateConflictError,
 )
@@ -478,12 +479,21 @@ class InMemoryProductRegistrationRepository:
             "verification": verification_row,
         }
 
-    # --- attendance flags (D16) ------------------------------------------------
+    # --- attendance flags (D16 / D16-REF-01) -----------------------------------
 
     def create_flag(
         self, *, flag: dict[str, Any], event: dict[str, Any]
     ) -> dict[str, Any]:
         self._require_request(flag["request_id"])
+        target_key = flag.get("target_key")
+        if target_key and any(
+            f["request_id"] == flag["request_id"]
+            and f.get("target_key") == target_key
+            and f["status"] == "OPEN"
+            and not f.get("deleted_at")
+            for f in self._flags.values()
+        ):
+            raise PrcStateConflictError("open_flag_exists")
         row = dict(flag)
         self._flags[row["id"]] = row
         self._append_event(row["request_id"], event)
@@ -500,11 +510,29 @@ class InMemoryProductRegistrationRepository:
             return None
         return copy.deepcopy(row)
 
+    def find_open_flag_by_target(
+        self, *, request_id: str, target_key: str
+    ) -> dict[str, Any] | None:
+        for f in self._flags.values():
+            if (
+                f["request_id"] == request_id
+                and f.get("target_key") == target_key
+                and f["status"] == "OPEN"
+                and not f.get("deleted_at")
+            ):
+                return copy.deepcopy(f)
+        return None
+
     def list_flags(
         self,
         *,
         request_id: str,
         status: str | None = None,
+        subject: str | None = None,
+        target_path: str | None = None,
+        target_attribute: str | None = None,
+        supplier_code: str | None = None,
+        store: str | None = None,
         page: int = 1,
         page_size: int = 25,
     ) -> dict[str, Any]:
@@ -516,6 +544,26 @@ class InMemoryProductRegistrationRepository:
         ]
         if status:
             items = [f for f in items if f["status"] == status]
+        if subject:
+            items = [f for f in items if f["subject"] == subject]
+        if target_path:
+            items = [f for f in items if f.get("target_path") == target_path]
+        if target_attribute:
+            items = [
+                f for f in items
+                if f.get("target_attribute") == target_attribute
+            ]
+        if supplier_code:
+            items = [
+                f for f in items
+                if (f.get("supplier_key") or {}).get("supplierCode")
+                == supplier_code
+            ]
+        if store:
+            items = [
+                f for f in items
+                if (f.get("supplier_key") or {}).get("store") == store
+            ]
         items.sort(key=lambda f: (f["created_at"], f["id"]), reverse=True)
         open_count = sum(
             1
@@ -543,6 +591,184 @@ class InMemoryProductRegistrationRepository:
             "hasMore": start + page_size < total,
         }
 
+    def list_flags_cross_case(
+        self,
+        *,
+        accessible_request_ids: list[str] | None,
+        global_scope: bool,
+        status: str | None = None,
+        subject: str | None = None,
+        target_path: str | None = None,
+        target_attribute: str | None = None,
+        product_code: str | None = None,
+        request_id: str | None = None,
+        request_type: str | None = None,
+        request_status: str | None = None,
+        assignee: str | None = None,
+        supplier_code: str | None = None,
+        store: str | None = None,
+        created_from: str | None = None,
+        created_to: str | None = None,
+        page: int = 1,
+        page_size: int = 25,
+    ) -> dict[str, Any]:
+        allowed = None if global_scope else set(accessible_request_ids or [])
+        items = []
+        for f in self._flags.values():
+            if f.get("deleted_at"):
+                continue
+            if allowed is not None and f["request_id"] not in allowed:
+                continue
+            if request_id and f["request_id"] != request_id:
+                continue
+            if status and f["status"] != status:
+                continue
+            if subject and f["subject"] != subject:
+                continue
+            if target_path and f.get("target_path") != target_path:
+                continue
+            if (
+                target_attribute
+                and f.get("target_attribute") != target_attribute
+            ):
+                continue
+            if supplier_code and (f.get("supplier_key") or {}).get(
+                "supplierCode"
+            ) != supplier_code:
+                continue
+            if store and (f.get("supplier_key") or {}).get("store") != store:
+                continue
+            req = self._requests.get(f["request_id"]) or {}
+            if product_code and req.get("official_product_code") != product_code:
+                continue
+            if request_type and req.get("request_type") != request_type:
+                continue
+            if request_status and req.get("status") != request_status:
+                continue
+            if assignee and req.get("assigned_to_subject") != assignee:
+                continue
+            item = copy.deepcopy(f)
+            item["product_code"] = req.get("official_product_code")
+            item["request_type"] = req.get("request_type")
+            item["request_status"] = req.get("status")
+            item["assigned_to_subject"] = req.get("assigned_to_subject")
+            item["product_description"] = None
+            items.append(item)
+        items.sort(key=lambda x: (x["created_at"], x["id"]), reverse=True)
+        open_count = sum(1 for i in items if i["status"] == "OPEN")
+        resolved_count = sum(1 for i in items if i["status"] == "RESOLVED")
+        distinct_req = len({i["request_id"] for i in items})
+        distinct_prod = len({
+            i["product_code"] for i in items
+            if i.get("product_code")
+        })
+        total = len(items)
+        start = (page - 1) * page_size
+        return {
+            "items": items[start : start + page_size],
+            "page": page,
+            "pageSize": page_size,
+            "total": total,
+            "openCount": open_count,
+            "resolvedCount": resolved_count,
+            "distinctRequestCount": distinct_req,
+            "distinctProductCount": distinct_prod,
+            "hasMore": start + page_size < total,
+        }
+
+    def summarize_flags_cross_case(
+        self,
+        *,
+        accessible_request_ids: list[str] | None,
+        global_scope: bool,
+        group_by: str,
+        status: str | None = None,
+        subject: str | None = None,
+        target_path: str | None = None,
+        target_attribute: str | None = None,
+        product_code: str | None = None,
+        request_status: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> dict[str, Any]:
+        listed = self.list_flags_cross_case(
+            accessible_request_ids=accessible_request_ids,
+            global_scope=global_scope,
+            status=status,
+            subject=subject,
+            target_path=target_path,
+            target_attribute=target_attribute,
+            product_code=product_code,
+            request_status=request_status,
+            page=1,
+            page_size=10_000,
+        )
+        key_fn = {
+            "request": lambda i: i["request_id"],
+            "product": lambda i: i.get("product_code"),
+            "targetPath": lambda i: i.get("target_path"),
+            "subject": lambda i: i.get("subject"),
+            "targetAttribute": lambda i: i.get("target_attribute"),
+        }.get(group_by)
+        if key_fn is None:
+            raise PrcRepositoryError("groupBy inválido")
+        buckets: dict[str, dict[str, Any]] = {}
+        for item in listed["items"]:
+            key = key_fn(item)
+            if key is None or key == "":
+                continue
+            key_s = str(key)
+            bucket = buckets.setdefault(
+                key_s,
+                {
+                    "key": key_s,
+                    "flagCount": 0,
+                    "openCount": 0,
+                    "resolvedCount": 0,
+                    "request_ids": set(),
+                    "lastCreatedAt": item.get("created_at"),
+                },
+            )
+            bucket["flagCount"] += 1
+            if item["status"] == "OPEN":
+                bucket["openCount"] += 1
+            if item["status"] == "RESOLVED":
+                bucket["resolvedCount"] += 1
+            bucket["request_ids"].add(item["request_id"])
+            if str(item.get("created_at") or "") > str(
+                bucket.get("lastCreatedAt") or ""
+            ):
+                bucket["lastCreatedAt"] = item.get("created_at")
+        rows = sorted(
+            buckets.values(),
+            key=lambda b: (-b["openCount"], -b["flagCount"], b["key"]),
+        )
+        total = len(rows)
+        start = (page - 1) * page_size
+        page_rows = rows[start : start + page_size]
+        return {
+            "groupBy": group_by,
+            "items": [
+                {
+                    "key": r["key"],
+                    "flagCount": r["flagCount"],
+                    "openCount": r["openCount"],
+                    "resolvedCount": r["resolvedCount"],
+                    "requestCount": len(r["request_ids"]),
+                    "lastCreatedAt": r["lastCreatedAt"],
+                }
+                for r in page_rows
+            ],
+            "page": page,
+            "pageSize": page_size,
+            "total": total,
+            "openCount": listed["openCount"],
+            "resolvedCount": listed["resolvedCount"],
+            "distinctRequestCount": listed["distinctRequestCount"],
+            "distinctProductCount": listed["distinctProductCount"],
+            "hasMore": start + page_size < total,
+        }
+
     def _require_flag_cas(
         self, request_id: str, flag_id: str, expected_version: int
     ) -> dict:
@@ -566,8 +792,10 @@ class InMemoryProductRegistrationRepository:
     ) -> dict[str, Any]:
         row = self._require_flag_cas(request_id, flag_id, expected_version)
         before = copy.deepcopy(row)
-        for key, value in patch.items():
-            row[key] = value
+        if "title" in patch:
+            row["title"] = patch["title"]
+        if "description" in patch:
+            row["description"] = patch["description"]
         row["row_version"] = int(row["row_version"]) + 1
         row["updated_by_subject"] = actor_subject
         row["updated_by_display_name"] = actor_display_name
@@ -578,6 +806,7 @@ class InMemoryProductRegistrationRepository:
             "description": before["description"],
             "subject": before["subject"],
             "target_path": before.get("target_path"),
+            "target_attribute": before.get("target_attribute"),
             "supplier_key": before.get("supplier_key"),
             "version": before["row_version"],
         }
@@ -604,6 +833,13 @@ class InMemoryProductRegistrationRepository:
             raise PrcStateConflictError("state_conflict")
         if next_status == "OPEN" and prev != "RESOLVED":
             raise PrcStateConflictError("state_conflict")
+        if next_status == "OPEN":
+            conflict = self.find_open_flag_by_target(
+                request_id=request_id,
+                target_key=row.get("target_key") or "",
+            )
+            if conflict is not None and conflict["id"] != flag_id:
+                raise PrcStateConflictError("open_flag_exists")
         row["status"] = next_status
         row["row_version"] = int(row["row_version"]) + 1
         row["updated_by_subject"] = actor_subject

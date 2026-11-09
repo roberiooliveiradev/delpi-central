@@ -776,6 +776,12 @@ class PostgresProductRegistrationRepository:
         out = dict(row)
         out["id"] = str(out["id"])
         out["request_id"] = str(out["request_id"])
+        sk = out.get("supplier_key")
+        if isinstance(sk, str):
+            try:
+                out["supplier_key"] = json.loads(sk)
+            except (TypeError, ValueError):
+                out["supplier_key"] = None
         for key in (
             "created_at", "updated_at", "resolved_at", "deleted_at",
         ):
@@ -785,29 +791,40 @@ class PostgresProductRegistrationRepository:
     def create_flag(
         self, *, flag: dict[str, Any], event: dict[str, Any]
     ) -> dict[str, Any]:
+        from psycopg.errors import UniqueViolation
+
         with self._conn() as conn:
-            conn.execute(
-                f"INSERT INTO {_T_FLAG}"
-                " (id, request_id, title, description, status, subject,"
-                "  target_path, supplier_key, row_version,"
-                "  created_by_subject, created_by_display_name, created_at,"
-                "  updated_by_subject, updated_by_display_name, updated_at)"
-                " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-                (
-                    flag["id"], flag["request_id"], flag["title"],
-                    flag["description"], flag["status"], flag["subject"],
-                    flag.get("target_path"),
-                    json.dumps(flag.get("supplier_key"))
-                    if flag.get("supplier_key") is not None else None,
-                    flag["row_version"],
-                    flag["created_by_subject"],
-                    flag.get("created_by_display_name"),
-                    flag["created_at"],
-                    flag["updated_by_subject"],
-                    flag.get("updated_by_display_name"),
-                    flag["updated_at"],
-                ),
-            )
+            try:
+                conn.execute(
+                    f"INSERT INTO {_T_FLAG}"
+                    " (id, request_id, title, description, status, subject,"
+                    "  target_path, target_attribute, supplier_key,"
+                    "  target_key, row_version,"
+                    "  created_by_subject, created_by_display_name,"
+                    "  created_at, updated_by_subject,"
+                    "  updated_by_display_name, updated_at)"
+                    " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,"
+                    "         %s,%s,%s,%s,%s,%s)",
+                    (
+                        flag["id"], flag["request_id"], flag["title"],
+                        flag["description"], flag["status"],
+                        flag["subject"],
+                        flag.get("target_path"),
+                        flag.get("target_attribute"),
+                        json.dumps(flag.get("supplier_key"))
+                        if flag.get("supplier_key") is not None else None,
+                        flag["target_key"],
+                        flag["row_version"],
+                        flag["created_by_subject"],
+                        flag.get("created_by_display_name"),
+                        flag["created_at"],
+                        flag["updated_by_subject"],
+                        flag.get("updated_by_display_name"),
+                        flag["updated_at"],
+                    ),
+                )
+            except UniqueViolation as exc:
+                raise PrcStateConflictError("open_flag_exists") from exc
             seq = conn.execute(
                 f"SELECT COALESCE(MAX(sequence_number),0)+1 AS n"
                 f" FROM {_T_EVT} WHERE request_id=%s",
@@ -830,11 +847,29 @@ class PostgresProductRegistrationRepository:
             row = conn.execute(sql, params).fetchone()
         return self._flag_row(row) if row else None
 
+    def find_open_flag_by_target(
+        self, *, request_id: str, target_key: str
+    ) -> dict[str, Any] | None:
+        with self._conn() as conn:
+            row = conn.execute(
+                f"SELECT * FROM {_T_FLAG}"
+                " WHERE request_id=%s AND target_key=%s"
+                " AND status='OPEN' AND deleted_at IS NULL"
+                " LIMIT 1",
+                (request_id, target_key),
+            ).fetchone()
+        return self._flag_row(row) if row else None
+
     def list_flags(
         self,
         *,
         request_id: str,
         status: str | None = None,
+        subject: str | None = None,
+        target_path: str | None = None,
+        target_attribute: str | None = None,
+        supplier_code: str | None = None,
+        store: str | None = None,
         page: int = 1,
         page_size: int = 25,
     ) -> dict[str, Any]:
@@ -843,6 +878,21 @@ class PostgresProductRegistrationRepository:
         if status:
             where += " AND status=%s"
             params.append(status)
+        if subject:
+            where += " AND subject=%s"
+            params.append(subject)
+        if target_path:
+            where += " AND target_path=%s"
+            params.append(target_path)
+        if target_attribute:
+            where += " AND target_attribute=%s"
+            params.append(target_attribute)
+        if supplier_code:
+            where += " AND supplier_key->>'supplierCode'=%s"
+            params.append(supplier_code)
+        if store:
+            where += " AND supplier_key->>'store'=%s"
+            params.append(store)
         offset = (page - 1) * page_size
         with self._conn() as conn:
             total = conn.execute(
@@ -872,6 +922,262 @@ class PostgresProductRegistrationRepository:
             "hasMore": offset + page_size < int(total),
         }
 
+    def list_flags_cross_case(
+        self,
+        *,
+        accessible_request_ids: list[str] | None,
+        global_scope: bool,
+        status: str | None = None,
+        subject: str | None = None,
+        target_path: str | None = None,
+        target_attribute: str | None = None,
+        product_code: str | None = None,
+        request_id: str | None = None,
+        request_type: str | None = None,
+        request_status: str | None = None,
+        assignee: str | None = None,
+        supplier_code: str | None = None,
+        store: str | None = None,
+        created_from: str | None = None,
+        created_to: str | None = None,
+        page: int = 1,
+        page_size: int = 25,
+    ) -> dict[str, Any]:
+        """Lista transversal com AuthZ por caso (IDs acessíveis)."""
+        if not global_scope and not accessible_request_ids:
+            return {
+                "items": [],
+                "page": page,
+                "pageSize": page_size,
+                "total": 0,
+                "openCount": 0,
+                "resolvedCount": 0,
+                "distinctRequestCount": 0,
+                "distinctProductCount": 0,
+                "hasMore": False,
+            }
+        where = f"f.deleted_at IS NULL"
+        params: list[Any] = []
+        if not global_scope:
+            where += " AND f.request_id = ANY(%s::uuid[])"
+            params.append(accessible_request_ids)
+        if request_id:
+            where += " AND f.request_id=%s"
+            params.append(request_id)
+        if status:
+            where += " AND f.status=%s"
+            params.append(status)
+        if subject:
+            where += " AND f.subject=%s"
+            params.append(subject)
+        if target_path:
+            where += " AND f.target_path=%s"
+            params.append(target_path)
+        if target_attribute:
+            where += " AND f.target_attribute=%s"
+            params.append(target_attribute)
+        if supplier_code:
+            where += " AND f.supplier_key->>'supplierCode'=%s"
+            params.append(supplier_code)
+        if store:
+            where += " AND f.supplier_key->>'store'=%s"
+            params.append(store)
+        if product_code:
+            where += " AND r.official_product_code=%s"
+            params.append(product_code)
+        if request_type:
+            where += " AND r.request_type=%s"
+            params.append(request_type)
+        if request_status:
+            where += " AND r.status=%s"
+            params.append(request_status)
+        if assignee:
+            where += " AND r.assigned_to_subject=%s"
+            params.append(assignee)
+        if created_from:
+            where += " AND f.created_at >= %s::timestamptz"
+            params.append(created_from)
+        if created_to:
+            where += " AND f.created_at <= %s::timestamptz"
+            params.append(created_to)
+        join = f" FROM {_T_FLAG} f JOIN {_T_REQ} r ON r.id = f.request_id"
+        offset = (page - 1) * page_size
+        with self._conn() as conn:
+            total = conn.execute(
+                f"SELECT COUNT(*) AS n{join} WHERE {where}",
+                params,
+            ).fetchone()["n"]
+            status_rows = conn.execute(
+                f"SELECT f.status, COUNT(*) AS n{join} WHERE {where}"
+                " GROUP BY f.status",
+                params,
+            ).fetchall()
+            distinct_req = conn.execute(
+                f"SELECT COUNT(DISTINCT f.request_id) AS n{join}"
+                f" WHERE {where}",
+                params,
+            ).fetchone()["n"]
+            distinct_prod = conn.execute(
+                f"SELECT COUNT(DISTINCT NULLIF(r.official_product_code,''))"
+                f" AS n{join} WHERE {where}"
+                " AND r.official_product_code IS NOT NULL"
+                " AND btrim(r.official_product_code) <> ''",
+                params,
+            ).fetchone()["n"]
+            rows = conn.execute(
+                f"SELECT f.*, r.official_product_code,"
+                f" r.request_type, r.status AS request_status,"
+                f" r.assigned_to_subject,"
+                f" coalesce("
+                f"  r.requested_payload->'product'->>'description',"
+                f"  r.requested_payload->>'description'"
+                f" ) AS product_description"
+                f"{join} WHERE {where}"
+                " ORDER BY f.created_at DESC, f.id DESC"
+                " LIMIT %s OFFSET %s",
+                [*params, page_size, offset],
+            ).fetchall()
+        by_status = {r["status"]: int(r["n"]) for r in status_rows}
+        items = []
+        for r in rows:
+            item = self._flag_row(r)
+            item["product_code"] = r.get("official_product_code")
+            item["request_type"] = r.get("request_type")
+            item["request_status"] = r.get("request_status")
+            item["assigned_to_subject"] = r.get("assigned_to_subject")
+            item["product_description"] = r.get("product_description")
+            items.append(item)
+        return {
+            "items": items,
+            "page": page,
+            "pageSize": page_size,
+            "total": int(total),
+            "openCount": by_status.get("OPEN", 0),
+            "resolvedCount": by_status.get("RESOLVED", 0),
+            "distinctRequestCount": int(distinct_req),
+            "distinctProductCount": int(distinct_prod),
+            "hasMore": offset + page_size < int(total),
+        }
+
+    def summarize_flags_cross_case(
+        self,
+        *,
+        accessible_request_ids: list[str] | None,
+        global_scope: bool,
+        group_by: str,
+        status: str | None = None,
+        subject: str | None = None,
+        target_path: str | None = None,
+        target_attribute: str | None = None,
+        product_code: str | None = None,
+        request_status: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> dict[str, Any]:
+        if group_by not in (
+            "request", "product", "targetPath", "subject", "targetAttribute",
+        ):
+            raise PrcRepositoryError("groupBy inválido")
+        if not global_scope and not accessible_request_ids:
+            return {
+                "groupBy": group_by,
+                "items": [],
+                "page": page,
+                "pageSize": page_size,
+                "total": 0,
+                "openCount": 0,
+                "resolvedCount": 0,
+                "distinctRequestCount": 0,
+                "distinctProductCount": 0,
+                "hasMore": False,
+            }
+        where = "f.deleted_at IS NULL"
+        params: list[Any] = []
+        if not global_scope:
+            where += " AND f.request_id = ANY(%s::uuid[])"
+            params.append(accessible_request_ids)
+        if status:
+            where += " AND f.status=%s"
+            params.append(status)
+        if subject:
+            where += " AND f.subject=%s"
+            params.append(subject)
+        if target_path:
+            where += " AND f.target_path=%s"
+            params.append(target_path)
+        if target_attribute:
+            where += " AND f.target_attribute=%s"
+            params.append(target_attribute)
+        if product_code:
+            where += " AND r.official_product_code=%s"
+            params.append(product_code)
+        if request_status:
+            where += " AND r.status=%s"
+            params.append(request_status)
+        join = f" FROM {_T_FLAG} f JOIN {_T_REQ} r ON r.id = f.request_id"
+        group_expr = {
+            "request": "f.request_id::text",
+            "product": "NULLIF(btrim(r.official_product_code),'')",
+            "targetPath": "f.target_path",
+            "subject": "f.subject",
+            "targetAttribute": "f.target_attribute",
+        }[group_by]
+        offset = (page - 1) * page_size
+        with self._conn() as conn:
+            totals = conn.execute(
+                f"SELECT COUNT(*) AS flag_n,"
+                f" COUNT(DISTINCT f.request_id) AS req_n,"
+                f" COUNT(DISTINCT NULLIF(btrim(r.official_product_code),''))"
+                f" AS prod_n,"
+                f" COUNT(*) FILTER (WHERE f.status='OPEN') AS open_n,"
+                f" COUNT(*) FILTER (WHERE f.status='RESOLVED') AS resolved_n"
+                f"{join} WHERE {where}",
+                params,
+            ).fetchone()
+            group_total = conn.execute(
+                f"SELECT COUNT(*) AS n FROM ("
+                f" SELECT {group_expr} AS g{join} WHERE {where}"
+                f" AND {group_expr} IS NOT NULL"
+                f" GROUP BY 1) s",
+                params,
+            ).fetchone()["n"]
+            rows = conn.execute(
+                f"SELECT {group_expr} AS group_key,"
+                f" COUNT(*) AS flag_count,"
+                f" COUNT(*) FILTER (WHERE f.status='OPEN') AS open_count,"
+                f" COUNT(*) FILTER (WHERE f.status='RESOLVED')"
+                f" AS resolved_count,"
+                f" COUNT(DISTINCT f.request_id) AS request_count,"
+                f" MAX(f.created_at) AS last_created_at"
+                f"{join} WHERE {where} AND {group_expr} IS NOT NULL"
+                f" GROUP BY 1"
+                f" ORDER BY open_count DESC, flag_count DESC, group_key ASC"
+                f" LIMIT %s OFFSET %s",
+                [*params, page_size, offset],
+            ).fetchall()
+        return {
+            "groupBy": group_by,
+            "items": [
+                {
+                    "key": str(r["group_key"]),
+                    "flagCount": int(r["flag_count"]),
+                    "openCount": int(r["open_count"]),
+                    "resolvedCount": int(r["resolved_count"]),
+                    "requestCount": int(r["request_count"]),
+                    "lastCreatedAt": _iso(r.get("last_created_at")),
+                }
+                for r in rows
+            ],
+            "page": page,
+            "pageSize": page_size,
+            "total": int(group_total),
+            "openCount": int(totals["open_n"]),
+            "resolvedCount": int(totals["resolved_n"]),
+            "distinctRequestCount": int(totals["req_n"]),
+            "distinctProductCount": int(totals["prod_n"]),
+            "hasMore": offset + page_size < int(group_total),
+        }
+
     def update_flag(
         self,
         *,
@@ -883,6 +1189,7 @@ class PostgresProductRegistrationRepository:
         actor_display_name: str | None,
         event: dict[str, Any],
     ) -> dict[str, Any]:
+        """Atualiza título/descrição. Alvo técnico é imutável (REF-01)."""
         with self._conn() as conn:
             row = conn.execute(
                 f"SELECT * FROM {_T_FLAG}"
@@ -897,24 +1204,13 @@ class PostgresProductRegistrationRepository:
             before = self._flag_row(row)
             conn.execute(
                 f"UPDATE {_T_FLAG} SET"
-                " title=%s, description=%s, subject=%s, target_path=%s,"
-                " supplier_key=%s, row_version=%s,"
+                " title=%s, description=%s, row_version=%s,"
                 " updated_by_subject=%s, updated_by_display_name=%s,"
                 " updated_at=%s"
                 " WHERE id=%s",
                 (
                     patch.get("title", row["title"]),
                     patch.get("description", row["description"]),
-                    patch.get("subject", row["subject"]),
-                    patch.get("target_path", row["target_path"]),
-                    json.dumps(patch["supplier_key"])
-                    if "supplier_key" in patch
-                    and patch["supplier_key"] is not None
-                    else (
-                        None if "supplier_key" in patch
-                        else json.dumps(row["supplier_key"])
-                        if row.get("supplier_key") is not None else None
-                    ),
                     int(row["row_version"]) + 1,
                     actor_subject, actor_display_name, _now(),
                     flag_id,
@@ -926,6 +1222,7 @@ class PostgresProductRegistrationRepository:
                 "description": before["description"],
                 "subject": before["subject"],
                 "target_path": before.get("target_path"),
+                "target_attribute": before.get("target_attribute"),
                 "supplier_key": before.get("supplier_key"),
                 "version": before["row_version"],
             }
@@ -952,6 +1249,8 @@ class PostgresProductRegistrationRepository:
         actor_display_name: str | None,
         event: dict[str, Any],
     ) -> dict[str, Any]:
+        from psycopg.errors import UniqueViolation
+
         with self._conn() as conn:
             row = conn.execute(
                 f"SELECT * FROM {_T_FLAG}"
@@ -971,31 +1270,34 @@ class PostgresProductRegistrationRepository:
             if next_status == "OPEN" and prev != "RESOLVED":
                 raise PrcStateConflictError("state_conflict")
             now = _now()
-            if next_status == "RESOLVED":
-                conn.execute(
-                    f"UPDATE {_T_FLAG} SET status=%s, row_version=%s,"
-                    " updated_by_subject=%s, updated_by_display_name=%s,"
-                    " updated_at=%s, resolved_by_subject=%s,"
-                    " resolved_by_display_name=%s, resolved_at=%s"
-                    " WHERE id=%s",
-                    (
-                        next_status, int(row["row_version"]) + 1,
-                        actor_subject, actor_display_name, now,
-                        actor_subject, actor_display_name, now, flag_id,
-                    ),
-                )
-            else:
-                conn.execute(
-                    f"UPDATE {_T_FLAG} SET status=%s, row_version=%s,"
-                    " updated_by_subject=%s, updated_by_display_name=%s,"
-                    " updated_at=%s, resolved_by_subject=NULL,"
-                    " resolved_by_display_name=NULL, resolved_at=NULL"
-                    " WHERE id=%s",
-                    (
-                        next_status, int(row["row_version"]) + 1,
-                        actor_subject, actor_display_name, now, flag_id,
-                    ),
-                )
+            try:
+                if next_status == "RESOLVED":
+                    conn.execute(
+                        f"UPDATE {_T_FLAG} SET status=%s, row_version=%s,"
+                        " updated_by_subject=%s, updated_by_display_name=%s,"
+                        " updated_at=%s, resolved_by_subject=%s,"
+                        " resolved_by_display_name=%s, resolved_at=%s"
+                        " WHERE id=%s",
+                        (
+                            next_status, int(row["row_version"]) + 1,
+                            actor_subject, actor_display_name, now,
+                            actor_subject, actor_display_name, now, flag_id,
+                        ),
+                    )
+                else:
+                    conn.execute(
+                        f"UPDATE {_T_FLAG} SET status=%s, row_version=%s,"
+                        " updated_by_subject=%s, updated_by_display_name=%s,"
+                        " updated_at=%s, resolved_by_subject=NULL,"
+                        " resolved_by_display_name=NULL, resolved_at=NULL"
+                        " WHERE id=%s",
+                        (
+                            next_status, int(row["row_version"]) + 1,
+                            actor_subject, actor_display_name, now, flag_id,
+                        ),
+                    )
+            except UniqueViolation as exc:
+                raise PrcStateConflictError("open_flag_exists") from exc
             event = {
                 **event,
                 "previous_status": prev,

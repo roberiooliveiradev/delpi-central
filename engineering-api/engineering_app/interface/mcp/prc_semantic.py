@@ -140,17 +140,116 @@ async def read_action(context, entry, args: dict):
                 "Resultado carregado.",
             )
         if entry.action == "flag_list":
-            if not ref:
-                return _err(
-                    "request_id é obrigatório.", code="validation"
+            # Sem request_id (ou scope=cross/summary) → consulta transversal
+            # / agregados — mesmos use cases REST; sem nova tool MCP.
+            scope = str(args.get("scope") or "").strip().lower()
+            group_by = args.get("group_by") or args.get("groupBy")
+            if scope == "summary" or group_by:
+                return _ok(
+                    svc.summarize_flags_cross_case(
+                        actor=actor,
+                        group_by=str(group_by or "request"),
+                        status=args.get("status"),
+                        subject=args.get("subject"),
+                        target_path=(
+                            args.get("target_path")
+                            or args.get("targetPath")
+                        ),
+                        target_attribute=(
+                            args.get("target_attribute")
+                            or args.get("targetAttribute")
+                        ),
+                        product_code=(
+                            args.get("product_code")
+                            or args.get("productCode")
+                        ),
+                        request_status=(
+                            args.get("request_status")
+                            or args.get("requestStatus")
+                        ),
+                        page=int(args.get("page", 1)),
+                        page_size=int(
+                            args.get("page_size")
+                            or args.get("pageSize")
+                            or 50
+                        ),
+                    ),
+                    "Resumo de bandeiras carregado.",
+                )
+            if not ref or scope in ("cross", "cross_case", "all"):
+                return _ok(
+                    svc.list_flags_cross_case(
+                        actor=actor,
+                        status=args.get("status"),
+                        subject=args.get("subject"),
+                        target_path=(
+                            args.get("target_path")
+                            or args.get("targetPath")
+                        ),
+                        target_attribute=(
+                            args.get("target_attribute")
+                            or args.get("targetAttribute")
+                        ),
+                        product_code=(
+                            args.get("product_code")
+                            or args.get("productCode")
+                        ),
+                        request_id=ref or None,
+                        request_type=(
+                            args.get("request_type")
+                            or args.get("requestType")
+                        ),
+                        request_status=(
+                            args.get("request_status")
+                            or args.get("requestStatus")
+                        ),
+                        assignee=args.get("assignee"),
+                        supplier_code=(
+                            args.get("supplier_code")
+                            or args.get("supplierCode")
+                        ),
+                        store=args.get("store"),
+                        created_from=(
+                            args.get("created_from")
+                            or args.get("createdFrom")
+                        ),
+                        created_to=(
+                            args.get("created_to")
+                            or args.get("createdTo")
+                        ),
+                        page=int(args.get("page", 1)),
+                        page_size=int(
+                            args.get("page_size")
+                            or args.get("pageSize")
+                            or 25
+                        ),
+                    ),
+                    "Bandeiras transversais carregadas.",
                 )
             return _ok(
                 svc.list_flags(
                     ref,
                     actor=actor,
                     status=args.get("status"),
+                    subject=args.get("subject"),
+                    target_path=(
+                        args.get("target_path") or args.get("targetPath")
+                    ),
+                    target_attribute=(
+                        args.get("target_attribute")
+                        or args.get("targetAttribute")
+                    ),
+                    supplier_code=(
+                        args.get("supplier_code")
+                        or args.get("supplierCode")
+                    ),
+                    store=args.get("store"),
                     page=int(args.get("page", 1)),
-                    page_size=int(args.get("page_size", 25)),
+                    page_size=int(
+                        args.get("page_size")
+                        or args.get("pageSize")
+                        or 25
+                    ),
                 ),
                 "Bandeiras carregadas.",
             )
@@ -349,9 +448,12 @@ def _flag_execute(
             ref, actor=actor,
             title=body.get("title") or "",
             description=body.get("description") or "",
-            subject=body.get("subject") or "GENERAL",
+            subject=body.get("subject") or "FIELD",
             target_path=body.get("target_path") or body.get("targetPath"),
             supplier_key=body.get("supplier_key") or body.get("supplierKey"),
+            target_attribute=(
+                body.get("target_attribute") or body.get("targetAttribute")
+            ),
             idempotency_key=idempotency_key,
         )
     elif action == "flag_update":
@@ -371,6 +473,11 @@ def _flag_execute(
             supplier_key=(
                 body["supplier_key"] if "supplier_key" in body
                 else body["supplierKey"] if "supplierKey" in body
+                else ...
+            ),
+            target_attribute=(
+                body["target_attribute"] if "target_attribute" in body
+                else body["targetAttribute"] if "targetAttribute" in body
                 else ...
             ),
             idempotency_key=idempotency_key,

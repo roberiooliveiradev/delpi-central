@@ -116,11 +116,12 @@ def _err(exc: Exception, operation_id: str):
                     operation_id=operation_id)
     if isinstance(exc, PrcStateConflictError):
         msg = str(exc)
-        code = (
-            "remove_completion_pending_owner"
-            if msg == "remove_completion_pending_owner"
-            else "state_conflict"
-        )
+        if msg == "remove_completion_pending_owner":
+            code = "remove_completion_pending_owner"
+        elif msg == "open_flag_exists":
+            code = "open_flag_exists"
+        else:
+            code = "state_conflict"
         return fail(msg, 409, data={"code": code},
                     operation_id=operation_id)
     if isinstance(exc, PrcForbiddenError):
@@ -235,8 +236,9 @@ class DraftBody(BaseModel):
 class FlagCreateBody(BaseModel):
     title: str = Field(..., min_length=1, max_length=120)
     description: str = Field(..., min_length=1, max_length=1000)
-    subject: str = Field(default="GENERAL", max_length=32)
+    subject: str = Field(default="FIELD", max_length=32)
     targetPath: str | None = Field(default=None, max_length=120)
+    targetAttribute: str | None = Field(default=None, max_length=32)
     supplierKey: dict | None = None
 
 
@@ -246,8 +248,10 @@ class FlagUpdateBody(BaseModel):
     description: str | None = Field(
         default=None, min_length=1, max_length=1000
     )
+    # Campos de alvo aceitos só para rejeição explícita de retarget.
     subject: str | None = Field(default=None, max_length=32)
     targetPath: str | None = Field(default=None, max_length=120)
+    targetAttribute: str | None = Field(default=None, max_length=32)
     supplierKey: dict | None = None
 
 
@@ -889,7 +893,104 @@ async def prc_outbound_request(request_id: str = Path(...)):
     return ok(data, message="Resultado carregado.", operation_id=op)
 
 
-# --- D16 attendance flags ----------------------------------------------------
+# --- D16 / D16-REF-01 attendance flags ---------------------------------------
+
+
+@router.get(
+    "/v1/product-registration/flags",
+    operation_id="prc_flag_list_cross",
+    summary="D16-REF-01 — Consulta transversal de bandeiras",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_flag_list_cross(
+    status: str | None = Query(default=None, max_length=16),
+    subject: str | None = Query(default=None, max_length=32),
+    targetPath: str | None = Query(default=None, max_length=120),
+    targetAttribute: str | None = Query(default=None, max_length=32),
+    productCode: str | None = Query(default=None, max_length=60),
+    requestId: str | None = Query(default=None),
+    requestType: str | None = Query(default=None, max_length=32),
+    requestStatus: str | None = Query(default=None, max_length=32),
+    assignee: str | None = Query(default=None, max_length=200),
+    supplierCode: str | None = Query(default=None, max_length=60),
+    store: str | None = Query(default=None, max_length=16),
+    createdFrom: str | None = Query(default=None, max_length=40),
+    createdTo: str | None = Query(default=None, max_length=40),
+    page: int = Query(default=1, ge=1),
+    pageSize: int = Query(default=25, ge=1, le=100),
+):
+    op = "prc_flag_list_cross"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid = None
+    if requestId:
+        rid, bad = _uuid_or_fail(requestId, op)
+        if bad is not None:
+            return bad
+    try:
+        data = build_prc_service().list_flags_cross_case(
+            actor=_actor(user),
+            status=status,
+            subject=subject,
+            target_path=targetPath,
+            target_attribute=targetAttribute,
+            product_code=productCode,
+            request_id=rid,
+            request_type=requestType,
+            request_status=requestStatus,
+            assignee=assignee,
+            supplier_code=supplierCode,
+            store=store,
+            created_from=createdFrom,
+            created_to=createdTo,
+            page=page,
+            page_size=pageSize,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(data, message="Bandeiras transversais carregadas.",
+              operation_id=op)
+
+
+@router.get(
+    "/v1/product-registration/flags/summary",
+    operation_id="prc_flag_summary",
+    summary="D16-REF-01 — Agregados de bandeiras (AuthZ no servidor)",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_flag_summary(
+    groupBy: str = Query(default="request", max_length=32),
+    status: str | None = Query(default=None, max_length=16),
+    subject: str | None = Query(default=None, max_length=32),
+    targetPath: str | None = Query(default=None, max_length=120),
+    targetAttribute: str | None = Query(default=None, max_length=32),
+    productCode: str | None = Query(default=None, max_length=60),
+    requestStatus: str | None = Query(default=None, max_length=32),
+    page: int = Query(default=1, ge=1),
+    pageSize: int = Query(default=50, ge=1, le=100),
+):
+    op = "prc_flag_summary"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    try:
+        data = build_prc_service().summarize_flags_cross_case(
+            actor=_actor(user),
+            group_by=groupBy,
+            status=status,
+            subject=subject,
+            target_path=targetPath,
+            target_attribute=targetAttribute,
+            product_code=productCode,
+            request_status=requestStatus,
+            page=page,
+            page_size=pageSize,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(data, message="Resumo de bandeiras carregado.",
+              operation_id=op)
 
 
 @router.get(
@@ -901,6 +1002,11 @@ async def prc_outbound_request(request_id: str = Path(...)):
 async def prc_flag_list(
     request_id: str = Path(...),
     status: str | None = Query(default=None, max_length=16),
+    subject: str | None = Query(default=None, max_length=32),
+    targetPath: str | None = Query(default=None, max_length=120),
+    targetAttribute: str | None = Query(default=None, max_length=32),
+    supplierCode: str | None = Query(default=None, max_length=60),
+    store: str | None = Query(default=None, max_length=16),
     page: int = Query(default=1, ge=1),
     pageSize: int = Query(default=25, ge=1, le=100),
 ):
@@ -914,6 +1020,9 @@ async def prc_flag_list(
     try:
         data = build_prc_service().list_flags(
             rid, actor=_actor(user), status=status,
+            subject=subject, target_path=targetPath,
+            target_attribute=targetAttribute,
+            supplier_code=supplierCode, store=store,
             page=page, page_size=pageSize,
         )
     except Exception as exc:
@@ -971,6 +1080,7 @@ async def prc_flag_create(
             title=body.title, description=body.description,
             subject=body.subject, target_path=body.targetPath,
             supplier_key=body.supplierKey,
+            target_attribute=body.targetAttribute,
             idempotency_key=idempotency_key,
         )
     except Exception as exc:
@@ -1008,12 +1118,20 @@ async def prc_flag_update(
     if bad is not None:
         return bad
     try:
+        # Só rejeita retarget quando o cliente envia os campos de alvo.
+        sent = body.model_fields_set
         data = build_prc_service().update_flag(
             rid, fid, actor=_actor(user),
             expected_version=body.expectedVersion,
             title=body.title, description=body.description,
-            subject=body.subject, target_path=body.targetPath,
-            supplier_key=body.supplierKey,
+            subject=body.subject if "subject" in sent else None,
+            target_path=body.targetPath if "targetPath" in sent else ...,
+            supplier_key=(
+                body.supplierKey if "supplierKey" in sent else ...
+            ),
+            target_attribute=(
+                body.targetAttribute if "targetAttribute" in sent else ...
+            ),
             idempotency_key=idempotency_key,
         )
     except Exception as exc:

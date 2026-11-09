@@ -222,7 +222,7 @@ BLOCKERS/EXECUTION_DRIFT/ARCHITECTURE_DECISION_REQUIRED: ...
 
 ## D16-REF-01 — Decisão PO superveniente: bandeiras por campo, experiência contextual e consultas transversais
 
-**Decisão registrada em 2026-11-09. Status:** PO_APPROVED_REFINEMENT / TARGET / NOT_IMPLEMENTED. **Task futura:** ENG-PRC-D16-REF-01-CONTEXTUAL-FIELD-FLAGS-AND-CROSS-CASE-QUERIES. **Objetivo desta revisão:** PLANEJAMENTO, não implementação nem deploy.
+**Decisão registrada em 2026-11-09. Status:** IMPLEMENTED_DEV (ENG-PRC-D16-REF-01). **Task:** ENG-PRC-D16-REF-01-CONTEXTUAL-FIELD-FLAGS-AND-CROSS-CASE-QUERIES. Migration aditiva `V017__prc_flags_contextual_targets.sql`; unicidade OPEN por `(request_id, target_key)`; consultas `GET /flags` e `/flags/summary`; UI contextual por campo + painel operacional; EVA reutiliza `flag_list`/`flag_*` sem novas tools. GENERAL legado preservado (somente leitura/histórico). HML/PROD não deployados nesta task.
 
 > **Regra de precedência:** esta seção **substitui a intenção anterior de uma seção genérica de bandeiras como principal interface**, e substitui a criação indiscriminada com subject=GENERAL. Não invalida CRUD, eventos, PostgreSQL V015/V016, REST/EVA, CAS, idempotência ou soft-delete já implementados. Implementar por evolução compatível e migration de dados governada, sem reescrever o D16 do zero.
 

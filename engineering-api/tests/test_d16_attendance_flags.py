@@ -62,15 +62,27 @@ def _delete(client, url, token, headers=None):
     return client.delete(url, headers=h)
 
 
-def _create_flag(client, jwks_env, core_rbac, rid, *, title="Revisar descrição",
-                 description="Confirmar descrição técnica com solicitante.",
-                 key="flag-k1", sub="analyst-1"):
+def _create_flag(
+    client, jwks_env, core_rbac, rid, *, title="Revisar descrição",
+    description="Confirmar descrição técnica com solicitante.",
+    key="flag-k1", sub="analyst-1",
+    subject="FIELD", target_path="description",
+    target_attribute=None, supplier_key=None,
+):
     core_rbac["behavior"] = ("data", rbac_payload(ANALYST, id=sub))
+    body = {
+        "title": title,
+        "description": description,
+        "subject": subject,
+        "targetPath": target_path,
+        "targetAttribute": target_attribute,
+        "supplierKey": supplier_key,
+    }
     return _post(
         client,
         f"/v1/product-registration/requests/{rid}/flags",
         _token(jwks_env, sub),
-        json={"title": title, "description": description, "subject": "GENERAL"},
+        json=body,
         headers={"Idempotency-Key": key},
     )
 
@@ -107,6 +119,39 @@ class TestFlagDomainValidation:
                 description="ok",
                 subject="FIELD",
                 target_path="notARealPath",
+            )
+
+    def test_field_requires_target_path(self):
+        with pytest.raises(PrcValidationError):
+            attendance_flags.validate_flag_payload(
+                title="ok", description="ok", subject="FIELD",
+            )
+
+    def test_field_ok(self):
+        out = attendance_flags.validate_flag_payload(
+            title="ok", description="ok", subject="FIELD",
+            target_path="description",
+        )
+        assert out["targetKey"] == "FIELD:description"
+
+    def test_supplier_pn_and_catalog_distinct(self):
+        key = {"supplierCode": "F1", "store": "01"}
+        pn = attendance_flags.validate_flag_payload(
+            title="ok", description="ok", subject="SUPPLIER_LINK",
+            supplier_key=key, target_attribute="partNumber",
+        )
+        cat = attendance_flags.validate_flag_payload(
+            title="ok", description="ok", subject="SUPPLIER_LINK",
+            supplier_key=key, target_attribute="catalogNumber",
+        )
+        assert pn["targetKey"] != cat["targetKey"]
+        assert "partNumber" in pn["targetKey"]
+        assert "catalogNumber" in cat["targetKey"]
+
+    def test_reject_new_general(self):
+        with pytest.raises(PrcValidationError):
+            attendance_flags.validate_flag_payload(
+                title="ok", description="ok", subject="GENERAL",
             )
 
 
@@ -347,7 +392,8 @@ class TestFlagEvaParity:
             payload={
                 "title": "Solicitar Part Number",
                 "description": "Cobrar PN correto do requisitante.",
-                "subject": "GENERAL",
+                "subject": "FIELD",
+                "targetPath": "description",
             },
             idempotency_key="eva-flag-1",
         )
@@ -423,3 +469,149 @@ class TestFlagEvaParity:
             '"success": true' in commit.content[0].text
             and "exclu" in commit.content[0].text.lower()
         )
+
+
+class TestFlagRef01Contextual:
+    def test_duplicate_open_returns_409(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid = _submit_create(
+            client, jwks_env, core_rbac, sub="analyst-1"
+        ).json()["data"]["requestId"]
+        first = _create_flag(
+            client, jwks_env, core_rbac, rid, key="dup-1"
+        )
+        assert first.status_code == 201
+        second = _create_flag(
+            client, jwks_env, core_rbac, rid, key="dup-2",
+            title="Outra",
+        )
+        assert second.status_code == 409
+        assert second.json()["data"]["code"] == "open_flag_exists"
+
+    def test_pn_and_catalog_independent(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid = _submit_create(
+            client, jwks_env, core_rbac, sub="analyst-1"
+        ).json()["data"]["requestId"]
+        key = {"supplierCode": "F99", "store": "01"}
+        pn = _create_flag(
+            client, jwks_env, core_rbac, rid, key="pn-1",
+            subject="SUPPLIER_LINK", target_path=None,
+            target_attribute="partNumber", supplier_key=key,
+            title="PN pendente",
+        )
+        cat = _create_flag(
+            client, jwks_env, core_rbac, rid, key="cat-1",
+            subject="SUPPLIER_LINK", target_path=None,
+            target_attribute="catalogNumber", supplier_key=key,
+            title="Catálogo pendente",
+        )
+        assert pn.status_code == 201, pn.text
+        assert cat.status_code == 201, cat.text
+        assert pn.json()["data"]["id"] != cat.json()["data"]["id"]
+
+    def test_resolved_allows_new_open_same_target(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid = _submit_create(
+            client, jwks_env, core_rbac, sub="analyst-1"
+        ).json()["data"]["requestId"]
+        tok = _token(jwks_env, "analyst-1")
+        created = _create_flag(
+            client, jwks_env, core_rbac, rid, key="res-new-1"
+        ).json()["data"]
+        _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/flags/"
+            f"{created['id']}/actions/resolve",
+            tok,
+            json={"expectedVersion": 1},
+            headers={"Idempotency-Key": "res-new-r"},
+        )
+        again = _create_flag(
+            client, jwks_env, core_rbac, rid, key="res-new-2",
+            title="Nova pendência",
+        )
+        assert again.status_code == 201, again.text
+
+    def test_target_immutable_on_patch(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid = _submit_create(
+            client, jwks_env, core_rbac, sub="analyst-1"
+        ).json()["data"]["requestId"]
+        tok = _token(jwks_env, "analyst-1")
+        created = _create_flag(
+            client, jwks_env, core_rbac, rid, key="imm-1"
+        ).json()["data"]
+        bad = _patch(
+            client,
+            f"/v1/product-registration/requests/{rid}/flags/{created['id']}",
+            tok,
+            json={"expectedVersion": 1, "targetPath": "group"},
+        )
+        assert bad.status_code == 422
+
+    def test_cross_case_list_and_summary(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid = _submit_create(
+            client, jwks_env, core_rbac, sub="analyst-1"
+        ).json()["data"]["requestId"]
+        _create_flag(client, jwks_env, core_rbac, rid, key="x-1")
+        tok = _token(jwks_env, "analyst-1")
+        listed = _get(
+            client,
+            "/v1/product-registration/flags?status=OPEN&targetPath=description",
+            tok,
+        )
+        assert listed.status_code == 200, listed.text
+        data = listed.json()["data"]
+        assert data["total"] >= 1
+        assert data["distinctRequestCount"] >= 1
+        assert data["openCount"] >= 1
+        # totais não são length da página
+        assert "distinctProductCount" in data
+
+        summary = _get(
+            client,
+            "/v1/product-registration/flags/summary"
+            "?groupBy=targetPath&status=OPEN",
+            tok,
+        )
+        assert summary.status_code == 200, summary.text
+        s = summary.json()["data"]
+        assert s["groupBy"] == "targetPath"
+        assert any(i["key"] == "description" for i in s["items"])
+
+    @pytest.mark.asyncio
+    async def test_eva_cross_case_via_flag_list(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid = _submit_create(
+            client, jwks_env, core_rbac, sub="analyst-1"
+        ).json()["data"]["requestId"]
+        await prc_semantic.execute_action(
+            _ctx("analyst-1"), _entry("flag_create"), "act",
+            target_ref=rid,
+            payload={
+                "title": "Campo grupo",
+                "description": "Conferir grupo",
+                "subject": "FIELD",
+                "targetPath": "group",
+            },
+            idempotency_key="eva-x-1",
+        )
+        cross = await prc_semantic.read_action(
+            _ctx("analyst-1"), _entry("flag_list"),
+            {"scope": "cross", "status": "OPEN", "targetPath": "group"},
+        )
+        assert "Campo grupo" in cross.content[0].text
+        summary = await prc_semantic.read_action(
+            _ctx("analyst-1"), _entry("flag_list"),
+            {"scope": "summary", "groupBy": "subject", "status": "OPEN"},
+        )
+        assert "groupBy" in summary.content[0].text
+        assert "FIELD" in summary.content[0].text
