@@ -979,3 +979,21 @@ EXECUTION_STATUS: NOT_YET_CUTOVER
 **Resultado evidenciável nesta conversa:** arquivos GitHub atualizados e verificados por leitura, `IMPLEMENTED_NOT_TESTED`, `TEST_NOT_RUN` para pytest/CI, `NOT_DEPLOYED`. O código **não** altera `CLARA_CONSENT_CHANNEL`, ack, RBAC, consentimento V014, migrations, BFF, Portal ou dados de fechamento. A decisão operacional do responsável já está documentada; assinatura separada Segurança/Plataforma continua não demonstrada. Quando a configuração produtiva mudar de acordo com a política aprovada, é necessário **rebuild/restart MCP** e reconsultar `tools/list` (descrições registradas no startup), `get_context(schema)`, PREPARE e ACT com smoke autorizado.
 
 **Proibido inferir cutover** apenas da presença da nova mensagem no MCP ou do deploy healthy. Aceite integral requer `portal_consent_required=false`, `conversational_act_armed=true` e read-back após confirmação explícita da operação de teste. Caso o catálogo do plugin conectado retenha descrições antigas, republicar/reconectar conforme procedimento oficial.
+
+
+### 20.18 Deploy das instruções MCP e canal efetivo medido (09/11/2026)
+
+**Código implantado:** `3b91571c9a7f3033d08bde95f80717efed2a4af9`. Imagem BFF/MCP `sha256:7cb5d50cf16e98d4927b1c8dfa70c0d90635cb85023c672ff1c45fd9295284c9`, container healthy, `/health` = `online`. Rollback da imagem anterior: `sha256:ce7311e5b689174f29736a547536a38b4f9169c070ae2ce8299fd0e565b07a1b`. Nenhuma migration da CLARA foi editada.
+
+**Canal medido no processo,** com `CLARA_CONSENT_CHANNEL` e `CLARA_CONVERSATIONAL_SECURITY_ACK` unset:
+
+```text
+consent_channel = portal
+portal_consent_required = true
+conversational_act_armed = false
+tools = get_context, read, analyze, knowledge, execute, delete
+```
+
+`execute` e `delete` incluem `confirmation_url Portal step-up V014`, coerente com o canal Portal. O schema de `checklist.version_publish` repete essa `phase_policy`. As instruções gerais contêm `ACTIVE CHANNEL: Portal V014`. `POST /mcp` `tools/list` sem Bearer responde `401`.
+
+**Cutover não executado.** §20.16 registra `CONTROLLADORIA_DECISION: ACCEPT_OPERATIONAL_RISK` e a aprovação do PO. O contrato vigente (`consent_channel.py` e doc 124 §8) só arma o ACT conversacional com o reconhecimento exato atribuído a Segurança/Plataforma. §20.16, doc 124 §10 e doc 161 §7 registram que essa assinatura **não está demonstrada**. O ack não foi gravado. Smoke ChatGPT e republicação do plugin permanecem `TEST_NOT_RUN` / `BLOCKED`. CF-UX-053 não está aceito.
