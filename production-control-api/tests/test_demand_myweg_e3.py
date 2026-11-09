@@ -206,8 +206,8 @@ def test_e3_myweg_origin_un_to_mi_and_stock_only() -> None:
     assert data["myweg"]["batch"]["collection_id"] == "COL-E3"
 
 
-def test_e3_myweg_90263964_200_pc_cover_26_un_without_factor_error() -> None:
-    """Regressão #1546: 26 peças = 0,026 MI; OP com 200 PC = 0,200 MI."""
+def test_e3_myweg_90263964_real_mi_op_covers_26_un() -> None:
+    """Regressão #1546: unidade C2_UM=MI, OP 0,200 MI cobre 26 peças."""
     rows = [{
         "id": "r-90263964",
         "line_no": 1,
@@ -225,12 +225,12 @@ def test_e3_myweg_90263964_200_pc_cover_26_un_without_factor_error() -> None:
     ops = [
         {
             "filial": "02",
-            "numero_op": "OP-09NOV",
+            "numero_op": "11286701001",
             "produto": "90263964",
-            "saldo_op": 200,
-            "unidade_op": "PC",
+            "saldo_op": 0.2,
+            "unidade_op": "MI",
             "unidade_produto": "MI",
-            "unidade": "PC",
+            "unidade": "MI",
             "data_fim_prevista_op": "2026-11-09",
         },
         {
@@ -257,7 +257,7 @@ def test_e3_myweg_90263964_200_pc_cover_26_un_without_factor_error() -> None:
     assert line["covered_by_orders"] == pytest.approx(0.026)
     assert line["uncovered_quantity"] == pytest.approx(0.0)
     assert line["covering_orders"] == [
-        {"production_order": "OP-09NOV", "quantity": 0.026, "expected_date": "2026-11-09"}
+        {"production_order": "11286701001", "quantity": 0.026, "expected_date": "2026-11-09"}
     ]
     assert line["status"] == "late"
     assert line["op_coverage_incomplete"] is False
