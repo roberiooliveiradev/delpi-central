@@ -845,3 +845,10 @@ DATE / ACTOR / EVIDENCE_REF: …
 **Decisão do PO:** continuar a revisão integral do Portal com **09/2026**, confrontando por filial e mesmo universo os resultados com os arquivos históricos privados do projeto. Não tomar a indisponibilidade de 10/2026 da Matriz como zero ou paridade negativa do Portal. **Trilha e protocolo de comparação:** [doc 159](./159-ocorrencia-reabertura-estoque-filial01-outubro-e-revisao-setembro-2026-11-09.md). Em caso de divergência de valores, filtros, fonte, autorização, UX ou exportação, registrar achado com evidência e RQ/AC neste plano antes de corrigir. Reconsultar outubro quando responsável confirmar novo fechamento.
 
 **Estado:** `PROVEN` (resposta operacional e dados anteriores), `PENDING` (outubro após correção), `PLANNED / TEST_NOT_RUN` (nova comparação setembro); `NO_RUNTIME`.
+
+
+### 20.11 Diretriz expressa PO — não duplicar a Core; concluir experiência CLARA padrão TÉO (09/11/2026)
+
+**PO_DECISION / TARGET:** CLARA deve seguir a experiência conversacional do TÉO, sem página externa e **sem replicar RBAC da Core**. Core é authority de identidade/permissões efetivas; BFF mantém escopo/recurso/ownership/business_rule, auditoria e transação. O PO rejeitou outra entrega que implante apenas contratos sem habilitar e validar o outcome. A diferença entre AuthZ Core e prova de consentimento da operação continua explícita; não tratar autorização Core como consentimento V014 automaticamente. **R-CLARA-01 §20.10 segue exigindo decisão formal de Segurança/Plataforma e Controladoria antes do cutover sensível.** Execução detalhada e DoD: [doc 161](./161-cf-ux-053-decisao-po-fronteira-core-e-execucao-conversacional-2026-11-09.md). Estado `PO_DECISION_PROVEN / TARGET / SECURITY_GATE_PENDING / NO_RUNTIME`.
+
+**Execução 09/11/2026:** branch documental integrada à main; fronteira Core/CLARA revalidada no código (`has_permission` Core; V014 = consentimento, não RBAC). Produção permanece `portal / armed=false / portal_req=true`. **Veredito:** `DECISION_REQUIRED` — sem `SECURITY_PLATFORM_DECISION` nem `CONTROLLADORIA_DECISION` assinados; cutover **não** executado (doc 161 §6).
