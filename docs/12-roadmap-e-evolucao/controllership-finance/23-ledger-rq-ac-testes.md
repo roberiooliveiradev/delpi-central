@@ -1508,4 +1508,6 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | AC-16..24 (UX/a11y/help/regressão) | PASS parcial | Help atualizado; teclado via `CfSegmentToggle`; smoke autenticado produtivo pós-deploy |
 | BFF `branch=01\|02\|all` | PROVEN | Rota e testes existentes (`test_closing_stock_reports`); sem mudança de contrato |
 | Diff | MFE-only | Sem nova rota/permissão/migration |
-| Deploy | PENDING→registrar após up-prod | Serviço `controllership-finance` apenas |
+| Deploy | PASS | `srv-api` HEAD `a6edbc9973`; MFE `infra-controllership-finance` imagem `ce858286…`; asset com «Por unidade»/«Consolidado — Filiais»; remoteEntry 200; BFF 401 fail-closed em `branch=01|02|all` |
+| Smoke autenticado UI | TEST_NOT_RUN | Sem sessão de usuário no executor; residual de homologação visual live |
+| Rollback | Disponível | Imagem anterior MFE `665b83760be4…` (2026-11-05) + `git checkout` pré-`a6edbc9973` |
