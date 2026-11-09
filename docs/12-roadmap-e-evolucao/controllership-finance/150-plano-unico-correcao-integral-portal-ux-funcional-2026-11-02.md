@@ -946,3 +946,25 @@ phase_policy = prepare → confirmation_url Portal step-up V014 → commit
 **Smoke conversacional PREPARE → confirmação → ACT → read-back:** `TEST_NOT_RUN` / `BLOCKED`. Sem o gate, o smoke sem página externa não é evidência de aceite.
 
 **Veredito:** `DEPLOYED_V014_COMPATIBLE` / `SECURITY_GATE_PENDING` / `CUTOVER_NOT_DONE`. CF-UX-053 **não** está aceito.
+
+
+### 20.16 Decisão expressa do responsável pela área — substituição de V014 na CLARA (09/11/2026)
+
+**DECISÃO REGISTRADA / PROVEN (declaração direta nesta conversa):** o solicitante afirma ser **o PO, desenvolvedor/coordenador único do projeto e responsável pela área de Controladoria**. Autoriza **expressamente a alteração da CLARA e do Portal**, incluindo a **substituição da obrigatoriedade de consentimento pela página V014** pelo padrão conversacional já utilizado pelo TÉO e demais MCPs DELPI, com confirmação no ChatGPT. Não solicitar novamente consentimento de produto nem aceite de **risco operacional da área** para essa mesma escolha.
+
+**Registro formal de decisão do owner da área:**
+```text
+PROJECT_AND_AREA_OWNER_DECISION: APPROVE_CLARA_CONVERSATIONAL_CUTOVER
+CONTROLLADORIA_DECISION: ACCEPT_OPERATIONAL_RISK
+CONSENT_TARGET: TEO_SHAPED_PREPARE_EXPLICIT_CHAT_CONFIRMATION_ACT
+LEGACY_PORTAL_STEP_UP: REMOVE_MANDATORY_REDIRECT_IN_TARGET
+DECISION_SOURCE: direct statement by PO and person responsible for the area, 2026-11-09, in ChatGPT conversation
+ACTOR: PO / responsável pela área (autodeclarado)
+EXECUTION_STATUS: NOT_YET_CUTOVER
+```
+
+**Risco explicitado para implementação:** o contrato TÉO `confirmation=true` é parâmetro MCP encaminhado pelo assistente e **não** comprovação independente de interação humana fora do modelo (V014). A autorização do responsável pela área assume o **risco operacional dessa diferença** para o desenho TARGET. A Core continua authority de effective permissions; BFF continua validando `capability AND resource_scope/ownership AND business_rule`, plano selado, actor binding, TTL, OCC, idempotência, auditoria e read-back. Nenhuma instrução desta decisão autoriza execução de operações de fechamento sem confirmação específica da proposta.
+
+**Atribuição de competência e histórico:** esta evidência registra a decisão do PO e o aceite operacional da Controladoria. **Não representa uma assinatura separada e comprovada de Segurança/Plataforma.** Se a política corporativa aplicável de R-CLARA-01 reservar ao guardião central a autorização para mudar a *garantia de consentimento*, tal assinatura permanece não demonstrada, mas **não voltar a tratar a decisão do PO / responsável operacional como ausente**. A definição da autoridade sobre esse controle deve ser tratada como divergência de governança específica, não novo pedido de autorização do PO.
+
+**Proibição de loop:** não reapresentar `CONTROLLADORIA_DECISION: AUSENTE`, “aguardando autorização do PO” ou “área ainda não autorizou” como estado atual. As seções §§20.8–20.15 são histórico do estado anterior a esta decisão. O cutover produtivo continua `NOT_DONE` até deploy e smoke real; **registro documental não altera runtime nem preenche ack**.
