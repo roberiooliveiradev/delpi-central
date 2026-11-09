@@ -1045,6 +1045,16 @@
   color: var(--ppc-accent);
 }
 
+/* Categoria distinta sem multiplicar badges nem mudar a densidade da lista. */
+.dashboard-production-control .ppc-board-pendencies__row--rupture .ppc-board-pendencies__icon {
+  color: var(--ppc-attention);
+}
+
+.dashboard-production-control .ppc-board-pendencies__row--rupture:hover,
+.dashboard-production-control .ppc-board-pendencies__row--rupture:focus-visible {
+  background: color-mix(in srgb, var(--ppc-attention) 7%, transparent);
+}
+
 .dashboard-production-control .ppc-board-pendencies__text {
   display: flex;
   flex-direction: column;
@@ -1318,6 +1328,53 @@
 .dashboard-production-control .ppc-op-detail__demand-quantities {
   text-align: right;
   align-items: flex-end;
+}
+
+/* Ruptura: apresenta dados canônicos do Estoque de Segurança sem inventar déficit. */
+.dashboard-production-control .ppc-stock-rupture-detail__description {
+  margin: 0 0 9px;
+  max-width: 560px;
+  color: var(--ppc-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-production-control .ppc-stock-rupture-detail__balance strong {
+  color: var(--ppc-critical);
+}
+
+.dashboard-production-control .ppc-stock-rupture-detail__section {
+  padding: 14px 0;
+  border-top: 1px solid var(--ppc-border);
+}
+
+.dashboard-production-control .ppc-stock-rupture-detail__section h3 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--ppc-title);
+}
+
+.dashboard-production-control .ppc-stock-rupture-detail__section p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--ppc-text);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.dashboard-production-control .ppc-stock-rupture-detail__method {
+  margin: 10px 0 0;
+  color: var(--ppc-text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.dashboard-production-control .ppc-stock-rupture-detail .ppc-op-detail__link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .dashboard-production-control .ppc-op-detail__footer {
