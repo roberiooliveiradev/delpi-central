@@ -712,6 +712,10 @@ export const copy = {
       "Não foi possível carregar o planejamento MyWEG agora. A carteira Protheus continua disponível.",
     opCoverageIncomplete:
       "Algumas OPs não puderam ser consideradas por unidade ou saldo inválido. A cobertura desses produtos pode estar incompleta.",
+    fiscalReconciliationApplied: (pieces: string) =>
+      `Faturamento WEG considerado provisoriamente: ${pieces} peças. Os saldos operacionais foram ajustados por FIFO, sem alterar a coleta original. Reconhecimento pela WEG ainda não confirmado.`,
+    fiscalReconciliationPending:
+      "A conciliação do faturamento WEG está inconclusiva para alguns materiais. Confira as notas antes de solicitar novas OPs.",
     exportLabel: "Exportar Excel",
     exportFileName: (branch: string) => `demanda-filial-${branch}`,
     exportSheetTitle: "Demanda",
@@ -797,6 +801,13 @@ export const copy = {
       coverageQuantity: "Qtd. alocada",
       coverageDate: "Fim previsto",
       opCount: (count: number) => `${count} OP${count === 1 ? "" : "s"} vinculada${count === 1 ? "" : "s"}`,
+      fiscalTitle: "Conciliação fiscal provisória",
+      rawMywegQuantity: "Necessidade WEG original",
+      fiscalOffset: "Faturamento considerado",
+      effectiveMyweg: "Saldo operacional ajustado",
+      fiscalDisclaimer: "Abatimento indicativo por FIFO. A WEG ainda pode não ter reconhecido essas notas.",
+      fiscalPending: "A conciliação fiscal está inconclusiva. Confira o faturamento antes de incluir nova OP.",
+      invoiceReference: "Notas consideradas",
       opObservation: "Observação da OP",
       opObservationMore: "Ler observação completa",
       opObservationLess: "Recolher observação",
