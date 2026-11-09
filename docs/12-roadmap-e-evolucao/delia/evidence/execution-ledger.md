@@ -6108,3 +6108,12 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **EXISTING_EQUIVALENT=YES / REUSE_DECISION=REUSE|EXTEND** — compose wiring + testes G4; sem novo registry.
 - **Veredicto:** `T2_TECHNICAL_READY_FOR_INDEPENDENT_REVIEW` — A-07 não CLOSED_PROVEN; R04 PENDING_OPS com handoff; ExternalConnection TARGET.
 
+| DELIA-C3-T2-MCP-REAL-DEV-E2E-AND-OUTCOME-VALIDATION-01 | E2E DEV: tools/list live (DAVI surface drift); Domain structure 90260921; SpecialistInterop read PASS; turn LLM timeout; admin disable/restore+isolamento PASS; runtime qwen3:8b+budgets; Core 413/0 DÉLIA 1474/0; PRODUCTION_DEPLOY=NOT_AUTHORIZED | A-07=IMPLEMENTED_BOUNDED_DEV; R04=PENDING_OPS; NEXT=T2_INDEPENDENT_REVIEW |
+
+### DELIA-C3-T2-MCP-REAL-DEV-E2E-AND-OUTCOME-VALIDATION-01 — execução (2026-11-09)
+
+- **Autorização:** homologação real DEV; disable/enable administrativo reversível; sem ACT/material prod.
+- **Identidade:** portal DEV → Core `/me` 200; `mcp_providers.manage` + delia.
+- **Drift live:** DAVI MCP tools = `analyze/get_context/knowledge/read` (não discover/execute documentados).
+- **Veredicto:** `ACCEPT_WITH_RESIDUAL` proposto — registry/revogação/S2S/READ MCP comprovados; turn completo LLM local incompleto; T04/T05 TEST_NOT_RUN.
+

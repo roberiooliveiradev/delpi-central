@@ -8,7 +8,7 @@
     "local_ollama": {
       "model": {
         "provider": "openai_compatible",
-        "model_name": "qwen3:4b-instruct-2507-q4_K_M"
+        "model_name": "qwen3:8b"
       },
       "generation": {
         "max_output_tokens": null
@@ -24,8 +24,8 @@
         "prior_turns_limit": 4
       },
       "budgets": {
-        "provider_call_timeout_seconds": 60.0,
-        "model_stage_timeout_seconds": 60.0,
+        "provider_call_timeout_seconds": 90.0,
+        "model_stage_timeout_seconds": 120.0,
         "interaction_call_timeout_seconds": 30.0,
         "turn_budget_seconds": 300.0,
         "interaction_total_budget_seconds": 300.0,
@@ -59,8 +59,8 @@
         "prior_turns_limit": 4
       },
       "budgets": {
-        "provider_call_timeout_seconds": 60.0,
-        "model_stage_timeout_seconds": 60.0,
+        "provider_call_timeout_seconds": 90.0,
+        "model_stage_timeout_seconds": 120.0,
         "interaction_call_timeout_seconds": 30.0,
         "turn_budget_seconds": 300.0,
         "interaction_total_budget_seconds": 300.0,
@@ -94,8 +94,8 @@
         "prior_turns_limit": 4
       },
       "budgets": {
-        "provider_call_timeout_seconds": 60.0,
-        "model_stage_timeout_seconds": 60.0,
+        "provider_call_timeout_seconds": 90.0,
+        "model_stage_timeout_seconds": 120.0,
         "interaction_call_timeout_seconds": 30.0,
         "turn_budget_seconds": 300.0,
         "interaction_total_budget_seconds": 300.0,

@@ -303,6 +303,27 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 **NEXT:** `T2_INDEPENDENT_REVIEW`.  
 **PRODUCTION_DEPLOY / T3:** `NOT_AUTHORIZED`.
 
+### 2A.16 Execution stamp — Real DEV E2E + Outcome validation (2026-11-09)
+
+**TASK:** `DELIA-C3-T2-MCP-REAL-DEV-E2E-AND-OUTCOME-VALIDATION-01`  
+**AUTHORIZATION:** homologação funcional DEV; disable/enable administrativo reversível; sem ACT empresarial; sem prod.  
+**BASE_HEAD (coordination):** `fa3b683b758077907aa338e1bcfd4779f4b67f1c` (ancestral `e4df51c12a`); execução em `main` atualizado.
+
+**DEV:** `DELIA_MCP_PROVIDER_REGISTRY_MODE=core`; identidade portal DEV válida (`mcp_providers.manage` + delia); profile `local_ollama` → `qwen3:8b` + budgets 90/120s (todos os profiles alinhados).
+
+**T01:** tools/list real autenticado PASS — superfície live DAVI = `analyze,get_context,knowledge,read` (**drift** vs docs `discover_delpi_information`/`execute_delpi_information`).  
+**T02:** turn `/interaction/turns` **não concluiu** em 480s (latência modelo local); Domain API structure `90260921` FP `a3dcef2068200898` PASS; durante o turn houve `davi.get_context` real; **SpecialistInterop** `davi.read`+`get_product_structure` PASS (COMPLETED, contém 90260921).  
+**T03/T07:** disable admin Core + eligible teo/vista + guard `mcp_provider_not_eligible` + enable restore PASS.  
+**T04/T05:** `TEST_NOT_RUN` (checkpoint harness / usuário negativo ausente).  
+**T06-A:** bad token fail-closed PASS. T06-B/C harness: cobertos por testes de contrato.  
+**T08:** Domain autoritativa PASS; resposta completa do turn INCONCLUSIVE; READ MCP structure via interop PASS.  
+**T09:** resume/cancel/G4 PASS. **T10:** Core 413/0; DÉLIA 1474/0.
+
+**A-07:** permanece `IMPLEMENTED_BOUNDED_DEV` (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS`.  
+**PROPOSED:** `ACCEPT_WITH_RESIDUAL` — E2E parcial (turn LLM incompleto; live tool names drifted).  
+**NEXT:** `T2_INDEPENDENT_REVIEW`.  
+**PRODUCTION_DEPLOY / T3:** `NOT_AUTHORIZED`.
+
 ## 3. Política de residual ZERO e limites reais
 
 - **ZERO** significa nenhum residual material **no escopo de fechamento DÉLIA aprovado**. Resíduo externo TÉO, dependência de produção ou limitação de modelo não pode ser rotulado `PASS`; determinar explicitamente se é bloqueador da aceitação DÉLIA ou de release. Não declarar que todo monorepo foi limpo.

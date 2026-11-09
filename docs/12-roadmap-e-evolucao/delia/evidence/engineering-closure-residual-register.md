@@ -850,3 +850,34 @@ Provider-neutral; SSRF/redirect/DNS checks; OAuth externo fora do Keycloak DELPI
 **NEXT:** `T2_INDEPENDENT_REVIEW`  
 **PRODUCTION_DEPLOY / T3:** `NOT_AUTHORIZED`
 
+## T2 REAL DEV E2E + OUTCOME (2026-11-09)
+
+**TASK_ID:** `DELIA-C3-T2-MCP-REAL-DEV-E2E-AND-OUTCOME-VALIDATION-01`
+
+| ID | Status | Evidência |
+|---|---|---|
+| T01 tools/list | PASS (live drift) | DAVI: analyze/get_context/knowledge/read; auth delegada |
+| T02 turn READ | INCONCLUSIVE/FAIL timeout | Domain FP a3dcef2068200898; turn 480s TimeoutError; davi.get_context ok mid-turn |
+| T02b interop READ | PASS | SpecialistInterop davi.read get_product_structure → COMPLETED + 90260921 |
+| T03 disable | PASS | admin disable/enable + expectedVersion; eligible restored |
+| T04 resume multi-turn | TEST_NOT_RUN | contract A–H only |
+| T05 user AuthZ neg | TEST_NOT_RUN | sem usuário negativo provisionado |
+| T06 bad token | PASS | core_forbidden fail-closed |
+| T07 isolation | PASS | teo eligible while davi blocked |
+| T08 outcome | PARTIAL | Domain match PROVEN; full Delia answer not delivered |
+| T09 cancel/deadline | PASS | pytest resume+G4 |
+| T10 regression | PASS | Core 413/0; DÉLIA 1474/0 |
+
+**LIVE_CONTRACT_DRIFT:** docs ainda citam `discover_delpi_information`/`execute_delpi_information`; owner api-delpi MCP vigente = surface `get_context/knowledge/read/analyze`.
+
+**DEV_ROLLBACK:** DAVI enabled restaurado; eligible davi,teo,vista.
+
+| ID | Status |
+|---|---|
+| A-07 | `IMPLEMENTED_BOUNDED_DEV` |
+| R04 | `PENDING_OPS` |
+| T2_TECHNICAL_STATUS | `ACCEPT_WITH_RESIDUAL` (proposta) |
+
+**NEXT:** `T2_INDEPENDENT_REVIEW`  
+**PRODUCTION_DEPLOY / T3:** `NOT_AUTHORIZED`
+

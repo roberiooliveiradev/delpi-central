@@ -30,7 +30,7 @@ def test_llm_tuning_comes_from_runtime_json(monkeypatch):
     # test_pydantic_ai_runtime_config).
     settings = Settings()
     assert settings.llm_max_output_tokens is None
-    assert settings.model_stage_timeout_seconds == 60.0
+    assert settings.model_stage_timeout_seconds == 120.0
     assert settings.llm_call_max_attempts == 3
 
 

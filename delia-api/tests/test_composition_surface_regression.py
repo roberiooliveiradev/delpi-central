@@ -172,6 +172,5 @@ def test_runtime_profiles_share_execution_policy():
     reference = flattened["local_ollama"]
     for name, fields in flattened.items():
         assert fields == reference, (
-            f"profile {name} diverges in execution policy: "
-            f"{set(fields.items()) ^ set(reference.items())}"
+            f"profile {name} diverges in execution policy from local_ollama"
         )

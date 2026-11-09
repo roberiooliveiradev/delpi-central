@@ -45,9 +45,7 @@ def test_checked_in_document_loads_default_profile():
     assert config.schema_version == 1
     assert config.profile_name == "local_ollama"
     assert config.profile.model.provider == "openai_compatible"
-    assert config.profile.model.model_name == (
-        "qwen3:4b-instruct-2507-q4_K_M"
-    )
+    assert config.profile.model.model_name == "qwen3:8b"
     assert config.fingerprint
 
 
@@ -193,12 +191,12 @@ def test_secret_fields_rejected_at_any_depth(tmp_path):
 def test_settings_resolves_checked_in_profile(monkeypatch):
     monkeypatch.delenv("DELIA_RUNTIME_PROFILE", raising=False)
     settings = Settings()
-    assert settings.llm_model == "qwen3:4b-instruct-2507-q4_K_M"
+    assert settings.llm_model == "qwen3:8b"
     assert settings.llm_provider == "openai_compatible"
-    assert settings.llm_timeout_seconds == 60.0
+    assert settings.llm_timeout_seconds == 90.0
     assert settings.llm_max_output_tokens is None
     assert settings.llm_context_tokens == 16384
-    assert settings.model_stage_timeout_seconds == 60.0
+    assert settings.model_stage_timeout_seconds == 120.0
     assert settings.turn_budget_seconds == 300.0
     assert settings.interaction_total_budget_seconds == 300.0
     assert settings.max_governed_attempts == 2
