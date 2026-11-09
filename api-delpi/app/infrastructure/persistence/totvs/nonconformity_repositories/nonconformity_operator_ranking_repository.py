@@ -51,7 +51,16 @@ class NonconformityOperatorRankingRepository(BaseRepository):
             SELECT
                 {code_sql} AS operator_code,
                 {defect_sql} AS defect,
-                COUNT(1) AS nc_count
+                COUNT(1) AS nc_count,
+                -- Mesma conversão do numerador PPM/Quantidade devolvida da Qualidade.
+                -- QI2_QTDDEV: quantidade devolvida/rejeitada informada na NC.
+                SUM(
+                    COALESCE(
+                        TRY_PARSE(NULLIF(LTRIM(RTRIM(QI2_QTDDEV)), '') AS DECIMAL(18,3) USING 'pt-BR'),
+                        TRY_PARSE(NULLIF(LTRIM(RTRIM(QI2_QTDDEV)), '') AS DECIMAL(18,3) USING 'en-US'),
+                        0
+                    )
+                ) AS rejected_quantity
             FROM QI2010 WITH (NOLOCK)
             WHERE {where_clause}
             GROUP BY {code_sql}, {defect_sql}
