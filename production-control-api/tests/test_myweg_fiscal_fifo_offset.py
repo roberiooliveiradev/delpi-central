@@ -71,7 +71,7 @@ def _nf(
 
 def _apply(lines: list, invoices: list[dict], batch: dict | None = None) -> dict:
     return reconcile_latest_myweg_fifo(
-        lines, invoices, batch=batch or BATCH, today=TODAY,
+        lines, invoices, batch=(BATCH if batch is None else batch), today=TODAY,
     )
 
 
