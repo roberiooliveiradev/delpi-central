@@ -31,6 +31,8 @@ from production_control_app.domain.ports.production_orders_gateway import (
     ProductionOrdersGateway,
 )
 from production_control_app.domain.services.branch_access_service import BranchAccessService
+from production_control_app.domain.services.current_month_period import today_in_timezone
+from production_control_app.domain.services.op_pendency_service import build_op_pendencies
 from production_control_app.domain.services.demand_coverage_service import (
     STATUS_AT_RISK,
     STATUS_COVERED_BY_ORDER,
@@ -413,6 +415,64 @@ class DemandService:
         return trimmed
 
     # --------------------------------------------------------------- public
+
+    def list_op_pendencies(
+        self,
+        user: object | None,
+        *,
+        branch: str,
+        refresh: bool = False,
+    ) -> dict[str, Any]:
+        """Pendências da Gestão à Vista, na mesma alocação da aba Demanda.
+
+        Requer demand.view e RBAC da filial. MyWEG entra somente na filial 02,
+        com permissão explícita, no mesmo pool de estoque/OP (origin=both).
+        O período do OTD não recorta o horizonte de necessidades abertas.
+        """
+        code = self._branch_access.assert_valid_branch(branch)
+        self._authorize(user, branch=code)
+        requested_origin = (
+            ORIGIN_BOTH
+            if code == DEMAND_SOURCE_BRANCH and can(user, PC_MYWEG_NEEDS_VIEW)
+            else ORIGIN_PROTHEUS
+        )
+        lines, meta = self._load_origin_lines(
+            user, branch=code, origin=requested_origin, refresh=refresh
+        )
+        metadata = meta or {}
+        source_status = "complete"
+        warning: str | None = None
+        if metadata.get("myweg_skipped"):
+            source_status = "partial"
+            warning = "Necessidades MyWEG indisponíveis; exibindo somente pedidos Protheus."
+        elif code == DEMAND_SOURCE_BRANCH and requested_origin == ORIGIN_PROTHEUS:
+            source_status = "partial"
+            warning = "Sem permissão MyWEG; exibindo somente pedidos Protheus."
+
+        # Falhas de estoque no SB2 tornam a cobertura MyWEG desconhecida.
+        # Evitar alertar 'crie OP' nessas condições (falso positivo).
+        uncertain_products: set[str] = set()
+        if metadata.get("stock_data_complete") is False:
+            uncertain_products = {
+                line.product_code for line in lines if line.source == ORIGIN_MYWEG
+            }
+        today = self._today or today_in_timezone("America/Sao_Paulo")
+        payload = build_op_pendencies(
+            lines, branch=code, today=today, incomplete_products=uncertain_products
+        )
+        if payload["suppressed_product_count"] > 0:
+            source_status = "partial"
+            warning = (
+                "Alguns produtos foram ocultados porque a cobertura por estoque ou OP "
+                "não está confirmada."
+            )
+        payload.update({
+            "requested_origin": requested_origin,
+            "source_status": source_status,
+            "warning": warning,
+            "refresh_policy": "snapshot_demand_ttl",
+        })
+        return payload
 
     def list_demand(
         self,
