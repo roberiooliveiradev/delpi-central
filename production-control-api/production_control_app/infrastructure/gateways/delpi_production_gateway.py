@@ -845,6 +845,20 @@ class DelpiProductionGateway:
             params={"branch": branch},
         )
 
+    def fetch_stock_rupture_pendencies(
+        self, *, branch: str, horizon_days: int = 30
+    ) -> dict[str, Any]:
+        """Rupturas do provider Reports, pela rota interna S2S da api-delpi.
+
+        Exclusivo ao BFF após checagem de acesso PCP/filial: o frontend jamais
+        recebe nem precisa utilizar o token interno da api-delpi.
+        """
+        return self._request(
+            "GET",
+            "/reports/providers/safety_stock_shortage_30d/pcp-pendencies",
+            params={"branch": branch, "horizonDays": horizon_days},
+        )
+
     def fetch_recently_closed_orders(self, *, days: int) -> dict[str, Any]:
         """Linhas SC6 encerradas no lookback (``C6_DATFAT``) — TOTVS puro."""
         return self._request(
