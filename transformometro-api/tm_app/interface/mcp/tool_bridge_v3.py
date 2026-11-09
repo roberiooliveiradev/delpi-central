@@ -240,6 +240,25 @@ _V3_READ_SPECIALIZED: dict[str, tuple[str, frozenset[str]]] = {
 }
 
 
+def _record_read_entity(entity_norm: str):
+    """Return GptEntity when ``entity_norm`` is a catalog record entity."""
+    try:
+        return parse_entity(entity_norm)
+    except ValueError:
+        return None
+
+
+def _allowed_read_actions(entity_norm: str, specialized: frozenset[str]) -> list[str]:
+    """Union specialized READ actions with catalog search/get when hybrid."""
+    allowed = set(specialized)
+    entity = _record_read_entity(entity_norm)
+    if entity is not None:
+        for op in ("get", "search"):
+            if entity_supports(entity, op):
+                allowed.add(op)
+    return sorted(allowed)
+
+
 def tool_read(
     entity: str,
     action: str | None = None,
@@ -249,19 +268,35 @@ def tool_read(
 
     Domain entities use ``action=search|get`` (same contract as
     ``record_read``); specialized entities carry their own closed action
-    vocabularies. READ only — it can never produce a write.
+    vocabularies. Hybrid entities (e.g. ``meeting_minute``) declare both:
+    ``search|get`` go through ``record_read``; specialized actions keep
+    their family handler. READ only — it can never produce a write.
     """
     try:
         entity_norm = str(entity or "").strip()
         action_norm = str(action or "").strip() or "get"
         body = dict(params or {})
 
+        # Catalog record path wins for search/get even when the same entity
+        # also exposes specialized READ actions (meeting_minute hybrid).
+        if action_norm in {"search", "get"}:
+            record_entity = _record_read_entity(entity_norm)
+            if record_entity is not None and entity_supports(
+                record_entity, action_norm
+            ):
+                body.setdefault("entity", entity_norm)
+                return _b.tool_record_read(
+                    action=action_norm,
+                    **_sig_kwargs(_b.tool_record_read, body),
+                )
+
         if entity_norm in _V3_READ_SPECIALIZED:
             fn_name, allowed = _V3_READ_SPECIALIZED[entity_norm]
             if action_norm not in allowed:
                 return _b._error_result(
                     f"Unknown read action '{action_norm}' for entity "
-                    f"'{entity_norm}'. Allowed: {sorted(allowed)}.",
+                    f"'{entity_norm}'. Allowed: "
+                    f"{_allowed_read_actions(entity_norm, allowed)}.",
                     status_code=400,
                     error_code="validation",
                 )
@@ -271,9 +306,7 @@ def tool_read(
                 kwargs["action"] = action_norm
             return fn(**kwargs)
 
-        try:
-            parse_entity(entity_norm)
-        except ValueError:
+        if _record_read_entity(entity_norm) is None:
             allowed = sorted(_V3_READ_SPECIALIZED) + [
                 e.value for e in GptEntity
             ]
@@ -282,16 +315,11 @@ def tool_read(
                 status_code=400,
                 error_code="validation",
             )
-        if action_norm not in {"search", "get"}:
-            return _b._error_result(
-                f"Unknown read action '{action_norm}' for entity "
-                f"'{entity_norm}'. Allowed: ['get', 'search'].",
-                status_code=400,
-                error_code="validation",
-            )
-        body.setdefault("entity", entity_norm)
-        return _b.tool_record_read(
-            action=action_norm, **_sig_kwargs(_b.tool_record_read, body)
+        return _b._error_result(
+            f"Unknown read action '{action_norm}' for entity "
+            f"'{entity_norm}'. Allowed: ['get', 'search'].",
+            status_code=400,
+            error_code="validation",
         )
     except Exception as exc:
         return _b.handle_tool_error(exc)

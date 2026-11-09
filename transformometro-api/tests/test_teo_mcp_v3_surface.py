@@ -194,6 +194,137 @@ def test_read_unknown_entity_and_action_fail_typed() -> None:
         _cleanup(tokens)
 
 
+def test_read_meeting_minute_search_and_get_use_record_read() -> None:
+    """Hybrid entity: catalog search/get must not be swallowed by specialized."""
+    tokens = _auth_context()
+    try:
+        with patch(
+            "tm_app.interface.mcp.tool_bridge._dispatch.record_read",
+            return_value={"total": 1, "items": [{"id": "mm-1", "title": "Demandas"}]},
+        ) as rec:
+            result = v3.tool_read(
+                "meeting_minute",
+                "search",
+                {"unit_code": "01", "q": "Demandas Comerciais"},
+            )
+            assert result.is_error is False
+            assert rec.call_args.kwargs["action"] == "search"
+            assert rec.call_args.kwargs["unit_code"] == "01"
+            assert rec.call_args.kwargs["q"] == "Demandas Comerciais"
+            assert rec.call_args.args[1] == "meeting_minute"
+
+        with patch(
+            "tm_app.interface.mcp.tool_bridge._dispatch.record_read",
+            return_value={"id": "mm-1", "title": "Demandas"},
+        ) as rec_get:
+            result = v3.tool_read(
+                "meeting_minute",
+                "get",
+                {"id": "11111111-1111-1111-1111-111111111111"},
+            )
+            assert result.is_error is False
+            assert rec_get.call_args.kwargs["action"] == "get"
+            assert (
+                rec_get.call_args.kwargs["record_id"]
+                == "11111111-1111-1111-1111-111111111111"
+            )
+    finally:
+        _cleanup(tokens)
+
+
+def test_read_meeting_minute_specialized_actions_preserved() -> None:
+    tokens = _auth_context()
+    try:
+        with patch(
+            "tm_app.interface.mcp.tool_bridge._dispatch.manage_meeting_minute",
+            return_value={"audit": []},
+        ) as mm:
+            result = v3.tool_read(
+                "meeting_minute",
+                "audit",
+                {"minute_id": "mm-1"},
+            )
+            assert result.is_error is False
+            assert mm.call_args.kwargs["action"] == "audit"
+            assert mm.call_args.kwargs["minute_id"] == "mm-1"
+            assert mm.call_args.kwargs["read_only"] is True
+
+        with patch(
+            "tm_app.interface.mcp.tool_bridge._dispatch.manage_meeting_minute",
+            return_value={"participants": []},
+        ) as mm_part:
+            result = v3.tool_read(
+                "meeting_minute",
+                "participants",
+                {"minute_id": "mm-1"},
+            )
+            assert result.is_error is False
+            assert mm_part.call_args.kwargs["action"] == "participants"
+    finally:
+        _cleanup(tokens)
+
+
+def test_read_meeting_minute_unknown_action_lists_hybrid_ops() -> None:
+    tokens = _auth_context()
+    try:
+        r = v3.tool_read("meeting_minute", "not_a_real_action")
+        assert r.is_error is True
+        message = r.structured_content["message"]
+        assert "search" in message
+        assert "get" in message
+        assert "audit" in message
+        assert "participants" in message
+    finally:
+        _cleanup(tokens)
+
+
+def test_read_process_search_unaffected_by_meeting_minute_hybrid() -> None:
+    tokens = _auth_context()
+    try:
+        with patch(
+            "tm_app.interface.mcp.tool_bridge._dispatch.record_read",
+            return_value={"items": [{"id": "p1"}]},
+        ) as rec:
+            result = v3.tool_read("process", "search", {"q": "x"})
+            assert result.is_error is False
+            assert rec.call_args.kwargs["action"] == "search"
+            assert rec.call_args.args[1] == "process"
+    finally:
+        _cleanup(tokens)
+
+
+def test_read_meeting_minute_get_not_found_and_forbidden() -> None:
+    from tm_app.application.gpt_actions.dispatch_service import GptActionsError
+
+    tokens = _auth_context()
+    try:
+        with patch(
+            "tm_app.interface.mcp.tool_bridge._dispatch.record_read",
+            side_effect=GptActionsError("Ata não encontrada.", 404),
+        ):
+            missing = v3.tool_read(
+                "meeting_minute",
+                "get",
+                {"id": "00000000-0000-0000-0000-000000000000"},
+            )
+            assert missing.is_error is True
+            assert missing.structured_content["status_code"] == 404
+
+        with patch(
+            "tm_app.interface.mcp.tool_bridge._dispatch.record_read",
+            side_effect=GptActionsError("Sem acesso à filial.", 403),
+        ):
+            denied = v3.tool_read(
+                "meeting_minute",
+                "search",
+                {"unit_code": "02"},
+            )
+            assert denied.is_error is True
+            assert denied.structured_content["status_code"] == 403
+    finally:
+        _cleanup(tokens)
+
+
 # --- analyze / knowledge ---------------------------------------------------------
 
 
