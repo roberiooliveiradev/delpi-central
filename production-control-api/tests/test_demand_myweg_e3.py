@@ -431,6 +431,52 @@ def test_e3_myweg_mi_not_converted_twice_and_unknown_op_flagged() -> None:
     assert payload["myweg"]["op_unverified_count"] == 1
 
 
+def test_e3_both_mp_sales_do_not_affect_myweg_or_cross_source_coverage() -> None:
+    """#1552: MP em vendas não faz overlap, estoque ou alerta indevido."""
+    service, user = _svc(
+        sales=[
+            _protheus_sale(
+                pedido="MP-001", produto="90260001", tipo_produto=" MP ",
+                unidade="KG", saldo=90.0, quantidade=90.0, no_estoque=90.0,
+                data_entrega="2026-11-01",
+            ),
+            _protheus_sale(
+                pedido="PA-001", produto="90268888", tipo_produto="PA",
+                saldo=2.0, quantidade=2.0, unidade="MI",
+            ),
+        ]
+    )
+    both = service.list_demand(user, branch="02", origin=ORIGIN_BOTH)
+    assert {row["source"] for row in both["items"]} == {"protheus", "myweg"}
+    assert {row["sales_order"] for row in both["items"]} == {"PA-001", "MYWEG"}
+    assert both["myweg"]["overlap_pending_count"] == 0
+    assert both["myweg"]["reconciliation_blocked_count"] == 0
+    assert both["summary"]["by_origin"]["protheus"]["line_count"] == 1
+    assert both["summary"]["by_origin"]["myweg"]["line_count"] == 1
+    assert both["summary"]["open_quantity"] == pytest.approx(3.5)
+    assert sum(bucket["open_quantity"] for bucket in both["horizon"]) == pytest.approx(3.5)
+
+    pending = service.list_op_pendencies(user, branch="02")
+    op_items = [item for item in pending["items"] if item["kind"] == "include_production_order"]
+    assert {item["product_code"] for item in op_items} == {"90260001", "90268888"}
+    myweg_pending = next(item for item in op_items if item["product_code"] == "90260001")
+    assert myweg_pending["origins"] == ["myweg"]
+
+
+def test_e3_myweg_origin_unchanged_when_sales_order_is_mp() -> None:
+    """MP é excluído apenas da carteira de vendas do PCP, não do lote WEG."""
+    service, user = _svc(
+        sales=[_protheus_sale(
+            pedido="MP-001", produto="90260001", tipo_produto="MP",
+            saldo=90.0, unidade="KG",
+        )]
+    )
+    result = service.list_demand(user, branch="02", origin=ORIGIN_MYWEG)
+    assert result["pagination"]["total"] == 1
+    assert result["items"][0]["source"] == "myweg"
+    assert result["items"][0]["product_code"] == "90260001"
+
+
 def test_e3_both_one_op_pool_no_double_allocation() -> None:
     rows = [{
         "id": "r1",
