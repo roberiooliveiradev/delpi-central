@@ -13,6 +13,14 @@ import {
 
 const QUEUE_PATH = "/apps/engineering/product-registration";
 
+/** Casos elegíveis criados via API oficial (DEV) — CSV de UUIDs. */
+function seededRequestIds(): string[] {
+  return (process.env.PRC_REF019_REQUEST_IDS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 test.beforeEach(async ({ page }) => {
   await loginAsDev(page);
 });
@@ -24,7 +32,29 @@ async function ensureAuthenticated(page: Page): Promise<void> {
   }
 }
 
+async function detailLoaded(page: Page): Promise<boolean> {
+  const loaded = page
+    .getByRole("tab", { name: /Ficha técnica|Visão geral|Histórico/i })
+    .or(
+      page.getByRole("button", {
+        name: /Ficha técnica|Solicitar informações|Iniciar atendimento/i,
+      }),
+    )
+    .first();
+  return loaded
+    .waitFor({ state: "visible", timeout: 30_000 })
+    .then(() => true)
+    .catch(() => false);
+}
+
 async function openInProgressCase(page: Page): Promise<boolean> {
+  const seeded = seededRequestIds();
+  for (const id of seeded) {
+    await page.goto(`${QUEUE_PATH}/${id}`);
+    await ensureAuthenticated(page);
+    if (await detailLoaded(page)) return true;
+  }
+
   await page.goto(QUEUE_PATH);
   await ensureAuthenticated(page);
   const row = page.locator("tbody tr").first();
@@ -44,22 +74,13 @@ async function openInProgressCase(page: Page): Promise<boolean> {
     await card.click();
   }
   await ensureAuthenticated(page);
-  // Mesmo critério do REF-018: detalhe carregou se a aba Ficha técnica existe
-  // ou se qualquer ação/status do PRC está visível.
-  const loaded = page
-    .getByRole("tab", { name: /Ficha técnica|Visão geral|Histórico/i })
-    .or(page.getByRole("button", { name: /Ficha técnica|Solicitar informações|Iniciar atendimento/i }))
-    .first();
-  return loaded
-    .waitFor({ state: "visible", timeout: 30_000 })
-    .then(() => true)
-    .catch(() => false);
+  return detailLoaded(page);
 }
 
 test("REF-019 — perguntas estruturadas, resposta e retomada", async ({
   page,
 }, testInfo) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   const forbidden = trackForbiddenApiCalls(page);
   const pageErrors = trackPageErrors(page);
   const shot = (name: string) =>
@@ -157,28 +178,34 @@ test("REF-019 — perguntas estruturadas, resposta e retomada", async ({
     await analyzeAsEng.click();
   }
 
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 6; i++) {
     const btn = page.getByRole("button", { name: /Aceitar esclarecimento/i }).first();
-    if (!(await btn.isVisible().catch(() => false))) break;
-    await btn.click();
-    await page.waitForTimeout(500);
+    const visible = await btn.isVisible().catch(() => false);
+    if (!visible) break;
+    await btn.click({ timeout: 5_000 }).catch(() => undefined);
+    await page.waitForTimeout(800);
   }
+  await expect(
+    page.getByText(/Histórico de rodadas resolvidas|Nenhuma rodada de esclarecimento em aberto|Esclarecimento aceito/i).first(),
+  ).toBeVisible({ timeout: 30_000 });
   await shot("accepted");
 
-  const resumeBtn = page.getByRole("button", { name: /Retomar atendimento/i });
-  if (await resumeBtn.first().isVisible().catch(() => false)) {
-    await expect(resumeBtn.first()).toBeEnabled({ timeout: 15_000 });
-    await resumeBtn.first().click();
-    const confirm = page.getByRole("button", {
-      name: /Retomar atendimento|Confirmar/i,
-    });
-    if (await confirm.last().isVisible().catch(() => false)) {
-      await confirm.last().click();
-    }
-    await expect(
-      page.getByText(/Em atendimento|Em andamento/i).first(),
-    ).toBeVisible({ timeout: 30_000 });
+  const resumeBtn = page
+    .getByRole("button", { name: /^Retomar atendimento$/i })
+    .filter({ hasNot: page.locator("[disabled], .delpi-ui-action-btn--disabled") })
+    .first();
+  await expect(resumeBtn).toBeEnabled({ timeout: 20_000 });
+  await resumeBtn.click();
+  const dialogConfirm = page
+    .locator('[role="dialog"], .delpi-ui-modal')
+    .getByRole("button", { name: /^Retomar atendimento$/i })
+    .last();
+  if (await dialogConfirm.isVisible().catch(() => false)) {
+    await dialogConfirm.click({ timeout: 10_000 });
   }
+  await expect(
+    page.getByText(/Em atendimento|Em andamento/i).first(),
+  ).toBeVisible({ timeout: 30_000 });
   await shot("resumed");
   await expectNoFailures(pageErrors, forbidden);
 });
