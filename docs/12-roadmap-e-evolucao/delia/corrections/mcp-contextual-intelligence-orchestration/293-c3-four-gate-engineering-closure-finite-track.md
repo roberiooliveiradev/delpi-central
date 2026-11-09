@@ -160,6 +160,28 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 **BASE_HEAD:** `1a895cb0f02bedb6bd2288855fe1d447fea8998e`  
 **RESULT:** T2.1 `RETIRE_FULL_SET` **IMPLEMENTED** (código/repo). T2.2 inventário: Core ExternalConnection/provider approval = `TARGET_ONLY` → T2.3 design only; T2.4/T2.5 = `BLOCKED_BY_OWNER_CONTRACT`. R04 prod flag = `PENDING_OPS`. Detalhe e procedimento ops: `evidence/engineering-closure-residual-register.md` § T2 ampliada. **NEXT:** `T2_INDEPENDENT_REVIEW`. T3 / PRODUCTION_DEPLOY: NOT_AUTHORIZED.
 
+### 2A.7 Decisão de arquitetura — persistência MCP no Core, não no Keycloak (PO 2026-11-09)
+
+**Decisão da coordenação / Product Owner (direção arquitetural aprovada; implementação ainda BLOCKED_BY_OWNER_CONTRACT):** o cadastro **governado** de servidores/provedores MCP da plataforma DELPI tem **Core API** como owner; a persistência pretendida é o **PostgreSQL sob ownership lógico do Core** (`delpi_core` no baseline atual), **não** o banco/schema do Keycloak e **não** uma tabela paralela da DÉLIA. Reutilizar preferencialmente as estruturas/tabelas/migrations já legítimas do Core; criar schema PostgreSQL dedicado somente mediante inventário, contrato e justificativa aprovada pelo owner Core. Esta decisão **não** aprova de antemão um schema físico, nome de tabela, migration, SQL, API, credencial, alteração no Keycloak ou deploy.
+
+**Ownership e separação de dados (contratos alvo, ainda não implementados):**
+
+| Dado/responsabilidade | Owner/fonte | Persistência ou consumo |
+|---|---|---|
+| Registro e aprovação do servidor MCP: providerRef, identidade, endpointRef, owner, protocolo, policy/status, audit/version/revoke | **Core governance** | PostgreSQL do Core (estrutura existente se adequada); CRUD/consulta por API governada com Core AuthZ |
+| Conexão efetiva por usuário/org, consentimento, sharing, scopes e credentialRef | **ExternalConnection**, owner físico/contrato a confirmar antes de executar | Reutilizar/estender boundary legítimo; **não presumir** que tudo pertença à mesma tabela/schema do provider registry |
+| Identity, client OAuth, audience, token exchange, SSO | **Keycloak** quando o recurso usar IAM DELPI | Estado IAM próprio; client configurado != aprovação do provedor; não duplicar tokens ou permissions no Core |
+| OAuth de terceiro (Microsoft/Google etc.), consentimento, refresh/revoke | **Provider OAuth externo e secret owner autorizado** | Não forçar terceiros a usar Keycloak; secret/token real fora de tabela comum, prompt, memória, logs e MFE |
+| Tool names, descriptions, schemas, toolClass e disponibilidade factual | **Servidor MCP** | `tools/list` live consumido pelo **Pydantic AI MCPToolset**; sem snapshot autoritativo |
+| Seleção, Policy/Decision, invocation gates, Evidence e Outcome | **DÉLIA** + Core/Domain business authorities | Consumir provider/connection refs por **contrato HTTP/evento**; sem imports/SQL cross-context nem segundo planner |
+| UI de administração/observabilidade | Core-governed capabilities e DÉLIA/Portal conforme contratos de UI | Uma superfície administrativa, não segunda autoridade de approval/credencial |
+
+**Fluxo alvo:** operador autorizado solicita cadastro → Core valida, audita e aprova provider → mecanismo de conexão/credencial próprio é vinculado por usuário/org → DÉLIA consulta somente refs/estados elegíveis via Core → resolve credential bounded → `MCPToolset` descobre `tools/list` em tempo real → toda invocação passa por DÉLIA/Core/Domain/Policy e Outcome. `registered != approved != enabled != authenticated != authorized != business outcome`. Em revogação, fail closed; cache não concede nem prolonga permissão.
+
+**Reuse-before-design:** `EXISTING_EQUIVALENT=NO/TARGET_ONLY` para provider approval e ExternalConnection físicos conforme relatório T2 ampliado no SHA `e94496503c8771eab87107c4d3d0dfeedb022295`; reconfirmar no HEAD antes de writes. `REUSE_DECISION=EXTEND Core` como direção preferida **após** provar owner, contratos e consumo, não autorização para criar generic registry na DÉLIA. Keycloak e MCPToolset: `EXISTING_EQUIVALENT=YES`, `REUSE`. Revalidar docs 16/17/21/49/50/51/52/59/60, ledger e contratos reais; novas evidências que contrariem o owner = `EXECUTION_DRIFT`/decisão superior.
+
+**Gates antes de qualquer código de Core/persistência:** (1) aceite formal de Core owner e fase/CP-RQ; (2) inventário de schema/tabelas/APIs/governança/RBAC/audit e segredo; (3) contrato versionado request/response/errors/AuthZ/idempotency/revocation/rollback/observability, `operationId` estável se HTTP; (4) design da migração idempotente de sete recursos internos e onboarding externo, sem dependência da callback OAuth do ChatGPT; (5) testes de approval/revoke, troca de token, isolamento usuário/tenant, SSRF, fail-closed, schema parity, E2E real e Outcome; (6) Ops authorization separada para qualquer ambiente produtivo. `A-07=BLOCKED_BY_OWNER_CONTRACT`, `R04=PENDING_OPS` até evidência factual. `T2_ARCHITECTURE_OWNERSHIP=NOT_PASS`; `T3` e deploy produtivo não autorizados por esta decisão.
+
 ## 3. Política de residual ZERO e limites reais
 
 - **ZERO** significa nenhum residual material **no escopo de fechamento DÉLIA aprovado**. Resíduo externo TÉO, dependência de produção ou limitação de modelo não pode ser rotulado `PASS`; determinar explicitamente se é bloqueador da aceitação DÉLIA ou de release. Não declarar que todo monorepo foi limpo.
