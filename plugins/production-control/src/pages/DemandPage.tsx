@@ -5,6 +5,8 @@ import {
   createDashboardStatusBadge,
   MultiTypeSeriesChart,
   NativeSelectField,
+  createDashboardMultiSelectField,
+  multiSelectBemClasses,
   formFieldShellBemClasses,
 } from "@delpi/plugin-ui/index";
 import { CalendarClock, PackageSearch, TriangleAlert } from "lucide-react";
@@ -28,6 +30,23 @@ const DEMAND_CHART_HEIGHT = 260;
 const KpiCard = createDashboardKpiCard({ prefix: "ppc", labels: copy.kpi });
 const StatusBadge = createDashboardStatusBadge({ prefix: "ppc" });
 const fieldClasses = formFieldShellBemClasses("ppc");
+const CustomerMultiSelect = createDashboardMultiSelectField({
+  classNames: {
+    ...multiSelectBemClasses("ppc"),
+    root: "ppc-demand-customer-filter",
+    fieldLabel: "ppc-demand-customer-filter__label",
+  },
+  portalScopeClassName: "dashboard-production-control",
+  labels: {
+    emptyLabel: copy.demand.customerAll,
+    searchPlaceholder: copy.demand.customerSearch,
+    selectVisible: copy.demand.customerSelectVisible,
+    clear: copy.demand.customerClear,
+    emptyOptions: copy.demand.customerEmpty,
+    multipleSelected: copy.demand.customersSelected,
+    searchAriaLabel: (label: string) => `Buscar em ${label}`,
+  },
+});
 
 const LoadingCard = createDashboardLoadingActivityCard({
   prefix: "ppc",
@@ -59,6 +78,7 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
   const [selected, setSelected] = useState<DemandLine | null>(null);
   const statusFieldId = useId();
   const originFieldId = useId();
+  const customerFieldId = useId();
 
   const { data, loading, refreshing, error, reload } = useDemand(branch, filters);
   const demand = copy.demand;
@@ -85,6 +105,7 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
 
   const summary = data?.summary;
   const rows = data?.items ?? [];
+  const customerOptions = data?.filters.customer_options ?? [];
   const showMywegUi = branch === "02";
   const splitChart = Boolean(
     showMywegUi &&
@@ -120,6 +141,7 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
   const filtersActive =
     Boolean(filters.search) ||
     Boolean(filters.status) ||
+    filters.customers.length > 0 ||
     Boolean(filters.dueFrom) ||
     Boolean(filters.dueTo) ||
     (showMywegUi && filters.origin !== "both");
@@ -355,6 +377,16 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
             }}
             toolbarExtra={
               <>
+                <CustomerMultiSelect
+                  id={customerFieldId}
+                  label={demand.customerLabel}
+                  options={customerOptions}
+                  selectedValues={filters.customers}
+                  onChange={(customers) => patch({ customers })}
+                  searchable
+                  emptyLabel={demand.customerAll}
+                  includeSelectedInOptions
+                />
                 {showMywegUi ? (
                   <NativeSelectField
                     id={originFieldId}
