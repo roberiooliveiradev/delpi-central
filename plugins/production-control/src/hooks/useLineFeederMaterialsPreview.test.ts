@@ -165,7 +165,7 @@ describe("useLineFeederMaterialsPreview", () => {
     );
     const { result, rerender } = renderHook(
       ({ branch }) => useLineFeederMaterialsPreview(branch),
-      { initialProps: { branch: "01" as const } },
+      { initialProps: { branch: "01" as "01" | "02" } },
     );
     void act(() => {
       void result.current.run({
