@@ -206,6 +206,138 @@ def test_e3_myweg_origin_un_to_mi_and_stock_only() -> None:
     assert data["myweg"]["batch"]["collection_id"] == "COL-E3"
 
 
+def test_e3_myweg_90263964_200_pc_cover_26_un_without_factor_error() -> None:
+    """Regressão #1546: 26 peças = 0,026 MI; OP com 200 PC = 0,200 MI."""
+    rows = [{
+        "id": "r-90263964",
+        "line_no": 1,
+        "material_weg_tratado": "90263964",
+        "codigo_referencia_weg": "90263964",
+        "data_remessa": "2026-10-28",
+        "quantidade_original_un": "26",
+        "quantidade_mi": "0.026",
+        "sb1_resolution": {
+            "status": "confirmed",
+            "protheus_product_code": "90263964",
+            "matched_by": "code_and_reference",
+        },
+    }]
+    ops = [
+        {
+            "filial": "02",
+            "numero_op": "OP-09NOV",
+            "produto": "90263964",
+            "saldo_op": 200,
+            "unidade_op": "PC",
+            "unidade_produto": "MI",
+            "unidade": "PC",
+            "data_fim_prevista_op": "2026-11-09",
+        },
+        {
+            "filial": "01",
+            "numero_op": "OUTRA-FILIAL",
+            "produto": "90263964",
+            "saldo_op": 900,
+            "unidade": "PC",
+        },
+    ]
+    stock = [{
+        "product_code": "90263964",
+        "quantity": 0.0,
+        "unit_of_measure": "MI",
+        "branch": "02",
+        "warehouse": "01",
+    }]
+    service, user = _svc(
+        sales=[_protheus_sale()], myweg_rows=rows, ops=ops, stock=stock
+    )
+    payload = service.list_demand(user, branch="02", origin=ORIGIN_MYWEG)
+    line = payload["items"][0]
+    assert line["open_quantity"] == pytest.approx(0.026)
+    assert line["covered_by_orders"] == pytest.approx(0.026)
+    assert line["uncovered_quantity"] == pytest.approx(0.0)
+    assert line["covering_orders"] == [
+        {"production_order": "OP-09NOV", "quantity": 0.026, "expected_date": "2026-11-09"}
+    ]
+    assert line["status"] == "late"
+    assert line["op_coverage_incomplete"] is False
+    assert payload["myweg"]["op_coverage_complete"] is True
+    assert payload["myweg"]["op_verified_count"] == 1
+
+
+def test_e3_myweg_mi_not_converted_twice_and_unknown_op_flagged() -> None:
+    service, user = _svc(
+        sales=[_protheus_sale()],
+        ops=[
+            {
+                "filial": "02",
+                "numero_op": "OP-MI",
+                "produto": "90260001",
+                "saldo_op": 0.3,
+                "unidade": "MI",
+                "data_fim_prevista_op": "2026-11-12",
+            },
+            {
+                "filial": "02",
+                "numero_op": "OP-SEM-UM",
+                "produto": "90260001",
+                "saldo_op": 2.0,
+            },
+        ],
+    )
+    payload = service.list_demand(user, branch="02", origin=ORIGIN_MYWEG)
+    line = payload["items"][0]
+    assert line["allocated_stock"] == pytest.approx(0.5)
+    assert line["covered_by_orders"] == pytest.approx(0.3)
+    assert line["uncovered_quantity"] == pytest.approx(0.7)
+    assert line["op_coverage_incomplete"] is True
+    assert payload["myweg"]["op_coverage_complete"] is False
+    assert payload["myweg"]["op_unit_status"] == OP_UNIT_UNVERIFIED
+    assert payload["myweg"]["op_unverified_count"] == 1
+
+
+def test_e3_both_one_op_pool_no_double_allocation() -> None:
+    rows = [{
+        "id": "r1",
+        "line_no": 1,
+        "material_weg_tratado": "M1",
+        "codigo_referencia_weg": "90260001",
+        "data_remessa": "2026-11-12",
+        "quantidade_original_un": "1000",
+        "quantidade_mi": "1",
+        "sb1_resolution": {
+            "status": "confirmed",
+            "protheus_product_code": "90260001",
+            "matched_by": "code_and_reference",
+        },
+    }]
+    service, user = _svc(
+        sales=[_protheus_sale(
+            produto="90260001",
+            saldo=1.0,
+            quantidade=1.0,
+            no_estoque=0.0,
+            data_entrega="2026-11-10",
+        )],
+        myweg_rows=rows,
+        stock=[],
+        ops=[{
+            "filial": "02",
+            "numero_op": "OP-COMUM",
+            "produto": "90260001",
+            "saldo_op": 1.5,
+            "unidade": "MI",
+            "data_fim_prevista_op": "2026-11-11",
+        }],
+    )
+    payload = service.list_demand(user, branch="02", origin=ORIGIN_BOTH)
+    by_source = {item["source"]: item for item in payload["items"]}
+    assert by_source["protheus"]["covered_by_orders"] == pytest.approx(1.0)
+    assert by_source["myweg"]["covered_by_orders"] == pytest.approx(0.5)
+    assert sum(row["covered_by_orders"] for row in payload["items"]) == pytest.approx(1.5)
+    assert payload["myweg"]["op_coverage_complete"] is True
+
+
 def test_e3_both_single_pool_shared_product() -> None:
     service, user = _svc(
         sales=[
