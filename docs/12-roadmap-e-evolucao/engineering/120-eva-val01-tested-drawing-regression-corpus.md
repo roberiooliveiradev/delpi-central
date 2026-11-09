@@ -518,3 +518,20 @@ Correção de perda silenciosa sob `span_conflict_tolerated` parcial (`reconcile
 **Overlays de células:** `p10/12/13_cells_overlay.png` SHA `e9c5a7c4…` / `eb61979f…` / `4ee45099…` (`.local/`, não no Git).
 
 **Validador offline:** `scripts/validate_g1_annotations.py` → PASS. Expected isento de fusões `10080192 10090316` e `4 5`. Holdout: `TRUE_UNSEEN_HOLDOUT=NOT_AVAILABLE`. `GT_APPROVAL_STATUS=OWNER_BLOCKED`. `VAL01_COMPLETED=false`.
+
+### Log G2 — First-loss 90264135 + inventário Totus (2026-11-09)
+
+**TASK:** `EVA-VAL01-G2-FIRST-LOSS-AND-TOTUS-STRUCTURE-CONTRACT-INVENTORY`. Sem código produtivo, sem G3/G4, sem deploy. Ledger: Doc 119 §61. Artefatos: `docs/.../eva-val01-g2/`.
+
+**PDF:** SHA `af47dd4c…edf3` `MATCH`. Trace read-only no container `delpi-engineering-api` (dumps `.local/eva-val01-g2/`, hashes em `evidence-registry.json`).
+
+**First-loss PROVEN:**
+
+| Caso | Fronteira | Evidência |
+|---|---|---|
+| p10 A2/A3 | SLANet cell merge → Understanding funde campo | OCR tokens separados; célula `10080192 10090316` + `line_texts` |
+| p12 50225702→AE/AH/AG | SLANet rowspan=11 → Understanding sem parent | OCR OK; subset tipado como `component_code` |
+| p13 `4 5` | OCR rodapé `4`+`5` (seq. 1…8) → SLANet célula → `component_code` | não é componente Totus |
+
+**Totus:** inventário `get_product_structure` / SG1010+SB1010; `CONTRACT_GAP` occurrence_id e revisão PDF; live 90264135 `TEST_NOT_RUN` (AUTH).  
+**Decisão:** SLANet isolado insuficiente nestes layouts; G3 recomendado após ack; fix não implementado. `VAL01_COMPLETED=false`.

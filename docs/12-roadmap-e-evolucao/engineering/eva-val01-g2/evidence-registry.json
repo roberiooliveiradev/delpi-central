@@ -1,0 +1,31 @@
+{
+  "schema": "eva_val01_g2_evidence_registry.v1",
+  "pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+  "note": "Raw boundary dumps local-only; summaries versioned in markdown.",
+  "artifacts": [
+    {
+      "file": "page_10.json",
+      "bytes": 15909,
+      "sha256": "eaf470c9219903d0961fdd4d8e3d9e62393552ce266f0eff05f16909a33a500c",
+      "storage": ".local/eva-val01-g2/"
+    },
+    {
+      "file": "page_12.json",
+      "bytes": 34401,
+      "sha256": "e022898ad2164df6eea87dd7e6996231dd6f02fcd0b38fff52f4378dceaeb3d4",
+      "storage": ".local/eva-val01-g2/"
+    },
+    {
+      "file": "page_13.json",
+      "bytes": 16972,
+      "sha256": "7d7fe73b2956c5a93705d96bbcf786f1c7c1a5cdfe2a91d8159b3f140da16eeb",
+      "storage": ".local/eva-val01-g2/"
+    },
+    {
+      "file": "report.json",
+      "bytes": 80810,
+      "sha256": "6c7a0351cd623e4b363718863970c5df67739b7def9682db730ea19e76382ef2",
+      "storage": ".local/eva-val01-g2/"
+    }
+  ]
+}

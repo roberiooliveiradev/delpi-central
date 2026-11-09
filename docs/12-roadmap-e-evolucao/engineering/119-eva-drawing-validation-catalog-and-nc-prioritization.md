@@ -1992,6 +1992,45 @@ ARCHITECTURE_DECISION_REQUIRED=false
 
 **Decisão recomendada:** Engenharia revisa overlays+JSON; Coordination só autoriza G2 após aceite formal GT/thresholds necessários. Não declarar GT homologado nesta rodada.
 
+### 61. G2 — First-loss trace + inventário Totus structure (2026-11-09)
+
+**TASK_ID:** `EVA-VAL01-G2-FIRST-LOSS-AND-TOTUS-STRUCTURE-CONTRACT-INVENTORY`.  
+**Autorização:** `G2_AUTHORIZED=true` (Coordination). **Escopo:** somente G2. Sem G3 benchmark, sem G4 fix, sem G6 comparação oficial, sem deploy, sem alteração de código produtivo.
+
+**Baseline:** PDF `90264135` SHA `af47dd4c…edf3` `MATCH`. G1 DRAFT usado como contraste visual (`GT_APPROVAL_STATUS` permanece `OWNER_BLOCKED`). Runtime engineering-api no `srv-api` (HEAD host pode divergir do HEAD documental local — dumps obtidos do container em execução). Artefatos: `docs/.../eva-val01-g2/`.
+
+#### First-loss por caso (PROVEN)
+
+| Caso | OCR | SLANet | Understanding | FIRST_LOSS |
+|---|---|---|---|---|
+| p10 A2=`10080192` ≠ A3=`10090316` | tokens/Y distintos | 1 célula `10080192 10090316` + `line_texts` | campo fundido; item A3 | **SLANet** (geometria); residual **Understanding** (não consome `line_texts`) |
+| p12 pai `50225702` → AE/AH/AG | tokens OK | célula `rowspan=11` agrega hierarquia | subset como `component_code`; sem parent link | **SLANet**; residual **Understanding** |
+| p13 `component_code='4 5'` | tokens `4` e `5` = índices de rodapé (seq. 1…8) | célula colspan=2 com token_refs 166/167 | tipa como código | **SLANet+assoc** sobre rodapé; Understanding tipa |
+
+Detalhe e evidências: `eva-val01-g2/first-loss-boundary-map.md` + dumps `.local/eva-val01-g2/` (hashes em `evidence-registry.json`).
+
+#### Totus structure (inventário de contrato)
+
+Owner: **api-delpi** `GET /products/{code}/structure` ← SG1010 (`G1_COD`,`G1_COMP`,`G1_QUANT`,`G1_INI/FIM`) + SB1010 (`B1_TIPO`,`B1_UM`,`B1_DESC`); AuthZ `ENGINEERING_LMP_ACCESS`; engenharia consome via gateway delegado user-parity.  
+**CONTRACT_GAP:** `occurrence_id` de desenho; binding revisão PDF↔BOM. Amostra live `90264135`: `TEST_NOT_RUN` (AUTH). Ver `totus-structure-contract-inventory.md` e matriz candidata `totus-drawing-alignment-matrix.md` (inclui NEG-01…09; proibido copiar nível Totus para relação visual não comprovada).
+
+#### Decisão de suficiência / próximo gate
+
+```text
+FRAMEWORK_SUFFICIENCY_DECISION=SLANet_ALONE_INSUFFICIENT_FOR_DENSE_HIERARCHY_AND_FOOTER_REJECTION
+OCR_STREAM=SUFFICIENT_AS_EVIDENCE
+UNDERSTANDING_RECOVERY_SIGNALS=UNDERUSED (line_texts)
+G3_ENTRY_DECISION=RECOMMENDED_AFTER_COORDINATION_ACK
+MINIMAL_FIX_PROPOSAL=documented_not_implemented (crop/footer + line_texts split + subset≠component_code)
+G2_EXIT_STATUS=PASS
+NEXT_AUTHORIZED_GATE=G3 (somente após ack Coordination; G4 ainda bloqueado)
+PRODUCTION_CODE_CHANGED=false
+EXECUTION_DRIFT=false
+ARCHITECTURE_DECISION_REQUIRED=false
+```
+
+`VAL01_COMPLETED=false`; `ENGINEERING_APPROVAL=NOT_APPROVED`; GT G1 continua `OWNER_BLOCKED`.
+
 ## 61. Coordination — execução retomada e comparação de hierarquia desenhada × Totus por nível (2026-11-09)
 
 **PLAN_LOCK=ACTIVE — emenda de continuidade de execução à §59; Doc 116 §B.9 prevalece para escopo deste refinamento.** **Não é plano novo, nem liberação para G4/G6 antecipados.** Origem: requisito de negócio explicitado pelo usuário de que a estrutura do Totus é mantida por níveis e os desenhos DELPI a representam em tabelas de conjunto/subconjunto/componentes. O resultado desejado é conferir **se cada ocorrência da estrutura oficial aparece no pai e no nível correspondentes no desenho**, não apenas detectar se o código aparece em qualquer texto ou página.
