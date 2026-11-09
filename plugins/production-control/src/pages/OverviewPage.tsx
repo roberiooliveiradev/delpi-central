@@ -5,12 +5,13 @@ import {
   createDashboardSegmentToggle,
   MultiTypeSeriesChart,
 } from "@delpi/plugin-ui/index";
-import { AlertCircle, Check, Timer } from "lucide-react";
+import { AlertCircle, AlertTriangle, Check, Timer } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { ChartCard } from "../components/ChartCard";
 import { BillingDueDetailModal } from "../components/BillingDueDetailModal";
 import { OpPendencyDetailModal, formatOpPendencyQuantity } from "../components/OpPendencyDetailModal";
+import { StockRuptureDetailModal, formatMaterialQuantity } from "../components/StockRuptureDetailModal";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
@@ -20,7 +21,7 @@ import type {
   BillingDueTodayCheck,
   BillingDueTodayLine,
   OverviewPayload,
-  OpPendencyItem,
+  PcpPendencyItem,
   PpcBranch,
   ProblemIssue,
   VolumeView,
@@ -144,20 +145,20 @@ export function OverviewPage({
   const [selectedBillingLine, setSelectedBillingLine] = useState<BillingDueTodayLine | null>(
     null,
   );
-  const [selectedOpPendency, setSelectedOpPendency] = useState<OpPendencyItem | null>(null);
+  const [selectedPendency, setSelectedPendency] = useState<PcpPendencyItem | null>(null);
   const { data, loading, error, reload } = useOverview(branch, volumeView, startDate, endDate);
   const {
     data: opPendencies, loading: opLoading, error: opError, reload: reloadOpPendencies,
   } = useOpPendencies(branch);
 
   useEffect(() => {
-    setSelectedOpPendency(null);
+    setSelectedPendency(null);
   }, [branch]);
 
   const refreshOverview = () => {
     reload();
     reloadOpPendencies();
-    setSelectedOpPendency(null);
+    setSelectedPendency(null);
   };
 
   /** A fila de atraso leva ao rastreio na Carga máquina, onde a OP pode ser reprogramada. */
@@ -474,27 +475,46 @@ export function OverviewPage({
                     <li key={item.id}>
                       <button
                         type="button"
-                        className="ppc-board-pendencies__row"
-                        aria-label={`${copy.home.opPendencies.showDetails}: ${item.product_code}`}
-                        onClick={() => setSelectedOpPendency(item)}
+                        className={`ppc-board-pendencies__row${item.kind === "stock_rupture" ? " ppc-board-pendencies__row--rupture" : ""}`}
+                        aria-label={`${copy.home.opPendencies.showDetails}: ${item.kind === "stock_rupture" ? "ruptura" : "OP"} ${item.product_code}`}
+                        onClick={() => setSelectedPendency(item)}
                       >
                         <span className="ppc-board-pendencies__icon" aria-hidden="true">
-                          <AlertCircle size={17} strokeWidth={1.75} />
+                          {item.kind === "stock_rupture"
+                            ? <AlertTriangle size={17} strokeWidth={1.75} />
+                            : <AlertCircle size={17} strokeWidth={1.75} />}
                         </span>
                         <span className="ppc-board-pendencies__text">
-                          <strong>
-                            {item.suggested_op_date
-                              ? `${copy.home.opPendencies.needOp} ${formatIsoDate(item.suggested_op_date)}`
-                              : copy.home.opPendencies.needDateMissing}
-                          </strong>
-                          <span>{copy.home.opPendencies.forProduct} {item.product_code}</span>
-                          <span className="ppc-board-pendencies__qty">
-                            {formatOpPendencyQuantity(
-                              item.next_uncovered_pieces, item.next_uncovered_quantity, item.unit,
-                            )}
-                            {" · "}
-                            {copy.home.opPendencies.required} {formatIsoDate(item.required_date)}
-                          </span>
+                          {item.kind === "stock_rupture" ? (
+                            <>
+                              <strong>
+                                {copy.home.opPendencies.stockRupture.cardDate} {formatIsoDate(item.first_shortage_date)}
+                              </strong>
+                              <span title={item.product_description}>
+                                {copy.home.opPendencies.stockRupture.material} {item.product_code}
+                              </span>
+                              <span className="ppc-board-pendencies__qty">
+                                {copy.home.opPendencies.stockRupture.projectedBalance}:{" "}
+                                {formatMaterialQuantity(item.shortage_balance, item.unit)}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <strong>
+                                {item.suggested_op_date
+                                  ? `${copy.home.opPendencies.needOp} ${formatIsoDate(item.suggested_op_date)}`
+                                  : copy.home.opPendencies.needDateMissing}
+                              </strong>
+                              <span>{copy.home.opPendencies.forProduct} {item.product_code}</span>
+                              <span className="ppc-board-pendencies__qty">
+                                {formatOpPendencyQuantity(
+                                  item.next_uncovered_pieces, item.next_uncovered_quantity, item.unit,
+                                )}
+                                {" · "}
+                                {copy.home.opPendencies.required} {formatIsoDate(item.required_date)}
+                              </span>
+                            </>
+                          )}
                         </span>
                       </button>
                     </li>
@@ -555,9 +575,15 @@ export function OverviewPage({
         onClose={() => setSelectedBillingLine(null)}
       />
       <OpPendencyDetailModal
-        item={selectedOpPendency}
+        item={selectedPendency?.kind === "include_production_order" ? selectedPendency : null}
         branch={branch}
-        onClose={() => setSelectedOpPendency(null)}
+        onClose={() => setSelectedPendency(null)}
+      />
+      <StockRuptureDetailModal
+        item={selectedPendency?.kind === "stock_rupture" ? selectedPendency : null}
+        branch={branch}
+        asOf={opPendencies?.as_of ?? null}
+        onClose={() => setSelectedPendency(null)}
       />
     </div>
   );
