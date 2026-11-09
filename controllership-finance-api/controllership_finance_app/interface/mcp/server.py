@@ -33,7 +33,10 @@ from delpi_mcp.tool_metadata import (
 from delpi_mcp.transport import mcp_transport_security_settings
 
 from controllership_finance_app.interface.mcp.branding import (
-    CLARA_MCP_INSTRUCTIONS,
+    build_clara_mcp_instructions,
+)
+from controllership_finance_app.application.clara.consent_channel import (
+    phase_policy_for_capability,
 )
 from controllership_finance_app.interface.mcp.constants import (
     DESTRUCTIVE_ACT_TOOLS,
@@ -124,7 +127,7 @@ def clara_mcp_transport_security() -> TransportSecuritySettings:
 def create_mcp_server() -> MCPServer:
     mcp = ClaraMCPServer(
         name="controllership-finance",
-        instructions=CLARA_MCP_INSTRUCTIONS,
+        instructions=build_clara_mcp_instructions(),
     )
     meta = security_schemes_meta(CLARA_MCP_SECURITY_SCHEMES)
 
@@ -265,11 +268,9 @@ def create_mcp_server() -> MCPServer:
             "com presentation selada; apresente a mudança ao usuário; "
             "após confirmação explícita chame phase='commit' com "
             "proposal_handle e confirmation=true. "
-            "CURRENT_RUNTIME (default): consentimento humano verificável "
-            "continua sendo o Portal (confirmation_url / V014) — "
-            "confirmation=true sozinho NÃO autoriza. TARGET conversacional "
-            "só arma ACT sem Portal quando Segurança configurar o ack. "
-            "Multi-ação: arg 'batch' {phase?, "
+            "Política efetiva de consentimento: "
+            + phase_policy_for_capability(direct=False)
+            + ". Multi-ação: arg 'batch' {phase?, "
             "operations:[{entity, action, params, depends_on?}]} — "
             "orquestra na mesma solicitação: diretas executam já, "
             "governadas voltam pending_confirmation e bloqueiam "
@@ -308,11 +309,11 @@ def create_mcp_server() -> MCPServer:
             "entity='document', action='cancel', "
             "target_ref='<document_id>'). Mesmo fluxo governado: "
             "phase='prepare' expõe exatamente o objeto e a "
-            "consequência → confirmação humana explícita no Portal "
-            "→ phase='commit' com proposal_handle e confirmation=true "
-            "(contrato TÉO). CURRENT_RUNTIME: sem consentimento Portal "
-            "V014 o ACT falha — confirmation=true não substitui AuthZ "
-            "nem o step-up humano verificável."
+            "consequência → confirmação explícita do usuário pelo canal "
+            "efetivo → phase='commit' com proposal_handle e "
+            "confirmation=true (contrato TÉO). Política efetiva: "
+            + phase_policy_for_capability(direct=False)
+            + ". Confirmação nunca substitui AuthZ Core ou regras do recurso."
         ),
         annotations=_annotations("delete", "Delete"),
         meta=meta,
