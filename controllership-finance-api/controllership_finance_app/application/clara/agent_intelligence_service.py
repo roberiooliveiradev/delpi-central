@@ -81,8 +81,13 @@ class ClaraAgentIntelligenceService:
                 "evidence_classification — apresente ambos."
             ),
             "confirmation": (
-                "Toda ACT exige proposal_handle de PREPARE + "
-                "confirmação humana explícita da operação exata."
+                "Toda ACT CONFIRMATION_REQUIRED exige PREPARE → "
+                "proposal_pending_confirmation → confirmação humana "
+                "explícita da operação exata → commit com "
+                "proposal_handle + confirmation=true (padrão TÉO). "
+                "CURRENT_RUNTIME: human proof = Portal V014 "
+                "(confirmation_url) até Segurança armar o canal "
+                "conversacional; confirmation=true sozinho não é AuthZ."
             ),
             "character": cls.persona_context(),
         }

@@ -47,6 +47,13 @@ from controllership_finance_app.application.clara.governed_writes import (
     _audit_mcp,
     _state_present,
 )
+from controllership_finance_app.application.clara.consent_channel import (
+    CONSENT_TYPE_MCP_CONFIRMATION,
+    batch_consent_instruction,
+    consent_channel,
+    conversational_act_enabled,
+    portal_consent_required,
+)
 from controllership_finance_app.application.clara.step_up_consent import (
     CONSENT_TYPE_PORTAL_STEP_UP,
     ConsentRequired,
@@ -352,21 +359,30 @@ class ClaraBatchOrchestrator:
                 }
                 for op in plan["operations"]
             ],
-            "confirmation_url": clara_consent_url(
-                batch_id=str(batch["batch_id"])
+            "status": "proposal_pending_confirmation",
+            "execution_policy": "confirm_before_act",
+            "consent_channel": consent_channel(),
+            "portal_consent_required": portal_consent_required(),
+            "conversational_act_armed": conversational_act_enabled(),
+            "confirmation_url": (
+                clara_consent_url(batch_id=str(batch["batch_id"]))
+                if portal_consent_required()
+                else None
             ),
-            "consent_instruction": (
-                "Apresente UMA confirmação consolidada ao usuário "
-                "listando ator, competência, objetos, operações, "
-                "motivos, efeitos e dependências — nunca uma "
-                "confirmação por operação. Direcione o usuário à "
-                "confirmation_url no Portal Controladoria & Finanças "
-                "para consentir o plano inteiro: responder 'sim' no "
-                "chat NÃO autoriza a execução — o consentimento é "
-                "gravado pela página do Portal com credencial fresca "
-                "que esta conversa não consegue produzir. O plano "
-                "selado não pode ser ampliado."
-            ),
+            "consent_instruction": batch_consent_instruction(),
+            "confirmation_contract": {
+                "pattern": "teo_prepare_then_commit",
+                "commit_requires": [
+                    "batch_handle",
+                    "plan_hash",
+                    "confirmation=true",
+                ],
+                "human_proof": (
+                    "portal_step_up_v014"
+                    if portal_consent_required()
+                    else "mcp_tool_confirmation_with_security_ack"
+                ),
+            },
             "expires_at": (
                 batch["expires_at"].isoformat()
                 if hasattr(batch["expires_at"], "isoformat")
@@ -384,11 +400,12 @@ class ClaraBatchOrchestrator:
         actor_sub: str,
         plan_hash: str,
         attestation: dict | None = None,
+        confirmation: bool | None = None,
     ) -> dict:
         """Uma confirmação consolidada, vinculada ao plan_hash exato.
 
         A chamada MCP NUNCA é, por si, prova de consentimento
-        (Doc 106 §3.1). São aceitas duas evidências verificáveis:
+        (Doc 106 §3.1). São aceitas evidências verificáveis:
 
         - Modo A (HOST_ATTESTED): assinatura HMAC do host sobre
           ``plan_hash|actor_sub|expires_at`` — texto de modelo ou
@@ -396,10 +413,13 @@ class ClaraBatchOrchestrator:
         - Modo B (CONSOLIDATED): ``consent_record`` do tipo
           ``portal_step_up`` já gravado pela superfície BFF de
           consentimento — token Keycloak emitido após o PREPARE,
-          credencial que o canal MCP não consegue fabricar.
+          credencial que o canal MCP não consegue fabricar;
+        - Modo C (MCP_CONFIRMATION): somente quando o canal
+          conversacional está armado por ack de Segurança e
+          ``confirmation=true`` — nunca substitui AuthZ.
 
         Sem evidência válida ⇒ ``consent_required`` com a URL da
-        página de consentimento do Portal.
+        página de consentimento do Portal (quando Portal obrigatório).
         """
         if attestation is not None:
             consent_record = self._verify_attestation(
@@ -413,6 +433,32 @@ class ClaraBatchOrchestrator:
                 consent_record=consent_record,
             )
             mode = "HOST_ATTESTED"
+        elif (
+            conversational_act_enabled()
+            and confirmation is True
+            and not portal_consent_required()
+        ):
+            consent_record = {
+                "type": CONSENT_TYPE_MCP_CONFIRMATION,
+                "confirmed_by": actor_sub,
+                "plan_hash": plan_hash,
+                "plan_version": 1,
+                "consent_channel": consent_channel(),
+                "security_ack": True,
+                "warning": (
+                    "Human proof is conversational MCP confirmation "
+                    "under explicit Security acknowledgement — not "
+                    "Portal V014."
+                ),
+            }
+            updated = self._batches.record_consent(
+                handle=handle,
+                actor_sub=actor_sub,
+                plan_hash=plan_hash,
+                mode="MCP_CONFIRMATION",
+                consent_record=consent_record,
+            )
+            mode = "MCP_CONFIRMATION"
         else:
             batch = self._batches.load_by_handle(handle=handle)
             if batch["actor_sub"] != actor_sub:

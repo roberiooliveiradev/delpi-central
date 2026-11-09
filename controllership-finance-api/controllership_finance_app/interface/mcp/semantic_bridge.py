@@ -8,18 +8,15 @@ HTTP method, SQL or model-supplied handler names. All handlers delegate
 to the same BFF route functions / governed writes used by the legacy
 surface — parity, never reimplementation.
 
-Governance (política vigente — docs 94/106, plano §5):
+Governance (política vigente — docs 94/106/124, CF-UX-053):
 - ``read``/``analyze``/``knowledge`` — immediate, human principal +
   live Core AuthZ via the canonical route functions.
-- ``execute`` — ``phase="prepare"`` seals the proposal and returns the
-  Portal consent URL; ``phase="commit"`` executes only with the exact
-  handle. Direct execution is not granted by this refactor: every
-  governed operation keeps PREPARE → trusted Portal consent → ACT.
-- ``delete`` — same governed flow, restricted to capabilities marked
-  ``destructive`` in the catalog.
-- ``batch`` — reuses ``ClaraBatchOrchestrator``: one consolidated
-  Portal consent covers the whole ordered plan; governed operations
-  never bypass the challenge.
+- ``execute``/``delete`` — TÉO-shaped PREPARE →
+  ``proposal_pending_confirmation`` → COMMIT with exact handle +
+  ``confirmation``. CURRENT_RUNTIME default keeps Portal V014 as
+  human proof; conversational ACT only when Security ack arms the
+  channel. ``confirmation=true`` is never AuthZ alone.
+- ``batch`` — consolidated plan; same channel policy as single-op.
 """
 
 from __future__ import annotations
@@ -32,6 +29,9 @@ from delpi_mcp.errors import mcp_tool_result
 
 from controllership_finance_app.application.clara.agent_intelligence_service import (  # noqa: E501
     ClaraAgentIntelligenceService,
+)
+from controllership_finance_app.application.clara.consent_channel import (
+    phase_policy_for_capability,
 )
 from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
@@ -572,13 +572,12 @@ def _schema_for(entity: str, action: str) -> dict | None:
             "destructive": bool(spec.get("destructive")),
             "direct": bool(spec.get("direct")),
             "required_params": list(spec["required_params"]),
-            "phase_policy": (
-                "phase=direct (default) executa já com AuthZ + "
-                "idempotência; phase=prepare → consentimento Portal → "
-                "phase=commit também é aceito"
-                if spec.get("direct")
-                else "phase=prepare → Portal consent → phase=commit; "
-                "confirmação humana verificável obrigatória"
+            "phase_policy": phase_policy_for_capability(
+                direct=bool(spec.get("direct"))
+            ),
+            "consent_channel_hint": (
+                "see prepare.consent_channel / "
+                "portal_consent_required on PREPARE response"
             ),
         }
     return None
@@ -994,6 +993,7 @@ def _run_operations(
 def _run_batch(
     batch: dict,
     actor_sub: str,
+    confirmation: bool | None = None,
 ) -> CallToolResult:
     phase = (batch.get("phase") or "").strip().lower()
     # Fase omitida ou explícita "direct/immediate/run": orquestração
@@ -1001,6 +1001,9 @@ def _run_batch(
     if phase in ("", "direct", "immediate", "run"):
         return _run_operations(batch, actor_sub)
     orch = _batch_orchestrator()
+    conf = confirmation
+    if conf is None and "confirmation" in batch:
+        conf = batch.get("confirmation")
     try:
         if phase == "prepare":
             operations = batch.get("operations") or []
@@ -1035,9 +1038,19 @@ def _run_batch(
                     handle=handle,
                     actor_sub=actor_sub,
                     plan_hash=batch.get("plan_hash"),
+                    confirmation=conf,
                 )
             )
         if phase in ("execute", "commit", "act"):
+            # TÉO-shaped shortcut: commit may carry confirmation when
+            # conversational channel is armed (confirm then execute).
+            if conf is True:
+                orch.confirm_batch(
+                    handle=handle,
+                    actor_sub=actor_sub,
+                    plan_hash=batch.get("plan_hash"),
+                    confirmation=True,
+                )
             return _ok(
                 orch.execute_batch(
                     handle=handle,
@@ -1072,7 +1085,7 @@ def _governed_dispatch(
     actor = actor_subject(user)
 
     if batch:
-        return _run_batch(batch, actor)
+        return _run_batch(batch, actor, confirmation=confirmation)
 
     phase_norm = (phase or "").strip().lower()
     if phase_norm in ("commit", "act"):

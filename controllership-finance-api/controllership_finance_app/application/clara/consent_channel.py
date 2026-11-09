@@ -97,3 +97,59 @@ def confirmation_instruction_for_prepare() -> str:
         "Portal o ACT continua rejeitado. A confirmação não substitui "
         "a autorização efetiva — o backend revalida tudo no ACT."
     )
+
+
+def phase_policy_for_capability(*, direct: bool) -> str:
+    """Schema/catalog phase_policy aligned with the active consent channel.
+
+    Hardcoding «Portal consent» while the contract is TÉO-shaped caused
+    ChatGPT to keep instructing an external page even after the MCP
+    tools already expose ``confirmation``. This helper keeps CURRENT
+    and TARGET honest in ``get_context(topic=schema)``.
+    """
+    if direct:
+        return (
+            "phase=direct (default) executa já com AuthZ + "
+            "idempotência; phase=prepare → phase=commit também é "
+            "aceito"
+        )
+    if conversational_act_enabled() and not portal_consent_required():
+        return (
+            "phase=prepare → proposal_pending_confirmation (apresente "
+            "a alteração selada) → após confirmação explícita do "
+            "usuário phase=commit com proposal_handle + "
+            "confirmation=true; AuthZ Core + OCC + read-back no ACT; "
+            "sem página Portal obrigatória (canal conversacional "
+            "armado)"
+        )
+    return (
+        "phase=prepare → proposal_pending_confirmation (apresente a "
+        "alteração selada) → confirmation_url Portal step-up V014 → "
+        "phase=commit com proposal_handle (confirmation=true é sinal "
+        "TÉO de contrato, não substitui V014 enquanto "
+        "portal_consent_required=true); AuthZ Core + OCC + read-back"
+    )
+
+
+def batch_consent_instruction() -> str:
+    if conversational_act_enabled() and not portal_consent_required():
+        return (
+            "Apresente UMA confirmação consolidada ao usuário listando "
+            "ator, competência, objetos, operações, motivos, efeitos e "
+            "dependências. Após confirmação explícita chame "
+            "batch.phase=confirm (ou commit) com batch_handle, "
+            "plan_hash e confirmation=true. confirmation=true não "
+            "substitui AuthZ efetiva — o backend revalida por operação."
+        )
+    return (
+        "Apresente UMA confirmação consolidada ao usuário listando "
+        "ator, competência, objetos, operações, motivos, efeitos e "
+        "dependências — nunca uma confirmação por operação. Direcione "
+        "o usuário à confirmation_url no Portal Controladoria & "
+        "Finanças para consentir o plano inteiro: responder 'sim' no "
+        "chat NÃO autoriza a execução — o consentimento é gravado "
+        "pela página do Portal com credencial fresca que esta "
+        "conversa não consegue produzir. O plano selado não pode ser "
+        "ampliado. confirmation=true no MCP é sinal TÉO e, sem canal "
+        "conversacional armado, não substitui V014."
+    )

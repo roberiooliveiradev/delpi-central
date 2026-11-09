@@ -488,7 +488,10 @@ def test_execute_batch_confirm_and_execute(monkeypatch, actor, governed):
     )
     assert res.is_error is False
     orch.confirm_batch.assert_called_once_with(
-        handle="b1", actor_sub="sub-1", plan_hash="ph"
+        handle="b1",
+        actor_sub="sub-1",
+        plan_hash="ph",
+        confirmation=None,
     )
     res = sb.tool_execute(
         batch={"phase": "execute", "batch_handle": "b1"}

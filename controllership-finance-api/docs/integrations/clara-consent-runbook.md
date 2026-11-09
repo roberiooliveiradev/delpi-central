@@ -85,9 +85,10 @@ O PO escolheu eliminar a exigência de página externa como experiência alvo e 
 | Contrato MCP (`proposal_pending_confirmation`, `confirmation`) | `IMPLEMENTED` |
 | Default produção | `CURRENT_RUNTIME` = `CLARA_CONSENT_CHANNEL=portal` (V014) |
 | Bypass Portal por `mcp_tool_confirmation` | Só com ack `R-CLARA-01-TEO-EQUIVALENCE-ACCEPTED` + canal `conversational`/`dual` |
-| Cutover sensível | `SECURITY_GATE_PENDING` / `DECISION_REQUIRED` |
+| Cutover sensível | `SECURITY_GATE_PENDING` / `CUTOVER_BLOCKED` |
 | Página `clara-consent` | Obrigatória no default; não descontinuada |
+| Migration V020 | Permite `consent_mode=MCP_CONFIRMATION` em lote (forward-only) |
 
-**Operação segura:** nunca definir o ack em produção sem aprovação escrita Segurança/Plataforma + Controladoria. Rollback = `CLARA_CONSENT_CHANNEL=portal` e ack vazio. Ver doc 124 §8 e doc 150 §20.9.
+**Operação segura:** nunca definir o ack em produção sem o texto de aprovação do doc 150 §20.10. Rollback = `CLARA_CONSENT_CHANNEL=portal` e ack vazio.
 
-**Nota de contrato:** o parâmetro MCP `confirmation` existe (padrão TÉO). Sem Portal V014 ou canal armado, ACT continua `consent_required` — a flag sozinha não autoriza.
+**Nota de contrato:** `get_context(topic=schema)` agora descreve PREPARE → `proposal_pending_confirmation` → commit/`confirmation=true` e declara honestamente se Portal V014 ainda é obrigatório. Sem canal armado, ACT continua `consent_required`.

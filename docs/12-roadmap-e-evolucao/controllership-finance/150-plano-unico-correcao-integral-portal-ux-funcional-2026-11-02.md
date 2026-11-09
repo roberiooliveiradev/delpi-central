@@ -806,6 +806,38 @@ Implementação, deploy, publicação/inativação/exclusão reais, alteração 
 
 **Deploy permitido sem gate:** rebuild BFF/MCP com flags default (Portal ON, ack vazio). **Deploy proibido:** qualquer config que arme ACT sensível só com flag/texto do modelo.
 
+### 20.10 Pacote formal de decisão — cutover conversacional (STOP até assinatura)
+
+**Owners competentes (não substituíveis pelo executor Cursor):**
+
+| Papel | Owner | Decisão exigida |
+|---|---|---|
+| UX / produto | PO Controladoria & Finanças | Já registrada: fluxo final no ChatGPT (padrão TÉO) |
+| Segurança / Plataforma (R-CLARA-01) | Guardião Segurança & Governança da plataforma Minha DELPI (SSO/RBAC/MCP) | Aceitar ou rejeitar nível de garantia TÉO (`confirmation=true` + proposta selada) vs V014; ou exigir HOST_ATTESTED / 2FA |
+| Risco operacional | Controladoria (owner PROC-0072) | Aceitar risco residual de impersonação de consentimento pelo modelo / prompt injection |
+
+**Diferença de garantia (obrigatória no aceite):**
+
+| Controle | V014 Portal | TÉO `confirmation=true` | HOST_ATTESTED |
+|---|---|---|---|
+| Identidade MCP (JWT) | sim | sim | sim |
+| Proposta selada / plan_hash | sim | sim | sim |
+| Prova de que o humano autenticado aprovou **este** plano fora do canal do modelo | sim (token Portal fresco + challenge) | **não** | condicional (HMAC do host) |
+| Forjável só pelo assistente | não | **sim** | não (se secret no host) |
+
+**Disponibilidade em produção (09/11/2026):** `CLARA_HOST_ATTESTATION_SECRET` = **não configurado**; `CLARA_CONSENT_CHANNEL` unset → default `portal`; ack Security vazio. HOST_ATTESTED = `NOT_CONFIGURED`.
+
+**Texto de aprovação mínimo (colar em doc 124 §8 + este §20.10):**
+
+```text
+SECURITY_PLATFORM_DECISION: ACCEPT_TEO_RESIDUAL | REQUIRE_HOST_ATTESTED | KEEP_V014
+CONTROLLADORIA_DECISION: ACCEPT_OPERATIONAL_RISK | REJECT
+ACK_VALUE_IF_ACCEPT: R-CLARA-01-TEO-EQUIVALENCE-ACCEPTED
+DATE / ACTOR / EVIDENCE_REF: …
+```
+
+**STOP CONDITION vigente:** sem as duas decisões `ACCEPT_*` + evidência registrada, **não** definir ack em produção, **não** declarar `ACCEPT` do CF-UX-053, **não** afirmar ausência de página externa no fluxo homologado.
+
 ## 21. Follow-up operacional 09/11/2026 — Filial 01 outubro reaberta, revisão setembro continua
 
 **Evidência de e-mail:** resposta recebida na thread “Verificação do fechamento de estoque e custos — Filial 01 (Outubro/2026)” informa: “Na matriz o estoque teve que ser reaberto para correção de NF.” A frase é compatível com `SB9010` de outubro sem posição para Filial 01 e `MV_ULMES=20260930`; **não prova conclusão da correção nem novo fechamento**. Classificação `PROVEN_EMAIL_STATEMENT` + `PENDING` para reprocessamento/revalidação.

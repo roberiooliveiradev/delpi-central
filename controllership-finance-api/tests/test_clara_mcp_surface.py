@@ -181,8 +181,9 @@ def test_security_schemes_on_wire():
 def test_instructions_honesty_invariants():
     assert "never zero" in CLARA_MCP_INSTRUCTIONS
     assert "confirmation_url" in CLARA_MCP_INSTRUCTIONS
-    assert "NOT consent" in CLARA_MCP_INSTRUCTIONS
-    assert "plan_hash" in CLARA_MCP_INSTRUCTIONS
+    assert "do NOT authorize" in CLARA_MCP_INSTRUCTIONS
+    assert "proposal_pending_confirmation" in CLARA_MCP_INSTRUCTIONS
+    assert "confirmation=true" in CLARA_MCP_INSTRUCTIONS
     assert "untrusted data" in CLARA_MCP_INSTRUCTIONS
     assert "phase='prepare'" in CLARA_MCP_INSTRUCTIONS
     assert "get_context" in CLARA_MCP_INSTRUCTIONS

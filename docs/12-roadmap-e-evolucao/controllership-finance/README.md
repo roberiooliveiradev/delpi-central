@@ -1,7 +1,7 @@
 # Portal Controladoria & Finanças — Fonte de navegação e estado
 
 
-> **09/11/2026 — CF-UX-053 (`IMPLEMENTED_NOT_CUTOVER`):** contrato conversacional estilo TÉO entregue no BFF/MCP (`proposal_pending_confirmation` + `confirmation=true`); default `CLARA_CONSENT_CHANNEL=portal` mantém V014. Cutover sem Portal exige ack Segurança `R-CLARA-01-TEO-EQUIVALENCE-ACCEPTED` + aprovação Controladoria — **STOP** sem isso. Detalhe: [doc 150 §20.9](./150-plano-unico-correcao-integral-portal-ux-funcional-2026-11-02.md), [doc 124 §8](./124-clara-write-execution-risk-policy.md).
+> **09/11/2026 — CF-UX-053 (`CUTOVER_BLOCKED`):** cadeia schema/prepare/lote alinhada ao contrato TÉO; runtime produtivo permanece `portal_consent_required=true` até assinatura formal Segurança/Plataforma + Controladoria ([doc 150 §20.10](./150-plano-unico-correcao-integral-portal-ux-funcional-2026-11-02.md)). HOST_ATTESTED `NOT_CONFIGURED`. **Não declarar ACCEPT** sem cutover verificado no ChatGPT.
 
 > **09/11/2026 — CF-UX-053 decisão PO:** UX alvo = confirmação no ChatGPT sem navegação obrigatória ao Portal. **A flag TÉO não prova consentimento humano equivalente a V014.** Segurança/Plataforma + Controladoria = `SECURITY_GATE_PENDING`.
 

@@ -75,6 +75,27 @@ def test_invalid_channel_falls_back_to_portal(channel_settings):
     assert cc.consent_channel() == "portal"
 
 
+def test_phase_policy_default_mentions_portal_and_teo(channel_settings):
+    policy = cc.phase_policy_for_capability(direct=False)
+    assert "proposal_pending_confirmation" in policy
+    assert "confirmation_url" in policy or "Portal" in policy
+    assert "confirmation=true" in policy
+    assert "portal_consent_required=true" in policy
+
+
+def test_phase_policy_armed_omits_mandatory_portal(channel_settings):
+    channel_settings.CLARA_CONSENT_CHANNEL = "conversational"
+    channel_settings.CLARA_CONVERSATIONAL_SECURITY_ACK = SECURITY_ACK_VALUE
+    policy = cc.phase_policy_for_capability(direct=False)
+    assert "sem página Portal obrigatória" in policy
+    assert "confirmation=true" in policy
+
+
+def test_phase_policy_direct_unchanged(channel_settings):
+    policy = cc.phase_policy_for_capability(direct=True)
+    assert "phase=direct" in policy
+
+
 def _governed_for_consent() -> ClaraGovernedWrites:
     gw = ClaraGovernedWrites(
         proposals=MagicMock(),
