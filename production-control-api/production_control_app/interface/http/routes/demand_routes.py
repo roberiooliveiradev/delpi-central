@@ -18,6 +18,7 @@ router = APIRouter(tags=["Demand"])
 def get_demand(
     request: Request,
     branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    customers: list[str] = Query([], description="Chaves dos clientes selecionados (multisseleção)"),
     search: str = Query(
         "",
         description="Cliente, código/loja, pedido, pedido do cliente, produto ou origem",
@@ -50,6 +51,7 @@ def get_demand(
             page_size=pageSize,
             refresh=refresh,
             origin=origin,
+            customers=customers,
         )
     except InvalidBranch as exc:
         return fail(str(exc), 422)
