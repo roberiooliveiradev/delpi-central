@@ -21,7 +21,7 @@ export function formatOpPendencyQuantity(
   unit: string,
 ): string {
   if (pieces !== null) {
-    return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 }).format(pieces)} ${labels.pieces}`;
+    return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 }).format(pieces)} ${pieces === 1 ? "peça" : labels.pieces}`;
   }
   return `${formatOpQuantity(quantity)} ${unit === "UNSPECIFIED" ? "unidade ERP não confirmada" : unit}`;
 }
