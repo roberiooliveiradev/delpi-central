@@ -434,3 +434,84 @@ H. Rebuild/DEV-only migrations com contratos, health, bundle fingerprint, gatewa
 
 **Execução (ENG-PRC-REF-017):** `PrcFieldFlagTrigger.tsx` renderiza sempre `<Flag size={14} />`; classe `--add` (azul `#2563eb`) sem OPEN e `--open` (vermelho) com OPEN; import `Plus` removido. CSS hover/focus/touch preservados. Vitest cobre ausência de import `Plus` e cor azul; Playwright `prc-ref017-verify-and-flags.spec.ts` cobre azul→vermelho→resolvido. **Status:** IMPLEMENTED_DEV.
 
+
+
+## D16-REF-03 / PRC-REF-018 — Bandeiras resolvidas contextuais e helps em labels
+
+**Decisão PO 2026-11-09. Status PO_APPROVED_PLAN / IMPLEMENTATION_PENDING / DEV_ONLY.** Esta seção atualiza o visual do D16-REF-01 e D16-REF-02 sem recriar o CRUD, a API, as migrações V015–V017 ou a integração EVA. A orientação antiga de esconder a bandeira RESOLVED do próprio campo fica substituída: ela permanece no campo, verde. Não criar novos documentos de planejamento.
+
+### Estados visuais e regra de prioridade
+
+| Situação | Ícone no campo | Interação |
+|---|---|---|
+| Sem OPEN nem RESOLVED | Bandeira Flag vazada AZUL discreta, só hover/focus/touch | Abre modal para adicionar |
+| Existe OPEN | Bandeira Flag VERMELHA sempre visível | Abre modal de detalhe/edição/resolução/remoção |
+| Sem OPEN, mas existe RESOLVED | Bandeira Flag VERDE discreta sempre visível | Abre histórico contextual e permite reabrir registro autorizado |
+| OPEN e RESOLVED simultâneas | Ícone VERMELHO prevalece; histórico das resolvidas no modal | Não empilhar ícones |
+| Somente DELETED | Sem marca permanente; histórico em consulta autorizada | Soft-delete não equivale a resolvida |
+
+**Uma OPEN por alvo/caso** continua sendo a invariant do banco. Várias RESOLVED históricas por alvo são possíveis: modal deve permitir escolher por data/título/id, sem selecionar arbitrariamente a mais recente para reabrir. Reabrir deve respeitar a constraint da OPEN e retornar 409 se outra estiver aberta. Uma flag resolvida não significa dado aprovado, verificação oficial no TOTVS ou fechamento do atendimento; é somente conclusão do acompanhamento humano. Não resolver automaticamente por alteração do valor ou fechamento do caso.
+
+### Legenda e ações do modal
+
+Legenda pequena, textual e acessível **dentro do modal** e opcionalmente acessível por disclosure compacto ao lado do contador da ficha:
+
+- **Bandeira azul — adicionar acompanhamento.**
+- **Bandeira vermelha — acompanhamento aberto.**
+- **Bandeira verde — acompanhamento resolvido.**
+
+Usar cor + texto + aria-label/tooltip, nunca somente cor. Botões com ícones coerentes com o resultado: **Flag verde + Resolver** (resulta em RESOLVED), **Flag vermelha + Reabrir** (resulta em OPEN), **Pencil + Editar**, **Trash2 + Remover** com confirmação, **Flag azul + Adicionar**; Salvar/Fechar com ícones apenas se o kit recomendar. Ícones compactos Lucide/kit; não transformar rodapé em barra colorida pesada. Em todas as ações, help no próprio label, não no símbolo de interrogação. Help exemplo Resolver: 'Encerra o acompanhamento, sem alterar nem aprovar o dado do produto'; Reabrir: 'Sinaliza novamente este campo como pendente'; Remover: 'Retira a bandeira, mantendo auditoria'; Editar: 'Atualiza título ou descrição'. Preservar live AuthZ, CAS, soft delete e eventos.
+
+### Ficha técnica e wireframes de referência
+
+Identificação e classificação
+  Descrição                 [Flag vermelha] CHICOTE DE LIGAÇÃO
+  Grupo                     [Flag verde]    9026
+  Tipo                      [Flag azul apenas em interação] PA
+  Unidade                   MI
+
+Acompanhamento técnico     1 aberta · 1 resolvida    [Legenda]
+  (sem chips de títulos de resolvidas nem botão Ocultar/Mostrar resolvidas)
+
+Modal Grupo — Resolvida
+  Legenda: Flag azul Adicionar | Flag vermelha Aberta | Flag verde Resolvida
+  Status Resolvida; texto; criada por/em; resolvida por/em; alvo original
+  [Flag vermelha Reabrir] [Trash2 Remover] [Fechar]
+  (se múltiplas resolvidas, selecionar a entrada histórica pretendida)
+
+**Remover a lista de chips de bandeiras resolvidas no cabeçalho** como apresentação principal; manter só resumo compacto de contagens e acesso a históricos, inclusive flags GENERAL legadas sem alvo. OPEN vermelha tem prioridade sobre RESOLVED verde no campo. Preservar UX em tela pequena, foco e leitura de tela.
+
+### Catálogo único de helps para CREATE, UPDATE, Ficha técnica e Verificação
+
+**Problema evidenciado por screenshot:** rótulos exibem texto técnico como B1_GRUPO — legado 'grupo', B1_TIPO — legado 'tipo', B1_CONTA — referência de implementação. Retirar da experiência do usuário; podem ficar em documentação interna. Não usar ícone '?' ou circle-help. **O próprio label** apresenta ajuda via hover/focus no desktop e clique/toque no touch, seguindo padrão oficial já usado no Portal/plugin-ui. Bandeira é controle independente: clicar no label abre help, clicar no ícone Flag abre modal. Acessibilidade e vínculo do label com input devem continuar intactos.
+
+Inventariar catálogo/ajudas já existentes em CREATE/UPDATE, plugin-ui e facade engineeringUi antes de criar abstração. Centralizar **labels e helps semânticos** em um único registry/apresentação do Portal Engenharia, se não houver equivalente; todos os consumidores usam o mesmo registry. Help não define valor oficial, permissão ou regra de domínio; Engineering API mantém autoridade técnica e EVA usa seus contratos, sem importar o frontend. Evitar duplicar textos em cada fluxo; variação contextual só onde necessária e formalizada. Fallback amigável sem mostrar legado/undefined.
+
+| Campo | Help funcional candidato, sujeito à validação owner Engenharia |
+|---|---|
+| Código oficial | Código atribuído ao produto no TOTVS, preservando zeros à esquerda |
+| Descrição | Descrição técnica utilizada para identificar o produto |
+| Grupo | Classificação do produto nos grupos cadastrados no TOTVS |
+| Tipo | Classificação do tipo de produto no ERP |
+| Unidade | Unidade de medida utilizada no cadastro e movimentação |
+| Armazém padrão | Armazém normalmente associado ao produto |
+| Conta contábil | Conta usada na classificação contábil do produto |
+| Produto de terceiros | Indica a classificação do produto quanto à propriedade de terceiros, conforme cadastro oficial |
+| Referência do cliente | Código ou referência fornecida pelo cliente para identificar o produto |
+| Part Number | Código de peça informado pelo fornecedor, quando disponível |
+| Catálogo | Referência de catálogo informada pelo fornecedor, quando disponível |
+
+Não presumir definição técnica oficial a partir destes textos exemplificativos. Verificar também labels de fornecedor Código, Loja, Razão social e Nome fantasia quando exibidos.
+
+### Implementação futura: sequência e aceite bloqueante
+
+1. Ler AGENTS, HEAD/status, kit/façade e implementação D16; inventariar resolvidas e componentes label/tooltip em todos os fluxos.
+2. Definir como localizar todas as RESOLVED de um alvo com paginação/escopo, sem concluir com base somente na primeira página; reutilizar os endpoints REST/equivalente EVA existentes e evitar backend novo se suficiente.
+3. Implementar estado visual azul/vermelho/verde por alvo SB1/SA5, prioridade OPEN, modal com histórico de resolvidas e ações com ícones e helps no próprio label; preservar dados GENERAL legados e pós-terminal.
+4. Substituir resumo com chips por contadores compactos, sem perder acesso à lista/histórico completo.
+5. Inventariar e centralizar helps já aprovados; expor no label hover/focus/touch em CREATE/UPDATE/Ficha técnica/Verificação; remover os textos B1_/A5_/legado/REST da UI visível; não adicionar '?' ou circle-help.
+6. Typecheck, build, Vitest, testes de regressão API/EVA quando afetados, PG real se contrato ou query mudar; Playwright SSO desktop/tablet/mobile, zoom200, teclado/touch, screenshots de help e 3 cores; axe quando disponível.
+7. Autorrevisão: múltiplas RESOLVED, OPEN+RESOLVED, reopen concorrente 409, retorno de foco, cor não única, histórico, conflito label/flag, catálogo único, nenhuma aprovação TOTVS implícita. Corrigir e retestar no SHA.
+8. Rebuild/recreate só DEV dos containers afetados, verificar gateway/bundle fingerprint, E2E pós-deploy, atualizar docs e evidências, commit/push conforme AGENTS. HML e PROD intocados.
+
+**AC:** (A) vermelho/verde/azul conforme estados, (B) legenda modal e ajuda de ações pelo label, (C) resolver/reabrir/remover corretos e auditáveis, (D) histórico de várias resolvidas navegável, (E) resumo compacto sem chips, (F) helps centralizados e iguais nos quatro fluxos, (G) sem texto legado nem '?', (H) frontend + tests reais DEV e sem regressões D13–D16. PASS somente com evidência por SHA; TEST_NOT_RUN ≠ PASS.
