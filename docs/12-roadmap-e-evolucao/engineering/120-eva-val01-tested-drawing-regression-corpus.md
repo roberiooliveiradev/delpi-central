@@ -490,3 +490,13 @@ Correção de perda silenciosa sob `span_conflict_tolerated` parcial (`reconcile
 **Baseline tests (read-only, imagem publicada):** `test_drawing_perception_r9` + `test_slanet_document_integrity` + `test_dec041_*` + `test_dec042_*` + `test_dec043_*` + `test_association_integrity_dec040` → **49 passed**. Reexecução MCP/OCR live do corpus 13: `TEST_NOT_RUN` (fora do orçamento G0).
 
 **Holdout / GT:** nenhum ground truth homologado pela Engenharia neste log; split holdout formal permanece gap para G1. `VAL01_COMPLETED=false`; `ENGINEERING_APPROVAL=NOT_APPROVED`.
+
+### Log G1 — Anotação visual 90264135 + split/holdout (2026-11-09)
+
+**TASK:** `EVA-VAL01-G1-VISUAL-GROUND-TRUTH-AND-HOLDOUT`. Sem código, sem tuning, sem deploy. Ledger: Doc 119 §60. Artefatos: `docs/12-roadmap-e-evolucao/engineering/eva-val01-g1/`.
+
+**PDF `90264135`:** SHA `af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3` reconfirmado no fileserver; páginas físicas **10 / 12 / 13** anotadas em DRAFT (`annotations/90264135_p*.json`). Overlays raster **não versionados** (`.local/eva-val01-g1-overlays/`); hashes em `overlays/overlay-registry.json`.
+
+**Contrastes (não GT):** p10 fusão `10080192 10090316`; p12 `50225702` como código de linha; p13 `component_code='4 5'`.
+
+**Split:** development=`90264026/004/017/135`; validation_exposed=demais 11 do índice; **`TRUE_UNSEEN_HOLDOUT=NOT_AVAILABLE`**. `GT_APPROVAL_STATUS=OWNER_BLOCKED`. `VAL01_COMPLETED=false`.

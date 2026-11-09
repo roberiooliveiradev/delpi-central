@@ -1,0 +1,241 @@
+{
+  "schema": "eva_val01_g1_overlay_registry.v1",
+  "pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+  "note": "PNG overlays are local evaluation artifacts under .local/; only hashes are versioned.",
+  "overlays": [
+    {
+      "file": "90264135_p10_dpi200.png",
+      "bytes": 839105,
+      "sha256": "f0cef06a74061d318d3994aa469bb829e9109c0c8667c6a2669ecf74819a2f0f",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "90264135_p10_raw.png",
+      "bytes": 582371,
+      "sha256": "8f89ff89afd1e825f910eb3194cd8373cda0a6afc0f071b40454296086dbcc9d",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 150
+    },
+    {
+      "file": "90264135_p12_dpi200.png",
+      "bytes": 792059,
+      "sha256": "cf9cb4f5a8671d3b99bd79747dbd1780d9f292c2bee6b862d05cfa471e0be310",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "90264135_p12_raw.png",
+      "bytes": 548455,
+      "sha256": "1c1d0c38b7cdf2a185c18248eeaa1c0b534fd7849fa4e0ca10c2429082e8615c",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 150
+    },
+    {
+      "file": "90264135_p13_dpi200.png",
+      "bytes": 479984,
+      "sha256": "7e2f80f03872e4311cfc78e203af76a3aeca586c29df6cf501d30bde86323a81",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "90264135_p13_raw.png",
+      "bytes": 332848,
+      "sha256": "e102f2ef4ad0ca5d987ae6d3e090aaede66ed3baa242c185f007550e7bdad28c",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 150
+    },
+    {
+      "file": "p10_L.png",
+      "bytes": 161866,
+      "sha256": "b888f123648e323eeb4ea658680c9253c4fc26effd2c2e6f0d2d48dc16b68096",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p10_R.png",
+      "bytes": 579253,
+      "sha256": "a4ee588ac9ef2b6b8ffff77b7326608978bc076530a41cc3ff320c836dbf183b",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p10_a1zone.png",
+      "bytes": 109287,
+      "sha256": "8b17b40ad63ca57c5ca29aa9b0375174c2ea568bb3d7503f0d137a450019270a",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p10_band0.png",
+      "bytes": 167428,
+      "sha256": "0c3feaa4aa0fbd86c0c11aa7d68c23e4bf650a037b4ebc45b736c76d74e1425e",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p10_band1.png",
+      "bytes": 204466,
+      "sha256": "c318bf0ca88cf00224cdac2f9f636699a2037f211ffed4b869399c1151e98da8",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p10_header.png",
+      "bytes": 136243,
+      "sha256": "67e551fef78ea2c4c6c30b8b846a3241d1c9aba6d5235ee436cc69ac8b37909b",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p10_tableband.png",
+      "bytes": 747740,
+      "sha256": "115926e950cafd962e5fe911c75e771ac83055542c9cc8ce1235c0a947332c7c",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p12_L.png",
+      "bytes": 140830,
+      "sha256": "a0380a93595d3f41d2f6889bd7be94dbded6a72ad9795357338ab4b01e4e1f5e",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p12_R.png",
+      "bytes": 509834,
+      "sha256": "2c4ac999f7458bbc2059ebf48c2cb614767f361ef96efe19d4d8de9a4d48f712",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p12_band0.png",
+      "bytes": 189041,
+      "sha256": "afea32e6e6fb3be91c128365572bed77c8b7f9f7dc31a4679c2bb136852ba016",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p12_band1.png",
+      "bytes": 187011,
+      "sha256": "b320fb55f93548f8a3afb9714468626c44e8050004a1aae7e4e9978d288a3a2b",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p12_band2.png",
+      "bytes": 215822,
+      "sha256": "1d079f52990e6f07c78f275231e2d9721cd01d01d98e76873e88a2477ae7eb68",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p12_tableband.png",
+      "bytes": 658224,
+      "sha256": "5ab6d4b32a2231eea4ccaba12dd70bc72c411dace019414b6588588a799daac0",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p13_L.png",
+      "bytes": 152257,
+      "sha256": "a0f8fb52884d5986edcd3830982fc3e90aa9f08b6881df237eace45731974c50",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p13_R.png",
+      "bytes": 253006,
+      "sha256": "e804c2fa56b3f2e8f21fc88ad573d1a267e1124275474c7819b233052080282f",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p13_band2.png",
+      "bytes": 121631,
+      "sha256": "5cfac8ea552fce0253de70033db41cfa73eeb04b127949454e452ea29f9b37ef",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p13_band3.png",
+      "bytes": 189072,
+      "sha256": "c7ada23ba778c3b1670e4bbda8593efdcc8aba1bfd31737b0fc065540e4e00b8",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p13_lower.png",
+      "bytes": 334019,
+      "sha256": "2bb2fd1b65b56948dc607569986152cbdd6cc4ec5a88b3b0182a0618c697ac52",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p13_tableband.png",
+      "bytes": 399053,
+      "sha256": "32b9615e70d0ec2bd105ace459d4ca2341c5331967303aaaad7cf1ccb80364bf",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    },
+    {
+      "file": "p13_upper.png",
+      "bytes": 81759,
+      "sha256": "a872560cbde25472234d3b447aee7a8de98a469e5fbc8598c3e55497c1eb3790",
+      "storage": ".local/eva-val01-g1-overlays/ (gitignored; not versioned)",
+      "source_pdf": "90264135.pdf",
+      "source_pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+      "render_dpi": 200
+    }
+  ]
+}

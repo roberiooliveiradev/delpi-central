@@ -1,0 +1,102 @@
+{
+  "schema": "eva_val01_g1_page_annotation.v1",
+  "annotation_status": "DRAFT",
+  "gt_approval_status": "OWNER_BLOCKED",
+  "annotator": "cursor-agent",
+  "reviewer": null,
+  "review_date": null,
+  "document_id": "diag:90264135",
+  "product_code": "90264135",
+  "pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+  "page": 13,
+  "render_ref": {
+    "file": "90264135_p13_dpi200.png",
+    "sha256": "7e2f80f03872e4311cfc78e203af76a3aeca586c29df6cf501d30bde86323a81",
+    "dpi": 200,
+    "size_px": [2339, 1653],
+    "storage": ".local/eva-val01-g1-overlays/"
+  },
+  "regions": [
+    {
+      "region_id": "90264135:p13:drawing_area",
+      "region_type": "drawing_area",
+      "notes": "Vista de montagem (CORRUGADO 10120137) com balões A*/dimensões; NÃO é tabela de componentes. Overlay p13_upper.png.",
+      "overlay_crops": ["p13_upper.png"]
+    },
+    {
+      "region_id": "90264135:p13:component_table",
+      "region_type": "component_table",
+      "notes": "Tabela inferior/direita com cabeçalhos Código|Descrição|Item|QTD.|Componente|Descrição. Overlays p13_band2/band3/lower.",
+      "overlay_crops": ["p13_band2.png", "p13_band3.png", "p13_lower.png", "p13_tableband.png"]
+    }
+  ],
+  "columns_observed": [
+    {"name_visual": "Código", "role": "set_or_subset_code"},
+    {"name_visual": "Descrição", "role": "set_or_subset_description"},
+    {"name_visual": "Item", "role": "item"},
+    {"name_visual": "QTD.", "role": "quantity"},
+    {"name_visual": "Componente", "role": "component_code"},
+    {"name_visual": "Descrição", "role": "component_description"}
+  ],
+  "parent_groups": [
+    {
+      "group_id": "90264135:p13:set:90264135",
+      "roles": {"set_code": "90264135", "set_description": "CHICOTE - P66"},
+      "evidence": "p13_band3.png"
+    },
+    {
+      "group_id": "90264135:p13:subset:50225749",
+      "roles": {"subset_code": "50225749", "subset_description": "CA0,75AZUL-05000/11/04-3800-9200"},
+      "evidence": "p13_band3.png (parcial)",
+      "text_status": "CLEAR"
+    }
+  ],
+  "component_occurrences": [
+    {"occurrence_id": "90264135:p13:90264135:A1", "parent_group_id": "90264135:p13:set:90264135", "item": "A1", "quantity": "7", "component_code": "10080182", "component_description": "TERM. TUBULAR DUPLO 2,50MM2 COMP 10,00MM ESTANHADO C/ISOLACAO GRANEL ROHS", "text_status": "CLEAR", "evidence": "p13_band2.png"},
+    {"occurrence_id": "90264135:p13:90264135:A2", "parent_group_id": "90264135:p13:set:90264135", "item": "A2", "quantity": "16", "component_code": "10080192", "component_description": "TERM. TUBULAR DUPLO 1,00MM2 COMP 8,00MM ESTANHADO C/ISOLACAO GRANEL ROHS", "text_status": "CLEAR", "evidence": "p13_band2.png"},
+    {"occurrence_id": "90264135:p13:90264135:A3", "parent_group_id": "90264135:p13:set:90264135", "item": "A3", "quantity": "1", "component_code": "10090316", "component_description": "CONECTOR RECEPTACULO 2 VIAS PT SUPERSEAL SERIE 1,5MM CONTRA PC 10090317", "text_status": "CLEAR", "evidence": "p13_band2.png", "code_in_description": ["10090317"]},
+    {"occurrence_id": "90264135:p13:90264135:A4", "parent_group_id": "90264135:p13:set:90264135", "item": "A4", "quantity": "2", "component_code": "10090317", "component_description": "CONECTOR RECEPTACULO 2 VIAS PT SUPERSEAL SERIE 1,5MM CONTRA PC 10090316", "text_status": "CLEAR", "evidence": "p13_band2.png", "code_in_description": ["10090316"]},
+    {"occurrence_id": "90264135:p13:90264135:A5", "parent_group_id": "90264135:p13:set:90264135", "item": "A5", "quantity": "1", "component_code": "10090926", "component_description": "CONECTOR RECEPTACULO 3 VIAS VM AR PT SUPERSEAL IP67", "text_status": "CLEAR", "evidence": "p13_band2.png"},
+    {"occurrence_id": "90264135:p13:90264135:A6", "parent_group_id": "90264135:p13:set:90264135", "item": "A6", "quantity": "1", "component_code": "10110677", "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 8MMX0,7MM", "text_status": "CLEAR", "evidence": "p13_band2.png"},
+    {"occurrence_id": "90264135:p13:90264135:A7", "parent_group_id": "90264135:p13:set:90264135", "item": "A7", "quantity": "6", "component_code": "10110678", "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 9MMX0,8MM", "text_status": "CLEAR", "evidence": "p13_band3.png"},
+    {"occurrence_id": "90264135:p13:90264135:B", "parent_group_id": "90264135:p13:set:90264135", "item": "B", "quantity": "1", "component_code": "10120137", "component_description": "TUBO CORRUGADO 1/2POL 12,70 PT 70°C POLIPROPILENO PARTIDO UL-ROHS", "text_status": "CLEAR", "evidence": "p13_band3.png"},
+    {"occurrence_id": "90264135:p13:90264135:A8", "parent_group_id": "90264135:p13:set:90264135", "item": "A8", "quantity": "1", "component_code": "10120146", "component_description": "TUBO CORRUGADO 3/8POL 9,50 PT 105°C POLIPROPILENO PARTIDO UL-ROHS", "text_status": "CLEAR", "evidence": "p13_band3.png"},
+    {"occurrence_id": "90264135:p13:90264135:AG", "parent_group_id": "90264135:p13:set:90264135", "item": "AG", "quantity": "16", "component_code": "10110676", "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM - ROHS", "text_status": "CLEAR", "evidence": "p13_band3.png"},
+    {"occurrence_id": "90264135:p13:50225749:AQ", "parent_group_id": "90264135:p13:subset:50225749", "item": "AQ", "quantity": "2", "component_code": "10010021", "component_description": "CABO PVC 70°C 0,75MM2 AL 450/750V BWF NM 247-3", "text_status": "CLEAR", "evidence": "p13_band3.png"},
+    {"occurrence_id": "90264135:p13:50225749:AR", "parent_group_id": "90264135:p13:subset:50225749", "item": "AR", "quantity": "2", "component_code": "10080438", "component_description": "TERM. TUBULAR 0,75MM2 COMP 8,00MM ESTANHADO C/ISOLACAO GRANEL ROHS", "text_status": "CLEAR", "evidence": "p13_band3.png"}
+  ],
+  "structural_invariants": [
+    "drawing_area e component_table são regiões distintas na mesma página",
+    "Números de pino/dimensão/grelha na drawing_area NÃO são component_code",
+    "10090317 em descrição de A3 e 10090316 em descrição de A4 são code_in_description",
+    "Valor histórico EVA component_code='4 5' NÃO aparece como código de componente na tabela anotada"
+  ],
+  "eva_defect_contrast": [
+    {
+      "source": "DEC-041/MCP historical",
+      "eva_value": "component_code='4 5'",
+      "expected_visual": "Nenhum component_code igual a '4 5' na tabela; possíveis origens = grelha/pinos/fragmentos — NÃO GT",
+      "never_use_as_gt": true
+    },
+    {
+      "source": "DEC-041 historical",
+      "eva_value": "agregação '10080182 10090316'",
+      "expected_visual": "A1→10080182 e A3→10090316 em linhas distintas",
+      "never_use_as_gt": true
+    }
+  ],
+  "ambiguities": [
+    {
+      "id": "AMB-P13-01",
+      "topic": "Origem geométrica exata do token EVA '4 5'",
+      "status": "AMBIGUOUS",
+      "notes": "Não localizado como código de componente na tabela; drawing_area tem pinos 1/2 e dimensões. Adjudicação owner + G2 first-loss."
+    },
+    {
+      "id": "AMB-P13-02",
+      "topic": "Lista completa de todas as linhas da tabela p13",
+      "status": "PARTIAL",
+      "notes": "Amostra A1–AG + grupo 50225749 anotada; demais linhas exigem passagem completa pelo owner"
+    }
+  ]
+}

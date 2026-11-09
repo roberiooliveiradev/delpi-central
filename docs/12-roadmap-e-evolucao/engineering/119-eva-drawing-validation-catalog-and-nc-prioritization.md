@@ -1904,3 +1904,42 @@ Rehash em `/mnt/fileserver/desenhos/{code}.pdf` (host `srv-api`, 2026-11-09): **
 | G0-AC10 | `PASS` (esta seção + Doc 120 + Issue #131) |
 
 **`G0_EXIT_STATUS`:** `PASS` (baseline inventariada e congelada; **não** autoriza G1 automaticamente). **`NEXT_AUTHORIZED_GATE`:** G1 — somente após review/aceite Coordination. **`EXECUTION_DRIFT`:** nenhum. **`ARCHITECTURE_DECISION_REQUIRED`:** nenhum novo boundary proposto.
+
+### 60. G1 — Ground Truth Visual, anotação e holdout protegido (2026-11-09)
+
+**TASK_ID:** `EVA-VAL01-G1-VISUAL-GROUND-TRUTH-AND-HOLDOUT`.  
+**Decisão:** `G0=ACCEPTED_WITH_DOCUMENTED_LIMITS`; `G1=AUTHORIZED`; `G2–G7=NOT_AUTHORIZED`.  
+**Código/produtivo:** `PRODUCTION_CODE_CHANGED=false`; sem ajuste de framework/DPI/parser/VLM; sem deploy.
+
+**Baseline G0 revalidada na entrada:** HEAD ancestral `c83801cbc3…` presente; image `sha256:1c99c4bdae…`; CONFIG_HASH / SLANet sha conforme §59.5 (referência, não forçada).
+
+#### Entregáveis
+
+| Entregável | Local | Status |
+|---|---|---|
+| `G1_DATASET_SPLIT_MANIFEST` | `docs/.../eva-val01-g1/dataset-split-manifest.json` | `DRAFT` / split `OWNER_BLOCKED` |
+| `G1_ANNOTATION_GUIDE` | `eva-val01-g1/annotation-guide.md` | `DRAFT` |
+| `G1_90264135_VISUAL_REFERENCE` | `eva-val01-g1/annotations/90264135_p{10,12,13}.json` + overlays `.local/` (hashes em `overlays/overlay-registry.json`) | `DRAFT` |
+| `G1_LAYOUT_FAMILY_MATRIX` | `eva-val01-g1/layout-family-matrix.md` | `DRAFT` |
+| `G1_HOLDOUT_PROTECTION_PLAN` | `eva-val01-g1/holdout-protection-plan.md` | `TRUE_UNSEEN_HOLDOUT=NOT_AVAILABLE` |
+| `G1_QUALITY_METRICS_AND_THRESHOLDS_PROPOSAL` | `eva-val01-g1/quality-metrics-proposal.md` | proposta; `OWNER_BLOCKED` |
+| Pacote owner | `eva-val01-g1/owner-review-package.md` | pronto para revisão |
+
+#### Achados visuais materiais (candidato; não GT homologado)
+
+- **p10:** A2=`10080192` e A3=`10090316` são **linhas distintas**; fusão histórica EVA `10080192 10090316` = defeito, `never_use_as_gt`.
+- **p12:** `50225702` é código de **subconjunto** (rowspan) com filhos AE/AH/AG (`10010028`/`10080897`/`10110676`); não é `component_code` de linha agregada.
+- **p13:** tabela vs `drawing_area` separadas; descrições A3/A4 citam códigos cruzados (`code_in_description`); `component_code='4 5'` histórico **não** é expected — origem `AMBIGUOUS` (AMB-P13-01).
+
+#### Homologação
+
+```text
+ANNOTATION_STATUS=DRAFT
+GT_APPROVAL_STATUS=OWNER_BLOCKED
+SPLIT_APPROVAL_STATUS=OWNER_BLOCKED
+THRESHOLD_APPROVAL_STATUS=OWNER_BLOCKED
+G1_EXIT_STATUS=PENDING_OWNER_APPROVAL
+NEXT_AUTHORIZED_GATE=G2 (somente após aceite Coordination + GT/thresholds necessários)
+```
+
+`VAL01_COMPLETED=false`; `ENGINEERING_APPROVAL=NOT_APPROVED`; `EXECUTION_DRIFT=false`.

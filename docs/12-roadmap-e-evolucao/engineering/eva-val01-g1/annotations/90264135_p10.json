@@ -1,0 +1,84 @@
+{
+  "schema": "eva_val01_g1_page_annotation.v1",
+  "annotation_status": "DRAFT",
+  "gt_approval_status": "OWNER_BLOCKED",
+  "annotator": "cursor-agent",
+  "reviewer": null,
+  "review_date": null,
+  "document_id": "diag:90264135",
+  "product_code": "90264135",
+  "pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+  "page": 10,
+  "render_ref": {
+    "file": "90264135_p10_dpi200.png",
+    "sha256": "f0cef06a74061d318d3994aa469bb829e9109c0c8667c6a2669ecf74819a2f0f",
+    "dpi": 200,
+    "size_px": [2339, 1653],
+    "storage": ".local/eva-val01-g1-overlays/"
+  },
+  "regions": [
+    {
+      "region_id": "90264135:p10:component_table_main",
+      "region_type": "component_table",
+      "notes": "Tabela principal com bloco de conjunto 90264135/CHICOTE-P66 (células esquerdas mescladas) e colunas Item|QTD|Componente|Descrição à direita. Cabeçalhos visíveis na página; overlays p10_band0/p10_R.",
+      "overlay_crops": ["p10_band0.png", "p10_tableband.png", "p10_R.png"]
+    },
+    {
+      "region_id": "90264135:p10:component_table_cables",
+      "region_type": "component_table",
+      "notes": "Bloco inferior/lateral de cabos indexados (1..n) com códigos 50225xxx e ocorrências AE/AH/AG; rowspan nas colunas de cabo. Overlay p10_band1.",
+      "overlay_crops": ["p10_band1.png"]
+    }
+  ],
+  "columns_observed": [
+    {"name_visual": "Código|Cabo", "role": "set_or_subset_code"},
+    {"name_visual": "Descrição", "role": "set_or_subset_description"},
+    {"name_visual": "Item", "role": "item"},
+    {"name_visual": "QTD.", "role": "quantity"},
+    {"name_visual": "Componente", "role": "component_code"},
+    {"name_visual": "Descrição", "role": "component_description"}
+  ],
+  "parent_groups": [
+    {
+      "group_id": "90264135:p10:set:90264135",
+      "roles": {"set_code": "90264135", "set_description": "CHICOTE - P66"},
+      "span_note": "Célula(s) esquerda(s) verticalmente mesclada(s) cobrindo múltiplas linhas de componentes A1–AD/AG",
+      "evidence": "visual overlay p10_band0 / full page"
+    }
+  ],
+  "component_occurrences": [
+    {"occurrence_id": "90264135:p10:90264135:A1", "parent_group_id": "90264135:p10:set:90264135", "item": "A1", "quantity": "7", "component_code": "10080182", "component_description": "TERM. TUBULAR DUPLO 2,50MM2 COMP 10,00MM ESTANHADO C/ISOLACAO GRANEL ROHS", "text_status": "CLEAR", "evidence": "visual page10; confirmed in sibling pages of same drawing family", "notes": "A1 acima da faixa A2 no crop band0; confirmar no overlay full-page pelo owner"},
+    {"occurrence_id": "90264135:p10:90264135:A2", "parent_group_id": "90264135:p10:set:90264135", "item": "A2", "quantity": "16", "component_code": "10080192", "component_description": "TERM. TUBULAR DUPLO 1,00MM2 COMP 8,00MM ESTANHADO C/ISOLACAO GRANEL ROHS", "text_status": "CLEAR", "evidence": "p10_band0.png", "row_separation": "DISTINCT_FROM_A3"},
+    {"occurrence_id": "90264135:p10:90264135:A3", "parent_group_id": "90264135:p10:set:90264135", "item": "A3", "quantity": "1", "component_code": "10090316", "component_description": "CONECTOR RECEPTACULO 2 VIAS PT SUPERSEAL SERIE 1,5MM CONTRA PC 10090317", "text_status": "CLEAR", "evidence": "p10_band0.png", "row_separation": "DISTINCT_FROM_A2", "code_in_description": ["10090317"]},
+    {"occurrence_id": "90264135:p10:90264135:A4", "parent_group_id": "90264135:p10:set:90264135", "item": "A4", "quantity": "2", "component_code": "10090317", "component_description": "CONECTOR RECEPTACULO 2 VIAS PT SUPERSEAL SERIE 1,5MM CONTRA PC 10090316", "text_status": "CLEAR", "evidence": "p10_band0.png", "code_in_description": ["10090316"]},
+    {"occurrence_id": "90264135:p10:90264135:A5", "parent_group_id": "90264135:p10:set:90264135", "item": "A5", "quantity": "1", "component_code": "10090926", "component_description": "CONECTOR RECEPTACULO 3 VIAS VM AR PT SUPERSEAL IP67", "text_status": "CLEAR", "evidence": "p10_band0.png"},
+    {"occurrence_id": "90264135:p10:90264135:A6", "parent_group_id": "90264135:p10:set:90264135", "item": "A6", "quantity": "1", "component_code": "10110677", "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 8MMX0,7MM", "text_status": "CLEAR", "evidence": "p10_band0.png"},
+    {"occurrence_id": "90264135:p10:90264135:A7", "parent_group_id": "90264135:p10:set:90264135", "item": "A7", "quantity": "6", "component_code": "10110678", "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 9MMX0,8MM", "text_status": "CLEAR", "evidence": "p10_band0.png"},
+    {"occurrence_id": "90264135:p10:90264135:A8", "parent_group_id": "90264135:p10:set:90264135", "item": "A8", "quantity": "1", "component_code": "10120146", "component_description": "TUBO CORRUGADO 3/8POL 9,50 PT 105°C POLIPROPILENO PARTIDO UL-ROHS", "text_status": "CLEAR", "evidence": "p10_band0.png"},
+    {"occurrence_id": "90264135:p10:90264135:A9", "parent_group_id": "90264135:p10:set:90264135", "item": "A9", "quantity": "1", "component_code": "10120148", "component_description": "TUBO CORRUGADO 1/4POL 6,40 PT 105°C POLIPROPILENO PARTIDO UL-ROHS", "text_status": "CLEAR", "evidence": "p10_band0.png"},
+    {"occurrence_id": "90264135:p10:90264135:AA", "parent_group_id": "90264135:p10:set:90264135", "item": "AA", "quantity": "1", "component_code": "10120149", "component_description": "TUBO CORRUGADO 3/16POL 4,80 PT 105°C POLIPROPILENO PARTIDO UL-ROHS", "text_status": "CLEAR", "evidence": "p10_band0.png"},
+    {"occurrence_id": "90264135:p10:90264135:AB", "parent_group_id": "90264135:p10:set:90264135", "item": "AB", "quantity": "1", "component_code": "10120150", "component_description": "TUBO CORRUGADO 1/2POL 12,70 PT 105°C POLIPROPILENO PARTIDO UL-ROHS", "text_status": "CLEAR", "evidence": "p10_band0.png"},
+    {"occurrence_id": "90264135:p10:90264135:AC", "parent_group_id": "90264135:p10:set:90264135", "item": "AC", "quantity": "1", "component_code": "10211028", "component_description": "FITA ISOLANTE PVC 18MM X 20M PRETA", "text_status": "CLEAR", "evidence": "p10_band0.png"},
+    {"occurrence_id": "90264135:p10:90264135:AD", "parent_group_id": "90264135:p10:set:90264135", "item": "AD", "quantity": "1", "component_code": "10211615", "component_description": "FITA ISOLANTE TECIDO POLIESTER ANTI CHAMA 19MM X 20M PRETA FITA FC203", "text_status": "CLEAR", "evidence": "p10_band0.png"}
+  ],
+  "structural_invariants": [
+    "A2 e A3 são LINHAS DISTINTAS da grade; component_code A2=10080192 e A3=10090316 nunca formam um único valor esperado",
+    "Descrições de A3/A4 citam o código do conector complementar (code_in_description) — não promover esses números a component_code da linha"
+  ],
+  "eva_defect_contrast": [
+    {
+      "source": "DEC-041/MCP historical",
+      "eva_value": "component_code='10080192 10090316'",
+      "expected_visual": ["A2→10080192", "A3→10090316"],
+      "never_use_as_gt": true
+    }
+  ],
+  "ambiguities": [
+    {
+      "id": "AMB-P10-01",
+      "topic": "A1 row exact box coordinates in full-page overlay",
+      "status": "CLEAR_TEXT_CANDIDATE_NEEDS_OWNER_BOX_SIGN_OFF",
+      "notes": "Texto A1 lido na família visual do desenho; bounding boxes precisas pendem de adjudicação sobre overlay dpi200 completo"
+    }
+  ]
+}
