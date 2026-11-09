@@ -74,3 +74,8 @@ confirm_batch / commit_proposal (MCP)
   limpeza periódica pode expirá-los por `expires_at` sem risco.
 - Auditoria: decisões de consentimento registradas no canal
   `mcp/clara` com `correlation_id` do desafio.
+
+
+## Evolução proposta — UX conversacional, não aplicada (09/11/2026)
+
+O PO escolheu eliminar a exigência de página externa como experiência alvo e aproximar a CLARA do TÉO (segunda chamada de proposta com `confirmation=true`). **Não modificar este runbook operacional como se o runtime já usasse esse caminho**: V014 permanece obrigatório para operações sensíveis na versão vigente. A flag do TÉO expressa a chamada do cliente, mas não constitui por si só atestação humana de host. Migração requer decisão escrita de Segurança/Plataforma + Controladoria, contratos versionados, testes negativos e cutover com rollback; ver doc 124 §8 e doc 150 §20. O `confirmation_url` permanece funcional até esse gate.
