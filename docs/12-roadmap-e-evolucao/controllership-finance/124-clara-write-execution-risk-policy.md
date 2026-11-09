@@ -1,5 +1,8 @@
 # Doc 124 — CLARA: política de execução de escrita por risco (SEMANTIC-002)
 
+> **CURRENT POLICY — CF-UX-053 / R-CLARA-01 V2 (09/11/2026):** a decisão do PO e responsável pela Controladoria em doc 150 §20.16 aprovou o padrão TÉO no ChatGPT e aceitou o risco operacional residual. Para o produto, a alteração do canal é seleção explícita e versionada pelo operador do backend (`CLARA_CONSENT_CHANNEL=conversational`), **sem `CLARA_CONVERSATIONAL_SECURITY_ACK`**. O modo default `portal` e o modo `dual` mantêm V014. A decisão **não constitui assinatura independente de Segurança/Plataforma**, e o sinal MCP não é atestação independente do humano. A política operacional vigente desta implementação está detalhada em §11; §§1–10 preservam histórico, não podem ser aplicados para bloquear novamente uma decisão operacional já registrada. Não ativar canal por parâmetros do usuário, JWT ou prompt.
+
+
 **Status:** CANONICAL — vigente a partir de CLARA-MCP-SEMANTIC-002;
 **revisão A** (`CF-CLARA-ACT-TRANSVERSAL-001`, PO): `checklist.draft_create`
 e `checklist.draft_update` promovidas a `DIRECT_ALLOWED` — criar/editar
@@ -184,3 +187,27 @@ PO determinou que CLARA não duplique **RBAC nem effective permissions**, cuja a
 **Distinção de autoridade:** a autodeclaração do PO como responsável pela área não constitui, por si só, assinatura independente do guardião Segurança/Plataforma. Os textos de §§1–9 descrevem a política e o runtime V014 anterior; não utilizar esses trechos históricos para negar que o **responsável operacional já autorizou a evolução**. Não declarar `SECURITY_PLATFORM_DECISION=ACCEPT_TEO_RESIDUAL` em nome de um guardião diferente sem evidência específica.
 
 **TARGET autorizado pelo responsável operacional:** PREPARE → proposta selada apresentada no ChatGPT → confirmação explícita e específica → ACT autenticado; Core effective permissions; BFF resource_scope/ownership/business_rule e salvaguardas transacionais. No canal conversacional, o argumento `confirmation=true` não substitui AuthZ nem as condições de validade da proposta. **CUTOVER_NOT_DONE** em produção até alteração técnica, gate corporativo efetivamente aplicável, deploy e smoke ChatGPT; nenhuma configuração alterada por este registro.
+
+
+## 11. Política de canal R-CLARA-01 V2 — substituição explícita de V014
+
+**Decisão de produto e owner operacional: PROVEN (doc 150 §20.16).** O responsável pela área autorizou a adoção do PREPARE → proposta selada → confirmação específica no ChatGPT → ACT governado, assumindo o risco de a indicação `confirmation=true` ser encaminhada pelo modelo sem prova independente equivalente à reautenticação V014. Não registrar `SECURITY_PLATFORM_DECISION=ACCEPT_TEO_RESIDUAL` nem `security_ack=true` como se houvesse assinatura de outra autoridade. A presente alteração é revisão explícita da política técnica do **produto CLARA** por instrução do PO, com risco documentado; não uma declaração de concordância de Segurança/Plataforma corporativa.
+
+**Contrato executável do backend (SOURCE OF TRUTH):**
+
+| `CLARA_CONSENT_CHANNEL` | Portal V014 exigido | ACT conversacional | Condição |
+|---|---|---|---|
+| unset / `portal` | sim | não | default fail-closed |
+| `dual` | sim | não | fallback sem bypass |
+| `conversational` | não | sim | seleção explícita do operador no servidor |
+| inválido | sim | não | fallback fail-closed |
+
+`CLARA_CONVERSATIONAL_SECURITY_ACK` **OBSOLETO / NÃO UTILIZADO**. A antiga string `R-CLARA-01-TEO-EQUIVALENCE-ACCEPTED` não deve ser preenchida, consultada ou gravada como assinatura. A escolha de canal **não** pode vir de chamadas MCP, JWT, params ou UI. A mudança depende de deploy e configuração verificáveis, não de um comando conversacional.
+
+**MCP_CONFIRMATION V2:** `consent_record.type=mcp_tool_confirmation`, `consent_channel=conversational`, `confirmation_policy=R-CLARA-01-OWNER-RISK-ACCEPTED-V2`, `confirmed_by=actor_sub`, `plan_hash` recalculado e correspondente, `plan_version=1`. Não escrever `security_ack=true`. BFF verifica plano persistido do mesmo ator, estado/TTL, permissões efetivas da Core, escopo, regras de negócio, OCC, idempotência e read-back; chamadas de commit isoladas sem proposta válida permanecem bloqueadas. V014 continua exigindo challenge e token fresco quando canal Portal.
+
+**Risco e mitigação:** a confirmação conversacional é somente sinal fornecido pelo MCP; não é prova externa de presença/ação humana. O operador deve verificar que o assistente apresentou a mudança e recebeu manifestação explícita antes de passar `confirmation=true`. O backend não consegue provar essa interação e não deve alegá-la em logs. Para capacidades de publicação/inativação, manter auditoria, read-back, idempotência e proibição de confirmação automática. Nenhum sinal MCP substitui `controllership-finance.manage` quando exigido.
+
+**Cutover/rollback:** antes da ativação, drenar/expirar propostas e lotes preparados sob o canal anterior; executar revisão de código e testes (unitários, DB, MCP, Portal, negativos) e atualizar o plugin se a definição estiver em cache. Implantar BFF/MCP, configurar `CLARA_CONSENT_CHANNEL=conversational` no servidor, reiniciar processo e medir `portal_consent_required=false` e `conversational_act_armed=true` por endpoint autenticado. Confirmar ferramenta `execute/delete` e `get_context(schema)` no ChatGPT, executar smoke com **dado de teste** e verificar auditoria/read-back. Para rollback, `CLARA_CONSENT_CHANNEL=portal`, reiniciar e verificar V014. **Não declarar PASS apenas por health 200.** Não publicar a V2 nem inativar a V1 como smoke.
+
+**Estado do repositório na edição desta seção:** código de política V2 implementado; testes **TEST_NOT_RUN** nesta sessão de connector; deploy **NOT_DONE**. A ausência de assinatura corporativa separada não deve ser disfarçada; qualquer autoridade externa obrigatória fora do escopo deste produto continua governada por sua própria política, não por um ack simulado no código.
