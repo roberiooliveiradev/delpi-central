@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import math
 from datetime import date
+from decimal import Decimal
 from typing import Any
 
 from production_control_app.application.services.demand_service import DemandService
@@ -42,6 +43,10 @@ from production_control_app.domain.services.demand_coverage_service import (
     DemandCoverageService,
     DemandLine,
 )
+from production_control_app.domain.services.myweg_fiscal_fifo_offset import (
+    reconcile_latest_myweg_fifo,
+)
+from production_control_app.domain.services.current_month_period import today_in_timezone
 from production_control_app.domain.services.myweg_demand_coverage_adapter import (
     COVERAGE_UNIT_MI,
     CUSTOMER_IDENTITY_PENDING,
@@ -517,6 +522,91 @@ class MyWegDemandCoveragePreviewService:
             "op_unit_assumption": op_unit,
         }
 
+    def _reconcile_latest_fiscal_needs(
+        self,
+        projected: list[Any],
+        batch_meta: dict[str, Any],
+        *,
+        branch: str,
+    ) -> dict[str, Any]:
+        """Fonte fiscal autoritativa (SD2/SF2) por lote de códigos elegíveis.
+
+        Falha de fonte não remove demanda. Em produção torna a sugestão de
+        nova OP inconclusiva para os produtos MyWEG, em vez de inventar zero NF.
+        """
+        products = sorted({
+            line.product_code for line in projected
+            if line.coverage_eligible and line.product_code
+        })
+        if not products:
+            return {
+                "lines": projected,
+                "allocations": {},
+                "pending_products": set(),
+                "meta": {"status": "no_eligible_products", "applied_un": "0"},
+            }
+        fetch = getattr(self._gateway, "list_customer_outbound_invoice_line_items", None)
+        if not callable(fetch):
+            # Compatibilidade com gateways legados e dublês de teste; não é
+            # o caminho de produção (DelpiProductionGateway tem a API S2S).
+            return {
+                "lines": projected,
+                "allocations": {},
+                "pending_products": set(),
+                "meta": {"status": "not_configured", "applied_un": "0"},
+            }
+        reference = _text(batch_meta.get("collection_date"))[:10] or _text(
+            batch_meta.get("collected_at")
+        )[:10]
+        today = self._today or today_in_timezone("America/Sao_Paulo")
+        if not reference or reference > today.isoformat():
+            return reconcile_latest_myweg_fifo(
+                projected, [], batch=batch_meta, today=today,
+            )
+        fiscal_items: list[dict[str, Any]] = []
+        try:
+            for start in range(0, len(products), 300):
+                response = fetch(
+                    branch=branch,
+                    customer_code=WEG_LINHARES_CUSTOMER_CODE,
+                    customer_store=WEG_LINHARES_CUSTOMER_STORE,
+                    issue_date_start=reference,
+                    issue_date_end=today.isoformat(),
+                    product_codes=products[start : start + 300],
+                    exclude_returns=True,
+                )
+                rows = require_items_list(
+                    response, "items", source_name="customer_outbound_invoice_line_items"
+                )
+                data = response.get("data") if isinstance(response.get("data"), dict) else response
+                if not isinstance(data, dict) or data.get("branch") != branch:
+                    raise PreviewPayloadError("Filial fiscal divergente ou ausente.")
+                if (
+                    data.get("customer_code") != WEG_LINHARES_CUSTOMER_CODE
+                    or data.get("customer_store") != WEG_LINHARES_CUSTOMER_STORE
+                ):
+                    raise PreviewPayloadError("Cliente fiscal divergente.")
+                fiscal_items.extend(row for row in rows if isinstance(row, dict))
+        except Exception as exc:  # noqa: BLE001 — consulta S2S opcional, decisão conservadora
+            return {
+                "lines": projected,
+                "allocations": {},
+                "pending_products": set(products),
+                "meta": {
+                    "status": "source_unavailable",
+                    "error_type": type(exc).__name__,
+                    "batch_id": _text(batch_meta.get("id")),
+                    "applied_un": "0",
+                    "pending_products": products,
+                },
+            }
+        return reconcile_latest_myweg_fifo(
+            projected,
+            fiscal_items,
+            batch=batch_meta,
+            today=today,
+        )
+
     def resolve_demand_origin_lines(
         self,
         user: object | None,
@@ -546,7 +636,13 @@ class MyWegDemandCoveragePreviewService:
         self._assert_authorized(user)
 
         batch_meta, projected = self._myweg_source.project_latest_lines(user, branch=code)
-        eligible = [line for line in projected if line.coverage_eligible and line.product_code]
+        fiscal = self._reconcile_latest_fiscal_needs(
+            projected, batch_meta, branch=code,
+        )
+        eligible = [
+            line for line in fiscal["lines"]
+            if line.coverage_eligible and line.product_code
+        ]
 
         sales_payload = self._gateway.fetch_open_sales_orders()
         sales_raw = require_items_list(
@@ -600,6 +696,18 @@ class MyWegDemandCoveragePreviewService:
             if stock_unavailable:
                 pending_without_stock += 1
             item = projection_to_coverage_input(line, product_stock_mi=product_stock)
+            invoice_allocation = fiscal["allocations"].get(line.record_id)
+            if invoice_allocation:
+                item["_fiscal_raw_quantity_mi"] = float(
+                    Decimal(invoice_allocation["raw_quantity_un"]) / Decimal("1000")
+                )
+                item["_fiscal_offset_mi"] = float(
+                    Decimal(invoice_allocation["applied_quantity_un"]) / Decimal("1000")
+                )
+                item["_fiscal_offset_status"] = invoice_allocation["status"]
+                item["_fiscal_invoice_refs"] = invoice_allocation["invoices"]
+            if line.product_code in fiscal["pending_products"]:
+                item["_fiscal_coverage_incomplete"] = True
             if stock_unavailable:
                 item["_preview_stock_source_pending"] = True
             myweg_inputs.append(item)
@@ -688,6 +796,8 @@ class MyWegDemandCoveragePreviewService:
                     consolidation["customer_identity_pending"]
                 ),
                 "batch": batch_meta,
+                "fiscal_reconciliation": fiscal["meta"],
+                "fiscal_pending_products": sorted(fiscal["pending_products"]),
                 "customer_scope": {
                     "weg_linhares_code": WEG_LINHARES_CUSTOMER_CODE,
                     "weg_linhares_store": WEG_LINHARES_CUSTOMER_STORE,
