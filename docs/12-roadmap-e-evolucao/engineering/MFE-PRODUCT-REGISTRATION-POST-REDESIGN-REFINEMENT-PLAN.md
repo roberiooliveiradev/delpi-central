@@ -558,3 +558,8 @@ O PO aprovou nova apresentação **sem duplicar código/loja/razão social**: co
 ## PRC-REF-015 / D15 — Baseline SA5 persistido e ciclo de vida completo
 
 **Contrato:** [PRODUCT-REGISTRATION-D15-SA5-BASELINE-AND-LIFECYCLE.md](./PRODUCT-REGISTRATION-D15-SA5-BASELINE-AND-LIFECYCLE.md). Captura server-side do baseline SB1+SA5 no intake UPDATE (`official_baseline` JSONB / V014), pré-condições ADD/UPDATE/REMOVE, fingerprint de concorrência (`official_context_stale`), verify seletivo e gate `PENDING_OWNER` na conclusão REMOVE. Sem escrita ERP; HML TOTVS ADD/UPDATE depende de operador. `IMPLEMENTED_DEV / REMOVE_PENDING_OWNER / PRODUCTION_DEPLOY_SUSPENDED`.
+
+
+## PRC-REF-016 / D16 — Bandeiras de acompanhamento CRUD no detalhe + EVA
+
+**Nova decisão PO:** [D16 — plano completo das bandeiras](./PRODUCT-REGISTRATION-D16-ATTENDANCE-FLAGS-CRUD-EVA-UX-PLAN.md). Na aba `Ficha técnica` do detalhe de atendimento, adicionar uma seção compacta **Bandeiras de acompanhamento** com ícone de flag, contador de abertas e botão `+ Nova bandeira`; CRUD: criar, listar, consultar, editar texto/contexto, resolver, reabrir e excluir logicamente com confirmação, eventos e auditoria. Textos livres podem registrar `revisar descrição` ou `solicitar PN à pessoa requisitante`, sem escrever `0` no PN ou alterar SB1/SA5. Proposta de visual anterior aos cartões técnicos, responsiva com vazio/loading/erro, autora/data/status, histórico e visibilidade pós-conclusão governada. Engineering API é owner; EVA usa mesmos casos de uso via ações semânticas existentes com PREPARE/ACT e autorização, não novas tools. **Planejado, sem execução; teste REST+EVA+PG real+Playwright obrigatório.**
