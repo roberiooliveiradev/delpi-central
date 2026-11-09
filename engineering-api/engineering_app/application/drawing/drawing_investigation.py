@@ -90,11 +90,15 @@ def _table_candidates(u: dict) -> list[dict]:
                 "row": r,
                 "code": code,
                 "fields": r.get("fields") or {},
-                "ambiguous": bool(
+                "ambiguous": bool(r.get("association_conflict"))
+                or bool(r.get("conflicting_fields"))
+                or bool(
                     r.get("association_status") != "FIELD_IDENTIFIED"
                     and not r.get("fields")
                 )
-                or any(c.get("ambiguous") for c in (r.get("cells") or [])),
+                or any(
+                    c.get("ambiguous") for c in (r.get("cells") or [])
+                ),
             }
         )
     return out

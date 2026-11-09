@@ -142,6 +142,8 @@ def populate_from_understanding(
         )
         if n_amb:
             ambiguities.append(f"ambiguous_cells:{n_amb}")
+        if row.get("conflicting_fields") or row.get("association_conflict"):
+            ambiguities.append("geometric_band_conflict")
 
         refs = [
             _ref(

@@ -34,8 +34,8 @@ SCHEMA_VERSION = "drawing_understanding.v1"
 
 FIELD_STATES = frozenset(
     {
-        "FIELD_IDENTIFIED", "FIELD_AMBIGUOUS", "TEXT_ONLY",
-        "NOT_FOUND", "NOT_COMPARABLE",
+        "FIELD_IDENTIFIED", "FIELD_AMBIGUOUS", "FIELD_BAND_CONFLICT",
+        "TEXT_ONLY", "NOT_FOUND", "NOT_COMPARABLE",
     }
 )
 DIMENSION_STATES = frozenset(
@@ -1463,6 +1463,14 @@ def _cell_role(text: str) -> str | None:
 
 
 def _cell_cx(cell: dict) -> float | None:
+    tcs = cell.get("token_centers") or []
+    xs = [
+        float(tc[0])
+        for tc in tcs
+        if isinstance(tc, (list, tuple)) and len(tc) >= 2
+    ]
+    if xs:
+        return sum(xs) / len(xs)
     b = cell.get("bounding_box_px") or []
     if len(b) >= 8:
         xs = [b[0], b[2], b[4], b[6]]
@@ -1471,6 +1479,157 @@ def _cell_cx(cell: dict) -> float | None:
     else:
         return None
     return (float(min(xs)) + float(max(xs))) / 2.0
+
+
+def _cell_cy(cell: dict) -> float | None:
+    """Centro Y da fonte do campo — token_centers > bbox > banda."""
+    if cell.get("_band_cy") is not None:
+        return float(cell["_band_cy"])
+    tcs = cell.get("token_centers") or []
+    ys = [
+        float(tc[1])
+        for tc in tcs
+        if isinstance(tc, (list, tuple)) and len(tc) >= 2
+    ]
+    if ys:
+        return sum(ys) / len(ys)
+    b = cell.get("bounding_box_px") or []
+    if len(b) >= 8:
+        _ys = [b[1], b[3], b[5], b[7]]
+    elif len(b) >= 4:
+        _ys = [b[1], b[3]]
+    else:
+        return None
+    return (float(min(_ys)) + float(max(_ys))) / 2.0
+
+
+def _token_ys(cell: dict) -> list[float]:
+    ys = []
+    for tc in cell.get("token_centers") or []:
+        if isinstance(tc, (list, tuple)) and len(tc) >= 2:
+            ys.append(float(tc[1]))
+    return ys
+
+
+def _is_group_description_context(
+    cell: dict,
+    text: str,
+    role: str | None,
+    *,
+    item_band: tuple[float, float] | None,
+    description_xs: list[float],
+) -> bool:
+    """Descrição de conjunto não preenche descrição de componente.
+
+    Âncora de grupo (código longo em rowspan) e texto de descrição à
+    esquerda da coluna de item, ou um rowspan de descrição claramente
+    à esquerda do cluster de descrições de componente, são contexto
+    estrutural. Descrição por linha, à direita do item, permanece
+    campo do componente.
+    """
+    if cell.get("_from_group_anchor"):
+        return True
+    if role != "description":
+        return False
+    cx = _cell_cx(cell)
+    if item_band is not None and cx is not None and cx < item_band[0] - 4:
+        return True
+    if int(cell.get("rowspan") or 1) <= 1 or cx is None or not description_xs:
+        return False
+    ordered = sorted(description_xs)
+    median = ordered[len(ordered) // 2]
+    return cx < median - 10
+
+
+def _refresh_row_projection(row: dict) -> None:
+    fields = row.get("fields") or {}
+    for kind in ("item", "quantity", "component_code", "description"):
+        row[kind] = (fields.get(kind) or {}).get("normalized_value")
+    conflict = bool(row.get("conflicting_fields"))
+    ambiguous = any(
+        (f or {}).get("association_state") == "FIELD_AMBIGUOUS"
+        for f in fields.values()
+    ) or any(c.get("ambiguous") for c in (row.get("cells") or []))
+    row["association_conflict"] = conflict
+    if conflict or ambiguous:
+        row["association_status"] = "INCONCLUSIVE"
+    elif fields:
+        row["association_status"] = "FIELD_IDENTIFIED"
+    else:
+        row["association_status"] = "UNRESOLVED"
+
+
+def _rehome_across_bands(rows: list[dict], band_gap: float) -> None:
+    """Move um campo órfão para a única linha cuja banda Y combina.
+
+    Não funde campos que já têm vizinhos na própria banda. Exige um
+    único destino. Conflito restante permanece explícito.
+    """
+    kinds = ("item", "quantity", "component_code", "description")
+
+    def anchor(row: dict) -> float | None:
+        cys = [
+            f.get("source_cy_px")
+            for f in (row.get("fields") or {}).values()
+            if isinstance(f, dict) and f.get("source_cy_px") is not None
+        ]
+        if not cys:
+            return None
+        cys.sort()
+        return cys[len(cys) // 2]
+
+    for kind in kinds:
+        for src in rows:
+            conflict = src.setdefault("conflicting_fields", {})
+            sources = []
+            if isinstance(conflict.get(kind), dict):
+                sources.append((conflict, True))
+            own = (src.get("fields") or {}).get(kind)
+            if isinstance(own, dict):
+                sources.append((src.get("fields") or {}, False))
+            for bucket, from_conflict in sources:
+                field = bucket.get(kind)
+                if not isinstance(field, dict):
+                    continue
+                cy = field.get("source_cy_px")
+                if cy is None:
+                    continue
+                siblings = [
+                    f
+                    for key, f in (src.get("fields") or {}).items()
+                    if key != kind
+                    and isinstance(f, dict)
+                    and f.get("source_cy_px") is not None
+                ]
+                if (
+                    not from_conflict
+                    and siblings
+                    and all(
+                        abs(f["source_cy_px"] - cy) <= band_gap
+                        for f in siblings
+                    )
+                ):
+                    continue
+                targets = []
+                for dst in rows:
+                    if dst is src or kind in (dst.get("fields") or {}):
+                        continue
+                    dst_anchor = anchor(dst)
+                    if dst_anchor is None or abs(dst_anchor - cy) > band_gap:
+                        continue
+                    targets.append(dst)
+                if len(targets) != 1:
+                    continue
+                dst = targets[0]
+                bucket.pop(kind, None)
+                field["association_state"] = "FIELD_IDENTIFIED"
+                field["association_method"] = (
+                    str(field.get("association_method") or "native_cell")
+                    + "+band_rehome"
+                )
+                dst.setdefault("fields", {})[kind] = field
+                _refresh_row_projection(src)
+                _refresh_row_projection(dst)
 
 
 def _role_band(xs: list[float], pad: float = 12.0):
@@ -1498,6 +1657,17 @@ def rows_from_native_cells(
     grouped: dict[int, list[dict]] = {}
     for cell in cells:
         grouped.setdefault(int(cell.get("row") or 0), []).append(cell)
+    header_row = None
+    header_score = 0
+    for row_index, row_cells in grouped.items():
+        score = sum(
+            1
+            for cell in row_cells
+            if _header_type(_norm(str(cell.get("text") or "")))
+        )
+        if score > header_score:
+            header_score = score
+            header_row = row_index
     # Célula nativa cobrindo múltiplas bandas Y de tokens (colunas
     # estreitas fundidas, ex.: "C 6 D 3" com rowspan=1 OU >1): cada
     # banda é redistribuída para a linha nativa cujo centroide Y é o
@@ -1509,34 +1679,53 @@ def rows_from_native_cells(
     row_cy: dict[int, float] = {}
     row_spans: dict[int, list[tuple[float, float]]] = {}
     for row_index, row_cells in grouped.items():
+        if row_index == header_row:
+            continue
         cys = []
         for c in row_cells:
             if c.get("line_texts") or int(c.get("rowspan") or 1) > 1:
                 continue
-            b = c.get("bounding_box_px") or []
-            if len(b) >= 8:
-                _ys = [b[1], b[3], b[5], b[7]]
-            elif len(b) >= 4:
-                _ys = [b[1], b[3]]
+            # token_centers delimitam a banda real. O polígono SLANet
+            # de uma célula fundida cobre várias linhas e não pode
+            # "conter" bandas de outros componentes.
+            token_ys = _token_ys(c)
+            if token_ys:
+                pad = 4.0
+                lo, hi = min(token_ys) - pad, max(token_ys) + pad
+                cys.extend(token_ys)
             else:
-                continue
-            lo, hi = float(min(_ys)), float(max(_ys))
-            cys.append((lo + hi) / 2.0)
+                b = c.get("bounding_box_px") or []
+                if len(b) >= 8:
+                    _ys = [b[1], b[3], b[5], b[7]]
+                elif len(b) >= 4:
+                    _ys = [b[1], b[3]]
+                else:
+                    continue
+                lo, hi = float(min(_ys)), float(max(_ys))
+                cys.append((lo + hi) / 2.0)
             row_spans.setdefault(row_index, []).append((lo, hi))
-            # token_centers (cy por token) — âncora visual mais precisa
-            # que o polígono da célula nativa.
-            tcs = c.get("token_centers") or []
-            for tc in tcs:
-                if isinstance(tc, (list, tuple)) and len(tc) >= 2:
-                    cys.append(float(tc[1]))
         if cys:
             row_cy[row_index] = sum(cys) / len(cys)
+    _cy_vals = sorted(row_cy.values())
+    _prelim_steps = [
+        b - a for a, b in zip(_cy_vals, _cy_vals[1:]) if b - a > 1
+    ]
+    _prelim_step = (
+        _prelim_steps[len(_prelim_steps) // 2] if _prelim_steps else 0.0
+    )
     for row_index, row_cells in list(grouped.items()):
         for cell in row_cells:
             lines = cell.get("line_texts") or []
             centers = cell.get("line_centers") or []
             if not (len(lines) > 1 and len(centers) == len(lines)):
                 continue
+            source_text = _norm(str(cell.get("text") or ""))
+            from_group = bool(
+                int(cell.get("rowspan") or 1) > 1
+                and _GROUP_CODE_RE.match(source_text)
+            )
+            if from_group:
+                cell["_from_group_anchor"] = True
             targets: dict[int, list[str]] = {}
             for line, cy in zip(lines, centers):
                 # 1ª evidência: faixa-Y de célula confiável da linha
@@ -1566,14 +1755,43 @@ def rows_from_native_cells(
                         target = row_index
                 else:
                     target = row_index
-                targets.setdefault(target, []).append(line)
+                line_s = line.strip()
+                canonical = bool(
+                    _ITEM_QTY_RE.fullmatch(line_s)
+                    or _QTY_CODE_RE.fullmatch(line_s)
+                )
+                # Descrição multilinha não é item/qtd. Sem faixa única,
+                # as bandas permanecem na célula — não saltam para a
+                # linha de código vizinha.
+                if len(hits) != 1 and not canonical:
+                    target = row_index
+                ref_cy = row_cy.get(target)
+                gap_lim = 0.6 * _prelim_step if _prelim_step else 12.0
+                if (
+                    canonical
+                    and ref_cy is not None
+                    and abs(ref_cy - cy) > max(gap_lim, 8.0)
+                ):
+                    # Linha física distinta projetada no índice SLANet
+                    # errado — não permanece na tupla incompatível.
+                    target = 500000 + int(round(cy * 10))
+                targets.setdefault(int(target), []).append(line)
             if len(targets) < 2:
                 continue
             cell["_split_done"] = True
-            cell["_split_text"] = " ".join(
-                targets.get(row_index, [])
-            )
+            stayed = targets.get(row_index, [])
+            cell["_split_text"] = " ".join(stayed)
             cell["line_texts"] = []
+            if stayed:
+                cell["_band_cy"] = sum(
+                    centers[i]
+                    for i, line in enumerate(lines)
+                    if line in stayed
+                ) / len(stayed)
+            else:
+                # O retângulo original ainda cobre as outras bandas;
+                # sem isso o centro Y médio reintroduz o vínculo falso.
+                cell["token_centers"] = []
             for target, tlines in targets.items():
                 if target == row_index:
                     continue
@@ -1581,18 +1799,15 @@ def rows_from_native_cells(
                 virtual["_split_done"] = True
                 virtual["_split_text"] = " ".join(tlines)
                 virtual["line_texts"] = []
+                virtual["rowspan"] = 1
+                virtual["_from_group_anchor"] = from_group
+                virtual["_detached_band"] = target >= 500000
+                virtual["_band_cy"] = sum(
+                    centers[i]
+                    for i, _ in enumerate(lines)
+                    if lines[i] in tlines
+                ) / len(tlines)
                 grouped.setdefault(target, []).append(virtual)
-    header_row = None
-    header_score = 0
-    for row_index, row_cells in grouped.items():
-        score = sum(
-            1
-            for cell in row_cells
-            if _header_type(_norm(str(cell.get("text") or "")))
-        )
-        if score > header_score:
-            header_score = score
-            header_row = row_index
     col_types: dict[int, str] = {}
     if header_row is not None:
         for cell in grouped[header_row]:
@@ -1647,6 +1862,22 @@ def rows_from_native_cells(
                 )
                 group_anchor_ids.add(id(c))
     group_anchors.sort()
+    # Passo mediano entre linhas — escala para decidir se dois campos
+    # vêm de bandas Y compatíveis (mesma linha física) ou conflitantes.
+    row_cys = []
+    for row_index, row_cells in grouped.items():
+        if row_index == header_row:
+            continue
+        cys = [
+            cy for cy in (_cell_cy(c) for c in row_cells) if cy is not None
+        ]
+        if cys:
+            row_cys.append(min(cys))
+    row_cys.sort()
+    steps = [b - a for a, b in zip(row_cys, row_cys[1:]) if b - a > 1]
+    steps.sort()
+    median_step = steps[len(steps) // 2] if steps else 18.0
+    band_gap_px = median_step * 0.6
     rows_out: list[dict] = []
     for row_index in sorted(grouped):
         if row_index == header_row:
@@ -1659,20 +1890,56 @@ def rows_from_native_cells(
         fields: dict[str, dict] = {}
         published = []
         inconclusive = False
+        parked: list[tuple[str, dict]] = []
+
+        def _field(value: str, cell: dict, method: str) -> dict:
+            return {
+                "raw_text": value,
+                "normalized_value": value,
+                "bounding_box_px": cell.get("bounding_box_px"),
+                "source_cy_px": _cell_cy(cell),
+                "col": int(cell.get("col") or 0),
+                "association_method": method,
+                "association_state": "FIELD_IDENTIFIED",
+            }
+
+        def _fits_row(kind: str, cy: float | None) -> bool:
+            if cy is None:
+                return False
+            siblings = [
+                f.get("source_cy_px")
+                for key, f in fields.items()
+                if key != kind and f.get("source_cy_px") is not None
+            ]
+            return bool(siblings) and all(
+                abs(other - cy) <= band_gap_px for other in siblings
+            )
+
         def _put(kind: str, value: str, cell: dict, method: str) -> None:
             nonlocal inconclusive
+            incoming = _field(value, cell, method)
             if kind not in fields:
-                fields[kind] = {
-                    "raw_text": value,
-                    "normalized_value": value,
-                    "bounding_box_px": cell.get("bounding_box_px"),
-                    "col": int(cell.get("col") or 0),
-                    "association_method": method,
-                    "association_state": "FIELD_IDENTIFIED",
-                }
-            elif fields[kind].get("normalized_value") != value:
-                inconclusive = True
-                fields[kind]["association_state"] = "FIELD_AMBIGUOUS"
+                fields[kind] = incoming
+                return
+            if fields[kind].get("normalized_value") == value:
+                return
+            old_cy = fields[kind].get("source_cy_px")
+            new_cy = incoming.get("source_cy_px")
+            if (
+                new_cy is not None
+                and old_cy is not None
+                and abs(new_cy - old_cy) > band_gap_px
+            ):
+                # Mesmo papel, bandas diferentes: o que combina com a
+                # linha fica; o outro aguarda rehome. Não vira tupla.
+                if _fits_row(kind, new_cy) and not _fits_row(kind, old_cy):
+                    parked.append((kind, fields[kind]))
+                    fields[kind] = incoming
+                else:
+                    parked.append((kind, incoming))
+                return
+            inconclusive = True
+            fields[kind]["association_state"] = "FIELD_AMBIGUOUS"
 
         for cell in row_cells:
             text = _norm(
@@ -1686,9 +1953,20 @@ def rows_from_native_cells(
             mixed = _cell_mixes_quantity_and_code(text)
             if cell.get("ambiguous"):
                 inconclusive = True
+            if not text:
+                continue
             role = _cell_role(text)
-            if id(cell) in group_anchor_ids:
-                # Célula-âncora de grupo é estrutura, não campo da linha.
+            group_context = id(cell) in group_anchor_ids or (
+                _is_group_description_context(
+                    cell,
+                    text,
+                    role,
+                    item_band=role_bands.get("item"),
+                    description_xs=role_x.get("description") or [],
+                )
+            )
+            if group_context:
+                # Contexto de grupo não entra na tupla do componente.
                 role = None
                 kind = None
             elif role:
@@ -1720,7 +1998,7 @@ def rows_from_native_cells(
                     ),
                 }
             )
-            if id(cell) in group_anchor_ids:
+            if group_context:
                 continue
             # Formas canônicas de célula fundida — a divisão de campos
             # segue a geometria da célula (mesmo retângulo, tokens
@@ -1753,6 +2031,39 @@ def rows_from_native_cells(
             if not kind or mixed:
                 continue
             _put(kind, text, cell, "native_cell")
+        # Coerência geométrica da tupla: campos projetados no mesmo
+        # índice SLANet mas oriundos de bandas Y incompatíveis não
+        # formam associação — os de banda minoritária saem da tupla e
+        # ficam registrados como conflito, sem promoção.
+        conflicting_fields: dict[str, dict] = {}
+        band_groups: list[list[str]] = []
+        for kind in ("item", "quantity", "component_code", "description"):
+            cy = (fields.get(kind) or {}).get("source_cy_px")
+            if cy is None:
+                continue
+            placed = False
+            for grp in band_groups:
+                rep = (fields[grp[0]] or {}).get("source_cy_px")
+                if rep is not None and abs(cy - rep) <= band_gap_px:
+                    grp.append(kind)
+                    placed = True
+                    break
+            if not placed:
+                band_groups.append([kind])
+        if len(band_groups) > 1:
+            dominant = max(band_groups, key=len)
+            for grp in band_groups:
+                if grp is dominant:
+                    continue
+                for kind in grp:
+                    f = fields.pop(kind)
+                    f["association_state"] = "FIELD_BAND_CONFLICT"
+                    conflicting_fields[kind] = f
+                    inconclusive = True
+        for kind, parked_field in parked:
+            parked_field["association_state"] = "FIELD_BAND_CONFLICT"
+            conflicting_fields.setdefault(kind, parked_field)
+            inconclusive = True
         group = None
         for arow, acode, aspan in group_anchors:
             if arow <= row_index < arow + aspan:
@@ -1763,8 +2074,13 @@ def rows_from_native_cells(
                 "page": page,
                 "cells": published,
                 "fields": fields,
+                "conflicting_fields": conflicting_fields,
                 "col_types": {str(k): v for k, v in col_types.items()},
                 "parent_group_candidate": group,
+                "association_conflict": bool(conflicting_fields),
+                "band_detached": any(
+                    c.get("_detached_band") for c in row_cells
+                ),
                 "item": fields.get("item", {}).get("normalized_value"),
                 "quantity": fields.get("quantity", {}).get(
                     "normalized_value"
@@ -1783,6 +2099,7 @@ def rows_from_native_cells(
                 "topology_source": "native_table_cells",
             }
         )
+    _rehome_across_bands(rows_out, band_gap_px)
     return rows_out, {str(k): v for k, v in col_types.items()}
 
 

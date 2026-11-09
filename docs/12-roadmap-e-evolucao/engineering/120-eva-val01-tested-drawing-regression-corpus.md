@@ -323,3 +323,14 @@ Bugs quad (`bb[3]-bb[1]=0`) impediam `line_texts`; fix `0a6d468f07` (cy/h por mi
 ## Log adicional — 2026-11-08 (DEC-VAL-040 — reconstrução lógica, `862b12ce34`)
 
 Fixtures reais: 90264004 (A7/A8 descrição→código) e 90264017 (F/G/K). Prova: A2–A8 completos, A9/AA por grupo, descrições vinculadas; C/D/E preservados. Resíduo: A1/A5, F/G/K, 13 PDFs, job MCP — TEST_NOT_RUN.
+
+## Log adicional — 2026-11-09 (DEC-VAL-040 — integridade de associação)
+
+**HEAD ao iniciar:** `f1f4767b30`. **Código da associação antes do diff:** ainda o de `862b12ce34`. **Deploy:** não realizado — corpus dos 13 PDFs e holdouts `TEST_NOT_RUN` (PDF oficial ausente neste workspace; motor não reexecutado).
+
+| product_code | pdf_sha256 | pages | ocr / slanet nesta rodada | resultado da fixture geométrica | regressão de corpus |
+|---|---|---|---|---|---|
+| `90264017` | `5452aabd3ddf94d5d004fe5c4d27c2daca9fcf8759a0c1b849b415d4769e32ee` | 14 | `TEST_NOT_RUN` (sem PDF local) | tupla G/9/`10110676` rejeitada; E/F/G/K separados quando o token do código está na banda | `TEST_NOT_RUN` |
+| `90264004` | `5b6717dfa7b8dcdc18f81b4657e1dcdf3410b9af42c8cf3109214df2f66719f4` | 1 | `TEST_NOT_RUN` | A2 não recebe `CHICOTE DE LIGACAO`; A7 descrição não vira código; A9 não cruza grupo | `TEST_NOT_RUN` |
+
+Holdouts do Doc 120 não foram usados para ajustar a regra. Ausência de divergência com BOM não foi medida. `FALSE_PROMOTED` na fixture focal = 0 para G/9 e para a descrição de grupo. Precisão de campo sem ground truth da Engenharia: não declarada. `VAL01_COMPLETED=false`.

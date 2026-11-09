@@ -1490,3 +1490,21 @@ Não criar nova source of truth, banco, serviço ou MFE; não fazer import entre
 **Correção (application layer, genérica):** papel por célula (conteúdo vence índice), banda-X só vetando `item`; splits `ITEM QTD`/`QTD CÓDIGO`/`CÓDIGO+desc`/`ITEM resto`; âncoras de grupo excluídas dos campos e herdadas como `parent_group_candidate`; `token_centers` como âncora visual de linha; banda migra só com evidência próxima.
 
 **Prova integrada real (container prod):** 90264004 — A2–A8 item/qtd/código/descrição corretos; zero descrição→código; A9/AA por grupo (50225478/79). 90264017 — C/D/E preservados, descrições agora vinculadas, F/G/K INCONCLUSIVE sem promoção falsa. Residuais: A1 código e A5 item não resolvidos (evidência insuficiente), F/G/K, regressão 13 PDFs e job MCP pós-deploy `TEST_NOT_RUN` (consumidor).
+
+## 51. DEC-VAL-040 — Integridade das associações (2026-11-09)
+
+**TASK_ID:** `EVA-VAL01-DEC040-ASSOCIATION-INTEGRITY-REMEDIATION-E2E`. **Baseline de código:** `862b12ce34` ainda é a última alteração commitada de `rows_from_native_cells` no início desta execução. **HEAD de trabalho ao iniciar:** `f1f4767b30` (main = origin/main). **Deploy desta correção:** não realizado. `VAL01_COMPLETED=false`. `ENGINEERING_APPROVAL=NOT_APPROVED`. `BOM_RELATION_PROVEN=false`.
+
+**Evidência que reabre o pacote (comentário 6727992363, jobs pós-deploy de `862b12ce34`):**
+- `90264004` job `aj-1d52deaaabc7446d`: A2 publicado com `description=CHICOTE DE LIGACAO` (descrição do conjunto). A5 sem item. A9 sob `50225478` sem código. A7/A8 corretos.
+- `90264017` job `aj-8f671a3ee1094d3e`: tupla `G/9/10110676` com token de G em Y≈200.5 e quantidade/código em Y≈180.5. C/D/E preservados. `association_status=INCONCLUSIVE` não impedia a tupla composta.
+
+**Causa-raiz (PROVEN na projeção, fixtures com a geometria desses jobs):**
+1. **G/9.** A faixa Y usada para redistribuir `line_texts` vinha do polígono SLANet. Caixa alta contém bandas cujo token está em outro Y. O cabeçalho entrava no passo entre linhas e inflava o limite, então `G 3`/`K 2` permaneciam no índice da quantidade 9. `_ITEM_TAIL` extraía só o item e a quantidade/código vizinhos completavam a tupla. `INCONCLUSIVE` não desfazia os campos.
+2. **A2.** Célula `rowspan` de descrição do conjunto (`CHICOTE DE LIGACAO`), à esquerda da coluna de item, era o primeiro texto longo da linha. `_put` guardava o primeiro valor e a etiqueta do componente não substituía.
+
+**Correção (mesmo `rows_from_native_cells`, sem pipeline novo):** faixa Y pelo centro dos tokens; linhas canônicas `ITEM QTD` distantes da banda viram ocorrência própria; descrição de grupo (âncora ou texto à esquerda do item / rowspan à esquerda do cluster de descrições) não preenche descrição de componente; campos de bandas incompatíveis saem da tupla para `conflicting_fields` com `association_conflict`; órfão com um único destino compatível é reancorado. Investigação trata `association_conflict` como linha ambígua. Mapper registra `geometric_band_conflict`. Conteúdo continua vencendo índice de coluna (A7).
+
+**Prova local:** `tests/test_association_integrity_dec040.py` mais `test_table_perception_native.py`, `test_slanet_document_integrity.py`, `test_drawing_investigation_r12.py` (77) e `test_drawing_object_profiles_r11_1.py` (16). Na fixture da página 9: E/2/10091368, F/9/10110676, G/3/10110679, K/2/10130020 quando o código está na mesma banda; nenhuma tupla G/9/10110676. A2 fica com `ETIQUETA ACETATO DE RAYON T2/V1`. A5 acompanha o token quando ele existe. A9 de `50225478` não herda o código de `50225479`.
+
+**Residuais e bloqueio de deploy:** o PDF oficial não está neste workspace; corpus dos 13 desenhos, holdout, integração no motor SLANet/OCR e job MCP autenticado ficam `TEST_NOT_RUN`. A1 continua sem código quando a célula não traz o token — não se inventa `10110081`. Código de A9 sob `50225478` só entra se a célula existir; ausência não copia o outro grupo. Sem esses gates, **não houve deploy**.
