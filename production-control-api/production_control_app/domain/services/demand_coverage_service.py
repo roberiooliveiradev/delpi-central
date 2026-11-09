@@ -82,6 +82,7 @@ class DemandLine:
     due_date: date | None
     dispatch_date: date | None
     product_stock: float
+    unit: str = ""
     allocated_stock: float = 0.0
     covering_orders: list[dict[str, Any]] = field(default_factory=list)
     uncovered_quantity: float = 0.0
@@ -114,6 +115,7 @@ class DemandLine:
             "customer_order": self.customer_order,
             "order_type": self.order_type,
             "product_code": self.product_code,
+            "unit": self.unit,
             "ordered_quantity": round(self.ordered_quantity, 3),
             "delivered_quantity": round(self.delivered_quantity, 3),
             "open_quantity": round(self.open_quantity, 3),
@@ -181,6 +183,7 @@ class DemandCoverageService:
                     due_date=_iso_date(item.get("data_entrega")),
                     dispatch_date=_iso_date(item.get("data_despacho")),
                     product_stock=_number(item.get("no_estoque")),
+                    unit=_text(item.get("unidade")).upper(),
                     source=source,
                     planning=source == "myweg",
                 )
