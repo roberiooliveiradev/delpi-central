@@ -67,6 +67,7 @@ export function NcOperatorRanking({
     {
       key: "main_defect",
       header: "Principal defeito",
+      headerHint: "Critério: maior reincidência de NCs; em caso de empate, maior quantidade devolvida/rejeitada (QI2_QTDDEV); depois, descrição em ordem alfabética.",
       render: (row) => row.main_defect,
     },
   ];
