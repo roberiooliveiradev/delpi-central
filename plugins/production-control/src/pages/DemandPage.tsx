@@ -255,6 +255,18 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
             <div className="ppc-demand-banner" role="status">
               <p>{demand.planningBanner}</p>
               {mywegUpdatedLabel ? <p>{mywegUpdatedLabel}</p> : null}
+              {Number(data.myweg?.fiscal_reconciliation?.applied_un ?? 0) > 0 ? (
+                <p>
+                  {demand.fiscalReconciliationApplied(
+                    new Intl.NumberFormat("pt-BR", {
+                      maximumFractionDigits: 0,
+                    }).format(Number(data.myweg?.fiscal_reconciliation?.applied_un ?? 0)),
+                  )}
+                </p>
+              ) : null}
+              {(data.myweg?.fiscal_pending_products?.length ?? 0) > 0 ? (
+                <p>{demand.fiscalReconciliationPending}</p>
+              ) : null}
               {data.myweg?.stock_incomplete || data.myweg?.stock_data_complete === false ? (
                 <p>{demand.mywegIncomplete}</p>
               ) : null}
