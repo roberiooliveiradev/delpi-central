@@ -19,6 +19,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityAttempt,
     GovernedCapabilityStatus,
@@ -168,12 +170,33 @@ def test_pipeline_serializes_json_and_single_line_ndjson() -> None:
     restored = json.loads(wire)
     assert restored["presentation"]["version"] == "2"
     md = restored["presentation"]["blocks"][0]["text"]
-    # NDJSON-safe: no raw newline survives inside any wire string.
-    for line in wire.splitlines():
-        assert line.strip() == line or True
+    # NDJSON-safe: compact JSON wire must be exactly one physical line.
+    # Raw newlines break NDJSON record framing; escaped ``\n`` inside
+    # JSON strings remain allowed and are not raw wire breaks.
+    assert "\n" not in wire
+    assert len(wire.splitlines()) == 1
+    assert wire == wire.strip()
     assert "\n" not in json.dumps(md)[1:-1].replace("\\n", "")
     frame = json.dumps({"type": "turn_result", "result": body}, ensure_ascii=False)
     assert "\n" not in frame
+    assert len(frame.splitlines()) == 1
+
+
+def test_ndjson_wire_assertion_rejects_raw_newline() -> None:
+    """Mutation evidence: the old ``… or True`` loop always passed.
+
+    A multi-line wire string must fail the NDJSON single-line contract.
+    """
+    defective_wire = '{"presentation":{"version":"2"}}\n{"extra":true}'
+    defective = True
+    for line in defective_wire.splitlines():
+        defective = defective and (line.strip() == line or True)
+    assert defective is True
+
+    with pytest.raises(AssertionError):
+        assert "\n" not in defective_wire
+    with pytest.raises(AssertionError):
+        assert len(defective_wire.splitlines()) == 1
 
 
 def test_pipeline_terminal_states_never_carry_markdown() -> None:

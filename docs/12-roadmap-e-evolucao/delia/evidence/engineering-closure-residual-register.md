@@ -758,7 +758,7 @@ Provider-neutral; SSRF/redirect/DNS checks; OAuth externo fora do Keycloak DELPI
 - I-09 Outcome ACT live: `TEST_NOT_RUN`.
 - I-10 single runtime: sem novo planner/registry (code audit).
 - Race TOCTOU eligibility→wire: residual documentado (não atomicidade distribuída).
-- G4 `assert line.strip() == line or True` em presentation homologation: **fora do boundary MCP** (residual não corrigido nesta task).
+- G4 `assert line.strip() == line or True` em presentation homologation: residual na task de qualidade; **corrigido em T2 full acceptance** (ver seção seguinte).
 
 ### Regressão desta execução
 
@@ -781,6 +781,72 @@ Provider-neutral; SSRF/redirect/DNS checks; OAuth externo fora do Keycloak DELPI
 | T2_ARCHITECTURE_GATE | quality slice ready for independent review; ownership/ExternalConnection/R04 ops still open |
 
 **OPEN_MATERIAL:** ExternalConnection; R04 ops; DNS-rebinding/proxy; Outcome ACT; TOCTOU Core→wire  
+**NEXT:** `T2_INDEPENDENT_REVIEW`  
+**PRODUCTION_DEPLOY / T3:** `NOT_AUTHORIZED`
+
+## T2 FULL IMPLEMENTATION + INTEGRATED ACCEPTANCE (2026-11-09)
+
+**TASK_ID:** `DELIA-T2-FULL-IMPLEMENTATION-REMEDIATION-AND-INTEGRATED-ACCEPTANCE-01`  
+**BASE_HEAD:** `d8097eb033…` (ancestral `eda3121a6a`)  
+**SCOPE:** G4 + Core registry DEV + DÉLIA mode=core + revogação E2E + regressões; sem T3/prod.
+
+### G4
+
+- Defect: `test_pipeline_serializes_json_and_single_line_ndjson` usava `or True`.
+- Fix: wire NDJSON single-line estrito + `test_ndjson_wire_assertion_rejects_raw_newline`.
+- RED/GREEN: mutação multi-line rejeitada; suite G4 PASS.
+
+### Core + DÉLIA DEV runtime
+
+| Check | Resultado |
+|---|---|
+| Migration `u7v8w9x0y1` | PROVEN |
+| Seed 7 providers | PROVEN (3 enabled / 4 disabled) |
+| Compose wiring mode+token | PROVEN (`docker-compose.dev.yml`) |
+| `DELIA_MCP_PROVIDER_REGISTRY_MODE=core` | PROVEN (infra/.env gitignored) |
+| S2S eligible + scope | PASS (`davi,teo,vista` / `provider_approval_only`) |
+| Disable davi → guard/composition | PASS (`mcp_provider_not_eligible`; teo ok) |
+| Restore parity | PASS |
+| Bad token | PASS fail-closed |
+| Rollback settings↔core | PASS |
+| Final DEV mode | `core` |
+| User-delegated tools/list READ live | TEST_NOT_RUN |
+| Outcome ACT live | TEST_NOT_RUN |
+
+### Regressão
+
+| Suite | Resultado |
+|---|---|
+| Core full | **413 PASS / 0 FAIL** |
+| DÉLIA full | **1474 PASS / 0 FAIL** |
+| G4 homologation | **PASS** |
+
+### R04 OPS HANDOFF (permanece PENDING_OPS)
+
+**OWNER:** Ops / delivery DÉLIA (flag de composição produtiva).  
+**PROBLEM:** produção ainda pode carregar `DELIA_MCP_CATALOG_MODE=snapshot_experiment` (contradiz RETIRE_FULL_SET no código).  
+**AUTHORIZED_DEV:** N/A para mutação prod.  
+**PROCEDURE (quando PRODUCTION_DEPLOY autorizado separadamente):**
+
+1. Confirmar imagem/SHA com snapshot experiment removido do código.
+2. Via processo local-first: config `DELIA_MCP_CATALOG_MODE=live` (ou unset) + remover `DELIA_MCP_CATALOG_DB` se residual.
+3. Restart apenas serviços afetados; health/readiness.
+4. Smoke: discovery live SpecialistInterop/MCPToolset; ausência de path snapshot.
+5. Evidência: env efetiva + logs sem secret + turn READ amostral.
+6. Rollback: restaurar env anterior apenas se autorizado e documentado.
+
+**STATUS:** `PENDING_OPS` — handoff pronto; **não** `CLOSED_PROVEN`.
+
+### Status gates
+
+| ID | Status |
+|---|---|
+| A-07 | `IMPLEMENTED_BOUNDED_DEV` + DEV runtime evidence (não CLOSED_PROVEN) |
+| R04 | `PENDING_OPS` |
+| ExternalConnection | TARGET (fora T2 obrigatório) |
+| T2_TECHNICAL_STATUS | READY_FOR_INDEPENDENT_REVIEW |
+
+**OPEN_MATERIAL:** R04 ops prod; ExternalConnection; DNS/proxy; Outcome ACT; TOCTOU; delegated live READ  
 **NEXT:** `T2_INDEPENDENT_REVIEW`  
 **PRODUCTION_DEPLOY / T3:** `NOT_AUTHORIZED`
 

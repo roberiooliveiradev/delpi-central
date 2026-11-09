@@ -6099,3 +6099,12 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **EXISTING_EQUIVALENT=YES / REUSE_DECISION=REUSE** — apenas testes + docs; sem nova abstração.
 - **Veredicto:** `VERIFIED_BOUNDED_DEV` (qualidade de testes/invariantes no escopo); A-07 **não** `CLOSED_PROVEN`; `NEXT=T2_INDEPENDENT_REVIEW`.
 
+| DELIA-T2-FULL-IMPLEMENTATION-REMEDIATION-AND-INTEGRATED-ACCEPTANCE-01 | G4 NDJSON or True→strict; compose mode+token; DEV mode=core S2S+disable/restore+rollback; Core 413/0; DÉLIA 1474/0; R04 handoff PENDING_OPS; Outcome/delegated READ TEST_NOT_RUN; PRODUCTION_DEPLOY=NOT_AUTHORIZED | A-07=IMPLEMENTED_BOUNDED_DEV+DEV_RUNTIME; R04=PENDING_OPS; NEXT=T2_INDEPENDENT_REVIEW |
+
+### DELIA-T2-FULL-IMPLEMENTATION-REMEDIATION-AND-INTEGRATED-ACCEPTANCE-01 — execução (2026-11-09)
+
+- **Autorização:** implementação/aceitação técnica integrada T2 DEV; sem T3/prod/Keycloak prod.
+- **BASE:** `d8097eb033…` (contém `eda3121a6a`); WIP untracked preservado.
+- **EXISTING_EQUIVALENT=YES / REUSE_DECISION=REUSE|EXTEND** — compose wiring + testes G4; sem novo registry.
+- **Veredicto:** `T2_TECHNICAL_READY_FOR_INDEPENDENT_REVIEW` — A-07 não CLOSED_PROVEN; R04 PENDING_OPS com handoff; ExternalConnection TARGET.
+

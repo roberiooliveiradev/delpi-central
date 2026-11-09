@@ -285,6 +285,24 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 **NEXT:** `T2_INDEPENDENT_REVIEW`.  
 **PRODUCTION_DEPLOY / T3:** `NOT_AUTHORIZED`.
 
+### 2A.15 Execution stamp — T2 full implementation remediation + integrated acceptance (2026-11-09)
+
+**TASK:** `DELIA-T2-FULL-IMPLEMENTATION-REMEDIATION-AND-INTEGRATED-ACCEPTANCE-01`  
+**AUTHORIZATION:** §2A.9 + PO correção/implementação T2 DEV; sem T3; sem prod/migrations prod/Keycloak prod.  
+**BASE_HEAD:** `d8097eb0333bba1e8122423ae5680f9c713e4af1` (contém `eda3121a6a` + `2ec85d3d42`).
+
+**G4:** falso positivo `assert line.strip() == line or True` → contrato NDJSON single-line (`"\n" not in wire`, `len(splitlines())==1`) + mutação RED.
+
+**Core registry DEV:** migration `u7v8w9x0y1` aplicada; tabela `mcp_providers` com 7 registros (davi/teo/vista enabled; caio/clara/suri/eva registered disabled).
+
+**DÉLIA→Core DEV:** compose passa `DELIA_MCP_PROVIDER_REGISTRY_MODE` + `CORE_API_INTEGRATIONS_SERVICE_TOKEN`; modo `core` ativado em `infra/.env` (gitignored); S2S eligible = davi,teo,vista + `authorizationScope=provider_approval_only`; disable davi → eligible teo,vista + guard `mcp_provider_not_eligible`; restore; bad token fail-closed; rollback `settings`↔`core` comprovado; estado final DEV = `core`.
+
+**Não feito / residual:** ExternalConnection TARGET; R04 prod flag `PENDING_OPS`; Outcome ACT live `TEST_NOT_RUN`; DNS-rebinding/proxy residual; TOCTOU Core→wire; tools/list user-delegated live nesta execução `TEST_NOT_RUN` (S2S/composition comprovados).
+
+**A-07:** `IMPLEMENTED_BOUNDED_DEV` + evidência DEV runtime (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS` (handoff ops no residual).  
+**NEXT:** `T2_INDEPENDENT_REVIEW`.  
+**PRODUCTION_DEPLOY / T3:** `NOT_AUTHORIZED`.
+
 ## 3. Política de residual ZERO e limites reais
 
 - **ZERO** significa nenhum residual material **no escopo de fechamento DÉLIA aprovado**. Resíduo externo TÉO, dependência de produção ou limitação de modelo não pode ser rotulado `PASS`; determinar explicitamente se é bloqueador da aceitação DÉLIA ou de release. Não declarar que todo monorepo foi limpo.

@@ -1833,6 +1833,10 @@ services:
       CORE_API_URL: ${CORE_API_URL:-http://core-api:8000}
       DELPI_AUTH_CORE_API_URL: ${DELPI_AUTH_CORE_API_URL:-http://core-api:8000}
       DELIA_CORE_TIMEOUT_SECONDS: ${DELIA_CORE_TIMEOUT_SECONDS:-5.0}
+      # A-07: Core governed MCP provider registry (default settings until
+      # DEV/ops explicitly switches to core). Token from infra/.env only.
+      DELIA_MCP_PROVIDER_REGISTRY_MODE: ${DELIA_MCP_PROVIDER_REGISTRY_MODE:-settings}
+      CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-}
 
       # DÉLIA real-provider gate — secret/transport envs only; every
       # intelligence tunable lives in delia-api/config/
