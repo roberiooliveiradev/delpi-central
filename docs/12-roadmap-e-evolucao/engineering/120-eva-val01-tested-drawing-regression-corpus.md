@@ -473,4 +473,6 @@ Correção de perda silenciosa sob `span_conflict_tolerated` parcial (`reconcile
 | `90264017` p9 | C–K; false_g9=0 | igual | `PASS` |
 | Corpus 13 | false_g9=0 chicote=0 | 13/13 sha_match; Σ false_g9=0; Σ chicote=0 | `PASS` |
 
-**Testes:** `test_dec043_native_preservation.py` + suites 041/042/040/native + PDF/MCP auth → 39+63 passed no harness com patch. Deploy/digest/jobs MCP: preencher no relatório DEC-043 após publicação.
+**Testes:** `test_dec043_native_preservation.py` + suites 041/042/040/native + PDF/MCP auth → 39+63 passed no harness com patch.
+
+**Deploy canônico (2026-11-09):** `git pull --ff-only` → `./infra/scripts/up-prod-sequential.sh --build engineering-api` no `srv-api`. HEAD `e59a13f68885576b418dc91121b2c1ab7df53bc9`. Imagem anterior `sha256:2662390f…` tag `infra-engineering-api:pre-dec043-e59a13f688-rollback`. Imagem publicada `sha256:1c99c4bdae4aa5e6e26718d144102902c4e1b6f4e3563dadb5d9fd991f7ecf71`; container healthy; runtime prova `reconcile_native_and_fallback_rows` + `span_conflict_tolerated_partial`. Reteste na imagem publicada: 90264026 B=`10090010`+ISOLADOR, 6 linhas, topo parcial; 90264004/017 críticos PASS. MCP autenticado: `401` sem identidade → `CONSUMER_MCP_ACCEPTANCE=PENDING` (sem fabricar credencial).
