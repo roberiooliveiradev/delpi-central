@@ -1,7 +1,7 @@
 # Meus processos — Hero compacto e área de resultados
 
 **Tipo:** wireframe funcional + contrato de UX para implementação
-**Estado:** TARGET — aprovado em conversa em 2026-11-09; **não implementado nem validado em runtime por esta documentação**
+**Estado:** IMPLEMENTED_IN_CODE — composição do hero compacto no MFE (`ProcessesPage` + `PageHeader.children`); **aceitação visual runtime = TEST_NOT_RUN** (sem smoke autenticado nesta entrega documental)
 **Owner:** `plugins/transformometro` (MFE Portal Transforma+)
 **Rota:** `/apps/transformometro/processes`
 **Referência existente:** [Blueprint do Portal Transforma+](../../../../docs/12-roadmap-e-evolucao/transformometro-app/PORTAL-TRANSFORMA-BLUEPRINT.md)

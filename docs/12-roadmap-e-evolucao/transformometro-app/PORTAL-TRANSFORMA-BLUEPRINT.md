@@ -106,7 +106,7 @@ Loading / erro / vazio: os de `DashboardPage`. 403 ≠ gráfico vazio.
 
 Propósito: abrir um processo visível. Dado: `GET /processes` → `list_processos` (`status`, `q`; backend também aceita filial, setor, família). Sem paginação de servidor. Ordenação local, alternância Processos/Departamentos e modos Grandes/Médios/Lista/Detalhes já existem; clique na linha abre o workspace.
 
-**Refatoração do hero compacto (TARGET, aprovação visual em 2026-11-09):** [wireframe funcional específico do MFE — Meus processos](../../../plugins/transformometro/docs/wireframes/meus-processos-hero-compacto.md). Substitui apenas a composição visual abaixo; não é evidência de implementação.
+**Refatoração do hero compacto (IMPLEMENTED_IN_CODE, aprovação de design em 2026-11-09):** [wireframe funcional específico do MFE — Meus processos](../../../plugins/transformometro/docs/wireframes/meus-processos-hero-compacto.md). Código no MFE concentra controles no hero; aceitação visual runtime permanece `TEST_NOT_RUN` até smoke autenticado.
 
 ```text
 [Início / Meus processos]                         (breadcrumb acima do hero)

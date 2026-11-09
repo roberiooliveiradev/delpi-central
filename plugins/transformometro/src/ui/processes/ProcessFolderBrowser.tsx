@@ -3,11 +3,9 @@ import { ChevronLeft } from "lucide-react";
 
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTable } from "../../components/DataTable";
-import { SegmentToggle } from "../../components/SegmentToggle";
 import {
   dataTableSectionBemClasses,
   ensureDelpiUiClass,
-  FieldLabel,
   SectionHintLabel,
 } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -25,14 +23,13 @@ import {
   sortDepartamentoFolders,
   type DepartamentoFolder,
 } from "./groupProcessesByDepartment";
+import { ProcessListBrowseToggle } from "./ProcessListBrowseToggle";
 import {
-  PROCESSO_LIST_BROWSE_MODES,
   readProcessoListBrowseMode,
   writeProcessoListBrowseMode,
   type ProcessoListBrowseMode,
 } from "./processListBrowseMode";
 import {
-  PROCESSO_LIST_SORT_OPTIONS,
   readProcessoListSort,
   sortProcessoListItems,
   writeProcessoListSort,
@@ -80,6 +77,8 @@ type Props = {
   onViewModeChange?: (mode: ProcessoListViewMode) => void;
   /** When true, sort/view toolbar is rendered by the page Hero. */
   hideListToolbar?: boolean;
+  /** Notifies the page when department-root presentation context changes. */
+  onBrowseContextChange?: (ctx: { departmentRoot: boolean }) => void;
 };
 
 
@@ -193,6 +192,7 @@ export function ProcessFolderBrowser({
   viewMode: viewModeProp,
   onViewModeChange,
   hideListToolbar = false,
+  onBrowseContextChange,
 }: Props) {
   const P = TM_HELP_TOOLTIPS.processos;
   const [browseModeState, setBrowseModeState] = useState<ProcessoListBrowseMode>(() =>
@@ -256,6 +256,11 @@ export function ProcessFolderBrowser({
   }, [selectedDepartamento, selectedDepartamentoKey]);
 
   const showingDepartamentoRoot = browseMode === "departamento" && !selectedDepartamento;
+
+  useEffect(() => {
+    onBrowseContextChange?.({ departmentRoot: showingDepartamentoRoot });
+  }, [onBrowseContextChange, showingDepartamentoRoot]);
+
   const processoItems = useMemo(() => {
     if (browseMode === "processo") return items;
     return selectedDepartamento?.processes ?? [];
@@ -380,34 +385,7 @@ export function ProcessFolderBrowser({
           </nav>
         </div>
       ) : !hideBrowseToggle ? (
-        <div className="tm-processo-browser__browse-row">
-          <div className="tm-processo-browser__browse-label">
-            <FieldLabel
-              className="tm-field__label"
-              label="Visualizar por"
-              hint={P.visaoOrganizacao}
-            />
-            <p className="ds-hint tm-processo-browser__browse-hint">
-              {browseMode === "departamento"
-                ? "Agrupamento por departamento do escopo (preferência salva neste navegador)."
-                : "Listagem plana de macroprocessos (preferência salva neste navegador)."}
-            </p>
-          </div>
-          <div className="tm-processo-browser__browse-toggle">
-            <SegmentToggle
-              ariaLabel="Visualizar listagem por processos ou departamentos"
-              idPrefix="tm-proc-browse"
-              prefix="ds"
-              size="md"
-              options={PROCESSO_LIST_BROWSE_MODES.map((mode) => ({
-                value: mode.id,
-                label: mode.label,
-              }))}
-              value={browseMode}
-              onChange={handleBrowseModeChange}
-            />
-          </div>
-        </div>
+        <ProcessListBrowseToggle value={browseMode} onChange={handleBrowseModeChange} />
       ) : null}
 
       {filters ? <div className="tm-processo-browser__filters">{filters}</div> : null}
@@ -442,7 +420,11 @@ export function ProcessFolderBrowser({
             <span className={`${SECTION_CN.meta} tm-processo-browser__count`}>{countLabel}</span>
           )}
         </div>
-      ) : null}
+      ) : hideRecordCount ? null : (
+        <div className="tm-processo-browser__results-meta" aria-live="polite">
+          <span className={`${SECTION_CN.meta} tm-processo-browser__count`}>{countLabel}</span>
+        </div>
+      )}
 
       {loading ? (
         <p className="ds-hint">Carregando processos…</p>
