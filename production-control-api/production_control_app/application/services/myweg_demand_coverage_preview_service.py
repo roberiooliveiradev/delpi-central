@@ -605,10 +605,17 @@ class MyWegDemandCoveragePreviewService:
             myweg_inputs.append(item)
         myweg_inputs = apply_pool_stock_to_inputs(myweg_inputs, stock["pool"], branch=code)
 
-        ops_payload = self._gateway.fetch_open_production_orders()
-        ops_all = require_items_list(
-            ops_payload, "items", source_name="open_production_orders"
-        )
+        # Falha de consulta de OP não deve apagar necessidades MyWEG: mantém
+        # leitura de estoque, mas sinaliza cobertura por OP como desconhecida.
+        op_source_error: str | None = None
+        try:
+            ops_payload = self._gateway.fetch_open_production_orders()
+            ops_all = require_items_list(
+                ops_payload, "items", source_name="open_production_orders"
+            )
+        except Exception as exc:  # noqa: BLE001
+            ops_all = []
+            op_source_error = type(exc).__name__
         candidate_products = myweg_products
         if origin_norm == "both":
             candidate_products = myweg_products | {
@@ -617,6 +624,10 @@ class MyWegDemandCoveragePreviewService:
         op_pool = normalize_myweg_open_ops(
             ops_all, branch=code, product_codes=candidate_products
         )
+        if op_source_error is not None:
+            op_pool["complete"] = False
+            op_pool["status"] = OP_UNIT_UNVERIFIED
+            op_pool["unverified_products"] = sorted(candidate_products)
 
         if origin_norm == "myweg":
             lines = self._coverage.build(
@@ -662,6 +673,8 @@ class MyWegDemandCoveragePreviewService:
                 "op_coverage_complete": op_pool["complete"],
                 "op_verified_count": op_pool["verified_count"],
                 "op_unverified_count": op_pool["unverified_count"],
+                "op_source_unavailable": op_source_error is not None,
+                "op_source_error_type": op_source_error,
                 "coverage_mode": (
                     "stock_and_op" if op_pool["complete"] else "stock_and_verified_op_partial"
                 ),
