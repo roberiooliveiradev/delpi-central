@@ -604,4 +604,12 @@ Provider-neutral; SSRF/redirect/DNS checks; OAuth externo fora do Keycloak DELPI
 4. Owner físico de ExternalConnection.  
 5. Autorização de migrations em DEV (não prod).
 
+
+### Decisão posterior ao relatório — autorização PO para execução bounded Core DEV (2026-11-09)
+
+**A-07 / mudança prospectiva:** PO autorizou explicitamente a implementação de registro governado MCP **sob ownership Core**, com PostgreSQL Core, API contratada, RBAC, auditoria, migration **DEV**, integração DÉLIA via HTTP e migração idempotente dos sete registros em DEV. `A-07=AUTHORIZED_FOR_BOUNDED_DEV_IMPLEMENTATION` (não `CLOSED_PROVEN`); `CORE_OWNER_ACK=TO_VERIFY` se o contrato vigente exigir aceite independente da equipe Core; `PERSISTENCE_DEV_SCOPE_AUTHORIZED_BY_PO=YES`. A decisão encontra-se no Documento 293 §2A.9; o relatório histórico da tentativa anterior continua válido como *estado anterior à autorização*, não como bloqueio de PO ainda pendente.
+
+**Condições de execução:** reancorar 16/ledger/ownership; contract-first com schema escolhido após inventário, permissão/operationIds/erros/audit/revoke/rollback; criar somente estrutura mínima Core no âmbito DEV se autorizada pela autoridade superior; nenhuma tabela MCP na DÉLIA/Keycloak, nenhum `tools/list` persistido. `ExternalConnection` físico e OAuth externo = owner/contrato separados, não automaticamente aprovados. Tests 401/403, isolation, SSRF, idempotence, migration 7× DEV, MCP live, Core+DÉLIA regression e Outcome; sem `PASS` por documentação. Produção/Keycloak writes/deploy **NÃO autorizados**; `R04=PENDING_OPS`; `T3=NOT_AUTHORIZED`.
+
+
 **NEXT:** `T2_INDEPENDENT_REVIEW` — aguardar aceite Core antes de qualquer implementação.
