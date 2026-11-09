@@ -59,6 +59,11 @@ function DemandRow({ line, unit }: { line: DemandLine; unit: string }) {
         <span className="ppc-op-detail__source">{sourceLabel(line)}</span>
         <strong>{line.customer_name || "—"}</strong>
         <small>{labels.order}: {demandIdentifier(line)}</small>
+        {line.covering_orders.length > 0 ? (
+          <small>
+            {labels.existingOps}: {line.covering_orders.map((op) => op.production_order).join(", ")}
+          </small>
+        ) : null}
       </div>
       <div className="ppc-op-detail__demand-quantities">
         <span>{labels.stock}: {stock} · {labels.fromOps}: {fromOrders}</span>
