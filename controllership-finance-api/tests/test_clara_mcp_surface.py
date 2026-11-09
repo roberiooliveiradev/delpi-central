@@ -182,7 +182,6 @@ def test_security_schemes_on_wire():
 
 def test_instructions_honesty_invariants(monkeypatch):
     monkeypatch.setattr(cc.settings, "CLARA_CONSENT_CHANNEL", "portal")
-    monkeypatch.setattr(cc.settings, "CLARA_CONVERSATIONAL_SECURITY_ACK", "")
     instructions = build_clara_mcp_instructions()
     assert "never zero" in instructions
     assert "confirmation_url" in instructions
@@ -196,18 +195,17 @@ def test_instructions_honesty_invariants(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "channel,ack,expect_portal",
+    "channel,expect_portal",
     [
-        ("portal", "", True),
-        ("conversational", "", True),
-        ("conversational", cc.SECURITY_ACK_VALUE, False),
+        ("portal", True),
+        ("dual", True),
+        ("conversational", False),
     ],
 )
 def test_tool_descriptions_follow_active_consent_policy(
-    monkeypatch, channel, ack, expect_portal
+    monkeypatch, channel, expect_portal
 ):
     monkeypatch.setattr(cc.settings, "CLARA_CONSENT_CHANNEL", channel)
-    monkeypatch.setattr(cc.settings, "CLARA_CONVERSATIONAL_SECURITY_ACK", ack)
     mcp = create_mcp_server()
     tools = asyncio.new_event_loop().run_until_complete(mcp.list_tools())
     descriptions = {tool.name: tool.description or "" for tool in tools}
