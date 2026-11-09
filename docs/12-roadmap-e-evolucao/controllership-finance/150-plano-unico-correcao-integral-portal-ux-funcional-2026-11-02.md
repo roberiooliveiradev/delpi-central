@@ -904,3 +904,45 @@ human_proof=portal_step_up_v014
 **Limites verificáveis:** `IMPLEMENTED_NOT_TESTED / NOT_DEPLOYED` no GitHub; testes escritos, `TEST_NOT_RUN` nesta sessão sem runtime de CI; nenhuma migração, alteração do catálogo Core, mudança de permissions, ativação de ack, deploy ou cutover foi executado. O mecanismo conversacional de ACT já existe em commits `2444de3`/`23d51e7`; esta fatia elimina diferenças residuais da BFF e do Portal. **A política R-CLARA-01 §20.10 permanece vigente até decisão formal do owner de segurança**; o registro da autorização PO não representa assinatura desse papel.
 
 **Execução Cursor:** revisar diff e testes, fazer deploy BFF antes de MFE; inspecionar schema ativo, configurar canal apenas se o gate estiver satisfeito, executar smoke ChatGPT de teste sem mutação real e documentar read-back e rollback. Atualizar/republish o plugin MCP **se a definição publicada no host estiver cacheada ou divergir do novo schema/status**. Nunca declarar `ACCEPT` do CF-UX-053 com `portal_consent_required=true`.
+
+**Status posterior:** o código desta seção foi integrado e implantado. O estado de deploy, o gate e o veredito estão em §20.15. O texto acima permanece como registro da branch antes dessa execução.
+
+
+### 20.15 Execução Cursor — deploy compatível com V014 e cutover bloqueado (09/11/2026)
+
+**HEAD inicial da sessão:** `dbc2e526c68e7df983d0458e65e0b9346e32d82a`.  
+**PR `#148`:** fechado no GitHub (`merged=true`), head de origem `4cae2753c3e14f98f38ce8f296cbe91024ac8361`. CI desse head: `architecture-gate` success, `audit` success.  
+**Merge SHA:** `290f020bb94194dc175ce9ef8a5969b389937396`.  
+**HEAD final / produção:** `d8097eb0333bba1e8122423ae5680f9c713e4af1` (teste da política e cabeça de migration V020, acima do merge). Servidor `srv-api` em fast-forward nesse SHA.
+
+**Runtime produtivo medido no container da BFF, sem alterar env:**
+
+```text
+CLARA_CONSENT_CHANNEL = unset → consent_channel = portal
+CLARA_CONVERSATIONAL_SECURITY_ACK = unset
+CLARA_HOST_ATTESTATION_SECRET = unset
+portal_consent_required = true
+conversational_act_armed = false
+phase_policy = prepare → confirmation_url Portal step-up V014 → commit
+```
+
+`GET /health` = `online`. `GET /clara/consent-policy` sem Bearer = `401 {"detail":"Unauthorized"}`; o corpo não contém o valor de ack. Nenhuma permission nova foi criada: a rota reutiliza `authorized_user` e `controllership-finance.access`.
+
+**Imagens:**
+
+| Serviço | Imagem vigente | Rollback imediato |
+|---|---|---|
+| BFF `controllership-finance-api` | `sha256:ce7311e5b689174f29736a547536a38b4f9169c070ae2ce8299fd0e565b07a1b` | rebuild a partir do Git anterior ao pull do servidor (`94f51e542b`) |
+| MFE `controllership-finance` | `sha256:6ff4728b79dba2ff4e16ee2894c2d2f8906f6a290ee64025fac599694744736a` | imagem anterior ainda presente `sha256:355666a2421d51ca2446220ae5e5ba8cd630a860c117ef6420c0e0387e4a0cd9` |
+
+`remoteEntry.js` do MFE respondeu `200`. O bundle contém `consent-policy`, o texto de retorno à conversa e o texto de autorização V014. Com a política efetiva ainda Portal, a página legada permanece no fluxo V014.
+
+**Testes desta execução:** suíte unitária CLARA/MCP `227 passed` antes do Postgres; Postgres efêmero local `test_pg_clara` + `test_pg_clara_batch` `79 passed` (ator divergente, replay, idempotência, stale, desafio e consentimento). A asserção que fixava a última migration em V019 foi atualizada para exigir V019 e a cabeça V020. `test_pg_parity016_document_post_message` só passou com `CF_DOCUMENT_UPLOAD_DIR` gravável no host. Portal: `ClaraConsentPage` 9 passed; rotas do plugin 55 passed; `tsc` e `vite build` verdes. Core `PermissionResolver` 11 passed; `delpi_auth` JWT/RBAC freshness 18 passed; authz da BFF 33 passed. `test_effective_permissions_alignment` = `TEST_NOT_RUN` (venv local sem SQLAlchemy). Nenhuma migration histórica foi reescrita e o RBAC da Core não foi alterado.
+
+**Gate §20.10:** `SECURITY_PLATFORM_DECISION` e `CONTROLLADORIA_DECISION` continuam ausentes. O ack não foi preenchido. Canal conversacional **não** armado.
+
+**Plugin ChatGPT:** `POST /mcp` `tools/list` sem Bearer = `401`. A descrição vigente de `execute`/`delete` no servidor implantado mantém `CURRENT_RUNTIME` com Portal V014. Não houve republicação do plugin: a definição do servidor coincide com `portal_consent_required=true`. Inspeção da cache do host ChatGPT = `TEST_NOT_RUN`.
+
+**Smoke conversacional PREPARE → confirmação → ACT → read-back:** `TEST_NOT_RUN` / `BLOCKED`. Sem o gate, o smoke sem página externa não é evidência de aceite.
+
+**Veredito:** `DEPLOYED_V014_COMPATIBLE` / `SECURITY_GATE_PENDING` / `CUTOVER_NOT_DONE`. CF-UX-053 **não** está aceito.
