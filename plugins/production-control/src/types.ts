@@ -213,6 +213,8 @@ export type DemandLine = {
   customer_order: string;
   order_type: string;
   product_code: string;
+  /** Unidade do saldo (C6_UM, fallback B1_UM); vazia quando desconhecida. */
+  unit?: string;
   ordered_quantity: number;
   delivered_quantity: number;
   open_quantity: number;
@@ -548,6 +550,46 @@ export type OverviewSeriesPoint = {
   prior_value?: number | null;
   start_date?: string | null;
   end_date?: string | null;
+};
+
+/** Pendência de inclusão de OP derivada da mesma cobertura das Demandas. */
+export type OpPendencySchedule = {
+  required_date: string | null;
+  suggested_op_date: string | null;
+  uncovered_quantity: number;
+  uncovered_pieces: number | null;
+  demand_count: number;
+  lines: DemandLine[];
+};
+
+export type OpPendencyItem = {
+  id: string;
+  kind: "include_production_order";
+  branch: string;
+  product_code: string;
+  unit: string;
+  required_date: string | null;
+  suggested_op_date: string | null;
+  next_uncovered_quantity: number;
+  next_uncovered_pieces: number | null;
+  total_uncovered_quantity: number;
+  total_uncovered_pieces: number | null;
+  demand_count: number;
+  origins: Array<"protheus" | "myweg">;
+  schedule: OpPendencySchedule[];
+};
+
+export type OpPendencyPayload = {
+  as_of: string;
+  branch: string;
+  items: OpPendencyItem[];
+  count: number;
+  suppressed_product_count: number;
+  total_uncovered_pieces: number | null;
+  requested_origin: "protheus" | "myweg" | "both";
+  source_status: "complete" | "partial";
+  warning: string | null;
+  refresh_policy: string;
 };
 
 export type OverviewPayload = {
