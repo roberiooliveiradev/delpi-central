@@ -968,3 +968,14 @@ EXECUTION_STATUS: NOT_YET_CUTOVER
 **Atribuição de competência e histórico:** esta evidência registra a decisão do PO e o aceite operacional da Controladoria. **Não representa uma assinatura separada e comprovada de Segurança/Plataforma.** Se a política corporativa aplicável de R-CLARA-01 reservar ao guardião central a autorização para mudar a *garantia de consentimento*, tal assinatura permanece não demonstrada, mas **não voltar a tratar a decisão do PO / responsável operacional como ausente**. A definição da autoridade sobre esse controle deve ser tratada como divergência de governança específica, não novo pedido de autorização do PO.
 
 **Proibição de loop:** não reapresentar `CONTROLLADORIA_DECISION: AUSENTE`, “aguardando autorização do PO” ou “área ainda não autorizou” como estado atual. As seções §§20.8–20.15 são histórico do estado anterior a esta decisão. O cutover produtivo continua `NOT_DONE` até deploy e smoke real; **registro documental não altera runtime nem preenche ack**.
+
+
+### 20.17 Fix da superfície MCP conforme canal efetivo — alteração direta main (09/11/2026)
+
+**PO / Controladoria:** decisão de TARGET e aceite operacional já registrados em §20.16; não solicitar novamente ao PO.
+
+**Patch aplicado na main** (não confundir com deploy): `controllership-finance-api/controllership_finance_app/interface/mcp/branding.py` adiciona `build_clara_mcp_instructions()` e elimina o texto fixo que instruía Portal mesmo após eventual ativação conversacional. `interface/mcp/server.py` constrói instruções do servidor no startup conforme política efetiva, e `tools/list` das tools `execute` e `delete` utiliza `phase_policy_for_capability(direct=False)`, que já acompanha o canal real. A estrutura de seis tools, assinatura, permissões e contratos públicos **não foi alterada**. `tests/test_clara_mcp_surface.py` verifica que descrições e instruções refletem `portal`, `conversational` sem ack e `conversational` com ack.
+
+**Resultado evidenciável nesta conversa:** arquivos GitHub atualizados e verificados por leitura, `IMPLEMENTED_NOT_TESTED`, `TEST_NOT_RUN` para pytest/CI, `NOT_DEPLOYED`. O código **não** altera `CLARA_CONSENT_CHANNEL`, ack, RBAC, consentimento V014, migrations, BFF, Portal ou dados de fechamento. A decisão operacional do responsável já está documentada; assinatura separada Segurança/Plataforma continua não demonstrada. Quando a configuração produtiva mudar de acordo com a política aprovada, é necessário **rebuild/restart MCP** e reconsultar `tools/list` (descrições registradas no startup), `get_context(schema)`, PREPARE e ACT com smoke autorizado.
+
+**Proibido inferir cutover** apenas da presença da nova mensagem no MCP ou do deploy healthy. Aceite integral requer `portal_consent_required=false`, `conversational_act_armed=true` e read-back após confirmação explícita da operação de teste. Caso o catálogo do plugin conectado retenha descrições antigas, republicar/reconectar conforme procedimento oficial.
