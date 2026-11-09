@@ -2370,7 +2370,7 @@ class ClaraGovernedWrites:
         # reaplicada pelos repositórios canônicos na execução.
         #
         # Consentimento (Doc 106 / CF-UX-053): default = Portal V014.
-        # Canal conversacional armado (Security ack) pode gravar
+        # Canal conversacional explicitamente selecionado pode gravar
         # consent_record tipado mcp_tool_confirmation somente com
         # confirmation=true + proposta selada do mesmo ator.
         # Revalida o gate no ACT antes do claim — a permission pode
