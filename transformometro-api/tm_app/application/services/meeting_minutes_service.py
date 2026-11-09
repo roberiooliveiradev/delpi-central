@@ -626,9 +626,16 @@ class MeetingMinutesService:
     def audit(self,user:Any,minute_id:str)->dict[str,Any]: self._load(user,"view",minute_id); return {"items":self.repo.list_audit(minute_id)}
     def soft_delete(self, user: Any, minute_id: str) -> dict[str, Any]:
         minute = self._load(user, "manage", minute_id)
-        if not MinuteStatusTransitionService.can_delete(minute["status"]):
-            raise ValueError("Atas assinadas ou finalizadas não podem ser excluídas.")
-        return {"minute": self.repo.soft_delete(minute_id, self._user_id(user))}
+        signatures = self.repo.list_signatures(minute_id) or []
+        try:
+            MinuteStatusTransitionService.assert_soft_deletable(
+                minute,
+                completed_signature_count=len(signatures),
+            )
+        except MinuteStatusTransitionError as exc:
+            raise ValueError(str(exc)) from exc
+        deleted = self.repo.soft_delete(minute_id, self._user_id(user))
+        return {"minute": deleted}
 
     def cancel(self, user: Any, minute_id: str, reason: str | None = None) -> dict[str, Any]:
         minute = self._load(user, "manage", minute_id)

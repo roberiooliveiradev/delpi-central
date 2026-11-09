@@ -216,6 +216,12 @@ export const USER_MANUAL_CONTENT = {
           how: "No Início, em Registros.",
           path: TRANSFORMOMETRO_ROUTES.meetingMinutes,
         },
+        {
+          want: "Excluir rascunho de ata",
+          where: "Atas · visualização, edição ou lista",
+          how: "Só rascunhos sem envio/assinatura. Confirme em «Excluir ata». Atas enviadas ou assinadas não podem ser excluídas.",
+          path: TRANSFORMOMETRO_ROUTES.meetingMinutes,
+        },
       ],
     },
     {

@@ -16,13 +16,17 @@ import {
   Pencil,
   Send,
   Signature,
+  Trash2,
 } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { PageHeader } from "../../components/PageHeader";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { dsGhostBtn } from "../../components/ghostChrome";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { buildAtaEditPath, buildAtaSignPath, TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
+  deleteAta,
   finalizeAta,
   getAta,
   resendAtaSignInvites,
@@ -30,6 +34,10 @@ import {
   type AtaDetail,
 } from "../../data/api/transformometroMeetingMinutesApi";
 import { MeetingMinuteDocumentView } from "../meeting-minutes/MeetingMinuteDocumentView";
+import {
+  canDeleteMeetingMinute,
+  meetingMinuteDeleteConfirmCopy,
+} from "../meeting-minutes/meetingMinuteDeletePolicy";
 import { ATA_MEETING_TYPE_LABELS, ATA_PARTICIPANT_ROLE_LABELS } from "../meeting-minutes/meetingMinuteLabels";
 import {
   ataSignatureProgress,
@@ -54,9 +62,11 @@ function signerIsDone(status: string): boolean {
 }
 
 export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNavigate }: Props) {
+  const confirm = useConfirm();
   const [detail, setDetail] = useState<AtaDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -102,9 +112,32 @@ export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNav
   }, [detail?.signers, status]);
   const canFinalize = status === "signed";
   const canSign = Boolean(detail?.viewer?.can_sign_now);
+  const canDelete = canDeleteMeetingMinute(minute, detail?.signatures);
   const title = String(minute?.title ?? (loading ? "Carregando…" : "Ata"));
   const meetingType =
     ATA_MEETING_TYPE_LABELS[String(minute?.meeting_type ?? "")] ?? "Reunião";
+
+  async function handleDelete() {
+    if (!minute || deleting) return;
+    const copy = meetingMinuteDeleteConfirmCopy(minute);
+    const confirmed = await confirm({
+      title: copy.title,
+      message: copy.message,
+      confirmLabel: copy.confirmLabel,
+      variant: "danger",
+    });
+    if (!confirmed) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await deleteAta(ataId, getAccessToken);
+      onNavigate(TRANSFORMOMETRO_ROUTES.atas);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Não foi possível excluir a ata.");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const signatureRows = useMemo(() => {
     if (!detail) return [];
@@ -198,7 +231,7 @@ export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNav
               </ActionButton>
             ) : null}
             <ActionButton
-              disabled={busy}
+              disabled={busy || deleting}
               onClick={() => {
                 const title = String(
                   detail?.minute?.title ?? detail?.minute?.minute_number ?? "Ata Transforma+",
@@ -211,6 +244,17 @@ export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNav
               <Download size={16} aria-hidden />
               PDF
             </ActionButton>
+            {canDelete ? (
+              <button
+                type="button"
+                className={dsGhostBtn("danger")}
+                disabled={busy || deleting}
+                onClick={() => void handleDelete()}
+              >
+                <Trash2 size={16} aria-hidden />
+                {deleting ? "Excluindo…" : "Excluir ata"}
+              </button>
+            ) : null}
           </>
         }
       />
@@ -293,6 +337,17 @@ export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNav
                     <Signature size={16} aria-hidden />
                     Assinar agora
                   </ActionButton>
+                ) : null}
+                {canDelete ? (
+                  <button
+                    type="button"
+                    className={dsGhostBtn("danger")}
+                    disabled={busy || deleting}
+                    onClick={() => void handleDelete()}
+                  >
+                    <Trash2 size={16} aria-hidden />
+                    {deleting ? "Excluindo…" : "Excluir ata"}
+                  </button>
                 ) : null}
               </div>
             </section>

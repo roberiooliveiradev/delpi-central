@@ -7,9 +7,9 @@ CONTENT_LOCKED_STATUSES = frozenset(
     {"awaiting_signatures", "partially_signed", "signed", "finalized", "cancelled"}
 )
 TERMINAL_STATUSES = frozenset({"finalized", "cancelled"})
-DELETABLE_STATUSES = frozenset(
-    {"draft", "in_review", "awaiting_signatures", "partially_signed", "cancelled"}
-)
+# Soft-delete is draft-only. Sent / signed / finalized / cancelled minutes
+# stay immutable for deletion (cancel is a separate lifecycle action).
+DELETABLE_STATUSES = frozenset({"draft"})
 
 ALLOWED_TRANSITIONS: dict[str, frozenset[str]] = {
     "draft": frozenset({"in_review", "awaiting_signatures", "cancelled"}),
@@ -37,8 +37,30 @@ class MinuteStatusTransitionService:
 
     @classmethod
     def can_delete(cls, status: str) -> bool:
-        """Soft-delete permitido enquanto a ata ainda não está assinada/finalizada."""
+        """Soft-delete only for draft minutes (signature/send gates live in service)."""
         return status in DELETABLE_STATUSES
+
+    @classmethod
+    def assert_soft_deletable(
+        cls,
+        minute: dict,
+        *,
+        completed_signature_count: int,
+    ) -> None:
+        """Fail closed when status, send history or signatures forbid delete."""
+        status = str(minute.get("status") or "").strip()
+        if not cls.can_delete(status):
+            raise MinuteStatusTransitionError(
+                "Somente atas em rascunho podem ser excluídas."
+            )
+        if minute.get("submitted_for_signature_at") is not None:
+            raise MinuteStatusTransitionError(
+                "Ata já enviada para assinatura não pode ser excluída."
+            )
+        if int(completed_signature_count or 0) > 0:
+            raise MinuteStatusTransitionError(
+                "Ata com assinatura realizada não pode ser excluída."
+            )
 
     @classmethod
     def requires_new_version_for_content_change(cls, status: str) -> bool:

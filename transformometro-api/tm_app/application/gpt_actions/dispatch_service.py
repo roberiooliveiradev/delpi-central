@@ -2168,6 +2168,10 @@ class GptActionsDispatchService:
                 raise GptActionsError(str(exc), 403) from exc
             except LookupError as exc:
                 raise GptActionsError(str(exc), 404) from exc
+            except ValueError as exc:
+                raise GptActionsError(
+                    str(exc), 409, {"error_kind": "conflict"}
+                ) from exc
             return row, "Ata removida."
 
         if entity == GptEntity.PROCESS_DOCUMENT:

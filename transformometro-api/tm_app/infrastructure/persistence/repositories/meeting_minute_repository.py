@@ -482,8 +482,64 @@ class MeetingMinuteRepository(PluginBaseRepository):
         if not row: raise LookupError("Signatário não encontrado.")
         return row
     def soft_delete(self, minute_id: str, actor_user_id: str) -> dict[str, Any]:
-        row=self.execute_returning_one(f"UPDATE {_S}.tm_meeting_minutes SET deleted_at=NOW(),updated_at=NOW() WHERE id=%s::uuid AND deleted_at IS NULL RETURNING *",(minute_id,))
-        if not row: raise LookupError("Ata não encontrada.")
-        return row
+        """Soft-delete under row lock; re-validates draft/send/signature gates."""
+        from tm_app.domain.services.minute_status_transition_service import (
+            MinuteStatusTransitionError,
+            MinuteStatusTransitionService,
+        )
+
+        with self.db() as conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        f"SELECT * FROM {_S}.tm_meeting_minutes "
+                        f"WHERE id=%s::uuid AND deleted_at IS NULL FOR UPDATE",
+                        (minute_id,),
+                    )
+                    before = cur.fetchone()
+                    if not before:
+                        raise LookupError("Ata não encontrada.")
+                    before_dict = dict(before)
+                    cur.execute(
+                        f"SELECT COUNT(*) AS n FROM {_S}.tm_meeting_minute_signatures "
+                        f"WHERE minute_id=%s::uuid",
+                        (minute_id,),
+                    )
+                    sig_row = cur.fetchone() or {}
+                    completed = int(sig_row.get("n") or 0)
+                    try:
+                        MinuteStatusTransitionService.assert_soft_deletable(
+                            before_dict,
+                            completed_signature_count=completed,
+                        )
+                    except MinuteStatusTransitionError as exc:
+                        raise ValueError(str(exc)) from exc
+                    cur.execute(
+                        f"""UPDATE {_S}.tm_meeting_minutes
+                            SET deleted_at=NOW(), updated_at=NOW()
+                            WHERE id=%s::uuid AND deleted_at IS NULL
+                            RETURNING *""",
+                        (minute_id,),
+                    )
+                    row = cur.fetchone()
+                    if not row:
+                        raise LookupError("Ata não encontrada.")
+                    after = dict(row)
+                    self._audit(
+                        cur,
+                        minute_id=minute_id,
+                        unit_code=str(after.get("unit_code") or before_dict["unit_code"]),
+                        entity_type="meeting_minute",
+                        entity_id=minute_id,
+                        action="soft_delete",
+                        actor_user_id=actor_user_id,
+                        before=before_dict,
+                        after=after,
+                    )
+                conn.commit()
+                return after
+            except Exception:
+                conn.rollback()
+                raise
     def list_audit(self, minute_id: str) -> list[dict[str, Any]]:
         return self.fetch_all(f"SELECT * FROM {_S}.tm_meeting_minute_audit_logs WHERE minute_id=%s::uuid ORDER BY created_at DESC LIMIT 200",(minute_id,))

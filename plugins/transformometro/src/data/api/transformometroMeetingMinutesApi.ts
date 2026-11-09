@@ -66,6 +66,12 @@ export function getAta(id: string, getAccessToken?: () => string | undefined) {
   return request<AtaDetail>(`/meeting-minutes/${id}`, getAccessToken);
 }
 
+export function deleteAta(id: string, getAccessToken?: () => string | undefined) {
+  return request<{ minute: Record<string, unknown> }>(`/meeting-minutes/${id}`, getAccessToken, {
+    method: "DELETE",
+  });
+}
+
 export function createAta(payload: Record<string, unknown>, getAccessToken?: () => string | undefined) {
   return request<AtaDetail>("/meeting-minutes", getAccessToken, { method: "POST", body: JSON.stringify(payload) });
 }

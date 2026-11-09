@@ -97,7 +97,11 @@ def _handle(exc: Exception):
     if isinstance(exc, LookupError):
         return fail(str(exc), 404)
     if isinstance(exc, ValueError):
-        return fail(str(exc), 400)
+        message = str(exc)
+        # Soft-delete policy / concurrent state → conflict, not validation.
+        if "exclu" in message.lower() or "assinatura" in message.lower():
+            return fail(message, 409, {"error_kind": "conflict"})
+        return fail(message, 400)
     if isinstance(exc, AtaGenerationError):
         return fail(str(exc), 502)
     logging.getLogger(__name__).exception("meeting_minutes_route_error")
