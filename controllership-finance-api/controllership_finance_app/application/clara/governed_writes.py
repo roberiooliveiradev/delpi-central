@@ -2264,18 +2264,20 @@ class ClaraGovernedWrites:
             ttl_seconds=PROPOSAL_TTL_SECONDS,
         )
         expires_at = proposal["expires_at"]
-        # R-CLARA-01: desafio de consentimento emitido no PREPARE —
-        # vincula ator + plano selado + expiração (V014).
-        self._challenges.issue_for_proposal(
-            proposal_id=str(proposal["proposal_id"]),
-            actor_sub=actor_sub,
-            plan_hash=proposal_plan_hash(
-                capability, params, expected_state
-            ),
-            expires_at=expires_at,
-        )
-        consent_ch = consent_channel()
+        # V014 challenge is specific to the Portal fallback, not to the
+        # TÉO-shaped conversational path. Avoid issuing unused challenges
+        # when a reviewed conversational channel is actually enabled.
         portal_required = portal_consent_required()
+        if portal_required:
+            self._challenges.issue_for_proposal(
+                proposal_id=str(proposal["proposal_id"]),
+                actor_sub=actor_sub,
+                plan_hash=proposal_plan_hash(
+                    capability, params, expected_state
+                ),
+                expires_at=expires_at,
+            )
+        consent_ch = consent_channel()
         conf_url = clara_consent_url(
             proposal_id=str(proposal["proposal_id"])
         )
