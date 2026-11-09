@@ -53,6 +53,7 @@ export const copy = {
       count: (n: number) => `${n} pendência${n === 1 ? "" : "s"}`,
       loading: "Verificando demandas, OPs e rupturas de materiais…",
       empty: "Nenhuma pendência confirmada no momento.",
+      emptyPartial: "Nenhuma OP pendente identificada. Não foi possível verificar as rupturas.",
       error: "Não foi possível verificar as pendências agora.",
       sourceWarning: "Cobertura parcial: algumas fontes ou produtos estão indisponíveis.",
       needOp: "Incluir OP até",
@@ -87,6 +88,8 @@ export const copy = {
       stockRupture: {
         type: "Ruptura de estoque",
         cardDate: "Ruptura prevista em",
+        cardDateOverdue: "Ruptura identificada em",
+        cardBalance: "Saldo projetado",
         material: "Material",
         projectedBalance: "Saldo projetado na ruptura",
         detailTitle: "Ruptura de estoque",
