@@ -1943,3 +1943,51 @@ NEXT_AUTHORIZED_GATE=G2 (somente após aceite Coordination + GT/thresholds neces
 ```
 
 `VAL01_COMPLETED=false`; `ENGINEERING_APPROVAL=NOT_APPROVED`; `EXECUTION_DRIFT=false`.
+
+### 60.1 G1 — Completude estrutural geométrica + handoff owner (2026-11-09)
+
+**TASK_ID:** `EVA-VAL01-G1-STRUCTURAL-GT-COMPLETION-AND-OWNER-HANDOFF`.  
+**Escopo:** somente G1. Sem G2–G7, sem código produtivo EVA, sem framework/OCR/SLANet/PaddleX, sem parser paralelo, sem deploy.
+
+**Fonte:** `/mnt/fileserver/desenhos/90264135.pdf` SHA `af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3` → `SOURCE_HASH_STATUS=MATCH`. Render DPI 200 PDFium; verificação em `eva-val01-g1/g1-source-and-render-verification.md`.
+
+#### Completude geométrica (candidato DRAFT)
+
+| Página | Região | coverage | rows×cols | cells | spans | Validador |
+|---|---|---|---|---|---|---|
+| 10 | `t_main` component_table | `COMPLETE_SELECTED_REGION` | 15×6 | 64 | 2 | PASS |
+| 12 | `t_subsets` | `COMPLETE_SELECTED_REGION` | 16×7 | 82 | 15 | PASS |
+| 13 | `t_main` + `drawing_area` separado | `COMPLETE_SELECTED_REGION` | 19×6 | 86 | 2 | PASS |
+
+Campos obrigatórios presentes: `table_bounding_box_px`, `row_boundaries`, `column_boundaries`, `cells[]` (bbox, rowspan/colspan, text, role, review_status), `annotation_coverage` + contagens/limites. JSON hashes em `overlays/annotation-content-hashes.json`.
+
+**Invariantes críticos (expected ≠ defeito EVA):**
+
+- p10/p13: A2=`10080192` ≠ A3=`10090316` (fusão histórica só em `eva_defect_contrast`).
+- p12: parent `50225702` (subset_code/rowspan) → filhos AE/AH/AG; não confundir subset com component_code.
+- p13: `component_code='4 5'` **ausente** do expected; AMB-P13-01 permanece `AMBIGUOUS` (origem → G2).
+
+**Validação:** `python3 …/eva-val01-g1/scripts/validate_g1_annotations.py` → `SUMMARY PASS`; espelho remoto `overlays/g1_validation_report.json` (`ALL_OK`).
+
+**Overlays:** `p{10,12,13}_cells_overlay.png` (+ zoom) em `.local/eva-val01-g1-overlays/`; hashes atualizados em `overlays/overlay-registry.json`. `OVERLAY_REVIEW_ACCESS=LOCAL_PATH_READY` (disponibilização ao revisor = canal autorizado da Coordination; não inventar recebimento).
+
+**Holdout:** `TRUE_UNSEEN_HOLDOUT=NOT_AVAILABLE` reconfirmado; 11 PDFs expostos **não** são holdout cego. Split/thresholds continuam `OWNER_BLOCKED`.
+
+**Owners pendentes:** GT, split, thresholds, adjudicação AMB-P12-01 / AMB-P13-01 / AMB-P13-02. Pacote: `owner-review-package.md`.
+
+```text
+G1_ANNOTATION_COMPLETENESS=PASS_DRAFT_STRUCTURAL
+G1_GEOMETRY_VALIDATION=PASS
+G1_OVERLAY_ACCESS=LOCAL_PATH_READY
+G1_OWNER_APPROVAL=OWNER_BLOCKED
+G1_SPLIT_APPROVAL=OWNER_BLOCKED
+G1_THRESHOLD_APPROVAL=OWNER_BLOCKED
+G1_TECHNICAL_PREPARATION=PASS
+G1_EXIT_STATUS=PENDING_OWNER_APPROVAL
+NEXT_GATE=G2_BLOCKED
+PRODUCTION_CODE_CHANGED=false
+EXECUTION_DRIFT=false
+ARCHITECTURE_DECISION_REQUIRED=false
+```
+
+**Decisão recomendada:** Engenharia revisa overlays+JSON; Coordination só autoriza G2 após aceite formal GT/thresholds necessários. Não declarar GT homologado nesta rodada.

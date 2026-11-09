@@ -1,0 +1,41 @@
+{
+  "pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+  "pages": {
+    "10": {
+      "file": "90264135_p10.json",
+      "validation_errors": [],
+      "ok": true,
+      "row_count": 15,
+      "column_count": 6,
+      "cell_count": 64,
+      "coverage": "COMPLETE_SELECTED_REGION",
+      "spans": 2,
+      "overlay_sha256": "e9c5a7c40066a40a057ccd3e45027aa52805cfcb67306e45f25febb9bbce2e80",
+      "zoom_sha256": "e44a5182d88eaa4575ca914ea1c8a3eddd1e3ed3380949cc82f4c6265ba5bc60"
+    },
+    "12": {
+      "file": "90264135_p12.json",
+      "validation_errors": [],
+      "ok": true,
+      "row_count": 16,
+      "column_count": 7,
+      "cell_count": 82,
+      "coverage": "COMPLETE_SELECTED_REGION",
+      "spans": 15,
+      "overlay_sha256": "eb61979fa96fa07d90ded27ffd20a0ee47a94607322cdeb5753709966a4fdd64",
+      "zoom_sha256": "de746cb9360aa486f9a7d1cec8a3821eb11a875663df1bdd310bb76dbc1aef59"
+    },
+    "13": {
+      "file": "90264135_p13.json",
+      "validation_errors": [],
+      "ok": true,
+      "row_count": 19,
+      "column_count": 6,
+      "cell_count": 86,
+      "coverage": "COMPLETE_SELECTED_REGION",
+      "spans": 2,
+      "overlay_sha256": "4ee450997dffc60e5590b77694d7e2e9f7a142f62863170d93f25c88b7c35028",
+      "zoom_sha256": "5a8b682c920e6182a224e02a44796143182b7de2ed0abd34d8761a8aeb2a863c"
+    }
+  }
+}

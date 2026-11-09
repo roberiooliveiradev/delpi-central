@@ -9,76 +9,1807 @@
   "product_code": "90264135",
   "pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
   "page": 10,
+  "coordinate_system": "pixels_top_left",
   "render_ref": {
     "file": "90264135_p10_dpi200.png",
     "sha256": "f0cef06a74061d318d3994aa469bb829e9109c0c8667c6a2669ecf74819a2f0f",
     "dpi": 200,
-    "size_px": [2339, 1653],
+    "size_px": [
+      2339,
+      1653
+    ],
     "storage": ".local/eva-val01-g1-overlays/"
   },
-  "regions": [
+  "tables": [
     {
-      "region_id": "90264135:p10:component_table_main",
+      "table_id": "90264135:p10:t_main",
+      "page": 10,
       "region_type": "component_table",
-      "notes": "Tabela principal com bloco de conjunto 90264135/CHICOTE-P66 (células esquerdas mescladas) e colunas Item|QTD|Componente|Descrição à direita. Cabeçalhos visíveis na página; overlays p10_band0/p10_R.",
-      "overlay_crops": ["p10_band0.png", "p10_tableband.png", "p10_R.png"]
-    },
-    {
-      "region_id": "90264135:p10:component_table_cables",
-      "region_type": "component_table",
-      "notes": "Bloco inferior/lateral de cabos indexados (1..n) com códigos 50225xxx e ocorrências AE/AH/AG; rowspan nas colunas de cabo. Overlay p10_band1.",
-      "overlay_crops": ["p10_band1.png"]
+      "table_bounding_box_px": [
+        528,
+        73,
+        1918,
+        523
+      ],
+      "coordinate_system": "pixels_top_left",
+      "render_dpi": 200,
+      "row_count": 15,
+      "column_count": 6,
+      "row_boundaries": [
+        73,
+        103,
+        133,
+        163,
+        193,
+        223,
+        253,
+        283,
+        313,
+        343,
+        373,
+        403,
+        433,
+        463,
+        493,
+        523
+      ],
+      "column_boundaries": [
+        528,
+        614,
+        923,
+        970,
+        1020,
+        1137,
+        1918
+      ],
+      "annotation_coverage": "COMPLETE_SELECTED_REGION",
+      "expected_row_count": 15,
+      "annotated_row_count": 15,
+      "unannotated_row_ranges": "Cable/subset rows below AG (y>523) excluded",
+      "coverage_limitations": "Selected region = header + set 90264135 (A1–AD, AG). Not full page.",
+      "cells": [
+        {
+          "cell_id": "90264135:p10:t_main:r0:c0",
+          "row_index": 0,
+          "col_index": 0,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            528,
+            73,
+            614,
+            103
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "Código"
+          ],
+          "text_literal": "Código",
+          "text_status": "CLEAR",
+          "role": "header",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r0:c1",
+          "row_index": 0,
+          "col_index": 1,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            614,
+            73,
+            923,
+            103
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "Descrição"
+          ],
+          "text_literal": "Descrição",
+          "text_status": "CLEAR",
+          "role": "header",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r0:c2",
+          "row_index": 0,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            923,
+            73,
+            970,
+            103
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "Item"
+          ],
+          "text_literal": "Item",
+          "text_status": "CLEAR",
+          "role": "header",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r0:c3",
+          "row_index": 0,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            970,
+            73,
+            1020,
+            103
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "QTD."
+          ],
+          "text_literal": "QTD.",
+          "text_status": "CLEAR",
+          "role": "header",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r0:c4",
+          "row_index": 0,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1020,
+            73,
+            1137,
+            103
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "Componente"
+          ],
+          "text_literal": "Componente",
+          "text_status": "CLEAR",
+          "role": "header",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r0:c5",
+          "row_index": 0,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1137,
+            73,
+            1918,
+            103
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "Descrição"
+          ],
+          "text_literal": "Descrição",
+          "text_status": "CLEAR",
+          "role": "header",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r1:c0",
+          "row_index": 1,
+          "col_index": 0,
+          "rowspan": 14,
+          "colspan": 1,
+          "bounding_box_px": [
+            528,
+            103,
+            614,
+            523
+          ],
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "90264135"
+          ],
+          "text_literal": "90264135",
+          "text_status": "CLEAR",
+          "role": "set_code",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r1:c1",
+          "row_index": 1,
+          "col_index": 1,
+          "rowspan": 14,
+          "colspan": 1,
+          "bounding_box_px": [
+            614,
+            103,
+            923,
+            523
+          ],
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "CHICOTE - P66"
+          ],
+          "text_literal": "CHICOTE - P66",
+          "text_status": "CLEAR",
+          "role": "set_description",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r1:c2",
+          "row_index": 1,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            923,
+            103,
+            970,
+            133
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "A1"
+          ],
+          "text_literal": "A1",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r1:c3",
+          "row_index": 1,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            970,
+            103,
+            1020,
+            133
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "7"
+          ],
+          "text_literal": "7",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r1:c4",
+          "row_index": 1,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1020,
+            103,
+            1137,
+            133
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10080182"
+          ],
+          "text_literal": "10080182",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r1:c5",
+          "row_index": 1,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1137,
+            103,
+            1918,
+            133
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "TERM. TUBULAR DUPLO 2,50MM2 COMP 10,00MM ESTANHADO C/ISOLACAO GRANEL ROHS"
+          ],
+          "text_literal": "TERM. TUBULAR DUPLO 2,50MM2 COMP 10,00MM ESTANHADO C/ISOLACAO GRANEL ROHS",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r2:c2",
+          "row_index": 2,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            923,
+            133,
+            970,
+            163
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "A2"
+          ],
+          "text_literal": "A2",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r2:c3",
+          "row_index": 2,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            970,
+            133,
+            1020,
+            163
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "16"
+          ],
+          "text_literal": "16",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r2:c4",
+          "row_index": 2,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1020,
+            133,
+            1137,
+            163
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10080192"
+          ],
+          "text_literal": "10080192",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r2:c5",
+          "row_index": 2,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1137,
+            133,
+            1918,
+            163
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "TERM. TUBULAR DUPLO 1,00MM2 COMP 8,00MM ESTANHADO C/ISOLACAO GRANEL ROHS"
+          ],
+          "text_literal": "TERM. TUBULAR DUPLO 1,00MM2 COMP 8,00MM ESTANHADO C/ISOLACAO GRANEL ROHS",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r3:c2",
+          "row_index": 3,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            923,
+            163,
+            970,
+            193
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "A3"
+          ],
+          "text_literal": "A3",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r3:c3",
+          "row_index": 3,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            970,
+            163,
+            1020,
+            193
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r3:c4",
+          "row_index": 3,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1020,
+            163,
+            1137,
+            193
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10090316"
+          ],
+          "text_literal": "10090316",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r3:c5",
+          "row_index": 3,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1137,
+            163,
+            1918,
+            193
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "CONECTOR RECEPTACULO 2 VIAS PT SUPERSEAL SERIE 1,5MM CONTRA PC 10090317"
+          ],
+          "text_literal": "CONECTOR RECEPTACULO 2 VIAS PT SUPERSEAL SERIE 1,5MM CONTRA PC 10090317",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r4:c2",
+          "row_index": 4,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            923,
+            193,
+            970,
+            223
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "A4"
+          ],
+          "text_literal": "A4",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r4:c3",
+          "row_index": 4,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            970,
+            193,
+            1020,
+            223
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "2"
+          ],
+          "text_literal": "2",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r4:c4",
+          "row_index": 4,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1020,
+            193,
+            1137,
+            223
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10090317"
+          ],
+          "text_literal": "10090317",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r4:c5",
+          "row_index": 4,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1137,
+            193,
+            1918,
+            223
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "CONECTOR RECEPTACULO 2 VIAS PT SUPERSEAL SERIE 1,5MM CONTRA PC 10090316"
+          ],
+          "text_literal": "CONECTOR RECEPTACULO 2 VIAS PT SUPERSEAL SERIE 1,5MM CONTRA PC 10090316",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r5:c2",
+          "row_index": 5,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            923,
+            223,
+            970,
+            253
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "A5"
+          ],
+          "text_literal": "A5",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r5:c3",
+          "row_index": 5,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            970,
+            223,
+            1020,
+            253
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r5:c4",
+          "row_index": 5,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1020,
+            223,
+            1137,
+            253
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10090926"
+          ],
+          "text_literal": "10090926",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r5:c5",
+          "row_index": 5,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1137,
+            223,
+            1918,
+            253
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "CONECTOR RECEPTACULO 3 VIAS VM AR PT SUPERSEAL IP67"
+          ],
+          "text_literal": "CONECTOR RECEPTACULO 3 VIAS VM AR PT SUPERSEAL IP67",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r6:c2",
+          "row_index": 6,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            923,
+            253,
+            970,
+            283
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "A6"
+          ],
+          "text_literal": "A6",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r6:c3",
+          "row_index": 6,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            970,
+            253,
+            1020,
+            283
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r6:c4",
+          "row_index": 6,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1020,
+            253,
+            1137,
+            283
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10110677"
+          ],
+          "text_literal": "10110677",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r6:c5",
+          "row_index": 6,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1137,
+            253,
+            1918,
+            283
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "ETIQUETA TERMORETRATIL AMARELO LISO 8MMX0,7MM"
+          ],
+          "text_literal": "ETIQUETA TERMORETRATIL AMARELO LISO 8MMX0,7MM",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r7:c2",
+          "row_index": 7,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            923,
+            283,
+            970,
+            313
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "A7"
+          ],
+          "text_literal": "A7",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r7:c3",
+          "row_index": 7,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            970,
+            283,
+            1020,
+            313
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "6"
+          ],
+          "text_literal": "6",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r7:c4",
+          "row_index": 7,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1020,
+            283,
+            1137,
+            313
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10110678"
+          ],
+          "text_literal": "10110678",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r7:c5",
+          "row_index": 7,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1137,
+            283,
+            1918,
+            313
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "ETIQUETA TERMORETRATIL AMARELO LISO 9MMX0,8MM"
+          ],
+          "text_literal": "ETIQUETA TERMORETRATIL AMARELO LISO 9MMX0,8MM",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r8:c2",
+          "row_index": 8,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            923,
+            313,
+            970,
+            343
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "A8"
+          ],
+          "text_literal": "A8",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r8:c3",
+          "row_index": 8,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            970,
+            313,
+            1020,
+            343
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r8:c4",
+          "row_index": 8,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1020,
+            313,
+            1137,
+            343
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10120146"
+          ],
+          "text_literal": "10120146",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r8:c5",
+          "row_index": 8,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1137,
+            313,
+            1918,
+            343
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "TUBO CORRUGADO 3/8POL 9,50 PT 105°C POLIPROPILENO PARTIDO UL-ROHS"
+          ],
+          "text_literal": "TUBO CORRUGADO 3/8POL 9,50 PT 105°C POLIPROPILENO PARTIDO UL-ROHS",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r9:c2",
+          "row_index": 9,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            923,
+            343,
+            970,
+            373
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "A9"
+          ],
+          "text_literal": "A9",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r9:c3",
+          "row_index": 9,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            970,
+            343,
+            1020,
+            373
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r9:c4",
+          "row_index": 9,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1020,
+            343,
+            1137,
+            373
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10120148"
+          ],
+          "text_literal": "10120148",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r9:c5",
+          "row_index": 9,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1137,
+            343,
+            1918,
+            373
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "TUBO CORRUGADO 1/4POL 6,40 PT 105°C POLIPROPILENO PARTIDO UL-ROHS"
+          ],
+          "text_literal": "TUBO CORRUGADO 1/4POL 6,40 PT 105°C POLIPROPILENO PARTIDO UL-ROHS",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r10:c2",
+          "row_index": 10,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            923,
+            373,
+            970,
+            403
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AA"
+          ],
+          "text_literal": "AA",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r10:c3",
+          "row_index": 10,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            970,
+            373,
+            1020,
+            403
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r10:c4",
+          "row_index": 10,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1020,
+            373,
+            1137,
+            403
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10120149"
+          ],
+          "text_literal": "10120149",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r10:c5",
+          "row_index": 10,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1137,
+            373,
+            1918,
+            403
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "TUBO CORRUGADO 3/16POL 4,80 PT 105°C POLIPROPILENO PARTIDO UL-ROHS"
+          ],
+          "text_literal": "TUBO CORRUGADO 3/16POL 4,80 PT 105°C POLIPROPILENO PARTIDO UL-ROHS",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r11:c2",
+          "row_index": 11,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            923,
+            403,
+            970,
+            433
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AB"
+          ],
+          "text_literal": "AB",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r11:c3",
+          "row_index": 11,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            970,
+            403,
+            1020,
+            433
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r11:c4",
+          "row_index": 11,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1020,
+            403,
+            1137,
+            433
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10120150"
+          ],
+          "text_literal": "10120150",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r11:c5",
+          "row_index": 11,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1137,
+            403,
+            1918,
+            433
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "TUBO CORRUGADO 1/2POL 12,70 PT 105°C POLIPROPILENO PARTIDO UL-ROHS"
+          ],
+          "text_literal": "TUBO CORRUGADO 1/2POL 12,70 PT 105°C POLIPROPILENO PARTIDO UL-ROHS",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r12:c2",
+          "row_index": 12,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            923,
+            433,
+            970,
+            463
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AC"
+          ],
+          "text_literal": "AC",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r12:c3",
+          "row_index": 12,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            970,
+            433,
+            1020,
+            463
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r12:c4",
+          "row_index": 12,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1020,
+            433,
+            1137,
+            463
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10211028"
+          ],
+          "text_literal": "10211028",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r12:c5",
+          "row_index": 12,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1137,
+            433,
+            1918,
+            463
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "FITA ISOLANTE PVC 18MM X 20M PRETA"
+          ],
+          "text_literal": "FITA ISOLANTE PVC 18MM X 20M PRETA",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r13:c2",
+          "row_index": 13,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            923,
+            463,
+            970,
+            493
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AD"
+          ],
+          "text_literal": "AD",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r13:c3",
+          "row_index": 13,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            970,
+            463,
+            1020,
+            493
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r13:c4",
+          "row_index": 13,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1020,
+            463,
+            1137,
+            493
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10211615"
+          ],
+          "text_literal": "10211615",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r13:c5",
+          "row_index": 13,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1137,
+            463,
+            1918,
+            493
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "FITA ISOLANTE TECIDO POLIESTER ANTI CHAMA 19MM X 20M PRETA FITA FC203"
+          ],
+          "text_literal": "FITA ISOLANTE TECIDO POLIESTER ANTI CHAMA 19MM X 20M PRETA FITA FC203",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r14:c2",
+          "row_index": 14,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            923,
+            493,
+            970,
+            523
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AG"
+          ],
+          "text_literal": "AG",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r14:c3",
+          "row_index": 14,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            970,
+            493,
+            1020,
+            523
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "16"
+          ],
+          "text_literal": "16",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r14:c4",
+          "row_index": 14,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1020,
+            493,
+            1137,
+            523
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10110676"
+          ],
+          "text_literal": "10110676",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p10:t_main:r14:c5",
+          "row_index": 14,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1137,
+            493,
+            1918,
+            523
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM"
+          ],
+          "text_literal": "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page10_dpi200_grid",
+          "review_status": "DRAFT"
+        }
+      ]
     }
-  ],
-  "columns_observed": [
-    {"name_visual": "Código|Cabo", "role": "set_or_subset_code"},
-    {"name_visual": "Descrição", "role": "set_or_subset_description"},
-    {"name_visual": "Item", "role": "item"},
-    {"name_visual": "QTD.", "role": "quantity"},
-    {"name_visual": "Componente", "role": "component_code"},
-    {"name_visual": "Descrição", "role": "component_description"}
   ],
   "parent_groups": [
     {
       "group_id": "90264135:p10:set:90264135",
-      "roles": {"set_code": "90264135", "set_description": "CHICOTE - P66"},
-      "span_note": "Célula(s) esquerda(s) verticalmente mesclada(s) cobrindo múltiplas linhas de componentes A1–AD/AG",
-      "evidence": "visual overlay p10_band0 / full page"
+      "roles": {
+        "set_code": "90264135",
+        "set_description": "CHICOTE - P66"
+      },
+      "rowspan_visual": 14,
+      "span_cells": [
+        "90264135:p10:t_main:r1:c0",
+        "90264135:p10:t_main:r1:c1"
+      ]
     }
   ],
   "component_occurrences": [
-    {"occurrence_id": "90264135:p10:90264135:A1", "parent_group_id": "90264135:p10:set:90264135", "item": "A1", "quantity": "7", "component_code": "10080182", "component_description": "TERM. TUBULAR DUPLO 2,50MM2 COMP 10,00MM ESTANHADO C/ISOLACAO GRANEL ROHS", "text_status": "CLEAR", "evidence": "visual page10; confirmed in sibling pages of same drawing family", "notes": "A1 acima da faixa A2 no crop band0; confirmar no overlay full-page pelo owner"},
-    {"occurrence_id": "90264135:p10:90264135:A2", "parent_group_id": "90264135:p10:set:90264135", "item": "A2", "quantity": "16", "component_code": "10080192", "component_description": "TERM. TUBULAR DUPLO 1,00MM2 COMP 8,00MM ESTANHADO C/ISOLACAO GRANEL ROHS", "text_status": "CLEAR", "evidence": "p10_band0.png", "row_separation": "DISTINCT_FROM_A3"},
-    {"occurrence_id": "90264135:p10:90264135:A3", "parent_group_id": "90264135:p10:set:90264135", "item": "A3", "quantity": "1", "component_code": "10090316", "component_description": "CONECTOR RECEPTACULO 2 VIAS PT SUPERSEAL SERIE 1,5MM CONTRA PC 10090317", "text_status": "CLEAR", "evidence": "p10_band0.png", "row_separation": "DISTINCT_FROM_A2", "code_in_description": ["10090317"]},
-    {"occurrence_id": "90264135:p10:90264135:A4", "parent_group_id": "90264135:p10:set:90264135", "item": "A4", "quantity": "2", "component_code": "10090317", "component_description": "CONECTOR RECEPTACULO 2 VIAS PT SUPERSEAL SERIE 1,5MM CONTRA PC 10090316", "text_status": "CLEAR", "evidence": "p10_band0.png", "code_in_description": ["10090316"]},
-    {"occurrence_id": "90264135:p10:90264135:A5", "parent_group_id": "90264135:p10:set:90264135", "item": "A5", "quantity": "1", "component_code": "10090926", "component_description": "CONECTOR RECEPTACULO 3 VIAS VM AR PT SUPERSEAL IP67", "text_status": "CLEAR", "evidence": "p10_band0.png"},
-    {"occurrence_id": "90264135:p10:90264135:A6", "parent_group_id": "90264135:p10:set:90264135", "item": "A6", "quantity": "1", "component_code": "10110677", "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 8MMX0,7MM", "text_status": "CLEAR", "evidence": "p10_band0.png"},
-    {"occurrence_id": "90264135:p10:90264135:A7", "parent_group_id": "90264135:p10:set:90264135", "item": "A7", "quantity": "6", "component_code": "10110678", "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 9MMX0,8MM", "text_status": "CLEAR", "evidence": "p10_band0.png"},
-    {"occurrence_id": "90264135:p10:90264135:A8", "parent_group_id": "90264135:p10:set:90264135", "item": "A8", "quantity": "1", "component_code": "10120146", "component_description": "TUBO CORRUGADO 3/8POL 9,50 PT 105°C POLIPROPILENO PARTIDO UL-ROHS", "text_status": "CLEAR", "evidence": "p10_band0.png"},
-    {"occurrence_id": "90264135:p10:90264135:A9", "parent_group_id": "90264135:p10:set:90264135", "item": "A9", "quantity": "1", "component_code": "10120148", "component_description": "TUBO CORRUGADO 1/4POL 6,40 PT 105°C POLIPROPILENO PARTIDO UL-ROHS", "text_status": "CLEAR", "evidence": "p10_band0.png"},
-    {"occurrence_id": "90264135:p10:90264135:AA", "parent_group_id": "90264135:p10:set:90264135", "item": "AA", "quantity": "1", "component_code": "10120149", "component_description": "TUBO CORRUGADO 3/16POL 4,80 PT 105°C POLIPROPILENO PARTIDO UL-ROHS", "text_status": "CLEAR", "evidence": "p10_band0.png"},
-    {"occurrence_id": "90264135:p10:90264135:AB", "parent_group_id": "90264135:p10:set:90264135", "item": "AB", "quantity": "1", "component_code": "10120150", "component_description": "TUBO CORRUGADO 1/2POL 12,70 PT 105°C POLIPROPILENO PARTIDO UL-ROHS", "text_status": "CLEAR", "evidence": "p10_band0.png"},
-    {"occurrence_id": "90264135:p10:90264135:AC", "parent_group_id": "90264135:p10:set:90264135", "item": "AC", "quantity": "1", "component_code": "10211028", "component_description": "FITA ISOLANTE PVC 18MM X 20M PRETA", "text_status": "CLEAR", "evidence": "p10_band0.png"},
-    {"occurrence_id": "90264135:p10:90264135:AD", "parent_group_id": "90264135:p10:set:90264135", "item": "AD", "quantity": "1", "component_code": "10211615", "component_description": "FITA ISOLANTE TECIDO POLIESTER ANTI CHAMA 19MM X 20M PRETA FITA FC203", "text_status": "CLEAR", "evidence": "p10_band0.png"}
+    {
+      "occurrence_id": "90264135:p10:90264135:A1",
+      "parent_group_id": "90264135:p10:set:90264135",
+      "item": "A1",
+      "quantity": "7",
+      "component_code": "10080182",
+      "component_description": "TERM. TUBULAR DUPLO 2,50MM2 COMP 10,00MM ESTANHADO C/ISOLACAO GRANEL ROHS",
+      "row_index": 1,
+      "cell_refs": [
+        "90264135:p10:t_main:r1:c2",
+        "90264135:p10:t_main:r1:c3",
+        "90264135:p10:t_main:r1:c4",
+        "90264135:p10:t_main:r1:c5"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p10:90264135:A2",
+      "parent_group_id": "90264135:p10:set:90264135",
+      "item": "A2",
+      "quantity": "16",
+      "component_code": "10080192",
+      "component_description": "TERM. TUBULAR DUPLO 1,00MM2 COMP 8,00MM ESTANHADO C/ISOLACAO GRANEL ROHS",
+      "row_index": 2,
+      "cell_refs": [
+        "90264135:p10:t_main:r2:c2",
+        "90264135:p10:t_main:r2:c3",
+        "90264135:p10:t_main:r2:c4",
+        "90264135:p10:t_main:r2:c5"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p10:90264135:A3",
+      "parent_group_id": "90264135:p10:set:90264135",
+      "item": "A3",
+      "quantity": "1",
+      "component_code": "10090316",
+      "component_description": "CONECTOR RECEPTACULO 2 VIAS PT SUPERSEAL SERIE 1,5MM CONTRA PC 10090317",
+      "row_index": 3,
+      "cell_refs": [
+        "90264135:p10:t_main:r3:c2",
+        "90264135:p10:t_main:r3:c3",
+        "90264135:p10:t_main:r3:c4",
+        "90264135:p10:t_main:r3:c5"
+      ],
+      "text_status": "CLEAR",
+      "code_in_description": [
+        "10090317"
+      ]
+    },
+    {
+      "occurrence_id": "90264135:p10:90264135:A4",
+      "parent_group_id": "90264135:p10:set:90264135",
+      "item": "A4",
+      "quantity": "2",
+      "component_code": "10090317",
+      "component_description": "CONECTOR RECEPTACULO 2 VIAS PT SUPERSEAL SERIE 1,5MM CONTRA PC 10090316",
+      "row_index": 4,
+      "cell_refs": [
+        "90264135:p10:t_main:r4:c2",
+        "90264135:p10:t_main:r4:c3",
+        "90264135:p10:t_main:r4:c4",
+        "90264135:p10:t_main:r4:c5"
+      ],
+      "text_status": "CLEAR",
+      "code_in_description": [
+        "10090316"
+      ]
+    },
+    {
+      "occurrence_id": "90264135:p10:90264135:A5",
+      "parent_group_id": "90264135:p10:set:90264135",
+      "item": "A5",
+      "quantity": "1",
+      "component_code": "10090926",
+      "component_description": "CONECTOR RECEPTACULO 3 VIAS VM AR PT SUPERSEAL IP67",
+      "row_index": 5,
+      "cell_refs": [
+        "90264135:p10:t_main:r5:c2",
+        "90264135:p10:t_main:r5:c3",
+        "90264135:p10:t_main:r5:c4",
+        "90264135:p10:t_main:r5:c5"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p10:90264135:A6",
+      "parent_group_id": "90264135:p10:set:90264135",
+      "item": "A6",
+      "quantity": "1",
+      "component_code": "10110677",
+      "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 8MMX0,7MM",
+      "row_index": 6,
+      "cell_refs": [
+        "90264135:p10:t_main:r6:c2",
+        "90264135:p10:t_main:r6:c3",
+        "90264135:p10:t_main:r6:c4",
+        "90264135:p10:t_main:r6:c5"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p10:90264135:A7",
+      "parent_group_id": "90264135:p10:set:90264135",
+      "item": "A7",
+      "quantity": "6",
+      "component_code": "10110678",
+      "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 9MMX0,8MM",
+      "row_index": 7,
+      "cell_refs": [
+        "90264135:p10:t_main:r7:c2",
+        "90264135:p10:t_main:r7:c3",
+        "90264135:p10:t_main:r7:c4",
+        "90264135:p10:t_main:r7:c5"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p10:90264135:A8",
+      "parent_group_id": "90264135:p10:set:90264135",
+      "item": "A8",
+      "quantity": "1",
+      "component_code": "10120146",
+      "component_description": "TUBO CORRUGADO 3/8POL 9,50 PT 105°C POLIPROPILENO PARTIDO UL-ROHS",
+      "row_index": 8,
+      "cell_refs": [
+        "90264135:p10:t_main:r8:c2",
+        "90264135:p10:t_main:r8:c3",
+        "90264135:p10:t_main:r8:c4",
+        "90264135:p10:t_main:r8:c5"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p10:90264135:A9",
+      "parent_group_id": "90264135:p10:set:90264135",
+      "item": "A9",
+      "quantity": "1",
+      "component_code": "10120148",
+      "component_description": "TUBO CORRUGADO 1/4POL 6,40 PT 105°C POLIPROPILENO PARTIDO UL-ROHS",
+      "row_index": 9,
+      "cell_refs": [
+        "90264135:p10:t_main:r9:c2",
+        "90264135:p10:t_main:r9:c3",
+        "90264135:p10:t_main:r9:c4",
+        "90264135:p10:t_main:r9:c5"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p10:90264135:AA",
+      "parent_group_id": "90264135:p10:set:90264135",
+      "item": "AA",
+      "quantity": "1",
+      "component_code": "10120149",
+      "component_description": "TUBO CORRUGADO 3/16POL 4,80 PT 105°C POLIPROPILENO PARTIDO UL-ROHS",
+      "row_index": 10,
+      "cell_refs": [
+        "90264135:p10:t_main:r10:c2",
+        "90264135:p10:t_main:r10:c3",
+        "90264135:p10:t_main:r10:c4",
+        "90264135:p10:t_main:r10:c5"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p10:90264135:AB",
+      "parent_group_id": "90264135:p10:set:90264135",
+      "item": "AB",
+      "quantity": "1",
+      "component_code": "10120150",
+      "component_description": "TUBO CORRUGADO 1/2POL 12,70 PT 105°C POLIPROPILENO PARTIDO UL-ROHS",
+      "row_index": 11,
+      "cell_refs": [
+        "90264135:p10:t_main:r11:c2",
+        "90264135:p10:t_main:r11:c3",
+        "90264135:p10:t_main:r11:c4",
+        "90264135:p10:t_main:r11:c5"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p10:90264135:AC",
+      "parent_group_id": "90264135:p10:set:90264135",
+      "item": "AC",
+      "quantity": "1",
+      "component_code": "10211028",
+      "component_description": "FITA ISOLANTE PVC 18MM X 20M PRETA",
+      "row_index": 12,
+      "cell_refs": [
+        "90264135:p10:t_main:r12:c2",
+        "90264135:p10:t_main:r12:c3",
+        "90264135:p10:t_main:r12:c4",
+        "90264135:p10:t_main:r12:c5"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p10:90264135:AD",
+      "parent_group_id": "90264135:p10:set:90264135",
+      "item": "AD",
+      "quantity": "1",
+      "component_code": "10211615",
+      "component_description": "FITA ISOLANTE TECIDO POLIESTER ANTI CHAMA 19MM X 20M PRETA FITA FC203",
+      "row_index": 13,
+      "cell_refs": [
+        "90264135:p10:t_main:r13:c2",
+        "90264135:p10:t_main:r13:c3",
+        "90264135:p10:t_main:r13:c4",
+        "90264135:p10:t_main:r13:c5"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p10:90264135:AG",
+      "parent_group_id": "90264135:p10:set:90264135",
+      "item": "AG",
+      "quantity": "16",
+      "component_code": "10110676",
+      "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM",
+      "row_index": 14,
+      "cell_refs": [
+        "90264135:p10:t_main:r14:c2",
+        "90264135:p10:t_main:r14:c3",
+        "90264135:p10:t_main:r14:c4",
+        "90264135:p10:t_main:r14:c5"
+      ],
+      "text_status": "CLEAR"
+    }
   ],
   "structural_invariants": [
-    "A2 e A3 são LINHAS DISTINTAS da grade; component_code A2=10080192 e A3=10090316 nunca formam um único valor esperado",
-    "Descrições de A3/A4 citam o código do conector complementar (code_in_description) — não promover esses números a component_code da linha"
+    "A2 row_index=2 code 10080192 DISTINCT from A3 row_index=3 code 10090316",
+    "set_code rowspan=14 is not component_code"
   ],
   "eva_defect_contrast": [
     {
       "source": "DEC-041/MCP historical",
-      "eva_value": "component_code='10080192 10090316'",
-      "expected_visual": ["A2→10080192", "A3→10090316"],
+      "eva_value": "component_code=10080192 10090316",
+      "expected_visual": [
+        "A2→10080192",
+        "A3→10090316"
+      ],
       "never_use_as_gt": true
     }
   ],
   "ambiguities": [
     {
       "id": "AMB-P10-01",
-      "topic": "A1 row exact box coordinates in full-page overlay",
-      "status": "CLEAR_TEXT_CANDIDATE_NEEDS_OWNER_BOX_SIGN_OFF",
-      "notes": "Texto A1 lido na família visual do desenho; bounding boxes precisas pendem de adjudicação sobre overlay dpi200 completo"
+      "topic": "A1 geometry",
+      "status": "RESOLVED_IN_DRAFT",
+      "notes": "A1 at row_index=1 with grid boxes; owner sign-off still required"
     }
   ]
 }

@@ -9,110 +9,2289 @@
   "product_code": "90264135",
   "pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
   "page": 12,
+  "coordinate_system": "pixels_top_left",
   "render_ref": {
     "file": "90264135_p12_dpi200.png",
-    "sha256": "cf9cb4f5a8671d3b99bd79747dbd1780d9f292c2bee6b862d05cfa471e0be310",
     "dpi": 200,
-    "size_px": [2339, 1653],
-    "storage": ".local/eva-val01-g1-overlays/"
+    "size_px": [
+      2339,
+      1653
+    ],
+    "storage": ".local/eva-val01-g1-overlays/",
+    "sha256": "cf9cb4f5a8671d3b99bd79747dbd1780d9f292c2bee6b862d05cfa471e0be310"
   },
-  "regions": [
+  "tables": [
     {
-      "region_id": "90264135:p12:component_table",
+      "table_id": "90264135:p12:t_subsets",
+      "page": 12,
       "region_type": "component_table",
-      "notes": "Tabela com bloco de conjunto 90264135/CHICOTE-P66 e múltiplos subconjuntos 50225701/02/03/04/40/(41). Overlays p12_band0–2.",
-      "overlay_crops": ["p12_band0.png", "p12_band1.png", "p12_band2.png", "p12_tableband.png"]
+      "table_bounding_box_px": [
+        700,
+        427,
+        1700,
+        1035
+      ],
+      "coordinate_system": "pixels_top_left",
+      "render_dpi": 200,
+      "row_count": 16,
+      "column_count": 7,
+      "row_boundaries": [
+        427,
+        465,
+        503,
+        541,
+        579,
+        617,
+        655,
+        693,
+        731,
+        769,
+        807,
+        845,
+        883,
+        921,
+        959,
+        997,
+        1035
+      ],
+      "column_boundaries": [
+        700,
+        746,
+        818,
+        895,
+        945,
+        1000,
+        1120,
+        1700
+      ],
+      "annotation_coverage": "COMPLETE_SELECTED_REGION",
+      "expected_row_count": 16,
+      "annotated_row_count": 16,
+      "unannotated_row_ranges": "Upper A1–AG set block on p12 excluded; 50225741 not annotated without visual confirm",
+      "coverage_limitations": "Selected region = subsets 50225701/02/03/04/40 with AE/AH/AG children only",
+      "cells": [
+        {
+          "cell_id": "90264135:p12:t_subsets:r0:c0",
+          "row_index": 0,
+          "col_index": 0,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            700,
+            427,
+            746,
+            465
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "#"
+          ],
+          "text_literal": "#",
+          "text_status": "CLEAR",
+          "role": "header",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r0:c1",
+          "row_index": 0,
+          "col_index": 1,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            746,
+            427,
+            818,
+            465
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "Código"
+          ],
+          "text_literal": "Código",
+          "text_status": "CLEAR",
+          "role": "header",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r0:c2",
+          "row_index": 0,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            818,
+            427,
+            895,
+            465
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "Descrição"
+          ],
+          "text_literal": "Descrição",
+          "text_status": "CLEAR",
+          "role": "header",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r0:c3",
+          "row_index": 0,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            895,
+            427,
+            945,
+            465
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "Item"
+          ],
+          "text_literal": "Item",
+          "text_status": "CLEAR",
+          "role": "header",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r0:c4",
+          "row_index": 0,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            945,
+            427,
+            1000,
+            465
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "QTD."
+          ],
+          "text_literal": "QTD.",
+          "text_status": "CLEAR",
+          "role": "header",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r0:c5",
+          "row_index": 0,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1000,
+            427,
+            1120,
+            465
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "Componente"
+          ],
+          "text_literal": "Componente",
+          "text_status": "CLEAR",
+          "role": "header",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r0:c6",
+          "row_index": 0,
+          "col_index": 6,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1120,
+            427,
+            1700,
+            465
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "Descrição"
+          ],
+          "text_literal": "Descrição",
+          "text_status": "CLEAR",
+          "role": "header",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r1:c0",
+          "row_index": 1,
+          "col_index": 0,
+          "rowspan": 3,
+          "colspan": 1,
+          "bounding_box_px": [
+            700,
+            465,
+            746,
+            579
+          ],
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "subset_index",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r1:c1",
+          "row_index": 1,
+          "col_index": 1,
+          "rowspan": 3,
+          "colspan": 1,
+          "bounding_box_px": [
+            746,
+            465,
+            818,
+            579
+          ],
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "50225701"
+          ],
+          "text_literal": "50225701",
+          "text_status": "CLEAR",
+          "role": "subset_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r1:c2",
+          "row_index": 1,
+          "col_index": 2,
+          "rowspan": 3,
+          "colspan": 1,
+          "bounding_box_px": [
+            818,
+            465,
+            895,
+            579
+          ],
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "CA1,00BRAN-00425/11/11-9700-9700"
+          ],
+          "text_literal": "CA1,00BRAN-00425/11/11-9700-9700",
+          "text_status": "CLEAR",
+          "role": "subset_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r1:c3",
+          "row_index": 1,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            895,
+            465,
+            945,
+            503
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AE"
+          ],
+          "text_literal": "AE",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r1:c4",
+          "row_index": 1,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            945,
+            465,
+            1000,
+            503
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r1:c5",
+          "row_index": 1,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1000,
+            465,
+            1120,
+            503
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10010028"
+          ],
+          "text_literal": "10010028",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r1:c6",
+          "row_index": 1,
+          "col_index": 6,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1120,
+            465,
+            1700,
+            503
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3"
+          ],
+          "text_literal": "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r2:c3",
+          "row_index": 2,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            895,
+            503,
+            945,
+            541
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AH"
+          ],
+          "text_literal": "AH",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r2:c4",
+          "row_index": 2,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            945,
+            503,
+            1000,
+            541
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "2"
+          ],
+          "text_literal": "2",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r2:c5",
+          "row_index": 2,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1000,
+            503,
+            1120,
+            541
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10080897"
+          ],
+          "text_literal": "10080897",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r2:c6",
+          "row_index": 2,
+          "col_index": 6,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1120,
+            503,
+            1700,
+            541
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/ISOL"
+          ],
+          "text_literal": "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/ISOL",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r3:c3",
+          "row_index": 3,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            895,
+            541,
+            945,
+            579
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AG"
+          ],
+          "text_literal": "AG",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r3:c4",
+          "row_index": 3,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            945,
+            541,
+            1000,
+            579
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "2"
+          ],
+          "text_literal": "2",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r3:c5",
+          "row_index": 3,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1000,
+            541,
+            1120,
+            579
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10110676"
+          ],
+          "text_literal": "10110676",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r3:c6",
+          "row_index": 3,
+          "col_index": 6,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1120,
+            541,
+            1700,
+            579
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM"
+          ],
+          "text_literal": "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r4:c0",
+          "row_index": 4,
+          "col_index": 0,
+          "rowspan": 3,
+          "colspan": 1,
+          "bounding_box_px": [
+            700,
+            579,
+            746,
+            693
+          ],
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "2"
+          ],
+          "text_literal": "2",
+          "text_status": "CLEAR",
+          "role": "subset_index",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r4:c1",
+          "row_index": 4,
+          "col_index": 1,
+          "rowspan": 3,
+          "colspan": 1,
+          "bounding_box_px": [
+            746,
+            579,
+            818,
+            693
+          ],
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "50225702"
+          ],
+          "text_literal": "50225702",
+          "text_status": "CLEAR",
+          "role": "subset_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r4:c2",
+          "row_index": 4,
+          "col_index": 2,
+          "rowspan": 3,
+          "colspan": 1,
+          "bounding_box_px": [
+            818,
+            579,
+            895,
+            693
+          ],
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "CA1,00BRAN-00540/11/11-9700-9700"
+          ],
+          "text_literal": "CA1,00BRAN-00540/11/11-9700-9700",
+          "text_status": "CLEAR",
+          "role": "subset_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r4:c3",
+          "row_index": 4,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            895,
+            579,
+            945,
+            617
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AE"
+          ],
+          "text_literal": "AE",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r4:c4",
+          "row_index": 4,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            945,
+            579,
+            1000,
+            617
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r4:c5",
+          "row_index": 4,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1000,
+            579,
+            1120,
+            617
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10010028"
+          ],
+          "text_literal": "10010028",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r4:c6",
+          "row_index": 4,
+          "col_index": 6,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1120,
+            579,
+            1700,
+            617
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3"
+          ],
+          "text_literal": "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r5:c3",
+          "row_index": 5,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            895,
+            617,
+            945,
+            655
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AH"
+          ],
+          "text_literal": "AH",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r5:c4",
+          "row_index": 5,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            945,
+            617,
+            1000,
+            655
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "2"
+          ],
+          "text_literal": "2",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r5:c5",
+          "row_index": 5,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1000,
+            617,
+            1120,
+            655
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10080897"
+          ],
+          "text_literal": "10080897",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r5:c6",
+          "row_index": 5,
+          "col_index": 6,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1120,
+            617,
+            1700,
+            655
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/ISOL"
+          ],
+          "text_literal": "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/ISOL",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r6:c3",
+          "row_index": 6,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            895,
+            655,
+            945,
+            693
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AG"
+          ],
+          "text_literal": "AG",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r6:c4",
+          "row_index": 6,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            945,
+            655,
+            1000,
+            693
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "2"
+          ],
+          "text_literal": "2",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r6:c5",
+          "row_index": 6,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1000,
+            655,
+            1120,
+            693
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10110676"
+          ],
+          "text_literal": "10110676",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r6:c6",
+          "row_index": 6,
+          "col_index": 6,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1120,
+            655,
+            1700,
+            693
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM"
+          ],
+          "text_literal": "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r7:c0",
+          "row_index": 7,
+          "col_index": 0,
+          "rowspan": 3,
+          "colspan": 1,
+          "bounding_box_px": [
+            700,
+            693,
+            746,
+            807
+          ],
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "3"
+          ],
+          "text_literal": "3",
+          "text_status": "CLEAR",
+          "role": "subset_index",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r7:c1",
+          "row_index": 7,
+          "col_index": 1,
+          "rowspan": 3,
+          "colspan": 1,
+          "bounding_box_px": [
+            746,
+            693,
+            818,
+            807
+          ],
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "50225703"
+          ],
+          "text_literal": "50225703",
+          "text_status": "CLEAR",
+          "role": "subset_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r7:c2",
+          "row_index": 7,
+          "col_index": 2,
+          "rowspan": 3,
+          "colspan": 1,
+          "bounding_box_px": [
+            818,
+            693,
+            895,
+            807
+          ],
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "CA1,00BRAN-00680/11/11-9700-9700"
+          ],
+          "text_literal": "CA1,00BRAN-00680/11/11-9700-9700",
+          "text_status": "CLEAR",
+          "role": "subset_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r7:c3",
+          "row_index": 7,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            895,
+            693,
+            945,
+            731
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AE"
+          ],
+          "text_literal": "AE",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r7:c4",
+          "row_index": 7,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            945,
+            693,
+            1000,
+            731
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r7:c5",
+          "row_index": 7,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1000,
+            693,
+            1120,
+            731
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10010028"
+          ],
+          "text_literal": "10010028",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r7:c6",
+          "row_index": 7,
+          "col_index": 6,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1120,
+            693,
+            1700,
+            731
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3"
+          ],
+          "text_literal": "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r8:c3",
+          "row_index": 8,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            895,
+            731,
+            945,
+            769
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AH"
+          ],
+          "text_literal": "AH",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r8:c4",
+          "row_index": 8,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            945,
+            731,
+            1000,
+            769
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "2"
+          ],
+          "text_literal": "2",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r8:c5",
+          "row_index": 8,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1000,
+            731,
+            1120,
+            769
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10080897"
+          ],
+          "text_literal": "10080897",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r8:c6",
+          "row_index": 8,
+          "col_index": 6,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1120,
+            731,
+            1700,
+            769
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/IS"
+          ],
+          "text_literal": "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/IS",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r9:c3",
+          "row_index": 9,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            895,
+            769,
+            945,
+            807
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AG"
+          ],
+          "text_literal": "AG",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r9:c4",
+          "row_index": 9,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            945,
+            769,
+            1000,
+            807
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "2"
+          ],
+          "text_literal": "2",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r9:c5",
+          "row_index": 9,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1000,
+            769,
+            1120,
+            807
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10110676"
+          ],
+          "text_literal": "10110676",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r9:c6",
+          "row_index": 9,
+          "col_index": 6,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1120,
+            769,
+            1700,
+            807
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM"
+          ],
+          "text_literal": "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r10:c0",
+          "row_index": 10,
+          "col_index": 0,
+          "rowspan": 3,
+          "colspan": 1,
+          "bounding_box_px": [
+            700,
+            807,
+            746,
+            921
+          ],
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "4"
+          ],
+          "text_literal": "4",
+          "text_status": "CLEAR",
+          "role": "subset_index",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r10:c1",
+          "row_index": 10,
+          "col_index": 1,
+          "rowspan": 3,
+          "colspan": 1,
+          "bounding_box_px": [
+            746,
+            807,
+            818,
+            921
+          ],
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "50225704"
+          ],
+          "text_literal": "50225704",
+          "text_status": "CLEAR",
+          "role": "subset_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r10:c2",
+          "row_index": 10,
+          "col_index": 2,
+          "rowspan": 3,
+          "colspan": 1,
+          "bounding_box_px": [
+            818,
+            807,
+            895,
+            921
+          ],
+          "is_empty": true,
+          "is_merged": true,
+          "text_lines": [],
+          "text_literal": "",
+          "text_status": "CLEAR",
+          "role": "subset_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r10:c3",
+          "row_index": 10,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            895,
+            807,
+            945,
+            845
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AE"
+          ],
+          "text_literal": "AE",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r10:c4",
+          "row_index": 10,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            945,
+            807,
+            1000,
+            845
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r10:c5",
+          "row_index": 10,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1000,
+            807,
+            1120,
+            845
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10010028"
+          ],
+          "text_literal": "10010028",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r10:c6",
+          "row_index": 10,
+          "col_index": 6,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1120,
+            807,
+            1700,
+            845
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3"
+          ],
+          "text_literal": "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r11:c3",
+          "row_index": 11,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            895,
+            845,
+            945,
+            883
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AH"
+          ],
+          "text_literal": "AH",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r11:c4",
+          "row_index": 11,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            945,
+            845,
+            1000,
+            883
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "2"
+          ],
+          "text_literal": "2",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r11:c5",
+          "row_index": 11,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1000,
+            845,
+            1120,
+            883
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10080897"
+          ],
+          "text_literal": "10080897",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r11:c6",
+          "row_index": 11,
+          "col_index": 6,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1120,
+            845,
+            1700,
+            883
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/IS"
+          ],
+          "text_literal": "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/IS",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r12:c3",
+          "row_index": 12,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            895,
+            883,
+            945,
+            921
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AG"
+          ],
+          "text_literal": "AG",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r12:c4",
+          "row_index": 12,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            945,
+            883,
+            1000,
+            921
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "2"
+          ],
+          "text_literal": "2",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r12:c5",
+          "row_index": 12,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1000,
+            883,
+            1120,
+            921
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10110676"
+          ],
+          "text_literal": "10110676",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r12:c6",
+          "row_index": 12,
+          "col_index": 6,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1120,
+            883,
+            1700,
+            921
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM"
+          ],
+          "text_literal": "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r13:c0",
+          "row_index": 13,
+          "col_index": 0,
+          "rowspan": 3,
+          "colspan": 1,
+          "bounding_box_px": [
+            700,
+            921,
+            746,
+            1035
+          ],
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "5"
+          ],
+          "text_literal": "5",
+          "text_status": "CLEAR",
+          "role": "subset_index",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r13:c1",
+          "row_index": 13,
+          "col_index": 1,
+          "rowspan": 3,
+          "colspan": 1,
+          "bounding_box_px": [
+            746,
+            921,
+            818,
+            1035
+          ],
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "50225740"
+          ],
+          "text_literal": "50225740",
+          "text_status": "CLEAR",
+          "role": "subset_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r13:c2",
+          "row_index": 13,
+          "col_index": 2,
+          "rowspan": 3,
+          "colspan": 1,
+          "bounding_box_px": [
+            818,
+            921,
+            895,
+            1035
+          ],
+          "is_empty": true,
+          "is_merged": true,
+          "text_lines": [],
+          "text_literal": "",
+          "text_status": "CLEAR",
+          "role": "subset_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r13:c3",
+          "row_index": 13,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            895,
+            921,
+            945,
+            959
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AE"
+          ],
+          "text_literal": "AE",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r13:c4",
+          "row_index": 13,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            945,
+            921,
+            1000,
+            959
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r13:c5",
+          "row_index": 13,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1000,
+            921,
+            1120,
+            959
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10010028"
+          ],
+          "text_literal": "10010028",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r13:c6",
+          "row_index": 13,
+          "col_index": 6,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1120,
+            921,
+            1700,
+            959
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3"
+          ],
+          "text_literal": "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r14:c3",
+          "row_index": 14,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            895,
+            959,
+            945,
+            997
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AH"
+          ],
+          "text_literal": "AH",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r14:c4",
+          "row_index": 14,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            945,
+            959,
+            1000,
+            997
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r14:c5",
+          "row_index": 14,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1000,
+            959,
+            1120,
+            997
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10080897"
+          ],
+          "text_literal": "10080897",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r14:c6",
+          "row_index": 14,
+          "col_index": 6,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1120,
+            959,
+            1700,
+            997
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/IS"
+          ],
+          "text_literal": "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/IS",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r15:c3",
+          "row_index": 15,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            895,
+            997,
+            945,
+            1035
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AG"
+          ],
+          "text_literal": "AG",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r15:c4",
+          "row_index": 15,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            945,
+            997,
+            1000,
+            1035
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "1"
+          ],
+          "text_literal": "1",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r15:c5",
+          "row_index": 15,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1000,
+            997,
+            1120,
+            1035
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10110676"
+          ],
+          "text_literal": "10110676",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p12:t_subsets:r15:c6",
+          "row_index": 15,
+          "col_index": 6,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            1120,
+            997,
+            1700,
+            1035
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM"
+          ],
+          "text_literal": "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page12_dpi200_grid",
+          "review_status": "DRAFT"
+        }
+      ]
     }
-  ],
-  "columns_observed": [
-    {"name_visual": "index/Cabo", "role": "subset_index"},
-    {"name_visual": "Código", "role": "subset_code"},
-    {"name_visual": "Descrição", "role": "subset_description"},
-    {"name_visual": "Item", "role": "item"},
-    {"name_visual": "QTD.", "role": "quantity"},
-    {"name_visual": "Componente", "role": "component_code"},
-    {"name_visual": "Descrição", "role": "component_description"}
   ],
   "parent_groups": [
     {
-      "group_id": "90264135:p12:set:90264135",
-      "roles": {"set_code": "90264135", "set_description": "CHICOTE - P66"},
-      "evidence": "p12_band0.png — célula mesclada esquerda cobrindo linhas A1–AA (parcialmente)"
-    },
-    {
       "group_id": "90264135:p12:subset:50225701",
-      "roles": {"subset_index": "1", "subset_code": "50225701", "subset_description": "CA1,00BRAN-00425/11/11-9700-9700"},
+      "roles": {
+        "subset_index": "1",
+        "subset_code": "50225701",
+        "subset_description": "CA1,00BRAN-00425/11/11-9700-9700"
+      },
       "rowspan_visual": 3,
-      "evidence": "p12_band1.png"
+      "span_cells": [
+        "90264135:p12:t_subsets:r1:c0",
+        "90264135:p12:t_subsets:r1:c1",
+        "90264135:p12:t_subsets:r1:c2"
+      ],
+      "text_status": "CLEAR"
     },
     {
       "group_id": "90264135:p12:subset:50225702",
-      "roles": {"subset_index": "2", "subset_code": "50225702", "subset_description": "CA1,00BRAN-00540/11/11-9700-9700"},
+      "roles": {
+        "subset_index": "2",
+        "subset_code": "50225702",
+        "subset_description": "CA1,00BRAN-00540/11/11-9700-9700"
+      },
       "rowspan_visual": 3,
-      "evidence": "p12_band1.png",
-      "notes": "Grupo prioritário do pedido G1; AE/AH/AG são linhas de componente sob este pai"
+      "span_cells": [
+        "90264135:p12:t_subsets:r4:c0",
+        "90264135:p12:t_subsets:r4:c1",
+        "90264135:p12:t_subsets:r4:c2"
+      ],
+      "text_status": "CLEAR"
     },
     {
       "group_id": "90264135:p12:subset:50225703",
-      "roles": {"subset_index": "3", "subset_code": "50225703", "subset_description": "CA1,00BRAN-00680/11/11-9700-9700"},
+      "roles": {
+        "subset_index": "3",
+        "subset_code": "50225703",
+        "subset_description": "CA1,00BRAN-00680/11/11-9700-9700"
+      },
       "rowspan_visual": 3,
-      "evidence": "p12_band2.png"
+      "span_cells": [
+        "90264135:p12:t_subsets:r7:c0",
+        "90264135:p12:t_subsets:r7:c1",
+        "90264135:p12:t_subsets:r7:c2"
+      ],
+      "text_status": "CLEAR"
     },
     {
       "group_id": "90264135:p12:subset:50225704",
-      "roles": {"subset_index": "4", "subset_code": "50225704", "subset_description": "TO_CONFIRM_LITERAL_ON_OVERLAY"},
+      "roles": {
+        "subset_index": "4",
+        "subset_code": "50225704",
+        "subset_description": null
+      },
       "rowspan_visual": 3,
-      "evidence": "p12_band2.png",
-      "text_status": "CLEAR_CODE_DESC_PARTIAL"
+      "span_cells": [
+        "90264135:p12:t_subsets:r10:c0",
+        "90264135:p12:t_subsets:r10:c1",
+        "90264135:p12:t_subsets:r10:c2"
+      ],
+      "text_status": "DOUBTFUL"
     },
     {
       "group_id": "90264135:p12:subset:50225740",
-      "roles": {"subset_index": "5", "subset_code": "50225740", "subset_description": "TO_CONFIRM_LITERAL_ON_OVERLAY"},
+      "roles": {
+        "subset_index": "5",
+        "subset_code": "50225740",
+        "subset_description": null
+      },
       "rowspan_visual": 3,
-      "evidence": "p12_band2.png"
+      "span_cells": [
+        "90264135:p12:t_subsets:r13:c0",
+        "90264135:p12:t_subsets:r13:c1",
+        "90264135:p12:t_subsets:r13:c2"
+      ],
+      "text_status": "DOUBTFUL"
     }
   ],
   "component_occurrences": [
-    {"occurrence_id": "90264135:p12:90264135:A1", "parent_group_id": "90264135:p12:set:90264135", "item": "A1", "quantity": "7", "component_code": "10080182", "component_description": "TERM. TUBULAR DUPLO 2,50MM2 COMP 10,00MM ESTANHA…", "text_status": "CLEAR", "evidence": "p12_band0.png"},
-    {"occurrence_id": "90264135:p12:90264135:A2", "parent_group_id": "90264135:p12:set:90264135", "item": "A2", "quantity": "16", "component_code": "10080192", "component_description": "TERM. TUBULAR DUPLO 1,00MM2 COMP 8,00MM ESTANHA…", "text_status": "CLEAR", "evidence": "p12_band0.png"},
-    {"occurrence_id": "90264135:p12:90264135:A3", "parent_group_id": "90264135:p12:set:90264135", "item": "A3", "quantity": "1", "component_code": "10090316", "component_description": "CONECTOR RECEPTACULO 2 VIAS PT SUPERSEAL SERIE 1…", "text_status": "CLEAR", "evidence": "p12_band0.png"},
-    {"occurrence_id": "90264135:p12:90264135:A9", "parent_group_id": "90264135:p12:set:90264135", "item": "A9", "quantity": "1", "component_code": "10120148", "component_description": "TUBO CORRUGADO 1/4POL 6,40 PT 105°C POLIPROPILENO", "text_status": "CLEAR", "evidence": "p12_band0.png"},
-    {"occurrence_id": "90264135:p12:90264135:AA", "parent_group_id": "90264135:p12:set:90264135", "item": "AA", "quantity": "1", "component_code": "10120149", "component_description": "TUBO CORRUGADO 3/16POL 4,80 PT 105°C POLIPROPILENO", "text_status": "CLEAR", "evidence": "p12_band0.png"},
-    {"occurrence_id": "90264135:p12:50225702:AE", "parent_group_id": "90264135:p12:subset:50225702", "item": "AE", "quantity": "1", "component_code": "10010028", "component_description": "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3", "text_status": "CLEAR", "evidence": "p12_band1.png"},
-    {"occurrence_id": "90264135:p12:50225702:AH", "parent_group_id": "90264135:p12:subset:50225702", "item": "AH", "quantity": "2", "component_code": "10080897", "component_description": "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/ISOL", "text_status": "CLEAR", "evidence": "p12_band1.png"},
-    {"occurrence_id": "90264135:p12:50225702:AG", "parent_group_id": "90264135:p12:subset:50225702", "item": "AG", "quantity": "2", "component_code": "10110676", "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM", "text_status": "CLEAR", "evidence": "p12_band1.png"},
-    {"occurrence_id": "90264135:p12:50225701:AE", "parent_group_id": "90264135:p12:subset:50225701", "item": "AE", "quantity": "1", "component_code": "10010028", "component_description": "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3", "text_status": "CLEAR", "evidence": "p12_band1.png"},
-    {"occurrence_id": "90264135:p12:50225701:AH", "parent_group_id": "90264135:p12:subset:50225701", "item": "AH", "quantity": "2", "component_code": "10080897", "component_description": "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/ISOL", "text_status": "CLEAR", "evidence": "p12_band1.png"},
-    {"occurrence_id": "90264135:p12:50225701:AG", "parent_group_id": "90264135:p12:subset:50225701", "item": "AG", "quantity": "2", "component_code": "10110676", "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM", "text_status": "CLEAR", "evidence": "p12_band1.png"},
-    {"occurrence_id": "90264135:p12:50225703:AE", "parent_group_id": "90264135:p12:subset:50225703", "item": "AE", "quantity": "1", "component_code": "10010028", "component_description": "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3", "text_status": "CLEAR", "evidence": "p12_band2.png"},
-    {"occurrence_id": "90264135:p12:50225703:AH", "parent_group_id": "90264135:p12:subset:50225703", "item": "AH", "quantity": "2", "component_code": "10080897", "component_description": "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/IS", "text_status": "CLEAR", "evidence": "p12_band2.png"},
-    {"occurrence_id": "90264135:p12:50225703:AG", "parent_group_id": "90264135:p12:subset:50225703", "item": "AG", "quantity": "2", "component_code": "10110676", "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM", "text_status": "CLEAR", "evidence": "p12_band2.png"}
+    {
+      "occurrence_id": "90264135:p12:50225701:AE",
+      "parent_group_id": "90264135:p12:subset:50225701",
+      "item": "AE",
+      "quantity": "1",
+      "component_code": "10010028",
+      "component_description": "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3",
+      "row_index": 1,
+      "cell_refs": [
+        "90264135:p12:t_subsets:r1:c3",
+        "90264135:p12:t_subsets:r1:c4",
+        "90264135:p12:t_subsets:r1:c5",
+        "90264135:p12:t_subsets:r1:c6"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p12:50225701:AH",
+      "parent_group_id": "90264135:p12:subset:50225701",
+      "item": "AH",
+      "quantity": "2",
+      "component_code": "10080897",
+      "component_description": "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/ISOL",
+      "row_index": 2,
+      "cell_refs": [
+        "90264135:p12:t_subsets:r2:c3",
+        "90264135:p12:t_subsets:r2:c4",
+        "90264135:p12:t_subsets:r2:c5",
+        "90264135:p12:t_subsets:r2:c6"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p12:50225701:AG",
+      "parent_group_id": "90264135:p12:subset:50225701",
+      "item": "AG",
+      "quantity": "2",
+      "component_code": "10110676",
+      "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM",
+      "row_index": 3,
+      "cell_refs": [
+        "90264135:p12:t_subsets:r3:c3",
+        "90264135:p12:t_subsets:r3:c4",
+        "90264135:p12:t_subsets:r3:c5",
+        "90264135:p12:t_subsets:r3:c6"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p12:50225702:AE",
+      "parent_group_id": "90264135:p12:subset:50225702",
+      "item": "AE",
+      "quantity": "1",
+      "component_code": "10010028",
+      "component_description": "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3",
+      "row_index": 4,
+      "cell_refs": [
+        "90264135:p12:t_subsets:r4:c3",
+        "90264135:p12:t_subsets:r4:c4",
+        "90264135:p12:t_subsets:r4:c5",
+        "90264135:p12:t_subsets:r4:c6"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p12:50225702:AH",
+      "parent_group_id": "90264135:p12:subset:50225702",
+      "item": "AH",
+      "quantity": "2",
+      "component_code": "10080897",
+      "component_description": "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/ISOL",
+      "row_index": 5,
+      "cell_refs": [
+        "90264135:p12:t_subsets:r5:c3",
+        "90264135:p12:t_subsets:r5:c4",
+        "90264135:p12:t_subsets:r5:c5",
+        "90264135:p12:t_subsets:r5:c6"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p12:50225702:AG",
+      "parent_group_id": "90264135:p12:subset:50225702",
+      "item": "AG",
+      "quantity": "2",
+      "component_code": "10110676",
+      "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM",
+      "row_index": 6,
+      "cell_refs": [
+        "90264135:p12:t_subsets:r6:c3",
+        "90264135:p12:t_subsets:r6:c4",
+        "90264135:p12:t_subsets:r6:c5",
+        "90264135:p12:t_subsets:r6:c6"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p12:50225703:AE",
+      "parent_group_id": "90264135:p12:subset:50225703",
+      "item": "AE",
+      "quantity": "1",
+      "component_code": "10010028",
+      "component_description": "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3",
+      "row_index": 7,
+      "cell_refs": [
+        "90264135:p12:t_subsets:r7:c3",
+        "90264135:p12:t_subsets:r7:c4",
+        "90264135:p12:t_subsets:r7:c5",
+        "90264135:p12:t_subsets:r7:c6"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p12:50225703:AH",
+      "parent_group_id": "90264135:p12:subset:50225703",
+      "item": "AH",
+      "quantity": "2",
+      "component_code": "10080897",
+      "component_description": "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/IS",
+      "row_index": 8,
+      "cell_refs": [
+        "90264135:p12:t_subsets:r8:c3",
+        "90264135:p12:t_subsets:r8:c4",
+        "90264135:p12:t_subsets:r8:c5",
+        "90264135:p12:t_subsets:r8:c6"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p12:50225703:AG",
+      "parent_group_id": "90264135:p12:subset:50225703",
+      "item": "AG",
+      "quantity": "2",
+      "component_code": "10110676",
+      "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM",
+      "row_index": 9,
+      "cell_refs": [
+        "90264135:p12:t_subsets:r9:c3",
+        "90264135:p12:t_subsets:r9:c4",
+        "90264135:p12:t_subsets:r9:c5",
+        "90264135:p12:t_subsets:r9:c6"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p12:50225704:AE",
+      "parent_group_id": "90264135:p12:subset:50225704",
+      "item": "AE",
+      "quantity": "1",
+      "component_code": "10010028",
+      "component_description": "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3",
+      "row_index": 10,
+      "cell_refs": [
+        "90264135:p12:t_subsets:r10:c3",
+        "90264135:p12:t_subsets:r10:c4",
+        "90264135:p12:t_subsets:r10:c5",
+        "90264135:p12:t_subsets:r10:c6"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p12:50225704:AH",
+      "parent_group_id": "90264135:p12:subset:50225704",
+      "item": "AH",
+      "quantity": "2",
+      "component_code": "10080897",
+      "component_description": "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/IS",
+      "row_index": 11,
+      "cell_refs": [
+        "90264135:p12:t_subsets:r11:c3",
+        "90264135:p12:t_subsets:r11:c4",
+        "90264135:p12:t_subsets:r11:c5",
+        "90264135:p12:t_subsets:r11:c6"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p12:50225704:AG",
+      "parent_group_id": "90264135:p12:subset:50225704",
+      "item": "AG",
+      "quantity": "2",
+      "component_code": "10110676",
+      "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM",
+      "row_index": 12,
+      "cell_refs": [
+        "90264135:p12:t_subsets:r12:c3",
+        "90264135:p12:t_subsets:r12:c4",
+        "90264135:p12:t_subsets:r12:c5",
+        "90264135:p12:t_subsets:r12:c6"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p12:50225740:AE",
+      "parent_group_id": "90264135:p12:subset:50225740",
+      "item": "AE",
+      "quantity": "1",
+      "component_code": "10010028",
+      "component_description": "CABO PVC 70°C 1,00MM2 BN 450/750V BWF NM 247-3",
+      "row_index": 13,
+      "cell_refs": [
+        "90264135:p12:t_subsets:r13:c3",
+        "90264135:p12:t_subsets:r13:c4",
+        "90264135:p12:t_subsets:r13:c5",
+        "90264135:p12:t_subsets:r13:c6"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p12:50225740:AH",
+      "parent_group_id": "90264135:p12:subset:50225740",
+      "item": "AH",
+      "quantity": "1",
+      "component_code": "10080897",
+      "component_description": "TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO C/IS",
+      "row_index": 14,
+      "cell_refs": [
+        "90264135:p12:t_subsets:r14:c3",
+        "90264135:p12:t_subsets:r14:c4",
+        "90264135:p12:t_subsets:r14:c5",
+        "90264135:p12:t_subsets:r14:c6"
+      ],
+      "text_status": "CLEAR"
+    },
+    {
+      "occurrence_id": "90264135:p12:50225740:AG",
+      "parent_group_id": "90264135:p12:subset:50225740",
+      "item": "AG",
+      "quantity": "1",
+      "component_code": "10110676",
+      "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM",
+      "row_index": 15,
+      "cell_refs": [
+        "90264135:p12:t_subsets:r15:c3",
+        "90264135:p12:t_subsets:r15:c4",
+        "90264135:p12:t_subsets:r15:c5",
+        "90264135:p12:t_subsets:r15:c6"
+      ],
+      "text_status": "CLEAR"
+    }
   ],
   "structural_invariants": [
-    "Subconjunto 50225702 é CÉLULA DE CÓDIGO DE GRUPO (rowspan), não component_code de linha de item",
-    "AE, AH e AG sob 50225702 são três ocorrências distintas; não fundir em um campo",
-    "Mesmos itens AE/AH/AG sob 50225701 e 50225702 são ocorrências distintas (não deduplicar)"
+    "50225702 subset_code rowspan=3; children AE/AH/AG distinct",
+    "Do not promote subset_code to component_code"
   ],
   "eva_defect_contrast": [
     {
       "source": "DEC-041/MCP historical",
-      "eva_value": "component_code='50225702' em linha agregando conjunto+componente",
-      "expected_visual": "50225702 = subset_code (pai); componentes AE/AH/AG com códigos 10010028/10080897/10110676",
-      "never_use_as_gt": true
-    },
-    {
-      "source": "DEC-041 historical fragmentation",
-      "eva_value": "célula agregada tipo 'A9 1 10120148'",
-      "expected_visual": "colunas separadas item=A9, qty=1, code=10120148",
+      "eva_value": "component_code=50225702 aggregated",
+      "expected_visual": "subset_code=50225702; AE/AH/AG own codes",
       "never_use_as_gt": true
     }
   ],
   "ambiguities": [
     {
       "id": "AMB-P12-01",
-      "topic": "Descrição literal completa de 50225704/50225741 e presença de 50225741 na mesma página",
+      "topic": "Descriptions 50225704/40 and presence of 50225741",
       "status": "PARTIAL",
-      "notes": "Códigos 50225701–04 e 50225740 confirmados visualmente nos crops; 50225741 citado no Doc 120 — confirmar na página completa pelo owner"
+      "notes": "subset_description empty/DOUBTFUL for 04/40; 50225741 omitted pending visual proof"
     }
   ]
 }

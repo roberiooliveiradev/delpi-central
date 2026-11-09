@@ -500,3 +500,21 @@ Correção de perda silenciosa sob `span_conflict_tolerated` parcial (`reconcile
 **Contrastes (não GT):** p10 fusão `10080192 10090316`; p12 `50225702` como código de linha; p13 `component_code='4 5'`.
 
 **Split:** development=`90264026/004/017/135`; validation_exposed=demais 11 do índice; **`TRUE_UNSEEN_HOLDOUT=NOT_AVAILABLE`**. `GT_APPROVAL_STATUS=OWNER_BLOCKED`. `VAL01_COMPLETED=false`.
+
+### Log G1 — Completude estrutural geométrica 90264135 (2026-11-09)
+
+**TASK:** `EVA-VAL01-G1-STRUCTURAL-GT-COMPLETION-AND-OWNER-HANDOFF`. Sem código produtivo, sem tuning, sem deploy. Ledger: Doc 119 §60.1.
+
+**Fonte:** SHA `af47dd4c…edf3` `MATCH`. Render DPI 200; PNG p10/p12/p13 hashes `f0cef06a…` / `cf9cb4f5…` / `7e2f80f0…` (registry local).
+
+**Anotações geométricas DRAFT (reescritas com grade completa no escopo selecionado):**
+
+| Página | coverage | rows×cols | cells | annotation SHA-256 |
+|---|---|---|---|---|
+| 10 | `COMPLETE_SELECTED_REGION` | 15×6 | 64 | `98d39af4d1f6c3b84c03069bca117fa9da750aa85d66ce1b200170ba9e26333c` |
+| 12 | `COMPLETE_SELECTED_REGION` | 16×7 | 82 | `73a27e2a2ebd76cacaf6b1aca21b7608b8e5f35f858ff1571871d53a23cf3551` |
+| 13 | `COMPLETE_SELECTED_REGION` | 19×6 | 86 | `31b557512109e0695fc93d41bd1f2bc7d335368b207cd3b2c71f86618f8181aa` |
+
+**Overlays de células:** `p10/12/13_cells_overlay.png` SHA `e9c5a7c4…` / `eb61979f…` / `4ee45099…` (`.local/`, não no Git).
+
+**Validador offline:** `scripts/validate_g1_annotations.py` → PASS. Expected isento de fusões `10080192 10090316` e `4 5`. Holdout: `TRUE_UNSEEN_HOLDOUT=NOT_AVAILABLE`. `GT_APPROVAL_STATUS=OWNER_BLOCKED`. `VAL01_COMPLETED=false`.
