@@ -14,7 +14,7 @@ Governance (política vigente — docs 94/106/124, CF-UX-053):
 - ``execute``/``delete`` — TÉO-shaped PREPARE →
   ``proposal_pending_confirmation`` → COMMIT with exact handle +
   ``confirmation``. CURRENT_RUNTIME default keeps Portal V014 as
-  human proof; conversational ACT only when Security ack arms the
+  human proof; conversational ACT only when the backend explicitly selects the
   channel. ``confirmation=true`` is never AuthZ alone.
 - ``batch`` — consolidated plan; same channel policy as single-op.
 """
