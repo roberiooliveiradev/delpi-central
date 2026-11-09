@@ -164,3 +164,8 @@ BUNDLE_FINGERPRINT: __federation_expose_App-CyhunCwe.js
 ## 10. Evolução aditiva D16 — bandeiras não alteram baseline SA5
 
 **Novo plano:** [D16 — bandeiras operacionais do atendimento](./PRODUCT-REGISTRATION-D16-ATTENDANCE-FLAGS-CRUD-EVA-UX-PLAN.md). Bandeira é observação de acompanhamento dentro da Engineering API, com CRUD/audit independente. Não pertence ao snapshot oficial SB1/SA5, não muda fingerprint de baseline, compare ou `verify-and-complete`. Exemplo de PN a confirmar é anotação, **nunca** preenchimento técnico automático com zero. Bandeira aberta não bloqueia conclusão por padrão; mantém consulta após conclusão conforme AuthZ, para acompanhar cobrança posterior. Sujeito a contrato owner sobre edição pós-terminal. Integração EVA deve usar os mesmos casos de uso. **PLANNED.**
+
+
+## D16-REF-01 — Bandeiras de acompanhamento vinculadas a atributos SA5
+
+[Contrato D16-REF-01](./PRODUCT-REGISTRATION-D16-ATTENDANCE-FLAGS-CRUD-EVA-UX-PLAN.md#d16-ref-01--decisão-po-superveniente-bandeiras-por-campo-experiência-contextual-e-consultas-transversais). Bandeiras de acompanhamento são anotações da Engenharia em caso PRC, persistem mesmo quando o PN/Catálogo muda, o vínculo deixa de existir ou o caso é concluído. Identidade de marca no SA5 = requestId + supplierKey canônica + targetAttribute (partNumber ≠ catalogNumber), nunca rowId visual ou texto do PN. A flag **não** altera official_baseline, fingerprint, verify, revisão ou ERP, nem permite burlar PENDING_OWNER de remoção. A pesquisa transversal por produto e campo usa requests autorizados da Engineering API; sem SoT de produto novo. **TARGET não implementado por esta nota.**
