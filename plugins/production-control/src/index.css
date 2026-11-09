@@ -4109,6 +4109,56 @@
   color: var(--ppc-title);
 }
 
+/* E5 fiscal: bloco compacto e rastreável, sem interferir nas métricas de OP. */
+.dashboard-production-control .ppc-demand-line__fiscal {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--ppc-accent) 24%, var(--ppc-border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ppc-accent) 4%, var(--ppc-surface));
+}
+
+.dashboard-production-control .ppc-demand-line__fiscal-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 9px 0 0;
+}
+
+.dashboard-production-control .ppc-demand-line__fiscal-disclaimer {
+  color: var(--ppc-text-muted);
+  line-height: 1.45;
+  font-size: 11px;
+  margin: 11px 0 0;
+}
+
+.dashboard-production-control .ppc-demand-line__fiscal-documents {
+  font-size: 11px;
+  color: var(--ppc-text-muted);
+  margin-top: 9px;
+}
+
+.dashboard-production-control .ppc-demand-line__fiscal-documents > span {
+  font-weight: 700;
+}
+
+.dashboard-production-control .ppc-demand-line__fiscal-documents ul {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 13px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 560px) {
+  .dashboard-production-control .ppc-demand-line__fiscal-facts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
+  }
+}
+
 .dashboard-production-control .ppc-demand-line__summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
