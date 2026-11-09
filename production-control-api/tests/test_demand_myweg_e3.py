@@ -338,6 +338,18 @@ def test_e3_both_one_op_pool_no_double_allocation() -> None:
     assert payload["myweg"]["op_coverage_complete"] is True
 
 
+def test_e3_myweg_op_read_failure_keeps_needs_with_partial_coverage_warning() -> None:
+    service, user = _svc(sales=[_protheus_sale()])
+    def _op_down() -> dict:
+        raise RuntimeError("source unavailable")
+    service._myweg_coverage._gateway.fetch_open_production_orders = _op_down  # type: ignore[method-assign]
+    payload = service.list_demand(user, branch="02", origin=ORIGIN_MYWEG)
+    assert payload["pagination"]["total"] == 1
+    assert payload["items"][0]["op_coverage_incomplete"] is True
+    assert payload["myweg"]["op_coverage_complete"] is False
+    assert payload["myweg"]["op_source_unavailable"] is True
+
+
 def test_e3_both_single_pool_shared_product() -> None:
     service, user = _svc(
         sales=[
