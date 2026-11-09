@@ -3207,23 +3207,15 @@
   gap: 6px;
   min-width: 190px;
   max-width: 280px;
+  --delpi-ui-control-height: 32px;
+  --delpi-ui-control-font-size: var(--ppc-font-xs);
+  --delpi-ui-control-radius: 8px;
 }
 
 .dashboard-production-control .ppc-demand-customer-filter__label {
   flex: 0 0 auto;
   font-size: var(--ppc-font-xs);
   color: var(--ppc-text-muted);
-}
-
-.dashboard-production-control .ppc-demand-customer-filter .delpi-ui-multi-select {
-  min-width: 130px;
-}
-
-.dashboard-production-control .ppc-demand-customer-filter .delpi-ui-multi-select__trigger {
-  min-height: 32px;
-  padding: 6px 9px;
-  font-size: var(--ppc-font-xs);
-  border-radius: 8px;
 }
 
 .dashboard-production-control .ppc-demand-filter {
