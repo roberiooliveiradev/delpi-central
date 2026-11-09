@@ -10,6 +10,10 @@ on:
       - "production-control-api/**"
       - "api-delpi/app/interface/http/routes/reports/reports_router.py"
       - "api-delpi/tests/test_reports_routes_smoke.py"
+      - "api-delpi/app/infrastructure/persistence/totvs/pedidos_venda_abertos/pedidos_venda_abertos_query_repository.py"
+      - "api-delpi/app/application/use_cases/pedidos_venda_abertos/list_pedidos_venda_abertos_use_case.py"
+      - "api-delpi/tests/test_open_order_metrics_sa1_join_sql.py"
+      - "api-delpi/tests/test_list_pedidos_venda_abertos_use_case.py"
       - ".github/workflows/production-control-quality.yml"
   pull_request:
     paths:
@@ -19,6 +23,10 @@ on:
       - "production-control-api/**"
       - "api-delpi/app/interface/http/routes/reports/reports_router.py"
       - "api-delpi/tests/test_reports_routes_smoke.py"
+      - "api-delpi/app/infrastructure/persistence/totvs/pedidos_venda_abertos/pedidos_venda_abertos_query_repository.py"
+      - "api-delpi/app/application/use_cases/pedidos_venda_abertos/list_pedidos_venda_abertos_use_case.py"
+      - "api-delpi/tests/test_open_order_metrics_sa1_join_sql.py"
+      - "api-delpi/tests/test_list_pedidos_venda_abertos_use_case.py"
       - ".github/workflows/production-control-quality.yml"
 
 permissions:
@@ -83,4 +91,4 @@ jobs:
           python -m pip install -r api-delpi/requirements.txt
       - name: Testar rotas do Delpi Reports
         working-directory: api-delpi
-        run: python -m pytest tests/test_reports_routes_smoke.py tests/test_customer_outbound_invoice_line_items.py -q
+        run: python -m pytest tests/test_reports_routes_smoke.py tests/test_customer_outbound_invoice_line_items.py tests/test_open_order_metrics_sa1_join_sql.py tests/test_list_pedidos_venda_abertos_use_case.py -q
