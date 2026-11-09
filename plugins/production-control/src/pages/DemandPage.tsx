@@ -239,6 +239,12 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
 
       {data ? (
         <>
+          {showMywegUi && data.myweg?.op_coverage_complete === false ? (
+            <div className="ppc-demand-banner" role="status">
+              <p>{demand.opCoverageIncomplete}</p>
+            </div>
+          ) : null}
+
           {showMywegUi && data.myweg?.myweg_degraded ? (
             <div className="ppc-demand-banner" role="status">
               <p>{demand.mywegDegraded}</p>
