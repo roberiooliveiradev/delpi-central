@@ -1,0 +1,32 @@
+{
+  "task_id": "EVA-VAL01-G4-MINIMAL-TABLE-INTEGRATION-FIX",
+  "gate": "G4",
+  "pdf_code": "90264135",
+  "pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+  "g2_dump_sha256": {
+    "page_10": "eaf470c9219903d0961fdd4d8e3d9e62393552ce266f0eff05f16909a33a500c",
+    "page_12": "e022898ad2164df6eea87dd7e6996231dd6f02fcd0b38fff52f4378dceaeb3d4",
+    "page_13": "7d7fe73b2956c5a93705d96bbcf786f1c7c1a5cdfe2a91d8159b3f140da16eeb"
+  },
+  "models": {
+    "slanet_inference_pdiparams_sha256": "9d33d47b174bcb9fb63f94dac54a4d01a974da6d0c56ddb51cf0e38ed43f7a60",
+    "rt_detr_residual_host_cleaned": true,
+    "g4_triggered_download": false
+  },
+  "tests": {
+    "g4_suite_and_dec040_043_related": "64 passed",
+    "corpus_13_live": "TEST_NOT_RUN"
+  },
+  "results": {
+    "p10_real_line_texts_split": true,
+    "p13_footer_not_promoted": true,
+    "p13_crop_excludes_index_strip": true,
+    "p12_rowspan_fixture_parent_link": true,
+    "p12_u_crop_giant_cell": "RESIDUAL"
+  },
+  "production_deploy_executed": false,
+  "generalization_claim": false,
+  "final_head": "004710ec5e96a7b16d4b6b97d9a04a16abcf2f08",
+  "base_head_at_g4_start": "89e96ec824306b11784c3e197ae1180e54061b35",
+  "note": "final_head equals git rev-parse HEAD of the G4 delivery commit when this file was last written; 1-amend lag possible if re-amended only for this field."
+}

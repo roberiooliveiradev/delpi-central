@@ -544,3 +544,12 @@ Correção de perda silenciosa sob `span_conflict_tolerated` parcial (`reconcile
 
 **Achados estruturais:** crop Understanding amplo vs crop G1 DRAFT — P13 elimina `4 5`; P12 elimina rowspan monolítico e preserva AE/AH/AG+códigos; P10 permanece fundido no SLANet com `line_texts`.  
 **Decisão:** SLANet suficiente como motor geométrico com crop correto; resíduos = integração (regioner + Understanding). G4 candidato: crop hardening + `line_texts`/papéis — **sem** novo framework. Smoke `90264026` OK (não holdout). `VAL01_COMPLETED=false`.
+
+### Log G4 — Integração mínima tabelas (2026-11-09)
+
+**TASK:** `EVA-VAL01-G4-MINIMAL-TABLE-INTEGRATION-FIX`. Código candidato Understanding/regioner; **sem deploy**. Ledger: Doc 119 §62.2. Artefatos: `docs/.../eva-val01-g4/`.
+
+**PDF evidência (replay G2 dumps, SHA af47dd4c…edf3):** célula SLANet p10 com `line_texts` → códigos separados; p13 `4 5` não promovido; crop exclui strip de índices. Hierarquia subset em fixture rowspan PASS; giant cell u_crop p12 permanece residual (depende crop correto — G3).
+
+**Regressão unitária:** DEC-040–043 + percepção/SLANet + G4 = 64 passed. **Corpus 13 live:** `TEST_NOT_RUN`. Não declarar generalização; GT G1 `OWNER_BLOCKED`. `VAL01_COMPLETED=false`.
+

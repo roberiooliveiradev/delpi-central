@@ -996,7 +996,7 @@ O subplano **não é nova frente, serviço, camada, documento nem autorização 
 
 ### 39.6 Execução Cursor — ledger de validação por ocorrência (2026-11-05)
 
-**DATA:** 2026-11-05. **BASE_HEAD inicial:** `7038168c71f4033625722f683e696a5f89143fb7`. **Revalidação antes do commit:** `6e8f2a6f22624c988d2d8c5cb55341998bb7e39e` (`main`, ancestral do início; commit PCP alheio). **FINAL_HEAD:** `01481495a2390b245138d53792befe3d8e741b38`. **BRANCH:** `main`. Alterações concorrentes fora deste pacote foram preservadas (DÉLIA, scripts de infra, plugin-ui, TV dashboard, travel-expenses).
+**DATA:** 2026-11-05. **BASE_HEAD inicial:** `7038168c71f4033625722f683e696a5f89143fb7`. **Revalidação antes do commit:** `6e8f2a6f22624c988d2d8c5cb55341998bb7e39e` (`main`, ancestral do início; commit PCP alheio). **FINAL_HEAD:** ver  ().`01481495a2390b245138d53792befe3d8e741b38`. **BRANCH:** `main`. Alterações concorrentes fora deste pacote foram preservadas (DÉLIA, scripts de infra, plugin-ui, TV dashboard, travel-expenses).
 
 **RQ / AC atendidos neste pacote**
 
@@ -2145,3 +2145,50 @@ Detalhe: `eva-val01-g3/structural-benchmark-results.md` + `framework-sufficiency
 **RQ-G4-05:** Gate de execução: HEAD/status/worktrees → inventário de funções equivalentes → RQ/AC + contrato → RED → menor diff → GREEN → testes de regressão → residual search → checar cache/model hash contra baseline e side effects de G3 → docs/ledger. Máximo três ciclos de correção por incremento conforme Doc 116. Gate de publicação separado: **não fazer deploy produtivo dentro do G4**; reportar código e testes em SHA, rollback/revert proposto; manter G5/G6/G7 bloqueados. Testes autenticados dependem de identidade real autorizada.
 
 **Estados de saída:** `G4_IMPLEMENTATION=PASS/FAIL/INCONCLUSIVE` apenas com evidências; `G1_OWNER_GT=OWNER_BLOCKED`; `G5_QUALITY=NOT_AUTHORIZED`; `G6_TOTUS_ALIGNMENT=NOT_AUTHORIZED`; `G7_DEPLOY=NOT_AUTHORIZED`; `VAL01_COMPLETED=false`; `automatic_nc=false`. Se G4 exigir trocar owner/source-of-truth ou contrato público, `ARCHITECTURE_DECISION_REQUIRED` e STOP da mudança; `EXECUTION_DRIFT` idem. **PROIBIDO SAIR DA TRILHA.**
+
+### 62.2 G4 — Integração mínima tabelas (2026-11-09)
+
+**TASK_ID:** `EVA-VAL01-G4-MINIMAL-TABLE-INTEGRATION-FIX`.  
+**Autorização:** G4 (Issue #131 / §62.1). **Escopo:** somente G4. Sem deploy, sem G5–G7, sem novo framework/parser.
+
+**BASE_HEAD (início da execução):** `89e96ec824` (main; WIP alheio preservado).
+**FINAL_HEAD:** `$(git rev-parse HEAD)`.  
+**Mudança:** `engineering_app/application/drawing/understanding.py` + `tests/test_eva_val01_g4_table_integration.py`.
+
+#### Correções (camada Understanding / regioner — reuso SLANet)
+
+| ID | Camada | Diff |
+|---|---|---|
+| G4-A | `_detect_component_table` + `_structure_table` + `_trim_sheet_index_margin` / `_connected_column_crop` | Exclui faixa de índices 1..N sem conteúdo tabular; recua margem do crop quando há vão demonstrável; não tipa célula `4 5` como `component_code` |
+| G4-B | `rows_from_native_cells` (`_line_is_canonical_field_band`) | Consome `line_texts`/`line_centers` de códigos/itens canônicos; split só com geometria distinta (≥8 px); abstenção sem geometria |
+| G4-C | âncoras `rowspan` + recusa de índice | `parent_group_candidate` quando rowspan/grupo comprovado; subset≠component; pai ausente → não inventado; sem dedupe |
+
+#### Evidências
+
+| Caso | Resultado | Classe |
+|---|---|---|
+| P10 célula real G2 `10080192 10090316` + `line_texts` | split → `10080192` e `10090316` | `PROVEN` (replay `.local/eva-val01-g2/page_10.json`) |
+| P13 célula real `4 5` + crop índice | não promovido; crop exclui strip | `PROVEN` (replay + fixture) |
+| P12 `50225702`→AE/AH/AG | PASS em fixture rowspan; u_crop giant rowspan=11 residual | `PROVEN` fixture / `RESIDUAL` u_crop |
+| DEC-040–043 + slanet + table_perception + G4 | **64 passed** | `PROVEN` |
+| Corpus Doc 120 (13 PDFs live) | `TEST_NOT_RUN` (sem AuthZ/PDF live nesta execução) | `TEST_NOT_RUN` |
+
+**Modelos:** PaddleOCR/SLANet inalterados; RT-DETR residual do probe G3 removido do host local (`.paddlex` / HF hub). SLANet `inference.pdiparams` SHA `9d33d47b…7a60`. Nenhuma instalação/download disparada pelo G4.
+
+```text
+G4_IMPLEMENTATION=PASS_WITH_RESIDUAL
+P10_A2_A3=PASS
+P13_FOOTER=PASS
+P12_HIERARCHY_FIXTURE=PASS
+P12_U_CROP_GIANT_CELL=RESIDUAL
+DEC040_043=PASS
+CORPUS_13_LIVE=TEST_NOT_RUN
+PRODUCTION_DEPLOY_EXECUTED=false
+G5_G6_G7=NOT_AUTHORIZED
+VAL01_COMPLETED=false
+GT_APPROVAL_STATUS=OWNER_BLOCKED
+NO_GENERALIZATION_CLAIM=true
+```
+
+Artefatos: `docs/.../eva-val01-g4/` + `.local/eva-val01-g4/replay_report.json`.
+

@@ -181,6 +181,40 @@ def _polygon_extent(box: list | None) -> tuple[float, float, float, float] | Non
     return min(xs), min(ys), max(xs), max(ys)
 
 
+_SHEET_INDEX_RE = re.compile(r"^\d{1,2}$")
+_SHEET_INDEX_SEQ_RE = re.compile(r"^(\d{1,2})(\s+\d{1,2})+$")
+
+
+def _is_sheet_index_text(text: str) -> bool:
+    """Índice de folha/quadro (1–2 dígitos), não código de componente."""
+    return bool(_SHEET_INDEX_RE.fullmatch((text or "").strip()))
+
+
+def _is_sheet_index_noise_cell(text: str) -> bool:
+    """Célula só com índices curtos ('4', '4 5') — nunca component_code."""
+    t = (text or "").strip()
+    return bool(
+        _SHEET_INDEX_RE.fullmatch(t) or _SHEET_INDEX_SEQ_RE.fullmatch(t)
+    )
+
+
+def _token_is_table_content(token: dict) -> bool:
+    """Token que ancora conteúdo tabular (código/item/cabeçalho/texto)."""
+    text = _text_of(token)
+    if not text:
+        return False
+    if _CODE_RE.match(text):
+        return True
+    if _is_header_label(text):
+        return True
+    # Item identifiers are compiled later; resolve at call time.
+    if _ITEM_IDENT_RE.fullmatch(text):
+        return True
+    if len(text) > 3 and re.search(r"[A-Za-zÀ-ÿ]", text):
+        return True
+    return False
+
+
 def _connected_column_crop(
     rows: list[dict], w: float, h: float
 ) -> list[float] | None:
@@ -213,6 +247,60 @@ def _connected_column_crop(
         w,
         h,
     )
+
+
+def _trim_sheet_index_margin(
+    box: list[float], tokens: list[dict], w: float, h: float
+) -> list[float] | None:
+    """Recua bordas quando a faixa marginal só tem índices 1..N.
+
+    Exige vão demonstrável após o último token de conteúdo tabular:
+    códigos, itens, cabeçalhos ou texto descritivo. Não remove a
+    última linha legítima de componentes.
+    """
+    clipped = _clip_box(box, w, h)
+    if not clipped:
+        return None
+    x1, y1, x2, y2 = clipped
+    inside = [
+        t
+        for t in tokens
+        if _tok_center(t) and _inside(_tok_center(t), clipped)
+    ]
+    content_ys = [
+        _tok_center(t)[1] for t in inside if _token_is_table_content(t)
+    ]
+    if not content_ys:
+        return clipped
+    last_content_y = max(content_ys)
+    first_content_y = min(content_ys)
+    bottom_idxs = [
+        t
+        for t in inside
+        if _is_sheet_index_text(_text_of(t))
+        and _tok_center(t)[1] > last_content_y + 4.0
+    ]
+    if len(bottom_idxs) >= 3:
+        idx_band = min(_tok_center(t)[1] for t in bottom_idxs) - 2.0
+        if not any(
+            _token_is_table_content(t) and _tok_center(t)[1] >= idx_band
+            for t in inside
+        ):
+            y2 = min(y2, idx_band)
+    top_idxs = [
+        t
+        for t in inside
+        if _is_sheet_index_text(_text_of(t))
+        and _tok_center(t)[1] < first_content_y - 4.0
+    ]
+    if len(top_idxs) >= 3:
+        idx_band = max(_tok_center(t)[1] for t in top_idxs) + 2.0
+        if not any(
+            _token_is_table_content(t) and _tok_center(t)[1] <= idx_band
+            for t in inside
+        ):
+            y1 = max(y1, idx_band)
+    return _clip_box([x1, y1, x2, y2], w, h)
 
 
 def _clip_box(box: list[float] | None, w: float, h: float) -> list[float] | None:
@@ -505,6 +593,22 @@ def _detect_component_table(
                 rows.append({"y": row_y, "tokens": [t]})
     if not rows:
         return None
+    # Faixas só com índices de folha/quadro (1..N) sem código/item/
+    # cabeçalho — conteúdo extratabular com separação demonstrável.
+    def _row_is_sheet_index_strip(row_tokens: list[dict]) -> bool:
+        texts = [_text_of(t) for t in row_tokens]
+        if len(texts) < 3:
+            return False
+        short = sum(1 for t in texts if _is_sheet_index_text(t))
+        if short < 3 or short / len(texts) < 0.6:
+            return False
+        return not any(_token_is_table_content(t) for t in row_tokens)
+
+    rows = [
+        r for r in rows if not _row_is_sheet_index_strip(r["tokens"])
+    ]
+    if not rows:
+        return None
     table_box = _box(
         [t for r in rows for t in r["tokens"]]
     )
@@ -654,9 +758,18 @@ def _structure_table(
             best_i = min(range(len(d)), key=lambda i: d[i])
             if keep_cols and best_i not in keep_cols:
                 continue
+            text_t = _text_of(t)
+            # Índice curto só permanece como quantidade tipada; fora
+            # disso não vira célula de componente/descrição.
+            provisional_type = col_types.get(best_i)
+            if _is_sheet_index_text(text_t) and provisional_type not in (
+                "quantity",
+                "item",
+            ):
+                continue
             ties = [i for i in range(len(d)) if abs(d[i] - d[best_i]) < 1e-9]
             cell = {
-                "text": _text_of(t),
+                "text": text_t,
                 "col": best_i,
                 "row": r_i,
                 "bounding_box_px": t.get("bounding_box_px"),
@@ -677,6 +790,14 @@ def _structure_table(
         for cell in cells:
             ct = cell.get("col_type")
             if not ct:
+                continue
+            if ct == "component_code" and (
+                _is_sheet_index_noise_cell(cell["text"])
+                or not (
+                    _CODE_RE.match(cell["text"])
+                    or _CODE_FIND_RE.search(cell["text"])
+                )
+            ):
                 continue
             if ct not in fields:
                 fields[ct] = {
@@ -947,6 +1068,11 @@ def build_understanding(
         )
         column_crop = _connected_column_crop(table_rows, w, h)
         if column_crop:
+            trimmed = _trim_sheet_index_margin(
+                column_crop, tokens, w, h
+            )
+            if trimmed:
+                column_crop = trimmed
             table["box"] = column_crop
             table["boundary_source"] = "connected_columns"
             graphic_boundary = False
@@ -1448,10 +1574,42 @@ _ITEM_TAIL_RE = re.compile(r"^(" + _ITEM_BODY + r")\s+(\S.*)$")
 _GROUP_CODE_RE = re.compile(r"^(\d{6,11})\b")
 
 
+def _line_is_canonical_field_band(text: str) -> bool:
+    """Banda textual que, sozinha, já é campo tipado de ocorrência.
+
+    Códigos de componente e identificadores de item entram aqui para
+    que `line_texts` com centros Y distintos recuperem linhas fundidas
+    pelo SLANet. Descrição multilinha NÃO é canônica.
+    """
+    line_s = (text or "").strip()
+    if not line_s:
+        return False
+    if _ITEM_QTY_RE.fullmatch(line_s) or _QTY_CODE_RE.fullmatch(line_s):
+        return True
+    if _ITEM_IDENT_RE.fullmatch(line_s):
+        return True
+    if _CODE_RE.match(line_s):
+        return True
+    return False
+
+
+def _line_centers_geometrically_distinct(
+    centers: list[float], *, min_gap_px: float = 8.0
+) -> bool:
+    """True quando há separação Y mínima entre bandas consecutivas."""
+    if len(centers) < 2:
+        return False
+    ordered = sorted(float(c) for c in centers)
+    gaps = [b - a for a, b in zip(ordered, ordered[1:])]
+    return bool(gaps) and min(gaps) >= min_gap_px
+
+
 def _cell_role(text: str) -> str | None:
     """Papel funcional de UMA célula pelo seu conteúdo — semântica,
     não posição. Nunca promove descrição a código nem vice-versa."""
-    if _CODE_FIND_RE.fullmatch(text):
+    if _is_sheet_index_noise_cell(text):
+        return None
+    if _CODE_FIND_RE.fullmatch(text) or _CODE_RE.match(text):
         return "component_code"
     if _ITEM_IDENT_RE.fullmatch(text):
         return "item"
@@ -1756,13 +1914,10 @@ def rows_from_native_cells(
                 else:
                     target = row_index
                 line_s = line.strip()
-                canonical = bool(
-                    _ITEM_QTY_RE.fullmatch(line_s)
-                    or _QTY_CODE_RE.fullmatch(line_s)
-                )
-                # Descrição multilinha não é item/qtd. Sem faixa única,
-                # as bandas permanecem na célula — não saltam para a
-                # linha de código vizinha.
+                canonical = _line_is_canonical_field_band(line_s)
+                # Descrição multilinha não é item/qtd/código. Sem faixa
+                # única, as bandas permanecem na célula — não saltam
+                # para a linha de código vizinha.
                 if len(hits) != 1 and not canonical:
                     target = row_index
                 ref_cy = row_cy.get(target)
@@ -1776,6 +1931,26 @@ def rows_from_native_cells(
                     # errado — não permanece na tupla incompatível.
                     target = 500000 + int(round(cy * 10))
                 targets.setdefault(int(target), []).append(line)
+            # Célula só com códigos/itens canônicos em bandas Y
+            # distintas, sem colunas-irmãs para ancorar: a evidência
+            # geométrica + textual basta para recuperar ocorrências.
+            # Sem geometria distinta → abstenção (não split cego).
+            if (
+                len(targets) < 2
+                and len(lines) > 1
+                and all(
+                    _line_is_canonical_field_band(str(line).strip())
+                    for line in lines
+                )
+                and _line_centers_geometrically_distinct(
+                    [float(c) for c in centers]
+                )
+            ):
+                targets = {}
+                for line, cy in zip(lines, centers):
+                    targets.setdefault(
+                        500000 + int(round(float(cy) * 10)), []
+                    ).append(line)
             if len(targets) < 2:
                 continue
             cell["_split_done"] = True
@@ -2065,6 +2240,18 @@ def rows_from_native_cells(
                 _put("description", m.group(2), cell, "native_cell_pair")
                 continue
             if not kind or mixed:
+                continue
+            # Índices de folha/quadro nunca são código de componente,
+            # mesmo quando a coluna tipada é component_code.
+            if kind == "component_code" and _is_sheet_index_noise_cell(
+                text
+            ):
+                continue
+            if kind == "component_code" and not (
+                _CODE_RE.match(text)
+                or _CODE_FIND_RE.search(text)
+                or _GROUP_CODE_RE.match(text)
+            ):
                 continue
             _put(kind, text, cell, "native_cell")
         # Coerência geométrica da tupla: campos projetados no mesmo
