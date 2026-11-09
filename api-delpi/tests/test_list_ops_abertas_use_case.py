@@ -15,6 +15,9 @@ def test_list_ops_abertas_normalizes_items_and_resumo() -> None:
                 "produto": "10080022",
                 "descricao_produto": "Produto exemplo",
                 "tipo_produto": "PA",
+                "unidade_op": "PC",
+                "unidade_produto": "MI",
+                "unidade": "PC",
                 "quantidade_op": 100,
                 "quantidade_produzida": 40,
                 "saldo_op": 60,
@@ -48,6 +51,9 @@ def test_list_ops_abertas_normalizes_items_and_resumo() -> None:
     assert len(result.items) == 1
     assert result.items[0]["numero_op"] == "123456/01/001"
     assert result.items[0]["saldo_op"] == 60.0
+    assert result.items[0]["unidade"] == "PC"
+    assert result.items[0]["unidade_op"] == "PC"
+    assert result.items[0]["unidade_produto"] == "MI"
     assert result.items[0]["observacao_op"] == "Prioridade cliente X"
     assert len(result.resumo) == 1
 
