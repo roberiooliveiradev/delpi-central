@@ -104,18 +104,26 @@ Loading / erro / vazio: os de `DashboardPage`. 403 ≠ gráfico vazio.
 
 ### Meus processos
 
-Propósito: abrir um processo visível. Dado: `GET /processes` → `list_processos` (`status`, `q`; backend também aceita filial, setor, família). Sem página. Sort local já testado em `processListSort.test.ts`. Clique na linha abre o workspace.
+Propósito: abrir um processo visível. Dado: `GET /processes` → `list_processos` (`status`, `q`; backend também aceita filial, setor, família). Sem paginação de servidor. Ordenação local, alternância Processos/Departamentos e modos Grandes/Médios/Lista/Detalhes já existem; clique na linha abre o workspace.
+
+**Refatoração do hero compacto (TARGET, aprovação visual em 2026-11-09):** [wireframe funcional específico do MFE — Meus processos](../../../plugins/transformometro/docs/wireframes/meus-processos-hero-compacto.md). Substitui apenas a composição visual abaixo; não é evidência de implementação.
 
 ```text
-┌──────────────────────────────────────────────────┐
-│ Meus processos                                   │
-│ Processos visíveis no seu acesso                 │
-│ [Buscar] [Status]                                │
-│ Código | Processo | Status | …                   │
-└──────────────────────────────────────────────────┘
+[Início / Meus processos]                         (breadcrumb acima do hero)
+┌────────────────────────────────────────────────────────────────┐
+│ PROCESSOS · Meus processos        [Atualizar] [+ Novo processo] │
+│ Processos disponíveis no Portal Transforma+.                   │
+│ [Buscar nome/código................] [Status v] [Ordenar por v] │
+│ [Processos | Departamentos] [Maior/Menor] [Grandes Médios Lista Detalhes] │
+└────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│ Resultados / tabela ou pastas, contagem e paginação existentes  │
+└────────────────────────────────────────────────────────────────┘
 ```
 
-Filtros de setor/filial na UI são alvo futuro: o endpoint aceita, a `ProcessesPage` hoje não manda. Wave 1 não é obrigada a acrescentar esses filtros. Mobile: a lista atual (`tm-processo-browser`) já quebra em 900px. Empty: mensagem atual, só quando `error` é nulo. 403: `StatusAlerts`, texto "Acesso negado".
+**Invariante do design:** hero concentra os controles de consulta e apresentação; remover o grande card intermediário. `ProcessFolderBrowser` já oferece `hideBrowseToggle` e `hideListToolbar` para evitar controles duplicados. A área de resultados e o formulário de criação mantêm seus comportamentos. "Maior" é **direção** de ordenação, não modo extra.
+
+Filtros de setor/filial na UI continuam fora do escopo desta refatoração: o endpoint aceita, mas a `ProcessesPage` não os manda. Mobile: preservar os breakpoints existentes e rolagem da tabela. Empty: mensagem atual somente sem erro. 403: `StatusAlerts`, nunca lista vazia por autorização.
 
 ### Workspace
 
