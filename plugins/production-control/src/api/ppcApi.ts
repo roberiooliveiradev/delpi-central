@@ -42,6 +42,7 @@ import type {
   LineFeederRequirementsPayload,
   MaterialsPayload,
   OverviewPayload,
+  OpPendencyPayload,
   ProblemDetectorItemsPayload,
   ProblemDetectorsPayload,
   Product3DModel,
@@ -87,6 +88,24 @@ export async function fetchOverview(params: {
     data: OverviewPayload;
   }>(ppcApiUrl(`/overview?${search.toString()}`), { signal: params.signal });
   return unwrapEnvelope(envelope, "Não foi possível carregar a gestão à vista.");
+}
+
+/** Pendências operacionais: snapshot integral da cobertura, não recortado pelo OTD. */
+export async function fetchOpPendencies(params: {
+  branch: string;
+  refresh?: boolean;
+  signal?: AbortSignal;
+}): Promise<OpPendencyPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  if (params.refresh) search.set("refresh", "true");
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: OpPendencyPayload;
+  }>(ppcApiUrl(`/demand/op-pendencies?${search.toString()}`), {
+    signal: params.signal,
+  });
+  return unwrapEnvelope(envelope, "Não foi possível carregar as pendências do PCP.");
 }
 
 export async function fetchReportsCatalog(params: {
