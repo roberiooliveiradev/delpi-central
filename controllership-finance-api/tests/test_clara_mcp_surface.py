@@ -23,8 +23,9 @@ from controllership_finance_app.interface.mcp.asgi import (
     normalize_mcp_mount_path,
 )
 from controllership_finance_app.interface.mcp.branding import (
-    CLARA_MCP_INSTRUCTIONS,
+    build_clara_mcp_instructions,
 )
+from controllership_finance_app.application.clara import consent_channel as cc
 from controllership_finance_app.interface.mcp.constants import (
     CLARA_LEGACY_TOOL_NAMES,
     LEGACY_TOOL_CLASS,
@@ -35,6 +36,7 @@ from controllership_finance_app.interface.mcp.constants import (
 )
 from controllership_finance_app.interface.mcp.server import (
     clara_mcp_server,
+    create_mcp_server,
 )
 from controllership_finance_app.interface.mcp import tool_bridge
 
@@ -178,15 +180,53 @@ def test_security_schemes_on_wire():
         assert schemes[0]["type"] == "oauth2"
 
 
-def test_instructions_honesty_invariants():
-    assert "never zero" in CLARA_MCP_INSTRUCTIONS
-    assert "confirmation_url" in CLARA_MCP_INSTRUCTIONS
-    assert "do NOT authorize" in CLARA_MCP_INSTRUCTIONS
-    assert "proposal_pending_confirmation" in CLARA_MCP_INSTRUCTIONS
-    assert "confirmation=true" in CLARA_MCP_INSTRUCTIONS
-    assert "untrusted data" in CLARA_MCP_INSTRUCTIONS
-    assert "phase='prepare'" in CLARA_MCP_INSTRUCTIONS
-    assert "get_context" in CLARA_MCP_INSTRUCTIONS
+def test_instructions_honesty_invariants(monkeypatch):
+    monkeypatch.setattr(cc.settings, "CLARA_CONSENT_CHANNEL", "portal")
+    monkeypatch.setattr(cc.settings, "CLARA_CONVERSATIONAL_SECURITY_ACK", "")
+    instructions = build_clara_mcp_instructions()
+    assert "never zero" in instructions
+    assert "confirmation_url" in instructions
+    assert "do NOT authorize" in instructions
+    assert "proposal_pending_confirmation" in instructions
+    assert "confirmation=true" in instructions
+    assert "untrusted data" in instructions
+    assert "phase='prepare'" in instructions
+    assert "get_context" in instructions
+    assert "{ACTIVE_CONSENT_POLICY}" not in instructions
+
+
+@pytest.mark.parametrize(
+    "channel,ack,expect_portal",
+    [
+        ("portal", "", True),
+        ("conversational", "", True),
+        ("conversational", cc.SECURITY_ACK_VALUE, False),
+    ],
+)
+def test_tool_descriptions_follow_active_consent_policy(
+    monkeypatch, channel, ack, expect_portal
+):
+    monkeypatch.setattr(cc.settings, "CLARA_CONSENT_CHANNEL", channel)
+    monkeypatch.setattr(cc.settings, "CLARA_CONVERSATIONAL_SECURITY_ACK", ack)
+    mcp = create_mcp_server()
+    tools = asyncio.new_event_loop().run_until_complete(mcp.list_tools())
+    descriptions = {tool.name: tool.description or "" for tool in tools}
+    instructions = build_clara_mcp_instructions()
+
+    for tool_name in ("execute", "delete"):
+        description = descriptions[tool_name]
+        assert "proposal_pending_confirmation" in description
+        assert "confirmation=true" in description
+        assert ("confirmation_url Portal" in description) is expect_portal
+
+    if expect_portal:
+        assert "Portal V014" in instructions
+        assert "do NOT authorize" in instructions
+    else:
+        assert "No mandatory confirmation_url" in instructions
+        assert "Portal page" in instructions
+        assert "ACTIVE CHANNEL: conversational" in instructions
+        assert "Portal V014 consent" not in instructions
 
 
 def test_mount_path_normalization():
