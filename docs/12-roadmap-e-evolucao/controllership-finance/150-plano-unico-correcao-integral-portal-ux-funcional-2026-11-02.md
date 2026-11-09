@@ -770,3 +770,14 @@ Conforme briefing PO §7 — mais: equivalência de prova declarada honestamente
 ### 20.7 Fora de escopo desta etapa
 
 Implementação, deploy, publicação/inativação/exclusão reais, alteração de fechamentos, drop de migrations, remoção imediata de `ClaraConsentPage` sem cutover.
+
+
+### 20.8 Decisão explícita de produto — seguir padrão conversacional do TÉO (09/11/2026)
+
+**PO_DECISION / TARGET:** o PO escolheu usar na CLARA o mesmo **padrão de interação** do MCP TÉO: apresentar mudança exata na conversa, receber confirmação textual explícita para a proposta identificada e então solicitar a operação pelo MCP. O objetivo é eliminar a obrigatoriedade de navegação para `clara-consent` em **todas as capacidades**, inclusive `version_publish` e `version_inactivate`. O PO rejeitou manter a etapa externa como experiência definitiva. **Não é autorização para executar efeitos produtivos nesta revisão.**
+
+**Benchmark PROVEN:** `transformometro-api/tm_app/interface/mcp/{server.py,tool_bridge_v3.py}`: operações governadas do TÉO geram `proposal_pending_confirmation`, exibem proposta selada e aceitam `proposal_id + confirmation=true` na segunda chamada. `confirmation=true` é argumento enviado pelo cliente/modelo; **não equivale à prova V014 de que o próprio usuário autenticado aprovou o plano**. Preservar esta distinção expressamente nos contratos e na UX.
+
+**DECISION_REQUIRED — Segurança/Plataforma, Controladoria:** aprovar formalmente o nível de garantia alternativo para operações de alto impacto, ou prover atestação de aprovação nativa, antes de remover a exigência V014. A decisão do PO fixa UX e padrão alvo, mas não substitui a autoridade de R-CLARA-01. A arquitetura deve preservar proposta selada (ator/recurso/versão/TTL/plan hash), autorização Core fail-closed, OCC, single-use, auditoria e read-back; nenhum `confirmation=true` isolado pode executar operação sem proposta válida.
+
+**Plano de migração escolhido (TARGET, não aplicado):** 1) comparar TÉO e CLARA por capability, risco e evidência de host; 2) obter aprovação de risco/segurança; 3) versionar política e contratos/migrações forward-only; 4) testar cenário positivo e negativos (confirmação ausente, ator divergente, replay, parâmetros alterados, estado stale, revoked permissions); 5) aplicar em ambiente isolado; 6) validar ChatGPT real e revalidar audit trail; 7) remover redirecionamento como dependência; 8) descontinuar página por gate de compatibilidade, preservando históricos e rollback. `NO_RUNTIME` até gate transversal explícito. Registro canônico de política: doc 124 §8.
