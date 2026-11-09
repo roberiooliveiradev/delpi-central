@@ -97,3 +97,9 @@ DATE / ACTOR / EVIDENCE_REF: …
 ```
 
 Somente após `ACCEPT_*` o Cursor pode armar o canal, republicar schema e executar smoke ChatGPT com `portal_consent_required=false`.
+
+## 7. Atualização da autoridade operacional — decisão expressa do PO / responsável pela área (09/11/2026)
+
+A informação de §6.2 sobre `CONTROLLADORIA_DECISION = AUSENTE` é **histórica e foi superada**: o solicitante identificou-se como **PO, desenvolvedor/coordenador único e responsável pela área** e autorizou expressamente substituir o fluxo obrigatório V014 pelo padrão TÉO da CLARA, com aceite do risco operacional da Controladoria. Registro canônico em [doc 150 §20.16](./150-plano-unico-correcao-integral-portal-ux-funcional-2026-11-02.md) e política doc 124 §10.
+
+**Não reabrir UX ou risco operacional com esse PO.** A competência separada de Segurança/Plataforma não foi demonstrada pela autodeclaração de responsabilidade da área; não forjar sua aprovação. A documentação é decisão de TARGET, não prova de cutover: no último smoke `portal_consent_required=true`, canal `portal`, `conversational_act_armed=false`.
