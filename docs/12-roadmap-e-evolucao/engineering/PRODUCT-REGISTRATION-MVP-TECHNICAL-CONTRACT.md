@@ -442,3 +442,16 @@ Decisão PO 2026-11-09: [adendo normativo D16-REF-01](./PRODUCT-REGISTRATION-D16
 
 **Execução ENG-PRC-REF-017 (DEV):** `verify_and_complete` reforçado — CREATE exige código normalizado; UPDATE rejeita troca (`fields.officialCode=immutable`); `_compare` emite `previous`/`expected`/`observed`; UI ActionBar + VerificationPanel alinhadas. Identidade CREATE além do match integral: **PENDING_OWNER** (contrato api-delpi sem proveniência de criação amarrada ao request). Sem endpoint/MCP novo. Sem write ERP.
 
+
+
+## PRC-REF-019 — Contrato de esclarecimentos do solicitante (2026-11-09)
+
+**PO_APPROVED_TARGET / NOT_IMPLEMENTED.** Jornada, wireframes, matrizes e testes no [PRC-REF-019 consolidado](./MFE-PRODUCT-REGISTRATION-POST-REDESIGN-REFINEMENT-PLAN.md). Owner Engineering API; não mudar sistema de verdade ou import de requests-api/my-requests.
+
+**Reuso comprovado:** POST /requests/{id}/actions/request-information com reason/pendingFields, information_requested, status in_progress|under_review → needs_information, resume → in_progress. Motivo legado permanece interpretável, sem associação de campo inventada.
+
+**Contrato TARGET:** rodada com ID e perguntas individuais por target FIELD path, SUPPLIER_LINK key+attribute ou GENERAL explícito; submissão pelo solicitante autenticado do próprio caso, rascunho e resposta por pergunta, análise/aceite ou pedido de complemento pelo analista, histórico de múltiplas rodadas, aviso por contrato oficial se disponível. Não alterar SB1/SA5 por uma resposta e não retomar automaticamente. Estender REST existente e criar somente rotas faltantes para rounds/list/detail/answer/submit/review, com DTO/erros/AuthZ/CAS/idempotência/migration antes de implementar.
+
+**Segurança:** solicitante só vê o conteúdo público de sua solicitação, sem bandeiras internas ou acesso global engineering.access. Se autorização requester exigir mudança Core: ARCHITECTURE_DECISION_REQUIRED. Notificações dependem de owner Core, com outbox/retry quando contratado; anexos dependem de contrato de armazenamento/scan. Não declarar capacidades ausentes como implementadas.
+
+**EVA:** mesmas Application Use Cases pelo dispatch de seis MCP tools, PREPARE/ACT/live AuthZ, sem responder em nome do solicitante. Testar respostas maliciosas como conteúdo não confiável. Critérios: fluxo analista→solicitante→resposta→avaliação→retomada, rodada de complemento, cruzamento de usuários, persistência/audit e Playwright real DEV; nenhum deploy HML/PROD.
