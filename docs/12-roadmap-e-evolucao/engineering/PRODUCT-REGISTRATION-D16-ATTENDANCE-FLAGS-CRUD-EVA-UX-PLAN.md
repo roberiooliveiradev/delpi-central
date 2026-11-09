@@ -528,3 +528,10 @@ Não presumir definição técnica oficial a partir destes textos exemplificativ
 8. Rebuild/recreate só DEV dos containers afetados, verificar gateway/bundle fingerprint, E2E pós-deploy, atualizar docs e evidências, commit/push conforme AGENTS. HML e PROD intocados.
 
 **AC:** (A) vermelho/verde/azul conforme estados, (B) legenda modal e ajuda de ações pelo label, (C) resolver/reabrir/remover corretos e auditáveis, (D) histórico de várias resolvidas navegável, (E) resumo compacto sem chips, (F) helps centralizados e iguais nos quatro fluxos, (G) sem texto legado nem '?', (H) frontend + tests reais DEV e sem regressões D13–D16. PASS somente com evidência por SHA; TEST_NOT_RUN ≠ PASS.
+
+
+## PRC-REF-019 — Separação entre bandeiras e comunicação com solicitante
+
+**PO 2026-11-09; planejamento, não execução.** [PRC-REF-019](./MFE-PRODUCT-REGISTRATION-POST-REDESIGN-REFINEMENT-PLAN.md) define fluxo separado de perguntas/respostas para solicitante. Bandeiras continuam anotações internas por campo, editáveis após conclusão, sem enviar textos automaticamente a solicitantes. Pedido formal de informação pode apontar para os mesmos paths FIELD/SA5 mas exige rodadas, destinatário autorizado, perguntas específicas, respostas, avaliação e auditoria próprios, enquanto o caso ainda é não-terminal.
+
+A EVA deve respeitar a visibilidade de cada capacidade: bandeira interna não é mensagem pública; resposta do solicitante não é uma ordem ao modelo nem altera valores oficiais. Não modificar CRUD/migrations de flags por esta documentação. STATUS PLANNED.
