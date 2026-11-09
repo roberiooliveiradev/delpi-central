@@ -231,6 +231,7 @@ def test_e3_myweg_90263964_real_mi_op_covers_26_un() -> None:
             "unidade_op": "MI",
             "unidade_produto": "MI",
             "unidade": "MI",
+            "observacao_op": "Liberar primeiro lote.",
             "data_fim_prevista_op": "2026-11-09",
         },
         {
@@ -257,7 +258,12 @@ def test_e3_myweg_90263964_real_mi_op_covers_26_un() -> None:
     assert line["covered_by_orders"] == pytest.approx(0.026)
     assert line["uncovered_quantity"] == pytest.approx(0.0)
     assert line["covering_orders"] == [
-        {"production_order": "11286701001", "quantity": 0.026, "expected_date": "2026-11-09"}
+        {
+            "production_order": "11286701001",
+            "quantity": 0.026,
+            "expected_date": "2026-11-09",
+            "observation": "Liberar primeiro lote.",
+        }
     ]
     assert line["status"] == "late"
     assert line["op_coverage_incomplete"] is False
