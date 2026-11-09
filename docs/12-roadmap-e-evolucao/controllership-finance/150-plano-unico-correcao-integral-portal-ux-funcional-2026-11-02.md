@@ -616,3 +616,9 @@ BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de tes
 - **CF-UX-050 (R04 HTTP 400) → ROOT_CAUSE_FIXED:** defaults Query(...) de sort_by/sort_direction vazavam como objeto para o produtor quando o MCP tool não repassava os parâmetros (regressão G070). Correção canônica na BFF (só str encaminhada) + tool bridge passou a aceitar sort_by/sort_direction. Testes BFF 7/7.
 - **Corpus CLARA:** ficha R04 reescrita (consumption-audit, sort, C2_STATUS, SH8); R09/R12/R15 corrigidas de TARGET_ONLY/not_implemented → IMPLEMENTADO. Corpus republicada: 497ec9af-00d4-4e07-9b64-b96fcc97f3c5 (2.230 itens, 88 fontes).
 - Resíduo: matriz semântica completa R01-R15 e bateria de perguntas por relatório ficam para próximo ciclo; fichas R01–R03/R05–R08/R10/R11/R13/R14 aguardam revisão source→SQL detalhada (doc 152 VERIFY_RUNTIME/OWNER_RULE_PENDING).
+
+## 20. Trilha de auditoria documental — CF-UX-052 / FINR150 e FINR130 (09/11/2026)
+
+- **Achado:** faltam consulta e exportação das posições de títulos a pagar e a receber **em aberto**, no padrão dos anexos privados `A pagar.xlsb` e `A Receber.xlsb`; a página Baixas financeiras cobre eventos de liquidação R01/R02, não as posições. O checklist V2 DRAFT rev.9/16 itens apenas cadastra as entregas.
+- **Trilha de inventário e plano de correção futura:** [doc 158](./158-trilha-auditoria-export-posicoes-titulos-abertos-2026-11-09.md) — verificar produtores/versões FINR150/FINR130, parâmetros, regras ERP SE1/SE2, fidelidade do Excel, contratos, segurança, RQ/AC, homologação e owners.
+- **Estado:** `TO_INVENTORY / PLAN_ONLY / NO_RUNTIME`. Corrigir apenas após auditoria integral do Portal, decisão material e gate transversal. Nenhuma rota, permissão ou runtime alterado.
