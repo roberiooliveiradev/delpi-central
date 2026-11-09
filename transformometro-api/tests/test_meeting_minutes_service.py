@@ -177,6 +177,68 @@ def test_create_send_sign_happy_path_and_invalid_finalize():
         service.finalize(user, "m1")
 
 
+def test_create_rejects_name_only_internal_participants():
+    """TÉO/Portal must not persist display_name-only internals (no user_id)."""
+    repo = FakeRepo()
+    service = MeetingMinutesService(repo)
+    user = SimpleNamespace(
+        id="11111111-1111-1111-1111-111111111111",
+        is_superadmin=True,
+        permissions=[],
+    )
+    with pytest.raises(ValueError, match="user_id"):
+        service.create(
+            user,
+            {
+                "unit_code": "01",
+                "title": "Ata sem vínculo",
+                "meeting_date": "2026-11-03",
+                "participants": [
+                    {
+                        "display_name": "Robério Teixeira de Oliveira",
+                        "must_sign": False,
+                        "role_in_meeting": "other",
+                    }
+                ],
+            },
+        )
+    assert repo.participants == []
+    assert repo.signers == []
+
+
+def test_create_syncs_signers_from_must_sign_participants():
+    repo = FakeRepo()
+    service = MeetingMinutesService(repo)
+    user = SimpleNamespace(
+        id="11111111-1111-1111-1111-111111111111",
+        is_superadmin=True,
+        permissions=[],
+    )
+    created = service.create(
+        user,
+        {
+            "unit_code": "01",
+            "title": "Ata com signatário",
+            "meeting_date": "2026-11-03",
+            "participants": [
+                {
+                    "user_id": "22222222-2222-2222-2222-222222222222",
+                    "display_name": "Joici Motta",
+                    "must_sign": True,
+                },
+                {
+                    "user_id": "33333333-3333-3333-3333-333333333333",
+                    "display_name": "Presença",
+                    "must_sign": False,
+                },
+            ],
+        },
+    )
+    assert len(created["participants"]) == 2
+    assert len(created["signers"]) == 1
+    assert created["signers"][0]["display_name"] == "Joici Motta"
+
+
 def test_content_hash_is_stable():
     payload = ContentHashService.build_version_payload(
         title="Ata",

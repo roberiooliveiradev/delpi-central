@@ -4412,6 +4412,18 @@
   font-weight: 650;
   white-space: nowrap;
 }
+.dashboard-transformometro .tm-ata-editor__unresolved{
+  margin: 12px 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--ds-warning-fg, #b45309) 35%, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-warning-fg, #b45309) 8%, var(--ds-card-bg));
+}
+.dashboard-transformometro .tm-ata-editor__unresolved > p{
+  margin: 0 0 10px;
+  font-size: var(--ds-font-sm);
+  color: var(--ds-text);
+}
 .dashboard-transformometro .tm-ata-editor__grid{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

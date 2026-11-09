@@ -5,6 +5,10 @@ from typing import Any
 
 from tm_app.application.services.content_hash_service import ContentHashService
 from tm_app.application.services.html_sanitizer import TmAtaHtmlSanitizer
+from tm_app.application.services.meeting_minute_participants import (
+    derive_signers_from_participants,
+    normalize_participants,
+)
 from tm_app.application.services.meeting_minute_write_fields import (
     normalize_minute_create_fields,
     normalize_minute_update_fields,
@@ -123,22 +127,10 @@ class MeetingMinutesService:
             return
         signers = payload.get("signers")
         if signers is None:
-            signers = []
-            for index, item in enumerate(payload.get("participants") or []):
-                if not item.get("must_sign") or not item.get("display_name"):
-                    continue
-                user_id = item.get("user_id")
-                invite_email = str(item.get("invite_email") or "").strip() or None
-                if not user_id and not invite_email:
-                    continue
-                signers.append(
-                    {
-                        "user_id": user_id,
-                        "invite_email": invite_email,
-                        "display_name": item["display_name"],
-                        "sign_order": index + 1,
-                    }
-                )
+            # Fail closed: never silently drop must_sign rows without identity.
+            signers = derive_signers_from_participants(
+                list(payload.get("participants") or [])
+            )
         if any(
             not item.get("display_name")
             or (not item.get("user_id") and not str(item.get("invite_email") or "").strip())
@@ -179,10 +171,20 @@ class MeetingMinutesService:
         header["content_hash"] = self._hash(header, content)
         minute = self.repo.create_minute(**header)
         minute_id = str(minute["id"])
-        if payload.get("participants"):
-            self.repo.replace_participants(minute_id, unit, payload["participants"], header["created_by_user_id"])
-        if "signers" in payload or payload.get("participants"):
-            self._sync_signers(user, minute_id, payload)
+        participants = (
+            normalize_participants(payload.get("participants"))
+            if "participants" in payload
+            else []
+        )
+        if participants:
+            self.repo.replace_participants(
+                minute_id, unit, participants, header["created_by_user_id"]
+            )
+        sync_payload = dict(payload)
+        if "participants" in payload:
+            sync_payload["participants"] = participants
+        if "signers" in payload or participants:
+            self._sync_signers(user, minute_id, sync_payload)
         return self.get_detail(user, minute_id)
 
     def update(self, user: Any, minute_id: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -210,12 +212,18 @@ class MeetingMinutesService:
                 content_hash=self._hash(minute, content),
                 **content,
             )
+        sync_payload = dict(payload)
         if "participants" in payload:
+            participants = normalize_participants(payload.get("participants") or [])
             self.repo.replace_participants(
-                minute_id, str(minute["unit_code"]), payload["participants"] or [], self._user_id(user)
+                minute_id,
+                str(minute["unit_code"]),
+                participants,
+                self._user_id(user),
             )
+            sync_payload["participants"] = participants
         if "signers" in payload or "participants" in payload:
-            self._sync_signers(user, minute_id, payload)
+            self._sync_signers(user, minute_id, sync_payload)
         return self.get_detail(user, minute_id)
 
     def create_version(self,user: Any,minute_id: str,payload: dict[str,Any]) -> dict[str,Any]:

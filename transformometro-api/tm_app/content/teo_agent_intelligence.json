@@ -305,6 +305,7 @@
     "rules": [
       "Search miss != proof of absence.",
       "Atas: search via gpt_record_read action=search entity=meeting_minute — NUNCA inventar gpt_meeting_minute_read para busca.",
+      "Atas/participantes: NUNCA gravar participants internos só com display_name. Internos exigem user_id (UUID Delpi); must_sign=true exige user_id ou invite_email. Nome sem vínculo não vira signatário.",
       "Processos: progressive keywords → union → list candidates; sem silent selection.",
       "Referência deítica (este processo / revisão atual / essa melhoria / o que estou vendo) sem IDs explícitos → get_context primeiro. ACTIVE → usar refs + read (leitura autoritativa). STALE/ABSENT → informar workspace indisponível, pedir o processo. AMBIGUOUS → uma pergunta discriminativa. NUNCA inferir processo por recência nem busca silenciosa.",
       "Referência explícita do usuário (nome/ID de processo) prevalece sobre o contexto ambiente do workspace.",
@@ -795,6 +796,7 @@
     "Inventar operationId / tool name (ex.: gpt_meeting_minute_read para search).",
     "Alegar Actions/MCP indisponíveis sem tentar neste turno.",
     "Usar evidence/meeting-minutes prepare ops para busca de atas (search via gpt_record_read action=search entity=meeting_minute).",
+    "Criar ata com participants internos só com nome (sem user_id) — falha de validação e impede Assina no Portal.",
     "Inventar proposal_handle (latest/current/null).",
     "Re-preparar mudança idêntica já confirmada quando proposal_id está disponível (execute aceita proposal_id).",
     "Tratar confirmation conversacional como AuthZ.",

@@ -6,9 +6,11 @@ import {
   NativeTextControl,
   parseDocxPreview,
   RichTextEditor,
+  SectionHintLabel,
   UserDirectoryPicker,
   type DirectoryUserOption,
 } from "@delpi/plugin-ui/index";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   ArrowLeft,
   Clock3,
@@ -42,31 +44,21 @@ import {
 import { createHttpMeetingMinuteGenerationPort } from "../../ai/httpMeetingMinuteGenerationPort";
 import { mergeAtaContentHtml, splitAtaContentForSave } from "../meeting-minutes/meetingMinuteContent";
 import { ATA_MEETING_TYPE_LABELS } from "../meeting-minutes/meetingMinuteLabels";
+import {
+  draftFromDirectoryUser,
+  hydrateParticipantsFromDetail,
+  isSigner,
+  nextParticipantClientKey,
+  type ParticipantDraft,
+} from "../meeting-minutes/meetingMinuteParticipants";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   ataId?: string;
   onNavigate: (path: string) => void;
 };
 
-type ParticipantDraft = {
-  user_id?: string;
-  display_name: string;
-  role_in_meeting: string;
-  must_sign: boolean;
-  is_external: boolean;
-  invite_email?: string;
-};
-
 type EditorMode = "fill" | "import";
 type PostSaveState = { id: string } | null;
-
-function isSigner(item: ParticipantDraft): boolean {
-  if (!item.must_sign || !item.display_name.trim()) return false;
-  if (item.is_external) {
-    return Boolean(item.invite_email?.trim() && item.invite_email.includes("@"));
-  }
-  return Boolean(item.user_id);
-}
 
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
@@ -119,25 +111,7 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
         setLocation(String(m.location ?? ""));
         setContentHtml(mergeAtaContentHtml(v as Parameters<typeof mergeAtaContentHtml>[0]));
         setParticipants(
-          detail.participants.map((item) => {
-            const name = String(item.display_name ?? "");
-            const userId = item.user_id ? String(item.user_id) : undefined;
-            const matchingSigner = detail.signers.find((signer) => {
-              if (userId && String(signer.user_id ?? "") === userId) return true;
-              if (!userId && String(signer.display_name ?? "") === name) return true;
-              return false;
-            });
-            return {
-              user_id: userId,
-              display_name: name,
-              role_in_meeting: String(item.role_in_meeting ?? "participant"),
-              must_sign: Boolean(item.must_sign),
-              is_external: Boolean(item.is_external),
-              invite_email: matchingSigner?.invite_email
-                ? String(matchingSigner.invite_email)
-                : undefined,
-            };
-          }),
+          hydrateParticipantsFromDetail(detail.participants, detail.signers),
         );
         setCurrentId(String(detail.minute.id));
       })
@@ -153,7 +127,7 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
   );
 
   const directoryUsers: DirectoryUserOption[] = participants
-    .filter((item) => item.user_id && !item.is_external)
+    .filter((item) => item.user_id && !item.is_external && !item.unresolved_identity)
     .map((item) => ({
       id: item.user_id!,
       name: item.display_name,
@@ -161,7 +135,14 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
     }));
 
   const internalPeople = useMemo(
-    () => participants.filter((item) => !item.is_external),
+    () =>
+      participants.filter(
+        (item) => !item.is_external && !item.unresolved_identity && item.user_id,
+      ),
+    [participants],
+  );
+  const unresolvedPeople = useMemo(
+    () => participants.filter((item) => Boolean(item.unresolved_identity)),
     [participants],
   );
   const externalPeople = useMemo(
@@ -172,22 +153,28 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
 
   function onDirectoryChange(users: DirectoryUserOption[]) {
     const externals = participants.filter((item) => item.is_external);
+    const unresolved = participants.filter((item) => item.unresolved_identity);
     const previousById = new Map(
       participants
-        .filter((item) => item.user_id && !item.is_external)
+        .filter((item) => item.user_id && !item.is_external && !item.unresolved_identity)
         .map((item) => [item.user_id!, item]),
     );
+    const previousByName = new Map(
+      unresolved.map((item) => [item.display_name.trim().toLowerCase(), item]),
+    );
+    const linkedKeys = new Set<string>();
+    const linked = users.map((user) => {
+      const previous =
+        previousById.get(user.id) ??
+        previousByName.get((user.name || user.email || "").trim().toLowerCase());
+      if (previous?.unresolved_identity) {
+        linkedKeys.add(previous.client_key);
+      }
+      return draftFromDirectoryUser(user, previous);
+    });
     setParticipants([
-      ...users.map((user) => {
-        const previous = previousById.get(user.id);
-        return {
-          user_id: user.id,
-          display_name: user.name || user.email,
-          role_in_meeting: previous?.role_in_meeting ?? "participant",
-          must_sign: previous?.must_sign ?? true,
-          is_external: false,
-        };
-      }),
+      ...linked,
+      ...unresolved.filter((item) => !linkedKeys.has(item.client_key)),
       ...externals,
     ]);
     setError(null);
@@ -202,6 +189,7 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
     setParticipants((prev) => [
       ...prev,
       {
+        client_key: nextParticipantClientKey("ext"),
         display_name: externalName.trim(),
         role_in_meeting: "guest",
         must_sign: externalMustSign,
@@ -278,13 +266,20 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
     const signers = participants.filter(isSigner);
     if (!signers.length) {
       setError(
-        "Inclua ao menos um signatário (usuário Delpi ou convidado externo com e-mail).",
+        unresolvedPeople.length
+          ? "Há pessoas só com nome (sem vínculo Delpi). Busque-as no diretório Minha Delpi e marque Assina, ou adicione convidado externo com e-mail."
+          : "Inclua ao menos um signatário (usuário Delpi ou convidado externo com e-mail).",
       );
       return null;
     }
     setSaving(true);
     setError(null);
     try {
+      // Persist only identity-bearing participants — unresolved name-only
+      // rows cannot become signers and would fail backend validation.
+      const persistableParticipants = participants.filter(
+        (item) => !item.unresolved_identity,
+      );
       const payload = {
         unit_code: unitCode,
         title: title.trim(),
@@ -294,7 +289,7 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
         end_time: endTime || null,
         location: location.trim() || null,
         ...splitAtaContentForSave(contentHtml),
-        participants,
+        participants: persistableParticipants,
         signers: signers.map((item, index) => ({
           user_id: item.user_id || null,
           invite_email: item.invite_email || null,
@@ -567,7 +562,11 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
           <header className="tm-ata-editor__section-head">
             <div>
               <h2>
-                <Users size={18} aria-hidden /> Quem assina
+                <Users size={18} aria-hidden />{" "}
+                <SectionHintLabel
+                  label="Quem assina"
+                  hint={TM_HELP_TOOLTIPS.meetingMinutes.quemAssina}
+                />
               </h2>
               <p className="ds-muted">
                 Busque pessoas do Minha Delpi. Por padrão, quem você adicionar assina a ata.
@@ -591,10 +590,40 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
             }}
           />
 
+          {unresolvedPeople.length > 0 ? (
+            <div className="tm-ata-editor__unresolved" role="status">
+              <p>
+                {unresolvedPeople.length} pessoa(s) constam só com nome (sem vínculo Delpi) — em
+                geral vindas do TÉO. Elas <strong>não contam como signatárias</strong>. Busque o
+                mesmo nome no diretório acima para vincular e marcar Assina.
+              </p>
+              <ul className="tm-ata-editor__people">
+                {unresolvedPeople.map((item) => (
+                  <li key={item.client_key} className="tm-ata-editor__person">
+                    <div className="tm-ata-editor__person-main">
+                      <strong>{item.display_name}</strong>
+                      <span className="ds-muted">Sem vínculo · não assina</span>
+                    </div>
+                    <ActionButton
+                      variant="link"
+                      onClick={() =>
+                        setParticipants((prev) =>
+                          prev.filter((row) => row.client_key !== item.client_key),
+                        )
+                      }
+                    >
+                      Remover
+                    </ActionButton>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
           {internalPeople.length > 0 ? (
             <ul className="tm-ata-editor__people">
               {internalPeople.map((item) => (
-                <li key={item.user_id} className="tm-ata-editor__person">
+                <li key={item.client_key} className="tm-ata-editor__person">
                   <div className="tm-ata-editor__person-main">
                     <strong>{item.display_name}</strong>
                     <NativeCheckboxControl
@@ -602,7 +631,9 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
                       onChange={(checked) =>
                         setParticipants((prev) =>
                           prev.map((row) =>
-                            row.user_id === item.user_id ? { ...row, must_sign: checked } : row,
+                            row.client_key === item.client_key
+                              ? { ...row, must_sign: checked }
+                              : row,
                           ),
                         )
                       }
@@ -612,7 +643,9 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
                   <ActionButton
                     variant="link"
                     onClick={() =>
-                      setParticipants((prev) => prev.filter((row) => row.user_id !== item.user_id))
+                      setParticipants((prev) =>
+                        prev.filter((row) => row.client_key !== item.client_key),
+                      )
                     }
                   >
                     Remover
@@ -657,8 +690,8 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
             </div>
             {externalPeople.length > 0 ? (
               <ul className="tm-ata-editor__people tm-ata-editor__people--external">
-                {externalPeople.map((item, index) => (
-                  <li key={`ext-${index}-${item.display_name}`} className="tm-ata-editor__person">
+                {externalPeople.map((item) => (
+                  <li key={item.client_key} className="tm-ata-editor__person">
                     <div className="tm-ata-editor__person-main">
                       <strong>{item.display_name}</strong>
                       <span className="ds-muted">
@@ -669,20 +702,11 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
                     </div>
                     <ActionButton
                       variant="link"
-                      onClick={() => {
-                        let seen = 0;
+                      onClick={() =>
                         setParticipants((prev) =>
-                          prev.filter((row) => {
-                            if (!row.is_external) return true;
-                            if (seen === index) {
-                              seen += 1;
-                              return false;
-                            }
-                            seen += 1;
-                            return true;
-                          }),
-                        );
-                      }}
+                          prev.filter((row) => row.client_key !== item.client_key),
+                        )
+                      }
                     >
                       Remover
                     </ActionButton>
@@ -730,7 +754,9 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
           <div className="tm-ata-editor__footer-meta ds-muted">
             {signerCount > 0
               ? `${signerCount} pessoa(s) vão assinar`
-              : "Selecione ao menos um signatário para salvar"}
+              : unresolvedPeople.length > 0
+                ? "Vincule os nomes ao diretório Delpi (ou adicione externo com e-mail) para salvar"
+                : "Selecione ao menos um signatário para salvar"}
           </div>
           <div className="tm-ata-editor__footer-actions">
             <ActionButton onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.atas)}>

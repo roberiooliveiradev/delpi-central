@@ -562,6 +562,11 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                     "meeting_date MUST be YYYY-MM-DD (not DD/MM/AAAA).",
                     "start_time/end_time: HH:MM or HH:MM:SS (not 14h30).",
                     "Optional UUIDs: omit or null — never send empty string \"\".",
+                    "participants[]: INTERNAL rows REQUIRE user_id (Delpi UUID) + "
+                    "display_name. NEVER send name-only internals — they cannot sign "
+                    "and fail validation. must_sign=true requires user_id OR "
+                    "invite_email (external). Presence-only guests: is_external=true, "
+                    "must_sign=false. Prefer explicit signers[] when defining who signs.",
                     "WORKFLOW + manage writes send/finalize/cancel/resend/create_version/"
                     "set_participants/set_signers: gpt_prepare_meeting_minute_change (PREPARE) "
                     "→ gpt_commit_proposal — not generic record update. resend requires "

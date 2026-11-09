@@ -519,4 +519,10 @@ export const TM_HELP_TOOLTIPS = {
     naturezaLegenda:
       "INFORMADO: registrado na referência. PROPOSTO: cenário ainda não realizado. CALCULADO: derivado automaticamente.",
   },
+  meetingMinutes: {
+    quemAssina:
+      "Só conta como signatário quem tem vínculo Delpi (busca no diretório) ou convidado externo com e-mail. Nome digitado sem vínculo — inclusive atas criadas pelo TÉO só com nomes — aparece como aviso e não libera o salvamento até você vincular a pessoa.",
+    assinaCheckbox:
+      "Marque Assina para incluir a pessoa na lista de assinaturas. Internos precisam estar no diretório; externos precisam de e-mail válido.",
+  },
 } as const;
