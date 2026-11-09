@@ -454,6 +454,41 @@ def preview_safety_stock_shortage_30d(
 
 
 @router.get(
+    "/providers/safety_stock_shortage_30d/pcp-pendencies",
+    operation_id="get_pcp_stock_rupture_pendencies",
+)
+def get_pcp_stock_rupture_pendencies(
+    request: Request,
+    branch: Annotated[str, Query(pattern="^(01|02)$")],
+    horizonDays: Annotated[int, Query(ge=1, le=30)] = 30,
+):
+    """S2S para o PCP: reutiliza o cálculo oficial, sem liberar Reports no navegador.
+
+    A autenticação da filial e a permissão de leitura do PCP são verificadas no
+    BFF antes desta chamada. Esta rota só aceita token interno de serviço.
+    """
+    if not request_has_valid_internal_service_token(request):
+        return error_response("Token de serviço interno inválido.", status_code=403)
+    try:
+        data = build_preview_safety_stock_shortage_30d_use_case().execute({
+            "branch": branch,
+            "horizonDays": horizonDays,
+            "includeBlocked": False,
+            "includeWithoutSafetyStock": True,
+        })
+        return api_delpi_success(
+            data,
+            operation_id="get_pcp_stock_rupture_pendencies",
+            message="Rupturas projetadas para o PCP consultadas com sucesso.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro interno ao consultar rupturas PCP: {exc}")
+        return error_response("Rupturas de estoque indisponíveis.", status_code=500)
+
+
+@router.get(
     "/providers/management_revenue_monthly/preview",
     operation_id="preview_report_provider_management_revenue_monthly",
 )
