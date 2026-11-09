@@ -631,3 +631,12 @@ O PO aprovou nova apresentação **sem duplicar código/loja/razão social**: co
 
 **Status:** EXECUTED_DEV / PENDING_OWNER (proveniência CREATE) / PENDING_TOTVS_OPERATOR (homologação positiva CREATE real) / PLAYWRIGHT_VERIFY_DIALOG_SKIPPED.
 
+
+
+## PRC-REF-018 — Estados contextuais das bandeiras e helps pelo próprio label
+
+**Decisão PO 2026-11-09 / implementação pendente.** [Especificação detalhada e wireframes REF-018 no D16](./PRODUCT-REGISTRATION-D16-ATTENDANCE-FLAGS-CRUD-EVA-UX-PLAN.md). A Ficha técnica mostrará **Flag azul** contextual se nenhum acompanhamento existe, **Flag vermelha** persistente quando há OPEN e **Flag verde** discreta persistente quando só há RESOLVED. Com OPEN e RESOLVED históricas, vermelho tem prioridade. A verde indica exclusivamente acompanhamento resolvido, não aprovação do produto ou confirmação TOTVS. Ícones de ação no modal: Flag verde + Resolver, Flag vermelha + Reabrir, Pencil + Editar, Trash2 + Remover; legenda textual de estados no modal. Históricos múltiplos navegáveis no mesmo campo; uma OPEN por alvo; 409 em reabertura concorrente. O cabeçalho deve manter contagens compactas sem chips de títulos nem botão Ocultar/Mostrar resolvidas.
+
+**Helps:** retirar da Ficha técnica os textos B1_..., A5_... e legado; em todos os fluxos CREATE, UPDATE, Ficha técnica e Verificação TOTVS, usar um catálogo canônico de label + ajuda funcional, aproveitando primeiro o registry existente (Abstraction Gate). O help abre no **próprio label** por hover/focus e por toque/clique em mobile, sem ícone '?' ou circle-help. A ajuda dos botões também pertence ao próprio label e segue o kit oficial; a Flag é acionador separado. A EVA não usa texto UI como authority. Responsividade, a11y, zoom200, Playwright 3 viewports, screenshots, auto-review, testes no SHA, deploy apenas DEV e docs obrigatórios. Nenhum novo SoT/MCP tool/endpoint sem contrato.
+
+**Status:** PO_APPROVED_TARGET / IMPLEMENTATION_PENDING / PRODUCTION_NOT_AUTHORIZED.
