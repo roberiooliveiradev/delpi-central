@@ -167,6 +167,48 @@ def test_open_production_orders_cover_what_stock_does_not() -> None:
     assert line.status == STATUS_COVERED_BY_ORDER
 
 
+def test_op_observation_is_carried_only_for_the_allocated_order() -> None:
+    """#1547: C2_OBS permanece na OP correta, sem campo vazio no payload."""
+    lines = DemandCoverageService(today=TODAY).build(
+        open_sales_orders=[_line(saldo=60.0, no_estoque=0.0)],
+        open_production_orders=[
+            _op(
+                numero_op="OP-A",
+                saldo_op=20.0,
+                data_fim_prevista_op="2026-08-22",
+                observacao_op="  Priorizar corte para WEG.  ",
+            ),
+            _op(
+                numero_op="OP-B",
+                saldo_op=40.0,
+                data_fim_prevista_op="2026-08-23",
+                observacao_op="",
+            ),
+            _op(
+                numero_op="OP-NAO-USADA",
+                saldo_op=30.0,
+                data_fim_prevista_op="2026-08-30",
+                observacao_op="Não mostrar esta observação.",
+            ),
+        ],
+    )
+    actual = lines[0].covering_orders
+    assert actual == [
+        {
+            "production_order": "OP-A",
+            "quantity": 20.0,
+            "expected_date": "2026-08-22",
+            "observation": "Priorizar corte para WEG.",
+        },
+        {
+            "production_order": "OP-B",
+            "quantity": 40.0,
+            "expected_date": "2026-08-23",
+        },
+    ]
+    assert lines[0].to_dict(TODAY)["covering_orders"] == actual
+
+
 def test_order_finishing_after_due_date_keeps_line_at_risk() -> None:
     lines = DemandCoverageService(today=TODAY).build(
         open_sales_orders=[_line(saldo=60.0, no_estoque=0.0, data_entrega="2026-08-25")],
