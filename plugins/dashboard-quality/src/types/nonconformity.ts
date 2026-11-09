@@ -60,3 +60,25 @@ export type NonconformitySeriesResponse = {
   truncated: boolean;
   points: NonconformitySeriesPoint[];
 };
+
+/** Ranking no período filtrado; não depende da paginação de Registros. */
+export type NcOperatorRankingResponse = {
+  ranking: Array<{
+    operator_code: string;
+    operator_name: string;
+    total_ncs: number;
+    main_defect: string;
+  }>;
+  operators: Array<{
+    operator_code: string;
+    operator_name: string;
+  }>;
+  detail: {
+    operator_code: string;
+    operator_name: string;
+    total_ncs: number;
+    defect_types_count: number;
+    defects: Array<{ description: string; count: number }>;
+  } | null;
+  total_operators: number;
+};
