@@ -545,6 +545,7 @@ Traces `source→OCR→SLANet→understanding→comparison→report→MCP/UI`; c
 6. Exibir relatório final separado por `LEGACY_RECOVERY, FUNCTIONAL_REPORT, OCR/SLANET_REGRESSION, OFFICIAL_COMPARISON, MCP_E2E, PORTAL_UI, DEPLOY_SHA/DIGEST, ENGINEERING_GT_PENDING, RESIDUALS`.
 7. Se legado inacessível, declarar `LEGACY_REFERENCE_UNAVAILABLE` e ainda entregar a experiência candidata compatível com as fontes atuais. Se uma authority real bloquear uma operação específica, continuar o restante sem fabricar sucesso.
 8. O objetivo é **entregar o relatório utilizável em produção**, não mais um documento descrevendo por que o projeto não avançou. Porém nenhum executor pode conceder a si próprio aprovação técnica ou de produção fora das políticas vigentes.
+9. Correção da VAL-01 destinada à produção só encerra o ciclo com testes pré-deploy, deploy canônico e validação no runtime pelo consumidor autorizado. Commit sem deploy é entrega parcial. Deploy sem essa validação fica pendente de aceite. Falha de segurança, contrato, integridade ou regressão crítica impede o deploy. Esta regra não cria publicação automática a cada commit.
 
 ## B.7 RQ/AC de produto para a task única de implementação
 

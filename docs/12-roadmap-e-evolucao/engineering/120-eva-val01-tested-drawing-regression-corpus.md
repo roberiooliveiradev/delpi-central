@@ -334,3 +334,25 @@ Fixtures reais: 90264004 (A7/A8 descrição→código) e 90264017 (F/G/K). Prova
 | `90264004` | `5b6717dfa7b8dcdc18f81b4657e1dcdf3410b9af42c8cf3109214df2f66719f4` | 1 | `TEST_NOT_RUN` | A2 não recebe `CHICOTE DE LIGACAO`; A7 descrição não vira código; A9 não cruza grupo | `TEST_NOT_RUN` |
 
 Holdouts do Doc 120 não foram usados para ajustar a regra. Ausência de divergência com BOM não foi medida. `FALSE_PROMOTED` na fixture focal = 0 para G/9 e para a descrição de grupo. Precisão de campo sem ground truth da Engenharia: não declarada. `VAL01_COMPLETED=false`.
+
+## Log adicional — 2026-11-09 (DEC-VAL-040 — corpus oficial no código `adceb6b5fa`)
+
+Execução read-only no acervo `/mnt/fileserver/desenhos`, container descartável com teto de 5 GiB, pipeline PDFium + PaddleOCR + SLANet + `rows_from_native_cells` do commit `adceb6b5fa`. Os 13 SHAs conferem com este índice. `90264004` e `90264017` são o conjunto usado para diagnosticar a classe; os outros 11 são holdout e não ajustaram a regra. Não há ground truth aprovado pela Engenharia para precisão de campo: a coluna de precisão permanece não declarada. `false_g9` é a tupla completa G/9/`10110676`. `chicote_item` é descrição de conjunto publicada em linha que tem item.
+
+| Produto | Papel | OCR | Tokens | Células SLANet | Linhas | Conflitos | false_g9 | chicote_item | Precisão |
+|---|---|---|---:|---:|---:|---:|---:|---:|---|
+| `90264302` | holdout | FULL 1/1 | 92 | 65 | 5 | 0 | 0 | 0 | não declarada |
+| `90264161` | holdout | FULL 1/1 | 126 | 62 | 7 | 0 | 0 | 0 | não declarada |
+| `90263520` | holdout | FULL 1/1 | 170 | 124 | 15 | 2 | 0 | 0 | não declarada |
+| `90261606` | holdout | FULL 1/1 | 178 | 65 | 8 | 2 | 0 | 0 | não declarada |
+| `90263572` | holdout | FULL 2/2 | 386 | 256 | 45 | 7 | 0 | 0 | não declarada |
+| `90264178` | holdout | FULL 1/1 | 245 | 205 | 30 | 1 | 0 | 0 | não declarada |
+| `90480120` | holdout | FULL 2/2 | 207 | 85 | 10 | 0 | 0 | 0 | não declarada |
+| `90264004` | desenvolvimento | FULL 1/1 | 172 | 80 | 12 | 0 | 0 | 0 | não declarada |
+| `90264014` | holdout | FULL 1/1 | 149 | 90 | 9 | 2 | 0 | 0 | não declarada |
+| `90264017` | desenvolvimento | FULL 14/14 | 1852 | 737 | 94 | 5 | 0 | 0 | não declarada |
+| `90264030` | holdout | FULL 13/13 | 1573 | 653 | 77 | 4 | 0 | 0 | não declarada |
+| `90264043` | holdout | FULL 1/1 | 155 | 107 | 15 | 0 | 0 | 0 | não declarada |
+| `90264050` | holdout | FULL 2/2 | 151 | 57 | 5 | 1 | 0 | 0 | não declarada |
+
+Grades nativas inconsistentes, não usadas para substituir linhas: `90264017` página 11 e `90264030` página 9. Tempo somado da bateria: cerca de 318 s. `ru_maxrss` final do processo: 511248 KB. Nenhum dos 13 reproduziu a tupla falsa G/9/`10110676` nem promoveu `CHICOTE` a descrição de item. A imagem depois implantada é `sha256:1fded63c13df79d06009f6a28f6161c0aa2ad28ffd793f32f72b22e857f79bef` (git `0e452c20dc`). Job MCP autenticado desta rodada: `CONSUMER_MCP_ACCEPTANCE=PENDING`.

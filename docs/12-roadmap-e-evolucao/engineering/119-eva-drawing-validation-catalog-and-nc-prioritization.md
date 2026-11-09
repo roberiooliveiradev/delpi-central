@@ -1508,3 +1508,31 @@ Não criar nova source of truth, banco, serviço ou MFE; não fazer import entre
 **Prova local:** `tests/test_association_integrity_dec040.py` mais `test_table_perception_native.py`, `test_slanet_document_integrity.py`, `test_drawing_investigation_r12.py` (77) e `test_drawing_object_profiles_r11_1.py` (16). Na fixture da página 9: E/2/10091368, F/9/10110676, G/3/10110679, K/2/10130020 quando o código está na mesma banda; nenhuma tupla G/9/10110676. A2 fica com `ETIQUETA ACETATO DE RAYON T2/V1`. A5 acompanha o token quando ele existe. A9 de `50225478` não herda o código de `50225479`.
 
 **Residuais e bloqueio de deploy:** o PDF oficial não está neste workspace; corpus dos 13 desenhos, holdout, integração no motor SLANet/OCR e job MCP autenticado ficam `TEST_NOT_RUN`. A1 continua sem código quando a célula não traz o token — não se inventa `10110081`. Código de A9 sob `50225478` só entra se a célula existir; ausência não copia o outro grupo. Sem esses gates, **não houve deploy**.
+
+## 52. DEC-VAL-040 — Deploy produtivo e validação de runtime (2026-11-09)
+
+**TASK_ID:** `EVA-VAL01-DEC040-PRODUCTION-DEPLOY-AND-MCP-VALIDATION`. Esta seção não substitui a §51. `ENGINEERING_APPROVAL=NOT_APPROVED`. `VAL01_COMPLETED=false`. `BOM_RELATION_PROVEN=false`.
+
+**Regra permanente da VAL-01:** correção destinada à produção inclui, na mesma entrega, testes pré-deploy, deploy canônico e validação no runtime produtivo pelo consumidor autorizado. Commit sem deploy é entrega parcial. Deploy sem validação funcional permanece pendente de aceite. A regra não autoriza deploy que falhe em segurança, contrato, integridade ou regressão crítica, nem automação que publique qualquer commit.
+
+**Código e runtime:**
+- Commit da correção: `adceb6b5fa67cbe2cf23fcbbfe47162ac28e831e`.
+- Git implantado: `0e452c20dc68b84280f673d6f92c4dea8597b705` (contém o commit da correção). Os commits entre os dois SHAs são o cadastro D15. Commits posteriores no `main`, até a conferência `dc491abd1e`, não alteram `engineering_app/application/drawing/`.
+- Imagem: `sha256:1fded63c13df79d06009f6a28f6161c0aa2ad28ffd793f32f72b22e857f79bef`. Container `delpi-engineering-api` criado em `2026-11-09T12:07:28Z`, health `healthy`, `GET /health` → `{"status":"online","service":"engineering-api"}`. O arquivo em execução contém `association_conflict`.
+- Rollback preservado e não utilizado: tag `infra-engineering-api:pre-dec040-adceb6b5-rollback` = `sha256:d2408fdf149c53843fc4fe458af6ebb4b590f9170a1713978e359e756a071dd7`.
+- Procedimento: `git pull --ff-only` e `./infra/scripts/up-prod-sequential.sh --build engineering-api` em `srv-api`. Sem `docker cp` e sem edição no container.
+
+**Acesso aos PDFs:** os arquivos oficiais estão em `/mnt/fileserver/desenhos`, o volume read-only que a API já monta. SHA conferido no arquivo. A execução foi um container descartável da imagem de engenharia, teto 5 GiB, modelos em `/opt/ocr-models:ro`. Nenhum PDF foi copiado para o Git. `GET /v1/products/90264004/drawing/pdf` e `POST /mcp` sem identidade retornam `401`.
+
+**Integração `90264004`** (SHA `5b6717df…19f4`, OCR FULL 1/1, 172 tokens, SLANet 60 células de tabela + 20 de carimbo). Repetida na imagem implantada, sem bind do código:
+- A2 = `10110082` / `ETIQUETA ACETATO DE RAYON T2/V1`. `CHICOTE DE LIGACAO` não virou descrição de item.
+- A7 `10110092` e A8 `10110093` preservados, com descrição de etiqueta.
+- A5 = `10110088`, quantidade 1. A1 = `10110081` porque a célula existia.
+- `50225478`: quantidade 2 / `10080065` e AA quantidade 2 / `10400035`. `50225479`: quantidade 6 / `10080065` e AA quantidade 6 / `10400035`.
+- Residual: o item `A9` não foi publicado. Não há token limpo `A9`; no segundo grupo a célula ambígua mistura `A9` com outro texto. A5–A8 ficam `INCONCLUSIVE` porque o SLANet marcou a célula de origem como ambígua, embora os quatro campos estejam `FIELD_IDENTIFIED` e corretos.
+
+**Integração `90264017`** (SHA `5452aabd…32ee`, OCR FULL 14/14, 1852 tokens). Página 9: C/6/`10081389`, D/3/`10081685`, E/2/`10091368`, F/9/`10110676`, G/3/`10110679`, K/2/`10130020`. A tupla G/9/`10110676` não aparece. Conflitos de banda ficam em `conflicting_fields` com `association_conflict`. Página 11 com `structure_consistent=false` não substitui a grade nativa. `FALSE_PROMOTED_ASSOCIATIONS=0` para a classe G/9 e para descrição de conjunto em item.
+
+**Corpus, contrato, segurança e recurso:** bateria dos 13 PDFs na Doc 120 deste mesmo dia. Pytest local: 93 passed (`test_association_integrity_dec040.py`, `test_table_perception_native.py`, `test_slanet_document_integrity.py`, `test_drawing_investigation_r12.py`, `test_drawing_object_profiles_r11_1.py`). Os 11 desenhos fora de `90264004`/`90264017` não ajustaram a regra. Precisão de campo sem ground truth aprovado pela Engenharia: não declarada. Container único, sequencial, teto 5 GiB, conclusão 0; o serviço produtivo permaneceu no ar.
+
+**MCP consumidor:** `CONSUMER_MCP_ACCEPTANCE=PENDING`. Este executor não tem sessão MCP autenticada nem token de usuário. Não houve job novo e a identidade não foi simulada. O aceite funcional completo continua pendente de verificação independente em `product.drawing_understanding` para `90264004` e `90264017`.
