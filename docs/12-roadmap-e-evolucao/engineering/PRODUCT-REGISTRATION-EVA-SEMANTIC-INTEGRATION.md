@@ -231,3 +231,10 @@ Ver [adendo D16-REF-01](./PRODUCT-REGISTRATION-D16-ATTENDANCE-FLAGS-CRUD-EVA-UX-
 ## PRC-REF-017 — EVA: paridade CREATE/UPDATE verify-and-complete
 
 A ação semântica `product_registration.verify_and_complete` continua a única via EVA de conclusão. CREATE: PREPARE/ACT devem receber `official_code` informado pelo analista (código gerado no TOTVS); a EVA não inventa código. UPDATE: código baseline da solicitação; troca arbitrária rejeitada pelo mesmo use case REST (`officialCode` immutable). Divergências campo a campo (`field_results` com previous/expected/observed) bloqueiam `completed` e permanecem consultáveis. Sem tool MCP adicional; sem write ERP. **Status:** IMPLEMENTED_DEV (mesmo `verify_and_complete` + testes `test_prc_eva_parity`).
+
+
+## PRC-REF-019 — EVA e rodadas de informações ao solicitante
+
+**TARGET / NOT_IMPLEMENTED.** Ver [PRC-REF-019](./MFE-PRODUCT-REGISTRATION-POST-REDESIGN-REFINEMENT-PLAN.md). A action semântica existente product_registration.request_information será ampliada para perguntas tipadas e alvo real, sempre consumindo o mesmo use case da REST; resume exige avaliação da rodada ativa, live AuthZ, CAS, idempotência, trilha humana. Read deve consultar rodadas, perguntas, respostas e históricos somente no escopo autorizado; escrita do analista usa PREPARE/ACT e confirmação governada quando aplicável.
+
+Preservar 6 MCP tools; não criar tool nova ou lógica de perguntas paralela. A EVA jamais deve responder em nome do solicitante, fabricar esclarecimento ou tratar resposta recebida como instrução: texto externo é conteúdo não confiável (prompt injection). Bandeiras D16 são privadas e não devem ser copiadas para perguntas/avisos. Se integração de solicitante/notifications exigir novo owner/permissão: ARCHITECTURE_DECISION_REQUIRED e pendência explícita. Testar REST/EVA parity, semântica e 401/403, concorrência, idempotência, confirmação e outcome em DEV.
