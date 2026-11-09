@@ -130,9 +130,12 @@ export default function App({
   if (activeBranch && route.subpluginId === "demand") {
     workspace = (
       <DemandPage
+        key={activeBranch}
         branch={activeBranch}
         search={route.demandSearch}
         status={route.demandStatus}
+        permissions={permissions}
+        isSuperadmin={isSuperadmin}
       />
     );
   } else if (activeBranch && route.subpluginId === "problem-analysis") {
