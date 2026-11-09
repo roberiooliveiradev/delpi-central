@@ -1511,3 +1511,18 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | Deploy | PASS | `srv-api` HEAD `a6edbc9973`; MFE `infra-controllership-finance` imagem `ce858286…`; asset com «Por unidade»/«Consolidado — Filiais»; remoteEntry 200; BFF 401 fail-closed em `branch=01|02|all` |
 | Smoke autenticado UI | TEST_NOT_RUN | Sem sessão de usuário no executor; residual de homologação visual live |
 | Rollback | Disponível | Imagem anterior MFE `665b83760be4…` (2026-11-05) + `git checkout` pré-`a6edbc9973` |
+
+---
+
+## PROC-0072 / Documento 157 — REWORK Filial 01 SOURCE_MISSING 2026-10 (2026-11-09)
+
+| Item | Estado | Evidência |
+|---|---|---|
+| Causa raiz | PROVEN | `SB9010` Filial 01: 0 linhas em `202610%`; último snapshot `20260930` (4812 / R$ 3.893.096,17; `S_T_A_M_P_` 2026-10-21) |
+| MV_ULMES | PROVEN | Filial 01=`20260930`; Filial 02=`20261031` — outubro da Matriz não fechado/materializado |
+| Filial 02 origem | PROVEN | `B9_FILIAL='02'` @ `20261031`: R05=`11.448.053,26`; P7 ex-99=`11.058.724,93`; loc99=`389.328,33` (= CLARA) |
+| SB9020 / pad 010 | PROVEN ausente | `OBJECT_ID('SB9020')=0`; ambos os sites em `SB9010` via `B9_FILIAL` |
+| 30/10 21:00 vs 31/10 | PROVEN UX | `dataAsOf=YYYY-MM-DD` + `formatDateTime` → UTC midnight → BRT 30/10 21:00; correção `formatCivilDate` |
+| Correção de saldo 01 | NÃO APLICÁVEL | Ausência legítima do ERP — não inventar snapshot; owner = fechamento Protheus Matriz |
+| Diff produto | MFE honesty | data civil + aviso consolidado parcial; layout doc 157 preservado |
+| Deploy inventário fictício | PROIBIDO | Sem deploy que fabrique Filial 01 |

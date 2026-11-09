@@ -932,6 +932,86 @@ describe("conciliação analítica — Por unidade | Consolidado (doc 157)", () 
     expect(screen.queryByText(/PASS/i)).toBeNull();
     expect(screen.queryByText(/paridade oficial comprovada/i)).toBeNull();
   });
+
+  it("data-base do operando usa data civil sem deslocar o dia do snapshot", async () => {
+    reconMock.mockImplementation(async (query: { branch?: string } = {}) =>
+      reconPayload({
+        branchCode: query.branch ?? "all",
+        operands: {
+          entradasSaidas: operand("100.00", {
+            dataAsOf: "2026-10-31",
+          }),
+          p7: operand("80.00", { dataAsOf: "2026-10-31" }),
+          h02: operand("20.00", { dataAsOf: "2026-10-31" }),
+        },
+        divergence: "0.00",
+        divergenceCents: "0.00",
+        parity: "IDENTITY_ONLY",
+      }),
+    );
+    renderPanel();
+    const table01 = await screen.findByRole("table", {
+      name: "Operandos da conciliação analítica — Filial 01",
+    });
+    expect(within(table01).getAllByText("31/10/2026").length).toBe(3);
+    expect(within(table01).queryByText(/30\/10\/2026/)).toBeNull();
+  });
+
+  it("consolidado incompleto avisa que valores parciais não são totais oficiais", async () => {
+    reconMock.mockImplementation(async (query: { branch?: string } = {}) => {
+      if (query.branch === "all") {
+        return reconPayload({
+          branchCode: "all",
+          eligibility: "INELIGIBLE",
+          ineligibleOperands: ["entradasSaidas", "p7", "h02"],
+          operands: {
+            entradasSaidas: operand("11448053.26", {
+              status: "INCOMPLETE",
+              available: false,
+            }),
+            p7: operand("11058724.93", {
+              status: "INCOMPLETE",
+              available: false,
+            }),
+            h02: operand("389328.33", {
+              status: "INCOMPLETE",
+              available: false,
+            }),
+          },
+          divergence: null,
+          divergenceCents: null,
+          parity: "NOT_COMPUTED",
+        });
+      }
+      if (query.branch === "01") {
+        return reconPayload({
+          branchCode: "01",
+          eligibility: "INELIGIBLE",
+          ineligibleOperands: ["entradasSaidas", "p7", "h02"],
+          operands: {
+            entradasSaidas: operand(null),
+            p7: operand(null),
+            h02: operand(null),
+          },
+          divergence: null,
+          divergenceCents: null,
+          parity: "NOT_COMPUTED",
+        });
+      }
+      return reconPayload({
+        branchCode: "02",
+        divergence: "0.00",
+        divergenceCents: "0.00",
+        parity: "IDENTITY_ONLY",
+      });
+    });
+    renderPanel();
+    await screen.findByText("Filial 01 — Matriz");
+    fireEvent.click(screen.getByRole("button", { name: "Consolidado" }));
+    expect(
+      await screen.findByText(/não são totais oficiais consolidados/),
+    ).toBeTruthy();
+  });
 });
 
 describe("catálogo em cartões — navegação contextual", () => {

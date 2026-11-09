@@ -15,7 +15,11 @@ import {
 } from "../../app/controllershipFinanceUi";
 import { CfFeedbackMessage } from "../../app/cfFeedbackUi";
 import { CF_HELP } from "../../content/helpTooltips";
-import { formatAmount, formatDateTime } from "../../utils/formatters";
+import {
+  formatAmount,
+  formatCivilDate,
+  formatDateTime,
+} from "../../utils/formatters";
 
 const SOURCE_STATE_LABELS: Record<SourceState, string> = {
   AVAILABLE: "Disponível",
@@ -227,6 +231,14 @@ const UNIT_SECTION_LABELS = {
   all: "Consolidado — Filiais 01 + 02",
 } as const;
 
+function hasIncompleteOperand(
+  reconciliation: StockReconciliationPayload,
+): boolean {
+  return (["entradasSaidas", "p7", "h02"] as const).some(
+    (key) => reconciliation.operands[key]?.status === "INCOMPLETE",
+  );
+}
+
 function AnalyticalReconciliationBody({
   reconciliation,
   loading,
@@ -300,7 +312,7 @@ function AnalyticalReconciliationBody({
                 </td>
                 <td>
                   {operand.dataAsOf
-                    ? formatDateTime(operand.dataAsOf)
+                    ? formatCivilDate(operand.dataAsOf)
                     : "—"}
                 </td>
               </tr>
@@ -344,6 +356,15 @@ function AnalyticalReconciliationBody({
             .join(", ")}
           . A divergência não é calculada — fonte ausente nunca entra
           como zero.
+          {hasIncompleteOperand(reconciliation) ? (
+            <>
+              {" "}
+              Quando o status é parcialmente disponível, os valores
+              exibidos refletem apenas as filiais com snapshot
+              histórico presente e não são totais oficiais
+              consolidados das Filiais 01 + 02.
+            </>
+          ) : null}
         </p>
       ) : null}
       {reconciliation.parity === "IDENTITY_ONLY" ? (
