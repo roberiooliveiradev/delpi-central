@@ -2167,6 +2167,108 @@ def _usable_native_associations(rows: list[dict]) -> int:
     return count
 
 
+def _item_key(row: dict) -> str | None:
+    item = str(row.get("item") or "").strip().upper()
+    return item or None
+
+
+def _item_frequency(rows: list[dict]) -> Counter:
+    counts: Counter = Counter()
+    for row in rows or []:
+        key = _item_key(row)
+        if key:
+            counts[key] += 1
+    return counts
+
+
+def _is_single_component_code(code: str | None) -> bool:
+    text = str(code or "").strip()
+    if not text or _FUSED_COMPONENT_CODES_RE.search(text):
+        return False
+    return bool(re.fullmatch(r"\d{6,11}", text))
+
+
+def _native_improves_fallback(native: dict, fallback: dict) -> bool:
+    """Native wins only with equal-or-better evidence for the same item."""
+    n_code = str(native.get("component_code") or "").strip()
+    f_code = str(fallback.get("component_code") or "").strip()
+    if not _is_single_component_code(n_code):
+        return False
+    if _FUSED_COMPONENT_CODES_RE.search(f_code):
+        return True
+    if not f_code:
+        return True
+    if f_code == n_code:
+        # Mesmo código: preferir native se recupera descrição ausente.
+        return bool(native.get("description")) or not fallback.get(
+            "description"
+        )
+    return False
+
+
+def reconcile_native_and_fallback_rows(
+    *,
+    native_rows: list[dict],
+    fallback_rows: list[dict],
+    page: int,
+    mode: str,
+) -> list[dict]:
+    """Decide linhas finais sem merge indiscriminado (DEC-VAL-043).
+
+    Modes:
+    - ``replace``: troca integral da página pela grade nativa.
+    - ``preserve``: atualiza somente ocorrências com item único na
+      página em ambos os lados, quando a nativa melhora a evidência;
+      demais linhas do fallback permanecem.
+    """
+    if mode == "replace":
+        return list(native_rows or [])
+    fallback = list(fallback_rows or [])
+    native = list(native_rows or [])
+    if not native:
+        return fallback
+    fb_freq = _item_frequency(fallback)
+    nat_freq = _item_frequency(native)
+    native_by_item: dict[str, dict] = {}
+    for row in native:
+        key = _item_key(row)
+        if key and nat_freq[key] == 1 and key not in native_by_item:
+            native_by_item[key] = row
+    out: list[dict] = []
+    replaced: set[str] = set()
+    for row in fallback:
+        key = _item_key(row)
+        if (
+            key
+            and fb_freq[key] == 1
+            and key in native_by_item
+            and _native_improves_fallback(native_by_item[key], row)
+        ):
+            chosen = dict(native_by_item[key])
+            chosen["page"] = int(chosen.get("page") or page)
+            chosen["topology_source"] = "native_table_cells"
+            chosen["association_method"] = (
+                chosen.get("association_method")
+                or "native_unique_item_upgrade"
+            )
+            out.append(chosen)
+            replaced.add(key)
+        else:
+            out.append(row)
+    # Novas ocorrências nativas com item único ausente no fallback —
+    # só quando a identidade não colide.
+    for key, row in native_by_item.items():
+        if key in replaced or fb_freq.get(key, 0) != 0:
+            continue
+        if not _is_single_component_code(row.get("component_code")):
+            continue
+        chosen = dict(row)
+        chosen["page"] = int(chosen.get("page") or page)
+        chosen["topology_source"] = "native_table_cells"
+        out.append(chosen)
+    return out
+
+
 def native_cells_preferable(
     *,
     consistent: bool,
@@ -2174,17 +2276,19 @@ def native_cells_preferable(
     native_rows: list[dict],
     fallback_rows: list[dict],
 ) -> tuple[bool, str | None]:
-    """Política conservadora de aceite da grade nativa (DEC-VAL-042).
+    """Política conservadora de aceite da grade nativa (DEC-VAL-042/043).
 
     ``structure_consistent=false`` não implica descarte automático.
     Conflito de span localizado pode coexistir com células textuais
-    associáveis. A grade nativa só substitui o fallback quando:
-    - é consistente; ou
-    - as limitações estruturais são somente suaves (``span_conflict``);
-    - há ao menos uma associação item+código único;
-    - não introduz mais códigos fundidos que o fallback da página.
+    associáveis.
 
-    Retorna ``(aplicar, limitação_de_proveniência_ou_None)``.
+    Retorna ``(aplicar, reason)`` onde ``reason`` é:
+    - ``None`` — substituição integral (estrutura consistente);
+    - ``span_conflict_tolerated`` — substituição integral sob cobertura
+      suficiente;
+    - ``span_conflict_tolerated_partial`` — upgrade só de ocorrências
+      com item único, preservando o restante do fallback (DEC-VAL-043);
+    - ou motivo de rejeição (``structure_incomplete`` / ``no_text_rows``).
     """
     if consistent:
         return True, None
@@ -2199,13 +2303,33 @@ def native_cells_preferable(
         return False, "structure_incomplete"
     if not native_rows:
         return False, "no_text_rows"
-    if _usable_native_associations(native_rows) < 1:
+    usable_native = _usable_native_associations(native_rows)
+    if usable_native < 1:
         return False, "structure_incomplete"
     if _count_fused_component_codes(native_rows) > _count_fused_component_codes(
         fallback_rows
     ):
         return False, "structure_incomplete"
-    return True, "span_conflict_tolerated"
+    usable_fallback = _usable_native_associations(fallback_rows)
+    if usable_native >= max(usable_fallback, 1):
+        return True, "span_conflict_tolerated"
+    # Cobertura parcial: só aplica se existir ao menos um upgrade
+    # inequívoco (item único) que melhore fusão/ausência de código.
+    fb_freq = _item_frequency(fallback_rows)
+    nat_freq = _item_frequency(native_rows)
+    native_by_item = {
+        _item_key(row): row
+        for row in native_rows
+        if _item_key(row) and nat_freq[_item_key(row)] == 1
+    }
+    for row in fallback_rows or []:
+        key = _item_key(row)
+        if not key or fb_freq[key] != 1:
+            continue
+        native = native_by_item.get(key)
+        if native and _native_improves_fallback(native, row):
+            return True, "span_conflict_tolerated_partial"
+    return False, "structure_incomplete"
 
 
 def apply_native_table_observations(
@@ -2224,6 +2348,7 @@ def apply_native_table_observations(
     limitations = list(understanding.get("limitations") or [])
     perceptions: list[dict] = []
     replaced_pages: set[int] = set()
+    partial_pages: set[int] = set()
     for obs in observations or []:
         result = obs.get("result") or {}
         render = result.get("render") or {}
@@ -2292,24 +2417,45 @@ def apply_native_table_observations(
             continue
         if tolerate_reason:
             limitations.append("table_perception:" + tolerate_reason)
+        mode = (
+            "preserve"
+            if tolerate_reason == "span_conflict_tolerated_partial"
+            else "replace"
+        )
+        reconciled = reconcile_native_and_fallback_rows(
+            native_rows=native_rows,
+            fallback_rows=page_fallback,
+            page=page,
+            mode=mode,
+        )
         rows = [
             row for row in rows
             if int(row.get("page") or page) != page
         ]
-        rows.extend(native_rows)
+        rows.extend(reconciled)
         replaced_pages.add(page)
+        if mode == "preserve":
+            partial_pages.add(page)
         per_page = dict(table.get("col_types") or {})
-        if per_page and all(isinstance(v, dict) for v in per_page.values()):
-            per_page[str(page)] = col_types
-            table["col_types"] = per_page
-        else:
-            table["col_types"] = col_types
+        if mode == "replace":
+            if per_page and all(
+                isinstance(v, dict) for v in per_page.values()
+            ):
+                per_page[str(page)] = col_types
+                table["col_types"] = per_page
+            else:
+                table["col_types"] = col_types
     table["rows"] = rows
     table["row_count"] = len(rows)
     table["perception_pages"] = sorted(replaced_pages)
     if replaced_pages:
-        table["topology_source"] = "native_table_cells"
-        table["detection"] = "native_table_cells"
+        # Preservação parcial mantém mistura de topologias.
+        if partial_pages and partial_pages == replaced_pages:
+            table["topology_source"] = "native_partial_over_fallback"
+            table["detection"] = "native_partial_over_fallback"
+        else:
+            table["topology_source"] = "native_table_cells"
+            table["detection"] = "native_table_cells"
     updated = dict(understanding)
     updated["component_table"] = table
     updated["table_perception"] = perceptions

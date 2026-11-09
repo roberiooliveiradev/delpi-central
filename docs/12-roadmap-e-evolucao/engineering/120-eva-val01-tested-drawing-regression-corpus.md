@@ -461,3 +461,16 @@ Correção determinística em `apply_native_table_observations` / `native_cells_
 **Corpus 13 (Doc 120):** 13/13 `sha_match=true`; `false_g9` soma 0; `chicote_on_item` soma 0; inconsistências SLANet em p11 (`90264017`) e p9 (`90264030`) sem reabrir G/9. Precisão global **não declarada** (sem GT owner).
 
 **Testes:** `test_dec042_native_table_gate.py` + `test_dec041_visual_table_diagnostic.py` + `test_association_integrity_dec040.py` + `test_table_perception_native.py` → 35 passed no harness com o patch.
+
+### Log experimental — DEC-VAL-043 (2026-11-09) — preservação + deploy
+
+Correção de perda silenciosa sob `span_conflict_tolerated` parcial (`reconcile_native_and_fallback_rows`). Detalhe: Doc 119 §58.
+
+| PDF | Antes (DEC-042) | Depois (DEC-043) | Gate |
+|---|---|---|---|
+| `90264026` | 5 linhas nativas (perda vs 6 fallback); B ok | **6 linhas**; B=`10090010`+ISOLADOR; C/D preservados; topo `native_partial_over_fallback` | `PASS` |
+| `90264004` | A9×2 AA×2 false_g9=0 | igual; 12/12 | `PASS` |
+| `90264017` p9 | C–K; false_g9=0 | igual | `PASS` |
+| Corpus 13 | false_g9=0 chicote=0 | 13/13 sha_match; Σ false_g9=0; Σ chicote=0 | `PASS` |
+
+**Testes:** `test_dec043_native_preservation.py` + suites 041/042/040/native + PDF/MCP auth → 39+63 passed no harness com patch. Deploy/digest/jobs MCP: preencher no relatório DEC-043 após publicação.

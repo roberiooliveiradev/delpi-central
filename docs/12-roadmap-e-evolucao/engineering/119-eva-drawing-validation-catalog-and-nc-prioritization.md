@@ -1684,6 +1684,24 @@ Contraste: p10 tem linhas “boas” (ex.: A1/A5/A6 com item+qtd+código+desc) a
 
 **NEXT_BOUNDED_STEP:** deploy canônico + validação MCP do consumidor (tarefa separada); residual de células multi-código nativas (90264135) em entrega futura sem VLM por default.
 
+## 58. DEC-VAL-043 — preservação sob grade parcial, deploy e aceite MCP (2026-11-09)
+
+**Status de entrada:** DEC-042 em `main` sem deploy; risco residual de substituição integral da página quando a nativa era só parcialmente coberta.
+
+**ROOT_CAUSE (PROVEN):** `apply_native_table_observations` trocava todas as linhas da página ao aceitar `span_conflict_tolerated` com `usable_native >= 1`, podendo descartar associações fallback sustentadas.
+
+**MINIMAL_PATCH:** `reconcile_native_and_fallback_rows` + modo `span_conflict_tolerated_partial` — upgrade apenas de itens com ocorrência única em ambos os lados quando a nativa melhora fusão/ausência; demais linhas do fallback preservadas. Substituição integral permanece quando `structure_consistent` ou cobertura nativa ≥ fallback.
+
+| Gate | Resultado offline |
+|---|---|
+| NO_SILENT_ASSOCIATION_LOSS | `PASS` (fixture + 90264026 → 6 linhas) |
+| 90264026 | `PASS` B=`10090010` + ISOLADOR; topo `native_partial_over_fallback` |
+| 90264004 / 90264017 | `PASS` A9/AA e C–K; false_g9=0 |
+| Corpus 13 | `PASS` sha_match; Σ false_g9=0; Σ chicote=0 |
+| Auth/PDF/MCP unit | `PASS` (63 testes harness) |
+
+Deploy e MCP: ver evidência operacional no Doc 120 e no relatório DEC-043 (SHA/digest/jobs). `ENGINEERING_APPROVAL=NOT_APPROVED`; `VAL01_COMPLETED=false`.
+
 **Necessidade evidenciada:** o pipeline PDFium→PaddleOCR→SLANet→Understanding consegue reconhecer boa parte das tabelas e recuperar casos focais, porém falha em algumas reconstruções de linhas, colunas, agrupamentos e papéis. Na amostra inédita, `90264026` publicou `component_code='90264026 10090010'` e deixou seis descrições como `null` apesar dos textos nas células; `90264135` retornou 294 linhas candidatas, OCR FULL 13/13, mas na p12 apenas 1/29 linhas tinha quatro campos preenchidos, com códigos e descrições fragmentados, e na p13 apenas 3/22. Essa contagem é completude de campos, **não precisão validada**. O primeiro defeito pode ser inteiramente determinístico; não atribuir ambos automaticamente à falta de modelo visual. No `90264135` a BOM oficial estava indisponível (`structure_not_provided`), fato que nenhum modelo supre.
 
 **Hipótese arquitetural H-VAL041:** avaliar uma capacidade **local, condicional e orientada a evidências** de diagnóstico visual de regiões tabulares ambíguas. O modelo pode propor hipóteses de linhas, células, divisórias, agrupamentos e papéis de tokens, com refs e coordenadas verificáveis, enquanto os mecanismos existentes reavaliam e validam a proposta. *IA proponente; framework verificador*. Um VLM local via runtime como Ollama é **candidato de benchmark**, não tecnologia aprovada. Evitar interpretação generativa do documento todo, edição de PDF oficial ou autopreenchimento. A capacidade deve utilizar os ports/adapters, contratos, observabilidade e permissões governados existentes; novo agente com autonomia e nova camada de arquitetura **não estão autorizados**.
