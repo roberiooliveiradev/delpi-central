@@ -23,9 +23,6 @@ from controllership_finance_app.application.clara.step_up_consent import (
 @pytest.fixture()
 def channel_settings(monkeypatch):
     monkeypatch.setattr(cc.settings, "CLARA_CONSENT_CHANNEL", "portal")
-    monkeypatch.setattr(
-        cc.settings, "CLARA_CONVERSATIONAL_SECURITY_ACK", ""
-    )
     return cc.settings
 
 
@@ -44,10 +41,11 @@ def test_conversational_explicit_channel_needs_no_signature(channel_settings):
     assert "acknowledgement" not in cc.confirmation_instruction_for_prepare()
 
 
-def test_legacy_ack_cannot_activate_portal(channel_settings):
+def test_legacy_ack_cannot_activate_portal(channel_settings, monkeypatch):
     # Obsolete string never turns a Portal deployment into conversational.
-    channel_settings.CLARA_CONVERSATIONAL_SECURITY_ACK = (
-        "R-CLARA-01-TEO-EQUIVALENCE-ACCEPTED"
+    monkeypatch.setattr(
+        channel_settings, "CLARA_CONVERSATIONAL_SECURITY_ACK",
+        "R-CLARA-01-TEO-EQUIVALENCE-ACCEPTED", raising=False
     )
     assert cc.conversational_act_enabled() is False
     assert cc.portal_consent_required() is True
