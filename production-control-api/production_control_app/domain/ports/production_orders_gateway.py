@@ -224,6 +224,12 @@ class ProductionOrdersGateway(Protocol):
     def fetch_open_production_orders(self) -> dict[str, Any]:
         ...
 
+    def fetch_stock_rupture_pendencies(
+        self, *, branch: str, horizon_days: int = 30
+    ) -> dict[str, Any]:
+        """Extrato oficial de rupturas projetadas (somente S2S via PCP)."""
+        ...
+
     def fetch_recently_closed_orders(self, *, days: int) -> dict[str, Any]:
         ...
 
