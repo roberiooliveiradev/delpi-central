@@ -319,15 +319,17 @@ class ClaraBatchOrchestrator:
             ttl_seconds=BATCH_TTL_SECONDS,
             correlation_id=correlation_id,
         )
-        # R-CLARA-01: desafio de consentimento emitido com o lote —
-        # vincula ator + plan_hash + expiração (V014).
-        self._challenges.issue_for_batch(
-            batch_id=str(batch["batch_id"]),
-            actor_sub=actor_sub,
-            plan_hash=plan["plan_hash"],
-            expires_at=batch["expires_at"],
-            correlation_id=correlation_id,
-        )
+        # Only Portal V014 uses a challenge. Conversational confirmation
+        # binds the sealed batch and actor without creating unused V014
+        # challenges; it remains behind the explicit policy gate.
+        if portal_consent_required():
+            self._challenges.issue_for_batch(
+                batch_id=str(batch["batch_id"]),
+                actor_sub=actor_sub,
+                plan_hash=plan["plan_hash"],
+                expires_at=batch["expires_at"],
+                correlation_id=correlation_id,
+            )
         _audit_mcp(
             entity_type="clara_batch",
             entity_id=str(batch["batch_id"]),
