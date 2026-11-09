@@ -20,6 +20,7 @@ from engineering_app.application.ports.product_registration import (
 )
 from engineering_app.domain.product_registration import baseline as sa5_baseline
 from engineering_app.domain.product_registration import catalog
+from engineering_app.domain.product_registration import flags as attendance_flags
 from engineering_app.domain.product_registration.errors import (
     PrcConcurrencyError,
     PrcDuplicateError,
@@ -1337,6 +1338,390 @@ class ProductRegistrationService:
             "pageSize": result["pageSize"],
             "total": result["total"],
         }
+
+    # --- ATTENDANCE FLAGS (D16) -----------------------------------------------
+
+    def _flag_actor_gate(self, actor: PrcActor) -> None:
+        """Bandeiras são operacionais — exige process (access)."""
+        _require_actor_process(actor)
+
+    def list_flags(
+        self,
+        request_id: str,
+        *,
+        actor: PrcActor,
+        status: str | None = None,
+        page: int = 1,
+        page_size: int = 25,
+    ) -> dict[str, Any]:
+        self._flag_actor_gate(actor)
+        self._get_scoped(request_id, actor)
+        if status is not None and status not in ("OPEN", "RESOLVED", "all"):
+            raise PrcValidationError(
+                "status inválido.", fields={"status": "enum"}
+            )
+        filt = None if status in (None, "all") else status
+        raw = self._repo.list_flags(
+            request_id=request_id,
+            status=filt,
+            page=page,
+            page_size=page_size,
+        )
+        return {
+            "items": [
+                attendance_flags.public_flag(item) for item in raw["items"]
+            ],
+            "page": raw["page"],
+            "pageSize": raw["pageSize"],
+            "total": raw["total"],
+            "openCount": raw["openCount"],
+            "resolvedCount": raw["resolvedCount"],
+            "hasMore": raw["hasMore"],
+        }
+
+    def get_flag(
+        self, request_id: str, flag_id: str, *, actor: PrcActor
+    ) -> dict[str, Any]:
+        self._flag_actor_gate(actor)
+        self._get_scoped(request_id, actor)
+        row = self._repo.get_flag(request_id=request_id, flag_id=flag_id)
+        if row is None:
+            raise PrcNotFoundError("flag", flag_id)
+        return attendance_flags.public_flag(row)
+
+    def create_flag(
+        self,
+        request_id: str,
+        *,
+        actor: PrcActor,
+        title: str,
+        description: str,
+        subject: str = "GENERAL",
+        target_path: str | None = None,
+        supplier_key: dict | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        self._flag_actor_gate(actor)
+        request = self._get_scoped(request_id, actor)
+        if (
+            request["status"] in ("completed", "rejected")
+            and not attendance_flags.FLAG_MUTATION_AFTER_TERMINAL
+        ):
+            raise PrcStateConflictError("state_conflict")
+        payload = attendance_flags.validate_flag_payload(
+            title=title,
+            description=description,
+            subject=subject,
+            target_path=target_path,
+            supplier_key=supplier_key,
+        )
+        fp = _fingerprint(
+            {
+                "request_id": request_id,
+                "op": "flag_create",
+                "payload": payload,
+            }
+        )
+        replay = self._idempotent_replay(
+            actor=actor, operation="flag_create", key=idempotency_key,
+            fingerprint=fp,
+        )
+        if replay is not None:
+            return replay
+        now = _now()
+        flag_id = _uuid()
+        row = {
+            "id": flag_id,
+            "request_id": request_id,
+            "title": payload["title"],
+            "description": payload["description"],
+            "status": "OPEN",
+            "subject": payload["subject"],
+            "target_path": payload.get("targetPath"),
+            "supplier_key": payload.get("supplierKey"),
+            "row_version": 1,
+            "created_by_subject": actor.user_id,
+            "created_by_display_name": actor.label,
+            "created_at": now,
+            "updated_by_subject": actor.user_id,
+            "updated_by_display_name": actor.label,
+            "updated_at": now,
+            "resolved_by_subject": None,
+            "resolved_by_display_name": None,
+            "resolved_at": None,
+            "deleted_by_subject": None,
+            "deleted_by_display_name": None,
+            "deleted_at": None,
+        }
+        event = {
+            "event_type": "flag.created",
+            "actor_subject": actor.user_id,
+            "actor_display_name": actor.label,
+            "actor_email": actor.email,
+            "reason": None,
+            "metadata": {
+                "channel": actor.channel,
+                "flagId": flag_id,
+                "title": payload["title"],
+                "subject": payload["subject"],
+            },
+            "previous_status": None,
+            "next_status": "OPEN",
+        }
+        created = self._repo.create_flag(flag=row, event=event)
+        response = attendance_flags.public_flag(created)
+        self._idempotent_store(
+            actor=actor, operation="flag_create", key=idempotency_key,
+            fingerprint=fp, request_id=request_id, status=201,
+            payload=response,
+        )
+        return response
+
+    def update_flag(
+        self,
+        request_id: str,
+        flag_id: str,
+        *,
+        actor: PrcActor,
+        expected_version: int,
+        title: str | None = None,
+        description: str | None = None,
+        subject: str | None = None,
+        target_path: Any = ...,
+        supplier_key: Any = ...,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        self._flag_actor_gate(actor)
+        self._get_scoped(request_id, actor)
+        current = self._repo.get_flag(request_id=request_id, flag_id=flag_id)
+        if current is None:
+            raise PrcNotFoundError("flag", flag_id)
+        kwargs: dict[str, Any] = {
+            "title": title if title is not None else current["title"],
+            "description": (
+                description if description is not None
+                else current["description"]
+            ),
+            "subject": subject if subject is not None else current["subject"],
+            "partial": False,
+        }
+        if target_path is not ...:
+            kwargs["target_path"] = target_path
+        else:
+            kwargs["target_path"] = current.get("target_path")
+        if supplier_key is not ...:
+            kwargs["supplier_key"] = supplier_key
+        else:
+            kwargs["supplier_key"] = current.get("supplier_key")
+        payload = attendance_flags.validate_flag_payload(**kwargs)
+        fp = _fingerprint(
+            {
+                "request_id": request_id,
+                "flag_id": flag_id,
+                "op": "flag_update",
+                "expected_version": expected_version,
+                "payload": payload,
+            }
+        )
+        replay = self._idempotent_replay(
+            actor=actor, operation="flag_update", key=idempotency_key,
+            fingerprint=fp,
+        )
+        if replay is not None:
+            return replay
+        patch = {
+            "title": payload["title"],
+            "description": payload["description"],
+            "subject": payload["subject"],
+            "target_path": payload.get("targetPath"),
+            "supplier_key": payload.get("supplierKey"),
+        }
+        event = {
+            "event_type": "flag.updated",
+            "actor_subject": actor.user_id,
+            "actor_display_name": actor.label,
+            "actor_email": actor.email,
+            "reason": None,
+            "metadata": {
+                "channel": actor.channel,
+                "flagId": flag_id,
+                "after": {
+                    "title": patch["title"],
+                    "subject": patch["subject"],
+                },
+            },
+            "previous_status": current["status"],
+            "next_status": current["status"],
+        }
+        updated = self._repo.update_flag(
+            request_id=request_id,
+            flag_id=flag_id,
+            expected_version=expected_version,
+            patch=patch,
+            actor_subject=actor.user_id,
+            actor_display_name=actor.label,
+            event=event,
+        )
+        response = attendance_flags.public_flag(updated)
+        self._idempotent_store(
+            actor=actor, operation="flag_update", key=idempotency_key,
+            fingerprint=fp, request_id=request_id, status=200,
+            payload=response,
+        )
+        return response
+
+    def resolve_flag(
+        self,
+        request_id: str,
+        flag_id: str,
+        *,
+        actor: PrcActor,
+        expected_version: int,
+        reason: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        return self._transition_flag(
+            request_id, flag_id, actor=actor,
+            expected_version=expected_version, next_status="RESOLVED",
+            event_type="flag.resolved", reason=reason,
+            idempotency_key=idempotency_key, operation="flag_resolve",
+        )
+
+    def reopen_flag(
+        self,
+        request_id: str,
+        flag_id: str,
+        *,
+        actor: PrcActor,
+        expected_version: int,
+        reason: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        return self._transition_flag(
+            request_id, flag_id, actor=actor,
+            expected_version=expected_version, next_status="OPEN",
+            event_type="flag.reopened", reason=reason,
+            idempotency_key=idempotency_key, operation="flag_reopen",
+        )
+
+    def _transition_flag(
+        self,
+        request_id: str,
+        flag_id: str,
+        *,
+        actor: PrcActor,
+        expected_version: int,
+        next_status: str,
+        event_type: str,
+        reason: str | None,
+        idempotency_key: str | None,
+        operation: str,
+    ) -> dict[str, Any]:
+        self._flag_actor_gate(actor)
+        self._get_scoped(request_id, actor)
+        fp = _fingerprint(
+            {
+                "request_id": request_id,
+                "flag_id": flag_id,
+                "op": operation,
+                "expected_version": expected_version,
+                "next_status": next_status,
+            }
+        )
+        replay = self._idempotent_replay(
+            actor=actor, operation=operation, key=idempotency_key,
+            fingerprint=fp,
+        )
+        if replay is not None:
+            return replay
+        event = {
+            "event_type": event_type,
+            "actor_subject": actor.user_id,
+            "actor_display_name": actor.label,
+            "actor_email": actor.email,
+            "reason": reason,
+            "metadata": {
+                "channel": actor.channel,
+                "flagId": flag_id,
+            },
+            "previous_status": None,
+            "next_status": next_status,
+        }
+        updated = self._repo.transition_flag(
+            request_id=request_id,
+            flag_id=flag_id,
+            expected_version=expected_version,
+            next_status=next_status,
+            actor_subject=actor.user_id,
+            actor_display_name=actor.label,
+            event=event,
+        )
+        response = attendance_flags.public_flag(updated)
+        self._idempotent_store(
+            actor=actor, operation=operation, key=idempotency_key,
+            fingerprint=fp, request_id=request_id, status=200,
+            payload=response,
+        )
+        return response
+
+    def delete_flag(
+        self,
+        request_id: str,
+        flag_id: str,
+        *,
+        actor: PrcActor,
+        expected_version: int,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        self._flag_actor_gate(actor)
+        self._get_scoped(request_id, actor)
+        fp = _fingerprint(
+            {
+                "request_id": request_id,
+                "flag_id": flag_id,
+                "op": "flag_delete",
+                "expected_version": expected_version,
+            }
+        )
+        replay = self._idempotent_replay(
+            actor=actor, operation="flag_delete", key=idempotency_key,
+            fingerprint=fp,
+        )
+        if replay is not None:
+            return replay
+        event = {
+            "event_type": "flag.deleted",
+            "actor_subject": actor.user_id,
+            "actor_display_name": actor.label,
+            "actor_email": actor.email,
+            "reason": None,
+            "metadata": {
+                "channel": actor.channel,
+                "flagId": flag_id,
+            },
+            "previous_status": None,
+            "next_status": None,
+        }
+        deleted = self._repo.soft_delete_flag(
+            request_id=request_id,
+            flag_id=flag_id,
+            expected_version=expected_version,
+            actor_subject=actor.user_id,
+            actor_display_name=actor.label,
+            event=event,
+        )
+        response = {
+            "id": deleted["id"],
+            "requestId": request_id,
+            "deleted": True,
+            "version": int(deleted["row_version"]),
+        }
+        self._idempotent_store(
+            actor=actor, operation="flag_delete", key=idempotency_key,
+            fingerprint=fp, request_id=request_id, status=200,
+            payload=response,
+        )
+        return response
 
 
 _FIELD_MAP = {

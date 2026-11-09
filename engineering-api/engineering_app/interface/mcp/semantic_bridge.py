@@ -516,6 +516,12 @@ _READ_DISPATCH = {
     ("product_registration", "outbound_result"): (
         lambda a: _prc_read("outbound_result", a)
     ),
+    ("product_registration", "flag_list"): (
+        lambda a: _prc_read("flag_list", a)
+    ),
+    ("product_registration", "flag_detail"): (
+        lambda a: _prc_read("flag_detail", a)
+    ),
 }
 
 
@@ -2318,6 +2324,11 @@ _EXECUTE_DISPATCH = {
     ("product_registration", "verify_and_complete"): (
         prc_semantic.execute_action
     ),
+    ("product_registration", "flag_create"): prc_semantic.execute_action,
+    ("product_registration", "flag_update"): prc_semantic.execute_action,
+    ("product_registration", "flag_resolve"): prc_semantic.execute_action,
+    ("product_registration", "flag_reopen"): prc_semantic.execute_action,
+    ("product_registration", "flag_delete"): prc_semantic.execute_action,
 }
 
 

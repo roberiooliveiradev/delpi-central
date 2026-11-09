@@ -609,6 +609,66 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "mismatch/unverifiable/unavailable nunca conclui."
         ),
     ),
+    # --- D16 attendance flags (mesmos use cases REST; sem nova MCP tool) ---
+    _a(
+        "product_registration", "flag_list", "read",
+        "List attendance flags for a product-registration case "
+        "(operational annotations; not SB1/SA5).",
+        "read", status="proven", ref_arg="request_id", paginated=True,
+        fields=("status", "page", "page_size"),
+    ),
+    _a(
+        "product_registration", "flag_detail", "read",
+        "Attendance flag detail scoped to the authorized request.",
+        "read", status="proven", ref_arg="request_id",
+        fields=("flag_id",),
+    ),
+    _a(
+        "product_registration", "flag_create", "execute",
+        "Create an attendance flag (title/description/subject) — "
+        "does not mutate official product data.",
+        "moderate", status="proven", phases=("act", "prepare"),
+        ref_arg="request_id",
+        requires=("title", "description"),
+        fields=("subject", "target_path", "supplier_key"),
+    ),
+    _a(
+        "product_registration", "flag_update", "execute",
+        "Update attendance flag content with CAS expected_version.",
+        "moderate", status="proven", phases=("act", "prepare"),
+        ref_arg="request_id",
+        requires=("flag_id", "expected_version"),
+        fields=("title", "description", "subject", "target_path",
+                "supplier_key"),
+    ),
+    _a(
+        "product_registration", "flag_resolve", "execute",
+        "Mark attendance flag RESOLVED (CAS).",
+        "moderate", status="proven", phases=("act", "prepare"),
+        ref_arg="request_id",
+        requires=("flag_id", "expected_version"),
+        fields=("reason",),
+    ),
+    _a(
+        "product_registration", "flag_reopen", "execute",
+        "Reopen a RESOLVED attendance flag (CAS).",
+        "moderate", status="proven", phases=("act", "prepare"),
+        ref_arg="request_id",
+        requires=("flag_id", "expected_version"),
+        fields=("reason",),
+    ),
+    _a(
+        "product_registration", "flag_delete", "execute",
+        "Soft-delete attendance flag — sealed proposal + verifiable "
+        "human confirmation; events retained.",
+        "destructive", status="proven", phases=("prepare", "commit"),
+        ref_arg="request_id",
+        requires=("flag_id", "expected_version"),
+        notes=(
+            "confirmed=true from the model is NOT authorization — "
+            "proposal_ref + human elicitation required on commit."
+        ),
+    ),
 )
 
 _ACTION_INDEX: dict[tuple[str, str], SemanticAction] = {

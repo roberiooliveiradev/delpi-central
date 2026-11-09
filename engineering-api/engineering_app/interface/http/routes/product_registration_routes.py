@@ -232,6 +232,30 @@ class DraftBody(BaseModel):
     changes: list[DraftChange] = Field(..., min_length=1)
 
 
+class FlagCreateBody(BaseModel):
+    title: str = Field(..., min_length=1, max_length=120)
+    description: str = Field(..., min_length=1, max_length=1000)
+    subject: str = Field(default="GENERAL", max_length=32)
+    targetPath: str | None = Field(default=None, max_length=120)
+    supplierKey: dict | None = None
+
+
+class FlagUpdateBody(BaseModel):
+    expectedVersion: int = Field(..., ge=1)
+    title: str | None = Field(default=None, min_length=1, max_length=120)
+    description: str | None = Field(
+        default=None, min_length=1, max_length=1000
+    )
+    subject: str | None = Field(default=None, max_length=32)
+    targetPath: str | None = Field(default=None, max_length=120)
+    supplierKey: dict | None = None
+
+
+class FlagActionBody(BaseModel):
+    expectedVersion: int = Field(..., ge=1)
+    reason: str | None = Field(default=None, max_length=1000)
+
+
 # --- 01 intake ---------------------------------------------------------------
 
 
@@ -863,3 +887,258 @@ async def prc_outbound_request(request_id: str = Path(...)):
     except Exception as exc:
         return _err(exc, op)
     return ok(data, message="Resultado carregado.", operation_id=op)
+
+
+# --- D16 attendance flags ----------------------------------------------------
+
+
+@router.get(
+    "/v1/product-registration/requests/{request_id}/flags",
+    operation_id="prc_flag_list",
+    summary="D16 — Listar bandeiras de acompanhamento",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_flag_list(
+    request_id: str = Path(...),
+    status: str | None = Query(default=None, max_length=16),
+    page: int = Query(default=1, ge=1),
+    pageSize: int = Query(default=25, ge=1, le=100),
+):
+    op = "prc_flag_list"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().list_flags(
+            rid, actor=_actor(user), status=status,
+            page=page, page_size=pageSize,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(data, message="Bandeiras carregadas.", operation_id=op)
+
+
+@router.get(
+    "/v1/product-registration/requests/{request_id}/flags/{flag_id}",
+    operation_id="prc_flag_detail",
+    summary="D16 — Detalhe de bandeira",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_flag_detail(
+    request_id: str = Path(...), flag_id: str = Path(...),
+):
+    op = "prc_flag_detail"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    fid, bad = _uuid_or_fail(flag_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().get_flag(rid, fid, actor=_actor(user))
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(data, message="Bandeira carregada.", operation_id=op)
+
+
+@router.post(
+    "/v1/product-registration/requests/{request_id}/flags",
+    operation_id="prc_flag_create",
+    summary="D16 — Criar bandeira de acompanhamento",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_flag_create(
+    request_id: str = Path(...),
+    body: FlagCreateBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_flag_create"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().create_flag(
+            rid, actor=_actor(user),
+            title=body.title, description=body.description,
+            subject=body.subject, target_path=body.targetPath,
+            supplier_key=body.supplierKey,
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    if isinstance(data, dict) and data.get("replayed"):
+        return ok(
+            data["response"], message="Bandeira já registrada (replay).",
+            status_code=200, operation_id=op,
+        )
+    return ok(
+        data, message="Bandeira criada.", status_code=201, operation_id=op,
+    )
+
+
+@router.patch(
+    "/v1/product-registration/requests/{request_id}/flags/{flag_id}",
+    operation_id="prc_flag_update",
+    summary="D16 — Editar bandeira",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_flag_update(
+    request_id: str = Path(...),
+    flag_id: str = Path(...),
+    body: FlagUpdateBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_flag_update"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    fid, bad = _uuid_or_fail(flag_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().update_flag(
+            rid, fid, actor=_actor(user),
+            expected_version=body.expectedVersion,
+            title=body.title, description=body.description,
+            subject=body.subject, target_path=body.targetPath,
+            supplier_key=body.supplierKey,
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    if isinstance(data, dict) and data.get("replayed"):
+        return ok(
+            data["response"],
+            message="Bandeira já atualizada (replay).",
+            operation_id=op,
+        )
+    return ok(data, message="Bandeira atualizada.", operation_id=op)
+
+
+@router.post(
+    "/v1/product-registration/requests/{request_id}/flags/{flag_id}/actions/resolve",
+    operation_id="prc_flag_resolve",
+    summary="D16 — Resolver bandeira",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_flag_resolve(
+    request_id: str = Path(...),
+    flag_id: str = Path(...),
+    body: FlagActionBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_flag_resolve"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    fid, bad = _uuid_or_fail(flag_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().resolve_flag(
+            rid, fid, actor=_actor(user),
+            expected_version=body.expectedVersion,
+            reason=body.reason, idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    if isinstance(data, dict) and data.get("replayed"):
+        return ok(
+            data["response"],
+            message="Bandeira já resolvida (replay).",
+            operation_id=op,
+        )
+    return ok(data, message="Bandeira resolvida.", operation_id=op)
+
+
+@router.post(
+    "/v1/product-registration/requests/{request_id}/flags/{flag_id}/actions/reopen",
+    operation_id="prc_flag_reopen",
+    summary="D16 — Reabrir bandeira",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_flag_reopen(
+    request_id: str = Path(...),
+    flag_id: str = Path(...),
+    body: FlagActionBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_flag_reopen"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    fid, bad = _uuid_or_fail(flag_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().reopen_flag(
+            rid, fid, actor=_actor(user),
+            expected_version=body.expectedVersion,
+            reason=body.reason, idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    if isinstance(data, dict) and data.get("replayed"):
+        return ok(
+            data["response"],
+            message="Bandeira já reaberta (replay).",
+            operation_id=op,
+        )
+    return ok(data, message="Bandeira reaberta.", operation_id=op)
+
+
+@router.delete(
+    "/v1/product-registration/requests/{request_id}/flags/{flag_id}",
+    operation_id="prc_flag_delete",
+    summary="D16 — Excluir bandeira (soft-delete)",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_flag_delete(
+    request_id: str = Path(...),
+    flag_id: str = Path(...),
+    expectedVersion: int = Query(..., ge=1),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_flag_delete"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    fid, bad = _uuid_or_fail(flag_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().delete_flag(
+            rid, fid, actor=_actor(user),
+            expected_version=expectedVersion,
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    if isinstance(data, dict) and data.get("replayed"):
+        return ok(
+            data["response"],
+            message="Bandeira já excluída (replay).",
+            operation_id=op,
+        )
+    return ok(data, message="Bandeira excluída.", operation_id=op)

@@ -143,6 +143,70 @@ class ProductRegistrationRepository(Protocol):
         ``completed`` e grava verification matched + evento."""
         ...
 
+    # --- attendance flags (D16) -----------------------------------------------
+
+    def create_flag(
+        self, *, flag: dict[str, Any], event: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Insere bandeira + evento flag.created na mesma transação."""
+        ...
+
+    def get_flag(
+        self, *, request_id: str, flag_id: str, include_deleted: bool = False
+    ) -> dict[str, Any] | None: ...
+
+    def list_flags(
+        self,
+        *,
+        request_id: str,
+        status: str | None = None,
+        page: int = 1,
+        page_size: int = 25,
+    ) -> dict[str, Any]:
+        """Lista não deletadas; status=OPEN|RESOLVED|None(all)."""
+        ...
+
+    def update_flag(
+        self,
+        *,
+        request_id: str,
+        flag_id: str,
+        expected_version: int,
+        patch: dict[str, Any],
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        """CAS + evento flag.updated."""
+        ...
+
+    def transition_flag(
+        self,
+        *,
+        request_id: str,
+        flag_id: str,
+        expected_version: int,
+        next_status: str,
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        """resolve/reopen com CAS + evento."""
+        ...
+
+    def soft_delete_flag(
+        self,
+        *,
+        request_id: str,
+        flag_id: str,
+        expected_version: int,
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Soft-delete + evento flag.deleted; preserva histórico."""
+        ...
+
 
 class OfficialProductReaderPort(Protocol):
     """Leitura oficial read-only de produto+fornecedores (TOTVS).

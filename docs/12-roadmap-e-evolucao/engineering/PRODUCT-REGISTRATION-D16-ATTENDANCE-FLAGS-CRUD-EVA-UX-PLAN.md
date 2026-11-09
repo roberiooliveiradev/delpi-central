@@ -1,7 +1,22 @@
 # D16 — Bandeiras de acompanhamento do atendimento PRC: CRUD, Portal e EVA
 
-**Decisão de produto:** 2026-11-09. **Status:** PO_APPROVED_INTENT / TARGET_CONTRACT / IMPLEMENTATION_NOT_STARTED. **Task:** ENG-PRC-D16-ATTENDANCE-FLAGS-FULL-CRUD-AND-EVA. **Escopo:** Planejamento e documentação, **sem alteração de runtime**.
+**Decisão de produto:** 2026-11-09. **Status:** IMPLEMENTED_IN_DEV / CONTRACT_LOCKED. **Task:** ENG-PRC-D16-ATTENDANCE-FLAGS-FULL-CRUD-AND-EVA. **Escopo:** CRUD REST + PG + UI + EVA parity + testes (DEV only).
 **Owner:** Engineering API para o agregado de bandeiras e auditoria; Portal Engenharia para UI; EVA como consumer governado dos mesmos casos de uso. Core mantém RBAC; Keycloak identidade; TOTVS permanece fonte de dados oficiais de produto/SA5; api-delpi faz somente leitura oficial. Não criar outro bounded context.
+
+### Outcomes (execução)
+
+| Superfície | Estado | Evidência |
+|---|---|---|
+| Domínio `flags.py` (title≤120, desc≤1000, subjects, soft-delete policy) | PROVEN | `tests/test_d16_attendance_flags.py` domain |
+| Migration `V015__prc_attendance_flags.sql` | PROVEN (código) / PENDING (PG real se DSN) | `api-delpi/migrations/plugins/engineering/` |
+| Repo in-memory + postgres + ports/service | PROVEN | pytest REST + EVA |
+| REST nested `/flags` CRUD + resolve/reopen/delete | PROVEN | `TestFlagRestCrud` |
+| AuthZ `engineering.access` + escopo do caso | PROVEN | isolation + process gate |
+| Eventos `flag.*` na timeline | PROVEN | timeline assert |
+| EVA semantic actions (sem nova MCP tool) + delete PREPARE/commit | PROVEN | `TestFlagEvaParity` |
+| UI Ficha técnica `PrcAttendanceFlags` | PROVEN (código/Vitest) / PENDING Playwright DEV | MFE + help |
+| Pós-conclusão mutável (`FLAG_MUTATION_AFTER_TERMINAL=True`) | PROVEN (contrato código) | domain flag |
+| Sem PN=0 / sem SB1-SA5 / sem TOTVS write | PROVEN (by design) | residual: flags não tocam baseline/TOTVS |
 
 ## 1. Problema e decisão PO
 
@@ -177,7 +192,7 @@ A transação de alteração da flag e evento deve ser atômica; duplicação po
 | F13 | DEV containers+builthash+gateway auth+docs SHA | ledger |
 | F14 | Sem chamada direta TOTVS, sem nova tool MCP, sem alteração Core/ERP/produção | residual search |
 
-**Status atual:** `PLANNED` para API, MFE, DB, EVA e testes; `PROVEN` apenas para existência de mecanismos PRC/EVA e inventário funcional legado, não para bandeiras novas. Não declarar implementado por esta documentação.
+**Status atual:** API/MFE/EVA/código de migration e testes unitários/integrados in-memory **PROVEN** no SHA de execução. Playwright autenticado e Postgres real dependem do ambiente DEV (`ENG_PRC_TEST_DSN` / SSO). Produção/HML **NOT_PERFORMED**.
 
 ## 10. Relatório obrigatório da futura execução
 

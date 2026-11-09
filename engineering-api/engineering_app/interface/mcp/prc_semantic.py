@@ -139,6 +139,32 @@ async def read_action(context, entry, args: dict):
                 svc.outbound_request(ref, actor=actor),
                 "Resultado carregado.",
             )
+        if entry.action == "flag_list":
+            if not ref:
+                return _err(
+                    "request_id é obrigatório.", code="validation"
+                )
+            return _ok(
+                svc.list_flags(
+                    ref,
+                    actor=actor,
+                    status=args.get("status"),
+                    page=int(args.get("page", 1)),
+                    page_size=int(args.get("page_size", 25)),
+                ),
+                "Bandeiras carregadas.",
+            )
+        if entry.action == "flag_detail":
+            flag_id = str(args.get("flag_id") or "").strip()
+            if not ref or not flag_id:
+                return _err(
+                    "request_id e flag_id são obrigatórios.",
+                    code="validation",
+                )
+            return _ok(
+                svc.get_flag(ref, flag_id, actor=actor),
+                "Bandeira carregada.",
+            )
     except Exception as exc:
         return _domain_err(exc)
     return _err(f"Ação '{entry.capability}' sem handler.",
@@ -227,6 +253,25 @@ async def execute_action(
                 idempotency_key=idempotency_key,
             )
 
+        if action == "flag_delete":
+            return await _flag_delete(
+                context, entry, phase, ref,
+                payload=payload or {},
+                expected_version=expected_version,
+                proposal_ref=proposal_ref, ctx=ctx,
+                idempotency_key=idempotency_key,
+            )
+
+        if action in (
+            "flag_create", "flag_update", "flag_resolve", "flag_reopen",
+        ):
+            return _flag_execute(
+                svc, actor, entry, phase, ref,
+                payload=payload or {},
+                expected_version=expected_version,
+                idempotency_key=idempotency_key,
+            )
+
         if not ref:
             return _err("target_ref (request_id) é obrigatório.",
                         code="validation")
@@ -272,6 +317,185 @@ async def execute_action(
         return _err(str(exc), code="validation")
     except Exception as exc:
         return _domain_err(exc)
+
+
+def _flag_execute(
+    svc, actor, entry, phase, ref, *,
+    payload, expected_version, idempotency_key,
+):
+    """Flag create/update/resolve/reopen — mesmos use cases REST."""
+    action = entry.action
+    if not ref:
+        return _err("target_ref (request_id) é obrigatório.",
+                    code="validation")
+    body = payload or {}
+    flag_id = str(body.get("flag_id") or "").strip()
+
+    if phase == "prepare":
+        preview = {
+            "phase": "prepare",
+            "request_id": ref,
+            "action": action,
+        }
+        if action != "flag_create":
+            preview["flag_id"] = flag_id
+            preview["expected_version"] = expected_version
+        else:
+            preview["title"] = body.get("title")
+        return _ok(preview, "Pré-validação de bandeira concluída.")
+
+    if action == "flag_create":
+        data = svc.create_flag(
+            ref, actor=actor,
+            title=body.get("title") or "",
+            description=body.get("description") or "",
+            subject=body.get("subject") or "GENERAL",
+            target_path=body.get("target_path") or body.get("targetPath"),
+            supplier_key=body.get("supplier_key") or body.get("supplierKey"),
+            idempotency_key=idempotency_key,
+        )
+    elif action == "flag_update":
+        if not flag_id:
+            return _err("flag_id é obrigatório.", code="validation")
+        version = _require_version({"expected_version": expected_version})
+        data = svc.update_flag(
+            ref, flag_id, actor=actor, expected_version=version,
+            title=body.get("title"),
+            description=body.get("description"),
+            subject=body.get("subject"),
+            target_path=(
+                body["target_path"] if "target_path" in body
+                else body["targetPath"] if "targetPath" in body
+                else ...
+            ),
+            supplier_key=(
+                body["supplier_key"] if "supplier_key" in body
+                else body["supplierKey"] if "supplierKey" in body
+                else ...
+            ),
+            idempotency_key=idempotency_key,
+        )
+    elif action in ("flag_resolve", "flag_reopen"):
+        if not flag_id:
+            return _err("flag_id é obrigatório.", code="validation")
+        version = _require_version({"expected_version": expected_version})
+        fn = (
+            svc.resolve_flag if action == "flag_resolve"
+            else svc.reopen_flag
+        )
+        data = fn(
+            ref, flag_id, actor=actor, expected_version=version,
+            reason=body.get("reason"),
+            idempotency_key=idempotency_key,
+        )
+    else:
+        return _err(f"Ação '{entry.capability}' sem handler.",
+                    code="not_implemented", status=501)
+    if isinstance(data, dict) and data.get("replayed"):
+        data = data["response"]
+    return _ok({"entity": entry.entity, "action": action, **data},
+               "Bandeira aplicada.")
+
+
+async def _flag_delete(
+    context, entry, phase, ref, *,
+    payload, expected_version, proposal_ref, ctx, idempotency_key,
+):
+    """Soft-delete com proposta selada + confirmação humana."""
+    from engineering_app.interface.mcp.semantic_bridge import (
+        _require_human_confirmation,
+    )
+    from engineering_app.application.eva.proposal_store import (
+        EvaProposalError,
+    )
+
+    svc = build_prc_service()
+    actor = _actor(context)
+    if not ref:
+        return _err("target_ref (request_id) é obrigatório.",
+                    code="validation")
+    body = payload or {}
+    flag_id = str(body.get("flag_id") or "").strip()
+    if not flag_id:
+        return _err("flag_id é obrigatório.", code="validation")
+    version = _require_version({"expected_version": expected_version})
+
+    if phase == "prepare":
+        detail = svc.get_flag(ref, flag_id, actor=actor)
+        proposal, handle = seal_proposal(
+            capability=entry.capability,
+            actor_id=str(getattr(context.user, "id", "") or ""),
+            target_ref=ref,
+            change={
+                "action": "flag_delete",
+                "flag_id": flag_id,
+                "expected_version": version,
+            },
+            impact={
+                "operation": "flag_delete",
+                "flagId": flag_id,
+                "title": detail.get("title"),
+                "effect": (
+                    "Exclusão lógica da bandeira — histórico preservado; "
+                    "não altera SB1/SA5/revisões."
+                ),
+            },
+            expected_postcondition={
+                "check": "flag_soft_deleted",
+                "flag_id": flag_id,
+            },
+        )
+        return _ok(
+            {"entity": entry.entity, "action": entry.action,
+             "phase": "prepare", "proposal_ref": handle,
+             "proposal": proposal.to_public_dict()},
+            "Proposta de exclusão selada — confirme com o usuário.",
+        )
+
+    handle = (proposal_ref or "").strip()
+    if not handle:
+        raise EvaProposalError(
+            "proposal_ref é obrigatório para phase=commit.",
+            code="proposal_required", status_code=400,
+        )
+    proposal = load_valid_proposal(
+        proposal_handle=handle,
+        actor_id=str(getattr(context.user, "id", "") or ""),
+        expected_capability=entry.capability,
+        expected_target_ref=ref,
+    )
+    if fingerprint(
+        {"action": "flag_delete", "flag_id": flag_id,
+         "expected_version": version}
+    ) != proposal.change_fingerprint:
+        raise EvaProposalError(
+            "Parâmetros divergem da proposta selada — prepare novamente.",
+            code="proposal_mismatch", status_code=409,
+        )
+    summary = (
+        f"Excluir bandeira {flag_id} da solicitação {ref} "
+        "(soft-delete; histórico preservado)."
+    )
+    confirmation = await _require_human_confirmation(
+        ctx,
+        expected_echo=flag_id,
+        summary=summary,
+        proposal_id=proposal.proposal_id,
+    )
+    if confirmation is not None:
+        return confirmation
+    get_proposal_store().consume(proposal.proposal_id)
+    data = svc.delete_flag(
+        ref, flag_id, actor=actor, expected_version=version,
+        idempotency_key=idempotency_key,
+    )
+    if isinstance(data, dict) and data.get("replayed"):
+        data = data["response"]
+    return _ok(
+        {"entity": entry.entity, "action": entry.action,
+         "phase": "commit", "proposal_id": proposal.proposal_id, **data},
+        "Bandeira excluída logicamente.",
+    )
 
 
 async def _terminal(

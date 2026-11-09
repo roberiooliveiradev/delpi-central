@@ -221,6 +221,11 @@ export function HelpPage({ basePath }: HelpPageProps) {
                     "Cada alteração exige justificativa e é verificada contra a versão atual do caso — se outra pessoa alterou antes, o portal avisa e recarrega os dados.",
                 },
                 {
+                  term: "Bandeiras de acompanhamento",
+                  meaning:
+                    "Anotações operacionais do analista na ficha técnica (criar, editar, resolver, reabrir e remover). Não alteram SB1, SA5, revisões técnicas nem o TOTVS; o histórico permanece após exclusão lógica.",
+                },
+                {
                   term: "Verificação TOTVS",
                   meaning:
                     "Na conclusão, a Engineering API relê o cadastro oficial e compara campo a campo. A solicitação só é concluída quando todos os campos verificáveis correspondem; a revisão publicada é imutável.",

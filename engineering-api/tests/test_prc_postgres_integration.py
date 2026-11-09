@@ -292,3 +292,117 @@ class TestPostgresIntegration:
         )
         after = repo.get_request(rid)
         assert after["official_baseline"]["fingerprint"] == "fp-d15-pg"
+
+    def test_attendance_flags_crud_and_audit(self, repo):
+        """D16 — flags no PostgreSQL real (V015); soft-delete + eventos."""
+        rid = str(uuid.uuid4())
+        _seed(repo, rid)
+        now = "2026-11-09T12:00:00+00:00"
+        flag_id = str(uuid.uuid4())
+        created = repo.create_flag(
+            flag={
+                "id": flag_id,
+                "request_id": rid,
+                "title": "Revisar descrição",
+                "description": "Confirmar com solicitante.",
+                "status": "OPEN",
+                "subject": "GENERAL",
+                "target_path": None,
+                "supplier_key": None,
+                "row_version": 1,
+                "created_by_subject": "analyst-pg",
+                "created_by_display_name": "Analyst",
+                "created_at": now,
+                "updated_by_subject": "analyst-pg",
+                "updated_by_display_name": "Analyst",
+                "updated_at": now,
+                "resolved_by_subject": None,
+                "resolved_by_display_name": None,
+                "resolved_at": None,
+                "deleted_by_subject": None,
+                "deleted_by_display_name": None,
+                "deleted_at": None,
+            },
+            event={
+                "event_type": "flag.created",
+                "actor_subject": "analyst-pg",
+                "actor_display_name": "Analyst",
+                "actor_email": None,
+                "reason": None,
+                "metadata": {"flagId": flag_id},
+                "previous_status": None,
+                "next_status": "OPEN",
+            },
+        )
+        assert created["status"] == "OPEN"
+        listed = repo.list_flags(request_id=rid, status="OPEN")
+        assert listed["openCount"] == 1
+        assert listed["items"][0]["id"] == flag_id
+
+        from engineering_app.domain.product_registration.errors import (
+            PrcConcurrencyError,
+            PrcNotFoundError,
+        )
+
+        with pytest.raises(PrcConcurrencyError):
+            repo.update_flag(
+                request_id=rid, flag_id=flag_id, expected_version=99,
+                patch={"title": "x"}, actor_subject="a",
+                actor_display_name="A",
+                event={
+                    "event_type": "flag.updated",
+                    "actor_subject": "a", "actor_display_name": "A",
+                    "actor_email": None, "reason": None,
+                    "metadata": {}, "previous_status": "OPEN",
+                    "next_status": "OPEN",
+                },
+            )
+
+        updated = repo.transition_flag(
+            request_id=rid, flag_id=flag_id, expected_version=1,
+            next_status="RESOLVED", actor_subject="analyst-pg",
+            actor_display_name="Analyst",
+            event={
+                "event_type": "flag.resolved",
+                "actor_subject": "analyst-pg",
+                "actor_display_name": "Analyst",
+                "actor_email": None, "reason": None,
+                "metadata": {"flagId": flag_id},
+                "previous_status": "OPEN", "next_status": "RESOLVED",
+            },
+        )
+        assert updated["status"] == "RESOLVED"
+        assert updated["row_version"] == 2
+
+        deleted = repo.soft_delete_flag(
+            request_id=rid, flag_id=flag_id, expected_version=2,
+            actor_subject="analyst-pg", actor_display_name="Analyst",
+            event={
+                "event_type": "flag.deleted",
+                "actor_subject": "analyst-pg",
+                "actor_display_name": "Analyst",
+                "actor_email": None, "reason": None,
+                "metadata": {"flagId": flag_id},
+                "previous_status": None, "next_status": None,
+            },
+        )
+        assert deleted["deleted_at"]
+        assert repo.get_flag(request_id=rid, flag_id=flag_id) is None
+        with pytest.raises(PrcNotFoundError):
+            repo.soft_delete_flag(
+                request_id=rid, flag_id=flag_id, expected_version=3,
+                actor_subject="analyst-pg", actor_display_name="Analyst",
+                event={
+                    "event_type": "flag.deleted",
+                    "actor_subject": "analyst-pg",
+                    "actor_display_name": "Analyst",
+                    "actor_email": None, "reason": None,
+                    "metadata": {}, "previous_status": None,
+                    "next_status": None,
+                },
+            )
+        events = repo.list_events(rid)
+        types = {e["event_type"] for e in events["items"]}
+        assert "flag.created" in types
+        assert "flag.resolved" in types
+        assert "flag.deleted" in types

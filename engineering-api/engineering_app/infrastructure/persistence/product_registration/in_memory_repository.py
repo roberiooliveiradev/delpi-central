@@ -39,6 +39,7 @@ class InMemoryProductRegistrationRepository:
         self._record_by_key: dict[tuple[str, str], str] = {}
         self._revisions: dict[str, list[dict]] = {}
         self._idempotency: dict[tuple[str, str, str], dict] = {}
+        self._flags: dict[str, dict] = {}  # flag_id → row
 
     # --- helpers internos ------------------------------------------------------
 
@@ -476,3 +477,171 @@ class InMemoryProductRegistrationRepository:
             "revision": copy.deepcopy(revision),
             "verification": verification_row,
         }
+
+    # --- attendance flags (D16) ------------------------------------------------
+
+    def create_flag(
+        self, *, flag: dict[str, Any], event: dict[str, Any]
+    ) -> dict[str, Any]:
+        self._require_request(flag["request_id"])
+        row = dict(flag)
+        self._flags[row["id"]] = row
+        self._append_event(row["request_id"], event)
+        return copy.deepcopy(row)
+
+    def get_flag(
+        self, *, request_id: str, flag_id: str, include_deleted: bool = False
+    ) -> dict[str, Any] | None:
+        self._require_request(request_id)
+        row = self._flags.get(flag_id)
+        if row is None or row["request_id"] != request_id:
+            return None
+        if row.get("deleted_at") and not include_deleted:
+            return None
+        return copy.deepcopy(row)
+
+    def list_flags(
+        self,
+        *,
+        request_id: str,
+        status: str | None = None,
+        page: int = 1,
+        page_size: int = 25,
+    ) -> dict[str, Any]:
+        self._require_request(request_id)
+        items = [
+            copy.deepcopy(f)
+            for f in self._flags.values()
+            if f["request_id"] == request_id and not f.get("deleted_at")
+        ]
+        if status:
+            items = [f for f in items if f["status"] == status]
+        items.sort(key=lambda f: (f["created_at"], f["id"]), reverse=True)
+        open_count = sum(
+            1
+            for f in self._flags.values()
+            if f["request_id"] == request_id
+            and not f.get("deleted_at")
+            and f["status"] == "OPEN"
+        )
+        resolved_count = sum(
+            1
+            for f in self._flags.values()
+            if f["request_id"] == request_id
+            and not f.get("deleted_at")
+            and f["status"] == "RESOLVED"
+        )
+        total = len(items)
+        start = (page - 1) * page_size
+        return {
+            "items": items[start : start + page_size],
+            "page": page,
+            "pageSize": page_size,
+            "total": total,
+            "openCount": open_count,
+            "resolvedCount": resolved_count,
+            "hasMore": start + page_size < total,
+        }
+
+    def _require_flag_cas(
+        self, request_id: str, flag_id: str, expected_version: int
+    ) -> dict:
+        row = self._flags.get(flag_id)
+        if row is None or row["request_id"] != request_id or row.get("deleted_at"):
+            raise PrcNotFoundError("flag", flag_id)
+        if int(row["row_version"]) != int(expected_version):
+            raise PrcConcurrencyError("stale_version")
+        return row
+
+    def update_flag(
+        self,
+        *,
+        request_id: str,
+        flag_id: str,
+        expected_version: int,
+        patch: dict[str, Any],
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        row = self._require_flag_cas(request_id, flag_id, expected_version)
+        before = copy.deepcopy(row)
+        for key, value in patch.items():
+            row[key] = value
+        row["row_version"] = int(row["row_version"]) + 1
+        row["updated_by_subject"] = actor_subject
+        row["updated_by_display_name"] = actor_display_name
+        row["updated_at"] = _now()
+        meta = dict(event.get("metadata") or {})
+        meta["before"] = {
+            "title": before["title"],
+            "description": before["description"],
+            "subject": before["subject"],
+            "target_path": before.get("target_path"),
+            "supplier_key": before.get("supplier_key"),
+            "version": before["row_version"],
+        }
+        event = {**event, "metadata": meta}
+        self._append_event(request_id, event)
+        return copy.deepcopy(row)
+
+    def transition_flag(
+        self,
+        *,
+        request_id: str,
+        flag_id: str,
+        expected_version: int,
+        next_status: str,
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        row = self._require_flag_cas(request_id, flag_id, expected_version)
+        prev = row["status"]
+        if prev == next_status:
+            raise PrcStateConflictError("state_conflict")
+        if next_status == "RESOLVED" and prev != "OPEN":
+            raise PrcStateConflictError("state_conflict")
+        if next_status == "OPEN" and prev != "RESOLVED":
+            raise PrcStateConflictError("state_conflict")
+        row["status"] = next_status
+        row["row_version"] = int(row["row_version"]) + 1
+        row["updated_by_subject"] = actor_subject
+        row["updated_by_display_name"] = actor_display_name
+        row["updated_at"] = _now()
+        if next_status == "RESOLVED":
+            row["resolved_by_subject"] = actor_subject
+            row["resolved_by_display_name"] = actor_display_name
+            row["resolved_at"] = row["updated_at"]
+        else:
+            row["resolved_by_subject"] = None
+            row["resolved_by_display_name"] = None
+            row["resolved_at"] = None
+        event = {
+            **event,
+            "previous_status": prev,
+            "next_status": next_status,
+        }
+        self._append_event(request_id, event)
+        return copy.deepcopy(row)
+
+    def soft_delete_flag(
+        self,
+        *,
+        request_id: str,
+        flag_id: str,
+        expected_version: int,
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        row = self._require_flag_cas(request_id, flag_id, expected_version)
+        row["deleted_by_subject"] = actor_subject
+        row["deleted_by_display_name"] = actor_display_name
+        row["deleted_at"] = _now()
+        row["row_version"] = int(row["row_version"]) + 1
+        row["updated_by_subject"] = actor_subject
+        row["updated_by_display_name"] = actor_display_name
+        row["updated_at"] = row["deleted_at"]
+        self._append_event(request_id, event)
+        return copy.deepcopy(row)

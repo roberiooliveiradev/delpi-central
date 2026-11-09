@@ -39,6 +39,11 @@ export const PRC_EVENT_LABELS: Record<string, string> = {
   completed: "Solicitação concluída",
   verification_attempted: "Verificação oficial executada",
   verify_and_complete: "Verificação oficial e conclusão",
+  "flag.created": "Bandeira criada",
+  "flag.updated": "Bandeira atualizada",
+  "flag.resolved": "Bandeira resolvida",
+  "flag.reopened": "Bandeira reaberta",
+  "flag.deleted": "Bandeira excluída",
 };
 
 export const PRC_RESULT_LABELS: Record<string, string> = {

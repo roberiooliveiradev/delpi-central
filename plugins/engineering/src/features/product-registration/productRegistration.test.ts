@@ -1,10 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  createPrcFlag,
+  deletePrcFlag,
+  fetchPrcFlags,
   fetchPrcQueue,
   prcAction,
   prcIntakeSubmit,
   prcUpdateDraft,
+  resolvePrcFlag,
 } from "./api/productRegistrationApi";
+import { PRC_EVENT_LABELS } from "./prcCopy";
 import {
   buildPrcQueueUrl,
   parsePrcQueueUrl,
@@ -168,5 +173,54 @@ describe("productRegistrationApi", () => {
       (init.headers as Record<string, string>)["Idempotency-Key"],
     ).toBe("idem-intake");
     expect(JSON.parse(String(init.body)).requestType).toBe("create");
+  });
+
+  it("lists and mutates attendance flags with Idempotency-Key", async () => {
+    await fetchPrcFlags(REQUEST_ID, { status: "OPEN", page: 1 });
+    const [listUrl] = vi.mocked(fetch).mock.calls[0] as [string];
+    expect(listUrl).toContain(`/requests/${REQUEST_ID}/flags`);
+    expect(listUrl).toContain("status=OPEN");
+
+    await createPrcFlag(
+      REQUEST_ID,
+      {
+        title: "Revisar descrição",
+        description: "Confirmar com solicitante.",
+        subject: "GENERAL",
+      },
+      "flag-idem-1",
+    );
+    const [, createInit] = vi.mocked(fetch).mock.calls[1] as [
+      string,
+      RequestInit,
+    ];
+    expect(createInit.method).toBe("POST");
+    expect(
+      (createInit.headers as Record<string, string>)["Idempotency-Key"],
+    ).toBe("flag-idem-1");
+
+    await resolvePrcFlag(
+      REQUEST_ID,
+      "flag-1",
+      { expectedVersion: 1 },
+      "flag-res",
+    );
+    const [resolveUrl] = vi.mocked(fetch).mock.calls[2] as [string];
+    expect(resolveUrl).toContain("/flags/flag-1/actions/resolve");
+
+    await deletePrcFlag(REQUEST_ID, "flag-1", 2, "flag-del");
+    const [deleteUrl, deleteInit] = vi.mocked(fetch).mock.calls[3] as [
+      string,
+      RequestInit,
+    ];
+    expect(deleteUrl).toContain("expectedVersion=2");
+    expect(deleteInit.method).toBe("DELETE");
+  });
+});
+
+describe("PRC_EVENT_LABELS D16", () => {
+  it("labels flag lifecycle events", () => {
+    expect(PRC_EVENT_LABELS["flag.created"]).toMatch(/Bandeira/);
+    expect(PRC_EVENT_LABELS["flag.deleted"]).toMatch(/exclu/);
   });
 });

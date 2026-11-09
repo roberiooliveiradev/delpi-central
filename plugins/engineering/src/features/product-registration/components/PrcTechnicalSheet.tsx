@@ -28,6 +28,7 @@ import {
   toSupplierRows,
   type SupplierRow,
 } from "../prcSuppliers";
+import { PrcAttendanceFlags } from "./PrcAttendanceFlags";
 
 function scalarText(value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";
@@ -190,6 +191,7 @@ export function PrcTechnicalSheet({
     <div className="engineering-prc__sheet">
       {!editing ? (
         <>
+          <PrcAttendanceFlags requestId={detail.id} />
           {FIELD_GROUPS.map((group) => {
             const fields = group.paths
               .filter((p) => p in draft || p === "officialProductCode")

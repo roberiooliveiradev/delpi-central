@@ -38,6 +38,7 @@ _T_REV = f"{_SCHEMA}.product_registration_revisions"
 _T_EVT = f"{_SCHEMA}.product_registration_events"
 _T_VER = f"{_SCHEMA}.product_registration_verifications"
 _T_IDEM = f"{_SCHEMA}.product_registration_idempotency"
+_T_FLAG = f"{_SCHEMA}.product_registration_flags"
 
 
 def _now() -> datetime:
@@ -768,3 +769,289 @@ class PostgresProductRegistrationRepository:
             "revision": rev,
             "verification": ver_row,
         }
+
+    # --- attendance flags (D16) ------------------------------------------------
+
+    def _flag_row(self, row: dict) -> dict[str, Any]:
+        out = dict(row)
+        out["id"] = str(out["id"])
+        out["request_id"] = str(out["request_id"])
+        for key in (
+            "created_at", "updated_at", "resolved_at", "deleted_at",
+        ):
+            out[key] = _iso(out.get(key))
+        return out
+
+    def create_flag(
+        self, *, flag: dict[str, Any], event: dict[str, Any]
+    ) -> dict[str, Any]:
+        with self._conn() as conn:
+            conn.execute(
+                f"INSERT INTO {_T_FLAG}"
+                " (id, request_id, title, description, status, subject,"
+                "  target_path, supplier_key, row_version,"
+                "  created_by_subject, created_by_display_name, created_at,"
+                "  updated_by_subject, updated_by_display_name, updated_at)"
+                " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                (
+                    flag["id"], flag["request_id"], flag["title"],
+                    flag["description"], flag["status"], flag["subject"],
+                    flag.get("target_path"),
+                    json.dumps(flag.get("supplier_key"))
+                    if flag.get("supplier_key") is not None else None,
+                    flag["row_version"],
+                    flag["created_by_subject"],
+                    flag.get("created_by_display_name"),
+                    flag["created_at"],
+                    flag["updated_by_subject"],
+                    flag.get("updated_by_display_name"),
+                    flag["updated_at"],
+                ),
+            )
+            seq = conn.execute(
+                f"SELECT COALESCE(MAX(sequence_number),0)+1 AS n"
+                f" FROM {_T_EVT} WHERE request_id=%s",
+                (flag["request_id"],),
+            ).fetchone()["n"]
+            self._insert_event(conn, flag["request_id"], seq, event)
+            row = conn.execute(
+                f"SELECT * FROM {_T_FLAG} WHERE id=%s", (flag["id"],)
+            ).fetchone()
+        return self._flag_row(row)
+
+    def get_flag(
+        self, *, request_id: str, flag_id: str, include_deleted: bool = False
+    ) -> dict[str, Any] | None:
+        with self._conn() as conn:
+            sql = f"SELECT * FROM {_T_FLAG} WHERE id=%s AND request_id=%s"
+            params: list[Any] = [flag_id, request_id]
+            if not include_deleted:
+                sql += " AND deleted_at IS NULL"
+            row = conn.execute(sql, params).fetchone()
+        return self._flag_row(row) if row else None
+
+    def list_flags(
+        self,
+        *,
+        request_id: str,
+        status: str | None = None,
+        page: int = 1,
+        page_size: int = 25,
+    ) -> dict[str, Any]:
+        where = "request_id=%s AND deleted_at IS NULL"
+        params: list[Any] = [request_id]
+        if status:
+            where += " AND status=%s"
+            params.append(status)
+        offset = (page - 1) * page_size
+        with self._conn() as conn:
+            total = conn.execute(
+                f"SELECT COUNT(*) AS n FROM {_T_FLAG} WHERE {where}",
+                params,
+            ).fetchone()["n"]
+            counts = conn.execute(
+                f"SELECT status, COUNT(*) AS n FROM {_T_FLAG}"
+                " WHERE request_id=%s AND deleted_at IS NULL"
+                " GROUP BY status",
+                (request_id,),
+            ).fetchall()
+            rows = conn.execute(
+                f"SELECT * FROM {_T_FLAG} WHERE {where}"
+                " ORDER BY created_at DESC, id DESC"
+                " LIMIT %s OFFSET %s",
+                [*params, page_size, offset],
+            ).fetchall()
+        by_status = {r["status"]: int(r["n"]) for r in counts}
+        return {
+            "items": [self._flag_row(r) for r in rows],
+            "page": page,
+            "pageSize": page_size,
+            "total": int(total),
+            "openCount": by_status.get("OPEN", 0),
+            "resolvedCount": by_status.get("RESOLVED", 0),
+            "hasMore": offset + page_size < int(total),
+        }
+
+    def update_flag(
+        self,
+        *,
+        request_id: str,
+        flag_id: str,
+        expected_version: int,
+        patch: dict[str, Any],
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        with self._conn() as conn:
+            row = conn.execute(
+                f"SELECT * FROM {_T_FLAG}"
+                " WHERE id=%s AND request_id=%s AND deleted_at IS NULL"
+                " FOR UPDATE",
+                (flag_id, request_id),
+            ).fetchone()
+            if row is None:
+                raise PrcNotFoundError("flag", flag_id)
+            if int(row["row_version"]) != int(expected_version):
+                raise PrcConcurrencyError("stale_version")
+            before = self._flag_row(row)
+            conn.execute(
+                f"UPDATE {_T_FLAG} SET"
+                " title=%s, description=%s, subject=%s, target_path=%s,"
+                " supplier_key=%s, row_version=%s,"
+                " updated_by_subject=%s, updated_by_display_name=%s,"
+                " updated_at=%s"
+                " WHERE id=%s",
+                (
+                    patch.get("title", row["title"]),
+                    patch.get("description", row["description"]),
+                    patch.get("subject", row["subject"]),
+                    patch.get("target_path", row["target_path"]),
+                    json.dumps(patch["supplier_key"])
+                    if "supplier_key" in patch
+                    and patch["supplier_key"] is not None
+                    else (
+                        None if "supplier_key" in patch
+                        else json.dumps(row["supplier_key"])
+                        if row.get("supplier_key") is not None else None
+                    ),
+                    int(row["row_version"]) + 1,
+                    actor_subject, actor_display_name, _now(),
+                    flag_id,
+                ),
+            )
+            meta = dict(event.get("metadata") or {})
+            meta["before"] = {
+                "title": before["title"],
+                "description": before["description"],
+                "subject": before["subject"],
+                "target_path": before.get("target_path"),
+                "supplier_key": before.get("supplier_key"),
+                "version": before["row_version"],
+            }
+            event = {**event, "metadata": meta}
+            seq = conn.execute(
+                f"SELECT COALESCE(MAX(sequence_number),0)+1 AS n"
+                f" FROM {_T_EVT} WHERE request_id=%s",
+                (request_id,),
+            ).fetchone()["n"]
+            self._insert_event(conn, request_id, seq, event)
+            updated = conn.execute(
+                f"SELECT * FROM {_T_FLAG} WHERE id=%s", (flag_id,)
+            ).fetchone()
+        return self._flag_row(updated)
+
+    def transition_flag(
+        self,
+        *,
+        request_id: str,
+        flag_id: str,
+        expected_version: int,
+        next_status: str,
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        with self._conn() as conn:
+            row = conn.execute(
+                f"SELECT * FROM {_T_FLAG}"
+                " WHERE id=%s AND request_id=%s AND deleted_at IS NULL"
+                " FOR UPDATE",
+                (flag_id, request_id),
+            ).fetchone()
+            if row is None:
+                raise PrcNotFoundError("flag", flag_id)
+            if int(row["row_version"]) != int(expected_version):
+                raise PrcConcurrencyError("stale_version")
+            prev = row["status"]
+            if prev == next_status:
+                raise PrcStateConflictError("state_conflict")
+            if next_status == "RESOLVED" and prev != "OPEN":
+                raise PrcStateConflictError("state_conflict")
+            if next_status == "OPEN" and prev != "RESOLVED":
+                raise PrcStateConflictError("state_conflict")
+            now = _now()
+            if next_status == "RESOLVED":
+                conn.execute(
+                    f"UPDATE {_T_FLAG} SET status=%s, row_version=%s,"
+                    " updated_by_subject=%s, updated_by_display_name=%s,"
+                    " updated_at=%s, resolved_by_subject=%s,"
+                    " resolved_by_display_name=%s, resolved_at=%s"
+                    " WHERE id=%s",
+                    (
+                        next_status, int(row["row_version"]) + 1,
+                        actor_subject, actor_display_name, now,
+                        actor_subject, actor_display_name, now, flag_id,
+                    ),
+                )
+            else:
+                conn.execute(
+                    f"UPDATE {_T_FLAG} SET status=%s, row_version=%s,"
+                    " updated_by_subject=%s, updated_by_display_name=%s,"
+                    " updated_at=%s, resolved_by_subject=NULL,"
+                    " resolved_by_display_name=NULL, resolved_at=NULL"
+                    " WHERE id=%s",
+                    (
+                        next_status, int(row["row_version"]) + 1,
+                        actor_subject, actor_display_name, now, flag_id,
+                    ),
+                )
+            event = {
+                **event,
+                "previous_status": prev,
+                "next_status": next_status,
+            }
+            seq = conn.execute(
+                f"SELECT COALESCE(MAX(sequence_number),0)+1 AS n"
+                f" FROM {_T_EVT} WHERE request_id=%s",
+                (request_id,),
+            ).fetchone()["n"]
+            self._insert_event(conn, request_id, seq, event)
+            updated = conn.execute(
+                f"SELECT * FROM {_T_FLAG} WHERE id=%s", (flag_id,)
+            ).fetchone()
+        return self._flag_row(updated)
+
+    def soft_delete_flag(
+        self,
+        *,
+        request_id: str,
+        flag_id: str,
+        expected_version: int,
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        with self._conn() as conn:
+            row = conn.execute(
+                f"SELECT * FROM {_T_FLAG}"
+                " WHERE id=%s AND request_id=%s AND deleted_at IS NULL"
+                " FOR UPDATE",
+                (flag_id, request_id),
+            ).fetchone()
+            if row is None:
+                raise PrcNotFoundError("flag", flag_id)
+            if int(row["row_version"]) != int(expected_version):
+                raise PrcConcurrencyError("stale_version")
+            now = _now()
+            conn.execute(
+                f"UPDATE {_T_FLAG} SET deleted_at=%s, deleted_by_subject=%s,"
+                " deleted_by_display_name=%s, row_version=%s,"
+                " updated_by_subject=%s, updated_by_display_name=%s,"
+                " updated_at=%s WHERE id=%s",
+                (
+                    now, actor_subject, actor_display_name,
+                    int(row["row_version"]) + 1,
+                    actor_subject, actor_display_name, now, flag_id,
+                ),
+            )
+            seq = conn.execute(
+                f"SELECT COALESCE(MAX(sequence_number),0)+1 AS n"
+                f" FROM {_T_EVT} WHERE request_id=%s",
+                (request_id,),
+            ).fetchone()["n"]
+            self._insert_event(conn, request_id, seq, event)
+            updated = conn.execute(
+                f"SELECT * FROM {_T_FLAG} WHERE id=%s", (flag_id,)
+            ).fetchone()
+        return self._flag_row(updated)

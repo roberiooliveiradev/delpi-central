@@ -2,7 +2,12 @@
  * contratos PRC da Engineering API. O MFE nunca chama api-delpi/TOTVS
  * direto e nunca decide autorização (backend fail-closed). */
 
-import { getJson, patchJson, postJson } from "../../../api/httpClient";
+import {
+  deleteJson,
+  getJson,
+  patchJson,
+  postJson,
+} from "../../../api/httpClient";
 
 const BASE = "/apps/engineering-api/v1/product-registration";
 
@@ -415,6 +420,143 @@ export async function prcUpdateDraft(
   return patchJson(
     `${BASE}/requests/${requestId}/draft`,
     body,
+    undefined,
+    idempotencyKey
+      ? { headers: { "Idempotency-Key": idempotencyKey } }
+      : undefined,
+  );
+}
+
+/* --- D16 attendance flags ------------------------------------------------ */
+
+export type PrcAttendanceFlag = {
+  id: string;
+  requestId: string;
+  title: string;
+  description: string;
+  status: "OPEN" | "RESOLVED";
+  subject: "GENERAL" | "FIELD" | "SUPPLIER_LINK";
+  targetPath?: string | null;
+  supplierKey?: { supplierCode: string; store: string } | null;
+  version: number;
+  createdAt: string;
+  createdBy: { subject: string; displayName?: string | null };
+  updatedAt: string;
+  updatedBy: { subject?: string | null; displayName?: string | null };
+  resolvedAt?: string | null;
+  resolvedBy?: { subject: string; displayName?: string | null } | null;
+  deleted?: boolean;
+};
+
+export type PrcFlagListResult = {
+  items: PrcAttendanceFlag[];
+  page: number;
+  pageSize: number;
+  total: number;
+  openCount: number;
+  resolvedCount: number;
+  hasMore: boolean;
+};
+
+export type PrcFlagCreateBody = {
+  title: string;
+  description: string;
+  subject?: "GENERAL" | "FIELD" | "SUPPLIER_LINK";
+  targetPath?: string | null;
+  supplierKey?: { supplierCode: string; store: string } | null;
+};
+
+export type PrcFlagUpdateBody = {
+  expectedVersion: number;
+  title?: string;
+  description?: string;
+  subject?: "GENERAL" | "FIELD" | "SUPPLIER_LINK";
+  targetPath?: string | null;
+  supplierKey?: { supplierCode: string; store: string } | null;
+};
+
+export async function fetchPrcFlags(
+  requestId: string,
+  params?: { status?: "OPEN" | "RESOLVED" | "all"; page?: number; pageSize?: number },
+  signal?: AbortSignal,
+): Promise<Envelope<PrcFlagListResult>> {
+  const qs = new URLSearchParams();
+  if (params?.status) qs.set("status", params.status);
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.pageSize) qs.set("pageSize", String(params.pageSize));
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return getJson(
+    `${BASE}/requests/${requestId}/flags${suffix}`,
+    signal,
+  );
+}
+
+export async function createPrcFlag(
+  requestId: string,
+  body: PrcFlagCreateBody,
+  idempotencyKey: string,
+): Promise<Envelope<PrcAttendanceFlag>> {
+  return postJson(`${BASE}/requests/${requestId}/flags`, body, undefined, {
+    headers: { "Idempotency-Key": idempotencyKey },
+  });
+}
+
+export async function updatePrcFlag(
+  requestId: string,
+  flagId: string,
+  body: PrcFlagUpdateBody,
+  idempotencyKey?: string,
+): Promise<Envelope<PrcAttendanceFlag>> {
+  return patchJson(
+    `${BASE}/requests/${requestId}/flags/${flagId}`,
+    body,
+    undefined,
+    idempotencyKey
+      ? { headers: { "Idempotency-Key": idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function resolvePrcFlag(
+  requestId: string,
+  flagId: string,
+  body: { expectedVersion: number; reason?: string },
+  idempotencyKey?: string,
+): Promise<Envelope<PrcAttendanceFlag>> {
+  return postJson(
+    `${BASE}/requests/${requestId}/flags/${flagId}/actions/resolve`,
+    body,
+    undefined,
+    idempotencyKey
+      ? { headers: { "Idempotency-Key": idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function reopenPrcFlag(
+  requestId: string,
+  flagId: string,
+  body: { expectedVersion: number; reason?: string },
+  idempotencyKey?: string,
+): Promise<Envelope<PrcAttendanceFlag>> {
+  return postJson(
+    `${BASE}/requests/${requestId}/flags/${flagId}/actions/reopen`,
+    body,
+    undefined,
+    idempotencyKey
+      ? { headers: { "Idempotency-Key": idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function deletePrcFlag(
+  requestId: string,
+  flagId: string,
+  expectedVersion: number,
+  idempotencyKey?: string,
+): Promise<Envelope<{ id: string; requestId: string; deleted: boolean; version: number }>> {
+  return deleteJson(
+    `${BASE}/requests/${requestId}/flags/${flagId}?expectedVersion=${expectedVersion}`,
     undefined,
     idempotencyKey
       ? { headers: { "Idempotency-Key": idempotencyKey } }

@@ -254,6 +254,7 @@ export async function patchJson<T>(
 export async function deleteJson<T>(
   path: string,
   signal?: AbortSignal,
+  options?: SendJsonOptions,
 ): Promise<T> {
-  return sendJson<T>("DELETE", path, undefined, signal);
+  return sendJson<T>("DELETE", path, undefined, signal, options);
 }
