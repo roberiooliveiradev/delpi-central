@@ -62,6 +62,7 @@ Para cada correção: RESPONSABILIDADE → OWNER → FONTE CANÔNICA → CONSUME
 - **Owner inicial:** DÉLIA — catálogo/discovery, com TÉO autoridade de descrição.
 - **Diagnóstico bounded:** validar consumo real e o owner do snapshot, mecanismo aprovado de refresh/retirement, versão/lineage, risco de drift; verificar se é apenas EVAL_ONLY. Não atualizar manualmente nem criar sincronização paralela.
 - **Aceite:** snapshot atualizado/aposentado por boundary autorizado; discovery coerente com contrato TÉO; smoke/regressão e prova de que invoke live não foi alterado.
+- **T2 decision package (2026-11-09, DELIA-C3-ENG-CLOSURE-T2-BOUNDARY-OWNERSHIP-CONFORMANCE-01):** prod ainda `snapshot_experiment` com DB ~2026-11-03 (teo analyze sem Scope requirements); Agent MCPToolset live mitiga discovery nativo; `mcp_provider.discover_catalog` consome snapshot quando flag ON. Recomendação coordenação: `RETIRE_FULL_SET` (fecha R04 sem auto-sync). Sem ADR, código preservado. **Estado permanece OPEN** até ADR+execução.
 - **Estado:** OPEN; stale snapshot `PROVEN`, ação depende de decisão de owner.
 
 ### R05 — Kimi ainda repete erro de escopo ocasionalmente [P2]

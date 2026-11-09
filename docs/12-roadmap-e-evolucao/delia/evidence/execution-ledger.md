@@ -5987,6 +5987,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 | DELIA-C3-R01-ADMISSION-V42-NATIVE-MCP-ENDTOEND-OUTCOME-VALIDATION-01 | Auth legítima recuperada em DEV (password-grant `rober`→gateway local; aud inclui `delia-api`); prod KC permanece invalid_grant sem reset. Runtime v42 + TEO MCP; perfil `openrouter_qwen` adicionado; harness admission unbind fix. E2E DEV: Kimi C1/B1 GROUNDED+MCP, controles conceituais 0-tool; Qwen14B C1 GROUNDED+MCP, B1 owner-path+MCP com Outcome parcial; Qwen4B local C1 admission FAIL (residual capacidade). Routing tests 8 PASS. PRODUCTION_DEPLOY=NOT_AUTHORIZED | R01 E2E Outcome PROVEN em DEV (Kimi/Qwen14B); residual Qwen4B admission + qualidade Outcome parcial Qwen |
 | DELIA-C3-ENG-CLOSURE-T0-BASELINE-RESIDUAL-FREEZE-01 | DOC_ONLY: reancoragem HEAD=54755b078a=origin/main; reconciliou docs 256/293 + ledger + backlog R01–R07 + matrix E2E dc491abd1e; L-01/L-02/L-03/L-04 CLOSED_PROVEN (deleções nativas); L-05 TO_VERIFY residual search; L-06/A-02/A-03/A-06 KEEP; A-05 snapshot experiment ARCHITECTURE_DECISION_REQUIRED; O-01/O-05/O-06 CLOSED; O-02/O-03/O-04/O-07 OPEN_MATERIAL; R-02 G4 fixture path OPEN_MATERIAL (ambiente); X-01/X-02/X-03 EXTERNAL; artefato engineering-closure-residual-register.md; CODE/TESTS unchanged; PRODUCTION_DEPLOY=NOT_AUTHORIZED | T0 FREEZE COMPLETE — gates L/A/O/R ainda NÃO PASS; NEXT=T0_INDEPENDENT_REVIEW → T1 só com autorização |
 | DELIA-C3-ENG-CLOSURE-T1-LEGACY-CONSUMER-PURGE-01 | L-05 only: HEAD d3a3d5ebfb=origin/main; L-01/L-02 ABSENT; rg+AST imports=0; importlib ModuleNotFoundError×2; root_composer/__init__ limpos; HISTORICAL_REFERENCE=2 comment lines generic_evidence_renderer; focused pytest 37 PASS (g2+composition+model_invocation+specialist_interop+interaction arch); CODE_CHANGED=NO; FULL_SUITE=TEST_NOT_RUN→T4; L-06 KEEP/A-05_PENDING; PRODUCTION_DEPLOY=NOT_AUTHORIZED | L-05=CLOSED_PROVEN; LEGACY_CLEANUP(L-05)=PASS; ZERO_LEGACY_GLOBAL=NOT PASS; NEXT=T1_INDEPENDENT_REVIEW |
+| DELIA-C3-ENG-CLOSURE-T2-BOUNDARY-OWNERSHIP-CONFORMANCE-01 | A-05/L-06/R04: HEAD fd78269968; doc216 PRODUCTION_SWITCH_NOT_APPROVED + Task33 live; LIVE=MCPToolset+SpecialistInterop; SNAPSHOT consumers=composer branch/sync script/tests; prod env ainda snapshot_experiment+DB 2026-11-03 (teo analyze sem Scope requirements) — R04 drift PROVEN; AB_VALIDITY=LIMITED; EXISTING_EQUIVALENT=YES REUSE live; RECOMMENDED=RETIRE_FULL_SET; DECISION_REQUIRED=RETIRE_FULL_SET_APPROVAL; CODE_CHANGED=NO; focused 20 PASS; PRODUCTION_DEPLOY=NOT_AUTHORIZED | A-05=ARCHITECTURE_DECISION_REQUIRED; L-06=KEEP_APPROVED pending ADR; R04=OPEN_MATERIAL; Architecture Ownership gate NOT PASS; NEXT=T2_INDEPENDENT_REVIEW |
 
 ### DELIA-C3-ENG-CLOSURE-T0-BASELINE-RESIDUAL-FREEZE-01 — execução (2026-11-09)
 
@@ -6005,5 +6006,19 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Testes focados:** 37 PASS (`test_g2_evidence_contract_regression`, `test_composition_surface_regression`, `test_model_invocation_architecture`, `test_specialist_interop_architecture`, `test_interaction_architecture`).
 - **CODE_CHANGED:** NO (Caso 1). **FULL_BACKEND:** TEST_NOT_RUN (T4). **L-06:** KEEP_APPROVED / A-05_PENDING.
 - **Veredicto:** L-05 CLOSED_PROVEN; Legacy Cleanup (slice L-05) PASS; ZERO_LEGACY_GLOBAL NOT PASS; `NEXT=T1_INDEPENDENT_REVIEW`.
+- **PRODUCTION_DEPLOY:** NOT_AUTHORIZED.
+
+### DELIA-C3-ENG-CLOSURE-T2-BOUNDARY-OWNERSHIP-CONFORMANCE-01 — execução (2026-11-09)
+
+- **Escopo:** A-05 / L-06 / R04 somente. **CODE_CHANGED=NO.**
+- **HEAD:** `fd78269968b8f546e49ea8f859ca8cd2e6212d23`.
+- **Autoridade:** doc216 experimento bounded + `PRODUCTION_SWITCH_NOT_APPROVED`; Task33 live baseline; ledger 216 AB=`HYBRID_CANDIDATE`/`LIMITED`/`PRODUCTION_SWITCH=NO`; sem ADR posterior de RETIRE ou promoção.
+- **LIVE:** default código; Agent `MCPToolset` discovery live; `SpecialistInterop` live.
+- **SNAPSHOT:** `SnapshotDiscoverInterop` + `McpCatalogStore` + `mcp_catalog_sync.py`; invoke live; consumidores = composer branch + script + testes experiment.
+- **Ops drift:** prod `DELIA_MCP_CATALOG_MODE=snapshot_experiment`, DB `/data/delia/mcp_catalog.db` captura ~2026-11-03; teo `analyze` sem “Scope requirements” → R04 stale PROVEN; path `mcp_provider.discover_catalog` afetado; Agent MCPToolset mitiga discovery nativo.
+- **Reuse:** `EXISTING_EQUIVALENT=YES` → `REUSE` live. `BENEFIT_NOT_PROVEN` para promoção (latência citada, amostra LIMITED).
+- **Decisão:** `RECOMMENDED_DECISION=RETIRE_FULL_SET`; `DECISION_REQUIRED=RETIRE_FULL_SET_APPROVAL`; remoção **não** executada.
+- **Testes:** 20 PASS (`test_mcp_catalog_experiment`, specialist_interop architecture, composition surface). Full suite `TEST_NOT_RUN`.
+- **Veredicto etapa:** `ARCHITECTURE_DECISION_REQUIRED` (conclusão bounded válida; gate Architecture & Ownership **não** ACCEPT). `NEXT=T2_INDEPENDENT_REVIEW`.
 - **PRODUCTION_DEPLOY:** NOT_AUTHORIZED.
 

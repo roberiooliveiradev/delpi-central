@@ -18,7 +18,7 @@
 | `BRANCH` | `main` |
 | `CANONICAL_REANCHOR` | HEAD → `.cursor`/instruções → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → arquitetura → product spec → 256/293/ledger/backlog R01–R07 → matrix E2E |
 | `CURRENT_PHASE` | Coordenação de fechamento engenharia **T0 Freeze** (doc 293). Marcadores históricos de `16` sob Product Master Option B permanecem supersedidos para sequência de feature; **esta trilha não avança C3/C4/C5**. |
-| `CANONICAL_NEXT` | `T1_INDEPENDENT_REVIEW` → autorização explícita de **T2** (A-05); sem avanço automático |
+| `CANONICAL_NEXT` | `T2_INDEPENDENT_REVIEW` → aprovação explícita `RETIRE_FULL_SET` (ou rejeição/KEEP) antes de qualquer remoção; T3 não autorizada |
 | `APPLICABLE_CP_RQ` | Gates L/A/O/R do doc 293; CPs materiais de Evidence/Epistemic/MCP (ex. CP-093/094) permanecem PARTIAL históricos — **não reabertos** nesta T0 |
 | `PYDANTIC_AI_VERSION` | `2.50.0` (`delia-api/requirements.txt`) |
 | `RUNTIME_CONFIG_FINGERPRINT` | JSON runtime sha256 prefix `3836a5290ebf4372` (arquivo `pydantic_ai.runtime.delpi.json` no HEAD); profiles: `local_ollama` (default), `openrouter_kimi`, `openrouter_qwen` |
@@ -42,12 +42,12 @@
 | L-03 | Legacy | Monólito `orchestration.py` removido / decomposto | DÉLIA capability_provision | ledger `LEGACY-ORCHESTRATION-REMOVAL…`; módulos `governed_capability_orchestrator` + `semantic_capability_support` | `CLOSED_PROVEN` | — |
 | L-04 | Legacy | Adapter texto `openai_compatible_adapter` aposentado | DÉLIA model_invocation | ausente em `infrastructure/model_invocation/`; ledger runtime unificado | `CLOSED_PROVEN` | — |
 | L-05 | Legacy | Busca residual: zero import vivo dos módulos deletados L-01/L-02 | DÉLIA QA | T1 SHA `d3a3d5ebfb`; `rg`+AST=0 imports; importlib ModuleNotFoundError×2; composer/`__init__` limpos; comentário histórico only; focused 37 PASS | `CLOSED_PROVEN` | — |
-| L-06 | Legacy | Snapshot experiment code (`snapshot_interop`, `catalog_store`, `mcp_catalog_sync`) | DÉLIA interop + coordenação | HEAD EXISTS; default mode `live`; não é OBSOLETE sem ADR | `KEEP_APPROVED` | T2 (decisão) |
+| L-06 | Legacy | Snapshot experiment code (`snapshot_interop`, `catalog_store`, `mcp_catalog_sync`) | DÉLIA interop + coordenação | T2: consumidores só experiment/tests/composer branch; default código=`live`; **prod env ainda `snapshot_experiment`** (drift ops) | `KEEP_APPROVED` até ADR | T2 review → remoção só se RETIRE aprovado |
 | A-01 | Architecture | Domain/Application sem import direto de Infra no snapshot | DÉLIA specialist_interop | `snapshot_interop` usa Protocol `_SnapshotCatalogStore`; ledger G5 | `CLOSED_PROVEN` | — |
 | A-02 | Architecture | C3-T4 Structured Understanding preservado | DÉLIA structured_understanding | docs 21/20/25 + doc256 Conflict A; código presente; unwired root = approved KEEP | `KEEP_APPROVED` | — |
 | A-03 | Architecture | C3-T5 OpenAPI foundation preservado | DÉLIA openapi/capability | ledger G5 KEEP (46 testes); `openapi_provider.py` presente; adapter direto já aposentado | `KEEP_APPROVED` | — |
 | A-04 | Architecture | Segundo Agent/planner/tool-loop paralelo ao Pydantic AI | DÉLIA orchestration | Agent + MCPToolset em adapter/investigation; G8 “zero segundo runtime” | `CLOSED_PROVEN` | — |
-| A-05 | Architecture | Destino do experimento snapshot (`live` vs `snapshot_experiment`) + R04 stale | Coordenação + DÉLIA interop | R04 OPEN; modo default `live`; stale catalog afeta discovery só no modo experiment | `ARCHITECTURE_DECISION_REQUIRED` | T2 |
+| A-05 | Architecture | Destino do experimento snapshot (`live` vs `snapshot_experiment`) + R04 stale | Coordenação + DÉLIA interop | T2 HEAD `fd78269968`; doc216 PRODUCTION_SWITCH_NOT_APPROVED; LIVE equivalente PROVEN; RETIRE recomendado; **código não removido** | `ARCHITECTURE_DECISION_REQUIRED` | Aguardar ADR |
 | A-06 | Architecture | Estratégia PromptedOutput vs ToolOutput (coexistência) | Coordenação DÉLIA | migração PromptedOutput rollback; ADR spike; **não reabrir em T3** | `KEEP_APPROVED` (+ ADR registrado) | — |
 | O-01 | Flow | Admissão v42 → owner path (Kimi, Qwen14B) | DÉLIA admission | matrix E2E + admission 3/3; SHA `dc491abd1e` | `CLOSED_PROVEN` | — |
 | O-02 | Flow | Admissão C1 Qwen4B local (`explanation`/owner_path=false) | DÉLIA admission + eval | matrix: admission FAIL 2/2; E2E 0 MCP; fronteira `ADMISSION` | `OPEN_MATERIAL` | T3 |
@@ -133,21 +133,111 @@ STATUS: CLOSED_PROVEN
 REQUIRED_T2_ACTION: none
 ```
 
-### A-05 — Snapshot experiment destiny (ARCHITECTURE_DECISION_REQUIRED)
+### A-05 — Snapshot experiment destiny (T2 decision package)
 
 ```text
 ISSUE_ID: A-05
+TASK_ID: DELIA-C3-ENG-CLOSURE-T2-BOUNDARY-OWNERSHIP-CONFORMANCE-01
+BASE_HEAD: fd78269968b8f546e49ea8f859ca8cd2e6212d23
 RESPONSIBILITY: retire vs keep snapshot_experiment + stale catalog (R04)
-LEGITIMATE_OWNER: coordenação DÉLIA + interop; TÉO autoridade de descrição live
-CANONICAL_SOURCE: doc216/248/256 Conflict C; backlog R04
-CURRENT_CONSUMERS: root_composer branch; scripts/mcp_catalog_sync.py; evals
-CURRENT_CONTRACT: DELIA_MCP_CATALOG_MODE=live|snapshot_experiment (default live)
-IMPLEMENTATION_PATH: catalog_store.py + snapshot_interop.py
-EVIDENCE_SHA: backlog R04 + settings default live no HEAD
-EXISTING_EQUIVALENT: YES (live MCPToolset path)
-REUSE_DECISION: REUSE live; experiment pending ADR
+LEGITIMATE_OWNER: coordenação DÉLIA (adoção); interop/composition (código); TÉO (descrições live)
+CANONICAL_SOURCE: doc216 (APPROVED_FOR_BOUNDED_EXPERIMENT; PRODUCTION_SWITCH_NOT_APPROVED;
+  Task33 live baseline); ledger DOC216-FINAL ADOPTION_RECOMMENDATION=HYBRID_CANDIDATE
+  com AB_VALIDITY=LIMITED + PRODUCTION_SWITCH=NO; doc217 KEEP_LIVE produção;
+  doc256 Conflict C; backlog R04; residual register T0
+A05_CANONICAL_AUTHORITY: doc216 + Task33 live — promoção produção exige ADR; NÃO há ADR
+  posterior autorizando RETIRE_FULL_SET nem promoção permanente do snapshot
 STATUS: ARCHITECTURE_DECISION_REQUIRED
-REQUIRED_T2_ACTION: decisão superior KEEP_EXPERIMENT|RETIRE_FULL_SET; se RETIRE, coordenar remoção bounded com testes; se KEEP, documentar refresh/owner e isolar EVAL_ONLY
+RECOMMENDED_DECISION: RETIRE_FULL_SET
+DECISION_APPROVAL_STATUS: PENDING_COORDINATION
+CODE_CHANGED: NO
+```
+
+#### Gate A — caminhos atuais (PROVEN no HEAD)
+
+| Campo | LIVE | SNAPSHOT_EXPERIMENT |
+|---|---|---|
+| Origem catálogo | `tools/list` MCP live (adapter / native `MCPToolset`) | SQLite `McpCatalogStore` (`DELIA_MCP_CATALOG_DB`) |
+| Owner informação | Specialist MCP (TÉO/DAVI/VISTA…) | Snapshot capturado + hash; **não** authority |
+| Discovery | `SpecialistInterop.discover_catalog` → adapter list; Agent: `MCPToolset` live | `SnapshotDiscoverInterop` lê ACTIVE; **invoke permanece live** |
+| Ativação | default `DELIA_MCP_CATALOG_MODE` unset/`live` | flag composition-only; exige `DELIA_MCP_CATALOG_DB` |
+| Consumidores código | runtime padrão; investigation Agent | `root_composer` branch; `mcp_catalog_sync.py`; `r4_authenticated_resume_eval` (condicional); `test_mcp_catalog_experiment.py` |
+| Freshness | contínua no owner | prod DB `/data/delia/mcp_catalog.db` mtime/captura **2026-11-03**; teo `analyze` **sem** “Scope requirements” (stale vs contrato R02) |
+
+`PRODUCTION_DEFAULT` (código): `live`.  
+`EXPERIMENT_ACTIVATION` (ops): **prod container `delpi-delia-api` tem `DELIA_MCP_CATALOG_MODE=snapshot_experiment` + DB set** — contradiz doc216 `PRODUCTION_SWITCH_NOT_APPROVED` → `OUT_OF_SCOPE_FINDING` / drift operacional (corrigir flag exige autorização ops; **sem** deploy/mutação nesta T2).
+
+#### Gate B — reuse
+
+| Responsabilidade | LIVE equivalente | Snapshot necessário? |
+|---|---|---|
+| Discovery capabilities | YES — MCPToolset + SpecialistInterop live | NO para runtime canônico |
+| Descrições/schemas | YES — tools/list owner | NO (risco stale) |
+| Seleção semântica | YES — Agent nativo | NO benefício estatístico (AB LIMITED) |
+| Atualização contratos | YES — live | Snapshot exige sync manual; auto-sync **proibido** nesta trilha |
+| Proveniência/AuthZ | YES — invoke + Core/Domain live | Snapshot explicitamente não-authority |
+
+```text
+EXISTING_EQUIVALENT: YES
+REUSE_DECISION: REUSE (live MCP / Pydantic AI MCPToolset)
+BENEFIT_NOT_PROVEN: melhoria latência discovery ~11s→0ms citada no ledger 216,
+  mas AB_VALIDITY=LIMITED; sem ADR de promoção; BENEFIT ≠ autorização produção
+```
+
+#### Gate C — R04
+
+```text
+R04_PRODUCTION_IMPACT: PARTIAL_PROVEN — com flag prod=snapshot_experiment,
+  mcp_provider.discover_catalog consome snapshot stale; Agent MCPToolset
+  discovery permanece live (mitiga path investigation nativo)
+R04_EXPERIMENT_IMPACT: PROVEN — teo analyze snapshot 2026-11-03 sem Scope requirements
+R04_CONTRACT_DRIFT: PROVEN (descrição analyze desatualizada vs live pós-R02)
+R04_OWNER: DÉLIA (modo/consumo); TÉO (contrato live autoritativo)
+R04_ROOT_CAUSE: snapshot congelado + modo experiment ativo sem refresh autorizado
+R04_REQUIRED_DISPOSITION: RETIRE_FULL_SET (fecha residual sem novo sync) OU
+  KEEP_EXPERIMENT estrito EVAL_ONLY + flag prod→live + política refresh (não fecha
+  R04 sozinho sem refresh/ADR)
+R04_STATUS_AFTER_T2: OPEN_MATERIAL (aguarda execução pós-ADR)
+```
+
+#### Gate D — decisão
+
+**RETIRE_FULL_SET (recomendado)** — critérios atendidos na evidência: LIVE cobre responsabilidades; consumidores exclusivos são experiment/test/composer branch; doc216 não autoriza produção; R04 stale PROVEN; sem continuidade obrigatória pós-native MCPToolset.
+
+**KEEP_EXPERIMENT** — só se coordenação declarar obrigação experimental contínua; exigiria: owner, EVAL_ONLY, prod flag=`live`, critério de encerramento, e tratamento R04 (refresh manual governado ou aceite residual) — **não recomendado** para fechar gate A do doc293.
+
+```text
+DECISION_REQUIRED=RETIRE_FULL_SET_APPROVAL
+```
+
+Conjunto candidato **após aprovação** (não executado nesta T2):
+
+- `delia-api/app/application/specialist_interop/snapshot_interop.py`
+- `delia-api/app/infrastructure/interoperability/mcp/catalog_store.py`
+- `delia-api/scripts/mcp_catalog_sync.py`
+- branch `snapshot_experiment` em `root_composer.py` (+ mirror em `r4_authenticated_resume_eval.py`)
+- settings `mcp_catalog_mode` / `mcp_catalog_db` (retirar ou fail-closed retired)
+- `tests/test_mcp_catalog_experiment.py` (aposentar com o experimento)
+- **Preservar** testes LIVE/MCP/AuthZ/architecture
+
+Ops paralelo (fora remoção de código): restaurar `DELIA_MCP_CATALOG_MODE=live` em produção por processo autorizado (local-first / config governada) — **PRODUCTION_DEPLOY desta task = NOT_AUTHORIZED**.
+
+#### Gate E — implementação
+
+```text
+AUTHORIZED_MINIMAL_ACTION: NONE
+REASON: falta aprovação superior explícita RETIRE_FULL_SET
+```
+
+#### Testes T2 (decisão only)
+
+```text
+FOCUSED_TEST_COMMAND: pytest -q tests/test_mcp_catalog_experiment.py
+  tests/test_specialist_interop_architecture.py
+  tests/test_composition_surface_regression.py
+FOCUSED_TEST_RESULT: 20 PASS
+FULL_BACKEND_REGRESSION: TEST_NOT_RUN
+LIVE_PATH_REGRESSION: TEST_NOT_RUN (sem mutação; default código live)
 ```
 
 ### A-02 / A-03 — KEEP_APPROVED (sem DELETE)
@@ -171,7 +261,7 @@ Mapeamento backlog R01–R07 → IDs:
 | R01 admission/E2E | RESOLVED_WITH_RESIDUAL | O-01 CLOSED; O-02/O-03/O-04 residuais | Sim, se O-02/O-03/O-04 forem material no DoD da trilha — T3 deve vereditar |
 | R02 READ contract | RESOLVED_WITH_RESIDUAL | — (TÉO); churn residual → O-08 | Não como contrato; sim se Outcome DÉLIA falhar por args evitáveis |
 | R03 tool budget | OPEN | O-07 | Sim, se falhas densas forem do fluxo DÉLIA |
-| R04 snapshot stale | OPEN | A-05 / L-06 | Só se modo experiment em produção/aceitação; default live mitiga |
+| R04 snapshot stale | OPEN_MATERIAL (T2) | A-05 / L-06 | Impacto experiment PROVEN; prod parcial com flag `snapshot_experiment` ainda ON |
 | R05 scope retry | OPEN | O-08 | T3 classifica |
 | R06 prod tools/list | OPEN TEST_NOT_RUN | X-01 | **Release/prod** — não substitui PASS DEV; se critério produto exigir prod metadata, permanece bloqueador de **release**, não de T1 código |
 | R07 TÉO suite 10 FAIL | OPEN | X-02 | Trilha TÉO; não esconder sob PASS DÉLIA |
@@ -229,9 +319,9 @@ Mapeamento backlog R01–R07 → IDs:
 
 ### T2 — Architecture & Ownership (`DELIA-C3-ENG-CLOSURE-T2-BOUNDARY-OWNERSHIP-CONFORMANCE-01`)
 
-**Somente:** `A-05` (ADR snapshot experiment + R04).  
-**Preservar:** A-01 CLOSED; A-02/A-03/A-06 KEEP.  
-**Proibido:** novo port especulativo; redesenho; tocar Keycloak/TÉO sem owner.
+**Status:** EXECUTADO como **decision package** — `RECOMMENDED=RETIRE_FULL_SET`; `CODE_CHANGED=NO`; aguarda ADR.  
+**Preservar até ADR:** L-06 código; A-01/A-02/A-03/A-06.  
+**Proibido nesta etapa:** remoção, sync automático, novo registry, T3.
 
 ### T3 — Orchestration & Flow (`DELIA-C3-ENG-CLOSURE-T3-FLOW-OUTCOME-REMEDIATION-01`)
 
@@ -277,4 +367,4 @@ Comparar este registro vs HEAD pós-T1–T4; ACCEPT só se L=A=O=R=PASS e zero `
 
 **Gates L/A/O/R do doc 293:** todos **ainda NÃO PASS** — T0 apenas congela o universo.
 
-**NEXT_BOUNDED_STEP:** `T1_INDEPENDENT_REVIEW` (autorização de T2/A-05 pela coordenação).
+**NEXT_BOUNDED_STEP:** `T2_INDEPENDENT_REVIEW` — coordenação aprova/rejeita `RETIRE_FULL_SET`; só então task bounded de remoção (se aprovada). T3 **não** autorizada.
