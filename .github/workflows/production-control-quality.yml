@@ -65,7 +65,7 @@ jobs:
       - name: Testes focalizados nas pendências e na demanda
         working-directory: production-control-api
         run: |
-          python -m pytest             tests/test_stock_rupture_pendencies.py             tests/test_op_pendencies.py tests/test_myweg_fiscal_fifo_offset.py tests/test_demand_myweg_e3.py -q
+          python -m pytest tests/test_stock_rupture_pendencies.py tests/test_op_pendencies.py tests/test_myweg_fiscal_fifo_offset.py tests/test_demand_myweg_e3.py tests/test_myweg_demand_coverage_preview_e2.py tests/test_demand.py tests/test_billing_due_today.py -q
 
   reports:
     name: Reports API - contrato S2S
@@ -83,4 +83,4 @@ jobs:
           python -m pip install -r api-delpi/requirements.txt
       - name: Testar rotas do Delpi Reports
         working-directory: api-delpi
-        run: python -m pytest tests/test_reports_routes_smoke.py -q
+        run: python -m pytest tests/test_reports_routes_smoke.py tests/test_customer_outbound_invoice_line_items.py -q
