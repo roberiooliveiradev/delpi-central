@@ -1452,6 +1452,7 @@ class ProductRegistrationService:
                 "previous": previous_value,
                 "expected": expected_value,
                 "observed": observed_value,
+                "reason": None if matched else "mismatch",
             }
             if not matched:
                 all_ok = False
@@ -2710,20 +2711,27 @@ def compare_link_ops(
     *,
     complete: bool = True,
 ) -> dict[str, Any]:
-    """Verificação seletiva de ops granulares SA5 (D12).
+    """Verificação seletiva de ops granulares SA5 (D12 / PRC-REF-020-UX-01).
 
     `update`: o vínculo oficial deve existir único e cada atributo
     informado deve bater. `add`: o vínculo deve existir (criado
     manualmente) com os atributos propostos. Vínculos fora do change
     set nunca reprovam a verificação. Conjunto oficial incompleto →
     unverifiable (não é possível comprovar a relação).
+
+    ``detail`` permanece compatível (``key``/``result``) e adiciona
+    ``supplierCode``, ``store``, ``operation``, ``attributes`` tipados
+    para diagnóstico UX — sem comparação no cliente.
     """
     detail: list[dict[str, Any]] = []
     result = "matched"
     if not complete:
         return {
             "result": "unverifiable",
-            "detail": [{"result": "official_links_incomplete"}],
+            "detail": [{
+                "result": "official_links_incomplete",
+                "reasonCode": "official_links_incomplete",
+            }],
         }
     by_key: dict[tuple[str, str], list[dict]] = {}
     for item in observed or []:
@@ -2733,47 +2741,92 @@ def compare_link_ops(
                 str(item.get("supplier_store") or "").strip(),
             )
             by_key.setdefault(key, []).append(item)
-    for i, op in enumerate(ops or []):
-        key = (
-            str(op["key"]["supplierCode"]).strip(),
-            str(op["key"]["store"]).strip(),
-        )
-        label = f"{op['operation']}:{key[0]}.{key[1]}"
+    for op in ops or []:
+        code = str(op["key"]["supplierCode"]).strip()
+        store = str(op["key"]["store"]).strip()
+        key = (code, store)
+        operation = str(op.get("operation") or "")
+        label = f"{operation}:{code}.{store}"
+        base = {
+            "key": label,
+            "supplierCode": code,
+            "store": store,
+            "operation": operation,
+            "supplierKey": {"supplierCode": code, "store": store},
+        }
         found = by_key.get(key, [])
-        if op["operation"] == "remove":
-            # pós-condição da remoção: ausência oficial comprovada.
+        if operation == "remove":
             if not found:
-                detail.append({"key": label, "result": "matched"})
+                detail.append({**base, "result": "matched", "attributes": []})
             else:
                 result = "mismatched"
-                detail.append(
-                    {"key": label, "result": "still_present_official"}
-                )
+                detail.append({
+                    **base,
+                    "result": "still_present_official",
+                    "reasonCode": "still_present_official",
+                    "attributes": [],
+                })
             continue
         if not found:
             result = "mismatched"
-            detail.append({"key": label, "result": "missing_in_official"})
+            detail.append({
+                **base,
+                "result": "missing_in_official",
+                "reasonCode": "missing_in_official",
+                "attributes": [],
+            })
             continue
         if len(found) > 1:
             result = "mismatched"
-            detail.append({"key": label, "result": "ambiguous_official"})
+            detail.append({
+                **base,
+                "result": "ambiguous_official",
+                "reasonCode": "ambiguous_official",
+                "attributes": [],
+            })
             continue
         link = found[0]
-        bad = []
+        attributes: list[dict[str, Any]] = []
+        bad_tokens: list[str] = []
         for field, official_key in _FIELD_MAP.items():
             if field not in op["fields"]:
                 continue
+            exp = (op["fields"][field] or "").strip()
             if official_key not in link:
                 result = "mismatched"
-                bad.append(f"{field}:unverifiable")
+                bad_tokens.append(f"{field}:unverifiable")
+                attributes.append({
+                    "attribute": field,
+                    "expected": exp,
+                    "observed": None,
+                    "result": "unverifiable",
+                    "reasonCode": "field_absent",
+                })
                 continue
-            exp = (op["fields"][field] or "").strip()
-            obs = str(link.get(official_key) or "").strip()
-            if exp != obs:
-                bad.append(f"{field}:mismatched")
-        if bad:
+            obs_raw = link.get(official_key)
+            obs = str(obs_raw if obs_raw is not None else "").strip()
+            attr_result = "matched" if exp == obs else "mismatched"
+            if attr_result != "matched":
+                result = "mismatched"
+                bad_tokens.append(f"{field}:mismatched")
+            attributes.append({
+                "attribute": field,
+                "expected": exp,
+                "observed": obs,
+                "result": attr_result,
+                "reasonCode": (
+                    "mismatch" if attr_result == "mismatched" else None
+                ),
+            })
+        link_result = "mismatched" if bad_tokens else "matched"
+        if bad_tokens:
             result = "mismatched"
-            detail.append({"key": label, "result": ",".join(bad)})
-        else:
-            detail.append({"key": label, "result": "matched"})
+        detail.append({
+            **base,
+            "result": ",".join(bad_tokens) if bad_tokens else "matched",
+            "linkResult": link_result,
+            "fields": [a["attribute"] for a in attributes
+                       if a["result"] != "matched"],
+            "attributes": attributes,
+        })
     return {"result": result, "detail": detail}

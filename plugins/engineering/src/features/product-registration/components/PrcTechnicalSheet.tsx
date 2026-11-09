@@ -3,7 +3,7 @@
  * relação produto×fornecedor: a lista completa editada é enviada como
  * valor proposto do path `suppliers`, conforme contrato de draft. */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   EngineeringActionButton,
@@ -317,6 +317,8 @@ export function PrcTechnicalSheet({
   editablePaths,
   editing,
   busy,
+  focusElementId,
+  focusNonce = 0,
   onStartEdit,
   onCancelEdit,
   onSave,
@@ -326,6 +328,9 @@ export function PrcTechnicalSheet({
   editablePaths: string[] | null;
   editing: boolean;
   busy: boolean;
+  /** PRC-REF-020-UX-01 — id DOM do alvo a destacar (campo/SA5). */
+  focusElementId?: string | null;
+  focusNonce?: number;
   onStartEdit: () => void;
   onCancelEdit: () => void;
   onSave: (
@@ -333,6 +338,31 @@ export function PrcTechnicalSheet({
   ) => void;
 }) {
   const draft = detail.technicalDraft || {};
+
+  useEffect(() => {
+    if (!focusElementId) return;
+    const timer = window.setTimeout(() => {
+      const el =
+        document.getElementById(focusElementId) ||
+        document.getElementById(
+          focusElementId.replace("prc-field-", "prc-edit-"),
+        );
+      if (!el) return;
+      el.classList.add("engineering-prc__nav-focus");
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (el instanceof HTMLElement) {
+        const focusable = el.querySelector<HTMLElement>(
+          "input,select,textarea,button,[tabindex]",
+        );
+        (focusable || el).focus?.({ preventScroll: true });
+      }
+      window.setTimeout(() => {
+        el.classList.remove("engineering-prc__nav-focus");
+      }, 4000);
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [focusElementId, focusNonce, editing, detail.id]);
+
   const changedPaths = useMemo(
     () => new Set((detail.changedPaths || []).map((c) => c.path)),
     [detail],

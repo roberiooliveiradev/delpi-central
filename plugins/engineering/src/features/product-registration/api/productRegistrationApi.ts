@@ -113,6 +113,17 @@ export type PrcTimelineEvent = {
 
 /** Resultado por campo devolvido pelo backend em `field_results` —
  * o MFE nunca calcula match próprio. */
+export type PrcSupplierAttributeResult = {
+  attribute: string;
+  expected?: unknown;
+  observed?: unknown;
+  result?: string;
+  reasonCode?: string | null;
+};
+
+/** Resultado por campo devolvido pelo backend em `field_results` —
+ * o MFE nunca calcula match próprio. PRC-REF-020-UX-01 estende
+ * `detail` SA5 com identidade e atributos tipados (aditivo). */
 export type PrcFieldResult = {
   result?: string;
   officialField?: string | null;
@@ -122,7 +133,18 @@ export type PrcFieldResult = {
   observed?: unknown;
   reason?: string;
   fields?: string[];
-  detail?: Array<{ key: string; result: string; fields?: string[] }>;
+  detail?: Array<{
+    key: string;
+    result: string;
+    fields?: string[];
+    reasonCode?: string;
+    supplierCode?: string;
+    store?: string;
+    operation?: string;
+    supplierKey?: { supplierCode?: string; store?: string };
+    linkResult?: string;
+    attributes?: PrcSupplierAttributeResult[];
+  }>;
 };
 
 export type PrcVerification = {

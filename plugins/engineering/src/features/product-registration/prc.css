@@ -126,7 +126,7 @@
   gap: 12px;
 }
 
-/* PRC-REF-020 — destaque de campos/SA5 bloqueantes na verificação. */
+/* PRC-REF-020 / UX-01 — destaque de campos/SA5 bloqueantes na verificação. */
 .engineering-prc__field-mismatch,
 .engineering-prc__supplier-mismatch {
   color: var(--engineering-danger, #b42318);
@@ -142,6 +142,69 @@
   border-radius: 4px;
   padding: 4px 6px;
   margin-inline-start: -6px;
+}
+
+.engineering-prc__verify-block-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.engineering-prc__verify-block-summary p {
+  margin: 0;
+}
+
+.engineering-prc__verify-filter {
+  margin-bottom: 12px;
+}
+
+.engineering-prc__verify-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.engineering-prc__supplier-diff--detailed li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.engineering-prc__value-cell {
+  word-break: break-word;
+  white-space: pre-wrap;
+  max-width: 28rem;
+}
+
+.engineering-prc__next-actions {
+  margin: 0 0 12px;
+  padding-inline-start: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.engineering-prc__compact-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.engineering-prc__nav-focus {
+  outline: 2px solid var(--engineering-info, #1570ef);
+  outline-offset: 3px;
+  border-radius: 4px;
+  animation: engineering-prc-nav-pulse 1.2s ease-out 2;
+}
+
+@keyframes engineering-prc-nav-pulse {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--engineering-info, #1570ef) 45%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 10px transparent;
+  }
 }
 
 @media (max-width: 1100px) {

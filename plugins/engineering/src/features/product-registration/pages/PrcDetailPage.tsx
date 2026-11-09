@@ -66,6 +66,7 @@ import { PrcTechnicalSheet } from "../components/PrcTechnicalSheet";
 import { PrcTimelineSection } from "../components/PrcTimelineSection";
 import { PrcVerificationPanel } from "../components/PrcVerificationPanel";
 import { PrcWorkflowProgress } from "../components/PrcWorkflowProgress";
+import { summarizeDiagnosis } from "../prcVerificationDiagnosis";
 
 const TABS: { key: PrcTabKey; label: string }[] = [
   { key: "overview", label: "Visão geral" },
@@ -114,8 +115,9 @@ export function PrcDetailPage({
   );
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState<{
-    kind: "success" | "error";
+    kind: "success" | "error" | "blocked";
     text: string;
+    problemCount?: number;
   } | null>(null);
   const [busy, setBusy] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -124,6 +126,11 @@ export function PrcDetailPage({
     string,
     PrcFieldResult
   > | null>(null);
+  const [focusTarget, setFocusTarget] = useState<{
+    elementId: string;
+    nonce: number;
+  } | null>(null);
+  const [navFallback, setNavFallback] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -138,6 +145,12 @@ export function PrcDetailPage({
       setVerifications(v.data.items);
       setFieldSpecs(ref.data.fields);
       setEditablePaths(ref.data.editableDraftPaths);
+      if (d.data.status === "completed") {
+        setMismatchFields(null);
+        setFeedback((prev) =>
+          prev?.kind === "blocked" ? null : prev,
+        );
+      }
       if (d.data.completedRecordId) {
         try {
           const rec = await fetchPrcRevisions(d.data.completedRecordId);
@@ -242,26 +255,28 @@ export function PrcDetailPage({
             code === "official_timeout" || err.status === 504;
           const isOfficialUnavailable =
             code === "official_unavailable" || err.status === 503;
-          const mismatchCount = err.data?.fieldResults
-            ? Object.values(err.data.fieldResults).filter(
-                (r) =>
-                  r.result === "mismatched" || r.result === "unverifiable",
-              ).length
-            : 0;
+          const diagnosis = summarizeDiagnosis({
+            fieldResults: err.data?.fieldResults || null,
+            globalResult: code || null,
+          });
           let text: string;
+          let kind: "success" | "error" | "blocked" = "error";
+          let problemCount: number | undefined;
           if (isInfoRound) {
             text =
               "Este atendimento ainda possui esclarecimentos pendentes. Aguarde as respostas e conclua a análise antes de retomar.";
           } else if (isOfficialTimeout || isOfficialUnavailable) {
             text = PRC_COPY.officialUnavailable;
-          } else if (mismatchCount > 0) {
-            text = `${PRC_COPY.conclusionBlocked} Foram encontrados ${mismatchCount} problema(s).`;
+          } else if (diagnosis.problems > 0 && !diagnosis.isInfra) {
+            kind = "blocked";
+            problemCount = diagnosis.problems;
+            text = `Conclusão bloqueada — ver ${diagnosis.problems} problema${diagnosis.problems === 1 ? "" : "s"}`;
           } else if (err.status === 409) {
             text = `Conflito — ${raw} Recarregue e revise o estado atual.`;
           } else {
             text = raw || "Falha na operação.";
           }
-          setFeedback({ kind: "error", text });
+          setFeedback({ kind, text, problemCount });
         }
         if (
           err.status === 409 ||
@@ -472,11 +487,29 @@ export function PrcDetailPage({
         )}
       </EngineeringPageHero>
 
-      {feedback ? (
+      {feedback && feedback.kind === "blocked" && tab !== "verification" ? (
+        <EngineeringStateBanner variant="warning">
+          <div className="engineering-prc__compact-block">
+            <span>{feedback.text}</span>
+            <EngineeringActionButton
+              variant="ghost"
+              onClick={() => selectTab("verification")}
+            >
+              Abrir diagnóstico
+            </EngineeringActionButton>
+          </div>
+        </EngineeringStateBanner>
+      ) : null}
+      {feedback && feedback.kind !== "blocked" ? (
         <EngineeringStateBanner
           variant={feedback.kind === "error" ? "error" : "success"}
         >
           {feedback.text}
+        </EngineeringStateBanner>
+      ) : null}
+      {navFallback ? (
+        <EngineeringStateBanner variant="warning">
+          {navFallback}
         </EngineeringStateBanner>
       ) : null}
 
@@ -573,6 +606,8 @@ export function PrcDetailPage({
             editablePaths={editablePaths}
             editing={editing}
             busy={busy}
+            focusElementId={focusTarget?.elementId || null}
+            focusNonce={focusTarget?.nonce || 0}
             onStartEdit={() => setEditing(true)}
             onCancelEdit={() => setEditing(false)}
             onSave={saveDraft}
@@ -585,6 +620,27 @@ export function PrcDetailPage({
             verifications={verifications}
             lastError={mismatchFields}
             verifying={verifying}
+            onNavigateToTarget={({ item, elementId }) => {
+              setNavFallback(null);
+              if (!elementId) {
+                setNavFallback(
+                  `Não foi possível localizar o alvo «${item.label}» na ficha técnica.`,
+                );
+                return;
+              }
+              setFocusTarget({ elementId, nonce: Date.now() });
+              selectTab("draft");
+            }}
+            onRetryComplete={() => {
+              document
+                .querySelector(".engineering-prc__hero-actions")
+                ?.scrollIntoView({ behavior: "smooth", block: "center" });
+              setFeedback({
+                kind: "success",
+                text:
+                  "Use Concluir atendimento no cabeçalho para uma nova verificação oficial (leitura fresca).",
+              });
+            }}
           />
         ) : null}
 

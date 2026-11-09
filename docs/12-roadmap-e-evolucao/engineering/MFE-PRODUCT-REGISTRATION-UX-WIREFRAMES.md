@@ -283,7 +283,7 @@ O PO aprovou nova apresentação **sem duplicar código/loja/razão social**: co
 
 ## PRC-REF-020-UX-01 — Wireframe de diagnóstico de divergências (PO 2026-11-09)
 
-**Aprovado como TARGET; implementação pendente.** Refinar área \`Verificação TOTVS\` para ensinar o próximo passo sem reduzir a força do bloqueio backend. Exemplo ilustrativo de uma tentativa com 9 campos, 4 conformes e 5 problemas (contagens **sempre calculadas de dados reais**):
+**IMPLEMENTADO_DEV.** Área \`Verificação TOTVS\` orienta o próximo passo sem reduzir a força do bloqueio backend. Exemplo ilustrativo de uma tentativa com N verificações tipadas (contagens **sempre calculadas de dados reais**):
 
 \`\`\`text
 Verificação TOTVS
