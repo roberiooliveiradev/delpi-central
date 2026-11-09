@@ -930,3 +930,8 @@ delpi-central em `2cbd3e308d70f33a894b1e48d2b0d18214603b7b`:
 - Front: rotas, clientes e jornadas das três personas.
 - Diferenças doc×código: seção 5.4.
 - Arquivos futuros: seção 18, com FORBIDDEN explícito.
+
+
+## D16 — Legado de flags como referência, sem dependência runtime
+
+O inventário deste documento registra `field_flag` e operações legadas `PATCH /api/requests/fields/<id>/flag` e `PATCH /api/products/fields/<id>/flag`, além de flags de conversa. Para o Portal Engenharia, o PO aprovou uma **nova bandeira textual de acompanhamento do atendimento**, **não** uma cópia de `field_flag` booleano nem a adoção de auth/socket/DB do legado. Ownership: Engineering API; consumidores Portal e EVA. Ver [plano D16](./PRODUCT-REGISTRATION-D16-ATTENDANCE-FLAGS-CRUD-EVA-UX-PLAN.md) para contratos, UI, auditoria e aceites. Esta inclusão não autoriza integração runtime com o Controle MP legado.
