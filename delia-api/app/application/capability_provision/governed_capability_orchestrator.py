@@ -350,8 +350,14 @@ class OperationalCapabilityOrchestrator:
         llm_call_max_attempts: int = 1,
         field_labels: FieldLabels | None = None,
         orchestration_instructions: Mapping[str, str] | None = None,
+        mcp_provider_eligibility=None,
     ) -> None:
         self._providers = {p.provider_id: p for p in providers}
+        # Doc 293 R1-RW01: optional live Core eligibility recheck before
+        # MCP tool invoke. None = settings-only composition (no Core
+        # registry mode); when set, composition-time enablement is never
+        # a durable grant.
+        self._mcp_provider_eligibility = mcp_provider_eligibility
         # R1/M01: declarative instruction text is composition-injected
         # from the governed resource; absent in tests -> empty map.
         self._instructions = dict(orchestration_instructions or {})
@@ -2333,6 +2339,40 @@ class OperationalCapabilityOrchestrator:
                 error_code="capability_not_on_surface",
             )
         group_key, group, descriptor = matched
+        # R1-RW01: revalidate Core provider approval for MCP groups
+        # (group_id == specialist / provider_ref). Fail closed without
+        # restart when Core revokes/disables after composition.
+        if (
+            self._mcp_provider_eligibility is not None
+            and str(group.provider_id or "") == "mcp"
+        ):
+            from app.application.ports.mcp_provider_eligibility_port import (
+                McpProviderEligibilityError,
+            )
+
+            try:
+                self._mcp_provider_eligibility.require_eligible(
+                    str(group.group_id or "").strip()
+                )
+            except McpProviderEligibilityError as exc:
+                _logger.info(
+                    "orchestration stage=semantic_tool_invoke "
+                    "decision=mcp_provider_eligibility_blocked "
+                    "provider_ref=%s error=%s correlation_id=%s",
+                    str(group.group_id or "")[:64],
+                    exc.code,
+                    correlation,
+                )
+                status = (
+                    GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+                    if exc.code == "mcp_provider_registry_unavailable"
+                    else GovernedCapabilityStatus.NOT_APPLICABLE
+                )
+                return GovernedCapabilityAttempt(
+                    status=status,
+                    correlation_id=correlation,
+                    error_code=exc.code,
+                )
         if descriptor.operation_class in _WRITE_OPERATION_CLASSES:
             return GovernedCapabilityAttempt(
                 status=GovernedCapabilityStatus.NOT_APPLICABLE,

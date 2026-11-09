@@ -50,6 +50,11 @@ class SpecialistConnectionProfile:
     exchange_audience: str
     resource_audience: str
     host_header: str = ""
+    display_name: str = ""
+    owner_ref: str = ""
+    auth_strategy_ref: str = "KEYCLOAK_DELEGATED"
+    # R1-RW04: why a Core-approved provider is not callable yet.
+    unavailable_reason: str = ""
 
 
 def specialist_connections_from_settings(
@@ -58,6 +63,7 @@ def specialist_connections_from_settings(
     profiles: dict[str, SpecialistConnectionProfile] = {}
     for specialist_id in CANONICAL_MCP_CLIENT_IDS:
         key = specialist_id.upper()
+        identity = _SPECIALIST_IDENTITY[specialist_id]
         profiles[specialist_id] = SpecialistConnectionProfile(
             endpoint=settings.mcp_specialist_endpoints.get(specialist_id, ""),
             enabled=settings.mcp_specialist_enabled.get(specialist_id, False),
@@ -73,6 +79,9 @@ def specialist_connections_from_settings(
             host_header=(
                 os.getenv(f"DELIA_MCP_{key}_HOST_HEADER") or ""
             ).strip(),
+            display_name=identity[0],
+            owner_ref=identity[1],
+            auth_strategy_ref="KEYCLOAK_DELEGATED",
         )
     return profiles
 
@@ -81,43 +90,66 @@ def specialist_connections_from_core_eligible(
     settings: Settings,
     eligible_items: list[Mapping[str, object]],
 ) -> Mapping[str, SpecialistConnectionProfile]:
-    """Build profiles from Core eligibility projection.
+    """Build profiles from Core eligibility projection (provider-neutral).
 
-    Only Core-eligible providers are enabled. Unknown provider refs that
-    are not in the domain identity registry are ignored (fail closed for
-    that row) — ExternalConnection/onboarding of novel providers is a
-    separate contract.
+    Core-approved providers with supported auth become enabled. Unknown
+    providers requiring ExternalConnection/OAuth remain present but
+    ``enabled=False`` with a typed ``unavailable_reason`` — never a
+    silent discard that hides Core approval, and never auto-authorized.
     """
     profiles: dict[str, SpecialistConnectionProfile] = {}
     for raw in eligible_items:
         if not isinstance(raw, Mapping):
             continue
         specialist_id = str(raw.get("providerRef") or "").strip().lower()
-        if not specialist_id or specialist_id not in CANONICAL_MCP_CLIENT_IDS:
+        if not specialist_id:
             continue
         endpoint = str(raw.get("endpointRef") or "").strip()
         if not endpoint:
             continue
+        auth = str(
+            raw.get("authStrategyRef") or "KEYCLOAK_DELEGATED"
+        ).strip().upper()
+        display = str(raw.get("displayName") or specialist_id).strip()
+        owner = str(raw.get("ownerRef") or specialist_id).strip()
         key = specialist_id.upper()
+        known = specialist_id in CANONICAL_MCP_CLIENT_IDS
         exchange = str(
             raw.get("resourceClientId")
             or os.getenv(f"DELIA_MCP_{key}_CLIENT_ID")
-            or CANONICAL_MCP_CLIENT_IDS[specialist_id]
+            or (CANONICAL_MCP_CLIENT_IDS[specialist_id] if known else "")
         ).strip()
         audience = str(
             raw.get("resourceAudience")
             or os.getenv(f"DELIA_MCP_{key}_RESOURCE_AUDIENCE")
-            or CANONICAL_MCP_RESOURCE_AUDIENCES[specialist_id]
+            or (CANONICAL_MCP_RESOURCE_AUDIENCES[specialist_id] if known else "")
         ).strip()
+
+        unavailable = ""
+        enabled = True
+        if auth == "EXTERNAL_OAUTH":
+            enabled = False
+            unavailable = "external_connection_not_implemented"
+        elif auth != "KEYCLOAK_DELEGATED":
+            enabled = False
+            unavailable = "auth_strategy_unsupported"
+        elif not exchange or not audience:
+            enabled = False
+            unavailable = "keycloak_identity_incomplete"
+
         profiles[specialist_id] = SpecialistConnectionProfile(
             endpoint=endpoint,
-            enabled=True,
+            enabled=enabled,
             timeout_seconds=settings.mcp_timeout_seconds,
             exchange_audience=exchange,
             resource_audience=audience,
             host_header=(
                 os.getenv(f"DELIA_MCP_{key}_HOST_HEADER") or ""
             ).strip(),
+            display_name=display,
+            owner_ref=owner,
+            auth_strategy_ref=auth,
+            unavailable_reason=unavailable,
         )
     # Preserve disabled slots for known specialists so adapters keep a
     # stable key set without enabling them.
@@ -125,6 +157,7 @@ def specialist_connections_from_core_eligible(
         if specialist_id in profiles:
             continue
         key = specialist_id.upper()
+        identity = _SPECIALIST_IDENTITY[specialist_id]
         profiles[specialist_id] = SpecialistConnectionProfile(
             endpoint=settings.mcp_specialist_endpoints.get(specialist_id, ""),
             enabled=False,
@@ -140,5 +173,8 @@ def specialist_connections_from_core_eligible(
             host_header=(
                 os.getenv(f"DELIA_MCP_{key}_HOST_HEADER") or ""
             ).strip(),
+            display_name=identity[0],
+            owner_ref=identity[1],
+            auth_strategy_ref="KEYCLOAK_DELEGATED",
         )
     return profiles

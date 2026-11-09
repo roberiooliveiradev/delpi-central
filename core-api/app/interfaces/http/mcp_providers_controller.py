@@ -28,6 +28,9 @@ from app.extensions.db import db
 from app.infrastructure.persistence.sqlalchemy.audit_repository import (
     SqlAlchemyAuditRepository,
 )
+from app.infrastructure.persistence.sqlalchemy.mcp_provider_repository import (
+    SqlAlchemyMcpProviderRepository,
+)
 from app.interfaces.http.security.authorization import require_permission
 from app.interfaces.http.utils.errors import api_error
 
@@ -56,8 +59,9 @@ def _client_ip() -> str | None:
 
 
 def _use_case() -> ManageMcpProvidersUseCase:
+    # Composition root for HTTP: concrete repos injected into the use case.
     return ManageMcpProvidersUseCase(
-        db.session,
+        SqlAlchemyMcpProviderRepository(db.session),
         audit_repository=SqlAlchemyAuditRepository(db.session),
     )
 

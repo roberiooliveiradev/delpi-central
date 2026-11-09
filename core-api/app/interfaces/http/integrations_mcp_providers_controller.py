@@ -18,6 +18,9 @@ from app.application.use_cases.manage_mcp_providers_use_case import (
 )
 from app.extensions.db import db
 from app.extensions.integration_rate_limit import integration_rate_limit
+from app.infrastructure.persistence.sqlalchemy.mcp_provider_repository import (
+    SqlAlchemyMcpProviderRepository,
+)
 from app.interfaces.http.security.service_token import require_service_token
 from app.interfaces.http.utils.errors import api_error
 
@@ -46,14 +49,23 @@ def list_eligible_mcp_providers():
         or ""
     ).strip() or None
     try:
-        items = ManageMcpProvidersUseCase(db.session).list_eligible()
+        items = ManageMcpProvidersUseCase(
+            SqlAlchemyMcpProviderRepository(db.session)
+        ).list_eligible()
         logger.info(
             "mcp_providers_eligible_ok correlation_id=%s count=%s latency_ms=%.1f",
             correlation_id,
             len(items),
             (time.monotonic() - started) * 1000,
         )
-        return jsonify({"items": items}), 200
+        # R1-RW05: S2S eligibility is provider_approval_only — never
+        # user/org connection AuthZ or domain permission.
+        return jsonify(
+            {
+                "items": items,
+                "authorizationScope": "provider_approval_only",
+            }
+        ), 200
     except Exception:
         logger.exception(
             "mcp_providers_eligible_failed correlation_id=%s latency_ms=%.1f",

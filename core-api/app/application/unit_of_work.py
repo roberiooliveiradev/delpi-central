@@ -56,6 +56,7 @@ from app.domain.ports.notification_dispatch_repository import NotificationDispat
 from app.domain.ports.notification_preference_repository import NotificationPreferenceRepository
 from app.domain.ports.portal_tour_repository import PortalTourRepository
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
+from app.domain.ports.mcp_provider_repository_port import McpProviderRepositoryPort
 from app.domain.ports.cache_port import PermissionCachePort
 from app.domain.ports.event_dispatcher_port import EventDispatcherPort
 
@@ -107,6 +108,7 @@ class UnitOfWork(Protocol):
     notification_preferences: NotificationPreferenceRepository
     portal_tour: PortalTourRepository
     audits: AuditRepositoryPort
+    mcp_providers: McpProviderRepositoryPort
 
     cache: PermissionCachePort
     events: EventDispatcherPort

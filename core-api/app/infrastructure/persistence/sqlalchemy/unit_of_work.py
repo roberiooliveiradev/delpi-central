@@ -41,6 +41,9 @@ from app.infrastructure.persistence.sqlalchemy.plugin_route_repository import Sq
 from app.infrastructure.persistence.sqlalchemy.plugin_permission_repository import SqlAlchemyPluginPermissionRepository
 
 from app.infrastructure.persistence.sqlalchemy.audit_repository import SqlAlchemyAuditRepository
+from app.infrastructure.persistence.sqlalchemy.mcp_provider_repository import (
+    SqlAlchemyMcpProviderRepository,
+)
 from app.infrastructure.persistence.sqlalchemy.consent_repository import SqlAlchemyConsentRepository
 from app.infrastructure.persistence.sqlalchemy.person_profile_repository import (
     SqlAlchemyPersonProfileRepository,
@@ -104,6 +107,11 @@ class SqlAlchemyUnitOfWork:
         # Audits
         # =========================
         self.audits = SqlAlchemyAuditRepository(self.session)
+
+        # =========================
+        # MCP provider governance
+        # =========================
+        self.mcp_providers = SqlAlchemyMcpProviderRepository(self.session)
 
         # =========================
         # LGPD Consents

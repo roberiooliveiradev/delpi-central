@@ -68,19 +68,57 @@ def test_core_eligible_enables_only_returned_providers(monkeypatch):
     assert profiles["clara"].enabled is False
 
 
-def test_core_ignores_unknown_provider_ref():
+def test_core_admits_unknown_keycloak_provider_when_identity_complete():
     settings = _Settings()
     profiles = specialist_connections_from_core_eligible(
         settings,
         [
             {
-                "providerRef": "unknown-vendor",
-                "endpointRef": "https://evil.example/mcp",
+                "providerRef": "partner-ops",
+                "displayName": "Partner Ops",
+                "ownerRef": "partner-ops-api",
+                "endpointRef": "https://partner.example/mcp",
+                "authStrategyRef": "KEYCLOAK_DELEGATED",
+                "resourceClientId": "mcp-partner-ops",
+                "resourceAudience": "https://partner.example/mcp",
             }
         ],
     )
-    assert "unknown-vendor" not in profiles
-    assert all(not p.enabled for p in profiles.values())
+    assert profiles["partner-ops"].enabled is True
+    assert profiles["partner-ops"].display_name == "Partner Ops"
+
+
+def test_core_marks_external_oauth_unavailable_without_connection():
+    settings = _Settings()
+    profiles = specialist_connections_from_core_eligible(
+        settings,
+        [
+            {
+                "providerRef": "gmail-mcp",
+                "displayName": "Gmail",
+                "ownerRef": "google",
+                "endpointRef": "https://gmail.example/mcp",
+                "authStrategyRef": "EXTERNAL_OAUTH",
+            }
+        ],
+    )
+    assert profiles["gmail-mcp"].enabled is False
+    assert (
+        profiles["gmail-mcp"].unavailable_reason
+        == "external_connection_not_implemented"
+    )
+
+
+def test_eligible_projection_declares_provider_approval_only_scope():
+    """R1-RW05: Core eligible items must not imply user AuthZ."""
+    # Contract field asserted on Core side; DÉLIA must not treat
+    # providerRef presence as domain permission.
+    item = {
+        "providerRef": "davi",
+        "authorizationScope": "provider_approval_only",
+    }
+    assert item["authorizationScope"] == "provider_approval_only"
+    assert "permissions" not in item
 
 
 def test_client_fail_closed_on_403():

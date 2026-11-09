@@ -39,6 +39,9 @@ from app.infrastructure.interoperability.config import (
     specialist_connections_from_core_eligible,
     specialist_connections_from_settings,
 )
+from app.infrastructure.interoperability.mcp.core_eligibility_guard import (
+    CoreMcpProviderEligibilityGuard,
+)
 from app.infrastructure.interoperability.mcp.core_provider_registry import (
     CoreMcpProviderRegistryClient,
     CoreMcpProviderRegistryError,
@@ -262,7 +265,30 @@ def create_application(
     )
     # Doc 293 §2A: snapshot catalog experiment retired — discovery is
     # always live SpecialistInterop (+ native MCPToolset on the Agent).
-    interop = SpecialistInterop(adapter)
+    # R1-RW04: Core-governed identities beyond the static seven.
+    from app.domain.specialist_interop.model import SpecialistRef
+    from app.domain.specialist_interop.rules import specialist_ref_or_none
+
+    governed_identities = {}
+    for sid, profile in connections.items():
+        if not profile.enabled:
+            continue
+        ref = specialist_ref_or_none(
+            sid,
+            display_name=profile.display_name or None,
+            owner_ref=profile.owner_ref or None,
+        )
+        if ref is not None:
+            governed_identities[sid] = ref
+        elif profile.display_name and profile.owner_ref:
+            governed_identities[sid] = SpecialistRef(
+                specialist_id=sid,
+                display_name=profile.display_name,
+                owner_ref=profile.owner_ref,
+            )
+    interop = SpecialistInterop(
+        adapter, governed_identities=governed_identities
+    )
     app.config["SPECIALIST_INTEROP"] = interop
 
     # C3-INTERACTION-RUNTIME-01R2: TEST_ONLY deterministic adapter is
@@ -453,6 +479,20 @@ def _compose_turn_handler(
             f"{settings.orchestration_engine!r} — expected one of "
             f"{sorted(_SUPPORTED_ORCHESTRATION_ENGINES)}"
         )
+    eligibility_guard = None
+    if (
+        settings.mcp_provider_registry_mode == "core"
+        and settings.core_api_url
+        and settings.core_integrations_service_token
+    ):
+        eligibility_guard = CoreMcpProviderEligibilityGuard(
+            CoreMcpProviderRegistryClient(
+                core_api_url=settings.core_api_url,
+                service_token=settings.core_integrations_service_token,
+                timeout_seconds=settings.core_timeout_seconds,
+                http_get=_bounded_http_get,
+            )
+        )
     gates = (
         OperationalCapabilityOrchestrator(
             providers,
@@ -467,6 +507,7 @@ def _compose_turn_handler(
             llm_call_max_attempts=settings.llm_call_max_attempts,
             field_labels=field_labels,
             orchestration_instructions=orchestration_instructions,
+            mcp_provider_eligibility=eligibility_guard,
         )
         if providers and orchestration_instructions is not None
         else None

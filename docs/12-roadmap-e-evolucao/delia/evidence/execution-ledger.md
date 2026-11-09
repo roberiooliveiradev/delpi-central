@@ -6064,3 +6064,12 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Não feito:** ExternalConnection físico; OAuth externo; UI admin completa; prod/IAM writes; T3.
 - **Veredicto:** `IMPLEMENTED_BOUNDED_DEV` — revisão independente; não autoaceite CLOSED_PROVEN.
 
+| DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-R1-REWORK-01 | Bounded rework R1: RW01 invoke eligibility recheck; RW02 Application→port; RW03 endpoint_policy/SSRF; RW04 provider-neutral admission; RW05 authorizationScope=provider_approval_only; Core MCP focused 32 PASS; Core full 382/29 (29 non-MCP preexist); DÉLIA focused 31 PASS; g4 fixture 1 FAIL unrelated; ExternalConnection NOT; Keycloak/prod untouched; PRODUCTION_DEPLOY=NOT_AUTHORIZED | A-07=IMPLEMENTED_BOUNDED_DEV; R04=PENDING_OPS; NEXT=T2_INDEPENDENT_REVIEW |
+
+### DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-R1-REWORK-01 — execução (2026-11-09)
+
+- **Autorização:** §2A.9 / §2A.11; escopo exclusivo correção arquitetura/revogação/segurança/elegibilidade do R1.
+- **BASE:** `3dacbdc0c23c13fefc23d9610f21cdbfd0632333`; reancoragem em `main` com WIP concorrente preservado.
+- **RW01–RW05:** implementados no menor diff; MCPToolset nativo preservado; sem segundo registry/banco DÉLIA.
+- **Veredicto:** `REWORK_IMPLEMENTED_BOUNDED_DEV` — entrega para `T2_INDEPENDENT_REVIEW`; A-07 **não** `CLOSED_PROVEN`; T3/PRODUCTION_DEPLOY NOT_AUTHORIZED.
+

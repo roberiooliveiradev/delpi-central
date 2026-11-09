@@ -74,16 +74,36 @@ _SPECIALIST_IDENTITY: dict[str, tuple[str, str, str, str]] = {
 APPROVED_SPECIALIST_IDS = frozenset(_SPECIALIST_IDENTITY)
 
 
-def specialist_ref_or_none(specialist_id: str) -> SpecialistRef | None:
-    """Return the canonical SpecialistRef for an approved id, else None."""
-    identity = _SPECIALIST_IDENTITY.get(str(specialist_id or "").strip().lower())
-    if identity is None:
-        return None
-    return SpecialistRef(
-        specialist_id=str(specialist_id).strip().lower(),
-        display_name=identity[0],
-        owner_ref=identity[1],
-    )
+def specialist_ref_or_none(
+    specialist_id: str,
+    *,
+    display_name: str | None = None,
+    owner_ref: str | None = None,
+) -> SpecialistRef | None:
+    """Return SpecialistRef for a known or Core-governed provider.
+
+    The seven DELPI specialists remain the canonical identity table.
+    Additional Core-approved providers may be admitted when
+    ``display_name`` and ``owner_ref`` are supplied by the governed
+    connection profile (R1-RW04) — never from tool metadata alone.
+    """
+    sid = str(specialist_id or "").strip().lower()
+    identity = _SPECIALIST_IDENTITY.get(sid)
+    if identity is not None:
+        return SpecialistRef(
+            specialist_id=sid,
+            display_name=identity[0],
+            owner_ref=identity[1],
+        )
+    display = str(display_name or "").strip()
+    owner = str(owner_ref or "").strip()
+    if sid and display and owner:
+        return SpecialistRef(
+            specialist_id=sid,
+            display_name=display,
+            owner_ref=owner,
+        )
+    return None
 
 
 # Provider-neutral mapping from the owner-typed DELPI ToolClass wire

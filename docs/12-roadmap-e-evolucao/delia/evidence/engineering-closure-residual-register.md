@@ -48,7 +48,7 @@
 | A-03 | Architecture | C3-T5 OpenAPI foundation preservado | DÉLIA openapi/capability | ledger G5 KEEP (46 testes); `openapi_provider.py` presente; adapter direto já aposentado | `KEEP_APPROVED` | — |
 | A-04 | Architecture | Segundo Agent/planner/tool-loop paralelo ao Pydantic AI | DÉLIA orchestration | Agent + MCPToolset em adapter/investigation; G8 “zero segundo runtime” | `CLOSED_PROVEN` | — |
 | A-05 | Architecture | Snapshot experiment RETIRE executado (código) | DÉLIA interop | PO §2A + remoção física; Settings fail-closed; live SpecialistInterop only | `CLOSED_PROVEN` (código) | R04 prod = PENDING_OPS |
-| A-07 | Architecture | Cadastro centralizado MCP (Core provider registry) | Core governance | R1: `mcp_providers` + HTTP admin/S2S + seed 7 DEV + DÉLIA HTTP client; ExternalConnection ainda TARGET; prod N/A | `IMPLEMENTED_BOUNDED_DEV` | T2_INDEPENDENT_REVIEW; ExternalConnection; R04 |
+| A-07 | Architecture | Cadastro centralizado MCP (Core provider registry) | Core governance | R1 + R1-REWORK: revoke-at-invoke, CA port, SSRF policy, provider-neutral admission, authorizationScope; ExternalConnection ainda TARGET; prod N/A | `IMPLEMENTED_BOUNDED_DEV` | T2_INDEPENDENT_REVIEW; ExternalConnection; R04 |
 | A-06 | Architecture | Estratégia PromptedOutput vs ToolOutput (coexistência) | Coordenação DÉLIA | migração PromptedOutput rollback; ADR spike; **não reabrir em T3** | `KEEP_APPROVED` (+ ADR registrado) | — |
 | O-01 | Flow | Admissão v42 → owner path (Kimi, Qwen14B) | DÉLIA admission | matrix E2E + admission 3/3; SHA `dc491abd1e` | `CLOSED_PROVEN` | — |
 | O-02 | Flow | Admissão C1 Qwen4B local (`explanation`/owner_path=false) | DÉLIA admission + eval | matrix: admission FAIL 2/2; E2E 0 MCP; fronteira `ADMISSION` | `OPEN_MATERIAL` | T3 |
@@ -591,7 +591,7 @@ Provider-neutral; SSRF/redirect/DNS checks; OAuth externo fora do Keycloak DELPI
 
 | ID | Status após esta task |
 |---|---|
-| A-07 | Architecture | Cadastro centralizado MCP (Core provider registry) | Core governance | R1: `mcp_providers` + HTTP admin/S2S + seed 7 DEV + DÉLIA HTTP client; ExternalConnection ainda TARGET; prod N/A | `IMPLEMENTED_BOUNDED_DEV` | T2_INDEPENDENT_REVIEW; ExternalConnection; R04 |
+| A-07 | Architecture | Cadastro centralizado MCP (Core provider registry) | Core governance | R1 + R1-REWORK: revoke-at-invoke, CA port, SSRF policy, provider-neutral admission, authorizationScope; ExternalConnection ainda TARGET; prod N/A | `IMPLEMENTED_BOUNDED_DEV` | T2_INDEPENDENT_REVIEW; ExternalConnection; R04 |
 | R04 | `PENDING_OPS` |
 | Architecture Ownership gate | `NOT_PASS` |
 | Snapshot | permanece ABSENT |
@@ -646,5 +646,38 @@ Provider-neutral; SSRF/redirect/DNS checks; OAuth externo fora do Keycloak DELPI
 | R04 | `PENDING_OPS` |
 | Architecture Ownership | PARTIAL — Core registry vivo em DEV; gate global ainda depende review |
 
+**NEXT:** `T2_INDEPENDENT_REVIEW`
+
+## T2 R1-REWORK — bounded architecture & security (2026-11-09)
+
+**TASK_ID:** `DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-R1-REWORK-01`  
+**AUTHORIZATION:** Documento 293 §2A.9 / §2A.11  
+**BASE:** R1 SHA `3dacbdc0c23c13fefc23d9610f21cdbfd0632333`
+
+### Correções
+
+1. **RW01 Revocation:** invoke-time Core eligibility recheck (port + guard + orchestrator); bloqueia revoke/disable/unavailable/malformed sem restart DÉLIA.
+2. **RW02 CA boundary:** Application → `McpProviderRepositoryPort` + domain entities; SQLAlchemy só em infrastructure/UoW.
+3. **RW03 SSRF:** `domain/mcp_providers/endpoint_policy.py` + trusted-host allowlist; cadastro ≠ connection-time completa para proxies arbitrários (residual documentado).
+4. **RW04 Provider-neutral:** Core-eligible desconhecidos admitidos com auth suportada; `EXTERNAL_OAUTH`/unsupported → `unavailable_reason` (não silent discard; não auto-ACT).
+5. **RW05 AuthZ boundary:** `authorizationScope=provider_approval_only` no S2S; gates Policy/Decision/Domain preservados.
+
+### Testes
+
+- Core focused MCP (lifecycle/http/policy/use_case): **32 PASS**
+- Core full `app/tests/`: **382 PASS / 29 FAIL** — falhas **sem** overlap MCP (RBAC/routes/favorites/presence/manifest); alinhado ao relatório R1 (29 FAIL preexistentes; PASS aumentou pelos novos testes)
+- DÉLIA focused registry/eligibility/composition: **31 PASS**
+- DÉLIA suite (sem presentation_v2 docs-mount + support): **1 FAIL** `test_g4_integrated_homologation` (fixture drift; fora do escopo MCP rework) + 2 ERROR de collection presentation_v2 por `/docs` não montado no container
+
+### Estados
+
+| ID | Status |
+|---|---|
+| A-07 | `IMPLEMENTED_BOUNDED_DEV` (não `CLOSED_PROVEN`) |
+| R04 | `PENDING_OPS` |
+| T2_ARCHITECTURE_GATE | PARTIAL — rework R1 entregue; review independente pendente |
+
+**DEV_REAL_E2E revoke-without-restart:** coberto por testes de invoke revalidation (guard/orchestrator); E2E HTTP admin+live wire classificado `TEST_NOT_RUN`/`INCONCLUSIVE` se ambiente admin token/ops não exercitado nesta fatia.  
+**PRODUCTION_DEPLOY:** NOT_AUTHORIZED. **T3:** NOT_AUTHORIZED.  
 **NEXT:** `T2_INDEPENDENT_REVIEW`
 

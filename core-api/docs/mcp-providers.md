@@ -45,7 +45,27 @@ Auth: CORE_API_INTEGRATIONS_SERVICE_TOKEN
 
 Returns only `enabled=true` providers in `APPROVED|ACTIVE|DEGRADED`.
 
+Each item and the envelope carry:
+
+```text
+authorizationScope: "provider_approval_only"
+```
+
+**R1-RW05:** this S2S projection proves **provider approval only**. It does
+**not** prove user/org ExternalConnection, Core business permission, or
+Domain AuthZ. DÉLIA must revalidate eligibility at invoke (R1-RW01) and
+preserve subject/Policy/Decision/Domain gates.
+
 `registered != approved != enabled != authenticated != authorized`.
+
+### Endpoint policy (R1-RW03)
+
+Registration validates structure, blocks credentials-in-URL, loopback,
+link-local, metadata, and non-trusted private resolution. Trusted
+in-cluster hosts are an **explicit allowlist**
+(`CORE_MCP_TRUSTED_ENDPOINT_HOSTS` + defaults). External hosts require
+HTTPS. Cadastro validation ≠ connection-time redirect/DNS-rebinding
+proof for arbitrary proxies.
 
 ## DEV seed
 

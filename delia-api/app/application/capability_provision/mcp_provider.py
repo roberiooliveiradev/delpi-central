@@ -43,9 +43,6 @@ from app.application.specialist_interop.specialist_interop import (
 )
 from app.domain.evidence.model import SourceRef
 from app.domain.specialist_interop.model import SpecialistOutcome
-from app.domain.specialist_interop.rules import APPROVED_SPECIALIST_IDS
-
-
 class McpCapabilityProvider:
     """Provider adapter over the approved MCP specialists."""
 
@@ -57,8 +54,13 @@ class McpCapabilityProvider:
         specialist_ids: Sequence[str],
     ) -> None:
         self._interop = interop
+        # R1-RW04: admit any Core/settings-enabled specialist id passed
+        # by composition — filtering by the static seven would discard
+        # governed onboarding.
         self._specialist_ids = tuple(
-            sid for sid in specialist_ids if sid in APPROVED_SPECIALIST_IDS
+            str(sid).strip().lower()
+            for sid in specialist_ids
+            if str(sid or "").strip()
         )
 
     def list_groups(

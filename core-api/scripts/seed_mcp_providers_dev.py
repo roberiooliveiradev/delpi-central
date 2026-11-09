@@ -123,11 +123,14 @@ def seed(session) -> dict[str, int]:
         STATUS_DISCOVERED,
     )
     from app.infrastructure.db.models.mcp_provider import McpProvider
+    from app.infrastructure.persistence.sqlalchemy.mcp_provider_repository import (
+        SqlAlchemyMcpProviderRepository,
+    )
 
     def _get(pref: str):
         return session.query(McpProvider).filter_by(provider_ref=pref).one_or_none()
 
-    uc = ManageMcpProvidersUseCase(session)
+    uc = ManageMcpProvidersUseCase(SqlAlchemyMcpProviderRepository(session))
     created = updated = enabled = skipped = 0
 
     for spec in DEV_SPECIALISTS:

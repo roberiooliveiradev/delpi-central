@@ -335,20 +335,30 @@ class McpSpecialistAdapter:
             self._credential_provider.invalidate(profile)
 
     def _profile(self, specialist_id: str) -> SpecialistConnectionProfile:
-        if specialist_id not in APPROVED_SPECIALIST_IDS:
-            raise SpecialistInteropError(
-                UNKNOWN_SPECIALIST,
-                "specialist is not in the approved allowlist",
-            )
+        # R1-RW04: connection map from Core/settings is the runtime
+        # admission surface — not a hard-coded seven-name allowlist.
+        # Unknown ids without a connection remain UNKNOWN_SPECIALIST.
         profile = self._connections.get(specialist_id)
-        if profile is None or not profile.endpoint:
+        if profile is None:
+            if specialist_id not in APPROVED_SPECIALIST_IDS:
+                raise SpecialistInteropError(
+                    UNKNOWN_SPECIALIST,
+                    "specialist is not in the approved allowlist",
+                )
+            raise SpecialistInteropError(
+                SPECIALIST_NOT_CONFIGURED,
+                "specialist endpoint is not configured",
+            )
+        if not profile.endpoint:
             raise SpecialistInteropError(
                 SPECIALIST_NOT_CONFIGURED,
                 "specialist endpoint is not configured",
             )
         if not profile.enabled:
             raise SpecialistInteropError(
-                SPECIALIST_DISABLED, "specialist connection is disabled"
+                SPECIALIST_DISABLED,
+                profile.unavailable_reason
+                or "specialist connection is disabled",
             )
         return profile
 

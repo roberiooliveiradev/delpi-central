@@ -1,13 +1,20 @@
-"""Application use cases for Core-governed MCP provider registry."""
+"""Application use cases for Core-governed MCP provider registry.
+
+Depends only on domain entities/ports — no SQLAlchemy imports.
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
-from urllib.parse import urlparse
 
+from app.domain.mcp_providers.entities import (
+    McpProviderRecord,
+    eligible_record_to_dict,
+    provider_record_to_dict,
+)
+from app.domain.mcp_providers.endpoint_policy import validate_mcp_endpoint_ref
 from app.domain.mcp_providers.lifecycle import (
     PROTOCOL_MCP,
     STATUS_DISCOVERED,
@@ -22,12 +29,8 @@ from app.domain.mcp_providers.lifecycle import (
     is_eligible,
     transition,
 )
-from app.infrastructure.db.models.mcp_provider import McpProvider
-from app.infrastructure.persistence.sqlalchemy.mcp_provider_repository import (
-    SqlAlchemyMcpProviderRepository,
-    eligible_to_dict,
-    provider_to_dict,
-)
+from app.domain.ports.audit_repository_port import AuditRepositoryPort
+from app.domain.ports.mcp_provider_repository_port import McpProviderRepositoryPort
 
 
 class McpProviderConflictError(Exception):
@@ -49,46 +52,6 @@ class McpProviderValidationError(Exception):
         self.path = path
 
 
-def _validate_endpoint(endpoint_ref: str) -> str:
-    value = str(endpoint_ref or "").strip()
-    if not value:
-        raise McpProviderValidationError(
-            "mcp_provider.endpoint_required",
-            "endpointRef is required",
-            path="endpointRef",
-        )
-    parsed = urlparse(value)
-    if parsed.scheme not in {"http", "https"}:
-        raise McpProviderValidationError(
-            "mcp_provider.endpoint_scheme",
-            "endpointRef must be http or https",
-            path="endpointRef",
-        )
-    if not parsed.netloc:
-        raise McpProviderValidationError(
-            "mcp_provider.endpoint_host",
-            "endpointRef must include a host",
-            path="endpointRef",
-        )
-    # Soft SSRF guard for registration: block obvious metadata/loopback
-    # unless explicitly host-local for DEV (http://*-api:). Private IP
-    # literals are rejected; docker DNS names remain allowed for DEV.
-    host = (parsed.hostname or "").lower()
-    if host in {"localhost", "127.0.0.1", "0.0.0.0", "::1", "metadata.google.internal"}:
-        raise McpProviderValidationError(
-            "mcp_provider.endpoint_ssrf",
-            "endpointRef host is not allowed",
-            path="endpointRef",
-        )
-    if host.startswith("169.254.") or host.startswith("metadata."):
-        raise McpProviderValidationError(
-            "mcp_provider.endpoint_ssrf",
-            "endpointRef host is not allowed",
-            path="endpointRef",
-        )
-    return value
-
-
 def _normalize_provider_ref(provider_ref: str) -> str:
     value = str(provider_ref or "").strip().lower()
     if not value or len(value) > 64:
@@ -106,13 +69,23 @@ def _normalize_provider_ref(provider_ref: str) -> str:
     return value
 
 
-@dataclass
-class ManageMcpProvidersUseCase:
-    """Single application façade for MCP provider governance."""
+def _validate_endpoint(endpoint_ref: str) -> str:
+    try:
+        return validate_mcp_endpoint_ref(endpoint_ref, resolve_dns=True)
+    except McpProviderLifecycleError as exc:
+        raise McpProviderValidationError(
+            exc.code, exc.message, path="endpointRef"
+        ) from exc
 
-    def __init__(self, session, *, audit_repository=None) -> None:
-        self._session = session
-        self._repo = SqlAlchemyMcpProviderRepository(session)
+
+class ManageMcpProvidersUseCase:
+    def __init__(
+        self,
+        repository: McpProviderRepositoryPort,
+        *,
+        audit_repository: AuditRepositoryPort | None = None,
+    ) -> None:
+        self._repo = repository
         self._audit = audit_repository
 
     def _audit_log(
@@ -170,7 +143,10 @@ class ManageMcpProvidersUseCase:
                 path="ownerRef",
             )
         endpoint = _validate_endpoint(endpoint_ref)
-        strategy = assert_auth_strategy(auth_strategy_ref)
+        try:
+            strategy = assert_auth_strategy(auth_strategy_ref)
+        except McpProviderLifecycleError as exc:
+            raise McpProviderValidationError(exc.code, exc.message) from exc
 
         existing = self._repo.get(pref)
         if existing is not None:
@@ -179,7 +155,6 @@ class ManageMcpProvidersUseCase:
                     "mcp_provider.already_exists",
                     f"Provider {pref} already exists",
                 )
-            # Idempotent re-register only when still a candidate and payload matches.
             if existing.approval_status not in {STATUS_DISCOVERED}:
                 raise McpProviderConflictError(
                     "mcp_provider.already_exists",
@@ -195,17 +170,17 @@ class ManageMcpProvidersUseCase:
             existing.risk_tier = (risk_tier or "").strip() or None
             existing.policy_ref = (policy_ref or "").strip() or None
             existing.version = int(existing.version) + 1
-            self._repo.flush()
+            saved = self._repo.save(existing)
             self._audit_log(
                 action="mcp_provider.register_idempotent",
                 provider_ref=pref,
                 actor_user_id=actor_user_id,
-                payload={"version": existing.version},
+                payload={"version": saved.version},
                 ip_address=ip_address,
             )
-            return provider_to_dict(existing)
+            return provider_record_to_dict(saved)
 
-        row = McpProvider(
+        record = McpProviderRecord(
             provider_ref=pref,
             display_name=name,
             protocol=PROTOCOL_MCP,
@@ -221,8 +196,7 @@ class ManageMcpProvidersUseCase:
             policy_ref=(policy_ref or "").strip() or None,
             version=1,
         )
-        self._repo.add(row)
-        self._repo.flush()
+        saved = self._repo.save(record)
         self._audit_log(
             action="mcp_provider.register",
             provider_ref=pref,
@@ -230,27 +204,32 @@ class ManageMcpProvidersUseCase:
             payload={"status": STATUS_DISCOVERED},
             ip_address=ip_address,
         )
-        return provider_to_dict(row)
+        return provider_record_to_dict(saved)
 
     def get(self, provider_ref: str) -> dict[str, Any]:
         row = self._repo.get(_normalize_provider_ref(provider_ref))
         if row is None:
             raise McpProviderNotFoundError(provider_ref)
-        return provider_to_dict(row)
+        return provider_record_to_dict(row)
 
     def list_providers(self, *, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
-        return [provider_to_dict(r) for r in self._repo.list_all(limit=limit, offset=offset)]
+        return [
+            provider_record_to_dict(r)
+            for r in self._repo.list_all(limit=limit, offset=offset)
+        ]
 
     def list_eligible(self) -> list[dict[str, Any]]:
-        return [eligible_to_dict(r) for r in self._repo.list_eligible()]
+        return [eligible_record_to_dict(r) for r in self._repo.list_eligible()]
 
-    def _require(self, provider_ref: str) -> McpProvider:
+    def _require(self, provider_ref: str) -> McpProviderRecord:
         row = self._repo.get(_normalize_provider_ref(provider_ref))
         if row is None:
             raise McpProviderNotFoundError(provider_ref)
         return row
 
-    def _bump_version(self, row: McpProvider, expected_version: int | None) -> None:
+    def _bump_version(
+        self, row: McpProviderRecord, expected_version: int | None
+    ) -> None:
         if expected_version is not None and int(row.version) != int(expected_version):
             raise McpProviderConflictError(
                 "mcp_provider.version_conflict",
@@ -272,15 +251,15 @@ class ManageMcpProvidersUseCase:
         except McpProviderLifecycleError as exc:
             raise McpProviderValidationError(exc.code, exc.message) from exc
         self._bump_version(row, expected_version)
-        self._repo.flush()
+        saved = self._repo.save(row)
         self._audit_log(
             action="mcp_provider.review",
-            provider_ref=row.provider_ref,
+            provider_ref=saved.provider_ref,
             actor_user_id=actor_user_id,
-            payload={"status": row.approval_status, "version": row.version},
+            payload={"status": saved.approval_status, "version": saved.version},
             ip_address=ip_address,
         )
-        return provider_to_dict(row)
+        return provider_record_to_dict(saved)
 
     def approve(
         self,
@@ -300,15 +279,19 @@ class ManageMcpProvidersUseCase:
         row.approved_by_user_id = actor_user_id
         row.approved_at = datetime.now(timezone.utc)
         self._bump_version(row, expected_version)
-        self._repo.flush()
+        saved = self._repo.save(row)
         self._audit_log(
             action="mcp_provider.approve",
-            provider_ref=row.provider_ref,
+            provider_ref=saved.provider_ref,
             actor_user_id=actor_user_id,
-            payload={"status": status, "enabled": enabled, "version": row.version},
+            payload={
+                "status": status,
+                "enabled": enabled,
+                "version": saved.version,
+            },
             ip_address=ip_address,
         )
-        return provider_to_dict(row)
+        return provider_record_to_dict(saved)
 
     def reject(
         self,
@@ -326,15 +309,15 @@ class ManageMcpProvidersUseCase:
         row.approval_status = status
         row.enabled = enabled
         self._bump_version(row, expected_version)
-        self._repo.flush()
+        saved = self._repo.save(row)
         self._audit_log(
             action="mcp_provider.reject",
-            provider_ref=row.provider_ref,
+            provider_ref=saved.provider_ref,
             actor_user_id=actor_user_id,
-            payload={"status": status, "version": row.version},
+            payload={"status": status, "version": saved.version},
             ip_address=ip_address,
         )
-        return provider_to_dict(row)
+        return provider_record_to_dict(saved)
 
     def enable(
         self,
@@ -352,15 +335,19 @@ class ManageMcpProvidersUseCase:
         row.approval_status = status
         row.enabled = enabled
         self._bump_version(row, expected_version)
-        self._repo.flush()
+        saved = self._repo.save(row)
         self._audit_log(
             action="mcp_provider.enable",
-            provider_ref=row.provider_ref,
+            provider_ref=saved.provider_ref,
             actor_user_id=actor_user_id,
-            payload={"status": status, "enabled": enabled, "version": row.version},
+            payload={
+                "status": status,
+                "enabled": enabled,
+                "version": saved.version,
+            },
             ip_address=ip_address,
         )
-        return provider_to_dict(row)
+        return provider_record_to_dict(saved)
 
     def disable(
         self,
@@ -378,15 +365,19 @@ class ManageMcpProvidersUseCase:
         row.approval_status = status
         row.enabled = enabled
         self._bump_version(row, expected_version)
-        self._repo.flush()
+        saved = self._repo.save(row)
         self._audit_log(
             action="mcp_provider.disable",
-            provider_ref=row.provider_ref,
+            provider_ref=saved.provider_ref,
             actor_user_id=actor_user_id,
-            payload={"status": status, "enabled": enabled, "version": row.version},
+            payload={
+                "status": status,
+                "enabled": enabled,
+                "version": saved.version,
+            },
             ip_address=ip_address,
         )
-        return provider_to_dict(row)
+        return provider_record_to_dict(saved)
 
     def revoke(
         self,
@@ -404,15 +395,19 @@ class ManageMcpProvidersUseCase:
         row.approval_status = status
         row.enabled = enabled
         self._bump_version(row, expected_version)
-        self._repo.flush()
+        saved = self._repo.save(row)
         self._audit_log(
             action="mcp_provider.revoke",
-            provider_ref=row.provider_ref,
+            provider_ref=saved.provider_ref,
             actor_user_id=actor_user_id,
-            payload={"status": status, "enabled": enabled, "version": row.version},
+            payload={
+                "status": status,
+                "enabled": enabled,
+                "version": saved.version,
+            },
             ip_address=ip_address,
         )
-        return provider_to_dict(row)
+        return provider_record_to_dict(saved)
 
     @staticmethod
     def is_eligible_projection(row: dict[str, Any]) -> bool:

@@ -207,6 +207,26 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 **TASK:** `DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-IMPLEMENTATION-R1`  
 **RESULT:** Core `mcp_providers` + HTTP + seed DEV 7 (3 enabled) **IMPLEMENTED**; DÉLIA HTTP consumer com `DELIA_MCP_PROVIDER_REGISTRY_MODE`; ExternalConnection **NOT_IMPLEMENTED**; R04 `PENDING_OPS`. **NEXT:** `T2_INDEPENDENT_REVIEW`. T3/PRODUCTION_DEPLOY: NOT_AUTHORIZED.
 
+### 2A.11 Execution stamp — Core MCP registry R1 bounded rework (2026-11-09)
+
+**TASK:** `DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-R1-REWORK-01`  
+**AUTHORIZATION:** §2A.9 (mesmo escopo bounded DEV; sem T3; sem PRODUCTION_DEPLOY; sem Keycloak prod writes).  
+**BASE_IMPLEMENTATION_SHA:** `3dacbdc0c23c13fefc23d9610f21cdbfd0632333` (R1). HEAD de reancoragem pode ter avançado por workstreams concorrentes; WIP alheio preservado.
+
+**RESULT (bounded rework):**
+
+| ID | Correção | Status |
+|---|---|---|
+| R1-RW01 | Revalidação de elegibilidade Core no invoke (`CoreMcpProviderEligibilityGuard` + orchestrator) — fail-closed; sem cache autoritativo | IMPLEMENTED + RED/GREEN |
+| R1-RW02 | Use case Application depende de `McpProviderRepositoryPort` / domain entities — sem import SQLAlchemy | IMPLEMENTED + arch assert |
+| R1-RW03 | `endpoint_policy` no domain + trusted hosts explícitos; negativos SSRF | IMPLEMENTED + RED/GREEN |
+| R1-RW04 | `specialist_connections_from_core_eligible` provider-neutral; auth não suportada → `unavailable_reason` tipado | IMPLEMENTED + RED/GREEN |
+| R1-RW05 | S2S `authorizationScope=provider_approval_only`; aprovação ≠ AuthZ usuário/org/Domain | FORMALIZED + tests |
+
+**Preservado:** `mcp_providers`, migration `u7v8w9x0y1`, admin/S2S, seed 7, MCPToolset nativo, SpecialistInterop. **Não feito:** ExternalConnection físico; OAuth externo; segundo registry; UI admin; T3; deploy prod.  
+**A-07:** permanece `IMPLEMENTED_BOUNDED_DEV` (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS`.  
+**NEXT:** `T2_INDEPENDENT_REVIEW`.
+
 ## 3. Política de residual ZERO e limites reais
 
 - **ZERO** significa nenhum residual material **no escopo de fechamento DÉLIA aprovado**. Resíduo externo TÉO, dependência de produção ou limitação de modelo não pode ser rotulado `PASS`; determinar explicitamente se é bloqueador da aceitação DÉLIA ou de release. Não declarar que todo monorepo foi limpo.

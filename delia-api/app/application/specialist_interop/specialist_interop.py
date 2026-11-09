@@ -130,8 +130,16 @@ def _owner_error_hint(content_text: str) -> str | None:
 class SpecialistInterop:
     """One provider-neutral boundary for approved specialist interaction."""
 
-    def __init__(self, port: SpecialistInteropPort) -> None:
+    def __init__(
+        self,
+        port: SpecialistInteropPort,
+        *,
+        governed_identities: Mapping[str, SpecialistRef] | None = None,
+    ) -> None:
         self._port = port
+        # R1-RW04: Core-approved provider identities beyond the seven
+        # static specialists (display/owner from governed profile).
+        self._governed_identities = dict(governed_identities or {})
 
     def discover_catalog(
         self, request: SpecialistCatalogRequest
@@ -263,7 +271,11 @@ class SpecialistInterop:
         )
 
     def _require_specialist(self, specialist_id: str) -> SpecialistRef:
-        specialist = specialist_ref_or_none(specialist_id)
+        sid = str(specialist_id or "").strip().lower()
+        governed = self._governed_identities.get(sid)
+        if governed is not None:
+            return governed
+        specialist = specialist_ref_or_none(sid)
         if specialist is None:
             raise SpecialistInteropError(
                 UNKNOWN_SPECIALIST,
