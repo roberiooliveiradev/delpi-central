@@ -579,12 +579,38 @@ export type OpPendencyItem = {
   schedule: OpPendencySchedule[];
 };
 
+/** Ruptura projetada pelo motor de Estoque de Segurança/Delpi Reports. */
+export type StockRupturePendencyItem = {
+  id: string;
+  kind: "stock_rupture";
+  branch: string;
+  product_code: string;
+  product_description: string;
+  unit: string;
+  first_shortage_date: string;
+  available_stock: number | null;
+  shortage_balance: number | null;
+  last_inventory_date: string | null;
+  next_purchase: string;
+  observation: string;
+  provider_key: "safety_stock_shortage_30d";
+};
+
+/** Lista cronológica única, preservando o modal específico de cada categoria. */
+export type PcpPendencyItem = OpPendencyItem | StockRupturePendencyItem;
+
 export type OpPendencyPayload = {
   as_of: string;
   branch: string;
-  items: OpPendencyItem[];
+  items: PcpPendencyItem[];
   count: number;
+  op_count: number;
+  stock_rupture_count: number;
+  stock_source_status: "complete" | "unavailable";
+  stock_as_of: string | null;
+  stock_horizon_days: number;
   suppressed_product_count: number;
+  /** Somatório exclusivo das pendências de OP, nunca de matérias-primas. */
   total_uncovered_pieces: number | null;
   requested_origin: "protheus" | "myweg" | "both";
   source_status: "complete" | "partial";
