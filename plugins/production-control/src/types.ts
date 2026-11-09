@@ -513,6 +513,8 @@ export type DemandPayload = {
     op_coverage_complete?: boolean;
     op_verified_count?: number;
     op_unverified_count?: number;
+    op_source_unavailable?: boolean;
+    op_source_error_type?: string | null;
     coverage_mode?: string;
     productive_activation_blocked?: boolean;
     stock_data_complete?: boolean;
