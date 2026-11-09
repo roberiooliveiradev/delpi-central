@@ -1,0 +1,109 @@
+{
+  "task_id": "DELIA-C3-R01-ADMISSION-V42-NATIVE-MCP-ENDTOEND-OUTCOME-VALIDATION-01",
+  "env": "DEV_LOCAL",
+  "instruction_version": 42,
+  "instruction_fp_prefix": "8fed7885b7864b4b",
+  "auth": "password_grant_rober_via_delpi_gateway",
+  "production_deploy": "NOT_AUTHORIZED",
+  "admission": {
+    "kimi": {
+      "pass": 3,
+      "fail": 0,
+      "C1": true,
+      "B1": true,
+      "CONC_SIPOC": true
+    },
+    "qwen14": {
+      "pass": 3,
+      "fail": 0,
+      "C1": true,
+      "B1": true,
+      "CONC_SIPOC": true
+    },
+    "qwen4b": {
+      "pass": 2,
+      "fail": 1,
+      "C1": false,
+      "B1": true,
+      "CONC_SIPOC": true
+    }
+  },
+  "e2e": {
+    "kimi": {
+      "C1": {
+        "grounding": "GROUNDED",
+        "invokes": 8
+      },
+      "B1": {
+        "grounding": "GROUNDED",
+        "invokes": 8
+      },
+      "CONC_SIPOC": {
+        "grounding": "NON_GROUNDED",
+        "invokes": 0
+      },
+      "CONC_PDCA": {
+        "grounding": "NON_GROUNDED",
+        "invokes": 0
+      },
+      "OPS_NON_TEO_1": {
+        "grounding": "GROUNDED",
+        "invokes": 8
+      },
+      "OPS_NON_TEO_2": {
+        "grounding": "GROUNDED",
+        "invokes": 7
+      },
+      "MULTITURN_TEO": {
+        "grounding": "GROUNDED",
+        "invokes": 9
+      }
+    },
+    "qwen14": {
+      "C1": {
+        "grounding": "GROUNDED",
+        "invokes": 2
+      },
+      "B1": {
+        "grounding": "NON_GROUNDED",
+        "invokes": 4,
+        "note": "owner_path_proven_outcome_partial_filial_id"
+      },
+      "CONC_SIPOC": {
+        "grounding": "NON_GROUNDED",
+        "invokes": 0
+      },
+      "CONC_PDCA": {
+        "grounding": "NON_GROUNDED",
+        "invokes": 0
+      },
+      "OPS_NON_TEO_1": {
+        "grounding": "NON_GROUNDED",
+        "invokes": 3
+      },
+      "OPS_NON_TEO_2": {
+        "grounding": "GROUNDED",
+        "invokes": 2
+      },
+      "MULTITURN_TEO": {
+        "grounding": "GROUNDED",
+        "invokes": 2
+      }
+    },
+    "qwen4b": {
+      "C1": {
+        "grounding": "NON_GROUNDED",
+        "invokes": 0,
+        "note": "admission_fail_explanation"
+      },
+      "CONC_SIPOC": {
+        "grounding": "NON_GROUNDED",
+        "invokes": 0
+      }
+    }
+  },
+  "tests": {
+    "test_interaction_admission_routing": "8 PASS",
+    "broader_suite": "1 FAIL pre-existing g4 fixture path outside scope"
+  }
+}

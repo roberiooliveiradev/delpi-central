@@ -1,0 +1,40 @@
+[
+ {
+  "id": "C1",
+  "question": "processos na engenharia"
+ },
+ {
+  "id": "B1",
+  "question": "analise departamento engenharia"
+ },
+ {
+  "id": "CONC_SIPOC",
+  "question": "O que é SIPOC?"
+ },
+ {
+  "id": "CONC_PDCA",
+  "question": "Explique o método PDCA de forma geral."
+ },
+ {
+  "id": "OPS_NON_TEO_1",
+  "question": "Quais iniciativas estão registradas?"
+ },
+ {
+  "id": "OPS_NON_TEO_2",
+  "question": "Compare os resultados das filiais."
+ },
+ {
+  "id": "MULTITURN_TEO",
+  "question": "Quais processos estão vinculados a esse departamento?",
+  "prior": [
+   [
+    "user",
+    "analise departamento engenharia"
+   ],
+   [
+    "assistant",
+    "O departamento de Engenharia possui processos e iniciativas registrados no Transformômetro. Posso detalhar processos vinculados."
+   ]
+  ]
+ }
+]

@@ -182,15 +182,14 @@ def main() -> int:
         return 3
     instruction_version = _apply_instruction_override(orch)
 
-    bound = False
+    binding = None
     if (
         _env("DEV_PORTAL_USERNAME")
         and _env("DEV_PORTAL_PASSWORD")
         and _env("KEYCLOAK_URL")
     ):
         try:
-            bind_subject_bearer(_subject_token())
-            bound = True
+            binding = bind_subject_bearer(_subject_token())
         except Exception as exc:
             print(
                 json.dumps(
@@ -249,8 +248,8 @@ def main() -> int:
             rows.append(row)
             print(json.dumps(row, ensure_ascii=False))
     finally:
-        if bound:
-            unbind_subject_bearer()
+        if binding is not None:
+            unbind_subject_bearer(binding)
 
     out = {
         "task_id": "DELIA-C3-R01-SEMANTIC-ADMISSION-OPERATIONAL-CLASSIFICATION-REMEDIATION-01",

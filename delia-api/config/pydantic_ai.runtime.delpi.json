@@ -74,6 +74,41 @@
         "record_usage": true,
         "record_config_fingerprint": true
       }
+    },
+    "openrouter_qwen": {
+      "model": {
+        "provider": "openai_compatible",
+        "model_name": "qwen/qwen3-14b"
+      },
+      "generation": {
+        "max_output_tokens": 8192
+      },
+      "agent": {
+        "request_limit": 12,
+        "tool_calls_limit": 8,
+        "retries": 2,
+        "llm_call_max_attempts": 3
+      },
+      "context": {
+        "effective_context_window_tokens": 32768,
+        "prior_turns_limit": 4
+      },
+      "budgets": {
+        "provider_call_timeout_seconds": 60.0,
+        "model_stage_timeout_seconds": 60.0,
+        "interaction_call_timeout_seconds": 30.0,
+        "turn_budget_seconds": 300.0,
+        "interaction_total_budget_seconds": 300.0,
+        "max_governed_attempts": 2
+      },
+      "tool_results": {
+        "max_projection_chars": 6000
+      },
+      "observability": {
+        "record_model_id": true,
+        "record_usage": true,
+        "record_config_fingerprint": true
+      }
     }
   }
 }
