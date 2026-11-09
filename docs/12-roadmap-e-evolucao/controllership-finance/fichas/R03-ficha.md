@@ -11,7 +11,11 @@ Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
   sustenta o valor de estoque reportado à contabilidade e o bloco
   "EM PROCESSO" conciliado com o R08.
 - Processo: PROC-0072, P3 (estoque/cutoff) — `PROVEN` (doc 118 §6).
-- Owner funcional: Controladoria; consumidor: Contabilidade/SPED.
+- Owner funcional: Controladoria interna; consumidor documental:
+  Contabilidade externa (doc 156). Natureza fiscal do P7 **não**
+  implica `recipient_area=FISCAL`.
+- Forma de entrega ao pacote: P7/resumo **por filial** (01 e 02
+  separados; Módulo 04) — doc 156; não consolidar as filiais.
 - Owner técnico: `api-delpi` + `controllership-finance-api`.
 - Produtor oficial: `MATR460` (roster) — `matr460.prx` **ausente**
   (`SOURCE_MISSING`); `A460UNIT.prw` localizado (hook por produto);

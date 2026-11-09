@@ -9,7 +9,10 @@ Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
 - Finalidade: conferir títulos pagos na competência por data e por
   natureza — base documental enviada à contabilidade no fechamento.
 - Processo: PROC-0072, etapa P2/P3 (documental) — `PROVEN` (doc 118 §6).
-- Owner funcional: Controladoria (análise) / Contabilidade (consumo).
+- Owner funcional: Controladoria interna (análise/preparo) /
+  Contabilidade externa (consumo documental — doc 156).
+- Forma de entrega ao pacote: relatório financeiro **consolidado
+  filiais 01+02** (Módulo 06) — doc 156.
 - Owner técnico: `api-delpi` (produtor SE5/SE2/SED/F7G) +
   `controllership-finance-api` (BFF).
 - Produtor do relatório oficial: `FINR190` + `FINR190_DLP.PRX`, layouts

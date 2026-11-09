@@ -7,11 +7,13 @@ Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
 
 - Código/nome: **R13 — Extratos bancários e aplicações** (evidências
   financeiras externas do pacote de fechamento).
-- Finalidade: compor o pacote documental enviado à DRE/contabilidade —
-  extratos, aplicações (XP, BB) e comprovantes.
+- Finalidade: compor o pacote documental enviado à Contabilidade
+  externa (público operacionalmente chamado “DRE”) — extratos,
+  aplicações (XP, BB) e comprovantes.
 - Processo: PROC-0072 — `PROVEN` no checklist de entregáveis
-  (doc 85 §12; doc 118 §6).
-- Owner funcional: Controladoria (coleta); DRE (consumo).
+  (doc 85 §12; doc 118 §6; doc 156).
+- Owner funcional: Controladoria interna (coleta); Contabilidade
+  externa (consumo documental — doc 156).
 - Owner técnico: nenhum — **fonte fora do Protheus**.
 - Implementação: **`SOURCE_UNAVAILABLE` — `BLOQUEADO`**; entrega via
   upload documental P2 (`TARGET`).
@@ -40,8 +42,9 @@ Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
 
 ## Operação
 
-- Documentos recebidos pela Controladoria → envio à DRE (doc 91/113/115
-  — fluxo já implementado como gestão documental, não como dado).
+- Documentos recebidos pela Controladoria interna → envio à
+  Contabilidade externa (doc 91/113/115/156 — gestão documental, não
+  dado consultável).
 - Comparações: `NOT_COMPARABLE` — evidência externa sem medida numérica.
 
 ## Governança

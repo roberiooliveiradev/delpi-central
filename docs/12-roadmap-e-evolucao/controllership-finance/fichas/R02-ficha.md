@@ -9,7 +9,10 @@ Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
 - Finalidade: conferir recebimentos da competência — contraparte de R01
   no pacote documental do fechamento.
 - Processo: PROC-0072 — `PROVEN` (doc 118 §6).
-- Owner funcional: Controladoria / Contabilidade.
+- Owner funcional: Controladoria interna (análise/preparo) /
+  Contabilidade externa (consumo documental — doc 156).
+- Forma de entrega ao pacote: relatório financeiro **consolidado
+  filiais 01+02** (Módulo 06) — doc 156.
 - Owner técnico: `api-delpi` + `controllership-finance-api`.
 - Produtor do relatório oficial: `DLP06R01` custom —
   **`SOURCE_MISSING`** (fonte ausente do acervo; E1 com TI/ERP).

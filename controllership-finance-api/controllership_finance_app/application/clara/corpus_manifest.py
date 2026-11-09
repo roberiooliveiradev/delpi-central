@@ -299,6 +299,12 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
        "125-clara-mcp-semantico-002-execution-report.md",
        "DOCUMENT", "Execução CLARA SEMANTIC-002 — relatório",
        "CURRENT_IMPLEMENTATION", "paridade-portal-clara"),
+    _s("doc-156",
+       "156-glossario-responsabilidades-destinatarios-proc0072-2026-11-09.md",
+       "DOCUMENT",
+       "Glossário de responsabilidades e destinatários PROC-0072 (PO 2026-11-09)",
+       "APPROVED_RULE", "processo-fechamento",
+       authority="PO"),
     # -- Fichas técnicas R01–R15 (stage-04, D-06 do doc 126) -----------
     _s("ficha-index", "fichas/README.md",
        "MATRIX", "Fichas R01–R15 — índice e matriz de inventário",
