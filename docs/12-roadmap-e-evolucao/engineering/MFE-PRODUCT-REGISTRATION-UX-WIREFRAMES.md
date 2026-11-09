@@ -342,3 +342,37 @@ Fornecedor 000123/01
 \`\`\`
 
 **Sem** duplicar mensagem de erro acima da aba e dentro de painel; sem segunda tabela para fornecedores; **sem coluna de observação longa** que imponha scroll horizontal. O motivo e a orientação aparecem na expansão da própria linha, acionados por usuário e por teclado. Valores extensos quebram/expandem. Os números reais vêm da mesma tentativa, sem contagem duplicada SA5. Ação \`Definir\` abre interação simples com \`Solicitar correção ao solicitante\` / \`Ajuste manual TOTVS\` / \`Pedir esclarecimento\`; apenas a Engenharia autorizada escolhe, sem mudar MATCH automaticamente. O solicitante só edita ficha por contrato de correção estruturada aprovado; ERP só muda manualmente por operador autorizado. Após correção, \`Concluir atendimento\` repete leitura oficial, permanecendo bloqueado se houver qualquer erro. Filtro/ação, focus, feedback e a11y via \`@delpi/plugin-ui\`, sem visualização em cartões concorrentes.
+
+## PRC-REF-021-REF-01 — Layout e operação simplificados (PO 2026-11-09)
+
+**\`PO_APPROVED_TARGET / PLANNED\`; este adendo substitui o wireframe REF-021 com coluna \`Encaminhamento\` e botão \`Definir\`.**
+
+\`\`\`text
+FILA — HERO
+Solicitações de produtos                    [Nova solicitação]
+[Buscar] [Status] [Tipo]    [Flag Campos sinalizados (N)]
+(sem faixa larga de bandeiras abaixo do hero)
+
+VERIFICAÇÃO TOTVS — UMA TABELA
+Produto 10080022 · 09/11/2026 15:51 · 4 divergências · Em atendimento
+[Problemas (4)] [Todos (11)]
+Campo                 Solicitado     TOTVS          Situação      Ação
+Unidade               UN             PC             Divergente    [Revisar]
+Grupo                 1001           1008           Divergente    [Revisar]
+Fornecedor 000123/01 · PN-2026      PN-2025        Divergente    [Revisar]
+[Histórico ▾]
+
+Sem modal Definir encaminhamento. Engenharia usa o botão normal
+Solicitar informações para devolver/confirmar dados, ou operador autorizado
+ajusta manualmente TOTVS. Reexecuta Concluir atendimento após correção.
+
+SOLICITAR INFORMAÇÕES — SUPPLIER_LINK
+[Tipo de alvo: Vínculo de fornecedor]
+[Pesquisar fornecedor: código, razão social ou fantasia...]
+[Seleção oficial: 000123 / 01 — nome autorizado]
+[Atributo: Part Number ou Catálogo]
+[Pergunta: ...]
+Sem digitação livre de código/loja; sem fallback quando lista local vazia.
+\`\`\`
+
+Kit \`@delpi/plugin-ui\` / façade \`engineeringUi\`; áreas responsivas/sem scroll horizontal, mouse/teclado/zoom200. O detalhe/CRUD de bandeiras permanece disponível sob demanda, sem segundo painel permanente. Busca de fornecedor depende exclusivamente de contrato oficial BFF/API e preserva identidade completa. Nenhuma mudança no backend de match ou escrita TOTVS.
