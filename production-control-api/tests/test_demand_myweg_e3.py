@@ -448,7 +448,7 @@ def test_e3_both_mp_sales_do_not_affect_myweg_or_cross_source_coverage() -> None
     )
     both = service.list_demand(user, branch="02", origin=ORIGIN_BOTH)
     assert {row["source"] for row in both["items"]} == {"protheus", "myweg"}
-    assert {row["sales_order"] for row in both["items"]} == {"PA-001", "MYWEG"}
+    assert {row["sales_order"] for row in both["items"]} == {"PA-001", "MyWEG"}
     assert both["myweg"]["overlap_pending_count"] == 0
     assert both["myweg"]["reconciliation_blocked_count"] == 0
     assert both["summary"]["by_origin"]["protheus"]["line_count"] == 1
