@@ -535,3 +535,12 @@ Correção de perda silenciosa sob `span_conflict_tolerated` parcial (`reconcile
 
 **Totus:** inventário `get_product_structure` / SG1010+SB1010; `CONTRACT_GAP` occurrence_id e revisão PDF; live 90264135 `TEST_NOT_RUN` (AUTH).  
 **Decisão:** SLANet isolado insuficiente nestes layouts; G3 recomendado após ack; fix não implementado. `VAL01_COMPLETED=false`.
+
+### Log G3 — Benchmark framework-first 90264135 (2026-11-09)
+
+**TASK:** `EVA-VAL01-G3-NATIVE-TABLE-FRAMEWORK-BENCHMARK`. Sem código produtivo, sem G4, sem deploy. Ledger: Doc 119 §62. Artefatos: `docs/.../eva-val01-g3/`.
+
+**PDF:** SHA `af47dd4c…edf3` `MATCH`. GT=`DRAFT`. SLANet operacional; PP-StructureV3 / TRPV2 / TableCellsDetection **não operacionais** (sem pesos/deps; probe de download limpo — cache G0 restaurado).
+
+**Achados estruturais:** crop Understanding amplo vs crop G1 DRAFT — P13 elimina `4 5`; P12 elimina rowspan monolítico e preserva AE/AH/AG+códigos; P10 permanece fundido no SLANet com `line_texts`.  
+**Decisão:** SLANet suficiente como motor geométrico com crop correto; resíduos = integração (regioner + Understanding). G4 candidato: crop hardening + `line_texts`/papéis — **sem** novo framework. Smoke `90264026` OK (não holdout). `VAL01_COMPLETED=false`.

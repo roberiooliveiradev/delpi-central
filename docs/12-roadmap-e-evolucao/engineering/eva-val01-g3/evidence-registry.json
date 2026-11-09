@@ -1,0 +1,37 @@
+{
+  "schema": "eva_val01_g3_evidence_registry.v1",
+  "pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
+  "gt_status": "DRAFT_G1_NOT_HOMOLOGATED",
+  "artifacts": [
+    {
+      "file": "alt2.json",
+      "bytes": 3711,
+      "sha256": "236870b21834c398b7e4e7030f6a7bbbdf6f4c9dfa31cb3a6bb906068f29aaf0",
+      "storage": ".local/eva-val01-g3/"
+    },
+    {
+      "file": "page_10.json",
+      "bytes": 20304,
+      "sha256": "828875a8f66adf9d29373429c134d9d20a4b5633d62c08616db51a0e58eec6c3",
+      "storage": ".local/eva-val01-g3/"
+    },
+    {
+      "file": "page_12.json",
+      "bytes": 15087,
+      "sha256": "19afa87c8a1a9419b933f651bca9d2559a01cbe76f720e5e99e24b51767f6628",
+      "storage": ".local/eva-val01-g3/"
+    },
+    {
+      "file": "page_13.json",
+      "bytes": 12935,
+      "sha256": "26c4c3797c54ad80de0c7a3ec62ca6df1294d2c3fc08ef651295e383ccf47524",
+      "storage": ".local/eva-val01-g3/"
+    },
+    {
+      "file": "report.json",
+      "bytes": 59821,
+      "sha256": "89df33620c8de1db77246007a13d7c6b6c1a8bc77353ac8c3cdd3abf1b0030db",
+      "storage": ".local/eva-val01-g3/"
+    }
+  ]
+}

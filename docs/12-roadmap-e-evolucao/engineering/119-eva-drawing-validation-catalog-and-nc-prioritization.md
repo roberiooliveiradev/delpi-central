@@ -2083,3 +2083,47 @@ ARCHITECTURE_DECISION_REQUIRED=false
 **Saída:** `G2=PASS` somente se as perdas examinadas tiverem explicação/reprodução suficiente, ou `G2=INCONCLUSIVE` com bloqueios e evidências; implementação G4 não começa por proximidade de código, nem aceite G6 por proximidade de negócio. **Evidências e execução jamais são substituídas por promessa.**
 
 **Estado ao registrar:** `G2_AUTHORIZED=true`, `G2_EXECUTION=TEST_NOT_RUN`, `TOTUS_HIERARCHY_CONTRACT=TO_INVENTORY`, `G1_OWNER_GT=OWNER_BLOCKED`, `G3_G4_G6_G7=NOT_AUTHORIZED`, `VAL01_COMPLETED=false`, `ENGINEERING_APPROVAL=NOT_APPROVED`, `AUTOMATIC_NC=false`.
+
+### 62. G3 — Benchmark framework-first estrutural (2026-11-09)
+
+**TASK_ID:** `EVA-VAL01-G3-NATIVE-TABLE-FRAMEWORK-BENCHMARK`.  
+**Autorização:** G3 (Coordination / Issue #131). **Escopo:** somente G3. Sem código produtivo, sem G4, sem deploy, sem provisionar frameworks novos em produção.
+
+**Baseline:** PDF `90264135` SHA `af47dd4c…edf3` `MATCH`; GT=`DRAFT_G1`; PaddleOCR 3.3.0; SLANet em cache. Artefatos: `docs/.../eva-val01-g3/`.
+
+#### Frameworks
+
+| Engine | Operacional | Resultado |
+|---|---|---|
+| SLANet | **sim** | motor A benchmarkado (u_crop vs g1_draft_crop) |
+| PP-StructureV3 | não | importável; dependency/weights ausentes |
+| TableRecognitionPipelineV2 | não | dependency error; pesos extras não provisionados |
+| TableCellsDetection | não | tentou download RT-DETR; **removido**; cache restaurado ao G0 |
+
+#### Comparativo estrutural (candidato DRAFT)
+
+| Caso | u_crop (regioner amplo) | g1_draft_crop | Interpretação |
+|---|---|---|---|
+| P10 A2/A3 | fusão SLANet + `line_texts` | fusão SLANet + `line_texts` | crop não resolve; Understanding deve consumir `line_texts` |
+| P12 50225702/AE/AH/AG | rowspan=11 monolítico | filhos+códigos preservados; sem giant rowspan | crop apertado melhora grade; parent link ainda integração |
+| P13 `4 5` | falso `component_code` | **ausente** (PASS) | exclusão de rodapé = regioner |
+
+#### Decisão
+
+```text
+FRAMEWORK_SUFFICIENCY_DECISION=
+  CURRENT_SLANET_SUFFICIENT_AS_GEOMETRY_ENGINE_WHEN_CROP_CORRECT
+  RESIDUAL_DEFECTS_MOSTLY_INTEGRATION
+NATIVE_ALTERNATES=IMPORTABLE_NOT_OPERATIONAL_WITHOUT_NEW_WEIGHTS
+G4_ENTRY_RECOMMENDATION=AUTHORIZED_CANDIDATE_AFTER_COORDINATION_ACK
+RECOMMENDED_MINIMAL_DIFF=regioner_crop_hardening + understanding_line_texts_and_roles
+NEW_FRAMEWORK_INSTALL=NOT_RECOMMENDED
+G3_EXIT_STATUS=PASS
+NEXT_AUTHORIZED_GATE=G4 (somente após ack Coordination; implementação mínima)
+PRODUCTION_CODE_CHANGED=false
+EXECUTION_DRIFT=false
+ARCHITECTURE_DECISION_REQUIRED=false
+```
+
+Detalhe: `eva-val01-g3/structural-benchmark-results.md` + `framework-sufficiency-decision.md`.  
+`VAL01_COMPLETED=false`; GT G1 continua `OWNER_BLOCKED`.
