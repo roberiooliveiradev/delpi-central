@@ -649,6 +649,8 @@ export const copy = {
     mywegIncomplete: "Estoque ou identidade MyWEG incompletos — confira pendências na cobertura.",
     mywegDegraded:
       "Não foi possível carregar o planejamento MyWEG agora. A carteira Protheus continua disponível.",
+    opCoverageIncomplete:
+      "Algumas OPs não puderam ser consideradas por unidade ou saldo inválido. A cobertura desses produtos pode estar incompleta.",
     exportLabel: "Exportar Excel",
     exportFileName: (branch: string) => `demanda-filial-${branch}`,
     exportSheetTitle: "Demanda",
@@ -728,6 +730,8 @@ export const copy = {
       uncovered: "Ainda sem cobertura",
       coverageTitle: "OPs que atendem este saldo",
       coverageEmpty: "Nenhuma OP aberta alocada a este saldo.",
+      opCoverageIncomplete:
+        "Há OPs deste produto com unidade ou saldo não confirmado. A cobertura exibida pode estar incompleta.",
       coverageOrder: "OP",
       coverageQuantity: "Qtd.",
       coverageDate: "Fim previsto",
