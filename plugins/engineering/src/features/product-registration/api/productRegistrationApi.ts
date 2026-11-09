@@ -162,6 +162,51 @@ export type PrcVerification = {
   error_code?: string | null;
 };
 
+/** PRC-REF-021 — decisão de encaminhamento por item divergente. */
+export type PrcDivergenceRouteDecision =
+  | "REQUESTER_CORRECTION"
+  | "ERP_MANUAL_CORRECTION"
+  | "NEEDS_CLARIFICATION";
+
+export type PrcDivergenceRouting = {
+  id: string;
+  verificationId: string;
+  targetType: "FIELD" | "SUPPLIER_LINK";
+  targetPath?: string | null;
+  targetAttribute?: string | null;
+  supplierKey?: { supplierCode: string; store: string } | null;
+  targetKey: string;
+  decision: PrcDivergenceRouteDecision;
+  reason?: string | null;
+  actorSubject?: string | null;
+  actorDisplayName?: string | null;
+  occurredAt?: string | null;
+  routingStatus?: string | null;
+  informationRoundId?: string | null;
+};
+
+export type PrcDivergenceRouteBody = {
+  expectedVersion: number;
+  verificationId: string;
+  targetType: "FIELD" | "SUPPLIER_LINK";
+  targetPath?: string | null;
+  supplierKey?: { supplierCode: string; store: string } | null;
+  targetAttribute?: string | null;
+  decision: PrcDivergenceRouteDecision;
+  reason: string;
+};
+
+export type PrcDivergenceRouteResult = {
+  routing: PrcDivergenceRouting;
+  caseVersion: number;
+  /** Escrita estruturada do solicitante ainda não autorizada pelo Core. */
+  requesterWrite?: {
+    status: "PENDING_OWNER";
+    code: "ARCHITECTURE_DECISION_REQUIRED";
+    message: string;
+  } | null;
+};
+
 export type PrcRecord = {
   id: string;
   official_product_code: string;
@@ -343,8 +388,30 @@ export async function fetchPrcTimeline(
 export async function fetchPrcVerifications(
   requestId: string,
   signal?: AbortSignal,
-): Promise<Envelope<{ items: PrcVerification[]; total: number }>> {
+): Promise<
+  Envelope<{
+    items: PrcVerification[];
+    total: number;
+    routings?: PrcDivergenceRouting[];
+  }>
+> {
   return getJson(`${BASE}/requests/${requestId}/verifications`, signal);
+}
+
+/** PRC-REF-021 — registra encaminhamento sem alterar field_results/MATCH. */
+export async function routeDivergence(
+  requestId: string,
+  body: PrcDivergenceRouteBody,
+  idempotencyKey?: string,
+): Promise<Envelope<PrcDivergenceRouteResult>> {
+  return postJson(
+    `${BASE}/requests/${requestId}/actions/route-divergence`,
+    body,
+    undefined,
+    idempotencyKey
+      ? { headers: { "Idempotency-Key": idempotencyKey } }
+      : undefined,
+  );
 }
 
 export async function fetchPrcRecord(

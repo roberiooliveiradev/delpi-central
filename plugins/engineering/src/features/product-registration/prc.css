@@ -126,6 +126,160 @@
   gap: 12px;
 }
 
+/* PRC-REF-021 — cabeçalho compacto + tabela única (sem banners/listas paralelas). */
+.engineering-prc__verify-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.engineering-prc__verify-head-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.engineering-prc__verify-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+
+.engineering-prc__verify-meta {
+  font-size: 0.875rem;
+  color: var(--en-muted, #667085);
+}
+
+.engineering-prc__verify-status-line {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.engineering-prc__verify-expand {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  text-align: start;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.engineering-prc__verify-expand:focus-visible {
+  outline: 2px solid var(--en-focus, #2e6da4);
+  outline-offset: 2px;
+}
+
+.engineering-prc__verify-row-detail {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--en-border, #d0d5dd);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--en-surface, #fff) 92%, #f2f4f7);
+}
+
+.engineering-prc__verify-row-detail p {
+  margin: 0 0 8px;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.engineering-prc__verify-row-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.engineering-prc__verify-history {
+  margin-top: 16px;
+}
+
+.engineering-prc__verify-history-toggle {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 4px 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  color: inherit;
+}
+
+.engineering-prc__verify-history-toggle:focus-visible {
+  outline: 2px solid var(--en-focus, #2e6da4);
+  outline-offset: 2px;
+}
+
+.engineering-prc__route-chip {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.engineering-prc__route-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 36rem;
+}
+
+.engineering-prc__route-options {
+  border: 1px solid var(--en-border, #d0d5dd);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+}
+
+.engineering-prc__route-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.engineering-prc__route-option small {
+  display: block;
+  margin-top: 2px;
+  color: var(--en-muted, #667085);
+  word-break: break-word;
+}
+
+.engineering-prc__route-reason {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.engineering-prc__route-reason textarea {
+  font: inherit;
+  font-weight: 400;
+  resize: vertical;
+  min-height: 4.5rem;
+  padding: 8px 10px;
+  border: 1px solid var(--en-border, #d0d5dd);
+  border-radius: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.engineering-prc__route-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 /* PRC-REF-020 / UX-01 — destaque de campos/SA5 bloqueantes na verificação. */
 .engineering-prc__field-mismatch,
 .engineering-prc__supplier-mismatch {
@@ -137,21 +291,15 @@
   background: color-mix(in srgb, var(--engineering-danger, #b42318) 8%, transparent);
 }
 
+.engineering-prc__row-expanded td {
+  box-shadow: inset 0 -2px 0 var(--en-focus, #2e6da4);
+}
+
 .engineering-prc__supplier-mismatch {
   outline: 1px solid color-mix(in srgb, var(--engineering-danger, #b42318) 35%, transparent);
   border-radius: 4px;
   padding: 4px 6px;
   margin-inline-start: -6px;
-}
-
-.engineering-prc__verify-block-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.engineering-prc__verify-block-summary p {
-  margin: 0;
 }
 
 .engineering-prc__verify-filter {
@@ -161,7 +309,28 @@
 .engineering-prc__verify-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.engineering-prc__verification {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.engineering-prc__verification table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.engineering-prc__verification th,
+.engineering-prc__verification td {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  vertical-align: top;
 }
 
 .engineering-prc__supplier-diff--detailed li {
@@ -172,8 +341,9 @@
 
 .engineering-prc__value-cell {
   word-break: break-word;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
-  max-width: 28rem;
+  max-width: 100%;
 }
 
 .engineering-prc__next-actions {

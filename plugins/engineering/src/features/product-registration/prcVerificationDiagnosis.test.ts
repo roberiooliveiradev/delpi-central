@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { PrcFieldResult, PrcVerification } from "./api/productRegistrationApi";
 import {
   buildDiagnosisItems,
+  diagnosisItemRoutingKey,
   formatDiagnosticValue,
   pickActiveFieldResults,
   summarizeDiagnosis,
@@ -185,6 +186,28 @@ describe("prcVerificationDiagnosis", () => {
     )!;
     expect(technicalTargetElementId(pn)).toBe(
       "prc-supplier-000123-01-partNumber",
+    );
+  });
+
+  it("builds stable routing keys for SB1 and SA5 (REF-021)", () => {
+    const field = buildDiagnosisItems(fieldResults).find(
+      (i) => i.path === "unit",
+    )!;
+    expect(diagnosisItemRoutingKey(field)).toBe("FIELD:unit");
+    const pn = buildDiagnosisItems(fieldResults).find(
+      (i) => i.attribute === "partNumber",
+    )!;
+    expect(diagnosisItemRoutingKey(pn)).toBe(
+      "SUPPLIER_LINK:000123/01:partNumber",
+    );
+  });
+
+  it("puts SB1 and SA5 problems in one flat item list", () => {
+    const items = buildDiagnosisItems(fieldResults);
+    expect(items.some((i) => i.kind === "field")).toBe(true);
+    expect(items.some((i) => i.kind === "supplier_attribute")).toBe(true);
+    expect(items.filter((i) => i.isProblem).map((i) => i.label).join("|")).toMatch(
+      /Unidade|Descrição|Part Number|Conta|Referência/i,
     );
   });
 });

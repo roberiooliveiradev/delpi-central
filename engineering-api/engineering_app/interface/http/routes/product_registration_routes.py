@@ -233,6 +233,23 @@ class RequestInformationBody(ActionBody):
     message: str | None = Field(default=None, max_length=1000)
 
 
+class DivergenceSupplierKeyBody(BaseModel):
+    supplierCode: str = Field(..., min_length=1, max_length=32)
+    store: str = Field(..., min_length=1, max_length=8)
+
+
+class DivergenceRouteBody(ActionBody):
+    """PRC-REF-021 — encaminhamento por item divergente (não altera MATCH)."""
+
+    verificationId: str = Field(..., min_length=1, max_length=64)
+    targetType: str = Field(..., min_length=1, max_length=32)
+    targetPath: str | None = Field(default=None, max_length=128)
+    supplierKey: DivergenceSupplierKeyBody | None = None
+    targetAttribute: str | None = Field(default=None, max_length=64)
+    decision: str = Field(..., min_length=1, max_length=64)
+    reason: str = Field(..., min_length=3, max_length=1000)
+
+
 class InformationAnswerBody(BaseModel):
     questionId: str = Field(..., min_length=1, max_length=64)
     text: str = Field(default="", max_length=4000)
@@ -585,6 +602,46 @@ async def prc_action_request_information(
         return _err(exc, op)
     data, _ = _unwrap_replay(data)
     return ok(data, message="Pendência registrada.", operation_id=op)
+
+
+@router.post(
+    "/v1/product-registration/requests/{request_id}/actions/route-divergence",
+    operation_id="prc_action_route_divergence",
+    summary="PRC-REF-021 — Encaminhar divergência oficial (sem alterar MATCH)",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_action_route_divergence(
+    request_id: str = Path(...),
+    body: DivergenceRouteBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_action_route_divergence"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().route_divergence(
+            rid,
+            actor=_actor(user),
+            expected_version=body.expectedVersion,
+            verification_id=body.verificationId,
+            target_type=body.targetType,
+            target_path=body.targetPath,
+            supplier_key=(
+                body.supplierKey.model_dump() if body.supplierKey else None
+            ),
+            target_attribute=body.targetAttribute,
+            decision=body.decision,
+            reason=body.reason,
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    data, _ = _unwrap_replay(data)
+    return ok(data, message="Encaminhamento registrado.", operation_id=op)
 
 
 # --- PRC-REF-019 rodadas de esclarecimento ---------------------------------

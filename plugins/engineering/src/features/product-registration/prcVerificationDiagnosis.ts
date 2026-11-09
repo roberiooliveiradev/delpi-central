@@ -436,3 +436,14 @@ export function technicalTargetElementId(item: DiagnosisItem): string | null {
   }
   return null;
 }
+
+/** Identidade estável do alvo de encaminhamento (PRC-REF-021). */
+export function diagnosisItemRoutingKey(item: DiagnosisItem): string {
+  if (item.kind === "field") {
+    return `FIELD:${item.path || item.id}`;
+  }
+  const code = item.supplierCode || "";
+  const store = item.store || "";
+  const attr = item.attribute || "link";
+  return `SUPPLIER_LINK:${code}/${store}:${attr}`;
+}

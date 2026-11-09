@@ -323,7 +323,7 @@ Um só banner/resumo detalhado por tentativa, sem duas mensagens vermelhas idên
 
 ## PRC-REF-021 — Wireframe simplificado: uma tabela para diagnosticar e decidir (PO 2026-11-09)
 
-**\`PO_APPROVED_TARGET / PLANNED\`.** O PO rejeitou a engenharia visual repetitiva (banners grandes, resumo extenso, cartões e blocos duplicados). **Uma tabela resolve.**
+**\`IMPLEMENTED_DEV\`.** O PO rejeitou a engenharia visual repetitiva (banners grandes, resumo extenso, cartões e blocos duplicados). **Uma tabela resolve** — entregue em \`PrcVerificationPanel\` (cabeçalho compacto + tabela única SB1/SA5 + Encaminhamento + histórico recolhível).
 
 \`\`\`text
 Verificação TOTVS · Produto 10080022 · 09/11/2026 15:51

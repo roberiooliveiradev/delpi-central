@@ -64,16 +64,18 @@ _ACTIONS_BY_STATUS: dict[str, tuple[str, ...]] = {
     "in_progress": (
         "edit_draft",
         "request_information",
+        "route_divergence",
         "complete",
         "reject",
     ),
-    "needs_information": ("resume", "reject"),
+    "needs_information": ("resume", "route_divergence", "reject"),
     # Legado aberto: reabrir para atendimento ou concluir com verificação.
     "under_review": (
         "return_to_attendance",
         "complete",
         "verify_and_complete",
         "request_information",
+        "route_divergence",
         "reject",
     ),
     "completed": (),
@@ -91,7 +93,22 @@ _ACTION_PERMISSION: dict[str, tuple[str, ...]] = {
     "complete": (ENG_ACCESS,),
     "reject": (ENG_ACCESS,),
     "verify_and_complete": (ENG_ACCESS,),
+    # PRC-REF-021 — encaminhamento de divergência (não altera MATCH oficial).
+    "route_divergence": (ENG_ACCESS,),
 }
+
+# PRC-REF-021 — decisões de encaminhamento por item divergente.
+DIVERGENCE_ROUTE_DECISIONS: frozenset[str] = frozenset(
+    {
+        "REQUESTER_CORRECTION",
+        "ERP_MANUAL_CORRECTION",
+        "NEEDS_CLARIFICATION",
+    }
+)
+DIVERGENCE_TARGET_TYPES: frozenset[str] = frozenset({"FIELD", "SUPPLIER_LINK"})
+DIVERGENCE_ROUTE_FROM: frozenset[str] = frozenset(
+    {"in_progress", "needs_information", "under_review"}
+)
 
 
 @dataclass(frozen=True)

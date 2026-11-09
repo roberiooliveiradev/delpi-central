@@ -26,6 +26,7 @@ import {
   fetchPrcVerifications,
   prcAction,
   prcUpdateDraft,
+  type PrcDivergenceRouting,
   type PrcFieldResult,
   type PrcFieldSpec,
   type PrcRequestDetail,
@@ -107,6 +108,9 @@ export function PrcDetailPage({
   const [detail, setDetail] = useState<PrcRequestDetail | null>(null);
   const [timeline, setTimeline] = useState<PrcTimelineEvent[]>([]);
   const [verifications, setVerifications] = useState<PrcVerification[]>([]);
+  const [divergenceRoutings, setDivergenceRoutings] = useState<
+    PrcDivergenceRouting[]
+  >([]);
   const [revisions, setRevisions] = useState<PrcRevisionSummary[]>([]);
   const [fieldSpecs, setFieldSpecs] = useState<PrcFieldSpec[] | null>(null);
   const [editablePaths, setEditablePaths] = useState<string[] | null>(null);
@@ -143,6 +147,7 @@ export function PrcDetailPage({
       setDetail(d.data);
       setTimeline(t.data.items);
       setVerifications(v.data.items);
+      setDivergenceRoutings(v.data.routings || []);
       setFieldSpecs(ref.data.fields);
       setEditablePaths(ref.data.editableDraftPaths);
       if (d.data.status === "completed") {
@@ -488,7 +493,7 @@ export function PrcDetailPage({
       </EngineeringPageHero>
 
       {feedback && feedback.kind === "blocked" && tab !== "verification" ? (
-        <EngineeringStateBanner variant="warning">
+        <EngineeringStateBanner variant="error">
           <div className="engineering-prc__compact-block">
             <span>{feedback.text}</span>
             <EngineeringActionButton
@@ -508,7 +513,7 @@ export function PrcDetailPage({
         </EngineeringStateBanner>
       ) : null}
       {navFallback ? (
-        <EngineeringStateBanner variant="warning">
+        <EngineeringStateBanner variant="error">
           {navFallback}
         </EngineeringStateBanner>
       ) : null}
@@ -618,6 +623,7 @@ export function PrcDetailPage({
           <PrcVerificationPanel
             detail={detail}
             verifications={verifications}
+            routings={divergenceRoutings}
             lastError={mismatchFields}
             verifying={verifying}
             onNavigateToTarget={({ item, elementId }) => {
@@ -639,6 +645,13 @@ export function PrcDetailPage({
                 kind: "success",
                 text:
                   "Use Concluir atendimento no cabeçalho para uma nova verificação oficial (leitura fresca).",
+              });
+            }}
+            onRouted={async () => {
+              await load();
+              setFeedback({
+                kind: "success",
+                text: "Encaminhamento de divergência registrado.",
               });
             }}
           />

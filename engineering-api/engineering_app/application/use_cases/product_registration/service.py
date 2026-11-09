@@ -35,6 +35,9 @@ from engineering_app.domain.product_registration.errors import (
     PrcValidationError,
 )
 from engineering_app.domain.product_registration.models import (
+    DIVERGENCE_ROUTE_DECISIONS,
+    DIVERGENCE_ROUTE_FROM,
+    DIVERGENCE_TARGET_TYPES,
     REQUEST_TYPES,
     PrcActor,
     transition_for,
@@ -627,7 +630,232 @@ class ProductRegistrationService:
         items = self._repo.list_verifications(request_id)
         for item in items:
             item.pop("observed_fields", None)
-        return {"items": items, "total": len(items)}
+        return {
+            "items": items,
+            "total": len(items),
+            "routings": self._list_divergence_routings(request_id),
+        }
+
+    def _list_divergence_routings(
+        self, request_id: str
+    ) -> list[dict[str, Any]]:
+        """Extrai decisões PRC-REF-021 dos eventos append-only."""
+        page = self._repo.list_events(request_id, page=1, page_size=500)
+        out: list[dict[str, Any]] = []
+        for ev in page.get("items") or []:
+            if ev.get("event_type") != "divergence_routed":
+                continue
+            meta = ev.get("metadata") or {}
+            if isinstance(meta, str):
+                try:
+                    meta = json.loads(meta)
+                except json.JSONDecodeError:
+                    meta = {}
+            if not isinstance(meta, dict):
+                meta = {}
+            out.append(
+                {
+                    "id": ev.get("id"),
+                    "verificationId": meta.get("verificationId"),
+                    "targetType": meta.get("targetType"),
+                    "targetPath": meta.get("targetPath"),
+                    "targetAttribute": meta.get("targetAttribute"),
+                    "supplierKey": meta.get("supplierKey"),
+                    "targetKey": meta.get("targetKey"),
+                    "decision": meta.get("decision"),
+                    "reason": ev.get("reason"),
+                    "actorSubject": ev.get("actor_subject"),
+                    "actorDisplayName": ev.get("actor_display_name"),
+                    "occurredAt": ev.get("occurred_at"),
+                    "routingStatus": meta.get("routingStatus"),
+                    "informationRoundId": meta.get("informationRoundId"),
+                }
+            )
+        return out
+
+    def route_divergence(
+        self,
+        request_id: str,
+        *,
+        actor: PrcActor,
+        expected_version: int,
+        verification_id: str,
+        target_type: str,
+        target_path: str | None,
+        supplier_key: dict[str, Any] | None,
+        target_attribute: str | None,
+        decision: str,
+        reason: str,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """PRC-REF-021 — registra encaminhamento por item divergente.
+
+        Não altera ``field_results``, MATCH, revisão, código oficial nem
+        status terminal. ``REQUESTER_CORRECTION`` não concede escrita ao
+        solicitante enquanto Core AuthZ estiver ``PENDING_OWNER``.
+        """
+        _require_actor_process(actor)
+        if not actor.has_action_permission("route_divergence"):
+            raise PrcForbiddenError(
+                "Sem permissão para encaminhar divergências."
+            )
+        request = self._get_scoped(request_id, actor)
+        if request["status"] not in DIVERGENCE_ROUTE_FROM:
+            raise PrcStateConflictError("state_conflict")
+        decision_u = (decision or "").strip().upper()
+        if decision_u not in DIVERGENCE_ROUTE_DECISIONS:
+            raise PrcValidationError(
+                "decision inválida.",
+                fields={"decision": ",".join(sorted(DIVERGENCE_ROUTE_DECISIONS))},
+            )
+        target_u = (target_type or "").strip().upper()
+        if target_u not in DIVERGENCE_TARGET_TYPES:
+            raise PrcValidationError(
+                "targetType inválido.",
+                fields={"targetType": ",".join(sorted(DIVERGENCE_TARGET_TYPES))},
+            )
+        reason_text = (reason or "").strip()[:1000]
+        if len(reason_text) < 3:
+            raise PrcValidationError(
+                "Justificativa é obrigatória.",
+                fields={"reason": "required"},
+            )
+        vid = (verification_id or "").strip()
+        if not vid:
+            raise PrcValidationError(
+                "verificationId é obrigatório.",
+                fields={"verificationId": "required"},
+            )
+        verifications = self._repo.list_verifications(request_id)
+        if not any(str(v.get("id")) == vid for v in verifications):
+            raise PrcNotFoundError("verification", vid)
+
+        path = (target_path or "").strip() or None
+        attr = (target_attribute or "").strip() or None
+        supplier: dict[str, str] | None = None
+        if target_u == "FIELD":
+            if not path or path == "suppliers":
+                raise PrcValidationError(
+                    "targetPath SB1 é obrigatório.",
+                    fields={"targetPath": "required"},
+                )
+            target_key = f"FIELD:{path}"
+        else:
+            code = str((supplier_key or {}).get("supplierCode") or "").strip()
+            store = str((supplier_key or {}).get("store") or "").strip()
+            if not code or not store:
+                raise PrcValidationError(
+                    "supplierKey.supplierCode/store obrigatórios.",
+                    fields={"supplierKey": "required"},
+                )
+            supplier = {"supplierCode": code, "store": store}
+            path = path or "suppliers"
+            attr_key = attr or "link"
+            target_key = f"SUPPLIER_LINK:{code}/{store}:{attr_key}"
+
+        routing_status = {
+            "REQUESTER_CORRECTION": "pending_owner",
+            "ERP_MANUAL_CORRECTION": "recorded_external",
+            "NEEDS_CLARIFICATION": "recorded",
+        }[decision_u]
+
+        fp = _fingerprint(
+            {
+                "action": "route_divergence",
+                "request_id": request_id,
+                "expected_version": expected_version,
+                "verification_id": vid,
+                "target_key": target_key,
+                "decision": decision_u,
+                "reason": reason_text,
+            }
+        )
+        replay = self._idempotent_replay(
+            actor=actor,
+            operation="route_divergence",
+            key=idempotency_key,
+            fingerprint=fp,
+        )
+        if replay is not None:
+            return replay
+
+        updated = self._repo.apply_transition(
+            request_id=request_id,
+            expected_version=expected_version,
+            allowed_from=DIVERGENCE_ROUTE_FROM,
+            actor_label=actor.label or actor.user_id,
+            actor_subject=actor.user_id,
+            actor_email=actor.email,
+            event_type="divergence_routed",
+            next_status=request["status"],
+            set_fields={},
+            reason=reason_text,
+            event_meta={
+                "action": "route_divergence",
+                "channel": actor.channel,
+                "verificationId": vid,
+                "targetType": target_u,
+                "targetPath": path,
+                "targetAttribute": attr,
+                "supplierKey": supplier,
+                "targetKey": target_key,
+                "decision": decision_u,
+                "routingStatus": routing_status,
+                "informationRoundId": None,
+            },
+        )
+        routing = {
+            "id": None,
+            "verificationId": vid,
+            "targetType": target_u,
+            "targetPath": path,
+            "targetAttribute": attr,
+            "supplierKey": supplier,
+            "targetKey": target_key,
+            "decision": decision_u,
+            "reason": reason_text,
+            "actorSubject": actor.user_id,
+            "actorDisplayName": actor.label,
+            "occurredAt": updated.get("updated_at"),
+            "routingStatus": routing_status,
+            "informationRoundId": None,
+        }
+        # Preenche id do evento mais recente matching.
+        for item in reversed(self._list_divergence_routings(request_id)):
+            if (
+                item.get("targetKey") == target_key
+                and item.get("verificationId") == vid
+                and item.get("decision") == decision_u
+            ):
+                routing["id"] = item.get("id")
+                routing["occurredAt"] = item.get("occurredAt")
+                break
+
+        response: dict[str, Any] = {
+            "routing": routing,
+            "caseVersion": int(updated.get("row_version") or expected_version + 1),
+            "requesterWrite": None,
+        }
+        if decision_u == "REQUESTER_CORRECTION":
+            response["requesterWrite"] = {
+                "status": "PENDING_OWNER",
+                "code": "ARCHITECTURE_DECISION_REQUIRED",
+                "message": (
+                    "Encaminhamento registrado. A escrita estruturada da "
+                    "ficha pelo solicitante sem engineering.access exige "
+                    "decisão Core/Coordination antes de ser habilitada."
+                ),
+            }
+        self._idempotent_store(
+            actor=actor,
+            operation="route_divergence",
+            key=idempotency_key,
+            fingerprint=fp,
+            request_id=request_id,
+            status=200,
+            payload=response,
+        )
+        return response
 
     def get_record(self, record_id: str, *, actor: PrcActor) -> dict[str, Any]:
         _require_actor_read(actor)
