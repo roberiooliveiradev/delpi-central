@@ -2,7 +2,13 @@ import { useCallback } from "react";
 
 import { useTransformometroEntityWatch } from "../hooks/useTransformometroEntityWatch";
 
-export type CatalogWatchId = "processo" | "filial" | "setor" | "recurso" | "dashboard";
+export type CatalogWatchId =
+  | "processo"
+  | "filial"
+  | "setor"
+  | "recurso"
+  | "dashboard"
+  | "meeting_minute";
 
 type Options = {
   catalogId: CatalogWatchId;

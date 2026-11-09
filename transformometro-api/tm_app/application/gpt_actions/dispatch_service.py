@@ -1742,8 +1742,11 @@ class GptActionsDispatchService:
             return row_to_json(row), "Vínculo criado.", 201
 
         if entity == GptEntity.MEETING_MINUTE:
+            from tm_app.core.realtime_actor import realtime_actor_client_id
+
             try:
-                row = self._minutes.create(request.state.user, data)
+                with realtime_actor_client_id(client_id_from_request(request)):
+                    row = self._minutes.create(request.state.user, data)
             except PermissionError as exc:
                 raise GptActionsError(str(exc), 403) from exc
             except ValueError as exc:
@@ -1998,14 +2001,30 @@ class GptActionsDispatchService:
             return row_to_json(row), "Vínculo atualizado."
 
         if entity == GptEntity.MEETING_MINUTE:
+            from tm_app.application.services.meeting_minute_conflict import (
+                MeetingMinuteConflictError,
+            )
+            from tm_app.core.realtime_actor import realtime_actor_client_id
+
             try:
-                row = self._minutes.update(request.state.user, rid, data)
+                with realtime_actor_client_id(client_id_from_request(request)):
+                    row = self._minutes.update(request.state.user, rid, data)
             except PermissionError as exc:
                 raise GptActionsError(str(exc), 403) from exc
             except LookupError as exc:
                 raise GptActionsError(str(exc), 404) from exc
+            except MeetingMinuteConflictError as exc:
+                details = {"error_kind": "conflict"}
+                if exc.current_updated_at:
+                    details["current_updated_at"] = exc.current_updated_at
+                raise GptActionsError(str(exc), 409, details) from exc
             except ValueError as exc:
-                raise GptActionsError(str(exc), 400) from exc
+                status = (
+                    400
+                    if "expected_updated_at" in str(exc).lower()
+                    else 400
+                )
+                raise GptActionsError(str(exc), status) from exc
             return row, "Ata atualizada."
 
         if entity == GptEntity.PROCESS_DOCUMENT:
@@ -2162,8 +2181,11 @@ class GptActionsDispatchService:
             return {"id": rid}, "Vínculo removido."
 
         if entity == GptEntity.MEETING_MINUTE:
+            from tm_app.core.realtime_actor import realtime_actor_client_id
+
             try:
-                row = self._minutes.soft_delete(request.state.user, rid)
+                with realtime_actor_client_id(client_id_from_request(request)):
+                    row = self._minutes.soft_delete(request.state.user, rid)
             except PermissionError as exc:
                 raise GptActionsError(str(exc), 403) from exc
             except LookupError as exc:
@@ -2408,21 +2430,24 @@ class GptActionsDispatchService:
                 400,
             ) from exc
         user = request.state.user
+        from tm_app.core.realtime_actor import realtime_actor_client_id
+
         try:
-            if workflow == GptMeetingMinuteWorkflow.SEND:
-                return self._minutes.send_for_signature(user, minute_id)
-            if workflow == GptMeetingMinuteWorkflow.FINALIZE:
-                return self._minutes.finalize(user, minute_id)
-            if workflow == GptMeetingMinuteWorkflow.REFUSE:
-                result = self._minutes.refuse(user, minute_id, str(reason or ""))
-                read_back = self._minutes.get_detail(user, minute_id)
-                minute = (read_back or {}).get("minute") or {}
-                return {
-                    **result,
-                    "read_back": read_back,
-                    "verified": str(minute.get("status") or "") == "in_review",
-                }
-            return self._minutes.cancel(user, minute_id, reason=reason)
+            with realtime_actor_client_id(client_id_from_request(request)):
+                if workflow == GptMeetingMinuteWorkflow.SEND:
+                    return self._minutes.send_for_signature(user, minute_id)
+                if workflow == GptMeetingMinuteWorkflow.FINALIZE:
+                    return self._minutes.finalize(user, minute_id)
+                if workflow == GptMeetingMinuteWorkflow.REFUSE:
+                    result = self._minutes.refuse(user, minute_id, str(reason or ""))
+                    read_back = self._minutes.get_detail(user, minute_id)
+                    minute = (read_back or {}).get("minute") or {}
+                    return {
+                        **result,
+                        "read_back": read_back,
+                        "verified": str(minute.get("status") or "") == "in_review",
+                    }
+                return self._minutes.cancel(user, minute_id, reason=reason)
         except PermissionError as exc:
             raise GptActionsError(str(exc), 403) from exc
         except LookupError as exc:

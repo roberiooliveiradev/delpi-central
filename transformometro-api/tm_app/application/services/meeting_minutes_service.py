@@ -28,6 +28,8 @@ from tm_app.application.services.sign_invite_mail_engagement_service import (
 from tm_app.application.security.authorization_policy import (
     TransformometroAuthorizationPolicy,
 )
+from tm_app.application.services.transformometro_realtime_notify import notify_entity_updated
+from tm_app.core.realtime_actor import get_realtime_actor_client_id
 from tm_app.domain.services.minute_status_transition_service import MinuteStatusTransitionError, MinuteStatusTransitionService
 from tm_app.infrastructure.pdf.minute_pdf_renderer import MinutePdfRenderer
 from tm_app.infrastructure.persistence.repositories.meeting_minute_repository import MeetingMinuteRepository
@@ -81,6 +83,72 @@ class MeetingMinutesService:
         invite_id = str((invite or {}).get("id") or "").strip()
         if invite_id:
             self.mail_engagement.confirm_delivered_if_pending(invite_id)
+
+    def _notify(
+        self,
+        *,
+        minute: dict[str, Any],
+        action: str,
+        actor_user_id: str | None,
+        version: dict[str, Any] | None = None,
+        extra_payload: dict[str, Any] | None = None,
+    ) -> None:
+        """Invalidation-only broadcast after a successful persistence commit."""
+        minute_id = str(minute.get("id") or "").strip()
+        if not minute_id:
+            return
+        payload: dict[str, Any] = {
+            "status": minute.get("status"),
+            "unit_code": minute.get("unit_code"),
+            "current_version_id": (
+                str(minute["current_version_id"])
+                if minute.get("current_version_id")
+                else None
+            ),
+            "updated_at": (
+                str(minute["updated_at"]) if minute.get("updated_at") is not None else None
+            ),
+        }
+        content_hash = None
+        if version and version.get("content_hash") is not None:
+            content_hash = str(version.get("content_hash"))
+        if content_hash:
+            payload["content_hash"] = content_hash
+        if extra_payload:
+            for key, value in extra_payload.items():
+                if value is not None and key not in {
+                    "agenda_html",
+                    "body_html",
+                    "decisions_html",
+                    "pending_html",
+                    "observations_html",
+                    "sign_url",
+                    "raw_token",
+                    "token",
+                    "image_path",
+                    "invite_email",
+                }:
+                    payload[key] = value
+        notify_entity_updated(
+            entity_type="meeting_minute",
+            entity_id=minute_id,
+            action=action,
+            actor_user_id=actor_user_id,
+            actor_client_id=get_realtime_actor_client_id(),
+            payload=payload,
+        )
+
+    def _require_expected_updated_at(self, payload: dict[str, Any] | None) -> str:
+        raw = (payload or {}).get("expected_updated_at")
+        expected = str(raw).strip() if raw is not None else ""
+        if not expected:
+            raise ValueError(
+                "expected_updated_at é obrigatório para evitar sobrescrita concorrente."
+            )
+        return expected
+
+    def _claim_revision(self, minute_id: str, expected_updated_at: str) -> dict[str, Any]:
+        return self.repo.claim_updated_at(minute_id, expected_updated_at)
 
     def _assert(self, user: Any, action: str, unit_code: str) -> None:
         del action, unit_code
@@ -185,7 +253,14 @@ class MeetingMinutesService:
             sync_payload["participants"] = participants
         if "signers" in payload or participants:
             self._sync_signers(user, minute_id, sync_payload)
-        return self.get_detail(user, minute_id)
+        detail = self.get_detail(user, minute_id)
+        self._notify(
+            minute=detail["minute"],
+            action="create",
+            actor_user_id=self._user_id(user),
+            version=detail.get("version"),
+        )
+        return detail
 
     def update(self, user: Any, minute_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         minute = self._load(user, "manage", minute_id)
@@ -195,11 +270,16 @@ class MeetingMinutesService:
                 if MinuteStatusTransitionService.requires_new_version_for_content_change(minute["status"])
                 else "Ata não pode ser editada no status atual."
             )
+        expected = self._require_expected_updated_at(payload)
+        minute = self._claim_revision(minute_id, expected)
         fields = normalize_minute_update_fields(payload)
         if fields:
             minute = self.repo.update_minute_draft(minute_id, fields, self._user_id(user))
         keys = ("agenda_html", "body_html", "decisions_html", "pending_html", "observations_html")
-        if any(key in payload for key in keys):
+        content_changed = any(key in payload for key in keys)
+        participants_changed = "participants" in payload
+        signers_changed = "signers" in payload
+        if content_changed:
             current = self.repo.get_version(minute_id)
             if not current:
                 raise LookupError("Versão atual não encontrada.")
@@ -213,7 +293,7 @@ class MeetingMinutesService:
                 **content,
             )
         sync_payload = dict(payload)
-        if "participants" in payload:
+        if participants_changed:
             participants = normalize_participants(payload.get("participants") or [])
             self.repo.replace_participants(
                 minute_id,
@@ -222,23 +302,66 @@ class MeetingMinutesService:
                 self._user_id(user),
             )
             sync_payload["participants"] = participants
-        if "signers" in payload or "participants" in payload:
+        if signers_changed or participants_changed:
             self._sync_signers(user, minute_id, sync_payload)
-        return self.get_detail(user, minute_id)
+        detail = self.get_detail(user, minute_id)
+        action = "update"
+        if participants_changed and not content_changed and not fields and not signers_changed:
+            action = "participants.updated"
+        elif signers_changed and not content_changed and not fields and not participants_changed:
+            action = "signers.updated"
+        self._notify(
+            minute=detail["minute"],
+            action=action,
+            actor_user_id=self._user_id(user),
+            version=detail.get("version"),
+        )
+        return detail
 
     def create_version(self,user: Any,minute_id: str,payload: dict[str,Any]) -> dict[str,Any]:
         minute=self._load(user,"manage",minute_id)
         if MinuteStatusTransitionService.is_terminal(minute["status"]): raise ValueError("Ata finalizada/cancelada não aceita nova versão.")
         reason=str(payload.get("change_reason") or "").strip()
         if not reason: raise ValueError("Informe o motivo da alteração.")
+        expected = self._require_expected_updated_at(payload)
+        self._claim_revision(minute_id, expected)
         current=self.repo.get_version(minute_id)
         if not current: raise LookupError("Versão atual não encontrada.")
         content={key:TmAtaHtmlSanitizer.sanitize(payload.get(key) if payload.get(key) is not None else current.get(key)) for key in ("agenda_html","body_html","decisions_html","pending_html","observations_html")}
-        return self.repo.create_new_version(minute_id=minute_id,change_reason=reason,content_hash=self._hash(minute,content),actor_user_id=self._user_id(user),**content)
+        created = self.repo.create_new_version(minute_id=minute_id,change_reason=reason,content_hash=self._hash(minute,content),actor_user_id=self._user_id(user),**content)
+        minute_row = created.get("minute") if isinstance(created, dict) else None
+        version_row = created.get("version") if isinstance(created, dict) else created
+        if not minute_row:
+            minute_row = self.repo.get_minute(minute_id) or minute
+        self._notify(
+            minute=minute_row,
+            action="version.created",
+            actor_user_id=self._user_id(user),
+            version=version_row if isinstance(version_row, dict) else None,
+        )
+        return created
 
-    def set_participants(self,user: Any,minute_id: str,participants:list[dict[str,Any]]) -> dict[str,Any]:
-        return self.update(user,minute_id,{"participants":participants})
-    def set_signers(self,user: Any,minute_id: str,signers:list[dict[str,Any]]) -> dict[str,Any]:
+    def set_participants(
+        self,
+        user: Any,
+        minute_id: str,
+        participants: list[dict[str, Any]],
+        *,
+        expected_updated_at: str | None = None,
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {"participants": participants}
+        if expected_updated_at is not None:
+            payload["expected_updated_at"] = expected_updated_at
+        return self.update(user, minute_id, payload)
+
+    def set_signers(
+        self,
+        user: Any,
+        minute_id: str,
+        signers: list[dict[str, Any]],
+        *,
+        expected_updated_at: str | None = None,
+    ) -> dict[str, Any]:
         minute=self._load(user,"manage",minute_id)
         if not MinuteStatusTransitionService.can_edit_content(minute["status"]): raise ValueError("Signatários só podem ser alterados em rascunho/revisão.")
         if any(
@@ -247,7 +370,25 @@ class MeetingMinutesService:
             for s in signers
         ):
             raise ValueError("Cada signatário precisa de display_name e user_id ou invite_email.")
-        return {"signers":self.repo.replace_signers(minute_id=minute_id,version_id=str(minute["current_version_id"]),unit_code=str(minute["unit_code"]),signers=signers,actor_user_id=self._user_id(user))}
+        expected = self._require_expected_updated_at(
+            {"expected_updated_at": expected_updated_at}
+        )
+        minute = self._claim_revision(minute_id, expected)
+        signers_rows = self.repo.replace_signers(
+            minute_id=minute_id,
+            version_id=str(minute["current_version_id"]),
+            unit_code=str(minute["unit_code"]),
+            signers=signers,
+            actor_user_id=self._user_id(user),
+        )
+        minute = self.repo.get_minute(minute_id) or minute
+        self._notify(
+            minute=minute,
+            action="signers.updated",
+            actor_user_id=self._user_id(user),
+            version=self.repo.get_version(minute_id),
+        )
+        return {"signers": signers_rows, "minute": minute}
 
     def send_for_signature(self,user: Any,minute_id: str) -> dict[str,Any]:
         minute=self._load(user,"manage",minute_id)
@@ -263,6 +404,13 @@ class MeetingMinutesService:
             updated,
             targets,
             mail_template_key="signPending",
+        )
+        self._notify(
+            minute=updated,
+            action="send_for_signature",
+            actor_user_id=self._user_id(user),
+            version=self.repo.get_version(minute_id),
+            extra_payload={"resent_count": dispatched["resent_count"]},
         )
         return {"minute": updated, "signers": targets, "resent_count": dispatched["resent_count"]}
 
@@ -281,6 +429,20 @@ class MeetingMinutesService:
             minute,
             targets,
             mail_template_key="signPendingReminder",
+        )
+        self.repo.touch_updated_at(minute_id)
+        refreshed = self.repo.get_minute(minute_id)
+        if isinstance(refreshed, dict) and refreshed.get("id"):
+            minute = refreshed
+        self._notify(
+            minute=minute,
+            action="sign_invites.resent",
+            actor_user_id=self._user_id(user),
+            version=self.repo.get_version(minute_id),
+            extra_payload={
+                "resent_count": dispatched["resent_count"],
+                "mail_sent": dispatched["mail_sent"],
+            },
         )
         return {
             "minute": minute,
@@ -493,9 +655,22 @@ class MeetingMinutesService:
         self.repo.invalidate_open_invites(signer_id=str(signer["id"]))
         if result.get("duplicate"): return {"signature":result["signature"],"minute":minute,"duplicate":True}
         new_status=MinuteStatusTransitionService.status_after_signature_progress(signed_count=result["signed_count"],required_count=result["required_count"])
-        if new_status != minute["status"]: minute=self.repo.set_status(minute_id=minute_id,status=new_status,actor_user_id=self._user_id(user),action="signature_progress")
+        if new_status != minute["status"]:
+            minute=self.repo.set_status(minute_id=minute_id,status=new_status,actor_user_id=self._user_id(user),action="signature_progress")
+        else:
+            minute = self.repo.touch_updated_at(minute_id)
         if new_status == "signed":
             self._notify_managers_signed(minute)
+        self._notify(
+            minute=minute,
+            action="signature.registered",
+            actor_user_id=self._user_id(user),
+            version=version,
+            extra_payload={
+                "signed_count": result.get("signed_count"),
+                "required_count": result.get("required_count"),
+            },
+        )
         return {"signature":result["signature"],"minute":minute,"duplicate":False}
 
     def public_sign(
@@ -551,15 +726,28 @@ class MeetingMinutesService:
             signed_count=result["signed_count"],
             required_count=result["required_count"],
         )
+        minute_id = str(minute["id"])
         if new_status != minute["status"]:
             minute = self.repo.set_status(
-                minute_id=str(minute["id"]),
+                minute_id=minute_id,
                 status=new_status,
                 actor_user_id=actor_id,
                 action="signature_progress",
             )
+        else:
+            minute = self.repo.touch_updated_at(minute_id)
         if new_status == "signed":
             self._notify_managers_signed(minute)
+        self._notify(
+            minute=minute,
+            action="signature.registered",
+            actor_user_id=actor_id,
+            version=version,
+            extra_payload={
+                "signed_count": result.get("signed_count"),
+                "required_count": result.get("required_count"),
+            },
+        )
         return {"signature": result["signature"], "minute": minute, "duplicate": False}
 
     def refuse(self,user:Any,minute_id:str,reason:str)->dict[str,Any]:
@@ -574,6 +762,12 @@ class MeetingMinutesService:
             updated,
             actor_name=str(signer.get("display_name") or "Signatário"),
             reason=reason.strip(),
+        )
+        self._notify(
+            minute=updated,
+            action="signature.refused",
+            actor_user_id=self._user_id(user),
+            version=self.repo.get_version(minute_id),
         )
         return {"minute":updated}
 
@@ -606,6 +800,12 @@ class MeetingMinutesService:
             actor_name=str(signer.get("display_name") or "Signatário"),
             reason=reason.strip(),
         )
+        self._notify(
+            minute=updated,
+            action="signature.refused",
+            actor_user_id=actor_id,
+            version=self.repo.get_version(str(updated["id"])),
+        )
         return {"minute": updated}
 
     def finalize(self,user:Any,minute_id:str)->dict[str,Any]:
@@ -615,7 +815,26 @@ class MeetingMinutesService:
         version=self.repo.get_version(minute_id)
         if not version: raise LookupError("Versão não encontrada.")
         code=secrets.token_urlsafe(12); raw=self._render_pdf({**minute,"validation_code":code},version)
-        return {"minute":self.repo.set_status(minute_id=minute_id,status="finalized",actor_user_id=self._user_id(user),action="finalize",extra={"final_pdf_path":self.pdf_storage.save(unit_code=str(minute["unit_code"]),minute_id=minute_id,raw=raw),"final_content_hash":version["content_hash"],"validation_code":code})}
+        updated = self.repo.set_status(
+            minute_id=minute_id,
+            status="finalized",
+            actor_user_id=self._user_id(user),
+            action="finalize",
+            extra={
+                "final_pdf_path": self.pdf_storage.save(
+                    unit_code=str(minute["unit_code"]), minute_id=minute_id, raw=raw
+                ),
+                "final_content_hash": version["content_hash"],
+                "validation_code": code,
+            },
+        )
+        self._notify(
+            minute=updated,
+            action="finalize",
+            actor_user_id=self._user_id(user),
+            version=version,
+        )
+        return {"minute": updated}
 
     def _render_pdf(self,minute:dict[str,Any],version:dict[str,Any])->bytes:
         signatures=[{**s,"image_bytes":self.signature_storage.read(str(s["image_path"]))} for s in self.repo.list_signatures(str(minute["id"])) if s.get("image_path")]
@@ -635,6 +854,11 @@ class MeetingMinutesService:
         except MinuteStatusTransitionError as exc:
             raise ValueError(str(exc)) from exc
         deleted = self.repo.soft_delete(minute_id, self._user_id(user))
+        self._notify(
+            minute=deleted,
+            action="delete",
+            actor_user_id=self._user_id(user),
+        )
         return {"minute": deleted}
 
     def cancel(self, user: Any, minute_id: str, reason: str | None = None) -> dict[str, Any]:
@@ -643,15 +867,20 @@ class MeetingMinutesService:
             MinuteStatusTransitionService.assert_transition(minute["status"], "cancelled")
         except MinuteStatusTransitionError as exc:
             raise ValueError(str(exc)) from exc
-        return {
-            "minute": self.repo.set_status(
-                minute_id=minute_id,
-                status="cancelled",
-                actor_user_id=self._user_id(user),
-                action="cancel",
-                extra={"cancel_reason": (reason or "").strip() or None},
-            )
-        }
+        updated = self.repo.set_status(
+            minute_id=minute_id,
+            status="cancelled",
+            actor_user_id=self._user_id(user),
+            action="cancel",
+            extra={"cancel_reason": (reason or "").strip() or None},
+        )
+        self._notify(
+            minute=updated,
+            action="cancel",
+            actor_user_id=self._user_id(user),
+            version=self.repo.get_version(minute_id),
+        )
+        return {"minute": updated}
 
     def pending_signatures(self, user: Any) -> dict[str, Any]:
         return self.list_minutes(user, {"pending_for_me": True, "limit": 100, "offset": 0})

@@ -27,6 +27,15 @@ Todo fluxo mutável invalida as UIs relevantes **sem F5**, para usuários remoto
 | Filial / setor / recurso | entity + catalog | Listas + detail |
 | Import JSON / pacote | `catalog:processo\|filial\|setor\|recurso\|dashboard` | Listas + detalhes (via catalog watch) |
 | Dashboard recalc | `catalog:dashboard` | Dashboard |
+| Atas (meeting_minute) | `meeting_minute:{id}`, `catalog:meeting_minute` | Lista + detalhe + editor (dirty protegido) |
+
+### Atas — contrato V1
+
+- Emit owner: `MeetingMinutesService` (Portal HTTP, TÉO/GPT e assinatura pública compartilham o mesmo caminho).
+- Evento: `entity.updated` com `entityType=meeting_minute`; payload só de invalidação (`status`, `updated_at`, `current_version_id`, `content_hash`, contadores).
+- Concorrência: `expected_updated_at` obrigatório em update/participantes/signatários/versão → 409 em divergência.
+- AuthZ WS: JWT + `transformometro.access` + existência da ata para `meeting_minute:{id}`; catálogo exige access.
+- Topologia: hub in-memory no processo único `delpi-transformometro-api` (uvicorn sem `--workers`). Revisar fan-out antes de escalar réplicas/workers.
 
 ## Checklist manual
 
@@ -35,9 +44,12 @@ Todo fluxo mutável invalida as UIs relevantes **sem F5**, para usuários remoto
 3. Import JSON com processo aberto → detail/árvore atualizam.
 4. Duas abas na mesma revisão → aba B reflete save da aba A.
 5. Voltar à revisão keep-alive → medição/investimentos refetcham.
+6. Salvar ata na sessão A → lista/detalhe B atualizam sem F5.
+7. Editor dirty na sessão B → aviso remoto sem sobrescrever; save com `expected_updated_at` stale → 409.
 
 ## Gate CI
 
 - `tests/test_transformometro_realtime.py` — fan-out, section keys, enrich.
-- `tests/test_realtime_mutation_notify_inventory.py` — rotas mutáveis chamam notify.
+- `tests/test_realtime_mutation_notify_inventory.py` — rotas mutáveis / services donos chamam notify.
+- `tests/test_meeting_minute_realtime_notify.py` — atas: fan-out, payload seguro, 409.
 - MFE: `collaborativeEntityUpdate.test.ts`, `workspaceTreeRefresh.test.ts`.

@@ -571,6 +571,9 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                     "set_participants/set_signers: gpt_prepare_meeting_minute_change (PREPARE) "
                     "→ gpt_commit_proposal — not generic record update. resend requires "
                     "data.confirm_resend=true.",
+                    "Optimistic concurrency: update / set_participants / set_signers / "
+                    "create_version REQUIRE data.expected_updated_at = minute.updated_at "
+                    "from the latest read (409 on stale). Do not omit it.",
                     "READ actions (pending_signatures/audit/versions/participants/signers/"
                     "generate_from_transcript): gpt_meeting_minute_read.",
                     "Handwritten signature PNG/PDF/public magic-link remain UI-only / not exposed.",

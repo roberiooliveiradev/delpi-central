@@ -43,6 +43,7 @@ CATALOG_ROOM_BY_ENTITY: dict[str, str] = {
     "setor": "setor",
     "recurso": "recurso",
     "recurso_custo": "recurso",
+    "meeting_minute": "meeting_minute",
     "catalog": "dashboard",
     "json_backup": "dashboard",
 }
@@ -84,6 +85,8 @@ def infer_section_key(entity_type: str, action: str) -> str | None:
             return "medicao"
         if entity_type == "process_document":
             return "documentacao"
+        if entity_type == "meeting_minute":
+            return "meeting_minute"
         if entity_type == "diagnostic":
             return "diagnostico"
         if entity_type == "catalog":
@@ -110,6 +113,28 @@ def infer_section_key(entity_type: str, action: str) -> str | None:
         return "custos"
     if entity_type == "process_document":
         return "documentacao"
+    if entity_type == "meeting_minute":
+        if action in {
+            "signers.updated",
+            "participants.updated",
+            "signature.registered",
+            "signature.refused",
+            "sign_invites.resent",
+            "send_for_signature",
+            "finalize",
+            "cancel",
+        }:
+            return {
+                "signers.updated": "signers",
+                "participants.updated": "participants",
+                "signature.registered": "status",
+                "signature.refused": "status",
+                "sign_invites.resent": "signers",
+                "send_for_signature": "status",
+                "finalize": "status",
+                "cancel": "status",
+            }[action]
+        return "meeting_minute"
     if entity_type == "diagnostic":
         return "diagnostico"
     if entity_type == "catalog":

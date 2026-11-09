@@ -15,6 +15,7 @@ ALLOWED_ENTITY_TYPES = frozenset(
         "filial",
         "setor",
         "recurso",
+        "meeting_minute",
         # Salas de listagem / dashboard (sem locks de edição colaborativa)
         "catalog",
     }

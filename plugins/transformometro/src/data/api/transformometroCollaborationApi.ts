@@ -9,6 +9,7 @@ export type CollaborationEntityType =
   | "filial"
   | "setor"
   | "recurso"
+  | "meeting_minute"
   | "catalog";
 
 export type CollaborationPresenceUser = {

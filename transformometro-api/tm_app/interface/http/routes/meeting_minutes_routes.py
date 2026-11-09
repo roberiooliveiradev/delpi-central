@@ -8,7 +8,10 @@ from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from tm_app.application.services.html_sanitizer import TmAtaHtmlSanitizer
+from tm_app.application.services.meeting_minute_conflict import MeetingMinuteConflictError
 from tm_app.application.services.meeting_minutes_service import MeetingMinutesService
+from tm_app.core.auth_actor import client_id_from_request
+from tm_app.core.realtime_actor import realtime_actor_client_id
 from tm_app.core.responses import fail, ok
 from tm_app.infrastructure.llm.kimi_llm_gateway import AtaGenerationError, KimiLlmGateway
 
@@ -56,6 +59,7 @@ class UpdateMinuteRequest(BaseModel):
     observations_html: str | None = None
     participants: list[dict[str, Any]] | None = None
     signers: list[dict[str, Any]] | None = None
+    expected_updated_at: str | None = None
 
 
 class VersionRequest(BaseModel):
@@ -65,10 +69,12 @@ class VersionRequest(BaseModel):
     decisions_html: str | None = None
     pending_html: str | None = None
     observations_html: str | None = None
+    expected_updated_at: str | None = None
 
 
 class SignersRequest(BaseModel):
     signers: list[dict[str, Any]] = Field(default_factory=list)
+    expected_updated_at: str | None = None
 
 
 class RefuseRequest(BaseModel):
@@ -96,16 +102,27 @@ def _handle(exc: Exception):
         return fail(str(exc), 403)
     if isinstance(exc, LookupError):
         return fail(str(exc), 404)
+    if isinstance(exc, MeetingMinuteConflictError):
+        details: dict[str, Any] = {"error_kind": "conflict"}
+        if exc.current_updated_at:
+            details["current_updated_at"] = exc.current_updated_at
+        return fail(str(exc), 409, details)
     if isinstance(exc, ValueError):
         message = str(exc)
         # Soft-delete policy / concurrent state → conflict, not validation.
         if "exclu" in message.lower() or "assinatura" in message.lower():
             return fail(message, 409, {"error_kind": "conflict"})
+        if "expected_updated_at" in message.lower():
+            return fail(message, 400, {"error_kind": "precondition_required"})
         return fail(message, 400)
     if isinstance(exc, AtaGenerationError):
         return fail(str(exc), 502)
     logging.getLogger(__name__).exception("meeting_minutes_route_error")
     return fail("Erro interno ao processar a ata.", 500)
+
+
+def _with_realtime_actor(request: Request):
+    return realtime_actor_client_id(client_id_from_request(request))
 
 
 @router.get("", operation_id="list_meeting_minutes")
@@ -175,7 +192,8 @@ def generate_from_transcript(request: Request, body: GenerateFromTranscriptReque
 @router.post("", operation_id="create_meeting_minute")
 def create(request: Request, body: CreateMinuteRequest):
     try:
-        return ok(service.create(request.state.user, body.model_dump()), status_code=201)
+        with _with_realtime_actor(request):
+            return ok(service.create(request.state.user, body.model_dump()), status_code=201)
     except Exception as exc:
         return _handle(exc)
 
@@ -192,7 +210,8 @@ def detail(request: Request, minute_id: str):
 def update(request: Request, minute_id: str, body: UpdateMinuteRequest):
     try:
         payload = {key: value for key, value in body.model_dump().items() if value is not None}
-        return ok(service.update(request.state.user, minute_id, payload))
+        with _with_realtime_actor(request):
+            return ok(service.update(request.state.user, minute_id, payload))
     except Exception as exc:
         return _handle(exc)
 
@@ -200,7 +219,11 @@ def update(request: Request, minute_id: str, body: UpdateMinuteRequest):
 @router.post("/{minute_id}/versions", operation_id="create_meeting_minute_version")
 def version(request: Request, minute_id: str, body: VersionRequest):
     try:
-        return ok(service.create_version(request.state.user, minute_id, body.model_dump()), status_code=201)
+        with _with_realtime_actor(request):
+            return ok(
+                service.create_version(request.state.user, minute_id, body.model_dump()),
+                status_code=201,
+            )
     except Exception as exc:
         return _handle(exc)
 
@@ -208,7 +231,15 @@ def version(request: Request, minute_id: str, body: VersionRequest):
 @router.put("/{minute_id}/participants", operation_id="replace_meeting_minute_participants")
 def participants(request: Request, minute_id: str, body: dict[str, Any]):
     try:
-        return ok(service.set_participants(request.state.user, minute_id, body.get("participants") or []))
+        with _with_realtime_actor(request):
+            return ok(
+                service.set_participants(
+                    request.state.user,
+                    minute_id,
+                    body.get("participants") or [],
+                    expected_updated_at=body.get("expected_updated_at"),
+                )
+            )
     except Exception as exc:
         return _handle(exc)
 
@@ -216,7 +247,15 @@ def participants(request: Request, minute_id: str, body: dict[str, Any]):
 @router.put("/{minute_id}/signers", operation_id="replace_meeting_minute_signers")
 def signers(request: Request, minute_id: str, body: SignersRequest):
     try:
-        return ok(service.set_signers(request.state.user, minute_id, body.signers))
+        with _with_realtime_actor(request):
+            return ok(
+                service.set_signers(
+                    request.state.user,
+                    minute_id,
+                    body.signers,
+                    expected_updated_at=body.expected_updated_at,
+                )
+            )
     except Exception as exc:
         return _handle(exc)
 
@@ -224,7 +263,8 @@ def signers(request: Request, minute_id: str, body: SignersRequest):
 @router.post("/{minute_id}/send-for-signature", operation_id="send_meeting_minute_for_signature")
 def send(request: Request, minute_id: str):
     try:
-        return ok(service.send_for_signature(request.state.user, minute_id))
+        with _with_realtime_actor(request):
+            return ok(service.send_for_signature(request.state.user, minute_id))
     except Exception as exc:
         return _handle(exc)
 
@@ -235,7 +275,8 @@ def send(request: Request, minute_id: str):
 )
 def resend_sign_invites(request: Request, minute_id: str):
     try:
-        return ok(service.resend_sign_invites(request.state.user, minute_id))
+        with _with_realtime_actor(request):
+            return ok(service.resend_sign_invites(request.state.user, minute_id))
     except Exception as exc:
         return _handle(exc)
 
@@ -259,20 +300,22 @@ async def sign(
     idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
 ):
     try:
-        return ok(
-            service.sign(
-                request.state.user,
-                minute_id,
-                png_bytes=await signature.read(),
-                display_name_confirmed=display_name_confirmed,
-                terms_accepted=terms_accepted,
-                client_ip=request.client.host if request.client else None,
-                user_agent=request.headers.get("user-agent"),
-                session_id=session_id,
-                idempotency_key=idempotency_key,
-            ),
-            status_code=201,
-        )
+        png_bytes = await signature.read()
+        with _with_realtime_actor(request):
+            return ok(
+                service.sign(
+                    request.state.user,
+                    minute_id,
+                    png_bytes=png_bytes,
+                    display_name_confirmed=display_name_confirmed,
+                    terms_accepted=terms_accepted,
+                    client_ip=request.client.host if request.client else None,
+                    user_agent=request.headers.get("user-agent"),
+                    session_id=session_id,
+                    idempotency_key=idempotency_key,
+                ),
+                status_code=201,
+            )
     except Exception as exc:
         return _handle(exc)
 
@@ -288,7 +331,8 @@ def image(request: Request, minute_id: str, signature_id: str):
 @router.post("/{minute_id}/signatures/refuse", operation_id="refuse_meeting_minute_signature")
 def refuse(request: Request, minute_id: str, body: RefuseRequest):
     try:
-        return ok(service.refuse(request.state.user, minute_id, body.reason))
+        with _with_realtime_actor(request):
+            return ok(service.refuse(request.state.user, minute_id, body.reason))
     except Exception as exc:
         return _handle(exc)
 
@@ -296,7 +340,8 @@ def refuse(request: Request, minute_id: str, body: RefuseRequest):
 @router.post("/{minute_id}/finalize", operation_id="finalize_meeting_minute")
 def finalize(request: Request, minute_id: str):
     try:
-        return ok(service.finalize(request.state.user, minute_id))
+        with _with_realtime_actor(request):
+            return ok(service.finalize(request.state.user, minute_id))
     except Exception as exc:
         return _handle(exc)
 
@@ -304,7 +349,12 @@ def finalize(request: Request, minute_id: str):
 @router.post("/{minute_id}/cancel", operation_id="cancel_meeting_minute")
 def cancel(request: Request, minute_id: str, body: CancelRequest | None = None):
     try:
-        return ok(service.cancel(request.state.user, minute_id, (body.reason if body else None)))
+        with _with_realtime_actor(request):
+            return ok(
+                service.cancel(
+                    request.state.user, minute_id, (body.reason if body else None)
+                )
+            )
     except Exception as exc:
         return _handle(exc)
 
@@ -333,6 +383,7 @@ def audit(request: Request, minute_id: str):
 @router.delete("/{minute_id}", operation_id="delete_meeting_minute")
 def delete(request: Request, minute_id: str):
     try:
-        return ok(service.soft_delete(request.state.user, minute_id))
+        with _with_realtime_actor(request):
+            return ok(service.soft_delete(request.state.user, minute_id))
     except Exception as exc:
         return _handle(exc)

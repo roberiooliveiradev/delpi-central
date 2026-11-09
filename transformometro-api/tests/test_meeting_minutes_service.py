@@ -28,13 +28,45 @@ class FakeRepo:
             "status": "draft",
             "current_version_id": "v1",
             "unit_code": data.get("unit_code", "01"),
+            "updated_at": "2026-11-09T12:00:00+00:00",
             **data,
         }
         self.version = {"id": "v1", "version_number": 1, "content_hash": data.get("content_hash"), **data}
         return self.minute
 
+    def claim_updated_at(self, minute_id, expected_updated_at):
+        from tm_app.application.services.meeting_minute_conflict import (
+            MeetingMinuteConflictError,
+        )
+
+        if not self.minute or str(self.minute.get("id")) != str(minute_id):
+            raise LookupError("Ata não encontrada.")
+        current = str(self.minute.get("updated_at") or "")
+        if current != str(expected_updated_at):
+            raise MeetingMinuteConflictError(current_updated_at=current or None)
+        self.minute["updated_at"] = "2026-11-09T12:00:01+00:00"
+        return self.minute
+
+    def touch_updated_at(self, minute_id):
+        if not self.minute or str(self.minute.get("id")) != str(minute_id):
+            raise LookupError("Ata não encontrada.")
+        self.minute["updated_at"] = "2026-11-09T12:00:02+00:00"
+        return self.minute
+
     def get_minute(self, _):
         return self.minute
+
+    def update_minute_draft(self, minute_id, fields, actor_user_id):
+        if not self.minute or str(self.minute.get("id")) != str(minute_id):
+            raise LookupError("Ata não encontrada.")
+        self.minute.update(fields)
+        self.minute["updated_at"] = "2026-11-09T12:00:03+00:00"
+        return self.minute
+
+    def update_current_version_content(self, *, minute_id, actor_user_id, **data):
+        if self.version:
+            self.version.update(data)
+        return self.touch_updated_at(minute_id)
 
     def get_version(self, _, version_id=None):
         return self.version

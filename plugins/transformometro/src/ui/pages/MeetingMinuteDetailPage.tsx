@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActionButton,
   StatusBadge,
@@ -33,6 +33,9 @@ import {
   sendAta,
   type AtaDetail,
 } from "../../data/api/transformometroMeetingMinutesApi";
+import { useTransformometroEntityWatch } from "../../hooks/useTransformometroEntityWatch";
+import { getTransformometroClientId } from "../../utils/clientId";
+import { resolveCollaborativeEntityUpdate } from "../../utils/collaborativeEntityUpdate";
 import { MeetingMinuteDocumentView } from "../meeting-minutes/MeetingMinuteDocumentView";
 import {
   canDeleteMeetingMinute,
@@ -69,21 +72,57 @@ export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNav
   const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const [remoteNotice, setRemoteNotice] = useState<string | null>(null);
+  const loadSilentRef = useRef(false);
+
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    const silent = Boolean(opts?.silent);
+    if (!silent) setLoading(true);
     try {
       setDetail(await getAta(ataId, getAccessToken));
       setError(null);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Erro ao carregar ata.");
+      const message = reason instanceof Error ? reason.message : "Erro ao carregar ata.";
+      setError(message);
+      if (/não encontrad|not found|exclu/i.test(message)) {
+        setDetail(null);
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [ataId, getAccessToken]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useTransformometroEntityWatch({
+    entities: [{ entityType: "meeting_minute", entityId: ataId }],
+    getAccessToken,
+    enabled: Boolean(ataId),
+    onEntityUpdated: (event) => {
+      if (event.entityType !== "meeting_minute") return;
+      const decision = resolveCollaborativeEntityUpdate({
+        editingSectionKey: null,
+        updatedSectionKey: event.sectionKey ?? "meeting_minute",
+        actorClientId: event.actorClientId,
+        myClientId: getTransformometroClientId(),
+      });
+      if (decision.kind === "ignore_own") return;
+      if (event.action === "delete") {
+        setRemoteNotice("Esta ata foi excluída por outro usuário.");
+        setDetail(null);
+        setError("Ata indisponível — ela foi excluída.");
+        return;
+      }
+      if (decision.notice) setRemoteNotice(decision.notice);
+      if (loadSilentRef.current) return;
+      loadSilentRef.current = true;
+      void load({ silent: true }).finally(() => {
+        loadSilentRef.current = false;
+      });
+    },
+  });
 
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
@@ -262,6 +301,11 @@ export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNav
       {error ? (
         <p className="tm-atas-alert" role="alert">
           {error}
+        </p>
+      ) : null}
+      {remoteNotice ? (
+        <p className="tm-atas-alert tm-atas-alert--info" role="status">
+          {remoteNotice}
         </p>
       ) : null}
 

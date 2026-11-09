@@ -14,6 +14,7 @@ from fastapi import Request
 from tm_app.application.gpt_actions.errors import GptActionsError
 from tm_app.application.services.audit_timeline_service import enrich_timeline_actor_names
 from tm_app.application.services.html_sanitizer import TmAtaHtmlSanitizer
+from tm_app.application.services.meeting_minute_conflict import MeetingMinuteConflictError
 from tm_app.application.services.meeting_minutes_service import MeetingMinutesService
 from tm_app.application.services.process_activity_touch import (
     touch_processo_for_revisao,
@@ -574,7 +575,10 @@ class ParityCapabilitiesService:
                         "confirm_resend=true is required for resend.",
                         400,
                     )
-                data = self._minutes.resend_sign_invites(user, mid)
+                from tm_app.core.realtime_actor import realtime_actor_client_id
+
+                with realtime_actor_client_id(client_id_from_request(request)):
+                    data = self._minutes.resend_sign_invites(user, mid)
                 read_back = self._minutes.get_detail(user, mid)
                 resent = int(data.get("resent_count") or 0)
                 return {
@@ -586,7 +590,10 @@ class ParityCapabilitiesService:
                 }
 
             if manage == GptMeetingMinuteManageAction.CREATE_VERSION:
-                created = self._minutes.create_version(user, mid, body)
+                from tm_app.core.realtime_actor import realtime_actor_client_id
+
+                with realtime_actor_client_id(client_id_from_request(request)):
+                    created = self._minutes.create_version(user, mid, body)
                 read_back = self._minutes.get_detail(user, mid)
                 created_id = str(
                     (created or {}).get("id")
@@ -616,9 +623,17 @@ class ParityCapabilitiesService:
                 participants = body.get("participants")
                 if not isinstance(participants, list):
                     raise GptActionsError("participants[] is required.", 400)
+                from tm_app.core.realtime_actor import realtime_actor_client_id
+
                 # MeetingMinutesService.set_participants → update → get_detail
                 # (authoritative persisted state).
-                data = self._minutes.set_participants(user, mid, participants)
+                with realtime_actor_client_id(client_id_from_request(request)):
+                    data = self._minutes.set_participants(
+                        user,
+                        mid,
+                        participants,
+                        expected_updated_at=body.get("expected_updated_at"),
+                    )
                 verified = (
                     isinstance(data, dict)
                     and bool(data.get("minute"))
@@ -636,7 +651,15 @@ class ParityCapabilitiesService:
                 signers = body.get("signers")
                 if not isinstance(signers, list):
                     raise GptActionsError("signers[] is required.", 400)
-                mutated = self._minutes.set_signers(user, mid, signers)
+                from tm_app.core.realtime_actor import realtime_actor_client_id
+
+                with realtime_actor_client_id(client_id_from_request(request)):
+                    mutated = self._minutes.set_signers(
+                        user,
+                        mid,
+                        signers,
+                        expected_updated_at=body.get("expected_updated_at"),
+                    )
                 read_back = self._minutes.get_detail(user, mid)
                 expected_ids = {
                     str(s.get("user_id") or s.get("invite_email") or "").strip()
@@ -694,6 +717,11 @@ class ParityCapabilitiesService:
             raise GptActionsError(str(exc), 403) from exc
         except LookupError as exc:
             raise GptActionsError(str(exc), 404) from exc
+        except MeetingMinuteConflictError as exc:
+            details = {"error_kind": "conflict"}
+            if exc.current_updated_at:
+                details["current_updated_at"] = exc.current_updated_at
+            raise GptActionsError(str(exc), 409, details) from exc
         except ValueError as exc:
             raise GptActionsError(str(exc), 400) from exc
 

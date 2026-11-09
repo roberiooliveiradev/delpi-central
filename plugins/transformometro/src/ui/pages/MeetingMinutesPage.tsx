@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActionButton, StatusBadge } from "@delpi/plugin-ui/index";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActionButton, SectionHintLabel, StatusBadge } from "@delpi/plugin-ui/index";
 import { ChevronRight, FileText, PenLine, Signature } from "lucide-react";
 
 import type { AppProps } from "../../App";
@@ -9,7 +9,9 @@ import { TransformometroShell } from "../../components/TransformometroShell";
 import { SelectField } from "../../components/ui/SelectField";
 import { buildAtaPath, TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { PORTAL_PAGE_COPY } from "../../constants/portalExperience";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { listAtas, type AtaListItem } from "../../data/api/transformometroMeetingMinutesApi";
+import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
 import { ATA_STATUS_LABELS } from "../meeting-minutes/meetingMinuteLabels";
 import {
   ataSignatureProgress,
@@ -61,9 +63,40 @@ export function MeetingMinutesPage({ getAccessToken, pathname, onNavigate }: Pro
     }
   }, [getAccessToken, status, unitCode]);
 
+  const loadRef = useRef(load);
+  useEffect(() => {
+    loadRef.current = load;
+  }, [load]);
+
+  const refetchTimerRef = useRef<number | null>(null);
+  const scheduleReload = useCallback(() => {
+    if (refetchTimerRef.current != null) {
+      window.clearTimeout(refetchTimerRef.current);
+    }
+    refetchTimerRef.current = window.setTimeout(() => {
+      refetchTimerRef.current = null;
+      void loadRef.current();
+    }, 350);
+  }, []);
+
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(
+    () => () => {
+      if (refetchTimerRef.current != null) {
+        window.clearTimeout(refetchTimerRef.current);
+      }
+    },
+    [],
+  );
+
+  useTransformometroCatalogWatch({
+    catalogId: "meeting_minute",
+    getAccessToken,
+    onUpdated: scheduleReload,
+  });
 
   const summary = useMemo(
     () => ({
@@ -102,6 +135,10 @@ export function MeetingMinutesPage({ getAccessToken, pathname, onNavigate }: Pro
           </>
         }
       />
+
+      <SectionHintLabel hint={TM_HELP_TOOLTIPS.meetingMinutes.realtimeSync}>
+        Sincronização em tempo real
+      </SectionHintLabel>
 
       <section className="tm-atas-summary" aria-label="Resumo das atas">
         <div className="tm-atas-summary__card">

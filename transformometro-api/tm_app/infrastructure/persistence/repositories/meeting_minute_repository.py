@@ -92,6 +92,51 @@ class MeetingMinuteRepository(PluginBaseRepository):
                 conn.rollback()
                 raise
 
+    def claim_updated_at(self, minute_id: str, expected_updated_at: str) -> dict[str, Any]:
+        """Atomic optimistic lock: bump updated_at only if it still matches.
+
+        Covers concurrent changes to header/content/participants/signers/status
+        once every mutation path touches ``updated_at``.
+        """
+        from tm_app.application.services.meeting_minute_conflict import (
+            MeetingMinuteConflictError,
+        )
+
+        expected = str(expected_updated_at or "").strip()
+        if not expected:
+            raise ValueError(
+                "expected_updated_at é obrigatório para evitar sobrescrita concorrente."
+            )
+        row = self.execute_returning_one(
+            f"""UPDATE {_S}.tm_meeting_minutes
+                SET updated_at=NOW()
+                WHERE id=%s::uuid AND deleted_at IS NULL
+                  AND updated_at=%s::timestamptz
+                RETURNING *""",
+            (minute_id, expected),
+        )
+        if row:
+            return row
+        existing = self.get_minute(minute_id)
+        if not existing:
+            raise LookupError("Ata não encontrada.")
+        current = existing.get("updated_at")
+        raise MeetingMinuteConflictError(
+            current_updated_at=str(current) if current is not None else None,
+        )
+
+    def touch_updated_at(self, minute_id: str) -> dict[str, Any]:
+        row = self.execute_returning_one(
+            f"""UPDATE {_S}.tm_meeting_minutes
+                SET updated_at=NOW()
+                WHERE id=%s::uuid AND deleted_at IS NULL
+                RETURNING *""",
+            (minute_id,),
+        )
+        if not row:
+            raise LookupError("Ata não encontrada.")
+        return row
+
     def update_minute_draft(self, minute_id: str, fields: dict[str, Any], actor_user_id: str) -> dict[str, Any]:
         allowed = {"title","meeting_type","meeting_date","start_time","end_time","location","responsible_user_id","responsible_name","chair_name","secretary_name"}
         fields = {k:v for k,v in fields.items() if k in allowed}
@@ -121,6 +166,8 @@ class MeetingMinuteRepository(PluginBaseRepository):
             agenda_html=%s,body_html=%s,decisions_html=%s,pending_html=%s,observations_html=%s,content_hash=%s
             WHERE id=%s RETURNING *""",(data["agenda_html"],data["body_html"],data["decisions_html"],data["pending_html"],data["observations_html"],data["content_hash"],minute["current_version_id"]))
         if not row: raise LookupError("Versão atual não encontrada.")
+        # Content mutations must advance the minute revision used by optimistic concurrency.
+        self.touch_updated_at(minute_id)
         return row
 
     def create_new_version(self, *, minute_id: str, change_reason: str, agenda_html: str, body_html: str, decisions_html: str, pending_html: str, observations_html: str, content_hash: str, actor_user_id: str) -> dict[str, Any]:
@@ -165,6 +212,12 @@ class MeetingMinuteRepository(PluginBaseRepository):
                          bool(item.get("is_external")), bool(item.get("must_sign")),
                          item.get("sort_order", index)))
                         rows.append(dict(cur.fetchone()))
+                    cur.execute(
+                        f"""UPDATE {_S}.tm_meeting_minutes
+                            SET updated_at=NOW()
+                            WHERE id=%s::uuid AND deleted_at IS NULL""",
+                        (minute_id,),
+                    )
                 conn.commit(); return rows
             except Exception:
                 conn.rollback()
@@ -189,6 +242,12 @@ class MeetingMinuteRepository(PluginBaseRepository):
                             minute_id,version_id,unit_code,user_id,invite_email,item["display_name"],item.get("sign_order",index+1),
                         ))
                         rows.append(dict(cur.fetchone()))
+                    cur.execute(
+                        f"""UPDATE {_S}.tm_meeting_minutes
+                            SET updated_at=NOW()
+                            WHERE id=%s::uuid AND deleted_at IS NULL""",
+                        (minute_id,),
+                    )
                 conn.commit(); return rows
             except Exception:
                 conn.rollback()

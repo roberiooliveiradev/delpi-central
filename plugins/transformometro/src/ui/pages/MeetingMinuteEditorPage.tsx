@@ -34,7 +34,9 @@ import {
   searchDirectoryUsers,
   sendAta,
   updateAta,
+  type AtaDetail,
 } from "../../data/api/transformometroMeetingMinutesApi";
+import { TransformometroHttpError } from "../../data/api/transformometroHttp";
 import {
   ATA_GENERATION_UNAVAILABLE_MESSAGE,
   requestAtaGenerationFromTranscript,
@@ -42,6 +44,9 @@ import {
   setMeetingMinuteGenerationPort,
 } from "../../ai/meetingMinuteGenerationPort";
 import { createHttpMeetingMinuteGenerationPort } from "../../ai/httpMeetingMinuteGenerationPort";
+import { useTransformometroEntityWatch } from "../../hooks/useTransformometroEntityWatch";
+import { getTransformometroClientId } from "../../utils/clientId";
+import { resolveCollaborativeEntityUpdate } from "../../utils/collaborativeEntityUpdate";
 import { mergeAtaContentHtml, splitAtaContentForSave } from "../meeting-minutes/meetingMinuteContent";
 import { ATA_MEETING_TYPE_LABELS } from "../meeting-minutes/meetingMinuteLabels";
 import {
@@ -88,7 +93,85 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
   const [docxTruncated, setDocxTruncated] = useState(false);
   const [currentId, setCurrentId] = useState<string | undefined>(ataId);
   const [postSave, setPostSave] = useState<PostSaveState>(null);
+  const [expectedUpdatedAt, setExpectedUpdatedAt] = useState<string | null>(null);
+  const [baselineKey, setBaselineKey] = useState<string | null>(null);
+  const [remoteBlocked, setRemoteBlocked] = useState(false);
+  const [editLocked, setEditLocked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const formSnapshotRef = useRef("");
+
+  function snapshotKey(input: {
+    title: string;
+    unitCode: string;
+    meetingType: string;
+    meetingDate: string;
+    startTime: string;
+    endTime: string;
+    location: string;
+    contentHtml: string;
+    participants: ParticipantDraft[];
+  }): string {
+    return JSON.stringify({
+      title: input.title,
+      unitCode: input.unitCode,
+      meetingType: input.meetingType,
+      meetingDate: input.meetingDate,
+      startTime: input.startTime,
+      endTime: input.endTime,
+      location: input.location,
+      contentHtml: input.contentHtml,
+      participants: input.participants.map((item) => ({
+        user_id: item.user_id ?? null,
+        display_name: item.display_name,
+        must_sign: item.must_sign,
+        invite_email: item.invite_email ?? null,
+        is_external: item.is_external,
+      })),
+    });
+  }
+
+  function applyDetail(detail: AtaDetail) {
+    const m = detail.minute;
+    const v = detail.version ?? {};
+    const nextTitle = String(m.title ?? "");
+    const nextUnit = String(m.unit_code ?? "01");
+    const nextType = String(m.meeting_type ?? "ordinary");
+    const nextDate = String(m.meeting_date ?? "").slice(0, 10);
+    const nextStart = String(m.start_time ?? "").slice(0, 5);
+    const nextEnd = String(m.end_time ?? "").slice(0, 5);
+    const nextLocation = String(m.location ?? "");
+    const nextContent = mergeAtaContentHtml(v as Parameters<typeof mergeAtaContentHtml>[0]);
+    const nextParticipants = hydrateParticipantsFromDetail(detail.participants, detail.signers);
+    setTitle(nextTitle);
+    setUnitCode(nextUnit);
+    setMeetingType(nextType);
+    setMeetingDate(nextDate);
+    setStartTime(nextStart);
+    setEndTime(nextEnd);
+    setShowTimes(Boolean(m.start_time || m.end_time));
+    setLocation(nextLocation);
+    setContentHtml(nextContent);
+    setParticipants(nextParticipants);
+    setCurrentId(String(detail.minute.id));
+    const updatedAt = m.updated_at != null ? String(m.updated_at) : null;
+    setExpectedUpdatedAt(updatedAt);
+    const key = snapshotKey({
+      title: nextTitle,
+      unitCode: nextUnit,
+      meetingType: nextType,
+      meetingDate: nextDate,
+      startTime: nextStart,
+      endTime: nextEnd,
+      location: nextLocation,
+      contentHtml: nextContent,
+      participants: nextParticipants,
+    });
+    setBaselineKey(key);
+    formSnapshotRef.current = key;
+    setRemoteBlocked(false);
+    const status = String(m.status ?? "");
+    setEditLocked(!(status === "draft" || status === "in_review"));
+  }
 
   useEffect(() => {
     setMeetingMinuteGenerationPort(createHttpMeetingMinuteGenerationPort(() => getAccessToken?.()));
@@ -98,27 +181,78 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
   useEffect(() => {
     if (!ataId) return;
     void getAta(ataId, getAccessToken)
-      .then((detail) => {
-        const m = detail.minute;
-        const v = detail.version ?? {};
-        setTitle(String(m.title ?? ""));
-        setUnitCode(String(m.unit_code ?? "01"));
-        setMeetingType(String(m.meeting_type ?? "ordinary"));
-        setMeetingDate(String(m.meeting_date ?? "").slice(0, 10));
-        setStartTime(String(m.start_time ?? "").slice(0, 5));
-        setEndTime(String(m.end_time ?? "").slice(0, 5));
-        setShowTimes(Boolean(m.start_time || m.end_time));
-        setLocation(String(m.location ?? ""));
-        setContentHtml(mergeAtaContentHtml(v as Parameters<typeof mergeAtaContentHtml>[0]));
-        setParticipants(
-          hydrateParticipantsFromDetail(detail.participants, detail.signers),
-        );
-        setCurrentId(String(detail.minute.id));
-      })
+      .then((detail) => applyDetail(detail))
       .catch((reason) =>
         setError(reason instanceof Error ? reason.message : "Erro ao carregar ata."),
       );
   }, [ataId, getAccessToken]);
+
+  const dirty = useMemo(() => {
+    if (!baselineKey) return Boolean(currentId);
+    const current = snapshotKey({
+      title,
+      unitCode,
+      meetingType,
+      meetingDate,
+      startTime,
+      endTime,
+      location,
+      contentHtml,
+      participants,
+    });
+    formSnapshotRef.current = current;
+    return current !== baselineKey;
+  }, [
+    baselineKey,
+    contentHtml,
+    currentId,
+    endTime,
+    location,
+    meetingDate,
+    meetingType,
+    participants,
+    startTime,
+    title,
+    unitCode,
+  ]);
+
+  useTransformometroEntityWatch({
+    entities: currentId
+      ? [{ entityType: "meeting_minute", entityId: currentId }]
+      : [],
+    getAccessToken,
+    enabled: Boolean(currentId),
+    onEntityUpdated: (event) => {
+      if (event.entityType !== "meeting_minute" || !currentId) return;
+      const decision = resolveCollaborativeEntityUpdate({
+        editingSectionKey: dirty ? "meeting_minute" : null,
+        updatedSectionKey: event.sectionKey ?? "meeting_minute",
+        actorClientId: event.actorClientId,
+        myClientId: getTransformometroClientId(),
+      });
+      if (decision.kind === "ignore_own") return;
+      if (event.action === "delete") {
+        setEditLocked(true);
+        setRemoteBlocked(true);
+        setError("Esta ata foi excluída e não pode mais ser salva.");
+        setNotice(null);
+        return;
+      }
+      if (decision.kind === "block_editing_conflict") {
+        setRemoteBlocked(true);
+        setNotice(decision.notice);
+        return;
+      }
+      void getAta(currentId, getAccessToken)
+        .then((detail) => {
+          applyDetail(detail);
+          if (decision.notice) setNotice(decision.notice);
+        })
+        .catch((reason) =>
+          setError(reason instanceof Error ? reason.message : "Erro ao sincronizar ata."),
+        );
+    },
+  });
 
   const searchUsers = useCallback(
     (search: string, limit = 10, signal?: AbortSignal) =>
@@ -259,6 +393,14 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
   }
 
   async function save(): Promise<string | null> {
+    if (editLocked || remoteBlocked) {
+      setError(
+        remoteBlocked
+          ? "Há uma atualização remota. Recarregue a ata antes de salvar."
+          : "Esta ata não pode ser editada no status atual.",
+      );
+      return null;
+    }
     if (!title.trim() || !meetingDate) {
       setError("Informe título e data da reunião.");
       return null;
@@ -272,6 +414,10 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
       );
       return null;
     }
+    if (currentId && !expectedUpdatedAt) {
+      setError("Estado da ata desatualizado. Recarregue antes de salvar.");
+      return null;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -280,7 +426,7 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
       const persistableParticipants = participants.filter(
         (item) => !item.unresolved_identity,
       );
-      const payload = {
+      const payload: Record<string, unknown> = {
         unit_code: unitCode,
         title: title.trim(),
         meeting_type: meetingType,
@@ -297,15 +443,26 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
           sign_order: index + 1,
         })),
       };
+      if (currentId && expectedUpdatedAt) {
+        payload.expected_updated_at = expectedUpdatedAt;
+      }
       const detail = currentId
         ? await updateAta(currentId, payload, getAccessToken)
         : await createAta(payload, getAccessToken);
+      applyDetail(detail);
       const id = String(detail.minute.id);
-      setCurrentId(id);
       setPostSave({ id });
       setNotice("Rascunho salvo.");
       return id;
     } catch (reason) {
+      if (reason instanceof TransformometroHttpError && reason.status === 409) {
+        setRemoteBlocked(true);
+        setError(
+          reason.message ||
+            "Conflito de edição: a ata mudou em outra sessão. Recarregue e reconcilie.",
+        );
+        return null;
+      }
       setError(reason instanceof Error ? reason.message : "Erro ao salvar ata.");
       return null;
     } finally {
@@ -345,10 +502,36 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
               <ArrowLeft size={16} aria-hidden />
               Voltar
             </ActionButton>
-            <ActionButton variant="primary" disabled={saving} onClick={() => void save()}>
+            <ActionButton
+              variant="primary"
+              disabled={saving || editLocked || remoteBlocked}
+              onClick={() => void save()}
+            >
               <Save size={16} aria-hidden />
               {saving ? "Salvando…" : "Salvar rascunho"}
             </ActionButton>
+            {remoteBlocked && currentId ? (
+              <ActionButton
+                variant="link"
+                onClick={() => {
+                  void getAta(currentId, getAccessToken)
+                    .then((detail) => {
+                      applyDetail(detail);
+                      setError(null);
+                      setNotice("Ata recarregada com a versão mais recente.");
+                    })
+                    .catch((reason) =>
+                      setError(
+                        reason instanceof Error
+                          ? reason.message
+                          : "Não foi possível recarregar a ata.",
+                      ),
+                    );
+                }}
+              >
+                Recarregar ata
+              </ActionButton>
+            ) : null}
           </>
         }
       />
@@ -762,7 +945,11 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
             <ActionButton onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.atas)}>
               Cancelar
             </ActionButton>
-            <ActionButton variant="primary" disabled={saving} onClick={() => void save()}>
+            <ActionButton
+              variant="primary"
+              disabled={saving || editLocked || remoteBlocked}
+              onClick={() => void save()}
+            >
               <Save size={16} aria-hidden />
               {saving ? "Salvando…" : "Salvar rascunho"}
             </ActionButton>
