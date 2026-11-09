@@ -47,6 +47,10 @@ import { createHttpMeetingMinuteGenerationPort } from "../../ai/httpMeetingMinut
 import { useTransformometroEntityWatch } from "../../hooks/useTransformometroEntityWatch";
 import { getTransformometroClientId } from "../../utils/clientId";
 import { resolveCollaborativeEntityUpdate } from "../../utils/collaborativeEntityUpdate";
+import {
+  buildMeetingMinuteEditorPagePath,
+  safeEntityPathLabel,
+} from "../../utils/tmPagePath";
 import { mergeAtaContentHtml, splitAtaContentForSave } from "../meeting-minutes/meetingMinuteContent";
 import { ATA_MEETING_TYPE_LABELS } from "../meeting-minutes/meetingMinuteLabels";
 import {
@@ -488,19 +492,31 @@ export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: P
   }
 
   const pageTitle = currentId ? "Editar ata" : "Nova ata";
+  const editorPathLabel = safeEntityPathLabel(title, "Ata");
 
   return (
     <TransformometroShell>
       <PageHeader
         title={pageTitle}
         subtitle="Transforma+ · preencha o registro ou gere a partir da transcrição."
+        path={buildMeetingMinuteEditorPagePath({
+          onNavigate,
+          ataId: currentId,
+          label: editorPathLabel,
+          mode: currentId ? "edit" : "new",
+        })}
         currentPath={TRANSFORMOMETRO_ROUTES.atas}
         onNavigate={onNavigate}
         actions={
           <>
-            <ActionButton variant="link" onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.atas)}>
+            <ActionButton
+              variant="link"
+              onClick={() =>
+                onNavigate(currentId ? buildAtaPath(currentId) : TRANSFORMOMETRO_ROUTES.atas)
+              }
+            >
               <ArrowLeft size={16} aria-hidden />
-              Voltar
+              {currentId ? "Cancelar edição" : "Cancelar"}
             </ActionButton>
             <ActionButton
               variant="primary"

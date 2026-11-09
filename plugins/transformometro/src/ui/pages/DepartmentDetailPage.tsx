@@ -29,6 +29,7 @@ import {
   type Setor,
 } from "../../data/api/transformometroApi";
 import { buildSetorPath } from "../../utils/routeParser";
+import { buildSettingsEntityPagePath, safeEntityPathLabel } from "../../utils/tmPagePath";
 import { valuesEqual } from "@delpi/plugin-ui/index";
 import { SetorFormFields } from "../departments/SetorFormFields";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
@@ -331,6 +332,17 @@ export function DepartmentDetailPage({
             ? "Cadastre departamento e vínculo com unidades"
             : `Status: ${setor?.status_setor ?? "ativo"}`
         }
+        path={buildSettingsEntityPagePath({
+          section: "departamentos",
+          onNavigate,
+          create: isCreate,
+          label: isCreate
+            ? null
+            : safeEntityPathLabel(
+                [setor?.codigo_setor, setor?.nome_setor].filter(Boolean).join(" — "),
+                "Departamento",
+              ),
+        })}
         currentPath={pathname ?? (isCreate ? buildSetorPath(CATALOG_CREATE.setor) : buildSetorPath(setorId))}
         onNavigate={onNavigate}
         actions={

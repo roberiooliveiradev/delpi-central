@@ -26,6 +26,7 @@ import { mapSelectOptionsFromItems } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { buildSettingsSectionPath } from "../../ui/settings/settingsWorkspaceNav";
 import { buildSetorPath } from "../../utils/routeParser";
+import { buildSettingsSectionPagePath } from "../../utils/tmPagePath";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
@@ -264,6 +265,7 @@ export function DepartmentsPage({ getAccessToken, pathname, onNavigate, embedded
       <PageHeader
         title="Departamentos"
         subtitle="Cadastro de departamentos e vínculo com unidades — usado nos processos"
+        path={buildSettingsSectionPagePath("departamentos", onNavigate)}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.setores}
         onNavigate={onNavigate}
         onRefresh={() => void load()}

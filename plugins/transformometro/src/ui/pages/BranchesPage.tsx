@@ -15,6 +15,7 @@ import { TransformometroShell } from "../../components/TransformometroShell";
 import { CATALOG_CREATE } from "../../constants/catalogRoutes";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { buildSettingsSectionPath } from "../../ui/settings/settingsWorkspaceNav";
+import { buildSettingsSectionPagePath } from "../../utils/tmPagePath";
 import {
   deleteFilial,
   fetchFiliais,
@@ -238,6 +239,7 @@ export function BranchesPage({ getAccessToken, pathname, onNavigate, embedded = 
       <PageHeader
         title="Unidades"
         subtitle="Cadastro de unidades — base para instâncias, departamentos e escopo do dashboard"
+        path={buildSettingsSectionPagePath("unidades", onNavigate)}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.filiais}
         onNavigate={onNavigate}
         onRefresh={() => void load()}

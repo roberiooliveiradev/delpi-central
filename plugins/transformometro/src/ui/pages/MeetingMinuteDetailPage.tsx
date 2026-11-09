@@ -36,6 +36,7 @@ import {
 import { useTransformometroEntityWatch } from "../../hooks/useTransformometroEntityWatch";
 import { getTransformometroClientId } from "../../utils/clientId";
 import { resolveCollaborativeEntityUpdate } from "../../utils/collaborativeEntityUpdate";
+import { buildMeetingMinuteDetailPagePath, safeEntityPathLabel } from "../../utils/tmPagePath";
 import { MeetingMinuteDocumentView } from "../meeting-minutes/MeetingMinuteDocumentView";
 import {
   canDeleteMeetingMinute,
@@ -153,6 +154,10 @@ export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNav
   const canSign = Boolean(detail?.viewer?.can_sign_now);
   const canDelete = canDeleteMeetingMinute(minute, detail?.signatures);
   const title = String(minute?.title ?? (loading ? "Carregando…" : "Ata"));
+  const pathLabel = safeEntityPathLabel(
+    String(minute?.minute_number || minute?.title || ""),
+    loading ? "Carregando…" : "Ata",
+  );
   const meetingType =
     ATA_MEETING_TYPE_LABELS[String(minute?.meeting_type ?? "")] ?? "Reunião";
 
@@ -220,6 +225,7 @@ export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNav
       <PageHeader
         title={title}
         subtitle="Visualização da ata Transforma+"
+        path={buildMeetingMinuteDetailPagePath({ onNavigate, label: pathLabel })}
         currentPath={pathname}
         onNavigate={onNavigate}
         onRefresh={() => void load()}

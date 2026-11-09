@@ -26,6 +26,7 @@ import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { TmNativeTextAreaField, TmNativeTextField } from "../../components/ui/tmNativeFormFields";
 import { PORTAL_PAGE_COPY } from "../../constants/portalExperience";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import { buildRootSectionPagePath } from "../../utils/tmPagePath";
 import { fetchMeProfile } from "../../data/api/meApi";
 import { searchDirectoryUsers } from "../../data/api/transformometroMeetingMinutesApi";
 import {
@@ -305,6 +306,7 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
       eyebrow={PORTAL_PAGE_COPY.myTasks.eyebrow}
       title={PORTAL_PAGE_COPY.myTasks.title}
       subtitle={PORTAL_PAGE_COPY.myTasks.description}
+      path={buildRootSectionPagePath(PORTAL_PAGE_COPY.myTasks.title, onNavigate)}
       currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.myTasks}
       onNavigate={onNavigate}
       refreshing={refreshing}

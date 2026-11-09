@@ -1,16 +1,28 @@
 import type { ReactNode } from "react";
 import { RefreshCw } from "lucide-react";
-import { PageHero, pageHeroBemClasses, LoadingActivityBadge, type PageHeroHighlight } from "@delpi/plugin-ui/index";
+import {
+  PageHero,
+  pageHeroBemClasses,
+  LoadingActivityBadge,
+  type DashboardPagePathProps,
+  type PageHeroHighlight,
+} from "@delpi/plugin-ui/index";
 
 import { PORTAL_PRODUCT_NAME } from "../constants/portalExperience";
 import { DS_GHOST_BTN } from "./ghostChrome";
+import { TmPagePath } from "./tmChromeUi";
 import "./PageHeader.css";
+
+export type PageHeaderPath = DashboardPagePathProps;
 
 type PageHeaderProps = {
   title: ReactNode;
   subtitle: ReactNode;
   eyebrow?: ReactNode;
+  /** Custom lead slot. When omitted, `path` renders the canonical TmPagePath. */
   lead?: ReactNode;
+  /** Canonical hierarchical path (TmPagePath) rendered above the hero. */
+  path?: PageHeaderPath;
   /** @deprecated TopBar do portal vive no App; mantido só por compatibilidade de call sites. */
   currentPath?: string;
   /** @deprecated TopBar do portal vive no App; mantido só por compatibilidade de call sites. */
@@ -30,6 +42,7 @@ export function PageHeader({
   subtitle,
   eyebrow = PORTAL_PRODUCT_NAME,
   lead,
+  path,
   onRefresh,
   refreshing = false,
   actions,
@@ -37,9 +50,11 @@ export function PageHeader({
   highlights,
   children,
 }: PageHeaderProps) {
+  const pathLead = path ? <TmPagePath {...path} /> : null;
+
   return (
     <>
-      {lead}
+      {lead ?? pathLead}
       <PageHero
         classNames={HERO}
         density="compact"

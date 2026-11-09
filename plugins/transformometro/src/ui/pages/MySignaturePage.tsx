@@ -4,17 +4,18 @@ import {
   NativeTextControl,
   SignatureCapturePanel,
 } from "@delpi/plugin-ui/index";
-import { ArrowLeft, Save } from "lucide-react";
+import { Save } from "lucide-react";
 
 import type { AppProps } from "../../App";
+import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
   fetchSignatureImageBlob,
   getSignatureProfile,
   updateSignatureProfile,
   uploadSignature,
 } from "../../data/api/transformometroMeetingMinutesApi";
+import { buildMySignaturePagePath } from "../../utils/tmPagePath";
 
 type Props = Pick<AppProps, "getAccessToken"> & { onNavigate?: (path: string) => void };
 
@@ -84,9 +85,21 @@ export function MySignaturePage({ getAccessToken, onNavigate }: Props) {
 
   return (
     <TransformometroShell>
+      {onNavigate ? (
+        <PageHeader
+          title="Minha assinatura"
+          subtitle="Configure o nome e o traço reutilizados nas atas Transforma+."
+          path={buildMySignaturePagePath(onNavigate)}
+          onNavigate={onNavigate}
+        />
+      ) : null}
       <section className="ds-card">
-        <h1>Minha assinatura</h1>
-        <p>Configure o nome e o traço reutilizados nas atas Transforma+.</p>
+        {!onNavigate ? (
+          <>
+            <h1>Minha assinatura</h1>
+            <p>Configure o nome e o traço reutilizados nas atas Transforma+.</p>
+          </>
+        ) : null}
         {error ? <p role="alert">{error}</p> : null}
         {success ? <p role="status">{success}</p> : null}
         <label className="ds-field">
@@ -125,12 +138,6 @@ export function MySignaturePage({ getAccessToken, onNavigate }: Props) {
             <Save size={16} aria-hidden />
             Salvar assinatura
           </ActionButton>
-          {onNavigate ? (
-            <ActionButton variant="ghost" onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.atas)}>
-              <ArrowLeft size={16} aria-hidden />
-              Voltar às atas
-            </ActionButton>
-          ) : null}
         </div>
       </section>
     </TransformometroShell>

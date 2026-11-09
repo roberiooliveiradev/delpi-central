@@ -29,6 +29,7 @@ import {
   type OptionsData,
 } from "../../data/api/transformometroApi";
 import { buildFilialPath } from "../../utils/routeParser";
+import { buildSettingsEntityPagePath, safeEntityPathLabel } from "../../utils/tmPagePath";
 import { valuesEqual } from "@delpi/plugin-ui/index";
 import { FilialFormFields } from "../branches/FilialFormFields";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
@@ -305,6 +306,17 @@ export function BranchDetailPage({
             ? "Cadastre uma unidade para instâncias, departamentos e escopo do dashboard"
             : `Status: ${filial?.status_filial ?? "ativo"}`
         }
+        path={buildSettingsEntityPagePath({
+          section: "unidades",
+          onNavigate,
+          create: isCreate,
+          label: isCreate
+            ? null
+            : safeEntityPathLabel(
+                [filial?.codigo_filial, filial?.nome_filial].filter(Boolean).join(" — "),
+                "Unidade",
+              ),
+        })}
         currentPath={pathname ?? (isCreate ? buildFilialPath(CATALOG_CREATE.filial) : buildFilialPath(filialId))}
         onNavigate={onNavigate}
         actions={

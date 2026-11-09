@@ -9,8 +9,9 @@ import {
 import { Check, PenLine } from "lucide-react";
 
 import type { AppProps } from "../../App";
+import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { buildAtaPath, TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import { buildAtaPath } from "../../constants/routes";
 import {
   fetchSignatureImageBlob,
   getAtaSignContext,
@@ -19,6 +20,10 @@ import {
   signAta,
   type AtaDetail,
 } from "../../data/api/transformometroMeetingMinutesApi";
+import {
+  buildMeetingMinuteSignPagePath,
+  safeEntityPathLabel,
+} from "../../utils/tmPagePath";
 import { MeetingMinuteDocumentView } from "../meeting-minutes/MeetingMinuteDocumentView";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -127,11 +132,25 @@ export function MeetingMinuteSignPage({ getAccessToken, ataId, onNavigate }: Pro
       }
     : null;
 
+  const minute = (context?.minute as Record<string, unknown> | undefined) ?? null;
+  const pathLabel = safeEntityPathLabel(
+    String(minute?.minute_number || minute?.title || ""),
+    "Ata",
+  );
+
   return (
     <TransformometroShell>
+      <PageHeader
+        title="Assinar ata"
+        subtitle="Leia o documento, confirme seu nome e assine."
+        path={buildMeetingMinuteSignPagePath({
+          onNavigate,
+          ataId,
+          label: pathLabel,
+        })}
+        onNavigate={onNavigate}
+      />
       <section className="ds-card">
-        <h1>Assinar ata</h1>
-        <p className="ds-muted">Leia o documento, confirme seu nome e assine.</p>
         {error ? <p role="alert">{error}</p> : null}
         {detail ? <MeetingMinuteDocumentView detail={detail} /> : null}
 
@@ -199,8 +218,8 @@ export function MeetingMinuteSignPage({ getAccessToken, ataId, onNavigate }: Pro
           </>
         )}
 
-        <ActionButton variant="link" onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.atas)}>
-          Voltar
+        <ActionButton variant="link" onClick={() => onNavigate(buildAtaPath(ataId))}>
+          Cancelar assinatura
         </ActionButton>
       </section>
     </TransformometroShell>

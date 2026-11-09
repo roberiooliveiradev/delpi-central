@@ -1,9 +1,7 @@
 import {
   ActionButton,
-  PagePath,
   SectionCard,
   createDashboardUserManual,
-  pagePathBemClasses,
   sectionCardPacBemClasses,
 } from "@delpi/plugin-ui/index";
 import { BookOpen } from "lucide-react";
@@ -21,9 +19,9 @@ import {
   type ProductGuideHelpTopic,
 } from "../../data/api/transformometroProductGuideApi";
 import { useCanManagePortal } from "../../state/portalChrome";
+import { buildRootSectionPagePath } from "../../utils/tmPagePath";
 
 const SECTION = sectionCardPacBemClasses("ds");
-const PATH = pagePathBemClasses("ds");
 const Manual = createDashboardUserManual({ prefix: "ds" });
 const SECTION_LABELS = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
@@ -42,6 +40,7 @@ export function HelpPage({ getAccessToken, pathname, onNavigate }: HelpPageProps
   const manual = USER_MANUAL_CONTENT;
   const canManage = useCanManagePortal();
   const home = TRANSFORMOMETRO_ROUTES.home;
+  const pagePath = buildRootSectionPagePath(copy.title, onNavigate);
   const [topicsById, setTopicsById] = useState<Map<string, ProductGuideHelpTopic> | null>(null);
   const [guidesLoaded, setGuidesLoaded] = useState(false);
 
@@ -80,24 +79,9 @@ export function HelpPage({ getAccessToken, pathname, onNavigate }: HelpPageProps
         }
         title={copy.title}
         subtitle={copy.description}
+        path={pagePath}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.help}
         onNavigate={onNavigate}
-        lead={
-          <PagePath
-            classNames={PATH}
-            portalScopeClassName="dashboard-transformometro"
-            back={{
-              label: "Início",
-              href: home,
-              onNavigate: (event) => {
-                event.preventDefault();
-                onNavigate(home);
-              },
-            }}
-            items={[]}
-            current={copy.title}
-          />
-        }
         actions={
           <ActionButton variant="ghost" onClick={() => onNavigate(home)}>
             {manual.backHome}

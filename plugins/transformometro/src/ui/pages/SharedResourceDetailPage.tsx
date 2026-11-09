@@ -38,6 +38,7 @@ import {
 } from "../../data/api/transformometroApi";
 import { optionalDateField, toDateInputValue } from "../../utils/dateInputs";
 import { buildProcessoPath, buildRecursoPath, buildRecursoSectionPath } from "../../utils/routeParser";
+import { buildSettingsEntityPagePath, safeEntityPathLabel } from "../../utils/tmPagePath";
 import { SharedResourceWorkspaceSectionPanel } from "../settings/SharedResourceWorkspaceSectionPanel";
 import type { RecursoWorkspaceSectionId } from "../settings/settingsWorkspaceNav";
 import { defaultRecursoSection } from "../settings/settingsWorkspaceNav";
@@ -673,6 +674,17 @@ export function SharedResourceDetailPage({
             ? "Cadastre licenças e ferramentas compartilhadas do catálogo global"
             : "Detalhes, histórico de custos e processos vinculados"
         }
+        path={buildSettingsEntityPagePath({
+          section: "recursos",
+          onNavigate,
+          create: isCreate,
+          label: isCreate
+            ? null
+            : safeEntityPathLabel(
+                [recurso?.codigo_recurso, recurso?.nome_recurso].filter(Boolean).join(" — "),
+                "Recurso",
+              ),
+        })}
         currentPath={
           pathname ?? (isCreate ? buildRecursoPath(CATALOG_CREATE.recurso) : buildRecursoPath(recursoId))
         }

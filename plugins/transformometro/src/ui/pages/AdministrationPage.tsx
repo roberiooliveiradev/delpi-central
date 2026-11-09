@@ -6,6 +6,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { PORTAL_ADMIN_LINKS, PORTAL_PAGE_COPY } from "../../constants/portalExperience";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import { buildRootSectionPagePath } from "../../utils/tmPagePath";
 
 const ROUTE_CARD = sectionRouteCardBemClasses("ds");
 
@@ -22,6 +23,7 @@ export function AdministrationPage({ pathname, onNavigate }: AdministrationPageP
         eyebrow={PORTAL_PAGE_COPY.administration.eyebrow}
         title={PORTAL_PAGE_COPY.administration.title}
         subtitle={PORTAL_PAGE_COPY.administration.description}
+        path={buildRootSectionPagePath(PORTAL_PAGE_COPY.administration.title, onNavigate)}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.administration}
         onNavigate={onNavigate}
       />

@@ -12,6 +12,7 @@ import { PORTAL_PAGE_COPY } from "../../constants/portalExperience";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { listAtas, type AtaListItem } from "../../data/api/transformometroMeetingMinutesApi";
 import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
+import { buildMeetingMinutesListPagePath } from "../../utils/tmPagePath";
 import { ATA_STATUS_LABELS } from "../meeting-minutes/meetingMinuteLabels";
 import {
   ataSignatureProgress,
@@ -114,6 +115,7 @@ export function MeetingMinutesPage({ getAccessToken, pathname, onNavigate }: Pro
         eyebrow={PORTAL_PAGE_COPY.meetingMinutes.eyebrow}
         title={PORTAL_PAGE_COPY.meetingMinutes.title}
         subtitle={PORTAL_PAGE_COPY.meetingMinutes.description}
+        path={buildMeetingMinutesListPagePath(onNavigate)}
         currentPath={pathname}
         onNavigate={onNavigate}
         onRefresh={() => void load()}

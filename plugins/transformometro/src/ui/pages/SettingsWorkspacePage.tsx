@@ -4,7 +4,7 @@ import { ArrowLeft, Plus } from "lucide-react";
 import type { AppProps } from "../../App";
 import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { CATALOG_CREATE } from "../../constants/catalogRoutes";
+import { CATALOG_CREATE, isCatalogCreateId } from "../../constants/catalogRoutes";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { PORTAL_PAGE_COPY } from "../../constants/portalExperience";
 import {
@@ -13,6 +13,10 @@ import {
   buildSetorPath,
   type ParsedTransformometroRoute,
 } from "../../utils/routeParser";
+import {
+  buildSettingsEntityPagePath,
+  buildSettingsSectionPagePath,
+} from "../../utils/tmPagePath";
 import { BranchesPage } from "./BranchesPage";
 import { BranchDetailPage } from "./BranchDetailPage";
 import { SharedResourcesPage } from "./SharedResourcesPage";
@@ -203,12 +207,34 @@ export function SettingsWorkspacePage({ getAccessToken, route, pathname, onNavig
     );
   }
 
+  const settingsPath =
+    route.view === "filial" && route.filialId
+      ? buildSettingsEntityPagePath({
+          section: "unidades",
+          onNavigate,
+          create: isCatalogCreateId("filial", route.filialId),
+        })
+      : route.view === "setor" && route.setorId
+        ? buildSettingsEntityPagePath({
+            section: "departamentos",
+            onNavigate,
+            create: isCatalogCreateId("setor", route.setorId),
+          })
+        : route.view === "recurso" && route.recursoId
+          ? buildSettingsEntityPagePath({
+              section: "recursos",
+              onNavigate,
+              create: isCatalogCreateId("recurso", route.recursoId),
+            })
+          : buildSettingsSectionPagePath(section, onNavigate);
+
   return (
     <TransformometroShell>
       <PageHeader
         eyebrow={PORTAL_PAGE_COPY.settings.eyebrow}
         title={PORTAL_PAGE_COPY.settings.title}
         subtitle={PORTAL_PAGE_COPY.settings.description}
+        path={settingsPath}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.configuracoesUnidades}
         onNavigate={onNavigate}
       />

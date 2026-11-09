@@ -25,6 +25,7 @@ import { toDateInputValue } from "../../utils/dateInputs";
 import { formatCurrency } from "../../utils/format";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { buildRecursoPath } from "../../utils/routeParser";
+import { buildSettingsSectionPagePath } from "../../utils/tmPagePath";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
@@ -256,6 +257,7 @@ export function SharedResourcesPage({ getAccessToken, pathname, onNavigate, embe
       <PageHeader
         title="Recursos compartilhados"
         subtitle="Catálogo global — vincule às revisões em Processos para rateio no dashboard"
+        path={buildSettingsSectionPagePath("recursos", onNavigate)}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.recursos}
         onNavigate={onNavigate}
         onRefresh={() => void load()}

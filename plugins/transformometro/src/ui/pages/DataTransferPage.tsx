@@ -11,6 +11,7 @@ import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { useFloatingNotice } from "../../components/ui/FloatingNoticeProvider";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { PORTAL_PAGE_COPY } from "../../constants/portalExperience";
+import { buildRootSectionPagePath } from "../../utils/tmPagePath";
 import {
   applyJsonImport,
   applyPackageImport,
@@ -239,6 +240,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
         eyebrow={PORTAL_PAGE_COPY.data.eyebrow}
         title={PORTAL_PAGE_COPY.data.title}
         subtitle={PORTAL_PAGE_COPY.data.description}
+        path={buildRootSectionPagePath(PORTAL_PAGE_COPY.data.title, onNavigate)}
         currentPath={pathname}
         onNavigate={onNavigate}
       />

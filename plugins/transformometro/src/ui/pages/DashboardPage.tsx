@@ -30,6 +30,7 @@ import {
 import { MultiSelectField } from "../../components/MultiSelectField";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { PORTAL_PAGE_COPY } from "../../constants/portalExperience";
+import { buildRootSectionPagePath } from "../../utils/tmPagePath";
 import { ChartCard } from "../../components/ChartCard";
 import { KpiCard } from "../../components/KpiCard";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
@@ -666,6 +667,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           eyebrow={PORTAL_PAGE_COPY.overview.eyebrow}
           title={PORTAL_PAGE_COPY.overview.title}
           subtitle={PORTAL_PAGE_COPY.overview.description}
+          path={buildRootSectionPagePath(PORTAL_PAGE_COPY.overview.title, onNavigate)}
           currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.dashboard}
           onNavigate={onNavigate}
           badge={
@@ -702,6 +704,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         eyebrow={PORTAL_PAGE_COPY.overview.eyebrow}
         title={PORTAL_PAGE_COPY.overview.title}
         subtitle={PORTAL_PAGE_COPY.overview.description}
+        path={buildRootSectionPagePath(PORTAL_PAGE_COPY.overview.title, onNavigate)}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.dashboard}
         onNavigate={onNavigate}
         badge={
