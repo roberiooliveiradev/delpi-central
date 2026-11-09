@@ -601,3 +601,13 @@ Plano documental aprovado para reconstruir as analises reais de Joyce, identific
 
 
 > **09/11/2026 — CF-UX-053, diretriz PO de execução integral:** CLARA não deve reproduzir RBAC da Core, deve manter apenas resource scope/business gates da BFF, e seguir confirmação conversacional padrão TÉO sem página externa como UX TARGET. **Sem alteração do runtime nesta documentação e sem dispensa automática do V014.** Plano de execução e DoD sem entregas parciais: [doc 161](./161-cf-ux-053-decisao-po-fronteira-core-e-execucao-conversacional-2026-11-09.md); decisão de segurança: doc 150 §20.10.
+
+
+
+### CF-UX-053 — política conversacional R-CLARA-01 V2 (09/11/2026)
+
+**Código e contrato de canal revisados em main; deploy e homologação ainda não comprovados neste registro.** Decisão do PO e responsável da área no [doc 150 §20.16](./150-plano-unico-correcao-integral-portal-ux-funcional-2026-11-02.md); implementação de código e handoff no [doc 150 §20.19](./150-plano-unico-correcao-integral-portal-ux-funcional-2026-11-02.md). Política consolidada no [doc 124 §11](./124-clara-write-execution-risk-policy.md) e atualização do [doc 161 §8](./161-cf-ux-053-decisao-po-fronteira-core-e-execucao-conversacional-2026-11-09.md).
+
+A CLARA mantém default Portal V014; o TARGET conversacional é habilitado **exclusivamente pela seleção de ambiente de backend** `CLARA_CONSENT_CHANNEL=conversational`. O antigo `CLARA_CONVERSATIONAL_SECURITY_ACK` foi descontinuado e não deve ser preenchido como assinatura fictícia. A mudança de garantia de consentimento foi documentada como risco operacional aceito pelo owner, sem alegar atestação humana externa ao MCP. O BFF conserva Core permissions, resource/business gates, plano selado, OCC/TTL, idempotência, auditoria e read-back. Nenhuma migration aplicada, plugin Core ou permissão foram alterados.
+
+**Gate real:** testes de regressão e PostgreSQL + MCP contract + deploy + restart + verificação autenticada da policy + smoke ChatGPT em recurso de teste. O código no repositório **não prova** cutover produtivo.
