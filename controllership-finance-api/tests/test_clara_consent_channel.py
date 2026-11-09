@@ -1,7 +1,7 @@
 """CF-UX-053 — consent channel policy and TÉO-shaped confirmation gate.
 
-Default remains Portal V014. confirmation=true alone never authorizes
-unless the Security acknowledgement arms conversational ACT.
+Default remains Portal V014; explicit server-side conversational selection
+enables the owner-accepted TÉO policy. The MCP signal is not V014 proof.
 """
 
 from __future__ import annotations
@@ -12,9 +12,6 @@ from unittest.mock import MagicMock
 import pytest
 
 from controllership_finance_app.application.clara import consent_channel as cc
-from controllership_finance_app.application.clara.consent_channel import (
-    SECURITY_ACK_VALUE,
-)
 from controllership_finance_app.application.clara.governed_writes import (
     ClaraGovernedWrites,
 )
@@ -39,34 +36,26 @@ def test_default_channel_is_portal(channel_settings):
     assert cc.prepare_status() == "proposal_pending_confirmation"
 
 
-def test_conversational_without_ack_keeps_portal(channel_settings):
+def test_conversational_explicit_channel_needs_no_signature(channel_settings):
     channel_settings.CLARA_CONSENT_CHANNEL = "conversational"
-    assert cc.conversational_act_enabled() is False
-    assert cc.portal_consent_required() is True
-    assert "confirmation_url" in cc.confirmation_instruction_for_prepare()
-
-
-def test_conversational_with_wrong_ack_keeps_portal(channel_settings):
-    channel_settings.CLARA_CONSENT_CHANNEL = "conversational"
-    channel_settings.CLARA_CONVERSATIONAL_SECURITY_ACK = "yes"
-    assert cc.conversational_act_enabled() is False
-    assert cc.portal_consent_required() is True
-
-
-def test_conversational_armed_only_with_exact_ack(channel_settings):
-    channel_settings.CLARA_CONSENT_CHANNEL = "conversational"
-    channel_settings.CLARA_CONVERSATIONAL_SECURITY_ACK = SECURITY_ACK_VALUE
     assert cc.conversational_act_enabled() is True
     assert cc.portal_consent_required() is False
-    instruction = cc.confirmation_instruction_for_prepare()
-    assert "confirmation=true" in instruction
-    assert "armado" in instruction.lower() or "acknowledgement" in instruction
+    assert "confirmation=true" in cc.confirmation_instruction_for_prepare()
+    assert "acknowledgement" not in cc.confirmation_instruction_for_prepare()
 
 
-def test_dual_with_ack_keeps_portal_url_requirement(channel_settings):
+def test_legacy_ack_cannot_activate_portal(channel_settings):
+    # Obsolete string never turns a Portal deployment into conversational.
+    channel_settings.CLARA_CONVERSATIONAL_SECURITY_ACK = (
+        "R-CLARA-01-TEO-EQUIVALENCE-ACCEPTED"
+    )
+    assert cc.conversational_act_enabled() is False
+    assert cc.portal_consent_required() is True
+
+
+def test_dual_keeps_portal_requirement(channel_settings):
     channel_settings.CLARA_CONSENT_CHANNEL = "dual"
-    channel_settings.CLARA_CONVERSATIONAL_SECURITY_ACK = SECURITY_ACK_VALUE
-    assert cc.conversational_act_enabled() is True
+    assert cc.conversational_act_enabled() is False
     assert cc.portal_consent_required() is True
 
 
@@ -85,7 +74,6 @@ def test_phase_policy_default_mentions_portal_and_teo(channel_settings):
 
 def test_phase_policy_armed_omits_mandatory_portal(channel_settings):
     channel_settings.CLARA_CONSENT_CHANNEL = "conversational"
-    channel_settings.CLARA_CONVERSATIONAL_SECURITY_ACK = SECURITY_ACK_VALUE
     policy = cc.phase_policy_for_capability(direct=False)
     assert "sem página Portal obrigatória" in policy
     assert "confirmation=true" in policy
@@ -128,10 +116,10 @@ def _sealed_proposal(**over):
     return base
 
 
-def test_commit_confirmation_true_alone_rejected_without_ack(
+def test_portal_commit_confirmation_true_alone_rejected(
     channel_settings, monkeypatch
 ):
-    """CURRENT_RUNTIME: confirmation=true must not bypass V014."""
+    """Explicit portal mode rejects an MCP-only confirmation."""
     monkeypatch.setattr(
         "controllership_finance_app.application.clara.governed_writes."
         "present_operation",
@@ -153,7 +141,7 @@ def test_commit_confirmation_true_alone_rejected_without_ack(
     gw._proposals.claim.assert_not_called()
 
 
-def test_commit_armed_conversational_records_mcp_consent(
+def test_commit_explicit_conversational_records_mcp_consent(
     channel_settings, monkeypatch
 ):
     from controllership_finance_app.application.clara.governed_writes import (
@@ -164,7 +152,6 @@ def test_commit_armed_conversational_records_mcp_consent(
     )
 
     channel_settings.CLARA_CONSENT_CHANNEL = "conversational"
-    channel_settings.CLARA_CONVERSATIONAL_SECURITY_ACK = SECURITY_ACK_VALUE
     monkeypatch.setattr(
         "controllership_finance_app.application.clara.governed_writes."
         "present_operation",
@@ -188,7 +175,8 @@ def test_commit_armed_conversational_records_mcp_consent(
                 "consent_record": {
                     "type": "mcp_tool_confirmation",
                     "confirmed_by": "sub-1",
-                    "security_ack": True,
+                    "confirmation_policy": cc.CONVERSATIONAL_POLICY_VERSION,
+                    "consent_channel": "conversational",
                     "plan_hash": plan_hash,
                 },
             }
@@ -200,7 +188,8 @@ def test_commit_armed_conversational_records_mcp_consent(
         "consent_record": {
             "type": "mcp_tool_confirmation",
             "confirmed_by": "sub-1",
-            "security_ack": True,
+            "confirmation_policy": cc.CONVERSATIONAL_POLICY_VERSION,
+            "consent_channel": "conversational",
             "plan_hash": plan_hash,
         },
     }
@@ -218,16 +207,52 @@ def test_commit_armed_conversational_records_mcp_consent(
     assert gw._proposals.record_consent.called
     consent = gw._proposals.record_consent.call_args.kwargs["consent_record"]
     assert consent["type"] == "mcp_tool_confirmation"
-    assert consent["security_ack"] is True
+    assert consent["confirmation_policy"] == cc.CONVERSATIONAL_POLICY_VERSION
+    assert consent["consent_channel"] == "conversational"
+    assert "security_ack" not in consent
     assert consent["plan_hash"] == plan_hash
 
 
-def test_commit_armed_without_confirmation_flag_rejected(channel_settings):
+def test_commit_conversational_without_confirmation_flag_rejected(channel_settings):
     channel_settings.CLARA_CONSENT_CHANNEL = "conversational"
-    channel_settings.CLARA_CONVERSATIONAL_SECURITY_ACK = SECURITY_ACK_VALUE
     gw = _governed_for_consent()
     gw._proposals.load_any_for_actor.return_value = _sealed_proposal()
     with pytest.raises(ConsentRequired) as exc:
         gw.commit(handle="h-opaque", actor_sub="sub-1", confirmation=False)
     assert "confirmation=true" in str(exc.value)
     gw._proposals.claim.assert_not_called()
+
+
+
+@pytest.mark.parametrize(
+    "record_override",
+    [
+        {"confirmed_by": "another-actor"},
+        {"plan_hash": "invalid-hash"},
+        {"consent_channel": "portal"},
+        {"confirmation_policy": "legacy-ack"},
+    ],
+)
+def test_conversational_record_must_match_sealed_actor_plan_and_policy(
+    channel_settings, record_override
+):
+    from controllership_finance_app.application.clara.step_up_consent import (
+        proposal_plan_hash,
+    )
+
+    channel_settings.CLARA_CONSENT_CHANNEL = "conversational"
+    proposal = _sealed_proposal()
+    record = {
+        "type": "mcp_tool_confirmation",
+        "confirmed_by": "sub-1",
+        "plan_hash": proposal_plan_hash(
+            proposal["capability"], proposal["payload"], proposal["expected_state"]
+        ),
+        "consent_channel": "conversational",
+        "confirmation_policy": cc.CONVERSATIONAL_POLICY_VERSION,
+    }
+    record.update(record_override)
+    proposal["consent_record"] = record
+    gw = _governed_for_consent()
+    with pytest.raises(ConsentRequired):
+        gw._require_consent(proposal)
