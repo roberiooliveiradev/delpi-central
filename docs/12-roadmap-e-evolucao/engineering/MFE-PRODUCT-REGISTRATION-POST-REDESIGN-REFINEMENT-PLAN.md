@@ -609,5 +609,25 @@ O PO aprovou nova apresentação **sem duplicar código/loja/razão social**: co
 - C07 SA5 remove gate PENDING_OWNER, nenhum write ERP; REST/EVA equivalentes.
 - C08 pytest/Vitest/PG real, Playwright SSO desktop/tablet/mobile, screenshots (incluindo erro, sucesso e falta de código), regressão D13–D16, bundle DEV e docs no SHA; produção/HML intocados.
 
-**Status:** PO_APPROVED_PLAN / CODE_CHANGES_NOT_PERFORMED / DEV_IMPLEMENTATION_PENDING.
+### F. Resultado da execução (ENG-PRC-REF-017)
+
+| Item | Estado |
+|---|---|
+| D16-REF-02 Flag azul (`Plus` → `Flag`) + CSS `--add` azul | **PROVEN** |
+| CREATE intake sem código; código obrigatório só em `verify-and-complete` | **PROVEN** |
+| UPDATE `officialCode` imutável na conclusão (422 `immutable`) | **PROVEN** |
+| `field_results` com `previous`/`expected`/`observed` + seletividade | **PROVEN** |
+| Aba Verificação TOTVS: Anterior (UPDATE) / Solicitado / Encontrado | **PROVEN** |
+| ActionBar CREATE editável × UPDATE readOnly + labels/hints | **PROVEN** |
+| Identidade CREATE além de B1_COD (timestamp/owner ERP) | **PENDING_OWNER** — gate vigente = match integral; sem inventar campos |
+| REST × EVA (mesmo `verify_and_complete`) | **PROVEN** (sem tool MCP nova) |
+| Pytest `TestVerifyAndComplete` + regressão PRC/EVA/D15 | **PROVEN** |
+| Vitest Flag/ActionBar + suite product-registration | **PROVEN** |
+| Postgres real (`ENG_PRC_TEST_DSN`) | **PROVEN** parcial (4/5; residual código PG001 pré-existente no DEV) |
+| Deploy DEV engineering + engineering-api | **PROVEN** (rebuild `infra-engineering`, restart API bind-mount; bundle `App-BtGihuZm.js` contém labels CREATE/UPDATE) |
+| Playwright Flag azul/vermelha desktop+tablet+mobile | **PROVEN** (3 passed; screenshots `prc-ref017-flag-*`) |
+| Playwright diálogo verify CREATE/UPDATE | **SKIPPED** — nenhum caso `under_review` com verify permitido no DEV na execução |
+| HML / produção | **NOT_PERFORMED** |
+
+**Status:** EXECUTED_DEV / PENDING_OWNER (proveniência CREATE) / PENDING_TOTVS_OPERATOR (homologação positiva CREATE real) / PLAYWRIGHT_VERIFY_DIALOG_SKIPPED.
 

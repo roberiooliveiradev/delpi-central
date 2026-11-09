@@ -858,13 +858,47 @@ class ProductRegistrationService:
         request = self._get_scoped(request_id, actor)
         if request["status"] != "under_review":
             raise PrcStateConflictError("state_conflict")
-        code = (official_code or request.get("official_product_code") or "")
-        if not code.strip():
+        # PRC-REF-017 — CREATE exige código informado na conclusão;
+        # UPDATE trava no código oficial da solicitação/baseline.
+        #
+        # Identidade CREATE: o contrato oficial (api-delpi → SB1/SA5)
+        # não expõe proveniência de criação amarrada ao requestId.
+        # Gate vigente = código informado + existência + correspondência
+        # integral dos campos verificáveis. Proveniência inequívoca de
+        # "criado neste atendimento" permanece PENDING_OWNER até o ERP
+        # disponibilizar evidência autorizada (sem inventar campos).
+        existing_code = (
+            str(request.get("official_product_code") or "").strip()
+        )
+        provided = str(official_code or "").strip()
+        if request["request_type"] == "update":
+            if not existing_code:
+                raise PrcValidationError(
+                    "Solicitação UPDATE sem código oficial baseline.",
+                    fields={"officialCode": "required"},
+                )
+            if provided and provided != existing_code:
+                raise PrcValidationError(
+                    "UPDATE não permite troca arbitrária de officialCode "
+                    "na conclusão.",
+                    fields={"officialCode": "immutable"},
+                )
+            code = existing_code
+        else:
+            code = provided or existing_code
+            if not code:
+                raise PrcValidationError(
+                    "Informe o código oficial atribuído no TOTVS após o "
+                    "cadastro manual.",
+                    fields={"officialCode": "required"},
+                )
+        try:
+            code = catalog.normalize_code(code, max_length=60)
+        except PrcValidationError:
             raise PrcValidationError(
-                "officialCode obrigatório para verificação.",
-                fields={"officialCode": "required"},
+                "officialCode inválido.",
+                fields={"officialCode": "invalid"},
             )
-        code = code.strip()
         if self._reader is None:
             raise PrcOfficialError(
                 "unavailable", "Leitor oficial não configurado."
@@ -1034,16 +1068,37 @@ class ProductRegistrationService:
     ) -> tuple[dict[str, Any], bool, bool]:
         product = observed.get("product") or {}
         suppliers = observed.get("suppliers") or []
+        # PRC-REF-017 — baseline/antes para coluna UPDATE na evidência.
+        baseline = request.get("official_baseline") or {}
+        baseline_fields = (
+            (baseline.get("fields") or {})
+            if isinstance(baseline, dict) else {}
+        )
         field_results: dict[str, Any] = {}
         all_ok = True
         has_unverifiable = False
         for path in expected_paths:
             spec = catalog.FIELD_INDEX[path]
+            previous_value = None
+            if request.get("request_type") == "update":
+                entry = baseline_fields.get(path)
+                if isinstance(entry, dict) and "value" in entry:
+                    previous_value = entry.get("value")
+                else:
+                    for ch in (request.get("draft") or {}).get(
+                        "changed_paths", []
+                    ) or []:
+                        if ch.get("path") == path and "originalValue" in ch:
+                            previous_value = ch.get("originalValue")
+                            break
             if not spec.verifiable:
                 field_results[path] = {
                     "result": "unverifiable",
                     "officialField": spec.official_field,
                     "reason": "contract_gap",
+                    "previous": previous_value,
+                    "expected": draft_data.get(path),
+                    "observed": None,
                 }
                 all_ok = False
                 has_unverifiable = True
@@ -1063,6 +1118,9 @@ class ProductRegistrationService:
                     "result": comparison["result"],
                     "officialField": "SA5",
                     "detail": comparison["detail"],
+                    "previous": baseline.get("links") or baseline.get("suppliers"),
+                    "expected": draft_data.get(path) or link_ops,
+                    "observed": suppliers,
                 }
                 if comparison["result"] != "matched":
                     all_ok = False
@@ -1073,6 +1131,9 @@ class ProductRegistrationService:
                     "result": "unverifiable",
                     "officialField": spec.official_field,
                     "reason": "field_absent",
+                    "previous": previous_value,
+                    "expected": draft_data.get(path),
+                    "observed": None,
                 }
                 all_ok = False
                 has_unverifiable = True
@@ -1084,6 +1145,7 @@ class ProductRegistrationService:
             field_results[path] = {
                 "result": "matched" if matched else "mismatched",
                 "officialField": spec.official_field,
+                "previous": previous_value,
                 "expected": expected_value,
                 "observed": observed_value,
             }

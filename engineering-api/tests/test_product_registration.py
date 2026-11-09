@@ -691,6 +691,212 @@ class TestVerifyAndComplete:
         assert rev.status_code == 200
         assert rev.json()["data"]["official_product_code"] == "001234"
 
+    def test_create_completion_requires_official_code(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        """PRC-REF-017 — CREATE sem código na conclusão → 422."""
+        rid, version = self._ready_request(
+            client, jwks_env, core_rbac, prc_service_repo,
+            FakeReader(_product()),
+        )
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": version},
+        )
+        assert resp.status_code == 422
+        detail = _get(
+            client,
+            f"/v1/product-registration/requests/{rid}",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]
+        assert detail["status"] == "under_review"
+        assert not detail.get("officialCode")
+
+    def test_create_intake_without_official_code(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        """PRC-REF-017 — CREATE intake não exige código oficial."""
+        resp = _submit_create(client, jwks_env, core_rbac)
+        assert resp.status_code == 201
+        rid = resp.json()["data"]["requestId"]
+        detail = _get(
+            client,
+            f"/v1/product-registration/requests/{rid}",
+            _token(jwks_env),
+        ).json()["data"]
+        assert detail["requestType"] == "create"
+        assert not detail.get("officialCode")
+
+    def test_create_invalid_official_code(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid, version = self._ready_request(
+            client, jwks_env, core_rbac, prc_service_repo,
+            FakeReader(_product()),
+        )
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": version, "officialCode": "   "},
+        )
+        assert resp.status_code == 422
+
+    def test_create_leading_zeros_preserved(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        product = _product()
+        product["product"]["code"] = "001234"
+        rid, version = self._ready_request(
+            client, jwks_env, core_rbac, prc_service_repo,
+            FakeReader(product),
+        )
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": version, "officialCode": "001234"},
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["data"]["officialCode"] == "001234"
+
+    def test_update_rejects_arbitrary_code_swap(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        """PRC-REF-017 — UPDATE não troca officialCode na conclusão."""
+        _attach_reader(prc_service_repo)
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        create = _post(
+            client,
+            "/v1/product-registration/intake/requests",
+            _token(jwks_env),
+            json={
+                "source": "engineering-test",
+                "requestType": "update",
+                "productType": "raw_material",
+                "schemaVersion": 1,
+                "officialProductCode": "001234",
+                "baseRevision": None,
+                "changes": [
+                    {
+                        "path": "description",
+                        "proposedValue": "NOVA DESC",
+                        "reason": "correção",
+                    }
+                ],
+            },
+            headers={"Idempotency-Key": "k-upd-lock"},
+        )
+        assert create.status_code == 201, create.text
+        rid = create.json()["data"]["requestId"]
+        version = _advance_to_review(client, jwks_env, core_rbac, rid)
+        prc_service_repo["reader"] = FakeReader(
+            _product(description="NOVA DESC")
+        )
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            _token(jwks_env, "analyst-1"),
+            json={
+                "expectedVersion": version,
+                "officialCode": "999999",
+            },
+        )
+        assert resp.status_code == 422
+        body = resp.json()["data"]
+        assert "officialCode" in str(body.get("fields") or body)
+
+    def test_update_field_results_include_previous(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        """PRC-REF-017 — field_results UPDATE traz previous/expected/observed."""
+        _attach_reader(prc_service_repo)
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        create = _post(
+            client,
+            "/v1/product-registration/intake/requests",
+            _token(jwks_env),
+            json={
+                "source": "engineering-test",
+                "requestType": "update",
+                "productType": "raw_material",
+                "schemaVersion": 1,
+                "officialProductCode": "001234",
+                "baseRevision": None,
+                "changes": [
+                    {
+                        "path": "description",
+                        "proposedValue": "NOVA DESC",
+                        "reason": "correção",
+                    }
+                ],
+            },
+            headers={"Idempotency-Key": "k-upd-prev"},
+        )
+        assert create.status_code == 201, create.text
+        rid = create.json()["data"]["requestId"]
+        version = _advance_to_review(client, jwks_env, core_rbac, rid)
+        prc_service_repo["reader"] = FakeReader(
+            _product(description="OUTRA")
+        )
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": version, "officialCode": "001234"},
+        )
+        assert resp.status_code == 409
+        fields = resp.json()["data"]["fieldResults"]
+        assert fields["description"]["result"] == "mismatched"
+        assert fields["description"]["expected"] == "NOVA DESC"
+        assert fields["description"]["observed"] == "OUTRA"
+        assert "previous" in fields["description"]
+        assert set(fields.keys()) == {"description"}
+
+    def test_update_selective_match_completes(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        _attach_reader(prc_service_repo)
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        create = _post(
+            client,
+            "/v1/product-registration/intake/requests",
+            _token(jwks_env),
+            json={
+                "source": "engineering-test",
+                "requestType": "update",
+                "productType": "raw_material",
+                "schemaVersion": 1,
+                "officialProductCode": "001234",
+                "baseRevision": None,
+                "changes": [
+                    {
+                        "path": "description",
+                        "proposedValue": "NOVA DESC",
+                        "reason": "correção",
+                    }
+                ],
+            },
+            headers={"Idempotency-Key": "k-upd-ok"},
+        )
+        assert create.status_code == 201, create.text
+        rid = create.json()["data"]["requestId"]
+        version = _advance_to_review(client, jwks_env, core_rbac, rid)
+        prc_service_repo["reader"] = FakeReader(
+            _product(description="NOVA DESC")
+        )
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": version},
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["data"]["officialCode"] == "001234"
+        assert resp.json()["data"]["status"] == "completed"
+
 
 class TestReferenceData:
     def test_reference_data_fields(

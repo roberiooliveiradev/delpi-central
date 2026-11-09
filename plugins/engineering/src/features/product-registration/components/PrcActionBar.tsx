@@ -21,18 +21,22 @@ type PendingAction = {
   spec: PrcActionSpec;
   reason: string;
   officialCode: string;
+  codeError: string;
 };
 
 export function PrcActionBar({
   allowedActions,
   busy,
   officialCode,
+  requestType,
   onRunAction,
   onEditDraft,
 }: {
   allowedActions: string[];
   busy: boolean;
   officialCode: string;
+  /** CREATE: código editável na conclusão; UPDATE: travado no baseline. */
+  requestType?: "create" | "update" | string;
   onRunAction: (
     spec: PrcActionSpec,
     extras: { reason?: string; officialCode?: string },
@@ -41,6 +45,7 @@ export function PrcActionBar({
 }) {
   const [pending, setPending] = useState<PendingAction | null>(null);
   const [reasonError, setReasonError] = useState("");
+  const isUpdate = requestType === "update";
 
   const actions = PRC_ACTION_ORDER.filter(
     (a) => allowedActions.includes(a) && PRC_ACTION_SPECS[a],
@@ -60,6 +65,33 @@ export function PrcActionBar({
       setReasonError("Informe o motivo para continuar.");
       return;
     }
+    if (spec.needsOfficialCode) {
+      const code = pending.officialCode.trim();
+      if (!isUpdate && !code) {
+        setPending((p) =>
+          p
+            ? {
+                ...p,
+                codeError:
+                  "Informe o código oficial atribuído ao produto após o cadastro manual no TOTVS.",
+              }
+            : p,
+        );
+        return;
+      }
+      if (isUpdate && !code) {
+        setPending((p) =>
+          p
+            ? {
+                ...p,
+                codeError:
+                  "Solicitação UPDATE sem código oficial baseline.",
+              }
+            : p,
+        );
+        return;
+      }
+    }
     onRunAction(spec, {
       reason: pending.reason.trim() || undefined,
       officialCode:
@@ -76,12 +108,25 @@ export function PrcActionBar({
       return;
     }
     if (spec.confirmTitle) {
-      setPending({ spec, reason: "", officialCode });
+      setPending({
+        spec,
+        reason: "",
+        officialCode,
+        codeError: "",
+      });
       setReasonError("");
       return;
     }
     onRunAction(spec, {});
   };
+
+  const verifyConfirmMessage = isUpdate
+    ? "A Engineering API relê o cadastro oficial no TOTVS e compara " +
+      "apenas os campos alterados nesta solicitação. Qualquer " +
+      "divergência mantém a revisão em aberto."
+    : "Informe o código oficial gerado no TOTVS após o cadastro " +
+      "manual. A Engineering API confirma existência e " +
+      "correspondência campo a campo antes de concluir.";
 
   return (
     <>
@@ -106,20 +151,40 @@ export function PrcActionBar({
           title={pending.spec.confirmTitle || pending.spec.label}
           message={
             <div className="engineering-prc__confirm-body">
-              <p>{pending.spec.confirmMessage}</p>
+              <p>
+                {pending.spec.action === "verify_and_complete"
+                  ? verifyConfirmMessage
+                  : pending.spec.confirmMessage}
+              </p>
               {pending.spec.needsOfficialCode ? (
                 <EngineeringTextField
                   id="prc-action-official-code"
-                  label="Código oficial TOTVS"
-                  hint="Código do produto cadastrado manualmente no ERP."
+                  label={
+                    isUpdate
+                      ? "Código oficial TOTVS (baseline)"
+                      : "Código do produto criado no TOTVS"
+                  }
+                  hint={
+                    isUpdate
+                      ? "Código travado no baseline D15 — troca exige operação própria."
+                      : "Informe o código oficial atribuído ao produto após o cadastro manual no TOTVS."
+                  }
                   value={pending.officialCode}
                   onChange={(v) =>
                     setPending((p) =>
-                      p ? { ...p, officialCode: v } : p,
+                      p && !isUpdate
+                        ? { ...p, officialCode: v, codeError: "" }
+                        : p,
                     )
                   }
                   required
+                  readOnly={isUpdate}
                 />
+              ) : null}
+              {pending.codeError ? (
+                <p className="engineering-prc__field-error" role="alert">
+                  {pending.codeError}
+                </p>
               ) : null}
               {pending.spec.needsReason ? (
                 <EngineeringTextAreaField

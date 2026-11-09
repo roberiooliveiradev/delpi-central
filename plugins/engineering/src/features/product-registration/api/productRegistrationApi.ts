@@ -108,6 +108,8 @@ export type PrcTimelineEvent = {
 export type PrcFieldResult = {
   result?: string;
   officialField?: string | null;
+  /** Valor baseline/anterior (UPDATE) — PRC-REF-017. */
+  previous?: unknown;
   expected?: unknown;
   observed?: unknown;
   reason?: string;

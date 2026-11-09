@@ -385,6 +385,7 @@ export function PrcDetailPage({
               allowedActions={detail.allowedActions}
               busy={busy}
               officialCode={detail.officialCode || ""}
+              requestType={detail.requestType}
               onRunAction={runAction}
               onEditDraft={() => selectTab("draft")}
             />

@@ -840,7 +840,8 @@
 }
 
 .engineering-prc__field-flag--add {
-  color: var(--en-text-muted);
+  /* D16-REF-02 — Flag azul vazada (mesmo tom discreto do antigo +). */
+  color: var(--en-primary, #2563eb);
   opacity: 0;
 }
 

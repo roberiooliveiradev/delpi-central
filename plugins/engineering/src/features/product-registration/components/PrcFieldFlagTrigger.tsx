@@ -1,6 +1,6 @@
 /** Acionador contextual de bandeira por campo / atributo SA5. */
 
-import { Flag, Plus } from "lucide-react";
+import { Flag } from "lucide-react";
 
 import type {
   PrcAttendanceFlag,
@@ -69,7 +69,8 @@ export function PrcFieldFlagTrigger({
         onOpen();
       }}
     >
-      {hasOpen ? <Flag size={14} aria-hidden /> : <Plus size={14} aria-hidden />}
+      {/* D16-REF-02: acionador sem OPEN usa Flag azul (não Plus). */}
+      <Flag size={14} aria-hidden />
     </button>
   );
 }

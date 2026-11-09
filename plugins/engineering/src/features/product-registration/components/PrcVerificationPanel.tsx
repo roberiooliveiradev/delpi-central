@@ -1,6 +1,6 @@
 /** Verificação oficial TOTVS — apresenta o resultado calculado pelo
- * backend (field_results): esperado × oficial × resultado por campo.
- * O MFE nunca compara valores localmente. */
+ * backend (field_results): anterior × esperado × oficial × resultado.
+ * O MFE nunca compara valores localmente. PRC-REF-017. */
 
 import { EngineeringDetailCard, EngineeringEmptyState, EngineeringSectionCard, EngineeringStateBanner } from "../../../ui/engineeringUi";
 import { EngineeringStatusBadge } from "../../../ui/engineeringUi";
@@ -37,6 +37,7 @@ function fmtValue(value: unknown): string {
 
 type FieldRow = {
   path: string;
+  previous: string;
   expected: string;
   observed: string;
   result: string;
@@ -46,6 +47,7 @@ type FieldRow = {
 function toFieldRows(fieldResults: Record<string, PrcFieldResult>): FieldRow[] {
   return Object.entries(fieldResults).map(([path, r]) => ({
     path,
+    previous: fmtValue(r.previous),
     expected: fmtValue(r.expected),
     observed: fmtValue(r.observed),
     result: r.result || "unverifiable",
@@ -71,6 +73,11 @@ export function PrcVerificationPanel({
       ? last.field_results
       : null);
   const rows = fieldResults ? toFieldRows(fieldResults) : [];
+  const isUpdate = detail.requestType === "update";
+  const mismatchCount = rows.filter(
+    (r) => r.result === "mismatched" || r.result === "unverifiable",
+  ).length;
+  const matchCount = rows.filter((r) => r.result === "matched").length;
 
   const fieldColumns: DataTableColumn<FieldRow>[] = [
     {
@@ -78,8 +85,17 @@ export function PrcVerificationPanel({
       header: "Campo",
       render: (r) => prcFieldLabel(r.path),
     },
-    { key: "expected", header: "Esperado", render: (r) => r.expected },
-    { key: "observed", header: "Oficial TOTVS", render: (r) => r.observed },
+    ...(isUpdate
+      ? [
+          {
+            key: "previous",
+            header: "Anterior",
+            render: (r: FieldRow) => r.previous,
+          } satisfies DataTableColumn<FieldRow>,
+        ]
+      : []),
+    { key: "expected", header: "Solicitado", render: (r) => r.expected },
+    { key: "observed", header: "Encontrado", render: (r) => r.observed },
     {
       key: "result",
       header: "Resultado",
@@ -148,16 +164,31 @@ export function PrcVerificationPanel({
                   "",
               ).toLocaleString("pt-BR")}
             </span>
+            {rows.length ? (
+              <span>
+                Resultado: {matchCount} correspondência(s) / {mismatchCount}{" "}
+                divergência(s)
+              </span>
+            ) : null}
           </div>
         ) : (
           <p className="engineering-prc__muted">{PRC_COPY.neverVerified}</p>
         )}
       </EngineeringDetailCard>
 
+      {mismatchCount > 0 ? (
+        <EngineeringStateBanner variant="error">
+          {mismatchCount} divergência(s) impede(m) a conclusão. Corrija o
+          cadastro no TOTVS (quando autorizado) e execute Verificar e
+          concluir novamente. A ficha da solicitação não é alterada
+          automaticamente.
+        </EngineeringStateBanner>
+      ) : null}
+
       {rows.length ? (
         <DataTableSection
           title="Comparação campo a campo"
-          hint="Resultado calculado pela Engineering API"
+          hint="Resultado calculado pela Engineering API — o Portal não compara localmente"
           columns={fieldColumns}
           rows={rows}
           rowKey={(r) => r.path}
@@ -168,7 +199,7 @@ export function PrcVerificationPanel({
 
       {supplierDetail.length ? (
         <EngineeringSectionCard
-          title="Vínculos de fornecedores"
+          title="Vínculos de fornecedores (SA5)"
           subtitle="Resultado por vínculo (código + loja) informado pelo backend"
         >
           <ul className="engineering-prc__supplier-diff">
