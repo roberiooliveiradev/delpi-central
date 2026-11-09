@@ -48,19 +48,12 @@ CLARA_MCP_INSTRUCTIONS = (
     "confirmation_contract. Present the sealed change to the user; "
     "after explicit confirmation call phase='commit' with the exact "
     "proposal_handle and confirmation=true. "
-    "CURRENT_RUNTIME (default CLARA_CONSENT_CHANNEL=portal): human "
-    "proof remains Portal step-up V014 via confirmation_url — a "
-    "'yes' in chat and confirmation=true alone do NOT authorize. "
-    "TARGET conversational ACT (no mandatory Portal page) only arms "
-    "when Security/Platform sets CLARA_CONSENT_CHANNEL and the "
-    "exact security acknowledgement; even then confirmation=true is "
-    "never AuthZ — Core permissions, scope, OCC, idempotency and "
-    "read-back are revalidated on ACT. "
+    "{ACTIVE_CONSENT_POLICY} "
     "For MULTI-ACTION requests use the execute 'batch' arg with "
     "operations:[{entity, action, params, depends_on?}] — direct "
     "operations execute at once, governed ones return "
-    "pending_confirmation with their confirmation_url and block "
-    "their dependents until the user consents; per-operation "
+    "pending_confirmation and block their dependents until the "
+    "user consents through the active channel; per-operation "
     "outcomes (executed/pending/blocked/failed) are reported "
     "honestly — there is no global transaction. "
     "Never expand the plan after consent; a host may still impose "
@@ -68,7 +61,7 @@ CLARA_MCP_INSTRUCTIONS = (
     "delete is restricted to catalog operations marked destructive "
     "— it always names the exact object and consequence in the "
     "prepare result, never executes directly, and requires the "
-    "same verifiable consent path. "
+    "same configured consent channel and backend checks. "
     "commit and batch execute revalidate Core permissions, "
     "eligibility, scope and business rules — confirmation never "
     "substitutes authorization. Proposals and batches expired, "
@@ -81,3 +74,34 @@ CLARA_MCP_INSTRUCTIONS = (
     "is unavailable, never zero; STOCK_CLOSED != MONTHLY_CLOSING_COMPLETED; "
     "CLARA never approves, validates or closes by inference."
 )
+
+
+
+def build_clara_mcp_instructions() -> str:
+    """Render guidance for the policy active at MCP server creation.
+
+    A static Portal message would remain visible after conversational
+    cutover even when get_context(schema) correctly advertises the channel.
+    """
+    from controllership_finance_app.application.clara.consent_channel import (
+        portal_consent_required,
+    )
+
+    if portal_consent_required():
+        policy = (
+            "ACTIVE CHANNEL: Portal V014 consent via confirmation_url is "
+            "mandatory for governed ACT. A 'yes' in chat and "
+            "confirmation=true alone do NOT authorize; present the sealed "
+            "proposal, direct to the Portal, then revalidate authorization."
+        )
+    else:
+        policy = (
+            "ACTIVE CHANNEL: conversational TÉO-shaped confirmation. "
+            "Present the sealed proposal, await explicit user approval "
+            "in ChatGPT, then call commit with the exact proposal_handle "
+            "and confirmation=true. No mandatory confirmation_url or "
+            "Portal page. This MCP signal is not independent proof of "
+            "human presence and never replaces Core effective permission, "
+            "resource scope, OCC, idempotency, audit or read-back."
+        )
+    return CLARA_MCP_INSTRUCTIONS.replace("{ACTIVE_CONSENT_POLICY}", policy)
