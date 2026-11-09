@@ -83,6 +83,12 @@ class DemandLine:
     dispatch_date: date | None
     product_stock: float
     unit: str = ""
+    # Comparação informativa: bruto WEG original vs. abatimento fiscal provisório.
+    raw_myweg_quantity_mi: float | None = None
+    fiscal_offset_mi: float = 0.0
+    fiscal_offset_status: str | None = None
+    fiscal_invoice_refs: list[dict[str, str]] = field(default_factory=list)
+    fiscal_coverage_incomplete: bool = False
     allocated_stock: float = 0.0
     covering_orders: list[dict[str, Any]] = field(default_factory=list)
     uncovered_quantity: float = 0.0
@@ -116,6 +122,11 @@ class DemandLine:
             "order_type": self.order_type,
             "product_code": self.product_code,
             "unit": self.unit,
+            "raw_myweg_quantity_mi": self.raw_myweg_quantity_mi,
+            "fiscal_offset_mi": round(self.fiscal_offset_mi, 3),
+            "fiscal_offset_status": self.fiscal_offset_status,
+            "fiscal_invoice_refs": self.fiscal_invoice_refs,
+            "fiscal_coverage_incomplete": bool(self.fiscal_coverage_incomplete),
             "ordered_quantity": round(self.ordered_quantity, 3),
             "delivered_quantity": round(self.delivered_quantity, 3),
             "open_quantity": round(self.open_quantity, 3),
@@ -184,6 +195,15 @@ class DemandCoverageService:
                     dispatch_date=_iso_date(item.get("data_despacho")),
                     product_stock=_number(item.get("no_estoque")),
                     unit=_text(item.get("unidade")).upper(),
+                    raw_myweg_quantity_mi=(
+                        _number(item.get("_fiscal_raw_quantity_mi"))
+                        if item.get("_fiscal_raw_quantity_mi") is not None
+                        else None
+                    ),
+                    fiscal_offset_mi=_number(item.get("_fiscal_offset_mi")),
+                    fiscal_offset_status=_text(item.get("_fiscal_offset_status")) or None,
+                    fiscal_invoice_refs=list(item.get("_fiscal_invoice_refs") or []),
+                    fiscal_coverage_incomplete=bool(item.get("_fiscal_coverage_incomplete")),
                     source=source,
                     planning=source == "myweg",
                 )
