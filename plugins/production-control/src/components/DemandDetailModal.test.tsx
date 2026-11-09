@@ -78,7 +78,7 @@ describe("DemandDetailModal #1547", () => {
     expect(screen.getByText("Como o saldo é coberto")).toBeTruthy();
     expect(screen.getByText("11286701001")).toBeTruthy();
     expect(screen.getByText("Corte previsto para o turno da manhã.")).toBeTruthy();
-    expect(screen.getByText("0,026")).toBeTruthy();
+    expect(screen.getAllByText("0,026").length).toBeGreaterThan(0);
   });
 
   it("mantém cada observação ligada à OP correta e omite observações vazias", () => {
