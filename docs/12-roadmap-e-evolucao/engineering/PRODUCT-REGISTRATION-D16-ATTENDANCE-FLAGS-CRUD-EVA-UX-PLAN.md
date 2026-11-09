@@ -217,3 +217,160 @@ PRODUCTION_DEPLOY: NOT_PERFORMED
 ACCEPTANCE: PASS/PARTIAL/FAIL
 BLOCKERS/EXECUTION_DRIFT/ARCHITECTURE_DECISION_REQUIRED: ...
 ```
+
+
+
+## D16-REF-01 — Decisão PO superveniente: bandeiras por campo, experiência contextual e consultas transversais
+
+**Decisão registrada em 2026-11-09. Status:** PO_APPROVED_REFINEMENT / TARGET / NOT_IMPLEMENTED. **Task futura:** ENG-PRC-D16-REF-01-CONTEXTUAL-FIELD-FLAGS-AND-CROSS-CASE-QUERIES. **Objetivo desta revisão:** PLANEJAMENTO, não implementação nem deploy.
+
+> **Regra de precedência:** esta seção **substitui a intenção anterior de uma seção genérica de bandeiras como principal interface**, e substitui a criação indiscriminada com subject=GENERAL. Não invalida CRUD, eventos, PostgreSQL V015/V016, REST/EVA, CAS, idempotência ou soft-delete já implementados. Implementar por evolução compatível e migration de dados governada, sem reescrever o D16 do zero.
+
+### 11.1 Produto e uso após o encerramento
+
+1. **Cada campo técnico visível na Ficha técnica pode possuir uma bandeira.** A bandeira representa um apontamento operacional textual, não um motivo de alteração do campo, nem aprovação/verificação oficial do dado. Campo pode permanecer inalterado e receber bandeira; bandeira pode sobreviver a mudanças de valor e a novas revisões.
+2. **Uma bandeira OPEN por alvo em cada solicitação**. Não permitir duas bandeiras abertas para o mesmo campo/alvo da mesma solicitação. Bandeiras RESOLVED e DELETED preservam histórico; permitir criar nova OPEN após resolução/remoção, sem sobrescrever registro anterior. Corrida Portal × EVA deve ser bloqueada **atomicamente no banco e no domínio** (índice único parcial / transação e 409 tipado), não só em React.
+3. A bandeira OPEN é sinalizada com **ícone de bandeira vermelha, pequeno e sempre visível ao lado do rótulo**. Na ausência de bandeira, nenhum ícone fixo polui a ficha: pequeno trigger 'Adicionar bandeira' surge por hover/foco no desktop; no touch, por toque/seleção da região com botão acessível e sem depender de hover.
+4. Ação de trigger abre **modal oficial @delpi/plugin-ui** contextual: campo e valor atual identificados, textarea descritivo (limite D16 1000), título editável ou derivado com exibição clara e possibilidade de renomear; cancelar não salva. Não usar textarea inline sob todos os campos. Se bandeira ativa, clicar bandeira vermelha abre modal de **visualização**, com texto, origem, autor, data, edição, resolver e remover; confirmar remoção destrutiva, soft-delete auditável. Reabrir no histórico/filtro.
+5. **RESOLVED deixa de produzir alerta vermelho**, mas continua navegável por histórico e consultas. **DELETE** é exclusão lógica e nunca apaga audit; remova apenas a marca ativa do campo. Não resolver automaticamente quando o valor do campo mudar, nem remover quando a solicitação terminar.
+6. **Pós-conclusão é requisito de primeira classe, não exceção temporária:** analista com permissão pode criar, editar, resolver, reabrir e remover bandeiras no caso terminal após dias/meses/anos, sem reabrir o workflow de cadastro, alterar ficha oficial, baseline D15, revisão técnica ou TOTVS. Preservar FLAG_MUTATION_AFTER_TERMINAL=True com AuthZ de objeto live. Solicitações rejeitadas: mesma política de leitura e mutação existente, confirmar comportamento com owner e testes sem inventar nova autoridade.
+7. O exemplo do PN '0' do legado é **contexto de cobrança**, não regra a reproduzir: bandeira informa pendência sem gravar '0', sem alterar PN/SA5 e sem presumir que PN seja sempre obrigatório.
+8. Bandeira **pertence à solicitação**; relacionar também a produto oficial/identificador quando disponível somente como índice/projeção derivada e autorizada, sem transformar a bandeira em atributo oficial SB1 ou criar source of truth paralelo. Se ainda não houver código oficial (CREATE), consulta deve continuar encontrando bandeira por requestId, e depois encontrá-la por código sem transferir a autoridade.
+
+### 11.2 Identidade canônica dos alvos e integridade
+
+| Alvo | Identidade no caso | Semântica |
+|---|---|---|
+| Campo SB1 | requestId + subject=FIELD + targetPath allowlisted | description, group, productKind, unit, defaultWarehouse, accountingAccount, thirdPartyProduct, customerReference e demais paths reais da ficha (inclusive officialProductCode **se** este for renderizado e o owner validar inclusão) |
+| Vínculo fornecedor: PN | requestId + subject=SUPPLIER_LINK + supplierKey completa + targetAttribute=partNumber | marca exclusivamente PN daquele vínculo |
+| Vínculo fornecedor: Catálogo | requestId + subject=SUPPLIER_LINK + supplierKey completa + targetAttribute=catalogNumber | marca exclusivamente Catálogo |
+| Outros atributos/elementos do fornecedor | somente quando renderizados como campo real, com targetAttribute explícito/allowlisted (ex.: fornecedor como relação, código/loja/razão), após Abstraction Gate | nunca reutilizar flag de PN para marcar vínculo inteiro |
+| Geral legado | subject=GENERAL sem alvo | **compatibilidade histórica**, não permitir novos registros gerais pelo novo fluxo contextual sem decisão específica |
+
+- Não usar índice da linha ou nome/valor textual como chave. Para SA5 usar chave oficial canônica de vínculo (produto/filial quando o contrato exigir, supplierCode/store com zeros à esquerda) + **atributo**. Para linhas ainda candidatas sem identidade oficial, definir regra de elegibilidade: **preferir exibir gatilho somente após seleção de identidade estável** e formalização/persistência do caso. Não associar bandeira persistente a rowId efêmero.
+- Evolução de schema: V015/V016 existentes guardam subject, target_path e supplier_key; acrescentar target_attribute (nome canônico a fechar) ou estrutura tipada equivalente e normalized_target_key/index, somente se necessário. Política de migração compatível e de rollback; incluir **unique parcial para OPEN não deletada** por request+identidade normalizada. Atenção à semântica de NULL em índices únicos; usar chave normalizada determinística/índice por expressão ou outra solução de unicidade provada sob concorrência.
+- Validar a coerência: FIELD exige targetPath válido e não aceita supplierKey/targetAttribute; SUPPLIER_LINK exige supplierKey+targetAttribute válido; GENERAL não pode ser criado por UI/EVA nova. Não permitir PATCH reatribuir silenciosamente bandeira já criada a outro campo: **alvo imutável** preferido; para corrigir alvo equivocado, resolver/remover e criar nova, com auditoria. Preservar compat REST/EVA para leituras históricas.
+- Histórico de uma bandeira continua ligado à **identidade original**, mesmo se fornecedor deixar de estar associado ao produto, mudar a descrição ou se campo tornar indisponível; nesses casos exibir indicador 'alvo não disponível na ficha atual' e manter busca/histórico, jamais mover marca para fornecedor homônimo ou linha diferente.
+- Ao receber no legado mais de uma OPEN para o mesmo alvo (ou GENERAL não associada), **não apagar nem escolher automaticamente**. Inventariar cardinalidade no DEV e preparar reconciliação owner-guided antes de criar unique index; se necessário separar migration de dados das constraints. Em caso de duas OPEN inválidas, backend sinaliza conflito e bloqueia nova criação até resolução, preservando a evidência.
+
+### 11.3 Wireframes de composição — sem imagens
+
+**Desktop em Ficha técnica:**
+    
+    Identificação e classificação
+    DESCRIÇÃO                                   🚩 (vermelha, aberta, sempre visível)
+    CHICOTE ELÉTRICO EVAPORADOR
+    GRUPO                       TIPO                 UNIDADE
+    8001                        PA                   MI
+    [No hover/focus em GRUPO:  🏳 + Adicionar bandeira] (ghost compacto)
+
+    Estoque e contabilidade
+    ARMAZÉM       CONTA CONTÁBIL      PRODUTO TERCEIROS      REF. CLIENTE
+    01            11401006           1                       1023-2785-1
+                  [🚩 se conta contábil tiver bandeira OPEN]
+
+    Fornecedores
+    Código  Loja  Razão social            Part Number          Catálogo
+    000089  01    WEG EQUIPAMENTOS       — [🚩 vermelha]      —
+                                          (bandeira PN deste vínculo)
+
+**Modal ao adicionar:**
+
+    Adicionar bandeira
+    Campo: Descrição
+    Valor atual: CHICOTE ELÉTRICO EVAPORADOR   [somente leitura; não prova oficial]
+    Título: [Revisar descrição]
+    Descrição: [Confirmar descrição com o solicitante...]
+    [Cancelar] [Salvar bandeira]
+
+**Modal bandeira OPEN:**
+
+    🚩 Bandeira — Descrição                          Aberta
+    "Confirmar descrição com o solicitante"
+    Criada por / quando · última atualização · alvo
+    [Editar] [Marcar resolvida] [Remover bandeira]
+    [Histórico]
+
+**Regras visuais:** área pequena, sem botão full-width; hover e foco desktop; toque em mobile apresenta affordance alcançável; ícone vermelho não depende apenas de cor (aria-label 'Bandeira aberta em ...', tooltip e estado no modal); acionador ≥ tamanho de toque utilizável no celular; preservar foco ao fechar modal e após mutation; zoom 200%, teclado, Escape/Enter, orientação screen reader. Para 0 bandeiras não renderizar seção genérica vazia que ocupe espaço. Contador pequeno 'N campos sinalizados' no cabeçalho de Ficha técnica, com ação de localizar/navegar de um campo sinalizado ao outro, sem duplicar CRUD. Não alterar layout aprovado D14/D15.
+
+### 11.4 Consultas adicionais: quais itens/produtos/campos estão bandeirados?
+
+**GAP PROVEN (inventário de rotas em 2026-11-09):** as rotas D16 existentes são nested em /requests/{requestId}/flags e a listagem mostra bandeiras de UM caso; ainda não está comprovada consulta transversal global por produto/campo. O frontend atual busca primeira página 50 e cria com subject GENERAL. **Não declarar este novo discovery já implementado.**
+
+Precisamos de **consultas governadas e paginadas por bandeiras e casos**, com filtros reais aplicados no banco **antes** da paginação, autorizadas por objeto, estáveis e com contagem correta. Preferir **uma rota de coleção transversal** e **uma projeção de agrupamento/aggregate/facets** na mesma Engineering API, só se o inventário não revelar contrato equivalente:
+
+| Necessidade | Contrato candidato TARGET | Observações |
+|---|---|---|
+| Listar bandeiras visíveis ao usuário entre solicitações | GET /v1/product-registration/flags?status=OPEN&subject=FIELD&targetPath=description&productCode=...&requestType=...&page=...&pageSize=... | filtros composáveis, enum/path allowlist, search textual bounded se houver caso de uso, ordenação consistente, nenhum vazamento |
+| Bandeiras de um caso | GET /requests/{requestId}/flags?status=...&targetPath=...&supplierCode=...&store=...&targetAttribute=... | **estender rota existente**, preservar contrato antigo e filtros; para renderização contextual preferir lookup batch por lista de alvos se necessário, sem N+1 requests |
+| Itens/solicitações com bandeiras ativas | GET /v1/product-registration/flags/summary?groupBy=request|product|targetPath|subject&status=OPEN&... | retorno de contagens e IDs/links escopados, sem carregar toda a base no browser; se lista agregada de requests exigir dados, usar read model/SQL do próprio contexto, não banco alheio |
+| Contagem por tipo/campo e tendência | no mesmo summary com groupBy=subject/targetPath/targetAttribute; possibilidade de filtros de período, criador/atendente e status | 'tipo' = subject FIELD/SUPPLIER_LINK e tipo do produto/caso **somente se campo oficial/solicitação autorizado**; registrar semântica para não confundir |
+| Por produto oficial | productCode exato no read model da Engineering API, associado a requests existentes; somente consulta de casos autorizados | bandeiras permanecem por solicitação e podem reaparecer para o mesmo produto em casos diferentes; nunca fundir sem identidade |
+| Histórico/resolvidas/removidas | query de bandeiras RESOLVED e timeline/eventos auditados; registros DELETED não voltam nas listas operacionais normais | privilégios adequados e auditoria imutável; não tratar soft-delete como OPEN |
+
+**Nota de rotas:** '/flags/summary' deve ter precedência estática sobre parâmetros dinâmicos e nomes finais serão fechados conforme router real; não introduzir endpoint redundante apenas por estética. Consultas sem requestId exigem **AuthZ por caso no servidor** (join/consulta escopada), nunca obter todas e filtrar no frontend. Rejeitar filtros inválidos; limites de paginação e cursores/offset estáveis, indexação por status/alvo/produto. Cuidado com cardinalidade dos agregados (total global autorizado ≠ first page length). Fornecer contadores distintos de OPEN, RESOLVED e quantidade de solicitações/produtos com pelo menos uma OPEN; não somar flags como se fossem produtos únicos. Não prometer tempo real se a stack usa refetch.
+
+**Fluxos do analista que a API precisa suportar:**
+1. Ver **todos os atendimentos com bandeira aberta** para priorização.
+2. Filtrar **campos Descrição sinalizados** para pedir conferência.
+3. Filtrar **PN faltante/pendente** somente quando houver bandeira correspondente; não inferir 'faltante' apenas por valor vazio nem exigir PN=0.
+4. Ver todos os **produtos com bandeiras abertas** e entrar no caso original, inclusive solicitação encerrada há meses.
+5. Filtrar por **atendente, período, situação, tipo de solicitação, campo e vínculo** com escopo autorizado, assim que o contrato confirmar os metadados disponíveis; sem join de tabela alheia nem exposição de dados pessoais indevida.
+6. Mostrar **flags resolvidas/reabertas** e histórico da pendência, com actor/datas, sem reativação automática.
+7. Permitir à EVA consultas equivalentes, inclusive "quais matérias-primas têm bandeira no Part Number?" como consulta explícita, grounded e com filtros de tipo de produto oficiais autorizados. A EVA não deve inferir todos os casos da empresa a partir da primeira página.
+
+**Experiência de descoberta futura:** criar visão operacional 'Campos sinalizados / Bandeiras' na fila ou modo de filtro, somente se os dados agregados reais forem expostos pelo backend. Pode incluir colunas produto, solicitação, campo, título, aberto desde, analista e status, com navegação profunda para o campo específico. É uma view sobre flags da Engenharia, **não** lista duplicada de fonte de verdade ou novo bounded context. Rotas de navegação devem preservar filtro/contexto e tratar alvos históricos não visíveis.
+
+### 11.5 EVA — expansão da paridade sem novas ferramentas MCP
+
+- Manter 6 tools públicas e actions atuais list/detail/create/update/resolve/reopen/delete, todos com os **mesmos use cases**, permissão por caso, actor real, CAS/idempotência, PREPARE/ACT; DELETE exige confirmação humana verificável (sem canal, confirmation_unavailable).
+- Create contextual exige target FIELD+path ou SUPPLIER_LINK+key+targetAttribute; PREPARE mostra **identidade do campo em português, caso, fornecedor (se houver), valor exibido e texto**, mas valor não é authority. ACT revalida alvo/versão/duplicidade.
+- Propor actions semânticas de **consulta transversal** por coleção e aggregates através de tool 'read' existente, primeiro inventariar se flag_list com filtros pode cobrir sem novas actions; não multiplicar catálogo sem consumer. Métodos EVA devem aplicar os mesmos filtros e redaction REST, limites e ordenação, e não citar dados inacessíveis.
+- EVA pode sugerir texto, nunca inventar que uma verificação oficial ocorreu, não adicionar bandeira sem pedido inequívoco/autorização; não alterar SB1/SA5/PN e nunca escrever '0'. Resolved/DELETE jamais é aprovação técnica, nem substitui ação de ERP.
+
+### 11.6 Compatibilidade com D16 existente e decisões de migração
+
+**Proven no HEAD inspecionado:**
+- engineering-api/domain/product_registration/flags.py: subject GENERAL/FIELD/SUPPLIER_LINK, targetPath opcional em FIELD, supplierKey obrigatório em SUPPLIER_LINK, **nenhum targetAttribute**, mutation depois de terminal habilitada.
+- plugins/engineering/.../PrcAttendanceFlags.tsx: componente global no topo, criação sempre subject GENERAL, lista apenas um request paginada (pageSize=50), cards, inline form.
+- engineering-api/interface/http/routes/product_registration_routes.py: CRUD nested GET/POST/PATCH/resolve/reopen/DELETE, sem rota transversal inventariada.
+- Contratos atuais de auditoria, grants V015/V016, REST/EVA e PG permanecem reutilizáveis.
+
+**Estratégia proposta:**
+1. Não apagar nem transformar automaticamente registros GENERAL anteriores. Preservar listagem de **legado/sem campo** via painel recolhido 'Bandeiras antigas sem campo' ou Histórico, com acesso autorizado e opção explícita de associar a alvo com transação e auditoria, se owner aprovar.
+2. Não sobrescrever D16 in place sem versionamento de DTO. Backend deverá aceitar leitura de legado e preferir novo contrato para novas criações contextuais; descontinuar criação GENERAL na UI e na action EVA de novo fluxo. Para clientes existentes, planejar depreciação/compat com registro de consumer e comunicação. Não criar migrador que atribua genericamente 'description'.
+3. Tornar target imutável após create; distinguir update de conteúdo/status de mudança de alvo. Se legado precisar associação, um comando explícito de migração/retarget autorizado e auditado, não PATCH comum.
+4. Migrar campos/índices e unique com inspeção real dos dados e testes de corrida. Resolver FIRST eventuais duplicidades históricas de forma governada; não excluir registros em silêncio.
+5. Preservar bandeiras após finalizar e ao longo de novas revisões, inclusive quando vínculo SA5 desaparece; campo não encontrado → histórico/fallback, sem deslocar bandeira.
+6. Reusar a infra de flags existente, não reintroduzir lógica do Controle MP legado. Abstraction Gate antes de hook genérico ou nova API: necessidade/owner/consumidor/contrato/pré/pós/rollback demonstrados.
+
+### 11.7 Sequência executável completa e testes de aceite da refatoração
+
+**Ordem obrigatória (futura task Cursor):**
+A. Ler AGENTS/HEAD/status e D16/REF-01, inventariar eventos, V015/V016, UI kit, fonte oficial de paths/keys, list pagination, EVA dispatch, casos terminais e consumers legado; documentar RQ/AC.
+B. Fechar contrato DTO e identidade contextual, status OPEN/RESOLVED/DELETED, unicidade ativa e política de legado; AuthZ read-across requests e indexação; contract tests antes de UI.
+C. Backend-first: domínio validator, migration incremental/idempotente, unique parcial/race handling, repositório e use cases CRUD por alvo, nova read transversal e summary agrupado, sem alterar SB1/SA5.
+D. EVA: ações existentes adaptadas e read transversal com mesmo service, guardrails PREPARE/ACT e delete; provas de paridade.
+E. Front: controles discretos contextuais em **todos** campos renderizados e em cada célula relevante SA5; modal acessível completo, ícone vermelho OPEN, focus/touch; contador e navegação, histórico legado recolhido; substituir seção genérica como UX principal.
+F. Fila/visão operacional de bandeiras: consumir endpoints realmente implementados para filtragem por status/tipo/campo/produto/request sem N+1, sem fake global counters.
+G. Testes: pytest domínio/API/EVA/PG real (unique concorrente, CAS, filtros/auth leaks, retomada pós-terminal), Vitest estado por campo, Playwright SSO desktop/tablet/mobile, zoom200, teclado, hover/touch, flags em PN vs Catálogo/fornecedores diferentes, create/update/resolve/reopen/delete, histórico, casos concluídos e visões transversais; screenshots.
+H. Rebuild/DEV-only migrations com contratos, health, bundle fingerprint, gateway auth, E2E real, docs SHA e relatório. Nenhum HML ou PROD.
+
+**AC bloqueantes:**
+- F-01 todos campos renderizados possuem trigger contextual sem poluição visual; ícone vermelho OPEN sempre visível; touch/focus/keyboard PASS.
+- F-02 modal de criação/visualização/edição/resolução/reabertura/remoção com actor, target e auditoria; exclusão soft e confirmação PASS.
+- F-03 FIELD path obrigatório + SUPPLIER_LINK key+targetAttribute; PN ≠ catálogo; fornecedor A ≠ B; nunca row index como chave PASS.
+- F-04 uma OPEN por alvo/caso, enforced no banco e no domínio sob concorrência Portal×EVA, 409 coerente PASS.
+- F-05 flag continua após mudança de valor, fechamento do caso ou desaparecimento de SA5, sem alterar ERP; pós-terminal CRUD sob AuthZ PASS.
+- F-06 registros GENERAL antigos acessíveis e não migrados silenciosamente; compat controlada PASS.
+- F-07 query autorizada por request, productCode, tipo, campo, status, período e agregados escopados com paginação/contagem corretas; nenhum vazamento entre casos PASS.
+- F-08 busca por PN pendente não inventa falta de PN nem preenche '0'; escopo fonte oficial e flags explícitas PASS.
+- F-09 EVA READ/CRUD + consulta transversal usando same Application Case, PREPARE/ACT/confirm/cas/security PASS.
+- F-10 timeline/eventos/imutable audit, rollback, idempotência e soft delete preservados PASS.
+- F-11 PG real, gateway JWT, typecheck/build/Vitest/pytest, Playwright desktop/tablet/mobile/zoom200, bundle DEV e screenshots PASS.
+- F-12 V015/V016 e D13-D15 intactos; nenhum endpoint ERP write, nenhuma nova tool MCP, nenhum deploy HML/PROD PASS.
+
+**Relatório obrigatório:** BASE_SHA/FINAL_SHA, matriz de rotas existentes vs novas, contratos/filter semantics, migration e data reconciliation, índice único provado sob corrida, compatibility legacy GENERAL, field coverage, supplier attribute coverage, flags after terminal, API read aggregates, EVA parity, auth leak negative tests, PG real, browser screenshots/DEV bundle, commits/push, residuals, EXECUTION_DRIFT e ARCHITECTURE_DECISION_REQUIRED quando aplicável.
+
+**Status de execução deste adendo:** DOCUMENTED / PO_APPROVED_TARGET / IMPLEMENTATION_NOT_STARTED. Não declarar PASS de frontend, endpoints transversais ou uniqueness apenas porque este documento foi atualizado.
+
