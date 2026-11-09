@@ -616,3 +616,157 @@ BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de tes
 - **CF-UX-050 (R04 HTTP 400) → ROOT_CAUSE_FIXED:** defaults Query(...) de sort_by/sort_direction vazavam como objeto para o produtor quando o MCP tool não repassava os parâmetros (regressão G070). Correção canônica na BFF (só str encaminhada) + tool bridge passou a aceitar sort_by/sort_direction. Testes BFF 7/7.
 - **Corpus CLARA:** ficha R04 reescrita (consumption-audit, sort, C2_STATUS, SH8); R09/R12/R15 corrigidas de TARGET_ONLY/not_implemented → IMPLEMENTADO. Corpus republicada: 497ec9af-00d4-4e07-9b64-b96fcc97f3c5 (2.230 itens, 88 fontes).
 - Resíduo: matriz semântica completa R01-R15 e bateria de perguntas por relatório ficam para próximo ciclo; fichas R01–R03/R05–R08/R10/R11/R13/R14 aguardam revisão source→SQL detalhada (doc 152 VERIFY_RUNTIME/OWNER_RULE_PENDING).
+
+---
+
+## 20. CF-UX-053 — Remoção do fluxo externo de autorização da CLARA (09/11/2026)
+
+**Estado:** `DECISION_REQUIRED` — inventário e proposta; **implementação bloqueada** até gate arquitetural/segurança explícito do owner. **Sem código runtime, sem deploy, sem publicação/inativação/exclusão nesta etapa.**
+
+| Campo | Classificação |
+|---|---|
+| Problema observado | `PROVEN` — UX exige `confirmation_url` → `/apps/controllership-finance/closing/clara-consent` para capacidades `CONFIRMATION_REQUIRED` |
+| Comportamento desejado (PO) | `TARGET` — confirmação exclusivamente conversacional no ChatGPT; sem redirecionamento Portal |
+| Inventário das capacidades | `TO_INVENTORY` fechado abaixo com evidência HEAD (matriz doc 124 + `_capability_table`) |
+| Revisão de segurança | `DECISION_REQUIRED` |
+| Escopo | Transversal a todas as operações governadas da CLARA (não só checklist) |
+
+### 20.1 Inventário HEAD — dependências do consentimento externo
+
+**Baseline inventário:** branch `main`; working tree com alterações concorrentes de Engineering preservadas (não tocadas). Política canônica: [doc 124](./124-clara-write-execution-risk-policy.md); R-CLARA-01/V014: [doc 106](./106-clara-batch-ssh-keycloak-chatgpt-go-e-gates.md) Adendo 4; código: `step_up_consent.py`, `governed_writes.py`, `batch_orchestrator.py`, `clara_consent_routes.py`, `ClaraConsentPage.tsx`, migrations `V013`/`V014`.
+
+#### Superfície obrigatória atual (CONFIRMATION_REQUIRED)
+
+```text
+MCP execute|delete phase=prepare
+  → proposta/lote selado + clara_consent_challenge (V014)
+  → confirmation_url = /apps/controllership-finance/closing/clara-consent?proposal|batch=…
+  → usuário autentica no Portal; BFF record_*_consent (token iat ≥ desafio)
+  → MCP phase=commit(proposal_handle) consome desafio APPROVED
+  → AuthZ efetiva + OCC + execute canônico + read-back + auditoria
+```
+
+Invariante explícita no servidor MCP e em `confirmation_instruction`: **«sim» no chat NÃO é consentimento**.
+
+#### Componentes inventariados
+
+| Camada | Artefato | Papel | Destino candidado |
+|---|---|---|---|
+| MFE | `ClaraConsentPage.tsx` + rota `closing/clara-consent` | UI de aprovação humana verificável | Descontinuar como **obrigatório**; preservar deep link read-only/histórico até cutover |
+| MFE | `pluginRoutes.ts` / `App.tsx` | Registro da view | Remover após cutover + alias de depreciação documentado |
+| BFF HTTP | `clara_consent_routes.py` (`record_clara_*_consent`, GET plano) | Grava `consent_record` + APPROVED do desafio | Substituir por emissor de prova conversacional **se** houver mecanismo verificável; senão manter |
+| Application | `step_up_consent.py`, `clara_consent_challenge_repository.py` | R-CLARA-01 | Evoluir schema/`origin` **somente** com decisão aprovada; migrations novas, **não** reescrever V013/V014 |
+| Application | `governed_writes.prepare/commit`, `batch_orchestrator` | Emite `confirmation_url`; commit exige desafio | Trocar instrução + gate de prova; preservar selagem/`plan_hash`/TTL/claim |
+| MCP | `server.py` `execute`/`delete`, `semantic_bridge`, `branding.py` | Contrato de tools + instruções | Atualizar após política; Knowledge/fichas CLARA em sincronia |
+| DB | `clara_consent_challenge`, step-up V013, propostas/lotes | Auditoria e prova | **Não dropar**; novos estados/origens via migration forward |
+| Testes | `ClaraConsentPage.test.tsx`, testes PG consent/batch | Regressão | Reescrever para nova prova; manter negativos de replay/mismatch |
+
+#### Matriz de capacidades (doc 124 — autoridade)
+
+| Classe | Qtd (rev. A) | Consentimento hoje | Exemplos |
+|---|---|---|---|
+| `DIRECT_ALLOWED` | 13 | Nenhum (AuthZ + V019 + read-back) | `checklist.draft_create/update`, pendências rotineiras, mensagens |
+| `CONFIRMATION_REQUIRED` | 35 | Portal step-up V014 | `checklist.version_publish/inactivate/discard`, `package.*`, `evidence.decide_*`, `p3.*`, `document.cancel`, `item.cancel`, catálogo, lote |
+| `BLOCKED` | operacional | N/A | permission/params/snapshot/stale/consent ausente |
+
+Cenários PO (publicar V2, inativar V1, excluir rascunho, docs, evidências, pacotes, lote, irreversíveis, sem AuthZ, confirmação ambígua) cobrem o bloco `CONFIRMATION_REQUIRED` + negativos já previstos na política.
+
+### 20.2 Comparativo com outros MCPs DELPI
+
+| Especialista | Confirmação sensível | Prova humana verificável? | Observação |
+|---|---|---|---|
+| **CLARA** (C&F) | PREPARE → **Portal** `confirmation_url` → COMMIT | **Sim** (desafio V014 + token Portal fresco) | Mais forte que boolean do modelo |
+| **TÉO** (Transformômetro) | PREPARE → `proposal_handle` + **`confirmation=true` no tool call** | **Não criptográfica** — flag da chamada MCP após diálogo | AuthZ revalidada; “confirmação conversacional ≠ AuthZ” documentado |
+| Host ChatGPT | Pode exigir confirmação nativa de tool write | Depende do plano/workspace OpenAI | Doc 106: CLARA não controla nem contorna o host |
+
+**Conclusão comparativa (`PROVEN` no código):** adotar só o padrão TÉO (`confirmation=true`) **reduz** a garantia R-CLARA-01; não é equivalência de segurança ao Portal step-up. Pedido de UX do PO **não comprova** equivalência.
+
+### 20.3 O que o ChatGPT fornece hoje (limite)
+
+| Mecanismo | Disponível? | Liga confirmação ↔ execução autenticada? |
+|---|---|---|
+| OAuth usuário no MCP (JWT Keycloak) | Sim | Identidade/sessão — **não** prova de aprovação do plano selado |
+| Texto “Sim, autorizo…” no chat | Sim | **Não** — o modelo pode chamar tool sem espelhar intenção; canal não assina o `plan_hash` |
+| `confirmation=true` no ACT | Sim (padrão TÉO) | Apenas flag no request tool; forjável pelo assistente |
+| Confirmação nativa OpenAI por tool | Parcial / host-dependent | Pode ser UX útil; **não** substitui desafio servidor DELPI; indisponível como contrato estável |
+| `HOST_ATTESTED` (HMAC, doc 106 Modo A) | Implementado / **`NOT_CONFIGURED`** em prod típico | Só se o host emitir atestação ligada a `plan_hash`+ator+expiração |
+
+**Limitação obrigatória a registrar:** sem atestação do host ou superfície com sessão Portal (ou equivalente com refresh token fora do canal MCP), **não existe** no ChatGPT um mecanismo confiável equivalente a V014. Texto isolado **não** substitui autenticação nem autorização.
+
+### 20.4 DECISION_REQUIRED — política e segurança
+
+#### Política atual (garantias)
+
+1. Proposta/lote com `plan_hash` imutável, TTL, actor binding.
+2. Desafio `clara_consent_challenge` origem `portal`, consumo único.
+3. Consentimento gravado só após APPROVED na mesma transação BFF.
+4. Token Keycloak com `iat ≥ challenge.created_at` (sessão Portal, não fabricável só pelo MCP).
+5. COMMIT revalida AuthZ Core, ownership/scope, OCC, idempotência, read-back, auditoria.
+6. «Sim» no chat explicitamente rejeitado como prova.
+
+#### Política proposta (PO / TARGET UX)
+
+1. Assistente apresenta ação, recurso, versão/competência, efeitos, riscos, reversibilidade.
+2. Usuário confirma na conversa de forma explícita e específica.
+3. CLARA executa via MCP com identidade efetiva.
+4. CLARA relê e reporta resultado — **sem** `clara-consent`.
+
+#### Garantia real da confirmação só no ChatGPT
+
+| Afirmação | Verdade |
+|---|---|
+| Usuário autenticado no MCP | Pode permanecer |
+| Parâmetros iguais aos do PREPARE | Pode permanecer via `proposal_handle` selado |
+| Humano aprovou **este** plano | **Não garantido** só com texto/`confirmation=true` |
+| Sem impersonação do consentimento pelo modelo | **Não garantido** |
+| Sem replay / params alterados | Selagem atual cobre; independente do canal de confirmação |
+
+#### Riscos materiais
+
+- Impersonação de consentimento pelo LLM ou prompt injection.
+- Replay de ACT se a prova for só boolean frouxo (mitigável com claim/consumo atuais **se** a prova for outra coisa).
+- Confirmação ambígua/outro recurso (mitigável com apresentação + `plan_hash` — já existe).
+- Falsa sensação de “consentimento conversacional = step-up”.
+
+#### Alternativas técnicas (para o owner escolher)
+
+| ID | Alternativa | UX ChatGPT | Equivalência ≈ V014 | Esforço |
+|---|---|---|---|---|
+| **A0** | Manter Portal step-up | Continua URL | Mantém | 0 |
+| **A1** | Só `confirmation=true` (estilo TÉO) | Sem URL | **Inferior** — falsa equivalência se vendida como igual | Baixo |
+| **A2** | Ativar **HOST_ATTESTED** se ChatGPT/workspace emitir atestação HMAC do plano | Sem URL **se** host cooperar | Condicional | Médio + dependência vendor |
+| **A3** | Challenge conversacional **assinado pelo backend** exibido no chat + ACT só com `challenge_id` + segundo fator que o MCP **não** consiga forjar sozinho (ex.: código OTP no e-mail/Portal short-link one-time, WebAuthn) | Quase in-chat; pode restar um toque fora | Próxima de V014 | Alto |
+| **A4** | Ampliar `DIRECT_ALLOWED` só onde doc 124 §5 for atendido; demais mantêm Portal | Parcial | Mantém para alto impacto | Baixo/médio |
+| **A5** | Dual-run: conversacional + Portal opcional até métricas | Híbrido | Mantém fallback | Médio |
+
+#### Recomendação de arquitetura/segurança (Cursor)
+
+1. **Não implementar A1 como substituto de V014** para publicação, exclusão, pacotes, P3 e decisões irreversíveis.
+2. Tratar o pedido do PO como **mudança de política de risco**, não como bug de UX.
+3. Preferência técnica: **A4 imediato (já parcialmente feito)** + avaliar **A2/A3** com Segurança/Plataforma + prova no ChatGPT real; **A0** permanece default até gate.
+4. Se o PO aceitar **explicitamente** risco residual estilo TÉO para um subconjunto, documentar em doc 124 rev. B com matriz por capability — nunca silencioso.
+5. Owners de aprovação: **PO (UX/política)** + **Segurança/Plataforma (R-CLARA-01)** + **Controladoria (aceitação de risco operacional)**.
+
+### 20.5 Plano de migração (após aprovação — ainda PLANNED)
+
+Ordem sugerida:
+
+1. Gate escrito no doc 124 (rev.) com alternativa escolhida (A0–A5) e lista de capabilities afetadas.
+2. Contrato MCP: presentation obrigatória; prova de consentimento tipada; testes negativos (ambígua, outro recurso, sem AuthZ, replay, params alterados).
+3. Implementação no owner BFF (`governed_writes` / `step_up_consent`); migration forward se `origin`/prova mudar; **não** mutar V013/V014.
+4. Knowledge/branding/instruções MCP; ajuda in-app.
+5. Deprecar `confirmation_url` obrigatória; dual-read do deep link por N versões.
+6. Bateria isolada (não produção): publicar V2, inativar V1, discard, docs, evidências, pacotes, lote, irreversíveis, negativos.
+7. Smoke **ChatGPT efetivo DELPI**.
+8. Cutover + rollback: feature flag `CLARA_CONSENT_CHANNEL=portal|conversational|dual`; reativar Portal em falha.
+9. Descontinuar página como path obrigatório; manter histórico/auditoria.
+
+**Rollback:** flag → `portal`; imagens/SHA anteriores; desafios/propostas intactos.
+
+### 20.6 Critérios de aceite (quando desbloqueado)
+
+Conforme briefing PO §7 — mais: equivalência de prova declarada honestamente; nenhuma capacidade `CONFIRMATION_REQUIRED` sem canal de prova aprovado; documentação 106/124/150/fichas alinhadas; testes ChatGPT reais `PASS` ou residual explícito.
+
+### 20.7 Fora de escopo desta etapa
+
+Implementação, deploy, publicação/inativação/exclusão reais, alteração de fechamentos, drop de migrations, remoção imediata de `ClaraConsentPage` sem cutover.
