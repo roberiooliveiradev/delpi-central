@@ -1,4 +1,7 @@
+import { DataTable, type DataTableColumn } from "./DataTable";
 import type { NcOperatorRankingResponse } from "../types/nonconformity";
+
+type OperatorRankingRow = NcOperatorRankingResponse["ranking"][number] & { position: number };
 
 type Props = {
   data: NcOperatorRankingResponse | null;
@@ -21,6 +24,45 @@ export function NcOperatorRanking({
 }: Props) {
   const selectedCode = data?.detail?.operator_code ?? "";
   const selected = data?.detail;
+  const rankingRows: OperatorRankingRow[] = (data?.ranking ?? []).map((item, index) => ({
+    ...item,
+    position: index + 1,
+  }));
+  const rankingColumns: DataTableColumn<OperatorRankingRow>[] = [
+    {
+      key: "position",
+      header: "#",
+      render: (row) => `${row.position}º`,
+    },
+    {
+      key: "operator_name",
+      header: "Operador",
+      interactive: true,
+      render: (row) => (
+        <button
+          type="button"
+          onClick={() => onOperatorChange(row.operator_code)}
+          aria-pressed={selectedCode === row.operator_code}
+          className="dq-nc-operators__operator-button"
+        >
+          {row.operator_name}
+        </button>
+      ),
+    },
+    {
+      key: "total_ncs",
+      header: "Total de NCs",
+      align: "right",
+      className: "dq-nc-operators__number",
+      render: (row) => formatCount(row.total_ncs),
+    },
+    {
+      key: "main_defect",
+      header: "Principal defeito",
+      render: (row) => row.main_defect,
+    },
+  ];
+
   return (
     <section className="dq-nc-operators dq-card" aria-label="Operadores com mais não conformidades" aria-busy={loading}>
       <header className="dq-nc-operators__header">
@@ -65,38 +107,15 @@ export function NcOperatorRanking({
       {data?.ranking.length ? (
         <div className="dq-nc-operators__layout">
           <div className="dq-nc-operators__ranking">
-            <div className="dq-nc-operators__table-scroll">
-              <table>
-                <thead><tr>
-                  <th scope="col">#</th>
-                  <th scope="col">Operador</th>
-                  <th scope="col">Total de NCs</th>
-                  <th scope="col">Principal defeito</th>
-                </tr></thead>
-                <tbody>
-                  {data.ranking.map((item, index) => (
-                    <tr
-                      key={item.operator_code}
-                      className={selectedCode === item.operator_code ? "dq-nc-operators__active" : ""}
-                    >
-                      <td>{index + 1}º</td>
-                      <td>
-                        <button
-                          type="button"
-                          onClick={() => onOperatorChange(item.operator_code)}
-                          aria-pressed={selectedCode === item.operator_code}
-                          className="dq-nc-operators__operator-button"
-                        >
-                          {item.operator_name}
-                        </button>
-                      </td>
-                      <td className="dq-nc-operators__number">{formatCount(item.total_ncs)}</td>
-                      <td>{item.main_defect}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              columns={rankingColumns}
+              rows={rankingRows}
+              rowKey={(row) => row.operator_code}
+              layout="section"
+              getRowClassName={(row) =>
+                selectedCode === row.operator_code ? "dq-nc-operators__active" : undefined
+              }
+            />
           </div>
           <div className="dq-nc-operators__detail">
             <div className="dq-nc-operators__metrics">
