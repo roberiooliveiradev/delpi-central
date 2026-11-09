@@ -111,7 +111,27 @@ test("REF-019 — perguntas estruturadas, resposta e retomada", async ({
   ).toBeVisible({ timeout: 30_000 });
   await shot("awaiting-requester");
 
-  const responseAreas = page.getByLabel(/Resposta/i);
+  // FIX-01: dual-role — garantir visão de solicitante antes de responder.
+  const respondAsRequester = page.getByRole("button", {
+    name: /Responder como solicitante/i,
+  });
+  if (await respondAsRequester.isVisible().catch(() => false)) {
+    await respondAsRequester.click();
+  }
+
+  // Resume deve permanecer indisponível enquanto a rodada está aberta.
+  await expect(
+    page.getByText(/Aguardando as informações solicitadas|Há respostas aguardando/i).first(),
+  ).toBeVisible({ timeout: 10_000 }).catch(() => undefined);
+  const resumeWhileOpen = page.getByRole("button", {
+    name: /Retomar atendimento/i,
+  });
+  if (await resumeWhileOpen.first().isVisible().catch(() => false)) {
+    await expect(resumeWhileOpen.first()).toBeDisabled();
+  }
+
+  const responseAreas = page.getByLabel(/Sua resposta|Resposta/i);
+  await expect(responseAreas.first()).toBeVisible({ timeout: 15_000 });
   const n = await responseAreas.count();
   if (n >= 1) await responseAreas.nth(0).fill("Descrição confirmada.");
   if (n >= 2) await responseAreas.nth(1).fill("Unidade correta: PC.");
@@ -123,13 +143,19 @@ test("REF-019 — perguntas estruturadas, resposta e retomada", async ({
   }
 
   const submitBtn = page.getByRole("button", { name: /Enviar respostas/i });
-  if (await submitBtn.isVisible().catch(() => false)) {
-    await submitBtn.click();
-    await expect(
-      page.getByText(/aguardando análise|Respostas enviadas|Aguardando análise/i).first(),
-    ).toBeVisible({ timeout: 30_000 });
-  }
+  await expect(submitBtn).toBeVisible({ timeout: 10_000 });
+  await submitBtn.click();
+  await expect(
+    page.getByText(/aguardando análise|Respostas enviadas|Aguardando análise/i).first(),
+  ).toBeVisible({ timeout: 30_000 });
   await shot("answers-submitted");
+
+  const analyzeAsEng = page.getByRole("button", {
+    name: /Analisar como Engenharia/i,
+  });
+  if (await analyzeAsEng.isVisible().catch(() => false)) {
+    await analyzeAsEng.click();
+  }
 
   for (let i = 0; i < 4; i++) {
     const btn = page.getByRole("button", { name: /Aceitar esclarecimento/i }).first();
@@ -140,8 +166,9 @@ test("REF-019 — perguntas estruturadas, resposta e retomada", async ({
   await shot("accepted");
 
   const resumeBtn = page.getByRole("button", { name: /Retomar atendimento/i });
-  if (await resumeBtn.isVisible().catch(() => false)) {
-    await resumeBtn.click();
+  if (await resumeBtn.first().isVisible().catch(() => false)) {
+    await expect(resumeBtn.first()).toBeEnabled({ timeout: 15_000 });
+    await resumeBtn.first().click();
     const confirm = page.getByRole("button", {
       name: /Retomar atendimento|Confirmar/i,
     });

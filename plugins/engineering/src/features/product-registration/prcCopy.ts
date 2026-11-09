@@ -303,7 +303,15 @@ export const PRC_INFO_COPY = {
   questionAccepted: "Esclarecimento aceito.",
   resume: "Retomar atendimento",
   resumeBlocked:
-    "Retome o atendimento depois de aceitar todos os esclarecimentos da rodada.",
+    "Aguardando as informações solicitadas. O atendimento poderá ser retomado após a análise dos esclarecimentos.",
+  resumeBlockedReview:
+    "Há respostas aguardando avaliação. Aceite os esclarecimentos ou registre a dispensa antes de retomar.",
+  resumeConflict:
+    "Este atendimento ainda possui esclarecimentos pendentes. Aguarde as respostas e conclua a análise antes de retomar.",
+  dualRoleRespond: "Responder como solicitante",
+  dualRoleReview: "Analisar como Engenharia",
+  dualRoleHint:
+    "Você é o solicitante e também opera o atendimento. Escolha a visão; cada ação continua autorizada pelo backend.",
   history: "Histórico de rodadas resolvidas",
 } as const;
 

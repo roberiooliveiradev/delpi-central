@@ -213,14 +213,20 @@ export function PrcDetailPage({
         if (err.data?.fieldResults) {
           setMismatchFields(err.data.fieldResults);
         }
-        setFeedback({
-          kind: "error",
-          text:
-            err.status === 409
-              ? `Conflito — ${err.message} Recarregue e revise o estado atual.`
-              : err.message || "Falha na operação.",
-        });
-        if (err.status === 409 && err.code === "stale_version") {
+        {
+          const raw = err.message || "";
+          const isInfoRound =
+            err.status === 409 && /information_round_open/i.test(raw);
+          setFeedback({
+            kind: "error",
+            text: isInfoRound
+              ? "Este atendimento ainda possui esclarecimentos pendentes. Aguarde as respostas e conclua a análise antes de retomar."
+              : err.status === 409
+                ? `Conflito — ${raw} Recarregue e revise o estado atual.`
+                : raw || "Falha na operação.",
+          });
+        }
+        if (err.status === 409) {
           await load();
         }
       } finally {
@@ -453,8 +459,8 @@ export function PrcDetailPage({
               requestStatus={detail.status}
               requesterSubject={detail.requester.subject}
               currentSubject={currentSubject}
-              canReview={detail.allowedActions.includes("resume")}
-              canResume={detail.allowedActions.includes("resume")}
+              informationExchange={detail.informationExchange}
+              allowedActions={detail.allowedActions}
               refreshToken={`${detail.caseVersion}:${detail.updatedAt}`}
               busy={busy}
               onChanged={load}

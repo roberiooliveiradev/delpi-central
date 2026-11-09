@@ -149,6 +149,15 @@ def _request_detail(request: dict, actor: PrcActor) -> dict[str, Any]:
     }
 
 
+def _active_info_round(
+    rounds: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    for rnd in rounds:
+        if rnd.get("status") in ("awaiting_requester", "awaiting_review"):
+            return rnd
+    return None
+
+
 class ProductRegistrationService:
     """Casos de uso do módulo — mesma implementação REST/EVA."""
 
@@ -162,6 +171,63 @@ class ProductRegistrationService:
         self._repo = repository
         self._reader = official_reader
         self._sources = allowed_sources or _ALLOWED_SOURCES_DEFAULT
+
+    def _attach_information_exchange(
+        self,
+        detail: dict[str, Any],
+        request_id: str,
+        *,
+        actor: PrcActor,
+        request: dict[str, Any],
+    ) -> dict[str, Any]:
+        """PRC-REF-019-FIX-01 — capabilities explícitas + filtro de resume.
+
+        ``allowedActions`` não oferece ``resume`` enquanto houver rodada
+        aberta (o domínio rejeitaria com 409). ``canRespond``/``canReview``
+        são capacidades de apresentação; a AuthZ efetiva permanece nos
+        use cases de draft/submit/accept/follow-up/resume.
+        """
+        rounds = self._repo.list_information_rounds(request_id=request_id)
+        blocker = info_rounds.has_open_information_blocker(rounds)
+        active = _active_info_round(rounds)
+        actions = [
+            action
+            for action in (detail.get("allowedActions") or [])
+            if not (blocker and action == "resume")
+        ]
+        detail["allowedActions"] = actions
+        requester = str(request.get("requester_subject") or "")
+        active_status = active.get("status") if active else None
+        detail["informationExchange"] = {
+            "hasOpenBlocker": blocker,
+            "canRespond": bool(
+                requester
+                and actor.user_id == requester
+                and active_status == "awaiting_requester"
+            ),
+            "canReview": bool(
+                actor.is_analyst
+                and request.get("status") == "needs_information"
+            ),
+            "activeRoundStatus": active_status,
+            "activeRoundId": active.get("id") if active else None,
+        }
+        return detail
+
+    def _detail(
+        self,
+        request: dict[str, Any],
+        actor: PrcActor,
+        *,
+        request_id: str | None = None,
+    ) -> dict[str, Any]:
+        detail = _request_detail(request, actor)
+        rid = request_id or str(request.get("id") or "")
+        if not rid:
+            return detail
+        return self._attach_information_exchange(
+            detail, rid, actor=actor, request=request
+        )
 
     # --- helpers de idempotência -------------------------------------------------
 
@@ -536,7 +602,7 @@ class ProductRegistrationService:
         _require_actor_read(actor)
         request = self._get_scoped(request_id, actor)
         request["verifications"] = self._repo.list_verifications(request_id)
-        return _request_detail(request, actor)
+        return self._detail(request, actor, request_id=request_id)
 
     def get_timeline(
         self, request_id: str, *, actor: PrcActor, page: int, page_size: int
@@ -653,8 +719,8 @@ class ProductRegistrationService:
             reason=reason,
             event_meta=meta,
         )
-        response = _request_detail(
-            {**updated, "verifications": []}, actor
+        response = self._detail(
+            {**updated, "verifications": []}, actor, request_id=request_id
         )
         self._idempotent_store(
             actor=actor,
@@ -765,8 +831,10 @@ class ProductRegistrationService:
             },
             questions=normalized,
         )
-        response = _request_detail(
-            {**result["request"], "verifications": []}, actor
+        response = self._detail(
+            {**result["request"], "verifications": []},
+            actor,
+            request_id=request_id,
         )
         response["informationRound"] = info_rounds.public_round_view(
             result["round"], include_internal=True
@@ -903,7 +971,9 @@ class ProductRegistrationService:
             actor_display_name=actor.label,
             actor_email=actor.email,
         )
-        response = _request_detail({**updated, "verifications": []}, actor)
+        response = self._detail(
+            {**updated, "verifications": []}, actor, request_id=request_id
+        )
         self._idempotent_store(
             actor=actor, operation="update_draft", key=idempotency_key,
             fingerprint=fp, request_id=request_id, status=200,

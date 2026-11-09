@@ -309,3 +309,49 @@ export function initialAnswerTexts(
   for (const q of questions) out[q.id] = q.answer?.text ?? "";
   return out;
 }
+
+/** Identidade conhecida e match de solicitante — fail-closed se ausente. */
+export function isRequesterSubject(
+  currentSubject: string | null | undefined,
+  requesterSubject: string | null | undefined,
+): boolean {
+  const current = (currentSubject || "").trim();
+  const requester = (requesterSubject || "").trim();
+  if (!current || !requester) return false;
+  return current === requester;
+}
+
+export type InfoRoleView = "requester" | "analyst";
+
+/**
+ * Visão inicial do painel: dual-role começa no solicitante quando há
+ * rodada aguardando resposta; caso contrário, analista.
+ */
+export function initialInfoRoleView(input: {
+  isRequester: boolean;
+  canRespond: boolean;
+  canReview: boolean;
+  activeRoundStatus?: string | null;
+}): InfoRoleView {
+  if (input.isRequester && input.canReview) {
+    if (
+      input.canRespond ||
+      input.activeRoundStatus === "awaiting_requester"
+    ) {
+      return "requester";
+    }
+    return "analyst";
+  }
+  if (input.isRequester || input.canRespond) return "requester";
+  return "analyst";
+}
+
+/** Mensagem funcional para 409 de rodada aberta (sem código técnico na UI). */
+export function informationRoundConflictMessage(
+  rawMessage: string | undefined,
+  fallback: string,
+): string {
+  const text = String(rawMessage || "");
+  if (/information_round_open/i.test(text)) return fallback;
+  return text.trim() || fallback;
+}

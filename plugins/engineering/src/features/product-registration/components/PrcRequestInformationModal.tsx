@@ -1,8 +1,6 @@
 /** Formulário multi-pergunta de "Solicitar informações" — PRC-REF-019.
- * Host-contained (não cobre a sidebar). Apenas coleta e valida o
- * necessário no cliente; a Engineering API valida alvos/limites e
- * decide autorização. O estado nasce a cada montagem (a barra monta o
- * modal só enquanto aberto), sem efeito de reset. */
+ * FIX-01: modal alto (variante wide + CSS), selects oficiais
+ * (SearchableSelect para campo/fornecedor), host-contained. */
 
 import { useId, useMemo, useState } from "react";
 
@@ -10,7 +8,7 @@ import {
   EngineeringActionButton,
   EngineeringFormActions,
   EngineeringHostDialog,
-  EngineeringSelectField,
+  EngineeringSearchableSelect,
   EngineeringStateBanner,
   EngineeringTextAreaField,
   EngineeringTextField,
@@ -54,10 +52,8 @@ export function PrcRequestInformationModal({
 }: {
   open: boolean;
   busy: boolean;
-  /** Solicitante do caso (destinatário das perguntas). */
   requesterLabel?: string;
   fieldSpecs?: PrcFieldSpec[] | null;
-  /** Fornecedores da ficha técnica (atalho para SUPPLIER_LINK). */
   suppliers?: InfoSupplierOption[];
   onSubmit: (payload: PrcRequestInformationSubmit) => void;
   onCancel: () => void;
@@ -77,6 +73,17 @@ export function PrcRequestInformationModal({
         label: prcFieldLabel(spec.path),
       })),
     [fieldSpecs],
+  );
+
+  const supplierOptions = useMemo(
+    () =>
+      (suppliers ?? []).map((s) => ({
+        value: `${s.supplierCode}|${s.store}`,
+        label: s.supplierName
+          ? `${s.supplierCode}/${s.store} — ${s.supplierName}`
+          : `${s.supplierCode}/${s.store}`,
+      })),
+    [suppliers],
   );
 
   const patch = (rowId: string, change: Partial<InfoQuestionDraft>) => {
@@ -128,6 +135,7 @@ export function PrcRequestInformationModal({
       open={open}
       onClose={busy ? () => undefined : onCancel}
       title={PRC_INFO_COPY.requestTitle}
+      className="engineering-prc-info-modal engineering-modal--wide delpi-ui-modal--wide"
       footer={
         <EngineeringFormActions>
           <EngineeringActionButton
@@ -170,6 +178,10 @@ export function PrcRequestInformationModal({
           {drafts.map((draft, index) => {
             const base = `${formId}-q${draft.rowId}`;
             const error = rowErrors[draft.rowId];
+            const supplierValue =
+              draft.supplierCode && draft.store
+                ? `${draft.supplierCode}|${draft.store}`
+                : "";
             return (
               <li
                 key={draft.rowId}
@@ -190,13 +202,17 @@ export function PrcRequestInformationModal({
                 </div>
 
                 <div className="engineering-prc__info-question-target">
-                  <EngineeringSelectField
+                  <EngineeringSearchableSelect
                     id={`${base}-type`}
                     label={PRC_INFO_COPY.targetType}
                     value={draft.targetType}
                     onChange={(value) =>
                       patch(draft.rowId, {
                         targetType: value as PrcInformationTargetType,
+                        targetPath: "",
+                        supplierCode: "",
+                        store: "",
+                        targetAttribute: "partNumber",
                       })
                     }
                     options={INFO_TARGET_OPTIONS.map((o) => ({
@@ -207,15 +223,16 @@ export function PrcRequestInformationModal({
                   />
 
                   {draft.targetType === "FIELD" ? (
-                    <EngineeringSelectField
+                    <EngineeringSearchableSelect
                       id={`${base}-field`}
                       label={PRC_INFO_COPY.targetField}
+                      searchable
                       value={draft.targetPath}
                       onChange={(value) =>
                         patch(draft.rowId, { targetPath: value })
                       }
                       options={fieldOptions}
-                      placeholderOption={PRC_INFO_COPY.targetFieldPlaceholder}
+                      placeholder={PRC_INFO_COPY.targetFieldPlaceholder}
                       required
                       disabled={busy}
                     />
@@ -223,13 +240,14 @@ export function PrcRequestInformationModal({
 
                   {draft.targetType === "SUPPLIER_LINK" ? (
                     <>
-                      {suppliers?.length ? (
-                        <EngineeringSelectField
+                      {supplierOptions.length ? (
+                        <EngineeringSearchableSelect
                           id={`${base}-supplier-pick`}
                           label={PRC_INFO_COPY.supplierPick}
-                          value=""
+                          searchable
+                          value={supplierValue}
                           onChange={(value) => {
-                            const hit = suppliers.find(
+                            const hit = (suppliers ?? []).find(
                               (s) => `${s.supplierCode}|${s.store}` === value,
                             );
                             if (hit) {
@@ -239,15 +257,8 @@ export function PrcRequestInformationModal({
                               });
                             }
                           }}
-                          options={suppliers.map((s) => ({
-                            value: `${s.supplierCode}|${s.store}`,
-                            label: s.supplierName
-                              ? `${s.supplierCode}/${s.store} — ${s.supplierName}`
-                              : `${s.supplierCode}/${s.store}`,
-                          }))}
-                          placeholderOption={
-                            PRC_INFO_COPY.supplierPickPlaceholder
-                          }
+                          options={supplierOptions}
+                          placeholder={PRC_INFO_COPY.supplierPickPlaceholder}
                           disabled={busy}
                         />
                       ) : null}
@@ -273,7 +284,7 @@ export function PrcRequestInformationModal({
                         required
                         disabled={busy}
                       />
-                      <EngineeringSelectField
+                      <EngineeringSearchableSelect
                         id={`${base}-supplier-attr`}
                         label={PRC_INFO_COPY.supplierAttribute}
                         value={draft.targetAttribute}

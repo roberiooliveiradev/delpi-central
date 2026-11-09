@@ -236,3 +236,5 @@ A ação semântica `product_registration.verify_and_complete` continua a única
 ## PRC-REF-019 — EVA e rodadas de informações ao solicitante
 
 **PROVEN / IMPLEMENTED_DEV (2026-11-09).** Ver [PRC-REF-019](./MFE-PRODUCT-REGISTRATION-POST-REDESIGN-REFINEMENT-PLAN.md). Capabilities: `request_information` (questions/message), `information_round_list|get`, `information_question_accept`, `information_follow_up`, `resume` (gate + waiver) — status `proven` no registry; mesmos use cases REST via 6 MCP tools; PREPARE/ACT; sem draft/submit do solicitante na EVA (ação humana do requester). Texto do solicitante tratado como não confiável. Bandeiras D16 não saem por outbound. `PENDING_NOTIFICATION_OWNER`; AuthZ solicitante externo sem `engineering.access` → `ARCHITECTURE_DECISION_REQUIRED`.
+
+**FIX-01:** detalhe REST/EVA herda o mesmo `_attach_information_exchange` (filtro de `resume` + bloco `informationExchange`). Sem novas MCP tools; sem regressão de dispatch.

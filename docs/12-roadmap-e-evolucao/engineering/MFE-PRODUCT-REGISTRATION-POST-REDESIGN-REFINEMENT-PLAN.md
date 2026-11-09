@@ -646,8 +646,20 @@ O PO aprovou nova apresentação **sem duplicar código/loja/razão social**: co
 
 **Decisão PO 2026-11-09. Status PO_APPROVED_TARGET / IMPLEMENTED_DEV / DEV_ONLY (2026-11-09).** Comunicação formal analista ↔ solicitante com perguntas tipadas, respostas rastreáveis, avaliação, complemento e retomada governada. **Não** confundir com bandeiras D16. Sem novo bounded context, sem my-requests/Chat runtime, sem gravação TOTVS. HML/PROD não deployados neste ciclo.
 
+### PRC-REF-019-FIX-01 — Dual-role UX, resume gate e plugin-ui (2026-11-09)
+
+**TASK:** `ENG-PRC-REF-019-FIX-01-REQUESTER-ANALYST-UX-AND-PLUGIN-UI`. Ambiente: DEV only.
+
+**Causas raiz corrigidas:**
+- Dual-role: painel usava `isRequesterView && !canReview`, ocultando o formulário quando o solicitante também era analista. Agora distingue `isRequester` / `canRespond` / `canReview` / `canResume` e oferece `SegmentToggle` explícito (visão não concede AuthZ).
+- Resume: `allowedActions` oferecia `resume` com rodada aberta; backend 409. Owner no service filtra `resume` enquanto `hasOpenBlocker` e detalhe expõe `informationExchange{hasOpenBlocker,canRespond,canReview,activeRound*}`. Hero/ActionBar/painel usam a mesma fonte; 409 traduzido para mensagem funcional.
+- Modal: variante `delpi-ui-modal--wide` (host-contained ~92% altura); selects ricos via `EngineeringSearchableSelect` (campo/fornecedor com busca; tipo/atributo alinhados ao Portal).
+
+**Residuais:** `ARCHITECTURE_DECISION_REQUIRED` — solicitante sem `engineering.access` ainda bloqueado no gate HTTP/Core; AuthZ de objeto no service permanece. Sem bypass local. Aceite geral FIX-01: PARTIAL se esse item for exigido no go-live externo.
+
 ### Inventário e gap (pós-execução)
 - PROVEN: domínio `information_rounds` + tabelas V018/V019; `POST request-information` com `questions[]`/`message` (legado reason+pendingFields compatível); GET/PATCH/POST de rodadas; AuthZ objeto solicitante; gate de resume + `waiver:`; modal multi-pergunta; painel solicitante/analista; EVA read/execute parity (6 MCP tools); pytest in-memory + PG real `TestPostgresInformationRounds`; Vitest 304; migrations DEV aplicadas; bundle engineering reconstruído.
+- PROVEN (FIX-01): `informationExchange` no detalhe; filtro de `resume`; dual-role SegmentToggle; 409 funcional; modal wide + SearchableSelect.
 - PENDING_NOTIFICATION_OWNER: catálogo Core sem entradas PRC — aviso push/e-mail não implementado; rodada permanece consultável.
 - PENDING_ATTACHMENTS_CONTRACT: respostas textuais apenas.
 - ARCHITECTURE_DECISION_REQUIRED (parcial): rotas ainda exigem `engineering.access`; solicitante externo sem essa permissão não acessa — AuthZ por objeto está no service, mas o gate de rota Core permanece.

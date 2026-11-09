@@ -79,6 +79,14 @@ export type PrcRequestDetail = {
   } | null;
   removeCompletionPolicy?: string;
   allowedActions: string[];
+  /** PRC-REF-019-FIX-01 — capacidades de esclarecimento (backend-first). */
+  informationExchange?: {
+    hasOpenBlocker: boolean;
+    canRespond: boolean;
+    canReview: boolean;
+    activeRoundStatus?: string | null;
+    activeRoundId?: string | null;
+  } | null;
   verificationSummary?: {
     result: string;
     checkedAt: string;

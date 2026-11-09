@@ -429,6 +429,36 @@ class TestInformationRoundRest:
         ).json()["data"]
         assert detail["status"] == "needs_information"
 
+    def test_detail_filters_resume_and_exposes_information_exchange(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        """FIX-01: allowedActions sem resume enquanto blocker aberto;
+        informationExchange carrega capacidades explícitas."""
+        rid, view = _open_round(client, jwks_env, core_rbac)
+        # Analista: pode revisar, não responder; resume filtrado.
+        analyst_detail = _get_as(
+            client, jwks_env, core_rbac, _base(rid), ANALYST_SUB
+        ).json()["data"]
+        assert analyst_detail["status"] == "needs_information"
+        assert "resume" not in analyst_detail["allowedActions"]
+        assert "reject" in analyst_detail["allowedActions"]
+        info = analyst_detail["informationExchange"]
+        assert info["hasOpenBlocker"] is True
+        assert info["canRespond"] is False
+        assert info["canReview"] is True
+        assert info["activeRoundStatus"] == "awaiting_requester"
+        assert info["activeRoundId"] == view["id"]
+
+        # Solicitante com engineering.access (dual-role): canRespond.
+        requester_detail = _get_as(
+            client, jwks_env, core_rbac, _base(rid), REQUESTER_SUB
+        ).json()["data"]
+        req_info = requester_detail["informationExchange"]
+        assert req_info["hasOpenBlocker"] is True
+        assert req_info["canRespond"] is True
+        assert req_info["canReview"] is True
+        assert "resume" not in requester_detail["allowedActions"]
+
     def test_resume_waiver_resolves_open_round(
         self, client, jwks_env, core_rbac, prc_service_repo
     ):

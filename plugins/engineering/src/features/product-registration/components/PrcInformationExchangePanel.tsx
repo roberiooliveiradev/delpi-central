@@ -1,21 +1,17 @@
 /** Intercâmbio de informações analista ↔ solicitante — PRC-REF-019.
  *
- * Painel da visão geral do detalhe:
- *  - solicitante: responde (rascunho/envio) a rodada `awaiting_requester`;
- *  - analista: avalia respostas (`awaiting_review`) — aceita, pede
- *    complemento ou retoma o atendimento;
- *  - histórico de rodadas resolvidas recolhido.
- *
- * O papel exibido é só apresentação: a Engineering API decide
- * autorização (403/409 aparecem como feedback). `canReview`/`canResume`
- * derivam de `allowedActions` do backend. */
+ * FIX-01: suporte a dual-role (mesmo usuário solicitante+analista) com
+ * alternância explícita; retomada só quando o backend liberar
+ * ``canResume``/``allowedActions`` sem bloqueio de rodada; 409 com
+ * mensagem funcional. Autorização efetiva permanece na Engineering API. */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { HomeApiError } from "../../../api/httpClient";
 import {
   EngineeringActionButton,
   EngineeringDetailCard,
+  EngineeringSegmentToggle,
   EngineeringStateBanner,
   EngineeringStatusBadge,
   EngineeringTextAreaField,
@@ -29,6 +25,7 @@ import {
   submitInformationAnswers,
   type PrcInformationQuestion,
   type PrcInformationRound,
+  type PrcRequestDetail,
 } from "../api/productRegistrationApi";
 import {
   PRC_INFO_COPY,
@@ -38,14 +35,17 @@ import {
   prcPersonLabel,
 } from "../prcCopy";
 import {
-  allInformationQuestionsAccepted,
   buildAnswerInputs,
   findActiveInformationRound,
   followUpInputFor,
   INFO_ANSWER_TEXT_MAX,
   INFO_QUESTION_TEXT_MAX,
+  informationRoundConflictMessage,
   initialAnswerTexts,
+  initialInfoRoleView,
+  isRequesterSubject,
   resolvedInformationRounds,
+  type InfoRoleView,
   validateInfoAnswersForSubmit,
 } from "../prcInformationExchange";
 
@@ -86,7 +86,6 @@ function RoundHeader({ round }: { round: PrcInformationRound }) {
   );
 }
 
-/** Perguntas e respostas em leitura (histórico / visão sem ação). */
 function ReadOnlyQuestions({ round }: { round: PrcInformationRound }) {
   return (
     <ol className="engineering-prc__info-qa">
@@ -119,27 +118,16 @@ function RequesterAnswerForm({
   onDraft: (texts: Record<string, string>) => void;
   onSubmit: (texts: Record<string, string>) => void;
 }) {
-  const [texts, setTexts] = useState<Record<string, string>>(() =>
-    initialAnswerTexts(round.questions),
-  );
+  const [texts, setTexts] = useState(() => initialAnswerTexts(round.questions));
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const submit = () => {
-    const check = validateInfoAnswersForSubmit(round.questions, texts);
-    if (!check.valid) {
-      setErrors(check.errors);
-      return;
-    }
-    setErrors({});
-    onSubmit(texts);
-  };
 
   return (
     <div className="engineering-prc__info-answer-form">
       <p className="engineering-prc__muted">{PRC_INFO_COPY.requesterIntro}</p>
       {round.message ? (
         <p>
-          <strong>{PRC_INFO_COPY.roundMessage}:</strong> {round.message}
+          <strong>{PRC_INFO_COPY.roundMessage}: </strong>
+          {round.message}
         </p>
       ) : null}
       <ol className="engineering-prc__info-qa">
@@ -155,17 +143,16 @@ function RequesterAnswerForm({
               label={PRC_INFO_COPY.yourAnswer}
               value={texts[q.id] ?? ""}
               onChange={(value) => {
-                setTexts((s) => ({ ...s, [q.id]: value }));
-                setErrors((e) => {
-                  if (!e[q.id]) return e;
-                  const next = { ...e };
+                setTexts((prev) => ({ ...prev, [q.id]: value }));
+                setErrors((prev) => {
+                  if (!prev[q.id]) return prev;
+                  const next = { ...prev };
                   delete next[q.id];
                   return next;
                 });
               }}
               maxLength={INFO_ANSWER_TEXT_MAX}
-              rows={3}
-              required
+              rows={4}
               disabled={disabled}
             />
             {errors[q.id] ? (
@@ -176,7 +163,7 @@ function RequesterAnswerForm({
           </li>
         ))}
       </ol>
-      <div className="engineering-prc__actions">
+      <div className="engineering-prc__info-answer-actions">
         <EngineeringActionButton
           variant="ghost"
           softDisabled={disabled}
@@ -187,7 +174,14 @@ function RequesterAnswerForm({
         <EngineeringActionButton
           variant="primary"
           softDisabled={disabled}
-          onClick={submit}
+          onClick={() => {
+            const result = validateInfoAnswersForSubmit(round.questions, texts);
+            if (!result.valid) {
+              setErrors(result.errors);
+              return;
+            }
+            onSubmit(texts);
+          }}
         >
           {PRC_INFO_COPY.submitAnswers}
         </EngineeringActionButton>
@@ -204,30 +198,19 @@ function AnalystReview({
 }: {
   round: PrcInformationRound;
   disabled: boolean;
-  onAccept: (question: PrcInformationQuestion) => void;
-  onFollowUp: (question: PrcInformationQuestion, text: string) => void;
+  onAccept: (q: PrcInformationQuestion) => void;
+  onFollowUp: (q: PrcInformationQuestion, text: string) => void;
 }) {
-  const [followUpId, setFollowUpId] = useState<string | null>(null);
+  const [followUpFor, setFollowUpFor] = useState<string | null>(null);
   const [followUpText, setFollowUpText] = useState("");
-  const [followUpError, setFollowUpError] = useState("");
-
-  const sendFollowUp = (question: PrcInformationQuestion) => {
-    if (!followUpText.trim()) {
-      setFollowUpError("Escreva a pergunta de complemento.");
-      return;
-    }
-    setFollowUpError("");
-    onFollowUp(question, followUpText);
-    setFollowUpId(null);
-    setFollowUpText("");
-  };
 
   return (
     <div className="engineering-prc__info-review">
       <p className="engineering-prc__muted">{PRC_INFO_COPY.reviewIntro}</p>
       <ol className="engineering-prc__info-qa">
         {round.questions.map((q) => {
-          const reviewable = q.status === "submitted";
+          const open = followUpFor === q.id;
+          const submitted = q.status === "submitted";
           return (
             <li key={q.id} className="engineering-prc__info-qa-item">
               <div className="engineering-prc__info-qa-head">
@@ -235,12 +218,13 @@ function AnalystReview({
                 <QuestionStatus status={q.status} />
               </div>
               <p>{q.questionText}</p>
-              <p>
-                <strong>{PRC_INFO_COPY.answerLabel}:</strong>{" "}
-                {q.answer?.text || PRC_INFO_COPY.noAnswerYet}
+              <p className="engineering-prc__muted">
+                {q.answer?.text
+                  ? `${PRC_INFO_COPY.answerLabel}: ${q.answer.text}`
+                  : PRC_INFO_COPY.noAnswerYet}
               </p>
-              {reviewable ? (
-                <div className="engineering-prc__actions">
+              {submitted ? (
+                <div className="engineering-prc__info-review-actions">
                   <EngineeringActionButton
                     variant="primary"
                     softDisabled={disabled}
@@ -252,53 +236,44 @@ function AnalystReview({
                     variant="ghost"
                     softDisabled={disabled}
                     onClick={() => {
-                      setFollowUpId(followUpId === q.id ? null : q.id);
+                      setFollowUpFor(q.id);
                       setFollowUpText("");
-                      setFollowUpError("");
                     }}
                   >
                     {PRC_INFO_COPY.requestFollowUp}
                   </EngineeringActionButton>
                 </div>
               ) : null}
-              {followUpId === q.id ? (
+              {open ? (
                 <div className="engineering-prc__info-followup">
                   <EngineeringTextAreaField
                     id={`prc-info-followup-${q.id}`}
                     label={PRC_INFO_COPY.followUpQuestion}
                     value={followUpText}
-                    onChange={(value) => {
-                      setFollowUpText(value);
-                      setFollowUpError("");
-                    }}
+                    onChange={setFollowUpText}
                     maxLength={INFO_QUESTION_TEXT_MAX}
                     rows={3}
                     required
                     disabled={disabled}
                   />
-                  {followUpError ? (
-                    <p className="engineering-prc__field-error" role="alert">
-                      {followUpError}
-                    </p>
-                  ) : null}
-                  <div className="engineering-prc__actions">
-                    <EngineeringActionButton
-                      variant="primary"
-                      softDisabled={disabled}
-                      onClick={() => sendFollowUp(q)}
-                    >
-                      {PRC_INFO_COPY.followUpSubmit}
-                    </EngineeringActionButton>
+                  <div className="engineering-prc__info-review-actions">
                     <EngineeringActionButton
                       variant="ghost"
                       disabled={disabled}
-                      onClick={() => {
-                        setFollowUpId(null);
-                        setFollowUpText("");
-                        setFollowUpError("");
-                      }}
+                      onClick={() => setFollowUpFor(null)}
                     >
                       {PRC_INFO_COPY.followUpCancel}
+                    </EngineeringActionButton>
+                    <EngineeringActionButton
+                      variant="primary"
+                      softDisabled={disabled || !followUpText.trim()}
+                      onClick={() => {
+                        if (!followUpText.trim()) return;
+                        onFollowUp(q, followUpText.trim());
+                        setFollowUpFor(null);
+                      }}
+                    >
+                      {PRC_INFO_COPY.followUpSubmit}
                     </EngineeringActionButton>
                   </div>
                 </div>
@@ -316,8 +291,8 @@ export function PrcInformationExchangePanel({
   requestStatus,
   requesterSubject,
   currentSubject,
-  canReview,
-  canResume,
+  informationExchange,
+  allowedActions,
   refreshToken,
   busy,
   onChanged,
@@ -325,24 +300,36 @@ export function PrcInformationExchangePanel({
 }: {
   requestId: string;
   requestStatus: string;
-  /** `detail.requester.subject`. */
   requesterSubject: string;
-  /** `sub` do access token — só para escolher a visão; nunca autorização. */
   currentSubject: string | null;
-  /** Backend liberou ação de analista (`allowedActions` inclui resume). */
-  canReview: boolean;
-  canResume: boolean;
-  /** Muda quando o caso é recarregado — dispara releitura das rodadas. */
+  informationExchange?: PrcRequestDetail["informationExchange"];
+  allowedActions: string[];
   refreshToken?: string | number;
   busy: boolean;
   onChanged: () => void | Promise<void>;
   onResume: () => void;
 }) {
   const [rounds, setRounds] = useState<PrcInformationRound[]>([]);
-  const [hasOpenBlocker, setHasOpenBlocker] = useState(false);
+  const [hasOpenBlocker, setHasOpenBlocker] = useState(
+    Boolean(informationExchange?.hasOpenBlocker),
+  );
   const [state, setState] = useState<"loading" | "ok" | "error">("loading");
   const [acting, setActing] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
+  const [roleView, setRoleView] = useState<InfoRoleView | null>(null);
+
+  const isRequester = isRequesterSubject(currentSubject, requesterSubject);
+  const canRespondFromApi = Boolean(informationExchange?.canRespond);
+  const canReviewFromApi = Boolean(informationExchange?.canReview);
+  const canReview =
+    canReviewFromApi ||
+    allowedActions.includes("resume") ||
+    allowedActions.includes("reject") ||
+    allowedActions.includes("request_information");
+  const canResume =
+    allowedActions.includes("resume") &&
+    requestStatus === "needs_information" &&
+    !hasOpenBlocker;
 
   const reload = useCallback(async () => {
     try {
@@ -359,6 +346,58 @@ export function PrcInformationExchangePanel({
     void reload();
   }, [reload, refreshToken]);
 
+  useEffect(() => {
+    if (informationExchange?.hasOpenBlocker != null) {
+      setHasOpenBlocker(Boolean(informationExchange.hasOpenBlocker));
+    }
+  }, [informationExchange?.hasOpenBlocker]);
+
+  const active = findActiveInformationRound(rounds);
+  const history = resolvedInformationRounds(rounds);
+
+  const canRespond = useMemo(() => {
+    if (informationExchange?.canRespond != null) {
+      return Boolean(informationExchange.canRespond);
+    }
+    return (
+      isRequester &&
+      Boolean(active) &&
+      active?.status === "awaiting_requester"
+    );
+  }, [informationExchange?.canRespond, isRequester, active]);
+
+  const dualRole = isRequester && canReview;
+
+  useEffect(() => {
+    if (!dualRole) {
+      setRoleView(null);
+      return;
+    }
+    setRoleView((prev) => {
+      if (prev) return prev;
+      return initialInfoRoleView({
+        isRequester,
+        canRespond,
+        canReview,
+        activeRoundStatus:
+          active?.status ?? informationExchange?.activeRoundStatus,
+      });
+    });
+  }, [
+    dualRole,
+    isRequester,
+    canRespond,
+    canReview,
+    active?.status,
+    informationExchange?.activeRoundStatus,
+  ]);
+
+  const effectiveView: InfoRoleView = dualRole
+    ? roleView || "requester"
+    : canRespond || isRequester
+      ? "requester"
+      : "analyst";
+
   const run = useCallback(
     async (
       operation: () => Promise<unknown>,
@@ -374,14 +413,21 @@ export function PrcInformationExchangePanel({
         if (notifyParent) await onChanged();
       } catch (e) {
         const err = e as HomeApiError;
+        const conflictText = informationRoundConflictMessage(
+          err.message,
+          PRC_INFO_COPY.resumeConflict,
+        );
         setFeedback({
           kind: "error",
           text:
             err.status === 409
-              ? `Conflito — ${err.message} Os esclarecimentos foram recarregados.`
+              ? conflictText
               : err.message || "Falha na operação.",
         });
-        if (err.status === 409) await reload();
+        if (err.status === 409) {
+          await reload();
+          if (notifyParent) await onChanged();
+        }
       } finally {
         setActing(false);
       }
@@ -389,19 +435,10 @@ export function PrcInformationExchangePanel({
     [reload, onChanged],
   );
 
-  const active = findActiveInformationRound(rounds);
-  const history = resolvedInformationRounds(rounds);
   const showPanel = rounds.length > 0 || requestStatus === "needs_information";
   if (!showPanel) return null;
 
   const disabled = busy || acting;
-  const isRequesterView =
-    !currentSubject ||
-    !requesterSubject ||
-    currentSubject === requesterSubject;
-  const resumeReady =
-    !hasOpenBlocker ||
-    (active ? allInformationQuestionsAccepted(active.questions) : false);
 
   const saveDraft = (round: PrcInformationRound, texts: Record<string, string>) =>
     run(
@@ -491,10 +528,12 @@ export function PrcInformationExchangePanel({
       </p>
     );
   } else if (active.status === "awaiting_requester") {
+    const showResponder =
+      effectiveView === "requester" && (canRespond || canRespondFromApi);
     body = (
       <div className="engineering-prc__info-round">
         <RoundHeader round={active} />
-        {isRequesterView && !canReview ? (
+        {showResponder ? (
           <RequesterAnswerForm
             key={`${active.id}:${active.version}`}
             round={active}
@@ -512,29 +551,36 @@ export function PrcInformationExchangePanel({
         )}
       </div>
     );
+  } else if (effectiveView === "analyst" && canReview) {
+    body = (
+      <div className="engineering-prc__info-round">
+        <RoundHeader round={active} />
+        <AnalystReview
+          key={`${active.id}:${active.version}`}
+          round={active}
+          disabled={disabled}
+          onAccept={(q) => void accept(active, q)}
+          onFollowUp={(q, text) => void followUp(active, q, text)}
+        />
+      </div>
+    );
   } else {
     body = (
       <div className="engineering-prc__info-round">
         <RoundHeader round={active} />
-        {canReview ? (
-          <AnalystReview
-            key={`${active.id}:${active.version}`}
-            round={active}
-            disabled={disabled}
-            onAccept={(q) => void accept(active, q)}
-            onFollowUp={(q, text) => void followUp(active, q, text)}
-          />
-        ) : (
-          <>
-            <p className="engineering-prc__muted">
-              {PRC_INFO_COPY.requesterWaitingReview}
-            </p>
-            <ReadOnlyQuestions round={active} />
-          </>
-        )}
+        <p className="engineering-prc__muted">
+          {PRC_INFO_COPY.requesterWaitingReview}
+        </p>
+        <ReadOnlyQuestions round={active} />
       </div>
     );
   }
+
+  const resumeHint = hasOpenBlocker
+    ? active?.status === "awaiting_review"
+      ? PRC_INFO_COPY.resumeBlockedReview
+      : PRC_INFO_COPY.resumeBlocked
+    : null;
 
   return (
     <EngineeringDetailCard
@@ -550,6 +596,27 @@ export function PrcInformationExchangePanel({
       }
     >
       <div className="engineering-prc__info-panel">
+        {dualRole ? (
+          <div className="engineering-prc__info-role-switch">
+            <p className="engineering-prc__muted">{PRC_INFO_COPY.dualRoleHint}</p>
+            <EngineeringSegmentToggle
+              ariaLabel="Visão do esclarecimento"
+              value={effectiveView}
+              onChange={(value) => setRoleView(value as InfoRoleView)}
+              options={[
+                {
+                  value: "requester",
+                  label: PRC_INFO_COPY.dualRoleRespond,
+                },
+                {
+                  value: "analyst",
+                  label: PRC_INFO_COPY.dualRoleReview,
+                },
+              ]}
+            />
+          </div>
+        ) : null}
+
         {feedback ? (
           <EngineeringStateBanner
             variant={feedback.kind === "error" ? "error" : "success"}
@@ -560,20 +627,24 @@ export function PrcInformationExchangePanel({
 
         {body}
 
-        {canResume && requestStatus === "needs_information" ? (
+        {requestStatus === "needs_information" ? (
           <div className="engineering-prc__info-resume">
-            {!resumeReady ? (
-              <p className="engineering-prc__muted">
-                {PRC_INFO_COPY.resumeBlocked}
-              </p>
+            {resumeHint ? (
+              <p className="engineering-prc__muted">{resumeHint}</p>
             ) : null}
-            <EngineeringActionButton
-              variant="primary"
-              disabled={disabled || !resumeReady}
-              onClick={onResume}
-            >
-              {PRC_INFO_COPY.resume}
-            </EngineeringActionButton>
+            {canResume ? (
+              <EngineeringActionButton
+                variant="primary"
+                disabled={disabled}
+                onClick={onResume}
+              >
+                {PRC_INFO_COPY.resume}
+              </EngineeringActionButton>
+            ) : (
+              <EngineeringActionButton variant="primary" disabled>
+                {PRC_INFO_COPY.resume}
+              </EngineeringActionButton>
+            )}
           </div>
         ) : null}
 

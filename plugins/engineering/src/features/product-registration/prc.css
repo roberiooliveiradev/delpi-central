@@ -987,13 +987,20 @@
 
 /* --- PRC-REF-019 intercâmbio de informações (layout apenas) -------------- */
 
+/* Modal wide já dimensiona ~92% do host (plugin-ui); reforço local só
+ * de spacing — não redefine position/fixed nem cobre a sidebar. */
+.engineering-prc-info-modal .engineering-prc__info-form {
+  min-height: 0;
+}
+
 .engineering-prc__info-form,
 .engineering-prc__info-panel,
 .engineering-prc__info-round,
 .engineering-prc__info-answer-form,
 .engineering-prc__info-review,
 .engineering-prc__info-followup,
-.engineering-prc__info-resume {
+.engineering-prc__info-resume,
+.engineering-prc__info-role-switch {
   display: flex;
   flex-direction: column;
   gap: 12px;

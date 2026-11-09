@@ -6,9 +6,10 @@ import { describe, expect, it } from "vitest";
 const here = dirname(fileURLToPath(import.meta.url));
 const read = (rel: string) => readFileSync(join(here, rel), "utf8");
 
-describe("PrcRequestInformationModal — PRC-REF-019", () => {
+describe("PrcRequestInformationModal — PRC-REF-019-FIX-01", () => {
   const src = read("PrcRequestInformationModal.tsx");
   const copy = read("../prcCopy.ts");
+  const css = read("../prc.css");
 
   it("permite adicionar/remover perguntas (labels em pt-BR no catálogo de copy)", () => {
     expect(copy).toMatch(/addQuestion: "Adicionar pergunta"/);
@@ -35,10 +36,25 @@ describe("PrcRequestInformationModal — PRC-REF-019", () => {
     expect(src).toMatch(/buildQuestionInputs\(drafts\)/);
   });
 
-  it("usa o kit Engineering host-contained e não cria ícone de ajuda", () => {
+  it("usa HostDialog wide + SearchableSelect oficiais (sem HelpCircle)", () => {
     expect(src).toMatch(/EngineeringHostDialog/);
+    expect(src).toMatch(/delpi-ui-modal--wide/);
+    expect(src).toMatch(/EngineeringSearchableSelect/);
+    expect(src).toMatch(/searchable/);
+    expect(src).not.toMatch(/EngineeringSelectField/);
+    expect(src).toMatch(/EngineeringTextAreaField/);
+    expect(src).toMatch(/EngineeringTextField/);
+    expect(src).toMatch(/EngineeringFormActions/);
+    expect(src).toMatch(/EngineeringActionButton/);
     expect(src).not.toMatch(/HelpCircle|HelpTooltip/);
     expect(src).not.toMatch(/my-requests|requests-api/);
+    expect(css).toMatch(/engineering-prc-info-modal/);
+  });
+
+  it("preserva identidade atômica do fornecedor (código|loja)", () => {
+    expect(src).toMatch(/\$\{s\.supplierCode\}\|\$\{s\.store\}/);
+    expect(src).toMatch(/supplierCode: hit\.supplierCode/);
+    expect(src).toMatch(/store: hit\.store/);
   });
 
   it("ActionBar abre o modal para request_information e repassa questions", () => {
