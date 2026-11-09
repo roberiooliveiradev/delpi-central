@@ -159,3 +159,8 @@ AUDIT_EVENTS: PROVEN
 REVISION_IMMUTABILITY: PROVEN (herdado + gate REMOVE)
 BUNDLE_FINGERPRINT: __federation_expose_App-CyhunCwe.js
 ```
+
+
+## 10. Evolução aditiva D16 — bandeiras não alteram baseline SA5
+
+**Novo plano:** [D16 — bandeiras operacionais do atendimento](./PRODUCT-REGISTRATION-D16-ATTENDANCE-FLAGS-CRUD-EVA-UX-PLAN.md). Bandeira é observação de acompanhamento dentro da Engineering API, com CRUD/audit independente. Não pertence ao snapshot oficial SB1/SA5, não muda fingerprint de baseline, compare ou `verify-and-complete`. Exemplo de PN a confirmar é anotação, **nunca** preenchimento técnico automático com zero. Bandeira aberta não bloqueia conclusão por padrão; mantém consulta após conclusão conforme AuthZ, para acompanhar cobrança posterior. Sujeito a contrato owner sobre edição pós-terminal. Integração EVA deve usar os mesmos casos de uso. **PLANNED.**
