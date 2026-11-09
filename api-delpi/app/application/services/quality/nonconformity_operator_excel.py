@@ -6,7 +6,6 @@ paginação. A coluna de quantidade é QI2_QTDDEV (devolvida/rejeitada).
 
 from __future__ import annotations
 
-from datetime import datetime
 from io import BytesIO
 
 from openpyxl import Workbook
@@ -15,7 +14,6 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 NAVY = "023667"
-CYAN = "00A6DE"
 WHITE = "FFFFFF"
 INK = "1F2937"
 LIGHT = "EAF4FA"
@@ -43,7 +41,7 @@ def _filter_description(filters: dict) -> str:
         ("Descrição", "description"),
     ]
     return " | ".join(
-        f"{name}: {_safe_text(filters.get(key) or 'Todas' if key in ('branch', 'type') else filters.get(key) or '-')}"
+        f"{name}: {_safe_text(filters.get(key) or ('Todas' if key in ('branch', 'type') else '-'))}"
         for name, key in keys
     )
 
