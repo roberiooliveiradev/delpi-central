@@ -357,6 +357,28 @@ Execução read-only no acervo `/mnt/fileserver/desenhos`, container descartáve
 
 Grades nativas inconsistentes, não usadas para substituir linhas: `90264017` página 11 e `90264030` página 9. Tempo somado da bateria: cerca de 318 s. `ru_maxrss` final do processo: 511248 KB. Nenhum dos 13 reproduziu a tupla falsa G/9/`10110676` nem promoveu `CHICOTE` a descrição de item. A imagem depois implantada é `sha256:1fded63c13df79d06009f6a28f6161c0aa2ad28ffd793f32f72b22e857f79bef` (git `0e452c20dc`). Job MCP autenticado desta rodada: `CONSUMER_MCP_ACCEPTANCE=PENDING`.
 
+## Log adicional — 2026-11-09 (DEC-VAL-040 — recuperação A9 em célula agregada)
+
+Correção em `rows_from_native_cells`: prefixo item via `_ITEM_TAIL`/`_ITEM_QTY` antes do skip de contexto de grupo; Y do item na banda-X. Integração oficial `90264004`: dois A9 publicados (2/`10080065`/`50225478` e 6/`10080065`/`50225479`). `90264017` p9: C–K preservados, `false_g9=0`. Bateria 13 PDFs (módulo candidato, container 5 GiB):
+
+| Produto | Papel | OCR | Tokens | Células | Linhas | complete | conflicts | false_g9 | chicote_item |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|
+| `90264302` | holdout | FULL 1/1 | 92 | 65 | 5 | 1 | 0 | 0 | 0 |
+| `90264161` | holdout | FULL 1/1 | 126 | 62 | 7 | 5 | 0 | 0 | 0 |
+| `90263520` | holdout | FULL 1/1 | 170 | 124 | 15 | 8 | 4 | 0 | 0 |
+| `90261606` | holdout | FULL 1/1 | 178 | 65 | 8 | 2 | 2 | 0 | 0 |
+| `90263572` | holdout | FULL 2/2 | 386 | 256 | 44 | 32 | 9 | 0 | 0 |
+| `90264178` | holdout | FULL 1/1 | 245 | 205 | 30 | 15 | 1 | 0 | 0 |
+| `90480120` | holdout | FULL 2/2 | 207 | 85 | 10 | 9 | 0 | 0 | 0 |
+| `90264004` | desenvolvimento | FULL 1/1 | 172 | 80 | 12 | 12 | 0 | 0 | 0 |
+| `90264014` | holdout | FULL 1/1 | 149 | 90 | 9 | 8 | 2 | 0 | 0 |
+| `90264017` | desenvolvimento | FULL 14/14 | 1852 | 737 | 94 | 38 | 6 | 0 | 0 |
+| `90264030` | holdout | FULL 13/13 | 1573 | 653 | 77 | 47 | 5 | 0 | 0 |
+| `90264043` | holdout | FULL 1/1 | 155 | 107 | 15 | 9 | 1 | 0 | 0 |
+| `90264050` | holdout | FULL 2/2 | 151 | 57 | 5 | 3 | 1 | 0 | 0 |
+
+SHA de todos os 13 conferem com o índice. Precisão de campo: não declarada (sem GT aprovado). Holdouts não ajustaram a regra. Alguns holdouts registram +1–2 `conflicts` tipados vs. bateria anterior (fail-closed); zero falsa promoção G/9 ou CHICOTE→item.
+
 
 ## Log adicional — 2026-11-09 (Handoff visual A9/AA, DEC-VAL-040, Doc 119 §53)
 

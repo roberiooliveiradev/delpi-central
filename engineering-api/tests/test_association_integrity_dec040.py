@@ -268,6 +268,211 @@ def test_repeated_item_stays_inside_its_group():
     assert by_group["50225478"]["component_code"] != "10080065"
 
 
+def _a9_mixed_group_cells():
+    """Geometria do job ``aj-c47df5e5efdb445a`` / comentário 6740121902.
+
+    A1–A8 estabelecem a banda-X de item (≥4 amostras). A célula nativa
+    agrega o token A9 (X≈480) com a descrição do subconjunto (X≈295).
+    Sem a correção, o contexto de grupo engole o item antes do
+    ``_ITEM_TAIL``. Códigos e textos são evidência do PDF, não regra.
+    """
+    cells = [
+        _cell(0, 0, "Codigo", _quad(0, 0, 80, 16)),
+        _cell(0, 1, "Descricao", _quad(200, 0, 400, 16)),
+        _cell(0, 2, "Item", _quad(460, 0, 500, 16)),
+        _cell(0, 3, "QTD.", _quad(520, 0, 560, 16)),
+        _cell(0, 4, "Comp.", _quad(580, 0, 680, 16)),
+        _cell(0, 5, "Descricao", _quad(700, 0, 1000, 16)),
+    ]
+    for i, letter in enumerate(
+        ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8"], start=1
+    ):
+        y = 40 + i * 30
+        cells += [
+            _cell(
+                i, 0, f"1011008{i}", _quad(0, y, 80, y + 20),
+                token_centers=[[40, y + 10]],
+            ),
+            _cell(
+                i, 1, f"ETIQUETA {letter}", _quad(200, y, 400, y + 20),
+                token_centers=[[300, y + 10]],
+            ),
+            _cell(
+                i, 2, letter, _quad(460, y, 500, y + 20),
+                token_centers=[[480, y + 10]],
+            ),
+            _cell(
+                i, 3, "1", _quad(520, y, 560, y + 20),
+                token_centers=[[540, y + 10]],
+            ),
+        ]
+    cells += [
+        _cell(
+            9, 0, "50225478", _quad(0, 340, 80, 420), rowspan=2,
+            token_centers=[[40, 360], [40, 400]],
+        ),
+        _cell(
+            9, 1, "A9 CF20AZUL-00290/10/05-0000-6500",
+            _quad(200, 340, 520, 390),
+            token_centers=[[295, 369], [480, 356]],
+            ambiguous=True,
+        ),
+        _cell(
+            9, 3, "2", _quad(520, 350, 560, 370),
+            token_centers=[[540, 360]],
+        ),
+        _cell(
+            9, 4, "10080065", _quad(580, 350, 680, 370),
+            token_centers=[[630, 360]],
+        ),
+        _cell(
+            9, 5, "TERM. PINO 2,17 20-14AWG ESTANHADO MACHO UL",
+            _quad(700, 350, 1000, 370),
+            token_centers=[[850, 360]],
+        ),
+        _cell(
+            10, 2, "AA", _quad(460, 400, 500, 420),
+            token_centers=[[480, 410]],
+        ),
+        _cell(
+            10, 3, "2", _quad(520, 400, 560, 420),
+            token_centers=[[540, 410]],
+        ),
+        _cell(
+            10, 4, "10400035", _quad(580, 400, 680, 420),
+            token_centers=[[630, 410]],
+        ),
+        _cell(
+            10, 5, "CABO SIL 200C", _quad(700, 400, 1000, 420),
+            token_centers=[[850, 410]],
+        ),
+        _cell(
+            11, 0, "50225479", _quad(0, 440, 80, 520), rowspan=2,
+            token_centers=[[40, 460], [40, 500]],
+        ),
+        _cell(
+            11, 1, "A9 CF20AZUL-00240/10/05-0000-6500",
+            _quad(200, 420, 520, 450),
+            token_centers=[[295, 437.5], [480.5, 423.5]],
+            ambiguous=True,
+        ),
+        _cell(
+            11, 3, "6", _quad(520, 415, 560, 435),
+            token_centers=[[540, 425]],
+        ),
+        _cell(
+            11, 4, "10080065", _quad(580, 415, 680, 435),
+            token_centers=[[630, 425]],
+        ),
+        _cell(
+            11, 5, "TERM. PINO 2,17 20-14AWG ESTANHADO MACHO UL",
+            _quad(700, 415, 1000, 435),
+            token_centers=[[850, 425]],
+        ),
+        _cell(
+            12, 2, "AA", _quad(460, 455, 500, 475),
+            token_centers=[[480, 465]],
+        ),
+        _cell(
+            12, 3, "6", _quad(520, 455, 560, 475),
+            token_centers=[[540, 465]],
+        ),
+        _cell(
+            12, 4, "10400035", _quad(580, 455, 680, 475),
+            token_centers=[[630, 465]],
+        ),
+        _cell(
+            12, 5, "CABO SIL 200C", _quad(700, 455, 1000, 475),
+            token_centers=[[850, 465]],
+        ),
+    ]
+    return cells
+
+
+def test_mixed_group_cell_publishes_item_prefix_in_both_groups():
+    """Token A9 na célula agregada com descrição de grupo vira item.
+
+    Baseline vermelha: qty/código sob o grupo certo, item=null.
+    """
+    rows, _ = rows_from_native_cells(_a9_mixed_group_cells(), page=1)
+    a9 = [r for r in rows if r.get("item") == "A9"]
+    assert len(a9) == 2
+    by_group = {r["parent_group_candidate"]: r for r in a9}
+    assert by_group["50225478"]["quantity"] == "2"
+    assert by_group["50225478"]["component_code"] == "10080065"
+    assert "TERM. PINO" in (by_group["50225478"].get("description") or "")
+    assert "CF20AZUL" not in (by_group["50225478"].get("description") or "")
+    assert by_group["50225479"]["quantity"] == "6"
+    assert by_group["50225479"]["component_code"] == "10080065"
+    aa = [r for r in rows if r.get("item") == "AA"]
+    assert {
+        (r["parent_group_candidate"], r["quantity"], r["component_code"])
+        for r in aa
+    } == {
+        ("50225478", "2", "10400035"),
+        ("50225479", "6", "10400035"),
+    }
+    assert _by_item(rows)["A8"]["component_code"] == "10110088"
+
+
+def test_group_description_without_item_prefix_stays_unpublished():
+    """Descrição de conjunto sem token de item não inventa A9."""
+    cells = _a9_mixed_group_cells()
+    for cell in cells:
+        if isinstance(cell.get("text"), str) and cell["text"].startswith("A9 "):
+            cell["text"] = cell["text"][3:]  # remove "A9 "
+            cell["token_centers"] = [
+                tc for tc in (cell.get("token_centers") or []) if tc[0] < 400
+            ]
+    rows, _ = rows_from_native_cells(cells, page=1)
+    assert all(r.get("item") != "A9" for r in rows)
+    codes = [
+        r for r in rows
+        if r.get("component_code") == "10080065"
+    ]
+    assert len(codes) == 2
+    assert {r["parent_group_candidate"] for r in codes} == {
+        "50225478", "50225479",
+    }
+
+
+def test_mixed_item_qty_inside_group_context_still_splits():
+    """``A9 2`` agregado ao contexto de grupo publica item e quantidade."""
+    cells = [
+        _cell(0, 0, "Codigo", _quad(0, 0, 80, 16)),
+        _cell(0, 1, "Descricao", _quad(200, 0, 400, 16)),
+        _cell(0, 2, "Item", _quad(460, 0, 500, 16)),
+        _cell(0, 3, "QTD.", _quad(520, 0, 560, 16)),
+        _cell(0, 4, "Comp.", _quad(580, 0, 680, 16)),
+    ]
+    for i, letter in enumerate(["A1", "A2", "A3", "A4"], start=1):
+        y = 30 + i * 25
+        cells += [
+            _cell(i, 2, letter, _quad(460, y, 500, y + 18),
+                  token_centers=[[480, y + 9]]),
+            _cell(i, 3, "1", _quad(520, y, 560, y + 18),
+                  token_centers=[[540, y + 9]]),
+            _cell(i, 4, f"1011008{i}", _quad(580, y, 680, y + 18),
+                  token_centers=[[630, y + 9]]),
+        ]
+    cells += [
+        _cell(5, 0, "50225478", _quad(0, 160, 80, 220), rowspan=2,
+              token_centers=[[40, 180]]),
+        _cell(
+            5, 1, "A9 2", _quad(200, 160, 520, 200),
+            token_centers=[[295, 185], [480, 175]],
+        ),
+        _cell(5, 4, "10080065", _quad(580, 160, 680, 200),
+              token_centers=[[630, 180]]),
+    ]
+    rows, _ = rows_from_native_cells(cells, page=1)
+    a9 = [r for r in rows if r.get("item") == "A9"]
+    assert len(a9) == 1
+    assert a9[0]["quantity"] == "2"
+    assert a9[0]["component_code"] == "10080065"
+    assert a9[0]["parent_group_candidate"] == "50225478"
+
+
 def test_code_present_on_first_group_is_not_stolen_by_the_second():
     cells = [
         _cell(0, 0, "Codigo", _quad(0, 0, 90, 16)),

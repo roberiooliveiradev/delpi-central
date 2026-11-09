@@ -1998,15 +1998,55 @@ def rows_from_native_cells(
                     ),
                 }
             )
-            if group_context:
-                continue
             # Formas canônicas de célula fundida — a divisão de campos
             # segue a geometria da célula (mesmo retângulo, tokens
-            # adjacentes), nunca a string esperada.
+            # adjacentes), nunca a string esperada. Em contexto de
+            # grupo a agregação nativa pode misturar o token de item
+            # (direita) com a descrição do conjunto (esquerda): extrai
+            # só o identificador/quantidade; o restante não vira
+            # description de componente. O Y do campo item segue o
+            # token na banda-X de item, não a média com a descrição.
+            def _item_source_cell() -> dict:
+                # Célula já destacada por banda (split de line_texts)
+                # preserva o Y da linha; não reescolhe entre todos os
+                # token_centers do retângulo pai.
+                if cell.get("_band_cy") is not None:
+                    return cell
+                item_band = role_bands.get("item")
+                tcs = [
+                    tc for tc in (cell.get("token_centers") or [])
+                    if isinstance(tc, (list, tuple)) and len(tc) >= 2
+                ]
+                if len(tcs) < 2 or item_band is None:
+                    return cell
+                mid = (item_band[0] + item_band[1]) / 2.0
+                ranked = sorted(
+                    tcs,
+                    key=lambda tc: (
+                        0
+                        if item_band[0] <= float(tc[0]) <= item_band[1]
+                        else 1,
+                        abs(mid - float(tc[0])),
+                    ),
+                )
+                chosen = dict(cell)
+                chosen["_band_cy"] = float(ranked[0][1])
+                return chosen
+
             m = _ITEM_QTY_RE.fullmatch(text)
             if m:
-                _put("item", m.group(1), cell, "native_cell_pair")
-                _put("quantity", m.group(2), cell, "native_cell_pair")
+                src = _item_source_cell()
+                _put("item", m.group(1), src, "native_cell_pair")
+                _put("quantity", m.group(2), src, "native_cell_pair")
+                continue
+            m = _ITEM_TAIL_RE.fullmatch(text)
+            if m and _ITEM_IDENT_RE.fullmatch(m.group(1)):
+                _put(
+                    "item", m.group(1), _item_source_cell(),
+                    "native_cell_partial",
+                )
+                continue
+            if group_context:
                 continue
             m = _QTY_CODE_RE.fullmatch(text)
             if m:
@@ -2023,10 +2063,6 @@ def rows_from_native_cells(
                     "native_cell_pair",
                 )
                 _put("description", m.group(2), cell, "native_cell_pair")
-                continue
-            m = _ITEM_TAIL_RE.fullmatch(text)
-            if m and _ITEM_IDENT_RE.fullmatch(m.group(1)):
-                _put("item", m.group(1), cell, "native_cell_partial")
                 continue
             if not kind or mixed:
                 continue

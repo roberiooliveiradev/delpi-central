@@ -1581,3 +1581,13 @@ Não criar nova source of truth, banco, serviço ou MFE; não fazer import entre
 **CHAT_RECOMMENDATION:** `EVA — Architecture / Coordination`. **FIRST ACTION:** ler `01_EVA_Instrucoes_do_Projeto.md`, `02_EVA_Instrucoes_Gerais_Portal_Engenharia.md`, `03_EVA_Chats_Especialistas_e_Prompts.md`; verificar HEAD remoto/working tree e Doc 119 §53, Doc 120 último log, Issue #131. Reconciliar fatos x histórico do chat, e selecionar **um** próximo bounded step. Não reabrir DEC-VAL-034, RES-01/02/03, auditoria framework-first concluída ou inventário do corpus sem regressão observada.
 
 **Veredicto de handoff:** `ACCEPT_WITH_RESIDUAL` para correção focal de associação em MCP; `INCONCLUSIVE` para causa dos A9 vermelho/mescla; `ENGINEERING_APPROVAL=NOT_APPROVED`; `VAL01_COMPLETED=false`.
+
+## 54. DEC-VAL-040 — A9 em célula agregada com descrição de grupo (2026-11-09)
+
+**TASK_ID:** `EVA-VAL01-DEC040-A9-VISUAL-VARIATION-ROOT-CAUSE`. `ENGINEERING_APPROVAL=NOT_APPROVED`. `VAL01_COMPLETED=false`. `BOM_RELATION_PROVEN=false`.
+
+**Primeira fronteira defeituosa (PROVEN):** `rows_from_native_cells` em `understanding.py`. O token OCR `A9` e a célula nativa existem (comentário 6740121902: texto `A9 CF20AZUL-…`, centros A9≈X480 / descrição≈X295). `_cell_role` classifica a agregação como `description`. Com ≥4 amostras de item (A1–A8), `_role_band` forma a banda-X; o centro médio da célula fica à esquerda → `_is_group_description_context=true` → `continue` antes de `_ITEM_TAIL_RE`. Quantidade e código das outras células publicavam; `item` ficava `null`. AA em célula limpa não passava por esse caminho. Cor vermelha isolada: não causal (AA vermelho recuperado).
+
+**Correção (mesmo módulo):** extrair `_ITEM_QTY_RE` / `_ITEM_TAIL_RE` **antes** do `continue` de contexto de grupo; ancorar `source_cy` do item no token da banda-X de item (ou preservar `_band_cy` de split). A cauda `CF20AZUL-…` não vira descrição de componente. Sem hardcode de produto/item/cor.
+
+**Prova:** fixtures red→green em `test_association_integrity_dec040.py`; negativo sem prefixo A9 não inventa item; PDF oficial `90264004` SHA `5b6717df…19f4`: A9/2/`10080065` sob `50225478` e A9/6/`10080065` sob `50225479`; A2 sem `CHICOTE`; A1–A8 e AA preservados. `90264017` SHA `5452aabd…32ee` OCR 14/14: C/D/E/F/G/K com códigos; `false_g9=0`. Corpus 13/13 SHA match, `false_g9=0`, `chicote_on_item=0` (Doc 120). Auth PDF/MCP: 29 testes. Residual: A5–A8 podem permanecer `INCONCLUSIVE` por `ambiguous` nativo; holdouts sem GT de precisão.
