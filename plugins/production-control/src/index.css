@@ -3507,8 +3507,7 @@
 
 
 /* Demanda: detalhe premium, compacto e isolado dos modais de Materiais/Faturamento. */
-.dashboard-production-control .delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
-  > .ppc-demand-line-dialog {
+.dashboard-production-control .ppc-modal.ppc-modal--demand-line.ppc-demand-line-dialog {
   width: min(1020px, 100%);
   max-width: min(1020px, 100%);
   min-width: 0;
@@ -3534,8 +3533,7 @@
   letter-spacing: -0.015em;
 }
 
-.dashboard-production-control .delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
-  > .ppc-demand-line-dialog > .ppc-modal__body {
+.dashboard-production-control .ppc-modal.ppc-modal--demand-line.ppc-demand-line-dialog > .ppc-modal__body {
   padding: 0;
   flex: 0 1 auto;
   overflow-y: auto;
