@@ -139,3 +139,11 @@ Não criar endpoint público só para teste. Não inventar token S2S como “usu
 2. Homologação live com JWT real (RBAC Core alcançável no container).
 3. Decisão de expor `B1_UM` (ou equivalente) em ops-abertas — **somente** com análise de consumidores/compatibilidade.
 4. Etapa 3 (`GET /demand` + UI) — ver `MYWEG-DEMAND-E3-INTEGRATION.md` (consolidação oficial permanece bloqueada).
+
+## 11. Correção posterior #1546 (09/11/2026)
+
+A fotografia de 08/11 acima documenta a limitação original, quando `ops-abertas` não expunha unidade. A correção posterior adicionou `C2_UM` e `B1_UM` ao contrato da API, e a integração E2/E3 agora normaliza cada OP elegível para MI: unidade MI permanece inalterada; PC/UN são divididas por 1000. OPs sem unidade confirmada ou saldo válido não entram na cobertura; o item recebe `op_coverage_incomplete` e o usuário vê aviso de cálculo parcial. A alocação única por produto/filial preserva o saldo disponível e evita duplicar OP entre origens na leitura `both`. A prévia E2 passa a mostrar a cobertura válida, mas a publicação de total consolidado oficial **continua bloqueada** pela ADR. A regra anterior de não considerar OPs era preventiva, não evidência de inexistência de produção.
+
+### Homologação
+
+Validar no ambiente real o produto `90263964`, filial `02`, incluindo a conversão da OP do dia 09/11/2026 e o saldo da necessidade MyWEG (0,026 MI = 26 unidades), sem presumir a unidade até consultar `C2_UM/B1_UM`. A execução dos testes automatizados do código não substitui a validação do saldo real no Protheus.
