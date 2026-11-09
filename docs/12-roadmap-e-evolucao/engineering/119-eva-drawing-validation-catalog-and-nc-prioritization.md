@@ -1991,3 +1991,56 @@ ARCHITECTURE_DECISION_REQUIRED=false
 ```
 
 **Decisão recomendada:** Engenharia revisa overlays+JSON; Coordination só autoriza G2 após aceite formal GT/thresholds necessários. Não declarar GT homologado nesta rodada.
+
+## 61. Coordination — execução retomada e comparação de hierarquia desenhada × Totus por nível (2026-11-09)
+
+**PLAN_LOCK=ACTIVE — emenda de continuidade de execução à §59; Doc 116 §B.9 prevalece para escopo deste refinamento.** **Não é plano novo, nem liberação para G4/G6 antecipados.** Origem: requisito de negócio explicitado pelo usuário de que a estrutura do Totus é mantida por níveis e os desenhos DELPI a representam em tabelas de conjunto/subconjunto/componentes. O resultado desejado é conferir **se cada ocorrência da estrutura oficial aparece no pai e no nível correspondentes no desenho**, não apenas detectar se o código aparece em qualquer texto ou página.
+
+### 61.1 Requisito de comparação, observação vs autoridade
+
+**RQ-61-01:** Inventariar primeiro as Domain APIs oficiais que expõem a hierarquia Totus realmente disponível e seus campos (product/root, parent/child, nível, classificação MP/PI/PA, ocorrência, qty, unit, revision). **`TOTUS_HIERARCHY_CONTRACT=TO_INVENTORY` até prova do contrato real, sem consultas diretas à base Totus ou imports de outro bounded context.** A existência de uma BOM já consultada **não prova** que a API fornece níveis completos ou classificação.
+
+**RQ-61-02:** Representar a **hierarquia desenhada** por observações rastreáveis: `document/page/region/table/row/cell`, `parent_code` identificado na coluna de conjunto/subconjunto (frequentemente rowspan) e `item/qty/component_code/component_description` nas colunas de ocorrência. Um documento pode ter mais de uma tabela/folha, repetição do mesmo conjunto, visão parcial e componentes sob pais distintos; **não deduplicar por child_code, não somar linhas entre folhas sem escopo/prova, não inferir um nível a partir do código de produto**.
+
+**RQ-61-03:** Cada relação observada `parent→child` determina uma aresta candidata; a profundidade desde a raiz **pode ser derivada somente das arestas que o desenho comprova**. Se desenho mostra filho sob o produto raiz, esse vínculo é candidato a nível direto; se sob um subconjunto observado, é candidato a próximo nível **se a cadeia até a raiz estiver comprovada**. Quando a cadeia/folha é incompleta, `DRAWING_LEVEL=UNKNOWN` ou equivalente existente. **Proibido copiar `totus.level` para a observação do desenho**. MP/PI/PA oficial também **não se deduz** de prefixos ou aparência de material.
+
+**RQ-61-04:** Comparar ocorrência **por caminho pai→filho e nível**, não apenas pelo código: `root/product + revision + parent/path + child + level + occurrence/multiplicity + qty/unit`, com o alinhamento de semântica de quantidade e UOM comprovado. Mesmo código em dois pais = duas ocorrências. Se tipo/revisão/quantidade não forem expostos pelo contrato ou comparáveis, não inventar: `UNKNOWN/NOT_COMPARABLE`. Comparação read-only sob AuthZ/BOM gate; `MATCH_CANDIDATE` e `CONFLICT_CANDIDATE` nunca são aprovação oficial ou NC automática. Desenho parcialmente lido **não autoriza** `DRAWING_MISSING` conclusivo. Regra de comparação deve preservar fonte, revisão e evidência de ambos os lados.
+
+**AC-61-01:** Em fixture com pai `50225702` e filhos `AE→10010028/1`, `AH→10080897/2`, `AG→10110676/2`, nenhum desses filhos é achatado para `90264135` sem relação visual explícita; associação de mesmo código a pai errado não passa por `MATCH_CANDIDATE` de nível. **Números de nível e classificação desse exemplo são desconhecidos até consulta à fonte oficial.** A2 `10080192` e A3 `10090316` são ocorrências distintas no conjunto principal; `10090317` citado na descrição de A3 não cria filho. `4 5` em p13 é negativo de promoção.
+ 
+**AC-61-02:** Repetição do mesmo código sob dois pais distintos preservada; revisão/folha em conflito, grupo sem cadeia comprovada, cobertura parcial, quantidades de bases distintas, item do texto livre e código em descrição ⇒ abstenção/flag, não falso MATCH/NC. Segurança/AuthZ/read-only e fontes oficiais preservados.
+
+**AC-61-03:** Métricas separadas: `STRUCTURE_VISUAL_ACC` (M1), `OCCURRENCE_PARENT_LEVEL_ACC` (M2/M4) e `TOTUS_COMPARISON_OUTCOME` (M4); nunca declarar um PASS a partir do outro ou do número de linhas preenchidas. Thresholds/GT owner e holdout inédito continuam pendentes para qualidade homologada.
+
+### 61.2 Política de gates — desfazer bloqueio indevido sem pular etapas
+
+**Decisão explícita de Coordination:** o **Adendo B** do Doc 116 já permite trabalho funcional e diagnóstico sobre candidatos read-only antes do GT oficial completo. Assim, **não exigir `GT_OWNER_APPROVAL=APPROVED` para G2 de diagnóstico read-only e preparação de fixtures**. Essa permissão **não muda** `G1_EXIT_STATUS=PENDING_OWNER_APPROVAL`, `G1_GT=DRAFT`, nem converte os overlays locais em precisão comprovada.
+
+| Etapa | Situação pós-emenda | Execução e saída |
+|---|---|---|
+| **G1 / M0** | `TECHNICAL_PREPARATION=PASS_AS_REPORTED`; `GT/SPLIT/THRESHOLDS=OWNER_BLOCKED` | Manter pacote `eva-val01-g1/`, disponibilizar overlays ao revisor pelo canal autorizado em paralelo; não alegar homologação nem holdout cego. |
+| **G2 / M1 — FIRST-LOSS DIAGNOSTIC** | **`AUTHORIZED_NOW`** | Executar análise read-only no mesmo PDF/recorte/DPI/config já congelados; registrar outputs brutos PDFium→OCR→SLANet→adapter→Understanding, grade/célula/token↔linha↔grupo/ocorrência, primeira fronteira perdida, com DRAFT marcado e conflito de evidência. Inventariar separadamente os contratos oficiais Totus/Domain APIs (sem DB cross-context). **Sem código produtivo, tuning, benchmark comparativo ou deploy em G2.** |
+| **G3 / M1 — FRAMEWORK BENCHMARK** | `NEXT_ONLY_AFTER_G2_EVIDENCE` | Benchmark configuracional/nativo se G2 demonstrar perda na percepção que exige avaliação; ambiente isolado, budget CPU/RAM e mesmas fontes, sem adoção produtiva automática. |
+| **G4 / M1 — MINIMAL IMPLEMENTATION** | `BLOCKED_UNTIL_G2/G3_DESIGN_GATE` | Corrigir camada responsável, menor diff, RED→GREEN e negativos, sem parser paralelo ou hardcode por produto. Se G2 mostrar perda exclusivamente no adapter, registrar suficiência dos frameworks e a não necessidade de ensaio comparativo caro, com justificativa aprovada no gate G3 antes de G4. |
+| **G5 / M1 — QUALITY** | `GT_OWNER_BLOCKED` | Medir estruturalmente com GT/thresholds aprovados e holdout verdadeiro; avaliações exploratórias DRAFT não produzem quality PASS. |
+| **G6 / M2/M4 — OFFICIAL ALIGNMENT** | `NOT_AUTHORIZED_YET` | Após fonte Totus contratual inventariada e classe estrutural suficientemente confiável, alinhar a hierarquia por ocorrências sob AuthZ, read-only, estados candidatos. **Não usar Totus para alucinar o que o desenho contém.** |
+| **G7 / RELEASE** | `NOT_AUTHORIZED_YET` | Pré/post-deploy, digest/rollback, MCP autenticado, aceites independentes quando aplicáveis. |
+
+**Restrições permanentes:** `FRAMEWORK_FIRST=MANDATORY`; `PARALLEL_TABLE_PARSER=PROHIBITED`; `PRODUCT_SPECIFIC_RULES=PROHIBITED`; `NEW_VLM_OR_AGENT=NOT_AUTHORIZED`; `E2–E7/E4/VAL02=FROZEN`. **Proibido alterar o plano por conta própria; `EXECUTION_DRIFT` interrompe só o escopo afetado e exige Coordination.** Contratos de autoridade/owner novos exigem `ARCHITECTURE_DECISION_REQUIRED`.
+
+### 61.3 Pacote de implementação autorizado agora: G2 fechado e ininterrupto
+
+**TASK_ID:** `EVA-VAL01-G2-FIRST-LOSS-AND-TOTUS-STRUCTURE-CONTRACT-INVENTORY`.
+
+**Ordem de execução, sem paradas entre subtarefas que caibam na autoridade do executor:**
+1. Revalidar authorities, HEAD/worktrees, Doc 116 §B.8/B.9, Doc 119 §§59–61, Doc 120, desenhos e anotações DRAFT G1, contratos existentes, consumidor autenticado e baseline/model/config hashes.
+2. Confirmar fonte do PDF `90264135`, revisar **visualmente** os recortes p10/p12/p13, respeitando cobertura selecionada (e diferenças de outras páginas); verificar overlays e anotações contra raster e destacar divergências como `DRAFT_CONFLICT` — **não corrigir expected a partir da EVA**.
+3. Rastrear para os mesmos recortes o output **bruto** de raster PDFium, OCR (text+bbox), SLANet (HTML/cell boxes/spans), projeção e gate native/fallback, Understanding tipado; registrar `FIRST_LOSS_BOUNDARY` por caso (A2/A3; 50225702→AE/AH/AG; p13 desenho vs tabela/`4 5`). Se algum backend não expuser formato suficiente, `OBSERVABILITY_GAP`; não modificar produção para obter saída.
+4. Inventariar APIs oficiais já existentes que consumam Totus: owner, endpoint/port/contract, campos e regras de níveis/MP-PI-PA/quantidade/UOM/revisão, autenticação e exemplos sanitizados. **Não consultar tabela SQL do Totus diretamente; não presumir sua forma.**
+5. Produzir matriz `TOTUS_RELATION (somente fatos oficiais disponíveis) ↔ DRAWING_RELATION (somente evidência visual) ↔ CANDIDATE_ALIGNMENT`, incluindo casos negativos de pai/nivel errado, código no texto livre, ocorrência repetida, folha parcial, inconsistência de revisão. No G2 essa matriz é **SPEC/DIAGNOSTIC, não comparação oficial produtiva nem código novo**.
+6. Atualizar **Doc 119 §61** com evidências e resultados G2 e **Doc 120** apenas se houver novos dados de corpus; publicar na **Issue #131** se houver ferramenta de autorização, senão deixar texto exato para Coordination. Preservar WIP alheio e não tocar código produtivo.
+7. Encerrar com `G2_REPORT`: `FIRST_LOSS_BOUNDARY`, prova por token/célula/linha/grupo, owner da falha, inventário efetivo Totus, conclusão `FRAMEWORK_SUFFICIENT | FRAMEWORK_EVAL_REQUIRED | INCONCLUSIVE`, proposta de menor diff somente **para gate futuro**, e `G3_ENTRY_DECISION`. Não transformar status histórico MCP em reexecução atual.
+
+**Saída:** `G2=PASS` somente se as perdas examinadas tiverem explicação/reprodução suficiente, ou `G2=INCONCLUSIVE` com bloqueios e evidências; implementação G4 não começa por proximidade de código, nem aceite G6 por proximidade de negócio. **Evidências e execução jamais são substituídas por promessa.**
+
+**Estado ao registrar:** `G2_AUTHORIZED=true`, `G2_EXECUTION=TEST_NOT_RUN`, `TOTUS_HIERARCHY_CONTRACT=TO_INVENTORY`, `G1_OWNER_GT=OWNER_BLOCKED`, `G3_G4_G6_G7=NOT_AUTHORIZED`, `VAL01_COMPLETED=false`, `ENGINEERING_APPROVAL=NOT_APPROVED`, `AUTOMATIC_NC=false`.
