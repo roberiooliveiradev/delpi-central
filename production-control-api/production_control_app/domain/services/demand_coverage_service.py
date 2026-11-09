@@ -60,6 +60,7 @@ class _OpenOrderSupply:
     order_number: str
     remaining: float
     expected_date: date | None
+    observation: str
 
 
 @dataclass(slots=True)
@@ -201,6 +202,7 @@ class DemandCoverageService:
                     order_number=_text(item.get("numero_op")),
                     remaining=remaining,
                     expected_date=_iso_date(item.get("data_fim_prevista_op")),
+                    observation=_text(item.get("observacao_op")),
                 )
             )
         for entries in supplies.values():
@@ -223,7 +225,9 @@ class DemandCoverageService:
             # O estoque vem repetido em cada linha da view: uma leitura basta.
             available_stock = max(group[0].product_stock, 0.0)
             queue = [
-                _OpenOrderSupply(entry.order_number, entry.remaining, entry.expected_date)
+                _OpenOrderSupply(
+                    entry.order_number, entry.remaining, entry.expected_date, entry.observation
+                )
                 for entry in supplies.get(key, ())
             ]
 
@@ -256,6 +260,7 @@ class DemandCoverageService:
                             "expected_date": (
                                 supply.expected_date.isoformat() if supply.expected_date else None
                             ),
+                            **({"observation": supply.observation} if supply.observation else {}),
                         }
                     )
                     if supply.expected_date and (
