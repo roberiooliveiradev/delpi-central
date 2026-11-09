@@ -52,9 +52,9 @@ def build_op_pendencies(
     for line in lines:
         if line.branch != branch or not line.product_code:
             continue
-        if line.op_coverage_incomplete:
-            suppressed.add(line.product_code)
         if _decimal(line.uncovered_quantity) > _QTY_EPS:
+            if line.op_coverage_incomplete:
+                suppressed.add(line.product_code)
             grouped[line.product_code].append(line)
 
     result: list[dict[str, Any]] = []
@@ -63,11 +63,11 @@ def build_op_pendencies(
         # como se a falta fosse confirmada.
         if product in suppressed:
             continue
-        units = {line.unit.strip().upper() for line in product_lines if line.unit.strip()}
+        units = {line.unit.strip().upper() or "UNSPECIFIED" for line in product_lines}
         if len(units) > 1:
             suppressed.add(product)
             continue
-        unit = next(iter(units), "")
+        unit = next(iter(units), "UNSPECIFIED")
         ordered = sorted(
             product_lines,
             key=lambda line: (
@@ -103,7 +103,7 @@ def build_op_pendencies(
             "kind": "include_production_order",
             "branch": branch,
             "product_code": product,
-            "unit": unit or "UNSPECIFIED",
+            "unit": unit,
             "required_date": first["required_date"],
             "suggested_op_date": first["suggested_op_date"],
             "next_uncovered_quantity": first["uncovered_quantity"],
