@@ -18,6 +18,10 @@ def test_ops_abertas_detalhe_sql_excludes_finished_partial() -> None:
     assert "VW_OPS_ABERTAS_PRODUTO" not in sql
     assert "saldo_op" in sql
     assert "numero_op" in sql
+    assert "OP.C2_UM" in sql
+    assert "P.B1_UM" in sql
+    assert "unidade_op" in sql
+    assert "unidade_produto" in sql
 
 
 def test_ops_abertas_resumo_sql_same_open_predicate() -> None:
