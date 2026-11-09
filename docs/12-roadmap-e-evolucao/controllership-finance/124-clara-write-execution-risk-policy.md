@@ -170,3 +170,8 @@ o contrato do doc 106 sem alteração.
 **Gate obrigatório R-CLARA-01:** Segurança/Plataforma e Controladoria devem registrar a decisão formal do §20.10 (ACCEPT_TEO_RESIDUAL / REQUIRE_HOST_ATTESTED / KEEP_V014 + ACCEPT_OPERATIONAL_RISK). HOST_ATTESTED em produção permanece `NOT_CONFIGURED`. Até assinatura + cutover verificado, **PREPARE → Portal V014 → ACT continua vigente**, tal como §§1–7. **Cutover por env sem essa assinatura é proibido.**
 
 **Invariantes para a evolução:** proposta única vinculada a ator, recurso, versão, plano e TTL; identidade + effective permissions via Core; resource_scope/ownership + business_rule fail-closed; atomic claim, OCC, idempotência física, audit trail, read-back; sem edição de migrations aplicadas; sem execução para `confirmation=true` desacompanhado de proposal válida. Inventário/planos em doc 150 §20.
+
+
+## 9. Diretriz PO sobre fronteira de responsabilidade (09/11/2026)
+
+PO determinou que CLARA não duplique **RBAC nem effective permissions**, cuja authority é a Core, e siga a experiência conversacional do TÉO, sem página de consentimento externa no TARGET. A BFF da CLARA deve continuar impondo `capability AND resource_scope/ownership AND business_rule`, verificando transições, integridade, idempotência e auditoria. **Permissão Core e consentimento humano vinculado ao plano são provas diferentes**: esta diretriz não equivale à autorização formal de substituir V014 para as 35 operações sensíveis. Aguardar decisão de Segurança/Plataforma + Controladoria documentada em doc 150 §20.10; não armar ack como substituto. Critérios de cutover e execução única em [doc 161](./161-cf-ux-053-decisao-po-fronteira-core-e-execucao-conversacional-2026-11-09.md). Até gate, política produtiva §§1–8 mantém Portal V014 obrigatório.
