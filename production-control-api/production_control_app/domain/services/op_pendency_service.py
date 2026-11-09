@@ -53,7 +53,7 @@ def build_op_pendencies(
         if line.branch != branch or not line.product_code:
             continue
         if _decimal(line.uncovered_quantity) > _QTY_EPS:
-            if line.op_coverage_incomplete:
+            if line.op_coverage_incomplete or line.fiscal_coverage_incomplete:
                 suppressed.add(line.product_code)
             grouped[line.product_code].append(line)
 
