@@ -6082,3 +6082,11 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **DEV E2E:** Core disable/restore + DÉLIA S2S guard PASS; Outcome ACT live TEST_NOT_RUN.
 - **Veredicto:** `REMEDIATION_IMPLEMENTED_BOUNDED_DEV` — `T2_INDEPENDENT_REVIEW`; A-07 não CLOSED_PROVEN.
 
+| DELIA-C3-T2-MCP-REGISTRY-REVOCATION-RESUME-FINAL-CLOSURE-01 | Resume READ MCP não reutiliza outcome sem require_eligible; gate movido antes de invoke_outcomes replay; testes A–H; S2S DEV PASS; Outcome ACT TEST_NOT_RUN; PRODUCTION_DEPLOY=NOT_AUTHORIZED | A-07=IMPLEMENTED_BOUNDED_DEV; R04=PENDING_OPS; NEXT=T2_INDEPENDENT_REVIEW |
+
+### DELIA-C3-T2-MCP-REGISTRY-REVOCATION-RESUME-FINAL-CLOSURE-01 — execução (2026-11-09)
+
+- **Causa:** `_invoke` retomava `resume_state.invoke_outcomes` antes do gate Core.
+- **Correção mínima:** eligibility MCP antes do replay e do transporte; reusa port/guard existentes.
+- **Veredicto:** `RESUME_REVOCATION_CLOSED_BOUNDED_DEV` — review independente; A-07 não CLOSED_PROVEN.
+

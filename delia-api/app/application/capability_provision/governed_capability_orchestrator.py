@@ -3137,12 +3137,42 @@ class OperationalCapabilityOrchestrator:
         # call too — no new operation after a disconnect.
         if _cancel_observed():
             raise _TurnCancelled()
+        # Universal MCP revocation gate (doc 293 §2A.12 residual closure):
+        # revalidate Core eligibility BEFORE resume replay AND before
+        # transport. A stored READ outcome is historical evidence, never
+        # a durable grant after Core revoke/disable/unavailable.
+        if (
+            self._mcp_provider_eligibility is not None
+            and str(group.provider_id or "") == "mcp"
+        ):
+            from app.application.ports.mcp_provider_eligibility_port import (
+                McpProviderEligibilityError,
+            )
+
+            try:
+                self._mcp_provider_eligibility.require_eligible(
+                    str(group.group_id or "").strip()
+                )
+            except McpProviderEligibilityError as exc:
+                _logger.info(
+                    "orchestration stage=provider_invoke "
+                    "decision=mcp_provider_eligibility_blocked "
+                    "provider_ref=%s error=%s capability=%s.%s "
+                    "correlation_id=%s",
+                    str(group.group_id or "")[:64],
+                    exc.code,
+                    group.group_id,
+                    remote_name,
+                    correlation,
+                )
+                raise CapabilityProviderError(exc.code, str(exc)) from exc
         # CP4 governed resume frontier — the capability is resolved
         # from the FRESH live group above, never from the checkpoint.
         # A recorded outcome replays only for an identical
-        # non-mutating invocation; a PREPARE/ACT (or any class not
-        # allowlisted) marks the frontier — once a material
-        # invocation has started, no further attempt may run.
+        # non-mutating invocation after live eligibility above; a
+        # PREPARE/ACT (or any class not allowlisted) marks the
+        # frontier — once a material invocation has started, no
+        # further attempt may run.
         resume_state = _RESUME_STATE.get()
         resumable = (
             capability.operation_class in _RESUMABLE_OPERATION_CLASSES
@@ -3169,36 +3199,6 @@ class OperationalCapabilityOrchestrator:
                 "provider_unavailable",
                 "capability provider is not configured",
             )
-        # Universal MCP revocation gate (doc 293 R1-RW01 remediation):
-        # every provider.invoke path — semantic tool, PREPARE, ACT,
-        # retries, discovery-read — revalidates Core eligibility here,
-        # immediately before transport. Composition-time eligibility
-        # is never a durable grant.
-        if (
-            self._mcp_provider_eligibility is not None
-            and str(group.provider_id or "") == "mcp"
-        ):
-            from app.application.ports.mcp_provider_eligibility_port import (
-                McpProviderEligibilityError,
-            )
-
-            try:
-                self._mcp_provider_eligibility.require_eligible(
-                    str(group.group_id or "").strip()
-                )
-            except McpProviderEligibilityError as exc:
-                _logger.info(
-                    "orchestration stage=provider_invoke "
-                    "decision=mcp_provider_eligibility_blocked "
-                    "provider_ref=%s error=%s capability=%s.%s "
-                    "correlation_id=%s",
-                    str(group.group_id or "")[:64],
-                    exc.code,
-                    group.group_id,
-                    remote_name,
-                    correlation,
-                )
-                raise CapabilityProviderError(exc.code, str(exc)) from exc
         started = time.monotonic()
         # LOOP-03R1 (observability): declared argument KEYS only —
         # never values, tokens, or payload content.

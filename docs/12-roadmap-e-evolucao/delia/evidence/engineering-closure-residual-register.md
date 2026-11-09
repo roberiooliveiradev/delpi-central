@@ -714,3 +714,27 @@ Provider-neutral; SSRF/redirect/DNS checks; OAuth externo fora do Keycloak DELPI
 
 **NEXT:** `T2_INDEPENDENT_REVIEW`
 
+## T2 RESUME-REVOCATION CLOSURE (2026-11-09)
+
+**TASK_ID:** `DELIA-C3-T2-MCP-REGISTRY-REVOCATION-RESUME-FINAL-CLOSURE-01`  
+**REFERENCE:** `a2944df834…`  
+**DEFECT:** resume replay de READ MCP sem revalidar Core eligibility  
+**FIX_LOCATION:** `governed_capability_orchestrator.py::_invoke` — eligibility **antes** de `invoke_outcomes` replay  
+**EXISTING_EQUIVALENT:** `McpProviderEligibilityPort` / `CoreMcpProviderEligibilityGuard`  
+**REUSE_DECISION:** REUSE (mesmo gate; ordem corrigida)
+
+### Evidência
+
+- RED/GREEN A–H em `tests/test_mcp_resume_eligibility_gate.py`
+- DEV S2S eligible davi/teo/vista + caio blocked: PASS
+- Resume-revoke live multi-turn harness: COVERED_BY_CONTRACT_TESTS (não harness E2E dedicado)
+- Outcome ACT live: TEST_NOT_RUN
+
+| ID | Status |
+|---|---|
+| A-07 | `IMPLEMENTED_BOUNDED_DEV` (não CLOSED_PROVEN) |
+| R04 | `PENDING_OPS` |
+
+**OPEN_MATERIAL:** ExternalConnection; R04 ops; DNS-rebinding/proxy residual; Outcome ACT live  
+**NEXT:** `T2_INDEPENDENT_REVIEW`
+

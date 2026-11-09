@@ -249,6 +249,23 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 **A-07:** `IMPLEMENTED_BOUNDED_DEV` (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS`.  
 **NEXT:** `T2_INDEPENDENT_REVIEW`.
 
+### 2A.13 Execution stamp — Resume eligibility before MCP outcome replay (2026-11-09)
+
+**TASK:** `DELIA-C3-T2-MCP-REGISTRY-REVOCATION-RESUME-FINAL-CLOSURE-01`  
+**AUTHORIZATION:** §2A.9 / correção residual delimitada.  
+**REFERENCE_SHA:** `a2944df834f676fb5e17c803f025c28a2bf5355e`.
+
+**DEFECT_ROOT_CAUSE:** `_invoke()` reutilizava `resume_state.invoke_outcomes[invoke_key]` **antes** de `require_eligible()` — evidência histórica de READ MCP podia operar como grant após revoke/disable.
+
+**FIRST_DIVERGENCE:** retorno antecipado de resume em `OperationalCapabilityOrchestrator._invoke` (pré-gate).
+
+**FIX:** mover o gate `CoreMcpProviderEligibilityGuard` / `McpProviderEligibilityPort` para **antes** do replay de resume e do transporte; sem segundo registry; evidência histórica preservada, não autorizativa.
+
+**TESTS:** `test_mcp_resume_eligibility_gate.py` cenários A–H RED→GREEN; regressão eligibility existente preservada.
+
+**A-07:** permanece `IMPLEMENTED_BOUNDED_DEV`. **R04:** `PENDING_OPS`.  
+**NEXT:** `T2_INDEPENDENT_REVIEW`.
+
 ## 3. Política de residual ZERO e limites reais
 
 - **ZERO** significa nenhum residual material **no escopo de fechamento DÉLIA aprovado**. Resíduo externo TÉO, dependência de produção ou limitação de modelo não pode ser rotulado `PASS`; determinar explicitamente se é bloqueador da aceitação DÉLIA ou de release. Não declarar que todo monorepo foi limpo.
