@@ -226,9 +226,9 @@ export function HelpPage({ basePath }: HelpPageProps) {
                     "Anotações operacionais do analista na ficha técnica (criar, editar, resolver, reabrir e remover). Não alteram SB1, SA5, revisões técnicas nem o TOTVS; o histórico permanece após exclusão lógica.",
                 },
                 {
-                  term: "Verificação TOTVS",
+                  term: "Concluir atendimento",
                   meaning:
-                    "Na conclusão, a Engineering API relê o cadastro oficial e compara campo a campo. A solicitação só é concluída quando todos os campos verificáveis correspondem; a revisão publicada é imutável.",
+                    "Ação única a partir de Em atendimento: a Engineering API valida a ficha, consulta o TOTVS em tempo real e compara campo a campo. Só conclui se tudo corresponder; qualquer divergência mantém a solicitação Em atendimento e destaca os problemas.",
                 },
                 {
                   term: "Histórico e revisões",

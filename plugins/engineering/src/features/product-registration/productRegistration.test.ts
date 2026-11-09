@@ -130,10 +130,10 @@ describe("productRegistrationApi", () => {
     expect(init.method).toBe("PATCH");
   });
 
-  it("sends action with expectedVersion and Idempotency-Key", async () => {
+  it("sends complete action with expectedVersion and Idempotency-Key", async () => {
     await prcAction(
       REQUEST_ID,
-      "verify-and-complete",
+      "complete",
       {
         expectedVersion: 3,
         officialCode: "001234",
@@ -145,7 +145,7 @@ describe("productRegistrationApi", () => {
       RequestInit,
     ];
     expect(url).toContain(
-      `/requests/${REQUEST_ID}/actions/verify-and-complete`,
+      `/requests/${REQUEST_ID}/actions/complete`,
     );
     expect(
       (init.headers as Record<string, string>)["Idempotency-Key"],

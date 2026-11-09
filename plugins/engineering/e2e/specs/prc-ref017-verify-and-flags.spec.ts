@@ -115,29 +115,29 @@ test("D16-REF-02 — Flag azul no hover e vermelha quando OPEN", async ({
   expectNoFailures(forbidden, pageErrors);
 });
 
-test("PRC-REF-017 — diálogo Verificar e concluir distingue CREATE/UPDATE", async ({
+test("PRC-REF-020 — diálogo Concluir atendimento distingue CREATE/UPDATE", async ({
   page,
 }, testInfo) => {
   const forbidden = trackForbiddenApiCalls(page);
   const pageErrors = trackPageErrors(page);
   const shot = (name: string) =>
     page.screenshot({
-      path: `e2e/artifacts/prc-ref017-verify-${name}-${testInfo.project.name}.png`,
+      path: `e2e/artifacts/prc-ref020-complete-${name}-${testInfo.project.name}.png`,
       fullPage: true,
     });
 
   await page.goto(QUEUE_PATH);
   await ensureAuthenticated(page);
 
-  const verifyBtn = page.getByRole("button", { name: /Verificar e concluir/i });
-  const row = page.locator("tbody tr").filter({ hasText: /Revisão|under_review|Em revisão/i }).first();
+  const verifyBtn = page.getByRole("button", { name: /Concluir atendimento/i });
+  const row = page.locator("tbody tr").filter({ hasText: /Atendimento|in_progress|Em atendimento/i }).first();
   const anyRow = page.locator("tbody tr").first();
   const anyCard = page.locator("[class*='interactive-data-card'], article").first();
-  const hasReview = await row
+  const hasInProgress = await row
     .waitFor({ state: "visible", timeout: 5_000 })
     .then(() => true)
     .catch(() => false);
-  if (hasReview) {
+  if (hasInProgress) {
     await row.click();
   } else {
     const hasAny = await anyRow
@@ -158,7 +158,7 @@ test("PRC-REF-017 — diálogo Verificar e concluir distingue CREATE/UPDATE", as
   await ensureAuthenticated(page);
 
   if (!(await verifyBtn.isVisible().catch(() => false))) {
-    test.skip(true, "Caso aberto não está under_review com verify permitido.");
+    test.skip(true, "Caso aberto não está Em atendimento com complete permitido.");
   }
 
   await verifyBtn.click();
@@ -173,7 +173,7 @@ test("PRC-REF-017 — diálogo Verificar e concluir distingue CREATE/UPDATE", as
   if (isCreate) {
     // Obrigatoriedade client-side sem código.
     await page
-      .getByRole("button", { name: /^Verificar e concluir$/i })
+      .getByRole("button", { name: /^Concluir atendimento$/i })
       .last()
       .click();
     await expect(page.getByRole("alert")).toContainText(/código oficial/i);

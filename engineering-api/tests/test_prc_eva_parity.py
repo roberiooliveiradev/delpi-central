@@ -14,7 +14,7 @@ from tests.conftest import rbac_payload
 from tests.test_product_registration import (
     ANALYST,
     FakeReader,
-    _advance_to_review,
+    _advance_to_attendance,
     _create_body,
     _get,
     _post,
@@ -193,9 +193,9 @@ class TestExecuteParity:
         rid = _submit_create(client, jwks_env, core_rbac).json()["data"][
             "requestId"
         ]
-        version = _advance_to_review(client, jwks_env, core_rbac, rid)
+        version = _advance_to_attendance(client, jwks_env, core_rbac, rid)
         prep = await prc_semantic.execute_action(
-            _ctx(), _entry("verify_and_complete"), "prepare",
+            _ctx(), _entry("complete"), "prepare",
             target_ref=rid, expected_version=version,
             payload={"official_code": "001234"},
         )
@@ -205,7 +205,8 @@ class TestExecuteParity:
     async def test_execute_dispatch_registered(self):
         for action in (
             "submit", "start", "update_draft", "request_information",
-            "resume", "submit_review", "reject", "verify_and_complete",
+            "resume", "submit_review", "return_to_attendance",
+            "reject", "complete", "verify_and_complete",
         ):
             assert ("product_registration", action) in _EXECUTE_DISPATCH
 
@@ -318,19 +319,19 @@ class TestTerminalE2E:
         rid = _submit_create(client, jwks_env, core_rbac).json()["data"][
             "requestId"
         ]
-        version = _advance_to_review(client, jwks_env, core_rbac, rid)
+        version = _advance_to_attendance(client, jwks_env, core_rbac, rid)
         # isola o CONTRACT_GAP (accountingAccount) para exercitar sucesso
         eva_service["repo"]._drafts[rid]["technical_data"].pop(
             "accountingAccount", None
         )
         prep = await prc_semantic.execute_action(
-            _ctx(), _entry("verify_and_complete"), "prepare",
+            _ctx(), _entry("complete"), "prepare",
             target_ref=rid, expected_version=version,
             payload={"official_code": "001234"},
         )
         ref = _ref_from(prep)
         commit = await prc_semantic.execute_action(
-            _ctx(), _entry("verify_and_complete"), "commit",
+            _ctx(), _entry("complete"), "commit",
             target_ref=rid, expected_version=version,
             payload={"official_code": "001234"}, proposal_ref=ref,
         )
@@ -339,13 +340,13 @@ class TestTerminalE2E:
         # conclusão duplicada: PREPARE pode selar, mas o ACT revalida
         # estado/versão → state_conflict/stale_version, nunca 2ª conclusão.
         prep2 = await prc_semantic.execute_action(
-            _ctx(), _entry("verify_and_complete"), "prepare",
+            _ctx(), _entry("complete"), "prepare",
             target_ref=rid, expected_version=version,
             payload={"official_code": "001234"},
         )
         ref2 = _ref_from(prep2)
         commit2 = await prc_semantic.execute_action(
-            _ctx(), _entry("verify_and_complete"), "commit",
+            _ctx(), _entry("complete"), "commit",
             target_ref=rid, expected_version=version,
             payload={"official_code": "001234"}, proposal_ref=ref2,
         )

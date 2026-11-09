@@ -2326,7 +2326,11 @@ _EXECUTE_DISPATCH = {
     ("product_registration", "submit_review"): (
         prc_semantic.execute_action
     ),
+    ("product_registration", "return_to_attendance"): (
+        prc_semantic.execute_action
+    ),
     ("product_registration", "reject"): prc_semantic.execute_action,
+    ("product_registration", "complete"): prc_semantic.execute_action,
     ("product_registration", "verify_and_complete"): (
         prc_semantic.execute_action
     ),

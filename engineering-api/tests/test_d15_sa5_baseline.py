@@ -12,7 +12,7 @@ from engineering_app.infrastructure.persistence.product_registration.in_memory_r
 from tests.test_product_registration import (
     ANALYST,
     FakeReader,
-    _advance_to_review,
+    _advance_to_attendance,
     _attach_reader,
     _get,
     _post,
@@ -328,10 +328,10 @@ def test_d15_remove_completion_pending_owner(
     prc_service_repo["reader"] = FakeReader(
         _product(suppliers=[])
     )
-    v = _advance_to_review(client, jwks_env, core_rbac, rid)
+    v = _advance_to_attendance(client, jwks_env, core_rbac, rid)
     done = _post(
         client,
-        f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+        f"/v1/product-registration/requests/{rid}/actions/complete",
         _token(jwks_env, "analyst-1"),
         json={"expectedVersion": v, "officialCode": "001234"},
     )
@@ -342,7 +342,7 @@ def test_d15_remove_completion_pending_owner(
         client, f"/v1/product-registration/requests/{rid}",
         _token(jwks_env, "analyst-1"),
     ).json()["data"]
-    assert detail["status"] == "under_review"
+    assert detail["status"] == "in_progress"
     assert detail["completedRecordId"] is None
 
 
@@ -387,10 +387,10 @@ def test_d15_update_pn_selective_verify(
             }]
         )
     )
-    v = _advance_to_review(client, jwks_env, core_rbac, rid)
+    v = _advance_to_attendance(client, jwks_env, core_rbac, rid)
     done = _post(
         client,
-        f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+        f"/v1/product-registration/requests/{rid}/actions/complete",
         _token(jwks_env, "analyst-1"),
         json={"expectedVersion": v, "officialCode": "001234"},
     )
@@ -418,10 +418,10 @@ def test_d15_add_verify_presence_after(
     rid = resp.json()["data"]["requestId"]
     # pós: ADD ainda ausente → mismatch, sem revisão
     prc_service_repo["reader"] = FakeReader(_product())
-    v = _advance_to_review(client, jwks_env, core_rbac, rid)
+    v = _advance_to_attendance(client, jwks_env, core_rbac, rid)
     done = _post(
         client,
-        f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+        f"/v1/product-registration/requests/{rid}/actions/complete",
         _token(jwks_env, "analyst-1"),
         json={"expectedVersion": v, "officialCode": "001234"},
     )
@@ -449,7 +449,7 @@ def test_d15_add_verify_presence_after(
     )
     done2 = _post(
         client,
-        f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+        f"/v1/product-registration/requests/{rid}/actions/complete",
         _token(jwks_env, "analyst-1"),
         json={"expectedVersion": v, "officialCode": "001234"},
     )

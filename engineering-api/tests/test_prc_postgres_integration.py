@@ -129,21 +129,11 @@ class TestPostgresIntegration:
         assert data["unit"] == "UN"  # preservado
         assert req["draft"]["changed_paths"][0]["path"] == "description"
 
-        # submit_review
-        req = repo.apply_transition(
-            request_id=rid, expected_version=3,
-            allowed_from=frozenset({"in_progress"}),
-            actor_label="Analyst", actor_subject="analyst-pg",
-            event_type="submitted_for_review",
-            next_status="under_review", set_fields={}, reason=None,
-            event_meta={},
-        )
-        assert req["status"] == "under_review"
-
-        # complete: record + revision + verification + evento (1 tx)
+        # PRC-REF-020 — conclusão a partir de in_progress (sem under_review).
+        official_code = f"PG{rid[:8].upper()}"
         out = repo.complete_request(
-            request_id=rid, expected_version=4,
-            actor_subject="analyst-pg", official_code="PG001",
+            request_id=rid, expected_version=3,
+            actor_subject="analyst-pg", official_code=official_code,
             official_source="api-delpi/totvs", base_revision=None,
             revision_snapshot=data,
             revision_changes=[
@@ -152,7 +142,7 @@ class TestPostgresIntegration:
                 for p, v in data.items()
             ],
             verification={
-                "official_product_code": "PG001",
+                "official_product_code": official_code,
                 "requested_by_subject": "analyst-pg",
                 "checked_at": "2026-11-06T00:00:00+00:00",
                 "official_source": "api-delpi/totvs",
@@ -168,7 +158,7 @@ class TestPostgresIntegration:
         assert out["request"]["status"] == "completed"
         assert out["revision"]["revision_number"] == 1
         record = out["record"]
-        assert record["official_product_code"] == "PG001"
+        assert record["official_product_code"] == official_code
         rev = repo.get_revision(record["id"], 1)
         assert rev["technical_snapshot"]["description"] == "PG EDIT"
 

@@ -361,7 +361,7 @@ async def execute_action(
             return _ok({"entity": entry.entity, "action": action, **data},
                        "Solicitação registrada.")
 
-        terminal = action in ("reject", "verify_and_complete")
+        terminal = action in ("reject", "verify_and_complete", "complete")
         if terminal:
             return await _terminal(
                 context, entry, phase, ref,
@@ -416,6 +416,7 @@ async def execute_action(
             "start": svc.start_request,
             "resume": svc.resume_request,
             "submit_review": svc.submit_review,
+            "return_to_attendance": svc.return_to_attendance,
         }.get(action)
         if fn is not None:
             data = fn(
@@ -813,7 +814,7 @@ async def _terminal(
         )
     else:
         token = str(getattr(context.user, "access_token", "") or "")
-        data = await svc.verify_and_complete(
+        data = await svc.complete_attendance(
             ref, actor=actor, expected_version=version,
             official_code=official_code,
             reason=reason,

@@ -108,7 +108,11 @@ def _submit_create(client, jwks_env, core_rbac, sub="user-1"):
     )
 
 
-def _advance_to_review(client, jwks_env, core_rbac, rid, sub="analyst-1"):
+def _advance_to_attendance(
+    client, jwks_env, core_rbac, rid, sub="analyst-1",
+):
+    """PRC-REF-020 — deixa a solicitação em ``in_progress`` (pronto
+    para Concluir atendimento)."""
     core_rbac["behavior"] = ("data", rbac_payload(ANALYST, id=sub))
     tok = _token(jwks_env, sub)
     r = _post(
@@ -117,10 +121,19 @@ def _advance_to_review(client, jwks_env, core_rbac, rid, sub="analyst-1"):
         tok, json={"expectedVersion": 1},
     )
     assert r.status_code == 200, r.text
+    return r.json()["data"]["caseVersion"]
+
+
+def _advance_to_review(client, jwks_env, core_rbac, rid, sub="analyst-1"):
+    """LEGADO — sobe até ``under_review`` (compat alias submit-review)."""
+    version = _advance_to_attendance(
+        client, jwks_env, core_rbac, rid, sub=sub,
+    )
+    tok = _token(jwks_env, sub)
     r = _post(
         client,
         f"/v1/product-registration/requests/{rid}/actions/submit-review",
-        tok, json={"expectedVersion": 2},
+        tok, json={"expectedVersion": version},
     )
     assert r.status_code == 200, r.text
     return r.json()["data"]["caseVersion"]
@@ -349,14 +362,16 @@ class TestWorkflow:
         rid = _submit_create(client, jwks_env, core_rbac).json()["data"][
             "requestId"
         ]
-        version = _advance_to_review(client, jwks_env, core_rbac, rid)
+        version = _advance_to_attendance(client, jwks_env, core_rbac, rid)
         detail = _get(
             client,
             f"/v1/product-registration/requests/{rid}",
             _token(jwks_env, "analyst-1"),
         ).json()["data"]
-        assert detail["status"] == "under_review"
-        assert version == 3
+        assert detail["status"] == "in_progress"
+        assert "complete" in detail["allowedActions"]
+        assert "submit_review" not in detail["allowedActions"]
+        assert version == 2
         # stale version → 409
         core_rbac["behavior"] = (
             "data", rbac_payload(ANALYST, id="analyst-1")
@@ -507,7 +522,7 @@ class TestVerifyAndComplete:
         rid = _submit_create(client, jwks_env, core_rbac).json()["data"][
             "requestId"
         ]
-        version = _advance_to_review(client, jwks_env, core_rbac, rid)
+        version = _advance_to_attendance(client, jwks_env, core_rbac, rid)
         return rid, version
 
     def test_not_found_does_not_complete(
@@ -519,7 +534,7 @@ class TestVerifyAndComplete:
         )
         resp = _post(
             client,
-            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            f"/v1/product-registration/requests/{rid}/actions/complete",
             _token(jwks_env, "analyst-1"),
             json={"expectedVersion": version, "officialCode": "001234"},
         )
@@ -530,13 +545,38 @@ class TestVerifyAndComplete:
             f"/v1/product-registration/requests/{rid}",
             _token(jwks_env, "analyst-1"),
         ).json()["data"]
-        assert detail["status"] == "under_review"
+        assert detail["status"] == "in_progress"
         verifs = _get(
             client,
             f"/v1/product-registration/requests/{rid}/verifications",
             _token(jwks_env, "analyst-1"),
         ).json()["data"]["items"]
         assert verifs[-1]["result"] == "not_found"
+
+    def test_complete_rejects_submitted_status(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        prc_service_repo["reader"] = FakeReader(_product())
+        rid = _submit_create(client, jwks_env, core_rbac).json()["data"][
+            "requestId"
+        ]
+        core_rbac["behavior"] = (
+            "data", rbac_payload(ANALYST, id="analyst-1")
+        )
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/complete",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": 1, "officialCode": "001234"},
+        )
+        assert resp.status_code == 409
+        detail = _get(
+            client,
+            f"/v1/product-registration/requests/{rid}",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]
+        assert detail["status"] == "submitted"
+        assert detail.get("completedRecordId") is None
 
     def test_mismatched_description_blocks(
         self, client, jwks_env, core_rbac, prc_service_repo
@@ -551,7 +591,7 @@ class TestVerifyAndComplete:
         ].pop("accountingAccount", None)
         resp = _post(
             client,
-            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            f"/v1/product-registration/requests/{rid}/actions/complete",
             _token(jwks_env, "analyst-1"),
             json={"expectedVersion": version, "officialCode": "001234"},
         )
@@ -571,7 +611,7 @@ class TestVerifyAndComplete:
         )
         resp = _post(
             client,
-            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            f"/v1/product-registration/requests/{rid}/actions/complete",
             _token(jwks_env, "analyst-1"),
             json={"expectedVersion": version, "officialCode": "001234"},
         )
@@ -610,7 +650,7 @@ class TestVerifyAndComplete:
         )
         resp = _post(
             client,
-            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            f"/v1/product-registration/requests/{rid}/actions/complete",
             _token(jwks_env, "analyst-1"),
             json={"expectedVersion": version, "officialCode": "001234"},
         )
@@ -625,7 +665,7 @@ class TestVerifyAndComplete:
         )
         resp = _post(
             client,
-            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            f"/v1/product-registration/requests/{rid}/actions/complete",
             _token(jwks_env, "analyst-1"),
             json={"expectedVersion": version, "officialCode": "001234"},
         )
@@ -640,7 +680,7 @@ class TestVerifyAndComplete:
         )
         resp = _post(
             client,
-            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            f"/v1/product-registration/requests/{rid}/actions/complete",
             _token(jwks_env, "analyst-1"),
             json={"expectedVersion": version, "officialCode": "001234"},
         )
@@ -657,34 +697,31 @@ class TestVerifyAndComplete:
             "data", rbac_payload(ANALYST, id="analyst-1")
         )
         tok = _token(jwks_env, "analyst-1")
-        _post(
+        started = _post(
             client,
             f"/v1/product-registration/requests/{rid}/actions/start",
             tok, json={"expectedVersion": 1},
         )
-        _post(
-            client,
-            f"/v1/product-registration/requests/{rid}/actions/submit-review",
-            tok, json={"expectedVersion": 2},
-        )
-        # accountingAccount agora é verificável via view=engineering.
+        assert started.status_code == 200, started.text
+        version = started.json()["data"]["caseVersion"]
+        # PRC-REF-020 — conclusão direta a partir de in_progress.
         resp = _post(
             client,
-            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            f"/v1/product-registration/requests/{rid}/actions/complete",
             tok,
-            json={"expectedVersion": 3, "officialCode": "001234"},
+            json={"expectedVersion": version, "officialCode": "001234"},
         )
         assert resp.status_code == 200, resp.text
         data = resp.json()["data"]
         assert data["status"] == "completed"
         assert data["revisionNumber"] == 1
         record_id = data["recordId"]
-        # terminal: segunda conclusão → 409
+        # alias legado aponta para o mesmo use case (já terminal → 409)
         resp2 = _post(
             client,
             f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
             tok,
-            json={"expectedVersion": 4, "officialCode": "001234"},
+            json={"expectedVersion": version + 1, "officialCode": "001234"},
         )
         assert resp2.status_code == 409
         # revisão imutável consultável
@@ -706,7 +743,7 @@ class TestVerifyAndComplete:
         )
         resp = _post(
             client,
-            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            f"/v1/product-registration/requests/{rid}/actions/complete",
             _token(jwks_env, "analyst-1"),
             json={"expectedVersion": version},
         )
@@ -716,7 +753,7 @@ class TestVerifyAndComplete:
             f"/v1/product-registration/requests/{rid}",
             _token(jwks_env, "analyst-1"),
         ).json()["data"]
-        assert detail["status"] == "under_review"
+        assert detail["status"] == "in_progress"
         assert not detail.get("officialCode")
 
     def test_create_intake_without_official_code(
@@ -743,7 +780,7 @@ class TestVerifyAndComplete:
         )
         resp = _post(
             client,
-            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            f"/v1/product-registration/requests/{rid}/actions/complete",
             _token(jwks_env, "analyst-1"),
             json={"expectedVersion": version, "officialCode": "   "},
         )
@@ -760,7 +797,7 @@ class TestVerifyAndComplete:
         )
         resp = _post(
             client,
-            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            f"/v1/product-registration/requests/{rid}/actions/complete",
             _token(jwks_env, "analyst-1"),
             json={"expectedVersion": version, "officialCode": "001234"},
         )
@@ -796,13 +833,13 @@ class TestVerifyAndComplete:
         )
         assert create.status_code == 201, create.text
         rid = create.json()["data"]["requestId"]
-        version = _advance_to_review(client, jwks_env, core_rbac, rid)
+        version = _advance_to_attendance(client, jwks_env, core_rbac, rid)
         prc_service_repo["reader"] = FakeReader(
             _product(description="NOVA DESC")
         )
         resp = _post(
             client,
-            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            f"/v1/product-registration/requests/{rid}/actions/complete",
             _token(jwks_env, "analyst-1"),
             json={
                 "expectedVersion": version,
@@ -842,13 +879,13 @@ class TestVerifyAndComplete:
         )
         assert create.status_code == 201, create.text
         rid = create.json()["data"]["requestId"]
-        version = _advance_to_review(client, jwks_env, core_rbac, rid)
+        version = _advance_to_attendance(client, jwks_env, core_rbac, rid)
         prc_service_repo["reader"] = FakeReader(
             _product(description="OUTRA")
         )
         resp = _post(
             client,
-            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            f"/v1/product-registration/requests/{rid}/actions/complete",
             _token(jwks_env, "analyst-1"),
             json={"expectedVersion": version, "officialCode": "001234"},
         )
@@ -888,13 +925,13 @@ class TestVerifyAndComplete:
         )
         assert create.status_code == 201, create.text
         rid = create.json()["data"]["requestId"]
-        version = _advance_to_review(client, jwks_env, core_rbac, rid)
+        version = _advance_to_attendance(client, jwks_env, core_rbac, rid)
         prc_service_repo["reader"] = FakeReader(
             _product(description="NOVA DESC")
         )
         resp = _post(
             client,
-            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            f"/v1/product-registration/requests/{rid}/actions/complete",
             _token(jwks_env, "analyst-1"),
             json={"expectedVersion": version},
         )
@@ -987,10 +1024,10 @@ class TestSupplierPartNumber:
              "product": _product()["product"], "suppliers": observed})
         rid = self._submit(
             client, jwks_env, core_rbac, suppliers).json()["data"]["requestId"]
-        v = _advance_to_review(client, jwks_env, core_rbac, rid)
+        v = _advance_to_attendance(client, jwks_env, core_rbac, rid)
         return _post(
             client,
-            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            f"/v1/product-registration/requests/{rid}/actions/complete",
             _token(jwks_env, "analyst-1"),
             json={"expectedVersion": v, "officialCode": "001234"}), rid
 

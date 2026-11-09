@@ -626,10 +626,19 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
     ),
     _a(
         "product_registration", "submit_review", "execute",
-        "Submit the technical draft for review — completeness check, "
-        "does NOT approve or complete.",
+        "LEGACY: submit draft for under_review. Prefer "
+        "product_registration.complete (PRC-REF-020).",
         "moderate", status="planned", phases=("act", "prepare"),
         ref_arg="request_id", requires=("expected_version",),
+        notes=("Deprecated operational step; kept for REST/EVA alias.",),
+    ),
+    _a(
+        "product_registration", "return_to_attendance", "execute",
+        "Reopen legacy under_review cases back to in_progress "
+        "(PRC-REF-020 migration path).",
+        "moderate", status="proven", phases=("act", "prepare"),
+        ref_arg="request_id", requires=("expected_version",),
+        fields=("reason",),
     ),
     _a(
         "product_registration", "reject", "execute",
@@ -644,19 +653,31 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ),
     ),
     _a(
-        "product_registration", "verify_and_complete", "execute",
-        "Verify the product in TOTVS (read-only official contract) and "
-        "complete — publishes the immutable revision ONLY on full "
-        "match. EVA nunca declara produto criado/alterado sem a "
-        "verificação oficial no ACT.",
+        "product_registration", "complete", "execute",
+        "Concluir atendimento: technical validation + fresh official "
+        "TOTVS read/compare; publishes immutable revision ONLY on full "
+        "match. Failure keeps in_progress (PRC-REF-020).",
         "moderate", status="proven", phases=("prepare", "commit"),
         ref_arg="request_id",
         requires=("expected_version",),
         fields=("official_code", "reason"),
         notes=(
-            "Terminal/high-impact: PREPARE prova readiness; ACT exige "
-            "confirmação humana verificável + leitura oficial fresca — "
-            "mismatch/unverifiable/unavailable nunca conclui."
+            "Terminal/high-impact: PREPARE readiness; ACT exige "
+            "confirmação humana + leitura oficial fresca — "
+            "mismatch/unverifiable/unavailable nunca conclui. "
+            "Same Application use case as verify_and_complete."
+        ),
+    ),
+    _a(
+        "product_registration", "verify_and_complete", "execute",
+        "LEGACY alias of product_registration.complete — same use case.",
+        "moderate", status="proven", phases=("prepare", "commit"),
+        ref_arg="request_id",
+        requires=("expected_version",),
+        fields=("official_code", "reason"),
+        notes=(
+            "Deprecated name; maps to complete_attendance. Prefer "
+            "product_registration.complete."
         ),
     ),
     # --- D16 attendance flags (mesmos use cases REST; sem nova MCP tool) ---

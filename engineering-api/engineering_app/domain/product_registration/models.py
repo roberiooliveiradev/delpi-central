@@ -1,22 +1,24 @@
 """Entidades, ator e máquina de estados do Product Registration.
 
-Framework-free. Regras centrais do contrato §7:
+Framework-free. Regras centrais (PRC-REF-020):
 - solicitação não é cadastro oficial; draft não é revisão publicada;
-- revisão é imutável; o record vigente aponta para revisão confirmada;
-- ``verify_and_complete`` sem match permanece ``under_review``;
+- revisão publicada é imutável; o record vigente aponta para ela;
+- conclusão ``complete`` exige verificação oficial integral;
+- falha de verificação permanece em ``in_progress`` (sem revisão);
+- ``under_review`` é legado (leitura/migração), não etapa operacional nova;
 - terminais não reabrem — nova solicitação para novo ciclo.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 PRC_STATUSES: tuple[str, ...] = (
     "submitted",
     "in_progress",
     "needs_information",
-    "under_review",
+    "under_review",  # legado — compatível para leitura/histórico
     "completed",
     "rejected",
 )
@@ -30,6 +32,9 @@ ENG_ACCESS = "engineering.access"
 ENG_MANAGER = "engineering.manager"
 
 # Transições de workflow — ação → (origens válidas, destino).
+# PRC-REF-020: ``complete`` conclui a partir de ``in_progress`` (e legado
+# ``under_review``). ``submit_review`` permanece no domínio apenas para
+# compatibilidade de endpoint; não entra em ``allowedActions`` do fluxo novo.
 _TRANSITIONS: dict[str, tuple[frozenset[str], str]] = {
     "start": (frozenset({"submitted"}), "in_progress"),
     "request_information": (
@@ -38,13 +43,19 @@ _TRANSITIONS: dict[str, tuple[frozenset[str], str]] = {
     ),
     "resume": (frozenset({"needs_information"}), "in_progress"),
     "submit_review": (frozenset({"in_progress"}), "under_review"),
+    "return_to_attendance": (frozenset({"under_review"}), "in_progress"),
+    "complete": (frozenset({"in_progress", "under_review"}), "completed"),
+    # Alias legado do mesmo use case de conclusão verificada.
+    "verify_and_complete": (
+        frozenset({"in_progress", "under_review"}),
+        "completed",
+    ),
     "reject": (
         frozenset(
             {"submitted", "in_progress", "needs_information", "under_review"}
         ),
         "rejected",
     ),
-    "verify_and_complete": (frozenset({"under_review"}), "completed"),
 }
 
 # Ações visíveis por status (allowedActions do backend — UI nunca decide).
@@ -53,11 +64,14 @@ _ACTIONS_BY_STATUS: dict[str, tuple[str, ...]] = {
     "in_progress": (
         "edit_draft",
         "request_information",
-        "submit_review",
+        "complete",
         "reject",
     ),
     "needs_information": ("resume", "reject"),
+    # Legado aberto: reabrir para atendimento ou concluir com verificação.
     "under_review": (
+        "return_to_attendance",
+        "complete",
         "verify_and_complete",
         "request_information",
         "reject",
@@ -66,15 +80,15 @@ _ACTIONS_BY_STATUS: dict[str, tuple[str, ...]] = {
     "rejected": (),
 }
 
-# Ação → permissão exigida — modelo de duas permissões (PO): todas as
-# operações do fluxo exigem ``engineering.access``; administração
-# (nenhuma exposta neste MVP) exigiria ``engineering.manager``.
+# Ação → permissão exigida — modelo de duas permissões (PO).
 _ACTION_PERMISSION: dict[str, tuple[str, ...]] = {
     "start": (ENG_ACCESS,),
     "edit_draft": (ENG_ACCESS,),
     "request_information": (ENG_ACCESS,),
     "resume": (ENG_ACCESS,),
     "submit_review": (ENG_ACCESS,),
+    "return_to_attendance": (ENG_ACCESS,),
+    "complete": (ENG_ACCESS,),
     "reject": (ENG_ACCESS,),
     "verify_and_complete": (ENG_ACCESS,),
 }

@@ -34,11 +34,13 @@ export const PRC_EVENT_LABELS: Record<string, string> = {
   draft_changed: "Ficha técnica alterada",
   information_requested: "Informações solicitadas",
   resumed: "Atendimento retomado",
-  submitted_for_review: "Encaminhada para revisão",
+  submitted_for_review: "Encaminhada para revisão (legado)",
+  returned_to_attendance: "Atendimento reaberto",
   rejected: "Solicitação rejeitada",
-  completed: "Solicitação concluída",
+  completed: "Atendimento concluído",
   verification_attempted: "Verificação oficial executada",
-  verify_and_complete: "Verificação oficial e conclusão",
+  verify_and_complete: "Verificação oficial e conclusão (legado)",
+  complete: "Atendimento concluído",
   "information.answers_drafted": "Rascunho de respostas salvo",
   "information.answers_submitted": "Respostas enviadas ao analista",
   "information.question_accepted": "Esclarecimento aceito",
@@ -232,10 +234,15 @@ export const PRC_COPY = {
   detailBreadcrumb: "Solicitações",
   intakeNote:
     "Enviar a solicitação registra o pedido para atendimento da Engenharia — não cadastra nem altera o produto no TOTVS.",
-  verifyCta: "Verificar e concluir",
+  verifyCta: "Concluir atendimento",
   verifyExplain:
-    "A Engineering API relê o cadastro oficial no TOTVS e conclui a solicitação somente se todos os campos verificáveis corresponderem. A revisão publicada é imutável.",
+    "Ao concluir, a Engineering API valida a ficha, consulta o TOTVS em tempo real e só publica a revisão se todos os campos verificáveis corresponderem.",
   neverVerified: "Nenhuma verificação oficial executada até o momento.",
+  verifyingNow: "Conferindo dados técnicos e consultando o cadastro oficial…",
+  conclusionBlocked:
+    "Conclusão bloqueada. A solicitação permanece Em atendimento.",
+  officialUnavailable:
+    "Não foi possível confirmar os dados oficiais no TOTVS. Nenhuma conclusão foi realizada.",
   noRevisions: "Nenhuma revisão publicada — revisões existem após a conclusão.",
   immutableRevision:
     "Revisões publicadas são imutáveis e servem apenas para consulta.",

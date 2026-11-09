@@ -1,25 +1,27 @@
 import { EngineeringProgressTracker } from "../../../ui/engineeringUi";
 import { prcStatusLabel } from "../prcCopy";
 
-const MAIN_PATH = ["submitted", "in_progress", "under_review", "completed"];
+/** PRC-REF-020 — caminho operacional sem Em revisão. */
+const MAIN_PATH = ["submitted", "in_progress", "completed"];
 
 const STEP_LABELS: Record<string, string> = {
   submitted: "Enviada",
   in_progress: "Em atendimento",
-  under_review: "Em revisão",
   completed: "Concluída",
 };
 
 type StepState = "complete" | "current" | "available" | "locked" | "error";
 
 /** Andamento do workflow PRC — caminho linear
- * submitted → in_progress → under_review → completed, com
- * needs_information/rejected representados como estado do step atual
- * (não como avanço linear, que seria enganoso). */
+ * submitted → in_progress → completed (REF-020).
+ * needs_information / under_review (legado) / rejected são estados do
+ * step atual, sem inventar avanço linear enganoso. */
 export function PrcWorkflowProgress({ status }: { status: string }) {
-  const currentIndex = MAIN_PATH.indexOf(
-    status === "needs_information" ? "in_progress" : status,
-  );
+  const mappedStatus =
+    status === "needs_information" || status === "under_review"
+      ? "in_progress"
+      : status;
+  const currentIndex = MAIN_PATH.indexOf(mappedStatus);
 
   const steps = MAIN_PATH.map((id, index) => {
     let state: StepState = "locked";
@@ -30,12 +32,14 @@ export function PrcWorkflowProgress({ status }: { status: string }) {
       else if (index === currentIndex) state = "current";
       else state = "available";
     }
-    const statusLabel =
-      index === currentIndex && status === "needs_information"
-        ? "em andamento — aguardando informações"
-        : index === 0 && status === "rejected"
-          ? "concluída — solicitação depois rejeitada"
-          : undefined;
+    let statusLabel: string | undefined;
+    if (index === currentIndex && status === "needs_information") {
+      statusLabel = "em andamento — aguardando informações";
+    } else if (index === currentIndex && status === "under_review") {
+      statusLabel = "legado em revisão — use Concluir atendimento ou Reabrir";
+    } else if (index === 0 && status === "rejected") {
+      statusLabel = "concluída — solicitação depois rejeitada";
+    }
     return { id, label: STEP_LABELS[id], state, statusLabel };
   });
 

@@ -51,8 +51,13 @@ _EVENT_TYPE_BY_ACTION = {
     "request_information": "information_requested",
     "resume": "resumed",
     "submit_review": "submitted_for_review",
+    "return_to_attendance": "returned_to_attendance",
+    "complete": "completed",
     "reject": "rejected",
 }
+
+# Status a partir dos quais a conclusão verificada é permitida (REF-020).
+_COMPLETE_FROM = frozenset({"in_progress", "under_review"})
 
 
 def _now() -> str:
@@ -193,7 +198,10 @@ class ProductRegistrationService:
         actions = [
             action
             for action in (detail.get("allowedActions") or [])
-            if not (blocker and action == "resume")
+            if not (
+                blocker
+                and action in ("resume", "complete", "verify_and_complete")
+            )
         ]
         detail["allowedActions"] = actions
         requester = str(request.get("requester_subject") or "")
@@ -899,6 +907,12 @@ class ProductRegistrationService:
     def submit_review(self, request_id: str, *, actor: PrcActor,
                       expected_version: int, reason: str | None = None,
                       idempotency_key: str | None = None) -> dict[str, Any]:
+        """LEGADO — ``in_progress → under_review``.
+
+        PRC-REF-020 remove a etapa operacional de revisão. O endpoint
+        permanece por compatibilidade de consumidores antigos; não entra
+        em ``allowedActions`` do fluxo novo. Preferir ``complete``.
+        """
         request = self._get_scoped(request_id, actor)
         draft = request.get("draft") or {}
         data = draft.get("technical_data") or {}
@@ -922,6 +936,25 @@ class ProductRegistrationService:
         return self._apply(
             request_id, actor=actor, action="submit_review",
             expected_version=expected_version, reason=reason,
+            idempotency_key=idempotency_key,
+        )
+
+    def return_to_attendance(
+        self,
+        request_id: str,
+        *,
+        actor: PrcActor,
+        expected_version: int,
+        reason: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """PRC-REF-020 — reabre legado ``under_review`` → ``in_progress``."""
+        return self._apply(
+            request_id,
+            actor=actor,
+            action="return_to_attendance",
+            expected_version=expected_version,
+            reason=reason,
             idempotency_key=idempotency_key,
         )
 
@@ -1039,7 +1072,39 @@ class ProductRegistrationService:
             raise PrcConcurrencyError("official_context_stale")
         return captured
 
-    # --- VERIFY AND COMPLETE --------------------------------------------------------
+    # --- COMPLETE (verificação oficial + conclusão) — PRC-REF-020 ---------------
+
+    async def complete_attendance(
+        self,
+        request_id: str,
+        *,
+        actor: PrcActor,
+        expected_version: int,
+        official_code: str | None,
+        reason: str | None,
+        access_token: str,
+        correlation_id: str,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Única operação de conclusão verificada (rótulo: Concluir atendimento).
+
+        Pré-condição: ``in_progress`` (ou legado ``under_review``). Executa
+        validação técnica + leitura oficial fresca + comparação integral;
+        só então publica revisão e marca ``completed``. Falha bloqueante
+        preserva o status atual (preferencialmente ``in_progress``) e
+        registra a tentativa — sem revisão publicada.
+        """
+        return await self._complete_with_official_verification(
+            request_id,
+            actor=actor,
+            expected_version=expected_version,
+            official_code=official_code,
+            reason=reason,
+            access_token=access_token,
+            correlation_id=correlation_id,
+            idempotency_key=idempotency_key,
+            action_name="complete",
+        )
 
     async def verify_and_complete(
         self,
@@ -1053,10 +1118,44 @@ class ProductRegistrationService:
         correlation_id: str,
         idempotency_key: str | None = None,
     ) -> dict[str, Any]:
+        """Alias legado de ``complete_attendance`` (mesmo use case)."""
+        return await self._complete_with_official_verification(
+            request_id,
+            actor=actor,
+            expected_version=expected_version,
+            official_code=official_code,
+            reason=reason,
+            access_token=access_token,
+            correlation_id=correlation_id,
+            idempotency_key=idempotency_key,
+            action_name="verify_and_complete",
+        )
+
+    async def _complete_with_official_verification(
+        self,
+        request_id: str,
+        *,
+        actor: PrcActor,
+        expected_version: int,
+        official_code: str | None,
+        reason: str | None,
+        access_token: str,
+        correlation_id: str,
+        idempotency_key: str | None = None,
+        action_name: str = "complete",
+    ) -> dict[str, Any]:
         _require_actor_verify(actor)
         request = self._get_scoped(request_id, actor)
-        if request["status"] != "under_review":
+        if request["status"] not in _COMPLETE_FROM:
             raise PrcStateConflictError("state_conflict")
+        if not actor.has_action_permission(action_name):
+            raise PrcForbiddenError(
+                f"Sem permissão para a ação '{action_name}'."
+            )
+        # REF-019: não concluir com rodada de esclarecimento aberta.
+        rounds = self._repo.list_information_rounds(request_id=request_id)
+        if info_rounds.has_open_information_blocker(rounds):
+            raise PrcStateConflictError("information_round_open")
         # PRC-REF-017 — CREATE exige código informado na conclusão;
         # UPDATE trava no código oficial da solicitação/baseline.
         #
@@ -1142,6 +1241,9 @@ class ProductRegistrationService:
                 field_results={}, observed=None,
                 correlation_id=correlation_id,
             )
+            self._reopen_legacy_review_after_failed_complete(
+                request_id, actor=actor, expected_version=expected_version,
+            )
             raise PrcOfficialError(
                 kind,
                 "Produto não confirmado na fonte oficial "
@@ -1163,6 +1265,9 @@ class ProductRegistrationService:
                 },
                 correlation_id=correlation_id,
             )
+            self._reopen_legacy_review_after_failed_complete(
+                request_id, actor=actor, expected_version=expected_version,
+            )
             if has_unverifiable:
                 raise PrcOfficialError(
                     "unverifiable",
@@ -1173,7 +1278,7 @@ class ProductRegistrationService:
                 )
             raise PrcOfficialError(
                 "mismatch",
-                "Divergência entre a ficha aprovada e o cadastro oficial.",
+                "Divergência entre a ficha técnica e o cadastro oficial.",
                 verification=verification,
                 field_results=field_results,
             )
@@ -1383,6 +1488,37 @@ class ProductRegistrationService:
                 "error_code": result if result != "matched" else None,
             },
         )
+
+    def _reopen_legacy_review_after_failed_complete(
+        self,
+        request_id: str,
+        *,
+        actor: PrcActor,
+        expected_version: int,
+    ) -> None:
+        """PRC-REF-020 — falha de conclusão em legado ``under_review``
+        reabre para ``in_progress`` (atendimento permanece aberto)."""
+        current = self._repo.get_request(request_id)
+        if not current or current.get("status") != "under_review":
+            return
+        try:
+            self._apply(
+                request_id,
+                actor=actor,
+                action="return_to_attendance",
+                expected_version=int(
+                    current.get("row_version") or expected_version
+                ),
+                reason=(
+                    "PRC-REF-020: verificação oficial bloqueou a conclusão "
+                    "— atendimento reaberto."
+                ),
+            )
+        except PrcStateConflictError:
+            # Concorrência: status já mudou; falha de verificação permanece.
+            return
+        except PrcConcurrencyError:
+            return
 
     def _build_snapshot(
         self, request: dict, draft_data: dict[str, Any]

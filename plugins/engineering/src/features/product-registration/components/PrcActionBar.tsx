@@ -16,6 +16,7 @@ import type { InfoSupplierOption } from "../prcInformationExchange";
 import {
   PRC_ACTION_ORDER,
   PRC_ACTION_SPECS,
+  isPrcCompleteAction,
   type PrcActionExtras,
   type PrcActionSpec,
 } from "./prcActionSpecs";
@@ -138,7 +139,7 @@ export function PrcActionBar({
   const verifyConfirmMessage = isUpdate
     ? "A Engineering API relê o cadastro oficial no TOTVS e compara " +
       "apenas os campos alterados nesta solicitação. Qualquer " +
-      "divergência mantém a revisão em aberto."
+      "divergência mantém a solicitação Em atendimento."
     : "Informe o código oficial gerado no TOTVS após o cadastro " +
       "manual. A Engineering API confirma existência e " +
       "correspondência campo a campo antes de concluir.";
@@ -182,7 +183,7 @@ export function PrcActionBar({
           message={
             <div className="engineering-prc__confirm-body">
               <p>
-                {pending.spec.action === "verify_and_complete"
+                {isPrcCompleteAction(pending.spec.action)
                   ? verifyConfirmMessage
                   : pending.spec.confirmMessage}
               </p>

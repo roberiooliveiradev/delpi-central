@@ -126,6 +126,24 @@
   gap: 12px;
 }
 
+/* PRC-REF-020 — destaque de campos/SA5 bloqueantes na verificação. */
+.engineering-prc__field-mismatch,
+.engineering-prc__supplier-mismatch {
+  color: var(--engineering-danger, #b42318);
+  font-weight: 600;
+}
+
+.engineering-prc__row-mismatch td {
+  background: color-mix(in srgb, var(--engineering-danger, #b42318) 8%, transparent);
+}
+
+.engineering-prc__supplier-mismatch {
+  outline: 1px solid color-mix(in srgb, var(--engineering-danger, #b42318) 35%, transparent);
+  border-radius: 4px;
+  padding: 4px 6px;
+  margin-inline-start: -6px;
+}
+
 @media (max-width: 1100px) {
   .engineering-prc__detail-grid {
     grid-template-columns: 1fr;

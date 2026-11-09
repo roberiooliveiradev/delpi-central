@@ -70,6 +70,7 @@ def test_only_authorized_business_routes_exposed(client):
         "/v1/product-registration/requests/{request_id}/actions/start",
         "/v1/product-registration/requests/{request_id}/actions/resume",
         "/v1/product-registration/requests/{request_id}/actions/submit-review",
+        "/v1/product-registration/requests/{request_id}/actions/return-to-attendance",
         "/v1/product-registration/requests/{request_id}/actions/request-information",
         # D16 / D16-REF-01 — bandeiras de acompanhamento.
         "/v1/product-registration/flags",
@@ -86,6 +87,7 @@ def test_only_authorized_business_routes_exposed(client):
         "/v1/product-registration/requests/{request_id}/information-rounds/{round_id}/actions/request-follow-up",
         "/v1/product-registration/requests/{request_id}/information-rounds/{round_id}/questions/{question_id}/actions/accept",
         "/v1/product-registration/requests/{request_id}/actions/reject",
+        "/v1/product-registration/requests/{request_id}/actions/complete",
         "/v1/product-registration/requests/{request_id}/actions/verify-and-complete",
         "/v1/product-registration/requests/{request_id}/verifications",
         "/v1/product-registration/technical-records/{record_id}",

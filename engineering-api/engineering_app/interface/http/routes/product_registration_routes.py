@@ -495,6 +495,7 @@ def _action_route(action: str, op: str, summary: str):
             "start": service.start_request,
             "resume": service.resume_request,
             "submit-review": service.submit_review,
+            "return-to-attendance": service.return_to_attendance,
         }[_action]
         try:
             data = fn(
@@ -512,7 +513,14 @@ def _action_route(action: str, op: str, summary: str):
 _action_route("start", "prc_action_start", "05 — Iniciar atendimento")
 _action_route("resume", "prc_action_resume", "08 — Retomar caso")
 _action_route(
-    "submit-review", "prc_action_submit_review", "09 — Submeter à revisão"
+    "submit-review",
+    "prc_action_submit_review",
+    "09 — Submeter à revisão (LEGADO — preferir Concluir atendimento)",
+)
+_action_route(
+    "return-to-attendance",
+    "prc_action_return_to_attendance",
+    "09b — Reabrir legado under_review → in_progress (PRC-REF-020)",
 )
 
 
@@ -817,18 +825,15 @@ async def prc_action_reject(
     return ok(data, message="Solicitação rejeitada.", operation_id=op)
 
 
-@router.post(
-    "/v1/product-registration/requests/{request_id}/actions/verify-and-complete",
-    operation_id="prc_action_verify_and_complete",
-    summary="11 — Verificar no TOTVS e concluir (revisão imutável)",
-)
-@require_any_permission(_PROCESS_PERMS)
-async def prc_action_verify_and_complete(
-    request_id: str = Path(...),
-    body: VerifyBody = Body(...),
-    idempotency_key: str | None = Header(default=None, max_length=200),
+async def _prc_complete_handler(
+    *,
+    request_id: str,
+    body: VerifyBody,
+    idempotency_key: str | None,
+    op: str,
+    use_legacy_alias: bool,
 ):
-    op = "prc_action_verify_and_complete"
+    """PRC-REF-020 — conclusão verificada (complete + alias verify-and-complete)."""
     user, denied = _user(op)
     if denied is not None:
         return denied
@@ -841,20 +846,76 @@ async def prc_action_verify_and_complete(
             "Token de acesso indisponível para verificação oficial.",
             401, operation_id=op,
         )
+    svc = build_prc_service()
     try:
-        data = await build_prc_service().verify_and_complete(
-            rid, actor=_actor(user),
-            expected_version=body.expectedVersion,
-            official_code=body.officialCode,
-            reason=body.reason,
-            access_token=access_token,
-            correlation_id=get_request_id(),
-            idempotency_key=idempotency_key,
-        )
+        if use_legacy_alias:
+            data = await svc.verify_and_complete(
+                rid, actor=_actor(user),
+                expected_version=body.expectedVersion,
+                official_code=body.officialCode,
+                reason=body.reason,
+                access_token=access_token,
+                correlation_id=get_request_id(),
+                idempotency_key=idempotency_key,
+            )
+        else:
+            data = await svc.complete_attendance(
+                rid, actor=_actor(user),
+                expected_version=body.expectedVersion,
+                official_code=body.officialCode,
+                reason=body.reason,
+                access_token=access_token,
+                correlation_id=get_request_id(),
+                idempotency_key=idempotency_key,
+            )
     except Exception as exc:
         return _err(exc, op)
-    return ok(data, message="Solicitação concluída com verificação "
-                            "oficial.", operation_id=op)
+    return ok(
+        data,
+        message="Atendimento concluído com verificação oficial.",
+        operation_id=op,
+    )
+
+
+@router.post(
+    "/v1/product-registration/requests/{request_id}/actions/complete",
+    operation_id="prc_action_complete",
+    summary="11 — Concluir atendimento (validação + verificação TOTVS)",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_action_complete(
+    request_id: str = Path(...),
+    body: VerifyBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    return await _prc_complete_handler(
+        request_id=request_id,
+        body=body,
+        idempotency_key=idempotency_key,
+        op="prc_action_complete",
+        use_legacy_alias=False,
+    )
+
+
+@router.post(
+    "/v1/product-registration/requests/{request_id}/actions/verify-and-complete",
+    operation_id="prc_action_verify_and_complete",
+    summary="11b — Alias legado de Concluir atendimento (mesmo use case)",
+    deprecated=True,
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_action_verify_and_complete(
+    request_id: str = Path(...),
+    body: VerifyBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    return await _prc_complete_handler(
+        request_id=request_id,
+        body=body,
+        idempotency_key=idempotency_key,
+        op="prc_action_verify_and_complete",
+        use_legacy_alias=True,
+    )
 
 
 # --- 12 verificações -------------------------------------------------------------

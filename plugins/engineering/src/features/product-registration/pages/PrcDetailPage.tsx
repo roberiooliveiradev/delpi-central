@@ -55,6 +55,7 @@ import {
 import { PrcActionBar } from "../components/PrcActionBar";
 import {
   PRC_ACTION_SPECS,
+  isPrcCompleteAction,
   type PrcActionExtras,
 } from "../components/prcActionSpecs";
 import { PrcInformationExchangePanel } from "../components/PrcInformationExchangePanel";
@@ -117,6 +118,7 @@ export function PrcDetailPage({
     text: string;
   } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [editing, setEditing] = useState(false);
   const [mismatchFields, setMismatchFields] = useState<Record<
     string,
@@ -183,9 +185,18 @@ export function PrcDetailPage({
       extras: PrcActionExtras,
     ) => {
       if (!detail || busy) return;
+      const isComplete = isPrcCompleteAction(spec.action);
       setBusy(true);
+      setVerifying(isComplete);
       setFeedback(null);
       setMismatchFields(null);
+      if (isComplete) {
+        selectTab("verification");
+        setFeedback({
+          kind: "success",
+          text: PRC_COPY.verifyingNow,
+        });
+      }
       try {
         const res = await prcAction(
           requestId,
@@ -203,37 +214,69 @@ export function PrcDetailPage({
           newIdemKey(`prc-${spec.action}-${requestId}`),
         );
         setDetail(res.data);
-        setFeedback({ kind: "success", text: "Operação aplicada." });
+        setFeedback({
+          kind: "success",
+          text: isComplete
+            ? "Atendimento concluído com verificação oficial."
+            : "Operação aplicada.",
+        });
         await load();
       } catch (e) {
         const err = e as HomeApiError & {
           code?: string;
-          data?: { fieldResults?: Record<string, PrcFieldResult> } | null;
+          data?: {
+            code?: string;
+            fieldResults?: Record<string, PrcFieldResult>;
+          } | null;
         };
         if (err.data?.fieldResults) {
           setMismatchFields(err.data.fieldResults);
+          selectTab("verification");
         }
         {
           const raw = err.message || "";
+          const code = err.data?.code || "";
           const isInfoRound =
             err.status === 409 && /information_round_open/i.test(raw);
-          setFeedback({
-            kind: "error",
-            text: isInfoRound
-              ? "Este atendimento ainda possui esclarecimentos pendentes. Aguarde as respostas e conclua a análise antes de retomar."
-              : err.status === 409
-                ? `Conflito — ${raw} Recarregue e revise o estado atual.`
-                : raw || "Falha na operação.",
-          });
+          const isOfficialTimeout =
+            code === "official_timeout" || err.status === 504;
+          const isOfficialUnavailable =
+            code === "official_unavailable" || err.status === 503;
+          const mismatchCount = err.data?.fieldResults
+            ? Object.values(err.data.fieldResults).filter(
+                (r) =>
+                  r.result === "mismatched" || r.result === "unverifiable",
+              ).length
+            : 0;
+          let text: string;
+          if (isInfoRound) {
+            text =
+              "Este atendimento ainda possui esclarecimentos pendentes. Aguarde as respostas e conclua a análise antes de retomar.";
+          } else if (isOfficialTimeout || isOfficialUnavailable) {
+            text = PRC_COPY.officialUnavailable;
+          } else if (mismatchCount > 0) {
+            text = `${PRC_COPY.conclusionBlocked} Foram encontrados ${mismatchCount} problema(s).`;
+          } else if (err.status === 409) {
+            text = `Conflito — ${raw} Recarregue e revise o estado atual.`;
+          } else {
+            text = raw || "Falha na operação.";
+          }
+          setFeedback({ kind: "error", text });
         }
-        if (err.status === 409) {
+        if (
+          err.status === 409 ||
+          err.status === 422 ||
+          err.status === 503 ||
+          err.status === 504
+        ) {
           await load();
         }
       } finally {
         setBusy(false);
+        setVerifying(false);
       }
     },
-    [detail, busy, requestId, load],
+    [detail, busy, requestId, load, selectTab],
   );
 
   const saveDraft = useCallback(
@@ -541,6 +584,7 @@ export function PrcDetailPage({
             detail={detail}
             verifications={verifications}
             lastError={mismatchFields}
+            verifying={verifying}
           />
         ) : null}
 

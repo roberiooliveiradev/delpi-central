@@ -403,8 +403,9 @@ class InMemoryProductRegistrationRepository:
         event_meta: dict[str, Any],
     ) -> dict[str, Any]:
         req = self._require_request(request_id)
+        # PRC-REF-020: conclusão a partir de in_progress (legado under_review).
         self._check_cas(
-            req, expected_version, frozenset({"under_review"})
+            req, expected_version, frozenset({"in_progress", "under_review"})
         )
         key = (official_source, official_code)
         record_id = self._record_by_key.get(key)
@@ -461,7 +462,7 @@ class InMemoryProductRegistrationRepository:
         self._append_event(
             request_id,
             {
-                "event_type": "verify_and_complete",
+                "event_type": "completed",
                 "actor_subject": actor_subject,
                 "actor_display_name": actor_display_name,
                 "actor_email": actor_email,
@@ -471,6 +472,7 @@ class InMemoryProductRegistrationRepository:
                     "record_id": record_id,
                     "revision_number": revision_number,
                     "verification_id": verification_row["id"],
+                    "action": "complete",
                     **event_meta,
                 },
                 "previous_status": prev,

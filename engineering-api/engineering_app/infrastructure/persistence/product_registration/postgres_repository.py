@@ -663,9 +663,10 @@ class PostgresProductRegistrationRepository:
         event_meta: dict[str, Any],
     ) -> dict[str, Any]:
         with self._conn() as conn:
+            # PRC-REF-020: conclusão a partir de in_progress (legado under_review).
             req = self._lock_and_check(
                 conn, request_id, expected_version,
-                frozenset({"under_review"}),
+                frozenset({"in_progress", "under_review"}),
             )
             rec = conn.execute(
                 f"SELECT * FROM {_T_REC} WHERE official_source=%s"
@@ -747,7 +748,7 @@ class PostgresProductRegistrationRepository:
             self._insert_event(
                 conn, request_id, self._next_event_seq(conn, request_id),
                 {
-                    "event_type": "verify_and_complete",
+                    "event_type": "completed",
                     "actor_subject": actor_subject,
                     "actor_display_name": actor_display_name,
                     "actor_email": actor_email,
@@ -757,6 +758,7 @@ class PostgresProductRegistrationRepository:
                         "record_id": str(rec["id"]),
                         "revision_number": rev_number,
                         "verification_id": str(ver_row["id"]),
+                        "action": "complete",
                         **event_meta,
                     },
                     "previous_status": req["status"],
