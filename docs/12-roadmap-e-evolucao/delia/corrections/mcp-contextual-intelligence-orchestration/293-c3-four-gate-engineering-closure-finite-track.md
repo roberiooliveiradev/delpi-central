@@ -46,6 +46,8 @@ Cada etapa é **um task ID**, um escopo congelado e um relatório. Não avançar
 
 ### T2 — ARCHITECTURE / OWNERSHIP (sem redesenho)
 
+**Emenda aprovada pelo PO em 2026-11-09:** ver §2A, que amplia conscientemente esta T2 para (a) RETIRE_FULL_SET já autorizado e (b) análise e possível extensão condicionada de cadastro/gestão de conexões MCP internas e externas com Core/Keycloak/ExternalConnection e MCPToolset native. A ampliação **não** autoriza por si writes de Core/IAM/prod ou nova migration sem owner/contrato/fase. Em conflitos, STOP e registrar o bloqueio.
+
 **TASK_ID:** `DELIA-C3-ENG-CLOSURE-T2-BOUNDARY-OWNERSHIP-CONFORMANCE-01`. **Owner:** arquitetura DÉLIA + owners dos contratos. Revisar dependências reais do HEAD (Domain/Application sem infra; HTTP/event inter-context, sem imports/banco alheios); anomalia snapshot Application→Infrastructure e destino de experimento, C3-T5 foundation/adapter OpenAPI, C3-T4 approved KEEP, configurações paralelas/providermatics no planner e imports MCP. Não tocar Keycloak/Core/TÉO sem owner autorizado; decisão snapshot/OpenAPI preserva freezing docs. Corrigir **somente** desvio comprovado dentro de ownership; RED→GREEN+arquitetura/segurança. Se decisão superior requerida, `ARCHITECTURE_DECISION_REQUIRED`, sem esconder sob PASS. **Exit:** `A=PASS` preliminar ou BLOCKED formal.
 
 ### T3 — ORCHESTRATION / FLOW (correção delimitada)
@@ -59,6 +61,98 @@ Cada etapa é **um task ID**, um escopo congelado e um relatório. Não avançar
 ### T5 — REVIEW INDEPENDENTE E FECHAMENTO
 
 **TASK_ID:** `DELIA-C3-ENG-CLOSURE-T5-INDEPENDENT-ZERO-RESIDUAL-ACCEPTANCE-01`. **Owner:** coordenação/reviewer independente. Comparar registro T0 vs HEAD, commits e consumer graph pós-removal, revalidar `16 + ledger`, tests reais e production status. Uma única tabela `ID|scope|owner|baseline|diff|test|Outcome|final disposition`; auditoria residual **direcionada** aos símbolos/paths congelados, não varredura nova de 66 arquivos. Veredictos L/A/O/R independentes. **ACCEPT somente L=A=O=R=PASS + ZERO_OPEN_MATERIAL + no drift**. Atualizar doc256 como supersession/ponte de T0–T5, anexos e ledger; registrar SHA/config, testes e handoff. Sem advancement C3, feature/model switch nem deploy automática. Se BLOCKED, **fim da execução com blocker formal** (owner/dependency/required decision), sem iniciar novo ciclo infinito; retomada específica exige nova autorização e reancoragem.
+
+## 2A. T2 ampliada por decisão explícita do Product Owner — remoção do snapshot + cadastro governado e federado dos MCPs (2026-11-09)
+
+**Natureza:** emenda de escopo **neste Documento 293**, sem criar documento/registry/engine novo por antecipação. **Decisão do PO:** (1) **RETIRE_FULL_SET** de \`snapshot_experiment\`, inclusive local/prod; (2) consolidar onboarding, cadastro, configuração e verificação de MCPs internos/externos sem três listas mantidas manualmente; (3) preservar **Pydantic AI MCPToolset** como consumidor do \`tools/list\` live; (4) preservar Keycloak/Core/Domain authority; (5) não inferir que todo MCP externo usa Keycloak. **Task ID continua** \`DELIA-C3-ENG-CLOSURE-T2-BOUNDARY-OWNERSHIP-CONFORMANCE-01\`. **T2 anterior** entregou somente decisão: commit \`b9346387bd28cb6d1a2b8b9777529c0d666f5133\`, \`A-05=ARCHITECTURE_DECISION_REQUIRED\`; a autorização deste PO supre a decisão de RETIRE, **não comprova execução nem aceita T2**.
+
+**Controle explícito de drift:** o congelamento original T0/T1 e a regra "uma task bounded por etapa" permanecem rastreáveis; este item é uma **ampliação superior conscientemente aprovada** do escopo T2, e não alegação de que o universo T0 já incluía onboarding externo. A parte nova deve registrar owner, CP/RQ aplicável e compatibilidade com \`16 + ledger\` antes de qualquer diff. Se o Core/segurança não tiver contrato legítimo ou o escopo/fase não permitirem implementar cadastro persistido agora, **STOP no slice correspondente**, formalizar \`ARCHITECTURE_DECISION_REQUIRED\` ou \`BLOCKED_BY_OWNER_CONTRACT\`; não criar tabela na DÉLIA como atalho, não iniciar T3, não gerar trilha recursiva. **Máximo um rework técnico bounded por etapa.** Documentação ≠ autorização de migração, IAM write, operação produtiva ou avanço de fase.
+
+### 2A.1 Reancoragem e evidências canônicas específicas
+
+Antes do trabalho: HEAD/origin/main/status, Project Instructions/.cursor, 16→50→17→49→51→52→21→20→25, arquitetura técnica, product spec 24, docs 17/21/51/59/60, doc216 (experimento A/B), doc256, registro residual T0/T1/T2, ledger, runbooks Keycloak/ChatGPT e **contratos Core**. Conflitos documentais exigem \`EXECUTION_DRIFT\`/decisão, não supersessão silenciosa. **Revalidar a localização/nome real do doc 52 no índice antes de afirmar leitura.**
+
+Evidências em HEAD anterior à execução (revalidar):
+- \`delia-api/app/domain/specialist_interop/rules.py\`: \`_SPECIALIST_IDENTITY\` contém 7 identidades aprovadas (DAVI, TÉO, VISTA, CAIO, CLARA, SURI, EVA); \`APPROVED_SPECIALIST_IDS\` deriva dela.
+- \`delia-api/app/infrastructure/config/settings.py\`: \`mcp_specialist_endpoints\` / \`mcp_specialist_enabled\` repetem manualmente os 7 IDs.
+- \`delia-api/app/infrastructure/interoperability/config.py\`: \`specialist_connections_from_settings\` já deriva perfis de identidade aprovada (reuse).
+- \`infra/docker-compose.yml\`: configuração padrão de endpoints/enablement dos 3 DAVI/TÉO/VISTA, não paridade comprovada com os outros quatro; \`root_composer.enabled_specialists\` é tupla **derivada** de perfis \`enabled and endpoint\`, não uma lista fixa de 3.
+- \`delia-api/app/infrastructure/orchestration/pydantic_ai_investigation.py\`: \`MCPToolset\` nativo, \`CombinedToolset\`, \`RenamedToolset\`, tool-definition filtering, hook \`process_tool_call\` governado; \`SpecialistInterop/McpCapabilityProvider\` preservam elegibilidade e invoke com autoridade live. Não substituir por segundo catálogo/Agent.
+- \`infra/scripts/delia_mcp_keycloak_state.py\`: \`SPECIALISTS\` com **7 resource clients** e o requester \`delia-api\`; pode haver duplicação de identidade IAM declarativa, mas esse script é infraestrutura de **provisionamento desejado**, não prova do Keycloak de produção. Runbook \`keycloak-prod-delia-mcp-provision.runbook.md\` ainda possui seção resumindo apenas 3; reconciliar contrato documental sem editar configuração IAM às cegas.
+- \`docs/12-roadmap-e-evolucao/delia/60-agent-interoperability-mcp-a2a-and-tool-protocols.md\` §5.1 estabelece **direção preferida:** Core como fonte governada de approvals/provedores; Keycloak é identidade/token exchange e **não** autoridade de aprovação; DÉLIA orquestra; provider possui \`tools/list\` live. Status da projeção Core é **TARGET/DEFERRED**, não implementação comprovada.
+- \`docs/12-roadmap-e-evolucao/delia/21-data-and-state-model.md\` §§4A.18, 7, 23 prevê \`ExternalConnection\`, classes \`USER_DELEGATED|ORG_MANAGED|SHARED_RESOURCE|SERVICE_CONNECTION\` e MCP registry como modelos **candidatos**, não tabelas físicas. \`51\` reporta \`ExternalConnection\` plataforma **TARGET_ONLY** no inventário histórico; estado do HEAD requer inspeção Core atual.
+- \`docs/10-guias-operacionais/mcp-chatgpt-plugin-onboarding-runbook.md\`: ChatGPT usa seu próprio cadastro OAuth e callback; DÉLIA possui requester \`delia-api\` e token exchange user-delegated. **Não** reutilizar callback/secret ChatGPT, não criar client DÉLIA por MCP e não pôr audience específica em scope compartilhado \`mcp:tools\`.
+
+**Estado factual:** \`EXISTING_EQUIVALENT=YES / REUSE_DECISION=REUSE\` para Pydantic AI MCPToolset, SpecialistInterop, profile resolver, identidade aprovada, IAM exchange e contratos conceituais; **\`TO_INVENTORY\`** para implementação real de provider approval persistido no Core, \`ExternalConnection\` físico, API/migrations e secret owner. **\`NEW\` proibido enquanto \`TO_INVENTORY\`.**
+
+### 2A.2 Ownership congelado para a nova superfície
+
+| Responsabilidade | Authority / owner | Persistência/consumo esperado |
+|---|---|---|
+| Aprovar/cadastrar/desabilitar/revogar provedores MCP e outros recursos de plataforma | **Core governance** (reutilizar/estender app/provider registry legítimo; verificar contrato existente primeiro) | Cadastro canônico aprovado, versionado e auditável; não armazenar nomes/schema de tools |
+| Identidade, client OAuth, audience, consentimento/token exchange quando DELPI | **Keycloak**; IAM owner e contratos do recurso | IAM authoritative; somente ref/diagnóstico sanitizado fora dele |
+| OAuth/credenciais de Microsoft, Google e outros serviços externos | **Owner OAuth externo + secret owner autorizado** | OAuth user/tenant-scoped; \`secretRef\`, nunca token/refresh token na tabela comum |
+| Vínculo efetivo da conexão a usuário/org, scopes, revogação, políticas | **ExternalConnection** conforme owner comprovado no inventário Core/DÉLIA; não criar autoridade duplicada | Registro de conexão distinto de registro de servidor; contrato first |
+| Catálogo de ferramentas, schema, toolClass, disponibilidade factual | **Servidor MCP dono da ferramenta** | \`tools/list\` **live** pelo MCPToolset; sem snapshot persistido como catálogo autoritativo |
+| Policy/Decision, eligibility, evidence, governance do invoke, Outcome | **DÉLIA** + Core/Domain no seu boundary | Port/adapter existente; hooks governados; \`tool metadata != permission\` |
+| Visualização administrativa única e checks de saúde | **DÉLIA Control Tower/Portal**, conforme UI/ownership existente | Projeção de estado, jamais segunda aprovação ou credential store |
+
+**Separação fundamental:** **MCP Server Registration** (servidor/owner/protocolo/aprovação) != **ExternalConnection** (usuário/org, credencial e consentimento) != **live tool catalog** (remote). Mesmo servidor pode atender múltiplas conexões; uma conexão pessoal não vira organizacional; em nenhum caso \`registered == reachable == authenticated == authorized == outcome\`.
+
+### 2A.3 Modelo lógico alvo (não schema físico pré-aprovado)
+
+Definir **por contrato existente, não por nome de tabela sugerido**, a menor representação necessária:
+
+**Provider/server approval record (Core preferido):** \`providerRef\`, \`protocol=MCP\`, \`ownerRef\`, \`displayName\`, \`endpointRef/validated HTTPS URL\`, \`authStrategyRef\`, \`trust/risk tier\`, \`allowedConnectionClasses\`, \`approved/disabled/revoked\`, \`policyRef\`, \`created/updated/version\`, \`approvedBy/auditRef\`, \`lastValidatedAt\` opcional. Credencial, description de tool e schema **fora** do master. Provider registration não confere permission.
+
+**Connection record (owner a provar):** \`connectionRef\`, \`providerRef\`, \`ownerType\`, \`ownerRef\`, \`sharingClass\`, \`consent/scope refs\`, \`credentialRef\`, \`status\`, \`expiry/revoke/reconnect refs\`, \`lastValidatedAt\`, \`auditRef\`. Nunca guardar token, secret, bearer, refresh-token, prompt ou resultado empresarial na tabela.
+
+**Read model de observabilidade:** \`configured|approved|enabled|auth_valid|tools_list_reachable|degraded|revoked|unknown\` por ambiente e escopo, timestamp e erro tipado sem segredo. Estado \`UNKNOWN\` não é \`DISABLED\` nem ausência de capability; resultado de sondagem não concede AuthZ. Preferir projeção computada/telemetria existente, não uma terceira tabela só por conveniência.
+
+**Contrato antes de implementação:** owner/consumers, API request/response/errors, RBAC Core, subject & tenant boundaries, identity linkage, URL validation/SSRF/redirect/DNS rebinding/egress, idempotency/version/revoke/rollback, confidentiality, rate limits/timeouts, audit/observability, compatibility, \`OpenAPI operationId\` estável se HTTP, tests/E2E/negative. Sem edição direta de DB do Core pela DÉLIA, sem cross-context imports.
+
+### 2A.4 Fases executivas fechadas dentro da T2 ampliada (sequenciais; STOP em boundary bloqueado)
+
+**T2.1 — Retirada do snapshot (já autorizada pelo PO; responsabilidade DÉLIA):**
+- Usar T2 report/registro residual para identificar TODOS consumidores e símbolos de \`snapshot_interop.py\`, \`catalog_store.py\`, \`mcp_catalog_sync.py\`, modo \`snapshot_experiment\`, flags, scripts \`r4_authenticated_resume_eval\`, compose/env examples, imports, fixtures e testes exclusivos de experimentação. Verificar consumidores atuais via AST/rg + composição; não reabrir outros legados.
+- Escrever RED para garantir único discovery live e rejeição fail-closed de configuração aposentada; remover código e consumidores exclusivos (inclusive arquivos sem função restante), sem apagar evidence histórica/doctests legítimos e sem esconder failures.
+- Para \`DELIA_MCP_CATALOG_MODE\` legado ainda ativo no ambiente: definir falha explícita de startup ou migração/clear operacional **antes** do rollout, com ordem segura; \`mode=live\`/unset como único caminho. Não reiniciar container, editar env produtivo, apagar banco persistido ou fazer deploy sem **ops authorization específica**. Higienizar DEV/test/local no escopo autorizado; identificar dados experimentais e retenção antes de qualquer delete de volume.
+- Provar MCPToolset native + SpecialistInterop + \`tools/list\`/invoke live, auth negatives, architecture/import test, composição; full backend suite se mudar runtime. \`A-05/L-06/R04\` ficam \`OPEN/PENDING\` se live produtivo não for verificado na versão/config correta.
+- Deliverable: commit mínimo, prova de no snapshot code/consumers, remediation plan de drift de produção, matriz de testes, sem falsa declaração de cleanup produtivo.
+
+**T2.2 — Inventário Core/IAM/ExternalConnection (READ-ONLY, bounded):**
+- Verificar no Core **código, migrations, APIs, testes, app/plugin registry, governance/approval/disable/revoke e contratos efetivos**; no DÉLIA comparar \`_SPECIALIST_IDENTITY\`, \`settings\`, \`specialist_connections_from_settings\`, \`root_composer\`, \`McpSpecialistAdapter\` e \`MCPToolset\`; no IAM conferir **scripts/runbooks** e, apenas mediante acesso autorizado, \`--check\` read-only de DEV/PROD com environment provenance. **Não** tocar SQL/keycloak/admin live sem gate.
+- Matriz **7×** DAVI/TÉO/VISTA/CAIO/CLARA/SURI/EVA: resource URL, owner, current approval ref, Keycloak client/audience/permission (se comprovados), enabled+endpoint por ambiente, tools/list real, negative AuthZ, reason unavailable. \`NOT_TESTED\` nunca vira \`PASS\`.
+- Inventariar provider OAuth externo/secret store, validade de \`ExternalConnection\` física, controle de revogação; ChatGPT OAuth custom-client e callbacks são **cliente-específicos**. Verificar mecanismo do Core antes de desenhar schema.
+- Entregar \`EXISTING_EQUIVALENT=YES|NO|TO_INVENTORY\`, \`REUSE_DECISION=REUSE|EXTEND|NEW\` **por responsabilidade** e contrato/owner. Se owner, contrato ou fase/Core write não autorizado → STOP em T2.2 com decisão pronta, não improvisar tabela DÉLIA.
+
+**T2.3 — Contrato de cadastro único (design contract-first; sem código sem gate):**
+- Formalizar API/projeção do Core (ou dono comprovado) para listar, registrar candidato, revisar/aprovar, habilitar/desabilitar, revogar e auditar server/provider — somente capabilities autorizadas; lifecycle \`DISCOVERED→REVIEWED→APPROVED→ACTIVE\`, \`DEGRADED\`, \`DISABLED\`, \`REVOKED\`, \`DEPRECATED\`. \`discovery != approval\`.
+- Formalizar connection lifecycle \`PENDING_CONSENT→CONNECTED→EXPIRED/DEGRADED→RECONNECT/REVOKED\` respeitando class/owner/consent; não misturar estado provider/connection/tool.
+- Identificar a autorização **separada** para criar/alterar recursos Core, IAM, secrets, migrações ou endpoints. Se necessário, entregar request de aprovação ao owner; **não** usar autorização de remover snapshot como autorização de alterar Core.
+- Definir migração idempotente dos sete especialistas com IDs canônicos e sem duplicar audience; nenhuma migração de dados em produção nesta task sem autorização operacional. Falha/rollback/fail-closed explícitos.
+
+**T2.4 — Backend/provider-neutral wiring (CONDICIONAL A T2.2/T2.3 + owner approval):**
+- Caso Core já disponha de contrato legítimo e a fase autorize, **REUSE/EXTEND** o contrato existente pelo boundary HTTP/evento real; nenhum import DÉLIA→internals Core, nem leitura de DB alheio.
+- Reutilizar \`SpecialistInteropPort\`, \`McpCapabilityProvider\`, \`specialist_connections_from_settings\` e \`MCPToolset\`. Migrar identidades de approval do hardcode para refs governadas **apenas depois** de prover read model Core equivalente e fallback/fail-closed sem ampliar permissões. Não transformar o banco Core em cache de \`tools/list\`.
+- Eliminar enumerações manuais divergentes de IDs na \`settings.py\`/Compose onde houver caminho de configuração comprovado e compatível; **não** remover configuração de endpoint/segredo que pertença ao deployment sem substituto oficial. Bootstrap dos sete registros idempotente; \`enabled\` não deve ser inferido de registro.
+- Um novo servidor aprovado aparece por configuração governada sem novo branch por nome no planner; \`MCPToolset\` criado por conexão elegível no turno; \`process_tool_call\` intercepta **toda** chamada; se credencial/scope/owner indisponível, fail closed.
+- **Segurança externa:** TLS HTTPS, allowed egress, IP/private/metadata endpoint/loopback/redirect/DNS rebinding/host check, tenant-bound identity, secrets owner, least-privilege, prompt injection em tool descriptions/schemas, toolclass untrusted como permissão, READ/WRITE, approval. MCP externo com OAuth Microsoft/Google segue owner respectivo; Keycloak de DELPI não substitui o OAuth externo.
+
+**T2.5 — Verificação operacional/UX (CONDICIONAL):**
+- Reusar surfaces MFE/Control Tower/plugin-ui existentes e contrato do Core; antes de componente novo, inventário do equivalente. Admin apresenta lista única de servidores e suas conexões, approved/enabled/authenticated/live/revoked, timestamps, \`tools/list\` count efêmero, erros sanitizados, testes de conectar/desconectar/revalidar. **UI não é permission authority**, não expõe tokens/URLs internos indevidos; ações materiais back-end-first.
+- Testes: sete internos (incluindo disabled/403/missing endpoint), ao menos um externo em sandbox autorizado quando houver credenciais, OAuth personal vs org, tenant isolation, expiração, revoke, SSRF/redirect, tool metadata injection, typed denial, policy/read/write boundaries, reconnect, no snapshot, cold restart, drift env, concurrency/idempotência, API failures.
+- E2E real somente no ambiente com credenciais/autorização válidas; sem integração Microsoft/Google real disponível, \`TEST_NOT_RUN\` para externo e **não** aceitar "suporta externos em produção". Full suite e generalização+security+task Outcome no SHA/config depois de diff.
+- No prod deploy automático. Operações de IAM/secret/compose/prod exigem autorização de owner/ops, janela, backup/rollback e pós-condição verificada.
+
+### 2A.5 Critério de saída e governança da ampliação
+
+- **Fechamento do snapshot (A-05/L-06/R04):** nenhum path experimental em runtime/código/local alvo; prod mode reconciliado sob ops autorizado e comprovado; 0 consumers ativos de snapshot, live path TESTED; R04 só \`CLOSED_PROVEN\` com pós-condição, senão \`PENDING_OPS\`.
+- **Cadastro central (novo escopo T2):** owner Core aprovado; contrato identificável; uma fonte de provider approval persistida; conexão/credential com owners separados; 7 internos reconciliados e 4 adicionais não omitidos por Compose; MCPToolset native live, sem espelho de tools; externo testado ou explicitamente \`PENDING_EXTERNAL_E2E\`; regressões/segurança. Nenhum \`PASS\` por mocks/documentação.
+- **Se T2.2 achar apenas TARGET/DEFERRED**, entregar decisão arquitetural aprovada como **plano**, com provas de inexistência baseadas em inventário (search=0 não basta), mas **não** implementar \`NEW\` ou mudar Core/migrations; \`T2_ARCHITECTURE_GATE=BLOCKED_BY_OWNER_CONTRACT\` até aprovação. Esta opção não impede encerrar apenas a subparte snapshot quando provada; não avança T3 automaticamente.
+- **Gates de execução:** a decisão superior deste PO aprova **RETIRE_FULL_SET** e **planejar** centralização; qualquer write Core/Keycloak/prod, nova API/migration ou ativação de externo requer owner/CP/RQ/contrato/fase específicos; preservar docs 16/50/17/49/51/52/21/20/25 e ledger. Execução não se autoaceita.
+- Relatório final deve separar \`SNAPSHOT_REMOVAL\`, \`CORE_EQUIVALENT\`, \`IAM_7X_STATE\`, \`PERSISTED_APPROVAL\`, \`EXTERNAL_CONNECTION_STATE\`, \`MCPTOOLSET_LIVE\`, \`AUTHZ_NEGATIVES\`, \`OUTCOME_EVIDENCE\`, \`OPS_DRIFT\`, \`OPEN_MATERIAL\`, \`FILES_CHANGED\`, \`TESTS\`, \`SHA\`, \`NEXT=T2_INDEPENDENT_REVIEW\`.
+- O **único artefato de planejamento** é este Documento 293 ampliado. A execução atualizará ledger/registro residual existentes após os fatos; não criar novo documento de roadmap, catálogo materializado, cronograma recursivo nem T6.
 
 ## 3. Política de residual ZERO e limites reais
 
