@@ -48,7 +48,7 @@ export const copy = {
     delayedEmpty: "Nenhuma OP atrasada neste recorte.",
     opPendencies: {
       title: "Pendências",
-      hint: "Inclusão de OPs e rupturas previstas de materiais."
+      hint: "Inclusão de OPs e rupturas previstas de materiais.",
       type: "Incluir ordem de produção",
       count: (n: number) => `${n} pendência${n === 1 ? "" : "s"}`,
       loading: "Verificando demandas, OPs e rupturas de materiais…",
