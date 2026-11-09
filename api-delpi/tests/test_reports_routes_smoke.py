@@ -17,6 +17,7 @@ from app.interface.http.routes.reports.reports_router import (
     delete_report_schedule,
     delete_report_shortage_item_note,
     get_personal_report_subscription,
+    get_pcp_stock_rupture_pendencies,
     get_report_definition,
     get_report_run,
     get_report_schedule,
@@ -189,6 +190,59 @@ def test_preview_safety_stock_shortage_30d_returns_meta(
     assert params["branch"] == "01"
     assert params["horizonDays"] == 30
     assert use_case.execute.call_args.kwargs.get("definition_id") is None
+
+
+@patch(
+    "app.interface.http.routes.reports.reports_router.request_has_valid_internal_service_token",
+    return_value=True,
+)
+@patch(
+    "app.interface.http.routes.reports.reports_router.build_preview_safety_stock_shortage_30d_use_case"
+)
+def test_pcp_stock_ruptures_s2s_uses_official_preview(
+    mock_build,
+    _valid_token,
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "items": [{"product_code": "10080001", "branch": "02", "first_shortage_date": "2026-11-12"}],
+        "total": 1,
+        "meta": {"branch": "02", "asOfDate": "2026-11-09"},
+        "providerKey": "safety_stock_shortage_30d",
+    }
+    mock_build.return_value = use_case
+
+    response = get_pcp_stock_rupture_pendencies(
+        request=MagicMock(), branch="02", horizonDays=30
+    )
+    assert_envelope_meta(
+        body_json(response),
+        operation_id="get_pcp_stock_rupture_pendencies",
+        shape="paged_list",
+    )
+    params = use_case.execute.call_args.args[0]
+    assert params == {
+        "branch": "02", "horizonDays": 30,
+        "includeBlocked": False, "includeWithoutSafetyStock": True,
+    }
+
+
+@patch(
+    "app.interface.http.routes.reports.reports_router.request_has_valid_internal_service_token",
+    return_value=False,
+)
+@patch(
+    "app.interface.http.routes.reports.reports_router.build_preview_safety_stock_shortage_30d_use_case"
+)
+def test_pcp_stock_ruptures_rejects_missing_service_token(
+    mock_build,
+    _invalid_token,
+) -> None:
+    response = get_pcp_stock_rupture_pendencies(
+        request=MagicMock(), branch="02", horizonDays=30
+    )
+    assert response.status_code == 403
+    mock_build.assert_not_called()
 
 
 @patch(
