@@ -295,6 +295,67 @@ def test_search_matches_customer_order_and_product() -> None:
     assert len(service.list_demand(user, branch="01", search="")["items"]) == 2
 
 
+def test_customer_multiselect_uses_entire_query_before_pagination() -> None:
+    rows = [
+        _line(pedido="A", nome_cliente="CLIENTE A", codigo_cadastro="000123", loja_cadastro="01"),
+        _line(pedido="B", nome_cliente="CLIENTE B", codigo_cadastro="000456", loja_cadastro="01"),
+        _line(pedido="C", nome_cliente="CLIENTE A", codigo_cadastro="000123", loja_cadastro="01"),
+        _line(pedido="D", nome_cliente="CLIENTE C", codigo_cadastro="000789", loja_cadastro="02"),
+    ]
+    service = _service(FakeDemandGateway(rows))
+    user = _user(*FULL_PERMS)
+
+    first_page = service.list_demand(user, branch="01", page_size=1)
+    options = first_page["filters"]["customer_options"]
+    assert len(options) == 3
+    assert {item["value"] for item in options} == {
+        "code:000123/01", "code:000456/01", "code:000789/02"
+    }
+
+    filtered = service.list_demand(
+        user,
+        branch="01",
+        customers=["code:000123/01", "code:000789/02"],
+        page_size=1,
+    )
+    assert filtered["pagination"]["total"] == 3
+    assert filtered["summary"]["line_count"] == 3
+    assert len(filtered["items"]) == 1
+    assert len(filtered["filters"]["customer_options"]) == 3
+    assert filtered["filters"]["selected_customers"] == [
+        "code:000123/01", "code:000789/02"
+    ]
+
+    second_page = service.list_demand(
+        user,
+        branch="01",
+        customers=["code:000123/01", "code:000789/02"],
+        page=2,
+        page_size=1,
+    )
+    assert second_page["pagination"]["total"] == 3
+    assert second_page["items"][0]["customer_code"] in {"000123", "000789"}
+
+
+def test_customer_options_respect_other_filters_and_empty_selection_is_all() -> None:
+    rows = [
+        _line(pedido="A", nome_cliente="CLIENTE A", codigo_cadastro="000123", produto="90262910"),
+        _line(pedido="B", nome_cliente="CLIENTE B", codigo_cadastro="000456", produto="80111222"),
+    ]
+    service = _service(FakeDemandGateway(rows))
+    user = _user(*FULL_PERMS)
+
+    all_customers = service.list_demand(user, branch="01", customers=[])
+    assert all_customers["pagination"]["total"] == 2
+
+    product_filtered = service.list_demand(user, branch="01", search="8011")
+    assert [o["value"] for o in product_filtered["filters"]["customer_options"]] == ["code:000456/01"]
+
+    unknown = service.list_demand(user, branch="01", customers=["code:unknown/01"])
+    assert unknown["pagination"]["total"] == 0
+    assert len(unknown["filters"]["customer_options"]) == 2
+
+
 def test_status_and_due_window_filters() -> None:
     gateway = FakeDemandGateway(
         [
