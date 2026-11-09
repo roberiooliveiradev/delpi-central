@@ -7,7 +7,7 @@ não entra na Demanda nem no card «a faturar até hoje».
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Mapping
 
 SUPPLIER_ENTITY_TYPE = "FORNECEDOR"
 
@@ -24,3 +24,12 @@ def is_supplier_sales_entity(tipo_entidade: Any) -> bool:
 def is_customer_sales_entity(tipo_entidade: Any) -> bool:
     """Aceita CLIENTE e valor vazio (legado); rejeita FORNECEDOR."""
     return not is_supplier_sales_entity(tipo_entidade)
+
+
+def is_pcp_sales_order_product(item: Mapping[str, Any]) -> bool:
+    """Exclui só pedidos de MP (SB1.B1_TIPO) do universo produtivo do PCP.
+
+    Tipo vazio/desconhecido permanece, sem inventar classificacao.
+    Nao filtra o endpoint global de vendas usado por outros setores.
+    """
+    return _entity_type(item.get("tipo_produto")) != "MP"
