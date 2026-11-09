@@ -280,3 +280,43 @@ Cada incremento deve apresentar before/after, componente reutilizado, lacunas re
 ## Wireframe aprovado V2 — Fornecedores em tabela com busca expansível (2026-11-08)
 
 O PO aprovou nova apresentação **sem duplicar código/loja/razão social**: colunas separadas **[Lupa] | Código | Loja | Razão social | Nome fantasia | Part Number | Catálogo | [Lixeira]**. A lupa antes do código abre pesquisa colapsável **dentro da linha** para código, razão social ou fantasia. Botões de adicionar/remover com ícones oficiais. Seleção do SA2 preenche código/loja/razão social; PN e catálogo permanecem atributos editáveis/opcionais. **Especificação canônica e critérios de aceite**: [MFE-PRC-WIREFRAME-FORNECEDORES-V2-APPROVED.md](./MFE-PRC-WIREFRAME-FORNECEDORES-V2-APPROVED.md). **Arte visual SVG**: [prc-fornecedores-wireframe-v2.svg](./assets/prc-fornecedores-wireframe-v2.svg). Escopo proposto D11; `PO_APPROVED_VISUAL_TARGET / IMPLEMENTATION_PENDING / PRODUCTION_DEPLOY_SUSPENDED`.
+
+## PRC-REF-020-UX-01 — Wireframe de diagnóstico de divergências (PO 2026-11-09)
+
+**Aprovado como TARGET; implementação pendente.** Refinar área \`Verificação TOTVS\` para ensinar o próximo passo sem reduzir a força do bloqueio backend. Exemplo ilustrativo de uma tentativa com 9 campos, 4 conformes e 5 problemas (contagens **sempre calculadas de dados reais**):
+
+\`\`\`text
+Verificação TOTVS
+[!] Não foi possível concluir o atendimento
+    5 problemas em 9 verificações · 4 conformes
+    Continua EM ATENDIMENTO; nenhuma revisão foi publicada.
+    Fonte oficial: api-delpi/TOTVS · Código: ... · Verificado em: ...
+
+[Somente problemas (5)] [Todos os campos (9)]
+
+Descrição             Solicitado: ...   TOTVS: ...   Divergente
+  A ficha possui descrição diferente da oficial.
+  [Revisar campo]
+
+Grupo                 Solicitado: 1001  TOTVS: 1008  Divergente
+  Classificação não coincide; verificar valor correto.
+  [Revisar campo]
+
+Unidade               Solicitado: UN    TOTVS: PC    Divergente
+  Unidade diferente; não presumir equivalência.
+  [Revisar campo]
+
+Referência cliente    Solicitado: ...   TOTVS: [vazio verificado ou não verificável]
+  Distinguir fonte vazia de atributo não retornado.
+  [Revisar campo]
+
+Fornecedor CÓD/LOJA   PN esperado ... / oficial ...  Divergente
+  [Detalhar vínculo/atributo]
+
+Corrigir ficha quando legitimamente necessário; solicitar informações quando
+a decisão técnica depender do requester; correção ERP é manual e autorizada.
+[Concluir atendimento novamente] (nova leitura oficial, sem forçar MATCH)
+[Histórico de tentativas]
+\`\`\`
+
+Um só banner/resumo detalhado por tentativa, sem duas mensagens vermelhas idênticas; fora da aba, aviso compacto/navegação. \`Observação\` informa diferença/limitação, não fica vazia para problemas. Textos longos expansíveis; fornecedor discriminado por código + loja + atributo PN/Catálogo; filtro visual sem perder histórico. Ação \`Revisar campo\` muda para \`Ficha técnica\`, rola/foca/destaca alvo sem alterar dado; quando impossível, fallback honesto. Usar padrões oficiais \`@delpi/plugin-ui\`, teclado/zoom200/mobile e screenshots reais DEV. Comparação é somente da Engineering API, nunca do frontend.
