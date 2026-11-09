@@ -233,6 +233,18 @@ export type DemandLine = {
   /** Necessidade MyWEG = planejamento do cliente (não pedido Protheus). */
   planning?: boolean;
   op_coverage_incomplete?: boolean;
+  /** Comparação fiscal operacional provisória, não reconhecimento WEG. */
+  raw_myweg_quantity_mi?: number | null;
+  fiscal_offset_mi?: number;
+  fiscal_offset_status?: string | null;
+  fiscal_invoice_refs?: Array<{
+    fiscal_key: string;
+    invoice: string;
+    series: string;
+    item: string;
+    quantity_un: string;
+  }>;
+  fiscal_coverage_incomplete?: boolean;
 };
 
 export type DemandHorizonBucket = {
@@ -525,6 +537,24 @@ export type DemandPayload = {
     stock_incomplete?: boolean;
     pending_without_stock_source_count?: number;
     overlap_pending_count?: number;
+    fiscal_reconciliation?: {
+      status: string;
+      policy?: string;
+      recognition_status?: string;
+      collection_date?: string | null;
+      batch_id?: string;
+      applied_un?: string;
+      applied_item_count?: number;
+      adjusted_record_count?: number;
+      pending_products?: string[];
+      products?: Array<{
+        product_code: string;
+        applied_un: string;
+        unapplied_fiscal_un: string;
+        invoice_count: number;
+      }>;
+    };
+    fiscal_pending_products?: string[];
     batch?: {
       collection_id?: string;
       collected_at?: string;
