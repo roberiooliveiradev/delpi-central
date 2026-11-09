@@ -224,8 +224,9 @@ function mockAllReady() {
   matrixMock.mockResolvedValue(matrix());
   summaryMock.mockResolvedValue(summary());
   stockMock.mockResolvedValue(stock());
-  reconMock.mockResolvedValue(
+  reconMock.mockImplementation(async (query: { branch?: string } = {}) =>
     reconPayload({
+      branchCode: query.branch ?? "all",
       divergence: "0.00",
       divergenceCents: "0.00",
       parity: "IDENTITY_ONLY",
@@ -674,10 +675,17 @@ describe("indicadores e área de atenção", () => {
 
 describe("conciliação analítica — superfície independente", () => {
   it("divergência analítica calculada aparece na seção e na atenção", async () => {
-    reconMock.mockResolvedValue(reconPayload());
+    reconMock.mockImplementation(async (query: { branch?: string } = {}) =>
+      reconPayload({
+        branchCode: query.branch ?? "all",
+        divergence: query.branch === "02" ? "0.00" : "48660.78",
+        divergenceCents: query.branch === "02" ? "0.00" : "48660.78",
+        parity: query.branch === "02" ? "IDENTITY_ONLY" : "DIVERGENCE",
+      }),
+    );
     renderPanel();
 
-    await screen.findByText("Divergência analítica");
+    await screen.findAllByText("Divergência analítica");
     expect(
       screen.getAllByText(/48\.660,78/).length,
     ).toBeGreaterThan(0);
@@ -685,7 +693,7 @@ describe("conciliação analítica — superfície independente", () => {
       screen.getAllByText(/nem substitui a conciliação governada/)
         .length,
     ).toBeGreaterThan(0);
-    // A divergência analítica também entra na área de atenção.
+    // Atenção conta só filiais 01/02; neste caso só a 01 diverge.
     expect(
       screen.getByRole("button", {
         name: /Divergências identificadas: 1/,
@@ -694,8 +702,9 @@ describe("conciliação analítica — superfície independente", () => {
   });
 
   it("operando ausente torna a conciliação inelegível — nunca zero", async () => {
-    reconMock.mockResolvedValue(
+    reconMock.mockImplementation(async (query: { branch?: string } = {}) =>
       reconPayload({
+        branchCode: query.branch ?? "all",
         eligibility: "INELIGIBLE",
         ineligibleOperands: ["h02"],
         operands: {
@@ -710,7 +719,7 @@ describe("conciliação analítica — superfície independente", () => {
     );
     renderPanel();
 
-    await screen.findByText("Conciliação pendente de validação");
+    await screen.findAllByText("Conciliação pendente de validação");
     expect(
       screen.getAllByText(/Operandos indisponíveis/).length,
     ).toBeGreaterThan(0);
@@ -739,6 +748,189 @@ describe("conciliação analítica — superfície independente", () => {
         name: /Divergências identificadas: —/,
       }),
     ).toBeTruthy();
+  });
+});
+
+describe("conciliação analítica — Por unidade | Consolidado (doc 157)", () => {
+  it("abre em Por unidade com Filial 01 e Filial 02 simultâneas", async () => {
+    renderPanel();
+
+    const toggle = await screen.findByRole("group", {
+      name: "Visualização da conciliação analítica",
+    });
+    expect(
+      within(toggle)
+        .getByRole("button", { name: "Por unidade" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(screen.getByText("Filial 01 — Matriz")).toBeTruthy();
+    expect(screen.getByText("Filial 02")).toBeTruthy();
+    expect(
+      screen.queryByText("Consolidado — Filiais 01 + 02"),
+    ).toBeNull();
+    expect(
+      screen.getByRole("table", {
+        name: "Operandos da conciliação analítica — Filial 01",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("table", {
+        name: "Operandos da conciliação analítica — Filial 02",
+      }),
+    ).toBeTruthy();
+  });
+
+  it("consulta branch=01, branch=02 e branch=all com query keys distintas", async () => {
+    renderPanel();
+    await screen.findByText("Filial 01 — Matriz");
+
+    await waitFor(() => expect(reconMock).toHaveBeenCalledTimes(3));
+    expect(reconMock).toHaveBeenCalledWith(
+      expect.objectContaining({ period: PERIOD, branch: "01" }),
+      expect.anything(),
+    );
+    expect(reconMock).toHaveBeenCalledWith(
+      expect.objectContaining({ period: PERIOD, branch: "02" }),
+      expect.anything(),
+    );
+    expect(reconMock).toHaveBeenCalledWith(
+      expect.objectContaining({ period: PERIOD, branch: "all" }),
+      expect.anything(),
+    );
+  });
+
+  it("exibe valores distintos por filial sem somar no frontend", async () => {
+    reconMock.mockImplementation(async (query: { branch?: string } = {}) => {
+      if (query.branch === "01") {
+        return reconPayload({
+          branchCode: "01",
+          divergence: "100.00",
+          divergenceCents: "100.00",
+          parity: "DIVERGENCE",
+          operands: {
+            entradasSaidas: operand("1000.00"),
+            p7: operand("800.00"),
+            h02: operand("100.00"),
+          },
+        });
+      }
+      if (query.branch === "02") {
+        return reconPayload({
+          branchCode: "02",
+          divergence: "50.00",
+          divergenceCents: "50.00",
+          parity: "DIVERGENCE",
+          operands: {
+            entradasSaidas: operand("500.00"),
+            p7: operand("400.00"),
+            h02: operand("50.00"),
+          },
+        });
+      }
+      return reconPayload({
+        branchCode: "all",
+        divergence: "200.00",
+        divergenceCents: "200.00",
+        parity: "DIVERGENCE",
+        operands: {
+          entradasSaidas: operand("2000.00"),
+          p7: operand("1600.00"),
+          h02: operand("200.00"),
+        },
+      });
+    });
+    renderPanel();
+
+    const table01 = await screen.findByRole("table", {
+      name: "Operandos da conciliação analítica — Filial 01",
+    });
+    const table02 = screen.getByRole("table", {
+      name: "Operandos da conciliação analítica — Filial 02",
+    });
+    expect(within(table01).getAllByText("100,00").length).toBeGreaterThan(0);
+    expect(within(table01).getByText("1.000,00")).toBeTruthy();
+    expect(within(table02).getAllByText("50,00").length).toBeGreaterThan(0);
+    expect(within(table02).getByText("500,00")).toBeTruthy();
+    expect(screen.queryByText("2.000,00")).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Consolidado" }),
+    );
+    const consolidated = await screen.findByRole("table", {
+      name: "Operandos da conciliação analítica — consolidado",
+    });
+    expect(within(consolidated).getByText("2.000,00")).toBeTruthy();
+    expect(within(consolidated).getAllByText("200,00").length).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole("heading", { name: "Filial 01 — Matriz" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: "Filial 02" }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("heading", {
+        name: "Consolidado — Filiais 01 + 02",
+      }),
+    ).toBeTruthy();
+    // Alternar não dispara nova rodada — cache por branch.
+    expect(reconMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("retornar a Por unidade restaura as duas seções na mesma competência", async () => {
+    renderPanel();
+    await screen.findByText("Filial 01 — Matriz");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Consolidado" }),
+    );
+    await screen.findByText("Consolidado — Filiais 01 + 02");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Por unidade" }),
+    );
+    expect(await screen.findByText("Filial 01 — Matriz")).toBeTruthy();
+    expect(screen.getByText("Filial 02")).toBeTruthy();
+    expect(
+      screen.queryByText("Consolidado — Filiais 01 + 02"),
+    ).toBeNull();
+  });
+
+  it("erro na Filial 02 preserva dados válidos da Filial 01", async () => {
+    reconMock.mockImplementation(async (query: { branch?: string } = {}) => {
+      if (query.branch === "02") {
+        throw new ApiError(502, "falha filial 02");
+      }
+      return reconPayload({
+        branchCode: query.branch ?? "all",
+        divergence: "0.00",
+        divergenceCents: "0.00",
+        parity: "IDENTITY_ONLY",
+      });
+    });
+    renderPanel();
+
+    const table01 = await screen.findByRole("table", {
+      name: "Operandos da conciliação analítica — Filial 01",
+    });
+    expect(within(table01).getByText(/0,00/)).toBeTruthy();
+    expect(
+      screen.getByText(/não é uma divergência zero/),
+    ).toBeTruthy();
+    expect(
+      screen.getAllByText(/partições do mesmo universo/).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByText("Filial 01 — Matriz")).toBeTruthy();
+  });
+
+  it("IDENTITY_ONLY com diferença zero não declara PASS de paridade oficial", async () => {
+    renderPanel();
+    await screen.findByText("Filial 01 — Matriz");
+    expect(
+      screen.getAllByText(/não comprova a paridade entre os relatórios oficiais/)
+        .length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByText(/PASS/i)).toBeNull();
+    expect(screen.queryByText(/paridade oficial comprovada/i)).toBeNull();
   });
 });
 

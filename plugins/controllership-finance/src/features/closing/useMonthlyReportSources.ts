@@ -4,7 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../api/httpClient";
 import { getFinancialSettlementsSummary } from "../../api/financialSettlementsApi";
 import { getStockInventory } from "../../api/stockInventoryApi";
-import { getStockReconciliation } from "../../api/stockReconciliationApi";
+import {
+  getStockReconciliation,
+  type StockReconciliationPayload,
+} from "../../api/stockReconciliationApi";
+import type { StockInventoryBranch } from "../../api/stockInventoryApi";
 import { getP3State, type P3Status } from "../../api/p3Api";
 import { listReportMatrix, type ReportMatrix } from "../../api/reportsApi";
 import {
@@ -32,6 +36,11 @@ import {
   stockReconciliationQueryKey,
   type ReportCacheScope,
 } from "../../app/reportQueryKeys";
+
+/** Filiais da visão analítica — consultas independentes à BFF. */
+export const ANALYTICAL_RECON_BRANCHES = ["01", "02", "all"] as const;
+export type AnalyticalReconBranch =
+  (typeof ANALYTICAL_RECON_BRANCHES)[number];
 
 export type ReportPanelError = {
   status: number;
@@ -188,9 +197,15 @@ export function useMonthlyReportSources(period: string) {
         pageSize: HUB_STOCK_PAGE_SIZE,
       })
     : ["cf", "stock-inventory", "disabled", period];
-  const reconKey = scope
-    ? stockReconciliationQueryKey(scope, { period })
-    : ["cf", "stock-reconciliation", "disabled", period];
+  const reconKey01 = scope
+    ? stockReconciliationQueryKey(scope, { period, branch: "01" })
+    : ["cf", "stock-reconciliation", "disabled", period, "01"];
+  const reconKey02 = scope
+    ? stockReconciliationQueryKey(scope, { period, branch: "02" })
+    : ["cf", "stock-reconciliation", "disabled", period, "02"];
+  const reconKeyAll = scope
+    ? stockReconciliationQueryKey(scope, { period, branch: "all" })
+    : ["cf", "stock-reconciliation", "disabled", period, "all"];
 
   const p3Query = useQuery({
     queryKey: p3Key,
@@ -252,16 +267,34 @@ export function useMonthlyReportSources(period: string) {
         ),
       ),
   });
-  const reconQuery = useQuery({
-    queryKey: reconKey,
-    enabled,
-    staleTime: REPORT_STALE_OPERATIONAL_MS,
-    gcTime: REPORT_GC_TIME_MS,
-    queryFn: ({ signal }) =>
-      guardReportQuery(scope!, reconKey, signal, (next) =>
-        getStockReconciliation({ period }, { signal: next }),
-      ),
-  });
+  function reconQueryOptions(
+    branch: StockInventoryBranch,
+    queryKey: readonly unknown[],
+  ) {
+    return {
+      queryKey,
+      enabled,
+      staleTime: REPORT_STALE_OPERATIONAL_MS,
+      gcTime: REPORT_GC_TIME_MS,
+      queryFn: ({ signal }: { signal: AbortSignal }) =>
+        guardReportQuery(scope!, queryKey, signal, (next) =>
+          getStockReconciliation(
+            { period, branch },
+            { signal: next },
+          ),
+        ),
+    };
+  }
+
+  const reconQuery01 = useQuery(
+    reconQueryOptions("01", reconKey01),
+  );
+  const reconQuery02 = useQuery(
+    reconQueryOptions("02", reconKey02),
+  );
+  const reconQueryAll = useQuery(
+    reconQueryOptions("all", reconKeyAll),
+  );
 
   const p3 = viewOf(p3Query.data, p3Query.error, p3Query.isError, p3Query.isPending);
   const matrix = viewOf(
@@ -282,17 +315,38 @@ export function useMonthlyReportSources(period: string) {
     stockQuery.isError,
     stockQuery.isPending,
   );
-  const recon = viewOf(
-    reconQuery.data,
-    reconQuery.error,
-    reconQuery.isError,
-    reconQuery.isPending,
+  const recon01 = viewOf(
+    reconQuery01.data,
+    reconQuery01.error,
+    reconQuery01.isError,
+    reconQuery01.isPending,
+  );
+  const recon02 = viewOf(
+    reconQuery02.data,
+    reconQuery02.error,
+    reconQuery02.isError,
+    reconQuery02.isPending,
+  );
+  const reconAll = viewOf(
+    reconQueryAll.data,
+    reconQueryAll.error,
+    reconQueryAll.isError,
+    reconQueryAll.isPending,
   );
 
-  const sources = [p3, matrix, settlements, stock, recon];
+  const sources = [p3, matrix, settlements, stock, recon01, recon02, reconAll];
   const fetchedTimes = sources
     .map((source) => source.fetchedAt)
     .filter((value): value is number => value !== null);
+
+  const reconByBranch: Record<
+    AnalyticalReconBranch,
+    ReportSource<StockReconciliationPayload> | null
+  > = {
+    "01": recon01.source,
+    "02": recon02.source,
+    all: reconAll.source,
+  };
 
   return {
     sealed: sealed || isReportSessionSealed(),
@@ -301,18 +355,25 @@ export function useMonthlyReportSources(period: string) {
     matrix: matrix.source,
     settlements: settlements.source,
     stock: stock.source,
-    recon: recon.source,
+    /** Alias legado = consolidado (`branch=all`). Preferir `reconByBranch`. */
+    recon: reconAll.source,
+    reconByBranch,
     p3Fetching: p3Query.isFetching,
     matrixFetching: matrixQuery.isFetching,
     settlementsFetching: settlementsQuery.isFetching,
     stockFetching: stockQuery.isFetching,
-    reconFetching: reconQuery.isFetching,
+    reconFetching:
+      reconQuery01.isFetching ||
+      reconQuery02.isFetching ||
+      reconQueryAll.isFetching,
     refreshError:
       p3.refreshError ??
       matrix.refreshError ??
       settlements.refreshError ??
       stock.refreshError ??
-      recon.refreshError,
+      recon01.refreshError ??
+      recon02.refreshError ??
+      reconAll.refreshError,
     latestFetchedAt: fetchedTimes.length > 0 ? Math.max(...fetchedTimes) : null,
     refetchAll: () => invalidateVisibleReports(period),
   };

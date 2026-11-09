@@ -1496,3 +1496,16 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | R07 Inventários | IMPLEMENTED | api-delpi inventory_adjustments* + BFF /closing/inventory-adjustments* + InventoryAdjustmentsPage + CLARA read(report.inventory_adjustments) |
 | R04 | lacuna real = integração BFF/CLARA/MFE | produtor consumption-audit existe em api-delpi (supplies/) |
 | Classificações G052-G058 'não implementado' R06/R07 | ERRADAS — corrigidas | busca era restrita ao namespace financeiro; SEARCH_MISS != ABSENCE |
+
+---
+
+## PROC-0072 / Documento 157 — Conciliação analítica por unidade (2026-11-09)
+
+| Req / AC | Estado | Evidência |
+|---|---|---|
+| AC-01..08 (Por unidade / Consolidado) | PASS | Vitest MFE: toggle, seções 01+02, `branch=all` sem soma no browser |
+| AC-09..15 (integridade / IDENTITY_ONLY / erro isolado) | PASS | Fixtures por filial; IDENTITY_ONLY sem PASS oficial; erro 02 preserva 01 |
+| AC-16..24 (UX/a11y/help/regressão) | PASS parcial | Help atualizado; teclado via `CfSegmentToggle`; smoke autenticado produtivo pós-deploy |
+| BFF `branch=01\|02\|all` | PROVEN | Rota e testes existentes (`test_closing_stock_reports`); sem mudança de contrato |
+| Diff | MFE-only | Sem nova rota/permissão/migration |
+| Deploy | PENDING→registrar após up-prod | Serviço `controllership-finance` apenas |

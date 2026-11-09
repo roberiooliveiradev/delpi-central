@@ -112,12 +112,12 @@ function readyMocks() {
     summariesByType: [],
     summariesByWarehouse: [],
   });
-  reconMock.mockResolvedValue({
+  reconMock.mockImplementation(async (query: { branch?: string } = {}) => ({
     report: "stock_reconciliation",
     kind: "analytical",
     governedReconciliation: "P3",
     period: PERIOD,
-    branchCode: "all",
+    branchCode: query.branch ?? "all",
     reportScope: "all_products",
     equation: "DIVERGENCIA = ENTRADAS_SAIDAS - P7 - H02",
     operandSemantics: {},
@@ -134,7 +134,7 @@ function readyMocks() {
     parity: "NOT_COMPUTED",
     parityTolerance: "NONE",
     provenance: {},
-  });
+  }));
 }
 
 function renderPanel(period = PERIOD) {
@@ -188,7 +188,7 @@ describe("chaves e identidade", () => {
   });
 });
 
-describe("reutilização das cinco consultas", () => {
+describe("reutilização das consultas do hub", () => {
   it("monta uma vez, reabre sem request e distingue a competência", async () => {
     readyMocks();
     const first = renderPanel();
@@ -197,7 +197,7 @@ describe("reutilização das cinco consultas", () => {
     expect(matrixMock).toHaveBeenCalledTimes(1);
     expect(summaryMock).toHaveBeenCalledTimes(1);
     expect(stockMock).toHaveBeenCalledTimes(1);
-    expect(reconMock).toHaveBeenCalledTimes(1);
+    expect(reconMock).toHaveBeenCalledTimes(3);
 
     first.unmount();
     renderPanel();
@@ -282,7 +282,7 @@ describe("reutilização das cinco consultas", () => {
     expect(matrixMock).toHaveBeenCalledTimes(2);
     expect(summaryMock).toHaveBeenCalledTimes(1);
     expect(stockMock).toHaveBeenCalledTimes(1);
-    expect(reconMock).toHaveBeenCalledTimes(1);
+    expect(reconMock).toHaveBeenCalledTimes(3);
   });
 
   it("descarta o cache inativo depois do gcTime", async () => {
@@ -297,7 +297,7 @@ describe("reutilização das cinco consultas", () => {
     expect(p3Mock).toHaveBeenCalledTimes(2);
   });
 
-  it("atualização manual refaz as cinco fontes da competência visível", async () => {
+  it("atualização manual refaz as fontes da competência visível", async () => {
     readyMocks();
     renderPanel();
     await screen.findByText("Relatórios para análise");
@@ -305,7 +305,7 @@ describe("reutilização das cinco consultas", () => {
     await waitFor(() => expect(p3Mock).toHaveBeenCalledTimes(2));
     expect(summaryMock).toHaveBeenCalledTimes(2);
     expect(stockMock).toHaveBeenCalledTimes(2);
-    expect(reconMock).toHaveBeenCalledTimes(2);
+    expect(reconMock).toHaveBeenCalledTimes(6);
     expect(matrixMock).toHaveBeenCalledTimes(2);
   });
 });
@@ -672,6 +672,6 @@ describe("invalidação direcionada", () => {
     expect(matrixMock).toHaveBeenCalledTimes(2);
     expect(summaryMock).toHaveBeenCalledTimes(1);
     expect(stockMock).toHaveBeenCalledTimes(1);
-    expect(reconMock).toHaveBeenCalledTimes(1);
+    expect(reconMock).toHaveBeenCalledTimes(3);
   });
 });

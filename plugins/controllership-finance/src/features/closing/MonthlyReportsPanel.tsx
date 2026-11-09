@@ -105,6 +105,7 @@ import {
 import {
   AnalyticalReconciliationSection,
   OPERAND_STATUS_LABELS,
+  type AnalyticalViewMode,
 } from "./ReportSharedSections";
 
 export type { ReportFamily };
@@ -347,19 +348,22 @@ const KIND_BADGE: Record<
   },
 };
 
-function buildAttentionItems(args: {
-  p3: Source<P3Status> | null;
-  matrix: Source<ReportMatrix> | null;
-  settlements: Source<SettlementsSummaryPayload> | null;
-  stock: Source<StockInventoryPayload> | null;
-  recon: Source<StockReconciliationPayload> | null;
-}): AttentionItem[] {
-  const { p3, matrix, settlements, stock, recon } = args;
-  const items: AttentionItem[] = [];
+const ANALYTICAL_ATTENTION_UNITS: Array<{
+  branch: "01" | "02";
+  label: string;
+}> = [
+  { branch: "01", label: "Filial 01 — Matriz" },
+  { branch: "02", label: "Filial 02" },
+];
 
+function pushAnalyticalAttention(
+  items: AttentionItem[],
+  recon: Source<StockReconciliationPayload> | null,
+  unit: { branch: "01" | "02"; label: string },
+): void {
   // Conciliação analítica — divergência calculada pela BFF a partir
   // dos três relatórios operacionais (superfície analítica, distinta
-  // do workflow governado P3).
+  // do workflow governado P3). Cada filial permanece independente.
   if (recon?.kind === "ready") {
     const data = recon.data;
     if (
@@ -368,18 +372,19 @@ function buildAttentionItems(args: {
       data.divergenceCents !== null
     ) {
       items.push({
-        id: "analytics-divergence",
+        id: `analytics-divergence-${unit.branch}`,
         kind: "divergence",
-        source: "Conciliação analítica de estoque",
+        source: `Conciliação analítica — ${unit.label}`,
         description:
-          "Diferença calculada entre Entradas/Saídas, P7 e Material em processo nesta competência.",
+          "Diferença calculada entre Entradas/Saídas, P7 e Material em processo nesta competência e filial.",
         situation: "Divergência identificada",
         difference: formatAmount(data.divergenceCents),
         origin: "Conciliação analítica (E/S − P7 − H02)",
         fetchedAt: recon.at.toISOString(),
         nextAction:
-          "Investigue os operandos nos relatórios R05, P7 e R08; a validação formal segue pelo checklist P3.",
+          "Investigue os operandos nos relatórios R05, P7 e R08 desta filial; a validação formal segue pelo checklist P3.",
         facts: [
+          ["Filial", unit.label],
           [
             "Entradas e saídas (R05)",
             data.operands.entradasSaidas.value
@@ -398,35 +403,27 @@ function buildAttentionItems(args: {
               ? formatAmount(data.operands.h02.value)
               : "—",
           ],
-          [
-            "Divergência",
-            formatAmount(data.divergenceCents),
-          ],
+          ["Divergência", formatAmount(data.divergenceCents)],
         ],
         totvsGuide: null,
         reportKey: "stock-inventory",
       });
     } else if (data.eligibility === "INELIGIBLE") {
       const missing = data.ineligibleOperands
-        .map(
-          (key) =>
-            DOMAIN_OPERAND_LABELS[key] ?? key,
-        )
+        .map((key) => DOMAIN_OPERAND_LABELS[key] ?? key)
         .join(", ");
       const missingDetail = data.ineligibleOperands
         .map((key) => {
-          const operand = data.operands[
-            key as keyof typeof data.operands
-          ];
+          const operand = data.operands[key as keyof typeof data.operands];
           const state =
             OPERAND_STATUS_LABELS[operand?.status ?? ""] ?? "—";
           return `${DOMAIN_OPERAND_LABELS[key] ?? key}: ${state}`;
         })
         .join("; ");
       items.push({
-        id: "analytics-ineligible",
+        id: `analytics-ineligible-${unit.branch}`,
         kind: "check_pending",
-        source: "Conciliação analítica de estoque",
+        source: `Conciliação analítica — ${unit.label}`,
         description: `Operandos indisponíveis ou incompletos: ${missing}. A divergência não é calculada — fonte ausente nunca entra como zero.`,
         situation: "Conciliação pendente",
         difference: null,
@@ -435,6 +432,7 @@ function buildAttentionItems(args: {
         nextAction:
           "Consulte os relatórios indisponíveis na origem — a conciliação calcula quando os três operandos estão completos.",
         facts: [
+          ["Filial", unit.label],
           ["Operandos pendentes", missing],
           ["Detalhe por fonte", missingDetail],
           ["Estado", "Cálculo não realizado"],
@@ -444,19 +442,41 @@ function buildAttentionItems(args: {
     }
   } else if (recon?.kind === "error") {
     items.push({
-      id: "analytics-error",
+      id: `analytics-error-${unit.branch}`,
       kind: "source_unavailable",
-      source: "Conciliação analítica de estoque",
+      source: `Conciliação analítica — ${unit.label}`,
       description:
-        "Não foi possível consultar a conciliação analítica deste período.",
+        "Não foi possível consultar a conciliação analítica desta filial.",
       situation: recon.error.message,
       difference: null,
       origin: "Conciliação analítica (E/S − P7 − H02)",
       fetchedAt: null,
       nextAction: "Atualize a consulta e tente novamente.",
-      facts: [["Erro", recon.error.message]],
+      facts: [
+        ["Filial", unit.label],
+        ["Erro", recon.error.message],
+      ],
       totvsGuide: null,
     });
+  }
+}
+
+function buildAttentionItems(args: {
+  p3: Source<P3Status> | null;
+  matrix: Source<ReportMatrix> | null;
+  settlements: Source<SettlementsSummaryPayload> | null;
+  stock: Source<StockInventoryPayload> | null;
+  reconByBranch: {
+    "01": Source<StockReconciliationPayload> | null;
+    "02": Source<StockReconciliationPayload> | null;
+    all: Source<StockReconciliationPayload> | null;
+  };
+}): AttentionItem[] {
+  const { p3, matrix, settlements, stock, reconByBranch } = args;
+  const items: AttentionItem[] = [];
+
+  for (const unit of ANALYTICAL_ATTENTION_UNITS) {
+    pushAnalyticalAttention(items, reconByBranch[unit.branch], unit);
   }
 
   // Conciliação P3 — divergências monetárias canônicas.
@@ -473,9 +493,10 @@ function buildAttentionItems(args: {
         // conciliação analítica — "consulta disponível" ≠ "elegível
         // p/ conciliar" e "snapshot ausente" ≠ "falha técnica".
         const operandStatus =
-          args.recon?.kind === "ready"
-            ? (args.recon.data.operands[DOMAIN_TO_OPERAND[recon.domain]]
-                .status ?? null)
+          args.reconByBranch.all?.kind === "ready"
+            ? (args.reconByBranch.all.data.operands[
+                DOMAIN_TO_OPERAND[recon.domain]
+              ].status ?? null)
             : null;
         const operational = operandStatus === "AVAILABLE";
         const snapshotMissing = operandStatus === "SOURCE_MISSING";
@@ -956,46 +977,63 @@ function MonthlyReportsPanelBody({
     matrix,
     settlements,
     stock,
-    recon,
+    reconByBranch,
     refreshError,
     latestFetchedAt,
     refetchAll,
     sealed,
     scopeReady,
   } = reports;
+  const [analyticalView, setAnalyticalView] =
+    useState<AnalyticalViewMode>("by-unit");
   const anyRefreshing =
     reports.p3Fetching ||
     reports.matrixFetching ||
     reports.settlementsFetching ||
     reports.stockFetching ||
     reports.reconFetching;
+  const recon01 = reconByBranch["01"];
+  const recon02 = reconByBranch["02"];
+  const reconAll = reconByBranch.all;
   const anyLoading =
     p3 === null ||
     matrix === null ||
     settlements === null ||
     stock === null ||
-    recon === null;
-  // Progresso honesto: 5 consultas com denominador estável conhecido —
-  // percentual = consultas concluídas / 5 (CF-UX-019, nunca estimado).
-  const sourcesTotal = 5;
+    recon01 === null ||
+    recon02 === null ||
+    reconAll === null;
+  // Progresso honesto: 7 consultas (P3, matriz, baixas, estoque e
+  // três branches da conciliação analítica 01/02/all).
+  const sourcesTotal = 7;
   const sourcesDone =
     (p3 !== null ? 1 : 0) +
     (matrix !== null ? 1 : 0) +
     (settlements !== null ? 1 : 0) +
     (stock !== null ? 1 : 0) +
-    (recon !== null ? 1 : 0);
+    (recon01 !== null ? 1 : 0) +
+    (recon02 !== null ? 1 : 0) +
+    (reconAll !== null ? 1 : 0);
   const loadingDescription = [
     `Fontes: conciliação P3 — ${p3 === null ? "consultando" : "concluída"}`,
     `matriz R01–R15 — ${matrix === null ? "consultando" : "concluída"}`,
     `baixas financeiras — ${settlements === null ? "consultando" : "concluída"}`,
     `posição de estoque — ${stock === null ? "consultando" : "concluída"}`,
-    `conciliação analítica — ${recon === null ? "consultando" : "concluída"}`,
+    `conciliação analítica 01 — ${recon01 === null ? "consultando" : "concluída"}`,
+    `conciliação analítica 02 — ${recon02 === null ? "consultando" : "concluída"}`,
+    `conciliação analítica consolidada — ${reconAll === null ? "consultando" : "concluída"}`,
   ].join(" · ");
 
   const attention = useMemo(
     () =>
-      buildAttentionItems({ p3, matrix, settlements, stock, recon }),
-    [p3, matrix, settlements, stock, recon],
+      buildAttentionItems({
+        p3,
+        matrix,
+        settlements,
+        stock,
+        reconByBranch,
+      }),
+    [p3, matrix, settlements, stock, reconByBranch],
   );
 
   // Indicadores — só valores cuja definição está comprovada.
@@ -1009,7 +1047,8 @@ function MonthlyReportsPanelBody({
     p3?.kind === "error" ||
     settlements?.kind === "error" ||
     stock?.kind === "error" ||
-    recon?.kind === "error";
+    recon01?.kind === "error" ||
+    recon02?.kind === "error";
   // «Divergências identificadas» só exibe um número quando a contagem
   // é comprovada: zero com verificações pendentes seria um falso
   // negativo — INCONCLUSIVE/pendente nunca vira «0» (REWORK-011).
@@ -1033,8 +1072,8 @@ function MonthlyReportsPanelBody({
   const operandStatus = (
     key: "entradasSaidas" | "p7" | "h02",
   ): string | null =>
-    recon?.kind === "ready"
-      ? (recon.data.operands[key].status ?? null)
+    reconAll?.kind === "ready"
+      ? (reconAll.data.operands[key].status ?? null)
       : null;
   const reportAvailable = (key: ReportKey): boolean => {
     if (key === "financial-settlements") {
@@ -1213,11 +1252,21 @@ function MonthlyReportsPanelBody({
         </section>
       </CfSectionCard>
 
-      {/* Conciliação analítica — composição BFF dos três relatórios
-          operacionais; distinta da conciliação governada P3. */}
+      {/* Conciliação analítica — por unidade (01+02) ou consolidado
+          (`branch=all`); distinta da conciliação governada P3. */}
       <AnalyticalReconciliationSection
-        reconciliation={recon?.kind === "ready" ? recon.data : null}
-        loading={recon === null}
+        viewMode={analyticalView}
+        onViewModeChange={setAnalyticalView}
+        reconByBranch={{
+          "01": recon01?.kind === "ready" ? recon01.data : null,
+          "02": recon02?.kind === "ready" ? recon02.data : null,
+          all: reconAll?.kind === "ready" ? reconAll.data : null,
+        }}
+        loadingByBranch={{
+          "01": recon01 === null,
+          "02": recon02 === null,
+          all: reconAll === null,
+        }}
       />
 
       {/* Catálogo compacto — cada cartão abre a página contextual do
@@ -1277,14 +1326,14 @@ function MonthlyReportsPanelBody({
               status =
                 operand === null
                   ? "Consulta implementada"
-                  : recon?.kind === "ready"
+                  : reconAll?.kind === "ready"
                     ? (OPERAND_STATUS_LABELS[
-                        recon.data.operands[operand].status ?? ""
+                        reconAll.data.operands[operand].status ?? ""
                       ] ?? "Disponível")
-                    : recon?.kind === "error"
+                    : reconAll?.kind === "error"
                       ? "Indisponível"
                       : null;
-              updated = recon?.kind === "ready" ? recon.at : null;
+              updated = reconAll?.kind === "ready" ? reconAll.at : null;
             }
             const selected =
               selectedReport === REPORT_KEY_TO_FAMILY[key];

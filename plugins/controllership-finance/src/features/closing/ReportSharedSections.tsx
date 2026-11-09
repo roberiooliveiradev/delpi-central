@@ -10,6 +10,7 @@ import { type P3Status, type SourceState } from "../../api/p3Api";
 import type { StockReconciliationPayload } from "../../api/stockReconciliationApi";
 import {
   CfSectionCard,
+  CfSegmentToggle,
   CfStatusBadge,
 } from "../../app/controllershipFinanceUi";
 import { CfFeedbackMessage } from "../../app/cfFeedbackUi";
@@ -210,30 +211,45 @@ const PARITY_LABELS: Record<string, string> = {
   NOT_COMPUTED: "Conciliação pendente de validação",
 };
 
-/**
- * Conciliação analítica `DIVERGENCIA = ENTRADAS_SAIDAS − P7 − H02`
- * (doc 15.1) computada pela BFF sobre os três relatórios operacionais —
- * independente da competência formal e do fluxo documental. É superfície
- * analítica: não persiste registro, não substitui a conciliação governada
- * P3 e nunca trata fonte ausente como zero.
- */
-export function AnalyticalReconciliationSection({
+export type AnalyticalViewMode = "by-unit" | "consolidated";
+
+export const ANALYTICAL_VIEW_OPTIONS: Array<{
+  value: AnalyticalViewMode;
+  label: string;
+}> = [
+  { value: "by-unit", label: "Por unidade" },
+  { value: "consolidated", label: "Consolidado" },
+];
+
+const UNIT_SECTION_LABELS = {
+  "01": "Filial 01 — Matriz",
+  "02": "Filial 02",
+  all: "Consolidado — Filiais 01 + 02",
+} as const;
+
+function AnalyticalReconciliationBody({
   reconciliation,
   loading,
+  sectionLabel,
+  ariaLabel,
 }: {
   reconciliation: StockReconciliationPayload | null;
   loading: boolean;
+  sectionLabel: string;
+  ariaLabel: string;
 }) {
   if (loading && !reconciliation) {
     return (
-      <p aria-live="polite">Consultando a conciliação analítica…</p>
+      <p aria-live="polite">
+        Consultando a conciliação analítica — {sectionLabel}…
+      </p>
     );
   }
   if (!reconciliation) {
     return (
       <CfFeedbackMessage
         intent="info"
-        title="Conciliação analítica de estoque"
+        title={sectionLabel}
       >
         A conciliação analítica não respondeu — ela não é uma divergência
         zero.
@@ -242,14 +258,17 @@ export function AnalyticalReconciliationSection({
   }
   const eligible = reconciliation.eligibility === "ELIGIBLE";
   return (
-    <CfSectionCard
-      title="Conciliação analítica — Entradas/Saídas − P7 − H02"
-      hint={CF_HELP.analytics.reconciliation}
-    >
-      <table
-        className="cf-p3-table"
-        aria-label="Operandos da conciliação analítica"
-      >
+    <div className="cf-analytical-unit">
+      <div className="cf-analytical-unit__header">
+        <h3 className="cf-analytical-unit__title">{sectionLabel}</h3>
+        <CfStatusBadge
+          label={PARITY_LABELS[reconciliation.parity]}
+          variant={
+            reconciliation.parity === "DIVERGENCE" ? "danger" : "info"
+          }
+        />
+      </div>
+      <table className="cf-p3-table" aria-label={ariaLabel}>
         <thead>
           <tr>
             <th>Operando</th>
@@ -259,9 +278,7 @@ export function AnalyticalReconciliationSection({
           </tr>
         </thead>
         <tbody>
-          {(
-            ["entradasSaidas", "p7", "h02"] as const
-          ).map((key) => {
+          {(["entradasSaidas", "p7", "h02"] as const).map((key) => {
             const operand = reconciliation.operands[key];
             return (
               <tr key={key}>
@@ -304,7 +321,11 @@ export function AnalyticalReconciliationSection({
             </td>
             <td colSpan={2}>
               <CfStatusBadge
-                label={PARITY_LABELS[reconciliation.parity]}
+                label={
+                  reconciliation.divergenceCents !== null
+                    ? PARITY_LABELS[reconciliation.parity]
+                    : "Não calculada"
+                }
                 variant={
                   reconciliation.parity === "DIVERGENCE"
                     ? "danger"
@@ -346,11 +367,95 @@ export function AnalyticalReconciliationSection({
           homologação por competência.
         </p>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * Conciliação analítica `DIVERGENCIA = ENTRADAS_SAIDAS − P7 − H02`
+ * (doc 15.1 / doc 157): visão por unidade (01+02 simultâneas) ou
+ * consolidado (`branch=all` da BFF). Não soma filiais no browser.
+ */
+export function AnalyticalReconciliationSection({
+  reconciliation,
+  loading,
+  loadingByBranch,
+  reconByBranch,
+  viewMode = "by-unit",
+  onViewModeChange,
+}: {
+  /** Compatível com consumidores que ainda passam um único payload. */
+  reconciliation?: StockReconciliationPayload | null;
+  /** @deprecated Preferir `loadingByBranch` (loading por filial). */
+  loading?: boolean;
+  loadingByBranch?: {
+    "01": boolean;
+    "02": boolean;
+    all: boolean;
+  };
+  reconByBranch?: {
+    "01": StockReconciliationPayload | null;
+    "02": StockReconciliationPayload | null;
+    all: StockReconciliationPayload | null;
+  };
+  viewMode?: AnalyticalViewMode;
+  onViewModeChange?: (mode: AnalyticalViewMode) => void;
+}) {
+  const byBranch = reconByBranch ?? {
+    "01": null,
+    "02": null,
+    all: reconciliation ?? null,
+  };
+  const pending = {
+    "01": loadingByBranch?.["01"] ?? Boolean(loading),
+    "02": loadingByBranch?.["02"] ?? Boolean(loading),
+    all: loadingByBranch?.all ?? Boolean(loading),
+  };
+
+  return (
+    <CfSectionCard
+      title="Conciliação analítica — Entradas/Saídas − P7 − H02"
+      hint={CF_HELP.analytics.reconciliation}
+      actions={
+        onViewModeChange ? (
+          <CfSegmentToggle<AnalyticalViewMode>
+            options={ANALYTICAL_VIEW_OPTIONS}
+            value={viewMode}
+            onChange={onViewModeChange}
+            ariaLabel="Visualização da conciliação analítica"
+            size="sm"
+          />
+        ) : undefined
+      }
+    >
+      {viewMode === "by-unit" ? (
+        <div className="cf-analytical-units">
+          <AnalyticalReconciliationBody
+            sectionLabel={UNIT_SECTION_LABELS["01"]}
+            ariaLabel="Operandos da conciliação analítica — Filial 01"
+            reconciliation={byBranch["01"]}
+            loading={pending["01"]}
+          />
+          <AnalyticalReconciliationBody
+            sectionLabel={UNIT_SECTION_LABELS["02"]}
+            ariaLabel="Operandos da conciliação analítica — Filial 02"
+            reconciliation={byBranch["02"]}
+            loading={pending["02"]}
+          />
+        </div>
+      ) : (
+        <AnalyticalReconciliationBody
+          sectionLabel={UNIT_SECTION_LABELS.all}
+          ariaLabel="Operandos da conciliação analítica — consolidado"
+          reconciliation={byBranch.all}
+          loading={pending.all}
+        />
+      )}
       <p className="cf-attention-item__meta">
         Visão analítica calculada pela BFF a partir dos relatórios
-        operacionais — não persiste registro nem substitui a conciliação
-        governada do checklist P3, que permanece a autoridade do
-        fechamento.
+        operacionais — cada seção usa o `branch` correspondente
+        (`01`, `02` ou `all`). Não persiste registro nem substitui a
+        conciliação governada do checklist P3.
       </p>
     </CfSectionCard>
   );
