@@ -640,28 +640,6 @@
 .dashboard-quality .dq-nc-operators__ranking {
   min-width: 0;
 }
-.dashboard-quality .dq-nc-operators__table-scroll {
-  overflow-x: auto;
-}
-.dashboard-quality .dq-nc-operators table {
-  border-collapse: collapse;
-  width: 100%;
-  min-width: 485px;
-  font-size: 12px;
-  text-align: left;
-}
-.dashboard-quality .dq-nc-operators th {
-  padding: 10px 12px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--dq-title);
-  background: color-mix(in srgb, var(--dq-accent) 10%, var(--dq-card-bg));
-  white-space: nowrap;
-}
-.dashboard-quality .dq-nc-operators td {
-  padding: 9px 12px;
-  border-bottom: 1px solid var(--dq-card-border);
-}
 .dashboard-quality .dq-nc-operators__active td {
   background: color-mix(in srgb, var(--dq-accent) 9%, transparent);
 }
