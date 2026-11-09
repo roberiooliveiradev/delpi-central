@@ -79,6 +79,7 @@ export const copy = {
       order: "Pedido / remessa",
       stock: "Do estoque",
       fromOps: "Das OPs",
+      existingOps: "OPs já consideradas",
       missing: "Saldo descoberto",
       openDemand: "Abrir em Demandas",
       close: "Fechar",
