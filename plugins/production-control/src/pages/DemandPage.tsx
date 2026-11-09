@@ -87,6 +87,7 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
     setFilters((current) => ({
       ...current,
       page: 1,
+      customers: [],
       origin: branch === "02" ? current.origin || "both" : "protheus",
     }));
   }, [branch]);
