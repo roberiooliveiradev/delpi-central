@@ -5989,6 +5989,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 | DELIA-C3-ENG-CLOSURE-T1-LEGACY-CONSUMER-PURGE-01 | L-05 only: HEAD d3a3d5ebfb=origin/main; L-01/L-02 ABSENT; rg+AST imports=0; importlib ModuleNotFoundError×2; root_composer/__init__ limpos; HISTORICAL_REFERENCE=2 comment lines generic_evidence_renderer; focused pytest 37 PASS (g2+composition+model_invocation+specialist_interop+interaction arch); CODE_CHANGED=NO; FULL_SUITE=TEST_NOT_RUN→T4; L-06 KEEP/A-05_PENDING; PRODUCTION_DEPLOY=NOT_AUTHORIZED | L-05=CLOSED_PROVEN; LEGACY_CLEANUP(L-05)=PASS; ZERO_LEGACY_GLOBAL=NOT PASS; NEXT=T1_INDEPENDENT_REVIEW |
 | DELIA-C3-ENG-CLOSURE-T2-BOUNDARY-OWNERSHIP-CONFORMANCE-01 | A-05/L-06/R04: HEAD fd78269968; doc216 PRODUCTION_SWITCH_NOT_APPROVED + Task33 live; LIVE=MCPToolset+SpecialistInterop; SNAPSHOT consumers=composer branch/sync script/tests; prod env ainda snapshot_experiment+DB 2026-11-03 (teo analyze sem Scope requirements) — R04 drift PROVEN; AB_VALIDITY=LIMITED; EXISTING_EQUIVALENT=YES REUSE live; RECOMMENDED=RETIRE_FULL_SET; DECISION_REQUIRED=RETIRE_FULL_SET_APPROVAL; CODE_CHANGED=NO; focused 20 PASS; PRODUCTION_DEPLOY=NOT_AUTHORIZED | A-05=ARCHITECTURE_DECISION_REQUIRED; L-06=KEEP_APPROVED pending ADR; R04=OPEN_MATERIAL; Architecture Ownership gate NOT PASS; NEXT=T2_INDEPENDENT_REVIEW |
 | DELIA-C3-ENG-CLOSURE-T2-BOUNDARY-OWNERSHIP-CONFORMANCE-01 (T2 ampliada §2A) | PO RETIRE_FULL_SET: removidos snapshot_interop/catalog_store/mcp_catalog_sync/test_mcp_catalog_experiment; Settings fail-closed; compose sem CATALOG_*; SpecialistInterop live only; test_mcp_catalog_snapshot_retired; Core ExternalConnection=TARGET_ONLY → T2.4/T2.5 BLOCKED_BY_OWNER_CONTRACT; 7 MCP matriz (DAVI/TEO/VISTA compose; CAIO–EVA unset); prod flag PENDING_OPS; CODE_CHANGED=YES (delia-api+infra); focused PASS; full ~1374/1 G4 pré-existente T4; PRODUCTION_DEPLOY=NOT_AUTHORIZED | A-05/L-06=CLOSED_PROVEN (código); R04=PENDING_OPS; A-07=BLOCKED_BY_OWNER_CONTRACT; Architecture Ownership gate NOT PASS global; NEXT=T2_INDEPENDENT_REVIEW |
+| DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-IMPLEMENTATION-01 | Gate CORE_OWNER_APPROVAL=NOT_PROVEN (§2A.7 implementação ainda BLOCKED); inventário Core: apps/plugins/RBAC/audit/consent/S2S YES reuse patterns; MCP provider/ExternalConnection físico ABSENT (rg=0); contrato draft no residual; CODE/MIGRATIONS=NO; Keycloak/prod untouched; snapshot still ABSENT; PRODUCTION_DEPLOY=NOT_AUTHORIZED | A-07=BLOCKED_BY_OWNER_CONTRACT; R04=PENDING_OPS; Architecture Ownership NOT PASS; NEXT=T2_INDEPENDENT_REVIEW |
 
 ### DELIA-C3-ENG-CLOSURE-T0-BASELINE-RESIDUAL-FREEZE-01 — execução (2026-11-09)
 
@@ -6034,4 +6035,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **T2.4/T2.5:** `BLOCKED_BY_OWNER_CONTRACT` — sem API/migration/UI.
 - **Ops:** procedimento remediação prod documentado; **não** executado; R04=`PENDING_OPS`.
 - **Veredicto:** snapshot code PASS; ownership gate cadastro NOT PASS; `NEXT=T2_INDEPENDENT_REVIEW`. T3 NOT_AUTHORIZED. PRODUCTION_DEPLOY NOT_AUTHORIZED.
+
+
+### DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-IMPLEMENTATION-01 — execução (2026-11-09)
+
+- **Tipo:** ANALYSIS + CONTRACT SPEC ONLY. **CODE_CHANGED=NO.** **MIGRATIONS=NO.**
+- **BASE_HEAD / ORIGIN:** `b3973d87a10c17da8593011cbe7c5f08e325a0c6` (inclui ADR §2A.7 `f5baf5b2`).
+- **Gate:** `CORE_OWNER_APPROVAL=NOT_PROVEN`; `PERSISTENCE_AUTHORIZED=NO` — §2A.7 e prompt proíbem presume autorização.
+- **Inventário:** Core models/controllers sem MCP provider registry; `apps` não equivale; PermissionResolver/audit/S2S effective-access reutilizáveis como padrões; Keycloak SPECIALISTS×7 script = REUSE IAM; ExternalConnection = TARGET_ONLY.
+- **Entrega:** especificação contratual A–F no residual register; sem tabela/API/UI/migração.
+- **Veredicto:** `BLOCKED_BY_OWNER_CONTRACT`. `NEXT=T2_INDEPENDENT_REVIEW`. T3/PROD NOT_AUTHORIZED.
 

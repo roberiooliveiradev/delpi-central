@@ -182,6 +182,13 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 
 **Gates antes de qualquer código de Core/persistência:** (1) aceite formal de Core owner e fase/CP-RQ; (2) inventário de schema/tabelas/APIs/governança/RBAC/audit e segredo; (3) contrato versionado request/response/errors/AuthZ/idempotency/revocation/rollback/observability, `operationId` estável se HTTP; (4) design da migração idempotente de sete recursos internos e onboarding externo, sem dependência da callback OAuth do ChatGPT; (5) testes de approval/revoke, troca de token, isolamento usuário/tenant, SSRF, fail-closed, schema parity, E2E real e Outcome; (6) Ops authorization separada para qualquer ambiente produtivo. `A-07=BLOCKED_BY_OWNER_CONTRACT`, `R04=PENDING_OPS` até evidência factual. `T2_ARCHITECTURE_OWNERSHIP=NOT_PASS`; `T3` e deploy produtivo não autorizados por esta decisão.
 
+### 2A.8 Execution stamp — Core governed MCP registry attempt (2026-11-09)
+
+**TASK:** `DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-IMPLEMENTATION-01`  
+**ADR:** §2A.7 / commit `f5baf5b2`  
+**GATE:** `CORE_OWNER_APPROVAL=NOT_PROVEN` · `PERSISTENCE_AUTHORIZED=NO`  
+**RESULT:** inventário Core reconfirmado (provider registry / ExternalConnection físico **ABSENT**); padrões apps/RBAC/audit/S2S = REUSE de *mecanismos*, não de schema MCP; especificação contratual registrada no residual; **nenhuma** migration/API/código Core ou registry DÉLIA. `A-07` permanece `BLOCKED_BY_OWNER_CONTRACT`. `R04=PENDING_OPS`. **NEXT:** `T2_INDEPENDENT_REVIEW` após aceite formal do Core owner. T3 / PRODUCTION_DEPLOY: NOT_AUTHORIZED.
+
 ## 3. Política de residual ZERO e limites reais
 
 - **ZERO** significa nenhum residual material **no escopo de fechamento DÉLIA aprovado**. Resíduo externo TÉO, dependência de produção ou limitação de modelo não pode ser rotulado `PASS`; determinar explicitamente se é bloqueador da aceitação DÉLIA ou de release. Não declarar que todo monorepo foi limpo.

@@ -48,7 +48,7 @@
 | A-03 | Architecture | C3-T5 OpenAPI foundation preservado | DÉLIA openapi/capability | ledger G5 KEEP (46 testes); `openapi_provider.py` presente; adapter direto já aposentado | `KEEP_APPROVED` | — |
 | A-04 | Architecture | Segundo Agent/planner/tool-loop paralelo ao Pydantic AI | DÉLIA orchestration | Agent + MCPToolset em adapter/investigation; G8 “zero segundo runtime” | `CLOSED_PROVEN` | — |
 | A-05 | Architecture | Snapshot experiment RETIRE executado (código) | DÉLIA interop | PO §2A + remoção física; Settings fail-closed; live SpecialistInterop only | `CLOSED_PROVEN` (código) | R04 prod = PENDING_OPS |
-| A-07 | Architecture | Cadastro centralizado MCP (Core ExternalConnection / provider approval) | Core governance | T2.2: ExternalConnection `TARGET_ONLY` (doc51); doc60 §5.1 DEFERRED; sem tabela/API física | `BLOCKED_BY_OWNER_CONTRACT` | aprovação Core + contrato |
+| A-07 | Architecture | Cadastro centralizado MCP (Core ExternalConnection / provider approval) | Core governance | T2 registry task: inventário Core rg=0; apps≠MCP registry; §2A.7 + gate CORE_OWNER_APPROVAL=NOT_PROVEN; contrato draft no residual; CODE_CHANGED=NO | `BLOCKED_BY_OWNER_CONTRACT` | aceite formal Core owner |
 | A-06 | Architecture | Estratégia PromptedOutput vs ToolOutput (coexistência) | Coordenação DÉLIA | migração PromptedOutput rollback; ADR spike; **não reabrir em T3** | `KEEP_APPROVED` (+ ADR registrado) | — |
 | O-01 | Flow | Admissão v42 → owner path (Kimi, Qwen14B) | DÉLIA admission | matrix E2E + admission 3/3; SHA `dc491abd1e` | `CLOSED_PROVEN` | — |
 | O-02 | Flow | Admissão C1 Qwen4B local (`explanation`/owner_path=false) | DÉLIA admission + eval | matrix: admission FAIL 2/2; E2E 0 MCP; fronteira `ADMISSION` | `OPEN_MATERIAL` | T3 |
@@ -476,3 +476,132 @@ EXTERNAL_MCP_E2E: TEST_NOT_RUN
 | Snapshot removal gate | **PASS** no código/repo |
 
 **NEXT:** `T2_INDEPENDENT_REVIEW`
+
+
+---
+
+## T2 — Governed MCP Registry implementation attempt (2026-11-09)
+
+**TASK_ID:** `DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-IMPLEMENTATION-01`  
+**ARCHITECTURE_DECISION_COMMIT:** `f5baf5b2a65dcbbf93d1f17efe6b2a9bdd5131b2` (§2A.7)  
+**BASE_HEAD:** `b3973d87a10c17da8593011cbe7c5f08e325a0c6`  
+**CODE_CHANGED:** NO · **MIGRATIONS_CHANGED:** NO · **PRODUCTION_DEPLOY:** NOT_AUTHORIZED · **T3:** NOT_AUTHORIZED
+
+### Ownership gate (obrigatório)
+
+```text
+CORE_OWNER_APPROVAL: NOT_PROVEN
+  evidência: §2A.7 declara direção arquitetural aprovada E
+  "implementação ainda BLOCKED_BY_OWNER_CONTRACT";
+  gate (1) exige "aceite formal de Core owner e fase/CP-RQ"
+  — ausente neste prompt e no HEAD
+CURRENT_PHASE: T2 / A-07 (não fase Core de persistence write)
+CP_RQ: A-07; doc60 §5.1 TARGET/DEFERRED; CP-197 ExternalConnection PLANNED
+LEGITIMATE_OWNER: Core governance (PostgreSQL delpi_core)
+EXISTING_EQUIVALENT: NO (provider registry / ExternalConnection MCP)
+REUSE_DECISION: EXTEND Core (preferido) — execução NÃO autorizada
+CONTRACT_APPROVED: NO (somente especificação abaixo)
+PERSISTENCE_AUTHORIZED: NO
+```
+
+**Veredicto de execução:** `BLOCKED_BY_OWNER_CONTRACT` — análise + especificação contratual apenas. Nenhum write Core/Keycloak/DÉLIA registry paralelo.
+
+### Inventário dirigido Core (HEAD)
+
+| RESPONSIBILITY | OWNER | SOURCE | CONSUMERS | CURRENT_CONTRACT | IMPLEMENTATION | TEST | EXISTING_EQUIVALENT | REUSE_DECISION |
+|---|---|---|---|---|---|---|---|---|
+| Cadastro apps/plugins | Core | `apps`, `app_manifests`, `app_versions`, `app_routes` | Portal/admin | HTTP `apps.*` + AuthZ `apps.view`/`apps.manage` | `apps_controller` + use cases | unit use cases | YES (portal apps) | REUSE padrões AuthZ/audit — **não** é MCP provider registry |
+| Active/inactive lifecycle | Core | `apps.active` + set_plugin_active | admin | boolean active | presente | unit | YES (apps) | REUSE padrão lifecycle — schema apps **sem** protocol/endpoint/authStrategy MCP |
+| RBAC / PermissionResolver | Core | `permissions`, roles/groups | toda plataforma | PermissionResolver canônico | `permission_resolver.py` | alignment tests | YES | REUSE para AuthZ admin/consumer futuro |
+| Auditoria | Core | `audit_logs` | admin/export | AuditLog model + retention job | presente | retention | YES | REUSE trilha — não cobre provider MCP hoje |
+| Consents | Core | `user_consents` | /me consents | purpose-scoped LGPD | presente | — | PARTIAL | REUSE só se ExternalConnection consent mapear purpose; **não** é connection OAuth |
+| S2S effective-access | Core | `GET /integrations/effective-access/...` | TV MCP futuro | doc integrations-effective-access | presente | — | YES (AuthZ subject) | REUSE para Domain AuthZ; **não** lista providers MCP |
+| MCP provider approval persistido | Core governance (alvo) | — | DÉLIA (futuro) | doc60 §5.1 DEFERRED; §2A.7 | **AUSENTE** (rg=0) | — | **NO** | EXTEND/NEW **após** CORE_OWNER_APPROVAL |
+| ExternalConnection físico | TBD | doc21 §7 candidato | DÉLIA connectors | TARGET_ONLY | **AUSENTE** | — | **NO** | TO_CONFIRM owner antes de schema |
+| tools/list catalog | MCP servers | live | MCPToolset | nativo | live | retired tests | YES | REUSE — nunca persistir como authority |
+| IAM token exchange | Keycloak | `delia_mcp_keycloak_state.py` SPECIALISTS×7 | delia-api | doc60 | script + runtime | TO_VERIFY prod | YES | REUSE — sem writes prod nesta task |
+| Snapshot catalog | — | retired | — | RETIRE_FULL_SET | ABSENT | retired PASS | N/A | NÃO reintroduzir |
+
+**Prova de ausência (CONFIRMADO_NO_CODIGO):** `rg mcp_provider|external_connection|provider_registry|mcp_server` em `core-api` → 0; nenhuma migration `CREATE TABLE` MCP; models listados sem tabela provider/connection MCP.
+
+**Apps ≠ MCP registry:** `apps` modela plugins do Portal (`id/name/base_path/type/active`), sem `protocol=MCP`, `endpoint_ref`, `auth_strategy_ref`, `approval_status`, `risk_tier` ou lifecycle `DISCOVERED→…→REVOKED`. Estender `apps` sem contrato aprovado seria overloading semântico — **não recomendado sem ADR Core**.
+
+### Especificação contratual (draft — NÃO implementada)
+
+**A. Provider registration (Core-owned, PostgreSQL `delpi_core`)**
+
+Campos conceituais mínimos (adaptar a naming Core):
+
+```text
+provider_ref (stable id)
+display_name
+protocol (= MCP)
+endpoint_ref (validated HTTPS / egress policy ref)
+owner_ref
+auth_strategy_ref (KEYCLOAK_DELEGATED | EXTERNAL_OAUTH | …)
+approval_status (DISCOVERED|REVIEWED|APPROVED|REJECTED|DISABLED|REVOKED|DEPRECATED)
+enabled (bool; só relevante se APPROVED)
+risk_tier / policy_ref
+version (optimistic concurrency)
+approved_by_ref / created_at / updated_at / audit_ref
+```
+
+Transições tipadas + AuthZ administrativa Core (`require_permission` novo código, ex. `integrations.mcp_providers.manage` — nome TBD pelo Core owner).  
+`approved=true` **nunca** via PATCH genérico sem use case de aprovação.
+
+**B. ExternalConnection (owner físico a confirmar)**
+
+Separado do provider. Sem tokens na tabela. Campos candidatos doc21 §7.  
+`PERSISTENCE_AUTHORIZED=NO` ⇒ **não criar tabela nesta task**.
+
+**C. HTTP Core (padrão apps_controller / integrations_*)**
+
+Capacidades alvo (paths/operationIds TBD pelo Core owner; exemplos não congelam URL):
+
+1. list providers  
+2. get by id  
+3. register candidate  
+4. approve / reject  
+5. enable / disable  
+6. revoke  
+7. list eligible for authorized consumer (DÉLIA S2S ou user-delegated)  
+8. audit trail query  
+
+Erros tipados, paginação, idempotência de registro, observabilidade, fail-closed.
+
+**D. DÉLIA consumer (após Core live)**
+
+```text
+authenticated context → Core eligibility → connection resolution
+→ credential (Keycloak exchange / external secret owner)
+→ MCPToolset live tools/list → governed invoke → Domain → Outcome
+```
+
+Fail-closed se Core indisponível. Sem segundo registry. Sem remoção prematura de `_SPECIALIST_IDENTITY`/settings até paridade comprovada.
+
+**E. Migração 7 especialistas (design)**
+
+Idempotente por `provider_ref` canônico (`davi`…`eva`); preservar Keycloak client ids; `enabled` espelha compose efetivo (DAVI/TÉO/VISTA true; CAIO–EVA false até ops). **Não aplicar em prod.**
+
+**F. Externo**
+
+Provider-neutral; SSRF/redirect/DNS checks; OAuth externo fora do Keycloak DELPI; E2E real = `TEST_NOT_RUN` sem servidor autorizado.
+
+### Estados
+
+| ID | Status após esta task |
+|---|---|
+| A-07 | `BLOCKED_BY_OWNER_CONTRACT` (inventário + contrato draft; sem persistência) |
+| R04 | `PENDING_OPS` |
+| Architecture Ownership gate | `NOT_PASS` |
+| Snapshot | permanece ABSENT |
+
+**Decisão necessária do Core owner (bloqueador):**
+
+1. Aceite formal `CORE_OWNER_APPROVAL` + fase/CP-RQ.  
+2. Escolha: nova tabela vs extensão justificada (não `apps` sem ADR).  
+3. Permission codes + operationIds.  
+4. Owner físico de ExternalConnection.  
+5. Autorização de migrations em DEV (não prod).
+
+**NEXT:** `T2_INDEPENDENT_REVIEW` — aguardar aceite Core antes de qualquer implementação.
