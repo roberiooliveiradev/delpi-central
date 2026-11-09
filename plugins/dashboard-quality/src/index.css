@@ -591,3 +591,174 @@
   flex-shrink: 0;
 }
 
+
+
+/* GLPI #1538: ranking de operadores na aba de NCs */
+.dashboard-quality .dq-nc-operators {
+  margin-bottom: var(--dq-section-gap);
+}
+.dashboard-quality .dq-nc-operators__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.dashboard-quality .dq-nc-operators__header h2 {
+  font-size: 17px;
+  color: var(--dq-title);
+  margin: 0 0 5px;
+}
+.dashboard-quality .dq-nc-operators__header p {
+  margin: 0;
+  color: var(--dq-text-muted);
+  font-size: 12px;
+}
+.dashboard-quality .dq-nc-operators__select {
+  display: grid;
+  gap: 6px;
+  min-width: 210px;
+  max-width: 100%;
+  font-size: 12px;
+  font-weight: 600;
+}
+.dashboard-quality .dq-nc-operators__select select {
+  min-height: 38px;
+  max-width: 100%;
+  border: 1px solid var(--dq-card-border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: var(--dq-text);
+  background: var(--dq-card-bg);
+}
+.dashboard-quality .dq-nc-operators__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(270px, 1fr);
+  gap: 22px;
+}
+.dashboard-quality .dq-nc-operators__ranking {
+  min-width: 0;
+}
+.dashboard-quality .dq-nc-operators__table-scroll {
+  overflow-x: auto;
+}
+.dashboard-quality .dq-nc-operators table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 485px;
+  font-size: 12px;
+  text-align: left;
+}
+.dashboard-quality .dq-nc-operators th {
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--dq-title);
+  background: color-mix(in srgb, var(--dq-accent) 10%, var(--dq-card-bg));
+  white-space: nowrap;
+}
+.dashboard-quality .dq-nc-operators td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--dq-card-border);
+}
+.dashboard-quality .dq-nc-operators__active td {
+  background: color-mix(in srgb, var(--dq-accent) 9%, transparent);
+}
+.dashboard-quality .dq-nc-operators__operator-button {
+  border: none;
+  padding: 0;
+  color: var(--dq-title);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-weight: 600;
+}
+.dashboard-quality .dq-nc-operators__operator-button:hover {
+  text-decoration: underline;
+}
+.dashboard-quality .dq-nc-operators__number {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.dashboard-quality .dq-nc-operators__detail {
+  min-width: 0;
+  padding-left: 20px;
+  border-left: 1px solid var(--dq-card-border);
+}
+.dashboard-quality .dq-nc-operators__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.dashboard-quality .dq-nc-operators__metrics > div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--dq-accent) 8%, var(--dq-card-bg));
+}
+.dashboard-quality .dq-nc-operators__metrics span {
+  font-size: 12px;
+  color: var(--dq-text-muted);
+}
+.dashboard-quality .dq-nc-operators__metrics strong {
+  font-size: 23px;
+  color: var(--dq-title);
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-quality .dq-nc-operators__detail h3 {
+  color: var(--dq-title);
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+.dashboard-quality .dq-nc-operators__defects {
+  max-height: 235px;
+  overflow-y: auto;
+}
+.dashboard-quality .dq-nc-operators__defect {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--dq-card-border);
+  font-size: 12px;
+}
+.dashboard-quality .dq-nc-operators__defect strong {
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-quality .dq-nc-operators__error {
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--dq-text);
+}
+.dashboard-quality .dq-nc-operators__error button {
+  background: transparent;
+  border: 1px solid var(--dq-card-border);
+  border-radius: 8px;
+  padding: 5px 8px;
+  color: var(--dq-title);
+  cursor: pointer;
+}
+.dashboard-quality .dq-nc-operators__empty {
+  color: var(--dq-text-muted);
+  margin: 16px 0;
+  font-size: 13px;
+}
+@media (max-width: 920px) {
+  .dashboard-quality .dq-nc-operators__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dashboard-quality .dq-nc-operators__detail {
+    border-left: 0;
+    border-top: 1px solid var(--dq-card-border);
+    padding-left: 0;
+    padding-top: 16px;
+  }
+}
