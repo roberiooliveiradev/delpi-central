@@ -349,3 +349,8 @@ pelo PO na autorização SEMANTIC-002:
 Nenhuma invariante de autorização, escopo, staleness, OCC, auditoria ou
 pós-condição é relaxada — o que muda é apenas a presença do desafio de
 consentimento, restrita às operações cujo efeito o justifica.
+
+
+## Adendo documental — decisão PO sobre canal de confirmação (09/11/2026)
+
+O PO decidiu que o **TARGET da UX CLARA** segue o padrão conversacional do MCP TÉO: proposta selada exibida no ChatGPT, confirmação explícita no chat, execução posterior pelo MCP, sem depender de abrir `clara-consent`. Essa é uma **decisão de produto**, não a comprovação de que `confirmation=true` substitui o consentimento reforçado de V014. Para os writes `CONFIRMATION_REQUIRED`, R-CLARA-01 e o step-up Portal **permanecem em vigor até aprovação escrita de Segurança/Plataforma + Controladoria e implementação validada**. Doc 124 §8 e doc 150 §20 trazem riscos, matriz e ordem de migração. Nenhum deploy nem exceção a JWT/AuthZ, escopo, plan hash, TTL, replay ou auditoria foi aprovado.
