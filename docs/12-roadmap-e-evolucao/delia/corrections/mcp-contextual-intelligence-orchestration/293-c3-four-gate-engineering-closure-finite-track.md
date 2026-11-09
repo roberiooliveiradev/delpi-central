@@ -266,6 +266,25 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 **A-07:** permanece `IMPLEMENTED_BOUNDED_DEV`. **R04:** `PENDING_OPS`.  
 **NEXT:** `T2_INDEPENDENT_REVIEW`.
 
+### 2A.14 Execution stamp — MCP Registry final quality + adversarial validation (2026-11-09)
+
+**TASK:** `DELIA-C3-T2-MCP-REGISTRY-FINAL-QUALITY-AND-ADVERSARIAL-VALIDATION-01`  
+**AUTHORIZATION:** §2A.9 / fechamento de qualidade T2 (sem novas features; sem T3; sem prod).  
+**BASE_HEAD (coordination observed):** `dfae28ad2ca708bb75ba4f291625e592ca52ec77` (contém implementação resume `94f51e542b`).  
+**REANCHOR_HEAD:** `dbc2e526c68e7df983d0458e65e0b9346e32d82a` (= `origin/main` no início).
+
+**KNOWN_FALSE_POSITIVE:** `tests/test_mcp_resume_eligibility_gate.py::test_h_cancel_blocks_before_resume_or_eligibility` — asserção `assert "Cancel" in type(exc.value).__name__ or True` sempre verdadeira.
+
+**ASSERTION_FIX:** `pytest.raises(_TurnCancelled)` + `type(exc.value) is _TurnCancelled`; deadline tipado `TurnBudgetExhausted` + `stage`; wire/eligibility não consultados; mutação documentada em `test_h_cancel_assertion_rejects_wrong_exception_type`. Registry missing-token: assert `integrations_token_missing`.
+
+**PATH_AUDIT:** todos os call sites de invoke MCP no orquestrador passam por `_invoke` (direct, selected/discovery/READ/chain/retry, ACT); MCPToolset nativo → `process_tool_call` → `_governed_semantic_tool_invoke` → `_invoke_selected` → `_invoke`; `McpCapabilityProvider.invoke` → SpecialistInterop → adapter apenas após o gate. Sem second registry/planner/runtime.
+
+**ADVERSARIAL:** janela TOCTOU Core-eligible→wire permanece residual (sem atomicidade distribuída); ExternalConnection / DNS-rebinding/proxy / Outcome ACT live continuam abertos. Nenhum bypass de eligibility por early-return de resume após o fix §2A.13.
+
+**A-07:** permanece `IMPLEMENTED_BOUNDED_DEV` (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS`.  
+**NEXT:** `T2_INDEPENDENT_REVIEW`.  
+**PRODUCTION_DEPLOY / T3:** `NOT_AUTHORIZED`.
+
 ## 3. Política de residual ZERO e limites reais
 
 - **ZERO** significa nenhum residual material **no escopo de fechamento DÉLIA aprovado**. Resíduo externo TÉO, dependência de produção ou limitação de modelo não pode ser rotulado `PASS`; determinar explicitamente se é bloqueador da aceitação DÉLIA ou de release. Não declarar que todo monorepo foi limpo.

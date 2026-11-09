@@ -6090,3 +6090,12 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Correção mínima:** eligibility MCP antes do replay e do transporte; reusa port/guard existentes.
 - **Veredicto:** `RESUME_REVOCATION_CLOSED_BOUNDED_DEV` — review independente; A-07 não CLOSED_PROVEN.
 
+| DELIA-C3-T2-MCP-REGISTRY-FINAL-QUALITY-AND-ADVERSARIAL-VALIDATION-01 | Fix falso positivo cancel (`or True`→`_TurnCancelled`); deadline tipado; missing-token code; path matrix `_invoke`/MCPToolset; adversarial TOCTOU residual; Core 413/0; DÉLIA full green; E2E multi-turn/Outcome ACT TEST_NOT_RUN; PRODUCTION_DEPLOY=NOT_AUTHORIZED | A-07=IMPLEMENTED_BOUNDED_DEV; R04=PENDING_OPS; NEXT=T2_INDEPENDENT_REVIEW |
+
+### DELIA-C3-T2-MCP-REGISTRY-FINAL-QUALITY-AND-ADVERSARIAL-VALIDATION-01 — execução (2026-11-09)
+
+- **Autorização:** qualidade/adversarial T2; PO correção de falhas comprovadas nos contratos afetados; sem T3/prod.
+- **BASE:** `dbc2e526c68e…` (= origin/main; contém `94f51e542b`); WIP concorrente preservado.
+- **EXISTING_EQUIVALENT=YES / REUSE_DECISION=REUSE** — apenas testes + docs; sem nova abstração.
+- **Veredicto:** `VERIFIED_BOUNDED_DEV` (qualidade de testes/invariantes no escopo); A-07 **não** `CLOSED_PROVEN`; `NEXT=T2_INDEPENDENT_REVIEW`.
+

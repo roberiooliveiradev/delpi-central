@@ -25,9 +25,13 @@ from app.application.capability_provision.semantic_capability_support import (
     _AttemptCheckpoint,
     _CANCEL_CHECK,
     _RESUME_STATE,
+    _TurnCancelled,
     _resume_invoke_key,
 )
-from app.application.interaction.turn_budget import TurnDeadline
+from app.application.interaction.turn_budget import (
+    TurnBudgetExhausted,
+    TurnDeadline,
+)
 from app.application.ports.mcp_provider_eligibility_port import (
     McpProviderEligibilityError,
 )
@@ -333,19 +337,21 @@ def test_h_deadline_blocks_before_resume_or_eligibility():
     stored = _stored_outcome()
     key = _resume_invoke_key("davi", "execute_delpi_information", {})
     eligibility = _TrackingEligibility(allow={"davi"})
+    wire = _WireProv()
     deadline = TurnDeadline.start(0.0)
-    # Force exhausted
     assert deadline.exhausted()
     with _resume_checkpoint({key: stored}):
-        with pytest.raises(Exception):
-            _orch(eligibility)._invoke(
+        with pytest.raises(TurnBudgetExhausted) as exc:
+            _orch(eligibility, [wire])._invoke(
                 group,
                 "execute_delpi_information",
                 {},
                 "c-h",
                 deadline=deadline,
             )
+    assert exc.value.stage == "provider_invoke"
     assert eligibility.calls == []
+    assert wire.calls == []
 
 
 def test_h_cancel_blocks_before_resume_or_eligibility():
@@ -353,14 +359,34 @@ def test_h_cancel_blocks_before_resume_or_eligibility():
     stored = _stored_outcome()
     key = _resume_invoke_key("davi", "execute_delpi_information", {})
     eligibility = _TrackingEligibility(allow={"davi"})
+    wire = _WireProv()
     token = _CANCEL_CHECK.set(lambda: True)
     try:
         with _resume_checkpoint({key: stored}):
-            with pytest.raises(Exception) as exc:
-                _orch(eligibility)._invoke(
+            with pytest.raises(_TurnCancelled) as exc:
+                _orch(eligibility, [wire])._invoke(
                     group, "execute_delpi_information", {}, "c-h2"
                 )
-        assert "Cancel" in type(exc.value).__name__ or True
+        assert type(exc.value) is _TurnCancelled
     finally:
         _CANCEL_CHECK.reset(token)
     assert eligibility.calls == []
+    assert wire.calls == []
+
+
+def test_h_cancel_assertion_rejects_wrong_exception_type():
+    """Mutation evidence: the old ``… or True`` assertion was a false
+    positive — it accepted ANY exception. The corrected contract must
+    fail when a non-cancel exception is observed instead.
+    """
+    # Characterization of the defective assertion (always True).
+    wrong = ValueError("not-cancel")
+    defective = ("Cancel" in type(wrong).__name__) or True
+    assert defective is True
+
+    # Corrected assertion must reject the wrong type.
+    with pytest.raises(AssertionError):
+        assert type(wrong) is _TurnCancelled
+
+    # And must accept the real cancel type used by the orchestrator.
+    assert type(_TurnCancelled()) is _TurnCancelled

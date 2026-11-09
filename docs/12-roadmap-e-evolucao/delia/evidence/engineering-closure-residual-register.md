@@ -738,3 +738,49 @@ Provider-neutral; SSRF/redirect/DNS checks; OAuth externo fora do Keycloak DELPI
 **OPEN_MATERIAL:** ExternalConnection; R04 ops; DNS-rebinding/proxy residual; Outcome ACT live  
 **NEXT:** `T2_INDEPENDENT_REVIEW`
 
+## T2 FINAL QUALITY + ADVERSARIAL VALIDATION (2026-11-09)
+
+**TASK_ID:** `DELIA-C3-T2-MCP-REGISTRY-FINAL-QUALITY-AND-ADVERSARIAL-VALIDATION-01`  
+**REFERENCE_IMPL:** `94f51e542b` (resume eligibility) sob HEAD reancorado `dbc2e526c68e…`  
+**SCOPE:** qualidade de testes + invariantes; sem feature nova; sem T3; sem prod.
+
+### Defects
+
+| ID | Achado | Correção |
+|---|---|---|
+| TQ-01 | Cancel assertion `… or True` (falso positivo) | `_TurnCancelled` tipado + mutação RED |
+| TQ-02 | Deadline `raises(Exception)` permissivo | `TurnBudgetExhausted` + stage + no wire |
+| TQ-03 | Missing-token só checava tipo genérico | assert `integrations_token_missing` |
+
+### Path / invariants (resumo)
+
+- I-01..I-08 cobertos por testes de eligibility/resume/cancel/deadline/multi-owner (contract).
+- I-09 Outcome ACT live: `TEST_NOT_RUN`.
+- I-10 single runtime: sem novo planner/registry (code audit).
+- Race TOCTOU eligibility→wire: residual documentado (não atomicidade distribuída).
+- G4 `assert line.strip() == line or True` em presentation homologation: **fora do boundary MCP** (residual não corrigido nesta task).
+
+### Regressão desta execução
+
+| Suite | Resultado |
+|---|---|
+| Core `app/tests/` | **413 PASS / 0 FAIL** |
+| Core MCP focused (policy/lifecycle/authz/use_case) | **34 PASS / 0 FAIL** |
+| DÉLIA MCP focused (resume/eligibility/registry/egress/adapter/native) | **74 PASS / 0 FAIL** |
+| DÉLIA `tests/` full | **1473 PASS / 0 FAIL** (baseline 1472 + 1 mutação cancel) |
+| DEV S2S eligibility live (este container: mode≠core, token ausente) | **TEST_NOT_RUN** |
+| Real multi-turn revocation harness | **TEST_NOT_RUN** (cobertura contratual A–H) |
+| Outcome ACT live | **TEST_NOT_RUN** |
+
+### Status gates
+
+| ID | Status |
+|---|---|
+| A-07 | `IMPLEMENTED_BOUNDED_DEV` (não CLOSED_PROVEN) |
+| R04 | `PENDING_OPS` |
+| T2_ARCHITECTURE_GATE | quality slice ready for independent review; ownership/ExternalConnection/R04 ops still open |
+
+**OPEN_MATERIAL:** ExternalConnection; R04 ops; DNS-rebinding/proxy; Outcome ACT; TOCTOU Core→wire  
+**NEXT:** `T2_INDEPENDENT_REVIEW`  
+**PRODUCTION_DEPLOY / T3:** `NOT_AUTHORIZED`
+

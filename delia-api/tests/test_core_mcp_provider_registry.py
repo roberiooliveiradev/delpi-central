@@ -142,8 +142,9 @@ def test_client_fail_closed_on_missing_token():
         timeout_seconds=2.0,
         http_get=MagicMock(),
     )
-    with pytest.raises(CoreMcpProviderRegistryError):
+    with pytest.raises(CoreMcpProviderRegistryError) as exc:
         client.list_eligible()
+    assert "integrations_token_missing" in str(exc.value)
 
 
 def test_client_ok_parses_items():
