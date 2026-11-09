@@ -171,6 +171,29 @@ def _protheus_sale(**overrides: Any) -> dict[str, Any]:
     return row
 
 
+def test_op_pendencies_use_same_both_pool_and_include_myweg_and_protheus() -> None:
+    service, user = _svc(sales=[_protheus_sale()])
+    payload = service.list_op_pendencies(user, branch="02")
+    assert payload["requested_origin"] == ORIGIN_BOTH
+    assert {item["product_code"] for item in payload["items"]} == {"90268888", "90260001"}
+    protheus = next(item for item in payload["items"] if item["product_code"] == "90268888")
+    myweg = next(item for item in payload["items"] if item["product_code"] == "90260001")
+    assert protheus["next_uncovered_pieces"] == 1000
+    assert myweg["next_uncovered_pieces"] == 1000
+    assert protheus["suggested_op_date"] == "2026-11-18"
+    assert myweg["suggested_op_date"] == "2026-11-13"
+    assert myweg["origins"] == ["myweg"]
+
+
+def test_op_pendencies_without_myweg_permission_show_only_authorized_erp() -> None:
+    service, user = _svc(sales=[_protheus_sale()])
+    user.permissions.discard(PC_MYWEG_NEEDS_VIEW)
+    payload = service.list_op_pendencies(user, branch="02")
+    assert payload["requested_origin"] == ORIGIN_PROTHEUS
+    assert payload["source_status"] == "partial"
+    assert [item["product_code"] for item in payload["items"]] == ["90268888"]
+
+
 def test_e3_default_origin_protheus_compatible() -> None:
     service, user = _svc(sales=[_protheus_sale()])
     data = service.list_demand(user, branch="02")
