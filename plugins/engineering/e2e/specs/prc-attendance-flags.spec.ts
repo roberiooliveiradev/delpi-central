@@ -15,19 +15,40 @@ test.beforeEach(async ({ page }) => {
   await loginAsDev(page);
 });
 
+async function ensureAuthenticated(page: Page): Promise<void> {
+  const sso = page.getByRole("button", { name: /Entrar com DELPI SSO/i });
+  if (await sso.isVisible().catch(() => false)) {
+    await loginAsDev(page);
+  }
+}
+
 async function openFirstRequestSheet(page: Page): Promise<boolean> {
-  await page.goto(QUEUE_PATH);
-  const row = page.locator("a[href*='/product-registration/']").first();
-  const visible = await row
-    .waitFor({ state: "visible", timeout: 20_000 })
-    .then(() => true)
-    .catch(() => false);
-  if (!visible) return false;
-  await row.click();
-  await expect(
-    page.getByRole("button", { name: "Ficha técnica" }).first(),
-  ).toBeVisible({ timeout: 20_000 });
-  await page.getByRole("button", { name: "Ficha técnica" }).first().click();
+  const envRid = (process.env.PRC_REQUEST_ID || "").trim();
+  if (!envRid) {
+    await page.goto(QUEUE_PATH);
+    await ensureAuthenticated(page);
+    const row = page.locator("tbody tr").first();
+    const hasRow = await row
+      .waitFor({ state: "visible", timeout: 15_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!hasRow) return false;
+    await row.click();
+  } else {
+    await page.goto(`${QUEUE_PATH}/${envRid}?tab=draft`);
+    await ensureAuthenticated(page);
+    if (!page.url().includes(envRid)) {
+      await page.goto(`${QUEUE_PATH}/${envRid}?tab=draft`);
+    }
+  }
+
+  await ensureAuthenticated(page);
+  const sheetTab = page
+    .getByRole("tab", { name: "Ficha técnica" })
+    .or(page.getByRole("button", { name: "Ficha técnica" }))
+    .first();
+  await expect(sheetTab).toBeVisible({ timeout: 30_000 });
+  await sheetTab.click();
   await expect(
     page.getByRole("heading", { name: "Bandeiras de acompanhamento" }),
   ).toBeVisible({ timeout: 20_000 });
@@ -62,7 +83,11 @@ test("CRUD de bandeiras na ficha técnica — persistência e histórico", async
   await shot("created");
 
   await page.reload();
-  await page.getByRole("button", { name: "Ficha técnica" }).first().click();
+  await page
+    .getByRole("tab", { name: "Ficha técnica" })
+    .or(page.getByRole("button", { name: "Ficha técnica" }))
+    .first()
+    .click();
   await expect(page.getByText(title).first()).toBeVisible({ timeout: 20_000 });
 
   const card = page.locator(".engineering-prc__flag-card", {
