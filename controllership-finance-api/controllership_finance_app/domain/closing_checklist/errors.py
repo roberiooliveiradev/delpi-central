@@ -421,3 +421,36 @@ class ItemKeyMismatch(ChecklistDomainError):
 
     code = "item_key_mismatch"
     status = 422
+
+
+class CompetenceDeleteError(ChecklistDomainError):
+    """Falha tipada da exclusão administrativa de competência."""
+
+    def __init__(self, message: str, *, details: dict | None = None) -> None:
+        super().__init__(message)
+        self.details = details or {}
+
+
+class CompetenceNotFound(CompetenceDeleteError):
+    code = "competence_not_found"
+    status = 404
+
+
+class CompetenceDeleteBlocked(CompetenceDeleteError):
+    code = "competence_delete_blocked"
+    status = 409
+
+
+class CompetenceDeleteConflict(CompetenceDeleteError):
+    code = "competence_delete_conflict"
+    status = 409
+
+
+class CompetenceDeleteUnavailable(CompetenceDeleteError):
+    code = "competence_delete_unavailable"
+    status = 503
+
+
+class CompetenceDeleteInvalid(CompetenceDeleteError):
+    code = "competence_delete_invalid"
+    status = 422

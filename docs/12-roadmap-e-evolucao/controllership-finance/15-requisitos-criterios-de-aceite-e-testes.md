@@ -148,3 +148,15 @@ Reportar:
 - residual search;
 - unresolved;
 - next step.
+
+## CF-UX-054 — exclusão de competência
+
+Aceite da implementação, sem deploy e sem exclusão de setembro/outubro de 2026:
+
+- `access` recebe 403; `manage` e superusuário humano reconhecido pela Core autorizam; service principal é recusado; RBAC indisponível falha fechado.
+- Competência vazia é excluída com read-back e auditoria preservada.
+- Checklist, documento ou outra FK operacional bloqueia, sem cascata.
+- Replay da mesma chave não exclui outra competência.
+- CLARA `competence.delete` segue PREPARE, confirmação explícita e ACT.
+- O Portal só mostra a ação para `manage` efetivo.
+- Ledger e contrato: [162](./162-cf-ux-054-exclusao-competencia-mensal.md).

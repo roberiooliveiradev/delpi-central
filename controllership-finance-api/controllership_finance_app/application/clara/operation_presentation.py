@@ -366,6 +366,28 @@ def _present_competence_open(p: dict) -> dict:
     )
 
 
+def _present_competence_delete(p: dict) -> dict:
+    return _simple(
+        "Excluir",
+        (
+            f"a competência {_period_of(p)} "
+            f"({_short(p.get('expected_competence_id'))})"
+        ),
+        effect=(
+            "a competência deixa de existir. A exclusão é irreversível "
+            "por este canal e só ocorre sem documentos, checklist, "
+            "pendências, pacotes ou outras dependências operacionais. "
+            "A auditoria de abertura permanece."
+        ),
+        motivation=p.get("reason"),
+        summary=(
+            f"Excluir a competência {_period_of(p)}, "
+            f"identificador {_short(p.get('expected_competence_id'))}, "
+            f"pelo motivo informado. A operação não remove logs."
+        ),
+    )
+
+
 def _present_pendency_create(p: dict) -> dict:
     return _simple(
         "Criar",
@@ -825,6 +847,7 @@ _PRESENTERS: dict[str, Callable[[dict], dict]] = {
     "clarification.open": _clarification_open,
     "clarification.resolve": _clarification_resolve,
     "competence.open": _present_competence_open,
+    "competence.delete": _present_competence_delete,
     "pendency.create": _present_pendency_create,
     "pendency.claim": _present_pendency_claim,
     "pendency.reassign": _present_pendency_reassign,

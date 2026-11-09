@@ -20,7 +20,14 @@ const cockpitMock = vi.fn();
 const listCompetencesMock = vi.fn();
 const getCompetenceMock = vi.fn();
 const openCompetenceMock = vi.fn();
+const diagnoseDeletionMock = vi.fn();
+const deleteCompetenceMock = vi.fn();
 const listP3EventsMock = vi.fn();
+const viewerCaps = vi.hoisted(() => ({
+  access: true,
+  manage: false,
+  accessDre: false,
+}));
 
 vi.mock("../../api/packagesApi", () => ({
   getClosingCockpit: (...args: unknown[]) => cockpitMock(...args),
@@ -34,6 +41,13 @@ vi.mock("../../api/competencesApi", () => ({
   listCompetences: (...args: unknown[]) => listCompetencesMock(...args),
   getCompetence: (...args: unknown[]) => getCompetenceMock(...args),
   openCompetence: (...args: unknown[]) => openCompetenceMock(...args),
+  diagnoseCompetenceDeletion: (...args: unknown[]) =>
+    diagnoseDeletionMock(...args),
+  deleteCompetence: (...args: unknown[]) => deleteCompetenceMock(...args),
+}));
+
+vi.mock("../../app/ViewerContext", () => ({
+  useViewerCapabilities: () => viewerCaps,
 }));
 
 vi.mock("./MonthlyDocumentsPanel", () => ({
@@ -184,6 +198,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  viewerCaps.manage = false;
   setLocation();
 });
 
@@ -1029,5 +1044,86 @@ describe("Visão geral V0.2 — atenção traduzida, eixos e conclusão/envio", 
       "Existe uma situação pendente que precisa ser verificada",
     );
     expect(screen.queryByText(/mystery_blocker_xyz/)).toBeNull();
+  });
+});
+
+describe("exclusão administrativa de competência", () => {
+  it("não oferece exclusão para quem tem apenas access", async () => {
+    setLocation();
+    viewerCaps.manage = false;
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    render(<MonthlyClosingPage basePath={BASE} />);
+    await screen.findByText("10/2026");
+    expect(screen.queryByRole("button", { name: "Excluir competência" })).toBeNull();
+  });
+
+  it("mostra o período e impede confirmar quando o diagnóstico bloqueia", async () => {
+    setLocation();
+    viewerCaps.manage = true;
+    listCompetencesMock.mockResolvedValue([COMPETENCES[0]]);
+    diagnoseDeletionMock.mockResolvedValue({
+      outcome: "blocked",
+      period: "2026-10",
+      competence_id: "c-oct",
+      status: "OPEN",
+      reasons: [{ code: "closing_document", count: 2, label: "documentos" }],
+    });
+    render(<MonthlyClosingPage basePath={BASE} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Excluir competência" }));
+    expect(
+      await screen.findByRole("dialog", { name: /outubro de 2026/ }),
+    ).toBeTruthy();
+    expect(screen.getByText(/documentos \(2\)/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Confirmar exclusão" })).toHaveProperty(
+      "disabled",
+      true,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(deleteCompetenceMock).not.toHaveBeenCalled();
+  });
+
+  it("confirma uma vez e atualiza a lista", async () => {
+    setLocation();
+    viewerCaps.manage = true;
+    listCompetencesMock.mockResolvedValue([COMPETENCES[0]]);
+    diagnoseDeletionMock.mockResolvedValue({
+      outcome: "eligible",
+      period: "2026-10",
+      competence_id: "c-oct",
+      status: "OPEN",
+      reasons: [],
+    });
+    let resolveDelete: (value: unknown) => void = () => {};
+    deleteCompetenceMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveDelete = resolve;
+        }),
+    );
+    render(<MonthlyClosingPage basePath={BASE} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Excluir competência" }));
+    await screen.findByText(/Nenhuma dependência operacional/);
+    fireEvent.change(screen.getByLabelText("Motivo"), {
+      target: { value: "Abertura sem uso operacional." },
+    });
+    fireEvent.change(screen.getByLabelText("Confirmação da competência 2026-10"), {
+      target: { value: "2026-10" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar exclusão" }));
+    expect(await screen.findByRole("button", { name: "Excluindo…" })).toHaveProperty(
+      "disabled",
+      true,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Excluindo…" }));
+    expect(deleteCompetenceMock).toHaveBeenCalledTimes(1);
+    listCompetencesMock.mockResolvedValue([]);
+    resolveDelete({
+      competence_id: "c-oct",
+      period: "2026-10",
+      deleted: true,
+      deleted_at: "2026-11-09T00:00:00Z",
+      audit_reference: "audit-1",
+    });
+    await waitFor(() => expect(listCompetencesMock).toHaveBeenCalledTimes(2));
   });
 });

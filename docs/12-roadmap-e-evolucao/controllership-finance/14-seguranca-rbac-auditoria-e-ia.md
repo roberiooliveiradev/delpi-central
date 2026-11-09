@@ -33,7 +33,8 @@ Autoriza administração/configuração:
 - vigências;
 - promoção de item excepcional;
 - correções estruturais;
-- publicação.
+- publicação;
+- exclusão de competência mensal sem dependência operacional (CF-UX-054). `access` isoladamente não autoriza. Superusuário humano segue o effective permission da Core. A auditoria de abertura permanece.
 
 `MANAGE` não implica automaticamente `ACCESS` operacional. Se o mesmo usuário precisar usar as superfícies operacionais, deve possuir `controllership-finance.access` conforme effective permissions do Core.
 

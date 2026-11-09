@@ -474,6 +474,8 @@ def _semantic_catalog(identity: dict | None = None) -> dict:
     governed = []
     try:
         for cap in _governed_writes().capabilities():
+            if cap["capability"] == "competence.delete" and not managed:
+                continue
             entity, _, action = cap["capability"].partition(".")
             governed.append(
                 _entry(
@@ -604,9 +606,20 @@ def tool_get_context(
                 "topic=schema exige entity e action.",
                 error_code="validation_error",
             )
-        schema = _schema_for(
-            entity.strip().lower(), action.strip().lower()
-        )
+        entity_name = entity.strip().lower()
+        action_name = action.strip().lower()
+        if (
+            entity_name == "competence"
+            and action_name == "delete"
+            and not identity.get("is_manage")
+        ):
+            return _err(
+                "A exclusão de competência é administrativa e não está "
+                "disponível para este ator.",
+                status_code=403,
+                error_code="forbidden",
+            )
+        schema = _schema_for(entity_name, action_name)
         if schema is None:
             return _err(
                 f"Action desconhecida: {entity}.{action}.",

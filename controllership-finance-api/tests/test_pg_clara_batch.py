@@ -158,7 +158,7 @@ def _configure_db():
 def env(_configure_db):
     applied = mr.run_migrations()
     assert "V019__clara_direct_execution_idempotency.sql" in applied
-    assert applied[-1] == "V020__clara_batch_mcp_confirmation_mode.sql"
+    assert applied[-1] == "V021__closing_audit_competence_set_null.sql"
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])
     checklist.submit_version_for_review(template_id, 1, actor=ADMIN)

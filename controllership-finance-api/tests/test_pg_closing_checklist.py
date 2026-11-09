@@ -141,6 +141,8 @@ def migrated(_configure_db):
         "V017__document_requirement_operations.sql",
         "V018__recipient_document_delivery.sql",
         "V019__clara_direct_execution_idempotency.sql",
+        "V020__clara_batch_mcp_confirmation_mode.sql",
+        "V021__closing_audit_competence_set_null.sql",
     ]
     return True
 

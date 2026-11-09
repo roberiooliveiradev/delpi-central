@@ -926,6 +926,36 @@ class ClosingChecklistRepository:
             )
         return row
 
+    def diagnose_competence_deletion(self, period: str) -> dict[str, Any]:
+        from controllership_finance_app.infrastructure.persistence.competence_deletion import (
+            diagnose_competence_deletion,
+        )
+
+        return diagnose_competence_deletion(period)
+
+    def delete_competence(
+        self,
+        period: str,
+        *,
+        actor: str,
+        expected_competence_id: str,
+        reason: str,
+        idempotency_key: str,
+        channel: str = "portal",
+    ) -> dict[str, Any]:
+        from controllership_finance_app.infrastructure.persistence.competence_deletion import (
+            delete_competence,
+        )
+
+        return delete_competence(
+            period,
+            actor=actor,
+            expected_competence_id=expected_competence_id,
+            reason=reason,
+            idempotency_key=idempotency_key,
+            channel=channel,
+        )
+
     def list_competence_items(
         self,
         period: str,

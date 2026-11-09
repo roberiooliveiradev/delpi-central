@@ -30,6 +30,7 @@ from psycopg.rows import dict_row
 
 from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
+    CompetenceDeleteBlocked,
     MissingReason,
 )
 from controllership_finance_app.application.clara.operation_presentation import (
@@ -305,6 +306,27 @@ class ClaraGovernedWrites:
                 return {
                     "package_version_id": str(version_id),
                     "version": version,
+                }
+            if capability == "competence.delete":
+                diagnosis = self._checklist.diagnose_competence_deletion(
+                    str(period)
+                )
+                if diagnosis.get("outcome") != "eligible":
+                    reasons = diagnosis.get("reasons") or []
+                    summary = ", ".join(
+                        f"{item.get('label')} ({item.get('count')})"
+                        for item in reasons
+                    ) or "dependência não detalhada"
+                    raise CompetenceDeleteBlocked(
+                        "A competência não pode ser excluída: " + summary,
+                        details=diagnosis,
+                    )
+                return {
+                    "competence": {
+                        "status": diagnosis.get("status"),
+                        "competence_id": diagnosis.get("competence_id"),
+                        "dependency_count": 0,
+                    }
                 }
             if capability in (
                 "competence.open",
@@ -934,6 +956,44 @@ class ClaraGovernedWrites:
                 "postcondition": lambda p, result, actor: (
                     self._competence_state(p["period"]).get("status")
                     == "OPEN"
+                ),
+            },
+            "competence.delete": {
+                "gate": "manage",
+                "destructive": True,
+                "direct": False,
+                "resource_type": "monthly_competence",
+                "resource_key": lambda p: str(_require(p, "period")),
+                "required_params": (
+                    "period",
+                    "expected_competence_id",
+                    "reason",
+                    "idempotency_key",
+                ),
+                "describe": lambda p: (
+                    f"excluir a competência {p['period']} "
+                    f"({p.get('expected_competence_id')})"
+                ),
+                "execute": lambda p, actor, groups: (
+                    self._checklist.delete_competence(
+                        p["period"],
+                        actor=actor,
+                        expected_competence_id=str(
+                            p["expected_competence_id"]
+                        ),
+                        reason=p["reason"],
+                        idempotency_key=p["idempotency_key"],
+                        channel="mcp",
+                    )
+                ),
+                "verify": lambda p, result: bool(
+                    (result or {}).get("deleted")
+                ),
+                "postcondition": lambda p, result, actor: (
+                    self._competence_state(p["period"]).get("status")
+                    == "NOT_OPEN"
+                    and str((result or {}).get("competence_id"))
+                    == str(p.get("expected_competence_id"))
                 ),
             },
             "pendency.create": {

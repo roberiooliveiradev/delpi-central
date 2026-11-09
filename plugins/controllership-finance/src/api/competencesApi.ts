@@ -1,5 +1,5 @@
 /** Cliente da BFF — Competências e checklist esperado (P2-READ). */
-import { cfApiUrl, httpGet, httpPost } from "./httpClient";
+import { cfApiUrl, httpDelete, httpGet, httpPost } from "./httpClient";
 
 export type CompetenceSheet = "ELETRONICO" | "FISICO";
 export type CompetenceItemOrigin = "TOTVS" | "EXTERNAL" | "MIXED";
@@ -155,6 +155,63 @@ export async function openCompetence(
   );
   if (!envelope?.data) {
     throw new Error("Resposta vazia ao abrir a competência.");
+  }
+  return envelope.data;
+}
+
+export type CompetenceDeletionReason = {
+  code: string;
+  count: number;
+  label: string;
+};
+
+export type CompetenceDeletionDiagnosis = {
+  outcome: "eligible" | "blocked" | "not_found" | "unavailable";
+  competence_id?: string;
+  period: string;
+  status?: string;
+  reasons: CompetenceDeletionReason[];
+};
+
+export type CompetenceDeletionResult = {
+  competence_id: string;
+  period: string;
+  deleted: boolean;
+  deleted_at: string;
+  audit_reference: string;
+  replayed?: boolean;
+};
+
+export async function diagnoseCompetenceDeletion(
+  period: string,
+  options?: { signal?: AbortSignal },
+): Promise<CompetenceDeletionDiagnosis> {
+  const envelope = await httpGet<Envelope<CompetenceDeletionDiagnosis>>(
+    cfApiUrl(`/closing/competences/${period}/deletion-eligibility`),
+    options,
+  );
+  if (!envelope?.data) {
+    throw new Error("Diagnóstico de exclusão indisponível.");
+  }
+  return envelope.data;
+}
+
+export async function deleteCompetence(
+  period: string,
+  body: {
+    expected_competence_id: string;
+    reason: string;
+    idempotency_key: string;
+  },
+  options?: { signal?: AbortSignal },
+): Promise<CompetenceDeletionResult> {
+  const envelope = await httpDelete<Envelope<CompetenceDeletionResult>>(
+    cfApiUrl(`/closing/competences/${period}`),
+    body,
+    options,
+  );
+  if (!envelope?.data?.deleted) {
+    throw new Error("A exclusão não foi confirmada pela Central de Fechamento.");
   }
   return envelope.data;
 }

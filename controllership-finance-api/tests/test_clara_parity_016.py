@@ -248,6 +248,7 @@ def test_read_tool_delegates_to_canonical_route(monkeypatch):
 
 NEW_CAPS = [
     "competence.open",
+    "competence.delete",
     "pendency.create",
     "pendency.reassign",
     "pendency.transition",
@@ -289,6 +290,7 @@ NEW_CAPS = [
 ]
 
 DESTRUCTIVE_CAPS = {
+    "competence.delete",
     "package.confirm_terminal_rejection",
     "item.cancel",
     "document.cancel",
@@ -360,6 +362,7 @@ def _writers_with(**identity):
 
 # Mapa Portal→CLARA: rotas com `authorized_admin`/`_require_manage`.
 MANAGE_CAPS = (
+    "competence.delete",
     "catalog.entry_create",
     "catalog.entry_update",
     "catalog.entry_deactivate",

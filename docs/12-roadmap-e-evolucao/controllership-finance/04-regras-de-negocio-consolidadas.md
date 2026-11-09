@@ -428,3 +428,7 @@ READY_FOR_IMPLEMENTATION_BRIEF != IMPLEMENTATION_AUTHORIZED
 FASE A não cria runtime.
 
 **Decisões P5 vigentes:** [37 — contrato canônico de revisão, C2, P5-A..J e DEC-01..04](./37-p5-submissao-e-revisao-no-portal.md). RQ/AC em [23](./23-ledger-rq-ac-testes.md); histórico de gates não é contrato ativo. `IMPLEMENTATION_AUTHORIZED=NO`.
+
+### RULE-CF-UX-054 — Exclusão de competência mensal
+
+A exclusão é administrativa e exige `controllership-finance.manage` efetivo. `access` isoladamente não autoriza. Só pode ser excluída a competência sem checklist, documento, decisão, pendência, pacote, evento de processo ou outra dependência operacional. A auditoria de abertura permanece. Portal e CLARA usam o mesmo caso de uso. Detalhe em [162](./162-cf-ux-054-exclusao-competencia-mensal.md).

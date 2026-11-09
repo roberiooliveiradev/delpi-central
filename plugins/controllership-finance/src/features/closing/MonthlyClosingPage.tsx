@@ -27,6 +27,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -65,6 +66,8 @@ import {
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
+import { useViewerCapabilities } from "../../app/ViewerContext";
+import { DeleteCompetenceControl } from "./DeleteCompetenceControl";
 import {
   invalidateP3,
   invalidateReportMatrix,
@@ -315,6 +318,7 @@ export function MonthlyClosingPage({
   const cockpitRequestId = useRef(0);
   const probeRequestId = useRef(0);
   const base = normalizeBasePath(basePath);
+  const canDeleteCompetence = useViewerCapabilities().manage;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -441,6 +445,28 @@ export function MonthlyClosingPage({
       `${base}/closing/monthly-closing/${period}?${params}`,
     );
   }, [base, period, documentsSearch, documentsState]);
+
+  const competenceColumns = useMemo(() => {
+    if (!canDeleteCompetence) return COMPETENCE_COLUMNS;
+    return [
+      ...COMPETENCE_COLUMNS,
+      {
+        key: "delete",
+        header: "Ações",
+        render: (row: ClosingCompetence) => (
+          <DeleteCompetenceControl
+            competence={row}
+            onDeleted={(deletedPeriod) => {
+              setRetryNonce((current) => current + 1);
+              if (deletedPeriod === period) {
+                navigatePluginPath(`${base}/closing/monthly-closing`);
+              }
+            }}
+          />
+        ),
+      },
+    ];
+  }, [base, canDeleteCompetence, period]);
 
   const listKey = `list:${retryNonce}`;
   const currentList = listResult?.key === listKey ? listResult : null;
@@ -859,7 +885,7 @@ export function MonthlyClosingPage({
             <DataTableSection<ClosingCompetence>
               title="Fechamentos abertos"
               titleHint={CF_HELP.monthlyClosing.page}
-              columns={COMPETENCE_COLUMNS}
+              columns={competenceColumns}
               rows={competences}
               rowKey={(row) => row.competence_id}
               hideSearch

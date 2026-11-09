@@ -22,6 +22,7 @@ from controllership_finance_app.infrastructure.persistence.closing_checklist_rep
 )
 from controllership_finance_app.interface.http.authz import (
     actor_subject,
+    authorized_admin,
     authorized_user,
 )
 
@@ -39,12 +40,22 @@ def _repository() -> ClosingChecklistRepository:
 
 
 def _domain_fail(exc: ChecklistDomainError, operation_id: str):
+    error = {"code": exc.code}
+    details = getattr(exc, "details", None)
+    if details:
+        error["details"] = details
     return fail(
         exc.message,
         exc.status,
-        data={"error": {"code": exc.code}},
+        data={"error": error},
         operation_id=operation_id,
     )
+
+
+class DeleteCompetenceRequest(BaseModel):
+    expected_competence_id: str = Field(min_length=36, max_length=36)
+    reason: str = Field(min_length=3, max_length=500)
+    idempotency_key: str = Field(min_length=8, max_length=128)
 
 
 @router.get("", operation_id="list_closing_competences")
@@ -95,6 +106,57 @@ def get_closing_competence(
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "get_closing_competence")
     return ok(competence, operation_id="get_closing_competence")
+
+
+@router.get(
+    "/{period}/deletion-eligibility",
+    operation_id="diagnose_closing_competence_deletion",
+)
+def diagnose_closing_competence_deletion(
+    request: Request,
+    period: str = Path(pattern=PERIOD_PATTERN),
+):
+    authorized_admin(request)
+    try:
+        diagnosis = _repository().diagnose_competence_deletion(period)
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "diagnose_closing_competence_deletion")
+    return ok(
+        diagnosis,
+        operation_id="diagnose_closing_competence_deletion",
+    )
+
+
+@router.delete(
+    "/{period}",
+    operation_id="delete_closing_competence",
+)
+def delete_closing_competence(
+    request: Request,
+    body: DeleteCompetenceRequest,
+    period: str = Path(pattern=PERIOD_PATTERN),
+):
+    user = authorized_admin(request)
+    try:
+        result = _repository().delete_competence(
+            period,
+            actor=actor_subject(user),
+            expected_competence_id=body.expected_competence_id,
+            reason=body.reason,
+            idempotency_key=body.idempotency_key,
+            channel="portal",
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "delete_closing_competence")
+    return ok(
+        result,
+        message=(
+            "Exclusão já registrada."
+            if result.get("replayed")
+            else "Competência excluída."
+        ),
+        operation_id="delete_closing_competence",
+    )
 
 
 @router.get(

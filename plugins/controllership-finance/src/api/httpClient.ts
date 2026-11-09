@@ -161,11 +161,17 @@ export async function httpPut<T>(
 
 export async function httpDelete<T>(
   url: string,
+  body?: unknown,
   options: RequestOptions = {},
 ): Promise<T> {
+  const headers = buildHeaders();
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+  }
   const response = await fetch(url, {
     method: "DELETE",
-    headers: buildHeaders(),
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
     signal: options.signal,
   });
 

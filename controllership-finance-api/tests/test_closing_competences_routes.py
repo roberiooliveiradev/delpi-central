@@ -282,3 +282,112 @@ def test_get_item_not_found(_auth_pipeline, repo):
     )
     assert response.status_code == 404
     assert response.json()["data"]["error"]["code"] == "item_not_found"
+
+
+COMPETENCE_ID = "44444444-4444-4444-8444-444444444444"
+DELETE_BODY = {
+    "expected_competence_id": COMPETENCE_ID,
+    "reason": "Competência aberta sem uso operacional.",
+    "idempotency_key": "delete-competence-key",
+}
+
+
+def _delete(client, period="2026-10", *, headers=None):
+    return client.request(
+        "DELETE",
+        f"/closing/competences/{period}",
+        headers=headers,
+        json=DELETE_BODY,
+    )
+
+
+def test_delete_requires_bearer(repo):
+    response = _delete(_client())
+    assert response.status_code == 401
+    repo.delete_competence.assert_not_called()
+
+
+def test_delete_access_only_forbidden(_auth_pipeline, repo):
+    response = _delete(_client(), headers=_headers())
+    assert response.status_code == 403
+    repo.delete_competence.assert_not_called()
+
+
+def test_delete_manage_authorized(_auth_pipeline, repo):
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS, MANAGE])
+    repo.delete_competence.return_value = {
+        "competence_id": COMPETENCE_ID,
+        "period": "2026-10",
+        "deleted": True,
+        "deleted_at": "2026-11-09T12:00:00+00:00",
+        "audit_reference": "audit-1",
+        "replayed": False,
+    }
+    response = _delete(_client(), headers=_headers())
+    assert response.status_code == 200
+    body = response.json()["data"]
+    assert body["deleted"] is True
+    assert body["audit_reference"] == "audit-1"
+    assert repo.delete_competence.call_args.kwargs["actor"] == (
+        "33333333-3333-4333-8333-333333333333"
+    )
+
+
+def test_delete_human_superadmin_authorized(_auth_pipeline, repo):
+    _auth_pipeline["rbac"] = _rbac(permissions=[], is_superadmin=True)
+    repo.delete_competence.return_value = {
+        "competence_id": COMPETENCE_ID,
+        "period": "2026-10",
+        "deleted": True,
+        "deleted_at": "2026-11-09T12:00:00+00:00",
+        "audit_reference": "audit-2",
+    }
+    response = _delete(_client(), headers=_headers())
+    assert response.status_code == 200
+    repo.delete_competence.assert_called_once()
+
+
+def test_delete_service_principal_denied(monkeypatch, repo):
+    monkeypatch.setattr(
+        fa, "request_has_valid_internal_service_token", lambda request: True
+    )
+    response = _delete(_client(), headers=_headers())
+    assert response.status_code == 403
+    repo.delete_competence.assert_not_called()
+
+
+def test_delete_rbac_unavailable_fails_closed(_auth_pipeline, repo):
+    _auth_pipeline["rbac"] = _rbac(
+        permissions=[ACCESS, MANAGE], rbac_unavailable=True
+    )
+    response = _delete(_client(), headers=_headers())
+    assert response.status_code == 503
+    repo.delete_competence.assert_not_called()
+
+
+def test_delete_not_found_maps_code(_auth_pipeline, repo):
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS, MANAGE])
+    repo.delete_competence.side_effect = de.CompetenceNotFound("ausente")
+    response = _delete(_client(), headers=_headers())
+    assert response.status_code == 404
+    assert response.json()["data"]["error"]["code"] == "competence_not_found"
+
+
+def test_delete_blocked_maps_reasons(_auth_pipeline, repo):
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS, MANAGE])
+    repo.delete_competence.side_effect = de.CompetenceDeleteBlocked(
+        "bloqueada",
+        details={"reasons": [{"code": "closing_document", "count": 2}]},
+    )
+    response = _delete(_client(), headers=_headers())
+    assert response.status_code == 409
+    error = response.json()["data"]["error"]
+    assert error["code"] == "competence_delete_blocked"
+    assert error["details"]["reasons"][0]["count"] == 2
+
+
+def test_delete_invalid_period_422(_auth_pipeline, repo):
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS, MANAGE])
+    response = _delete(_client(), "2026-13", headers=_headers())
+    assert response.status_code == 422
+    repo.delete_competence.assert_not_called()
