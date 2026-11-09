@@ -860,6 +860,10 @@ export const copy = {
     columns: {
       product: "Material",
       workCenter: "CT",
+      inventoryBlock: "Inventário",
+      toDeliver: "A entregar",
+      firstScheduled: "Primeira programação",
+      order: "OP / Operação",
       unit: "UM",
       required: "Necessário",
       factory: "Na fábrica",
