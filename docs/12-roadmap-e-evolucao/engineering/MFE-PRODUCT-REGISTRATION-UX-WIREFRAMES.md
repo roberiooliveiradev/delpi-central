@@ -320,3 +320,25 @@ a decisão técnica depender do requester; correção ERP é manual e autorizada
 \`\`\`
 
 Um só banner/resumo detalhado por tentativa, sem duas mensagens vermelhas idênticas; fora da aba, aviso compacto/navegação. \`Observação\` informa diferença/limitação, não fica vazia para problemas. Textos longos expansíveis; fornecedor discriminado por código + loja + atributo PN/Catálogo; filtro visual sem perder histórico. Ação \`Revisar campo\` muda para \`Ficha técnica\`, rola/foca/destaca alvo sem alterar dado; quando impossível, fallback honesto. Usar padrões oficiais \`@delpi/plugin-ui\`, teclado/zoom200/mobile e screenshots reais DEV. Comparação é somente da Engineering API, nunca do frontend.
+
+## PRC-REF-021 — Wireframe simplificado: uma tabela para diagnosticar e decidir (PO 2026-11-09)
+
+**\`PO_APPROVED_TARGET / PLANNED\`.** O PO rejeitou a engenharia visual repetitiva (banners grandes, resumo extenso, cartões e blocos duplicados). **Uma tabela resolve.**
+
+\`\`\`text
+Verificação TOTVS · Produto 10080022 · 09/11/2026 15:51
+Conclusão bloqueada — 4 divergências · Em atendimento
+[Problemas (4)] [Todos (11)]
+
+Campo                  Solicitado        TOTVS               Situação      Encaminhamento
+Unidade                UN                PC                  Divergente    [Definir]
+Grupo                  1001              1008                Divergente    [Definir]
+Descrição              REF019-FIX02 6    TERM. OLHAL...      Divergente    [Definir]
+Referência cliente     REF...            Vazio verificado    Divergente    [Definir]
+Fornecedor 000123/01
+  Part Number           PN-2026           PN-2025             Divergente    [Definir]
+...
+[Histórico de tentativas ▾]
+\`\`\`
+
+**Sem** duplicar mensagem de erro acima da aba e dentro de painel; sem segunda tabela para fornecedores; **sem coluna de observação longa** que imponha scroll horizontal. O motivo e a orientação aparecem na expansão da própria linha, acionados por usuário e por teclado. Valores extensos quebram/expandem. Os números reais vêm da mesma tentativa, sem contagem duplicada SA5. Ação \`Definir\` abre interação simples com \`Solicitar correção ao solicitante\` / \`Ajuste manual TOTVS\` / \`Pedir esclarecimento\`; apenas a Engenharia autorizada escolhe, sem mudar MATCH automaticamente. O solicitante só edita ficha por contrato de correção estruturada aprovado; ERP só muda manualmente por operador autorizado. Após correção, \`Concluir atendimento\` repete leitura oficial, permanecendo bloqueado se houver qualquer erro. Filtro/ação, focus, feedback e a11y via \`@delpi/plugin-ui\`, sem visualização em cartões concorrentes.
