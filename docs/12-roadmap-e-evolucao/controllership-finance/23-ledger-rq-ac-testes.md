@@ -1526,3 +1526,6 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | Correção de saldo 01 | NÃO APLICÁVEL | Ausência legítima do ERP — não inventar snapshot; owner = fechamento Protheus Matriz |
 | Diff produto | MFE honesty | data civil + aviso consolidado parcial; layout doc 157 preservado |
 | Deploy inventário fictício | PROIBIDO | Sem deploy que fabrique Filial 01 |
+| Deploy honesty UX | PASS | SHA `0ea36d58b3`; imagem MFE `355666a2421d…`; rollback `ce8582865e44…` |
+| Smoke autenticado CLARA pós-fix | TEST_NOT_RUN | Sem sessão no executor; estados 01/02/all inalterados na origem |
+| Residual operacional | PENDING | Fechamento Protheus Filial 01 competência 2026-10 (`MV_ULMES` → `20261031` + SB9) |
