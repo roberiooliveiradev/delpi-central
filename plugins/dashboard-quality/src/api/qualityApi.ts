@@ -21,6 +21,7 @@ import type {
   ListNonconformitiesParams,
   Nonconformity,
   NonconformitySeriesResponse,
+  NcOperatorRankingResponse,
 } from "../types/nonconformity";
 import type { ChartGranularity } from "../types/chart";
 import type {
@@ -88,6 +89,28 @@ export async function listNonconformities(
       description: params.description,
       page: params.page,
       page_size: params.page_size,
+    },
+    signal
+  );
+}
+
+export async function getNcOperatorRanking(
+  params: Omit<ListNonconformitiesParams, "page" | "page_size"> & {
+    operator_code?: string;
+  } = {},
+  signal?: AbortSignal
+): Promise<NcOperatorRankingResponse> {
+  return fetchQualityData<NcOperatorRankingResponse>(
+    "/nonconformities/operators",
+    {
+      type: params.type ?? "all",
+      branch: params.branch,
+      start_date: params.start_date,
+      end_date: params.end_date,
+      status: params.status,
+      item_code: params.item_code,
+      description: params.description,
+      operator_code: params.operator_code,
     },
     signal
   );

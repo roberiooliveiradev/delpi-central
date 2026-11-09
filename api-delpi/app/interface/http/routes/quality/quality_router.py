@@ -229,6 +229,58 @@ def get_nonconformity_streak(
         )
 
 
+@router.get(
+    "/nonconformities/operators",
+    operation_id="get_nonconformity_operator_ranking",
+)
+@require_any_permission(KPI_QUALITY_ACCESS)
+def get_nonconformity_operator_ranking_route(
+    type: str = NONCONFORMITY_TYPE_QUERY(),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
+    status: Optional[str] = NONCONFORMITY_QI2_STATUS_QUERY(),
+    item_code: Optional[str] = None,
+    description: Optional[str] = None,
+    operator_code: Optional[str] = Query(default=None, max_length=30),
+):
+    """Ranking em todos os registros filtrados, nunca na página corrente."""
+    try:
+        from app.application.use_cases.nonconformity.get_operator_ranking_use_case import (
+            get_nonconformity_operator_ranking,
+        )
+
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
+            date_start=date_start,
+            date_end=date_end,
+        )
+        result = get_nonconformity_operator_ranking(
+            type=type,
+            branch=branch,
+            date_start=start_date,
+            date_end=end_date,
+            status=status,
+            item_code=item_code,
+            description=description,
+            operator_code=operator_code,
+        )
+        return api_delpi_success(
+            result, operation_id="get_nonconformity_operator_ranking"
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao buscar ranking de operadores por NC: {exc}")
+        return error_response(
+            "Erro interno ao buscar ranking de operadores por NC.",
+            status_code=500,
+        )
+
+
 @router.get("/nonconformities", operation_id="list_nonconformities")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def list_nonconformity_route(

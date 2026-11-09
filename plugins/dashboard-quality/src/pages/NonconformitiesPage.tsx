@@ -13,6 +13,9 @@ import {
 } from "recharts";
 
 import { ChartCard } from "../components/ChartCard";
+import { NcOperatorRanking } from "../components/NcOperatorRanking";
+import { getNcOperatorRanking } from "../api/qualityApi";
+import { useQualityResource } from "../hooks/useQualityResource";
 import { ChartToolbar } from "../components/ChartToolbar";
 import type { DataTableColumn } from "../components/DataTable";
 import { DataTableSection } from "../components/DataTableSection";
@@ -63,6 +66,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
   const [status, setStatus] = useState("");
   const [itemCode, setItemCode] = useState("");
   const [description, setDescription] = useState("");
+  const [selectedOperatorCode, setSelectedOperatorCode] = useState("");
 
   const {
     dateStart,
@@ -145,6 +149,44 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
     filters: chartFilters,
     granularity,
   });
+
+  const {
+    data: operatorRanking,
+    loading: operatorRankingLoading,
+    error: operatorRankingError,
+    reload: reloadOperatorRanking,
+  } = useQualityResource(
+    (signal) =>
+      getNcOperatorRanking(
+        {
+          ...chartFilters,
+          operator_code: selectedOperatorCode || undefined,
+        },
+        signal
+      ),
+    [
+      chartFilters.type,
+      chartFilters.branch,
+      chartFilters.start_date,
+      chartFilters.end_date,
+      chartFilters.status,
+      chartFilters.item_code,
+      chartFilters.description,
+      selectedOperatorCode,
+    ]
+  );
+
+  useEffect(() => {
+    setSelectedOperatorCode("");
+  }, [
+    chartFilters.type,
+    chartFilters.branch,
+    chartFilters.start_date,
+    chartFilters.end_date,
+    chartFilters.status,
+    chartFilters.item_code,
+    chartFilters.description,
+  ]);
 
   useEffect(() => {
     setPage(1);
@@ -281,6 +323,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
   const handleRefresh = () => {
     reload();
     reloadChart();
+    reloadOperatorRanking();
   };
 
   const hasChartValues = chartData.some((point) => point.value > 0);
@@ -431,6 +474,15 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
           ) : null}
         </ChartCard>
       </section>
+
+      <NcOperatorRanking
+        data={operatorRanking}
+        loading={operatorRankingLoading}
+        error={operatorRankingError}
+        operatorCode={selectedOperatorCode}
+        onOperatorChange={setSelectedOperatorCode}
+        onRetry={reloadOperatorRanking}
+      />
 
       <DataTableSection
         columnPreferencesKey="dashboard-quality:NonconformitiesPage:registros:v1"
