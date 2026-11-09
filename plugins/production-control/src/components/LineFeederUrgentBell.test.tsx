@@ -147,7 +147,7 @@ describe("LineFeederUrgentBell (C5)", () => {
     listMock
       .mockResolvedValueOnce(queueOf([makeRequest({ status: "picked" })]))
       .mockResolvedValueOnce(queueOf([]));
-    patchMock.mockResolvedValue(makeRequest({ status: "delivered" }));
+    patchMock.mockResolvedValue({ ...makeRequest(), status: "delivered" });
     render(<LineFeederUrgentBell branch="01" />);
 
     await openBell();
