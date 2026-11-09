@@ -106,7 +106,7 @@ D14 não é aceito por implementação parcial de UI ou backend. Se houver opera
 
 TASK_ID: ENG-PRC-D14-FIX-TABLE-AND-CONTEXTUAL-REASONS
 BASE_SHA: f1f4767b3015f07310ddc61769fe282528416086
-FINAL_SHA: 7c13fd75f0c20c2ac29c05155f6806612a2eb917
+FINAL_SHA: a15bfb32bf743a1235917d9836b203fe66684bad
 FOREIGN_DIFF_PRESERVED: delia-api/*, engineering-api/.../drawing/understanding.py, plugins/tv-dashboard-presentation/*, tv-dashboard-api/*
 
 B01_CREATE_COLLAPSIBLE_SEARCH: PASS — lupa exclusiva; busca fechada por padrão; Playwright autenticado desktop/tablet/mobile
