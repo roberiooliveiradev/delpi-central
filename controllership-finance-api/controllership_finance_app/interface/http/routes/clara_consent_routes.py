@@ -18,6 +18,11 @@ import uuid
 
 from fastapi import APIRouter, Path, Request
 
+from controllership_finance_app.application.clara.consent_channel import (
+    consent_channel,
+    conversational_act_enabled,
+    portal_consent_required,
+)
 from controllership_finance_app.application.clara.step_up_consent import (
     ClaraStepUpConsent,
 )
@@ -72,6 +77,27 @@ class ConsentAuthError(ChecklistDomainError):
 
 def _service() -> ClaraStepUpConsent:
     return ClaraStepUpConsent()
+
+
+@router.get(
+    "/consent-policy",
+    operation_id="get_clara_consent_policy",
+)
+def get_clara_consent_policy(request: Request):
+    """Read-only runtime policy for the legacy Portal consent surface.
+
+    Authenticated users may discover which channel is actually enabled.
+    This endpoint never authorizes an ACT or reveals internal ack secrets.
+    """
+    _actor(request)
+    return ok(
+        {
+            "consent_channel": consent_channel(),
+            "portal_consent_required": portal_consent_required(),
+            "conversational_act_armed": conversational_act_enabled(),
+        },
+        operation_id="get_clara_consent_policy",
+    )
 
 
 @router.get(
