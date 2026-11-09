@@ -228,6 +228,7 @@ export type DemandLine = {
   source?: DemandOrigin | "protheus" | "myweg";
   /** Necessidade MyWEG = planejamento do cliente (não pedido Protheus). */
   planning?: boolean;
+  op_coverage_incomplete?: boolean;
 };
 
 export type DemandHorizonBucket = {
@@ -509,6 +510,9 @@ export type DemandPayload = {
     adr_status?: string;
     official_aggregate?: boolean;
     op_unit_status?: string;
+    op_coverage_complete?: boolean;
+    op_verified_count?: number;
+    op_unverified_count?: number;
     coverage_mode?: string;
     productive_activation_blocked?: boolean;
     stock_data_complete?: boolean;
