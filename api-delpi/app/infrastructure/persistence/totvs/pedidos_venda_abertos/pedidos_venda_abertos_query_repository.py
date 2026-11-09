@@ -38,6 +38,7 @@ _ITEMS_SELECT = f"""
     v.entregue,
     v.saldo,
     {_LINE_UNIT_SQL} AS unidade,
+    RTRIM(COALESCE(B1.B1_TIPO, '')) AS tipo_produto,
     CONVERT(VARCHAR(10), v.data_despacho, 23) AS data_despacho,
     CONVERT(VARCHAR(10), v.data_entrega, 23) AS data_entrega,
     v.no_estoque,
