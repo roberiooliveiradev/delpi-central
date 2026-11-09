@@ -196,6 +196,8 @@ export type DemandCoveringOrder = {
   production_order: string;
   quantity: number;
   expected_date: string | null;
+  /** Texto da SC2.C2_OBS; ausente quando a OP não possui observação. */
+  observation?: string | null;
 };
 
 export type DemandOrigin = "protheus" | "myweg" | "both";
