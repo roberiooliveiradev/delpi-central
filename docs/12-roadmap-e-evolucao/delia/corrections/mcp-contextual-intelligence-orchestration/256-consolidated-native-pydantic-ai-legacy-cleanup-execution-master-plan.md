@@ -883,3 +883,8 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
   ambiente dev, não defeito de código/config já demonstrado.
 - Correções medidas entregues: contexto 16384, memória 6800M,
   retries 2, thinking disable, log-safety tipada.
+
+
+## 40. Fechamento transversal finito L/A/O/R — doc 293 (2026-11-09)
+
+**Decisão PO — nova trilha de aceite final, SEM reiniciar G0–G8.** O plano [293 — trilha finita T0–T5](./293-c3-four-gate-engineering-closure-finite-track.md) é o complemento executivo de fechamento para quatro gates simultâneos: `LEGACY_CLEANUP`, `ARCHITECTURE_OWNERSHIP`, `ORCHESTRATION_FLOW`, `FULL_REGRESSION`. Consome as execuções e decisões registradas neste documento, docs 239–255, ledger e HEAD atual; não reabre automaticamente trabalho aceito e não repete o inventário total. Ordem fixa: `T0 freeze → T1 limpeza comprovada → T2 boundaries → T3 fluxos/Outcome → T4 full regression → T5 review independente`. Uma task por etapa, até um rework bounded por etapa, avanço somente após review. **DoD global=ZERO_OPEN_MATERIAL + 4×PASS**; dependências externas e limitações de modelo não viram PASS por conveniência. **Estado neste registro: PLANNED/DOC_ONLY; sem código, teste, deploy ou avanço de fase.** Autorizar inicialmente apenas T0.
