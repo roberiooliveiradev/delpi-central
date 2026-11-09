@@ -446,3 +446,18 @@ Investigação offline instrumentada; **sem deploy**, **sem mudança de lógica 
 **Precisão de campo:** `TEST_NOT_RUN` / `INCONCLUSIVE` — sem GT owner. Completude MCP prévia permanece como no log acima; não reinterpretar completude como precisão.
 
 **Negativos preservados:** suite `test_association_integrity_dec040.py` = 12 passed na imagem `infra-engineering-api:latest` (inclui A9/AA/A2 e falsa associação G/9). `CODE_CHANGED_PRODUCTIVE=false` nesta rodada.
+
+### Log experimental — DEC-VAL-042 (2026-11-09) — gate nativo + descrição
+
+Correção determinística em `apply_native_table_observations` / `native_cells_preferable`. **Deploy não autorizado.** Validação offline com bind do módulo Understanding sobre imagem `infra-engineering-api:latest` (digest pré-deploy A9 `sha256:2662390f…`). Detalhe: Doc 119 §57.
+
+| PDF | SHA | Antes (DEC-041 / baseline) | Depois (candidato) | Gates |
+|---|---|---|---|---|
+| `90264026` | `4d0c2e2f…fec4` | B=`90264026 10090010`; desc null; topo fallback | B=`10090010`; desc `ISOLADOR…`; `span_conflict_tolerated`; fused=0 | `PASS` |
+| `90264004` | `5b6717df…19f4` | A9×2 / AA×2 / false_g9=0 | A9=2 AA=2 false_g9=0 chicote=0; 12/12 codes+desc | `PASS` |
+| `90264017` p9 | `5452aabd…32ee` | C–K corretos; false_g9=0 | C–K `PASS`; false_g9=0; conflicts tipados preservados | `PASS` |
+| `90264135` p10–13 | `af47dd4c…edf3` | fusões nativas | residual `fused_codes=5`; false_g9=0 | `PASS` (não forçado) |
+
+**Corpus 13 (Doc 120):** 13/13 `sha_match=true`; `false_g9` soma 0; `chicote_on_item` soma 0; inconsistências SLANet em p11 (`90264017`) e p9 (`90264030`) sem reabrir G/9. Precisão global **não declarada** (sem GT owner).
+
+**Testes:** `test_dec042_native_table_gate.py` + `test_dec041_visual_table_diagnostic.py` + `test_association_integrity_dec040.py` + `test_table_perception_native.py` → 35 passed no harness com o patch.

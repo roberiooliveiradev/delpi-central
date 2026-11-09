@@ -1658,6 +1658,32 @@ Contraste: p10 tem linhas “boas” (ex.: A1/A5/A6 com item+qtd+código+desc) a
 
 **Hipóteses invalidadas:** (H1) “falha 90264026 = falta de VLM” → **INVALIDADA**; (H2) “PP-StructureV3 instalado e operacional” → **INVALIDADA** (símbolo presente, pipeline deps falha); (H3) “qwen2.5vl:7b executável no Ollama atual” → **INVALIDADA** sob limite 4.4 GiB.
 
+## 57. DEC-VAL-042 — gate conservador de células nativas + projeção de descrição (2026-11-09)
+
+**Status:** `BOUNDED_FIX_VALIDATED / PRODUCTION_DEPLOY=NOT_AUTHORIZED`. Sem VLM, sem novo boundary, sem alteração de autoridade.
+
+**ROOT_CAUSE_NATIVE_GATE (PROVEN):** `apply_native_table_observations` descartava toda a grade quando `structure_consistent=false`, mesmo com limitação apenas `span_conflict` e células textuais associáveis. O fallback fundia `90264026`+`10090010`.
+
+**ROOT_CAUSE_DESCRIPTION_PROJECTION (PROVEN):** as descrições existiam nas células nativas (`rows_from_native_cells`); a perda ocorria porque o gate mantinha o fallback token-cluster, que não tipava/publicava `description`. Não há segundo mapper separado no caminho nativo.
+
+**Política `native_cells_preferable`:** aceita grade nativa se (a) `structure_consistent`, ou (b) limitações estruturais ⊆ `{span_conflict}` **e** há ≥1 associação item+código único **e** a nativa não introduz mais códigos fundidos que o fallback da página. Proveniência: `table_perception:span_conflict_tolerated`. Hard limitations (`bbox_count_mismatch`, `empty_structure`, …) continuam a rejeitar.
+
+| RQ | Resultado |
+|---|---|
+| RQ-042-01 gate conservador | `PASS` — 90264026 aplica nativo com `span_conflict_tolerated` |
+| RQ-042-02 conjunto×componente | `PASS` — B→`10090010` (SHA `4d0c2e2f…fec4`) |
+| RQ-042-03 descrição | `PASS` — B desc contém `ISOLADOR…`; A/F com descrições; grupo não vira desc do item |
+| RQ-042-04 histórico DEC-040 | `PASS` — 90264004 A9×2/AA×2; 90264017 C–K; `false_g9=0`; `chicote_on_item=0` |
+| RQ-042-05 corpus 13 | `PASS` — 13/13 `sha_match`; soma `false_g9=0`, `chicote_on_item=0` |
+| RQ-042-06 segurança/contratos | `PASS` — sem mudança de AuthZ/BOM/contrato público |
+| RQ-042-07 recursos | `PASS` — sem degradação material; rss~500 MiB nos probes |
+
+**Residual 90264135:** `fused_codes=5` em páginas 10/13 com `structure_consistent=true` — agregação **dentro** da célula nativa; fora do escopo deste gate. `INCONCLUSIVE` preservado onde aplicável.
+
+**Arquivos:** `understanding.py` (`native_cells_preferable` + gate); testes `test_dec042_native_table_gate.py`, `test_dec041_visual_table_diagnostic.py` atualizado; scripts offline `eva_dec042_*.py`.
+
+**NEXT_BOUNDED_STEP:** deploy canônico + validação MCP do consumidor (tarefa separada); residual de células multi-código nativas (90264135) em entrega futura sem VLM por default.
+
 **Necessidade evidenciada:** o pipeline PDFium→PaddleOCR→SLANet→Understanding consegue reconhecer boa parte das tabelas e recuperar casos focais, porém falha em algumas reconstruções de linhas, colunas, agrupamentos e papéis. Na amostra inédita, `90264026` publicou `component_code='90264026 10090010'` e deixou seis descrições como `null` apesar dos textos nas células; `90264135` retornou 294 linhas candidatas, OCR FULL 13/13, mas na p12 apenas 1/29 linhas tinha quatro campos preenchidos, com códigos e descrições fragmentados, e na p13 apenas 3/22. Essa contagem é completude de campos, **não precisão validada**. O primeiro defeito pode ser inteiramente determinístico; não atribuir ambos automaticamente à falta de modelo visual. No `90264135` a BOM oficial estava indisponível (`structure_not_provided`), fato que nenhum modelo supre.
 
 **Hipótese arquitetural H-VAL041:** avaliar uma capacidade **local, condicional e orientada a evidências** de diagnóstico visual de regiões tabulares ambíguas. O modelo pode propor hipóteses de linhas, células, divisórias, agrupamentos e papéis de tokens, com refs e coordenadas verificáveis, enquanto os mecanismos existentes reavaliam e validam a proposta. *IA proponente; framework verificador*. Um VLM local via runtime como Ollama é **candidato de benchmark**, não tecnologia aprovada. Evitar interpretação generativa do documento todo, edição de PDF oficial ou autopreenchimento. A capacidade deve utilizar os ports/adapters, contratos, observabilidade e permissões governados existentes; novo agente com autonomia e nova camada de arquitetura **não estão autorizados**.

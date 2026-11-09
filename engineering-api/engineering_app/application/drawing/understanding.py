@@ -2139,14 +2139,85 @@ def rows_from_native_cells(
     return rows_out, {str(k): v for k, v in col_types.items()}
 
 
+# Limitações de grade que não invalidam, sozinhas, associações
+# textuais já sustentadas pelas células (DEC-VAL-042).
+_SOFT_STRUCTURE_LIMITATIONS = frozenset({"span_conflict"})
+_FUSED_COMPONENT_CODES_RE = re.compile(r"\b\d{6,11}(?:\s+\d{6,11})+\b")
+
+
+def _count_fused_component_codes(rows: list[dict]) -> int:
+    count = 0
+    for row in rows or []:
+        code = str(row.get("component_code") or "")
+        if _FUSED_COMPONENT_CODES_RE.search(code):
+            count += 1
+    return count
+
+
+def _usable_native_associations(rows: list[dict]) -> int:
+    """Associações item+código único (sem fusão multi-código)."""
+    count = 0
+    for row in rows or []:
+        if not row.get("item"):
+            continue
+        code = str(row.get("component_code") or "")
+        if not code or _FUSED_COMPONENT_CODES_RE.search(code):
+            continue
+        count += 1
+    return count
+
+
+def native_cells_preferable(
+    *,
+    consistent: bool,
+    structure_limitations: list[str] | None,
+    native_rows: list[dict],
+    fallback_rows: list[dict],
+) -> tuple[bool, str | None]:
+    """Política conservadora de aceite da grade nativa (DEC-VAL-042).
+
+    ``structure_consistent=false`` não implica descarte automático.
+    Conflito de span localizado pode coexistir com células textuais
+    associáveis. A grade nativa só substitui o fallback quando:
+    - é consistente; ou
+    - as limitações estruturais são somente suaves (``span_conflict``);
+    - há ao menos uma associação item+código único;
+    - não introduz mais códigos fundidos que o fallback da página.
+
+    Retorna ``(aplicar, limitação_de_proveniência_ou_None)``.
+    """
+    if consistent:
+        return True, None
+    limitations = {
+        str(item).strip()
+        for item in (structure_limitations or [])
+        if str(item).strip()
+    }
+    if not limitations or not limitations.issubset(
+        _SOFT_STRUCTURE_LIMITATIONS
+    ):
+        return False, "structure_incomplete"
+    if not native_rows:
+        return False, "no_text_rows"
+    if _usable_native_associations(native_rows) < 1:
+        return False, "structure_incomplete"
+    if _count_fused_component_codes(native_rows) > _count_fused_component_codes(
+        fallback_rows
+    ):
+        return False, "structure_incomplete"
+    return True, "span_conflict_tolerated"
+
+
 def apply_native_table_observations(
     understanding: dict, observations: list[dict]
 ) -> dict:
     """Substitui linhas agrupadas quando a grade nativa tem texto.
 
     Região que não é tabela de componentes fica só na observação
-    neutra. Grade sem texto, inconsistente ou com erro não apaga as
-    linhas já lidas e não fabrica parentesco.
+    neutra. Grade sem texto, corrompida ou com erro não apaga as
+    linhas já lidas e não fabrica parentesco. Conflito de span
+    localizado pode ser tolerado quando as associações nativas são
+    comprovadamente utilizáveis (DEC-VAL-042).
     """
     table = dict(understanding.get("component_table") or {})
     rows = list(table.get("rows") or [])
@@ -2159,9 +2230,12 @@ def apply_native_table_observations(
         page = int(obs.get("page") or render.get("processed_page") or 1)
         native_cells = result.get("cells") or []
         consistent = False
+        structure_limitations: list[str] = []
         if result.get("tables"):
-            consistent = bool(
-                result["tables"][0].get("structure_consistent")
+            table0 = result["tables"][0] or {}
+            consistent = bool(table0.get("structure_consistent"))
+            structure_limitations = list(
+                table0.get("structure_limitations") or []
             )
         perceptions.append(
             {
@@ -2175,6 +2249,7 @@ def apply_native_table_observations(
                 "error_kind": result.get("error_kind"),
                 "error_detail": result.get("error_detail"),
                 "structure_consistent": consistent,
+                "structure_limitations": structure_limitations,
                 "cells": native_cells,
                 "association": result.get("association"),
                 "limitations": result.get("limitations") or [],
@@ -2183,10 +2258,9 @@ def apply_native_table_observations(
         )
         if obs.get("region_type") != "component_table":
             continue
-        if result.get("error_kind") or not consistent:
+        if result.get("error_kind"):
             limitations.append(
-                "table_perception:"
-                + str(result.get("error_kind") or "structure_incomplete")
+                "table_perception:" + str(result.get("error_kind"))
             )
             continue
         if not any(
@@ -2200,6 +2274,24 @@ def apply_native_table_observations(
         if not native_rows:
             limitations.append("table_perception:no_text_rows")
             continue
+        page_fallback = [
+            row for row in rows
+            if int(row.get("page") or page) == page
+        ]
+        apply_native, tolerate_reason = native_cells_preferable(
+            consistent=consistent,
+            structure_limitations=structure_limitations,
+            native_rows=native_rows,
+            fallback_rows=page_fallback,
+        )
+        if not apply_native:
+            limitations.append(
+                "table_perception:"
+                + str(tolerate_reason or "structure_incomplete")
+            )
+            continue
+        if tolerate_reason:
+            limitations.append("table_perception:" + tolerate_reason)
         rows = [
             row for row in rows
             if int(row.get("page") or page) != page
