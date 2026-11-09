@@ -103,16 +103,12 @@ class Settings:
         default="false",
     ).lower() in ("1", "true", "yes")
 
-    # CF-UX-053 — consent channel. Default ``portal`` keeps V014 /
-    # R-CLARA-01. ``conversational`` / ``dual`` only bypass Portal when
-    # CLARA_CONVERSATIONAL_SECURITY_ACK matches the exact Security gate
-    # value (see consent_channel.SECURITY_ACK_VALUE). Never set the ack
-    # in production without formal Segurança + Controladoria approval.
+    # CF-UX-053 — operational owner decision recorded in doc 150 §20.16.
+    # Explicit "conversational" enables the TÉO-shaped MCP confirmation.
+    # Unset, invalid or "dual" requires Portal V014. Server-only config:
+    # do not read channel selection from user input or JWT claims.
     CLARA_CONSENT_CHANNEL: str = _get_env(
         "CLARA_CONSENT_CHANNEL", default="portal"
-    )
-    CLARA_CONVERSATIONAL_SECURITY_ACK: str = _get_env(
-        "CLARA_CONVERSATIONAL_SECURITY_ACK", default=""
     )
 
 
