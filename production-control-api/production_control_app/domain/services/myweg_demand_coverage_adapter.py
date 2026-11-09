@@ -6,7 +6,7 @@ REUSE_DECISION: EXTEND — menor adaptador; sem segundo motor de cobertura.
 
 from __future__ import annotations
 
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any, Iterable, Mapping, Sequence
 
 from production_control_app.domain.myweg_demand_source_contract import (
@@ -32,6 +32,7 @@ RECONCILIATION_BLOCKED = "reconciliation_blocked"
 CUSTOMER_IDENTITY_PENDING = "customer_identity_pending"
 STOCK_WAREHOUSE_DEFAULT = "01"
 OP_UNIT_UNVERIFIED = "OP_UNIT_UNVERIFIED"
+OP_UNIT_VERIFIED = "OP_UNIT_VERIFIED"
 
 
 def un_to_mi(quantity_un: Decimal | str | int | float) -> Decimal:
@@ -47,6 +48,65 @@ def mi_to_float_for_coverage(quantity_mi: Decimal) -> float:
     """Fronteira Decimal → float do motor atual (3 casas, half-up)."""
     quantized = quantity_mi.quantize(_QTY_QUANTIZE, rounding=ROUND_HALF_UP)
     return float(quantized)
+
+
+def normalize_myweg_open_ops(
+    ops: Sequence[Mapping[str, Any]],
+    *,
+    branch: str,
+    product_codes: Iterable[str],
+) -> dict[str, Any]:
+    """OPs abertas normalizadas para MI, sem presumir unidade ausente.
+
+    Usa C2_UM da ordem, com fallback B1_UM do produto, na fonte api-delpi.
+    PC/UN são convertidas para MI (÷1000); MI permanece sem conversão.
+    """
+    products = {str(code or "").strip() for code in product_codes}
+    products.discard("")
+    verified: list[dict[str, Any]] = []
+    rejected: list[dict[str, str]] = []
+    for item in ops:
+        if not isinstance(item, Mapping):
+            continue
+        product = str(item.get("produto") or "").strip()
+        if str(item.get("filial") or "").strip() != branch or product not in products:
+            continue
+        try:
+            balance = Decimal(str(item.get("saldo_op")))
+        except (InvalidOperation, TypeError, ValueError):
+            balance = Decimal("NaN")
+        if balance.is_finite() and balance <= ZERO:
+            continue
+        unit = str(
+            item.get("unidade_op") or item.get("unidade")
+            or item.get("unidade_produto") or ""
+        ).strip().upper()
+        converted: float | None = None
+        if balance.is_finite() and unit in {COVERAGE_UNIT_MI, "PC", "UN"}:
+            quantity_mi = balance if unit == COVERAGE_UNIT_MI else un_to_mi(balance)
+            converted = mi_to_float_for_coverage(quantity_mi)
+        if converted is None or converted <= 0:
+            rejected.append({
+                "production_order": str(item.get("numero_op") or "").strip(),
+                "product_code": product,
+                "unit": unit,
+                "reason": "invalid_balance_or_unit" if converted is None else "below_mi_precision",
+            })
+            continue
+        normalized = dict(item)
+        normalized["saldo_op"] = converted
+        normalized["unidade_cobertura"] = COVERAGE_UNIT_MI
+        verified.append(normalized)
+    pending_products = sorted({item["product_code"] for item in rejected})
+    return {
+        "items": verified,
+        "verified_count": len(verified),
+        "unverified_count": len(rejected),
+        "unverified_products": pending_products,
+        "unverified_sample": rejected[:20],
+        "status": OP_UNIT_UNVERIFIED if rejected else OP_UNIT_VERIFIED,
+        "complete": not rejected,
+    }
 
 
 def customer_cadastro_code(item: Mapping[str, Any]) -> str:
