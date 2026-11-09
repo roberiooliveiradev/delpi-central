@@ -269,6 +269,25 @@ class ProductRegistrationService:
             official_code = draft_data.pop("officialProductCode", None)
             base_revision = None
             stored_payload = dict(draft_data)
+            # D14-FIX — justificativas opcionais individuais do create:
+            # canal `reasons` próprio, validado contra os vínculos
+            # declarados; auditado no payload, nunca no snapshot técnico.
+            supplier_keys = {
+                (
+                    str(s.get("supplierCode") or "").strip(),
+                    str(s.get("store") or "").strip(),
+                )
+                for s in draft_data.get("suppliers") or []
+            }
+            reasons, reasons_err = catalog.validate_create_reasons(
+                payload.get("reasons"), supplier_keys
+            )
+            if reasons_err:
+                raise PrcValidationError(
+                    reasons_err, fields={"reasons": "invalid"}
+                )
+            if reasons:
+                stored_payload["reasons"] = reasons
         else:
             official_code = (payload.get("officialProductCode") or "").strip()
             if not official_code:

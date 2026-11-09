@@ -183,6 +183,9 @@ class IntakeBody(BaseModel):
     baseRevision: int | None = Field(default=None, ge=1)
     changes: list[dict] | None = None
     supplierLinkChanges: list[dict] | None = None
+    # D14-FIX — justificativas opcionais por campo/vínculo no create
+    # (mesma família de reasons do update; aditivo e opcional).
+    reasons: dict | None = None
 
 
 class ActionBody(BaseModel):
@@ -251,6 +254,7 @@ async def prc_intake_submit(
                 "baseRevision": body.baseRevision,
                 "changes": body.changes,
                 "supplierLinkChanges": body.supplierLinkChanges,
+                "reasons": body.reasons,
             },
             idempotency_key=idempotency_key,
         )

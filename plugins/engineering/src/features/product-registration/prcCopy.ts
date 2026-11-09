@@ -115,7 +115,7 @@ export const PRC_FIELD_HELP: Record<string, string> = {
 export const PRC_SUPPLIER_HELP = {
   placeholder: "Buscar por código, razão social ou nome fantasia",
   search:
-    "Pesquise o fornecedor cadastrado no TOTVS e selecione a razão social e a loja correspondentes.",
+    "Use a lupa da linha para abrir a busca no cadastro TOTVS; selecione a razão social e a loja oficiais.",
   storeHint:
     "Identifica a unidade cadastral do fornecedor. Será preenchida automaticamente após a seleção.",
   legalNameHint:
@@ -124,6 +124,8 @@ export const PRC_SUPPLIER_HELP = {
     "Informe o código pelo qual o fornecedor identifica este material. Pode ficar vazio quando não houver Part Number.",
   catalogHint:
     "Informe a referência de catálogo do fornecedor para este material, quando disponível.",
+  reasonOptional:
+    "Justificativa opcional (até 250 caracteres) — aparece só quando o campo foi preenchido ou alterado.",
   selectRequired:
     "Escolha um fornecedor na lista de resultados para confirmar o código e a loja.",
   duplicate:

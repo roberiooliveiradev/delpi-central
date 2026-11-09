@@ -330,6 +330,17 @@ export type PrcIntakeBody = {
   changes?: Array<{ path: string; proposedValue: unknown; reason: string }> | null;
   /** D12 — operações granulares de vínculo SA5 (update/add). */
   supplierLinkChanges?: PrcSupplierLinkChange[] | null;
+  /** D14-FIX — justificativas opcionais do create (≤250): por path
+   * preenchido e por vínculo incluído; canal próprio, nunca dentro de
+   * requestedData/suppliers[]. */
+  reasons?: {
+    fields?: Record<string, string>;
+    supplierLinks?: Array<{
+      key: { supplierCode: string; store: string };
+      reason?: string;
+      fieldReasons?: { partNumber?: string; catalogNumber?: string };
+    }>;
+  } | null;
 };
 
 export type PrcIntakeResult = {

@@ -338,6 +338,26 @@ declare module "@delpi/plugin-ui/index" {
 
   export function ActionButton(props: ActionButtonProps): ReactElement;
 
+  export type IconButtonTone = "default" | "danger" | "primary";
+
+  export type IconButtonProps = {
+    children: ReactNode;
+    "aria-label": string;
+    "aria-describedby"?: string;
+    "aria-expanded"?: boolean;
+    "aria-haspopup"?: "listbox" | "menu" | "dialog" | "tree" | "grid" | "true" | "false";
+    "aria-pressed"?: boolean;
+    pressed?: boolean;
+    tone?: IconButtonTone;
+    type?: "button" | "submit" | "reset";
+    disabled?: boolean;
+    onClick?: () => void;
+    className?: string;
+    autoFocus?: boolean;
+  };
+
+  export function IconButton(props: IconButtonProps): ReactElement;
+
   export type FilePreviewModalProps = {
     open: boolean;
     title: string;

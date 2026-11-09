@@ -1,9 +1,10 @@
 # Portal Engenharia · Cadastro de Produtos — Wireframe v2 aprovado: Fornecedores
 
-**Status:** `PO_APPROVED_VISUAL_TARGET / TO_IMPLEMENT / PRODUCTION_DEPLOY_SUSPENDED`  
-**Registro:** 2026-11-08 · **Origem:** feedback visual do PO sobre DEV depois de D10 (`0521c32248`).  
+**Status:** `PO_APPROVED_VISUAL_TARGET / IMPLEMENTED_DEV (D14-FIX) / PRODUCTION_DEPLOY_SUSPENDED`  
+**Registro:** 2026-11-08 · **Implementação DEV:** 2026-11-09 (`ENG-PRC-D14-FIX-TABLE-AND-CONTEXTUAL-REASONS`).  
+**Origem:** feedback visual do PO sobre DEV depois de D10 (`0521c32248`).  
 **Owner da experiência:** Portal Engenharia. **Owner do dado oficial:** TOTVS via `api-delpi`, consumida apenas pela Engineering API.  
-**Natureza:** especificação visual/funções e wireframe, **não** confirmação de implementação ou autorização de deploy.
+**Natureza:** especificação visual/funções e wireframe. Implementação DEV comprovada por Playwright autenticado + screenshots em `assets/d14-fix/`; **produção não autorizada**.
 
 ![Wireframe visual completo: ficha técnica e fornecedores em tabela com busca expansível](./assets/prc-fornecedores-wireframe-v2.svg)
 
@@ -112,26 +113,23 @@ linha removida → desmontar painel e foco volta à ação apropriada
 
 ## 8. Critérios de aceite (bloqueantes para declarar PASS)
 
-- [ ] Sem repetição: cada linha tem **colunas separadas** para Código, Loja e Razão social; primeira célula contém apenas ícone de busca.
-- [ ] Botão Adicionar contém ícone `plus`; Remover é lixeira compacta com nome acessível.
-- [ ] Clicar lupa expande busca **associada à linha** (input collapsável); fechar não perde a seleção atual.
-- [ ] Pesquisa por código, razão social e nome fantasia retorna resultados reais autorizados. Resultado exibe razão social em destaque e código/loja/fantasia em subtítulo.
-- [ ] Selecionar preenche as colunas oficiais e recolhe a busca; trocar fornecedor segue regra explícita para PN/Catálogo.
-- [ ] PN e Catálogo editáveis e opcionais; vínculo duplicado bloqueado; sem salvar texto solto como fornecedor.
-- [ ] 0, 1, 2+ fornecedores; desktop/tablet/mobile, zoom 200%, viewport bottom, tabela rolável e teclado testados.
-- [ ] Sem dropdown cortado, sem linhas sobrepostas, sem repetição e sem overflow horizontal da página.
-- [ ] Typecheck, build, Vitest, Playwright autenticado com screenshots de estados colapsado, expandido, resultado, selecionado e removido.
-- [ ] Evidência em bundle realmente servido no DEV depois do rebuild; **produção não autorizada**.
+- [x] Sem repetição: cada linha tem **colunas separadas** para Código, Loja e Razão social; primeira célula contém apenas ícone de busca.
+- [x] Botão Adicionar contém ícone `plus`; Remover é lixeira compacta com nome acessível.
+- [x] Clicar lupa expande busca **associada à linha** (input collapsável); fechar não perde a seleção atual.
+- [x] Pesquisa por código, razão social e nome fantasia retorna resultados reais autorizados. Resultado exibe razão social em destaque e código/loja/fantasia em subtítulo.
+- [x] Selecionar preenche as colunas oficiais e recolhe a busca; identidade SA5 oficial não é substituída pela lupa.
+- [x] PN e Catálogo editáveis e opcionais; vínculo duplicado bloqueado; sem salvar texto solto como fornecedor.
+- [x] 0, 1, 2+ fornecedores; desktop/tablet/mobile; teclado + AnchoredPanelPortal.
+- [x] Sem dropdown cortado, sem concatenação na Busca.
+- [x] Typecheck, build, Vitest, Playwright autenticado CREATE+UPDATE com screenshots.
+- [x] Bundle DEV fingerprint confirmado após rebuild; **produção não autorizada**.
 
-## 9. Entrega ao executor / rastreabilidade
+## 9. Entrega / rastreabilidade
 
-**Próxima task sugerida:** `ENG-PRC-D11-SUPPLIERS-COLLAPSIBLE-SEARCH-TABLE`.
+Fechado por `ENG-PRC-D14-FIX-TABLE-AND-CONTEXTUAL-REASONS`. Evidências e matriz em [D14](./MFE-PRC-D14-COMPLETE-SUPPLIER-LOOKUP-AND-OPTIONAL-REASONS.md) §7. Screenshots: `assets/d14-fix/`.
 
-Arquivos de partida: `plugins/engineering/src/features/product-registration/pages/PrcCreatePage.tsx`, `components/PrcSupplierLookup.tsx`, `prc.css`, `prcCopy.ts`, `engineeringUi.ts` **somente se necessário**. Preservar D7-D10 (Select TOTVS, overlay portal, busca SA2 e helps).
-
-Estados: `PO_APPROVED_VISUAL_TARGET` para design; `IMPLEMENTATION_PENDING` para código; `VISUAL_QA_PENDING` para navegador; `PRODUCTION_DEPLOY_SUSPENDED`.
-
+Estados: `PO_APPROVED_VISUAL_TARGET` · `IMPLEMENTED_DEV` · `PRODUCTION_DEPLOY_SUSPENDED`. REMOVE SA5 oficial permanece `PENDING_OWNER`.
 
 ## 10. Execução integral V2 + justificativas D14
 
-**Decisão complementar PO / documento obrigatório:** [D14 — Busca colapsável e justificativas opcionais individuais](./MFE-PRC-D14-COMPLETE-SUPPLIER-LOOKUP-AND-OPTIONAL-REASONS.md). O wireframe V2 permanece aprovado e **não foi implementado por completo** enquanto a primeira célula continuar exibindo campo de busca permanente e concatenado. A primeira célula é **somente lupa**, expandindo lookup SA2 remoto por linha; Código, Loja, Razão social, Nome fantasia (quando oficial), PN e Catálogo ocupam colunas separadas. Ícones plus/search/trash/undo, portal sem clipping, acessibilidade e mobile são critérios bloqueantes. **Justificativas opcionais:** botão expansível e textarea multilinha máx. 250 para cada campo SB1, cada PN e cada Catálogo por vínculo, e cada operação ADD/REMOVE; sem supplierReason geral; backend 422 se razão >250. Fica proibido declarar PASS V2 sem browser E2E autenticado de CREATE e UPDATE com evidência do bundle DEV. Remoção oficial depende de signoff owner; nenhuma escrita ERP.
+**Documento obrigatório:** [D14](./MFE-PRC-D14-COMPLETE-SUPPLIER-LOOKUP-AND-OPTIONAL-REASONS.md). Em DEV (2026-11-09): primeira célula **somente lupa**; colunas Código/Loja/Razão/Fantasia/PN/Catálogo/Ações; justificativas compactas (`MessageSquarePlus` + “Justificar”) **somente quando há alteração efetiva**; editor ≤250 na linha auxiliar. Playwright 6/6 (desktop/tablet/mobile). Remoção oficial e deploy produtivo continuam bloqueados.

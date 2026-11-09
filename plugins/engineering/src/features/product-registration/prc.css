@@ -283,12 +283,75 @@
   font-size: 0.85rem;
 }
 
-.engineering-prc__supplier-table th:nth-child(1) { width: 34%; }
-.engineering-prc__supplier-table th:nth-child(2) { width: 8%; }
-.engineering-prc__supplier-table th:nth-child(3) { width: 24%; }
-.engineering-prc__supplier-table th:nth-child(4) { width: 14%; }
-.engineering-prc__supplier-table th:nth-child(5) { width: 12%; }
-.engineering-prc__supplier-table th:nth-child(6) { width: 8%; }
+/* Tabela V2 — 8 colunas: lupa estreita + identidade separada +
+ * atributos editáveis + ações compactas. */
+.engineering-prc__supplier-table th:nth-child(1) { width: 44px; }
+.engineering-prc__supplier-table th:nth-child(2) { width: 9%; }
+.engineering-prc__supplier-table th:nth-child(3) { width: 6%; }
+.engineering-prc__supplier-table th:nth-child(4) { width: 24%; }
+.engineering-prc__supplier-table th:nth-child(5) { width: 14%; }
+.engineering-prc__supplier-table th:nth-child(6) { width: 14%; }
+.engineering-prc__supplier-table th:nth-child(7) { width: 13%; }
+.engineering-prc__supplier-table th:nth-child(8) { width: 9%; }
+
+.engineering-prc__supplier-td--search {
+  text-align: center;
+  padding-inline: 4px !important;
+}
+
+.engineering-prc__supplier-td--actions {
+  white-space: normal;
+}
+
+/* Linha auxiliar da `<tr>` — busca SA2 expansível e editores de
+ * justificativa contextual fora da célula (não estouram altura/largura
+ * da linha principal). */
+.engineering-prc__supplier-aux > td {
+  background: var(--en-surface-muted);
+  padding: 8px 10px !important;
+}
+
+.engineering-prc__supplier-aux > td::before {
+  content: none !important;
+}
+
+.engineering-prc__supplier-search {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 560px;
+}
+
+.engineering-prc__supplier-search-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.engineering-prc__supplier-search-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--en-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.engineering-prc__cell-error {
+  display: block;
+  color: var(--en-danger);
+  font-size: 0.78rem;
+  margin-top: 2px;
+}
+
+.engineering-prc__cell-diff {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 3px 0 0;
+  font-size: 0.72rem;
+  flex-wrap: wrap;
+}
 
 .engineering-prc__supplier-table td {
   overflow-wrap: anywhere;
@@ -449,3 +512,73 @@
 
 .engineering-prc__remove-tag { color: var(--en-danger); }
 .engineering-prc__add-tag { color: var(--en-success); }
+
+/* D14-FIX — justificativa contextual compacta: gatilho `link` do kit
+ * ajustado à margem do campo; largura do conteúdo (nunca 100% da
+ * coluna); editor na linha auxiliar/inline, nunca aberto por padrão. */
+.engineering-prc__reason-toggle {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  gap: 4px;
+  width: max-content;
+  max-width: 100%;
+  align-self: flex-start;
+  min-height: 0;
+  padding: 0;
+}
+
+.engineering-prc__reason-filled {
+  font-size: 0.7rem;
+  color: var(--en-text-muted);
+}
+
+.engineering-prc__reason {
+  margin-top: 6px;
+  max-width: 560px;
+}
+
+.engineering-prc__reason-label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--en-text-muted);
+  margin-bottom: 2px;
+}
+
+.engineering-prc__reason-input {
+  width: 100%;
+  min-width: 0;
+  padding: 5px 7px;
+  border: 1px solid var(--en-border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.8rem;
+  background: var(--en-surface);
+  color: var(--en-text);
+  resize: vertical;
+}
+
+.engineering-prc__reason-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2px;
+  gap: 8px;
+}
+
+.engineering-prc__reason-count {
+  font-size: 0.7rem;
+  color: var(--en-text-muted);
+}
+
+.engineering-prc__reason-count--full { color: var(--en-danger); }
+
+.engineering-prc__reason-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.engineering-prc__reason + .engineering-prc__reason {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--en-border);
+}

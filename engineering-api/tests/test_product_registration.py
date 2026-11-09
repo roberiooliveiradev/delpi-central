@@ -1065,3 +1065,112 @@ def test_d14_scalar_reason_optional():
         catalog.validate_update_changes(
             [{"path": "accountingAccount", "proposedValue": "x",
               "reason": "a" * 251}])
+
+
+def test_d14fix_create_reasons_validation():
+    from engineering_app.domain.product_registration import catalog
+    keys = {("000001", "01"), ("000002", "02")}
+    # ausente/vazio → sem razão, sem erro
+    out, err = catalog.validate_create_reasons(None, keys)
+    assert err is None and out == {}
+    out, err = catalog.validate_create_reasons(
+        {"fields": {}, "supplierLinks": []}, keys)
+    assert err is None and out == {}
+    # campos + vínculos independentes
+    out, err = catalog.validate_create_reasons(
+        {"fields": {"description": "Contexto da descrição"},
+         "supplierLinks": [
+             {"key": {"supplierCode": "000001", "store": "01"},
+              "reason": "Inclusão homologada",
+              "fieldReasons": {"partNumber": "PN novo",
+                               "catalogNumber": "Cat X"}},
+             {"key": {"supplierCode": "000002", "store": "02"},
+              "reason": "Novo fornecedor"}]},
+        keys)
+    assert err is None
+    assert out["fields"] == {"description": "Contexto da descrição"}
+    assert out["supplierLinks"][0]["reason"] == "Inclusão homologada"
+    assert out["supplierLinks"][0]["fieldReasons"] == {
+        "partNumber": "PN novo", "catalogNumber": "Cat X"}
+    assert "fieldReasons" not in out["supplierLinks"][1]
+    # razão de PN nunca vaza para Catálogo nem outro vínculo
+    assert out["supplierLinks"][1]["reason"] == "Novo fornecedor"
+    # 250 exato ok; 251 rejeitado
+    out, err = catalog.validate_create_reasons(
+        {"fields": {"description": "a" * 250}}, keys)
+    assert err is None
+    _, err = catalog.validate_create_reasons(
+        {"fields": {"description": "a" * 251}}, keys)
+    assert err is not None
+    _, err = catalog.validate_create_reasons(
+        {"supplierLinks": [
+            {"key": {"supplierCode": "000001", "store": "01"},
+             "fieldReasons": {"partNumber": "b" * 251}}]},
+        keys)
+    assert err is not None
+    # path desconhecido / suppliers / officialProductCode → 422
+    _, err = catalog.validate_create_reasons(
+        {"fields": {"campo_inventado": "x"}}, keys)
+    assert err is not None
+    _, err = catalog.validate_create_reasons(
+        {"fields": {"suppliers": "x"}}, keys)
+    assert err is not None
+    # vínculo fora do payload → 422 (sem razão fantasma)
+    _, err = catalog.validate_create_reasons(
+        {"supplierLinks": [
+            {"key": {"supplierCode": "999999", "store": "99"},
+             "reason": "r"}]},
+        keys)
+    assert err is not None
+    # atributo não editável → 422
+    _, err = catalog.validate_create_reasons(
+        {"supplierLinks": [
+            {"key": {"supplierCode": "000001", "store": "01"},
+             "fieldReasons": {"supplierName": "r"}}]},
+        keys)
+    assert err is not None
+
+
+def test_d14fix_create_intake_persists_reasons(
+    client, jwks_env, core_rbac, prc_service_repo
+):
+    core_rbac["behavior"] = ("data", rbac_payload(ANALYST, id="user-1"))
+    body = _create_body(
+        reasons={
+            "fields": {"description": "Porque o material mudou"},
+            "supplierLinks": [
+                {"key": {"supplierCode": "000001", "store": "01"},
+                 "reason": "Vínculo principal",
+                 "fieldReasons": {"partNumber": "PN informado"}}],
+        })
+    resp = _post(
+        client, "/v1/product-registration/intake/requests",
+        _token(jwks_env), json=body, headers={"Idempotency-Key": "k-r1"},
+    )
+    assert resp.status_code == 201, resp.text
+    rid = resp.json()["data"]["requestId"]
+    detail = _get(
+        client, f"/v1/product-registration/requests/{rid}",
+        _token(jwks_env))
+    assert detail.status_code == 200
+    stored = detail.json()["data"]["requestedChanges"]
+    assert stored["reasons"]["fields"]["description"] == \
+        "Porque o material mudou"
+    link = stored["reasons"]["supplierLinks"][0]
+    assert link["reason"] == "Vínculo principal"
+    assert link["fieldReasons"] == {"partNumber": "PN informado"}
+    # razões não poluem o snapshot técnico do draft
+    draft = detail.json()["data"]["technicalDraft"] or {}
+    assert "reasons" not in draft
+
+
+def test_d14fix_create_intake_reason_251_rejected(
+    client, jwks_env, core_rbac, prc_service_repo
+):
+    core_rbac["behavior"] = ("data", rbac_payload(ANALYST, id="user-1"))
+    body = _create_body(reasons={"fields": {"description": "a" * 251}})
+    resp = _post(
+        client, "/v1/product-registration/intake/requests",
+        _token(jwks_env), json=body, headers={"Idempotency-Key": "k-r2"},
+    )
+    assert resp.status_code == 422, resp.text

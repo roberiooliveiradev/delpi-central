@@ -6,6 +6,7 @@
  * `source` vem da allowlist do reference-data ("portal-engineering"). */
 
 import {
+  Fragment,
   useCallback,
   useEffect,
   useMemo,
@@ -13,6 +14,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { Plus, Search, Trash2, Undo2, X } from "lucide-react";
 
 import { HomeApiError } from "../../../api/httpClient";
 import {
@@ -20,6 +22,7 @@ import {
   EngineeringDetailCard,
   EngineeringDetailFieldGrid,
   EngineeringFormActions,
+  EngineeringIconButton,
   EngineeringLoadingActivityCard,
   EngineeringPageHero,
   EngineeringPagePath,
@@ -44,7 +47,6 @@ import {
   type PrcEditContext,
   type PrcIntakeBody,
   type PrcReferenceData,
-  type PrcSupplierLinkChange,
 } from "../api/productRegistrationApi";
 import {
   buildPrcQueueUrl,
@@ -71,16 +73,23 @@ import {
   emptySupplierRow,
   type SupplierRow,
 } from "../prcSuppliers";
-import { PrcReasonField } from "../components/PrcReasonField";
+import {
+  PrcReasonEditor,
+  PrcReasonField,
+  PrcReasonToggle,
+} from "../components/PrcReasonField";
 import { PrcSupplierCellLookup } from "../components/PrcSupplierLookup";
+import {
+  buildCreateIntakeBody,
+  buildUpdateIntakeBody,
+  PRC_PORTAL_SOURCE,
+} from "../prcIntakePayload";
 
 const STEPS = [
   { id: "identify", label: "Identificação" },
   { id: "sheet", label: "Ficha técnica" },
   { id: "review", label: "Revisar e enviar" },
 ];
-
-const PORTAL_SOURCE = "portal-engineering";
 
 const FIELD_GROUPS: { title: string; paths: string[] }[] = [
   {
@@ -167,7 +176,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
 
   const sourceAllowed = useMemo(() => {
     if (!refData) return true; // ainda carregando — o backend decide
-    return refData.sources.includes(PORTAL_SOURCE);
+    return refData.sources.includes(PRC_PORTAL_SOURCE);
   }, [refData]);
 
   const backToQueue = useCallback(() => {
@@ -275,6 +284,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
               supplierCode: l.supplierCode,
               store: l.store,
               supplierName: l.supplierName,
+              supplierShortName: l.supplierShortName || "",
               partNumber: l.partNumber || "",
               catalogNumber: l.catalogNumber || "",
             })),
@@ -293,74 +303,59 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
     setStep((s) => Math.max(0, s - 1));
   };
 
-  const buildBody = (): PrcIntakeBody => {
-    if (requestType === "create") {
-      const requestedData: Record<string, unknown> = {};
-      for (const spec of refData?.fields || []) {
-        if (spec.path === "suppliers") continue;
-        const raw = (values[spec.path] || "").trim();
-        if (raw || spec.requiredCreateIntake || spec.kind === "text") {
-          requestedData[spec.path] = raw;
-        }
-      }
-      requestedData.suppliers = suppliers.map((r) => ({
-        supplierCode: r.supplierCode.trim(),
-        store: r.store.trim(),
-        supplierName: r.supplierName.trim(),
-        partNumber: r.partNumber.trim() || "",
-        catalogNumber: r.catalogNumber.trim() || null,
-      }));
-      return {
-        source: PORTAL_SOURCE,
-        requestType: "create",
-        productType: refData?.productTypes?.[0] || "raw_material",
-        schemaVersion: refData?.schemaVersion || 1,
-        requestedData,
-      };
-    }
-    const changes: Array<{
-      path: string;
-      proposedValue: unknown;
-      reason: string;
-    }> = scalarDiff.map((change) => ({
-      path: change.path,
-      proposedValue: change.after,
-      reason: (reasons[change.path] || "").trim(),
-    }));
-    const rowByKey = new Map(
-      suppliers.map((r) => [linkKeyOf(r.supplierCode, r.store), r]),
+  /* D14-FIX — busca expansível por linha: no máximo uma aberta por
+   * vez; o estado vive na própria linha e não desloca outras. */
+  const toggleRowSearch = (index: number) =>
+    setSuppliers((rows) =>
+      rows.map((r, i) => ({
+        ...r,
+        searchOpen: i === index ? !r.searchOpen : false,
+      })),
     );
-    const supplierLinkChanges: PrcSupplierLinkChange[] = linkOps.map(
-      (op) => {
-        const row = rowByKey.get(
-          linkKeyOf(op.key.supplierCode, op.key.store),
-        );
-        const fieldReasons: Record<string, string> = {};
-        if (row?.pnReason?.trim())
-          fieldReasons.partNumber = row.pnReason.trim();
-        if (row?.catReason?.trim())
-          fieldReasons.catalogNumber = row.catReason.trim();
-        return {
-          operation: op.operation,
-          key: op.key,
-          fields: op.operation === "remove" ? {} : op.fields,
-          reason: (row?.opReason || "").trim(),
-          ...(Object.keys(fieldReasons).length
-            ? { fieldReasons }
-            : {}),
-        };
-      },
+
+  const closeRowSearch = (index: number) =>
+    setSuppliers((rows) =>
+      rows.map((r, i) =>
+        i === index ? { ...r, searchOpen: false } : r,
+      ),
     );
-    return {
-      source: PORTAL_SOURCE,
-      requestType: "update",
-      productType: refData?.productTypes?.[0] || "raw_material",
-      schemaVersion: refData?.schemaVersion || 1,
-      officialProductCode: officialCode.trim(),
-      changes,
-      supplierLinkChanges,
-    };
-  };
+
+  const toggleSupplierReason = (
+    index: number,
+    flag: "pnReasonOpen" | "catReasonOpen" | "opReasonOpen",
+  ) =>
+    setSuppliers((rows) =>
+      rows.map((r, i) => (i === index ? { ...r, [flag]: !r[flag] } : r)),
+    );
+
+  const setSupplierReason = (
+    index: number,
+    flag: "pnReason" | "catReason" | "opReason",
+    v: string,
+  ) =>
+    setSuppliers((rows) =>
+      rows.map((r, i) => (i === index ? { ...r, [flag]: v } : r)),
+    );
+
+  /* Nova linha nasce com busca fechada — só a lupa; o clique abre
+   * a área colapsável (wireframe V2 / D14-FIX). */
+  const addSupplierRow = () =>
+    setSuppliers((rows) => [
+      ...rows.map((r) => ({ ...r, searchOpen: false })),
+      emptySupplierRow(),
+    ]);
+
+  const buildBody = (): PrcIntakeBody =>
+    requestType === "create"
+      ? buildCreateIntakeBody({ refData, values, reasons, suppliers })
+      : buildUpdateIntakeBody({
+          refData,
+          officialCode,
+          scalarDiff,
+          linkOps,
+          reasons,
+          suppliers,
+        });
 
   const submit = async () => {
     if (busy) return;
@@ -459,6 +454,12 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
     const selected = true;
     const changed = requestType === "update" && changedPaths.has(path);
     const baseline = baselineFields[path];
+    /* D14-FIX — justificativa só quando há alteração efetiva: UPDATE
+     * usa o diff D13 contra o baseline; CREATE conta o preenchimento
+     * como alteração (campo vazio não mostra o gatilho). */
+    const reasonVisible =
+      (requestType === "update" && changed) ||
+      (requestType === "create" && (values[path] || "").trim() !== "");
     return (
       <div
         key={path}
@@ -525,7 +526,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                 {fieldErrors[path]}
               </p>
             ) : null}
-            {requestType === "update" ? (
+            {reasonVisible ? (
               <PrcReasonField
                 id={`prc-new-reason-${path}`}
                 value={reasons[path] || ""}
@@ -622,7 +623,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
 
       {!sourceAllowed ? (
         <EngineeringStateBanner variant="error">
-          A origem «{PORTAL_SOURCE}» não está autorizada pela Engineering API.
+          A origem «{PRC_PORTAL_SOURCE}» não está autorizada pela Engineering API.
           Contate o administrador da plataforma.
         </EngineeringStateBanner>
       ) : null}
@@ -701,9 +702,9 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
               <EngineeringActionButton
                 variant="ghost"
                 disabled={busy}
-                onClick={() => setSuppliers((rows) => [...rows, emptySupplierRow()])}
+                onClick={addSupplierRow}
               >
-                + Adicionar fornecedor
+                <Plus size={15} aria-hidden /> Adicionar fornecedor
               </EngineeringActionButton>
             }
           >
@@ -728,9 +729,11 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                       </caption>
                       <thead>
                         <tr>
-                          <th scope="col">Fornecedor</th>
+                          <th scope="col">Busca</th>
+                          <th scope="col">Código</th>
                           <th scope="col">Loja</th>
                           <th scope="col">Razão social</th>
+                          <th scope="col">Nome fantasia</th>
                           <th scope="col">{PRC_SUPPLIER_LABELS.partNumber}</th>
                           <th scope="col">{PRC_SUPPLIER_LABELS.catalogNumber}</th>
                           <th scope="col">Ações</th>
@@ -747,244 +750,462 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                           const key = linkKeyOf(row.supplierCode, row.store);
                           const isOfficial = officialKeys.has(key);
                           const markedRemove = removeMarks.has(key);
+                          const baselineLink = isOfficial
+                            ? (editCtx?.links || []).find(
+                                (l) =>
+                                  linkKeyOf(l.supplierCode, l.store) === key,
+                              )
+                            : undefined;
+                          /* D14-FIX — UPDATE compara com o baseline SA5;
+                           * linha nova (create/ADD) conta preenchimento
+                           * como alteração efetiva do atributo. */
+                          const pnChanged = isOfficial
+                            ? row.partNumber.trim() !==
+                              (baselineLink?.partNumber || "").trim()
+                            : row.partNumber.trim() !== "";
+                          const catChanged = isOfficial
+                            ? row.catalogNumber.trim() !==
+                              (baselineLink?.catalogNumber || "").trim()
+                            : row.catalogNumber.trim() !== "";
+                          /* Identidade de vínculo oficial SA5 nunca é
+                           * substituída silenciosamente — troca real é
+                           * remoção proposta + novo vínculo. */
+                          const identityLocked = isOfficial;
+                          const searchId = `prc-sup-search-${index}`;
+                          const auxOpen = Boolean(
+                            row.searchOpen ||
+                              row.pnReasonOpen ||
+                              row.catReasonOpen ||
+                              row.opReasonOpen,
+                          );
                           const rowClass = markedRemove
                             ? "engineering-prc__supplier-tr--remove"
                             : isOfficial && requestType === "update"
                               ? ""
                               : "engineering-prc__supplier-tr--added";
                           return (
-                            <tr
-                              key={index}
-                              className={missing || dup ? "engineering-prc__supplier-tr--error" : rowClass}
-                            >
-                              <td data-label="Fornecedor">
-                                {row.supplierCode ? (
-                                  <span>{row.supplierCode}</span>
-                                ) : row.searchOpen ? (
-                                <PrcSupplierCellLookup
-                                  id={`prc-new-sup-${index}`}
-                                  displayValue={
-                                    row.supplierCode
-                                      ? `${row.supplierCode} / ${row.store} — ${row.supplierName}`
-                                      : ""
-                                  }
-                                  query={row.query}
-                                  disabled={busy}
-                                  onQueryChange={(v) =>
-                                    setSuppliers((rows) =>
-                                      rows.map((r, i) =>
-                                        i === index ? { ...r, query: v } : r,
-                                      ),
-                                    )
-                                  }
-                                  onSelect={(hit) =>
-                                    setSuppliers((rows) =>
-                                      rows.map((r, i) =>
-                                        i === index
-                                          ? {
-                                              ...r,
-                                              supplierCode: String(
-                                                hit.supplier_code ?? "",
-                                              ),
-                                              store: String(
-                                                hit.supplier_store ?? "",
-                                              ),
-                                              supplierName: String(
-                                                hit.supplier_name ?? "",
-                                              ),
-                                              query: "",
-                                              searchOpen: false,
-                                            }
-                                          : r,
-                                      ),
-                                    )
-                                  }
-                                  onClear={() =>
-                                    setSuppliers((rows) =>
-                                      rows.map((r, i) =>
-                                        i === index
-                                          ? {
-                                              ...r,
-                                              supplierCode: "",
-                                              store: "",
-                                              supplierName: "",
-                                              query: "",
-                                            }
-                                          : r,
-                                      ),
-                                    )
-                                  }
-                                />
-                                ) : (
-                                  <button
-                                    type="button"
-                                    className="engineering-prc__lookup-clear"
-                                    aria-label="Buscar fornecedor por código, razão social ou nome fantasia"
-                                    onClick={() =>
+                            <Fragment key={index}>
+                              <tr
+                                className={missing || dup ? "engineering-prc__supplier-tr--error" : rowClass}
+                              >
+                                <td
+                                  data-label="Busca"
+                                  className="engineering-prc__supplier-td--search"
+                                >
+                                  <span
+                                    title={
+                                      identityLocked
+                                        ? "Identidade oficial do vínculo — para trocar o fornecedor, solicite a remoção e adicione um novo vínculo."
+                                        : "Buscar por código, razão social ou nome fantasia"
+                                    }
+                                  >
+                                    <EngineeringIconButton
+                                      className="engineering-prc__search-toggle"
+                                      aria-label={
+                                        row.supplierCode
+                                          ? `Alterar fornecedor da linha ${index + 1}`
+                                          : `Buscar fornecedor da linha ${index + 1}`
+                                      }
+                                      aria-expanded={Boolean(row.searchOpen)}
+                                      aria-controls={searchId}
+                                      aria-haspopup="listbox"
+                                      disabled={
+                                        busy ||
+                                        identityLocked ||
+                                        markedRemove
+                                      }
+                                      onClick={() => toggleRowSearch(index)}
+                                    >
+                                      <Search size={15} aria-hidden />
+                                    </EngineeringIconButton>
+                                  </span>
+                                </td>
+                                <td data-label="Código">
+                                  {row.supplierCode || "—"}
+                                </td>
+                                <td data-label="Loja">{row.store || "—"}</td>
+                                <td data-label="Razão social">
+                                  {row.supplierName || "—"}
+                                  {missing ? (
+                                    <span
+                                      className="engineering-prc__cell-error"
+                                      role="alert"
+                                    >
+                                      Selecione um fornecedor oficial.
+                                    </span>
+                                  ) : null}
+                                  {dup && !missing ? (
+                                    <span
+                                      className="engineering-prc__cell-error"
+                                      role="alert"
+                                    >
+                                      Vínculo duplicado (mesmo código e loja).
+                                    </span>
+                                  ) : null}
+                                </td>
+                                <td data-label="Nome fantasia">
+                                  {row.supplierShortName || "—"}
+                                </td>
+                                <td data-label={PRC_SUPPLIER_LABELS.partNumber}>
+                                  <input
+                                    id={`prc-new-sup-pn-${index}`}
+                                    type="text"
+                                    className="engineering-prc__cell-input"
+                                    aria-label={`${PRC_SUPPLIER_LABELS.partNumber} (opcional)`}
+                                    title={PRC_SUPPLIER_HELP.partNumberHint}
+                                    value={row.partNumber}
+                                    disabled={busy}
+                                    onChange={(e) =>
                                       setSuppliers((rows) =>
                                         rows.map((r, i) =>
                                           i === index
-                                            ? { ...r, searchOpen: true }
+                                            ? { ...r, partNumber: e.target.value }
                                             : r,
                                         ),
                                       )
                                     }
-                                  >
-                                    🔍
-                                  </button>
-                                )}
-                                {missing ? (
-                                  <span className="engineering-prc__field-error" role="alert">
-                                    Selecione um fornecedor oficial.
-                                  </span>
-                                ) : null}
-                                {dup && !missing ? (
-                                  <span className="engineering-prc__field-error" role="alert">
-                                    Vínculo duplicado (mesmo código e loja).
-                                  </span>
-                                ) : null}
-                              </td>
-                              <td data-label="Loja">{row.store || "—"}</td>
-                              <td data-label="Razão social">{row.supplierName || "—"}</td>
-                              <td data-label={PRC_SUPPLIER_LABELS.partNumber}>
-                                <input
-                                  id={`prc-new-sup-pn-${index}`}
-                                  type="text"
-                                  className="engineering-prc__cell-input"
-                                  aria-label={`${PRC_SUPPLIER_LABELS.partNumber} (opcional)`}
-                                  title={PRC_SUPPLIER_HELP.partNumberHint}
-                                  value={row.partNumber}
-                                  disabled={busy}
-                                  onChange={(e) =>
-                                    setSuppliers((rows) =>
-                                      rows.map((r, i) =>
-                                        i === index
-                                          ? { ...r, partNumber: e.target.value }
-                                          : r,
-                                      ),
-                                    )
-                                  }
-                                />
-                                <PrcReasonField
-                                  id={`prc-sup-pn-reason-${index}`}
-                                  value={row.pnReason || ""}
-                                  onChange={(v) =>
-                                    setSuppliers((rows) =>
-                                      rows.map((r, i) =>
-                                        i === index ? { ...r, pnReason: v } : r,
-                                      ),
-                                    )
-                                  }
-                                  disabled={busy}
-                                />
-                              </td>
-                              <td data-label={PRC_SUPPLIER_LABELS.catalogNumber}>
-                                <input
-                                  id={`prc-new-sup-cat-${index}`}
-                                  type="text"
-                                  className="engineering-prc__cell-input"
-                                  aria-label={PRC_SUPPLIER_LABELS.catalogNumber}
-                                  value={row.catalogNumber}
-                                  disabled={busy}
-                                  onChange={(e) =>
-                                    setSuppliers((rows) =>
-                                      rows.map((r, i) =>
-                                        i === index
-                                          ? {
-                                              ...r,
-                                              catalogNumber: e.target.value,
-                                            }
-                                          : r,
-                                      ),
-                                    )
-                                  }
-                                />
-                                <PrcReasonField
-                                  id={`prc-sup-cat-reason-${index}`}
-                                  value={row.catReason || ""}
-                                  onChange={(v) =>
-                                    setSuppliers((rows) =>
-                                      rows.map((r, i) =>
-                                        i === index ? { ...r, catReason: v } : r,
-                                      ),
-                                    )
-                                  }
-                                  disabled={busy}
-                                />
-                              </td>
-                              <td data-label="Ações">
-                                {requestType === "update" && isOfficial ? (
-                                  markedRemove ? (
-                                    <EngineeringActionButton
-                                      variant="ghost"
+                                  />
+                                  {isOfficial && pnChanged ? (
+                                    <p className="engineering-prc__cell-diff">
+                                      <span className="engineering-prc__diff-tag">
+                                        Alterado
+                                      </span>
+                                      <span className="engineering-prc__muted">
+                                        Anterior:{" "}
+                                        <strong>
+                                          {(baselineLink?.partNumber || "")
+                                            .trim() || "vazio"}
+                                        </strong>
+                                      </span>
+                                    </p>
+                                  ) : null}
+                                  {pnChanged ? (
+                                    <PrcReasonToggle
+                                      id={`prc-sup-pn-reason-${index}`}
+                                      value={row.pnReason || ""}
+                                      open={Boolean(row.pnReasonOpen)}
                                       disabled={busy}
-                                      onClick={() =>
-                                        setRemoveMarks((prev) => {
-                                          const next = new Set(prev);
-                                          next.delete(key);
-                                          return next;
-                                        })
-                                      }
-                                    >
-                                      Desfazer remoção
-                                    </EngineeringActionButton>
-                                  ) : (
-                                    <EngineeringActionButton
-                                      variant="ghost"
-                                      disabled={busy}
-                                      aria-label={`Solicitar remoção do vínculo ${row.supplierCode}/${row.store}`}
-                                      onClick={() =>
-                                        setRemoveMarks((prev) =>
-                                          new Set(prev).add(key),
+                                      onToggle={() =>
+                                        toggleSupplierReason(
+                                          index,
+                                          "pnReasonOpen",
                                         )
                                       }
-                                    >
-                                      Remover
-                                    </EngineeringActionButton>
-                                  )
-                                ) : (
-                                  <EngineeringActionButton
-                                    variant="ghost"
+                                    />
+                                  ) : null}
+                                </td>
+                                <td data-label={PRC_SUPPLIER_LABELS.catalogNumber}>
+                                  <input
+                                    id={`prc-new-sup-cat-${index}`}
+                                    type="text"
+                                    className="engineering-prc__cell-input"
+                                    aria-label={PRC_SUPPLIER_LABELS.catalogNumber}
+                                    title={PRC_SUPPLIER_HELP.catalogHint}
+                                    value={row.catalogNumber}
                                     disabled={busy}
-                                    onClick={() =>
+                                    onChange={(e) =>
                                       setSuppliers((rows) =>
-                                        rows.filter((_, i) => i !== index),
+                                        rows.map((r, i) =>
+                                          i === index
+                                            ? {
+                                                ...r,
+                                                catalogNumber: e.target.value,
+                                              }
+                                            : r,
+                                        ),
                                       )
                                     }
-                                  >
-                                    Remover
-                                  </EngineeringActionButton>
-                                )}
-                                {markedRemove ? (
-                                  <>
-                                    <p className="engineering-prc__remove-tag">
-                                      Remoção solicitada — será proposta ao
-                                      TOTVS.
+                                  />
+                                  {isOfficial && catChanged ? (
+                                    <p className="engineering-prc__cell-diff">
+                                      <span className="engineering-prc__diff-tag">
+                                        Alterado
+                                      </span>
+                                      <span className="engineering-prc__muted">
+                                        Anterior:{" "}
+                                        <strong>
+                                          {(baselineLink?.catalogNumber || "")
+                                            .trim() || "vazio"}
+                                        </strong>
+                                      </span>
                                     </p>
-                                    <PrcReasonField
-                                      id={`prc-sup-rm-reason-${index}`}
-                                      value={row.opReason || ""}
-                                      onChange={(v) =>
-                                        setSuppliers((rows) =>
-                                          rows.map((r, i) =>
-                                            i === index
-                                              ? { ...r, opReason: v }
-                                              : r,
-                                          ),
+                                  ) : null}
+                                  {catChanged ? (
+                                    <PrcReasonToggle
+                                      id={`prc-sup-cat-reason-${index}`}
+                                      value={row.catReason || ""}
+                                      open={Boolean(row.catReasonOpen)}
+                                      disabled={busy}
+                                      onToggle={() =>
+                                        toggleSupplierReason(
+                                          index,
+                                          "catReasonOpen",
                                         )
                                       }
-                                      disabled={busy}
                                     />
-                                  </>
-                                ) : null}
-                                {!isOfficial &&
-                                requestType === "update" ? (
-                                  <p className="engineering-prc__add-tag">
-                                    Adicionado
-                                  </p>
-                                ) : null}
-                              </td>
-                            </tr>
+                                  ) : null}
+                                </td>
+                                <td
+                                  data-label="Ações"
+                                  className="engineering-prc__supplier-td--actions"
+                                >
+                                  {requestType === "update" && isOfficial ? (
+                                    markedRemove ? (
+                                      <span title="Desfazer remoção">
+                                        <EngineeringIconButton
+                                          aria-label={`Desfazer remoção do vínculo ${row.supplierCode}/${row.store}`}
+                                          disabled={busy}
+                                          onClick={() =>
+                                            setRemoveMarks((prev) => {
+                                              const next = new Set(prev);
+                                              next.delete(key);
+                                              return next;
+                                            })
+                                          }
+                                        >
+                                          <Undo2 size={15} aria-hidden />
+                                        </EngineeringIconButton>
+                                      </span>
+                                    ) : (
+                                      <span title="Solicitar remoção">
+                                        <EngineeringIconButton
+                                          tone="danger"
+                                          aria-label={`Solicitar remoção do vínculo ${row.supplierCode}/${row.store}`}
+                                          disabled={busy}
+                                          onClick={() =>
+                                            setRemoveMarks((prev) =>
+                                              new Set(prev).add(key),
+                                            )
+                                          }
+                                        >
+                                          <Trash2 size={15} aria-hidden />
+                                        </EngineeringIconButton>
+                                      </span>
+                                    )
+                                  ) : (
+                                    <span title="Remover linha">
+                                      <EngineeringIconButton
+                                        tone="danger"
+                                        aria-label={`Remover fornecedor da linha ${index + 1}`}
+                                        disabled={busy}
+                                        onClick={() =>
+                                          setSuppliers((rows) =>
+                                            rows.filter((_, i) => i !== index),
+                                          )
+                                        }
+                                      >
+                                        <Trash2 size={15} aria-hidden />
+                                      </EngineeringIconButton>
+                                    </span>
+                                  )}
+                                  {markedRemove ? (
+                                    <>
+                                      <p className="engineering-prc__remove-tag">
+                                        Remoção solicitada — será proposta ao
+                                        TOTVS.
+                                      </p>
+                                      <PrcReasonToggle
+                                        id={`prc-sup-rm-reason-${index}`}
+                                        value={row.opReason || ""}
+                                        open={Boolean(row.opReasonOpen)}
+                                        disabled={busy}
+                                        onToggle={() =>
+                                          toggleSupplierReason(
+                                            index,
+                                            "opReasonOpen",
+                                          )
+                                        }
+                                      />
+                                    </>
+                                  ) : null}
+                                  {!isOfficial && !missing ? (
+                                    <>
+                                      {requestType === "update" ? (
+                                        <p className="engineering-prc__add-tag">
+                                          Adicionado
+                                        </p>
+                                      ) : null}
+                                      <PrcReasonToggle
+                                        id={`prc-sup-add-reason-${index}`}
+                                        value={row.opReason || ""}
+                                        open={Boolean(row.opReasonOpen)}
+                                        disabled={busy}
+                                        label="Justificar inclusão"
+                                        onToggle={() =>
+                                          toggleSupplierReason(
+                                            index,
+                                            "opReasonOpen",
+                                          )
+                                        }
+                                      />
+                                    </>
+                                  ) : null}
+                                </td>
+                              </tr>
+                              {auxOpen ? (
+                                <tr className="engineering-prc__supplier-aux">
+                                  <td colSpan={8}>
+                                    {row.searchOpen ? (
+                                      <div
+                                        id={searchId}
+                                        className="engineering-prc__supplier-search"
+                                        role="group"
+                                        aria-label={`Busca de fornecedor da linha ${index + 1}`}
+                                      >
+                                        <div className="engineering-prc__supplier-search-head">
+                                          <span className="engineering-prc__supplier-search-title">
+                                            {row.supplierCode
+                                              ? "Alterar seleção do fornecedor"
+                                              : "Pesquisar fornecedor"}
+                                          </span>
+                                          <EngineeringIconButton
+                                            aria-label="Fechar busca"
+                                            onClick={() =>
+                                              closeRowSearch(index)
+                                            }
+                                          >
+                                            <X size={14} aria-hidden />
+                                          </EngineeringIconButton>
+                                        </div>
+                                        <PrcSupplierCellLookup
+                                          id={`prc-new-sup-${index}`}
+                                          query={row.query}
+                                          disabled={busy}
+                                          onQueryChange={(v) =>
+                                            setSuppliers((rows) =>
+                                              rows.map((r, i) =>
+                                                i === index
+                                                  ? { ...r, query: v }
+                                                  : r,
+                                              ),
+                                            )
+                                          }
+                                          onSelect={(hit) => {
+                                            setSuppliers((rows) =>
+                                              rows.map((r, i) =>
+                                                i === index
+                                                  ? {
+                                                      ...r,
+                                                      supplierCode: String(
+                                                        hit.supplier_code ??
+                                                          "",
+                                                      ),
+                                                      store: String(
+                                                        hit.supplier_store ??
+                                                          "",
+                                                      ),
+                                                      supplierName: String(
+                                                        hit.supplier_name ??
+                                                          "",
+                                                      ),
+                                                      supplierShortName:
+                                                        String(
+                                                          hit.supplier_short_name ??
+                                                            "",
+                                                        ),
+                                                      query: "",
+                                                      searchOpen: false,
+                                                    }
+                                                  : r,
+                                              ),
+                                            );
+                                            /* Foco avança para o Part
+                                             * Number da linha após a
+                                             * seleção oficial. */
+                                            window.requestAnimationFrame(
+                                              () => {
+                                                document
+                                                  .getElementById(
+                                                    `prc-new-sup-pn-${index}`,
+                                                  )
+                                                  ?.focus();
+                                              },
+                                            );
+                                          }}
+                                          onClose={() =>
+                                            closeRowSearch(index)
+                                          }
+                                        />
+                                        <p className="engineering-prc__muted">
+                                          Ao escolher um resultado, código,
+                                          loja e razão social são preenchidos
+                                          automaticamente.
+                                        </p>
+                                      </div>
+                                    ) : null}
+                                    {pnChanged && row.pnReasonOpen ? (
+                                      <PrcReasonEditor
+                                        id={`prc-sup-pn-reason-${index}`}
+                                        label={`Justificativa de ${PRC_SUPPLIER_LABELS.partNumber} (opcional)`}
+                                        value={row.pnReason || ""}
+                                        onChange={(v) =>
+                                          setSupplierReason(
+                                            index,
+                                            "pnReason",
+                                            v,
+                                          )
+                                        }
+                                        disabled={busy}
+                                        onCollapse={() =>
+                                          toggleSupplierReason(
+                                            index,
+                                            "pnReasonOpen",
+                                          )
+                                        }
+                                      />
+                                    ) : null}
+                                    {catChanged && row.catReasonOpen ? (
+                                      <PrcReasonEditor
+                                        id={`prc-sup-cat-reason-${index}`}
+                                        label={`Justificativa de ${PRC_SUPPLIER_LABELS.catalogNumber} (opcional)`}
+                                        value={row.catReason || ""}
+                                        onChange={(v) =>
+                                          setSupplierReason(
+                                            index,
+                                            "catReason",
+                                            v,
+                                          )
+                                        }
+                                        disabled={busy}
+                                        onCollapse={() =>
+                                          toggleSupplierReason(
+                                            index,
+                                            "catReasonOpen",
+                                          )
+                                        }
+                                      />
+                                    ) : null}
+                                    {row.opReasonOpen &&
+                                    (markedRemove ||
+                                      (!isOfficial && !missing)) ? (
+                                      <PrcReasonEditor
+                                        id={`prc-sup-op-reason-${index}`}
+                                        label={
+                                          markedRemove
+                                            ? "Justificativa da remoção (opcional)"
+                                            : "Justificativa da inclusão (opcional)"
+                                        }
+                                        value={row.opReason || ""}
+                                        onChange={(v) =>
+                                          setSupplierReason(
+                                            index,
+                                            "opReason",
+                                            v,
+                                          )
+                                        }
+                                        disabled={busy}
+                                        onCollapse={() =>
+                                          toggleSupplierReason(
+                                            index,
+                                            "opReasonOpen",
+                                          )
+                                        }
+                                      />
+                                    ) : null}
+                                  </td>
+                                </tr>
+                              ) : null}
+                            </Fragment>
                           );
                         })}
                       </tbody>

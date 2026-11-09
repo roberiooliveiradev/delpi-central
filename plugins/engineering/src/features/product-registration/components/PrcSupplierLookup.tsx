@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   EngineeringAnchoredPanel,
-  EngineeringTextField,
   ENGINEERING_PORTAL_SCOPE,
 } from "../../../ui/engineeringUi";
 import { PRC_SUPPLIER_HELP } from "../prcCopy";
@@ -63,6 +62,7 @@ function useSupplierSearch(query: string) {
 type LookupPanelProps = {
   open: boolean;
   anchorRef: React.RefObject<HTMLDivElement | null>;
+  panelRef: React.RefObject<HTMLDivElement | null>;
   listId: string;
   items: PrcSupplierHit[];
   activeIndex: number;
@@ -78,6 +78,7 @@ type LookupPanelProps = {
 function SupplierSuggestPanel({
   open,
   anchorRef,
+  panelRef,
   listId,
   items,
   activeIndex,
@@ -86,7 +87,6 @@ function SupplierSuggestPanel({
   onChoose,
   onDismiss,
 }: LookupPanelProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
   return (
     <EngineeringAnchoredPanel
       open={open}
@@ -177,24 +177,35 @@ function useLookupKeys({
   };
 }
 
-/** Combobox SA2 — busca código/nome via BFF Engenharia → api-delpi →
- * TOTVS. Seleção define código+loja+nome oficiais; PN/catálogo ficam
- * editáveis e não são inferidos. */
-export function PrcSupplierLookup({
+/** Lookup SA2 embutido na linha auxiliar da tabela de fornecedores —
+ * input puro dentro da área expansível aberta pela lupa da coluna
+ * Busca. Seleção oficial SA2 preenche código+loja+razão+fantasia nas
+ * colunas próprias (nunca concatena nem exibe identidade na Busca);
+ * Escape ou clique externo recolhe a área sem apagar a seleção. */
+export function PrcSupplierCellLookup({
   id,
-  value,
+  query,
   disabled,
+  onQueryChange,
   onSelect,
+  onClose,
 }: {
   id: string;
-  value: string;
+  query: string;
   disabled?: boolean;
+  onQueryChange: (v: string) => void;
   onSelect: (hit: PrcSupplierHit) => void;
+  onClose: () => void;
 }) {
-  const [query, setQuery] = useState("");
   const { items, open, state, setOpen } = useSupplierSearch(query);
   const [activeIndex, setActiveIndex] = useState(-1);
   const anchorRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
   const listId = `${id}-list`;
   const visible = items.slice(0, MAX_VISIBLE);
 
@@ -203,14 +214,54 @@ export function PrcSupplierLookup({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
 
+  /* Foco no input quando a área expansível da linha é aberta. */
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  /* Clique fora da área expandida da linha (`.supplier-aux`) e fora do
+   * painel de sugestões portado recolhe a busca — nunca apaga a seleção
+   * nem cria diff. A lupa (`.search-toggle`) é excluída para o próprio
+   * toggle não reabrir a área na mesma interação. */
+  useEffect(() => {
+    const onDocMouseDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (
+        anchorRef.current?.contains(t) ||
+        panelRef.current?.contains(t)
+      ) {
+        return;
+      }
+      if (
+        t instanceof Element &&
+        (t.closest(".engineering-prc__supplier-aux") ||
+          t.closest(".engineering-prc__search-toggle"))
+      ) {
+        return;
+      }
+      onCloseRef.current();
+    };
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () =>
+      document.removeEventListener("mousedown", onDocMouseDown);
+  }, []);
+
   const choose = (hit: PrcSupplierHit) => {
     onSelect(hit);
     setOpen(false);
-    setQuery("");
   };
-  const onKeyDown = useLookupKeys({
+  const lookupKeys = useLookupKeys({
     open, visible, activeIndex, setActiveIndex, setOpen, onChoose: choose,
   });
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      onCloseRef.current();
+      return;
+    }
+    lookupKeys(e);
+  };
 
   return (
     <div
@@ -224,17 +275,28 @@ export function PrcSupplierLookup({
         if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false);
       }}
     >
-      <EngineeringTextField
+      <input
+        ref={inputRef}
         id={id}
-        label="Fornecedor"
-        hint={PRC_SUPPLIER_HELP.search}
-        value={value || query}
-        onChange={(v) => {
-          setQuery(v);
-          onSelect({ supplier_code: "", supplier_store: "", supplier_name: v });
-        }}
-        disabled={disabled}
+        type="text"
+        className="engineering-prc__lookup-input"
         placeholder={PRC_SUPPLIER_HELP.placeholder}
+        value={query}
+        disabled={disabled}
+        aria-label="Buscar fornecedor por código, razão social ou nome fantasia"
+        aria-autocomplete="list"
+        aria-controls={listId}
+        aria-activedescendant={
+          activeIndex >= 0 ? `${listId}-opt-${activeIndex}` : undefined
+        }
+        /* Autocomplete nativo do Chrome desligado só neste input —
+         * evita sugestão visual concorrente com o listbox SA2 oficial. */
+        autoComplete="off"
+        onChange={(e) => onQueryChange(e.target.value)}
+        onKeyDown={onKeyDown}
+        onFocus={() => {
+          if (visible.length) setOpen(true);
+        }}
       />
       {state === "loading" ? (
         <span className="engineering-prc__muted">Buscando…</span>
@@ -244,120 +306,10 @@ export function PrcSupplierLookup({
           Busca indisponível — tente novamente.
         </span>
       ) : null}
-      <span onKeyDown={onKeyDown} className="engineering-prc__lookup-keys">
-        <SupplierSuggestPanel
-          open={open}
-          anchorRef={anchorRef}
-          listId={listId}
-          items={visible}
-          activeIndex={activeIndex}
-          emptyText="Nenhum fornecedor encontrado."
-          showEmpty={open && !visible.length && state === "idle"}
-          onChoose={choose}
-          onDismiss={() => setOpen(false)}
-        />
-      </span>
-    </div>
-  );
-}
-
-/** Variante compacta do lookup SA2 para célula de tabela editável —
- * input puro (sem label), seleção oficial obrigatória, dropdown em
- * portal para nunca ser cortado pelo overflow da tabela. */
-export function PrcSupplierCellLookup({
-  id,
-  displayValue,
-  query,
-  disabled,
-  onQueryChange,
-  onSelect,
-  onClear,
-}: {
-  id: string;
-  displayValue: string;
-  query: string;
-  disabled?: boolean;
-  onQueryChange: (v: string) => void;
-  onSelect: (hit: PrcSupplierHit) => void;
-  onClear: () => void;
-}) {
-  const { items, open, state, setOpen } = useSupplierSearch(query);
-  const [activeIndex, setActiveIndex] = useState(-1);
-  const anchorRef = useRef<HTMLDivElement>(null);
-  const selected = Boolean(displayValue);
-  const listId = `${id}-list`;
-  const visible = items.slice(0, MAX_VISIBLE);
-
-  useEffect(() => {
-    setActiveIndex(visible.length ? 0 : -1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items]);
-
-  const choose = (hit: PrcSupplierHit) => {
-    onSelect(hit);
-    setOpen(false);
-  };
-  const onKeyDown = useLookupKeys({
-    open, visible, activeIndex, setActiveIndex, setOpen, onChoose: choose,
-  });
-
-  return (
-    <div
-      ref={anchorRef}
-      className="engineering-prc__lookup"
-      role="combobox"
-      aria-expanded={open}
-      aria-haspopup="listbox"
-      aria-owns={listId}
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false);
-      }}
-    >
-      {selected ? (
-        <div className="engineering-prc__lookup-selected">
-          <span>{displayValue}</span>
-          <button
-            type="button"
-            className="engineering-prc__lookup-clear"
-            disabled={disabled}
-            onClick={onClear}
-            aria-label="Alterar fornecedor"
-          >
-            Alterar
-          </button>
-        </div>
-      ) : (
-        <input
-          id={id}
-          type="text"
-          className="engineering-prc__lookup-input"
-          placeholder={PRC_SUPPLIER_HELP.placeholder}
-          value={query}
-          disabled={disabled}
-          aria-label="Buscar fornecedor por código ou nome"
-          aria-autocomplete="list"
-          aria-controls={listId}
-          aria-activedescendant={
-            activeIndex >= 0 ? `${listId}-opt-${activeIndex}` : undefined
-          }
-          onChange={(e) => onQueryChange(e.target.value)}
-          onKeyDown={onKeyDown}
-          onFocus={() => {
-            if (visible.length) setOpen(true);
-          }}
-        />
-      )}
-      {state === "loading" ? (
-        <span className="engineering-prc__muted">Buscando…</span>
-      ) : null}
-      {state === "error" ? (
-        <span className="engineering-prc__field-error" role="alert">
-          Busca indisponível.
-        </span>
-      ) : null}
       <SupplierSuggestPanel
-        open={open && !selected && state !== "loading"}
+        open={open && state !== "loading"}
         anchorRef={anchorRef}
+        panelRef={panelRef}
         listId={listId}
         items={visible}
         activeIndex={activeIndex}

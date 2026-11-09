@@ -6,6 +6,8 @@ export type SupplierRow = {
   supplierCode: string;
   store: string;
   supplierName: string;
+  /** A2_NREDUZ — nome fantasia oficial, quando disponível. */
+  supplierShortName?: string;
   partNumber: string;
   catalogNumber: string;
   /** Texto de busca SA2 da linha (só enquanto não há seleção oficial). */
@@ -16,6 +18,11 @@ export type SupplierRow = {
   pnReason?: string;
   catReason?: string;
   opReason?: string;
+  /** D14-FIX — editor de razão expandido na linha auxiliar (fechado
+   * por padrão; um por atributo, nunca compartilhado). */
+  pnReasonOpen?: boolean;
+  catReasonOpen?: boolean;
+  opReasonOpen?: boolean;
 };
 
 export function toSupplierRows(value: unknown): SupplierRow[] {

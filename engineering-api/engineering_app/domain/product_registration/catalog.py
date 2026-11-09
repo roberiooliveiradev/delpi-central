@@ -662,3 +662,130 @@ def validate_supplier_link_changes(
             }
         )
     return out, None
+
+
+# --- reasons do intake create (D14-FIX) --------------------------------------
+# CREATE não tem baseline/diff: a justificativa opcional é por campo
+# preenchido e por vínculo incluído, transportada em canal próprio do
+# contrato (`reasons`), nunca injetada em requestedData/suppliers[] —
+# o snapshot técnico permanece estritamente de dados oficiais.
+REASON_MAX_LENGTH = 250
+
+
+def _reason_text(value: Any, label: str) -> tuple[str, str | None]:
+    text = str(value or "").strip()
+    if len(text) > REASON_MAX_LENGTH:
+        return "", f"{label} excede {REASON_MAX_LENGTH} caracteres."
+    return text, None
+
+
+def validate_create_reasons(
+    reasons: Any,
+    supplier_keys: set[tuple[str, str]],
+) -> tuple[dict[str, Any], str | None]:
+    """Valida o canal opcional de justificativas do intake ``create``.
+
+    Shape: ``{"fields": {path: texto}, "supplierLinks": [{key, reason,
+    fieldReasons}]}``. Cada texto é opcional (omito/vazio = sem razão) e
+    limitado a 250 caracteres — acima falha 422, nunca trunca. Razões de
+    vínculo só são aceitas para (supplierCode, store) presentes no
+    ``requestedData.suppliers`` do mesmo intake.
+
+    Retorna ``(normalizado, erro|None)``; normalizado omite entradas
+    vazias para não poluir o payload auditado.
+    """
+    if reasons is None:
+        return {}, None
+    if not isinstance(reasons, dict):
+        return {}, "reasons deve ser objeto."
+    unknown = set(reasons) - {"fields", "supplierLinks"}
+    if unknown:
+        return {}, (
+            f"reasons contém chaves desconhecidas: {sorted(unknown)}."
+        )
+    out: dict[str, Any] = {}
+
+    fields = reasons.get("fields") or {}
+    if not isinstance(fields, dict):
+        return {}, "reasons.fields deve ser objeto."
+    f_out: dict[str, str] = {}
+    for path, raw in fields.items():
+        spec = FIELD_INDEX.get(str(path))
+        if (
+            spec is None
+            or spec.kind == "suppliers"
+            or spec.path == "officialProductCode"
+        ):
+            return {}, f"reasons.fields contém path inválido: {path}."
+        text, err = _reason_text(raw, f"reasons.fields.{path}")
+        if err:
+            return {}, err
+        if text:
+            f_out[str(path)] = text
+    if f_out:
+        out["fields"] = f_out
+
+    links = reasons.get("supplierLinks") or []
+    if not isinstance(links, list):
+        return {}, "reasons.supplierLinks deve ser lista."
+    l_out: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for i, item in enumerate(links):
+        if not isinstance(item, dict):
+            return {}, f"reasons.supplierLinks[{i}] deve ser objeto."
+        key = item.get("key") or {}
+        code = str(key.get("supplierCode") or "").strip()
+        store = str(key.get("store") or "").strip()
+        if not code or not store:
+            return {}, (
+                f"reasons.supplierLinks[{i}].key exige supplierCode "
+                "e store."
+            )
+        if (code, store) not in supplier_keys:
+            return {}, (
+                f"reasons.supplierLinks[{i}] referencia vínculo "
+                f"{code}/{store} ausente do payload."
+            )
+        if (code, store) in seen:
+            return {}, (
+                f"reasons.supplierLinks[{i}] duplica o vínculo "
+                f"{code}/{store}."
+            )
+        seen.add((code, store))
+        reason, err = _reason_text(
+            item.get("reason"), f"reasons.supplierLinks[{i}].reason"
+        )
+        if err:
+            return {}, err
+        frs = item.get("fieldReasons") or {}
+        if not isinstance(frs, dict):
+            return {}, (
+                f"reasons.supplierLinks[{i}].fieldReasons inválido."
+            )
+        fr_out: dict[str, str] = {}
+        for fr_key, fr_val in frs.items():
+            if fr_key not in SUPPLIER_LINK_EDITABLE_FIELDS:
+                return {}, (
+                    f"reasons.supplierLinks[{i}].fieldReasons contém "
+                    f"campo não editável: {fr_key}."
+                )
+            text, err = _reason_text(
+                fr_val,
+                f"reasons.supplierLinks[{i}].fieldReasons.{fr_key}",
+            )
+            if err:
+                return {}, err
+            if text:
+                fr_out[fr_key] = text
+        entry: dict[str, Any] = {
+            "key": {"supplierCode": code, "store": store}
+        }
+        if reason:
+            entry["reason"] = reason
+        if fr_out:
+            entry["fieldReasons"] = fr_out
+        if len(entry) > 1:
+            l_out.append(entry)
+    if l_out:
+        out["supplierLinks"] = l_out
+    return out, None

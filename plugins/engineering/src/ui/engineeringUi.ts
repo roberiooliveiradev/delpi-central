@@ -1,6 +1,7 @@
 import {
   ActionButton,
   AnchoredPanelPortal,
+  IconButton,
   catalogSearchBarBemClasses,
   ChartCard as DelpiChartCard,
   chartCardBemClasses,
@@ -173,6 +174,10 @@ export const EngineeringStatusBadge = createDashboardStatusBadge({
 });
 
 export const EngineeringActionButton = ActionButton;
+
+/** Botão só-ícone do kit (lupa, lixeira, desfazer) — hit target oficial
+ * 36px, tons default/danger/primary; nome acessível obrigatório. */
+export const EngineeringIconButton = IconButton;
 
 export const EngineeringSectionCard = createDashboardSectionCard({
   classNames: sectionCardPacBemClasses(ENG_UI_PREFIX),

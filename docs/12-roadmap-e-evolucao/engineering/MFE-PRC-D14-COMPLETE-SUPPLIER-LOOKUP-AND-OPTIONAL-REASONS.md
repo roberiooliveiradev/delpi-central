@@ -1,6 +1,6 @@
 # D14 — Busca colapsável V2 e justificativas opcionais individuais (SB1 e SA5)
 
-**Data PO:** 2026-11-08. **Status:** PO_APPROVED / IMPLEMENTATION_PENDING / PROD_SUSPENDED. **Task:** ENG-PRC-D14-FULL-UX-AND-CONTRACT.
+**Data PO:** 2026-11-08. **Status:** IMPLEMENTED_DEV / PROD_SUSPENDED. **Task:** `ENG-PRC-D14-FIX-TABLE-AND-CONTEXTUAL-REASONS` (fechamento de `ENG-PRC-D14-FULL-UX-AND-CONTRACT`).
 **Documentos de origem:** MFE-PRC-WIREFRAME-FORNECEDORES-V2-APPROVED.md, MFE-PRC-D13-DIRECT-EDIT-AUTOMATIC-DIFF-AND-SA5-OPERATIONS.md, MFE-PRC-D12-ROUTES-API-DELPI-IMPLEMENTATION-BLUEPRINT.md, MFE-PRC-REF-012-INDIVIDUAL-FIELDS-AND-SUPPLIER-LINK-OPERATIONS.md.
 **Owners:** Portal Engenharia MFE (UX), Engineering API (intake/draft/domain/verify/audit), api-delpi (read-only SB1/SA2/SA5), Core (RBAC), Engineering owner (regras técnicas); TOTVS é a fonte oficial. Não criar novo owner ou boundary.
 
@@ -104,24 +104,49 @@ D14 não é aceito por implementação parcial de UI ou backend. Se houver opera
 
 ## 7. Formato de evidências
 
-TASK_ID: ENG-PRC-D14-FULL-UX-AND-CONTRACT
-BASE_SHA: ... FINAL_SHA: ... FOREIGN_DIFF_PRESERVED: ...
-B01_CREATE_COLLAPSIBLE_SEARCH: ...
-B02_UPDATE_COLLAPSIBLE_SEARCH: ...
-B03_DISTINCT_COLUMNS: ...
-B04_REAL_SA2_CODE_LEGAL_TRADE: ...
-B05_OVERLAY_A11Y_MOBILE: ...
-J01_SB1_8_OPTIONAL_REASON: ...
-J02_PN_CATALOG_INDEPENDENT: ...
-J03_ADD_REMOVE_REASONS: ...
-J04_250_CLIENT_BACKEND_422: ...
-J05_CREATE_UPDATE_DRAFT_EVA_AUDIT: ...
-S01_SA5_ONLY_VERIFY: ...
-S02_SERVER_BASELINE_ADD_REMOVE: ...
-TYPECHECK: ... BUILD: ... VITEST: ... PYTEST: ... POSTGRES: ...
-PLAYWRIGHT_DESKTOP_TABLET_MOBILE: ... SCREENSHOTS: ...
-DEV_CONTAINERS: ... BUNDLE_FINGERPRINT: ... AUTH_GATEWAY: ...
-DOCS: ... COMMITS: ... PUSH: ...
+TASK_ID: ENG-PRC-D14-FIX-TABLE-AND-CONTEXTUAL-REASONS
+BASE_SHA: f1f4767b3015f07310ddc61769fe282528416086
+FINAL_SHA: (preencher no commit)
+FOREIGN_DIFF_PRESERVED: delia-api/*, engineering-api/.../drawing/understanding.py, plugins/tv-dashboard-presentation/*, tv-dashboard-api/*
+
+B01_CREATE_COLLAPSIBLE_SEARCH: PASS — lupa exclusiva; busca fechada por padrão; Playwright autenticado desktop/tablet/mobile
+B02_UPDATE_COLLAPSIBLE_SEARCH: PASS — vínculo oficial com lupa desabilitada (identidade SA5 preservada); nova linha com lupa
+B03_DISTINCT_COLUMNS: PASS — Busca|Código|Loja|Razão|Fantasia|PN|Catálogo|Ações sem concatenação
+B04_REAL_SA2_CODE_LEGAL_TRADE: PASS — seleção SA2 preenche colunas; busca por razão social remota (ex.: BRITAGEM TRES RIOS)
+B05_OVERLAY_A11Y_MOBILE: PASS — AnchoredPanelPortal; aria-expanded/controls; cards ≤768px
+J01_SB1_8_OPTIONAL_REASON: PASS — gatilho só com alteração/preenchimento; textarea ≤250 colapsado
+J02_PN_CATALOG_INDEPENDENT: PASS — PN e Catálogo com toggles/razões independentes (E2E + Vitest)
+J03_ADD_REMOVE_REASONS: PASS (REMOVE UI) / PENDING_OWNER (publicação REMOVE no ERP)
+J04_250_CLIENT_BACKEND_422: PASS — maxLength 250 cliente; pytest 250 ok / 251 → 422
+J05_CREATE_UPDATE_DRAFT_EVA_AUDIT: PASS — canal `reasons` no create fora do technicalDraft; update via fieldReasons
+S01_SA5_ONLY_VERIFY: PASS — herdado D13 (fail-closed preservado)
+S02_SERVER_BASELINE_ADD_REMOVE: PARTIAL — ADD baseline ok; REMOVE aguarda signoff owner
+TYPECHECK: PASS (`npm run typecheck` engineering)
+BUILD: PASS (`npm run build` + docker rebuild `delpi-engineering`)
+VITEST: PASS — `prcIntakePayload.test.ts` 13/13
+PYTEST: PASS — `test_product_registration.py -k d14` 5/5
+PLAYWRIGHT_DESKTOP_TABLET_MOBILE: PASS — 6/6 (`prc-suppliers.spec.ts`)
+SCREENSHOTS: `docs/12-roadmap-e-evolucao/engineering/assets/d14-fix/` (+ espelho gitignored em `plugins/engineering/e2e/artifacts/`)
+DEV_CONTAINERS: `delpi-engineering` recreate + `delpi-engineering-api` restart (local DEV)
+BUNDLE_FINGERPRINT: `__federation_expose_App-QrdhYuIl.js` + `style-7OfO7Qlv.css` (gateway `/apps/engineering/assets/remoteEntry.js`)
+DOCS: este arquivo + wireframe V2 atualizado
 PROD_DEPLOY: NOT_PERFORMED
-ACCEPTANCE: PASS/PARTIAL/FAIL
-BLOCKERS: ... EXECUTION_DRIFT: ... ARCHITECTURE_DECISION_REQUIRED: ...
+ACCEPTANCE: PASS (DEV) / PARTIAL (REMOVE owner)
+BLOCKERS: remoção SA5 oficial ainda depende de regra técnica do owner
+EXECUTION_DRIFT: nenhum material
+ARCHITECTURE_DECISION_REQUIRED: nenhum
+
+### Screenshots canônicos (desktop)
+
+| Estado | Arquivo |
+|---|---|
+| Busca colapsada (só lupa) | `assets/d14-fix/prc-suppliers-search-collapsed-lupa-only-desktop.png` |
+| Busca expandida | `assets/d14-fix/prc-suppliers-search-open-new-row-desktop.png` |
+| Seleção SA2 → colunas | `assets/d14-fix/prc-suppliers-supplier-selected-columns-desktop.png` |
+| PN alterado → Justificar compacto | `assets/d14-fix/prc-suppliers-pn-changed-reason-toggle-desktop.png` |
+| Editor ≤250 aberto | `assets/d14-fix/prc-suppliers-reason-editor-open-close-desktop.png` |
+| UPDATE baseline sem gatilho | `assets/d14-fix/prc-update-update-baseline-desktop.png` |
+| UPDATE PN alterado | `assets/d14-fix/prc-update-update-pn-changed-desktop.png` |
+| UPDATE PN+Catálogo | `assets/d14-fix/prc-update-update-both-changed-desktop.png` |
+| UPDATE PN revertido | `assets/d14-fix/prc-update-update-pn-reverted-desktop.png` |
+| UPDATE revisão | `assets/d14-fix/prc-update-update-review-desktop.png` |
