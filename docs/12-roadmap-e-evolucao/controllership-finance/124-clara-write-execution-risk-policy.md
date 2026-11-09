@@ -157,3 +157,16 @@ o contrato do doc 106 sem alteração.
 | Base | CLARA-MCP-SEMANTIC-001 (doc 119, commit 3f36137dc3) |
 | Implementação | `governed_writes.execute_direct`, `semantic_bridge` (fase direct + `_run_operations`), V019 |
 | Auditoria | `CLARA_DIRECT_ATTEMPT/ACT/REJECTED` em `closing_audit_event` |
+
+
+## 8. Decisão de produto posterior — confirmação conversacional padrão TÉO (09/11/2026)
+
+**Status: PO_APPROVED_UX / SECURITY_GATE_PENDING / `IMPLEMENTED_NOT_CUTOVER`.** O PO escolheu substituir a navegação obrigatória para `/closing/clara-consent` pelo fluxo de confirmação na conversa, para todas as capabilities, inclusive as 35 `CONFIRMATION_REQUIRED`.
+
+**Padrão TÉO inspecionado:** `transformometro-api/tm_app/interface/mcp/server.py` + `tool_bridge_v3.py` aceitam proposta pendente selada e `proposal_id + confirmation=true` somente na confirmação; operações diretas seguem política por risco. É referência de **UX/API de chamada**, não evidência de equivalência ao consentimento Portal V014. Texto no chat e flag `confirmation=true` são modeláveis pelo cliente; a prova de aprovação humana autenticada do plano selado não foi demonstrada.
+
+**Implementação independente (código):** contrato `proposal_pending_confirmation` + `confirmation` no MCP CLARA; canal `CLARA_CONSENT_CHANNEL` default `portal`; ACT conversacional (`mcp_tool_confirmation`) só arma com `CLARA_CONVERSATIONAL_SECURITY_ACK=R-CLARA-01-TEO-EQUIVALENCE-ACCEPTED`. Sem ack, `confirmation=true` **não** substitui V014. Detalhe: doc 150 §20.9.
+
+**Gate obrigatório R-CLARA-01:** Segurança/Plataforma e Controladoria devem avaliar/aceitar expressamente o risco da alteração de garantia, ou exigir atestação de host/segundo fator verificável antes de liberar alteração das 35 capacidades sensíveis. PO já decidiu UX; segurança da execução permanece `DECISION_REQUIRED`. Até aprovação + cutover verificado, **PREPARE → Portal V014 → ACT continua vigente**, tal como §§1–7.
+
+**Invariantes para a evolução:** proposta única vinculada a ator, recurso, versão, plano e TTL; identidade + effective permissions via Core; resource_scope/ownership + business_rule fail-closed; atomic claim, OCC, idempotência física, audit trail, read-back; sem edição de migrations aplicadas; sem execução para `confirmation=true` desacompanhado de proposal válida. Inventário/planos em doc 150 §20.

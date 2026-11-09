@@ -621,14 +621,16 @@ BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de tes
 
 ## 20. CF-UX-053 — Remoção do fluxo externo de autorização da CLARA (09/11/2026)
 
-**Estado:** `DECISION_REQUIRED` — inventário e proposta; **implementação bloqueada** até gate arquitetural/segurança explícito do owner. **Sem código runtime, sem deploy, sem publicação/inativação/exclusão nesta etapa.**
+**Estado:** `IMPLEMENTED_NOT_CUTOVER` / `SECURITY_GATE_PENDING` — contrato TÉO-shaped entregue no BFF/MCP com **default `CLARA_CONSENT_CHANNEL=portal`** (V014 vigente). Cutover conversacional das 35 `CONFIRMATION_REQUIRED` **bloqueado** até aprovação formal Segurança/Plataforma + Controladoria (`CLARA_CONVERSATIONAL_SECURITY_ACK`).
 
 | Campo | Classificação |
 |---|---|
 | Problema observado | `PROVEN` — UX exige `confirmation_url` → `/apps/controllership-finance/closing/clara-consent` para capacidades `CONFIRMATION_REQUIRED` |
 | Comportamento desejado (PO) | `TARGET` — confirmação exclusivamente conversacional no ChatGPT; sem redirecionamento Portal |
-| Inventário das capacidades | `TO_INVENTORY` fechado abaixo com evidência HEAD (matriz doc 124 + `_capability_table`) |
-| Revisão de segurança | `DECISION_REQUIRED` |
+| Inventário das capacidades | `PROVEN` — 13 `DIRECT_ALLOWED` + 35 `CONFIRMATION_REQUIRED` (matriz doc 124) |
+| Contrato MCP TÉO-shaped | `IMPLEMENTED_NOT_CUTOVER` — `proposal_pending_confirmation` + `confirmation=true` no commit; ACT conversacional só com ack |
+| Runtime produtivo sensível | `CURRENT_RUNTIME` = Portal V014; cutover = `DECISION_REQUIRED` |
+| Revisão de segurança | `SECURITY_GATE_PENDING` |
 | Escopo | Transversal a todas as operações governadas da CLARA (não só checklist) |
 
 ### 20.1 Inventário HEAD — dependências do consentimento externo
@@ -770,3 +772,36 @@ Conforme briefing PO §7 — mais: equivalência de prova declarada honestamente
 ### 20.7 Fora de escopo desta etapa
 
 Implementação, deploy, publicação/inativação/exclusão reais, alteração de fechamentos, drop de migrations, remoção imediata de `ClaraConsentPage` sem cutover.
+
+
+### 20.8 Decisão explícita de produto — seguir padrão conversacional do TÉO (09/11/2026)
+
+**PO_DECISION / TARGET:** o PO escolheu usar na CLARA o mesmo **padrão de interação** do MCP TÉO: apresentar mudança exata na conversa, receber confirmação textual explícita para a proposta identificada e então solicitar a operação pelo MCP. O objetivo é eliminar a obrigatoriedade de navegação para `clara-consent` em **todas as capacidades**, inclusive `version_publish` e `version_inactivate`. O PO rejeitou manter a etapa externa como experiência definitiva. **Não é autorização para executar efeitos produtivos nesta revisão.**
+
+**Benchmark PROVEN:** `transformometro-api/tm_app/interface/mcp/{server.py,tool_bridge_v3.py}`: operações governadas do TÉO geram `proposal_pending_confirmation`, exibem proposta selada e aceitam `proposal_id + confirmation=true` na segunda chamada. `confirmation=true` é argumento enviado pelo cliente/modelo; **não equivale à prova V014 de que o próprio usuário autenticado aprovou o plano**. Preservar esta distinção expressamente nos contratos e na UX.
+
+**DECISION_REQUIRED — Segurança/Plataforma, Controladoria:** aprovar formalmente o nível de garantia alternativo para operações de alto impacto, ou prover atestação de aprovação nativa, antes de remover a exigência V014. A decisão do PO fixa UX e padrão alvo, mas não substitui a autoridade de R-CLARA-01. A arquitetura deve preservar proposta selada (ator/recurso/versão/TTL/plan hash), autorização Core fail-closed, OCC, single-use, auditoria e read-back; nenhum `confirmation=true` isolado pode executar operação sem proposta válida.
+
+**Plano de migração escolhido (TARGET, não aplicado):** 1) comparar TÉO e CLARA por capability, risco e evidência de host; 2) obter aprovação de risco/segurança; 3) versionar política e contratos/migrações forward-only; 4) testar cenário positivo e negativos (confirmação ausente, ator divergente, replay, parâmetros alterados, estado stale, revoked permissions); 5) aplicar em ambiente isolado; 6) validar ChatGPT real e revalidar audit trail; 7) remover redirecionamento como dependência; 8) descontinuar página por gate de compatibilidade, preservando históricos e rollback. Registro canônico de política: doc 124 §8.
+
+### 20.9 Implementação independente (CF-UX-053) — `IMPLEMENTED_NOT_CUTOVER`
+
+**Entregue no código (default seguro):**
+
+| Artefato | Mudança | Estado |
+|---|---|---|
+| `consent_channel.py` | Canais `portal` / `conversational` / `dual`; ack `R-CLARA-01-TEO-EQUIVALENCE-ACCEPTED` | `IMPLEMENTED` |
+| `config.py` | `CLARA_CONSENT_CHANNEL` (default `portal`), `CLARA_CONVERSATIONAL_SECURITY_ACK` (default vazio) | `IMPLEMENTED` |
+| `governed_writes.prepare` | `status=proposal_pending_confirmation`, `confirmation_contract`, URL só se Portal obrigatório | `IMPLEMENTED` |
+| `governed_writes.commit` | Aceita `confirmation=`; grava `mcp_tool_confirmation` **somente** se canal armado + ack | `IMPLEMENTED` |
+| MCP `execute`/`delete` | Parâmetro `confirmation` (padrão TÉO); instruções CURRENT vs TARGET | `IMPLEMENTED` |
+| `ClaraConsentPage` / V013–V014 | Preservados; sem drop; sem rewrite de migration | `CURRENT_RUNTIME` |
+| Unitários canal + forward MCP | `test_clara_consent_channel.py`, semantic commit/confirmation | `PROVEN` em suite local |
+| Cutover sensível em produção | `CLARA_CONSENT_CHANNEL=conversational` + ack | `DECISION_REQUIRED` / **STOP** |
+| Smoke ChatGPT real pós-cutover | Experiência sem URL | `TEST_NOT_RUN` |
+
+**Política aplicada no runtime default:** `confirmation=true` é sinal de contrato (TÉO), **não** prova humana V014. Sem ack, commit sem Portal continua `consent_required`.
+
+**Aprovações owners:** PO UX = aprovada; Segurança/Plataforma = **PENDENTE**; Controladoria risco operacional = **PENDENTE**.
+
+**Deploy permitido sem gate:** rebuild BFF/MCP com flags default (Portal ON, ack vazio). **Deploy proibido:** qualquer config que arme ACT sensível só com flag/texto do modelo.

@@ -349,3 +349,8 @@ pelo PO na autorização SEMANTIC-002:
 Nenhuma invariante de autorização, escopo, staleness, OCC, auditoria ou
 pós-condição é relaxada — o que muda é apenas a presença do desafio de
 consentimento, restrita às operações cujo efeito o justifica.
+
+
+## Adendo documental — decisão PO sobre canal de confirmação (09/11/2026)
+
+O PO decidiu que o **TARGET da UX CLARA** segue o padrão conversacional do MCP TÉO: proposta selada exibida no ChatGPT, confirmação explícita no chat, execução posterior pelo MCP, sem depender de abrir `clara-consent`. **Implementação independente (`IMPLEMENTED_NOT_CUTOVER`):** contrato + flag `CLARA_CONSENT_CHANNEL` (default `portal`) + ack Security para armar ACT conversacional. Isso **não** comprova que `confirmation=true` substitui V014. Para `CONFIRMATION_REQUIRED`, R-CLARA-01 / Portal permanecem vigentes até aprovação escrita Segurança/Plataforma + Controladoria e cutover verificado. Doc 124 §8 e doc 150 §20.9. Deploy com default Portal é permitido; armar ack em produção sem gate = **STOP**.

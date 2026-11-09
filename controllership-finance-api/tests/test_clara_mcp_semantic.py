@@ -366,7 +366,19 @@ def test_execute_commit_uses_exact_handle(governed):
     )
     assert res.is_error is False
     governed.commit.assert_called_once_with(
-        handle="h1", actor_sub="sub-1"
+        handle="h1", actor_sub="sub-1", confirmation=None
+    )
+
+
+def test_execute_commit_forwards_confirmation(governed):
+    res = sb.tool_execute(
+        phase="commit",
+        proposal_handle="h1",
+        confirmation=True,
+    )
+    assert res.is_error is False
+    governed.commit.assert_called_once_with(
+        handle="h1", actor_sub="sub-1", confirmation=True
     )
 
 
@@ -436,7 +448,7 @@ def test_delete_commit_same_governed_path(governed):
     )
     assert res.is_error is False
     governed.commit.assert_called_once_with(
-        handle="h1", actor_sub="sub-1"
+        handle="h1", actor_sub="sub-1", confirmation=None
     )
 
 

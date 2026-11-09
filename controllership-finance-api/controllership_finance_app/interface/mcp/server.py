@@ -260,10 +260,16 @@ def create_mcp_server() -> MCPServer:
             "Política por risco: ações marcadas direct no catálogo "
             "executam imediatamente (default) com AuthZ efetiva, "
             "idempotência física e pós-condição por read-back; demais "
-            "ações seguem phase='prepare' → consentimento verificável "
-            "no Portal (confirmation_url) → phase='commit' com o "
-            "proposal_handle exato. Um 'sim' digitado no chat NÃO é "
-            "consentimento. Multi-ação: arg 'batch' {phase?, "
+            "ações CONFIRMATION_REQUIRED seguem o contrato TÉO: "
+            "phase='prepare' devolve status=proposal_pending_confirmation "
+            "com presentation selada; apresente a mudança ao usuário; "
+            "após confirmação explícita chame phase='commit' com "
+            "proposal_handle e confirmation=true. "
+            "CURRENT_RUNTIME (default): consentimento humano verificável "
+            "continua sendo o Portal (confirmation_url / V014) — "
+            "confirmation=true sozinho NÃO autoriza. TARGET conversacional "
+            "só arma ACT sem Portal quando Segurança configurar o ack. "
+            "Multi-ação: arg 'batch' {phase?, "
             "operations:[{entity, action, params, depends_on?}]} — "
             "orquestra na mesma solicitação: diretas executam já, "
             "governadas voltam pending_confirmation e bloqueiam "
@@ -285,10 +291,12 @@ def create_mcp_server() -> MCPServer:
         idempotency_key: str | None = None,
         expected_revision: int | None = None,
         batch: dict[str, Any] | None = None,
+        confirmation: bool | None = None,
     ) -> CallToolResult:
         return _guarded(semantic.tool_execute)(
             entity, action, params, phase, proposal_handle,
             idempotency_key, expected_revision, batch,
+            confirmation,
         )
 
     @mcp.tool(
@@ -301,8 +309,10 @@ def create_mcp_server() -> MCPServer:
             "target_ref='<document_id>'). Mesmo fluxo governado: "
             "phase='prepare' expõe exatamente o objeto e a "
             "consequência → confirmação humana explícita no Portal "
-            "→ phase='commit' com o proposal_handle. Nunca executa "
-            "com 'confirmed=true' do modelo."
+            "→ phase='commit' com proposal_handle e confirmation=true "
+            "(contrato TÉO). CURRENT_RUNTIME: sem consentimento Portal "
+            "V014 o ACT falha — confirmation=true não substitui AuthZ "
+            "nem o step-up humano verificável."
         ),
         annotations=_annotations("delete", "Delete"),
         meta=meta,
@@ -315,10 +325,11 @@ def create_mcp_server() -> MCPServer:
         phase: str | None = None,
         proposal_handle: str | None = None,
         expected_revision: int | None = None,
+        confirmation: bool | None = None,
     ) -> CallToolResult:
         return _guarded(semantic.tool_delete)(
             entity, action, target_ref, params, phase,
-            proposal_handle, expected_revision,
+            proposal_handle, expected_revision, confirmation,
         )
 
     return mcp

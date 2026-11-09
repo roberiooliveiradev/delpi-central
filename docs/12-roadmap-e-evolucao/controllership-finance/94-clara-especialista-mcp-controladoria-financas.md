@@ -475,3 +475,7 @@ Existe uma administração dedicada para **definir quais documentos são exigido
 - **Escrita transacional:** cadastro/edição/encerramento é UMA operação na BFF (`PUT …/documents/{item_key}/requirement`) com `base_version` (OCC) e `Idempotency-Key`; retry é seguro e replay retorna o mesmo resultado.
 - **Rascunho aberto:** a operação é recusada com `catalog_draft_conflict` enquanto houver DRAFT/REVIEW — o administrador deve concluir/descartar o rascunho pela UI antes de alterar o catálogo.
 - **Produção:** endpoint ativo, V017 aplicada, RBAC fail-closed verificado; primeiro cadastro real será feito pelo PO (draft v1 com 53 itens reais aguarda publicação prospectiva — `effective_from` nunca cobre competência já aberta).
+
+## Adendo 09/11/2026 — confirmação conversacional como TARGET de produto
+
+Decisão expressa do PO: a CLARA deve seguir a experiência conversacional do TÉO para operações governadas, com proposta selada e confirmação explícita na conversa; eliminar o redirecionamento obrigatório ao Portal é o objetivo. **Código:** contrato TÉO-shaped (`proposal_pending_confirmation` + `confirmation`) entregue; default `CLARA_CONSENT_CHANNEL=portal` mantém PREPARE → V014 → ACT. Cutover conversacional exige ack Segurança + Controladoria (`IMPLEMENTED_NOT_CUTOVER` / `SECURITY_GATE_PENDING`). `confirmation=true` não prova, por si só, equivalência a V014. Referências: doc 124 §8; doc 150 §20.9.

@@ -1,6 +1,9 @@
 # Portal Controladoria & Finanças — Fonte de navegação e estado
 
-> **09/11/2026 — CF-UX-053 (CLARA sem autorização externa):** o PO solicitou confirmação **somente conversacional** no ChatGPT, eliminando `clara-consent` / `confirmation_url`. Inventário + `DECISION_REQUIRED` de segurança registrados no [doc 150 §20](./150-plano-unico-correcao-integral-portal-ux-funcional-2026-11-02.md); política vigente permanece [doc 124](./124-clara-write-execution-risk-policy.md) + V014 (R-CLARA-01). **Implementação bloqueada** até gate explícito — «sim» no chat não é equivalente ao step-up Portal.
+
+> **09/11/2026 — CF-UX-053 (`IMPLEMENTED_NOT_CUTOVER`):** contrato conversacional estilo TÉO entregue no BFF/MCP (`proposal_pending_confirmation` + `confirmation=true`); default `CLARA_CONSENT_CHANNEL=portal` mantém V014. Cutover sem Portal exige ack Segurança `R-CLARA-01-TEO-EQUIVALENCE-ACCEPTED` + aprovação Controladoria — **STOP** sem isso. Detalhe: [doc 150 §20.9](./150-plano-unico-correcao-integral-portal-ux-funcional-2026-11-02.md), [doc 124 §8](./124-clara-write-execution-risk-policy.md).
+
+> **09/11/2026 — CF-UX-053 decisão PO:** UX alvo = confirmação no ChatGPT sem navegação obrigatória ao Portal. **A flag TÉO não prova consentimento humano equivalente a V014.** Segurança/Plataforma + Controladoria = `SECURITY_GATE_PENDING`.
 
 > **Rework 09/11/2026 — Filial 01 SOURCE_MISSING em 2026-10 (Documento 157):** causa raiz **PROVEN no produtor TOTVS**, não no MFE: `SB9010` sem linhas `B9_FILIAL='01'` em qualquer `B9_DATA` de outubro/2026; `MV_ULMES` filial 01 = `20260930` (último fechamento materializado), filial 02 = `20261031`. Totais CLARA da Filial 02 batem com `SUM(B9_VINI1)` / P7 ex-99 / loc 99 na mesma data (`11.448.053,26` / `11.058.724,93` / `389.328,33`). Consolidado `INCOMPLETE` é honesto. Correção de produto: **não inventar saldo** — dependência operacional do fechamento da Matriz; MFE ajusta data-base civil (`formatCivilDate`) e aviso de consolidado parcial. Ver [doc 23](./23-ledger-rq-ac-testes.md) §Documento 157 rework.
 

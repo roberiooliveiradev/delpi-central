@@ -216,3 +216,7 @@ release stage-05 (30/10/2026, host `srv-api`, checkout `297068f1b7` — inclui `
 ## Adendo Gate 021 — estado real do IAM/MCP (31/10/2026)
 
 Inspeção read-only do realm `delpi` em produção confirmou o client **`mcp-controllership-finance`** totalmente provisionado: habilitado, público, standard flow, PKCE S256, redirect `https://chatgpt.com/connector_platform_oauth_redirect`, scopes default `mcp:tools` + `audience-delpi` (+`basic`,`email`,`profile`,`roles`,`web-origins`,`acr`). O registro histórico `mcp-clara = BLOCKED_IAM` referia-se à nomenclatura anterior e está **superado** — o client correto existe e está configurado. Direct access grants desabilitado por desenho: não há password grant legítimo; o caminho oficial é authorization code + PKCE via conector ChatGPT. **Pendente:** execução e2e real do fluxo (tools/list, read, analyze, knowledge, execute/delete discovery) — `TEST_NOT_RUN` no Gate 021 por indisponibilidade de sessão conectora autorizada; não requer alteração de IAM.
+
+## Adendo 09/11/2026 — confirmação conversacional como TARGET de produto
+
+Decisão expressa do PO: a CLARA deve seguir a experiência conversacional do TÉO para operações governadas, com proposta selada e confirmação explícita na conversa; eliminar o redirecionamento obrigatório ao Portal é o objetivo. **Código:** MCP `execute`/`delete` aceitam `confirmation`; prepare devolve `proposal_pending_confirmation`. Runtime default permanece Portal V014. Cutover conversacional = `SECURITY_GATE_PENDING`. Referências: doc 124 §8; doc 150 §20.9.

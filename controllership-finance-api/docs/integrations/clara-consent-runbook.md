@@ -74,3 +74,20 @@ confirm_batch / commit_proposal (MCP)
   limpeza periódica pode expirá-los por `expires_at` sem risco.
 - Auditoria: decisões de consentimento registradas no canal
   `mcp/clara` com `correlation_id` do desafio.
+
+
+## Evolução — UX conversacional TÉO (`IMPLEMENTED_NOT_CUTOVER`)
+
+O PO escolheu eliminar a exigência de página externa como experiência alvo e aproximar a CLARA do TÉO (segunda chamada com `confirmation=true`).
+
+| Camada | Estado |
+|---|---|
+| Contrato MCP (`proposal_pending_confirmation`, `confirmation`) | `IMPLEMENTED` |
+| Default produção | `CURRENT_RUNTIME` = `CLARA_CONSENT_CHANNEL=portal` (V014) |
+| Bypass Portal por `mcp_tool_confirmation` | Só com ack `R-CLARA-01-TEO-EQUIVALENCE-ACCEPTED` + canal `conversational`/`dual` |
+| Cutover sensível | `SECURITY_GATE_PENDING` / `DECISION_REQUIRED` |
+| Página `clara-consent` | Obrigatória no default; não descontinuada |
+
+**Operação segura:** nunca definir o ack em produção sem aprovação escrita Segurança/Plataforma + Controladoria. Rollback = `CLARA_CONSENT_CHANNEL=portal` e ack vazio. Ver doc 124 §8 e doc 150 §20.9.
+
+**Nota de contrato:** o parâmetro MCP `confirmation` existe (padrão TÉO). Sem Portal V014 ou canal armado, ACT continua `consent_required` — a flag sozinha não autoriza.

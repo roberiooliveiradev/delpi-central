@@ -810,11 +810,13 @@ def _prepare_single(
 def _commit_single(
     proposal_handle: str,
     actor_sub: str,
+    confirmation: bool | None = None,
 ) -> CallToolResult:
     try:
         result = _governed_writes().commit(
             handle=proposal_handle,
             actor_sub=actor_sub,
+            confirmation=confirmation,
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc)
@@ -1064,6 +1066,7 @@ def _governed_dispatch(
     *,
     destructive_only: bool,
     tool_name: str,
+    confirmation: bool | None = None,
 ) -> CallToolResult:
     _request, user = _user_and_access()
     actor = actor_subject(user)
@@ -1078,7 +1081,9 @@ def _governed_dispatch(
                 "proposal_handle obrigatório em phase=commit.",
                 error_code="validation_error",
             )
-        return _commit_single(proposal_handle, actor)
+        return _commit_single(
+            proposal_handle, actor, confirmation=confirmation
+        )
 
     ent = (entity or "").strip().lower()
     act = (action or "").strip().lower()
@@ -1144,6 +1149,7 @@ def tool_execute(
     idempotency_key: str | None = None,
     expected_revision: int | None = None,
     batch: dict | None = None,
+    confirmation: bool | None = None,
 ) -> CallToolResult:
     return _governed_dispatch(
         entity,
@@ -1156,6 +1162,7 @@ def tool_execute(
         batch,
         destructive_only=False,
         tool_name="execute",
+        confirmation=confirmation,
     )
 
 
@@ -1167,6 +1174,7 @@ def tool_delete(
     phase: str | None = None,
     proposal_handle: str | None = None,
     expected_revision: int | None = None,
+    confirmation: bool | None = None,
 ) -> CallToolResult:
     payload = dict(params or {})
     if target_ref is not None:
@@ -1193,4 +1201,5 @@ def tool_delete(
         None,
         destructive_only=True,
         tool_name="delete",
+        confirmation=confirmation,
     )

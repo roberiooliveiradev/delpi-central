@@ -35,6 +35,14 @@ from controllership_finance_app.domain.closing_checklist.errors import (
 from controllership_finance_app.application.clara.operation_presentation import (
     present_operation,
 )
+from controllership_finance_app.application.clara.consent_channel import (
+    CONSENT_TYPE_MCP_CONFIRMATION,
+    confirmation_instruction_for_prepare,
+    consent_channel,
+    conversational_act_enabled,
+    portal_consent_required,
+    prepare_status,
+)
 from controllership_finance_app.application.clara.step_up_consent import (
     CONSENT_TYPE_PORTAL_STEP_UP,
     ConsentRequired,
@@ -2266,7 +2274,13 @@ class ClaraGovernedWrites:
             ),
             expires_at=expires_at,
         )
+        consent_ch = consent_channel()
+        portal_required = portal_consent_required()
+        conf_url = clara_consent_url(
+            proposal_id=str(proposal["proposal_id"])
+        )
         return {
+            "status": prepare_status(),
             "proposal_handle": handle,
             "proposal_id": str(proposal["proposal_id"]),
             "capability": capability,
@@ -2276,19 +2290,32 @@ class ClaraGovernedWrites:
             "presentation": present_operation(capability, params),
             "expected_state": expected_state,
             "execution_policy": "confirm_before_act",
-            "confirmation_url": clara_consent_url(
-                proposal_id=str(proposal["proposal_id"])
-            ),
+            "consent_channel": consent_ch,
+            "portal_consent_required": portal_required,
+            "conversational_act_armed": conversational_act_enabled(),
+            "confirmation_url": conf_url if portal_required else None,
             "confirmation_instruction": (
-                "Apresente a operação exata ao usuário (quem, recurso, "
-                "competência, versão, efeito, motivo) e direcione-o à "
-                "confirmation_url no Portal Controladoria & Finanças "
-                "para consentir. Responder 'sim' no chat NÃO autoriza "
-                "a execução — o consentimento é gravado pela página do "
-                "Portal com credencial fresca que esta conversa não "
-                "consegue produzir. A confirmação não substitui a "
-                "autorização efetiva — o backend revalida tudo no ACT."
+                confirmation_instruction_for_prepare()
             ),
+            "confirmation_contract": {
+                "pattern": "teo_prepare_then_commit",
+                "commit_requires": [
+                    "proposal_handle|proposal_id",
+                    "phase=commit",
+                    "confirmation=true",
+                ],
+                "human_proof": (
+                    "portal_step_up_v014"
+                    if portal_required
+                    else "mcp_tool_confirmation_with_security_ack"
+                ),
+                "note": (
+                    "confirmation=true is a sealed-proposal ACT signal "
+                    "(TÉO-shaped). It is never AuthZ and, unless the "
+                    "Security ack arms conversational ACT, never "
+                    "replaces Portal V014."
+                ),
+            },
             "expires_at": (
                 expires_at.isoformat()
                 if hasattr(expires_at, "isoformat")
@@ -2307,6 +2334,7 @@ class ClaraGovernedWrites:
         user_groups: Any = (),
         correlation_id: str | None = None,
         resume: bool = False,
+        confirmation: bool | None = None,
     ) -> dict:
         sealed = self._proposals.load_any_for_actor(
             handle=handle, actor_sub=actor_sub
@@ -2338,14 +2366,19 @@ class ClaraGovernedWrites:
         # autoriza — claim só liga ator+proposta; autorização efetiva é
         # reaplicada pelos repositórios canônicos na execução.
         #
-        # Consentimento verificável (Doc 106 §3.1/§3.2): a tool
-        # chamada pelo assistente não é prova de consentimento —
-        # é exigido consent_record gravado pela superfície BFF de
-        # step-up (token Keycloak emitido após o PREPARE). Boolean
-        # ou texto do modelo nunca bastam.
+        # Consentimento (Doc 106 / CF-UX-053): default = Portal V014.
+        # Canal conversacional armado (Security ack) pode gravar
+        # consent_record tipado mcp_tool_confirmation somente com
+        # confirmation=true + proposta selada do mesmo ator.
         # Revalida o gate no ACT antes do claim — a permission pode
         # ter sido revogada entre PREPARE e execução.
         self._check_gate(sealed["capability"])
+        sealed = self._maybe_attach_conversational_consent(
+            sealed,
+            handle=handle,
+            actor_sub=actor_sub,
+            confirmation=confirmation,
+        )
         self._require_consent(sealed)
         proposal = self._proposals.claim(
             handle=handle, actor_sub=actor_sub
@@ -2658,6 +2691,90 @@ class ClaraGovernedWrites:
 
     _TRUSTED_CONSENT_TYPES = {CONSENT_TYPE_PORTAL_STEP_UP}
 
+    def _portal_consent_ok(self, proposal: dict) -> bool:
+        record = proposal.get("consent_record") or {}
+        if isinstance(record, str):
+            record = json.loads(record)
+        if record.get("type") != CONSENT_TYPE_PORTAL_STEP_UP:
+            return False
+        if record.get("confirmed_by") != proposal["actor_sub"]:
+            return False
+        payload = proposal["payload"]
+        if isinstance(payload, str):
+            payload = json.loads(payload)
+        plan_hash = record.get("plan_hash") or proposal_plan_hash(
+            proposal["capability"],
+            payload,
+            proposal["expected_state"],
+        )
+        return self._challenges.verify_proposal_binding(
+            challenge_id=record.get("challenge_id"),
+            proposal_id=str(proposal["proposal_id"]),
+            actor_sub=proposal["actor_sub"],
+            plan_hash=plan_hash,
+        )
+
+    def _maybe_attach_conversational_consent(
+        self,
+        proposal: dict,
+        *,
+        handle: str,
+        actor_sub: str,
+        confirmation: bool | None,
+    ) -> dict:
+        """Attach TÉO-shaped confirmation only when Security ack arms it.
+
+        Without the ack, confirmation=true never writes consent and
+        Portal V014 remains the only trusted proof.
+        """
+        if self._portal_consent_ok(proposal):
+            return proposal
+        if not conversational_act_enabled():
+            return proposal
+        if confirmation is not True:
+            raise ConsentRequired(
+                "Canal conversacional armado exige confirmation=true "
+                "no ACT após o usuário confirmar explicitamente a "
+                "proposta selada no ChatGPT (padrão TÉO)."
+            )
+        payload = proposal["payload"]
+        if isinstance(payload, str):
+            payload = json.loads(payload)
+        if not present_operation(
+            proposal["capability"], payload
+        ).get("displayable"):
+            raise ConsentRequired(
+                "Operação sem representação clara — não autorizável "
+                "por confirmação conversacional."
+            )
+        plan_hash = proposal_plan_hash(
+            proposal["capability"],
+            payload,
+            proposal["expected_state"],
+        )
+        consent_record = {
+            "type": CONSENT_TYPE_MCP_CONFIRMATION,
+            "confirmed_by": actor_sub,
+            "capability": proposal["capability"],
+            "resource_key": proposal["resource_key"],
+            "plan_hash": plan_hash,
+            "plan_version": 1,
+            "consent_channel": consent_channel(),
+            "security_ack": True,
+            "warning": (
+                "Human proof is conversational MCP confirmation under "
+                "explicit Security acknowledgement — not Portal V014."
+            ),
+        }
+        self._proposals.record_consent(
+            proposal_id=str(proposal["proposal_id"]),
+            actor_sub=actor_sub,
+            consent_record=consent_record,
+        )
+        return self._proposals.load_any_for_actor(
+            handle=handle, actor_sub=actor_sub
+        )
+
     def _require_consent(self, proposal: dict) -> None:
         record = proposal.get("consent_record") or {}
         if isinstance(record, str):
@@ -2684,6 +2801,22 @@ class ClaraGovernedWrites:
                 actor_sub=proposal["actor_sub"],
                 plan_hash=plan_hash,
             ):
+                return
+        if (
+            conversational_act_enabled()
+            and rtype == CONSENT_TYPE_MCP_CONFIRMATION
+            and record.get("confirmed_by") == proposal["actor_sub"]
+            and record.get("security_ack") is True
+        ):
+            payload = proposal["payload"]
+            if isinstance(payload, str):
+                payload = json.loads(payload)
+            expected = proposal_plan_hash(
+                proposal["capability"],
+                payload,
+                proposal["expected_state"],
+            )
+            if record.get("plan_hash") == expected:
                 return
         raise ConsentRequired(
             "Consentimento humano não registrado por superfície "
