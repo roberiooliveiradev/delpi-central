@@ -62,3 +62,25 @@ def get_demand(
     except DelpiGatewayError as exc:
         return fail(str(exc), 502)
     return ok(data)
+
+@router.get("/demand/op-pendencies")
+def get_demand_op_pendencies(
+    request: Request,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    refresh: bool = Query(False, description="Atualiza snapshot de cobertura da demanda"),
+):
+    """Pendências de inclusão de OP por produto/filial, com detalhe de origem."""
+    user = resolve_user(request)
+    try:
+        data = build_demand_service().list_op_pendencies(
+            user, branch=branch, refresh=refresh
+        )
+    except InvalidBranch as exc:
+        return fail(str(exc), 422)
+    except BranchAccessDenied as exc:
+        return fail(str(exc), 403)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    except DelpiGatewayError as exc:
+        return fail(str(exc), 502)
+    return ok(data)
