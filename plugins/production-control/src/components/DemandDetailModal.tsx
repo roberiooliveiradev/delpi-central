@@ -128,7 +128,7 @@ export function DemandDetailModal({ line, branch, onClose }: DemandDetailModalPr
     <HostContainedFitDialog
       open
       title={detail.title}
-      className="ppc-demand-line-dialog"
+      className="ppc-demand-line-dialog ppc-modal--demand-line"
       onClose={onClose}
     >
       <div className="ppc-demand-line">
