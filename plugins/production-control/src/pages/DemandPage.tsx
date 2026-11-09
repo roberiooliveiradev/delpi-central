@@ -22,6 +22,7 @@ import type { DemandLine, PpcBranch } from "../types";
 import { downloadDemandExcel } from "../utils/demandExcel";
 import { demandOrderTableLabel } from "../utils/demandOrderLabel";
 import { demandStatusBadge, demandStatusOptions } from "../utils/demandStatus";
+import { canViewMywegNeeds, defaultDemandOrigin } from "../utils/demandOrigin";
 import { formatIsoDate } from "../utils/formatIsoDate";
 import { formatOpQuantity } from "../utils/formatOpQuantity";
 
@@ -61,18 +62,28 @@ type DemandPageProps = {
   branch: PpcBranch;
   search: string | null;
   status: string | null;
+  permissions?: readonly string[];
+  isSuperadmin?: boolean;
 };
 
 function originBadgeLabel(source: string | undefined): string {
   return source === "myweg" ? copy.demand.originBadgeMyweg : copy.demand.originBadgeProtheus;
 }
 
-export function DemandPage({ branch, search, status }: DemandPageProps) {
+export function DemandPage({
+  branch,
+  search,
+  status,
+  permissions,
+  isSuperadmin = false,
+}: DemandPageProps) {
+  const canViewMyweg = canViewMywegNeeds(permissions, isSuperadmin);
+  const initialOrigin = defaultDemandOrigin(branch, canViewMyweg);
   const [filters, setFilters] = useState<DemandFilters>({
     ...DEMAND_DEFAULT_FILTERS,
     search: search ?? "",
     status: status ?? "",
-    origin: branch === "02" ? "both" : "protheus",
+    origin: initialOrigin,
   });
   const [searchDraft, setSearchDraft] = useState(filters.search);
   const [selected, setSelected] = useState<DemandLine | null>(null);
@@ -83,14 +94,16 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
   const { data, loading, refreshing, error, reload } = useDemand(branch, filters);
   const demand = copy.demand;
 
+  // Se o acesso a MyWEG for revogado na sessao, remove a origem restrita.
+  // Ao trocar filial, App remonta a pagina, sem herdar filtros da filial anterior.
   useEffect(() => {
-    setFilters((current) => ({
-      ...current,
-      page: 1,
-      customers: [],
-      origin: branch === "02" ? current.origin || "both" : "protheus",
-    }));
-  }, [branch]);
+    if (canViewMyweg) return;
+    setFilters((current) =>
+      current.origin === "protheus"
+        ? current
+        : { ...current, origin: "protheus", customers: [], page: 1 },
+    );
+  }, [canViewMyweg]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -107,7 +120,7 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
   const summary = data?.summary;
   const rows = data?.items ?? [];
   const customerOptions = data?.filters.customer_options ?? [];
-  const showMywegUi = branch === "02";
+  const showMywegUi = branch === "02" && canViewMyweg;
   const splitChart = Boolean(
     showMywegUi &&
       (data?.filters.origin === "both" || data?.filters.origin === "myweg") &&
@@ -449,7 +462,7 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
                       setSearchDraft("");
                       setFilters({
                         ...DEMAND_DEFAULT_FILTERS,
-                        origin: branch === "02" ? "both" : "protheus",
+                        origin: initialOrigin,
                       });
                     }}
                   >
