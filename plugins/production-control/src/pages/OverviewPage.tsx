@@ -6,7 +6,7 @@ import {
   MultiTypeSeriesChart,
 } from "@delpi/plugin-ui/index";
 import { AlertCircle, Check, Timer } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { ChartCard } from "../components/ChartCard";
 import { BillingDueDetailModal } from "../components/BillingDueDetailModal";
@@ -148,6 +148,10 @@ export function OverviewPage({
   const {
     data: opPendencies, loading: opLoading, error: opError, reload: reloadOpPendencies,
   } = useOpPendencies(branch);
+
+  useEffect(() => {
+    setSelectedOpPendency(null);
+  }, [branch]);
 
   const refreshOverview = () => {
     reload();
@@ -478,8 +482,9 @@ export function OverviewPage({
                         </span>
                         <span className="ppc-board-pendencies__text">
                           <strong>
-                            {copy.home.opPendencies.needOp}{" "}
-                            {item.suggested_op_date ? formatIsoDate(item.suggested_op_date) : copy.home.opPendencies.needDateMissing}
+                            {item.suggested_op_date
+                              ? `${copy.home.opPendencies.needOp} ${formatIsoDate(item.suggested_op_date)}`
+                              : copy.home.opPendencies.needDateMissing}
                           </strong>
                           <span>{copy.home.opPendencies.forProduct} {item.product_code}</span>
                           <span className="ppc-board-pendencies__qty">
