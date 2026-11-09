@@ -33,6 +33,10 @@ from production_control_app.domain.ports.production_orders_gateway import (
 from production_control_app.domain.services.branch_access_service import BranchAccessService
 from production_control_app.domain.services.current_month_period import today_in_timezone
 from production_control_app.domain.services.op_pendency_service import build_op_pendencies
+from production_control_app.domain.services.stock_rupture_pendency_service import (
+    build_stock_rupture_pendencies,
+    merge_pendency_items,
+)
 from production_control_app.domain.services.demand_coverage_service import (
     STATUS_AT_RISK,
     STATUS_COVERED_BY_ORDER,
@@ -123,6 +127,33 @@ class _DemandSnapshotCache:
 _SNAPSHOT_CACHE = _DemandSnapshotCache(setting_int("cacheTtlSeconds", 120))
 
 
+class _StockRuptureSnapshotCache:
+    """TTL curto para evitar repetir a projeção de estoque em cada navegação."""
+
+    def __init__(self, ttl_seconds: int = 120) -> None:
+        self._ttl = max(0, ttl_seconds)
+        self._entries: dict[str, tuple[float, list[dict[str, Any]], dict[str, Any]]] = {}
+
+    def get(self, branch: str) -> tuple[list[dict[str, Any]], dict[str, Any]] | None:
+        if self._ttl == 0:
+            return None
+        entry = self._entries.get(branch)
+        if entry is None:
+            return None
+        timestamp, rows, meta = entry
+        if time.monotonic() - timestamp > self._ttl:
+            self._entries.pop(branch, None)
+            return None
+        return rows, meta
+
+    def set(self, branch: str, rows: list[dict[str, Any]], meta: dict[str, Any]) -> None:
+        if self._ttl:
+            self._entries[branch] = (time.monotonic(), rows, meta)
+
+
+_STOCK_RUPTURE_CACHE = _StockRuptureSnapshotCache(120)
+
+
 class DemandService:
     def __init__(
         self,
@@ -133,6 +164,7 @@ class DemandService:
         myweg_coverage: Any | None = None,
         today: date | None = None,
         cache: _DemandSnapshotCache | None = None,
+        stock_rupture_cache: _StockRuptureSnapshotCache | None = None,
     ) -> None:
         self._gateway = gateway
         self._branch_access = branch_access or BranchAccessService()
@@ -140,6 +172,9 @@ class DemandService:
         self._coverage = coverage or DemandCoverageService(today=today)
         self._myweg_coverage = myweg_coverage
         self._cache = cache if cache is not None else _SNAPSHOT_CACHE
+        self._stock_rupture_cache = (
+            stock_rupture_cache if stock_rupture_cache is not None else _STOCK_RUPTURE_CACHE
+        )
 
     # ------------------------------------------------------------- helpers
 
@@ -416,6 +451,28 @@ class DemandService:
 
     # --------------------------------------------------------------- public
 
+    def _load_stock_rupture_rows(
+        self, *, branch: str, refresh: bool
+    ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        """Somente após RBAC; projeção vem do Reports em rota S2S da api-delpi."""
+        if not refresh:
+            cached = self._stock_rupture_cache.get(branch)
+            if cached is not None:
+                return cached
+        payload = self._gateway.fetch_stock_rupture_pendencies(
+            branch=branch, horizon_days=30
+        )
+        data = payload.get("data") if isinstance(payload, dict) else None
+        if not isinstance(data, dict) or not isinstance(data.get("items"), list):
+            raise DelpiGatewayError("Rupturas do Delpi Reports indisponíveis.")
+        raw_meta = data.get("meta")
+        meta = raw_meta if isinstance(raw_meta, dict) else {}
+        if meta.get("branch") and str(meta["branch"]).strip() != branch:
+            raise DelpiGatewayError("Rupturas recebidas de filial diferente da solicitada.")
+        rows = [row for row in data["items"] if isinstance(row, dict)]
+        self._stock_rupture_cache.set(branch, rows, meta)
+        return rows, meta
+
     def list_op_pendencies(
         self,
         user: object | None,
@@ -466,11 +523,40 @@ class DemandService:
                 "Alguns produtos foram ocultados porque a cobertura por estoque ou OP "
                 "não está confirmada."
             )
+
+        # Falha na fonte Reports não pode apagar a lista de OPs. A origem da
+        # ruptura fica visivelmente indisponível, nunca tratada como zero.
+        stock_status = "complete"
+        stock_as_of: str | None = None
+        rupture_items: list[dict[str, Any]] = []
+        try:
+            stock_rows, stock_meta = self._load_stock_rupture_rows(
+                branch=code, refresh=refresh
+            )
+            rupture_items = build_stock_rupture_pendencies(
+                stock_rows, branch=code, today=today, horizon_days=30
+            )
+            stock_as_of = str(stock_meta.get("asOfDate") or "") or None
+        except Exception:  # noqa: BLE001 — falha isolada, sem divulgar detalhes internos
+            stock_status = "unavailable"
+            source_status = "partial"
+            warning = " ".join(filter(None, (
+                warning,
+                "Rupturas de estoque indisponíveis. As pendências de OP seguem visíveis.",
+            )))
+        op_items = payload["items"]
         payload.update({
+            "items": merge_pendency_items(op_items, rupture_items),
+            "count": len(op_items) + len(rupture_items),
+            "op_count": len(op_items),
+            "stock_rupture_count": len(rupture_items),
+            "stock_source_status": stock_status,
+            "stock_as_of": stock_as_of,
+            "stock_horizon_days": 30,
             "requested_origin": requested_origin,
             "source_status": source_status,
             "warning": warning,
-            "refresh_policy": "snapshot_demand_ttl",
+            "refresh_policy": "snapshot_demand_ttl_and_rupture_120s",
         })
         return payload
 
