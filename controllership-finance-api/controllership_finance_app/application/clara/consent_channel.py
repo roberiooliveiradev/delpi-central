@@ -1,10 +1,10 @@
 """CLARA consent channel policy (CF-UX-053).
 
-Runtime default remains Portal step-up (V014 / R-CLARA-01). The
-conversational TÉO-shaped contract (proposal presentation +
-``confirmation=true`` on ACT) is implemented behind an explicit
-channel setting and a separate security acknowledgement so production
-cannot silently weaken the human-proof guarantee.
+Runtime default remains Portal step-up (V014 / R-CLARA-01).
+The operational owner accepted the residual risk of the TEO-shaped
+contract (doc 150 §20.16). A deliberate conversational channel
+selection is the cutover; no fabricated Security acknowledgement is used.
+The channel must never be inferred from the user's token or prompt.
 """
 
 from __future__ import annotations
@@ -15,9 +15,8 @@ CHANNEL_PORTAL = "portal"
 CHANNEL_CONVERSATIONAL = "conversational"
 CHANNEL_DUAL = "dual"
 
-# Must be set verbatim by Security/Platform after formal acceptance of
-# TÉO-equivalent residual risk for CONFIRMATION_REQUIRED capabilities.
-SECURITY_ACK_VALUE = "R-CLARA-01-TEO-EQUIVALENCE-ACCEPTED"
+# Explicit channel opt-in, not a signature or independent human proof.
+CONVERSATIONAL_POLICY_VERSION = "R-CLARA-01-OWNER-RISK-ACCEPTED-V2"
 
 CONSENT_TYPE_MCP_CONFIRMATION = "mcp_tool_confirmation"
 
@@ -29,29 +28,18 @@ def consent_channel() -> str:
     return CHANNEL_PORTAL
 
 
-def conversational_security_ack_present() -> bool:
-    return (
-        str(settings.CLARA_CONVERSATIONAL_SECURITY_ACK or "").strip()
-        == SECURITY_ACK_VALUE
-    )
-
-
 def conversational_act_enabled() -> bool:
-    """True only when channel opts in AND security ack is present.
+    """Only explicit backend configuration enables conversational ACT.
 
-    Without the ack, conversational/dual never bypass Portal V014.
+    The default and invalid values stay on V014. The 'dual' mode is
+    Portal-bound; user messages or JWT cannot switch this policy.
     """
-    channel = consent_channel()
-    if channel not in {CHANNEL_CONVERSATIONAL, CHANNEL_DUAL}:
-        return False
-    return conversational_security_ack_present()
+    return consent_channel() == CHANNEL_CONVERSATIONAL
 
 
 def portal_consent_required() -> bool:
-    """Portal V014 remains mandatory unless conversational ACT is armed."""
-    if consent_channel() == CHANNEL_CONVERSATIONAL and conversational_act_enabled():
-        return False
-    return True
+    """V014 is mandatory except for the explicitly selected chat channel."""
+    return not conversational_act_enabled()
 
 
 def prepare_status() -> str:
@@ -59,9 +47,7 @@ def prepare_status() -> str:
 
 
 def confirmation_instruction_for_prepare() -> str:
-    channel = consent_channel()
-    conversational_ready = conversational_act_enabled()
-    if channel == CHANNEL_CONVERSATIONAL and conversational_ready:
+    if conversational_act_enabled():
         return (
             "Apresente a operação exata ao usuário (quem, recurso, "
             "competência, versão, efeito, riscos, reversibilidade) e "
@@ -71,20 +57,11 @@ def confirmation_instruction_for_prepare() -> str:
             "confirmation=true não substitui a autorização efetiva do "
             "Core — o backend revalida permissões, escopo, OCC, "
             "idempotência e read-back no ACT. "
-            "Atenção: este canal conversacional está armado com "
-            "acknowledgement de Segurança; a prova humana não é o "
-            "step-up Portal V014."
+            "Canal definido explicitamente no backend após aceite "
+            "operacional do responsável da área. O sinal MCP não "
+            "equivale ao step-up Portal V014."
         )
-    if channel == CHANNEL_DUAL and conversational_ready:
-        return (
-            "Apresente a operação selada na conversa e peça confirmação "
-            "explícita. Em seguida chame phase=commit com "
-            "confirmation=true. Enquanto o dual permanecer com Portal "
-            "obrigatório para prova V014, o usuário também deve "
-            "aprovar em confirmation_url quando o canal conversacional "
-            "não estiver autorizado a substituir o step-up."
-        )
-    # Default / portal / conversational without ack: V014 mandatory.
+    # Portal fallback, including dual and invalid configuration.
     return (
         "Apresente a operação exata ao usuário (quem, recurso, "
         "competência, versão, efeito, motivo, riscos) no ChatGPT. "
