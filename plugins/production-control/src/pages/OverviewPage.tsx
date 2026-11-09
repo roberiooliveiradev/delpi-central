@@ -468,7 +468,11 @@ export function OverviewPage({
                   {copy.home.opPendencies.error}
                 </p>
               ) : !opPendencies?.items.length ? (
-                <p className="ppc-board-list__empty">{copy.home.opPendencies.empty}</p>
+                <p className="ppc-board-list__empty">
+                  {opPendencies?.stock_source_status === "unavailable"
+                    ? copy.home.opPendencies.emptyPartial
+                    : copy.home.opPendencies.empty}
+                </p>
               ) : (
                 <ul className="ppc-board-list__scroll">
                   {opPendencies.items.map((item) => (
@@ -488,13 +492,16 @@ export function OverviewPage({
                           {item.kind === "stock_rupture" ? (
                             <>
                               <strong>
-                                {copy.home.opPendencies.stockRupture.cardDate} {formatIsoDate(item.first_shortage_date)}
+                                {opPendencies?.as_of && item.first_shortage_date < opPendencies.as_of
+                                  ? copy.home.opPendencies.stockRupture.cardDateOverdue
+                                  : copy.home.opPendencies.stockRupture.cardDate}
+                                {" "}{formatIsoDate(item.first_shortage_date)}
                               </strong>
                               <span title={item.product_description}>
                                 {copy.home.opPendencies.stockRupture.material} {item.product_code}
                               </span>
                               <span className="ppc-board-pendencies__qty">
-                                {copy.home.opPendencies.stockRupture.projectedBalance}:{" "}
+                                {copy.home.opPendencies.stockRupture.cardBalance}:{" "}
                                 {formatMaterialQuantity(item.shortage_balance, item.unit)}
                               </span>
                             </>
