@@ -43,6 +43,9 @@ from production_control_app.domain.services.demand_coverage_service import (
     DemandCoverageService,
     DemandLine,
 )
+from production_control_app.domain.services.demand_entity_scope import (
+    is_pcp_sales_order_product,
+)
 from production_control_app.domain.services.myweg_fiscal_fifo_offset import (
     reconcile_latest_myweg_fifo,
 )
@@ -213,7 +216,12 @@ class MyWegDemandCoveragePreviewService:
                 reason="source_read_failed",
             )
 
-        sales_branch = [item for item in sales_all if _text(item.get("filial")) == code]
+        # MP nao pertence a carteira produtiva do PCP: retirar antes
+        # de classificacao de sobreposicao, estoque e consolidacao MyWEG.
+        sales_branch = [
+            item for item in sales_all
+            if _text(item.get("filial")) == code and is_pcp_sales_order_product(item)
+        ]
         protheus_units = summarize_units(sales_branch)
 
         myweg_products = {line.product_code for line in eligible if line.product_code}
@@ -649,7 +657,12 @@ class MyWegDemandCoveragePreviewService:
             sales_payload, "items", source_name="open_sales_orders"
         )
         sales_all = [item for item in sales_raw if isinstance(item, dict)]
-        sales_branch = [item for item in sales_all if _text(item.get("filial")) == code]
+        # MP nao pertence a carteira produtiva do PCP: retirar antes
+        # de classificacao de sobreposicao, estoque e consolidacao MyWEG.
+        sales_branch = [
+            item for item in sales_all
+            if _text(item.get("filial")) == code and is_pcp_sales_order_product(item)
+        ]
 
         myweg_products = {line.product_code for line in eligible if line.product_code}
         consolidation = classify_consolidation(
