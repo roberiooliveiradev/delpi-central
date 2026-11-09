@@ -374,3 +374,55 @@ H. Rebuild/DEV-only migrations com contratos, health, bundle fingerprint, gatewa
 
 **Status de execução deste adendo:** DOCUMENTED / PO_APPROVED_TARGET / IMPLEMENTATION_NOT_STARTED. Não declarar PASS de frontend, endpoints transversais ou uniqueness apenas porque este documento foi atualizado.
 
+
+
+
+## D16-REF-01 — Execution & Self-Review Gate (Cursor, DEV only)
+
+**Escopo autorizado:** implementação completa do D16-REF-01 no ambiente DEV. **PROD e HML proibidos**. Não reutilizar comandos antigos sem descobrir o compose/script vigente. Não declarar PASS só por build, unit ou contrato. Evidência sempre vinculada a SHA, ambiente, bundle e data.
+
+### Fase 0 — Inventário e contrato pré-implementação
+- Ler AGENTS.md e authorities, verificar HEAD/status/diffs concorrentes, confirmar D16 atual, V015/V016, migrations index/grants, composição DEV, ferramentas EVA e kit UI. Identificar conflitos de deploy/Sso antes de alterar containers.
+- Produzir a matriz EXISTS/CHANGE/NEW para operações REST nested, nova listagem transversal, summary/agrupamento, filtros por field/subject/targetAttribute/productCode/requestId/status/owner/período e dispatch EVA. **Não inventar rota já existente**.
+- Fechar chave de alvo imutável e restrição UNIQUE OPEN; desenho de migration incremental incluindo dados GENERAL legados e rollback. Revisar AuthZ de escopo cruzado; não basta engineering.access sem acesso legítimo ao caso.
+- Fechar critérios de aceite com evidência concreta; diferenciar regras PO firmes de decisões de contrato owner pendentes. Se owner/SoT mudar: ARCHITECTURE_DECISION_REQUIRED.
+
+### Fase 1 — Domain, DB, application e API
+- Refatorar validação de alvo contextual (FIELD path; SUPPLIER_LINK key + targetAttribute), sem subject GENERAL novo na UI/EVA. Soft-delete e RESOLVED não bloqueiam nova OPEN no mesmo alvo. TARGET imutável após criação normal; legado isolado.
+- Migration aditiva com grants mínimos/índices e prova sob concorrência real, incluindo NULL semantics. Ingestão de legado sem reatribuição fictícia e sem perda. Unicidade OPEN por request/alvo deve falhar atomicamente em corrida e retornar 409 tipado; idempotência/CAS/audit intactos.
+- Contratos list/summary atravessando solicitações com filtros aplicados antes de paginação, order estável, counts correct e escopo server-side. Implementar bounded paginação/aggregation e índices adequados; não N+1 nem import de banco alheio.
+- Nenhuma escrita ERP, mudança de revisão técnica, source of truth adicional ou reabertura de caso terminal.
+
+### Fase 2 — EVA
+- Reaproveitar exatamente seis MCP tools. CRUD usa mesmos application use cases REST; preparar com alvo e texto inequívocos; ACT revalidar principal/caso/versão/alvo. Delete com confirmação humana verificável e fail-closed.
+- Consultas transversais via read e mesmo contrato de filtros, scopes, ordenação, paginação e redaction. Não criar tool nova nem ampliar acesso sob o pretexto de analytics.
+- Incluir unit/contract/parity tests positivos, negativos, concorrência Portal×EVA e confirmação indisponível.
+
+### Fase 3 — MFE, UX e acessibilidade
+- Remover faixa genérica como UX principal; renderizar trigger contextual em cada campo real SB1 e em PN/Catálogo SA5 individualizados, com fallback histórico de flags GENERAL. Icone vermelho sempre visível OPEN, botão pequeno no hover/focus e affordance touch, modal oficial create/view/edit/resolve/reopen/delete, confirmação destructive.
+- Histórico e resumo navegável dos campos marcados; consulta transversal com filtros / deep-link para campo e request, sem totals fake e sem duplicar banco de dados. Dados históricos sem alvo visível continuam recuperáveis.
+- Foco inicial/restauração, teclado, Escape, aria-labels, screen reader, zoom 200, sticky/table overflow e mobile sem hover; não regressar D14 table nem D15 baseline.
+
+### Fase 4 — Verificação técnica e cenários obrigatórios
+- Executar typecheck e build MFE; Vitest de alvos por campo e render; pytest domain/API/EVA/PG real incluindo migrations + grants, CAS/version, idempotência, audit atomic, partial unique concurrent insert, conflicts, legacy general, cross-case AuthZ negative, target immutable, post-terminal years, summary distinct count and stable pagination.
+- Playwright autenticado sobre **bundle DEV realmente servido** desktop/tablet/mobile, zoom200, keyboard/touch: sem bandeira → hover/foco/toque → modal → criação → refresh → vermelha → edição → resolver → reabrir → remoção com confirmação → audit; PN vs catálogo de mesmo fornecedor e fornecedores distintos; dois casos com mesmo produto; caso terminal; legados sem target; listagem transversal filtros/paginação; 403 e 409. Screenshots e traces sanitizados.
+- Fazer testes de integração em API/gateway e CRUD EVA real autorizado. Se SSO quebrar, investigar Keycloak/Portal/host/origins/cookies e health **sem enfraquecer AuthN**; registrar PENDING se não completar, jamais trocar por E2E com auth fake para dizer PASS.
+- Executar casos de regressão D13-D15, SA5 duplicidade e verify fail-closed; não reimplantar PROD.
+
+### Fase 5 — Self-review obrigatório *depois* da implementação, antes do aceite
+1. Inspecionar diff inteiro com checklist de contratos e arquitetura (domain isolado, read/write boundary, owner, joins, no N+1, no SQL externo, no nova tool, no secrets).
+2. Revisar casos de erro e corrida: CREATE simultâneo da mesma OPEN, conflito CAS no edit, resolve/reopen/remove, retry e reuso de idempotency key, orphan fornecedor e legados. Verificar unicidade efetiva no banco, não por teste de mock.
+3. Revisar segurança: 401/403/404, tenant e case-level scope em reads agregados, counts não vazam casos, input sem HTML injection, payload schema allowlist, after-terminal AuthZ, EVA PREPARE/ACT.
+4. Revisar UX visual screenshot por breakpoint: trigger visível em teclado e mobile, vermelho só OPEN, nenhum card geral dominante, modal não clipped e foco restaurado, flags em todos campos requeridos. Se houver falha, corrigir e **reexecutar testes** no SHA corrigido.
+5. Responder para cada AC F-01..F-12 com PASS/FAIL/PENDING/TEST_NOT_RUN e evidência. Registrar execução drift, residual, riscos e decisões owner. Não autodeclarar 'complete' com E2E ausente.
+6. Residual search por GENERAL criado pela UI, flag sem target, targetAttribute ausente, paginação in-memory em vez de SQL, flags que alteram campo, novas tools MCP, alteração PROD, hard-delete, bypass AuthZ.
+7. Checar migração de dados e rollback/revoke e paths de docs; commit/push conforme AGENTS.md e preservar todos os foreign diffs.
+
+### Fase 6 — Deploy restrito DEV e evidência pós-deploy
+- Confirmar ambiente DEV e variáveis/compose (somente **nomes das variáveis e presença**, nunca valores secretos no relatório). Aplicar migration apenas PG DEV; rebuild/recreate apenas engineering-api / plugin engineering impactados. health e rota Gateway autenticada, fingerprint de bundle e provas endpoints EVA no container rodando.
+- Reexecutar smoke pós-deploy e Playwright sobre o host real DEV. Gravar SHA commit do código e SHA docs; se HEAD mudar, marcar evidência STALE_EVIDENCE e rerun crítico.
+- PROD_DEPLOY=NOT_PERFORMED e HML_DEPLOY=NOT_PERFORMED são obrigatórios.
+- Relatório: BASE_SHA FINAL_SHA, migrations, contracts, 12 AC, backend PG tests, cross-scope security, EVA parity, screenshots, post-terminal, stale evidence, status de health/SSO, bundle fingerprint, commits/push, blockers, residuals. **Aceite integral = todas as AC provadas**; caso contrário PARTIAL.
+
+**Status deste gate:** PLAN_APPROVED / IMPLEMENTATION_PENDING / NO_DEPLOY.
+
