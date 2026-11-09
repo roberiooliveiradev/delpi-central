@@ -109,6 +109,71 @@ def _service(gateway: FakeDemandGateway) -> DemandService:
 # ------------------------------------------------------------------ cobertura
 
 
+def test_raw_material_sales_are_excluded_before_coverage_allocation() -> None:
+    """#1552: MP nunca compete por estoque/OP com PA do mesmo produto."""
+    sales = [
+        _line(pedido="MP", produto="90262910", tipo_produto=" MP ",
+              saldo=50.0, no_estoque=80.0, data_entrega="2026-08-22"),
+        _line(pedido="PA", produto="90262910", tipo_produto="PA",
+              saldo=60.0, no_estoque=80.0, data_entrega="2026-08-25"),
+    ]
+    result = DemandCoverageService(today=TODAY).build(
+        open_sales_orders=sales, open_production_orders=[], branch="01"
+    )
+    assert [line.sales_order for line in result] == ["PA"]
+    assert result[0].allocated_stock == 60.0
+    assert result[0].uncovered_quantity == 0.0
+
+
+@pytest.mark.parametrize("branch", ["01", "02"])
+def test_mp_sales_are_missing_from_list_summary_horizon_and_op_pendencies(branch: str) -> None:
+    """Filtrar MP no backend impede contaminar tabela, KPI, gráfico e alerta de OP."""
+    sales = [
+        _line(filial=branch, pedido="MP", produto="30190001",
+              tipo_produto="mp", saldo=90.0, quantidade=90.0,
+              unidade="KG", data_entrega="2026-08-10"),
+        _line(filial=branch, pedido="PA", produto="90262910",
+              tipo_produto="PA", saldo=2.0, quantidade=2.0,
+              unidade="MI", data_entrega="2026-08-25"),
+        _line(filial=branch, pedido="PI", produto="80001001",
+              tipo_produto="PI", saldo=3.0, quantidade=3.0,
+              data_entrega="2026-08-27"),
+        _line(filial=branch, pedido="DESCONHECIDO", produto="99999999",
+              tipo_produto="", saldo=4.0, quantidade=4.0,
+              data_entrega="2026-08-27"),
+    ]
+    service = _service(FakeDemandGateway(sales_orders=sales))
+    user = _user(*FULL_PERMS)
+    payload = service.list_demand(user, branch=branch)
+    assert [row["sales_order"] for row in payload["items"]] == [
+        "PA", "PI", "DESCONHECIDO"
+    ]
+    assert payload["summary"]["line_count"] == 3
+    assert payload["summary"]["open_quantity"] == 9.0
+    assert sum(bucket["open_quantity"] for bucket in payload["horizon"]) == 9.0
+    assert payload["pagination"]["total"] == 3
+
+    pending = service.list_op_pendencies(user, branch=branch)
+    assert {item["product_code"] for item in pending["items"]
+            if item["kind"] == "include_production_order"} == {
+        "90262910", "80001001", "99999999"
+    }
+
+
+def test_unknown_type_remains_and_myweg_source_is_not_filtered_by_sales_scope() -> None:
+    """Tipo ausente não autoriza excluir produto; MyWEG não é pedido de venda."""
+    rows = [
+        _line(pedido="SEM-TIPO", tipo_produto=None),
+        _line(pedido="NECESSIDADE", source="myweg",
+              tipo_produto="MP", produto="90260001"),
+    ]
+    result = DemandCoverageService(today=TODAY).build(
+        open_sales_orders=rows, open_production_orders=[], branch="01",
+    )
+    assert {line.sales_order for line in result} == {"SEM-TIPO", "NECESSIDADE"}
+    assert {line.source for line in result} == {"protheus", "myweg"}
+
+
 def test_stock_covers_lines_in_delivery_order() -> None:
     rows = [
         _line(pedido="A", linha="01", saldo=30.0, data_entrega="2026-08-25", no_estoque=50.0),
