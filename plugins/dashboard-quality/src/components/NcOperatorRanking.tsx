@@ -1,3 +1,5 @@
+import { FileSpreadsheet } from "lucide-react";
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { DataTable, type DataTableColumn } from "./DataTable";
 import type { NcOperatorRankingResponse } from "../types/nonconformity";
 
@@ -10,6 +12,9 @@ type Props = {
   operatorCode: string;
   onOperatorChange: (value: string) => void;
   onRetry: () => void;
+  onExportExcel: () => void;
+  exportingExcel: boolean;
+  exportExcelError: string | null;
 };
 
 const formatCount = (value: number) => new Intl.NumberFormat("pt-BR").format(value);
@@ -21,6 +26,9 @@ export function NcOperatorRanking({
   operatorCode,
   onOperatorChange,
   onRetry,
+  onExportExcel,
+  exportingExcel,
+  exportExcelError,
 }: Props) {
   const selectedCode = data?.detail?.operator_code ?? "";
   const selected = data?.detail;
@@ -70,6 +78,17 @@ export function NcOperatorRanking({
           <h2>Top 5 operadores com mais NCs</h2>
           <p>Quantidade de ocorrências por operador no período selecionado.</p>
         </div>
+        <div className="dq-nc-operators__controls">
+          <button
+            type="button"
+            className={`${GHOST_BTN} dq-no-print`}
+            onClick={onExportExcel}
+            disabled={exportingExcel || loading || !data?.total_operators}
+            title="Baixar a relação completa de operadores e seus defeitos"
+          >
+            <FileSpreadsheet size={16} aria-hidden="true" />
+            {exportingExcel ? "Gerando Excel…" : "Exportar Excel"}
+          </button>
         <label className="dq-nc-operators__select">
           <span>Operador</span>
           <select
@@ -85,7 +104,14 @@ export function NcOperatorRanking({
             ))}
           </select>
         </label>
+        </div>
       </header>
+
+      {exportExcelError ? (
+        <p role="alert" className="dq-nc-operators__error">
+          Não foi possível exportar a planilha: {exportExcelError}
+        </p>
+      ) : null}
 
       {error ? (
         <div role="alert" className="dq-nc-operators__error">
