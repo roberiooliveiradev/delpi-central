@@ -36,6 +36,13 @@ def build_ops_abertas_detalhe_sql() -> str:
         RTRIM(OP.C2_PRODUTO) AS produto,
         RTRIM(COALESCE(P.B1_DESC, '')) AS descricao_produto,
         RTRIM(COALESCE(P.B1_TIPO, '')) AS tipo_produto,
+        RTRIM(COALESCE(OP.C2_UM, '')) AS unidade_op,
+        RTRIM(COALESCE(P.B1_UM, '')) AS unidade_produto,
+        COALESCE(
+            NULLIF(LTRIM(RTRIM(OP.C2_UM)), ''),
+            NULLIF(LTRIM(RTRIM(P.B1_UM)), ''),
+            ''
+        ) AS unidade,
         CAST(ISNULL(OP.C2_QUANT, 0) AS FLOAT) AS quantidade_op,
         CAST(ISNULL(OP.C2_QUJE, 0) AS FLOAT) AS quantidade_produzida,
         CAST(OP.C2_QUANT - OP.C2_QUJE AS FLOAT) AS saldo_op,
