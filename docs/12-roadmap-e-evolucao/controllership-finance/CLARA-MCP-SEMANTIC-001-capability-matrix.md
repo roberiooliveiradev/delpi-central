@@ -178,3 +178,8 @@ com justificativa por efeito está no
 - Execução direta classe B: **RESOLVIDO em SEMANTIC-002** — decisão
   do owner publicada no doc 124 (13 DIRECT_ALLOWED / 35
   CONFIRMATION_REQUIRED; BLOCKED = erro tipado por pré-condição).
+
+
+## Atualização de planejamento 09/11/2026 — canal de consentimento
+
+**PO TARGET:** substituir confirmação externa por experiência conversacional padrão TÉO, em todas as 35 capabilities `CONFIRMATION_REQUIRED`. O inventário deste documento continua descrevendo a implementação **real** PREPARE → Portal step-up V014 → ACT; não apresentar a flag `confirmation=true` do TÉO como prova equivalente. Revisão formal da política requer aprovação de Segurança/Plataforma + Controladoria, contrato e testes no ChatGPT real. Registro principal: doc 150 §20 e doc 124 §8. `NO_RUNTIME`.
