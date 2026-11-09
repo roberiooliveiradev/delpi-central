@@ -49,6 +49,7 @@ from controllership_finance_app.application.clara.governed_writes import (
 )
 from controllership_finance_app.application.clara.consent_channel import (
     CONSENT_TYPE_MCP_CONFIRMATION,
+    CONVERSATIONAL_POLICY_VERSION,
     batch_consent_instruction,
     consent_channel,
     conversational_act_enabled,
@@ -382,7 +383,7 @@ class ClaraBatchOrchestrator:
                 "human_proof": (
                     "portal_step_up_v014"
                     if portal_consent_required()
-                    else "mcp_tool_confirmation_with_security_ack"
+                    else "mcp_tool_confirmation_owner_risk_accepted_v2"
                 ),
             },
             "expires_at": (
@@ -416,9 +417,10 @@ class ClaraBatchOrchestrator:
           ``portal_step_up`` já gravado pela superfície BFF de
           consentimento — token Keycloak emitido após o PREPARE,
           credencial que o canal MCP não consegue fabricar;
-        - Modo C (MCP_CONFIRMATION): somente quando o canal
-          conversacional está armado por ack de Segurança e
-          ``confirmation=true`` — nunca substitui AuthZ.
+        - Modo C (MCP_CONFIRMATION): canal conversacional escolhido
+          explicitamente no servidor + ``confirmation=true`` na
+          proposta selada, conforme aceite operacional do owner.
+          Isto nunca substitui AuthZ nem constitui prova humana V014.
 
         Sem evidência válida ⇒ ``consent_required`` com a URL da
         página de consentimento do Portal (quando Portal obrigatório).
@@ -446,11 +448,10 @@ class ClaraBatchOrchestrator:
                 "plan_hash": plan_hash,
                 "plan_version": 1,
                 "consent_channel": consent_channel(),
-                "security_ack": True,
+                "confirmation_policy": CONVERSATIONAL_POLICY_VERSION,
                 "warning": (
-                    "Human proof is conversational MCP confirmation "
-                    "under explicit Security acknowledgement — not "
-                    "Portal V014."
+                    "MCP conversational confirmation is a model-provided "
+                    "signal, not independent Portal V014 human proof."
                 ),
             }
             updated = self._batches.record_consent(
@@ -495,10 +496,14 @@ class ClaraBatchOrchestrator:
                     "posteriores do plano."
                 )
             elif batch["status"] == "PREPARED":
+                if conversational_act_enabled():
+                    raise ConsentRequired(
+                        "Confirmação conversacional do lote selado "
+                        "ausente ou inválida; apresente todo o plano "
+                        "e solicite confirmação explícita."
+                    )
                 raise ConsentRequired(
-                    "Consentimento humano não registrado por "
-                    "superfície confiável. Abra a página de "
-                    "consentimento no Portal: "
+                    "Consentimento V014 não registrado. Abra a página do Portal: "
                     + clara_consent_url(
                         batch_id=str(batch["batch_id"])
                     )
