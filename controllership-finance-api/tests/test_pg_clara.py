@@ -156,7 +156,8 @@ def _configure_db():
 @pytest.fixture(scope="module")
 def env(_configure_db):
     applied = mr.run_migrations()
-    assert applied[-1] == "V019__clara_direct_execution_idempotency.sql"
+    assert "V019__clara_direct_execution_idempotency.sql" in applied
+    assert applied[-1] == "V020__clara_batch_mcp_confirmation_mode.sql"
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])
     checklist.submit_version_for_review(template_id, 1, actor=ADMIN)

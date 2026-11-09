@@ -169,7 +169,7 @@ function OperationCard({
 }
 
 export function ClaraConsentPage() {
-  const target = useMemo(parseConsentTarget, []);
+  const target = useMemo(() => parseConsentTarget(), []);
   const [batch, setBatch] = useState<ClaraBatchConsentView | null>(null);
   const [proposal, setProposal] =
     useState<ClaraProposalConsentView | null>(null);

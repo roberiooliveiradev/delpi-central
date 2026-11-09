@@ -5,7 +5,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@delpi/plugin-ui/index", async () => await import("../../test/pluginUiMock"));
 
@@ -13,8 +13,10 @@ const getBatchMock = vi.fn();
 const recordBatchMock = vi.fn();
 const getProposalMock = vi.fn();
 const recordProposalMock = vi.fn();
+const getPolicyMock = vi.fn();
 
 vi.mock("../../api/claraConsentApi", () => ({
+  getClaraConsentPolicy: (...args: unknown[]) => getPolicyMock(...args),
   getClaraBatchConsentView: (...args: unknown[]) => getBatchMock(...args),
   recordClaraBatchConsent: (...args: unknown[]) => recordBatchMock(...args),
   getClaraProposalConsentView: (...args: unknown[]) =>
@@ -155,6 +157,18 @@ function proposal(overrides: Record<string, unknown> = {}) {
     ...overrides,
   };
 }
+
+function portalPolicy() {
+  return {
+    consent_channel: "portal" as const,
+    portal_consent_required: true,
+    conversational_act_armed: false,
+  };
+}
+
+beforeEach(() => {
+  getPolicyMock.mockResolvedValue(portalPolicy());
+});
 
 afterEach(() => {
   cleanup();
@@ -303,5 +317,42 @@ describe("ClaraConsentPage", () => {
     await waitFor(() =>
       expect(recordProposalMock).toHaveBeenCalledWith(UUID, CHALLENGE),
     );
+  });
+
+  it("não registra consentimento quando o canal conversacional está ativo", async () => {
+    setSearch(`proposal=${UUID}`);
+    getPolicyMock.mockResolvedValue({
+      consent_channel: "conversational",
+      portal_consent_required: false,
+      conversational_act_armed: true,
+    });
+    render(<ClaraConsentPage />);
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Volte à conversa com a CLARA/),
+      ).toBeTruthy(),
+    );
+    expect(getProposalMock).not.toHaveBeenCalled();
+    expect(recordProposalMock).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("button", { name: /Autorizar/ }),
+    ).toBeNull();
+  });
+
+  it("bloqueia a página quando a política efetiva não pode ser lida", async () => {
+    setSearch(`batch=${UUID}`);
+    getPolicyMock.mockRejectedValue(
+      Object.assign(new Error("unauthorized"), { status: 401, code: "unauthorized" }),
+    );
+    render(<ClaraConsentPage />);
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Não foi possível verificar o canal da CLARA/),
+      ).toBeTruthy(),
+    );
+    expect(getBatchMock).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("button", { name: /Autorizar/ }),
+    ).toBeNull();
   });
 });
