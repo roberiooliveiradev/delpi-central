@@ -39,6 +39,7 @@ from production_control_app.domain.services.myweg_demand_coverage_adapter import
     conservation_check,
     is_linhares_open_order,
     mi_to_float_for_coverage,
+    normalize_myweg_open_ops,
     projection_to_coverage_input,
     summarize_units,
     un_to_mi,
@@ -94,6 +95,28 @@ def test_ac03_un_to_mi_exact() -> None:
     assert un_to_mi(Decimal("1500")) == Decimal("1.5")
     assert mi_to_float_for_coverage(Decimal("1.5")) == 1.5
     assert un_to_mi("1000") == Decimal("1")
+
+
+def test_myweg_ops_normalize_mi_pc_un_and_reject_unknown() -> None:
+    """Não inventar saldo quando C2_UM/B1_UM estiver ausente."""
+    normalized = normalize_myweg_open_ops(
+        [
+            {"filial": "02", "produto": "90263964", "numero_op": "MI", "saldo_op": 0.2, "unidade_op": "MI"},
+            {"filial": "02", "produto": "90263964", "numero_op": "PC", "saldo_op": 200, "unidade_op": "PC"},
+            {"filial": "02", "produto": "90263964", "numero_op": "UN", "saldo_op": 200, "unidade_op": "UN"},
+            {"filial": "02", "produto": "90263964", "numero_op": "FALLBACK", "saldo_op": 0.1, "unidade_produto": "MI"},
+            {"filial": "02", "produto": "90263964", "numero_op": "MT", "saldo_op": 200, "unidade_op": "MT"},
+            {"filial": "02", "produto": "90263964", "numero_op": "SEM-UM", "saldo_op": 200},
+            {"filial": "01", "produto": "90263964", "numero_op": "FILIAL-ERRADA", "saldo_op": 200, "unidade_op": "PC"},
+        ],
+        branch="02", product_codes={"90263964"},
+    )
+    by_op = {item["numero_op"]: item["saldo_op"] for item in normalized["items"]}
+    assert by_op == {"MI": 0.2, "PC": 0.2, "UN": 0.2, "FALLBACK": 0.1}
+    assert normalized["verified_count"] == 4
+    assert normalized["unverified_count"] == 2
+    assert normalized["unverified_products"] == ["90263964"]
+    assert normalized["complete"] is False
 
 
 def test_stock_partial_op_partial_uncovered_adapter_motor() -> None:
