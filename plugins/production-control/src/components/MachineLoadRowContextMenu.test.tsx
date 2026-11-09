@@ -61,6 +61,14 @@ describe("MachineLoadRowContextMenu — modo individual", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it("esconde «Solicitar correção a Processos» sem permissão (sem handler)", () => {
+    const props = makeProps({ onReportProcessIssue: undefined });
+    render(<MachineLoadRowContextMenu {...props} />);
+    expect(
+      screen.queryByRole("menuitem", { name: /Solicitar correção a Processos/i }),
+    ).toBeNull();
+  });
+
   it("uma única operação selecionada ainda mostra o menu individual", () => {
     const props = makeProps({ selectionCount: 1, onClearSelection: vi.fn() });
     render(<MachineLoadRowContextMenu {...props} />);

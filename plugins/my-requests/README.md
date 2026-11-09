@@ -59,6 +59,19 @@ Rebuild na stack: `./infra/scripts/up-dev-sequential.sh --fase remote --build pl
 
 ## Manifesto
 
-`my-requests.manifest.json` — registrar na Core API (`POST /core-api/admin/apps/register`).
+`my-requests.manifest.json` — registrar na Core API:
+
+```bash
+TOKEN=<jwt_apps.manage> ./plugins/my-requests/scripts/register-manifest.sh
+```
+
+Permissões relevantes para Problema de Processo vs chamado diverso:
+
+| Código | Uso |
+|---|---|
+| `my-requests.process-issue.create` | Abrir Problema de Processo (Portal PCP, DELPI MES, etc.) |
+| `my-requests.process-issue.process` | Atender fila de Problema de Processo |
+| `my-requests.general-request.create` | Abrir chamado diverso para Processos |
+| `my-requests.general-request.process` | Atender chamado diverso |
 
 Roadmap: [PLAYBOOK.md](../../docs/12-roadmap-e-evolucao/my-requests/PLAYBOOK.md).

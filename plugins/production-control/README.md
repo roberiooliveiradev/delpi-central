@@ -150,6 +150,8 @@ Contrato TOTVS (não duplicado aqui): [production-pcp-orders.md](../../api-delpi
 
 `production-control.access`, `production-control.demand.view`, `production-control.machine-load.view`, `production-control.problem-analysis.view`, `production-control.materials.view`, `production-control.line-feeder.view`, `production-control.delivery-map.view`, `production-control.reports.view`, `production-control.product-3d-models.manage`, `production-control.view.filial-01`, `production-control.view.filial-02`. A rail só mostra Materiais / Alimentador de linha / Mapa de entrega / Relatórios / Modelos 3D para quem tem a permissão correspondente — o grant no Keycloak é operação (código e manifesto já declaram a permissão).
 
+**Cross-plugin (Minhas Solicitações):** `my-requests.process-issue.create` — necessária para a ação «Solicitar correção a Processos» na Carga Máquina. Declarada no manifesto `my-requests` (não no de production-control); o BFF e o Requests API revalidam no backend. Distinta de `my-requests.general-request.create` (chamado diverso).
+
 `production-control.line-feeder.view` governa a consulta dinâmica do Alimentador (e as ações legadas de pick-plan / urgentes ainda expostas). O papel operacional é um só por filial.
 
 ## Desenvolvimento

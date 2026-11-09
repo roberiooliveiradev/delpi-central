@@ -7,6 +7,22 @@
  * política de Idempotency-Key da tentativa lógica (mesma do public-hub).
  */
 
+/** Permissão canônica do tipo process-issue (Minhas Solicitações). */
+export const PROCESS_ISSUE_CREATE_PERMISSION =
+  "my-requests.process-issue.create";
+
+/**
+ * Gate de UI — o backend (PC BFF + Requests API) continua sendo a autoridade.
+ * Superadmin vê a ação; demais só com o código efetivo no host.
+ */
+export function canCreateProcessIssue(
+  permissions: readonly string[] | undefined,
+  isSuperadmin: boolean | undefined,
+): boolean {
+  if (isSuperadmin) return true;
+  return (permissions ?? []).includes(PROCESS_ISSUE_CREATE_PERMISSION);
+}
+
 export type ProcessIssueCode =
   | "work_center_incompatible"
   | "machine_limitation"

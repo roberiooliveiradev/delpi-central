@@ -50,6 +50,7 @@ import { httpErrorStatus } from "../api/httpClient";
 import { copy } from "../content/copy";
 import {
   beginProcessIssueAttempt,
+  canCreateProcessIssue,
   processIssueConfirmationMessage,
   processIssueSubmitErrorMessage,
   submitKeyForDraft,
@@ -126,6 +127,8 @@ type MachineLoadPageProps = {
   startDate: string | null;
   endDate: string | null;
   locateQuery?: string | null;
+  permissions?: string[];
+  isSuperadmin?: boolean;
 };
 
 const HIGHLIGHT_MS = 3200;
@@ -146,8 +149,11 @@ export function MachineLoadPage({
   startDate,
   endDate,
   locateQuery = null,
+  permissions,
+  isSuperadmin = false,
 }: MachineLoadPageProps) {
   const confirm = usePpcConfirm();
+  const canReportProcessIssue = canCreateProcessIssue(permissions, isSuperadmin);
   const {
     data,
     loading,
@@ -1921,7 +1927,9 @@ export function MachineLoadPage({
           setTransferMode("operation");
           setTransferOperation(operation);
         }}
-        onReportProcessIssue={openProcessIssue}
+        onReportProcessIssue={
+          canReportProcessIssue ? openProcessIssue : undefined
+        }
         prioritizeDisabled={sequenceBusy}
         withdrawDisabled={sequenceBusy}
         transferDisabled={sequenceBusy}

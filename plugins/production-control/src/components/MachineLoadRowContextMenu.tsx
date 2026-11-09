@@ -217,20 +217,22 @@ export function MachineLoadRowContextMenu({
           onClose();
         }}
       />
-      <ContextMenuItem
-        label={
-          hasOperation
-            ? copy.machineLoad.rowActions.processIssue
-            : copy.machineLoad.rowActions.processIssueDisabled
-        }
-        icon={ClipboardPenLine}
-        disabled={!hasOperation}
-        onSelect={() => {
-          if (!operation) return;
-          onReportProcessIssue?.(operation);
-          onClose();
-        }}
-      />
+      {onReportProcessIssue ? (
+        <ContextMenuItem
+          label={
+            hasOperation
+              ? copy.machineLoad.rowActions.processIssue
+              : copy.machineLoad.rowActions.processIssueDisabled
+          }
+          icon={ClipboardPenLine}
+          disabled={!hasOperation}
+          onSelect={() => {
+            if (!operation) return;
+            onReportProcessIssue(operation);
+            onClose();
+          }}
+        />
+      ) : null}
     </ContextMenu>
   );
 }

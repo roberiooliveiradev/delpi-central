@@ -170,6 +170,8 @@ export default function App({
         startDate={route.startDate}
         endDate={route.endDate}
         locateQuery={route.locateQuery}
+        permissions={permissions}
+        isSuperadmin={isSuperadmin}
       />
     );
   } else if (activeBranch && route.subpluginId === "delivery-map") {
