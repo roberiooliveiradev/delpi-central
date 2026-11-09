@@ -1619,7 +1619,44 @@ Não criar nova source of truth, banco, serviço ou MFE; não fazer import entre
 
 ## 56. DEC-VAL-041 (PROPOSTA) — diagnóstico visual assistido de tabelas, framework-first (2026-11-09)
 
-**Origem:** discussão de Architecture / Coordination após a amostra independente do Doc 119 §§55–55.1 e o log do Doc 120. **Status:** `PLANNED / BENCHMARK=TEST_NOT_RUN`; discussão registrada, **não** constitui aprovação de implementação, provider, agente autônomo, novo serviço ou deploy. E1/VAL-01 permanece a única frente ativa, sem criar plano ou tracker paralelo. Esta proposta complementa a diretriz transversal do Doc 116 §B.8 e DEC-VAL-036, **não** as substitui.
+**Origem:** discussão de Architecture / Coordination após a amostra independente do Doc 119 §§55–55.1 e o log do Doc 120. **Status (execução 2026-11-09):** `INVESTIGATION_EXECUTED / BENCHMARK=PASS_WITH_BLOCKERS`; **não** constitui aprovação de implementação produtiva, provider, agente autônomo, novo serviço ou deploy. E1/VAL-01 permanece a única frente ativa, sem criar plano ou tracker paralelo. Esta proposta complementa a diretriz transversal do Doc 116 §B.8 e DEC-VAL-036, **não** as substitui.
+
+### 56.1 Resultado experimental DEC-VAL-041 (2026-11-09) — evidência
+
+**HEAD de execução:** `e94496503c8771eab87107c4d3d0dfeedb022295` (`main`). Deploy produtivo: **NÃO AUTORIZADO** nesta tarefa. Código de associação produtiva: **não alterado**.
+
+| Perfil | Resultado | Classificação |
+|---|---|---|
+| A — baseline atual | Reproduzido nos PDFs oficiais SHA `4d0c2e2f…fec4` e `af47dd4c…edf3` | `PASS` (diagnóstico) |
+| B — framework nativo adicional | PP-StructureV3 importável mas pipeline `UNAVAILABLE` (deps); `crop_box` não aceito; TableMagic `NOT_AVAILABLE`; SLANet já é a baseline | `INCONCLUSIVE` / `NOT_AVAILABLE` operacional |
+| C — VLM local seletivo | `qwen2.5vl:7b` provisionado; Ollama container mem=4.4 GiB; load exige ~12.4 GiB → `VLM_BENCHMARK=BLOCKED_RESOURCE_OR_PERMISSION` | `BLOCKED` |
+| D — hipótese + revalidação determinística | Fixture offline: preferir células nativas apesar de `span_conflict` recupera `B→10090010` via `rows_from_native_cells` / `apply_native_table_observations` | `PASS` (padrão offline) |
+
+**FIRST_DEFECTIVE_BOUNDARY — 90264026 (PROVEN):**
+
+1. SLANet + OCR produzem célula de grupo `90264026 CHCIOTE…` e célula distinta `10090010` para item B (40 células; token `90264026` conf≈0.9999; token `10090010` conf≈0.9999).
+2. `cells_from_html_structure` marca `structure_limitations=["span_conflict"]` → `structure_consistent=false`.
+3. `apply_native_table_observations` descarta a grade nativa (`table_perception:structure_incomplete`) e preserva o fallback de agrupamento por tokens.
+4. Fallback publica `component_code="90264026 10090010"` na linha B; descrições presentes nas células não chegam ao campo estruturado no consumidor MCP.
+5. **Não é insuficiência de visão generativa** para esta classe: correção determinística candidata = relaxar/reclassificar o gate de consistência quando células textuais associáveis existem (próxima entrega bounded; **não** misturada a este benchmark).
+
+**FIRST_DEFECTIVE_BOUNDARY — 90264135 (PROVEN misto):**
+
+| Página | `structure_consistent` | Fronteira dominante | Evidência |
+|---|---|---|---|
+| 10 | `true` (295 células) | Célula nativa já agrega códigos (`10080192 10090316`); itens mistos `A3 A4`; conflitos tipados preservados | Associação/OCR→célula / grade mesclada **antes** do mapper |
+| 12 | `true` (200 células) | Fragmentação: `A9 1 10120148` numa única célula de descrição; poucas tuplas completas | Geometria/OCR densos + papéis funcionais |
+| 13 | `true` (115 células) | Campos fundidos (`10080182 10090316`, `4 5`); item+qtd colados (`A1 7`) | Mescla de colunas / spans na percepção |
+
+Contraste: p10 tem linhas “boas” (ex.: A1/A5/A6 com item+qtd+código+desc) ao lado de linhas com célula já agregada — a diferença observada é **conteúdo/geometria da célula SLANet**, não o gate `structure_consistent`.
+
+**Framework sufficiency:** SLANet resolve grade e associação suficiente para 90264026 **se** o gate não descartar; não resolve sozinho agregação multi-código dentro de uma célula no 90264135. PP-StructureV3 **não** foi comparado de forma justa (`UNAVAILABLE` runtime). VLM **não** mediu ganho incremental (bloqueio de memória).
+
+**Recomendação:** **A — correção determinística suficiente** para a classe 90264026 (gate/span_conflict); **D — inconclusivo para adoção de VLM** até haver orçamento de memória/GPU e GT de precisão do owner; **não C**. Próximo passo bounded: patch mínimo do gate de consistência + métricas de associação, sem novo boundary.
+
+**Fixtures:** `engineering-api/tests/test_dec041_visual_table_diagnostic.py` (4 passed); script offline `engineering-api/scripts/eva_dec041_benchmark_offline.py`. Overlay raster sanitizado gerado em host de laboratório (`/tmp/eva_dec041_90264026_table.png`, não versionar PDF).
+
+**Hipóteses invalidadas:** (H1) “falha 90264026 = falta de VLM” → **INVALIDADA**; (H2) “PP-StructureV3 instalado e operacional” → **INVALIDADA** (símbolo presente, pipeline deps falha); (H3) “qwen2.5vl:7b executável no Ollama atual” → **INVALIDADA** sob limite 4.4 GiB.
 
 **Necessidade evidenciada:** o pipeline PDFium→PaddleOCR→SLANet→Understanding consegue reconhecer boa parte das tabelas e recuperar casos focais, porém falha em algumas reconstruções de linhas, colunas, agrupamentos e papéis. Na amostra inédita, `90264026` publicou `component_code='90264026 10090010'` e deixou seis descrições como `null` apesar dos textos nas células; `90264135` retornou 294 linhas candidatas, OCR FULL 13/13, mas na p12 apenas 1/29 linhas tinha quatro campos preenchidos, com códigos e descrições fragmentados, e na p13 apenas 3/22. Essa contagem é completude de campos, **não precisão validada**. O primeiro defeito pode ser inteiramente determinístico; não atribuir ambos automaticamente à falta de modelo visual. No `90264135` a BOM oficial estava indisponível (`structure_not_provided`), fato que nenhum modelo supre.
 

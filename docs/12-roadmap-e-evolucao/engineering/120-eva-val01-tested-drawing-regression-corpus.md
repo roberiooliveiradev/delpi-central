@@ -427,3 +427,22 @@ Job autenticado `aj-1a368df473284c0d` `COMPLETED` / `result_ready=true` no mesmo
 | 13 | 22 | 3 | 7 | 6 |
 
 Métrica de preenchimento **não é precisão**; todos os status globais continuam candidatos. Exemplos verificáveis no payload MCP: p10 `component_code='10080192 10090316'`, p12 `component_code='50225702'` em linha com informação de conjunto agregada, p13 `component_code='4 5'`; p12 `A9` e `AA` têm descrição mas quantidade/código ausentes na mesma linha lógica. `bom_structure_comparison=INCONCLUSIVE` pois a fonte retornou `structure_not_provided`, não por correspondência validada. Esse desenho introduz um **residual de segmentação multipágina e de contexto de grupo** para investigação bounded em E1/VAL-01. Inspeção visual do ChatGPT foi parcial (páginas selecionadas) e não equivale a ground truth do owner. PDF oficial materializado e hash conferido localmente; não versionar binário no repositório.
+
+### Log experimental — DEC-VAL-041 (2026-11-09) — perfis A/B/C/D
+
+Investigação offline instrumentada; **sem deploy**, **sem mudança de lógica produtiva de associação**. HEAD `e94496503c8771eab87107c4d3d0dfeedb022295`. Detalhe canônico: Doc 119 §56.1.
+
+| MODEL_OR_FRAMEWORK | VERSION / CONFIG | PDF_SHA | PAGE | RESULTADO MEDIDO |
+|---|---|---|---:|---|
+| Baseline A — PDFium+PaddleOCR+SLANet+Understanding | paddle 3.2.2 / paddleocr 3.3.0 / SLANet cached; isolation=inprocess | `4d0c2e2f…fec4` | 1 | 75 tokens; 40 células; `structure_consistent=false` (`span_conflict`); fallback `component_code="90264026 10090010"`; native cells separam grupo×código |
+| Baseline A — idem | idem | `af47dd4c…edf3` | 10 | 295 células; `structure_consistent=true`; célula nativa já traz `10080192 10090316`; linhas boas coexistentes |
+| Baseline A — idem | idem | `af47dd4c…edf3` | 12 | 200 células; `structure_consistent=true`; fragmentação `A9 1 10120148` em célula única |
+| Baseline A — idem | idem | `af47dd4c…edf3` | 13 | 115 células; `structure_consistent=true`; `4 5` e `10080182 10090316` agregados |
+| B — PPStructureEngine (PP-StructureV3) | símbolo AVAILABLE; pipeline create → `UNAVAILABLE` deps; `crop_box` TypeError no adapter | `4d0c2e2f…fec4` | 1 | **NOT_AVAILABLE operacional** — não comparado |
+| B — PP-TableMagic | — | — | — | **NOT_AVAILABLE** |
+| C — Ollama `qwen2.5vl:7b` | Q4_K_M; container mem 4.4 GiB | crop p1 região tabela | 1 | Load pede 12.4 GiB → HTTP 500; `VLM_BENCHMARK=BLOCKED_RESOURCE_OR_PERMISSION` |
+| D — hipótese prefer-native + `rows_from_native_cells` | fixture `test_dec041_visual_table_diagnostic.py` | n/a (célula sintética espelhando medição) | 1 | 4/4 testes PASS; recupera `B→10090010` sem tokens inventados |
+
+**Precisão de campo:** `TEST_NOT_RUN` / `INCONCLUSIVE` — sem GT owner. Completude MCP prévia permanece como no log acima; não reinterpretar completude como precisão.
+
+**Negativos preservados:** suite `test_association_integrity_dec040.py` = 12 passed na imagem `infra-engineering-api:latest` (inclui A9/AA/A2 e falsa associação G/9). `CODE_CHANGED_PRODUCTIVE=false` nesta rodada.
