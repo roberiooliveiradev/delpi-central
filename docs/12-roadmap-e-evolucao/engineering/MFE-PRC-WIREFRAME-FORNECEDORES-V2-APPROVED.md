@@ -132,4 +132,4 @@ Estados: `PO_APPROVED_VISUAL_TARGET` · `IMPLEMENTED_DEV` · `PRODUCTION_DEPLOY_
 
 ## 10. Execução integral V2 + justificativas D14
 
-**Documento obrigatório:** [D14](./MFE-PRC-D14-COMPLETE-SUPPLIER-LOOKUP-AND-OPTIONAL-REASONS.md). Em DEV (2026-11-09): primeira célula **somente lupa**; colunas Código/Loja/Razão/Fantasia/PN/Catálogo/Ações; justificativas compactas (`MessageSquarePlus` + “Justificar”) **somente quando há alteração efetiva**; editor ≤250 na linha auxiliar. Playwright 6/6 (desktop/tablet/mobile). Remoção oficial e deploy produtivo continuam bloqueados.
+**Documento obrigatório:** [D14](./MFE-PRC-D14-COMPLETE-SUPPLIER-LOOKUP-AND-OPTIONAL-REASONS.md). Em DEV (2026-11-09): primeira célula **somente lupa**; colunas Código/Loja/Razão/Fantasia/PN/Catálogo/Ações; justificativas compactas (`MessageSquarePlus` + “Justificar”) **somente quando há alteração efetiva**; editor ≤250 na linha auxiliar. Playwright CREATE/UPDATE verdes. **D14-FIX-02:** identidade local `rowId`/`origin` — descartar candidata não marca remoção oficial; duplicidade SA2 bloqueada com mensagem contextual. Remoção ERP e deploy produtivo continuam bloqueados.

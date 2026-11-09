@@ -65,12 +65,15 @@ import {
 } from "../prcCopy";
 import {
   computeLinkDiff,
+  computeLinkDiffDetailed,
   computeScalarDiff,
   linkKeyOf,
 } from "../prcDiff";
 import {
-  duplicateSupplierIndexes,
+  duplicateDraftRowIds,
   emptySupplierRow,
+  findRowWithOfficialKey,
+  officialSupplierRow,
   type SupplierRow,
 } from "../prcSuppliers";
 import {
@@ -139,6 +142,8 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
   const [editCtxState, setEditCtxState] = useState<
     "idle" | "loading" | "error" | "not_found"
   >("idle");
+  /** D14-FIX-02 — remoção oficial marcada por `rowId` (nunca pela
+   * chave SA5, que pode coincidir com uma candidata duplicada). */
   const [removeMarks, setRemoveMarks] = useState<Set<string>>(new Set());
 
   const [error, setError] = useState("");
@@ -216,8 +221,21 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
       if (bad >= 0) {
         return `Fornecedor ${bad + 1}: ${PRC_SUPPLIER_HELP.selectRequired}`;
       }
-      if (duplicateSupplierIndexes(suppliers).size > 0) {
-        return PRC_SUPPLIER_HELP.duplicate;
+      if (duplicateDraftRowIds(suppliers).size > 0) {
+        return PRC_SUPPLIER_HELP.duplicateExisting;
+      }
+      if (requestType === "update" && editCtx) {
+        const detailed = computeLinkDiffDetailed(
+          editCtx.links || [],
+          suppliers,
+          removeMarks,
+        );
+        if (detailed.ambiguousOfficialKeys.length) {
+          return "Há vínculos oficiais ambíguos para a mesma chave — operação bloqueada.";
+        }
+        if (detailed.conflictingKeys.length) {
+          return PRC_SUPPLIER_HELP.duplicateExisting;
+        }
       }
 
       return "";
@@ -237,9 +255,6 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
       ? computeScalarDiff(baselineFields, values, scalarPaths)
       : [];
   const changedPaths = new Set(scalarDiff.map((c) => c.path));
-  const officialKeys = new Set(
-    (editCtx?.links || []).map((l) => linkKeyOf(l.supplierCode, l.store)),
-  );
   const linkOps =
     requestType === "update" && editCtx
       ? computeLinkDiff(editCtx.links || [], suppliers, removeMarks)
@@ -278,17 +293,8 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
               ]),
             ),
           );
-          setSuppliers(
-            (d.links || []).map((l) => ({
-              ...emptySupplierRow(),
-              supplierCode: l.supplierCode,
-              store: l.store,
-              supplierName: l.supplierName,
-              supplierShortName: l.supplierShortName || "",
-              partNumber: l.partNumber || "",
-              catalogNumber: l.catalogNumber || "",
-            })),
-          );
+          setRemoveMarks(new Set());
+          setSuppliers((d.links || []).map((l) => officialSupplierRow(l)));
         })
         .catch(() => {
           setEditCtx(null);
@@ -303,42 +309,67 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
     setStep((s) => Math.max(0, s - 1));
   };
 
-  /* D14-FIX — busca expansível por linha: no máximo uma aberta por
-   * vez; o estado vive na própria linha e não desloca outras. */
-  const toggleRowSearch = (index: number) =>
+  /* D14-FIX / D14-FIX-02 — mutações por `rowId` (nunca índice). */
+  const patchSupplierRow = (rowId: string, patch: Partial<SupplierRow>) =>
     setSuppliers((rows) =>
-      rows.map((r, i) => ({
+      rows.map((r) => (r.rowId === rowId ? { ...r, ...patch } : r)),
+    );
+
+  const toggleRowSearch = (rowId: string) =>
+    setSuppliers((rows) =>
+      rows.map((r) => ({
         ...r,
-        searchOpen: i === index ? !r.searchOpen : false,
+        searchOpen: r.rowId === rowId ? !r.searchOpen : false,
+        selectionError:
+          r.rowId === rowId ? undefined : r.selectionError,
       })),
     );
 
-  const closeRowSearch = (index: number) =>
-    setSuppliers((rows) =>
-      rows.map((r, i) =>
-        i === index ? { ...r, searchOpen: false } : r,
-      ),
-    );
+  const closeRowSearch = (rowId: string) =>
+    patchSupplierRow(rowId, { searchOpen: false });
 
   const toggleSupplierReason = (
-    index: number,
+    rowId: string,
     flag: "pnReasonOpen" | "catReasonOpen" | "opReasonOpen",
   ) =>
     setSuppliers((rows) =>
-      rows.map((r, i) => (i === index ? { ...r, [flag]: !r[flag] } : r)),
+      rows.map((r) =>
+        r.rowId === rowId ? { ...r, [flag]: !r[flag] } : r,
+      ),
     );
 
   const setSupplierReason = (
-    index: number,
+    rowId: string,
     flag: "pnReason" | "catReason" | "opReason",
     v: string,
   ) =>
     setSuppliers((rows) =>
-      rows.map((r, i) => (i === index ? { ...r, [flag]: v } : r)),
+      rows.map((r) => (r.rowId === rowId ? { ...r, [flag]: v } : r)),
     );
 
-  /* Nova linha nasce com busca fechada — só a lupa; o clique abre
-   * a área colapsável (wireframe V2 / D14-FIX). */
+  /** Descartar candidata: remove só aquele `rowId`; nunca gera remove SA5. */
+  const discardDraftRow = (rowId: string) => {
+    setSuppliers((rows) => rows.filter((r) => r.rowId !== rowId));
+    setRemoveMarks((prev) => {
+      if (!prev.has(rowId)) return prev;
+      const next = new Set(prev);
+      next.delete(rowId);
+      return next;
+    });
+  };
+
+  /** Solicitar remoção oficial: marca só o `rowId` da linha official. */
+  const markOfficialRemove = (rowId: string) =>
+    setRemoveMarks((prev) => new Set(prev).add(rowId));
+
+  const undoOfficialRemove = (rowId: string) =>
+    setRemoveMarks((prev) => {
+      const next = new Set(prev);
+      next.delete(rowId);
+      return next;
+    });
+
+  /* Nova linha draft nasce com busca fechada — só a lupa. */
   const addSupplierRow = () =>
     setSuppliers((rows) => [
       ...rows.map((r) => ({ ...r, searchOpen: false })),
@@ -745,20 +776,22 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                             !row.supplierCode.trim() ||
                             !row.store.trim() ||
                             !row.supplierName.trim();
-                          const dup =
-                            duplicateSupplierIndexes(suppliers).has(index);
+                          const dup = duplicateDraftRowIds(suppliers).has(
+                            row.rowId,
+                          );
                           const key = linkKeyOf(row.supplierCode, row.store);
-                          const isOfficial = officialKeys.has(key);
-                          const markedRemove = removeMarks.has(key);
+                          /* D14-FIX-02 — oficialidade vem de `origin`,
+                           * nunca de lookup pela chave SA5 (candidata
+                           * duplicada não herda remoção oficial). */
+                          const isOfficial = row.origin === "official";
+                          const markedRemove =
+                            isOfficial && removeMarks.has(row.rowId);
                           const baselineLink = isOfficial
                             ? (editCtx?.links || []).find(
                                 (l) =>
                                   linkKeyOf(l.supplierCode, l.store) === key,
                               )
                             : undefined;
-                          /* D14-FIX — UPDATE compara com o baseline SA5;
-                           * linha nova (create/ADD) conta preenchimento
-                           * como alteração efetiva do atributo. */
                           const pnChanged = isOfficial
                             ? row.partNumber.trim() !==
                               (baselineLink?.partNumber || "").trim()
@@ -767,11 +800,8 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                             ? row.catalogNumber.trim() !==
                               (baselineLink?.catalogNumber || "").trim()
                             : row.catalogNumber.trim() !== "";
-                          /* Identidade de vínculo oficial SA5 nunca é
-                           * substituída silenciosamente — troca real é
-                           * remoção proposta + novo vínculo. */
                           const identityLocked = isOfficial;
-                          const searchId = `prc-sup-search-${index}`;
+                          const searchId = `prc-sup-search-${row.rowId}`;
                           const auxOpen = Boolean(
                             row.searchOpen ||
                               row.pnReasonOpen ||
@@ -784,9 +814,15 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                               ? ""
                               : "engineering-prc__supplier-tr--added";
                           return (
-                            <Fragment key={index}>
+                            <Fragment key={row.rowId}>
                               <tr
-                                className={missing || dup ? "engineering-prc__supplier-tr--error" : rowClass}
+                                className={
+                                  missing || dup || row.selectionError
+                                    ? "engineering-prc__supplier-tr--error"
+                                    : rowClass
+                                }
+                                data-row-id={row.rowId}
+                                data-origin={row.origin}
                               >
                                 <td
                                   data-label="Busca"
@@ -814,7 +850,9 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                         identityLocked ||
                                         markedRemove
                                       }
-                                      onClick={() => toggleRowSearch(index)}
+                                      onClick={() =>
+                                        toggleRowSearch(row.rowId)
+                                      }
                                     >
                                       <Search size={15} aria-hidden />
                                     </EngineeringIconButton>
@@ -826,7 +864,14 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                 <td data-label="Loja">{row.store || "—"}</td>
                                 <td data-label="Razão social">
                                   {row.supplierName || "—"}
-                                  {missing ? (
+                                  {row.selectionError ? (
+                                    <span
+                                      className="engineering-prc__cell-error"
+                                      role="alert"
+                                    >
+                                      {row.selectionError}
+                                    </span>
+                                  ) : missing ? (
                                     <span
                                       className="engineering-prc__cell-error"
                                       role="alert"
@@ -834,12 +879,12 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                       Selecione um fornecedor oficial.
                                     </span>
                                   ) : null}
-                                  {dup && !missing ? (
+                                  {dup && !missing && !row.selectionError ? (
                                     <span
                                       className="engineering-prc__cell-error"
                                       role="alert"
                                     >
-                                      Vínculo duplicado (mesmo código e loja).
+                                      {PRC_SUPPLIER_HELP.duplicateExisting}
                                     </span>
                                   ) : null}
                                 </td>
@@ -848,7 +893,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                 </td>
                                 <td data-label={PRC_SUPPLIER_LABELS.partNumber}>
                                   <input
-                                    id={`prc-new-sup-pn-${index}`}
+                                    id={`prc-new-sup-pn-${row.rowId}`}
                                     type="text"
                                     className="engineering-prc__cell-input"
                                     aria-label={`${PRC_SUPPLIER_LABELS.partNumber} (opcional)`}
@@ -856,13 +901,9 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                     value={row.partNumber}
                                     disabled={busy}
                                     onChange={(e) =>
-                                      setSuppliers((rows) =>
-                                        rows.map((r, i) =>
-                                          i === index
-                                            ? { ...r, partNumber: e.target.value }
-                                            : r,
-                                        ),
-                                      )
+                                      patchSupplierRow(row.rowId, {
+                                        partNumber: e.target.value,
+                                      })
                                     }
                                   />
                                   {isOfficial && pnChanged ? (
@@ -881,13 +922,13 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                   ) : null}
                                   {pnChanged ? (
                                     <PrcReasonToggle
-                                      id={`prc-sup-pn-reason-${index}`}
+                                      id={`prc-sup-pn-reason-${row.rowId}`}
                                       value={row.pnReason || ""}
                                       open={Boolean(row.pnReasonOpen)}
                                       disabled={busy}
                                       onToggle={() =>
                                         toggleSupplierReason(
-                                          index,
+                                          row.rowId,
                                           "pnReasonOpen",
                                         )
                                       }
@@ -896,7 +937,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                 </td>
                                 <td data-label={PRC_SUPPLIER_LABELS.catalogNumber}>
                                   <input
-                                    id={`prc-new-sup-cat-${index}`}
+                                    id={`prc-new-sup-cat-${row.rowId}`}
                                     type="text"
                                     className="engineering-prc__cell-input"
                                     aria-label={PRC_SUPPLIER_LABELS.catalogNumber}
@@ -904,16 +945,9 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                     value={row.catalogNumber}
                                     disabled={busy}
                                     onChange={(e) =>
-                                      setSuppliers((rows) =>
-                                        rows.map((r, i) =>
-                                          i === index
-                                            ? {
-                                                ...r,
-                                                catalogNumber: e.target.value,
-                                              }
-                                            : r,
-                                        ),
-                                      )
+                                      patchSupplierRow(row.rowId, {
+                                        catalogNumber: e.target.value,
+                                      })
                                     }
                                   />
                                   {isOfficial && catChanged ? (
@@ -932,13 +966,13 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                   ) : null}
                                   {catChanged ? (
                                     <PrcReasonToggle
-                                      id={`prc-sup-cat-reason-${index}`}
+                                      id={`prc-sup-cat-reason-${row.rowId}`}
                                       value={row.catReason || ""}
                                       open={Boolean(row.catReasonOpen)}
                                       disabled={busy}
                                       onToggle={() =>
                                         toggleSupplierReason(
-                                          index,
+                                          row.rowId,
                                           "catReasonOpen",
                                         )
                                       }
@@ -956,11 +990,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                           aria-label={`Desfazer remoção do vínculo ${row.supplierCode}/${row.store}`}
                                           disabled={busy}
                                           onClick={() =>
-                                            setRemoveMarks((prev) => {
-                                              const next = new Set(prev);
-                                              next.delete(key);
-                                              return next;
-                                            })
+                                            undoOfficialRemove(row.rowId)
                                           }
                                         >
                                           <Undo2 size={15} aria-hidden />
@@ -973,9 +1003,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                           aria-label={`Solicitar remoção do vínculo ${row.supplierCode}/${row.store}`}
                                           disabled={busy}
                                           onClick={() =>
-                                            setRemoveMarks((prev) =>
-                                              new Set(prev).add(key),
-                                            )
+                                            markOfficialRemove(row.rowId)
                                           }
                                         >
                                           <Trash2 size={15} aria-hidden />
@@ -983,15 +1011,19 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                       </span>
                                     )
                                   ) : (
-                                    <span title="Remover linha">
+                                    <span
+                                      title={
+                                        dup
+                                          ? PRC_SUPPLIER_HELP.discardDraftOnly
+                                          : "Descartar linha candidata"
+                                      }
+                                    >
                                       <EngineeringIconButton
                                         tone="danger"
-                                        aria-label={`Remover fornecedor da linha ${index + 1}`}
+                                        aria-label={`Descartar fornecedor da linha ${index + 1}`}
                                         disabled={busy}
                                         onClick={() =>
-                                          setSuppliers((rows) =>
-                                            rows.filter((_, i) => i !== index),
-                                          )
+                                          discardDraftRow(row.rowId)
                                         }
                                       >
                                         <Trash2 size={15} aria-hidden />
@@ -1005,20 +1037,20 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                         TOTVS.
                                       </p>
                                       <PrcReasonToggle
-                                        id={`prc-sup-rm-reason-${index}`}
+                                        id={`prc-sup-rm-reason-${row.rowId}`}
                                         value={row.opReason || ""}
                                         open={Boolean(row.opReasonOpen)}
                                         disabled={busy}
                                         onToggle={() =>
                                           toggleSupplierReason(
-                                            index,
+                                            row.rowId,
                                             "opReasonOpen",
                                           )
                                         }
                                       />
                                     </>
                                   ) : null}
-                                  {!isOfficial && !missing ? (
+                                  {!isOfficial && !missing && !dup ? (
                                     <>
                                       {requestType === "update" ? (
                                         <p className="engineering-prc__add-tag">
@@ -1026,19 +1058,24 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                         </p>
                                       ) : null}
                                       <PrcReasonToggle
-                                        id={`prc-sup-add-reason-${index}`}
+                                        id={`prc-sup-add-reason-${row.rowId}`}
                                         value={row.opReason || ""}
                                         open={Boolean(row.opReasonOpen)}
                                         disabled={busy}
                                         label="Justificar inclusão"
                                         onToggle={() =>
                                           toggleSupplierReason(
-                                            index,
+                                            row.rowId,
                                             "opReasonOpen",
                                           )
                                         }
                                       />
                                     </>
+                                  ) : null}
+                                  {dup ? (
+                                    <p className="engineering-prc__muted">
+                                      {PRC_SUPPLIER_HELP.discardDraftOnly}
+                                    </p>
                                   ) : null}
                                 </td>
                               </tr>
@@ -1061,86 +1098,95 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                           <EngineeringIconButton
                                             aria-label="Fechar busca"
                                             onClick={() =>
-                                              closeRowSearch(index)
+                                              closeRowSearch(row.rowId)
                                             }
                                           >
                                             <X size={14} aria-hidden />
                                           </EngineeringIconButton>
                                         </div>
                                         <PrcSupplierCellLookup
-                                          id={`prc-new-sup-${index}`}
+                                          id={`prc-new-sup-${row.rowId}`}
                                           query={row.query}
                                           disabled={busy}
                                           onQueryChange={(v) =>
-                                            setSuppliers((rows) =>
-                                              rows.map((r, i) =>
-                                                i === index
-                                                  ? { ...r, query: v }
-                                                  : r,
-                                              ),
-                                            )
+                                            patchSupplierRow(row.rowId, {
+                                              query: v,
+                                              selectionError: undefined,
+                                            })
                                           }
                                           onSelect={(hit) => {
-                                            setSuppliers((rows) =>
-                                              rows.map((r, i) =>
-                                                i === index
-                                                  ? {
-                                                      ...r,
-                                                      supplierCode: String(
-                                                        hit.supplier_code ??
-                                                          "",
-                                                      ),
-                                                      store: String(
-                                                        hit.supplier_store ??
-                                                          "",
-                                                      ),
-                                                      supplierName: String(
-                                                        hit.supplier_name ??
-                                                          "",
-                                                      ),
-                                                      supplierShortName:
-                                                        String(
-                                                          hit.supplier_short_name ??
-                                                            "",
-                                                        ),
-                                                      query: "",
-                                                      searchOpen: false,
-                                                    }
-                                                  : r,
-                                              ),
+                                            const code = String(
+                                              hit.supplier_code ?? "",
                                             );
-                                            /* Foco avança para o Part
-                                             * Number da linha após a
-                                             * seleção oficial. */
+                                            const store = String(
+                                              hit.supplier_store ?? "",
+                                            );
+                                            const conflict =
+                                              findRowWithOfficialKey(
+                                                suppliers,
+                                                code,
+                                                store,
+                                                row.rowId,
+                                              );
+                                            if (conflict) {
+                                              patchSupplierRow(row.rowId, {
+                                                selectionError:
+                                                  PRC_SUPPLIER_HELP.duplicateExisting,
+                                                searchOpen: true,
+                                              });
+                                              return;
+                                            }
+                                            patchSupplierRow(row.rowId, {
+                                              supplierCode: code,
+                                              store,
+                                              supplierName: String(
+                                                hit.supplier_name ?? "",
+                                              ),
+                                              supplierShortName: String(
+                                                hit.supplier_short_name ?? "",
+                                              ),
+                                              query: "",
+                                              searchOpen: false,
+                                              selectionError: undefined,
+                                            });
                                             window.requestAnimationFrame(
                                               () => {
                                                 document
                                                   .getElementById(
-                                                    `prc-new-sup-pn-${index}`,
+                                                    `prc-new-sup-pn-${row.rowId}`,
                                                   )
                                                   ?.focus();
                                               },
                                             );
                                           }}
                                           onClose={() =>
-                                            closeRowSearch(index)
+                                            closeRowSearch(row.rowId)
                                           }
                                         />
-                                        <p className="engineering-prc__muted">
-                                          Ao escolher um resultado, código,
-                                          loja e razão social são preenchidos
-                                          automaticamente.
-                                        </p>
+                                        {row.selectionError ? (
+                                          <p
+                                            className="engineering-prc__field-error"
+                                            role="alert"
+                                          >
+                                            {row.selectionError}
+                                          </p>
+                                        ) : (
+                                          <p className="engineering-prc__muted">
+                                            Ao escolher um resultado, código,
+                                            loja e razão social são
+                                            preenchidos automaticamente.
+                                          </p>
+                                        )}
                                       </div>
                                     ) : null}
                                     {pnChanged && row.pnReasonOpen ? (
                                       <PrcReasonEditor
-                                        id={`prc-sup-pn-reason-${index}`}
+                                        id={`prc-sup-pn-reason-${row.rowId}`}
                                         label={`Justificativa de ${PRC_SUPPLIER_LABELS.partNumber} (opcional)`}
                                         value={row.pnReason || ""}
                                         onChange={(v) =>
                                           setSupplierReason(
-                                            index,
+                                            row.rowId,
                                             "pnReason",
                                             v,
                                           )
@@ -1148,7 +1194,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                         disabled={busy}
                                         onCollapse={() =>
                                           toggleSupplierReason(
-                                            index,
+                                            row.rowId,
                                             "pnReasonOpen",
                                           )
                                         }
@@ -1156,12 +1202,12 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                     ) : null}
                                     {catChanged && row.catReasonOpen ? (
                                       <PrcReasonEditor
-                                        id={`prc-sup-cat-reason-${index}`}
+                                        id={`prc-sup-cat-reason-${row.rowId}`}
                                         label={`Justificativa de ${PRC_SUPPLIER_LABELS.catalogNumber} (opcional)`}
                                         value={row.catReason || ""}
                                         onChange={(v) =>
                                           setSupplierReason(
-                                            index,
+                                            row.rowId,
                                             "catReason",
                                             v,
                                           )
@@ -1169,7 +1215,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                         disabled={busy}
                                         onCollapse={() =>
                                           toggleSupplierReason(
-                                            index,
+                                            row.rowId,
                                             "catReasonOpen",
                                           )
                                         }
@@ -1177,9 +1223,9 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                     ) : null}
                                     {row.opReasonOpen &&
                                     (markedRemove ||
-                                      (!isOfficial && !missing)) ? (
+                                      (!isOfficial && !missing && !dup)) ? (
                                       <PrcReasonEditor
-                                        id={`prc-sup-op-reason-${index}`}
+                                        id={`prc-sup-op-reason-${row.rowId}`}
                                         label={
                                           markedRemove
                                             ? "Justificativa da remoção (opcional)"
@@ -1188,7 +1234,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                         value={row.opReason || ""}
                                         onChange={(v) =>
                                           setSupplierReason(
-                                            index,
+                                            row.rowId,
                                             "opReason",
                                             v,
                                           )
@@ -1196,7 +1242,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                         disabled={busy}
                                         onCollapse={() =>
                                           toggleSupplierReason(
-                                            index,
+                                            row.rowId,
                                             "opReasonOpen",
                                           )
                                         }

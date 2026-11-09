@@ -644,6 +644,20 @@ def validate_supplier_link_changes(
             if txt:
                 fr_out[fr_key] = txt
         if (code, store) in seen:
+            prev = next(
+                (x for x in out
+                 if x["key"]["supplierCode"] == code
+                 and x["key"]["store"] == store),
+                None,
+            )
+            prev_op = (prev or {}).get("operation")
+            if prev_op and prev_op != operation:
+                return [], (
+                    f"supplierLinkChanges[{i}] conflita com operação "
+                    f"'{prev_op}' já declarada para o vínculo "
+                    f"{code}/{store} (proibido add/update/remove "
+                    "simultâneos na mesma chave)."
+                )
             return [], (
                 f"supplierLinkChanges[{i}] duplica o vínculo "
                 f"{code}/{store}."

@@ -1,8 +1,19 @@
 /** Modelo de linha de fornecedor do PRC — conversão fiel do payload
  * `suppliers[]` (partNumber opcional pode ser null → string vazia
- * canônica, nunca valor inventado). */
+ * canônica, nunca valor inventado).
+ *
+ * D14-FIX-02 — cada linha visual tem `rowId` estável e `origin`
+ * (`official` = baseline SA5; `draft` = candidata da sessão). A chave
+ * oficial `(supplierCode, store)` gera operações SA5; remoção/descarte
+ * e justificativas usam `rowId` para não confundir instâncias. */
+
+export type SupplierRowOrigin = "official" | "draft";
 
 export type SupplierRow = {
+  /** Identidade local estável da linha UI — nunca índice de array. */
+  rowId: string;
+  /** Origem: baseline SA5 vs candidata adicionada nesta sessão. */
+  origin: SupplierRowOrigin;
   supplierCode: string;
   store: string;
   supplierName: string;
@@ -18,12 +29,33 @@ export type SupplierRow = {
   pnReason?: string;
   catReason?: string;
   opReason?: string;
-  /** D14-FIX — editor de razão expandido na linha auxiliar (fechado
-   * por padrão; um por atributo, nunca compartilhado). */
+  /** D14-FIX — editor de razão expandido na linha auxiliar. */
   pnReasonOpen?: boolean;
   catReasonOpen?: boolean;
   opReasonOpen?: boolean;
+  /** Erro contextual de seleção (ex.: duplicidade SA2). */
+  selectionError?: string;
 };
+
+let _rowSeq = 0;
+
+/** Gera `rowId` exclusivo por sessão (não reutilizado). */
+export function newSupplierRowId(prefix = "row"): string {
+  _rowSeq += 1;
+  const rand =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `r${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  return `${prefix}-${_rowSeq}-${rand}`;
+}
+
+/** Chave oficial SA5 `(supplierCode|store)` — zeros preservados. */
+export function supplierOfficialKey(
+  code: string,
+  store: string,
+): string {
+  return `${String(code ?? "").trim()}|${String(store ?? "").trim()}`;
+}
 
 export function toSupplierRows(value: unknown): SupplierRow[] {
   if (!Array.isArray(value)) return [];
@@ -33,6 +65,8 @@ export function toSupplierRows(value: unknown): SupplierRow[] {
         typeof v === "object" && v !== null,
     )
     .map((v) => ({
+      rowId: newSupplierRowId("draft"),
+      origin: "draft" as const,
       supplierCode: String(v.supplierCode ?? ""),
       store: String(v.store ?? ""),
       supplierName: String(v.supplierName ?? ""),
@@ -52,9 +86,11 @@ export function supplierRowsToPayload(rows: SupplierRow[]) {
   }));
 }
 
-/** Linha em branco para "Adicionar fornecedor". */
+/** Linha em branco (candidata) para "Adicionar fornecedor". */
 export function emptySupplierRow(): SupplierRow {
   return {
+    rowId: newSupplierRowId("draft"),
+    origin: "draft",
     supplierCode: "",
     store: "",
     supplierName: "",
@@ -64,23 +100,87 @@ export function emptySupplierRow(): SupplierRow {
   };
 }
 
-/** Índices de linhas duplicadas pela chave oficial (code, store). */
-export function duplicateSupplierIndexes(rows: SupplierRow[]): Set<number> {
-  const seen = new Map<string, number>();
-  const dups = new Set<number>();
-  rows.forEach((r, i) => {
+/** Linha a partir de vínculo oficial SA5 do edit-context. */
+export function officialSupplierRow(link: {
+  supplierCode: string;
+  store: string;
+  supplierName?: string;
+  supplierShortName?: string;
+  partNumber?: string | null;
+  catalogNumber?: string | null;
+}): SupplierRow {
+  return {
+    rowId: newSupplierRowId("official"),
+    origin: "official",
+    supplierCode: link.supplierCode,
+    store: link.store,
+    supplierName: link.supplierName || "",
+    supplierShortName: link.supplierShortName || "",
+    partNumber: link.partNumber == null ? "" : String(link.partNumber),
+    catalogNumber:
+      link.catalogNumber == null ? "" : String(link.catalogNumber),
+    query: "",
+  };
+}
+
+/**
+ * Linhas candidatas (`draft`) cuja chave oficial já existe em outra
+ * linha (oficial ou outra candidata). A linha oficial do mesmo par
+ * NÃO entra no conjunto — permanece íntegra; só a candidata é
+ * marcada como duplicada descartável.
+ */
+export function duplicateDraftRowIds(rows: SupplierRow[]): Set<string> {
+  const byKey = new Map<string, SupplierRow[]>();
+  for (const r of rows) {
     const code = r.supplierCode.trim();
     const store = r.store.trim();
-    if (!code || !store) return;
-    const key = `${code}|${store}`;
-    if (seen.has(key)) {
-      dups.add(seen.get(key) as number);
-      dups.add(i);
-    } else {
-      seen.set(key, i);
+    if (!code || !store) continue;
+    const key = supplierOfficialKey(code, store);
+    const list = byKey.get(key) || [];
+    list.push(r);
+    byKey.set(key, list);
+  }
+  const dups = new Set<string>();
+  for (const group of byKey.values()) {
+    if (group.length < 2) continue;
+    const hasOfficial = group.some((r) => r.origin === "official");
+    for (const r of group) {
+      if (r.origin === "draft") dups.add(r.rowId);
+      else if (!hasOfficial) dups.add(r.rowId);
     }
-  });
+    /* Múltiplos oficiais com a mesma chave = ambiguidade; marcar todos. */
+    const officials = group.filter((r) => r.origin === "official");
+    if (officials.length > 1) {
+      for (const r of officials) dups.add(r.rowId);
+    }
+  }
   return dups;
+}
+
+/** @deprecated use duplicateDraftRowIds — mantido para testes legados. */
+export function duplicateSupplierIndexes(rows: SupplierRow[]): Set<number> {
+  const dups = duplicateDraftRowIds(rows);
+  const out = new Set<number>();
+  rows.forEach((r, i) => {
+    if (dups.has(r.rowId)) out.add(i);
+  });
+  return out;
+}
+
+/** Outra linha (exceto `exceptRowId`) já ocupa a chave oficial. */
+export function findRowWithOfficialKey(
+  rows: SupplierRow[],
+  code: string,
+  store: string,
+  exceptRowId?: string,
+): SupplierRow | undefined {
+  const key = supplierOfficialKey(code, store);
+  if (key === "|") return undefined;
+  return rows.find(
+    (r) =>
+      r.rowId !== exceptRowId &&
+      supplierOfficialKey(r.supplierCode, r.store) === key,
+  );
 }
 
 /** Hit SA2 — razão social (`A2_NOME`) é sempre a linha principal;

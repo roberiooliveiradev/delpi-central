@@ -11,6 +11,8 @@ import type { SupplierRow } from "./prcSuppliers";
 
 function row(over: Partial<SupplierRow> = {}): SupplierRow {
   return {
+    rowId: over.rowId || "row-test-1",
+    origin: over.origin || "draft",
     supplierCode: "000002",
     store: "01",
     supplierName: "TE CONNECTIVITY",

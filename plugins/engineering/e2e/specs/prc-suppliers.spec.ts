@@ -164,7 +164,9 @@ test("tabela V2 — colunas separadas, lupa colapsável e seleção SA2", async 
 
   /* Expandir → textarea ≤250 na linha auxiliar, Recolher preserva. */
   await pnToggle.click();
-  const reasonText = page.locator("#prc-sup-pn-reason-0-text");
+  const reasonText = page.locator(
+    "textarea[id^='prc-sup-pn-reason-'][id$='-text']",
+  );
   await expect(reasonText).toBeVisible();
   await expect(reasonText).toHaveAttribute("maxlength", "250");
   /* 10 chars exactos → contador "10/250 caracteres". */
@@ -217,7 +219,7 @@ test("tabela V2 — colunas separadas, lupa colapsável e seleção SA2", async 
   await page.keyboard.press("Escape");
   await expect(page.getByRole("listbox")).toHaveCount(0);
   await page
-    .getByRole("button", { name: "Remover fornecedor da linha 2" })
+    .getByRole("button", { name: "Descartar fornecedor da linha 2" })
     .click();
   await expect(page.getByRole("listbox")).toHaveCount(0);
 
@@ -290,7 +292,7 @@ test("update — diff D13 aciona justificativa só no atributo alterado", async 
   /* Editor de PN abre na linha auxiliar, não estoura a célula. */
   await pnToggle.click();
   const editor = page.locator(
-    ".engineering-prc__supplier-aux #prc-sup-pn-reason-0-text",
+    ".engineering-prc__supplier-aux textarea[id^='prc-sup-pn-reason-']",
   );
   await expect(editor).toBeVisible();
   await editor.fill("ctx pn update");
@@ -333,6 +335,106 @@ test("update — diff D13 aciona justificativa só no atributo alterado", async 
   ).toBeVisible();
   await expect(page.getByText(/1 operação/)).toBeVisible();
   await shot("update-review");
+
+  expectNoFailures(forbidden, pageErrors);
+});
+
+test("update — D14-FIX-02 duplicidade SA5 não marca remoção oficial", async ({
+  page,
+}, testInfo) => {
+  const forbidden = trackForbiddenApiCalls(page);
+  const pageErrors = trackPageErrors(page);
+  const shot = (name: string) =>
+    page.screenshot({
+      path: `e2e/artifacts/prc-dup-${name}-${testInfo.project.name}.png`,
+      fullPage: true,
+    });
+
+  await page.goto(CREATE_PATH);
+  await page
+    .getByRole("button", { name: "Alterar produto existente" })
+    .click();
+  await page.getByLabel(/Código oficial TOTVS/).fill(UPDATE_PRODUCT);
+  await page.getByRole("button", { name: "Avançar" }).click();
+  await expect(
+    page.locator(".engineering-prc__supplier-table"),
+  ).toBeVisible({ timeout: 30_000 });
+  await shot("before-add");
+
+  const table = page.locator(".engineering-prc__supplier-table");
+  const officialRow = table.locator('tr[data-origin="official"]').first();
+  await expect(officialRow).toBeVisible();
+  const officialCode = (
+    await officialRow.locator('td[data-label="Código"]').innerText()
+  ).trim();
+  const officialStore = (
+    await officialRow.locator('td[data-label="Loja"]').innerText()
+  ).trim();
+  expect(officialCode.length).toBeGreaterThan(0);
+
+  await page
+    .getByRole("button", { name: "Adicionar fornecedor" })
+    .click();
+  const draftRow = table.locator('tr[data-origin="draft"]').first();
+  await expect(draftRow).toBeVisible();
+  await draftRow
+    .getByRole("button", { name: /Buscar fornecedor da linha/ })
+    .click();
+  const input = page.getByRole("textbox", { name: SEARCH_LABEL });
+  await expect(input).toBeVisible();
+  await input.fill(officialCode);
+  const listbox = page.getByRole("listbox", {
+    name: "Fornecedores sugeridos",
+  });
+  const sameOption = listbox
+    .getByRole("option")
+    .filter({ hasText: new RegExp(officialCode) })
+    .filter({ hasText: new RegExp(`Loja:\\s*${officialStore}`) })
+    .first();
+  await expect(sameOption).toBeVisible({ timeout: 15_000 });
+  await sameOption.click();
+  await shot("duplicate-attempt");
+
+  await expect(
+    page.getByText(/já está vinculado ao produto/i).first(),
+  ).toBeVisible();
+  await expect(officialRow.getByText("Remoção solicitada")).toHaveCount(0);
+  await expect(
+    officialRow.getByRole("button", { name: /Desfazer remoção/ }),
+  ).toHaveCount(0);
+  await expect(
+    officialRow.locator('td[data-label="Código"]'),
+  ).toContainText(officialCode);
+  await shot("duplicate-error");
+
+  /* Fecha a busca auxiliar (mobile) e descarta a candidata via rowId. */
+  const draftMain = table.locator('tr[data-origin="draft"]').first();
+  const fechar = page.getByRole("button", { name: "Fechar busca" });
+  if (await fechar.count()) {
+    await fechar.click();
+  }
+  await draftMain
+    .getByRole("button", { name: /Descartar fornecedor da linha/ })
+    .scrollIntoViewIfNeeded();
+  await draftMain
+    .getByRole("button", { name: /Descartar fornecedor da linha/ })
+    .click();
+  await expect(table.locator('tr[data-origin="draft"]')).toHaveCount(0, {
+    timeout: 10_000,
+  });
+  await expect(
+    table.locator('tr[data-origin="official"]').first(),
+  ).toBeVisible();
+  await expect(
+    table.locator('tr[data-origin="official"]').getByText("Remoção solicitada"),
+  ).toHaveCount(0);
+  await shot("after-discard");
+
+  await page.getByRole("button", { name: "Avançar" }).click();
+  await expect(
+    page.getByText(/Nenhuma alteração identificada/i),
+  ).toBeVisible();
+  await shot("no-unintended-ops");
 
   expectNoFailures(forbidden, pageErrors);
 });

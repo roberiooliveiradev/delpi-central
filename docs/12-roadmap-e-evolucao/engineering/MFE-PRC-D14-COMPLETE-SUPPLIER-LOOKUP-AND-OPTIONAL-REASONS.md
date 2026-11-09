@@ -150,3 +150,43 @@ ARCHITECTURE_DECISION_REQUIRED: nenhum
 | UPDATE PN+Catálogo | `assets/d14-fix/prc-update-update-both-changed-desktop.png` |
 | UPDATE PN revertido | `assets/d14-fix/prc-update-update-pn-reverted-desktop.png` |
 | UPDATE revisão | `assets/d14-fix/prc-update-update-review-desktop.png` |
+
+## 8. D14-FIX-02 — Identidade local das linhas e proteção contra duplicidade SA5
+
+**TASK_ID:** `ENG-PRC-D14-FIX-02-SA5-ROW-IDENTITY-AND-DUPLICATE-PROTECTION`  
+**BASE_SHA:** `3cf3ed1f0f016c4a0d9e034a3b625fab4c2c58af`  
+**FINAL_SHA:** (preencher no commit)  
+**PROD_DEPLOY:** NOT_PERFORMED
+
+### Causa raiz
+
+`isOfficial` era derivado de `officialKeys.has(supplierCode|store)`. Uma linha **draft** que selecionava o mesmo fornecedor de um vínculo SA5 herdava o comportamento de remoção oficial; `removeMarks` indexado pela chave SA5 marcava **todas** as linhas com aquela chave.
+
+### Correção
+
+| Conceito | Regra |
+|---|---|
+| Identidade oficial | `(supplierCode, store)` — zeros preservados; gera ops SA5 |
+| Identidade local | `rowId` estável + `origin: "official" \| "draft"` |
+| Descartar candidata | remove só o `rowId` draft; **nunca** gera `remove` |
+| Solicitar remoção | só `origin === "official"`; `removeMarks` por `rowId` |
+| Desfazer remoção | remove só aquele `rowId` do set |
+| Seleção SA2 duplicada | bloqueia antes de preencher; mensagem contextual |
+| Diff | `computeLinkDiff` classifica por `origin`; conflito/ambiguidade sem ops |
+| Backend | rejeita chave duplicada e conflito tipado add/update/remove |
+
+### Evidência
+
+- Vitest: `prcDiff` + `prcSuppliers` + `prcIntakePayload` — PASS  
+- Pytest: `test_d14fix02_supplier_link_duplicate_and_conflict` — PASS  
+- Playwright: **9/9** (desktop/tablet/mobile) incluindo reprodução PO  
+- Bundle DEV: ver fingerprint no commit  
+- Screenshots: `assets/d14-fix-02/`
+
+| Estado | Arquivo |
+|---|---|
+| Antes de adicionar | `assets/d14-fix-02/prc-dup-before-add-desktop.png` |
+| Tentativa de duplicidade | `assets/d14-fix-02/prc-dup-duplicate-attempt-desktop.png` |
+| Erro contextual | `assets/d14-fix-02/prc-dup-duplicate-error-desktop.png` |
+| Após descartar candidata | `assets/d14-fix-02/prc-dup-after-discard-desktop.png` |
+| Sem ops indevidas | `assets/d14-fix-02/prc-dup-no-unintended-ops-desktop.png` |

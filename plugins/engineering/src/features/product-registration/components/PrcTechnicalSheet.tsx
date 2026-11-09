@@ -23,6 +23,7 @@ import type {
 } from "../api/productRegistrationApi";
 import { PRC_FIELD_LABELS, PRC_SUPPLIER_LABELS } from "../prcCopy";
 import {
+  emptySupplierRow,
   supplierRowsToPayload,
   toSupplierRows,
   type SupplierRow,
@@ -470,14 +471,7 @@ export function PrcTechnicalSheet({
                     onClick={() =>
                       setSuppliersDraft((rows) => [
                         ...(rows || []),
-                        {
-                          supplierCode: "",
-                          store: "",
-                          supplierName: "",
-                          partNumber: "",
-                          catalogNumber: "",
-                          query: "",
-                        },
+                        emptySupplierRow(),
                       ])
                     }
                   >

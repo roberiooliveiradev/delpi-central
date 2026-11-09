@@ -130,6 +130,10 @@ export const PRC_SUPPLIER_HELP = {
     "Escolha um fornecedor na lista de resultados para confirmar o código e a loja.",
   duplicate:
     "Este fornecedor e esta loja já foram adicionados à solicitação.",
+  duplicateExisting:
+    "Este fornecedor já está vinculado ao produto. Para alterar o Part Number ou Catálogo, edite a linha existente.",
+  discardDraftOnly:
+    "Descartar remove somente esta linha candidata — o vínculo oficial permanece intacto.",
 } as const;
 
 /** Mensagens de validação acionáveis da ficha (sem jargão técnico). */

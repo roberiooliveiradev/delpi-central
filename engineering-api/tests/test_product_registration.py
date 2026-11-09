@@ -1067,6 +1067,45 @@ def test_d14_scalar_reason_optional():
               "reason": "a" * 251}])
 
 
+def test_d14fix02_supplier_link_duplicate_and_conflict():
+    """D14-FIX-02 — mesma chave SA5 não pode repetir ops nem misturar
+    add/update/remove no mesmo intake."""
+    from engineering_app.domain.product_registration import catalog
+    key = {"supplierCode": "000002", "store": "01"}
+    # dois ADD → duplicata
+    _, err = catalog.validate_supplier_link_changes([
+        {"operation": "add", "key": key, "fields": {"partNumber": "A"}},
+        {"operation": "add", "key": key, "fields": {"partNumber": "B"}},
+    ])
+    assert err is not None and "duplica" in err
+    # ADD + REMOVE → conflito tipado
+    _, err = catalog.validate_supplier_link_changes([
+        {"operation": "add", "key": key, "fields": {"partNumber": "A"}},
+        {"operation": "remove", "key": key, "fields": {}, "reason": "x"},
+    ])
+    assert err is not None and "conflita" in err
+    # UPDATE + REMOVE → conflito
+    _, err = catalog.validate_supplier_link_changes([
+        {"operation": "update", "key": key, "fields": {"partNumber": "A"}},
+        {"operation": "remove", "key": key, "fields": {}},
+    ])
+    assert err is not None and "conflita" in err
+    # dois REMOVE → duplicata
+    _, err = catalog.validate_supplier_link_changes([
+        {"operation": "remove", "key": key, "fields": {}},
+        {"operation": "remove", "key": key, "fields": {}},
+    ])
+    assert err is not None
+    # chaves distintas → ok
+    ops, err = catalog.validate_supplier_link_changes([
+        {"operation": "update", "key": key, "fields": {"partNumber": "A"}},
+        {"operation": "add",
+         "key": {"supplierCode": "000089", "store": "01"},
+         "fields": {"catalogNumber": "C"}},
+    ])
+    assert err is None and len(ops) == 2
+
+
 def test_d14fix_create_reasons_validation():
     from engineering_app.domain.product_registration import catalog
     keys = {("000001", "01"), ("000002", "02")}
