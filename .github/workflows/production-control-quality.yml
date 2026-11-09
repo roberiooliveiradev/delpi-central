@@ -65,7 +65,7 @@ jobs:
       - name: Testes focalizados nas pendências e na demanda
         working-directory: production-control-api
         run: |
-          python -m pytest             tests/test_stock_rupture_pendencies.py             tests/test_op_pendencies.py             tests/test_demand_myweg_e3.py -q
+          python -m pytest             tests/test_stock_rupture_pendencies.py             tests/test_op_pendencies.py tests/test_myweg_fiscal_fifo_offset.py tests/test_demand_myweg_e3.py -q
 
   reports:
     name: Reports API - contrato S2S
