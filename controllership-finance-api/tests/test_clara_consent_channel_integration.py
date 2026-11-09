@@ -15,18 +15,17 @@ from controllership_finance_app.interface.http.routes import clara_consent_route
 
 
 @pytest.mark.parametrize(
-    "channel,ack,expected_challenges",
+    "channel,expected_challenges",
     [
-        ("portal", "", 1),
-        ("conversational", "", 1),
-        ("conversational", cc.SECURITY_ACK_VALUE, 0),
+        ("portal", 1),
+        ("dual", 1),
+        ("conversational", 0),
     ],
 )
 def test_prepare_only_issues_portal_challenge_when_required(
-    monkeypatch, channel, ack, expected_challenges
+    monkeypatch, channel, expected_challenges
 ):
     monkeypatch.setattr(cc.settings, "CLARA_CONSENT_CHANNEL", channel)
-    monkeypatch.setattr(cc.settings, "CLARA_CONVERSATIONAL_SECURITY_ACK", ack)
     proposals = MagicMock()
     proposals.create.return_value = {
         "proposal_id": "11111111-1111-1111-1111-111111111111",
@@ -59,18 +58,17 @@ def test_prepare_only_issues_portal_challenge_when_required(
 
 
 @pytest.mark.parametrize(
-    "channel,ack,expected_portal",
+    "channel,expected_portal",
     [
-        ("portal", "", True),
-        ("conversational", "", True),
-        ("conversational", cc.SECURITY_ACK_VALUE, False),
+        ("portal", True),
+        ("dual", True),
+        ("conversational", False),
     ],
 )
 def test_authenticated_policy_endpoint_reflects_backend_gate(
-    monkeypatch, channel, ack, expected_portal
+    monkeypatch, channel, expected_portal
 ):
     monkeypatch.setattr(cc.settings, "CLARA_CONSENT_CHANNEL", channel)
-    monkeypatch.setattr(cc.settings, "CLARA_CONVERSATIONAL_SECURITY_ACK", ack)
     monkeypatch.setattr(routes, "_actor", lambda request: "actor-1")
     monkeypatch.setattr(
         routes, "ok", lambda payload, operation_id: {"data": payload}
@@ -84,7 +82,7 @@ def test_authenticated_policy_endpoint_reflects_backend_gate(
     assert result["consent_channel"] == channel
     assert result["portal_consent_required"] is expected_portal
     assert result["conversational_act_armed"] is not expected_portal
-    assert cc.SECURITY_ACK_VALUE not in repr(result)
+    assert "security_ack" not in repr(result)
 
 
 def test_policy_endpoint_rejects_request_without_user():
@@ -98,18 +96,17 @@ def test_policy_endpoint_rejects_request_without_user():
 
 
 @pytest.mark.parametrize(
-    "channel,ack,expected_challenges",
+    "channel,expected_challenges",
     [
-        ("portal", "", 1),
-        ("conversational", "", 1),
-        ("conversational", cc.SECURITY_ACK_VALUE, 0),
+        ("portal", 1),
+        ("dual", 1),
+        ("conversational", 0),
     ],
 )
 def test_prepare_batch_only_issues_portal_challenge_when_required(
-    monkeypatch, channel, ack, expected_challenges
+    monkeypatch, channel, expected_challenges
 ):
     monkeypatch.setattr(cc.settings, "CLARA_CONSENT_CHANNEL", channel)
-    monkeypatch.setattr(cc.settings, "CLARA_CONVERSATIONAL_SECURITY_ACK", ack)
     from controllership_finance_app.application.clara import (
         batch_orchestrator as batch_mod,
     )
