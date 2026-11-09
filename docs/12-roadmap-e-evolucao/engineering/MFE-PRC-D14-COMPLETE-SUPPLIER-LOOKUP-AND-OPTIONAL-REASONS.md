@@ -120,7 +120,7 @@ J03_ADD_REMOVE_REASONS: PASS (REMOVE UI) / PENDING_OWNER (publicação REMOVE no
 J04_250_CLIENT_BACKEND_422: PASS — maxLength 250 cliente; pytest 250 ok / 251 → 422
 J05_CREATE_UPDATE_DRAFT_EVA_AUDIT: PASS — canal `reasons` no create fora do technicalDraft; update via fieldReasons
 S01_SA5_ONLY_VERIFY: PASS — herdado D13 (fail-closed preservado)
-S02_SERVER_BASELINE_ADD_REMOVE: PARTIAL — ADD baseline ok; REMOVE aguarda signoff owner
+S02_SERVER_BASELINE_ADD_REMOVE: ver **D15** — baseline server-side PROVEN; REMOVE conclusão `PENDING_OWNER`
 TYPECHECK: PASS (`npm run typecheck` engineering)
 BUILD: PASS (`npm run build` + docker rebuild `delpi-engineering`)
 VITEST: PASS — `prcIntakePayload.test.ts` 13/13
@@ -190,3 +190,11 @@ ARCHITECTURE_DECISION_REQUIRED: nenhum
 | Erro contextual | `assets/d14-fix-02/prc-dup-duplicate-error-desktop.png` |
 | Após descartar candidata | `assets/d14-fix-02/prc-dup-after-discard-desktop.png` |
 | Sem ops indevidas | `assets/d14-fix-02/prc-dup-no-unintended-ops-desktop.png` |
+
+## 9. D15 — baseline e ciclo de vida SA5
+
+Contrato e evidências: [PRODUCT-REGISTRATION-D15-SA5-BASELINE-AND-LIFECYCLE.md](./PRODUCT-REGISTRATION-D15-SA5-BASELINE-AND-LIFECYCLE.md).
+
+- Baseline oficial persistido server-side no intake UPDATE (`official_baseline` JSONB).
+- Pré-condições ADD/UPDATE/REMOVE contra baseline; fingerprint de concorrência.
+- Conclusão REMOVE permanece `PENDING_OWNER`.

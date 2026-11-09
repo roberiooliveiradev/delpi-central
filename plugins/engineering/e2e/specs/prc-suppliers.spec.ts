@@ -438,3 +438,52 @@ test("update — D14-FIX-02 duplicidade SA5 não marca remoção oficial", async
 
   expectNoFailures(forbidden, pageErrors);
 });
+
+test("D15 — edit-context expõe fingerprint e baseline completo", async ({
+  page,
+}, testInfo) => {
+  const forbidden = trackForbiddenApiCalls(page);
+  const pageErrors = trackPageErrors(page);
+  const shot = (name: string) =>
+    page.screenshot({
+      path: `e2e/artifacts/prc-d15-${name}-${testInfo.project.name}.png`,
+      fullPage: true,
+    });
+
+  const editCtxPromise = page.waitForResponse(
+    (res) =>
+      res.url().includes("/edit-context") &&
+      res.request().method() === "GET" &&
+      res.ok(),
+    { timeout: 30_000 },
+  );
+
+  await page.goto(CREATE_PATH);
+  await page
+    .getByRole("button", { name: "Alterar produto existente" })
+    .click();
+  await page.getByLabel(/Código oficial TOTVS/).fill(UPDATE_PRODUCT);
+  await page.getByRole("button", { name: "Avançar" }).click();
+
+  const editCtxRes = await editCtxPromise;
+  const body = await editCtxRes.json();
+  const data = body.data || body;
+  expect(data.status).toBe("available");
+  expect(typeof data.fingerprint).toBe("string");
+  expect(data.fingerprint.length).toBeGreaterThan(16);
+  expect(data.sourceContractVersion).toBe("prc-sa5-baseline.v1");
+  expect(data.linksComplete).toBe(true);
+  expect(Array.isArray(data.links)).toBe(true);
+  expect(data.links.length).toBeGreaterThan(0);
+  expect(data.removeCompletionPolicy).toBe("PENDING_OWNER");
+
+  await expect(
+    page.locator(".engineering-prc__supplier-table"),
+  ).toBeVisible({ timeout: 30_000 });
+  await expect(
+    page.locator('tr[data-origin="official"]').first(),
+  ).toBeVisible();
+  await shot("baseline-loaded");
+
+  expectNoFailures(forbidden, pageErrors);
+});

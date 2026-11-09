@@ -146,9 +146,19 @@ export function buildUpdateIntakeBody(args: {
   linkOps: PrcLinkOp[];
   reasons: Record<string, string>;
   suppliers: SupplierRow[];
+  baselineFingerprint?: string | null;
+  editContextReadAt?: string | null;
 }): PrcIntakeBody {
-  const { refData, officialCode, scalarDiff, linkOps, reasons, suppliers } =
-    args;
+  const {
+    refData,
+    officialCode,
+    scalarDiff,
+    linkOps,
+    reasons,
+    suppliers,
+    baselineFingerprint,
+    editContextReadAt,
+  } = args;
   const changes = scalarDiff.map((change) => ({
     path: change.path,
     proposedValue: change.after,
@@ -162,5 +172,9 @@ export function buildUpdateIntakeBody(args: {
     officialProductCode: officialCode.trim(),
     changes,
     supplierLinkChanges: linkChangesWithReasons(linkOps, suppliers),
+    ...(baselineFingerprint
+      ? { baselineFingerprint }
+      : {}),
+    ...(editContextReadAt ? { editContextReadAt } : {}),
   };
 }

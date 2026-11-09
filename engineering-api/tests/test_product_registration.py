@@ -146,11 +146,14 @@ def _product(**over):
         "customer_reference": "",
         "accounting_account": "11401002",
     }
+    suppliers = over.pop("suppliers", None)
+    suppliers_complete = over.pop("suppliers_complete", True)
+    status = over.pop("status", "available")
     product.update(over)
     return {
-        "status": "available",
+        "status": status,
         "product": product,
-        "suppliers": [
+        "suppliers": suppliers if suppliers is not None else [
             {
                 "supplier_code": "000001",
                 "supplier_store": "01",
@@ -159,7 +162,12 @@ def _product(**over):
                 "catalog_code": None,
             }
         ],
+        "suppliers_complete": suppliers_complete,
     }
+
+
+def _attach_reader(prc_service_repo, result=None):
+    prc_service_repo["reader"] = FakeReader(result or _product())
 
 
 class TestIntake:
@@ -282,6 +290,7 @@ class TestUpdate:
     def test_update_single_field_no_record(
         self, client, jwks_env, core_rbac, prc_service_repo
     ):
+        _attach_reader(prc_service_repo)
         core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
         resp = _post(
             client,
@@ -307,6 +316,9 @@ class TestUpdate:
         ).json()["data"]
         assert detail["technicalDraft"]["description"] == "NOVA DESC"
         assert detail["technicalDraft"]["officialProductCode"] == "001234"
+        assert detail["officialBaseline"]["officialProductCode"] == "001234"
+        assert detail["officialBaseline"]["linksComplete"] is True
+        assert detail["officialBaseline"]["fingerprint"]
 
     def test_unknown_path_rejected(
         self, client, jwks_env, core_rbac, prc_service_repo

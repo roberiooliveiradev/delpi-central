@@ -143,8 +143,8 @@ class PostgresProductRegistrationRepository:
                     "  official_product_code, base_revision_number,"
                     "  requested_payload, payload_schema_version, status,"
                     "  assigned_to_subject, row_version,"
-                    "  created_at, updated_at)"
-                    " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                    "  created_at, updated_at, official_baseline)"
+                    " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                     (
                         request["id"], request["request_type"],
                         request["product_type"], request["source"],
@@ -160,6 +160,11 @@ class PostgresProductRegistrationRepository:
                         request["assigned_to_subject"],
                         request["row_version"],
                         request["created_at"], request["updated_at"],
+                        (
+                            json.dumps(request["official_baseline"])
+                            if request.get("official_baseline") is not None
+                            else None
+                        ),
                     ),
                 )
                 conn.execute(

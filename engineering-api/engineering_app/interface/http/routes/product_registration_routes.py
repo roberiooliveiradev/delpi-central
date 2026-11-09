@@ -106,10 +106,22 @@ def _err(exc: Exception, operation_id: str):
             operation_id=operation_id,
         )
     if isinstance(exc, PrcConcurrencyError):
-        return fail(str(exc), 409, data={"code": "stale_version"},
+        msg = str(exc)
+        code = (
+            "official_context_stale"
+            if msg == "official_context_stale"
+            else "stale_version"
+        )
+        return fail(msg, 409, data={"code": code},
                     operation_id=operation_id)
     if isinstance(exc, PrcStateConflictError):
-        return fail(str(exc), 409, data={"code": "state_conflict"},
+        msg = str(exc)
+        code = (
+            "remove_completion_pending_owner"
+            if msg == "remove_completion_pending_owner"
+            else "state_conflict"
+        )
+        return fail(msg, 409, data={"code": code},
                     operation_id=operation_id)
     if isinstance(exc, PrcForbiddenError):
         return fail(str(exc), 403, data={"code": "forbidden"},
@@ -186,6 +198,10 @@ class IntakeBody(BaseModel):
     # D14-FIX — justificativas opcionais por campo/vínculo no create
     # (mesma família de reasons do update; aditivo e opcional).
     reasons: dict | None = None
+    # D15 — fingerprint do edit-context para gate de concorrência
+    # (estado oficial relevante; não usa timestamp isolado).
+    baselineFingerprint: str | None = Field(default=None, max_length=128)
+    editContextReadAt: str | None = Field(default=None, max_length=64)
 
 
 class ActionBody(BaseModel):
@@ -234,7 +250,8 @@ async def prc_intake_submit(
     if denied is not None:
         return denied
     try:
-        data = build_prc_service().submit_request(
+        access_token = str(getattr(user, "access_token", "") or "")
+        data = await build_prc_service().submit_request(
             actor=_actor(user),
             source=body.source.strip(),
             external_request_id=(
@@ -255,8 +272,12 @@ async def prc_intake_submit(
                 "changes": body.changes,
                 "supplierLinkChanges": body.supplierLinkChanges,
                 "reasons": body.reasons,
+                "baselineFingerprint": body.baselineFingerprint,
+                "editContextReadAt": body.editContextReadAt,
             },
             idempotency_key=idempotency_key,
+            access_token=access_token or None,
+            correlation_id=get_request_id(),
         )
     except Exception as exc:
         return _err(exc, op)

@@ -31,8 +31,8 @@ def repo():
     yield r
 
 
-def _req(rid: str, payload: dict) -> dict:
-    return {
+def _req(rid: str, payload: dict, **extra) -> dict:
+    out = {
         "id": rid,
         "request_type": "create",
         "product_type": "raw_material",
@@ -50,7 +50,10 @@ def _req(rid: str, payload: dict) -> dict:
         "row_version": 1,
         "created_at": "2026-11-06T00:00:00+00:00",
         "updated_at": "2026-11-06T00:00:00+00:00",
+        "official_baseline": None,
     }
+    out.update(extra)
+    return out
 
 
 _DRAFT_PAYLOAD = {"description": "PG TEST", "unit": "UN"}
@@ -219,3 +222,73 @@ class TestPostgresIntegration:
             actor_or_source="u1", operation="intake",
             idempotency_key=key,
         )["request_fingerprint"] == "fp1"
+
+    def test_d15_official_baseline_persisted(self, repo):
+        """V014 — coluna official_baseline JSONB round-trip."""
+        rid = str(uuid.uuid4())
+        baseline = {
+            "baselineVersion": 1,
+            "sourceContractVersion": "prc-sa5-baseline.v1",
+            "officialProductCode": "001234",
+            "fingerprint": "fp-d15-pg",
+            "linksComplete": True,
+            "links": [
+                {"supplierCode": "000001", "store": "01",
+                 "partNumber": "PN-1", "catalogNumber": ""},
+            ],
+        }
+        draft_data = {
+            "description": "PG BASELINE", "group": "1001",
+            "productKind": "MP", "defaultWarehouse": "01", "unit": "UN",
+            "thirdPartyProduct": "1", "accountingAccount": "11401002",
+            "customerReference": "", "suppliers": [],
+            "supplierLinkChanges": [
+                {"operation": "add",
+                 "key": {"supplierCode": "000089", "store": "01"},
+                 "fields": {"partNumber": "X"}},
+            ],
+        }
+        created = repo.create_request(
+            request=_req(
+                rid,
+                {"officialProductCode": "001234",
+                 "supplierLinkChanges": draft_data["supplierLinkChanges"]},
+                request_type="update",
+                official_product_code="001234",
+                official_baseline=baseline,
+            ),
+            draft={
+                "request_id": rid, "schema_version": 1,
+                "technical_data": draft_data, "changed_paths": [],
+                "row_version": 1, "updated_by_subject": "user-pg-1",
+                "updated_at": "2026-11-09T00:00:00+00:00",
+            },
+            event={
+                "event_type": "submitted", "actor_subject": "user-pg-1",
+                "reason": None,
+                "metadata": {"baselineFingerprint": "fp-d15-pg"},
+                "previous_status": None, "next_status": "submitted",
+            },
+        )
+        assert created["official_baseline"]["fingerprint"] == "fp-d15-pg"
+        assert created["official_baseline"]["linksComplete"] is True
+        reloaded = repo.get_request(rid)
+        assert reloaded["official_baseline"]["officialProductCode"] == "001234"
+        # draft PATCH não apaga o baseline
+        repo.apply_transition(
+            request_id=rid, expected_version=1,
+            allowed_from=frozenset({"submitted"}),
+            actor_label="A", actor_subject="a",
+            event_type="started", next_status="in_progress",
+            set_fields={"assigned_to_subject": "a"},
+            reason=None, event_meta={},
+        )
+        repo.update_draft(
+            request_id=rid, expected_version=2,
+            actor_subject="a",
+            changes=[{"path": "description",
+                      "proposedValue": "EDIT", "reason": "r"}],
+            event_meta={},
+        )
+        after = repo.get_request(rid)
+        assert after["official_baseline"]["fingerprint"] == "fp-d15-pg"

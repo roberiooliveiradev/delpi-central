@@ -50,6 +50,29 @@ export type PrcRequestDetail = {
   changedPaths: Array<{ path: string; reason: string }>;
   draftVersion?: number;
   caseVersion: number;
+  /** D15 — baseline oficial capturado server-side no intake UPDATE. */
+  officialBaseline?: {
+    baselineVersion?: number;
+    sourceContractVersion?: string;
+    officialProductCode?: string;
+    officialSource?: string;
+    readAt?: string;
+    capturedAt?: string;
+    capturedBy?: string;
+    linksComplete?: boolean;
+    fingerprint?: string;
+    fields?: Record<string, unknown>;
+    links?: Array<{
+      supplierCode: string;
+      store: string;
+      supplierName?: string;
+      supplierShortName?: string;
+      partNumber?: string;
+      catalogNumber?: string;
+    }>;
+    removeCompletionPolicy?: string;
+  } | null;
+  removeCompletionPolicy?: string;
   allowedActions: string[];
   verificationSummary?: {
     result: string;
@@ -237,9 +260,13 @@ export type PrcEditContext = {
   status: string;
   officialCode: string;
   readAt?: string;
+  baselineVersion?: number;
+  sourceContractVersion?: string;
+  fingerprint?: string;
   fields: Record<string, PrcEditContextField>;
   links: PrcEditContextLink[];
   linksComplete?: boolean;
+  removeCompletionPolicy?: string;
 };
 
 export type PrcSupplierLinkChange = {
@@ -341,6 +368,9 @@ export type PrcIntakeBody = {
       fieldReasons?: { partNumber?: string; catalogNumber?: string };
     }>;
   } | null;
+  /** D15 — fingerprint do edit-context para concorrência oficial. */
+  baselineFingerprint?: string | null;
+  editContextReadAt?: string | null;
 };
 
 export type PrcIntakeResult = {

@@ -243,4 +243,31 @@ describe("buildUpdateIntakeBody", () => {
     expect(body.changes?.[0].reason).toBe("porque mudou");
     expect(body.changes?.[1].reason).toBe("");
   });
+
+  it("D15 — envia fingerprint e readAt do edit-context", () => {
+    const body = buildUpdateIntakeBody({
+      refData: REF_DATA,
+      officialCode: "90264270",
+      scalarDiff: [{ path: "description", before: "A", after: "B" }],
+      linkOps: [],
+      reasons: {},
+      suppliers: [],
+      baselineFingerprint: "abc123",
+      editContextReadAt: "2026-11-09T12:00:00Z",
+    });
+    expect(body.baselineFingerprint).toBe("abc123");
+    expect(body.editContextReadAt).toBe("2026-11-09T12:00:00Z");
+  });
+
+  it("D15 — omite fingerprint quando ausente", () => {
+    const body = buildUpdateIntakeBody({
+      refData: REF_DATA,
+      officialCode: "90264270",
+      scalarDiff: [{ path: "description", before: "A", after: "B" }],
+      linkOps: [],
+      reasons: {},
+      suppliers: [],
+    });
+    expect(body.baselineFingerprint).toBeUndefined();
+  });
 });

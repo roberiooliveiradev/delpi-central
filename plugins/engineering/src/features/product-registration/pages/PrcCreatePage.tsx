@@ -386,6 +386,8 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
           linkOps,
           reasons,
           suppliers,
+          baselineFingerprint: editCtx?.fingerprint || null,
+          editContextReadAt: editCtx?.readAt || null,
         });
 
   const submit = async () => {

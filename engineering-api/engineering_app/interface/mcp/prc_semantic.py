@@ -185,7 +185,12 @@ async def execute_action(
                      "note": "ACT grava a solicitação com o ator real."},
                     "Payload aceito para submissão.",
                 )
-            data = svc.submit_request(
+            access_token = str(
+                getattr(context, "access_token", None)
+                or getattr(context, "token", None)
+                or ""
+            )
+            data = await svc.submit_request(
                 actor=actor,
                 source="eva",
                 external_request_id=body.get("externalRequestId"),
@@ -198,8 +203,15 @@ async def execute_action(
                     "officialProductCode": body.get("officialProductCode"),
                     "baseRevision": body.get("baseRevision"),
                     "changes": body.get("changes"),
+                    "supplierLinkChanges": body.get("supplierLinkChanges"),
+                    "baselineFingerprint": body.get("baselineFingerprint"),
+                    "editContextReadAt": body.get("editContextReadAt"),
                 },
                 idempotency_key=idempotency_key,
+                access_token=access_token or None,
+                correlation_id=str(
+                    getattr(context, "correlation_id", None) or ""
+                ) or None,
             )
             return _ok({"entity": entry.entity, "action": action, **data},
                        "Solicitação registrada.")

@@ -18,6 +18,7 @@ from engineering_app.application.ports.product_registration import (
     OfficialProductReaderPort,
     ProductRegistrationRepository,
 )
+from engineering_app.domain.product_registration import baseline as sa5_baseline
 from engineering_app.domain.product_registration import catalog
 from engineering_app.domain.product_registration.errors import (
     PrcConcurrencyError,
@@ -122,6 +123,12 @@ def _request_detail(request: dict, actor: PrcActor) -> dict[str, Any]:
         "changedPaths": draft.get("changed_paths", []),
         "draftVersion": draft.get("row_version"),
         "caseVersion": request["row_version"],
+        "officialBaseline": sa5_baseline.public_baseline_view(
+            request.get("official_baseline")
+        ),
+        "removeCompletionPolicy": (
+            sa5_baseline.SA5_REMOVE_COMPLETION_POLICY
+        ),
         "allowedActions": actor.allowed_actions(request["status"]),
         "verificationSummary": (
             {
@@ -205,7 +212,7 @@ class ProductRegistrationService:
 
     # --- INTAKE ------------------------------------------------------------------
 
-    def submit_request(
+    async def submit_request(
         self,
         *,
         actor: PrcActor,
@@ -217,6 +224,8 @@ class ProductRegistrationService:
         schema_version: int,
         payload: dict[str, Any],
         idempotency_key: str | None,
+        access_token: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         _require_actor_create(actor)
         if request_type not in REQUEST_TYPES:
@@ -260,6 +269,7 @@ class ProductRegistrationService:
         changed_paths: list[dict[str, Any]]
         official_code: str | None
         base_revision: int | None
+        official_baseline: dict[str, Any] | None = None
 
         if request_type == "create":
             draft_data = catalog.validate_create_payload(
@@ -334,6 +344,11 @@ class ProductRegistrationService:
                 changes = catalog.validate_update_changes(raw_changes)
             else:
                 changes = []
+            if not changes and not link_ops:
+                raise PrcValidationError(
+                    "UPDATE exige ao menos uma alteração efetiva.",
+                    fields={"changes": "required"},
+                )
             record = self._repo.get_record_by_official_code(
                 official_source=catalog.OFFICIAL_SOURCE,
                 official_code=official_code,
@@ -353,6 +368,23 @@ class ProductRegistrationService:
                 snapshot = (base or {}).get("technical_snapshot") or {}
             else:
                 snapshot = {"officialProductCode": official_code}
+            # D15 — baseline oficial server-side (não confiar no browser).
+            official_baseline = await self._capture_update_baseline(
+                actor=actor,
+                official_code=official_code,
+                access_token=access_token,
+                correlation_id=correlation_id or _uuid(),
+                client_fingerprint=payload.get("baselineFingerprint"),
+                require_links_complete=bool(link_ops),
+            )
+            baseline_err = sa5_baseline.validate_link_ops_against_baseline(
+                link_ops, official_baseline
+            )
+            if baseline_err:
+                raise PrcValidationError(
+                    baseline_err,
+                    fields={"supplierLinkChanges": "baseline_precondition"},
+                )
             draft_data = dict(snapshot)
             draft_data["officialProductCode"] = official_code
             for change in changes:
@@ -366,12 +398,8 @@ class ProductRegistrationService:
                 "baseRevision": base_revision,
                 "changes": changes,
                 "supplierLinkChanges": link_ops,
+                "baselineFingerprint": official_baseline.get("fingerprint"),
             }
-            if not changes and not link_ops:
-                raise PrcValidationError(
-                    "UPDATE exige ao menos uma alteração efetiva.",
-                    fields={"changes": "required"},
-                )
 
         request_id = _uuid()
         now = _now()
@@ -396,6 +424,7 @@ class ProductRegistrationService:
             "completed_at": None,
             "rejected_at": None,
             "completed_record_id": None,
+            "official_baseline": official_baseline,
         }
         draft = {
             "request_id": request_id,
@@ -417,6 +446,21 @@ class ProductRegistrationService:
                 "request_type": request_type,
                 "external_request_id": external_request_id,
                 "channel": actor.channel,
+                **(
+                    {
+                        "baselineFingerprint": (
+                            official_baseline or {}
+                        ).get("fingerprint"),
+                        "baselineVersion": (
+                            official_baseline or {}
+                        ).get("baselineVersion"),
+                        "linksComplete": (
+                            official_baseline or {}
+                        ).get("linksComplete"),
+                    }
+                    if official_baseline
+                    else {}
+                ),
             },
             "previous_status": None,
             "next_status": "submitted",
@@ -737,6 +781,64 @@ class ProductRegistrationService:
         )
         return response
 
+    async def _capture_update_baseline(
+        self,
+        *,
+        actor: PrcActor,
+        official_code: str,
+        access_token: str | None,
+        correlation_id: str,
+        client_fingerprint: Any,
+        require_links_complete: bool,
+    ) -> dict[str, Any]:
+        """D15 — lê e congela o estado oficial no momento do intake."""
+        if self._reader is None:
+            raise PrcOfficialError(
+                "unavailable",
+                "Leitor oficial não configurado para capturar baseline.",
+            )
+        if not (access_token or "").strip():
+            raise PrcOfficialError(
+                "unavailable",
+                "Token de acesso ausente para leitura oficial do baseline.",
+            )
+        observed = await self._reader.read_product(
+            access_token=access_token,
+            request_id=correlation_id,
+            official_code=official_code,
+        )
+        status = observed.get("status")
+        if status != "available":
+            kind = {
+                "not_found": "not_found",
+                "forbidden": "forbidden",
+                "timeout": "timeout",
+                "contract_error": "contract_error",
+            }.get(status, "unavailable")
+            raise PrcOfficialError(
+                kind,
+                "Baseline oficial indisponível — formalização bloqueada "
+                f"({kind}).",
+            )
+        links_complete = bool(observed.get("suppliers_complete", True))
+        if require_links_complete and not links_complete:
+            raise PrcOfficialError(
+                "unverifiable",
+                "Consulta SA5 incompleta — baseline não pode comprovar "
+                "ausência/presença de vínculos.",
+            )
+        captured = sa5_baseline.build_official_baseline(
+            observed,
+            official_code=official_code,
+            captured_by=actor.user_id,
+            correlation_id=correlation_id,
+            captured_at=_now(),
+        )
+        client_fp = str(client_fingerprint or "").strip()
+        if client_fp and client_fp != captured.get("fingerprint"):
+            raise PrcConcurrencyError("official_context_stale")
+        return captured
+
     # --- VERIFY AND COMPLETE --------------------------------------------------------
 
     async def verify_and_complete(
@@ -768,6 +870,16 @@ class ProductRegistrationService:
             )
         draft = request.get("draft") or {}
         data = draft.get("technical_data") or {}
+        link_ops = data.get("supplierLinkChanges") or []
+        # D15 — conclusão REMOVE permanece PENDING_OWNER mesmo com
+        # ausência comprovável no read-back.
+        if (
+            sa5_baseline.remove_ops_present(link_ops)
+            and not sa5_baseline.SA5_REMOVE_COMPLETION_ALLOWED
+        ):
+            raise PrcStateConflictError(
+                "remove_completion_pending_owner"
+            )
         expected_paths = self._expected_verify_paths(request, data)
         if not expected_paths and (
             (draft.get("changed_paths") or [])
@@ -1086,37 +1198,43 @@ class ProductRegistrationService:
                 "reason": observed.get("reason"),
                 "officialCode": code,
             }
-        product = observed.get("product") or {}
-        links = [
-            {
-                "supplierCode": str(i.get("supplier_code") or ""),
-                "store": str(i.get("supplier_store") or ""),
-                "supplierName": str(i.get("supplier_name") or ""),
-                "supplierShortName": str(
-                    i.get("supplier_short_name") or ""
-                ),
-                "partNumber": str(i.get("supplier_part_number") or ""),
-                "catalogNumber": str(i.get("catalog_code") or ""),
-            }
-            for i in (observed.get("suppliers") or [])
-            if isinstance(i, dict)
-        ]
-        fields = {
-            spec.path: {
-                "value": product.get(spec.official_field),
-                "officialField": spec.official_field,
-            }
-            for spec in catalog.FIELD_SPECS
-            if spec.official_field and spec.kind != "suppliers"
-        }
+        captured = sa5_baseline.build_official_baseline(
+            observed,
+            official_code=code,
+            captured_by=actor.user_id,
+            correlation_id=correlation_id,
+            captured_at=_now(),
+        )
         return {
             "status": "available",
             "officialCode": code,
-            "readAt": _now(),
+            "readAt": captured["readAt"],
             "officialSource": catalog.OFFICIAL_SOURCE,
-            "fields": fields,
-            "links": links,
-            "linksComplete": bool(observed.get("suppliers_complete")),
+            "baselineVersion": captured["baselineVersion"],
+            "sourceContractVersion": captured["sourceContractVersion"],
+            "fingerprint": captured["fingerprint"],
+            "fields": {
+                path: {
+                    "value": meta.get("value"),
+                    "officialField": meta.get("officialField"),
+                }
+                for path, meta in (captured.get("fields") or {}).items()
+            },
+            "links": [
+                {
+                    "supplierCode": item["supplierCode"],
+                    "store": item["store"],
+                    "supplierName": item.get("supplierName") or "",
+                    "supplierShortName": item.get("supplierShortName") or "",
+                    "partNumber": item.get("partNumber") or "",
+                    "catalogNumber": item.get("catalogNumber") or "",
+                }
+                for item in (captured.get("links") or [])
+            ],
+            "linksComplete": bool(captured.get("linksComplete")),
+            "removeCompletionPolicy": (
+                sa5_baseline.SA5_REMOVE_COMPLETION_POLICY
+            ),
         }
 
     def reference_data(self, *, actor: PrcActor) -> dict[str, Any]:
