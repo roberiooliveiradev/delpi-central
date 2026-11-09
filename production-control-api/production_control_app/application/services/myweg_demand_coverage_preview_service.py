@@ -55,6 +55,7 @@ from production_control_app.domain.services.myweg_demand_coverage_adapter import
     classify_consolidation,
     conservation_check,
     projection_to_coverage_input,
+    normalize_myweg_open_ops,
     summarize_units,
 )
 
@@ -520,8 +521,8 @@ class MyWegDemandCoveragePreviewService:
     ) -> dict[str, Any]:
         """Linhas completas para ``GET /demand`` (origin=myweg|both).
 
-        Reusa o mesmo pool/adapter da prévia E2. Sem OP confirmada
-        (``OP_UNIT_UNVERIFIED``). Consolidação não é total oficial.
+        Reusa o mesmo pool/adapter da prévia E2, com OPs normalizadas para MI.
+        Consolidação não é total oficial (ADR ainda pendente).
         """
         code = _text(branch)
         if code == FORBIDDEN_BRANCH:
@@ -598,10 +599,23 @@ class MyWegDemandCoveragePreviewService:
             myweg_inputs.append(item)
         myweg_inputs = apply_pool_stock_to_inputs(myweg_inputs, stock["pool"], branch=code)
 
+        ops_payload = self._gateway.fetch_open_production_orders()
+        ops_all = require_items_list(
+            ops_payload, "items", source_name="open_production_orders"
+        )
+        candidate_products = myweg_products
+        if origin_norm == "both":
+            candidate_products = myweg_products | {
+                _text(item.get("produto")) for item in consolidation["protheus_for_coverage"]
+            }
+        op_pool = normalize_myweg_open_ops(
+            ops_all, branch=code, product_codes=candidate_products
+        )
+
         if origin_norm == "myweg":
             lines = self._coverage.build(
                 open_sales_orders=myweg_inputs,
-                open_production_orders=[],
+                open_production_orders=op_pool["items"],
                 branch=code,
             )
         else:
@@ -612,11 +626,14 @@ class MyWegDemandCoveragePreviewService:
             )
             lines = self._coverage.build(
                 open_sales_orders=consolidated_inputs,
-                open_production_orders=[],
+                open_production_orders=op_pool["items"],
                 branch=code,
             )
 
         for line in lines:
+            line.op_coverage_incomplete = (
+                line.product_code in op_pool["unverified_products"]
+            )
             if line.source == SOURCE_MYWEG or line.sales_order == DISPLAY_ORDER_MYWEG:
                 line.source = SOURCE_MYWEG
                 line.planning = True
@@ -635,8 +652,13 @@ class MyWegDemandCoveragePreviewService:
                 "branch": code,
                 "adr_status": "ARCHITECTURE_DECISION_REQUIRED",
                 "official_aggregate": False,
-                "op_unit_status": OP_UNIT_UNVERIFIED,
-                "coverage_mode": "stock_only",
+                "op_unit_status": op_pool["status"],
+                "op_coverage_complete": op_pool["complete"],
+                "op_verified_count": op_pool["verified_count"],
+                "op_unverified_count": op_pool["unverified_count"],
+                "coverage_mode": (
+                    "stock_and_op" if op_pool["complete"] else "stock_and_verified_op_partial"
+                ),
                 "productive_activation_blocked": True,
                 "stock_data_complete": stock_data_complete,
                 "stock_incomplete": bool(stock["incomplete"]),
