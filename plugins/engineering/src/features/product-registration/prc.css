@@ -845,6 +845,12 @@
   opacity: 0;
 }
 
+.engineering-prc__field-flag--resolved {
+  /* PRC-REF-018 — acompanhamento resolvido (não aprova TOTVS). */
+  color: #1a7f37;
+  opacity: 1;
+}
+
 .engineering-prc__field-flag:focus-visible {
   opacity: 1;
   outline: 2px solid var(--en-focus, #2563eb);
@@ -923,4 +929,58 @@
   .engineering-prc__field-flag--add {
     opacity: 1;
   }
+}
+
+
+/* PRC-REF-018 — legenda e resumo compacto */
+.engineering-prc__flags--compact .engineering-prc__flags-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.engineering-prc__flag-legend {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 0 4px;
+  font-size: 0.85rem;
+  list-style: none;
+}
+
+.engineering-prc__flag-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.engineering-prc__flag-legend-swatch {
+  display: inline-flex;
+  color: inherit;
+}
+
+.engineering-prc__flag-legend-swatch--add { color: var(--en-primary, #2563eb); }
+.engineering-prc__flag-legend-swatch--open { color: #b42318; }
+.engineering-prc__flag-legend-swatch--resolved { color: #1a7f37; }
+
+.engineering-prc__flag-action-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.engineering-prc__flag-history {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.engineering-prc__flag-history button {
+  text-align: left;
+  width: 100%;
 }

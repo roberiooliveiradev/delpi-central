@@ -97,38 +97,79 @@ export const PRC_SUPPLIER_LABELS: Record<string, string> = {
 /** Helps funcionais por path da ficha — significado real do campo
  * TOTVS em linguagem de Engenharia (nunca nome de tabela como
  * explicação). Quando presente, prevalece sobre `spec.note`. */
+/** Catálogo canônico PRC-REF-018 — labels+helps funcionais.
+ * Consumido por CREATE, UPDATE, Ficha técnica e Verificação TOTVS.
+ * Nunca exibir B1_/A5_/legado como help ao usuário. */
 export const PRC_FIELD_HELP: Record<string, string> = {
+  officialProductCode:
+    "Código atribuído ao produto no TOTVS. Preserve zeros à esquerda.",
   description:
-    "Informe uma descrição clara e padronizada do material, permitindo sua identificação no cadastro oficial.",
+    "Descrição técnica utilizada para identificar o produto.",
   group:
-    "Selecione o grupo de produtos correspondente à classificação do material no TOTVS.",
+    "Classificação do produto nos grupos cadastrados no TOTVS.",
   productKind:
-    "Selecione o tipo de produto conforme sua classificação oficial.",
+    "Classificação do tipo de produto no ERP.",
   unit:
-    "Escolha a unidade de medida utilizada para controlar o material, como unidade, metro ou quilograma, conforme as opções disponíveis no TOTVS.",
+    "Unidade de medida utilizada no cadastro e movimentação.",
   defaultWarehouse:
-    "Selecione o armazém padrão associado ao produto para as operações de estoque.",
+    "Armazém normalmente associado ao produto.",
   accountingAccount:
-    "Selecione a conta contábil indicada para a classificação do produto. Pesquise por código ou descrição para localizar a conta desejada.",
+    "Conta usada na classificação contábil do produto.",
   thirdPartyProduct:
-    "Indique se o material pertence a terceiros, conforme a classificação utilizada no TOTVS.",
+    "Indica a classificação do produto quanto à propriedade de terceiros, conforme cadastro oficial.",
   customerReference:
-    "Informe a referência utilizada pelo cliente para identificar este material, quando aplicável.",
+    "Código ou referência fornecida pelo cliente para identificar o produto.",
+  suppliers:
+    "Vínculos do produto com fornecedores oficiais (código, loja e atributos).",
 };
+
+/** Helps das ações de bandeira — no próprio label (sem ícone ?). */
+export const PRC_FLAG_ACTION_HELP = {
+  add: "Registra um acompanhamento para este campo, sem alterar seu valor.",
+  edit: "Permite modificar o título ou a descrição do acompanhamento.",
+  resolve:
+    "Encerra este acompanhamento, mantendo seu histórico. Não aprova nem altera o dado do produto.",
+  reopen: "Retorna o acompanhamento ao estado aberto para nova análise.",
+  remove:
+    "Retira a bandeira da visualização e preserva os eventos de auditoria.",
+  save: "Grava as alterações feitas neste acompanhamento.",
+  close: "Fecha o painel sem gravar alterações pendentes.",
+  legend:
+    "Azul adiciona acompanhamento; vermelha indica aberto; verde indica resolvido. A cor não aprova o cadastro no TOTVS.",
+} as const;
+
+const LEGACY_NOTE_RE = /\b(B1_|A5_|legado|legado\s*['"]|cta_contabil)\b/i;
+
+/** Help funcional do path — nunca devolve nota técnica/legado. */
+export function prcFieldHelp(
+  path: string,
+  fallbackNote?: string | null,
+): string | undefined {
+  const head = path.split(".")[0];
+  const fromCatalog = PRC_FIELD_HELP[head] || PRC_FIELD_HELP[path];
+  if (fromCatalog) return fromCatalog;
+  const note = (fallbackNote || "").trim();
+  if (!note || LEGACY_NOTE_RE.test(note)) return undefined;
+  return note;
+}
 
 /** Textos da busca assistida SA2 (código / razão social / fantasia). */
 export const PRC_SUPPLIER_HELP = {
   placeholder: "Buscar por código, razão social ou nome fantasia",
   search:
     "Use a lupa da linha para abrir a busca no cadastro TOTVS; selecione a razão social e a loja oficiais.",
+  codeHint:
+    "Código oficial do fornecedor no cadastro TOTVS.",
   storeHint:
-    "Identifica a unidade cadastral do fornecedor. Será preenchida automaticamente após a seleção.",
+    "Unidade cadastral (loja) do fornecedor no TOTVS.",
   legalNameHint:
-    "Nome oficial do fornecedor, preenchido automaticamente a partir do TOTVS.",
+    "Razão social oficial do fornecedor no TOTVS.",
+  tradeNameHint:
+    "Nome fantasia do fornecedor, quando disponível no cadastro oficial.",
   partNumberHint:
-    "Informe o código pelo qual o fornecedor identifica este material. Pode ficar vazio quando não houver Part Number.",
+    "Código de peça informado pelo fornecedor, quando disponível.",
   catalogHint:
-    "Informe a referência de catálogo do fornecedor para este material, quando disponível.",
+    "Referência de catálogo informada pelo fornecedor, quando disponível.",
   reasonOptional:
     "Justificativa opcional (até 250 caracteres) — aparece só quando o campo foi preenchido ou alterado.",
   selectRequired:

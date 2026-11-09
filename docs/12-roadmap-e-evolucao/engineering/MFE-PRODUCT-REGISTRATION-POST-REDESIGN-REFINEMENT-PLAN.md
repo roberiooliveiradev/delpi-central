@@ -639,4 +639,4 @@ O PO aprovou nova apresentação **sem duplicar código/loja/razão social**: co
 
 **Helps:** retirar da Ficha técnica os textos B1_..., A5_... e legado; em todos os fluxos CREATE, UPDATE, Ficha técnica e Verificação TOTVS, usar um catálogo canônico de label + ajuda funcional, aproveitando primeiro o registry existente (Abstraction Gate). O help abre no **próprio label** por hover/focus e por toque/clique em mobile, sem ícone '?' ou circle-help. A ajuda dos botões também pertence ao próprio label e segue o kit oficial; a Flag é acionador separado. A EVA não usa texto UI como authority. Responsividade, a11y, zoom200, Playwright 3 viewports, screenshots, auto-review, testes no SHA, deploy apenas DEV e docs obrigatórios. Nenhum novo SoT/MCP tool/endpoint sem contrato.
 
-**Status:** PO_APPROVED_TARGET / IMPLEMENTATION_PENDING / PRODUCTION_NOT_AUTHORIZED.
+**Status:** EXECUTED_DEV / PRODUCTION_NOT_AUTHORIZED (ENG-PRC-REF-018). Flag verde contextual, legenda, helps no label e catálogo central entregues no MFE; Playwright 3 viewports PASS.

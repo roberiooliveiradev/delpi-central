@@ -84,6 +84,7 @@ export function PrcVerificationPanel({
       key: "path",
       header: "Campo",
       render: (r) => prcFieldLabel(r.path),
+      headerHint: "Campo solicitado comparado à leitura oficial TOTVS.",
     },
     ...(isUpdate
       ? [

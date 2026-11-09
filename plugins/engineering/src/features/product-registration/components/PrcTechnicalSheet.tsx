@@ -9,6 +9,7 @@ import {
   EngineeringActionButton,
   EngineeringCheckboxControl,
   EngineeringDetailCard,
+  EngineeringFieldLabel,
   EngineeringFormActions,
   EngineeringSelectField,
   EngineeringStateBanner,
@@ -20,7 +21,12 @@ import type {
   PrcFieldSpec,
   PrcRequestDetail,
 } from "../api/productRegistrationApi";
-import { PRC_FIELD_LABELS, PRC_SUPPLIER_LABELS } from "../prcCopy";
+import {
+  PRC_FIELD_LABELS,
+  PRC_SUPPLIER_HELP,
+  PRC_SUPPLIER_LABELS,
+  prcFieldHelp,
+} from "../prcCopy";
 import {
   emptySupplierRow,
   supplierRowsToPayload,
@@ -35,6 +41,8 @@ import {
 import {
   findOpenFieldFlag,
   findOpenSupplierFlag,
+  findResolvedFieldFlags,
+  findResolvedSupplierFlags,
   PrcFieldFlagTrigger,
 } from "./PrcFieldFlagTrigger";
 
@@ -95,6 +103,10 @@ function PrcTechnicalSheetRead({
                   p === "officialProductCode"
                     ? undefined
                     : findOpenFieldFlag(flags, p);
+                const resolvedFlags =
+                  p === "officialProductCode"
+                    ? []
+                    : findResolvedFieldFlags(flags, p);
                 const label = fieldLabel(p);
                 return (
                   <div
@@ -108,12 +120,16 @@ function PrcTechnicalSheetRead({
                     }
                   >
                     <div className="engineering-prc__flagged-field-label">
-                      <span>{label}</span>
+                      <EngineeringFieldLabel
+                        label={label}
+                        hint={prcFieldHelp(p, specByPath.get(p)?.note)}
+                      />
                       {p !== "officialProductCode" ? (
                         <PrcFieldFlagTrigger
                           openFlag={openFlag}
+                          resolvedFlags={resolvedFlags}
                           label={label}
-                          onOpen={() =>
+                          onOpen={(flag) =>
                             openTarget(
                               {
                                 subject: "FIELD",
@@ -121,17 +137,12 @@ function PrcTechnicalSheetRead({
                                 fieldLabel: label,
                                 currentValue: scalarText(draft[p]),
                               },
-                              openFlag || null,
+                              flag,
                             )
                           }
                         />
                       ) : null}
                     </div>
-                    {specByPath.get(p)?.note ? (
-                      <p className="engineering-prc__muted">
-                        {specByPath.get(p)?.note}
-                      </p>
-                    ) : null}
                     <div className="engineering-prc__flagged-field-value">
                       {scalarText(draft[p])}
                     </div>
@@ -189,9 +200,15 @@ function PrcTechnicalSheetRead({
                   key: "partNumber",
                   header: `${PRC_SUPPLIER_LABELS.partNumber} (opcional)`,
                   headerHint:
-                    "A5_CODPRF — pode ser vazio quando o TOTVS também está vazio.",
+                    PRC_SUPPLIER_HELP.partNumberHint,
                   render: (r) => {
                     const openFlag = findOpenSupplierFlag(
+                      flags,
+                      r.supplierCode,
+                      r.store,
+                      "partNumber",
+                    );
+                    const resolvedFlags = findResolvedSupplierFlags(
                       flags,
                       r.supplierCode,
                       r.store,
@@ -205,8 +222,9 @@ function PrcTechnicalSheetRead({
                         {r.partNumber || "—"}
                         <PrcFieldFlagTrigger
                           openFlag={openFlag}
+                          resolvedFlags={resolvedFlags}
                           label={`${PRC_SUPPLIER_LABELS.partNumber} ${r.supplierCode}`}
-                          onOpen={() =>
+                          onOpen={(flag) =>
                             openTarget(
                               {
                                 subject: "SUPPLIER_LINK",
@@ -217,7 +235,7 @@ function PrcTechnicalSheetRead({
                                 },
                                 currentValue: r.partNumber || "",
                               },
-                              openFlag || null,
+                              flag,
                             )
                           }
                         />
@@ -235,6 +253,12 @@ function PrcTechnicalSheetRead({
                       r.store,
                       "catalogNumber",
                     );
+                    const resolvedFlags = findResolvedSupplierFlags(
+                      flags,
+                      r.supplierCode,
+                      r.store,
+                      "catalogNumber",
+                    );
                     return (
                       <span
                         id={`prc-supplier-${r.supplierCode}-${r.store}-catalogNumber`}
@@ -243,8 +267,9 @@ function PrcTechnicalSheetRead({
                         {r.catalogNumber || "—"}
                         <PrcFieldFlagTrigger
                           openFlag={openFlag}
+                          resolvedFlags={resolvedFlags}
                           label={`${PRC_SUPPLIER_LABELS.catalogNumber} ${r.supplierCode}`}
-                          onOpen={() =>
+                          onOpen={(flag) =>
                             openTarget(
                               {
                                 subject: "SUPPLIER_LINK",
@@ -255,7 +280,7 @@ function PrcTechnicalSheetRead({
                                 },
                                 currentValue: r.catalogNumber || "",
                               },
-                              openFlag || null,
+                              flag,
                             )
                           }
                         />
@@ -456,7 +481,7 @@ export function PrcTechnicalSheet({
                         disabled={!allowed || busy}
                         onChange={(v) => togglePath(p, v)}
                         label={fieldLabel(p)}
-                        hint={spec?.note || undefined}
+                        hint={prcFieldHelp(p, spec?.note)}
                       />
                     ) : (
                       <span className="engineering-prc__edit-row-label">
@@ -487,7 +512,7 @@ export function PrcTechnicalSheet({
                           <EngineeringTextField
                             id={`prc-edit-${p}`}
                             label={`Novo valor — ${fieldLabel(p)}`}
-                            hint={spec?.note || undefined}
+                            hint={prcFieldHelp(p, spec?.note)}
                             value={editValues[p] ?? ""}
                             onChange={(v) =>
                               setEditValues((s) => ({ ...s, [p]: v }))
@@ -578,7 +603,7 @@ export function PrcTechnicalSheet({
                     <EngineeringTextField
                       id={`prc-sup-pn-${index}`}
                       label={`${PRC_SUPPLIER_LABELS.partNumber} (opcional)`}
-                      hint="Vazio é legítimo quando a fonte oficial também está vazia."
+                      hint={PRC_SUPPLIER_HELP.partNumberHint}
                       value={row.partNumber}
                       onChange={(v) =>
                         setSuppliersDraft((rows) =>

@@ -438,7 +438,7 @@ H. Rebuild/DEV-only migrations com contratos, health, bundle fingerprint, gatewa
 
 ## D16-REF-03 / PRC-REF-018 — Bandeiras resolvidas contextuais e helps em labels
 
-**Decisão PO 2026-11-09. Status PO_APPROVED_PLAN / IMPLEMENTATION_PENDING / DEV_ONLY.** Esta seção atualiza o visual do D16-REF-01 e D16-REF-02 sem recriar o CRUD, a API, as migrações V015–V017 ou a integração EVA. A orientação antiga de esconder a bandeira RESOLVED do próprio campo fica substituída: ela permanece no campo, verde. Não criar novos documentos de planejamento.
+**Decisão PO 2026-11-09. Status IMPLEMENTED_DEV / DEV_ONLY (ENG-PRC-REF-018).** Esta seção atualiza o visual do D16-REF-01 e D16-REF-02 sem recriar o CRUD, a API, as migrações V015–V017 ou a integração EVA. A orientação antiga de esconder a bandeira RESOLVED do próprio campo fica substituída: ela permanece no campo, verde. Não criar novos documentos de planejamento.
 
 ### Estados visuais e regra de prioridade
 
@@ -502,6 +502,19 @@ Inventariar catálogo/ajudas já existentes em CREATE/UPDATE, plugin-ui e facade
 | Catálogo | Referência de catálogo informada pelo fornecedor, quando disponível |
 
 Não presumir definição técnica oficial a partir destes textos exemplificativos. Verificar também labels de fornecedor Código, Loja, Razão social e Nome fantasia quando exibidos.
+
+### Execução ENG-PRC-REF-018
+
+| Item | Estado |
+|---|---|
+| Flag azul / vermelha / verde + prioridade OPEN | **PROVEN** |
+| Resumo compacto sem chips de resolvidas | **PROVEN** |
+| Legenda no modal e disclosure na ficha | **PROVEN** |
+| Ícones + helps nos labels das ações (HelpTooltip wrap) | **PROVEN** |
+| Catálogo `PRC_FIELD_HELP` / `prcFieldHelp` (CREATE/UPDATE/Ficha) | **PROVEN** |
+| Sem '?' / circle-help como acionador | **PROVEN** |
+| Playwright desktop/tablet/mobile | **PROVEN** |
+| Backend/MCP/EVA contratos | **INALTERADOS** (somente UX) |
 
 ### Implementação futura: sequência e aceite bloqueante
 

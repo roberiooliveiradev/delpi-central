@@ -1,4 +1,4 @@
-/** D16-REF-01 — contador compacto + legado GENERAL + estado compartilhado. */
+/** D16 / PRC-REF-018 — provider + resumo compacto (sem chips de resolvidas). */
 
 import {
   createContext,
@@ -20,7 +20,7 @@ import {
   fetchPrcFlags,
   type PrcAttendanceFlag,
 } from "../api/productRegistrationApi";
-import { PRC_FIELD_LABELS } from "../prcCopy";
+import { PRC_FIELD_LABELS, PRC_FLAG_ACTION_HELP } from "../prcCopy";
 import {
   PrcFlagModal,
   type FlagTargetContext,
@@ -34,7 +34,10 @@ type FlagsCtx = {
   loading: boolean;
   error: string;
   reload: () => Promise<void>;
-  openTarget: (target: FlagTargetContext, flag?: PrcAttendanceFlag | null) => void;
+  openTarget: (
+    target: FlagTargetContext,
+    flag?: PrcAttendanceFlag | null,
+  ) => void;
 };
 
 const Ctx = createContext<FlagsCtx | null>(null);
@@ -134,6 +137,7 @@ export function PrcAttendanceFlagsProvider({
         requestId={requestId}
         flag={modalFlag}
         target={modalTarget}
+        historyFlags={flags}
         onClose={() => setModalOpen(false)}
         onChanged={reload}
       />
@@ -141,16 +145,15 @@ export function PrcAttendanceFlagsProvider({
   );
 }
 
-/** Contador compacto + legado GENERAL recolhido. */
+/** Resumo compacto PRC-REF-018 — contagens + legenda; sem chips resolvidos. */
 export function PrcAttendanceFlagsSummary() {
   const { flags, openCount, resolvedCount, loading, error, openTarget } =
     usePrcFlagsContext();
   const [showLegacy, setShowLegacy] = useState(false);
-  const [showResolved, setShowResolved] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
 
   const openFlags = flags.filter((f) => f.status === "OPEN");
   const legacy = flags.filter((f) => f.subject === "GENERAL");
-  const resolved = flags.filter((f) => f.status === "RESOLVED");
 
   const jumpTo = (flag: PrcAttendanceFlag) => {
     if (flag.subject === "FIELD" && flag.targetPath) {
@@ -183,30 +186,69 @@ export function PrcAttendanceFlagsSummary() {
   return (
     <section
       className="engineering-prc__flags engineering-prc__flags--compact"
-      aria-label="Bandeiras de acompanhamento"
+      aria-label="Acompanhamento técnico"
     >
       <header className="engineering-prc__flags-head">
         <div className="engineering-prc__flags-title-row">
           <Flag size={16} aria-hidden />
-          <h3>Campos sinalizados</h3>
+          <h3>Acompanhamento técnico</h3>
           <span className="engineering-prc__flags-count" aria-live="polite">
-            {openCount} aberta{openCount === 1 ? "" : "s"}
-            {resolvedCount
-              ? ` · ${resolvedCount} resolvida${resolvedCount === 1 ? "" : "s"}`
-              : ""}
+            {openCount} aberta{openCount === 1 ? "" : "s"} · {resolvedCount}{" "}
+            resolvida{resolvedCount === 1 ? "" : "s"}
           </span>
         </div>
+        <EngineeringActionButton
+          variant="ghost"
+          onClick={() => setShowLegend((v) => !v)}
+          aria-expanded={showLegend}
+          aria-label="Legenda das bandeiras"
+        >
+          Legenda das bandeiras
+        </EngineeringActionButton>
       </header>
+      {showLegend ? (
+        <ul
+          className="engineering-prc__flag-legend"
+          aria-label={PRC_FLAG_ACTION_HELP.legend}
+        >
+          <li>
+            <span
+              className="engineering-prc__flag-legend-swatch engineering-prc__flag-legend-swatch--add"
+              aria-hidden
+            >
+              <Flag size={14} />
+            </span>
+            Adicionar acompanhamento
+          </li>
+          <li>
+            <span
+              className="engineering-prc__flag-legend-swatch engineering-prc__flag-legend-swatch--open"
+              aria-hidden
+            >
+              <Flag size={14} />
+            </span>
+            Acompanhamento aberto
+          </li>
+          <li>
+            <span
+              className="engineering-prc__flag-legend-swatch engineering-prc__flag-legend-swatch--resolved"
+              aria-hidden
+            >
+              <Flag size={14} />
+            </span>
+            Acompanhamento resolvido
+          </li>
+        </ul>
+      ) : null}
       {error ? (
         <EngineeringStateBanner variant="error">{error}</EngineeringStateBanner>
       ) : null}
       {loading ? (
         <p className="engineering-prc__muted">Carregando bandeiras…</p>
       ) : null}
-      {!loading && openFlags.length === 0 ? (
+      {!loading && openFlags.length === 0 && resolvedCount === 0 ? (
         <p className="engineering-prc__muted">
-          Nenhuma bandeira aberta. Passe o mouse ou foque um campo para
-          sinalizar.
+          Nenhuma bandeira. Passe o mouse ou foque um campo para sinalizar.
         </p>
       ) : null}
       {openFlags.length > 0 ? (
@@ -232,31 +274,6 @@ export function PrcAttendanceFlagsSummary() {
             );
           })}
         </ul>
-      ) : null}
-      {resolved.length > 0 ? (
-        <div className="engineering-prc__flags-toggle">
-          <EngineeringActionButton
-            variant="ghost"
-            onClick={() => setShowResolved((v) => !v)}
-          >
-            {showResolved ? "Ocultar resolvidas" : "Ver resolvidas"}
-          </EngineeringActionButton>
-          {showResolved ? (
-            <ul className="engineering-prc__flags-chip-list">
-              {resolved.map((f) => (
-                <li key={f.id}>
-                  <button
-                    type="button"
-                    className="engineering-prc__flags-chip engineering-prc__flags-chip--resolved"
-                    onClick={() => jumpTo(f)}
-                  >
-                    {f.title}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
       ) : null}
       {legacy.length > 0 ? (
         <div className="engineering-prc__flags-legacy">

@@ -75,7 +75,7 @@ export function PrcFlagsOpsPanel({ basePath }: { basePath: string }) {
   return (
     <section className="engineering-prc__flags-ops" aria-label="Bandeiras">
       <EngineeringActionButton
-        variant={open ? "secondary" : "ghost"}
+        variant={open ? "ghost" : "ghost"}
         onClick={() => setOpen((v) => !v)}
       >
         <Flag size={14} aria-hidden />{" "}
@@ -127,13 +127,14 @@ export function PrcFlagsOpsPanel({ basePath }: { basePath: string }) {
                 ]}
               />
               <EngineeringFilterInput
+          type="text"
                 label="Produto"
                 value={productCode}
                 onChange={setProductCode}
                 placeholder="Código oficial"
               />
               <EngineeringActionButton
-                variant="secondary"
+                variant="ghost"
                 onClick={() => {
                   setPage(1);
                   void load();

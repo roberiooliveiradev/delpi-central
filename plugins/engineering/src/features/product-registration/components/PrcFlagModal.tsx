@@ -1,7 +1,8 @@
-/** Modal CRUD contextual de bandeira — kit oficial plugin-ui. */
+/** Modal CRUD contextual de bandeira — PRC-REF-018 / D16-REF-03. */
 
-import { useEffect, useId, useState } from "react";
-import { Flag } from "lucide-react";
+import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
+import { Flag, Pencil, Save, Trash2, X } from "lucide-react";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 import { HomeApiError } from "../../../api/httpClient";
 import {
@@ -23,7 +24,11 @@ import {
   type PrcFlagCreateBody,
   type PrcFlagTargetAttribute,
 } from "../api/productRegistrationApi";
-import { PRC_FIELD_LABELS, PRC_SUPPLIER_LABELS } from "../prcCopy";
+import {
+  PRC_FIELD_LABELS,
+  PRC_FLAG_ACTION_HELP,
+  PRC_SUPPLIER_LABELS,
+} from "../prcCopy";
 
 function newIdempotencyKey(prefix: string): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -49,6 +54,25 @@ function actorLabel(actor?: {
   return actor.displayName || actor.subject || "—";
 }
 
+function ActionLabel({
+  icon,
+  text,
+  help,
+}: {
+  icon: ReactNode;
+  text: string;
+  help: string;
+}) {
+  return (
+    <HelpTooltip content={help} ariaLabel={`Ajuda: ${text}`} wrap placement="top">
+      <span className="engineering-prc__flag-action-row" tabIndex={0}>
+        <span aria-hidden>{icon}</span>
+        {text}
+      </span>
+    </HelpTooltip>
+  );
+}
+
 export type FlagTargetContext = {
   subject: "FIELD" | "SUPPLIER_LINK" | "GENERAL";
   targetPath?: string | null;
@@ -58,11 +82,27 @@ export type FlagTargetContext = {
   fieldLabel?: string;
 };
 
+function sameTarget(flag: PrcAttendanceFlag, target: FlagTargetContext): boolean {
+  if (flag.subject !== target.subject) return false;
+  if (target.subject === "FIELD") {
+    return flag.targetPath === target.targetPath;
+  }
+  if (target.subject === "SUPPLIER_LINK") {
+    return (
+      flag.targetAttribute === target.targetAttribute &&
+      flag.supplierKey?.supplierCode === target.supplierKey?.supplierCode &&
+      flag.supplierKey?.store === target.supplierKey?.store
+    );
+  }
+  return true;
+}
+
 export function PrcFlagModal({
   open,
   requestId,
   flag,
   target,
+  historyFlags = [],
   onClose,
   onChanged,
 }: {
@@ -70,18 +110,39 @@ export function PrcFlagModal({
   requestId: string;
   flag: PrcAttendanceFlag | null;
   target: FlagTargetContext;
+  /** Todas as bandeiras do caso — para histórico RESOLVED do mesmo alvo. */
+  historyFlags?: PrcAttendanceFlag[];
   onClose: () => void;
   onChanged: () => void | Promise<void>;
 }) {
   const formId = useId();
+  const [active, setActive] = useState<PrcAttendanceFlag | null>(flag);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  const siblingResolved = useMemo(
+    () =>
+      historyFlags
+        .filter(
+          (f) =>
+            f.status === "RESOLVED" &&
+            sameTarget(f, target) &&
+            (!active || f.id !== active.id),
+        )
+        .sort((a, b) =>
+          String(b.resolvedAt || b.updatedAt || "").localeCompare(
+            String(a.resolvedAt || a.updatedAt || ""),
+          ),
+        ),
+    [historyFlags, target, active],
+  );
+
   useEffect(() => {
     if (!open) return;
+    setActive(flag);
     setTitle(flag?.title || "");
     setDescription(flag?.description || "");
     setError("");
@@ -90,7 +151,7 @@ export function PrcFlagModal({
 
   if (!open) return null;
 
-  const isCreate = !flag;
+  const isCreate = !active;
   const targetTitle =
     target.subject === "FIELD"
       ? target.fieldLabel ||
@@ -101,13 +162,18 @@ export function PrcFlagModal({
         ? `${PRC_SUPPLIER_LABELS[target.targetAttribute || "partNumber"] || target.targetAttribute} — ${target.supplierKey?.supplierCode || "?"} / ${target.supplierKey?.store || "?"}`
         : "Bandeira legada (sem campo)";
 
+  const selectFlag = (next: PrcAttendanceFlag) => {
+    setActive(next);
+    setTitle(next.title || "");
+    setDescription(next.description || "");
+    setError("");
+  };
+
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true);
     setError("");
     try {
       await fn();
-      // Aguarda reload do provider antes de fechar — evita CAS com
-      // versão obsoleta na próxima abertura do modal.
       await onChanged();
       onClose();
     } catch (err) {
@@ -149,11 +215,11 @@ export function PrcFlagModal({
           supplierKey: target.supplierKey,
         };
         await createPrcFlag(requestId, body, newIdempotencyKey("flag-create"));
-      } else if (flag) {
+      } else if (active) {
         await updatePrcFlag(
           requestId,
-          flag.id,
-          { expectedVersion: flag.version, title: t, description: d },
+          active.id,
+          { expectedVersion: active.version, title: t, description: d },
           newIdempotencyKey("flag-update"),
         );
       }
@@ -173,51 +239,67 @@ export function PrcFlagModal({
               disabled={busy}
               onClick={onClose}
             >
-              Fechar
+              <ActionLabel
+                icon={<X size={14} />}
+                text="Fechar"
+                help={PRC_FLAG_ACTION_HELP.close}
+              />
             </EngineeringActionButton>
-            {flag?.status === "OPEN" ? (
+            {active?.status === "OPEN" ? (
               <EngineeringActionButton
-                variant="secondary"
+                variant="ghost"
                 disabled={busy}
                 onClick={() =>
                   run(() =>
                     resolvePrcFlag(
                       requestId,
-                      flag.id,
-                      { expectedVersion: flag.version },
+                      active.id,
+                      { expectedVersion: active.version },
                       newIdempotencyKey("flag-resolve"),
                     ),
                   )
                 }
               >
-                Resolver
+                <ActionLabel
+                  icon={<Flag size={14} color="#1a7f37" />}
+                  text="Resolver"
+                  help={PRC_FLAG_ACTION_HELP.resolve}
+                />
               </EngineeringActionButton>
             ) : null}
-            {flag?.status === "RESOLVED" ? (
+            {active?.status === "RESOLVED" ? (
               <EngineeringActionButton
-                variant="secondary"
+                variant="ghost"
                 disabled={busy}
                 onClick={() =>
                   run(() =>
                     reopenPrcFlag(
                       requestId,
-                      flag.id,
-                      { expectedVersion: flag.version },
+                      active.id,
+                      { expectedVersion: active.version },
                       newIdempotencyKey("flag-reopen"),
                     ),
                   )
                 }
               >
-                Reabrir
+                <ActionLabel
+                  icon={<Flag size={14} color="#b42318" />}
+                  text="Reabrir"
+                  help={PRC_FLAG_ACTION_HELP.reopen}
+                />
               </EngineeringActionButton>
             ) : null}
-            {flag ? (
+            {active ? (
               <EngineeringActionButton
-                variant="danger"
+                variant="ghost"
                 disabled={busy}
                 onClick={() => setConfirmDelete(true)}
               >
-                Remover
+                <ActionLabel
+                  icon={<Trash2 size={14} />}
+                  text="Remover"
+                  help={PRC_FLAG_ACTION_HELP.remove}
+                />
               </EngineeringActionButton>
             ) : null}
             <EngineeringActionButton
@@ -225,12 +307,57 @@ export function PrcFlagModal({
               disabled={busy}
               onClick={() => void save()}
             >
-              {isCreate ? "Criar" : "Salvar"}
+              <ActionLabel
+                icon={
+                  isCreate ? (
+                    <Flag size={14} color="#2563eb" />
+                  ) : (
+                    <Save size={14} />
+                  )
+                }
+                text={isCreate ? "Criar" : "Salvar"}
+                help={
+                  isCreate ? PRC_FLAG_ACTION_HELP.add : PRC_FLAG_ACTION_HELP.save
+                }
+              />
             </EngineeringActionButton>
           </EngineeringFormActions>
         }
       >
         <div className="engineering-prc__flag-modal" id={formId}>
+          <ul
+            className="engineering-prc__flag-legend"
+            aria-label={PRC_FLAG_ACTION_HELP.legend}
+          >
+            <li>
+              <span
+                className="engineering-prc__flag-legend-swatch engineering-prc__flag-legend-swatch--add"
+                aria-hidden
+              >
+                <Flag size={14} />
+              </span>
+              Adicionar acompanhamento
+            </li>
+            <li>
+              <span
+                className="engineering-prc__flag-legend-swatch engineering-prc__flag-legend-swatch--open"
+                aria-hidden
+              >
+                <Flag size={14} />
+              </span>
+              Acompanhamento aberto
+            </li>
+            <li>
+              <span
+                className="engineering-prc__flag-legend-swatch engineering-prc__flag-legend-swatch--resolved"
+                aria-hidden
+              >
+                <Flag size={14} />
+              </span>
+              Acompanhamento resolvido
+            </li>
+          </ul>
+
           <p className="engineering-prc__flag-modal-target">
             <Flag size={14} aria-hidden />
             <strong>{targetTitle}</strong>
@@ -240,24 +367,49 @@ export function PrcFlagModal({
               Valor atual (somente contexto): {target.currentValue}
             </p>
           ) : null}
-          {flag ? (
+
+          {siblingResolved.length > 0 ? (
+            <div>
+              <p className="engineering-prc__muted">
+                Histórico resolvido neste campo — selecione para consultar ou
+                reabrir:
+              </p>
+              <ul className="engineering-prc__flag-history">
+                {siblingResolved.map((h) => (
+                  <li key={h.id}>
+                    <EngineeringActionButton
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() => selectFlag(h)}
+                    >
+                      <Flag size={12} color="#1a7f37" aria-hidden /> {h.title} ·{" "}
+                      {formatWhen(h.resolvedAt || h.updatedAt)}
+                    </EngineeringActionButton>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {active ? (
             <dl className="engineering-prc__flag-meta">
               <div>
                 <dt>Estado</dt>
-                <dd>{flag.status === "OPEN" ? "Aberta" : "Resolvida"}</dd>
+                <dd>{active.status === "OPEN" ? "Aberta" : "Resolvida"}</dd>
               </div>
               <div>
                 <dt>Criada por</dt>
                 <dd>
-                  {actorLabel(flag.createdBy)} · {formatWhen(flag.createdAt)}
+                  {actorLabel(active.createdBy)} ·{" "}
+                  {formatWhen(active.createdAt)}
                 </dd>
               </div>
-              {flag.resolvedAt ? (
+              {active.resolvedAt ? (
                 <div>
                   <dt>Resolvida</dt>
                   <dd>
-                    {actorLabel(flag.resolvedBy)} ·{" "}
-                    {formatWhen(flag.resolvedAt)}
+                    {actorLabel(active.resolvedBy)} ·{" "}
+                    {formatWhen(active.resolvedAt)}
                   </dd>
                 </div>
               ) : null}
@@ -269,22 +421,30 @@ export function PrcFlagModal({
           <EngineeringTextField
             id={`${formId}-title`}
             label="Título"
+            hint={PRC_FLAG_ACTION_HELP.edit}
             value={title}
             onChange={setTitle}
             maxLength={120}
             required
-            disabled={busy}
+            disabled={busy || active?.status === "RESOLVED"}
           />
           <EngineeringTextAreaField
             id={`${formId}-desc`}
             label="Descrição"
+            hint={PRC_FLAG_ACTION_HELP.edit}
             value={description}
             onChange={setDescription}
             maxLength={1000}
             required
-            disabled={busy}
+            disabled={busy || active?.status === "RESOLVED"}
             rows={5}
           />
+          {active?.status === "OPEN" ? (
+            <p className="engineering-prc__muted">
+              <Pencil size={12} aria-hidden /> Edite título/descrição e salve,
+              ou use Resolver para encerrar o acompanhamento.
+            </p>
+          ) : null}
         </div>
       </EngineeringHostDialog>
       <EngineeringConfirmDialog
@@ -297,12 +457,12 @@ export function PrcFlagModal({
         confirmBusy={busy}
         onCancel={() => setConfirmDelete(false)}
         onConfirm={() => {
-          if (!flag) return;
+          if (!active) return;
           void run(() =>
             deletePrcFlag(
               requestId,
-              flag.id,
-              flag.version,
+              active.id,
+              active.version,
               newIdempotencyKey("flag-delete"),
             ),
           );

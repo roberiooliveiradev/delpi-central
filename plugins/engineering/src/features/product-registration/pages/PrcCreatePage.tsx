@@ -57,7 +57,7 @@ import {
 } from "../prcNavigate";
 import {
   PRC_COPY,
-  PRC_FIELD_HELP,
+  prcFieldHelp,
   PRC_FIELD_LABELS,
   PRC_SUPPLIER_HELP,
   PRC_SUPPLIER_LABELS,
@@ -430,7 +430,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
         ? "Catálogo oficial sem itens disponíveis."
         : view.status === "error"
           ? "Falha ao consultar o catálogo oficial TOTVS."
-          : PRC_FIELD_HELP[path] || spec?.note || "Catálogo oficial TOTVS";
+          : prcFieldHelp(path, spec?.note) || "Catálogo oficial TOTVS";
     return (
       <>
         <EngineeringSearchableSelect
@@ -531,7 +531,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
               <EngineeringSearchableSelect
                 id={`prc-new-${path}`}
                 label={label}
-                hint={PRC_FIELD_HELP[path] || spec.note || undefined}
+                hint={prcFieldHelp(path, spec.note)}
                 value={values[path] || ""}
                 onChange={(v) => setValue(path, v)}
                 options={enumOptions(path, spec.enumValues)}
@@ -543,7 +543,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
               <EngineeringTextField
                 id={`prc-new-${path}`}
                 label={label}
-                hint={PRC_FIELD_HELP[path] || spec?.note || undefined}
+                hint={prcFieldHelp(path, spec?.note)}
                 value={values[path] || ""}
                 onChange={(v) => setValue(path, v)}
                 required={
@@ -692,7 +692,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
               <EngineeringTextField
                 id="prc-new-official-code"
                 label="Código oficial TOTVS"
-                hint="Código B1 do produto que será alterado."
+                hint={prcFieldHelp("officialProductCode") || "Código atribuído ao produto no TOTVS. Preserve zeros à esquerda."}
                 value={officialCode}
                 onChange={setOfficialCode}
                 required
