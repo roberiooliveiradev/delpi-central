@@ -6046,3 +6046,10 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Entrega:** especificação contratual A–F no residual register; sem tabela/API/UI/migração.
 - **Veredicto:** `BLOCKED_BY_OWNER_CONTRACT`. `NEXT=T2_INDEPENDENT_REVIEW`. T3/PROD NOT_AUTHORIZED.
 
+
+### DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-IMPLEMENTATION-01 — decisão PO posterior (2026-11-09)
+
+- **Decisão formal:** `PO_IMPLEMENTATION_AUTHORIZATION=APPROVED` para implementação **bounded DEV** no Core, no sentido de extensão da governança existente; persistência PostgreSQL Core (schema físico por evidência); API+RBAC+audit, migrations DEV, integração DÉLIA por API, migração idempotente dos sete provedores DEV, testes/security/regressão. Fonte: doc293 §2A.9, autorização explícita do PO nesta coordenação.
+- **Owner:** Core governance; `CORE_OWNER_ACK/TECHNICAL_CONTRACT_ACCEPTANCE=TO_VERIFY` se exigido como ato separado; não atribuir assinatura inexistente. O veto anterior por **ausência de autorização do PO** está superado: `A-07=AUTHORIZED_FOR_BOUNDED_DEV_IMPLEMENTATION`, **não** implementado/aceito. `ExternalConnection` físico continua condicionado a owner/contrato separado.
+- **Preservar:** Keycloak identidade/token exchange, Pydantic AI MCPToolset live, Domain AuthZ/Outcome; proibido snapshot, registry paralelo DÉLIA, schema Keycloak, catálogo materializado. `R04=PENDING_OPS`. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `T3=NOT_AUTHORIZED`.
+- **EXECUTION_STATE:** `PENDING`; testes/código da implementação Core **TEST_NOT_RUN** nesta autorização documental. Reancorar 16 + ledger + owner contracts antes de executar; parar em conflito/falta de aprovação separada requerida. **NEXT:** execução Core DEV contratada, seguida de T2_INDEPENDENT_REVIEW. Relatório histórico `BLOCKED_BY_OWNER_CONTRACT` permaneceu verdadeiro no seu SHA de execução.
