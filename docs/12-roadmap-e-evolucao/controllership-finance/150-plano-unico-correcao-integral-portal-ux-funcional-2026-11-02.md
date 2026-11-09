@@ -859,3 +859,32 @@ DATE / ACTOR / EVIDENCE_REF: …
 **Código alterado (branch `fix/cf-ux-053-consent-channel-batch-surface-20261109`):** `controllership-finance-api/controllership_finance_app/interface/mcp/semantic_bridge.py` — `_run_operations` deixou de instruir incondicionalmente “consentimento no Portal”. Retorna agora `consent_channel`, `portal_consent_required`, `conversational_act_armed`, `confirmation_contract` quando disponível e instrução gerada pela política ativa; `confirmation_url` só aparece quando o Portal é efetivamente exigido. Nova suíte `tests/test_clara_semantic_operations_consent_channel.py` com três cenários: Portal default, conversacional sem ack (fallback), conversacional armado (sem URL).
 
 **Classificação (após integração Cursor):** PR `#146` mergeado em `main` (`67a4a324e6`); suíte local **95 PASS** (inclui `test_clara_semantic_operations_consent_channel` + regressão MCP/consent/direct/surface). Gates CI do head do PR: `architecture-gate` + `audit` = success. Deploy BFF produtivo desta correção **sem** armar canal conversacional. Cutover sensível **permanece `SECURITY_GATE_PENDING`** (§20.10). Este hotfix de mensagens/metadados **não** substitui a decisão material sobre o mecanismo de consentimento nem elimina `confirmation_url` no CURRENT_RUNTIME default Portal.
+
+### 20.13 Rework ChatGPT real — causa raiz e STOP (09/11/2026)
+
+**Smoke ChatGPT (PO):** prepare `checklist.version_publish` (template `monthly-closing-checklist`, versão 2, vigência `2026-01`) retornou:
+
+```text
+status=proposal_pending_confirmation
+consent_channel=portal
+portal_consent_required=true
+conversational_act_armed=false
+human_proof=portal_step_up_v014
+```
+
+**Causa raiz PROVEN (produção `1ca693c603`):**
+
+| Pergunta | Evidência |
+|---|---|
+| Por que `consent_channel=portal`? | Default de código `CLARA_CONSENT_CHANNEL=portal`; env prod **unset** → settings lê `portal` |
+| O que impede `conversational_act_armed=true`? | `CLARA_CONVERSATIONAL_SECURITY_ACK` unset/vazio; exige valor exato `R-CLARA-01-TEO-EQUIVALENCE-ACCEPTED` (`consent_channel.conversational_act_enabled`) |
+| Quem ainda emite `confirmation_url` obrigatória? | `governed_writes.prepare` quando `portal_consent_required()`; MFE `ClaraConsentPage`; batch/prepare paths com V014 |
+| O que é Core? | JWT + `has_permission` effective (`access`/`manage`/`access.dre`) — **não** prova de plano |
+| O que é BFF legítimo? | resource_scope/ownership/business_rule, OCC, proposal seal, claim, idempotência, auditoria, read-back |
+| O que é só política V014? | `clara_consent_challenge` + step-up Portal — consentimento do **plano**, não RBAC |
+| TÉO utilizável sob contratos aprovados? | Contrato MCP já TÉO-shaped; cutover ACT sem Portal **bloqueado** até §20.10 |
+| Consumidor do fluxo antigo? | ChatGPT/MCP atual + Portal `clara-consent` (CURRENT_RUNTIME) |
+
+**§20.10 revalidado nesta execução:** `SECURITY_PLATFORM_DECISION` e `CONTROLLADORIA_DECISION` **continuam AUSENTES** no Git. HOST_ATTESTED secret **não** configurado.
+
+**Ação do executor:** **nenhum** novo patch de mensagens, **nenhum** preenchimento de ack, **nenhum** deploy parcial. Veredito: `DECISION_REQUIRED` — owners Segurança/Plataforma + Controladoria devem assinar §20.10 antes de qualquer cutover que produza `portal_consent_required=false`.
