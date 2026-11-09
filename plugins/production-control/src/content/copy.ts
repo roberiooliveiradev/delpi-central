@@ -711,7 +711,7 @@ export const copy = {
     },
     detail: {
       title: "Linha da demanda",
-      orderSection: "Pedido",
+      orderSection: "Dados da demanda",
       qtySection: "Quantidades",
       coverageSection: "Como o saldo é coberto",
       customer: "Cliente",
@@ -733,8 +733,12 @@ export const copy = {
       opCoverageIncomplete:
         "Há OPs deste produto com unidade ou saldo não confirmado. A cobertura exibida pode estar incompleta.",
       coverageOrder: "OP",
-      coverageQuantity: "Qtd.",
+      coverageQuantity: "Qtd. alocada",
       coverageDate: "Fim previsto",
+      opCount: (count: number) => `${count} OP${count === 1 ? "" : "s"} vinculada${count === 1 ? "" : "s"}`,
+      opObservation: "Observação da OP",
+      opObservationMore: "Ler observação completa",
+      opObservationLess: "Recolher observação",
       opAfterDue: "depois da entrega",
       reasonLate: (days: number) =>
         `Entrega já venceu há ${days} dia${days === 1 ? "" : "s"}.`,
