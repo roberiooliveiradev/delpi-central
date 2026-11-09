@@ -89,6 +89,7 @@ class DemandLine:
     # Origem da linha na Demanda integrada (default = carteira Protheus).
     source: str = "protheus"
     planning: bool = False
+    op_coverage_incomplete: bool = False
 
     @property
     def key(self) -> str:
@@ -129,6 +130,7 @@ class DemandLine:
             "days_late": self.days_late(today),
             "source": self.source or "protheus",
             "planning": bool(self.planning),
+            "op_coverage_incomplete": bool(self.op_coverage_incomplete),
         }
 
 
