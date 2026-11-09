@@ -26,6 +26,12 @@ export function formatOpPendencyQuantity(
   return `${formatOpQuantity(quantity)} ${unit === "UNSPECIFIED" ? "unidade ERP não confirmada" : unit}`;
 }
 
+function amountAsPieces(quantity: number, unit: string): number | null {
+  if (unit === "MI") return Math.round(quantity * 1000);
+  if (unit === "PC" || unit === "UN") return Math.round(quantity);
+  return null;
+}
+
 function sourceLabel(line: DemandLine): string {
   return line.source === "myweg" ? labels.sourceMyweg : labels.sourceProtheus;
 }
@@ -38,9 +44,13 @@ function demandIdentifier(line: DemandLine): string {
 
 function DemandRow({ line, unit }: { line: DemandLine; unit: string }) {
   const quantity = formatOpPendencyQuantity(
-    unit === "MI" ? Math.round(line.uncovered_quantity * 1000) :
-      unit === "UN" || unit === "PC" ? Math.round(line.uncovered_quantity) : null,
-    line.uncovered_quantity, unit,
+    amountAsPieces(line.uncovered_quantity, unit), line.uncovered_quantity, unit,
+  );
+  const stock = formatOpPendencyQuantity(
+    amountAsPieces(line.allocated_stock, unit), line.allocated_stock, unit,
+  );
+  const fromOrders = formatOpPendencyQuantity(
+    amountAsPieces(line.covered_by_orders, unit), line.covered_by_orders, unit,
   );
 
   return (
@@ -51,7 +61,7 @@ function DemandRow({ line, unit }: { line: DemandLine; unit: string }) {
         <small>{labels.order}: {demandIdentifier(line)}</small>
       </div>
       <div className="ppc-op-detail__demand-quantities">
-        <span>{labels.stock}: {formatOpQuantity(line.allocated_stock)} · {labels.fromOps}: {formatOpQuantity(line.covered_by_orders)} {unit !== "UNSPECIFIED" ? unit : ""}</span>
+        <span>{labels.stock}: {stock} · {labels.fromOps}: {fromOrders}</span>
         <strong>{labels.missing}: {quantity}</strong>
       </div>
     </li>
