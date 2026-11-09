@@ -138,6 +138,12 @@ export function DemandDetailModal({ line, branch, onClose }: DemandDetailModalPr
             />
           </div>
 
+          {line.op_coverage_incomplete ? (
+            <div className="ppc-demand-banner" role="status">
+              <p>{detail.opCoverageIncomplete}</p>
+            </div>
+          ) : null}
+
           <div className="ppc-demand-detail__ops">
             <div className="ppc-demand-detail__ops-head">
               <span>{detail.coverageOrder}</span>
