@@ -296,6 +296,33 @@ class DemandService:
                 return False
         return True
 
+    @staticmethod
+    def _customer_key(line: DemandLine) -> str:
+        """Identidade estável por código/loja, mesmo entre origens e páginas."""
+        code = _text(line.customer_code).upper()
+        store = _text(line.customer_store).upper()
+        if code:
+            return f"code:{code}/{store}"
+        return f"name:{_text(line.customer_name).casefold()}"
+
+    def _customer_options(self, lines: Iterable[DemandLine]) -> list[dict[str, str]]:
+        """Catálogo da consulta inteira, antes do recorte de clientes e da paginação."""
+        options: dict[str, dict[str, str]] = {}
+        for line in lines:
+            key = self._customer_key(line)
+            if key in options:
+                continue
+            code = _text(line.customer_code)
+            store = _text(line.customer_store)
+            name = _text(line.customer_name) or code or "Cliente não identificado"
+            identifier = f"{code}/{store}" if store else code
+            label = f"{name} · {identifier}" if code else name
+            options[key] = {"value": key, "label": label}
+        return sorted(
+            options.values(),
+            key=lambda item: (item["label"].casefold(), item["value"]),
+        )
+
     def _sort_key(self, field: str):
         if field == "customer_name":
             return lambda line: (line.customer_name, line.sales_order, line.line_item)
@@ -402,6 +429,7 @@ class DemandService:
         page_size: int | None = None,
         refresh: bool = False,
         origin: str | None = None,
+        customers: list[str] | None = None,
     ) -> dict[str, Any]:
         code = self._branch_access.assert_valid_branch(branch)
         self._authorize(user, branch=code)
@@ -451,7 +479,16 @@ class DemandService:
         if effective_origin not in ALLOWED_ORIGINS:
             effective_origin = requested_origin
 
-        filtered = [line for line in all_lines if self._matches(line, query)]
+        matching_lines = [line for line in all_lines if self._matches(line, query)]
+        customer_options = self._customer_options(matching_lines)
+        selected_customers = list(dict.fromkeys(
+            _text(value) for value in (customers or []) if _text(value)
+        ))
+        selected_set = set(selected_customers)
+        filtered = [
+            line for line in matching_lines
+            if not selected_set or self._customer_key(line) in selected_set
+        ]
         filtered.sort(key=self._sort_key(query.sort), reverse=query.direction == "desc")
 
         total = len(filtered)
@@ -497,6 +534,8 @@ class DemandService:
                 "requested_origin": requested_origin,
                 "statuses": list(allowed_statuses),
                 "origins": [ORIGIN_PROTHEUS, ORIGIN_MYWEG, ORIGIN_BOTH],
+                "customer_options": customer_options,
+                "selected_customers": selected_customers,
             },
             "pagination": {
                 "page": query.page,
