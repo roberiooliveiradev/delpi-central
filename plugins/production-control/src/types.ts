@@ -494,6 +494,8 @@ export type DemandPayload = {
     requested_origin?: DemandOrigin;
     statuses: DemandStatus[];
     origins?: DemandOrigin[];
+    customer_options?: Array<{ value: string; label: string }>;
+    selected_customers?: string[];
   };
   pagination: {
     page: number;
