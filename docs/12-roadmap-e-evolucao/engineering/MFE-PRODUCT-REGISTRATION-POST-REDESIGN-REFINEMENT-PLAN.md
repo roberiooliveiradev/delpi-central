@@ -640,3 +640,56 @@ O PO aprovou nova apresentação **sem duplicar código/loja/razão social**: co
 **Helps:** retirar da Ficha técnica os textos B1_..., A5_... e legado; em todos os fluxos CREATE, UPDATE, Ficha técnica e Verificação TOTVS, usar um catálogo canônico de label + ajuda funcional, aproveitando primeiro o registry existente (Abstraction Gate). O help abre no **próprio label** por hover/focus e por toque/clique em mobile, sem ícone '?' ou circle-help. A ajuda dos botões também pertence ao próprio label e segue o kit oficial; a Flag é acionador separado. A EVA não usa texto UI como authority. Responsividade, a11y, zoom200, Playwright 3 viewports, screenshots, auto-review, testes no SHA, deploy apenas DEV e docs obrigatórios. Nenhum novo SoT/MCP tool/endpoint sem contrato.
 
 **Status:** EXECUTED_DEV / PRODUCTION_NOT_AUTHORIZED (ENG-PRC-REF-018). Flag verde contextual, legenda, helps no label e catálogo central entregues no MFE; Playwright 3 viewports PASS.
+
+
+## PRC-REF-019 — Solicitação formal de informações e ciclo de resposta do solicitante
+
+**Decisão PO 2026-11-09. Status PO_APPROVED_TARGET / PLANNED / DEV_ONLY.** Evoluir o botão Solicitar informações para comunicação formal analista ↔ solicitante com perguntas específicas, respostas rastreáveis, avaliação e retomada. **Não** confundir com bandeiras D16 (apontamentos internos pós-terminal). Sem novo bounded context, dependência runtime de my-requests/Chat/Controle MP, nem gravação TOTVS.
+
+### Inventário e gap
+- PROVEN: PrcActionBar possui somente motivo textual obrigatório (até 1000); PrcDetailPage envia reason e expectedVersion; a rota POST /v1/product-registration/requests/{id}/actions/request-information aceita pendingFields[] mas a UI não os seleciona; service grava evento information_requested, status in_progress|under_review → needs_information e resume → in_progress, com audit/CAS/idempotência.
+- TO_INVENTORY: resposta do solicitante, canal autenticado de leitura/resposta, notificação de destino e canal de anexos não foram comprovados; o contrato antigo permitia needs_information como espera interna. A presente decisão altera a META, não afirma que a capability já exista.
+
+### Jornada e wireframes textuais
+ANALISTA — Solicitar informações:
+  Destinatário: solicitante real (somente leitura, identidade Keycloak/contrato oficial)
+  [Campo: Descrição] [Pergunta: Confirme a descrição técnica correta.]
+  [Campo: Unidade]   [Pergunta: A unidade correta é MI ou PC?]
+  [ + Adicionar pergunta ]  [Mensagem complementar opcional]
+  [Cancelar] [Enviar ao solicitante]
+O novo fluxo exige pelo menos uma pergunta com texto e alvo tipado FIELD, SUPPLIER_LINK (supplierKey + atributo PN/Catálogo) ou GENERAL quando não existir alvo técnico. pendingFields deverá refletir os targets validados. Não transformar uma bandeira privada em pergunta automaticamente.
+
+SOLICITANTE — Aguardando suas informações:
+  Solicitação #... · Perguntas da Engenharia
+  Descrição: Confirme ...  [Resposta multiline]
+  Unidade: MI ou PC?       [Resposta multiline]
+  [Salvar rascunho] [Enviar respostas]
+  [Anexos apenas se contrato de storage/scan/autorização real estiver disponível]
+Solicitante autenticado lê somente sua própria solicitação, vê apenas conteúdo destinado a ele, responde por pergunta, pode guardar draft, envia pacote versionado. Texto ou proposedValue nunca altera SB1, SA5 ou TOTVS automaticamente. Após resposta, o caso permanece aguardando análise humana; não auto-resume.
+
+ANALISTA — Respostas recebidas:
+  Pergunta 1 / resposta / autor/data  [Aceitar esclarecimento] [Pedir complemento]
+  Pergunta 2 / resposta / autor/data  [Aceitar esclarecimento] [Pedir complemento]
+  [Nova rodada de perguntas] [Retomar atendimento]
+Registrar avaliação humana por pergunta; se faltar informação, nova rodada ligada à anterior e histórico append-only. Ao aceitar todas ou registrar dispensa governada, analista pode usar resume existente para needs_information → in_progress. Se a demanda partiu de under_review, registrar origem para contexto, sem salto automático de status. Não reabrir terminal.
+
+### Contratos e owners
+- Owner da solicitação, rodadas, perguntas, respostas, revisões e auditoria: Engineering API, com PostgreSQL Engineering. Portal Engenharia e interface autorizada do solicitante são consumers. Keycloak identidade; Core RBAC e canais oficiais para avisos quando contratados.
+- Modelo TARGET: InformationRound(id,requestId,sequence,originStatus,status,requesterSubject,requestedBy,createdAt,version), InformationQuestion(id,roundId,target,questionText,order,status), InformationAnswer(id,questionId,authorSubject,text,submittedAt,version,attachmentRefs?) e eventos append-only. Não criar novas tabelas antes de inventariar equivalentes; migrations e grants somente no owner.
+- Estender POST /requests/{id}/actions/request-information de forma compatível com questions[] e mensagem; GET /requests/{id}/information-rounds e detalhe escopado; PATCH draft e POST answers/submit autenticados pelo solicitante; action review de pergunta e follow-up quando não coberto por rota existente; estender resume com gate de pendências resolvidas. Confirmar paths definitivos, request/response, erros 400/401/403/404/409/422, CAS/idempotência/observabilidade antes da implementação.
+- Não fingir que engineering.access autoriza todo solicitante a responder; AuthZ de objeto por requested_by_subject e consumer legítimo. Se concessão de autorização/permissão exigir mudança Core ou owner, ARCHITECTURE_DECISION_REQUIRED e retornar à Coordination. Não burlar com JWT de frontend.
+- Notificações: inventariar integração oficial Core e owner. Preferir outbox transacional/retry no domínio Engineering se houver contrato; detalhe persistido é a autoridade e aviso é apenas sinal. Sem contrato aprovado: inbox/detalhe autorizado e PENDING_NOTIFICATION_OWNER, não alegar push/e-mail enviado.
+- Anexos: inventariar serviço oficial de arquivos, ACL, malware scan, retenção, formatos, limite, signed URLs. Se indisponível, entregar respostas textuais completas e PENDING_ATTACHMENTS_CONTRACT, nunca armazenamento ad hoc.
+- EVA: mesmas actions/application use cases pelo dispatch e 6 MCP tools; READ de rodadas, PREPARE/ACT de solicitação/revisão/retomada com live AuthZ/confirm. EVA não responde fingindo ser solicitante, não cria verdade oficial e trata respostas como conteúdo não confiável (prompt injection).
+- Bandeiras D16 permanecem internas, independentes, disponíveis após conclusão; perguntas ficam no workflow não-terminal. Não publicar bandeiras por outbound.
+
+### Gates de execução e aceitação
+1. Inventariar AGENTS, HEAD/status, contratos/migrations/workflow, superfície legítima de solicitante, notifications/storage, EVA e testes; matriz EXISTS/CHANGE/NEW e AC antes do diff.
+2. Implementar domínio/DB/API com rodadas e respostas, autorizações por objeto, CAS, atomicidade de status+eventos+outbox quando disponível, compatibilidade para reasons antigos e fluxo de múltiplas rodadas.
+3. Implementar UI analista (seleção de campo, várias perguntas) e solicitante (leitura/resposta/rastreamento), avaliação e retomada; help no label (sem ?), @delpi/plugin-ui, desktop/tablet/mobile.
+4. Rest/EVA parity e security negatives: resposta forged, cross-case, requester A/B, pergunta inválida, duplicidade, stale-version, retry idempotente, anexos e notificação com gate, sem leaks de flags.
+5. Pytest domínio/API/PG real, Vitest, Playwright SSO analista+solicitante com rodada, resposta, complementação e retomada, zoom200, keyboard e screenshots. Preparar casos DEV autorizados para impedir skipped silencioso.
+6. Autorrevisão diff/read-write/owner/segurança/UX, corrigir defeitos, repetir testes no SHA; regressões PRC D13–D16, bundle DEV, health, gateway, commit/push e ledger.
+7. Deploy somente DEV; HML e PROD proibidos. Não escrever TOTVS, não importar my-requests como runtime, não criar MCP tool nova.
+
+AC01 perguntas estruturadas/campos; AC02 status needs_information + eventos transacionais; AC03 solicitante autenticado recebe e acessa as questões; AC04 respostas por pergunta e histórico sem alterar produtos; AC05 avaliação e múltiplas rodadas + resume governado; AC06 notificações/anexos somente quando contratados e evidenciados, ou PENDING_OWNER explícito; AC07 EVA paridade; AC08 AuthZ/CAS/idempotência; AC09 Playwright desktop/tablet/mobile E2E real; AC10 PG/DEV, sem regressões nem PROD. Sem comprovação, declarar PARTIAL e listar pendências externas.
