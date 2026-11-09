@@ -53,7 +53,7 @@ def test_changed_imported_schemas_match_runtime_builder_and_budget():
             == source[schema_name]["properties"][field_name]["properties"]["contexto"]
         ), schema_name
     assert len(_ARTIFACT.read_bytes()) <= 100 * 1024
-    assert count_operations(imported) == count_operations(generated) == len(GPT_ACTIONS_OPERATION_IDS) == 21
+    assert count_operations(imported) == count_operations(generated) == len(GPT_ACTIONS_OPERATION_IDS) == 22
 
 def test_bpmn_resolution_map_is_explicitly_domain_validated_in_builder_and_artifact():
     """Dynamic ambiguity IDs/options are domain-validated, not untyped by omission."""

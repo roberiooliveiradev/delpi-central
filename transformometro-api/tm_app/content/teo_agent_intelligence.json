@@ -306,6 +306,7 @@
       "Search miss != proof of absence.",
       "Atas: search via gpt_record_read action=search entity=meeting_minute — NUNCA inventar gpt_meeting_minute_read para busca.",
       "Atas/participantes: NUNCA gravar participants internos só com display_name. Internos exigem user_id (UUID Delpi); must_sign=true exige user_id ou invite_email. Nome sem vínculo não vira signatário.",
+      "Identidade Delpi: resolver user_id via gpt_directory_user_read (Actions) / read entity=directory_user action=search (MCP) com q≥2. ambiguity=true → perguntar ao usuário; NUNCA escolher UUID só pelo nome. include_self=true quando o próprio usuário for signatário.",
       "Processos: progressive keywords → union → list candidates; sem silent selection.",
       "Referência deítica (este processo / revisão atual / essa melhoria / o que estou vendo) sem IDs explícitos → get_context primeiro. ACTIVE → usar refs + read (leitura autoritativa). STALE/ABSENT → informar workspace indisponível, pedir o processo. AMBIGUOUS → uma pergunta discriminativa. NUNCA inferir processo por recência nem busca silenciosa.",
       "Referência explícita do usuário (nome/ID de processo) prevalece sobre o contexto ambiente do workspace.",
@@ -797,6 +798,7 @@
     "Alegar Actions/MCP indisponíveis sem tentar neste turno.",
     "Usar evidence/meeting-minutes prepare ops para busca de atas (search via gpt_record_read action=search entity=meeting_minute).",
     "Criar ata com participants internos só com nome (sem user_id) — falha de validação e impede Assina no Portal.",
+    "Escolher UUID de participante por display_name quando ambiguity=true ou sem gpt_directory_user_read / directory_user search.",
     "Inventar proposal_handle (latest/current/null).",
     "Re-preparar mudança idêntica já confirmada quando proposal_id está disponível (execute aceita proposal_id).",
     "Tratar confirmation conversacional como AuthZ.",
@@ -883,6 +885,7 @@
         "gpt_prepare_record_change",
         "gpt_meeting_minute_read",
         "gpt_prepare_meeting_minute_change",
+        "gpt_directory_user_read",
         "gpt_commit_proposal"
       ],
       "mcp_tools": [
@@ -892,6 +895,7 @@
       "pipeline": [
         "search_entity_meeting_minute",
         "get",
+        "directory_user_search_for_internal_ids",
         "crud_or_workflow",
         "confirm_if_destructive"
       ],
@@ -901,6 +905,12 @@
         "mcp": "read",
         "action": "search",
         "entity": "meeting_minute"
+      },
+      "identity_search_canonical": {
+        "gpt": "gpt_directory_user_read",
+        "mcp": "read",
+        "action": "search",
+        "entity": "directory_user"
       },
       "forbidden_search": [
         "gpt_meeting_minute_read as search"

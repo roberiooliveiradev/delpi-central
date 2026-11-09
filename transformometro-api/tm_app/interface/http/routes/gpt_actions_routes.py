@@ -34,6 +34,9 @@ from tm_app.application.gpt_actions.user_context_service import (
 from tm_app.application.gpt_actions.workspace_context_service import (
     WorkspaceContextService,
 )
+from tm_app.application.directory.directory_users_read_service import (
+    DirectoryUsersReadService,
+)
 from tm_app.application.helpdesk.helpdesk_read_service import (
     HelpdeskReadService,
 )
@@ -88,6 +91,7 @@ _user_context = UserContextService(
 _workspace_context = WorkspaceContextService()
 _solution_catalog = SolutionCatalogService()
 _helpdesk = HelpdeskReadService()
+_directory_users = DirectoryUsersReadService()
 
 # LEGACY_TRANSITIONAL: still mounted for migration, excluded from Builder OpenAPI.
 LEGACY_DIRECT_WRITE_OPERATION_IDS = frozenset(
@@ -545,6 +549,38 @@ def gpt_solution_read(
             data,
             "Inteligência de soluções Minha DELPI (metadados da Core — "
             "conhecimento, não autorização).",
+        )
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.get(
+    "/directory-users",
+    operation_id="gpt_directory_user_read",
+    summary="Search Delpi directory users (Core-owned identity)",
+)
+def gpt_directory_user_read(
+    request: Request,
+    action: Literal["search"],
+    q: str = Query(..., min_length=2),
+    limit: int | None = Query(default=None, ge=1, le=20),
+    include_self: bool = Query(default=True),
+):
+    try:
+        authorization = _bearer_or_fail(request)
+        if not isinstance(authorization, str):
+            return authorization
+        data = _directory_users.search(
+            getattr(request.state, "user", None),
+            authorization,
+            q=q,
+            limit=int(limit or 10),
+            include_self=include_self,
+        )
+        return ok(
+            data,
+            "Pesquisa de usuários do diretório Delpi (Core — identidade "
+            "canônica para participantes/signatários; não é autorização).",
         )
     except Exception as exc:
         return _handle(exc)

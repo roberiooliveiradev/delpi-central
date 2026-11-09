@@ -88,6 +88,7 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_prepare_collaboration_change",
     "gpt_helpdesk_read",
     "gpt_prepare_helpdesk_change",
+    "gpt_directory_user_read",
 )
 
 # Legacy HTTP still mounted (prepare-only shim) — not Builder-importable.
@@ -171,9 +172,10 @@ def _ok_response(description: str) -> dict[str, Any]:
     }
 
 
-def _error_responses() -> dict[str, Any]:
+def _shared_error_response_components() -> dict[str, Any]:
+    """Single copy of common error responses — paths $ref these for ≤100KiB."""
     return {
-        "400": {
+        "GptActionsBadRequest": {
             "description": (
                 "Validation or domain error. Body is ApiEnvelope with success=false; "
                 "read message + data.errors (do not show only HTTP 400)."
@@ -199,7 +201,7 @@ def _error_responses() -> dict[str, Any]:
                 }
             },
         },
-        "401": {
+        "GptActionsUnauthorized": {
             "description": (
                 "Missing/invalid Bearer. ApiEnvelope message explains AuthN; "
                 "read message (not only HTTP 401)."
@@ -215,7 +217,7 @@ def _error_responses() -> dict[str, Any]:
                 }
             },
         },
-        "403": {
+        "GptActionsForbidden": {
             "description": (
                 "Authenticated but lacking permission. Read message + data.error_kind."
             ),
@@ -230,8 +232,8 @@ def _error_responses() -> dict[str, Any]:
                 }
             },
         },
-        "404": _ok_response("Record not found"),
-        "422": {
+        "GptActionsNotFound": _ok_response("Record not found"),
+        "GptActionsUnprocessable": {
             "description": (
                 "Request body/query schema invalid. Read message + data.errors."
             ),
@@ -241,7 +243,7 @@ def _error_responses() -> dict[str, Any]:
                 }
             },
         },
-        "503": {
+        "GptActionsUnavailable": {
             "description": (
                 "Persistence/infrastructure failure. Read message + data.error_kind=persistence."
             ),
@@ -251,6 +253,17 @@ def _error_responses() -> dict[str, Any]:
                 }
             },
         },
+    }
+
+
+def _error_responses() -> dict[str, Any]:
+    return {
+        "400": {"$ref": "#/components/responses/GptActionsBadRequest"},
+        "401": {"$ref": "#/components/responses/GptActionsUnauthorized"},
+        "403": {"$ref": "#/components/responses/GptActionsForbidden"},
+        "404": {"$ref": "#/components/responses/GptActionsNotFound"},
+        "422": {"$ref": "#/components/responses/GptActionsUnprocessable"},
+        "503": {"$ref": "#/components/responses/GptActionsUnavailable"},
     }
 
 
@@ -678,6 +691,63 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 ],
                 "responses": {
                     "200": _ok_response("Solution catalog or context payload"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": False,
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/directory-users": {
+            "get": {
+                "operationId": "gpt_directory_user_read",
+                "summary": "Search Delpi directory users (Core-owned identity)",
+                "description": (
+                    "Core directory search (Bearer-forwarded). action=search; "
+                    "q≥2. Returns user_id + display_name. ambiguity=true → "
+                    "ask user; never pick UUID by name. Use before meeting "
+                    "minute participants/signers."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "action",
+                        "in": "query",
+                        "required": True,
+                        "schema": {
+                            "type": "string",
+                            "enum": ["search"],
+                        },
+                        "description": "search only.",
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": True,
+                        "schema": {"type": "string", "minLength": 2},
+                        "description": "Name/email search (≥2 characters).",
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 20,
+                            "default": 10,
+                        },
+                    },
+                    {
+                        "name": "include_self",
+                        "in": "query",
+                        "schema": {"type": "boolean", "default": True},
+                        "description": (
+                            "Include the authenticated user in results "
+                            "(default true — needed for self as signer)."
+                        ),
+                    },
+                ],
+                "responses": {
+                    "200": _ok_response("Directory user search payload"),
                     **_error_responses(),
                 },
                 "x-openai-isConsequential": False,
@@ -1707,6 +1777,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     ),
                 }
             },
+            "responses": _shared_error_response_components(),
             "schemas": {
                 "ApiEnvelope": _envelope_schema(),
                 "GptMyContextResponse": {

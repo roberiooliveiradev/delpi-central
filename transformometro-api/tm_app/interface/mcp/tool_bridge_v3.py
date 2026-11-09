@@ -226,6 +226,10 @@ _V3_READ_SPECIALIZED: dict[str, tuple[str, frozenset[str]]] = {
         "tool_meeting_minute_read",
         MEETING_MINUTE_READ_ACTION_VALUES,
     ),
+    "directory_user": (
+        "tool_directory_user_read",
+        frozenset({"search"}),
+    ),
     "evidence": ("tool_evidence_read", frozenset({"list"})),
     "task": (
         "tool_collaboration_read",

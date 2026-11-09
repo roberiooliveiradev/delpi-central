@@ -663,6 +663,23 @@ def _canonical_catalog() -> dict[str, Any]:
             "operation": "solution_read",
         },
         {
+            "id": "directory_user_search",
+            "kind": "analysis",
+            "owner": "core-api",
+            "description": (
+                "Search Delpi directory users (Core GET /me/directory/users) "
+                "to resolve canonical user_id + display_name before writing "
+                "meeting_minute participants/signers. READ only. Ambiguous "
+                "matches must be disambiguated with the user — never pick a "
+                "UUID by display_name alone. Email is masked."
+            ),
+            "read_only": True,
+            "operation": "directory_user_read",
+            "read_actions": ["search"],
+            "filterable_fields": ["q", "limit", "include_self"],
+            "mcp_entity": "directory_user",
+        },
+        {
             "id": "helpdesk_demand",
             "kind": "analysis",
             "owner": "helpdesk-api",

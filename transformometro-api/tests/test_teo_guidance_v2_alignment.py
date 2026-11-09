@@ -42,7 +42,7 @@ def test_builder_visible_ops_exclude_legacy_crud():
         assert op not in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_prepare_record_change" in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_commit_proposal" in GPT_ACTIONS_OPERATION_IDS
-    assert len(GPT_ACTIONS_OPERATION_IDS) == 21
+    assert len(GPT_ACTIONS_OPERATION_IDS) == 22
 
 
 def test_registration_guide_teaches_v2_not_legacy_crud_as_current():

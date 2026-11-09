@@ -86,6 +86,9 @@ from tm_app.application.helpdesk.helpdesk_write_capabilities import (
 from tm_app.infrastructure.helpdesk_composition import (
     build_helpdesk_write_stack,
 )
+from tm_app.application.directory.directory_users_read_service import (
+    DirectoryUsersReadService,
+)
 from tm_app.application.solutions.solution_catalog_service import (
     SolutionCatalogService,
 )
@@ -127,6 +130,7 @@ _user_context = UserContextService(person_profile_reader=CorePersonProfileGatewa
 _workspace_context = WorkspaceContextService()
 _solution_catalog = SolutionCatalogService()
 _helpdesk = HelpdeskReadService()
+_directory_users = DirectoryUsersReadService()
 
 _ERROR_KIND_BY_CODE = {
     "unauthenticated": "unauthenticated",
@@ -480,6 +484,45 @@ def tool_solution_read(
             data,
             "Inteligência de soluções Minha DELPI (metadados da Core — "
             "conhecimento, não autorização).",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_directory_user_read(
+    action: str,
+    q: str | None = None,
+    limit: int | None = None,
+    include_self: bool | None = None,
+) -> CallToolResult:
+    """Resolve Delpi directory identities via Core (Bearer-forwarded).
+
+    action=search only. Returns user_id + display_name (+ masked email).
+    Multi-match sets ambiguity=true — never collapse silently to one UUID.
+    """
+    try:
+        action_norm = str(action or "").strip().lower() or "search"
+        if action_norm != "search":
+            return _error_result(
+                f"Unknown directory_user action '{action_norm}'. "
+                "Allowed: ['search'].",
+                status_code=400,
+                error_code="validation",
+            )
+        context = require_mcp_context()
+        if not context.authorization:
+            raise PermissionError("Unauthorized")
+        request = build_mcp_request()
+        data = _directory_users.search(
+            request.state.user,
+            context.authorization,
+            q=str(q or ""),
+            limit=int(limit or 10),
+            include_self=True if include_self is None else bool(include_self),
+        )
+        return _ok_result(
+            data,
+            "Diretório de usuários (Core — identidade canônica).",
         )
     except Exception as exc:
         return handle_tool_error(exc)

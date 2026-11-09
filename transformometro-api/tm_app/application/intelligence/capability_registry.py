@@ -112,6 +112,14 @@ CAPABILITY_BINDINGS: tuple[CapabilityBinding, ...] = (
     # `action` selects the exact capability (same owner/AuthZ/posture).
     _b("record.search", "gpt_record_read", ("record_read", "READ"), primary="record_read"),
     _b("record.read", "gpt_record_read", ("record_read", "READ"), primary="record_read"),
+    # Directory identity search — Core-owned GET /me/directory/users,
+    # Bearer-forwarded through Transformômetro for TÉO participant resolution.
+    _b(
+        "directory_user.search",
+        "gpt_directory_user_read",
+        ("directory_user_read", "READ"),
+        primary="directory_user_read",
+    ),
     # Semantic family: Helpdesk read intelligence — one bounded read
     # tool on the Helpdesk BFF; `action` selects the exact capability.
     # GLPI stays ticket authority; the BFF owns contract/OAuth/AuthZ.
@@ -249,6 +257,7 @@ MCP_TO_V3_TOOL: dict[str, str] = {
     "analyze": "analyze",
     "record_read": "read",
     "helpdesk_read": "read",
+    "directory_user_read": "read",
     "meeting_minute_read": "read",
     "evidence_read": "read",
     "collaboration_read": "read",
