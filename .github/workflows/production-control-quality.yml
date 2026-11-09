@@ -1,0 +1,86 @@
+name: Portal PCP Quality
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "plugins/production-control/**"
+      - "plugins/plugin-ui/**"
+      - "plugins/vite/**"
+      - "production-control-api/**"
+      - "api-delpi/app/interface/http/routes/reports/reports_router.py"
+      - "api-delpi/tests/test_reports_routes_smoke.py"
+      - ".github/workflows/production-control-quality.yml"
+  pull_request:
+    paths:
+      - "plugins/production-control/**"
+      - "plugins/plugin-ui/**"
+      - "plugins/vite/**"
+      - "production-control-api/**"
+      - "api-delpi/app/interface/http/routes/reports/reports_router.py"
+      - "api-delpi/tests/test_reports_routes_smoke.py"
+      - ".github/workflows/production-control-quality.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    name: PCP frontend - build e testes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            plugins/plugin-ui/package-lock.json
+            plugins/production-control/package-lock.json
+      - name: Instalar kit visual compartilhado
+        run: npm ci --prefix plugins/plugin-ui
+      - name: Instalar Portal PCP
+        run: npm ci --prefix plugins/production-control
+      - name: Typecheck
+        run: npm run typecheck --prefix plugins/production-control
+      - name: Testes unitários
+        run: npm test --prefix plugins/production-control
+      - name: Build de produção
+        run: npm run build --prefix plugins/production-control
+
+  backend:
+    name: PCP API - regressões de pendências
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: production-control-api/requirements.txt
+      - name: Instalar dependências
+        run: |
+          python -m pip install -e './shared[fastapi]'
+          python -m pip install -r production-control-api/requirements.txt
+      - name: Testes focalizados nas pendências e na demanda
+        working-directory: production-control-api
+        run: |
+          python -m pytest             tests/test_stock_rupture_pendencies.py             tests/test_op_pendencies.py             tests/test_demand_myweg_e3.py -q
+
+  reports:
+    name: Reports API - contrato S2S
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: api-delpi/requirements.txt
+      - name: Instalar dependências
+        run: |
+          python -m pip install -e './shared[fastapi]'
+          python -m pip install -r api-delpi/requirements.txt
+      - name: Testar rotas do Delpi Reports
+        working-directory: api-delpi
+        run: python -m pytest tests/test_reports_routes_smoke.py -q
