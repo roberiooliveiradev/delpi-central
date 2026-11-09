@@ -18,7 +18,7 @@
 | `BRANCH` | `main` |
 | `CANONICAL_REANCHOR` | HEAD → `.cursor`/instruções → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → arquitetura → product spec → 256/293/ledger/backlog R01–R07 → matrix E2E |
 | `CURRENT_PHASE` | Coordenação de fechamento engenharia **T0 Freeze** (doc 293). Marcadores históricos de `16` sob Product Master Option B permanecem supersedidos para sequência de feature; **esta trilha não avança C3/C4/C5**. |
-| `CANONICAL_NEXT` | `T0_INDEPENDENT_REVIEW` → autorização explícita de **T1** (sem avanço automático) |
+| `CANONICAL_NEXT` | `T1_INDEPENDENT_REVIEW` → autorização explícita de **T2** (A-05); sem avanço automático |
 | `APPLICABLE_CP_RQ` | Gates L/A/O/R do doc 293; CPs materiais de Evidence/Epistemic/MCP (ex. CP-093/094) permanecem PARTIAL históricos — **não reabertos** nesta T0 |
 | `PYDANTIC_AI_VERSION` | `2.50.0` (`delia-api/requirements.txt`) |
 | `RUNTIME_CONFIG_FINGERPRINT` | JSON runtime sha256 prefix `3836a5290ebf4372` (arquivo `pydantic_ai.runtime.delpi.json` no HEAD); profiles: `local_ollama` (default), `openrouter_kimi`, `openrouter_qwen` |
@@ -41,7 +41,7 @@
 | L-02 | Legacy | `outcome_assessment.py` removido | DÉLIA capability_provision | HEAD ABSENT; delete `88a7c4e50c`; ledger G2 | `CLOSED_PROVEN` | — |
 | L-03 | Legacy | Monólito `orchestration.py` removido / decomposto | DÉLIA capability_provision | ledger `LEGACY-ORCHESTRATION-REMOVAL…`; módulos `governed_capability_orchestrator` + `semantic_capability_support` | `CLOSED_PROVEN` | — |
 | L-04 | Legacy | Adapter texto `openai_compatible_adapter` aposentado | DÉLIA model_invocation | ausente em `infrastructure/model_invocation/`; ledger runtime unificado | `CLOSED_PROVEN` | — |
-| L-05 | Legacy | Busca residual: zero import vivo dos módulos deletados L-01/L-02 | DÉLIA QA | apenas comentário em `generic_evidence_renderer.py`; T1 deve revalidar `rg`/AST | `TO_VERIFY` | T1 |
+| L-05 | Legacy | Busca residual: zero import vivo dos módulos deletados L-01/L-02 | DÉLIA QA | T1 SHA `d3a3d5ebfb`; `rg`+AST=0 imports; importlib ModuleNotFoundError×2; composer/`__init__` limpos; comentário histórico only; focused 37 PASS | `CLOSED_PROVEN` | — |
 | L-06 | Legacy | Snapshot experiment code (`snapshot_interop`, `catalog_store`, `mcp_catalog_sync`) | DÉLIA interop + coordenação | HEAD EXISTS; default mode `live`; não é OBSOLETE sem ADR | `KEEP_APPROVED` | T2 (decisão) |
 | A-01 | Architecture | Domain/Application sem import direto de Infra no snapshot | DÉLIA specialist_interop | `snapshot_interop` usa Protocol `_SnapshotCatalogStore`; ledger G5 | `CLOSED_PROVEN` | — |
 | A-02 | Architecture | C3-T4 Structured Understanding preservado | DÉLIA structured_understanding | docs 21/20/25 + doc256 Conflict A; código presente; unwired root = approved KEEP | `KEEP_APPROVED` | — |
@@ -77,10 +77,40 @@
 | L-02 | `…/outcome_assessment.py` | nenhum (removido); lógica determinística em `generic_evidence_renderer.py` | HEAD ABSENT · G2 ledger | `CLOSED_PROVEN` | nenhuma |
 | L-03 | `orchestration.py` monólito | substituído por orchestrator/support | ledger remoção nativa | `CLOSED_PROVEN` | nenhuma |
 | L-04 | `openai_compatible_adapter` (texto) | aposentado; STT adapter distinto KEEP | dir model_invocation | `CLOSED_PROVEN` | nenhuma |
-| L-05 | imports órfãos L-01/L-02 | — | comentário only; **falta** prova AST residual no SHA T1 | `TO_VERIFY` | VERIFY `rg`/AST + teste import negativo |
+| L-05 | imports órfãos L-01/L-02 | nenhum ativo | T1 `d3a3d5ebfb`: AST 0; importlib ausente; 2 linhas comentário `HISTORICAL_REFERENCE` | `CLOSED_PROVEN` | nenhuma |
 | L-06 | `snapshot_interop` / `catalog_store` / `mcp_catalog_sync` | `root_composer` se `DELIA_MCP_CATALOG_MODE=snapshot_experiment`; default `live` | HEAD EXISTS | `KEEP_APPROVED` | não DELETE sem A-05 |
 
 **Saída L (T0):** candidatos DELETE do doc256/244/245 **já executados**. Não há `OPEN_MATERIAL` de remoção física restante. T1 = verificação residual + proibição de reintrodução — **não** nova auditoria dos 66 arquivos.
+
+### T1 — L-05 verification (2026-11-09)
+
+**TASK_ID:** `DELIA-C3-ENG-CLOSURE-T1-LEGACY-CONSUMER-PURGE-01`  
+**BASE_HEAD verificado:** `d3a3d5ebfb628aa81404d269ac2dfcd8b5272384` (= `origin/main` no início)  
+**CODE_CHANGED:** NO (Caso 1 — nenhum consumidor executável)
+
+| Campo | Valor |
+|---|---|
+| `L01_FILE_ABSENT` | YES |
+| `L02_FILE_ABSENT` | YES |
+| `STATIC_IMPORT_REFERENCES` | 0 (AST Import/ImportFrom) |
+| `DYNAMIC_IMPORT_REFERENCES` | 0 (`__import__`/`import_module` AST) |
+| `ACTIVE_CONSUMERS` | 0 |
+| `ORPHAN_ALIASES` | 0 |
+| `REGISTRY_REFERENCES` | 0 |
+| `COMPOSITION_REFERENCE_ERRORS` | 0 (`root_composer` load OK; source sem símbolos) |
+| `HISTORICAL_REFERENCES` | 2 linhas comentário em `generic_evidence_renderer.py:366-367` |
+| `NEGATIVE_TEST_REFERENCES` | `tests/test_g2_evidence_contract_regression.py` (pins assessors retired; importa equivalente `generic_evidence_renderer`) |
+| `EXISTING_EQUIVALENT` | YES — projeção determinística em `generic_evidence_renderer` |
+| `REUSE_DECISION` | REUSE |
+| `FOCUSED_TEST_COMMAND` | `pytest -q tests/test_g2_evidence_contract_regression.py tests/test_composition_surface_regression.py tests/test_model_invocation_architecture.py tests/test_specialist_interop_architecture.py tests/test_interaction_architecture.py` |
+| `FOCUSED_TEST_RESULT` | 37 PASS |
+| `FULL_BACKEND_REGRESSION` | `TEST_NOT_RUN` (responsabilidade T4; sem diff de produção) |
+| `L05_STATUS` | `CLOSED_PROVEN` |
+| `L06_STATUS` | `KEEP_APPROVED` / A-05_PENDING |
+| `LEGACY_CLEANUP_VERDICT` (L-05 slice) | `PASS` |
+| `ZERO_LEGACY_GLOBAL_VERDICT` | **NOT PASS** — L-06/A-05 deliberadamente pendentes até T2 |
+
+**Não reabrir:** L-01–L-04; não remover L-06; gates A/O/R inalterados.
 
 ---
 
@@ -193,10 +223,9 @@ Mapeamento backlog R01–R07 → IDs:
 
 ### T1 — Legacy Cleanup (`DELIA-C3-ENG-CLOSURE-T1-LEGACY-CONSUMER-PURGE-01`)
 
-**Somente:** `L-05` (VERIFY).  
+**Status:** EXECUTADO — `L-05=CLOSED_PROVEN`; sem diff funcional.  
 **Não incluir:** L-01…L-04 (já CLOSED); L-06 DELETE (bloqueado por A-05).  
-**Operação esperada:** busca residual `rg`/AST por símbolos deletados; confirmar zero import; opcional teste negativo de import; **sem** remoção estética; **sem** reabrir C3-T4/T5.  
-**Testes:** focused import/architecture + subset regression acordado no prompt T1.
+**Próxima revisão:** `T1_INDEPENDENT_REVIEW` antes de autorizar T2.
 
 ### T2 — Architecture & Ownership (`DELIA-C3-ENG-CLOSURE-T2-BOUNDARY-OWNERSHIP-CONFORMANCE-01`)
 
@@ -240,7 +269,7 @@ Comparar este registro vs HEAD pós-T1–T4; ACCEPT só se L=A=O=R=PASS e zero `
 
 | Gate | CLOSED_PROVEN | OPEN_MATERIAL | KEEP_APPROVED | TO_VERIFY | EXTERNAL / ADR |
 |---|---:|---:|---:|---:|---:|
-| L | 4 | 0 | 1 | 1 | 0 |
+| L | 5 | 0 | 1 | 0 | 0 |
 | A | 2 | 0 | 3 | 0 | 1 ADR (A-05) |
 | O | 3 | 4 | 0 | 3 | 0 |
 | R | 0 | 1 | 0 | 3 | 0 |
@@ -248,4 +277,4 @@ Comparar este registro vs HEAD pós-T1–T4; ACCEPT só se L=A=O=R=PASS e zero `
 
 **Gates L/A/O/R do doc 293:** todos **ainda NÃO PASS** — T0 apenas congela o universo.
 
-**NEXT_BOUNDED_STEP:** `T0_INDEPENDENT_REVIEW` (autorização de T1 pela coordenação).
+**NEXT_BOUNDED_STEP:** `T1_INDEPENDENT_REVIEW` (autorização de T2/A-05 pela coordenação).

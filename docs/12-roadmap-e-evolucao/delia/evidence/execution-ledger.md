@@ -5986,6 +5986,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 
 | DELIA-C3-R01-ADMISSION-V42-NATIVE-MCP-ENDTOEND-OUTCOME-VALIDATION-01 | Auth legítima recuperada em DEV (password-grant `rober`→gateway local; aud inclui `delia-api`); prod KC permanece invalid_grant sem reset. Runtime v42 + TEO MCP; perfil `openrouter_qwen` adicionado; harness admission unbind fix. E2E DEV: Kimi C1/B1 GROUNDED+MCP, controles conceituais 0-tool; Qwen14B C1 GROUNDED+MCP, B1 owner-path+MCP com Outcome parcial; Qwen4B local C1 admission FAIL (residual capacidade). Routing tests 8 PASS. PRODUCTION_DEPLOY=NOT_AUTHORIZED | R01 E2E Outcome PROVEN em DEV (Kimi/Qwen14B); residual Qwen4B admission + qualidade Outcome parcial Qwen |
 | DELIA-C3-ENG-CLOSURE-T0-BASELINE-RESIDUAL-FREEZE-01 | DOC_ONLY: reancoragem HEAD=54755b078a=origin/main; reconciliou docs 256/293 + ledger + backlog R01–R07 + matrix E2E dc491abd1e; L-01/L-02/L-03/L-04 CLOSED_PROVEN (deleções nativas); L-05 TO_VERIFY residual search; L-06/A-02/A-03/A-06 KEEP; A-05 snapshot experiment ARCHITECTURE_DECISION_REQUIRED; O-01/O-05/O-06 CLOSED; O-02/O-03/O-04/O-07 OPEN_MATERIAL; R-02 G4 fixture path OPEN_MATERIAL (ambiente); X-01/X-02/X-03 EXTERNAL; artefato engineering-closure-residual-register.md; CODE/TESTS unchanged; PRODUCTION_DEPLOY=NOT_AUTHORIZED | T0 FREEZE COMPLETE — gates L/A/O/R ainda NÃO PASS; NEXT=T0_INDEPENDENT_REVIEW → T1 só com autorização |
+| DELIA-C3-ENG-CLOSURE-T1-LEGACY-CONSUMER-PURGE-01 | L-05 only: HEAD d3a3d5ebfb=origin/main; L-01/L-02 ABSENT; rg+AST imports=0; importlib ModuleNotFoundError×2; root_composer/__init__ limpos; HISTORICAL_REFERENCE=2 comment lines generic_evidence_renderer; focused pytest 37 PASS (g2+composition+model_invocation+specialist_interop+interaction arch); CODE_CHANGED=NO; FULL_SUITE=TEST_NOT_RUN→T4; L-06 KEEP/A-05_PENDING; PRODUCTION_DEPLOY=NOT_AUTHORIZED | L-05=CLOSED_PROVEN; LEGACY_CLEANUP(L-05)=PASS; ZERO_LEGACY_GLOBAL=NOT PASS; NEXT=T1_INDEPENDENT_REVIEW |
 
 ### DELIA-C3-ENG-CLOSURE-T0-BASELINE-RESIDUAL-FREEZE-01 — execução (2026-11-09)
 
@@ -5995,3 +5996,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Reconciliação:** docs 256 (G2 deleções CLOSED; G5 snapshot Protocol + C3-T5 KEEP; G8 ACCEPT_WITH_RESIDUAL ≠ zero residual 293) + 293 + backlog R01–R07 + matrix `delia-api/.battery/r01-v42-e2e/matrix-summary.json` (SHA E2E `dc491abd1e`, ancestral).
 - **Veredicto etapa:** T0 FREEZE COMPLETE; gates L/A/O/R **não** aceitos; `NEXT=T0_INDEPENDENT_REVIEW`.
 - **PRODUCTION_DEPLOY:** NOT_AUTHORIZED.
+
+### DELIA-C3-ENG-CLOSURE-T1-LEGACY-CONSUMER-PURGE-01 — execução (2026-11-09)
+
+- **Escopo:** exclusivamente `L-05` (consumidores residuais de `paginated_result_semantics` / `outcome_assessment`).
+- **HEAD:** `d3a3d5ebfb628aa81404d269ac2dfcd8b5272384` (= origin/main no reanchor).
+- **Evidência:** arquivos L-01/L-02 ausentes; AST/import_module/__import__ = 0 hits; `importlib` → ModuleNotFoundError; `root_composer` e `capability_provision.__init__` sem símbolos; 2 comentários históricos classificados `HISTORICAL_REFERENCE`.
+- **Testes focados:** 37 PASS (`test_g2_evidence_contract_regression`, `test_composition_surface_regression`, `test_model_invocation_architecture`, `test_specialist_interop_architecture`, `test_interaction_architecture`).
+- **CODE_CHANGED:** NO (Caso 1). **FULL_BACKEND:** TEST_NOT_RUN (T4). **L-06:** KEEP_APPROVED / A-05_PENDING.
+- **Veredicto:** L-05 CLOSED_PROVEN; Legacy Cleanup (slice L-05) PASS; ZERO_LEGACY_GLOBAL NOT PASS; `NEXT=T1_INDEPENDENT_REVIEW`.
+- **PRODUCTION_DEPLOY:** NOT_AUTHORIZED.
+
