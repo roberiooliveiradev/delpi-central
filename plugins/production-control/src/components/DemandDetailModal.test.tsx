@@ -161,6 +161,47 @@ describe("DemandDetailModal #1547", () => {
     expect(close).toHaveBeenCalledTimes(1);
   });
 
+  it("exibe a diferença entre bruto WEG, faturamento provisório e saldo ajustado", () => {
+    render(
+      <DemandDetailModal
+        line={{
+          ...DEMAND,
+          product_code: "90263918",
+          ordered_quantity: 0.005,
+          open_quantity: 0.005,
+          raw_myweg_quantity_mi: 0.011,
+          fiscal_offset_mi: 0.006,
+          fiscal_offset_status: "provisional_invoice_offset",
+          fiscal_invoice_refs: [{
+            fiscal_key: "02|017071|02|04",
+            invoice: "017071", series: "02", item: "04", quantity_un: "6",
+          }],
+        }}
+        branch="02"
+        onClose={() => undefined}
+      />,
+    );
+    const panel = document.querySelector(".ppc-demand-line__fiscal") as HTMLElement;
+    expect(panel).toBeTruthy();
+    expect(within(panel).getByText("11 peças")).toBeTruthy();
+    expect(within(panel).getByText("6 peças")).toBeTruthy();
+    expect(within(panel).getByText("5 peças")).toBeTruthy();
+    expect(within(panel).getByText(/017071\/02/)).toBeTruthy();
+    expect(within(panel).getByText(/WEG ainda pode não ter reconhecido/)).toBeTruthy();
+  });
+
+  it("sinaliza cobertura fiscal inconclusiva sem inventar nota", () => {
+    render(
+      <DemandDetailModal
+        line={{ ...DEMAND, fiscal_coverage_incomplete: true }}
+        branch="02"
+        onClose={() => undefined}
+      />,
+    );
+    expect(screen.getByRole("status").textContent).toContain("Confira o faturamento");
+    expect(screen.queryByText("Notas consideradas")).toBeNull();
+  });
+
   it("não renderiza para demanda não selecionada", () => {
     const { container } = render(
       <DemandDetailModal line={null} branch="02" onClose={() => undefined} />,
