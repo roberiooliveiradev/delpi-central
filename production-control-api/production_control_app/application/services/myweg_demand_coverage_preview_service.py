@@ -238,20 +238,22 @@ class MyWegDemandCoveragePreviewService:
             sb2_error=sb2_meta.get("error"),
         )
 
-        # ops-abertas não expõe B1_UM — não confirmar cobertura por OP na prévia MyWEG.
+        # OPs verificadas por C2_UM (fallback B1_UM), convertidas para MI.
+        candidate_products = myweg_products | {
+            _text(item.get("produto")) for item in consolidation["protheus_for_coverage"]
+        }
+        op_pool = normalize_myweg_open_ops(
+            ops_all, branch=code, product_codes=candidate_products
+        )
         op_unit = {
-            "status": OP_UNIT_UNVERIFIED,
-            "evidence": (
-                "CONFIRMADO_NO_CODIGO: ops_abertas_sql seleciona C2_QUANT/C2_QUJE/saldo_op "
-                "sem B1_UM. Contrato atual de /pedidos-venda-abertos/ops-abertas não inclui unidade."
-            ),
-            "myweg_op_allocation": "disabled",
+            "status": op_pool["status"],
+            "evidence": "C2_UM da OP; fallback B1_UM via ops-abertas.",
+            "myweg_op_allocation": "verified_units_only",
             "protheus_parity_op_allocation": "enabled_unchanged",
             "potential_ops_count": len(ops_all),
-            "note": (
-                "Cobertura por OP não é classificada como confirmada para necessidades MyWEG. "
-                "Prévia parcial por estoque válido permanece. Unidade da OP = HIPOTESE_A_VALIDAR."
-            ),
+            "verified_ops_count": op_pool["verified_count"],
+            "unverified_ops_count": op_pool["unverified_count"],
+            "unverified_sample": op_pool["unverified_sample"],
         }
 
         # --- Cenário 1: só Protheus (paridade Demanda atual; OP inalterada) ---
@@ -261,7 +263,7 @@ class MyWegDemandCoveragePreviewService:
             branch=code,
         )
 
-        # --- Cenário 2: só MyWEG elegível (estoque validado; sem OP confirmada) ---
+        # --- Cenário 2: MyWEG elegível (estoque e OP com unidade confirmada) ---
         myweg_inputs = []
         blocked_stock_products: list[str] = []
         pending_stock_qty_mi = 0.0
@@ -285,13 +287,12 @@ class MyWegDemandCoveragePreviewService:
         myweg_inputs = apply_pool_stock_to_inputs(myweg_inputs, stock["pool"], branch=code)
         myweg_lines = self._coverage.build(
             open_sales_orders=myweg_inputs,
-            open_production_orders=[],  # OP_UNIT_UNVERIFIED
+            open_production_orders=op_pool["items"],
             branch=code,
         )
 
         # --- Cenário 3: consolidação proposta (ADR pendente) ---
-        # Um único build + pool (filial, produto). Enquanto OP_UNIT_UNVERIFIED:
-        # somente estoque — sem segundo passe que duplicaria alocação.
+        # Um único build e um pool de OPs por (filial, produto), sem duplicação.
         consolidated_inputs = apply_pool_stock_to_inputs(
             list(consolidation["protheus_for_coverage"]) + list(myweg_inputs),
             stock["pool"],
@@ -299,17 +300,19 @@ class MyWegDemandCoveragePreviewService:
         )
         consolidated_lines = self._coverage.build(
             open_sales_orders=consolidated_inputs,
-            open_production_orders=[],
+            open_production_orders=op_pool["items"],
             branch=code,
         )
 
+        for line in [*myweg_lines, *consolidated_lines]:
+            line.op_coverage_incomplete = line.product_code in op_pool["unverified_products"]
         today = self._today or date.today()
         adr_accepted = False
         stock_data_complete = bool(sb2_meta.get("complete")) and not sb2_meta.get("error")
         if exclusive and stock["incomplete"]:
             stock_data_complete = False
         sources_readable = not source_errors
-        productive_coverage_complete = False  # OP_UNIT_UNVERIFIED
+        productive_coverage_complete = bool(op_pool["complete"])
         consolidation_blocked = (
             (not adr_accepted)
             or bool(consolidation["reconciliation_blocked"])
@@ -324,7 +327,7 @@ class MyWegDemandCoveragePreviewService:
             "stock_data_complete": stock_data_complete,
             "productive_coverage_complete": productive_coverage_complete,
             "consolidation_adr_blocked": not adr_accepted,
-            "op_unit_unverified": True,
+            "op_unit_unverified": not op_pool["complete"],
             "consolidated_coverage_reliable": False,
         }
         # reliable global exige fontes + estoque completos; incomplete com error vazio → False.
@@ -354,7 +357,10 @@ class MyWegDemandCoveragePreviewService:
                 "myweg_covered_by_validated_stock": round(
                     sum(line.allocated_stock for line in myweg_lines), 3
                 ),
-                "myweg_covered_by_verified_op": 0.0,
+                "myweg_covered_by_verified_op": round(
+                    sum(float(order["quantity"]) for line in myweg_lines for order in line.covering_orders),
+                    3,
+                ),
                 "myweg_uncovered_confirmed": round(
                     sum(line.uncovered_quantity for line in myweg_lines), 3
                 ),
@@ -465,8 +471,8 @@ class MyWegDemandCoveragePreviewService:
                     **self._scenario_payload(
                         myweg_lines, today, source_label="myweg", force_unit=COVERAGE_UNIT_MI
                     ),
-                    "op_coverage_confirmed": False,
-                    "op_unit_status": OP_UNIT_UNVERIFIED,
+                    "op_coverage_confirmed": op_pool["complete"],
+                    "op_unit_status": op_pool["status"],
                     "pending_without_stock_source_mi": round(pending_stock_qty_mi, 3),
                 },
                 "consolidated_proposed": {
@@ -480,9 +486,9 @@ class MyWegDemandCoveragePreviewService:
                     "definitive_total_published": False,
                     "blocked": consolidation_blocked,
                     "reliable": False,
-                    "stock_only_partial": True,
+                    "stock_only_partial": not op_pool["items"],
                     "single_pool_allocation": True,
-                    "op_coverage_confirmed_for_myweg": False,
+                    "op_coverage_confirmed_for_myweg": op_pool["complete"],
                     "block_reasons": [
                         reason
                         for reason, flag in (
@@ -502,7 +508,7 @@ class MyWegDemandCoveragePreviewService:
                                 bool(consolidation["customer_identity_pending"]),
                             ),
                             ("protheus_units_mixed", bool(protheus_units["mixed"])),
-                            ("op_unit_unverified_myweg", True),
+                            ("op_unit_unverified_myweg", not op_pool["complete"]),
                         )
                         if flag
                     ],
