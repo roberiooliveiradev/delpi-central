@@ -92,6 +92,12 @@ function OpObservation({ text }: { text: string | null | undefined }) {
   );
 }
 
+function fiscalPieces(quantityMi: number): string {
+  return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 }).format(
+    Math.round(quantityMi * 1000),
+  );
+}
+
 function statusReason(line: DemandLine): string {
   const detail = copy.demand.detail;
   if (line.status === "late") return detail.reasonLate(line.days_late);
@@ -160,6 +166,48 @@ export function DemandDetailModal({ line, branch, onClose }: DemandDetailModalPr
             <Fact label={detail.dispatch} value={formatIsoDate(line.dispatch_date)} compact />
           </dl>
         </section>
+
+        {orderIsMyweg && ((line.fiscal_offset_mi ?? 0) > 0 || line.fiscal_coverage_incomplete) ? (
+          <section className="ppc-demand-line__fiscal" aria-label={detail.fiscalTitle}>
+            <div className="ppc-demand-line__section-heading">
+              <h3 className="ppc-demand-line__section-title">{detail.fiscalTitle}</h3>
+            </div>
+            {line.fiscal_coverage_incomplete ? (
+              <p className="ppc-demand-line__warning" role="status">{detail.fiscalPending}</p>
+            ) : null}
+            {(line.fiscal_offset_mi ?? 0) > 0 ? (
+              <>
+                <dl className="ppc-demand-line__fiscal-facts">
+                  <Fact
+                    label={detail.rawMywegQuantity}
+                    value={`${fiscalPieces(line.raw_myweg_quantity_mi ?? 0)} peças`}
+                  />
+                  <Fact
+                    label={detail.fiscalOffset}
+                    value={`${fiscalPieces(line.fiscal_offset_mi ?? 0)} peças`}
+                  />
+                  <Fact
+                    label={detail.effectiveMyweg}
+                    value={`${fiscalPieces(line.open_quantity)} peças`}
+                  />
+                </dl>
+                <p className="ppc-demand-line__fiscal-disclaimer">{detail.fiscalDisclaimer}</p>
+                {line.fiscal_invoice_refs && line.fiscal_invoice_refs.length > 0 ? (
+                  <div className="ppc-demand-line__fiscal-documents">
+                    <span>{detail.invoiceReference}</span>
+                    <ul>
+                      {line.fiscal_invoice_refs.map((ref) => (
+                        <li key={ref.fiscal_key}>
+                          NF {ref.invoice}/{ref.series} · item {ref.item} · {ref.quantity_un} peças
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </>
+            ) : null}
+          </section>
+        ) : null}
 
         <div className="ppc-demand-line__summary">
           <section className="ppc-demand-line__section ppc-demand-line__section--summary" aria-label={detail.qtySection}>
