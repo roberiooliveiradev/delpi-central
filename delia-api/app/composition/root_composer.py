@@ -227,35 +227,9 @@ def create_application(
             settings, connections
         ),
     )
-    # Doc 216: SNAPSHOT_EXPERIMENT (eval-only) routes catalog
-    # discovery through the persisted snapshot; invoke stays live.
-    # Missing/invalid config fails closed — never silent fallback.
-    if settings.mcp_catalog_mode == "snapshot_experiment":
-        if not settings.mcp_catalog_db:
-            raise RuntimeError(
-                "DELIA_MCP_CATALOG_MODE=snapshot_experiment requires "
-                "DELIA_MCP_CATALOG_DB"
-            )
-        from app.application.specialist_interop.snapshot_interop import (
-            SnapshotDiscoverInterop,
-        )
-        from app.infrastructure.interoperability.mcp.catalog_store import (
-            McpCatalogStore,
-            contract_hash,
-        )
-
-        interop = SnapshotDiscoverInterop(
-            adapter,
-            McpCatalogStore(settings.mcp_catalog_db),
-            contract_hash,
-        )
-    elif settings.mcp_catalog_mode != "live":
-        raise RuntimeError(
-            "DELIA_MCP_CATALOG_MODE must be 'live' or "
-            f"'snapshot_experiment', got {settings.mcp_catalog_mode!r}"
-        )
-    else:
-        interop = SpecialistInterop(adapter)
+    # Doc 293 §2A: snapshot catalog experiment retired — discovery is
+    # always live SpecialistInterop (+ native MCPToolset on the Agent).
+    interop = SpecialistInterop(adapter)
     app.config["SPECIALIST_INTEROP"] = interop
 
     # C3-INTERACTION-RUNTIME-01R2: TEST_ONLY deterministic adapter is

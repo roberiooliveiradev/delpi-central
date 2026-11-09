@@ -154,6 +154,12 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 - Relatório final deve separar \`SNAPSHOT_REMOVAL\`, \`CORE_EQUIVALENT\`, \`IAM_7X_STATE\`, \`PERSISTED_APPROVAL\`, \`EXTERNAL_CONNECTION_STATE\`, \`MCPTOOLSET_LIVE\`, \`AUTHZ_NEGATIVES\`, \`OUTCOME_EVIDENCE\`, \`OPS_DRIFT\`, \`OPEN_MATERIAL\`, \`FILES_CHANGED\`, \`TESTS\`, \`SHA\`, \`NEXT=T2_INDEPENDENT_REVIEW\`.
 - O **único artefato de planejamento** é este Documento 293 ampliado. A execução atualizará ledger/registro residual existentes após os fatos; não criar novo documento de roadmap, catálogo materializado, cronograma recursivo nem T6.
 
+### 2A.6 Execution stamp (T2 ampliada — 2026-11-09)
+
+**TASK:** `DELIA-C3-ENG-CLOSURE-T2-BOUNDARY-OWNERSHIP-CONFORMANCE-01`  
+**BASE_HEAD:** `1a895cb0f02bedb6bd2288855fe1d447fea8998e`  
+**RESULT:** T2.1 `RETIRE_FULL_SET` **IMPLEMENTED** (código/repo). T2.2 inventário: Core ExternalConnection/provider approval = `TARGET_ONLY` → T2.3 design only; T2.4/T2.5 = `BLOCKED_BY_OWNER_CONTRACT`. R04 prod flag = `PENDING_OPS`. Detalhe e procedimento ops: `evidence/engineering-closure-residual-register.md` § T2 ampliada. **NEXT:** `T2_INDEPENDENT_REVIEW`. T3 / PRODUCTION_DEPLOY: NOT_AUTHORIZED.
+
 ## 3. Política de residual ZERO e limites reais
 
 - **ZERO** significa nenhum residual material **no escopo de fechamento DÉLIA aprovado**. Resíduo externo TÉO, dependência de produção ou limitação de modelo não pode ser rotulado `PASS`; determinar explicitamente se é bloqueador da aceitação DÉLIA ou de release. Não declarar que todo monorepo foi limpo.

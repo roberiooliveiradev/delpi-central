@@ -18,7 +18,7 @@
 | `BRANCH` | `main` |
 | `CANONICAL_REANCHOR` | HEAD → `.cursor`/instruções → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → arquitetura → product spec → 256/293/ledger/backlog R01–R07 → matrix E2E |
 | `CURRENT_PHASE` | Coordenação de fechamento engenharia **T0 Freeze** (doc 293). Marcadores históricos de `16` sob Product Master Option B permanecem supersedidos para sequência de feature; **esta trilha não avança C3/C4/C5**. |
-| `CANONICAL_NEXT` | `T2_INDEPENDENT_REVIEW` → aprovação explícita `RETIRE_FULL_SET` (ou rejeição/KEEP) antes de qualquer remoção; T3 não autorizada |
+| `CANONICAL_NEXT` | `T2_INDEPENDENT_REVIEW` — snapshot code retired; cadastro Core `BLOCKED_BY_OWNER_CONTRACT`; prod flag `PENDING_OPS`; T3 não autorizada |
 | `APPLICABLE_CP_RQ` | Gates L/A/O/R do doc 293; CPs materiais de Evidence/Epistemic/MCP (ex. CP-093/094) permanecem PARTIAL históricos — **não reabertos** nesta T0 |
 | `PYDANTIC_AI_VERSION` | `2.50.0` (`delia-api/requirements.txt`) |
 | `RUNTIME_CONFIG_FINGERPRINT` | JSON runtime sha256 prefix `3836a5290ebf4372` (arquivo `pydantic_ai.runtime.delpi.json` no HEAD); profiles: `local_ollama` (default), `openrouter_kimi`, `openrouter_qwen` |
@@ -42,12 +42,13 @@
 | L-03 | Legacy | Monólito `orchestration.py` removido / decomposto | DÉLIA capability_provision | ledger `LEGACY-ORCHESTRATION-REMOVAL…`; módulos `governed_capability_orchestrator` + `semantic_capability_support` | `CLOSED_PROVEN` | — |
 | L-04 | Legacy | Adapter texto `openai_compatible_adapter` aposentado | DÉLIA model_invocation | ausente em `infrastructure/model_invocation/`; ledger runtime unificado | `CLOSED_PROVEN` | — |
 | L-05 | Legacy | Busca residual: zero import vivo dos módulos deletados L-01/L-02 | DÉLIA QA | T1 SHA `d3a3d5ebfb`; `rg`+AST=0 imports; importlib ModuleNotFoundError×2; composer/`__init__` limpos; comentário histórico only; focused 37 PASS | `CLOSED_PROVEN` | — |
-| L-06 | Legacy | Snapshot experiment code (`snapshot_interop`, `catalog_store`, `mcp_catalog_sync`) | DÉLIA interop + coordenação | T2: consumidores só experiment/tests/composer branch; default código=`live`; **prod env ainda `snapshot_experiment`** (drift ops) | `KEEP_APPROVED` até ADR | T2 review → remoção só se RETIRE aprovado |
+| L-06 | Legacy | Snapshot experiment code removido (RETIRE_FULL_SET PO) | DÉLIA interop | T2 ampliada: arquivos ausentes; env retired fail-closed; compose limpo; testes retired PASS | `CLOSED_PROVEN` (código) | ops: limpar flag prod |
 | A-01 | Architecture | Domain/Application sem import direto de Infra no snapshot | DÉLIA specialist_interop | `snapshot_interop` usa Protocol `_SnapshotCatalogStore`; ledger G5 | `CLOSED_PROVEN` | — |
 | A-02 | Architecture | C3-T4 Structured Understanding preservado | DÉLIA structured_understanding | docs 21/20/25 + doc256 Conflict A; código presente; unwired root = approved KEEP | `KEEP_APPROVED` | — |
 | A-03 | Architecture | C3-T5 OpenAPI foundation preservado | DÉLIA openapi/capability | ledger G5 KEEP (46 testes); `openapi_provider.py` presente; adapter direto já aposentado | `KEEP_APPROVED` | — |
 | A-04 | Architecture | Segundo Agent/planner/tool-loop paralelo ao Pydantic AI | DÉLIA orchestration | Agent + MCPToolset em adapter/investigation; G8 “zero segundo runtime” | `CLOSED_PROVEN` | — |
-| A-05 | Architecture | Destino do experimento snapshot (`live` vs `snapshot_experiment`) + R04 stale | Coordenação + DÉLIA interop | T2 HEAD `fd78269968`; doc216 PRODUCTION_SWITCH_NOT_APPROVED; LIVE equivalente PROVEN; RETIRE recomendado; **código não removido** | `ARCHITECTURE_DECISION_REQUIRED` | Aguardar ADR |
+| A-05 | Architecture | Snapshot experiment RETIRE executado (código) | DÉLIA interop | PO §2A + remoção física; Settings fail-closed; live SpecialistInterop only | `CLOSED_PROVEN` (código) | R04 prod = PENDING_OPS |
+| A-07 | Architecture | Cadastro centralizado MCP (Core ExternalConnection / provider approval) | Core governance | T2.2: ExternalConnection `TARGET_ONLY` (doc51); doc60 §5.1 DEFERRED; sem tabela/API física | `BLOCKED_BY_OWNER_CONTRACT` | aprovação Core + contrato |
 | A-06 | Architecture | Estratégia PromptedOutput vs ToolOutput (coexistência) | Coordenação DÉLIA | migração PromptedOutput rollback; ADR spike; **não reabrir em T3** | `KEEP_APPROVED` (+ ADR registrado) | — |
 | O-01 | Flow | Admissão v42 → owner path (Kimi, Qwen14B) | DÉLIA admission | matrix E2E + admission 3/3; SHA `dc491abd1e` | `CLOSED_PROVEN` | — |
 | O-02 | Flow | Admissão C1 Qwen4B local (`explanation`/owner_path=false) | DÉLIA admission + eval | matrix: admission FAIL 2/2; E2E 0 MCP; fronteira `ADMISSION` | `OPEN_MATERIAL` | T3 |
@@ -368,3 +369,110 @@ Comparar este registro vs HEAD pós-T1–T4; ACCEPT só se L=A=O=R=PASS e zero `
 **Gates L/A/O/R do doc 293:** todos **ainda NÃO PASS** — T0 apenas congela o universo.
 
 **NEXT_BOUNDED_STEP:** `T2_INDEPENDENT_REVIEW` — coordenação aprova/rejeita `RETIRE_FULL_SET`; só então task bounded de remoção (se aprovada). T3 **não** autorizada.
+
+
+---
+
+## T2 ampliada — execução (2026-11-09)
+
+**TASK_ID:** `DELIA-C3-ENG-CLOSURE-T2-BOUNDARY-OWNERSHIP-CONFORMANCE-01` (emenda PO §2A doc 293)  
+**PLAN_COMMIT:** `91ab7b8476a48b9b7afd815952ae4a67843098c9`  
+**BASE_HEAD (reanchor):** `1a895cb0f02bedb6bd2288855fe1d447fea8998e`  
+**PRODUCTION_DEPLOY:** NOT_AUTHORIZED · **T3:** NOT_AUTHORIZED
+
+### T2.1 — RETIRE_FULL_SET (código)
+
+**Removidos:**
+- `delia-api/app/application/specialist_interop/snapshot_interop.py`
+- `delia-api/app/infrastructure/interoperability/mcp/catalog_store.py`
+- `delia-api/scripts/mcp_catalog_sync.py`
+- `delia-api/tests/test_mcp_catalog_experiment.py`
+- branch snapshot em `root_composer.py` e `r4_authenticated_resume_eval.py`
+- env Compose `DELIA_MCP_CATALOG_MODE` / `DELIA_MCP_CATALOG_DB`
+
+**Fail-closed:** `Settings` rejeita `DELIA_MCP_CATALOG_DB` não-vazio e qualquer `DELIA_MCP_CATALOG_MODE` ≠ unset/`live`.
+
+**Testes:** `test_mcp_catalog_snapshot_retired` + arch/composition focused PASS; suíte ampla ~1374 PASS / 1 FAIL = G4 path (T4, pré-existente).
+
+**Consumidores ativos snapshot:** 0 (somente testes negativos de ausência).
+
+### Produção — drift e remediação (NÃO executada)
+
+Estado observado anteriormente: `DELIA_MCP_CATALOG_MODE=snapshot_experiment`, DB `/data/delia/mcp_catalog.db` (~2026-11-03).
+
+Procedimento autorizado futuro (ops; **não** mutar prod nesta task):
+
+1. Backup `.env` / compose overlay e do volume `mcp_catalog.db` se retenção for necessária.
+2. Remover ou comentar `DELIA_MCP_CATALOG_MODE` e `DELIA_MCP_CATALOG_DB` no env prod.
+3. Deploy/restart **somente** após push deste código (Settings fail-closed) + autorização ops — ordem: código live-only → limpar env → restart.
+4. Pós-condição: container sem as duas envs; health 200; um turno DEV/prod autorizado com MCPToolset live; ausência de erros `retired` no boot.
+5. Volume SQLite experimental: reter ou apagar conforme política de dados; **não** é fonte de authority.
+6. Rollback: restaurar env+imagem anteriores (não reintroduzir snapshot no código).
+
+`R04_STATUS` após T2.1 código: **`PENDING_OPS`** até pós-condição prod verificada. Não declarar `CLOSED_PROVEN` para R04 sem prova runtime prod.
+
+### T2.2 — Inventário (READ-ONLY)
+
+| Responsabilidade | EXISTING_EQUIVALENT | REUSE_DECISION | Evidência |
+|---|---|---|---|
+| MCPToolset / CombinedToolset live | YES | REUSE | `pydantic_ai_investigation.py` |
+| SpecialistInterop + adapter | YES | REUSE | application/infrastructure interop |
+| Identidades 7 specialists | YES | REUSE | `_SPECIALIST_IDENTITY` (davi…eva) |
+| Endpoints/enable flags | YES (env) | REUSE até Core | `settings.mcp_specialist_*` |
+| Provider approval persistido Core | NO / TARGET_ONLY | **não NEW** | doc51 §18.3; sem tabela/API Core |
+| ExternalConnection físico | NO / TARGET_ONLY | **não NEW** | doc21 candidato; doc51 TARGET_ONLY |
+| Keycloak 7 resource clients (desejado) | YES (script) | REUSE IAM | `delia_mcp_keycloak_state.py` SPECIALISTS×7; **≠ prova prod provisionada** |
+| Compose defaults | PARCIAL | — | DAVI/TÉO/VISTA enabled; CAIO/CLARA/SURI/EVA unset no DEV local |
+
+**Matriz 7× (DEV local container):**
+
+| ID | Endpoint env | Enabled | tools/list | AuthZ | Nota |
+|---|---|---|---|---|---|
+| DAVI | set | true | TEST_NOT_RUN (T2) | — | compose default |
+| TÉO | set | true | TEST_NOT_RUN | — | compose default |
+| VISTA | set | true | TEST_NOT_RUN | — | compose default |
+| CAIO | unset | unset | TEST_NOT_RUN | — | identity exists; not wired DEV |
+| CLARA | unset | unset | TEST_NOT_RUN | — | idem |
+| SURI | unset | unset | TEST_NOT_RUN | — | idem |
+| EVA | unset | unset | TEST_NOT_RUN | — | idem |
+
+Keycloak prod state: **TO_VERIFY** (sem `--check` autorizado nesta execução).
+
+### T2.3 — Contrato cadastro centralizado (design only)
+
+```text
+RESPONSIBILITY: aprovar/cadastrar/desabilitar provedores MCP
+LEGITIMATE_OWNER: Core governance (doc60 §5.1)
+CANONICAL_SOURCE: docs 21 §§4A.18/7/23; 60 §5.1; 51 TARGET_ONLY
+CONSUMERS: DÉLIA composition (futuro read model); Control Tower UI
+CURRENT_CONTRACT: candidato ExternalConnection + provider approval — NÃO físico
+EXISTING_EQUIVALENT: NO (plataforma)
+REUSE_DECISION: EXTEND Core quando contrato/fase autorizarem — NEW na DÉLIA PROIBIDO
+OWNER_APPROVAL: REQUIRED (Core write)
+PHASE_AUTHORIZATION: DEFERRED / BLOCKED_BY_OWNER_CONTRACT
+```
+
+Separação preservada: **Server registration ≠ ExternalConnection ≠ live tools/list**.
+
+### T2.4 / T2.5 — implementação
+
+```text
+STATUS: BLOCKED_BY_OWNER_CONTRACT
+REASON: ExternalConnection / provider approval Core não existem fisicamente;
+        PO autorizou planejar, não improvisar tabela na DÉLIA
+UI_ADMIN: não implementada (sem contrato backend)
+EXTERNAL_MCP_E2E: TEST_NOT_RUN
+```
+
+### Estados finais T2 ampliada
+
+| ID | Status |
+|---|---|
+| A-05 | `CLOSED_PROVEN` (código) |
+| L-06 | `CLOSED_PROVEN` (código) |
+| R04 | `PENDING_OPS` (prod flag) |
+| A-07 cadastro Core | `BLOCKED_BY_OWNER_CONTRACT` |
+| Architecture Ownership gate | **NOT PASS** global (A-07 + R04 ops) |
+| Snapshot removal gate | **PASS** no código/repo |
+
+**NEXT:** `T2_INDEPENDENT_REVIEW`

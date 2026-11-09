@@ -314,14 +314,29 @@ class Settings:
         self.checkpoint_db_path = (
             os.getenv("DELIA_CHECKPOINT_DB") or ""
         ).strip() or None
-        # Doc 216: isolated catalog experiment — LIVE default;
-        # SNAPSHOT_EXPERIMENT is eval-only composition config.
-        self.mcp_catalog_mode = (
-            os.getenv("DELIA_MCP_CATALOG_MODE") or "live"
+        # Doc 293 §2A / PO RETIRE_FULL_SET: MCP catalog snapshot
+        # experiment removed. Discovery is live-only (MCPToolset /
+        # SpecialistInterop). Stale env fails closed — never a silent
+        # second catalog authority.
+        _catalog_mode = (
+            os.getenv("DELIA_MCP_CATALOG_MODE") or ""
         ).strip().lower()
-        self.mcp_catalog_db = (
+        _catalog_db = (
             os.getenv("DELIA_MCP_CATALOG_DB") or ""
-        ).strip() or None
+        ).strip()
+        if _catalog_db:
+            raise ValueError(
+                "DELIA_MCP_CATALOG_DB is retired: MCP discovery is "
+                "live-only via SpecialistInterop / MCPToolset "
+                "(doc 293 §2A RETIRE_FULL_SET)"
+            )
+        if _catalog_mode and _catalog_mode != "live":
+            raise ValueError(
+                "DELIA_MCP_CATALOG_MODE is retired "
+                f"(got {_catalog_mode!r}): MCP discovery is live-only "
+                "via SpecialistInterop / MCPToolset "
+                "(doc 293 §2A RETIRE_FULL_SET)"
+            )
         # VD-F03 dictation.transcription.v1 — dedicated audio-capable
         # model behind the same approved OpenAI-compatible provider
         # family. Independent DELIA_STT_* set: incomplete config fails

@@ -2068,8 +2068,8 @@ services:
       # TEO: analyze -> gpt_analyze (view=summary only).
       DELIA_C4_DAVI_PRODUCT_READ_ENABLED: ${DELIA_C4_DAVI_PRODUCT_READ_ENABLED:-}
       DELIA_C4_TEO_DASHBOARD_ANALYZE_ENABLED: ${DELIA_C4_TEO_DASHBOARD_ANALYZE_ENABLED:-}
-      DELIA_MCP_CATALOG_MODE: ${DELIA_MCP_CATALOG_MODE:-live}
-      DELIA_MCP_CATALOG_DB: ${DELIA_MCP_CATALOG_DB:-/data/delia/mcp_catalog.db}
+      # Doc 293 §2A RETIRE_FULL_SET: DELIA_MCP_CATALOG_MODE/DB removed —
+      # MCP discovery is live-only; stale env fails closed in Settings.
       # CRI E1: central ON/OFF for conversational response intelligence —
       # default OFF; fail-closed to baseline on invalid/absent resources.
       # Stays unset in prod .env unless rollout is separately authorized.

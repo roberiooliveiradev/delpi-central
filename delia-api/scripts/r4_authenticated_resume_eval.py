@@ -266,29 +266,8 @@ def _compose(inject_purpose=None, on_inject=None):
             ),
         )
     )
-    if settings.mcp_catalog_mode == "snapshot_experiment":
-        if not settings.mcp_catalog_db:
-            raise SystemExit(
-                "refused: DELIA_MCP_CATALOG_MODE=snapshot_experiment "
-                "requires DELIA_MCP_CATALOG_DB"
-            )
-        from app.application.specialist_interop.snapshot_interop import (
-            SnapshotDiscoverInterop,
-        )
-        from app.infrastructure.interoperability.mcp.catalog_store import (
-            McpCatalogStore,
-        )
-
-        interop = SnapshotDiscoverInterop(
-            mcp, McpCatalogStore(settings.mcp_catalog_db)
-        )
-    elif settings.mcp_catalog_mode != "live":
-        raise SystemExit(
-            "refused: unknown DELIA_MCP_CATALOG_MODE="
-            f"{settings.mcp_catalog_mode!r}"
-        )
-    else:
-        interop = SpecialistInterop(mcp)
+    # Doc 293 §2A: snapshot catalog experiment retired — live only.
+    interop = SpecialistInterop(mcp)
     guarded = _GuardedAdapter(
         PydanticAiModelInvocationAdapter(
             base_url=settings.llm_base_url,
