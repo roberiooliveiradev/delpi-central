@@ -568,3 +568,46 @@ O PO aprovou nova apresentação **sem duplicar código/loja/razão social**: co
 ## PRC-REF-016-A / D16-REF-01 — Bandeiras junto a cada campo, pós-conclusão e descoberta
 
 **Nova direção PO:** [refatoração D16-REF-01](./PRODUCT-REGISTRATION-D16-ATTENDANCE-FLAGS-CRUD-EVA-UX-PLAN.md#d16-ref-01--decisão-po-superveniente-bandeiras-por-campo-experiência-contextual-e-consultas-transversais). Substituir a faixa geral de Bandeiras de acompanhamento como UX principal por **ícone contextual em cada campo**: trigger pequeno só no hover/focus/toque quando não há flag; bandeira **vermelha visível** se OPEN; modal oficial para criar/ver/editar/resolver/remover, com audit/soft-delete e sem mudança do campo. Una OPEN por campo/solicitação; fornecedores têm alvos separados por vinculo+atributo (PN/Catálogo). RESOLVED sem alerta vermelho mas visível em histórico; flags pós-conclusão permanecem editáveis por analista autorizado, inclusive meses depois. No cabeçalho da ficha, contador compacto e navegação para campos sinalizados; sem card genérico vazio. **Read layer nova TARGET:** lista/filtros de casos, produtos e campos com bandeiras, agrupamentos por tipo/atributo, status, período e atendente sob AuthZ backend, sem total falso de primeira página. EVA deve suportar CRUD contextual e consultas consolidadas pelos mesmos use cases. D16 infraestrutura permanece PROVEN; refinamento **PLANNED**, sem deploy.
+
+
+## PRC-REF-017 — Ícone de bandeira azul e fechamento CREATE/UPDATE com evidência individual (2026-11-09)
+
+**Decisão PO / planejamento, não implementação.** Esta é evolução aditiva dos fluxos D13–D16, sem novo documento nem novo endpoint desnecessário. Detalhes de contrato e gates em [contrato técnico PRC](./PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md) e [D15](./PRODUCT-REGISTRATION-D15-SA5-BASELINE-AND-LIFECYCLE.md).
+
+### A. Trigger das bandeiras (ajuste visual pontual)
+- Na Ficha técnica, **substituir o símbolo \`+\` por \`Flag\` Lucide** quando não existir bandeira OPEN; manter exatamente o tratamento visual azul/ghost discreto do trigger atual (mesmo hover/focus/touch, tamanho e acessibilidade). No hover/foco/toque mostrar **bandeira azul vazada** com nome acessível \`Adicionar bandeira em {campo}\`, sem cruz. Após criar bandeira, mostrar **bandeira vermelha** persistente; clicar abre modal contextual para editar/resolver/remover. RESOLVED não aparece vermelha. Não mudar contrato de flags, filtros, cor padrão do design system, nem layout aprovado.
+- Fonte já inventariada: \`plugins/engineering/src/features/product-registration/components/PrcFieldFlagTrigger.tsx\` importa \`Flag, Plus\` e renderiza \`hasOpen ? <Flag...> : <Plus...>\`. Alterar o branch fechado para \`Flag\`, preservando CSS \`engineering-prc__field-flag--add\` e comportamento. Testar desktop hover/focus, mobile touch, ícone azul sem flag, vermelho OPEN, screen reader.
+
+### B. Jornada do atendente — CREATE
+1. Solicitante cria pedido sem código de produto, pois ainda não existe no TOTVS; nenhuma validação deve exigi-lo na abertura.
+2. Analista inicia atendimento, revisa os campos propostos e executa cadastro **manual por operador autorizado** no TOTVS; nenhum write ERP pela Engenharia.
+3. Para concluir, informar **código do produto novo** no campo dedicado da confirmação de conclusão (não na descrição nem em bandeira). Preservar zeros à esquerda. Confirmar que o código não é vazio, resolve a **produto oficialmente existente**, possui identidade inequívoca e corresponde ao pedido CREATE (evitar concluir equivocadamente um produto existente de outro atendimento; estratégia de prova de identidade/recência/proveniência precisa ser definida no contrato do owner e evidenciada; apenas existência do B1_COD é insuficiente para comprovar que foi "criado neste atendimento").
+4. Executar consulta oficial via \`OfficialProductReaderPort → api-delpi\` e comparar **todos os campos aplicáveis solicitados** e fornecedores vinculados quando exigidos/verificáveis. Caso valor diverja, esteja indisponível, parcial, ambíguo ou não verificável: **não concluir**.
+5. Gravar o código verificado na solicitação final, no \`technical_record\`/revisão e no retorno acessível ao solicitante (detalhe e outbound autorizado), junto de data, origem e status da verificação. Nunca publicar somente porque alguém digitou o código.
+6. UX da aba \`Verificação TOTVS\`: lista organizada de **campo / esperado / encontrado / resultado / origem / horário**; instrução 'Informe o código gerado manualmente no TOTVS' e ação de verificar, caso disponível no contrato; confirmação final habilitada pelo backend apenas quando tudo que é obrigatório está comprovado. Não expor SQL/credenciais ao usuário.
+
+### C. Jornada do atendente — UPDATE
+1. O código oficial vem da solicitação/baseline; não oferecer troca arbitrária de produto no diálogo de conclusão.
+2. Renderizar lista individual dos campos alterados: **campo, valor anterior do baseline, valor solicitado, valor observado na leitura oficial, resultado** (\`MATCH\`, \`MISMATCH\`, \`UNVERIFIABLE\`, \`PENDING\` conforme código real) e separar operações SA5 ADD/UPDATE/REMOVE por chave e atributo.
+3. Comparar **somente os campos efetivamente solicitados**, incluindo PN e Catálogo independentes; não exigir correspondência de atributos fora do change set. Falha de apenas um campo bloqueia finalização completa, sem aprovação parcial silenciosa.
+4. A tentativa de \`verify-and-complete\` deve usar leitura live oficial, expectedVersion/CAS, idempotência/auditoria e persistir tentativa com resultados por campo. Não reutilizar screenshot ou cache da UI como evidência.
+5. Se algum campo não corresponde ao solicitado, mostrar diferenças e orientar o analista a corrigir no TOTVS manualmente e **verificar novamente**; não marcar completed até total match. Se sem alterações efetivas, definir regra de fluxo e impedir conclusão sem prova aplicável.
+6. SA5 REMOVE permanece **PENDING_OWNER** para conclusão, independentemente do read-back, até aprovação técnica; não contornar gate.
+
+### D. Inventário de implementação (2026-11-09; requer reconfirmação no HEAD do executor)
+- **PROVEN no código consultado:** \`service.verify_and_complete\` exige \`officialCode\` quando não existe; usa \`_reader.read_product\`, \`_expected_verify_paths\` com CREATE por campos de draft e UPDATE por \`changed_paths\`/SA5, compara com \`_compare\`, registra tentativas de mismatch/unverifiable e só chama \`complete_request\` após match; resposta inclui \`officialCode\`. \`PrcActionBar\` já mostra campo Código oficial TOTVS em confirmação quando \`needsOfficialCode\`; \`PrcDetailPage\` exibe \`officialCode\`.
+- **TO_INVENTORY / AC pendente:** verificar se UI distingue CREATE/UPDATE, se \`needsOfficialCode\` está ativo no CREATE e desabilitado/restrito no UPDATE, se código é propagado a requester/outbound, se todos os valores CREATE/SA5 são de fato incluídos sem omissão de paths e se comparação bloqueia oficial incompleto; verificar se a identidade do novo produto foi comprovada além de \`B1_COD\`. Verificar tratamentos 404/409/422/503 e relatório de verificação individual na aba Verificação TOTVS.
+- Nenhum mecanismo paralelo/SQL direto na Engineering API. Se falta leitura SB1/SA5, contrato/projeção oficial deve evoluir **exclusivamente na api-delpi**, mantendo AuthZ e proveniência.
+
+### E. Critérios de aceite de próxima execução
+- C01 Ícone Flag azul em campo sem bandeira, vermelho quando OPEN, no desktop hover/focus, tablet/mobile toque, acessibilidade/zoom200.
+- C02 CREATE sem código no intake; código oficial obrigatório somente na conclusão; não aceitar vazio/inexistente/ambíguo.
+- C03 CREATE exige correspondência integral dos campos verificáveis requeridos e vínculos oficiais; identidade/proveniência do produto novo comprovada ou gate explícito PENDING_OWNER para evidência que o TOTVS não forneça.
+- C04 Código verificado persiste na solicitação, revisão/histórico e consulta autorizada do solicitante/outbound.
+- C05 UPDATE exibe verificação individual para cada campo alterado (SB1 e SA5) com esperado/observado/resultados, sem exigir atributo não alterado.
+- C06 Um mismatch/unverifiable/timeout/incompletude bloqueia completed, registra tentativa e permite nova verificação.
+- C07 SA5 remove gate PENDING_OWNER, nenhum write ERP; REST/EVA equivalentes.
+- C08 pytest/Vitest/PG real, Playwright SSO desktop/tablet/mobile, screenshots (incluindo erro, sucesso e falta de código), regressão D13–D16, bundle DEV e docs no SHA; produção/HML intocados.
+
+**Status:** PO_APPROVED_PLAN / CODE_CHANGES_NOT_PERFORMED / DEV_IMPLEMENTATION_PENDING.
+
