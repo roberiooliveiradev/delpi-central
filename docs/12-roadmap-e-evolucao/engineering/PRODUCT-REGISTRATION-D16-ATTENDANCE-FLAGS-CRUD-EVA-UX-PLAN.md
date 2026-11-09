@@ -426,3 +426,9 @@ H. Rebuild/DEV-only migrations com contratos, health, bundle fingerprint, gatewa
 
 **Status deste gate:** PLAN_APPROVED / IMPLEMENTATION_PENDING / NO_DEPLOY.
 
+
+
+## D16-REF-02 — Ajuste cosmético do acionador de bandeira (PO 2026-11-09)
+
+**Decisão PO:** onde não há bandeira OPEN, substituir o ícone de **+** no botão contextual por **\`Flag\` azul** (tom/tokens do antigo +, ghost pequeno), mantendo hover/foco/ação por toque. Se OPEN, mostrar **\`Flag\` vermelha persistente**. RESOLVED não exibe alerta vermelho e permanece em histórico. Não alterar contrato REST/EVA, descrição, modal, auditoria ou execução. **Ponto de código inventariado:** \`plugins/engineering/src/features/product-registration/components/PrcFieldFlagTrigger.tsx\`, branch \`hasOpen ? <Flag size={14} .../> : <Plus size={14} .../>\`; trocar somente branch fechado e import desnecessário, manter aria-label \`Adicionar bandeira em {campo}\`. **Aceite:** screenshots antes/depois, desktop hover/focus, mobile toque, vermelho OPEN, a11y, zoom200, build/Vitest/Playwright e bundle DEV; nenhuma regressão. Registro de planejamento, não implementado nesta tarefa.
+
