@@ -25,6 +25,7 @@ def test_list_pedidos_venda_abertos_normalizes_items_and_summary() -> None:
                 "entregue": 4,
                 "saldo": 6,
                 "unidade": "MI",
+                "tipo_produto": " PA ",
                 "data_despacho": "",
                 "data_entrega": "2026-06-09",
                 "no_estoque": 2,
@@ -51,6 +52,7 @@ def test_list_pedidos_venda_abertos_normalizes_items_and_summary() -> None:
     assert result.items[0]["data_entrega"] == "2026-06-09"
     assert result.items[0]["saldo"] == 6.0
     assert result.items[0]["unidade"] == "MI"
+    assert result.items[0]["tipo_produto"] == "PA"
     assert result.summary.total_linhas == 1
     assert result.summary.itens_estoque_parcial == 1
 
