@@ -1,6 +1,6 @@
 # 162 — CF-UX-054 — Exclusão de competência mensal
 
-Estado: a exclusão administrativa foi implantada em produção no commit `03d194e6c41d68acc19a2c3c97a54f9887ca4231` (V021 aplicada; setembro e outubro de 2026 permanecem abertos). A revisão **CF-UX-054-UX-01** está no código e ainda não foi implantada. Nenhuma competência produtiva foi excluída.
+Estado: a exclusão administrativa foi implantada em produção no commit `03d194e6c41d68acc19a2c3c97a54f9887ca4231` (V021 aplicada; setembro e outubro de 2026 permanecem abertos). A revisão **CF-UX-054-UX-01** está no commit `2fd51b320bcb9ed0f3193ae3991540c7b8a0b974` e ainda não foi implantada. Nenhuma competência produtiva foi excluída.
 
 ## Escopo e owner
 
