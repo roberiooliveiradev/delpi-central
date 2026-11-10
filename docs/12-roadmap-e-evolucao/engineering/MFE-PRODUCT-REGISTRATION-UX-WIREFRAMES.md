@@ -425,3 +425,31 @@ Bandeiras internas D16 seguem ações autorizadas.
 \`\`\`
 
 **Regras visuais:** modo edição reaproveita os componentes reais do cadastro, com valores preenchidos e validação/diff; fornecedores sempre por busca oficial e identidade code+store; help no label e bandeira contextual por campo; apenas campos devolvidos editáveis pelo requester. Justificativa só contextual e exigida quando houver alteração; nenhum formulário que repete campo/novo valor/justificativa para todos os atributos. Destacar alvos e motivos da devolução dentro da ficha; foco e scroll corretos. Nada de dashboards nem novas listas paralelas. Em desktop/tablet/mobile e zoom200, elementos sem horizontal overflow e botões acessíveis por teclado. Reutilizar estados do backend, jamais botão fake com autorização inexistente.
+
+## PRC-REF-023 — Páginas alvo: documento opcional no formulário canônico, duas superfícies (2026-11-10)
+
+**Status \`PO_APPROVED_FUNCTIONAL_TARGET / PLANNED\`.** UX enxuta, sem formularios duplicados.
+
+\`\`\`text
+PORTAL ENGENHARIA / NOVA SOLICITAÇÃO
+[CREATE | UPDATE]   (mesmas seções e campos de hoje)
+Identificação e classificação · atributos técnicos · fornecedores SA5
+... Part Number obrigatório; Catálogo opcional ...
+Documentos de apoio (opcional)
+[Selecionar PDF ou imagem]   [Arquivos selecionados / remover]
+[Nova solicitação / Enviar alteração]
+(PDF ou imagem é apoio à análise, não campo obrigatório nem evidência TOTVS)
+
+DETALHE DO PRC (usuário autorizado)
+Ficha técnica | Verificação TOTVS | Histórico | Revisões
+Documentos de apoio (se houver) [Nome | Autor | Data | Download seguro]
+
+MINHAS SOLICITAÇÕES / NOVA CRIAÇÃO OU ALTERAÇÃO DE MATÉRIA-PRIMA
+Mesmo formulário funcional da Engenharia: campos, selects oficiais,
+busca fornecedor, PN obrigatório, Catálogo opcional, documentos opcionais.
+[Enviar solicitação]
+Após envio: caso PRC da Engineering API; acompanhamento/retorno autorizado
+em Minhas Solicitações, sem criar cópia de workflow no requests-api.
+\`\`\`
+
+**Não é prioridade desenhar um novo wizard.** Primeiro sustentar anexo na API, depois adicionar o campo de upload discreto à ficha oficial, por último consumir a mesma semântica em Minhas Solicitações. \`StagedAttachmentsField\` no MFE My Requests serve como referência de staging/preview/removal, não como autorização para importar internals ou apontar upload PRC ao storage do requests-api. O suporte de upload deve distinguir arquivo local vs persistido, falha/retry e permissões no download. Se storage/permission/cutover não estiverem aprovados, manter UX sem controle falso de envio.
