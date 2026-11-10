@@ -1,56 +1,98 @@
-/** PRC-REF-023-F01-FIX-01 — o upload usa o kit oficial @delpi/plugin-ui
- * via façade engineeringUi; input nativo visível não pode retornar. */
+/** PRC-REF-023 — asserções de fonte: upload usa primitivas oficiais
+ * plugin-ui via façade engineeringUi (dropzone + strip + modal). */
 
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const src = (rel: string) =>
-  readFileSync(resolve(__dirname, rel), "utf8");
-
+const src = (rel: string) => readFileSync(resolve(__dirname, rel), "utf8");
 const createPage = () => src("../pages/PrcCreatePage.tsx");
+const detailSection = () => src("./PrcAttachmentsSection.tsx");
 const facade = () => src("../../../ui/engineeringUi.ts");
 
-describe("PRC-REF-023-F01-FIX-01 — upload via plugin-ui oficial", () => {
+describe("PRC-REF-023 — upload via plugin-ui oficial", () => {
   it("FileDropzone oficial renderizado na seção de documentos", () => {
     const t = createPage();
     expect(t).toContain("EngineeringFileDropzone");
-    expect(t).toContain("EngineeringAttachmentFileList");
     expect(t).toContain('title="Documentos de apoio (opcional)"');
   });
   it("não há input file nativo visível na página", () => {
     expect(createPage()).not.toMatch(/<input[^>]*type="file"/);
   });
-  it("dropzone usa input oculto do kit (hideInput)", () => {
-    expect(createPage()).toContain("hideInput");
-  });
-  it("accept vem da política compartilhada (não string solta)", () => {
+  it("accept e limites derivam da política compartilhada", () => {
     const t = createPage();
     expect(t).toContain("accept={PRC_ATTACHMENT_ACCEPT}");
     expect(t).toContain("PRC_ATTACHMENT_MAX_COUNT");
     expect(t).toContain("PRC_ATTACHMENT_MAX_MB");
-  });
-  it("arquivos selecionados são marcados como ainda não enviados", () => {
-    expect(createPage()).toContain("ainda não enviados");
-  });
-  it("retry preserva o requestId criado (sem recriar solicitação)", () => {
-    const t = createPage();
-    expect(t).toContain("createdRequestId");
-    expect(t).toContain("Tentar enviar documentos novamente");
-    // create só ocorre quando createdRequestId é nulo
-    expect(t).toMatch(/createdRequestId\s*\?\s*null\s*:\s*await prcIntakeSubmit/);
-  });
-  it("façade exporta wrappers com prefixo engineering (BEM dual)", () => {
-    const f = facade();
-    expect(f).toContain("createDashboardFileDropzone");
-    expect(f).toContain('fileDropzoneBemClasses(ENG_UI_PREFIX, "file-dropzone")');
-    expect(f).toContain("createDashboardAttachmentFileList");
-    expect(f).toContain("attachmentFileListBemClasses(ENG_UI_PREFIX)");
   });
   it("MFE não importa componentes internos do my-requests", () => {
     const t = createPage();
     expect(t).not.toContain("my-requests");
     expect(t).not.toContain("StagedAttachmentsField");
     expect(t).not.toContain("mrUi");
+  });
+});
+
+describe("PRC-REF-023-FIX-02 — miniaturas e modal de prévia", () => {
+  it("PreviewStrip oficial substitui a lista vertical (create)", () => {
+    const t = createPage();
+    expect(t).toContain("EngineeringAttachmentPreviewStrip");
+    expect(t).toContain('mode="manage"');
+    expect(t).not.toContain("EngineeringAttachmentFileList");
+  });
+  it("modal FilePreviewModal com arquivo local (create)", () => {
+    const t = createPage();
+    expect(t).toContain("EngineeringFilePreviewModal");
+    expect(t).toContain("source={previewFile}");
+    expect(t).toContain('"Ainda não enviado"');
+  });
+  it("PreviewStrip + modal no detalhe com fetch autenticado lazy", () => {
+    const t = detailSection();
+    expect(t).toContain("EngineeringAttachmentPreviewStrip");
+    expect(t).toContain('mode="preview"');
+    expect(t).toContain("EngineeringFilePreviewModal");
+    // blob só via endpoint autenticado — nunca URL pública/storageKey
+    expect(t).toContain("downloadPrcAttachment");
+    expect(t).not.toContain("storageKey");
+    expect(t).not.toMatch(/storage_key/i);
+  });
+  it("object URLs de miniaturas locais são revogadas", () => {
+    const t = createPage();
+    expect(t).toContain("URL.createObjectURL(f)");
+    expect(t).toContain("URL.revokeObjectURL(url)");
+    // cleanup do effect com a memo como dep
+    expect(t).toMatch(/thumbUrls\.forEach\(\(url\)\s*=>\s*URL\.revokeObjectURL/);
+  });
+  it("object URLs de thumbs persistidas são revogadas", () => {
+    const t = detailSection();
+    expect(t).toContain("URL.createObjectURL(blob)");
+    expect(t).toMatch(/Object\.values\(created\)\.forEach\(\(u\)\s*=>\s*URL\.revokeObjectURL/);
+  });
+  it("estados por arquivo: selecionado/enviando/enviado/erro", () => {
+    const t = createPage();
+    expect(t).toContain('"Selecionado"');
+    expect(t).toContain('"Enviando…"');
+    expect(t).toContain('"Enviado"');
+    expect(t).toContain("`Erro — ${fileErrors[i]}`");
+  });
+  it("retry envia só documentos não confirmados (uploadedIdx)", () => {
+    const t = createPage();
+    expect(t).toContain("uploadedIdx.has(i)");
+    expect(t).toContain("Tentar enviar documentos novamente");
+    // create só ocorre quando createdRequestId é nulo
+    expect(t).toMatch(/createdRequestId\s*\?\s*null\s*:\s*await prcIntakeSubmit/);
+  });
+  it("download autorizado por ação explícita (detalhe + modal)", () => {
+    const t = detailSection();
+    expect(t).toContain('variant="ghost"');
+    expect(t).toContain("Baixar");
+    expect(t).toMatch(/a\.download\s*=\s*att\.originalFileName/);
+  });
+  it("façade exporta wrappers das primitivas de preview", () => {
+    const f = facade();
+    expect(f).toContain("createDashboardAttachmentPreviewStrip");
+    expect(f).toContain("attachmentPreviewStripBemClasses(ENG_UI_PREFIX)");
+    expect(f).toContain("FilePreviewModal");
+    expect(f).toContain("portalScopeClassName: ENG_PORTAL_SCOPE");
   });
 });

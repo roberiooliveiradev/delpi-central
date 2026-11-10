@@ -1,10 +1,14 @@
 /** PRC-REF-023 — seção «Documentos de apoio» do detalhe PRC.
- * Lista metadados + download autorizado via Engineering API. */
+ * Miniaturas oficiais (imagem=thumb real, PDF=ícone) + modal de
+ * pré-visualização; bytes sempre via endpoint autenticado da
+ * Engineering API — nunca URL pública nem chave de storage. */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   EngineeringActionButton,
+  EngineeringAttachmentPreviewStrip,
+  EngineeringFilePreviewModal,
   EngineeringSectionCard,
   EngineeringStateBanner,
 } from "../../../ui/engineeringUi";
@@ -30,6 +34,7 @@ export function PrcAttachmentsSection({
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [preview, setPreview] = useState<PrcAttachment | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -48,24 +53,71 @@ export function PrcAttachmentsSection({
     void load();
   }, [load, refreshToken]);
 
-  const download = async (att: PrcAttachment) => {
-    setDownloading(att.attachmentId);
-    setError("");
-    try {
-      const blob = await downloadPrcAttachment(requestId, att.attachmentId);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = att.originalFileName;
-      a.rel = "noopener";
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      setError((e as Error).message || "Falha ao baixar o documento.");
-    } finally {
-      setDownloading(null);
+  /* Miniaturas de imagens persistidas: blob autenticado → object URL;
+   * revogado na troca de itens/desmontagem. PDF usa ícone oficial. */
+  const [thumbUrls, setThumbUrls] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let cancelled = false;
+    const created: Record<string, string> = {};
+    const images = items.filter(
+      (i) => i.state === "AVAILABLE" && i.mediaType.startsWith("image/"),
+    );
+    if (!images.length) {
+      setThumbUrls({});
+      return undefined;
     }
-  };
+    void (async () => {
+      for (const att of images) {
+        try {
+          const blob = await downloadPrcAttachment(
+            requestId,
+            att.attachmentId,
+          );
+          if (cancelled) return;
+          created[att.attachmentId] = URL.createObjectURL(blob);
+        } catch {
+          /* thumb indisponível → cai no ícone por tipo */
+        }
+      }
+      if (!cancelled) setThumbUrls(created);
+    })();
+    return () => {
+      cancelled = true;
+      Object.values(created).forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [items, requestId]);
+
+  const download = useCallback(
+    async (att: PrcAttachment) => {
+      setDownloading(att.attachmentId);
+      setError("");
+      try {
+        const blob = await downloadPrcAttachment(requestId, att.attachmentId);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = att.originalFileName;
+        a.rel = "noopener";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      } catch (e) {
+        setError((e as Error).message || "Falha ao baixar o documento.");
+      } finally {
+        setDownloading(null);
+      }
+    },
+    [requestId],
+  );
+
+  /* Modal usa loader do kit com fetch lazy autenticado — o blob só é
+   * buscado quando o usuário abre a pré-visualização. */
+  const previewSource = useMemo(
+    () =>
+      preview
+        ? () => downloadPrcAttachment(requestId, preview.attachmentId)
+        : null,
+    [preview, requestId],
+  );
 
   return (
     <EngineeringSectionCard
@@ -81,32 +133,55 @@ export function PrcAttachmentsSection({
         </p>
       ) : null}
       {items.length ? (
-        <ul className="engineering-prc__attach-list">
-          {items.map((att) => (
-            <li key={att.attachmentId}>
-              <span>
-                {att.originalFileName} —{" "}
-                {PRC_ATTACHMENT_MEDIA_LABELS[att.mediaType] || att.mediaType},{" "}
-                {prcFormatSize(att.sizeBytes)} ·{" "}
-                {PRC_ATTACHMENT_STATE_LABELS[att.state] || att.state} ·{" "}
-                {att.uploadedByDisplayName || att.uploadedBySubject || "—"} ·{" "}
-                {new Date(att.createdAt).toLocaleString("pt-BR")}
-              </span>
-              {att.state === "AVAILABLE" ? (
-                <EngineeringActionButton
-                  variant="ghost"
-                  softDisabled={downloading === att.attachmentId}
-                  onClick={() => void download(att)}
-                >
-                  {downloading === att.attachmentId
-                    ? "Baixando…"
-                    : "Baixar"}
-                </EngineeringActionButton>
-              ) : null}
-            </li>
-          ))}
-        </ul>
+        <EngineeringAttachmentPreviewStrip
+          mode="preview"
+          items={items.map((att) => ({
+            id: att.attachmentId,
+            fileName: att.originalFileName,
+            contentType: att.mediaType,
+            previewUrl: thumbUrls[att.attachmentId] ?? null,
+            detail: `${PRC_ATTACHMENT_MEDIA_LABELS[att.mediaType] || att.mediaType} · ${prcFormatSize(att.sizeBytes)} · ${PRC_ATTACHMENT_STATE_LABELS[att.state] || att.state} · ${att.uploadedByDisplayName || att.uploadedBySubject || "—"} · ${new Date(att.createdAt).toLocaleString("pt-BR")}`,
+            busy: false,
+            removable: false,
+          }))}
+          onOpen={(item) => {
+            const att = items.find((i) => i.attachmentId === item.id);
+            if (att && att.state === "AVAILABLE") setPreview(att);
+          }}
+        />
       ) : null}
+      <EngineeringFilePreviewModal
+        open={preview != null}
+        title={preview?.originalFileName || "Documento"}
+        source={previewSource}
+        mimeType={preview?.mediaType || null}
+        fileName={preview?.originalFileName || null}
+        metaItems={
+          preview
+            ? [
+                PRC_ATTACHMENT_MEDIA_LABELS[preview.mediaType] ||
+                  preview.mediaType,
+                prcFormatSize(preview.sizeBytes),
+                preview.uploadedByDisplayName || preview.uploadedBySubject,
+                new Date(preview.createdAt).toLocaleString("pt-BR"),
+              ]
+            : []
+        }
+        headerActions={
+          preview ? (
+            <EngineeringActionButton
+              variant="ghost"
+              softDisabled={downloading === preview.attachmentId}
+              onClick={() => preview && void download(preview)}
+            >
+              {downloading === preview.attachmentId
+                ? "Baixando…"
+                : "Baixar"}
+            </EngineeringActionButton>
+          ) : null
+        }
+        onClose={() => setPreview(null)}
+      />
     </EngineeringSectionCard>
   );
 }

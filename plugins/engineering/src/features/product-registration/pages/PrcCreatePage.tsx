@@ -19,10 +19,11 @@ import { Plus, Search, Trash2, Undo2, X } from "lucide-react";
 import { HomeApiError } from "../../../api/httpClient";
 import {
   EngineeringActionButton,
-  EngineeringAttachmentFileList,
+  EngineeringAttachmentPreviewStrip,
   EngineeringDetailCard,
   EngineeringDetailFieldGrid,
   EngineeringFileDropzone,
+  EngineeringFilePreviewModal,
   EngineeringFormActions,
   EngineeringIconButton,
   EngineeringLoadingActivityCard,
@@ -408,21 +409,30 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
 
   /* PRC-REF-023 — documentos opcionais: criado o caso (requestId real),
    * cada arquivo é enviado; falhas não derrubam a solicitação e ficam
-   * retentáveis com o mesmo caseId preservado. */
+   * retentáveis com o mesmo caseId preservado. Estados por arquivo:
+   * selecionado → enviando → enviado | erro. Retry só reenvia os não
+   * confirmados — nunca recria a solicitação. */
   const [supportFiles, setSupportFiles] = useState<File[]>([]);
   const [fileErrors, setFileErrors] = useState<Record<number, string>>({});
+  const [uploadedIdx, setUploadedIdx] = useState<Set<number>>(new Set());
   const [createdRequestId, setCreatedRequestId] = useState<string | null>(
     null,
   );
   const [uploadSummary, setUploadSummary] = useState<string>("");
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
 
   const uploadSupportFiles = async (requestId: string, files: File[]) => {
     const failures: Record<number, string> = {};
     let ok = 0;
     for (let i = 0; i < files.length; i += 1) {
+      if (uploadedIdx.has(i)) {
+        ok += 1;
+        continue;
+      }
       try {
         await uploadPrcAttachment(requestId, files[i]);
         ok += 1;
+        setUploadedIdx((prev) => new Set(prev).add(i));
       } catch (e) {
         failures[i] = (e as Error).message || "Falha no upload.";
       }
@@ -465,6 +475,34 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
     } finally {
       setBusy(false);
     }
+  };
+
+  /* Miniaturas locais: object URL apenas para imagens; revogadas na
+   * remoção/substituição/desmontagem (cleanup do effect). */
+  const thumbUrls = useMemo(() => {
+    const map = new Map<number, string>();
+    supportFiles.forEach((f, i) => {
+      if ((f.type || "").startsWith("image/")) {
+        map.set(i, URL.createObjectURL(f));
+      }
+    });
+    return map;
+  }, [supportFiles]);
+  useEffect(
+    () => () => {
+      thumbUrls.forEach((url) => URL.revokeObjectURL(url));
+    },
+    [thumbUrls],
+  );
+
+  const downloadLocalFile = (f: File) => {
+    const url = URL.createObjectURL(f);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = f.name;
+    a.rel = "noopener";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
   };
 
   const onPickSupportFiles = (list: File[] | FileList | null) => {
@@ -1388,19 +1426,32 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
               <p className="engineering-prc__muted">
                 Arquivos selecionados (ainda não enviados)
               </p>
-              <EngineeringAttachmentFileList
+              <EngineeringAttachmentPreviewStrip
+                mode="manage"
                 items={supportFiles.map((f, i) => ({
                   id: `local-${i}-${f.name}`,
                   fileName: f.name,
-                  detail: `${prcFormatSize(f.size)}${
-                    fileErrors[i] ? ` — ${fileErrors[i]}` : ""
+                  contentType: f.type || null,
+                  previewUrl: thumbUrls.get(i) ?? null,
+                  detail: `${prcFormatSize(f.size)} · ${
+                    uploadedIdx.has(i)
+                      ? "Enviado"
+                      : busy
+                        ? "Enviando…"
+                        : fileErrors[i]
+                          ? `Erro — ${fileErrors[i]}`
+                          : "Selecionado"
                   }`,
+                  busy,
+                  removable: !uploadedIdx.has(i),
                 }))}
-                canRemove={!busy}
+                onOpen={(item) => {
+                  const idx = Number(String(item.id).split("-")[1] ?? -1);
+                  const f = supportFiles[idx];
+                  if (f) setPreviewFile(f);
+                }}
                 onRemove={(item) => {
-                  const idx = Number(
-                    String(item.id).split("-")[1] || -1,
-                  );
+                  const idx = Number(String(item.id).split("-")[1] ?? -1);
                   if (idx >= 0) {
                     setSupportFiles((s) => s.filter((_, j) => j !== idx));
                     setFileErrors((prev) => {
@@ -1427,6 +1478,33 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
               Tentar enviar documentos novamente
             </EngineeringActionButton>
           ) : null}
+          <EngineeringFilePreviewModal
+            open={previewFile != null}
+            title={previewFile?.name || "Documento"}
+            source={previewFile}
+            mimeType={previewFile?.type || null}
+            fileName={previewFile?.name || null}
+            metaItems={
+              previewFile
+                ? [
+                    previewFile.type || null,
+                    prcFormatSize(previewFile.size),
+                    "Ainda não enviado",
+                  ]
+                : []
+            }
+            headerActions={
+              previewFile ? (
+                <EngineeringActionButton
+                  variant="ghost"
+                  onClick={() => previewFile && downloadLocalFile(previewFile)}
+                >
+                  Baixar
+                </EngineeringActionButton>
+              ) : null
+            }
+            onClose={() => setPreviewFile(null)}
+          />
         </EngineeringSectionCard>
       ) : null}
 

@@ -2,9 +2,12 @@ import {
   ActionButton,
   AnchoredPanelPortal,
   attachmentFileListBemClasses,
+  attachmentPreviewStripBemClasses,
   createDashboardAttachmentFileList,
+  createDashboardAttachmentPreviewStrip,
   createDashboardFileDropzone,
   fileDropzoneBemClasses,
+  FilePreviewModal,
   IconButton,
   catalogSearchBarBemClasses,
   ChartCard as DelpiChartCard,
@@ -418,3 +421,24 @@ export const EngineeringAttachmentFileList = createDashboardAttachmentFileList({
     empty: "Nenhum arquivo selecionado.",
   },
 });
+
+/** PRC-REF-023-F01-FIX-02 — miniaturas + modal de pré-visualização com
+ * as mesmas primitivas de Minhas Solicitações (sem JSX copiado). */
+export const EngineeringAttachmentPreviewStrip =
+  createDashboardAttachmentPreviewStrip({
+    classNames: attachmentPreviewStripBemClasses(ENG_UI_PREFIX),
+    labels: {
+      empty: "Nenhum arquivo selecionado.",
+      openAriaLabel: (fileName: string) => `Abrir ${fileName}`,
+      removeAriaLabel: (fileName: string) => `Remover ${fileName}`,
+    },
+  });
+
+export function EngineeringFilePreviewModal(
+  props: Omit<ComponentProps<typeof FilePreviewModal>, "portalScopeClassName">,
+) {
+  return createElement(FilePreviewModal, {
+    ...props,
+    portalScopeClassName: ENG_PORTAL_SCOPE,
+  });
+}
