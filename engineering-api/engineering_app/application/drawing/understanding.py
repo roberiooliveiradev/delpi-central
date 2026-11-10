@@ -1407,6 +1407,7 @@ def build_understanding(
     out: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "document_hash_sha256": document_hash,
+        "product_code": product_code,
         "page": page,
         "page_size_px": [round(w, 0), round(h, 0)],
         "regions": regions,
@@ -1635,6 +1636,7 @@ def build_document_understanding(
         "schema_version": SCHEMA_VERSION,
         "scope": "multi_page_document",
         "document_hash_sha256": document_hash,
+        "product_code": product_code,
         "page": min(by_page),
         "pages_analyzed": sorted(by_page),
         "page_results": page_results,
@@ -2861,7 +2863,11 @@ def _derive_occurrence_paths(
     for o in occs:
         path = [o["component_code"]]
         seen = {o["component_code"]}
-        cur = o["parent_code"]
+        cur = (
+            o["parent_code"]
+            if o["parent_state"] == "IDENTIFIED"
+            else None
+        )
         ambiguous = False
         while cur is not None:
             if cur in seen:
@@ -2926,6 +2932,12 @@ def drawing_structure_occurrences(
         if not code or code == product_code:
             continue
         parent = row.get("parent_group_candidate") or None
+        parent_source = row.get("parent_group_source")
+        # Proximidade Y isolada não prova parentesco (RQ-02): âncora
+        # por aproximação vira candidata, não vínculo identificado.
+        proximity_only = parent_source in {
+            "y_anchor_nearest", "y_anchor_correction",
+        }
         status = str(row.get("association_status") or "")
         uncertainty: list[str] = []
         if status == "INCONCLUSIVE" or row.get("association_conflict"):
@@ -2934,6 +2946,8 @@ def drawing_structure_occurrences(
             uncertainty.append("band_detached")
         if not parent:
             uncertainty.append("parent_not_observed")
+        elif proximity_only:
+            uncertainty.append("parent_inferred_by_proximity")
         unit = (
             (row.get("fields") or {}).get("unit") or {}
         ).get("normalized_value")
@@ -2949,7 +2963,11 @@ def drawing_structure_occurrences(
                 },
                 "component_code": code,
                 "parent_code": parent,
-                "parent_state": "IDENTIFIED" if parent else "UNKNOWN",
+                "parent_state": (
+                    "IDENTIFIED"
+                    if parent and not proximity_only
+                    else "UNKNOWN"
+                ),
                 "parent_evidence": row.get("parent_group_source"),
                 "item": row.get("item"),
                 "quantity": row.get("quantity"),

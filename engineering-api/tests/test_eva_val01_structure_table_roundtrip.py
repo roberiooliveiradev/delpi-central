@@ -316,3 +316,88 @@ def test_bidirectional_level_mismatch_flagged():
     ][0]
     assert lvl["result"] == "CONFLICT_CANDIDATE"
     assert lvl["finding"] == "LEVEL_MISMATCH"
+
+
+# --------------------------------------------------------------------------
+# RQ — integridade raiz/pai (EVA-VAL01-G5-ROOT-PARENT-INTEGRITY-FIX)
+# --------------------------------------------------------------------------
+
+
+def _apply_native_with_product_code():
+    """Integração completa: understanding com product_code + obs nativa
+    contendo o código do produto numa linha de âncora Y."""
+    from engineering_app.application.drawing.understanding import (
+        apply_native_table_observations,
+        build_document_understanding,
+    )
+    u = build_document_understanding(
+        [_tok := {"raw_text": "A", "normalized_text": "A",
+                  "bounding_box_px": [10, 20, 30, 20, 30, 32, 10, 32],
+                  "page": 1},
+         {"raw_text": "1", "normalized_text": "1",
+          "bounding_box_px": [40, 20, 55, 20, 55, 32, 40, 32], "page": 1},
+         {"raw_text": "10020033", "normalized_text": "10020033",
+          "bounding_box_px": [60, 20, 120, 20, 120, 32, 60, 32],
+          "page": 1},
+         {"raw_text": "10080106", "normalized_text": "10080106",
+          "bounding_box_px": [60, 50, 120, 50, 120, 62, 60, 62],
+          "page": 1}],
+        document_hash="sha:x",
+        product_code="90264302",
+    )
+    assert u.get("product_code") == "90264302"
+    cells = [
+        {"row": 0, "col": 0, "text": "Item", "bounding_box_px": [0, 0, 40, 0, 40, 16, 0, 16]},
+        {"row": 0, "col": 1, "text": "Codigo", "bounding_box_px": [50, 0, 130, 0, 130, 16, 50, 16]},
+        {"row": 1, "col": 0, "text": "A", "bounding_box_px": [0, 20, 40, 20, 40, 36, 0, 36], "token_centers": [[20, 28]]},
+        {"row": 1, "col": 1, "text": "10020033", "bounding_box_px": [50, 20, 130, 20, 130, 36, 50, 36], "token_centers": [[90, 28]]},
+        {"row": 2, "col": 0, "text": "B", "bounding_box_px": [0, 40, 40, 40, 40, 56, 0, 56], "token_centers": [[20, 48]]},
+        {"row": 2, "col": 1, "text": "90264302", "bounding_box_px": [50, 40, 130, 40, 130, 56, 50, 56], "token_centers": [[90, 48]]},
+    ]
+    obs = [{"page": 1, "region_type": "component_table",
+            "result": {"cells": cells,
+                       "tables": [{"structure_consistent": True,
+                                   "structure_limitations": []}],
+                       "render": {"processed_page": 1},
+                       "processed_pages": [1]}}]
+    return apply_native_table_observations(u, obs)
+
+
+def test_product_code_preserved_through_native_integration():
+    """TC01/TC02: envelope preserva product_code e a raiz não vira
+    componente após apply_native_table_observations."""
+    updated = _apply_native_with_product_code()
+    occs = (updated.get("component_table") or {}).get(
+        "structure_occurrences") or []
+    assert all(o["component_code"] != "90264302" for o in occs)
+
+
+def test_y_anchor_nearest_not_parent_proof():
+    """TC03: proximidade Y isolada → parent_state UNKNOWN, nível None."""
+    rows = [{"row": 1, "page": 1, "component_code": "90264302",
+             "parent_group_candidate": "50226113",
+             "parent_group_source": "y_anchor_nearest",
+             "fields": {}, "cells": [],
+             "association_status": "FIELD_IDENTIFIED"},
+            {"row": 2, "page": 1, "component_code": "10020033",
+             "parent_group_candidate": "50226113",
+             "parent_group_source": "column_span",
+             "fields": {}, "cells": [],
+             "association_status": "FIELD_IDENTIFIED"}]
+    occs = drawing_structure_occurrences(rows, product_code="90264302")
+    by = {o["component_code"]: o for o in occs}
+    assert by["10020033"]["parent_state"] == "IDENTIFIED"
+    assert by["10020033"]["drawing_level"] == 1
+    assert by["10020033"]["level_basis"] == "visual_root_candidate"
+
+
+def test_proximity_parent_does_not_identify():
+    rows = [{"row": 1, "page": 1, "component_code": "10020033",
+             "parent_group_candidate": "50226113",
+             "parent_group_source": "y_anchor_nearest",
+             "fields": {}, "cells": [],
+             "association_status": "FIELD_IDENTIFIED"}]
+    occs = drawing_structure_occurrences(rows)
+    assert occs[0]["parent_state"] == "UNKNOWN"
+    assert "parent_inferred_by_proximity" in occs[0]["uncertainty"]
+    assert occs[0]["drawing_level"] is None

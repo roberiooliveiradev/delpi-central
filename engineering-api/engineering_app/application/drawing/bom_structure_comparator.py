@@ -319,7 +319,11 @@ def _drawing_occurrences(
             elif row_group:
                 parent = row_group
                 parent_source = row_group_source or "group_anchor"
-                verified = True
+                # Âncoras estruturais (rowspan/coluna) verificam;
+                # proximidade Y isolada é candidata não verificada.
+                verified = parent_source not in {
+                    "y_anchor_nearest", "y_anchor_correction",
+                }
             elif set_col is not None and code in set_codes:
                 # Código na coluna de conjuntos de tabela multi-coluna:
                 # é PAI dos itens da linha — seu próprio pai não é
