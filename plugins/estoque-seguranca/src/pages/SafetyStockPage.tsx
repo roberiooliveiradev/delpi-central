@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { EssPageNav } from "../components/EssPageNav";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
@@ -17,27 +17,14 @@ import {
   DEFAULT_PAGE_SIZE,
   DEFAULT_QUERY_PARAMS,
   MAX_PAGE_SIZE,
-  type SafetyStockFiltersData,
   type SafetyStockItem,
   type SafetyStockQueryParams,
 } from "../types/safetyStock";
-
-function resolveEffectiveBranch(
-  selectedBranch: string,
-  options: SafetyStockFiltersData | null,
-): string {
-  const authorized = options?.authorized_branches ?? [];
-  if (selectedBranch && authorized.includes(selectedBranch)) {
-    return selectedBranch;
-  }
-  if (authorized.length === 1) {
-    return authorized[0];
-  }
-  if (!selectedBranch && options?.branch) {
-    return options.branch;
-  }
-  return selectedBranch;
-}
+import {
+  readPreferredSafetyStockBranch,
+  resolveAuthorizedSafetyStockBranch,
+  savePreferredSafetyStockBranch,
+} from "../utils/branchPreference";
 
 function buildAppliedParams(
   filters: SafetyStockQueryParams,
@@ -53,6 +40,7 @@ function buildAppliedParams(
 }
 
 export function SafetyStockPage() {
+  const [preferredBranch] = useState(readPreferredSafetyStockBranch);
   const [filters, setFilters] = useState<SafetyStockQueryParams>(DEFAULT_QUERY_PARAMS);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
@@ -61,9 +49,17 @@ export function SafetyStockPage() {
   const filterOptions = useSafetyStockFilters(filters.branch, filters.includeBlocked);
 
   const effectiveBranch = useMemo(
-    () => resolveEffectiveBranch(filters.branch, filterOptions.data),
-    [filters.branch, filterOptions.data],
+    () => resolveAuthorizedSafetyStockBranch(filters.branch, filterOptions.data, preferredBranch),
+    [filters.branch, filterOptions.data, preferredBranch],
   );
+
+  // Primeiro consultamos as filiais autorizadas; nunca confiamos diretamente no storage.
+  useEffect(() => {
+    if (!filterOptions.data || !effectiveBranch || filters.branch === effectiveBranch) return;
+    setFilters((current) =>
+      current.branch === effectiveBranch ? current : { ...current, branch: effectiveBranch },
+    );
+  }, [effectiveBranch, filterOptions.data, filters.branch]);
 
   const displayFilters = useMemo(
     () => ({ ...filters, branch: effectiveBranch }),
@@ -81,9 +77,12 @@ export function SafetyStockPage() {
   const items = useSafetyStockItems(appliedParams, page, pageSize);
 
   const handleFilterChange = useCallback((patch: Partial<SafetyStockQueryParams>) => {
+    if (patch.branch && filterOptions.data?.authorized_branches.includes(patch.branch)) {
+      savePreferredSafetyStockBranch(patch.branch);
+    }
     setFilters((current) => ({ ...current, ...patch }));
     setPage(1);
-  }, []);
+  }, [filterOptions.data]);
 
   const handleClearFilters = useCallback(() => {
     const branch = effectiveBranch || filterOptions.data?.authorized_branches[0] || "";
@@ -105,9 +104,11 @@ export function SafetyStockPage() {
     setPage(1);
   }, []);
 
-  const initialFiltersLoading = filterOptions.loading && !filterOptions.data;
+  const initialFiltersLoading =
+    (filterOptions.loading && !filterOptions.data) ||
+    (Boolean(filterOptions.data) && !filters.branch);
   const showContent =
-    Boolean(effectiveBranch) && (filterOptions.data !== null || !filterOptions.error);
+    Boolean(filters.branch && effectiveBranch) && (filterOptions.data !== null || !filterOptions.error);
 
   const emptyTableMessage =
     appliedParams?.status === "below_safety_stock"

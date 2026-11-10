@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { ConsumptionAnalysisDetailModal } from "../components/ConsumptionAnalysisDetailModal";
 import { ConsumptionAnalysisDistribution } from "../components/ConsumptionAnalysisDistribution";
@@ -19,25 +19,12 @@ import {
   type ConsumptionAnalysisItem,
   type ConsumptionAnalysisQueryParams,
 } from "../types/consumptionAnalysis";
-import type { SafetyStockFiltersData } from "../types/safetyStock";
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "../types/safetyStock";
-
-function resolveEffectiveBranch(
-  selectedBranch: string,
-  options: SafetyStockFiltersData | null,
-): string {
-  const authorized = options?.authorized_branches ?? [];
-  if (selectedBranch && authorized.includes(selectedBranch)) {
-    return selectedBranch;
-  }
-  if (authorized.length === 1) {
-    return authorized[0];
-  }
-  if (!selectedBranch && options?.branch) {
-    return options.branch;
-  }
-  return selectedBranch;
-}
+import {
+  readPreferredSafetyStockBranch,
+  resolveAuthorizedSafetyStockBranch,
+  savePreferredSafetyStockBranch,
+} from "../utils/branchPreference";
 
 function buildAppliedParams(
   filters: ConsumptionAnalysisQueryParams,
@@ -53,6 +40,7 @@ function buildAppliedParams(
 }
 
 export function ConsumptionAnalysisPage() {
+  const [preferredBranch] = useState(readPreferredSafetyStockBranch);
   const [filters, setFilters] = useState<ConsumptionAnalysisQueryParams>(
     DEFAULT_ANALYSIS_QUERY_PARAMS,
   );
@@ -62,9 +50,17 @@ export function ConsumptionAnalysisPage() {
 
   const filterOptions = useSafetyStockFilters(filters.branch, filters.includeBlocked);
   const effectiveBranch = useMemo(
-    () => resolveEffectiveBranch(filters.branch, filterOptions.data),
-    [filters.branch, filterOptions.data],
+    () => resolveAuthorizedSafetyStockBranch(filters.branch, filterOptions.data, preferredBranch),
+    [filters.branch, filterOptions.data, preferredBranch],
   );
+  // Primeiro consultamos as filiais autorizadas; nunca confiamos diretamente no storage.
+  useEffect(() => {
+    if (!filterOptions.data || !effectiveBranch || filters.branch === effectiveBranch) return;
+    setFilters((current) =>
+      current.branch === effectiveBranch ? current : { ...current, branch: effectiveBranch },
+    );
+  }, [effectiveBranch, filterOptions.data, filters.branch]);
+
   const debouncedSearch = useDebouncedValue(filters.search, 350);
   const appliedParams = useMemo(
     () => buildAppliedParams(filters, debouncedSearch, effectiveBranch),
@@ -76,10 +72,13 @@ export function ConsumptionAnalysisPage() {
 
   const handleFilterChange = useCallback(
     (patch: Partial<ConsumptionAnalysisQueryParams>) => {
+      if (patch.branch && filterOptions.data?.authorized_branches.includes(patch.branch)) {
+        savePreferredSafetyStockBranch(patch.branch);
+      }
       setFilters((current) => ({ ...current, ...patch }));
       setPage(1);
     },
-    [],
+    [filterOptions.data],
   );
 
   const handleClearFilters = useCallback(() => {
@@ -102,9 +101,11 @@ export function ConsumptionAnalysisPage() {
     setPage(1);
   }, []);
 
-  const initialFiltersLoading = filterOptions.loading && !filterOptions.data;
+  const initialFiltersLoading =
+    (filterOptions.loading && !filterOptions.data) ||
+    (Boolean(filterOptions.data) && !filters.branch);
   const showContent =
-    Boolean(effectiveBranch) && (filterOptions.data !== null || !filterOptions.error);
+    Boolean(filters.branch && effectiveBranch) && (filterOptions.data !== null || !filterOptions.error);
   const displayFilters = useMemo(
     () => ({ ...filters, branch: effectiveBranch }),
     [filters, effectiveBranch],
