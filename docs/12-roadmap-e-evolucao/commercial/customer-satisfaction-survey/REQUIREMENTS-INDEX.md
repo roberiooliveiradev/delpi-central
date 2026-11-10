@@ -8,7 +8,7 @@
 
 **Este é o ponto de entrada.** Primeiro consulte a linha do requisito; só abra o documento em **Detalhe** quando precisar aprofundar aquela frente. Este índice descreve *o que* foi pedido/decidido, **não** comprova que o recurso já esteja implementado e não aprova automaticamente backlog, CRUD ou novas abstrações.
 
-**Fontes e prioridade:** (1) [Plano de Monitoramento da Satisfação dos Clientes — Delpi] — documento integral de 5 páginas anexado às **fontes do projeto** (não há cópia integral publicada nesta pasta); (2) [registro das decisões da entrevista](./OPEN-DECISIONS.md), que complementa o plano quando o usuário decidiu um comportamento; (3) fontes técnicas canônicas, a identificar por frente. A página 1 do plano contém exemplos gerais de métodos de pesquisa; **as seções 1–10 e as decisões específicas** governam o produto proposto.
+**Fontes e prioridade:** (1) **Plano de Monitoramento da Satisfação dos Clientes — Delpi** — documento integral de 5 páginas anexado às **fontes do projeto** (não há cópia integral publicada nesta pasta); (2) [registro das decisões da entrevista](./OPEN-DECISIONS.md), que complementa o plano quando o usuário decidiu um comportamento; (3) fontes técnicas canônicas, a identificar por frente. A página 1 do plano contém exemplos gerais de métodos de pesquisa; **as seções 1–10 e as decisões específicas** governam o produto proposto.
 
 **Estados na tabela:** `DEFINIDO` = decisão funcional informada pelo solicitante; `FONTE DEFINIDA` = especificação explícita no plano; `DEFINIDO COM VALIDAÇÃO` = intenção definida, condicionada a verificação normativa; `TO_INVENTORY` = evidência/contrato técnico ainda a levantar. *Nenhum desses estados significa implementado, testado ou aprovado para release.*
 
