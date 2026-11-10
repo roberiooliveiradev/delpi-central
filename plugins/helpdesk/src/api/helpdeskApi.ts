@@ -67,6 +67,10 @@ export type TicketSummary = {
   sla_ttr?: string;
   sla_tto?: string;
   assigned_display_name: string;
+  assigned_user_id?: number | null;
+  /** Minha DELPI directory user_id for technician avatar. */
+  assigned_directory_user_id?: string;
+  assigned_has_photo?: boolean;
   requester_display_name?: string;
   requester_id?: number | null;
   /** Minha DELPI directory user_id when linked — used for avatar photo. */

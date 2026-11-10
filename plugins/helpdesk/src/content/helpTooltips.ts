@@ -120,7 +120,7 @@ export const helpTooltips = {
     refreshList: "Atualiza a grade sem limpar filtros.",
     search: "Busca no número, título ou conteúdo do chamado.",
     statusChips: "Atalhos de recorte: Meus chamados e status. Sem contadores — o helpdesk não expõe totais por estado.",
-    myTickets: "Mostra só os chamados em que você é o requerente.",
+    myTickets: "Somente chamados em que você é o requerente — nunca os de outras pessoas.",
     advancedFilters: "Refine os chamados com critérios adicionais alinhados às colunas da lista.",
   },
 

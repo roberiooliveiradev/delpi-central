@@ -475,6 +475,24 @@ class HttpxGlpiClient:
             for ticket_id in searched.ticket_ids
             if ticket_id in by_id
         )
+        # Defense in depth: nested status OR must not leak other actors if
+        # Search grouping drifts. Re-apply actor filters on hydrated rows.
+        if query.requester_id is not None:
+            wanted = int(query.requester_id)
+            ordered = tuple(
+                row
+                for row in ordered
+                if getattr(row, "requester_id", None) is not None
+                and int(row.requester_id) == wanted
+            )
+        if query.assignee_id is not None:
+            wanted_assignee = int(query.assignee_id)
+            ordered = tuple(
+                row
+                for row in ordered
+                if getattr(row, "assigned_user_id", None) is not None
+                and int(row.assigned_user_id) == wanted_assignee
+            )
         return TicketListPage(
             items=ordered,
             page=query.page,

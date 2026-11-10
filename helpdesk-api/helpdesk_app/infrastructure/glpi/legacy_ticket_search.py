@@ -138,8 +138,23 @@ def build_legacy_ticket_search_paths_from_parts(
         if len(status_ids) == 1:
             add(_FIELD_STATUS, "equals", status_ids[0])
         elif len(status_ids) > 1:
+            # Nested OR group — flat OR after AND requester/assignee would
+            # otherwise become (actor AND status=1) OR status=2 OR … and leak
+            # tickets from other requesters (GLPI search links are flat).
+            group: list[dict[str, str | int]] = []
             for index, status_id in enumerate(status_ids):
-                add(_FIELD_STATUS, "equals", int(status_id), link=("AND" if index == 0 else "OR"))
+                entry: dict[str, str | int] = {
+                    "field": _FIELD_STATUS,
+                    "searchtype": "equals",
+                    "value": int(status_id),
+                }
+                if index > 0:
+                    entry["link"] = "OR"
+                group.append(entry)
+            group_entry: dict = {"criteria": group}
+            if criteria:
+                group_entry["link"] = "AND"
+            criteria.append(group_entry)
 
         if urgency_id is not None:
             add(_FIELD_URGENCY, "equals", int(urgency_id))
@@ -167,9 +182,7 @@ def build_legacy_ticket_search_paths_from_parts(
             add(_FIELD_ID, "contains", "")
 
         params: list[tuple[str, str]] = []
-        for index, criterion in enumerate(criteria):
-            for key, value in criterion.items():
-                params.append((f"criteria[{index}][{key}]", str(value)))
+        _append_legacy_criteria(params, criteria)
         params.append(("forcedisplay[0]", str(_FIELD_ID)))
         params.append(("forcedisplay[1]", str(sort_field)))
         params.append(("range", f"0-{end}"))
@@ -178,6 +191,27 @@ def build_legacy_ticket_search_paths_from_parts(
         paths.append(f"/apirest.php/search/Ticket?{urlencode(params)}")
 
     return tuple(paths)
+
+
+def _append_legacy_criteria(
+    params: list[tuple[str, str]],
+    criteria: list,
+    *,
+    prefix: str = "criteria",
+) -> None:
+    """Serialize flat and nested GLPI search criteria (AND groups with OR children)."""
+    for index, criterion in enumerate(criteria):
+        if not isinstance(criterion, dict):
+            continue
+        nested = criterion.get("criteria")
+        if isinstance(nested, list):
+            link = criterion.get("link")
+            if link is not None:
+                params.append((f"{prefix}[{index}][link]", str(link)))
+            _append_legacy_criteria(params, nested, prefix=f"{prefix}[{index}][criteria]")
+            continue
+        for key, value in criterion.items():
+            params.append((f"{prefix}[{index}][{key}]", str(value)))
 
 
 def merge_legacy_ticket_search(

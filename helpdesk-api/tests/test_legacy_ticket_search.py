@@ -61,8 +61,26 @@ def test_build_legacy_search_uses_canonical_status_field():
     )
     encoded = _encoded(path)
     assert "criteria[0][field]=5" in encoded  # assignee
-    assert "criteria[1][field]=12" in encoded  # status group first criterion
-    assert "criteria[1][searchtype]=equals" in encoded
+    # Multi-status must be a nested OR group under AND — never flat OR after actor.
+    assert "criteria[1][link]=AND" in encoded
+    assert "criteria[1][criteria][0][field]=12" in encoded
+    assert "criteria[1][criteria][0][searchtype]=equals" in encoded
+    assert "criteria[1][criteria][1][link]=OR" in encoded
+    assert "criteria[1][criteria][1][field]=12" in encoded
+    assert "criteria[2][field]=12" not in encoded
+
+
+def test_requester_and_open_status_keeps_actor_outside_status_or_group():
+    (path,) = build_legacy_ticket_search_paths_from_parts(
+        requester_id=12, status="open", page=1, page_size=20
+    )
+    encoded = _encoded(path)
+    assert "criteria[0][field]=4" in encoded
+    assert "criteria[0][searchtype]=equals" in encoded
+    assert "criteria[1][link]=AND" in encoded
+    assert "criteria[1][criteria][0][field]=12" in encoded
+    # Flat OR after requester must not exist (that leaked other requesters).
+    assert "criteria[2][link]=OR" not in encoded
 
 
 def test_build_legacy_search_sort_assigned():

@@ -78,6 +78,9 @@ class TicketSummary:
     sla_tto: str = ""
     sla_ttr_exceeded: bool | None = None
     assigned_user_id: int | None = None
+    """Minha DELPI directory user_id for assigned technician avatar."""
+    assigned_directory_user_id: str = ""
+    assigned_has_photo: bool = False
     requester_id: int | None = None
     """Minha DELPI directory user_id (Keycloak) when linked — avatar photo."""
     requester_directory_user_id: str = ""

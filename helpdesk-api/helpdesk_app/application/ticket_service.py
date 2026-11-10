@@ -367,14 +367,18 @@ class TicketService:
     def _enrich_ticket_list_requester_avatars(
         self, token: str, page: TicketListPage
     ) -> TicketListPage:
-        """Attach Minha DELPI directory id + has_photo for requester avatars (ADDITIVE)."""
+        """Attach Minha DELPI directory id + has_photo for requester/technician avatars."""
         from dataclasses import replace
 
         glpi_ids = sorted(
             {
-                int(row.requester_id)
+                int(uid)
                 for row in page.items
-                if getattr(row, "requester_id", None) and int(row.requester_id) > 0
+                for uid in (
+                    getattr(row, "requester_id", None),
+                    getattr(row, "assigned_user_id", None),
+                )
+                if uid and int(uid) > 0
             }
         )
         if not glpi_ids:
@@ -393,12 +397,20 @@ class TicketService:
         enriched: list[TicketSummary] = []
         for row in page.items:
             rid = getattr(row, "requester_id", None)
-            directory_id = directory_by_glpi.get(int(rid), "") if rid else ""
+            aid = getattr(row, "assigned_user_id", None)
+            requester_directory = directory_by_glpi.get(int(rid), "") if rid else ""
+            assigned_directory = directory_by_glpi.get(int(aid), "") if aid else ""
             enriched.append(
                 replace(
                     row,
-                    requester_directory_user_id=directory_id,
-                    requester_has_photo=bool(flags.get(directory_id)) if directory_id else False,
+                    requester_directory_user_id=requester_directory,
+                    requester_has_photo=(
+                        bool(flags.get(requester_directory)) if requester_directory else False
+                    ),
+                    assigned_directory_user_id=assigned_directory,
+                    assigned_has_photo=(
+                        bool(flags.get(assigned_directory)) if assigned_directory else False
+                    ),
                 )
             )
         return TicketListPage(

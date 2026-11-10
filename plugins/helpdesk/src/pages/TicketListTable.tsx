@@ -52,14 +52,26 @@ export function TicketListTable({
   /** When true (ex.: filtro Meus chamados), use myPhotoUrl if directory photo is missing. */
   preferMyPhoto?: boolean;
 }) {
-  const photoEntries = useMemo(
-    () =>
-      items.map((row) => ({
-        directoryUserId: (row.requester_directory_user_id || "").trim() || undefined,
-        hasPhoto: Boolean(row.requester_has_photo) || preferMyPhoto,
-      })),
-    [items, preferMyPhoto],
-  );
+  const photoEntries = useMemo(() => {
+    const entries: { directoryUserId?: string; hasPhoto?: boolean }[] = [];
+    for (const row of items) {
+      const requesterId = (row.requester_directory_user_id || "").trim();
+      if (requesterId) {
+        entries.push({
+          directoryUserId: requesterId,
+          hasPhoto: Boolean(row.requester_has_photo),
+        });
+      }
+      const assignedId = (row.assigned_directory_user_id || "").trim();
+      if (assignedId) {
+        entries.push({
+          directoryUserId: assignedId,
+          hasPhoto: Boolean(row.assigned_has_photo),
+        });
+      }
+    }
+    return entries;
+  }, [items]);
   const { photoFor } = useDirectoryUserPhotoUrls(photoEntries);
 
   const columns = resolveVisibleColumns(columnPreferences).map((definition) =>
@@ -152,20 +164,38 @@ function DateCell({ value }: { value: string }) {
   );
 }
 
-function requesterPhotoSrc(
-  row: TicketSummary,
+function personPhotoSrc(
+  directoryUserId: string | null | undefined,
   photoFor: (directoryUserId: string | null | undefined) => string | null,
-  myPhotoUrl?: string | null,
-  preferMyPhoto = false,
+  fallbackMyPhoto?: string | null,
 ): string | null {
-  const directoryId = (row.requester_directory_user_id || "").trim();
+  const directoryId = (directoryUserId || "").trim();
   if (directoryId) {
     const fromDirectory = photoFor(directoryId);
     if (fromDirectory) return fromDirectory;
   }
-  if (preferMyPhoto && myPhotoUrl) return myPhotoUrl;
-  if (row.requester_has_photo && myPhotoUrl) return myPhotoUrl;
-  return null;
+  return fallbackMyPhoto || null;
+}
+
+function personAvatarLabel(
+  name: string,
+  directoryUserId: string | null | undefined,
+  photoSrc: string | null,
+) {
+  const shown = name.trim();
+  if (!shown) return "";
+  const directoryId = (directoryUserId || "").trim();
+  return (
+    <HelpdeskEntityAvatarLabel
+      name={shown}
+      colorKey={resolveAvatarColorKey({
+        directoryUserId: directoryId,
+        displayName: shown,
+      })}
+      src={photoSrc}
+      size="sm"
+    />
+  );
 }
 
 function renderColumn(
@@ -186,22 +216,23 @@ function renderColumn(
       return row.category;
     case "urgency":
       return row.urgency;
-    case "assigned":
-      return row.assigned_display_name;
+    case "assigned": {
+      const name = (row.assigned_display_name ?? "").trim();
+      if (!name) return "";
+      const directoryId = (row.assigned_directory_user_id || "").trim();
+      return personAvatarLabel(name, directoryId, personPhotoSrc(directoryId, photoFor));
+    }
     case "requester": {
       const name = (row.requester_display_name ?? "").trim();
       if (!name) return "";
       const directoryId = (row.requester_directory_user_id || "").trim();
-      return (
-        <HelpdeskEntityAvatarLabel
-          name={name}
-          colorKey={resolveAvatarColorKey({
-            directoryUserId: directoryId,
-            displayName: name,
-          })}
-          src={requesterPhotoSrc(row, photoFor, myPhotoUrl, preferMyPhoto)}
-          size="sm"
-        />
+      // preferMyPhoto only when Meus chamados is on AND directory photo is missing —
+      // never reuse my photo for another requester (filter leak safety).
+      const fallback = preferMyPhoto && !directoryId ? myPhotoUrl : null;
+      return personAvatarLabel(
+        name,
+        directoryId,
+        personPhotoSrc(directoryId, photoFor, fallback),
       );
     }
     case "created_at":

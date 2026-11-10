@@ -31,14 +31,26 @@ export function TicketListCards({
   preferMyPhoto?: boolean;
 }) {
   const now = new Date();
-  const photoEntries = useMemo(
-    () =>
-      items.map((row) => ({
-        directoryUserId: (row.requester_directory_user_id || "").trim() || undefined,
-        hasPhoto: Boolean(row.requester_has_photo) || preferMyPhoto,
-      })),
-    [items, preferMyPhoto],
-  );
+  const photoEntries = useMemo(() => {
+    const entries: { directoryUserId?: string; hasPhoto?: boolean }[] = [];
+    for (const row of items) {
+      const requesterId = (row.requester_directory_user_id || "").trim();
+      if (requesterId) {
+        entries.push({
+          directoryUserId: requesterId,
+          hasPhoto: Boolean(row.requester_has_photo),
+        });
+      }
+      const assignedId = (row.assigned_directory_user_id || "").trim();
+      if (assignedId) {
+        entries.push({
+          directoryUserId: assignedId,
+          hasPhoto: Boolean(row.assigned_has_photo),
+        });
+      }
+    }
+    return entries;
+  }, [items]);
   const { photoFor } = useDirectoryUserPhotoUrls(photoEntries);
 
   return (
@@ -53,12 +65,14 @@ export function TicketListCards({
         const updatedAbs = absoluteDateTimeLabel(row.updated_at);
         const updatedRel = relativeTimeLabel(row.updated_at, now) || updatedAbs;
         const requester = (row.requester_display_name ?? "").trim();
-        const technician = row.assigned_display_name.trim();
-        const directoryId = (row.requester_directory_user_id || "").trim();
-        const photoSrc =
-          (directoryId ? photoFor(directoryId) : null) ||
-          (preferMyPhoto || row.requester_has_photo ? myPhotoUrl : null) ||
+        const technician = (row.assigned_display_name ?? "").trim();
+        const requesterDirectoryId = (row.requester_directory_user_id || "").trim();
+        const assignedDirectoryId = (row.assigned_directory_user_id || "").trim();
+        const requesterPhotoSrc =
+          (requesterDirectoryId ? photoFor(requesterDirectoryId) : null) ||
+          (preferMyPhoto && !requesterDirectoryId ? myPhotoUrl : null) ||
           null;
+        const assignedPhotoSrc = assignedDirectoryId ? photoFor(assignedDirectoryId) : null;
         return (
           <HelpdeskRecordCard
             key={row.id}
@@ -88,10 +102,10 @@ export function TicketListCards({
                   <HelpdeskEntityAvatarLabel
                     name={requester}
                     colorKey={resolveAvatarColorKey({
-                      directoryUserId: directoryId,
+                      directoryUserId: requesterDirectoryId,
                       displayName: requester,
                     })}
-                    src={photoSrc}
+                    src={requesterPhotoSrc}
                     size="sm"
                   />
                 ) : (
@@ -102,7 +116,19 @@ export function TicketListCards({
               {
                 id: "assigned",
                 label: "Técnico",
-                value: technician || "—",
+                value: technician ? (
+                  <HelpdeskEntityAvatarLabel
+                    name={technician}
+                    colorKey={resolveAvatarColorKey({
+                      directoryUserId: assignedDirectoryId,
+                      displayName: technician,
+                    })}
+                    src={assignedPhotoSrc}
+                    size="sm"
+                  />
+                ) : (
+                  "—"
+                ),
                 present: true,
               },
               {
