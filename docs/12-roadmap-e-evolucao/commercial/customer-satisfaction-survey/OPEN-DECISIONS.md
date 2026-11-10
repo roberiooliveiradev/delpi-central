@@ -22,19 +22,22 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
  
 ### Q02 — Elegibilidade e amostragem
 **Pergunta:** Quais clientes entram em cada campanha (todos os ativos, clientes estratégicos, volume mínimo, período de compra, exclusões)?
-**Status:** DECIDED (seleção configurável, informada pelo solicitante; owner Comercial a validar formalmente).
-**Resposta:** O público da pesquisa não será fixo: os usuários autorizados deverão selecionar no produto quais empresas clientes participarão de cada campanha.
+**Status:** DECIDED (informado pelo solicitante; validação formal do owner Comercial pendente).
+**Resposta:** O público não será fixo. O usuário autorizado selecionará na aplicação as empresas participantes de cada campanha dentre os clientes cadastrados no ERP e consultáveis no Portal Comercial.
+**Requisito confirmado em complemento:** Cada empresa selecionada terá um link específico e obrigatório por campanha, vinculado à empresa e às perguntas padronizadas. O usuário poderá copiar esse link e compartilhá-lo por e-mail, WhatsApp ou Teams; deverá existir também opção de disparo direto por e-mail ao contato informado. Ao receber uma resposta, o sistema deverá associá-la ao cliente e à campanha e disponibilizá-la em visão tabular com perguntas e respostas para cálculo dos indicadores. Preservar a regra Q01: uma única resposta por empresa por campanha.
 **Data:** 2026-11-10.
-**Fonte:** Resposta do solicitante: "Isso tem que ficar configurável no produto, tá, eles vão selecionar lá".
-**Hipótese de solução (não aprovada):** gerar um link individual por cliente, conforme possibilidade mencionada pelo solicitante ("talvez a gente gere talvez um link específico pra cada cliente").
-**Pendente:** quem pode selecionar/aprovar a lista, se filtros ou inclusão manual serão necessários, critérios de elegibilidade, origem dos contatos e como identificar/validar o destinatário e impedir respostas duplicadas sem expor dados.
-**Impacto:** campanha precisa preservar a lista efetivamente selecionada; convite e resposta vinculados à empresa e à campanha; manter a regra Q01 de no máximo uma resposta por empresa por campanha.
+**Fonte:** Explicações do solicitante na conversa após Q02 (a segunda explicação substitui a hipótese anterior de link opcional).
+**Pendências não inferidas:** permissões de gestão, envio efetivo/integração de e-mail, segurança e ciclo de vida do link, prevenção de resposta duplicada, auditoria, identificação do respondente e tratamento de links compartilhados.
+**Impacto:** seleção configurável e registro por empresa/campanha, sem criar novo cadastro paralelo de clientes.
 
 ### Q03 — Contatos e fonte canônica
 **Pergunta:** De onde virão os contatos e quem poderá manter ou aprovar a lista de destinatários (TOTVS, Portal Comercial, CRM, outra base)?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** dados, autorização, LGPD e qualidade de envio.
+**Status:** DECIDED quanto à fonte e inclusão de clientes; PENDING quanto à origem/gestão dos e-mails de destinatários e responsáveis.
+**Resposta:** Apenas empresas já cadastradas no ERP TOTVS poderão participar. O ERP continua sendo a autoridade do cadastro de clientes. O Portal Comercial já consome dados do TOTVS via API DELPI, conforme informado pelo solicitante. Na configuração da campanha/link, o usuário selecionará a empresa por meio da rota de consulta de clientes existente; não criar cadastro paralelo de clientes nesta solução. Se o cliente ainda não existir, deverá ser cadastrado no ERP pelo fluxo atual, antes de estar disponível para seleção.
+**Data:** 2026-11-10.
+**Fonte:** Resposta do solicitante à Q03, na conversa.
+**PENDING:** origem e validação do endereço de e-mail e contato utilizado no envio direto; quem pode alterá-lo para a campanha; contratos exatos da rota existente, filtros, escopo multiunidade, IDs canônicos e autenticação dependem de inventário técnico.
+**Impacto:** preservar ownership do ERP e reutilizar consulta existente via API DELPI; evitar criação e manutenção duplicadas de clientes.
 
 ### Q04 — Identificação e confidencialidade
 **Pergunta:** Respostas serão identificadas, anônimas ou confidenciais com acesso restrito? O cliente será informado do tratamento e finalidade?
@@ -156,4 +159,4 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ## Próxima pergunta em entrevista
 
-**Q03** — De onde virão os contatos dos clientes para enviar a pesquisa, e quem poderá manter essa lista?
+**Q04** — As respostas serão identificadas pelo cliente/contato ou confidenciais, e quem poderá ver respostas individuais?
