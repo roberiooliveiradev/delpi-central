@@ -92,6 +92,14 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 - **STOP:** qualquer necessidade de alterar regras/políticas de firewall, usar credencial administrativa ampla ou coletar segredos exige revisão de segurança e autorização específica. Não inferir ativos Windows/Linux a partir de objetos de rede do Sophos.
 - Fontes técnicas oficiais: https://docs.sophos.com/nsg/sophos-firewall/21.5/Help/en-us/webhelp/onlinehelp/AdministratorHelp/BackupAndFirmware/API/APIConfiguration/index.html e https://docs.sophos.com/nsg/sophos-Firewall/21.5/help/en-us/webhelp/onlinehelp/AdministratorHelp/Administration/SNMP/index.html .
 
+**Direção operacional do PO — coleta interna independente (10/11/2026):**
+- A TI interna da DELPI, sob responsabilidade do PO, deve operar e governar o inventário automático e suas credenciais. O GLPI operado pela empresa terceirizada **não é dependência nem condição de execução** e não deve ser consultado como pré-requisito para iniciar.
+- O GLPI da própria DELPI pode ser inventariado e reutilizado **apenas se houver ganho demonstrado e acesso autorizado**, sem criar autoridade paralela; inventariar ferramentas/agentes já presentes nos hosts antes de instalar novos.
+- **Primeiro piloto: servidor Linux `srv-api`**, já cadastrado no Portal de TI. Iniciar por diagnóstico local e comandos read-only executados pelo responsável interno, sem modificar daemon, pacotes, permissões, SSH, firewall, Docker ou configuração produtiva.
+- Levantar SO/kernel, hardware, memória, disco, interfaces, serviços/systemd, containers Docker, agentes existentes e mecanismos seguros de identificação. Evidência obtida manualmente em terminal serve de baseline, **não prova integração automática**.
+- Só após inventário e revisão de segurança escolher o adaptador: coletor local mínimo, agente já instalado, SSH com chave/conta restrita ou API existente. Planejar Windows depois; Sophos Matriz SFOS 21.5 depois. Não iniciar captura remota ativa sem contrato, credenciais e allowlist aprovados.
+- Coletar observações com `source`, `observed_at`, identidade estável e conciliação idempotente contra cadastros preexistentes. Dados curados manualmente não são sobrescritos; divergências viram candidatos para revisão. A Etapa 3A/3B permanece adiada.
+
 **Objetivo da E4 (PLANNED):** minimizar o cadastro manual de servidores Windows/Linux e da infraestrutura de rede Sophos, sem criar uma segunda autoridade sobre ativos existentes, nem sobrescrever dados operacionais curados por pessoas.
 
 **Gate inicial (TO_INVENTORY), antes de aprovar contratos/implementação:**
