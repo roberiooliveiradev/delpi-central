@@ -164,6 +164,7 @@ vi.mock("./lineFeederUi", () => ({
 afterEach(() => {
   cleanup();
   queueMock.mockReset();
+  window.localStorage.clear();
 });
 
 describe("LineFeederCollectModal", () => {
@@ -263,4 +264,43 @@ describe("LineFeederCollectModal", () => {
       ).toBeTruthy(),
     );
   });
+  it("preserva o horizonte de horas após remontar a tela na mesma filial", async () => {
+    queueMock.mockResolvedValue({
+      work_centers: [
+        { work_center: "CT-A", work_center_name: "Prensa", operation_count: 2 },
+      ],
+    });
+    const props = {
+      open: true,
+      branch: "02" as const,
+      onClose: () => undefined,
+      onSubmit: () => undefined,
+    };
+    const first = render(<LineFeederCollectModal {...props} />);
+    await screen.findByText(/CT-A · Prensa/);
+    fireEvent.change(screen.getByLabelText("Horas de produção por posto"), {
+      target: { value: "5.5" },
+    });
+    expect((screen.getByLabelText("Horas de produção por posto") as HTMLInputElement).value).toBe("5.5");
+
+    first.unmount();
+    render(<LineFeederCollectModal {...props} />);
+    expect((screen.getByLabelText("Horas de produção por posto") as HTMLInputElement).value).toBe("5.5");
+  });
+
+  it("prioriza a consulta atual ao reabrir, sem misturar com outra duração armazenada", () => {
+    window.localStorage.setItem("production-control:line-feeder:hours:v1:02", "5");
+    queueMock.mockResolvedValue({ work_centers: [] });
+    render(
+      <LineFeederCollectModal
+        open
+        branch="02"
+        initial={{ workCenters: [], hoursPerWorkCenter: 2 }}
+        onClose={() => undefined}
+        onSubmit={() => undefined}
+      />,
+    );
+    expect((screen.getByLabelText("Horas de produção por posto") as HTMLInputElement).value).toBe("2");
+  });
+
 });
