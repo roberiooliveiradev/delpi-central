@@ -1096,3 +1096,18 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 
 **Proposal:** `ACCEPT_WITH_RESIDUAL` → `COORDINATION_INT1_REAL_EVAL_INDEPENDENT_REVIEW`  
 **INT1_REWORK_BUDGET_EXHAUSTED:** YES
+
+
+## 2026-11-10 — INT-1 real Qwen independent review: material failures / eval harness security hold
+
+| ID | Classification | Evidence / next |
+|---|---|---|
+| INT1-P3 semantic selection | **OPEN_MATERIAL / FAIL** | Real Qwen selected dashboard analyze rather than operational visualization-format catalog; objective not met |
+| INT1-G1 semantic reword | **OPEN_MATERIAL / FAIL** | Real Qwen found identity but not requested BOM tree |
+| INT1-MCP-RENAME | **TEST_NOT_RUN** | Real renamed-tool selection not exercised; prior FunctionModel tests do not prove this |
+| INT1-P1-P2 | **PARTIAL_OUTCOME** | Owner evidence acquired with incomplete/truncated coverage, not global completion |
+| INT1-EVAL-CREDENTIAL-ISOLATION | **TO_VERIFY / SECURITY_REVIEW_REQUIRED** | Eval script copies prod `printenv`, selectively filters and supplies to eval container; separation of processes != separation of credentials |
+| INT1-EVAL-EGRESS | **TO_VERIFY / SECURITY_REVIEW_REQUIRED** | Host proxy bound 0.0.0.0; script describes use of localhost route to pass application egress guard; requires authorized egress-policy review |
+| INT1-REWORK-BUDGET | **EXHAUSTED** | No automatic functional rework |
+
+**Stage:** `INT1_STAGE_ACCEPTANCE=BLOCKED`, `INT1_CLOSED=NO`; `NEXT=T2_INT1_EVAL_ENV_SECURITY_AND_BLOCKER_DECISION`. No assertion of actual secret exposure or runtime write; production restart not observed in executor evidence. No promotion/INT2/T3/production deploy authorization.
