@@ -26,6 +26,7 @@ import { detailPath, newPath } from "../constants/kaizen";
 import { ANNUAL_BUSINESS_DAYS } from "../content/savingsConstants";
 import type { KaizenRecord } from "../types/kaizen";
 import { formatCurrency, formatDate } from "../utils/format";
+import { buildIdeaMonthFilter, detectIdeaMonthFilter } from "../utils/ideaMonthFilter";
 import { savingsTypeLabel, statusLabel, unitLabel } from "../utils/labels";
 import type { BranchOption } from "../utils/kaizenBranchPermissions";
 
@@ -86,6 +87,18 @@ export function KaizenListPage({
     () => detectPeriodPreset(dateStart, dateEnd),
     [dateStart, dateEnd],
   );
+
+  const ideaMonth = useMemo(
+    () => detectIdeaMonthFilter({ dateFields, dateStart, dateEnd }),
+    [dateFields, dateStart, dateEnd],
+  );
+
+  const handleIdeaMonthChange = useCallback((month: string) => {
+    const filters = buildIdeaMonthFilter(month);
+    setDateFields(filters.dateFields);
+    setDateStart(filters.dateStart);
+    setDateEnd(filters.dateEnd);
+  }, []);
 
   const clearFilters = useCallback(() => {
     setStatuses([]);
@@ -314,6 +327,7 @@ export function KaizenListPage({
         statuses={statuses}
         savingsTypes={savingsTypes}
         dateFields={dateFields}
+        ideaMonth={ideaMonth}
         dateStart={dateStart}
         dateEnd={dateEnd}
         title={title}
@@ -323,6 +337,7 @@ export function KaizenListPage({
         onStatusesChange={setStatuses}
         onSavingsTypesChange={setSavingsTypes}
         onDateFieldsChange={setDateFields}
+        onIdeaMonthChange={handleIdeaMonthChange}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onTitleChange={setTitle}
