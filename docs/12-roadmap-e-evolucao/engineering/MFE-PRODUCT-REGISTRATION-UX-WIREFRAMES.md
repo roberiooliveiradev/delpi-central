@@ -453,3 +453,38 @@ em Minhas Solicitações, sem criar cópia de workflow no requests-api.
 \`\`\`
 
 **Não é prioridade desenhar um novo wizard.** Primeiro sustentar anexo na API, depois adicionar o campo de upload discreto à ficha oficial, por último consumir a mesma semântica em Minhas Solicitações. \`StagedAttachmentsField\` no MFE My Requests serve como referência de staging/preview/removal, não como autorização para importar internals ou apontar upload PRC ao storage do requests-api. O suporte de upload deve distinguir arquivo local vs persistido, falha/retry e permissões no download. Se storage/permission/cutover não estiverem aprovados, manter UX sem controle falso de envio.
+
+## PRC-REF-023-F02/F03/F04 — Mesma ficha e documentos nas duas superfícies (PO 2026-11-10)
+
+**\`PO_APPROVED_TARGET / PLANNED\`.** Reutilizar controles canônicos; sem tela paralela de produto, novo wizard ou painel de anexos duplicado.
+
+\`\`\`text
+PORTAL ENGENHARIA · CREATE OU UPDATE
+Ficha completa PRC · atributos oficiais · fornecedores SA2/SA5
+Documentos de apoio (opcional)
+[Dropzone] [miniaturas de imagem / ícone PDF] [remover antes do envio]
+[Clique → FilePreviewModal / Baixar] [Enviar solicitação]
+(falha parcial: retry só dos pendentes, caseId preservado)
+
+PORTAL ENGENHARIA · DETALHE EM ATENDIMENTO
+[Ficha técnica] [Verificação TOTVS] [Histórico]
+Documentos de apoio: [miniaturas/ícones → modal PDF/imagem]
+[Download autorizado]; sem criar outro painel concorrente
+(solicitante consulta documentos permitidos; novos anexos em
+ "Devolvida para correção" ainda pendem de decisão)
+
+MINHAS SOLICITAÇÕES · NOVA SOLICITAÇÃO (MATÉRIA-PRIMA / PRODUTO)
+[Tipo: Criar | Alterar] · MESMOS CAMPOS E CONTROLES PRC
+[Descrição] [Grupo] [Tipo] [Unidade] [Estoque/Contabilidade]
+[Fornecedor por pesquisa oficial] [PN*] [Catálogo opcional]
+[Documentos opcionais: mesmo dropzone + preview + modal]
+[Enviar] → um único caso oficial da Engineering API
+
+MINHAS SOLICITAÇÕES · MINHA FILA/DETALHE
+[Enviada] [Em atendimento] [Devolvida para correção] [Concluída]
+Ver ficha/anexos/histórico permitidos
+Devolvida: editar na própria ficha SOMENTE alvos indicados; [Reenviar]
+Engenharia: atendimento/edição governados no Portal Engenharia
+\`\`\`
+
+Para cada tela validar desktop/tablet/mobile, zoom200, foco e teclado. Não expor ações não autorizadas; não copiar JSX de MFEs para criar uma segunda implementação. \`F02\` é consolidação e QA das superfícies documentais existentes; \`F03/F04\` exigem contratos Core/Coordination antes do cutover.
