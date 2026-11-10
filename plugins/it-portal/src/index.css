@@ -1,0 +1,325 @@
+/**
+ * Portal de TI — tokens itp-* ligados aos tokens do host.
+ * Escopo `.dashboard-it-portal`; componentes visuais vêm do `@delpi/plugin-ui`,
+ * aqui ficam somente tokens e composição de layout do portal.
+ */
+
+.dashboard-it-portal,
+.dashboard-it-portal * {
+  box-sizing: border-box;
+}
+
+.dashboard-it-portal {
+  --itp-page-padding: 24px;
+  --itp-section-gap: 24px;
+  --itp-grid-gap: 16px;
+  --itp-accent: var(--primary, #089bdb);
+  --itp-title: var(--secundary, #003866);
+  --itp-text: var(--text, #111111);
+  --itp-text-muted: var(--text-muted, rgba(17, 17, 17, 0.68));
+  --itp-surface: var(--surface, #ffffff);
+  --itp-surface-muted: var(--surface-muted, #f6f8fa);
+  --itp-border: var(--border, #e6e6e6);
+  --itp-warning: #b45309;
+  --itp-danger: #b91c1c;
+  --delpi-ui-accent: var(--itp-accent);
+  --delpi-ui-surface: var(--itp-surface);
+  --delpi-ui-surface-muted: var(--itp-surface-muted);
+  --delpi-ui-text: var(--itp-text);
+  --delpi-ui-title: var(--itp-title);
+  --delpi-ui-text-muted: var(--itp-text-muted);
+  --delpi-ui-border: var(--itp-border);
+  --delpi-ui-muted: var(--itp-text-muted);
+  --delpi-ui-section-gap: var(--itp-section-gap);
+  --delpi-ui-grid-gap: var(--itp-grid-gap);
+  --delpi-ui-page-padding: var(--itp-page-padding);
+  --delpi-surface: var(--itp-surface);
+  --delpi-muted: var(--itp-surface-muted);
+  --delpi-text: var(--itp-text);
+  --delpi-text-muted: var(--itp-text-muted);
+  --delpi-border: var(--itp-border);
+  --delpi-warning: var(--itp-warning);
+  --delpi-danger: var(--itp-danger);
+}
+
+:root[data-theme="dark"] .dashboard-it-portal {
+  --itp-title: rgba(255, 255, 255, 0.94);
+  --itp-text: rgba(255, 255, 255, 0.94);
+  --itp-text-muted: rgba(255, 255, 255, 0.78);
+  --itp-surface: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
+  --itp-surface-muted: color-mix(in srgb, var(--surface-2, #1b2030) 70%, #0b0e14);
+  --itp-border: rgba(255, 255, 255, 0.14);
+  --itp-warning: #fbbf24;
+  --itp-danger: #f87171;
+}
+
+.dashboard-it-portal.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  max-width: none;
+  padding: var(--itp-page-padding);
+  gap: var(--itp-section-gap);
+  background-color: var(--app-canvas, var(--bg));
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 5%, var(--app-canvas, var(--bg))),
+    var(--app-canvas, var(--bg)) 280px
+  );
+  color: var(--itp-text);
+}
+
+.dashboard-it-portal .itp-page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--itp-section-gap);
+  min-width: 0;
+}
+
+.dashboard-it-portal .itp-page-stack .itp-table-section {
+  margin-bottom: 0;
+}
+
+/* Indicadores e grids de seções */
+.dashboard-it-portal .itp-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: var(--itp-grid-gap);
+}
+
+.dashboard-it-portal .itp-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  gap: var(--itp-grid-gap);
+  align-items: start;
+}
+
+/* Pares rótulo/valor (somente leitura) */
+.dashboard-it-portal .itp-field-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 12px var(--itp-grid-gap);
+  margin: 0;
+}
+
+.dashboard-it-portal .itp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-it-portal .itp-field dt {
+  color: var(--itp-text-muted);
+  font-size: 0.75rem;
+}
+
+.dashboard-it-portal .itp-field dd {
+  margin: 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+/* Células e textos */
+.dashboard-it-portal .itp-cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-it-portal .itp-muted {
+  margin: 0;
+  color: var(--itp-text-muted);
+  font-size: 0.8125rem;
+}
+
+.dashboard-it-portal .itp-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.dashboard-it-portal .itp-prewrap {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-it-portal .itp-badge-group,
+.dashboard-it-portal .itp-row-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Filtros e formulários */
+.dashboard-it-portal .itp-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  align-items: end;
+  gap: 12px;
+}
+
+.dashboard-it-portal .itp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dashboard-it-portal .itp-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.dashboard-it-portal .itp-form-legend {
+  grid-column: 1 / -1;
+  padding: 0;
+  margin-bottom: 4px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.dashboard-it-portal .itp-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dashboard-it-portal .itp-form-errors {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 0.875rem;
+}
+
+.dashboard-it-portal .itp-state-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.dashboard-it-portal .itp-state-title,
+.dashboard-it-portal .itp-state-text {
+  margin: 0;
+}
+
+.dashboard-it-portal .itp-state-title {
+  font-weight: 600;
+}
+
+.dashboard-it-portal .itp-secret-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--itp-warning) 45%, var(--itp-border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--itp-warning) 10%, var(--itp-surface));
+  font-size: 0.875rem;
+}
+
+.dashboard-it-portal .itp-secret-warning svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--itp-warning);
+}
+
+/* Listas: notas, histórico e atalhos do início */
+.dashboard-it-portal .itp-timeline,
+.dashboard-it-portal .itp-link-list,
+.dashboard-it-portal .itp-chip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dashboard-it-portal .itp-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.dashboard-it-portal .itp-timeline-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 0 12px 14px;
+  border-left: 2px solid var(--itp-border);
+  border-bottom: 1px solid var(--itp-border);
+}
+
+.dashboard-it-portal .itp-timeline-item:last-child {
+  border-bottom: 0;
+}
+
+.dashboard-it-portal .itp-timeline-meta {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--itp-text-muted);
+}
+
+.dashboard-it-portal .itp-timeline-meta strong {
+  color: var(--itp-text);
+}
+
+.dashboard-it-portal .itp-link-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-it-portal .itp-link-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--itp-border);
+}
+
+.dashboard-it-portal .itp-link-list-item:last-child {
+  border-bottom: 0;
+}
+
+.dashboard-it-portal .itp-link-list-anchor {
+  flex: 1 1 220px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.dashboard-it-portal .itp-link-list-anchor:hover strong {
+  color: var(--itp-accent);
+  text-decoration: underline;
+}
+
+.dashboard-it-portal .itp-link-list-anchor:focus-visible {
+  outline: 2px solid var(--itp-accent);
+  outline-offset: 2px;
+}
+
+.dashboard-it-portal .itp-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-it-portal.dashboard-page {
+    --itp-page-padding: 16px;
+    --itp-section-gap: 16px;
+  }
+}
