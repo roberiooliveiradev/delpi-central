@@ -1,7 +1,8 @@
-/** PRC-REF-022 — modal compacto para Devolver para correção.
- * Seleciona alvos do catálogo oficial + vínculos SA5 (SUPPLIER_LINK)
- * por pesquisa oficial, com atributo e motivo por alvo.
- * Não duplica a ficha técnica nem cria Q&A paralelo. */
+/** PRC-REF-022-FIX-02 — modal compacto para Devolver para correção.
+ * Lista única e uniforme: cada campo corrigível (SB1 e atributos SA5)
+ * aparece como checkbox + motivo, sem seções, seletores ou etapas.
+ * A identidade técnica do vínculo (supplierCode/store/targetAttribute)
+ * é preenchida automaticamente a partir da ficha — invisível ao analista. */
 
 import { useId, useMemo, useState } from "react";
 
@@ -10,16 +11,13 @@ import {
   EngineeringCheckboxControl,
   EngineeringFormActions,
   EngineeringHostDialog,
-  EngineeringSearchableSelect,
   EngineeringStateBanner,
   EngineeringTextAreaField,
 } from "../../../ui/engineeringUi";
 import type { PrcFieldSpec } from "../api/productRegistrationApi";
-import { INFO_SUPPLIER_ATTRIBUTE_OPTIONS } from "../prcInformationExchange";
 import type { InfoSupplierOption } from "../prcInformationExchange";
 import { PRC_SUPPLIER_LABELS, prcFieldLabel } from "../prcCopy";
 import type { PrcCorrectionTargetInput } from "./prcActionSpecs";
-import { PrcOfficialSupplierSearchField } from "./PrcOfficialSupplierSearchField";
 
 const FIELD_CANDIDATES = [
   "description",
@@ -32,32 +30,73 @@ const FIELD_CANDIDATES = [
   "customerReference",
 ];
 
-const MAX_SUPPLIER_TARGETS = 20;
+export type PrcReturnEntry =
+  | { key: string; kind: "field"; label: string; path: string }
+  | {
+      key: string;
+      kind: "supplier";
+      label: string;
+      supplierCode: string;
+      store: string;
+      targetAttribute: "partNumber" | "catalogNumber" | null;
+    };
 
-type SupplierTargetDraft = {
-  rowId: string;
-  supplierCode: string;
-  store: string;
-  supplierName?: string;
-  targetAttribute: "partNumber" | "catalogNumber";
-  reason: string;
-};
-
-let supplierRowSeq = 0;
-
-function emptySupplierTarget(): SupplierTargetDraft {
-  supplierRowSeq += 1;
-  return {
-    rowId: `sup-target-${supplierRowSeq}`,
-    supplierCode: "",
-    store: "",
-    targetAttribute: "partNumber",
-    reason: "",
-  };
-}
-
-function supplierTargetKey(draft: SupplierTargetDraft): string {
-  return `${draft.supplierCode.trim()}|${draft.store.trim()}|${draft.targetAttribute}`;
+/** Lista única de campos devolvíveis: paths SB1 do catálogo + por
+ * vínculo existente na ficha as opções Fornecedor (link integral),
+ * Part Number e Catálogo. A identidade técnica sai da ficha — nunca
+ * de input do analista. */
+export function prcReturnEntryList(
+  fieldSpecs: PrcFieldSpec[] | null | undefined,
+  suppliers: InfoSupplierOption[] | null | undefined,
+): PrcReturnEntry[] {
+  const fromSpec = (fieldSpecs || [])
+    .map((s) => s.path)
+    .filter((p) => p !== "officialProductCode" && p !== "suppliers");
+  const base = Array.from(
+    new Set(fromSpec.length ? fromSpec : FIELD_CANDIDATES),
+  );
+  const out: PrcReturnEntry[] = base.map((path) => ({
+    key: `FIELD:${path}`,
+    kind: "field",
+    label: prcFieldLabel(path),
+    path,
+  }));
+  const links = new Map<string, { code: string; store: string }>();
+  for (const s of suppliers || []) {
+    const code = String(s.supplierCode || "").trim();
+    const store = String(s.store || "").trim();
+    if (code && store) links.set(`${code}|${store}`, { code, store });
+  }
+  const multiple = links.size > 1;
+  for (const { code, store } of links.values()) {
+    const suffix = multiple ? ` — Fornecedor ${code} / ${store}` : "";
+    const id = `${code}|${store}`;
+    out.push({
+      key: `SUP:${id}:link`,
+      kind: "supplier",
+      label: multiple ? `Fornecedor ${code} / ${store}` : "Fornecedor",
+      supplierCode: code,
+      store,
+      targetAttribute: null,
+    });
+    out.push({
+      key: `SUP:${id}:partNumber`,
+      kind: "supplier",
+      label: `${PRC_SUPPLIER_LABELS.partNumber}${suffix}`,
+      supplierCode: code,
+      store,
+      targetAttribute: "partNumber",
+    });
+    out.push({
+      key: `SUP:${id}:catalogNumber`,
+      kind: "supplier",
+      label: `${PRC_SUPPLIER_LABELS.catalogNumber}${suffix}`,
+      supplierCode: code,
+      store,
+      targetAttribute: "catalogNumber",
+    });
+  }
+  return out;
 }
 
 export function PrcReturnForCorrectionModal({
@@ -71,8 +110,8 @@ export function PrcReturnForCorrectionModal({
   open: boolean;
   busy: boolean;
   fieldSpecs?: PrcFieldSpec[] | null;
-  /** Vínculos já presentes na ficha — atalho de preenchimento da
-   * identidade oficial (supplierCode + store). */
+  /** Vínculos já presentes na ficha — origem das opções SA5 e da
+   * identidade técnica enviada ao backend (nunca input livre). */
   suppliers?: InfoSupplierOption[];
   onSubmit: (targets: PrcCorrectionTargetInput[]) => void;
   onCancel: () => void;
@@ -80,126 +119,52 @@ export function PrcReturnForCorrectionModal({
   const formId = useId();
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [reasons, setReasons] = useState<Record<string, string>>({});
-  const [supplierTargets, setSupplierTargets] = useState<
-    SupplierTargetDraft[]
-  >([]);
-  const [supplierErrors, setSupplierErrors] = useState<
-    Record<string, string>
-  >({});
   const [formError, setFormError] = useState("");
 
-  const paths = useMemo(() => {
-    const fromSpec = (fieldSpecs || [])
-      .map((s) => s.path)
-      .filter((p) => p !== "officialProductCode" && p !== "suppliers");
-    const base = fromSpec.length ? fromSpec : FIELD_CANDIDATES;
-    return Array.from(new Set(base));
-  }, [fieldSpecs]);
-
-  const draftLinkOptions = useMemo(
-    () =>
-      (suppliers || [])
-        .filter((s) => s.supplierCode.trim() && s.store.trim())
-        .map((s) => ({
-          value: `${s.supplierCode.trim()}|${s.store.trim()}`,
-          label: `${s.supplierCode.trim()} / ${s.store.trim()}${
-            s.supplierName ? ` — ${s.supplierName}` : ""
-          }`,
-        })),
-    [suppliers],
+  const entries = useMemo<PrcReturnEntry[]>(
+    () => prcReturnEntryList(fieldSpecs, suppliers),
+    [fieldSpecs, suppliers],
   );
 
   if (!open) return null;
 
-  const toggle = (path: string, checked: boolean) => {
-    setSelected((prev) => ({ ...prev, [path]: checked }));
-  };
-
-  const patchTarget = (
-    rowId: string,
-    change: Partial<SupplierTargetDraft>,
-  ) => {
-    setSupplierTargets((list) =>
-      list.map((t) => (t.rowId === rowId ? { ...t, ...change } : t)),
-    );
-    setSupplierErrors((errors) => {
-      if (!errors[rowId]) return errors;
-      const next = { ...errors };
-      delete next[rowId];
-      return next;
-    });
+  const toggle = (key: string, checked: boolean) => {
+    setSelected((prev) => ({ ...prev, [key]: checked }));
     setFormError("");
-  };
-
-  const pickDraftLink = (rowId: string, value: string) => {
-    const [code = "", store = ""] = value.split("|");
-    patchTarget(rowId, {
-      supplierCode: code.trim(),
-      store: store.trim(),
-      supplierName: (suppliers || []).find(
-        (s) =>
-          s.supplierCode.trim() === code.trim() &&
-          s.store.trim() === store.trim(),
-      )?.supplierName,
-    });
   };
 
   const submit = () => {
     const targets: PrcCorrectionTargetInput[] = [];
-    for (const path of paths) {
-      if (!selected[path]) continue;
-      const reason = (reasons[path] || "").trim();
+    for (const entry of entries) {
+      if (!selected[entry.key]) continue;
+      const reason = (reasons[entry.key] || "").trim();
       if (reason.length < 3) {
         setFormError(
-          `Informe o motivo (mín. 3 caracteres) para «${prcFieldLabel(path)}».`,
+          `Informe o motivo (mín. 3 caracteres) para «${entry.label}».`,
         );
         return;
       }
-      targets.push({
-        targetType: "FIELD",
-        targetPath: path,
-        reason,
-      });
-    }
-    const rowErrors: Record<string, string> = {};
-    const seen = new Set<string>();
-    for (const draft of supplierTargets) {
-      const code = draft.supplierCode.trim();
-      const store = draft.store.trim();
-      if (!code || !store) {
-        rowErrors[draft.rowId] =
-          "Selecione o fornecedor pela pesquisa oficial ou pela lista de vínculos.";
-        continue;
+      if (entry.kind === "field") {
+        targets.push({
+          targetType: "FIELD",
+          targetPath: entry.path,
+          reason,
+        });
+      } else {
+        targets.push({
+          targetType: "SUPPLIER_LINK",
+          targetPath: "suppliers",
+          targetAttribute: entry.targetAttribute,
+          supplierKey: {
+            supplierCode: entry.supplierCode,
+            store: entry.store,
+          },
+          reason,
+        });
       }
-      if (draft.reason.trim().length < 3) {
-        rowErrors[draft.rowId] =
-          "Informe o motivo (mín. 3 caracteres) para este vínculo.";
-        continue;
-      }
-      const key = supplierTargetKey(draft);
-      if (seen.has(key)) {
-        rowErrors[draft.rowId] =
-          "Este vínculo e atributo já foram adicionados à devolução.";
-        continue;
-      }
-      seen.add(key);
-      targets.push({
-        targetType: "SUPPLIER_LINK",
-        targetPath: "suppliers",
-        targetAttribute: draft.targetAttribute,
-        supplierKey: { supplierCode: code, store },
-        reason: draft.reason.trim(),
-      });
-    }
-    if (Object.keys(rowErrors).length) {
-      setSupplierErrors(rowErrors);
-      setFormError("Revise os vínculos destacados.");
-      return;
     }
     if (!targets.length) {
-      setFormError(
-        "Selecione ao menos um campo ou vínculo para devolver.",
-      );
+      setFormError("Selecione ao menos um campo para devolver.");
       return;
     }
     setFormError("");
@@ -232,9 +197,8 @@ export function PrcReturnForCorrectionModal({
       }
     >
       <p className="engineering-prc__muted">
-        Indique os campos da ficha e os atributos de fornecedores a
-        corrigir, com o motivo de cada alvo. O solicitante editará na
-        mesma ficha técnica.
+        Selecione os campos que precisam de correção e informe o motivo.
+        O solicitante editará na mesma ficha técnica.
       </p>
       <form
         id={formId}
@@ -245,23 +209,23 @@ export function PrcReturnForCorrectionModal({
         }}
       >
         <div className="engineering-prc__edit-list">
-          {paths.map((path) => {
-            const picked = Boolean(selected[path]);
+          {entries.map((entry) => {
+            const picked = Boolean(selected[entry.key]);
             return (
-              <div key={path} className="engineering-prc__edit-row">
+              <div key={entry.key} className="engineering-prc__edit-row">
                 <EngineeringCheckboxControl
                   checked={picked}
                   disabled={busy}
-                  onChange={(v) => toggle(path, v)}
-                  label={prcFieldLabel(path)}
+                  onChange={(v) => toggle(entry.key, v)}
+                  label={entry.label}
                 />
                 {picked ? (
                   <EngineeringTextAreaField
-                    id={`${formId}-reason-${path}`}
+                    id={`${formId}-reason-${entry.key}`}
                     label="Motivo da correção"
-                    value={reasons[path] || ""}
+                    value={reasons[entry.key] || ""}
                     onChange={(v) =>
-                      setReasons((s) => ({ ...s, [path]: v }))
+                      setReasons((s) => ({ ...s, [entry.key]: v }))
                     }
                     required
                     maxLength={1000}
@@ -272,128 +236,6 @@ export function PrcReturnForCorrectionModal({
               </div>
             );
           })}
-        </div>
-
-        <h3 className="engineering-prc__info-heading">
-          Vínculos de fornecedores
-        </h3>
-        <ol className="engineering-prc__info-questions">
-          {supplierTargets.map((draft, index) => {
-            const selectedSupplier =
-              draft.supplierCode && draft.store
-                ? {
-                    supplierCode: draft.supplierCode,
-                    store: draft.store,
-                    supplierName: draft.supplierName,
-                  }
-                : null;
-            return (
-              <li
-                key={draft.rowId}
-                className="engineering-prc__info-question"
-                aria-label={`Vínculo ${index + 1}`}
-              >
-                <div className="engineering-prc__info-question-head">
-                  <strong>{`Vínculo ${index + 1}`}</strong>
-                  <EngineeringActionButton
-                    variant="ghost"
-                    disabled={busy}
-                    onClick={() =>
-                      setSupplierTargets((list) =>
-                        list.filter((t) => t.rowId !== draft.rowId),
-                      )
-                    }
-                  >
-                    Remover alvo
-                  </EngineeringActionButton>
-                </div>
-                <div className="engineering-prc__info-question-target">
-                  {draftLinkOptions.length ? (
-                    <EngineeringSearchableSelect
-                      id={`${formId}-sup-${draft.rowId}-pick`}
-                      label="Vínculo da ficha"
-                      searchable
-                      value={
-                        draft.supplierCode && draft.store
-                          ? `${draft.supplierCode}|${draft.store}`
-                          : ""
-                      }
-                      onChange={(v) => pickDraftLink(draft.rowId, v)}
-                      options={draftLinkOptions}
-                      placeholder="Preencher a partir da ficha"
-                      disabled={busy}
-                    />
-                  ) : null}
-                  <PrcOfficialSupplierSearchField
-                    id={`${formId}-sup-${draft.rowId}-search`}
-                    selected={selectedSupplier}
-                    disabled={busy}
-                    onSelect={(hit) =>
-                      patchTarget(draft.rowId, {
-                        supplierCode: hit.supplierCode,
-                        store: hit.store,
-                        supplierName: hit.supplierName,
-                      })
-                    }
-                    onClear={() =>
-                      patchTarget(draft.rowId, {
-                        supplierCode: "",
-                        store: "",
-                        supplierName: undefined,
-                      })
-                    }
-                  />
-                  <EngineeringSearchableSelect
-                    id={`${formId}-sup-${draft.rowId}-attr`}
-                    label="Atributo a corrigir"
-                    value={draft.targetAttribute}
-                    onChange={(v) =>
-                      patchTarget(draft.rowId, {
-                        targetAttribute:
-                          v as SupplierTargetDraft["targetAttribute"],
-                      })
-                    }
-                    options={INFO_SUPPLIER_ATTRIBUTE_OPTIONS.map((o) => ({
-                      value: o.value,
-                      label: o.label,
-                    }))}
-                    disabled={busy}
-                  />
-                </div>
-                <EngineeringTextAreaField
-                  id={`${formId}-sup-${draft.rowId}-reason`}
-                  label={`Motivo da correção — ${PRC_SUPPLIER_LABELS[draft.targetAttribute]}`}
-                  value={draft.reason}
-                  onChange={(v) =>
-                    patchTarget(draft.rowId, { reason: v })
-                  }
-                  required
-                  maxLength={1000}
-                  disabled={busy}
-                  rows={2}
-                />
-                {supplierErrors[draft.rowId] ? (
-                  <p className="engineering-prc__field-error" role="alert">
-                    {supplierErrors[draft.rowId]}
-                  </p>
-                ) : null}
-              </li>
-            );
-          })}
-        </ol>
-        <div>
-          <EngineeringActionButton
-            variant="ghost"
-            disabled={busy || supplierTargets.length >= MAX_SUPPLIER_TARGETS}
-            onClick={() =>
-              setSupplierTargets((list) => [
-                ...list,
-                emptySupplierTarget(),
-              ])
-            }
-          >
-            Adicionar vínculo
-          </EngineeringActionButton>
         </div>
 
         {formError ? (
