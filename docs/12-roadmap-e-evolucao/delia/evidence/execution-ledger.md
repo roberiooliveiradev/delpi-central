@@ -6139,3 +6139,15 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **R04:** CLOSED_PROVEN neste runtime (env sem CATALOG_*; Settings fail-closed; mode=core).
 - **Handoff PO:** `http://localhost/apps/delia`; perguntas amostrais no relatório.
 - **Veredicto:** `T2_RELEASE_DEPLOYED_QWEN14B` com residuais controlados (R05/R06 live, VISTA phrasing flaky); ExternalConnection/ACT = fora de escopo.
+
+
+| DELIA-C3-T2-PO-FAIL-INVESTIGATIVE-INTELLIGENCE-TRACK-REGISTRATION-01 | Documentation-only coordination decision after PO manual homologation FAILED (P1/P2/P3); T2 remains functionally REWORK despite Qwen14B production release historical fact. Four cognitive responsibilities scoped; only investigative Agent inventory T2-INT0 next; no implementation/deploy/T3. | T2_FUNCTIONAL_ACCEPTANCE=REWORK; NEXT=T2_INT0_INVESTIGATIVE_AGENT_REUSE_AND_CONTRACT_INVENTORY |
+
+### DELIA-C3-T2-PO-FAIL-INVESTIGATIVE-INTELLIGENCE-TRACK-REGISTRATION-01 — architecture coordination record (2026-11-10)
+
+- **Authority:** 16 order unchanged; 293 finite T2-INT scope; 50/17/49/51/52/21/20/25 and MCP 60 remain superior. No phase advancement, no new architecture, framework or business authority.
+- **PO evidence:** real sequence (product 90260921 structure; registered Transformômetro processes; available visualization formats) **FAIL objective satisfaction**. Executor forensic report: P2/P3 semantic selection + unverified objective coverage after grounded related evidence; P1 original INCONCLUSIVE because later reproduction PASS; no independent DEV/PROD parity (one container). Earlier GO/release stamps remain historical and are not evidence of business acceptance.
+- **Architecture direction:** four bounded cognitive responsibilities (understanding, investigation, sufficiency evaluation, synthesis) under existing DÉLIA/Pydantic AI and existing Evidence/Policy/Decision/Outcome gates. Not four physical Agents by default. First inspect/reuse existing investigation Agent/MCPToolset and coverage/finalization contracts; new evaluator/subagent/handoff only if bounded experiment proves necessity and native support.
+- **Reuse:** investigation/MCPToolset/Evidence/Outcome `EXISTING_EQUIVALENT=YES / REUSE_DECISION=REUSE`; independent evaluator `EXISTING_EQUIVALENT=TO_INVENTORY / REUSE_DECISION=UNDECIDED`. No code/config/deploy or model changes in this task.
+- **Finite next:** `T2_INT0_INVESTIGATIVE_AGENT_REUSE_AND_CONTRACT_INVENTORY` (diagnostic contract/inventory ONLY); after independent review, potentially INT-1 small experiment, not auto-authorized. Tests should be causally targeted + generalization metamorphic, not full-stack or mandatory Kimi/Qwen comparison.
+- **Formal status:** `T2_TECHNICAL_RELEASE=DEPLOYED_REPORTED`; `T2_FUNCTIONAL_ACCEPTANCE=REWORK`; `PO_MANUAL_HOMOLOGATION=FAIL`; `C3_PHASE=UNCHANGED`; `T3_AUTHORIZED=NO`; `PRODUCTION_DEPLOY_FOR_NEW_TRACK=NOT_AUTHORIZED`; `NEXT=T2_INT0_INVESTIGATIVE_AGENT_REUSE_AND_CONTRACT_INVENTORY`.
