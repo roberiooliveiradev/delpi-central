@@ -42,7 +42,7 @@ Para cada questão: `Status: DECIDED | SOURCE_DEFINED | PARTIAL | TO_INVENTORY |
 
 ### Q04 — Identificação e confidencialidade
 **Pergunta:** Respostas serão identificadas, anônimas ou confidenciais com acesso restrito? O cliente será informado do tratamento e finalidade?
-**Status:** DECIDED quanto à identificação por empresa e matriz funcional de acesso (informado pelo solicitante; implementação e códigos reais TO_INVENTORY). Política de transparência ao respondente e retenção PENDING.
+**Status:** DECIDED quanto à identificação por empresa e matriz funcional de acesso (informado pelo solicitante; implementação e códigos reais TO_INVENTORY). Política de transparência ao respondente e conformidade jurídica/técnica da retenção histórica ainda requerem validação.
 **Resposta — identificação:** As respostas da pesquisa serão identificadas e vinculadas somente à empresa cliente e à campanha; notas e comentários por empresa serão visíveis apenas aos perfis autorizados. O questionário não deve exigir nem armazenar nome/e-mail da pessoa física que respondeu como identificador da resposta. O e-mail usado para convite é dado operacional de envio, não identificação do respondente. Link compartilhável não comprova identidade pessoal.
 **Resposta — perfis:** Criar/estabelecer a permissão proposta `commercial.marketing` para gerir esta frente. O solicitante informa que já existe `commercial.manager`. Ambos os perfis poderão configurar campanhas e seus destinatários, gerar links, disparar convites, consultar respostas individualizadas e tratar os dados/resultados.
 **Resposta — demais usuários:** Os outros usuários que têm acesso ao Portal Comercial verão apenas resumo/indicadores agregados; não terão acesso às configurações, disparos, respostas individualizadas, listas restritas de destinatários ou tratamento operacional da pesquisa.
@@ -50,7 +50,7 @@ Para cada questão: `Status: DECIDED | SOURCE_DEFINED | PARTIAL | TO_INVENTORY |
 **Owner funcional:** Comercial (validação formal PENDING).
 **Impacto:** Segregar operações e dados pessoais/sensíveis; verificar autorização em cada endpoint e consulta no backend (filtro apenas no frontend não constitui autorização). O resumo agregado deve evitar identificar indiretamente clientes em grupos muito pequenos.
 **TO_INVENTORY:** Confirmar os códigos/semântica atuais de permissões, owners e mecanismo de aplicação no backend, conforme contratos canônicos existentes. `commercial.marketing` é requisito novo, não permissão já implementada; `commercial.manager` é existência relatada, ainda não confirmada por inventário nesta decisão.
-**PENDING complementar:** Aviso de privacidade e finalidade ao cliente, política de retenção, auditoria, limiares mínimos para agregações e regras de segmentação que possam revelar respostas individuais. Evitar coleta incidental de identificadores pessoais além do necessário à entrega/segurança do convite.
+**Complemento decidido em 2026-11-10:** O solicitante definiu manutenção histórica por tempo indeterminado, sem prazo fixo de exclusão programada, para comparação plurianual; o estado da pesquisa pertence ao escopo da API Comercial. Não equivale a autorização irrestrita de conservação de dados pessoais: finalidade, minimização, proteção, atendimento a direitos dos titulares e revisão de conformidade LGPD permanecem requisitos de governança. **TO_INVENTORY:** mecanismos de auditoria, limiares mínimos para agregações e regras de segmentação que possam revelar respostas individuais. Evitar coleta incidental de identificadores pessoais além do necessário à entrega/segurança do convite.
 
 ## B. Campanhas, envio e formulário
 
@@ -151,35 +151,35 @@ Para cada questão: `Status: DECIDED | SOURCE_DEFINED | PARTIAL | TO_INVENTORY |
 
 ### Q15 — Critério e triagem de problemas
 **Pergunta:** O que torna uma resposta ou comentário um problema a tratar, quem classifica nas oito categorias e quais situações exigem acompanhamento?
-**Status:** SOURCE_DEFINED quanto às oito categorias e à existência de classificação; PARTIAL quanto ao critério de relevância e responsabilidade operacional.
+**Status:** SOURCE_DEFINED quanto às oito categorias; DECIDED quanto aos perfis responsáveis pelo tratamento; PENDING apenas para critérios de relevância e detalhes operacionais.
 **Resposta pelo plano:** Cada problema identificado deve ser classificado como Produto, Qualidade, Entrega, Atendimento, Comercial, Técnico, Comunicação ou Preço (seção 8, etapa 2, página 4). A consolidação deve listar principais comentários e clientes críticos em até cinco dias após o encerramento (etapa 1).
-**PENDING:** O plano não define uma regra automática para transformar cada nota ou comentário em problema, nem nomeia quem faz a triagem. Não implementar detecção automática/alertas por inferência; classificação humana simples é alternativa a validar operacionalmente.
+**Responsabilidade DECIDED:** O tratamento da pesquisa, incluindo triagem e classificação, cabe aos usuários autorizados por `commercial.marketing` ou `commercial.manager`, conforme decisão do solicitante em 2026-11-10. O plano não estabelece critério automático para transformar notas/comentários em problemas: não inventar detecção automática ou nova aprovação.
 **Impacto:** Reutilizar oito categorias do plano, sem inventar novas categorias ou automação.
 ### Q16 — Gestão de ações
 **Pergunta:** Quem cria e atribui planos de ação, quais etapas/status e critérios de aprovação e conclusão deverão existir?
-**Status:** SOURCE_DEFINED quanto aos campos mínimos do acompanhamento; PARTIAL quanto a responsáveis de governança e estados.
+**Status:** SOURCE_DEFINED quanto aos campos mínimos; DECIDED quanto aos perfis com responsabilidade de gestão; PENDING para enumerações/status e procedimentos não especificados.
 **Resposta pelo plano:** Para cada oportunidade relevante, manter Problema, Cliente, Causa, Ação, Responsável, Prazo e Status (seção 8, etapa 3, página 4). Na estrutura do CRM também estão previstos plano de ação, responsável pela ação, prazo, status e reavaliação (seção 10, páginas 4–5). O painel mostra ações concluídas ÷ ações identificadas (seção 9).
-**PENDING:** Quem cria e encerra ações, valores permitidos de status, critérios de conclusão, eventual aprovação e fluxo de reavaliação não são detalhados; não inferir workflow complexo.
+**Responsabilidade DECIDED:** Usuários autorizados por `commercial.marketing` ou `commercial.manager` gerem o tratamento, podendo registrar, atribuir e acompanhar ações, conclusões e reavaliações no escopo da pesquisa. O responsável indicado em cada ação é um campo operacional do plano, não uma terceira permissão de gestão. **PENDING técnico/operacional:** Valores de status e critérios simples de conclusão ainda não estão definidos; não inferir workflow de aprovação complexo.
 **Impacto:** Um registro simples de ações com seus campos pode ser a menor solução suficiente, após inventário de eventual recurso existente.
 ### Q17 — Retorno ao cliente
 **Pergunta:** Em quais situações é obrigatório responder ao cliente, por qual canal e quem aprova/registra o retorno e a reavaliação?
-**Status:** SOURCE_DEFINED quanto ao público-alvo do retorno; PARTIAL quanto ao canal e à responsabilidade.
+**Status:** SOURCE_DEFINED quanto ao público-alvo do retorno; DECIDED quanto aos perfis responsáveis por acompanhar o retorno; PENDING quanto ao canal operacional.
 **Resposta pelo plano:** Prever retorno aos clientes com críticas relevantes, inclusive com texto-modelo informando recebimento da avaliação e ações em andamento (seção 8, etapa 4, página 4). Registrar reavaliação no acompanhamento (seção 10, página 5).
-**PENDING:** Canal efetivo de retorno, responsável por enviar e registrar e eventual aprovação não são determinados. O texto-modelo não autoriza envio automatizado nem define um prazo específico.
+**Responsabilidade DECIDED:** O tratamento e acompanhamento do retorno ao cliente competem aos usuários autorizados por `commercial.marketing` ou `commercial.manager`, segundo decisão de 2026-11-10. **PENDING:** Canal efetivo de retorno e detalhes de registro. O texto-modelo não autoriza envio automático, não define prazo específico e não pressupõe uma aprovação adicional.
 **Impacto:** Fechar o ciclo com o cliente sem criar integração adicional sem necessidade.
 ### Q18 — Acesso, retenção e auditoria
 **Pergunta:** Quem pode gerir campanhas, destinatários, disparos, respostas individuais, indicadores e ações? Por quanto tempo os dados serão mantidos?
-**Status:** PARTIALLY_DECIDED pelo solicitante na Q04; PENDING quanto à retenção e aos detalhes de segurança.
+**Status:** DECIDED quanto aos perfis de gestão e à intenção de retenção histórica por tempo indeterminado; TO_INVENTORY quanto à execução das regras de segurança, auditoria e validação LGPD.
 **Resposta pelo plano:** O plano descreve resultados e acompanhamento por cliente, mas não fixa permissões, retenção, auditoria ou regra de divulgação de respostas individualizadas (seções 7–10). A decisão complementar informada pelo solicitante em Q04 restringe configuração/envios/respostas individualizadas a commercial.marketing e commercial.manager e libera apenas indicadores agregados aos demais usuários do Portal Comercial.
-**PENDING / TO_INVENTORY:** Confirmar contratos de permissão reais, política de retenção, proteção de convites/links, auditoria e limiares de agregação que evitem exposição indireta de clientes. Backend continua autoridade.
+**Decisão complementar (2026-11-10):** Guardar pesquisas e respostas historicamente por tempo indeterminado em tabelas no domínio da API Comercial para acompanhar a evolução da DELPI ao longo dos anos; não estabelecer exclusão automática por prazo fixo por simples conveniência técnica. **TO_INVENTORY:** Contratos reais das permissões, armazenamento em schema de responsabilidade comercial, proteção dos convites/links, auditoria, segregação de acesso e limiares de agregação. **Governança:** Validar finalidade, base legal, transparência, minimização, segurança, direitos dos titulares e revisão periódica da necessidade de retenção, conforme LGPD. A decisão funcional não dispensa conformidade nem constitui prova de implementação; backend permanece autoridade.
 **Impacto:** Preservar a matriz funcional decidida sem atribuir ao plano regra que ele não traz.
 ## E. Uso do que já existe
 
 ### Q19 — Integração e ownership
 **Pergunta:** Quais recursos atuais do Portal Comercial/CRM/customer-experience serão reutilizados, e qual API será autoridade de cada dado e regra?
-**Status:** SOURCE_DEFINED somente para intenção de acompanhar no CRM; TO_INVENTORY para implementação, contrato e owner.
+**Status:** DECIDED quanto ao domínio proprietário futuro e à estratégia de inventário incremental; TO_INVENTORY quanto a contratos, código e recursos reais.
 **Resposta pelo plano:** A seção 10, páginas 4–5, lista campos de acompanhamento no CRM: pesquisa enviada, data, responsável, IGS, NPS, notas por dimensão, comentários, pontos críticos, plano de ação, responsável, prazo, status e reavaliação. O solicitante já informou que a primeira solução será no Portal Comercial existente e reutilizará clientes do ERP TOTVS via API DELPI (Q03).
-**TO_INVENTORY:** Verificar HEAD/branch, contratos e rotas de clientes, recursos de formulários e ações existentes, authority de dados comerciais, RBAC no backend e consumidores; esta resposta depende de evidência técnica e não de nova entrevista.
+**Decisão complementar (2026-11-10):** Persistência das campanhas, convites, respostas e acompanhamentos no escopo de dados e regras da API Comercial, em tabelas/esquemas sob sua responsabilidade; não criar autoridade cadastral paralela ao TOTVS. Inventário técnico será incremental, realizado antes de cada frente de desenvolvimento de rotas, modelos e interface, e não exigido como uma grande fase documental separada. **TO_INVENTORY por frente:** Confirmar HEAD, branch e working tree; fonte canônica e owner; contratos/consumidores; rotas de clientes, formulários e ações reutilizáveis; permissões backend; testes e comportamento comprovado. Não assumir estrutura física, endpoints ou capacidades antes dessa verificação.
 **Impacto:** Evitar cadastro paralelo, CRUD duplicado e deslocamento de regras para o frontend.
 ### Q20 — Critérios de sucesso e primeira entrega
 **Pergunta:** Como saberemos que a primeira entrega resolveu a necessidade da Qualidade e do Comercial? Quais resultados mínimos devem estar disponíveis antes de iniciar uma campanha real?
@@ -197,4 +197,4 @@ Para cada questão: `Status: DECIDED | SOURCE_DEFINED | PARTIAL | TO_INVENTORY |
 
 ## Próxima pergunta em entrevista
 
-**Próximo passo após leitura integral do plano:** não perguntar novamente sobre segmentações (Q13), evolução (Q14), categorias (Q15), campos de ação (Q16), público do retorno (Q17) ou indicadores (Q20), pois já constam no plano. Priorizar inventário técnico e esclarecer apenas pendências de negócio que bloquearem a implementação.
+**Próximo passo após decisões complementares de 2026-11-10:** Não perguntar novamente sobre segmentações, evolução, categorias, campos de ação, tratamento por Marketing/Manager, retenção histórica ou escopo de persistência na API Comercial. Prosseguir com especificação funcional baseada no plano e decisões do solicitante. Executar inventário técnico bounded por frente imediatamente antes de projetar/implementar rotas, dados e interface; esclarecer somente lacunas materiais para as quais não haja decisão ou contrato canônico. Nenhuma implementação está comprovada ou autorizada por este documento.
