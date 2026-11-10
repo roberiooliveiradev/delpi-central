@@ -77,9 +77,12 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ### Q07 — Lembretes e tentativas
 **Pergunta:** Quantos convites/lembretes podem ser enviados por contato? Quais prazos, expiração e regras para reenvio?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** status de entrega, prevenção de duplicatas e taxa de resposta.
+**Status:** DECIDED quanto ao reenvio manual e à ausência de lembretes automáticos; PENDING quanto a limites e regras complementares.
+**Resposta:** Usuários autorizados de Marketing e Manager poderão visualizar empresas que ainda não responderam e reenviar manualmente o convite. O reenvio utiliza o mesmo link exclusivo da empresa na campanha, sem criar outro link nem permitir uma segunda resposta. Não implementar lembretes automáticos por prazo ou intervalo.
+**Fonte:** Resposta expressa do solicitante em 2026-11-10: "Manual", após a proposta de reenvio manual de convites aos clientes pendentes com o mesmo link.
+**Condições:** A validade do link continua restrita às datas da campanha (Q05), e o envio direto pelo Portal permanece somente por e-mail, com cópia manual do link para os demais canais (Q06).
+**PENDING:** Limites de tentativas, eventual aviso sobre frequência excessiva, registro e auditoria dos reenvios, comprovação de entrega de e-mail e detalhes de permissões no backend.
+**Impacto:** Fluxo operacional simples, sem automação de lembretes; identificação de pendências por empresa e prevenção de respostas duplicadas.
 
 ### Q08 — Obrigatoriedade e não aplicabilidade
 **Pergunta:** Quais das 15 perguntas serão obrigatórias? Será permitida resposta "não se aplica", envio parcial ou alteração após envio?
