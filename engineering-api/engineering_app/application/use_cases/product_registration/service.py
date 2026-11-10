@@ -22,6 +22,9 @@ from engineering_app.domain.product_registration import baseline as sa5_baseline
 from engineering_app.domain.product_registration import catalog
 from engineering_app.domain.product_registration import flags as attendance_flags
 from engineering_app.domain.product_registration import (
+    correction_returns as corr_returns,
+)
+from engineering_app.domain.product_registration import (
     information_rounds as info_rounds,
 )
 from engineering_app.domain.product_registration.errors import (
@@ -55,9 +58,30 @@ _EVENT_TYPE_BY_ACTION = {
     "resume": "resumed",
     "submit_review": "submitted_for_review",
     "return_to_attendance": "returned_to_attendance",
+    "return_for_correction": "correction_returned",
+    "resubmit_correction": "correction_resubmitted",
     "complete": "completed",
     "reject": "rejected",
 }
+
+_REQUESTER_CORRECTION_ACTIONS = frozenset(
+    {"save_returned_fields", "resubmit_correction"}
+)
+_ANALYST_ONLY_ACTIONS = frozenset(
+    {
+        "start",
+        "edit_draft",
+        "return_for_correction",
+        "complete",
+        "verify_and_complete",
+        "reject",
+        "request_information",
+        "resume",
+        "submit_review",
+        "return_to_attendance",
+        "route_divergence",
+    }
+)
 
 # Status a partir dos quais a conclusão verificada é permitida (REF-020).
 _COMPLETE_FROM = frozenset({"in_progress", "under_review"})
@@ -180,6 +204,30 @@ class ProductRegistrationService:
         self._reader = official_reader
         self._sources = allowed_sources or _ALLOWED_SOURCES_DEFAULT
 
+    def _filter_actions_for_actor(
+        self,
+        actions: list[str],
+        *,
+        actor: PrcActor,
+        request: dict[str, Any],
+    ) -> list[str]:
+        """Object AuthZ: solicitante ≠ analista; dual-role sem toggle."""
+        requester = str(request.get("requester_subject") or "")
+        is_requester = bool(requester) and actor.user_id == requester
+        out: list[str] = []
+        for action in actions:
+            if action in _REQUESTER_CORRECTION_ACTIONS:
+                if is_requester and actor.has_action_permission(action):
+                    out.append(action)
+                continue
+            if action in _ANALYST_ONLY_ACTIONS:
+                if actor.is_analyst and actor.has_action_permission(action):
+                    out.append(action)
+                continue
+            if actor.has_action_permission(action):
+                out.append(action)
+        return out
+
     def _attach_information_exchange(
         self,
         detail: dict[str, Any],
@@ -225,6 +273,95 @@ class ProductRegistrationService:
         }
         return detail
 
+    def _attach_correction_exchange(
+        self,
+        detail: dict[str, Any],
+        request_id: str,
+        *,
+        actor: PrcActor,
+        request: dict[str, Any],
+    ) -> dict[str, Any]:
+        """PRC-REF-022 — ciclo aberto de devolução + AuthZ por objeto."""
+        open_ret = self._repo.get_open_correction_return(
+            request_id=request_id
+        )
+        last_closed = None
+        if open_ret is None:
+            history = self._repo.list_correction_returns(
+                request_id=request_id
+            )
+            for row in reversed(history):
+                if row.get("status") == "resubmitted":
+                    last_closed = row
+                    break
+        actions = self._filter_actions_for_actor(
+            list(detail.get("allowedActions") or []),
+            actor=actor,
+            request=request,
+        )
+        # Em needs_correction o analista não edita a ficha operacionalmente.
+        if request.get("status") == "needs_correction":
+            actions = [
+                a
+                for a in actions
+                if a not in ("edit_draft", "return_for_correction", "complete")
+            ]
+        detail["allowedActions"] = actions
+        requester = str(request.get("requester_subject") or "")
+        is_requester = bool(requester) and actor.user_id == requester
+        view = (
+            corr_returns.public_return_view(open_ret)
+            if open_ret
+            else (
+                corr_returns.public_return_view(last_closed)
+                if last_closed
+                else None
+            )
+        )
+        detail["correctionExchange"] = {
+            "hasOpenReturn": open_ret is not None,
+            "canCorrect": bool(
+                is_requester
+                and open_ret is not None
+                and request.get("status") == "needs_correction"
+            ),
+            "canReturn": bool(
+                actor.is_analyst and request.get("status") == "in_progress"
+            ),
+            "openReturn": view if open_ret else None,
+            "lastResubmitted": (
+                corr_returns.public_return_view(last_closed)
+                if last_closed and open_ret is None
+                else None
+            ),
+            "requesterAuthz": {
+                "status": (
+                    "PENDING_OWNER"
+                    if not actor.has_action_permission(
+                        "save_returned_fields"
+                    )
+                    else "object_scoped"
+                ),
+                "code": (
+                    "ARCHITECTURE_DECISION_REQUIRED"
+                    if not actor.has_action_permission(
+                        "save_returned_fields"
+                    )
+                    else None
+                ),
+                "note": (
+                    "Solicitante sem engineering.access exige decisão "
+                    "Core/Coordination; superfície atual reutiliza "
+                    "ENG_ACCESS + object AuthZ (intake dual-role)."
+                    if not actor.has_action_permission(
+                        "save_returned_fields"
+                    )
+                    else "Object AuthZ: apenas requester_subject do caso."
+                ),
+            },
+        }
+        return detail
+
     def _detail(
         self,
         request: dict[str, Any],
@@ -236,7 +373,10 @@ class ProductRegistrationService:
         rid = request_id or str(request.get("id") or "")
         if not rid:
             return detail
-        return self._attach_information_exchange(
+        detail = self._attach_information_exchange(
+            detail, rid, actor=actor, request=request
+        )
+        return self._attach_correction_exchange(
             detail, rid, actor=actor, request=request
         )
 
@@ -1081,6 +1221,271 @@ class ProductRegistrationService:
             status=200, payload=response,
         )
         return response
+
+    def return_for_correction(
+        self,
+        request_id: str,
+        *,
+        actor: PrcActor,
+        expected_version: int,
+        targets: list[dict[str, Any]],
+        reason: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """PRC-REF-022 — devolve campos tipados ao solicitante."""
+        request = self._get_scoped(request_id, actor)
+        if not actor.is_analyst:
+            raise PrcForbiddenError(
+                "Somente a Engenharia autorizada pode devolver para correção."
+            )
+        if not actor.has_action_permission("return_for_correction"):
+            raise PrcForbiddenError(
+                "Sem permissão para a ação 'return_for_correction'."
+            )
+        normalized = corr_returns.validate_return_targets(targets)
+        reason_text = (reason or "").strip()[:1000] or None
+        fp = _fingerprint(
+            {
+                "action": "return_for_correction",
+                "request_id": request_id,
+                "expected_version": expected_version,
+                "targets": [
+                    {
+                        "targetKey": t["target_key"],
+                        "reason": t["reason"],
+                    }
+                    for t in normalized
+                ],
+                "reason": reason_text,
+            }
+        )
+        replay = self._idempotent_replay(
+            actor=actor,
+            operation="return_for_correction",
+            key=idempotency_key,
+            fingerprint=fp,
+        )
+        if replay is not None:
+            return replay
+        if request["status"] != "in_progress":
+            raise PrcStateConflictError("state_conflict")
+        result = self._repo.create_correction_return(
+            request_id=request_id,
+            expected_version=expected_version,
+            actor_subject=actor.user_id,
+            actor_label=actor.label or actor.user_id,
+            actor_email=actor.email,
+            reason=reason_text,
+            event_meta={
+                "action": "return_for_correction",
+                "channel": actor.channel,
+            },
+            return_row={"id": _uuid()},
+            targets=normalized,
+        )
+        response = self._detail(
+            {**result["request"], "verifications": []},
+            actor,
+            request_id=request_id,
+        )
+        response["correctionReturn"] = corr_returns.public_return_view(
+            result["return"]
+        )
+        self._idempotent_store(
+            actor=actor,
+            operation="return_for_correction",
+            key=idempotency_key,
+            fingerprint=fp,
+            request_id=request_id,
+            status=200,
+            payload=response,
+        )
+        return response
+
+    def update_returned_fields(
+        self,
+        request_id: str,
+        *,
+        actor: PrcActor,
+        expected_version: int,
+        changes: list[dict[str, Any]],
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """PRC-REF-022 — solicitante corrige apenas alvos devolvidos."""
+        request = self._get_scoped(request_id, actor)
+        if request["requester_subject"] != actor.user_id:
+            raise PrcForbiddenError(
+                "Somente o solicitante do chamado pode corrigir os campos "
+                "devolvidos."
+            )
+        if not actor.has_action_permission("save_returned_fields"):
+            raise PrcForbiddenError(
+                "Sem permissão para corrigir campos devolvidos "
+                "(ARCHITECTURE_DECISION_REQUIRED: solicitante sem "
+                "engineering.access)."
+            )
+        fp = _fingerprint(
+            {
+                "action": "save_returned_fields",
+                "request_id": request_id,
+                "expected_version": expected_version,
+                "changes": changes,
+            }
+        )
+        replay = self._idempotent_replay(
+            actor=actor,
+            operation="save_returned_fields",
+            key=idempotency_key,
+            fingerprint=fp,
+        )
+        if replay is not None:
+            return replay
+        if request["status"] != "needs_correction":
+            raise PrcStateConflictError("state_conflict")
+        open_ret = self._repo.get_open_correction_return(
+            request_id=request_id
+        )
+        if open_ret is None:
+            raise PrcStateConflictError("correction_return_missing")
+        validated = corr_returns.validate_returned_changes(
+            targets=open_ret.get("targets") or [],
+            changes=changes,
+        )
+        # Reusa validação canônica de draft para paths/valores (exceto
+        # confirmação, que não aplica patch de valor).
+        draft_like = [
+            {
+                "path": c["path"],
+                "proposedValue": c["proposedValue"],
+                "reason": c["reason"],
+            }
+            for c in validated
+            if c["mode"] != "confirmed"
+        ]
+        if draft_like:
+            catalog.validate_update_changes(draft_like)
+        updated = self._repo.update_returned_fields(
+            request_id=request_id,
+            expected_version=expected_version,
+            actor_subject=actor.user_id,
+            actor_display_name=actor.label,
+            actor_email=actor.email,
+            changes=validated,
+            event_meta={"channel": actor.channel},
+        )
+        response = self._detail(
+            {**updated, "verifications": []},
+            actor,
+            request_id=request_id,
+        )
+        self._idempotent_store(
+            actor=actor,
+            operation="save_returned_fields",
+            key=idempotency_key,
+            fingerprint=fp,
+            request_id=request_id,
+            status=200,
+            payload=response,
+        )
+        return response
+
+    def resubmit_correction(
+        self,
+        request_id: str,
+        *,
+        actor: PrcActor,
+        expected_version: int,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """PRC-REF-022 — reenvia correções e retorna a in_progress."""
+        request = self._get_scoped(request_id, actor)
+        if request["requester_subject"] != actor.user_id:
+            raise PrcForbiddenError(
+                "Somente o solicitante do chamado pode reenviar a correção."
+            )
+        if not actor.has_action_permission("resubmit_correction"):
+            raise PrcForbiddenError(
+                "Sem permissão para reenviar correção "
+                "(ARCHITECTURE_DECISION_REQUIRED)."
+            )
+        fp = _fingerprint(
+            {
+                "action": "resubmit_correction",
+                "request_id": request_id,
+                "expected_version": expected_version,
+            }
+        )
+        replay = self._idempotent_replay(
+            actor=actor,
+            operation="resubmit_correction",
+            key=idempotency_key,
+            fingerprint=fp,
+        )
+        if replay is not None:
+            return replay
+        if request["status"] != "needs_correction":
+            raise PrcStateConflictError("state_conflict")
+        open_ret = self._repo.get_open_correction_return(
+            request_id=request_id
+        )
+        if open_ret is None:
+            raise PrcStateConflictError("correction_return_missing")
+        targets = open_ret.get("targets") or []
+        if not corr_returns.all_targets_addressed(targets):
+            raise PrcValidationError(
+                "Trate todos os campos devolvidos antes de reenviar.",
+                fields={"targets": "unaddressed"},
+            )
+        result = self._repo.resubmit_correction(
+            request_id=request_id,
+            expected_version=expected_version,
+            actor_subject=actor.user_id,
+            actor_label=actor.label or actor.user_id,
+            actor_email=actor.email,
+            event_meta={
+                "action": "resubmit_correction",
+                "channel": actor.channel,
+            },
+        )
+        response = self._detail(
+            {**result["request"], "verifications": []},
+            actor,
+            request_id=request_id,
+        )
+        response["correctionReturn"] = corr_returns.public_return_view(
+            result["return"]
+        )
+        self._idempotent_store(
+            actor=actor,
+            operation="resubmit_correction",
+            key=idempotency_key,
+            fingerprint=fp,
+            request_id=request_id,
+            status=200,
+            payload=response,
+        )
+        return response
+
+    def list_correction_returns(
+        self, request_id: str, *, actor: PrcActor
+    ) -> dict[str, Any]:
+        self._get_scoped(request_id, actor)
+        rows = self._repo.list_correction_returns(request_id=request_id)
+        return {
+            "items": [corr_returns.public_return_view(r) for r in rows],
+            "total": len(rows),
+        }
+
+    def get_correction_return(
+        self, request_id: str, return_id: str, *, actor: PrcActor
+    ) -> dict[str, Any]:
+        self._get_scoped(request_id, actor)
+        row = self._repo.get_correction_return(
+            request_id=request_id, return_id=return_id
+        )
+        if row is None:
+            raise PrcNotFoundError("correction_return", return_id)
+        return corr_returns.public_return_view(row)
 
     def resume_request(self, request_id: str, *, actor: PrcActor,
                        expected_version: int, reason: str | None = None,

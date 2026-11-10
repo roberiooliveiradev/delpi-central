@@ -13,12 +13,14 @@ const STEP_LABELS: Record<string, string> = {
 type StepState = "complete" | "current" | "available" | "locked" | "error";
 
 /** Andamento do workflow PRC — caminho linear
- * submitted → in_progress → completed (REF-020).
- * needs_information / under_review (legado) / rejected são estados do
- * step atual, sem inventar avanço linear enganoso. */
+ * submitted → in_progress → completed (REF-020/022).
+ * needs_correction / needs_information / under_review / rejected são
+ * estados do step atual, sem inventar avanço linear enganoso. */
 export function PrcWorkflowProgress({ status }: { status: string }) {
   const mappedStatus =
-    status === "needs_information" || status === "under_review"
+    status === "needs_information" ||
+    status === "under_review" ||
+    status === "needs_correction"
       ? "in_progress"
       : status;
   const currentIndex = MAIN_PATH.indexOf(mappedStatus);
@@ -33,7 +35,9 @@ export function PrcWorkflowProgress({ status }: { status: string }) {
       else state = "available";
     }
     let statusLabel: string | undefined;
-    if (index === currentIndex && status === "needs_information") {
+    if (index === currentIndex && status === "needs_correction") {
+      statusLabel = "em andamento — devolvida para correção";
+    } else if (index === currentIndex && status === "needs_information") {
       statusLabel = "em andamento — aguardando informações";
     } else if (index === currentIndex && status === "under_review") {
       statusLabel = "legado em revisão — use Concluir atendimento ou Reabrir";

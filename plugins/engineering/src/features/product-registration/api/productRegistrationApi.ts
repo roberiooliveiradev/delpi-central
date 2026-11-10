@@ -87,6 +87,19 @@ export type PrcRequestDetail = {
     activeRoundStatus?: string | null;
     activeRoundId?: string | null;
   } | null;
+  /** PRC-REF-022 — ciclo de devolução para correção (backend-first). */
+  correctionExchange?: {
+    hasOpenReturn: boolean;
+    canCorrect: boolean;
+    canReturn: boolean;
+    openReturn?: PrcCorrectionReturn | null;
+    lastResubmitted?: PrcCorrectionReturn | null;
+    requesterAuthz?: {
+      status?: string | null;
+      code?: string | null;
+      note?: string | null;
+    } | null;
+  } | null;
   verificationSummary?: {
     result: string;
     checkedAt: string;
@@ -514,6 +527,59 @@ export async function prcAction(
 ): Promise<Envelope<PrcRequestDetail>> {
   return postJson(
     `${BASE}/requests/${requestId}/actions/${actionPath}`,
+    body,
+    undefined,
+    idempotencyKey
+      ? { headers: { "Idempotency-Key": idempotencyKey } }
+      : undefined,
+  );
+}
+
+/* --- PRC-REF-022 devolução / correção ------------------------------------ */
+
+export type PrcCorrectionReturnTarget = {
+  id?: string;
+  ordinal?: number;
+  targetType: "FIELD" | "SUPPLIER_LINK";
+  targetPath?: string | null;
+  targetAttribute?: string | null;
+  supplierKey?: { supplierCode: string; store: string } | null;
+  targetKey?: string;
+  targetLabel?: string;
+  reason: string;
+  baselineValue?: unknown;
+  addressedAt?: string | null;
+  addressedMode?: "changed" | "confirmed" | null;
+};
+
+export type PrcCorrectionReturn = {
+  id: string;
+  requestId?: string;
+  sequence?: number;
+  status: "open" | "resubmitted" | "superseded" | string;
+  originCaseVersion?: number;
+  returnedBy?: { subject?: string; displayName?: string | null };
+  requesterSubject?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  resubmittedAt?: string | null;
+  targets: PrcCorrectionReturnTarget[];
+};
+
+export type PrcReturnedFieldChange = {
+  path: string;
+  proposedValue?: unknown;
+  reason: string;
+  mode?: "changed" | "confirmed";
+};
+
+export async function prcUpdateReturnedFields(
+  requestId: string,
+  body: { expectedVersion: number; changes: PrcReturnedFieldChange[] },
+  idempotencyKey?: string,
+): Promise<Envelope<PrcRequestDetail>> {
+  return patchJson(
+    `${BASE}/requests/${requestId}/returned-fields`,
     body,
     undefined,
     idempotencyKey

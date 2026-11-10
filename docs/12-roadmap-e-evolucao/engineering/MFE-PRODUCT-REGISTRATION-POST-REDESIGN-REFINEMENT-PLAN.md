@@ -1,6 +1,6 @@
 # Portal Engenharia MFE — Plano incremental de refinamentos pós-redesign
 
-> **Decisão funcional superveniente PRC-REF-022 (2026-11-10):** fluxo único Enviada → Em atendimento ⇄ Devolvida para correção → Concluída, editor compartilhado create/read/edit. O adendo REF-022 ao final deste documento prevalece sobre fluxos legados contraditórios. `PO_APPROVED_TARGET / PLANNED` (não é implementação).
+> **Decisão funcional superveniente PRC-REF-022 (2026-11-10):** fluxo único Enviada → Em atendimento ⇄ Devolvida para correção → Concluída, editor compartilhado create/read/edit. O adendo REF-022 ao final deste documento prevalece sobre fluxos legados contraditórios. `IMPLEMENTED_DEV` (AuthZ solicitante sem `engineering.access` = `PENDING_OWNER`).
 
 > **Status:** `PO_REFINEMENT_APPROVED / IMPLEMENTATION_PENDING / OPEN_FOR_MORE_FEEDBACK` · **Registrado:** 2026-11-07.
 >
@@ -805,7 +805,7 @@ AC01 perguntas estruturadas/campos; AC02 status needs_information + eventos tran
 
 ## PRC-REF-022 — Fluxo único de devolução, correção e reenvio + ficha compartilhada (decisão funcional PO, 2026-11-10)
 
-**Estado:** \`PO_APPROVED_TARGET / PLANNED / CODE_NOT_CHANGED_BY_THIS_RECORD\`. **Precedência:** esta decisão substitui como experiência principal os fluxos de \`Solicitar informações\` com perguntas/respostas independentes, \`Definir encaminhamento\` e edição em formulário paralelo, mencionados em REF-019/021; o registro histórico desses recursos não é apagado. **Autoridade:** Engineering API/owner Engenharia governa workflow e draft; Keycloak identidade; Core RBAC e permissão ao solicitante; api-delpi/TOTVS somente leitura oficial. Alteração de policy Core ou authority requer \`ARCHITECTURE_DECISION_REQUIRED\` + Coordination, nunca bypass.
+**Estado:** \`IMPLEMENTED_DEV\`. **Precedência:** esta decisão substitui como experiência principal os fluxos de \`Solicitar informações\` com perguntas/respostas independentes, \`Definir encaminhamento\` e edição em formulário paralelo, mencionados em REF-019/021; o registro histórico desses recursos não é apagado. **Autoridade:** Engineering API/owner Engenharia governa workflow e draft; Keycloak identidade; Core RBAC e permissão ao solicitante; api-delpi/TOTVS somente leitura oficial. Solicitante sem \`engineering.access\` permanece \`ARCHITECTURE_DECISION_REQUIRED\` + Coordination — a superfície atual usa object AuthZ sobre \`engineering.access\` (modelo intake dual-role), sem bypass.
 
 ### Jornada operacional e regras
 

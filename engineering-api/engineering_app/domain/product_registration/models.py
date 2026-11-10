@@ -1,11 +1,12 @@
 """Entidades, ator e máquina de estados do Product Registration.
 
-Framework-free. Regras centrais (PRC-REF-020):
+Framework-free. Regras centrais (PRC-REF-020 + REF-022):
 - solicitação não é cadastro oficial; draft não é revisão publicada;
 - revisão publicada é imutável; o record vigente aponta para ela;
 - conclusão ``complete`` exige verificação oficial integral;
 - falha de verificação permanece em ``in_progress`` (sem revisão);
-- ``under_review`` é legado (leitura/migração), não etapa operacional nova;
+- ``needs_correction`` — devolução estruturada da ficha ao solicitante;
+- ``needs_information`` / ``under_review`` são legados (leitura/histórico);
 - terminais não reabrem — nova solicitação para novo ciclo.
 """
 
@@ -17,7 +18,8 @@ from typing import Any
 PRC_STATUSES: tuple[str, ...] = (
     "submitted",
     "in_progress",
-    "needs_information",
+    "needs_information",  # legado REF-019
+    "needs_correction",  # PRC-REF-022
     "under_review",  # legado — compatível para leitura/histórico
     "completed",
     "rejected",
@@ -32,11 +34,9 @@ ENG_ACCESS = "engineering.access"
 ENG_MANAGER = "engineering.manager"
 
 # Transições de workflow — ação → (origens válidas, destino).
-# PRC-REF-020: ``complete`` conclui a partir de ``in_progress`` (e legado
-# ``under_review``). ``submit_review`` permanece no domínio apenas para
-# compatibilidade de endpoint; não entra em ``allowedActions`` do fluxo novo.
 _TRANSITIONS: dict[str, tuple[frozenset[str], str]] = {
     "start": (frozenset({"submitted"}), "in_progress"),
+    # Legado REF-019 — permanece para casos abertos; não é o fluxo novo.
     "request_information": (
         frozenset({"in_progress", "under_review"}),
         "needs_information",
@@ -44,31 +44,50 @@ _TRANSITIONS: dict[str, tuple[frozenset[str], str]] = {
     "resume": (frozenset({"needs_information"}), "in_progress"),
     "submit_review": (frozenset({"in_progress"}), "under_review"),
     "return_to_attendance": (frozenset({"under_review"}), "in_progress"),
+    # PRC-REF-022
+    "return_for_correction": (
+        frozenset({"in_progress"}),
+        "needs_correction",
+    ),
+    "resubmit_correction": (
+        frozenset({"needs_correction"}),
+        "in_progress",
+    ),
     "complete": (frozenset({"in_progress", "under_review"}), "completed"),
-    # Alias legado do mesmo use case de conclusão verificada.
     "verify_and_complete": (
         frozenset({"in_progress", "under_review"}),
         "completed",
     ),
     "reject": (
         frozenset(
-            {"submitted", "in_progress", "needs_information", "under_review"}
+            {
+                "submitted",
+                "in_progress",
+                "needs_information",
+                "needs_correction",
+                "under_review",
+            }
         ),
         "rejected",
     ),
 }
 
 # Ações visíveis por status (allowedActions do backend — UI nunca decide).
+# Object AuthZ adicional (requester vs analista) é aplicada no service.
 _ACTIONS_BY_STATUS: dict[str, tuple[str, ...]] = {
     "submitted": ("start", "reject"),
     "in_progress": (
         "edit_draft",
-        "request_information",
+        "return_for_correction",
         "complete",
         "reject",
     ),
     "needs_information": ("resume", "reject"),
-    # Legado aberto: reabrir para atendimento ou concluir com verificação.
+    "needs_correction": (
+        "save_returned_fields",
+        "resubmit_correction",
+        "reject",
+    ),
     "under_review": (
         "return_to_attendance",
         "complete",
@@ -81,6 +100,9 @@ _ACTIONS_BY_STATUS: dict[str, tuple[str, ...]] = {
 }
 
 # Ação → permissão exigida — modelo de duas permissões (PO).
+# save_returned_fields/resubmit: superfície atual exige ENG_ACCESS
+# (intake já usa o mesmo modelo); object AuthZ restringe ao requester.
+# Solicitante sem engineering.access = ARCHITECTURE_DECISION_REQUIRED.
 _ACTION_PERMISSION: dict[str, tuple[str, ...]] = {
     "start": (ENG_ACCESS,),
     "edit_draft": (ENG_ACCESS,),
@@ -88,14 +110,16 @@ _ACTION_PERMISSION: dict[str, tuple[str, ...]] = {
     "resume": (ENG_ACCESS,),
     "submit_review": (ENG_ACCESS,),
     "return_to_attendance": (ENG_ACCESS,),
+    "return_for_correction": (ENG_ACCESS,),
+    "save_returned_fields": (ENG_ACCESS,),
+    "resubmit_correction": (ENG_ACCESS,),
     "complete": (ENG_ACCESS,),
     "reject": (ENG_ACCESS,),
     "verify_and_complete": (ENG_ACCESS,),
-    # PRC-REF-021 — encaminhamento de divergência (não altera MATCH oficial).
     "route_divergence": (ENG_ACCESS,),
 }
 
-# PRC-REF-021 — decisões de encaminhamento por item divergente.
+# PRC-REF-021 — decisões de encaminhamento por item divergente (legado).
 DIVERGENCE_ROUTE_DECISIONS: frozenset[str] = frozenset(
     {
         "REQUESTER_CORRECTION",

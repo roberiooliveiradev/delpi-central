@@ -233,6 +233,32 @@ class RequestInformationBody(ActionBody):
     message: str | None = Field(default=None, max_length=1000)
 
 
+class CorrectionTargetBody(BaseModel):
+    """PRC-REF-022 — alvo tipado da devolução (FIELD | SUPPLIER_LINK)."""
+
+    targetType: str = Field(..., min_length=1, max_length=32)
+    targetPath: str | None = Field(default=None, max_length=120)
+    targetAttribute: str | None = Field(default=None, max_length=32)
+    supplierKey: dict | None = None
+    reason: str = Field(..., min_length=3, max_length=1000)
+
+
+class ReturnForCorrectionBody(ActionBody):
+    targets: list[CorrectionTargetBody] = Field(..., min_length=1)
+
+
+class ReturnedFieldChangeBody(BaseModel):
+    path: str = Field(..., min_length=1, max_length=120)
+    proposedValue: object = None
+    reason: str = Field(..., min_length=3, max_length=500)
+    mode: str = Field(default="changed", max_length=32)
+
+
+class UpdateReturnedFieldsBody(BaseModel):
+    expectedVersion: int = Field(..., ge=1)
+    changes: list[ReturnedFieldChangeBody] = Field(..., min_length=1)
+
+
 class DivergenceSupplierKeyBody(BaseModel):
     supplierCode: str = Field(..., min_length=1, max_length=32)
     store: str = Field(..., min_length=1, max_length=8)
@@ -602,6 +628,154 @@ async def prc_action_request_information(
         return _err(exc, op)
     data, _ = _unwrap_replay(data)
     return ok(data, message="Pendência registrada.", operation_id=op)
+
+
+@router.post(
+    "/v1/product-registration/requests/{request_id}/actions/return-for-correction",
+    operation_id="prc_action_return_for_correction",
+    summary="PRC-REF-022 — Devolver para correção (needs_correction)",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_action_return_for_correction(
+    request_id: str = Path(...),
+    body: ReturnForCorrectionBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_action_return_for_correction"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().return_for_correction(
+            rid,
+            actor=_actor(user),
+            expected_version=body.expectedVersion,
+            targets=[t.model_dump() for t in body.targets],
+            reason=body.reason,
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    data, _ = _unwrap_replay(data)
+    return ok(data, message="Devolvida para correção.", operation_id=op)
+
+
+@router.patch(
+    "/v1/product-registration/requests/{request_id}/returned-fields",
+    operation_id="prc_update_returned_fields",
+    summary="PRC-REF-022 — Solicitante corrige campos devolvidos",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_update_returned_fields(
+    request_id: str = Path(...),
+    body: UpdateReturnedFieldsBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_update_returned_fields"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().update_returned_fields(
+            rid,
+            actor=_actor(user),
+            expected_version=body.expectedVersion,
+            changes=[c.model_dump() for c in body.changes],
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    data, _ = _unwrap_replay(data)
+    return ok(data, message="Campos devolvidos atualizados.", operation_id=op)
+
+
+@router.post(
+    "/v1/product-registration/requests/{request_id}/actions/resubmit-correction",
+    operation_id="prc_action_resubmit_correction",
+    summary="PRC-REF-022 — Reenviar correção para Engenharia",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_action_resubmit_correction(
+    request_id: str = Path(...),
+    body: ActionBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_action_resubmit_correction"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().resubmit_correction(
+            rid,
+            actor=_actor(user),
+            expected_version=body.expectedVersion,
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    data, _ = _unwrap_replay(data)
+    return ok(data, message="Correção reenviada à Engenharia.", operation_id=op)
+
+
+@router.get(
+    "/v1/product-registration/requests/{request_id}/correction-returns",
+    operation_id="prc_list_correction_returns",
+    summary="PRC-REF-022 — Listar ciclos de devolução",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_list_correction_returns(request_id: str = Path(...)):
+    op = "prc_list_correction_returns"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().list_correction_returns(
+            rid, actor=_actor(user)
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(data, message="Ciclos de devolução.", operation_id=op)
+
+
+@router.get(
+    "/v1/product-registration/requests/{request_id}/correction-returns/{return_id}",
+    operation_id="prc_get_correction_return",
+    summary="PRC-REF-022 — Detalhe de um ciclo de devolução",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_get_correction_return(
+    request_id: str = Path(...),
+    return_id: str = Path(...),
+):
+    op = "prc_get_correction_return"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    ret_id, bad2 = _uuid_or_fail(return_id, op)
+    if bad2 is not None:
+        return bad2
+    try:
+        data = build_prc_service().get_correction_return(
+            rid, ret_id, actor=_actor(user)
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(data, message="Ciclo de devolução.", operation_id=op)
 
 
 @router.post(

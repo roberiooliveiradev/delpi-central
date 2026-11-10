@@ -26,7 +26,9 @@ import {
   fetchPrcVerifications,
   prcAction,
   prcUpdateDraft,
+  prcUpdateReturnedFields,
   type PrcFieldResult,
+  type PrcReturnedFieldChange,
   type PrcFieldSpec,
   type PrcRequestDetail,
   type PrcRevisionSummary,
@@ -223,15 +225,21 @@ export function PrcDetailPage({
             ...(extras.pendingFields?.length
               ? { pendingFields: extras.pendingFields }
               : {}),
+            ...(extras.targets?.length ? { targets: extras.targets } : {}),
           },
           newIdemKey(`prc-${spec.action}-${requestId}`),
         );
         setDetail(res.data);
+        setEditing(false);
         setFeedback({
           kind: "success",
           text: isComplete
             ? "Atendimento concluído com verificação oficial."
-            : "Operação aplicada.",
+            : spec.action === "return_for_correction"
+              ? "Solicitação devolvida para correção."
+              : spec.action === "resubmit_correction"
+                ? "Correções reenviadas à Engenharia."
+                : "Operação aplicada.",
         });
         await load();
       } catch (e) {
@@ -328,9 +336,41 @@ export function PrcDetailPage({
     [detail, busy, requestId, load],
   );
 
-  /* Hero: apenas ações sem confirmação/argumentos (start, resume).
-   * Ações terminais/com motivo ficam na barra do card — confirmação
-   * explícita é obrigatória (verify_and_complete, reject…). */
+  const saveReturnedFields = useCallback(
+    async (changes: PrcReturnedFieldChange[]) => {
+      if (!detail || busy) return;
+      setBusy(true);
+      setFeedback(null);
+      try {
+        const res = await prcUpdateReturnedFields(
+          requestId,
+          { expectedVersion: detail.caseVersion, changes },
+          newIdemKey(`prc-returned-${requestId}`),
+        );
+        setDetail(res.data);
+        setFeedback({
+          kind: "success",
+          text: "Campos devolvidos atualizados.",
+        });
+        await load();
+      } catch (e) {
+        const err = e as HomeApiError;
+        setFeedback({
+          kind: "error",
+          text:
+            err.status === 409
+              ? `Conflito de versão — os dados foram recarregados. ${err.message || ""}`
+              : err.message || "Falha ao salvar a correção.",
+        });
+        if (err.status === 409) await load();
+      } finally {
+        setBusy(false);
+      }
+    },
+    [detail, busy, requestId, load],
+  );
+
+  /* Hero: apenas ações sem confirmação/argumentos (start, resume). */
   const primaryAction = useMemo(() => {
     if (!detail) return null;
     for (const key of ["resume", "start"]) {
@@ -477,7 +517,10 @@ export function PrcDetailPage({
               fieldSpecs={fieldSpecs}
               suppliers={infoSuppliers}
               onRunAction={runAction}
-              onEditDraft={() => selectTab("draft")}
+              onEditDraft={() => {
+                selectTab("draft");
+                setEditing(true);
+              }}
             />
           </div>
         ) : (
@@ -486,6 +529,22 @@ export function PrcDetailPage({
           </p>
         )}
       </EngineeringPageHero>
+
+      {detail.status === "needs_correction" &&
+      detail.correctionExchange?.openReturn ? (
+        <EngineeringStateBanner variant="error">
+          Devolvida para correção — a Engenharia pediu ajuste em{" "}
+          {detail.correctionExchange.openReturn.targets?.length || 0} campo(s).
+          Corrija diretamente na ficha técnica.
+        </EngineeringStateBanner>
+      ) : null}
+      {detail.status === "in_progress" &&
+      detail.correctionExchange?.lastResubmitted ? (
+        <EngineeringStateBanner variant="success">
+          Correções recebidas do solicitante — revise a ficha e continue o
+          atendimento.
+        </EngineeringStateBanner>
+      ) : null}
 
       {feedback && feedback.kind === "blocked" && tab !== "verification" ? (
         <EngineeringStateBanner variant="error">
@@ -611,6 +670,7 @@ export function PrcDetailPage({
             onStartEdit={() => setEditing(true)}
             onCancelEdit={() => setEditing(false)}
             onSave={saveDraft}
+            onSaveReturned={saveReturnedFields}
           />
         ) : null}
 

@@ -1,6 +1,6 @@
 # MFE Portal Engenharia — Controle e Cadastro de Produtos: UX, wireframes e fluxo visual
 
-> **Decisão funcional superveniente PRC-REF-022 (2026-11-10):** fluxo único Enviada → Em atendimento ⇄ Devolvida para correção → Concluída, editor compartilhado create/read/edit. O adendo REF-022 ao final deste documento prevalece sobre fluxos legados contraditórios. `PO_APPROVED_TARGET / PLANNED` (não é implementação).
+> **Decisão funcional superveniente PRC-REF-022 (2026-11-10):** fluxo único Enviada → Em atendimento ⇄ Devolvida para correção → Concluída, editor compartilhado create/read/edit. O adendo REF-022 ao final deste documento prevalece sobre fluxos legados contraditórios. `IMPLEMENTED_DEV`.
 
 > **Estado:** `TARGET / UX_CONTRACT_SPECIFIED / IMPLEMENTATION_PENDING / VISUAL_QA_NOT_RUN` · **Decisão do Product Owner:** redesign completo antes de deploy de produção (2026-11-07).
 >

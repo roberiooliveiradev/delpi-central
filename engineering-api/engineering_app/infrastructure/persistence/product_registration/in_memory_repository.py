@@ -46,6 +46,9 @@ class InMemoryProductRegistrationRepository:
         self._info_rounds: dict[str, dict] = {}  # round_id → row
         self._info_questions: dict[str, dict] = {}  # question_id → row
         self._info_answers: dict[str, dict] = {}  # question_id → row
+        # PRC-REF-022 — devoluções para correção.
+        self._correction_returns: dict[str, dict] = {}  # return_id → row
+        self._correction_targets: dict[str, dict] = {}  # target_id → row
 
     # --- helpers internos ------------------------------------------------------
 
@@ -1352,3 +1355,288 @@ class InMemoryProductRegistrationRepository:
             meta["waiver"] = True
             self._append_event(request_id, {**event, "metadata": meta})
         return resolved
+
+    # --- PRC-REF-022 correction returns --------------------------------------
+
+    def _correction_targets_of(self, return_id: str) -> list[dict]:
+        rows = [
+            copy.deepcopy(t)
+            for t in self._correction_targets.values()
+            if t["return_id"] == return_id
+        ]
+        rows.sort(key=lambda t: int(t.get("ordinal") or 0))
+        return rows
+
+    def get_correction_return(
+        self, *, request_id: str, return_id: str
+    ) -> dict[str, Any] | None:
+        row = self._correction_returns.get(return_id)
+        if row is None or row["request_id"] != request_id:
+            return None
+        out = copy.deepcopy(row)
+        out["targets"] = self._correction_targets_of(return_id)
+        return out
+
+    def get_open_correction_return(
+        self, *, request_id: str
+    ) -> dict[str, Any] | None:
+        for row in self._correction_returns.values():
+            if row["request_id"] == request_id and row["status"] == "open":
+                out = copy.deepcopy(row)
+                out["targets"] = self._correction_targets_of(row["id"])
+                return out
+        return None
+
+    def list_correction_returns(
+        self, *, request_id: str
+    ) -> list[dict[str, Any]]:
+        rows = [
+            r for r in self._correction_returns.values()
+            if r["request_id"] == request_id
+        ]
+        rows.sort(key=lambda r: int(r.get("sequence") or 0))
+        out = []
+        for row in rows:
+            item = copy.deepcopy(row)
+            item["targets"] = self._correction_targets_of(row["id"])
+            out.append(item)
+        return out
+
+    def create_correction_return(
+        self,
+        *,
+        request_id: str,
+        expected_version: int,
+        actor_subject: str,
+        actor_label: str,
+        actor_email: str | None,
+        reason: str | None,
+        event_meta: dict[str, Any],
+        return_row: dict[str, Any],
+        targets: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        req = self._require_request(request_id)
+        self._check_cas(
+            req, expected_version, frozenset({"in_progress"})
+        )
+        for existing in self._correction_returns.values():
+            if (
+                existing["request_id"] == request_id
+                and existing["status"] == "open"
+            ):
+                raise PrcStateConflictError("correction_return_open")
+        seq = 1 + max(
+            (
+                int(r["sequence"])
+                for r in self._correction_returns.values()
+                if r["request_id"] == request_id
+            ),
+            default=0,
+        )
+        rid = return_row["id"]
+        now = _now()
+        draft = copy.deepcopy(self._drafts.get(request_id) or {})
+        self._correction_returns[rid] = {
+            **return_row,
+            "request_id": request_id,
+            "sequence": seq,
+            "status": "open",
+            "origin_case_version": int(req["row_version"]),
+            "returned_by_subject": actor_subject,
+            "returned_by_display_name": actor_label,
+            "requester_subject": req["requester_subject"],
+            "draft_snapshot": draft.get("technical_data"),
+            "row_version": 1,
+            "created_at": now,
+            "updated_at": now,
+            "resubmitted_at": None,
+            "resubmitted_by_subject": None,
+        }
+        for t in targets:
+            tid = _uuid()
+            baseline = None
+            tech = draft.get("technical_data") or {}
+            if t["target_type"] == "FIELD":
+                baseline = tech.get(t["target_path"])
+                self._correction_targets[tid] = {
+                "id": tid,
+                "return_id": rid,
+                "request_id": request_id,
+                **t,
+                "baseline_value": baseline,
+                "addressed_at": None,
+                "addressed_by_subject": None,
+                "addressed_mode": None,
+                "addressed_value": None,
+                "created_at": now,
+            }
+        prev = req["status"]
+        req["status"] = "needs_correction"
+        req["row_version"] = int(req["row_version"]) + 1
+        req["updated_at"] = now
+        self._append_event(
+            request_id,
+            {
+                "event_type": "correction_returned",
+                "actor_subject": actor_subject,
+                "actor_display_name": actor_label,
+                "actor_email": actor_email,
+                "reason": reason,
+                "metadata": {
+                    **event_meta,
+                    "returnId": rid,
+                    "sequence": seq,
+                    "targetKeys": [t["target_key"] for t in targets],
+                },
+                "previous_status": prev,
+                "next_status": "needs_correction",
+            },
+        )
+        return {
+            "request": self.get_request(request_id),
+            "return": self.get_correction_return(
+                request_id=request_id, return_id=rid
+            ),
+        }
+
+    def update_returned_fields(
+        self,
+        *,
+        request_id: str,
+        expected_version: int,
+        actor_subject: str,
+        actor_display_name: str | None,
+        actor_email: str | None,
+        changes: list[dict[str, Any]],
+        event_meta: dict[str, Any],
+    ) -> dict[str, Any]:
+        req = self._require_request(request_id)
+        self._check_cas(
+            req, expected_version, frozenset({"needs_correction"})
+        )
+        open_ret = self.get_open_correction_return(request_id=request_id)
+        if open_ret is None:
+            raise PrcStateConflictError("correction_return_missing")
+        draft = self._drafts[request_id]
+        applied: list[dict[str, Any]] = []
+        now = _now()
+        for change in changes:
+            path = change["path"]
+            mode = change.get("mode") or "changed"
+            old = draft["technical_data"].get(path)
+            new_val = (
+                old if mode == "confirmed" else change.get("proposedValue")
+            )
+            if mode != "confirmed":
+                draft["technical_data"][path] = new_val
+            applied.append(
+                {
+                    "path": path,
+                    "before": old,
+                    "after": new_val,
+                    "reason": change.get("reason"),
+                    "mode": mode,
+                }
+            )
+            for t in self._correction_targets.values():
+                if t["return_id"] != open_ret["id"]:
+                    continue
+                if t.get("target_type") == "FIELD" and t.get("target_path") == path:
+                    t["addressed_at"] = now
+                    t["addressed_by_subject"] = actor_subject
+                    t["addressed_mode"] = mode
+                    t["addressed_value"] = new_val
+                elif path == "suppliers" and t.get("target_type") == "SUPPLIER_LINK":
+                    t["addressed_at"] = now
+                    t["addressed_by_subject"] = actor_subject
+                    t["addressed_mode"] = mode
+                    t["addressed_value"] = new_val
+        changed = {
+            item["path"]: item for item in draft.get("changed_paths", [])
+        }
+        for change in changes:
+            if (change.get("mode") or "changed") == "confirmed":
+                continue
+            changed[change["path"]] = {
+                "path": change["path"],
+                "reason": change.get("reason") or "correction",
+            }
+        draft["changed_paths"] = list(changed.values())
+        draft["row_version"] = int(draft.get("row_version", 1)) + 1
+        draft["updated_by_subject"] = actor_subject
+        draft["updated_at"] = now
+        req["row_version"] = int(req["row_version"]) + 1
+        req["updated_at"] = now
+        open_ret_row = self._correction_returns[open_ret["id"]]
+        open_ret_row["row_version"] = int(open_ret_row["row_version"]) + 1
+        open_ret_row["updated_at"] = now
+        self._append_event(
+            request_id,
+            {
+                "event_type": "correction_fields_saved",
+                "actor_subject": actor_subject,
+                "actor_display_name": actor_display_name,
+                "actor_email": actor_email,
+                "reason": None,
+                "metadata": {
+                    "changes": applied,
+                    "returnId": open_ret["id"],
+                    **event_meta,
+                },
+                "previous_status": req["status"],
+                "next_status": req["status"],
+            },
+        )
+        return self.get_request(request_id)
+
+    def resubmit_correction(
+        self,
+        *,
+        request_id: str,
+        expected_version: int,
+        actor_subject: str,
+        actor_label: str,
+        actor_email: str | None,
+        event_meta: dict[str, Any],
+    ) -> dict[str, Any]:
+        req = self._require_request(request_id)
+        self._check_cas(
+            req, expected_version, frozenset({"needs_correction"})
+        )
+        open_ret = self.get_open_correction_return(request_id=request_id)
+        if open_ret is None:
+            raise PrcStateConflictError("correction_return_missing")
+        now = _now()
+        row = self._correction_returns[open_ret["id"]]
+        row["status"] = "resubmitted"
+        row["row_version"] = int(row["row_version"]) + 1
+        row["updated_at"] = now
+        row["resubmitted_at"] = now
+        row["resubmitted_by_subject"] = actor_subject
+        prev = req["status"]
+        req["status"] = "in_progress"
+        req["row_version"] = int(req["row_version"]) + 1
+        req["updated_at"] = now
+        self._append_event(
+            request_id,
+            {
+                "event_type": "correction_resubmitted",
+                "actor_subject": actor_subject,
+                "actor_display_name": actor_label,
+                "actor_email": actor_email,
+                "reason": None,
+                "metadata": {
+                    **event_meta,
+                    "returnId": open_ret["id"],
+                    "sequence": open_ret.get("sequence"),
+                },
+                "previous_status": prev,
+                "next_status": "in_progress",
+            },
+        )
+        return {
+            "request": self.get_request(request_id),
+            "return": self.get_correction_return(
+                request_id=request_id, return_id=open_ret["id"]
+            ),
+        }

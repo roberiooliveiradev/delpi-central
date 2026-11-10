@@ -436,6 +436,24 @@ async def execute_action(
                 message=(payload or {}).get("message"),
                 idempotency_key=idempotency_key,
             )
+        elif action == "return_for_correction":
+            data = svc.return_for_correction(
+                ref, actor=actor, expected_version=version,
+                targets=(payload or {}).get("targets") or [],
+                reason=reason,
+                idempotency_key=idempotency_key,
+            )
+        elif action == "save_returned_fields":
+            data = svc.update_returned_fields(
+                ref, actor=actor, expected_version=version,
+                changes=_payload_changes(payload, changes),
+                idempotency_key=idempotency_key,
+            )
+        elif action == "resubmit_correction":
+            data = svc.resubmit_correction(
+                ref, actor=actor, expected_version=version,
+                idempotency_key=idempotency_key,
+            )
         elif action == "update_draft":
             data = svc.update_draft(
                 ref, actor=actor, expected_version=version,

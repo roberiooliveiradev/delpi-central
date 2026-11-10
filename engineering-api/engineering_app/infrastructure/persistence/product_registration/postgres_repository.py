@@ -43,6 +43,8 @@ _T_FLAG = f"{_SCHEMA}.product_registration_flags"
 _T_INFO_ROUND = f"{_SCHEMA}.product_registration_info_rounds"
 _T_INFO_Q = f"{_SCHEMA}.product_registration_info_questions"
 _T_INFO_A = f"{_SCHEMA}.product_registration_info_answers"
+_T_CORR_RET = f"{_SCHEMA}.product_registration_correction_returns"
+_T_CORR_TGT = f"{_SCHEMA}.product_registration_correction_targets"
 
 # Estados de rodada que bloqueiam a abertura de nova rodada / resume.
 _INFO_OPEN_ROUND_STATUSES = ("awaiting_requester", "awaiting_review")
@@ -2048,3 +2050,410 @@ class PostgresProductRegistrationRepository:
                 self._load_info_round(conn, request_id, rid)
                 for rid in resolved_ids
             ]
+
+    # --- PRC-REF-022 correction returns --------------------------------------
+
+    def _map_correction_target(self, row: dict[str, Any]) -> dict[str, Any]:
+        out = dict(row)
+        out["id"] = str(out["id"])
+        out["return_id"] = str(out["return_id"])
+        out["request_id"] = str(out["request_id"])
+        out["created_at"] = _iso(out.get("created_at"))
+        out["addressed_at"] = _iso(out.get("addressed_at"))
+        return out
+
+    def _map_correction_return(
+        self, row: dict[str, Any], targets: list[dict[str, Any]]
+    ) -> dict[str, Any]:
+        out = dict(row)
+        out["id"] = str(out["id"])
+        out["request_id"] = str(out["request_id"])
+        for key in (
+            "created_at",
+            "updated_at",
+            "resubmitted_at",
+        ):
+            out[key] = _iso(out.get(key))
+        out["targets"] = targets
+        return out
+
+    def _load_correction_targets(
+        self, conn, return_id: str
+    ) -> list[dict[str, Any]]:
+        rows = conn.execute(
+            f"SELECT * FROM {_T_CORR_TGT} WHERE return_id=%s"
+            " ORDER BY ordinal",
+            (return_id,),
+        ).fetchall()
+        return [self._map_correction_target(dict(r)) for r in rows]
+
+    def _load_correction_return(
+        self, conn, request_id: str, return_id: str
+    ) -> dict[str, Any] | None:
+        row = conn.execute(
+            f"SELECT * FROM {_T_CORR_RET}"
+            " WHERE id=%s AND request_id=%s",
+            (return_id, request_id),
+        ).fetchone()
+        if row is None:
+            return None
+        targets = self._load_correction_targets(conn, return_id)
+        return self._map_correction_return(dict(row), targets)
+
+    def get_correction_return(
+        self, *, request_id: str, return_id: str
+    ) -> dict[str, Any] | None:
+        with self._conn() as conn:
+            return self._load_correction_return(conn, request_id, return_id)
+
+    def get_open_correction_return(
+        self, *, request_id: str
+    ) -> dict[str, Any] | None:
+        with self._conn() as conn:
+            row = conn.execute(
+                f"SELECT * FROM {_T_CORR_RET}"
+                " WHERE request_id=%s AND status='open'"
+                " ORDER BY sequence DESC LIMIT 1",
+                (request_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            targets = self._load_correction_targets(conn, str(row["id"]))
+            return self._map_correction_return(dict(row), targets)
+
+    def list_correction_returns(
+        self, *, request_id: str
+    ) -> list[dict[str, Any]]:
+        with self._conn() as conn:
+            rows = conn.execute(
+                f"SELECT * FROM {_T_CORR_RET} WHERE request_id=%s"
+                " ORDER BY sequence",
+                (request_id,),
+            ).fetchall()
+            out = []
+            for row in rows:
+                rid = str(row["id"])
+                targets = self._load_correction_targets(conn, rid)
+                out.append(self._map_correction_return(dict(row), targets))
+            return out
+
+    def create_correction_return(
+        self,
+        *,
+        request_id: str,
+        expected_version: int,
+        actor_subject: str,
+        actor_label: str,
+        actor_email: str | None,
+        reason: str | None,
+        event_meta: dict[str, Any],
+        return_row: dict[str, Any],
+        targets: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        with self._conn() as conn:
+            req = self._lock_and_check(
+                conn, request_id, expected_version, frozenset({"in_progress"})
+            )
+            open_row = conn.execute(
+                f"SELECT 1 FROM {_T_CORR_RET}"
+                " WHERE request_id=%s AND status='open' LIMIT 1",
+                (request_id,),
+            ).fetchone()
+            if open_row:
+                raise PrcStateConflictError("correction_return_open")
+            seq_row = conn.execute(
+                f"SELECT COALESCE(MAX(sequence), 0) AS mx"
+                f" FROM {_T_CORR_RET} WHERE request_id=%s",
+                (request_id,),
+            ).fetchone()
+            seq = int(seq_row["mx"]) + 1
+            now = _now()
+            rid = str(return_row.get("id") or _uuid())
+            draft = conn.execute(
+                f"SELECT technical_data FROM {_T_DRAFT}"
+                " WHERE request_id=%s",
+                (request_id,),
+            ).fetchone()
+            tech = dict((draft or {}).get("technical_data") or {})
+            conn.execute(
+                f"INSERT INTO {_T_CORR_RET}"
+                " (id, request_id, sequence, status, origin_case_version,"
+                "  returned_by_subject, returned_by_display_name,"
+                "  requester_subject, draft_snapshot, row_version,"
+                "  created_at, updated_at)"
+                " VALUES (%s,%s,%s,'open',%s,%s,%s,%s,%s,1,%s,%s)",
+                (
+                    rid,
+                    request_id,
+                    seq,
+                    int(req["row_version"]),
+                    actor_subject,
+                    actor_label,
+                    req["requester_subject"],
+                    json.dumps(tech),
+                    now,
+                    now,
+                ),
+            )
+            for t in targets:
+                baseline = None
+                if t["target_type"] == "FIELD":
+                    baseline = tech.get(t["target_path"])
+                conn.execute(
+                    f"INSERT INTO {_T_CORR_TGT}"
+                    " (id, return_id, request_id, ordinal, target_type,"
+                    "  target_path, target_attribute, supplier_key,"
+                    "  target_key, target_label, reason, baseline_value,"
+                    "  created_at)"
+                    " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                    (
+                        _uuid(),
+                        rid,
+                        request_id,
+                        t["ordinal"],
+                        t["target_type"],
+                        t.get("target_path"),
+                        t.get("target_attribute"),
+                        json.dumps(t.get("supplier_key"))
+                        if t.get("supplier_key") is not None
+                        else None,
+                        t["target_key"],
+                        t["target_label"],
+                        t["reason"],
+                        json.dumps(baseline)
+                        if baseline is not None
+                        else None,
+                        now,
+                    ),
+                )
+            prev = req["status"]
+            conn.execute(
+                f"UPDATE {_T_REQ} SET status=%s, row_version=row_version+1,"
+                " updated_at=%s WHERE id=%s",
+                ("needs_correction", now, request_id),
+            )
+            self._insert_event(
+                conn,
+                request_id,
+                self._next_event_seq(conn, request_id),
+                {
+                    "event_type": "correction_returned",
+                    "actor_subject": actor_subject,
+                    "actor_display_name": actor_label,
+                    "actor_email": actor_email,
+                    "reason": reason,
+                    "metadata": {
+                        **event_meta,
+                        "returnId": rid,
+                        "sequence": seq,
+                        "targetKeys": [t["target_key"] for t in targets],
+                    },
+                    "previous_status": prev,
+                    "next_status": "needs_correction",
+                },
+            )
+            created = self._load_correction_return(conn, request_id, rid)
+        return {
+            "request": self.get_request(request_id),
+            "return": created,
+        }
+
+    def update_returned_fields(
+        self,
+        *,
+        request_id: str,
+        expected_version: int,
+        actor_subject: str,
+        actor_display_name: str | None,
+        actor_email: str | None,
+        changes: list[dict[str, Any]],
+        event_meta: dict[str, Any],
+    ) -> dict[str, Any]:
+        with self._conn() as conn:
+            req = self._lock_and_check(
+                conn,
+                request_id,
+                expected_version,
+                frozenset({"needs_correction"}),
+            )
+            open_row = conn.execute(
+                f"SELECT * FROM {_T_CORR_RET}"
+                " WHERE request_id=%s AND status='open' FOR UPDATE",
+                (request_id,),
+            ).fetchone()
+            if open_row is None:
+                raise PrcStateConflictError("correction_return_missing")
+            return_id = str(open_row["id"])
+            draft = conn.execute(
+                f"SELECT * FROM {_T_DRAFT} WHERE request_id=%s FOR UPDATE",
+                (request_id,),
+            ).fetchone()
+            data = dict(draft["technical_data"] or {})
+            changed = {
+                c["path"]: c for c in (draft["changed_paths"] or [])
+            }
+            applied: list[dict[str, Any]] = []
+            now = _now()
+            for change in changes:
+                path = change["path"]
+                mode = change.get("mode") or "changed"
+                old = data.get(path)
+                new_val = old if mode == "confirmed" else change.get(
+                    "proposedValue"
+                )
+                if mode != "confirmed":
+                    data[path] = new_val
+                    changed[path] = {
+                        "path": path,
+                        "reason": change.get("reason") or "correction",
+                    }
+                applied.append(
+                    {
+                        "path": path,
+                        "before": old,
+                        "after": new_val,
+                        "reason": change.get("reason"),
+                        "mode": mode,
+                    }
+                )
+                if path == "suppliers":
+                    conn.execute(
+                        f"UPDATE {_T_CORR_TGT} SET addressed_at=%s,"
+                        " addressed_by_subject=%s, addressed_mode=%s,"
+                        " addressed_value=%s"
+                        " WHERE return_id=%s AND target_type='SUPPLIER_LINK'",
+                        (
+                            now,
+                            actor_subject,
+                            mode,
+                            json.dumps(new_val)
+                            if new_val is not None
+                            else None,
+                            return_id,
+                        ),
+                    )
+                else:
+                    conn.execute(
+                        f"UPDATE {_T_CORR_TGT} SET addressed_at=%s,"
+                        " addressed_by_subject=%s, addressed_mode=%s,"
+                        " addressed_value=%s"
+                        " WHERE return_id=%s AND target_type='FIELD'"
+                        " AND target_path=%s",
+                        (
+                            now,
+                            actor_subject,
+                            mode,
+                            json.dumps(new_val)
+                            if new_val is not None
+                            else None,
+                            return_id,
+                            path,
+                        ),
+                    )
+            conn.execute(
+                f"UPDATE {_T_DRAFT} SET technical_data=%s,"
+                " changed_paths=%s, row_version=row_version+1,"
+                " updated_by_subject=%s, updated_at=%s"
+                " WHERE request_id=%s",
+                (
+                    json.dumps(data),
+                    json.dumps(list(changed.values())),
+                    actor_subject,
+                    now,
+                    request_id,
+                ),
+            )
+            conn.execute(
+                f"UPDATE {_T_REQ} SET row_version=row_version+1,"
+                " updated_at=%s WHERE id=%s",
+                (now, request_id),
+            )
+            conn.execute(
+                f"UPDATE {_T_CORR_RET} SET row_version=row_version+1,"
+                " updated_at=%s WHERE id=%s",
+                (now, return_id),
+            )
+            self._insert_event(
+                conn,
+                request_id,
+                self._next_event_seq(conn, request_id),
+                {
+                    "event_type": "correction_fields_saved",
+                    "actor_subject": actor_subject,
+                    "actor_display_name": actor_display_name,
+                    "actor_email": actor_email,
+                    "reason": None,
+                    "metadata": {
+                        "changes": applied,
+                        "returnId": return_id,
+                        **event_meta,
+                    },
+                    "previous_status": req["status"],
+                    "next_status": req["status"],
+                },
+            )
+        return self.get_request(request_id)
+
+    def resubmit_correction(
+        self,
+        *,
+        request_id: str,
+        expected_version: int,
+        actor_subject: str,
+        actor_label: str,
+        actor_email: str | None,
+        event_meta: dict[str, Any],
+    ) -> dict[str, Any]:
+        with self._conn() as conn:
+            req = self._lock_and_check(
+                conn,
+                request_id,
+                expected_version,
+                frozenset({"needs_correction"}),
+            )
+            open_row = conn.execute(
+                f"SELECT * FROM {_T_CORR_RET}"
+                " WHERE request_id=%s AND status='open' FOR UPDATE",
+                (request_id,),
+            ).fetchone()
+            if open_row is None:
+                raise PrcStateConflictError("correction_return_missing")
+            return_id = str(open_row["id"])
+            now = _now()
+            conn.execute(
+                f"UPDATE {_T_CORR_RET} SET status='resubmitted',"
+                " row_version=row_version+1, updated_at=%s,"
+                " resubmitted_at=%s, resubmitted_by_subject=%s"
+                " WHERE id=%s",
+                (now, now, actor_subject, return_id),
+            )
+            prev = req["status"]
+            conn.execute(
+                f"UPDATE {_T_REQ} SET status=%s, row_version=row_version+1,"
+                " updated_at=%s WHERE id=%s",
+                ("in_progress", now, request_id),
+            )
+            self._insert_event(
+                conn,
+                request_id,
+                self._next_event_seq(conn, request_id),
+                {
+                    "event_type": "correction_resubmitted",
+                    "actor_subject": actor_subject,
+                    "actor_display_name": actor_label,
+                    "actor_email": actor_email,
+                    "reason": None,
+                    "metadata": {
+                        **event_meta,
+                        "returnId": return_id,
+                        "sequence": open_row["sequence"],
+                    },
+                    "previous_status": prev,
+                    "next_status": "in_progress",
+                },
+            )
+            closed = self._load_correction_return(conn, request_id, return_id)
+        return {
+            "request": self.get_request(request_id),
+            "return": closed,
+        }

@@ -305,6 +305,63 @@ class ProductRegistrationRepository(Protocol):
         """Resolve rodadas abertas (dispensa explícita no resume)."""
         ...
 
+    # --- correction returns (PRC-REF-022) ------------------------------------
+
+    def get_correction_return(
+        self, *, request_id: str, return_id: str
+    ) -> dict[str, Any] | None: ...
+
+    def get_open_correction_return(
+        self, *, request_id: str
+    ) -> dict[str, Any] | None: ...
+
+    def list_correction_returns(
+        self, *, request_id: str
+    ) -> list[dict[str, Any]]: ...
+
+    def create_correction_return(
+        self,
+        *,
+        request_id: str,
+        expected_version: int,
+        actor_subject: str,
+        actor_label: str,
+        actor_email: str | None,
+        reason: str | None,
+        event_meta: dict[str, Any],
+        return_row: dict[str, Any],
+        targets: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """CAS in_progress → needs_correction + ciclo aberto + evento."""
+        ...
+
+    def update_returned_fields(
+        self,
+        *,
+        request_id: str,
+        expected_version: int,
+        actor_subject: str,
+        actor_display_name: str | None,
+        actor_email: str | None,
+        changes: list[dict[str, Any]],
+        event_meta: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Patch allowlisted no draft sob needs_correction + marca alvos."""
+        ...
+
+    def resubmit_correction(
+        self,
+        *,
+        request_id: str,
+        expected_version: int,
+        actor_subject: str,
+        actor_label: str,
+        actor_email: str | None,
+        event_meta: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Fecha ciclo aberto e retorna caso a in_progress."""
+        ...
+
 
 class OfficialProductReaderPort(Protocol):
     """Leitura oficial read-only de produto+fornecedores (TOTVS).

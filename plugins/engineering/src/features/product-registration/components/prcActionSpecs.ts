@@ -3,6 +3,14 @@ import type { ReactNode } from "react";
 import type { PrcInformationQuestionInput } from "../api/productRegistrationApi";
 
 /** Extras repassados pela barra ao `runAction` do detalhe. */
+export type PrcCorrectionTargetInput = {
+  targetType: "FIELD" | "SUPPLIER_LINK";
+  targetPath?: string | null;
+  targetAttribute?: string | null;
+  supplierKey?: { supplierCode: string; store: string } | null;
+  reason: string;
+};
+
 export type PrcActionExtras = {
   reason?: string;
   officialCode?: string;
@@ -10,6 +18,8 @@ export type PrcActionExtras = {
   questions?: PrcInformationQuestionInput[];
   message?: string;
   pendingFields?: string[];
+  /** PRC-REF-022 — alvos da devolução. */
+  targets?: PrcCorrectionTargetInput[];
 };
 
 /** Catálogo de apresentação das ações PRC — disponibilidade real vem
@@ -23,6 +33,8 @@ export type PrcActionSpec = {
   needsOfficialCode?: boolean;
   /** Abre o formulário multi-pergunta (PrcRequestInformationModal). */
   needsQuestions?: boolean;
+  /** PRC-REF-022 — seleção de campos + motivo (PrcReturnForCorrectionModal). */
+  needsCorrectionTargets?: boolean;
   confirmTitle?: string;
   confirmMessage?: ReactNode;
   danger?: boolean;
@@ -44,12 +56,30 @@ export const PRC_ACTION_SPECS: Record<string, PrcActionSpec> = {
   },
   request_information: {
     action: "request_information",
-    label: "Solicitar informações",
+    label: "Solicitar informações (legado)",
     path: "request-information",
     needsQuestions: true,
-    confirmTitle: "Solicitar informações",
+    confirmTitle: "Solicitar informações (legado)",
     confirmMessage:
-      "A solicitação ficará aguardando informações até ser retomada.",
+      "Fluxo legado REF-019. Prefira Devolver para correção.",
+  },
+  return_for_correction: {
+    action: "return_for_correction",
+    label: "Devolver para correção",
+    path: "return-for-correction",
+    needsCorrectionTargets: true,
+    confirmTitle: "Devolver para correção",
+    confirmMessage:
+      "O solicitante corrigirá na própria ficha os campos indicados e poderá reenviar à Engenharia.",
+  },
+  resubmit_correction: {
+    action: "resubmit_correction",
+    label: "Reenviar para Engenharia",
+    path: "resubmit-correction",
+    confirmTitle: "Reenviar para Engenharia",
+    confirmMessage:
+      "A solicitação volta para Em atendimento com as correções registradas.",
+    primary: true,
   },
   resume: {
     action: "resume",
@@ -117,6 +147,8 @@ export const PRC_ACTION_SPECS: Record<string, PrcActionSpec> = {
 export const PRC_ACTION_ORDER = [
   "complete",
   "verify_and_complete",
+  "resubmit_correction",
+  "return_for_correction",
   "return_to_attendance",
   "resume",
   "start",

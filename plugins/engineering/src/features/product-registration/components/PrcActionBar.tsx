@@ -21,6 +21,7 @@ import {
   type PrcActionSpec,
 } from "./prcActionSpecs";
 import { PrcRequestInformationModal } from "./PrcRequestInformationModal";
+import { PrcReturnForCorrectionModal } from "./PrcReturnForCorrectionModal";
 
 type PendingAction = {
   spec: PrcActionSpec;
@@ -56,11 +57,16 @@ export function PrcActionBar({
 }) {
   const [pending, setPending] = useState<PendingAction | null>(null);
   const [infoSpec, setInfoSpec] = useState<PrcActionSpec | null>(null);
+  const [returnSpec, setReturnSpec] = useState<PrcActionSpec | null>(null);
   const [reasonError, setReasonError] = useState("");
   const isUpdate = requestType === "update";
 
   const actions = PRC_ACTION_ORDER.filter(
-    (a) => allowedActions.includes(a) && PRC_ACTION_SPECS[a],
+    (a) =>
+      allowedActions.includes(a) &&
+      PRC_ACTION_SPECS[a] &&
+      /* save_returned_fields ocorre na própria ficha, não na barra. */
+      a !== "save_returned_fields",
   ).map((a) => PRC_ACTION_SPECS[a]);
 
   if (!actions.length) return null;
@@ -123,6 +129,10 @@ export function PrcActionBar({
       setInfoSpec(spec);
       return;
     }
+    if (spec.needsCorrectionTargets) {
+      setReturnSpec(spec);
+      return;
+    }
     if (spec.confirmTitle) {
       setPending({
         spec,
@@ -172,6 +182,19 @@ export function PrcActionBar({
           onSubmit={({ questions, message, pendingFields }) => {
             onRunAction(infoSpec, { questions, message, pendingFields });
             setInfoSpec(null);
+          }}
+        />
+      ) : null}
+
+      {returnSpec ? (
+        <PrcReturnForCorrectionModal
+          open
+          busy={busy}
+          fieldSpecs={fieldSpecs}
+          onCancel={() => setReturnSpec(null)}
+          onSubmit={(targets) => {
+            onRunAction(returnSpec, { targets });
+            setReturnSpec(null);
           }}
         />
       ) : null}

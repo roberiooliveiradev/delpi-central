@@ -1,6 +1,6 @@
 # Product Registration — contrato técnico do MVP Engineering-only
 
-> **Decisão funcional superveniente PRC-REF-022 (2026-11-10):** fluxo único Enviada → Em atendimento ⇄ Devolvida para correção → Concluída, editor compartilhado create/read/edit. O adendo REF-022 ao final deste documento prevalece sobre fluxos legados contraditórios. `PO_APPROVED_TARGET / PLANNED` (não é implementação).
+> **Decisão funcional superveniente PRC-REF-022 (2026-11-10):** fluxo único Enviada → Em atendimento ⇄ Devolvida para correção → Concluída, editor compartilhado create/read/edit. O adendo REF-022 ao final deste documento prevalece sobre fluxos legados contraditórios. `IMPLEMENTED_DEV` (runtime Engineering API + Portal; AuthZ solicitante sem `engineering.access` = `ARCHITECTURE_DECISION_REQUIRED` / `PENDING_OWNER`).
 
 > **Data:** 2026-11-06
 > **Estado:** \`TARGET / CONTRACT_SPECIFIED / ARCHITECTURE_DECISION_REQUIRED\` para o ownership; \`IMPLEMENTATION_NOT_STARTED\`; \`TEST_NOT_RUN\`.
@@ -510,9 +510,9 @@ Decisão PO 2026-11-09: [adendo normativo D16-REF-01](./PRODUCT-REGISTRATION-D16
 
 **Fila:** \`PrcFlagsOpsPanel compact\` dentro do \`EngineeringPageHero\` de \`PrcQueuePage\` — sem faixa externa; CRUD/AuthZ D16 preservados.
 
-## PRC-REF-022 — Contrato alvo: devolução para correção e edição da ficha pelo solicitante (PO 2026-11-10)
+## PRC-REF-022 — Contrato: devolução para correção e edição da ficha pelo solicitante (PO 2026-11-10)
 
-**\`PO_APPROVED_TARGET / PLANNED\`. Prevalência:** o fluxo operacional principal substitui \`needs_information\`/rodadas abertas como mecanismo padrão de correção e elimina editores paralelos; os dados, eventos e contratos anteriores são legados a inventariar, não apagar. A implementação **depende da aprovação Core** para o requester atualizar exclusivamente sua solicitação devolvida, sem \`engineering.access\`: \`ARCHITECTURE_DECISION_REQUIRED\` até obtenção do contrato. Não alegar runtime.
+**\`IMPLEMENTED_DEV\` (Engineering API + Portal).** Prevalência: o fluxo operacional principal substitui \`needs_information\`/rodadas abertas como mecanismo padrão de correção e elimina editores paralelos; dados/eventos REF-019 permanecem legados legíveis. **AuthZ solicitante sem \`engineering.access\`:** superfície atual reutiliza \`engineering.access\` + object AuthZ (\`requester_subject\`) — adequado ao intake dual-role; solicitante puro sem \`engineering.access\` = \`ARCHITECTURE_DECISION_REQUIRED\` / \`PENDING_OWNER\` (Core/Coordination). Migration \`V021__prc_ref022_needs_correction.sql\`. REST: \`return-for-correction\`, \`PATCH .../returned-fields\`, \`resubmit-correction\`, \`GET .../correction-returns\`.
 
 **Máquina alvo:** \`submitted --start--> in_progress\`; \`in_progress --return_for_correction--> needs_correction\`; \`needs_correction --save_returned_fields--> needs_correction\`; \`needs_correction --resubmit_correction--> in_progress\` (sem publicação automática, esperando avaliação Engenharia); \`in_progress --complete_attendance--> completed\` somente após fresh official read e zero erros; \`reject\` terminal pelo analista com motivo. Repetir devolução quantas vezes necessário. Não dar edição irrestrita ao autor por ser autor: durante atendimento, a Engenharia edita; durante devolução, o solicitante edita apenas o escopo devolvido; \`completed/rejected\` sem escrita técnica. Política para edição no \`submitted\` somente quando contrato existente for verificado, nunca inferir.
 

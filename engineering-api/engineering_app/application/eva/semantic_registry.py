@@ -563,19 +563,48 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
     ),
     _a(
         "product_registration", "request_information", "execute",
-        "Open a typed clarification round (PRC-REF-019) and move the case "
-        "to needs_information. Payload: questions[] "
-        "{targetType: FIELD|SUPPLIER_LINK|GENERAL, targetPath, "
-        "targetAttribute, supplierKey, questionText} + optional message; "
-        "legacy reason + pending_fields still accepted.",
+        "LEGACY PRC-REF-019 — open clarification round (needs_information). "
+        "Operational correction flow is return_for_correction (REF-022).",
         "moderate", status="proven", phases=("act", "prepare"),
         ref_arg="request_id",
         requires=("expected_version",),
         fields=("questions", "message", "reason", "pending_fields"),
         notes=(
-            "Provide questions[] or a legacy reason; resume stays gated "
-            "while a round is open (waiver: reason prefix resolves it).",
+            "Legacy only for open rounds; prefer return_for_correction.",
         ),
+    ),
+    _a(
+        "product_registration", "return_for_correction", "execute",
+        "PRC-REF-022 — return selected technical sheet targets to the "
+        "requester (needs_correction). Payload: targets[] "
+        "{targetType: FIELD|SUPPLIER_LINK, targetPath, targetAttribute, "
+        "supplierKey, reason}. Does not write TOTVS.",
+        "moderate", status="proven", phases=("act", "prepare"),
+        ref_arg="request_id",
+        requires=("expected_version", "targets"),
+        fields=("targets", "reason"),
+    ),
+    _a(
+        "product_registration", "save_returned_fields", "execute",
+        "PRC-REF-022 — requester patches only returned allowlisted paths "
+        "(or confirms without value change via mode=confirmed). "
+        "Object AuthZ: requester_subject of the case.",
+        "moderate", status="proven", phases=("act", "prepare"),
+        ref_arg="request_id",
+        requires=("expected_version", "changes"),
+        fields=("changes",),
+        notes=(
+            "Surface still requires engineering.access until Core grants "
+            "requester-only write (ARCHITECTURE_DECISION_REQUIRED).",
+        ),
+    ),
+    _a(
+        "product_registration", "resubmit_correction", "execute",
+        "PRC-REF-022 — requester resubmits after all returned targets are "
+        "addressed; case returns to in_progress.",
+        "moderate", status="proven", phases=("act", "prepare"),
+        ref_arg="request_id",
+        requires=("expected_version",),
     ),
     _a(
         "product_registration", "information_round_list", "read",
