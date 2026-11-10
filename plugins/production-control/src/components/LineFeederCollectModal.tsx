@@ -5,11 +5,16 @@ import { fetchLineFeederPublishedQueue } from "../api/ppcApi";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import type { LineFeederPublishedWorkCenter, PpcBranch } from "../types";
+import {
+  LINE_FEEDER_MAX_HOURS,
+  readPreferredLineFeederHours,
+  savePreferredLineFeederHours,
+} from "../utils/lineFeederHourPreference";
 import { HostContainedWideDialog } from "./PpcConfirmModal";
 import { LineFeederWorkCenterMultiSelect } from "./lineFeederUi";
 
 const HOUR_SHORTCUTS = [1, 2, 3, 4] as const;
-const MAX_HOURS = 24;
+const MAX_HOURS = LINE_FEEDER_MAX_HOURS;
 
 export type LineFeederCollectSelection = {
   workCenters: string[];
@@ -78,11 +83,19 @@ export function LineFeederCollectModal({
     setHoursRaw(
       initial?.hoursPerWorkCenter != null
         ? String(initial.hoursPerWorkCenter)
-        : "3",
+        : String(readPreferredLineFeederHours(branch)),
     );
     void loadCenters(controller.signal);
     return () => controller.abort();
   }, [open, branch, initial, loadCenters]);
+
+  const handleHoursChange = useCallback((raw: string) => {
+    setHoursRaw(raw);
+    const value = parseHours(raw);
+    if (value !== null && value <= MAX_HOURS) {
+      savePreferredLineFeederHours(branch, value);
+    }
+  }, [branch]);
 
   const options = useMemo(
     () =>
@@ -176,7 +189,7 @@ export function LineFeederCollectModal({
               aria-label={texts.hoursAria}
               aria-invalid={Boolean(hoursError)}
               disabled={submitting}
-              onChange={(event) => setHoursRaw(event.target.value)}
+              onChange={(event) => handleHoursChange(event.target.value)}
             />
           </label>
           <p className="ppc-feeder-collect__hint">{texts.hoursHint}</p>
@@ -196,7 +209,7 @@ export function LineFeederCollectModal({
                     : "ppc-feeder-collect__chip"
                 }
                 disabled={submitting}
-                onClick={() => setHoursRaw(String(value))}
+                onClick={() => handleHoursChange(String(value))}
               >
                 {value}h
               </button>
