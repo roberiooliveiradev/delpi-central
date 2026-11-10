@@ -1,4 +1,5 @@
-/** Visão operacional transversal de bandeiras (AuthZ no backend). */
+/** Visão operacional transversal de bandeiras (AuthZ no backend).
+ * PRC-REF-021-REF-01 — modo compacto no hero da fila (sem faixa externa). */
 
 import { useCallback, useEffect, useState } from "react";
 import { Flag } from "lucide-react";
@@ -19,7 +20,14 @@ import {
 import { PRC_FIELD_LABELS, PRC_STATUS_LABELS, prcShortId } from "../prcCopy";
 import { navigatePrc, PRC_PATHS } from "../prcNavigate";
 
-export function PrcFlagsOpsPanel({ basePath }: { basePath: string }) {
+export function PrcFlagsOpsPanel({
+  basePath,
+  compact = false,
+}: {
+  basePath: string;
+  /** Quando true, renderiza controle compacto adequado ao body do hero. */
+  compact?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState("OPEN");
   const [targetPath, setTargetPath] = useState("");
@@ -32,6 +40,7 @@ export function PrcFlagsOpsPanel({ basePath }: { basePath: string }) {
     distinctRequestCount: 0,
     distinctProductCount: 0,
   });
+  const [badgeCount, setBadgeCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
@@ -50,12 +59,16 @@ export function PrcFlagsOpsPanel({ basePath }: { basePath: string }) {
       });
       const data = res.data;
       setItems(data.items || []);
-      setTotals({
+      const nextTotals = {
         total: data.total ?? 0,
         openCount: data.openCount ?? 0,
         distinctRequestCount: data.distinctRequestCount ?? 0,
         distinctProductCount: data.distinctProductCount ?? 0,
-      });
+      };
+      setTotals(nextTotals);
+      if (status === "OPEN" || status === "all") {
+        setBadgeCount(nextTotals.openCount);
+      }
     } catch (err) {
       setError(
         err instanceof HomeApiError
@@ -67,22 +80,60 @@ export function PrcFlagsOpsPanel({ basePath }: { basePath: string }) {
     }
   }, [status, targetPath, targetAttribute, productCode, page]);
 
+  /* Contador autorizado no hero — uma consulta leve OPEN; 403/erro
+   * omitem o número (fail-closed visual, sem inventar total). */
+  useEffect(() => {
+    if (!compact) return undefined;
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const res = await fetchPrcFlagsCrossCase(
+          {
+            status: "OPEN",
+            page: 1,
+            pageSize: 1,
+          },
+          controller.signal,
+        );
+        if (controller.signal.aborted) return;
+        setBadgeCount(res.data.openCount ?? res.data.total ?? 0);
+      } catch {
+        if (controller.signal.aborted) return;
+        setBadgeCount(null);
+      }
+    })();
+    return () => controller.abort();
+  }, [compact]);
+
   useEffect(() => {
     if (!open) return;
     void load();
   }, [open, load]);
 
+  const toggleLabel =
+    badgeCount != null
+      ? `Campos sinalizados (${badgeCount})`
+      : "Campos sinalizados";
+
   return (
-    <section className="engineering-prc__flags-ops" aria-label="Bandeiras">
+    <section
+      className={
+        compact
+          ? "engineering-prc__flags-ops engineering-prc__flags-ops--hero"
+          : "engineering-prc__flags-ops"
+      }
+      aria-label="Bandeiras"
+    >
       <EngineeringActionButton
-        variant={open ? "ghost" : "ghost"}
+        variant="ghost"
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
         <Flag size={14} aria-hidden />{" "}
-        {open ? "Ocultar campos sinalizados" : "Campos sinalizados / bandeiras"}
+        {open ? "Ocultar campos sinalizados" : toggleLabel}
       </EngineeringActionButton>
       {open ? (
-        <>
+        <div className="engineering-prc__flags-ops-body">
           <EngineeringFiltersRow>
             <div className="engineering-prc__flags-ops-filters">
               <EngineeringFilterSelect
@@ -127,7 +178,7 @@ export function PrcFlagsOpsPanel({ basePath }: { basePath: string }) {
                 ]}
               />
               <EngineeringFilterInput
-          type="text"
+                type="text"
                 label="Produto"
                 value={productCode}
                 onChange={setProductCode}
@@ -213,7 +264,7 @@ export function PrcFlagsOpsPanel({ basePath }: { basePath: string }) {
             <div className="engineering-prc__flags-actions">
               <EngineeringActionButton
                 variant="ghost"
-                disabled={page <= 1 || loading}
+                softDisabled={page <= 1 || loading}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
                 Anterior
@@ -221,14 +272,14 @@ export function PrcFlagsOpsPanel({ basePath }: { basePath: string }) {
               <span className="engineering-prc__muted">Página {page}</span>
               <EngineeringActionButton
                 variant="ghost"
-                disabled={page * 25 >= totals.total || loading}
+                softDisabled={page * 25 >= totals.total || loading}
                 onClick={() => setPage((p) => p + 1)}
               >
                 Próxima
               </EngineeringActionButton>
             </div>
           ) : null}
-        </>
+        </div>
       ) : null}
     </section>
   );

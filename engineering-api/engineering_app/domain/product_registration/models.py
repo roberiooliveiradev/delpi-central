@@ -64,18 +64,16 @@ _ACTIONS_BY_STATUS: dict[str, tuple[str, ...]] = {
     "in_progress": (
         "edit_draft",
         "request_information",
-        "route_divergence",
         "complete",
         "reject",
     ),
-    "needs_information": ("resume", "route_divergence", "reject"),
+    "needs_information": ("resume", "reject"),
     # Legado aberto: reabrir para atendimento ou concluir com verificação.
     "under_review": (
         "return_to_attendance",
         "complete",
         "verify_and_complete",
         "request_information",
-        "route_divergence",
         "reject",
     ),
     "completed": (),

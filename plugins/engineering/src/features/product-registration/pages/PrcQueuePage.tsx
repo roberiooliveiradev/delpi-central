@@ -312,9 +312,11 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
             options={TYPE_OPTIONS}
           />
         </EngineeringFiltersRow>
+        {/* PRC-REF-021-REF-01 — bandeiras compactas no hero (sem faixa externa). */}
+        {!forbidden ? (
+          <PrcFlagsOpsPanel basePath={basePath} compact />
+        ) : null}
       </EngineeringPageHero>
-
-      {!forbidden ? <PrcFlagsOpsPanel basePath={basePath} /> : null}
 
       {forbidden ? (
         <>

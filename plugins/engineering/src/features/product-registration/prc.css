@@ -216,70 +216,6 @@
   outline-offset: 2px;
 }
 
-.engineering-prc__route-chip {
-  display: inline-block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  word-break: break-word;
-}
-
-.engineering-prc__route-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 36rem;
-}
-
-.engineering-prc__route-options {
-  border: 1px solid var(--en-border, #d0d5dd);
-  border-radius: 6px;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin: 0;
-}
-
-.engineering-prc__route-option {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 8px;
-  align-items: start;
-}
-
-.engineering-prc__route-option small {
-  display: block;
-  margin-top: 2px;
-  color: var(--en-muted, #667085);
-  word-break: break-word;
-}
-
-.engineering-prc__route-reason {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-weight: 600;
-}
-
-.engineering-prc__route-reason textarea {
-  font: inherit;
-  font-weight: 400;
-  resize: vertical;
-  min-height: 4.5rem;
-  padding: 8px 10px;
-  border: 1px solid var(--en-border, #d0d5dd);
-  border-radius: 6px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.engineering-prc__route-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
 /* PRC-REF-020 / UX-01 — destaque de campos/SA5 bloqueantes na verificação. */
 .engineering-prc__field-mismatch,
 .engineering-prc__supplier-mismatch {
@@ -1159,11 +1095,72 @@
   margin-bottom: 16px;
 }
 
+/* PRC-REF-021-REF-01 — controle compacto no body do hero. */
+.engineering-prc__flags-ops--hero {
+  margin: 8px 0 0;
+  gap: 8px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.engineering-prc__flags-ops--hero .engineering-prc__flags-ops-body {
+  margin-top: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--en-border, #d0d5dd);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--en-surface, #fff) 94%, #f2f4f7);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .engineering-prc__flags-ops-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   align-items: flex-end;
+}
+
+.engineering-prc__official-supplier {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.engineering-prc__official-supplier-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.engineering-prc__official-supplier-selected {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--en-border, #d0d5dd);
+  border-radius: 6px;
+  word-break: break-word;
+}
+
+.engineering-prc__official-supplier-clear {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  color: inherit;
+  text-decoration: underline;
+}
+
+.engineering-prc__lookup--modal {
+  width: 100%;
 }
 
 @media (max-width: 720px) {

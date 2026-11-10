@@ -213,12 +213,15 @@ def test_route_divergence_forbidden_without_access(
 
 
 @pytest.mark.usefixtures("prc_service_repo")
-def test_allowed_actions_include_route_divergence(
+def test_allowed_actions_omit_route_divergence_after_ref01(
     client, jwks_env, core_rbac, prc_service_repo,
 ):
+    """REF-021-REF-01 — encaminhamento não é etapa operacional do Portal."""
     rid, tok, _vid, _version = _open_in_progress(
         client, jwks_env, core_rbac, prc_service_repo
     )
     detail = _get(client, f"{_base(rid)}", tok).json()["data"]
-    assert "route_divergence" in detail["allowedActions"]
+    assert "route_divergence" not in detail["allowedActions"]
     assert detail["status"] == "in_progress"
+    assert "request_information" in detail["allowedActions"]
+    assert "complete" in detail["allowedActions"]

@@ -266,6 +266,12 @@ export const PRC_INFO_COPY = {
   targetFieldPlaceholder: "Selecione o campo",
   supplierPick: "Fornecedor da ficha",
   supplierPickPlaceholder: "Preencher a partir da ficha (opcional)",
+  supplierSearch: "Pesquisar fornecedor",
+  supplierSearchPlaceholder:
+    "Digite código, razão social ou nome fantasia…",
+  supplierSearchEmpty: "Nenhum fornecedor oficial encontrado para o termo.",
+  supplierSearchUnavailable:
+    "Pesquisa oficial indisponível — tente novamente. Não é permitido informar código/loja manualmente.",
   supplierCode: "Código do fornecedor",
   supplierStore: "Loja",
   supplierAttribute: "Atributo",

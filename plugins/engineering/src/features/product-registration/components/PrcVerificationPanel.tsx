@@ -1,13 +1,13 @@
-/** Verificação oficial TOTVS — tabela única + encaminhamento (PRC-REF-021).
- * O MFE nunca compara valores nem aprova MATCH; só apresenta evidências e
- * registra decisões de encaminhamento autorizadas pelo backend. */
+/** Verificação oficial TOTVS — tabela única (PRC-REF-021-REF-01).
+ * O MFE nunca compara valores nem aprova MATCH. Sem modal/coluna de
+ * encaminhamento: a Engenharia trata divergências pelos fluxos
+ * operacionais já existentes (REF-019 / edição / ajuste TOTVS externo). */
 
 import { useEffect, useMemo, useState } from "react";
 
 import {
   EngineeringActionButton,
   EngineeringEmptyState,
-  EngineeringHostDialog,
   EngineeringSegmentToggle,
   EngineeringStateBanner,
   EngineeringStatusBadge,
@@ -15,15 +15,9 @@ import {
 import type { DataTableColumn } from "../../lmps/components/dataTableUi";
 import { DataTableSection } from "../../lmps/components/DataTableSection";
 import type {
-  PrcDivergenceRouting,
-  PrcDivergenceRouteDecision,
   PrcFieldResult,
   PrcRequestDetail,
   PrcVerification,
-} from "../api/productRegistrationApi";
-import {
-  newPrcIdempotencyKey,
-  routeDivergence,
 } from "../api/productRegistrationApi";
 import {
   PRC_COPY,
@@ -31,44 +25,12 @@ import {
   PRC_RESULT_VARIANTS,
 } from "../prcCopy";
 import {
-  diagnosisItemRoutingKey,
   formatDiagnosticValue,
   pickActiveFieldResults,
   summarizeDiagnosis,
   technicalTargetElementId,
   type DiagnosisItem,
 } from "../prcVerificationDiagnosis";
-
-const ROUTE_OPTIONS: Array<{
-  value: PrcDivergenceRouteDecision;
-  label: string;
-  hint: string;
-}> = [
-  {
-    value: "REQUESTER_CORRECTION",
-    label: "Solicitar correção ao solicitante",
-    hint:
-      "Devolve o campo ao autor para correção ou confirmação. Não é rejeição. A escrita estruturada da ficha pelo solicitante permanece pendente de decisão Core (PENDING_OWNER).",
-  },
-  {
-    value: "ERP_MANUAL_CORRECTION",
-    label: "Ajuste manual TOTVS",
-    hint:
-      "Encaminha correção externa no ERP por operador autorizado. O Portal não escreve no TOTVS; a conclusão exige nova leitura oficial.",
-  },
-  {
-    value: "NEEDS_CLARIFICATION",
-    label: "Pedir esclarecimento",
-    hint:
-      "Registra necessidade de esclarecimento antes de determinar o valor correto. Reutilize as rodadas REF-019 para perguntas e respostas.",
-  },
-];
-
-const ROUTE_LABELS: Record<PrcDivergenceRouteDecision, string> = {
-  REQUESTER_CORRECTION: "Correção ao solicitante",
-  ERP_MANUAL_CORRECTION: "Ajuste TOTVS",
-  NEEDS_CLARIFICATION: "Esclarecimento",
-};
 
 function resultBadge(result: string | undefined) {
   const key = result || "unverifiable";
@@ -99,21 +61,6 @@ function statusHeadline(
   return "Aguardando verificação oficial";
 }
 
-function latestRoutingForItem(
-  item: DiagnosisItem,
-  routings: PrcDivergenceRouting[],
-  verificationId: string | null | undefined,
-): PrcDivergenceRouting | null {
-  const key = diagnosisItemRoutingKey(item);
-  const matches = routings.filter((r) => {
-    if (verificationId && r.verificationId && r.verificationId !== verificationId) {
-      return false;
-    }
-    return r.targetKey === key;
-  });
-  return matches.length ? matches[matches.length - 1] : null;
-}
-
 export type PrcVerificationNavigateTarget = {
   item: DiagnosisItem;
   elementId: string | null;
@@ -122,23 +69,19 @@ export type PrcVerificationNavigateTarget = {
 export function PrcVerificationPanel({
   detail,
   verifications,
-  routings = [],
   lastError,
   verifying,
   onNavigateToTarget,
   onRetryComplete,
-  onRouted,
 }: {
   detail: PrcRequestDetail;
   verifications: PrcVerification[];
-  routings?: PrcDivergenceRouting[];
   lastError?: Record<string, PrcFieldResult> | null;
   verifying?: boolean;
   onNavigateToTarget?: (target: PrcVerificationNavigateTarget) => void;
   onRetryComplete?: () => void;
-  onRouted?: () => void | Promise<void>;
 }) {
-  const { fieldResults, verification, staleError } = useMemo(
+  const { fieldResults, verification } = useMemo(
     () =>
       pickActiveFieldResults({
         verifications,
@@ -163,13 +106,6 @@ export function PrcVerificationPanel({
   const [filter, setFilter] = useState<"problems" | "all">("problems");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [routeItem, setRouteItem] = useState<DiagnosisItem | null>(null);
-  const [routeDecision, setRouteDecision] =
-    useState<PrcDivergenceRouteDecision>("NEEDS_CLARIFICATION");
-  const [routeReason, setRouteReason] = useState("");
-  const [routeBusy, setRouteBusy] = useState(false);
-  const [routeError, setRouteError] = useState<string | null>(null);
-  const [routeNotice, setRouteNotice] = useState<string | null>(null);
 
   useEffect(() => {
     setFilter(summary.problems > 0 ? "problems" : "all");
@@ -180,7 +116,6 @@ export function PrcVerificationPanel({
     filter === "problems" ? summary.problemItems : summary.items;
   const canComplete =
     detail.status === "in_progress" || detail.status === "under_review";
-  const canRoute = detail.allowedActions.includes("route_divergence");
   const showBlocked =
     detail.status !== "completed" &&
     !summary.isInfra &&
@@ -236,39 +171,24 @@ export function PrcVerificationPanel({
       render: (r) => resultBadge(r.result),
     },
     {
-      key: "routing",
-      header: "Encaminhamento",
-      render: (r) => {
-        const existing = latestRoutingForItem(
-          r,
-          routings,
-          summary.verificationId,
-        );
-        if (existing) {
-          return (
-            <span className="engineering-prc__route-chip">
-              {ROUTE_LABELS[existing.decision] || existing.decision}
-            </span>
-          );
-        }
-        if (!r.isProblem || !canRoute || !summary.verificationId) {
-          return <span className="engineering-prc__muted">—</span>;
-        }
-        return (
+      key: "actions",
+      header: "Ação",
+      render: (r) =>
+        r.isProblem ? (
           <EngineeringActionButton
             variant="ghost"
-            onClick={() => {
-              setRouteItem(r);
-              setRouteDecision("NEEDS_CLARIFICATION");
-              setRouteReason("");
-              setRouteError(null);
-              setRouteNotice(null);
-            }}
+            onClick={() =>
+              onNavigateToTarget?.({
+                item: r,
+                elementId: technicalTargetElementId(r),
+              })
+            }
           >
-            Definir
+            Revisar
           </EngineeringActionButton>
-        );
-      },
+        ) : (
+          <span className="engineering-prc__muted">—</span>
+        ),
     },
   ];
 
@@ -294,57 +214,6 @@ export function PrcVerificationPanel({
       render: (v) => v.error_code || "—",
     },
   ];
-
-  const submitRoute = async () => {
-    if (!routeItem || !summary.verificationId || routeBusy) return;
-    const reason = routeReason.trim();
-    if (reason.length < 3) {
-      setRouteError("Informe uma justificativa (mín. 3 caracteres).");
-      return;
-    }
-    setRouteBusy(true);
-    setRouteError(null);
-    setRouteNotice(null);
-    try {
-      const body = {
-        expectedVersion: detail.caseVersion,
-        verificationId: summary.verificationId,
-        targetType:
-          routeItem.kind === "field" ? ("FIELD" as const) : ("SUPPLIER_LINK" as const),
-        targetPath:
-          routeItem.kind === "field" ? routeItem.path || null : "suppliers",
-        supplierKey:
-          routeItem.kind === "field"
-            ? null
-            : {
-                supplierCode: routeItem.supplierCode || "",
-                store: routeItem.store || "",
-              },
-        targetAttribute: routeItem.attribute || null,
-        decision: routeDecision,
-        reason,
-      };
-      const res = await routeDivergence(
-        detail.id,
-        body,
-        newPrcIdempotencyKey(`prc-route-${detail.id}`),
-      );
-      const pending = res.data.requesterWrite;
-      if (pending?.status === "PENDING_OWNER") {
-        setRouteNotice(
-          pending.message ||
-            "Encaminhamento registrado. Escrita estruturada do solicitante aguarda decisão Core.",
-        );
-      }
-      setRouteItem(null);
-      await onRouted?.();
-    } catch (e) {
-      const err = e as { message?: string };
-      setRouteError(err.message || "Falha ao registrar encaminhamento.");
-    } finally {
-      setRouteBusy(false);
-    }
-  };
 
   const hasEvidence = Boolean(verification || fieldResults || verifying);
 
@@ -386,10 +255,6 @@ export function PrcVerificationPanel({
                   : PRC_COPY.officialUnavailable}
           </EngineeringStateBanner>
         ) : null}
-        {routeNotice ? (
-          <EngineeringStateBanner variant="success">{routeNotice}</EngineeringStateBanner>
-        ) : null}
-        {staleError && detail.status === "completed" ? null : null}
       </header>
 
       {!hasEvidence ? (
@@ -507,78 +372,6 @@ export function PrcVerificationPanel({
           campos verificáveis corresponderem.
         </EngineeringStateBanner>
       ) : null}
-
-      <EngineeringHostDialog
-        open={Boolean(routeItem)}
-        title="Definir encaminhamento"
-        onClose={() => {
-          if (!routeBusy) setRouteItem(null);
-        }}
-        className="engineering-prc-route-dialog"
-      >
-        {routeItem ? (
-          <div className="engineering-prc__route-form">
-            <p>
-              <strong>{routeItem.label}</strong>
-            </p>
-            <p className="engineering-prc__muted">
-              Solicitado: {formatDiagnosticValue(routeItem.expected)} · TOTVS:{" "}
-              {formatDiagnosticValue(routeItem.observed)}
-            </p>
-            <fieldset className="engineering-prc__route-options">
-              <legend>Decisão da Engenharia</legend>
-              {ROUTE_OPTIONS.map((opt) => (
-                <label key={opt.value} className="engineering-prc__route-option">
-                  <input
-                    type="radio"
-                    name="prc-route-decision"
-                    value={opt.value}
-                    checked={routeDecision === opt.value}
-                    onChange={() => setRouteDecision(opt.value)}
-                    disabled={routeBusy}
-                  />
-                  <span>
-                    <strong>{opt.label}</strong>
-                    <small>{opt.hint}</small>
-                  </span>
-                </label>
-              ))}
-            </fieldset>
-            <label className="engineering-prc__route-reason">
-              Justificativa
-              <textarea
-                value={routeReason}
-                onChange={(e) => setRouteReason(e.target.value)}
-                rows={3}
-                maxLength={1000}
-                disabled={routeBusy}
-                required
-              />
-            </label>
-            {routeError ? (
-              <EngineeringStateBanner variant="error">
-                {routeError}
-              </EngineeringStateBanner>
-            ) : null}
-            <div className="engineering-prc__route-actions">
-              <EngineeringActionButton
-                variant="ghost"
-                softDisabled={routeBusy}
-                onClick={() => setRouteItem(null)}
-              >
-                Cancelar
-              </EngineeringActionButton>
-              <EngineeringActionButton
-                variant="primary"
-                softDisabled={routeBusy}
-                onClick={() => void submitRoute()}
-              >
-                Registrar encaminhamento
-              </EngineeringActionButton>
-            </div>
-          </div>
-        ) : null}
-      </EngineeringHostDialog>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 /** Formulário multi-pergunta de "Solicitar informações" — PRC-REF-019.
- * FIX-01: modal alto (variante wide + CSS), selects oficiais
- * (SearchableSelect para campo/fornecedor), host-contained. */
+ * FIX-01 + REF-021-REF-01: modal wide, SearchableSelect de campo,
+ * fornecedor SUPPLIER_LINK apenas por pesquisa oficial SA2. */
 
 import { useId, useMemo, useState } from "react";
 
@@ -11,7 +11,6 @@ import {
   EngineeringSearchableSelect,
   EngineeringStateBanner,
   EngineeringTextAreaField,
-  EngineeringTextField,
 } from "../../../ui/engineeringUi";
 import type {
   PrcFieldSpec,
@@ -34,6 +33,7 @@ import {
   type InfoQuestionDraft,
   type InfoSupplierOption,
 } from "../prcInformationExchange";
+import { PrcOfficialSupplierSearchField } from "./PrcOfficialSupplierSearchField";
 
 export type PrcRequestInformationSubmit = {
   questions: PrcInformationQuestionInput[];
@@ -75,16 +75,10 @@ export function PrcRequestInformationModal({
     [fieldSpecs],
   );
 
-  const supplierOptions = useMemo(
-    () =>
-      (suppliers ?? []).map((s) => ({
-        value: `${s.supplierCode}|${s.store}`,
-        label: s.supplierName
-          ? `${s.supplierCode}/${s.store} — ${s.supplierName}`
-          : `${s.supplierCode}/${s.store}`,
-      })),
-    [suppliers],
-  );
+  /* `suppliers` da ficha permanece disponível como contexto opcional
+   * no ActionBar, mas a identidade SUPPLIER_LINK vem só da pesquisa
+   * oficial SA2 (REF-021-REF-01) — sem fallback manual. */
+  void suppliers;
 
   const patch = (rowId: string, change: Partial<InfoQuestionDraft>) => {
     setDrafts((list) =>
@@ -178,10 +172,13 @@ export function PrcRequestInformationModal({
           {drafts.map((draft, index) => {
             const base = `${formId}-q${draft.rowId}`;
             const error = rowErrors[draft.rowId];
-            const supplierValue =
+            const selectedSupplier =
               draft.supplierCode && draft.store
-                ? `${draft.supplierCode}|${draft.store}`
-                : "";
+                ? {
+                    supplierCode: draft.supplierCode,
+                    store: draft.store,
+                  }
+                : null;
             return (
               <li
                 key={draft.rowId}
@@ -240,49 +237,22 @@ export function PrcRequestInformationModal({
 
                   {draft.targetType === "SUPPLIER_LINK" ? (
                     <>
-                      {supplierOptions.length ? (
-                        <EngineeringSearchableSelect
-                          id={`${base}-supplier-pick`}
-                          label={PRC_INFO_COPY.supplierPick}
-                          searchable
-                          value={supplierValue}
-                          onChange={(value) => {
-                            const hit = (suppliers ?? []).find(
-                              (s) => `${s.supplierCode}|${s.store}` === value,
-                            );
-                            if (hit) {
-                              patch(draft.rowId, {
-                                supplierCode: hit.supplierCode,
-                                store: hit.store,
-                              });
-                            }
-                          }}
-                          options={supplierOptions}
-                          placeholder={PRC_INFO_COPY.supplierPickPlaceholder}
-                          disabled={busy}
-                        />
-                      ) : null}
-                      <EngineeringTextField
-                        id={`${base}-supplier-code`}
-                        label={PRC_INFO_COPY.supplierCode}
-                        value={draft.supplierCode}
-                        onChange={(value) =>
-                          patch(draft.rowId, { supplierCode: value })
-                        }
-                        maxLength={20}
-                        required
+                      <PrcOfficialSupplierSearchField
+                        id={`${base}-supplier-search`}
+                        selected={selectedSupplier}
                         disabled={busy}
-                      />
-                      <EngineeringTextField
-                        id={`${base}-supplier-store`}
-                        label={PRC_INFO_COPY.supplierStore}
-                        value={draft.store}
-                        onChange={(value) =>
-                          patch(draft.rowId, { store: value })
+                        onSelect={(hit) =>
+                          patch(draft.rowId, {
+                            supplierCode: hit.supplierCode,
+                            store: hit.store,
+                          })
                         }
-                        maxLength={10}
-                        required
-                        disabled={busy}
+                        onClear={() =>
+                          patch(draft.rowId, {
+                            supplierCode: "",
+                            store: "",
+                          })
+                        }
                       />
                       <EngineeringSearchableSelect
                         id={`${base}-supplier-attr`}

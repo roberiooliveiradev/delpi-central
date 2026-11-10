@@ -607,7 +607,12 @@ async def prc_action_request_information(
 @router.post(
     "/v1/product-registration/requests/{request_id}/actions/route-divergence",
     operation_id="prc_action_route_divergence",
-    summary="PRC-REF-021 — Encaminhar divergência oficial (sem alterar MATCH)",
+    summary=(
+        "PRC-REF-021 (legado/deprecated operacional REF-021-REF-01) — "
+        "registrar encaminhamento auditável sem alterar MATCH; não é "
+        "etapa compulsória do Portal"
+    ),
+    deprecated=True,
 )
 @require_any_permission(_PROCESS_PERMS)
 async def prc_action_route_divergence(

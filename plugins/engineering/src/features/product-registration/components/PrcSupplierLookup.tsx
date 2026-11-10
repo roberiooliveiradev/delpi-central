@@ -15,7 +15,9 @@ const MAX_VISIBLE = 8;
 
 type LookupState = "idle" | "loading" | "error";
 
-function useSupplierSearch(query: string) {
+/** Busca SA2 oficial (Engineering API → api-delpi) — debounce, cancelamento
+ * e descarte de resposta obsoleta. Reutilizado pela ficha e pelo modal REF-019. */
+export function useSupplierSearch(query: string) {
   const [items, setItems] = useState<PrcSupplierHit[]>([]);
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<LookupState>("idle");

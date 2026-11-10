@@ -345,7 +345,7 @@ Fornecedor 000123/01
 
 ## PRC-REF-021-REF-01 — Layout e operação simplificados (PO 2026-11-09)
 
-**\`PO_APPROVED_TARGET / PLANNED\`; este adendo substitui o wireframe REF-021 com coluna \`Encaminhamento\` e botão \`Definir\`.**
+**\`IMPLEMENTED_DEV\`; este adendo substitui o wireframe REF-021 com coluna \`Encaminhamento\` e botão \`Definir\`.**
 
 \`\`\`text
 FILA — HERO
