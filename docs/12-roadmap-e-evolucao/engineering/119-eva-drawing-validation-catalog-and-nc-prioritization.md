@@ -2323,3 +2323,25 @@ G5_QUALITY_HOMOLOGATED=NOT_AUTHORIZED (GT/split/holdout owner)
 G6_G7=NOT_AUTHORIZED
 VAL01_COMPLETED=false
 ```
+
+### 64. Deploy produtivo — tabelas de estrutura generalistas (2026-11-10)
+
+**TASK_ID:** `EVA-VAL01-GENERALIZED-TABLE-PRODUCTION-DEPLOY`. **SHA:** `30ac7cbb44`. **Baseline de rollback:** `38f5077e0f` (ff-only, sem reset — rollback = reverter para o SHA anterior pelo mesmo fluxo Git). **Mecanismo:** `git pull --ff-only` + `./infra/scripts/up-prod-sequential.sh --build engineering-api` em `srv-api` (somente o serviço afetado).
+
+**Pré-deploy:** 198 testes PASS no SHA de publicação (G4+G5 profiles+roundtrip+DEC-040–043+SLANet/perception+comparador+recovery+r8+architecture+analysis). Contratos aditivos — consumidores existentes inalterados.
+
+**Deploy:** `delpi-engineering-api` rebuilt+up, `healthy`, startup completo, `/apps/engineering-api/health` 200 via gateway (~48ms). Código verificado dentro do container (`parent_group_source`, `align_structure_to_drawing` presentes). MCP EVA responde na superfície (401 sem auth = canal íntegro). `drawing_understanding.v1` ativo.
+
+**Restrições preservadas:** comparação oficial Totus NÃO conectada (align é função pura, sem wiring); `automatic_nc=false`; G6/G7 bloqueados; nenhum feature experimental ativado; nenhuma alteração em banco/Keycloak/Core/api-delpi.
+
+```text
+DEPLOY_EXECUTED=true
+DEPLOY_STATUS=HEALTHY
+POST_DEPLOY_SMOKE=PASS (health gateway 200 + container code verified)
+MCP_EVA_SURFACE=UP (auth-required, intact)
+OFFICIAL_TOTUS_COMPARISON_ENABLED=false
+ROLLBACK_EXECUTED=false (não necessário)
+G5_QUALITY_HOMOLOGATED=NOT_DECLARED
+G6_G7=NOT_AUTHORIZED
+VAL01_COMPLETED=false
+```
