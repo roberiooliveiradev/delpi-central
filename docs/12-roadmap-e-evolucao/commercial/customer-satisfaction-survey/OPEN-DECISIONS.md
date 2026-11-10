@@ -86,9 +86,12 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ### Q08 — Obrigatoriedade e não aplicabilidade
 **Pergunta:** Quais das 15 perguntas serão obrigatórias? Será permitida resposta "não se aplica", envio parcial ou alteração após envio?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** experiência e denominadores dos cálculos.
+**Status:** DECIDED quanto à obrigatoriedade e opção "Não se aplica"; PENDING quanto a envio parcial e edição após envio.
+**Resposta:** Das 15 perguntas padronizadas do plano, tornar obrigatórias somente a pergunta de satisfação geral (escala 1–5, base do IGS) e a pergunta de recomendação (escala 0–10, base do NPS). Nas dez perguntas de avaliação por dimensão (1–5), permitir a opção "Não se aplica", sem exigir uma nota numérica em todos os casos. As três perguntas abertas serão opcionais.
+**Regra para indicadores:** "Não se aplica" não representa nota zero nem nota neutra; excluir esses registros do cálculo da média da respectiva dimensão e informar o número de respostas válidas no indicador. As perguntas obrigatórias precisam ser respondidas para a submissão final.
+**Fonte:** Resposta do solicitante em 2026-11-10: "Concordo com a regra", em resposta à proposta explícita de duas perguntas obrigatórias, opção "Não se aplica" nas dez avaliações e três abertas opcionais.
+**PENDING:** Se as dez dimensões também poderão ficar sem resposta (além de selecionar "Não se aplica"), possibilidade de salvar rascunho/resposta parcial, alterações após submissão, tratamento de formulário interrompido e detalhamento de validações.
+**Impacto:** Mantém IGS e NPS com notas válidas e evita distorcer avaliações de assuntos não conhecidos pelo cliente, preservando resposta única por empresa/campanha (Q01).
 
 ### Q09 — Evolução do questionário
 **Pergunta:** As perguntas e escalas serão fixas ou configuráveis por campanha, preservando versão histórica?
