@@ -85,6 +85,13 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 
 **Decisão:** postergar E3A e E3B para projetos futuros. Priorizar E4, inventário automatizado, antes de construir mapa gráfico e motor de impacto. Essa mudança **não equivale a aceite adicional da E2B** nem autoriza execução de código, integração ativa ou alteração de infraestrutura.
 
+**Fonte inventariada — Matriz (PROVEN pela captura de tela fornecida pelo PO em 10/11/2026):**
+- Firewall principal: **Sophos XGS 116**, firmware **SFOS 21.5.0 GA, Build 171**. O modelo/firmware da filial **não foi confirmado** e deve ser inventariado separadamente. Não registrar número de série da imagem no roadmap.
+- **TARGET de integração:** estudar API **XML** do SFOS 21.5 (operações exclusivamente de consulta; acesso desabilitado por padrão, liberar apenas IP do coletor, conta própria com perfil restrito somente leitura quando comprovado) e **SNMPv3** para métricas de saúde; não assumir disponibilidade da API REST lançada nas versões mais novas.
+- **TO_INVENTORY:** versão/habilitação efetiva de API e SNMP, MIBs, endpoints/entidades consultáveis, IP e zona do coletor, permissões administrativas, campos de redes/interfaces/VLAN/rotas e cobertura real; configuração em ambiente controlado sem varredura irrestrita.
+- **STOP:** qualquer necessidade de alterar regras/políticas de firewall, usar credencial administrativa ampla ou coletar segredos exige revisão de segurança e autorização específica. Não inferir ativos Windows/Linux a partir de objetos de rede do Sophos.
+- Fontes técnicas oficiais: https://docs.sophos.com/nsg/sophos-firewall/21.5/Help/en-us/webhelp/onlinehelp/AdministratorHelp/BackupAndFirmware/API/APIConfiguration/index.html e https://docs.sophos.com/nsg/sophos-Firewall/21.5/help/en-us/webhelp/onlinehelp/AdministratorHelp/Administration/SNMP/index.html .
+
 **Objetivo da E4 (PLANNED):** minimizar o cadastro manual de servidores Windows/Linux e da infraestrutura de rede Sophos, sem criar uma segunda autoridade sobre ativos existentes, nem sobrescrever dados operacionais curados por pessoas.
 
 **Gate inicial (TO_INVENTORY), antes de aprovar contratos/implementação:**
