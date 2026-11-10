@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "id": "it-portal",
   "name": "Portal de TI",
-  "description": "Inventário de servidores, notas técnicas e planos de ação da infraestrutura de TI.",
+  "description": "Inventário de servidores, serviços, aplicações e bancos de dados, com notas técnicas e planos de ação da infraestrutura de TI.",
   "icon": "server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "microfrontend",
   "basePath": "/apps/it-portal",
   "entry": "/apps/it-portal/assets/remoteEntry.js",
@@ -44,6 +44,30 @@
       "name": "Portal de TI — gerenciar planos de ação",
       "description": "Cria, edita e altera o status de planos de ação. Requer também ver servidores.",
       "module": "it-portal"
+    },
+    {
+      "code": "it-portal.services.view",
+      "name": "Portal de TI — ver serviços e aplicações",
+      "description": "Consulta serviços e aplicações, os servidores onde executam e seu histórico. Requer também ver servidores.",
+      "module": "it-portal"
+    },
+    {
+      "code": "it-portal.services.manage",
+      "name": "Portal de TI — gerenciar serviços e aplicações",
+      "description": "Cadastra, edita, arquiva e restaura serviços e vincula ou desvincula servidores. Requer também ver servidores e ver serviços.",
+      "module": "it-portal"
+    },
+    {
+      "code": "it-portal.databases.view",
+      "name": "Portal de TI — ver bancos de dados",
+      "description": "Consulta instâncias de bancos de dados e seu histórico. Ver os serviços consumidores exige também ver serviços. Requer ver servidores.",
+      "module": "it-portal"
+    },
+    {
+      "code": "it-portal.databases.manage",
+      "name": "Portal de TI — gerenciar bancos de dados",
+      "description": "Cadastra, edita, arquiva e restaura instâncias de bancos. Vincular serviços consumidores exige também ver serviços. Requer ver servidores e ver bancos.",
+      "module": "it-portal"
     }
   ],
   "routes": [
@@ -77,6 +101,22 @@
       "permission": "it-portal.access",
       "icon": "circle-help",
       "order": 48,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/it-portal/services",
+      "label": "Serviços e aplicações",
+      "permission": "it-portal.services.view",
+      "icon": "boxes",
+      "order": 49,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/it-portal/databases",
+      "label": "Bancos de dados",
+      "permission": "it-portal.databases.view",
+      "icon": "server",
+      "order": 50,
       "showInMenu": false
     }
   ],

@@ -133,6 +133,10 @@ def test_capabilities_reflect_effective_permissions(client, principal):
         "can_create_notes": True,
         "can_view_action_plans": False,
         "can_manage_action_plans": False,
+        "can_view_services": False,
+        "can_manage_services": False,
+        "can_view_databases": False,
+        "can_manage_databases": False,
     }
     principal.permissions = []
     assert client.get("/me/capabilities").status_code == 403

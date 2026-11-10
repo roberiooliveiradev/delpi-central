@@ -19,12 +19,14 @@ import delpi_auth.middleware.fastapi_auth as fastapi_auth  # noqa: E402
 
 from it_portal_app.interface.http import authz  # noqa: E402
 from it_portal_app.interface.http.dependencies import (  # noqa: E402
+    get_inventory_repository,
     get_repository,
     get_today_provider,
 )
 from it_portal_app.main import app  # noqa: E402
 
 from tests.fakes import InMemoryItPortalRepository  # noqa: E402
+from tests.inventory_fakes import InMemoryInventoryRepository  # noqa: E402
 
 TODAY = date(2026, 11, 10)
 USER_ID = "2b0c7a52-6f7e-4d3c-9a51-0f4f1c2d9e11"
@@ -34,6 +36,11 @@ ALL_PERMISSIONS = list(authz.ALL_PERMISSIONS)
 @pytest.fixture
 def repository():
     return InMemoryItPortalRepository()
+
+
+@pytest.fixture
+def inventory(repository):
+    return InMemoryInventoryRepository(repository)
 
 
 @pytest.fixture
@@ -61,8 +68,9 @@ def principal(monkeypatch):
 
 
 @pytest.fixture
-def client(repository, principal):
+def client(repository, inventory, principal):
     app.dependency_overrides[get_repository] = lambda: repository
+    app.dependency_overrides[get_inventory_repository] = lambda: inventory
     app.dependency_overrides[get_today_provider] = lambda: (lambda: TODAY)
     with TestClient(app, headers={"Authorization": "Bearer test-token"}) as test_client:
         yield test_client
@@ -84,6 +92,42 @@ def server_payload(**overrides):
         "administrative_status": "in_operation",
         "responsible": "Equipe Infra",
         "description": "Servidor principal do ERP.",
+    }
+    payload.update(overrides)
+    return payload
+
+
+def service_payload(**overrides):
+    payload = {
+        "name": "Portal Interno",
+        "description": "Aplicação web de uso interno.",
+        "service_kind": "business_application",
+        "service_type": "web_application",
+        "technology": "Python/FastAPI",
+        "environment": "production",
+        "unit_code": "01",
+        "port": 8443,
+        "criticality": "high",
+        "responsible": "Equipe Sistemas",
+        "administrative_status": "in_operation",
+    }
+    payload.update(overrides)
+    return payload
+
+
+def database_payload(server_id: str, **overrides):
+    payload = {
+        "name": "erp_prod",
+        "dbms": "sql_server",
+        "version": "2019",
+        "server_id": server_id,
+        "port": 1433,
+        "environment": "production",
+        "purpose": "Base do ERP",
+        "criticality": "critical",
+        "responsible": "Equipe Infra",
+        "administrative_status": "in_operation",
+        "technical_notes": "Backup diário às 23h.",
     }
     payload.update(overrides)
     return payload

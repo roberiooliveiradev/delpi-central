@@ -10,8 +10,13 @@ from fastapi import Depends
 from it_portal_app.application.action_plan_service import ActionPlanService
 from it_portal_app.application.clock import business_today
 from it_portal_app.application.dashboard_service import DashboardService
-from it_portal_app.application.ports import ItPortalRepository
+from it_portal_app.application.database_inventory import DatabaseInventory
+from it_portal_app.application.ports import InventoryRepository, ItPortalRepository
 from it_portal_app.application.server_service import ServerService
+from it_portal_app.application.service_inventory import ServiceInventory
+from it_portal_app.infrastructure.persistence.postgres_inventory_repository import (
+    PostgresInventoryRepository,
+)
 from it_portal_app.infrastructure.persistence.postgres_repository import (
     PostgresItPortalRepository,
 )
@@ -19,6 +24,24 @@ from it_portal_app.infrastructure.persistence.postgres_repository import (
 
 def get_repository() -> ItPortalRepository:
     return PostgresItPortalRepository()
+
+
+def get_inventory_repository() -> InventoryRepository:
+    return PostgresInventoryRepository()
+
+
+def get_service_inventory(
+    inventory: InventoryRepository = Depends(get_inventory_repository),
+    servers: ItPortalRepository = Depends(get_repository),
+) -> ServiceInventory:
+    return ServiceInventory(inventory, servers)
+
+
+def get_database_inventory(
+    inventory: InventoryRepository = Depends(get_inventory_repository),
+    servers: ItPortalRepository = Depends(get_repository),
+) -> DatabaseInventory:
+    return DatabaseInventory(inventory, servers)
 
 
 def get_today_provider() -> Callable[[], date]:

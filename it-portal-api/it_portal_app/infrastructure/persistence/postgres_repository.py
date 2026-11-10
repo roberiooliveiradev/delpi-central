@@ -6,11 +6,6 @@ Concorrência otimista: updates exigem a `revision` lida pelo cliente.
 
 from __future__ import annotations
 
-import json
-import logging
-import uuid
-from collections.abc import Iterator
-from contextlib import contextmanager
 from datetime import date
 
 import psycopg
@@ -29,13 +24,16 @@ from it_portal_app.domain.catalogs import (
     HIGH_CRITICALITIES,
     OPEN_ACTION_STATUSES,
 )
-from it_portal_app.domain.errors import ConflictError, PersistenceUnavailableError
+from it_portal_app.domain.errors import ConflictError
 from it_portal_app.domain.servers import ServerFields, format_server_code
-from it_portal_app.infrastructure.persistence.db import db_configured, db_connect
-
-logger = logging.getLogger(__name__)
-
-_S = "it_portal"
+from it_portal_app.infrastructure.persistence.postgres_base import (
+    SCHEMA as _S,
+)
+from it_portal_app.infrastructure.persistence.postgres_base import (
+    PostgresRepositoryBase,
+    escape_like,
+    history_row,
+)
 
 _CRITICALITY_RANK_SQL = (
     "CASE s.criticality "
@@ -86,10 +84,6 @@ _ACTION_SELECT = f"""
       FROM {_S}.action_plans a
       JOIN {_S}.servers s ON s.id = a.server_id
 """
-
-
-def _escape_like(value: str) -> str:
-    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
 def _server_row(row: dict) -> dict:
@@ -160,65 +154,7 @@ def _note_row(row: dict) -> dict:
     }
 
 
-def _history_row(row: dict) -> dict:
-    return {
-        "id": str(row["id"]),
-        "entity_type": row["entity_type"],
-        "entity_id": str(row["entity_id"]),
-        "event_type": row["event_type"],
-        "changes": row["changes"],
-        "actor_name": row["actor_name"],
-        "occurred_at": row["occurred_at"],
-    }
-
-
-class PostgresItPortalRepository:
-    @contextmanager
-    def _tx(self) -> Iterator[psycopg.Connection]:
-        if not db_configured():
-            raise PersistenceUnavailableError(
-                "persistence_unavailable", "Armazenamento do Portal de TI não configurado."
-            )
-        try:
-            conn = db_connect()
-        except psycopg.OperationalError as exc:
-            logger.error("it_portal_db_connect_failed error=%s", type(exc).__name__)
-            raise PersistenceUnavailableError(
-                "persistence_unavailable",
-                "Armazenamento do Portal de TI indisponível no momento.",
-            ) from exc
-        try:
-            with conn.transaction():
-                yield conn
-        except pg_errors.QueryCanceled as exc:
-            logger.error("it_portal_db_statement_timeout")
-            raise PersistenceUnavailableError(
-                "persistence_timeout", "A consulta demorou demais. Tente novamente."
-            ) from exc
-        finally:
-            conn.close()
-
-    @staticmethod
-    def _audit(conn: psycopg.Connection, audit: AuditEvent, actor: Actor) -> None:
-        conn.execute(
-            f"""
-            INSERT INTO {_S}.audit_events
-                (id, entity_type, entity_id, server_id, event_type, changes,
-                 actor_id, actor_name)
-            VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s, %s)
-            """,
-            (
-                str(uuid.uuid4()),
-                audit.entity_type,
-                audit.entity_id,
-                audit.server_id,
-                audit.event_type,
-                json.dumps(audit.changes, default=str, ensure_ascii=False),
-                actor.id,
-                actor.name,
-            ),
-        )
-
+class PostgresItPortalRepository(PostgresRepositoryBase):
     def _fetch_server(self, conn: psycopg.Connection, server_id: str) -> dict | None:
         row = conn.execute(
             _SERVER_SELECT + " WHERE s.id = %(id)s",
@@ -242,7 +178,7 @@ class PostgresItPortalRepository:
         elif query.archived == "archived":
             where.append("s.archived_at IS NOT NULL")
         if query.q:
-            params["q"] = f"%{_escape_like(query.q)}%"
+            params["q"] = f"%{escape_like(query.q)}%"
             where.append(
                 "(s.name ILIKE %(q)s OR s.hostname ILIKE %(q)s OR s.ip_address ILIKE %(q)s)"
             )
@@ -421,11 +357,12 @@ class PostgresItPortalRepository:
     def list_server_history(self, server_id: str, limit: int) -> list[dict]:
         with self._tx() as conn:
             rows = conn.execute(
-                f"SELECT * FROM {_S}.audit_events WHERE server_id = %s "
-                "ORDER BY occurred_at DESC, id DESC LIMIT %s",
-                (server_id, limit),
+                f"SELECT * FROM {_S}.audit_events "
+                "WHERE server_id = %(id)s OR subject_ids @> ARRAY[%(id)s]::uuid[] "
+                "ORDER BY occurred_at DESC, id DESC LIMIT %(limit)s",
+                {"id": server_id, "limit": limit},
             ).fetchall()
-        return [_history_row(row) for row in rows]
+        return [history_row(row) for row in rows]
 
     # ----------------------------------------------------------- action plans
 
@@ -448,7 +385,7 @@ class PostgresItPortalRepository:
                 "AND a.due_date < %(today)s"
             )
         if query.q:
-            params["q"] = f"%{_escape_like(query.q)}%"
+            params["q"] = f"%{escape_like(query.q)}%"
             where.append(
                 "(a.title ILIKE %(q)s OR s.name ILIKE %(q)s OR s.hostname ILIKE %(q)s)"
             )

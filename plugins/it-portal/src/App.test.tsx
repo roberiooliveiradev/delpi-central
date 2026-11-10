@@ -1,8 +1,8 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import App from "./App";
 import type { Capabilities, Dashboard, Server } from "./api/itPortalApi";
+import { mockApi, renderAt, requestedPaths } from "./test/harness";
 
 const SERVER_ID = "4b6f1c1e-2f8a-4c3b-9d7e-0a1b2c3d4e5f";
 
@@ -13,6 +13,10 @@ const ALL_CAPS: Capabilities = {
   can_create_notes: true,
   can_view_action_plans: true,
   can_manage_action_plans: true,
+  can_view_services: false,
+  can_manage_services: false,
+  can_view_databases: false,
+  can_manage_databases: false,
 };
 
 const VIEW_ONLY: Capabilities = {
@@ -62,32 +66,6 @@ function dashboard(overrides: Partial<Dashboard> = {}): Dashboard {
     attention_action_plans: [],
     ...overrides,
   };
-}
-
-type Routes = Record<string, { status?: number; data?: unknown; body?: unknown }>;
-
-function ok(data: unknown) {
-  return { success: true, message: "ok", data };
-}
-
-function mockApi(routes: Routes) {
-  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = new URL(String(input), "http://localhost");
-    const key = url.pathname.replace("/apps/it-portal-api", "");
-    const method = init?.method ?? "GET";
-    const route = method === "GET" ? routes[key] : routes[`${method} ${key}`];
-    if (!route) return new Response(JSON.stringify({ detail: "Not Found" }), { status: 404 });
-    const status = route.status ?? 200;
-    const body = route.body ?? (status < 400 ? ok(route.data) : { success: false, message: "Erro", data: null });
-    return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
-  });
-  vi.stubGlobal("fetch", fetchMock);
-  return fetchMock;
-}
-
-function renderAt(path: string) {
-  window.history.pushState(null, "", path);
-  return render(<App getAccessToken={() => "token"} pathname={path} basePath="/apps/it-portal" />);
 }
 
 beforeEach(() => {
@@ -177,7 +155,7 @@ describe("servers", () => {
   });
 
   it("shows the secret warning on the note composer", async () => {
-    mockApi({
+    const fetchMock = mockApi({
       "/me/capabilities": { data: ALL_CAPS },
       [`/servers/${SERVER_ID}`]: { data: server() },
       [`/servers/${SERVER_ID}/notes`]: { data: [] },
@@ -188,6 +166,11 @@ describe("servers", () => {
     expect(await screen.findByRole("note")).toBeTruthy();
     expect(screen.getByText(/Não registre senhas/)).toBeTruthy();
     expect(screen.getByRole("button", { name: /Arquivar/ })).toBeTruthy();
+    // Etapa 1 preservada: sem permissões E2A não há seções nem chamadas de inventário novas.
+    expect(screen.queryByText("Componentes vinculados")).toBeNull();
+    expect(screen.queryByText("Serviços hospedados")).toBeNull();
+    const paths = requestedPaths(fetchMock);
+    expect(paths.some((p) => p.includes("service-hostings") || p.startsWith("/database-instances"))).toBe(false);
   });
 
   it("makes archived servers read-only", async () => {

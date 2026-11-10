@@ -10,11 +10,15 @@ import { PortalProvider, usePortal } from "./app/PortalContext";
 import { ForbiddenState, LoadingBlock, QueryErrorState } from "./app/QueryStates";
 import { normalizeBasePath, resolveRoute } from "./app/routes";
 import { ActionPlansPage } from "./features/action-plans/ActionPlansPage";
+import { DatabaseDetailPage } from "./features/databases/DatabaseDetailPage";
+import { DatabasesPage } from "./features/databases/DatabasesPage";
 import { HelpPage } from "./features/help/HelpPage";
 import { HomePage } from "./features/home/HomePage";
 import { NotFoundPage } from "./features/home/NotFoundPage";
 import { ServerDetailPage } from "./features/servers/ServerDetailPage";
 import { ServersPage } from "./features/servers/ServersPage";
+import { ServiceDetailPage } from "./features/services/ServiceDetailPage";
+import { ServicesPage } from "./features/services/ServicesPage";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -64,6 +68,22 @@ function PortalRoutes({ pathnameFromHost }: { pathnameFromHost?: string }) {
   } else if (route.view === "server_detail" && route.serverId) {
     content = capabilities.can_view_servers ? (
       <ServerDetailPage key={route.serverId} serverId={route.serverId} />
+    ) : (
+      <ForbiddenState />
+    );
+  } else if (route.view === "services") {
+    content = capabilities.can_view_services ? <ServicesPage /> : <ForbiddenState />;
+  } else if (route.view === "service_detail" && route.serviceId) {
+    content = capabilities.can_view_services ? (
+      <ServiceDetailPage key={route.serviceId} serviceId={route.serviceId} />
+    ) : (
+      <ForbiddenState />
+    );
+  } else if (route.view === "databases") {
+    content = capabilities.can_view_databases ? <DatabasesPage /> : <ForbiddenState />;
+  } else if (route.view === "database_detail" && route.databaseId) {
+    content = capabilities.can_view_databases ? (
+      <DatabaseDetailPage key={route.databaseId} databaseId={route.databaseId} />
     ) : (
       <ForbiddenState />
     );

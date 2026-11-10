@@ -24,6 +24,10 @@ SERVERS_MANAGE = "it-portal.servers.manage"
 NOTES_CREATE = "it-portal.notes.create"
 ACTIONS_VIEW = "it-portal.actions.view"
 ACTIONS_MANAGE = "it-portal.actions.manage"
+SERVICES_VIEW = "it-portal.services.view"
+SERVICES_MANAGE = "it-portal.services.manage"
+DATABASES_VIEW = "it-portal.databases.view"
+DATABASES_MANAGE = "it-portal.databases.manage"
 
 ALL_PERMISSIONS = (
     ACCESS,
@@ -32,6 +36,10 @@ ALL_PERMISSIONS = (
     NOTES_CREATE,
     ACTIONS_VIEW,
     ACTIONS_MANAGE,
+    SERVICES_VIEW,
+    SERVICES_MANAGE,
+    DATABASES_VIEW,
+    DATABASES_MANAGE,
 )
 
 

@@ -101,9 +101,20 @@ class NoteOut(BaseModel):
     created_at: datetime
 
 
+HistoryEntityType = Literal[
+    "server",
+    "server_note",
+    "action_plan",
+    "service",
+    "service_hosting",
+    "database_instance",
+    "database_consumer",
+]
+
+
 class HistoryEventOut(BaseModel):
     id: str
-    entity_type: Literal["server", "server_note", "action_plan"]
+    entity_type: HistoryEntityType
     entity_id: str
     event_type: str
     changes: dict
@@ -176,6 +187,165 @@ class CapabilitiesOut(BaseModel):
     can_create_notes: bool
     can_view_action_plans: bool
     can_manage_action_plans: bool
+    can_view_services: bool
+    can_manage_services: bool
+    can_view_databases: bool
+    can_manage_databases: bool
+
+
+# ------------------------------------------------------------- inventário E2A
+
+_PortInput = int | str | None
+
+
+class ServiceInput(_Input):
+    name: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    description: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    service_kind: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    service_type: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    technology: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    environment: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    unit_code: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    port: _PortInput = Field(default=None, description="1–65535; vazio quando não se aplica.")
+    criticality: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    responsible: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    administrative_status: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+
+
+class ServiceUpdateInput(ServiceInput):
+    revision: int = Field(ge=1)
+
+
+class DatabaseInstanceInput(_Input):
+    name: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    dbms: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    version: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    server_id: str | None = Field(default=None, max_length=64)
+    port: _PortInput = Field(default=None, description="1–65535; vazio quando não se aplica.")
+    environment: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    purpose: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    criticality: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    responsible: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    administrative_status: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    technical_notes: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+
+
+class DatabaseInstanceUpdateInput(DatabaseInstanceInput):
+    revision: int = Field(ge=1)
+
+
+class ServiceHostingInput(_Input):
+    service_id: str | None = Field(default=None, max_length=64)
+    server_id: str | None = Field(default=None, max_length=64)
+    runtime: str | None = Field(default=None, max_length=64)
+    instance_name: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    notes: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+
+
+class DatabaseConsumerInput(_Input):
+    database_instance_id: str | None = Field(default=None, max_length=64)
+    service_id: str | None = Field(default=None, max_length=64)
+    notes: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+
+
+class ServiceSummaryOut(BaseModel):
+    id: str
+    code: str
+    name: str
+    service_kind: str
+    environment: str
+    criticality: str
+    archived: bool
+
+
+class DatabaseSummaryOut(BaseModel):
+    id: str
+    code: str
+    name: str
+    dbms: str
+    environment: str
+    criticality: str
+    archived: bool
+
+
+class ServiceOut(BaseModel):
+    id: str
+    code: str
+    name: str
+    description: str | None
+    service_kind: str
+    service_type: str
+    technology: str | None
+    environment: str
+    unit_code: str
+    port: int | None
+    criticality: str
+    responsible: str
+    administrative_status: str
+    revision: int
+    archived: bool
+    archived_at: datetime | None
+    archived_by_name: str | None
+    hosting_count: int
+    database_count: int
+    created_at: datetime
+    created_by_name: str
+    updated_at: datetime
+    updated_by_name: str
+
+
+class DatabaseInstanceOut(BaseModel):
+    id: str
+    code: str
+    name: str
+    dbms: str
+    version: str | None
+    server_id: str
+    server: ServerSummaryOut
+    port: int | None
+    environment: str
+    purpose: str | None
+    criticality: str
+    responsible: str
+    administrative_status: str
+    technical_notes: str | None
+    revision: int
+    archived: bool
+    archived_at: datetime | None
+    archived_by_name: str | None
+    consumer_count: int
+    created_at: datetime
+    created_by_name: str
+    updated_at: datetime
+    updated_by_name: str
+
+
+class ServiceHostingOut(BaseModel):
+    id: str
+    service_id: str
+    server_id: str
+    runtime: str
+    instance_name: str | None
+    notes: str | None
+    created_at: datetime
+    created_by_name: str
+    service: ServiceSummaryOut
+    server: ServerSummaryOut
+
+
+class LinkRemovedOut(BaseModel):
+    id: str = Field(description="Id do vínculo removido. Os recursos ligados são preservados.")
+
+
+class DatabaseConsumerOut(BaseModel):
+    id: str
+    database_instance_id: str
+    service_id: str
+    notes: str | None
+    created_at: datetime
+    created_by_name: str
+    database: DatabaseSummaryOut
+    service: ServiceSummaryOut
 
 
 class HealthOut(BaseModel):

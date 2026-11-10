@@ -62,7 +62,10 @@ def database():
 @pytest.fixture(scope="module")
 def migrated(database):
     applied = run_migrations()
-    assert applied == ["V001__create_it_portal_schema.sql"]
+    assert applied == [
+        "V001__create_it_portal_schema.sql",
+        "V002__services_and_database_instances.sql",
+    ]
     return database
 
 
@@ -86,7 +89,10 @@ def _sql(query: str, params=()):
 def test_migrations_are_idempotent(migrated):
     assert run_migrations() == []
     rows = _sql("SELECT version, name FROM it_portal.schema_migrations")
-    assert [(r["version"], r["name"]) for r in rows] == [(1, "V001__create_it_portal_schema.sql")]
+    assert sorted((r["version"], r["name"]) for r in rows) == [
+        (1, "V001__create_it_portal_schema.sql"),
+        (2, "V002__services_and_database_instances.sql"),
+    ]
 
 
 def test_changed_applied_migration_aborts(migrated, tmp_path, monkeypatch):

@@ -12,8 +12,21 @@ describe("resolveRoute", () => {
     [`${BASE}/servers`, "servers"],
     [`${BASE}/action-plans`, "action_plans"],
     [`${BASE}/help`, "help"],
+    [`${BASE}/services`, "services"],
+    [`${BASE}/databases`, "databases"],
   ])("%s → %s", (pathname, view) => {
     expect(resolveRoute(pathname, BASE).view).toBe(view);
+  });
+
+  it("resolves service and database detail with normalized uuids", () => {
+    expect(resolveRoute(`${BASE}/services/${SERVER_ID.toUpperCase()}`, BASE)).toEqual({
+      view: "service_detail",
+      serviceId: SERVER_ID,
+    });
+    expect(resolveRoute(`${BASE}/databases/${SERVER_ID}`, BASE)).toEqual({
+      view: "database_detail",
+      databaseId: SERVER_ID,
+    });
   });
 
   it("resolves server detail with a normalized uuid", () => {
@@ -28,6 +41,9 @@ describe("resolveRoute", () => {
     `${BASE}/servers/${SERVER_ID}/extra`,
     `${BASE}/monitoring`,
     `${BASE}/action-plans/x`,
+    `${BASE}/services/not-a-uuid`,
+    `${BASE}/databases/${SERVER_ID}/consumers`,
+    `${BASE}/database-instances`,
     "/apps/other",
     "/apps/it-portalx",
   ])("does not invent pages for %s", (pathname) => {
@@ -40,10 +56,15 @@ describe("navigation helpers", () => {
     expect(buildPath(BASE, "home")).toBe(BASE);
     expect(buildPath(BASE, "action_plans")).toBe(`${BASE}/action-plans`);
     expect(buildPath(BASE, { serverId: SERVER_ID })).toBe(`${BASE}/servers/${SERVER_ID}`);
+    expect(buildPath(BASE, { serviceId: SERVER_ID })).toBe(`${BASE}/services/${SERVER_ID}`);
+    expect(buildPath(BASE, { databaseId: SERVER_ID })).toBe(`${BASE}/databases/${SERVER_ID}`);
+    expect(buildPath(BASE, "databases")).toBe(`${BASE}/databases`);
   });
 
-  it("marks servers active on the detail page and nothing on not found", () => {
+  it("marks the list active on detail pages and nothing on not found", () => {
     expect(activeNavId("server_detail")).toBe("servers");
+    expect(activeNavId("service_detail")).toBe("services");
+    expect(activeNavId("database_detail")).toBe("databases");
     expect(activeNavId("not_found")).toBeNull();
   });
 

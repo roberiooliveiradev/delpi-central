@@ -15,10 +15,27 @@ API própria do Portal de TI (Minha DELPI). Única origem de dados do MFE
 
 ```text
 domain/          regras puras (validação, catálogos, transições, guarda de segredos)
-application/     serviços (servidores, notas, planos, dashboard) + ports
-infrastructure/  PostgresItPortalRepository, migrations runner
+application/     serviços (servidores, notas, planos, dashboard, serviços, bancos) + ports
+infrastructure/  PostgresItPortalRepository, PostgresInventoryRepository, migrations runner
 interface/http/  rotas FastAPI, schemas Pydantic, authz
 ```
+
+## Inventário de serviços e bancos (E2A — `V002`)
+
+| Entidade | Tabela | Observações |
+|---|---|---|
+| Serviço / aplicação (`SVC-0001`) | `services` | `service_kind` separa aplicação de negócio de serviço de plataforma; nome único ativo por unidade + ambiente |
+| Instância em execução | `service_hostings` | vínculo serviço → servidor com `runtime` (container, processo, serviço do SO…); par único |
+| Instância de banco (`DB-0001`) | `database_instances` | servidor hospedeiro obrigatório; nome único ativo por servidor; **sem credenciais** |
+| Consumo de banco | `database_consumers` | vínculo serviço → instância; par único |
+
+- Vínculos são removidos com `DELETE` (somente a associação; FKs `RESTRICT`
+  impedem apagar cadastros). Criação e remoção são auditadas com snapshot dos
+  dois lados.
+- `audit_events.subject_ids` lista todos os recursos afetados; o histórico de
+  servidor, serviço e banco é `entity_id = X OR subject_ids @> [X]`.
+- Cadastro arquivado é somente leitura e não recebe novos vínculos (409).
+- Nenhum dado é semeado. A API não se conecta aos bancos inventariados.
 
 ## Autorização
 
@@ -34,6 +51,13 @@ responde 503. Apenas principals humanos (`principal_type=user`).
 | `it-portal.notes.create` | registrar notas (com `servers.view`) |
 | `it-portal.actions.view` | listar/consultar planos (com `servers.view`) |
 | `it-portal.actions.manage` | criar, editar, alterar status (com `servers.view`) |
+| `it-portal.services.view` | listar/consultar serviços e onde executam (com `servers.view`) |
+| `it-portal.services.manage` | CRUD/arquivo de serviços, vincular/desvincular servidores (com `servers.view` + `services.view`) |
+| `it-portal.databases.view` | listar/consultar instâncias de banco (com `servers.view`) |
+| `it-portal.databases.manage` | CRUD/arquivo de instâncias (com `servers.view` + `databases.view`) |
+
+Listar ou alterar vínculos serviço ↔ banco exige ver os **dois** lados
+(`services.view` + `databases.view`), além do `manage` de bancos para escrever.
 
 Escritas gravam o evento de auditoria (`audit_events`) na mesma transação,
 com o autor real do token. Logs de acesso registram só rota, operationId,

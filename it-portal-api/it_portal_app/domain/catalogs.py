@@ -20,6 +20,34 @@ ACTION_PRIORITIES = ("low", "medium", "high", "urgent")
 ACTION_STATUSES = ("pending", "in_progress", "done", "cancelled")
 OPEN_ACTION_STATUSES = ("pending", "in_progress")
 
+# Aplicação lógica de negócio × serviço de plataforma instalado. A instância em
+# execução (container, processo) é a hospedagem, não um novo serviço.
+SERVICE_KINDS = ("business_application", "platform_service")
+SERVICE_TYPES = (
+    "web_application",
+    "api",
+    "identity_access",
+    "reverse_proxy",
+    "cache",
+    "messaging",
+    "file_storage",
+    "scheduler",
+    "monitoring",
+    "erp",
+    "other",
+)
+HOSTING_RUNTIMES = ("container", "native_process", "os_service", "virtual_machine", "other")
+DBMS_ENGINES = (
+    "postgresql",
+    "sql_server",
+    "mysql",
+    "mariadb",
+    "oracle",
+    "mongodb",
+    "sqlite",
+    "other",
+)
+
 HIGH_CRITICALITIES = ("high", "critical")
 
 CRITICALITY_RANK = {value: index for index, value in enumerate(CRITICALITIES)}

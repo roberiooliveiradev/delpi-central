@@ -62,6 +62,8 @@ export function useInvalidateInventory() {
     void queryClient.invalidateQueries({ queryKey: queryKeys.servers });
     void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
     void queryClient.invalidateQueries({ queryKey: queryKeys.actionPlans });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.services });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.databases });
   };
 }
 

@@ -19,8 +19,14 @@ from it_portal_app.interface.http.routes.action_plans_routes import (
 from it_portal_app.interface.http.routes.overview_routes import (
     router as overview_router,
 )
+from it_portal_app.interface.http.routes.database_routes import (
+    router as database_router,
+)
 from it_portal_app.interface.http.routes.servers_routes import (
     router as servers_router,
+)
+from it_portal_app.interface.http.routes.services_routes import (
+    router as services_router,
 )
 from it_portal_app.middleware.auth_middleware import jwt_middleware
 from it_portal_app.observability import configure_logging, request_context_middleware
@@ -45,11 +51,12 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(
     title="IT Portal API",
     description=(
-        "BFF do Portal de TI DELPI — inventário de servidores, notas técnicas e "
-        "planos de ação (Etapa 1). Todas as rotas de dados exigem JWT Keycloak e "
+        "BFF do Portal de TI DELPI — inventário de servidores, notas técnicas, "
+        "planos de ação, serviços/aplicações, instâncias de banco de dados e "
+        "vínculos entre eles. Todas as rotas de dados exigem JWT Keycloak e "
         "permissões efetivas resolvidas pelo Core."
     ),
-    version="0.1.0",
+    version="0.2.0",
     root_path=settings.IT_PORTAL_API_ROOT_PATH,
     lifespan=lifespan,
     redirect_slashes=False,
@@ -104,6 +111,8 @@ app.add_middleware(
 app.include_router(overview_router)
 app.include_router(servers_router)
 app.include_router(action_plans_router)
+app.include_router(services_router)
+app.include_router(database_router)
 
 
 def custom_openapi():

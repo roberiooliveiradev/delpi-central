@@ -4,6 +4,7 @@ import type {
   AdministrativeStatus,
   Criticality,
   Environment,
+  ServiceKind,
 } from "../api/itPortalApi";
 import {
   ACTION_PRIORITY_LABELS,
@@ -11,6 +12,7 @@ import {
   ADMINISTRATIVE_STATUS_LABELS,
   CRITICALITY_LABELS,
   ENVIRONMENT_LABELS,
+  SERVICE_KIND_LABELS,
 } from "../content/labels";
 import { ItpStatusBadge } from "./itPortalUi";
 
@@ -72,6 +74,15 @@ export function ActionStatusBadge({ value, overdue }: { value: ActionStatus; ove
       <ItpStatusBadge label={ACTION_STATUS_LABELS[value]} variant={ACTION_STATUS_VARIANT[value]} />
       {overdue ? <ItpStatusBadge label="Atrasado" variant="danger" /> : null}
     </span>
+  );
+}
+
+export function ServiceKindBadge({ value }: { value: ServiceKind }) {
+  return (
+    <ItpStatusBadge
+      label={SERVICE_KIND_LABELS[value]}
+      variant={value === "business_application" ? "info" : "neutral"}
+    />
   );
 }
 

@@ -13,15 +13,15 @@ import { QueryErrorState } from "../../app/QueryStates";
 import { queryKeys } from "../../app/queryKeys";
 import { buildPath } from "../../app/routes";
 import { useDebouncedValue } from "../../app/useDebouncedValue";
-import { CRITICALITY_OPTIONS, ENVIRONMENT_OPTIONS, UNIT_LABELS, UNIT_OPTIONS } from "../../content/labels";
+import {
+  ARCHIVED_OPTIONS,
+  CRITICALITY_OPTIONS,
+  ENVIRONMENT_OPTIONS,
+  UNIT_LABELS,
+  UNIT_OPTIONS,
+} from "../../content/labels";
 import { useListState } from "../action-plans/ActionPlanTable";
 import { ServerFormModal } from "./ServerFormModal";
-
-const ARCHIVED_OPTIONS = [
-  { value: "active", label: "Ativos" },
-  { value: "archived", label: "Arquivados" },
-  { value: "all", label: "Todos" },
-];
 
 export function ServersPage() {
   const { basePath, capabilities } = usePortal();

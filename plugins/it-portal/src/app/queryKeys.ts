@@ -1,4 +1,9 @@
-import type { ActionPlanListQuery, ServerListQuery } from "../api/itPortalApi";
+import type {
+  ActionPlanListQuery,
+  DatabaseListQuery,
+  ServerListQuery,
+  ServiceListQuery,
+} from "../api/itPortalApi";
 
 export const queryKeys = {
   capabilities: ["it-portal", "capabilities"] as const,
@@ -8,6 +13,18 @@ export const queryKeys = {
   server: (id: string) => ["it-portal", "servers", "detail", id] as const,
   notes: (id: string) => ["it-portal", "servers", "notes", id] as const,
   history: (id: string) => ["it-portal", "servers", "history", id] as const,
+  serverHostings: (id: string) => ["it-portal", "servers", "hostings", id] as const,
   actionPlans: ["it-portal", "action-plans"] as const,
   actionPlanList: (query: ActionPlanListQuery) => ["it-portal", "action-plans", "list", query] as const,
+  services: ["it-portal", "services"] as const,
+  serviceList: (query: ServiceListQuery) => ["it-portal", "services", "list", query] as const,
+  service: (id: string) => ["it-portal", "services", "detail", id] as const,
+  serviceHistory: (id: string) => ["it-portal", "services", "history", id] as const,
+  serviceHostings: (id: string) => ["it-portal", "services", "hostings", id] as const,
+  serviceDatabases: (id: string) => ["it-portal", "services", "databases", id] as const,
+  databases: ["it-portal", "databases"] as const,
+  databaseList: (query: DatabaseListQuery) => ["it-portal", "databases", "list", query] as const,
+  database: (id: string) => ["it-portal", "databases", "detail", id] as const,
+  databaseHistory: (id: string) => ["it-portal", "databases", "history", id] as const,
+  databaseConsumers: (id: string) => ["it-portal", "databases", "consumers", id] as const,
 };

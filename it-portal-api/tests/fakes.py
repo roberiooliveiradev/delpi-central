@@ -46,6 +46,7 @@ class InMemoryItPortalRepository:
                 "entity_type": audit.entity_type,
                 "entity_id": audit.entity_id,
                 "server_id": audit.server_id,
+                "subject_ids": tuple(audit.subject_ids),
                 "event_type": audit.event_type,
                 "changes": audit.changes,
                 "actor_name": actor.name,
@@ -199,7 +200,9 @@ class InMemoryItPortalRepository:
         return note
 
     def list_server_history(self, server_id, limit):
-        events = [e for e in self.audit if e["server_id"] == server_id]
+        events = [
+            e for e in self.audit if e["server_id"] == server_id or server_id in e["subject_ids"]
+        ]
         return list(reversed(events))[:limit]
 
     # action plans

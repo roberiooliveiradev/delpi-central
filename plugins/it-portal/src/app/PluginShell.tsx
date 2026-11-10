@@ -1,4 +1,4 @@
-import { BookOpen, ClipboardList, LayoutDashboard, Server } from "lucide-react";
+import { AppWindow, BookOpen, ClipboardList, Database, LayoutDashboard, Server } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { SHELL_CONTENT } from "../content/labels";
@@ -17,6 +17,8 @@ import { activeNavId, buildPath, type NavId, type PluginView } from "./routes";
 const NAV_ICONS: Record<NavId, ReactNode> = {
   home: <LayoutDashboard size={16} strokeWidth={1.75} aria-hidden="true" />,
   servers: <Server size={16} strokeWidth={1.75} aria-hidden="true" />,
+  services: <AppWindow size={16} strokeWidth={1.75} aria-hidden="true" />,
+  databases: <Database size={16} strokeWidth={1.75} aria-hidden="true" />,
   action_plans: <ClipboardList size={16} strokeWidth={1.75} aria-hidden="true" />,
   help: <BookOpen size={16} strokeWidth={1.75} aria-hidden="true" />,
 };
@@ -37,6 +39,8 @@ export function PluginShell({ view, children }: { view: PluginView; children: Re
     if (!capabilities) return [];
     const ids: NavId[] = ["home"];
     if (capabilities.can_view_servers) ids.push("servers");
+    if (capabilities.can_view_services) ids.push("services");
+    if (capabilities.can_view_databases) ids.push("databases");
     if (capabilities.can_view_action_plans) ids.push("action_plans");
     ids.push("help");
     return ids;
