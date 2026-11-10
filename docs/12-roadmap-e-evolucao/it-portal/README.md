@@ -136,6 +136,28 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 
 **Fora do escopo da E4 inicial:** mapas da E3A, simulação da E3B, detecção/alertas contínuos da futura observabilidade, escrita remota/configuração do firewall, descoberta ativa irrestrita e importação de credenciais ou payloads sensíveis.
 
+## E4.S1 — piloto automático Linux srv-api (execução autorizada, implantação condicionada)
+
+**Estado:** READY_TO_EXECUTE no escopo do produto, **NOT_IMPLEMENTED**. Autorização do PO em 10/11/2026 para avançar com o piloto. Código, configuração Keycloak, execução agendada e validação em produção ainda exigem suas evidências próprias. O executor não se autoaceita.
+
+**BASE_HEAD de planejamento:** `025728aadaab626083247d410cab0be47f3cf226` (reancorar novamente antes de editar). **Owner:** `it-portal-api` para contratos e dados de observações; `plugins/it-portal` para visualização; executor de infraestrutura para coleta local Linux agendada. Core/Keycloak continuam owners de identidade/autorização.
+
+**Inventário provado:** `srv-api` Ubuntu 24.04.4 LTS em VMware; 16 vCPUs, ~23 GiB RAM, storage raiz ~197 GiB, rede principal `192.168.1.237/24`; ~114 containers Docker no momento da coleta; Zabbix Agent 2 7.0.23 ativo (hostname/memória disponíveis, chave CPU inconclusiva). Disco raiz ~83% utilizado, swap ~100% na amostra. Nada disso comprova integração automática.
+
+**Reuso antes de invenção:**
+- `EXISTING_EQUIVALENT = TO_INVENTORY` para transportes de observações/coletores reutilizáveis; pesquisar e abrir fontes canônicas antes de criar.
+- `REUSE_DECISION = EXTEND` a API, tabelas e UI existentes do Portal de TI; `REUSE` autenticação S2S canônica `shared/delpi_auth/service_token_{provider,validator}.py` quando aplicável. Não criar identidade nem token paralelo. Leitura local Linux via ferramentas do SO; Zabbix opcional somente quando a chave e o ownership forem comprovados.
+- `GLPI` não é dependência: computadores/endpoints fora do escopo. Sophos, Windows, E3A/E3B também não entram no piloto Linux.
+
+**Contrato-alvo a aprovar antes do código de ingestão:**
+- Snapshot estruturado **somente leitura** do host: hostname, identidade estável protegida, SO/kernel, CPU, RAM/swap, volumes, interfaces físicas, serviços e resumo dos containers (quando permitido). Nunca coletar env, volumes sensíveis, argumentos de processo, tokens, senhas, mounts detalhados/segredos ou stdout indiscriminado. Limites de cardinalidade e timeout por comando; sem root e sem acesso irrestrito ao socket Docker.
+- Observação persistida distinta de campos manuais do servidor: `source`, `observed_at`, `received_at`, `server_id`, `run_id` idempotente, `schema_version`, `status` e resumo validado; reter histórico finito. Servidor pré-existente é correlacionado pelo ID e identidade estável; IP isolado não prova identidade. Nunca criar/arquivar/alterar servidor manualmente sem aprovação.
+- **S2S:** interfaces humanas atuais do Portal de TI exigem `principal_type=user`. Um coletor não pode usar token de usuário, superadmin, header forjado nem endpoint público desprotegido. Avaliar contrato e implementação isolados para identidade técnica Keycloak client-credentials, audience, allowed client e escopo de ingestão, fail-closed, com testes negativos. Se a adequação do middleware violar o boundary, `ARCHITECTURE_DECISION_REQUIRED` e STOP na ingestão.
+- Preview/dry-run local antes de registrar snapshots; API deve autorizar a origem da observação e conferir binding com servidor alvo. Sem segredos em logs; sem registro direto em banco externo. Agendamento desligado até smoke controlado. 
+- UI de detalhe do servidor com origem e horário da coleta, saúde/status, resumo técnico, diferenças e estados vazio/erro/desatualizado, respeitando `servers.view`; aceitar alterações de campos manuais só em operação explícita e autorizada.
+
+**Aceite esperado:** testes unitários do coletor e domínio; Postgres real com migration aditiva e idempotência; contrato HTTP, S2S (401/403/503 e cliente/scope indevidos), histórico e autenticação humana inalterados; frontend testes + build + visual; ensaio read-only no `srv-api` comprovando ausência de regressão operacional; ativação agendada e outcome de coleta periódica somente após gate operacional. Reportar `PASS|FAIL|PENDING|TEST_NOT_RUN` por aceite, diff, SHA, comando e evidência de runtime. Não marcar COMPLETE só por commit/testes.
+
 ## Residuais abertos
 
 | ID | Residual | Dono da decisão |
