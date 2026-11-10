@@ -271,6 +271,148 @@ def test_g4_repeated_component_under_different_parents_not_deduped():
     assert parents == {"50225701", "50225702"}
 
 
+# ----- G4-P12 structural boundary (crop + hierarchy) -----
+
+
+def test_g4_dual_code_columns_crop_keeps_parent_and_component_band():
+    """Duas colunas de código (conjunto esparso + componente denso) com
+    itens entre elas: o crop preserva ambas e não engole ruído à direita.
+
+    Classe da first-loss P12 — envelope page-wide degrada o SLANet.
+    """
+    tokens = []
+    # coluna esquerda (pai/subconjunto) — esparsa
+    for index, code in enumerate(("50225701", "50225702", "50225703")):
+        y = 300 + index * 90
+        tokens.append(_tok(code, 200, y, 70))
+    # itens + qty entre colunas
+    for index, (item, qty) in enumerate(
+        (("AE", "1"), ("AH", "2"), ("AG", "2"), ("AE", "1"), ("AH", "2"), ("AG", "2"),
+         ("AE", "1"), ("AH", "2"), ("AG", "2"))
+    ):
+        y = 300 + index * 30
+        tokens.extend((_tok(item, 780, y, 24), _tok(qty, 860, y, 16)))
+    # coluna direita (componentes) — densa
+    for index, code in enumerate(
+        ("10010028", "10080897", "10110676") * 3
+    ):
+        y = 300 + index * 30
+        tokens.append(_tok(code, 980, y, 70))
+        tokens.append(_tok("DESC", 1100, y, 80))
+    # ruído de carimbo / margem direita (não pode puxar o crop)
+    tokens.extend((
+        _tok("90264135", 2000, 100, 70),
+        _tok("CLIENTE", 2050, 140, 60),
+        _tok("REV", 2050, 180, 40),
+        _tok("01", 2120, 180, 24),
+    ))
+    result = build_understanding(
+        tokens, document_hash="x", page=12, render_size_px=(2339, 1653),
+    )
+    region = _component_region(result)
+    assert region is not None
+    box = region["box_px"]
+    assert box[0] <= 200, box
+    assert box[2] >= 1050, box
+    # não page-wide: ruído em x≈2000 fora do núcleo
+    assert box[2] < 1800, box
+    assert (box[2] - box[0]) * (box[3] - box[1]) <= 2339 * 1653 * 0.55
+
+
+def test_g4_centered_group_label_assigns_children_above_and_below():
+    """Rótulo de conjunto centrado na célula mesclada: filhos acima e
+    abaixo do token do pai herdam o mesmo parent_group_candidate."""
+    cells = [
+        _cell(0, 0, "Codigo", _quad(0, 0, 80, 16)),
+        _cell(0, 1, "Item", _quad(90, 0, 130, 16)),
+        _cell(0, 2, "Qtd", _quad(140, 0, 180, 16)),
+        _cell(0, 3, "Comp", _quad(190, 0, 280, 16)),
+        _cell(1, 0, "50225701", _quad(0, 20, 80, 80), rowspan=3,
+              token_centers=[[40, 50]]),
+        _cell(1, 1, "AE", _quad(90, 20, 130, 40), token_centers=[[110, 30]]),
+        _cell(1, 2, "1", _quad(140, 20, 180, 40), token_centers=[[160, 30]]),
+        _cell(1, 3, "10010011", _quad(190, 20, 280, 40),
+              token_centers=[[235, 30]]),
+        _cell(2, 1, "AH", _quad(90, 50, 130, 70), token_centers=[[110, 60]]),
+        _cell(2, 2, "2", _quad(140, 50, 180, 70), token_centers=[[160, 60]]),
+        _cell(2, 3, "10010012", _quad(190, 50, 280, 70),
+              token_centers=[[235, 60]]),
+        # pai seguinte: token Y no meio; filho AE acima do token
+        _cell(3, 0, "50225702", _quad(0, 80, 80, 160), rowspan=3,
+              token_centers=[[40, 120]]),
+        _cell(3, 1, "AE", _quad(90, 85, 130, 105), token_centers=[[110, 95]]),
+        _cell(3, 2, "1", _quad(140, 85, 180, 105), token_centers=[[160, 95]]),
+        _cell(3, 3, "10010028", _quad(190, 85, 280, 105),
+              token_centers=[[235, 95]]),
+        _cell(4, 1, "AH", _quad(90, 115, 130, 135), token_centers=[[110, 125]]),
+        _cell(4, 2, "2", _quad(140, 115, 180, 135), token_centers=[[160, 125]]),
+        _cell(4, 3, "10080897", _quad(190, 115, 280, 135),
+              token_centers=[[235, 125]]),
+        _cell(5, 1, "AG", _quad(90, 145, 130, 165), token_centers=[[110, 155]]),
+        _cell(5, 2, "2", _quad(140, 145, 180, 165), token_centers=[[160, 155]]),
+        _cell(5, 3, "10110676", _quad(190, 145, 280, 165),
+              token_centers=[[235, 155]]),
+        _cell(6, 0, "50225703", _quad(0, 170, 80, 230), rowspan=2,
+              token_centers=[[40, 200]]),
+        _cell(6, 1, "AE", _quad(90, 175, 130, 195), token_centers=[[110, 185]]),
+        _cell(6, 2, "1", _quad(140, 175, 180, 195), token_centers=[[160, 185]]),
+        _cell(6, 3, "10010028", _quad(190, 175, 280, 195),
+              token_centers=[[235, 185]]),
+    ]
+    rows, _ = rows_from_native_cells(cells, page=12)
+    kids = [
+        r for r in rows
+        if r.get("parent_group_candidate") == "50225702"
+    ]
+    assert {r.get("item") for r in kids} >= {"AE", "AH", "AG"}
+    by_code = {r.get("component_code"): r for r in kids}
+    assert by_code["10010028"]["item"] == "AE"
+    assert by_code["10010028"]["quantity"] == "1"
+    assert by_code["10080897"]["item"] == "AH"
+    assert by_code["10080897"]["quantity"] == "2"
+    assert by_code["10110676"]["item"] == "AG"
+    assert by_code["10110676"]["quantity"] == "2"
+    # AE do próximo pai não fica sob 50225702
+    ae_next = [
+        r for r in rows
+        if r.get("item") == "AE" and r.get("component_code") == "10010028"
+        and r.get("parent_group_candidate") == "50225703"
+    ]
+    assert ae_next
+
+
+def test_g4_fused_quantity_line_texts_split_like_items():
+    """Quantidades fundidas ('2 2') com bandas Y distintas → duas qtds."""
+    cells = _header_item_qty_code_desc() + [
+        _cell(
+            1, 0, "AH AG", _quad(0, 20, 40, 70),
+            line_texts=["AH", "AG"],
+            line_centers=[30.0, 60.0],
+            token_centers=[[20, 30.0], [20, 60.0]],
+        ),
+        _cell(
+            1, 1, "2 2", _quad(40, 20, 80, 70),
+            line_texts=["2", "2"],
+            line_centers=[30.0, 60.0],
+            token_centers=[[60, 30.0], [60, 60.0]],
+        ),
+        _cell(1, 2, "10080897", _quad(90, 20, 170, 40),
+              token_centers=[[130, 30.0]]),
+        _cell(1, 3, "TERM", _quad(180, 20, 300, 40),
+              token_centers=[[240, 30.0]]),
+        _cell(2, 2, "10110676", _quad(90, 50, 170, 70),
+              token_centers=[[130, 60.0]]),
+        _cell(2, 3, "ETIQ", _quad(180, 50, 300, 70),
+              token_centers=[[240, 60.0]]),
+    ]
+    rows, _ = rows_from_native_cells(cells, page=12)
+    by_item = _by_item(rows)
+    assert by_item["AH"]["component_code"] == "10080897"
+    assert by_item["AH"]["quantity"] == "2"
+    assert by_item["AG"]["component_code"] == "10110676"
+    assert by_item["AG"]["quantity"] == "2"
+
+
 # ----- G4-A positivos -----
 
 

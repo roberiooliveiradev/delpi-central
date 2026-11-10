@@ -559,3 +559,12 @@ Correção de perda silenciosa sob `span_conflict_tolerated` parcial (`reconcile
 
 **Real:** p10 A2/A3 códigos+qtd separados PASS; p13 sem promoção `4 5` PASS; p12 hierarquia `50225702→AE/AH/AG` **não demonstrada** no crop Understanding (RESIDUAL). Unit 82 passed. Corpus 13 live `TEST_NOT_RUN`. GT DRAFT. `VAL01_COMPLETED=false`.
 
+### Log G4 P12 structural boundary repair (2026-11-10)
+
+**TASK:** `EVA-VAL01-G4-P12-STRUCTURAL-BOUNDARY-REPAIR`. Sem deploy. PDF SHA `af47dd4c…edf3` MATCH.
+
+**First-loss:** crop Understanding page-wide → SLANet perde hierarquia; crop G1 sem coluna do pai rejeitado.  
+**Fix:** `hierarchical_code_columns` (gate >70% largura) + override Y de grupo + split de qty repetida por índice.  
+**Real p12:** pai `50225702` → AE/10010028/1, AH/10080897 (qty UNKNOWN — célula SLANet sem qty), AG/10110676/2.  
+**Regressão:** p10 A2/A3 PASS (connected); p13 sem falso código PASS. Unit G4+DEC040–043+SLANet/perception **68 passed**. Corpus 13 live `TEST_NOT_RUN`. `VAL01_COMPLETED=false`.
+

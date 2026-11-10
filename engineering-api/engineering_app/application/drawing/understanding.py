@@ -251,6 +251,103 @@ def _connected_column_crop(
     )
 
 
+def _hierarchical_code_pair_crop(
+    tokens: list[dict], w: float, h: float
+) -> list[float] | None:
+    """Núcleo hierárquico = coluna esparsa de conjunto + coluna densa.
+
+    Quando há ≥2 colunas de código com itens entre elas, o envelope
+    connected_columns ainda pode atravessar carimbo à direita. O
+    recorte usa só o par esquerdo/direito vencedor e expande o Y pela
+    mediana dos vãos da coluna esquerda — células mescladas cujo
+    rótulo fica no meio do bloco vertical.
+    """
+    codes: list[tuple[float, float]] = []
+    items: list[tuple[float, float]] = []
+    for token in tokens:
+        center = _tok_center(token)
+        if not center:
+            continue
+        text = _text_of(token)
+        if _CODE_RE.match(text):
+            codes.append((center[0], center[1]))
+        elif _ITEM_IDENT_RE.fullmatch(text):
+            items.append((center[0], center[1]))
+    if len(codes) < 4:
+        return None
+    x_tol = max(w * 0.07, _cluster_tolerance(
+        w, [c[0] for c in codes], page_fraction=0.07,
+    ))
+    cols: list[list[tuple[float, float]]] = []
+    for point in sorted(codes, key=lambda c: c[0]):
+        for col in cols:
+            mean_x = sum(p[0] for p in col) / len(col)
+            if abs(point[0] - mean_x) <= x_tol:
+                col.append(point)
+                break
+        else:
+            cols.append([point])
+    col_stats = [
+        (
+            sum(p[0] for p in col) / len(col),
+            len(col),
+            min(p[0] for p in col),
+            max(p[0] for p in col),
+            [p[1] for p in col],
+        )
+        for col in cols
+        if len(col) >= 2
+    ]
+    if len(col_stats) < 2:
+        return None
+    best: tuple | None = None
+    for i, left in enumerate(col_stats):
+        for right in col_stats[i + 1 :]:
+            lx, ln, lmin, lmax, lys = left
+            rx, rn, rmin, rmax, rys = right
+            if rx - lx < w * 0.12:
+                continue
+            between = [
+                it
+                for it in items
+                if lx + (rx - lx) * 0.15 < it[0] < rx - (rx - lx) * 0.05
+            ]
+            score = ln + rn + 2 * len(between)
+            if ln < rn:
+                score += rn
+            if score < 8 or len(between) < 2:
+                continue
+            gaps = sorted(
+                b - a for a, b in zip(sorted(lys), sorted(lys)[1:]) if b - a > 1
+            )
+            med_gap = gaps[len(gaps) // 2] if gaps else max(h * 0.04, 40.0)
+            pad = max(w, h) * 0.02
+            y1 = min(lys) - med_gap * 0.55
+            y2 = max(lys) + med_gap * 0.55
+            # inclui itens entre colunas que caiam na faixa expandida
+            for _ix, iy in between:
+                if y1 - med_gap <= iy <= y2 + med_gap:
+                    y1 = min(y1, iy - pad)
+                    y2 = max(y2, iy + pad)
+            crop = [
+                max(0.0, lmin - pad),
+                max(0.0, y1),
+                min(w, rmax + w * 0.18),
+                min(h, y2),
+            ]
+            area = (crop[2] - crop[0]) * (crop[3] - crop[1])
+            if area > w * h * 0.55:
+                continue
+            if area < w * h * 0.02:
+                continue
+            cand = (score, -area, crop)
+            if best is None or cand[:2] > best[:2]:
+                best = cand
+    if not best:
+        return None
+    return _clip_box(best[2], w, h)
+
+
 def _trim_sheet_index_margin(
     box: list[float], tokens: list[dict], w: float, h: float
 ) -> list[float] | None:
@@ -1074,6 +1171,20 @@ def build_understanding(
             table, w, h
         )
         column_crop = _connected_column_crop(table_rows, w, h)
+        hier_crop = _hierarchical_code_pair_crop(tokens, w, h)
+        boundary_source = "connected_columns"
+        # Só substitui quando o envelope connected está page-wide
+        # (first-loss P12): em páginas já compactas o par hierárquico
+        # pode cortar a coluna errada e regressar A2/A3.
+        if hier_crop is not None and column_crop is not None:
+            connected_w = column_crop[2] - column_crop[0]
+            hier_w = hier_crop[2] - hier_crop[0]
+            if connected_w > w * 0.70 and hier_w < connected_w * 0.90:
+                column_crop = hier_crop
+                boundary_source = "hierarchical_code_columns"
+        elif hier_crop is not None and column_crop is None:
+            column_crop = hier_crop
+            boundary_source = "hierarchical_code_columns"
         if column_crop:
             trimmed = _trim_sheet_index_margin(
                 column_crop, tokens, w, h
@@ -1081,7 +1192,7 @@ def build_understanding(
             if trimmed:
                 column_crop = trimmed
             table["box"] = column_crop
-            table["boundary_source"] = "connected_columns"
+            table["boundary_source"] = boundary_source
             graphic_boundary = False
             span = (column_crop[2] - column_crop[0]) * (
                 column_crop[3] - column_crop[1]
@@ -1584,9 +1695,10 @@ _GROUP_CODE_RE = re.compile(r"^(\d{6,11})\b")
 def _line_is_canonical_field_band(text: str) -> bool:
     """Banda textual que, sozinha, já é campo tipado de ocorrência.
 
-    Códigos de componente e identificadores de item entram aqui para
-    que `line_texts` com centros Y distintos recuperem linhas fundidas
-    pelo SLANet. Descrição multilinha NÃO é canônica.
+    Códigos de componente, identificadores de item e quantidades
+    numéricas puras entram aqui para que `line_texts` com centros Y
+    distintos recuperem linhas fundidas pelo SLANet. Descrição
+    multilinha NÃO é canônica.
     """
     line_s = (text or "").strip()
     if not line_s:
@@ -1596,6 +1708,8 @@ def _line_is_canonical_field_band(text: str) -> bool:
     if _ITEM_IDENT_RE.fullmatch(line_s):
         return True
     if _CODE_RE.match(line_s):
+        return True
+    if _NUM_RE.fullmatch(line_s):
         return True
     return False
 
@@ -1613,15 +1727,19 @@ def _line_centers_geometrically_distinct(
 
 def _cell_role(text: str) -> str | None:
     """Papel funcional de UMA célula pelo seu conteúdo — semântica,
-    não posição. Nunca promove descrição a código nem vice-versa."""
-    if _is_sheet_index_noise_cell(text):
-        return None
+    não posição. Nunca promove descrição a código nem vice-versa.
+
+    Índices curtos (`4`, `4 5`) não são `component_code` (gate à parte);
+    um número puro continua podendo ser `quantity` — qty 1/2 é legítima.
+    """
     if _CODE_FIND_RE.fullmatch(text) or _CODE_RE.match(text):
         return "component_code"
     if _ITEM_IDENT_RE.fullmatch(text):
         return "item"
     if _NUM_RE.fullmatch(text):
         return "quantity"
+    if _is_sheet_index_noise_cell(text):
+        return None
     if len(text) > 3 and re.search(r"[A-Za-zÀ-ÿ]", text):
         return "description"
     return None
@@ -1891,8 +2009,11 @@ def rows_from_native_cells(
             )
             if from_group:
                 cell["_from_group_anchor"] = True
-            targets: dict[int, list[str]] = {}
-            for line, cy in zip(lines, centers):
+            # Pares (índice, texto): textos repetidos ("2 2") não podem
+            # usar `line in stayed` — isso mistura centros Y de bandas
+            # distintas e apaga a quantidade na associação.
+            targets: dict[int, list[tuple[int, str]]] = {}
+            for line_i, (line, cy) in enumerate(zip(lines, centers)):
                 # 1ª evidência: faixa-Y de célula confiável da linha
                 # contém o centro da banda (mesma linha visual).
                 hits = [
@@ -1937,7 +2058,7 @@ def rows_from_native_cells(
                     # Linha física distinta projetada no índice SLANet
                     # errado — não permanece na tupla incompatível.
                     target = 500000 + int(round(cy * 10))
-                targets.setdefault(int(target), []).append(line)
+                targets.setdefault(int(target), []).append((line_i, line))
             # Célula só com códigos/itens canônicos em bandas Y
             # distintas, sem colunas-irmãs para ancorar: a evidência
             # geométrica + textual basta para recuperar ocorrências.
@@ -1954,22 +2075,30 @@ def rows_from_native_cells(
                 )
             ):
                 targets = {}
-                for line, cy in zip(lines, centers):
+                for line_i, (line, cy) in enumerate(zip(lines, centers)):
                     targets.setdefault(
                         500000 + int(round(float(cy) * 10)), []
-                    ).append(line)
+                    ).append((line_i, line))
             if len(targets) < 2:
                 continue
             cell["_split_done"] = True
             stayed = targets.get(row_index, [])
-            cell["_split_text"] = " ".join(stayed)
+            cell["_split_text"] = " ".join(text for _i, text in stayed)
             cell["line_texts"] = []
+            source_tcs = [
+                tc
+                for tc in (cell.get("token_centers") or [])
+                if isinstance(tc, (list, tuple)) and len(tc) >= 2
+            ]
+            source_cx = _cell_cx(cell) or 0.0
             if stayed:
                 cell["_band_cy"] = sum(
-                    centers[i]
-                    for i, line in enumerate(lines)
-                    if line in stayed
+                    float(centers[i]) for i, _text in stayed
                 ) / len(stayed)
+                if len(source_tcs) == len(lines):
+                    cell["token_centers"] = [
+                        source_tcs[i] for i, _text in stayed
+                    ]
             else:
                 # O retângulo original ainda cobre as outras bandas;
                 # sem isso o centro Y médio reintroduz o vínculo falso.
@@ -1979,16 +2108,25 @@ def rows_from_native_cells(
                     continue
                 virtual = dict(cell)
                 virtual["_split_done"] = True
-                virtual["_split_text"] = " ".join(tlines)
+                virtual["_split_text"] = " ".join(
+                    text for _i, text in tlines
+                )
                 virtual["line_texts"] = []
                 virtual["rowspan"] = 1
                 virtual["_from_group_anchor"] = from_group
                 virtual["_detached_band"] = target >= 500000
                 virtual["_band_cy"] = sum(
-                    centers[i]
-                    for i, _ in enumerate(lines)
-                    if lines[i] in tlines
+                    float(centers[i]) for i, _text in tlines
                 ) / len(tlines)
+                if len(source_tcs) == len(lines):
+                    virtual["token_centers"] = [
+                        source_tcs[i] for i, _text in tlines
+                    ]
+                else:
+                    virtual["token_centers"] = [
+                        [source_cx, float(centers[i])]
+                        for i, _text in tlines
+                    ]
                 grouped.setdefault(target, []).append(virtual)
     col_types: dict[int, str] = {}
     if header_row is not None:
@@ -2029,6 +2167,28 @@ def rows_from_native_cells(
     # pela âncora mais recente (subconjunto aninhado).
     group_anchors: list[tuple[int, str, int]] = []
     group_anchor_ids: set[int] = set()
+    group_y_anchors: list[tuple[float, str]] = []
+
+    def _group_anchor_cy(cell: dict) -> float | None:
+        tcs = cell.get("token_centers") or []
+        ys = [
+            float(tc[1])
+            for tc in tcs
+            if isinstance(tc, (list, tuple)) and len(tc) >= 2
+        ]
+        if ys:
+            return sum(ys) / len(ys)
+        return _cell_cy(cell)
+
+    def _register_group_anchor(
+        row_index: int, code: str, span: int, cell: dict
+    ) -> None:
+        group_anchors.append((row_index, code, span))
+        group_anchor_ids.add(id(cell))
+        cy = _group_anchor_cy(cell)
+        if cy is not None:
+            group_y_anchors.append((cy, code))
+
     for row_index, row_cells in grouped.items():
         if row_index == header_row:
             continue
@@ -2039,10 +2199,9 @@ def rows_from_native_cells(
                 _norm(str(c.get("text") or ""))
             )
             if m:
-                group_anchors.append(
-                    (row_index, m.group(1), int(c.get("rowspan") or 1))
+                _register_group_anchor(
+                    row_index, m.group(1), int(c.get("rowspan") or 1), c
                 )
-                group_anchor_ids.add(id(c))
     # Coluna esparsa de códigos puros (rowspan perdido pelo SLANet):
     # cada código puro ancora até o próximo código puro da mesma
     # coluna quando a coluna é materialmente mais esparsa que outra
@@ -2123,9 +2282,9 @@ def rows_from_native_cells(
                 span = int(next_row) - int(row_index)
                 if span < 2:
                     continue
-                group_anchors.append((row_index, code, span))
-                group_anchor_ids.add(id(cell))
+                _register_group_anchor(row_index, code, span, cell)
     group_anchors.sort()
+    group_y_anchors.sort(key=lambda a: a[0])
     # Passo mediano entre linhas — escala para decidir se dois campos
     # vêm de bandas Y compatíveis (mesma linha física) ou conflitantes.
     row_cys = []
@@ -2376,10 +2535,48 @@ def rows_from_native_cells(
             parked_field["association_state"] = "FIELD_BAND_CONFLICT"
             conflicting_fields.setdefault(kind, parked_field)
             inconclusive = True
+        # Rowspan nativo primeiro. Se o rótulo do conjunto ficou acima
+        # do filho (célula mesclada com texto centrado) e outro pai em
+        # Y está materialmente mais perto, corrige a herança — sem
+        # trocar filhos que já estão acima do rótulo do próprio grupo.
         group = None
         for arow, acode, aspan in group_anchors:
             if arow <= row_index < arow + aspan:
                 group = acode
+        row_cy_val = None
+        for kind in ("item", "component_code", "quantity"):
+            cy = (fields.get(kind) or {}).get("source_cy_px")
+            if cy is not None:
+                row_cy_val = float(cy)
+                break
+        if row_cy_val is None:
+            cys = [
+                cy for cy in (_cell_cy(c) for c in row_cells) if cy is not None
+            ]
+            if cys:
+                row_cy_val = sum(cys) / len(cys)
+        if len(group_y_anchors) >= 2 and row_cy_val is not None:
+            nearest_cy, nearest_code = min(
+                group_y_anchors,
+                key=lambda anchor: (
+                    abs(anchor[0] - row_cy_val),
+                    anchor[0],
+                ),
+            )
+            if group is None:
+                group = nearest_code
+            elif nearest_code != group:
+                span_cy = next(
+                    (cy for cy, code in group_y_anchors if code == group),
+                    None,
+                )
+                if (
+                    span_cy is not None
+                    and span_cy < row_cy_val - 4.0
+                    and abs(nearest_cy - row_cy_val)
+                    < abs(span_cy - row_cy_val)
+                ):
+                    group = nearest_code
         rows_out.append(
             {
                 "row": row_index,

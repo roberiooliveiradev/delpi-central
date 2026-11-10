@@ -2223,3 +2223,38 @@ VAL01_COMPLETED=false
 NO_GENERALIZATION_CLAIM=true
 ```
 
+### 62.4 G4 — Reparação estrutural P12 (crop hierárquico) (2026-11-10)
+
+**TASK_ID:** `EVA-VAL01-G4-P12-STRUCTURAL-BOUNDARY-REPAIR`.  
+**Autorização:** Coordination / Issue #131 — contínuo dentro de G4. Sem deploy; G5–G7 bloqueados.
+
+**First-loss (CONFIRMADO_NO_CODIGO + pipeline real):** envelope `connected_columns` page-wide na p12 → SLANet degrada grade (itens AE/AH perdidos / pai vira componente). Crop G1 DRAFT que omite a coluna do pai **não** é solução.
+
+**Correção mínima (Understanding, sem parser paralelo):**
+1. `_hierarchical_code_pair_crop` — par coluna esparsa (conjunto) + coluna densa (componentes) com Y expandido pelo vão mediano da coluna esquerda; só substitui connected quando este está >70% da largura da página.
+2. Herança de grupo: rowspan nativo + override Y quando o rótulo do pai ficou acima do filho e outro pai está mais perto (rótulo centrado em célula mesclada).
+3. `line_texts` de quantidades repetidas (`2 2`) usam índice de banda (não `line in stayed`); número puro é banda canônica; qty 1/2 não é engolida como “sheet index” no `_cell_role`.
+
+**Pipeline real 90264135 (SHA `af47dd4c…edf3`, srv-api docker efêmero):**
+
+| Página | Resultado | Notas |
+|---|---|---|
+| 12 | **PASS códigos hierárquicos** | `50225702`→AE/`10010028`/1; AH/`10080897`; AG/`10110676`/2. `parent_as_component=false`. Boundary `hierarchical_code_columns`. |
+| 12 qty AH | **UNKNOWN / residual** | Célula SLANet da linha AH sob o pai sem qty nativa (OCR tem `2` em Y≈788; grade omite col qty). Sem fill-in Totus. |
+| 10 | **PASS regressão** | A2=`10080192` q=16; A3=`10090316` q=1; sem fusão; boundary permanece `connected_columns`. |
+| 13 | **PASS promoção** | `false_codes=[]`; crop hierárquico Y0≈970. |
+
+**Testes:** G4 + DEC-040–043 + SLANet/perception = **68 passed**. Corpus 13 live: `TEST_NOT_RUN`.
+
+```text
+G4_P12_REPAIR_STATUS=PASS_WITH_QTY_RESIDUAL
+P12_PARENT_CHILD_CODES=PASS
+P12_AH_QTY=UNKNOWN_SLANET_CELL_GAP
+P10_REGRESSION=PASS
+P13_FALSE_CODE=PASS
+PRODUCTION_DEPLOY=false
+G5_G6_G7=NOT_AUTHORIZED
+VAL01_COMPLETED=false
+NO_GENERALIZATION_CLAIM=true
+```
+
