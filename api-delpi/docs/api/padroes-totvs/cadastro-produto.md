@@ -14,6 +14,8 @@ Parte da [biblioteca de padrões TOTVS](./README.md).
 | `B1_CUSTD` | Custo padrão | Fallback de valoração quando `B2_CM1` do almoxarifado falta — [armazem-custo.md](./armazem-custo.md) |
 | `B1_TPMAT` | Produto de terceiro (SX3) | `1` = Não · `2` = Sim |
 | `B1_TIPO` | Tipo de produto | `MP` matéria-prima · `PA` acabado · `PI` intermediário — constante `PRODUCT_TYPE_RAW_MATERIAL` em `protheus_product_types.py` |
+| `B1_PE` / `B1_TIPE` | Prazo de Entrega (Lead Time) geral / unidade | Frequentemente zerado no cadastro geral DELPI; para prazo por filial usar **`SBZ010.BZ_PE` / `BZ_TIPE`**, ver [lead-time-prazo-entrega.md](./lead-time-prazo-entrega.md) |
+| `B1_FORPRZ` | Fórmula Cálculo do Prazo | Não é o número de dias do Lead Time |
 | `B1_REFEREN` | Ref. Cliente | Código do produto no cliente (`customer_reference` na API). Não confundir com SA1. Filtro: prefixo `LIKE` + `Latin1_General_CI_AI`. No desenho aparece como `REF:` / `COD. CLIENTE`. |
 | `B1_CODDES` | Cód. desenho | Código do desenho do cliente (`drawing_code` na API). No carimbo costuma aparecer como `DES. CLIENTE`. Não confundir com `B1_REFEREN`. |
 
@@ -72,6 +74,12 @@ Constante de domínio (refugos): `THIRD_PARTY_PRODUCT_TPMAT = "2"` em `refugos_s
 |-------------|---------|
 | Filtrar terceiro só no frontend | Totais e rankings ficam inconsistentes |
 | Esquecer o filtro em uma das rotas do mesmo domínio (`resumo` vs `rankings` vs `registros`) | Divergência entre KPIs |
+
+---
+
+## Prazo de Entrega (Lead Time) por filial
+
+Para análises de prazo de reposição/entrega cadastrada por filial, consultar **`SBZ010.BZ_PE`**, com `BZ_FILIAL` e `BZ_TIPE`; **não depender de `B1_PE`**, que costuma estar zerado no cadastro geral desta instalação. `SA5010.A5_PE` refere-se à amarração produto–fornecedor. Padrão completo, consultas e exemplo do item `10100049`: [lead-time-prazo-entrega.md](./lead-time-prazo-entrega.md).
 
 ---
 
