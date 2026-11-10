@@ -18,6 +18,12 @@ describe("Helpdesk list UX structural", () => {
     expect(page).toContain("HelpdeskPageHero");
     expect(page).toContain("HelpdeskScopeChipBar");
     expect(page).toContain("helpdesk-list-primary-bar");
+    expect(css).toContain(
+      ".helpdesk-list-primary-bar > .delpi-ui-help-tooltip--wrap:has(.helpdesk-filter-box)",
+    );
+    expect(css).toMatch(
+      /\.helpdesk-list-primary-bar\s*>\s*\.delpi-ui-help-tooltip--wrap:has\(\.helpdesk-filter-box\)[\s\S]*?flex:\s*1\s+1\s+28rem/,
+    );
     expect(page).toContain("TicketListFilterPopover");
     expect(page).toContain("TicketListSortPopover");
     expect(page).toContain("TicketListCards");

@@ -536,8 +536,19 @@
   background: transparent;
 }
 
+/* HintAction wrap is flex:0 + max-content by default — stretch so search fills the row. */
+.dashboard-helpdesk .helpdesk-list-primary-bar > .delpi-ui-help-tooltip--wrap:has(.helpdesk-filter-box) {
+  display: flex;
+  flex: 1 1 28rem;
+  width: auto;
+  min-width: min(100%, 18rem);
+  max-width: 100%;
+  align-items: stretch;
+}
+
 .dashboard-helpdesk .helpdesk-list-primary-bar .helpdesk-filter-box {
-  flex: 1 1 14rem;
+  flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
 }
 
