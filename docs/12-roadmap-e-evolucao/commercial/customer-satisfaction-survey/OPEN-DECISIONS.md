@@ -42,9 +42,15 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ### Q04 — Identificação e confidencialidade
 **Pergunta:** Respostas serão identificadas, anônimas ou confidenciais com acesso restrito? O cliente será informado do tratamento e finalidade?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** vínculo a clientes, privacidade, planos de ação e retenção.
+**Status:** DECIDED quanto à identificação por empresa e matriz funcional de acesso (informado pelo solicitante; implementação e códigos reais TO_INVENTORY). Política de transparência ao respondente e retenção PENDING.
+**Resposta — identificação:** As respostas da pesquisa serão identificadas e vinculadas à empresa cliente e à campanha; notas e comentários individuais não serão anônimos para os perfis autorizados.
+**Resposta — perfis:** Criar/estabelecer a permissão proposta `commercial.marketing` para gerir esta frente. O solicitante informa que já existe `commercial.manager`. Ambos os perfis poderão configurar campanhas e seus destinatários, gerar links, disparar convites, consultar respostas individualizadas e tratar os dados/resultados.
+**Resposta — demais usuários:** Os outros usuários que têm acesso ao Portal Comercial verão apenas resumo/indicadores agregados; não terão acesso às configurações, disparos, respostas individualizadas, listas restritas de destinatários ou tratamento operacional da pesquisa.
+**Fonte:** Resposta do solicitante à Q04 em 2026-11-10.
+**Owner funcional:** Comercial (validação formal PENDING).
+**Impacto:** Segregar operações e dados pessoais/sensíveis; verificar autorização em cada endpoint e consulta no backend (filtro apenas no frontend não constitui autorização). O resumo agregado deve evitar identificar indiretamente clientes em grupos muito pequenos.
+**TO_INVENTORY:** Confirmar os códigos/semântica atuais de permissões, owners e mecanismo de aplicação no backend, conforme contratos canônicos existentes. `commercial.marketing` é requisito novo, não permissão já implementada; `commercial.manager` é existência relatada, ainda não confirmada por inventário nesta decisão.
+**PENDING complementar:** Aviso de privacidade e finalidade ao cliente, política de retenção, auditoria, limiares mínimos para agregações e regras de segmentação que possam revelar respostas individuais.
 
 ## B. Campanhas, envio e formulário
 
