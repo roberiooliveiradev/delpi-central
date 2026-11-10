@@ -461,3 +461,18 @@ A revisão confirmou o reuso do `PydanticAiInvestigationOrchestrator` + native P
 **LOCAL_QWEN_EVAL=TEST_NOT_RUN** (prod container only; compose.dev shares `container_name`).  
 **INT1_FINAL_REVIEW_PROPOSAL:** `ACCEPT_WITH_RESIDUAL` (deterministic F1–F4 proven; live Qwen P1–P3 residual; plan-absent Outcome verdict remains INT-3).  
 **NEXT:** `COORDINATION_FINAL_INT1_ACCEPTANCE`. Sem nova implementação corretiva automática. **PRODUCTION_DEPLOY=NOT_AUTHORIZED; T3/INT2/INT3/INT4=NOT_AUTHORIZED.**
+
+
+### Coordenação — revisão final INT-1 (2026-11-10)
+
+**REVIEWED_SHA:** `3bb2be887b05562a6d85301a86ecf5d2e5ae5883`. **REWORK_BUDGET_EXHAUSTED=YES**. **INT1_TECHNICAL_VERDICT=ACCEPT_WITH_RESIDUAL** para o escopo *investigation mechanics*, com limites de evidência explícitos. **T2_FUNCTIONAL_ACCEPTANCE=REWORK**, **PO_MANUAL_HOMOLOGATION=FAIL**; o aceite desta subetapa não fecha T2.
+
+**Independent code review, F1–F4:**
+- F1: uso de fingerprint capability+args torna possível nova chamada materialmente diferente após `owner_argument_rejected`; ModelRetry one-shot mantido. `PASS_CODE_REVIEW` no diff.
+- F2: progresso deixa de inferir relevância pela classe READ/ANALYSIS; `PASS_CODE_REVIEW`, porém nova observação sem plan/obligations ainda NÃO prova suficiência.
+- F3: suite usa `PydanticAiInvestigationOrchestrator` com `FunctionModel` e ferramentas renomeadas. **PASS para wiring/contrato com seleção programada; NOT_PROVEN para seleção semântica autônoma de Qwen/LLM.** O próprio teste escolhe capability pelo `description` e constrói `ToolCallPart` predefinido; não rotular como `LIVE_MODEL_GENERALIZATION=PASS`.
+- F4: caminho sem plan retorna `SUCCESS` com `coverage_unknown`; logo `SUCCESS` ainda NÃO significa `OBJECTIVE_SATISFIED`. **PASS para sinalizar lacuna, FAIL/PENDING para Outcome de negócio P2/P3**, propriedade do boundary de avaliação/INT-3. Não atribuir conclusão sem evidência.
+
+**Testes:** GREEN/REGRESSION relatados pelo executor; revisão examinou diff e testes no GitHub, não reexecutou pytest no host. `LOCAL_QWEN_P1_P2_P3=TEST_NOT_RUN`; único container informado = produção e `compose.dev` compartilha `container_name`. Nenhum deploy autorizado.
+
+**Decisão finita:** não reabrir a INT-1; congelar a extensão aprovada sob `ACCEPT_WITH_RESIDUAL` técnico e transferir a pendência objetiva (satisfação sem plano e evidência semântica live) para o gate seguinte **já previsto** na T2-INT. A próxima etapa não é automaticamente implementável: coordenação deve selecionar INT-2 compreensão ou INT-3 suficiência conforme dependências canônicas e garantir avaliação isolada Qwen14B antes de afirmar sucesso funcional. `T3/PROD_DEPLOY/INT2_IMPLEMENTATION=NOT_AUTHORIZED` por este aceite; `NEXT=T2_INT_NEXT_BOUNDED_DESIGN_DECISION`. `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND` sem novo Agent/planner.
