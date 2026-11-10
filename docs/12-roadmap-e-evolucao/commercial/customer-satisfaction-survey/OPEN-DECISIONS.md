@@ -67,9 +67,13 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ### Q06 — Canal de distribuição
 **Pergunta:** Qual será o canal inicial (e-mail, WhatsApp, SMS ou combinação), e o envio será manual, assistido ou automático?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** integração, entregabilidade, auditoria e custos.
+**Status:** DECIDED quanto aos canais e modos iniciais; PENDING quanto à integração concreta de e-mail, registro de entrega e condições de disparo.
+**Resposta:** O Portal Comercial deverá oferecer envio direto de convite exclusivamente por e-mail para o contato configurável da empresa cliente. Também deverá permitir copiar o link exclusivo por cliente/campanha para compartilhamento manual pelo usuário em WhatsApp, Microsoft Teams, e-mail externo ou outros canais. Não incluir integrações de disparo direto por WhatsApp ou Teams neste escopo.
+**Distinção importante:** Abertura automática de campanha (Q05) não significa envio automático de convites; nenhum disparo em lote, agendado ou automático foi aprovado nesta decisão. O acionamento do envio direto será feito pelo usuário autorizado, até definição contrária.
+**Fonte:** Resposta do solicitante em 2026-11-10: "Concordo com você", à proposta de envio direto apenas por e-mail e cópia manual para outros canais.
+**Owner funcional:** Comercial; permissão de envio conforme Q04 (commercial.marketing e commercial.manager), a validar tecnicamente.
+**PENDING / TO_INVENTORY:** Serviço autorizado de envio de e-mail, formato do convite, rastreamento de envio/erro/entrega, auditoria, disponibilidade do link conforme janela de campanha e tratamento dos contatos conforme Q03.
+**Impacto:** Menor número de integrações, preservando a escolha de canal de contato e a rastreabilidade possível do envio direto por e-mail.
 
 ### Q07 — Lembretes e tentativas
 **Pergunta:** Quantos convites/lembretes podem ser enviados por contato? Quais prazos, expiração e regras para reenvio?
