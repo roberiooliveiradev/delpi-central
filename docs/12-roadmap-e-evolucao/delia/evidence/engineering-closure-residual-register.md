@@ -978,3 +978,25 @@ Provider-neutral; SSRF/redirect/DNS checks; OAuth externo fora do Keycloak DELPI
 | T3 | NOT_AUTHORIZED |
 
 **NEXT_FROM_CANONICAL_PLAN:** homologação manual do PO; sem avanço T3.
+
+
+## 2026-11-10 — PO failed homologation and T2-INT cognitive responsibility track (docs-only)
+
+**Canonical owner/order:** doc 16; bounded execution map doc 293; execution state ledger. This entry **supersedes only prior functional acceptance claims**, without rewriting release history or negating reported runtime/image identities.
+
+| Item | State | Evidence / limit |
+|---|---|---|
+| T2 release to production | DEPLOY_REPORTED / historical | Qwen14B release SHA 30ac7cbb reported; not functional acceptance |
+| PO manual objective outcome | **FAIL** | Three PO queries failed to satisfy requested product structure, process listing, visualization formats |
+| F1/F2 generalization claim | **STALE_EVIDENCE for broad success** | Isolated DAVI positive controls do not cover multi-turn PO failure |
+| P1 root cause | **INCONCLUSIVE** | Reproduction PASS; original screenshot path discovery/metadata not traced to exact correlation |
+| P2/P3 shared flow | **PROVEN boundary gap, remediation NOT_STARTED** | Relevant grounded evidence accepted despite failure of user-objective coverage; invalid arguments/churn |
+| Independent DEV vs PROD parity | TEST_NOT_RUN | Executor had one shared production container; not two runtime environments |
+| Runtime model in original PO turn | INCONCLUSIVE | Later Qwen invocations proven by executor, original PO correlation missing |
+| Objective satisfaction | **FAIL / OPEN_MATERIAL** | Evidence validity/grounding distinct from semantic obligation satisfaction |
+| Proposed multi-agent separation | **TO_INVENTORY** | Four cognitive responsibilities, not four approved Agents; Pydantic AI reuse-first |
+| Current authorized next | **T2-INT0 inventory/specification only** | Agent investigation path first; no code/deploy/release/T3 |
+
+**Corrective direction:** The same Pydantic AI runtime remains the primary investigation intelligence; inspect reuse in Application coverage/finalize and native Pydantic AI before authorizing any cognitive delegation. `EXISTING_EQUIVALENT=YES` for core investigation/MCPToolset/Evidence/Outcome, and `TO_INVENTORY` for independent cognitive evaluator. `REUSE_DECISION=REUSE|EXTEND` candidate, **not implementation authorization**. No provider/tool-specific instructions, no parallel planner, no model comparison or full-stack testing by default. Measure by objective satisfaction and evidence fidelity, not HTTP 200, GROUNDED, call count or token consumption alone.
+
+**Residual status:** R04 production config closure historical unchanged. R05/R06/R08/R09 controlled risk classifications unchanged pending proper owner review. Outstanding P2/P3 semantic coverage gap is a **new material functional rework**, cannot be silently recast as accepted residual. T2 functional closure blocked, T3 still unauthorized. For stages/gates, see doc 293 T2-INT and doc 16 2026-11-10 decision.
