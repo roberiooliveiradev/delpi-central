@@ -8,6 +8,7 @@ type KaizenRecordFiltersProps = {
   statuses: string[];
   savingsTypes: string[];
   dateFields: string[];
+  ideaMonth: string;
   dateStart: string;
   dateEnd: string;
   title: string;
@@ -17,6 +18,7 @@ type KaizenRecordFiltersProps = {
   onStatusesChange: (value: string[]) => void;
   onSavingsTypesChange: (value: string[]) => void;
   onDateFieldsChange: (value: string[]) => void;
+  onIdeaMonthChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onTitleChange: (value: string) => void;
@@ -28,6 +30,7 @@ export function KaizenRecordFilters({
   statuses,
   savingsTypes,
   dateFields,
+  ideaMonth,
   dateStart,
   dateEnd,
   title,
@@ -37,6 +40,7 @@ export function KaizenRecordFilters({
   onStatusesChange,
   onSavingsTypesChange,
   onDateFieldsChange,
+  onIdeaMonthChange,
   onDateStartChange,
   onDateEndChange,
   onTitleChange,
@@ -71,6 +75,14 @@ export function KaizenRecordFilters({
         selectedValues={savingsTypes}
         onChange={onSavingsTypesChange}
         emptyLabel="Todos"
+      />
+      <FilterInputField
+        id="kz-filter-idea-month"
+        label="Mês das ideias"
+        hint="Filtra pela data de recebimento da ideia. Substitui o período e a coluna de data atuais."
+        type="month"
+        value={ideaMonth}
+        onChange={onIdeaMonthChange}
       />
       <MultiSelectField
         label="Coluna de data"
