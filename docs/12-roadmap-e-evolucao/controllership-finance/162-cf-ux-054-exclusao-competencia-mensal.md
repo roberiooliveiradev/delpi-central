@@ -1,6 +1,6 @@
 # 162 — CF-UX-054 — Exclusão de competência mensal
 
-Estado: **implementado no código, sem deploy e sem exclusão produtiva**.
+Estado: a exclusão administrativa foi implantada em produção no commit `03d194e6c41d68acc19a2c3c97a54f9887ca4231` (V021 aplicada; setembro e outubro de 2026 permanecem abertos). A revisão **CF-UX-054-UX-01** está no código e ainda não foi implantada. Nenhuma competência produtiva foi excluída.
 
 ## Escopo e owner
 
@@ -16,7 +16,7 @@ A exclusão é administrativa. Exige a permissão efetiva `controllership-financ
 
 `DELETE /closing/competences/{period}`
 
-Autorização: `authorized_admin`. Corpo: `expected_competence_id`, `reason`, `idempotency_key`.
+Autorização: `authorized_admin`. Corpo: `expected_competence_id`, `idempotency_key` e `reason` opcional (no máximo 500 caracteres; ausência, vazio e texto curto são aceitos).
 
 Sucesso: `competence_id`, `period`, `deleted=true`, `deleted_at`, `audit_reference`.
 
@@ -32,11 +32,19 @@ A auditoria não bloqueia. A migration **V021** troca a FK de `closing_audit_eve
 
 ## CLARA
 
-Capability `competence.delete`. Tool semântica `delete`. Não foi criada uma sétima ferramenta MCP. PREPARE não altera a competência. ACT revalida `manage`, o estado selado e as dependências. Confirmação ausente, ator divergente, permissão revogada ou dependência surgida depois do PREPARE rejeitam a execução. O canal conversacional vigente não exige `CLARA_CONVERSATIONAL_SECURITY_ACK`.
+Capability `competence.delete`. Tool semântica `delete`. Não foi criada uma sétima ferramenta MCP. `reason` não é parâmetro obrigatório. PREPARE não altera a competência. ACT revalida `manage`, o estado selado e as dependências e continua exigindo confirmação explícita. Confirmação ausente, ator divergente, permissão revogada ou dependência surgida depois do PREPARE rejeitam a execução. Sem motivo, a apresentação diz que nenhuma justificativa foi informada. O canal conversacional vigente não exige `CLARA_CONVERSATIONAL_SECURITY_ACK`.
 
 ## Portal
 
-Na lista «Fechamentos abertos», o botão «Excluir competência» só é montado quando `useViewerCapabilities().manage` é verdadeiro. O diálogo consulta o diagnóstico, exige motivo e a digitação do período, impede envio duplo e, após o sucesso, recarrega a lista. Se a competência excluída for a selecionada, a navegação volta à lista.
+«Excluir competência» fica no hero da competência aberta, só quando `useViewerCapabilities().manage` é verdadeiro. A lista de fechamentos não tem coluna de ações. O diálogo consulta o diagnóstico, empilha motivo opcional e a digitação obrigatória do período, impede envio duplo e, após o sucesso, invalida a consulta e volta à lista.
+
+## CF-UX-054-UX-01 — Modal e posicionamento de exclusão
+
+O botão saiu da tabela «Fechamentos abertos» e passou para a área de ações do hero, em variante discreta, sem competir com «Atualizar consulta». Quem tem apenas `access`, e o período ainda não aberto, não vê a ação. A autorização efetiva permanece na BFF.
+
+O motivo é opcional no Portal, no `DELETE`, na persistência e na CLARA. A digitação exata de `YYYY-MM` continua obrigatória no Portal, e a confirmação explícita continua obrigatória no ChatGPT. Competência com dependência continua bloqueada, com a contagem visível. O modal usa `CfDialog`, campos oficiais e o rodapé do kit.
+
+Testes executados nesta revisão: página de fechamento mensal (8 cenários de exclusão), rotas HTTP da competência, paridade CLARA e PostgreSQL de exclusão, incluindo motivo ausente, vazio e curto. A conferência visual no Portal publicado fica inconclusiva até o deploy desta revisão: a produção ainda mostra a revisão anterior.
 
 ## Auditoria e read-back
 
@@ -48,6 +56,6 @@ Setembro e outubro de 2026 não foram excluídos por esta implementação. A fun
 
 ## Riscos residuais
 
-- Deploy produtivo e a exclusão real de 2026-09/2026-10 não fazem parte deste gate.
+- A revisão UX-01 ainda não foi implantada. A exclusão real de 2026-09/2026-10 não foi executada.
 - Uma proposta CLARA criada depois da contagem e antes do commit pode não ser vista se não houver FK. A revalidação imediatamente anterior ao DELETE cobre as FKs operacionais.
-- O plugin ChatGPT passa a ver a capability depois do deploy e da reconexão; isso ainda não ocorreu.
+- A capability já está no BFF implantado em `03d194e6`. O contrato de motivo opcional só passa a valer em produção depois do deploy desta revisão.

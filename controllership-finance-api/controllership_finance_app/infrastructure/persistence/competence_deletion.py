@@ -505,11 +505,11 @@ def _uuid(value: str, field: str) -> str:
         ) from None
 
 
-def _reason(value: str) -> str:
+def _reason(value: str | None) -> str:
     text = " ".join(str(value or "").split())
-    if len(text) < 3 or len(text) > 500:
+    if len(text) > 500:
         raise CompetenceDeleteInvalid(
-            "Informe o motivo da exclusão, entre 3 e 500 caracteres.",
+            "O motivo da exclusão pode ter no máximo 500 caracteres.",
             details={"outcome": "invalid", "field": "reason"},
         )
     return text

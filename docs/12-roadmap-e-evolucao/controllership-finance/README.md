@@ -1,6 +1,6 @@
 # Portal Controladoria & Finanças — Fonte de navegação e estado
 
-> **09/11/2026 — CF-UX-054 (implementado, sem deploy e sem exclusão produtiva):** competência mensal pode ser excluída por `DELETE /closing/competences/{period}` e pela capability CLARA `competence.delete` (tool `delete`, gate `manage`, confirmação explícita). Só é elegível a competência sem dependência operacional. A auditoria usa `ON DELETE SET NULL` (V021) e não é apagada. Setembro e outubro de 2026 não foram excluídos. Ver [doc 162](./162-cf-ux-054-exclusao-competencia-mensal.md).
+> **10/11/2026 — CF-UX-054-UX-01 (no código, sem deploy desta revisão):** a exclusão de competência implantada em `03d194e6` passa a ter motivo opcional e o botão no hero da competência aberta. A digitação do período e o bloqueio por dependência permanecem. Setembro e outubro de 2026 não foram excluídos. Ver [doc 162](./162-cf-ux-054-exclusao-competencia-mensal.md).
 
 
 > **09/11/2026 — CF-UX-053 (`CUTOVER_BLOCKED`):** cadeia schema/prepare/lote alinhada ao contrato TÉO; runtime produtivo permanece `portal_consent_required=true` até assinatura formal Segurança/Plataforma + Controladoria ([doc 150 §20.10](./150-plano-unico-correcao-integral-portal-ux-funcional-2026-11-02.md)). HOST_ATTESTED `NOT_CONFIGURED`. **Não declarar ACCEPT** sem cutover verificado no ChatGPT.

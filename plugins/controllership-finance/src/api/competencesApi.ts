@@ -200,7 +200,7 @@ export async function deleteCompetence(
   period: string,
   body: {
     expected_competence_id: string;
-    reason: string;
+    reason?: string;
     idempotency_key: string;
   },
   options?: { signal?: AbortSignal },

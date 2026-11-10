@@ -134,12 +134,17 @@ def _exists(period: str) -> bool:
         return cur.fetchone() is not None
 
 
-def _delete(period: str, competence_id: str, key: str):
+def _delete(
+    period: str,
+    competence_id: str,
+    key: str,
+    reason: str = "Competência de teste sem dependência operacional.",
+):
     return delete_competence(
         period,
         actor=ACTOR,
         expected_competence_id=competence_id,
-        reason="Competência de teste sem dependência operacional.",
+        reason=reason,
         idempotency_key=key,
         channel="portal",
     )
@@ -172,6 +177,53 @@ def test_foreign_keys_keep_audit_and_block_cascade(migrated):
     assert "c" not in rules.values()
     assert "competence_checklist_item" in rules
     assert "closing_document" in rules
+
+
+def test_blank_and_short_reasons_are_audited_as_given(migrated):
+    cases = (("2020-08", "", "blank-reason-key"), ("2020-09", "ab", "short-reason-key"))
+    for period, reason, key in cases:
+        competence_id = _open(period)
+        deleted = _delete(period, competence_id, key, reason=reason)
+        assert deleted["deleted"] is True
+        with plugins_db_connect() as conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT detail->>'reason'
+                  FROM controllership_finance.closing_audit_event
+                 WHERE event_type = 'COMPETENCE_DELETED'
+                   AND detail->>'competence_id' = %s
+                """,
+                (competence_id,),
+            )
+            assert cur.fetchone()[0] == reason
+
+
+def test_clara_prepare_without_reason(migrated, monkeypatch):
+    monkeypatch.setattr(settings, "CLARA_CONSENT_CHANNEL", "conversational")
+    period = "2020-07"
+    competence_id = _open(period)
+    writes = ClaraGovernedWrites(
+        identity_provider=lambda: {
+            "subject": ACTOR,
+            "name": "Gestor",
+            "is_manage": True,
+            "is_dre": False,
+        }
+    )
+    proposal = writes.prepare(
+        capability="competence.delete",
+        params={
+            "period": period,
+            "expected_competence_id": competence_id,
+            "idempotency_key": "clara-delete-no-reason",
+        },
+        actor_sub=ACTOR,
+    )
+    assert proposal["presentation"]["displayable"] is True
+    assert "Nenhuma justificativa foi informada." in (
+        proposal["presentation"]["summary"]
+    )
+    assert _exists(period)
 
 
 def test_empty_competence_is_deleted_and_audit_survives(migrated):

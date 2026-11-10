@@ -336,6 +336,41 @@ def test_capability_presenter_displayable(cap):
         assert p.get(key), f"{cap}.{key}"
 
 
+def test_competence_delete_reason_is_optional():
+    spec = _writers()._capability_table()["competence.delete"]
+    assert "reason" not in spec["required_params"]
+    assert spec["required_params"] == (
+        "period",
+        "expected_competence_id",
+        "idempotency_key",
+    )
+    assert spec["gate"] == "manage"
+    assert spec["destructive"] is True
+    assert spec["direct"] is False
+    presented = opres.present_operation(
+        "competence.delete",
+        {
+            "period": "2026-08",
+            "expected_competence_id": "44444444-4444-4444-8444-444444444444",
+            "idempotency_key": "optional-reason",
+        },
+    )
+    assert presented["displayable"] is True
+    assert presented["motivation"] is None
+    assert "Nenhuma justificativa foi informada." in presented["summary"]
+    with_reason = opres.present_operation(
+        "competence.delete",
+        {
+            "period": "2026-08",
+            "expected_competence_id": "44444444-4444-4444-8444-444444444444",
+            "idempotency_key": "optional-reason",
+            "reason": "ajuste pontual",
+        },
+    )
+    assert with_reason["motivation"] == "ajuste pontual"
+    assert "Motivo: ajuste pontual." in with_reason["summary"]
+
+
 def test_destructive_flags_on_class_d():
     table = _writers()._capability_table()
     for cap in DESTRUCTIVE_CAPS:

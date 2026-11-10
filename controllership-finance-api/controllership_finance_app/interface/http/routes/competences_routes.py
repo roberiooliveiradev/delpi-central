@@ -54,7 +54,7 @@ def _domain_fail(exc: ChecklistDomainError, operation_id: str):
 
 class DeleteCompetenceRequest(BaseModel):
     expected_competence_id: str = Field(min_length=36, max_length=36)
-    reason: str = Field(min_length=3, max_length=500)
+    reason: str = Field(default="", max_length=500)
     idempotency_key: str = Field(min_length=8, max_length=128)
 
 

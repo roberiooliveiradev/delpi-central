@@ -94,7 +94,7 @@ com justificativa por efeito está no
 | clarification.open | execute | `clarification.open` | access | DIRECT_ALLOWED | direct (prepare→consent→commit compat) | MIGRATED |
 | clarification.resolve | execute | `clarification.resolve` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
 | competence.open | execute | `competence.open` | access | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
-| competence.delete | delete | `competence.delete` | manage | GOVERNED_HIGH | prepare→consent→commit | IMPLEMENTED_NOT_DEPLOYED |
+| competence.delete | delete | `competence.delete` | manage | GOVERNED_HIGH | prepare→consent→commit | DEPLOYED em 03d194e6; motivo opcional ainda local |
 | pendency.create | execute | `pendency.create` | access | DIRECT_ALLOWED | direct (prepare→consent→commit compat) | MIGRATED |
 | pendency.claim | execute | `pendency.claim` | access | DIRECT_ALLOWED | direct (prepare→consent→commit compat) | MIGRATED |
 | pendency.reassign | execute | `pendency.reassign` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |

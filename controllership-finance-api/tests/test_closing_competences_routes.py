@@ -292,12 +292,12 @@ DELETE_BODY = {
 }
 
 
-def _delete(client, period="2026-10", *, headers=None):
+def _delete(client, period="2026-10", *, headers=None, body=None):
     return client.request(
         "DELETE",
         f"/closing/competences/{period}",
         headers=headers,
-        json=DELETE_BODY,
+        json=DELETE_BODY if body is None else body,
     )
 
 
@@ -391,3 +391,73 @@ def test_delete_invalid_period_422(_auth_pipeline, repo):
     response = _delete(_client(), "2026-13", headers=_headers())
     assert response.status_code == 422
     repo.delete_competence.assert_not_called()
+
+
+def _authorize_manage(pipeline, repo):
+    pipeline["rbac"] = _rbac(permissions=[ACCESS, MANAGE])
+    repo.delete_competence.return_value = {
+        "competence_id": COMPETENCE_ID,
+        "period": "2026-10",
+        "deleted": True,
+        "deleted_at": "2026-11-09T12:00:00+00:00",
+        "audit_reference": "audit-1",
+        "replayed": False,
+    }
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {
+            "expected_competence_id": COMPETENCE_ID,
+            "idempotency_key": "delete-competence-key",
+        },
+        {**DELETE_BODY, "reason": ""},
+        {**DELETE_BODY, "reason": "ok"},
+        DELETE_BODY,
+    ],
+)
+def test_delete_accepts_optional_reason(_auth_pipeline, repo, body):
+    _authorize_manage(_auth_pipeline, repo)
+    response = _delete(_client(), headers=_headers(), body=body)
+    assert response.status_code == 200
+    assert repo.delete_competence.call_args.kwargs["reason"] == body.get(
+        "reason", ""
+    )
+
+
+def test_delete_rejects_reason_over_500(_auth_pipeline, repo):
+    _authorize_manage(_auth_pipeline, repo)
+    response = _delete(
+        _client(),
+        headers=_headers(),
+        body={**DELETE_BODY, "reason": "x" * 501},
+    )
+    assert response.status_code == 422
+    repo.delete_competence.assert_not_called()
+
+
+def test_delete_rejects_non_text_reason(_auth_pipeline, repo):
+    _authorize_manage(_auth_pipeline, repo)
+    response = _delete(
+        _client(),
+        headers=_headers(),
+        body={**DELETE_BODY, "reason": ["não", "texto"]},
+    )
+    assert response.status_code == 422
+    repo.delete_competence.assert_not_called()
+
+
+def test_reason_normalizes_blank_and_keeps_short_text():
+    from controllership_finance_app.infrastructure.persistence.competence_deletion import (
+        _reason,
+    )
+    from controllership_finance_app.domain.closing_checklist.errors import (
+        CompetenceDeleteInvalid,
+    )
+
+    assert _reason(None) == ""
+    assert _reason("   ") == ""
+    assert _reason(" ok ") == "ok"
+    with pytest.raises(CompetenceDeleteInvalid):
+        _reason("x" * 501)

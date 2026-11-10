@@ -367,6 +367,12 @@ def _present_competence_open(p: dict) -> dict:
 
 
 def _present_competence_delete(p: dict) -> dict:
+    reason = " ".join(str(p.get("reason") or "").split())
+    justification = (
+        f"Motivo: {reason}."
+        if reason
+        else "Nenhuma justificativa foi informada."
+    )
     return _simple(
         "Excluir",
         (
@@ -379,11 +385,11 @@ def _present_competence_delete(p: dict) -> dict:
             "pendências, pacotes ou outras dependências operacionais. "
             "A auditoria de abertura permanece."
         ),
-        motivation=p.get("reason"),
+        motivation=reason or None,
         summary=(
             f"Excluir a competência {_period_of(p)}, "
-            f"identificador {_short(p.get('expected_competence_id'))}, "
-            f"pelo motivo informado. A operação não remove logs."
+            f"identificador {_short(p.get('expected_competence_id'))}. "
+            f"{justification} A operação não remove logs."
         ),
     )
 

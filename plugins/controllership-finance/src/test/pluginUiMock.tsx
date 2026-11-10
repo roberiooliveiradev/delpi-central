@@ -972,6 +972,7 @@ export function createHostContainedModalShell() {
     onClose?: () => void;
     closeAriaLabel?: string;
     children?: ReactNode;
+    footer?: ReactNode;
   }) {
     if (!props.open) return null;
     return el(
@@ -988,6 +989,7 @@ export function createHostContainedModalShell() {
         "×",
       ),
       props.children,
+      props.footer,
     );
   };
 }

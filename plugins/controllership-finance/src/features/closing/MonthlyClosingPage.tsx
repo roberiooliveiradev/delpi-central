@@ -27,7 +27,6 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -446,28 +445,6 @@ export function MonthlyClosingPage({
     );
   }, [base, period, documentsSearch, documentsState]);
 
-  const competenceColumns = useMemo(() => {
-    if (!canDeleteCompetence) return COMPETENCE_COLUMNS;
-    return [
-      ...COMPETENCE_COLUMNS,
-      {
-        key: "delete",
-        header: "Ações",
-        render: (row: ClosingCompetence) => (
-          <DeleteCompetenceControl
-            competence={row}
-            onDeleted={(deletedPeriod) => {
-              setRetryNonce((current) => current + 1);
-              if (deletedPeriod === period) {
-                navigatePluginPath(`${base}/closing/monthly-closing`);
-              }
-            }}
-          />
-        ),
-      },
-    ];
-  }, [base, canDeleteCompetence, period]);
-
   const listKey = `list:${retryNonce}`;
   const currentList = listResult?.key === listKey ? listResult : null;
   const competences =
@@ -760,6 +737,24 @@ export function MonthlyClosingPage({
           onClearFilters={() =>
             navigatePluginPath(monthlyPath(base, "", tab))
           }
+          extraActions={
+            canDeleteCompetence &&
+            probe?.kind === "ready" &&
+            probe.data.status === "OPEN" ? (
+              <DeleteCompetenceControl
+                competence={probe.data}
+                onDeleted={(deletedPeriod) => {
+                  invalidateP3(deletedPeriod);
+                  invalidateReportMatrix(deletedPeriod);
+                  invalidateVisibleReports(deletedPeriod);
+                  setProbeResult(null);
+                  setCockpitResult(null);
+                  setRetryNonce((current) => current + 1);
+                  navigatePluginPath(`${base}/closing/monthly-closing`);
+                }}
+              />
+            ) : null
+          }
           tabs={
             period && !detailMode ? (
               <CfSegmentToggle<MonthlyClosingTab>
@@ -885,7 +880,7 @@ export function MonthlyClosingPage({
             <DataTableSection<ClosingCompetence>
               title="Fechamentos abertos"
               titleHint={CF_HELP.monthlyClosing.page}
-              columns={competenceColumns}
+              columns={COMPETENCE_COLUMNS}
               rows={competences}
               rowKey={(row) => row.competence_id}
               hideSearch

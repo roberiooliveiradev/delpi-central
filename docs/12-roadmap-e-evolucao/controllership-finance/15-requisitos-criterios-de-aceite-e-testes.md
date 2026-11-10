@@ -151,7 +151,7 @@ Reportar:
 
 ## CF-UX-054 — exclusão de competência
 
-Aceite da implementação, sem deploy e sem exclusão de setembro/outubro de 2026:
+A exclusão foi implantada em `03d194e6`, sem exclusão de setembro/outubro de 2026. A revisão UX-01 (motivo opcional e botão no hero) ainda não foi implantada:
 
 - `access` recebe 403; `manage` e superusuário humano reconhecido pela Core autorizam; service principal é recusado; RBAC indisponível falha fechado.
 - Competência vazia é excluída com read-back e auditoria preservada.

@@ -15,6 +15,8 @@ import { CfFeedbackMessage } from "../../app/cfFeedbackUi";
 import {
   CfActionButton,
   CfDialog,
+  CfTextAreaField,
+  CfTextField,
 } from "../../app/controllershipFinanceUi";
 
 const MONTHS = [
@@ -45,6 +47,18 @@ function errorMessage(error: unknown): string {
   return "Não foi possível concluir a exclusão.";
 }
 
+function blockedMessage(
+  reasons: CompetenceDeletionDiagnosis["reasons"],
+): string {
+  const parts = (reasons ?? [])
+    .filter((item) => item.count > 0)
+    .map((item) => `${item.count} ${item.label}`);
+  if (!parts.length) {
+    return "Exclusão bloqueada. Existe uma dependência que impede a remoção.";
+  }
+  return `Exclusão bloqueada. Existem ${parts.join(" e ")}.`;
+}
+
 export function DeleteCompetenceControl({
   competence,
   onDeleted,
@@ -62,6 +76,7 @@ export function DeleteCompetenceControl({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const idempotencyKey = useRef("");
+  const sending = useRef(false);
 
   function close() {
     if (busy) return;
@@ -84,15 +99,14 @@ export function DeleteCompetenceControl({
     }
   }
 
-  const blocked = diagnosis?.outcome !== "eligible";
+  const eligible = diagnosis?.outcome === "eligible";
+  const checking = diagnosis === null && diagnosisError === null;
   const canSubmit =
-    !busy &&
-    diagnosis?.outcome === "eligible" &&
-    reason.trim().length >= 3 &&
-    confirmation.trim() === competence.period;
+    !busy && eligible && confirmation.trim() === competence.period;
 
   async function submit() {
-    if (!canSubmit) return;
+    if (!canSubmit || sending.current) return;
+    sending.current = true;
     setBusy(true);
     setSubmitError(null);
     try {
@@ -108,41 +122,68 @@ export function DeleteCompetenceControl({
       setOpen(false);
       onDeleted(result.period);
     } catch (error) {
+      sending.current = false;
       setBusy(false);
       setSubmitError(errorMessage(error));
     }
   }
 
+  const fieldsLocked = busy || !eligible;
+
   return (
     <>
-      <span
-        onClick={(event) => event.stopPropagation()}
-        onKeyDown={(event) => event.stopPropagation()}
+      <CfActionButton
+        type="button"
+        variant="ghost"
+        className="cf-action-btn--danger"
+        onClick={() => void openDialog()}
       >
-        <CfActionButton type="button" onClick={() => void openDialog()}>
-          Excluir competência
-        </CfActionButton>
-      </span>
+        Excluir competência
+      </CfActionButton>
       {open ? (
         <CfDialog
           open
-          title={`Excluir competência ${periodLabel(competence.period)}`}
+          title={`Excluir competência — ${periodLabel(competence.period)}`}
           onClose={close}
           closeAriaLabel="Fechar exclusão de competência"
+          footer={
+            <>
+              <CfActionButton type="button" onClick={close} disabled={busy}>
+                Cancelar
+              </CfActionButton>
+              <CfActionButton
+                type="submit"
+                form="delete-competence-form"
+                disabled={!canSubmit}
+                onClick={() => void submit()}
+              >
+                {busy ? "Excluindo…" : "Confirmar exclusão"}
+              </CfActionButton>
+            </>
+          }
         >
           <form
+            id="delete-competence-form"
+            className="cf-validation-panel__form"
             onSubmit={(event) => {
               event.preventDefault();
               void submit();
             }}
           >
             <p>
-              Esta é uma operação administrativa destrutiva. A competência{" "}
-              <strong>{periodLabel(competence.period)}</strong> ({competence.period}
-              , identificador {competence.competence_id}) será removida somente
-              se não houver dependências operacionais. A auditoria de abertura
-              permanece. Não há recuperação automática.
+              A competência <strong>{periodLabel(competence.period)}</strong>{" "}
+              ({competence.period}) será removida. A operação é destrutiva e
+              não tem recuperação automática. A auditoria de abertura
+              permanece. Dependências operacionais impedem a exclusão.
             </p>
+            <p className="cf-validation-panel__doc-detail">
+              Identificador {competence.competence_id}
+            </p>
+            {checking ? (
+              <CfFeedbackMessage intent="info" title="Verificando dependências…">
+                O diagnóstico de elegibilidade ainda não terminou.
+              </CfFeedbackMessage>
+            ) : null}
             {diagnosisError ? (
               <CfFeedbackMessage intent="error" title="Diagnóstico indisponível">
                 {diagnosisError}
@@ -150,49 +191,36 @@ export function DeleteCompetenceControl({
             ) : null}
             {diagnosis?.outcome === "blocked" ? (
               <CfFeedbackMessage intent="error" title="Exclusão bloqueada">
-                {(diagnosis.reasons ?? [])
-                  .map((item) => `${item.label} (${item.count})`)
-                  .join(", ") || "dependência encontrada"}
-                .
+                {blockedMessage(diagnosis.reasons)}
               </CfFeedbackMessage>
             ) : null}
-            {diagnosis?.outcome === "eligible" ? (
-              <p>Nenhuma dependência operacional foi encontrada.</p>
+            {eligible ? (
+              <CfFeedbackMessage intent="success" title="Exclusão permitida">
+                Nenhuma dependência operacional foi encontrada.
+              </CfFeedbackMessage>
             ) : null}
-            <label>
-              Motivo
-              <textarea
-                value={reason}
-                onChange={(event) => setReason(event.target.value)}
-                required
-                minLength={3}
-                maxLength={500}
-                disabled={busy || blocked}
-              />
-            </label>
-            <label>
-              Digite {competence.period} para confirmar
-              <input
-                value={confirmation}
-                onChange={(event) => setConfirmation(event.target.value)}
-                autoComplete="off"
-                disabled={busy || blocked}
-                aria-label={`Confirmação da competência ${competence.period}`}
-              />
-            </label>
+            <CfTextAreaField
+              label="Motivo (opcional)"
+              hint="Você pode registrar uma justificativa para a auditoria."
+              rows={4}
+              fullWidth
+              maxLength={500}
+              value={reason}
+              disabled={fieldsLocked}
+              onChange={setReason}
+            />
+            <CfTextField
+              label={`Digite ${competence.period} para confirmar`}
+              fullWidth
+              value={confirmation}
+              disabled={fieldsLocked}
+              onChange={setConfirmation}
+            />
             {submitError ? (
               <CfFeedbackMessage intent="error" title="A exclusão não foi concluída">
                 {submitError}
               </CfFeedbackMessage>
             ) : null}
-            <div>
-              <CfActionButton type="button" onClick={close} disabled={busy}>
-                Cancelar
-              </CfActionButton>
-              <CfActionButton type="submit" disabled={!canSubmit}>
-                {busy ? "Excluindo…" : "Confirmar exclusão"}
-              </CfActionButton>
-            </div>
           </form>
         </CfDialog>
       ) : null}

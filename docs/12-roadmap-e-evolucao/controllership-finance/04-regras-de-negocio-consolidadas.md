@@ -431,4 +431,4 @@ FASE A não cria runtime.
 
 ### RULE-CF-UX-054 — Exclusão de competência mensal
 
-A exclusão é administrativa e exige `controllership-finance.manage` efetivo. `access` isoladamente não autoriza. Só pode ser excluída a competência sem checklist, documento, decisão, pendência, pacote, evento de processo ou outra dependência operacional. A auditoria de abertura permanece. Portal e CLARA usam o mesmo caso de uso. Detalhe em [162](./162-cf-ux-054-exclusao-competencia-mensal.md).
+A exclusão é administrativa e exige `controllership-finance.manage` efetivo. `access` isoladamente não autoriza. Só pode ser excluída a competência sem checklist, documento, decisão, pendência, pacote, evento de processo ou outra dependência operacional. A auditoria de abertura permanece. O motivo é opcional; a confirmação do período no Portal e a confirmação explícita na CLARA continuam obrigatórias. Portal e CLARA usam o mesmo caso de uso. Detalhe em [162](./162-cf-ux-054-exclusao-competencia-mensal.md).

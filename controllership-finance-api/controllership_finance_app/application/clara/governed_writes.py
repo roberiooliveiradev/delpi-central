@@ -967,7 +967,6 @@ class ClaraGovernedWrites:
                 "required_params": (
                     "period",
                     "expected_competence_id",
-                    "reason",
                     "idempotency_key",
                 ),
                 "describe": lambda p: (
@@ -981,7 +980,7 @@ class ClaraGovernedWrites:
                         expected_competence_id=str(
                             p["expected_competence_id"]
                         ),
-                        reason=p["reason"],
+                        reason=p.get("reason") or "",
                         idempotency_key=p["idempotency_key"],
                         channel="mcp",
                     )
