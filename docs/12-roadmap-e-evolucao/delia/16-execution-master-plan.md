@@ -2049,3 +2049,12 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 **Binding:** The previous INT-1 `ACCEPT_WITH_RESIDUAL` technical code review does **not** close INT-1. `INT1_IMPLEMENTATION=PROVEN_IN_CODE`; `INT1_LIVE_QWEN_EVAL=TEST_NOT_RUN`; `INT1_STAGE_ACCEPTANCE=PENDING_REAL_EVAL`; `INT1_CLOSED=NO`. No intelligence responsibility stage INT-1…INT-5 may be accepted, closed, or progressed based only on unit tests, FunctionModel, code review or documentation. Each stage requires real model inference (currently Qwen 14B), relevant actual capability/owner evidence when the task requires it, evaluation of user objective and generalization, with evaluated SHA/runtime/config, isolated nonproduction environment, independent review, and ledger evidence. `HTTP_200/GROUNDED != OBJECTIVE_SATISFIED`.
 
 **NEXT=T2_INT1_ISOLATED_REAL_QWEN_EVAL_GATE**; nonproduction isolation must be proved before any live test. If unavailable, block with `TEST_NOT_RUN`; never use prod as DEV. Rework budget exhausted means no automatic additional code correction; it does not waive real-test gate. `T2_FUNCTIONAL_ACCEPTANCE=REWORK`, `T3=NOT_AUTHORIZED`, `INT2_IMPLEMENTATION=NOT_AUTHORIZED`, `PRODUCTION_DEPLOY=NOT_AUTHORIZED`. The INT-1 code-review verdict remains historical and scoped. Detail doc 293 and ledger.
+
+
+### 2026-11-10 — INT-1 real Qwen gate: independent review BLOCKED
+
+**REVIEWED_EVAL_COMMIT:** `2fde206b9be6784a335198f2dcec0ae9d2848a29`. Real Qwen14B executed; P1/P2 evidence-positive but partial coverage; **P3=FAIL**, **G1=FAIL objective**, renamed-tool live generalization `TEST_NOT_RUN`. `INT1_STAGE_ACCEPTANCE=BLOCKED`, `INT1_CLOSED=NO`, `T2_FUNCTIONAL_ACCEPTANCE=REWORK`. Technical review of the INT-1 diff remains historical and scoped, not acceptance.
+
+**Isolation review:** distinct eval process proven, but script copies prod container environment with selective filtering, uses the prod Docker network, and binds an external-model egress proxy to `0.0.0.0` while presenting loopback to the existing guard. `CREDENTIAL_ISOLATION=NOT_PROVEN`; `EGRESS_POLICY_REVIEW_REQUIRED`. No assertion of actual exposure. Hold reuse of this evaluation harness until owner security review. See doc 293 and ledger.
+
+**NEXT=T2_INT1_EVAL_ENV_SECURITY_AND_BLOCKER_DECISION** (finite review/decision, not additional INT-1 rework). `INT1_REWORK_BUDGET_EXHAUSTED=YES`; `INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED`. No auto-advancement or parallel architecture.
