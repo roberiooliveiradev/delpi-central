@@ -1,0 +1,10 @@
+fastapi
+pydantic
+uvicorn[standard]
+python-dotenv
+PyJWT
+python-jose[cryptography]
+httpx
+pytest
+psycopg[binary]==3.2.4
+tzdata

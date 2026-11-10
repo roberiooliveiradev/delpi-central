@@ -1,0 +1,69 @@
+"""Autorização do Portal de TI — backend-first, fail-closed.
+
+- somente principal humano (`principal_type == "user"`); service tokens não
+  operam o inventário;
+- Core é a authority das permissões efetivas (`has_permission`); JWT válido
+  sem a permissão não basta;
+- `rbac_unavailable` (Core fora) falha fechado com 503;
+- toda rota de dados exige `it-portal.access` + a permissão específica.
+"""
+
+from __future__ import annotations
+
+import uuid
+
+from fastapi import Request
+
+from delpi_auth.authz_core import has_permission
+
+from it_portal_app.application.ports import Actor
+
+ACCESS = "it-portal.access"
+SERVERS_VIEW = "it-portal.servers.view"
+SERVERS_MANAGE = "it-portal.servers.manage"
+NOTES_CREATE = "it-portal.notes.create"
+ACTIONS_VIEW = "it-portal.actions.view"
+ACTIONS_MANAGE = "it-portal.actions.manage"
+
+ALL_PERMISSIONS = (
+    ACCESS,
+    SERVERS_VIEW,
+    SERVERS_MANAGE,
+    NOTES_CREATE,
+    ACTIONS_VIEW,
+    ACTIONS_MANAGE,
+)
+
+
+def _human_user(request: Request):
+    user = getattr(request.state, "user", None)
+    if user is None:
+        raise Exception("Unauthorized")
+    if getattr(user, "principal_type", None) != "user":
+        raise Exception("Forbidden")
+    if getattr(user, "rbac_unavailable", False):
+        raise Exception("Service Unavailable")
+    return user
+
+
+def authorize(request: Request, *permissions: str):
+    """Usuário humano com `it-portal.access` e todas as `permissions` efetivas."""
+    user = _human_user(request)
+    for permission in (ACCESS, *permissions):
+        if not has_permission(user, permission):
+            raise Exception("Forbidden")
+    return user
+
+
+def user_has(user, permission: str) -> bool:
+    return has_permission(user, permission)
+
+
+def actor_from(user) -> Actor:
+    """Autor real para auditoria: subject UUID resolvido pelo Core, sem fallback."""
+    try:
+        actor_id = str(uuid.UUID(str(getattr(user, "id", None))))
+    except (TypeError, ValueError):
+        raise Exception("Unauthorized") from None
+    name = (getattr(user, "name", None) or "").strip()[:200] or "Usuário"
+    return Actor(id=actor_id, name=name)

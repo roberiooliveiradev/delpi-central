@@ -3003,6 +3003,86 @@ services:
     networks:
       - delpi-network
 
+  # Portal de TI — BFF própria (inventário de servidores / planos de ação).
+  # Sem env_file: recebe só auth, Core RBAC e o próprio banco (schema it_portal).
+  it-portal-api:
+    build:
+      context: ..
+      dockerfile: it-portal-api/Dockerfile
+
+    container_name: delpi-it-portal-api
+    restart: unless-stopped
+
+    environment:
+      PORT: "8000"
+      APP_ENV: ${APP_ENV:-}
+      IT_PORTAL_API_ROOT_PATH: /apps/it-portal-api
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      DELPI_AUTH_CORE_API_URL: http://core-api:8000
+
+      KEYCLOAK_URL: ${KEYCLOAK_URL:-http://keycloak:8080/auth}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      # Persistência própria no postgres-plugins, schema isolado it_portal.
+      # IT_PORTAL_DB_USER/PASSWORD = role dedicada; vazias → PLUGINS_DB_*.
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+      IT_PORTAL_DB_USER: ${IT_PORTAL_DB_USER:-}
+      IT_PORTAL_DB_PASSWORD: ${IT_PORTAL_DB_PASSWORD:-}
+      IT_PORTAL_RUN_MIGRATIONS_ON_STARTUP: ${IT_PORTAL_RUN_MIGRATIONS_ON_STARTUP:-true}
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+    depends_on:
+      keycloak:
+        condition: service_started
+      core-api:
+        condition: service_started
+      postgres-plugins:
+        condition: service_started
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
+  it-portal:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: it-portal/Dockerfile
+      target: production
+
+    container_name: delpi-it-portal
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   cipa-api:
     build:
       context: ..

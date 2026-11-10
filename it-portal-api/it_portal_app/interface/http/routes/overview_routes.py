@@ -1,0 +1,78 @@
+"""Visão geral, capabilities do usuário e health."""
+
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, Request
+
+from it_portal_app.application.dashboard_service import DashboardService
+from it_portal_app.core.responses import ok
+from it_portal_app.interface.http.authz import (
+    ACTIONS_MANAGE,
+    ACTIONS_VIEW,
+    NOTES_CREATE,
+    SERVERS_MANAGE,
+    SERVERS_VIEW,
+    actor_from,
+    authorize,
+    user_has,
+)
+from it_portal_app.interface.http.dependencies import get_dashboard_service
+from it_portal_app.interface.http.schemas import (
+    ERROR_RESPONSES,
+    CapabilitiesOut,
+    DashboardOut,
+    Envelope,
+    HealthOut,
+)
+
+router = APIRouter()
+
+
+@router.get(
+    "/health",
+    operation_id="get_it_portal_health",
+    response_model=HealthOut,
+    tags=["Health"],
+    summary="Liveness — sem dados do inventário",
+)
+def get_it_portal_health():
+    return {"status": "online", "service": "it-portal-api"}
+
+
+@router.get(
+    "/me/capabilities",
+    operation_id="get_it_portal_capabilities",
+    response_model=Envelope[CapabilitiesOut],
+    tags=["Me"],
+    responses=ERROR_RESPONSES,
+    summary="Capabilities efetivas do usuário no Portal de TI (decididas pelo backend)",
+)
+def get_it_portal_capabilities(request: Request):
+    user = authorize(request)
+    view_servers = user_has(user, SERVERS_VIEW)
+    data = {
+        "display_name": actor_from(user).name,
+        "can_view_servers": view_servers,
+        "can_manage_servers": view_servers and user_has(user, SERVERS_MANAGE),
+        "can_create_notes": view_servers and user_has(user, NOTES_CREATE),
+        "can_view_action_plans": view_servers and user_has(user, ACTIONS_VIEW),
+        "can_manage_action_plans": view_servers and user_has(user, ACTIONS_MANAGE),
+    }
+    return ok(data, operation_id="get_it_portal_capabilities")
+
+
+@router.get(
+    "/dashboard",
+    operation_id="get_it_portal_dashboard",
+    response_model=Envelope[DashboardOut],
+    tags=["Overview"],
+    responses=ERROR_RESPONSES,
+    summary="Indicadores e listas da visão geral",
+)
+def get_it_portal_dashboard(
+    request: Request,
+    service: DashboardService = Depends(get_dashboard_service),
+):
+    user = authorize(request, SERVERS_VIEW)
+    data = service.overview(include_action_plans=user_has(user, ACTIONS_VIEW))
+    return ok(data, operation_id="get_it_portal_dashboard")
