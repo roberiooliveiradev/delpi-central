@@ -1040,6 +1040,10 @@ export type PrcAttachment = {
   sizeBytes: number;
   sha256: string;
   state: "PENDING_SCAN" | "AVAILABLE" | "REJECTED" | "QUARANTINED" | "DELETED";
+  /** Nível de inspeção aplicado ao conteúdo — hoje sempre "structural"
+   * (magic bytes + estrutura). Sem AV na plataforma: AVAILABLE não
+   * significa «scan antimalware aprovado». */
+  inspection?: string;
   uploadedBySubject?: string | null;
   uploadedByDisplayName?: string | null;
   createdAt: string;

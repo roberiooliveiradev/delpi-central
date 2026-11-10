@@ -780,6 +780,7 @@ declare module "@delpi/plugin-ui/index" {
     labels?: Partial<FileDropzoneLabels>;
     fieldLabel?: string;
     ariaLabel?: string;
+    hideInput?: boolean;
   };
 
   export function fileDropzoneBemClasses(
@@ -791,6 +792,40 @@ declare module "@delpi/plugin-ui/index" {
     classNames: FileDropzoneClassNames;
     labels: FileDropzoneLabels;
   }): ComponentType<DashboardFileDropzoneProps>;
+
+  export type AttachmentFileListItem = {
+    id: string;
+    fileName: string;
+    detail?: string;
+    busy?: boolean;
+  };
+  export type AttachmentFileListClassNames = Record<string, string>;
+  export type AttachmentFileListLabels = {
+    open: string;
+    download: string;
+    remove: string;
+    empty: string;
+  };
+  export type DashboardAttachmentFileListProps = {
+    items: AttachmentFileListItem[];
+    onOpen?: (item: AttachmentFileListItem) => void;
+    onDownload?: (item: AttachmentFileListItem) => void;
+    onRemove?: (item: AttachmentFileListItem) => void;
+    canRemove?: boolean;
+    emptyMessage?: string;
+    className?: string;
+    labels?: Partial<AttachmentFileListLabels>;
+    itemActions?: (item: AttachmentFileListItem) => ReactNode;
+  };
+
+  export function attachmentFileListBemClasses(
+    prefix: string,
+  ): AttachmentFileListClassNames;
+
+  export function createDashboardAttachmentFileList(config: {
+    classNames: AttachmentFileListClassNames;
+    labels: AttachmentFileListLabels;
+  }): ComponentType<DashboardAttachmentFileListProps>;
 
   export type AttachmentPreviewStripMode = "preview" | "manage";
   export type AttachmentPreviewStripItem = {

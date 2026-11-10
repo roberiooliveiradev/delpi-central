@@ -1,6 +1,10 @@
 import {
   ActionButton,
   AnchoredPanelPortal,
+  attachmentFileListBemClasses,
+  createDashboardAttachmentFileList,
+  createDashboardFileDropzone,
+  fileDropzoneBemClasses,
   IconButton,
   catalogSearchBarBemClasses,
   ChartCard as DelpiChartCard,
@@ -393,3 +397,24 @@ export const EngineeringAnchoredPanel = AnchoredPanelPortal;
 export { ENG_PORTAL_SCOPE as ENGINEERING_PORTAL_SCOPE };
 
 
+
+/** PRC-REF-023-F01-FIX-01 — wrappers oficiais do kit para upload de
+ * documentos. Labels de limite vêm do consumidor (contrato PRC), nunca
+ * de constante divergente. */
+export const EngineeringFileDropzone = createDashboardFileDropzone({
+  classNames: fileDropzoneBemClasses(ENG_UI_PREFIX, "file-dropzone"),
+  labels: {
+    title: "Arraste arquivos ou clique para escolher",
+    hint: "PDF ou imagens",
+  },
+});
+
+export const EngineeringAttachmentFileList = createDashboardAttachmentFileList({
+  classNames: attachmentFileListBemClasses(ENG_UI_PREFIX),
+  labels: {
+    open: "Abrir",
+    download: "Baixar",
+    remove: "Remover",
+    empty: "Nenhum arquivo selecionado.",
+  },
+});

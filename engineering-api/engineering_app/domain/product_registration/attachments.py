@@ -120,8 +120,15 @@ def validate_attachment(
 
 
 def attachment_to_api(row: dict) -> dict:
-    """DTO de saída — nunca expõe storage_key/path físico."""
+    """DTO de saída — nunca expõe storage_key/path físico.
+
+    ``inspection`` registra HONESTAMENTE o nível de inspeção aplicado:
+    hoje só validação estrutural (magic bytes + estrutura do tipo) —
+    NÃO há antivírus na plataforma (PENDING_MALWARE_SCAN_OWNER). Nunca
+    apresentar ``AVAILABLE`` como «scan antimalware aprovado».
+    """
     return {
+        "inspection": "structural",
         "attachmentId": row["id"],
         "requestId": row["request_id"],
         "originalFileName": row["original_file_name"],

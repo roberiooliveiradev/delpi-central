@@ -19,8 +19,10 @@ import { Plus, Search, Trash2, Undo2, X } from "lucide-react";
 import { HomeApiError } from "../../../api/httpClient";
 import {
   EngineeringActionButton,
+  EngineeringAttachmentFileList,
   EngineeringDetailCard,
   EngineeringDetailFieldGrid,
+  EngineeringFileDropzone,
   EngineeringFormActions,
   EngineeringIconButton,
   EngineeringLoadingActivityCard,
@@ -50,8 +52,11 @@ import {
   type PrcReferenceData,
 } from "../api/productRegistrationApi";
 import {
+  PRC_ATTACHMENT_ACCEPT,
   PRC_ATTACHMENT_MAX_COUNT,
+  PRC_ATTACHMENT_MAX_MB,
   prcCheckAttachmentFile,
+  prcFormatSize,
 } from "../prcAttachments";
 import {
   buildPrcQueueUrl,
@@ -462,12 +467,13 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
     }
   };
 
-  const onPickSupportFiles = (list: FileList | null) => {
-    if (!list?.length) return;
+  const onPickSupportFiles = (list: File[] | FileList | null) => {
+    const files = Array.from(list ?? []);
+    if (!files.length) return;
     setFileErrors({});
     const next: Record<number, string> = {};
     const accepted: File[] = [];
-    for (const f of Array.from(list)) {
+    for (const f of files) {
       const check = prcCheckAttachmentFile(f);
       if (check.ok) {
         accepted.push(f);
@@ -1363,52 +1369,63 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
       {step === 1 ? (
         <EngineeringSectionCard
           title="Documentos de apoio (opcional)"
-          subtitle="PDF ou imagem, até 10 MB por arquivo — máx. 10 documentos"
+          subtitle={`Até ${PRC_ATTACHMENT_MAX_MB} MB por arquivo · máx. ${PRC_ATTACHMENT_MAX_COUNT} arquivos`}
         >
-          <input
-            type="file"
-            multiple
-            accept=".pdf,.png,.jpg,.jpeg,.webp"
+          <EngineeringFileDropzone
             disabled={busy}
-            aria-label="Selecionar documentos de apoio"
-            onChange={(e) => {
-              onPickSupportFiles(e.target.files);
-              e.target.value = "";
+            multiple
+            accept={PRC_ATTACHMENT_ACCEPT}
+            hideInput
+            ariaLabel="Selecionar documentos de apoio"
+            onFilesSelected={onPickSupportFiles}
+            labels={{
+              title: "Arraste arquivos ou clique para escolher",
+              hint: `PDF ou imagens · até ${PRC_ATTACHMENT_MAX_MB} MB por arquivo · máx. ${PRC_ATTACHMENT_MAX_COUNT} arquivos`,
             }}
           />
           {supportFiles.length ? (
-            <ul className="engineering-prc__attach-list">
-              {supportFiles.map((f, i) => (
-                <li key={`${f.name}-${i}`}>
-                  <span>
-                    {f.name} — {(f.size / 1024 / 1024).toFixed(1)} MB
-                  </span>
-                  <EngineeringActionButton
-                    variant="ghost"
-                    disabled={busy}
-                    onClick={() =>
-                      setSupportFiles((s) => s.filter((_, j) => j !== i))
-                    }
-                  >
-                    Remover
-                  </EngineeringActionButton>
-                  {fileErrors[i] ? (
-                    <span className="engineering-prc__cell-error" role="alert">
-                      {fileErrors[i]}
-                    </span>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="engineering-prc__muted">
-              Nenhum documento selecionado — você pode enviar sem anexos.
-            </p>
-          )}
+            <>
+              <p className="engineering-prc__muted">
+                Arquivos selecionados (ainda não enviados)
+              </p>
+              <EngineeringAttachmentFileList
+                items={supportFiles.map((f, i) => ({
+                  id: `local-${i}-${f.name}`,
+                  fileName: f.name,
+                  detail: `${prcFormatSize(f.size)}${
+                    fileErrors[i] ? ` — ${fileErrors[i]}` : ""
+                  }`,
+                }))}
+                canRemove={!busy}
+                onRemove={(item) => {
+                  const idx = Number(
+                    String(item.id).split("-")[1] || -1,
+                  );
+                  if (idx >= 0) {
+                    setSupportFiles((s) => s.filter((_, j) => j !== idx));
+                    setFileErrors((prev) => {
+                      const next = { ...prev };
+                      delete next[idx];
+                      return next;
+                    });
+                  }
+                }}
+              />
+            </>
+          ) : null}
           {uploadSummary ? (
             <EngineeringStateBanner variant="error">
               {uploadSummary}
             </EngineeringStateBanner>
+          ) : null}
+          {createdRequestId && uploadSummary ? (
+            <EngineeringActionButton
+              variant="primary"
+              disabled={busy}
+              onClick={() => void submit()}
+            >
+              Tentar enviar documentos novamente
+            </EngineeringActionButton>
           ) : null}
         </EngineeringSectionCard>
       ) : null}

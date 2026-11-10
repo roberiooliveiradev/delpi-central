@@ -5,6 +5,8 @@
 export const PRC_ATTACHMENT_ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp";
 export const PRC_ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024;
 export const PRC_ATTACHMENT_MAX_COUNT = 10;
+/** Limite em MB para exibição — derivado de MAX_BYTES (fonte única). */
+export const PRC_ATTACHMENT_MAX_MB = PRC_ATTACHMENT_MAX_BYTES / 1024 / 1024;
 
 const _EXT_OK = new Set(["pdf", "png", "jpg", "jpeg", "webp"]);
 

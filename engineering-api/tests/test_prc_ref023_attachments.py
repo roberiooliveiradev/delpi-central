@@ -100,6 +100,8 @@ def test_upload_pdf_valid(
     assert att["sizeBytes"] == len(PDF)
     assert att["sha256"]
     assert att["originalFileName"] == "datasheet.pdf"
+    # Semântica honesta: inspeção estrutural, não scan antimalware.
+    assert att["inspection"] == "structural"
     assert "storageKey" not in str(att).lower()
     assert "storage_key" not in att
 
