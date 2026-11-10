@@ -6194,3 +6194,13 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **LOCAL_QWEN_EVAL:** `TEST_NOT_RUN` (isolation: prod `delpi-delia-api` only).
 - **Proposal to coordination:** `ACCEPT_WITH_RESIDUAL` — live P1–P3 and INT-3 Outcome remain open; investigation rework budget exhausted.
 - **NEXT:** `COORDINATION_FINAL_INT1_ACCEPTANCE`. No automatic further corrective implementation. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `T3/INT2/INT3/INT4=NOT_AUTHORIZED`.
+
+
+| DELIA-C3-T2-INT1-FINAL-INDEPENDENT-ACCEPTANCE-01 | Coordination code review of 3bb2be887b05562a6d85301a86ecf5d2e5ae5883: F1/F2 corrected; F3 FunctionModel proves scripted Agent wiring/rename (NOT live autonomous semantic selection); F4 SUCCESS+coverage_unknown still not objective satisfied. Single INT1 rework exhausted; technical ACCEPT_WITH_RESIDUAL, PO function FAIL, Qwen real eval TEST_NOT_RUN. No prod/T3. | INT1_TECHNICAL=ACCEPT_WITH_RESIDUAL; T2_FUNCTIONAL=REWORK; NEXT=T2_INT_NEXT_BOUNDED_DESIGN_DECISION |
+
+### INT-1 final coordination verdict (2026-11-10)
+
+- **REVIEWED_SHA:** `3bb2be887b05562a6d85301a86ecf5d2e5ae5883`. `INT1_REWORK_BUDGET_EXHAUSTED=YES`; **no further INT1 rework authorized**.
+- **Evidence:** code/diff and tests inspected through GitHub; pytest GREEN as reported by Cursor, not independently rerun by coordination. F1 corrected material arg retries; F2 no class-based relevance; F3 integration uses Pydantic AI `FunctionModel` with programmed choices, not live LLM semantic generalization; F4 adds honest `coverage_unknown` but preserves `SUCCESS` without plan.
+- **Formal split:** `INT1_TECHNICAL_VERDICT=ACCEPT_WITH_RESIDUAL`; `INT1_LIVE_QWEN_EVAL=TEST_NOT_RUN`; `PO_MANUAL_HOMOLOGATION=FAIL`; `T2_FUNCTIONAL_ACCEPTANCE=REWORK`. Earlier release remains historical, not PO acceptance.
+- **NEXT:** `T2_INT_NEXT_BOUNDED_DESIGN_DECISION` (confirm semantic objective understanding/coverage owners, INT-2 vs INT-3 sequencing and isolated local Qwen evaluation). No new code/deploy/T3/INT2 automatic permission.
