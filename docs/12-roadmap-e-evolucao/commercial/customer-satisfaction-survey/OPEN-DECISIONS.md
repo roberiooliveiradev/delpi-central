@@ -12,10 +12,14 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ### Q01 — Unidade de resposta
 **Pergunta:** A pesquisa poderá receber apenas uma resposta por empresa cliente, ou múltiplas respostas de contatos da mesma empresa? Se múltiplas, como representar cada empresa nos indicadores?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** convites, unicidade, taxa de resposta, IGS/NPS e comparações.
-
+**Status:** DECIDED (informado pelo solicitante; validação pelo owner comercial conforme governança).
+**Resposta:** Cada empresa cliente terá somente uma resposta por campanha de pesquisa. Não permitir segunda resposta para a mesma empresa na mesma campanha.
+**Owner da decisão:** Comercial — validação formal PENDING.
+**Data:** 2026-11-10.
+**Fonte:** Resposta do solicitante na conversa: "cada empresa cliente só terá uma resposta".
+**Justificativa:** Ainda não informada.
+**Impacto:** A unidade de contabilização será a empresa cliente por campanha. Convidar mais de um contato, seleção do respondente autorizado, reenvios e eventuais correções da resposta continuam PENDING; não pressupor uma única pessoa de contato ou regra automática de deduplicação por CNPJ.
+ 
 ### Q02 — Elegibilidade e amostragem
 **Pergunta:** Quais clientes entram em cada campanha (todos os ativos, clientes estratégicos, volume mínimo, período de compra, exclusões)?
 **Status:** PENDING
@@ -148,4 +152,4 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ## Próxima pergunta em entrevista
 
-**Q01** — Apenas uma resposta por empresa cliente ou várias respostas por diferentes contatos da mesma empresa?
+**Q02** — Quais empresas clientes deverão ser incluídas em cada campanha (todos os clientes ativos, apenas clientes com compras recentes, seleção manual ou outro critério)?
