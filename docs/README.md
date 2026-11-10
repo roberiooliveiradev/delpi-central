@@ -19,6 +19,7 @@ Documentação técnica do monorepo **delpi-central** (produto **Minha DELPI**).
 
 | Iniciativa | Entrada | Objetivo |
 |---|---|---|
+| **Homologação VM srv-api** | [02-infraestrutura/homologacao-vm-srv-api.md](./02-infraestrutura/homologacao-vm-srv-api.md) | Registro de continuidade, decisões, evidências, bloqueios e retomada da homologação |
 | **Minha DELPI Copilot** | [12-roadmap-e-evolucao/minha-delpi-copilot/README.md](./12-roadmap-e-evolucao/minha-delpi-copilot/README.md) | IA como segunda interface operacional da plataforma: explicar, analisar, navegar e executar capabilities autorizadas |
 
 ---
