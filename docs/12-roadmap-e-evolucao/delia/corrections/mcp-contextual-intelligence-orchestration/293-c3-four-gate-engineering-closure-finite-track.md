@@ -434,3 +434,16 @@ A revisão confirmou o reuso do `PydanticAiInvestigationOrchestrator` + native P
 **Gate operacional anterior ao live eval:** PROD e DEV atualmente compartilham `container_name: delpi-delia-api` em compose e o executor não demonstrou runtime DEV independente. Provar isolamento de runtime, rede, portas, env, arquivos, credenciais, volume e acesso autorizado antes de testar Qwen14B local. Não modificar/reiniciar container produtivo, não usar produção como DEV; se indisponível, executar somente testes determinísticos e reportar `LOCAL_LIVE_EVAL=TEST_NOT_RUN`.
 
 **Escopo INT-1 autorizado:** baseline/teste RED de seleção/progresso e erros reais P2/P3; extensão mínima do Agent investigativo na interpretação de relevância, schema/owner recovery e discovery non-citability, preservando autonomia semântica e a autoridade de Application Outcome. Verificar primeiro comportamento de `_finalize_agent_collected_attempts` e `_apply_declared_answer` com ausência de plan; não duplicar INT-2/INT-3/INT-4. Testes focados consumer + um metamórfico provider/schema rename e Qwen 14B em DEV isolado apenas. **PRODUCTION_DEPLOY=NOT_AUTHORIZED; T3=NOT_AUTHORIZED; INT2=NOT_AUTHORIZED.** Submeter diff e evidências para revisão crítica; implementação não se autoaceita.
+
+### Stamp — INT-1 local isolation + investigative rework executed (2026-11-10)
+
+**TASK:** `DELIA-C3-T2-INT1-LOCAL-ISOLATION-AND-INVESTIGATIVE-REWORK-01`.  
+**BASE_HEAD:** `429f1317539d77df370b9c577998f2f22676a7fd`.  
+**EXISTING_EQUIVALENT=YES; REUSE_DECISION=EXTEND** — `PydanticAiInvestigationOrchestrator` only; no second Agent/planner/engine.  
+**LOCAL_ISOLATION=PROVEN_HOST_PYTEST** — host `delia-api/.venv` process; `DELIA_ENV` unset; prod container `delpi-delia-api` (`project=infra`, `DELIA_ENV=production`) not restarted/reconfigured/used. `docker-compose.dev.yml` still shares `container_name: delpi-delia-api` → live compose DEV **not** used.  
+**LOCAL_LIVE_EVAL=TEST_NOT_RUN** — no isolated live Qwen runtime proven without colliding with prod container_name; deterministic RED/GREEN + metamorphic only.  
+**PYDANTIC_AI_VERSION=2.50.0; MODEL_ID=qwen/qwen3-14b (target; live not run); INSTRUCTION_VERSION=generalist-semantic-v2.**  
+**DIFF (delia-api):** `classify_investigation_progress` + finalize `related_observations_insufficient`; investigation projections (`investigation_progress`, `owner_validation_hint`); one-shot `owner_argument_rejected` ModelRetry; equivalent-rejection non-progress; COMPLETE+uncovered identifiers ModelRetry; instructions v2. Tests: `tests/test_int1_investigative_progress_rework.py` (R1–R6 + metamorphic) GREEN; sibling suites GREEN.  
+**INT1_STATUS=READY_FOR_INDEPENDENT_REVIEW** (implementation does not self-accept).  
+**OPEN:** plan-absent objective-kind gap remains Application Outcome (INT-3); live P1–P3 Qwen still pending isolated DEV.  
+**NEXT:** `COORDINATION_INT1_INDEPENDENT_REVIEW`. **PRODUCTION_DEPLOY=NOT_AUTHORIZED; T3=NOT_AUTHORIZED; INT2=NOT_AUTHORIZED.** Sem avanço de fase.

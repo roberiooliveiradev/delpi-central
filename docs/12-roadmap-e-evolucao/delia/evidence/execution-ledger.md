@@ -6172,3 +6172,15 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Conditional authorization:** trace and fix selection/progress/recovery/discovery tagging in investigation scope; preserve App final Outcome responsibility, avoid compulsory plan/tool calls for trivial turns and provider-name shortcuts.
 - **Isolation blocker:** compose.dev shares `container_name: delpi-delia-api`; Qwen live tests only if separate local runtime can be proven non-production without touching/restarting production, otherwise `TEST_NOT_RUN`.
 - **NEXT:** `T2_INT1_LOCAL_ISOLATION_AND_INVESTIGATIVE_REWORK`; focused RED/GREEN + metamorphic and local live if safe. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`, `T3=NOT_AUTHORIZED`, `INT2=NOT_AUTHORIZED`. T2 functional status remains REWORK.
+
+| DELIA-C3-T2-INT1-LOCAL-ISOLATION-AND-INVESTIGATIVE-REWORK-01 | Host pytest isolation proven (prod container untouched); EXTEND existing PydanticAiInvestigationOrchestrator with investigation_progress / owner_argument ModelRetry / related_observations_insufficient; R1–R6+metamorphic GREEN; LOCAL_LIVE_EVAL=TEST_NOT_RUN (compose.dev shares container_name) | INT1=READY_FOR_INDEPENDENT_REVIEW; NEXT=COORDINATION_INT1_INDEPENDENT_REVIEW |
+
+### INT-1 local isolation + investigative rework — 2026-11-10
+
+- **BASE_HEAD:** `429f1317539d77df370b9c577998f2f22676a7fd`. **PYDANTIC_AI_VERSION=2.50.0**. **INSTRUCTION_VERSION=`generalist-semantic-v2`**.
+- **LOCAL_ISOLATION:** host `delia-api/.venv` pytest; `DELIA_ENV` unset; prod `delpi-delia-api` project=`infra` / `DELIA_ENV=production` not used/restarted. compose.dev shares `container_name` → live DEV not started.
+- **REUSE:** EXTEND only — no new Agent/planner/registry. Progress classes NEW_INFORMATION / NO_PROGRESS / RELATED_INSUFFICIENT / DISCOVERY_ONLY on projections; finalize tags `related_observations_insufficient` when related evidence fails plan obligations/REF05; one-shot owner_argument_rejected ModelRetry + equivalent-rejection non-progress; COMPLETE with uncovered identifiers → ModelRetry.
+- **TESTS:** `tests/test_int1_investigative_progress_rework.py` + sibling instruction/generalization/G1/native-first/semantic/real-owner suites GREEN.
+- **LOCAL_LIVE_EVAL:** `TEST_NOT_RUN` (P1–P3 Qwen). Deterministic generalization PASS (rename-invariant progress).
+- **OPEN:** plan-absent objective-kind Outcome (INT-3); live Qwen P1–P3 pending isolated runtime.
+- **Veredicto:** `INT1_STATUS=READY_FOR_INDEPENDENT_REVIEW` (não se autoaceita). `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `INT2=NOT_AUTHORIZED`; `T3=NOT_AUTHORIZED`. **NEXT:** `COORDINATION_INT1_INDEPENDENT_REVIEW`.

@@ -1959,6 +1959,77 @@ def _is_business_evidence_attempt(
     return True
 
 
+# Investigation-side progress classes (INT-1). Signals for the Agent
+# and finalize limitations — never a second Outcome authority.
+INVESTIGATION_PROGRESS_NEW = "NEW_INFORMATION"
+INVESTIGATION_PROGRESS_NONE = "NO_PROGRESS"
+INVESTIGATION_PROGRESS_RELATED = "RELATED_INSUFFICIENT"
+INVESTIGATION_PROGRESS_DISCOVERY = "DISCOVERY_ONLY"
+
+
+def classify_investigation_progress(
+    attempt: GovernedCapabilityAttempt,
+    *,
+    prior_content_fingerprints: frozenset[str] | set[str] = frozenset(),
+    uncovered_after: Sequence[str] = (),
+    plan: "SemanticInvestigationPlan | None" = None,
+    operation_class: str | None = None,
+) -> str:
+    """Classify one observation's contribution to the user objective.
+
+    Deterministic, contract-driven, owner-/tool-name agnostic. Discovery
+    catalogs are never business progress. A SUCCESS that fails every
+    declared material obligation, or that leaves named identifiers
+    uncovered, is related-but-insufficient — not objective completion.
+    """
+    if "discovery_metadata_observation" in attempt.limitations:
+        return INVESTIGATION_PROGRESS_DISCOVERY
+    if attempt.status is not GovernedCapabilityStatus.SUCCESS:
+        return INVESTIGATION_PROGRESS_NONE
+    if not _is_business_evidence_attempt(attempt):
+        return INVESTIGATION_PROGRESS_NONE
+    body = (attempt.content or "").strip()
+    content_fp = hashlib.sha256(body.encode("utf-8")).hexdigest()[:24]
+    if content_fp in prior_content_fingerprints:
+        return INVESTIGATION_PROGRESS_NONE
+    obligations = (
+        plan.evidence_needed
+        if plan is not None and plan.evidence_needed
+        else ()
+    )
+    if obligations:
+        if not any(
+            _attempt_satisfies_obligation(attempt, obligation)
+            for obligation in obligations
+        ):
+            return INVESTIGATION_PROGRESS_RELATED
+    # Named identifiers remain open and this observation produced no
+    # authoritative root — related text/docs without identity coverage.
+    if uncovered_after and _authoritative_structure_root(attempt) is None:
+        return INVESTIGATION_PROGRESS_RELATED
+    op = (operation_class or "").strip().upper()
+    if (
+        plan is not None
+        and getattr(plan.goal, "goal_class", None) == "read"
+        and op == "ANALYSIS"
+        and not obligations
+    ):
+        # Declared READ goal + ANALYSIS-class observation without a
+        # binding obligation: related aggregate, not registry evidence.
+        return INVESTIGATION_PROGRESS_RELATED
+    return INVESTIGATION_PROGRESS_NEW
+
+
+def observation_content_fingerprint(
+    attempt: GovernedCapabilityAttempt,
+) -> str | None:
+    """Stable fingerprint of observation body for no-progress detection."""
+    body = (attempt.content or "").strip()
+    if not body:
+        return None
+    return hashlib.sha256(body.encode("utf-8")).hexdigest()[:24]
+
+
 def _authoritative_structure_root(
     attempt: GovernedCapabilityAttempt,
 ) -> str | None:
@@ -2840,6 +2911,7 @@ def _finalize_agent_collected_attempts(
                     admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
                     limitations=(
                         LIMITATION_INSUFFICIENT_EVIDENCE,
+                        "related_observations_insufficient",
                         "ref05_target_unbound",
                         *(
                             f"ref05_missing_target:{token}"
@@ -2847,6 +2919,9 @@ def _finalize_agent_collected_attempts(
                         ),
                     ),
                     error_code="investigation_target_binding_failed",
+                    content=business[0].content,
+                    provenance=business[0].provenance,
+                    outcome=business[0].outcome,
                 )
         if obligations and obligations != targets:
             coverage = _evaluate_material_obligations(
@@ -2854,12 +2929,14 @@ def _finalize_agent_collected_attempts(
                 business=business,
             )
             if any(state != OBLIGATION_SATISFIED for _, state in coverage):
+                related = ("related_observations_insufficient",) if business else ()
                 return GovernedCapabilityAttempt(
                     status=GovernedCapabilityStatus.NOT_APPLICABLE,
                     correlation_id=correlation,
                     admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
                     limitations=tuple(
                         [LIMITATION_INSUFFICIENT_EVIDENCE]
+                        + list(related)
                         + [
                             f"obligation_{state.lower()}:{oid}"
                             for oid, state in coverage
@@ -2867,6 +2944,11 @@ def _finalize_agent_collected_attempts(
                         ]
                     )[:24],
                     error_code="investigation_incomplete_coverage",
+                    content=business[0].content if business else None,
+                    provenance=(
+                        business[0].provenance if business else None
+                    ),
+                    outcome=business[0].outcome if business else None,
                 )
         partial = _partial_coverage()
         if partial is not None:
@@ -2889,6 +2971,7 @@ def _finalize_agent_collected_attempts(
                     limitations=tuple(
                         [LIMITATION_INSUFFICIENT_EVIDENCE]
                         + ["material_obligations_incomplete"]
+                        + ["related_observations_insufficient"]
                         + [
                             f"obligation_{state.lower()}:{oid}"
                             for oid, state in coverage
@@ -2896,6 +2979,16 @@ def _finalize_agent_collected_attempts(
                         ]
                     )[:24],
                     error_code="investigation_incomplete_coverage",
+                    content=(
+                        "\n\n---\n\n".join(
+                            (item.content or "").strip()
+                            for item in business
+                            if (item.content or "").strip()
+                        )[:MAX_RENDER_CONTENT_CHARS]
+                        or None
+                    ),
+                    provenance=business[-1].provenance,
+                    outcome=business[-1].outcome,
                 )
         partial = _partial_coverage()
         if partial is not None:

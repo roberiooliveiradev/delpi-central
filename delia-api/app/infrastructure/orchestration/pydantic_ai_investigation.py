@@ -32,7 +32,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Literal, Mapping
+from typing import Any, Callable, Literal, Mapping, Sequence
 
 from app.application.capability_provision.contracts import (
     InvestigationAnswer,
@@ -45,11 +45,17 @@ from app.application.capability_provision.governed_stage_gates import (
     SupportsGovernedStageGates,
 )
 from app.application.capability_provision.semantic_capability_support import (
+    INVESTIGATION_PROGRESS_DISCOVERY,
+    INVESTIGATION_PROGRESS_NEW,
+    INVESTIGATION_PROGRESS_NONE,
+    INVESTIGATION_PROGRESS_RELATED,
     _IDENTIFIER_LITERAL_RE,
     _LAST_CATALOG_FAILURES,
     _authoritative_structure_root,
     _emit_activity,
     _is_business_evidence_attempt,
+    classify_investigation_progress,
+    observation_content_fingerprint,
 )
 from app.application.interaction.activity import (
     ActivityEventSink,
@@ -67,6 +73,7 @@ from app.application.model_invocation.contracts import (
     ConversationContextTurn,
 )
 from app.application.specialist_interop.errors import (
+    OWNER_ARGUMENT_REJECTED,
     SpecialistInteropError,
 )
 
@@ -113,7 +120,7 @@ def build_openai_compatible_investigation_model(
 # text owner-/tool-agnostic: live capability names, schemas and
 # argument contracts come from tools/list + each tool description —
 # never from hardcoded specialist workflows here.
-_INVESTIGATION_INSTRUCTION_VERSION = "generalist-semantic-v1"
+_INVESTIGATION_INSTRUCTION_VERSION = "generalist-semantic-v2"
 
 _INVESTIGATION_INSTRUCTIONS = """\
 You are DÉLIA's generalist semantic investigation agent for one user turn.
@@ -127,7 +134,11 @@ Rules:
 - Examine contracts: required fields, types, enums and nested objects
   come from the tool schema you received. Build arguments exactly as
   that schema declares.
-- Select capabilities semantically for the user's need. After each
+- Select capabilities semantically for the user's need. Match the
+  observation kind to the objective using live contracts: an aggregate
+  or summary capability does not satisfy a request for enumerated
+  registry records; a documentation or knowledge capability does not
+  satisfy a request for operational business records. After each
   result, decide the next call yourself (including other owners). Do
   not stop after merely listing or describing capabilities when the
   user asked for business data.
@@ -140,15 +151,26 @@ Rules:
 - Interpret results as observations. Prefer owner-declared business
   content with provenance over metadata-only listings. Preserve owner
   limitations such as partial completeness.
+- Use investigation_progress on each observation: NEW_INFORMATION means
+  objective progress; RELATED_INSUFFICIENT means the result is related
+  but does not satisfy the objective — keep investigating with a more
+  appropriate live capability; DISCOVERY_ONLY and NO_PROGRESS are never
+  citable business evidence. evidence_citable=false never grounds an
+  answer.
+- When owner_validation_hint is present after an argument rejection,
+  rebuild arguments from that hint and the tool schema — do not repeat
+  an equivalent rejected payload.
 - Verify sufficiency and provenance against the user's identifiers
-  before concluding. Continue investigating when evidence is missing.
+  before concluding. Continue investigating when evidence is missing
+  or only related-but-insufficient.
 - If a tool result lists uncovered_user_identifiers, call an owner
   tool again for each remaining identifier before you stop. One
   observation does not finish a request that names several identifiers.
   A knowledge or documentation read does not cover an identifier that
   still lacks an authoritative owner root.
-- If a tool result says repeated_failure_no_progress, do not call that
-  tool again with the same arguments. Change the arguments or choose
+- If a tool result says repeated_failure_no_progress or
+  repeated_observation_no_progress, do not call that tool again with
+  equivalent arguments. Change the arguments materially or choose
   another owner tool.
 - If the prompt says an owner failed to enumerate, that owner is
   unavailable for this turn. Do not treat the smaller tool list as
@@ -162,9 +184,11 @@ Rules:
   ask the user to restate identifiers already supplied.
 - Never request PREPARE/ACT/write tools; they are not exposed.
 - Never invent business facts when tools fail or return incomplete data.
-  Communicate real limitations honestly.
+  Communicate real limitations honestly. Prefer status insufficient or
+  partial with unmet_obligations when only related observations exist.
 - Do not claim an investigation is complete; Application finalizes from
-  authoritative evidence coverage.
+  authoritative evidence coverage. A GROUNDED-looking observation alone
+  does not prove the user objective is satisfied.
 - Never transform metadata, memory, or model output into authorization.
 - Your final answer is delivered ONLY through the structured output
   contract — a valid JSON object or output-tool call matching the
@@ -299,6 +323,9 @@ class InvestigationDeps:
     non_progress_calls: dict[str, dict[str, Any]] = field(
         default_factory=dict
     )
+    # Content fingerprints of prior SUCCESS observations — used to
+    # detect repeated equivalent bodies that do not advance coverage.
+    observed_content_fingerprints: set[str] = field(default_factory=set)
     # One-shot flag: the insufficiency ModelRetry may buy a single
     # extra investigation pass per run — a re-declared insufficiency
     # must never burn the whole retry budget as agent_error.
@@ -307,6 +334,9 @@ class InvestigationDeps:
     # via ModelRetry; a second bad declaration is handled by the
     # deterministic acceptor, never by burning more retry budget.
     evidence_ref_retry_used: bool = False
+    # One-shot owner_argument_rejected recovery via ModelRetry with
+    # the owner validation hint — never infinite equivalent retries.
+    owner_argument_retry_used: bool = False
 
 
 def _bounded_json(payload: Any, *, limit: int = 6000) -> str:
@@ -392,7 +422,13 @@ def _declared_container_only(declared: object) -> bool:
 
 
 def _attempt_projection(
-    attempt: GovernedCapabilityAttempt, *, observation_index: int
+    attempt: GovernedCapabilityAttempt,
+    *,
+    observation_index: int,
+    uncovered_after: Sequence[str] | tuple[str, ...] | list[str] = (),
+    plan: object | None = None,
+    operation_class: str | None = None,
+    prior_content_fingerprints: frozenset[str] | set[str] = frozenset(),
 ) -> dict[str, Any]:
     structured = (
         attempt.outcome.structured
@@ -475,7 +511,14 @@ def _attempt_projection(
                 root_code = code.strip()[:120]
         elif isinstance(root, str) and root.strip():
             root_code = root.strip()[:120]
-    return {
+    progress = classify_investigation_progress(
+        attempt,
+        prior_content_fingerprints=prior_content_fingerprints,
+        uncovered_after=tuple(uncovered_after),
+        plan=plan if plan is not None else None,  # type: ignore[arg-type]
+        operation_class=operation_class,
+    )
+    projection: dict[str, Any] = {
         "observation_index": observation_index,
         "evidence_handle": f"obs:{observation_index}",
         # Same deterministic classification the governed acceptor
@@ -483,6 +526,7 @@ def _attempt_projection(
         # observations the model may READ, never citable business
         # evidence. Report them under limitations instead.
         "evidence_citable": _is_business_evidence_attempt(attempt),
+        "investigation_progress": progress,
         "status": attempt.status.value,
         "content": (attempt.content or "")[:2000] or None,
         "limitations": list(attempt.limitations)[:12],
@@ -513,6 +557,7 @@ def _attempt_projection(
             else None
         ),
         "authoritative_root_code": root_code,
+        "operation_class": operation_class,
         "candidates": candidate_summaries or None,
         "source_ids": [
             ref.source_id
@@ -523,6 +568,20 @@ def _attempt_projection(
             )
         ][:8],
     }
+    owner_hint = getattr(attempt, "owner_hint", None)
+    if isinstance(owner_hint, str) and owner_hint.strip():
+        projection["owner_validation_hint"] = owner_hint.strip()[:500]
+    if progress == INVESTIGATION_PROGRESS_RELATED:
+        projection["coverage_note"] = (
+            "Observation is related but does not satisfy the user "
+            "objective. Choose a live capability whose contract "
+            "matches the requested evidence kind."
+        )
+    elif progress == INVESTIGATION_PROGRESS_DISCOVERY:
+        projection["coverage_note"] = (
+            "Discovery/catalog metadata is not business evidence."
+        )
+    return projection
 
 
 def uncovered_user_identifiers(
@@ -1138,9 +1197,8 @@ class PydanticAiInvestigationOrchestrator:
             )
             focused_query = str(raw_args.get("query") or "").strip()
             invoke_text = focused_query or ctx.deps.input_text
-            fingerprint = _invocation_fingerprint(
-                str(capability_id or "").strip(), raw_args
-            )
+            cap_key = str(capability_id or "").strip()
+            fingerprint = _invocation_fingerprint(cap_key, raw_args)
             previous = ctx.deps.non_progress_calls.get(fingerprint)
             if previous is not None:
                 repeated = dict(previous)
@@ -1148,6 +1206,22 @@ class PydanticAiInvestigationOrchestrator:
                 if not previous.get("authoritative_root_code"):
                     repeated["repeated_failure_no_progress"] = True
                     repeated["error_class"] = "repeated_equivalent_failure"
+                    repeated["investigation_progress"] = (
+                        INVESTIGATION_PROGRESS_NONE
+                    )
+                return _proj(repeated)
+            # Equivalent owner rejection with different args still
+            # counts as non-progress after the first recovery attempt.
+            failure_fp = f"{cap_key}\x00error:{OWNER_ARGUMENT_REJECTED}"
+            prior_reject = ctx.deps.non_progress_calls.get(failure_fp)
+            if prior_reject is not None and ctx.deps.owner_argument_retry_used:
+                repeated = dict(prior_reject)
+                repeated["repeated_equivalent_call"] = True
+                repeated["repeated_failure_no_progress"] = True
+                repeated["error_class"] = "repeated_equivalent_failure"
+                repeated["investigation_progress"] = (
+                    INVESTIGATION_PROGRESS_NONE
+                )
                 return _proj(repeated)
             inner_keys = (
                 ",".join(sorted(str(k) for k in raw_args["arguments"]))[
@@ -1167,7 +1241,7 @@ class PydanticAiInvestigationOrchestrator:
                 ctx.deps.correlation,
             )
             attempt = ctx.deps.gates._governed_semantic_tool_invoke(
-                capability_id=str(capability_id or "").strip(),
+                capability_id=cap_key,
                 arguments=raw_args,
                 input_text=invoke_text,
                 correlation=ctx.deps.correlation,
@@ -1180,32 +1254,79 @@ class PydanticAiInvestigationOrchestrator:
             )
             ctx.deps.collected.append(attempt)
             index = len(ctx.deps.collected) - 1
-            projection = _attempt_projection(
-                attempt, observation_index=index
-            )
+            # Uncovered identifiers AFTER this observation — used both
+            # for progress classification and Agent coverage hints.
             uncovered = uncovered_user_identifiers(
                 ctx.deps.input_text, ctx.deps.collected
             )
+            op_class = None
+            catalog_entry = next(
+                (
+                    entry
+                    for entry in live_catalog
+                    if isinstance(entry, Mapping)
+                    and str(entry.get("capability_id") or "") == cap_key
+                ),
+                None,
+            )
+            if isinstance(catalog_entry, Mapping):
+                raw_op = catalog_entry.get("operation_class")
+                if isinstance(raw_op, str) and raw_op.strip():
+                    op_class = raw_op.strip()
+            projection = _attempt_projection(
+                attempt,
+                observation_index=index,
+                uncovered_after=uncovered,
+                plan=ctx.deps.investigation_plan,
+                operation_class=op_class,
+                prior_content_fingerprints=(
+                    ctx.deps.observed_content_fingerprints
+                ),
+            )
             if uncovered:
                 projection["uncovered_user_identifiers"] = uncovered
-                projection["coverage_note"] = (
-                    "Named identifiers still lack an authoritative "
-                    "observation. Choose the next owner tool yourself."
-                )
+                if "coverage_note" not in projection:
+                    projection["coverage_note"] = (
+                        "Named identifiers still lack an authoritative "
+                        "observation. Choose the next owner tool yourself."
+                    )
+            content_fp = observation_content_fingerprint(attempt)
+            if content_fp is not None:
+                if content_fp in ctx.deps.observed_content_fingerprints:
+                    projection["repeated_observation_no_progress"] = True
+                    projection["investigation_progress"] = (
+                        INVESTIGATION_PROGRESS_NONE
+                    )
+                else:
+                    ctx.deps.observed_content_fingerprints.add(content_fp)
             _logger.info(
                 "orchestration engine=pydantic_ai "
                 "stage=investigation decision=tool_observed "
                 "capability=%s action=%s root=%s uncovered=%s "
-                "status=%s error=%s correlation_id=%s",
+                "progress=%s status=%s error=%s correlation_id=%s",
                 capability_id,
                 projection.get("action_id"),
                 projection.get("authoritative_root_code"),
                 ",".join(uncovered[:8]),
+                projection.get("investigation_progress"),
                 attempt.status.value if attempt.status else "-",
                 attempt.error_code or "-",
                 ctx.deps.correlation,
             )
             ctx.deps.non_progress_calls[fingerprint] = dict(projection)
+            if attempt.error_code == OWNER_ARGUMENT_REJECTED:
+                ctx.deps.non_progress_calls[failure_fp] = dict(projection)
+                hint = projection.get("owner_validation_hint") or (
+                    "owner rejected the proposed arguments"
+                )
+                if not ctx.deps.owner_argument_retry_used:
+                    ctx.deps.owner_argument_retry_used = True
+                    raise ModelRetry(
+                        f"Owner rejected arguments: {hint}. "
+                        "Rebuild arguments from the published tool "
+                        "schema and any owner_validation_hint — do not "
+                        "resubmit an equivalent rejected payload."
+                    )
             return _proj(projection)
 
         # Prefetch live catalog once so each capability is a native tool.
@@ -1729,6 +1850,26 @@ class PydanticAiInvestigationOrchestrator:
                     "supply it now; if the question is purely "
                     "conceptual, re-declare with honest limitations."
                 )
+            # INT-1: COMPLETE while named identifiers remain uncovered
+            # is not objective satisfaction — buy one more pass or
+            # force an honest re-declaration with unmet obligations.
+            if (
+                output.status is InvestigationAnswerStatus.COMPLETE
+                and not ctx.deps.insufficiency_retry_used
+                and ctx.deps.tool_calls < self._tool_calls_limit
+            ):
+                still_open = uncovered_user_identifiers(
+                    ctx.deps.input_text, ctx.deps.collected
+                )
+                if still_open:
+                    ctx.deps.insufficiency_retry_used = True
+                    raise ModelRetry(
+                        "Named identifiers still lack authoritative "
+                        f"observations: {still_open[:8]}. Call an "
+                        "owner capability that can observe each "
+                        "remaining identifier, or re-declare as "
+                        "insufficient/partial with unmet_obligations."
+                    )
             # Cosmetic normalization only — the internal evidence
             # handle ``[obs:N]`` is an implementation detail, never
             # user-facing answer text. Evidence binding is unchanged.
