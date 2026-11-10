@@ -100,6 +100,13 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 - Só após inventário e revisão de segurança escolher o adaptador: coletor local mínimo, agente já instalado, SSH com chave/conta restrita ou API existente. Planejar Windows depois; Sophos Matriz SFOS 21.5 depois. Não iniciar captura remota ativa sem contrato, credenciais e allowlist aprovados.
 - Coletar observações com `source`, `observed_at`, identidade estável e conciliação idempotente contra cadastros preexistentes. Dados curados manualmente não são sobrescritos; divergências viram candidatos para revisão. A Etapa 3A/3B permanece adiada.
 
+**E4 / piloto srv-api — evidência de diagnóstico local (10/11/2026, PROVEN na saída fornecida pelo PO):**
+- Host Linux com Zabbix Agent 2 **7.0.23**, serviço `zabbix-agent2` ativo e habilitado. Hostname e memória disponível retornaram valores no teste `-t`; `system.cpu.num` retornou `ZBX_NODATA` (**INCONCLUSIVE**, não caracteriza falha do serviço sem verificação adicional).
+- Zabbix `Server`, `ServerActive` e `Hostname` configurados (destinos não expostos; **owner do servidor Zabbix e acesso à API ainda TO_INVENTORY**). Não concluir que a DELPI já controla a fonte de monitoramento.
+- Docker em operação com **114 containers** observados no instante da coleta. A lista de redes revelou `inventario-ti_default`: indício de projeto de inventário pré-existente, mas **TO_INVENTORY** quanto a containers, finalidade, manutenção e reuso. Não criar outro coletor até inspecionar essa capacidade.
+- Os testes foram apenas leituras locais; **não existe comprovação de coleta automatizada integrada ao Portal de TI**. Recomendação: verificar containers e labels Compose da rede `inventario-ti_default` e a capacidade Zabbix antes de escolher implementação, sem adicionar acesso/credenciais nem modificar serviços.
+- **Risco operacional observado:** swap totalmente utilizada e disco principal próximo de 83% na amostra anterior; exigir orçamento de recursos, volume, agendamento controlado e fail-safe no piloto.
+
 **Objetivo da E4 (PLANNED):** minimizar o cadastro manual de servidores Windows/Linux e da infraestrutura de rede Sophos, sem criar uma segunda autoridade sobre ativos existentes, nem sobrescrever dados operacionais curados por pessoas.
 
 **Gate inicial (TO_INVENTORY), antes de aprovar contratos/implementação:**
