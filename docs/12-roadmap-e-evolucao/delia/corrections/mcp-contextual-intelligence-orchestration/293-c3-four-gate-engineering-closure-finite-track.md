@@ -377,3 +377,41 @@ Registro operacional (não avança gates L/A/O/R automaticamente): remediação 
 **RESULT:** revisão independente AR01–AR12 favorável; R04 `CLOSED_PROVEN` no runtime produtivo deste host (CATALOG_* ausente; mode=`core`); deploy `delia-api`+`api-delpi` no SHA `30ac7cbb4467…` com `DELIA_RUNTIME_PROFILE=openrouter_qwen` / `qwen/qwen3-14b` verificado por invocação; DAVI/TEO/SIPOC GROUNDED; VISTA phrasing flaky classificado risco controlado; ExternalConnection/ACT fora de escopo.  
 **PROD_READY_FOR_PO_MANUAL_TEST:** YES (`http://localhost/apps/delia`).  
 **T3:** `NOT_AUTHORIZED`. Detalhe: residual register + execution ledger.
+
+
+## Anexo — 2026-11-10 | T2 functional REWORK: inteligência investigativa como primeira responsabilidade especializada
+
+**Authority:** Documento 16 (ordem), 50/17/49/51/52 (boundary e reuse), 21/20/25 (estado, gates, CP), este 293 (trilha finite), ledger (execução). **A-07=IMPLEMENTED_BOUNDED_DEV**, R04=production closure previamente reportado, **T2_RELEASE_DEPLOYED_QWEN14B** é registro histórico de release, **não aceite do negócio**. Após a homologação manual com P1/P2/P3 incorretas, **T2_FUNCTIONAL_ACCEPTANCE=REWORK** e **PO_MANUAL_HOMOLOGATION=FAIL**. O estudo forense subsequente foi *diagnóstico*, sem code/config/deploy; P2/P3 problemas de seleção/cobertura sustentados, P1 original INCONCLUSIVE, DEV independente não exercido. Não apagar stamps anteriores; estes não provam Outcome.
+
+### T2-INT — única subtrilha permitida agora, sem avanço de fase
+
+**Objetivo de produto:** progredir para uma inteligência orquestrada com quatro responsabilidades, sem presumir quatro agentes físicos. A inteligência principal continua responsável por coordenar o objetivo; Pydantic AI e os mecanismos atuais fornecem execução cognitiva e delegação somente quando justificada. DÉLIA Application mantém authority de Policy/Decision/Evidence/Outcome e live Core/Domain gates.
+
+| Sequência | Responsabilidade | Equivalentes iniciais a verificar | Estado / gate |
+|---|---|---|---|
+| INT-0 | Reancoragem, causa/contrato e inventário dos consumers reais | Agent, MCPToolset, InvestigationAnswer, SemanticInvestigationPlan, Coverage, Outcome | **NEXT — TO_INVENTORY; sem código** |
+| INT-1 | **Investigação**: Agent generalista com ferramentas dinâmicas e progresso baseado em evidência | `PydanticAiInvestigationOrchestrator`, MCPToolset, SpecialistInterop, governed invoke | **SPECIFICATION/EXPERIMENT_ONLY** após INT-0; nenhum subagent aprovado |
+| INT-2 | Compreensão: objetivo e entrega esperada tipados para separar lista/aggregate/explicação sem keywords hardcoded | Admission, plan, InvestigationAnswer, aplicação de contratos | **PLANNED / NOT_AUTHORIZED** |
+| INT-3 | Avaliação independente de suficiência (distinta de grounding); teste de necessidade cognitiva | `_evaluate_material_obligations`, `_apply_declared_answer`, finalization, Evidence/Outcome | **TO_INVENTORY / NOT_AUTHORIZED** |
+| INT-4 | Síntese fiel, relevante e rastreável | `InvestigationAnswer`, CRI/render, Evidence binding | **PLANNED / NOT_AUTHORIZED** |
+| INT-5 | Aceite integrado do comportamento generalista | três casos PO + metamórficos provider/schema/renaming e negatives bounded | **GATED / NOT_AUTHORIZED** |
+
+A ordem INT-1 → INT-4 descreve *foco de investigação*, não pipeline determinístico obrigatório; a compreensão pode anteceder execução no mesmo Agent. Nenhum aumento de chamadas LLM, novo serviço/registry/planner, framework adicional, modelo específico ou novo boundary permitido por default. Múltiplos Agents/hand-off Pydantic AI só podem ser propostos após comparar baseline único com variante mínima, provando melhora de Outcome, custo/latência e segurança.
+
+### Inventário/contratos que INT-0 deve entregar
+
+```text
+RESPONSIBILITY → OWNER → CANONICAL_SOURCE → CONSUMERS → CONTRACT → CODE → EVIDENCE → OUTCOME
+EXISTING_EQUIVALENT=YES|NO|TO_INVENTORY
+REUSE_DECISION=REUSE|EXTEND|NEW
+```
+
+Inspecionar caminho ativo de `_INVESTIGATION_INSTRUCTIONS` e `PydanticAiInvestigationOrchestrator`; `InvestigationAnswer` / plano opcional; tools/list e schemas live; `_is_business_evidence_attempt` (evidência válida ≠ conteúdo relevante); `_evaluate_material_obligations`; `_apply_declared_answer` (COMPLETE + refs válidas sem plano); `_finalize_agent_collected_attempts` (SUCCESS com observações sem obrigações e `multiple_observations_without_compose`); argumentos inválidos e anti-churn; contratos de resultado parcial e de apresentação. Não inferir implementação nativa Pydantic AI de docs sem validar versão local.
+
+### Critério finito e estratégia de teste
+
+- **Primeiro resultado:** mapa do grafo de chamadas real + hipótese falsificável sobre o menor boundary incorreto, já existente, **sem alteração de código**. Separar P1 original INCONCLUSIVE de P2/P3 sustentadas.
+- **Experimento futuro, somente após nova autorização:** reproduzir falha exata, RED, menor extensão do mecanismo existente, GREEN em consumer e um caso metamórfico com ferramenta/provider/schema alterados. Não hardcode de perguntas/owner/tool e não aceitar `HTTP 200/GROUNDED` como Outcome.
+- **Gate de promoção:** critérios objetivos de suficiência da resposta, Evidence/provenance, negativa/partial honesto e chamada efetiva MCP; preservar segurança. Somente a coordenação decide autorização subsequente.
+- **STOP:** conclusão sem evidência, dependência de mudança de autoridade/contrato canônico, drift ou escopo novo → `INCONCLUSIVE`/`EXECUTION_DRIFT`/`ARCHITECTURE_DECISION_REQUIRED`; não redesenhar silenciosamente.
+- **NEXT:** `T2_INT0_INVESTIGATIVE_AGENT_REUSE_AND_CONTRACT_INVENTORY`, sob Documento 16. **PRODUCTION_DEPLOY=NOT_AUTHORIZED; T3=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NO.**
