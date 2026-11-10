@@ -13,7 +13,9 @@ Arquitetura, contrato e permissões vigentes: `it-portal-api/README.md` e
 | E2A — `IT-PORTAL-INVENTORY-E2A` | Serviços/aplicações, instâncias de banco, hospedagem serviço→servidor, consumo serviço→banco | `a656d209` | COMPLETE_WITH_RESIDUAL | `REVIEW_DECISION: ACCEPT_WITH_RESIDUAL` — homologado em produção pelo PO com os sete critérios funcionais confirmados |
 | R-SEC-01 | Residual RBAC das escritas (ver abaixo) | `d39f6012` | implementado antes da E2B | pendente de revisão |
 | E2B — `IT-PORTAL-INVENTORY-E2B` | Redes, integrações e relacionamentos entre recursos (ver abaixo) | ver Git | implementado | pendente de revisão |
-| E3 | Mapa interativo e análise de impacto | — | fora do escopo atual | — |
+| E3A — mapa visual | Visualização interativa de dependências entre ativos | — | PLANNED — projeto futuro, adiado pelo PO | Não iniciar na prioridade atual |
+| E3B — análise de impacto | Simulação de indisponibilidade e dependências afetadas | — | PLANNED — projeto futuro, adiado pelo PO | Não iniciar na prioridade atual |
+| E4 — coleta automática de inventário | Descoberta e atualização periódica de servidores Windows/Linux, redes e infraestrutura Sophos, com proveniência e reconciliação | — | PLANNED — prioridade atual para discovery/arquitetura | Decisão do PO em 10/11/2026; implementação ainda não iniciada |
 
 O executor não se auto-aceita: o estado de aceite é registrado somente após
 `REVIEW_DECISION` do Product Owner.
@@ -78,6 +80,24 @@ comportamento canônico da plataforma e não é alterado pelo Portal de TI.
 Uso real do GLPI: somente `helpdesk-api` (chamados e vínculo de ativos ao
 chamado, `helpdesk_app/infrastructure/glpi/mapping.py`). Nenhuma integração
 automática GLPI/Zabbix é feita pelo Portal de TI.
+
+## Repriorização de roadmap pelo PO — 10/11/2026
+
+**Decisão:** postergar E3A e E3B para projetos futuros. Priorizar E4, inventário automatizado, antes de construir mapa gráfico e motor de impacto. Essa mudança **não equivale a aceite adicional da E2B** nem autoriza execução de código, integração ativa ou alteração de infraestrutura.
+
+**Objetivo da E4 (PLANNED):** minimizar o cadastro manual de servidores Windows/Linux e da infraestrutura de rede Sophos, sem criar uma segunda autoridade sobre ativos existentes, nem sobrescrever dados operacionais curados por pessoas.
+
+**Gate inicial (TO_INVENTORY), antes de aprovar contratos/implementação:**
+
+- Reancorar em GitHub HEAD, regras, owners, consumidores, contratos e evidências. Inventariar GLPI real (inventário nativo, GLPI Agent e plugins), Zabbix/monitoramento existente, integrações no monorepo e eventual solução de gestão de endpoints. Registrar `EXISTING_EQUIVALENT` e `REUSE_DECISION` por fonte.
+- Confirmar abrangência, unidades, endereços permitidos, sistemas Windows/Linux, disponibilidade de agentes ou WinRM/SSH, permissões somente leitura, cadência e restrições operacionais.
+- Confirmar fabricante/modelo, firmware SFOS e plano de gerenciamento do Sophos; selecionar **conforme disponibilidade comprovada** API local REST (quando suportada), API XML legada, API Sophos Central e/ou SNMPv3. Inventariar endpoints e campos efetivamente disponíveis antes de prometer DHCP, VPN ou outras informações em tempo real.
+- Definir ownership por atributo, identificadores estáveis e correlação com os cadastros E1/E2A/E2B. IP isolado não é identidade permanente. Observações automáticas devem ter origem, horário, confiança e ciclo de vida; divergência cria candidato/revisão, não substituição silenciosa.
+- Fixar contratos de conectores e sincronização: apenas leitura da origem, segredo em vault/config protegida, escopo de rede restrito, rate limits, timeouts, auditoria, reprocessamento idempotente, observabilidade, falha parcial e retorno seguro. Não executar varreduras indiscriminadas, comandos remotos privilegiados, alteração do Sophos ou exclusão automática de ativos.
+
+**Ordem de investigação/entrega proposta, sujeita aos gates:** (1) inventário de fontes e piloto limitado; (2) coleta Windows/Linux por mecanismo já disponível ou adaptador read-only aprovado; (3) coleta do Sophos compatível com a versão; (4) normalização, reconciliação com inventário existente e agendamento; (5) UI mostrando origem, última coleta, divergências e aprovação dos candidatos.
+
+**Fora do escopo da E4 inicial:** mapas da E3A, simulação da E3B, detecção/alertas contínuos da futura observabilidade, escrita remota/configuração do firewall, descoberta ativa irrestrita e importação de credenciais ou payloads sensíveis.
 
 ## Residuais abertos
 
