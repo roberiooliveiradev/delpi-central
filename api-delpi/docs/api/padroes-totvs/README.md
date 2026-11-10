@@ -25,6 +25,7 @@ Regras Cursor: **`totvs-product-patterns.mdc`** (quando **usar** e como **enriqu
 | Princípios SQL Protheus | [principios-sql.md](./principios-sql.md) | `D_E_L_E_T_`, NOLOCK, `*010`, bind, joins |
 | Unidades de medida | [unidades-medida.md](./unidades-medida.md) | `MI`, BOM — resumo; detalhe no playbook |
 | Cadastro de produto | [cadastro-produto.md](./cadastro-produto.md) | `B1_TPMAT`, `B1_CUSTD`, `B1_REFEREN`, campos SB1 recorrentes |
+| Prazo de Entrega (Lead Time) por filial | [lead-time-prazo-entrega.md](./lead-time-prazo-entrega.md) | **`SBZ010.BZ_PE` + `BZ_TIPE` + `BZ_FILIAL`**; diferenças de `B1_PE` e `A5_PE`; SQL e cautelas |
 | Cadastro de cliente (SA1) | [cadastro-cliente.md](./cadastro-cliente.md) | `A1_NREDUZ` vs `A1_NOME`, bloqueio, loja `1`/`01`, busca carteira |
 | Cadastro de fornecedor (SA2) | [cadastro-fornecedor.md](./cadastro-fornecedor.md) | Chave `COD+LOJA`, `GETSXENUM`, bloqueio `A2_MSBLQL`, SA5 separada; auditoria completa no playbook |
 | Centro de custo (CTT010) | [centro-custo-ctt.md](./centro-custo-ctt.md) | `CTT_FILIAL` em branco = cadastro global; join por filial estrita devolve descrição nula |
