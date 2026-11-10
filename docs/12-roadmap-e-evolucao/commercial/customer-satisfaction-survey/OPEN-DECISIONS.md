@@ -90,7 +90,8 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 **Resposta:** Das 15 perguntas padronizadas do plano, tornar obrigatórias somente a pergunta de satisfação geral (escala 1–5, base do IGS) e a pergunta de recomendação (escala 0–10, base do NPS). Nas dez perguntas de avaliação por dimensão (1–5), permitir a opção "Não se aplica", sem exigir uma nota numérica em todos os casos. As três perguntas abertas serão opcionais.
 **Regra para indicadores:** "Não se aplica" não representa nota zero nem nota neutra; excluir esses registros do cálculo da média da respectiva dimensão e informar o número de respostas válidas no indicador. As perguntas obrigatórias precisam ser respondidas para a submissão final.
 **Fonte:** Resposta do solicitante em 2026-11-10: "Concordo com a regra", em resposta à proposta explícita de duas perguntas obrigatórias, opção "Não se aplica" nas dez avaliações e três abertas opcionais.
-**Decisão complementar — alteração após envio (pergunta 10 da entrevista, distinta da Q10 de IGS abaixo):** O cliente poderá revisar e modificar as respostas antes da submissão final. Após clicar em "Enviar" e a submissão ser concluída, a resposta será definitiva: não poderá ser alterada, inclusive enquanto a campanha permanecer aberta. Preservar uma única resposta por empresa/campanha (Q01). Fonte: concordância explícita do solicitante em 2026-11-10. Owner: Comercial (validação formal PENDING). Trata-se de requisito futuro, não de comportamento implementado comprovado.\n**PENDING:** Se as dez dimensões também poderão ficar sem resposta (além de selecionar "Não se aplica"), possibilidade de salvar rascunho/resposta parcial, tratamento de formulário interrompido e detalhamento de validações.
+**Decisão complementar — alteração após envio (pergunta 10 da entrevista, distinta da Q10 de IGS abaixo):** O cliente poderá revisar e modificar as respostas antes da submissão final. Após clicar em "Enviar" e a submissão ser concluída, a resposta será definitiva: não poderá ser alterada, inclusive enquanto a campanha permanecer aberta. Preservar uma única resposta por empresa/campanha (Q01). Fonte: concordância explícita do solicitante em 2026-11-10. Owner: Comercial (validação formal PENDING). Trata-se de requisito futuro, não de comportamento implementado comprovado.
+**PENDING:** Se as dez dimensões também poderão ficar sem resposta (além de selecionar "Não se aplica"), possibilidade de salvar rascunho/resposta parcial, tratamento de formulário interrompido e detalhamento de validações.
 **Impacto:** Mantém IGS e NPS com notas válidas e evita distorcer avaliações de assuntos não conhecidos pelo cliente, preservando resposta única por empresa/campanha (Q01).
 
 ### Q09 — Evolução do questionário
@@ -107,9 +108,13 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ### Q10 — Regra oficial de IGS
 **Pergunta:** O IGS será a média das respostas individuais à pergunta geral, ou a média primeiro por empresa e depois entre empresas?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** peso dos clientes e precisão do IGS.
+**Status:** DECIDED (pergunta 11 da entrevista; decisão informada pelo solicitante; validação formal do owner Comercial PENDING).
+**Resposta:** Calcular o IGS como a média aritmética simples das notas da pergunta obrigatória de satisfação geral (escala 1–5), considerando uma resposta por empresa participante da campanha. Cada empresa tem peso igual, sem ponderação por faturamento, porte ou importância comercial. Exemplo: notas 3, 4 e 5 resultam em IGS 4,0. Não confundir com média das dez dimensões.
+**Fonte:** Concordância explícita do solicitante em 2026-11-10 à proposta da pergunta 11 da entrevista.
+**Owner da decisão:** Comercial — validação formal PENDING.
+**Data:** 2026-11-10.
+**Justificativa:** Indicador simples e comparável entre empresas e campanhas.
+**Impacto:** Peso igual por empresa e cálculo a partir das notas gerais válidas; contratos e implementação permanecem TO_INVENTORY.
 
 ### Q11 — Regra oficial de NPS
 **Pergunta:** Confirmar cálculo de NPS: percentual de notas 9–10 menos percentual de notas 0–6, excluindo ausências; como agregar múltiplos contatos?
