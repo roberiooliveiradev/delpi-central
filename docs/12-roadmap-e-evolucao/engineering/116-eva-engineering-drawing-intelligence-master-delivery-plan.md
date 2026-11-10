@@ -603,3 +603,12 @@ Traces `source→OCR→SLANet→understanding→comparison→report→MCP/UI`; c
 **Regra de continuidade:** diagnóstico G2 e preparação técnica de etapas posteriores **não implicam homologação do G1**; não transformar falta de aprovação em bloqueio de investigação que preserva `DRAFT`. Por outro lado, não autoriza pular G2/G3, treinar com holdout, alterar fontes oficiais, implantar sem testes, ampliar E2–E7 ou declarar `VAL01_COMPLETED`. Executor segue Doc 119 §61: `EXECUTION_DRIFT→STOP atividade afetada→Coordination` para mudança real de owner/authority/escopo. **Nenhum novo engine, bounded context, MCP ou source of truth**.
 
 **Estado inicial deste adendo:** `PLANNED`; `TOTUS_HIERARCHY_CONTRACT=TO_INVENTORY`; `G2_FIRST_LOSS=AUTHORIZED_DIAGNOSTIC`; `G1_OWNER_GT=OWNER_BLOCKED`; `G5_GENERALIZATION=NOT_APPROVED`; `VAL01_COMPLETED=false`.
+
+
+## B.10 VAL-01 — especificação governada de tabela bidirecional (2026-11-10)
+
+**Decisão registrada, não implementação:** usar a rota existente `api-delpi GET /products/{code}/structure/excel` e `ExcelStructureBuilder` como **referência de padrão tabular DELPI**, sem fazer do XLSX o source of truth da BOM. A fonte oficial continua `GET /products/{code}/structure` via contrato/autorizações do domínio. Documento técnico único desta proposta dentro da VAL-01: [eva-val01-table-bidirectional-algorithm.md](./eva-val01-table-bidirectional-algorithm.md). Tracker permanece Issue #131. Não cria outro roadmap/engine/bounded context.
+
+**Regra:** observação independente `PDF→PDFium→PaddleOCR→SLANet→adapter→Understanding→graph de ocorrências`; projeção controlada `BOM fixture→ExcelStructureBuilder→tabela→PDF de teste→reconhecimento` para medir perdas e invariantes; comparação futura **bidirecional** `BOM→desenho` e `desenho→BOM` por caminho pai→filho, nível comprovado, multiplicidade e qty/UM revisionalmente comparáveis. Fonte oficial **não** completa campos visuais; o exportador pode achatar PI, reutilizar letras por código e transformar quantidade, portanto não é inversa perfeita ou GT sem validação.
+
+**Framework-first:** configurar recorte/associação/papéis de tabela nas capacidades existentes, sem parser paralelo; testes generalistas por famílias de layouts, não apenas PDF 90264135. Acoplamentos conhecidos do `understanding.py` (crop 70%/90%, alinhamento Y, rowspan, regex) são hipóteses a avaliar com regressões multi-layout. G4 associação de campos segue autorizado; **G5/G6/G7 não autorizados**, GT/holdout pendentes, nenhuma alteração runtime por este adendo. `SPECIFICATION_ONLY`, `VAL01_COMPLETED=false`.
