@@ -22,9 +22,13 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
  
 ### Q02 — Elegibilidade e amostragem
 **Pergunta:** Quais clientes entram em cada campanha (todos os ativos, clientes estratégicos, volume mínimo, período de compra, exclusões)?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** população, taxa de resposta e comparabilidade.
+**Status:** DECIDED (seleção configurável, informada pelo solicitante; owner Comercial a validar formalmente).
+**Resposta:** O público da pesquisa não será fixo: os usuários autorizados deverão selecionar no produto quais empresas clientes participarão de cada campanha.
+**Data:** 2026-11-10.
+**Fonte:** Resposta do solicitante: "Isso tem que ficar configurável no produto, tá, eles vão selecionar lá".
+**Hipótese de solução (não aprovada):** gerar um link individual por cliente, conforme possibilidade mencionada pelo solicitante ("talvez a gente gere talvez um link específico pra cada cliente").
+**Pendente:** quem pode selecionar/aprovar a lista, se filtros ou inclusão manual serão necessários, critérios de elegibilidade, origem dos contatos e como identificar/validar o destinatário e impedir respostas duplicadas sem expor dados.
+**Impacto:** campanha precisa preservar a lista efetivamente selecionada; convite e resposta vinculados à empresa e à campanha; manter a regra Q01 de no máximo uma resposta por empresa por campanha.
 
 ### Q03 — Contatos e fonte canônica
 **Pergunta:** De onde virão os contatos e quem poderá manter ou aprovar a lista de destinatários (TOTVS, Portal Comercial, CRM, outra base)?
@@ -152,4 +156,4 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ## Próxima pergunta em entrevista
 
-**Q02** — Quais empresas clientes deverão ser incluídas em cada campanha (todos os clientes ativos, apenas clientes com compras recentes, seleção manual ou outro critério)?
+**Q03** — De onde virão os contatos dos clientes para enviar a pesquisa, e quem poderá manter essa lista?
