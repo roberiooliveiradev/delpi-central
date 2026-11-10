@@ -1,6 +1,6 @@
 # Customer Satisfaction Survey — DELPI
 
-> Status: DISCOVERY / TO_INVENTORY. Documento de levantamento inicial, sem aprovação de escopo técnico, arquitetura, cronograma ou implementação.
+> Status: REQUISITOS FUNCIONAIS CONSOLIDADOS / TO_INVENTORY técnico incremental. **Sem evidência de implementação, homologação ou aprovação de backlog técnico.**
 
 ## Objetivo
 
@@ -34,25 +34,26 @@ Centralizar a análise da pesquisa de satisfação de clientes solicitada pelo C
 - Avaliar primeira entrega modular no Portal Comercial, com possível integração futura ao CRM; arquitetura não decidida.
 - Expectativa condicionada de primeira versão até fim de novembro de 2026; não é compromisso aprovado nem entrega comprovada.
 
-## Definições de negócio pendentes (PENDING)
+## Navegação da documentação
 
-1. Universo elegível de clientes, seleção de contatos e critérios de exclusão.
-2. Uma resposta por cliente ou múltiplas respostas por contato; deduplicação, peso e agregação por cliente.
-3. Identificação dos respondentes; anonimato; vínculo com cadastro comercial; tratamento de informações pessoais.
-4. Canais de envio, responsáveis, entregabilidade, lembretes, expiração e reenvio.
-5. Perguntas obrigatórias ou opcionais, opção não aplicável, respostas parciais e versionamento do questionário.
-6. Fórmula oficial de NPS e denominadores de percentuais, respostas inválidas ou ausentes.
-7. Regra de classificação de cliente crítico, critérios de alertas e ações relevantes.
-8. Definições e autoridade dos segmentos, carteiras, faturamento, região e cliente estratégico.
-9. Abertura/fechamento de campanha, permissões, auditoria e visibilidade de respostas individuais.
-10. Estados e aprovações dos planos de ação, retorno ao cliente e reavaliação.
-11. Critérios de comparação histórica entre campanhas e versões de perguntas.
-12. Responsáveis por cada etapa, SLA de consolidação, métricas de sucesso e política de retenção.
+**Entrada obrigatória para análise e desenvolvimento:** [REQUIREMENTS-INDEX.md](./REQUIREMENTS-INDEX.md) — tabela mestre com 34 requisitos, origem, estado e links para aprofundamento. **Não reproduza todo o material em novos documentos.**
 
-## Análise técnica futura — não aprovada
+- [OPEN-DECISIONS.md](./OPEN-DECISIONS.md) — histórico das decisões tomadas com o solicitante; consultar apenas a questão vinculada ao requisito em análise.
+- **Plano de Monitoramento da Satisfação dos Clientes — Delpi** — documento integral está nas fontes do projeto, não copiado para esta pasta do GitHub. As seções 1–10 são a fonte de negócio; o índice cita as páginas pertinentes.
+- Arquivos técnicos de detalhe devem ser criados **somente quando necessários** para uma frente concreta e vinculados ao ID correspondente no índice.
 
-Após validação funcional, levantar HEAD, branch, fontes canônicas, contratos existentes, consumidores, permissões e testes; determinar a menor solução suficiente. Só então detalhar entidades, endpoints, CRUD, integrações, frontend e critérios de aceite. Não criar backlog técnico como se fosse decisão tomada.
+## Situação e limites
 
-## Próxima atividade
+As decisões principais de negócio já foram levantadas e registradas no índice. São regras **propostas para implementação**, não funcionalidades comprovadamente existentes. O tratamento da pesquisa cabe aos perfis funcionais `commercial.marketing` e `commercial.manager`; as respostas terão histórico no domínio da API Comercial para comparação plurianual; o cadastro mestre de clientes permanece no TOTVS, consultado por meio da API DELPI, conforme fontes e decisões.
 
-Consolidar uma especificação funcional rastreável: requisito -> evidência -> regra de negócio -> pendência -> decisão do owner -> critério de aceite, preservando as perguntas completas do documento original e validando-as com Comercial/Qualidade.
+Retenção por tempo indeterminado é intenção funcional declarada, condicionada aos controles de privacidade e conformidade com a LGPD. **Segurança, permissões reais, contratos, modelos físicos, rotas, consumidores, testes e possibilidade de reutilização ainda exigem evidências técnicas.**
+
+## Fluxo de evolução limitado
+
+1. Selecionar uma frente/ID no [índice](./REQUIREMENTS-INDEX.md).
+2. Ler somente o detalhe já referenciado e os contratos canônicos da frente.
+3. No GitHub, confirmar HEAD, branch e, quando houver acesso ao ambiente de trabalho, working tree; inspecionar owners, consumidores, permissões e testes.
+4. Registrar ali o menor conjunto de mudanças e critérios de aceite necessários, sem criar documento duplicado.
+5. Implementar e verificar antes de marcar `IMPLEMENTADO` ou `VALIDADO` com evidência (código e testes não são prova automática de uso real).
+
+**Não repetir a entrevista inteira nem criar ciclos de documentação sem um bloqueio concreto.** Questões sem impacto imediato podem permanecer identificadas para a frente correspondente, sem impedir toda a iniciativa.
