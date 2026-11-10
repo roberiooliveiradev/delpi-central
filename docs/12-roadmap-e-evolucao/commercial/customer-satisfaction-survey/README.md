@@ -4,7 +4,7 @@
 
 ## Objetivo
 
-Centralizar a análise da pesquisa de satisfação de clientes solicitada pelo Comercial, mantendo separadas as regras informadas, as decisões pendentes e as propostas futuras. A solução pretendida deverá considerar o Portal Comercial existente e a evolução do CRM, sem presumir ownership técnico antes do inventário.
+Centralizar a análise da pesquisa de satisfação de clientes solicitada pelo Comercial, mantendo separadas as regras fornecidas pelo plano, as decisões funcionais já tomadas, as verificações técnicas ainda necessárias e as propostas futuras. A solução pretendida deverá considerar o Portal Comercial existente e a evolução do CRM, sem presumir ownership técnico antes do inventário.
 
 ## Fontes
 
@@ -38,7 +38,7 @@ Centralizar a análise da pesquisa de satisfação de clientes solicitada pelo C
 
 **Entrada obrigatória para análise e desenvolvimento:** [REQUIREMENTS-INDEX.md](./REQUIREMENTS-INDEX.md) — tabela mestre com 34 requisitos, origem, estado e links para aprofundamento. **Não reproduza todo o material em novos documentos.**
 
-- [OPEN-DECISIONS.md](./OPEN-DECISIONS.md) — histórico das decisões tomadas com o solicitante; consultar apenas a questão vinculada ao requisito em análise.
+- [BUSINESS-DECISIONS.md](./BUSINESS-DECISIONS.md) — histórico das decisões de negócio, suas fontes e as ressalvas; consultar apenas a questão vinculada ao requisito em análise.
 - **Plano de Monitoramento da Satisfação dos Clientes — Delpi** — documento integral está nas fontes do projeto, não copiado para esta pasta do GitHub. As seções 1–10 são a fonte de negócio; o índice cita as páginas pertinentes.
 - Arquivos técnicos de detalhe devem ser criados **somente quando necessários** para uma frente concreta e vinculados ao ID correspondente no índice.
 
