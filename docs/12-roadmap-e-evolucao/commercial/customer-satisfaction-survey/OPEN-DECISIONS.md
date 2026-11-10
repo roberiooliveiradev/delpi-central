@@ -32,12 +32,13 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ### Q03 — Contatos e fonte canônica
 **Pergunta:** De onde virão os contatos e quem poderá manter ou aprovar a lista de destinatários (TOTVS, Portal Comercial, CRM, outra base)?
-**Status:** DECIDED quanto à fonte e inclusão de clientes; PENDING quanto à origem/gestão dos e-mails de destinatários e responsáveis.
-**Resposta:** Apenas empresas já cadastradas no ERP TOTVS poderão participar. O ERP continua sendo a autoridade do cadastro de clientes. O Portal Comercial já consome dados do TOTVS via API DELPI, conforme informado pelo solicitante. Na configuração da campanha/link, o usuário selecionará a empresa por meio da rota de consulta de clientes existente; não criar cadastro paralelo de clientes nesta solução. Se o cliente ainda não existir, deverá ser cadastrado no ERP pelo fluxo atual, antes de estar disponível para seleção.
+**Status:** DECIDED quanto à origem dos clientes e preenchimento/edição do contato para o envio; PENDING quanto às permissões específicas e validações técnicas.
+**Resposta — cadastro do cliente:** Apenas clientes cadastrados no ERP TOTVS poderão participar. O TOTVS permanece autoridade sobre o cadastro; a seleção deve reutilizar a consulta de clientes já disponível ao Portal Comercial via API DELPI. Cliente inexistente deverá ser cadastrado no ERP pelo fluxo atual. Não haverá cadastro paralelo de empresas na pesquisa.
+**Resposta — contato para envio:** Ao selecionar um cliente para a campanha, os campos de contato/e-mail devem ser pré-preenchidos com os dados disponíveis no cadastro consultado. O usuário configurador poderá editar ou informar o e-mail no contexto do convite antes de gerar/enviar o link. A edição desses dados para o convite não cria novo fluxo de cadastro e não implica gravação no ERP; eventual atualização do cadastro mestre permanece no procedimento regular do TOTVS.
 **Data:** 2026-11-10.
-**Fonte:** Resposta do solicitante à Q03, na conversa.
-**PENDING:** origem e validação do endereço de e-mail e contato utilizado no envio direto; quem pode alterá-lo para a campanha; contratos exatos da rota existente, filtros, escopo multiunidade, IDs canônicos e autenticação dependem de inventário técnico.
-**Impacto:** preservar ownership do ERP e reutilizar consulta existente via API DELPI; evitar criação e manutenção duplicadas de clientes.
+**Fonte:** Respostas do solicitante à Q03 e complemento: "deixa o campo como editável, mas já traz os dados do cadastro do cliente".
+**PENDING / TO_INVENTORY:** Verificar quais campos de contato a rota atual realmente retorna; perfil autorizado a configurar/envios; regras de validação, privacidade, rastreabilidade e armazenamento do destinatário efetivamente utilizado na campanha; escopo de unidades e identidade canônica do cliente.
+**Impacto:** Reutilizar a fonte oficial de clientes; evitar duplicação cadastral; permitir contato específico por campanha preservando autoria e rastreabilidade.
 
 ### Q04 — Identificação e confidencialidade
 **Pergunta:** Respostas serão identificadas, anônimas ou confidenciais com acesso restrito? O cliente será informado do tratamento e finalidade?
