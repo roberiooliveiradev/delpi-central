@@ -447,3 +447,17 @@ A revisão confirmou o reuso do `PydanticAiInvestigationOrchestrator` + native P
 **INT1_STATUS=READY_FOR_INDEPENDENT_REVIEW** (implementation does not self-accept).  
 **OPEN:** plan-absent objective-kind gap remains Application Outcome (INT-3); live P1–P3 Qwen still pending isolated DEV.  
 **NEXT:** `COORDINATION_INT1_INDEPENDENT_REVIEW`. **PRODUCTION_DEPLOY=NOT_AUTHORIZED; T3=NOT_AUTHORIZED; INT2=NOT_AUTHORIZED.** Sem avanço de fase.
+
+### Stamp — INT-1 final bounded rework F1–F4 (2026-11-10)
+
+**TASK:** `DELIA-C3-T2-INT1-FINAL-BOUNDED-REWORK-AND-ACCEPTANCE-01`.  
+**REVIEWED_IMPLEMENTATION_SHA:** `7cd27e6d0cbc6f401fca9a5fc93282eac54073a0`.  
+**REWORK_BUDGET:** 1 — FINAL (`INT1_REWORK_BUDGET_EXHAUSTED=YES`).  
+**EXISTING_EQUIVALENT=YES; REUSE_DECISION=EXTEND; SECOND_AGENT=NO.**  
+**F1:** removed capability-wide block after first `owner_argument_rejected`; identical fingerprint still short-circuits; materially different args invoke; one-shot ModelRetry keeps owner hint.  
+**F2:** `classify_investigation_progress` no longer uses READ/ANALYSIS as sufficiency; obligations + evidence structure decide RELATED vs NEW.  
+**F3:** Agent-path integration + metamorphic rename suite (`test_int1_final_bounded_rework.py`) traverses real `PydanticAiInvestigationOrchestrator` with FunctionModel (not helper-only).  
+**F4:** finalize without obligations returns evidence on fast path with `coverage_unknown`; related aggregate with plan obligations remains NOT_APPLICABLE + `related_observations_insufficient`.  
+**LOCAL_QWEN_EVAL=TEST_NOT_RUN** (prod container only; compose.dev shares `container_name`).  
+**INT1_FINAL_REVIEW_PROPOSAL:** `ACCEPT_WITH_RESIDUAL` (deterministic F1–F4 proven; live Qwen P1–P3 residual; plan-absent Outcome verdict remains INT-3).  
+**NEXT:** `COORDINATION_FINAL_INT1_ACCEPTANCE`. Sem nova implementação corretiva automática. **PRODUCTION_DEPLOY=NOT_AUTHORIZED; T3/INT2/INT3/INT4=NOT_AUTHORIZED.**

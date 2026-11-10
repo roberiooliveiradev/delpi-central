@@ -1201,6 +1201,8 @@ class PydanticAiInvestigationOrchestrator:
             fingerprint = _invocation_fingerprint(cap_key, raw_args)
             previous = ctx.deps.non_progress_calls.get(fingerprint)
             if previous is not None:
+                # Identical capability+arguments only — a material arg
+                # change is a new fingerprint and must reach the owner.
                 repeated = dict(previous)
                 repeated["repeated_equivalent_call"] = True
                 if not previous.get("authoritative_root_code"):
@@ -1209,19 +1211,6 @@ class PydanticAiInvestigationOrchestrator:
                     repeated["investigation_progress"] = (
                         INVESTIGATION_PROGRESS_NONE
                     )
-                return _proj(repeated)
-            # Equivalent owner rejection with different args still
-            # counts as non-progress after the first recovery attempt.
-            failure_fp = f"{cap_key}\x00error:{OWNER_ARGUMENT_REJECTED}"
-            prior_reject = ctx.deps.non_progress_calls.get(failure_fp)
-            if prior_reject is not None and ctx.deps.owner_argument_retry_used:
-                repeated = dict(prior_reject)
-                repeated["repeated_equivalent_call"] = True
-                repeated["repeated_failure_no_progress"] = True
-                repeated["error_class"] = "repeated_equivalent_failure"
-                repeated["investigation_progress"] = (
-                    INVESTIGATION_PROGRESS_NONE
-                )
                 return _proj(repeated)
             inner_keys = (
                 ",".join(sorted(str(k) for k in raw_args["arguments"]))[
@@ -1315,10 +1304,12 @@ class PydanticAiInvestigationOrchestrator:
             )
             ctx.deps.non_progress_calls[fingerprint] = dict(projection)
             if attempt.error_code == OWNER_ARGUMENT_REJECTED:
-                ctx.deps.non_progress_calls[failure_fp] = dict(projection)
                 hint = projection.get("owner_validation_hint") or (
                     "owner rejected the proposed arguments"
                 )
+                # One-shot native recovery with owner feedback. Further
+                # calls with *different* arguments still invoke; only the
+                # identical fingerprint short-circuit above prevents loops.
                 if not ctx.deps.owner_argument_retry_used:
                     ctx.deps.owner_argument_retry_used = True
                     raise ModelRetry(

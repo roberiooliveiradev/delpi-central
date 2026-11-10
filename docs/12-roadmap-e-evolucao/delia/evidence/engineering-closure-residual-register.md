@@ -1062,3 +1062,20 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 
 **NEXT:** `COORDINATION_INT1_INDEPENDENT_REVIEW`.  
 **PRODUCTION_DEPLOY / T3 / INT2:** NOT_AUTHORIZED.
+
+### INT-1 final bounded rework F1–F4 (2026-11-10)
+
+**TASK:** `DELIA-C3-T2-INT1-FINAL-BOUNDED-REWORK-AND-ACCEPTANCE-01`  
+**REVIEWED_SHA:** `7cd27e6d0cbc6f401fca9a5fc93282eac54073a0`  
+**INT1_REWORK_BUDGET_EXHAUSTED:** YES  
+
+| Fix | Change | Evidence |
+|---|---|---|
+| F1 | Identical fingerprint short-circuit only; material arg change still invokes; one-shot owner ModelRetry | `test_f1_identical_rejection_short_circuits_but_new_args_invoke` |
+| F2 | Progress ignores READ/ANALYSIS class; obligations + structure decide | `test_f2_analysis_adequate_*` / `test_f2_read_inadequate_*` |
+| F3 | Real Agent path + metamorphic rename | `test_f3_agent_path_*` / `test_f3_metamorphic_*` |
+| F4 | plan absent → `coverage_unknown` on fast SUCCESS; related+plan stays NOT_APPLICABLE | `test_f4_*` |
+
+**LOCAL_QWEN_EVAL:** TEST_NOT_RUN  
+**Proposal:** ACCEPT_WITH_RESIDUAL → `COORDINATION_FINAL_INT1_ACCEPTANCE`  
+**Open residual:** live Qwen P1–P3; INT-3 Outcome sufficiency when plan absent.

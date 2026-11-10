@@ -1980,8 +1980,14 @@ def classify_investigation_progress(
     Deterministic, contract-driven, owner-/tool-name agnostic. Discovery
     catalogs are never business progress. A SUCCESS that fails every
     declared material obligation, or that leaves named identifiers
-    uncovered, is related-but-insufficient — not objective completion.
+    uncovered without an authoritative root, is related-but-insufficient.
+
+    ``operation_class`` is accepted for projection compatibility but
+    never decides sufficiency — the same ANALYSIS or READ capability
+    may be adequate or inadequate depending on obligations and the
+    observed evidence structure (INT-1 F2).
     """
+    del operation_class  # never authority for relevance
     if "discovery_metadata_observation" in attempt.limitations:
         return INVESTIGATION_PROGRESS_DISCOVERY
     if attempt.status is not GovernedCapabilityStatus.SUCCESS:
@@ -2007,16 +2013,9 @@ def classify_investigation_progress(
     # authoritative root — related text/docs without identity coverage.
     if uncovered_after and _authoritative_structure_root(attempt) is None:
         return INVESTIGATION_PROGRESS_RELATED
-    op = (operation_class or "").strip().upper()
-    if (
-        plan is not None
-        and getattr(plan.goal, "goal_class", None) == "read"
-        and op == "ANALYSIS"
-        and not obligations
-    ):
-        # Declared READ goal + ANALYSIS-class observation without a
-        # binding obligation: related aggregate, not registry evidence.
-        return INVESTIGATION_PROGRESS_RELATED
+    # Without declared obligations, a new business observation is
+    # progress information only — never a proven objective verdict
+    # (finalize / INT-3 own sufficiency).
     return INVESTIGATION_PROGRESS_NEW
 
 
@@ -2953,6 +2952,17 @@ def _finalize_agent_collected_attempts(
         partial = _partial_coverage()
         if partial is not None:
             return partial
+        # F4: plan/obligations absent → evidence may still be returned on
+        # the fast path, but coverage of the user objective is unproven.
+        if not obligations:
+            return dataclasses.replace(
+                business[0],
+                limitations=tuple(
+                    dict.fromkeys(
+                        list(business[0].limitations) + ["coverage_unknown"]
+                    )
+                )[:24],
+            )
         return business[0]
 
     if business:
@@ -3018,14 +3028,16 @@ def _finalize_agent_collected_attempts(
             provenance = dataclasses.replace(
                 provenance, source_refs=merged_refs
             )
+        multi_limits = list(last.limitations) + [
+            "multiple_observations_without_compose"
+        ]
+        if not obligations:
+            multi_limits.append("coverage_unknown")
         return GovernedCapabilityAttempt(
             status=GovernedCapabilityStatus.SUCCESS,
             correlation_id=correlation,
             content=joined or last.content,
-            limitations=tuple(
-                list(last.limitations)
-                + ["multiple_observations_without_compose"]
-            )[:24],
+            limitations=tuple(dict.fromkeys(multi_limits))[:24],
             provenance=provenance,
             outcome=last.outcome,
             markdown_content=last.markdown_content,

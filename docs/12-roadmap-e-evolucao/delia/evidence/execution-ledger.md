@@ -6184,3 +6184,13 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **LOCAL_LIVE_EVAL:** `TEST_NOT_RUN` (P1–P3 Qwen). Deterministic generalization PASS (rename-invariant progress).
 - **OPEN:** plan-absent objective-kind Outcome (INT-3); live Qwen P1–P3 pending isolated runtime.
 - **Veredicto:** `INT1_STATUS=READY_FOR_INDEPENDENT_REVIEW` (não se autoaceita). `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `INT2=NOT_AUTHORIZED`; `T3=NOT_AUTHORIZED`. **NEXT:** `COORDINATION_INT1_INDEPENDENT_REVIEW`.
+
+| DELIA-C3-T2-INT1-FINAL-BOUNDED-REWORK-AND-ACCEPTANCE-01 | Final REWORK_BUDGET=1 on SHA 7cd27e6d0c: F1 arg recovery, F2 progress sans op-class, F3 Agent+metamorphic path, F4 coverage_unknown boundary; host pytest only; LOCAL_QWEN_EVAL=TEST_NOT_RUN | INT1_REWORK_BUDGET_EXHAUSTED=YES; NEXT=COORDINATION_FINAL_INT1_ACCEPTANCE |
+
+### INT-1 final bounded rework F1–F4 — 2026-11-10
+
+- **REVIEWED_SHA:** `7cd27e6d0cbc6f401fca9a5fc93282eac54073a0`. **BASE at start of task:** current `main` (helpdesk WIP preserved, not staged).
+- **F1–F4:** proven by `tests/test_int1_final_bounded_rework.py` + focused siblings GREEN. No second Agent; no architecture change.
+- **LOCAL_QWEN_EVAL:** `TEST_NOT_RUN` (isolation: prod `delpi-delia-api` only).
+- **Proposal to coordination:** `ACCEPT_WITH_RESIDUAL` — live P1–P3 and INT-3 Outcome remain open; investigation rework budget exhausted.
+- **NEXT:** `COORDINATION_FINAL_INT1_ACCEPTANCE`. No automatic further corrective implementation. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `T3/INT2/INT3/INT4=NOT_AUTHORIZED`.
