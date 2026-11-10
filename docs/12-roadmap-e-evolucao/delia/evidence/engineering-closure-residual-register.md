@@ -900,3 +900,81 @@ Provider-neutral; SSRF/redirect/DNS checks; OAuth externo fora do Keycloak DELPI
 | PHASE | NÃO avançada |
 | NEXT | `T2_INDEPENDENT_REVIEW` |
 | PRODUCTION_DEPLOY / T3 | NOT_AUTHORIZED |
+
+## T2 INDEPENDENT REVIEW + QWEN14B PRODUCTION RELEASE (2026-11-10)
+
+**TASK_ID:** `DELIA-C3-T2-INDEPENDENT-REVIEW-RESIDUAL-CLOSURE-QWEN14B-PRODUCTION-RELEASE-01`  
+**REVIEW_SHA / RELEASE_SHA / FINAL_HEAD:** `30ac7cbb4467f2d4703f266a701979747857a54c`  
+**FUNC_REMEDIATION_SHA:** `f4eff148ff40d5b4d83b3099b08f3a6af918623f` (ancestral)  
+**MODEL:** `openrouter_qwen` / `qwen/qwen3-14b` (fingerprint profile `bbe33dd125948f32`)  
+**REFERENCE:** `openrouter_kimi` / `moonshotai/kimi-k3`
+
+### Independent architecture (AR01–AR12)
+
+| ID | STATUS | EVIDENCE |
+|---|---|---|
+| AR01 planner paralelo | PASS | único Agent Pydantic AI + MCPToolset; A-04 CLOSED |
+| AR02 instruções sem MCP names | PASS | `_INVESTIGATION_INSTRUCTIONS` generalistas; harness decoupling PASS |
+| AR03 discovery dinâmica | PASS | MCPToolset tools/list live |
+| AR04 sem shadow catalog | PASS | Settings fail-closed CATALOG_*; SpecialistInterop only |
+| AR05 MCP owner contract | PASS | DAVI/TÉO/VISTA owners |
+| AR06 sem import BC bypass | PASS | ports/adapters; Core HTTP |
+| AR07 MCP≠FACT sem Evidence | PASS | Evidence + grounding path |
+| AR08 modelo≠autorização | PASS | instructions + AuthZ gates |
+| AR09 READ≠WRITE | PASS | PREPARE/ACT não expostos |
+| AR10 PREPARE/ACT separado | PASS | investigation instructions |
+| AR11 structured output | PASS | JSON/output-tool contract |
+| AR12 presentation≠facts | PASS | root+items + owner_result_incomplete |
+
+### Residual matrix R01–R14
+
+| ID | FINAL_STATUS | BLOCKS_RELEASE | NOTES |
+|---|---|---|---|
+| R01 semantic MCP | CLOSED_PROVEN | NO | E01/E02/P05 GROUNDED |
+| R02 synthesis/Evidence | CLOSED_PROVEN | NO | root+items+is_complete; focused pytest PASS |
+| R03 multi-MCP | CLOSED_PROVEN (bounded) | NO | DAVI/TEO PASS; VISTA flaky phrasing ACCEPTED_CONTROLLED_RISK |
+| R04 catalog legado prod | CLOSED_PROVEN | NO | CATALOG_* absent; Settings fail-closed; live mode=core |
+| R05 resume pós-revogação | ACCEPTED_CONTROLLED_RISK | NO | unit resume/eligibility PASS; live E10 not re-run on prod window |
+| R06 User AuthZ negativo | ACCEPTED_CONTROLLED_RISK | NO | sem user negativo provisionado; 401 invalid token PASS |
+| R07 Core S2S fail-closed | CLOSED_PROVEN | NO | unit + prior DEV E2E; bad token 401 |
+| R08 DNS/proxy/egress | ACCEPTED_CONTROLLED_RISK | NO | endpoint_policy + egress controls; DNS-rebinding residual |
+| R09 TOCTOU | ACCEPTED_CONTROLLED_RISK | NO | revalidate-at-invoke; atomicidade distribuída impossível |
+| R10 Outcome ACT | OUT_OF_SCOPE_FUTURE_PHASE | NO | ACT prod não autorizado nesta task |
+| R11 ExternalConnection | OUT_OF_SCOPE_FUTURE_PHASE | NO | TARGET_ONLY |
+| R12 model profile parity | CLOSED_PROVEN | NO | container profile+model invocation verified |
+| R13 Rollback | CLOSED_PROVEN | NO | digests anteriores capturados; procedure documentada |
+| R14 deploy identity | CLOSED_PROVEN | NO | RUNTIME_SHA=HEAD; image digests pós-build |
+
+### Production deploy
+
+| Campo | Valor |
+|---|---|
+| SERVICES | `delia-api`, `api-delpi` |
+| PROD_DELIA_IMG | `sha256:28af603572d67fb62b00abfba02d0216e2df60fa85b45077938a1653b4b2aabe` |
+| PROD_APIDELPI_IMG | `sha256:7ea9dfd5baeaf7eef3e1b4273612644e362cc13288e8f77b06123b5c9be272b8` |
+| ROLLBACK_DELIA_IMG | `sha256:07de3027e959e4ef31764f85e957eab3245dabd5c57595c599b89cd3bf8e3726` |
+| ROLLBACK_APIDELPI_IMG | `sha256:d7eab622bdfb6c6b057fab10505a096954cf01a8b2188b5319dc7c552fb89aca` |
+| PROFILE | `openrouter_qwen` effective |
+| MCP_REGISTRY_MODE | `core` |
+| CATALOG_VARS | ABSENT |
+| PROD_URL | `http://localhost/` (Portal) / `http://localhost/apps/delia` |
+| HEALTH | delia-api + api-delpi healthy; gateway curl 200 (wget UA 403 false-positive) |
+| P05 DAVI | PASS GROUNDED qwen/qwen3-14b |
+| P06 TEO | PASS GROUNDED |
+| P07 VISTA | INCONCLUSIVE/flaky (clarification) — E04 anterior GROUNDED |
+| P08 SIPOC | PASS GROUNDED |
+| NDJSON | PASS `turn_result` terminal em `/interaction/turns` |
+
+### Gates
+
+| Gate | Status |
+|---|---|
+| RELEASE_GATE | GO (PO-authorized + technical gates) |
+| A-07 | `IMPLEMENTED_BOUNDED_DEV` (ExternalConnection ainda TARGET) |
+| R04 | `CLOSED_PROVEN` (runtime prod deste host) |
+| T2_TECHNICAL_STATUS | `ACCEPT_WITH_RESIDUAL` (riscos controlados R05/R06/R08/R09; VISTA phrasing) |
+| T2_RELEASE_STATUS | `DEPLOYED_QWEN14B` |
+| PROD_READY_FOR_PO_MANUAL_TEST | YES |
+| T3 | NOT_AUTHORIZED |
+
+**NEXT_FROM_CANONICAL_PLAN:** homologação manual do PO; sem avanço T3.

@@ -6127,3 +6127,15 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **BASE_HEAD observado coordenação:** `457148a8a9…`; reancoragem ff em `origin/main` (WIP concorrente preservado).
 - **E2E:** `DELIA_RUNTIME_PROFILE=openrouter_qwen` / `qwen/qwen3-14b`; HTTP 200 GROUNDED; operational `read` completed; partial `is_complete=false` preservado.
 - **Veredicto proposto:** `ACCEPT_WITH_RESIDUAL` (flake local_ollama sob budget; TEO/VISTA E2E turn completo não reexecutado — catalog surface PASS).
+
+| DELIA-C3-T2-INDEPENDENT-REVIEW-RESIDUAL-CLOSURE-QWEN14B-PRODUCTION-RELEASE-01 | Independent AR01–AR12 PASS; R04 CLOSED_PROVEN (CATALOG_* absent); Qwen14B E2E DAVI/TEO/SIPOC; deploy delia-api+api-delpi SHA 30ac7cbb; profile openrouter_qwen verified; PO manual handoff YES; T3=NO | T2_RELEASE=DEPLOYED_QWEN14B; NEXT=PO_MANUAL_HOMOLOGATION |
+
+### DELIA-C3-T2-INDEPENDENT-REVIEW-RESIDUAL-CLOSURE-QWEN14B-PRODUCTION-RELEASE-01 — execução (2026-11-10)
+
+- **Autorização:** PO liberou preparação/deploy Qwen 14B condicionada a gates técnicos; T3 não autorizado.
+- **HEAD/RELEASE_SHA:** `30ac7cbb4467f2d4703f266a701979747857a54c`; remediação funcional ancestral `f4eff148ff`.
+- **Modelo:** `qwen/qwen3-14b` via `openrouter_qwen` (fingerprint `bbe33dd125948f32`); Kimi referência M01/M04/M06 PASS.
+- **Deploy:** `up-prod-sequential.sh --build delia-api api-delpi`; digests e rollback registrados no residual register.
+- **R04:** CLOSED_PROVEN neste runtime (env sem CATALOG_*; Settings fail-closed; mode=core).
+- **Handoff PO:** `http://localhost/apps/delia`; perguntas amostrais no relatório.
+- **Veredicto:** `T2_RELEASE_DEPLOYED_QWEN14B` com residuais controlados (R05/R06 live, VISTA phrasing flaky); ExternalConnection/ACT = fora de escopo.

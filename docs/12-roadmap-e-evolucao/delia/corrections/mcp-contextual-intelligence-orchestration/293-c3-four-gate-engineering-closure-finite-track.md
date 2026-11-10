@@ -370,3 +370,10 @@ NEXT_STAGE=REVIEW_REQUIRED
 ## Anexo — execução DELIA-C3-SEMANTIC-MCP-PROGRESSION-RESPONSE-SYNTHESIS (2026-11-10)
 
 Registro operacional (não avança gates L/A/O/R automaticamente): remediação F1/F2 de progressão semântica MCP dinâmica e síntese; evidência no residual register e execution ledger. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`. `T3=NOT_AUTHORIZED`.
+
+## Anexo — T2 Independent Review + Qwen14B Production Release (2026-11-10)
+
+**TASK:** `DELIA-C3-T2-INDEPENDENT-REVIEW-RESIDUAL-CLOSURE-QWEN14B-PRODUCTION-RELEASE-01`  
+**RESULT:** revisão independente AR01–AR12 favorável; R04 `CLOSED_PROVEN` no runtime produtivo deste host (CATALOG_* ausente; mode=`core`); deploy `delia-api`+`api-delpi` no SHA `30ac7cbb4467…` com `DELIA_RUNTIME_PROFILE=openrouter_qwen` / `qwen/qwen3-14b` verificado por invocação; DAVI/TEO/SIPOC GROUNDED; VISTA phrasing flaky classificado risco controlado; ExternalConnection/ACT fora de escopo.  
+**PROD_READY_FOR_PO_MANUAL_TEST:** YES (`http://localhost/apps/delia`).  
+**T3:** `NOT_AUTHORIZED`. Detalhe: residual register + execution ledger.
