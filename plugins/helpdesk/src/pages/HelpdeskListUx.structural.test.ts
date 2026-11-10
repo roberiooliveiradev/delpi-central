@@ -23,6 +23,8 @@ describe("Helpdesk list UX structural", () => {
     expect(page).toContain("HelpdeskListPaginationFooter");
     expect(page).toContain("shouldForceTicketCards");
     expect(page).toContain("TICKET_STATUS_FILTERS");
+    expect(page).toContain('label: "Meus chamados"');
+    expect(page).toContain("requester_mine");
     expect(page).not.toContain("HelpdeskHostDrawer");
     expect(page).not.toContain("HelpdeskFilterBarShell");
     expect(page).not.toContain("HelpdeskCompactPagination");
@@ -31,6 +33,28 @@ describe("Helpdesk list UX structural", () => {
     expect(page).toContain("usePersistedViewLayout");
     expect(ui).toContain("createDashboardPageHero");
     expect(ui).toContain("createDashboardScopeChipBar");
+    expect(ui).toContain("createDashboardEntityAvatarLabel");
+    expect(ui).toContain("HelpdeskEntityAvatarLabel");
+  });
+
+  it("coluna requerente usa avatar do kit e é ordenável", () => {
+    const table = read("TicketListTable.tsx");
+    const cards = read("TicketListCards.tsx");
+    const model = read("../presentation/ticketListViewModel.ts");
+    const view = read("../presentation/ticketView.ts");
+    const builder = read("TicketListFilterBuilder.tsx");
+    expect(table).toContain("HelpdeskEntityAvatarLabel");
+    expect(table).toContain('case "requester"');
+    expect(cards).toContain("HelpdeskEntityAvatarLabel");
+    expect(model).toMatch(
+      /\{\s*key:\s*"requester",\s*header:\s*"Requerente",\s*fixed:\s*false,\s*sortable:\s*true/,
+    );
+    expect(model).toContain('key: "requester_mine"');
+    expect(model).toContain('key: "solved_from"');
+    expect(model).toContain('key: "closed_from"');
+    expect(view).toContain('"requester"');
+    expect(view).toContain("requester_mine");
+    expect(builder).toContain('input === "mine"');
   });
 
   it("CTA Abrir chamado na listagem usa ActionButton com texto (não só ícone +)", () => {

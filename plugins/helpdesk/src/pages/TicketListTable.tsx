@@ -14,7 +14,12 @@ import {
   isModifiedHelpdeskClick,
   ticketDetailPath,
 } from "../routing/helpdeskRoute";
-import { HelpdeskDataTable, HelpdeskStatusBadge, helpdeskDataTableClassNames } from "../ui/helpdeskUi";
+import {
+  HelpdeskDataTable,
+  HelpdeskEntityAvatarLabel,
+  HelpdeskStatusBadge,
+  helpdeskDataTableClassNames,
+} from "../ui/helpdeskUi";
 
 function eventFromTicketLink(event: { target: EventTarget | null }): boolean {
   const node = event.target;
@@ -137,6 +142,18 @@ function renderColumn(key: TicketListColumnDefinition["key"], row: TicketSummary
       return row.urgency;
     case "assigned":
       return row.assigned_display_name;
+    case "requester": {
+      const name = (row.requester_display_name ?? "").trim();
+      if (!name) return "";
+      return (
+        <HelpdeskEntityAvatarLabel
+          name={name}
+          colorKey={row.requester_id != null ? `glpi:${row.requester_id}` : name}
+          secondary={row.requester_id != null ? `#${row.requester_id}` : undefined}
+          size="sm"
+        />
+      );
+    }
     case "created_at":
       return <DateCell value={row.created_at} />;
     case "updated_at":
@@ -146,7 +163,7 @@ function renderColumn(key: TicketListColumnDefinition["key"], row: TicketSummary
     case "closed_at":
       return <DateCell value={row.closed_at ?? ""} />;
     default:
-      // Plain-text cells share the canonical formatter (requester/entity/last_editor…).
+      // Plain-text cells share the canonical formatter (entity/last_editor…).
       return cellTextForColumn(row, key);
   }
 }

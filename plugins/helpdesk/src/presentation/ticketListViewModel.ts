@@ -75,12 +75,15 @@ export type TicketListFilterFieldKey =
   | "urgency_id"
   | "category_id"
   | "assignee_id"
+  | "requester_mine"
   | "updated_from"
   | "updated_to"
   | "created_from"
   | "created_to"
   | "solved_from"
-  | "solved_to";
+  | "solved_to"
+  | "closed_from"
+  | "closed_to";
 
 export type TicketListColumnDefinition = {
   key: TicketListColumnKey;
@@ -127,7 +130,7 @@ export const TICKET_LIST_COLUMN_CATALOG: readonly TicketListColumnDefinition[] =
   { key: "updated_at", header: "Atualizado", fixed: false, sortable: true, solicitante: true, defaultVisible: true },
   { key: "solved_at", header: "Resolvido", fixed: false, sortable: true, solicitante: true, defaultVisible: false },
   { key: "closed_at", header: "Fechado", fixed: false, sortable: true, solicitante: true, defaultVisible: false },
-  { key: "requester", header: "Requerente", fixed: false, sortable: false, solicitante: true, defaultVisible: true },
+  { key: "requester", header: "Requerente", fixed: false, sortable: true, solicitante: true, defaultVisible: true },
   { key: "entity", header: "Entidade", fixed: false, sortable: false, solicitante: true, defaultVisible: false },
   { key: "last_editor", header: "Última edição por", fixed: false, sortable: false, solicitante: true, defaultVisible: false },
 ] as const;
@@ -141,6 +144,7 @@ const SORT_LABELS: Record<string, string> = {
   category: "Categoria",
   urgency: "Urgência",
   assigned: "Técnico",
+  requester: "Requerente",
   created_at: "Aberto",
   updated_at: "Última atualização",
   solved_at: "Resolvido",
@@ -200,14 +204,20 @@ export function ticketListViewModelFromFilters(
   push("urgency_id", filters.urgency_id);
   push("category_id", filters.category_id);
   push("assignee_id", filters.assignee_id);
+  if (filters.requester_mine) push("requester_mine", "1");
   push("updated_from", filters.updated_from, "gte");
   push("updated_to", filters.updated_to, "lte");
   push("created_from", filters.created_from, "gte");
   push("created_to", filters.created_to, "lte");
+  push("solved_from", filters.solved_from, "gte");
+  push("solved_to", filters.solved_to, "lte");
+  push("closed_from", filters.closed_from, "gte");
+  push("closed_to", filters.closed_to, "lte");
 
   const parsedLevels = parseTicketSortLevels(filters.sort);
   const sorts: TicketListSortLevel[] = parsedLevels;
   const activeFilterLabels: string[] = [];
+  if (filters.requester_mine) activeFilterLabels.push("Meus chamados");
   if (filters.status.trim()) {
     activeFilterLabels.push(`Status: ${STATUS_FILTER_LABELS[filters.status] ?? filters.status}`);
   }
@@ -217,6 +227,8 @@ export function ticketListViewModelFromFilters(
   if (filters.assignee_id.trim()) activeFilterLabels.push("Técnico");
   if (filters.updated_from.trim() || filters.updated_to.trim()) activeFilterLabels.push("Atualizado");
   if (filters.created_from.trim() || filters.created_to.trim()) activeFilterLabels.push("Aberto");
+  if (filters.solved_from.trim() || filters.solved_to.trim()) activeFilterLabels.push("Resolvido");
+  if (filters.closed_from.trim() || filters.closed_to.trim()) activeFilterLabels.push("Fechado");
 
   const primary = sorts[0] ?? { field: "updated_at" as const, direction: "desc" as const };
   const sortLabel =
@@ -282,22 +294,26 @@ const FILTER_FIELD_LABELS: Record<TicketListFilterFieldKey, string> = {
   urgency_id: "Urgência",
   category_id: "Categoria",
   assignee_id: "Técnico",
+  requester_mine: "Meus chamados",
   updated_from: "Atualizado de",
   updated_to: "Atualizado até",
   created_from: "Aberto de",
   created_to: "Aberto até",
   solved_from: "Resolvido de",
   solved_to: "Resolvido até",
+  closed_from: "Fechado de",
+  closed_to: "Fechado até",
 };
 
 /** Fields the solicitante builder can send today (flat ADDITIVE BFF query). */
 export const TICKET_LIST_BUILDER_FIELDS: readonly {
   key: TicketListFilterFieldKey;
   label: string;
-  input: "text" | "status" | "urgency" | "category" | "assignee" | "date";
+  input: "text" | "status" | "urgency" | "category" | "assignee" | "mine" | "date";
   operator: ListFilterOperator;
 }[] = [
   { key: "q", label: FILTER_FIELD_LABELS.q, input: "text", operator: "contains" },
+  { key: "requester_mine", label: FILTER_FIELD_LABELS.requester_mine, input: "mine", operator: "eq" },
   { key: "status", label: FILTER_FIELD_LABELS.status, input: "status", operator: "eq" },
   { key: "urgency_id", label: FILTER_FIELD_LABELS.urgency_id, input: "urgency", operator: "eq" },
   { key: "category_id", label: FILTER_FIELD_LABELS.category_id, input: "category", operator: "eq" },
@@ -306,6 +322,10 @@ export const TICKET_LIST_BUILDER_FIELDS: readonly {
   { key: "updated_to", label: FILTER_FIELD_LABELS.updated_to, input: "date", operator: "lte" },
   { key: "created_from", label: FILTER_FIELD_LABELS.created_from, input: "date", operator: "gte" },
   { key: "created_to", label: FILTER_FIELD_LABELS.created_to, input: "date", operator: "lte" },
+  { key: "solved_from", label: FILTER_FIELD_LABELS.solved_from, input: "date", operator: "gte" },
+  { key: "solved_to", label: FILTER_FIELD_LABELS.solved_to, input: "date", operator: "lte" },
+  { key: "closed_from", label: FILTER_FIELD_LABELS.closed_from, input: "date", operator: "gte" },
+  { key: "closed_to", label: FILTER_FIELD_LABELS.closed_to, input: "date", operator: "lte" },
 ] as const;
 
 export function newFilterRuleId(): string {
@@ -354,10 +374,15 @@ export function ticketListFiltersFromFilterGroup(
     urgency_id: "",
     category_id: "",
     assignee_id: "",
+    requester_mine: false,
     updated_from: "",
     updated_to: "",
     created_from: "",
     created_to: "",
+    solved_from: "",
+    solved_to: "",
+    closed_from: "",
+    closed_to: "",
     page: 1,
   };
   const applyRule = (rule: TicketListFilterRule) => {
@@ -379,6 +404,9 @@ export function ticketListFiltersFromFilterGroup(
       case "assignee_id":
         next.assignee_id = value;
         break;
+      case "requester_mine":
+        next.requester_mine = value === "1" || value.toLowerCase() === "true";
+        break;
       case "updated_from":
         next.updated_from = value;
         break;
@@ -390,6 +418,18 @@ export function ticketListFiltersFromFilterGroup(
         break;
       case "created_to":
         next.created_to = value;
+        break;
+      case "solved_from":
+        next.solved_from = value;
+        break;
+      case "solved_to":
+        next.solved_to = value;
+        break;
+      case "closed_from":
+        next.closed_from = value;
+        break;
+      case "closed_to":
+        next.closed_to = value;
         break;
       default:
         break;

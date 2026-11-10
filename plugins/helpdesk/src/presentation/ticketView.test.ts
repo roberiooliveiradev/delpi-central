@@ -524,21 +524,28 @@ describe("ticket list filters", () => {
       urgency_id: "3",
       category_id: "",
       assignee_id: "",
+      requester_mine: true,
       updated_from: "",
       updated_to: "",
       created_from: "2026-01-01",
       created_to: "2026-01-31",
+      solved_from: "",
+      solved_to: "",
+      closed_from: "",
+      closed_to: "",
       sort: "updated_at:desc",
       page: 1,
       page_size: 10,
     });
     expect(search).toContain("q=Monitor");
     expect(search).toContain("status=in_progress");
+    expect(search).toContain("requester_mine=1");
     expect(search).toContain("created_from=2026-01-01");
     expect(search).toContain("created_to=2026-01-31");
     expect(search).toContain("page_size=10");
     const parsed = parseTicketListFilters(search);
     expect(parsed.created_from).toBe("2026-01-01");
+    expect(parsed.requester_mine).toBe(true);
     expect(parsed.page_size).toBe(10);
     expect(isTicketFilterActive(parsed)).toBe(true);
     expect(isTicketFilterActive(parseTicketListFilters(""))).toBe(false);

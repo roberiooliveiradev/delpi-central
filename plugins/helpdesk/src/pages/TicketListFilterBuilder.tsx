@@ -94,7 +94,7 @@ export function TicketListFilterBuilder({
                   updateRule(rule.id, {
                     field: nextMeta.key,
                     operator: nextMeta.operator,
-                    value: "",
+                    value: nextMeta.input === "mine" ? "1" : "",
                   });
                 }}
                 options={TICKET_LIST_BUILDER_FIELDS.map((item) => ({
@@ -147,6 +147,18 @@ export function TicketListFilterBuilder({
                   options={[
                     { value: "", label: "Todos" },
                     ...assignees.map((item) => ({ value: String(item.id), label: item.name })),
+                  ]}
+                />
+              ) : null}
+              {meta.input === "mine" ? (
+                <HelpdeskFilterSelect
+                  label="Valor"
+                  hint={help.value}
+                  value={rule.value === "1" ? "1" : "0"}
+                  onChange={(value) => updateRule(rule.id, { value: value === "1" ? "1" : "" })}
+                  options={[
+                    { value: "1", label: "Somente os meus" },
+                    { value: "0", label: "Todos os visíveis" },
                   ]}
                 />
               ) : null}

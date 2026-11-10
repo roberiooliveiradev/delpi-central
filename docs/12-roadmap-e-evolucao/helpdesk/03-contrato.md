@@ -79,13 +79,16 @@ Regras invioláveis:
 | `urgency_id` | urgência 1–5 |
 | `category_id` | categoria do token |
 | `assignee_id` | id GLPI do técnico — **exceção Search legado** (`GLPI_LEGACY_*`, mesmo de H12/H10); ids via `search/Ticket`, hidratação/ACL via HLAPI OAuth |
+| `requester_mine` | `true` — BFF resolve o `user_id` da sessão OAuth e filtra pelo requerente (Search legado campo 4); o cliente não envia o id |
 | `updated_from` / `updated_to` | `YYYY-MM-DD` em `date_mod` |
 | `created_from` / `created_to` | `YYYY-MM-DD` em `date_creation` |
-| `sort` | `updated_at:desc` (padrão), `created_at`, `solved_at`, `closed_at`, `title`, `id`, `status`, `category`, `urgency`, `assigned` + `:asc\|:desc` — `assigned` usa a mesma exceção Search |
+| `solved_from` / `solved_to` | `YYYY-MM-DD` em `date_solve` |
+| `closed_from` / `closed_to` | `YYYY-MM-DD` em `date_close` |
+| `sort` | `updated_at:desc` (padrão), `created_at`, `solved_at`, `closed_at`, `title`, `id`, `status`, `category`, `urgency`, `assigned`, `requester` + `:asc\|:desc` — `assigned`/`requester` usam a mesma exceção Search |
 | `page` | página 1-based |
 | `page_size` | padrão 20; a tela envia 10, 20 ou 50 (máximo 50) |
 
-O BFF pede `limit = page_size + 1` à HLAPI (caminho normal) e devolve `has_more`. Sem `assignee_id`/`sort=assigned`, a listagem **não** usa apirest. Status ou sort desconhecidos, ou data inválida: 422 `validation_error`. `q` só conserva letra, número, espaço, hífen e underscore. Sem `GLPI_LEGACY_*` ligado, `assignee_id` / sort `assigned` → 503 `glpi_feature_disabled`.
+O BFF pede `limit = page_size + 1` à HLAPI (caminho normal) e devolve `has_more`. Sem `assignee_id`/`requester_mine`/`sort=assigned|requester`, a listagem **não** usa apirest. Status ou sort desconhecidos, ou data inválida: 422 `validation_error`. `q` só conserva letra, número, espaço, hífen e underscore. Sem `GLPI_LEGACY_*` ligado, `assignee_id` / `requester_mine` / sort `assigned|requester` → 503 `glpi_feature_disabled`.
 
 ```json
 {

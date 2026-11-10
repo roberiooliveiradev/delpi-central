@@ -399,7 +399,12 @@ def list_tickets(
     updated_to: str = "",
     created_from: str = "",
     created_to: str = "",
+    solved_from: str = "",
+    solved_to: str = "",
+    closed_from: str = "",
+    closed_to: str = "",
     assignee_id: int | None = None,
+    requester_mine: bool = False,
     sort: str = "updated_at:desc",
     page: int = 1,
     page_size: int = 20,
@@ -415,20 +420,35 @@ def list_tickets(
             updated_to=updated_to,
             created_from=created_from,
             created_to=created_to,
+            solved_from=solved_from,
+            solved_to=solved_to,
+            closed_from=closed_from,
+            closed_to=closed_to,
             assignee_id=assignee_id,
+            requester_mine=requester_mine,
             sort=sort,
             page=page,
             page_size=page_size,
         )
+        service = _tickets(request)
+        if query.requester_mine:
+            query = service.resolve_requester_mine(actor.subject, query)
+            if query.requester_id is None:
+                return {
+                    "items": [],
+                    "page": query.page,
+                    "page_size": query.page_size,
+                    "has_more": False,
+                }
         decision = dashboard_reader_gate.classify_ticket_list(request)
         if decision == "denied":
             raise InstitutionalReadDenied("Leitura institucional do Helpdesk não autorizada.")
         if decision == "unavailable":
             raise InstitutionalReaderUnavailable("Leitura institucional do Helpdesk indisponível.")
         if decision == "ready":
-            listed = _tickets(request).tickets_as_dashboard_reader(query)
+            listed = service.tickets_as_dashboard_reader(query)
         else:
-            listed = _tickets(request).tickets(actor.subject, query)
+            listed = service.tickets(actor.subject, query)
     except HelpdeskError as exc:
         return _error(exc, request)
     return {

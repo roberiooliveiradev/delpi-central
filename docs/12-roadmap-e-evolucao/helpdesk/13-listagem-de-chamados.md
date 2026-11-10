@@ -69,7 +69,7 @@ A foto do Super-Admin **não** é o alvo visual. Serve para inventariar capacida
 | Data de abertura | `date` / `date_creation` | **IMPLEMENTADO** — «Aberto» (data-hora absoluta) |
 | Data da resolução | `date_solve` / `solvedate` | **IMPLEMENTADO** — `solved_at` |
 | Última atualização | `date_mod` | **IMPLEMENTADO** — «Atualizado» (data-hora absoluta) |
-| Requerente | `team` role `requester` | **IMPLEMENTADO** — `requester_display_name` (rótulo; **não ordena**) |
+| Requerente | `team` role `requester` | **IMPLEMENTADO** — avatar + `requester_display_name`; ordenável via Search legado |
 | Atribuído — técnico | `team` role `assigned` | **IMPLEMENTADO** — rótulo; **não ordena** |
 | Categoria | `category` | IMPLEMENTADO |
 | Última edição por | `users_id_lastupdater` | CONSOLE_GLPI — bancada; nome não identifica |

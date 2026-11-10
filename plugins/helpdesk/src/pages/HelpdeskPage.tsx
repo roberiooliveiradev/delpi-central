@@ -371,10 +371,15 @@ function TicketListPage() {
       urgency_id: "",
       category_id: "",
       assignee_id: "",
+      requester_mine: false,
       updated_from: "",
       updated_to: "",
       created_from: "",
       created_to: "",
+      solved_from: "",
+      solved_to: "",
+      closed_from: "",
+      closed_to: "",
       page: 1,
       sort: filters.sort,
       page_size: filters.page_size,
@@ -399,10 +404,15 @@ function TicketListPage() {
           urgency_id: next.urgency_id || undefined,
           category_id: next.category_id || undefined,
           assignee_id: next.assignee_id || undefined,
+          requester_mine: next.requester_mine || undefined,
           updated_from: next.updated_from || undefined,
           updated_to: next.updated_to || undefined,
           created_from: next.created_from || undefined,
           created_to: next.created_to || undefined,
+          solved_from: next.solved_from || undefined,
+          solved_to: next.solved_to || undefined,
+          closed_from: next.closed_from || undefined,
+          closed_to: next.closed_to || undefined,
           sort: next.sort || undefined,
           page: next.page,
           page_size: next.page_size,
@@ -529,12 +539,21 @@ function TicketListPage() {
     setSortDraft(parseTicketSortLevels(filters.sort));
   }, [filters]);
 
-  const statusChips = TICKET_STATUS_FILTERS.map((item) => ({
-    id: item.value || "all",
-    label: item.label,
-    active: filters.status === item.value,
-    onSelect: () => commitFilters({ ...filters, status: item.value, page: 1 }),
-  }));
+  const statusChips = [
+    {
+      id: "mine",
+      label: "Meus chamados",
+      active: filters.requester_mine,
+      onSelect: () =>
+        commitFilters({ ...filters, requester_mine: !filters.requester_mine, page: 1 }),
+    },
+    ...TICKET_STATUS_FILTERS.map((item) => ({
+      id: item.value || "all",
+      label: item.label,
+      active: filters.status === item.value,
+      onSelect: () => commitFilters({ ...filters, status: item.value, page: 1 }),
+    })),
+  ];
 
   const listChrome = view !== "link" && view !== "forbidden";
 

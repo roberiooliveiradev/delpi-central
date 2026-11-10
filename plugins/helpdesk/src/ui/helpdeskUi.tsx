@@ -17,6 +17,7 @@ import {
   createDashboardDataCardsGrid,
   createDashboardDataRecordCard,
   createDashboardEmptyState,
+  createDashboardEntityAvatarLabel,
   createDashboardFiltersKit,
   createDashboardFormActions,
   createDashboardLoadingActivityCard,
@@ -102,6 +103,9 @@ export function HelpdeskPageHero(props: ComponentProps<typeof HelpdeskPageHeroBa
 }
 
 export const HelpdeskScopeChipBar = createDashboardScopeChipBar({ prefix: PREFIX });
+
+/** Avatar + nome — padrão Minha DELPI para pessoa na lista (requerente/técnico). */
+export const HelpdeskEntityAvatarLabel = createDashboardEntityAvatarLabel(PREFIX);
 
 export const HelpdeskFilterBarShell = createFilterBarShell({
   prefix: PREFIX,

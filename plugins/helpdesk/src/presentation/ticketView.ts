@@ -114,10 +114,15 @@ export type TicketListFilters = {
   urgency_id: string;
   category_id: string;
   assignee_id: string;
+  requester_mine: boolean;
   updated_from: string;
   updated_to: string;
   created_from: string;
   created_to: string;
+  solved_from: string;
+  solved_to: string;
+  closed_from: string;
+  closed_to: string;
   sort: string;
   page: number;
   page_size: number;
@@ -148,6 +153,7 @@ export const TICKET_LIST_SORTABLE_COLUMNS = [
   "category",
   "urgency",
   "assigned",
+  "requester",
   "created_at",
   "updated_at",
   "solved_at",
@@ -183,14 +189,24 @@ export const DEFAULT_TICKET_LIST_FILTERS: TicketListFilters = {
   urgency_id: "",
   category_id: "",
   assignee_id: "",
+  requester_mine: false,
   updated_from: "",
   updated_to: "",
   created_from: "",
   created_to: "",
+  solved_from: "",
+  solved_to: "",
+  closed_from: "",
+  closed_to: "",
   sort: "updated_at:desc",
   page: 1,
   page_size: 20,
 };
+
+function parseTruthyFlag(raw: string | null): boolean {
+  const value = (raw || "").trim().toLowerCase();
+  return value === "1" || value === "true" || value === "yes";
+}
 
 export function parseTicketListFilters(search: string): TicketListFilters {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
@@ -202,10 +218,15 @@ export function parseTicketListFilters(search: string): TicketListFilters {
     urgency_id: (params.get("urgency_id") || "").trim(),
     category_id: (params.get("category_id") || "").trim(),
     assignee_id: (params.get("assignee_id") || "").trim(),
+    requester_mine: parseTruthyFlag(params.get("requester_mine")),
     updated_from: (params.get("updated_from") || "").trim(),
     updated_to: (params.get("updated_to") || "").trim(),
     created_from: (params.get("created_from") || "").trim(),
     created_to: (params.get("created_to") || "").trim(),
+    solved_from: (params.get("solved_from") || "").trim(),
+    solved_to: (params.get("solved_to") || "").trim(),
+    closed_from: (params.get("closed_from") || "").trim(),
+    closed_to: (params.get("closed_to") || "").trim(),
     sort: (params.get("sort") || DEFAULT_TICKET_LIST_FILTERS.sort).trim(),
     page: Number.isInteger(page) && page > 0 ? page : 1,
     page_size: ALLOWED_PAGE_SIZES.has(pageSize) ? pageSize : DEFAULT_TICKET_LIST_FILTERS.page_size,
@@ -219,10 +240,15 @@ export function ticketListSearch(filters: TicketListFilters): string {
   if (filters.urgency_id.trim()) params.set("urgency_id", filters.urgency_id.trim());
   if (filters.category_id.trim()) params.set("category_id", filters.category_id.trim());
   if (filters.assignee_id.trim()) params.set("assignee_id", filters.assignee_id.trim());
+  if (filters.requester_mine) params.set("requester_mine", "1");
   if (filters.updated_from.trim()) params.set("updated_from", filters.updated_from.trim());
   if (filters.updated_to.trim()) params.set("updated_to", filters.updated_to.trim());
   if (filters.created_from.trim()) params.set("created_from", filters.created_from.trim());
   if (filters.created_to.trim()) params.set("created_to", filters.created_to.trim());
+  if ((filters.solved_from || "").trim()) params.set("solved_from", filters.solved_from.trim());
+  if ((filters.solved_to || "").trim()) params.set("solved_to", filters.solved_to.trim());
+  if ((filters.closed_from || "").trim()) params.set("closed_from", filters.closed_from.trim());
+  if ((filters.closed_to || "").trim()) params.set("closed_to", filters.closed_to.trim());
   if (filters.sort && filters.sort !== DEFAULT_TICKET_LIST_FILTERS.sort) params.set("sort", filters.sort);
   if (filters.page > 1) params.set("page", String(filters.page));
   if (filters.page_size !== DEFAULT_TICKET_LIST_FILTERS.page_size) {
@@ -239,10 +265,15 @@ export function isTicketFilterActive(filters: TicketListFilters): boolean {
       || filters.urgency_id.trim()
       || filters.category_id.trim()
       || filters.assignee_id.trim()
-      || filters.updated_from.trim()
-      || filters.updated_to.trim()
-      || filters.created_from.trim()
-      || filters.created_to.trim(),
+      || filters.requester_mine
+      || (filters.updated_from || "").trim()
+      || (filters.updated_to || "").trim()
+      || (filters.created_from || "").trim()
+      || (filters.created_to || "").trim()
+      || (filters.solved_from || "").trim()
+      || (filters.solved_to || "").trim()
+      || (filters.closed_from || "").trim()
+      || (filters.closed_to || "").trim(),
   );
 }
 

@@ -12,6 +12,7 @@ import {
 } from "../routing/helpdeskRoute";
 import {
   HelpdeskDataCardsGrid,
+  HelpdeskEntityAvatarLabel,
   HelpdeskRecordCard,
   HelpdeskStatusBadge,
 } from "../ui/helpdeskUi";
@@ -62,7 +63,16 @@ export function TicketListCards({
               {
                 id: "requester",
                 label: "Solicitante",
-                value: requester,
+                value: requester ? (
+                  <HelpdeskEntityAvatarLabel
+                    name={requester}
+                    colorKey={row.requester_id != null ? `glpi:${row.requester_id}` : requester}
+                    secondary={row.requester_id != null ? `#${row.requester_id}` : undefined}
+                    size="sm"
+                  />
+                ) : (
+                  ""
+                ),
                 present: Boolean(requester),
               },
               {

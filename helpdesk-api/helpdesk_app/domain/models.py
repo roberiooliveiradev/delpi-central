@@ -92,6 +92,10 @@ class TicketListQuery:
     page: int = 1
     page_size: int = 20
     assignee_id: int | None = None
+    """GLPI requester user id — Search legado (campo Requerente), como assignee_id."""
+    requester_id: int | None = None
+    """True when the list must be scoped to the session actor as requester."""
+    requester_mine: bool = False
     """Original sort token from the API (`updated_at:desc`, `assigned:asc`, …)."""
     client_sort: str = "updated_at:desc"
     q: str = ""
@@ -102,6 +106,10 @@ class TicketListQuery:
     updated_to: str = ""
     created_from: str = ""
     created_to: str = ""
+    solved_from: str = ""
+    solved_to: str = ""
+    closed_from: str = ""
+    closed_to: str = ""
 
 
 @dataclass(frozen=True)

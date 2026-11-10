@@ -145,6 +145,26 @@ def test_list_filters_by_assignee_id():
     assert glpi.last_list_query.client_sort == "assigned:asc"
 
 
+def test_list_filters_requester_mine_and_sort():
+    client, glpi = build_client()
+    link(client)
+    glpi.session_uid = 12
+    mine = client.get("/tickets", params={"requester_mine": "true"}, headers=auth_headers())
+    assert mine.status_code == 200
+    assert [row["id"] for row in mine.json()["items"]] == [7]
+    assert glpi.last_list_query.requester_id == 12
+    assert glpi.last_list_query.requester_mine is True
+    glpi.session_uid = 99
+    empty = client.get("/tickets", params={"requester_mine": "true"}, headers=auth_headers())
+    assert empty.status_code == 200
+    assert empty.json()["items"] == []
+    sorted_requester = client.get(
+        "/tickets", params={"sort": "requester:asc"}, headers=auth_headers()
+    )
+    assert sorted_requester.status_code == 200
+    assert glpi.last_list_query.client_sort == "requester:asc"
+
+
 def test_create_ticket_and_followup_are_idempotent():
     client, glpi = build_client()
     link(client)

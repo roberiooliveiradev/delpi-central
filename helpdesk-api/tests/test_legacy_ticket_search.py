@@ -26,6 +26,15 @@ def test_needs_legacy_when_assignee_or_assigned_sort():
         build_ticket_list_query(sort="assigned:asc")
     ) is True
     assert ticket_list_needs_legacy_actor_search(
+        build_ticket_list_query(requester_id=12)
+    ) is True
+    assert ticket_list_needs_legacy_actor_search(
+        build_ticket_list_query(requester_mine=True)
+    ) is True
+    assert ticket_list_needs_legacy_actor_search(
+        build_ticket_list_query(sort="requester:desc")
+    ) is True
+    assert ticket_list_needs_legacy_actor_search(
         build_ticket_list_query(sort="updated_at:desc,title:asc")
     ) is False
 
@@ -63,6 +72,26 @@ def test_build_legacy_search_sort_assigned():
     assert "ASC" in encoded
     # The sort column is also requested via forcedisplay for merged ordering.
     assert "forcedisplay[1]=5" in encoded
+
+
+def test_build_legacy_search_path_includes_requester_field():
+    # GLPI canonical search option: 4 = Requester (users),
+    # glpi_tickets_users join type=REQUESTER.
+    (path,) = build_legacy_ticket_search_paths_from_parts(
+        requester_id=12, page=1, page_size=20
+    )
+    encoded = _encoded(path)
+    assert "criteria[0][field]=4" in encoded
+    assert "criteria[0][searchtype]=equals" in encoded
+    assert "12" in encoded
+
+
+def test_build_legacy_search_sort_requester():
+    (path,) = build_legacy_ticket_search_paths_from_parts(sort="requester:asc")
+    encoded = _encoded(path)
+    assert "sort=4" in encoded
+    assert "ASC" in encoded
+    assert "forcedisplay[1]=4" in encoded
 
 
 def test_numeric_term_fanout_covers_id_name_and_content():

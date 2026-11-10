@@ -1099,6 +1099,20 @@ declare module "@delpi/plugin-ui/index" {
     prefix: string,
   ): ComponentType<DashboardInitialsAvatarProps>;
 
+  export type DashboardEntityAvatarLabelProps = {
+    name: string;
+    colorKey?: string;
+    secondary?: string | null;
+    src?: string | null;
+    size?: InitialsAvatarSize;
+    emptyLabel?: string;
+    className?: string;
+  };
+
+  export function createDashboardEntityAvatarLabel(
+    prefix: string,
+  ): ComponentType<DashboardEntityAvatarLabelProps>;
+
   export type HintActionProps = {
     hint: string;
     ariaLabel: string;

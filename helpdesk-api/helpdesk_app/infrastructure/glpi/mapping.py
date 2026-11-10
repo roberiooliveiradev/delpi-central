@@ -96,7 +96,7 @@ _SORT_FIELDS = {
     "created_at": "date_creation",
     "solved_at": "date_solve",
     "closed_at": "date_close",
-    # `assigned` is not an HLAPI RSQL column — handled via legacy Search exception.
+    # `assigned` / `requester` are not HLAPI RSQL columns — legacy Search exception.
 }
 _MAX_PAGE_SIZE = 50
 _DEFAULT_PAGE_SIZE = 20
@@ -301,13 +301,21 @@ def build_ticket_list_query(
     updated_to: str = "",
     created_from: str = "",
     created_to: str = "",
+    solved_from: str = "",
+    solved_to: str = "",
+    closed_from: str = "",
+    closed_to: str = "",
     assignee_id: int | None = None,
+    requester_id: int | None = None,
+    requester_mine: bool = False,
     sort: str = "updated_at:desc",
     page: int = 1,
     page_size: int = _DEFAULT_PAGE_SIZE,
 ) -> TicketListQuery:
     if assignee_id is not None and int(assignee_id) < 1:
         raise GlpiValidation("assignee_id inválido.")
+    if requester_id is not None and int(requester_id) < 1:
+        raise GlpiValidation("requester_id inválido.")
     clauses: list[str] = ["is_deleted==false"]
     term = _search_term(q)
     if term:
@@ -341,6 +349,18 @@ def build_ticket_list_query(
         clauses.append(f"date_creation=ge={created_start}T00:00:00")
     if created_end:
         clauses.append(f"date_creation=le={created_end}T23:59:59")
+    solved_start = _day(solved_from, "solved_from")
+    solved_end = _day(solved_to, "solved_to")
+    if solved_start:
+        clauses.append(f"date_solve=ge={solved_start}T00:00:00")
+    if solved_end:
+        clauses.append(f"date_solve=le={solved_end}T23:59:59")
+    closed_start = _day(closed_from, "closed_from")
+    closed_end = _day(closed_to, "closed_to")
+    if closed_start:
+        clauses.append(f"date_close=ge={closed_start}T00:00:00")
+    if closed_end:
+        clauses.append(f"date_close=le={closed_end}T23:59:59")
     safe_page = max(1, page)
     safe_size = min(_MAX_PAGE_SIZE, max(1, page_size))
     client_sort = (sort or "updated_at:desc").strip() or "updated_at:desc"
@@ -353,6 +373,8 @@ def build_ticket_list_query(
         page=safe_page,
         page_size=safe_size,
         assignee_id=int(assignee_id) if assignee_id is not None else None,
+        requester_id=int(requester_id) if requester_id is not None else None,
+        requester_mine=bool(requester_mine),
         client_sort=client_sort,
         q=term,
         status=(status or "").strip(),
@@ -362,18 +384,22 @@ def build_ticket_list_query(
         updated_to=(updated_to or "").strip(),
         created_from=(created_from or "").strip(),
         created_to=(created_to or "").strip(),
+        solved_from=(solved_from or "").strip(),
+        solved_to=(solved_to or "").strip(),
+        closed_from=(closed_from or "").strip(),
+        closed_to=(closed_to or "").strip(),
     )
 
 
 def _hlapi_sort_token(client_sort: str) -> str:
-    """Drop `assigned` levels (HLAPI cannot sort team); keep remaining or default."""
+    """Drop actor sorts (HLAPI cannot sort team); keep remaining or default."""
     levels: list[str] = []
     for chunk in (client_sort or "").split(","):
         chunk = chunk.strip()
         if not chunk:
             continue
         field = chunk.split(":", 1)[0].strip()
-        if field == "assigned":
+        if field in {"assigned", "requester"}:
             continue
         levels.append(chunk)
     return ",".join(levels) if levels else "updated_at:desc"

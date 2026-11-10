@@ -322,6 +322,20 @@ class TicketService:
         except Exception:
             return False
 
+    def resolve_requester_mine(self, subject: str, query: TicketListQuery) -> TicketListQuery:
+        """Bind ``requester_mine`` to the actor's GLPI user id (backend-first)."""
+        from dataclasses import replace
+
+        if not query.requester_mine:
+            return query
+        if query.requester_id is not None:
+            return replace(query, requester_mine=True)
+        token = self._token(subject)
+        user_id = self._glpi.session_user_id(token)
+        if user_id is None or int(user_id) < 1:
+            return replace(query, requester_id=None, requester_mine=True)
+        return replace(query, requester_id=int(user_id), requester_mine=True)
+
     def tickets(self, subject: str, query: TicketListQuery) -> TicketListPage:
         return self._glpi.list_tickets(self._token(subject), query)
 

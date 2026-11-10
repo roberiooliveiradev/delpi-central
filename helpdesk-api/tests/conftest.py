@@ -38,6 +38,7 @@ class FakeGlpi:
                 "Média",
                 "2026-09-21T12:00:00Z",
                 requester_display_name="Robério Teixeira",
+                requester_id=12,
                 status_id=1,
                 assigned_display_name="Ana Silva",
                 assigned_user_id=15,
@@ -229,6 +230,13 @@ class FakeGlpi:
                 for row in items
                 if getattr(row, "assigned_user_id", None) == int(assignee_id)
             ]
+        requester_id = getattr(query, "requester_id", None)
+        if requester_id is not None:
+            items = [
+                row
+                for row in items
+                if getattr(row, "requester_id", None) == int(requester_id)
+            ]
         client_sort = getattr(query, "client_sort", "") or ""
         primary = client_sort.split(",")[0].strip() if client_sort else ""
         if primary.startswith("assigned:"):
@@ -236,6 +244,13 @@ class FakeGlpi:
             items = sorted(
                 items,
                 key=lambda row: (getattr(row, "assigned_display_name", "") or "").lower(),
+                reverse=reverse,
+            )
+        if primary.startswith("requester:"):
+            reverse = not primary.endswith(":asc")
+            items = sorted(
+                items,
+                key=lambda row: (getattr(row, "requester_display_name", "") or "").lower(),
                 reverse=reverse,
             )
         return TicketListPage(

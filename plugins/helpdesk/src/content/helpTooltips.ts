@@ -119,8 +119,9 @@ export const helpTooltips = {
     columns: "Mostra ou esconde colunas da tabela. Preferência neste navegador.",
     refreshList: "Atualiza a grade sem limpar filtros.",
     search: "Busca no número, título ou conteúdo do chamado.",
-    statusChips: "Atalho de status. Sem contadores — o helpdesk não expõe totais por estado.",
-    advancedFilters: "Refine os chamados com critérios adicionais.",
+    statusChips: "Atalhos de recorte: Meus chamados e status. Sem contadores — o helpdesk não expõe totais por estado.",
+    myTickets: "Mostra só os chamados em que você é o requerente.",
+    advancedFilters: "Refine os chamados com critérios adicionais alinhados às colunas da lista.",
   },
 
   pagination: {
@@ -161,6 +162,6 @@ export const helpTooltips = {
     updated_at: "Data e hora da última alteração.",
     solved_at: "Data e hora da solução, quando houver.",
     closed_at: "Data e hora do fechamento, quando houver.",
-    requester: "Nome do solicitante (rótulo).",
+    requester: "Quem abriu o chamado. Avatar com iniciais; ordenável pelo nome.",
   },
 } as const;

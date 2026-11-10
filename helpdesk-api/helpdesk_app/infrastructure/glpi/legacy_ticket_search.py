@@ -1,11 +1,12 @@
-"""Legacy apirest search/Ticket — exceção estreita para atores (técnico).
+"""Legacy apirest search/Ticket — exceção estreita para atores (técnico/requerente).
 
 HLAPI RSQL não filtra/ordena `team` (G-06/G-26). Quando a listagem precisa de
-`assignee_id` ou `sort=assigned`, o BFF usa Search clássico (mesma sessão
-`GLPI_LEGACY_*` de H12/H10) só para descobrir ids; a hidratação e o ACL
-continuam no Bearer OAuth via HLAPI `id=in=(…)`.
+`assignee_id`, `requester_id`/`requester_mine` ou `sort=assigned|requester`, o
+BFF usa Search clássico (mesma sessão `GLPI_LEGACY_*` de H12/H10) só para
+descobrir ids; a hidratação e o ACL continuam no Bearer OAuth via HLAPI
+`id=in=(…)`.
 
-Não é caminho geral da listagem: sem assignee/sort-assigned → HLAPI puro.
+Não é caminho geral da listagem: sem ator/sort-ator → HLAPI puro.
 
 Busca textual (`q`): como os links são flat AND/OR sem parênteses, o grupo
 OR do HLAPI `(id==N, name~t, content~t)` vira uma sub-busca por campo
@@ -24,13 +25,14 @@ from helpdesk_app.domain.models import TicketListQuery
 
 # Field ids — GLPI 10/11 Ticket search options (override via env if drift).
 # Canonical ids proven against GLPI 11 CommonITILObject::getSearchOptionsMain()
-# and getSearchOptionsActors(): 5=Technician (assigned), 12=Status.
+# and getSearchOptionsActors(): 4=Requester, 5=Technician (assigned), 12=Status.
 _FIELD_ID = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_ID_FIELD", "2") or "2")
 _FIELD_NAME = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_NAME_FIELD", "1") or "1")
 _FIELD_CONTENT = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_CONTENT_FIELD", "21") or "21")
 _FIELD_STATUS = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_STATUS_FIELD", "12") or "12")
 _FIELD_CATEGORY = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_CATEGORY_FIELD", "7") or "7")
 _FIELD_URGENCY = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_URGENCY_FIELD", "10") or "10")
+_FIELD_REQUESTER = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_REQUESTER_FIELD", "4") or "4")
 _FIELD_ASSIGN = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_ASSIGN_FIELD", "5") or "5")
 _FIELD_DATE_OPEN = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_DATE_OPEN_FIELD", "15") or "15")
 _FIELD_DATE_MOD = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_DATE_MOD_FIELD", "19") or "19")
@@ -46,6 +48,8 @@ _STATUS_GROUPS: dict[str, tuple[int, ...]] = {
     "closed": (6,),
 }
 
+_ACTOR_SORT_FIELDS = frozenset({"assigned", "requester"})
+
 
 @dataclass(frozen=True)
 class LegacyTicketSearchResult:
@@ -57,9 +61,11 @@ class LegacyTicketSearchResult:
 def ticket_list_needs_legacy_actor_search(query: TicketListQuery) -> bool:
     if query.assignee_id is not None:
         return True
+    if query.requester_id is not None or query.requester_mine:
+        return True
     primary = (query.client_sort or "updated_at:desc").split(",")[0].strip()
     field = primary.split(":", 1)[0].strip()
-    return field == "assigned"
+    return field in _ACTOR_SORT_FIELDS
 
 
 def build_legacy_ticket_search_paths_from_parts(
@@ -72,7 +78,12 @@ def build_legacy_ticket_search_paths_from_parts(
     updated_to: str = "",
     created_from: str = "",
     created_to: str = "",
+    solved_from: str = "",
+    solved_to: str = "",
+    closed_from: str = "",
+    closed_to: str = "",
     assignee_id: int | None = None,
+    requester_id: int | None = None,
     sort: str = "updated_at:desc",
     page: int = 1,
     page_size: int = 20,
@@ -118,6 +129,11 @@ def build_legacy_ticket_search_paths_from_parts(
                 raise GlpiValidation("assignee_id inválido.")
             add(_FIELD_ASSIGN, "equals", int(assignee_id))
 
+        if requester_id is not None:
+            if int(requester_id) < 1:
+                raise GlpiValidation("requester_id inválido.")
+            add(_FIELD_REQUESTER, "equals", int(requester_id))
+
         status_ids = _status_ids(status)
         if len(status_ids) == 1:
             add(_FIELD_STATUS, "equals", status_ids[0])
@@ -138,6 +154,14 @@ def build_legacy_ticket_search_paths_from_parts(
             add(_FIELD_DATE_MOD, "morethan", f"{updated_from.strip()} 00:00:00")
         if updated_to.strip():
             add(_FIELD_DATE_MOD, "lessthan", f"{updated_to.strip()} 23:59:59")
+        if solved_from.strip():
+            add(_FIELD_DATE_SOLVE, "morethan", f"{solved_from.strip()} 00:00:00")
+        if solved_to.strip():
+            add(_FIELD_DATE_SOLVE, "lessthan", f"{solved_to.strip()} 23:59:59")
+        if closed_from.strip():
+            add(_FIELD_DATE_CLOSE, "morethan", f"{closed_from.strip()} 00:00:00")
+        if closed_to.strip():
+            add(_FIELD_DATE_CLOSE, "lessthan", f"{closed_to.strip()} 23:59:59")
 
         if not criteria:
             add(_FIELD_ID, "contains", "")
@@ -292,6 +316,7 @@ def _legacy_sort(sort: str) -> tuple[int, str]:
         "category": _FIELD_CATEGORY,
         "urgency": _FIELD_URGENCY,
         "assigned": _FIELD_ASSIGN,
+        "requester": _FIELD_REQUESTER,
         "created_at": _FIELD_DATE_OPEN,
         "updated_at": _FIELD_DATE_MOD,
         "solved_at": _FIELD_DATE_SOLVE,

@@ -29,9 +29,11 @@ const SORT_OPTIONS = TICKET_LIST_SORTABLE_COLUMNS.map((key) => ({
                   ? "Urgência"
                   : key === "assigned"
                     ? "Técnico"
-                    : key === "id"
-                      ? "Chamado"
-                      : key,
+                    : key === "requester"
+                      ? "Requerente"
+                      : key === "id"
+                        ? "Chamado"
+                        : key,
 }));
 
 export function TicketListSortBuilder({
