@@ -8,15 +8,39 @@ export type PluginView =
   | "service_detail"
   | "databases"
   | "database_detail"
+  | "networks"
+  | "network_detail"
+  | "integrations"
+  | "integration_detail"
   | "action_plans"
   | "help"
   | "not_found";
 
-export type NavId = "home" | "servers" | "services" | "databases" | "action_plans" | "help";
+export type NavId =
+  | "home"
+  | "servers"
+  | "services"
+  | "databases"
+  | "networks"
+  | "integrations"
+  | "action_plans"
+  | "help";
 
-export type ResolvedRoute = { view: PluginView; serverId?: string; serviceId?: string; databaseId?: string };
+export type ResolvedRoute = {
+  view: PluginView;
+  serverId?: string;
+  serviceId?: string;
+  databaseId?: string;
+  networkId?: string;
+  integrationId?: string;
+};
 
-export type DetailTarget = { serverId: string } | { serviceId: string } | { databaseId: string };
+export type DetailTarget =
+  | { serverId: string }
+  | { serviceId: string }
+  | { databaseId: string }
+  | { networkId: string }
+  | { integrationId: string };
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -25,7 +49,9 @@ const COLLECTIONS = {
   servers: { list: "servers", detail: "server_detail", idKey: "serverId" },
   services: { list: "services", detail: "service_detail", idKey: "serviceId" },
   databases: { list: "databases", detail: "database_detail", idKey: "databaseId" },
-} as const satisfies Record<string, { list: PluginView; detail: PluginView; idKey: keyof ResolvedRoute }>;
+  networks: { list: "networks", detail: "network_detail", idKey: "networkId" },
+  integrations: { list: "integrations", detail: "integration_detail", idKey: "integrationId" },
+} as const satisfies Record<string, { list: PluginView & NavId; detail: PluginView; idKey: keyof ResolvedRoute }>;
 
 export function normalizePathname(pathname: string): string {
   const trimmed = pathname.split("?")[0].replace(/\/+$/, "");
@@ -55,11 +81,9 @@ export function resolveRoute(pathname: string, basePath: string): ResolvedRoute 
 }
 
 export function activeNavId(view: PluginView): NavId | null {
-  if (view === "server_detail") return "servers";
-  if (view === "service_detail") return "services";
-  if (view === "database_detail") return "databases";
   if (view === "not_found") return null;
-  return view;
+  const owner = Object.values(COLLECTIONS).find((collection) => collection.detail === view);
+  return owner ? owner.list : (view as NavId);
 }
 
 const NAV_SEGMENTS: Record<NavId, string> = {
@@ -67,15 +91,16 @@ const NAV_SEGMENTS: Record<NavId, string> = {
   servers: "/servers",
   services: "/services",
   databases: "/databases",
+  networks: "/networks",
+  integrations: "/integrations",
   action_plans: "/action-plans",
   help: "/help",
 };
 
 export function buildPath(basePath: string, target: NavId | DetailTarget): string {
   if (typeof target === "object") {
-    if ("serverId" in target) return `${basePath}/servers/${target.serverId}`;
-    if ("serviceId" in target) return `${basePath}/services/${target.serviceId}`;
-    return `${basePath}/databases/${target.databaseId}`;
+    const [segment, collection] = Object.entries(COLLECTIONS).find(([, item]) => item.idKey in target)!;
+    return `${basePath}/${segment}/${(target as Record<string, string>)[collection.idKey]}`;
   }
   return `${basePath}${NAV_SEGMENTS[target]}` || "/";
 }

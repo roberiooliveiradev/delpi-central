@@ -35,3 +35,9 @@ export function requestedPaths(fetchMock: ReturnType<typeof mockApi>, method = "
     .filter(([, init]) => (init?.method ?? "GET") === method)
     .map(([input]) => new URL(String(input), "http://localhost").pathname.replace("/apps/it-portal-api", ""));
 }
+
+export function requestBodies(fetchMock: ReturnType<typeof mockApi>, method: string): unknown[] {
+  return fetchMock.mock.calls
+    .filter(([, init]) => init?.method === method)
+    .map(([, init]) => JSON.parse(String(init?.body ?? "null")));
+}

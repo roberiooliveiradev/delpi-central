@@ -11,8 +11,8 @@ Arquitetura, contrato e permissões vigentes: `it-portal-api/README.md` e
 | E1 — `IT-PORTAL-MVP-E1` | Servidores, anotações, planos de ação, visão geral | `5df2177c` | COMPLETE | aceito pelo PO |
 | Gate 0 recovery | Recuperação do baseline em produção | `85626954` | COMPLETE_WITH_RESIDUAL | `REVIEW_DECISION: ACCEPT_WITH_RESIDUAL` |
 | E2A — `IT-PORTAL-INVENTORY-E2A` | Serviços/aplicações, instâncias de banco, hospedagem serviço→servidor, consumo serviço→banco | `a656d209` | COMPLETE_WITH_RESIDUAL | `REVIEW_DECISION: ACCEPT_WITH_RESIDUAL` — homologado em produção pelo PO com os sete critérios funcionais confirmados |
-| R-SEC-01 | Residual RBAC das escritas (ver abaixo) | ver Git | delimitado antes da E2B | pendente de revisão |
-| E2B — `IT-PORTAL-INVENTORY-E2B` | Redes, integrações e relacionamentos entre recursos | ver Git | `READY_TO_EXECUTE` → em execução | pendente de revisão |
+| R-SEC-01 | Residual RBAC das escritas (ver abaixo) | `d39f6012` | implementado antes da E2B | pendente de revisão |
+| E2B — `IT-PORTAL-INVENTORY-E2B` | Redes, integrações e relacionamentos entre recursos (ver abaixo) | ver Git | implementado | pendente de revisão |
 | E3 | Mapa interativo e análise de impacto | — | fora do escopo atual | — |
 
 O executor não se auto-aceita: o estado de aceite é registrado somente após
@@ -43,6 +43,28 @@ gravar; leituras não fazem lookup fresh; manage sem view → 403).
 
 Fora do escopo: o bypass `is_superadmin` de `delpi_auth.authz_core` é
 comportamento canônico da plataforma e não é alterado pelo Portal de TI.
+
+## E2B — decisões de modelagem
+
+- **Redes** (`networks`, migration `V003`): CIDR validado no backend e no banco
+  (`::cidr`), gateway dentro do CIDR, VLAN 1–4094. O escopo
+  `container_runtime` é a confirmação explícita exigida para redes do Docker;
+  elas nunca são tratadas como corporativas. CIDR único por unidade apenas
+  entre redes corporativas ativas. Sem varredura.
+- **Conectividade** servidor↔rede (`server_network_links`): IP opcional, dentro
+  do CIDR, sem endereço de rede/broadcast; alterar o CIDR é recusado se deixar
+  IPs vinculados fora.
+- **Integrações** (`integrations`): origem e destino são um serviço cadastrado
+  ou um sistema externo nomeado, com pelo menos uma ponta interna e sem
+  autointegração; protocolo e direção em catálogo; texto passa pelo guard de
+  segredos. Consumo de banco continua em `database_consumers`.
+- **Dependência operacional** serviço→serviço (`service_dependencies`): somente
+  registrada explicitamente, sem autorrelação nem duplicata.
+- Hospedagem, conectividade, consumo e dependência são tipos distintos; a
+  página do servidor deriva as integrações das hospedagens. Mapa e análise de
+  impacto ficam para a E3.
+- Correção incidental da E2A: o histórico do MFE lia `changes.database`, mas a
+  API grava o snapshot do vínculo serviço–banco como `database_instance`.
 
 ## Inventário GLPI / Zabbix (E2A e E2B)
 

@@ -1,3 +1,8 @@
+import { configure } from "@testing-library/react";
+
+/** Páginas completas renderizam várias queries em paralelo; 1 s padrão é curto em runners carregados. */
+configure({ asyncUtilTimeout: 5_000 });
+
 /** APIs de layout ausentes no jsdom e usadas pelos componentes do kit. */
 class ResizeObserverStub {
   observe() {}

@@ -13,6 +13,7 @@ import { queryKeys } from "../../app/queryKeys";
 import { buildPath } from "../../app/routes";
 import { DBMS_LABELS } from "../../content/labels";
 import { DatabaseFormModal } from "../databases/DatabaseFormModal";
+import { IntegrationsSection, NetworkLinksSection } from "../inventory/ConnectivitySections";
 import { DetailField as Field } from "../inventory/InventoryDialogs";
 import { HostingsSection } from "../inventory/LinkSections";
 
@@ -44,8 +45,35 @@ function countLabel(count: number | undefined, singular: string, plural: string)
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
-/** Seções E2A da página do servidor; cada uma só aparece com a permissão de leitura correspondente. */
+/** Seções de inventário da página do servidor; cada uma só aparece com a permissão de leitura correspondente. */
 export function ServerComponentsSections({ server }: { server: Server }) {
+  const { capabilities } = usePortal();
+  return (
+    <>
+      <ServerInventorySummary server={server} />
+      {capabilities?.can_view_networks ? (
+        <NetworkLinksSection
+          owner={{ serverId: server.id }}
+          title="Redes"
+          emptyMessage="Nenhuma rede vinculada a este servidor."
+          canManage={capabilities.can_manage_networks}
+          ownerArchived={server.archived}
+        />
+      ) : null}
+      {capabilities?.can_view_integrations ? (
+        <IntegrationsSection
+          owner={{ serverId: server.id }}
+          title="Integrações dos serviços hospedados"
+          emptyMessage="Nenhuma integração registrada para os serviços hospedados neste servidor."
+          canManage={false}
+          ownerArchived={server.archived}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function ServerInventorySummary({ server }: { server: Server }) {
   const { capabilities } = usePortal();
   const canSeeServices = capabilities?.can_view_services === true;
   const canSeeDatabases = capabilities?.can_view_databases === true;

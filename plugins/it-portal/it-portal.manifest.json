@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "id": "it-portal",
   "name": "Portal de TI",
-  "description": "Inventário de servidores, serviços, aplicações e bancos de dados, com notas técnicas e planos de ação da infraestrutura de TI.",
+  "description": "Inventário de servidores, serviços, aplicações, bancos de dados, redes e integrações, com relacionamentos, notas técnicas e planos de ação da infraestrutura de TI.",
   "icon": "server",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "microfrontend",
   "basePath": "/apps/it-portal",
   "entry": "/apps/it-portal/assets/remoteEntry.js",
@@ -68,6 +68,30 @@
       "name": "Portal de TI — gerenciar bancos de dados",
       "description": "Cadastra, edita, arquiva e restaura instâncias de bancos. Vincular serviços consumidores exige também ver serviços. Requer ver servidores e ver bancos.",
       "module": "it-portal"
+    },
+    {
+      "code": "it-portal.networks.view",
+      "name": "Portal de TI — ver redes",
+      "description": "Consulta redes, os servidores conectados a cada uma e o histórico. Requer também ver servidores.",
+      "module": "it-portal"
+    },
+    {
+      "code": "it-portal.networks.manage",
+      "name": "Portal de TI — gerenciar redes",
+      "description": "Cadastra, edita, arquiva e restaura redes e vincula ou desvincula servidores. Requer ver servidores e ver redes.",
+      "module": "it-portal"
+    },
+    {
+      "code": "it-portal.integrations.view",
+      "name": "Portal de TI — ver integrações",
+      "description": "Consulta integrações entre serviços e com sistemas externos e o histórico. Requer também ver servidores e ver serviços.",
+      "module": "it-portal"
+    },
+    {
+      "code": "it-portal.integrations.manage",
+      "name": "Portal de TI — gerenciar integrações",
+      "description": "Cadastra, edita, arquiva e restaura integrações. Requer ver servidores, ver serviços e ver integrações.",
+      "module": "it-portal"
     }
   ],
   "routes": [
@@ -117,6 +141,22 @@
       "permission": "it-portal.databases.view",
       "icon": "server",
       "order": 50,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/it-portal/networks",
+      "label": "Redes",
+      "permission": "it-portal.networks.view",
+      "icon": "network",
+      "order": 51,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/it-portal/integrations",
+      "label": "Integrações",
+      "permission": "it-portal.integrations.view",
+      "icon": "workflow",
+      "order": 52,
       "showInMenu": false
     }
   ],

@@ -109,6 +109,10 @@ HistoryEntityType = Literal[
     "service_hosting",
     "database_instance",
     "database_consumer",
+    "network",
+    "server_network_link",
+    "integration",
+    "service_dependency",
 ]
 
 
@@ -191,6 +195,10 @@ class CapabilitiesOut(BaseModel):
     can_manage_services: bool
     can_view_databases: bool
     can_manage_databases: bool
+    can_view_networks: bool
+    can_manage_networks: bool
+    can_view_integrations: bool
+    can_manage_integrations: bool
 
 
 # ------------------------------------------------------------- inventário E2A
@@ -346,6 +354,172 @@ class DatabaseConsumerOut(BaseModel):
     created_by_name: str
     database: DatabaseSummaryOut
     service: ServiceSummaryOut
+
+
+# ------------------------------------------------------------- inventário E2B
+
+
+class NetworkInput(_Input):
+    name: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    cidr: str | None = Field(
+        default=None, max_length=64, description="Endereço de rede com prefixo (ex.: 10.0.1.0/24)."
+    )
+    vlan_id: int | str | None = Field(default=None, description="1–4094; vazio sem VLAN.")
+    gateway: str | None = Field(default=None, max_length=64)
+    unit_code: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    location: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    purpose: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    environment: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    zone: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    network_scope: str | None = Field(
+        default=None,
+        max_length=64,
+        description="corporate | container_runtime (rede interna de containers).",
+    )
+    criticality: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    responsible: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    notes: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+
+
+class NetworkUpdateInput(NetworkInput):
+    revision: int = Field(ge=1)
+
+
+class ServerNetworkLinkInput(_Input):
+    server_id: str | None = Field(default=None, max_length=64)
+    network_id: str | None = Field(default=None, max_length=64)
+    ip_address: str | None = Field(
+        default=None, max_length=64, description="IP do servidor nesta rede (dentro do CIDR)."
+    )
+    interface_name: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    notes: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+
+
+class IntegrationInput(_Input):
+    name: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    source_service_id: str | None = Field(default=None, max_length=64)
+    source_external_name: str | None = Field(
+        default=None,
+        max_length=_TRANSPORT_MAX,
+        description="Sistema externo não cadastrado (exclusivo com source_service_id).",
+    )
+    target_service_id: str | None = Field(default=None, max_length=64)
+    target_external_name: str | None = Field(
+        default=None,
+        max_length=_TRANSPORT_MAX,
+        description="Sistema externo não cadastrado (exclusivo com target_service_id).",
+    )
+    protocol: str | None = Field(default=None, max_length=64)
+    direction: str | None = Field(default=None, max_length=64)
+    purpose: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    criticality: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    responsible: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    administrative_status: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    notes: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+
+
+class IntegrationUpdateInput(IntegrationInput):
+    revision: int = Field(ge=1)
+
+
+class ServiceDependencyInput(_Input):
+    dependent_service_id: str | None = Field(default=None, max_length=64)
+    required_service_id: str | None = Field(default=None, max_length=64)
+    notes: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+
+
+class NetworkSummaryOut(BaseModel):
+    id: str
+    code: str
+    name: str
+    cidr: str
+    vlan_id: int | None
+    network_scope: str
+    environment: str
+    unit_code: str
+    archived: bool
+
+
+class NetworkOut(BaseModel):
+    id: str
+    code: str
+    name: str
+    cidr: str
+    vlan_id: int | None
+    gateway: str | None
+    unit_code: str
+    location: str | None
+    purpose: str | None
+    environment: str
+    zone: str | None
+    network_scope: str
+    criticality: str
+    responsible: str
+    notes: str | None
+    revision: int
+    archived: bool
+    archived_at: datetime | None
+    archived_by_name: str | None
+    server_count: int
+    created_at: datetime
+    created_by_name: str
+    updated_at: datetime
+    updated_by_name: str
+
+
+class ServerNetworkLinkOut(BaseModel):
+    id: str
+    server_id: str
+    network_id: str
+    ip_address: str | None
+    interface_name: str | None
+    notes: str | None
+    created_at: datetime
+    created_by_name: str
+    server: ServerSummaryOut
+    network: NetworkSummaryOut
+
+
+class IntegrationOut(BaseModel):
+    id: str
+    code: str
+    name: str
+    source_service_id: str | None
+    source_external_name: str | None = Field(
+        description="Preenchido quando a origem é um sistema externo não cadastrado."
+    )
+    source_service: ServiceSummaryOut | None
+    target_service_id: str | None
+    target_external_name: str | None = Field(
+        description="Preenchido quando o destino é um sistema externo não cadastrado."
+    )
+    target_service: ServiceSummaryOut | None
+    protocol: str
+    direction: str
+    purpose: str | None
+    criticality: str
+    responsible: str
+    administrative_status: str
+    notes: str | None
+    revision: int
+    archived: bool
+    archived_at: datetime | None
+    archived_by_name: str | None
+    created_at: datetime
+    created_by_name: str
+    updated_at: datetime
+    updated_by_name: str
+
+
+class ServiceDependencyOut(BaseModel):
+    id: str
+    dependent_service_id: str
+    required_service_id: str
+    notes: str | None
+    created_at: datetime
+    created_by_name: str
+    dependent_service: ServiceSummaryOut
+    required_service: ServiceSummaryOut
 
 
 class HealthOut(BaseModel):

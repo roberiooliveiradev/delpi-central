@@ -36,6 +36,10 @@ SERVICES_VIEW = "it-portal.services.view"
 SERVICES_MANAGE = "it-portal.services.manage"
 DATABASES_VIEW = "it-portal.databases.view"
 DATABASES_MANAGE = "it-portal.databases.manage"
+NETWORKS_VIEW = "it-portal.networks.view"
+NETWORKS_MANAGE = "it-portal.networks.manage"
+INTEGRATIONS_VIEW = "it-portal.integrations.view"
+INTEGRATIONS_MANAGE = "it-portal.integrations.manage"
 
 ALL_PERMISSIONS = (
     ACCESS,
@@ -48,6 +52,10 @@ ALL_PERMISSIONS = (
     SERVICES_MANAGE,
     DATABASES_VIEW,
     DATABASES_MANAGE,
+    NETWORKS_VIEW,
+    NETWORKS_MANAGE,
+    INTEGRATIONS_VIEW,
+    INTEGRATIONS_MANAGE,
 )
 
 

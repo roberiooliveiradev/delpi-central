@@ -30,7 +30,7 @@ import { useInvalidateInventory } from "../servers/ServerFormModal";
 import { InventoryConfirmDialog } from "./InventoryDialogs";
 import { ResourcePicker } from "./ResourcePicker";
 
-function ResourceLink({ label, target, title }: { label: string; target: DetailTarget; title: string }) {
+export function ResourceLink({ label, target, title }: { label: string; target: DetailTarget; title: string }) {
   const { basePath } = usePortal();
   const href = buildPath(basePath, target);
   return (
@@ -40,7 +40,7 @@ function ResourceLink({ label, target, title }: { label: string; target: DetailT
   );
 }
 
-function UnlinkButton({ label, onClick }: { label: string; onClick: () => void }) {
+export function UnlinkButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <ItpActionButton variant="ghost" aria-label={label} onClick={onClick}>
       <Unlink size={14} strokeWidth={1.75} aria-hidden="true" /> Remover vínculo

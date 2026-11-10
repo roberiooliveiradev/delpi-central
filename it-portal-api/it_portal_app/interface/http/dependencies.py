@@ -11,9 +11,18 @@ from it_portal_app.application.action_plan_service import ActionPlanService
 from it_portal_app.application.clock import business_today
 from it_portal_app.application.dashboard_service import DashboardService
 from it_portal_app.application.database_inventory import DatabaseInventory
-from it_portal_app.application.ports import InventoryRepository, ItPortalRepository
+from it_portal_app.application.integration_inventory import IntegrationInventory
+from it_portal_app.application.network_inventory import NetworkInventory
+from it_portal_app.application.ports import (
+    ConnectivityRepository,
+    InventoryRepository,
+    ItPortalRepository,
+)
 from it_portal_app.application.server_service import ServerService
 from it_portal_app.application.service_inventory import ServiceInventory
+from it_portal_app.infrastructure.persistence.postgres_connectivity_repository import (
+    PostgresConnectivityRepository,
+)
 from it_portal_app.infrastructure.persistence.postgres_inventory_repository import (
     PostgresInventoryRepository,
 )
@@ -42,6 +51,26 @@ def get_database_inventory(
     servers: ItPortalRepository = Depends(get_repository),
 ) -> DatabaseInventory:
     return DatabaseInventory(inventory, servers)
+
+
+def get_connectivity_repository() -> ConnectivityRepository:
+    return PostgresConnectivityRepository()
+
+
+def get_network_inventory(
+    connectivity: ConnectivityRepository = Depends(get_connectivity_repository),
+    inventory: InventoryRepository = Depends(get_inventory_repository),
+    servers: ItPortalRepository = Depends(get_repository),
+) -> NetworkInventory:
+    return NetworkInventory(connectivity, inventory, servers)
+
+
+def get_integration_inventory(
+    connectivity: ConnectivityRepository = Depends(get_connectivity_repository),
+    inventory: InventoryRepository = Depends(get_inventory_repository),
+    servers: ItPortalRepository = Depends(get_repository),
+) -> IntegrationInventory:
+    return IntegrationInventory(connectivity, inventory, servers)
 
 
 def get_today_provider() -> Callable[[], date]:

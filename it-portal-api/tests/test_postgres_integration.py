@@ -65,6 +65,7 @@ def migrated(database):
     assert applied == [
         "V001__create_it_portal_schema.sql",
         "V002__services_and_database_instances.sql",
+        "V003__networks_integrations_relationships.sql",
     ]
     return database
 
@@ -92,6 +93,7 @@ def test_migrations_are_idempotent(migrated):
     assert sorted((r["version"], r["name"]) for r in rows) == [
         (1, "V001__create_it_portal_schema.sql"),
         (2, "V002__services_and_database_instances.sql"),
+        (3, "V003__networks_integrations_relationships.sql"),
     ]
 
 

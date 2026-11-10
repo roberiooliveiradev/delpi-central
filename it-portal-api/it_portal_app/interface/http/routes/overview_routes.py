@@ -11,6 +11,10 @@ from it_portal_app.interface.http.authz import (
     ACTIONS_VIEW,
     DATABASES_MANAGE,
     DATABASES_VIEW,
+    INTEGRATIONS_MANAGE,
+    INTEGRATIONS_VIEW,
+    NETWORKS_MANAGE,
+    NETWORKS_VIEW,
     NOTES_CREATE,
     SERVERS_MANAGE,
     SERVERS_VIEW,
@@ -56,6 +60,8 @@ def get_it_portal_capabilities(request: Request):
     view_servers = user_has(user, SERVERS_VIEW)
     view_services = view_servers and user_has(user, SERVICES_VIEW)
     view_databases = view_servers and user_has(user, DATABASES_VIEW)
+    view_networks = view_servers and user_has(user, NETWORKS_VIEW)
+    view_integrations = view_services and user_has(user, INTEGRATIONS_VIEW)
     data = {
         "display_name": actor_from(user).name,
         "can_view_servers": view_servers,
@@ -67,6 +73,10 @@ def get_it_portal_capabilities(request: Request):
         "can_manage_services": view_services and user_has(user, SERVICES_MANAGE),
         "can_view_databases": view_databases,
         "can_manage_databases": view_databases and user_has(user, DATABASES_MANAGE),
+        "can_view_networks": view_networks,
+        "can_manage_networks": view_networks and user_has(user, NETWORKS_MANAGE),
+        "can_view_integrations": view_integrations,
+        "can_manage_integrations": view_integrations and user_has(user, INTEGRATIONS_MANAGE),
     }
     return ok(data, operation_id="get_it_portal_capabilities")
 

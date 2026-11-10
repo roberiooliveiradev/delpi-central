@@ -22,6 +22,12 @@ from it_portal_app.interface.http.routes.overview_routes import (
 from it_portal_app.interface.http.routes.database_routes import (
     router as database_router,
 )
+from it_portal_app.interface.http.routes.integration_routes import (
+    router as integration_router,
+)
+from it_portal_app.interface.http.routes.network_routes import (
+    router as network_router,
+)
 from it_portal_app.interface.http.routes.servers_routes import (
     router as servers_router,
 )
@@ -56,7 +62,7 @@ app = FastAPI(
         "vínculos entre eles. Todas as rotas de dados exigem JWT Keycloak e "
         "permissões efetivas resolvidas pelo Core."
     ),
-    version="0.2.0",
+    version="0.3.0",
     root_path=settings.IT_PORTAL_API_ROOT_PATH,
     lifespan=lifespan,
     redirect_slashes=False,
@@ -113,6 +119,8 @@ app.include_router(servers_router)
 app.include_router(action_plans_router)
 app.include_router(services_router)
 app.include_router(database_router)
+app.include_router(network_router)
+app.include_router(integration_router)
 
 
 def custom_openapi():

@@ -29,6 +29,10 @@ const BFF_PERMISSIONS = [
   "it-portal.services.manage",
   "it-portal.databases.view",
   "it-portal.databases.manage",
+  "it-portal.networks.view",
+  "it-portal.networks.manage",
+  "it-portal.integrations.view",
+  "it-portal.integrations.manage",
 ];
 
 describe("it-portal manifest", () => {

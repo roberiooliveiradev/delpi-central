@@ -10,14 +10,12 @@ from __future__ import annotations
 import psycopg
 from psycopg import errors as pg_errors
 
-from it_portal_app.application.inventory_rules import reference_not_found
 from it_portal_app.application.ports import (
     Actor,
     AuditEvent,
     DatabaseQuery,
     ServiceQuery,
 )
-from it_portal_app.domain.catalogs import CRITICALITIES
 from it_portal_app.domain.database_instances import (
     DatabaseInstanceFields,
     format_database_code,
@@ -34,16 +32,14 @@ from it_portal_app.infrastructure.persistence.postgres_base import (
     escape_like,
     history_row,
 )
+from it_portal_app.infrastructure.persistence.postgres_base import (
+    archive_assignment as _archive_assignment,
+)
+from it_portal_app.infrastructure.persistence.postgres_base import (
+    rank_sql as _rank_sql,
+)
 
 LINK_LIST_LIMIT = 500
-
-
-def _rank_sql(column: str) -> str:
-    return (
-        f"CASE {column} "
-        + " ".join(f"WHEN '{value}' THEN {index}" for index, value in enumerate(CRITICALITIES))
-        + " END"
-    )
 
 
 _SERVICE_SORT_SQL = {
@@ -252,64 +248,7 @@ def _consumer_row(row: dict) -> dict:
     }
 
 
-def _archive_assignment(archived: bool) -> tuple[str, str]:
-    if archived:
-        return (
-            "archived_at = now(), archived_by_id = %(actor_id)s, "
-            "archived_by_name = %(actor_name)s",
-            "archived_at IS NULL",
-        )
-    return (
-        "archived_at = NULL, archived_by_id = NULL, archived_by_name = NULL",
-        "archived_at IS NOT NULL",
-    )
-
-
 class PostgresInventoryRepository(PostgresRepositoryBase):
-    # --------------------------------------------------------------- guards
-
-    @staticmethod
-    def _require_active(
-        conn: psycopg.Connection,
-        table: str,
-        row_id: str,
-        *,
-        field: str,
-        missing_message: str,
-        archived_error: ConflictError,
-    ) -> None:
-        row = conn.execute(
-            f"SELECT archived_at FROM {_S}.{table} WHERE id = %s FOR SHARE", (row_id,)
-        ).fetchone()
-        if row is None:
-            raise reference_not_found(field, missing_message)
-        if row["archived_at"] is not None:
-            raise ConflictError(archived_error.code, archived_error.message)
-
-    def _require_active_server(self, conn: psycopg.Connection, server_id: str) -> None:
-        self._require_active(
-            conn,
-            "servers",
-            server_id,
-            field="server_id",
-            missing_message="Servidor não encontrado.",
-            archived_error=ConflictError(
-                "server_archived", "Servidor arquivado: restaure o cadastro antes de vinculá-lo."
-            ),
-        )
-
-    def _require_active_service(self, conn: psycopg.Connection, service_id: str) -> None:
-        self._require_active(
-            conn,
-            "services",
-            service_id,
-            field="service_id",
-            missing_message="Serviço não encontrado.",
-            archived_error=ConflictError(
-                "service_archived", "Serviço arquivado: restaure o cadastro antes de alterá-lo."
-            ),
-        )
-
     # ------------------------------------------------------------- services
 
     def _fetch_service(self, conn: psycopg.Connection, service_id: str) -> dict | None:

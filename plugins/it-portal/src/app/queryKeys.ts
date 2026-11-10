@@ -1,6 +1,8 @@
 import type {
   ActionPlanListQuery,
   DatabaseListQuery,
+  IntegrationListQuery,
+  NetworkListQuery,
   ServerListQuery,
   ServiceListQuery,
 } from "../api/itPortalApi";
@@ -27,4 +29,17 @@ export const queryKeys = {
   database: (id: string) => ["it-portal", "databases", "detail", id] as const,
   databaseHistory: (id: string) => ["it-portal", "databases", "history", id] as const,
   databaseConsumers: (id: string) => ["it-portal", "databases", "consumers", id] as const,
+  networks: ["it-portal", "networks"] as const,
+  networkList: (query: NetworkListQuery) => ["it-portal", "networks", "list", query] as const,
+  network: (id: string) => ["it-portal", "networks", "detail", id] as const,
+  networkHistory: (id: string) => ["it-portal", "networks", "history", id] as const,
+  networkServerLinks: (id: string) => ["it-portal", "networks", "server-links", id] as const,
+  serverNetworkLinks: (id: string) => ["it-portal", "networks", "by-server", id] as const,
+  integrations: ["it-portal", "integrations"] as const,
+  integrationList: (query: IntegrationListQuery) => ["it-portal", "integrations", "list", query] as const,
+  integration: (id: string) => ["it-portal", "integrations", "detail", id] as const,
+  integrationHistory: (id: string) => ["it-portal", "integrations", "history", id] as const,
+  serviceIntegrations: (id: string) => ["it-portal", "integrations", "by-service", id] as const,
+  serverIntegrations: (id: string) => ["it-portal", "integrations", "by-server", id] as const,
+  serviceDependencies: (id: string) => ["it-portal", "services", "dependencies", id] as const,
 };

@@ -7,6 +7,9 @@ import type {
   DbmsEngine,
   Environment,
   HostingRuntime,
+  IntegrationDirection,
+  IntegrationProtocol,
+  NetworkScope,
   ServerType,
   ServiceKind,
   ServiceType,
@@ -100,6 +103,33 @@ export const DBMS_LABELS: Record<DbmsEngine, string> = {
   other: "Outro",
 };
 
+export const NETWORK_SCOPE_LABELS: Record<NetworkScope, string> = {
+  corporate: "Rede corporativa",
+  container_runtime: "Rede interna de containers",
+};
+
+export const NETWORK_SCOPE_HINT =
+  "Rede corporativa é uma sub-rede da infraestrutura (ex.: VLAN de servidores). Redes criadas pelo Docker ou outro runtime de containers só devem ser cadastradas quando confirmadas, e sempre como rede interna de containers.";
+
+export const INTEGRATION_PROTOCOL_LABELS: Record<IntegrationProtocol, string> = {
+  http_api: "API HTTP/REST",
+  soap: "SOAP",
+  grpc: "gRPC",
+  smb: "Compartilhamento SMB",
+  nfs: "NFS",
+  file_transfer: "Transferência de arquivos (SFTP/FTP)",
+  email_smtp: "E-mail (SMTP)",
+  ldap: "LDAP",
+  message_queue: "Fila de mensagens",
+  webhook: "Webhook",
+  other: "Outro",
+};
+
+export const INTEGRATION_DIRECTION_LABELS: Record<IntegrationDirection, string> = {
+  source_to_target: "Origem → destino",
+  bidirectional: "Bidirecional",
+};
+
 function toOptions<T extends string>(labels: Record<T, string>): Option<T>[] {
   return (Object.keys(labels) as T[]).map((value) => ({ value, label: labels[value] }));
 }
@@ -115,6 +145,9 @@ export const SERVICE_KIND_OPTIONS = toOptions(SERVICE_KIND_LABELS);
 export const SERVICE_TYPE_OPTIONS = toOptions(SERVICE_TYPE_LABELS);
 export const HOSTING_RUNTIME_OPTIONS = toOptions(HOSTING_RUNTIME_LABELS);
 export const DBMS_OPTIONS = toOptions(DBMS_LABELS);
+export const NETWORK_SCOPE_OPTIONS = toOptions(NETWORK_SCOPE_LABELS);
+export const INTEGRATION_PROTOCOL_OPTIONS = toOptions(INTEGRATION_PROTOCOL_LABELS);
+export const INTEGRATION_DIRECTION_OPTIONS = toOptions(INTEGRATION_DIRECTION_LABELS);
 
 export const ARCHIVED_OPTIONS = [
   { value: "active", label: "Ativos" },
@@ -181,6 +214,42 @@ export const LINK_FIELD_LABELS: Record<string, string> = {
   database_instance_id: "Instância de banco",
   runtime: "Forma de execução",
   instance_name: "Nome da instância em execução",
+  network_id: "Rede",
+  ip_address: "Endereço IP na rede",
+  interface_name: "Interface",
+  dependent_service_id: "Serviço dependente",
+  required_service_id: "Serviço requerido",
+  notes: "Observações",
+};
+
+export const NETWORK_FIELD_LABELS: Record<string, string> = {
+  name: "Nome",
+  cidr: "CIDR",
+  vlan_id: "VLAN",
+  gateway: "Gateway",
+  unit_code: "Unidade",
+  location: "Local",
+  purpose: "Finalidade",
+  environment: "Ambiente",
+  zone: "Zona",
+  network_scope: "Escopo da rede",
+  criticality: "Criticidade",
+  responsible: "Responsável",
+  notes: "Observações",
+};
+
+export const INTEGRATION_FIELD_LABELS: Record<string, string> = {
+  name: "Nome",
+  source_service_id: "Serviço de origem",
+  source_external_name: "Origem externa",
+  target_service_id: "Serviço de destino",
+  target_external_name: "Destino externo",
+  protocol: "Protocolo",
+  direction: "Direção",
+  purpose: "Finalidade",
+  criticality: "Criticidade",
+  responsible: "Responsável",
+  administrative_status: "Situação",
   notes: "Observações",
 };
 
@@ -205,6 +274,18 @@ export const HISTORY_EVENT_LABELS: Record<string, string> = {
   database_instance_restored: "Instância de banco restaurada",
   database_consumer_created: "Serviço vinculado ao banco",
   database_consumer_removed: "Vínculo serviço–banco removido",
+  network_created: "Rede cadastrada",
+  network_updated: "Rede atualizada",
+  network_archived: "Rede arquivada",
+  network_restored: "Rede restaurada",
+  server_network_link_created: "Servidor vinculado à rede",
+  server_network_link_removed: "Vínculo servidor–rede removido",
+  integration_created: "Integração cadastrada",
+  integration_updated: "Integração atualizada",
+  integration_archived: "Integração arquivada",
+  integration_restored: "Integração restaurada",
+  service_dependency_created: "Dependência operacional registrada",
+  service_dependency_removed: "Dependência operacional removida",
 };
 
 export const SHELL_CONTENT = {
@@ -217,6 +298,8 @@ export const SHELL_CONTENT = {
     servers: "Servidores",
     services: "Serviços",
     databases: "Bancos de dados",
+    networks: "Redes",
+    integrations: "Integrações",
     action_plans: "Planos de ação",
     help: "Ajuda",
   },
@@ -225,6 +308,8 @@ export const SHELL_CONTENT = {
     servers: "Inventário de servidores da infraestrutura.",
     services: "Aplicações e serviços de plataforma e onde estão hospedados.",
     databases: "Instâncias de bancos de dados e serviços que as utilizam.",
+    networks: "Sub-redes, VLANs e os servidores conectados a cada uma.",
+    integrations: "Integrações entre serviços e com sistemas externos.",
     action_plans: "Planos de ação de todos os servidores.",
     help: "Como usar o Portal de TI.",
   },

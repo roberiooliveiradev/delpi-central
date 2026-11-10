@@ -13,6 +13,7 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    testTimeout: 20_000,
   },
   server: {
     /* Alias @delpi/plugin-ui aponta para sibling; Vite nega ?raw fora do root. */

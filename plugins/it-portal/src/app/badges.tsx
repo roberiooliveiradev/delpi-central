@@ -4,6 +4,7 @@ import type {
   AdministrativeStatus,
   Criticality,
   Environment,
+  NetworkScope,
   ServiceKind,
 } from "../api/itPortalApi";
 import {
@@ -12,6 +13,7 @@ import {
   ADMINISTRATIVE_STATUS_LABELS,
   CRITICALITY_LABELS,
   ENVIRONMENT_LABELS,
+  NETWORK_SCOPE_LABELS,
   SERVICE_KIND_LABELS,
 } from "../content/labels";
 import { ItpStatusBadge } from "./itPortalUi";
@@ -84,6 +86,10 @@ export function ServiceKindBadge({ value }: { value: ServiceKind }) {
       variant={value === "business_application" ? "info" : "neutral"}
     />
   );
+}
+
+export function NetworkScopeBadge({ value }: { value: NetworkScope }) {
+  return <ItpStatusBadge label={NETWORK_SCOPE_LABELS[value]} variant={value === "corporate" ? "info" : "neutral"} />;
 }
 
 export function ArchivedBadge() {

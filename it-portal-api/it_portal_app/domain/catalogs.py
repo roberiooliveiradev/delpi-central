@@ -48,6 +48,24 @@ DBMS_ENGINES = (
     "other",
 )
 
+# Redes internas de runtime de containers (bridge do Docker etc.) não são redes
+# corporativas permanentes: a classificação é sempre explícita no cadastro.
+NETWORK_SCOPES = ("corporate", "container_runtime")
+INTEGRATION_PROTOCOLS = (
+    "http_api",
+    "soap",
+    "grpc",
+    "smb",
+    "nfs",
+    "file_transfer",
+    "email_smtp",
+    "ldap",
+    "message_queue",
+    "webhook",
+    "other",
+)
+INTEGRATION_DIRECTIONS = ("source_to_target", "bidirectional")
+
 HIGH_CRITICALITIES = ("high", "critical")
 
 CRITICALITY_RANK = {value: index for index, value in enumerate(CRITICALITIES)}

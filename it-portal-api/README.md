@@ -15,8 +15,10 @@ API própria do Portal de TI (Minha DELPI). Única origem de dados do MFE
 
 ```text
 domain/          regras puras (validação, catálogos, transições, guarda de segredos)
-application/     serviços (servidores, notas, planos, dashboard, serviços, bancos) + ports
-infrastructure/  PostgresItPortalRepository, PostgresInventoryRepository, migrations runner
+application/     serviços (servidores, notas, planos, dashboard, serviços, bancos,
+                 redes, integrações) + ports
+infrastructure/  PostgresItPortalRepository, PostgresInventoryRepository,
+                 PostgresConnectivityRepository, migrations runner
 interface/http/  rotas FastAPI, schemas Pydantic, authz
 ```
 
@@ -37,6 +39,30 @@ interface/http/  rotas FastAPI, schemas Pydantic, authz
 - Cadastro arquivado é somente leitura e não recebe novos vínculos (409).
 - Nenhum dado é semeado. A API não se conecta aos bancos inventariados.
 
+## Redes, integrações e relacionamentos (E2B — `V003`)
+
+| Entidade | Tabela | Observações |
+|---|---|---|
+| Rede (`NET-0001`) | `networks` | CIDR validado/normalizado no backend (exige prefixo e endereço de rede); VLAN 1–4094; gateway dentro do CIDR; `network_scope` explícito (`corporate` × `container_runtime`); nome único ativo por unidade; CIDR único ativo por unidade só para redes corporativas |
+| Conectividade | `server_network_links` | vínculo servidor → rede; IP opcional precisa pertencer ao CIDR (revalidado sob lock); par único; alterar o CIDR com IPs vinculados fora dele → 409 `network_links_outside_cidr` |
+| Integração (`INT-0001`) | `integrations` | cada ponta é **um** serviço cadastrado **ou** um sistema externo nomeado (não cadastrado); pelo menos uma ponta interna; sem autointegração; única ativa por origem + destino + protocolo; **sem credenciais/payloads** |
+| Dependência operacional | `service_dependencies` | dependente → requerido, explícita (nunca presumida); sem autodependência; par único |
+
+Tipos de relacionamento e onde vivem:
+
+| Tipo | Tabela(s) |
+|---|---|
+| hospedagem | `service_hostings`, `database_instances.server_id` |
+| consumo | `database_consumers`, `integrations` |
+| conectividade | `server_network_links` |
+| dependência operacional | `service_dependencies` |
+
+- Consulta por recurso: `/servers/{id}/network-links`, `/servers/{id}/integrations`
+  (integrações dos serviços hospedados), `/networks/{id}/server-links`,
+  `/services/{id}/integrations`, `/services/{id}/dependencies`.
+- Sem varredura de rede, discovery, agentes ou integração automática
+  GLPI/Zabbix. Mapa interativo e análise de impacto ficam para a Etapa 3.
+
 ## Autorização
 
 Toda rota (exceto `/health`) exige JWT Keycloak válido **e** RBAC efetivo do
@@ -55,6 +81,13 @@ responde 503. Apenas principals humanos (`principal_type=user`).
 | `it-portal.services.manage` | CRUD/arquivo de serviços, vincular/desvincular servidores (com `servers.view` + `services.view`) |
 | `it-portal.databases.view` | listar/consultar instâncias de banco (com `servers.view`) |
 | `it-portal.databases.manage` | CRUD/arquivo de instâncias (com `servers.view` + `databases.view`) |
+| `it-portal.networks.view` | listar/consultar redes e a conectividade servidor ↔ rede (com `servers.view`) |
+| `it-portal.networks.manage` | CRUD/arquivo de redes, conectar/desconectar servidores (com `servers.view` + `networks.view`) |
+| `it-portal.integrations.view` | listar/consultar integrações (com `servers.view` + `services.view`) |
+| `it-portal.integrations.manage` | CRUD/arquivo de integrações (com as permissões de leitura) |
+
+Dependências operacionais pertencem ao domínio de serviços: leitura com
+`servers.view` + `services.view`, escrita com `services.manage`.
 
 Listar ou alterar vínculos serviço ↔ banco exige ver os **dois** lados
 (`services.view` + `databases.view`), além do `manage` de bancos para escrever.

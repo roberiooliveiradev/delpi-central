@@ -8,8 +8,10 @@ from typing import Protocol
 
 from it_portal_app.domain.action_plans import ActionPlanFields
 from it_portal_app.domain.database_instances import DatabaseInstanceFields
+from it_portal_app.domain.integrations import IntegrationFields, ServiceDependencyFields
 from it_portal_app.domain.inventory_links import ConsumerFields, HostingFields
 from it_portal_app.domain.it_services import ServiceFields
+from it_portal_app.domain.networks import NetworkFields, ServerNetworkLinkFields
 from it_portal_app.domain.servers import ServerFields
 
 
@@ -38,6 +40,8 @@ SERVER_SORT_KEYS = ("name", "hostname", "criticality", "environment", "created_a
 ACTION_SORT_KEYS = ("due_date", "priority", "status", "created_at", "updated_at", "title")
 SERVICE_SORT_KEYS = ("name", "criticality", "environment", "created_at", "updated_at")
 DATABASE_SORT_KEYS = ("name", "dbms", "criticality", "environment", "created_at", "updated_at")
+NETWORK_SORT_KEYS = ("name", "criticality", "environment", "created_at", "updated_at")
+INTEGRATION_SORT_KEYS = ("name", "criticality", "protocol", "created_at", "updated_at")
 
 
 @dataclass(frozen=True)
@@ -261,3 +265,119 @@ class InventoryRepository(Protocol):
     def delete_consumer(self, consumer_id: str, actor: Actor, audit: AuditEvent) -> bool: ...
 
     def list_subject_history(self, subject_id: str, limit: int) -> list[dict]: ...
+
+
+@dataclass(frozen=True)
+class NetworkQuery:
+    q: str | None = None
+    unit_code: str | None = None
+    environment: str | None = None
+    network_scope: str | None = None
+    criticality: str | None = None
+    archived: str = "active"
+    sort: str = "name"
+    direction: str = "asc"
+    page: int = 1
+    page_size: int = 25
+
+
+@dataclass(frozen=True)
+class IntegrationQuery:
+    q: str | None = None
+    service_id: str | None = None
+    protocol: str | None = None
+    criticality: str | None = None
+    administrative_status: str | None = None
+    archived: str = "active"
+    sort: str = "name"
+    direction: str = "asc"
+    page: int = 1
+    page_size: int = 25
+
+
+class ConnectivityRepository(Protocol):
+    """Redes, conectividade servidor↔rede, integrações e dependências (E2B).
+
+    Mesmas garantias do `InventoryRepository`: referência ativa revalidada na
+    transação, pares únicos, revisão otimista e auditoria na mesma transação.
+    """
+
+    def list_networks(self, query: NetworkQuery) -> tuple[list[dict], int]: ...
+
+    def get_network(self, network_id: str) -> dict | None: ...
+
+    def insert_network(
+        self, network_id: str, fields: NetworkFields, actor: Actor, audit: AuditEvent
+    ) -> dict: ...
+
+    def update_network(
+        self,
+        network_id: str,
+        fields: NetworkFields,
+        expected_revision: int,
+        actor: Actor,
+        audit: AuditEvent,
+    ) -> dict | None: ...
+
+    def set_network_archived(
+        self,
+        network_id: str,
+        archived: bool,
+        expected_revision: int,
+        actor: Actor,
+        audit: AuditEvent,
+    ) -> dict | None: ...
+
+    def list_network_links(
+        self, *, network_id: str | None = None, server_id: str | None = None
+    ) -> list[dict]: ...
+
+    def get_network_link(self, link_id: str) -> dict | None: ...
+
+    def insert_network_link(
+        self, link_id: str, fields: ServerNetworkLinkFields, actor: Actor, audit: AuditEvent
+    ) -> dict: ...
+
+    def delete_network_link(self, link_id: str, actor: Actor, audit: AuditEvent) -> bool: ...
+
+    def list_integrations(self, query: IntegrationQuery) -> tuple[list[dict], int]: ...
+
+    def get_integration(self, integration_id: str) -> dict | None: ...
+
+    def list_server_integrations(self, server_id: str) -> list[dict]: ...
+
+    def insert_integration(
+        self, integration_id: str, fields: IntegrationFields, actor: Actor, audit: AuditEvent
+    ) -> dict: ...
+
+    def update_integration(
+        self,
+        integration_id: str,
+        fields: IntegrationFields,
+        expected_revision: int,
+        actor: Actor,
+        audit: AuditEvent,
+    ) -> dict | None: ...
+
+    def set_integration_archived(
+        self,
+        integration_id: str,
+        archived: bool,
+        expected_revision: int,
+        actor: Actor,
+        audit: AuditEvent,
+    ) -> dict | None: ...
+
+    def list_dependencies(self, service_id: str) -> list[dict]: ...
+
+    def get_dependency(self, dependency_id: str) -> dict | None: ...
+
+    def insert_dependency(
+        self,
+        dependency_id: str,
+        fields: ServiceDependencyFields,
+        actor: Actor,
+        audit: AuditEvent,
+    ) -> dict: ...
+
+    def delete_dependency(self, dependency_id: str, actor: Actor, audit: AuditEvent) -> bool: ...

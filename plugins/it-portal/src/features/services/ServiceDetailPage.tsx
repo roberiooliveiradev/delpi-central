@@ -19,6 +19,7 @@ import { queryKeys } from "../../app/queryKeys";
 import { buildPath } from "../../app/routes";
 import { SERVICE_FIELD_LABELS, SERVICE_TYPE_LABELS, UNIT_LABELS } from "../../content/labels";
 import { HistorySection } from "../history/HistorySection";
+import { DependenciesSection, IntegrationsSection } from "../inventory/ConnectivitySections";
 import { DetailField as Field, InventoryConfirmDialog } from "../inventory/InventoryDialogs";
 import { ConsumersSection, HostingsSection } from "../inventory/LinkSections";
 import { ServiceFormModal } from "./ServiceFormModal";
@@ -155,6 +156,16 @@ export function ServiceDetailPage({ serviceId }: { serviceId: string }) {
           ownerArchived={service.archived}
         />
       ) : null}
+      {capabilities?.can_view_integrations ? (
+        <IntegrationsSection
+          owner={{ serviceId: service.id, service }}
+          title="Integrações"
+          emptyMessage="Nenhuma integração registrada para este serviço."
+          canManage={capabilities.can_manage_integrations}
+          ownerArchived={service.archived}
+        />
+      ) : null}
+      <DependenciesSection service={service} canManage={canManage} ownerArchived={service.archived} />
 
       <HistorySection
         queryKey={queryKeys.serviceHistory(service.id)}

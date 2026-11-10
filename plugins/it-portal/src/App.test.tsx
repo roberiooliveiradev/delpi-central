@@ -17,6 +17,10 @@ const ALL_CAPS: Capabilities = {
   can_manage_services: false,
   can_view_databases: false,
   can_manage_databases: false,
+  can_view_networks: false,
+  can_manage_networks: false,
+  can_view_integrations: false,
+  can_manage_integrations: false,
 };
 
 const VIEW_ONLY: Capabilities = {

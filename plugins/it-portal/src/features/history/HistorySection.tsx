@@ -11,6 +11,8 @@ import {
   DATABASE_FIELD_LABELS,
   HISTORY_EVENT_LABELS,
   HOSTING_RUNTIME_LABELS,
+  INTEGRATION_FIELD_LABELS,
+  NETWORK_FIELD_LABELS,
   SERVER_FIELD_LABELS,
   SERVICE_FIELD_LABELS,
 } from "../../content/labels";
@@ -22,6 +24,8 @@ const FIELD_LABELS_BY_ENTITY: Partial<Record<HistoryEntityType, Record<string, s
   action_plan: ACTION_FIELD_LABELS,
   service: SERVICE_FIELD_LABELS,
   database_instance: DATABASE_FIELD_LABELS,
+  network: NETWORK_FIELD_LABELS,
+  integration: INTEGRATION_FIELD_LABELS,
 };
 
 function refLabel(ref: Ref): string {
@@ -42,7 +46,14 @@ export function describeHistoryChange(event: HistoryEvent): string | null {
     return `${refLabel(changes.service as Ref)} em ${refLabel(changes.server as Ref)}${suffix}`;
   }
   if (event.entity_type === "database_consumer") {
-    return `${refLabel(changes.service as Ref)} usa ${refLabel(changes.database as Ref)}`;
+    return `${refLabel(changes.service as Ref)} usa ${refLabel(changes.database_instance as Ref)}`;
+  }
+  if (event.entity_type === "server_network_link") {
+    const ip = typeof changes.ip_address === "string" ? ` com IP ${changes.ip_address}` : "";
+    return `${refLabel(changes.server as Ref)} na rede ${refLabel(changes.network as Ref)}${ip}`;
+  }
+  if (event.entity_type === "service_dependency") {
+    return `${refLabel(changes.dependent_service as Ref)} depende de ${refLabel(changes.required_service as Ref)}`;
   }
   const fields = Object.keys(changes);
   if (event.event_type.endsWith("_updated") && fields.length > 0) {

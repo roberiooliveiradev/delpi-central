@@ -12,6 +12,9 @@ const SECTIONS = [
   { id: "services", label: "Serviços e aplicações" },
   { id: "databases", label: "Bancos de dados" },
   { id: "links", label: "Vínculos" },
+  { id: "networks", label: "Redes" },
+  { id: "integrations", label: "Integrações" },
+  { id: "relationships", label: "Tipos de relação" },
   { id: "notes", label: "Notas técnicas" },
   { id: "action-plans", label: "Planos de ação" },
   { id: "permissions", label: "Permissões" },
@@ -36,9 +39,9 @@ export function HelpPage() {
             <Manual.Eyebrow>Visão geral</Manual.Eyebrow>
             <h2>O que é o Portal de TI</h2>
             <Manual.Scope>
-              Inventário manual da infraestrutura DELPI: servidores, serviços e aplicações, instâncias de bancos de dados
-              e os vínculos entre eles, com notas técnicas, planos de ação e histórico auditado. Todas as informações são
-              gravadas no banco do portal e ficam disponíveis após recarregar a página.
+              Inventário manual da infraestrutura DELPI: servidores, serviços e aplicações, instâncias de bancos de dados,
+              redes, integrações e os relacionamentos entre eles, com notas técnicas, planos de ação e histórico auditado.
+              Todas as informações são gravadas no banco do portal e ficam disponíveis após recarregar a página.
             </Manual.Scope>
             <Manual.Concepts
               items={[
@@ -55,7 +58,7 @@ export function HelpPage() {
                 {
                   term: "Fora desta etapa",
                   meaning:
-                    "Monitoramento, descoberta automática, agentes, integração com GLPI ou Zabbix, redes, integrações entre sistemas, mapa de dependências, notificações e anexos ainda não estão disponíveis.",
+                    "Monitoramento, descoberta automática, varredura de rede, agentes, integração com GLPI ou Zabbix, mapa visual de dependências, análise de impacto, notificações e anexos ainda não estão disponíveis.",
                 },
               ]}
             />
@@ -190,6 +193,103 @@ export function HelpPage() {
             </Manual.Scope>
           </Manual.Section>
 
+          <Manual.Section id="itp-manual-networks">
+            <Manual.Eyebrow>Redes</Manual.Eyebrow>
+            <h2>Cadastrar redes e conectar servidores</h2>
+            <Manual.GuideTable
+              rows={[
+                {
+                  want: "Cadastrar uma rede",
+                  where: "Redes",
+                  how: "«Cadastrar rede», informe nome, CIDR (ex.: 10.0.1.0/24), unidade, ambiente, escopo, criticidade e responsável.",
+                },
+                {
+                  want: "Dizer que um servidor está em uma rede",
+                  where: "Detalhe do servidor (seção Redes) ou da rede",
+                  how: "«Vincular rede» ou «Vincular servidor». O IP informado precisa estar dentro do CIDR.",
+                },
+                {
+                  want: "Ver os servidores de uma rede",
+                  where: "Detalhe da rede",
+                  how: "Seção «Servidores conectados».",
+                },
+              ]}
+            />
+            <Manual.Concepts
+              items={[
+                {
+                  term: "Rede corporativa",
+                  meaning:
+                    "Sub-rede da infraestrutura, como a VLAN dos servidores. O mesmo CIDR não pode ser cadastrado duas vezes na mesma unidade.",
+                },
+                {
+                  term: "Rede interna de containers",
+                  meaning:
+                    "Rede criada pelo Docker ou outro runtime. Só cadastre quando confirmada, e sempre com este escopo — ela não vira rede corporativa.",
+                },
+              ]}
+            />
+            <Manual.Scope>
+              O portal valida o formato do CIDR, do gateway e dos IPs, mas não faz varredura nem descoberta automática: as
+              redes são cadastradas pela equipe de TI. Alterar o CIDR é recusado se algum servidor vinculado ficar com IP fora
+              da nova faixa.
+            </Manual.Scope>
+          </Manual.Section>
+
+          <Manual.Section id="itp-manual-integrations">
+            <Manual.Eyebrow>Integrações</Manual.Eyebrow>
+            <h2>Registrar integrações entre sistemas</h2>
+            <Manual.GuideTable
+              rows={[
+                {
+                  want: "Cadastrar uma integração",
+                  where: "Integrações ou detalhe do serviço",
+                  how: "«Cadastrar integração», escolha a origem e o destino, o protocolo, a direção, a criticidade e o responsável.",
+                },
+                {
+                  want: "Registrar um sistema de fora",
+                  where: "Formulário da integração",
+                  how: "Em uma das pontas, escolha «Sistema externo» e informe o nome (ex.: SEFAZ). A outra ponta precisa ser um serviço cadastrado.",
+                },
+                {
+                  want: "Ver as integrações de um servidor",
+                  where: "Detalhe do servidor",
+                  how: "Seção «Integrações dos serviços hospedados», calculada a partir dos serviços que executam ali.",
+                },
+              ]}
+            />
+            <Manual.Scope>
+              Registre apenas integrações que existem de fato — não cadastre aplicações fictícias. Nunca informe
+              credenciais, tokens, URLs com senha ou exemplos de payload. O uso de bancos de dados continua sendo
+              registrado no vínculo serviço–banco.
+            </Manual.Scope>
+          </Manual.Section>
+
+          <Manual.Section id="itp-manual-relationships">
+            <Manual.Eyebrow>Tipos de relação</Manual.Eyebrow>
+            <h2>Diferença entre hospedagem, conectividade, consumo e dependência</h2>
+            <Manual.Concepts
+              items={[
+                { term: "Hospedagem", meaning: "Onde o serviço executa: vínculo serviço–servidor." },
+                { term: "Conectividade", meaning: "Em quais redes o servidor está: vínculo servidor–rede." },
+                {
+                  term: "Consumo",
+                  meaning: "Troca de dados: vínculo serviço–banco ou integração entre serviços ou com sistemas externos.",
+                },
+                {
+                  term: "Dependência operacional",
+                  meaning:
+                    "Um serviço deixa de funcionar sem o outro. Registrada no detalhe do serviço, seção «Dependências operacionais». O portal nunca presume dependências.",
+                },
+              ]}
+            />
+            <Manual.Scope>
+              Todas as relações aparecem nas páginas dos dois lados e podem ser removidas sem apagar os cadastros. O portal
+              recusa relações com cadastros inexistentes ou arquivados, relações repetidas e um recurso relacionado a ele
+              mesmo. O mapa visual e a análise de impacto chegam em uma etapa futura.
+            </Manual.Scope>
+          </Manual.Section>
+
           <Manual.Section id="itp-manual-notes">
             <Manual.Eyebrow>Notas técnicas</Manual.Eyebrow>
             <h2>Registrar observações</h2>
@@ -223,7 +323,8 @@ export function HelpPage() {
             <h2>Quem pode fazer o quê</h2>
             <Manual.Scope>
               As permissões são concedidas pela administração da Minha DELPI e verificadas pelo servidor a cada
-              requisição. Botões que você não pode usar não aparecem.
+              requisição. Ao gravar, o servidor confere suas permissões atuais na hora: uma permissão retirada deixa de
+              valer imediatamente. Botões que você não pode usar não aparecem.
             </Manual.Scope>
             <Manual.Glossary
               items={[
@@ -250,6 +351,22 @@ export function HelpPage() {
                   term: "Gerenciar bancos de dados",
                   meaning:
                     "Cadastrar, editar, arquivar e restaurar instâncias e vincular ou desvincular serviços consumidores.",
+                },
+                {
+                  term: "Ver redes",
+                  meaning: "Consultar redes, os servidores conectados e o histórico. Exige também ver servidores.",
+                },
+                {
+                  term: "Gerenciar redes",
+                  meaning: "Cadastrar, editar, arquivar e restaurar redes e vincular ou desvincular servidores.",
+                },
+                {
+                  term: "Ver integrações",
+                  meaning: "Consultar integrações e o histórico. Exige também ver servidores e ver serviços.",
+                },
+                {
+                  term: "Gerenciar integrações",
+                  meaning: "Cadastrar, editar, arquivar e restaurar integrações.",
                 },
               ]}
             />
@@ -279,6 +396,18 @@ export function HelpPage() {
                 {
                   q: "Por que não consigo vincular um servidor ou serviço?",
                   a: "Só cadastros ativos podem receber vínculos, e o mesmo par não pode ser vinculado duas vezes. Restaure o cadastro arquivado, se for o caso.",
+                },
+                {
+                  q: "Por que o CIDR foi recusado?",
+                  a: "Informe o endereço da rede com o prefixo, como 10.0.1.0/24. Um endereço de host (10.0.1.5/24) não é aceito como CIDR.",
+                },
+                {
+                  q: "Posso cadastrar uma integração entre dois sistemas externos?",
+                  a: "Não. Pelo menos uma ponta precisa ser um serviço cadastrado no Portal de TI.",
+                },
+                {
+                  q: "Quem pode registrar dependências operacionais?",
+                  a: "Quem gerencia serviços e aplicações. A dependência é registrada no detalhe do serviço.",
                 },
                 {
                   q: "Posso guardar a senha do banco no portal?",

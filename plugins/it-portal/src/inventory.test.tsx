@@ -27,6 +27,10 @@ const E1_ONLY: Capabilities = {
   can_manage_services: false,
   can_view_databases: false,
   can_manage_databases: false,
+  can_view_networks: false,
+  can_manage_networks: false,
+  can_view_integrations: false,
+  can_manage_integrations: false,
 };
 
 const INVENTORY_MANAGER: Capabilities = {
@@ -379,7 +383,7 @@ describe("databases", () => {
             entity_id: CONSUMER.id,
             event_type: "database_consumer_removed",
             changes: {
-              database: { id: DATABASE_ID, code: "DB-0001", name: "ERP_PROD" },
+              database_instance: { id: DATABASE_ID, code: "DB-0001", name: "ERP_PROD" },
               service: { id: SERVICE_ID, code: "SVC-0001", name: "Portal Interno" },
             },
             actor_name: "Ana Souza",

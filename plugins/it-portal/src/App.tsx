@@ -15,6 +15,10 @@ import { DatabasesPage } from "./features/databases/DatabasesPage";
 import { HelpPage } from "./features/help/HelpPage";
 import { HomePage } from "./features/home/HomePage";
 import { NotFoundPage } from "./features/home/NotFoundPage";
+import { IntegrationDetailPage } from "./features/integrations/IntegrationDetailPage";
+import { IntegrationsPage } from "./features/integrations/IntegrationsPage";
+import { NetworkDetailPage } from "./features/networks/NetworkDetailPage";
+import { NetworksPage } from "./features/networks/NetworksPage";
 import { ServerDetailPage } from "./features/servers/ServerDetailPage";
 import { ServersPage } from "./features/servers/ServersPage";
 import { ServiceDetailPage } from "./features/services/ServiceDetailPage";
@@ -84,6 +88,22 @@ function PortalRoutes({ pathnameFromHost }: { pathnameFromHost?: string }) {
   } else if (route.view === "database_detail" && route.databaseId) {
     content = capabilities.can_view_databases ? (
       <DatabaseDetailPage key={route.databaseId} databaseId={route.databaseId} />
+    ) : (
+      <ForbiddenState />
+    );
+  } else if (route.view === "networks") {
+    content = capabilities.can_view_networks ? <NetworksPage /> : <ForbiddenState />;
+  } else if (route.view === "network_detail" && route.networkId) {
+    content = capabilities.can_view_networks ? (
+      <NetworkDetailPage key={route.networkId} networkId={route.networkId} />
+    ) : (
+      <ForbiddenState />
+    );
+  } else if (route.view === "integrations") {
+    content = capabilities.can_view_integrations ? <IntegrationsPage /> : <ForbiddenState />;
+  } else if (route.view === "integration_detail" && route.integrationId) {
+    content = capabilities.can_view_integrations ? (
+      <IntegrationDetailPage key={route.integrationId} integrationId={route.integrationId} />
     ) : (
       <ForbiddenState />
     );

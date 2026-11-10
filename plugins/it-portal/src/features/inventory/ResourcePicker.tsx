@@ -6,7 +6,7 @@ import { ItpSelectField, ItpTextField } from "../../app/itPortalUi";
 import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { DBMS_LABELS } from "../../content/labels";
 
-export type PickerKind = "server" | "service" | "database";
+export type PickerKind = "server" | "service" | "database" | "network";
 
 type Option = { value: string; label: string };
 
@@ -23,6 +23,10 @@ async function fetchOptions(kind: PickerKind, q: string, signal: AbortSignal): P
     const page = await itPortalApi.listServices(query, signal);
     return { ...page, items: page.items.map((s) => ({ value: s.id, label: `${s.code} · ${s.name}` })) };
   }
+  if (kind === "network") {
+    const page = await itPortalApi.listNetworks(query, signal);
+    return { ...page, items: page.items.map((n) => ({ value: n.id, label: `${n.code} · ${n.name} (${n.cidr})` })) };
+  }
   const page = await itPortalApi.listDatabases(query, signal);
   return {
     ...page,
@@ -37,6 +41,7 @@ const PICKER_COPY: Record<PickerKind, { search: string; select: string }> = {
   server: { search: "Buscar servidor", select: "Servidor" },
   service: { search: "Buscar serviço", select: "Serviço" },
   database: { search: "Buscar instância de banco", select: "Instância de banco" },
+  network: { search: "Buscar rede", select: "Rede" },
 };
 
 export function ResourcePicker({
@@ -45,12 +50,14 @@ export function ResourcePicker({
   onChange,
   excludeIds = [],
   initialOption,
+  label,
 }: {
   kind: PickerKind;
   value: string;
   onChange: (value: string) => void;
   excludeIds?: readonly string[];
   initialOption?: Option;
+  label?: string;
 }) {
   const [search, setSearch] = useState("");
   const q = useDebouncedValue(search);
@@ -59,7 +66,7 @@ export function ResourcePicker({
     queryFn: ({ signal }) => fetchOptions(kind, q, signal),
     placeholderData: keepPreviousData,
   });
-  const copy = PICKER_COPY[kind];
+  const copy = label ? { search: `Buscar ${label.toLocaleLowerCase("pt-BR")}`, select: label } : PICKER_COPY[kind];
   const loaded = (optionsQuery.data?.items ?? []).filter((option) => !excludeIds.includes(option.value));
   const options =
     initialOption && !loaded.some((option) => option.value === initialOption.value)

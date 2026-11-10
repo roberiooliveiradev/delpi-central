@@ -31,6 +31,20 @@ export type DbmsEngine =
   | "mongodb"
   | "sqlite"
   | "other";
+export type NetworkScope = "corporate" | "container_runtime";
+export type IntegrationProtocol =
+  | "http_api"
+  | "soap"
+  | "grpc"
+  | "smb"
+  | "nfs"
+  | "file_transfer"
+  | "email_smtp"
+  | "ldap"
+  | "message_queue"
+  | "webhook"
+  | "other";
+export type IntegrationDirection = "source_to_target" | "bidirectional";
 
 export type Server = {
   id: string;
@@ -90,7 +104,11 @@ export type HistoryEntityType =
   | "service"
   | "service_hosting"
   | "database_instance"
-  | "database_consumer";
+  | "database_consumer"
+  | "network"
+  | "server_network_link"
+  | "integration"
+  | "service_dependency";
 
 export type HistoryEvent = {
   id: string;
@@ -278,6 +296,141 @@ export type DatabaseConsumerInput = {
   notes: string;
 };
 
+export type Network = {
+  id: string;
+  code: string;
+  name: string;
+  cidr: string;
+  vlan_id: number | null;
+  gateway: string | null;
+  unit_code: UnitCode;
+  location: string | null;
+  purpose: string | null;
+  environment: Environment;
+  zone: string | null;
+  network_scope: NetworkScope;
+  criticality: Criticality;
+  responsible: string;
+  notes: string | null;
+  revision: number;
+  archived: boolean;
+  archived_at: string | null;
+  archived_by_name: string | null;
+  server_count: number;
+  created_at: string;
+  created_by_name: string;
+  updated_at: string;
+  updated_by_name: string;
+};
+
+export type NetworkInput = {
+  name: string;
+  cidr: string;
+  vlan_id: string;
+  gateway: string;
+  unit_code: string;
+  location: string;
+  purpose: string;
+  environment: string;
+  zone: string;
+  network_scope: string;
+  criticality: string;
+  responsible: string;
+  notes: string;
+};
+
+export type NetworkSummary = {
+  id: string;
+  code: string;
+  name: string;
+  cidr: string;
+  vlan_id: number | null;
+  network_scope: NetworkScope;
+  environment: Environment;
+  unit_code: UnitCode;
+  archived: boolean;
+};
+
+export type ServerNetworkLink = {
+  id: string;
+  server_id: string;
+  network_id: string;
+  ip_address: string | null;
+  interface_name: string | null;
+  notes: string | null;
+  created_at: string;
+  created_by_name: string;
+  server: ServerSummary;
+  network: NetworkSummary;
+};
+
+export type ServerNetworkLinkInput = {
+  server_id: string;
+  network_id: string;
+  ip_address: string;
+  interface_name: string;
+  notes: string;
+};
+
+export type Integration = {
+  id: string;
+  code: string;
+  name: string;
+  source_service_id: string | null;
+  source_external_name: string | null;
+  source_service: ServiceSummary | null;
+  target_service_id: string | null;
+  target_external_name: string | null;
+  target_service: ServiceSummary | null;
+  protocol: IntegrationProtocol;
+  direction: IntegrationDirection;
+  purpose: string | null;
+  criticality: Criticality;
+  responsible: string;
+  administrative_status: AdministrativeStatus;
+  notes: string | null;
+  revision: number;
+  archived: boolean;
+  archived_at: string | null;
+  archived_by_name: string | null;
+  created_at: string;
+  created_by_name: string;
+  updated_at: string;
+  updated_by_name: string;
+};
+
+export type IntegrationInput = {
+  name: string;
+  source_service_id: string | null;
+  source_external_name: string | null;
+  target_service_id: string | null;
+  target_external_name: string | null;
+  protocol: string;
+  direction: string;
+  purpose: string;
+  criticality: string;
+  responsible: string;
+  administrative_status: string;
+  notes: string;
+};
+
+export type ServiceDependency = {
+  id: string;
+  dependent_service_id: string;
+  required_service_id: string;
+  notes: string | null;
+  created_at: string;
+  created_by_name: string;
+  dependent_service: ServiceSummary;
+  required_service: ServiceSummary;
+};
+
+export type ServiceDependencyInput = {
+  dependent_service_id: string;
+  required_service_id: string;
+  notes: string;
+};
+
 export type LinkRemoved = { id: string };
 
 export type Page<T> = { items: T[]; total: number; page: number; page_size: number };
@@ -302,9 +455,39 @@ export type Capabilities = {
   can_manage_services: boolean;
   can_view_databases: boolean;
   can_manage_databases: boolean;
+  can_view_networks: boolean;
+  can_manage_networks: boolean;
+  can_view_integrations: boolean;
+  can_manage_integrations: boolean;
 };
 
 export type ArchiveFilter = "active" | "archived" | "all";
+
+export type NetworkListQuery = {
+  q?: string;
+  unit_code?: string;
+  environment?: string;
+  network_scope?: string;
+  criticality?: string;
+  archived?: ArchiveFilter;
+  sort?: string;
+  direction?: "asc" | "desc";
+  page?: number;
+  page_size?: number;
+};
+
+export type IntegrationListQuery = {
+  q?: string;
+  service_id?: string;
+  protocol?: string;
+  criticality?: string;
+  administrative_status?: string;
+  archived?: ArchiveFilter;
+  sort?: string;
+  direction?: "asc" | "desc";
+  page?: number;
+  page_size?: number;
+};
 
 export type ServiceListQuery = {
   q?: string;
@@ -430,6 +613,53 @@ export const itPortalApi = {
     apiPost<DatabaseConsumer>(apiUrl("/database-consumers"), input),
   deleteConsumer: (id: string) =>
     apiDelete<LinkRemoved>(apiUrl(`/database-consumers/${encodeURIComponent(id)}`)),
+
+  listNetworks: (query: NetworkListQuery, signal?: AbortSignal) =>
+    apiGet<Page<Network>>(apiUrl("/networks", query), signal),
+  getNetwork: (id: string, signal?: AbortSignal) =>
+    apiGet<Network>(apiUrl(`/networks/${encodeURIComponent(id)}`), signal),
+  createNetwork: (input: NetworkInput) => apiPost<Network>(apiUrl("/networks"), input),
+  updateNetwork: (id: string, input: NetworkInput, revision: number) =>
+    apiPut<Network>(apiUrl(`/networks/${encodeURIComponent(id)}`), { ...input, revision }),
+  archiveNetwork: (id: string, revision: number) =>
+    apiPost<Network>(apiUrl(`/networks/${encodeURIComponent(id)}/archive`), { revision }),
+  restoreNetwork: (id: string, revision: number) =>
+    apiPost<Network>(apiUrl(`/networks/${encodeURIComponent(id)}/restore`), { revision }),
+  listNetworkHistory: (id: string, signal?: AbortSignal) =>
+    apiGet<HistoryEvent[]>(apiUrl(`/networks/${encodeURIComponent(id)}/history`), signal),
+  listNetworkServerLinks: (id: string, signal?: AbortSignal) =>
+    apiGet<ServerNetworkLink[]>(apiUrl(`/networks/${encodeURIComponent(id)}/server-links`), signal),
+  listServerNetworkLinks: (serverId: string, signal?: AbortSignal) =>
+    apiGet<ServerNetworkLink[]>(apiUrl(`/servers/${encodeURIComponent(serverId)}/network-links`), signal),
+  createServerNetworkLink: (input: ServerNetworkLinkInput) =>
+    apiPost<ServerNetworkLink>(apiUrl("/server-network-links"), input),
+  deleteServerNetworkLink: (id: string) =>
+    apiDelete<LinkRemoved>(apiUrl(`/server-network-links/${encodeURIComponent(id)}`)),
+
+  listIntegrations: (query: IntegrationListQuery, signal?: AbortSignal) =>
+    apiGet<Page<Integration>>(apiUrl("/integrations", query), signal),
+  getIntegration: (id: string, signal?: AbortSignal) =>
+    apiGet<Integration>(apiUrl(`/integrations/${encodeURIComponent(id)}`), signal),
+  createIntegration: (input: IntegrationInput) => apiPost<Integration>(apiUrl("/integrations"), input),
+  updateIntegration: (id: string, input: IntegrationInput, revision: number) =>
+    apiPut<Integration>(apiUrl(`/integrations/${encodeURIComponent(id)}`), { ...input, revision }),
+  archiveIntegration: (id: string, revision: number) =>
+    apiPost<Integration>(apiUrl(`/integrations/${encodeURIComponent(id)}/archive`), { revision }),
+  restoreIntegration: (id: string, revision: number) =>
+    apiPost<Integration>(apiUrl(`/integrations/${encodeURIComponent(id)}/restore`), { revision }),
+  listIntegrationHistory: (id: string, signal?: AbortSignal) =>
+    apiGet<HistoryEvent[]>(apiUrl(`/integrations/${encodeURIComponent(id)}/history`), signal),
+  listServiceIntegrations: (serviceId: string, signal?: AbortSignal) =>
+    apiGet<Integration[]>(apiUrl(`/services/${encodeURIComponent(serviceId)}/integrations`), signal),
+  listServerIntegrations: (serverId: string, signal?: AbortSignal) =>
+    apiGet<Integration[]>(apiUrl(`/servers/${encodeURIComponent(serverId)}/integrations`), signal),
+
+  listServiceDependencies: (serviceId: string, signal?: AbortSignal) =>
+    apiGet<ServiceDependency[]>(apiUrl(`/services/${encodeURIComponent(serviceId)}/dependencies`), signal),
+  createServiceDependency: (input: ServiceDependencyInput) =>
+    apiPost<ServiceDependency>(apiUrl("/service-dependencies"), input),
+  deleteServiceDependency: (id: string) =>
+    apiDelete<LinkRemoved>(apiUrl(`/service-dependencies/${encodeURIComponent(id)}`)),
 };
 
 /** Transições aceitas pela API (o backend revalida — isto só orienta a UI). */
