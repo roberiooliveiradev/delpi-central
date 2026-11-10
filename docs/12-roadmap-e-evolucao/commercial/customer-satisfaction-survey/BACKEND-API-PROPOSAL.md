@@ -1,8 +1,12 @@
-# Pesquisa de satisfação — Proposta de backend e contratos REST/CAIO
+# Pesquisa de satisfação — Padrão aprovado de backend e contratos REST/CAIO
 
-> **Estado: PROPOSTO / NÃO APROVADO PARA IMPLEMENTAÇÃO.** Análise de 10/11/2026; branch consultada: `main`, HEAD observado ao iniciar: `71ae3e9605496f6e6a986e9daa1d3e7c265f624f`. Antes de implementar, reancorar em HEAD/branch/working tree reais e contratos atuais. Nenhuma rota deste documento está comprovadamente implementada.
+> **Estado: PADRÃO DE ARQUITETURA ACEITO PELO SOLICITANTE em 10/11/2026; IMPLEMENTAÇÃO PENDENTE.** O aceite ratifica domínio, famílias REST, seis tools semânticas do CAIO e controles de acesso; **não** comprova deploy, contrato físico, testes, nem obriga a implementar toda operação opcional. Antes de cada frente, confirmar HEAD/branch/working tree e contratos reais.
 >
 > **Base de negócio:** [índice mestre](./REQUIREMENTS-INDEX.md), [decisões](./BUSINESS-DECISIONS.md), documento integral «Plano de Monitoramento da Satisfação dos Clientes — Delpi» nas fontes do projeto. **Código consultado:** `commercial_app/main.py`, `application/security/commercial_permissions.py`, `interface/http/routes/customer_routes.py`, `interface/mcp/semantic_bridge.py`, `application/caio/semantic_registry.py`, `interface/mcp/tool_bridge.py`, `migrations/V003__tasks_activities.sql`, `middleware/auth_middleware.py`; referências a conferir no HEAD de execução.
+
+## Decisão registrada — aceite do padrão
+
+**Decisão (10/11/2026, solicitante):** "perfeito, aceito o padrão". Este documento torna-se a **referência arquitetural aceita para implementação incremental**, vinculada ao [índice mestre](./REQUIREMENTS-INDEX.md). O conjunto de 20 rotas descreve operações candidatas, **não 20 obrigações de implementação imediata**. R09 (remoção de destinatário), nomes físicos, filtros sem fonte comprovada e demais detalhes técnicos dependem de inventário delimitado. O CAIO continuará com seis tools. **Aprovação do padrão ≠ execução nem homologação.**
 
 ## 1. Ownership e segurança — contrato funcional
 

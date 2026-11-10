@@ -1,12 +1,12 @@
-# Pesquisa de satisfação — Registro de decisões em aberto
+# Pesquisa de satisfação — Decisões de negócio e registro histórico
 
-> Estado: DISCOVERY / PENDING. Criado em 2026-11-10. As perguntas abaixo são questões de levantamento, **não** requisitos aprovados. Responder sequencialmente; registrar decisão, responsável, data, justificativa e impacto antes de alterar contratos ou backlog.
+> Estado: LEVANTAMENTO PRINCIPAL DE NEGÓCIO CONSOLIDADO (10/11/2026). O documento preserva 20 perguntas, respostas do plano e decisões do solicitante. **Não representa 20 decisões pendentes**, nem prova implementação. Referência central: [índice mestre](./REQUIREMENTS-INDEX.md).
 >
 > Fontes: "Plano de Monitoramento da Satisfação dos Clientes — Delpi" (fornecido pelo Comercial) e ata do Transformômetro 2026/016, "Retorno às Demandas Comerciais — Transforma Mais" (06/11/2026, parcialmente assinada). Fonte técnica e owners ainda requerem inventário.
 
-## Como atualizar
+## Como consultar e manter
 
-Para cada questão: `Status: DECIDED | SOURCE_DEFINED | PARTIAL | TO_INVENTORY | PENDING | NEEDS_VALIDATION`; `Resposta`; `Owner da decisão`; `Data`; `Justificativa`; `Impacto`; `Fonte`. Resposta do usuário é decisão informada, sujeita à validação do owner quando necessário. Não confundir proposta com aprovação de implementação.
+Para cada questão, manter status, resposta, owner, data, justificativa, impacto e fonte. `DECIDED` significa decisão funcional, **não** implementação. Registros `PENDING`/`TO_INVENTORY` referem-se principalmente a detalhes técnicos, segurança ou validações formais; não reabrir a entrevista inteira sem bloqueio real. O [índice mestre](./REQUIREMENTS-INDEX.md) é a entrada principal. A [arquitetura REST/CAIO](./BACKEND-API-PROPOSAL.md) foi aceita em 10/11/2026 e ainda não está implementada.
 
 ## A. Público, contatos e identificação
 
@@ -195,6 +195,6 @@ Para cada questão: `Status: DECIDED | SOURCE_DEFINED | PARTIAL | TO_INVENTORY |
 - Consolidação prevista: até cinco dias após o encerramento.
 - Primeira prioridade segundo ata 2026/016: pesquisa de satisfação; prazo de primeira entrega citado como expectativa condicionada, não compromisso.
 
-## Próxima pergunta em entrevista
+## Encaminhamento do levantamento
 
-**Próximo passo após decisões complementares de 2026-11-10:** Não perguntar novamente sobre segmentações, evolução, categorias, campos de ação, tratamento por Marketing/Manager, retenção histórica ou escopo de persistência na API Comercial. Prosseguir com especificação funcional baseada no plano e decisões do solicitante. Executar inventário técnico bounded por frente imediatamente antes de projetar/implementar rotas, dados e interface; esclarecer somente lacunas materiais para as quais não haja decisão ou contrato canônico. Nenhuma implementação está comprovada ou autorizada por este documento.
+**Encaminhamento após decisões complementares de 2026-11-10:** Não perguntar novamente sobre segmentações, evolução, categorias, campos de ação, tratamento por Marketing/Manager, retenção histórica ou escopo de persistência na API Comercial. Prosseguir com especificação funcional baseada no plano e decisões do solicitante. Executar inventário técnico bounded por frente imediatamente antes de projetar/implementar rotas, dados e interface; esclarecer somente lacunas materiais para as quais não haja decisão ou contrato canônico. Nenhuma implementação está comprovada ou autorizada por este documento.
