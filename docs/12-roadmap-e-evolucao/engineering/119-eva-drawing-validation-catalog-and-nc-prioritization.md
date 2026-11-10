@@ -2258,3 +2258,11 @@ VAL01_COMPLETED=false
 NO_GENERALIZATION_CLAIM=true
 ```
 
+
+### 63. Coordination — levantamento ExcelStructureBuilder e algoritmo de alinhamento em duas direções (2026-11-10)
+
+**DESIGN/SPEC ONLY, SEM NOVO GATE.** Inventariada `api-delpi GET /products/{code}/structure/excel` (`get_product_structure_excel`, `API_DELPI_ACCESS`). Fluxo: `ProductStructureRepository`→`BomTreeBuilder`→`ExcelStructureBuilder`. Fonte de dados oficiais continua `GET /products/{code}/structure` sob Domain API/AuthZ. A planilha tem seis colunas, labels alfabéticos e merge por bloco pai, mas **pode achatar intermediários, reutiliza labels por código e recalcula quantidade**; não é oráculo de estrutura sem verificações. Detalhes e pseudoalgoritmo: [eva-val01-table-bidirectional-algorithm.md](./eva-val01-table-bidirectional-algorithm.md).
+
+**Ordem técnica preservada:** `VISUAL_OBSERVATION` independente do Totus → `CONTROLLED_ROUND_TRIP` com fixtures do exportador para validar comportamento que a tabela de fato expressa → `BIDIRECTIONAL_ALIGN` por pai/caminho/nível e ocorrência **somente G6**. Padrão de tabela é configuração semântica para adapter/Understanding, não uma engine nova; SLANet permanece responsável por estrutura visual. Proibido completar desenho a partir da BOM, importar builder cross-context no runtime EVA, comparar por código isolado, hardcode de PDF, publicar/NC automático.
+
+**Generalização:** testes por famílias de layouts (direto, PI, repetidos, rowspan, multiline, seis/sete colunas, rodapé, escala, revisão, multipágina); 13 PDFs expostos são regressão, não holdout. G5 requer GT/split/threshold owner e holdout legítimo para homologação. `G4_FIELD_COMPLETENESS=AUTHORIZED` pela Issue #131, `G5_G6_G7=NOT_AUTHORIZED`; `SPECIFICATION_ONLY`; `LIVE_EXCEL_EXPORT=TEST_NOT_RUN`; `BIDIRECTIONAL_RUNTIME=TEST_NOT_RUN`; `VAL01_COMPLETED=false`. Documento não declara teste, deploy ou mudança produtiva.
