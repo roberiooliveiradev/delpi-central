@@ -462,6 +462,27 @@ A revisão confirmou o reuso do `PydanticAiInvestigationOrchestrator` + native P
 **INT1_FINAL_REVIEW_PROPOSAL:** `ACCEPT_WITH_RESIDUAL` (deterministic F1–F4 proven; live Qwen P1–P3 residual; plan-absent Outcome verdict remains INT-3).  
 **NEXT:** `COORDINATION_FINAL_INT1_ACCEPTANCE`. Sem nova implementação corretiva automática. **PRODUCTION_DEPLOY=NOT_AUTHORIZED; T3/INT2/INT3/INT4=NOT_AUTHORIZED.**
 
+### Stamp — INT-1 isolated real Qwen 14B evaluation (2026-11-10)
+
+**TASK:** `T2_INT1_ISOLATED_REAL_QWEN_EVAL_GATE`.  
+**IMPLEMENTED_INT1_SHA:** `3bb2be887b05562a6d85301a86ecf5d2e5ae5883` (ancestor of HEAD).  
+**EVALUATED_SHA / RUNTIME_CODE:** host mount of `delia-api/` at eval time on HEAD `1fa326f50243856f37cebd23b6b803008dd538d7`.  
+**DEV_RUNTIME_ISOLATION=PROVEN_PROCESS_SEPARATION** — temporary container `delpi-delia-eval-int1` (distinct id) on `infra_delpi-network`; `DELIA_ENV=development`; OpenRouter via localhost egress proxy `host.docker.internal:18765`; **prod `delpi-delia-api` StartedAt unchanged** (`PROD_CONTAINER_UNTOUCHED=YES`). No compose.dev collision used. No functional INT-1 code change.  
+**MODEL:** `qwen/qwen3-14b` / `openrouter_qwen` / pydantic-ai `2.50.0` / instruction `generalist-semantic-v2` fp `7dbc94c5035b0f19` / config fp `b42a0da3f3be8154`.  
+**LIVE_EVAL=EXECUTED** (not TEST_NOT_RUN).
+
+| Case | Tools | Investigation | Objective coverage | Notes |
+|---|---|---|---|---|
+| P1 structure 90260921 | get_context→read | PASS (authoritative structure + qty; `owner_result_incomplete` preserved) | PARTIAL | GROUNDED + coverage_unknown; incomplete owner honest |
+| P2 Transformômetro processes | read×3 | PASS (cadastral process ids, not aggregate-only) | PARTIAL | truncated/pagination limitations declared |
+| P3 visualization formats | analyze×2 | FAIL/RELATED | FAIL | dashboards TEO-like; not operational viz-format catalog |
+| G1 semantic reword | read/get_context/knowledge | PARTIAL | FAIL | identity found; structure tree not recovered |
+| Tool-rename MCP gen | — | TEST_NOT_RUN | — | no isolated rename MCP without new architecture |
+
+**INT1_REWORK_BUDGET_EXHAUSTED=YES** — no functional remediation in this task.  
+**INT1_STAGE_ACCEPTANCE_PROPOSAL:** `ACCEPT_WITH_RESIDUAL` (real inference proven; P3 selection residual + tool-rename gen absent + MCP READ backends shared with prod network).  
+**NEXT:** `COORDINATION_INT1_REAL_EVAL_INDEPENDENT_REVIEW`. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `T3/INT2/INT3/INT4=NOT_AUTHORIZED`.
+
 
 ### Coordenação — revisão final INT-1 (2026-11-10)
 

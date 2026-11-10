@@ -6208,6 +6208,18 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 
 | DELIA-C3-T2-INT1-PO-REAL-EVAL-ACCEPTANCE-GATE-CORRECTION-01 | PO explicitly forbade closure of any intelligence stage without real test. Prior INT1 ACCEPT_WITH_RESIDUAL narrowed to provisional code review; Qwen14B live eval never ran, hence INT1 NOT CLOSED, stage acceptance PENDING_REAL_EVAL. Next bounded step prove isolated DEV + real inference P1/P2/P3 and outcome; no automatic code rework or prod. | INT1_STAGE_ACCEPTANCE=PENDING_REAL_EVAL; NEXT=T2_INT1_ISOLATED_REAL_QWEN_EVAL_GATE |
 
+| T2_INT1_ISOLATED_REAL_QWEN_EVAL_GATE | Isolated eval container + OpenRouter localhost proxy; prod untouched; real qwen/qwen3-14b P1/P2/P3+G1; P1/P2 investigative PASS(partial coverage); P3 FAIL related-analyze; tool-rename TEST_NOT_RUN; no INT-1 code rework | LIVE_EVAL=EXECUTED; NEXT=COORDINATION_INT1_REAL_EVAL_INDEPENDENT_REVIEW |
+
+### INT-1 isolated real Qwen 14B evaluation — 2026-11-10
+
+- **Isolation:** `delpi-delia-eval-int1` ≠ `delpi-delia-api`; `DELIA_ENV=development`; LLM via `host.docker.internal:18765` proxy; `PROD_CONTAINER_UNTOUCHED=YES` (StartedAt `2026-11-10T14:25:59.754369293Z`).
+- **Config:** model `qwen/qwen3-14b`, profile `openrouter_qwen`, pydantic-ai `2.50.0`, instruction fp `7dbc94c5035b0f19`, runtime fp `b42a0da3f3be8154`, INT1 code ancestor `3bb2be887b`.
+- **P1:** MCP get_context+read; structure 90260921 + component 10020003 qty 175; `owner_result_incomplete` + `coverage_unknown`; declared partial.
+- **P2:** MCP read×3; process codes PROC-0105/PROC-0104; truncation/pagination limitations; not aggregate-only.
+- **P3:** MCP analyze×2; dashboard ids — related-insufficient vs viz-format catalog; residual selection.
+- **G1 reword:** identity only; structure miss. **Tool-rename gen:** `TEST_NOT_RUN`.
+- **CODE_REMEDIATION:** NOT_AUTHORIZED / none. **Proposal:** `ACCEPT_WITH_RESIDUAL` → coordination review.
+
 ### Product Master correction — every cognitive-stage closure requires real evaluation (2026-11-10)
 
 - **DECISION:** Any `ACCEPT`, `ACCEPT_WITH_RESIDUAL`, `CLOSED` or progression for INT-1 through INT-5 is **prohibited** without actual inference by the authorized model in an independent DEV/evaluation runtime, with relevant tools/source results, evaluated SHA/config, observability and objective-level outcome evidence. FunctionModel and deterministic pytest prove wiring only.

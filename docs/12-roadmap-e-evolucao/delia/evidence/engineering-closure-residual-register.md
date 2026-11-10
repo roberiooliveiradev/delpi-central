@@ -1076,6 +1076,23 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | F3 | Real Agent path + metamorphic rename | `test_f3_agent_path_*` / `test_f3_metamorphic_*` |
 | F4 | plan absent → `coverage_unknown` on fast SUCCESS; related+plan stays NOT_APPLICABLE | `test_f4_*` |
 
-**LOCAL_QWEN_EVAL:** TEST_NOT_RUN  
-**Proposal:** ACCEPT_WITH_RESIDUAL → `COORDINATION_FINAL_INT1_ACCEPTANCE`  
-**Open residual:** live Qwen P1–P3; INT-3 Outcome sufficiency when plan absent.
+**LOCAL_QWEN_EVAL (at F1–F4 close):** was `TEST_NOT_RUN` — superseded by isolated live eval stamp below.  
+**Proposal (code review only):** ACCEPT_WITH_RESIDUAL → then real-eval gate.
+
+### INT-1 isolated real Qwen evaluation (2026-11-10)
+
+**TASK:** `T2_INT1_ISOLATED_REAL_QWEN_EVAL_GATE`  
+**LIVE_EVAL:** EXECUTED (isolated container + OpenRouter proxy; prod untouched)  
+**MODEL:** `qwen/qwen3-14b` / `openrouter_qwen`
+
+| Residual | Class | Notes |
+|---|---|---|
+| P3 selected `analyze` dashboards for “formatos de visualização” | INVESTIGATION_SELECTION | Related-insufficient vs operational viz catalog; no code rework (budget exhausted) |
+| G1 semantic reword missed structure tree | INVESTIGATION_CONTINUITY | Identity found; structure not recovered on reword |
+| Tool-rename MCP generalization | TEST_NOT_RUN | No isolated rename MCP without new architecture |
+| MCP READ backends on prod docker network | ENVIRONMENT | Eval process isolated; owner READ services shared |
+| INT-3 Outcome sufficiency / plan-absent | DEFERRED | `coverage_unknown` preserved; not INT-1 Outcome authority |
+| MODEL_PING empty on short OpenAI client probe | NON_BLOCKING | Full Agent turns invoked model successfully |
+
+**Proposal:** `ACCEPT_WITH_RESIDUAL` → `COORDINATION_INT1_REAL_EVAL_INDEPENDENT_REVIEW`  
+**INT1_REWORK_BUDGET_EXHAUSTED:** YES

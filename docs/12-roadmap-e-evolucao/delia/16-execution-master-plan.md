@@ -2041,6 +2041,8 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 
 **Anotação factual 2026-11-10 (INT-1 final rework):** F1–F4 aplicados sobre `7cd27e6d0c`; `INT1_REWORK_BUDGET_EXHAUSTED=YES`. Proposta `ACCEPT_WITH_RESIDUAL` para coordenação. `PHASE_ADVANCEMENT=NO`; `NEXT=COORDINATION_FINAL_INT1_ACCEPTANCE`. Sem nova rodada corretiva automática.
 
+**Anotação factual 2026-11-10 (INT-1 real Qwen eval):** `LIVE_EVAL=EXECUTED` em runtime isolado (`delpi-delia-eval-int1`, prod untouched). P1/P2 investigação real com evidência owner; P3 residual (analyze≠catálogo de formatos); tool-rename gen `TEST_NOT_RUN`. `INT1_STAGE_ACCEPTANCE=PENDING_COORDINATION_REVIEW`; `INT1_CLOSED=NO`; `PHASE_ADVANCEMENT=NO`; `NEXT=COORDINATION_INT1_REAL_EVAL_INDEPENDENT_REVIEW`.
+
 
 ### Product Master correction — mandatory real inference before intelligence-stage acceptance (2026-11-10)
 
