@@ -6,6 +6,9 @@ evidência de caso; a implementação não pode calibrar-se a um PDF.
 """
 from __future__ import annotations
 
+from engineering_app.application.drawing.perception_contract import (
+    fill_empty_quantity_cells_from_unassigned,
+)
 from engineering_app.application.drawing.understanding import (
     build_understanding,
     rows_from_native_cells,
@@ -575,3 +578,156 @@ def test_g4_near_edge_legitimate_code_row_not_trimmed():
         "33333333" in (c.get("text") or "")
         for r in rows for c in (r.get("cells") or [])
     )
+
+
+# ----- G4 field completeness -----
+
+
+def test_g4_description_with_cited_code_still_publishes_description():
+    """Números/código citados no texto não anulam o campo description."""
+    cells = _header_item_qty_code_desc() + [
+        _cell(1, 0, "A2", _quad(0, 20, 40, 40), token_centers=[[20, 30]]),
+        _cell(1, 1, "16", _quad(40, 20, 80, 40), token_centers=[[60, 30]]),
+        _cell(1, 2, "10080192", _quad(90, 20, 170, 40),
+              token_centers=[[130, 30]]),
+        _cell(
+            1, 3,
+            "TERM. TUBULAR DUPLO 1,00MM2 COMP CONTRA PC 10090317",
+            _quad(180, 20, 500, 40),
+            token_centers=[[340, 30]],
+        ),
+    ]
+    rows, _ = rows_from_native_cells(cells, page=10)
+    by_item = _by_item(rows)
+    assert by_item["A2"]["component_code"] == "10080192"
+    assert by_item["A2"]["quantity"] == "16"
+    assert "TERM. TUBULAR" in (by_item["A2"]["description"] or "")
+    assert "10090317" in (by_item["A2"]["description"] or "")
+    assert all(r.get("component_code") != "10090317" for r in rows)
+
+
+def test_g4_multiline_description_follows_sibling_row_bands():
+    """Descrição multilinha acompanha bandas Y de item/código já split."""
+    cells = [
+        _cell(0, 0, "Item", _quad(0, 0, 40, 16)),
+        _cell(0, 1, "Codigo", _quad(90, 0, 170, 16)),
+        _cell(0, 2, "Descricao", _quad(180, 0, 500, 16)),
+        _cell(
+            1, 0, "A2 A3", _quad(0, 20, 40, 70),
+            line_texts=["A2", "A3"],
+            line_centers=[30.0, 60.0],
+            token_centers=[[20, 30.0], [20, 60.0]],
+        ),
+        _cell(
+            1, 1, "10080192 10090316", _quad(90, 20, 170, 70),
+            line_texts=["10080192", "10090316"],
+            line_centers=[30.0, 60.0],
+            token_centers=[[130, 30.0], [130, 60.0]],
+        ),
+        _cell(
+            1, 2,
+            "SUPORTE SUPERIOR SUPORTE INFERIOR",
+            _quad(180, 20, 500, 70),
+            line_texts=["SUPORTE SUPERIOR", "SUPORTE INFERIOR"],
+            line_centers=[30.0, 60.0],
+            token_centers=[[340, 30.0], [340, 60.0]],
+        ),
+    ]
+    rows, _ = rows_from_native_cells(cells, page=10)
+    by_item = _by_item(rows)
+    assert by_item["A2"]["component_code"] == "10080192"
+    assert "SUPORTE SUPERIOR" in (by_item["A2"]["description"] or "")
+    assert by_item["A3"]["component_code"] == "10090316"
+    assert "SUPORTE INFERIOR" in (by_item["A3"]["description"] or "")
+    assert by_item["A2"]["component_code"] != by_item["A3"]["component_code"]
+
+
+def test_g4_unassigned_qty_fills_empty_cell_on_matching_row_band():
+    """Token qty OCR órfão (centro fora do polígono) preenche célula vazia
+    da mesma banda Y de item/código — não a linha vizinha."""
+    cells = [
+        {
+            "row": 1, "col": 0, "text": "AH", "rowspan": 1, "colspan": 1,
+            "bounding_box_px": _quad(780, 770, 830, 800),
+            "token_centers": [[781.5, 788.0]],
+        },
+        {
+            "row": 1, "col": 1, "text": "", "rowspan": 1, "colspan": 1,
+            "bounding_box_px": _quad(862, 749, 950, 792),
+            "token_centers": None,
+        },
+        {
+            "row": 1, "col": 2, "text": "10080897", "rowspan": 1, "colspan": 1,
+            "bounding_box_px": _quad(926, 775, 1044, 800),
+            "token_centers": [[985.0, 787.5]],
+        },
+        {
+            "row": 2, "col": 0, "text": "AG", "rowspan": 1, "colspan": 1,
+            "bounding_box_px": _quad(780, 810, 830, 840),
+            "token_centers": [[782.0, 825.5]],
+        },
+        {
+            "row": 2, "col": 1, "text": "2", "rowspan": 1, "colspan": 1,
+            "bounding_box_px": _quad(824, 784, 901, 839),
+            "token_centers": [[857.5, 826.0]],
+        },
+        {
+            "row": 2, "col": 2, "text": "10110676", "rowspan": 1, "colspan": 1,
+            "bounding_box_px": _quad(926, 810, 1044, 840),
+            "token_centers": [[985.5, 825.0]],
+        },
+    ]
+    tokens = [
+        {
+            "normalized_text": "2",
+            "bounding_box_px": [845.0, 773.0, 870.0, 773.0, 870.0, 803.0, 845.0, 803.0],
+        },
+    ]
+    left = fill_empty_quantity_cells_from_unassigned(cells, tokens, [0])
+    assert left == []
+    assert cells[1]["text"] == "2"
+    assert cells[4]["text"] == "2"  # AG inalterado
+    rows, _ = rows_from_native_cells(
+        [
+            _cell(0, 0, "Item", _quad(0, 0, 40, 16)),
+            _cell(0, 1, "Qtd", _quad(40, 0, 80, 16)),
+            _cell(0, 2, "Codigo", _quad(90, 0, 170, 16)),
+        ] + cells,
+        page=12,
+    )
+    by_item = _by_item(rows)
+    assert by_item["AH"]["quantity"] == "2"
+    assert by_item["AH"]["component_code"] == "10080897"
+    assert by_item["AG"]["quantity"] == "2"
+
+
+def test_g4_unassigned_qty_abstains_when_two_rows_equally_close():
+    """Empate entre linhas → token permanece unassigned (sem migração)."""
+    cells = [
+        {
+            "row": 1, "col": 0, "text": "AH", "rowspan": 1, "colspan": 1,
+            "bounding_box_px": _quad(100, 100, 140, 120),
+            "token_centers": [[120, 110]],
+        },
+        {
+            "row": 1, "col": 1, "text": "", "rowspan": 1, "colspan": 1,
+            "bounding_box_px": _quad(150, 100, 200, 120),
+        },
+        {
+            "row": 2, "col": 0, "text": "AG", "rowspan": 1, "colspan": 1,
+            "bounding_box_px": _quad(100, 130, 140, 150),
+            "token_centers": [[120, 140]],
+        },
+        {
+            "row": 2, "col": 1, "text": "", "rowspan": 1, "colspan": 1,
+            "bounding_box_px": _quad(150, 130, 200, 150),
+        },
+    ]
+    tokens = [{
+        "normalized_text": "2",
+        "bounding_box_px": [160, 120, 180, 120, 180, 130, 160, 130],
+    }]
+    left = fill_empty_quantity_cells_from_unassigned(cells, tokens, [0])
+    assert left == [0]
+    assert cells[1]["text"] == ""
+    assert cells[3]["text"] == ""

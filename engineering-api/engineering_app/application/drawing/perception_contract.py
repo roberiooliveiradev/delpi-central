@@ -235,6 +235,36 @@ class PerceptionEnginePort(Protocol):
         ...
 
 
+def _token_center_px(bb: list) -> tuple[float, float] | None:
+    """Centro do token: média dos vértices do polígono (quad 8 pts).
+
+    Tratar ``[x1,y1,x2,y1,...]`` como se fosse ``[x1,y1,x2,y2]`` usa o
+    segundo vértice do topo como ``y2`` e coloca o centro na borda —
+    tokens de quantidade caem fora da célula da própria linha.
+    """
+    if not bb or len(bb) < 4:
+        return None
+    if len(bb) >= 8:
+        xs = [float(bb[i]) for i in range(0, 8, 2)]
+        ys = [float(bb[i]) for i in range(1, 8, 2)]
+        return sum(xs) / 4.0, sum(ys) / 4.0
+    return (float(bb[0]) + float(bb[2])) / 2.0, (
+        float(bb[1]) + float(bb[3])
+    ) / 2.0
+
+
+def _bbox_center_px(cb: list) -> tuple[float, float] | None:
+    if not cb or len(cb) < 4:
+        return None
+    if len(cb) >= 8:
+        xs = [float(cb[i]) for i in range(0, 8, 2)]
+        ys = [float(cb[i]) for i in range(1, 8, 2)]
+        return sum(xs) / 4.0, sum(ys) / 4.0
+    return (float(cb[0]) + float(cb[2])) / 2.0, (
+        float(cb[1]) + float(cb[3])
+    ) / 2.0
+
+
 def associate_tokens_to_cells(
     tokens: list,
     cell_bboxes: list,
@@ -244,8 +274,9 @@ def associate_tokens_to_cells(
     """Associa tokens OCR a células SLANet por geometria determinística.
 
     RQ-01/02/05: token→célula por contenção do centro do token;
-    múltiplas células → ``conflicts``; sem match → ``unassigned``.
-    Nunca inventa texto nem associa arbitrariamente.
+    múltiplas células → ``conflicts`` (vence a célula de centro mais
+    próximo); sem match → ``unassigned``. Nunca inventa texto nem
+    associa arbitrariamente.
     """
     ox, oy = crop_offset
     assigned: dict = {}
@@ -253,10 +284,11 @@ def associate_tokens_to_cells(
     unassigned: list = []
     for ti, tok in enumerate(tokens):
         bb = tok.get("bounding_box_px") if isinstance(tok, dict) else None
-        if not bb or len(bb) < 4:
+        center = _token_center_px(bb) if isinstance(bb, (list, tuple)) else None
+        if center is None:
             unassigned.append(ti)
             continue
-        cx, cy = (bb[0] + bb[2]) / 2.0, (bb[1] + bb[3]) / 2.0
+        cx, cy = center
         hits = []
         for ci, cb in enumerate(cell_bboxes or []):
             if not cb or len(cb) < 4:
@@ -272,7 +304,18 @@ def associate_tokens_to_cells(
             assigned.setdefault(hits[0], []).append(ti)
         elif len(hits) > 1:
             conflicts.append({"token_index": ti, "cells": hits})
-            assigned.setdefault(hits[0], []).append(ti)
+
+            def _dist(ci: int) -> tuple[float, int]:
+                mid = _bbox_center_px(cell_bboxes[ci])
+                if mid is None:
+                    return (float("inf"), ci)
+                return (
+                    (mid[0] - cx) ** 2 + (mid[1] - cy) ** 2,
+                    ci,
+                )
+
+            chosen = min(hits, key=_dist)
+            assigned.setdefault(chosen, []).append(ti)
         else:
             unassigned.append(ti)
     return {
@@ -281,6 +324,138 @@ def associate_tokens_to_cells(
         "unassigned": unassigned,
         "method": "center_containment",
     }
+
+
+_QTY_TOKEN_RE = re.compile(r"^\d{1,4}([.,]\d+)?$")
+
+
+def fill_empty_quantity_cells_from_unassigned(
+    cells: list[dict],
+    tokens: list,
+    unassigned: list[int],
+) -> list[int]:
+    """Preenche célula qty vazia com token OCR órfão alinhado à linha.
+
+    Quando o centro do token fica 1–2px fora do polígono SLANet, a
+    contenção falha e a quantidade some. Só atribui se:
+    - o token é quantidade curta;
+    - existe célula vazia na mesma coluna visual (X);
+    - a banda Y do token combina com item/código da mesma linha SLANet
+      melhor do que com qualquer outra linha candidata (único vencedor).
+    Nunca inventa texto nem move qty já atribuída.
+    """
+    if not cells or not tokens or not unassigned:
+        return list(unassigned)
+    remaining: list[int] = []
+    row_anchor_cy: dict[int, list[float]] = {}
+    for cell in cells:
+        text = str(cell.get("text") or "").strip()
+        if not text:
+            continue
+        cy = None
+        tcs = cell.get("token_centers") or []
+        ys = [
+            float(tc[1])
+            for tc in tcs
+            if isinstance(tc, (list, tuple)) and len(tc) >= 2
+        ]
+        if ys:
+            cy = sum(ys) / len(ys)
+        else:
+            bb = cell.get("bounding_box_px") or []
+            if len(bb) >= 8:
+                cy = (min(bb[1::2]) + max(bb[1::2])) / 2.0
+            elif len(bb) >= 4:
+                cy = (float(bb[1]) + float(bb[3])) / 2.0
+        if cy is None:
+            continue
+        # Âncoras de linha: item (letras curtas) ou código longo.
+        if re.fullmatch(r"[A-Za-z]{1,2}\d{0,3}|[A-Za-z]{3,4}\d+", text) or (
+            re.fullmatch(r"\d{6,11}", text)
+        ):
+            row_anchor_cy.setdefault(int(cell.get("row") or 0), []).append(cy)
+
+    def _cell_xy_range(cell: dict) -> tuple[float, float, float, float] | None:
+        bb = cell.get("bounding_box_px") or []
+        if len(bb) >= 8:
+            xs, ys = bb[0::2], bb[1::2]
+        elif len(bb) >= 4:
+            xs, ys = [bb[0], bb[2]], [bb[1], bb[3]]
+        else:
+            return None
+        return min(xs), min(ys), max(xs), max(ys)
+
+    for ti in unassigned:
+        if ti >= len(tokens):
+            remaining.append(ti)
+            continue
+        tok = tokens[ti]
+        if not isinstance(tok, dict):
+            remaining.append(ti)
+            continue
+        raw = str(
+            tok.get("normalized_text")
+            or tok.get("raw_text")
+            or tok.get("text")
+            or ""
+        ).strip()
+        if not _QTY_TOKEN_RE.fullmatch(raw):
+            remaining.append(ti)
+            continue
+        center = _token_center_px(tok.get("bounding_box_px"))
+        if center is None:
+            remaining.append(ti)
+            continue
+        cx, cy = center
+        candidates: list[tuple[float, int, dict]] = []
+        for cell in cells:
+            if str(cell.get("text") or "").strip():
+                continue
+            if int(cell.get("rowspan") or 1) > 1:
+                continue
+            extents = _cell_xy_range(cell)
+            if extents is None:
+                continue
+            x1, y1, x2, y2 = extents
+            # Pad horizontal pequeno: centro OCR frequentemente 1–3px
+            # à esquerda da borda SLANet da coluna de quantidade.
+            pad_x = max(8.0, 0.15 * (x2 - x1))
+            pad_y = max(4.0, 0.10 * (y2 - y1))
+            if not (x1 - pad_x <= cx <= x2 + pad_x):
+                continue
+            if not (y1 - pad_y <= cy <= y2 + pad_y):
+                continue
+            row = int(cell.get("row") or 0)
+            anchors = row_anchor_cy.get(row) or []
+            if not anchors:
+                continue
+            anchor = min(anchors, key=lambda a: abs(a - cy))
+            dy = abs(anchor - cy)
+            # Token deve estar na banda da linha, não na vizinha.
+            if dy > max(18.0, 0.55 * abs((y2 - y1) or 18.0) + 8.0):
+                continue
+            candidates.append((dy, row, cell))
+        if not candidates:
+            remaining.append(ti)
+            continue
+        candidates.sort(key=lambda c: (c[0], c[1]))
+        best_dy, _best_row, best_cell = candidates[0]
+        # Empate com outra linha → abstenção (não migrar qty vizinha).
+        close = [
+            c for c in candidates if abs(c[0] - best_dy) <= 4.0 and c[2] is not best_cell
+        ]
+        other_rows = {c[1] for c in close if c[1] != _best_row}
+        if other_rows:
+            remaining.append(ti)
+            continue
+        best_cell["text"] = raw
+        best_cell["token_centers"] = [[round(cx, 1), round(cy, 1)]]
+        refs = list(best_cell.get("token_refs") or [])
+        if ti not in refs:
+            refs.append(ti)
+        best_cell["token_refs"] = refs
+        best_cell["association_method"] = "ocr_unassigned_row_band"
+    return remaining
 
 
 def resolve_requested_page(

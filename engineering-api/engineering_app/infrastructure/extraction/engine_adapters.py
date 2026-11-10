@@ -899,6 +899,18 @@ class TableStructureEngine:
                         _cell_out["line_texts"] = line_texts
                         _cell_out["line_centers"] = line_centers
                     cells.append(_cell_out)
+                # Tokens qty órfãos (centro 1–3px fora do polígono):
+                # preencher célula vazia alinhada à banda Y da linha.
+                from engineering_app.application.drawing.perception_contract import (  # noqa: E501
+                    fill_empty_quantity_cells_from_unassigned,
+                )
+                association["unassigned"] = (
+                    fill_empty_quantity_cells_from_unassigned(
+                        cells,
+                        page_tokens,
+                        association.get("unassigned") or [],
+                    )
+                )
             _res = make_result(
                 provider_id=self.provider_id,
                 provider_version="slanet_7.67MB",

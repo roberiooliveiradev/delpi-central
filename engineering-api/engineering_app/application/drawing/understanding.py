@@ -1989,145 +1989,217 @@ def rows_from_native_cells(
             row_spans.setdefault(row_index, []).append((lo, hi))
         if cys:
             row_cy[row_index] = sum(cys) / len(cys)
-    _cy_vals = sorted(row_cy.values())
-    _prelim_steps = [
-        b - a for a, b in zip(_cy_vals, _cy_vals[1:]) if b - a > 1
-    ]
-    _prelim_step = (
-        _prelim_steps[len(_prelim_steps) // 2] if _prelim_steps else 0.0
-    )
-    for row_index, row_cells in list(grouped.items()):
-        for cell in row_cells:
-            lines = cell.get("line_texts") or []
-            centers = cell.get("line_centers") or []
-            if not (len(lines) > 1 and len(centers) == len(lines)):
+    def _rebuild_row_geometry() -> tuple[float, float]:
+        row_cy.clear()
+        row_spans.clear()
+        for ri, rcells in grouped.items():
+            if ri == header_row:
                 continue
-            source_text = _norm(str(cell.get("text") or ""))
-            from_group = bool(
-                int(cell.get("rowspan") or 1) > 1
-                and _GROUP_CODE_RE.match(source_text)
-            )
-            if from_group:
-                cell["_from_group_anchor"] = True
-            # Pares (índice, texto): textos repetidos ("2 2") não podem
-            # usar `line in stayed` — isso mistura centros Y de bandas
-            # distintas e apaga a quantidade na associação.
-            targets: dict[int, list[tuple[int, str]]] = {}
-            for line_i, (line, cy) in enumerate(zip(lines, centers)):
-                # 1ª evidência: faixa-Y de célula confiável da linha
-                # contém o centro da banda (mesma linha visual).
-                hits = [
-                    r
-                    for r, spans in row_spans.items()
-                    if any(lo - 1.0 <= cy <= hi + 1.0 for lo, hi in spans)
-                ]
-                if len(hits) == 1:
-                    target = hits[0]
-                elif row_cy:
-                    target = min(
-                        row_cy, key=lambda r: abs(row_cy[r] - cy)
-                    )
-                    # Evidência distante indica 2ª linha da mesma
-                    # célula (multilinha), não outra linha física.
-                    _steps = sorted(row_cy.values())
-                    _step = (
-                        _steps[len(_steps) // 2] - _steps[0]
-                        if len(_steps) > 1 else 0.0
-                    )
-                    if (
-                        _step
-                        and abs(row_cy[target] - cy) > 0.6 * _step
-                    ):
-                        target = row_index
-                else:
-                    target = row_index
-                line_s = line.strip()
-                canonical = _line_is_canonical_field_band(line_s)
-                # Descrição multilinha não é item/qtd/código. Sem faixa
-                # única, as bandas permanecem na célula — não saltam
-                # para a linha de código vizinha.
-                if len(hits) != 1 and not canonical:
-                    target = row_index
-                ref_cy = row_cy.get(target)
-                gap_lim = 0.6 * _prelim_step if _prelim_step else 12.0
-                if (
-                    canonical
-                    and ref_cy is not None
-                    and abs(ref_cy - cy) > max(gap_lim, 8.0)
+            cys: list[float] = []
+            for c in rcells:
+                if c.get("line_texts") and not c.get("_split_done"):
+                    continue
+                if int(c.get("rowspan") or 1) > 1 and not c.get(
+                    "_split_done"
                 ):
-                    # Linha física distinta projetada no índice SLANet
-                    # errado — não permanece na tupla incompatível.
-                    target = 500000 + int(round(cy * 10))
-                targets.setdefault(int(target), []).append((line_i, line))
-            # Célula só com códigos/itens canônicos em bandas Y
-            # distintas, sem colunas-irmãs para ancorar: a evidência
-            # geométrica + textual basta para recuperar ocorrências.
-            # Sem geometria distinta → abstenção (não split cego).
-            if (
-                len(targets) < 2
-                and len(lines) > 1
-                and all(
+                    continue
+                token_ys = _token_ys(c)
+                if token_ys:
+                    pad = 4.0
+                    lo, hi = min(token_ys) - pad, max(token_ys) + pad
+                    cys.extend(token_ys)
+                else:
+                    b = c.get("bounding_box_px") or []
+                    if len(b) >= 8:
+                        _ys = [b[1], b[3], b[5], b[7]]
+                    elif len(b) >= 4:
+                        _ys = [b[1], b[3]]
+                    else:
+                        continue
+                    lo, hi = float(min(_ys)), float(max(_ys))
+                    cys.append((lo + hi) / 2.0)
+                row_spans.setdefault(ri, []).append((lo, hi))
+            if cys:
+                row_cy[ri] = sum(cys) / len(cys)
+        cy_vals = sorted(row_cy.values())
+        steps = [b - a for a, b in zip(cy_vals, cy_vals[1:]) if b - a > 1]
+        steps.sort()
+        return (steps[len(steps) // 2] if steps else 0.0), (
+            0.6 * (steps[len(steps) // 2] if steps else 0.0)
+            if steps
+            else 12.0
+        )
+
+    def _split_multiline_cells(*, description_pass: bool) -> None:
+        prelim_step, _gap = _rebuild_row_geometry()
+        for row_index, row_cells in list(grouped.items()):
+            for cell in list(row_cells):
+                if cell.get("_split_done"):
+                    continue
+                lines = cell.get("line_texts") or []
+                centers = cell.get("line_centers") or []
+                if not (len(lines) > 1 and len(centers) == len(lines)):
+                    continue
+                all_canonical = all(
                     _line_is_canonical_field_band(str(line).strip())
                     for line in lines
                 )
-                and _line_centers_geometrically_distinct(
-                    [float(c) for c in centers]
-                )
-            ):
-                targets = {}
-                for line_i, (line, cy) in enumerate(zip(lines, centers)):
-                    targets.setdefault(
-                        500000 + int(round(float(cy) * 10)), []
-                    ).append((line_i, line))
-            if len(targets) < 2:
-                continue
-            cell["_split_done"] = True
-            stayed = targets.get(row_index, [])
-            cell["_split_text"] = " ".join(text for _i, text in stayed)
-            cell["line_texts"] = []
-            source_tcs = [
-                tc
-                for tc in (cell.get("token_centers") or [])
-                if isinstance(tc, (list, tuple)) and len(tc) >= 2
-            ]
-            source_cx = _cell_cx(cell) or 0.0
-            if stayed:
-                cell["_band_cy"] = sum(
-                    float(centers[i]) for i, _text in stayed
-                ) / len(stayed)
-                if len(source_tcs) == len(lines):
-                    cell["token_centers"] = [
-                        source_tcs[i] for i, _text in stayed
-                    ]
-            else:
-                # O retângulo original ainda cobre as outras bandas;
-                # sem isso o centro Y médio reintroduz o vínculo falso.
-                cell["token_centers"] = []
-            for target, tlines in targets.items():
-                if target == row_index:
+                # 1ª passagem: só bandas canônicas (item/qtd/código).
+                # 2ª: descrições multilinha, depois que row_cy reflete
+                # as linhas físicas já recuperadas.
+                if description_pass == all_canonical:
                     continue
-                virtual = dict(cell)
-                virtual["_split_done"] = True
-                virtual["_split_text"] = " ".join(
-                    text for _i, text in tlines
+                source_text = _norm(str(cell.get("text") or ""))
+                from_group = bool(
+                    int(cell.get("rowspan") or 1) > 1
+                    and _GROUP_CODE_RE.match(source_text)
                 )
-                virtual["line_texts"] = []
-                virtual["rowspan"] = 1
-                virtual["_from_group_anchor"] = from_group
-                virtual["_detached_band"] = target >= 500000
-                virtual["_band_cy"] = sum(
-                    float(centers[i]) for i, _text in tlines
-                ) / len(tlines)
-                if len(source_tcs) == len(lines):
-                    virtual["token_centers"] = [
-                        source_tcs[i] for i, _text in tlines
+                if from_group:
+                    cell["_from_group_anchor"] = True
+                targets: dict[int, list[tuple[int, str]]] = {}
+                for line_i, (line, cy) in enumerate(zip(lines, centers)):
+                    hits = [
+                        r
+                        for r, spans in row_spans.items()
+                        if any(
+                            lo - 1.0 <= cy <= hi + 1.0 for lo, hi in spans
+                        )
                     ]
+                    if len(hits) == 1:
+                        target = hits[0]
+                    elif row_cy:
+                        target = min(
+                            row_cy, key=lambda r: abs(row_cy[r] - cy)
+                        )
+                        _steps = sorted(row_cy.values())
+                        _step = (
+                            _steps[len(_steps) // 2] - _steps[0]
+                            if len(_steps) > 1
+                            else 0.0
+                        )
+                        if (
+                            _step
+                            and abs(row_cy[target] - cy) > 0.6 * _step
+                        ):
+                            target = row_index
+                    else:
+                        target = row_index
+                    line_s = line.strip()
+                    canonical = _line_is_canonical_field_band(line_s)
+                    gap_lim = (
+                        0.6 * prelim_step if prelim_step else 12.0
+                    )
+                    if len(hits) != 1 and not canonical:
+                        # Descrição multilinha: só acompanha âncora de
+                        # item/código quando o desvio Y cabe no vão das
+                        # próprias bandas de descrição — evita saltar
+                        # para código de outra ocorrência (TUBO FLEX).
+                        if description_pass and row_cy:
+                            nearest = min(
+                                row_cy,
+                                key=lambda r: abs(row_cy[r] - cy),
+                            )
+                            desc_span = (
+                                float(max(centers)) - float(min(centers))
+                                if centers
+                                else 0.0
+                            )
+                            lim = max(
+                                8.0,
+                                min(gap_lim, 0.75 * desc_span + 4.0)
+                                if desc_span > 4.0
+                                else 8.0,
+                            )
+                            own_cy = row_cy.get(row_index)
+                            if (
+                                own_cy is not None
+                                and abs(own_cy - cy)
+                                <= abs(row_cy[nearest] - cy)
+                            ):
+                                target = row_index
+                            elif abs(row_cy[nearest] - cy) <= lim:
+                                target = nearest
+                            else:
+                                target = row_index
+                        else:
+                            target = row_index
+                    ref_cy = row_cy.get(target)
+                    if (
+                        canonical
+                        and ref_cy is not None
+                        and abs(ref_cy - cy) > max(gap_lim, 8.0)
+                    ):
+                        target = 500000 + int(round(cy * 10))
+                    targets.setdefault(int(target), []).append(
+                        (line_i, line)
+                    )
+                if (
+                    len(targets) < 2
+                    and len(lines) > 1
+                    and all_canonical
+                    and _line_centers_geometrically_distinct(
+                        [float(c) for c in centers]
+                    )
+                ):
+                    targets = {}
+                    for line_i, (line, cy) in enumerate(
+                        zip(lines, centers)
+                    ):
+                        targets.setdefault(
+                            500000 + int(round(float(cy) * 10)), []
+                        ).append((line_i, line))
+                if len(targets) < 2:
+                    continue
+                cell["_split_done"] = True
+                stayed = targets.get(row_index, [])
+                cell["_split_text"] = " ".join(
+                    text for _i, text in stayed
+                )
+                cell["line_texts"] = []
+                source_tcs = [
+                    tc
+                    for tc in (cell.get("token_centers") or [])
+                    if isinstance(tc, (list, tuple)) and len(tc) >= 2
+                ]
+                source_cx = _cell_cx(cell) or 0.0
+                if stayed:
+                    cell["_band_cy"] = sum(
+                        float(centers[i]) for i, _text in stayed
+                    ) / len(stayed)
+                    if len(source_tcs) == len(lines):
+                        cell["token_centers"] = [
+                            source_tcs[i] for i, _text in stayed
+                        ]
                 else:
-                    virtual["token_centers"] = [
-                        [source_cx, float(centers[i])]
-                        for i, _text in tlines
-                    ]
-                grouped.setdefault(target, []).append(virtual)
+                    cell["token_centers"] = []
+                for target, tlines in targets.items():
+                    if target == row_index:
+                        continue
+                    virtual = dict(cell)
+                    virtual["_split_done"] = True
+                    virtual["_split_text"] = " ".join(
+                        text for _i, text in tlines
+                    )
+                    virtual["line_texts"] = []
+                    virtual["rowspan"] = 1
+                    virtual["_from_group_anchor"] = from_group
+                    virtual["_detached_band"] = target >= 500000
+                    virtual["_band_cy"] = sum(
+                        float(centers[i]) for i, _text in tlines
+                    ) / len(tlines)
+                    if len(source_tcs) == len(lines):
+                        virtual["token_centers"] = [
+                            source_tcs[i] for i, _text in tlines
+                        ]
+                    else:
+                        virtual["token_centers"] = [
+                            [source_cx, float(centers[i])]
+                            for i, _text in tlines
+                        ]
+                    grouped.setdefault(target, []).append(virtual)
+
+    _split_multiline_cells(description_pass=False)
+    _split_multiline_cells(description_pass=True)
     col_types: dict[int, str] = {}
     if header_row is not None:
         for cell in grouped[header_row]:
@@ -2487,7 +2559,12 @@ def rows_from_native_cells(
                 )
                 _put("description", m.group(2), cell, "native_cell_pair")
                 continue
-            if not kind or mixed:
+            if not kind:
+                continue
+            # Célula qty+código fundidos: só os pares canônicos acima
+            # separam campos. Descrição com números/código citado no
+            # texto continua descrição — não abster o campo inteiro.
+            if mixed and kind != "description":
                 continue
             # Índices de folha/quadro nunca são código de componente,
             # mesmo quando a coluna tipada é component_code.

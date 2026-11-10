@@ -568,3 +568,11 @@ Correção de perda silenciosa sob `span_conflict_tolerated` parcial (`reconcile
 **Real p12:** pai `50225702` → AE/10010028/1, AH/10080897 (qty UNKNOWN — célula SLANet sem qty), AG/10110676/2.  
 **Regressão:** p10 A2/A3 PASS (connected); p13 sem falso código PASS. Unit G4+DEC040–043+SLANet/perception **68 passed**. Corpus 13 live `TEST_NOT_RUN`. `VAL01_COMPLETED=false`.
 
+### Log G4 field association completeness (2026-11-10)
+
+**TASK:** `EVA-VAL01-G4-FIELD-ASSOCIATION-COMPLETENESS`. Sem deploy. PDF SHA `af47dd4c…edf3` MATCH.
+
+**AH qty:** OCR `2@788` órfão (1,5px fora da célula) → fill por banda Y da linha; empate abstém.  
+**P10 desc:** mixed não bloqueia description; split multilinha em 2ª passagem.  
+**Real:** p12 AE/AH/AG qty+desc PASS; p10 A2/A3 descrições PASS; p13 sem `4 5`. Unit **72 passed**. Corpus 13 `TEST_NOT_RUN`. `VAL01_COMPLETED=false`.
+

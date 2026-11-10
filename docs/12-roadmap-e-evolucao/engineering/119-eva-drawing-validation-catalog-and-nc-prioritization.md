@@ -2258,3 +2258,37 @@ VAL01_COMPLETED=false
 NO_GENERALIZATION_CLAIM=true
 ```
 
+### 62.5 G4 — Completude de campos (qty AH + descrições P10) (2026-11-10)
+
+**TASK_ID:** `EVA-VAL01-G4-FIELD-ASSOCIATION-COMPLETENESS`.  
+**Base:** `d248f1d4ba`. Sem deploy; G5–G7 bloqueados.
+
+**AH qty (p12) — first-loss:** OCR `2` em (857.5, 788) alinhado a AH/`10080897`; célula SLANet qty vazia com borda X≈859 (centro 1,5px fora). Associação por contenção falhava; token órfão.
+
+**Fix qty:** `fill_empty_quantity_cells_from_unassigned` — só preenche célula vazia quando banda Y do token combina unicamente com âncoras item/código da mesma linha (+ pad X). Empate entre linhas → abstenção. Centro de token OCR em quad 8 pts corrigido (`_token_center_px`).
+
+**Descrições P10 — first-loss:** (1) `_cell_mixes_quantity_and_code` abortava `description` com números/código citado; (2) descrição multilinha não acompanhava bandas após split canônico.
+
+**Fix desc:** permitir `kind==description` mesmo com mixed; 2ª passagem de split de `line_texts` para descrição com limite pelo vão das próprias bandas (não salta para código distante — regressão TUBO FLEX).
+
+**Pipeline real 90264135:**
+
+| Página | Resultado |
+|---|---|
+| 12 | **PASS** AE/1, AH/2, AG/2 sob `50225702` + descrições |
+| 10 | **PASS** A2/A3 códigos+qtd+descrições; `10090317` só no texto A3 |
+| 13 | **PASS** `false_codes=[]` |
+
+**Testes:** 72 passed (G4 + DEC-040–043 + SLANet/perception). Corpus 13: `TEST_NOT_RUN`.
+
+```text
+G4_FIELD_COMPLETENESS=PASS
+P12_AH_QTY=PASS
+P10_DESCRIPTIONS=PASS
+P13_FALSE_CODE=PASS
+PRODUCTION_DEPLOY=false
+G5_G6_G7=NOT_AUTHORIZED
+VAL01_COMPLETED=false
+NO_GENERALIZATION_CLAIM=true
+```
+
