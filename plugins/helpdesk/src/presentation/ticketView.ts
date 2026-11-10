@@ -336,6 +336,7 @@ export type ConversationSource = {
   description_html?: string;
   created_at: string;
   requester_display_name: string;
+  requester_directory_user_id?: string;
   requester_mine?: boolean;
   timeline: {
     id: number;
@@ -366,6 +367,8 @@ export type ConversationMessage = {
   bodyHtml: string;
   createdAtLabel: string;
   authorName: string;
+  /** Minha DELPI directory user id when known — keeps avatar hue aligned. */
+  authorUserId?: string;
   mine: boolean;
   attachmentIds: number[];
 };
@@ -606,6 +609,7 @@ export function unassignedTicketAttachments(
 export function conversationMessages(ticket: ConversationSource, now: Date): ConversationMessage[] {
   const attachments = dedupeTicketAttachments(ticket.attachments);
   const requester = ticket.requester_display_name.trim();
+  const requesterDirectoryId = (ticket.requester_directory_user_id || "").trim();
   const openingHtml = stampHelpdeskAttachmentIds(ticket.description_html || "");
   const opening: ConversationMessage = {
     id: "opening",
@@ -615,6 +619,7 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
     bodyHtml: openingHtml,
     createdAtLabel: openingTimeLabel(ticket.created_at, requester, now),
     authorName: requester,
+    authorUserId: requesterDirectoryId || undefined,
     mine: ticket.requester_mine === true,
     attachmentIds: entryAttachmentIds(
       "opening",

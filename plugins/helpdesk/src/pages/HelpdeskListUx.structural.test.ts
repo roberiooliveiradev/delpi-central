@@ -52,11 +52,15 @@ describe("Helpdesk list UX structural", () => {
     const builder = read("TicketListFilterBuilder.tsx");
     expect(table).toContain("HelpdeskEntityAvatarLabel");
     expect(table).toContain("useDirectoryUserPhotoUrls");
+    expect(table).toContain("resolveAvatarColorKey");
     expect(table).toContain("requester_directory_user_id");
     expect(table).toContain("preferMyPhoto");
     expect(table).toContain('case "requester"');
+    expect(table).not.toContain("glpi:");
     expect(cards).toContain("HelpdeskEntityAvatarLabel");
     expect(cards).toContain("useDirectoryUserPhotoUrls");
+    expect(cards).toContain("resolveAvatarColorKey");
+    expect(cards).not.toContain("glpi:");
     expect(page).toContain("useMyPersonProfilePhoto");
     expect(page).toContain("preferMyPhoto={filters.requester_mine}");
     expect(api).toContain("requester_directory_user_id");

@@ -262,6 +262,8 @@ export {
   hueFromKey,
   initialsAvatarBemClasses,
   initialsFromName,
+  normalizeAvatarColorKey,
+  resolveAvatarColorKey,
   type DashboardInitialsAvatarProps,
   type InitialsAvatarClassNames,
   type InitialsAvatarProps,

@@ -4,6 +4,7 @@ import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
   InitialsAvatar,
   initialsAvatarBemClasses,
+  resolveAvatarColorKey,
   type InitialsAvatarClassNames,
 } from "../layout/InitialsAvatar";
 import {
@@ -554,12 +555,16 @@ function MessageThreadTextItem({
   const showAvatar = Boolean(
     avatarName && (!message.mine || showMineIdentity) && !continues,
   );
+  const avatarColorKey = resolveAvatarColorKey({
+    directoryUserId: message.authorUserId,
+    displayName: avatarName,
+  });
   const avatar = showAvatar ? (
     authorHref && authorLinkTitle ? (
       <InitialsAvatar
         classNames={classNames.avatar}
         name={avatarName}
-        colorKey={message.authorUserId ?? avatarName}
+        colorKey={avatarColorKey}
         size="sm"
         src={authorSrc}
         href={authorHref}
@@ -570,7 +575,7 @@ function MessageThreadTextItem({
       <InitialsAvatar
         classNames={classNames.avatar}
         name={avatarName}
-        colorKey={message.authorUserId ?? avatarName}
+        colorKey={avatarColorKey}
         size="sm"
         src={authorSrc}
         previewable={false}

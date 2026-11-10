@@ -78,6 +78,29 @@ export function hueFromKey(key: string): number {
   return hash;
 }
 
+/**
+ * Normalizes any avatar color key so the same person keeps the same hue
+ * across TopBar, lists, threads and pickers (case/spacing insensitive).
+ */
+export function normalizeAvatarColorKey(key: string): string {
+  return key.trim().replace(/\s+/g, " ").toLocaleLowerCase("pt-BR");
+}
+
+/**
+ * Canonical Minha DELPI avatar color key.
+ * Prefer directory user id (Keycloak UUID); else display name.
+ * Do not invent local prefixes (`glpi:`, numeric GLPI ids) — they diverge
+ * from surfaces that only know the person's name or directory id.
+ */
+export function resolveAvatarColorKey(input: {
+  directoryUserId?: string | null;
+  displayName?: string | null;
+}): string {
+  const directory = (input.directoryUserId ?? "").trim();
+  if (directory) return normalizeAvatarColorKey(directory);
+  return normalizeAvatarColorKey(input.displayName ?? "");
+}
+
 export function initialsAvatarBemClasses(prefix: string): InitialsAvatarClassNames {
   return {
     root: delpiUiClass(`${prefix}-avatar`, "delpi-ui-avatar"),
@@ -121,7 +144,7 @@ export function InitialsAvatar(props: InitialsAvatarProps) {
   const resolvedSrc = src && failedSrc !== src ? src : null;
   const rootClass = [withBemModifier(classNames.root, size), className].filter(Boolean).join(" ");
   const initials = initialsFromName(name);
-  const hue = hueFromKey(colorKey ?? name);
+  const hue = hueFromKey(normalizeAvatarColorKey(colorKey ?? name));
   /** Iniciais sempre claras — fundo HSL escuro; evita herdar texto do tema claro. */
   const initialStyle = {
     background: `hsl(${hue} 48% 42%)`,

@@ -133,6 +133,7 @@ import {
   persistHelpdeskAttachmentHtml,
   useAuthenticatedAttachmentSrcs,
 } from "../presentation/useAuthenticatedAttachmentSrcs";
+import { useDirectoryUserPhotoUrls } from "../presentation/useDirectoryUserPhotoUrls";
 import { useMyPersonProfilePhoto } from "../presentation/useMyPersonProfilePhoto";
 import {
   emptyFilterGroup,
@@ -1917,6 +1918,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   /** Bumps resolve identity after IDB seed (create parity). */
   const [pendingHydrated, setPendingHydrated] = useState(0);
   const myPhotoUrl = useMyPersonProfilePhoto();
+  const requesterDirectoryIds = useMemo(() => {
+    const id = (ticket?.requester_directory_user_id || "").trim();
+    return id ? [id] : [];
+  }, [ticket?.requester_directory_user_id]);
+  const { photoFor: requesterPhotoFor } = useDirectoryUserPhotoUrls(requesterDirectoryIds);
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
   /** Explicit per-id user intent — MIME type never decides attachment vs inline. */
   const pendingKindsRef = useRef<Map<string, HelpdeskDraftPendingKind>>(new Map());
@@ -2825,6 +2831,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                           bodyHtml: message.bodyHtml || undefined,
                           createdAtLabel: message.createdAtLabel,
                           authorName: message.authorName || undefined,
+                          authorUserId: message.authorUserId || undefined,
                           authorSrc: conversationAuthorSrc(message.mine, myPhotoUrl),
                           mine: message.mine,
                           belowBody:
@@ -3808,6 +3815,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                     onAssigneeChange={setAssigneePick}
                     onAssignConfirm={assignTechnician}
                     assignSaving={assignSaving}
+                    requesterPhotoSrc={
+                      ticket.requester_mine
+                        ? myPhotoUrl
+                        : requesterPhotoFor((ticket.requester_directory_user_id || "").trim())
+                    }
                   />
                 </div>
               ) : null}

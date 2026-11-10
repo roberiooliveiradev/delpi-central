@@ -459,7 +459,33 @@ class TicketService:
         detail = self._with_classification_flag(token, detail, viewer_email=viewer_email)
         detail = self._with_delete_flag(token, detail)
         detail = self._with_linked_objects(token, detail)
-        return self._with_cycle_flags(token, detail)
+        detail = self._with_cycle_flags(token, detail)
+        return self._enrich_ticket_detail_requester_avatar(token, detail)
+
+    def _enrich_ticket_detail_requester_avatar(
+        self, token: str, detail: TicketDetail
+    ) -> TicketDetail:
+        """Attach directory id for requester avatar hue/photo (ADDITIVE)."""
+        glpi_id = detail.requester_identity.user_id
+        if glpi_id is None or int(glpi_id) < 1:
+            return detail
+        directory_by_glpi = self._directory_ids_for_glpi_users(token, [int(glpi_id)])
+        directory_id = directory_by_glpi.get(int(glpi_id), "")
+        if not directory_id:
+            return detail
+        has_photo = False
+        profiles = self._person_profiles
+        if profiles is not None and getattr(profiles, "configured", lambda: False)():
+            try:
+                flags = profiles.lookup_has_photo([directory_id]) or {}
+                has_photo = bool(flags.get(directory_id))
+            except Exception:
+                logger.exception("helpdesk_detail_requester_photo_lookup_failed")
+        return replace(
+            detail,
+            requester_directory_user_id=directory_id,
+            requester_has_photo=has_photo,
+        )
 
     def attachment(self, subject: str, ticket_id: int, document_id: int) -> tuple[bytes, str, str]:
         token = self._token(subject)

@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 import {
   UserDirectoryPicker,
   createInitialsAvatar,
+  resolveAvatarColorKey,
   type DirectoryUserOption,
 } from "@delpi/plugin-ui/index";
 
@@ -74,7 +75,10 @@ export function HelpdeskAssigneePicker({
   const renderAvatar = (user: DirectoryUserOption) => (
     <HelpdeskAvatar
       name={user.name}
-      colorKey={user.directoryUserId || user.id}
+      colorKey={resolveAvatarColorKey({
+        directoryUserId: user.directoryUserId,
+        displayName: user.name,
+      })}
       size="sm"
       src={photoFor(user.directoryUserId)}
       previewable={false}

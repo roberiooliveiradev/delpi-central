@@ -9,6 +9,8 @@ import {
   hueFromKey,
   initialsAvatarBemClasses,
   initialsFromName,
+  normalizeAvatarColorKey,
+  resolveAvatarColorKey,
 } from "./InitialsAvatar";
 
 afterEach(() => {
@@ -26,10 +28,35 @@ describe("initialsFromName / hueFromKey", () => {
     expect(hueFromKey("01|01")).toBe(hueFromKey("01|01"));
     expect(hueFromKey("01|01")).not.toBe(hueFromKey("02|01"));
   });
+
+  it("normaliza nome para a mesma cor em qualquer superfície", () => {
+    expect(normalizeAvatarColorKey("  José Carlos  ")).toBe("josé carlos");
+    expect(resolveAvatarColorKey({ displayName: "José Carlos" })).toBe(
+      resolveAvatarColorKey({ displayName: "  josé   carlos " }),
+    );
+    expect(
+      resolveAvatarColorKey({
+        directoryUserId: "abc-123",
+        displayName: "José Carlos",
+      }),
+    ).toBe(normalizeAvatarColorKey("abc-123"));
+  });
+
 });
 
 describe("InitialsAvatar", () => {
   const classNames = initialsAvatarBemClasses("pva");
+
+  it("usa a mesma hue para o mesmo nome com casing diferente", () => {
+    const { unmount } = render(
+      <InitialsAvatar name="José Carlos" classNames={classNames} />,
+    );
+    const first = (document.querySelector(".delpi-ui-avatar") as HTMLElement).style.background;
+    unmount();
+    render(<InitialsAvatar name="josé carlos" classNames={classNames} />);
+    const second = (document.querySelector(".delpi-ui-avatar") as HTMLElement).style.background;
+    expect(first).toBe(second);
+  });
 
   it("emite dual-class e iniciais sem src", () => {
     render(<InitialsAvatar name="Acme Indústria" classNames={classNames} size="md" />);

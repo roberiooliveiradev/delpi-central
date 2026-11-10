@@ -537,6 +537,8 @@ def get_ticket(request: Request, ticket_id: int):
         "sla_tto": ticket.sla_tto,
         "can_followup": ticket.can_followup,
         "requester_display_name": ticket.requester_display_name,
+        "requester_directory_user_id": getattr(ticket, "requester_directory_user_id", "") or "",
+        "requester_has_photo": bool(getattr(ticket, "requester_has_photo", False)),
         "requester_mine": ticket.requester_mine,
         "assigned_display_name": ticket.assigned_display_name,
         "assigned_user_id": ticket.assigned_user_id,

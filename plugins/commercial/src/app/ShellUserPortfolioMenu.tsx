@@ -149,6 +149,7 @@ export function ShellUserPortfolioMenu({
       displayName={displayName}
       fallbackLabel={copy.nameFallback}
       avatarUrl={photoObjectUrl}
+      colorKey={userId || undefined}
       portalScopeClassName="dashboard-commercial"
       avatarHref={portalProfileHref ?? undefined}
       avatarTitle={profileTitle}

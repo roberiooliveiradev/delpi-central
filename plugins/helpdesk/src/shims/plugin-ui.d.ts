@@ -1100,6 +1100,13 @@ declare module "@delpi/plugin-ui/index" {
     prefix: string,
   ): ComponentType<DashboardInitialsAvatarProps>;
 
+  export function normalizeAvatarColorKey(key: string): string;
+
+  export function resolveAvatarColorKey(input: {
+    directoryUserId?: string | null;
+    displayName?: string | null;
+  }): string;
+
   export type DashboardEntityAvatarLabelProps = {
     name: string;
     colorKey?: string;

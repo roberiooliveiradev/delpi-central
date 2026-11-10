@@ -37,6 +37,8 @@ export type TopBarUserIdentityProps = {
   displayName: string | null;
   fallbackLabel?: string;
   avatarUrl?: string | null;
+  /** Stable hue key (prefer directory user id). Default: display name. */
+  colorKey?: string | null;
   loading?: boolean;
   classNames: TopBarUserIdentityClassNames;
   avatarClassNames: InitialsAvatarClassNames;
@@ -85,6 +87,7 @@ export function TopBarUserIdentity({
   displayName,
   fallbackLabel = "Usuário",
   avatarUrl = null,
+  colorKey = null,
   loading = false,
   classNames,
   avatarClassNames,
@@ -136,10 +139,12 @@ export function TopBarUserIdentity({
     if (hasMenu) setOpen(!open);
   };
 
+  const resolvedColorKey = (colorKey ?? "").trim() || label;
   const avatarNode =
     avatarHref != null ? (
       <InitialsAvatar
         name={label}
+        colorKey={resolvedColorKey}
         size="sm"
         alt=""
         src={avatarUrl}
@@ -160,6 +165,7 @@ export function TopBarUserIdentity({
     ) : (
       <InitialsAvatar
         name={label}
+        colorKey={resolvedColorKey}
         size="sm"
         alt=""
         src={avatarUrl}

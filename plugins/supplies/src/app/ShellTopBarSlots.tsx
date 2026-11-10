@@ -112,6 +112,7 @@ export function ShellTopBarActions({ basePath }: ShellTopBarActionsProps) {
         displayName={displayName}
         fallbackLabel={SHELL_NAV_CONTENT.userMenu.nameFallback}
         avatarUrl={photoUrl}
+        colorKey={userId}
         loading={loading}
         portalScopeClassName="dashboard-supplies-portal"
         avatarHref={portalProfileHref ?? undefined}

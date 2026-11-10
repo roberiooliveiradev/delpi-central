@@ -60,6 +60,7 @@ export function PortalTopBarUserIdentity() {
       displayName={displayName}
       fallbackLabel="Usuário"
       avatarUrl={photoUrl}
+      colorKey={userId}
       loading={loading}
       portalScopeClassName="dashboard-transformometro"
       href={href ?? undefined}

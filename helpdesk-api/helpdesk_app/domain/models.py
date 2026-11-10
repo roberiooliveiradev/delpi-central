@@ -239,6 +239,9 @@ class TicketDetail:
     assigned_display_name: str = ""
     assigned_user_id: int | None = None
     requester_identity: PersonIdentity = PersonIdentity()
+    """Minha DELPI directory user_id when linked — same as list avatar key."""
+    requester_directory_user_id: str = ""
+    requester_has_photo: bool = False
     requester_mine: bool = False
     status_id: int | None = None
     description_html: str = ""

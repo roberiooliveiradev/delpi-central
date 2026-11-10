@@ -1,4 +1,5 @@
 import { useMemo, type MouseEvent, type ReactNode } from "react";
+import { resolveAvatarColorKey } from "@delpi/plugin-ui/index";
 
 import { absoluteDateTimeLabel, relativeTimeLabel, statusBadgeVariant } from "../presentation/ticketView";
 import {
@@ -194,7 +195,10 @@ function renderColumn(
       return (
         <HelpdeskEntityAvatarLabel
           name={name}
-          colorKey={directoryId || (row.requester_id != null ? `glpi:${row.requester_id}` : name)}
+          colorKey={resolveAvatarColorKey({
+            directoryUserId: directoryId,
+            displayName: name,
+          })}
           src={requesterPhotoSrc(row, photoFor, myPhotoUrl, preferMyPhoto)}
           size="sm"
         />

@@ -295,6 +295,7 @@ declare module "@delpi/plugin-ui/index" {
     displayName: string | null;
     fallbackLabel?: string;
     avatarUrl?: string | null;
+    colorKey?: string | null;
     loading?: boolean;
     href?: string;
     onNavigate?: (event: unknown) => void;

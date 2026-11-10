@@ -1,4 +1,5 @@
 import { useMemo, type MouseEvent } from "react";
+import { resolveAvatarColorKey } from "@delpi/plugin-ui/index";
 
 import type { TicketSummary } from "../api/helpdeskApi";
 import {
@@ -86,7 +87,10 @@ export function TicketListCards({
                 value: requester ? (
                   <HelpdeskEntityAvatarLabel
                     name={requester}
-                    colorKey={directoryId || (row.requester_id != null ? `glpi:${row.requester_id}` : requester)}
+                    colorKey={resolveAvatarColorKey({
+                      directoryUserId: directoryId,
+                      displayName: requester,
+                    })}
                     src={photoSrc}
                     size="sm"
                   />
