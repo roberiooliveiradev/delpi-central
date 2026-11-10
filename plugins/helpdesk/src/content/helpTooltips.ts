@@ -119,7 +119,7 @@ export const helpTooltips = {
     columns: "Mostra ou esconde colunas da tabela. Preferência neste navegador.",
     refreshList: "Atualiza a grade sem limpar filtros.",
     search: "Busca no número, título ou conteúdo do chamado.",
-    statusChips: "Filtra por status (combinável com Meus chamados / Todos). Sem contadores — o helpdesk não expõe totais por estado.",
+    statusChips: "Atalhos de recorte: Meus chamados e status. Sem contadores — o helpdesk não expõe totais por estado.",
     myTickets: "Alterna entre só os seus (você é o requerente) e todos os visíveis. Combina com o filtro de status. Só aparece se você já tiver chamado como requerente.",
     advancedFilters: "Refine os chamados com critérios adicionais alinhados às colunas da lista.",
   },

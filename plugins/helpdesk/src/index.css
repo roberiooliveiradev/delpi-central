@@ -557,24 +557,6 @@
   min-width: 0;
 }
 
-.dashboard-helpdesk .helpdesk-list-filters-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.65rem;
-  min-width: 0;
-  flex: 1 1 16rem;
-}
-
-.dashboard-helpdesk .helpdesk-list-scope-divider {
-  width: 1px;
-  align-self: stretch;
-  min-height: 1.65rem;
-  margin-inline: 0.1rem;
-  background: color-mix(in srgb, var(--helpdesk-muted, #94a3b8) 45%, transparent);
-  flex: 0 0 auto;
-}
-
 .dashboard-helpdesk .helpdesk-list-secondary-bar .helpdesk-list-toolbar {
   flex: 1 1 auto;
   min-width: 0;

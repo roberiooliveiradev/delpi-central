@@ -314,8 +314,6 @@ function TicketListPage() {
   const filtersRef = useRef(filters);
   filtersRef.current = filters;
   const [canAssign, setCanAssign] = useState<boolean | null>(null);
-  /** True when the actor has at least one ticket as requester — drives Meus/Todos toggle. */
-  const [hasMineTickets, setHasMineTickets] = useState(false);
   const [viewportWidth, setViewportWidth] = useState(() =>
     typeof window === "undefined" ? 1280 : window.innerWidth,
   );
@@ -525,25 +523,6 @@ function TicketListPage() {
   }, []);
 
   useEffect(() => {
-    const controller = new AbortController();
-    void listTickets({ requester_mine: true, page_size: 10, page: 1 }, controller.signal)
-      .then((body) => {
-        const mine = (body.items || []).length > 0 || Boolean(body.has_more);
-        setHasMineTickets(mine);
-        if (!mine && filtersRef.current.requester_mine) {
-          commitFilters({
-            ...filtersRef.current,
-            requester_mine: false,
-            requester_id: "",
-            page: 1,
-          });
-        }
-      })
-      .catch(() => setHasMineTickets(false));
-    return () => controller.abort();
-  }, []);
-
-  useEffect(() => {
     const onPop = () => {
       setFilters(currentListFilters());
     };
@@ -580,12 +559,26 @@ function TicketListPage() {
     setSortDraft(parseTicketSortLevels(filters.sort));
   }, [filters]);
 
-  const statusChips = TICKET_STATUS_FILTERS.map((item) => ({
-    id: item.value || "all-status",
-    label: item.label,
-    active: filters.status === item.value,
-    onSelect: () => commitFilters({ ...filters, status: item.value, page: 1 }),
-  }));
+  const statusChips = [
+    {
+      id: "mine",
+      label: "Meus chamados",
+      active: filters.requester_mine,
+      onSelect: () =>
+        commitFilters({
+          ...filters,
+          requester_mine: !filters.requester_mine,
+          requester_id: !filters.requester_mine ? "" : filters.requester_id,
+          page: 1,
+        }),
+    },
+    ...TICKET_STATUS_FILTERS.map((item) => ({
+      id: item.value || "all",
+      label: item.label,
+      active: filters.status === item.value,
+      onSelect: () => commitFilters({ ...filters, status: item.value, page: 1 }),
+    })),
+  ];
 
   const listChrome = view !== "link" && view !== "forbidden";
 
@@ -712,38 +705,9 @@ function TicketListPage() {
             </form>
 
             <div className="helpdesk-list-secondary-bar">
-              <div className="helpdesk-list-filters-row" aria-label="Escopo e status">
-                {hasMineTickets ? (
-                  <>
-                    <HintAction hint={helpTooltips.listUi.myTickets} ariaLabel="Ajuda: Meus chamados">
-                      <HelpdeskSegmentToggle
-                        ariaLabel="Escopo dos chamados"
-                        idPrefix="helpdesk-ticket-list-scope"
-                        size="sm"
-                        widthMode="content"
-                        value={filters.requester_mine ? "mine" : "all"}
-                        onChange={(value) => {
-                          const mine = value === "mine";
-                          commitFilters({
-                            ...filters,
-                            requester_mine: mine,
-                            requester_id: mine ? "" : filters.requester_id,
-                            page: 1,
-                          });
-                        }}
-                        options={[
-                          { value: "mine", label: "Meus chamados" },
-                          { value: "all", label: "Todos" },
-                        ]}
-                      />
-                    </HintAction>
-                    <span className="helpdesk-list-scope-divider" aria-hidden />
-                  </>
-                ) : null}
-                <HintAction hint={helpTooltips.listUi.statusChips} ariaLabel="Ajuda: Status">
-                  <HelpdeskScopeChipBar aria-label="Filtro rápido de status" chips={statusChips} />
-                </HintAction>
-              </div>
+              <HintAction hint={helpTooltips.listUi.statusChips} ariaLabel="Ajuda: Status">
+                <HelpdeskScopeChipBar aria-label="Filtro rápido de status" chips={statusChips} />
+              </HintAction>
               <TicketListToolbar
                 viewModel={listViewModel}
                 leading={
