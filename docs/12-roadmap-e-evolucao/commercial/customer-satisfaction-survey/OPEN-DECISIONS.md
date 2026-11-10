@@ -127,9 +127,12 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ### Q12 — Críticos e satisfeitos
 **Pergunta:** As faixas 1–2 (críticos) e 4–5 (satisfeitos) se referem à pergunta geral, a cada dimensão ou a ambas? Qual denominador?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** alertas e indicadores.
+**Status:** DECIDED quanto à aplicação simples da classificação (pergunta 13 da entrevista; validação formal do owner Comercial PENDING).
+**Resposta:** Aplicar as faixas 1–2 (críticos) e 4–5 (satisfeitos) somente à pergunta obrigatória de satisfação geral (escala 1–5); nota 3 fica como faixa intermediária, sem atribuir ao plano original nomenclatura não comprovada. Calcular os percentuais com denominador igual ao total de empresas com resposta válida à satisfação geral na campanha, uma resposta por empresa. Nas dez dimensões, mostrar apenas médias das notas válidas e suas quantidades, sem classificar individualmente clientes como críticos ou satisfeitos por dimensão. 'Não se aplica' não entra nas médias das dimensões.
+**Fonte:** Escolha explícita do solicitante em 2026-11-10 pelo 'caminho de fluxo simples', em resposta à alternativa de classificar apenas a satisfação geral ou também as dez dimensões. A aplicação somente à geral é a interpretação operacional mais simples dessa escolha.
+**Owner da decisão:** Comercial — validação formal PENDING.
+**Data:** 2026-11-10.
+**Impacto:** Indicadores enxutos e comparáveis, sem duplicação de classificações. Implementação futura, não estado atual comprovado.
 
 ### Q13 — Segmentações oficiais
 **Pergunta:** Quais fontes e regras oficiais definirão segmento, região, vendedor/carteira, tempo de relacionamento, faturamento e cliente estratégico? Qual período de referência?
@@ -193,4 +196,4 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ## Próxima pergunta em entrevista
 
-**Próxima decisão da entrevista:** pergunta 13 — classificação de clientes críticos e satisfeitos (Q12 do registro canônico). A pergunta 12 da entrevista, NPS, está registrada em Q11.
+**Próxima decisão da entrevista:** pergunta 14 — fontes e regras de segmentação (Q13 do registro canônico).
