@@ -2019,7 +2019,7 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 
 ## 2026-11-10 — T2/C3: PO manual FAIL → trilha subordinada de inteligência investigativa (decisão documental, sem implementação)
 
-**Ordem canônica preservada:** este item e o Documento 293 são uma ramificação bounded de diagnóstico/rework da **T2 já em execução**; não criam T3, fase, programa, engine, planner ou arquitetura paralela. **T2_FUNCTIONAL_ACCEPTANCE=REWORK; T2_RELEASE_DEPLOYED=HISTORICAL_FACT (conforme evidências do executor); PO_MANUAL_HOMOLOGATION=FAIL; PHASE_ADVANCEMENT=NO; NEXT=T2_INVESTIGATIVE_INTELLIGENCE_INVENTORY_AND_BOUNDED_EXPERIMENT_SPECIFICATION.**
+**Ordem canônica preservada:** este item e o Documento 293 são uma ramificação bounded de diagnóstico/rework da **T2 já em execução**; não criam T3, fase, programa, engine, planner ou arquitetura paralela. **T2_FUNCTIONAL_ACCEPTANCE=REWORK; T2_RELEASE_DEPLOYED=HISTORICAL_FACT (conforme evidências do executor); PO_MANUAL_HOMOLOGATION=FAIL; PHASE_ADVANCEMENT=NO; NEXT=T2_INT0_INVESTIGATIVE_AGENT_REUSE_AND_CONTRACT_INVENTORY.**
 
 **Evidência motivadora:** as três perguntas reais do PO (estrutura do produto 90260921, processos cadastrados no Transformômetro, formatos de visualização disponíveis) não alcançaram o objetivo; investigação forense de 2026-11-10 identificou P2/P3 com evidência empresária válida mas escopo inadequado, rejeições de argumentos e finalização baseada em grounding sem comprovar satisfação do objetivo. P1 original permanece **INCONCLUSIVE** (reprodução posterior PASS), e não há paridade DEV/PROD independente: o executor reutilizou um único runtime. Relatórios anteriores de HTTP 200/GROUNDED não constituem aceite funcional.
 
