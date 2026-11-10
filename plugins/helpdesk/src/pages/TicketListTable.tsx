@@ -1,4 +1,4 @@
-import type { MouseEvent, ReactNode } from "react";
+import { useMemo, type MouseEvent, type ReactNode } from "react";
 
 import { absoluteDateTimeLabel, relativeTimeLabel, statusBadgeVariant } from "../presentation/ticketView";
 import {
@@ -9,6 +9,7 @@ import {
 } from "../presentation/ticketListViewModel";
 import type { TicketSummary } from "../api/helpdeskApi";
 import { helpTooltips } from "../content/helpTooltips";
+import { useDirectoryUserPhotoUrls } from "../presentation/useDirectoryUserPhotoUrls";
 import {
   followHelpdeskPath,
   isModifiedHelpdeskClick,
@@ -35,6 +36,8 @@ export function TicketListTable({
   onSortChange,
   onOpen,
   columnPreferences,
+  myPhotoUrl,
+  preferMyPhoto = false,
 }: {
   items: TicketSummary[];
   loading: boolean;
@@ -43,9 +46,23 @@ export function TicketListTable({
   onOpen: (ticketId: number) => void;
   /** When omitted, solicitante defaults from the catalog are used. */
   columnPreferences?: TicketListColumnPreference[];
+  /** Authenticated Minha DELPI person-profile photo (blob URL). */
+  myPhotoUrl?: string | null;
+  /** When true (ex.: filtro Meus chamados), use myPhotoUrl if directory photo is missing. */
+  preferMyPhoto?: boolean;
 }) {
+  const photoEntries = useMemo(
+    () =>
+      items.map((row) => ({
+        directoryUserId: (row.requester_directory_user_id || "").trim() || undefined,
+        hasPhoto: Boolean(row.requester_has_photo) || preferMyPhoto,
+      })),
+    [items, preferMyPhoto],
+  );
+  const { photoFor } = useDirectoryUserPhotoUrls(photoEntries);
+
   const columns = resolveVisibleColumns(columnPreferences).map((definition) =>
-    toDataTableColumn(definition),
+    toDataTableColumn(definition, photoFor, myPhotoUrl, preferMyPhoto),
   );
 
   return (
@@ -89,13 +106,19 @@ export function TicketListTable({
   );
 }
 
-function toDataTableColumn(definition: TicketListColumnDefinition) {
+function toDataTableColumn(
+  definition: TicketListColumnDefinition,
+  photoFor: (directoryUserId: string | null | undefined) => string | null,
+  myPhotoUrl?: string | null,
+  preferMyPhoto = false,
+) {
   return {
     key: definition.key,
     header: definition.header,
     headerHint: helpTooltips.columns[definition.key as keyof typeof helpTooltips.columns],
     sortable: definition.sortable,
-    render: (row: TicketSummary) => renderColumn(definition.key, row),
+    render: (row: TicketSummary) =>
+      renderColumn(definition.key, row, photoFor, myPhotoUrl, preferMyPhoto),
   };
 }
 
@@ -128,7 +151,29 @@ function DateCell({ value }: { value: string }) {
   );
 }
 
-function renderColumn(key: TicketListColumnDefinition["key"], row: TicketSummary) {
+function requesterPhotoSrc(
+  row: TicketSummary,
+  photoFor: (directoryUserId: string | null | undefined) => string | null,
+  myPhotoUrl?: string | null,
+  preferMyPhoto = false,
+): string | null {
+  const directoryId = (row.requester_directory_user_id || "").trim();
+  if (directoryId) {
+    const fromDirectory = photoFor(directoryId);
+    if (fromDirectory) return fromDirectory;
+  }
+  if (preferMyPhoto && myPhotoUrl) return myPhotoUrl;
+  if (row.requester_has_photo && myPhotoUrl) return myPhotoUrl;
+  return null;
+}
+
+function renderColumn(
+  key: TicketListColumnDefinition["key"],
+  row: TicketSummary,
+  photoFor: (directoryUserId: string | null | undefined) => string | null = () => null,
+  myPhotoUrl?: string | null,
+  preferMyPhoto = false,
+) {
   switch (key) {
     case "id":
       return <TicketDetailLink ticketId={row.id}>{String(row.id)}</TicketDetailLink>;
@@ -145,11 +190,13 @@ function renderColumn(key: TicketListColumnDefinition["key"], row: TicketSummary
     case "requester": {
       const name = (row.requester_display_name ?? "").trim();
       if (!name) return "";
+      const directoryId = (row.requester_directory_user_id || "").trim();
       return (
         <HelpdeskEntityAvatarLabel
           name={name}
-          colorKey={row.requester_id != null ? `glpi:${row.requester_id}` : name}
+          colorKey={directoryId || (row.requester_id != null ? `glpi:${row.requester_id}` : name)}
           secondary={row.requester_id != null ? `#${row.requester_id}` : undefined}
+          src={requesterPhotoSrc(row, photoFor, myPhotoUrl, preferMyPhoto)}
           size="sm"
         />
       );

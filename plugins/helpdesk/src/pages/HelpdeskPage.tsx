@@ -293,6 +293,7 @@ function writeListFilters(filters: TicketListFilters) {
 }
 
 function TicketListPage() {
+  const myPhotoUrl = useMyPersonProfilePhoto();
   const [filters, setFilters] = useState(currentListFilters);
   const [items, setItems] = useState<TicketSummary[]>([]);
   const [hasMore, setHasMore] = useState(false);
@@ -593,9 +594,7 @@ function TicketListPage() {
             </HintAction>
           </div>
         }
-      />
-
-      <div className="helpdesk-list-shell">
+      >
         {listChrome ? (
           <div className="helpdesk-list-controls">
             <form
@@ -709,7 +708,9 @@ function TicketListPage() {
             </div>
           </div>
         ) : null}
+      </HelpdeskPageHero>
 
+      <div className="helpdesk-list-shell">
         {view === "loading" ? (
           <HelpdeskLoadingCard
             title="Carregando chamados…"
@@ -762,6 +763,8 @@ function TicketListPage() {
           showCards ? (
             <TicketListCards
               items={items}
+              myPhotoUrl={myPhotoUrl}
+              preferMyPhoto={filters.requester_mine}
               onOpen={(ticketId) => navigateHelpdesk(`/apps/helpdesk/tickets/${ticketId}`)}
             />
           ) : (
@@ -770,6 +773,8 @@ function TicketListPage() {
               loading={loading}
               sort={parseTicketSort(filters.sort)}
               columnPreferences={columnPreferences}
+              myPhotoUrl={myPhotoUrl}
+              preferMyPhoto={filters.requester_mine}
               onSortChange={(columnKey) =>
                 commitFilters({ ...filters, sort: nextTicketSort(filters.sort, columnKey), page: 1 })
               }

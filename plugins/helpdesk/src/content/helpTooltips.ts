@@ -162,6 +162,6 @@ export const helpTooltips = {
     updated_at: "Data e hora da última alteração.",
     solved_at: "Data e hora da solução, quando houver.",
     closed_at: "Data e hora do fechamento, quando houver.",
-    requester: "Quem abriu o chamado. Avatar com iniciais; ordenável pelo nome.",
+    requester: "Quem abriu o chamado. Avatar com foto da Minha DELPI quando disponível; ordenável pelo nome.",
   },
 } as const;

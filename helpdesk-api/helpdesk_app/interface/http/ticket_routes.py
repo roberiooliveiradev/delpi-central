@@ -471,6 +471,8 @@ def list_tickets(
                 "assigned_user_id": row.assigned_user_id,
                 "requester_display_name": row.requester_display_name,
                 "requester_id": row.requester_id,
+                "requester_directory_user_id": getattr(row, "requester_directory_user_id", "") or "",
+                "requester_has_photo": bool(getattr(row, "requester_has_photo", False)),
                 "entity": row.entity,
                 "last_editor": row.last_editor,
             }

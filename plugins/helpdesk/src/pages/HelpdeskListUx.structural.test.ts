@@ -25,6 +25,11 @@ describe("Helpdesk list UX structural", () => {
     expect(page).toContain("TICKET_STATUS_FILTERS");
     expect(page).toContain('label: "Meus chamados"');
     expect(page).toContain("requester_mine");
+    // Controles da lista (busca/chips/filtros) vivem no body do PageHero.
+    expect(page).toMatch(/<HelpdeskPageHero[\s\S]*helpdesk-list-controls[\s\S]*<\/HelpdeskPageHero>/);
+    expect(page).not.toMatch(
+      /helpdesk-list-shell[\s\S]*helpdesk-list-controls/,
+    );
     expect(page).not.toContain("HelpdeskHostDrawer");
     expect(page).not.toContain("HelpdeskFilterBarShell");
     expect(page).not.toContain("HelpdeskCompactPagination");
@@ -37,15 +42,25 @@ describe("Helpdesk list UX structural", () => {
     expect(ui).toContain("HelpdeskEntityAvatarLabel");
   });
 
-  it("coluna requerente usa avatar do kit e é ordenável", () => {
+  it("coluna requerente usa avatar do kit com foto Minha DELPI e é ordenável", () => {
     const table = read("TicketListTable.tsx");
     const cards = read("TicketListCards.tsx");
+    const page = read("HelpdeskPage.tsx");
+    const api = read("../api/helpdeskApi.ts");
     const model = read("../presentation/ticketListViewModel.ts");
     const view = read("../presentation/ticketView.ts");
     const builder = read("TicketListFilterBuilder.tsx");
     expect(table).toContain("HelpdeskEntityAvatarLabel");
+    expect(table).toContain("useDirectoryUserPhotoUrls");
+    expect(table).toContain("requester_directory_user_id");
+    expect(table).toContain("preferMyPhoto");
     expect(table).toContain('case "requester"');
     expect(cards).toContain("HelpdeskEntityAvatarLabel");
+    expect(cards).toContain("useDirectoryUserPhotoUrls");
+    expect(page).toContain("useMyPersonProfilePhoto");
+    expect(page).toContain("preferMyPhoto={filters.requester_mine}");
+    expect(api).toContain("requester_directory_user_id");
+    expect(api).toContain("requester_has_photo");
     expect(model).toMatch(
       /\{\s*key:\s*"requester",\s*header:\s*"Requerente",\s*fixed:\s*false,\s*sortable:\s*true/,
     );

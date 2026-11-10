@@ -519,6 +519,11 @@
   min-width: 0;
 }
 
+/* Controles no body do PageHero — sem moldura extra; o hero já delimita. */
+.dashboard-helpdesk .delpi-ui-page-hero__body .helpdesk-list-controls {
+  width: 100%;
+}
+
 .dashboard-helpdesk .helpdesk-list-primary-bar {
   display: flex;
   flex-wrap: wrap;

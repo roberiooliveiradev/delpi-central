@@ -79,6 +79,9 @@ class TicketSummary:
     sla_ttr_exceeded: bool | None = None
     assigned_user_id: int | None = None
     requester_id: int | None = None
+    """Minha DELPI directory user_id (Keycloak) when linked — avatar photo."""
+    requester_directory_user_id: str = ""
+    requester_has_photo: bool = False
     entity: str = ""
     last_editor: str = ""
 

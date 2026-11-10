@@ -37,6 +37,7 @@ from helpdesk_app.domain.models import (
     TicketListPage,
     TicketListQuery,
     TicketRelation,
+    TicketSummary,
 )
 from helpdesk_app.infrastructure.glpi.mapping import (
     can_delete_ticket,
@@ -337,7 +338,9 @@ class TicketService:
         return replace(query, requester_id=int(user_id), requester_mine=True)
 
     def tickets(self, subject: str, query: TicketListQuery) -> TicketListPage:
-        return self._glpi.list_tickets(self._token(subject), query)
+        token = self._token(subject)
+        page = self._glpi.list_tickets(token, query)
+        return self._enrich_ticket_list_requester_avatars(token, page)
 
     def tickets_as_dashboard_reader(self, query: TicketListQuery) -> TicketListPage:
         """Institutional summary page. Never falls back to the personal or upload token."""
@@ -350,13 +353,102 @@ class TicketService:
         config = load_dashboard_reader_config()
         if not reader_is_ready(config):
             raise InstitutionalReaderUnavailable("Leitura institucional do Helpdesk indisponível.")
-        return self._glpi.list_tickets_as_dashboard_reader(
+        page = self._glpi.list_tickets_as_dashboard_reader(
             query,
             app_token=config.app_token,
             user_token=config.user_token,
             entity_ids=config.entity_ids,
             group_ids=config.group_ids,
         )
+        # Soft-fail: institutional reader has no personal OAuth token for User GETs.
+        return page
+
+    def _enrich_ticket_list_requester_avatars(
+        self, token: str, page: TicketListPage
+    ) -> TicketListPage:
+        """Attach Minha DELPI directory id + has_photo for requester avatars (ADDITIVE)."""
+        from dataclasses import replace
+
+        glpi_ids = sorted(
+            {
+                int(row.requester_id)
+                for row in page.items
+                if getattr(row, "requester_id", None) and int(row.requester_id) > 0
+            }
+        )
+        if not glpi_ids:
+            return page
+        directory_by_glpi = self._directory_ids_for_glpi_users(token, glpi_ids)
+        if not directory_by_glpi:
+            return page
+        profiles = self._person_profiles
+        flags: dict[str, bool] = {}
+        if profiles is not None and getattr(profiles, "configured", lambda: False)():
+            try:
+                flags = profiles.lookup_has_photo(list(directory_by_glpi.values())) or {}
+            except Exception:
+                logger.exception("helpdesk_requester_photo_lookup_failed")
+                flags = {}
+        enriched: list[TicketSummary] = []
+        for row in page.items:
+            rid = getattr(row, "requester_id", None)
+            directory_id = directory_by_glpi.get(int(rid), "") if rid else ""
+            enriched.append(
+                replace(
+                    row,
+                    requester_directory_user_id=directory_id,
+                    requester_has_photo=bool(flags.get(directory_id)) if directory_id else False,
+                )
+            )
+        return TicketListPage(
+            items=tuple(enriched),
+            page=page.page,
+            page_size=page.page_size,
+            has_more=page.has_more,
+        )
+
+    def _directory_ids_for_glpi_users(
+        self, token: str, glpi_ids: list[int]
+    ) -> dict[int, str]:
+        """Map GLPI user id → Minha DELPI directory user_id via email (soft-fail)."""
+        directory = self._directory
+        if directory is None or not getattr(directory, "configured", lambda: False)():
+            return {}
+        get_user = getattr(self._glpi, "get_user", None)
+        if not callable(get_user):
+            return {}
+        email_by_glpi: dict[int, str] = {}
+        for glpi_id in glpi_ids:
+            try:
+                profile = get_user(token, int(glpi_id))
+            except Exception:
+                continue
+            if profile is None:
+                continue
+            emails = tuple(getattr(profile, "emails", ()) or ())
+            email = next((str(item).strip().lower() for item in emails if "@" in str(item)), "")
+            if email:
+                email_by_glpi[int(glpi_id)] = email
+        if not email_by_glpi:
+            return {}
+        directory_by_email: dict[str, str] = {}
+        for email in sorted(set(email_by_glpi.values())):
+            try:
+                hits = directory.search_users(q=email, limit=5, browse=False)
+            except Exception:
+                logger.exception("helpdesk_directory_requester_search_failed")
+                continue
+            for person in hits or []:
+                if str(person.get("email") or "").strip().lower() == email:
+                    uid = str(person.get("id") or "").strip()
+                    if uid:
+                        directory_by_email[email] = uid
+                    break
+        return {
+            glpi_id: directory_by_email[email]
+            for glpi_id, email in email_by_glpi.items()
+            if email in directory_by_email
+        }
 
     def ticket(self, subject: str, ticket_id: int, viewer_email: str = "") -> TicketDetail:
         token = self._token(subject)

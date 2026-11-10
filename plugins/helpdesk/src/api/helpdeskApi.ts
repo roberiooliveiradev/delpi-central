@@ -69,6 +69,9 @@ export type TicketSummary = {
   assigned_display_name: string;
   requester_display_name?: string;
   requester_id?: number | null;
+  /** Minha DELPI directory user_id when linked — used for avatar photo. */
+  requester_directory_user_id?: string;
+  requester_has_photo?: boolean;
   entity?: string;
   last_editor?: string;
 };

@@ -1,4 +1,4 @@
-import type { MouseEvent } from "react";
+import { useMemo, type MouseEvent } from "react";
 
 import type { TicketSummary } from "../api/helpdeskApi";
 import {
@@ -6,6 +6,7 @@ import {
   relativeTimeLabel,
   statusBadgeVariant,
 } from "../presentation/ticketView";
+import { useDirectoryUserPhotoUrls } from "../presentation/useDirectoryUserPhotoUrls";
 import {
   isModifiedHelpdeskClick,
   ticketDetailPath,
@@ -20,11 +21,25 @@ import {
 export function TicketListCards({
   items,
   onOpen,
+  myPhotoUrl,
+  preferMyPhoto = false,
 }: {
   items: TicketSummary[];
   onOpen: (ticketId: number) => void;
+  myPhotoUrl?: string | null;
+  preferMyPhoto?: boolean;
 }) {
   const now = new Date();
+  const photoEntries = useMemo(
+    () =>
+      items.map((row) => ({
+        directoryUserId: (row.requester_directory_user_id || "").trim() || undefined,
+        hasPhoto: Boolean(row.requester_has_photo) || preferMyPhoto,
+      })),
+    [items, preferMyPhoto],
+  );
+  const { photoFor } = useDirectoryUserPhotoUrls(photoEntries);
+
   return (
     <HelpdeskDataCardsGrid
       className="helpdesk-record-list"
@@ -38,6 +53,11 @@ export function TicketListCards({
         const updatedRel = relativeTimeLabel(row.updated_at, now) || updatedAbs;
         const requester = (row.requester_display_name ?? "").trim();
         const technician = row.assigned_display_name.trim();
+        const directoryId = (row.requester_directory_user_id || "").trim();
+        const photoSrc =
+          (directoryId ? photoFor(directoryId) : null) ||
+          (preferMyPhoto || row.requester_has_photo ? myPhotoUrl : null) ||
+          null;
         return (
           <HelpdeskRecordCard
             key={row.id}
@@ -66,8 +86,9 @@ export function TicketListCards({
                 value: requester ? (
                   <HelpdeskEntityAvatarLabel
                     name={requester}
-                    colorKey={row.requester_id != null ? `glpi:${row.requester_id}` : requester}
+                    colorKey={directoryId || (row.requester_id != null ? `glpi:${row.requester_id}` : requester)}
                     secondary={row.requester_id != null ? `#${row.requester_id}` : undefined}
+                    src={photoSrc}
                     size="sm"
                   />
                 ) : (
