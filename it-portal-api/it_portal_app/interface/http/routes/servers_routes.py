@@ -16,6 +16,7 @@ from it_portal_app.interface.http.authz import (
     SERVERS_VIEW,
     actor_from,
     authorize,
+    authorize_write,
 )
 from it_portal_app.interface.http.dependencies import get_server_service
 from it_portal_app.interface.http.schemas import (
@@ -84,7 +85,7 @@ def create_it_server(
     payload: ServerInput,
     service: ServerService = Depends(get_server_service),
 ):
-    user = authorize(request, SERVERS_MANAGE)
+    user = authorize_write(request, SERVERS_VIEW, SERVERS_MANAGE)
     created = service.create_server(payload.model_dump(), actor_from(user))
     return ok(created, "Servidor cadastrado.", 201, operation_id="create_it_server")
 
@@ -116,7 +117,7 @@ def update_it_server(
     payload: ServerUpdateInput,
     service: ServerService = Depends(get_server_service),
 ):
-    user = authorize(request, SERVERS_MANAGE)
+    user = authorize_write(request, SERVERS_VIEW, SERVERS_MANAGE)
     data = payload.model_dump(exclude={"revision"})
     updated = service.update_server(
         str(server_id), data, payload.revision, actor_from(user)
@@ -136,7 +137,7 @@ def archive_it_server(
     payload: RevisionInput,
     service: ServerService = Depends(get_server_service),
 ):
-    user = authorize(request, SERVERS_MANAGE)
+    user = authorize_write(request, SERVERS_VIEW, SERVERS_MANAGE)
     archived = service.archive_server(str(server_id), payload.revision, actor_from(user))
     return ok(archived, "Servidor arquivado.", operation_id="archive_it_server")
 
@@ -153,7 +154,7 @@ def restore_it_server(
     payload: RevisionInput,
     service: ServerService = Depends(get_server_service),
 ):
-    user = authorize(request, SERVERS_MANAGE)
+    user = authorize_write(request, SERVERS_VIEW, SERVERS_MANAGE)
     restored = service.restore_server(str(server_id), payload.revision, actor_from(user))
     return ok(restored, "Servidor restaurado.", operation_id="restore_it_server")
 
@@ -186,7 +187,7 @@ def create_it_server_note(
     payload: NoteInput,
     service: ServerService = Depends(get_server_service),
 ):
-    user = authorize(request, SERVERS_VIEW, NOTES_CREATE)
+    user = authorize_write(request, SERVERS_VIEW, NOTES_CREATE)
     note = service.add_note(str(server_id), payload.body, actor_from(user))
     return ok(note, "Nota registrada.", 201, operation_id="create_it_server_note")
 

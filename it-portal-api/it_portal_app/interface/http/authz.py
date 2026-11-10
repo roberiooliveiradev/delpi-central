@@ -5,18 +5,26 @@
 - Core é a authority das permissões efetivas (`has_permission`); JWT válido
   sem a permissão não basta;
 - `rbac_unavailable` (Core fora) falha fechado com 503;
-- toda rota de dados exige `it-portal.access` + a permissão específica.
+- toda rota de dados exige `it-portal.access` + a permissão específica;
+- toda escrita (`authorize_write`) revalida a permissão efetiva no Core sem
+  cache nem fallback stale: permissão revogada não grava e Core fora → 503.
 """
 
 from __future__ import annotations
 
+import logging
 import uuid
+from types import SimpleNamespace
 
+import anyio
 from fastapi import Request
 
+import delpi_auth.middleware.fastapi_auth as fastapi_auth
 from delpi_auth.authz_core import has_permission
 
 from it_portal_app.application.ports import Actor
+
+logger = logging.getLogger(__name__)
 
 ACCESS = "it-portal.access"
 SERVERS_VIEW = "it-portal.servers.view"
@@ -61,6 +69,46 @@ def authorize(request: Request, *permissions: str):
         if not has_permission(user, permission):
             raise Exception("Forbidden")
     return user
+
+
+async def _fresh_rbac(token: str) -> dict:
+    return await fastapi_auth.load_user_rbac(token, force_refresh=True)
+
+
+def authorize_write(request: Request, *permissions: str):
+    """`authorize` + revalidação fresh no Core para escritas materiais.
+
+    Deve rodar em rota síncrona (worker thread do AnyIO): o lookup é delegado
+    ao event loop da aplicação porque `load_user_rbac` serializa por um
+    `asyncio.Lock` ligado ao loop. Retorna o principal fresh, que deve ser o
+    autor da escrita.
+    """
+    user = authorize(request, *permissions)
+    token = str(getattr(user, "access_token", None) or "").strip()
+    if not token:
+        raise Exception("Unauthorized")
+    try:
+        rbac = anyio.from_thread.run(_fresh_rbac, token)
+    except Exception as exc:
+        logger.error(
+            "it_portal_write_authz_unavailable dependency=core_rbac error_class=%s",
+            type(exc).__name__,
+        )
+        raise Exception("Service Unavailable") from None
+    fresh = SimpleNamespace(
+        **{
+            **vars(user),
+            "id": rbac.get("id") or getattr(user, "id", None),
+            "name": rbac.get("name") or getattr(user, "name", None),
+            "permissions": list(rbac.get("permissions") or []),
+            "is_superadmin": bool(rbac.get("is_superadmin", False)),
+            "rbac_unavailable": False,
+        }
+    )
+    for permission in (ACCESS, *permissions):
+        if not has_permission(fresh, permission):
+            raise Exception("Forbidden")
+    return fresh
 
 
 def user_has(user, permission: str) -> bool:

@@ -46,7 +46,13 @@ def inventory(repository):
 @pytest.fixture
 def principal(monkeypatch):
     """Configura o principal resolvido pelo Core para a requisição."""
-    state = SimpleNamespace(permissions=list(ALL_PERMISSIONS), rbac_unavailable=False)
+    state = SimpleNamespace(
+        permissions=list(ALL_PERMISSIONS),
+        rbac_unavailable=False,
+        fresh_permissions=None,
+        fresh_unavailable=False,
+        fresh_lookups=0,
+    )
 
     def _claims(_token):
         return {"sub": USER_ID, "email": "ana.ti@delpi.com.br", "name": "Ana TI"}
@@ -54,11 +60,18 @@ def principal(monkeypatch):
     async def _rbac(_token, *, force_refresh=False):
         if state.rbac_unavailable:
             raise RuntimeError("core down")
+        permissions = state.permissions
+        if force_refresh:
+            state.fresh_lookups += 1
+            if state.fresh_unavailable:
+                raise RuntimeError("core down")
+            if state.fresh_permissions is not None:
+                permissions = state.fresh_permissions
         return {
             "id": USER_ID,
             "email": "ana.ti@delpi.com.br",
             "name": "Ana TI",
-            "permissions": list(state.permissions),
+            "permissions": list(permissions),
             "is_superadmin": False,
         }
 

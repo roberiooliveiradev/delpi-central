@@ -17,6 +17,7 @@ from it_portal_app.interface.http.authz import (
     SERVICES_VIEW,
     actor_from,
     authorize,
+    authorize_write,
 )
 from it_portal_app.interface.http.dependencies import get_database_inventory
 from it_portal_app.interface.http.schemas import (
@@ -91,7 +92,7 @@ def create_it_database_instance(
     payload: DatabaseInstanceInput,
     inventory: DatabaseInventory = Depends(get_database_inventory),
 ):
-    user = authorize(request, *WRITE)
+    user = authorize_write(request, *WRITE)
     created = inventory.create_database(payload.model_dump(), actor_from(user))
     return ok(created, "Instância cadastrada.", 201, operation_id="create_it_database_instance")
 
@@ -123,7 +124,7 @@ def update_it_database_instance(
     payload: DatabaseInstanceUpdateInput,
     inventory: DatabaseInventory = Depends(get_database_inventory),
 ):
-    user = authorize(request, *WRITE)
+    user = authorize_write(request, *WRITE)
     data = payload.model_dump(exclude={"revision"})
     updated = inventory.update_database(str(database_id), data, payload.revision, actor_from(user))
     return ok(updated, "Instância atualizada.", operation_id="update_it_database_instance")
@@ -141,7 +142,7 @@ def archive_it_database_instance(
     payload: RevisionInput,
     inventory: DatabaseInventory = Depends(get_database_inventory),
 ):
-    user = authorize(request, *WRITE)
+    user = authorize_write(request, *WRITE)
     archived = inventory.archive_database(str(database_id), payload.revision, actor_from(user))
     return ok(archived, "Instância arquivada.", operation_id="archive_it_database_instance")
 
@@ -158,7 +159,7 @@ def restore_it_database_instance(
     payload: RevisionInput,
     inventory: DatabaseInventory = Depends(get_database_inventory),
 ):
-    user = authorize(request, *WRITE)
+    user = authorize_write(request, *WRITE)
     restored = inventory.restore_database(str(database_id), payload.revision, actor_from(user))
     return ok(restored, "Instância restaurada.", operation_id="restore_it_database_instance")
 
@@ -211,7 +212,7 @@ def create_it_database_consumer(
     payload: DatabaseConsumerInput,
     inventory: DatabaseInventory = Depends(get_database_inventory),
 ):
-    user = authorize(request, *WRITE, SERVICES_VIEW)
+    user = authorize_write(request, *WRITE, SERVICES_VIEW)
     consumer = inventory.link_consumer(payload.model_dump(), actor_from(user))
     return ok(consumer, "Vínculo registrado.", 201, operation_id="create_it_database_consumer")
 
@@ -227,7 +228,7 @@ def delete_it_database_consumer(
     consumer_id: UUID,
     inventory: DatabaseInventory = Depends(get_database_inventory),
 ):
-    user = authorize(request, *WRITE, SERVICES_VIEW)
+    user = authorize_write(request, *WRITE, SERVICES_VIEW)
     inventory.unlink_consumer(str(consumer_id), actor_from(user))
     return ok(
         {"id": str(consumer_id)}, "Vínculo removido.", operation_id="delete_it_database_consumer"

@@ -18,6 +18,7 @@ from it_portal_app.interface.http.authz import (
     SERVERS_VIEW,
     actor_from,
     authorize,
+    authorize_write,
 )
 from it_portal_app.interface.http.dependencies import (
     get_action_plan_service,
@@ -89,7 +90,7 @@ def create_it_action_plan(
     payload: ActionPlanInput,
     service: ActionPlanService = Depends(get_action_plan_service),
 ):
-    user = authorize(request, SERVERS_VIEW, ACTIONS_MANAGE)
+    user = authorize_write(request, SERVERS_VIEW, ACTIONS_MANAGE)
     created = service.create_action_plan(
         str(server_id), payload.model_dump(), actor_from(user)
     )
@@ -123,7 +124,7 @@ def update_it_action_plan(
     payload: ActionPlanUpdateInput,
     service: ActionPlanService = Depends(get_action_plan_service),
 ):
-    user = authorize(request, SERVERS_VIEW, ACTIONS_MANAGE)
+    user = authorize_write(request, SERVERS_VIEW, ACTIONS_MANAGE)
     updated = service.update_action_plan(
         str(action_plan_id),
         payload.model_dump(exclude={"revision"}),
@@ -145,7 +146,7 @@ def change_it_action_plan_status(
     payload: ActionPlanStatusInput,
     service: ActionPlanService = Depends(get_action_plan_service),
 ):
-    user = authorize(request, SERVERS_VIEW, ACTIONS_MANAGE)
+    user = authorize_write(request, SERVERS_VIEW, ACTIONS_MANAGE)
     updated = service.change_status(
         str(action_plan_id), payload.status, payload.revision, actor_from(user)
     )

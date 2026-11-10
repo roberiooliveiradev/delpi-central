@@ -47,7 +47,7 @@ responde 503. Apenas principals humanos (`principal_type=user`).
 |---|---|
 | `it-portal.access` | abrir o portal (`/me/capabilities`) |
 | `it-portal.servers.view` | inventário, detalhe, notas, histórico, dashboard |
-| `it-portal.servers.manage` | cadastrar, editar, arquivar, restaurar |
+| `it-portal.servers.manage` | cadastrar, editar, arquivar, restaurar (com `servers.view`) |
 | `it-portal.notes.create` | registrar notas (com `servers.view`) |
 | `it-portal.actions.view` | listar/consultar planos (com `servers.view`) |
 | `it-portal.actions.manage` | criar, editar, alterar status (com `servers.view`) |
@@ -58,6 +58,11 @@ responde 503. Apenas principals humanos (`principal_type=user`).
 
 Listar ou alterar vínculos serviço ↔ banco exige ver os **dois** lados
 (`services.view` + `databases.view`), além do `manage` de bancos para escrever.
+
+Toda escrita revalida as permissões no Core sem cache nem fallback stale
+(`authorize_write` → `load_user_rbac(force_refresh=True)`): permissão
+revogada não grava, e Core indisponível nesse lookup responde 503 sem gravar.
+Leituras usam o RBAC com cache do middleware.
 
 Escritas gravam o evento de auditoria (`audit_events`) na mesma transação,
 com o autor real do token. Logs de acesso registram só rota, operationId,

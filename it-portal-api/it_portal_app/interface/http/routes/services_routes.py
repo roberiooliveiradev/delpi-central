@@ -18,6 +18,7 @@ from it_portal_app.interface.http.authz import (
     SERVICES_VIEW,
     actor_from,
     authorize,
+    authorize_write,
 )
 from it_portal_app.interface.http.dependencies import (
     get_database_inventory,
@@ -96,7 +97,7 @@ def create_it_service(
     payload: ServiceInput,
     inventory: ServiceInventory = Depends(get_service_inventory),
 ):
-    user = authorize(request, *WRITE)
+    user = authorize_write(request, *WRITE)
     created = inventory.create_service(payload.model_dump(), actor_from(user))
     return ok(created, "Serviço cadastrado.", 201, operation_id="create_it_service")
 
@@ -128,7 +129,7 @@ def update_it_service(
     payload: ServiceUpdateInput,
     inventory: ServiceInventory = Depends(get_service_inventory),
 ):
-    user = authorize(request, *WRITE)
+    user = authorize_write(request, *WRITE)
     data = payload.model_dump(exclude={"revision"})
     updated = inventory.update_service(str(service_id), data, payload.revision, actor_from(user))
     return ok(updated, "Serviço atualizado.", operation_id="update_it_service")
@@ -146,7 +147,7 @@ def archive_it_service(
     payload: RevisionInput,
     inventory: ServiceInventory = Depends(get_service_inventory),
 ):
-    user = authorize(request, *WRITE)
+    user = authorize_write(request, *WRITE)
     archived = inventory.archive_service(str(service_id), payload.revision, actor_from(user))
     return ok(archived, "Serviço arquivado.", operation_id="archive_it_service")
 
@@ -163,7 +164,7 @@ def restore_it_service(
     payload: RevisionInput,
     inventory: ServiceInventory = Depends(get_service_inventory),
 ):
-    user = authorize(request, *WRITE)
+    user = authorize_write(request, *WRITE)
     restored = inventory.restore_service(str(service_id), payload.revision, actor_from(user))
     return ok(restored, "Serviço restaurado.", operation_id="restore_it_service")
 
@@ -249,7 +250,7 @@ def create_it_service_hosting(
     payload: ServiceHostingInput,
     inventory: ServiceInventory = Depends(get_service_inventory),
 ):
-    user = authorize(request, *WRITE)
+    user = authorize_write(request, *WRITE)
     hosting = inventory.link_service_to_server(payload.model_dump(), actor_from(user))
     return ok(hosting, "Vínculo registrado.", 201, operation_id="create_it_service_hosting")
 
@@ -265,7 +266,7 @@ def delete_it_service_hosting(
     hosting_id: UUID,
     inventory: ServiceInventory = Depends(get_service_inventory),
 ):
-    user = authorize(request, *WRITE)
+    user = authorize_write(request, *WRITE)
     inventory.unlink_hosting(str(hosting_id), actor_from(user))
     return ok(
         {"id": str(hosting_id)}, "Vínculo removido.", operation_id="delete_it_service_hosting"
