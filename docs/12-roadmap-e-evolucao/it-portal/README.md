@@ -114,6 +114,14 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 - **Gate seguinte somente leitura:** inspeção no GLPI interno pela UI (versão, Administração > Inventário, Ativos > Computadores e agentes/últimas coletas), sem instalar agente, executar varredura ou editar configuração. Depois decidir `EXISTING_EQUIVALENT`/`REUSE_DECISION` para a coleta do Linux e a integração autorizada GLPI → Portal de TI.
 - Modelo proposto (TARGET, ainda não decidido): GLPI interno como possível fonte de **observações** de hardware/software via agente; Portal de TI preserva cadastro e relações curadas, reconciliando por identidade estável, com trilha de proveniência e aprovação de divergências. Não presumir vínculo direto ao MySQL do GLPI.
 
+**Decisão de escopo superveniente do PO — somente servidores (10/11/2026):**
+- **Prioridade E4:** mapear e automatizar somente servidores Linux e Windows da DELPI, começando pelo `srv-api` (Linux) já cadastrado no Portal de TI. Cadastro e gerenciamento dos servidores devem continuar no domínio do `it-portal-api` e MFE `it-portal`.
+- **FORA DO ESCOPO AGORA:** computadores, notebooks, estações de trabalho e migração do inventário de computadores já cadastrado manualmente no GLPI da DELPI. Não criar telas, agentes ou migrations para endpoints de usuário nesta fase.
+- **Evidência declarada pelo PO:** os servidores ainda **não foram mapeados no GLPI interno**; portanto **não exigir consulta ao GLPI ou instalação de GLPI Agent** para iniciar a coleta de servidores. A verificação de UI do GLPI citada no diagnóstico anterior fica **cancelada como próximo gate**. A presença dos containers `inventario-ti-glpi-1`/`inventario-ti-db-1` não demonstra coleta de servidores.
+- **Reuse gate restrito:** aproveitar dados locais e capacidades autorizadas do Linux, Zabbix Agent 2 (se tecnicamente viável sem depender do monitoramento de terceiros), Docker e ferramentas Windows já existentes. Escolher adaptador somente após avaliar permissões, limites, owners, consumo de recursos, contratos e segurança. Proibir criação duplicada de servidor e sobrescrita silenciosa de campos manuais.
+- **Entrega alvo:** coleta periódica somente leitura com origem/horário/estado, reconciliação idempotente com servidor existente, revisão de divergências e visibilidade no Portal de TI; iniciar em modo observação/dry-run antes de qualquer escrita no inventário. Sem acesso remoto privilegiado, varredura indiscriminada ou novas dependências de terceirizados.
+- A E3A/E3B permanece futura, e a integração Sophos segue posterior ao primeiro piloto de servidores. O inventário existente de computadores no GLPI não será alterado por este projeto.
+
 **Objetivo da E4 (PLANNED):** minimizar o cadastro manual de servidores Windows/Linux e da infraestrutura de rede Sophos, sem criar uma segunda autoridade sobre ativos existentes, nem sobrescrever dados operacionais curados por pessoas.
 
 **Gate inicial (TO_INVENTORY), antes de aprovar contratos/implementação:**
