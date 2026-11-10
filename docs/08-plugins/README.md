@@ -99,7 +99,6 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/cultura-delpi` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
 | `plugins/transformometro` | `transformometro` | microfrontend | plugin | `/apps/transformometro` | `delpi-transformometro` |
 | `plugins/helpdesk` | Meus Chamados de TI | microfrontend | `helpdesk.access` | `/apps/helpdesk` | BFF `helpdesk-api`; lista publicada. Abertura ao vivo ainda não está no ledger |
-| `plugins/it-portal` | `it-portal` | microfrontend | plugin | `/apps/it-portal` | `delpi-it-portal` (BFF `delpi-it-portal-api`) |
 | `plugins/api-delpi-console` | `api-delpi-console` | microfrontend | plugin | `/apps/api-delpi-console` | `delpi-api-delpi-console` |
 | `plugins/idd_production` | (ver manifesto) | — | — | — | Avaliar registro na Core API |
 | `plugins/tv-dashboard` | `tv-dashboard` | microfrontend | plugin | `/apps/tv-dashboard` | `delpi-tv-dashboard` |
@@ -117,7 +116,6 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 **Etiquetas da Qualidade:** admin `/apps/quality-labels`; público `/p/quality-labels/inspection/{token}`. CRUD na api-delpi (`/quality/labels`). [README](../../plugins/quality-labels/README.md) · [API](../../api-delpi/docs/api/quality-labels.md).
 **Portal PCP:** `/apps/production-control` (gestão à vista + demanda + carga máquina + análise de problemas + materiais + alimentador de linha). API: `/apps/production-control-api/*`. Destino do módulo: **Portal de Produção**, PCP como primeira área — [recado no roadmap](../12-roadmap-e-evolucao/production-control/README.md). [README do plugin](../../plugins/production-control/README.md) · [API](../../production-control-api/README.md).
 **Portal Financeiro:** `/apps/financial` (gestão à vista + faturamento/ROL + inadimplência + despesas por CC + notas fiscais de entrada + IDD/IGD). API: `/apps/financial-api/*`. Plugins legados permanecem. [README do plugin](../../plugins/financial/README.md) · [API](../../financial-api/README.md) · [spec](../12-roadmap-e-evolucao/financial/README.md).
-**Portal de TI:** `/apps/it-portal` (inventário manual de servidores, notas técnicas, planos de ação e histórico auditado). API própria: `/apps/it-portal-api/*` (schema `it_portal` no postgres-plugins). [README do plugin](../../plugins/it-portal/README.md) · [API](../../it-portal-api/README.md).
 **Despesas de Viagem:** `/apps/travel-expenses` (prestação, cupons e pacote). API: `/apps/travel-expenses-api/*`. [README](../../plugins/travel-expenses/README.md) · [API](../../travel-expenses-api/README.md) · [playbook](../12-roadmap-e-evolucao/travel-expenses/PLAYBOOK.md).
 **Pulso de Produção:** `/apps/production-pulse` (dispositivos IoT + modo operador). API: `/apps/production-pulse-api/*`. [README](../../plugins/production-pulse/README.md) · [API](../../production-pulse-api/README.md) · [roadmap](../12-roadmap-e-evolucao/production-pulse/ROADMAP.md).
 **CIPA SIPAT:** admin `/apps/cipa/filial-{01|02}/sipat`; público `/p/cipa/sipat/{token}`. API: `/apps/cipa-api/public/sipat/*`.

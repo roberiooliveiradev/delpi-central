@@ -1,12 +1,12 @@
-# Pesquisa de satisfação — Decisões de negócio e registro histórico
+# Pesquisa de satisfação — Registro de decisões em aberto
 
-> Estado: LEVANTAMENTO PRINCIPAL DE NEGÓCIO CONSOLIDADO (10/11/2026). Este arquivo preserva as 20 questões originalmente levantadas, as respostas do plano e as decisões informadas pelo solicitante. **Não é uma lista de 20 decisões ainda abertas**, nem aprovação de implementação ou evidência de funcionalidade existente. Consulte primeiro o [índice mestre de requisitos](./REQUIREMENTS-INDEX.md), usando este histórico apenas para esclarecer uma regra específica.
+> Estado: DISCOVERY / PENDING. Criado em 2026-11-10. As perguntas abaixo são questões de levantamento, **não** requisitos aprovados. Responder sequencialmente; registrar decisão, responsável, data, justificativa e impacto antes de alterar contratos ou backlog.
 >
 > Fontes: "Plano de Monitoramento da Satisfação dos Clientes — Delpi" (fornecido pelo Comercial) e ata do Transformômetro 2026/016, "Retorno às Demandas Comerciais — Transforma Mais" (06/11/2026, parcialmente assinada). Fonte técnica e owners ainda requerem inventário.
 
-## Como consultar e manter
+## Como atualizar
 
-Para cada questão, preservar: `Status: DECIDED | SOURCE_DEFINED | PARTIAL | TO_INVENTORY | PENDING | NEEDS_VALIDATION`; `Resposta`; `Owner da decisão`; `Data`; `Justificativa`; `Impacto`; `Fonte`. **DECIDED** significa requisito de negócio definido, não implementado. **PENDING/TO_INVENTORY** nas notas históricas refere-se a detalhe operacional, verificação técnica, segurança ou validação formal, salvo quando houver bloqueio explícito. Não reabrir a entrevista inteira nem transformar proposta em backlog aprovado. Manter [REQUIREMENTS-INDEX.md](./REQUIREMENTS-INDEX.md) como a porta de entrada e vincular novos documentos específicos somente quando necessários.
+Para cada questão: `Status: DECIDED | SOURCE_DEFINED | PARTIAL | TO_INVENTORY | PENDING | NEEDS_VALIDATION`; `Resposta`; `Owner da decisão`; `Data`; `Justificativa`; `Impacto`; `Fonte`. Resposta do usuário é decisão informada, sujeita à validação do owner quando necessário. Não confundir proposta com aprovação de implementação.
 
 ## A. Público, contatos e identificação
 
@@ -195,6 +195,6 @@ Para cada questão, preservar: `Status: DECIDED | SOURCE_DEFINED | PARTIAL | TO_
 - Consolidação prevista: até cinco dias após o encerramento.
 - Primeira prioridade segundo ata 2026/016: pesquisa de satisfação; prazo de primeira entrega citado como expectativa condicionada, não compromisso.
 
-## Encaminhamento do levantamento
+## Próxima pergunta em entrevista
 
-**Encaminhamento após decisões complementares de 2026-11-10:** Não perguntar novamente sobre segmentações, evolução, categorias, campos de ação, tratamento por Marketing/Manager, retenção histórica ou escopo de persistência na API Comercial. Prosseguir com especificação funcional baseada no plano e decisões do solicitante. Executar inventário técnico bounded por frente imediatamente antes de projetar/implementar rotas, dados e interface; esclarecer somente lacunas materiais para as quais não haja decisão ou contrato canônico. Nenhuma implementação está comprovada ou autorizada por este documento.
+**Próximo passo após decisões complementares de 2026-11-10:** Não perguntar novamente sobre segmentações, evolução, categorias, campos de ação, tratamento por Marketing/Manager, retenção histórica ou escopo de persistência na API Comercial. Prosseguir com especificação funcional baseada no plano e decisões do solicitante. Executar inventário técnico bounded por frente imediatamente antes de projetar/implementar rotas, dados e interface; esclarecer somente lacunas materiais para as quais não haja decisão ou contrato canônico. Nenhuma implementação está comprovada ou autorizada por este documento.

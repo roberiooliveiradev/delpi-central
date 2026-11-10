@@ -2345,3 +2345,18 @@ G5_QUALITY_HOMOLOGATED=NOT_DECLARED
 G6_G7=NOT_AUTHORIZED
 VAL01_COMPLETED=false
 ```
+
+### 65. Fix raiz/pai + deploy — integridade de contexto do produto (2026-11-10)
+
+**TASK_ID:** `EVA-VAL01-G5-ROOT-PARENT-INTEGRITY-FIX`. **SHA:** `512d6bd0ed`. **Causa raiz (confirmada):** envelope de `build_document_understanding`/`build_understanding` não carregava `product_code` → `apply_native_table_observations` reconstruía ocorrências com `product_code=None`, desativando a exclusão da raiz (caso `90264302` job `aj-732aafdc7d544d17`). **RQ-02:** `y_anchor_nearest`/`y_anchor_correction` classificados como proximidade — `parent_state=UNKNOWN` + `parent_inferred_by_proximity`; nível só via cadeia `IDENTIFIED`; comparador não verifica parentesco por proximidade. **RQ-04:** `band_detached` permanece incerteza registrada — investigação sem reprovação nova. **Testes:** TC01–TC06 (integração completa com raiz em célula nativa) + **201 passed** total. **Deploy:** srv-api ff-only + up-prod-sequential `--build engineering-api` → healthy, código verificado no container, gateway 200. Rollback baseline: `30ac7cbb44` (via `38f5077e0f` anterior não é mais base — anterior imediato `47a1a9657e`/`4e566a86ca`). Smoke autenticado pós-deploy: `TEST_NOT_RUN` (exige identidade delegada — entregar SHA ao consumidor autorizado).
+
+```text
+ROOT_AS_COMPONENT_FIX=DEPLOYED
+PARENT_EVIDENCE_POLICY=STRUCTURAL_ONLY (rowspan_anchor|column_span)
+PROXIMITY_PARENT=UNKNOWN
+REAL_PDF_90264302_POST_DEPLOY=TEST_NOT_RUN
+DEC040_043_G4_G5_REGRESSION=PASS
+G5_QUALITY_HOMOLOGATED=NOT_DECLARED
+G6_G7=NOT_AUTHORIZED
+VAL01_COMPLETED=false
+```
