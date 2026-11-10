@@ -6,7 +6,7 @@
 
 ## Como atualizar
 
-Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; `Owner da decisão`; `Data`; `Justificativa`; `Impacto`; `Fonte`. Resposta do usuário é decisão informada, sujeita à validação do owner quando necessário. Não confundir proposta com aprovação de implementação.
+Para cada questão: `Status: DECIDED | SOURCE_DEFINED | PARTIAL | TO_INVENTORY | PENDING | NEEDS_VALIDATION`; `Resposta`; `Owner da decisão`; `Data`; `Justificativa`; `Impacto`; `Fonte`. Resposta do usuário é decisão informada, sujeita à validação do owner quando necessário. Não confundir proposta com aprovação de implementação.
 
 ## A. Público, contatos e identificação
 
@@ -136,56 +136,57 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ### Q13 — Segmentações oficiais
 **Pergunta:** Quais fontes e regras oficiais definirão segmento, região, vendedor/carteira, tempo de relacionamento, faturamento e cliente estratégico? Qual período de referência?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** filtros, segurança e consistência com Portal Comercial.
-
+**Status:** SOURCE_DEFINED quanto às sete segmentações; TO_INVENTORY quanto à fonte e às regras técnicas de cada atributo.
+**Resposta pelo plano:** Analisar os resultados por cliente, segmento, vendedor, região, tempo de relacionamento, volume/faturamento da conta e clientes estratégicos versus demais clientes. O documento inclui exemplo de tabela comparativa com colunas Geral, Clientes estratégicos e Demais clientes para satisfação geral e médias por dimensão (seção 7, página 3). Não é necessária nova decisão do solicitante sobre QUAIS filtros deseja.
+**PENDING / TO_INVENTORY:** Localizar autoridade e disponibilidade dos campos nas APIs/cadastro existentes, como determinar cliente estratégico e período de referência para atributos variáveis; não criar classificação ou fonte paralela.
+**Natureza:** Fonte de requisito de negócio, não evidência de que filtros e integrações estejam implementados.
+**Impacto:** Reaproveitar dados existentes e apresentar comparações simples sem novas dimensões inventadas.
 ### Q14 — Comparação histórica
 **Pergunta:** Comparar por campanha anterior, mesmo semestre do ano anterior ou ambos? Como lidar com mudanças de perguntas e composição de clientes?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** evolução semestral/anual.
-
+**Status:** SOURCE_DEFINED para comparação com pesquisa anterior e visão semestral/anual; PENDING apenas para critérios técnicos de comparação com públicos diferentes.
+**Resposta pelo plano:** Mostrar evolução semestral/anual e comparação dos indicadores com a pesquisa anterior (seções 8 e 9, página 4). A decisão de manter as quinze perguntas iguais entre campanhas já está registrada em Q09.
+**PENDING / TO_INVENTORY:** Tratamento de campanhas com composição diferente de empresas, períodos sem resposta e bases insuficientes; não presumir comparação individual ou mesmo semestre do ano anterior como requisito separado.
+**Impacto:** Uma evolução histórica simples atende ao plano sem multiplicar modos de comparação.
 ## D. Tratamento, ações e governança
 
 ### Q15 — Critério e triagem de problemas
 **Pergunta:** O que torna uma resposta ou comentário um problema a tratar, quem classifica nas oito categorias e quais situações exigem acompanhamento?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** fila de trabalho e métricas de criticidade.
-
+**Status:** SOURCE_DEFINED quanto às oito categorias e à existência de classificação; PARTIAL quanto ao critério de relevância e responsabilidade operacional.
+**Resposta pelo plano:** Cada problema identificado deve ser classificado como Produto, Qualidade, Entrega, Atendimento, Comercial, Técnico, Comunicação ou Preço (seção 8, etapa 2, página 4). A consolidação deve listar principais comentários e clientes críticos em até cinco dias após o encerramento (etapa 1).
+**PENDING:** O plano não define uma regra automática para transformar cada nota ou comentário em problema, nem nomeia quem faz a triagem. Não implementar detecção automática/alertas por inferência; classificação humana simples é alternativa a validar operacionalmente.
+**Impacto:** Reutilizar oito categorias do plano, sem inventar novas categorias ou automação.
 ### Q16 — Gestão de ações
 **Pergunta:** Quem cria e atribui planos de ação, quais etapas/status e critérios de aprovação e conclusão deverão existir?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** ciclo de correção e indicador de ações concluídas.
-
+**Status:** SOURCE_DEFINED quanto aos campos mínimos do acompanhamento; PARTIAL quanto a responsáveis de governança e estados.
+**Resposta pelo plano:** Para cada oportunidade relevante, manter Problema, Cliente, Causa, Ação, Responsável, Prazo e Status (seção 8, etapa 3, página 4). Na estrutura do CRM também estão previstos plano de ação, responsável pela ação, prazo, status e reavaliação (seção 10, páginas 4–5). O painel mostra ações concluídas ÷ ações identificadas (seção 9).
+**PENDING:** Quem cria e encerra ações, valores permitidos de status, critérios de conclusão, eventual aprovação e fluxo de reavaliação não são detalhados; não inferir workflow complexo.
+**Impacto:** Um registro simples de ações com seus campos pode ser a menor solução suficiente, após inventário de eventual recurso existente.
 ### Q17 — Retorno ao cliente
 **Pergunta:** Em quais situações é obrigatório responder ao cliente, por qual canal e quem aprova/registra o retorno e a reavaliação?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** fechamento da jornada e rastreabilidade.
-
+**Status:** SOURCE_DEFINED quanto ao público-alvo do retorno; PARTIAL quanto ao canal e à responsabilidade.
+**Resposta pelo plano:** Prever retorno aos clientes com críticas relevantes, inclusive com texto-modelo informando recebimento da avaliação e ações em andamento (seção 8, etapa 4, página 4). Registrar reavaliação no acompanhamento (seção 10, página 5).
+**PENDING:** Canal efetivo de retorno, responsável por enviar e registrar e eventual aprovação não são determinados. O texto-modelo não autoriza envio automatizado nem define um prazo específico.
+**Impacto:** Fechar o ciclo com o cliente sem criar integração adicional sem necessidade.
 ### Q18 — Acesso, retenção e auditoria
 **Pergunta:** Quem pode gerir campanhas, destinatários, disparos, respostas individuais, indicadores e ações? Por quanto tempo os dados serão mantidos?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** LGPD, segurança e controle backend.
-
+**Status:** PARTIALLY_DECIDED pelo solicitante na Q04; PENDING quanto à retenção e aos detalhes de segurança.
+**Resposta pelo plano:** O plano descreve resultados e acompanhamento por cliente, mas não fixa permissões, retenção, auditoria ou regra de divulgação de respostas individualizadas (seções 7–10). A decisão complementar informada pelo solicitante em Q04 restringe configuração/envios/respostas individualizadas a commercial.marketing e commercial.manager e libera apenas indicadores agregados aos demais usuários do Portal Comercial.
+**PENDING / TO_INVENTORY:** Confirmar contratos de permissão reais, política de retenção, proteção de convites/links, auditoria e limiares de agregação que evitem exposição indireta de clientes. Backend continua autoridade.
+**Impacto:** Preservar a matriz funcional decidida sem atribuir ao plano regra que ele não traz.
 ## E. Uso do que já existe
 
 ### Q19 — Integração e ownership
 **Pergunta:** Quais recursos atuais do Portal Comercial/CRM/customer-experience serão reutilizados, e qual API será autoridade de cada dado e regra?
-**Status:** TO_INVENTORY (questão técnica; não depende só de entrevista).
-**Resposta:** —
-**Impacto:** menor implementação suficiente; evitar duplicidade e violação de ownership.
-
+**Status:** SOURCE_DEFINED somente para intenção de acompanhar no CRM; TO_INVENTORY para implementação, contrato e owner.
+**Resposta pelo plano:** A seção 10, páginas 4–5, lista campos de acompanhamento no CRM: pesquisa enviada, data, responsável, IGS, NPS, notas por dimensão, comentários, pontos críticos, plano de ação, responsável, prazo, status e reavaliação. O solicitante já informou que a primeira solução será no Portal Comercial existente e reutilizará clientes do ERP TOTVS via API DELPI (Q03).
+**TO_INVENTORY:** Verificar HEAD/branch, contratos e rotas de clientes, recursos de formulários e ações existentes, authority de dados comerciais, RBAC no backend e consumidores; esta resposta depende de evidência técnica e não de nova entrevista.
+**Impacto:** Evitar cadastro paralelo, CRUD duplicado e deslocamento de regras para o frontend.
 ### Q20 — Critérios de sucesso e primeira entrega
 **Pergunta:** Como saberemos que a primeira entrega resolveu a necessidade da Qualidade e do Comercial? Quais resultados mínimos devem estar disponíveis antes de iniciar uma campanha real?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** escopo, teste, homologação e resultado operacional.
-
+**Status:** SOURCE_DEFINED quanto aos resultados esperados e ao prazo de consolidação; PENDING quanto à homologação formal e escopo exato de uma primeira entrega.
+**Resposta pelo plano:** Monitorar IGS, NPS, taxa de resposta (respondentes ÷ convidados), médias por dimensão, percentuais satisfeitos (4–5) e críticos (1–2), evolução semestral/anual, planos de ação concluídos (concluídos ÷ identificados); consolidar em até cinco dias após a pesquisa, incluindo comentários e clientes críticos (seções 8–9, página 4). O processo proposto também cobre classificação, ação e retorno aos clientes com críticas relevantes.
+**PENDING:** Owner e aceitação formal, evidência de medição do prazo, indicadores mínimos da primeira entrega e testes de segurança/operacionais. Não interpretar o prazo como SLA de processamento automático em tempo real.
+**Impacto:** Base objetiva para critérios de aceite, sem aprovação automática de backlog técnico.
 ## Já definido pelas fontes — não perguntar novamente sem necessidade
 
 - Periodicidade desejada: duas campanhas por ano, janelas maio/junho e novembro/dezembro.
@@ -196,4 +197,4 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ## Próxima pergunta em entrevista
 
-**Próxima decisão da entrevista:** pergunta 14 — fontes e regras de segmentação (Q13 do registro canônico).
+**Próximo passo após leitura integral do plano:** não perguntar novamente sobre segmentações (Q13), evolução (Q14), categorias (Q15), campos de ação (Q16), público do retorno (Q17) ou indicadores (Q20), pois já constam no plano. Priorizar inventário técnico e esclarecer apenas pendências de negócio que bloquearem a implementação.
