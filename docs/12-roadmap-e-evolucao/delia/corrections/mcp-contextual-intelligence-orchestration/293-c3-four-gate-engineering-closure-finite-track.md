@@ -423,3 +423,14 @@ Inspecionar caminho ativo de `_INVESTIGATION_INSTRUCTIONS` e `PydanticAiInvestig
 **INT-1:** `NOT_STARTED` — PO solicitou implementação condicionada, mas gate canônico desta seção exige revisão independente após INT-0 → `ARCHITECTURE_DECISION_REQUIRED` antes de qualquer diff.  
 **LOCAL_ENVIRONMENT_NOT_AVAILABLE** para eval live Qwen nesta host (container produtivo único).  
 **NEXT:** `COORDINATION_INT0_INDEPENDENT_REVIEW`. Sem avanço de fase; T3/INT-2/deploy NOT_AUTHORIZED.
+
+
+### Coordenação — INT-0 independent review (2026-11-10)
+
+**REVIEWED_IMPLEMENTATION_COMMIT:** `71ae3e9605496f6e6a986e9daa1d3e7c265f624f`. **VERDICT:** `ACCEPT_WITH_RESIDUAL` (INT-0 docs-only inventory), **INT-1:** `AUTHORIZED_BOUNDED_CONDITIONAL`; **NEXT:** `T2_INT1_LOCAL_ISOLATION_AND_INVESTIGATIVE_REWORK`, sem avanço de fase.
+
+A revisão confirmou o reuso do `PydanticAiInvestigationOrchestrator` + native Pydantic AI 2.50.0, MCPToolset, SpecialistInterop, ModelRetry, InvestigationAnswer e gates existentes. **EXISTING_EQUIVALENT=YES; REUSE_DECISION=EXTEND** para o Agent investigativo existente; **NEW_AGENT=NOT_JUSTIFIED**. Diagnóstico principal é ausência de comprovação de pertinência/objetivo na finalização sem obrigações tipadas; não concluir que tornar `SemanticInvestigationPlan` obrigatório em todas as perguntas resolveria o problema. Extensão deve preservar caminho simples e limites, sem novo planner/engine, sem hardcoding de MCP/modelo/pergunta.
+
+**Gate operacional anterior ao live eval:** PROD e DEV atualmente compartilham `container_name: delpi-delia-api` em compose e o executor não demonstrou runtime DEV independente. Provar isolamento de runtime, rede, portas, env, arquivos, credenciais, volume e acesso autorizado antes de testar Qwen14B local. Não modificar/reiniciar container produtivo, não usar produção como DEV; se indisponível, executar somente testes determinísticos e reportar `LOCAL_LIVE_EVAL=TEST_NOT_RUN`.
+
+**Escopo INT-1 autorizado:** baseline/teste RED de seleção/progresso e erros reais P2/P3; extensão mínima do Agent investigativo na interpretação de relevância, schema/owner recovery e discovery non-citability, preservando autonomia semântica e a autoridade de Application Outcome. Verificar primeiro comportamento de `_finalize_agent_collected_attempts` e `_apply_declared_answer` com ausência de plan; não duplicar INT-2/INT-3/INT-4. Testes focados consumer + um metamórfico provider/schema rename e Qwen 14B em DEV isolado apenas. **PRODUCTION_DEPLOY=NOT_AUTHORIZED; T3=NOT_AUTHORIZED; INT2=NOT_AUTHORIZED.** Submeter diff e evidências para revisão crítica; implementação não se autoaceita.
