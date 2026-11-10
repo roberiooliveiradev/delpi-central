@@ -56,12 +56,13 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ### Q05 — Calendário e abertura
 **Pergunta:** As duas campanhas semestrais (maio/junho e novembro/dezembro) terão datas fixas ou configuráveis? Quem poderá criá-las, aprová-las, iniciar e encerrar?
-**Status:** DECIDED quanto às janelas de referência, configuração livre de datas e encerramento automático; PENDING quanto à abertura da campanha e eventuais aprovações.
+**Status:** DECIDED quanto às janelas de referência, configuração livre de datas, abertura e encerramento automáticos; PENDING apenas para detalhes operacionais/técnicos e eventuais aprovações.
 **Resposta:** Manter como configuração inicial no banco de dados duas campanhas de referência por ano: primeira em maio/junho e segunda em novembro/dezembro, conforme plano original. Os perfis já autorizados à configuração da pesquisa (`commercial.marketing` e `commercial.manager`, sujeitos à validação técnica) poderão alterar livremente as datas de início e término. Não fixar essas datas no código nem impor obrigatoriamente as janelas originais.
+**Abertura automática (DECIDED):** A campanha deverá abrir automaticamente ao alcançar a data de início configurada, sem ativação manual por Marketing/Manager. Antes dessa data, os links não deverão receber respostas. A abertura automática não implica disparo automático de e-mails/convites, que é uma decisão separada.
 **Encerramento automático (DECIDED):** A campanha deverá encerrar automaticamente ao atingir a data de término configurada. Após o encerramento, o link não deverá aceitar novas respostas, preservando os dados e indicadores já recebidos. Não exigir ação manual de Marketing/Manager para encerrar. O instante exato de corte e fuso horário devem ser especificados na implementação.
 **Natureza:** Requisito de implementação futura; não afirmar que registros ou funcionalidade já existam no banco.
-**Fonte:** Concordância explícita do solicitante em 2026-11-10 com datas configuráveis e resposta posterior: "Não, elas vão encerrar automaticamente".
-**PENDING:** Forma de abertura (automática na data configurada ou ativação manual), modelo de recorrência, eventual aprovação, alterações após início, prazo de consolidação depois do fechamento, validações e auditoria.
+**Fonte:** Concordância explícita do solicitante em 2026-11-10 com datas configuráveis e respostas posteriores: "Não, elas vão encerrar automaticamente" e "Abertura também automática".
+**PENDING:** Modelo de recorrência, eventual aprovação de campanha, alterações após início, instante de corte/fuso horário, prazo de consolidação depois do fechamento, validações e auditoria.
 **Impacto:** Preservar planejamento semestral com flexibilidade operacional e histórico das datas aplicadas a cada campanha.
 
 ### Q06 — Canal de distribuição
