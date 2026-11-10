@@ -13,6 +13,7 @@ describe("Helpdesk list UX structural", () => {
   it("lista usa PageHero, busca compacta, chips e popovers (sem drawer)", () => {
     const page = read("HelpdeskPage.tsx");
     const ui = read("../ui/helpdeskUi.tsx");
+    const css = read("../index.css");
     expect(page).not.toContain("HelpdeskFiltersRow");
     expect(page).toContain("HelpdeskPageHero");
     expect(page).toContain("HelpdeskScopeChipBar");
@@ -25,6 +26,13 @@ describe("Helpdesk list UX structural", () => {
     expect(page).toContain("TICKET_STATUS_FILTERS");
     expect(page).toContain('label: "Meus chamados"');
     expect(page).toContain("requester_mine");
+    expect(page).toContain("hasMineTickets");
+    expect(page).toContain("helpdesk-list-filters-row");
+    expect(page).toContain("helpdesk-list-scope-divider");
+    expect(page).toContain('idPrefix="helpdesk-ticket-list-scope"');
+    expect(page).toContain('value={filters.requester_mine ? "mine" : "all"}');
+    expect(css).toContain(".helpdesk-list-filters-row");
+    expect(css).toContain(".helpdesk-list-scope-divider");
     // Controles da lista (busca/chips/filtros) vivem no body do PageHero.
     expect(page).toMatch(/<HelpdeskPageHero[\s\S]*helpdesk-list-controls[\s\S]*<\/HelpdeskPageHero>/);
     expect(page).not.toMatch(
