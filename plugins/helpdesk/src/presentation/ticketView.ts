@@ -114,6 +114,7 @@ export type TicketListFilters = {
   urgency_id: string;
   category_id: string;
   assignee_id: string;
+  requester_id: string;
   requester_mine: boolean;
   updated_from: string;
   updated_to: string;
@@ -189,6 +190,7 @@ export const DEFAULT_TICKET_LIST_FILTERS: TicketListFilters = {
   urgency_id: "",
   category_id: "",
   assignee_id: "",
+  requester_id: "",
   requester_mine: false,
   updated_from: "",
   updated_to: "",
@@ -218,6 +220,7 @@ export function parseTicketListFilters(search: string): TicketListFilters {
     urgency_id: (params.get("urgency_id") || "").trim(),
     category_id: (params.get("category_id") || "").trim(),
     assignee_id: (params.get("assignee_id") || "").trim(),
+    requester_id: (params.get("requester_id") || "").trim(),
     requester_mine: parseTruthyFlag(params.get("requester_mine")),
     updated_from: (params.get("updated_from") || "").trim(),
     updated_to: (params.get("updated_to") || "").trim(),
@@ -240,6 +243,9 @@ export function ticketListSearch(filters: TicketListFilters): string {
   if (filters.urgency_id.trim()) params.set("urgency_id", filters.urgency_id.trim());
   if (filters.category_id.trim()) params.set("category_id", filters.category_id.trim());
   if (filters.assignee_id.trim()) params.set("assignee_id", filters.assignee_id.trim());
+  if (filters.requester_id.trim() && !filters.requester_mine) {
+    params.set("requester_id", filters.requester_id.trim());
+  }
   if (filters.requester_mine) params.set("requester_mine", "1");
   if (filters.updated_from.trim()) params.set("updated_from", filters.updated_from.trim());
   if (filters.updated_to.trim()) params.set("updated_to", filters.updated_to.trim());
@@ -265,6 +271,7 @@ export function isTicketFilterActive(filters: TicketListFilters): boolean {
       || filters.urgency_id.trim()
       || filters.category_id.trim()
       || filters.assignee_id.trim()
+      || filters.requester_id.trim()
       || filters.requester_mine
       || (filters.updated_from || "").trim()
       || (filters.updated_to || "").trim()

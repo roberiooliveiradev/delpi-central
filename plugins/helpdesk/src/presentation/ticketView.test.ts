@@ -4,6 +4,7 @@ import {
   absoluteDateTimeLabel,
   conversationAuthorSrc,
   conversationMessages,
+  DEFAULT_TICKET_LIST_FILTERS,
   detailRecordHeading,
   detailRecordSubtitle,
   hasVisibleRichText,
@@ -524,6 +525,7 @@ describe("ticket list filters", () => {
       urgency_id: "3",
       category_id: "",
       assignee_id: "",
+      requester_id: "11",
       requester_mine: true,
       updated_from: "",
       updated_to: "",
@@ -540,6 +542,7 @@ describe("ticket list filters", () => {
     expect(search).toContain("q=Monitor");
     expect(search).toContain("status=in_progress");
     expect(search).toContain("requester_mine=1");
+    expect(search).not.toContain("requester_id=");
     expect(search).toContain("created_from=2026-01-01");
     expect(search).toContain("created_to=2026-01-31");
     expect(search).toContain("page_size=10");
@@ -549,6 +552,16 @@ describe("ticket list filters", () => {
     expect(parsed.page_size).toBe(10);
     expect(isTicketFilterActive(parsed)).toBe(true);
     expect(isTicketFilterActive(parseTicketListFilters(""))).toBe(false);
+  });
+
+  it("guarda requester_id na URL quando não é meus chamados", () => {
+    const search = ticketListSearch({
+      ...DEFAULT_TICKET_LIST_FILTERS,
+      requester_id: "32",
+    });
+    expect(search).toContain("requester_id=32");
+    expect(parseTicketListFilters(search).requester_id).toBe("32");
+    expect(isTicketFilterActive(parseTicketListFilters(search))).toBe(true);
   });
 
   it("não trata página sozinha como recorte", () => {

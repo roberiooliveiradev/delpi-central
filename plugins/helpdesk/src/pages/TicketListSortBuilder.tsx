@@ -65,6 +65,7 @@ export function TicketListSortBuilder({
               label={`Nível ${index + 1}`}
               hint={help.field}
               value={level.field}
+              searchable
               onChange={(field) =>
                 updateLevel(index, { field: field as TicketListSortLevel["field"] })
               }

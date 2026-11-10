@@ -324,13 +324,14 @@ class TicketService:
             return False
 
     def resolve_requester_mine(self, subject: str, query: TicketListQuery) -> TicketListQuery:
-        """Bind ``requester_mine`` to the actor's GLPI user id (backend-first)."""
+        """Bind ``requester_mine`` to the actor's GLPI user id (backend-first).
+
+        Always overwrites any client ``requester_id`` — mine is session-owned.
+        """
         from dataclasses import replace
 
         if not query.requester_mine:
             return query
-        if query.requester_id is not None:
-            return replace(query, requester_mine=True)
         token = self._token(subject)
         user_id = self._glpi.session_user_id(token)
         if user_id is None or int(user_id) < 1:

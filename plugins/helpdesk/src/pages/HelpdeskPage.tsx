@@ -300,6 +300,7 @@ function TicketListPage() {
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [urgencies, setUrgencies] = useState<{ id: number; name: string }[]>([]);
   const [assignees, setAssignees] = useState<{ id: number; name: string }[]>([]);
+  const [requesters, setRequesters] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -372,6 +373,7 @@ function TicketListPage() {
       urgency_id: "",
       category_id: "",
       assignee_id: "",
+      requester_id: "",
       requester_mine: false,
       updated_from: "",
       updated_to: "",
@@ -405,6 +407,7 @@ function TicketListPage() {
           urgency_id: next.urgency_id || undefined,
           category_id: next.category_id || undefined,
           assignee_id: next.assignee_id || undefined,
+          requester_id: next.requester_mine ? undefined : next.requester_id || undefined,
           requester_mine: next.requester_mine || undefined,
           updated_from: next.updated_from || undefined,
           updated_to: next.updated_to || undefined,
@@ -504,6 +507,21 @@ function TicketListPage() {
   }, [canAssign]);
 
   useEffect(() => {
+    const controller = new AbortController();
+    void listUsers({ q: "", limit: 50, purpose: "mention" }, controller.signal)
+      .then((body) => {
+        setRequesters(
+          (body.items || []).map((user) => ({
+            id: Number(user.id),
+            name: (user.display_name || "").trim() || `Usuário ${user.id}`,
+          })),
+        );
+      })
+      .catch(() => setRequesters([]));
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
     const onPop = () => {
       setFilters(currentListFilters());
     };
@@ -546,7 +564,12 @@ function TicketListPage() {
       label: "Meus chamados",
       active: filters.requester_mine,
       onSelect: () =>
-        commitFilters({ ...filters, requester_mine: !filters.requester_mine, page: 1 }),
+        commitFilters({
+          ...filters,
+          requester_mine: !filters.requester_mine,
+          requester_id: !filters.requester_mine ? "" : filters.requester_id,
+          page: 1,
+        }),
     },
     ...TICKET_STATUS_FILTERS.map((item) => ({
       id: item.value || "all",
@@ -632,6 +655,7 @@ function TicketListPage() {
                     urgencies={urgencies}
                     categories={categories}
                     assignees={assignees}
+                    requesters={requesters}
                     onClear={() => setBuilderGroup(emptyFilterGroup())}
                     onApply={() => {
                       const next = ticketListFiltersFromFilterGroup(builderGroup, filters);

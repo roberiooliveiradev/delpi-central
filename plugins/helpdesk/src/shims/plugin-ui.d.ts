@@ -693,6 +693,7 @@ declare module "@delpi/plugin-ui/index" {
     onChange: (value: string) => void;
     options: readonly FilterSelectOption[];
     disabled?: boolean;
+    searchable?: boolean;
   };
 
   export type DashboardFiltersKit = {

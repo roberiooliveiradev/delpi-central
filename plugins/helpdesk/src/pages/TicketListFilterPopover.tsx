@@ -16,6 +16,7 @@ export function TicketListFilterPopover({
   urgencies,
   categories,
   assignees,
+  requesters,
 }: {
   group: TicketListFilterGroup;
   onChange: (next: TicketListFilterGroup) => void;
@@ -24,6 +25,7 @@ export function TicketListFilterPopover({
   urgencies: CatalogOption[];
   categories: CatalogOption[];
   assignees: CatalogOption[];
+  requesters: CatalogOption[];
 }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -66,6 +68,7 @@ export function TicketListFilterPopover({
             urgencies={urgencies}
             categories={categories}
             assignees={assignees}
+            requesters={requesters}
             onClear={onClear}
             onApply={() => {
               onApply();

@@ -65,11 +65,17 @@ describe("Helpdesk list UX structural", () => {
       /\{\s*key:\s*"requester",\s*header:\s*"Requerente",\s*fixed:\s*false,\s*sortable:\s*true/,
     );
     expect(model).toContain('key: "requester_mine"');
+    expect(model).toContain('key: "requester_id"');
+    expect(model).toContain('input: "requester"');
     expect(model).toContain('key: "solved_from"');
     expect(model).toContain('key: "closed_from"');
     expect(view).toContain('"requester"');
     expect(view).toContain("requester_mine");
+    expect(view).toContain("requester_id");
     expect(builder).toContain('input === "mine"');
+    expect(builder).toContain('input === "requester"');
+    expect(builder).toContain("searchable");
+    expect(builder).toContain("requesters");
   });
 
   it("CTA Abrir chamado na listagem usa ActionButton com texto (não só ícone +)", () => {

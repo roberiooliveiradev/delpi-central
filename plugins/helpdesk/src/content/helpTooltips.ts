@@ -133,7 +133,7 @@ export const helpTooltips = {
 
   filterBuilder: {
     panel: "Refine os chamados com um ou mais critérios.",
-    field: "Campo do filtro aceito nesta lista.",
+    field: "Campo do filtro (busque pelo nome da coluna). Critérios alinhados à grade.",
     operator: "Operação: contém, é, de ou até — conforme o campo.",
     value: "Valor da regra. Vazio não entra ao aplicar.",
     removeRule: "Remove esta regra. A lista só muda depois de Aplicar.",

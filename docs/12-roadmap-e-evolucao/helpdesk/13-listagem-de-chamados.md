@@ -229,6 +229,7 @@ FORA                  → não entra neste produto
 | G-24 | Urgência, categoria, atualizado de/até | **IMPLEMENTADO** | — |
 | G-25 | Aberto de/até (`created_from` / `created_to`) | **IMPLEMENTADO** | `date_creation` |
 | G-26 | Filtro por técnico | **IMPLEMENTADO** (exceção Search legado + HLAPI hydrate) | `assignee_id`; exige `GLPI_LEGACY_*` |
+| G-26b | Filtro por requerente | **IMPLEMENTADO** (exceção Search legado + HLAPI hydrate) | `requester_id` ou `requester_mine`; exige `GLPI_LEGACY_*` |
 | G-27 | Default «Abertos» | FORA neste inventário | default Todos + subtítulo «no seu nome» |
 | G-28 | Caracteres de `q` | invariante | sem injetar RSQL |
 

@@ -75,6 +75,7 @@ export type TicketListFilterFieldKey =
   | "urgency_id"
   | "category_id"
   | "assignee_id"
+  | "requester_id"
   | "requester_mine"
   | "updated_from"
   | "updated_to"
@@ -205,6 +206,7 @@ export function ticketListViewModelFromFilters(
   push("category_id", filters.category_id);
   push("assignee_id", filters.assignee_id);
   if (filters.requester_mine) push("requester_mine", "1");
+  else push("requester_id", filters.requester_id);
   push("updated_from", filters.updated_from, "gte");
   push("updated_to", filters.updated_to, "lte");
   push("created_from", filters.created_from, "gte");
@@ -218,6 +220,7 @@ export function ticketListViewModelFromFilters(
   const sorts: TicketListSortLevel[] = parsedLevels;
   const activeFilterLabels: string[] = [];
   if (filters.requester_mine) activeFilterLabels.push("Meus chamados");
+  else if (filters.requester_id.trim()) activeFilterLabels.push("Requerente");
   if (filters.status.trim()) {
     activeFilterLabels.push(`Status: ${STATUS_FILTER_LABELS[filters.status] ?? filters.status}`);
   }
@@ -291,6 +294,7 @@ const FILTER_FIELD_LABELS: Record<TicketListFilterFieldKey, string> = {
   urgency_id: "Urgência",
   category_id: "Categoria",
   assignee_id: "Técnico",
+  requester_id: "Requerente",
   requester_mine: "Meus chamados",
   updated_from: "Atualizado de",
   updated_to: "Atualizado até",
@@ -306,15 +310,16 @@ const FILTER_FIELD_LABELS: Record<TicketListFilterFieldKey, string> = {
 export const TICKET_LIST_BUILDER_FIELDS: readonly {
   key: TicketListFilterFieldKey;
   label: string;
-  input: "text" | "status" | "urgency" | "category" | "assignee" | "mine" | "date";
+  input: "text" | "status" | "urgency" | "category" | "assignee" | "requester" | "mine" | "date";
   operator: ListFilterOperator;
 }[] = [
   { key: "q", label: FILTER_FIELD_LABELS.q, input: "text", operator: "contains" },
-  { key: "requester_mine", label: FILTER_FIELD_LABELS.requester_mine, input: "mine", operator: "eq" },
   { key: "status", label: FILTER_FIELD_LABELS.status, input: "status", operator: "eq" },
   { key: "urgency_id", label: FILTER_FIELD_LABELS.urgency_id, input: "urgency", operator: "eq" },
   { key: "category_id", label: FILTER_FIELD_LABELS.category_id, input: "category", operator: "eq" },
   { key: "assignee_id", label: FILTER_FIELD_LABELS.assignee_id, input: "assignee", operator: "eq" },
+  { key: "requester_id", label: FILTER_FIELD_LABELS.requester_id, input: "requester", operator: "eq" },
+  { key: "requester_mine", label: FILTER_FIELD_LABELS.requester_mine, input: "mine", operator: "eq" },
   { key: "updated_from", label: FILTER_FIELD_LABELS.updated_from, input: "date", operator: "gte" },
   { key: "updated_to", label: FILTER_FIELD_LABELS.updated_to, input: "date", operator: "lte" },
   { key: "created_from", label: FILTER_FIELD_LABELS.created_from, input: "date", operator: "gte" },
@@ -371,6 +376,7 @@ export function ticketListFiltersFromFilterGroup(
     urgency_id: "",
     category_id: "",
     assignee_id: "",
+    requester_id: "",
     requester_mine: false,
     updated_from: "",
     updated_to: "",
@@ -401,8 +407,13 @@ export function ticketListFiltersFromFilterGroup(
       case "assignee_id":
         next.assignee_id = value;
         break;
+      case "requester_id":
+        next.requester_id = value;
+        next.requester_mine = false;
+        break;
       case "requester_mine":
         next.requester_mine = value === "1" || value.toLowerCase() === "true";
+        if (next.requester_mine) next.requester_id = "";
         break;
       case "updated_from":
         next.updated_from = value;

@@ -29,6 +29,7 @@ export function TicketListFilterBuilder({
   urgencies,
   categories,
   assignees,
+  requesters,
 }: {
   group: TicketListFilterGroup;
   onChange: (next: TicketListFilterGroup) => void;
@@ -37,6 +38,7 @@ export function TicketListFilterBuilder({
   urgencies: CatalogOption[];
   categories: CatalogOption[];
   assignees: CatalogOption[];
+  requesters: CatalogOption[];
 }) {
   const help = helpTooltips.filterBuilder;
 
@@ -88,6 +90,7 @@ export function TicketListFilterBuilder({
                 label="Campo"
                 hint={help.field}
                 value={rule.field}
+                searchable
                 onChange={(field) => {
                   const nextMeta =
                     TICKET_LIST_BUILDER_FIELDS.find((item) => item.key === field) ?? meta;
@@ -110,6 +113,7 @@ export function TicketListFilterBuilder({
                   label="Valor"
                   hint={help.value}
                   value={rule.value}
+                  searchable
                   onChange={(value) => updateRule(rule.id, { value })}
                   options={[...TICKET_STATUS_FILTERS]}
                 />
@@ -119,6 +123,7 @@ export function TicketListFilterBuilder({
                   label="Valor"
                   hint={help.value}
                   value={rule.value}
+                  searchable
                   onChange={(value) => updateRule(rule.id, { value })}
                   options={[
                     { value: "", label: "Todas" },
@@ -131,6 +136,7 @@ export function TicketListFilterBuilder({
                   label="Valor"
                   hint={help.value}
                   value={rule.value}
+                  searchable
                   onChange={(value) => updateRule(rule.id, { value })}
                   options={[
                     { value: "", label: "Todas" },
@@ -143,10 +149,24 @@ export function TicketListFilterBuilder({
                   label="Valor"
                   hint={help.value}
                   value={rule.value}
+                  searchable
                   onChange={(value) => updateRule(rule.id, { value })}
                   options={[
                     { value: "", label: "Todos" },
                     ...assignees.map((item) => ({ value: String(item.id), label: item.name })),
+                  ]}
+                />
+              ) : null}
+              {meta.input === "requester" ? (
+                <HelpdeskFilterSelect
+                  label="Valor"
+                  hint={help.value}
+                  value={rule.value}
+                  searchable
+                  onChange={(value) => updateRule(rule.id, { value })}
+                  options={[
+                    { value: "", label: "Todos" },
+                    ...requesters.map((item) => ({ value: String(item.id), label: item.name })),
                   ]}
                 />
               ) : null}

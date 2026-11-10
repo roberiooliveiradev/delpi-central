@@ -90,6 +90,7 @@ describe("ticketListFiltersFromFilterGroup", () => {
           { id: "1", field: "q", operator: "contains", value: "rede" },
           { id: "2", field: "status", operator: "eq", value: "open" },
           { id: "3", field: "created_from", operator: "gte", value: "2026-01-01" },
+          { id: "4", field: "requester_id", operator: "eq", value: "32" },
         ],
         groups: [],
       },
@@ -98,7 +99,26 @@ describe("ticketListFiltersFromFilterGroup", () => {
     expect(next.q).toBe("rede");
     expect(next.status).toBe("open");
     expect(next.created_from).toBe("2026-01-01");
+    expect(next.requester_id).toBe("32");
+    expect(next.requester_mine).toBe(false);
     expect(next.page).toBe(1);
+  });
+
+  it("meus chamados limpa requester_id ao achatar", () => {
+    const next = ticketListFiltersFromFilterGroup(
+      {
+        id: "root",
+        combinator: "and",
+        rules: [
+          { id: "1", field: "requester_id", operator: "eq", value: "32" },
+          { id: "2", field: "requester_mine", operator: "eq", value: "1" },
+        ],
+        groups: [],
+      },
+      DEFAULT_TICKET_LIST_FILTERS,
+    );
+    expect(next.requester_mine).toBe(true);
+    expect(next.requester_id).toBe("");
   });
 
   it("não serializa grupo OR aninhado", () => {
