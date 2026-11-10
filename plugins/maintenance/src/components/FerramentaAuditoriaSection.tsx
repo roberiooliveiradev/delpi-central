@@ -26,6 +26,8 @@ const SectionCard = createDashboardSectionCard({
   classNames: sectionCardPacBemClasses("dm"),
   labels: {
     titleHelpAriaLabel: (title) => `Ajuda: ${title}`,
+    collapseAriaLabel: (title) => `Minimizar ${title}`,
+    expandAriaLabel: (title) => `Expandir ${title}`,
   },
 });
 
@@ -125,6 +127,7 @@ export function FerramentaAuditoriaSection({
 }: FerramentaAuditoriaSectionProps) {
   const auditTable = useServerTable({ pageSize: 10 });
   const [viewMode, setViewMode] = useState<AuditoriaViewMode>("timeline");
+  const [auditoriaOpen, setAuditoriaOpen] = useState(true);
   const [items, setItems] = useState<FerramentaAuditItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -172,39 +175,44 @@ export function FerramentaAuditoriaSection({
       <SectionCard
         title="Auditoria da ferramenta"
         hint="Registro cronológico de reposições e revisões programadas desta ferramenta."
-        subtitle="Eventos em ordem do mais recente para o mais antigo."
+        subtitle={auditoriaOpen ? "Eventos em ordem do mais recente para o mais antigo." : undefined}
+        collapsible
+        open={auditoriaOpen}
+        onOpenChange={setAuditoriaOpen}
         actions={
           <>
-            <div
-              className="dm-view-toggle"
-              role="tablist"
-              aria-label="Visualização da auditoria"
-            >
-              <button
-                type="button"
-                role="tab"
-                aria-selected={viewMode === "timeline"}
-                className={`dm-view-toggle__btn${
-                  viewMode === "timeline" ? " dm-view-toggle__btn--active" : ""
-                }`}
-                onClick={() => setViewMode("timeline")}
+            {auditoriaOpen ? (
+              <div
+                className="dm-view-toggle"
+                role="tablist"
+                aria-label="Visualização da auditoria"
               >
-                <History size={16} aria-hidden="true" />
-                Linha do tempo
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={viewMode === "table"}
-                className={`dm-view-toggle__btn${
-                  viewMode === "table" ? " dm-view-toggle__btn--active" : ""
-                }`}
-                onClick={() => setViewMode("table")}
-              >
-                <Table2 size={16} aria-hidden="true" />
-                Tabela
-              </button>
-            </div>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={viewMode === "timeline"}
+                  className={`dm-view-toggle__btn${
+                    viewMode === "timeline" ? " dm-view-toggle__btn--active" : ""
+                  }`}
+                  onClick={() => setViewMode("timeline")}
+                >
+                  <History size={16} aria-hidden="true" />
+                  Linha do tempo
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={viewMode === "table"}
+                  className={`dm-view-toggle__btn${
+                    viewMode === "table" ? " dm-view-toggle__btn--active" : ""
+                  }`}
+                  onClick={() => setViewMode("table")}
+                >
+                  <Table2 size={16} aria-hidden="true" />
+                  Tabela
+                </button>
+              </div>
+            ) : null}
             <span className="dm-badge">{total} evento(s)</span>
           </>
         }
