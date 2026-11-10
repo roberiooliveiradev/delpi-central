@@ -6161,3 +6161,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Falsifiable cause:** optional plan absent ⇒ finalize accepts related SUCCESS observations (aggregates/docs) as terminal without objective-kind coverage.
 - **Local eval:** NOT_RUN — `delpi-delia-api` is `DELIA_ENV=production` / compose project `infra`; compose.dev shares `container_name` → cannot isolate without disrupting prod.
 - **Veredicto:** `INT0_COMPLETE_FOR_REVIEW`; `INT1_STATUS=NOT_STARTED`; `CODE_CHANGES=NONE` (delia-api); docs updated.
+
+
+| DELIA-C3-T2-INT0-INDEPENDENT-REVIEW-AND-INT1-BOUNDED-AUTHORIZATION-01 | Coordination reviewed INT0 docs-only commit 71ae3e9605496f6e6a986e9daa1d3e7c265f624f: inventory accepted with residual; existing PydanticAiInvestigationOrchestrator REUSE/EXTEND, no new agent; DEV isolation is mandatory before Qwen14B live evaluation; INT1 minimal investigation rework authorized conditionally, no prod/T3/INT2. | INT0=ACCEPT_WITH_RESIDUAL; INT1=AUTHORIZED_BOUNDED_CONDITIONAL; NEXT=T2_INT1_LOCAL_ISOLATION_AND_INVESTIGATIVE_REWORK |
+
+### INT-0 review and INT-1 conditional decision — 2026-11-10
+
+- **REVIEW_SHA:** `71ae3e9605496f6e6a986e9daa1d3e7c265f624f`. No INT-1 code implemented at that SHA. **INT0_VERDICT=ACCEPT_WITH_RESIDUAL**.
+- **REUSE:** Pydantic AI 2.50.0 Agent + MCPToolset + ModelRetry + existing governed invocation and InvestigationAnswer. `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND` limited to existing investigation runtime; no second Agent/engine/planner.
+- **Conditional authorization:** trace and fix selection/progress/recovery/discovery tagging in investigation scope; preserve App final Outcome responsibility, avoid compulsory plan/tool calls for trivial turns and provider-name shortcuts.
+- **Isolation blocker:** compose.dev shares `container_name: delpi-delia-api`; Qwen live tests only if separate local runtime can be proven non-production without touching/restarting production, otherwise `TEST_NOT_RUN`.
+- **NEXT:** `T2_INT1_LOCAL_ISOLATION_AND_INVESTIGATIVE_REWORK`; focused RED/GREEN + metamorphic and local live if safe. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`, `T3=NOT_AUTHORIZED`, `INT2=NOT_AUTHORIZED`. T2 functional status remains REWORK.
