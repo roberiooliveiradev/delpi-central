@@ -107,6 +107,13 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 - Os testes foram apenas leituras locais; **não existe comprovação de coleta automatizada integrada ao Portal de TI**. Recomendação: verificar containers e labels Compose da rede `inventario-ti_default` e a capacidade Zabbix antes de escolher implementação, sem adicionar acesso/credenciais nem modificar serviços.
 - **Risco operacional observado:** swap totalmente utilizada e disco principal próximo de 83% na amostra anterior; exigir orçamento de recursos, volume, agendamento controlado e fail-safe no piloto.
 
+**E4 / inspeção `inventario-ti_default` (10/11/2026, PROVEN na saída do PO):**
+- Rede Docker `inventario-ti_default` identificada como projeto Compose `inventario-ti` com **dois containers somente**: `inventario-ti-glpi-1` (imagem `glpi/glpi:latest`, running) e `inventario-ti-db-1` (imagem `mysql:9.6`, healthy). Portanto, trata-se de **GLPI e banco**, e não de um coletor de infraestrutura já confirmado. Nenhum agente GLPI Linux foi demonstrado nesse levantamento.
+- O projeto pode ser o GLPI interno da DELPI, conforme o contexto do PO, mas exigem confirmação sua identidade/instância, versão, inventário nativo habilitado, ativos/agents existentes e acesso de API com least privilege. O `latest` da imagem **não comprova versão GLPI instalada**.
+- O `srv-api` tem 16 CPUs lógicas via `nproc`, Zabbix Agent 2 v7.0.23 operante; a chave local `system.cpu.num` permaneceu inconclusiva. Não transformar essa exceção em bloqueio para inventário.
+- **Gate seguinte somente leitura:** inspeção no GLPI interno pela UI (versão, Administração > Inventário, Ativos > Computadores e agentes/últimas coletas), sem instalar agente, executar varredura ou editar configuração. Depois decidir `EXISTING_EQUIVALENT`/`REUSE_DECISION` para a coleta do Linux e a integração autorizada GLPI → Portal de TI.
+- Modelo proposto (TARGET, ainda não decidido): GLPI interno como possível fonte de **observações** de hardware/software via agente; Portal de TI preserva cadastro e relações curadas, reconciliando por identidade estável, com trilha de proveniência e aprovação de divergências. Não presumir vínculo direto ao MySQL do GLPI.
+
 **Objetivo da E4 (PLANNED):** minimizar o cadastro manual de servidores Windows/Linux e da infraestrutura de rede Sophos, sem criar uma segunda autoridade sobre ativos existentes, nem sobrescrever dados operacionais curados por pessoas.
 
 **Gate inicial (TO_INVENTORY), antes de aprovar contratos/implementação:**
