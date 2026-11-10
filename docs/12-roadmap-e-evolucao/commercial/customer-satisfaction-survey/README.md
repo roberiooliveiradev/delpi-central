@@ -40,7 +40,8 @@ Centralizar a análise da pesquisa de satisfação de clientes solicitada pelo C
 
 - [OPEN-DECISIONS.md](./OPEN-DECISIONS.md) — histórico das decisões tomadas com o solicitante; consultar apenas a questão vinculada ao requisito em análise.
 - **Plano de Monitoramento da Satisfação dos Clientes — Delpi** — documento integral está nas fontes do projeto, não copiado para esta pasta do GitHub. As seções 1–10 são a fonte de negócio; o índice cita as páginas pertinentes.
-- Arquivos técnicos de detalhe devem ser criados **somente quando necessários** para uma frente concreta e vinculados ao ID correspondente no índice.
+- [BACKEND-API-PROPOSAL.md](./BACKEND-API-PROPOSAL.md) — proposta técnica de rotas REST, persistência e ampliação semântica do CAIO; **ainda não aprovada para implementação**.
+- Outros arquivos técnicos de detalhe devem ser criados **somente quando necessários** para uma frente concreta e vinculados ao ID correspondente no índice.
 
 ## Situação e limites
 
