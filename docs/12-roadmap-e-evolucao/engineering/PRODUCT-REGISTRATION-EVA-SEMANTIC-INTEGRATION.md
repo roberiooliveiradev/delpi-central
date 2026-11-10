@@ -1,5 +1,7 @@
 # Product Registration — plano de paridade EVA por ações semânticas
 
+> **Decisão funcional superveniente PRC-REF-022 (2026-11-10):** fluxo único Enviada → Em atendimento ⇄ Devolvida para correção → Concluída, editor compartilhado create/read/edit. O adendo REF-022 ao final deste documento prevalece sobre fluxos legados contraditórios. `PO_APPROVED_TARGET / PLANNED` (não é implementação).
+
 > **2026-11-06 | Status:** `TARGET / DESIGN_SPECIFIED / IMPLEMENTATION_NOT_STARTED`
 > **Evidência de integração:** `engineering-api/engineering_app/application/eva/semantic_registry.py`, `engineering-api/engineering_app/interface/mcp/semantic_bridge.py`, `engineering-api/engineering_app/interface/mcp/tool_bridge.py`, `engineering-api/engineering_app/interface/mcp/server.py`.
 > **Base funcional:** [PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md](./PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md).
@@ -245,3 +247,7 @@ A ação semântica `product_registration.verify_and_complete` continua a única
 **Fail-closed sem exceção:** qualquer \`MISMATCH\`, \`UNVERIFIABLE\`, \`NOT_FOUND\`, leitura parcial/ambígua, \`FORBIDDEN\`, timeout, erro de contrato, CAS stale, integridade ou owner gate pendente bloqueia \`completed\` e revisão publicada. CREATE exige código real após cadastro manual; UPDATE usa código imutável/baseline. Sem escrita TOTVS. Proveniência CREATE \`PENDING_OWNER\`; SA5 REMOVE gate intacto; REF-019/D16 preservados.
 
 **Paridade/testes:** REST/EVA positivos e negativos cobertos no SHA de entrega; deploy somente DEV. Contrato: [PRC-REF-020](./PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md#prc-ref-020--contrato-normativo-concluir-com-verificacao-oficial-em-uma-acao-po-2026-11-09).
+
+## PRC-REF-022 — Paridade EVA com devolução e edição restrita (PO 2026-11-10)
+
+**\`PO_APPROVED_TARGET / PLANNED\`; não implementado por este registro.** O workflow alvo é \`submitted → in_progress ⇄ needs_correction → completed\` (+ \`rejected\` terminal). EVA/REST/Portal consomem **os mesmos Application Use Cases** governados para devolução por campo, leitura do pedido de correção, retorno do solicitante e conclusão oficial. Manter as seis ferramentas MCP existentes; PREPARE/ACT + confirmação para ações com efeitos, live AuthZ, CAS, idempotência, logs sem secretos e audit trail. EVA **não altera a ficha em nome do requester** com base em respostas textuais e não pode decidir permissões; para a escrita feita pelo solicitante, o canal humano autorizado deve usar a superfície oficial, não agente com provider scope. Textos e razões do requester são dados não confiáveis. A edição restrita requer contrato Core aprovado e objeto seguro, sem assumir \`engineering.access\`. \`needs_information\` e seus ciclos REF-019 permanecem históricos/compatíveis, sem apagar eventos ou tabelas. Nenhuma escrita ERP, criação de 7ª tool, source of truth EVA, mudança de owner ou bypass REF-020.
