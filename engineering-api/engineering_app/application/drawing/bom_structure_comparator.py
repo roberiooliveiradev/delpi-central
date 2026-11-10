@@ -23,6 +23,7 @@ a Engenharia permanece autoridade de aprovação e NC.
 from __future__ import annotations
 
 import re
+from collections import Counter
 from typing import Any
 
 _CODE_IN_TEXT_RE = re.compile(r"\d{8,11}")
@@ -254,7 +255,16 @@ def _drawing_occurrences(
             for k, v in row_col_types.items()
             if v == "component_code" and str(k).lstrip("-").isdigit()
         )
-        set_col = code_typed_cols[0] if len(code_typed_cols) >= 2 else None
+        parent_typed_cols = sorted(
+            int(k)
+            for k, v in row_col_types.items()
+            if v == "parent_code" and str(k).lstrip("-").isdigit()
+        )
+        set_col = (
+            parent_typed_cols[0]
+            if parent_typed_cols
+            else (code_typed_cols[0] if len(code_typed_cols) >= 2 else None)
+        )
         page = _row_page(row)
         if page != last_page:
             current_parent = None
@@ -290,12 +300,27 @@ def _drawing_occurrences(
         ]
         if len(row_sets) == 1:
             current_parent = row_sets[0]
+        # Vínculo pai já observado pelo Understanding (âncora de
+        # rowspan/coluna) tem precedência sobre a rederivação por
+        # coluna/prefixo — uma única fonte para o parentesco visual.
+        row_group = row.get("parent_group_candidate")
+        row_group_source = row.get("parent_group_source")
         for code in codes:
             item_type = _infer_item_type(code)
             cols = code_cols.get(code) or set()
             other_anchors = [a for a in row_anchors if a != code]
             other_sets = [s for s in row_sets if s != code]
-            if set_col is not None and code in set_codes:
+            if row_group and code == row_group:
+                # A linha é a âncora do grupo — seu pai não é
+                # determinado por esta tabela.
+                parent = None
+                parent_source = "set_parent"
+                verified = False
+            elif row_group:
+                parent = row_group
+                parent_source = row_group_source or "group_anchor"
+                verified = True
+            elif set_col is not None and code in set_codes:
                 # Código na coluna de conjuntos de tabela multi-coluna:
                 # é PAI dos itens da linha — seu próprio pai não é
                 # determinado por esta tabela. Nunca âncora de raiz
@@ -1763,4 +1788,345 @@ def _occurrence_page(
     return None
 
 
-__all__ = ["compare_bom_to_drawing"]
+def _occ_brief(occ: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "component_code": occ.get("component_code"),
+        "parent_code": occ.get("parent_code"),
+        "parent_state": occ.get("parent_state"),
+        "item": occ.get("item"),
+        "quantity": occ.get("quantity"),
+        "drawing_level": occ.get("drawing_level"),
+        "level_basis": occ.get("level_basis"),
+        "page": occ.get("page"),
+        "row": occ.get("row"),
+        "state": occ.get("state"),
+        "uncertainty": occ.get("uncertainty") or [],
+    }
+
+
+def align_structure_to_drawing(
+    *,
+    official_occurrences: list[dict[str, Any]] | None,
+    drawing_occurrences: list[dict[str, Any]] | None,
+    coverage_comparable: bool | None = None,
+    revision_comparable: bool | None = None,
+    quantity_comparable: bool | None = None,
+) -> dict[str, Any]:
+    """Alinhamento bidirecional candidato — aresta oficial ×
+    ocorrência observada (preparação G5/G6, fixtures controladas).
+
+    Sentido 1 (estrutura → desenho): cada aresta oficial pai→filho
+    procura representação observada. Sentido 2 (desenho → estrutura):
+    cada ocorrência observada com pai comprovado procura aresta
+    oficial equivalente. Ausência só vira conflito quando cobertura e
+    revisão são comprovadas comparáveis; quantidade só se compara com
+    semântica de unidade provada — caso contrário UNKNOWN /
+    NOT_COMPARABLE. Função pura: não consulta Totus, não publica
+    findings oficiais e não muta nada.
+    """
+    limitations: list[str] = []
+    counts: dict[str, int] = {
+        "match_candidate": 0,
+        "conflict_candidate": 0,
+        "unknown": 0,
+        "not_comparable": 0,
+        "drawing_only_candidates": 0,
+    }
+    if official_occurrences is None or drawing_occurrences is None:
+        return {
+            "status": "NOT_COMPARABLE",
+            "alignments": [],
+            "summary": dict(counts),
+            "limitations": ["side_missing: uma das representações "
+                            "não foi fornecida"],
+        }
+    if coverage_comparable is not True:
+        limitations.append(
+            "drawing_coverage_not_proven: ausência não vira conflito"
+        )
+    if revision_comparable is not True:
+        limitations.append(
+            "revision_binding_not_proven: divergências e ausências "
+            "permanecem UNKNOWN"
+        )
+    if quantity_comparable is not True:
+        limitations.append(
+            "quantity_semantics_not_proven: quantidade/UM não "
+            "comparada"
+        )
+    conflicts_allowed = revision_comparable is True
+    absence_allowed = (
+        coverage_comparable is True and revision_comparable is True
+    )
+    by_edge: dict[tuple, list[int]] = {}
+    by_child: dict[str, list[int]] = {}
+    for i, o in enumerate(drawing_occurrences):
+        child = str(o.get("component_code") or "")
+        if not child:
+            continue
+        by_child.setdefault(child, []).append(i)
+        if (
+            o.get("parent_state") == "IDENTIFIED"
+            and o.get("parent_code")
+        ):
+            by_edge.setdefault(
+                (str(o["parent_code"]), child), []
+            ).append(i)
+    official_edge_count: Counter = Counter()
+    for e in official_occurrences:
+        official_edge_count[
+            (str(e.get("parent_code")), str(e.get("component_code")))
+        ] += 1
+    alignments: list[dict[str, Any]] = []
+    matched_obs: set[int] = set()
+    for e in official_occurrences:
+        parent = str(e.get("parent_code") or "")
+        child = str(e.get("component_code") or "")
+        if not child:
+            continue
+        level = e.get("depth") if e.get("depth") is not None else e.get(
+            "bom_level"
+        )
+        rec: dict[str, Any] = {
+            "official": {
+                "parent_code": parent,
+                "component_code": child,
+                "level": level,
+                "quantity": e.get("quantity_raw"),
+                "unit": e.get("unit_raw"),
+            },
+            "observed": [],
+            "aspects": [],
+            "result": None,
+        }
+        hits = by_edge.get((parent, child), [])
+        same_child = by_child.get(child, [])
+        if hits:
+            matched_obs.update(hits)
+            rec["observed"] = [
+                _occ_brief(drawing_occurrences[i]) for i in hits
+            ]
+            expected_n = official_edge_count[(parent, child)]
+            if len(hits) != expected_n:
+                rec["aspects"].append(
+                    {
+                        "aspect": "multiplicity",
+                        "result": "CONFLICT_CANDIDATE",
+                        "finding": "OCCURRENCE_MULTIPLICITY_MISMATCH",
+                        "official": expected_n,
+                        "observed": len(hits),
+                    }
+                )
+            rec["aspects"].append(
+                {"aspect": "parent_child", "result": "MATCH_CANDIDATE"}
+            )
+            observed_level = next(
+                (
+                    drawing_occurrences[i].get("drawing_level")
+                    for i in hits
+                    if drawing_occurrences[i].get("drawing_level")
+                    is not None
+                ),
+                None,
+            )
+            if level is None or observed_level is None:
+                rec["aspects"].append(
+                    {
+                        "aspect": "level",
+                        "result": "NOT_COMPARABLE",
+                        "reason": "level_not_proven_on_one_side",
+                    }
+                )
+            elif int(level) == int(observed_level):
+                rec["aspects"].append(
+                    {"aspect": "level", "result": "MATCH_CANDIDATE"}
+                )
+            else:
+                rec["aspects"].append(
+                    {
+                        "aspect": "level",
+                        "result": (
+                            "CONFLICT_CANDIDATE"
+                            if conflicts_allowed
+                            else "UNKNOWN"
+                        ),
+                        "finding": (
+                            "LEVEL_MISMATCH"
+                            if conflicts_allowed
+                            else None
+                        ),
+                        "official": level,
+                        "observed": observed_level,
+                    }
+                )
+            if quantity_comparable is not True:
+                rec["aspects"].append(
+                    {"aspect": "quantity", "result": "NOT_COMPARABLE"}
+                )
+            else:
+                rec["aspects"].append(
+                    {
+                        "aspect": "quantity",
+                        "result": (
+                            "MATCH_CANDIDATE"
+                            if str(e.get("quantity_raw"))
+                            == str(
+                                drawing_occurrences[hits[0]].get(
+                                    "quantity"
+                                )
+                            )
+                            else "CONFLICT_CANDIDATE"
+                        ),
+                    }
+                )
+            rec["result"] = (
+                "CONFLICT_CANDIDATE"
+                if any(
+                    a["result"] == "CONFLICT_CANDIDATE"
+                    for a in rec["aspects"]
+                )
+                else "MATCH_CANDIDATE"
+            )
+        elif same_child:
+            proven = [
+                i
+                for i in same_child
+                if drawing_occurrences[i].get("parent_state")
+                == "IDENTIFIED"
+            ]
+            if proven:
+                matched_obs.update(proven)
+                rec["observed"] = [
+                    _occ_brief(drawing_occurrences[i]) for i in proven
+                ]
+                if conflicts_allowed:
+                    rec["result"] = "CONFLICT_CANDIDATE"
+                    rec["aspects"].append(
+                        {
+                            "aspect": "parent_child",
+                            "result": "CONFLICT_CANDIDATE",
+                            "finding": "PARENT_RELATION_MISMATCH",
+                        }
+                    )
+                else:
+                    rec["result"] = "UNKNOWN"
+                    rec["aspects"].append(
+                        {
+                            "aspect": "parent_child",
+                            "result": "UNKNOWN",
+                            "reason": "parent_divergence_unproven",
+                        }
+                    )
+            else:
+                rec["result"] = "UNKNOWN"
+                rec["aspects"].append(
+                    {
+                        "aspect": "parent_child",
+                        "result": "UNKNOWN",
+                        "reason": "observed_parent_not_proven",
+                    }
+                )
+        else:
+            if absence_allowed:
+                rec["result"] = "CONFLICT_CANDIDATE"
+                rec["aspects"].append(
+                    {
+                        "aspect": "presence",
+                        "result": "CONFLICT_CANDIDATE",
+                        "finding": "BOM_ONLY",
+                    }
+                )
+            else:
+                rec["result"] = "UNKNOWN"
+                rec["aspects"].append(
+                    {
+                        "aspect": "presence",
+                        "result": "UNKNOWN",
+                        "reason": "absence_unproven",
+                    }
+                )
+        key = rec["result"].lower()
+        if key in counts:
+            counts[key] += 1
+        alignments.append(rec)
+    extras: list[dict[str, Any]] = []
+    official_children = {
+        str(e.get("component_code"))
+        for e in official_occurrences
+    }
+    for i, o in enumerate(drawing_occurrences):
+        child = str(o.get("component_code") or "")
+        if not child or child not in official_children:
+            if (
+                o.get("parent_state") != "IDENTIFIED"
+                or o.get("state") == "INCONCLUSIVE"
+            ):
+                continue
+            if child not in official_children:
+                if conflicts_allowed:
+                    extras.append(
+                        {
+                            "result": "CONFLICT_CANDIDATE",
+                            "finding": "DRAWING_ONLY",
+                            "observed": _occ_brief(o),
+                        }
+                    )
+                else:
+                    extras.append(
+                        {
+                            "result": "UNKNOWN",
+                            "reason": "extra_unproven",
+                            "observed": _occ_brief(o),
+                        }
+                    )
+        elif i not in matched_obs:
+            if o.get("parent_state") != "IDENTIFIED":
+                continue
+            if conflicts_allowed:
+                extras.append(
+                    {
+                        "result": "CONFLICT_CANDIDATE",
+                        "finding": "DRAWING_ONLY",
+                        "reason": "occurrence_under_other_parent",
+                        "observed": _occ_brief(o),
+                    }
+                )
+            else:
+                extras.append(
+                    {
+                        "result": "UNKNOWN",
+                        "reason": "extra_unproven",
+                        "observed": _occ_brief(o),
+                    }
+                )
+    counts["drawing_only_candidates"] = sum(
+        1 for x in extras if x.get("finding") == "DRAWING_ONLY"
+    )
+    counts["conflict_candidate"] += sum(
+        1 for x in extras if x["result"] == "CONFLICT_CANDIDATE"
+    )
+    counts["unknown"] += sum(
+        1 for x in extras if x["result"] == "UNKNOWN"
+    )
+    if counts["conflict_candidate"]:
+        status = "DIVERGENCES_CANDIDATES"
+    elif not alignments and not extras:
+        status = "NOT_COMPARABLE"
+    elif counts["match_candidate"] == 0:
+        status = "INCONCLUSIVE"
+    elif counts["unknown"]:
+        status = "INCONCLUSIVE"
+    else:
+        status = "MATCH_CANDIDATE"
+    return {
+        "status": status,
+        "alignments": alignments,
+        "drawing_extra_occurrences": extras,
+        "summary": counts,
+        "limitations": limitations,
+        "review_status": "PENDING_HUMAN_REVIEW",
+        "method": "deterministic_bidirectional_occurrence_align",
+    }
+
+
+__all__ = ["compare_bom_to_drawing", "align_structure_to_drawing"]

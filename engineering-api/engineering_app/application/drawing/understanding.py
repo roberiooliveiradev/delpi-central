@@ -71,7 +71,7 @@ _TABLE_HEADER_LABELS = frozenset(
         "item", "cod", "cod.", "código", "codigo",
         "descrição", "descricao", "descr", "qtd",
         "qtde", "quant", "unid", "un", "componente",
-        "obs", "pi", "mp", "ref", "ref.",
+        "obs", "pi", "mp", "ref", "ref.", "cabo",
     }
 )
 _REVHIST_LABELS = frozenset(
@@ -92,6 +92,7 @@ _HEADER_TYPE_MAP = {
     "pi": "component_code", "mp": "component_code",
     "ref": "reference", "descrição": "description",
     "descricao": "description", "descr": "description",
+    "cabo": "cable",
     "obs": "note",
 }
 _REV_LABEL_RE = re.compile(r"^REV\.?:?$", re.IGNORECASE)
@@ -947,6 +948,14 @@ def _structure_table(
             ),
         }
         rows_out.append(typed)
+    # Perfil DELPI também no caminho token-cluster: papéis por
+    # evidência de conteúdo (sem item_band — pivô esparso×denso).
+    _assign_presentation_roles(
+        [c for r in rows_out for c in r["cells"]],
+        col_types,
+        item_band=None,
+        data_row_count=len(rows_out),
+    )
     return rows_out, ambiguous, col_types
 
 
@@ -1439,6 +1448,11 @@ def build_understanding(
             "confidence": "rule_based",
             "box": list(table["box"]) if table and table.get("box") else None,
             "topology_source": "token_cluster",
+            "structure_occurrences": drawing_structure_occurrences(
+                table_rows,
+                product_code=product_code,
+                document_hash=document_hash,
+            ),
         },
         "identifier_candidates": fields,
         "code_contexts": code_contexts,
@@ -1610,6 +1624,11 @@ def build_document_understanding(
         "detection": "code_column_cluster + row_y_proximity (per page)",
         "confidence": "rule_based",
         "topology_source": "token_cluster",
+        "structure_occurrences": drawing_structure_occurrences(
+            rows_all,
+            product_code=product_code,
+            document_hash=document_hash,
+        ),
     }
 
     out: dict[str, Any] = {
@@ -1927,8 +1946,162 @@ def _role_band(xs: list[float], pad: float = 12.0):
     return (min(core) - pad, max(core) + pad)
 
 
+# Perfil de apresentação DELPI — papéis semânticos das colunas de uma
+# tabela de estrutura de produto (EVA VAL-01 / Doc 116 §B.9). O bloco
+# do pai (código + descrição esparsos) fica à esquerda do bloco de
+# ocorrências (item/quantidade/componente/descrição, denso). O perfil
+# orienta a interpretação — a geometria SLANet/OCR continua sendo a
+# evidência de linhas, colunas e spans; sem prova, nenhum papel é
+# atribuído.
+DELPI_TABLE_PRESENTATION = {
+    "profile_id": "delpi_structure_table",
+    "parent_roles": ("parent_code", "parent_description"),
+    "occurrence_roles": (
+        "item", "quantity", "component_code", "description",
+    ),
+    "optional_roles": ("cable", "unit", "reference", "note"),
+}
+
+_PARENT_ROLES = frozenset({"parent_code", "parent_description"})
+
+
+def _cell_text(c: dict) -> str:
+    return _norm(
+        str(
+            c["_split_text"]
+            if c.get("_split_done")
+            else (c.get("text") or "")
+        )
+    )
+
+
+def _col_median_cx(cells: list[dict], col: int) -> float | None:
+    xs = [
+        cx
+        for c in cells
+        if int(c.get("col") or 0) == col
+        for cx in [_cell_cx(c)]
+        if cx is not None
+    ]
+    if not xs:
+        return None
+    xs.sort()
+    return xs[len(xs) // 2]
+
+
+def _assign_presentation_roles(
+    cells: list[dict],
+    col_types: dict[int, str],
+    *,
+    item_band: tuple[float, float] | None,
+    data_row_count: int,
+) -> dict | None:
+    """Atribui papéis do perfil DELPI às colunas tipadas.
+
+    A coluna de código do **pai** é comprovada pela mesma evidência
+    que a âncora esparsa já exigia: ≥2 células lideradas por código,
+    materialmente menos densa que a coluna de componentes e posicionada
+    no bloco do pai (à esquerda da banda de item quando presente, senão
+    à esquerda da coluna densa). Descrição no mesmo bloco vira
+    ``parent_description``. Sem essa prova, ``col_types`` permanece e
+    o chamador se abstém do papel — o perfil não inventa posição.
+    """
+    if data_row_count < 4:
+        return None
+    codes_by_col: dict[int, list[tuple[float | None, dict]]] = {}
+    stats: dict[int, Counter] = {}
+    for c in cells:
+        col = int(c.get("col") or 0)
+        text = _cell_text(c)
+        if not text:
+            continue
+        st = stats.setdefault(col, Counter())
+        st["total"] += 1
+        if _GROUP_CODE_RE.match(text):
+            st["codes"] += 1
+            if int(c.get("rowspan") or 1) > 1:
+                st["code_rowspans"] += 1
+            codes_by_col.setdefault(col, []).append((_cell_cx(c), c))
+        elif _cell_role(text) == "description":
+            st["descriptions"] += 1
+    if not codes_by_col:
+        return None
+    counts = {col: len(v) for col, v in codes_by_col.items()}
+    densest_n = max(counts.values())
+    if densest_n < 3:
+        return None
+    dense_cols = [c for c, n in counts.items() if n == densest_n]
+    dense_xs = [
+        cx
+        for dc in dense_cols
+        for cx, _c in codes_by_col[dc]
+        if cx is not None
+    ]
+    densest_mid = (
+        sorted(dense_xs)[len(dense_xs) // 2] if dense_xs else None
+    )
+    item_mid = (
+        (item_band[0] + item_band[1]) / 2.0 if item_band else None
+    )
+    parent_col = None
+    pivot = None
+    for col in sorted(counts):
+        if col in dense_cols:
+            continue
+        n = counts[col]
+        # ≥2 âncoras provam esparsidade; uma única âncora rowspan
+        # declarada pelo SLANet também é prova de bloco pai.
+        if n < 2 and not stats[col]["code_rowspans"]:
+            continue
+        if n >= max(3, int(0.45 * data_row_count)):
+            continue
+        if densest_n < n + 2 or densest_mid is None:
+            continue
+        sparse_xs = [
+            cx for cx, _c in codes_by_col[col] if cx is not None
+        ]
+        if not sparse_xs:
+            continue
+        sparse_mid = sorted(sparse_xs)[len(sparse_xs) // 2]
+        if item_mid is not None:
+            if sparse_mid >= item_mid - 4.0:
+                continue
+            pivot = "item_band"
+        else:
+            if sparse_mid >= densest_mid - 8.0:
+                continue
+            pivot = "sparse_dense_columns"
+        parent_col = col
+        break
+    if parent_col is None:
+        return None
+    col_types[parent_col] = "parent_code"
+    parent_mid = _col_median_cx(cells, parent_col)
+    ref_right = item_mid if item_mid is not None else densest_mid
+    parent_desc_cols: list[int] = []
+    for col, st in sorted(stats.items()):
+        if col == parent_col or col in dense_cols or st["codes"]:
+            continue
+        if not st["descriptions"]:
+            continue
+        mid = _col_median_cx(cells, col)
+        if mid is None or parent_mid is None or ref_right is None:
+            continue
+        if parent_mid - 4.0 <= mid < ref_right - 4.0:
+            col_types[col] = "parent_description"
+            parent_desc_cols.append(col)
+    return {
+        "profile_id": DELPI_TABLE_PRESENTATION["profile_id"],
+        "parent_code_col": parent_col,
+        "parent_description_cols": parent_desc_cols,
+        "component_code_cols": sorted(dense_cols),
+        "pivot": pivot,
+        "confidence": "rule_based",
+    }
+
+
 def rows_from_native_cells(
-    cells: list[dict], *, page: int
+    cells: list[dict], *, page: int, profile_out: dict | None = None
 ) -> tuple[list[dict], dict[str, str]]:
     """Linhas do Understanding a partir da grade nativa.
 
@@ -2234,10 +2407,24 @@ def rows_from_native_cells(
             if r and cx is not None:
                 role_x.setdefault(r, []).append(cx)
     role_bands = {r: _role_band(xs) for r, xs in role_x.items()}
+    # Perfil DELPI (VAL-01): papéis de coluna por evidência de conteúdo
+    # + posição relativa — pai esparso à esquerda do item, componente
+    # denso à direita. Sem prova suficiente a tipagem atual permanece.
+    data_row_indices = sorted(
+        i for i in grouped if i != header_row
+    )
+    profile_meta = _assign_presentation_roles(
+        [c for ri in data_row_indices for c in grouped[ri]],
+        col_types,
+        item_band=role_bands.get("item"),
+        data_row_count=len(data_row_indices),
+    )
+    if isinstance(profile_out, dict) and profile_meta:
+        profile_out.update(profile_meta)
     # Âncoras de grupo: célula rowspan>1 iniciando por código longo.
     # Linhas abaixo herdam a âncora vigente; sobreposição resolve-se
     # pela âncora mais recente (subconjunto aninhado).
-    group_anchors: list[tuple[int, str, int]] = []
+    group_anchors: list[tuple[int, str, int, str]] = []
     group_anchor_ids: set[int] = set()
     group_y_anchors: list[tuple[float, str]] = []
 
@@ -2253,9 +2440,9 @@ def rows_from_native_cells(
         return _cell_cy(cell)
 
     def _register_group_anchor(
-        row_index: int, code: str, span: int, cell: dict
+        row_index: int, code: str, span: int, cell: dict, source: str
     ) -> None:
-        group_anchors.append((row_index, code, span))
+        group_anchors.append((row_index, code, span, source))
         group_anchor_ids.add(id(cell))
         cy = _group_anchor_cy(cell)
         if cy is not None:
@@ -2272,89 +2459,43 @@ def rows_from_native_cells(
             )
             if m:
                 _register_group_anchor(
-                    row_index, m.group(1), int(c.get("rowspan") or 1), c
+                    row_index, m.group(1), int(c.get("rowspan") or 1), c,
+                    "rowspan_anchor",
                 )
-    # Coluna esparsa de códigos puros (rowspan perdido pelo SLANet):
-    # cada código puro ancora até o próximo código puro da mesma
-    # coluna quando a coluna é materialmente mais esparsa que outra
-    # coluna de códigos ou que a densidade de itens.
-    data_row_indices = sorted(
-        i for i in grouped if i != header_row
+    # Âncora por papel de coluna (perfil DELPI): célula liderada por
+    # código na coluna tipada ``parent_code`` ancora até a próxima
+    # âncora da mesma coluna (span explícito do rowspan quando >1).
+    # A prova de esparsa×densa e posição já foi feita por
+    # ``_assign_presentation_roles`` — aqui só se lê o papel.
+    parent_code_cols = sorted(
+        int(c) for c, t in col_types.items() if t == "parent_code"
     )
-    if len(data_row_indices) >= 4:
-        pure_by_col: dict[int, list[tuple[int, str, dict]]] = {}
-        item_row_n = 0
+    for pcol in parent_code_cols:
+        entries: list[tuple[int, str, dict]] = []
         for row_index in data_row_indices:
-            has_item = False
             for c in grouped[row_index]:
-                text = _norm(
-                    str(
-                        c.get("_split_text")
-                        if c.get("_split_done")
-                        else (c.get("text") or "")
-                    )
-                )
-                if _ITEM_IDENT_RE.fullmatch(text) or _ITEM_QTY_RE.fullmatch(
-                    text
-                ):
-                    has_item = True
-                if not _CODE_RE.match(text):
-                    continue
-                if int(c.get("rowspan") or 1) > 1:
+                if int(c.get("col") or 0) != pcol:
                     continue
                 if id(c) in group_anchor_ids:
                     continue
-                pure_by_col.setdefault(
-                    int(c.get("col") or 0), []
-                ).append((row_index, text, c))
-            if has_item:
-                item_row_n += 1
-        densest = max(
-            (len(v) for v in pure_by_col.values()), default=0
-        )
-        denser_cols = [
-            c for c, ents in pure_by_col.items()
-            if len(ents) >= densest and densest >= 3
-        ]
-        denser_x = []
-        for dc in denser_cols:
-            for _ri, _code, cell in pure_by_col[dc]:
-                cx = _cell_cx(cell)
-                if cx is not None:
-                    denser_x.append(cx)
-        denser_mid = (
-            sorted(denser_x)[len(denser_x) // 2] if denser_x else None
-        )
-        for _col, entries in pure_by_col.items():
-            if len(entries) < 2:
-                continue
-            if len(entries) >= max(3, int(0.45 * len(data_row_indices))):
-                continue
-            # Exige coluna de componentes mais densa à direita — evita
-            # promover códigos densos de peça a âncora de grupo.
-            if densest < len(entries) + 2 or denser_mid is None:
-                continue
-            sparse_x = [
-                cx
-                for cx in (_cell_cx(cell) for _ri, _c, cell in entries)
-                if cx is not None
-            ]
-            if not sparse_x:
-                continue
-            sparse_mid = sorted(sparse_x)[len(sparse_x) // 2]
-            if sparse_mid >= denser_mid - 8.0:
-                continue
-            ordered = sorted(entries, key=lambda e: e[0])
-            for i, (row_index, code, cell) in enumerate(ordered):
+                m = _GROUP_CODE_RE.match(_cell_text(c))
+                if m:
+                    entries.append((row_index, m.group(1), c))
+        entries.sort(key=lambda e: e[0])
+        for i, (row_index, code, cell) in enumerate(entries):
+            span = int(cell.get("rowspan") or 1)
+            if span <= 1:
                 next_row = (
-                    ordered[i + 1][0]
-                    if i + 1 < len(ordered)
+                    entries[i + 1][0]
+                    if i + 1 < len(entries)
                     else (data_row_indices[-1] + 1)
                 )
                 span = int(next_row) - int(row_index)
-                if span < 2:
-                    continue
-                _register_group_anchor(row_index, code, span, cell)
+            if span < 2:
+                continue
+            _register_group_anchor(
+                row_index, code, span, cell, "column_span",
+            )
     group_anchors.sort()
     group_y_anchors.sort(key=lambda a: a[0])
     # Passo mediano entre linhas — escala para decidir se dois campos
@@ -2451,8 +2592,12 @@ def rows_from_native_cells(
             if not text:
                 continue
             role = _cell_role(text)
-            group_context = id(cell) in group_anchor_ids or (
-                _is_group_description_context(
+            parent_role = col_types.get(col)
+            parent_col_cell = parent_role in _PARENT_ROLES
+            group_context = (
+                parent_col_cell
+                or id(cell) in group_anchor_ids
+                or _is_group_description_context(
                     cell,
                     text,
                     role,
@@ -2461,9 +2606,10 @@ def rows_from_native_cells(
                 )
             )
             if group_context:
-                # Contexto de grupo não entra na tupla do componente.
+                # Contexto de grupo não entra na tupla do componente —
+                # o papel do bloco pai permanece como evidência.
                 role = None
-                kind = None
+                kind = parent_role if parent_col_cell else None
             elif role:
                 band = role_bands.get(role)
                 cx = _cell_cx(cell)
@@ -2617,9 +2763,11 @@ def rows_from_native_cells(
         # Y está materialmente mais perto, corrige a herança — sem
         # trocar filhos que já estão acima do rótulo do próprio grupo.
         group = None
-        for arow, acode, aspan in group_anchors:
+        group_source = None
+        for arow, acode, aspan, asource in group_anchors:
             if arow <= row_index < arow + aspan:
                 group = acode
+                group_source = asource
         row_cy_val = None
         for kind in ("item", "component_code", "quantity"):
             cy = (fields.get(kind) or {}).get("source_cy_px")
@@ -2642,6 +2790,7 @@ def rows_from_native_cells(
             )
             if group is None:
                 group = nearest_code
+                group_source = "y_anchor_nearest"
             elif nearest_code != group:
                 span_cy = next(
                     (cy for cy, code in group_y_anchors if code == group),
@@ -2654,6 +2803,7 @@ def rows_from_native_cells(
                     < abs(span_cy - row_cy_val)
                 ):
                     group = nearest_code
+                    group_source = "y_anchor_correction"
         rows_out.append(
             {
                 "row": row_index,
@@ -2663,6 +2813,7 @@ def rows_from_native_cells(
                 "conflicting_fields": conflicting_fields,
                 "col_types": {str(k): v for k, v in col_types.items()},
                 "parent_group_candidate": group,
+                "parent_group_source": group_source,
                 "association_conflict": bool(conflicting_fields),
                 "band_detached": any(
                     c.get("_detached_band") for c in row_cells
@@ -2687,6 +2838,158 @@ def rows_from_native_cells(
         )
     _rehome_across_bands(rows_out, band_gap_px)
     return rows_out, {str(k): v for k, v in col_types.items()}
+
+
+def _derive_occurrence_paths(
+    occs: list[dict], *, product_code: str | None = None
+) -> None:
+    """Caminho e nível visual por ocorrência — só arestas provadas.
+
+    Sobe a cadeia pai→filho observada: o topo é ``product_code``
+    (``chain_to_product_code``) ou um código que só aparece como pai
+    (``visual_root_candidate``). Cadeia incompleta, ambígua ou cíclica
+    deixa ``drawing_level=None`` — nunca copia nível de outra fonte.
+    """
+    parents_by_child: dict[str, set[str]] = {}
+    child_codes: set[str] = set()
+    for o in occs:
+        child_codes.add(o["component_code"])
+        if o["parent_state"] == "IDENTIFIED":
+            parents_by_child.setdefault(
+                o["component_code"], set()
+            ).add(o["parent_code"])
+    for o in occs:
+        path = [o["component_code"]]
+        seen = {o["component_code"]}
+        cur = o["parent_code"]
+        ambiguous = False
+        while cur is not None:
+            if cur in seen:
+                o["uncertainty"].append("cycle_detected")
+                ambiguous = True
+                break
+            path.insert(0, cur)
+            seen.add(cur)
+            ups = parents_by_child.get(cur) or set()
+            if len(ups) > 1:
+                o["uncertainty"].append("ambiguous_parent_chain")
+                ambiguous = True
+                break
+            cur = next(iter(ups)) if ups else None
+        o["hierarchy_path"] = path if len(path) > 1 else None
+        if ambiguous:
+            continue
+        top = path[0]
+        if product_code and top == product_code:
+            o["drawing_level"] = len(path) - 1
+            o["level_basis"] = "chain_to_product_code"
+        elif top not in child_codes:
+            o["drawing_level"] = len(path) - 1
+            o["level_basis"] = "visual_root_candidate"
+        elif o["parent_state"] == "IDENTIFIED" or len(path) > 1:
+            o["uncertainty"].append("chain_top_parent_unknown")
+
+
+def drawing_structure_occurrences(
+    rows: list[dict],
+    *,
+    product_code: str | None = None,
+    document_hash: str | None = None,
+) -> list[dict]:
+    """Ocorrências hierárquicas candidatas das linhas da tabela.
+
+    ``produto/conjunto → subconjunto → componente`` conforme comprovado
+    pela observação — sem preencher pai, nível, quantidade ou tipo a
+    partir de fonte oficial. O mesmo código sob pais distintos produz
+    ocorrências distintas: nunca há deduplicação por ``component_code``.
+    """
+    occs: list[dict] = []
+    for row in rows or []:
+        code = None
+        code_field = (row.get("fields") or {}).get("component_code") or {}
+        m = _CODE_FIND_RE.search(
+            str(code_field.get("normalized_value") or "")
+        )
+        if m:
+            code = m.group(0)
+        if not code:
+            for cell in row.get("cells") or []:
+                if cell.get("col_type") != "component_code":
+                    continue
+                m = _CODE_FIND_RE.search(str(cell.get("text") or ""))
+                if m:
+                    code = m.group(0)
+                    break
+        if not code:
+            m = _CODE_FIND_RE.search(str(row.get("component_code") or ""))
+            code = m.group(0) if m else None
+        if not code or code == product_code:
+            continue
+        parent = row.get("parent_group_candidate") or None
+        status = str(row.get("association_status") or "")
+        uncertainty: list[str] = []
+        if status == "INCONCLUSIVE" or row.get("association_conflict"):
+            uncertainty.append("association_conflict")
+        if row.get("band_detached"):
+            uncertainty.append("band_detached")
+        if not parent:
+            uncertainty.append("parent_not_observed")
+        unit = (
+            (row.get("fields") or {}).get("unit") or {}
+        ).get("normalized_value")
+        occs.append(
+            {
+                "occurrence_key": {
+                    "document_sha256": document_hash,
+                    "page": row.get("page"),
+                    "row": row.get("row"),
+                    "item": row.get("item"),
+                    "parent_path": parent or "UNKNOWN",
+                    "component_code": code,
+                },
+                "component_code": code,
+                "parent_code": parent,
+                "parent_state": "IDENTIFIED" if parent else "UNKNOWN",
+                "parent_evidence": row.get("parent_group_source"),
+                "item": row.get("item"),
+                "quantity": row.get("quantity"),
+                "unit": unit,
+                "description": row.get("description"),
+                "page": row.get("page"),
+                "row": row.get("row"),
+                "hierarchy_path": None,
+                "drawing_level": None,
+                "level_basis": None,
+                "state": (
+                    "INCONCLUSIVE" if uncertainty else
+                    "OCCURRENCE_CANDIDATE"
+                ),
+                "uncertainty": uncertainty,
+                "evidence": {
+                    "fields": {
+                        k: {
+                            "bounding_box_px": f.get("bounding_box_px"),
+                            "association_method": f.get(
+                                "association_method"
+                            ),
+                            "association_state": f.get(
+                                "association_state"
+                            ),
+                        }
+                        for k, f in (row.get("fields") or {}).items()
+                        if isinstance(f, dict)
+                    },
+                    "token_refs": [
+                        ref
+                        for c in (row.get("cells") or [])
+                        for ref in (c.get("token_refs") or [])
+                    ],
+                    "topology_source": row.get("topology_source"),
+                },
+            }
+        )
+    _derive_occurrence_paths(occs, product_code=product_code)
+    return occs
 
 
 # Limitações de grade que não invalidam, sozinhas, associações
@@ -2943,9 +3246,14 @@ def apply_native_table_observations(
         ):
             limitations.append("table_perception:structure_without_text")
             continue
+        profile_meta: dict = {}
         native_rows, col_types = rows_from_native_cells(
-            native_cells, page=page
+            native_cells, page=page, profile_out=profile_meta
         )
+        if profile_meta:
+            pp = dict(table.get("presentation_profile") or {})
+            pp[str(page)] = profile_meta
+            table["presentation_profile"] = pp
         if not native_rows:
             limitations.append("table_perception:no_text_rows")
             continue
@@ -2997,6 +3305,11 @@ def apply_native_table_observations(
                 table["col_types"] = col_types
     table["rows"] = rows
     table["row_count"] = len(rows)
+    table["structure_occurrences"] = drawing_structure_occurrences(
+        rows,
+        product_code=understanding.get("product_code"),
+        document_hash=understanding.get("document_hash_sha256"),
+    )
     table["perception_pages"] = sorted(replaced_pages)
     if replaced_pages:
         # Preservação parcial mantém mistura de topologias.

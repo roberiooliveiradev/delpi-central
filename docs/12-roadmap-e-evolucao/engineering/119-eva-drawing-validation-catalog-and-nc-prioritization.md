@@ -2292,3 +2292,34 @@ VAL01_COMPLETED=false
 NO_GENERALIZATION_CLAIM=true
 ```
 
+
+### 63. Implementação — generalização do algoritmo de tabelas de estrutura (2026-11-10)
+
+**TASK_ID:** `EVA-VAL01-G5-GENERALIZED-STRUCTURE-TABLE-REFACTOR`. **Tracker:** Issue #131. **Spec:** `eva-val01-table-bidirectional-algorithm.md` (PR #150, referência — não integrada). **Base:** `f2dd0428ee`. Sem deploy; G6/G7 bloqueados.
+
+**Implementado (capacidades existentes, sem parser/engine/serviço paralelo):**
+
+| Fronteira | Mudança |
+|---|---|
+| `understanding.py` | `DELPI_TABLE_PRESENTATION` (perfil semântico) + `_assign_presentation_roles`: papéis `parent_code`/`parent_description` por evidência esparso×denso e posição relativa ao item (ou à coluna densa). Âncoras de grupo agora dirigidas pelo papel `parent_code` — o bloco `pure_by_col` (detecção esparsa ad hoc + span) foi substituído por uma única decisão de papel (~89→43 linhas). `parent_group_source` por linha (`rowspan_anchor`/`column_span`/`y_anchor_nearest`/`y_anchor_correction`). `profile_out` opcional em `rows_from_native_cells`; `presentation_profile` por página em `apply_native_table_observations`. Header `cabo`→papel `cable` (variante de 7 colunas). `structure_occurrences` projetado em `build_understanding`, `build_document_understanding` e nas linhas finais pós-reconcile — identidade por ocorrência (doc/página/linha/item/pai/filho), `hierarchy_path`, `drawing_level` só quando a cadeia visual é provada (`chain_to_product_code`/`visual_root_candidate`), `uncertainty` explícita. Fallback `_structure_table` recebe a mesma atribuição de papéis. |
+| `bom_structure_comparator.py` | `_drawing_occurrences`: `set_col` agora usa coluna tipada `parent_code` (antes: 1ª de ≥2 colunas de código); `parent_group_candidate`/`parent_group_source` observado pelo Understanding tem precedência sobre rederivação por coluna/prefixo — uma fonte para parentesco visual. Nova função pura `align_structure_to_drawing` (S→D e D→S por aresta/occidência, aspectos `parent_child`/`multiplicity`/`level`/`quantity`, findings `PARENT_RELATION_MISMATCH`/`BOM_ONLY`/`DRAWING_ONLY`/`LEVEL_MISMATCH`/`OCCURRENCE_MULTIPLICITY_MISMATCH`; conflitos só com revisão+cobertura comprovadas; quantidade `NOT_COMPARABLE` sem semântica provada). Não conectada ao runtime/Totus — fixtures apenas (G6 segue `NOT_AUTHORIZED`). |
+
+**Regras geométricas revistas (§4.4):** `_hierarchical_code_pair_crop` (boundary quando connected >70% página — mantido, evidência P12), `_trim_sheet_index_margin` (exclusão de faixa de índices — mantido, família rodapé), `_line_is_canonical_field_band` (split de células fundidas — mantido), `group_anchors`/bandas Y (coerência de campos — mantido), associação por bandas X (item-veto — mantido). Duplicação removida: detecção de coluna-pai existia duas vezes (papel implícito + `pure_by_col`); agora `_assign_presentation_roles` é a única decisão, consumida por âncoras, `col_types` e comparador.
+
+**Testes (RED→GREEN):** `test_eva_val01_presentation_profiles.py` (12 testes — MP direto, multi-MP, PI com filhos, mesmo código 2 pais, pai-que-é-filho, cadeia ambígua, rowspan, multilinha, variante Cabo, colunas reordenadas, escala/posição, qty ausente, abstenção em colunas equilibradas). `test_eva_val01_structure_table_roundtrip.py` (8 testes — round-trip `ExcelStructureBuilder` real via XLSX→células SLANet, perdas de projeção documentadas; alinhamento bidirecional: MATCH, PARENT_RELATION_MISMATCH, BOM_ONLY, DRAWING_ONLY, LEVEL_MISMATCH, abstenção sem cobertura/revisão). **178 passed** (novos + G4 + DEC-040–043 + slanet/perception + comparador + recovery + r8 + architecture + analysis). Raster real (PDFium+OCR+SLANet) e corpus 13 live: `TEST_NOT_RUN` (sem modelos/AuthZ no host local).
+
+```text
+G5_REFACTOR_IMPLEMENTATION=PASS_UNIT_FIXTURE
+PRESENTATION_PROFILE=IMPLEMENTED_CONFIG_SEMANTIC
+DRAWING_OCCURRENCES=IMPLEMENTED_CANDIDATE
+BIDIRECTIONAL_ALIGN=IMPLEMENTED_FIXTURE_ONLY
+DEC040_043_G4_REGRESSION=PASS
+ROUND_TRIP_RASTER=TEST_NOT_RUN
+CORPUS_13_LIVE=TEST_NOT_RUN
+GENERALIZATION_CLAIM=NOT_DECLARED (fixtures+famílias; holdout owner pendente)
+TOTUS_LIVE_COMPARISON=NOT_EXECUTED (G6)
+PRODUCTION_DEPLOY=false
+G5_QUALITY_HOMOLOGATED=NOT_AUTHORIZED (GT/split/holdout owner)
+G6_G7=NOT_AUTHORIZED
+VAL01_COMPLETED=false
+```
