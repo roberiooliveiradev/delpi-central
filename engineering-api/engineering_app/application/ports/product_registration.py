@@ -363,6 +363,43 @@ class ProductRegistrationRepository(Protocol):
         """Fecha ciclo aberto e retorna caso a in_progress."""
         ...
 
+    # --- PRC-REF-023 — vínculo documental -------------------------------------
+
+    def create_attachment(self, *, attachment: dict[str, Any]) -> dict[str, Any]:
+        """Persiste metadado do anexo já gravado no storage."""
+        ...
+
+    def list_attachments(self, *, request_id: str) -> list[dict[str, Any]]:
+        """Documentos do caso (estados visíveis; nunca storage_key)."""
+        ...
+
+    def get_attachment(
+        self, *, request_id: str, attachment_id: str
+    ) -> dict[str, Any] | None:
+        """Anexo do caso — identidade composta (nunca id solto)."""
+        ...
+
+    def find_attachment_by_hash(
+        self, *, request_id: str, sha256: str, original_file_name: str
+    ) -> dict[str, Any] | None:
+        """Dedup idempotente: mesmo bytes+nome no mesmo caso."""
+        ...
+
+
+class AttachmentStoragePort(Protocol):
+    """PRC-REF-023 — port de bytes (provider governado).
+
+    storage_key é opaco e nunca exposto em DTO/log de request.
+    """
+
+    def save(self, key: str, content: bytes) -> None: ...
+
+    def exists(self, key: str) -> bool: ...
+
+    def open_path(self, key: str): ...
+
+    def delete(self, key: str) -> None: ...
+
 
 class OfficialProductReaderPort(Protocol):
     """Leitura oficial read-only de produto+fornecedores (TOTVS).

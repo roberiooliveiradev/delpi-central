@@ -44,10 +44,15 @@ import {
   fetchPrcEditContext,
   fetchPrcReferenceData,
   prcIntakeSubmit,
+  uploadPrcAttachment,
   type PrcEditContext,
   type PrcIntakeBody,
   type PrcReferenceData,
 } from "../api/productRegistrationApi";
+import {
+  PRC_ATTACHMENT_MAX_COUNT,
+  prcCheckAttachmentFile,
+} from "../prcAttachments";
 import {
   buildPrcQueueUrl,
   EMPTY_PRC_QUEUE_URL,
@@ -396,14 +401,55 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
           editContextReadAt: editCtx?.readAt || null,
         });
 
+  /* PRC-REF-023 — documentos opcionais: criado o caso (requestId real),
+   * cada arquivo é enviado; falhas não derrubam a solicitação e ficam
+   * retentáveis com o mesmo caseId preservado. */
+  const [supportFiles, setSupportFiles] = useState<File[]>([]);
+  const [fileErrors, setFileErrors] = useState<Record<number, string>>({});
+  const [createdRequestId, setCreatedRequestId] = useState<string | null>(
+    null,
+  );
+  const [uploadSummary, setUploadSummary] = useState<string>("");
+
+  const uploadSupportFiles = async (requestId: string, files: File[]) => {
+    const failures: Record<number, string> = {};
+    let ok = 0;
+    for (let i = 0; i < files.length; i += 1) {
+      try {
+        await uploadPrcAttachment(requestId, files[i]);
+        ok += 1;
+      } catch (e) {
+        failures[i] = (e as Error).message || "Falha no upload.";
+      }
+    }
+    return { ok, failures };
+  };
+
   const submit = async () => {
     if (busy) return;
     setBusy(true);
     setError("");
     setFieldErrors({});
+    setUploadSummary("");
     try {
-      const env = await prcIntakeSubmit(buildBody(), idemKey.current);
-      navigatePrc(PRC_PATHS.detail(env.data.requestId), basePath);
+      const env = createdRequestId
+        ? null
+        : await prcIntakeSubmit(buildBody(), idemKey.current);
+      const rid = createdRequestId || env!.data.requestId;
+      if (!createdRequestId) setCreatedRequestId(rid);
+      if (supportFiles.length) {
+        const { ok, failures } = await uploadSupportFiles(rid, supportFiles);
+        if (Object.keys(failures).length) {
+          setFileErrors(failures);
+          setUploadSummary(
+            `Solicitação criada. ${ok} documento(s) anexado(s); ` +
+              `${Object.keys(failures).length} falha(ram) — corrija e ` +
+              "tente novamente sem recriar a solicitação.",
+          );
+          return;
+        }
+      }
+      navigatePrc(PRC_PATHS.detail(rid), basePath);
     } catch (e) {
       const err = e as HomeApiError & {
         fields?: Record<string, string>;
@@ -414,6 +460,27 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
     } finally {
       setBusy(false);
     }
+  };
+
+  const onPickSupportFiles = (list: FileList | null) => {
+    if (!list?.length) return;
+    setFileErrors({});
+    const next: Record<number, string> = {};
+    const accepted: File[] = [];
+    for (const f of Array.from(list)) {
+      const check = prcCheckAttachmentFile(f);
+      if (check.ok) {
+        accepted.push(f);
+      } else {
+        next[supportFiles.length + accepted.length] = check.error;
+      }
+    }
+    const merged = [...supportFiles, ...accepted].slice(
+      0,
+      PRC_ATTACHMENT_MAX_COUNT,
+    );
+    setSupportFiles(merged);
+    if (Object.keys(next).length) setFileErrors(next);
   };
 
   const renderCatalogField = (
@@ -1291,6 +1358,59 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
             )}
           </EngineeringSectionCard>
         </>
+      ) : null}
+
+      {step === 1 ? (
+        <EngineeringSectionCard
+          title="Documentos de apoio (opcional)"
+          subtitle="PDF ou imagem, até 10 MB por arquivo — máx. 10 documentos"
+        >
+          <input
+            type="file"
+            multiple
+            accept=".pdf,.png,.jpg,.jpeg,.webp"
+            disabled={busy}
+            aria-label="Selecionar documentos de apoio"
+            onChange={(e) => {
+              onPickSupportFiles(e.target.files);
+              e.target.value = "";
+            }}
+          />
+          {supportFiles.length ? (
+            <ul className="engineering-prc__attach-list">
+              {supportFiles.map((f, i) => (
+                <li key={`${f.name}-${i}`}>
+                  <span>
+                    {f.name} — {(f.size / 1024 / 1024).toFixed(1)} MB
+                  </span>
+                  <EngineeringActionButton
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() =>
+                      setSupportFiles((s) => s.filter((_, j) => j !== i))
+                    }
+                  >
+                    Remover
+                  </EngineeringActionButton>
+                  {fileErrors[i] ? (
+                    <span className="engineering-prc__cell-error" role="alert">
+                      {fileErrors[i]}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="engineering-prc__muted">
+              Nenhum documento selecionado — você pode enviar sem anexos.
+            </p>
+          )}
+          {uploadSummary ? (
+            <EngineeringStateBanner variant="error">
+              {uploadSummary}
+            </EngineeringStateBanner>
+          ) : null}
+        </EngineeringSectionCard>
       ) : null}
 
       {step === 2 ? (

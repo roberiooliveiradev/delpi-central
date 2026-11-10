@@ -45,6 +45,7 @@ _T_INFO_Q = f"{_SCHEMA}.product_registration_info_questions"
 _T_INFO_A = f"{_SCHEMA}.product_registration_info_answers"
 _T_CORR_RET = f"{_SCHEMA}.product_registration_correction_returns"
 _T_CORR_TGT = f"{_SCHEMA}.product_registration_correction_targets"
+_T_ATT = f"{_SCHEMA}.product_registration_attachments"
 
 # Estados de rodada que bloqueiam a abertura de nova rodada / resume.
 _INFO_OPEN_ROUND_STATUSES = ("awaiting_requester", "awaiting_review")
@@ -2476,3 +2477,68 @@ class PostgresProductRegistrationRepository:
             "request": self.get_request(request_id),
             "return": closed,
         }
+
+    # --- PRC-REF-023 — vínculo documental -------------------------------------
+
+    def _attachment_row(self, row: dict) -> dict[str, Any]:
+        out = dict(row)
+        out["id"] = str(out["id"])
+        out["request_id"] = str(out["request_id"])
+        out["created_at"] = _iso(out.get("created_at"))
+        return out
+
+    def create_attachment(self, *, attachment: dict[str, Any]) -> dict[str, Any]:
+        with self._conn() as conn:
+            conn.execute(
+                f"INSERT INTO {_T_ATT}"
+                " (id, request_id, original_file_name, media_type,"
+                "  size_bytes, sha256, storage_key, state,"
+                "  uploaded_by_subject, uploaded_by_display_name,"
+                "  uploaded_by_email, correlation_id, created_at)"
+                " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                (
+                    attachment["id"], attachment["request_id"],
+                    attachment["original_file_name"],
+                    attachment["media_type"], attachment["size_bytes"],
+                    attachment["sha256"], attachment["storage_key"],
+                    attachment["state"],
+                    attachment["uploaded_by_subject"],
+                    attachment.get("uploaded_by_display_name"),
+                    attachment.get("uploaded_by_email"),
+                    attachment.get("correlation_id"),
+                    attachment["created_at"],
+                ),
+            )
+        return self._attachment_row(attachment)
+
+    def list_attachments(self, *, request_id: str) -> list[dict[str, Any]]:
+        with self._conn() as conn:
+            rows = conn.execute(
+                f"SELECT * FROM {_T_ATT} WHERE request_id=%s"
+                " AND state<>'DELETED' ORDER BY created_at, id",
+                (request_id,),
+            ).fetchall()
+        return [self._attachment_row(r) for r in rows]
+
+    def get_attachment(
+        self, *, request_id: str, attachment_id: str
+    ) -> dict[str, Any] | None:
+        with self._conn() as conn:
+            row = conn.execute(
+                f"SELECT * FROM {_T_ATT} WHERE id=%s AND request_id=%s"
+                " AND state<>'DELETED'",
+                (attachment_id, request_id),
+            ).fetchone()
+        return self._attachment_row(row) if row else None
+
+    def find_attachment_by_hash(
+        self, *, request_id: str, sha256: str, original_file_name: str
+    ) -> dict[str, Any] | None:
+        with self._conn() as conn:
+            row = conn.execute(
+                f"SELECT * FROM {_T_ATT} WHERE request_id=%s"
+                " AND sha256=%s AND original_file_name=%s"
+                " AND state<>'DELETED' ORDER BY created_at LIMIT 1",
+                (request_id, sha256, original_file_name),
+            ).fetchone()
+        return self._attachment_row(row) if row else None

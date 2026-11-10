@@ -124,6 +124,28 @@ def set_prc_service_for_tests(service: ProductRegistrationService) -> None:
     _SERVICE_SINGLETON = service
 
 
+def build_prc_attachment_storage():
+    """PRC-REF-023 — storage de bytes (padrão persistent-upload-storage).
+
+    ``ENG_PRC_ATTACHMENTS_STORAGE=memory`` → volátil (testes);
+    padrão ``disk`` → volume dedicado ``ENG_PRC_ATTACHMENTS_DIR``
+    (default ``/app/data/prc-attachments``, espelhado no compose).
+    """
+    import os
+
+    from engineering_app.infrastructure.storage.prc_attachment_storage import (
+        LocalVolumeAttachmentStorage,
+        MemoryAttachmentStorage,
+    )
+
+    mode = (os.getenv("ENG_PRC_ATTACHMENTS_STORAGE") or "disk").strip().lower()
+    if mode == "memory":
+        return MemoryAttachmentStorage()
+    return LocalVolumeAttachmentStorage(
+        os.getenv("ENG_PRC_ATTACHMENTS_DIR", "/app/data/prc-attachments")
+    )
+
+
 def build_prc_service() -> ProductRegistrationService:
     global _SERVICE_SINGLETON
     if _SERVICE_SINGLETON is not None:
@@ -132,5 +154,6 @@ def build_prc_service() -> ProductRegistrationService:
         build_prc_repository(),
         official_reader=build_official_product_reader(),
         allowed_sources=_sources_allowlist(),
+        attachment_storage=build_prc_attachment_storage(),
     )
     return _SERVICE_SINGLETON

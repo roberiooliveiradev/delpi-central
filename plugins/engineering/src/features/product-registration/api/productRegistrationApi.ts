@@ -4,8 +4,10 @@
 
 import {
   deleteJson,
+  getBlob,
   getJson,
   patchJson,
+  postFormData,
   postJson,
 } from "../../../api/httpClient";
 
@@ -1025,5 +1027,59 @@ export async function deletePrcFlag(
     idempotencyKey
       ? { headers: { "Idempotency-Key": idempotencyKey } }
       : undefined,
+  );
+}
+
+// --- PRC-REF-023 — documentos opcionais de apoio -------------------------
+
+export type PrcAttachment = {
+  attachmentId: string;
+  requestId: string;
+  originalFileName: string;
+  mediaType: string;
+  sizeBytes: number;
+  sha256: string;
+  state: "PENDING_SCAN" | "AVAILABLE" | "REJECTED" | "QUARANTINED" | "DELETED";
+  uploadedBySubject?: string | null;
+  uploadedByDisplayName?: string | null;
+  createdAt: string;
+};
+
+export type PrcAttachmentList = {
+  requestId: string;
+  attachments: PrcAttachment[];
+  canUpload: boolean;
+};
+
+export async function fetchPrcAttachments(
+  requestId: string,
+  signal?: AbortSignal,
+): Promise<Envelope<PrcAttachmentList>> {
+  return getJson(`${BASE}/requests/${requestId}/attachments`, signal);
+}
+
+export type PrcAttachmentUploadResult = {
+  attachment: PrcAttachment;
+  deduplicated: boolean;
+};
+
+export async function uploadPrcAttachment(
+  requestId: string,
+  file: File,
+  signal?: AbortSignal,
+): Promise<Envelope<PrcAttachmentUploadResult>> {
+  const form = new FormData();
+  form.append("file", file, file.name);
+  return postFormData(`${BASE}/requests/${requestId}/attachments`, form, signal);
+}
+
+export async function downloadPrcAttachment(
+  requestId: string,
+  attachmentId: string,
+  signal?: AbortSignal,
+): Promise<Blob> {
+  return getBlob(
+    `${BASE}/requests/${requestId}/attachments/${attachmentId}/download`,
+    signal,
   );
 }

@@ -2872,6 +2872,7 @@ services:
     # governado via infra/scripts; vazio → model_not_provisioned honesto).
     volumes:
       - ${OCR_MODELS_HOST_PATH:-/srv/delpi/ocr-models}:/opt/ocr-models:ro
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/prc-attachments:/app/data/prc-attachments
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]

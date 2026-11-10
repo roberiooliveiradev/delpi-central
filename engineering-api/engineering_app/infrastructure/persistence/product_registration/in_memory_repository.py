@@ -49,6 +49,8 @@ class InMemoryProductRegistrationRepository:
         # PRC-REF-022 — devoluções para correção.
         self._correction_returns: dict[str, dict] = {}  # return_id → row
         self._correction_targets: dict[str, dict] = {}  # target_id → row
+        # PRC-REF-023 — documentos de apoio.
+        self._attachments: dict[str, dict] = {}  # attachment_id → row
 
     # --- helpers internos ------------------------------------------------------
 
@@ -1659,3 +1661,42 @@ class InMemoryProductRegistrationRepository:
                 request_id=request_id, return_id=open_ret["id"]
             ),
         }
+
+    # --- PRC-REF-023 — vínculo documental -------------------------------------
+
+    def create_attachment(self, *, attachment: dict[str, Any]) -> dict[str, Any]:
+        row = dict(attachment)
+        self._attachments[row["id"]] = row
+        return dict(row)
+
+    def list_attachments(self, *, request_id: str) -> list[dict[str, Any]]:
+        out = [
+            dict(r)
+            for r in self._attachments.values()
+            if r.get("request_id") == request_id and r.get("state") != "DELETED"
+        ]
+        out.sort(key=lambda r: (str(r.get("created_at") or ""), str(r["id"])))
+        return out
+
+    def get_attachment(
+        self, *, request_id: str, attachment_id: str
+    ) -> dict[str, Any] | None:
+        row = self._attachments.get(attachment_id)
+        if not row or row.get("request_id") != request_id:
+            return None
+        if row.get("state") == "DELETED":
+            return None
+        return dict(row)
+
+    def find_attachment_by_hash(
+        self, *, request_id: str, sha256: str, original_file_name: str
+    ) -> dict[str, Any] | None:
+        for r in self._attachments.values():
+            if (
+                r.get("request_id") == request_id
+                and r.get("state") != "DELETED"
+                and r.get("sha256") == sha256
+                and r.get("original_file_name") == original_file_name
+            ):
+                return dict(r)
+        return None

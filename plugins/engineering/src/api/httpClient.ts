@@ -258,3 +258,62 @@ export async function deleteJson<T>(
 ): Promise<T> {
   return sendJson<T>("DELETE", path, undefined, signal, options);
 }
+
+/** POST multipart/form-data — usado por uploads de documentos. O
+ * Content-Type com boundary é definido pelo browser; nunca montar
+ * manualmente. */
+export async function postFormData<T>(
+  path: string,
+  form: FormData,
+  signal?: AbortSignal,
+): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const onAbort = () => controller.abort();
+  signal?.addEventListener("abort", onAbort, { once: true });
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      method: "POST",
+      headers: authHeaders(),
+      credentials: "same-origin",
+      body: form,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if ((error as Error)?.name === "AbortError") {
+      if (signal?.aborted) throw error;
+      throw new HomeApiError("timeout", "A resposta demorou demais. Tente novamente.");
+    }
+    throw new HomeApiError("network_error", "Falha de comunicação. Verifique sua conexão.");
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener("abort", onAbort);
+  }
+  if (!response.ok) {
+    let failBody: ApiFailBody | null = null;
+    try {
+      failBody = (await response.json()) as ApiFailBody;
+    } catch {
+      /* envelope inesperado */
+    }
+    if (
+      response.status === 400 ||
+      response.status === 409 ||
+      response.status === 413 ||
+      response.status === 415 ||
+      response.status === 422
+    ) {
+      const err = new HomeApiError(
+        "contract_error",
+        failBody?.message || "O arquivo enviado foi recusado.",
+        response.status,
+      );
+      (err as { fields?: Record<string, string> }).fields =
+        failBody?.data?.fields;
+      throw err;
+    }
+    throw errorForStatus(response.status);
+  }
+  return (await response.json()) as T;
+}

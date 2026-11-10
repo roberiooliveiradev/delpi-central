@@ -55,6 +55,7 @@ import {
   prcStatusLabel,
 } from "../prcCopy";
 import { PrcActionBar } from "../components/PrcActionBar";
+import { PrcAttachmentsSection } from "../components/PrcAttachmentsSection";
 import {
   PRC_ACTION_SPECS,
   isPrcCompleteAction,
@@ -714,6 +715,11 @@ export function PrcDetailPage({
             revisions={revisions}
           />
         ) : null}
+
+        <PrcAttachmentsSection
+          requestId={detail.id}
+          refreshToken={`${detail.caseVersion}:${detail.updatedAt}`}
+        />
       </div>
     </main>
   );

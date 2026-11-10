@@ -2317,6 +2317,7 @@ services:
       - ../engineering-api:/app
       - ../shared:/shared
       - ../api-delpi/contracts:/api-delpi/contracts:ro
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/prc-attachments:/app/data/prc-attachments
 
     depends_on:
       - keycloak

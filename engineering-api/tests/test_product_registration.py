@@ -42,9 +42,16 @@ def prc_service_repo(monkeypatch):
     from engineering_app.application.use_cases.product_registration.service import (  # noqa: E501
         ProductRegistrationService,
     )
+    from engineering_app.infrastructure.storage.prc_attachment_storage import (  # noqa: E501
+        MemoryAttachmentStorage,
+    )
 
     prc_composer.set_prc_service_for_tests(
-        ProductRegistrationService(repo, official_reader=_ReaderProxy())
+        ProductRegistrationService(
+            repo,
+            official_reader=_ReaderProxy(),
+            attachment_storage=MemoryAttachmentStorage(),
+        )
     )
     yield state
     prc_composer.reset_prc_singletons()

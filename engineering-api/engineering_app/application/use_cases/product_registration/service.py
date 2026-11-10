@@ -15,8 +15,12 @@ from datetime import datetime, timezone
 from typing import Any
 
 from engineering_app.application.ports.product_registration import (
+    AttachmentStoragePort,
     OfficialProductReaderPort,
     ProductRegistrationRepository,
+)
+from engineering_app.domain.product_registration import (
+    attachments as attachments_mod,
 )
 from engineering_app.domain.product_registration import baseline as sa5_baseline
 from engineering_app.domain.product_registration import catalog
@@ -199,10 +203,12 @@ class ProductRegistrationService:
         *,
         official_reader: OfficialProductReaderPort | None = None,
         allowed_sources: tuple[str, ...] | None = None,
+        attachment_storage: "AttachmentStoragePort | None" = None,
     ) -> None:
         self._repo = repository
         self._reader = official_reader
         self._sources = allowed_sources or _ALLOWED_SOURCES_DEFAULT
+        self._storage = attachment_storage
 
     def _filter_actions_for_actor(
         self,
@@ -3405,6 +3411,146 @@ class ProductRegistrationService:
             status=201, payload=response,
         )
         return response
+
+    # --- PRC-REF-023 — documentos opcionais de apoio ---------------------
+
+    def _require_attachment_storage(self):
+        if self._storage is None:
+            raise PrcValidationError(
+                "Armazenamento de documentos não configurado.",
+                fields={"attachments": "storage_unavailable"},
+            )
+        return self._storage
+
+    def list_attachments(
+        self, request_id: str, *, actor: PrcActor
+    ) -> dict[str, Any]:
+        request = self._get_scoped(request_id, actor)
+        rows = self._repo.list_attachments(request_id=request_id)
+        visible = [
+            r for r in rows
+            if r["state"] in ("AVAILABLE", "PENDING_SCAN", "REJECTED")
+        ]
+        return {
+            "requestId": request_id,
+            "attachments": [attachments_mod.attachment_to_api(r) for r in visible],
+            "canUpload": self._can_upload_attachment(request, actor),
+        }
+
+    def _can_upload_attachment(self, request: dict, actor: PrcActor) -> bool:
+        return (
+            actor.user_id == request.get("requester_subject")
+            and request.get("status") in attachments_mod.ATTACHMENT_UPLOAD_STATUSES
+        )
+
+    def upload_attachment(
+        self,
+        request_id: str,
+        *,
+        actor: PrcActor,
+        filename: str | None,
+        content: bytes,
+        correlation_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Upload governado: valida por conteúdo → grava bytes → persiste
+        vínculo. Só o solicitante do caso anexa (estados aprovados).
+        Dedup idempotente por (caso, sha256, nome)."""
+        request = self._get_scoped(request_id, actor)
+        storage = self._require_attachment_storage()
+        if actor.user_id != request.get("requester_subject"):
+            raise PrcForbiddenError(
+                "Somente o solicitante do caso pode anexar documentos."
+            )
+        if request.get("status") not in attachments_mod.ATTACHMENT_UPLOAD_STATUSES:
+            raise PrcStateConflictError(
+                "attachments_not_allowed_state"
+            )
+        existing = self._repo.list_attachments(request_id=request_id)
+        try:
+            meta = attachments_mod.validate_attachment(
+                filename=filename,
+                content=content,
+                current_count=len(existing),
+            )
+        except ValueError as exc:
+            code = str(exc)
+            raise PrcValidationError(
+                attachments_mod.attachment_error(code),
+                fields={"file": code},
+            ) from exc
+        dup = self._repo.find_attachment_by_hash(
+            request_id=request_id,
+            sha256=str(meta["sha256"]),
+            original_file_name=str(meta["original_file_name"]),
+        )
+        if dup is not None:
+            return {
+                "attachment": attachments_mod.attachment_to_api(dup),
+                "deduplicated": True,
+            }
+        attachment_id = _uuid()
+        storage_key = f"{request_id}/{attachment_id}{meta['extension']}"
+        try:
+            storage.save(storage_key, content)
+        except Exception as exc:
+            raise PrcValidationError(
+                "Storage de documentos indisponível no momento.",
+                fields={"file": "storage_unavailable"},
+            ) from exc
+        row = {
+            "id": attachment_id,
+            "request_id": request_id,
+            "original_file_name": meta["original_file_name"],
+            "media_type": meta["media_type"],
+            "size_bytes": meta["size_bytes"],
+            "sha256": meta["sha256"],
+            "storage_key": storage_key,
+            "state": "AVAILABLE",
+            "uploaded_by_subject": actor.user_id,
+            "uploaded_by_display_name": actor.label,
+            "uploaded_by_email": actor.email,
+            "correlation_id": correlation_id,
+            "created_at": _now(),
+        }
+        try:
+            row = self._repo.create_attachment(attachment=row)
+        except Exception:
+            # Falha parcial: bytes gravados sem vínculo → limpar órfão.
+            try:
+                storage.delete(storage_key)
+            except Exception:
+                pass
+            raise
+        return {
+            "attachment": attachments_mod.attachment_to_api(row),
+            "deduplicated": False,
+        }
+
+    def download_attachment(
+        self, request_id: str, attachment_id: str, *, actor: PrcActor
+    ) -> dict[str, Any]:
+        """Retorna metadado + handle de bytes para streaming autenticado.
+        Estado AVAILABLE apenas; identidade composta request+attachment."""
+        self._get_scoped(request_id, actor)
+        storage = self._require_attachment_storage()
+        row = self._repo.get_attachment(
+            request_id=request_id, attachment_id=attachment_id
+        )
+        if row is None:
+            raise PrcNotFoundError("attachment", attachment_id)
+        if row["state"] != "AVAILABLE":
+            raise PrcStateConflictError("attachment_not_available")
+        try:
+            handle = storage.open_path(row["storage_key"])
+        except Exception as exc:
+            raise PrcValidationError(
+                "Arquivo indisponível no storage.",
+                fields={"file": "storage_unavailable"},
+            ) from exc
+        return {
+            "meta": attachments_mod.attachment_to_api(row),
+            "handle": handle,
+        }
 
 
 _FIELD_MAP = {

@@ -10,7 +10,8 @@ nunca vem do payload. Idempotency-Key em POST mutável; expectedVersion
 (CAS) em mudanças de estado/draft.
 """
 
-from fastapi import APIRouter, Body, Header, Path, Query
+from fastapi import APIRouter, Body, File, Header, Path, Query, UploadFile
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from delpi_auth.authorization import require_any_permission
@@ -1814,3 +1815,126 @@ async def prc_flag_delete(
             operation_id=op,
         )
     return ok(data, message="Bandeira excluída.", operation_id=op)
+
+
+
+# --- PRC-REF-023 — documentos opcionais de apoio ----------------------------
+
+_ATT_MAX_BYTES = 10 * 1024 * 1024  # espelha domain.attachments (10 MB)
+
+
+@router.post(
+    "/v1/product-registration/requests/{request_id}/attachments",
+    operation_id="prc_attachment_upload",
+    summary="PRC-REF-023 — Upload de documento de apoio (opcional)",
+)
+@require_any_permission(_CREATE_PERMS)
+async def prc_attachment_upload(
+    request_id: str = Path(...),
+    file: UploadFile = File(...),
+):
+    op = "prc_attachment_upload"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    content = await file.read(_ATT_MAX_BYTES + 1)
+    if len(content) > _ATT_MAX_BYTES:
+        return fail(
+            "Arquivo excede o limite de 10 MB por documento.",
+            413,
+            data={"code": "attachment_too_large"},
+            operation_id=op,
+        )
+    try:
+        data = build_prc_service().upload_attachment(
+            rid,
+            actor=_actor(user),
+            filename=file.filename,
+            content=content,
+            correlation_id=get_request_id(),
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(
+        data,
+        message="Documento anexado.",
+        operation_id=op,
+        status_code=201,
+    )
+
+
+@router.get(
+    "/v1/product-registration/requests/{request_id}/attachments",
+    operation_id="prc_attachments_list",
+    summary="PRC-REF-023 — Documentos de apoio do caso",
+)
+@require_any_permission(_READ_PERMS)
+async def prc_attachments_list(request_id: str = Path(...)):
+    op = "prc_attachments_list"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().list_attachments(
+            rid, actor=_actor(user)
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(data, message="Documentos carregados.", operation_id=op)
+
+
+@router.get(
+    "/v1/product-registration/requests/{request_id}/attachments/{attachment_id}/download",
+    operation_id="prc_attachment_download",
+    summary="PRC-REF-023 — Download autorizado de documento",
+)
+@require_any_permission(_READ_PERMS)
+async def prc_attachment_download(
+    request_id: str = Path(...),
+    attachment_id: str = Path(...),
+):
+    op = "prc_attachment_download"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    aid, bad = _uuid_or_fail(attachment_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().download_attachment(
+            rid, aid, actor=_actor(user)
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    meta = data["meta"]
+    handle = data["handle"]
+    filename = meta["originalFileName"]
+    headers = {
+        "Content-Disposition": (
+            f"attachment; filename*=UTF-8''{__import__('urllib.parse').parse.quote(filename)}"
+        ),
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "private, no-store",
+        "Content-Length": str(meta["sizeBytes"]),
+    }
+    if hasattr(handle, "read"):
+        return StreamingResponse(
+            handle,
+            media_type=meta["mediaType"],
+            headers=headers,
+        )
+    return FileResponse(
+        handle,
+        media_type=meta["mediaType"],
+        filename=None,
+        headers=headers,
+    )
