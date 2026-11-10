@@ -214,6 +214,11 @@ def validate_link_ops_against_baseline(
                     f"supplierLinkChanges[{i}] ADD rejeitado — vínculo "
                     f"{label} já existe no baseline oficial."
                 )
+            if not _norm_attr((op.get("fields") or {}).get("partNumber")):
+                return (
+                    f"supplierLinkChanges[{i}] ADD rejeitado — "
+                    "partNumber obrigatório (PRC-REF-022-FIX-01)."
+                )
             continue
         if operation in ("update", "remove"):
             if not found:
@@ -235,8 +240,97 @@ def validate_link_ops_against_baseline(
                         f"supplierLinkChanges[{i}] UPDATE sem alteração "
                         f"efetiva em {label}."
                     )
+                # PRC-REF-022-FIX-01 — vínculo alterado deve resultar
+                # com partNumber válido: valor declarado ou o vigente
+                # no baseline oficial.
+                resulting_pn = (
+                    _norm_attr(fields.get("partNumber"))
+                    if "partNumber" in fields
+                    else _norm_attr(before.get("partNumber"))
+                )
+                if not resulting_pn:
+                    return (
+                        f"supplierLinkChanges[{i}] UPDATE rejeitado — "
+                        f"vínculo {label} ficaria sem partNumber válido "
+                        "(A5_CODPRF obrigatório)."
+                    )
             continue
         return f"supplierLinkChanges[{i}] operation inválida."
+    return None
+
+
+def validate_completion_part_numbers(
+    *,
+    draft_suppliers: list[dict[str, Any]],
+    link_ops: list[dict[str, Any]],
+    baseline_links: list[dict[str, Any]],
+) -> str | None:
+    """PRC-REF-022-FIX-01 — gate de conclusão: todo vínculo registrado
+    ou alterado deve possuir partNumber válido.
+
+    Vínculos intocados pelo caso (mesma chave e mesmos atributos do
+    baseline oficial) são preservados como legado e não exigem PN —
+    dados históricos não são reescritos. Sem baseline confiável, todo
+    vínculo esperado é tratado como sujeito à regra (fail-closed).
+    """
+    indexed: dict[tuple[str, str], dict[str, Any]] = {}
+    has_baseline = bool(baseline_links)
+    for link in baseline_links or []:
+        if not isinstance(link, dict):
+            continue
+        key = (
+            _norm_code(link.get("supplierCode")),
+            _norm_code(link.get("store")),
+        )
+        if key[0] and key[1]:
+            indexed[key] = link
+
+    def _baseline_link(code: str, store: str) -> dict[str, Any] | None:
+        return indexed.get((code, store))
+
+    if link_ops:
+        for i, op in enumerate(link_ops):
+            operation = str(op.get("operation") or "")
+            if operation == "remove":
+                continue
+            key = op.get("key") or {}
+            code = _norm_code(key.get("supplierCode"))
+            store = _norm_code(key.get("store"))
+            label = f"{code}/{store}"
+            fields = op.get("fields") or {}
+            before = _baseline_link(code, store) or {}
+            resulting_pn = (
+                _norm_attr(fields.get("partNumber"))
+                if "partNumber" in fields
+                else _norm_attr(before.get("partNumber"))
+            )
+            if not resulting_pn:
+                return (
+                    f"Vínculo {label} alterado sem partNumber válido — "
+                    "conclusão bloqueada (A5_CODPRF obrigatório)."
+                )
+        return None
+    for i, item in enumerate(draft_suppliers or []):
+        if not isinstance(item, dict):
+            continue
+        code = _norm_code(item.get("supplierCode"))
+        store = _norm_code(item.get("store"))
+        label = f"{code}/{store}"
+        before = _baseline_link(code, store)
+        if has_baseline and before is not None:
+            same_attrs = (
+                _norm_attr(before.get("partNumber"))
+                == _norm_attr(item.get("partNumber"))
+                and _norm_attr(before.get("catalogNumber"))
+                == _norm_attr(item.get("catalogNumber"))
+            )
+            if same_attrs:
+                continue  # vínculo intocado — legado preservado
+        if not _norm_attr(item.get("partNumber")):
+            return (
+                f"Vínculo {label} registrado/alterado sem partNumber "
+                "válido — conclusão bloqueada (A5_CODPRF obrigatório)."
+            )
     return None
 
 

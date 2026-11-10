@@ -148,6 +148,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
 
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [supplierErrorsVisible, setSupplierErrorsVisible] = useState(false);
   const [busy, setBusy] = useState(false);
   const idemKey = useRef(newIdemKey());
 
@@ -220,6 +221,11 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
       );
       if (bad >= 0) {
         return `Fornecedor ${bad + 1}: ${PRC_SUPPLIER_HELP.selectRequired}`;
+      }
+      const missingPn = suppliers.findIndex((r) => !r.partNumber.trim());
+      if (missingPn >= 0) {
+        setSupplierErrorsVisible(true);
+        return `Fornecedor ${missingPn + 1}: ${PRC_SUPPLIER_HELP.partNumberRequired}`;
       }
       if (duplicateDraftRowIds(suppliers).size > 0) {
         return PRC_SUPPLIER_HELP.duplicateExisting;
@@ -730,7 +736,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
 
           <EngineeringSectionCard
             title="Fornecedores"
-            subtitle="Código + loja + nome obrigatórios; Part Number e catálogo opcionais"
+            subtitle="Código + loja + nome + Part Number obrigatórios; Catálogo opcional"
             actions={
               <EngineeringActionButton
                 variant="ghost"
@@ -898,7 +904,9 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                     id={`prc-new-sup-pn-${row.rowId}`}
                                     type="text"
                                     className="engineering-prc__cell-input"
-                                    aria-label={`${PRC_SUPPLIER_LABELS.partNumber} (opcional)`}
+                                    aria-label={PRC_SUPPLIER_LABELS.partNumber}
+                                    aria-required="true"
+                                    required
                                     title={PRC_SUPPLIER_HELP.partNumberHint}
                                     value={row.partNumber}
                                     disabled={busy}
@@ -908,6 +916,15 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                       })
                                     }
                                   />
+                                  {supplierErrorsVisible &&
+                                  !row.partNumber.trim() ? (
+                                    <span
+                                      className="engineering-prc__cell-error"
+                                      role="alert"
+                                    >
+                                      {PRC_SUPPLIER_HELP.partNumberRequired}
+                                    </span>
+                                  ) : null}
                                   {isOfficial && pnChanged ? (
                                     <p className="engineering-prc__cell-diff">
                                       <span className="engineering-prc__diff-tag">

@@ -999,7 +999,9 @@ def _create_body_with_suppliers(suppliers):
 
 
 class TestSupplierPartNumber:
-    """PO-D5.4: partNumber (A5_CODPRF) opcional — identidade por (code,store)."""
+    """PRC-REF-022-FIX-01: partNumber (A5_CODPRF) obrigatório —
+    substitui a regra histórica PO-D5.4 que o tratava como opcional.
+    Identidade do vínculo continua (code, store)."""
 
     def _submit(self, client, jwks_env, core_rbac, suppliers, sub="user-1"):
         core_rbac["behavior"] = ("data", rbac_payload(ANALYST, id=sub))
@@ -1032,43 +1034,82 @@ class TestSupplierPartNumber:
             json={"expectedVersion": v, "officialCode": "001234"}), rid
 
     # --- intake validation -------------------------------------------------
-    def test_intake_pn_empty_accepted(
+    def test_intake_pn_empty_rejected(
         self, client, jwks_env, core_rbac, prc_service_repo
     ):
         r = self._submit(client, jwks_env, core_rbac,
                          [self._sup(partNumber="")])
-        assert r.status_code == 201, r.text
-        draft = r.json()["data"].get("draft", {})
-        # normalized canonical representation is ""
-        assert draft.get("suppliers", [{}])[0].get("partNumber", "") == ""
+        assert r.status_code == 422, r.text
+        fields = r.json()["data"]["fields"]
+        assert "partNumber" in str(fields)
 
-    def test_intake_pn_omitted_accepted(
+    def test_intake_pn_omitted_rejected(
         self, client, jwks_env, core_rbac, prc_service_repo
     ):
         s = self._sup(); s.pop("partNumber")
         r = self._submit(client, jwks_env, core_rbac, [s])
-        assert r.status_code == 201, r.text
+        assert r.status_code == 422, r.text
 
-    def test_intake_pn_null_accepted(
+    def test_intake_pn_null_rejected(
         self, client, jwks_env, core_rbac, prc_service_repo
     ):
         r = self._submit(client, jwks_env, core_rbac,
                          [self._sup(partNumber=None)])
+        assert r.status_code == 422, r.text
+
+    def test_intake_pn_whitespace_rejected(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        r = self._submit(client, jwks_env, core_rbac,
+                         [self._sup(partNumber="   ")])
+        assert r.status_code == 422, r.text
+
+    def test_intake_pn_too_long_rejected(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        r = self._submit(client, jwks_env, core_rbac,
+                         [self._sup(partNumber="P" * 81)])
+        assert r.status_code == 422, r.text
+
+    def test_intake_catalog_absent_accepted(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        s = self._sup(); s.pop("catalogNumber")
+        r = self._submit(client, jwks_env, core_rbac, [s])
         assert r.status_code == 201, r.text
 
     # --- official comparison ------------------------------------------------
-    def test_match_empty_pn_vs_empty_official(
+    def test_completion_blocked_empty_pn(
         self, client, jwks_env, core_rbac, prc_service_repo
     ):
-        # Cenário A — exp "" + obs "" → completed (caso real 90264270/WEG)
+        """Fail-closed: vínculo registrado/alterado sem PN não conclui,
+        mesmo quando o oficial também está vazio (legado preservado só
+        em vínculo intocado)."""
         obs = [{"supplier_code": "000001", "supplier_store": "01",
                 "supplier_name": "FORNECEDOR X",
                 "supplier_part_number": "", "catalog_code": None}]
-        r, _ = self._verify(
-            client, jwks_env, core_rbac, prc_service_repo,
-            [self._sup(partNumber="")], obs)
-        assert r.status_code == 200, r.text
-        assert r.json()["data"]["status"] == "completed"
+        # Intake já bloqueia PN vazio — a porta de conclusão é a
+        # segunda linha de defesa para dados legados.
+        r = self._submit(
+            client, jwks_env, core_rbac, [self._sup(partNumber="")])
+        assert r.status_code == 422, r.text
+        # Estado legado simulado: draft histórico com PN vazio.
+        rid = self._submit(
+            client, jwks_env, core_rbac, [self._sup()]
+        ).json()["data"]["requestId"]
+        repo = prc_service_repo["repo"]
+        draft = repo._drafts[rid]
+        draft["technical_data"]["suppliers"][0]["partNumber"] = ""
+        prc_service_repo["reader"] = FakeReader(
+            {"status": "available",
+             "product": _product()["product"], "suppliers": obs})
+        v = _advance_to_attendance(client, jwks_env, core_rbac, rid)
+        r = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/complete",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": v, "officialCode": "001234"})
+        assert r.status_code == 422, r.text
 
     def test_match_filled_pn(
         self, client, jwks_env, core_rbac, prc_service_repo
@@ -1092,16 +1133,17 @@ class TestSupplierPartNumber:
             [self._sup()], obs)
         assert r.status_code == 409
 
-    def test_mismatch_empty_pn_vs_filled_official(
+    def test_mismatch_pn_differs_blocks(
         self, client, jwks_env, core_rbac, prc_service_repo
     ):
-        # Cenário D — ficha aprovada diz vazio; oficial tem PN → mismatch.
+        # PN divergente do oficial → mismatch bloqueia conclusão.
         obs = [{"supplier_code": "000001", "supplier_store": "01",
                 "supplier_name": "FORNECEDOR X",
-                "supplier_part_number": "PN-1", "catalog_code": None}]
+                "supplier_part_number": "PN-DIFERENTE",
+                "catalog_code": None}]
         r, _ = self._verify(
             client, jwks_env, core_rbac, prc_service_repo,
-            [self._sup(partNumber="")], obs)
+            [self._sup()], obs)
         assert r.status_code == 409
 
     def test_unverifiable_when_official_attr_absent(
@@ -1151,7 +1193,8 @@ def test_d12_link_ops_validation():
          "fields": {"partNumber": "PN-2"}, "reason": "correção"},
         {"operation": "add",
          "key": {"supplierCode": "001572", "store": "01"},
-         "fields": {"catalogNumber": "CAT-1"}, "reason": "nova fonte"},
+         "fields": {"partNumber": "PN-1572", "catalogNumber": "CAT-1"},
+         "reason": "nova fonte"},
     ])
     assert err is None and len(ops) == 2
     _, err = catalog.validate_supplier_link_changes(
@@ -1361,7 +1404,7 @@ def test_d14fix02_supplier_link_duplicate_and_conflict():
         {"operation": "update", "key": key, "fields": {"partNumber": "A"}},
         {"operation": "add",
          "key": {"supplierCode": "000089", "store": "01"},
-         "fields": {"catalogNumber": "C"}},
+         "fields": {"partNumber": "PN-89", "catalogNumber": "C"}},
     ])
     assert err is None and len(ops) == 2
 

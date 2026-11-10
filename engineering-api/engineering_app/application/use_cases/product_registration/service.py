@@ -1243,6 +1243,32 @@ class ProductRegistrationService:
                 "Sem permissão para a ação 'return_for_correction'."
             )
         normalized = corr_returns.validate_return_targets(targets)
+        # Identidade exata: alvos SUPPLIER_LINK devem existir na ficha —
+        # devolução nunca cria vínculo nem referencia fornecedor externo.
+        draft_suppliers = (
+            (request.get("draft") or {}).get("technical_data") or {}
+        ).get("suppliers") or []
+        known_links = {
+            (
+                str(s.get("supplierCode") or "").strip(),
+                str(s.get("store") or "").strip(),
+            )
+            for s in draft_suppliers
+            if isinstance(s, dict)
+        }
+        for t in normalized:
+            if t["target_type"] != "SUPPLIER_LINK":
+                continue
+            key = (
+                t["supplier_key"]["supplierCode"],
+                t["supplier_key"]["store"],
+            )
+            if key not in known_links:
+                raise PrcValidationError(
+                    f"Vínculo {key[0]}/{key[1]} não encontrado na ficha "
+                    "técnica — devolução exige vínculo existente.",
+                    fields={"targets": "supplier_link_not_found"},
+                )
         reason_text = (reason or "").strip()[:1000] or None
         fp = _fingerprint(
             {
@@ -1347,12 +1373,15 @@ class ProductRegistrationService:
         )
         if open_ret is None:
             raise PrcStateConflictError("correction_return_missing")
+        ret_targets = open_ret.get("targets") or []
         validated = corr_returns.validate_returned_changes(
-            targets=open_ret.get("targets") or [],
+            targets=ret_targets,
             changes=changes,
         )
         # Reusa validação canônica de draft para paths/valores (exceto
-        # confirmação, que não aplica patch de valor).
+        # confirmação, que não aplica patch de valor). O path agregado
+        # `suppliers` é validado granularmente abaixo — nunca libera a
+        # lista inteira.
         draft_like = [
             {
                 "path": c["path"],
@@ -1360,10 +1389,36 @@ class ProductRegistrationService:
                 "reason": c["reason"],
             }
             for c in validated
-            if c["mode"] != "confirmed"
+            if c["mode"] != "confirmed" and c["path"] != "suppliers"
         ]
         if draft_like:
             catalog.validate_update_changes(draft_like)
+        supplier_targets = [
+            t for t in ret_targets if t.get("target_type") == "SUPPLIER_LINK"
+        ]
+        addressed_supplier_keys: set[str] = set()
+        current_suppliers = (
+            (request.get("draft") or {}).get("technical_data") or {}
+        ).get("suppliers") or []
+        for idx, change in enumerate(validated):
+            if change["path"] != "suppliers":
+                continue
+            if change["mode"] == "confirmed":
+                # Confirmação explícita: o solicitante ratifica os
+                # valores vigentes de todos os vínculos devolvidos.
+                addressed_supplier_keys.update(
+                    str(t.get("target_key") or "")
+                    for t in supplier_targets
+                )
+                continue
+            merged, addressed = corr_returns.validate_supplier_correction(
+                targets=ret_targets,
+                current_suppliers=current_suppliers,
+                proposed=change["proposedValue"],
+                change_index=idx,
+            )
+            change["proposedValue"] = merged
+            addressed_supplier_keys.update(addressed)
         updated = self._repo.update_returned_fields(
             request_id=request_id,
             expected_version=expected_version,
@@ -1371,6 +1426,7 @@ class ProductRegistrationService:
             actor_display_name=actor.label,
             actor_email=actor.email,
             changes=validated,
+            addressed_supplier_keys=addressed_supplier_keys,
             event_meta={"channel": actor.channel},
         )
         response = self._detail(
@@ -1855,6 +1911,25 @@ class ProductRegistrationService:
                 "integrity_error: solicitação com mudanças efetivas sem "
                 "conjunto de verificação."
             )
+        # PRC-REF-022-FIX-01 — gate PN: nenhum vínculo registrado ou
+        # alterado pode ser ratificado sem partNumber válido. Vínculos
+        # intocados pelo caso preservam o legado. Fail-closed antes da
+        # leitura oficial.
+        if "suppliers" in expected_paths:
+            baseline_links = (
+                (request.get("official_baseline") or {}).get("links")
+                or []
+            )
+            pn_err = sa5_baseline.validate_completion_part_numbers(
+                draft_suppliers=data.get("suppliers") or [],
+                link_ops=link_ops,
+                baseline_links=baseline_links,
+            )
+            if pn_err:
+                raise PrcValidationError(
+                    pn_err,
+                    fields={"suppliers": "partNumber_required"},
+                )
         observed = await self._reader.read_product(
             access_token=access_token,
             request_id=correlation_id,

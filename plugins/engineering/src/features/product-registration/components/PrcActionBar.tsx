@@ -191,6 +191,7 @@ export function PrcActionBar({
           open
           busy={busy}
           fieldSpecs={fieldSpecs}
+          suppliers={suppliers}
           onCancel={() => setReturnSpec(null)}
           onSubmit={(targets) => {
             onRunAction(returnSpec, { targets });

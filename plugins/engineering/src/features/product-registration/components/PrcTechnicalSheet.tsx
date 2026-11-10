@@ -199,7 +199,7 @@ function PrcTechnicalSheetRead({
                 },
                 {
                   key: "partNumber",
-                  header: `${PRC_SUPPLIER_LABELS.partNumber} (opcional)`,
+                  header: PRC_SUPPLIER_LABELS.partNumber,
                   headerHint:
                     PRC_SUPPLIER_HELP.partNumberHint,
                   render: (r) => {
@@ -246,7 +246,7 @@ function PrcTechnicalSheetRead({
                 },
                 {
                   key: "catalogNumber",
-                  header: PRC_SUPPLIER_LABELS.catalogNumber,
+                  header: `${PRC_SUPPLIER_LABELS.catalogNumber} (opcional)`,
                   render: (r) => {
                     const openFlag = findOpenSupplierFlag(
                       flags,
@@ -366,6 +366,51 @@ export function PrcTechnicalSheet({
     }
     return map;
   }, [openReturn]);
+
+  /* PRC-REF-022-FIX-01 — granularidade por vínculo+atributo: mapa
+   * `code|store` → atributos devolvidos + motivo por alvo. Alvo sem
+   * `targetAttribute` (link integral) libera PN e Catálogo. */
+  const returnedSupplierAttrs = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    for (const t of openReturn?.targets || []) {
+      if (t.targetType !== "SUPPLIER_LINK" || !t.supplierKey) continue;
+      const key = `${String(t.supplierKey.supplierCode || "").trim()}|${String(
+        t.supplierKey.store || "",
+      ).trim()}`;
+      const set = map.get(key) || new Set<string>();
+      if (t.targetAttribute) {
+        set.add(t.targetAttribute);
+      } else {
+        set.add("partNumber");
+        set.add("catalogNumber");
+      }
+      map.set(key, set);
+    }
+    return map;
+  }, [openReturn]);
+  const supplierAttrReasons = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const t of openReturn?.targets || []) {
+      if (t.targetType !== "SUPPLIER_LINK" || !t.supplierKey) continue;
+      const key = `${String(t.supplierKey.supplierCode || "").trim()}|${String(
+        t.supplierKey.store || "",
+      ).trim()}|${t.targetAttribute || "link"}`;
+      map.set(key, t.reason);
+    }
+    return map;
+  }, [openReturn]);
+  const supplierRowKey = (code: string, store: string) =>
+    `${String(code || "").trim()}|${String(store || "").trim()}`;
+  const supplierAttrEditable = (
+    row: SupplierRow,
+    attr: "partNumber" | "catalogNumber",
+  ) =>
+    !correctionMode ||
+    Boolean(
+      returnedSupplierAttrs
+        .get(supplierRowKey(row.supplierCode, row.store))
+        ?.has(attr),
+    );
 
   useEffect(() => {
     if (!focusElementId) return;
@@ -544,6 +589,30 @@ export function PrcTechnicalSheet({
           setFormError("Informe a justificativa dos fornecedores.");
           return;
         }
+        /* PRC-REF-022-FIX-01 — somente atributos devolvidos podem mudar;
+         * vínculo alterado exige Part Number válido. */
+        const pnMissing = suppliersDraft.findIndex((r, i) => {
+          const attrs = returnedSupplierAttrs.get(
+            supplierRowKey(r.supplierCode, r.store),
+          );
+          const current = (toSupplierRows(draft.suppliers) || [])[i];
+          const willChange = Boolean(
+            attrs &&
+              (Array.from(attrs) as Array<"partNumber" | "catalogNumber">)
+                .some(
+                  (attr) =>
+                    String(r[attr] ?? "").trim() !==
+                    String(current?.[attr] ?? "").trim(),
+                ),
+          );
+          return willChange && !r.partNumber.trim();
+        });
+        if (pnMissing >= 0) {
+          setFormError(
+            `Fornecedor ${pnMissing + 1}: Part Number é obrigatório para alterar o vínculo.`,
+          );
+          return;
+        }
         changes.push({
           path: "suppliers",
           proposedValue: supplierRowsToPayload(suppliersDraft),
@@ -590,11 +659,12 @@ export function PrcTechnicalSheet({
         (r) =>
           !r.supplierCode.trim() ||
           !r.store.trim() ||
-          !r.supplierName.trim(),
+          !r.supplierName.trim() ||
+          !r.partNumber.trim(),
       );
       if (missing >= 0) {
         setFormError(
-          `Fornecedor ${missing + 1}: código, loja e nome são obrigatórios.`,
+          `Fornecedor ${missing + 1}: código, loja, nome e Part Number são obrigatórios.`,
         );
         return;
       }
@@ -774,104 +844,142 @@ export function PrcTechnicalSheet({
             </div>
             {suppliersDraft !== null ? (
               <>
-                {suppliersDraft.map((row, index) => (
-                  <div key={index} className="engineering-prc__supplier-row">
-                    <EngineeringTextField
-                      id={`prc-sup-code-${index}`}
-                      label={PRC_SUPPLIER_LABELS.supplierCode}
-                      value={row.supplierCode}
-                      onChange={(v) =>
-                        setSuppliersDraft((rows) =>
-                          rows!.map((r, i) =>
-                            i === index ? { ...r, supplierCode: v } : r,
-                          ),
-                        )
-                      }
-                      required
-                      disabled={busy}
-                    />
-                    <EngineeringTextField
-                      id={`prc-sup-store-${index}`}
-                      label={PRC_SUPPLIER_LABELS.store}
-                      value={row.store}
-                      onChange={(v) =>
-                        setSuppliersDraft((rows) =>
-                          rows!.map((r, i) =>
-                            i === index ? { ...r, store: v } : r,
-                          ),
-                        )
-                      }
-                      required
-                      disabled={busy}
-                    />
-                    <EngineeringTextField
-                      id={`prc-sup-name-${index}`}
-                      label={PRC_SUPPLIER_LABELS.supplierName}
-                      value={row.supplierName}
-                      onChange={(v) =>
-                        setSuppliersDraft((rows) =>
-                          rows!.map((r, i) =>
-                            i === index ? { ...r, supplierName: v } : r,
-                          ),
-                        )
-                      }
-                      required
-                      disabled={busy}
-                    />
-                    <EngineeringTextField
-                      id={`prc-sup-pn-${index}`}
-                      label={`${PRC_SUPPLIER_LABELS.partNumber} (opcional)`}
-                      hint={PRC_SUPPLIER_HELP.partNumberHint}
-                      value={row.partNumber}
-                      onChange={(v) =>
-                        setSuppliersDraft((rows) =>
-                          rows!.map((r, i) =>
-                            i === index ? { ...r, partNumber: v } : r,
-                          ),
-                        )
-                      }
-                      disabled={busy}
-                    />
-                    <EngineeringTextField
-                      id={`prc-sup-cat-${index}`}
-                      label={PRC_SUPPLIER_LABELS.catalogNumber}
-                      value={row.catalogNumber}
-                      onChange={(v) =>
-                        setSuppliersDraft((rows) =>
-                          rows!.map((r, i) =>
-                            i === index ? { ...r, catalogNumber: v } : r,
-                          ),
-                        )
-                      }
-                      disabled={busy}
-                    />
+                {suppliersDraft.map((row, index) => {
+                  const rowKey = supplierRowKey(
+                    row.supplierCode,
+                    row.store,
+                  );
+                  const returnedAttrs = correctionMode
+                    ? returnedSupplierAttrs.get(rowKey)
+                    : undefined;
+                  const rowReasons =
+                    correctionMode && returnedAttrs
+                      ? (["partNumber", "catalogNumber"] as const)
+                          .filter((a) => returnedAttrs.has(a))
+                          .map(
+                            (a) =>
+                              `${PRC_SUPPLIER_LABELS[a]}: ${supplierAttrReasons.get(
+                                `${rowKey}|${a}`,
+                              ) || supplierAttrReasons.get(`${rowKey}|link`) || ""}`,
+                          )
+                          .filter((s) => !s.endsWith(": "))
+                      : [];
+                  return (
+                    <div
+                      key={index}
+                      className="engineering-prc__supplier-row"
+                    >
+                      {rowReasons.length ? (
+                        <p className="engineering-prc__change-notes">
+                          Correção solicitada — {rowReasons.join(" · ")}
+                        </p>
+                      ) : null}
+                      <EngineeringTextField
+                        id={`prc-sup-code-${index}`}
+                        label={PRC_SUPPLIER_LABELS.supplierCode}
+                        value={row.supplierCode}
+                        onChange={(v) =>
+                          setSuppliersDraft((rows) =>
+                            rows!.map((r, i) =>
+                              i === index ? { ...r, supplierCode: v } : r,
+                            ),
+                          )
+                        }
+                        required
+                        disabled={busy || correctionMode}
+                      />
+                      <EngineeringTextField
+                        id={`prc-sup-store-${index}`}
+                        label={PRC_SUPPLIER_LABELS.store}
+                        value={row.store}
+                        onChange={(v) =>
+                          setSuppliersDraft((rows) =>
+                            rows!.map((r, i) =>
+                              i === index ? { ...r, store: v } : r,
+                            ),
+                          )
+                        }
+                        required
+                        disabled={busy || correctionMode}
+                      />
+                      <EngineeringTextField
+                        id={`prc-sup-name-${index}`}
+                        label={PRC_SUPPLIER_LABELS.supplierName}
+                        value={row.supplierName}
+                        onChange={(v) =>
+                          setSuppliersDraft((rows) =>
+                            rows!.map((r, i) =>
+                              i === index ? { ...r, supplierName: v } : r,
+                            ),
+                          )
+                        }
+                        required
+                        disabled={busy || correctionMode}
+                      />
+                      <EngineeringTextField
+                        id={`prc-sup-pn-${index}`}
+                        label={PRC_SUPPLIER_LABELS.partNumber}
+                        hint={PRC_SUPPLIER_HELP.partNumberHint}
+                        value={row.partNumber}
+                        onChange={(v) =>
+                          setSuppliersDraft((rows) =>
+                            rows!.map((r, i) =>
+                              i === index ? { ...r, partNumber: v } : r,
+                            ),
+                          )
+                        }
+                        required
+                        disabled={
+                          busy || !supplierAttrEditable(row, "partNumber")
+                        }
+                      />
+                      <EngineeringTextField
+                        id={`prc-sup-cat-${index}`}
+                        label={`${PRC_SUPPLIER_LABELS.catalogNumber} (opcional)`}
+                        value={row.catalogNumber}
+                        onChange={(v) =>
+                          setSuppliersDraft((rows) =>
+                            rows!.map((r, i) =>
+                              i === index ? { ...r, catalogNumber: v } : r,
+                            ),
+                          )
+                        }
+                        disabled={
+                          busy || !supplierAttrEditable(row, "catalogNumber")
+                        }
+                      />
+                      {!correctionMode ? (
+                        <EngineeringActionButton
+                          variant="ghost"
+                          disabled={busy}
+                          onClick={() =>
+                            setSuppliersDraft((rows) =>
+                              rows!.filter((_, i) => i !== index),
+                            )
+                          }
+                        >
+                          Remover
+                        </EngineeringActionButton>
+                      ) : null}
+                    </div>
+                  );
+                })}
+                {!correctionMode ? (
+                  <div className="engineering-prc__supplier-add">
                     <EngineeringActionButton
                       variant="ghost"
                       disabled={busy}
                       onClick={() =>
-                        setSuppliersDraft((rows) =>
-                          rows!.filter((_, i) => i !== index),
-                        )
+                        setSuppliersDraft((rows) => [
+                          ...(rows || []),
+                          emptySupplierRow(),
+                        ])
                       }
                     >
-                      Remover
+                      + Adicionar fornecedor
                     </EngineeringActionButton>
                   </div>
-                ))}
-                <div className="engineering-prc__supplier-add">
-                  <EngineeringActionButton
-                    variant="ghost"
-                    disabled={busy}
-                    onClick={() =>
-                      setSuppliersDraft((rows) => [
-                        ...(rows || []),
-                        emptySupplierRow(),
-                      ])
-                    }
-                  >
-                    + Adicionar fornecedor
-                  </EngineeringActionButton>
-                </div>
+                ) : null}
                 <EngineeringTextField
                   id="prc-sup-reason"
                   label="Justificativa da alteração de fornecedores"

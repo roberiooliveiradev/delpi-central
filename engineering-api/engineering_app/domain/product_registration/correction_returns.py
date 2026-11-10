@@ -200,6 +200,162 @@ def all_targets_addressed(targets: list[dict[str, Any]]) -> bool:
     return all(t.get("addressed_at") for t in targets)
 
 
+def supplier_link_targets_index(
+    targets: list[dict[str, Any]],
+) -> dict[tuple[str, str], dict[str, Any]]:
+    """Mapa ``(supplierCode, store) -> {attrs permitidos, target_key}``
+    dos alvos SUPPLIER_LINK da devolução aberta.
+
+    Alvo sem ``target_attribute`` (link integral) autoriza os dois
+    atributos editáveis do vínculo — nunca a identidade (código, loja,
+    razão social) nem a lista.
+    """
+    out: dict[tuple[str, str], dict[str, Any]] = {}
+    for t in targets or []:
+        if t.get("target_type") != "SUPPLIER_LINK":
+            continue
+        key = t.get("supplier_key") or {}
+        code = str(key.get("supplierCode") or "").strip()
+        store = str(key.get("store") or "").strip()
+        if not code or not store:
+            continue
+        attr = str(t.get("target_attribute") or "").strip()
+        allowed = (
+            set(catalog.SUPPLIER_LINK_EDITABLE_FIELDS)
+            if not attr
+            else {attr}
+        )
+        entry = out.setdefault(
+            (code, store), {"attrs": set(), "target_keys": set()}
+        )
+        entry["attrs"].update(allowed)
+        entry["target_keys"].add(str(t.get("target_key") or ""))
+    return out
+
+
+def _supplier_identity(item: dict[str, Any]) -> tuple[str, str]:
+    return (
+        str(item.get("supplierCode") or "").strip(),
+        str(item.get("store") or "").strip(),
+    )
+
+
+def validate_supplier_correction(
+    *,
+    targets: list[dict[str, Any]],
+    current_suppliers: list[dict[str, Any]],
+    proposed: Any,
+    change_index: int = 0,
+) -> tuple[list[dict[str, Any]], set[str]]:
+    """Valida o valor proposto do path agregado ``suppliers`` contra a
+    allowlist granular da devolução (vínculo + atributo devolvidos).
+
+    Regras:
+    - a lista proposta deve ter exatamente o mesmo conjunto de
+      identidades ``(supplierCode, store)`` — sem adição nem remoção;
+    - ``supplierName`` e a identidade nunca são editáveis;
+    - cada atributo divergente deve pertencer a um alvo SUPPLIER_LINK
+      devolvido para aquele vínculo;
+    - vínculos alterados são revalidados integralmente
+      (``partNumber`` obrigatório — PRC-REF-022-FIX-01);
+    - vínculos intocados preservam o valor vigente (legado não é
+      reescrito nem revalidado).
+
+    Retorna ``(lista_mesclada, target_keys_endereçados)``.
+    """
+    field = f"changes[{change_index}].proposedValue"
+    if not isinstance(proposed, list):
+        raise PrcValidationError(
+            "suppliers deve ser lista.",
+            fields={field: "type"},
+        )
+    allowed = supplier_link_targets_index(targets)
+    current_by_key: dict[tuple[str, str], dict[str, Any]] = {}
+    current_order: list[tuple[str, str]] = []
+    for item in current_suppliers or []:
+        if not isinstance(item, dict):
+            continue
+        key = _supplier_identity(item)
+        if not key[0] or not key[1]:
+            continue
+        current_by_key.setdefault(key, item)
+        if key not in current_order:
+            current_order.append(key)
+    proposed_keys: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for item in proposed:
+        if not isinstance(item, dict):
+            raise PrcValidationError(
+                "suppliers[] deve conter objetos.",
+                fields={field: "type"},
+            )
+        key = _supplier_identity(item)
+        if key in seen:
+            raise PrcValidationError(
+                f"Vínculo {key[0]}/{key[1]} duplicado na proposta.",
+                fields={field: "duplicate"},
+            )
+        seen.add(key)
+        proposed_keys.append(key)
+    if set(proposed_keys) != set(current_by_key):
+        raise PrcValidationError(
+            "A correção não pode adicionar nem remover vínculos de "
+            "fornecedor — apenas os atributos devolvidos.",
+            fields={field: "link_set"},
+        )
+    merged: list[dict[str, Any]] = []
+    addressed: set[str] = set()
+    changed_keys: set[tuple[str, str]] = set()
+    for key in current_order:
+        current = current_by_key[key]
+        proposal = next(
+            p for p in proposed if _supplier_identity(p) == key
+        )
+        entry = allowed.get(key, {"attrs": set(), "target_keys": set()})
+        name = str(proposal.get("supplierName") or "").strip()
+        if name != str(current.get("supplierName") or "").strip():
+            raise PrcValidationError(
+                f"Razão social do vínculo {key[0]}/{key[1]} não é "
+                "editável nesta correção.",
+                fields={field: "immutable"},
+            )
+        candidate = dict(current)
+        link_changed = False
+        for attr in catalog.SUPPLIER_LINK_EDITABLE_FIELDS:
+            new_value = proposal.get(attr)
+            new_text = (
+                ""
+                if new_value is None
+                else str(new_value).strip()
+            )
+            cur_text = str(current.get(attr) or "").strip()
+            if new_text == cur_text:
+                continue
+            if attr not in entry["attrs"]:
+                raise PrcValidationError(
+                    f"Atributo '{attr}' do vínculo {key[0]}/{key[1]} "
+                    "não foi devolvido para correção.",
+                    fields={field: "allowlist"},
+                )
+            candidate[attr] = new_text
+            link_changed = True
+        if link_changed:
+            changed_keys.add(key)
+            # Vínculo alterado → revalidação integral (PN obrigatório).
+            validated = catalog.validate_supplier(candidate)
+            addressed.update(entry["target_keys"])
+            merged.append(validated)
+        else:
+            merged.append(dict(current))
+    if not changed_keys:
+        raise PrcValidationError(
+            "Nenhum atributo devolvido foi alterado — use "
+            "mode='confirmed' para confirmar sem mudança.",
+            fields={field: "no_change"},
+        )
+    return merged, addressed
+
+
 def validate_returned_changes(
     *,
     targets: list[dict[str, Any]],

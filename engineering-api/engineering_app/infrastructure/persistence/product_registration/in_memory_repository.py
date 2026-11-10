@@ -1458,7 +1458,21 @@ class InMemoryProductRegistrationRepository:
             tech = draft.get("technical_data") or {}
             if t["target_type"] == "FIELD":
                 baseline = tech.get(t["target_path"])
-                self._correction_targets[tid] = {
+            elif t["target_type"] == "SUPPLIER_LINK":
+                key = t.get("supplier_key") or {}
+                baseline = next(
+                    (
+                        s
+                        for s in (tech.get("suppliers") or [])
+                        if isinstance(s, dict)
+                        and str(s.get("supplierCode") or "").strip()
+                        == str(key.get("supplierCode") or "").strip()
+                        and str(s.get("store") or "").strip()
+                        == str(key.get("store") or "").strip()
+                    ),
+                    None,
+                )
+            self._correction_targets[tid] = {
                 "id": tid,
                 "return_id": rid,
                 "request_id": request_id,
@@ -1508,6 +1522,7 @@ class InMemoryProductRegistrationRepository:
         actor_display_name: str | None,
         actor_email: str | None,
         changes: list[dict[str, Any]],
+        addressed_supplier_keys: set[str] | None = None,
         event_meta: dict[str, Any],
     ) -> dict[str, Any]:
         req = self._require_request(request_id)
@@ -1546,7 +1561,11 @@ class InMemoryProductRegistrationRepository:
                     t["addressed_by_subject"] = actor_subject
                     t["addressed_mode"] = mode
                     t["addressed_value"] = new_val
-                elif path == "suppliers" and t.get("target_type") == "SUPPLIER_LINK":
+                elif (
+                    path == "suppliers"
+                    and t.get("target_type") == "SUPPLIER_LINK"
+                    and t.get("target_key") in (addressed_supplier_keys or set())
+                ):
                     t["addressed_at"] = now
                     t["addressed_by_subject"] = actor_subject
                     t["addressed_mode"] = mode

@@ -179,13 +179,15 @@ export const PRC_SUPPLIER_HELP = {
   tradeNameHint:
     "Nome fantasia do fornecedor, quando disponível no cadastro oficial.",
   partNumberHint:
-    "Código de peça informado pelo fornecedor, quando disponível.",
+    "Código de peça do produto no catálogo do fornecedor — obrigatório para vincular.",
   catalogHint:
     "Referência de catálogo informada pelo fornecedor, quando disponível.",
   reasonOptional:
     "Justificativa opcional (até 250 caracteres) — aparece só quando o campo foi preenchido ou alterado.",
   selectRequired:
     "Escolha um fornecedor na lista de resultados para confirmar o código e a loja.",
+  partNumberRequired:
+    "Part Number é obrigatório para vincular o fornecedor.",
   duplicate:
     "Este fornecedor e esta loja já foram adicionados à solicitação.",
   duplicateExisting:

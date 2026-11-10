@@ -344,6 +344,7 @@ class ProductRegistrationRepository(Protocol):
         actor_display_name: str | None,
         actor_email: str | None,
         changes: list[dict[str, Any]],
+        addressed_supplier_keys: set[str] | None = None,
         event_meta: dict[str, Any],
     ) -> dict[str, Any]:
         """Patch allowlisted no draft sob needs_correction + marca alvos."""

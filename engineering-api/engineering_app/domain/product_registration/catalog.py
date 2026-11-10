@@ -159,7 +159,8 @@ _PRODUCT_FIELDS: tuple[FieldSpec, ...] = (
         official_field="suppliers",
         official_source="products.suppliers",
         note="SA5 — vínculo por (supplierCode, store); partNumber "
-        "opcional (A5_CODPRF pode ser vazio — PO-D5.4).",
+        "obrigatório (A5_CODPRF — PRC-REF-022-FIX-01); catalogNumber "
+        "opcional.",
     ),
 )
 
@@ -182,13 +183,15 @@ SUPPLIER_REQUIRED_KEYS: tuple[str, ...] = (
     "supplierCode",
     "store",
     "supplierName",
+    # PRC-REF-022-FIX-01: partNumber (A5_CODPRF) é obrigatório para
+    # registrar ou alterar vínculo — substitui a regra histórica
+    # PO-D5.4 que o tratava como opcional. Verificação oficial continua
+    # obrigatória (nunca wildcard).
+    "partNumber",
 )
-# PO-D5.4: partNumber (A5_CODPRF) é opcional — aceita vazio/null/omitido
-# quando o cadastro oficial TOTVS não possui o valor. Quando informado,
-# a verificação oficial continua obrigatória (nunca wildcard).
 SUPPLIER_OPTIONAL_KEYS: tuple[str, ...] = (
     "catalogNumber",  # A5_CODPRCA
-    "partNumber",  # A5_CODPRF
+    # A5_CODPRF agora é required — ver SUPPLIER_REQUIRED_KEYS.
 )
 SUPPLIER_ALLOWED_KEYS: frozenset[str] = frozenset(
     SUPPLIER_REQUIRED_KEYS + SUPPLIER_OPTIONAL_KEYS
@@ -262,14 +265,13 @@ def validate_supplier(item: Any) -> dict[str, Any]:
             out[key] = text
     catalog = item.get("catalogNumber")
     if catalog is not None and str(catalog).strip():
-        out["catalogNumber"] = str(catalog).strip()[:80]
+        cat_text = str(catalog).strip()
+        if len(cat_text) > 80:
+            fields["suppliers.catalogNumber"] = "max_length"
+        else:
+            out["catalogNumber"] = cat_text
     else:
         out["catalogNumber"] = None
-    part_number = item.get("partNumber")
-    if part_number is not None and str(part_number).strip():
-        out["partNumber"] = str(part_number).strip()[:80]
-    else:
-        out["partNumber"] = ""
     if fields:
         raise PrcValidationError("Fornecedor inválido.", fields=fields)
     return out
@@ -450,8 +452,8 @@ def scalar_values_match(spec: FieldSpec, expected: Any, observed: Any) -> bool:
 def supplier_link_key(supplier: dict[str, Any], *, official: bool) -> tuple[str, str]:
     """Identidade do vínculo produto×fornecedor: (supplierCode, store).
 
-    PO-D5.4: partNumber NÃO compõe a chave — é atributo comparado depois
-    de localizada a relação (A5_CODPRF pode ser vazio no TOTVS).
+    partNumber NÃO compõe a chave — é atributo obrigatório comparado
+    depois de localizada a relação (PRC-REF-022-FIX-01).
     """
     if official:
         return (
@@ -618,6 +620,29 @@ def validate_supplier_link_changes(
             return [], (
                 f"supplierLinkChanges[{i}].fields contém atributo não "
                 f"editável: {sorted(unknown)}."
+            )
+        # PRC-REF-022-FIX-01 — PN obrigatório: ADD exige partNumber
+        # não vazio; UPDATE não pode esvaziar partNumber declarado.
+        # Atributos respeitam o limite oficial (80) — nunca trunca.
+        for field_name, field_value in fields.items():
+            text = str(field_value or "").strip()
+            if len(text) > 80:
+                return [], (
+                    f"supplierLinkChanges[{i}].fields.{field_name} "
+                    "excede 80 caracteres."
+                )
+            if field_name == "partNumber" and not text:
+                return [], (
+                    f"supplierLinkChanges[{i}].fields.partNumber é "
+                    "obrigatório e não pode ser vazio (A5_CODPRF — "
+                    "PRC-REF-022-FIX-01)."
+                )
+        if operation == "add" and not str(
+            fields.get("partNumber") or ""
+        ).strip():
+            return [], (
+                f"supplierLinkChanges[{i}].fields.partNumber é "
+                "obrigatório em ADD de vínculo (PRC-REF-022-FIX-01)."
             )
         reason = str(op.get("reason") or "").strip()
         if len(reason) > 250:

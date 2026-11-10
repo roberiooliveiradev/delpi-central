@@ -1,6 +1,6 @@
 /** Modelo de linha de fornecedor do PRC — conversão fiel do payload
- * `suppliers[]` (partNumber opcional pode ser null → string vazia
- * canônica, nunca valor inventado).
+ * `suppliers[]` (partNumber obrigatório — PRC-REF-022-FIX-01; vazio é
+ * representado como string vazia canônica e rejeitado na validação).
  *
  * D14-FIX-02 — cada linha visual tem `rowId` estável e `origin`
  * (`official` = baseline SA5; `draft` = candidata da sessão). A chave

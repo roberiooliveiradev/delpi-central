@@ -223,5 +223,8 @@ def test_allowed_actions_omit_route_divergence_after_ref01(
     detail = _get(client, f"{_base(rid)}", tok).json()["data"]
     assert "route_divergence" not in detail["allowedActions"]
     assert detail["status"] == "in_progress"
-    assert "request_information" in detail["allowedActions"]
+    # REF-022 — request_information virou ação legada e não é mais
+    # oferecida em in_progress (Devolver para correção é o caminho).
+    assert "request_information" not in detail["allowedActions"]
+    assert "return_for_correction" in detail["allowedActions"]
     assert "complete" in detail["allowedActions"]

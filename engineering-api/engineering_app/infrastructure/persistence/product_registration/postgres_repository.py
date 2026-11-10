@@ -2199,6 +2199,20 @@ class PostgresProductRegistrationRepository:
                 baseline = None
                 if t["target_type"] == "FIELD":
                     baseline = tech.get(t["target_path"])
+                elif t["target_type"] == "SUPPLIER_LINK":
+                    key = t.get("supplier_key") or {}
+                    baseline = next(
+                        (
+                            s
+                            for s in (tech.get("suppliers") or [])
+                            if isinstance(s, dict)
+                            and str(s.get("supplierCode") or "").strip()
+                            == str(key.get("supplierCode") or "").strip()
+                            and str(s.get("store") or "").strip()
+                            == str(key.get("store") or "").strip()
+                        ),
+                        None,
+                    )
                 conn.execute(
                     f"INSERT INTO {_T_CORR_TGT}"
                     " (id, return_id, request_id, ordinal, target_type,"
@@ -2267,6 +2281,7 @@ class PostgresProductRegistrationRepository:
         actor_display_name: str | None,
         actor_email: str | None,
         changes: list[dict[str, Any]],
+        addressed_supplier_keys: set[str] | None = None,
         event_meta: dict[str, Any],
     ) -> dict[str, Any]:
         with self._conn() as conn:
@@ -2317,21 +2332,25 @@ class PostgresProductRegistrationRepository:
                     }
                 )
                 if path == "suppliers":
-                    conn.execute(
-                        f"UPDATE {_T_CORR_TGT} SET addressed_at=%s,"
-                        " addressed_by_subject=%s, addressed_mode=%s,"
-                        " addressed_value=%s"
-                        " WHERE return_id=%s AND target_type='SUPPLIER_LINK'",
-                        (
-                            now,
-                            actor_subject,
-                            mode,
-                            json.dumps(new_val)
-                            if new_val is not None
-                            else None,
-                            return_id,
-                        ),
-                    )
+                    for tkey in addressed_supplier_keys or set():
+                        conn.execute(
+                            f"UPDATE {_T_CORR_TGT} SET addressed_at=%s,"
+                            " addressed_by_subject=%s, addressed_mode=%s,"
+                            " addressed_value=%s"
+                            " WHERE return_id=%s"
+                            " AND target_type='SUPPLIER_LINK'"
+                            " AND target_key=%s",
+                            (
+                                now,
+                                actor_subject,
+                                mode,
+                                json.dumps(new_val)
+                                if new_val is not None
+                                else None,
+                                return_id,
+                                tkey,
+                            ),
+                        )
                 else:
                     conn.execute(
                         f"UPDATE {_T_CORR_TGT} SET addressed_at=%s,"

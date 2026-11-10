@@ -76,7 +76,7 @@ linksComplete, fields[], links[], fingerprint
 | Fase | Regra |
 |---|---|
 | Pré | Vínculo presente único; atributo conhecido; valor proposto ≠ anterior; sem `remove` na mesma chave |
-| Pós | Compara **somente** atributos do change set (`partNumber` / `catalogNumber`) |
+| Pós | Compara **somente** atributos do change set (`partNumber` / `catalogNumber`) — PRC-REF-022-FIX-01: `partNumber` obrigatório em todo vínculo registrado/alterado (ADD exige PN; UPDATE não pode resultar em PN vazio); `catalogNumber` permanece opcional |
 
 ### REMOVE
 
