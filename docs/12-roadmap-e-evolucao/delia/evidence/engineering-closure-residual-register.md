@@ -881,3 +881,22 @@ Provider-neutral; SSRF/redirect/DNS checks; OAuth externo fora do Keycloak DELPI
 **NEXT:** `T2_INDEPENDENT_REVIEW`  
 **PRODUCTION_DEPLOY / T3:** `NOT_AUTHORIZED`
 
+
+
+## C3 SEMANTIC MCP + RESPONSE SYNTHESIS (2026-11-10)
+
+**TASK_ID:** `DELIA-C3-SEMANTIC-MCP-PROGRESSION-RESPONSE-SYNTHESIS-AND-LEGACY-REMOVAL-01`
+
+| Campo | Valor |
+|---|---|
+| ROOT_CAUSE_A | `_INVESTIGATION_INSTRUCTIONS` acopladas a `davi.execute_delpi_information` / `discover_*` / `candidate_token` universal + metadata DAVI `get_context` dizendo read/analyze não implementados |
+| FIRST_DIVERGENCE_A | Agent recebia contrato/instruções obsoletas → falhava args de `davi.read` ou não progredia catalog→READ |
+| ROOT_CAUSE_B | `_business_lines` substituía `data.root` por único item de `items`; síntese omitia `is_complete=false` do owner |
+| FIRST_DIVERGENCE_B | Evidence citable com root 90260921, mas conteúdo renderizado/síntese perdia root e limitação parcial |
+| REMEDIATION | Instruções generalistas v1; hints schema-derived; DAVI metadata live; render root+items; `owner_result_incomplete` |
+| REAL_E2E | OpenRouter `qwen/qwen3-14b` (~49s): GROUNDED + OBSERVATION; read completed; 90260921 + 10020003 + is_complete=false |
+| GENERALIZATION | Catalog live DAVI(4)/TEO(6)/VISTA(6) superfícies distintas; harness G04–G12 instructions-agnostic PASS |
+| RESIDUAL | Comentário histórico `discover_delpi_information` em `generic_evidence_renderer.py` (HISTORICAL_REFERENCE); flake local_ollama sob budget 300s (BUDGET_REDESIGN=DEFERRED) |
+| PHASE | NÃO avançada |
+| NEXT | `T2_INDEPENDENT_REVIEW` |
+| PRODUCTION_DEPLOY / T3 | NOT_AUTHORIZED |

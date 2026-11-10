@@ -98,6 +98,33 @@ def test_business_lines_explicit_empty():
     ]
 
 
+def test_business_lines_preserves_root_with_single_item():
+    """Subject root must not be replaced by a lone child item."""
+    lines = _business_lines(
+        {
+            "data": {
+                "root": {
+                    "code": "90260921",
+                    "description": "CHICOTE",
+                    "type": "PA",
+                },
+                "items": [
+                    {
+                        "code": "10020003",
+                        "description": "CABO",
+                        "quantity": 175,
+                    }
+                ],
+                "is_complete": False,
+            }
+        }
+    )
+    blob = "\n".join(lines or [])
+    assert "90260921" in blob
+    assert "10020003" in blob
+    assert "is_complete: false" in blob
+
+
 def test_md_leaf_escapes_all_markup():
     assert _md_leaf("*bold* [x](y) `c`") == (
         "\\*bold\\* \\[x\\]\\(y\\) \\`c\\`"

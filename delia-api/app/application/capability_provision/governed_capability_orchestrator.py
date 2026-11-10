@@ -274,6 +274,7 @@ from app.application.capability_provision.semantic_capability_support import (
     _identifier_arg_keys,
     _is_business_evidence_attempt,
     _is_candidate_bound,
+    _structured_owner_incomplete,
     _is_unconstrained_string,
     _iter_guidance_doc_items,
     _json_block,
@@ -2531,6 +2532,25 @@ class OperationalCapabilityOrchestrator:
             outcome=outcome,
             render=_render,
         )
+        # Owner business payloads may declare incompleteness inside
+        # structured data while the MCP transport remains complete.
+        # Surface that as a limitation so finalize/presentation cannot
+        # silently promote a partial tree to a finished answer.
+        if _structured_owner_incomplete(outcome):
+            if "owner_result_incomplete" not in attempt.limitations:
+                attempt = GovernedCapabilityAttempt(
+                    status=attempt.status,
+                    correlation_id=attempt.correlation_id,
+                    content=attempt.content,
+                    limitations=tuple(attempt.limitations)
+                    + ("owner_result_incomplete",),
+                    error_code=attempt.error_code,
+                    provenance=attempt.provenance,
+                    outcome=attempt.outcome,
+                    markdown_content=attempt.markdown_content,
+                    admission_outcome=attempt.admission_outcome,
+                    verified_composition=attempt.verified_composition,
+                )
         # Tag pure discovery envelopes so finalize never treats catalog
         # / candidate lists as business facts (R2). When discovery-first
         # already chained to an owner READ (remote_used != discover

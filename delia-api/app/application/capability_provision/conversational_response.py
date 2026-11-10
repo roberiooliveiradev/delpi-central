@@ -464,6 +464,49 @@ def _format_records(
             lines.append(f"{indent}{idx}. {item}")
     return lines
 
+_SUBJECT_CONTEXT_KEYS = ("root", "parent", "subject")
+
+
+def _structural_subject(payload: Mapping) -> Mapping | None:
+    """First owner-declared subject object in a data envelope."""
+    for key in _SUBJECT_CONTEXT_KEYS:
+        candidate = payload.get(key)
+        if isinstance(candidate, Mapping) and candidate:
+            return candidate
+    return None
+
+
+def _project_subject_with_items(
+    payload: Mapping,
+    items: list,
+    *,
+    field_labels: FieldLabels | None,
+    format_structured,
+    format_records,
+) -> list[str] | None:
+    """Keep subject identity when an envelope also publishes items.
+
+    A single-item list must not replace an authoritative root/parent/
+    subject already declared on the same payload — that erases the
+    user's identifier and turns a BOM child into a false primary.
+    """
+    subject = _structural_subject(payload)
+    if subject is None:
+        return None
+    lines = format_structured(subject, field_labels=field_labels) or []
+    if items:
+        child_lines = format_records(items, field_labels=field_labels)
+        if child_lines:
+            lines.append("Componentes:")
+            lines.extend(child_lines)
+    else:
+        lines.append("Componentes: (vazio)")
+    completeness = payload.get("is_complete")
+    if isinstance(completeness, bool):
+        lines.append(f"is_complete: {str(completeness).lower()}")
+    return lines or None
+
+
 def _business_lines(
     node: Mapping,
     depth: int = 0,
@@ -486,6 +529,15 @@ def _business_lines(
         if isinstance(payload, Mapping):
             items = payload.get(_ITEMS_KEY)
             if isinstance(items, list):
+                with_subject = _project_subject_with_items(
+                    payload,
+                    items,
+                    field_labels=field_labels,
+                    format_structured=_format_structured,
+                    format_records=_format_records,
+                )
+                if with_subject is not None:
+                    return with_subject
                 if not items:
                     return [EMPTY_RESULT_TEXT]
                 if len(items) == 1 and isinstance(items[0], Mapping):
@@ -512,7 +564,6 @@ def _business_lines(
                 return [EMPTY_RESULT_TEXT]
             return _format_records(payload, field_labels=field_labels)
     return None
-
 # G3-RW-01: a leaf must remain literal data — the projector owns every
 # structural decision. ALL CommonMark-escapable ASCII punctuation is
 # backslash-escaped so owner text can never form emphasis, code spans,
@@ -680,6 +731,15 @@ def _md_business_lines(
         if isinstance(payload, Mapping):
             items = payload.get(_ITEMS_KEY)
             if isinstance(items, list):
+                with_subject = _project_subject_with_items(
+                    payload,
+                    items,
+                    field_labels=field_labels,
+                    format_structured=_md_format_structured,
+                    format_records=_md_format_records,
+                )
+                if with_subject is not None:
+                    return with_subject
                 if not items:
                     return [EMPTY_RESULT_TEXT]
                 if len(items) == 1 and isinstance(items[0], Mapping):

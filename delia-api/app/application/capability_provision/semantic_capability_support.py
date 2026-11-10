@@ -1915,6 +1915,26 @@ class SemanticInvestigationPlan:
     evidence_needed: tuple[str, ...] = ()
 
 
+def _structured_owner_incomplete(outcome: SpecialistOutcome | None) -> bool:
+    """True when owner structured payload declares business incompleteness.
+
+    Distinct from transport ``outcome.is_complete``: MCP adapters may
+    mark the wire result complete while ``data.is_complete=false``
+    (partial tree / truncated page). That owner flag must remain visible.
+    """
+    if outcome is None:
+        return False
+    structured = outcome.structured
+    if not isinstance(structured, Mapping):
+        return False
+    if structured.get("is_complete") is False:
+        return True
+    data = structured.get("data")
+    if isinstance(data, Mapping) and data.get("is_complete") is False:
+        return True
+    return False
+
+
 def _is_business_evidence_attempt(
     attempt: GovernedCapabilityAttempt,
 ) -> bool:
@@ -2464,7 +2484,31 @@ def _apply_declared_answer(
                         "declared_status_overridden"
                     )
                     extra_limitations.append("coverage_unknown")
+                owner_incomplete = any(
+                    _structured_owner_incomplete(item.outcome)
+                    or "owner_result_incomplete" in item.limitations
+                    for item in business
+                )
+                if owner_incomplete:
+                    extra_limitations.append("owner_result_incomplete")
                 synthesized = answer_text[:MAX_RENDER_CONTENT_CHARS]
+                if owner_incomplete:
+                    marker = "is_complete: false"
+                    lowered = synthesized.casefold()
+                    if (
+                        marker not in lowered
+                        and "is_complete=false" not in lowered
+                        and "parcial" not in lowered
+                        and "incompleta" not in lowered
+                    ):
+                        notice = (
+                            "\n\nNota: a fonte declarou resultado "
+                            "parcial (is_complete=false)."
+                        )
+                        room = MAX_RENDER_CONTENT_CHARS - len(notice)
+                        synthesized = (
+                            synthesized[: max(0, room)] + notice
+                        )
                 return dataclasses.replace(
                     terminal,
                     content=synthesized,

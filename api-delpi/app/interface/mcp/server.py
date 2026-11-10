@@ -260,8 +260,10 @@ def create_mcp_server() -> MCPServer:
             "limits and live agent directives (context is not authorization). "
             "action=catalog: compact list of eligible governed read "
             "capabilities. action=schema: governed argument schema for one "
-            "capability via 'capability'. Planned tools (read/analyze/"
-            "execute/delete) are reported as not implemented."
+            "capability via 'capability'. After selecting a capability, call "
+            "the live semantic tools read or analyze (or knowledge for "
+            "governed documentation). Write-class execute/delete remain "
+            "not implemented on this surface."
         ),
         annotations=ToolAnnotations.model_validate(
             tool_annotations_payload(
@@ -379,11 +381,16 @@ def create_mcp_server() -> MCPServer:
         description=(
             "Read DELPI business data through one governed capability. "
             "capability: id published by get_context action=catalog/schema "
-            "(e.g. search_products, get_product_stock). arguments: bounded "
-            "fields from that capability's argument_schema. Only currently "
-            "eligible capabilities execute — unknown or unavailable ids fail "
-            "closed. Does not accept URL, path, method, operationId lookup "
-            "outside the catalog, or SQL. Backend AuthZ remains authoritative."
+            "(e.g. search_products, get_product_structure, get_product_stock). "
+            "arguments: object whose keys come from that capability's "
+            "argument_schema (for example {\"code\": \"<product-code>\"}) — never "
+            "place those business fields as top-level siblings of capability. "
+            "Prefer get_context action=schema for the selected capability "
+            "before the first read when the argument contract is unclear. "
+            "Only currently eligible capabilities execute — unknown or "
+            "unavailable ids fail closed. Does not accept URL, path, method, "
+            "operationId lookup outside the catalog, or SQL. Backend AuthZ "
+            "remains authoritative."
         ),
         annotations=ToolAnnotations.model_validate(
             tool_annotations_payload(

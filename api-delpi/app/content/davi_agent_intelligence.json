@@ -57,7 +57,7 @@
   "surface_parity": {
     "mcp_tools": 4,
     "gpt_actions_legacy": 2,
-    "note": "Capability parity ≠ transport count. W1–W9 semantic surface: get_context + knowledge + read + analyze (legacy broker retired; read/analyze/execute/delete remain PLANNED_NOT_IMPLEMENTED). Product Master capability search_products via read/analyze. Descriptive for the Agent, not alternate SoT (tool counts owned by MCP server / GPT façade). Same DaviAgentIntelligenceService. GPT Actions = LEGACY_TRANSITIONAL (gpt_get_catalog + gpt_search_products only). Stock/BOM/shipping/etc. via MCP read/analyze; gpt_get_catalog carries live directives, not those operations."
+    "note": "Capability parity ≠ transport count. W1–W9 semantic surface: get_context + knowledge + read + analyze are LIVE. Write-class execute/delete remain PLANNED_NOT_IMPLEMENTED. Product Master capability search_products via read/analyze. Descriptive for the Agent, not alternate SoT (tool counts owned by MCP server / GPT façade). Same DaviAgentIntelligenceService. GPT Actions = LEGACY_TRANSITIONAL (gpt_get_catalog + gpt_search_products only). Stock/BOM/shipping/etc. via MCP read/analyze; gpt_get_catalog carries live directives, not those operations."
   },
   "anti_patterns": [
     "Inventar estoque, preço, BOM, fornecedor ou status sem retorno de tool.",

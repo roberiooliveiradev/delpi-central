@@ -365,3 +365,8 @@ NEXT_STAGE=REVIEW_REQUIRED
 ```
 
 **Single command to start:** autorizar somente **T0**, sem código. Revisar T0 e então emitir **um único prompt bounded para T1**, sucessivamente até T5. Nenhuma autorização implícita para tarefas seguintes. **Fim inequívoco = T5 ACCEPT ou T5 BLOCKED/ADR documentado; sem loops de prompts.**
+
+
+## Anexo — execução DELIA-C3-SEMANTIC-MCP-PROGRESSION-RESPONSE-SYNTHESIS (2026-11-10)
+
+Registro operacional (não avança gates L/A/O/R automaticamente): remediação F1/F2 de progressão semântica MCP dinâmica e síntese; evidência no residual register e execution ledger. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`. `T3=NOT_AUTHORIZED`.

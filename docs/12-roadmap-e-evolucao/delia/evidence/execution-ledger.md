@@ -6117,3 +6117,13 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Drift live:** DAVI MCP tools = `analyze/get_context/knowledge/read` (não discover/execute documentados).
 - **Veredicto:** `ACCEPT_WITH_RESIDUAL` proposto — registry/revogação/S2S/READ MCP comprovados; turn completo LLM local incompleto; T04/T05 TEST_NOT_RUN.
 
+
+
+| DELIA-C3-SEMANTIC-MCP-PROGRESSION-RESPONSE-SYNTHESIS-AND-LEGACY-REMOVAL-01 | Instruções Agent desacopladas; DAVI metadata live; render root+items; owner_result_incomplete; E2E OpenRouter Qwen GROUNDED 90260921; PRODUCTION_DEPLOY=NOT_AUTHORIZED | F1/F2 remediated_bounded_dev; NEXT=T2_INDEPENDENT_REVIEW |
+
+### DELIA-C3-SEMANTIC-MCP-PROGRESSION-RESPONSE-SYNTHESIS-AND-LEGACY-REMOVAL-01 — execução (2026-11-10)
+
+- **Autorização:** investigação causal F1/F2 + remediação mínima; sem budget redesign / T3 / prod.
+- **BASE_HEAD observado coordenação:** `457148a8a9…`; reancoragem ff em `origin/main` (WIP concorrente preservado).
+- **E2E:** `DELIA_RUNTIME_PROFILE=openrouter_qwen` / `qwen/qwen3-14b`; HTTP 200 GROUNDED; operational `read` completed; partial `is_complete=false` preservado.
+- **Veredicto proposto:** `ACCEPT_WITH_RESIDUAL` (flake local_ollama sob budget; TEO/VISTA E2E turn completo não reexecutado — catalog surface PASS).
