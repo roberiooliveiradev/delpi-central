@@ -195,7 +195,6 @@ function renderColumn(
         <HelpdeskEntityAvatarLabel
           name={name}
           colorKey={directoryId || (row.requester_id != null ? `glpi:${row.requester_id}` : name)}
-          secondary={row.requester_id != null ? `#${row.requester_id}` : undefined}
           src={requesterPhotoSrc(row, photoFor, myPhotoUrl, preferMyPhoto)}
           size="sm"
         />

@@ -87,7 +87,6 @@ export function TicketListCards({
                   <HelpdeskEntityAvatarLabel
                     name={requester}
                     colorKey={directoryId || (row.requester_id != null ? `glpi:${row.requester_id}` : requester)}
-                    secondary={row.requester_id != null ? `#${row.requester_id}` : undefined}
                     src={photoSrc}
                     size="sm"
                   />

@@ -262,11 +262,8 @@ export function cellTextForColumn(row: TicketSummary, key: TicketListColumnKey):
       return row.urgency;
     case "assigned":
       return row.assigned_display_name ?? "";
-    case "requester": {
-      const name = (row.requester_display_name ?? "").trim();
-      const id = row.requester_id;
-      return id ? `${name} (#${id})` : name;
-    }
+    case "requester":
+      return (row.requester_display_name ?? "").trim();
     case "created_at":
       return absoluteDateTimeLabel(row.created_at);
     case "updated_at":

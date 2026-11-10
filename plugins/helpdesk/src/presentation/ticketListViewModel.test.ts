@@ -148,7 +148,7 @@ describe("cellTextForColumn", () => {
 
   it("publica código GLPI do requerente quando o BFF entrega o id", () => {
     const withId = { ...row, requester_id: 11 };
-    expect(cellTextForColumn(withId, "requester")).toBe("Robério Teixeira (#11)");
+    expect(cellTextForColumn(withId, "requester")).toBe("Robério Teixeira");
   });
 
   it("publica entidade e última edição vindas do GLPI", () => {
