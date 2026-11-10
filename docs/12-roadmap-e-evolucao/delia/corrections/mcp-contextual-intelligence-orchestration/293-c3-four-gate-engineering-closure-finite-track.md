@@ -415,3 +415,11 @@ Inspecionar caminho ativo de `_INVESTIGATION_INSTRUCTIONS` e `PydanticAiInvestig
 - **Gate de promoção:** critérios objetivos de suficiência da resposta, Evidence/provenance, negativa/partial honesto e chamada efetiva MCP; preservar segurança. Somente a coordenação decide autorização subsequente.
 - **STOP:** conclusão sem evidência, dependência de mudança de autoridade/contrato canônico, drift ou escopo novo → `INCONCLUSIVE`/`EXECUTION_DRIFT`/`ARCHITECTURE_DECISION_REQUIRED`; não redesenhar silenciosamente.
 - **NEXT:** `T2_INT0_INVESTIGATIVE_AGENT_REUSE_AND_CONTRACT_INVENTORY`, sob Documento 16. **PRODUCTION_DEPLOY=NOT_AUTHORIZED; T3=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NO.**
+
+### Stamp — INT-0 inventory executed (2026-11-10)
+
+**TASK:** `DELIA-C3-T2-INT01-…` (fatia INT-0).  
+**RESULT:** inventário I01–I10 COMPLETE no residual register; `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=REUSE|EXTEND` (sem NEW Agent); hipótese causal falsificável no finalize sem plan/obligations.  
+**INT-1:** `NOT_STARTED` — PO solicitou implementação condicionada, mas gate canônico desta seção exige revisão independente após INT-0 → `ARCHITECTURE_DECISION_REQUIRED` antes de qualquer diff.  
+**LOCAL_ENVIRONMENT_NOT_AVAILABLE** para eval live Qwen nesta host (container produtivo único).  
+**NEXT:** `COORDINATION_INT0_INDEPENDENT_REVIEW`. Sem avanço de fase; T3/INT-2/deploy NOT_AUTHORIZED.

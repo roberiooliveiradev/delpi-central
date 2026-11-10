@@ -6151,3 +6151,13 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Reuse:** investigation/MCPToolset/Evidence/Outcome `EXISTING_EQUIVALENT=YES / REUSE_DECISION=REUSE`; independent evaluator `EXISTING_EQUIVALENT=TO_INVENTORY / REUSE_DECISION=UNDECIDED`. No code/config/deploy or model changes in this task.
 - **Finite next:** `T2_INT0_INVESTIGATIVE_AGENT_REUSE_AND_CONTRACT_INVENTORY` (diagnostic contract/inventory ONLY); after independent review, potentially INT-1 small experiment, not auto-authorized. Tests should be causally targeted + generalization metamorphic, not full-stack or mandatory Kimi/Qwen comparison.
 - **Formal status:** `T2_TECHNICAL_RELEASE=DEPLOYED_REPORTED`; `T2_FUNCTIONAL_ACCEPTANCE=REWORK`; `PO_MANUAL_HOMOLOGATION=FAIL`; `C3_PHASE=UNCHANGED`; `T3_AUTHORIZED=NO`; `PRODUCTION_DEPLOY_FOR_NEW_TRACK=NOT_AUTHORIZED`; `NEXT=T2_INT0_INVESTIGATIVE_AGENT_REUSE_AND_CONTRACT_INVENTORY`.
+
+| DELIA-C3-T2-INT01-INVESTIGATIVE-INTELLIGENCE-NATIVE-PYDANTIC-AI-IMPLEMENTATION-AND-LOCAL-EVALUATION-01 | INT-0 inventory COMPLETE (docs only); EXISTING_EQUIVALENT=YES REUSE/EXTEND; first divergence = finalize SUCCESS on related business evidence without plan obligations; LOCAL_ENVIRONMENT_NOT_AVAILABLE (prod container); INT-1 code BLOCKED pending independent review; no delia-api diff | INT0=COMPLETE; INT1_AUTHORITY_GATE=ARCHITECTURE_DECISION_REQUIRED; NEXT=COORDINATION_INT0_INDEPENDENT_REVIEW |
+
+### DELIA-C3-T2-INT01 … — INT-0 execution (2026-11-10)
+
+- **Authority conflict resolution:** PO chat authorized INT-1 *conditioned* on INT-0 + canonical contracts; doc 293/ledger require INT-0 **without code** and INT-1 only after independent review → **no implementation diff**.
+- **Inventory:** `PydanticAiInvestigationOrchestrator` + MCPToolset + SpecialistInterop + `_governed_semantic_tool_invoke` + `_is_business_evidence_attempt` + `_finalize_agent_collected_attempts` + `InvestigationAnswer` mapped to I01–I10; pydantic-ai **2.50.0**.
+- **Falsifiable cause:** optional plan absent ⇒ finalize accepts related SUCCESS observations (aggregates/docs) as terminal without objective-kind coverage.
+- **Local eval:** NOT_RUN — `delpi-delia-api` is `DELIA_ENV=production` / compose project `infra`; compose.dev shares `container_name` → cannot isolate without disrupting prod.
+- **Veredicto:** `INT0_COMPLETE_FOR_REVIEW`; `INT1_STATUS=NOT_STARTED`; `CODE_CHANGES=NONE` (delia-api); docs updated.

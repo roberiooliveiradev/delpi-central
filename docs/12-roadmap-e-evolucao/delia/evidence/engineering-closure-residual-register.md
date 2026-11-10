@@ -1000,3 +1000,64 @@ Provider-neutral; SSRF/redirect/DNS checks; OAuth externo fora do Keycloak DELPI
 **Corrective direction:** The same Pydantic AI runtime remains the primary investigation intelligence; inspect reuse in Application coverage/finalize and native Pydantic AI before authorizing any cognitive delegation. `EXISTING_EQUIVALENT=YES` for core investigation/MCPToolset/Evidence/Outcome, and `TO_INVENTORY` for independent cognitive evaluator. `REUSE_DECISION=REUSE|EXTEND` candidate, **not implementation authorization**. No provider/tool-specific instructions, no parallel planner, no model comparison or full-stack testing by default. Measure by objective satisfaction and evidence fidelity, not HTTP 200, GROUNDED, call count or token consumption alone.
 
 **Residual status:** R04 production config closure historical unchanged. R05/R06/R08/R09 controlled risk classifications unchanged pending proper owner review. Outstanding P2/P3 semantic coverage gap is a **new material functional rework**, cannot be silently recast as accepted residual. T2 functional closure blocked, T3 still unauthorized. For stages/gates, see doc 293 T2-INT and doc 16 2026-11-10 decision.
+
+## T2-INT0 — Investigative Agent reuse / contract inventory (2026-11-10)
+
+**TASK_ID:** `DELIA-C3-T2-INT01-INVESTIGATIVE-INTELLIGENCE-NATIVE-PYDANTIC-AI-IMPLEMENTATION-AND-LOCAL-EVALUATION-01` (INT-0 slice only)  
+**BASE_HEAD (execution):** `45d031f724b340a0e443eed69034810461ed31d9` (contains origin `06abbd3b98` + unrelated PRC commit)  
+**ORIGIN_MAIN at start:** `06abbd3b98490663f82bb6e90c07782646035fcb`  
+**PYDANTIC_AI_VERSION (runtime container):** `2.50.0`  
+**CODE_CHANGES:** NONE (doc 293 INT-0 = TO_INVENTORY; sem código)  
+**INT1_AUTHORITY_GATE:** `ARCHITECTURE_DECISION_REQUIRED` / pending independent review of this inventory before any INT-1 experiment diff  
+**LOCAL_ENVIRONMENT:** `NOT_AVAILABLE` — único `delpi-delia-api` no host é compose project `infra`, `DELIA_ENV=production`, mesmo `container_name` em compose.dev e compose prod; live Qwen eval nesta task **não** executada (proibição de usar produção como DEV)
+
+### Responsibility inventory
+
+| RESPONSIBILITY | OWNER | CANONICAL_CONTRACT | CONSUMERS | CURRENT_IMPLEMENTATION | CURRENT_FAILURE | EXISTING_EQUIVALENT | REUSE_DECISION |
+|---|---|---|---|---|---|---|---|
+| I01 investigation understanding | `PydanticAiInvestigationOrchestrator` + optional `declare_investigation_goal` → `SemanticInvestigationPlan` | Agent instructions + plan tool; plan **optional** for simple READ | finalize / obligations | `_INVESTIGATION_INSTRUCTIONS` generalist-semantic-v1; plan tool exists | Without plan, finalize has no typed obligation of *kind* (list vs aggregate) | YES | EXTEND (plan/obligation semantics) |
+| I02 capability discovery | MCPToolset live + `_project_semantic_tool_catalog` | tools/list; SpecialistInterop | Agent tool surface | Native MCPToolset ×3 (davi/teo/vista) + catalog project | Discovery content can still reach user path if not tagged | YES | REUSE |
+| I03 semantic selection | Agent (Pydantic AI) | live tool descriptions/schemas | governed invoke | Model selects among live tools; no lexical router | Selects related-but-insufficient tools (teo.analyze for process list; vista knowledge/docs for formats) | YES | EXTEND (feedback / progress signals) |
+| I04 argument generation | Agent + schema hints + `focus_arguments_on_next_identifier` + ModelRetry on serialized dicts | owner JSON Schema | `_governed_semantic_tool_invoke` | arg_type_gate + ModelRetry; envelope hints | `owner_argument_rejected` still common (teo.read/vista.read) despite type-pass | YES | EXTEND (richer owner error → ModelRetry) |
+| I05 governed invocation | `OperationalCapabilityOrchestrator._governed_semantic_tool_invoke` / gates | Policy/AuthZ/eligibility | investigation process_tool_call | Port + Core eligibility + Domain | Intact; not the PO objective failure | YES | REUSE |
+| I06 evidence interpretation | `_is_business_evidence_attempt` + projections | GovernedCapabilityAttempt / Evidence | finalize, CRI | Filters discovery_metadata_observation; empty; incomplete wire | **Relevance to user objective not evaluated** — related SUCCESS counts as business evidence | YES | EXTEND (relevance/progress class) |
+| I07 investigation progress | `non_progress_calls` fingerprint in investigation | repeated_failure_no_progress projection | Agent instructions | Fingerprint of capability+args; repeats short-circuit | Different args that still fail equivalently still churn; SUCCESS related ≠ progress on objective | YES | EXTEND |
+| I08 recovery | ModelRetry + owner error projection | SpecialistOutcome errors | Agent | Partial | Owner rejection text may be insufficient for schema-correct reformulation | YES | EXTEND |
+| I09 continuation | Agent loop + tool_calls_limit / budgets | profile agent.tool_calls_limit | orchestrator | Continues until limit / structured output | May finalize early with insufficient-but-related evidence | YES | EXTEND |
+| I10 investigation output | `InvestigationAnswer` → `_apply_declared_answer` / `_finalize_agent_collected_attempts` | contracts.InvestigationAnswer | interaction / presentation | Structured output + deterministic acceptor | Finalize SUCCESS joins business observations without objective-kind gate when plan absent (`multiple_observations_without_compose`) | YES | EXTEND (not new Outcome authority — that is INT-3) |
+| Coverage / Outcome final | Application finalize + Evidence | Outcome contracts | HTTP/NDJSON | `_evaluate_material_obligations` only when plan.evidence_needed set | **Gap:** no plan ⇒ no material obligation check ⇒ related aggregates accepted | YES | REUSE now; INT-3 owns independent sufficiency |
+| AuthZ / Policy | Core + Domain + gates | existing | all invokes | intact | N/A | YES | REUSE |
+
+### First divergence (falsifiable)
+
+```text
+H_PRIMARY:
+  When SemanticInvestigationPlan is absent (optional for simple READ),
+  _finalize_agent_collected_attempts treats any _is_business_evidence_attempt
+  SUCCESS as terminal SUCCESS, without checking whether the observation's
+  semantic kind satisfies the user objective (list vs aggregate vs docs).
+
+H_SUPPORTING:
+  Agent tool selection lacks a native signal distinguishing purpose classes
+  across live MCP descriptions; owner_argument_rejected recovery is weak;
+  discovery metadata leak is partially gated but presentation can still expose catalogs.
+```
+
+Proven by prior forensic correlations (teo.read reject → teo.analyze SUCCESS → GROUNDED aggregates) and code path `semantic_capability_support.py` finalize when `business` non-empty and `obligations` empty.
+
+### Native Pydantic AI capabilities available (v2.50.0)
+
+Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool limits — **already in use**. No missing framework prerequisite for EXTEND. New Agent **not** justified by INT-0.
+
+### INT-1 experiment proposal (NOT AUTHORIZED to code in this task)
+
+Smallest EXTEND candidates after independent review:
+
+1. Investigation-side progress/relevance classification of observations (NEW_INFORMATION / NO_PROGRESS / RELATED_INSUFFICIENT) using existing attempt projections — feed Agent + finalize limitations without new Outcome authority.
+2. Stronger ModelRetry payloads from `owner_argument_rejected` using owner validation messages already returned.
+3. Ensure discovery/OpenAPI catalog projections always carry `discovery_metadata_observation` and never become sole SUCCESS content for identifier/list objectives.
+
+Do **not** implement INT-2/3/4; do **not** add lexical if-"processos"; do **not** create second Agent/planner.
+
+**NEXT:** `COORDINATION_INT0_INDEPENDENT_REVIEW` → only then authorize `T2_INT1` bounded experiment.  
+**PRODUCTION_DEPLOY / T3 / INT2:** NOT_AUTHORIZED.
