@@ -1,5 +1,7 @@
 # MFE Portal Engenharia — Controle e Cadastro de Produtos: UX, wireframes e fluxo visual
 
+> **Decisão funcional superveniente PRC-REF-022 (2026-11-10):** fluxo único Enviada → Em atendimento ⇄ Devolvida para correção → Concluída, editor compartilhado create/read/edit. O adendo REF-022 ao final deste documento prevalece sobre fluxos legados contraditórios. `PO_APPROVED_TARGET / PLANNED` (não é implementação).
+
 > **Estado:** `TARGET / UX_CONTRACT_SPECIFIED / IMPLEMENTATION_PENDING / VISUAL_QA_NOT_RUN` · **Decisão do Product Owner:** redesign completo antes de deploy de produção (2026-11-07).
 >
 > **Escopo:** somente experiência `plugins/engineering/src/features/product-registration/` e sua navegação no Portal Engenharia. Não altera domínio, TOTVS, owners, RBAC ou os seis tools MCP.
@@ -376,3 +378,50 @@ Sem digitação livre de código/loja; sem fallback quando lista local vazia.
 \`\`\`
 
 Kit \`@delpi/plugin-ui\` / façade \`engineeringUi\`; áreas responsivas/sem scroll horizontal, mouse/teclado/zoom200. O detalhe/CRUD de bandeiras permanece disponível sob demanda, sem segundo painel permanente. Busca de fornecedor depende exclusivamente de contrato oficial BFF/API e preserva identidade completa. Nenhuma mudança no backend de match ou escrita TOTVS.
+
+## PRC-REF-022 — Páginas definitivas alvo: ficha compartilhada e devolução por campo (PO 2026-11-10)
+
+**\`PO_APPROVED_TARGET / PLANNED\`.** Supersede a UX de \`Solicitar informações\` como correção principal e o formulário paralelo "Editar ficha técnica" exibindo "Novo valor — X" e "Justificativa" para cada campo. Foco em **uma única ficha** com modos \`create|read|edit\`, reutilizando schema, field specs e selects/lookup oficiais já existentes; não construir segundo formulário.
+
+\`\`\`text
+FILA / product-registration
+Solicitações de produtos        [Nova solicitação] [Bandeiras (N)]
+[Buscar] [Status: Enviada / Em atendimento / Devolvida para correção / Concluída / Rejeitada]
+Uma tabela: Nº | Tipo | Solicitante | Código oficial | Abertura | Status | Responsável
+
+DETALHE — SOLICITAÇÃO EM ATENDIMENTO (analista)
+Solicitação #... [Em atendimento]
+[Editar ficha] [Devolver para correção] [Concluir atendimento] [Rejeitar]
+[Visão geral] [Ficha técnica] [Verificação TOTVS] [Histórico] [Revisões]
+Ficha técnica com dados atuais; clicar Editar ativa os controles NA MESMA FICHA.
+
+DEVOLVER PARA CORREÇÃO (analista)
+Selecione os campos: [ ] Unidade  [ ] Descrição  [ ] Fornecedor 000123/01 PN
+Por campo: orientação objetiva / motivo obrigatório
+[Cancelar] [Devolver solicitação]
+Sem perguntas/respostas independentes, sem "Definir encaminhamento".
+
+SOLICITAÇÃO DEVOLVIDA (solicitante)
+Solicitação #... [Devolvida para correção]
+2 campos precisam de correção.
+Ficha técnica compartilhada, em modo edit só para os alvos devolvidos:
+Unidade [select com valor atual] (motivo: confirme PC vs UN)
+Fornecedor 000123/01 · PN [controle oficial] (motivo: informe referência correta)
+[Salvar alterações] [Reenviar para Engenharia]
+Demais campos em read-only; sem editor em card separado e sem toggle de papel.
+
+SOLICITAÇÃO DEVOLVIDA (Engenharia)
+[Devolvida para correção] — aguardando solicitante.
+Visualizar campos e histórico, sem edição simultânea.
+
+RETORNO À ENGENHARIA
+[Em atendimento] — Correções recebidas (eventos e diffs)
+[Concluir atendimento] → Engineering API valida + lê TOTVS fresco.
+Qualquer problema mantém Em atendimento; sucesso → Concluída.
+
+TERMINAL
+[Concluída/Rejeitada] — Ficha técnica somente leitura.
+Bandeiras internas D16 seguem ações autorizadas.
+\`\`\`
+
+**Regras visuais:** modo edição reaproveita os componentes reais do cadastro, com valores preenchidos e validação/diff; fornecedores sempre por busca oficial e identidade code+store; help no label e bandeira contextual por campo; apenas campos devolvidos editáveis pelo requester. Justificativa só contextual e exigida quando houver alteração; nenhum formulário que repete campo/novo valor/justificativa para todos os atributos. Destacar alvos e motivos da devolução dentro da ficha; foco e scroll corretos. Nada de dashboards nem novas listas paralelas. Em desktop/tablet/mobile e zoom200, elementos sem horizontal overflow e botões acessíveis por teclado. Reutilizar estados do backend, jamais botão fake com autorização inexistente.
