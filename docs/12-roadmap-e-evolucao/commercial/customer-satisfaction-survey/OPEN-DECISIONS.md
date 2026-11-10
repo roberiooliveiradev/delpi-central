@@ -118,9 +118,12 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ### Q11 — Regra oficial de NPS
 **Pergunta:** Confirmar cálculo de NPS: percentual de notas 9–10 menos percentual de notas 0–6, excluindo ausências; como agregar múltiplos contatos?
-**Status:** PENDING
-**Resposta:** —
-**Impacto:** KPI principal; fórmula não está explicitada no documento.
+**Status:** DECIDED (pergunta 12 da entrevista; decisão informada pelo solicitante, validação formal do owner Comercial PENDING).
+**Resposta:** Adotar a fórmula padrão de NPS: promotores = notas 9–10; neutros = 7–8; detratores = 0–6. NPS em pontos = percentual de empresas promotoras menos percentual de empresas detratoras, usando como denominador todas as respostas válidas, inclusive as neutras. Cada empresa tem peso igual, uma resposta por empresa/campanha, sem ponderação por faturamento, porte ou importância comercial. Exemplo: 60% promotores, 20% neutros, 20% detratores = NPS +40.
+**Fonte:** Concordância explícita do solicitante em 2026-11-10 à proposta da pergunta 12 da entrevista.
+**Owner da decisão:** Comercial — validação formal PENDING.
+**Data:** 2026-11-10.
+**Impacto:** Indicador comparável entre campanhas; implementação e contratos técnicos TO_INVENTORY.
 
 ### Q12 — Críticos e satisfeitos
 **Pergunta:** As faixas 1–2 (críticos) e 4–5 (satisfeitos) se referem à pergunta geral, a cada dimensão ou a ambas? Qual denominador?
@@ -190,4 +193,4 @@ Para cada questão: `Status: PENDING | DECIDED | NEEDS_VALIDATION`; `Resposta`; 
 
 ## Próxima pergunta em entrevista
 
-**Próxima questão técnica/canônica em aberto:** Q10 — Regra oficial de IGS. Atenção: a pergunta 10 da entrevista foi sobre alteração após envio, registrada como complemento de Q08; não equivale à Q10 deste documento.
+**Próxima decisão da entrevista:** pergunta 13 — classificação de clientes críticos e satisfeitos (Q12 do registro canônico). A pergunta 12 da entrevista, NPS, está registrada em Q11.
