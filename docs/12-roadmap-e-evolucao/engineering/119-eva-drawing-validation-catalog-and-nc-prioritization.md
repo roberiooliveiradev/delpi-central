@@ -2419,3 +2419,84 @@ G6_G7=NOT_AUTHORIZED
 DEPLOY_STATUS=NOT_EXECUTED
 VAL01_COMPLETED=false
 ```
+
+### 67. G5 — Investigação de causa estrutural e proposta de refatoração desacoplada (2026-11-11)
+
+**TASK_ID:** `EVA-VAL01-G5-TABLE-STRUCTURE-GENERALIZATION-ROOT-CAUSE`. **Modo:** INVESTIGAÇÃO + REVISÃO ARQUITETURAL + PROPOSTA. `CODE_CHANGED=false`, `DEPLOY_EXECUTED=false`. Produção vigente: `95e219acb4` (contém `a380c852bc` — §66).
+
+**Corpus de evidência (SHAs confirmados, payloads percepção extraídos e inspeção visual das páginas renderizadas):**
+
+| PDF | SHA-256 | Grade SLANet | Saída | Estado |
+|---|---|---|---|---|
+| `90264302` | `f33447b2…` | fiel | 4/4 IDENTIFIED | controle |
+| `90264174` | `0671f076…` | fiel | 4/4 IDENTIFIED (pós-§66) | controle |
+| `90264275` | `69d7eadc…` | fiel | 7/7 IDENTIFIED | controle |
+| `90264128` | `d36a2027…` | infiel | 23 occ, 15 ID + 8 UNKNOWN | falha |
+| `90264138` | `a7b58121…` | infiel | 13 occ, 4 ID + 9 UNKNOWN + códigos de conjunto emitidos como componentes | falha |
+| `90264061` | `13fb554f…` | infiel | 5 occ, 1 ID + 4 UNKNOWN | falha |
+| `90264135` p13 | `af47dd4c…` | ausente | `COORDINATE_MISMATCH` registrado | falha upstream |
+
+#### Matriz de primeira perda (fronteira defeituosa provada)
+
+| Caso | PDF | PDFium | PaddleOCR | Regioner/crop | SLANet | Adapter | Understanding | Primeira perda |
+|---|---|---|---|---|---|---|---|---|
+| `90264174` | ok | ok | ok | ok | ok | ok | falhou (corrigido §66) | Understanding |
+| `90264061` | ok | ok | **falhou** | ok | perda secundária (célula A6/`10211552` ausente) | — | herda | **PaddleOCR** (fusão `'A 90264061'` — letra de zona da régua + código, `line_texts=null`, token atômico) |
+| `90264138` | ok | ok | ok | ok | **falhou** | — | herda + emissão errada | **SLANet** (rowspan subdeclarado rs1 vs. visual 2; rótulo `Código` fundido ao 1º código; coluna visual `QTD+Componente` colapsada em uma célula) |
+| `90264128` | ok | ok | parcial | ok | **falhou** | — | UNKNOWN honesto | **SLANet** (célula `50233810` vazia; célula multi-entidade `'50233812 B 50233813'`; rowspans truncados) |
+| `90264275` | ok | ok | ok | ok | ok | ok | ok | — |
+| `90264135` p13 | ok | ok | ok | ok | **falhou** | `COORDINATE_MISMATCH` | fail-closed | engine/bbox |
+
+**Leitura sistêmica:** quando a grade SLANet é fiel (302/174/275), o Understanding — inclusive pré-§66 em parte — reconstrói a estrutura. A **fronteira dominante de perda é a fidelidade da grade SLANet** (rowspan, coluna, célula ausente/fundida), seguida da fusão de tokens no PaddleOCR. O Understanding não é a causa primária nos casos remanescentes — mas hoje **compensa falhas upstream com heurísticas em camadas**, o que produz comportamento inconsistente (recuperação parcial vs. UNKNOWN honesto vs. emissão de código de contexto como componente em 138).
+
+#### Hipóteses avaliadas
+
+- **H1 adapter perde associações: REJEITADA** — bandas `line_texts`/`line_centers` e `token_refs` preservados; a associação por contenção funciona quando há token separado.
+- **H2 crop insuficiente: REJEITADA** nos 4 casos — crops capturam as tabelas completas.
+- **H3 papéis de coluna dependentes de layout: PROVADA** — em 138 `col_types={'2':description,'3':item}`; a promoção sparse/dense não dispara porque a coluna de componente está fundida (`'1 10080010'`) e não há contraste de densidade → códigos de conjunto tratados como `component_code`.
+- **H4 âncora-Y substitui estrutura: PARCIAL** — dispara quando falta evidência, mas permanece `UNKNOWN` (honesto); o risco não é o UNKNOWN, é o vizinho errado sugerido (`50233811` para filhos de `50233810`).
+- **H5 reconstrução perde informação: PARCIAL** — em 138 códigos de conjunto (`50215397`, `50225759`…) foram emitidos como `component_code` — perda de distinção de papel, não de token.
+- **H6 contratos sem evidência suficiente: PROVADA** — não existe marcador de "célula multi-entidade"; `span_conflict`/`bbox_count_mismatch`/`line_texts=null` são registrados como limitations mas **nunca alimentam decisão de reparo**; confiança de célula não é surfada.
+- **H7 ausência de modelo único de ocorrência: PROVADA** — dois produtores de linhas (fallback token-space `_structure_table` × grade nativa `rows_from_native_cells`) reconciliados por casamento de letra de item — frágil com itens repetidos (AA/A9, itens em múltiplos conjuntos).
+- **H8 semântica geração × interpretação divergente: PARCIAL** — o layout DELPI (6 colunas; `Código|Descrição` mesclados por pai; `Item|QTD|Componente|Descrição` por linha; **o código de conjunto "abre" um bloco até o próximo código**) é consistente; a interpretação rederiva essa semântica por heurística em vez de a tratá-la como invariante explícita.
+- **H9 conflito de regras em camadas: PROVADA** — tipificação de coluna por tokens (`_detect_component_table`), por contagem de conteúdo (`rows_from_native_cells`) e por perfil de apresentação (`_assign_presentation_roles`) são três mecanismos concorrentes que podem divergir e nunca explicam qual venceu.
+
+#### Auditoria de acoplamento
+
+`understanding.py` (3 393 linhas) concentra: regioner por cluster de tokens (`_detect_component_table`), decisão de crop (`_connected_column_crop`, `_hierarchical_code_pair_crop`, `_trim_sheet_index_margin`), estruturação fallback (`_structure_table`), semântica de grade nativa (`rows_from_native_cells`), geometria de bandas (`_split_multiline_cells`, `_rehome_across_bands`), heurísticas de papel (`_assign_presentation_roles`), modelo de ocorrência e reconciliação (`reconcile_native_and_fallback_rows`). Três reconstruções paralelas da grade visual; limiares empíricos espalhados (0.045/0.30/0.55/0.70/0.90…); mutação in-place de células (`_split_text`, `_from_group_anchor`) tornando o processamento dependente de ordem. Classificação: `LAYOUT_COUPLING` (regioner/crop dentro do semântico), `DUPLICATED_LOGIC` (3 mecanismos de papel de coluna; 2 produtores de linhas), `UNJUSTIFIED_HEURISTIC` (limiares sem GT), `ADAPTER_RESPONSIBILITY` absorvida (split de células multi-entidade é tentado no Understanding por falta de reparo no adapter), `NECESSARY_DOMAIN_INTERPRETATION` (semântica pai/filho DELPI — deve ficar, mas como invariante explícita).
+
+#### Capacidades de framework subutilizadas
+
+- **SLANet/adapter:** `structure_score`, `html` completo e `bounding_box` por célula já chegam no contrato — nenhum é usado para gating ou reparo. Células com texto vazio (`50233810`), multi-entidade (`'50233812 B 50233813'`) ou `span_conflict` poderiam disparar re-associação direcionada pelo bbox da célula (máquina de crop já existe no adapter).
+- **PaddleOCR:** associação por contenção é única e irreversível; token fundido (`'A 90264061'`, `line_texts=null`) não tem rota de refinamento (re-OCR/recorte da região do token ou da célula).
+- **PPStructureV3:** engine já cadastrada no registry (`ppstructure_v3` — layout+OCR+tabela unificados eliminaria a fronteira de associação) — `NOT_PROVISIONED` (sem pesos em `/opt/ocr-models`); decisão de infra, não de código.
+
+#### Semântica de apresentação DELPI (spec PR #150 + inspeção visual)
+
+`ProductStructureRepository → BomTreeBuilder → ExcelStructureBuilder`: 6 colunas, bloco de pai = `Código|Descrição` mesclados verticalmente, componentes = `Item|QTD|Componente|Descrição` por linha. Invariante-chave: **cada código de conjunto abre um bloco que termina no próximo código** — o rowspan é a realização visual dessa semântica, não a semântica em si. Isso implica: rowspan subdeclarado é recuperável **quando a coluna de pais foi tipada** (linhas vazias abaixo da âncora, até a próxima âncora, são continuação candidata); sem tipagem, continua incerto por desenho — e `UNKNOWN` permanece correto.
+
+#### Propostas desacopladas (ordenadas custo/risco/impacto)
+
+| # | Proposta | Camada | Resolve | Regras removidas | Contrato | Risco | Esforço |
+|---|---|---|---|---|---|---|---|
+| P1a | Tipagem de coluna: células `qty code` contam como evidência de componente | Understanding | 138 (promoção não dispara) | nenhuma (ajuste de evidência) | nenhum | baixo | S |
+| P1b | Guarda: não emitir código de contexto/conjunto como `component_code` quando papel de coluna inconclusivo | Understanding | 138 (falsos componentes) | emissão otimista | nenhum | baixo | S |
+| P1c | Âncora prefixada: `<decorador> <código>` (letra de zona/rótulo) — generalizar `_group_code_of` | Understanding | 061 parcial | caso especial | nenhum | baixo | S |
+| P2 | Reparo no adapter: célula vazia/multi-entidade/fusão (`line_texts=null`, `span_conflict`) → re-associação direcionada por bbox de célula (re-OCR do recorte) | `engine_adapters`/`perception_contract` | 061, 128 (`50233810` vazia) | nenhuma | aditivo (flags novas) | médio | M |
+| P3 | Produtor único de linhas: grade nativa = autoridade quando há células; fallback só sem grade; remover reconcile por letra de item | Understanding | 138/H7 | `reconcile_*` simplificado | interno | médio-alto | M |
+| P4 | Extrair regioner/crop de `understanding.py` para módulo de percepção (mesmo bounded context) | refatoração | H9/acoplamento | heurísticas duplicadas | interno | médio | M |
+| P5 | Avaliar provisionamento PPStructureV3 (gate de decisão, não implementação) | infra/modelo | fronteira OCR↔célula inteira | potencialmente adapter | — | alto | decisão |
+
+**Recomendação (menor incremento comprovável):** P1a+P1b+P1c — três correções pequenas no módulo canônico, cada uma com fixture RED provável a partir dos payloads reais já capturados (`g5_90264138/90264061_perception.json`), depois P2 como incremento separado no adapter. P3–P5 exigem autorização própria de escopo.
+
+**Estratégia de generalização:** fixture RED por classe (coluna de componente fundida qty+code; código de contexto como falso componente; âncora prefixada por letra de zona; célula pai vazia) + A/B deepcopy nos payloads reais 128/138/061 + controles 302/174/275 + negativo (linhas sem bloco visível permanecem UNKNOWN). **Não declarar generalização sem GT owner + holdout.**
+
+```text
+FIRST_LOSS_MATRIX=PROVEN_6_CASES
+DOMINANT_BOUNDARY=SLANET_GRID_FIDELITY (128/138/135p13) + OCR_FUSION (061)
+HYPOTHESES=H1-R,H2-R,H3-P,H4-PART,H5-PART,H6-P,H7-P,H8-PART,H9-P
+CODE_CHANGED=false
+DEPLOY_EXECUTED=false
+G5_QUALITY_HOMOLOGATED=NOT_DECLARED
+VAL01_COMPLETED=false
+```

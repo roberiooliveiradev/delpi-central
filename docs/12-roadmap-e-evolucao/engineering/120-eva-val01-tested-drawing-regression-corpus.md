@@ -596,3 +596,18 @@ Correção de perda silenciosa sob `span_conflict_tolerated` parcial (`reconcile
 **Nota de harness:** `rows_from_native_cells` muta as células in-place (`_split_text`, `_from_group_anchor`) — comparações A/B exigem `deepcopy` das observações por execução, senão o segundo passe herda flags do primeiro (artefato de medição, não de produção — apply é chamado uma única vez por observação no fluxo real).
 
 **Holdout/GT:** `TRUE_UNSEEN_HOLDOUT=NOT_AVAILABLE`; `GT_APPROVAL_STATUS=OWNER_BLOCKED`. `VAL01_COMPLETED=false`.
+
+### Log G5-RCA — Primeira perda por classe em 4 desenhos oficiais (2026-11-11)
+
+**TASK:** `EVA-VAL01-G5-TABLE-STRUCTURE-GENERALIZATION-ROOT-CAUSE`. Investigação sem mudança de código. Diagnóstico completo: Doc 119 §67. Payloads de percepção: `g5_90264128/138/061/275_perception.json` (SHAs MATCH vs. `/mnt/fileserver/desenhos`).
+
+| Desenho | SHA-256 | Células SLANet | Saída | Primeira perda | Veredito |
+|---|---|---|---|---|---|
+| `90264128` | `d36a2027…` | 148 | 23 occ / 15 ID / 8 UNKNOWN | **SLANet**: célula `50233810` vazia; `'50233812 B 50233813'` multi-entidade; rowspans truncados | falha de grade — UNKNOWN honesto nos filhos órfãos |
+| `90264138` | `a7b58121…` | 69 | 13 occ / 4 ID / 9 UNKNOWN | **SLANet**: rowspan subdeclarado; `Código 50215397` rótulo+código fundidos; coluna `QTD+Componente` colapsada | falha de grade → cascata semântica: códigos de conjunto emitidos como componentes |
+| `90264061` | `13fb554f…` | 51 | 5 occ / 1 ID / 4 UNKNOWN | **PaddleOCR**: `'A 90264061'` token atômico (`line_texts=null`, letra de zona+código); célula A6/`10211552` ausente na grade | falha de token + grade |
+| `90264275` | `69d7eadc…` | 39 | 7 occ / 7 ID | — | **controle: PASS** (2 conjuntos: raiz→A1/A2, `90350416`→A3–A7) |
+
+**Padrão provado:** quando a grade é fiel, a interpretação reconstrói a hierarquia (302/174/275 = 100% ID). A fronteira dominante de perda é a **fidelidade da grade SLANet** e a **fusão de tokens no OCR** — não o papel de coluna no Understanding, que falha em cascata quando a coluna de componentes colapsa (138: `col_types={2:description,3:item}`).
+
+**Não-homologado:** contagens observadas, não métricas de precisão; `GT_OWNER_BLOCKED` permanece; UNKNOWN nos órfãos é comportamento correto fail-closed, não defeito.
