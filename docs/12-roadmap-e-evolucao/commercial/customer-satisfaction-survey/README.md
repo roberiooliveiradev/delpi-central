@@ -42,7 +42,7 @@ Centralizar a análise da pesquisa de satisfação de clientes solicitada pelo C
 - **Plano de Monitoramento da Satisfação dos Clientes — Delpi** — documento integral está nas fontes do projeto, não copiado para esta pasta do GitHub. As seções 1–10 são a fonte de negócio; o índice cita as páginas pertinentes.
 - [BACKEND-API-PROPOSAL.md](./BACKEND-API-PROPOSAL.md) — **padrão arquitetural aceito em 10/11/2026**, atualizado pelo recorte de 11/11; implementação pendente.
 - [SURVEY-FIRST-RELEASE-CONTRACT.md](./SURVEY-FIRST-RELEASE-CONTRACT.md) — **contrato fechado da primeira entrega:** três tabelas, campanhas, participantes, convite por cópia, formulário externo, respostas e indicadores, sem envio de e-mail pela aplicação e sem planos de ação.
-- [FRONTEND-FIRST-RELEASE-PLAN.md](./FRONTEND-FIRST-RELEASE-PLAN.md) — planejamento das telas internas, formulário público, filtros, apresentação dos indicadores e testes, respeitando a primeira entrega.
+- [FRONTEND-FIRST-RELEASE-PLAN.md](./FRONTEND-FIRST-RELEASE-PLAN.md) — planejamento das telas internas, **card agregado de satisfação na Visão Geral**, formulário público, indicadores e testes, respeitando a primeira entrega.
 - Outros arquivos técnicos de detalhe devem ser criados **somente quando necessários** para uma frente concreta e vinculados ao ID correspondente no índice.
 
 ## Situação e limites
