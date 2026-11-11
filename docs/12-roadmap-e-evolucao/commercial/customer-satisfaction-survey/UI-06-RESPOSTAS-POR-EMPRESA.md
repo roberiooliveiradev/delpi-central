@@ -75,6 +75,17 @@ AO ACIONAR VER RESPOSTA:
 | Detalhes da resposta | [UI-07 — página própria](./UI-07-DETALHES-RESPOSTA.md), `CommercialPageHero`, `CommercialDetailCard`, `CommercialDetailFieldGrid` | Somente leitura, navegação própria, sem drawer |
 | Estados | `CommercialLoadingCard`, `CommercialEmptyState`, `CommercialStateBanner` | Sem dados ≠ erro ≠ sem permissão |
 
+### Decisão visual — formato responsivo da lista (11/11/2026)
+
+**APROVADO PELO SOLICITANTE — OPÇÃO A:** mostrar **tabela no computador** e **cards por empresa no celular**. Esta é uma regra de apresentação da **mesma consulta autorizada**, não duas listas ou fontes de dados diferentes.
+
+- **Desktop:** usar o padrão oficial `CommercialDataTable`, com Cliente (avatar `CustomerAvatar`, nome, código/loja), Situação, Data da resposta e ação contextual “Ver resposta” somente para respondidas.
+- **Celular:** usar o padrão existente de cards de dados do PluginUI/CommercialUi, após confirmar as props na implementação; cada card deve mostrar no cabeçalho avatar, nome completo, código/loja e situação, e na área inferior a data ou “Sem resposta registrada” e a ação separada “Ver resposta”, se existir resposta definitiva.
+- **Tablet/larguras intermediárias:** adaptar pelo comportamento responsivo oficial do kit, sem impor tabela comprimida ou rolagem horizontal; validar breakpoint na execução, não fixar valor arbitrário na especificação.
+- **Mesmas regras em todas as telas:** ordenação, filtros, identidade `customer_code` + `customer_store`, contagens gerais da campanha e autorização do backend; avatar/nome navegam para Conta do Cliente, enquanto “Ver resposta” navega para UI-07. Pendente não tem resposta para abrir. Sem duplicar carregamentos, componentes de avatar ou lógica de negócio.
+- **Testes de aceite:** desktop/tabela, celular/cards, tablet, teclado, zoom, leitor de tela, nomes longos, estado vazio/erro/loading, separação de ações e preservação do retorno à lista filtrada.
+- **Estado:** decisão de UX **APROVADA e documentada**, implementação e testes **PENDING**.
+
 ## 5. Responsividade e critérios de aceite da identidade
 
 **Desktop:** avatar pequeno à esquerda do nome e do código/loja dentro da coluna Cliente; ação “Ver resposta” em coluna própria. **Tablet:** preservar a identidade visível e reorganizar colunas conforme largura. **Celular:** um card por empresa com `CustomerAvatar`, nome, código/loja, situação e ação separada. Somente o clique no avatar/nome navega para a Conta; a ação “Ver resposta” navega para a página UI-07. Em todos os tamanhos, se a empresa não tiver imagem, exibir iniciais do kit sem salto de layout.
