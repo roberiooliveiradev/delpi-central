@@ -192,6 +192,42 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 - **Próximo gate somente leitura:** identificar um `KC_BASE_URL` HTTPS alcançável pelo host, preferencialmente URL corporativa válida, sem vazar segredos; executar `KC_BASE_URL=... python3 infra/scripts/keycloak_s2s_it_portal_collector.py --check`. Se for inacessível, investigar topologia/entrypoint sem modificar DNS ou abrir acesso administrativo desnecessário.
 - Permanecem bloqueados `--apply`, `submit` e ativação do timer até saneamento do contrato de ingestão JSON e revisão dos gates de segurança anteriormente registrados.
 
+## E4.S1 — Keycloak check por HTTPS (11/11/2026)
+
+**Evidência operacional (saída enviada pelo operador, PROVEN na execução reportada):**
+- `curl -fsS https://minhadelpi.com.br/auth/realms/delpi/.well-known/openid-configuration` respondeu `issuer=https://minhadelpi.com.br/auth/realms/delpi`. Keycloak público e realm `delpi` acessíveis via HTTPS a partir do host; não comprova acesso a todas as operações internas.
+- `KC_BASE_URL=https://minhadelpi.com.br/auth python3 infra/scripts/keycloak_s2s_it_portal_collector.py --check` executou a leitura administrativa e informou `[DRIFT] client it-portal-host-collector — inexistente`. O cliente técnico do piloto ainda exige provisionamento aprovado; o check não cria nem altera recursos.
+- O operador estava autenticado como `michael`, com repositório em `/home/operador/projetos/delpi-central`. O `cd ~/projetos/delpi-central` falhou por apontar para `/home/michael`, mas a consulta seguinte executou no CWD anterior e produziu resposta. Runbooks devem usar caminho absoluto/descoberto.
+- A `infra/.env` contém `KEYCLOAK_ADMIN_URL=http://keycloak:8080` (nome de serviço Docker, não resolvível diretamente no host), `KEYCLOAK_ISSUER=${PUBLIC_BASE_URL}/auth/realms/${KEYCLOAK_REALM}` e `KC_HOSTNAME=http://localhost:9080/auth`; esses valores exigem análise contextual de runtime antes de qualquer mudança. **Não alterar o Keycloak para resolver o piloto**, pois o issuer público está validado.
+- `--apply`, `submit` e timer **não autorizados neste gate**. O bloqueio de sanitização estrita recursiva no payload JSON de observações continua válido e precisa de correção, testes e revisão antes de abrir ingestão S2S.
+- Próxima verificação segura: confirmar V004 em `it_portal.schema_migrations` e identidade do servidor registrado no Portal de TI via consulta SQL somente leitura no container da API, sem publicar credenciais.
+
+**Estado:** `IMPLEMENTED_PENDING_SMOKE`. `Keycloak CHECK=PASS_COM_DRIFT_CLIENT_MISSING`, `S2S PROVISIONING=PENDING`, `OBSERVATION SUBMIT=PENDING`.
+
+## E4.S1 — verificação de migration e identidade do srv-api (11/11/2026)
+
+**Evidência observada no `srv-api` (consulta SQL somente leitura executada pelo operador no container `delpi-it-portal-api`):**
+- `it_portal.schema_migrations` registra `version=4`, `name=V004__server_observations.sql` (**PASS**: migration V004 aplicada; a consulta não demonstrou contagem de linhas ou grants da tabela).
+- Cadastro alvo na tabela `it_portal.servers`: `id=459fd1b8-643f-493d-9911-0ff7aaf91424`, `hostname=srv-api`, `active=true` (**PASS**: registro existente e elegível para conciliação por hostname).
+- Não há necessidade de criar outro cadastro do `srv-api`; preservar campos manuais.
+- **PENDING (antes desta correção de segurança):** sanitização/allowlist de payload JSON em profundidade, provisionamento Keycloak S2S, configuração segregada do coletor, smoke `submit` autenticado com `run_id`, leitura humana no MFE e agendamento systemd. `COMPLETE` continua pendente.
+
+## E4.S1 — gate de segurança: allowlist estrita do summary (11/11/2026)
+
+**Causa raiz (CONFIRMADO_NO_CODIGO):** `_sanitize_summary` usava denylist só no nível superior e preservava chaves desconhecidas dentro de objetos/listas aninhadas (`os`, `memory`, `docker_summary`, etc.), permitindo persistência JSONB de campos fora do contrato do coletor.
+
+**Correção (owner `it-portal-api/it_portal_app/domain/observations.py`):**
+- allowlist de seções/campos alinhada ao coletor Linux v1;
+- varredura recursiva rejeita chaves sensíveis (`password`, `token`, `secret`, `env`, `credentials`, `authorization`, `private_key`, etc.);
+- campos desconhecidos não sensíveis são descartados; limites de tamanho/cardinalidade preservados;
+- `sections_status` restrito às seções do coletor.
+
+**Evidência de testes (local, antes do commit desta fatia):**
+- `pytest tests/test_observations_domain.py tests/test_observations_http.py tests/test_http_contract.py` → PASS (positivo com snapshot realista + negativos aninhados parametrizados).
+- Sem alteração de V004, cadastro manual, escopos S2S, Keycloak `--apply`, `submit` ou timer.
+
+**Estado após esta fatia:** residual de sanitização aninhada **ATENDIDO_NO_CODIGO** (sujeito a revisão independente). Demais gates S2S/smoke/timer permanecem **PENDING**. `COMPLETE` não declarado.
+
 ## Residuais abertos
 
 | ID | Residual | Dono da decisão |
