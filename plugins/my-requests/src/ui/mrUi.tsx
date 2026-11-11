@@ -22,6 +22,7 @@ import {
   createDashboardStatusBadge,
   createDashboardTextField,
   createDashboardTopBar,
+  createDashboardUnderlineNav,
   createHostContainedModalShell,
   createInitialsAvatar,
   createTimeline,
@@ -183,6 +184,12 @@ export const MyRequestsProgressTracker = createDashboardProgressTracker({
 export const MyRequestsJourneyProgressBar = createDashboardJourneyProgressBar({
   prefix: MR_UI_PREFIX,
   defaultLabel: "Progresso da solicitação",
+});
+
+/** UI-FIX-07 — mesma navegação por abas sublinhada usada pelo
+ * Portal Engenharia (`createDashboardUnderlineNav` do kit). */
+export const MyRequestsUnderlineNav = createDashboardUnderlineNav({
+  prefix: MR_UI_PREFIX,
 });
 
 export const MyRequestsAvatar = createInitialsAvatar(MR_UI_PREFIX);

@@ -977,42 +977,17 @@
   gap: 8px;
 }
 
-.engineering-prc__flagged-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px 16px;
-}
-
-.engineering-prc__flagged-field {
-  min-width: 0;
-}
-
-.engineering-prc__flagged-field--wide {
-  grid-column: 1 / -1;
-}
-
-.engineering-prc__flagged-field-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-
-.engineering-prc__flagged-field:hover .engineering-prc__field-flag--add,
-.engineering-prc__flagged-field:focus .engineering-prc__field-flag--add,
-.engineering-prc__flagged-field:focus-within .engineering-prc__field-flag--add,
-.engineering-prc__flagged-field-label:hover .engineering-prc__field-flag--add,
-.engineering-prc__flagged-field-label:focus-within .engineering-prc__field-flag--add,
-.engineering-prc__supplier-flag-cell:hover .engineering-prc__field-flag--add,
-.engineering-prc__supplier-flag-cell:focus-within .engineering-prc__field-flag--add {
+/* Flags de acompanhamento reveladas no hover/focus — os containers
+ * agora são as classes neutras `delpi-prc__sheet-*` do kit. */
+.delpi-prc__sheet-field:hover .engineering-prc__field-flag--add,
+.delpi-prc__sheet-field:focus .engineering-prc__field-flag--add,
+.delpi-prc__sheet-field:focus-within .engineering-prc__field-flag--add,
+.delpi-prc__sheet-field-label:hover .engineering-prc__field-flag--add,
+.delpi-prc__sheet-field-label:focus-within .engineering-prc__field-flag--add,
+.delpi-prc__sheet-supplier-cell:hover .engineering-prc__field-flag--add,
+.delpi-prc__sheet-supplier-cell:focus-within .engineering-prc__field-flag--add {
   opacity: 1;
   pointer-events: auto;
-}
-
-.engineering-prc__flagged-field-value {
-  margin-top: 4px;
-  word-break: break-word;
 }
 
 .engineering-prc__field-flag {
@@ -1050,13 +1025,6 @@
   opacity: 1;
   outline: 2px solid var(--en-focus, #2563eb);
   outline-offset: 1px;
-}
-
-.engineering-prc__supplier-flag-cell {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 28px;
 }
 
 .engineering-prc__flag-modal {
@@ -1172,10 +1140,6 @@
 }
 
 @media (max-width: 720px) {
-  .engineering-prc__flagged-grid {
-    grid-template-columns: 1fr;
-  }
-
   .engineering-prc__field-flag--add {
     opacity: 1;
   }

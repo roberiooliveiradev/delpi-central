@@ -175,6 +175,8 @@ export function toSupplierRows(value: unknown): SupplierRow[] {
       supplierCode: String(v.supplierCode ?? ""),
       store: String(v.store ?? ""),
       supplierName: String(v.supplierName ?? ""),
+      supplierShortName:
+        v.supplierShortName == null ? "" : String(v.supplierShortName),
       partNumber: v.partNumber == null ? "" : String(v.partNumber),
       catalogNumber: v.catalogNumber == null ? "" : String(v.catalogNumber),
       query: "",
@@ -804,6 +806,21 @@ export const PRC_FIELD_HELP: Record<string, string> = {
   suppliers:
     "Vínculos do produto com fornecedores oficiais (código, loja e atributos).",
 };
+
+const LEGACY_NOTE_RE = /\b(B1_|A5_|legado|legado\s*['"]|cta_contabil)\b/i;
+
+/** Help funcional do path — nunca devolve nota técnica/legado. */
+export function prcFieldHelp(
+  path: string,
+  fallbackNote?: string | null,
+): string | undefined {
+  const head = path.split(".")[0];
+  const fromCatalog = PRC_FIELD_HELP[head] || PRC_FIELD_HELP[path];
+  if (fromCatalog) return fromCatalog;
+  const note = (fallbackNote || "").trim();
+  if (!note || LEGACY_NOTE_RE.test(note)) return undefined;
+  return note;
+}
 
 // ---------------------------------------------------------------------
 // Catálogos — mapeamento campo→kind e opções de select.

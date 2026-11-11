@@ -132,13 +132,33 @@ export type PrcRequestDetail = {
   id: string;
   status: string;
   requestType: string;
+  productType?: string;
   source: string;
   officialCode?: string | null;
+  baseRevision?: number | null;
+  externalRequestId?: string | null;
   caseVersion: number;
   requester: { subject: string; displayName?: string | null };
+  assignedTo?: string | null;
+  assignedToDisplayName?: string | null;
   createdAt: string;
+  updatedAt?: string;
   technicalDraft?: Record<string, unknown> | null;
   requestedPayload?: Record<string, unknown> | null;
+  requestedChanges?: Record<string, unknown> | null;
+  changedPaths?: Array<{ path: string; reason: string }>;
+  /** Baseline oficial UPDATE capturado no intake (visão pública). */
+  officialBaseline?: {
+    fields?: Record<string, unknown>;
+    linksComplete?: boolean;
+    fingerprint?: string;
+  } | null;
+  verificationSummary?: {
+    result: string;
+    checkedAt: string;
+    officialSource?: string;
+  } | null;
+  completedRecordId?: string | null;
   allowedActions: string[];
   correctionExchange?: {
     canCorrect?: boolean;

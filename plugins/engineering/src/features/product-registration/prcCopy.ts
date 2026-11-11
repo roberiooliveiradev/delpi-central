@@ -1,34 +1,20 @@
 /** Textos pt-BR da feature Controle e Cadastro de Produtos — camada de
  * conteúdo local (labels/hints), nunca paths nem contratos. */
 
-export const PRC_STATUS_LABELS: Record<string, string> = {
-  submitted: "Enviada",
-  in_progress: "Em atendimento",
-  needs_information: "Aguardando informações",
-  needs_correction: "Devolvida para correção",
-  under_review: "Em revisão",
-  completed: "Concluída",
-  rejected: "Rejeitada",
-};
-
-export const PRC_STATUS_VARIANTS: Record<
-  string,
-  "neutral" | "info" | "success" | "warning" | "danger"
-> = {
-  submitted: "info",
-  in_progress: "info",
-  needs_information: "warning",
-  needs_correction: "warning",
-  under_review: "warning",
-  completed: "success",
-  rejected: "danger",
-};
-
-export const PRC_TYPE_LABELS: Record<string, string> = {
-  create: "Criação",
-  update: "Alteração",
-};
-
+import {
+  PRC_EVENT_LABELS,
+  PRC_ENUM_OPTION_LABELS,
+  PRC_FIELD_HELP,
+  PRC_FIELD_LABELS,
+  PRC_STATUS_LABELS,
+  PRC_STATUS_VARIANTS,
+  PRC_SUPPLIER_LABELS,
+  PRC_TYPE_LABELS,
+  prcFieldHelp,
+  prcPersonLabel,
+  prcRequesterLabel,
+  prcStatusLabel,
+} from "@delpi/plugin-ui/index";
 
 export const PRC_RESULT_LABELS: Record<string, string> = {
   matched: "Correspondente",
@@ -55,58 +41,6 @@ export const PRC_RESULT_VARIANTS: Record<
   contract_error: "danger",
 };
 
-/** Campos do catálogo v1 → rótulo pt-BR (espelha FIELD_SPECS do
- * backend; path técnico permanece EN). */
-export const PRC_FIELD_LABELS: Record<string, string> = {
-  officialProductCode: "Código oficial",
-  description: "Descrição",
-  group: "Grupo",
-  productKind: "Tipo",
-  unit: "Unidade",
-  defaultWarehouse: "Armazém padrão",
-  thirdPartyProduct: "Produto de terceiros",
-  accountingAccount: "Conta contábil",
-  customerReference: "Referência do cliente",
-  suppliers: "Fornecedores",
-};
-
-export const PRC_SUPPLIER_LABELS: Record<string, string> = {
-  supplierCode: "Código",
-  store: "Loja",
-  supplierName: "Razão social",
-  partNumber: "Part Number",
-  catalogNumber: "Catálogo",
-};
-
-/** Helps funcionais por path da ficha — significado real do campo
- * TOTVS em linguagem de Engenharia (nunca nome de tabela como
- * explicação). Quando presente, prevalece sobre `spec.note`. */
-/** Catálogo canônico PRC-REF-018 — labels+helps funcionais.
- * Consumido por CREATE, UPDATE, Ficha técnica e Verificação TOTVS.
- * Nunca exibir B1_/A5_/legado como help ao usuário. */
-export const PRC_FIELD_HELP: Record<string, string> = {
-  officialProductCode:
-    "Código atribuído ao produto no TOTVS. Preserve zeros à esquerda.",
-  description:
-    "Descrição técnica utilizada para identificar o produto.",
-  group:
-    "Classificação do produto nos grupos cadastrados no TOTVS.",
-  productKind:
-    "Classificação do tipo de produto no ERP.",
-  unit:
-    "Unidade de medida utilizada no cadastro e movimentação.",
-  defaultWarehouse:
-    "Armazém normalmente associado ao produto.",
-  accountingAccount:
-    "Conta usada na classificação contábil do produto.",
-  thirdPartyProduct:
-    "Indica a classificação do produto quanto à propriedade de terceiros, conforme cadastro oficial.",
-  customerReference:
-    "Código ou referência fornecida pelo cliente para identificar o produto.",
-  suppliers:
-    "Vínculos do produto com fornecedores oficiais (código, loja e atributos).",
-};
-
 /** Helps das ações de bandeira — no próprio label (sem ícone ?). */
 export const PRC_FLAG_ACTION_HELP = {
   add: "Registra um acompanhamento para este campo, sem alterar seu valor.",
@@ -121,21 +55,6 @@ export const PRC_FLAG_ACTION_HELP = {
   legend:
     "Azul adiciona acompanhamento; vermelha indica aberto; verde indica resolvido. A cor não aprova o cadastro no TOTVS.",
 } as const;
-
-const LEGACY_NOTE_RE = /\b(B1_|A5_|legado|legado\s*['"]|cta_contabil)\b/i;
-
-/** Help funcional do path — nunca devolve nota técnica/legado. */
-export function prcFieldHelp(
-  path: string,
-  fallbackNote?: string | null,
-): string | undefined {
-  const head = path.split(".")[0];
-  const fromCatalog = PRC_FIELD_HELP[head] || PRC_FIELD_HELP[path];
-  if (fromCatalog) return fromCatalog;
-  const note = (fallbackNote || "").trim();
-  if (!note || LEGACY_NOTE_RE.test(note)) return undefined;
-  return note;
-}
 
 /** Textos da busca assistida SA2 (código / razão social / fantasia). */
 export const PRC_SUPPLIER_HELP = {
@@ -174,23 +93,6 @@ export const PRC_VALIDATION = {
   catalogUnavailable:
     "Não foi possível consultar as opções oficiais no TOTVS. Tente novamente.",
 } as const;
-
-/** Rótulos funcionais pt-BR dos enums de domínio (códigos vêm do
- * catálogo canônico do backend; descrições são conteúdo de UI). */
-export const PRC_ENUM_OPTION_LABELS: Record<
-  string,
-  Record<string, string>
-> = {
-  productKind: {
-    MP: "Matéria-prima",
-    PA: "Produto acabado",
-    PI: "Produto intermediário",
-  },
-  thirdPartyProduct: {
-    "1": "Não",
-    "2": "Sim",
-  },
-};
 
 export const PRC_COPY = {
   breadcrumbHome: "Início",
@@ -348,11 +250,23 @@ export function prcFieldLabel(path: string): string {
 }
 
 
-/* UI-FIX-03 — implementações migraram para `@delpi/plugin-ui`
+/* UI-FIX-03/07 — implementações migraram para `@delpi/plugin-ui`
  * (fonte única compartilhada com Minhas Solicitações). */
+/* UI-FIX-03/07 — implementações migraram para `@delpi/plugin-ui`
+ * (fonte única compartilhada com Minhas Solicitações). Re-export via
+ * `export {}` local — `export {} from` ao remote federado gera export
+ * duplicado no transform do Rollup MF. */
 export {
   PRC_EVENT_LABELS,
+  PRC_ENUM_OPTION_LABELS,
+  PRC_FIELD_HELP,
+  PRC_FIELD_LABELS,
+  PRC_STATUS_LABELS,
+  PRC_STATUS_VARIANTS,
+  PRC_SUPPLIER_LABELS,
+  PRC_TYPE_LABELS,
+  prcFieldHelp,
   prcPersonLabel,
   prcRequesterLabel,
   prcStatusLabel,
-} from "@delpi/plugin-ui/index";
+};

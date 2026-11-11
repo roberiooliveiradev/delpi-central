@@ -1,10 +1,13 @@
-/** PRC-REF-023-F04 — acompanhamento do caso PRC pelo solicitante.
+/** PRC-REF-023-F04/UI-FIX-07 — acompanhamento do caso PRC pelo
+ * solicitante.
  *
- * Status, histórico, anexos privados e correção de campos devolvidos —
- * sempre sobre o mesmo ``requestId`` da Engineering API. Correção só
- * edita os alvos devolvidos pelo analista (contrato REF-022); o backend
- * valida escopo de objeto, estado, versão e idempotência.
- */
+ * Hero consolidado + duas abas (Ficha técnica · Histórico) sobre o
+ * mesmo ``requestId`` da Engineering API. A ficha técnica é a
+ * composição única `PrcTechnicalSheetView` do kit — mesma leitura do
+ * Portal Engenharia — e os documentos de apoio vivem dentro dela.
+ * Correção só edita os alvos devolvidos pelo analista (REF-022),
+ * contextual na própria ficha; o backend valida escopo de objeto,
+ * estado, versão e idempotência. */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -14,8 +17,11 @@ import {
   PRC_FIELD_LABELS,
   PRC_STATUS_LABELS,
   PRC_TYPE_LABELS,
+  PrcTechnicalSheetView,
+  PrcWorkflowProgress,
   addSupportFiles,
   prcFormatSize,
+  prcRequesterLabel,
   prcTimelineItemViews,
   type PrcSupportFile,
 } from "@delpi/plugin-ui/index";
@@ -36,6 +42,7 @@ import {
 import { RequestHistoryTimeline } from "../../components/RequestHistoryTimeline";
 import { useParticipantAvatarUrls } from "../../hooks/useParticipantAvatarUrls";
 import {
+  DetailFields,
   MyRequestsAttachmentPreviewStrip,
   MyRequestsFileDropzone,
   MyRequestsFormActions,
@@ -43,6 +50,7 @@ import {
   MyRequestsSectionCard,
   MyRequestsStateBanner,
   MyRequestsStatusBadge,
+  MyRequestsUnderlineNav,
   TextField,
 } from "../../ui/mrUi";
 
@@ -51,6 +59,13 @@ type Props = {
   onBack: () => void;
 };
 
+type CaseTab = "sheet" | "history";
+
+const CASE_TABS: { key: CaseTab; label: string }[] = [
+  { key: "sheet", label: "Ficha técnica" },
+  { key: "history", label: "Histórico" },
+];
+
 export function PrcCasePage({ requestId, onBack }: Props) {
   const [detail, setDetail] = useState<PrcRequestDetail | null>(null);
   const [timeline, setTimeline] = useState<PrcTimelineEvent[]>([]);
@@ -58,6 +73,7 @@ export function PrcCasePage({ requestId, onBack }: Props) {
   const [canUpload, setCanUpload] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<CaseTab>("sheet");
   const [changes, setChanges] = useState<
     Record<string, { value: string; reason: string; mode: "changed" | "confirmed" }>
   >({});
@@ -196,167 +212,221 @@ export function PrcCasePage({ requestId, onBack }: Props) {
         <>
           <MyRequestsSectionCard
             title={`${PRC_TYPE_LABELS[detail.requestType] || "Solicitação"} — ${detail.id.slice(0, 8)}`}
-            hint={`Criada em ${new Date(detail.createdAt).toLocaleString("pt-BR")}`}
+            hint="Acompanhamento do caso PRC na Engineering API."
+            actions={
+              <MyRequestsStatusBadge
+                label={PRC_STATUS_LABELS[detail.status] || detail.status}
+                variant={
+                  detail.status === "completed"
+                    ? "success"
+                    : detail.status === "rejected"
+                      ? "danger"
+                      : detail.status === "needs_correction"
+                        ? "warning"
+                        : "info"
+                }
+              />
+            }
           >
-            <MyRequestsStatusBadge
-              label={PRC_STATUS_LABELS[detail.status] || detail.status}
-              variant={
-                detail.status === "completed"
-                  ? "success"
-                  : detail.status === "rejected"
-                    ? "danger"
-                    : detail.status === "needs_correction"
-                      ? "warning"
-                      : "info"
-              }
+            <DetailFields
+              fields={[
+                {
+                  label: "Código oficial",
+                  value: detail.officialCode || "Aguardando cadastro",
+                },
+                {
+                  label: "Solicitante",
+                  value: prcRequesterLabel(detail.requester),
+                },
+                {
+                  label: "Abertura",
+                  value: new Date(detail.createdAt).toLocaleString("pt-BR"),
+                },
+                {
+                  label: "Última atualização",
+                  value: detail.updatedAt
+                    ? new Date(detail.updatedAt).toLocaleString("pt-BR")
+                    : "—",
+                },
+              ]}
             />
-            {detail.officialCode ? (
-              <p>Código oficial: {detail.officialCode}</p>
-            ) : null}
+            <PrcWorkflowProgress status={detail.status} />
           </MyRequestsSectionCard>
 
-          {canCorrect ? (
-            <MyRequestsSectionCard
-              title="Correção solicitada pela Engenharia"
-              hint="Ajuste somente os campos devolvidos e reenvie o mesmo chamado."
-            >
-              {detail.correctionExchange?.openReturn?.reason ? (
-                <p>
-                  <strong>Motivo:</strong>{" "}
-                  {detail.correctionExchange.openReturn.reason}
-                </p>
-              ) : null}
-              {openTargets
-                .filter((t) => t.targetPath)
-                .map((t) => {
-                  const path = t.targetPath!;
-                  const label = PRC_FIELD_LABELS[path] || path;
-                  const entry = changes[path] || {
-                    value: "",
-                    reason: "",
-                    mode: "changed" as const,
-                  };
-                  return (
-                    <div key={path}>
-                      <p>
-                        <strong>{label}:</strong> {t.reason}
-                      </p>
-                      <TextField
-                        label={`Novo valor — ${label}`}
-                        value={entry.value}
-                        onChange={(v) =>
-                          setChanges((s) => ({
-                            ...s,
-                            [path]: {
-                              ...entry,
-                              value: v,
-                              mode: "changed" as const,
-                            },
-                          }))
-                        }
-                      />
-                      <TextField
-                        label="Justificativa (opcional)"
-                        value={entry.reason}
-                        onChange={(v) =>
-                          setChanges((s) => ({
-                            ...s,
-                            [path]: { ...entry, reason: v },
-                          }))
-                        }
-                      />
-                    </div>
-                  );
-                })}
-              <MyRequestsFormActions>
-                <ActionButton
-                  variant="primary"
-                  disabled={busy}
-                  onClick={() => void saveAndResubmit()}
-                >
-                  Salvar correções e reenviar
-                </ActionButton>
-              </MyRequestsFormActions>
-            </MyRequestsSectionCard>
-          ) : null}
+          <MyRequestsUnderlineNav
+            mode="tabs"
+            ariaLabel="Seções do acompanhamento"
+            activeId={tab}
+            items={CASE_TABS.map((t) => ({
+              id: t.key,
+              label: t.label,
+              controlId: `prc-case-panel-${t.key}`,
+              tabId: `prc-case-tab-${t.key}`,
+              onSelect: () => setTab(t.key),
+            }))}
+          />
 
-          <MyRequestsSectionCard title="Documentos">
-            {attachments.length ? (
-              <MyRequestsAttachmentPreviewStrip
-                mode="preview"
-                items={attachments.map((att) => ({
-                  id: att.attachmentId,
-                  fileName: att.originalFileName,
-                  contentType: att.mediaType || null,
-                  detail: `${prcFormatSize(att.sizeBytes || 0)} · ${
-                    PRC_ATTACHMENT_STATE_LABELS[att.state] || att.state
-                  }`,
-                }))}
-                onOpen={(item) => {
-                  const att = attachments.find(
-                    (a) => a.attachmentId === item.id,
-                  );
-                  if (att) void download(att);
-                }}
-              />
-            ) : (
-              <p>Nenhum documento anexado.</p>
-            )}
-            {canUpload ? (
+          <div
+            role="tabpanel"
+            id={`prc-case-panel-${tab}`}
+            aria-labelledby={`prc-case-tab-${tab}`}
+            className="delpi-prc"
+          >
+            {tab === "sheet" ? (
               <>
-                <MyRequestsFileDropzone
-                  multiple
-                  ariaLabel="Anexar documentos"
-                  onFilesSelected={(list) => {
-                    const { files, errors } = addSupportFiles(
-                      newFiles,
-                      Array.from(list ?? []),
-                      10,
-                    );
-                    setNewFiles(files);
-                    setFileError(Object.values(errors)[0] || "");
-                  }}
-                  labels={{
-                    title: `Anexar documento (até ${PRC_ATTACHMENT_MAX_MB} MB)`,
-                    hint: "PDF ou imagens",
-                  }}
+                {canCorrect ? (
+                  <MyRequestsSectionCard
+                    title="Correção solicitada pela Engenharia"
+                    hint="Ajuste somente os campos devolvidos e reenvie o mesmo chamado."
+                  >
+                    {detail.correctionExchange?.openReturn?.reason ? (
+                      <p>
+                        <strong>Motivo:</strong>{" "}
+                        {detail.correctionExchange.openReturn.reason}
+                      </p>
+                    ) : null}
+                    {openTargets
+                      .filter((t) => t.targetPath)
+                      .map((t) => {
+                        const path = t.targetPath!;
+                        const label = PRC_FIELD_LABELS[path] || path;
+                        const entry = changes[path] || {
+                          value: "",
+                          reason: "",
+                          mode: "changed" as const,
+                        };
+                        return (
+                          <div key={path}>
+                            <p>
+                              <strong>{label}:</strong> {t.reason}
+                            </p>
+                            <TextField
+                              label={`Novo valor — ${label}`}
+                              value={entry.value}
+                              onChange={(v) =>
+                                setChanges((s) => ({
+                                  ...s,
+                                  [path]: {
+                                    ...entry,
+                                    value: v,
+                                    mode: "changed" as const,
+                                  },
+                                }))
+                              }
+                            />
+                            <TextField
+                              label="Justificativa (opcional)"
+                              value={entry.reason}
+                              onChange={(v) =>
+                                setChanges((s) => ({
+                                  ...s,
+                                  [path]: { ...entry, reason: v },
+                                }))
+                              }
+                            />
+                          </div>
+                        );
+                      })}
+                    <MyRequestsFormActions>
+                      <ActionButton
+                        variant="primary"
+                        disabled={busy}
+                        onClick={() => void saveAndResubmit()}
+                      >
+                        Salvar correções e reenviar
+                      </ActionButton>
+                    </MyRequestsFormActions>
+                  </MyRequestsSectionCard>
+                ) : null}
+
+                <PrcTechnicalSheetView
+                  draft={detail.technicalDraft}
+                  changedPaths={detail.changedPaths || []}
+                  baselineFields={detail.officialBaseline?.fields || null}
                 />
-                {newFiles.length ? (
-                  <MyRequestsFormActions>
-                    <ActionButton
-                      variant="primary"
-                      disabled={busy}
-                      onClick={() => void uploadNew()}
-                    >
-                      Enviar {newFiles.length} documento(s)
-                    </ActionButton>
-                  </MyRequestsFormActions>
-                ) : null}
-                {fileError ? (
-                  <MyRequestsStateBanner variant="error">
-                    {fileError}
-                  </MyRequestsStateBanner>
-                ) : null}
+
+                <MyRequestsSectionCard title="Documentos de apoio">
+                  {attachments.length ? (
+                    <MyRequestsAttachmentPreviewStrip
+                      mode="preview"
+                      items={attachments.map((att) => ({
+                        id: att.attachmentId,
+                        fileName: att.originalFileName,
+                        contentType: att.mediaType || null,
+                        detail: `${prcFormatSize(att.sizeBytes || 0)} · ${
+                          PRC_ATTACHMENT_STATE_LABELS[att.state] || att.state
+                        }`,
+                      }))}
+                      onOpen={(item) => {
+                        const att = attachments.find(
+                          (a) => a.attachmentId === item.id,
+                        );
+                        if (att) void download(att);
+                      }}
+                    />
+                  ) : (
+                    <p>Nenhum documento anexado.</p>
+                  )}
+                  {canUpload ? (
+                    <>
+                      <MyRequestsFileDropzone
+                        multiple
+                        ariaLabel="Anexar documentos"
+                        onFilesSelected={(list) => {
+                          const { files, errors } = addSupportFiles(
+                            newFiles,
+                            Array.from(list ?? []),
+                            10,
+                          );
+                          setNewFiles(files);
+                          setFileError(Object.values(errors)[0] || "");
+                        }}
+                        labels={{
+                          title: `Anexar documento (até ${PRC_ATTACHMENT_MAX_MB} MB)`,
+                          hint: "PDF ou imagens",
+                        }}
+                      />
+                      {newFiles.length ? (
+                        <MyRequestsFormActions>
+                          <ActionButton
+                            variant="primary"
+                            disabled={busy}
+                            onClick={() => void uploadNew()}
+                          >
+                            Enviar {newFiles.length} documento(s)
+                          </ActionButton>
+                        </MyRequestsFormActions>
+                      ) : null}
+                      {fileError ? (
+                        <MyRequestsStateBanner variant="error">
+                          {fileError}
+                        </MyRequestsStateBanner>
+                      ) : null}
+                    </>
+                  ) : null}
+                </MyRequestsSectionCard>
               </>
             ) : null}
-          </MyRequestsSectionCard>
 
-          <MyRequestsSectionCard title="Linha do tempo">
-            <RequestHistoryTimeline
-              items={historyViews.map((v) => ({
-                id: v.id,
-                title: v.title,
-                occurredAt: v.occurredAt,
-                timeLabel: v.timeLabel,
-                actorName: v.actorLabel || null,
-                actorUserId: v.actorUserId,
-                transition: v.transition,
-                detailText: v.reasonText,
-                metaText: v.metaText,
-              }))}
-              avatarByUserId={avatarByUserId}
-            />
-          </MyRequestsSectionCard>
+            {tab === "history" ? (
+              <MyRequestsSectionCard title="Linha do tempo">
+                <RequestHistoryTimeline
+                  items={historyViews.map((v) => ({
+                    id: v.id,
+                    title: v.title,
+                    occurredAt: v.occurredAt,
+                    timeLabel: v.timeLabel,
+                    actorName: v.actorLabel || null,
+                    actorUserId: v.actorUserId,
+                    transition: v.transition,
+                    detailText: v.reasonText,
+                    metaText: v.metaText,
+                  }))}
+                  avatarByUserId={avatarByUserId}
+                />
+              </MyRequestsSectionCard>
+            ) : null}
+          </div>
         </>
       ) : null}
       <MyRequestsFormActions>

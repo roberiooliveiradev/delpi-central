@@ -1260,6 +1260,31 @@ declare module "@delpi/plugin-ui/index" {
   export function PrcRequestForm(
     props: PrcRequestFormProps,
   ): JSX.Element;
+
+  /* UI-FIX-07 — ficha técnica em leitura + andamento do workflow,
+   * mesma composição do Portal Engenharia. */
+  export type PrcSheetChange = { path: string; reason: string };
+  export type PrcTechnicalSheetViewProps = {
+    draft: Record<string, unknown> | null | undefined;
+    changedPaths?: PrcSheetChange[];
+    specNotes?: Record<string, string | null | undefined> | null;
+    baselineFields?: Record<string, unknown> | null;
+    suppliersHeaderActions?: React.ReactNode;
+    fieldAdornment?: (
+      path: string,
+      displayValue: string,
+    ) => React.ReactNode;
+    supplierAdornment?: (
+      row: SupplierRow,
+      attribute: "partNumber" | "catalogNumber",
+    ) => React.ReactNode;
+  };
+  export function PrcTechnicalSheetView(
+    props: PrcTechnicalSheetViewProps,
+  ): JSX.Element;
+  export function PrcWorkflowProgress(props: {
+    status: string;
+  }): JSX.Element;
   /* UI-FIX-03 — rótulos/formatadores de timeline compartilhados */
   export const PRC_EVENT_LABELS: Record<string, string>;
   export function prcPersonLabel(

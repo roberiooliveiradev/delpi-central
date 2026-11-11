@@ -5,18 +5,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { PrcTechnicalSheetView } from "@delpi/plugin-ui/index";
+
 import {
   EngineeringActionButton,
   EngineeringCheckboxControl,
   EngineeringDetailCard,
-  EngineeringFieldLabel,
   EngineeringFormActions,
   EngineeringSelectField,
   EngineeringStateBanner,
   EngineeringTextField,
 } from "../../../ui/engineeringUi";
-import type { DataTableColumn } from "../../lmps/components/dataTableUi";
-import { DataTableSection } from "../../lmps/components/DataTableSection";
 import type {
   PrcFieldSpec,
   PrcRequestDetail,
@@ -72,6 +71,9 @@ function fieldLabel(path: string): string {
   return PRC_FIELD_LABELS[path] || path;
 }
 
+/** UI-FIX-07 — leitura da ficha delegada à composição única do kit;
+ * aqui ficam apenas os adornos do perfil Engenharia (flags de
+ * acompanhamento e ação «Editar ficha»). */
 function PrcTechnicalSheetRead({
   detail,
   draft,
@@ -90,225 +92,77 @@ function PrcTechnicalSheetRead({
   const { flags, openTarget } = usePrcFlagsContext();
 
   return (
-    <>
-      {FIELD_GROUPS.map((group) => {
-        const paths = group.paths.filter(
-          (p) => p in draft || p === "officialProductCode",
-        );
-        if (!paths.length) return null;
-        return (
-          <EngineeringDetailCard key={group.title} title={group.title}>
-            <div className="engineering-prc__flagged-grid">
-              {paths.map((p) => {
-                const openFlag =
-                  p === "officialProductCode"
-                    ? undefined
-                    : findOpenFieldFlag(flags, p);
-                const resolvedFlags =
-                  p === "officialProductCode"
-                    ? []
-                    : findResolvedFieldFlags(flags, p);
-                const label = fieldLabel(p);
-                return (
-                  <div
-                    key={p}
-                    id={`prc-field-${p}`}
-                    tabIndex={-1}
-                    className={
-                      p === "description"
-                        ? "engineering-prc__flagged-field engineering-prc__flagged-field--wide"
-                        : "engineering-prc__flagged-field"
-                    }
-                  >
-                    <div className="engineering-prc__flagged-field-label">
-                      <EngineeringFieldLabel
-                        label={label}
-                        hint={prcFieldHelp(p, specByPath.get(p)?.note)}
-                      />
-                      {p !== "officialProductCode" ? (
-                        <PrcFieldFlagTrigger
-                          openFlag={openFlag}
-                          resolvedFlags={resolvedFlags}
-                          label={label}
-                          onOpen={(flag) =>
-                            openTarget(
-                              {
-                                subject: "FIELD",
-                                targetPath: p,
-                                fieldLabel: label,
-                                currentValue: scalarText(draft[p]),
-                              },
-                              flag,
-                            )
-                          }
-                        />
-                      ) : null}
-                    </div>
-                    <div className="engineering-prc__flagged-field-value">
-                      {scalarText(draft[p])}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {group.paths.some((p) => changedPaths.has(p)) ? (
-              <ul className="engineering-prc__change-notes">
-                {group.paths
-                  .filter((p) => changedPaths.has(p))
-                  .map((p) => (
-                    <li key={p}>
-                      <strong>{fieldLabel(p)}</strong> — alterado:{" "}
-                      {changedReasons.get(p)}
-                    </li>
-                  ))}
-              </ul>
-            ) : null}
-          </EngineeringDetailCard>
-        );
-      })}
-
-      <EngineeringDetailCard
-        title="Fornecedores"
-        headerActions={
-          detail.allowedActions.includes("edit_draft") ? (
-            <EngineeringActionButton variant="ghost" onClick={enterEdit}>
-              Editar ficha
-            </EngineeringActionButton>
-          ) : undefined
-        }
-      >
-        {toSupplierRows(draft.suppliers).length ? (
-          <DataTableSection
-            title="Vínculos produto × fornecedor"
-            columns={
-              [
-                {
-                  key: "supplierCode",
-                  header: PRC_SUPPLIER_LABELS.supplierCode,
-                  render: (r: SupplierRow) => r.supplierCode,
+    <PrcTechnicalSheetView
+      draft={draft}
+      changedPaths={Array.from(changedPaths).map((p) => ({
+        path: p,
+        reason: changedReasons.get(p) || "",
+      }))}
+      specNotes={Object.fromEntries(
+        Array.from(specByPath, ([p, s]) => [p, s.note]),
+      )}
+      baselineFields={
+        (detail.officialBaseline?.fields as
+          | Record<string, unknown>
+          | undefined) || null
+      }
+      suppliersHeaderActions={
+        detail.allowedActions.includes("edit_draft") ? (
+          <EngineeringActionButton variant="ghost" onClick={enterEdit}>
+            Editar ficha
+          </EngineeringActionButton>
+        ) : undefined
+      }
+      fieldAdornment={(p, displayValue) => (
+        <PrcFieldFlagTrigger
+          openFlag={findOpenFieldFlag(flags, p)}
+          resolvedFlags={findResolvedFieldFlags(flags, p)}
+          label={fieldLabel(p)}
+          onOpen={(flag) =>
+            openTarget(
+              {
+                subject: "FIELD",
+                targetPath: p,
+                fieldLabel: fieldLabel(p),
+                currentValue: displayValue,
+              },
+              flag,
+            )
+          }
+        />
+      )}
+      supplierAdornment={(r, attribute) => (
+        <PrcFieldFlagTrigger
+          openFlag={findOpenSupplierFlag(
+            flags,
+            r.supplierCode,
+            r.store,
+            attribute,
+          )}
+          resolvedFlags={findResolvedSupplierFlags(
+            flags,
+            r.supplierCode,
+            r.store,
+            attribute,
+          )}
+          label={`${PRC_SUPPLIER_LABELS[attribute]} ${r.supplierCode}`}
+          onOpen={(flag) =>
+            openTarget(
+              {
+                subject: "SUPPLIER_LINK",
+                targetAttribute: attribute,
+                supplierKey: {
+                  supplierCode: r.supplierCode,
+                  store: r.store,
                 },
-                {
-                  key: "store",
-                  header: PRC_SUPPLIER_LABELS.store,
-                  render: (r) => r.store,
-                },
-                {
-                  key: "supplierName",
-                  header: PRC_SUPPLIER_LABELS.supplierName,
-                  render: (r) => r.supplierName,
-                },
-                {
-                  key: "partNumber",
-                  header: PRC_SUPPLIER_LABELS.partNumber,
-                  headerHint:
-                    PRC_SUPPLIER_HELP.partNumberHint,
-                  render: (r) => {
-                    const openFlag = findOpenSupplierFlag(
-                      flags,
-                      r.supplierCode,
-                      r.store,
-                      "partNumber",
-                    );
-                    const resolvedFlags = findResolvedSupplierFlags(
-                      flags,
-                      r.supplierCode,
-                      r.store,
-                      "partNumber",
-                    );
-                    return (
-                      <span
-                        id={`prc-supplier-${r.supplierCode}-${r.store}-partNumber`}
-                        className="engineering-prc__supplier-flag-cell"
-                      >
-                        {r.partNumber || "—"}
-                        <PrcFieldFlagTrigger
-                          openFlag={openFlag}
-                          resolvedFlags={resolvedFlags}
-                          label={`${PRC_SUPPLIER_LABELS.partNumber} ${r.supplierCode}`}
-                          onOpen={(flag) =>
-                            openTarget(
-                              {
-                                subject: "SUPPLIER_LINK",
-                                targetAttribute: "partNumber",
-                                supplierKey: {
-                                  supplierCode: r.supplierCode,
-                                  store: r.store,
-                                },
-                                currentValue: r.partNumber || "",
-                              },
-                              flag,
-                            )
-                          }
-                        />
-                      </span>
-                    );
-                  },
-                },
-                {
-                  key: "catalogNumber",
-                  header: `${PRC_SUPPLIER_LABELS.catalogNumber} (opcional)`,
-                  render: (r) => {
-                    const openFlag = findOpenSupplierFlag(
-                      flags,
-                      r.supplierCode,
-                      r.store,
-                      "catalogNumber",
-                    );
-                    const resolvedFlags = findResolvedSupplierFlags(
-                      flags,
-                      r.supplierCode,
-                      r.store,
-                      "catalogNumber",
-                    );
-                    return (
-                      <span
-                        id={`prc-supplier-${r.supplierCode}-${r.store}-catalogNumber`}
-                        className="engineering-prc__supplier-flag-cell"
-                      >
-                        {r.catalogNumber || "—"}
-                        <PrcFieldFlagTrigger
-                          openFlag={openFlag}
-                          resolvedFlags={resolvedFlags}
-                          label={`${PRC_SUPPLIER_LABELS.catalogNumber} ${r.supplierCode}`}
-                          onOpen={(flag) =>
-                            openTarget(
-                              {
-                                subject: "SUPPLIER_LINK",
-                                targetAttribute: "catalogNumber",
-                                supplierKey: {
-                                  supplierCode: r.supplierCode,
-                                  store: r.store,
-                                },
-                                currentValue: r.catalogNumber || "",
-                              },
-                              flag,
-                            )
-                          }
-                        />
-                      </span>
-                    );
-                  },
-                },
-              ] as DataTableColumn<SupplierRow>[]
-            }
-            rows={toSupplierRows(draft.suppliers)}
-            rowKey={(r) => `${r.supplierCode}.${r.store}.${r.partNumber}`}
-            hideSearch
-            emptyMessage="Nenhum fornecedor vinculado."
-          />
-        ) : (
-          <p className="engineering-prc__muted">
-            Nenhum fornecedor vinculado.
-          </p>
-        )}
-        {changedPaths.has("suppliers") ? (
-          <p className="engineering-prc__change-notes">
-            <strong>Fornecedores</strong> — alterado:{" "}
-            {changedReasons.get("suppliers")}
-          </p>
-        ) : null}
-      </EngineeringDetailCard>
-    </>
+                currentValue: String(r[attribute] || ""),
+              },
+              flag,
+            )
+          }
+        />
+      )}
+    />
   );
 }
 

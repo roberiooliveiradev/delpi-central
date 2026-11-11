@@ -283,3 +283,12 @@ export {
   type PrcFormEditContextLink,
   type PrcRequestFormProps,
 } from "./components/prc/PrcRequestForm";
+
+/* PRC-REF-023-UI-FIX-07 — ficha técnica em leitura + andamento do
+ * workflow, fonte única para Engenharia e Minhas Solicitações. */
+export {
+  PrcTechnicalSheetView,
+  type PrcSheetChange,
+  type PrcTechnicalSheetViewProps,
+} from "./components/prc/PrcTechnicalSheetView";
+export { PrcWorkflowProgress } from "./components/prc/PrcWorkflowProgress";

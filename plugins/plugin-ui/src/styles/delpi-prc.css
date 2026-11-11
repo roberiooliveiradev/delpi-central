@@ -11,6 +11,76 @@
   gap: var(--delpi-ui-section-gap, 16px);
 }
 
+/* Ficha técnica em leitura (UI-FIX-07) — mesma grade da referência
+ * do Portal Engenharia, em classes neutras para os dois MFEs. */
+.delpi-prc__sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+.delpi-prc__sheet-field {
+  min-width: 0;
+}
+
+.delpi-prc__sheet-field--wide {
+  grid-column: 1 / -1;
+}
+
+.delpi-prc__sheet-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.delpi-prc__sheet-field-value {
+  margin-top: 4px;
+  word-break: break-word;
+}
+
+.delpi-prc__sheet-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.delpi-prc__sheet-table th,
+.delpi-prc__sheet-table td {
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--delpi-ui-border);
+}
+
+.delpi-prc__sheet-table th {
+  font-weight: 600;
+  color: var(--delpi-ui-text-muted);
+  white-space: nowrap;
+}
+
+.delpi-prc__sheet-supplier-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+}
+
+.delpi-prc__change-notes {
+  margin: var(--delpi-ui-grid-gap, 12px) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--delpi-ui-text-muted);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 640px) {
+  .delpi-prc__sheet-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .delpi-prc__muted {
   color: var(--delpi-ui-text-muted);
   font-size: 0.85rem;
