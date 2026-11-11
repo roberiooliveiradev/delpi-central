@@ -255,6 +255,20 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 
 **Chamado GLPI #1571:** permanece aberto até comprovação da execução periódica (AC-04).
 
+## E4.S1 — revisão independente da implantação horária (11/11/2026)
+
+**REVIEW_DECISION: REWORK** pontual do pacote `702a6a51143f278c47ac0a09a856ae4deada5c2e`, antes da instalação em produção. A correção não reabre E1/E2 nem o smoke manual já validado.
+
+**Evidências:** arquivos versionados `collectors/linux_host/deploy/install-it-portal-linux-collector.sh`, `run-collector.sh`, `*.service`, `*.timer` e `submit.py`. O executor reportou testes `pytest`, `systemd-analyze verify` e gates Phase3/platform como **PASS (reportado, não reproduzido nesta revisão)**. O operador comprovou que, antes da instalação, `delpi-collector` não existia, timer estava `not-found/inactive` e health HTTP local retornava 200.
+
+**Bloqueio de segurança (PROVEN no código):** o instalador executa `chown -R delpi-collector` sobre todo `/opt/delpi/it-portal-collector`, incluindo executável, módulos, vendor/shared e venv. Assim, o usuário de execução pode alterar seu próprio código/dependências. Uma reinstalação subsequente usa `pip install -e` como root sobre essa árvore editável. Corrigir ownership com binário/código/vendor/venv **root-owned, não graváveis** pelo serviço; manter somente `/var/lib/it-portal-collector` gravável; env `root:delpi-collector 0640`. Testar negativas de escrita como `delpi-collector`, inclusive após reinstalação idempotente, e preservação de ausência de privilégios Docker.
+
+**Ajuste operacional:** revisar/remover `Requires=it-portal-linux-collector.service` no `[Unit]` do timer; o timer deve acionar o oneshot apenas no calendário programado, sem disparo antecipado implícito durante `enable --now`. Testar `systemd-analyze verify` e comportamento de agendamento. Revisar cópia de `shared/` para excluir artefatos locais/sensíveis não versionados; dependências do venv devem ser reprodutíveis.
+
+**Drift local do host, não tratar como defeito do pacote:** clone em `main` estava atrás do remoto antes do pull; `shared/delpi_auth.egg-info/SOURCES.txt` estava modificado. Preservar alteração, inspecionar diff e não usar reset/clean/stash automático.
+
+**Gates pendentes:** corrigir pacote e entregar SHA verificável; `git pull --ff-only` no host após checar divergência e working tree; executar instalador versionado; verificar permissões e diagnose como conta técnica; smoke oneshot → novo `run_id` no PostgreSQL → UI; só então `systemctl enable --now` de timer com autorização do operador; observar duas execuções agendadas. Não declarar COMPLETE nem solucionar GLPI #1571 antes desse outcome.
+
 ## Residuais abertos
 
 | ID | Residual | Dono da decisão |
