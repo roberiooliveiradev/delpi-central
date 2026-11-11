@@ -48,6 +48,23 @@ function numberLabel(value: number | null | undefined): string {
   return String(value);
 }
 
+function percentLabel(value: unknown): string {
+  if (value == null) return "—";
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0 || n > 100) return "—";
+  return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(n)}%`;
+}
+
+function uptimeLabel(value: unknown): string {
+  if (value == null) return "—";
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds) || seconds < 0) return "—";
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return `${days}d ${hours}h ${minutes}min`;
+}
+
 function DivergencesBlock({ items }: { items: ObservationDivergence[] }) {
   if (!items.length) return null;
   return (
@@ -76,7 +93,15 @@ function ObservationBody({ observation }: { observation: Observation }) {
   const swap = (summary.swap as Record<string, unknown> | undefined) ?? {};
   const volumes = (summary.volumes as Array<Record<string, unknown>> | undefined) ?? [];
   const nics = (summary.host_nics as Array<Record<string, unknown>> | undefined) ?? [];
-  const services = (summary.systemd_services as Array<Record<string, unknown>> | undefined) ?? [];
+  const isWindows = observation.source === "windows_host_collector";
+  const services = (isWindows
+    ? summary.windows_services as Array<Record<string, unknown>> | undefined
+    : summary.systemd_services as Array<Record<string, unknown>> | undefined) ?? [];
+  const memTotal = Number(memory.total_bytes);
+  const memAvailable = Number(memory.available_bytes);
+  const memoryUsed = memTotal > 0 && Number.isFinite(memAvailable)
+    ? 100 * (memTotal - memAvailable) / memTotal
+    : null;
   const docker = (summary.docker_summary as Record<string, unknown> | undefined) ?? {};
   const presentation = (observation.presentation_status ?? "unavailable") as ObservationPresentationStatus;
 
@@ -104,13 +129,16 @@ function ObservationBody({ observation }: { observation: Observation }) {
               value={orDash(typeof os.architecture === "string" ? os.architecture : null)}
             />
             <Field label="CPUs lógicas" value={numberLabel(summary.cpu_logical as number | undefined)} />
+            {isWindows ? <Field label="Uso de CPU (amostra)" value={percentLabel(summary.cpu_usage_percent)} /> : null}
+            {isWindows ? <Field label="Uptime" value={uptimeLabel(summary.uptime_seconds)} /> : null}
           </dl>
         </ItpSectionCard>
         <ItpSectionCard title="Memória e disco">
           <dl className="itp-field-list">
             <Field label="Memória total" value={bytesLabel(memory.total_bytes as number | undefined)} />
             <Field label="Memória disponível" value={bytesLabel(memory.available_bytes as number | undefined)} />
-            <Field label="Swap total" value={bytesLabel(swap.total_bytes as number | undefined)} />
+            {isWindows ? <Field label="Memória usada (amostra)" value={percentLabel(memoryUsed)} /> : null}
+            {!isWindows ? <Field label="Swap total" value={bytesLabel(swap.total_bytes as number | undefined)} /> : null}
           </dl>
           {volumes.length ? (
             <ul className="itp-plain-list">
@@ -143,13 +171,13 @@ function ObservationBody({ observation }: { observation: Observation }) {
             <p className="itp-muted">Nenhuma interface de host na observação.</p>
           )}
         </ItpSectionCard>
-        <ItpSectionCard title="Serviços observados">
+        <ItpSectionCard title={isWindows ? "Serviços Windows observados" : "Serviços observados"}>
           {services.length ? (
             <ul className="itp-plain-list">
               {services.map((service) => (
                 <li key={String(service.name)}>
                   {String(service.name)} — {orDash(service.active_state as string | undefined)}
-                  {service.sub_state ? ` / ${String(service.sub_state)}` : ""}
+                  {service.sub_state ? isWindows ? ` / inicialização: ${String(service.sub_state)}` : ` / ${String(service.sub_state)}` : ""}
                 </li>
               ))}
             </ul>
@@ -157,7 +185,7 @@ function ObservationBody({ observation }: { observation: Observation }) {
             <p className="itp-muted">Nenhum serviço da allowlist nesta observação.</p>
           )}
         </ItpSectionCard>
-        <ItpSectionCard title="Docker">
+        {!isWindows ? <ItpSectionCard title="Docker">
           {docker.available ? (
             <dl className="itp-field-list">
               <Field
@@ -177,7 +205,7 @@ function ObservationBody({ observation }: { observation: Observation }) {
               {docker.unavailable_reason ? ` (${String(docker.unavailable_reason)})` : ""}.
             </p>
           )}
-        </ItpSectionCard>
+        </ItpSectionCard> : null}
       </div>
     </>
   );
