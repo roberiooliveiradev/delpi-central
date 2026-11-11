@@ -243,6 +243,8 @@ class TicketDetail:
     requester_display_name: str = ""
     assigned_display_name: str = ""
     assigned_user_id: int | None = None
+    """Minha DELPI directory user_id for the assignee when linked."""
+    assigned_directory_user_id: str = ""
     requester_identity: PersonIdentity = PersonIdentity()
     """Minha DELPI directory user_id when linked — same as list avatar key."""
     requester_directory_user_id: str = ""

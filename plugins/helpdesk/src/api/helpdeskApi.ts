@@ -108,6 +108,8 @@ export type TimelineEntry = {
   content_html?: string;
   created_at: string;
   author_display_name: string;
+  /** GLPI users_id of the timeline author when known. */
+  author_user_id?: number | null;
   mine: boolean;
   state?: number | null;
   duration_seconds?: number | null;
@@ -136,6 +138,8 @@ export type TicketDetail = TicketSummary & {
   description: string;
   description_html?: string;
   requester_display_name: string;
+  /** GLPI users_id of the requester when known. */
+  requester_user_id?: number | null;
   requester_mine: boolean;
   can_followup?: boolean;
   can_assign?: boolean;

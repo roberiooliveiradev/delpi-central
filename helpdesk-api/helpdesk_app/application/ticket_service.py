@@ -477,26 +477,40 @@ class TicketService:
     def _enrich_ticket_detail_requester_avatar(
         self, token: str, detail: TicketDetail
     ) -> TicketDetail:
-        """Attach directory id for requester avatar hue/photo (ADDITIVE)."""
-        glpi_id = detail.requester_identity.user_id
-        if glpi_id is None or int(glpi_id) < 1:
+        """Attach directory ids for requester/assignee avatar hue/photo (ADDITIVE)."""
+        glpi_ids: list[int] = []
+        requester_glpi = detail.requester_identity.user_id
+        if requester_glpi is not None and int(requester_glpi) > 0:
+            glpi_ids.append(int(requester_glpi))
+        assigned_glpi = detail.assigned_user_id
+        if assigned_glpi is not None and int(assigned_glpi) > 0:
+            glpi_ids.append(int(assigned_glpi))
+        if not glpi_ids:
             return detail
-        directory_by_glpi = self._directory_ids_for_glpi_users(token, [int(glpi_id)])
-        directory_id = directory_by_glpi.get(int(glpi_id), "")
-        if not directory_id:
-            return detail
+        directory_by_glpi = self._directory_ids_for_glpi_users(token, glpi_ids)
+        requester_directory = (
+            directory_by_glpi.get(int(requester_glpi), "") if requester_glpi else ""
+        )
+        assigned_directory = (
+            directory_by_glpi.get(int(assigned_glpi), "") if assigned_glpi else ""
+        )
         has_photo = False
         profiles = self._person_profiles
-        if profiles is not None and getattr(profiles, "configured", lambda: False)():
+        if (
+            requester_directory
+            and profiles is not None
+            and getattr(profiles, "configured", lambda: False)()
+        ):
             try:
-                flags = profiles.lookup_has_photo([directory_id]) or {}
-                has_photo = bool(flags.get(directory_id))
+                flags = profiles.lookup_has_photo([requester_directory]) or {}
+                has_photo = bool(flags.get(requester_directory))
             except Exception:
                 logger.exception("helpdesk_detail_requester_photo_lookup_failed")
         return replace(
             detail,
-            requester_directory_user_id=directory_id,
-            requester_has_photo=has_photo,
+            requester_directory_user_id=requester_directory or detail.requester_directory_user_id,
+            requester_has_photo=has_photo if requester_directory else detail.requester_has_photo,
+            assigned_directory_user_id=assigned_directory or detail.assigned_directory_user_id,
         )
 
     def attachment(self, subject: str, ticket_id: int, document_id: int) -> tuple[bytes, str, str]:

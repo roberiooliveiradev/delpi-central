@@ -37,6 +37,10 @@ describe("HELPDESK-MFE-UX-001-R3 conversation detail", () => {
     expect(view).toContain("mine: entry.mine === true");
     expect(view).toContain('entry.kind === "document"');
     expect(view).toContain('kind: "document"');
+    expect(view).toContain("sortTimelineChronologically");
+    expect(view).toContain("conversationAuthorPresentation");
+    expect(detail).toContain("compact");
+    expect(detail).toContain("directoryPhotoFor");
   });
 
   it("composer starts compact without fill and keeps attach/send + rich text", () => {

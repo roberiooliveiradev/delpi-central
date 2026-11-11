@@ -36,6 +36,7 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     TASK_STATUSES,
     apply_viewer_identity,
     apply_validation_viewer,
+    canonicalize_timeline_authors,
     attachment_filename,
     build_user_search_filter,
     create_ticket_body,
@@ -528,11 +529,13 @@ class HttpxGlpiClient:
         extra_allowed, ticket_docs = self._legacy_ticket_document_scope(
             ticket_id, ticket, timeline
         )
-        detail = apply_viewer_identity(
-            parse_ticket_detail(
-                ticket, timeline, extra_document_ids=extra_allowed
-            ),
-            viewer,
+        detail = canonicalize_timeline_authors(
+            apply_viewer_identity(
+                parse_ticket_detail(
+                    ticket, timeline, extra_document_ids=extra_allowed
+                ),
+                viewer,
+            )
         )
         validations = apply_validation_viewer(
             parse_ticket_validations(validations_payload),

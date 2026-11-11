@@ -492,16 +492,9 @@ describe("conversationMessages", () => {
       description: "Problema no cálculo",
       created_at: "2026-10-21T10:00:00Z",
       requester_display_name: "Joici Motta",
+      requester_user_id: 55,
+      requester_directory_user_id: "dir-joici",
       timeline: [
-        {
-          id: 9001,
-          kind: "document",
-          content: "CPV Filial.docx",
-          created_at: "2026-10-21T10:05:00Z",
-          author_display_name: "Joici Motta",
-          document_id: 4401,
-          mine: false,
-        },
         {
           id: 42,
           kind: "followup",
@@ -509,6 +502,16 @@ describe("conversationMessages", () => {
           created_at: "2026-10-21T11:00:00Z",
           author_display_name: "Robério Oliveira",
           mine: true,
+        },
+        {
+          id: 9001,
+          kind: "document",
+          content: "CPV Filial.docx",
+          created_at: "2026-10-21T10:05:00Z",
+          author_display_name: "Joici",
+          author_user_id: 55,
+          document_id: 4401,
+          mine: false,
         },
       ],
       attachments: [
@@ -520,12 +523,42 @@ describe("conversationMessages", () => {
     expect(messages[1]).toMatchObject({
       kind: "document",
       authorName: "Joici Motta",
+      authorUserId: "dir-joici",
       attachmentIds: [4401],
       bodyText: "",
       mine: false,
     });
     expect(messages[0]?.attachmentIds).toEqual([]);
     expect(unassignedTicketAttachments(source, messages)).toEqual([]);
+  });
+
+  it("unifica nome/avatar do requerente quando o followup traz nome curto", () => {
+    const messages = conversationMessages(
+      {
+        title: "CPV",
+        description: "texto",
+        created_at: "2026-10-21T10:00:00Z",
+        requester_display_name: "Joici Motta",
+        requester_user_id: 55,
+        requester_directory_user_id: "dir-joici",
+        timeline: [
+          {
+            id: 9,
+            kind: "followup",
+            content: "ok",
+            created_at: "2026-10-22T10:00:00Z",
+            author_display_name: "Joici",
+            author_user_id: 55,
+          },
+        ],
+        attachments: [],
+      },
+      now,
+    );
+    expect(messages[0]?.authorName).toBe("Joici Motta");
+    expect(messages[0]?.authorUserId).toBe("dir-joici");
+    expect(messages[1]?.authorName).toBe("Joici Motta");
+    expect(messages[1]?.authorUserId).toBe("dir-joici");
   });
 
   it("Document na timeline não duplica anexo na abertura mesmo com itemtype Ticket", () => {

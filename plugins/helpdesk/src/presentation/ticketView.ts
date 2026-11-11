@@ -336,8 +336,12 @@ export type ConversationSource = {
   description_html?: string;
   created_at: string;
   requester_display_name: string;
+  requester_user_id?: number | null;
   requester_directory_user_id?: string;
   requester_mine?: boolean;
+  assigned_display_name?: string;
+  assigned_user_id?: number | null;
+  assigned_directory_user_id?: string;
   timeline: {
     id: number;
     kind: string;
@@ -345,6 +349,7 @@ export type ConversationSource = {
     content_html?: string;
     created_at: string;
     author_display_name: string;
+    author_user_id?: number | null;
     mine?: boolean;
     state?: number | null;
     duration_seconds?: number | null;
@@ -608,10 +613,61 @@ export function unassignedTicketAttachments(
   );
 }
 
+/** Stable chronological order for timeline siblings (Document between followups). */
+export function sortTimelineChronologically<T extends { created_at: string }>(
+  timeline: readonly T[],
+): T[] {
+  return timeline
+    .map((entry, index) => ({ entry, index }))
+    .sort((left, right) => {
+      const leftTs = Date.parse(left.entry.created_at || "");
+      const rightTs = Date.parse(right.entry.created_at || "");
+      const leftOk = Number.isFinite(leftTs);
+      const rightOk = Number.isFinite(rightTs);
+      if (leftOk && rightOk && leftTs !== rightTs) return leftTs - rightTs;
+      return left.index - right.index;
+    })
+    .map((row) => row.entry);
+}
+
+function conversationAuthorPresentation(
+  ticket: ConversationSource,
+  entry: ConversationSource["timeline"][number],
+): { authorName: string; authorUserId?: string } {
+  const requesterName = ticket.requester_display_name.trim();
+  const assignedName = (ticket.assigned_display_name || "").trim();
+  const requesterGlpi = Number(ticket.requester_user_id);
+  const assignedGlpi = Number(ticket.assigned_user_id);
+  const authorGlpi = Number(entry.author_user_id);
+  const rawName = (entry.author_display_name || "").trim();
+  if (Number.isFinite(authorGlpi) && authorGlpi > 0) {
+    if (Number.isFinite(requesterGlpi) && authorGlpi === requesterGlpi) {
+      return {
+        authorName: requesterName || rawName,
+        authorUserId: (ticket.requester_directory_user_id || "").trim() || undefined,
+      };
+    }
+    if (Number.isFinite(assignedGlpi) && authorGlpi === assignedGlpi) {
+      return {
+        authorName: assignedName || rawName,
+        authorUserId: (ticket.assigned_directory_user_id || "").trim() || undefined,
+      };
+    }
+  }
+  if (entry.kind === "document" && !rawName && requesterName) {
+    return {
+      authorName: requesterName,
+      authorUserId: (ticket.requester_directory_user_id || "").trim() || undefined,
+    };
+  }
+  return { authorName: rawName };
+}
+
 export function conversationMessages(ticket: ConversationSource, now: Date): ConversationMessage[] {
   const attachments = dedupeTicketAttachments(ticket.attachments);
+  const timeline = sortTimelineChronologically(ticket.timeline);
   const documentTimelineIds = new Set(
-    ticket.timeline
+    timeline
       .filter((entry) => entry.kind === "document")
       .map((entry) => Number(entry.document_id))
       .filter((id) => Number.isFinite(id) && id > 0),
@@ -639,7 +695,7 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
       openingAttachments,
     ),
   };
-  const replies = ticket.timeline
+  const replies = timeline
     .filter(
       (entry) =>
         entry.kind === "followup" ||
@@ -648,6 +704,7 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
         entry.kind === "document",
     )
     .map((entry): ConversationMessage => {
+      const author = conversationAuthorPresentation(ticket, entry);
       if (entry.kind === "document") {
         const documentId = Number(entry.document_id);
         const attachmentIds =
@@ -659,7 +716,8 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
           bodyText: "",
           bodyHtml: "",
           createdAtLabel: relativeTimeLabel(entry.created_at, now),
-          authorName: entry.author_display_name.trim(),
+          authorName: author.authorName,
+          authorUserId: author.authorUserId,
           mine: entry.mine === true,
           attachmentIds,
         };
@@ -674,7 +732,8 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
         bodyText: entry.content,
         bodyHtml,
         createdAtLabel: relativeTimeLabel(entry.created_at, now),
-        authorName: entry.author_display_name.trim(),
+        authorName: author.authorName,
+        authorUserId: author.authorUserId,
         mine: entry.mine === true,
         attachmentIds: entryAttachmentIds(kind, entry.id, entry.content_html || "", attachments),
       };

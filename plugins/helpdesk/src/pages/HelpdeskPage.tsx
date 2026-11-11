@@ -1931,11 +1931,16 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   /** Bumps resolve identity after IDB seed (create parity). */
   const [pendingHydrated, setPendingHydrated] = useState(0);
   const myPhotoUrl = useMyPersonProfilePhoto();
-  const requesterDirectoryIds = useMemo(() => {
-    const id = (ticket?.requester_directory_user_id || "").trim();
-    return id ? [id] : [];
-  }, [ticket?.requester_directory_user_id]);
-  const { photoFor: requesterPhotoFor } = useDirectoryUserPhotoUrls(requesterDirectoryIds);
+  const conversationDirectoryIds = useMemo(() => {
+    const ids = new Set<string>();
+    const requesterId = (ticket?.requester_directory_user_id || "").trim();
+    const assignedId = (ticket?.assigned_directory_user_id || "").trim();
+    if (requesterId) ids.add(requesterId);
+    if (assignedId) ids.add(assignedId);
+    return [...ids];
+  }, [ticket?.requester_directory_user_id, ticket?.assigned_directory_user_id]);
+  const { photoFor: directoryPhotoFor } = useDirectoryUserPhotoUrls(conversationDirectoryIds);
+  const requesterPhotoFor = directoryPhotoFor;
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
   /** Explicit per-id user intent — MIME type never decides attachment vs inline. */
   const pendingKindsRef = useRef<Map<string, HelpdeskDraftPendingKind>>(new Map());
@@ -2857,12 +2862,17 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                           createdAtLabel: message.createdAtLabel,
                           authorName: message.authorName || undefined,
                           authorUserId: message.authorUserId || undefined,
-                          authorSrc: conversationAuthorSrc(message.mine, myPhotoUrl),
+                          authorSrc:
+                            conversationAuthorSrc(message.mine, myPhotoUrl) ||
+                            (message.authorUserId
+                              ? directoryPhotoFor(message.authorUserId) || undefined
+                              : undefined),
                           mine: message.mine,
                           belowBody:
                             message.attachmentIds.length > 0 ? (
                               <TicketAttachmentPreview
                                 ticketId={ticketId}
+                                compact
                                 attachments={ticket.attachments.filter((item) =>
                                   message.attachmentIds.includes(item.document_id),
                                 )}

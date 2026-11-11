@@ -1088,6 +1088,57 @@ def test_person_name_prefers_the_most_complete_label():
     assert detail.timeline[0].author_display_name == "Robério Oliveira"
 
 
+def test_canonicalize_timeline_authors_reuses_requester_label():
+    from helpdesk_app.infrastructure.glpi.mapping import canonicalize_timeline_authors
+
+    detail = parse_ticket_detail(
+        {
+            "id": 1399,
+            "name": "CPV Filial",
+            "content": "texto",
+            "status": {"name": "Novo"},
+            "urgency": 2,
+            "team": [
+                {
+                    "role": "requester",
+                    "id": 55,
+                    "firstname": "Joici",
+                    "realname": "Motta",
+                }
+            ],
+        },
+        {
+            "results": [
+                {
+                    "type": "Followup",
+                    "item": {
+                        "id": 9,
+                        "content": "ok",
+                        "date_creation": "2026-10-22T10:00:00Z",
+                        "user": {"id": 55, "name": "Joici"},
+                    },
+                },
+                {
+                    "type": "Document",
+                    "item": {
+                        "id": 77,
+                        "documents_id": 4401,
+                        "filename": "CPV Filial.docx",
+                        "mime": "application/pdf",
+                        "date_creation": "2026-10-21T10:05:00Z",
+                    },
+                },
+            ]
+        },
+    )
+    canon = canonicalize_timeline_authors(detail)
+    followup = next(entry for entry in canon.timeline if entry.kind == "followup")
+    document = next(entry for entry in canon.timeline if entry.kind == "document")
+    assert followup.author_display_name == "Joici Motta"
+    assert document.author_display_name == "Joici Motta"
+    assert document.author_identity.user_id == 55
+
+
 def test_conversation_identity_uses_id_or_email_never_name():
     detail = parse_ticket_detail(
         {

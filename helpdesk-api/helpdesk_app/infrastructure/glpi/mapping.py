@@ -1108,6 +1108,51 @@ def apply_viewer_identity(detail: TicketDetail, viewer: PersonIdentity) -> Ticke
     )
 
 
+def canonicalize_timeline_authors(detail: TicketDetail) -> TicketDetail:
+    """Reuse ticket-level display names when the author is the requester or assignee.
+
+    HLAPI Document/Followup rows often expose only ``users_id`` or a short
+    ``name`` (e.g. ``Joici``) while the ticket team already has the fuller
+    label (``Joici Motta``). Matching by GLPI user id keeps avatar/name stable.
+    """
+    requester_id = detail.requester_identity.user_id
+    assigned_id = detail.assigned_user_id
+    requester_name = (detail.requester_display_name or "").strip()
+    assigned_name = (detail.assigned_display_name or "").strip()
+    entries: list[TimelineEntry] = []
+    for entry in detail.timeline:
+        author_id = entry.author_identity.user_id
+        name = (entry.author_display_name or "").strip()
+        if author_id and requester_id and int(author_id) == int(requester_id) and requester_name:
+            name = requester_name
+        elif author_id and assigned_id and int(author_id) == int(assigned_id) and assigned_name:
+            name = assigned_name
+        elif (
+            entry.kind == "document"
+            and not name
+            and not author_id
+            and requester_name
+        ):
+            # HLAPI Document rows sometimes omit user entirely; GLPI still
+            # shows the requester who uploaded — prefer the ticket label.
+            name = requester_name
+            author_id = requester_id
+        if name != (entry.author_display_name or "").strip() or (
+            author_id and author_id != entry.author_identity.user_id
+        ):
+            identity = (
+                PersonIdentity(user_id=author_id, emails=entry.author_identity.emails)
+                if author_id and author_id != entry.author_identity.user_id
+                else entry.author_identity
+            )
+            entries.append(
+                replace(entry, author_display_name=name, author_identity=identity)
+            )
+        else:
+            entries.append(entry)
+    return replace(detail, timeline=tuple(entries))
+
+
 VALIDATION_WAITING = 2
 VALIDATION_ACCEPTED = 3
 VALIDATION_REFUSED = 4

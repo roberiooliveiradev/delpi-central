@@ -29,10 +29,13 @@ export function TicketAttachmentPreview({
   ticketId,
   attachments,
   onError,
+  /** Inside a conversation bubble — hide the "Arquivos do chamado" strip heading. */
+  compact = false,
 }: {
   ticketId: string;
   attachments: TicketAttachment[];
   onError: (message: string) => void;
+  compact?: boolean;
 }) {
   const [preview, setPreview] = useState<TicketAttachment | null>(null);
   const [thumbs, setThumbs] = useState<Record<number, string>>({});
@@ -80,9 +83,11 @@ export function TicketAttachmentPreview({
     <>
       <HelpdeskAttachmentPreviewStrip
         heading={
-          <HintAction hint={helpTooltips.detailUi.attachments} ariaLabel="Ajuda: Arquivos do chamado">
-            <span className="delpi-ui-section-hint-label">Arquivos do chamado</span>
-          </HintAction>
+          compact ? undefined : (
+            <HintAction hint={helpTooltips.detailUi.attachments} ariaLabel="Ajuda: Arquivos do chamado">
+              <span className="delpi-ui-section-hint-label">Arquivos do chamado</span>
+            </HintAction>
+          )
         }
         items={items}
         onOpen={(item) => {
