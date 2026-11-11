@@ -40,9 +40,7 @@ def test_dry_run_persists_sanitized_decision_trace(tmp_path: Path) -> None:
     }
 
 
-def test_security_gate_blocks_nonprod_without_owner_flag(
-    monkeypatch,
-) -> None:
+def test_gate_reports_settings_egress_block_without_flag(monkeypatch) -> None:
     monkeypatch.setenv("DELIA_ENV", "development")
     monkeypatch.delenv("DELIA_EVAL_EGRESS_AUTHORIZED", raising=False)
     monkeypatch.setenv("DELIA_LLM_BASE_URL", "https://openrouter.ai/api/v1")
@@ -50,9 +48,9 @@ def test_security_gate_blocks_nonprod_without_owner_flag(
     monkeypatch.setenv("DELIA_RUNTIME_PROFILE", "openrouter_qwen")
     gate = check_security_gate()
     assert gate["SECURE_EVAL_GATE"] == "BLOCKED"
-    assert gate["MODEL_EGRESS_AUTHORIZED"] == "NOT_PROVEN"
-    assert gate["SECURITY_OWNER_APPROVAL"] == "NOT_PROVEN"
-    assert any("SECURITY_OWNER_APPROVAL" in item for item in gate["BLOCKERS"])
+    assert gate["POLICY_BLOCKS_EXTERNAL_BASE_URL"] is True
+    assert gate["SECURITY_OWNER_APPROVAL"] == "NOT_A_RUNTIME_CONFIG_REQUIREMENT"
+    assert "existing Settings LLM egress policy blocks this endpoint" in gate["BLOCKERS"]
 
 
 def test_security_gate_ready_for_openrouter_with_flag(monkeypatch) -> None:
@@ -63,7 +61,9 @@ def test_security_gate_ready_for_openrouter_with_flag(monkeypatch) -> None:
     monkeypatch.setenv("DELIA_RUNTIME_PROFILE", "openrouter_qwen")
     gate = check_security_gate()
     assert gate["SECURE_EVAL_GATE"] == "READY_FOR_ISOLATED_EVAL"
-    assert gate["MODEL_EGRESS_AUTHORIZED"] == "PROVEN_ALLOWLIST_OPENROUTER"
+    assert gate["POLICY_BLOCKS_EXTERNAL_BASE_URL"] is False
+    assert gate["SECURITY_OWNER_APPROVAL"] == "NOT_A_RUNTIME_CONFIG_REQUIREMENT"
+    assert gate["MCP_READ_AUTHORIZED"] == "VERIFY_WITH_OWNER"
     assert not gate["BLOCKERS"]
 
 
