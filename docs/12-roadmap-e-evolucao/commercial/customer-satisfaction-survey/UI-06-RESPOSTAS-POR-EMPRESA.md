@@ -101,6 +101,12 @@ AO CLICAR/TOCAR EM LINHA OU CARD RESPONDIDO (EXCETO NO LINK DA CONTA):
 - **Não alterar:** filtros automáticos e botão **Limpar filtros** no Hero, três contagens da campanha, data em coluna própria, linha/card respondido clicável, ausência de coluna “Ver resposta” e paginação tradicional.
 - **Estado:** **UX APROVADA E DOCUMENTADA; NÃO IMPLEMENTADO / NÃO TESTADO**. Confirmar contratos e componentes oficiais antes de desenvolver.
 
+### Decisão — ordenação inicial e reaproveitamento de padrões transversais (11/11/2026)
+
+**APROVADO PELO SOLICITANTE:** ordenação inicial da UI-06 por **Data da resposta decrescente (respostas mais recentes primeiro)**, com empresas pendentes (**sem resposta definitiva e sem data**) ao final; empates resolvidos por identidade estável da empresa, seguindo contrato da API. Isso vale tanto à tabela desktop quanto aos cards mobile; preservar `sort`/`dir` e a paginação no retorno à UI-06. A `commercial-api` é autoridade da ordenação do conjunto total paginado, não o frontend sobre uma página parcial.
+
+**Diretriz transversal expressa:** não transformar padrões já implementados no Portal Comercial (Hero, filtros automáticos, limpar filtros, tabelas, ordenação, paginação, cards mobile, estados e navegação) em perguntas de aprovação repetidas para cada página. **Inventariar a implementação e reutilizar o comportamento oficial** em todas as páginas aplicáveis; perguntar somente sobre exceções funcionais ou lacunas comprovadas. Esta diretriz não afirma que toda página nova já esteja implementada nem altera contracts/owners sem evidência. Manter as decisões específicas desta UI-06: três contagens, coluna própria de data e linha/card respondido acionável.
+
 ## 4. Mapa de componentes oficiais
 
 | Região | Componente/padrão já existente | Observação |
