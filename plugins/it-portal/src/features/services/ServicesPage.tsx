@@ -121,6 +121,7 @@ export function ServicesPage() {
   return (
     <>
       <ItpPageHero
+        variant="immersive"
         aria-label="Serviços e aplicações"
         eyebrow="Inventário"
         title="Serviços e aplicações"

@@ -38,6 +38,7 @@ export function ActionPlansPage() {
   return (
     <>
       <ItpPageHero
+        variant="immersive"
         aria-label="Planos de ação"
         eyebrow="Infraestrutura"
         title="Planos de ação"

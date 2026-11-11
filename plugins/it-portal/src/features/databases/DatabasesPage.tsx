@@ -125,6 +125,7 @@ export function DatabasesPage() {
   return (
     <>
       <ItpPageHero
+        variant="immersive"
         aria-label="Bancos de dados"
         eyebrow="Inventário"
         title="Bancos de dados"
