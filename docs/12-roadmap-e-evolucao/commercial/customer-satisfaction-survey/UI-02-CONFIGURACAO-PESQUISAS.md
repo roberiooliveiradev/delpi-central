@@ -148,6 +148,23 @@ Criar campanhas e selecionar clientes existentes no TOTVS para que o usuário po
 - **Faixas de verificação propostas:** desktop útil a partir de 1200px; intermediário 768–1199px; celular abaixo de 768px. Esses pontos **não são breakpoints implementados comprovados**; verificar faixas oficiais e zoom/teclado. A disposição detalhada e medidas **dos filtros** serão refinadas na próxima etapa, embora sua permanência no Hero e 2/1 colunas já tenham aceite.
 - **Status:** composição **APROVADA**, valores CSS concretos e implementação **PENDING**.
 
+### Decisão visual aprovada — filtros no corpo do Hero da UI-02A (11/11/2026)
+
+**APROVADO PELO SOLICITANTE:** organizar os filtros globais no `children` do `CommercialPageHero`, sem barra independente. **Ano** e **Situação** ocupam campos mais estreitos; **Pesquisar campanha** ocupa a largura restante; **Limpar filtros** permanece alinhado à direita no desktop e na faixa intermediária e abaixo dos campos no celular. Filtros se aplicam automaticamente; limpar restaura os valores iniciais sem navegar nem afetar dados de campanha.
+
+| Elemento | Desktop largo — meta aprovada para refinamento | Tablet/intermediário | Mobile |
+|---|---|---|---|
+| `CommercialSelectField` — Ano | **160px** alvo | 1 de 2 colunas iguais | 100% da largura útil |
+| `CommercialSelectField` — Situação | **180px** alvo | 1 de 2 colunas iguais | 100% da largura útil |
+| `CommercialTextField` — Pesquisar campanha | Flexível, ocupando espaço restante; **min-width 240px** alvo | Ocupa a linha inteira | 100% da largura útil |
+| `CommercialClearFiltersButton` — Limpar filtros | À direita na mesma composição de filtros | Alinhado à direita abaixo dos campos | Abaixo dos campos, sem overflow |
+| Espaçamento entre filtros | **12px** alvo | **12px** alvo | **12px** alvo |
+
+- **Alinhamento:** labels sobre os campos de filtro; controles usam altura, padding interno, borda, tipografia e foco das primitivas oficiais do PluginUI, sem CSS paralelo. **Faixa de altura 40–44px** citada no blueprint continua alvo de teste, não confirmação de CSS real.
+- **Dados e comportamento:** pesquisa por nome, situação `Agendada/Aberta/Encerrada` oriunda do backend e seleção de ano disponível; filtros automáticos com tratamento apropriado de busca e paginação no servidor. Ao alterar filtro, atualizar o conjunto consultado e ajustar página atual quando necessário. Mostrar estado sem resultados, carregamento e falha sem inventar contagens.
+- **Responsividade:** desktop em composição horizontal com campos 160/180/flexível; tablet com 2 colunas para selects e linha seguinte de busca; celular em coluna única. Quebra por largura real sem truncar rótulos nem criar rolagem horizontal. Testar com teclado, zoom e faixas/breakpoints do PluginUI.
+- **Status:** distribuição, posicionamento e comportamento **APROVADOS**; os tamanhos informados são **alvos visuais aprovados para checagem de compatibilidade**, não CSS implementado, e os breakpoints/contratos do kit ainda exigem inspeção e testes antes de codificar.
+
 ### 1.2.2 Layout responsivo PROPOSTO, a testar com kit real
 
 | Área | Desktop largo (>=1200px úteis) | Intermediário (768–1199px úteis) | Mobile (<768px úteis) |
