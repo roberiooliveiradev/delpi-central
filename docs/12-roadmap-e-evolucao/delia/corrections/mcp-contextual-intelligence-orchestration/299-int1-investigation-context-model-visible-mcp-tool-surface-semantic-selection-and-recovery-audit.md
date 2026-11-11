@@ -118,10 +118,13 @@ Overall objectives (scorer proposal): A SAT6/PART12/NOT5/INC1 → B SAT6/PART13/
 ```text
 CREDENTIAL_SCOPE=NONE_PROVEN_SEPARATE_FROM_PROD
 CATALOG_DTO_DESCRIPTION_CAP_320=REMAINS (budget/catalog path; MCPToolset path preserved)
+CATALOG_HARD_CAP_80=RESIDUAL_AT_SCALE (n=12 in INT-1 sample → NOT_PROVEN cause)
 G1_TEO_DECOMPOSITION_ATTRACTOR=OPEN
 OBJECTIVE_REPRESENTATION_GAP=NOT_PROVEN_REQUIRED (no INT-2 impl)
 INT3=NOT_AUTHORIZED
 ```
+
+Independent inventory after landing ([Investigation context audit](21a43e92-fe4a-457c-94eb-8ea775194bce)) corroborated F1/F2 and the native tool-loop boundary; no additional code correction required from that inventory beyond the residuals above.
 
 ## 10. Recommended next step
 

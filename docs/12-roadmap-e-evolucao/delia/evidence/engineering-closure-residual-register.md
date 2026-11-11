@@ -1267,8 +1267,11 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-G1-TEO-DECOMPOSITION-ATTRACTOR | **OPEN** | Still TEO-first ×3 after description fix; owner semantic overlap |
 | INT1-P2-CONTINUITY-RELIABILITY | **PARTIAL** | Some page continuation; not consistent across 3 reps |
 | INT1-CATALOG-DTO-DESC-320 | **RESIDUAL** | Catalog DTO still caps descriptions at 320 (budget path) |
+| INT1-CATALOG-HARD-CAP-80 | **RESIDUAL_AT_SCALE / NOT_PROVEN_IN_INT1_SAMPLE** | `_project_semantic_tool_catalog` bounds `catalog[:80]`; with current INT-1 surface n=12 all DAVI/TÉO/VISTA tools remained model-visible — not a proven cause of P1/P2/P3/G1 in docs 298–299 |
 | INT1-CREDENTIAL-ISOLATION | **RESIDUAL** | Unchanged |
 | INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | Not auto-justified |
 | INT1-STAGE | **BLOCKED** | Doc 299 independent review |
+
+**Independent inventory corroboration (post-299):** [Investigation context audit](21a43e92-fe4a-457c-94eb-8ea775194bce) reconfirmed F1/F2 (description `[:500]`, missing pagination fields), native Pydantic AI loop, deps non-visible, and owner-agnostic selection — consistent with remediations already landed in `5b0fbab313`.
 
 **NEXT=`COORDINATION_INT1_CONTEXT_AND_RECOVERY_INDEPENDENT_REVIEW`**.
