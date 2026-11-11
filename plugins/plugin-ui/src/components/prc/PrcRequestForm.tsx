@@ -46,6 +46,7 @@ import { stateBannerBemClasses } from "../feedback/StateBanner";
 
 import {
   addSupportFiles,
+  applySupplierLinkOps,
   buildCreateIntakeBody,
   buildUpdateIntakeBody,
   computeLinkDiff,
@@ -55,6 +56,8 @@ import {
   emptySupplierRow,
   enumOptions,
   officialSupplierRow,
+  supplierRowsToPayload,
+  toSupplierRows,
   PRC_ATTACHMENT_ACCEPT,
   PRC_ATTACHMENT_MAX_COUNT,
   PRC_ATTACHMENT_MAX_MB,
@@ -186,6 +189,32 @@ export type PrcFormDataProvider = {
     idempotencyKey: string,
   ): Promise<{ requestId: string }>;
   uploadAttachment(requestId: string, file: File): Promise<unknown>;
+  /** PRC-REF-023-EDIT-POLICY-FIX-08 — salva a ficha do próprio caso em
+   * ``submitted`` (CAS + idempotência, mesmo requestId). */
+  saveDraft?(
+    requestId: string,
+    expectedVersion: number,
+    changes: Array<{
+      path: string;
+      proposedValue: unknown;
+      reason: string;
+    }>,
+    idempotencyKey: string,
+  ): Promise<unknown>;
+};
+
+/** Entrada do modo de edição pré-atendimento: o caso já existe na
+ * Engineering API e o formulário edita o mesmo requestId. */
+export type PrcCaseEditInput = {
+  requestId: string;
+  expectedVersion: number;
+  requestType: "create" | "update";
+  /** technicalDraft completo do caso (campos + suppliers +
+   * supplierLinkChanges). */
+  draft: Record<string, unknown>;
+  /** Razões registradas no draft (changedPaths) — preenche os campos
+   * de justificativa já existentes. */
+  changedPaths?: Array<{ path: string; reason?: string }>;
 };
 
 export type PrcRequestFormProps = {
@@ -197,6 +226,10 @@ export type PrcRequestFormProps = {
   onCompleted: (requestId: string) => void;
   /** Escopo do portal host para overlays (lookup SA2 / preview). */
   portalScopeClassName?: string;
+  /** FIX-08 — edição livre do caso enviado (``submitted``) pelo
+   * criador. Sem identify step; salva via PATCH de draft no mesmo
+   * requestId. Autorização/estado/versão são decididos no backend. */
+  editCase?: PrcCaseEditInput;
 };
 
 /* ---------------- constantes e helpers de cópia -------------------- */
@@ -238,6 +271,21 @@ function fieldHelp(path: string, fallbackNote?: string | null) {
   return note;
 }
 
+/** Assinatura canônica da lista de vínculos — detecção de mudança na
+ * edição de caso CREATE (linhas candidatas, sem diff de ops). */
+function supplierListSignature(
+  rows: ReturnType<typeof supplierRowsToPayload>,
+): string {
+  return rows
+    .map(
+      (r) =>
+        `${r.supplierCode}|${r.store}|${r.supplierName}|` +
+        `${r.partNumber}|${r.catalogNumber ?? ""}`,
+    )
+    .sort()
+    .join("\n");
+}
+
 function newIdemKey(): string {
   const uuid =
     typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -254,6 +302,7 @@ export function PrcRequestForm({
   onCancel,
   onCompleted,
   portalScopeClassName,
+  editCase,
 }: PrcRequestFormProps) {
   const [refData, setRefData] = useState<PrcReferenceData | null>(null);
   /* Store estável por instância — fetcher injetado pelo MFE; estado dos
@@ -268,15 +317,111 @@ export function PrcRequestForm({
   const [loadError, setLoadError] = useState("");
   const [step, setStep] = useState(0);
 
-  const [requestType, setRequestType] = useState<"create" | "update">(
-    "create",
+  /* FIX-08 — `editCase`: edição livre do caso ``submitted`` no mesmo
+   * requestId. O wizard pula a etapa de identificação, semeia a ficha
+   * do technicalDraft oficial e difunde contra o próprio draft (o
+   * baseline do diff é o caso, não o TOTVS). */
+  const steps = useMemo(
+    () =>
+      editCase ? STEPS.filter((s) => s.id !== "identify") : STEPS,
+    [editCase],
   );
-  const [officialCode, setOfficialCode] = useState("");
+  const stepId = steps[step]?.id;
 
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [suppliers, setSuppliers] = useState<SupplierRow[]>([]);
-  const [reasons, setReasons] = useState<Record<string, string>>({});
-  const [editCtx, setEditCtx] = useState<PrcFormEditContext | null>(null);
+  const [requestType, setRequestType] = useState<"create" | "update">(
+    () => editCase?.requestType || "create",
+  );
+  const [officialCode, setOfficialCode] = useState(() =>
+    editCase?.requestType === "update"
+      ? String(editCase.draft?.officialProductCode || "")
+      : "",
+  );
+
+  const [values, setValues] = useState<Record<string, string>>(() => {
+    if (!editCase) return {};
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(editCase.draft || {})) {
+      if (
+        k === "suppliers" ||
+        k === "supplierLinkChanges" ||
+        k === "officialProductCode"
+      ) {
+        continue;
+      }
+      out[k] = v === null || v === undefined ? "" : String(v);
+    }
+    return out;
+  });
+  const [suppliers, setSuppliers] = useState<SupplierRow[]>(() => {
+    if (!editCase) return [];
+    const draft = editCase.draft || {};
+    if (editCase.requestType === "update") {
+      /* Caso UPDATE: technical_data.suppliers é a base oficial e os
+       * vínculos pedidos vivem em supplierLinkChanges — o formulário
+       * exibe o estado-alvo materializado (linhas tratadas como
+       * baseline do diff, mesma semântica dos vínculos oficiais). */
+      return applySupplierLinkOps(
+        draft.suppliers,
+        draft.supplierLinkChanges,
+      ).map((l) =>
+        officialSupplierRow({
+          supplierCode: String(l.supplierCode || ""),
+          store: String(l.store || ""),
+          supplierName: String(l.supplierName || ""),
+          supplierShortName:
+            l.supplierShortName == null
+              ? ""
+              : String(l.supplierShortName),
+          partNumber:
+            l.partNumber == null ? "" : String(l.partNumber),
+          catalogNumber:
+            l.catalogNumber == null ? "" : String(l.catalogNumber),
+        }),
+      );
+    }
+    return toSupplierRows(draft.suppliers);
+  });
+  const [reasons, setReasons] = useState<Record<string, string>>(() => {
+    if (!editCase?.changedPaths) return {};
+    const out: Record<string, string> = {};
+    for (const c of editCase.changedPaths) {
+      if (c?.path && c.reason) out[c.path] = c.reason;
+    }
+    return out;
+  });
+  const [editCtx, setEditCtx] = useState<PrcFormEditContext | null>(
+    () => {
+      if (!editCase || editCase.requestType !== "update") return null;
+      const draft = editCase.draft || {};
+      const fields: PrcFormEditContext["fields"] = {};
+      for (const [k, v] of Object.entries(draft)) {
+        if (k === "suppliers" || k === "supplierLinkChanges") continue;
+        fields[k] = { value: v };
+      }
+      return {
+        status: "available",
+        officialCode: String(draft.officialProductCode || ""),
+        fields,
+        links: applySupplierLinkOps(
+          draft.suppliers,
+          draft.supplierLinkChanges,
+        ).map((l) => ({
+          supplierCode: String(l.supplierCode || ""),
+          store: String(l.store || ""),
+          supplierName: String(l.supplierName || ""),
+          supplierShortName:
+            l.supplierShortName == null
+              ? ""
+              : String(l.supplierShortName),
+          partNumber:
+            l.partNumber == null ? "" : String(l.partNumber),
+          catalogNumber:
+            l.catalogNumber == null ? "" : String(l.catalogNumber),
+        })),
+        linksComplete: true,
+      };
+    },
+  );
   const [editCtxState, setEditCtxState] = useState<
     "idle" | "loading" | "error" | "not_found"
   >("idle");
@@ -328,19 +473,27 @@ export function PrcRequestForm({
     setValues((s) => ({ ...s, [path]: v }));
 
   const baselineFields: Record<string, unknown> = {};
-  Object.entries(editCtx?.fields || {}).forEach(([p, f]) => {
-    baselineFields[p] = f?.value;
-  });
+  if (editCase && !editCtx) {
+    /* Edição de caso CREATE: o baseline do diff é o próprio draft. */
+    for (const [k, v] of Object.entries(editCase.draft || {})) {
+      if (k === "suppliers" || k === "supplierLinkChanges") continue;
+      baselineFields[k] = v;
+    }
+  } else {
+    Object.entries(editCtx?.fields || {}).forEach(([p, f]) => {
+      baselineFields[p] = f?.value;
+    });
+  }
+  const hasBaseline = Boolean(editCtx) || Boolean(editCase);
   const scalarPaths = (refData?.fields || [])
     .filter(
       (spec) =>
         spec.kind !== "suppliers" && spec.path !== "officialProductCode",
     )
     .map((spec) => spec.path);
-  const scalarDiff =
-    requestType === "update" && editCtx
-      ? computeScalarDiff(baselineFields, values, scalarPaths)
-      : [];
+  const scalarDiff = hasBaseline
+    ? computeScalarDiff(baselineFields, values, scalarPaths)
+    : [];
   const changedPaths = new Set(scalarDiff.map((c) => c.path));
   /* PrcOfficialLink usa `undefined` (não `null`) — normalizamos os
    * vínculos do contexto na fronteira do diff. */
@@ -360,15 +513,30 @@ export function PrcRequestForm({
       ? computeLinkDiff(officialLinks, suppliers, removeMarks)
       : [];
 
-  const validateStep = (index: number): string => {
-    if (index === 0) {
+  /* Caso CREATE em edição: fornecedores são candidatos (origin draft)
+   * — a mudança é detectada comparando o payload com o draft inicial. */
+  const initialSupplierSig = useMemo(() => {
+    if (!editCase || editCase.requestType !== "create") return "";
+    return supplierListSignature(
+      supplierRowsToPayload(toSupplierRows(editCase.draft?.suppliers)),
+    );
+  }, [editCase]);
+  const suppliersChanged = editCase
+    ? editCase.requestType === "update"
+      ? linkOps.length > 0
+      : supplierListSignature(supplierRowsToPayload(suppliers)) !==
+        initialSupplierSig
+    : false;
+
+  const validateStep = (id: string): string => {
+    if (id === "identify") {
       if (requestType === "update") {
         if (!officialCode.trim())
           return "Informe o código oficial do produto a alterar.";
       }
       return "";
     }
-    if (index === 1) {
+    if (id === "sheet") {
       if (requestType === "create") {
         for (const spec of refData?.fields || []) {
           if (!spec.requiredCreateIntake) continue;
@@ -378,7 +546,13 @@ export function PrcRequestForm({
             return `Preencha «${PRC_FIELD_LABELS[spec.path] || spec.path}».`;
           }
         }
-      } else if (!scalarDiff.length && !linkOps.length) {
+      }
+      if (
+        (requestType === "update" || editCase) &&
+        !scalarDiff.length &&
+        !linkOps.length &&
+        !suppliersChanged
+      ) {
         return "Nenhuma alteração identificada — edite um campo, vínculo ou adicione um fornecedor.";
       }
       const bad = suppliers.findIndex(
@@ -418,13 +592,13 @@ export function PrcRequestForm({
 
   const next = () => {
     if (editCtxState === "loading") return;
-    const msg = validateStep(step);
+    const msg = validateStep(stepId || "");
     if (msg) {
       setError(msg);
       return;
     }
     setError("");
-    if (requestType === "update" && step === 0) {
+    if (!editCase && requestType === "update" && stepId === "identify") {
       setEditCtxState("loading");
       dataProvider
         .fetchEditContext(officialCode.trim())
@@ -458,7 +632,7 @@ export function PrcRequestForm({
           setEditCtxState("error");
         });
     }
-    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    setStep((s) => Math.min(s + 1, steps.length - 1));
   };
 
   const back = () => {
@@ -591,17 +765,65 @@ export function PrcRequestForm({
     setFieldErrors({});
     setUploadSummary("");
     try {
-      const env = createdRequestId
-        ? null
-        : await dataProvider.submitIntake(buildBody(), idemKey.current);
-      const rid = createdRequestId || env!.requestId;
-      if (!createdRequestId) setCreatedRequestId(rid);
+      let rid: string;
+      if (editCase) {
+        /* FIX-08 — salva o mesmo caso via PATCH /draft (CAS +
+         * idempotência). Fornecedores vão como lista final desejada;
+         * a API deriva supplierLinkChanges em casos UPDATE. */
+        const draftChanges = [
+          ...scalarDiff.map((c) => ({
+            path: c.path,
+            proposedValue: c.after,
+            reason: (reasons[c.path] || "").trim(),
+          })),
+          ...(suppliersChanged
+            ? [
+                {
+                  path: "suppliers",
+                  proposedValue: supplierRowsToPayload(suppliers),
+                  reason: suppliers
+                    .map((r) => r.opReason || "")
+                    .filter(Boolean)
+                    .join("; ")
+                    .slice(0, 240),
+                },
+              ]
+            : []),
+        ];
+        if (!draftChanges.length) {
+          setError(
+            "Nenhuma alteração identificada — edite um campo, " +
+              "vínculo ou adicione um fornecedor.",
+          );
+          return;
+        }
+        if (!dataProvider.saveDraft) {
+          setError(
+            "Edição de solicitação não está disponível neste portal.",
+          );
+          return;
+        }
+        await dataProvider.saveDraft(
+          editCase.requestId,
+          editCase.expectedVersion,
+          draftChanges,
+          idemKey.current,
+        );
+        rid = editCase.requestId;
+      } else {
+        const env = createdRequestId
+          ? null
+          : await dataProvider.submitIntake(buildBody(), idemKey.current);
+        rid = createdRequestId || env!.requestId;
+        if (!createdRequestId) setCreatedRequestId(rid);
+      }
       if (supportFiles.length) {
         const { ok, failures } = await uploadSupportFiles(rid, supportFiles);
         if (Object.keys(failures).length) {
           setFileErrors(failures);
           setUploadSummary(
-            `Solicitação criada. ${ok} documento(s) anexado(s); ` +
+            `${editCase ? "Alterações salvas" : "Solicitação criada"}. ` +
+              `${ok} documento(s) anexado(s); ` +
               `${Object.keys(failures).length} falha(ram) — corrija e ` +
               "tente novamente sem recriar a solicitação.",
           );
@@ -729,13 +951,16 @@ export function PrcRequestForm({
   const renderSheetField = (path: string) => {
     const spec = specByPath.get(path);
     const label = PRC_FIELD_LABELS[path] || path;
-    const changed = requestType === "update" && changedPaths.has(path);
+    const changed = hasBaseline && changedPaths.has(path);
     const baseline = baselineFields[path];
-    /* Justificativa só quando há alteração efetiva: UPDATE usa o diff
-     * contra o baseline; CREATE conta o preenchimento como alteração. */
+    /* Justificativa só quando há alteração efetiva: UPDATE/edição de
+     * caso usam o diff contra o baseline; CREATE novo conta o
+     * preenchimento como alteração. */
     const reasonVisible =
-      (requestType === "update" && changed) ||
-      (requestType === "create" && (values[path] || "").trim() !== "");
+      (hasBaseline && changed) ||
+      (!hasBaseline &&
+        requestType === "create" &&
+        (values[path] || "").trim() !== "");
     return (
       <div
         key={path}
@@ -743,12 +968,14 @@ export function PrcRequestForm({
           changed ? " delpi-prc__edit-row--changed" : ""
         }`}
       >
-        {requestType === "update" && changed ? (
+        {changed ? (
           <div className="delpi-prc__diff-badge">
             <span className="delpi-prc__diff-tag">Alterado</span>
             <span className="delpi-prc__muted">
-              Anterior no TOTVS:{" "}
-              <strong>{String(baseline ?? "") || "vazio"}</strong>
+              {editCase
+                ? "Anterior na solicitação"
+                : "Anterior no TOTVS"}
+              : <strong>{String(baseline ?? "") || "vazio"}</strong>
             </span>
             <button
               type="button"
@@ -819,7 +1046,7 @@ export function PrcRequestForm({
   };
 
   const reviewItems =
-    requestType === "create"
+    requestType === "create" && !editCase
       ? Object.entries(values)
           .filter(([, v]) => v.trim())
           .map(([path, v]) => ({
@@ -856,21 +1083,25 @@ export function PrcRequestForm({
   return (
     <div className="delpi-prc">
       <PrcProgressTracker
-        steps={STEPS.map((s, i) => ({
+        steps={steps.map((s, i) => ({
           id: s.id,
           label: s.label,
           state: i < step ? "complete" : i === step ? "current" : "available",
         }))}
-        currentStepId={STEPS[step].id}
+        currentStepId={steps[step].id}
         interactive
         onStepChange={(id) => {
-          const target = STEPS.findIndex((s) => s.id === id);
+          const target = steps.findIndex((s) => s.id === id);
           if (target <= step) {
             setError("");
             setStep(target);
           }
         }}
-        ariaLabel="Etapas da nova solicitação"
+        ariaLabel={
+          editCase
+            ? "Etapas da edição da solicitação"
+            : "Etapas da nova solicitação"
+        }
       />
 
       {!sourceAllowed ? (
@@ -880,7 +1111,7 @@ export function PrcRequestForm({
         </PrcStateBanner>
       ) : null}
 
-      {step === 0 ? (
+      {stepId === "identify" ? (
         <PrcSectionCard
           title="O que precisa ser feito?"
           subtitle="Escolha o tipo de solicitação"
@@ -946,7 +1177,7 @@ export function PrcRequestForm({
         </PrcSectionCard>
       ) : null}
 
-      {step === 1 ? (
+      {stepId === "sheet" ? (
         <>
           {FIELD_GROUPS.map((group) => (
             <PrcSectionCard key={group.title} title={group.title}>
@@ -1026,7 +1257,7 @@ export function PrcRequestForm({
         </>
       ) : null}
 
-      {step === 1 ? (
+      {stepId === "sheet" ? (
         <PrcSectionCard
           title="Documentos de apoio (opcional)"
           subtitle={`Até ${PRC_ATTACHMENT_MAX_MB} MB por arquivo · máx. ${PRC_ATTACHMENT_MAX_COUNT} arquivos`}
@@ -1127,17 +1358,22 @@ export function PrcRequestForm({
         </PrcSectionCard>
       ) : null}
 
-      {step === 2 ? (
+      {stepId === "review" ? (
         <PrcDetailCard
           title="Resumo da solicitação"
-          hint="Confira os dados antes de enviar à Engenharia."
+          hint={
+            editCase
+              ? "Confira as alterações antes de salvar no mesmo chamado."
+              : "Confira os dados antes de enviar à Engenharia."
+          }
         >
           <PrcDetailFieldGrid
             fields={[
               {
                 label: "Tipo",
-                value:
-                  requestType === "create"
+                value: editCase
+                  ? "Edição da solicitação enviada"
+                  : requestType === "create"
                     ? "Criação de matéria-prima"
                     : "Alteração de produto",
               },
@@ -1198,7 +1434,7 @@ export function PrcRequestForm({
             Voltar
           </ActionButton>
         ) : null}
-        {step < STEPS.length - 1 ? (
+        {step < steps.length - 1 ? (
           <ActionButton variant="primary" onClick={next}>
             Avançar
           </ActionButton>
@@ -1208,7 +1444,7 @@ export function PrcRequestForm({
             softDisabled={busy || !sourceAllowed}
             onClick={submit}
           >
-            Enviar solicitação
+            {editCase ? "Salvar alterações" : "Enviar solicitação"}
           </ActionButton>
         )}
       </PrcFormActions>

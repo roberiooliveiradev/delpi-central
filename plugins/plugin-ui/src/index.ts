@@ -278,6 +278,7 @@ export {
  * Engenharia e Minhas Solicitações; API via PrcFormDataProvider. */
 export {
   PrcRequestForm,
+  type PrcCaseEditInput,
   type PrcFormDataProvider,
   type PrcFormEditContext,
   type PrcFormEditContextLink,

@@ -311,9 +311,11 @@ class InMemoryProductRegistrationRepository:
         event_meta: dict[str, Any],
         actor_display_name: str | None = None,
         actor_email: str | None = None,
+        extra_draft_fields: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         req = self._require_request(request_id)
-        self._check_cas(req, expected_version, frozenset({"in_progress"}))
+        # FIX-08 — ficha mutável apenas antes do atendimento.
+        self._check_cas(req, expected_version, frozenset({"submitted"}))
         draft = self._drafts[request_id]
         applied: list[dict[str, Any]] = []
         for change in changes:
@@ -334,6 +336,11 @@ class InMemoryProductRegistrationRepository:
                 "reason": change["reason"],
             }
         draft["changed_paths"] = list(changed.values())
+        # FIX-08 — campos derivados server-side (ex.: supplierLinkChanges
+        # derivado da lista alvo em casos update) não são paths de
+        # ficha: atualizam technical_data sem entrar em changed_paths.
+        if extra_draft_fields:
+            draft["technical_data"].update(extra_draft_fields)
         draft["row_version"] = int(draft.get("row_version", 1)) + 1
         draft["updated_by_subject"] = actor_subject
         draft["updated_at"] = _now()

@@ -17,12 +17,14 @@ import {
   PRC_FIELD_LABELS,
   PRC_STATUS_LABELS,
   PRC_TYPE_LABELS,
+  PrcRequestForm,
   PrcTechnicalSheetView,
   PrcWorkflowProgress,
   addSupportFiles,
   prcFormatSize,
   prcRequesterLabel,
   prcTimelineItemViews,
+  type PrcFormDataProvider,
   type PrcSupportFile,
 } from "@delpi/plugin-ui/index";
 
@@ -30,10 +32,16 @@ import { AppShell } from "../../components/AppShell";
 import {
   downloadPrcAttachment,
   fetchPrcAttachments,
+  fetchPrcCatalog,
+  fetchPrcEditContext,
+  fetchPrcReferenceData,
   fetchPrcRequest,
   fetchPrcTimeline,
+  prcIntakeSubmit,
   resubmitPrcCorrection,
   savePrcReturnedFields,
+  searchPrcSuppliers,
+  updatePrcDraft,
   uploadPrcAttachment,
   type PrcAttachment,
   type PrcRequestDetail,
@@ -43,6 +51,7 @@ import { RequestHistoryTimeline } from "../../components/RequestHistoryTimeline"
 import { useParticipantAvatarUrls } from "../../hooks/useParticipantAvatarUrls";
 import {
   DetailFields,
+  MR_PORTAL_SCOPE,
   MyRequestsAttachmentPreviewStrip,
   MyRequestsFileDropzone,
   MyRequestsFormActions,
@@ -66,6 +75,8 @@ const CASE_TABS: { key: CaseTab; label: string }[] = [
   { key: "history", label: "Histórico" },
 ];
 
+const PRC_SOURCE = "my-requests";
+
 export function PrcCasePage({ requestId, onBack }: Props) {
   const [detail, setDetail] = useState<PrcRequestDetail | null>(null);
   const [timeline, setTimeline] = useState<PrcTimelineEvent[]>([]);
@@ -79,6 +90,35 @@ export function PrcCasePage({ requestId, onBack }: Props) {
   >({});
   const [newFiles, setNewFiles] = useState<PrcSupportFile[]>([]);
   const [fileError, setFileError] = useState("");
+  /* FIX-08 — edição livre pré-atendimento: o backend só emite
+   * `edit_draft` ao criador em ``submitted`` (allowedActions). */
+  const [editing, setEditing] = useState(false);
+
+  const dataProvider = useMemo<PrcFormDataProvider>(
+    () => ({
+      fetchReferenceData: (signal) => fetchPrcReferenceData(signal),
+      fetchCatalog: (kind, query, signal, limit) =>
+        fetchPrcCatalog(kind, query, signal, limit).then((data) => ({
+          data,
+        })),
+      searchSuppliers: searchPrcSuppliers,
+      fetchEditContext: fetchPrcEditContext,
+      submitIntake: (body, idempotencyKey) =>
+        prcIntakeSubmit(body, idempotencyKey).then((result) => ({
+          requestId: result.requestId,
+        })),
+      uploadAttachment: (caseId, file) =>
+        uploadPrcAttachment(caseId, file).then(() => undefined),
+      saveDraft: (caseId, expectedVersion, changes, idempotencyKey) =>
+        updatePrcDraft(
+          caseId,
+          expectedVersion,
+          changes,
+          idempotencyKey,
+        ).then(() => undefined),
+    }),
+    [],
+  );
 
   const load = useCallback(() => {
     const ac = new AbortController();
@@ -203,6 +243,34 @@ export function PrcCasePage({ requestId, onBack }: Props) {
     );
   }
 
+  /* FIX-08 — modo de edição do caso enviado: mesmo wizard
+   * compartilhado, sem etapa de identificação; salva PATCH /draft
+   * com CAS + idempotência no mesmo requestId. */
+  if (editing && detail) {
+    return (
+      <AppShell title="Editar solicitação">
+        <PrcRequestForm
+          source={PRC_SOURCE}
+          dataProvider={dataProvider}
+          portalScopeClassName={MR_PORTAL_SCOPE}
+          editCase={{
+            requestId,
+            expectedVersion: detail.caseVersion,
+            requestType:
+              detail.requestType === "update" ? "update" : "create",
+            draft: detail.technicalDraft || {},
+            changedPaths: detail.changedPaths || [],
+          }}
+          onCancel={() => setEditing(false)}
+          onCompleted={() => {
+            setEditing(false);
+            load();
+          }}
+        />
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell title="Acompanhamento da solicitação">
       {error ? (
@@ -214,18 +282,28 @@ export function PrcCasePage({ requestId, onBack }: Props) {
             title={`${PRC_TYPE_LABELS[detail.requestType] || "Solicitação"} — ${detail.id.slice(0, 8)}`}
             hint="Acompanhamento do caso PRC na Engineering API."
             actions={
-              <MyRequestsStatusBadge
-                label={PRC_STATUS_LABELS[detail.status] || detail.status}
-                variant={
-                  detail.status === "completed"
-                    ? "success"
-                    : detail.status === "rejected"
-                      ? "danger"
-                      : detail.status === "needs_correction"
-                        ? "warning"
-                        : "info"
-                }
-              />
+              <>
+                {detail.allowedActions?.includes("edit_draft") ? (
+                  <ActionButton
+                    variant="ghost"
+                    onClick={() => setEditing(true)}
+                  >
+                    Editar solicitação
+                  </ActionButton>
+                ) : null}
+                <MyRequestsStatusBadge
+                  label={PRC_STATUS_LABELS[detail.status] || detail.status}
+                  variant={
+                    detail.status === "completed"
+                      ? "success"
+                      : detail.status === "rejected"
+                        ? "danger"
+                        : detail.status === "needs_correction"
+                          ? "warning"
+                          : "info"
+                  }
+                />
+              </>
             }
           >
             <DetailFields

@@ -96,9 +96,14 @@ class ProductRegistrationRepository(Protocol):
         actor_subject: str,
         changes: list[dict[str, Any]],
         event_meta: dict[str, Any],
+        actor_display_name: str | None = None,
+        actor_email: str | None = None,
+        extra_draft_fields: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """CAS do draft em ``in_progress``: aplica changes campo-a-campo,
-        bump row_version (request+draft) e grava evento draft_changed."""
+        """CAS do draft em ``submitted``: aplica changes campo-a-campo,
+        bump row_version (request+draft) e grava evento draft_changed.
+        ``extra_draft_fields`` aplica campos derivados server-side
+        (ex.: supplierLinkChanges) fora de changed_paths."""
         ...
 
     # --- verificações oficiais -------------------------------------------------

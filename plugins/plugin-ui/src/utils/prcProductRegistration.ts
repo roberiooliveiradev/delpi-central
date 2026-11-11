@@ -193,6 +193,63 @@ export function supplierRowsToPayload(rows: SupplierRow[]) {
   }));
 }
 
+/** PRC-REF-023-EDIT-POLICY-FIX-08 — materializa a relação proposta de
+ * fornecedores de um caso UPDATE: aplica ``supplierLinkChanges`` sobre
+ * a lista base do draft. O solicitante enxerga (e edita) o estado-alvo
+ * da solicitação, não o baseline TOTVS. */
+export function applySupplierLinkOps(
+  suppliers: unknown,
+  ops: unknown,
+): Record<string, unknown>[] {
+  const byKey = new Map<string, Record<string, unknown>>();
+  for (const item of Array.isArray(suppliers) ? suppliers : []) {
+    if (typeof item !== "object" || item === null) continue;
+    const rec = { ...(item as Record<string, unknown>) };
+    const key = linkKeyOf(
+      String(rec.supplierCode ?? ""),
+      String(rec.store ?? ""),
+    );
+    if (key !== "|") byKey.set(key, rec);
+  }
+  for (const raw of Array.isArray(ops) ? ops : []) {
+    const op = raw as {
+      operation?: string;
+      key?: { supplierCode?: string; store?: string };
+      fields?: Record<string, unknown>;
+      supplierName?: string;
+    };
+    if (!op || !op.key) continue;
+    const key = linkKeyOf(
+      String(op.key.supplierCode ?? ""),
+      String(op.key.store ?? ""),
+    );
+    if (key === "|") continue;
+    const fields = op.fields || {};
+    if (op.operation === "remove") {
+      byKey.delete(key);
+      continue;
+    }
+    if (op.operation === "add") {
+      byKey.set(key, {
+        supplierCode: op.key.supplierCode,
+        store: op.key.store,
+        supplierName: op.supplierName || "",
+        partNumber: fields.partNumber ?? null,
+        catalogNumber: fields.catalogNumber ?? null,
+      });
+      continue;
+    }
+    const cur = byKey.get(key);
+    if (cur && op.operation === "update") {
+      if ("partNumber" in fields) cur.partNumber = fields.partNumber;
+      if ("catalogNumber" in fields) {
+        cur.catalogNumber = fields.catalogNumber;
+      }
+    }
+  }
+  return [...byKey.values()];
+}
+
 export function emptySupplierRow(): SupplierRow {
   return {
     rowId: newSupplierRowId("draft"),

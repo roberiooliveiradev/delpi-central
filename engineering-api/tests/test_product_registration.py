@@ -391,25 +391,23 @@ class TestWorkflow:
         )
         assert resp.status_code == 409
 
-    def test_draft_patch_only_in_progress(
+    def test_draft_patch_state_and_owner_policy(
         self, client, jwks_env, core_rbac, prc_service_repo
     ):
+        """FIX-08 — o criador edita em submitted; iniciado o
+        atendimento, a ficha vira somente leitura para todos."""
         rid = _submit_create(client, jwks_env, core_rbac).json()["data"][
             "requestId"
         ]
         core_rbac["behavior"] = (
-            "data", rbac_payload(ANALYST, id="analyst-1")
+            "data", rbac_payload(ANALYST, id="user-1")
         )
-        tok = _token(jwks_env, "analyst-1")
-        _post(
-            client,
-            f"/v1/product-registration/requests/{rid}/actions/start",
-            tok, json={"expectedVersion": 1},
-        )
+        tok = _token(jwks_env, "user-1")
+        # Criador edita em submitted (mesmo requestId, CAS v1).
         resp = client.patch(
             f"/v1/product-registration/requests/{rid}/draft",
             json={
-                "expectedVersion": 2,
+                "expectedVersion": 1,
                 "changes": [
                     {
                         "path": "description",
@@ -425,6 +423,48 @@ class TestWorkflow:
             resp.json()["data"]["technicalDraft"]["description"]
             == "DESC CORRIGIDA"
         )
+        # Analista de terceiro não edita a ficha alheia nem em submitted.
+        core_rbac["behavior"] = (
+            "data", rbac_payload(ANALYST, id="analyst-1")
+        )
+        tok_a = _token(jwks_env, "analyst-1")
+        resp = client.patch(
+            f"/v1/product-registration/requests/{rid}/draft",
+            json={
+                "expectedVersion": 2,
+                "changes": [
+                    {
+                        "path": "description",
+                        "proposedValue": "HIJACK",
+                        "reason": "x",
+                    }
+                ],
+            },
+            headers={"Authorization": f"Bearer {tok_a}"},
+        )
+        assert resp.status_code == 403, resp.text
+        # Início do atendimento → escrita bloqueada para ambos os papéis.
+        _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/start",
+            tok_a, json={"expectedVersion": 2},
+        )
+        for t, expected in ((tok, 403), (tok_a, 403)):
+            resp = client.patch(
+                f"/v1/product-registration/requests/{rid}/draft",
+                json={
+                    "expectedVersion": 3,
+                    "changes": [
+                        {
+                            "path": "description",
+                            "proposedValue": "LATE",
+                            "reason": "x",
+                        }
+                    ],
+                },
+                headers={"Authorization": f"Bearer {t}"},
+            )
+            assert resp.status_code in (403, 409), resp.text
 
     def test_needs_information_resume(
         self, client, jwks_env, core_rbac, prc_service_repo

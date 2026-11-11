@@ -1249,6 +1249,23 @@ declare module "@delpi/plugin-ui/index" {
       requestId: string,
       file: File,
     ): Promise<unknown>;
+    saveDraft?(
+      requestId: string,
+      expectedVersion: number,
+      changes: Array<{
+        path: string;
+        proposedValue: unknown;
+        reason: string;
+      }>,
+      idempotencyKey: string,
+    ): Promise<unknown>;
+  };
+  export type PrcCaseEditInput = {
+    requestId: string;
+    expectedVersion: number;
+    requestType: "create" | "update";
+    draft: Record<string, unknown>;
+    changedPaths?: Array<{ path: string; reason?: string }>;
   };
   export type PrcRequestFormProps = {
     source: string;
@@ -1256,6 +1273,7 @@ declare module "@delpi/plugin-ui/index" {
     onCancel: () => void;
     onCompleted: (requestId: string) => void;
     portalScopeClassName?: string;
+    editCase?: PrcCaseEditInput;
   };
   export function PrcRequestForm(
     props: PrcRequestFormProps,

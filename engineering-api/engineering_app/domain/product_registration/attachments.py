@@ -25,7 +25,12 @@ ATTACHMENT_STATES = frozenset(
 
 # Estados em que o solicitante pode anexar documentos ao caso.
 # needs_correction/completed/rejected = PENDING_OWNER (contrato REF-023).
-ATTACHMENT_UPLOAD_STATUSES = frozenset({"submitted", "in_progress"})
+# PRC-REF-023-EDIT-POLICY-FIX-08 — documentos da ficha só mudam antes
+# do início do atendimento. Em ``in_progress`` ficha e anexos são
+# somente leitura; ``needs_correction`` permanece bloqueado enquanto o
+# contrato de devolução não definir alvo documental (alvos atuais:
+# FIELD/SUPPLIER_LINK) — ampliar exige decisão explícita de contrato.
+ATTACHMENT_UPLOAD_STATUSES = frozenset({"submitted"})
 
 # MIME oficial por assinatura binária — a extensão/Content-Type do
 # cliente nunca é prova. (magic, media_type, extensão canônica)

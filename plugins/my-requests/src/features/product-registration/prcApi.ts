@@ -295,6 +295,27 @@ export function fetchPrcCorrectionReturns(
   ).then((body) => unwrap(body).items);
 }
 
+/** PRC-REF-023-EDIT-POLICY-FIX-08 — edição livre pré-atendimento:
+ * PATCH /draft no mesmo requestId (CAS + idempotência; só o criador
+ * e somente em ``submitted`` — decidido no backend). */
+export function updatePrcDraft(
+  requestId: string,
+  expectedVersion: number,
+  changes: Array<{
+    path: string;
+    proposedValue: unknown;
+    reason: string;
+  }>,
+  idempotencyKey: string,
+  signal?: AbortSignal,
+): Promise<PrcRequestDetail> {
+  return httpPatch<Envelope<PrcRequestDetail>>(
+    `${PRC_BASE}/requests/${encodeURIComponent(requestId)}/draft`,
+    { expectedVersion, changes },
+    { signal, headers: { "Idempotency-Key": idempotencyKey } },
+  ).then(unwrap);
+}
+
 export function savePrcReturnedFields(
   requestId: string,
   expectedVersion: number,

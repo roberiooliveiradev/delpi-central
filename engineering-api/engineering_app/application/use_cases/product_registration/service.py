@@ -69,13 +69,18 @@ _EVENT_TYPE_BY_ACTION = {
     "reject": "rejected",
 }
 
-_REQUESTER_CORRECTION_ACTIONS = frozenset(
-    {"save_returned_fields", "resubmit_correction"}
+_REQUESTER_SCOPED_ACTIONS = frozenset(
+    {
+        # FIX-08 — ações de escrita exclusivas do criador do caso:
+        # correção da devolução + edição livre pré-atendimento.
+        "save_returned_fields",
+        "resubmit_correction",
+        "edit_draft",
+    }
 )
 _ANALYST_ONLY_ACTIONS = frozenset(
     {
         "start",
-        "edit_draft",
         "return_for_correction",
         "complete",
         "verify_and_complete",
@@ -223,7 +228,7 @@ class ProductRegistrationService:
         is_requester = bool(requester) and actor.user_id == requester
         out: list[str] = []
         for action in actions:
-            if action in _REQUESTER_CORRECTION_ACTIONS:
+            if action in _REQUESTER_SCOPED_ACTIONS:
                 if is_requester and actor.has_action_permission(action):
                     out.append(action)
                 continue
@@ -1669,11 +1674,50 @@ class ProductRegistrationService:
         self, request_id: str, *, actor: PrcActor, expected_version: int,
         changes: list[dict[str, Any]], idempotency_key: str | None = None,
     ) -> dict[str, Any]:
-        _require_actor_process(actor)
         request = self._get_scoped(request_id, actor)
         if not actor.has_action_permission("edit_draft"):
             raise PrcForbiddenError("Sem permissão para editar o draft.")
+        # FIX-08 — edição livre pré-atendimento é do criador do caso:
+        # analista de terceiro não reescreve ficha alheia nem em
+        # ``submitted``; o estado é revalidado atomicamente pelo CAS do
+        # repositório (``submitted`` + expected_version).
+        if actor.user_id != request.get("requester_subject"):
+            raise PrcForbiddenError(
+                "Somente o solicitante do caso pode editar a ficha."
+            )
         validated = catalog.validate_update_changes(changes)
+        # FIX-08 — em casos ``update`` a relação de fornecedores é
+        # governada por ``supplierLinkChanges`` (verify compara ops vs
+        # leitura oficial). A edição informa a lista final desejada;
+        # o backend deriva e valida as ops contra o baseline oficial,
+        # nunca confia em ops montadas no cliente.
+        extra_draft_fields: dict[str, Any] | None = None
+        if request.get("request_type") == "update":
+            supplier_change = next(
+                (c for c in validated if c["path"] == "suppliers"), None
+            )
+            if supplier_change is not None:
+                baseline = request.get("official_baseline") or {}
+                ops = catalog.derive_supplier_link_ops(
+                    baseline.get("links") or [],
+                    supplier_change["proposedValue"],
+                )
+                ops, ops_err = catalog.validate_supplier_link_changes(ops)
+                if ops_err:
+                    raise PrcValidationError(
+                        ops_err, fields={"suppliers": "invalid"}
+                    )
+                baseline_err = (
+                    sa5_baseline.validate_link_ops_against_baseline(
+                        ops, baseline
+                    )
+                )
+                if baseline_err:
+                    raise PrcValidationError(
+                        baseline_err,
+                        fields={"suppliers": "baseline_precondition"},
+                    )
+                extra_draft_fields = {"supplierLinkChanges": ops}
         fp = _fingerprint(
             {
                 "action": "update_draft",
@@ -1693,6 +1737,7 @@ class ProductRegistrationService:
             expected_version=expected_version,
             actor_subject=actor.user_id,
             changes=validated,
+            extra_draft_fields=extra_draft_fields,
             event_meta={"channel": actor.channel},
             actor_display_name=actor.label,
             actor_email=actor.email,

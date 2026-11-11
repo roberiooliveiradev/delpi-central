@@ -78,8 +78,24 @@ describe("PrcCasePage — composição compartilhada", () => {
     expect(page).toMatch(/resubmitPrcCorrection/);
     // Correção preserva o mesmo requestId oficial.
     expect(page).toMatch(/resubmitPrcCorrection\(\s*requestId/);
-    // Sem edição livre da ficha pelo solicitante.
-    expect(page).not.toMatch(/allowedActions\.includes\("edit_draft"\)/);
+  });
+
+  it("edição pré-atendimento só quando o backend emite edit_draft (FIX-08)", () => {
+    // Ação visível exclusivamente por allowedActions do backend.
+    expect(page).toMatch(/allowedActions\?\.includes\("edit_draft"\)/);
+    // Mesmo formulário compartilhado do kit — nunca um terceiro wizard.
+    expect(page).toMatch(/PrcRequestForm/);
+    expect(page).toMatch(/editCase=\{\{/);
+    // Mesmo requestId e CAS pela versão atual do caso.
+    expect(page).toMatch(/requestId,\s*\n\s*expectedVersion: detail\.caseVersion/);
+    // Provider salva via PATCH /draft canônico, mesmo requestId.
+    expect(page).toMatch(/saveDraft: \(caseId, expectedVersion, changes, idempotencyKey\) =>/);
+    expect(page).toMatch(/updatePrcDraft\(\s*caseId,\s*expectedVersion,\s*changes,\s*idempotencyKey,/);
+    expect(api).toMatch(/export function updatePrcDraft\(/);
+    expect(api).toMatch(/\/draft/);
+    expect(api).toMatch(/Idempotency-Key/);
+    // Após salvar, o caso é recarregado (mesma identidade).
+    expect(page).toMatch(/setEditing\(false\);\s*\n\s*load\(\);/);
   });
 
   it("histórico usa o renderer padronizado de Minhas Solicitações", () => {

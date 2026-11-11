@@ -83,10 +83,15 @@ _TRANSITIONS: dict[str, tuple[frozenset[str], str]] = {
 
 # Ações visíveis por status (allowedActions do backend — UI nunca decide).
 # Object AuthZ adicional (requester vs analista) é aplicada no service.
+# PRC-REF-023-EDIT-POLICY-FIX-08 — ``edit_draft`` migra para
+# ``submitted``: a ficha (e os documentos) só é mutável antes do início
+# do atendimento e somente pelo criador do caso. Em ``in_progress`` a
+# ficha submetida é somente leitura para ambos os portais — a
+# Engenharia atende, devolve, verifica e conclui, nunca reescreve a
+# ficha por edição genérica.
 _ACTIONS_BY_STATUS: dict[str, tuple[str, ...]] = {
-    "submitted": ("start", "reject"),
+    "submitted": ("start", "edit_draft", "reject"),
     "in_progress": (
-        "edit_draft",
         "return_for_correction",
         "complete",
         "reject",
@@ -115,7 +120,9 @@ _ACTIONS_BY_STATUS: dict[str, tuple[str, ...]] = {
 # exige object AuthZ (somente o requester do caso corrige/reenvia).
 _ACTION_PERMISSION: dict[str, tuple[tuple[str, ...], ...]] = {
     "start": ((ENG_ACCESS,),),
-    "edit_draft": ((ENG_ACCESS,),),
+    # FIX-08 — edit_draft é do criador do caso (escopo por objeto no
+    # service); ``engineering.access`` sozinho não habilita a ação.
+    "edit_draft": ((ENG_ACCESS,), (MR_PRC_CREATE,)),
     "request_information": ((ENG_ACCESS,),),
     "resume": ((ENG_ACCESS,),),
     "submit_review": ((ENG_ACCESS,),),

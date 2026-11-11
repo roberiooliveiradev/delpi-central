@@ -24,12 +24,10 @@ def test_openapi_exposes_stable_operation_ids(client):
     assert paths["/ready"]["get"]["operationId"] == "get_engineering_ready"
 
 
-def test_only_authorized_business_routes_exposed(client):
-    """Superfície autorizada: health/ready + Home (F2a) + Overview
-    (F3.OVERVIEW) + LMP funcional (G3: E-LMP-01/03). Qualquer rota de
-    negócio nova exige revisão deste contrato."""
-    spec = client.get("/openapi.json").json()
-    allowed = {
+# Superfície autorizada de rotas de negócio — fonte única compartilhada
+# com test_auth_middleware (probe ausente ⇒ mesmo conjunto). Qualquer
+# rota nova exige revisão explícita deste contrato.
+ALLOWED_BUSINESS_PATHS = {
         "/health",
         "/ready",
         "/v1/home",
@@ -88,6 +86,16 @@ def test_only_authorized_business_routes_exposed(client):
         "/v1/product-registration/requests/{request_id}/information-rounds/{round_id}/questions/{question_id}/actions/accept",
         "/v1/product-registration/requests/{request_id}/actions/reject",
         "/v1/product-registration/requests/{request_id}/actions/complete",
+        # PRC-REF-022/REF-023 — devolução para correção, anexos e
+        # divergência de rota (inclui FIX-08 draft/returned-fields).
+        "/v1/product-registration/requests/{request_id}/actions/return-for-correction",
+        "/v1/product-registration/requests/{request_id}/actions/resubmit-correction",
+        "/v1/product-registration/requests/{request_id}/actions/route-divergence",
+        "/v1/product-registration/requests/{request_id}/returned-fields",
+        "/v1/product-registration/requests/{request_id}/correction-returns",
+        "/v1/product-registration/requests/{request_id}/correction-returns/{return_id}",
+        "/v1/product-registration/requests/{request_id}/attachments",
+        "/v1/product-registration/requests/{request_id}/attachments/{attachment_id}/download",
         "/v1/product-registration/requests/{request_id}/actions/verify-and-complete",
         "/v1/product-registration/requests/{request_id}/verifications",
         "/v1/product-registration/technical-records/{record_id}",
@@ -99,8 +107,15 @@ def test_only_authorized_business_routes_exposed(client):
         "/v1/product-registration/reference-data/suppliers/search",
         "/v1/product-registration/outbound/requests",
         "/v1/product-registration/outbound/requests/{request_id}",
-    }
-    assert set(spec["paths"].keys()) == allowed
+}
+
+
+def test_only_authorized_business_routes_exposed(client):
+    """Superfície autorizada: health/ready + Home (F2a) + Overview
+    (F3.OVERVIEW) + LMP funcional (G3: E-LMP-01/03). Qualquer rota de
+    negócio nova exige revisão deste contrato."""
+    spec = client.get("/openapi.json").json()
+    assert set(spec["paths"].keys()) == ALLOWED_BUSINESS_PATHS
 
 
 def test_docs_ui_disabled(client):

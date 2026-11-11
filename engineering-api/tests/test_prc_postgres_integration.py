@@ -89,9 +89,24 @@ class TestPostgresIntegration:
         assert created["status"] == "submitted"
         assert created["draft"]["technical_data"]["unit"] == "UN"
 
-        # start → in_progress (CAS v1)
-        req = repo.apply_transition(
+        # FIX-08 — draft seletivo só antes do atendimento; preserva
+        # demais campos.
+        repo.update_draft(
             request_id=rid, expected_version=1,
+            actor_subject="user-pg-1",
+            changes=[{"path": "description",
+                      "proposedValue": "PG EDIT", "reason": "correção"}],
+            event_meta={},
+        )
+        req = repo.get_request(rid)
+        data = req["draft"]["technical_data"]
+        assert data["description"] == "PG EDIT"
+        assert data["unit"] == "UN"  # preservado
+        assert req["draft"]["changed_paths"][0]["path"] == "description"
+
+        # start → in_progress (CAS v2)
+        req = repo.apply_transition(
+            request_id=rid, expected_version=2,
             allowed_from=frozenset({"submitted"}),
             actor_label="Analyst", actor_subject="analyst-pg",
             event_type="started", next_status="in_progress",
@@ -99,11 +114,12 @@ class TestPostgresIntegration:
             reason=None, event_meta={},
         )
         assert req["status"] == "in_progress"
-        assert req["row_version"] == 2
+        assert req["row_version"] == 3
 
         # CAS stale → erro
         from engineering_app.domain.product_registration.errors import (
             PrcConcurrencyError,
+            PrcStateConflictError,
         )
 
         with pytest.raises(PrcConcurrencyError):
@@ -115,19 +131,15 @@ class TestPostgresIntegration:
                 set_fields={}, reason=None, event_meta={},
             )
 
-        # draft seletivo preserva demais campos
-        repo.update_draft(
-            request_id=rid, expected_version=2,
-            actor_subject="analyst-pg",
-            changes=[{"path": "description",
-                      "proposedValue": "PG EDIT", "reason": "correção"}],
-            event_meta={},
-        )
-        req = repo.get_request(rid)
-        data = req["draft"]["technical_data"]
-        assert data["description"] == "PG EDIT"
-        assert data["unit"] == "UN"  # preservado
-        assert req["draft"]["changed_paths"][0]["path"] == "description"
+        # FIX-08 — ficha bloqueada para escrita em atendimento.
+        with pytest.raises(PrcStateConflictError):
+            repo.update_draft(
+                request_id=rid, expected_version=3,
+                actor_subject="analyst-pg",
+                changes=[{"path": "description",
+                          "proposedValue": "LATE EDIT", "reason": "x"}],
+                event_meta={},
+            )
 
         # PRC-REF-020 — conclusão a partir de in_progress (sem under_review).
         official_code = f"PG{rid[:8].upper()}"
@@ -264,24 +276,26 @@ class TestPostgresIntegration:
         assert created["official_baseline"]["linksComplete"] is True
         reloaded = repo.get_request(rid)
         assert reloaded["official_baseline"]["officialProductCode"] == "001234"
-        # draft PATCH não apaga o baseline
-        repo.apply_transition(
+        # FIX-08 — draft PATCH em submitted não apaga o baseline e a
+        # edição persiste após a transição para atendimento.
+        repo.update_draft(
             request_id=rid, expected_version=1,
+            actor_subject="a",
+            changes=[{"path": "description",
+                      "proposedValue": "EDIT", "reason": "r"}],
+            event_meta={},
+        )
+        repo.apply_transition(
+            request_id=rid, expected_version=2,
             allowed_from=frozenset({"submitted"}),
             actor_label="A", actor_subject="a",
             event_type="started", next_status="in_progress",
             set_fields={"assigned_to_subject": "a"},
             reason=None, event_meta={},
         )
-        repo.update_draft(
-            request_id=rid, expected_version=2,
-            actor_subject="a",
-            changes=[{"path": "description",
-                      "proposedValue": "EDIT", "reason": "r"}],
-            event_meta={},
-        )
         after = repo.get_request(rid)
         assert after["official_baseline"]["fingerprint"] == "fp-d15-pg"
+        assert after["draft"]["technical_data"]["description"] == "EDIT"
 
     def test_attendance_flags_crud_and_audit(self, repo):
         """D16 — flags no PostgreSQL real (V015); soft-delete + eventos."""

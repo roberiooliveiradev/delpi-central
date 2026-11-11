@@ -585,7 +585,7 @@ _action_route(
     operation_id="prc_update_draft",
     summary="06 — Edição campo-a-campo do draft (CAS + allowlist)",
 )
-@require_any_permission(_PROCESS_PERMS)
+@require_any_permission(_REQUESTER_WRITE_PERMS)
 async def prc_update_draft(
     request_id: str = Path(...),
     body: DraftBody = Body(...),

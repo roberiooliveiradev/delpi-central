@@ -488,11 +488,13 @@ class PostgresProductRegistrationRepository:
         event_meta: dict[str, Any],
         actor_display_name: str | None = None,
         actor_email: str | None = None,
+        extra_draft_fields: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         with self._conn() as conn:
             row = self._lock_and_check(
                 conn, request_id, expected_version,
-                frozenset({"in_progress"}),
+                # FIX-08 — ficha mutável apenas antes do atendimento.
+                frozenset({"submitted"}),
             )
             draft = conn.execute(
                 f"SELECT * FROM {_T_DRAFT} WHERE request_id=%s FOR UPDATE",
@@ -514,6 +516,11 @@ class PostgresProductRegistrationRepository:
                 changed[path] = {
                     "path": path, "reason": change["reason"],
                 }
+            # FIX-08 — campos derivados server-side (supplierLinkChanges
+            # de casos update) fora de changed_paths, mesmo critério do
+            # repositório em memória.
+            if extra_draft_fields:
+                data.update(extra_draft_fields)
             conn.execute(
                 f"UPDATE {_T_DRAFT} SET technical_data=%s,"
                 " changed_paths=%s, row_version=row_version+1,"

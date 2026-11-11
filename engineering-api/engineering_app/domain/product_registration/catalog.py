@@ -703,6 +703,88 @@ def validate_supplier_link_changes(
     return out, None
 
 
+def derive_supplier_link_ops(
+    baseline_links: Any,
+    proposed_suppliers: Any,
+) -> list[dict[str, Any]]:
+    """PRC-REF-023-EDIT-POLICY-FIX-08 — deriva ``supplierLinkChanges``
+    da lista final desejada vs baseline oficial (casos ``update``).
+
+    A edição pré-atendimento do solicitante informa a relação completa
+    desejada (mesmo contrato do path ``suppliers`` do draft); o backend
+    converte o estado-alvo em ops ADD/UPDATE/REMOVE chaveadas por
+    (supplierCode, store), preservando a semântica de vínculo do fluxo
+    UPDATE — verify compara ops contra a leitura oficial, nunca lista
+    solta. ``partNumber``/``catalogNumber`` são os únicos atributos
+    mutáveis por op (SUPPLIER_LINK_EDITABLE_FIELDS).
+    """
+    def _key(item: dict[str, Any]) -> tuple[str, str]:
+        return supplier_link_key(item, official=False)
+
+    def _norm_attr(value: Any) -> str:
+        return "" if value is None else str(value).strip()
+
+    indexed: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for link in baseline_links or []:
+        if not isinstance(link, dict):
+            continue
+        key = _key(link)
+        if key[0] and key[1]:
+            indexed.setdefault(key, []).append(link)
+    proposed_by_key: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for item in proposed_suppliers or []:
+        if not isinstance(item, dict):
+            continue
+        key = _key(item)
+        if key[0] and key[1]:
+            proposed_by_key.setdefault(key, []).append(item)
+
+    ops: list[dict[str, Any]] = []
+    for key in sorted(indexed):
+        if key not in proposed_by_key:
+            ops.append(
+                {
+                    "operation": "remove",
+                    "key": {"supplierCode": key[0], "store": key[1]},
+                }
+            )
+    for key in sorted(proposed_by_key):
+        code, store = key
+        base = (indexed.get(key) or [None])[0]
+        for item in proposed_by_key[key]:
+            if base is None:
+                fields = {
+                    f: _norm_attr(item.get(f))
+                    for f in SUPPLIER_LINK_EDITABLE_FIELDS
+                    if _norm_attr(item.get(f))
+                }
+                ops.append(
+                    {
+                        "operation": "add",
+                        "key": {"supplierCode": code, "store": store},
+                        "fields": fields,
+                        "supplierName": _norm_attr(
+                            item.get("supplierName")
+                        ),
+                    }
+                )
+                continue
+            fields = {
+                f: _norm_attr(item.get(f))
+                for f in SUPPLIER_LINK_EDITABLE_FIELDS
+                if _norm_attr(item.get(f)) != _norm_attr(base.get(f))
+            }
+            if fields:
+                ops.append(
+                    {
+                        "operation": "update",
+                        "key": {"supplierCode": code, "store": store},
+                        "fields": fields,
+                    }
+                )
+    return ops
+
+
 # --- reasons do intake create (D14-FIX) --------------------------------------
 # CREATE não tem baseline/diff: a justificativa opcional é por campo
 # preenchido e por vínculo incluído, transportada em canal próprio do

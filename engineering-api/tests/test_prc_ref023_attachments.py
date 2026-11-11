@@ -293,14 +293,21 @@ def test_duplicate_upload_deduplicated(
     assert len(lst) == 1
 
 
-def test_upload_in_progress_by_requester(
+def test_upload_in_progress_blocked_for_everyone(
     client, jwks_env, core_rbac, prc_service_repo
 ):
+    """FIX-08 — iniciado o atendimento, documentos da ficha ficam
+    somente leitura (upload, retry e substituição bloqueados)."""
     rid = _create(client, jwks_env, core_rbac)
     _create_and_start(client, jwks_env, core_rbac, rid)
     tok = _as(jwks_env, core_rbac, REQUESTER_SUB)
     r = _upload(client, tok, rid, PDF, "doc.pdf")
-    assert r.status_code == 201, r.text
+    assert r.status_code == 409, r.text
+    lst = client.get(
+        f"{_base(rid)}/attachments",
+        headers={"Authorization": f"Bearer {tok}"},
+    ).json()["data"]
+    assert lst["canUpload"] is False
 
 
 def test_upload_completed_case_rejected(

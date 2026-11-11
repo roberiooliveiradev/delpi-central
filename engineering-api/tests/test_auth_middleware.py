@@ -13,6 +13,7 @@ import pytest
 from jose import jwt
 
 from conftest import rbac_payload
+from test_health import ALLOWED_BUSINESS_PATHS
 
 
 def _auth(token: str) -> dict:
@@ -286,39 +287,7 @@ def test_probe_route_not_in_production_openapi(client):
     spec = client.get("/openapi.json").json()
     assert "/probe" not in spec["paths"]
     assert "/probe/whoami" not in spec["paths"]
-    assert set(spec["paths"].keys()) == {
-        "/health",
-        "/ready",
-        "/v1/home",
-        "/v1/overview",
-        "/v1/lmps",
-        "/v1/lmps/summary",
-        "/v1/lmps/goal-context",
-        "/v1/lmps/department-idd",
-        "/v1/lmps/nonconformities/streak",
-        "/v1/lmps/{sale_number}",
-        "/v1/lmps/{sale_number}/history/events",
-        "/v1/lmps/{sale_number}/history/flow",
-        "/v1/products",
-        "/v1/products/filter-options",
-        "/v1/products/{product_code}",
-        "/v1/products/{product_code}/structure",
-        "/v1/products/{product_code}/parents",
-        "/v1/products/{product_code}/suppliers",
-        "/v1/products/{product_code}/drawing",
-        "/v1/products/{product_code}/drawing/pdf",
-        "/v1/products/{product_code}/purchase-price-history",
-        "/public/characters/{character_id}/avatar/{filename}",
-        "/v1/nonconformities",
-        "/v1/nonconformities/{record_id}",
-        "/v1/nonconformities/{record_id}/history",
-        "/v1/nonconformities/{record_id}/context",
-        "/v1/nonconformities/indicators",
-        "/v1/nonconformities/problem-tags",
-        "/v1/nonconformities/export",
-        "/v1/nonconformities/import",
-        "/v1/nonconformities/prepare",
-    }
+    assert set(spec["paths"].keys()) == ALLOWED_BUSINESS_PATHS
 
 
 def test_service_token_headers_do_not_bypass(jwks_env, core_rbac, probe_client, monkeypatch):
