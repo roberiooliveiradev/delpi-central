@@ -204,6 +204,14 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 
 **Estado:** `IMPLEMENTED_PENDING_SMOKE`. `Keycloak CHECK=PASS_COM_DRIFT_CLIENT_MISSING`, `S2S PROVISIONING=PENDING`, `OBSERVATION SUBMIT=PENDING`.
 
+## E4.S1 — verificação de migration e identidade do srv-api (11/11/2026)
+
+**Evidência observada no `srv-api` (consulta SQL somente leitura executada pelo operador no container `delpi-it-portal-api`):**
+- `it_portal.schema_migrations` registra `version=4`, `name=V004__server_observations.sql` (**PASS**: migration V004 aplicada; a consulta não demonstrou contagem de linhas ou grants da tabela).
+- Cadastro alvo na tabela `it_portal.servers`: `id=459fd1b8-643f-493d-9911-0ff7aaf91424`, `hostname=srv-api`, `active=true` (**PASS**: registro existente e elegível para conciliação por hostname).
+- Não há necessidade de criar outro cadastro do `srv-api`; preservar campos manuais.
+- **PENDING:** correção de sanitização/allowlist de payload JSON em profundidade e revisão, provisionamento Keycloak S2S, configuração segregada do coletor, smoke `submit` autenticado com `run_id`, leitura humana no MFE e agendamento systemd. `COMPLETE` continua pendente.
+
 ## Residuais abertos
 
 | ID | Residual | Dono da decisão |
