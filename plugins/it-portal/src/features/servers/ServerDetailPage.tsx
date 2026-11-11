@@ -28,6 +28,7 @@ import { ServerComponentsSections } from "./ServerComponentsSections";
 import { ServerFormModal, useInvalidateInventory } from "./ServerFormModal";
 import { ServerHistorySection } from "./ServerHistorySection";
 import { ServerNotesSection } from "./ServerNotesSection";
+import { ServerSectionNavigation, availableServerSections, type ServerSectionId } from "./ServerSectionNavigation";
 
 type Modal = "edit" | "archive" | "restore" | "new_action" | null;
 
@@ -43,6 +44,7 @@ function Field({ label, value }: { label: string; value: ReactNode }) {
 export function ServerDetailPage({ serverId }: { serverId: string }) {
   const { basePath, capabilities } = usePortal();
   const [modal, setModal] = useState<Modal>(null);
+  const [section, setSection] = useState<ServerSectionId>("overview");
 
   const serverQuery = useQuery({
     queryKey: queryKeys.server(serverId),
@@ -77,6 +79,9 @@ export function ServerDetailPage({ serverId }: { serverId: string }) {
   const server = serverQuery.data;
   const canManage = capabilities?.can_manage_servers === true;
   const canManageActions = capabilities?.can_manage_action_plans === true;
+  const availableSections = capabilities ? availableServerSections(capabilities) : [];
+  const activeSection = availableSections.some((item) => item.id === section) ? section : "overview";
+  const activeDefinition = availableSections.find((item) => item.id === activeSection);
 
   return (
     <>
@@ -123,56 +128,80 @@ export function ServerDetailPage({ serverId }: { serverId: string }) {
         </ItpStateBanner>
       ) : null}
 
-      <div className="itp-detail-grid">
-        <ItpSectionCard title="Identificação">
-          <dl className="itp-field-list">
-            <Field label="Código" value={server.code} />
-            <Field label={SERVER_FIELD_LABELS.hostname} value={server.hostname} />
-            <Field label={SERVER_FIELD_LABELS.ip_address} value={orDash(server.ip_address)} />
-            <Field label={SERVER_FIELD_LABELS.unit_code} value={UNIT_LABELS[server.unit_code] ?? server.unit_code} />
-            <Field label={SERVER_FIELD_LABELS.location} value={orDash(server.location)} />
-          </dl>
-        </ItpSectionCard>
-        <ItpSectionCard title="Operação">
-          <dl className="itp-field-list">
-            <Field label={SERVER_FIELD_LABELS.environment} value={<EnvironmentBadge value={server.environment} />} />
-            <Field label={SERVER_FIELD_LABELS.server_type} value={SERVER_TYPE_LABELS[server.server_type]} />
-            <Field label={SERVER_FIELD_LABELS.purpose} value={orDash(server.purpose)} />
-            <Field label={SERVER_FIELD_LABELS.operating_system} value={orDash(server.operating_system)} />
-            <Field label={SERVER_FIELD_LABELS.criticality} value={<CriticalityBadge value={server.criticality} />} />
-            <Field
-              label={SERVER_FIELD_LABELS.administrative_status}
-              value={<AdministrativeStatusBadge value={server.administrative_status} />}
-            />
-          </dl>
-        </ItpSectionCard>
-        <ItpSectionCard title="Responsabilidade e registro">
-          <dl className="itp-field-list">
-            <Field label={SERVER_FIELD_LABELS.responsible} value={orDash(server.responsible)} />
-            <Field label="Cadastrado" value={`${formatDateTime(server.created_at)} · ${server.created_by_name}`} />
-            <Field label="Última alteração" value={`${formatDateTime(server.updated_at)} · ${server.updated_by_name}`} />
-          </dl>
-        </ItpSectionCard>
-      </div>
+      <ServerSectionNavigation sections={availableSections} active={activeSection} onSelect={setSection} />
 
-      <ItpSectionCard title={SERVER_FIELD_LABELS.description}>
-        <p className="itp-prewrap">{server.description?.trim() ? server.description : "Sem descrição."}</p>
-      </ItpSectionCard>
+      <section
+        id="itp-server-active-panel"
+        className="itp-server-workspace__panel"
+        aria-labelledby="itp-server-active-heading"
+      >
+        <header className="itp-server-workspace__panel-heading">
+          <div>
+            <p className="itp-server-workspace__eyebrow">Área selecionada</p>
+            <h2 id="itp-server-active-heading">{activeDefinition?.label ?? "Visão geral"}</h2>
+          </div>
+          <p>{activeDefinition?.description ?? "Dados cadastrais do servidor"}</p>
+        </header>
 
-      {capabilities?.can_view_action_plans ? (
-        <ServerActionPlans
-          server={server}
-          canCreate={canManageActions && !server.archived}
-          onCreate={() => setModal("new_action")}
-        />
-      ) : null}
+        {activeSection === "overview" ? (
+          <>
+            <div className="itp-detail-grid">
+              <ItpSectionCard title="Identificação">
+                <dl className="itp-field-list">
+                  <Field label="Código" value={server.code} />
+                  <Field label={SERVER_FIELD_LABELS.hostname} value={server.hostname} />
+                  <Field label={SERVER_FIELD_LABELS.ip_address} value={orDash(server.ip_address)} />
+                  <Field label={SERVER_FIELD_LABELS.unit_code} value={UNIT_LABELS[server.unit_code] ?? server.unit_code} />
+                  <Field label={SERVER_FIELD_LABELS.location} value={orDash(server.location)} />
+                </dl>
+              </ItpSectionCard>
+              <ItpSectionCard title="Operação">
+                <dl className="itp-field-list">
+                  <Field label={SERVER_FIELD_LABELS.environment} value={<EnvironmentBadge value={server.environment} />} />
+                  <Field label={SERVER_FIELD_LABELS.server_type} value={SERVER_TYPE_LABELS[server.server_type]} />
+                  <Field label={SERVER_FIELD_LABELS.purpose} value={orDash(server.purpose)} />
+                  <Field label={SERVER_FIELD_LABELS.operating_system} value={orDash(server.operating_system)} />
+                  <Field label={SERVER_FIELD_LABELS.criticality} value={<CriticalityBadge value={server.criticality} />} />
+                  <Field
+                    label={SERVER_FIELD_LABELS.administrative_status}
+                    value={<AdministrativeStatusBadge value={server.administrative_status} />}
+                  />
+                </dl>
+              </ItpSectionCard>
+              <ItpSectionCard title="Responsabilidade e registro">
+                <dl className="itp-field-list">
+                  <Field label={SERVER_FIELD_LABELS.responsible} value={orDash(server.responsible)} />
+                  <Field label="Cadastrado" value={`${formatDateTime(server.created_at)} · ${server.created_by_name}`} />
+                  <Field label="Última alteração" value={`${formatDateTime(server.updated_at)} · ${server.updated_by_name}`} />
+                </dl>
+              </ItpSectionCard>
+            </div>
+            <ItpSectionCard title={SERVER_FIELD_LABELS.description}>
+              <p className="itp-prewrap">{server.description?.trim() ? server.description : "Sem descrição."}</p>
+            </ItpSectionCard>
+          </>
+        ) : null}
 
-      <ServerComponentsSections server={server} />
+        {activeSection === "inventory" ? <ServerAutomaticInventorySection serverId={server.id} /> : null}
 
-      <ServerAutomaticInventorySection serverId={server.id} />
+        {activeSection === "services" ||
+        activeSection === "databases" ||
+        activeSection === "networks" ||
+        activeSection === "integrations" ? (
+          <ServerComponentsSections server={server} section={activeSection} />
+        ) : null}
 
-      <ServerNotesSection server={server} />
-      <ServerHistorySection serverId={server.id} />
+        {activeSection === "actions" && capabilities?.can_view_action_plans ? (
+          <ServerActionPlans
+            server={server}
+            canCreate={canManageActions && !server.archived}
+            onCreate={() => setModal("new_action")}
+          />
+        ) : null}
+
+        {activeSection === "notes" ? <ServerNotesSection server={server} /> : null}
+        {activeSection === "history" ? <ServerHistorySection serverId={server.id} /> : null}
+      </section>
 
       {modal === "edit" ? <ServerFormModal open server={server} onClose={() => setModal(null)} /> : null}
       {modal === "archive" || modal === "restore" ? (
