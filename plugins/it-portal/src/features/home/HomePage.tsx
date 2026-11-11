@@ -1,5 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { AlarmClock, CheckCircle2, ListTodo, Plus, Server as ServerIcon, ShieldAlert } from "lucide-react";
+import {
+  AlarmClock,
+  AppWindow,
+  CheckCircle2,
+  ClipboardList,
+  Database,
+  ListTodo,
+  Network,
+  Plus,
+  Server as ServerIcon,
+  ShieldAlert,
+  Workflow,
+} from "lucide-react";
 import { useState } from "react";
 
 import { itPortalApi, type Dashboard } from "../../api/itPortalApi";
@@ -10,9 +22,11 @@ import {
   ItpEmptyState,
   ItpKpiCard,
   ItpPageHero,
+  ItpNavigationCard,
   ItpSectionCard,
   ItpSemicircleGauge,
   ItpStatusBadge,
+  ItpTimeline,
   ItpTopBarSearchTrigger,
 } from "../../app/itPortalUi";
 import { HOME_CONTENT, SHELL_CONTENT } from "../../content/labels";
@@ -89,15 +103,83 @@ export function HomePage() {
         />
       </ItpPageHero>
       {body}
-      <ItpSectionCard title="Próximas áreas" subtitle="Ainda não disponíveis nesta etapa do Portal de TI.">
-        <ul className="itp-chip-list" aria-label="Áreas indisponíveis">
-          {UPCOMING_AREAS.map((area) => (
-            <li key={area}>
-              <ItpStatusBadge label={`${area} · indisponível`} variant="neutral" />
-            </li>
-          ))}
-        </ul>
-      </ItpSectionCard>
+      <div className="itp-home-secondary">
+        <ItpSectionCard title="Próximas áreas" subtitle="Ainda não disponíveis nesta etapa do Portal de TI.">
+          <ul className="itp-chip-list" aria-label="Áreas indisponíveis">
+            {UPCOMING_AREAS.map((area) => (
+              <li key={area}>
+                <ItpStatusBadge label={`${area} · indisponível`} variant="neutral" />
+              </li>
+            ))}
+          </ul>
+        </ItpSectionCard>
+
+        <ItpSectionCard
+          title={HOME_CONTENT.quickAccess.title}
+          subtitle={HOME_CONTENT.quickAccess.subtitle}
+        >
+          <div className="itp-quick-grid">
+            {capabilities?.can_view_servers ? (
+              <ItpNavigationCard
+                title={SHELL_CONTENT.nav.servers}
+                icon={<ServerIcon size={20} strokeWidth={1.75} aria-hidden="true" />}
+                onClick={() => navigateTo(buildPath(basePath, "servers"))}
+              />
+            ) : null}
+            {capabilities?.can_view_services ? (
+              <ItpNavigationCard
+                title={SHELL_CONTENT.nav.services}
+                icon={<AppWindow size={20} strokeWidth={1.75} aria-hidden="true" />}
+                onClick={() => navigateTo(buildPath(basePath, "services"))}
+              />
+            ) : null}
+            {capabilities?.can_view_databases ? (
+              <ItpNavigationCard
+                title={SHELL_CONTENT.nav.databases}
+                icon={<Database size={20} strokeWidth={1.75} aria-hidden="true" />}
+                onClick={() => navigateTo(buildPath(basePath, "databases"))}
+              />
+            ) : null}
+            {capabilities?.can_view_networks ? (
+              <ItpNavigationCard
+                title={SHELL_CONTENT.nav.networks}
+                icon={<Network size={20} strokeWidth={1.75} aria-hidden="true" />}
+                onClick={() => navigateTo(buildPath(basePath, "networks"))}
+              />
+            ) : null}
+            {capabilities?.can_view_integrations ? (
+              <ItpNavigationCard
+                title={SHELL_CONTENT.nav.integrations}
+                icon={<Workflow size={20} strokeWidth={1.75} aria-hidden="true" />}
+                onClick={() => navigateTo(buildPath(basePath, "integrations"))}
+              />
+            ) : null}
+            {capabilities?.can_view_action_plans ? (
+              <ItpNavigationCard
+                title={SHELL_CONTENT.nav.action_plans}
+                icon={<ClipboardList size={20} strokeWidth={1.75} aria-hidden="true" />}
+                onClick={() => navigateTo(buildPath(basePath, "action_plans"))}
+              />
+            ) : null}
+          </div>
+        </ItpSectionCard>
+
+        <ItpSectionCard
+          title={HOME_CONTENT.upcomingActions.title}
+          subtitle={HOME_CONTENT.upcomingActions.subtitle}
+        >
+          <ItpTimeline
+            aria-label={HOME_CONTENT.upcomingActions.title}
+            items={HOME_CONTENT.upcomingActions.items.map((item) => ({
+              id: item.id,
+              title: item.title,
+              detail: item.description,
+              timeLabel: item.when,
+              tone: "info" as const,
+            }))}
+          />
+        </ItpSectionCard>
+      </div>
       {creating ? (
         <ServerFormModal
           open
