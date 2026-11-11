@@ -10,7 +10,7 @@
 
 A entrada `Início > Marketing > Pesquisa de satisfação do cliente` abre diretamente a **página de Resultados**, rota candidata `/apps/commercial/satisfaction-results`, usando `pluginRoutes.ts`/`navigatePluginView`, não URL absoluta hardcoded em componentes. A visão serve a três perguntas: **como está a satisfação, como evoluiu e onde investigar oportunidades de melhoria**. O público `commercial.access` recebe exclusivamente agregados; `commercial.marketing` ou `commercial.manage` tem adicionalmente navegação para Configuração e consulta individual autorizada.
 
-**Ordem proposta definitiva para revisão:** (1) `CommercialPagePath` e Hero; (2) Resumo executivo; (3) Evolução histórica; (4) Avaliação das dez dimensões; (5) Comparações por grupo; (6) consulta por empresa **somente para gestores**. A Evolução é gráfico combinado IGS/NPS com dois eixos, sem tabela histórica fixa, com detalhes por campanha sob demanda e exportação oficial. O indicador de ações concluídas será acrescentado na **entrega 2 obrigatória**, nunca simulado na primeira.
+**Ordem aprovada:** (1) `CommercialPagePath` e Hero; (2) Resumo executivo; (3) Evolução histórica; (4) Avaliação das dez dimensões; (5) Comparações por grupo. **Respostas por Empresa é página própria** para Marketing/Manage, fora do corpo analítico. A Evolução é gráfico combinado IGS/NPS com dois eixos, sem tabela histórica fixa, com detalhes por campanha sob demanda e exportação oficial. O indicador de ações concluídas será acrescentado na **entrega 2 obrigatória**, nunca simulado na primeira.
 
 **Regra visual não negociável:** compor a página com componentes já publicados por `@delpi/plugin-ui/index` e wrappers existentes em `plugins/commercial/src/app/commercialUi.ts`. Não criar `SurveyKpi`, `SurveyChart`, botões nativos estilizados, CSS da página ou segundo design system. JSX de composição e transformação de dados são aceitáveis; gap real de componente => TO_INVENTORY + Abstraction Gate antes de alterar PluginUI.
 
@@ -48,7 +48,7 @@ A entrada `Início > Marketing > Pesquisa de satisfação do cliente` abre diret
 │ [Comparar também as dez dimensões ▾] — 10 linhas extras na mesma tabela │
 │ valores supressos se amostra abaixo do limiar do backend                 │
 ├──────────────────────────────────────────────────────────────────────────┤
-│ RESPOSTAS POR EMPRESA* (somente marketing/manage)                        │
+│ CONSULTA INDIVIDUAL EM PÁGINA PRÓPRIA* (sem seção nesta página)                        │
 │ Tabela apenas leitura → abrir resposta em CommercialHostDrawer           │
 └──────────────────────────────────────────────────────────────────────────┘
 * Controle e autorização no backend. **Cliente individual não é filtro
@@ -103,7 +103,7 @@ A página real usa **`CommercialPageHero` com densidade `compact` (default do wr
 | Eyebrow | Prop `eyebrow` de `CommercialPageHero` | “Portal Comercial” |
 | Título | `CommercialSectionHintLabel` dentro de `title` do Hero | “Pesquisa de Satisfação do Cliente” e ajuda contextual real |
 | Descrição | Prop `description` | “Acompanhe os resultados das pesquisas e a evolução da satisfação dos clientes.” |
-| Ações globais à direita | `CommercialActionButton` (`ActionButton` do PluginUI) | “Atualizar”; “Configuração” só para gestão, navega à UI-02 |
+| Ações globais à direita | `CommercialActionButton` (`ActionButton` do PluginUI) | **“Atualizar” → “Respostas por empresa” → “Configuração”**; duas navegações de gestão somente para Marketing/Manage; UI-06 e UI-02 respectivamente; sem segunda topbar |
 | Filtros principais no corpo do Hero | `CommercialSelectField` | Ano (anos com dados), Campanha (campanha real ou Ano completo), Grupo (Geral/Estratégicos/Demais) |
 | Controles complementares **dentro** do Hero | `CommercialFilterBarShell`, `cmFiltersKit`, `CommercialSelectField`, `CommercialMultiSelectField`, `CommercialTextField` conforme filtros reais | Segmento, cliente, vendedor, região, tempo de relacionamento e faturamento **somente com fonte oficial e permissão** |
 | Área expansível de filtros | Preferir recursos de `cmFiltersKit`/`CommercialFilterBarShell` já exportados e inspecionar suas props/testes na etapa de implementação | Acionador “Mais filtros” fica no Hero, expansão no próprio Hero. **TO_INVENTORY:** comportamento/expander exato; não inventar componente `CommercialFilterPopover` |
@@ -587,14 +587,15 @@ Os números servem **apenas de exemplo**, não podem ser copiados para dados de 
 9. Loading, vazio, sem classificação, amostra suprimida e erro distintos; nenhum valor ausente/suprimido renderizado como zero.
 10. Testes em desktop, tablet, celular, zoom 200–400%, com teclado/leitor de tela; verificar expansão, recolhimento, foco, nomes longos, preservação de unidades, segurança e regressão dos componentes compartilhados. Relatório de execução com HEAD/branch/working tree, diff, testes, outcome e gaps.
 
-## 8. Consulta individual — somente Marketing/Manage
+## 8. Consulta por empresa — página independente, somente Marketing/Manage
 
-**Não é um card de advertência vazio para usuários comuns.** Para `commercial.access`, essa região **não é renderizada nem carregada**. Para gestores:
-- `SectionCard` “Respostas por empresa”, `CommercialDataTable` com empresa (`codigo + loja`, usando padrão autorizado), período/data, IGS individual, NPS individual e indicação de comentários; coluna de ação contextual “Abrir resposta”.
-- `CommercialHostDrawer` + `CommercialDetailCard`/`CommercialDetailFieldGrid` para leitura imutável da resposta (10 dimensões, IGS, NPS, três comentários) e identificação da empresa.
-- Ação de abrir resposta existe na linha, **exceção contextual** à regra de botões globais no Hero; filtros da lista, se necessários, ficam no Hero e somente para gestores.
-- Sem editar, excluir, expor token, reenviar pesquisa ou criar ações da entrega 2. Se houver intenção de exportar dados individuais, só após nova decisão e avaliação de privacidade.
-- Segurança no backend: `commercial.marketing` OU `commercial.manage`; `commercial.access` isolado nunca autoriza endpoint individual. Incluir testes negativos reais.
+**Decisão aprovada:** **Respostas por Empresa** não é seção/tabela da página principal de Resultados. A consulta individual e de participação ficará em uma **página própria de leitura**, documentada em [UI-06 — Respostas por Empresa](./UI-06-RESPOSTAS-POR-EMPRESA.md). Resultados permanece uma página **exclusivamente analítica e agregada** (Resumo, Evolução, Dimensões e Comparação por grupos).
+
+**Entrada sem redundância de topbar:** manter a topbar principal intacta. No **`CommercialPageHero` de Resultados**: `Atualizar`, `Respostas por empresa`, `Configuração`, nessa ordem de intenção; dois últimos somente para Marketing/Manage autorizado. `CommercialPagePath` mostra a trilha; usar `pluginRoutes.ts` / navegação existente, sem URLs absolutas improvisadas. Na UI-06, o Hero oferece `Ver resultados`, `Configuração` e `Atualizar`. A UI-02 oferece caminho contextual para Respostas por Empresa e retorno a Resultados. **Rotas são propostas, não implementadas.**
+
+**Padrão de identidade aprovado:** dentro da lista e dos cards de Respostas por Empresa reutilizar **`CustomerAvatar` real** de `plugins/commercial/src/features/customers/components/CustomerAvatar.tsx` (que usa `createInitialsAvatar("cm")` do PluginUI). Avatar e nome levam à **Conta do Cliente** via helpers de navegação atuais; `Ver resposta` é ação independente que abre o **`CommercialHostDrawer`** somente leitura, sem desviar para a conta. A identidade é **`customer_code + customer_store`**. A imagem só é consultada se `hasAvatar` oficial estiver disponível; caso contrário, iniciais do kit, **sem dados inventados nem armazenamento de avatar duplicado**.
+
+A página independente lista **respondidas e pendentes**, sem criar participantes nem copiar convites; essas ações pertencem exclusivamente à Configuração. Consulta privada e drill-down exigem autorização definitiva no `commercial-api`; `commercial.access` isolado não autoriza acesso. As notas individuais são `overall_score` (1–5) e `recommendation_score` (0–10); **não rotular notas por empresa como IGS ou NPS agregados**.
 
 ## 9. Estados, acessibilidade e responsividade
 
@@ -649,12 +650,12 @@ Desktop: Hero compacto, KPIs em 5 colunas quando couber, gráfico combinado e to
 ## 12. Critérios de aceite e testes
 
 1. `CommercialPagePath` + **um Hero real do PluginUI**, com **todos** os filtros e ações globais dentro dele; Configuração só para gestão. Sem toolbar de filtros espalhada sob o Hero.
-2. Após o Hero: **Resumo → Evolução histórica → Dez dimensões → Comparativos → Respostas privadas**; sem tabela histórica fixa na Evolução.
+2. Após o Hero: **Resumo → Evolução histórica → Dez dimensões → Comparativos**; **sem respostas privadas nesta página** e sem tabela histórica fixa na Evolução. O Hero inclui navegação autorizada à UI-06.
 3. Cinco KPIs; base e período explícitos; trend apenas quando calculável; delta pontual correto, sem cor induzida.
 4. Gráfico combinado IGS/NPS dual-axis, sem tabela fixa, com tipo, inspector, preferências e exportação do PluginUI; detalhes por campanha sob demanda e ano completo recalculado pelo backend, sem média de médias.
 5. `CommercialHorizontalValueBars` usa `max={5}`, ranking, `meta=n válido`, dez perguntas oficiais e layout responsivo.
 6. Comparativo aprovado: cinco indicadores visíveis + dez dimensões expansíveis **na mesma tabela**; Geral/Estratégicos/Demais, desktop em quatro colunas e celular em cards por indicador; mostrar bases autorizadas, não inventar estratificação, e `commercial.access` não consegue inferir grupos pequenos por diferença ou filtros.
-7. Com `commercial.access`, nenhum request a endpoints identificados ou montagem do drawer; gestor lê resposta imutável. Backend decide todas as autorizações.
+7. Com `commercial.access`, nenhum request a endpoints identificados ou montagem do drawer; gestor consulta respostas imutáveis **na UI-06**, não no corpo de Resultados. Backend decide todas as autorizações.
 8. Loading, vazio, erro, supressão e indisponibilidade de fonte diferentes; retry global no Hero.
 9. Todos os visuais vêm do PluginUI/CommercialUi existente; inventário residual de exports/props e testes de regressão do Portal antes do diff; nenhuma abstração/CSS novo sem Abstraction Gate.
 10. Desktop/tablet/mobile, teclado, zoom, foco, contraste e leitores de tela verificados.
