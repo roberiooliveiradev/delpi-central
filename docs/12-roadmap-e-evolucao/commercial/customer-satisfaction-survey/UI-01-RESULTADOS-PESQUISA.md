@@ -109,24 +109,142 @@ A página real usa **`CommercialPageHero` com densidade `compact` (default do wr
 
 **Volume e desempenho:** Ano/Campanha/Grupo sempre visíveis. Controles menos frequentes em “Mais filtros”, dentro do mesmo Hero; estado de filtros ativos permanece identificável. A seleção `Ano completo` só é oferecida se a API suportar consolidação adequada. Não usar `AnalyticsFilters` diretamente se sua semântica de pedidos/competência não corresponder à pesquisa: reutilizar **as primitivas oficiais**, não seus filtros operacionais.
 
-## 4. Resumo executivo — composição PluginUI
+## 4. Resumo executivo — composição aprovada, responsividade e PluginUI
 
-**Objetivo:** responder imediatamente “como foi a pesquisa?” com contexto e tendência.
+> **Decisão de UX registrada em 11/11/2026:** cinco KPIs compactos com mesmo peso visual, todos com tendência em relação à campanha anterior **quando válida**, descrição da métrica e contexto da amostra. Abaixo é especificação de UI e testes, **não evidência de implementação**. A composição é revisada nesta etapa; fórmulas pertencem ao backend.
 
-| Parte | Reuso PluginUI / Comercial | Regra exata |
+### 4.1 Conteúdo, ordem, hierarquia e semântica
+
+A seção inicia **imediatamente depois do Hero**. O título é **“Resumo executivo”**. Na mesma faixa de cabeçalho, mostrar identificação exata da campanha/período selecionado e **“N respostas de N participantes cadastrados”** com fonte e contagem oficiais. Não criar sexto KPI “Respondentes”; o denominador está no cabeçalho e no contexto da Taxa de resposta. Se o filtro abranger múltiplas campanhas, explicitar **respostas por empresa/campanha** e participantes elegíveis por campanha, em vez de insinuar empresas únicas.
+
+**Ordem fixa dos cinco cards:** 1. **IGS**; 2. **NPS**; 3. **Taxa de resposta**; 4. **Satisfeitos**; 5. **Críticos**. Todos têm mesmo tamanho/hierarquia no desktop e na composição responsiva, nenhum recebe destaque especial ou largura dupla. Não destacar Críticos em barra separada ou tom vermelho sem política formal.
+
+Cada card apresenta, nessa ordem: **rótulo + ajuda contextual**, **valor principal**, **variação anterior com unidade correta**, **legenda de comparação identificando a campanha anterior**; a indicação de base/definição fica na ajuda e no contexto. Quando não existir comparação válida: “Sem comparação anterior” no slot de tendência, **sem valor `0` inventado**.
+
+| Indicador | Valor principal | Variação vs. anterior | `titleHint` e regra oficial |
+|---|---|---|---|
+| **IGS** | `4,3 / 5` | `+0,2 ponto` | Média de satisfação geral das respostas válidas (escala 1 a 5); não é média das dez dimensões, salvo contrato canônico mudar explicitamente |
+| **NPS** | `+48` (faixa -100 a +100) | `+7 pontos` | % promotores (9–10) − % detratores (0–6); passivos (7–8) contam na base; delta em pontos do índice, não em % |
+| **Taxa de resposta** | `72%` | `−2 p.p.` | Respostas definitivas / participantes cadastrados e elegíveis da campanha, conforme denominação oficial do backend; cópia manual não comprova envio |
+| **Satisfeitos** | `84%` | `+2 p.p.` | % com nota geral 4 ou 5, relativo às notas gerais válidas |
+| **Críticos** | `6%` | `−2 p.p.` | % com nota geral 1 ou 2, relativo às notas gerais válidas; não é quantidade de casos de plano de ação |
+
+**Números da tabela são somente ilustrativos** e não entram na implementação como valores padrão. Para todos os deltas: `resultado período atual − resultado período anterior` com mesmo cálculo, fontes oficiais e recorte suficientemente comparável. A legenda precisa indicar **qual foi a campanha anterior** (ex.: “vs. 2026/1”), não apenas “vs. anterior” sem referência.
+
+**Interpretação e cor:** subir IGS/NPS/Resposta/Satisfeitos pode ser direção favorável; **reduzir Críticos** pode ser favorável. Entretanto, cor verde ou vermelha somente se uma política explícita definir essa interpretação e a amostra for comparável. Até essa definição, apresentar **sinal numérico e unidade com cor neutra**, sem semáforo ou classificação automática. Taxa de resposta menor não pode ser confundida com satisfação menor. Nunca adicionar meta, velocidade/velocímetro, IDD ou limiar de criticidade não aprovados.
+
+### 4.2 Wireframes por largura — conteúdo completo, não apenas rearranjo
+
+**Desktop largo** (faixa referencial **≥ 1200 px de área útil do conteúdo**, não apenas largura da janela): cinco cards na mesma linha, mantendo mesma largura. Os limites são **alvos de design, sujeitos a teste real com shell e zoom**, não breakpoints já comprovados do kit.
+
+```text
+┌─ RESUMO EXECUTIVO ──────────────────────────────────────────────────────────────────────────┐
+│ Pesquisa 2026/2 · data/período             72 respostas / 100 participantes cadastrados  │
+│                                                                                           │
+│ ┌─ IGS ─────────┐ ┌─ NPS ─────────┐ ┌─ TAXA DE ─────┐ ┌─ SATISFEITOS ─┐ ┌─ CRÍTICOS ──┐ │
+│ │ 4,3 / 5      │ │ +48           │ │ RESPOSTA      │ │ 84%            │ │ 6%           │ │
+│ │ +0,2 ponto   │ │ +7 pontos     │ │ 72%           │ │ +2 p.p.       │ │ −2 p.p.      │ │
+│ │ vs. 2026/1   │ │ vs. 2026/1    │ │ −2 p.p.       │ │ vs. 2026/1     │ │ vs. 2026/1   │ │
+│ │ (?) fórmula  │ │ (?) fórmula   │ │ vs. 2026/1    │ │ (?) fórmula    │ │ (?) fórmula  │ │
+│ └──────────────┘ └───────────────┘ └───────────────┘ └────────────────┘ └──────────────┘ │
+└───────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Tablet / notebook estreito** (faixa referencial **600–1199 px úteis**): grid em **duas colunas**. Quinto card na posição padrão da terceira linha; **não** ocupar as duas colunas, não criar card maior ou layout especial para o último. Repetir tendência e ajuda em todos.
+
+```text
+┌─ RESUMO EXECUTIVO ─────────────────────────────┐
+│ Pesquisa 2026/2 · 72 de 100                   │
+│ ┌─ IGS ───────────────┐ ┌─ NPS ─────────────┐ │
+│ │4,3/5; +0,2 ponto   │ │+48; +7 pontos    │ │
+│ │vs. 2026/1; ajuda   │ │vs. 2026/1; ajuda │ │
+│ └─────────────────────┘ └───────────────────┘ │
+│ ┌─ TAXA RESPOSTA ─────┐ ┌─ SATISFEITOS ─────┐ │
+│ │72%; −2 p.p.        │ │84%; +2 p.p.      │ │
+│ │vs. 2026/1; ajuda   │ │vs. 2026/1; ajuda │ │
+│ └─────────────────────┘ └───────────────────┘ │
+│ ┌─ CRÍTICOS ──────────┐                       │
+│ │6%; −2 p.p.         │                       │
+│ │vs. 2026/1; ajuda   │                       │
+│ └─────────────────────┘                       │
+└────────────────────────────────────────────────┘
+```
+
+**Celular** (área útil **< 600 px**, referencial): **uma coluna**, ordem idêntica. Cards de altura compacta; valor principal e variação podem estar em linhas próximas **via slot `hint` existente**, respeitando o componente oficial. **Não forçar duas colunas**, rolagem horizontal, microtexto ou esconder tendência/ajuda.
+
+```text
+┌─ RESUMO EXECUTIVO ─────────────┐
+│ Pesquisa 2026/2               │
+│ 72 de 100 participantes       │
+│ ┌─ IGS ──────────────────────┐ │
+│ │ 4,3 / 5                   │ │
+│ │ +0,2 ponto · vs. 2026/1   │ │
+│ └───────────────────────────┘ │
+│ ┌─ NPS ──────────────────────┐ │
+│ │ +48                       │ │
+│ │ +7 pontos · vs. 2026/1    │ │
+│ └───────────────────────────┘ │
+│ ┌─ TAXA DE RESPOSTA ─────────┐ │
+│ │ 72%                       │ │
+│ │ −2 p.p. · vs. 2026/1      │ │
+│ └───────────────────────────┘ │
+│ ┌─ SATISFEITOS ──────────────┐ │
+│ │ 84%                       │ │
+│ │ +2 p.p. · vs. 2026/1      │ │
+│ └───────────────────────────┘ │
+│ ┌─ CRÍTICOS ─────────────────┐ │
+│ │ 6%                        │ │
+│ │ −2 p.p. · vs. 2026/1      │ │
+│ └───────────────────────────┘ │
+└───────────────────────────────┘
+```
+
+**Acessibilidade em todas as larguras:** `titleHint` acessível por teclado e leitor de tela, alvo acionável quando houver ajuda, ordem de foco coerente com ordem visual, contraste do tema existente, zoom de 200–400% sem corte de valores/tendências, não depender só de cor/ícone para sinal do delta, unidades lidas corretamente (pontos vs. pontos percentuais). Sem criar CSS de breakpoint específico desta tela se o grid responsivo oficial existente resolver.
+
+### 4.3 Componentes exatos do PluginUI e contratos de props (confirmados no código)
+
+| Peça | Nome no Comercial / origem no PluginUI | Props e decisão |
 |---|---|---|
-| Container e subtítulo | `SectionCard` (PluginUI), `cmSectionCardClassNames`/`cmSectionLabels` ou `CommercialSectionCard` | Título “Resumo executivo”; informar campanha/período e `respondentes / participantes cadastrados` |
-| IGS | `CommercialMetricCard` (`createMetricKpiCard`) | Média 1–5, valor `x,x / 5`, **delta em pontos de escala**, se comparável |
-| NPS | `CommercialMetricCard` | -100 a +100; variação em **pontos de NPS**, nunca percentual |
-| Taxa de resposta | `CommercialMetricCard` | respostas / participantes cadastrados; delta em **pontos percentuais (p.p.)**, não “convites enviados” |
-| Satisfeitos (4–5) | `CommercialMetricCard` | percentual entre notas gerais válidas |
-| Críticos (1–2) | `CommercialMetricCard` | percentual entre notas gerais válidas, não número de casos abertos |
-| Variação | `CommercialTrendDelta` (`createDashboardTrendDelta`) quando props suportarem, ou `hint` de `CommercialMetricCard` | Mostrar somente com comparação válida, nomear o período anterior e denominadores; sem “positivo” automático para crescimento da taxa de críticos |
-| Carregando/vazio/erro | `CommercialLoadingCard`, `EmptyState`, `CommercialStateBanner` | Não renderizar 0 para ausência; erro ≠ período sem respostas |
+| **Container de seção** | `SectionCard` de `@delpi/plugin-ui/index`; alternativa já existente `CommercialSectionCard` = `createDashboardSectionCard` | `title="Resumo executivo"`, `cmSectionCardClassNames`, `cmSectionLabels` se usar diretamente `SectionCard`, mesmo padrão de `OverviewPage.tsx` |
+| **Cinco KPIs** | `CommercialMetricCard` em `commercialUi.ts` → `createMetricKpiCard("cm")` → `MetricKpiCard` em `plugins/plugin-ui/src/components/layout/MetricKpiCard.tsx` | **`label`, `value`, `titleHint`, `hint`** são props reais. `hint` aceita `ReactNode`: acomodar delta e legenda. `hero=false`, `tone="default"`, `onClick` ausente para não insinuar drill-down |
+| **Ajuda de fórmula** | `HelpTooltip` integrado ao próprio `MetricKpiCard` via `titleHint` | Não criar ícone `?` ou tooltip manual dentro da página |
+| **Tendências** | `hint` de `CommercialMetricCard`; **não usar `CommercialTrendDelta` nesta seção** | Verificado que `TrendDelta.tsx` usa `formatTrendDeltaPct` e acrescenta `%` para qualquer `value` numérico. Isso **produziria unidade errada** para `+0,2 ponto`, `+7 pontos`, `−2 p.p.`. Usar texto formatado pelo domínio no slot do card; somente considerar evolução do PluginUI via Abstraction Gate se houver necessidade repetida |
+| **Grid** | Grid responsivo já usado por `OverviewPage.tsx` com classes oficiais da área `cm-home-kpi-grid`/`cm-overview-kpi-grid`, após conferir seu CSS e breakpoints | Manter **5 / 2 / 1 colunas** em larguras úteis adequadas; não declarar que as classes atuais já realizam exatamente essa distribuição sem teste; ajustar apenas composição usando layout existente |
+| **Loading** | `CommercialLoadingCard` em `commercialUi.ts` → `createDashboardLoadingActivityCard` | Enquanto aguarda consulta; não exibir zeros |
+| **Vazio** | `EmptyState` (PluginUI) + `cmEmptyStateClassNames` | “Ainda não há resultados disponíveis para este período” conforme estado oficial |
+| **Erro/protegido** | `CommercialStateBanner` → `createDashboardStateBanner` | Mensagem de falha distinta de privacidade/amostra; retry **global somente no Hero** |
 
-**Densidade:** cinco KPIs em uma faixa responsiva existente (`cm-home-kpi-grid` apenas se coerente com o Portal), sem sexto card “respondentes”. Respondentes entram no contexto do bloco. **Não separar críticos em barra com cor de alerta**: mesma hierarquia visual dos outros cinco indicadores; possível tratamento de cor só se houver política oficial. Não inventar metas de IGS, NPS ou limiar `IGS<4`.
+**Não usar:** `CommercialDashboardKpiCard` (metas/IDD desnecessários), `CommercialSpeedometerGauge` (meta/limiar inexistente), `CommercialCompareSparkline` (histórico já está na seção seguinte), `CommercialTrendDelta` (formata percentual incorretamente para estes deltas), cards nativos estilizados ou classes CSS exclusivas sem inventário.
 
-**Comparações:** valor da pesquisa anterior é contexto com período, delta somente se ambos têm dados e método idêntico. Mudanças de população devem ficar visíveis para evitar inferir melhoria causal; comparar períodos de grupos distintos é análise descritiva, não comprovação de impacto.
+**Verificação pendente só de integração:** breakpoints reais do grid do Portal e espaço disponível no shell, como o `hint: ReactNode` se comporta em mobile, e correspondência dos cinco KPIs aos campos fornecidos pelo endpoint oficial. Nada disso autoriza criar componente novo antes de medir.
+
+### 4.4 Estados e cálculos/denominadores
+
+| Situação | UI do Resumo |
+|---|---|
+| Campanha válida encerrada com respostas e anterior comparável | Cinco valores e cinco deltas com unidade, período comparado e amostra |
+| Campanha válida sem anterior | Cinco valores quando conhecidos; em cada card “Sem comparação anterior” |
+| Resultado anual/recorte de múltiplas campanhas | Recalcular com todas as respostas válidas da seleção **no backend**; delta só se comparação anual/temporal explicitamente definida e comparável |
+| Sem campanha encerrada | `EmptyState` contextual; não fabricar zero |
+| Campanha sem respostas | Taxa pode ser `0%` **somente quando denominador real válido existir**, IGS/NPS/Satisfeitos/Críticos ficam “—” sem nota; evitar marcar tudo como erro |
+| Falha de API | `CommercialStateBanner`, retry no Hero; não exibir KPI antigo como se fosse atual sem status de desatualização |
+| Amostra suprimida/recorte pequeno | Apresentar “Dados protegidos” conforme decisão do backend, sem permitir recompor via outro filtro ou delta |
+| Filtro sem fonte oficial | Filtro indisponível no Hero; não falsificar segmentação |
+
+**Cálculos canônicos:** IGS usa notas gerais válidas (1–5), NPS usa diferença percentual de promotores/detratores nas respostas 0–10, satisfação 4–5 e criticidade 1–2 usam a pergunta geral, taxa usa respostas definitivas/participantes cadastrados/elegíveis conforme contrato da campanha. A API é autoridade; frontend apenas formata número, unidade e texto de período. NPS acumulado **não** deve ser calculado como média de NPS sem dados de amostra.
+
+### 4.5 Critérios de aceite objetivos — Resumo Executivo
+
+1. Resumo aparece logo abaixo do `CommercialPageHero`, sem filtros ou ações globais duplicadas na seção.
+2. Cinco `CommercialMetricCard`, mesma hierarquia e ordem IGS/NPS/Taxa/Satisfeitos/Críticos; sem sexto card nem barra especial para críticos.
+3. Cabeçalho identifica campanha/período e informa respostas e participantes cadastrados, distinguindo campanha individual de ano consolidado.
+4. Todos os cinco KPIs exibem deltas **apenas quando comparáveis**; valores com unidades corretas e período anterior explícito. Ausência de comparação não aparece como 0.
+5. Todos usam `titleHint` para fórmula; tendências no `hint` existente do card, sem uso indevido de `CommercialTrendDelta`.
+6. Desktop: 5 colunas quando o shell oferecer espaço; tablet: 2; celular: 1. Nenhum KPI ausente, quinto sem largura extra e nenhum scroll horizontal.
+7. Acessibilidade: foco, teclado, tooltips, zoom, contraste, leitor de tela; texto de tendência não depende só de cor.
+8. Estados carregando, sem campanha, sem respostas, falha e amostra protegida são distintos e refletem decisões do backend.
+9. Nenhuma meta, limiar ou classificação colorida inventada; nenhuma consulta identificável para `commercial.access`.
+10. Validar CSS/grid do Portal e propriedades `hint` nos três tamanhos reais em testes de UI; relatório de execução com capturas por viewport, HEAD, diff, testes e resultados.
 
 ## 5. Evolução histórica — um bloco, gráfico + tabela
 
