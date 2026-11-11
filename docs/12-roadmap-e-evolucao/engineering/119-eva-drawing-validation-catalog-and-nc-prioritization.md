@@ -2558,3 +2558,33 @@ SECURITY=OK (sem secrets/logs novos; proveniência preservada)
 ROLLBACK_READY=YES (imagem anterior + git revert de d6da831c9f)
 RELEASE_DECISION=PASS
 ```
+
+### 70. G6 — Recuperação visual localizada por evidência de papel (2026-11-11)
+
+**TASK:** `EVA-VAL01-G6-GOVERNED-STRUCTURE-GUIDED-VISUAL-RECOVERY`. Incremento no mesmo bounded context, sem exceção por produto.
+
+**Caso principal 90264061 — A6/`10211552`:** o token existe no OCR (x 459–529, y 222–246) mas o centro fica ~2px fora do bbox declarado de r7c5 e coberto pelas extensões de grade de 4 células vazias (r6c4, r6c5, r7c4, r7c5) → competição → fail-closed. A primeira perda é a **ambiguidade de extensão de grade em células vazias concorrentes**.
+
+**Implementação (`perception_contract._disambiguate_by_column_role`, reutilizada por `fill_empty_cells_from_unassigned_grid_extent`):**
+
+1. *Estágio linha:* o conteúdo pertence à linha que emite ocorrência — provada por célula de item (`^[A-Z]{1,2}\d{0,2}$`) ou quantidade (`^\d{1,4}([.,]\d+)?$`) populada naquela linha. Linhas-fantasma (só descrição/continuação) não absorvem código.
+2. *Estágio coluna:* densidade de código das irmãs populadas (grades desalinhadas espalham códigos por colunas vizinhas) — máximo único decide; empate → token permanece `unassigned` (fail-closed).
+
+Proveniência preservada: `association_method=grid_extent_unassigned` + `ambiguous=True` + `token_refs`.
+
+**Resultados no pipeline fiel (container, código candidato, SLANet real):**
+
+| Desenho | Antes | Depois |
+|---|---|---|
+| `90264061` | 5/5 ID (A6 ausente) | **6/6 ID — A6/`10211552` qty 2 → `50225531` recuperado** |
+| `90264004` | 9/9 | **10/10** (+`10400035` qty 6 → `50225479`, linha AA legítima) |
+| `90264138` | 10/3 | 10/3 (1 fill adicional sem mudança de estado) |
+| `90264128/302/174/275` | — | **inalterados** |
+
+RQs estruturais verificados como já atendidos pelo contrato existente: RQ-01 (`DELPI_TABLE_PRESENTATION` + promoção/âncora G5), RQ-02/RQ-05 (`compare_bom_to_drawing` + `align_structure_to_drawing` — função pura, bidirecional, fail-closed UNKNOWN/NOT_COMPARABLE, sem novo comparador). Reinspeção por re-OCR de recorte **não implementada** — a recuperação por evidência geométrica+perfil cobriu a classe provada; re-OCR fica para decisão arquitetural se uma classe residual exigir.
+
+```text
+G6_LOCALIZED_RECOVERY=grid-extent-disambiguation (2-stage evidence)
+FALSE_LINKS=0 novos — empate e perfil ambíguo permanecem unassigned
+IDEMPOTENCY=preenche apenas célula vazia, proveniência registrada
+```

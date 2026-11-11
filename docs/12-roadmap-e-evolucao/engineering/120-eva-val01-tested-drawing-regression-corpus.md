@@ -644,3 +644,19 @@ Harness: benchmark OCR + TableStructureEngine (código candidato `d6da831c9f` vi
 | `90264061` | 1 | 5/1/4 | **5/5/0** | **PASS+** — âncora prefixada + bloco rs4 |
 
 **Saldo:** +18 ID líquidos, 0 regressões, 0 falsos vínculos, UNKNOWN preservado onde não há prova.
+
+### Log G6-RECOVERY — Recuperação localizada no pipeline fiel (2026-11-11)
+
+Mecanismo: `fill_empty_cells_from_unassigned_grid_extent` + `_disambiguate_by_column_role` (2 estágios: evidência de linha → densidade de coluna). Payloads gerados no container com código candidato via PYTHONPATH; `build_document_understanding`+`apply_native_table_observations` local.
+
+| Desenho | Antes | Depois | Recuperação |
+|---|---|---|---|
+| `90264061` | 5 occ/5 ID | **6 occ/6 ID** | A6/`10211552` qty 2 → `50225531` — token órfão desambiguado para r7c5 (prova: linha com item A6+qty 2; coluna densidade código máxima) |
+| `90264004` | 9/9 | **10/10** | `10400035` qty 6 → `50225479` (linha AA) |
+| `90264138` | 13/10/3 | 13/10/3 | inalterado |
+| `90264128` | 23/20/3 | 23/20/3 | inalterado |
+| `90264302` | 4/4 | 4/4 | controle |
+| `90264174` | 4/4 | 4/4 | controle |
+| `90264275` | 7/7 | 7/7 | controle |
+
+**Testes:** 19/19 G5 file (2 novos RED→GREEN: desambiguação por papel + empate fail-closed); suíte `tests/` **1104 passed / 5 failed** — mesmas 5 pré-existentes classificadas em §69.

@@ -575,3 +575,63 @@ def test_rehomed_band_crossing_parent_boundary_stays_unknown():
     assert migrated and all(
         o["parent_state"] == "UNKNOWN" for o in migrated
     )
+
+
+def test_grid_extent_disambiguates_by_column_role():
+    """Classe 061-A6: token órfão coberto por duas células vazias.
+
+    A célula do código existe mas seu bbox não contém o token; a célula
+    vizinha (descrição) também está vazia. O papel da coluna — provado
+    pelo conteúdo das irmãs — decide; sem coluna compatível única o
+    token permanece unassigned.
+    """
+    from engineering_app.application.drawing.perception_contract import (
+        fill_empty_cells_from_unassigned_grid_extent as fill,
+    )
+
+    cells = [
+        _cell(0, 0, "A5", _quad(300, 30, 360, 50)),
+        _cell(0, 1, "2", _quad(370, 30, 400, 50)),
+        # código largo estende a banda da coluna de código sobre a
+        # coluna vizinha — reproduz a sobreposição real do 061
+        _cell(0, 2, "10080010", _quad(410, 30, 560, 50)),
+        _cell(0, 3, "TERMINAL ISOLADO", _quad(490, 30, 700, 50)),
+        _cell(1, 0, "A6", _quad(300, 50, 360, 70)),
+        _cell(1, 1, "2", _quad(370, 50, 400, 70)),
+        _cell(1, 2, "", _quad(370, 52, 480, 74)),
+        _cell(1, 3, "", _quad(490, 52, 700, 74)),
+    ]
+    token = {
+        "text": "10211552",
+        # centro dentro das extensões de AMBAS as células vazias,
+        # fora do bbox declarado de qualquer uma
+        "bounding_box_px": _quad(478, 56, 548, 60),
+    }
+    remaining = fill(cells, [token], [0])
+    assert remaining == []
+    assert cells[6]["text"] == "10211552"
+    assert cells[6]["association_method"] == "grid_extent_unassigned"
+    assert cells[7]["text"] == ""
+
+
+def test_grid_extent_competition_without_role_stays_unassigned():
+    """Sem prova de papel (colunas com perfil idêntico) → fail-closed."""
+    from engineering_app.application.drawing.perception_contract import (
+        fill_empty_cells_from_unassigned_grid_extent as fill,
+    )
+
+    cells = [
+        _cell(0, 0, "10080010", _quad(410, 30, 560, 50)),
+        _cell(0, 1, "10380035", _quad(460, 30, 560, 50)),
+        _cell(1, 0, "", _quad(410, 52, 480, 74)),
+        _cell(1, 1, "", _quad(490, 52, 560, 74)),
+    ]
+    token = {
+        "text": "10211552",
+        # coberto pelas extensões das duas células vazias; ambas as
+        # colunas são de código → empate → fail-closed
+        "bounding_box_px": _quad(478, 56, 548, 60),
+    }
+    remaining = fill(cells, [token], [0])
+    assert remaining == [0]
+    assert all(c["text"] == "" for c in cells[2:])

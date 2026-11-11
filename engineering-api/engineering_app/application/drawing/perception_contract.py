@@ -559,18 +559,22 @@ def fill_empty_cells_from_unassigned_grid_extent(
             and e[0] <= cx <= e[2]
             and e[1] <= cy <= e[3]
         ]
-        # Mais de uma célula reivindicando o token → a grade está
-        # ambígua; não associar é a resposta honesta.
-        if len(hits) != 1:
-            remaining.append(ti)
-            continue
-        cell = hits[0]
         raw = str(
             tok.get("normalized_text")
             or tok.get("raw_text")
             or tok.get("text")
             or ""
         ).strip()
+        # Mais de uma célula reivindicando o token: a ambiguidade só é
+        # resolvida com prova de papel — a coluna das irmãs populadas
+        # diz se aquele espaço é de código ou de texto. Sem coluna
+        # compatível única, não associar é a resposta honesta.
+        if len(hits) != 1:
+            hits = _disambiguate_by_column_role(hits, raw, cells)
+            if len(hits) != 1:
+                remaining.append(ti)
+                continue
+        cell = hits[0]
         if not raw:
             remaining.append(ti)
             continue
@@ -587,6 +591,77 @@ def fill_empty_cells_from_unassigned_grid_extent(
             refs.append(ti)
         cell["token_refs"] = refs
     return remaining
+
+
+_CODE_TOKEN_RE = re.compile(r"\d{6,11}")
+_NUM_TOKEN_RE = re.compile(r"^\d{1,4}([.,]\d+)?$")
+_ITEM_TOKEN_RE = re.compile(r"^[A-Z]{1,2}\d{0,2}$")
+
+
+def _disambiguate_by_column_role(
+    hits: list[dict], raw: str, cells: list[dict]
+) -> list[dict]:
+    """Resolve competição de células vazias por papel da coluna.
+
+    A prova é o perfil das irmãs populadas: coluna cujos textos são
+    majoritariamente códigos recebe token código; coluna de texto
+    recebe token textual. Sem candidato único compatível, a lista
+    volta vazia e o token permanece não associado (fail-closed).
+    """
+    if not raw or not hits:
+        return []
+    if _CODE_TOKEN_RE.search(raw):
+        wanted = "code"
+    elif _NUM_TOKEN_RE.fullmatch(raw):
+        wanted = "number"
+    else:
+        wanted = "text"
+    # Estágio 1 — linha: o conteúdo pertence à linha que emite
+    # ocorrência, provada por célula de item ou quantidade populada.
+    # Linhas-fantasma (só descrição/continuação) não absorvem código.
+    def _row_has_occurrence_evidence(cell: dict) -> bool:
+        row = int(cell.get("row") or 0)
+        for c2 in cells:
+            if int(c2.get("row") or 0) != row:
+                continue
+            t = str(c2.get("text") or "").strip()
+            if t and (
+                _ITEM_TOKEN_RE.fullmatch(t) or _NUM_TOKEN_RE.fullmatch(t)
+            ):
+                return True
+        return False
+
+    emitting = [c for c in hits if _row_has_occurrence_evidence(c)]
+    pool = emitting if emitting else hits
+    if len(pool) == 1:
+        return pool
+    # Estágio 2 — coluna: densidade de código das irmãs populadas.
+    # Grades desalinhadas espalham códigos por colunas vizinhas; o
+    # máximo único decide, empate permanece inconclusivo.
+    col_codes: dict[int, int] = {}
+    col_total: dict[int, int] = {}
+    for c in cells:
+        t = str(c.get("text") or "").strip()
+        if not t:
+            continue
+        col = int(c.get("col") or 0)
+        col_total[col] = col_total.get(col, 0) + 1
+        if _CODE_TOKEN_RE.search(t):
+            col_codes[col] = col_codes.get(col, 0) + 1
+
+    def _density(cell: dict) -> float:
+        col = int(cell.get("col") or 0)
+        total = col_total.get(col, 0)
+        if total == 0:
+            return -1.0
+        frac = col_codes.get(col, 0) / total
+        return frac if wanted == "code" else 1.0 - frac
+
+    best = max(pool, key=_density)
+    if _density(best) <= 0:
+        return []
+    tied = [c for c in pool if _density(c) == _density(best)]
+    return tied if len(tied) == 1 else []
 
 
 def resolve_requested_page(
