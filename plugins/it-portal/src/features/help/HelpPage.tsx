@@ -29,7 +29,7 @@ function scrollToSection(id: string) {
 export function HelpPage() {
   return (
     <>
-      <ItpPageHero aria-label="Ajuda" eyebrow="Ajuda" title="Como usar o Portal de TI" />
+      <ItpPageHero variant="immersive" aria-label="Ajuda" eyebrow="Ajuda" title="Como usar o Portal de TI" />
       <Manual.Frame>
         <Manual.Layout
           title="Nesta página"
@@ -49,7 +49,12 @@ export function HelpPage() {
                 {
                   term: "Início",
                   meaning:
-                    "Indicadores calculados a partir do inventário: servidores ativos, criticidade alta/crítica, ações abertas e atrasadas.",
+                    "Indicadores calculados a partir do inventário: servidores ativos, criticidade alta/crítica, ações abertas e atrasadas. Os cartões são clicáveis e levam à lista correspondente; «Acesso rápido» abre as áreas que você pode ver e «Próximas ações» mostra o cronograma de evoluções ainda indisponíveis.",
+                },
+                {
+                  term: "Saúde do inventário",
+                  meaning:
+                    "Percentual de servidores ativos sem criticidade alta ou crítica, calculado do cadastro. Não é uptime: o portal não mede disponibilidade nem sabe se um servidor está online.",
                 },
                 {
                   term: "Situação administrativa",
