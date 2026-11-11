@@ -114,17 +114,25 @@ function DashboardContent({ data, basePath }: { data: Dashboard; basePath: strin
 
   return (
     <>
-      <div className="itp-kpi-grid" role="group" aria-label="Indicadores">
+      <div className="itp-home-kpis" role="group" aria-label="Indicadores">
         <ItpKpiCard
           label="Servidores ativos"
           value={formatCount(data.servers.total)}
-          hint="Cadastros não arquivados"
+          status={{ label: "Operacionais", tone: "positive", trend: "up" }}
+          onSelect={() => navigateTo(serversHref)}
+          aria-label="Ver servidores"
           icon={<ServerIcon size={18} strokeWidth={1.75} aria-hidden="true" />}
         />
         <ItpKpiCard
           label="Criticidade alta ou crítica"
           value={formatCount(data.servers.high_or_critical)}
-          hint="Servidores ativos"
+          status={
+            data.servers.high_or_critical > 0
+              ? { label: "Requer atenção", tone: "warning", trend: "up" }
+              : { label: "Sem criticidade elevada", tone: "positive", trend: "flat" }
+          }
+          onSelect={() => navigateTo(serversHref)}
+          aria-label="Ver servidores"
           tone={data.servers.high_or_critical > 0 ? "warning" : "default"}
           icon={<ShieldAlert size={18} strokeWidth={1.75} aria-hidden="true" />}
         />
@@ -133,13 +141,21 @@ function DashboardContent({ data, basePath }: { data: Dashboard; basePath: strin
             <ItpKpiCard
               label="Ações abertas"
               value={formatCount(data.action_plans.open)}
-              hint="Pendentes ou em andamento"
+              status={{ label: "Em andamento", tone: "neutral", trend: "down" }}
+              onSelect={() => navigateTo(actionsHref)}
+              aria-label="Ver planos de ação"
               icon={<ListTodo size={18} strokeWidth={1.75} aria-hidden="true" />}
             />
             <ItpKpiCard
               label="Ações atrasadas"
               value={formatCount(data.action_plans.overdue)}
-              hint={`Prazo anterior a ${formatDate(data.reference_date)}`}
+              status={
+                data.action_plans.overdue > 0
+                  ? { label: "Requer atenção", tone: "negative", trend: "up" }
+                  : { label: "Dentro do prazo", tone: "positive", trend: "up" }
+              }
+              onSelect={() => navigateTo(actionsHref)}
+              aria-label="Ver planos de ação"
               tone={data.action_plans.overdue > 0 ? "negative" : "positive"}
               icon={<AlarmClock size={18} strokeWidth={1.75} aria-hidden="true" />}
             />
