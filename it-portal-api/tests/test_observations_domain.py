@@ -192,14 +192,14 @@ def test_presentation_status_stale_and_partial():
 def _windows_raw(**overrides):
     """JSON equivalente ao Collect-ItPortalWindowsInventory.ps1 validado no SRV-DB01."""
     body = {
-        "run_id": "windows-srv-db01-0001",
+        "run_id": "windows-pilot-0001",
         "source": "windows_host_collector",
         "schema_version": "1",
         "status": "complete",
         "observed_at": "2026-11-11T16:49:09.732Z",
-        "host_identity": {"hostname": "srv-db01", "machine_id": None},
+        "host_identity": {"hostname": "win-pilot-01", "machine_id": None},
         "summary": {
-            "identity": {"hostname": "srv-db01", "machine_id": None},
+            "identity": {"hostname": "win-pilot-01", "machine_id": None},
             "os": {
                 "name": "Microsoft Windows Server 2019 Standard",
                 "version": "10.0.17763",
@@ -216,7 +216,7 @@ def _windows_raw(**overrides):
                 {"mount_point": "I:", "filesystem": "NTFS", "size_bytes": 323_175_000_000,
                  "used_bytes": 314_775_000_000, "available_bytes": 8_400_000_000, "used_percent": 97.39}
             ],
-            "host_nics": [{"name": "Ethernet", "addresses": ["192.168.1.230"], "state": "up"}],
+            "host_nics": [{"name": "Ethernet", "addresses": ["192.0.2.10"], "state": "up"}],
             "windows_services": [
                 {"name": "EventLog", "active_state": "running", "sub_state": "automatic", "unit_file_state": None}
             ],
@@ -262,7 +262,7 @@ def test_linux_snapshot_does_not_accept_windows_only_fields():
     "poison", [
         {"windows_services": [{"name": "MSSQLSERVER", "token": "secret"}]},
         {"volumes": [{"mount_point": "I:", "credentials": {"password": "bad"}}]},
-        {"identity": {"hostname": "srv-db01", "client_secret": "bad"}},
+        {"identity": {"hostname": "win-pilot-01", "client_secret": "bad"}},
     ],
 )
 def test_windows_rejects_nested_secrets(poison):
