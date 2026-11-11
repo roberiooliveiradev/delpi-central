@@ -91,6 +91,16 @@ AO CLICAR/TOCAR EM LINHA OU CARD RESPONDIDO (EXCETO NO LINK DA CONTA):
 - **Acessibilidade e responsividade:** controles oficiais com rótulos legíveis, teclado/foco e tamanhos de toque adequados, sem rolagem horizontal no celular. Testar página inicial, intermediária e final, zero resultados, alteração de filtros, retorno da UI-07 e prevenção de resposta antiga de rede sobrescrever a nova.
 - **Status:** decisão de UX registrada e aprovada; paginação da UI-06 **NÃO IMPLEMENTADA / NÃO TESTADA**.
 
+### Decisão visual — ordenação da lista por dispositivo (11/11/2026)
+
+**APROVADO PELO SOLICITANTE — OPÇÃO A:** no **desktop**, ordenar pela interação com os **cabeçalhos das três colunas** da tabela (**Cliente**, **Situação**, **Data da resposta**), reutilizando o padrão ordenável do `CommercialDataTable`; no **celular**, usar um **seletor compacto de ordenação acima dos cards**, fora do Hero. Não adicionar seletor de ordenação ao Hero no desktop e não duplicar mecanismos de ordenação visíveis no mesmo dispositivo.
+
+- **Mesmo estado de consulta:** cabeçalhos e seletor mobile atualizam os mesmos parâmetros de ordenação `sort` e `dir` já previstos na URL/contrato R12, com atualização automática e preservação no retorno UI-07 → UI-06. A ordem escolhida deve permanecer ao alternar entre tamanhos de tela.
+- **Campos ordenáveis:** Cliente (nome oficial; desempate por código + loja), Situação e Data da resposta; a API é autoridade da ordenação da **lista paginada inteira**, com critério de desempate estável. Não ordenar apenas a página carregada no frontend. Valores exatos aceitos em `sort`/`dir`, ordem inicial e tratamento de datas ausentes ficam **PENDING** de compatibilização com o contrato real da API/padrão existente; não inventar enum implementado.
+- **Usabilidade:** cabeçalhos ordenáveis com indicação acessível de direção/estado; seletor mobile oferece campo e direção conforme o padrão existente. Usar teclado e leitores de tela; impedir que ordenação acione abertura de resposta. Ao ordenar, atualizar a lista sem botão “Aplicar” e retornar à primeira página se isso for necessário para navegação previsível.
+- **Não alterar:** filtros automáticos e botão **Limpar filtros** no Hero, três contagens da campanha, data em coluna própria, linha/card respondido clicável, ausência de coluna “Ver resposta” e paginação tradicional.
+- **Estado:** **UX APROVADA E DOCUMENTADA; NÃO IMPLEMENTADO / NÃO TESTADO**. Confirmar contratos e componentes oficiais antes de desenvolver.
+
 ## 4. Mapa de componentes oficiais
 
 | Região | Componente/padrão já existente | Observação |
