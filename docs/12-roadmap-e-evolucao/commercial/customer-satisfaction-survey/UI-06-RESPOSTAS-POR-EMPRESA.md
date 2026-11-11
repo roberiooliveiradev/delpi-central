@@ -80,6 +80,17 @@ AO CLICAR/TOCAR EM LINHA OU CARD RESPONDIDO (EXCETO NO LINK DA CONTA):
 - Estados de loading, erro e vazio devem ser consistentes com os padrões do Portal; não sugerir “nenhum participante” se o filtro apenas não encontrar correspondência.
 - **Status:** UX **APROVADA**, atualização documental; comportamento novo ainda **NÃO IMPLEMENTADO / NÃO TESTADO**.
 
+### Decisão visual — paginação tradicional (11/11/2026)
+
+**APROVADO PELO SOLICITANTE:** a UI-06 utiliza **paginação tradicional** na tabela desktop e na lista de cards mobile, reutilizando o componente/padrão de paginação existente no Portal Comercial. **Não usar “Carregar mais” ou rolagem infinita.**
+
+- Exibir indicação de intervalo e total de empresas do **resultado filtrado** (por exemplo, “Exibindo 1–20 de 86 empresas”), controles para navegar entre páginas e indicação da página atual. O tamanho exato da página deve seguir o padrão existente e ser confirmado em implementação, sem inventar um padrão novo.
+- **Fonte do total/página:** a `commercial-api` deve oferecer consulta paginada e total confiável do conjunto filtrado, com ordenação determinística; não paginar somente o trecho carregado nem inferir totais a partir de uma página parcial. O contrato do endpoint R12/listagem e parâmetros será validado na etapa de backend.
+- **Filtros continuam automáticos** e o botão **Limpar filtros** continua no Hero; ao mudar campanha, situação, grupo ou pesquisa, voltar à primeira página do novo conjunto quando necessário. Os três cards **Participantes / Respondidas / Pendentes** permanecem globais à campanha, independentes dos filtros e da página.
+- Preservar na URL a campanha, os filtros, ordenação e o número de página; a navegação UI-06 → UI-07 → UI-06 deve restaurar a mesma seleção e página, usando o contrato de retorno seguro já especificado. Quando a página antiga deixar de existir, ajustar para uma página válida sem exibir dados inventados.
+- **Acessibilidade e responsividade:** controles oficiais com rótulos legíveis, teclado/foco e tamanhos de toque adequados, sem rolagem horizontal no celular. Testar página inicial, intermediária e final, zero resultados, alteração de filtros, retorno da UI-07 e prevenção de resposta antiga de rede sobrescrever a nova.
+- **Status:** decisão de UX registrada e aprovada; paginação da UI-06 **NÃO IMPLEMENTADA / NÃO TESTADA**.
+
 ## 4. Mapa de componentes oficiais
 
 | Região | Componente/padrão já existente | Observação |
