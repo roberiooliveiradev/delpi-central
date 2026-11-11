@@ -27,6 +27,97 @@ Criar campanhas e selecionar clientes existentes no TOTVS para que o usuário po
 - **Dados e ownership:** TOTVS é fonte oficial do cliente; `commercial-api` é autoridade de campanhas, participantes, estado, vínculos, tokens, modelo de mensagem salvo e escritas; UI mostra apenas estado confirmado. Roteiros de testes: adicionar na criação, voltar com campanha aberta, adicionar em lote, validar parcial/duplicados, trocar participante e copiar nome/link corretos, não alterar histórico/respostas e negar escrita quando encerrada ou sem permissão.
 - **Status:** fluxo operacional **CONFIRMADO E DOCUMENTADO**; telas, contratos e execução ainda **PENDING**.
 
+## 1.1 Blueprint consolidado da UI-02 — telas para refinamento de cima para baixo (11/11/2026)
+
+> **Status:** consolidação das decisões aprovadas e proposta detalhada de composição visual. **NÃO IMPLEMENTADO**. Os fluxos marcados APROVADO são decisões do usuário; ordenação final de campos, densidade, ações e apresentação de cada tela são referências **A REFINAR VISUALMENTE**, não aprovação integral. Não transformar dados dos wireframes em valores reais.
+
+### Mapa de telas e responsabilidades
+
+| Tela | Função e relação |
+|---|---|
+| **UI-02A — Campanhas (inicial)** | Lista, pesquisa, filtros, Nova campanha, navegação para Configurar e Resultados |
+| **UI-02A.1 — Nova campanha** | Diálogo oficial com nome e datas; após criação confirmada abre configuração |
+| **UI-02B — Configuração da campanha** | Trilha, Hero, situação/período, Participantes, Mensagem padrão, Dados |
+| **UI-02B.1 — Adicionar participantes** | Pesquisa TOTVS e multiseleção; inclusão parcial por lote e relatório individual |
+| **UI-02B.2 — Mensagem padrão** | Editor único com duas chaves dinâmicas, texto persistido por campanha |
+| **UI-02C — Detalhe do participante** | Empresa, contato, resposta pendente/respondida, prévia e cópia de convite/link |
+| **UI-02C.1 — Editar contato** | Diálogo por empresa; nome/e-mail opcionais apenas do convite |
+| **UI-01 — Resultados** | Página analítica independente; entrada global ou por campanha |
+| **UI-06/UI-07 — Respostas privadas** | Página de participantes/respondentes e página de resposta individual; não duplicar na UI-02 |
+
+### Regra aprovada de navegação UI-02 → UI-01
+
+**APROVADO, opção A:** no Hero da **listagem UI-02A**, o botão global **Ver resultados** abre **UI-01 na visão geral padrão**, sem recuperar a última campanha visitada. Na linha de uma campanha, **Resultados**, e no seu detalhe **Ver resultados desta campanha**, abrem a **UI-01 com aquela campanha explicitamente selecionada** no filtro, e ano correspondente. O filtro global e os filtros operacionais da UI-02 não migram para os filtros de análise. A volta à Configuração pela UI-01 fica restrita a gestores e utiliza os helpers oficiais de navegação/retorno, preservando o detalhe de origem quando seguro/conhecido, senão a lista. Rotas são propostas e ainda **NÃO IMPLEMENTADAS**.
+
+### UI-02A — Página inicial, de cima para baixo
+
+1. **Trilha:** CommercialPagePath, Comercial / Marketing / Pesquisa de Satisfação / Configuração; sem topbar duplicada.
+2. **Hero compacto:** CommercialPageHero, título **Configuração das Pesquisas**, descrição sobre campanhas, participantes e convites. Ações **Ver resultados (global)** e **Nova campanha**; acesso autorizado a Respostas por empresa quando contextualizado.
+3. **Filtros no próprio Hero:** **Ano**, **Situação** (Agendada/Aberta/Encerrada), **Pesquisar campanha** e **Limpar filtros**, com aplicação automática. As situações vêm da API, não de botão ativar/desativar.
+4. **Corpo:** seção **Campanhas**, total de registros, tabela oficial em desktop com **Campanha/período**, **Situação**, **Participantes cadastrados**, **Respostas** e **Taxa de resposta** se autorizada/disponível; contexto e ações **Abrir/configurar** e **Resultados** por linha. Não usar "convites enviados" nem "entregues".
+5. **Base:** ordenação e paginação oficiais (20 por página como referência do Portal), seletor de tamanho quando aplicável; cards no celular; estados vazio, falha, carregamento, acesso negado e ausência de filtro, diferenciados. Personalização de colunas/fonte/tabela-cards somente se apropriada e coberta pelo kit.
+
+### UI-02A.1 — Diálogo Nova campanha
+
+1. **Cabeçalho:** Nova campanha, orientação breve.
+2. **Campos:** nome obrigatório; data e hora de **Início**; data e hora de **Término**; indicação **Questionário oficial fixo de 15 perguntas**.
+3. **Rodapé:** Cancelar / Criar campanha. Backend valida dados, permissão e período; falha preserva campos e mostra erro. Somente após persistência confirmada o diálogo fecha e abre UI-02B para configurar empresas e mensagem. **Não** colocar busca TOTVS nem editor de mensagem dentro do diálogo; não ativar/encerrar manualmente.
+
+### UI-02B — Detalhe/configuração de campanha
+
+1. **Topo:** CommercialPagePath Configuração / Nome da campanha, retorno à lista; Hero oficial com nome, período e status derivado do backend.
+2. **Ações do Hero:** **Ver resultados desta campanha** (UI-01 contextual), **Respostas por empresa** (UI-06, somente gestão) e **Editar datas** somente onde backend permitir. Filtros globais da lista de participantes no Hero, sem toolbar paralela.
+3. **Navegação de seções:** **Participantes**, **Mensagem padrão**, **Dados da campanha** via componente oficial de abas/underline navigation; padrão inicial Participantes. Alternar seção sem apagar pesquisas/seleções e sem gravar automaticamente.
+4. **Participantes, resumo:** três cards compactos Participantes cadastrados / Respondidas / Pendentes, todos com contagens retornadas pela API. Pendente significa ausência de resposta, não prova de falta de envio.
+5. **Participantes, adicionar:** busca de cliente TOTVS por nome, código/loja; múltiplas seleções e ação Adicionar selecionadas. A lista de participantes é **acumulativa**; o gestor pode voltar e adicionar durante a campanha **ABERTA**, sem alterar respostas, links existentes ou prazo. Configuração inicial agendada prevista; detalhes de edições posteriores em agendadas PENDING. Encerrada não recebe inclusão na proposta, validada pelo backend.
+6. **Resultado de inclusão:** apresentar **Incluídas**, **Já existentes**, **Com falha** e relatório por empresa (código/loja e motivo seguro). Válidas são incluídas mesmo com outras falhando; duplicadas preservam vínculo/token, erro global não pode ser rotulado sucesso parcial.
+7. **Lista acumulada:** pesquisa por nome/código/loja, filtro Pendente/Respondido, tabela/cards oficiais, ordenação e paginação; empresa, código/loja, contato opcional, status e ações. Linha/card abre **UI-02C**. Copiar link pode existir como ação rápida autorizada; copiar mensagem deve abrir prévia do participante, sem editor duplicado. Sem status Enviado/Entregue.
+8. **Mensagem padrão:** ver UI-02B.2. Mostrar situação Configurada/A configurar apenas conforme dado real, não como sucesso fictício.
+9. **Dados:** nome, janela, estado, versão de questionário fixo; edição de datas sob regras de backend, sem invalidar respostas. Sem criar editor de perguntas ou flag de ativação.
+
+### UI-02B.1 — Inclusão múltipla: interação e estados
+
+- Busca autorizada commercial-api → api-delpi/TOTVS; exibir empresa e **par código+loja preservando zeros iniciais**. Seleção múltipla, contagem, confirmação do lote, manter seleção entre pesquisas/paginação conforme padrão existente.
+- Após resposta confirmada, diferenciar **incluídas, já existentes e falhas por empresa**; não repetir gravações bem-sucedidas ou regenerar tokens. Campos/contrato HTTP de lote e transação por item ainda PENDING do backend.
+- Estados: carregando, nenhuma empresa localizada, permissão insuficiente, indisponibilidade TOTVS, duplicidade, erro global, validação por item, retentativa segura. Nunca envia convite nem cria cliente no Portal.
+
+### UI-02B.2 — Mensagem padrão da campanha
+
+1. **Cabeçalho:** Mensagem padrão da campanha, texto de ajuda e indicação de alteração pendente/salva conforme backend.
+2. **Editor único simples:** assunto para e-mail e corpo textual; o Marketing escreve como deseja. Somente dois campos dinâmicos definidos em código: **{nome_empresa}** e **{link_pesquisa}**. Pode digitar os tokens ou usar **Inserir campo** na posição do cursor. Reconhecimento/destaque no editor ou equivalente compatível com kit, sem editor rico complexo nem cadastro de tokens.
+3. **Validação e prévia:** mostrar como nome e link serão substituídos; dados fictícios identificados na configuração ou participante autorizado. Conteúdo final precisa nome e URL corretos; política exata para texto sem algum token (bloqueio ou composição segura) segue PENDING técnico/UX. Escapar conteúdo e proibir HTML/script arbitrário.
+4. **Rodapé:** Cancelar/Reverter, Salvar mensagem. Persistir **uma mensagem por campanha**, confirmada pela commercial-api; não salvar links/tokens de participantes dentro do modelo. Futuras cópias usam texto atualizado; convites encaminhados fora do Portal não são rastreados.
+5. **Formatos de saída:** e-mail com HTML formatado e alternativa texto; WhatsApp/Teams/outros como texto simples. A cópia HTML rica e compatibilidade com Outlook continuam PENDING de testes. Não há envio automático nem três editores independentes.
+
+### UI-02C — Detalhe do participante
+
+1. **Topo/trilha:** voltar à campanha e à lista no mesmo contexto; nome oficial, código e loja TOTVS; situação Pendente/Respondida oriunda da API.
+2. **Contato do convite:** nome e e-mail auxiliares, opcionais; ação **Editar contato**, abrindo UI-02C.1. Não mudar cadastro TOTVS e não identificar pessoa física respondente.
+3. **Mensagem:** texto **salvo da campanha**, resolvido exclusivamente para esta empresa; chaves {nome_empresa} e {link_pesquisa} tornam-se nome TOTVS e URL estável retornada pela commercial-api. Se falta configuração, orientar a voltar à seção de mensagem, sem fingir que já foi salva.
+4. **Prévia/cópia:** seletor **E-mail / WhatsApp / Teams**, com Copiar mensagem no formato correspondente e Copiar link independente. E-mail: conteúdo rico text/html e alternativa text/plain quando suportado; os demais em texto. Não enviar, não marcar entregue, não abrir app externo automaticamente.
+5. **Estados:** só confirmar cópia após clipboard realmente aceitar; quando negado, oferecer seleção/cópia manual. Nenhum token em logs, analytics ou conteúdo de terceiros. Não incorporar resposta privada completa no detalhe operacional; UI-06/UI-07 são áreas distintas.
+
+### UI-02C.1 — Diálogo Editar contato
+
+- Dialog oficial com empresa/código/loja somente leitura; campos opcionais **Nome do contato** e **E-mail do contato**, pré-preenchidos.
+- Cancelar não grava; Salvar contato valida e-mail, autorização e vínculo na commercial-api, mantém diálogo em erro e atualiza detalhe após confirmação; nenhuma gravação TOTVS, alteração de token ou envio de convite.
+
+### UI-01, UI-06 e UI-07 — fronteiras das páginas
+
+- **UI-01:** resultados **agregados**, filtros e KPIs próprios, evolução, dimensões, comparações. Entrada global abre geral; ação de campanha abre filtrada. Nenhuma gestão de participantes ou cópia na página de resultados.
+- **UI-06:** respostas por empresa, restritas a Marketing/Manage, com os próprios padrões aprovados de filtros, tabela/cards, ordenação e paginação. Não duplicar inteira na aba Participantes.
+- **UI-07:** resposta individual **imutável e somente leitura**; não confundir com UI-02C, que é detalhe operacional para convite e contato.
+
+### Componentes, estados, segurança e roteiro de refinamento
+
+**Padrões oficiais a reutilizar:** CommercialPagePath, CommercialPageHero, CommercialActionButton, CommercialSectionCard, CommercialUnderlineNav, CommercialDataTable, CommercialPagination, cards móveis, filtros, CommercialHostDialog, campos e banners do PluginUI. Validar nomes/props atuais antes de implementar. Hero concentra filtros e ações globais; ações de linhas/diálogos ficam com seu conteúdo. Não criar cabeçalho visual ou kit paralelo. Desktop usa tabelas, celular usa cards, acessibilidade com teclado, foco, contraste e zoom.
+
+**Owners:** TOTVS é fonte oficial de cliente; commercial-api detém campanha, participantes, link, texto salvo, autorização, auditoria e persistência; plugin Comercial apresenta/navega/copia. Gestão para commercial.marketing OU commercial.manage (ainda sujeita a implementação/validação); commercial.access isolado recebe somente agregados protegidos, não convites/contatos/respostas individuais. Nenhuma ação do navegador substitui autorização backend.
+
+**PENDÊNCIAS técnicas:** endpoint/persistência do texto por campanha, transporte e retorno de lote, compatibilidade do clipboard HTML, política exata de tokens ausentes, contratos de retorno e seleção em campanhas agendadas. **NÃO IMPLEMENTADO**: páginas, backend e testes. Não declarar recurso pronto pela existência da especificação.
+
+**Ordem futura de refinamento visual:** (1) UI-02A lista — trilha, Hero, filtros, tabela e base; (2) UI-02A.1 criação; (3) UI-02B Hero/abas/resumo; (4) UI-02B.1 seleção e resultado do lote; (5) UI-02B.2 mensagem; (6) UI-02C detalhe e cópia; (7) UI-02C.1 contato; (8) revisão de transições UI-01/UI-06/UI-07. Atualizar esta fonte canônica, sem duplicar documentos.
+
 ## 2. Wireframe A — lista e criação
 
 ```text

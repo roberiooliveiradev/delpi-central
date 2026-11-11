@@ -93,6 +93,10 @@ A entrada `Início > Marketing > Pesquisa de satisfação do cliente` abre diret
 └───────────────────────────┘
 ```
 
+### Navegação aprovada com a UI-02 (11/11/2026)
+
+**APROVADO, opção A:** a ação **Ver resultados GLOBAL** no Hero da listagem de campanhas UI-02 abre a UI-01 na **visão geral padrão**, sem herdar última campanha. A ação **Resultados** de uma linha e **Ver resultados desta campanha** no detalhe abrem a UI-01 com **a campanha explícita selecionada** no filtro de campanha e ano correspondente, validada pelo backend. Filtros operacionais da UI-02 não migram para a análise. A volta para Configuração é restrita à gestão e utiliza o retorno seguro do Portal quando o detalhe de origem for conhecido, senão a lista. **Rotas/navegação ainda NÃO IMPLEMENTADAS.**
+
 ## 3. Hero — inventário fechado de conteúdo e reuso
 
 A página real usa **`CommercialPageHero` com densidade `compact` (default do wrapper)**, exatamente como `OverviewPage.tsx`, `AnalyticsOtdPage.tsx` e `AnalyticsOpportunitiesPage.tsx`. O Hero real do PluginUI possui `eyebrow`, `title`, `description`, `badge`, `actions` e `children` (corpo inferior). `CommercialPagePath` aparece antes, como padrão analítico. Não reproduzir o Hero manualmente por `div`.

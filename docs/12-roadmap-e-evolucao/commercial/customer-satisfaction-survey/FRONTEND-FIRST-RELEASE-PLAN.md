@@ -125,6 +125,12 @@ Paths internos são **propostos**, não encontrados implementados. A nomenclatur
 
 **Clientes HTTP:** usar `plugins/commercial/src/api/httpClient.ts` e respostas/erros oficiais para gestão e indicadores, criando `satisfactionSurveysApi.ts` quando necessário. Para a página pública, usar `plugins/public-hub/src/apps/commercial/api.ts`, seguindo o `fetch` sem bearer do módulo público existente. **Não chamar `api-delpi` diretamente**. O código público pertence ao shell público compartilhado, sem assumir o CRUD de formulários de Customer Experience.
 
+### Consolidação da UI-02 para refinamento visual (11/11/2026)
+
+A referência detalhada de telas, de topo à base, está em [UI-02](./UI-02-CONFIGURACAO-PESQUISAS.md), seção **1.1 Blueprint consolidado**. Abrange listagem, nova campanha, detalhe/configuração, participantes e inclusão múltipla, modelo padrão salvo por campanha, detalhe individual para copiar convites, diálogo de contato e ligações UI-01/UI-06/UI-07. Regras aprovadas são separadas das composições visuais ainda **a refinar**; nada disso foi implementado.
+
+**Navegação aprovada:** Ver resultados GLOBAL da lista → UI-01 **geral padrão**; Resultados de campanha na linha/detalhe → UI-01 **filtrada pela campanha**. Retorno via helpers oficiais; nenhuma transferência de filtros operacionais. **PENDING implementação e testes.**
+
 ## 5. Permissões e navegação
 
 - **Gestão** `commercial.marketing` OU `commercial.manage`: criar campanhas, selecionar participantes, copiar convites e ver respostas detalhadas.
