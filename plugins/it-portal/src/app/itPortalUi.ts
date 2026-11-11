@@ -25,8 +25,12 @@ import {
   createDashboardUserManual,
   createFloatingNoticeStack,
   createHostContainedModalShell,
+  createDashboardNavigationCard,
   createMetricKpiCard,
+  createSemicircleProgressGauge,
+  createTimeline,
   dateFieldBemClasses,
+  navigationCardBemClasses,
   emptyStatePanelBemClasses,
   sectionCardPacBemClasses,
   selectFieldPacClasses,
@@ -53,6 +57,12 @@ const ItpPageHeroBase = createDashboardPageHero({ prefix: UI_PREFIX });
 export function ItpPageHero(props: ComponentProps<typeof ItpPageHeroBase>) {
   return createElement(ItpPageHeroBase, { density: "compact", ...props });
 }
+
+export const ItpNavigationCard = createDashboardNavigationCard({
+  classNames: navigationCardBemClasses(UI_PREFIX),
+});
+export const ItpTimeline = createTimeline({ prefix: UI_PREFIX });
+export const ItpSemicircleGauge = createSemicircleProgressGauge({ prefix: UI_PREFIX });
 
 export const ItpTopBar = createDashboardTopBar({ prefix: UI_PREFIX });
 export const ItpTopBarUtilityCluster = createDashboardTopBarUtilityCluster({ prefix: UI_PREFIX });

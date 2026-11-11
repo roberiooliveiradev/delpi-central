@@ -12,8 +12,11 @@ import {
   ItpPageHero,
   ItpSectionCard,
   ItpStatusBadge,
+  ItpTopBarSearchTrigger,
 } from "../../app/itPortalUi";
+import { HOME_CONTENT, SHELL_CONTENT } from "../../content/labels";
 import { navigateTo, spaNavigate } from "../../app/navigation";
+import { useShellSearch } from "../../app/PluginShell";
 import { toApiError, usePortal } from "../../app/PortalContext";
 import { ForbiddenState, LoadingBlock, QueryErrorState } from "../../app/QueryStates";
 import { queryKeys } from "../../app/queryKeys";
@@ -24,6 +27,7 @@ const UPCOMING_AREAS = ["Monitoramento", "Descoberta automática", "Integração
 
 export function HomePage() {
   const { basePath, capabilities } = usePortal();
+  const { openPalette } = useShellSearch();
   const [creating, setCreating] = useState(false);
   const canView = capabilities?.can_view_servers === true;
   const canManage = capabilities?.can_manage_servers === true;
@@ -68,11 +72,21 @@ export function HomePage() {
     <>
       <ItpPageHero
         aria-label="Portal de TI"
+        variant="immersive"
+        density="comfortable"
         eyebrow="Portal de TI"
         title={capabilities?.display_name ? `Olá, ${capabilities.display_name.split(" ")[0]}` : "Portal de TI"}
-        description="Inventário de servidores e planos de ação da infraestrutura DELPI."
+        description="Inventário de servidores, serviços e planos de ação da infraestrutura DELPI."
         actions={dashboardQuery.data && dashboardQuery.data.servers.total > 0 ? createButton : null}
-      />
+      >
+        <ItpTopBarSearchTrigger
+          onOpen={openPalette}
+          label={HOME_CONTENT.heroSearchLabel}
+          shortcutLabel={SHELL_CONTENT.search.shortcut}
+          aria-label={SHELL_CONTENT.search.ariaLabel}
+          title={SHELL_CONTENT.search.title}
+        />
+      </ItpPageHero>
       {body}
       <ItpSectionCard title="Próximas áreas" subtitle="Ainda não disponíveis nesta etapa do Portal de TI.">
         <ul className="itp-chip-list" aria-label="Áreas indisponíveis">
