@@ -9,7 +9,10 @@ import {
   catalogOptions,
   PRC_CATALOG_KINDS,
 } from "./prcProductRegistration";
-import type { PrcCatalogOption } from "./prcProductRegistration";
+import type {
+  PrcCatalogOption,
+  PrcCatalogOptionItem,
+} from "./prcProductRegistration";
 
 export type PrcCatalogStatus =
   | "idle"
@@ -100,7 +103,9 @@ export class PrcCatalogStore {
     )
       .then((env) => {
         if (!this.isCurrent(path, epoch, controller)) return;
-        const options = catalogOptions(env?.data?.items ?? []);
+        const options = catalogOptions(
+          (env?.data?.items ?? []) as PrcCatalogOptionItem[],
+        );
         this.set(
           path,
           options.length

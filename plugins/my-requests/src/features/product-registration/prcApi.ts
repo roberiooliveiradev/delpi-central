@@ -115,11 +115,17 @@ export type PrcAttachment = {
 };
 
 export type PrcTimelineEvent = {
-  eventType: string;
-  actorDisplayName?: string | null;
+  id: string;
+  sequence_number: number;
+  event_type: string;
+  actor_subject?: string;
+  actor_display_name?: string | null;
+  actor_email?: string | null;
+  occurred_at: string;
   reason?: string | null;
-  createdAt: string;
-  meta?: Record<string, unknown> | null;
+  metadata?: Record<string, unknown> | null;
+  previous_status?: string | null;
+  next_status?: string | null;
 };
 
 export type PrcRequestDetail = {

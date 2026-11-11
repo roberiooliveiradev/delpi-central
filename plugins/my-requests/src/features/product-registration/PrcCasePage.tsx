@@ -16,6 +16,7 @@ import {
   PRC_TYPE_LABELS,
   addSupportFiles,
   prcFormatSize,
+  prcTimelineItemViews,
   type PrcSupportFile,
 } from "@delpi/plugin-ui/index";
 
@@ -336,14 +337,18 @@ export function PrcCasePage({ requestId, onBack }: Props) {
 
           <MyRequestsSectionCard title="Histórico">
             <MyRequestsTimeline
-              items={timeline.map((e) => ({
-                id: `${e.eventType}-${e.createdAt}`,
-                title: e.eventType,
-                occurredAt: e.createdAt,
-                timeLabel: new Date(e.createdAt).toLocaleString("pt-BR"),
-                detail: [e.actorDisplayName, e.reason]
+              items={prcTimelineItemViews(timeline).map((v) => ({
+                id: v.id,
+                title: v.title,
+                occurredAt: v.occurredAt,
+                timeLabel: v.timeLabel,
+                detail: [
+                  v.transition ? `${v.transition} ·` : null,
+                  v.reasonText,
+                ]
                   .filter(Boolean)
-                  .join(" — "),
+                  .join(" "),
+                meta: v.metaText,
               }))}
             />
           </MyRequestsSectionCard>

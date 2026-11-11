@@ -4,12 +4,12 @@
  * Engenharia e Minhas Solicitações — prefixo `delpi-prc__`. */
 
 .delpi-prc__muted {
-  color: var(--en-text-muted);
+  color: var(--delpi-ui-text-muted);
   font-size: 0.85rem;
 }
 
 .delpi-prc__field-error {
-  color: var(--en-danger);
+  color: var(--delpi-ui-danger);
   font-size: 0.82rem;
   margin: 0;
 }
@@ -19,7 +19,7 @@
   flex-direction: column;
   gap: 8px;
   padding-block-end: 8px;
-  border-bottom: 1px solid var(--en-border);
+  border-bottom: 1px solid var(--delpi-ui-border);
 }
 
 .delpi-prc__edit-row:last-child {
@@ -42,7 +42,7 @@
   gap: 12px;
   align-items: end;
   padding-block-end: 12px;
-  border-bottom: 1px solid var(--en-border);
+  border-bottom: 1px solid var(--delpi-ui-border);
 }
 
 .delpi-prc__supplier-add {
@@ -61,12 +61,12 @@
 /* PRC-REF-020 / UX-01 — destaque de campos/SA5 bloqueantes na verificação. */
 .delpi-prc__field-mismatch,
 .delpi-prc__supplier-mismatch {
-  color: var(--engineering-danger, #b42318);
+  color: var(--delpi-ui-danger, #b42318);
   font-weight: 600;
 }
 
 .delpi-prc__supplier-mismatch {
-  outline: 1px solid color-mix(in srgb, var(--engineering-danger, #b42318) 35%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--delpi-ui-danger, #b42318) 35%, transparent);
   border-radius: 4px;
   padding: 4px 6px;
   margin-inline-start: -6px;
@@ -88,8 +88,8 @@
 .delpi-prc__lookup-panel {
   min-width: 280px;
   max-width: min(420px, calc(100vw - 24px));
-  background: var(--en-surface);
-  border: 1px solid var(--en-border);
+  background: var(--delpi-ui-surface);
+  border: 1px solid var(--delpi-ui-border);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
 }
@@ -115,7 +115,7 @@
   border: 0;
   border-radius: 6px;
   background: none;
-  color: var(--en-text);
+  color: var(--delpi-ui-text);
   font: inherit;
   cursor: pointer;
   white-space: normal;
@@ -124,7 +124,7 @@
 .delpi-prc__lookup-option:hover,
 .delpi-prc__lookup-option:focus-visible,
 .delpi-prc__lookup-item--active .delpi-prc__lookup-option {
-  background: var(--en-surface-muted);
+  background: var(--delpi-ui-surface-muted);
   outline: none;
 }
 
@@ -137,14 +137,14 @@
 .delpi-prc__lookup-meta {
   display: block;
   font-size: 0.76rem;
-  color: var(--en-text-muted);
+  color: var(--delpi-ui-text-muted);
   white-space: normal;
 }
 
 .delpi-prc__lookup-empty {
   padding: 10px 12px;
   font-size: 0.85rem;
-  color: var(--en-text-muted);
+  color: var(--delpi-ui-text-muted);
 }
 
 .delpi-prc__form-grid {
@@ -221,7 +221,7 @@
  * justificativa contextual fora da célula (não estouram altura/largura
  * da linha principal). */
 .delpi-prc__supplier-aux > td {
-  background: var(--en-surface-muted);
+  background: var(--delpi-ui-surface-muted);
   padding: 8px 10px !important;
 }
 
@@ -246,14 +246,14 @@
 .delpi-prc__supplier-search-title {
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--en-text-muted);
+  color: var(--delpi-ui-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
 
 .delpi-prc__cell-error {
   display: block;
-  color: var(--en-danger);
+  color: var(--delpi-ui-danger);
   font-size: 0.78rem;
   margin-top: 2px;
 }
@@ -274,15 +274,15 @@
 .delpi-prc__supplier-table th {
   text-align: left;
   padding: 6px 10px;
-  color: var(--en-text-muted);
+  color: var(--delpi-ui-text-muted);
   font-weight: 600;
-  border-bottom: 1px solid var(--en-border);
+  border-bottom: 1px solid var(--delpi-ui-border);
   white-space: nowrap;
 }
 
 .delpi-prc__supplier-table td {
   padding: 6px 10px;
-  border-bottom: 1px solid var(--en-border);
+  border-bottom: 1px solid var(--delpi-ui-border);
   vertical-align: top;
 }
 
@@ -295,16 +295,16 @@
   width: 100%;
   min-width: 120px;
   padding: 6px 8px;
-  border: 1px solid var(--en-border);
+  border: 1px solid var(--delpi-ui-border);
   border-radius: 6px;
   font: inherit;
-  background: var(--en-surface);
-  color: var(--en-text);
+  background: var(--delpi-ui-surface);
+  color: var(--delpi-ui-text);
 }
 
 .delpi-prc__cell-input:focus-visible,
 .delpi-prc__lookup-input:focus-visible {
-  outline: 2px solid var(--en-accent);
+  outline: 2px solid var(--delpi-ui-accent);
   outline-offset: 1px;
 }
 
@@ -318,7 +318,7 @@
 .delpi-prc__lookup-clear {
   border: 0;
   background: none;
-  color: var(--en-accent);
+  color: var(--delpi-ui-accent);
   cursor: pointer;
   font-size: 0.8rem;
   padding: 2px 4px;
@@ -340,7 +340,7 @@
     width: 100%;
   }
   .delpi-prc__supplier-table tr {
-    border: 1px solid var(--en-border);
+    border: 1px solid var(--delpi-ui-border);
     border-radius: 8px;
     margin-bottom: 10px;
     padding: 6px;
@@ -354,14 +354,14 @@
     display: block;
     font-size: 0.72rem;
     font-weight: 600;
-    color: var(--en-text-muted);
+    color: var(--delpi-ui-text-muted);
     margin-bottom: 2px;
   }
 }
 
 /* D13 — edição direta + diff automático */
 .delpi-prc__edit-row--changed {
-  border-left: 3px solid var(--en-accent);
+  border-left: 3px solid var(--delpi-ui-accent);
   padding-left: 10px;
 }
 
@@ -374,7 +374,7 @@
 }
 
 .delpi-prc__diff-tag {
-  background: var(--en-accent);
+  background: var(--delpi-ui-accent);
   color: #fff;
   border-radius: 4px;
   padding: 1px 6px;
@@ -399,8 +399,8 @@
   font-weight: 600;
 }
 
-.delpi-prc__remove-tag { color: var(--en-danger); }
-.delpi-prc__add-tag { color: var(--en-success); }
+.delpi-prc__remove-tag { color: var(--delpi-ui-danger); }
+.delpi-prc__add-tag { color: var(--delpi-ui-success); }
 
 /* D14-FIX — justificativa contextual compacta: gatilho `link` do kit
  * ajustado à margem do campo; largura do conteúdo (nunca 100% da
@@ -418,7 +418,7 @@
 
 .delpi-prc__reason-filled {
   font-size: 0.7rem;
-  color: var(--en-text-muted);
+  color: var(--delpi-ui-text-muted);
 }
 
 .delpi-prc__reason {
@@ -429,7 +429,7 @@
 .delpi-prc__reason-label {
   display: block;
   font-size: 0.72rem;
-  color: var(--en-text-muted);
+  color: var(--delpi-ui-text-muted);
   margin-bottom: 2px;
 }
 
@@ -437,12 +437,12 @@
   width: 100%;
   min-width: 0;
   padding: 5px 7px;
-  border: 1px solid var(--en-border);
+  border: 1px solid var(--delpi-ui-border);
   border-radius: 6px;
   font: inherit;
   font-size: 0.8rem;
-  background: var(--en-surface);
-  color: var(--en-text);
+  background: var(--delpi-ui-surface);
+  color: var(--delpi-ui-text);
   resize: vertical;
 }
 
@@ -456,10 +456,10 @@
 
 .delpi-prc__reason-count {
   font-size: 0.7rem;
-  color: var(--en-text-muted);
+  color: var(--delpi-ui-text-muted);
 }
 
-.delpi-prc__reason-count--full { color: var(--en-danger); }
+.delpi-prc__reason-count--full { color: var(--delpi-ui-danger); }
 
 .delpi-prc__reason-actions {
   display: inline-flex;
@@ -469,7 +469,7 @@
 .delpi-prc__reason + .delpi-prc__reason {
   margin-top: 10px;
   padding-top: 8px;
-  border-top: 1px dashed var(--en-border);
+  border-top: 1px dashed var(--delpi-ui-border);
 }
 
 .delpi-prc__flagged-field:hover .delpi-prc__field-flag--add,

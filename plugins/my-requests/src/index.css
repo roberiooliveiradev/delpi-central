@@ -23,6 +23,7 @@
   --delpi-ui-muted: var(--my-requests-text-muted);
   --delpi-ui-border: var(--my-requests-border);
   --delpi-ui-danger: var(--my-requests-danger);
+  --delpi-ui-success: #15803d;
   --delpi-ui-section-gap: var(--my-requests-section-gap);
 }
 

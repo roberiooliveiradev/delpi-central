@@ -29,34 +29,6 @@ export const PRC_TYPE_LABELS: Record<string, string> = {
   update: "Alteração",
 };
 
-export const PRC_EVENT_LABELS: Record<string, string> = {
-  submitted: "Solicitação enviada",
-  started: "Atendimento iniciado",
-  assigned: "Responsável atribuído",
-  draft_changed: "Ficha técnica alterada",
-  information_requested: "Informações solicitadas",
-  resumed: "Atendimento retomado",
-  submitted_for_review: "Encaminhada para revisão (legado)",
-  returned_to_attendance: "Atendimento reaberto",
-  correction_returned: "Devolvida para correção",
-  correction_fields_saved: "Campos devolvidos atualizados",
-  correction_resubmitted: "Correção reenviada à Engenharia",
-  rejected: "Solicitação rejeitada",
-  completed: "Atendimento concluído",
-  verification_attempted: "Verificação oficial executada",
-  verify_and_complete: "Verificação oficial e conclusão (legado)",
-  complete: "Atendimento concluído",
-  "information.answers_drafted": "Rascunho de respostas salvo",
-  "information.answers_submitted": "Respostas enviadas ao analista",
-  "information.question_accepted": "Esclarecimento aceito",
-  "information.follow_up_requested": "Complemento solicitado",
-  "information.round_resolved": "Rodada de esclarecimento concluída",
-  "flag.created": "Bandeira criada",
-  "flag.updated": "Bandeira atualizada",
-  "flag.resolved": "Bandeira resolvida",
-  "flag.reopened": "Bandeira reaberta",
-  "flag.deleted": "Bandeira excluída",
-};
 
 export const PRC_RESULT_LABELS: Record<string, string> = {
   matched: "Correspondente",
@@ -361,36 +333,12 @@ export const PRC_INFO_ROUND_STATUS_LABELS: Record<string, string> = {
   resolved: "Resolvida",
 };
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function prcShortId(id: string): string {
   return `#${id.slice(0, 8)}`;
 }
 
-/** Identidade honesta — nunca exibe GUID bruto como nome de pessoa. */
-export function prcPersonLabel(
-  subject: string | null | undefined,
-  displayName?: string | null,
-): string {
-  const name = (displayName || "").trim();
-  if (name) return name;
-  if (!subject) return PRC_COPY.unassigned;
-  return UUID_RE.test(subject.trim())
-    ? PRC_COPY.assigneeUnknown
-    : subject.trim();
-}
 
-export function prcRequesterLabel(requester: {
-  subject: string;
-  displayName?: string | null;
-}): string {
-  const name = (requester.displayName || "").trim();
-  if (name) return name;
-  return UUID_RE.test(requester.subject)
-    ? PRC_COPY.requesterUnknown
-    : requester.subject;
-}
 
 export function prcFieldLabel(path: string): string {
   const head = path.split(".")[0];
@@ -399,6 +347,12 @@ export function prcFieldLabel(path: string): string {
   return sub ? `${base} · ${PRC_SUPPLIER_LABELS[sub] || sub}` : base;
 }
 
-export function prcStatusLabel(status: string): string {
-  return PRC_STATUS_LABELS[status] || status;
-}
+
+/* UI-FIX-03 — implementações migraram para `@delpi/plugin-ui`
+ * (fonte única compartilhada com Minhas Solicitações). */
+export {
+  PRC_EVENT_LABELS,
+  prcPersonLabel,
+  prcRequesterLabel,
+  prcStatusLabel,
+} from "@delpi/plugin-ui/index";

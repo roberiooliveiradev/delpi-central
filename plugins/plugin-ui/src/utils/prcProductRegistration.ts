@@ -865,3 +865,143 @@ export function withSelectedOption(
     ...options,
   ];
 }
+
+/* PRC-REF-023-UI-FIX-03 — rótulos oficiais da timeline e helpers de
+ * apresentação PRC, fonte única compartilhada (antes duplicados no
+ * prcCopy do Portal Engenharia). O backend emite `event_type` e
+ * `previous_status`/`next_status` — aqui ficam os rótulos pt-BR. */
+
+export const PRC_EVENT_LABELS: Record<string, string> = {
+  submitted: "Solicitação enviada",
+  started: "Atendimento iniciado",
+  assigned: "Responsável atribuído",
+  draft_changed: "Ficha técnica alterada",
+  information_requested: "Informações solicitadas",
+  resumed: "Atendimento retomado",
+  submitted_for_review: "Encaminhada para revisão (legado)",
+  returned_to_attendance: "Atendimento reaberto",
+  correction_returned: "Devolvida para correção",
+  correction_fields_saved: "Campos devolvidos atualizados",
+  correction_resubmitted: "Correção reenviada à Engenharia",
+  rejected: "Solicitação rejeitada",
+  completed: "Atendimento concluído",
+  verification_attempted: "Verificação oficial executada",
+  verify_and_complete: "Verificação oficial e conclusão (legado)",
+  complete: "Atendimento concluído",
+  "information.answers_drafted": "Rascunho de respostas salvo",
+  "information.answers_submitted": "Respostas enviadas ao analista",
+  "information.question_accepted": "Esclarecimento aceito",
+  "information.follow_up_requested": "Complemento solicitado",
+  "information.round_resolved": "Rodada de esclarecimento concluída",
+  "flag.created": "Bandeira criada",
+  "flag.updated": "Bandeira atualizada",
+  "flag.resolved": "Bandeira resolvida",
+  "flag.reopened": "Bandeira reaberta",
+  "flag.deleted": "Bandeira excluída",
+};
+
+const PRC_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Identidade honesta — nunca exibe GUID bruto como nome de pessoa. */
+export function prcPersonLabel(
+  subject: string | null | undefined,
+  displayName?: string | null,
+): string {
+  const name = (displayName || "").trim();
+  if (name) return name;
+  if (!subject) return "Não atribuído";
+  return PRC_UUID_RE.test(subject.trim())
+    ? "Responsável não identificado"
+    : subject.trim();
+}
+
+export function prcRequesterLabel(requester: {
+  subject: string;
+  displayName?: string | null;
+}): string {
+  const name = (requester.displayName || "").trim();
+  if (name) return name;
+  return PRC_UUID_RE.test(requester.subject)
+    ? "Solicitante não identificado"
+    : requester.subject;
+}
+
+export function prcStatusLabel(status: string): string {
+  return PRC_STATUS_LABELS[status] || status;
+}
+
+/** Formata timestamp da timeline em pt-BR sem nunca emitir
+ * "Invalid Date" — retorna fallback neutro e preserva o evento. */
+export function prcFormatTimelineDate(
+  iso: string | null | undefined,
+  fallback = "Data indisponível",
+): string {
+  const t = iso ? new Date(iso) : null;
+  if (!t || Number.isNaN(t.getTime())) return fallback;
+  return t.toLocaleString("pt-BR");
+}
+
+/** Evento da timeline oficial (contrato snake_case da Engineering API). */
+export type PrcTimelineEventLike = {
+  id: string;
+  sequence_number: number;
+  event_type: string;
+  actor_subject?: string;
+  actor_display_name?: string | null;
+  actor_email?: string | null;
+  occurred_at: string;
+  reason?: string | null;
+  metadata?: Record<string, unknown> | null;
+  previous_status?: string | null;
+  next_status?: string | null;
+};
+
+export type PrcTimelineItemView = {
+  id: string;
+  title: string;
+  occurredAt: string;
+  timeLabel: string;
+  actorLabel: string;
+  transition: string | null;
+  reasonText: string | null;
+  channel: string | null;
+  metaText: string;
+};
+
+/** Mapper neutro evento→apresentação — mesma interpretação nos dois
+ * MFEs: ordena por sequence_number, rotula event_type, formata data
+ * sem "Invalid Date", expõe transição/autor/canal/motivo. */
+export function prcTimelineItemViews(
+  events: PrcTimelineEventLike[],
+): PrcTimelineItemView[] {
+  return [...events]
+    .sort((a, b) => (a.sequence_number ?? 0) - (b.sequence_number ?? 0))
+    .map((ev) => {
+      const actor = prcPersonLabel(
+        ev.actor_subject,
+        ev.actor_display_name,
+      );
+      const transition =
+        ev.previous_status && ev.next_status
+          ? `${prcStatusLabel(ev.previous_status)} → ${prcStatusLabel(ev.next_status)}`
+          : ev.next_status
+            ? prcStatusLabel(ev.next_status)
+            : null;
+      const channel =
+        typeof ev.metadata?.channel === "string"
+          ? ev.metadata.channel
+          : null;
+      return {
+        id: ev.id,
+        title: PRC_EVENT_LABELS[ev.event_type] || ev.event_type,
+        occurredAt: ev.occurred_at,
+        timeLabel: prcFormatTimelineDate(ev.occurred_at),
+        actorLabel: actor,
+        transition,
+        reasonText: ev.reason?.trim() || null,
+        channel,
+        metaText: `${actor}${ev.actor_email ? ` · ${ev.actor_email}` : ""}${channel ? ` · canal ${channel}` : ""}`,
+      };
+    });
+}

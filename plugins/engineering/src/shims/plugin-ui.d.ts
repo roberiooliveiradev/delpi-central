@@ -2954,6 +2954,50 @@ declare module "@delpi/plugin-ui/index" {
     retry(path: string): void;
     abortAll(): void;
   }
+
+  /* UI-FIX-03 — rótulos/formatadores de timeline compartilhados */
+  export const PRC_EVENT_LABELS: Record<string, string>;
+  export function prcPersonLabel(
+    subject: string | null | undefined,
+    displayName?: string | null,
+  ): string;
+  export function prcRequesterLabel(requester: {
+    subject: string;
+    displayName?: string | null;
+  }): string;
+  export function prcStatusLabel(status: string): string;
+  export function prcFormatTimelineDate(
+    iso: string | null | undefined,
+    fallback?: string,
+  ): string;
+
+  export type PrcTimelineEventLike = {
+    id: string;
+    sequence_number: number;
+    event_type: string;
+    actor_subject?: string;
+    actor_display_name?: string | null;
+    actor_email?: string | null;
+    occurred_at: string;
+    reason?: string | null;
+    metadata?: Record<string, unknown> | null;
+    previous_status?: string | null;
+    next_status?: string | null;
+  };
+  export type PrcTimelineItemView = {
+    id: string;
+    title: string;
+    occurredAt: string;
+    timeLabel: string;
+    actorLabel: string;
+    transition: string | null;
+    reasonText: string | null;
+    channel: string | null;
+    metaText: string;
+  };
+  export function prcTimelineItemViews(
+    events: PrcTimelineEventLike[],
+  ): PrcTimelineItemView[];
 }
 
 

@@ -26,6 +26,8 @@
   --delpi-ui-text-muted: var(--en-text-muted);
   --delpi-ui-border: var(--en-border);
   --delpi-ui-muted: var(--en-text-muted);
+  --delpi-ui-danger: var(--en-danger);
+  --delpi-ui-success: var(--en-success);
   --delpi-ui-section-gap: var(--en-section-gap);
   --delpi-ui-grid-gap: var(--en-grid-gap);
   --delpi-ui-page-padding: var(--en-page-padding);
