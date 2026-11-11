@@ -6434,6 +6434,21 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 
 | DELIA-C3-T2-INT1-TEO-SEMANTIC-CONTRACT-AND-DAVI-BOM-COMPLETENESS-REMEDIATION-01 | TEO read description ecoa Process WBS; DAVI full-mode omite pagination null + classifier null-as-absent; targeted tests PASS; doc 304; no LLM | CONTRACT_REMEDIATED; NEXT=COORDINATION_INT1_TEO_DAVI_INDEPENDENT_REVIEW |
 
+| DELIA-C3-T2-INT1-TEO-DAVI-INTEGRATED-VALIDATION-AND-PRODUCTION-DEPLOY-01 | Predeploy PASS; G1/P1 live or-qwen14b-3863d58c5327; deploy api-delpi→TEO→delia @ e2b341d877; G1 TEO-first residual; completeness fixed; doc 305 | PROD_DEPLOY=YES; NEXT=COORDINATION_INT1_PRODUCTION_VALIDATION_INDEPENDENT_REVIEW |
+
+### INT-1 TEO/DAVI integrated validation + production deploy — 2026-11-11
+
+- **TASK:** `DELIA-C3-T2-INT1-TEO-DAVI-INTEGRATED-VALIDATION-AND-PRODUCTION-DEPLOY-01`.
+- **RELEASE_SHA:** `e2b341d87785345ffcabf784bd6314c3ce0115d7` (includes doc304 `c4f3d6370c`).
+- **PREDEPLOY:** TEO/DAVI/DELIA targeted tests PASS; enterprise 90260921 complete after DAVI rebuild.
+- **LIVE:** `or-qwen14b-3863d58c5327` — MODEL_REQUESTS=2; G1 TEO-first then DAVI recovery; P1 DAVI-first; `owner_result_incomplete=false`; declared complete; GROUNDED.
+- **DEPLOY:** `up-prod-sequential.sh --build` api-delpi → transformometro-api → delia-api; images rotated; health OK; rollback NOT_REQUIRED.
+- **PROD SETTINGS:** delia env=production; profile openrouter_qwen; model qwen/qwen3-14b; fp e4a5b706a3b3156b.
+- **AGENT/INSTRUCTION unchanged**; FULL_BATTERY=NOT_RUN.
+- **Doc:** `305-int1-teo-davi-integrated-validation-and-controlled-production-deployment.md`.
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_PRODUCTION_VALIDATION_INDEPENDENT_REVIEW`.
+
 ### INT-1 TEO contract + DAVI BOM completeness remediation — 2026-11-11
 
 - **TASK:** `DELIA-C3-T2-INT1-TEO-SEMANTIC-CONTRACT-AND-DAVI-BOM-COMPLETENESS-REMEDIATION-01`.

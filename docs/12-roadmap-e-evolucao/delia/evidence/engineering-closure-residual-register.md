@@ -1368,3 +1368,21 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
 
 **NEXT=`COORDINATION_INT1_TEO_DAVI_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+## 2026-11-11 — INT-1 TEO/DAVI integrated validation + prod deploy residuals
+
+**TASK:** `DELIA-C3-T2-INT1-TEO-DAVI-INTEGRATED-VALIDATION-AND-PRODUCTION-DEPLOY-01` · Doc **305** · SHA `e2b341d877…`
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-DAVI-FALSE-INCOMPLETE | **CLOSED_IN_PROD** | Runtime probe 90260921 is_complete=true; no null page keys |
+| INT1-TEO-DECOMPOSITION-DESC-AMBIGUITY | **CLOSED_IN_PROD** | tools/list WBS prose active on transformometro-api |
+| INT1-G1-P1-LIVE-AFTER-FIX | **EXECUTED** | eval `or-qwen14b-3863d58c5327`; declared complete; incomplete=false |
+| INT1-G1-TEO-FIRST-ATTRACTOR | **OPEN / RESIDUAL** | G1 still TEO-first (process search → decomposition_tree) then DAVI recovery |
+| INT1-COVERAGE-UNKNOWN-FINALIZE | **OPEN** | plan-absent coverage_unknown (INT-3) |
+| INT1-PROD-DEPLOY-THREE-SERVICES | **EXECUTED** | api-delpi → TEO → delia-api; health OK; rollback not required |
+| INT1-STAGE | **BLOCKED** | Doc 305 independent review |
+| INT1-CLOSED | **NO** | — |
+| INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
+
+**NEXT=`COORDINATION_INT1_PRODUCTION_VALIDATION_INDEPENDENT_REVIEW`**.

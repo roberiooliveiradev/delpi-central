@@ -2140,3 +2140,7 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 ### 2026-11-11 — INT-1 TEO semantic contract + DAVI BOM completeness remediation
 
 **TASK:** `DELIA-C3-T2-INT1-TEO-SEMANTIC-CONTRACT-AND-DAVI-BOM-COMPLETENESS-REMEDIATION-01`. Causal follow-up to doc 303. **Front A:** MCP TÉO `read` description now publishes `decomposition_tree` as process WBS (`processo_id`), reusing `ENTITY_DESCRIPTIONS` — no DAVI routing. **Front B:** false `owner_result_incomplete` traced to full-mode `page/page_size/total_pages=null` → pagination UNKNOWN; UC omits nulls + classifier treats null as absent; SKU 90260921 remains depth-1 PA→MP (not multilnível loss). Targeted TEO/DAVI tests PASS; no external LLM; no Agent/instruction change. Doc 304. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_TEO_DAVI_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+### 2026-11-11 — INT-1 TEO/DAVI integrated validation + production deploy
+
+**TASK:** `DELIA-C3-T2-INT1-TEO-DAVI-INTEGRATED-VALIDATION-AND-PRODUCTION-DEPLOY-01`. Release `e2b341d877…`. Predeploy targeted PASS. Live G1/P1 `or-qwen14b-3863d58c5327` against rebuilt DAVI+TEO: G1 still TEO-first then DAVI recovery; P1 DAVI-first; `owner_result_incomplete` cleared; declared complete. Deploy `up-prod-sequential --build` api-delpi → transformometro-api → delia-api; health OK; rollback not required. Doc 305. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_PRODUCTION_VALIDATION_INDEPENDENT_REVIEW`**.
