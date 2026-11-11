@@ -172,6 +172,17 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 
 **Critério de fechamento:** smoke com resultado material e verificável em produção, dados manuais preservados, nenhum segredo coletado, identidade vinculada ao cadastro e observação com `run_id` idempotente. Se houver divergência de owner/security, registrar `EXECUTION_DRIFT` / `ARCHITECTURE_DECISION_REQUIRED`, sem improvisar bypass.
 
+## E4.S1 — smoke diagnóstico completo no srv-api (11/11/2026)
+
+**Evidência reportada pelo operador (PROVEN pela saída do terminal fornecida no chat, sem log remoto independente):**
+- `python3 -m collectors.linux_host diagnose` executado com Python em ambiente virtual isolado no próprio `srv-api`.
+- `status: complete`, com as sete seções `identity`, `os`, `memory`, `volumes`, `nics`, `systemd` e `docker` retornando `ok`.
+- Superado o erro local de dependências `ModuleNotFoundError: No module named 'jose'` com ambiente de execução isolado; a instalação systemd de produção, serviço/usuário próprio e acesso ao ambiente de coleta permanecem **PENDING**.
+- A API 0.4.0 foi identificada em container no `srv-api` na evidência anterior; não há ainda prova de V004 aplicada por consulta de banco, `submit` S2S, observação persistida, apresentação no Portal nem agendamento.
+- **GATE AINDA ABERTO:** corrigir/validar sanitização estrita de campos JSON aninhados no resumo de observações antes de habilitar S2S de ingestão, conforme revisão anterior. `submit`, Keycloak `--apply` e timer continuam **PENDING**.
+
+**Estado:** `IMPLEMENTED_PENDING_SMOKE`, mesmo após o diagnóstico local `PASS`. A E4.S1 só recebe aceite completo após envio autenticado, persistência, visualização, controles de segurança e decisão de agendamento respaldados por evidência.
+
 ## Residuais abertos
 
 | ID | Residual | Dono da decisão |
