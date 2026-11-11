@@ -69,6 +69,17 @@ AO CLICAR/TOCAR EM LINHA OU CARD RESPONDIDO (EXCETO NO LINK DA CONTA):
 
 **Contagens aprovadas:** manter Participantes/Respondidas/Pendentes acima da lista, sem afetar essa decisão. **Estado:** UX aprovada, documentação registrada, **não implementado**; testar clique/toque/teclado na linha/card e ausência de navegação em pendentes.
 
+### Decisão visual — filtros automáticos e limpar filtros (11/11/2026)
+
+**APROVADO PELO SOLICITANTE — regra permanente:** os filtros da UI-06 são **sempre automáticos**, conforme os demais Heroes do Portal Comercial. **Não criar botão “Aplicar”** nem exigir confirmação para atualizar a lista. Manter **botão “Limpar filtros” no `CommercialPageHero`**, seguindo o padrão oficial dos outros Heroes (verificar o componente/contrato existente na implementação; não criar outra solução visual).
+
+- Mudanças de **campanha, situação e grupo** atualizam a consulta automaticamente; a **pesquisa por nome/código/loja** também filtra automaticamente, usando espera curta de digitação somente se necessária para evitar consultas excessivas.
+- O botão **Limpar filtros** restaura os filtros de **situação, grupo e busca** para seus valores padrão, mantendo a **campanha selecionada** como contexto da consulta. Ordenação e página retornam ao padrão quando a mudança dos filtros invalidar o resultado corrente. Confirmar o comportamento exato de reset pelos Heroes existentes antes de codificar, sem sobrescrever a decisão de campanha contextual.
+- Ao mudar qualquer filtro que altera o conjunto de linhas, reiniciar a paginação quando necessário e manter parâmetros navegáveis/retornáveis na URL da UI-06, para que a UI-07 volte à lista com o mesmo contexto. Proteger contra resultado de requisição antiga sobrescrevendo filtros mais recentes.
+- Os três cards **Participantes / Respondidas / Pendentes** continuam refletindo a campanha inteira, sem variar com filtros locais de situação, grupo ou busca.
+- Estados de loading, erro e vazio devem ser consistentes com os padrões do Portal; não sugerir “nenhum participante” se o filtro apenas não encontrar correspondência.
+- **Status:** UX **APROVADA**, atualização documental; comportamento novo ainda **NÃO IMPLEMENTADO / NÃO TESTADO**.
+
 ## 4. Mapa de componentes oficiais
 
 | Região | Componente/padrão já existente | Observação |
