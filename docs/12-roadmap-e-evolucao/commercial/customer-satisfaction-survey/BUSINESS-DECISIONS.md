@@ -123,6 +123,7 @@ A primeira entrega deverá permitir **criação de campanhas, escolha de partici
 **Owner da decisão:** Comercial — validação formal PENDING.
 **Data:** 2026-11-10.
 **Justificativa:** Indicador simples e comparável entre empresas e campanhas.
+**Contexto interpretativo do Word (§4):** “Mais importante do que estabelecer uma 'nota ideal' é acompanhar a evolução do indicador e identificar quais clientes ou dimensões estão deteriorando.” O objetivo é acompanhar variações ao longo do tempo, **não** impor meta/semáforo automático, nem divulgar respostas identificáveis a quem só tem `commercial.access`. A comparação depende das campanhas e bases oficiais disponíveis.
 **Impacto:** Peso igual por empresa e cálculo a partir das notas gerais válidas; contratos e implementação permanecem TO_INVENTORY.
 
 ### Q11 — Regra oficial de NPS
@@ -132,6 +133,7 @@ A primeira entrega deverá permitir **criação de campanhas, escolha de partici
 **Fonte:** Concordância explícita do solicitante em 2026-11-10 à proposta da pergunta 12 da entrevista.
 **Owner da decisão:** Comercial — validação formal PENDING.
 **Data:** 2026-11-10.
+**Leitura conjunta prevista pelo Word (§5):** satisfação geral mede a experiência atual; NPS mede a disposição de recomendar; perguntas dimensionais explicam por que o cliente está satisfeito ou insatisfeito. É uma **orientação analítica**, não autorização para o frontend calcular novos índices ou diagnosticar causas automaticamente. A interpretação é apoiada nos indicadores canônicos da API.
 **Impacto:** Indicador comparável entre campanhas; implementação e contratos técnicos TO_INVENTORY.
 
 ### Q12 — Críticos e satisfeitos
@@ -163,6 +165,7 @@ A primeira entrega deverá permitir **criação de campanhas, escolha de partici
 **Status:** SOURCE_DEFINED quanto às oito categorias; DECIDED quanto aos perfis responsáveis pelo tratamento; PENDING apenas para critérios de relevância e detalhes operacionais.
 **Resposta pelo plano:** Cada problema identificado deve ser classificado como Produto, Qualidade, Entrega, Atendimento, Comercial, Técnico, Comunicação ou Preço (seção 8, etapa 2, página 4). A consolidação deve listar principais comentários e clientes críticos em até cinco dias após o encerramento (etapa 1).
 **Responsabilidade DECIDED:** O tratamento da pesquisa, incluindo triagem e classificação, cabe aos usuários autorizados por `commercial.marketing` ou `commercial.manager`, conforme decisão do solicitante em 2026-11-10. O plano não estabelece critério automático para transformar notas/comentários em problemas: não inventar detecção automática ou nova aprovação.
+**Finalidade adicional expressa no Word (§6):** a terceira pergunta aberta (“Existe alguma necessidade ou expectativa que a Delpi ainda não esteja atendendo?”) pode revelar **novas oportunidades comerciais, técnicas e de relacionamento**. Preservar a informação na leitura e na consolidação da entrega 1; eventual encaminhamento e tratamento integram a entrega 2, com avaliação humana de relevância, sem gerar automaticamente uma oportunidade ou classificação.
 **Impacto:** Reutilizar oito categorias do plano, sem inventar novas categorias ou automação.
 ### Q16 — Gestão de ações
 **Pergunta:** Quem cria e atribui planos de ação, quais etapas/status e critérios de aprovação e conclusão deverão existir?
@@ -175,6 +178,14 @@ A primeira entrega deverá permitir **criação de campanhas, escolha de partici
 **Status:** SOURCE_DEFINED quanto ao público-alvo do retorno; DECIDED quanto aos perfis responsáveis por acompanhar o retorno; PENDING quanto ao canal operacional.
 **Resposta pelo plano:** Prever retorno aos clientes com críticas relevantes, inclusive com texto-modelo informando recebimento da avaliação e ações em andamento (seção 8, etapa 4, página 4). Registrar reavaliação no acompanhamento (seção 10, página 5).
 **Responsabilidade DECIDED:** O tratamento e acompanhamento do retorno ao cliente competem aos usuários autorizados por `commercial.marketing` ou `commercial.manager`, segundo decisão de 2026-11-10. **PENDING:** Canal efetivo de retorno e detalhes de registro. O texto-modelo não autoriza envio automático, não define prazo específico e não pressupõe uma aprovação adicional.
+**Texto-modelo literal do Word (§8, etapa 4), apenas referência de comunicação:**
+
+> “Recebemos sua avaliação e identificamos alguns pontos que merecem atenção. Gostaríamos de apresentar as ações que estamos conduzindo para melhorar sua experiência com a Delpi.”
+
+É **exemplo**, não template aprovado para envio automático, não prova de ações já iniciadas e não obriga a mensagem padronizada. O contato efetivo, pelo canal definido pelo Comercial, integra a entrega 2.
+
+**Sequência operacional de referência (§10 do Word):** Cliente → Pesquisa enviada → Data da pesquisa → Responsável → IGS → NPS → Notas por dimensão → Comentários → Pontos críticos → Plano de ação → Responsável pela ação → Prazo → Status → Reavaliação. **Interpretação de implantação:** a entrega 1 registra campanha, participante, resposta e dados/indicadores; a entrega 2 registra tratamento, ação, acompanhamento e reavaliação. “Pesquisa enviada” é redação do Word, **não prova de convite efetivamente entregue** no processo atual de cópia manual; IGS e NPS são resultados agregados, não pontuações individuais da resposta. A lista descreve rastreabilidade operacional, não impõe uma tela ou tabela única.
+
 **Impacto:** Fechar o ciclo com o cliente sem criar integração adicional sem necessidade.
 ### Q18 — Acesso, retenção e auditoria
 **Pergunta:** Quem pode gerir campanhas, destinatários, disparos, respostas individuais, indicadores e ações? Por quanto tempo os dados serão mantidos?
