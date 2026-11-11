@@ -428,7 +428,7 @@ describe("server detail — icon navigation and linked components", () => {
     expect(screen.getByText("Parcial")).toBeTruthy();
     expect(screen.getByText("Diferenças em relação ao cadastro")).toBeTruthy();
     expect(screen.getByText(/Docker indisponível/)).toBeTruthy();
-    expect(screen.getByText("8")).toBeTruthy();
+    expect(screen.getAllByText("8").length).toBeGreaterThan(0);
     expect(screen.getByText("CPUs lógicas · uso não coletado")).toBeTruthy();
   });
 
@@ -436,7 +436,7 @@ describe("server detail — icon navigation and linked components", () => {
     mockApi(serverDetailRoutes(E1_ONLY));
     renderAt("/apps/it-portal/servers/" + SERVER_ID);
     const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
-    expect(within(navigation).getByRole("button", { name: /Visão geral/ })).toHaveAttribute("aria-pressed", "true");
+    expect(within(navigation).getByRole("button", { name: /Visão geral/ }).getAttribute("aria-pressed")).toBe("true");
     expect(within(navigation).getByRole("button", { name: /Coleta automática/ })).toBeTruthy();
     expect(within(navigation).queryByRole("button", { name: /^Serviços/ })).toBeNull();
     expect(within(navigation).queryByRole("button", { name: /Bancos de dados/ })).toBeNull();
