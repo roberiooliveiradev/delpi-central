@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import math
 from datetime import datetime, timezone
 from typing import Any
 
@@ -11,7 +12,7 @@ from it_portal_app.domain.field_rules import clean, choice, optional_text, requi
 from it_portal_app.domain.secret_guard import ensure_no_secret
 from it_portal_app.domain.servers import normalize_hostname, normalize_ip
 
-OBSERVATION_SOURCES = ("linux_host_collector",)
+OBSERVATION_SOURCES = ("linux_host_collector", "windows_host_collector")
 OBSERVATION_STATUSES = ("complete", "partial", "failed")
 SECTION_STATUSES = ("ok", "partial", "unavailable", "failed")
 SCHEMA_VERSION_V1 = "1"
@@ -56,6 +57,14 @@ SUMMARY_TOP_LEVEL_KEYS = frozenset(
 )
 SECTIONS_STATUS_KEYS = frozenset(
     {"identity", "os", "memory", "volumes", "nics", "systemd", "docker"}
+)
+# E4.S3: contratos distintos; a entrada Windows não amplia a allowlist Linux.
+WINDOWS_SUMMARY_TOP_LEVEL_KEYS = frozenset(
+    {"identity", "os", "virtualization", "cpu_logical", "cpu_usage_percent",
+     "uptime_seconds", "memory", "volumes", "host_nics", "windows_services"}
+)
+WINDOWS_SECTIONS_STATUS_KEYS = frozenset(
+    {"identity", "os", "cpu", "memory", "volumes", "nics", "windows_services"}
 )
 SENSITIVE_SUMMARY_KEYS = frozenset(
     {
@@ -133,17 +142,18 @@ def _parse_observed_at(raw: object, errors: dict) -> datetime:
     return parsed.astimezone(timezone.utc)
 
 
-def _validate_sections_status(raw: object, errors: dict) -> dict[str, str]:
+def _validate_sections_status(raw: object, errors: dict, *, source: str) -> dict[str, str]:
     if raw is None:
         return {}
     if not isinstance(raw, dict):
         errors["sections_status"] = "sections_status deve ser um objeto."
         return {}
     out: dict[str, str] = {}
+    allowed = WINDOWS_SECTIONS_STATUS_KEYS if source == "windows_host_collector" else SECTIONS_STATUS_KEYS
     for key, value in list(raw.items())[:40]:
         name = clean(key)
         status = clean(value)
-        if not name or name not in SECTIONS_STATUS_KEYS:
+        if not name or name not in allowed:
             # Seções desconhecidas são descartadas; não expandem o contrato.
             continue
         if status not in SECTION_STATUSES:
@@ -352,8 +362,8 @@ def _sanitize_docker_summary(raw: object, errors: dict) -> dict | None:
     }
 
 
-def _sanitize_summary(raw: object, errors: dict) -> dict:
-    """Reconstrói o summary apenas com o contrato v1 do coletor Linux.
+def _sanitize_summary(raw: object, errors: dict, *, source: str) -> dict:
+    """Reconstrói o summary apenas com a allowlist da fonte de coleta.
 
     Chaves sensíveis em qualquer profundidade rejeitam a observação.
     Campos desconhecidos (não sensíveis) são descartados pela allowlist.
@@ -372,9 +382,10 @@ def _sanitize_summary(raw: object, errors: dict) -> dict:
         return {}
 
     summary: dict[str, Any] = {}
+    allowed = WINDOWS_SUMMARY_TOP_LEVEL_KEYS if source == "windows_host_collector" else SUMMARY_TOP_LEVEL_KEYS
     for key in raw:
         name = str(key)
-        if name not in SUMMARY_TOP_LEVEL_KEYS:
+        if name not in allowed:
             continue
         value = raw.get(key)
         if name == "identity":
@@ -391,6 +402,10 @@ def _sanitize_summary(raw: object, errors: dict) -> dict:
                 summary["virtualization"] = virt
         elif name == "cpu_logical":
             summary["cpu_logical"] = _optional_nonneg_int(value)
+        elif name == "cpu_usage_percent":
+            summary["cpu_usage_percent"] = _optional_percent(value)
+        elif name == "uptime_seconds":
+            summary["uptime_seconds"] = _optional_nonneg_int(value)
         elif name == "memory":
             memory = _sanitize_memory_block(
                 value,
@@ -417,10 +432,10 @@ def _sanitize_summary(raw: object, errors: dict) -> dict:
             volumes = _sanitize_volumes(value, errors)
             if volumes is not None:
                 summary["volumes"] = volumes
-        elif name == "systemd_services":
+        elif name in ("systemd_services", "windows_services"):
             services = _sanitize_systemd_services(value, errors)
             if services is not None:
-                summary["systemd_services"] = services
+                summary[name] = services
         elif name == "docker_summary":
             docker = _sanitize_docker_summary(value, errors)
             if docker is not None:
@@ -449,7 +464,7 @@ def _optional_percent(value: object) -> float | None:
         number = float(value)
     except (TypeError, ValueError):
         return None
-    if number < 0 or number > 100:
+    if not math.isfinite(number) or number < 0 or number > 100:
         return None
     return round(number, 2)
 
@@ -485,9 +500,9 @@ def build_observation_ingest(raw: dict) -> ObservationIngest:
     if machine_id:
         ensure_no_secret("host_identity.machine_id", machine_id)
 
-    sections_status = _validate_sections_status(raw.get("sections_status"), errors)
+    sections_status = _validate_sections_status(raw.get("sections_status"), errors, source=source)
     try:
-        summary = _sanitize_summary(raw.get("summary"), errors)
+        summary = _sanitize_summary(raw.get("summary"), errors, source=source)
     except ValidationError as exc:
         field = exc.details.get("field") or "summary"
         errors[str(field)] = exc.message

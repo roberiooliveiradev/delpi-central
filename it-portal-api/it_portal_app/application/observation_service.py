@@ -25,6 +25,32 @@ def _allowlist_server_ids() -> frozenset[str]:
     return frozenset(item.strip() for item in raw.split(",") if item.strip())
 
 
+def _windows_collector_bindings() -> dict[str, frozenset[str]]:
+    """E4.S3: vínculo explícito client_id -> servidor(es); vazio nega Windows.
+
+    Sintaxe: client-1=uuid-1;client-2=uuid-2 (um cliente por host recomendado).
+    Múltiplos UUIDs para o mesmo cliente podem ser separados por vírgula.
+    """
+    raw = (os.environ.get("IT_PORTAL_WINDOWS_COLLECTOR_BINDINGS") or "").strip()
+    parsed: dict[str, set[str]] = {}
+    for entry in raw.split(";"):
+        if not entry.strip() or "=" not in entry:
+            continue
+        client, server_ids = entry.split("=", 1)
+        client = client.strip()
+        if not client:
+            continue
+        ids = set()
+        for candidate in server_ids.split(","):
+            try:
+                ids.add(str(uuid.UUID(candidate.strip())))
+            except (ValueError, AttributeError):
+                continue
+        if ids:
+            parsed.setdefault(client, set()).update(ids)
+    return {client: frozenset(ids) for client, ids in parsed.items()}
+
+
 def _retention() -> int:
     raw = (os.environ.get("IT_PORTAL_OBSERVATION_RETENTION") or "").strip()
     if not raw:
@@ -100,6 +126,13 @@ class ObservationService:
             )
 
         ingest = build_observation_ingest(raw)
+        if ingest.source == "windows_host_collector":
+            permitted = _windows_collector_bindings().get(collector_client_id, frozenset())
+            if server_id not in permitted:
+                raise ConflictError(
+                    "windows_collector_binding_forbidden",
+                    "Cliente Windows não autorizado para este servidor.",
+                )
         registered_hostname = normalize_hostname(server.get("hostname"))
         if ingest.host_identity.hostname != registered_hostname:
             raise ValidationError(

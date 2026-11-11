@@ -1,6 +1,6 @@
 # E4.S2 — descoberta local de servidores Windows (piloto controlado)
 
-Status: **DIAGNOSTIC_ONLY / NÃO IMPLANTADO**. Esta fatia não habilita coleta automatizada, monitoramento contínuo, alertas ou ingestão Windows na API.
+Status: **DIAGNOSTIC_ONLY / EXECUÇÃO MANUAL VALIDADA** em um Windows Server 2019 em 11/11/2026. Esta fatia não habilita coleta automatizada, monitoramento contínuo ou alertas. A integração API/UI está proposta separadamente em [E4.S3](E4S3-WINDOWS-OBSERVATIONS.md), sem deploy comprovado.
 
 ## Contexto comprovado
 
@@ -29,7 +29,7 @@ Cobertura: hostname; hash SHA-256 de UUID de hardware **quando disponível** (n�
 
 Para cada Windows: registrar *somente após evidência*: hostname normalizado, unidade (01/02), função/criticidade, SO, IP(s) local(is), hipervisor/modelo, owner, serviços de negócio explícitos, registro preexistente no Portal, controles EDR/Zabbix/Windows e permissão de coleta. Identificar possíveis homônimos/VMs clonadas antes de conciliar; não criar servidores a partir de endereço IP isolado.
 
-## Fase 2: integrar Windows ao Portal (NÃO implementada)
+## Fase 2: integrar Windows ao Portal (proposta na E4.S3; ainda não implantada)
 
 1. Contrato aditivo na API: `windows_host_collector`, chaves `cpu_usage_percent`, `uptime_seconds`, `windows_services` e estados de seção Windows; permitir apenas campos explícitos, sanitizar profundamente e impor limites por lista/tamanho. Preservar o contrato Linux.
 2. Testes positivos/negativos: JSON realista do PowerShell, segredos aninhados, host incorreto, UUID divergente, replay `run_id`, allowlist de servidor/cliente, falha S2S, dados curados intactos.
@@ -42,7 +42,7 @@ Para cada Windows: registrar *somente após evidência*: hostname normalizado, u
 
 - [x] Diagnóstico Windows versionado, sem rede nem escrita
 - [x] Plano de coleta e restrições documentados
-- [ ] Execução e evidência em Windows Server real
-- [ ] Testes PowerShell no Windows 5.1/7 (ambiente indisponível na revisão remota)
-- [ ] Integração de fonte Windows na API e UI
+- [x] Execução e evidência de diagnóstico local em Windows Server 2019 (status complete; 7/7 seções ok)
+- [ ] Testes automatizados PowerShell no Windows 5.1/7 (execução manual validada no Server 2019)
+- [ ] Integração de fonte Windows na API e UI (código em PR E4.S3; aguarda merge/deploy/aceite)
 - [ ] Homologação S2S, agendamento e monitoramento

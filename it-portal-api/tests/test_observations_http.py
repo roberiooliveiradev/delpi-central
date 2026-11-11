@@ -171,3 +171,106 @@ def test_collector_rejects_server_outside_allowlist(client, collector_auth, monk
     )
     assert response.status_code == 409
     assert response.json()["data"]["error"]["code"] == "collector_server_forbidden"
+
+
+def _windows_observation_body(hostname="srv-erp-01.delpi.local", **overrides):
+    body = {
+        "run_id": "run-windows-http-0001",
+        "source": "windows_host_collector",
+        "schema_version": "1",
+        "status": "complete",
+        "observed_at": "2026-11-11T16:49:09.732Z",
+        "host_identity": {"hostname": hostname},
+        "summary": {
+            "os": {"name": "Microsoft Windows Server 2019 Standard", "version": "10.0.17763"},
+            "cpu_logical": 8,
+            "cpu_usage_percent": 33.0,
+            "uptime_seconds": 7824971,
+            "memory": {"total_bytes": 47243603968, "available_bytes": 5511974912},
+            "volumes": [{"mount_point": "I:", "size_bytes": 323175000000,
+                         "available_bytes": 8400000000, "used_percent": 97.39}],
+            "windows_services": [{"name": "EventLog", "active_state": "running"}],
+        },
+        "sections_status": {"os": "ok", "cpu": "ok", "memory": "ok",
+                            "volumes": "ok", "windows_services": "ok"},
+    }
+    body.update(overrides)
+    return body
+
+
+def test_windows_ingest_s2s_binding_latest_replay_and_manual_inventory_intact(
+    client, pilot_server, collector_auth, monkeypatch, observations
+):
+    windows_client = "it-portal-windows-pilot01"
+    collector_auth.identity = _identity(client_id=windows_client)
+    monkeypatch.setenv(
+        "IT_PORTAL_WINDOWS_COLLECTOR_BINDINGS",
+        f"{windows_client}={pilot_server['id']}",
+    )
+    url = f"/collector/v1/servers/{pilot_server['id']}/observations"
+    headers = {"X-Delpi-Service-Authorization": "Bearer svc-token"}
+
+    before = client.get(f"/servers/{pilot_server['id']}").json()["data"]
+    first = client.post(url, json=_windows_observation_body(), headers=headers)
+    assert first.status_code == 201
+    snapshot = first.json()["data"]
+    assert snapshot["source"] == "windows_host_collector"
+    assert snapshot["summary"]["cpu_usage_percent"] == 33.0
+    assert snapshot["summary"]["windows_services"][0]["active_state"] == "running"
+    assert client.get(f"/servers/{pilot_server['id']}/observations/latest").json()["data"]["id"] == snapshot["id"]
+    replay = client.post(url, json=_windows_observation_body(), headers=headers)
+    assert replay.status_code == 201
+    assert replay.json()["data"]["id"] == snapshot["id"]
+    assert len(observations.observations) == 1
+    after = client.get(f"/servers/{pilot_server['id']}").json()["data"]
+    for key in ("hostname", "operating_system", "ip_address", "revision"):
+        assert before[key] == after[key]
+
+
+def test_windows_ingest_fails_closed_without_binding(
+    client, pilot_server, collector_auth, monkeypatch
+):
+    collector_auth.identity = _identity(client_id="it-portal-windows-pilot01")
+    monkeypatch.delenv("IT_PORTAL_WINDOWS_COLLECTOR_BINDINGS", raising=False)
+    response = client.post(
+        f"/collector/v1/servers/{pilot_server['id']}/observations",
+        json=_windows_observation_body(),
+        headers={"X-Delpi-Service-Authorization": "Bearer svc-token"},
+    )
+    assert response.status_code == 409
+    assert response.json()["data"]["error"]["code"] == "windows_collector_binding_forbidden"
+
+
+def test_windows_ingest_rejects_other_client_even_if_server_is_allowlisted(
+    client, pilot_server, collector_auth, monkeypatch
+):
+    monkeypatch.setenv(
+        "IT_PORTAL_WINDOWS_COLLECTOR_BINDINGS",
+        f"it-portal-windows-pilot01={pilot_server['id']}",
+    )
+    # Reutilizar identidade Linux não autoriza enviar payload Windows.
+    response = client.post(
+        f"/collector/v1/servers/{pilot_server['id']}/observations",
+        json=_windows_observation_body(),
+        headers={"X-Delpi-Service-Authorization": "Bearer svc-token"},
+    )
+    assert response.status_code == 409
+    assert response.json()["data"]["error"]["code"] == "windows_collector_binding_forbidden"
+
+
+def test_windows_ingest_rejects_hostname_mismatch(
+    client, pilot_server, collector_auth, monkeypatch
+):
+    windows_client = "it-portal-windows-pilot01"
+    collector_auth.identity = _identity(client_id=windows_client)
+    monkeypatch.setenv(
+        "IT_PORTAL_WINDOWS_COLLECTOR_BINDINGS",
+        f"{windows_client}={pilot_server['id']}",
+    )
+    response = client.post(
+        f"/collector/v1/servers/{pilot_server['id']}/observations",
+        json=_windows_observation_body(hostname="other-server"),
+        headers={"X-Delpi-Service-Authorization": "Bearer svc-token"},
+    )
+    assert response.status_code == 422
+    assert response.json()["data"]["error"]["code"] == "hostname_mismatch"

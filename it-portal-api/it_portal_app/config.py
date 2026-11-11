@@ -53,6 +53,9 @@ class Settings:
     IT_PORTAL_COLLECTOR_SERVER_ALLOWLIST: str = _get_env(
         "IT_PORTAL_COLLECTOR_SERVER_ALLOWLIST", default=""
     )
+    IT_PORTAL_WINDOWS_COLLECTOR_BINDINGS: str = _get_env(
+        "IT_PORTAL_WINDOWS_COLLECTOR_BINDINGS", default=""
+    )
 
 
 settings = Settings()
