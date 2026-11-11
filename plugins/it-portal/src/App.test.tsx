@@ -145,6 +145,60 @@ describe("home", () => {
     expect(within(indicators).queryByText("Ações atrasadas")).toBeNull();
     expect(screen.getByText("ERP Produção")).toBeTruthy();
   });
+
+  it("shows inventory health from criticality without inventing availability", async () => {
+    mockApi({
+      "/me/capabilities": { data: VIEW_ONLY },
+      "/dashboard": {
+        data: dashboard({
+          servers: { total: 4, high_or_critical: 1 },
+          recent_servers: [server()],
+        }),
+      },
+    });
+    renderAt("/apps/it-portal");
+    expect(await screen.findByText("Saúde do inventário")).toBeTruthy();
+    const gauge = screen.getByRole("img", { name: /Saúde do inventário: 75%/ });
+    expect(gauge.getAttribute("aria-label")).not.toMatch(/Online|uptime/i);
+    expect(screen.getByText("sem criticidade alta ou crítica")).toBeTruthy();
+    expect(screen.getByText("Alta ou crítica")).toBeTruthy();
+    expect(screen.queryByText("Online")).toBeNull();
+  });
+
+  it("quick access only offers permitted areas and KPI navigates to the list", async () => {
+    mockApi({
+      "/me/capabilities": { data: VIEW_ONLY },
+      "/dashboard": {
+        data: dashboard({
+          servers: { total: 2, high_or_critical: 0 },
+          recent_servers: [server()],
+        }),
+      },
+      "/servers": { data: { items: [server()], total: 1, page: 1, page_size: 20 } },
+    });
+    renderAt("/apps/it-portal");
+    const quickAccess = (await screen.findByText("Acesso rápido")).closest("section")!;
+    expect(within(quickAccess).getByRole("button", { name: "Servidores" })).toBeTruthy();
+    expect(within(quickAccess).queryByRole("button", { name: "Serviços" })).toBeNull();
+    expect(within(quickAccess).queryByRole("button", { name: "Bancos de dados" })).toBeNull();
+    const indicators = await screen.findByRole("group", { name: "Indicadores" });
+    fireEvent.click(within(indicators).getAllByRole("button", { name: "Ver servidores" })[0]);
+    expect(window.location.pathname).toBe("/apps/it-portal/servers");
+  });
+
+  it("hero search opens the same command palette as the top bar", async () => {
+    mockApi({
+      "/me/capabilities": { data: VIEW_ONLY },
+      "/dashboard": { data: dashboard() },
+    });
+    renderAt("/apps/it-portal");
+    const triggers = await screen.findAllByRole("button", {
+      name: /Buscar áreas do Portal de TI/,
+    });
+    expect(triggers.length).toBeGreaterThanOrEqual(2);
+    fireEvent.click(triggers[triggers.length - 1]);
+    expect(await screen.findByPlaceholderText("Digite o nome de uma área…")).toBeTruthy();
+  });
 });
 
 describe("servers", () => {
