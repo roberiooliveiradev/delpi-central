@@ -1819,7 +1819,7 @@ NEXT: flag DELIA_ARGGEN_ENGINE + wiring em _propose_candidate_arguments
 ## PYDANTIC-AI — resume point wiring (SHA 3461cc991a)
 
 DONE: adapter pydantic_arggen.py publicado (create_model do schema real +
-Agent output_type + previous_arguments). 
+Agent output_type + previous_arguments).
 NEXT EXACT: (1) settings DELIA_ARGGEN_ENGINE (default llm) em settings.py
 apos tool_selection_mode; (2) em _propose_candidate_arguments L13945+ —
 antes de _model_stage_proposal, quando mode==pydantic_ai chamar
@@ -4027,7 +4027,7 @@ NEXT: flag DELIA_ARGGEN_ENGINE + wiring em _propose_candidate_arguments
 ## PYDANTIC-AI — resume point wiring (SHA 3461cc991a)
 
 DONE: adapter pydantic_arggen.py publicado (create_model do schema real +
-Agent output_type + previous_arguments). 
+Agent output_type + previous_arguments).
 NEXT EXACT: (1) settings DELIA_ARGGEN_ENGINE (default llm) em settings.py
 apos tool_selection_mode; (2) em _propose_candidate_arguments L13945+ —
 antes de _model_stage_proposal, quando mode==pydantic_ai chamar
@@ -5415,7 +5415,7 @@ MODEL A/B (decompose stage, same instr+input+schema, 5x each):
 FINDING: 4B decomposes reliably in isolation — in-pipeline variance is
 in sub-goal->READ chain (goal_evidence_relevance=irrelevant,
 empty_result, source_unavailable), not decompose structured-output.
-8B not a viable upgrade (latency/hardware). 
+8B not a viable upgrade (latency/hardware).
 E2E real (current SHA): A03 same-session decomposed=4 ->
 COMPLETEDx3/BLOCKEDx1 in ~172s, no composition (subs produced
 empty/irrelevant evidence); B01 single-turn HTTP 200/48.6s
@@ -6247,3 +6247,68 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **G1:** standalone reword scenario without `prior`; therefore semantic paraphrase failure, not proven multiturm continuity. Root identity alone != BOM tree coverage.
 - **Safety:** container process separation verified in executor evidence; production `printenv` copy with selective filtering and proxy routing external provider under allowed-looking local URL conflict with explicit local-only DEV egress contract. `EVAL_METHOD_EXECUTION_DRIFT=PROVEN_IN_CODE`; `CREDENTIAL_ISOLATION=NOT_PROVEN`; exposure unknown. Stop harness reuse; owner security/ADR required for any safe external-model eval mechanism.
 - **NEXT:** unchanged `T2_INT1_EVAL_ENV_SECURITY_AND_BLOCKER_DECISION`, no INT1 auto-rework, no stage close, INT2/T3/deploy unauthorized. See Doc 293 bounded diagnostic.
+
+| DELIA-C3-T2-INT1-CONSOLIDATED-ROOT-CAUSE-AND-SECURITY-INVESTIGATION-01 | Diagnosis-only: P3=TEO.analyze selection (not missing get_catalog on live SIX-TOOLS); G1=single-turn arg/capability miss; P1 owner incomplete; P2 truncation+no page continue; SUCCESS+coverage_unknown=F4 contract; harness EXECUTION_DRIFT proven; no functional code; live calls=0 | INT1_STAGE=BLOCKED; HARNESS_REUSE=BLOCKED; NEXT=COORDINATION_T2_INT1_CONSOLIDATED_CAUSAL_REVIEW |
+
+### INT-1 consolidated causal + security report — 2026-11-11
+
+- **TASK:** `DELIA-C3-T2-INT1-CONSOLIDATED-ROOT-CAUSE-AND-SECURITY-INVESTIGATION-01`. Docs-only update to 16/293/residual/ledger; **FUNCTIONAL_CODE_CHANGED=NO**; **LIVE_MODEL_CALLS=0**.
+- **Artifacts used:** local `.battery/int1-isolated-qwen-eval/{eval-output.jsonl,driver.log,proxy.log}` (gitignored) + HEAD contracts/code for evaluated SHAs’ ancestry.
+- **P3_FIRST_DIVERGENT_BOUNDARY:** MODEL_SELECTION among multi-specialist MCP tools → `MCP:analyze`×2 producing TEO dashboard views; VISTA format guidance path is `knowledge`/`read` (legacy `get_catalog`/`get_product_guide` forbidden on live surface).
+- **G1_FIRST_DIVERGENT_BOUNDARY:** MODEL_SELECTION/ARGUMENTS on independent reword (no prior) → identity/knowledge path without BOM; not multiturn memory defect.
+- **COVERAGE:** finalize allows `GovernedCapabilityStatus.SUCCESS` with `coverage_unknown` when obligations/plan absent (F4) — objective satisfaction remains INT-3; typed objective kind INT-2.
+- **SECURITY:** `EVAL_METHOD_EXECUTION_DRIFT=PROVEN_IN_CODE`; `CREDENTIAL_ISOLATION=NOT_PROVEN`; `HARNESS_REUSE=BLOCKED`; `CREDENTIAL_REVIEW_REQUIRED=YES` (no secret values in docs).
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT1_REWORK_BUDGET_EXHAUSTED=YES**; **INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_T2_INT1_CONSOLIDATED_CAUSAL_REVIEW`.
+
+| DELIA-C3-T2-INT1-P3-G1-EXACT-DECISION-FORENSICS-01 | Forensic recovery of P3/G1 decision chain: host retains only stdout summary; per-scenario JSON with mcp_invoke_records/args was written inside destroyed eval container (/tmp/delia_eval_artifacts). P3 action sequence analyze×2 OBSERVED; recovery fail mechanism PROVEN (plan-absent→NEW not RELATED). G1 sequence diverges from P1 at first call (read vs get_context); args/capability_id MISSING. No live calls; harness not reused. | INT1_STAGE=BLOCKED; NEXT=COORDINATION_INT1_EXACT_CAUSAL_DECISION |
+
+### INT-1 P3/G1 exact decision forensics — 2026-11-11
+
+- **TASK:** `DELIA-C3-T2-INT1-P3-G1-EXACT-DECISION-FORENSICS-01`. **FUNCTIONAL_CODE_CHANGED=NO**; **LIVE_MODEL_CALLS=0**; **EVAL_HARNESS_REUSED=NO**.
+- **REANCHOR:** local HEAD may lag `origin/main` (commercial docs); evaluated SHAs remain ancestors. Prompt `OBSERVED_HEAD=d6d24731` is on origin history; executor did not switch branch.
+- **TRACE_STATUS:** `P1/P3/G1_ORIGINAL_TRACE=PARTIAL`. Surviving: `.battery/int1-isolated-qwen-eval/{eval-output.jsonl,driver.log,proxy.log}`. Missing decisive: model-visible toolset, ToolCall args, specialist-qualified capability_id, investigation_progress projections, owner result bodies beyond final prose.
+- **ARTIFACT_LOSS_MECHANISM (PROVEN_BY_EVALUATED_CODE):** `native_mcptoolset_direct_eval._write_artifact` → `/tmp/delia_eval_artifacts/{scenario}.json` inside container; stdout filter omits `mcp_invoke_records`/`collected_attempts`; container removed by harness cleanup.
+- **P3:** first observed tool action = `analyze` then `analyze`; owner content = TEO `dashboard_*`. Exact attribution “tool absent vs wrong selection despite VISTA knowledge/read present” = **INCONCLUSIVE**. Post-first-call non-recovery = **PROVEN**: no plan obligations + no user identifiers → `classify_investigation_progress` returns `NEW_INFORMATION` for business SUCCESS → no `RELATED_INSUFFICIENT`/`coverage_note` forcing kind switch; Agent then declared `partial` and finalize kept grounded prose + `coverage_unknown`.
+- **G1 vs P1:** P1=`get_context→read` recovered BOM; G1=`read→get_context→read→get_context→knowledge→knowledge` no BOM. First divergent **observed** step = G1 first call `read` (P1 first=`get_context`). Args/`get_product_structure` usage = UNKNOWN. Declared limitation claiming lack of structure capability contradicts DAVI live `read` contract publishing `get_product_structure` (PROVEN_BY_CODE). tool_calls=6 < default limit 8 → not limit exhaustion.
+- **INSTRUCTION_VERSION:** `generalist-semantic-v2` (impl SHA); ledger instruction fp `7dbc94c5035b0f19`; runtime fp `b42a0da3f3be8154`.
+- **MINIMUM_SAFE_OBSERVATION_REQUIRED:** host-mounted sanitized capture of eligible `capability_id` tool surface + each ToolCall args shape + progress projection + specialist id — without reusing suspended credential/egress harness.
+- **NEXT:** `COORDINATION_INT1_EXACT_CAUSAL_DECISION`. `INT1_STAGE_ACCEPTANCE=BLOCKED`; `INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+| DELIA-C3-T2-INT1-SECURE-EVAL-AND-FULL-DECISION-TRACE-01 | Security gate BLOCKED (no owner-approved nonprod OpenRouter egress; configured model≠qwen/qwen3-14b; prior harness still forbidden). Observability dry-run PASS: host-persistent JSONL schema/surface/args/progress/sanitization. Real P3/G1 Qwen TEST_NOT_RUN. No functional intelligence change; prod not used as eval. | SECURE_EVAL_GATE=BLOCKED; REAL_QWEN=TEST_NOT_RUN; NEXT=COORDINATION_INT1_DECISION_TRACE_REVIEW |
+
+### INT-1 secure eval + full decision trace — 2026-11-11
+
+- **TASK:** `DELIA-C3-T2-INT1-SECURE-EVAL-AND-FULL-DECISION-TRACE-01`.
+- **EXISTING_EQUIVALENT=PARTIAL** (`Settings.llm_egress_blocked_reason`, local Ollama, prior eval harness — last is **forbidden reuse**). **REUSE_DECISION=EXTEND observability only; NEW authorized egress path requires ADR**.
+- **SECURITY:** `SECURE_EVAL_GATE=BLOCKED`. OpenRouter direct refused in `DELIA_ENV=development`. Localhost-shaped proxy remains EXECUTION_DRIFT class without `DELIA_EVAL_EGRESS_AUTHORIZED` + owner artifact. No separate eval credential scope proven. Ollama has `qwen3:8b` / `delia-qwen3:8b`, **not** required `qwen/qwen3-14b`. `ARCHITECTURE_DECISION_REQUIRED` for authorized nonprod external Qwen14B path.
+- **OBSERVABILITY (prepared; no live Qwen):** `delia-api/scripts/int1_secure_decision_trace.py` + `tests/test_int1_secure_decision_trace.py`. Host path `delia-api/.battery/int1-secure-decision-trace/` (gitignored). Dry-run + separate-process verify: `TRACE_SCHEMA=PASS`, `TRACE_PERSISTENCE_AFTER_EXIT=PASS`, `TRACE_SANITIZATION=PASS`, `TOOL_SURFACE_CAPTURE=PASS`, `ARGUMENT_CAPTURE=PASS`, `PROGRESS_CAPTURE=PASS`. Pytest 2/2 PASS.
+- **REAL_QWEN P3/G1:** `TEST_NOT_RUN` (security gate).
+- **FUNCTIONAL_CODE_CHANGED=NO** (eval observability scripts/tests only). **PRODUCTION_CHANGES=NONE**.
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/T3=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_DECISION_TRACE_REVIEW` (coordinate security ADR + then authorized traced P3/G1).
+
+| DELIA-C3-T2-INT1-LOCAL-QWEN14B-SETUP-AND-INSTRUMENTED-ROOT-CAUSE-EVAL-01 | PO pivot: cancel Ollama 14B; use OpenRouter `qwen/qwen3-14b` + `openrouter_qwen`. Settings allowlist + `DELIA_EVAL_EGRESS_AUTHORIZED=1`. Isolated eval (no proxy/printenv). Security READY; dry-run PASS; live P3/G1/P1 traced on host. P3 first call vista.read (never teo.analyze); G1 first call teo.read vs P1 davi.get_context. No functional rework. | SECURE_EVAL=READY; LIVE=EXECUTED; INT1_STAGE=BLOCKED; NEXT=COORDINATION_INT1_OPENROUTER_INSTRUMENTED_CAUSAL_REVIEW |
+
+### INT-1 OpenRouter Qwen14B instrumented root-cause eval — 2026-11-11
+
+- **TASK:** `DELIA-C3-T2-INT1-LOCAL-QWEN14B-SETUP-AND-INSTRUMENTED-ROOT-CAUSE-EVAL-01` (substitui instalação Ollama 14B do prompt anterior).
+- **MODEL/CONFIG:** `qwen/qwen3-14b` / `openrouter_qwen` / pydantic-ai `2.50.0` / config fp `b42a0da3f3be8154` / host `openrouter.ai`.
+- **SECURITY:** `SECURE_EVAL_GATE=READY_FOR_ISOLATED_EVAL` via allowlist explícita (`Settings.eval_authorized_external_llm_hosts` + flag). Proxy localhost **não** usado. Credenciais seletivas `infra/.env` + portal `infra/.env.local`. `CREDENTIAL_ISOLATION=NONE_PROVEN_SEPARATE_FROM_PROD` residual. `PROD_CONTAINER_UNTOUCHED=YES`.
+- **EVAL_ID:** `or-qwen14b-35aaf1a4174b`. Traces: `delia-api/.battery/int1-secure-decision-trace/or-qwen14b-35aaf1a4174b/` (gitignored). Report: `.battery/int1-openrouter-qwen14b-eval/CAUSAL-REPORT-or-qwen14b-35aaf1a4174b.md`.
+- **P3:** toolset=12; **first divergence** = `vista.read` (422) — **never** `teo.analyze`; recovery via `teo.knowledge` dashboard → GROUNDED partial + `coverage_unknown`.
+- **G1 vs P1:** **first divergence** = G1 `teo.read` vs P1 `davi.get_context`; G1 never `davi.read`/`get_product_structure`; NON_GROUNDED + `uncovered_identifier:90260921`. P1 GROUNDED BOM + `owner_result_incomplete`/`coverage_unknown`.
+- **FUNCTIONAL_CODE_CHANGED=NO** (settings egress allowlist + eval harness/observability only). **INT1_REWORK_BUDGET_EXHAUSTED=YES**; **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_OPENROUTER_INSTRUMENTED_CAUSAL_REVIEW`.
+
+| DELIA-C3-T2-INT1-OPENROUTER-CAUSAL-REPORT-PERSISTENCE-01 | Published sanitized causal report for `or-qwen14b-35aaf1a4174b` as doc 294; no live re-eval; raw .battery not committed; INT-1 remains BLOCKED | DOC_PUBLISHED; NEXT=COORDINATION_INT1_PUBLISHED_CAUSAL_REPORT_REVIEW |
+
+### INT-1 OpenRouter causal report persistence — 2026-11-11
+
+- **TASK:** `DELIA-C3-T2-INT1-OPENROUTER-CAUSAL-REPORT-PERSISTENCE-01`.
+- **REPORT_ORIGIN:** `ORIGINAL_SANITIZED` from local CAUSAL-REPORT + host JSONL projections.
+- **PUBLISHED:** `docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/294-int1-openrouter-qwen14b-instrumented-causal-evaluation.md`.
+- **EVALUATION_ID:** `or-qwen14b-35aaf1a4174b` / model `qwen/qwen3-14b` / profile `openrouter_qwen`.
+- **LIVE_MODEL_CALLS=0**; **FUNCTIONAL_CODE_CHANGED=NO**; **RAW_TRACES_COMMITTED=NO**.
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/T3=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_PUBLISHED_CAUSAL_REPORT_REVIEW`.

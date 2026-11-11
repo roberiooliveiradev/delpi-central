@@ -156,8 +156,8 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 
 ### 2A.6 Execution stamp (T2 ampliada — 2026-11-09)
 
-**TASK:** `DELIA-C3-ENG-CLOSURE-T2-BOUNDARY-OWNERSHIP-CONFORMANCE-01`  
-**BASE_HEAD:** `1a895cb0f02bedb6bd2288855fe1d447fea8998e`  
+**TASK:** `DELIA-C3-ENG-CLOSURE-T2-BOUNDARY-OWNERSHIP-CONFORMANCE-01`
+**BASE_HEAD:** `1a895cb0f02bedb6bd2288855fe1d447fea8998e`
 **RESULT:** T2.1 `RETIRE_FULL_SET` **IMPLEMENTED** (código/repo). T2.2 inventário: Core ExternalConnection/provider approval = `TARGET_ONLY` → T2.3 design only; T2.4/T2.5 = `BLOCKED_BY_OWNER_CONTRACT`. R04 prod flag = `PENDING_OPS`. Detalhe e procedimento ops: `evidence/engineering-closure-residual-register.md` § T2 ampliada. **NEXT:** `T2_INDEPENDENT_REVIEW`. T3 / PRODUCTION_DEPLOY: NOT_AUTHORIZED.
 
 ### 2A.7 Decisão de arquitetura — persistência MCP no Core, não no Keycloak (PO 2026-11-09)
@@ -184,9 +184,9 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 
 ### 2A.8 Execution stamp — Core governed MCP registry attempt (2026-11-09)
 
-**TASK:** `DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-IMPLEMENTATION-01`  
-**ADR:** §2A.7 / commit `f5baf5b2`  
-**GATE:** `CORE_OWNER_APPROVAL=NOT_PROVEN` · `PERSISTENCE_AUTHORIZED=NO`  
+**TASK:** `DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-IMPLEMENTATION-01`
+**ADR:** §2A.7 / commit `f5baf5b2`
+**GATE:** `CORE_OWNER_APPROVAL=NOT_PROVEN` · `PERSISTENCE_AUTHORIZED=NO`
 **RESULT:** inventário Core reconfirmado (provider registry / ExternalConnection físico **ABSENT**); padrões apps/RBAC/audit/S2S = REUSE de *mecanismos*, não de schema MCP; especificação contratual registrada no residual; **nenhuma** migration/API/código Core ou registry DÉLIA. `A-07` permanece `BLOCKED_BY_OWNER_CONTRACT`. `R04=PENDING_OPS`. **NEXT:** `T2_INDEPENDENT_REVIEW` após aceite formal do Core owner. T3 / PRODUCTION_DEPLOY: NOT_AUTHORIZED.
 
 ### 2A.9 Aceite formal de escopo pelo Product Owner — implementação Core MCP em DEV (2026-11-09)
@@ -204,13 +204,13 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 
 ### 2A.10 Execution stamp — Core MCP registry R1 (2026-11-09)
 
-**TASK:** `DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-IMPLEMENTATION-R1`  
+**TASK:** `DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-IMPLEMENTATION-R1`
 **RESULT:** Core `mcp_providers` + HTTP + seed DEV 7 (3 enabled) **IMPLEMENTED**; DÉLIA HTTP consumer com `DELIA_MCP_PROVIDER_REGISTRY_MODE`; ExternalConnection **NOT_IMPLEMENTED**; R04 `PENDING_OPS`. **NEXT:** `T2_INDEPENDENT_REVIEW`. T3/PRODUCTION_DEPLOY: NOT_AUTHORIZED.
 
 ### 2A.11 Execution stamp — Core MCP registry R1 bounded rework (2026-11-09)
 
-**TASK:** `DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-R1-REWORK-01`  
-**AUTHORIZATION:** §2A.9 (mesmo escopo bounded DEV; sem T3; sem PRODUCTION_DEPLOY; sem Keycloak prod writes).  
+**TASK:** `DELIA-C3-T2-CORE-GOVERNED-MCP-REGISTRY-R1-REWORK-01`
+**AUTHORIZATION:** §2A.9 (mesmo escopo bounded DEV; sem T3; sem PRODUCTION_DEPLOY; sem Keycloak prod writes).
 **BASE_IMPLEMENTATION_SHA:** `3dacbdc0c23c13fefc23d9610f21cdbfd0632333` (R1). HEAD de reancoragem pode ter avançado por workstreams concorrentes; WIP alheio preservado.
 
 **RESULT (bounded rework):**
@@ -223,14 +223,14 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 | R1-RW04 | `specialist_connections_from_core_eligible` provider-neutral; auth não suportada → `unavailable_reason` tipado | IMPLEMENTED + RED/GREEN |
 | R1-RW05 | S2S `authorizationScope=provider_approval_only`; aprovação ≠ AuthZ usuário/org/Domain | FORMALIZED + tests |
 
-**Preservado:** `mcp_providers`, migration `u7v8w9x0y1`, admin/S2S, seed 7, MCPToolset nativo, SpecialistInterop. **Não feito:** ExternalConnection físico; OAuth externo; segundo registry; UI admin; T3; deploy prod.  
-**A-07:** permanece `IMPLEMENTED_BOUNDED_DEV` (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS`.  
+**Preservado:** `mcp_providers`, migration `u7v8w9x0y1`, admin/S2S, seed 7, MCPToolset nativo, SpecialistInterop. **Não feito:** ExternalConnection físico; OAuth externo; segundo registry; UI admin; T3; deploy prod.
+**A-07:** permanece `IMPLEMENTED_BOUNDED_DEV` (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS`.
 **NEXT:** `T2_INDEPENDENT_REVIEW`.
 
 ### 2A.12 Execution stamp — Full remediation + regression (2026-11-09)
 
-**TASK:** `DELIA-C3-T2-CORE-MCP-REGISTRY-FULL-REMEDIATION-AND-REGRESSION-01`  
-**AUTHORIZATION:** PO — corrigir falhas verificadas (MCP + Core/DÉLIA full suites); PRODUCTION_DEPLOY/Keycloak prod/T3 NOT_AUTHORIZED.  
+**TASK:** `DELIA-C3-T2-CORE-MCP-REGISTRY-FULL-REMEDIATION-AND-REGRESSION-01`
+**AUTHORIZATION:** PO — corrigir falhas verificadas (MCP + Core/DÉLIA full suites); PRODUCTION_DEPLOY/Keycloak prod/T3 NOT_AUTHORIZED.
 **REFERENCE_SHA:** `ebd0a3533d20d93c001a2151fd9e567e9f116f85`.
 
 **RESULT:**
@@ -246,13 +246,13 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 | DEV E2E DÉLIA↔Core S2S eligible + guard | PASS |
 | Outcome empresarial live (Keycloak user + Domain ACT) | TEST_NOT_RUN |
 
-**A-07:** `IMPLEMENTED_BOUNDED_DEV` (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS`.  
+**A-07:** `IMPLEMENTED_BOUNDED_DEV` (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS`.
 **NEXT:** `T2_INDEPENDENT_REVIEW`.
 
 ### 2A.13 Execution stamp — Resume eligibility before MCP outcome replay (2026-11-09)
 
-**TASK:** `DELIA-C3-T2-MCP-REGISTRY-REVOCATION-RESUME-FINAL-CLOSURE-01`  
-**AUTHORIZATION:** §2A.9 / correção residual delimitada.  
+**TASK:** `DELIA-C3-T2-MCP-REGISTRY-REVOCATION-RESUME-FINAL-CLOSURE-01`
+**AUTHORIZATION:** §2A.9 / correção residual delimitada.
 **REFERENCE_SHA:** `a2944df834f676fb5e17c803f025c28a2bf5355e`.
 
 **DEFECT_ROOT_CAUSE:** `_invoke()` reutilizava `resume_state.invoke_outcomes[invoke_key]` **antes** de `require_eligible()` — evidência histórica de READ MCP podia operar como grant após revoke/disable.
@@ -263,14 +263,14 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 
 **TESTS:** `test_mcp_resume_eligibility_gate.py` cenários A–H RED→GREEN; regressão eligibility existente preservada.
 
-**A-07:** permanece `IMPLEMENTED_BOUNDED_DEV`. **R04:** `PENDING_OPS`.  
+**A-07:** permanece `IMPLEMENTED_BOUNDED_DEV`. **R04:** `PENDING_OPS`.
 **NEXT:** `T2_INDEPENDENT_REVIEW`.
 
 ### 2A.14 Execution stamp — MCP Registry final quality + adversarial validation (2026-11-09)
 
-**TASK:** `DELIA-C3-T2-MCP-REGISTRY-FINAL-QUALITY-AND-ADVERSARIAL-VALIDATION-01`  
-**AUTHORIZATION:** §2A.9 / fechamento de qualidade T2 (sem novas features; sem T3; sem prod).  
-**BASE_HEAD (coordination observed):** `dfae28ad2ca708bb75ba4f291625e592ca52ec77` (contém implementação resume `94f51e542b`).  
+**TASK:** `DELIA-C3-T2-MCP-REGISTRY-FINAL-QUALITY-AND-ADVERSARIAL-VALIDATION-01`
+**AUTHORIZATION:** §2A.9 / fechamento de qualidade T2 (sem novas features; sem T3; sem prod).
+**BASE_HEAD (coordination observed):** `dfae28ad2ca708bb75ba4f291625e592ca52ec77` (contém implementação resume `94f51e542b`).
 **REANCHOR_HEAD:** `dbc2e526c68e7df983d0458e65e0b9346e32d82a` (= `origin/main` no início).
 
 **KNOWN_FALSE_POSITIVE:** `tests/test_mcp_resume_eligibility_gate.py::test_h_cancel_blocks_before_resume_or_eligibility` — asserção `assert "Cancel" in type(exc.value).__name__ or True` sempre verdadeira.
@@ -281,14 +281,14 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 
 **ADVERSARIAL:** janela TOCTOU Core-eligible→wire permanece residual (sem atomicidade distribuída); ExternalConnection / DNS-rebinding/proxy / Outcome ACT live continuam abertos. Nenhum bypass de eligibility por early-return de resume após o fix §2A.13.
 
-**A-07:** permanece `IMPLEMENTED_BOUNDED_DEV` (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS`.  
-**NEXT:** `T2_INDEPENDENT_REVIEW`.  
+**A-07:** permanece `IMPLEMENTED_BOUNDED_DEV` (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS`.
+**NEXT:** `T2_INDEPENDENT_REVIEW`.
 **PRODUCTION_DEPLOY / T3:** `NOT_AUTHORIZED`.
 
 ### 2A.15 Execution stamp — T2 full implementation remediation + integrated acceptance (2026-11-09)
 
-**TASK:** `DELIA-T2-FULL-IMPLEMENTATION-REMEDIATION-AND-INTEGRATED-ACCEPTANCE-01`  
-**AUTHORIZATION:** §2A.9 + PO correção/implementação T2 DEV; sem T3; sem prod/migrations prod/Keycloak prod.  
+**TASK:** `DELIA-T2-FULL-IMPLEMENTATION-REMEDIATION-AND-INTEGRATED-ACCEPTANCE-01`
+**AUTHORIZATION:** §2A.9 + PO correção/implementação T2 DEV; sem T3; sem prod/migrations prod/Keycloak prod.
 **BASE_HEAD:** `d8097eb0333bba1e8122423ae5680f9c713e4af1` (contém `eda3121a6a` + `2ec85d3d42`).
 
 **G4:** falso positivo `assert line.strip() == line or True` → contrato NDJSON single-line (`"\n" not in wire`, `len(splitlines())==1`) + mutação RED.
@@ -299,29 +299,29 @@ Definir **por contrato existente, não por nome de tabela sugerido**, a menor re
 
 **Não feito / residual:** ExternalConnection TARGET; R04 prod flag `PENDING_OPS`; Outcome ACT live `TEST_NOT_RUN`; DNS-rebinding/proxy residual; TOCTOU Core→wire; tools/list user-delegated live nesta execução `TEST_NOT_RUN` (S2S/composition comprovados).
 
-**A-07:** `IMPLEMENTED_BOUNDED_DEV` + evidência DEV runtime (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS` (handoff ops no residual).  
-**NEXT:** `T2_INDEPENDENT_REVIEW`.  
+**A-07:** `IMPLEMENTED_BOUNDED_DEV` + evidência DEV runtime (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS` (handoff ops no residual).
+**NEXT:** `T2_INDEPENDENT_REVIEW`.
 **PRODUCTION_DEPLOY / T3:** `NOT_AUTHORIZED`.
 
 ### 2A.16 Execution stamp — Real DEV E2E + Outcome validation (2026-11-09)
 
-**TASK:** `DELIA-C3-T2-MCP-REAL-DEV-E2E-AND-OUTCOME-VALIDATION-01`  
-**AUTHORIZATION:** homologação funcional DEV; disable/enable administrativo reversível; sem ACT empresarial; sem prod.  
+**TASK:** `DELIA-C3-T2-MCP-REAL-DEV-E2E-AND-OUTCOME-VALIDATION-01`
+**AUTHORIZATION:** homologação funcional DEV; disable/enable administrativo reversível; sem ACT empresarial; sem prod.
 **BASE_HEAD (coordination):** `fa3b683b758077907aa338e1bcfd4779f4b67f1c` (ancestral `e4df51c12a`); execução em `main` atualizado.
 
 **DEV:** `DELIA_MCP_PROVIDER_REGISTRY_MODE=core`; identidade portal DEV válida (`mcp_providers.manage` + delia); profile `local_ollama` → `qwen3:8b` + budgets 90/120s (todos os profiles alinhados).
 
-**T01:** tools/list real autenticado PASS — superfície live DAVI = `analyze,get_context,knowledge,read` (**drift** vs docs `discover_delpi_information`/`execute_delpi_information`).  
-**T02:** turn `/interaction/turns` **não concluiu** em 480s (latência modelo local); Domain API structure `90260921` FP `a3dcef2068200898` PASS; durante o turn houve `davi.get_context` real; **SpecialistInterop** `davi.read`+`get_product_structure` PASS (COMPLETED, contém 90260921).  
-**T03/T07:** disable admin Core + eligible teo/vista + guard `mcp_provider_not_eligible` + enable restore PASS.  
-**T04/T05:** `TEST_NOT_RUN` (checkpoint harness / usuário negativo ausente).  
-**T06-A:** bad token fail-closed PASS. T06-B/C harness: cobertos por testes de contrato.  
-**T08:** Domain autoritativa PASS; resposta completa do turn INCONCLUSIVE; READ MCP structure via interop PASS.  
+**T01:** tools/list real autenticado PASS — superfície live DAVI = `analyze,get_context,knowledge,read` (**drift** vs docs `discover_delpi_information`/`execute_delpi_information`).
+**T02:** turn `/interaction/turns` **não concluiu** em 480s (latência modelo local); Domain API structure `90260921` FP `a3dcef2068200898` PASS; durante o turn houve `davi.get_context` real; **SpecialistInterop** `davi.read`+`get_product_structure` PASS (COMPLETED, contém 90260921).
+**T03/T07:** disable admin Core + eligible teo/vista + guard `mcp_provider_not_eligible` + enable restore PASS.
+**T04/T05:** `TEST_NOT_RUN` (checkpoint harness / usuário negativo ausente).
+**T06-A:** bad token fail-closed PASS. T06-B/C harness: cobertos por testes de contrato.
+**T08:** Domain autoritativa PASS; resposta completa do turn INCONCLUSIVE; READ MCP structure via interop PASS.
 **T09:** resume/cancel/G4 PASS. **T10:** Core 413/0; DÉLIA 1474/0.
 
-**A-07:** permanece `IMPLEMENTED_BOUNDED_DEV` (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS`.  
-**PROPOSED:** `ACCEPT_WITH_RESIDUAL` — E2E parcial (turn LLM incompleto; live tool names drifted).  
-**NEXT:** `T2_INDEPENDENT_REVIEW`.  
+**A-07:** permanece `IMPLEMENTED_BOUNDED_DEV` (não `CLOSED_PROVEN`). **R04:** `PENDING_OPS`.
+**PROPOSED:** `ACCEPT_WITH_RESIDUAL` — E2E parcial (turn LLM incompleto; live tool names drifted).
+**NEXT:** `T2_INDEPENDENT_REVIEW`.
 **PRODUCTION_DEPLOY / T3:** `NOT_AUTHORIZED`.
 
 ## 3. Política de residual ZERO e limites reais
@@ -373,9 +373,9 @@ Registro operacional (não avança gates L/A/O/R automaticamente): remediação 
 
 ## Anexo — T2 Independent Review + Qwen14B Production Release (2026-11-10)
 
-**TASK:** `DELIA-C3-T2-INDEPENDENT-REVIEW-RESIDUAL-CLOSURE-QWEN14B-PRODUCTION-RELEASE-01`  
-**RESULT:** revisão independente AR01–AR12 favorável; R04 `CLOSED_PROVEN` no runtime produtivo deste host (CATALOG_* ausente; mode=`core`); deploy `delia-api`+`api-delpi` no SHA `30ac7cbb4467…` com `DELIA_RUNTIME_PROFILE=openrouter_qwen` / `qwen/qwen3-14b` verificado por invocação; DAVI/TEO/SIPOC GROUNDED; VISTA phrasing flaky classificado risco controlado; ExternalConnection/ACT fora de escopo.  
-**PROD_READY_FOR_PO_MANUAL_TEST:** YES (`http://localhost/apps/delia`).  
+**TASK:** `DELIA-C3-T2-INDEPENDENT-REVIEW-RESIDUAL-CLOSURE-QWEN14B-PRODUCTION-RELEASE-01`
+**RESULT:** revisão independente AR01–AR12 favorável; R04 `CLOSED_PROVEN` no runtime produtivo deste host (CATALOG_* ausente; mode=`core`); deploy `delia-api`+`api-delpi` no SHA `30ac7cbb4467…` com `DELIA_RUNTIME_PROFILE=openrouter_qwen` / `qwen/qwen3-14b` verificado por invocação; DAVI/TEO/SIPOC GROUNDED; VISTA phrasing flaky classificado risco controlado; ExternalConnection/ACT fora de escopo.
+**PROD_READY_FOR_PO_MANUAL_TEST:** YES (`http://localhost/apps/delia`).
 **T3:** `NOT_AUTHORIZED`. Detalhe: residual register + execution ledger.
 
 
@@ -418,10 +418,10 @@ Inspecionar caminho ativo de `_INVESTIGATION_INSTRUCTIONS` e `PydanticAiInvestig
 
 ### Stamp — INT-0 inventory executed (2026-11-10)
 
-**TASK:** `DELIA-C3-T2-INT01-…` (fatia INT-0).  
-**RESULT:** inventário I01–I10 COMPLETE no residual register; `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=REUSE|EXTEND` (sem NEW Agent); hipótese causal falsificável no finalize sem plan/obligations.  
-**INT-1:** `NOT_STARTED` — PO solicitou implementação condicionada, mas gate canônico desta seção exige revisão independente após INT-0 → `ARCHITECTURE_DECISION_REQUIRED` antes de qualquer diff.  
-**LOCAL_ENVIRONMENT_NOT_AVAILABLE** para eval live Qwen nesta host (container produtivo único).  
+**TASK:** `DELIA-C3-T2-INT01-…` (fatia INT-0).
+**RESULT:** inventário I01–I10 COMPLETE no residual register; `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=REUSE|EXTEND` (sem NEW Agent); hipótese causal falsificável no finalize sem plan/obligations.
+**INT-1:** `NOT_STARTED` — PO solicitou implementação condicionada, mas gate canônico desta seção exige revisão independente após INT-0 → `ARCHITECTURE_DECISION_REQUIRED` antes de qualquer diff.
+**LOCAL_ENVIRONMENT_NOT_AVAILABLE** para eval live Qwen nesta host (container produtivo único).
 **NEXT:** `COORDINATION_INT0_INDEPENDENT_REVIEW`. Sem avanço de fase; T3/INT-2/deploy NOT_AUTHORIZED.
 
 
@@ -437,38 +437,38 @@ A revisão confirmou o reuso do `PydanticAiInvestigationOrchestrator` + native P
 
 ### Stamp — INT-1 local isolation + investigative rework executed (2026-11-10)
 
-**TASK:** `DELIA-C3-T2-INT1-LOCAL-ISOLATION-AND-INVESTIGATIVE-REWORK-01`.  
-**BASE_HEAD:** `429f1317539d77df370b9c577998f2f22676a7fd`.  
-**EXISTING_EQUIVALENT=YES; REUSE_DECISION=EXTEND** — `PydanticAiInvestigationOrchestrator` only; no second Agent/planner/engine.  
-**LOCAL_ISOLATION=PROVEN_HOST_PYTEST** — host `delia-api/.venv` process; `DELIA_ENV` unset; prod container `delpi-delia-api` (`project=infra`, `DELIA_ENV=production`) not restarted/reconfigured/used. `docker-compose.dev.yml` still shares `container_name: delpi-delia-api` → live compose DEV **not** used.  
-**LOCAL_LIVE_EVAL=TEST_NOT_RUN** — no isolated live Qwen runtime proven without colliding with prod container_name; deterministic RED/GREEN + metamorphic only.  
-**PYDANTIC_AI_VERSION=2.50.0; MODEL_ID=qwen/qwen3-14b (target; live not run); INSTRUCTION_VERSION=generalist-semantic-v2.**  
-**DIFF (delia-api):** `classify_investigation_progress` + finalize `related_observations_insufficient`; investigation projections (`investigation_progress`, `owner_validation_hint`); one-shot `owner_argument_rejected` ModelRetry; equivalent-rejection non-progress; COMPLETE+uncovered identifiers ModelRetry; instructions v2. Tests: `tests/test_int1_investigative_progress_rework.py` (R1–R6 + metamorphic) GREEN; sibling suites GREEN.  
-**INT1_STATUS=READY_FOR_INDEPENDENT_REVIEW** (implementation does not self-accept).  
-**OPEN:** plan-absent objective-kind gap remains Application Outcome (INT-3); live P1–P3 Qwen still pending isolated DEV.  
+**TASK:** `DELIA-C3-T2-INT1-LOCAL-ISOLATION-AND-INVESTIGATIVE-REWORK-01`.
+**BASE_HEAD:** `429f1317539d77df370b9c577998f2f22676a7fd`.
+**EXISTING_EQUIVALENT=YES; REUSE_DECISION=EXTEND** — `PydanticAiInvestigationOrchestrator` only; no second Agent/planner/engine.
+**LOCAL_ISOLATION=PROVEN_HOST_PYTEST** — host `delia-api/.venv` process; `DELIA_ENV` unset; prod container `delpi-delia-api` (`project=infra`, `DELIA_ENV=production`) not restarted/reconfigured/used. `docker-compose.dev.yml` still shares `container_name: delpi-delia-api` → live compose DEV **not** used.
+**LOCAL_LIVE_EVAL=TEST_NOT_RUN** — no isolated live Qwen runtime proven without colliding with prod container_name; deterministic RED/GREEN + metamorphic only.
+**PYDANTIC_AI_VERSION=2.50.0; MODEL_ID=qwen/qwen3-14b (target; live not run); INSTRUCTION_VERSION=generalist-semantic-v2.**
+**DIFF (delia-api):** `classify_investigation_progress` + finalize `related_observations_insufficient`; investigation projections (`investigation_progress`, `owner_validation_hint`); one-shot `owner_argument_rejected` ModelRetry; equivalent-rejection non-progress; COMPLETE+uncovered identifiers ModelRetry; instructions v2. Tests: `tests/test_int1_investigative_progress_rework.py` (R1–R6 + metamorphic) GREEN; sibling suites GREEN.
+**INT1_STATUS=READY_FOR_INDEPENDENT_REVIEW** (implementation does not self-accept).
+**OPEN:** plan-absent objective-kind gap remains Application Outcome (INT-3); live P1–P3 Qwen still pending isolated DEV.
 **NEXT:** `COORDINATION_INT1_INDEPENDENT_REVIEW`. **PRODUCTION_DEPLOY=NOT_AUTHORIZED; T3=NOT_AUTHORIZED; INT2=NOT_AUTHORIZED.** Sem avanço de fase.
 
 ### Stamp — INT-1 final bounded rework F1–F4 (2026-11-10)
 
-**TASK:** `DELIA-C3-T2-INT1-FINAL-BOUNDED-REWORK-AND-ACCEPTANCE-01`.  
-**REVIEWED_IMPLEMENTATION_SHA:** `7cd27e6d0cbc6f401fca9a5fc93282eac54073a0`.  
-**REWORK_BUDGET:** 1 — FINAL (`INT1_REWORK_BUDGET_EXHAUSTED=YES`).  
-**EXISTING_EQUIVALENT=YES; REUSE_DECISION=EXTEND; SECOND_AGENT=NO.**  
-**F1:** removed capability-wide block after first `owner_argument_rejected`; identical fingerprint still short-circuits; materially different args invoke; one-shot ModelRetry keeps owner hint.  
-**F2:** `classify_investigation_progress` no longer uses READ/ANALYSIS as sufficiency; obligations + evidence structure decide RELATED vs NEW.  
-**F3:** Agent-path integration + metamorphic rename suite (`test_int1_final_bounded_rework.py`) traverses real `PydanticAiInvestigationOrchestrator` with FunctionModel (not helper-only).  
-**F4:** finalize without obligations returns evidence on fast path with `coverage_unknown`; related aggregate with plan obligations remains NOT_APPLICABLE + `related_observations_insufficient`.  
-**LOCAL_QWEN_EVAL=TEST_NOT_RUN** (prod container only; compose.dev shares `container_name`).  
-**INT1_FINAL_REVIEW_PROPOSAL:** `ACCEPT_WITH_RESIDUAL` (deterministic F1–F4 proven; live Qwen P1–P3 residual; plan-absent Outcome verdict remains INT-3).  
+**TASK:** `DELIA-C3-T2-INT1-FINAL-BOUNDED-REWORK-AND-ACCEPTANCE-01`.
+**REVIEWED_IMPLEMENTATION_SHA:** `7cd27e6d0cbc6f401fca9a5fc93282eac54073a0`.
+**REWORK_BUDGET:** 1 — FINAL (`INT1_REWORK_BUDGET_EXHAUSTED=YES`).
+**EXISTING_EQUIVALENT=YES; REUSE_DECISION=EXTEND; SECOND_AGENT=NO.**
+**F1:** removed capability-wide block after first `owner_argument_rejected`; identical fingerprint still short-circuits; materially different args invoke; one-shot ModelRetry keeps owner hint.
+**F2:** `classify_investigation_progress` no longer uses READ/ANALYSIS as sufficiency; obligations + evidence structure decide RELATED vs NEW.
+**F3:** Agent-path integration + metamorphic rename suite (`test_int1_final_bounded_rework.py`) traverses real `PydanticAiInvestigationOrchestrator` with FunctionModel (not helper-only).
+**F4:** finalize without obligations returns evidence on fast path with `coverage_unknown`; related aggregate with plan obligations remains NOT_APPLICABLE + `related_observations_insufficient`.
+**LOCAL_QWEN_EVAL=TEST_NOT_RUN** (prod container only; compose.dev shares `container_name`).
+**INT1_FINAL_REVIEW_PROPOSAL:** `ACCEPT_WITH_RESIDUAL` (deterministic F1–F4 proven; live Qwen P1–P3 residual; plan-absent Outcome verdict remains INT-3).
 **NEXT:** `COORDINATION_FINAL_INT1_ACCEPTANCE`. Sem nova implementação corretiva automática. **PRODUCTION_DEPLOY=NOT_AUTHORIZED; T3/INT2/INT3/INT4=NOT_AUTHORIZED.**
 
 ### Stamp — INT-1 isolated real Qwen 14B evaluation (2026-11-10)
 
-**TASK:** `T2_INT1_ISOLATED_REAL_QWEN_EVAL_GATE`.  
-**IMPLEMENTED_INT1_SHA:** `3bb2be887b05562a6d85301a86ecf5d2e5ae5883` (ancestor of HEAD).  
-**EVALUATED_SHA / RUNTIME_CODE:** host mount of `delia-api/` at eval time on HEAD `1fa326f50243856f37cebd23b6b803008dd538d7`.  
-**DEV_RUNTIME_ISOLATION=PROVEN_PROCESS_SEPARATION** — temporary container `delpi-delia-eval-int1` (distinct id) on `infra_delpi-network`; `DELIA_ENV=development`; OpenRouter via localhost egress proxy `host.docker.internal:18765`; **prod `delpi-delia-api` StartedAt unchanged** (`PROD_CONTAINER_UNTOUCHED=YES`). No compose.dev collision used. No functional INT-1 code change.  
-**MODEL:** `qwen/qwen3-14b` / `openrouter_qwen` / pydantic-ai `2.50.0` / instruction `generalist-semantic-v2` fp `7dbc94c5035b0f19` / config fp `b42a0da3f3be8154`.  
+**TASK:** `T2_INT1_ISOLATED_REAL_QWEN_EVAL_GATE`.
+**IMPLEMENTED_INT1_SHA:** `3bb2be887b05562a6d85301a86ecf5d2e5ae5883` (ancestor of HEAD).
+**EVALUATED_SHA / RUNTIME_CODE:** host mount of `delia-api/` at eval time on HEAD `1fa326f50243856f37cebd23b6b803008dd538d7`.
+**DEV_RUNTIME_ISOLATION=PROVEN_PROCESS_SEPARATION** — temporary container `delpi-delia-eval-int1` (distinct id) on `infra_delpi-network`; `DELIA_ENV=development`; OpenRouter via localhost egress proxy `host.docker.internal:18765`; **prod `delpi-delia-api` StartedAt unchanged** (`PROD_CONTAINER_UNTOUCHED=YES`). No compose.dev collision used. No functional INT-1 code change.
+**MODEL:** `qwen/qwen3-14b` / `openrouter_qwen` / pydantic-ai `2.50.0` / instruction `generalist-semantic-v2` fp `7dbc94c5035b0f19` / config fp `b42a0da3f3be8154`.
 **LIVE_EVAL=EXECUTED** (not TEST_NOT_RUN).
 
 | Case | Tools | Investigation | Objective coverage | Notes |
@@ -479,8 +479,8 @@ A revisão confirmou o reuso do `PydanticAiInvestigationOrchestrator` + native P
 | G1 semantic reword | read/get_context/knowledge | PARTIAL | FAIL | identity found; structure tree not recovered |
 | Tool-rename MCP gen | — | TEST_NOT_RUN | — | no isolated rename MCP without new architecture |
 
-**INT1_REWORK_BUDGET_EXHAUSTED=YES** — no functional remediation in this task.  
-**INT1_STAGE_ACCEPTANCE_PROPOSAL:** `ACCEPT_WITH_RESIDUAL` (real inference proven; P3 selection residual + tool-rename gen absent + MCP READ backends shared with prod network).  
+**INT1_REWORK_BUDGET_EXHAUSTED=YES** — no functional remediation in this task.
+**INT1_STAGE_ACCEPTANCE_PROPOSAL:** `ACCEPT_WITH_RESIDUAL` (real inference proven; P3 selection residual + tool-rename gen absent + MCP READ backends shared with prod network).
 **NEXT:** `COORDINATION_INT1_REAL_EVAL_INDEPENDENT_REVIEW`. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `T3/INT2/INT3/INT4=NOT_AUTHORIZED`.
 
 
@@ -530,3 +530,139 @@ A revisão confirmou o reuso do `PydanticAiInvestigationOrchestrator` + native P
 **Instrumentação/resultados:** `native_mcptoolset_direct_eval.py` registra calls, respostas e `llm_runs.count` medidos pelo wrapper `Agent.run_sync`; **4 cenários não equivalem a 4 requests internos do modelo**. Artifacts completos de turns ficam em `delia-api/.battery/`/diretório temporário e não estão disponíveis no commit do relatório. Não alegar primeira divergência exata P3/G1 sem esses dados; pedir trace sanitizado com lista de capacidades apresentadas ao Agent, decision/call schema/arguments, owner business response, progress, declared output, final outcome, SHA/profile.
 
 **Bounded NEXT (diagnosis, not code):** 1) security/egress authorization e revogação/rotação de qualquer credencial produtiva encontrada no ambiente de avaliação conforme decisão do owner; 2) caracterização P3 com VISTA catalog/guide versus real tool surface; 3) G1 com duas perguntas independentes + controle estrutural owner e paridade de schema; 4) matriz de responsabilidades INT-1 seleção vs INT-2 compreensão vs INT-3 cobertura, sem mover defeito para próxima fase para conseguir aceite. Emitir `ARCHITECTURE_DECISION_REQUIRED` para novo caminho externo de avaliação; não reabrir reworks ou avançar INT2/T3 automaticamente.
+
+
+### 2026-11-11 — INT-1 CONSOLIDATED ROOT CAUSE (diagnosis only; supersedes § inventário TO_VERIFY parcial)
+
+**TASK_ID:** `DELIA-C3-T2-INT1-CONSOLIDATED-ROOT-CAUSE-AND-SECURITY-INVESTIGATION-01`
+**HEAD observado:** revalidar no momento da leitura; investigação ancorada com `origin/main` alinhado e SHAs `3bb2be887b` (impl) / `2fde206b9b` (eval) como ancestrais. **FUNCTIONAL_CODE_CHANGED=NO**; **LIVE_MODEL_CALLS=0**; **PRODUCTION_CHANGES=NONE**.
+
+**Correção factual ao inventário anterior neste doc:** documentação/histórico ainda cita `get_catalog`/`get_product_guide` como tools MCP VISTA. No contrato **vivo** (`tv-dashboard-api/.../mcp/constants.py`) esses nomes estão em `MCP_FORBIDDEN_TOOLS`; superfície pública = seis verbos (`get_context|read|analyze|knowledge|execute|delete`). Guidance de formatos vive via `knowledge` / `read` (`product_guide` / tópicos `display_formats`, `block_types`). Não tratar ausência de `get_catalog` no toolset do Agent como bug de filtering sem essa consolidação.
+
+| Falha | Primeira divergência | Owner | Confiança |
+|---|---|---|---|
+| P3 | Seleção multi-especialista: Agent invocou `MCP:analyze`×2 e obteve views TEO `dashboard_*` (não catálogo VISTA de formatos/blocos) | INT-1 Agent seleção + ambiguidade semântica da pergunta vs contratos TEO/VISTA; agravante: sem plan obligations, progress classifica evidência business como `NEW` | ALTA no alvo escolhido (eval-output); MÉDIA se VISTA estava elegível naquele turno (catalog_caps não persistido no log) |
+| G1 | Single-turn reword: sequência `read/get_context/knowledge` sem recuperar BOM; P1 no mesmo harness provou `get_context+read`→estrutura | INT-1 seleção/argumentação de capability DAVI (`get_product_structure`), **não** continuidade multiturno | ALTA (cenário sem `prior`; conteúdo ≠ BOM) |
+| P1 parcial | Owner entregou estrutura parcial + `owner_result_incomplete` | Limite/fonte owner (incompletude) + finalize honesto | ALTA parcialidade; MÉDIA se existia READ de expansão não tentada (args não traçados) |
+| P2 parcial | Truncamento/paginação TEO; Agent declara `page=2` mas encerra após 3×`read` | Owner truncamento legítimo + INT-1 não continuou paginação contratual | ALTA truncamento; MÉDIA se budget/tool_calls impediu (tokens=0 no artefato; sem prova de limit hit) |
+| Coverage/Outcome | Finalize F4: plan/obligations ausentes → `SUCCESS` + `coverage_unknown` com evidência business | Contrato INT-1 finalize ↔ INT-2 plan ↔ INT-3 suficiência | ALTA (código) |
+| Harness | `printenv` prod → env eval; proxy `0.0.0.0`→OpenRouter; `host.docker.internal` passa `llm_egress_blocked_reason` | Método de eval / security-config | ALTA drift; exposição de secret = NOT_PROVEN (valores não auditados neste relatório) |
+
+**SECURITY_FINDING:** `EVAL_METHOD_EXECUTION_DRIFT=PROVEN_IN_CODE`. **HARNESS_REUSE=BLOCKED**. **CREDENTIAL_REVIEW_REQUIRED=YES** (owner segurança; sem rotação nesta task).
+
+**Minimal remediation sequence (proposal only):** (1) decisão de segurança/egress/credenciais para eval externo; (2) decisão de autoridade semântica P3 (VISTA block/display vs TEO dashboards); (3) se INT-1 pode fechar seleção sem INT-2 objective-kind / obligations; (4) observabilidade obrigatória de tool surface+args sanitizados em evals futuros; (5) só então correção mínima no boundary escolhido — sem segundo Agent, sem lexical router, sem reabrir budget automaticamente.
+
+**NEXT:** `COORDINATION_T2_INT1_CONSOLIDATED_CAUSAL_REVIEW`. `INT1_STAGE_ACCEPTANCE=BLOCKED`; `INT1_CLOSED=NO`; `INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+
+### 2026-11-11 — P3/G1 EXACT DECISION FORENSICS (diagnosis; no code; no live model)
+
+**TASK_ID:** `DELIA-C3-T2-INT1-P3-G1-EXACT-DECISION-FORENSICS-01`
+**EVAL_HARNESS_REUSED=NO**; **LIVE_MODEL_CALLS=0**; **FUNCTIONAL_CODE_CHANGED=NO**.
+
+**Trace inventory**
+
+| Capture | Status |
+|---|---|
+| P1/P3/G1 stdout summary (targets, declared_answer, limitations) | AVAILABLE (host `.battery`) |
+| mcp_invoke_records (args types + result_snippet) | MISSING (written under container `/tmp/delia_eval_artifacts`, destroyed on cleanup; omitted from stdout filter) |
+| Model-visible MCPToolset descriptions/schemas | MISSING |
+| investigation_progress projections per call | MISSING from artifacts; reconstructable only as code paths |
+| proxy.log | AVAILABLE (POST counts only; no tool semantics) |
+
+**P3 decision chain (evidence-classed)**
+
+1. USER_MESSAGE OBSERVED: “Quais formatos de visualização de dados estão disponíveis?”
+2. INSTRUCTIONS PROVEN_BY_CODE: `generalist-semantic-v2` (SHA `3bb2be887b`).
+3. MODEL_VISIBLE_TOOLSET: UNKNOWN (not captured).
+4. FIRST ToolCall OBSERVED: `analyze` (stdout target `MCP:analyze` — specialist id collapsed by harness formatter).
+5. OWNER_RESULT OBSERVED in final prose: TEO dashboard view ids (`dashboard_summary_live`, …) — matches TEO.analyze description enums (INFERRED_FROM_STATIC_CONFIG + OBSERVED content).
+6. SECOND ToolCall OBSERVED: `analyze` again (different fingerprint likely; content family still dashboards).
+7. Progress feedback that would force kind-switch (`RELATED_INSUFFICIENT` + coverage_note): **would NOT fire** for this question under plan-absent + no numeric identifiers — PROVEN_BY_EVALUATED_CODE (`classify_investigation_progress` → `NEW_INFORMATION` for business SUCCESS).
+8. FINALIZATION OBSERVED: declared `partial` + unmet viz details; limitations include `coverage_unknown`, `declared_status_overridden`.
+
+**P3 first divergence:** first tool action = `analyze` (dashboard ANALYSIS), not VISTA `knowledge`/`read` guidance path.
+**P3 exact why-analyze (absent tool vs wrong selection):** `EXACT_CAUSAL_ATTRIBUTION=INCONCLUSIVE` — needs model-visible tool surface.
+**P3 why-no-recovery:** PROVEN progress/finalize path above (Agent boundary + plan-absent contract), not MCP execution failure.
+
+**G1 vs P1**
+
+| | P1 | G1 |
+|---|---|---|
+| Question | estrutura do produto 90260921 | árvore de componentes e relações do item 90260921 |
+| prior | none | none |
+| Observed calls | get_context → read | read → get_context → read → get_context → knowledge → knowledge |
+| BOM evidence | YES (partial owner) | NO |
+| tool_calls_limit | n/a (2 < 8) | 6 < 8 — not exhausted |
+
+**G1 FIRST_DIVERGENCE (OBSERVED):** step_1 tool name/order differs (`read` first vs P1 `get_context` first).
+**G1 args / whether `get_product_structure` invoked:** UNKNOWN.
+**G1 declared “falta de capacidade…”:** conflicts with DAVI `read` description publishing `get_product_structure` (PROVEN_BY_CODE) — indicates selection/arg failure or wrong-specialist read, not absent Domain capability.
+
+**MINIMUM_SAFE_OBSERVATION_REQUIRED (do not implement here):** authorized eval path that host-persists sanitized `{capability_id, arg_key_types, progress, specialist}` per call + eligible tool surface snapshot; no prod printenv copy; no unauthorized egress.
+
+**NEXT:** `COORDINATION_INT1_EXACT_CAUSAL_DECISION`.
+
+
+### 2026-11-11 — SECURE EVAL + FULL DECISION TRACE (prep; real Qwen blocked)
+
+**TASK_ID:** `DELIA-C3-T2-INT1-SECURE-EVAL-AND-FULL-DECISION-TRACE-01`
+**FUNCTIONAL_INTELLIGENCE_CODE_CHANGED=NO**; **LIVE_QWEN_P3_G1=TEST_NOT_RUN**; **EVAL_HARNESS_BYPASS_REUSED=NO**.
+
+**EXISTING_EQUIVALENT=PARTIAL** — `Settings.llm_egress_blocked_reason` (nonprod local-only), Ollama local models, prior capture seams in `native_mcptoolset_direct_eval.py`. Prior isolated harness + `openrouter_local_egress_proxy.py` = **forbidden**.
+**REUSE_DECISION=EXTEND observability capture on host path; NEW authorized external egress requires `ARCHITECTURE_DECISION_REQUIRED`**.
+
+**GATE 1 SECURITY = BLOCKED**
+
+| Condition | Status |
+|---|---|
+| NONPROD_RUNTIME_ISOLATED | NOT_PROVEN |
+| CREDENTIAL_ISOLATION | NOT_PROVEN |
+| NETWORK_ACCESS_AUTHORIZED | NOT_PROVEN |
+| MODEL_EGRESS_AUTHORIZED | NOT_PROVEN |
+| MCP_READ_AUTHORIZED | NOT_PROVEN |
+| SECURITY_OWNER_APPROVAL | NOT_PROVEN |
+| Target `qwen/qwen3-14b` available under authorized path | NO (local Ollama has 8b-class only; OpenRouter nonprod refused by policy) |
+
+Evidence: `settings.py` refuses external LLM hosts when `DELIA_ENV≠production`; localhost-shaped URLs pass host check (prior drift class) and remain unauthorized without explicit owner approval artifact. Script `int1_secure_decision_trace.py --check-security-gate` exits BLOCKED.
+
+**GATE 2–3 OBSERVABILITY = PASS (dry-run only)**
+
+Delivered: `delia-api/scripts/int1_secure_decision_trace.py`, `tests/test_int1_secure_decision_trace.py`. Persist under `delia-api/.battery/int1-secure-decision-trace/` (gitignored, chmod owner-only best-effort). Events: `evaluation_meta`, `model_visible_toolset`, `tool_call`, `finalization` with secret redaction.
+
+| Gate | Result |
+|---|---|
+| TRACE_SCHEMA | PASS |
+| TRACE_PERSISTENCE_AFTER_EXIT | PASS (incl. separate process verify) |
+| TRACE_SANITIZATION | PASS |
+| TOOL_SURFACE_CAPTURE | PASS |
+| ARGUMENT_CAPTURE | PASS |
+| PROGRESS_CAPTURE | PASS |
+
+**GATE 4–7 REAL P3/G1:** not executed (`SECURE_EVAL_GATE=BLOCKED`).
+
+**ADR still required:** authorized nonprod evaluation path for Qwen 14B (credential scope, egress allowlist, process/network isolation, MCP READ scope) — then wire real Agent runs into the host-persistent trace schema without decision-logic changes.
+
+**NEXT:** `COORDINATION_INT1_DECISION_TRACE_REVIEW`. `INT1_STAGE_ACCEPTANCE=BLOCKED`.
+
+### 2026-11-11 — PO correction executed: OpenRouter Qwen14B instrumented causal eval
+
+**TASK_ID:** `DELIA-C3-T2-INT1-LOCAL-QWEN14B-SETUP-AND-INSTRUMENTED-ROOT-CAUSE-EVAL-01`.
+**Supersedes** prior local-Ollama-14B setup instruction: use external `qwen/qwen3-14b` via OpenRouter profile `openrouter_qwen`; do not install local 14B; do not remove `qwen3:8b`; do not use `openrouter_local_egress_proxy`; do not copy prod `printenv`.
+
+**Security path (minimal legitimate DEV):** `DELIA_ENV=development` + `DELIA_EVAL_EGRESS_AUTHORIZED=1` + Settings allowlist host `openrouter.ai` + real `https://openrouter.ai/api/v1` + selective secrets from `infra/.env` (LLM + exchange) + portal identity from `infra/.env.local` + MCP host headers + Keycloak issuer matching gateway tokens. Isolated eval container; production `delpi-delia-api` StartedAt unchanged. Residual: credential scope still shared with infra LLM key (`NONE_PROVEN_SEPARATE_FROM_PROD`).
+
+**LIVE_EVAL_ID:** `or-qwen14b-35aaf1a4174b` (pydantic-ai `2.50.0`, config fp `b42a0da3f3be8154`). Host traces under `delia-api/.battery/int1-secure-decision-trace/or-qwen14b-35aaf1a4174b/`.
+
+| Scenario | First material divergence | Outcome |
+|---|---|---|
+| P3 | first wire=`vista.read` (422); **never** `teo.analyze` despite tool surface listing it | GROUNDED partial via `teo.knowledge` + `coverage_unknown` |
+| G1 | first wire=`teo.read` vs P1 `davi.get_context`; G1 never reaches `get_product_structure` | NON_GROUNDED; `uncovered_identifier:90260921` |
+| P1 control | `davi.get_context`→`davi.read` BOM | GROUNDED partial; `owner_result_incomplete`/`coverage_unknown` |
+
+**FUNCTIONAL_CODE_CHANGED=NO** (egress allowlist + eval harness/observability only). **No INT-1 rework, INT-2, T3, or prod deploy.**
+**INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **NEXT=`COORDINATION_INT1_OPENROUTER_INSTRUMENTED_CAUSAL_REVIEW`**.
+
+### 2026-11-11 — Causal report persistence for independent review
+
+**TASK:** `DELIA-C3-T2-INT1-OPENROUTER-CAUSAL-REPORT-PERSISTENCE-01`. Sanitized report published as sibling doc **294** (`294-int1-openrouter-qwen14b-instrumented-causal-evaluation.md`) for evaluation `or-qwen14b-35aaf1a4174b`. No re-run of P1/P3/G1. Raw traces remain local. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_PUBLISHED_CAUSAL_REPORT_REVIEW`**.
