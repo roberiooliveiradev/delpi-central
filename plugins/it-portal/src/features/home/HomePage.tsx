@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { AlarmClock, ListTodo, Plus, Server as ServerIcon, ShieldAlert } from "lucide-react";
+import { AlarmClock, CheckCircle2, ListTodo, Plus, Server as ServerIcon, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 
 import { itPortalApi, type Dashboard } from "../../api/itPortalApi";
@@ -11,6 +11,7 @@ import {
   ItpKpiCard,
   ItpPageHero,
   ItpSectionCard,
+  ItpSemicircleGauge,
   ItpStatusBadge,
   ItpTopBarSearchTrigger,
 } from "../../app/itPortalUi";
@@ -163,7 +164,7 @@ function DashboardContent({ data, basePath }: { data: Dashboard; basePath: strin
         ) : null}
       </div>
 
-      <div className="itp-detail-grid">
+      <div className="itp-home-main">
         <ItpSectionCard
           title="Servidores recentes"
           subtitle="Últimos servidores cadastrados."
@@ -177,7 +178,10 @@ function DashboardContent({ data, basePath }: { data: Dashboard; basePath: strin
             {data.recent_servers.map((server) => {
               const href = buildPath(basePath, { serverId: server.id });
               return (
-                <li key={server.id} className="itp-link-list-item">
+                <li key={server.id} className="itp-link-list-item itp-link-list-item--icon">
+                  <span className="itp-row-icon" aria-hidden="true">
+                    <ServerIcon size={18} strokeWidth={1.75} />
+                  </span>
                   <a href={href} onClick={spaNavigate(href)} className="itp-link-list-anchor">
                     <span className="itp-cell-stack">
                       <strong>{server.name}</strong>
@@ -207,7 +211,10 @@ function DashboardContent({ data, basePath }: { data: Dashboard; basePath: strin
             }
           >
             {data.attention_action_plans.length === 0 ? (
-              <p className="itp-muted">Nenhuma ação aberta no momento.</p>
+              <p className="itp-empty-positive">
+                <CheckCircle2 size={18} strokeWidth={1.75} aria-hidden="true" />
+                Nenhuma ação aberta no momento.
+              </p>
             ) : (
               <ul className="itp-link-list">
                 {data.attention_action_plans.map((plan) => {
@@ -233,6 +240,32 @@ function DashboardContent({ data, basePath }: { data: Dashboard; basePath: strin
             )}
           </ItpSectionCard>
         ) : null}
+
+        <ItpSectionCard title={HOME_CONTENT.health.title} subtitle={HOME_CONTENT.health.subtitle}>
+          <ItpSemicircleGauge
+            value={Math.round(
+              ((data.servers.total - data.servers.high_or_critical) / data.servers.total) * 100,
+            )}
+            centerLabel={HOME_CONTENT.health.centerLabel}
+            legend={[
+              {
+                id: "high-or-critical",
+                label: HOME_CONTENT.health.highOrCritical,
+                count: data.servers.high_or_critical,
+                tone: "danger",
+              },
+              {
+                id: "low-or-medium",
+                label: HOME_CONTENT.health.lowOrMedium,
+                count: data.servers.total - data.servers.high_or_critical,
+                tone: "success",
+              },
+            ]}
+            aria-label={`${HOME_CONTENT.health.title}: ${Math.round(
+              ((data.servers.total - data.servers.high_or_critical) / data.servers.total) * 100,
+            )}% ${HOME_CONTENT.health.centerLabel}`}
+          />
+        </ItpSectionCard>
       </div>
     </>
   );
