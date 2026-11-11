@@ -5,6 +5,20 @@
 > **Planejamento por etapas:** esta especificação é exclusiva da **entrega 1**. A **entrega 2 está assumida como obrigatória** e incluirá gestão de classificação, planos de ação, retornos e reavaliações, com suas interfaces a detalhar ao iniciar essa frente. Não eliminar requisitos do Word por não aparecerem nas páginas deste ciclo.
 >\n> **Fontes canônicas:** [índice mestre](./REQUIREMENTS-INDEX.md), [decisões](./BUSINESS-DECISIONS.md), [contrato da primeira entrega](./SURVEY-FIRST-RELEASE-CONTRACT.md) e o plano integral nas fontes do projeto. Este documento descreve **a interface para o escopo aprovado**, não altera o ownership ou aprova desenvolvimento de planos de ação.
 
+## Especificações completas por página — wireframes e PluginUI
+
+O [plano de frontend](./FRONTEND-FIRST-RELEASE-PLAN.md) permanece como **visão geral**; cada superfície possui um documento específico, com wireframe, inventário de componentes reais, regras de segurança, contratos, estados e critérios de aceite. **Não criar componentes visuais nativos nas páginas**: reutilizar PluginUI e componentes já utilizados no Comercial, submetendo qualquer lacuna ao Abstraction Gate.
+
+| Superfície | Documento |
+|---|---|
+| Página principal — Resultados | [UI-01](./UI-01-RESULTADOS-PESQUISA.md) |
+| Página de Configuração e detalhe de campanha | [UI-02](./UI-02-CONFIGURACAO-PESQUISAS.md) |
+| Página pública de respostas | [UI-03](./UI-03-FORMULARIO-PUBLICO.md) |
+| Integração no Início: card Marketing | [UI-04](./UI-04-INICIO-CARD-MARKETING.md) |
+| Integração na Visão Geral: seção Pesquisa de Satisfação do Cliente | [UI-05](./UI-05-VISAO-GERAL-SECAO-PESQUISA.md) |
+
+**Prioridade visual de revisão:** UI-01 → UI-02 → UI-03; UI-04/UI-05 são pontos de encaixe no portal existente. Os wireframes são propostas visuais **não aprovadas individualmente**, nem prova de implementação.
+
 ## 1. Escopo e experiência
 
 **Entregar nesta versão:** o usuário autorizado cria campanha, seleciona empresas TOTVS, copia link/mensagem e distribui **por conta própria**, acompanha respostas e analisa resultados. O cliente abre o formulário pelo link, revisa e envia uma resposta definitiva. O Comercial usa os resultados para suas ações **fora da aplicação**.

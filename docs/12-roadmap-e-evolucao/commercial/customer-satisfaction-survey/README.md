@@ -56,6 +56,8 @@ Centralizar a análise da pesquisa de satisfação de clientes solicitada pelo C
 - [FRONTEND-FIRST-RELEASE-PLAN.md](./FRONTEND-FIRST-RELEASE-PLAN.md) — planejamento das telas internas, **seção única Pesquisa de Satisfação do Cliente na Visão Geral com indicadores gerais**, formulário público, indicadores e testes, respeitando a primeira entrega.
 - Outros arquivos técnicos de detalhe devem ser criados **somente quando necessários** para uma frente concreta e vinculados ao ID correspondente no índice.
 
+- **Wireframes e componentes:** [Resultados](./UI-01-RESULTADOS-PESQUISA.md), [Configuração](./UI-02-CONFIGURACAO-PESQUISAS.md), [Formulário público](./UI-03-FORMULARIO-PUBLICO.md), [Início/Marketing](./UI-04-INICIO-CARD-MARKETING.md), [Visão Geral](./UI-05-VISAO-GERAL-SECAO-PESQUISA.md). Cada documento tem mapa PluginUI/CommercialUi e testes; **status: proposta não implementada**, a validar visualmente com o solicitante.
+
 ## Situação e limites
 
 As decisões principais de negócio já foram levantadas e registradas no índice. **Em 11/11/2026**, o solicitante definiu a sequência obrigatória: entrega 1 com pesquisa e indicadores; entrega 2 com planos de ação e fechamento do ciclo. O envio de convites pela aplicação foi substituído por distribuição manual do link. **O adiamento de funcionalidades para a entrega 2 não as exclui do produto.** São regras **propostas para implementação**, não funcionalidades comprovadamente existentes. A gestão da pesquisa cabe aos códigos `commercial.marketing` (a criar durante o desenvolvimento) ou `commercial.manage` (existente); as respostas terão histórico no domínio da API Comercial para comparação plurianual; o cadastro mestre de clientes permanece no TOTVS, consultado por meio da API DELPI, conforme fontes e decisões.

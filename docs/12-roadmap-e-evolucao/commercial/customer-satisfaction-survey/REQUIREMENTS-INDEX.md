@@ -111,6 +111,11 @@
 | [BACKEND-API-PROPOSAL.md](./BACKEND-API-PROPOSAL.md) | Padrão de arquitetura aceito: REST, dados, autorização e paridade CAIO; implementação ainda pendente | Para trabalhar cada frente de backend |
 | [SURVEY-FIRST-RELEASE-CONTRACT.md](./SURVEY-FIRST-RELEASE-CONTRACT.md) | Contrato técnico da primeira entrega, com três tabelas, formulários, indicadores e operações sem envio de e-mail nem plano de ação | Antes de desenvolver qualquer etapa da pesquisa |
 | [FRONTEND-FIRST-RELEASE-PLAN.md](./FRONTEND-FIRST-RELEASE-PLAN.md) | Planejamento do frontend: navegação interna, formulário público, resultados, contratos e testes | Na implementação do plugin Comercial |
+| [UI-01-RESULTADOS-PESQUISA.md](./UI-01-RESULTADOS-PESQUISA.md) | Página de Resultados: wireframe, filtros, indicadores, gráficos, tabelas e inventário PluginUI | Especificar/desenvolver resultados |
+| [UI-02-CONFIGURACAO-PESQUISAS.md](./UI-02-CONFIGURACAO-PESQUISAS.md) | Página de Configuração: campanhas, participantes, cópia de convites, estados e componentes | Especificar/desenvolver gestão |
+| [UI-03-FORMULARIO-PUBLICO.md](./UI-03-FORMULARIO-PUBLICO.md) | Página pública: 15 questões, revisão e submissão, reuso public-hub/PluginUI | Especificar/desenvolver formulário |
+| [UI-04-INICIO-CARD-MARKETING.md](./UI-04-INICIO-CARD-MARKETING.md) | Integração no Início: card Marketing, navegação e capacidade | Inserir entrada no hub existente |
+| [UI-05-VISAO-GERAL-SECAO-PESQUISA.md](./UI-05-VISAO-GERAL-SECAO-PESQUISA.md) | Integração na Visão Geral: seção única de indicadores consolidados | Integrar resumo existente |
 | Documento detalhado novo | Criar **quando necessário**, com ID(s) relacionado(s), owner, evidência, contrato, critérios de aceite e link no índice | Só na frente correspondente |
 
 **Critério de conclusão desta etapa:** organização documental, não implementação. Próxima atividade: escolher uma frente delimitada, inventariar seu contrato atual e produzir sua especificação/testes sem reabrir as decisões já fechadas.
