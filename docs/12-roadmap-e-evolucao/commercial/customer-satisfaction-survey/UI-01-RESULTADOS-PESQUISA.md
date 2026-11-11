@@ -1,6 +1,6 @@
 # UI-01 — Página de Resultados da Pesquisa de Satisfação do Cliente
 
-> **Status:** proposta de UX; **Resumo Executivo e Evolução Histórica aprovados visualmente**, demais seções ainda em revisão; **não implementada**. Regra do Hero com todos os filtros e ações globais: **decisão aprovada**. A nova ordem das seções e composição do resumo foram aceitas para registro, sujeitas à revisão por etapas. Branch consultada: `main`, HEAD-base de revisão `093d13a58250401514cf8f3323c3dfb7508a8cf9` (revalidar antes da implementação).
+> **Status:** proposta de UX; **Resumo Executivo, Evolução Histórica e Avaliação das Dez Dimensões aprovados visualmente**, demais seções ainda em revisão; **não implementada**. Regra do Hero com todos os filtros e ações globais: **decisão aprovada**. A nova ordem das seções e composição do resumo foram aceitas para registro, sujeitas à revisão por etapas. Branch consultada: `main`, HEAD-base desta revisão `620ddc99e622240b3c31430abd388c83a110f04c` (revalidar antes da implementação).
 >
 > **Owner visual:** `plugins/commercial` (MFE). **Autoridade de regras, métricas, acesso e privacidade:** `commercial-api`; origem de clientes e atributos comerciais conforme fonte oficial via `api-delpi`/TOTVS. Esta especificação não concede autorização de implementação ou alteração de contrato backend.
 >
@@ -38,7 +38,7 @@ A entrada `Início > Marketing > Pesquisa de satisfação do cliente` abre diret
 │ [gráfico combinado: IGS esquerdo (1–5) + NPS direito (−100 a +100)]      │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ AVALIAÇÃO DAS 10 DIMENSÕES                                               │
-│ [Ordem: menor média primeiro, ou ordem do questionário via Hero]          │
+│ [Ranking obrigatório: menor média primeiro; empate = ordem oficial]       │
 │ Prazo de entrega       ━━━━━━━   3,8  (n válido)                          │
 │ Flexibilidade          ━━━━━━━━  4,0                                      │
 │ ... completar dez itens; eixo/máximo fixo 5                              │
@@ -82,7 +82,7 @@ A entrada `Início > Marketing > Pesquisa de satisfação do cliente` abre diret
 │ [detalhe após toque]      │
 ├───────────────────────────┤
 │ Dez dimensões             │
-│ [barras layout=stacked]   │
+│ [10 barras empilhadas]    │
 ├───────────────────────────┤
 │ Comparações               │
 │ [tabela adaptativa]       │
@@ -359,19 +359,109 @@ Conteúdo aprovado para o detalhe: **campanha/período; IGS; NPS; participantes 
 9. Nenhum `0` para ausência; lacunas reais não interpoladas artificialmente; erros, carregamento e amostra suprimida com estados próprios.
 10. Testar desktop/tablet/celular com capturas, tipo de gráfico, inspector, exportação, toque/foco, eixos e regressão dos gráficos de ROL/Closing Rate; relatório com HEAD, diff, testes, outcome e gaps.
 
-## 6. Avaliação das dez dimensões — ranking justificável
+## 6. Avaliação das dez dimensões — VISUAL APROVADO, ranking crescente
 
-| Parte | Componente real | Propriedades / comportamento |
+> **Decisão visual aprovada em 11/11/2026:** um ranking **com as dez dimensões**, ordenado automaticamente da **menor média para a maior**, empate resolvido pela ordem oficial do questionário; barras horizontais do PluginUI, sem tabela nem gráficos extras. **Não implementado.** Métricas, permissões e proteção de amostras pertencem ao `commercial-api`.
+
+### 6.1 Objetivo operacional e hierarquia
+
+Identificar rapidamente **quais dimensões estão relativamente pior e melhor avaliadas**, para orientar leitura do Comercial, sem confundir ranking com causalidade, plano de ação ou a métrica IGS. Esta seção vem **depois da Evolução Histórica**. Título **“Avaliação por dimensão”** e subtítulo **“Média das respostas válidas por aspecto · escala de 1 a 5”**, com ajuda: notas válidas de 1 a 5; `Não se aplica` e nulos não entram no numerador nem denominador; cada dimensão pode ter **n válido diferente**.
+
+Um `SectionCard` / `CommercialSectionCard` envolve **uma lista de dez barras horizontais**, todas na mesma escala fixa de 1 a 5. Cada item contém **rótulo oficial da dimensão**, **barra proporcional à média no máximo 5**, **média formatada com uma casa decimal `x,x / 5`**, e **`n` respostas válidas**. Ordenar `mean ASC`, empatando pela **ordem canônica do questionário**, estável entre atualizações. Não usar cor por ranking, semáforo, “nota abaixo de 4 = crítico” nem inventar meta de satisfação. O menor item aparece primeiro porque identifica uma oportunidade de investigação, **não** porque já comprova um problema operacional.
+
+As dez **chaves técnicas confirmadas no contrato da entrega 1**, para mapeamento de dados e ordem canônica, são: `quality`, `delivery_deadline`, `service`, `agility`, `communication`, `technical_support`, `commercial_support`, `flexibility`, `reliability`, `partnership`. Os rótulos curtos usados abaixo são **somente exemplos de UI**, não substituem a **redação integral e a ordem oficial das perguntas do Word**, que devem ser conferidas no contrato versionado antes da implementação. Não mapear por posição de array; usar chaves canônicas.
+
+### 6.2 Wireframes em três tamanhos — todas as dez dimensões
+
+**Desktop (alvo ≥ 1200 px de área útil):** `layout="columns"`, mesma linha para rótulo, barra e valor; `meta` exibe a quantidade de respostas válidas associada ao rótulo. Não abrir duas colunas de rankings (evitaria leitura global). As barras ocupam a largura disponível; nomes longos não podem ser truncados sem alternativa acessível.
+
+```text
+┌─ AVALIAÇÃO POR DIMENSÃO ─────────────────────────────────────────────────────────┐
+│ Média de respostas válidas · notas 1–5 · Não se aplica excluído                 │
+│                                                                                │
+│ Prazo de entrega       n=61    ━━━━━━━━━━━━━━━━━━━────────  3,6 / 5           │
+│ Flexibilidade          n=66    ━━━━━━━━━━━━━━━━━━━━───────  3,8 / 5           │
+│ Comunicação            n=69    ━━━━━━━━━━━━━━━━━━━━━──────  3,9 / 5           │
+│ Agilidade              n=68    ━━━━━━━━━━━━━━━━━━━━━──────  4,0 / 5           │
+│ Suporte técnico        n=58    ━━━━━━━━━━━━━━━━━━━━━━─────  4,1 / 5           │
+│ Atendimento            n=70    ━━━━━━━━━━━━━━━━━━━━━━─────  4,2 / 5           │
+│ Suporte comercial      n=65    ━━━━━━━━━━━━━━━━━━━━━━━────  4,3 / 5           │
+│ Confiabilidade         n=72    ━━━━━━━━━━━━━━━━━━━━━━━━───  4,4 / 5           │
+│ Qualidade              n=71    ━━━━━━━━━━━━━━━━━━━━━━━━━──  4,5 / 5           │
+│ Parceria               n=70    ━━━━━━━━━━━━━━━━━━━━━━━━━━─  4,6 / 5           │
+└────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Tablet / notebook estreito (alvo 600–1199 px úteis):** manter **uma única lista ordenada**. Preferir `layout="columns"` enquanto rótulo, valor e amostra couberem; passar a `layout="stacked"` quando a largura do componente tornar nomes difíceis de ler, **sem depender apenas do tipo de dispositivo**. Preservar todas as dez linhas e o mesmo critério de ordenação.
+
+```text
+┌─ AVALIAÇÃO POR DIMENSÃO ──────────────────────┐
+│ Prazo de entrega · n=61   ━━━━━━━──  3,6 / 5 │
+│ Flexibilidade · n=66     ━━━━━━━━─  3,8 / 5 │
+│ ... oito dimensões restantes, sem ocultar    │
+└───────────────────────────────────────────────┘
+```
+
+**Celular (alvo < 600 px úteis):** `layout="stacked"`, no qual o PluginUI coloca **rótulo + valor acima e barra de largura plena abaixo**. `meta` informa `n` válido; os dez itens aparecem em rolagem **vertical natural da página**, nunca carrossel/scroll horizontal. Não reduzir tamanho do texto para forçar três colunas, não ocultar dimensões, e não criar segundo widget mobile.
+
+```text
+┌─ AVALIAÇÃO POR DIMENSÃO ──┐
+│ Média · escala de 1 a 5   │
+│ Prazo de entrega  3,6 / 5│
+│ n=61 respostas válidas    │
+│ ━━━━━━━━━━━━━━━━━─────   │
+│ Flexibilidade     3,8 / 5│
+│ n=66 respostas válidas    │
+│ ━━━━━━━━━━━━━━━━━━───    │
+│ ...                      │
+│ Qualidade         4,5 / 5│
+│ n=71 respostas válidas    │
+│ ━━━━━━━━━━━━━━━━━━━━━─   │
+│ Parceria          4,6 / 5│
+│ n=70 respostas válidas    │
+│ ━━━━━━━━━━━━━━━━━━━━━━   │
+└──────────────────────────┘
+```
+
+**Todos os valores, contagens e comprimentos de barras dos wireframes são fictícios.** Não inserir dados ilustrativos como seed de produção. Breakpoints são referências de experiência, **não prova de CSS existente**: conferir layout real no shell e zoom 200–400%. Os rótulos deverão ser os oficiais.
+
+### 6.3 Mapa exato de componentes PluginUI e propriedades confirmadas
+
+| Papel | Componente real / origem | Props e decisão |
 |---|---|---|
-| Container | `SectionCard` | Título “Avaliação por dimensão”, ajuda explicando notas 1–5 e `Não se aplica` |
-| Ranking | `CommercialHorizontalValueBars` → `HorizontalValueBars` do PluginUI | Passar `items: {id,label,value,valueLabel?,meta?}[]`; usar `max={5}`, `aria-label`, `layout="columns"` desktop / `"stacked"` mobile |
-| Texto de amostra | `items[].meta` | `n = [respostas válidas]`; não exibir valor inventado quando `n=0` |
-| Ordem | Ordenação dos dados entregue ao componente | Default: menor média primeiro; empate: ordem oficial das 10 perguntas. Se permitir “ordem original”, seletor no Hero |
-| Escala | Prop `max={5}` do kit | **Obrigatória**, porque o default do kit é o maior valor dos itens e distorceria as barras quando o maior fosse 4,7 |
-| Interação | Omitir `onItemClick` na primeira entrega | Não criar drill-down que possa revelar respostas individuais por agregados pequenos |
-| Cor e alertas | Tokens padrão do kit | **Não pintar abaixo de 4 como perigo** sem meta/limiar de criticidade aprovado |
+| Painel | `SectionCard` de `@delpi/plugin-ui/index`, ou wrapper `CommercialSectionCard` de `commercialUi.ts` | Um painel; título, subtítulo/ajuda seguindo padrão de seções do Comercial |
+| Ranking | `CommercialHorizontalValueBars` de `plugins/commercial/src/app/commercialUi.ts` → `HorizontalValueBars` em `plugins/plugin-ui/src/components/charts/HorizontalValueBars.tsx` | `items: {id, label, value, valueLabel?, meta?}[]`, `max={5}`, `layout="columns" | "stacked"`, `aria-label`; usar `id` como chave canônica de dimensão |
+| Escala | `max={5}` da implementação real | **Obrigatória:** sem prop, o kit usa **a maior nota presente** como máximo, ampliando visualmente todas as barras |
+| Texto de amostra | `items[].meta` | `n = [contagem válida]`; mostrar contagens fornecidas/permitidas pelo backend, sem inventar base |
+| Valores | `items[].value` e `items[].valueLabel` | `value` = média numérica válida de 1 a 5; `valueLabel` = `x,x / 5` localizado em pt-BR |
+| Interação | `onItemClick` **omitido** | Lista não acionável; nenhum acesso a resposta individual por clique na barra |
+| Aparência | Classes/tokens internos de `HorizontalValueBars` | Usar kit sem criar barras, classes ou lógica de cor próprias; não pintar dimensão de menor nota em alerta |
+| Carregamento / vazio / erro | `CommercialLoadingCard`, `EmptyState`, `CommercialStateBanner` | Distinguir não carregado, nenhuma amostra válida, falha e proteção da amostra |
 
-As **dez dimensões e seus rótulos oficiais** vêm do Word/contrato da pesquisa. Os nomes presentes nos protótipos anteriores eram ilustrativos: usar textos oficiais e ordem oficial após conferência ao construir a configuração da tela. A API fornece número válido por dimensão (excluindo `Não se aplica`).
+**Não usar `ChartViewShell` ou `ChartTypeSegmentToggle` nesta seção**: a análise possui uma única representação adequada (ranking de barras horizontais); não é a evolução temporal multi-séries. O padrão de ferramentas de aparência aprovado para os **gráficos temporais** não obriga criar troca de tipo em todos os indicadores. Não adicionar filtro de ordem no bloco: a **ordem crescente está aprovada como padrão fixo**; qualquer futura opção de consulta deverá respeitar a regra de filtros dentro do Hero.
+
+### 6.4 Regras de dados, proteção e estados
+
+- A média de cada dimensão é calculada **no `commercial-api`**: soma das notas 1–5 válidas ÷ total de respostas válidas daquela dimensão; `null` / “Não se aplica” não entram. Não calcular como IGS nem média das dez dimensões como satisfação geral.
+- A UI recebe da API `mean`, `valid_count` e identificador canônico. Ordenar apenas os **agregados autorizados** por média crescente; desempatar pela ordem oficial; fonte dos dados continua sendo a API.
+- Se `valid_count=0`/média ausente, **não** renderizar `0`/barra vazia como nota: mostrar “Sem avaliação” com a dimensão preservada; `HorizontalValueBars` exige `value:number`, logo **PENDING** como compor item sem média usando recurso do kit/estado neutro, sem forçar `0`. Itens sem média devem ficar **após** as dimensões com média, seguindo ordem oficial entre si, sem fingir que são as piores.
+- Se a política de privacidade suprimir uma dimensão/recorte, não revelar nem a média nem contagem proibida, inclusive pela ordem (evitar ordenação que permita inferência). Exibir “Dados protegidos” em apresentação permitida pelo contrato; **PENDING** a composição para item suprimido.
+- O ranking não classifica respostas individuais como críticas/satisfeitas por dimensão. Notas 1–2 e 4–5 para “Críticos” e “Satisfeitos” pertencem **exclusivamente à satisfação geral**.
+- Não criar navegação para respostas privadas ou investigação identificável pelo público `commercial.access`; backend decide permissão, recortes e limiar mínimo.
+- Cor padrão uniforme; sem setas de tendência, metas, limiar de 4, sem percentual de “satisfeitos” por dimensão inventado.
+
+### 6.5 Critérios objetivos de aceite — Dimensões
+
+1. Seção aparece depois da Evolução, num único painel com título, contexto da escala e ajuda sobre “Não se aplica”.
+2. **Exatamente dez dimensões oficiais**, salvo supressão visual exigida pelo backend; rótulos fiéis ao questionário versionado e chaves estáveis.
+3. Ordenação **da menor para a maior média**, desempate pela ordem oficial do questionário; sem alternância de ordenação fora do Hero.
+4. **`CommercialHorizontalValueBars`**, `max={5}`, `items[].meta` com n válido, `valueLabel` com `x,x / 5`; nenhum componente paralelo de barras.
+5. Desktop: rótulo/barra/nota na mesma linha; tablet adapta pelo espaço; celular: rótulo/nota acima, barra abaixo, todos os itens visíveis na rolagem vertical.
+6. Não acrescentar tabela fixa, gráfico de linha, filtro local, mudança de tipo, tooltip customizado ou drill-down sem necessidade comprovada.
+7. Sem “zero” para nota ausente, sem falso alerta ou meta; estados sem dados/erro/suprimidos próprios.
+8. Não revelar contagens ou médias protegidas, nem por ordenação ou clique; sem queries de respostas individuais para `commercial.access`.
+9. Testar os três tamanhos, nomes longos, contraste, zoom 200–400%, foco/leitor de tela e regressão visual do `HorizontalValueBars` já usado no Portal.
+10. Execução depende de HEAD e working tree verificados, contrato versionado das perguntas e relatório de alterações/testes/gaps.
 
 ## 7. Comparativo de segmentos — evidência e proteção
 
