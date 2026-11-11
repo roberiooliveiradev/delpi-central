@@ -1,7 +1,7 @@
 /** Detalhe da solicitação PRC — header com status/ações, andamento do
  * workflow, cards de identificação e abas por URL
- * (Visão geral · Ficha técnica · Verificação TOTVS · Histórico ·
- * Revisões). allowedActions é a única autoridade de ações; CAS via
+ * (Ficha técnica · Verificação TOTVS · Histórico · Revisões).
+ * allowedActions é a única autoridade de ações; CAS via
  * expectedVersion; nenhuma conclusão otimista. */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -10,7 +10,6 @@ import { HomeApiError } from "../../../api/httpClient";
 import { getSubjectFromAccessToken } from "../../../app/authDisplayName";
 import {
   EngineeringActionButton,
-  EngineeringDetailCard,
   EngineeringDetailFieldGrid,
   EngineeringLoadingActivityCard,
   EngineeringPageHero,
@@ -48,11 +47,9 @@ import {
   PRC_COPY,
   PRC_RESULT_LABELS,
   PRC_TYPE_LABELS,
-  prcFieldLabel,
   prcPersonLabel,
   prcRequesterLabel,
   prcShortId,
-  prcStatusLabel,
 } from "../prcCopy";
 import { PrcActionBar } from "../components/PrcActionBar";
 import { PrcAttachmentsSection } from "../components/PrcAttachmentsSection";
@@ -72,19 +69,11 @@ import { PrcWorkflowProgress } from "../components/PrcWorkflowProgress";
 import { summarizeDiagnosis } from "../prcVerificationDiagnosis";
 
 const TABS: { key: PrcTabKey; label: string }[] = [
-  { key: "overview", label: "Visão geral" },
   { key: "draft", label: "Ficha técnica" },
   { key: "verification", label: "Verificação TOTVS" },
   { key: "history", label: "Histórico" },
   { key: "revisions", label: "Revisões" },
 ];
-
-function fmt(value: unknown): string {
-  if (value === null || value === undefined || value === "") return "—";
-  if (Array.isArray(value)) return `${value.length} item(ns)`;
-  if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
-}
 
 function newIdemKey(prefix: string): string {
   const uuid =
@@ -461,8 +450,22 @@ export function PrcDetailPage({
       value: new Date(detail.createdAt).toLocaleString("pt-BR"),
     },
     {
+      label: "Última atualização",
+      value: new Date(detail.updatedAt).toLocaleString("pt-BR"),
+    },
+    {
       label: "Origem",
       value: detail.source,
+    },
+    {
+      label: "Referência externa",
+      value: detail.externalRequestId || "—",
+    },
+    {
+      label: "Verificação oficial",
+      value: detail.verificationSummary
+        ? `${PRC_RESULT_LABELS[detail.verificationSummary.result] || detail.verificationSummary.result} em ${new Date(detail.verificationSummary.checkedAt).toLocaleString("pt-BR")}`
+        : "Nunca verificado",
     },
   ];
 
@@ -590,89 +593,28 @@ export function PrcDetailPage({
         role="tabpanel"
         id={`prc-panel-${tab}`}
         aria-labelledby={`prc-tab-${tab}`}
+        className="engineering-prc__tabpanel"
       >
-        {tab === "overview" ? (
-          <div className="engineering-prc__overview">
-            <PrcInformationExchangePanel
-              requestId={detail.id}
-              requestStatus={detail.status}
-              requesterSubject={detail.requester.subject}
-              currentSubject={currentSubject}
-              informationExchange={detail.informationExchange}
-              allowedActions={detail.allowedActions}
-              refreshToken={`${detail.caseVersion}:${detail.updatedAt}`}
-              busy={busy}
-              onChanged={load}
-            />
-
-            <EngineeringDetailCard title="Resumo da solicitação">
-              <EngineeringDetailFieldGrid
-                fields={[
-                  {
-                    label: "Tipo",
-                    value:
-                      PRC_TYPE_LABELS[detail.requestType] ||
-                      detail.requestType,
-                  },
-                  {
-                    label: "Status",
-                    value: prcStatusLabel(detail.status),
-                  },
-                  {
-                    label: "Última atualização",
-                    value: new Date(detail.updatedAt).toLocaleString("pt-BR"),
-                  },
-                  {
-                    label: "Referência externa",
-                    value: detail.externalRequestId || "—",
-                  },
-                  {
-                    label: "Verificação oficial",
-                    value: detail.verificationSummary
-                      ? `${PRC_RESULT_LABELS[detail.verificationSummary.result] || detail.verificationSummary.result} em ${new Date(detail.verificationSummary.checkedAt).toLocaleString("pt-BR")}`
-                      : "Nunca verificado",
-                  },
-                ]}
-              />
-            </EngineeringDetailCard>
-
-            {detail.requestType === "update" &&
-            Object.keys(detail.requestedChanges || {}).length ? (
-              <EngineeringDetailCard title="Alterações solicitadas">
-                <ul className="engineering-prc__supplier-diff">
-                  {(
-                    (detail.requestedChanges.changes as Array<{
-                      path: string;
-                      proposedValue: unknown;
-                      reason: string;
-                    }>) || []
-                  ).map((c, i) => (
-                    <li key={i}>
-                      <strong>{prcFieldLabel(c.path)}</strong> →{" "}
-                      {fmt(c.proposedValue)}
-                      {c.reason ? ` — ${c.reason}` : ""}
-                    </li>
-                  ))}
-                </ul>
-              </EngineeringDetailCard>
-            ) : null}
-          </div>
-        ) : null}
-
         {tab === "draft" ? (
-          <PrcTechnicalSheet
-            detail={detail}
-            fieldSpecs={fieldSpecs}
-            editablePaths={editablePaths}
-            editing={editing}
-            busy={busy}
-            focusElementId={focusTarget?.elementId || null}
-            focusNonce={focusTarget?.nonce || 0}
-            onStartEdit={() => setEditing(true)}
-            onCancelEdit={() => setEditing(false)}
-            onSave={saveDraft}
-            onSaveReturned={saveReturnedFields}
-          />
+          <>
+            <PrcTechnicalSheet
+              detail={detail}
+              fieldSpecs={fieldSpecs}
+              editablePaths={editablePaths}
+              editing={editing}
+              busy={busy}
+              focusElementId={focusTarget?.elementId || null}
+              focusNonce={focusTarget?.nonce || 0}
+              onStartEdit={() => setEditing(true)}
+              onCancelEdit={() => setEditing(false)}
+              onSave={saveDraft}
+              onSaveReturned={saveReturnedFields}
+            />
+            <PrcAttachmentsSection
+              requestId={detail.id}
+              refreshToken={`${detail.caseVersion}:${detail.updatedAt}`}
+            />
+          </>
         ) : null}
 
         {tab === "verification" ? (
@@ -706,7 +648,20 @@ export function PrcDetailPage({
         ) : null}
 
         {tab === "history" ? (
-          <PrcTimelineSection events={timeline} />
+          <>
+            <PrcInformationExchangePanel
+              requestId={detail.id}
+              requestStatus={detail.status}
+              requesterSubject={detail.requester.subject}
+              currentSubject={currentSubject}
+              informationExchange={detail.informationExchange}
+              allowedActions={detail.allowedActions}
+              refreshToken={`${detail.caseVersion}:${detail.updatedAt}`}
+              busy={busy}
+              onChanged={load}
+            />
+            <PrcTimelineSection events={timeline} />
+          </>
         ) : null}
 
         {tab === "revisions" ? (
@@ -715,11 +670,6 @@ export function PrcDetailPage({
             revisions={revisions}
           />
         ) : null}
-
-        <PrcAttachmentsSection
-          requestId={detail.id}
-          refreshToken={`${detail.caseVersion}:${detail.updatedAt}`}
-        />
       </div>
     </main>
   );

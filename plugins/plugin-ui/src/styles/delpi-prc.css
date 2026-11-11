@@ -3,6 +3,14 @@
  * justificativas contextuais). Fonte canônica única para Portal
  * Engenharia e Minhas Solicitações — prefixo `delpi-prc__`. */
 
+/* Pilha raiz do formulário: separação consistente entre os cards
+ * irmãos (seções do wizard, banners e ações) no token oficial. */
+.delpi-prc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--delpi-ui-section-gap, 16px);
+}
+
 .delpi-prc__muted {
   color: var(--delpi-ui-text-muted);
   font-size: 0.85rem;

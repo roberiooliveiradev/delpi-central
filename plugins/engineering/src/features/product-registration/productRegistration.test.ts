@@ -98,10 +98,12 @@ describe("prcNavigate url state", () => {
     ).toBe("/apps/engineering/product-registration?status=in_progress");
   });
 
-  it("parses detail tab with fallback to overview", () => {
+  it("parses detail tab with fallback to ficha técnica", () => {
     expect(parsePrcTab("?tab=verification")).toBe("verification");
-    expect(parsePrcTab("?tab=bogus")).toBe("overview");
-    expect(parsePrcTab("")).toBe("overview");
+    expect(parsePrcTab("?tab=bogus")).toBe("draft");
+    expect(parsePrcTab("")).toBe("draft");
+    /* deep link legado `?tab=overview` → Ficha técnica, sem erro. */
+    expect(parsePrcTab("?tab=overview")).toBe("draft");
   });
 });
 

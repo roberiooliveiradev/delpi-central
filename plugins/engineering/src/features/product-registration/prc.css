@@ -20,7 +20,15 @@
   align-items: start;
 }
 
-.engineering-prc__overview,
+/* Painel de abas: os cards irmãos do conteúdo ativo (ficha técnica,
+ * verificação, histórico, revisões, documentos) herdam a separação
+ * oficial do container — nunca margin por card. */
+.engineering-prc__tabpanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--en-grid-gap);
+}
+
 .engineering-prc__sheet,
 .engineering-prc__verification,
 .engineering-prc__revisions {

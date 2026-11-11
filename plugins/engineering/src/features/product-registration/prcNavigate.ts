@@ -135,25 +135,25 @@ export function buildPrcQueueUrl(
 // --- Detalhe: abas orientadas por URL ------------------------------------
 
 export type PrcTabKey =
-  | "overview"
   | "draft"
   | "verification"
   | "history"
   | "revisions";
 
 export const PRC_TAB_KEYS: readonly PrcTabKey[] = [
-  "overview",
   "draft",
   "verification",
   "history",
   "revisions",
 ];
 
+/** `?tab=` ausente, inválido ou legado (`overview`) → Ficha técnica,
+ * aba inicial padrão do detalhe PRC (UI-FIX-06). */
 export function parsePrcTab(search: string): PrcTabKey {
   const raw = new URLSearchParams(search).get("tab");
   return (PRC_TAB_KEYS as readonly string[]).includes(raw || "")
     ? (raw as PrcTabKey)
-    : "overview";
+    : "draft";
 }
 
 export function prcDetailTabHref(
@@ -162,5 +162,5 @@ export function prcDetailTabHref(
   tab: PrcTabKey,
 ): string {
   const base = `${basePath}/${PRC_PATHS.detail(requestId)}`;
-  return tab === "overview" ? base : `${base}?tab=${tab}`;
+  return tab === "draft" ? base : `${base}?tab=${tab}`;
 }
