@@ -1212,6 +1212,54 @@ declare module "@delpi/plugin-ui/index" {
     abortAll(): void;
   }
 
+
+  /* UI-FORM-UNIFICATION-05 — formulário completo PRC compartilhado. */
+  export type PrcFormEditContextLink = {
+    supplierCode: string;
+    store: string;
+    supplierName?: string;
+    supplierShortName?: string;
+    partNumber?: string | null;
+    catalogNumber?: string | null;
+  };
+  export type PrcFormEditContext = {
+    status?: string;
+    officialCode?: string;
+    readAt?: string;
+    fingerprint?: string;
+    fields: Record<
+      string,
+      { value: unknown; officialField?: string | null }
+    >;
+    links: PrcFormEditContextLink[];
+    linksComplete?: boolean;
+  };
+  export type PrcFormDataProvider = {
+    fetchReferenceData(signal?: AbortSignal): Promise<PrcReferenceData>;
+    fetchCatalog: PrcCatalogFetcher;
+    searchSuppliers: PrcSupplierSearchFn;
+    fetchEditContext(
+      officialCode: string,
+    ): Promise<PrcFormEditContext>;
+    submitIntake(
+      body: PrcIntakeBody,
+      idempotencyKey: string,
+    ): Promise<{ requestId: string }>;
+    uploadAttachment(
+      requestId: string,
+      file: File,
+    ): Promise<unknown>;
+  };
+  export type PrcRequestFormProps = {
+    source: string;
+    dataProvider: PrcFormDataProvider;
+    onCancel: () => void;
+    onCompleted: (requestId: string) => void;
+    portalScopeClassName?: string;
+  };
+  export function PrcRequestForm(
+    props: PrcRequestFormProps,
+  ): JSX.Element;
   /* UI-FIX-03 — rótulos/formatadores de timeline compartilhados */
   export const PRC_EVENT_LABELS: Record<string, string>;
   export function prcPersonLabel(

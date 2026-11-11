@@ -55,6 +55,9 @@ export * from "./components/data";
 export * from "./components/forms";
 export * from "./components/preview";
 export * from "./components/charts";
+/** Named re-export — `export *` é podado pelo federation pruning para
+ * símbolos sem uso interno no remote (host it-portal consome). */
+export { createSemicircleProgressGauge } from "./components/charts/SemicircleProgressGauge";
 export * from "./components/bpmn";
 export * from "./components/org";
 export * from "./components/shape";
@@ -269,3 +272,14 @@ export {
   type PrcBaselineLink,
   type PrcSupplierTableProps,
 } from "./components/prc/PrcSupplierForm";
+
+/* PRC-REF-023-UI-FORM-UNIFICATION-05 — formulário completo PRC
+ * (wizard Identificação → Ficha técnica → Revisão) único para Portal
+ * Engenharia e Minhas Solicitações; API via PrcFormDataProvider. */
+export {
+  PrcRequestForm,
+  type PrcFormDataProvider,
+  type PrcFormEditContext,
+  type PrcFormEditContextLink,
+  type PrcRequestFormProps,
+} from "./components/prc/PrcRequestForm";

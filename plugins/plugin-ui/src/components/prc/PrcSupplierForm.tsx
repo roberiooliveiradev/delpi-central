@@ -36,6 +36,8 @@ export const PRC_SUPPLIER_TEXT = {
   discardDraftOnly:
     "Descartar remove somente esta linha candidata — o vínculo oficial permanece intacto.",
   emptyResult: "Nenhum fornecedor encontrado para o termo pesquisado.",
+  selectRequired:
+    "Escolha um fornecedor na lista de resultados para confirmar o código e a loja.",
 } as const;
 
 /* ---------------- justificativas contextuais ---------------- */

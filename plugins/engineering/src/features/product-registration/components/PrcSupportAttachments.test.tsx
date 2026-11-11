@@ -7,26 +7,31 @@ import { resolve } from "node:path";
 
 const src = (rel: string) => readFileSync(resolve(__dirname, rel), "utf8");
 const createPage = () => src("../pages/PrcCreatePage.tsx");
+/* UI-FORM-UNIFICATION-05 — a composição do formulário migrou para o
+ * kit; as asserções de dropzone/preview/retry apontam a fonte única. */
+const kitForm = () =>
+  src("../../../../../plugin-ui/src/components/prc/PrcRequestForm.tsx");
 const detailSection = () => src("./PrcAttachmentsSection.tsx");
 const facade = () => src("../../../ui/engineeringUi.ts");
 
 describe("PRC-REF-023 — upload via plugin-ui oficial", () => {
   it("FileDropzone oficial renderizado na seção de documentos", () => {
-    const t = createPage();
-    expect(t).toContain("EngineeringFileDropzone");
+    const t = kitForm();
+    expect(t).toContain("PrcFileDropzone");
     expect(t).toContain('title="Documentos de apoio (opcional)"');
   });
-  it("não há input file nativo visível na página", () => {
-    expect(createPage()).not.toMatch(/<input[^>]*type="file"/);
+  it("não há input file nativo visível no formulário", () => {
+    expect(kitForm()).not.toMatch(/<input[^>]*type="file"/);
   });
   it("accept e limites derivam da política compartilhada", () => {
-    const t = createPage();
+    const t = kitForm();
     expect(t).toContain("accept={PRC_ATTACHMENT_ACCEPT}");
     expect(t).toContain("PRC_ATTACHMENT_MAX_COUNT");
     expect(t).toContain("PRC_ATTACHMENT_MAX_MB");
   });
-  it("MFE não importa componentes internos do my-requests", () => {
+  it("wrapper engenharia delega ao formulário compartilhado", () => {
     const t = createPage();
+    expect(t).toContain("PrcRequestForm");
     expect(t).not.toContain("my-requests");
     expect(t).not.toContain("StagedAttachmentsField");
     expect(t).not.toContain("mrUi");
@@ -35,14 +40,14 @@ describe("PRC-REF-023 — upload via plugin-ui oficial", () => {
 
 describe("PRC-REF-023-FIX-02 — miniaturas e modal de prévia", () => {
   it("PreviewStrip oficial substitui a lista vertical (create)", () => {
-    const t = createPage();
-    expect(t).toContain("EngineeringAttachmentPreviewStrip");
+    const t = kitForm();
+    expect(t).toContain("PrcAttachmentStrip");
     expect(t).toContain('mode="manage"');
     expect(t).not.toContain("EngineeringAttachmentFileList");
   });
   it("modal FilePreviewModal com arquivo local (create)", () => {
-    const t = createPage();
-    expect(t).toContain("EngineeringFilePreviewModal");
+    const t = kitForm();
+    expect(t).toContain("FilePreviewModal");
     expect(t).toContain("source={previewFile}");
     expect(t).toContain('"Ainda não enviado"');
   });
@@ -57,7 +62,7 @@ describe("PRC-REF-023-FIX-02 — miniaturas e modal de prévia", () => {
     expect(t).not.toMatch(/storage_key/i);
   });
   it("object URLs de miniaturas locais são revogadas", () => {
-    const t = createPage();
+    const t = kitForm();
     expect(t).toContain("URL.createObjectURL(f)");
     expect(t).toContain("URL.revokeObjectURL(url)");
     // cleanup do effect com a memo como dep
@@ -69,18 +74,20 @@ describe("PRC-REF-023-FIX-02 — miniaturas e modal de prévia", () => {
     expect(t).toMatch(/Object\.values\(created\)\.forEach\(\(u\)\s*=>\s*URL\.revokeObjectURL/);
   });
   it("estados por arquivo: selecionado/enviando/enviado/erro", () => {
-    const t = createPage();
+    const t = kitForm();
     expect(t).toContain('"Selecionado"');
     expect(t).toContain('"Enviando…"');
     expect(t).toContain('"Enviado"');
     expect(t).toContain("`Erro — ${fileErrors[f.localId]}`");
   });
   it("retry envia só documentos não confirmados (uploadedIds)", () => {
-    const t = createPage();
+    const t = kitForm();
     expect(t).toContain("uploadedIds.has(entry.localId)");
     expect(t).toContain("Tentar enviar documentos novamente");
     // create só ocorre quando createdRequestId é nulo
-    expect(t).toMatch(/createdRequestId\s*\?\s*null\s*:\s*await prcIntakeSubmit/);
+    expect(t).toMatch(
+      /createdRequestId\s*\?\s*null\s*:\s*await dataProvider\.submitIntake/,
+    );
   });
   it("download autorizado por ação explícita (detalhe + modal)", () => {
     const t = detailSection();

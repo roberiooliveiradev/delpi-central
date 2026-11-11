@@ -166,12 +166,18 @@ export function fetchPrcCatalog(
   catalog: string,
   query = "",
   signal?: AbortSignal,
-): Promise<PrcCatalogItem[]> {
-  const qs = query ? `?query=${encodeURIComponent(query)}` : "";
-  return httpGet<Envelope<{ items: PrcCatalogItem[] }>>(
+  limit?: number,
+): Promise<{ items: PrcCatalogItem[]; hasMore?: boolean }> {
+  const params = new URLSearchParams();
+  if (query) params.set("query", query);
+  if (limit) params.set("limit", String(limit));
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  return httpGet<
+    Envelope<{ items: PrcCatalogItem[]; hasMore?: boolean }>
+  >(
     `${PRC_BASE}/reference-data/catalogs/${encodeURIComponent(catalog)}${qs}`,
     { signal },
-  ).then((body) => unwrap(body).items);
+  ).then(unwrap);
 }
 
 export type PrcSupplierHit = {
