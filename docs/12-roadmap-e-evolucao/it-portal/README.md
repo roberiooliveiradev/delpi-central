@@ -158,6 +158,20 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 
 **Aceite esperado:** testes unitários do coletor e domínio; Postgres real com migration aditiva e idempotência; contrato HTTP, S2S (401/403/503 e cliente/scope indevidos), histórico e autenticação humana inalterados; frontend testes + build + visual; ensaio read-only no `srv-api` comprovando ausência de regressão operacional; ativação agendada e outcome de coleta periódica somente após gate operacional. Reportar `PASS|FAIL|PENDING|TEST_NOT_RUN` por aceite, diff, SHA, comando e evidência de runtime. Não marcar COMPLETE só por commit/testes.
 
+## Revisão independente E4.S1 — 11/11/2026
+
+**REVIEW_DECISION: ACCEPT_WITH_RESIDUAL** para o artefato de código `1884eddf34bcbc796f1e9f525e8ee6cbdd07ea5b`. **Estado operacional: IMPLEMENTED_PENDING_SMOKE; não é COMPLETE.** Inspeção estática no GitHub; sem acesso ao runtime do `srv-api` e sem reprodução local dos testes apresentados pelo executor. A `main` avançou somente em frente externa após a entrega na data da revisão.
+
+**PASS reportado pelo executor:** testes API sem Postgres, frontend 82/82, arquitetura/gates e CLI `diagnose` parcial esperado. **TEST_NOT_RUN / PENDING:** Postgres real V004 (não demonstrado), deploy, V004 aplicada em produção, client credentials Keycloak, allowlist do UUID do `srv-api`, `submit` autêntico, leitura humana da observação no MFE e timer desabilitado.
+
+**Residuais/gates antes da ativação do S2S:**
+1. `it_portal_app/domain/observations.py::_sanitize_summary` filtra nomes sensíveis no nível superior, mas preserva chaves aninhadas desconhecidas no JSON. `ObservationIngestInput.summary` é `dict` livre; o repositório grava esse resultado no JSONB. Restringir recursivamente ao contrato de campos aceitos ou rejeitar estruturas desconhecidas/sensíveis, com testes adversariais. **Não habilitar ingresso S2S de produção antes desse ajuste delimitado e nova revisão.**
+2. `collectors/linux_host/submit.py` importa `delpi_auth.service_token_provider`, que importa `requests`. O comando divulgado `PYTHONPATH=it-portal-api python3 -m collectors.linux_host submit` não garante dependências nem `shared` disponíveis no Python do host. Verificar o ambiente e prover execução isolada/reprodutível; evitar `pip` global e scripts com credenciais em argumentos. O `systemd` usa `/opt/delpi/it-portal-collector`, usuário próprio e env em `/etc/delpi`; instalação/venv/permissões não foram comprovadas.
+3. O provisioner `--apply` é operação de administração Keycloak e escreve segredo em `infra/.env`; executar primeiro `--check` e validar endpoint HTTPS, controle de arquivo e impacto da mudança. O arquivo de env do coletor é distinto e **não** é carregado automaticamente pelo comando CLI interativo.
+4. Implantação inicial da API + MFE pode ocorrer **com S2S_ALLOWED_CLIENTS e allowlist vazios** (fail-closed), em ordem API primeiro, MFE depois. Verificar saúde, versionamento API `0.4.0`, V004, render vazio/compatibilidade e ausência de regressões. Após o gate acima, provisionar identidade técnica aprovada e comprovar `diagnose`→`submit`→GET humano→UI. **Não habilitar timer** até autorização operacional separada.
+
+**Critério de fechamento:** smoke com resultado material e verificável em produção, dados manuais preservados, nenhum segredo coletado, identidade vinculada ao cadastro e observação com `run_id` idempotente. Se houver divergência de owner/security, registrar `EXECUTION_DRIFT` / `ARCHITECTURE_DECISION_REQUIRED`, sem improvisar bypass.
+
 ## Residuais abertos
 
 | ID | Residual | Dono da decisão |
