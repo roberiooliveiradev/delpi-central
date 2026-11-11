@@ -21,6 +21,14 @@ O [plano de frontend](./FRONTEND-FIRST-RELEASE-PLAN.md) permanece como **visão 
 
 **Prioridade visual de revisão:** UI-01 → UI-02 → UI-03; UI-04/UI-05 são pontos de encaixe no portal existente. Os wireframes são propostas visuais **não aprovadas individualmente**, nem prova de implementação.
 
+### Diretriz transversal aprovada — reutilização dos padrões implementados (11/11/2026)
+
+**Decisão do solicitante, válida para todas as páginas aplicáveis da Pesquisa de Satisfação:** inventariar e reutilizar os padrões **já implementados** no Portal Comercial para Heroes, filtros automáticos, botão Limpar filtros, tabelas, cabeçalhos ordenáveis, paginação, cartões móveis, seleção de visualização, ajustes de fonte, personalização de colunas, estados e navegação. **Não reapresentar esses padrões como novas dúvidas visuais por página.** Validar se cada página realmente precisa do recurso; páginas públicas e telas sem tabela não recebem controles sem sentido. Exceções operacionais, riscos de dados e lacunas técnicas seguem exigindo análise.
+
+**Referências concretas verificadas em código:** `plugins/commercial/src/app/commercialUi.ts` (`CommercialPageHero`, `CommercialClearFiltersButton`, `CommercialDataTable`, `CommercialDataCardsGrid`, `CommercialDataCardsSortBar`, `CommercialTableColumnVisibilityMenu`, `CommercialTableFontSizeControls`, `CommercialExcelExportButton`); `app/dataTableUi.ts` (`CommercialPagination`, `CommercialDataTableSection`, default de 20 registros); `features/customers/components/CustomersTable.tsx` (tabela/cards, cabeçalhos ordenáveis, seletor de ordenação, personalização, exportação e fonte); `features/proposals/ProposalsPage.tsx` (paginação e busca com espera de 350 ms); `app/commercialNavigationReturn.ts` (retorno seguro). O kit `DataTableSection` declara que ordenação com paginação remota deve ocorrer na fonte de dados, não apenas na página carregada.
+
+**Aprovação específica UI-06:** cinco opções aprovadas em conjunto — personalização de colunas, fonte, **exportação Excel restrita**, alternância tabela/cards no desktop e seleção de tamanho de página. Detalhes, restrições e gates: [UI-06](./UI-06-RESPOSTAS-POR-EMPRESA.md#decisão-em-lote--recursos-de-tabela-e-lista-já-existentes-no-portal-11112026). A exportação é uma nova capacidade **desejada para UI-06**, não um endpoint já implementado; nenhuma exportação de dados identificáveis pode ser habilitada para `commercial.access` isolado. Não estender automaticamente a outras páginas sem conferir escopo, finalidade e autorização. Implementação e testes permanecem pendentes.
+
 ## 1. Escopo e experiência
 
 **Entregar nesta versão:** o usuário autorizado cria campanha, seleciona empresas TOTVS, copia link/mensagem e distribui **por conta própria**, acompanha respostas e analisa resultados. O cliente abre o formulário pelo link, revisa e envia uma resposta definitiva. O Comercial usa os resultados para suas ações **fora da aplicação**.
