@@ -69,6 +69,17 @@
 - **Segurança:** avanço entre etapas é somente estado local do formulário. **Não gravar rascunhos nem enviar respostas parciais** no backend; a `commercial-api` valida novamente todas as seleções e a janela/token no envio definitivo, com persistência única e resposta imutável.
 - **Estado:** decisão funcional e UX **APROVADA/DOCUMENTADA**, implementação e testes **PENDING**.
 
+### Decisão aprovada — edição direta por seção na revisão final (11/11/2026)
+
+**APROVADO PELO SOLICITANTE — OPÇÃO A:** a tela de revisão final apresenta as respostas agrupadas em **três seções**, na ordem canônica, cada qual com **botão “Editar” próprio**. Esse botão retorna **diretamente** à etapa correspondente (1, 2 ou 3) para correção, sem exigir que o cliente percorra outras etapas para trás.
+
+- Seção 1: cinco dimensões 01–05; seção 2: cinco dimensões 06–10; seção 3: satisfação geral, recomendação e três comentários opcionais. Exibir notas, “Não se aplica” e indicação de comentário não preenchido, sem transformar opcionais em obrigatórios.
+- **Preservar as 15 respostas em memória local** ao sair da revisão, editar e retornar; não limpar outras seções. Na etapa editada, manter a validação das avaliações obrigatórias antes de permitir **“Voltar à revisão”**, com foco acessível nas pendências. O retorno deve ir à **revisão final**, sem obrigar novamente a passagem pelas etapas posteriores já completas; caso alguma esteja incompleta, bloquear envio e orientar a correção.
+- Recalcular o indicador de progresso aprovado (12 avaliações obrigatórias) após mudanças e reapresentar os valores atualizados na revisão. Diferenciar claramente **edição antes do envio** de resposta definitiva, que permanece imutável.
+- Não criar segundo formulário ou modal de edição. Reutilizar os controles do `plugins/public-hub` e componentes oficiais compatíveis; botões “Editar” com rótulo acessível que indique a seção de destino, navegação por teclado e preservação de foco quando apropriado.
+- **Sem gravação parcial:** transitar para editar ou voltar à revisão não chama a API; somente o botão definitivo **Confirmar e enviar** executa a operação única autorizada pelo token, após validação no backend. Testar correção das três seções, campos opcionais vazios, retorno sem perda, teclado e confirmação sem duplicidade.
+- **Status:** decisão funcional/UX **APROVADA e documentada**. UI-03, integração e testes **NÃO IMPLEMENTADOS**.
+
 ## 3. Wireframe — revisão, envio e estados
 
 ```text
