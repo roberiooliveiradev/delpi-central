@@ -9,7 +9,7 @@
   Use cliente confidencial exclusivo do host, escopo it-portal.observations.ingest
   e audience it-portal-api. O secret é informado interativamente.
 .EXAMPLE
-  .\Send-ItPortalWindowsObservation.ps1 -ApiBaseUrl 'https://portal.exemplo/apps/it-portal-api' -S2sTokenUrl 'https://auth.exemplo/realms/delpi/protocol/openid-connect/token' -ClientId 'it-portal-windows-srv-db01' -ServerId '<uuid-cadastrado>'
+  .\Send-ItPortalWindowsObservation.ps1 -ApiBaseUrl 'https://portal.exemplo/apps/it-portal-api' -S2sTokenUrl 'https://auth.exemplo/realms/delpi/protocol/openid-connect/token' -ClientId 'it-portal-windows-pilot01' -ServerId '<uuid-cadastrado>'
 #>
 [CmdletBinding()]
 param(
