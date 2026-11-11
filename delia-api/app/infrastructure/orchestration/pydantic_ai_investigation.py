@@ -666,6 +666,18 @@ def _attempt_projection(
         projection["coverage_note"] = (
             "Discovery/catalog metadata is not business evidence."
         )
+    # Surface open identifiers in the same projection the Agent reads.
+    # Callers historically appended these after ``_attempt_projection``,
+    # which left eval traces and any early return path without the
+    # recovery signal even though ``uncovered_after`` already informed
+    # progress classification.
+    if uncovered_after:
+        projection["uncovered_user_identifiers"] = list(uncovered_after)
+        if "coverage_note" not in projection:
+            projection["coverage_note"] = (
+                "Named identifiers still lack an authoritative "
+                "observation. Choose the next owner tool yourself."
+            )
     # Reuse the canonical owner pagination detector — do not invent
     # cursors. Surface page/has_more so the model can continue a
     # truncated list with the same tool schema (P2 continuity).
@@ -1382,13 +1394,6 @@ class PydanticAiInvestigationOrchestrator:
                     ctx.deps.observed_content_fingerprints
                 ),
             )
-            if uncovered:
-                projection["uncovered_user_identifiers"] = uncovered
-                if "coverage_note" not in projection:
-                    projection["coverage_note"] = (
-                        "Named identifiers still lack an authoritative "
-                        "observation. Choose the next owner tool yourself."
-                    )
             content_fp = observation_content_fingerprint(attempt)
             if content_fp is not None:
                 if content_fp in ctx.deps.observed_content_fingerprints:
@@ -1547,15 +1552,20 @@ class PydanticAiInvestigationOrchestrator:
                         "error_code": "investigation_goal_rejected",
                     }
                 )
-            return _proj(
-                {
-                    "status": "ACCEPTED",
-                    "goal_class": plan.goal.goal_class,
-                    "comparison_requested": plan.goal.comparison_requested,
-                    "target_identities": list(plan.target_identities),
-                    "evidence_needed": list(plan.evidence_needed),
-                }
-            )
+            accepted: dict[str, Any] = {
+                "status": "ACCEPTED",
+                "goal_class": plan.goal.goal_class,
+                "comparison_requested": plan.goal.comparison_requested,
+                "target_identities": list(plan.target_identities),
+                "evidence_needed": list(plan.evidence_needed),
+            }
+            # Echo the accepted subject so the Agent retains the same
+            # declared interpretation across subsequent tool calls.
+            # Omission made the field write-only after acceptance.
+            subject = getattr(plan.goal, "business_subject", None)
+            if isinstance(subject, str) and subject.strip():
+                accepted["business_subject"] = subject.strip()
+            return _proj(accepted)
 
         # Native MCP interop (task MCPTOOLSET-MIGRATION-01, extended by
         # NATIVE-MCPTOOLSET-DIRECT-ORCHESTRATION-01): each enabled

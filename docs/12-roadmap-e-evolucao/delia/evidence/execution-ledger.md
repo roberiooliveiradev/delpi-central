@@ -6399,3 +6399,18 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `300-int1-full-context-delivery-mcp-contract-semantics-and-model-context-configuration-remediation.md`.
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_FULL_CONTEXT_INDEPENDENT_REVIEW`.
+
+| DELIA-C3-T2-INT1-INTENT-UNDERSTANDING-AND-TOOL-SELECTION-CAUSAL-REVIEW-01 | Offline causal replay G1/P1/P3/P2; declare_goal unused 0/55; G1 first=teo.read decomposition/process; EXTEND uncovered projection + business_subject echo; no LLM; doc 301 | INTENT_CAUSAL=DONE; LIVE=PENDING_PO; NEXT=COORDINATION_INT1_INTENT_SELECTION_INDEPENDENT_REVIEW |
+
+### INT-1 intent understanding + tool selection causal review — 2026-11-11
+
+- **TASK:** `DELIA-C3-T2-INT1-INTENT-UNDERSTANDING-AND-TOOL-SELECTION-CAUSAL-REVIEW-01`.
+- **EXISTING_EQUIVALENT=YES**. **REUSE_DECISION=EXTEND** (`_attempt_projection`, declare goal echo).
+- **EXTERNAL_LLM_CALLS=0**; **FULL_BATTERY=NOT_RUN**.
+- **G1_FIRST_DIVERGENCE:** `TOOL_SELECTION_ERROR` (`teo.read` entity=`decomposition_tree`|`process`) + `TOOL_CONTRACT_AMBIGUITY` (TEO); not proven “intent misunderstood”.
+- **GOAL_DECLARATION_USAGE:** 0/30 ctx-rec + 0/25 stab-v2.
+- **FIXES:** uncovered/coverage inside `_attempt_projection`; echo `business_subject` on ACCEPTED goal.
+- **TESTS:** `test_int1_intent_goal_projection_signals.py` + adjacent PASS.
+- **Doc:** `301-int1-intent-understanding-objective-representation-and-semantic-tool-selection-causal-review.md`.
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_INTENT_SELECTION_INDEPENDENT_REVIEW`.

@@ -1295,3 +1295,20 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-CLOSED | **NO** | — |
 
 **NEXT=`COORDINATION_INT1_FULL_CONTEXT_INDEPENDENT_REVIEW`**. `INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+## 2026-11-11 — INT-1 intent / tool-selection causal residuals
+
+**TASK:** `DELIA-C3-T2-INT1-INTENT-UNDERSTANDING-AND-TOOL-SELECTION-CAUSAL-REVIEW-01`
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-G1-FIRST-TOOL-TEO-DECOMPOSITION | **PROVEN_IN_SAMPLE** | first MCP `teo.read` decomposition_tree/process; DAVI structure available |
+| INT1-GOAL-DECLARATION-UNUSED | **PROVEN_IN_SAMPLE** | 0/55 traces called `declare_investigation_goal` |
+| INT1-UNCOVERED-PROJECTION-CANONICAL | **REMEDIATED** | uncovered/coverage now inside `_attempt_projection` |
+| INT1-BUSINESS-SUBJECT-ECHO | **REMEDIATED** | declare ACCEPTED echoes `business_subject` |
+| INT1-TEO-OWNER-DESC-AMBIGUITY | **OPEN / OWNER_CHANGE_REQUIRED** | process WBS ≠ product BOM |
+| INT1-LIVE-INTENT-RERUN | **PENDING_PO_AUTHORIZATION** | minimal live proposal in doc 301 |
+| INT1-STAGE | **BLOCKED** | Doc 301 review |
+| INT1-CLOSED | **NO** | — |
+
+**NEXT=`COORDINATION_INT1_INTENT_SELECTION_INDEPENDENT_REVIEW`**. `INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

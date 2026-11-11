@@ -2124,3 +2124,7 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 ### 2026-11-11 — INT-1 full context delivery + MCP semantic contract remediation
 
 **TASK:** `DELIA-C3-T2-INT1-FULL-CONTEXT-AND-MCP-SEMANTIC-CONTRACT-REMEDIATION-01`. Inventário de truncamentos; remoção de `catalog[:320]` / `content[:2000]` e overflow silencioso de `_bounded_json`; perfil `openrouter_qwen` → context **40960**, projection **20000**, prior_turns **32**. Auditoria G1: TEO `decomposition_tree` = process WBS ≠ DAVI product BOM — `OWNER_CHANGE_REQUIRED` no TEO (sem tradução local). Live Qwen 8×3 **TEST_NOT_RUN** (`SECURE_EVAL_GATE=BLOCKED` / credential scope residual). Doc 300. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_FULL_CONTEXT_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+### 2026-11-11 — INT-1 intent understanding + tool selection causal review
+
+**TASK:** `DELIA-C3-T2-INT1-INTENT-UNDERSTANDING-AND-TOOL-SELECTION-CAUSAL-REVIEW-01`. Replay causal offline (docs 294–300 + traces ctx-rec/stab-v2). G1 first divergence = `teo.read` (`decomposition_tree`/`process`) com DAVI structure disponível; `declare_investigation_goal` **0/55** traces. Correção mínima: uncovered/coverage na projeção canônica + echo `business_subject`. Sem LLM externo; sem bateria 8×3. Doc 301. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_INTENT_SELECTION_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
