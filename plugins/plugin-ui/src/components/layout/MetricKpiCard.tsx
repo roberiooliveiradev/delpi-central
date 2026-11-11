@@ -1,10 +1,19 @@
-import type { ReactNode } from "react";
+import { ChevronRight, Minus, TrendingDown, TrendingUp } from "lucide-react";
+import type { KeyboardEvent, ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 import { FitText } from "./FitText";
 import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
 
 export type MetricKpiCardTone = "default" | "positive" | "negative" | "warning";
+
+export type MetricKpiStatusTone = "positive" | "negative" | "warning" | "neutral";
+
+export type MetricKpiStatus = {
+  label: string;
+  tone?: MetricKpiStatusTone;
+  trend?: "up" | "down" | "flat";
+};
 
 export type MetricKpiCardClassNames = {
   article: string;
@@ -16,6 +25,10 @@ export type MetricKpiCardClassNames = {
   value: string;
   hint?: string;
   icon?: string;
+  footer?: string;
+  status?: string;
+  statusTone?: (tone: MetricKpiStatusTone) => string;
+  chevron?: string;
 };
 
 export type MetricKpiCardProps = {
@@ -27,6 +40,11 @@ export type MetricKpiCardProps = {
   hint?: ReactNode;
   icon?: ReactNode;
   tone?: MetricKpiCardTone;
+  /** Pill de status no rodapé (o consumidor calcula label/tom a partir do dado). */
+  status?: MetricKpiStatus;
+  /** Torna o card acionável (role=button, Enter/Espaço) com chevron à direita. */
+  onSelect?: () => void;
+  "aria-label"?: string;
   classNames: MetricKpiCardClassNames;
   className?: string;
   /** Valor com font-size adaptativo ao card (TV / blocos redimensionáveis). */
@@ -49,6 +67,11 @@ export function metricKpiCardBemClasses(prefix: string, block = "kpi-card"): Met
     value: pair(`${card}__value`, `${ui}-value`),
     hint: pair(`${card}__hint`, `${ui}-subtitle`),
     icon: pair(`${prefix}-kpi-icon`, `${ui}-icon`),
+    footer: pair(`${card}__footer`, `${ui}-card__footer`),
+    status: pair(`${card}__status`, `${ui}-status`),
+    statusTone: (tone) =>
+      pair(`${card}__status ${card}__status--${tone}`, `${ui}-status ${ui}-status--${tone}`),
+    chevron: pair(`${card}__chevron`, `${ui}-card__chevron`),
   };
 }
 
@@ -59,21 +82,44 @@ export function MetricKpiCard({
   hint,
   icon,
   tone = "default",
+  status,
+  onSelect,
+  "aria-label": ariaLabel,
   classNames,
   className,
   fitValue = false,
 }: MetricKpiCardProps) {
   const showLabel = Boolean(label?.trim());
+  const interactive = typeof onSelect === "function";
   const articleClass = [
     classNames.articleTone(tone),
     className,
     !showLabel && !hint ? withBemModifier(classNames.article, "value-dominant") : "",
+    interactive ? withBemModifier(classNames.article, "interactive") : "",
   ]
     .filter(Boolean)
     .join(" ");
+  const statusTone = status?.tone ?? "neutral";
+  const TrendIcon =
+    status?.trend === "up" ? TrendingUp : status?.trend === "down" ? TrendingDown : Minus;
+  const onKeyDown = interactive
+    ? (event: KeyboardEvent<HTMLElement>) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect();
+        }
+      }
+    : undefined;
 
   return (
-    <article className={articleClass}>
+    <article
+      className={articleClass}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? ariaLabel : undefined}
+      onClick={interactive ? () => onSelect() : undefined}
+      onKeyDown={onKeyDown}
+    >
       <div className={classNames.header}>
         <div className={classNames.body}>
           {showLabel ? (
@@ -110,6 +156,27 @@ export function MetricKpiCard({
           </div>
         ) : null}
       </div>
+      {status || interactive ? (
+        <div className={classNames.footer}>
+          {status ? (
+            <span
+              className={
+                classNames.statusTone ? classNames.statusTone(statusTone) : classNames.status
+              }
+            >
+              {status.trend ? <TrendIcon size={12} strokeWidth={2} aria-hidden="true" /> : null}
+              {status.label}
+            </span>
+          ) : (
+            <span />
+          )}
+          {interactive ? (
+            <span className={classNames.chevron} aria-hidden="true">
+              <ChevronRight size={16} strokeWidth={1.75} />
+            </span>
+          ) : null}
+        </div>
+      ) : null}
     </article>
   );
 }

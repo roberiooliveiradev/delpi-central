@@ -180,7 +180,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     updatedAt: "2026-08-06",
     changeNote: "Card interativo usa article+role=button para coexistir com HelpTooltip.",
   }),
-  vc("layout", "MetricKpiCard"),
+  vc("layout", "MetricKpiCard", {
+    updatedAt: "2026-11-11",
+    changeNote: "Status pill opcional e card acionável (onSelect + chevron).",
+  }),
   vc("layout", "InitialsAvatar", {
     addedAt: "2026-08-04",
     description:

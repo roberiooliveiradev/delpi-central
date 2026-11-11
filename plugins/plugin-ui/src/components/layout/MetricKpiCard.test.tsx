@@ -50,6 +50,46 @@ describe("MetricKpiCard", () => {
     );
   });
 
+  it("status pill e chevron aparecem com onSelect; Enter aciona", () => {
+    const classNames = metricKpiCardBemClasses("itp");
+    let selected = 0;
+    render(
+      <MetricKpiCard
+        label="Ações atrasadas"
+        value="0"
+        status={{ label: "Dentro do prazo", tone: "positive", trend: "up" }}
+        onSelect={() => {
+          selected += 1;
+        }}
+        aria-label="Ver planos de ação"
+        classNames={classNames}
+      />,
+    );
+    expect(screen.getByText("Dentro do prazo")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-kpi-status--positive")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-kpi-card__chevron")).toBeTruthy();
+    const card = screen.getByRole("button", { name: "Ver planos de ação" });
+    fireEvent.keyDown(card, { key: "Enter" });
+    expect(selected).toBe(1);
+    fireEvent.click(card);
+    expect(selected).toBe(2);
+  });
+
+  it("sem onSelect o card continua inerte e sem chevron", () => {
+    const classNames = metricKpiCardBemClasses("itp");
+    render(
+      <MetricKpiCard
+        label="Servidores ativos"
+        value="3"
+        status={{ label: "Operacionais", tone: "neutral" }}
+        classNames={classNames}
+      />,
+    );
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(document.querySelector(".delpi-ui-kpi-card__chevron")).toBeNull();
+    expect(screen.getByText("Operacionais")).toBeTruthy();
+  });
+
   it("sem titleHint não monta HelpTooltip", () => {
     const classNames = metricKpiCardBemClasses("cm");
     const { container } = render(
