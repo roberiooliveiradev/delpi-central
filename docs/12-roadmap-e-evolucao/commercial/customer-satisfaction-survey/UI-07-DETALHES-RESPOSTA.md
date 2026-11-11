@@ -1,14 +1,46 @@
 # UI-07 — Detalhes da Resposta da Pesquisa
 
-> **Status:** decisões de UX aprovadas para **página própria**, **identificação no Hero**, **dois cards de notas individuais** e visual de **cinco pontos nas dimensões** (11/11/2026); **NÃO IMPLEMENTADO**. `RatingDots` é **CANDIDATO À CRIAÇÃO no PluginUI**, não componente existente nem backlog autorizado. HEAD-base desta revisão `main` `70943a7867851cb5455e3f1429aa7bcf2d68ee6e`, revalidar para implementar.
+> **Status:** decisões de UX aprovadas para **página própria**, **identificação no Hero**, **dois cards de notas individuais** e visual de **cinco pontos nas dimensões** (11/11/2026); **NÃO IMPLEMENTADO** no código. Auditoria dos seis gates (DEVIN) em `main` HEAD `0cde0f674bd31e494f6af3f9f688d908f24f5542` (11/11/2026): contratos técnicos fechados onde possível; implementação e testes de runtime **pendentes**. `RatingDots` permanece **CANDIDATO À CRIAÇÃO no PluginUI** — contrato mínimo fechado abaixo; **não autorizado a implementar nesta auditoria**.
 >
 > **Owner UI:** `plugins/commercial`; **owner primitiva visual candidata:** `plugins/plugin-ui`; **authority de dados e autorização:** `commercial-api`. Referências: [UI-06](./UI-06-RESPOSTAS-POR-EMPRESA.md), [UI-01](./UI-01-RESULTADOS-PESQUISA.md), [contrato da primeira entrega](./SURVEY-FIRST-RELEASE-CONTRACT.md), [formulário](./UI-03-FORMULARIO-PUBLICO.md).
+
+## 0. Matriz dos seis gates (auditoria 11/11/2026)
+
+| Gate | Situação | Evidência resumida | Pendência de implementação |
+|---|---|---|---|
+| **G01** RatingDots / PluginUI | `CLOSED_SPEC` | Inventário de `plugins/plugin-ui/src/components/data` + exports públicos: sem equivalente read-only de cinco pontos; alternativas (`InlineMeter`, badges, estrelas interativas locais) inadequadas | Criar primitiva após autorização; ver §4 |
+| **G02** Navegação UI-06→UI-07 | `CLOSED_SPEC` | Padrão real em `pluginRoutes.ts` / `pluginNavigation.ts` / `commercialNavigationReturn.ts`; **nenhuma** view/rota/página de satisfação no código | Registrar rotas propostas §1.1; páginas UI-06/UI-07 |
+| **G03** Contrato de leitura | `CLOSED_SPEC` | R13 e payload definidos no [contrato da entrega 1](./SURVEY-FIRST-RELEASE-CONTRACT.md); **ausentes** migrations/rotas/use cases no `commercial-api` | Endpoint + persistência + `questionnaire_version` concreto |
+| **G04** Permissões | `CLOSED_SPEC` (matriz) / `PENDING_IMPLEMENTATION` (runtime) | `commercial.access` e `commercial.manage` **CONFIRMADOS** em `commercial_permissions.py` + manifest; `commercial.marketing` **somente documental**; R13 inexistente | Adicionar `commercial.marketing` na etapa autorizada; gate R13 marketing **OU** manage; negar access isolado |
+| **G05** Estados / responsividade | `CLOSED_SPEC` | Spec visual e estados aprovados (§§1–5); componentes Comercial existentes verificados em `commercialUi.ts`; **sem renderização nem teste** da página | Implementar página + validar desktop/tablet/320px/zoom/a11y/temas |
+| **G06** Testes integrados | `PENDING_IMPLEMENTATION` | Matriz §6 definida; **nenhuma suíte** UI-07/R13 existe; só testes de permissões genéricas executáveis hoje | Criar e executar testes após código |
+
+**Classificação:** nenhum gate é `CLOSED_VERIFIED` — não há comportamento comprovado em runtime. Nenhum gate está `BLOCKED` por impedimento arquitetural externo; o bloqueio é ausência de implementação autorizada.
 
 ## 1. Fluxo, papel e navegação aprovados
 
 **Ver resposta** na UI-06 abre **uma página completa**, não drawer, modal, aba ou seção expansível. A identidade é a **resposta definitiva da empresa (código + loja) naquela campanha**, com acesso **somente a `commercial.marketing` OU `commercial.manage`** aprovado no backend. `commercial.access` isolado jamais recebe dados individuais. Nenhuma gravação, edição, exclusão, reenvio ou exportação privada sem decisão e autorização próprias.
 
-**Não criar segunda topbar.** Usar `CommercialPagePath` e `CommercialPageHero` com `density="compact"`: `eyebrow` Portal Comercial/Marketing, `title` “Detalhes da resposta”, `description` contexto de campanha, e `actions` com **“Voltar às respostas”**, usando `CommercialActionButton`. **Identificação da empresa ocupa `children` do mesmo Hero**, com `CustomerAvatar`, `CommercialEntityLink`, `CommercialDetailFieldGrid` e, se necessário, `CommercialStatusBadge`, sem card de identificação duplicado. Sem filtros na página, sem ações de Configuração/Resultados repetidas. Retornar à UI-06 preservando campanha, filtros e posição de lista quando o contrato de navegação existente permitir. Avatar e nome levam separadamente à Conta do Cliente. **Rotas exatas PENDING** no `pluginRoutes.ts`/`pluginNavigation.ts`, não inventar URLs.
+**Não criar segunda topbar.** Usar `CommercialPagePath` e `CommercialPageHero` com `density="compact"`: `eyebrow` Portal Comercial/Marketing, `title` “Detalhes da resposta”, `description` contexto de campanha, e `actions` com **“Voltar às respostas”**, usando `CommercialActionButton`. **Identificação da empresa ocupa `children` do mesmo Hero**, com `CustomerAvatar`, `CommercialEntityLink`, `CommercialDetailFieldGrid` e, se necessário, `CommercialStatusBadge`, sem card de identificação duplicado. Sem filtros na página, sem ações de Configuração/Resultados repetidas. Retornar à UI-06 preservando campanha, filtros e posição de lista quando o contrato de navegação existente permitir. Avatar e nome levam separadamente à Conta do Cliente.
+
+### 1.1 Contrato de rota e navegação (G02 — `CLOSED_SPEC`, não implementado)
+
+Padrão real do Comercial: roteamento manual em `plugins/commercial/src/app/pluginRoutes.ts` + `pluginNavigation.ts` + retorno seguro em `commercialNavigationReturn.ts` (`returnTo` / `returnLabel`, sanitizado sob `/apps/commercial`). **Não existe** React Router; paths novos em inglês kebab-case.
+
+| Item | Contrato proposto | Owner |
+|---|---|---|
+| UI-06 (lista) | `/apps/commercial/satisfaction-survey-responses` | `pluginRoutes.ts`, `App.tsx`, manifest |
+| UI-07 (detalhe) | `/apps/commercial/satisfaction-survey-responses/:responseId` | idem |
+| `PluginView` | `satisfaction_survey_responses` / `satisfaction_survey_response_detail` | `pluginRoutes.ts` |
+| Identidade da resposta | **somente** `responseId` (UUID da resposta definitiva); campanha/empresa vêm do payload R13 | `commercial-api` |
+| Query UI-06 | `campaign_id`, `status`, `group` (valores oficiais da API), `q`, `page`, `sort`, `dir` | helper de sanitização do domínio |
+| Query UI-07 | `returnTo` (pathname+query completos da lista), `returnLabel` (ex.: “Respostas por empresa”) | `commercialNavigationReturn.ts` |
+| “Ver resposta” | Builder que monta detalhe + `buildHrefWithReturn` a partir da URL atual da lista | `pluginNavigation.ts` |
+| Conta do Cliente | `buildCustomerDetailHref` / `navigateCustomerDetail` com `returnNav` contextual; **não** copiar filtros da pesquisa para a Conta | padrão Minha Carteira/OTD |
+| Acesso direto URL | Página chama R13; 404/403/loading conforme backend; sem inventar dados | UI + API |
+| Pendente na UI-06 | Sem ação “Ver resposta” | UI-06 |
+
+**Evidência de ausência:** greps e inspeção de `PluginView`, `App.tsx`, `commercial.manifest.json` e features — zero rotas/páginas de satisfação. **Não registrar como implementado.**
 
 ## 2. Ordem completa e wireframes
 
@@ -67,7 +99,7 @@ TOPBAR EXISTENTE
 | Alternativa parcial | `InlineMeter` | `data/InlineMeter.tsx`: barra contínua/segmentada, **não** pontos |
 | Alternativa inadequada | `JourneyProgressBar` | `feedback/JourneyProgressBar.tsx`: barra percentual |
 | Alternativa inadequada | `HorizontalValueBars` | Ranking por barras, não pontos individuais |
-| Pontos 1–5 | **`RatingDots` CANDIDATO** | **Não encontrado** nas buscas/inventário realizados; não afirmar implementado |
+| Pontos 1–5 | **`RatingDots` CANDIDATO (`CLOSED_SPEC`)** | Inventário 11/11/2026 em HEAD `0cde0f67…`: sem export em `components/data` nem no pacote; ver residual §4; **não implementado** |
 
 ## 3.1 Detalhamento aprovado — bloco de Avaliação Geral
 
@@ -103,22 +135,80 @@ TOPBAR EXISTENTE
 
 **Critérios de aceite:** um único card, três blocos, os três ícones visíveis ao lado das perguntas, indicador do card, ausência tratada explicitamente, textos longos sem truncamento, desktop/tablet/celular acessíveis e nenhuma ação de escrita. **Registro de UX, NÃO IMPLEMENTADO.**
 
-## 4. Abstraction Gate — candidato `RatingDots` no PluginUI
+## 4. Abstraction Gate — candidato `RatingDots` no PluginUI (G01 — `CLOSED_SPEC`)
 
-**Problema:** falta uma primitiva de **avaliação discreta, só de leitura**, com cinco pontos preenchidos/neutros + nota numérica, independente de pesquisa. As alternativas verificadas são barras. Busca de descoberta por `RatingDots`, `DotRating`, `RatingScale`, `ScoreDots`, `createRating` e “rating dots” sem retorno; inspeção de `plugins/plugin-ui/src/components/data`, `forms` e exports públicos não apontou equivalente. **Resultado de busca não prova ausência universal**; fazer busca residual no HEAD de execução.
+**Problema:** falta uma primitiva de **avaliação discreta, só de leitura**, com cinco pontos preenchidos/neutros + nota numérica, independente de pesquisa. Alternativas verificadas no HEAD `0cde0f67…`:
 
-**Proposta (não aprovada para implementação automática):**
-- Arquivo candidato: `plugins/plugin-ui/src/components/data/RatingDots.tsx`; exportar via `components/data/index.ts` e pacote `@delpi/plugin-ui/index` após decisão técnica.
-- Props mínimas sugeridas: `value: number | null`, `max?: number` (default 5), `size?: "sm" | "md"`, `showValue?: boolean`, `emptyLabel?: string`, `aria-label?: string`. Confirmar necessidade de `max` variável; preferir API menor se só houver caso de 5.
-- Somente visual, sem editar, sem foco/hover interativo, sem regra comercial. `null` → rótulo definido, não zero; valores fora da escala devem ser tratados com segurança. Pontos preenchidos obedecem nota, vazios são neutros; texto numérico e descrição acessível sempre disponíveis.
-- Cores por **tokens do PluginUI** com light/dark, sem hexadecimal fixo ou semáforo (nota baixa não vira perigo automaticamente); BEM e estilos oficiais.
-- Testes: notas 1–5, `null`, limites, leitura acessível, temas, responsividade; regressão de exports/pacote e do consumidor Comercial.
-- **Antes de alterar código:** confirmar HEAD/branch/working tree, fontes do PluginUI, consumidores/contratos, testes; Abstraction Gate com composição mínima vs primitiva, menor diff e relatório de execução. Nenhuma implementação até autorização.
+| Candidato | Por que não reutiliza |
+|---|---|
+| `InlineMeter` (`data/InlineMeter.tsx`) | Barra contínua/`role="meter"`, não cinco unidades discretas |
+| `DepartmentScoreBadge` | Texto/classificação, sem pontos |
+| Sparklines / `TrendDelta` / `HorizontalValueBars` | Séries, deltas ou rankings — outra semântica |
+| Estrelas em `public-hub` / `customer-experience` | Interativas, locais ao domínio, não exportadas no PluginUI |
+| Escalas 1–5 em helpdesk/transformômetro/chat admin | Controles editáveis, não indicador read-only |
+
+**Decisão Abstraction Gate:** composição ad hoc no Comercial (CSS/divs) **duplicaria** um primitivo visual transversal sem ownership no kit → **criar `RatingDots` no PluginUI** é a menor solução correta **quando autorizado**. Não criar cópia comercial. Não implementar nesta auditoria.
+
+**Contrato mínimo fechado (implementação pendente):**
+
+```ts
+// Candidato — não existe no código
+type RatingDotsProps = {
+  value: 1 | 2 | 3 | 4 | 5 | null;
+  max?: 5;                 // fixo em 5 na v1; prop opcional só se surgir segundo consumidor
+  size?: "sm" | "md";
+  showValue?: boolean;     // default true → "n / 5"
+  emptyLabel?: string;     // default genérico; UI-07 mapeia null → "Não se aplica" no consumidor
+  "aria-label": string;    // obrigatório
+  className?: string;
+};
+```
+
+- Arquivo candidato: `plugins/plugin-ui/src/components/data/RatingDots.tsx` + CSS canônico `styles/rating-dots.css` (tokens `--delpi-ui-*`, light/dark); export via `components/data/index.ts` e `@delpi/plugin-ui/index`.
+- Somente leitura: sem `onChange`, sem foco interativo, sem hover de seleção, sem semáforo por nota baixa.
+- `value` 1–5 preenche os primeiros N pontos; fora da escala → estado seguro (não inventar nota).
+- Regra comercial N/A **não** vive na primitiva: a UI-07, com `null` de resposta definitiva validada, **omite pontos** e mostra “Não se aplica” (pode usar `emptyLabel` ou ramo do consumidor).
+- Testes mínimos (quando implementar): 1–5, `null`/emptyLabel, a11y `aria-label`, temas, export/regressão do pacote.
+
+**Residual search (além de texto):** barrels `data`/`forms`/`feedback`/`layout`/`index.ts`; catálogo visual do kit; padrões `[1,2,3,4,5]`/estrelas no monorepo; “dots” no PluginUI = marcadores de gráfico, não rating. **G01 não é `EXISTENTE_REUTILIZÁVEL`.**
 
 **Gate Q08 — FECHADO por decisão do solicitante (11/11/2026):** para resposta definitiva, todas as dez dimensões requerem escolha explícita nota 1–5 ou “Não se aplica”. O estado sem seleção só existe antes de finalizar o formulário e **não é resposta persistível**. O contrato de `dimensions` deve manter as dez chaves canônicas; `null` da resposta definitiva = alternativa “Não se aplica” realmente marcada. API não pode inferir essa alternativa a partir de ausência do campo. Ver [BUSINESS-DECISIONS.md — Q08](./BUSINESS-DECISIONS.md) e [contrato da entrega 1](./SURVEY-FIRST-RELEASE-CONTRACT.md).
 
-## 5. Estados, segurança e aceite
+## 5. Estados, segurança e aceite (G05 — `CLOSED_SPEC`; runtime não validado)
 
-Loading via `CommercialLoadingCard`; não encontrado via `CommercialEmptyState`; falha via `CommercialStateBanner`; não autorizado por backend sem payload. Não expor token, dados pessoais de contato ou resposta a usuários somente `commercial.access`. Respeitar imutabilidade da resposta definitiva.
+| Estado | Componente / comportamento | Validado em runtime? |
+|---|---|---|
+| Loading | `CommercialLoadingCard` | Não — página inexistente |
+| Resposta inexistente | `CommercialEmptyState` | Não |
+| Erro de conexão | `CommercialStateBanner` | Não |
+| Acesso negado | Backend 403 **sem** payload sensível; UI sem inventar dados | Não (R13 ausente) |
+| Dados incompletos/inconsistentes | Erro de integridade — **não** forçar nota zero | Spec only |
+| Comentário ausente | “Não informado” + ícone `minus` | Spec only |
+| Dimensão N/A | “Não se aplica” sem pontos/zero | Spec only |
+| Sem avatar | `CustomerAvatar` com iniciais | Componente existe; página não |
+| Nome longo / 320px / zoom 200–400% | Reorganizar Hero/`children`; sem scroll horizontal | Spec only |
+| Troca rápida entre respostas | Abort/cancelar fetch anterior; loading por `responseId` | Spec only |
+| Teclado / leitores / contraste / claro-escuro | Tokens kit; texto acessível além dos pontos | Spec only |
+| Somente leitura | Sem inputs, PATCH/DELETE, classificação IA ou ações de tratamento | Spec only |
 
-**Aceite visual:** página própria abre de UI-06, sem drawer; volta com contexto; identidade no próprio Hero (`children`) com avatar e código+loja, sem card repetido; dois `CommercialMetricCard` individuais neutros com ícones discretos, escalas e sem IGS/NPS; dez dimensões visíveis em ordem oficial com pontos e valor; N/A explícito; três comentários integrais; uso dos componentes oficiais; responsivo acessível; testes de negativas de permissão e nenhuma escrita. **Status permanece NÃO IMPLEMENTADO.**
+Componentes Comercial confirmados em `plugins/commercial/src/app/commercialUi.ts`: `CommercialPageHero` (`density="compact"` default), `CommercialMetricCard` (`label`/`value`/`hint`/`titleHint`/`icon`/`hero`/`tone`/`onClick` omitido), `CommercialLoadingCard`, `CommercialEmptyState`, `CommercialStateBanner`, `CommercialDetailCard`, `CommercialDetailFieldGrid`, `CommercialSectionCard`, `CommercialActionButton`, `CommercialPagePath`.
+
+**Não declarar responsividade validada** sem renderização e testes. **Aceite visual** permanece o da especificação aprovada; **status NÃO IMPLEMENTADO.**
+
+## 6. Matriz de testes (G06 — `PENDING_IMPLEMENTATION`)
+
+| # | Cenário | Suíte candidata | Resultado nesta auditoria |
+|---|---|---|---|
+| T01 | Navegação UI-06 → UI-07 com `responseId` + `returnTo` | `plugins/commercial` href/route tests | **TEST_NOT_RUN** — código inexistente |
+| T02 | Retorno preserva campanha/filtros/página | `commercialNavigationReturn` + domínio | **TEST_NOT_RUN** |
+| T03 | Identidade empresa código+loja; Conta separada de “Ver resposta” | UI + `buildCustomerDetailHref` | **TEST_NOT_RUN** |
+| T04 | Payload R13: escalas 1–5 e 0–10; 10 dimensões ordem oficial; textos do catálogo versionado | `commercial-api` contract tests | **TEST_NOT_RUN** — R13 ausente |
+| T05 | `null` dimensão = N/A; nunca nota 0 | API + UI | **TEST_NOT_RUN** |
+| T06 | Comentários integrais / “Não informado” | UI | **TEST_NOT_RUN** |
+| T07 | `questionnaire_version` histórica ≠ inferência por data | API + catálogo | **TEST_NOT_RUN** |
+| T08 | Auth: marketing OK; manage OK; access isolado 403; sem token 401 | `commercial-api` | **TEST_NOT_RUN** para R13; permissões genéricas existem em `tests/test_commercial_permissions.py` (**pytest ausente neste ambiente** — não executado) |
+| T09 | R16 agregado sem comentários/notas individuais / reidentificação | API | **TEST_NOT_RUN** |
+| T10 | Estados loading/404/403/erro; sem writes | UI | **TEST_NOT_RUN** |
+| T11 | Layout 320px / zoom / a11y / temas | UI | **TEST_NOT_RUN** — sem render |
+
+**Proibido afirmar “testes verdes”** para UI-07 enquanto as suítes acima não existirem e não forem executadas.

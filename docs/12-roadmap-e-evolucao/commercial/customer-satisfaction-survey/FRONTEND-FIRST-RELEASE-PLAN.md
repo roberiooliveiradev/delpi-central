@@ -62,6 +62,7 @@ Paths internos são **propostos**, não encontrados implementados. A nomenclatur
 - **Copiar mensagem** monta texto do convite com link estável retornado pela API; pode usar um texto aprovado no próprio cliente, sem template CRUD de campanha. Não criar botão **Enviar e-mail**. Copiar novamente usa o mesmo link; não gerar token no navegador.
 - Ação de remover participante (R09) **não aparece na primeira entrega**, salvo definição e implementação segura posterior.
 - As respostas por empresa aparecem apenas para quem tem gestão; clicando em **Ver resposta**, navegar à **UI-07 — página independente**, sem modal/drawer, exibindo notas individuais e os três comentários em leitura. Sem edição ou exclusão.
+- **Rotas fechadas em spec (auditoria 11/11/2026, não implementadas):** UI-06 `/apps/commercial/satisfaction-survey-responses`; UI-07 `/apps/commercial/satisfaction-survey-responses/:responseId` + `returnTo`/`returnLabel`. Ver [UI-07 §1.1](./UI-07-DETALHES-RESPOSTA.md#11-contrato-de-rota-e-navegação-g02--closed_spec-não-implementado). `RatingDots` = `CLOSED_SPEC` no PluginUI; página UI-07 e R13 = pendentes.
 
 ### 3.3 Formulário externo (Cliente)
 

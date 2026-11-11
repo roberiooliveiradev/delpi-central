@@ -1,6 +1,6 @@
 # UI-06 — Respostas por Empresa (consulta privada)
 
-> **Estado:** decisões de UX **aprovadas visualmente em 11/11/2026**, **NÃO IMPLEMENTADO**. Separação da UI-01 e identidade visual com avatar aprovadas. Rota exata, detalhes de responsividade e fonte de avatar **TO_INVENTORY/PENDING**. Base GitHub `main` / `c12aad74fdcfe6ee6c6124e93addec921b21ce38` (revalidar em qualquer implementação).
+> **Estado:** decisões de UX **aprovadas visualmente em 11/11/2026**, **NÃO IMPLEMENTADO**. Separação da UI-01 e identidade visual com avatar aprovadas. Auditoria UI-07/G02 (11/11/2026, HEAD `0cde0f674bd31e494f6af3f9f688d908f24f5542`): **contrato de rota fechado** (spec); páginas/rotas ainda ausentes no código. Fonte de `hasAvatar` na projeção de respostas permanece **TO_INVENTORY** até o endpoint R12.
 >
 > **Owner visual:** `plugins/commercial`. **Autoridade de dados e permissão:** `commercial-api`. Origem de empresa e imagem existente: integrações oficiais do Portal/TOTVS, sem duplicar cadastro.
 
@@ -8,7 +8,9 @@
 
 Página **somente de consulta**, separada da UI-01 de [Resultados](./UI-01-RESULTADOS-PESQUISA.md) e da UI-02 de [Configuração](./UI-02-CONFIGURACAO-PESQUISAS.md). Lista empresas **respondentes e pendentes** da campanha selecionada. Resposta enviada é definitiva e consultada somente na **página própria UI-07 — Detalhes da Resposta**, sem modal nem drawer. **Não** adicionar participante, criar campanha, alterar contato, editar resposta, copiar/reenviar link ou disparar convite nesta UI; estas operações pertencem à Configuração, quando autorizadas.
 
-**Uma única topbar principal**, sem barra duplicada nem nova área de navegação. Ações contextuais no `CommercialPageHero`: **Ver resultados**, **Configuração** e **Atualizar** (com autorização); filtros de campanha, situação, grupo e busca por cliente **dentro do mesmo Hero**, conforme fonte e permissão. `CommercialPagePath` mostra a trilha. Entradas: botão **Respostas por empresa** no Hero da UI-01, e ligação contextual da UI-02 que pode preservar a campanha escolhida. Rotas exatas a definir com `pluginRoutes.ts` / `pluginNavigation.ts`, sem presumir que já existam.
+**Uma única topbar principal**, sem barra duplicada nem nova área de navegação. Ações contextuais no `CommercialPageHero`: **Ver resultados**, **Configuração** e **Atualizar** (com autorização); filtros de campanha, situação, grupo e busca por cliente **dentro do mesmo Hero**, conforme fonte e permissão. `CommercialPagePath` mostra a trilha. Entradas: botão **Respostas por empresa** no Hero da UI-01, e ligação contextual da UI-02 que pode preservar a campanha escolhida.
+
+**Contrato de rota (G02 — `CLOSED_SPEC`, não implementado):** lista em `/apps/commercial/satisfaction-survey-responses` com query `campaign_id`/`status`/`group`/`q`/`page`/`sort`/`dir`; **Ver resposta** navega para `/apps/commercial/satisfaction-survey-responses/:responseId` com `returnTo`+`returnLabel` via `commercialNavigationReturn.ts`. Detalhe e owners: [UI-07 §1.1](./UI-07-DETALHES-RESPOSTA.md#11-contrato-de-rota-e-navegação-g02--closed_spec-não-implementado).
 
 Usuários com somente `commercial.access` não acessam esta página nem os endpoints identificados. Para consulta privada, exigir `commercial.marketing` ou `commercial.manage` efetivamente validados no backend. A simples ocultação dos botões não substitui autorização.
 

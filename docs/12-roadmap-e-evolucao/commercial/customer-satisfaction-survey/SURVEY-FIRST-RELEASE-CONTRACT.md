@@ -89,7 +89,70 @@
 
 **Gate de fidelidade textual Q09: FECHADO no nível documental.** Conferidos 10/10 textos de dimensões, 2/2 perguntas gerais e 3/3 abertas: **15/15 textos localizados** e mapeados às 15 chaves previstas. A **UI-03** deve renderizar a pergunta literal em cada campo de resposta; a **UI-07** deve apresentar as dez perguntas literais abaixo dos títulos das dimensões, as duas perguntas literais junto às notas individuais (visíveis ou em ajuda acessível, conforme UX) e as três perguntas abertas literais sob seus títulos. A ordem oficial acima deve ser preservada em formulário e leitura, sem usar rótulos ilustrativos como autoridade.
 
-**Gate de versionamento: decisão funcional fechada, implementação técnica PENDING.** `questionnaire_version` já existe no contrato de campanha/resposta como intenção, mas **o identificador técnico concreto da primeira versão ainda não foi estabelecido nem observado em backend**. Não inventar valor como `v1` em payload/API. Na implementação escolher identificador imutável e explícito, vincular o catálogo oficial de textos e escalas a ele, registrar no convite/campanha/resposta e devolver a versão correta nos endpoints internos/públicos. Validar que a resposta histórica sempre usa o catálogo da versão persistida; Q09 proíbe personalização por campanha. O contrato futuro deve ser verificado no código, migrações e testes antes de declarar runtime pronto.
+**Gate de versionamento: decisão funcional fechada; identificador técnico proposto abaixo; runtime PENDING.** `questionnaire_version` já existe no contrato de campanha/resposta como intenção e **ainda não foi observado em backend** (auditoria 11/11/2026: zero migrations/módulos `satisfaction*` no `commercial-api`; última migration `V023__seller_customer_center.sql`).
+
+**Identificador proposto da primeira versão imutável (ainda não em uso no código):**
+
+```text
+delpi.commercial.satisfaction-survey.canonical-15@2026-11-11
+```
+
+Semântica: catálogo das 15 perguntas conferidas com o Word em 11/11/2026 (seção 1.4). É string estável e explícita — **não** inferir versão pela data da campanha nem pelo relógio. Qualquer alteração futura de texto/ordem/escala exige **novo** identificador e novo catálogo imutável; Q09 proíbe personalização por campanha. Na implementação: vincular o catálogo em código/constante versionada a este ID, gravar em campanha e resposta, devolver em R13/R14 e testes de leitura histórica. Até existir no código, **não** tratar o valor como “já adotado em produção”.
+
+### 1.5 Contrato de leitura individual R13 (G03 — `CLOSED_SPEC`; implementação pendente)
+
+`GET /satisfaction-surveys/responses/{response_id}` — authority `commercial-api`; **não existe** em routers/OpenAPI/use cases no HEAD auditado.
+
+| Campo | Tipo | Fonte | Validação / nota |
+|---|---|---|---|
+| `id` | UUID | `satisfaction_responses.id` | Identidade canônica da UI-07 |
+| `campaign_id` | UUID | FK via recipient → campaign | Conferir vínculo |
+| `campaign_name` | TEXT | campanha | Exibição |
+| `customer_code`, `customer_store` | TEXT | recipient | Identidade TOTVS; par obrigatório |
+| `customer_name` | TEXT | snapshot +/ou consulta oficial autorizada | Nome exibido; cadastro mestre = TOTVS |
+| `has_avatar` | boolean opcional | enriquecimento oficial existente | Sem flag inventada na pesquisa |
+| `submitted_at` | TIMESTAMPTZ | response | Data/hora definitiva |
+| `status` | derivado | presença de resposta definitiva | Situação oficial (ex.: responded) |
+| `questionnaire_version` | TEXT | response (= campanha) | Ver ID proposto acima |
+| `overall_score` | int 1–5 | response | Obrigatório; UI: `n / 5`, **não** rotular IGS |
+| `recommendation_score` | int 0–10 | response | Obrigatório; UI: `n / 10`, **não** rotular NPS |
+| `dimensions` | object 10 chaves | response JSONB | Cada valor `1..5` ou `null` (= N/A explícito, Q08); chaves: `quality`, `delivery_deadline`, `service`, `agility`, `communication`, `technical_support`, `commercial_support`, `flexibility`, `reliability`, `partnership` |
+| `strengths`, `improvements`, `unmet_needs` | TEXT \| null | response | Comentários opcionais; UI “Não informado” se vazio |
+| Textos literais | via catálogo da `questionnaire_version` | catálogo imutável | UI-07 não hardcodar redação divergente do catálogo |
+
+**Não retornar:** token de convite, `token_hash`/`token_ciphertext`, e-mail/nome de pessoa física respondente, payloads de outras empresas.
+
+**Exemplo ilustrativo (não é fixture de produção):**
+
+```json
+{
+  "id": "11111111-1111-1111-1111-111111111111",
+  "campaign_id": "22222222-2222-2222-2222-222222222222",
+  "campaign_name": "Pesquisa 2026/2",
+  "customer_code": "001245",
+  "customer_store": "01",
+  "customer_name": "Empresa Alpha",
+  "submitted_at": "2026-12-10T15:30:00Z",
+  "questionnaire_version": "delpi.commercial.satisfaction-survey.canonical-15@2026-11-11",
+  "overall_score": 4,
+  "recommendation_score": 9,
+  "dimensions": {
+    "quality": 5,
+    "delivery_deadline": 3,
+    "service": 4,
+    "agility": 4,
+    "communication": 4,
+    "technical_support": null,
+    "commercial_support": 5,
+    "flexibility": 3,
+    "reliability": 5,
+    "partnership": 5
+  },
+  "strengths": "Atendimento técnico consistente.",
+  "improvements": null,
+  "unmet_needs": "Lead time reduzido para pedidos urgentes."
+}
+```
 
 ## 2. Fluxo de campanhas e participantes
 
@@ -126,6 +189,18 @@
 **Consulta interna agregada:** `GET /satisfaction-surveys/results` com seleção de campanha e filtros por atributos **oficiais disponíveis**, sem cadastrar dimensões fictícias. Filtros pedidos pelo plano: cliente, segmento, vendedor, região, tempo de relacionamento, volume/faturamento e estratégico vs. demais. A origem, período de referência e resolução desses campos devem ser confirmados na frente de indicadores; se atributo faltar, registrar indisponibilidade honesta, sem inventar proxy. Comparações Geral / Estratégicos / Demais seguem o exemplo do plano.
 
 **Consulta privada:** `GET /satisfaction-surveys/campaigns/{campaign_id}/responses` e `GET /satisfaction-surveys/responses/{response_id}` restritas a Marketing/Manage. **Consulta agregada** para `commercial.access` nunca contém resposta individual, comentário por cliente, participante, nem grupo reduzido que permita reidentificação. Critério técnico de supressão/limiar deve ser testado antes de expor filtros à base ampla.
+
+### 4.1 Matriz de autorização R12/R13 (G04 — evidência 11/11/2026)
+
+| Ator | Código | Existência no código | R13 leitura individual | R16 agregados |
+|---|---|---|---|---|
+| Access isolado | `commercial.access` | **CONFIRMADO** (`commercial_permissions.py`, manifest) | **Negar** (403; sem payload) | Permitir com supressão |
+| Manage | `commercial.manage` | **CONFIRMADO** (mesmo catálogo; **não** usar termo legado `commercial.manager`) | Permitir quando R13 existir | Permitir |
+| Marketing | `commercial.marketing` | **CONTRATO_DOCUMENTAL_ONLY** — ausente do catálogo Python, manifest e testes | Permitir quando código + R13 existirem | Permitir |
+| Sem permissão / token inválido | — | Middleware JWT atual | 401/403 | 401/403 |
+| Superadmin | `is_superadmin` | Bypass existente em `has_any_permission` | Seguir política global vigente; não usar como atalho de produto | idem |
+
+**Evidência:** `commercial-api/commercial_app/application/security/commercial_permissions.py` declara apenas `commercial.access`, `commercial.manage`, `commercial.billing.notify`. Nenhum endpoint de satisfação registrado em `main.py`. **Não ampliar permissões globalmente** só para facilitar a UI-07; adicionar `commercial.marketing` somente na etapa autorizada, com testes positivos (marketing, manage) e negativos (access, anônimo).
 
 ## 5. Permissões, CAIO e validação por etapa
 
