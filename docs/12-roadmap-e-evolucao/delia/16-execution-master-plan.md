@@ -2128,3 +2128,7 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 ### 2026-11-11 — INT-1 intent understanding + tool selection causal review
 
 **TASK:** `DELIA-C3-T2-INT1-INTENT-UNDERSTANDING-AND-TOOL-SELECTION-CAUSAL-REVIEW-01`. Replay causal offline (docs 294–300 + traces ctx-rec/stab-v2). G1 first divergence = `teo.read` (`decomposition_tree`/`process`) com DAVI structure disponível; `declare_investigation_goal` **0/55** traces. Correção mínima: uncovered/coverage na projeção canônica + echo `business_subject`. Sem LLM externo; sem bateria 8×3. Doc 301. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_INTENT_SELECTION_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+### 2026-11-11 — INT-1 minimal real intent vs tool selection (G1+P1)
+
+**TASK:** `DELIA-C3-T2-INT1-INTENT-VS-TOOL-SELECTION-MINIMAL-REAL-QWEN-EVAL-01`. PO authorized 2 scenarios only. **LIVE_EVAL=BLOCKED**: security gate FAIL (`DELIA_EVAL_EGRESS_AUTHORIZED` absent; Settings model ≠ qwen/qwen3-14b; credential scope residual `NONE_PROVEN_SEPARATE_FROM_PROD` without credential-owner approval). `MODEL_REQUESTS=0`. No functional/instruction change. Doc 302. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_MINIMAL_REAL_INTENT_EVAL_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

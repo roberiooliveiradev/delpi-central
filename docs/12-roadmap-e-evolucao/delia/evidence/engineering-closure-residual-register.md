@@ -1312,3 +1312,18 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-CLOSED | **NO** | — |
 
 **NEXT=`COORDINATION_INT1_INTENT_SELECTION_INDEPENDENT_REVIEW`**. `INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+## 2026-11-11 — INT-1 minimal real G1+P1 eval residuals
+
+**TASK:** `DELIA-C3-T2-INT1-INTENT-VS-TOOL-SELECTION-MINIMAL-REAL-QWEN-EVAL-01`
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-MINIMAL-LIVE-G1-P1 | **BLOCKED** | Security/egress/credential gates; MODEL_REQUESTS=0 |
+| INT1-CREDENTIAL-ISOLATION | **RESIDUAL** | `NONE_PROVEN_SEPARATE_FROM_PROD` — PO two-scenario auth ≠ credential-owner approval |
+| INT1-EGRESS-HOST-SESSION | **BLOCKED** | `DELIA_EVAL_EGRESS_AUTHORIZED` absent; Settings model mismatch |
+| INT1-TEO-OWNER-DESC-AMBIGUITY | **OPEN** | unchanged (prior docs) |
+| INT1-STAGE | **BLOCKED** | Doc 302 review |
+| INT1-CLOSED | **NO** | — |
+
+**NEXT=`COORDINATION_INT1_MINIMAL_REAL_INTENT_EVAL_REVIEW`**. `INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

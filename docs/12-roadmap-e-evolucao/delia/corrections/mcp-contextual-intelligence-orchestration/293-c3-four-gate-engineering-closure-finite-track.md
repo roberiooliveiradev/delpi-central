@@ -694,3 +694,7 @@ Delivered: `delia-api/scripts/int1_secure_decision_trace.py`, `tests/test_int1_s
 ### 2026-11-11 — INT-1 intent understanding + tool selection causal review
 
 **TASK:** `DELIA-C3-T2-INT1-INTENT-UNDERSTANDING-AND-TOOL-SELECTION-CAUSAL-REVIEW-01`. See sibling **301**. Offline causal matrices; G1 first divergence tool selection under TEO contract ambiguity; declare_goal unused in sample; minimal projection/echo EXTEND; no external LLM. `INT1_STAGE_ACCEPTANCE=BLOCKED`. `NEXT=COORDINATION_INT1_INTENT_SELECTION_INDEPENDENT_REVIEW`.
+
+### 2026-11-11 — INT-1 minimal real intent vs tool selection (blocked)
+
+**TASK:** `DELIA-C3-T2-INT1-INTENT-VS-TOOL-SELECTION-MINIMAL-REAL-QWEN-EVAL-01`. See sibling **302**. Authorized G1+P1 only; live not started — security/credential gates BLOCKED; `MODEL_REQUESTS=0`. `INT1_STAGE_ACCEPTANCE=BLOCKED`. `NEXT=COORDINATION_INT1_MINIMAL_REAL_INTENT_EVAL_REVIEW`.

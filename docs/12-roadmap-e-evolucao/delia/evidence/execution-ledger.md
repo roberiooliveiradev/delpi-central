@@ -6414,3 +6414,18 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `301-int1-intent-understanding-objective-representation-and-semantic-tool-selection-causal-review.md`.
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_INTENT_SELECTION_INDEPENDENT_REVIEW`.
+
+| DELIA-C3-T2-INT1-INTENT-VS-TOOL-SELECTION-MINIMAL-REAL-QWEN-EVAL-01 | Minimal G1+P1 live attempt; SECURE_EVAL_GATE=BLOCKED; credential scope residual; MODEL_REQUESTS=0; doc 302 | LIVE=BLOCKED; NEXT=COORDINATION_INT1_MINIMAL_REAL_INTENT_EVAL_REVIEW |
+
+### INT-1 minimal real intent vs tool selection — 2026-11-11
+
+- **TASK:** `DELIA-C3-T2-INT1-INTENT-VS-TOOL-SELECTION-MINIMAL-REAL-QWEN-EVAL-01`.
+- **PO_SCOPE:** G1 + P1 only; 1 rep; no rework; no full battery.
+- **FREEZE_SHA:** `a4af0939110f83fd6b4ca29f95253d82e9e9dab7`; profile openrouter_qwen / fp `7dbc94c5035b0f19` / window 40960 (checked-in).
+- **SECURITY_GATE:** BLOCKED (egress flag absent; host Settings model `qwen3:8b`; `EVALUATION_CREDENTIAL_SCOPE=NONE_PROVEN_SEPARATE_FROM_PROD` without credential-owner approval).
+- **LIVE:** not executed — **MODEL_REQUESTS=0**, **TOOL_CALLS=0**, **EXECUTED_SCENARIOS=0**.
+- **FUNCTIONAL_CODE_CHANGED=NO**; **INSTRUCTION_CHANGED=NO**.
+- **TARGETED_TESTS:** secure_decision_trace + intent_goal_projection + runtime profile selector PASS.
+- **Doc:** `302-int1-minimal-real-intent-understanding-vs-mcp-tool-selection-causal-evaluation.md`.
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_MINIMAL_REAL_INTENT_EVAL_REVIEW`.
