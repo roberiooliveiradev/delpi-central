@@ -83,8 +83,8 @@ foreach ($sidValue in @(
     'S-1-5-18',
     'S-1-5-32-544'
 )) {
-    $sid = New-Object Security.Principal.SecurityIdentifier($sidValue)
-    $access = New-Object Security.AccessControl.FileSystemAccessRule(
+    $sid = [Security.Principal.SecurityIdentifier]::new($sidValue)
+    $access = [Security.AccessControl.FileSystemAccessRule]::new(
         $sid,
         [Security.AccessControl.FileSystemRights]::FullControl,
         [Security.AccessControl.AccessControlType]::Allow
