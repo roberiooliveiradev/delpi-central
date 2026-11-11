@@ -192,6 +192,18 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 - **Próximo gate somente leitura:** identificar um `KC_BASE_URL` HTTPS alcançável pelo host, preferencialmente URL corporativa válida, sem vazar segredos; executar `KC_BASE_URL=... python3 infra/scripts/keycloak_s2s_it_portal_collector.py --check`. Se for inacessível, investigar topologia/entrypoint sem modificar DNS ou abrir acesso administrativo desnecessário.
 - Permanecem bloqueados `--apply`, `submit` e ativação do timer até saneamento do contrato de ingestão JSON e revisão dos gates de segurança anteriormente registrados.
 
+## E4.S1 — Keycloak check por HTTPS (11/11/2026)
+
+**Evidência operacional (saída enviada pelo operador, PROVEN na execução reportada):**
+- `curl -fsS https://minhadelpi.com.br/auth/realms/delpi/.well-known/openid-configuration` respondeu `issuer=https://minhadelpi.com.br/auth/realms/delpi`. Keycloak público e realm `delpi` acessíveis via HTTPS a partir do host; não comprova acesso a todas as operações internas.
+- `KC_BASE_URL=https://minhadelpi.com.br/auth python3 infra/scripts/keycloak_s2s_it_portal_collector.py --check` executou a leitura administrativa e informou `[DRIFT] client it-portal-host-collector — inexistente`. O cliente técnico do piloto ainda exige provisionamento aprovado; o check não cria nem altera recursos.
+- O operador estava autenticado como `michael`, com repositório em `/home/operador/projetos/delpi-central`. O `cd ~/projetos/delpi-central` falhou por apontar para `/home/michael`, mas a consulta seguinte executou no CWD anterior e produziu resposta. Runbooks devem usar caminho absoluto/descoberto.
+- A `infra/.env` contém `KEYCLOAK_ADMIN_URL=http://keycloak:8080` (nome de serviço Docker, não resolvível diretamente no host), `KEYCLOAK_ISSUER=${PUBLIC_BASE_URL}/auth/realms/${KEYCLOAK_REALM}` e `KC_HOSTNAME=http://localhost:9080/auth`; esses valores exigem análise contextual de runtime antes de qualquer mudança. **Não alterar o Keycloak para resolver o piloto**, pois o issuer público está validado.
+- `--apply`, `submit` e timer **não autorizados neste gate**. O bloqueio de sanitização estrita recursiva no payload JSON de observações continua válido e precisa de correção, testes e revisão antes de abrir ingestão S2S.
+- Próxima verificação segura: confirmar V004 em `it_portal.schema_migrations` e identidade do servidor registrado no Portal de TI via consulta SQL somente leitura no container da API, sem publicar credenciais.
+
+**Estado:** `IMPLEMENTED_PENDING_SMOKE`. `Keycloak CHECK=PASS_COM_DRIFT_CLIENT_MISSING`, `S2S PROVISIONING=PENDING`, `OBSERVATION SUBMIT=PENDING`.
+
 ## Residuais abertos
 
 | ID | Residual | Dono da decisão |
