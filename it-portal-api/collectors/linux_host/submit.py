@@ -15,6 +15,8 @@ from .diagnose import build_observation_payload
 
 DEFAULT_SCOPE = "it-portal.observations.ingest"
 SERVICE_AUTH_HEADER = "X-Delpi-Service-Authorization"
+# User-Agent neutro (sem impersonar navegador). Suficiente para gateway local.
+DEFAULT_USER_AGENT = "delpi-it-portal-linux-collector/1.0"
 
 
 def _required_env(name: str, environ: Mapping[str, str]) -> str:
@@ -22,6 +24,28 @@ def _required_env(name: str, environ: Mapping[str, str]) -> str:
     if not value:
         raise SystemExit(f"Variável obrigatória ausente: {name}")
     return value
+
+
+def build_ingest_request(
+    *,
+    base_url: str,
+    server_id: str,
+    token: str,
+    body: dict,
+    http_host: str | None = None,
+    user_agent: str = DEFAULT_USER_AGENT,
+) -> urllib.request.Request:
+    """Monta o POST de ingestão — Host customizado só quando explicitamente pedido."""
+    url = f"{base_url.rstrip('/')}/collector/v1/servers/{server_id}/observations"
+    encoded = json.dumps(body).encode("utf-8")
+    request = urllib.request.Request(url, data=encoded, method="POST")
+    request.add_header("Content-Type", "application/json")
+    request.add_header(SERVICE_AUTH_HEADER, f"Bearer {token}")
+    request.add_header("User-Agent", user_agent)
+    host = (http_host or "").strip()
+    if host:
+        request.add_header("Host", host)
+    return request
 
 
 def submit_observation(
@@ -41,11 +65,13 @@ def submit_observation(
     provider = ClientCredentialsTokenProvider.from_env(merged)
     token = provider.get_token()
     body = payload if payload is not None else build_observation_payload()
-    url = f"{base_url}/collector/v1/servers/{server_id}/observations"
-    encoded = json.dumps(body).encode("utf-8")
-    request = urllib.request.Request(url, data=encoded, method="POST")
-    request.add_header("Content-Type", "application/json")
-    request.add_header(SERVICE_AUTH_HEADER, f"Bearer {token}")
+    request = build_ingest_request(
+        base_url=base_url,
+        server_id=server_id,
+        token=token,
+        body=body,
+        http_host=(env.get("IT_PORTAL_COLLECTOR_HTTP_HOST") or "").strip() or None,
+    )
     opener = http_open or urllib.request.urlopen
     try:
         with opener(request, timeout=30) as response:
@@ -64,6 +90,7 @@ def submit_observation(
 def main(argv: list[str] | None = None) -> int:
     _ = argv
     result = submit_observation()
+    # Não imprime token/secret — apenas status HTTP e corpo da API.
     print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
     return 0
 

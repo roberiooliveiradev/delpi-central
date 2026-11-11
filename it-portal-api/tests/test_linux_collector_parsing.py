@@ -1,4 +1,6 @@
-"""Parsers do coletor Linux — positive / sibling / negative."""
+"""Parsers e artefatos systemd do coletor Linux — positive / sibling / negative."""
+
+from pathlib import Path
 
 from collectors.linux_host.parsing import (
     filter_host_nics,
@@ -57,17 +59,33 @@ def test_parse_df_and_systemctl():
     assert show["unit_file_state"] == "enabled"
 
 
-def test_systemd_unit_files_exist_and_are_disabled_by_default():
-    from pathlib import Path
-
+def test_systemd_units_are_ready_for_hourly_enable_without_auto_start():
     deploy = Path(__file__).resolve().parents[1] / "collectors" / "linux_host" / "deploy"
     service = (deploy / "it-portal-linux-collector.service").read_text(encoding="utf-8")
     timer = (deploy / "it-portal-linux-collector.timer").read_text(encoding="utf-8")
-    active_wanted = [
-        line
-        for line in service.splitlines() + timer.splitlines()
-        if line.strip().startswith("WantedBy=")
-    ]
-    assert active_wanted == []
-    assert "# WantedBy=timers.target" in timer
-    assert "flock" in service
+    installer = (deploy / "install-it-portal-linux-collector.sh").read_text(encoding="utf-8")
+    wrapper = (deploy / "run-collector.sh").read_text(encoding="utf-8")
+
+    assert "OnCalendar=hourly" in timer
+    assert "Persistent=true" in timer
+    assert "RandomizedDelaySec=5m" in timer
+    assert "WantedBy=timers.target" in timer
+    assert "# WantedBy=timers.target" not in timer
+
+    assert "User=delpi-collector" in service
+    assert "EnvironmentFile=/etc/delpi/it-portal-linux-collector.env" in service
+    assert "EnvironmentFile=-/etc/delpi" not in service
+    assert "/opt/delpi/it-portal-collector/bin/run-collector submit" in service
+    assert "flock -n" in service
+    assert "TimeoutStartSec=120" in service
+    assert "NoNewPrivileges=true" in service
+
+    # O enable aparece só no texto de ajuda final — nunca no corpo executável.
+    installer_body = installer.split("cat <<EOF", 1)[0]
+    assert "systemctl enable" not in installer_body
+    assert "usermod" not in installer_body
+    assert "gpasswd" not in installer_body
+    assert "docker" in installer  # documenta ausência / aviso, sem conceder
+    assert "arquivo de ambiente obrigatório ausente" in wrapper
+    assert (deploy / "it-portal-linux-collector.env.example").is_file()
+    assert (deploy / "requirements-collector.txt").is_file()

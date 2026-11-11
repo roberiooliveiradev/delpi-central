@@ -240,6 +240,21 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 
 **Status:** `IMPLEMENTED_PENDING_SMOKE`; falha inicial classificada como `BLOCKED_AT_PUBLIC_EDGE` até prova adicional. Chamada do GLPI #1571 deve permanecer aberta.
 
+## E4.S1 — pacote de implantação horária do coletor (11/11/2026)
+
+**Objetivo desta fatia:** artefatos versionados para instalar o coletor em `/opt/delpi/it-portal-collector` com usuário `delpi-collector`, venv + `shared/delpi_auth`, env em `/etc/delpi`, units systemd horárias e runbook — **sem** habilitar o timer no instalador.
+
+**EXTEND dos artefatos existentes** (`collectors/linux_host/deploy/*`):
+- `install-it-portal-linux-collector.sh` (+ facade `infra/scripts/…`) idempotente; não chama `systemctl enable`; não adiciona grupo `docker`;
+- service: Python do venv via `bin/run-collector`, `EnvironmentFile` obrigatório, `flock`, timeout 120s, proteções de filesystem;
+- timer: `OnCalendar=hourly`, `Persistent=true`, `RandomizedDelaySec=5m`, `WantedBy=timers.target`;
+- env example com `IT_PORTAL_COLLECTOR_BASE_URL=http://127.0.0.1/apps/it-portal-api` e token Keycloak HTTPS;
+- `submit` aceita `IT_PORTAL_COLLECTOR_HTTP_HOST` opcional (default: sem Host customizado).
+
+**Não feito nesta fatia (gates operacionais):** Keycloak `--apply`, `submit` produtivo, `systemctl enable --now` do timer, concessão docker, mudança de V004/Cloudflare/cadastro manual.
+
+**Chamado GLPI #1571:** permanece aberto até comprovação da execução periódica (AC-04).
+
 ## Residuais abertos
 
 | ID | Residual | Dono da decisão |

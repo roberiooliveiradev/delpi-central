@@ -8,19 +8,29 @@ Wants=network-online.target
 Type=oneshot
 User=delpi-collector
 Group=delpi-collector
-# Não elevar privilégios; Docker só se o usuário já tiver acesso ao grupo.
+# Sem elevação; Docker só se o operador conceder grupo docker em decisão separada.
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
 PrivateTmp=true
-ReadWritePaths=/var/lib/it-portal-collector
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+# Env obrigatório: sem o arquivo o systemd falha de forma explícita (sem "-").
+EnvironmentFile=/etc/delpi/it-portal-linux-collector.env
+Environment=PYTHONPATH=/opt/delpi/it-portal-collector
 WorkingDirectory=/opt/delpi/it-portal-collector
-EnvironmentFile=-/etc/delpi/it-portal-linux-collector.env
+ReadWritePaths=/var/lib/it-portal-collector
+# Timeout limitado para diagnóstico + token + POST.
+TimeoutStartSec=120
 # flock evita overlap se o timer disparar com execução anterior ainda ativa.
 ExecStart=/usr/bin/flock -n /var/lib/it-portal-collector/collector.lock \
-  /usr/bin/python3 -m collectors.linux_host submit
+  /opt/delpi/it-portal-collector/bin/run-collector submit
 Nice=10
+# Sucesso esperado 0; flock -n retorna 1 quando o lock está ocupado (overlap).
+SuccessExitStatus=0
 
 [Install]
-# Unidade preparada e DESABILITADA até gate operacional de agendamento.
-# WantedBy propositalmente omitido — habilitar só com autorização explícita.
+# Serviço oneshot acionado pelo timer. Não habilitar diretamente em produção
+# sem o runbook; o timer é a unidade de ativação.
