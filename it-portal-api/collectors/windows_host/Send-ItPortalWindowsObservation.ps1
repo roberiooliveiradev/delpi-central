@@ -7,7 +7,8 @@
   client_credentials e envia para a API por HTTPS. Não agenda tarefas, não
   cria arquivos nem imprime segredos ou o JSON técnico completo.
   Use cliente confidencial exclusivo do host, escopo it-portal.observations.ingest
-  e audience it-portal-api. O secret é informado interativamente.
+  e audience it-portal-api. O secret é solicitado interativamente, ou lido
+  de um arquivo DPAPI criado pela mesma conta Windows que executa a tarefa.
 .EXAMPLE
   .\Send-ItPortalWindowsObservation.ps1 -ApiBaseUrl 'https://portal.exemplo/apps/it-portal-api' -S2sTokenUrl 'https://auth.exemplo/realms/delpi/protocol/openid-connect/token' -ClientId 'it-portal-windows-pilot01' -ServerId '<uuid-cadastrado>'
 #>
@@ -28,7 +29,9 @@ param(
     [Parameter(Mandatory = $true)]
     [guid]$ServerId,
 
-    [string[]]$ServiceNames = @('EventLog', 'W32Time', 'LanmanServer')
+    [string[]]$ServiceNames = @('EventLog', 'W32Time', 'LanmanServer'),
+
+    [string]$ClientSecretDpapiPath
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -48,7 +51,28 @@ if ($observation.source -ne 'windows_host_collector' -or -not $observation.run_i
     throw 'Origem ou run_id inválidos no diagnóstico local.'
 }
 
-$secureSecret = Read-Host -Prompt "Client secret S2S de $ClientId (não aparece na tela)" -AsSecureString
+# Para o agendador, apenas o usuario que cifrou via DPAPI neste host pode
+# descriptografar. Nenhum segredo aparece nos argumentos, logs ou arquivos .ps1.
+$secureSecret = $null
+if ($ClientSecretDpapiPath) {
+    if (-not [System.IO.Path]::IsPathRooted($ClientSecretDpapiPath) -or
+        -not (Test-Path -LiteralPath $ClientSecretDpapiPath -PathType Leaf)) {
+        throw 'Arquivo DPAPI local nao encontrado (caminho absoluto obrigatorio).'
+    }
+    try {
+        $encryptedSecret = (Get-Content -LiteralPath $ClientSecretDpapiPath -Raw -ErrorAction Stop).Trim()
+        if (-not $encryptedSecret) {
+            throw 'Conteudo DPAPI vazio.'
+        }
+        $secureSecret = ConvertTo-SecureString -String $encryptedSecret -ErrorAction Stop
+    } catch {
+        throw 'Nao foi possivel ler o segredo DPAPI: execute com a mesma conta e no mesmo Windows usado na criacao.'
+    } finally {
+        $encryptedSecret = $null
+    }
+} else {
+    $secureSecret = Read-Host -Prompt "Client secret S2S de $ClientId (não aparece na tela)" -AsSecureString
+}
 $handle = [IntPtr]::Zero
 $clientSecret = $null
 try {
@@ -68,7 +92,9 @@ try {
     if ($handle -ne [IntPtr]::Zero) {
         [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($handle)
     }
-    $secureSecret.Dispose()
+    if ($null -ne $secureSecret) {
+        $secureSecret.Dispose()
+    }
 }
 
 if (-not $tokenResponse.access_token) {
