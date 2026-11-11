@@ -65,6 +65,16 @@ export {
   STABLE_CHART_SIZE_EPSILON_PX,
 } from "./stableChartSize";
 export {
+  SemicircleProgressGauge,
+  SEMICIRCLE_GAUGE_TONE_COLORS,
+  createSemicircleProgressGauge,
+  semicircleProgressGaugeBemClasses,
+  type SemicircleProgressGaugeClassNames,
+  type SemicircleProgressGaugeLegendItem,
+  type SemicircleProgressGaugeProps,
+  type SemicircleProgressGaugeTone,
+} from "./SemicircleProgressGauge";
+export {
   SpeedometerGauge,
   SPEEDOMETER_TONE_COLORS,
   resolveSpeedometerZoneThresholds,

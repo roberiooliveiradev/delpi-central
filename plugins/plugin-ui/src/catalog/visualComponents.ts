@@ -445,6 +445,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("charts", "SeriesChartPrimitive"),
   vc("charts", "ImpactEffortMatrix"),
   vc("charts", "ImpactEffortMatrixLegend"),
+  vc("charts", "SemicircleProgressGauge", {
+    addedAt: "2026-11-11",
+    description:
+      "Donut semicircular com valor central e legenda de contagens por tom; sem agulha/meta.",
+  }),
   vc("charts", "ChartTypeCatalogPanel"),
   vc("charts", "TableInsertCatalogPanel"),
   // preview

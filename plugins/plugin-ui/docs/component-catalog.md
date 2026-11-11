@@ -1317,6 +1317,14 @@ Scatter SVG headless para priorização de revisões (Playbook 21 Transformômet
 
 Velocímetro semicircular (SVG) para KPIs percentuais (ex.: OTD por unidade). Faixas de alerta no arco (&lt;90% danger · &lt;95% warning · demais success), tooltip no hover/foco, tamanho default 260. CSS em `styles/speedometer-gauge.css`.
 
+### `SemicircleProgressGauge`
+
+Donut semicircular **sem agulha/meta** para um percentual com legenda de contagens:
+`value`, `max`, `centerLabel`, `legend: { id, label, count, tone }[]`, `tone`, `size`, `prefix`.
+O consumidor calcula valor e legenda; o kit só desenha (arco, valor central e dots por tom).
+CSS em `styles/semicircle-progress-gauge.css`. Consumidor piloto: `it-portal` (Saúde do inventário).
+Use `SpeedometerGauge` quando houver meta/faixas; este quando houver composição por contagens.
+
 ### `HorizontalValueBars`
 
 Barras horizontais leves para rankings / top N. Preferir `ConfigurableSeriesChart` / `horizontal_bar` com `colorScale` quando o caso for dashboard.

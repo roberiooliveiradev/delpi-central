@@ -53,6 +53,12 @@ Objetivo: **uma implementação** de balões explicativos e primitivos de label/
 Fases 0–6: **[refactoring-roadmap.md](./refactoring-roadmap.md)** (§ 1–7).  
 **Frente ativa — Fase 7** (zero CSS kit no MFE): roadmap **§ 8** + [seção abaixo](#fase-7--zero-css-de-componente-do-kit-no-mfe-jul2026). Regra Cursor: `plugins-reusable-components.mdc`.
 
+## Componentes novos com consumidor piloto
+
+| Componente | Piloto | Segundo consumidor candidato |
+|---|---|---|
+| `SemicircleProgressGauge` | `it-portal` (Saúde do inventário, nov/2026) | Dashboards com percentual + composição por contagens (substituir gauges locais quando surgirem) |
+
 ## Componentes futuros no pacote
 
 Ver inventário detalhado em [refactoring-roadmap.md § 1.3](./refactoring-roadmap.md#13-componentes-duplicados--candidatos-a-extrair-2-consumidores).

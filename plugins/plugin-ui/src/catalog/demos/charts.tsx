@@ -1,4 +1,5 @@
 import { ConfigurableSeriesChart, ImpactEffortMatrix, ImpactEffortMatrixLegend } from "../../components/charts";
+import { SemicircleProgressGauge } from "../../components/charts/SemicircleProgressGauge";
 import { ChartTypeCatalogPanel } from "../../components/charts/ChartTypeCatalogPanel";
 import { TableInsertCatalogPanel } from "../../components/charts/TableInsertCatalogPanel";
 import { BarSeriesChart } from "../../components/charts/BarSeriesChart";
@@ -103,6 +104,34 @@ export const chartsCatalogEntries: CatalogEntryDraft[] = [
         id: "default",
         label: "Legenda",
         render: () => <ImpactEffortMatrixLegend />,
+      },
+    ],
+  },
+  {
+    id: "charts.SemicircleProgressGauge",
+    family: "charts",
+    exportName: "SemicircleProgressGauge",
+    title: "SemicircleProgressGauge",
+    demos: [
+      {
+        id: "default",
+        label: "Com legenda",
+        render: () => (
+          <SemicircleProgressGauge
+            prefix="puc"
+            value={82}
+            centerLabel="dentro do esperado"
+            legend={[
+              { id: "ok", label: "Conforme", count: 41, tone: "success" },
+              { id: "warn", label: "Atenção", count: 9, tone: "warning" },
+            ]}
+          />
+        ),
+      },
+      {
+        id: "empty",
+        label: "Zero",
+        render: () => <SemicircleProgressGauge prefix="puc" value={0} centerLabel="sem itens" />,
       },
     ],
   },
