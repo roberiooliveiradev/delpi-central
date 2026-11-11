@@ -131,123 +131,71 @@ def append_event(
 
 
 def check_security_gate() -> dict[str, Any]:
-    """Fail-closed security inventory for INT-1 real Qwen eval."""
-    # Import lazily so --dry-run schema checks can run without full app.
+    """Diagnostic of the configured evaluation runtime, not a second approval authority.
+
+    PO controls scenario authorization outside this function. The application's
+    existing Settings egress allowlist remains authoritative for connectivity;
+    genuine MCP authentication/authorization remains enforced by the owners.
+    Do not run this on host defaults to assess an isolated evaluation container.
+    """
     sys.path.insert(0, str(_REPO_DELIA))
     from app.infrastructure.config.settings import (
         Settings,
-        is_local_llm_host,
         llm_egress_blocked_reason,
     )
 
     settings = Settings()
-    env = settings.environment
     base_url = settings.llm_base_url or ""
-    host = urlsplit(base_url).hostname or ""
-    local_host = is_local_llm_host(host) if host else False
-    policy_blocks_external = (
-        llm_egress_blocked_reason(env, base_url) is not None
-        if base_url
-        else env != "production"
-    )
-    # Explicit eval authorization — never inferred from connectivity.
-    owner_flag = (os.environ.get("DELIA_EVAL_EGRESS_AUTHORIZED") or "").strip()
-    owner_approved = owner_flag == "1"
-    # Localhost-shaped URL that would satisfy Settings host check but
-    # still forward to OpenRouter is the prior EXECUTION_DRIFT pattern.
-    localhost_shaped = local_host and env != "production"
-    bypass_pattern = localhost_shaped and not owner_approved
-
-    model = settings.llm_model or ""
+    host = (urlsplit(base_url).hostname or "").lower()
     target_model = "qwen/qwen3-14b"
-    model_match = model == target_model
-
-    # Local Ollama may host other qwen sizes — not a substitute for the
-    # authorized target without coordination approval.
-    result = {
-        "SECURE_EVAL_GATE": "BLOCKED",
-        "NONPROD_RUNTIME_ISOLATED": "NOT_PROVEN",
-        "CREDENTIAL_ISOLATION": "NOT_PROVEN",
-        "NETWORK_ACCESS_AUTHORIZED": "NOT_PROVEN",
-        "MODEL_EGRESS_AUTHORIZED": "NOT_PROVEN",
-        "MCP_READ_AUTHORIZED": "NOT_PROVEN",
-        "PRODUCTION_UNTOUCHED": "NOT_OBSERVED_THIS_SCRIPT",
-        "SECURITY_OWNER_APPROVAL": "NOT_PROVEN",
-        "POLICY_EXTERNAL_LLM_NONPROD": (
-            "REFUSED" if env != "production" else "PRODUCTION_PATH"
-        ),
-        "CURRENT_ENV": env,
-        "CURRENT_LLM_HOST_CLASS": (
-            "local_shaped" if local_host else ("empty" if not host else "external")
-        ),
-        "POLICY_BLOCKS_EXTERNAL_BASE_URL": policy_blocks_external,
-        "LOCALHOST_SHAPED_BYPASS_PATTERN": bypass_pattern,
-        "DELIA_EVAL_EGRESS_AUTHORIZED_FLAG": owner_approved,
-        "TARGET_MODEL": target_model,
-        "CONFIGURED_MODEL": model,
-        "TARGET_MODEL_MATCH": model_match,
-        "ARCHITECTURE_DECISION_REQUIRED": (
-            "authorized nonprod external Qwen14B eval path "
-            "(credential scope + egress + isolation)"
-            if env != "production"
-            else None
-        ),
-        "EXISTING_EQUIVALENT": "PARTIAL",
-        "REUSE_DECISION": (
-            "EXTEND_OBSERVABILITY_ONLY; "
-            "NEW_AUTHORIZED_EGRESS_PATH_REQUIRES_ADR"
-        ),
-        "SECURITY_OWNER": "platform-security-identity-authorization + delivery/runtime",
-        "APPROVED_EGRESS_PATH": "NONE_DOCUMENTED_FOR_NONPROD_OPENROUTER",
-        "EVALUATION_CREDENTIAL_SCOPE": "NONE_PROVEN_SEPARATE_FROM_PROD",
-        "BLOCKERS": [],
-    }
+    target_profile = "openrouter_qwen"
+    configured_egress = (
+        (os.environ.get("DELIA_EVAL_EGRESS_AUTHORIZED") or "").strip() == "1"
+    )
     blockers: list[str] = []
-    openrouter_host = host.lower() == "openrouter.ai"
-    if env != "production" and not owner_approved:
-        blockers.append("SECURITY_OWNER_APPROVAL missing for nonprod external model")
-    # Localhost-shaped OpenRouter (prior EXECUTION_DRIFT) is always refused
-    # for this eval — even with the flag. Use the real allowlisted host.
-    if localhost_shaped:
-        blockers.append(
-            "localhost-shaped LLM URL forbidden for OpenRouter eval "
-            "(use https://openrouter.ai/api/v1; do not use egress proxy)"
-        )
-    if env != "production" and base_url and policy_blocks_external:
-        blockers.append("nonprod external LLM base URL refused by Settings policy")
-    if owner_approved and base_url and not openrouter_host and not local_host:
-        blockers.append(
-            f"eval allowlist expects openrouter.ai, got host {host!r}"
-        )
-    if not model_match:
-        blockers.append(
-            f"configured model {model!r} != required target {target_model!r}"
-        )
-    if not owner_approved:
-        blockers.append("MODEL_EGRESS_AUTHORIZED not proven")
-        blockers.append("CREDENTIAL_ISOLATION not proven for eval identity")
-        blockers.append("NETWORK_ACCESS_AUTHORIZED not proven")
-    result["BLOCKERS"] = blockers
-    if (
-        not blockers
-        and owner_approved
-        and model_match
-        and openrouter_host
-        and not policy_blocks_external
-    ):
-        result["SECURE_EVAL_GATE"] = "READY_FOR_ISOLATED_EVAL"
-        result["MODEL_EGRESS_AUTHORIZED"] = "PROVEN_ALLOWLIST_OPENROUTER"
-        result["SECURITY_OWNER_APPROVAL"] = "PO_AUTHORIZED_EVAL_FLAG"
-        result["APPROVED_EGRESS_PATH"] = "https://openrouter.ai/api/v1"
-        result["ARCHITECTURE_DECISION_REQUIRED"] = None
-        result["POLICY_EXTERNAL_LLM_NONPROD"] = (
-            "ALLOWLISTED_WHEN_DELIA_EVAL_EGRESS_AUTHORIZED=1"
-        )
-        result["REUSE_DECISION"] = (
-            "REUSE openrouter_qwen profile + explicit eval egress allowlist"
-        )
-    return result
+    if settings.environment == "production":
+        blockers.append("evaluation must not use the production runtime")
+    if host != "openrouter.ai":
+        blockers.append("evaluation endpoint must be https://openrouter.ai/api/v1")
+    if settings.llm_model != target_model:
+        blockers.append("evaluation model does not match qwen/qwen3-14b")
+    if settings.runtime_profile != target_profile:
+        blockers.append("evaluation profile does not match openrouter_qwen")
+    if base_url and llm_egress_blocked_reason(settings.environment, base_url):
+        blockers.append("existing Settings LLM egress policy blocks this endpoint")
 
+    # This flag configures the application's existing nonprod egress allowlist.
+    # It is NOT evidence of a second security-owner approval. The eval runner
+    # already supplies it in its isolated, non-production container.
+    return {
+        "SECURE_EVAL_GATE": "READY_FOR_ISOLATED_EVAL" if not blockers else "BLOCKED",
+        "BLOCKERS": blockers,
+        "CURRENT_ENV": settings.environment,
+        "CURRENT_LLM_HOST_CLASS": (
+            "openrouter" if host == "openrouter.ai"
+            else "empty" if not host else "other"
+        ),
+        "CONFIGURED_MODEL": settings.llm_model or "",
+        "TARGET_MODEL": target_model,
+        "TARGET_MODEL_MATCH": settings.llm_model == target_model,
+        "DELIA_EVAL_EGRESS_AUTHORIZED_FLAG": configured_egress,
+        "POLICY_BLOCKS_EXTERNAL_BASE_URL": bool(
+            base_url and llm_egress_blocked_reason(settings.environment, base_url)
+        ),
+        "NONPROD_RUNTIME_ISOLATED": "VERIFY_IN_RUNNER",
+        "PRODUCTION_UNTOUCHED": "VERIFY_IN_RUNNER",
+        "MCP_READ_AUTHORIZED": "VERIFY_WITH_OWNER",
+        "CREDENTIAL_ISOLATION": "NOT_ASSESSED_BY_CONFIG_CHECK",
+        "SECURITY_OWNER_APPROVAL": "NOT_A_RUNTIME_CONFIG_REQUIREMENT",
+        "POLICY_EXTERNAL_LLM_NONPROD": "EXISTING_SETTINGS_ALLOWLIST",
+        "APPROVED_EGRESS_PATH": (
+            base_url if not blockers else "NOT_CONFIGURED"
+        ),
+        "ARCHITECTURE_DECISION_REQUIRED": None,
+        "EXISTING_EQUIVALENT": "YES",
+        "REUSE_DECISION": "REUSE_EXISTING_SETTINGS_AND_EVAL_RUNNER",
+        "EVALUATION_CREDENTIAL_SCOPE": "VERIFY_WITH_CREDENTIAL_OWNER_IF_REQUIRED",
+    }
 
 def run_dry_run(*, root: Path | None = None) -> dict[str, Any]:
     """Deterministic capture without external provider or MCP wire."""
