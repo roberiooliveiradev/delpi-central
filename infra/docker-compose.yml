@@ -3042,6 +3042,13 @@ services:
       IT_PORTAL_DB_PASSWORD: ${IT_PORTAL_DB_PASSWORD:-}
       IT_PORTAL_RUN_MIGRATIONS_ON_STARTUP: ${IT_PORTAL_RUN_MIGRATIONS_ON_STARTUP:-true}
 
+      # E4.S1 — validação S2S da ingestão do coletor (vazios = ingestão fail-closed).
+      S2S_AUDIENCE: ${IT_PORTAL_S2S_AUDIENCE:-it-portal-api}
+      S2S_ALLOWED_CLIENTS: ${IT_PORTAL_S2S_ALLOWED_CLIENTS:-}
+      IT_PORTAL_COLLECTOR_SERVER_ALLOWLIST: ${IT_PORTAL_COLLECTOR_SERVER_ALLOWLIST:-}
+      IT_PORTAL_OBSERVATION_RETENTION: ${IT_PORTAL_OBSERVATION_RETENTION:-50}
+      IT_PORTAL_OBSERVATION_STALE_HOURS: ${IT_PORTAL_OBSERVATION_STALE_HOURS:-36}
+
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
       interval: 10s

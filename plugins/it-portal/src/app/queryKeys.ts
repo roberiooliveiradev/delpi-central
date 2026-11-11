@@ -15,6 +15,7 @@ export const queryKeys = {
   server: (id: string) => ["it-portal", "servers", "detail", id] as const,
   notes: (id: string) => ["it-portal", "servers", "notes", id] as const,
   history: (id: string) => ["it-portal", "servers", "history", id] as const,
+  serverObservationLatest: (id: string) => ["it-portal", "servers", "observations", "latest", id] as const,
   serverHostings: (id: string) => ["it-portal", "servers", "hostings", id] as const,
   actionPlans: ["it-portal", "action-plans"] as const,
   actionPlanList: (query: ActionPlanListQuery) => ["it-portal", "action-plans", "list", query] as const,

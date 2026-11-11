@@ -7,6 +7,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 
+from it_portal_app.application.observation_service import ObservationService
 from it_portal_app.application.ports import ServerQuery
 from it_portal_app.application.server_service import ServerService
 from it_portal_app.core.responses import ok
@@ -18,13 +19,14 @@ from it_portal_app.interface.http.authz import (
     authorize,
     authorize_write,
 )
-from it_portal_app.interface.http.dependencies import get_server_service
+from it_portal_app.interface.http.dependencies import get_observation_service, get_server_service
 from it_portal_app.interface.http.schemas import (
     ERROR_RESPONSES,
     Envelope,
     HistoryEventOut,
     NoteInput,
     NoteOut,
+    ObservationOut,
     PageOut,
     RevisionInput,
     ServerInput,
@@ -205,3 +207,37 @@ def list_it_server_history(
 ):
     authorize(request, SERVERS_VIEW)
     return ok(service.list_history(str(server_id)), operation_id="list_it_server_history")
+
+
+@router.get(
+    "/{server_id}/observations/latest",
+    operation_id="get_it_server_latest_observation",
+    response_model=Envelope[ObservationOut | None],
+    summary="Última observação automática do servidor",
+)
+def get_it_server_latest_observation(
+    request: Request,
+    server_id: UUID,
+    service: ObservationService = Depends(get_observation_service),
+):
+    authorize(request, SERVERS_VIEW)
+    return ok(service.latest(str(server_id)), operation_id="get_it_server_latest_observation")
+
+
+@router.get(
+    "/{server_id}/observations",
+    operation_id="list_it_server_observations",
+    response_model=Envelope[list[ObservationOut]],
+    summary="Histórico limitado de observações automáticas do servidor",
+)
+def list_it_server_observations(
+    request: Request,
+    server_id: UUID,
+    limit: int = Query(default=20, ge=1, le=50),
+    service: ObservationService = Depends(get_observation_service),
+):
+    authorize(request, SERVERS_VIEW)
+    return ok(
+        service.list_history(str(server_id), limit=limit),
+        operation_id="list_it_server_observations",
+    )

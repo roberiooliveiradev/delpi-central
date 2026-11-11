@@ -21,6 +21,7 @@ from it_portal_app.interface.http import authz  # noqa: E402
 from it_portal_app.interface.http.dependencies import (  # noqa: E402
     get_connectivity_repository,
     get_inventory_repository,
+    get_observation_repository,
     get_repository,
     get_today_provider,
 )
@@ -29,6 +30,7 @@ from it_portal_app.main import app  # noqa: E402
 from tests.connectivity_fakes import InMemoryConnectivityRepository  # noqa: E402
 from tests.fakes import InMemoryItPortalRepository  # noqa: E402
 from tests.inventory_fakes import InMemoryInventoryRepository  # noqa: E402
+from tests.observation_fakes import InMemoryObservationRepository  # noqa: E402
 
 TODAY = date(2026, 11, 10)
 USER_ID = "2b0c7a52-6f7e-4d3c-9a51-0f4f1c2d9e11"
@@ -48,6 +50,11 @@ def inventory(repository):
 @pytest.fixture
 def connectivity(inventory):
     return InMemoryConnectivityRepository(inventory)
+
+
+@pytest.fixture
+def observations(repository):
+    return InMemoryObservationRepository(servers=repository)
 
 
 @pytest.fixture
@@ -88,10 +95,11 @@ def principal(monkeypatch):
 
 
 @pytest.fixture
-def client(repository, inventory, connectivity, principal):
+def client(repository, inventory, connectivity, observations, principal):
     app.dependency_overrides[get_repository] = lambda: repository
     app.dependency_overrides[get_inventory_repository] = lambda: inventory
     app.dependency_overrides[get_connectivity_repository] = lambda: connectivity
+    app.dependency_overrides[get_observation_repository] = lambda: observations
     app.dependency_overrides[get_today_provider] = lambda: (lambda: TODAY)
     with TestClient(app, headers={"Authorization": "Bearer test-token"}) as test_client:
         yield test_client

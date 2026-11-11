@@ -69,6 +69,10 @@ EXPECTED_OPERATIONS = {
     ("get", "/services/{service_id}/dependencies"): "list_it_service_dependencies",
     ("post", "/service-dependencies"): "create_it_service_dependency",
     ("delete", "/service-dependencies/{dependency_id}"): "delete_it_service_dependency",
+    # E4.S1 — observações automáticas
+    ("post", "/collector/v1/servers/{server_id}/observations"): "ingest_it_server_observation",
+    ("get", "/servers/{server_id}/observations/latest"): "get_it_server_latest_observation",
+    ("get", "/servers/{server_id}/observations"): "list_it_server_observations",
 }
 
 

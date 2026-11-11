@@ -97,6 +97,32 @@ export type ServerNote = {
   created_at: string;
 };
 
+export type ObservationPresentationStatus = "available" | "partial" | "stale" | "unavailable";
+
+export type ObservationDivergence = {
+  field: string;
+  registered: string | null;
+  observed: string | null;
+  observed_all?: string[];
+};
+
+export type Observation = {
+  id: string;
+  server_id: string;
+  run_id: string;
+  source: string;
+  collector_client_id: string;
+  observed_at: string;
+  received_at: string;
+  schema_version: string;
+  status: "complete" | "partial" | "failed" | string;
+  summary: Record<string, unknown>;
+  sections_status: Record<string, string>;
+  divergences: ObservationDivergence[];
+  created_at: string;
+  presentation_status?: ObservationPresentationStatus | null;
+};
+
 export type HistoryEntityType =
   | "server"
   | "server_note"
@@ -561,6 +587,13 @@ export const itPortalApi = {
     apiPost<ServerNote>(apiUrl(`/servers/${encodeURIComponent(serverId)}/notes`), { body }),
   listHistory: (serverId: string, signal?: AbortSignal) =>
     apiGet<HistoryEvent[]>(apiUrl(`/servers/${encodeURIComponent(serverId)}/history`), signal),
+  getLatestObservation: (serverId: string, signal?: AbortSignal) =>
+    apiGet<Observation | null>(
+      apiUrl(`/servers/${encodeURIComponent(serverId)}/observations/latest`),
+      signal,
+    ),
+  listObservations: (serverId: string, signal?: AbortSignal) =>
+    apiGet<Observation[]>(apiUrl(`/servers/${encodeURIComponent(serverId)}/observations`), signal),
 
   listActionPlans: (query: ActionPlanListQuery, signal?: AbortSignal) =>
     apiGet<Page<ActionPlan>>(apiUrl("/action-plans", query), signal),

@@ -138,9 +138,9 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 
 ## E4.S1 — piloto automático Linux srv-api (execução autorizada, implantação condicionada)
 
-**Estado:** READY_TO_EXECUTE no escopo do produto, **NOT_IMPLEMENTED**. Autorização do PO em 10/11/2026 para avançar com o piloto. Código, configuração Keycloak, execução agendada e validação em produção ainda exigem suas evidências próprias. O executor não se autoaceita.
+**Estado:** IMPLEMENTED_PENDING_SMOKE — código/V004/S2S ingest/UI/coletor/provisioner Keycloak `--check` entregues; COMPLETE só após smoke real (diagnose + observação visível com S2S provisionado). Agendamento systemd permanece desabilitado. Apply Keycloak e timer = gates operacionais separados. O executor não se autoaceita.
 
-**BASE_HEAD de planejamento:** `025728aadaab626083247d410cab0be47f3cf226` (reancorar novamente antes de editar). **Owner:** `it-portal-api` para contratos e dados de observações; `plugins/it-portal` para visualização; executor de infraestrutura para coleta local Linux agendada. Core/Keycloak continuam owners de identidade/autorização.
+**BASE_HEAD de planejamento:** `025728aadaab626083247d410cab0be47f3cf226` (superado; reancorar no HEAD do commit E4.S1). **Owner:** `it-portal-api` para contratos e dados de observações; `plugins/it-portal` para visualização; executor de infraestrutura para coleta local Linux agendada. Core/Keycloak continuam owners de identidade/autorização.
 
 **Inventário provado:** `srv-api` Ubuntu 24.04.4 LTS em VMware; 16 vCPUs, ~23 GiB RAM, storage raiz ~197 GiB, rede principal `192.168.1.237/24`; ~114 containers Docker no momento da coleta; Zabbix Agent 2 7.0.23 ativo (hostname/memória disponíveis, chave CPU inconclusiva). Disco raiz ~83% utilizado, swap ~100% na amostra. Nada disso comprova integração automática.
 

@@ -100,6 +100,7 @@ def upgraded(fresh_database, tmp_path_factory):
     assert run_migrations() == [
         "V002__services_and_database_instances.sql",
         "V003__networks_integrations_relationships.sql",
+        "V004__server_observations.sql",
     ]
     return {"server_id": server_id, "checksum_v1": checksum_v1}
 
@@ -115,7 +116,7 @@ def pg_client(upgraded, principal):
 def test_v002_upgrade_preserves_etapa1_data_and_checksum(upgraded, pg_client):
     assert run_migrations() == []
     rows = _exec("SELECT version, checksum FROM it_portal.schema_migrations ORDER BY version")
-    assert [row["version"] for row in rows] == [1, 2, 3]
+    assert [row["version"] for row in rows] == [1, 2, 3, 4]
     assert rows[0]["checksum"] == upgraded["checksum_v1"]
 
     server = pg_client.get(f"/servers/{upgraded['server_id']}").json()["data"]

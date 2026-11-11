@@ -136,6 +136,27 @@
   font-size: 0.8125rem;
 }
 
+.dashboard-it-portal .itp-plain-list {
+  margin: 8px 0 0;
+  padding-left: 1.1rem;
+  color: var(--itp-text);
+  font-size: 0.875rem;
+}
+
+.dashboard-it-portal .itp-plain-list li + li {
+  margin-top: 4px;
+}
+
+.dashboard-it-portal .itp-subsection-title {
+  margin: 16px 0 4px;
+  font-size: 0.9375rem;
+  color: var(--itp-title);
+}
+
+.dashboard-it-portal .itp-observation-divergences {
+  margin: 12px 0 4px;
+}
+
 .dashboard-it-portal .itp-code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.8125rem;

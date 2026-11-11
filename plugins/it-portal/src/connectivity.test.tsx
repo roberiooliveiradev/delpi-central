@@ -241,6 +241,7 @@ function serverPageRoutes(caps: Capabilities) {
     [`/servers/${SERVER_ID}`]: { data: server() },
     [`/servers/${SERVER_ID}/notes`]: { data: [] },
     [`/servers/${SERVER_ID}/history`]: { data: [] },
+    [`/servers/${SERVER_ID}/observations/latest`]: { data: null },
     [`/servers/${SERVER_ID}/service-hostings`]: { data: [HOSTING] },
     "/database-instances": page([]),
     [`/servers/${SERVER_ID}/network-links`]: { data: [LINK] },

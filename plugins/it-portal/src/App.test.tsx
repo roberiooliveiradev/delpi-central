@@ -164,6 +164,7 @@ describe("servers", () => {
       [`/servers/${SERVER_ID}`]: { data: server() },
       [`/servers/${SERVER_ID}/notes`]: { data: [] },
       [`/servers/${SERVER_ID}/history`]: { data: [] },
+      [`/servers/${SERVER_ID}/observations/latest`]: { data: null },
       "/action-plans": { data: { items: [], total: 0, page: 1, page_size: 20 } },
     });
     renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
@@ -185,6 +186,7 @@ describe("servers", () => {
       },
       [`/servers/${SERVER_ID}/notes`]: { data: [] },
       [`/servers/${SERVER_ID}/history`]: { data: [] },
+      [`/servers/${SERVER_ID}/observations/latest`]: { data: null },
       "/action-plans": { data: { items: [], total: 0, page: 1, page_size: 20 } },
     });
     renderAt(`/apps/it-portal/servers/${SERVER_ID}`);

@@ -522,6 +522,39 @@ class ServiceDependencyOut(BaseModel):
     required_service: ServiceSummaryOut
 
 
+class HostIdentityInput(_Input):
+    hostname: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    machine_id: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+
+
+class ObservationIngestInput(_Input):
+    run_id: str | None = Field(default=None, max_length=64)
+    source: str | None = Field(default=None, max_length=40)
+    schema_version: str | None = Field(default=None, max_length=16)
+    status: str | None = Field(default=None, max_length=20)
+    observed_at: str | None = Field(default=None, max_length=64)
+    host_identity: HostIdentityInput | None = None
+    summary: dict | None = None
+    sections_status: dict[str, str] | None = None
+
+
+class ObservationOut(BaseModel):
+    id: str
+    server_id: str
+    run_id: str
+    source: str
+    collector_client_id: str
+    observed_at: datetime
+    received_at: datetime
+    schema_version: str
+    status: str
+    summary: dict
+    sections_status: dict
+    divergences: list
+    created_at: datetime
+    presentation_status: str | None = None
+
+
 class HealthOut(BaseModel):
     status: str
     service: str

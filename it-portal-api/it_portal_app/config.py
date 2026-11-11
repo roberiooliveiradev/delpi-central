@@ -47,6 +47,13 @@ class Settings:
         "IT_PORTAL_RUN_MIGRATIONS_ON_STARTUP", default="false"
     ).lower() in ("1", "true", "yes")
 
+    # E4.S1 — ingestão S2S do coletor Linux (fail-closed se vazio na rota).
+    S2S_AUDIENCE: str = _get_env("S2S_AUDIENCE", default="")
+    S2S_ALLOWED_CLIENTS: str = _get_env("S2S_ALLOWED_CLIENTS", default="")
+    IT_PORTAL_COLLECTOR_SERVER_ALLOWLIST: str = _get_env(
+        "IT_PORTAL_COLLECTOR_SERVER_ALLOWLIST", default=""
+    )
+
 
 settings = Settings()
 

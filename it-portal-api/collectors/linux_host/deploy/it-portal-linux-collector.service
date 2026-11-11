@@ -1,0 +1,26 @@
+[Unit]
+Description=Portal de TI — coletor Linux de inventário automático (E4.S1)
+Documentation=file:///opt/delpi/it-portal-collector/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=delpi-collector
+Group=delpi-collector
+# Não elevar privilégios; Docker só se o usuário já tiver acesso ao grupo.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/it-portal-collector
+WorkingDirectory=/opt/delpi/it-portal-collector
+EnvironmentFile=-/etc/delpi/it-portal-linux-collector.env
+# flock evita overlap se o timer disparar com execução anterior ainda ativa.
+ExecStart=/usr/bin/flock -n /var/lib/it-portal-collector/collector.lock \
+  /usr/bin/python3 -m collectors.linux_host submit
+Nice=10
+
+[Install]
+# Unidade preparada e DESABILITADA até gate operacional de agendamento.
+# WantedBy propositalmente omitido — habilitar só com autorização explícita.

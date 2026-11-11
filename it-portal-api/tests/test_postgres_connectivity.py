@@ -135,7 +135,10 @@ def upgraded(fresh_database, tmp_path_factory):
         for table in ("servers", "services", "service_hostings", "audit_events")
     }
 
-    assert run_migrations() == ["V003__networks_integrations_relationships.sql"]
+    assert run_migrations() == [
+        "V003__networks_integrations_relationships.sql",
+        "V004__server_observations.sql",
+    ]
     return {
         "server_id": server_id,
         "service_id": service_id,
@@ -154,7 +157,7 @@ def pg_client(upgraded, principal):
 def test_v003_upgrade_preserves_e2a_data_and_checksums(upgraded, pg_client):
     assert run_migrations() == []
     rows = _exec("SELECT version, checksum FROM it_portal.schema_migrations ORDER BY version")
-    assert [row["version"] for row in rows] == [1, 2, 3]
+    assert [row["version"] for row in rows] == [1, 2, 3, 4]
     assert {row["version"]: row["checksum"] for row in rows if row["version"] < 3} == upgraded[
         "checksums"
     ]

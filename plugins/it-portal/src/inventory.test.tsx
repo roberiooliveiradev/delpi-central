@@ -191,6 +191,7 @@ function serverDetailRoutes(caps: Capabilities) {
     [`/servers/${SERVER_ID}`]: { data: server() },
     [`/servers/${SERVER_ID}/notes`]: { data: [] },
     [`/servers/${SERVER_ID}/history`]: { data: [] },
+    [`/servers/${SERVER_ID}/observations/latest`]: { data: null },
     [`/servers/${SERVER_ID}/service-hostings`]: { data: [HOSTING] },
     "/database-instances": page([database()]),
     [`DELETE /service-hostings/${HOSTING_ID}`]: { data: { id: HOSTING_ID } },
@@ -245,6 +246,7 @@ describe("help", () => {
     expect(await screen.findByRole("heading", { name: "Cadastrar serviços e aplicações" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Inventariar instâncias de bancos de dados" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Ligar serviços, servidores e bancos" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Ler o inventário automático do servidor" })).toBeTruthy();
     expect(screen.getAllByText("Gerenciar bancos de dados").length).toBeGreaterThan(0);
     expect(screen.getByText("Remover um vínculo apaga o serviço ou o servidor?")).toBeTruthy();
   });
@@ -354,6 +356,59 @@ describe("server detail — linked components", () => {
     expect(await screen.findByText("Bancos de dados associados")).toBeTruthy();
     expect(screen.queryByText("Serviços hospedados")).toBeNull();
     expect(requestedPaths(fetchMock).some((p) => p.includes("service-hostings"))).toBe(false);
+  });
+
+  it("shows automatic inventory empty state", async () => {
+    mockApi(serverDetailRoutes(INVENTORY_VIEWER));
+    renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
+    expect(
+      await screen.findByText(/Nenhuma observação automática registrada/),
+    ).toBeTruthy();
+  });
+
+  it("shows automatic inventory snapshot, divergences and partial docker", async () => {
+    const observation = {
+      id: "obs-1",
+      server_id: SERVER_ID,
+      run_id: "run-test-0001",
+      source: "linux_host_collector",
+      collector_client_id: "it-portal-host-collector",
+      observed_at: "2026-11-11T10:00:00Z",
+      received_at: "2026-11-11T10:00:05Z",
+      schema_version: "1",
+      status: "partial",
+      summary: {
+        os: { name: "Ubuntu", version: "24.04", kernel: "6.8.0", architecture: "x86_64" },
+        cpu_logical: 8,
+        memory: { total_bytes: 16_000_000_000, available_bytes: 8_000_000_000 },
+        host_nics: [{ name: "eth0", addresses: ["192.168.1.237/24"], state: "up" }],
+        volumes: [{ mount_point: "/", size_bytes: 100, used_bytes: 40, used_percent: 40 }],
+        systemd_services: [{ name: "docker.service", active_state: "active", sub_state: "running" }],
+        docker_summary: { available: false, unavailable_reason: "no_permission" },
+      },
+      sections_status: { os: "ok", docker: "unavailable" },
+      divergences: [
+        {
+          field: "operating_system",
+          registered: "Windows Server 2022",
+          observed: "Ubuntu 24.04",
+        },
+      ],
+      created_at: "2026-11-11T10:00:05Z",
+      presentation_status: "partial",
+    };
+    const fetchMock = mockApi({
+      ...serverDetailRoutes(INVENTORY_VIEWER),
+      [`/servers/${SERVER_ID}/observations/latest`]: { data: observation },
+    });
+    renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
+    await waitFor(() =>
+      expect(requestedPaths(fetchMock).some((p) => p.endsWith("/observations/latest"))).toBe(true),
+    );
+    expect(await screen.findByText("SO e hardware")).toBeTruthy();
+    expect(screen.getByText("Parcial")).toBeTruthy();
+    expect(screen.getByText(/Divergências em relação ao cadastro/)).toBeTruthy();
+    expect(screen.getByText(/Docker indisponível/)).toBeTruthy();
   });
 });
 

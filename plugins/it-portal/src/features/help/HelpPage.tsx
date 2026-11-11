@@ -9,6 +9,7 @@ const SERVICE_KIND_LABEL_HELP = {
 const SECTIONS = [
   { id: "overview", label: "Visão geral" },
   { id: "servers", label: "Servidores" },
+  { id: "auto-inventory", label: "Inventário automático" },
   { id: "services", label: "Serviços e aplicações" },
   { id: "databases", label: "Bancos de dados" },
   { id: "links", label: "Vínculos" },
@@ -58,7 +59,7 @@ export function HelpPage() {
                 {
                   term: "Fora desta etapa",
                   meaning:
-                    "Monitoramento, descoberta automática, varredura de rede, agentes, integração com GLPI ou Zabbix, mapa visual de dependências, análise de impacto, notificações e anexos ainda não estão disponíveis.",
+                    "Monitoramento contínuo, varredura de rede, integração com GLPI/Zabbix como fonte canônica, mapa visual de dependências, análise de impacto, notificações e anexos ainda não estão disponíveis. O inventário automático Linux é um snapshot complementar ao cadastro manual.",
                 },
               ]}
             />
@@ -94,6 +95,39 @@ export function HelpPage() {
             <Manual.Scope>
               O hostname é único por unidade e ambiente: o mesmo hostname pode existir em Produção e Homologação, mas não
               duas vezes no mesmo ambiente da mesma unidade.
+            </Manual.Scope>
+          </Manual.Section>
+
+          <Manual.Section id="itp-manual-auto-inventory">
+            <Manual.Eyebrow>Inventário automático</Manual.Eyebrow>
+            <h2>Ler o inventário automático do servidor</h2>
+            <Manual.Concepts
+              items={[
+                {
+                  term: "O que é",
+                  meaning:
+                    "Snapshot técnico coletado no próprio host Linux (SO, CPU, memória, volumes, interfaces de host, serviços da allowlist e resumo Docker quando acessível). Complementa o cadastro manual; não o substitui.",
+                },
+                {
+                  term: "Onde ver",
+                  meaning:
+                    "No detalhe do servidor, seção «Inventário automático». Exige a mesma permissão de visualizar servidores.",
+                },
+                {
+                  term: "Divergências",
+                  meaning:
+                    "Quando hostname, sistema operacional ou IP observado diferem do cadastro, a seção destaca a diferença. Nesta etapa a correção do cadastro continua manual.",
+                },
+                {
+                  term: "Status",
+                  meaning:
+                    "Disponível, parcial, desatualizada (após ~36h) ou indisponível. Coletas parciais (ex.: Docker sem permissão) não apagam o restante do snapshot.",
+                },
+              ]}
+            />
+            <Manual.Scope>
+              O coletor é somente leitura e não-root. Agendamento e envio autenticado máquina-a-máquina ficam atrás de
+              gates operacionais; o cadastro manual nunca é alterado automaticamente pela observação.
             </Manual.Scope>
           </Manual.Section>
 

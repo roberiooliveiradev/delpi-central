@@ -13,10 +13,12 @@ from it_portal_app.application.dashboard_service import DashboardService
 from it_portal_app.application.database_inventory import DatabaseInventory
 from it_portal_app.application.integration_inventory import IntegrationInventory
 from it_portal_app.application.network_inventory import NetworkInventory
+from it_portal_app.application.observation_service import ObservationService
 from it_portal_app.application.ports import (
     ConnectivityRepository,
     InventoryRepository,
     ItPortalRepository,
+    ObservationRepository,
 )
 from it_portal_app.application.server_service import ServerService
 from it_portal_app.application.service_inventory import ServiceInventory
@@ -25,6 +27,9 @@ from it_portal_app.infrastructure.persistence.postgres_connectivity_repository i
 )
 from it_portal_app.infrastructure.persistence.postgres_inventory_repository import (
     PostgresInventoryRepository,
+)
+from it_portal_app.infrastructure.persistence.postgres_observation_repository import (
+    PostgresObservationRepository,
 )
 from it_portal_app.infrastructure.persistence.postgres_repository import (
     PostgresItPortalRepository,
@@ -95,3 +100,14 @@ def get_dashboard_service(
     today: Callable[[], date] = Depends(get_today_provider),
 ) -> DashboardService:
     return DashboardService(repository, today)
+
+
+def get_observation_repository() -> ObservationRepository:
+    return PostgresObservationRepository()
+
+
+def get_observation_service(
+    observations: ObservationRepository = Depends(get_observation_repository),
+    servers: ItPortalRepository = Depends(get_repository),
+) -> ObservationService:
+    return ObservationService(observations, servers)

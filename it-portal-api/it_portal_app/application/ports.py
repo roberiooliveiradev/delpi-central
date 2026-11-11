@@ -12,6 +12,7 @@ from it_portal_app.domain.integrations import IntegrationFields, ServiceDependen
 from it_portal_app.domain.inventory_links import ConsumerFields, HostingFields
 from it_portal_app.domain.it_services import ServiceFields
 from it_portal_app.domain.networks import NetworkFields, ServerNetworkLinkFields
+from it_portal_app.domain.observations import ObservationIngest
 from it_portal_app.domain.servers import ServerFields
 
 
@@ -381,3 +382,27 @@ class ConnectivityRepository(Protocol):
     ) -> dict: ...
 
     def delete_dependency(self, dependency_id: str, actor: Actor, audit: AuditEvent) -> bool: ...
+
+
+class ObservationRepository(Protocol):
+    """Observações automáticas de servidores (E4.S1).
+
+    Idempotência por `run_id`. Nunca cria nem altera o cadastro manual do servidor.
+    """
+
+    def get_by_run_id(self, run_id: str) -> dict | None: ...
+
+    def get_latest_for_server(self, server_id: str) -> dict | None: ...
+
+    def list_for_server(self, server_id: str, *, limit: int) -> list[dict]: ...
+
+    def insert_observation(
+        self,
+        observation_id: str,
+        server_id: str,
+        ingest: ObservationIngest,
+        *,
+        collector_client_id: str,
+        divergences: list[dict],
+        retention: int,
+    ) -> dict: ...

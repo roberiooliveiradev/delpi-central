@@ -66,6 +66,7 @@ def migrated(database):
         "V001__create_it_portal_schema.sql",
         "V002__services_and_database_instances.sql",
         "V003__networks_integrations_relationships.sql",
+        "V004__server_observations.sql",
     ]
     return database
 
@@ -94,6 +95,7 @@ def test_migrations_are_idempotent(migrated):
         (1, "V001__create_it_portal_schema.sql"),
         (2, "V002__services_and_database_instances.sql"),
         (3, "V003__networks_integrations_relationships.sql"),
+        (4, "V004__server_observations.sql"),
     ]
 
 

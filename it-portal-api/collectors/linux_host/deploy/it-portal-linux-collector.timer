@@ -1,0 +1,13 @@
+[Unit]
+Description=Portal de TI — agendamento do coletor Linux (desabilitado até gate)
+Requires=it-portal-linux-collector.service
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=5m
+Unit=it-portal-linux-collector.service
+
+[Install]
+# Timer preparado e DESABILITADO. Não habilitar em produção sem gate S2S + PO.
+# WantedBy=timers.target

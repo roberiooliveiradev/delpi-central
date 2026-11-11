@@ -23,6 +23,7 @@ import { buildPath } from "../../app/routes";
 import { SERVER_FIELD_LABELS, SERVER_TYPE_LABELS, UNIT_LABELS } from "../../content/labels";
 import { ActionPlanFormModal } from "../action-plans/ActionPlanModals";
 import { ActionPlanTable, useListState } from "../action-plans/ActionPlanTable";
+import { ServerAutomaticInventorySection } from "./ServerAutomaticInventorySection";
 import { ServerComponentsSections } from "./ServerComponentsSections";
 import { ServerFormModal, useInvalidateInventory } from "./ServerFormModal";
 import { ServerHistorySection } from "./ServerHistorySection";
@@ -166,6 +167,8 @@ export function ServerDetailPage({ serverId }: { serverId: string }) {
       ) : null}
 
       <ServerComponentsSections server={server} />
+
+      <ServerAutomaticInventorySection serverId={server.id} />
 
       <ServerNotesSection server={server} />
       <ServerHistorySection serverId={server.id} />

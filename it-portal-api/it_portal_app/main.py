@@ -16,6 +16,9 @@ from it_portal_app.domain.errors import DomainError
 from it_portal_app.interface.http.routes.action_plans_routes import (
     router as action_plans_router,
 )
+from it_portal_app.interface.http.routes.collector_routes import (
+    router as collector_router,
+)
 from it_portal_app.interface.http.routes.overview_routes import (
     router as overview_router,
 )
@@ -34,6 +37,7 @@ from it_portal_app.interface.http.routes.servers_routes import (
 from it_portal_app.interface.http.routes.services_routes import (
     router as services_router,
 )
+from it_portal_app.interface.http.s2s_auth import S2SHttpException
 from it_portal_app.middleware.auth_middleware import jwt_middleware
 from it_portal_app.observability import configure_logging, request_context_middleware
 from it_portal_app.startup.run_migrations_on_startup import run_migrations_on_startup
@@ -58,11 +62,11 @@ app = FastAPI(
     title="IT Portal API",
     description=(
         "BFF do Portal de TI DELPI — inventário de servidores, notas técnicas, "
-        "planos de ação, serviços/aplicações, instâncias de banco de dados e "
-        "vínculos entre eles. Todas as rotas de dados exigem JWT Keycloak e "
-        "permissões efetivas resolvidas pelo Core."
+        "planos de ação, serviços/aplicações, bancos, redes, integrações e "
+        "observações automáticas. Rotas humanas exigem JWT Keycloak e "
+        "permissões do Core; ingestão do coletor usa S2S individual."
     ),
-    version="0.3.0",
+    version="0.4.0",
     root_path=settings.IT_PORTAL_API_ROOT_PATH,
     lifespan=lifespan,
     redirect_slashes=False,
@@ -103,6 +107,16 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
+@app.exception_handler(S2SHttpException)
+async def s2s_exception_handler(request: Request, exc: S2SHttpException):
+    return fail(
+        exc.detail if isinstance(exc.detail, str) else "Forbidden",
+        exc.status_code,
+        data={"error": {"code": exc.error_code, "details": None}},
+        operation_id=_operation_id(request),
+    )
+
+
 app.middleware("http")(jwt_middleware)
 app.middleware("http")(request_context_middleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -121,6 +135,7 @@ app.include_router(services_router)
 app.include_router(database_router)
 app.include_router(network_router)
 app.include_router(integration_router)
+app.include_router(collector_router)
 
 
 def custom_openapi():
