@@ -201,7 +201,7 @@ def _windows_observation_body(hostname="srv-erp-01.delpi.local", **overrides):
 def test_windows_ingest_s2s_binding_latest_replay_and_manual_inventory_intact(
     client, pilot_server, collector_auth, monkeypatch, observations
 ):
-    windows_client = "it-portal-windows-srv-db01"
+    windows_client = "it-portal-windows-pilot01"
     collector_auth.identity = _identity(client_id=windows_client)
     monkeypatch.setenv(
         "IT_PORTAL_WINDOWS_COLLECTOR_BINDINGS",
@@ -230,7 +230,7 @@ def test_windows_ingest_s2s_binding_latest_replay_and_manual_inventory_intact(
 def test_windows_ingest_fails_closed_without_binding(
     client, pilot_server, collector_auth, monkeypatch
 ):
-    collector_auth.identity = _identity(client_id="it-portal-windows-srv-db01")
+    collector_auth.identity = _identity(client_id="it-portal-windows-pilot01")
     monkeypatch.delenv("IT_PORTAL_WINDOWS_COLLECTOR_BINDINGS", raising=False)
     response = client.post(
         f"/collector/v1/servers/{pilot_server['id']}/observations",
@@ -246,7 +246,7 @@ def test_windows_ingest_rejects_other_client_even_if_server_is_allowlisted(
 ):
     monkeypatch.setenv(
         "IT_PORTAL_WINDOWS_COLLECTOR_BINDINGS",
-        f"it-portal-windows-srv-db01={pilot_server['id']}",
+        f"it-portal-windows-pilot01={pilot_server['id']}",
     )
     # Reutilizar identidade Linux não autoriza enviar payload Windows.
     response = client.post(
@@ -261,7 +261,7 @@ def test_windows_ingest_rejects_other_client_even_if_server_is_allowlisted(
 def test_windows_ingest_rejects_hostname_mismatch(
     client, pilot_server, collector_auth, monkeypatch
 ):
-    windows_client = "it-portal-windows-srv-db01"
+    windows_client = "it-portal-windows-pilot01"
     collector_auth.identity = _identity(client_id=windows_client)
     monkeypatch.setenv(
         "IT_PORTAL_WINDOWS_COLLECTOR_BINDINGS",
