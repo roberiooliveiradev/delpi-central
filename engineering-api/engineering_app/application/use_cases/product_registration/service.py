@@ -52,6 +52,7 @@ from engineering_app.domain.product_registration.models import (
 
 _ALLOWED_SOURCES_DEFAULT = (
     "portal-engineering",
+    "my-requests",
     "eva",
     "engineering-test",
 )
@@ -356,9 +357,8 @@ class ProductRegistrationService:
                     else None
                 ),
                 "note": (
-                    "Solicitante sem engineering.access exige decisão "
-                    "Core/Coordination; superfície atual reutiliza "
-                    "ENG_ACCESS + object AuthZ (intake dual-role)."
+                    "Solicitante sem engineering.access e sem "
+                    "my-requests.raw-material-creation.create não corrige."
                     if not actor.has_action_permission(
                         "save_returned_fields"
                     )
@@ -1352,9 +1352,7 @@ class ProductRegistrationService:
             )
         if not actor.has_action_permission("save_returned_fields"):
             raise PrcForbiddenError(
-                "Sem permissão para corrigir campos devolvidos "
-                "(ARCHITECTURE_DECISION_REQUIRED: solicitante sem "
-                "engineering.access)."
+                "Sem permissão para corrigir campos devolvidos."
             )
         fp = _fingerprint(
             {

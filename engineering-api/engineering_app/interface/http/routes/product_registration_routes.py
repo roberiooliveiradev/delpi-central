@@ -33,7 +33,11 @@ from engineering_app.domain.product_registration.errors import (
     PrcUnverifiableFieldError,
     PrcValidationError,
 )
-from engineering_app.domain.product_registration.models import ENG_ACCESS
+from engineering_app.domain.product_registration.models import (
+    ENG_ACCESS,
+    MR_ACCESS,
+    MR_PRC_CREATE,
+)
 from engineering_app.infrastructure.gateways.core_identity_lookup import (
     collect_identity_subjects,
     enrich_queue_items,
@@ -53,6 +57,14 @@ router = APIRouter()
 _READ_PERMS = [ENG_ACCESS]
 _PROCESS_PERMS = [ENG_ACCESS]
 _CREATE_PERMS = [ENG_ACCESS]
+
+# PRC-REF-023-F04 — superfícies do solicitante de Minhas Solicitações.
+# Leitura: qualquer usuário do módulo my-requests pode ler *o próprio*
+# caso (object AuthZ no service). Escrita/insumos de formulário: exige
+# o código de criação de matéria-prima. Nenhum papel novo é criado;
+# operações de atendimento permanecem exclusivas de ENG_ACCESS.
+_REQUESTER_READ_PERMS = [ENG_ACCESS, MR_ACCESS, MR_PRC_CREATE]
+_REQUESTER_WRITE_PERMS = [ENG_ACCESS, MR_PRC_CREATE]
 
 
 def _user(operation_id: str):
@@ -357,7 +369,7 @@ class FlagActionBody(BaseModel):
     operation_id="prc_intake_submit",
     summary="01 — Intake versionado de solicitação create/update",
 )
-@require_any_permission(_CREATE_PERMS)
+@require_any_permission(_REQUESTER_WRITE_PERMS)
 async def prc_intake_submit(
     body: IntakeBody = Body(...),
     idempotency_key: str | None = Header(default=None, max_length=200),
@@ -419,7 +431,7 @@ async def prc_intake_submit(
     operation_id="prc_list_requests",
     summary="02 — Fila paginada e filtrada (escopo do ator)",
 )
-@require_any_permission(_READ_PERMS)
+@require_any_permission(_REQUESTER_READ_PERMS)
 async def prc_list_requests(
     status: str | None = Query(default=None, max_length=32),
     type: str | None = Query(default=None, pattern="^(create|update)$"),
@@ -465,7 +477,7 @@ async def prc_list_requests(
     operation_id="prc_get_request",
     summary="03 — Detalhe do caso (draft, versão, ações permitidas)",
 )
-@require_any_permission(_READ_PERMS)
+@require_any_permission(_REQUESTER_READ_PERMS)
 async def prc_get_request(request_id: str = Path(...)):
     op = "prc_get_request"
     user, denied = _user(op)
@@ -490,7 +502,7 @@ async def prc_get_request(request_id: str = Path(...)):
     operation_id="prc_get_timeline",
     summary="04 — Histórico append-only do caso",
 )
-@require_any_permission(_READ_PERMS)
+@require_any_permission(_REQUESTER_READ_PERMS)
 async def prc_get_timeline(
     request_id: str = Path(...),
     page: int = Query(default=1, ge=1),
@@ -669,7 +681,7 @@ async def prc_action_return_for_correction(
     operation_id="prc_update_returned_fields",
     summary="PRC-REF-022 — Solicitante corrige campos devolvidos",
 )
-@require_any_permission(_PROCESS_PERMS)
+@require_any_permission(_REQUESTER_WRITE_PERMS)
 async def prc_update_returned_fields(
     request_id: str = Path(...),
     body: UpdateReturnedFieldsBody = Body(...),
@@ -701,7 +713,7 @@ async def prc_update_returned_fields(
     operation_id="prc_action_resubmit_correction",
     summary="PRC-REF-022 — Reenviar correção para Engenharia",
 )
-@require_any_permission(_PROCESS_PERMS)
+@require_any_permission(_REQUESTER_WRITE_PERMS)
 async def prc_action_resubmit_correction(
     request_id: str = Path(...),
     body: ActionBody = Body(...),
@@ -732,7 +744,7 @@ async def prc_action_resubmit_correction(
     operation_id="prc_list_correction_returns",
     summary="PRC-REF-022 — Listar ciclos de devolução",
 )
-@require_any_permission(_PROCESS_PERMS)
+@require_any_permission(_REQUESTER_READ_PERMS)
 async def prc_list_correction_returns(request_id: str = Path(...)):
     op = "prc_list_correction_returns"
     user, denied = _user(op)
@@ -755,7 +767,7 @@ async def prc_list_correction_returns(request_id: str = Path(...)):
     operation_id="prc_get_correction_return",
     summary="PRC-REF-022 — Detalhe de um ciclo de devolução",
 )
-@require_any_permission(_PROCESS_PERMS)
+@require_any_permission(_REQUESTER_READ_PERMS)
 async def prc_get_correction_return(
     request_id: str = Path(...),
     return_id: str = Path(...),
@@ -836,7 +848,7 @@ def _answers_payload(answers) -> list[dict]:
     operation_id="prc_information_round_list",
     summary="PRC-REF-019 — Listar rodadas de esclarecimento do caso",
 )
-@require_any_permission(_READ_PERMS)
+@require_any_permission(_REQUESTER_READ_PERMS)
 async def prc_information_round_list(request_id: str = Path(...)):
     op = "prc_information_round_list"
     user, denied = _user(op)
@@ -859,7 +871,7 @@ async def prc_information_round_list(request_id: str = Path(...)):
     operation_id="prc_information_round_get",
     summary="PRC-REF-019 — Detalhe de uma rodada de esclarecimento",
 )
-@require_any_permission(_READ_PERMS)
+@require_any_permission(_REQUESTER_READ_PERMS)
 async def prc_information_round_get(
     request_id: str = Path(...), round_id: str = Path(...),
 ):
@@ -887,7 +899,7 @@ async def prc_information_round_get(
     operation_id="prc_information_round_draft_answers",
     summary="PRC-REF-019 — Salvar rascunho de respostas (solicitante)",
 )
-@require_any_permission(_PROCESS_PERMS)
+@require_any_permission(_REQUESTER_WRITE_PERMS)
 async def prc_information_round_draft_answers(
     request_id: str = Path(...),
     round_id: str = Path(...),
@@ -922,7 +934,7 @@ async def prc_information_round_draft_answers(
     operation_id="prc_information_round_submit_answers",
     summary="PRC-REF-019 — Enviar respostas ao analista (solicitante)",
 )
-@require_any_permission(_PROCESS_PERMS)
+@require_any_permission(_REQUESTER_WRITE_PERMS)
 async def prc_information_round_submit_answers(
     request_id: str = Path(...),
     round_id: str = Path(...),
@@ -1259,7 +1271,7 @@ async def prc_get_revision(
     operation_id="prc_reference_data",
     summary="16 — Catálogo de campos, tipos e política de dados",
 )
-@require_any_permission(_READ_PERMS + _CREATE_PERMS)
+@require_any_permission(_REQUESTER_WRITE_PERMS)
 async def prc_reference_data():
     op = "prc_reference_data"
     user, denied = _user(op)
@@ -1310,7 +1322,7 @@ async def _delegated_get(user, op: str, path: str, params: dict):
     operation_id="prc_edit_context",
     summary="16a — Contexto oficial de edição (SB1 + SA5)",
 )
-@require_any_permission(_READ_PERMS + _CREATE_PERMS)
+@require_any_permission(_REQUESTER_WRITE_PERMS)
 async def prc_edit_context(
     official_code: str = Path(..., max_length=60),
 ):
@@ -1352,7 +1364,7 @@ async def prc_edit_context(
     operation_id="prc_catalog_items",
     summary="16b — Catálogos TOTVS read-only da ficha técnica",
 )
-@require_any_permission(_READ_PERMS + _CREATE_PERMS)
+@require_any_permission(_REQUESTER_WRITE_PERMS)
 async def prc_catalog_items(
     catalog: str = Path(...),
     query: str | None = Query(default=None, max_length=60),
@@ -1379,7 +1391,7 @@ async def prc_catalog_items(
     operation_id="prc_supplier_search",
     summary="16c — Busca de fornecedores SA2 (código ou nome)",
 )
-@require_any_permission(_READ_PERMS + _CREATE_PERMS)
+@require_any_permission(_REQUESTER_WRITE_PERMS)
 async def prc_supplier_search(
     query: str = Query(..., min_length=2, max_length=80),
     page: int = Query(default=1, ge=1),
@@ -1828,7 +1840,7 @@ _ATT_MAX_BYTES = 10 * 1024 * 1024  # espelha domain.attachments (10 MB)
     operation_id="prc_attachment_upload",
     summary="PRC-REF-023 — Upload de documento de apoio (opcional)",
 )
-@require_any_permission(_CREATE_PERMS)
+@require_any_permission(_REQUESTER_WRITE_PERMS)
 async def prc_attachment_upload(
     request_id: str = Path(...),
     file: UploadFile = File(...),
@@ -1871,7 +1883,7 @@ async def prc_attachment_upload(
     operation_id="prc_attachments_list",
     summary="PRC-REF-023 — Documentos de apoio do caso",
 )
-@require_any_permission(_READ_PERMS)
+@require_any_permission(_REQUESTER_READ_PERMS)
 async def prc_attachments_list(request_id: str = Path(...)):
     op = "prc_attachments_list"
     user, denied = _user(op)
@@ -1894,7 +1906,7 @@ async def prc_attachments_list(request_id: str = Path(...)):
     operation_id="prc_attachment_download",
     summary="PRC-REF-023 — Download autorizado de documento",
 )
-@require_any_permission(_READ_PERMS)
+@require_any_permission(_REQUESTER_READ_PERMS)
 async def prc_attachment_download(
     request_id: str = Path(...),
     attachment_id: str = Path(...),

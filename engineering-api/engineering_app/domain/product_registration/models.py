@@ -33,6 +33,15 @@ REQUEST_TYPES: tuple[str, ...] = ("create", "update")
 ENG_ACCESS = "engineering.access"
 ENG_MANAGER = "engineering.manager"
 
+# PRC-REF-023-F04 — solicitante de Minhas Solicitações (decisão PO):
+# opera o próprio caso PRC sem ``engineering.access``. São os códigos
+# já governados pelo Core para o módulo my-requests — nenhum papel novo
+# é criado. A object AuthZ do service restringe cada operação ao
+# requester/assigned do caso; ``is_analyst``/fila global continuam
+# exclusivos de ``engineering.access``.
+MR_ACCESS = "my-requests.access"
+MR_PRC_CREATE = "my-requests.raw-material-creation.create"
+
 # Transições de workflow — ação → (origens válidas, destino).
 _TRANSITIONS: dict[str, tuple[frozenset[str], str]] = {
     "start": (frozenset({"submitted"}), "in_progress"),
@@ -99,24 +108,25 @@ _ACTIONS_BY_STATUS: dict[str, tuple[str, ...]] = {
     "rejected": (),
 }
 
-# Ação → permissão exigida — modelo de duas permissões (PO).
-# save_returned_fields/resubmit: superfície atual exige ENG_ACCESS
-# (intake já usa o mesmo modelo); object AuthZ restringe ao requester.
-# Solicitante sem engineering.access = ARCHITECTURE_DECISION_REQUIRED.
-_ACTION_PERMISSION: dict[str, tuple[str, ...]] = {
-    "start": (ENG_ACCESS,),
-    "edit_draft": (ENG_ACCESS,),
-    "request_information": (ENG_ACCESS,),
-    "resume": (ENG_ACCESS,),
-    "submit_review": (ENG_ACCESS,),
-    "return_to_attendance": (ENG_ACCESS,),
-    "return_for_correction": (ENG_ACCESS,),
-    "save_returned_fields": (ENG_ACCESS,),
-    "resubmit_correction": (ENG_ACCESS,),
-    "complete": (ENG_ACCESS,),
-    "reject": (ENG_ACCESS,),
-    "verify_and_complete": (ENG_ACCESS,),
-    "route_divergence": (ENG_ACCESS,),
+# Ação → conjuntos alternativos de permissão (OR de ANDs).
+# Ações de atendimento continuam exclusivas de ENG_ACCESS.
+# PRC-REF-023-F04: save_returned_fields/resubmit_correction também
+# aceitam o código de criação de Minhas Solicitações — o service ainda
+# exige object AuthZ (somente o requester do caso corrige/reenvia).
+_ACTION_PERMISSION: dict[str, tuple[tuple[str, ...], ...]] = {
+    "start": ((ENG_ACCESS,),),
+    "edit_draft": ((ENG_ACCESS,),),
+    "request_information": ((ENG_ACCESS,),),
+    "resume": ((ENG_ACCESS,),),
+    "submit_review": ((ENG_ACCESS,),),
+    "return_to_attendance": ((ENG_ACCESS,),),
+    "return_for_correction": ((ENG_ACCESS,),),
+    "save_returned_fields": ((ENG_ACCESS,), (MR_PRC_CREATE,)),
+    "resubmit_correction": ((ENG_ACCESS,), (MR_PRC_CREATE,)),
+    "complete": ((ENG_ACCESS,),),
+    "reject": ((ENG_ACCESS,),),
+    "verify_and_complete": ((ENG_ACCESS,),),
+    "route_divergence": ((ENG_ACCESS,),),
 }
 
 # PRC-REF-021 — decisões de encaminhamento por item divergente (legado).
@@ -158,11 +168,19 @@ class PrcActor:
 
     @property
     def can_create(self) -> bool:
-        return self._access
+        # Engenheiro cria pelo Portal; solicitante cria pelo código de
+        # matéria-prima de Minhas Solicitações (PRC-REF-023-F04).
+        return self._access or self._has(MR_PRC_CREATE)
 
     @property
     def can_read(self) -> bool:
-        return self._access
+        # Escopo do objeto é decidido no service: analista vê a fila
+        # global; demais atores só os próprios casos.
+        return (
+            self._access
+            or self._has(MR_ACCESS)
+            or self._has(MR_PRC_CREATE)
+        )
 
     @property
     def can_process(self) -> bool:
@@ -185,8 +203,11 @@ class PrcActor:
         return self._has(ENG_MANAGER)
 
     def has_action_permission(self, action: str) -> bool:
-        required = _ACTION_PERMISSION.get(action, ())
-        return all(self._has(code) for code in required)
+        alternatives = _ACTION_PERMISSION.get(action, ())
+        return any(
+            all(self._has(code) for code in required)
+            for required in alternatives
+        )
 
     def allowed_actions(self, status: str) -> list[str]:
         """Ações legítimas do status filtradas pela permissão do ator."""

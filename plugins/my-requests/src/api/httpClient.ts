@@ -7,7 +7,7 @@ import {
   isTechnicalErrorCode,
 } from "../content/apiErrorMessages";
 
-type RequestOptions = { signal?: AbortSignal };
+type RequestOptions = { signal?: AbortSignal; headers?: Record<string, string> };
 
 const DELPI_CALLER_APP = "my-requests";
 
@@ -21,7 +21,7 @@ export function getAccessToken(): string | undefined {
   return accessTokenGetter?.();
 }
 
-function authHeaders(): Record<string, string> {
+export function authHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: "application/json",
     "X-Delpi-Caller-App": DELPI_CALLER_APP,
@@ -121,7 +121,7 @@ async function parseJson<T>(response: Response): Promise<T> {
 export async function httpGet<T>(url: string, options: RequestOptions = {}): Promise<T> {
   const response = await fetch(url, {
     method: "GET",
-    headers: authHeaders(),
+    headers: { ...authHeaders(), ...(options.headers || {}) },
     signal: options.signal,
   });
   if (!response.ok) {
@@ -140,6 +140,7 @@ export async function httpPost<T>(
     headers: {
       ...authHeaders(),
       "Content-Type": "application/json",
+      ...(options.headers || {}),
     },
     body: JSON.stringify(body),
     signal: options.signal,
@@ -160,6 +161,7 @@ export async function httpPatch<T>(
     headers: {
       ...authHeaders(),
       "Content-Type": "application/json",
+      ...(options.headers || {}),
     },
     body: JSON.stringify(body),
     signal: options.signal,
@@ -176,7 +178,7 @@ export async function httpDelete<T>(
 ): Promise<T> {
   const response = await fetch(url, {
     method: "DELETE",
-    headers: authHeaders(),
+    headers: { ...authHeaders(), ...(options.headers || {}) },
     signal: options.signal,
   });
   if (!response.ok) {

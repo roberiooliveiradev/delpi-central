@@ -6,10 +6,12 @@ import { AppShell } from "../components/AppShell";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { iconForRequestType } from "../content/requestTypeIcons";
 import { InvoiceIssuanceWizard } from "../features/invoice-issuance/ui/InvoiceIssuanceWizard";
+import { PrcRequestPage } from "../features/product-registration/PrcRequestPage";
 import { SchemaFormPage } from "../features/raw-material-creation/SchemaFormPage";
 import {
   myRequestsNewPath,
   myRequestsPath,
+  myRequestsPrcPath,
   navigateMyRequestsPath,
 } from "../hooks/myRequestsNavigation";
 import { useMyRequestsRouterPath } from "../hooks/useMyRequestsRouterPath";
@@ -96,6 +98,18 @@ export function NewRequestPage() {
   }
 
   if (activeType) {
+    /* PRC-REF-023-F03 — matéria-prima/produto usa o formulário PRC
+     * completo sobre a Engineering API (mesmo caso oficial). */
+    if (activeType.code === "raw-material-creation") {
+      return (
+        <PrcRequestPage
+          onCancel={closeForm}
+          onDone={(rid) =>
+            navigateMyRequestsPath(myRequestsPrcPath(rid))
+          }
+        />
+      );
+    }
     const openMode = resolveOpenMode(activeType);
     if (isInvoiceIssuanceSpecialized(activeType)) {
       return <InvoiceIssuanceWizard requestType={activeType} onCancel={closeForm} />;

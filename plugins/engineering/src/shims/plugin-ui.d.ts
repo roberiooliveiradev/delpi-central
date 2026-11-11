@@ -2599,4 +2599,241 @@ declare module "@delpi/plugin-ui/index" {
     onSecondary?: () => void;
     classNames: ConfirmModalClassNames;
   }): ReactElement;
+
+
+  /* PRC-REF-023 — contrato compartilhado de product registration
+   * (utils/prcProductRegistration.ts do kit). */
+  export type PrcFieldSpec = {
+    path: string;
+    kind: string;
+    requiredCreateIntake: boolean;
+    verifiable: boolean;
+    officialField?: string | null;
+    enumValues?: string[] | null;
+    maxLength: number;
+    note?: string | null;
+  };
+  export type PrcReferenceData = {
+    schemaVersion: number;
+    productTypes: string[];
+    requestTypes: string[];
+    statuses: string[];
+    sources: string[];
+    fields: PrcFieldSpec[];
+    editableDraftPaths: string[];
+    supplierKeys: { required: string[]; optional: string[] };
+  };
+  export type PrcSupplierLinkChange = {
+    operation: "update" | "add" | "remove";
+    key: { supplierCode: string; store: string };
+    fields: { partNumber?: string; catalogNumber?: string };
+    reason?: string;
+    fieldReasons?: { partNumber?: string; catalogNumber?: string };
+  };
+  export type PrcIntakeBody = {
+    source: string;
+    externalRequestId?: string | null;
+    externalItemId?: string | null;
+    requestType: "create" | "update";
+    productType: string;
+    schemaVersion: number;
+    requestedData?: Record<string, unknown> | null;
+    officialProductCode?: string | null;
+    baseRevision?: number | null;
+    changes?: Array<{
+      path: string;
+      proposedValue: unknown;
+      reason: string;
+    }> | null;
+    supplierLinkChanges?: PrcSupplierLinkChange[] | null;
+    reasons?: {
+      fields?: Record<string, string>;
+      supplierLinks?: Array<{
+        key: { supplierCode: string; store: string };
+        reason?: string;
+        fieldReasons?: { partNumber?: string; catalogNumber?: string };
+      }>;
+    } | null;
+    baselineFingerprint?: string | null;
+    editContextReadAt?: string | null;
+  };
+  export type PrcScalarChange = { path: string; before: string; after: string };
+  export type PrcLinkKey = { supplierCode: string; store: string };
+  export type PrcLinkOp =
+    | {
+        operation: "update" | "add";
+        key: PrcLinkKey;
+        fields: { partNumber?: string; catalogNumber?: string };
+        supplierName?: string;
+      }
+    | { operation: "remove"; key: PrcLinkKey };
+  export type SupplierRowOrigin = "official" | "draft";
+  export type SupplierRow = {
+    rowId: string;
+    origin: SupplierRowOrigin;
+    supplierCode: string;
+    store: string;
+    supplierName: string;
+    supplierShortName?: string;
+    partNumber: string;
+    catalogNumber: string;
+    query: string;
+    searchOpen?: boolean;
+    pnReason?: string;
+    catReason?: string;
+    opReason?: string;
+    pnReasonOpen?: boolean;
+    catReasonOpen?: boolean;
+    opReasonOpen?: boolean;
+    selectionError?: string;
+  };
+  export type PrcLinkRow = {
+    rowId: string;
+    origin: SupplierRowOrigin;
+    supplierCode: string;
+    store: string;
+    supplierName?: string;
+    partNumber: string;
+    catalogNumber: string;
+  };
+  export type PrcOfficialLink = {
+    supplierCode: string;
+    store: string;
+    supplierName?: string;
+    partNumber?: string;
+    catalogNumber?: string;
+  };
+  export type LinkDiffResult = {
+    ops: PrcLinkOp[];
+    ambiguousOfficialKeys: string[];
+    conflictingKeys: string[];
+  };
+  export function linkKeyOf(code: string, store: string): string;
+  export function supplierOfficialKey(code: string, store: string): string;
+  export function computeScalarDiff(
+    baseline: Record<string, unknown>,
+    values: Record<string, string>,
+    paths: string[],
+  ): PrcScalarChange[];
+  export function computeLinkDiff(
+    official: PrcOfficialLink[],
+    rows: PrcLinkRow[],
+    removeRowIds?: ReadonlySet<string>,
+  ): PrcLinkOp[];
+  export function computeLinkDiffDetailed(
+    official: PrcOfficialLink[],
+    rows: PrcLinkRow[],
+    removeRowIds?: ReadonlySet<string>,
+  ): LinkDiffResult;
+  export function linkDiffConflicts(rows: PrcLinkRow[]): string[];
+  export function linkChangesWithReasons(
+    ops: PrcLinkOp[],
+    rows: SupplierRow[],
+  ): PrcSupplierLinkChange[];
+  export function buildCreateReasons(
+    values: Record<string, string>,
+    reasons: Record<string, string>,
+    suppliers: SupplierRow[],
+  ): PrcIntakeBody["reasons"];
+  export function emptySupplierRow(): SupplierRow;
+  export function newSupplierRowId(prefix?: string): string;
+  export function toSupplierRows(value: unknown): SupplierRow[];
+  export function supplierRowsToPayload(rows: SupplierRow[]): unknown[];
+  export function officialSupplierRow(link: PrcOfficialLink): SupplierRow;
+  export function duplicateDraftRowIds(rows: SupplierRow[]): Set<string>;
+  export function findRowWithOfficialKey(
+    rows: SupplierRow[],
+    code: string,
+    store: string,
+    exceptRowId?: string,
+  ): SupplierRow | undefined;
+  export function supplierHitMain(hit: {
+    supplier_name?: string;
+  }): string;
+  export function supplierHitLabel(hit: {
+    supplier_code?: string;
+    supplier_store?: string;
+    supplier_name?: string;
+  }): string;
+  export function supplierHitSecondary(hit: {
+    supplier_code?: string;
+    supplier_store?: string;
+    supplier_short_name?: string;
+    supplier_name?: string;
+  }): string;
+  export function buildCreateIntakeBody(args: {
+    source: string;
+    refData: PrcReferenceData | null;
+    values: Record<string, string>;
+    reasons: Record<string, string>;
+    suppliers: SupplierRow[];
+    productType?: string;
+    externalRequestId?: string | null;
+    externalItemId?: string | null;
+  }): PrcIntakeBody;
+  export function buildUpdateIntakeBody(args: {
+    source: string;
+    refData: PrcReferenceData | null;
+    officialCode: string;
+    scalarDiff: PrcScalarChange[];
+    linkOps: PrcLinkOp[];
+    reasons: Record<string, string>;
+    suppliers: SupplierRow[];
+    productType?: string;
+    baselineFingerprint?: string | null;
+    editContextReadAt?: string | null;
+    externalRequestId?: string | null;
+    externalItemId?: string | null;
+  }): PrcIntakeBody;
+  export const PRC_ATTACHMENT_ACCEPT: string;
+  export const PRC_ATTACHMENT_MAX_BYTES: number;
+  export const PRC_ATTACHMENT_MAX_COUNT: number;
+  export const PRC_ATTACHMENT_MAX_MB: number;
+  export type PrcAttachmentLocalCheck =
+    | { ok: true }
+    | { ok: false; error: string };
+  export function prcCheckAttachmentFile(
+    file: File,
+  ): PrcAttachmentLocalCheck;
+  export function prcFormatSize(bytes: number): string;
+  export const PRC_ATTACHMENT_STATE_LABELS: Record<string, string>;
+  export const PRC_ATTACHMENT_MEDIA_LABELS: Record<string, string>;
+  export interface PrcSupportFile {
+    localId: string;
+    file: File;
+  }
+  export interface PrcSupportPickResult {
+    files: PrcSupportFile[];
+    errors: Record<string, string>;
+  }
+  export function newSupportFileId(file: File): string;
+  export function addSupportFiles(
+    current: PrcSupportFile[],
+    picked: File[],
+    maxCount?: number,
+  ): PrcSupportPickResult;
+  export function removeSupportFile(
+    current: PrcSupportFile[],
+    localId: string,
+  ): PrcSupportFile[];
+  export const PRC_STATUS_LABELS: Record<string, string>;
+  export const PRC_TYPE_LABELS: Record<string, string>;
+  export const PRC_FIELD_LABELS: Record<string, string>;
+  export const PRC_SUPPLIER_LABELS: Record<string, string>;
+  export const PRC_FIELD_HELP: Record<string, string>;
+  export const PRC_CATALOG_KINDS: Record<string, string>;
+  export type PrcCatalogOption = { value: string; label: string };
+  export function catalogOptions(
+    items: readonly { code: string; label?: string | null }[],
+  ): PrcCatalogOption[];
+  export function enumOptions(
+    path: string,
+    values: readonly string[],
+  ): PrcCatalogOption[];
+  export function withSelectedOption(
+    options: readonly PrcCatalogOption[],
+    value: string,
+  ): PrcCatalogOption[];
 }
+
+

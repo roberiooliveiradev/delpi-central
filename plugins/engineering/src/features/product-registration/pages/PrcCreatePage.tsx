@@ -56,9 +56,13 @@ import {
   PRC_ATTACHMENT_ACCEPT,
   PRC_ATTACHMENT_MAX_COUNT,
   PRC_ATTACHMENT_MAX_MB,
-  prcCheckAttachmentFile,
   prcFormatSize,
 } from "../prcAttachments";
+import {
+  addSupportFiles,
+  removeSupportFile,
+  type PrcSupportFile,
+} from "../prcSupportFiles";
 import {
   buildPrcQueueUrl,
   EMPTY_PRC_QUEUE_URL,
@@ -412,29 +416,32 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
    * retentáveis com o mesmo caseId preservado. Estados por arquivo:
    * selecionado → enviando → enviado | erro. Retry só reenvia os não
    * confirmados — nunca recria a solicitação. */
-  const [supportFiles, setSupportFiles] = useState<File[]>([]);
-  const [fileErrors, setFileErrors] = useState<Record<number, string>>({});
-  const [uploadedIdx, setUploadedIdx] = useState<Set<number>>(new Set());
+  const [supportFiles, setSupportFiles] = useState<PrcSupportFile[]>([]);
+  const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
+  const [uploadedIds, setUploadedIds] = useState<Set<string>>(new Set());
   const [createdRequestId, setCreatedRequestId] = useState<string | null>(
     null,
   );
   const [uploadSummary, setUploadSummary] = useState<string>("");
   const [previewFile, setPreviewFile] = useState<File | null>(null);
 
-  const uploadSupportFiles = async (requestId: string, files: File[]) => {
-    const failures: Record<number, string> = {};
+  const uploadSupportFiles = async (
+    requestId: string,
+    files: PrcSupportFile[],
+  ) => {
+    const failures: Record<string, string> = {};
     let ok = 0;
-    for (let i = 0; i < files.length; i += 1) {
-      if (uploadedIdx.has(i)) {
+    for (const entry of files) {
+      if (uploadedIds.has(entry.localId)) {
         ok += 1;
         continue;
       }
       try {
-        await uploadPrcAttachment(requestId, files[i]);
+        await uploadPrcAttachment(requestId, entry.file);
         ok += 1;
-        setUploadedIdx((prev) => new Set(prev).add(i));
+        setUploadedIds((prev) => new Set(prev).add(entry.localId));
       } catch (e) {
-        failures[i] = (e as Error).message || "Falha no upload.";
+        failures[entry.localId] = (e as Error).message || "Falha no upload.";
       }
     }
     return { ok, failures };
@@ -480,10 +487,10 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
   /* Miniaturas locais: object URL apenas para imagens; revogadas na
    * remoção/substituição/desmontagem (cleanup do effect). */
   const thumbUrls = useMemo(() => {
-    const map = new Map<number, string>();
-    supportFiles.forEach((f, i) => {
-      if ((f.type || "").startsWith("image/")) {
-        map.set(i, URL.createObjectURL(f));
+    const map = new Map<string, string>();
+    supportFiles.forEach((entry) => {
+      if ((entry.file.type || "").startsWith("image/")) {
+        map.set(entry.localId, URL.createObjectURL(entry.file));
       }
     });
     return map;
@@ -508,23 +515,13 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
   const onPickSupportFiles = (list: File[] | FileList | null) => {
     const files = Array.from(list ?? []);
     if (!files.length) return;
-    setFileErrors({});
-    const next: Record<number, string> = {};
-    const accepted: File[] = [];
-    for (const f of files) {
-      const check = prcCheckAttachmentFile(f);
-      if (check.ok) {
-        accepted.push(f);
-      } else {
-        next[supportFiles.length + accepted.length] = check.error;
-      }
-    }
-    const merged = [...supportFiles, ...accepted].slice(
-      0,
+    const { files: merged, errors } = addSupportFiles(
+      supportFiles,
+      files,
       PRC_ATTACHMENT_MAX_COUNT,
     );
     setSupportFiles(merged);
-    if (Object.keys(next).length) setFileErrors(next);
+    setFileErrors(errors);
   };
 
   const renderCatalogField = (
@@ -1428,38 +1425,36 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
               </p>
               <EngineeringAttachmentPreviewStrip
                 mode="manage"
-                items={supportFiles.map((f, i) => ({
-                  id: `local-${i}-${f.name}`,
-                  fileName: f.name,
-                  contentType: f.type || null,
-                  previewUrl: thumbUrls.get(i) ?? null,
-                  detail: `${prcFormatSize(f.size)} · ${
-                    uploadedIdx.has(i)
+                items={supportFiles.map((f) => ({
+                  id: f.localId,
+                  fileName: f.file.name,
+                  contentType: f.file.type || null,
+                  previewUrl: thumbUrls.get(f.localId) ?? null,
+                  detail: `${prcFormatSize(f.file.size)} · ${
+                    uploadedIds.has(f.localId)
                       ? "Enviado"
                       : busy
                         ? "Enviando…"
-                        : fileErrors[i]
-                          ? `Erro — ${fileErrors[i]}`
+                        : fileErrors[f.localId]
+                          ? `Erro — ${fileErrors[f.localId]}`
                           : "Selecionado"
                   }`,
                   busy,
-                  removable: !uploadedIdx.has(i),
+                  removable: !uploadedIds.has(f.localId),
                 }))}
                 onOpen={(item) => {
-                  const idx = Number(String(item.id).split("-")[1] ?? -1);
-                  const f = supportFiles[idx];
-                  if (f) setPreviewFile(f);
+                  const entry = supportFiles.find(
+                    (f) => f.localId === item.id,
+                  );
+                  if (entry) setPreviewFile(entry.file);
                 }}
                 onRemove={(item) => {
-                  const idx = Number(String(item.id).split("-")[1] ?? -1);
-                  if (idx >= 0) {
-                    setSupportFiles((s) => s.filter((_, j) => j !== idx));
-                    setFileErrors((prev) => {
-                      const next = { ...prev };
-                      delete next[idx];
-                      return next;
-                    });
-                  }
+                  setSupportFiles((s) => removeSupportFile(s, item.id));
+                  setFileErrors((prev) => {
+                    const next = { ...prev };
+                    delete next[item.id];
+                    return next;
+                  });
                 }}
               />
             </>

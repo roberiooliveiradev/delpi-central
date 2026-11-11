@@ -7,7 +7,7 @@
 - ausente/outro → ``UnavailableProductRegistrationRepository``.
 
 Sources de intake: ``ENG_PRC_SOURCES_ALLOWLIST`` (CSV); default
-``portal-engineering,eva,engineering-test``.
+``portal-engineering,my-requests,eva,engineering-test``.
 """
 
 from __future__ import annotations
@@ -25,7 +25,12 @@ from engineering_app.application.use_cases.product_registration.service import (
 def _sources_allowlist() -> tuple[str, ...]:
     raw = os.getenv("ENG_PRC_SOURCES_ALLOWLIST", "")
     items = tuple(s.strip() for s in raw.split(",") if s.strip())
-    return items or ("portal-engineering", "eva", "engineering-test")
+    return items or (
+        "portal-engineering",
+        "my-requests",
+        "eva",
+        "engineering-test",
+    )
 
 
 _REPO_SINGLETON: ProductRegistrationRepository | None = None

@@ -1,8 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActionButton, DataTable, type DataTableColumn } from "@delpi/plugin-ui/index";
+import {
+  ActionButton,
+  DataTable,
+  PRC_STATUS_LABELS,
+  PRC_TYPE_LABELS,
+  type DataTableColumn,
+} from "@delpi/plugin-ui/index";
 
 import { useMyRequestsListSync } from "../app/MyRequestsRealtimeProvider";
 import { listMyRequests, listRequestTypes } from "../api/requestsApi";
+import {
+  listMyPrcRequests,
+  type PrcRequestSummary,
+} from "../features/product-registration/prcApi";
+import { myRequestsPrcPath } from "../hooks/myRequestsNavigation";
 import { AppShell } from "../components/AppShell";
 import { RequestListFilters } from "../components/RequestListFilters";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -145,6 +156,17 @@ export function MinePage() {
     [typeNameByCode],
   );
 
+  /* PRC-REF-023-F04 — casos oficiais de cadastro de produto na
+   * Engineering API (mesmo requestId; sem registro duplicado). */
+  const [prcItems, setPrcItems] = useState<PrcRequestSummary[]>([]);
+  useEffect(() => {
+    const ac = new AbortController();
+    listMyPrcRequests(ac.signal)
+      .then((res) => setPrcItems(res.items))
+      .catch(() => setPrcItems([]));
+    return () => ac.abort();
+  }, []);
+
   const emptyMessage =
     filters.q || filters.typeCode || filters.status || filters.branch
       ? "Nenhuma solicitação para os filtros selecionados."
@@ -191,6 +213,35 @@ export function MinePage() {
           ) : null}
         </div>
       </MyRequestsSectionCard>
+      {prcItems.length ? (
+        <MyRequestsSectionCard
+          title="Cadastro de produtos e matérias-primas"
+          hint="Acompanhamento oficial junto à Engenharia."
+        >
+          {prcItems.map((row) => (
+            <p key={row.id}>
+              <a href={myRequestsPrcPath(row.id)}>
+                {PRC_TYPE_LABELS[row.requestType] || row.requestType} —{" "}
+                {row.id.slice(0, 8)}
+              </a>{" "}
+              <MyRequestsStatusBadge
+                label={PRC_STATUS_LABELS[row.status] || row.status}
+                variant={
+                  row.status === "completed"
+                    ? "success"
+                    : row.status === "rejected"
+                      ? "danger"
+                      : row.status === "needs_correction"
+                        ? "warning"
+                        : "info"
+                }
+              />{" "}
+              {new Date(row.createdAt).toLocaleDateString("pt-BR")}
+              {row.officialCode ? ` · ${row.officialCode}` : ""}
+            </p>
+          ))}
+        </MyRequestsSectionCard>
+      ) : null}
     </AppShell>
   );
 }

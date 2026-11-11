@@ -35,13 +35,23 @@ export function useMyRequestsRouterPath(
 }
 
 export function resolveInternalRoute(pathname: string): {
-  name: "mine" | "work-queue" | "new" | "detail" | "edit" | "admin" | "home";
+  name:
+    | "mine"
+    | "work-queue"
+    | "new"
+    | "detail"
+    | "edit"
+    | "admin"
+    | "prc"
+    | "home";
   requestId?: string;
 } {
   const normalized = pathname.replace(/\/+$/, "") || BASE;
   if (normalized === BASE || normalized === `${BASE}/mine`) {
     return { name: "mine" };
   }
+  const prc = normalized.match(new RegExp(`^${BASE}/prc/([^/]+)$`));
+  if (prc?.[1]) return { name: "prc", requestId: prc[1] };
   if (normalized === `${BASE}/work-queue`) return { name: "work-queue" };
   if (normalized === `${BASE}/new`) return { name: "new" };
   if (normalized === `${BASE}/admin`) return { name: "admin" };

@@ -231,6 +231,17 @@ ENGINEERING_LMP_ACCESS = [
     DASHBOARD_ENGINEERING_VIEW,
     DASHBOARD_LMPS_VIEW,
 ]
+
+# PRC-REF-023-F04 — o fluxo oficial de Product Registration também é
+# iniciado pelo solicitante de Minhas Solicitações (engineering-api →
+# api-delpi com Bearer delegado). O código de criação já existente em
+# my-requests autoriza as leituras oficiais estritamente necessárias
+# à ficha PRC (baseline + catálogos + fornecedores) — nenhum papel novo.
+PRC_REQUESTER_CREATE = "my-requests.raw-material-creation.create"
+PRC_READ_ACCESS = [
+    *ENGINEERING_LMP_ACCESS,
+    PRC_REQUESTER_CREATE,
+]
 ENGINEERING_LMP_NC_WRITE = [
     DASHBOARD_LMPS_NC_WRITE,
 ]

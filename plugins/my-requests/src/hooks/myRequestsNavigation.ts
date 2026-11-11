@@ -34,6 +34,11 @@ export function myRequestsPath(
   return `${BASE}/${route}`;
 }
 
+/** PRC-REF-023-F04 — acompanhamento do caso PRC oficial. */
+export function myRequestsPrcPath(requestId: string): string {
+  return `${BASE}/prc/${encodeURIComponent(requestId)}`;
+}
+
 /** Edit surface for returned requests: `/requests/:id/edit`. */
 export function myRequestsEditPath(requestId: string): string {
   return `${BASE}/requests/${encodeURIComponent(requestId)}/edit`;

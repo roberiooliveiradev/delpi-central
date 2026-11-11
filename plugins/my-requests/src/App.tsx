@@ -4,6 +4,11 @@ import { MyRequestsFloatingNoticeProvider } from "./app/MyRequestsFloatingNotice
 import { MyRequestsRealtimeProvider } from "./app/MyRequestsRealtimeProvider";
 import { configureHttpClient } from "./api/httpClient";
 import { AppShell } from "./components/AppShell";
+import { PrcCasePage } from "./features/product-registration/PrcCasePage";
+import {
+  myRequestsPath,
+  navigateMyRequestsPath,
+} from "./hooks/myRequestsNavigation";
 import {
   resolveInternalRoute,
   useMyRequestsRouterPath,
@@ -88,6 +93,14 @@ export default function App({
       break;
     case "edit":
       page = <RequestEditPage requestId={route.requestId!} />;
+      break;
+    case "prc":
+      page = (
+        <PrcCasePage
+          requestId={route.requestId!}
+          onBack={() => navigateMyRequestsPath(myRequestsPath("mine"))}
+        />
+      );
       break;
     case "admin":
       page = access.canManage ? (

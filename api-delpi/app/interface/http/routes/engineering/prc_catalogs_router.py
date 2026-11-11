@@ -11,7 +11,7 @@ from fastapi import APIRouter, Query
 
 from app.application.dto.supplies.suppliers_request import SuppliersListRequest
 from app.application.security.api_delpi_permissions import (
-    ENGINEERING_LMP_ACCESS,
+    PRC_READ_ACCESS,
 )
 from app.composition.supplies_composer import (
     build_list_supplies_suppliers_use_case,
@@ -33,7 +33,7 @@ router = APIRouter(
 
 
 @router.get("/catalogs/{catalog}", operation_id="prc_catalog_items")
-@require_any_permission(ENGINEERING_LMP_ACCESS)
+@require_any_permission(PRC_READ_ACCESS)
 def list_prc_catalog_items(
     catalog: str,
     query: str | None = Query(
@@ -70,7 +70,7 @@ def list_prc_catalog_items(
 
 
 @router.get("/suppliers", operation_id="prc_supplier_search")
-@require_any_permission(ENGINEERING_LMP_ACCESS)
+@require_any_permission(PRC_READ_ACCESS)
 def search_prc_suppliers(
     query: str = Query(..., min_length=2, max_length=80),
     page: int = Query(default=1, ge=1),

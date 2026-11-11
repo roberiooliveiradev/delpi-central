@@ -73,11 +73,11 @@ describe("PRC-REF-023-FIX-02 — miniaturas e modal de prévia", () => {
     expect(t).toContain('"Selecionado"');
     expect(t).toContain('"Enviando…"');
     expect(t).toContain('"Enviado"');
-    expect(t).toContain("`Erro — ${fileErrors[i]}`");
+    expect(t).toContain("`Erro — ${fileErrors[f.localId]}`");
   });
-  it("retry envia só documentos não confirmados (uploadedIdx)", () => {
+  it("retry envia só documentos não confirmados (uploadedIds)", () => {
     const t = createPage();
-    expect(t).toContain("uploadedIdx.has(i)");
+    expect(t).toContain("uploadedIds.has(entry.localId)");
     expect(t).toContain("Tentar enviar documentos novamente");
     // create só ocorre quando createdRequestId é nulo
     expect(t).toMatch(/createdRequestId\s*\?\s*null\s*:\s*await prcIntakeSubmit/);

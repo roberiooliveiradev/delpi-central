@@ -16,6 +16,7 @@ from app.application.security.api_delpi_permissions import (
     API_DELPI_ACCESS,
     ENGINEERING_LMP_ACCESS,
     PEDIDOS_VENDA_ABERTOS_PERMISSIONS,
+    PRC_READ_ACCESS,
 )
 from app.core.responses import error_response, not_found_response
 from app.interface.http.query_param_enums import (
@@ -612,7 +613,7 @@ def get_product_directives(
     response_model=ProductDetailResponse,
     openapi_extra=openapi_example_response(PRODUCT_DETAIL_EXAMPLE),
 )
-@require_any_permission(ENGINEERING_LMP_ACCESS)
+@require_any_permission(PRC_READ_ACCESS)
 def get_product_detail(
     code: str,
     view: str = PRODUCT_DETAIL_VIEW_QUERY(),
@@ -1335,7 +1336,7 @@ def parents(
         return error_response(str(e))
 
 @router.get("/{code}/suppliers", **PRODUCT_SUPPLIERS)
-@require_any_permission(ENGINEERING_LMP_ACCESS)
+@require_any_permission(PRC_READ_ACCESS)
 def suppliers(
     code: str,
     view: str = PRODUCT_DETAIL_VIEW_QUERY(),

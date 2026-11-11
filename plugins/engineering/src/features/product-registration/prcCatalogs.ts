@@ -13,17 +13,22 @@
 
 import {
   fetchPrcCatalog,
-  type PrcCatalogItem,
 } from "./api/productRegistrationApi";
-import { PRC_ENUM_OPTION_LABELS } from "./prcCopy";
 
-/** path do campo → `kind` da rota BFF `reference-data/catalogs/{kind}`. */
-export const PRC_CATALOG_KINDS: Record<string, string> = {
-  group: "product-groups",
-  unit: "units",
-  defaultWarehouse: "warehouses",
-  accountingAccount: "accounting-accounts",
-};
+/* PRC-REF-023-F03 — helpers puros de catálogo migraram para
+ * `@delpi/plugin-ui` (`utils/prcProductRegistration`), fonte única
+ * compartilhada com Minhas Solicitações; o store com fetch injetável
+ * permanece local. */
+import {
+  catalogOptions,
+  enumOptions,
+  PRC_CATALOG_KINDS,
+  withSelectedOption,
+  type PrcCatalogOption,
+} from "@delpi/plugin-ui/index";
+
+export { catalogOptions, enumOptions, PRC_CATALOG_KINDS, withSelectedOption };
+export type { PrcCatalogOption };
 
 export type PrcCatalogStatus =
   | "idle"
@@ -31,8 +36,6 @@ export type PrcCatalogStatus =
   | "success"
   | "empty"
   | "error";
-
-export type PrcCatalogOption = { value: string; label: string };
 
 export type PrcCatalogView = {
   status: PrcCatalogStatus;
@@ -50,47 +53,6 @@ const IDLE_VIEW: PrcCatalogView = {
   options: [],
   hasMore: false,
 };
-
-/** `code — label` pesquisável pelos dois lados; código nunca coage. */
-export function catalogOptions(
-  items: readonly PrcCatalogItem[],
-): PrcCatalogOption[] {
-  return (items ?? [])
-    .filter((item) => item != null && item.code != null)
-    .map((item) => {
-      const code = String(item.code);
-      const label = String(item.label ?? "").trim();
-      return { value: code, label: label ? `${code} — ${label}` : code };
-    });
-}
-
-/** Enum do domínio → opções rotuladas (`código — descrição funcional`). */
-export function enumOptions(
-  path: string,
-  values: readonly string[],
-): PrcCatalogOption[] {
-  const labels = PRC_ENUM_OPTION_LABELS[path] ?? {};
-  return values.map((v) => ({
-    value: v,
-    label: labels[v] ? `${v} — ${labels[v]}` : v,
-  }));
-}
-
-/** Opções do Select incluindo o valor selecionado quando ele não está
- * na lista carregada (falha de refresh ou paginação) — a escolha do
- * usuário nunca some da tela nem vira texto livre. */
-export function withSelectedOption(
-  options: readonly PrcCatalogOption[],
-  selected: string,
-): PrcCatalogOption[] {
-  if (!selected || options.some((o) => o.value === selected)) {
-    return [...options];
-  }
-  return [
-    { value: selected, label: `${selected} — valor selecionado` },
-    ...options,
-  ];
-}
 
 type FetchCatalog = typeof fetchPrcCatalog;
 type Listener = () => void;
