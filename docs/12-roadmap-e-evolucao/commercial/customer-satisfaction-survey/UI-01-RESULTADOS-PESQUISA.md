@@ -1,16 +1,16 @@
 # UI-01 — Página de Resultados da Pesquisa de Satisfação do Cliente
 
-> **Status:** proposta de UX refinada e registrada em 11/11/2026 após crítica do solicitante; **não implementada nem homologada visualmente em todas as seções**. Regra do Hero com todos os filtros e ações globais: **decisão aprovada**. A nova ordem das seções e composição do resumo foram aceitas para registro, sujeitas à revisão por etapas. Branch observada: `main`, HEAD `34d9106cbd86152a88821b6d3f38cb1b4997251e` (revalidar antes da implementação).
+> **Status:** proposta de UX; **Resumo Executivo e Evolução Histórica aprovados visualmente**, demais seções ainda em revisão; **não implementada**. Regra do Hero com todos os filtros e ações globais: **decisão aprovada**. A nova ordem das seções e composição do resumo foram aceitas para registro, sujeitas à revisão por etapas. Branch consultada: `main`, HEAD-base de revisão `093d13a58250401514cf8f3323c3dfb7508a8cf9` (revalidar antes da implementação).
 >
 > **Owner visual:** `plugins/commercial` (MFE). **Autoridade de regras, métricas, acesso e privacidade:** `commercial-api`; origem de clientes e atributos comerciais conforme fonte oficial via `api-delpi`/TOTVS. Esta especificação não concede autorização de implementação ou alteração de contrato backend.
 >
-> **Referências:** [índice mestre](./REQUIREMENTS-INDEX.md), [Word e decisões de negócio](./BUSINESS-DECISIONS.md), [contrato da entrega 1](./SURVEY-FIRST-RELEASE-CONTRACT.md), [plano global de frontend](./FRONTEND-FIRST-RELEASE-PLAN.md). Código verificado em `plugins/commercial/src/app/commercialUi.ts`, `features/overview/OverviewPage.tsx`, `features/analytics/AnalyticsOtdPage.tsx`, `features/analytics/AnalyticsOpportunitiesPage.tsx`, `features/analytics/components/AnalyticsClosingRateSeriesChart.tsx`, `plugins/plugin-ui/src/components/layout/PageHero.tsx`, `plugins/plugin-ui/src/components/charts/{HorizontalValueBars.tsx,ChartViewShell.tsx,MultiTypeSeriesChart.tsx}`.
+> **Referências:** [índice mestre](./REQUIREMENTS-INDEX.md), [Word e decisões de negócio](./BUSINESS-DECISIONS.md), [contrato da entrega 1](./SURVEY-FIRST-RELEASE-CONTRACT.md), [plano global de frontend](./FRONTEND-FIRST-RELEASE-PLAN.md). Código verificado em `plugins/commercial/src/app/commercialUi.ts`, `features/overview/OverviewPage.tsx`, `features/analytics/AnalyticsOtdPage.tsx`, `features/analytics/AnalyticsOpportunitiesPage.tsx`, `features/analytics/components/AnalyticsClosingRateSeriesChart.tsx`, `features/analytics/components/AnalyticsRolSeriesChart.tsx`, `plugins/plugin-ui/src/components/layout/PageHero.tsx`, `plugins/plugin-ui/src/components/charts/{HorizontalValueBars.tsx,ChartViewShell.tsx,MultiTypeSeriesChart.tsx}`.
 
 ## 1. Finalidade e critérios de UX
 
 A entrada `Início > Marketing > Pesquisa de satisfação do cliente` abre diretamente a **página de Resultados**, rota candidata `/apps/commercial/satisfaction-results`, usando `pluginRoutes.ts`/`navigatePluginView`, não URL absoluta hardcoded em componentes. A visão serve a três perguntas: **como está a satisfação, como evoluiu e onde investigar oportunidades de melhoria**. O público `commercial.access` recebe exclusivamente agregados; `commercial.marketing` ou `commercial.manage` tem adicionalmente navegação para Configuração e consulta individual autorizada.
 
-**Ordem proposta definitiva para revisão:** (1) `CommercialPagePath` e Hero; (2) Resumo executivo; (3) Evolução histórica; (4) Avaliação das dez dimensões; (5) Comparações por grupo; (6) consulta por empresa **somente para gestores**. O histórico tabular faz parte da própria seção Evolução, não é outra seção repetida. O indicador de ações concluídas será acrescentado na **entrega 2 obrigatória**, nunca simulado na primeira.
+**Ordem proposta definitiva para revisão:** (1) `CommercialPagePath` e Hero; (2) Resumo executivo; (3) Evolução histórica; (4) Avaliação das dez dimensões; (5) Comparações por grupo; (6) consulta por empresa **somente para gestores**. A Evolução é gráfico combinado IGS/NPS com dois eixos, sem tabela histórica fixa, com detalhes por campanha sob demanda e exportação oficial. O indicador de ações concluídas será acrescentado na **entrega 2 obrigatória**, nunca simulado na primeira.
 
 **Regra visual não negociável:** compor a página com componentes já publicados por `@delpi/plugin-ui/index` e wrappers existentes em `plugins/commercial/src/app/commercialUi.ts`. Não criar `SurveyKpi`, `SurveyChart`, botões nativos estilizados, CSS da página ou segundo design system. JSX de composição e transformação de dados são aceitáveis; gap real de componente => TO_INVENTORY + Abstraction Gate antes de alterar PluginUI.
 
@@ -34,8 +34,8 @@ A entrada `Início > Marketing > Pesquisa de satisfação do cliente` abre diret
 │ [Críticos 6%]   Delta somente quando há base anterior comparável        │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ EVOLUÇÃO HISTÓRICA                                                       │
-│ IGS:       ●───●────●────●────●────● (semestres 2024/1...2026/2)        │
-│ [Tabela de apoio no mesmo SectionCard: campanha, n, IGS, NPS, taxa...]   │
+│ [Linhas ▼] [Configurar séries ▼] [Exportar ▼] — barra do gráfico         │
+│ [gráfico combinado: IGS esquerdo (1–5) + NPS direito (−100 a +100)]      │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ AVALIAÇÃO DAS 10 DIMENSÕES                                               │
 │ [Ordem: menor média primeiro, ou ordem do questionário via Hero]          │
@@ -70,13 +70,16 @@ A entrada `Início > Marketing > Pesquisa de satisfação do cliente` abre diret
 │ [Limpar filtros]          │
 ├───────────────────────────┤
 │ Resumo executivo          │
-│ [IGS] [NPS]               │
-│ [Taxa] [Satisfeitos]      │
+│ [IGS]                     │
+│ [NPS]                     │
+│ [Taxa]                    │
+│ [Satisfeitos]             │
 │ [Críticos]                │
 ├───────────────────────────┤
 │ Evolução histórica        │
-│ [gráfico largura total]   │
-│ [tabela adaptativa]       │
+│ [Tipo ▼] [Séries ▼] [CSV]│
+│ [gráfico IGS + NPS]       │
+│ [detalhe após toque]      │
 ├───────────────────────────┤
 │ Dez dimensões             │
 │ [barras layout=stacked]   │
@@ -105,7 +108,7 @@ A página real usa **`CommercialPageHero` com densidade `compact` (default do wr
 | Limpar e contar filtros | `CommercialClearFiltersButton` + texto acessível | Limpa somente filtros de pesquisa, não estado de outros módulos |
 | Recarregar resultados | `CommercialActionButton` | Refetch real com loading e estados; não navegar, não enviar formulário |
 
-**Decisão semântica:** todos os **filtros da página e ações globais** ficam dentro do Hero, inclusive eventual escolha entre IGS/NPS da série histórica ou ordenação das dimensões, se forem controles de consulta. Para simplificar a primeira entrega, **gráfico principal fixo em IGS e ordenação inicial menor média primeiro**; o backend também fornece NPS no histórico tabular. Só introduzir seletores adicionais no Hero após necessidade confirmada. Controles puramente de apresentação oferecidos pelo `ChartViewShell` (ex.: escolher tipo de gráfico) são opcionais, não necessários ao escopo mínimo; se forem adotados, validar com o solicitante se devem ficar no Hero para manter a regra. Ações contextuais de cada linha ou de modal (`Abrir resposta`, confirmação/cancelamento) ficam junto ao contexto, não no Hero.
+**Decisão semântica aprovada:** filtros de dados da página e ações globais ficam **somente no Hero**; controles de apresentação do gráfico (tipo, cores, visibilidade, tendências e exportação da série) ficam **no `ChartViewShell`**, como nas demais páginas do Comercial. Evolução inicial apresenta **IGS e NPS juntos**; visibilidade individual pode ser personalizada no inspetor de séries. A ordenação inicial das dimensões é menor média primeiro. Ações contextuais permanecem junto ao seu conteúdo.
 
 **Volume e desempenho:** Ano/Campanha/Grupo sempre visíveis. Controles menos frequentes em “Mais filtros”, dentro do mesmo Hero; estado de filtros ativos permanece identificável. A seleção `Ano completo` só é oferecida se a API suportar consolidação adequada. Não usar `AnalyticsFilters` diretamente se sua semântica de pedidos/competência não corresponder à pesquisa: reutilizar **as primitivas oficiais**, não seus filtros operacionais.
 
@@ -246,22 +249,115 @@ Cada card apresenta, nessa ordem: **rótulo + ajuda contextual**, **valor princi
 9. Nenhuma meta, limiar ou classificação colorida inventada; nenhuma consulta identificável para `commercial.access`.
 10. Validar CSS/grid do Portal e propriedades `hint` nos três tamanhos reais em testes de UI; relatório de execução com capturas por viewport, HEAD, diff, testes e resultados.
 
-## 5. Evolução histórica — um bloco, gráfico + tabela
+## 5. Evolução histórica — gráfico combinado e responsivo (VISUAL APROVADO)
 
-**Objetivo:** responder “como mudou ao longo de vários anos?” imediatamente após o resumo. Não manter seção “Histórico anual” duplicada.
+> **Estado:** decisão visual aprovada em 11/11/2026; **não implementado**. Gráfico temporal único, IGS e NPS em dois eixos, com controles visuais oficiais do PluginUI. **Sem tabela histórica fixa**. Os wireframes são especificações conceituais, não capturas da interface real.
 
-| Parte | Componente existente | Decisão |
+### 5.1 Objetivo e conteúdo
+
+Responder “como evoluíram satisfação e recomendação por campanha?”, sem duplicar os KPIs do Resumo Executivo. Usar um `SectionCard` / `CommercialSectionCard` com título “Evolução histórica”, ajuda de interpretação das escalas, barra do gráfico, gráfico combinado e legenda. Categorias são campanhas reais **em ordem cronológica**, não períodos simulados. Tipo inicial: **linhas**. Série `igs`: eixo primário esquerdo (domínio **1–5**); série `nps`: eixo secundário direito (domínio **−100 a +100**). Rótulos, legenda e tooltip devem distinguir unidades; alturas relativas das duas linhas **não** são comparáveis. Não há gráfico duplicado, tabela permanente nem card de detalhes permanentemente aberto.
+
+### 5.2 Wireframes específicos por largura
+
+**Desktop largo** (alvo ≥ 1200 px de **área útil**; validar no shell real):
+
+```text
+┌─ EVOLUÇÃO HISTÓRICA ───────────────────────────────────────────────────────┐
+│ Satisfação e recomendação por campanha; ajuda das escalas                  │
+│ [Linhas ▾]    [Configurar séries ▾]                     [Exportar ▾]        │
+│ IGS — eixo esquerdo (1–5)                  NPS — direito (−100 a +100)    │
+│ 5 ┤    ╱────╱────╱────╱                ···NPS···                        100│
+│ 4 ┤  ╱    IGS                        ···········                        50│
+│ 3 ┤╱                         [tooltip ao interagir com campanha]          0│
+│ 2 ┤                                             ·······                 −50│
+│ 1 └ 24/1   24/2   25/1   25/2   26/1   26/2                        −100│
+│ Legenda: IGS (primário) · NPS (secundário)                                  │
+└───────────────────────────────────────────────────────────────────────────┘
+```
+
+**Tablet / notebook estreito** (alvo 600–1199 px úteis): **mesmo gráfico combinado**, ocupando largura útil toda. O `ChartViewShell` deve reorganizar/permitir quebra da barra, preservando tipo, configuração de séries e exportação; eixos e legenda identificados. Em dispositivo de toque, detalhe **após seleção**, abaixo do gráfico e fechável, sem sobrepor os dados.
+
+```text
+┌─ EVOLUÇÃO HISTÓRICA ────────────────────────┐
+│ [Tipo ▾] [Séries ▾] [Exportar ▾]           │
+│ IGS esq. 1–5 · NPS dir. −100 a +100       │
+│ [gráfico combinado na largura disponível]  │
+│ [legenda acessível]                        │
+│ [detalhe abaixo somente se selecionado ×]  │
+└────────────────────────────────────────────┘
+```
+
+**Celular** (alvo < 600 px úteis): único gráfico combinado em largura total, **sem rolagem horizontal da página**. Barra de ferramentas compacta pode quebrar em várias linhas ou usar os popovers oficiais; controles **não somem**. Preservar ambos os eixos e legenda, com rótulos temporais abreviados quando necessário e nomes completos acessíveis. **Ao abrir a página, detalhe fechado**; tocar ponto/campanha abre detalhe **abaixo do gráfico**, tocar outro ponto atualiza e ação de fechar o recolhe. Nunca manter tooltip grande sobre a área do gráfico no celular.
+
+```text
+┌─ EVOLUÇÃO HISTÓRICA ─────┐
+│ [Linhas ▾]              │
+│ [Configurar séries ▾]   │
+│ [Exportar ▾]            │
+│ IGS ⟵   ⟶ NPS          │
+│ [gráfico combinado]      │
+│ [legenda]                │
+│                          │
+│ APÓS TOQUE EM CAMPANHA:  │
+│ ┌ Pesquisa 2026/2 ─ × ┐ │
+│ │ IGS        4,3 / 5  │ │
+│ │ NPS            +48  │ │
+│ │ Respostas   72/100  │ │
+│ │ Taxa           72%  │ │
+│ └──────────────────────┘ │
+└──────────────────────────┘
+```
+
+**Dados ilustrativos**, nunca valores padrão. Breakpoints são metas de UX, não classes CSS já comprovadas. Validar largura útil, popovers, eixos, foco, zoom de 200–400%, contraste e leitores de tela.
+
+### 5.3 Ferramentas existentes do PluginUI — correspondência de código
+
+O padrão completo já é utilizado em `plugins/commercial/src/features/analytics/components/AnalyticsRolSeriesChart.tsx` e parcialmente em `AnalyticsClosingRateSeriesChart.tsx`. **Reutilizar apresentação, não as regras de negócio de ROL ou conversão.**
+
+| Funcionalidade / posição | Componente ou função real | Decisão para Marketing |
 |---|---|---|
-| Container | `SectionCard`/`CommercialSectionCard` | “Evolução histórica” após KPIs |
-| Gráfico temporal | `ChartViewShell` + `MultiTypeSeriesChart` exportados pelo PluginUI | Linha do **IGS**, eixo temporal por campanha real ordenada por datas, séries de um tipo/escala por vez |
-| Configuração de série | `MultiTypeSeriesSpec` no gráfico, com cor por tokens/paleta do kit | Série `igs`, `chartType="line"`, `categoryKey` referente ao período; configurações exatas do pacote são autoridade |
-| Alternativas de visualização | `ChartTypeSegmentToggle`, `ChartOverlayOptionsPopover`, `ChartSeriesColorsPopover` só se exigidos e aprovados | **Não adicionar controles à toolbar do gráfico por padrão**: todos os filtros e ações globais ficam no Hero |
-| Tabela auxiliar no mesmo bloco | `CommercialDataTable`, eventualmente `CommercialPagination` | Campanha/período, n respondentes, n participantes, IGS, NPS, taxa, variação; tabela visível no mesmo bloco, sem seção redundante |
-| Estados | `CommercialLoadingCard`, `EmptyState` | Uma campanha: sem tendência; nenhuma campanha: indisponível; série deve aceitar anos múltiplos |
+| Barra **dentro do gráfico** | `ChartViewShell` (`typeToggle`, `seriesColors`, `exportActions`, `overlays`) | Controles de **apresentação** junto ao gráfico. Filtros de dados/ano/campanha/segmento e ações globais ficam **somente no `CommercialPageHero`** |
+| Gráfico e dois eixos | `MultiTypeSeriesChart` | `data`, `categoryKey`, `series`, `chartType`, `formatY`, `formatYSecondary`, `formatTooltipValue`, `secondaryDataKeys`; `series[].axis="secondary"` ou `secondaryDataKeys=["nps"]` |
+| Trocar tipo | `ChartTypeSegmentToggle`, `TIME_MULTI_SERIES_TYPES` | `family="time_multi_series"`: **linhas** (padrão), **colunas**, **área**; testar dual-axis nos três; nunca oferecer pizza/empilhado para a evolução |
+| Configurar série | `ChartSeriesColorsPopover` | IGS/NPS individual: cor, exibir/ocultar, habilitar tendência linear, cor/traçado/espessura da tendência, restaurar cada série ou tudo |
+| Aplicar/resetar configuração | `applySeriesViewPreferences`, `buildChartSeriesConfigItems`, `patchSeriesTrendStyle`, `resetSeriesViewPreferences`, `seriesViewHasOverrides` em `seriesFillPreferences.ts` | Preferências alteram apenas visualização, nunca valores do backend |
+| Salvar escolhas | `usePersistedChartPreferences` | `storageKey` isolada, proposta: `commercial:marketing:satisfaction-evolution`; persistência é **localStorage do navegador**, não perfil do backend |
+| Exportação local | `CommercialTabularExportButtons` e `runTabularExport` | Exportar tabela de **agregados autorizados**: campanha/período, IGS, NPS, participantes, respostas e taxa; sem tabela fixa na página |
+| Painel de opções | `ChartOverlayOptionsPopover` | Capacidade do kit confirmada; **não** copiar opção comparar ano anterior de ROL sem contrato de campanhas semestrais aprovado |
+| Estados | `CommercialLoadingCard`, `EmptyState`, `CommercialStateBanner` | Diferenciar carregamento, sem dados, erro e amostras protegidas |
 
-**Paridade do gráfico:** `ChartViewShell` possui slots `granularity`, `overlays`, `typeToggle`, `exportActions` e `children`; seu uso sem toolbar é válido. `MultiTypeSeriesChart` exige `data`, `categoryKey`, `series`, `chartType` e aceita `height`, `formatY`, `formatTooltipValue`. Aplicar unidade IGS (1–5), não interpolar campanhas ausentes e não depender do ano corrente hardcoded. Se controles de tipo/exportação forem realmente introduzidos, primeiro resolver coerência com a política de ações globais no Hero.
+**Configuração inicial:** ambas as séries visíveis, sem tendência automática. Se ocultar ambas, fornecer mensagem de estado neutro ou impedir ocultar última série; verificar comportamento existente antes de implementar. Tendência do PluginUI é **linear descritiva, não previsão**; número mínimo de campanhas e tratamento de lacunas são **PENDING**, não assumir política.
 
-**Cálculo anual:** a API deve recomputar IGS e NPS usando respostas válidas de todas as campanhas no ano; não tirar média simples de NPS sem os denominadores. Ano completo pode ter empresas que responderam em duas campanhas; contar respostas por campanha e rotular claramente a unidade (empresa por campanha), sem chamar isso “empresas únicas no ano” sem regra específica.
+### 5.4 Detalhe da campanha e interação
+
+Conteúdo aprovado para o detalhe: **campanha/período; IGS; NPS; participantes cadastrados/elegíveis; respostas finais; taxa de resposta**. Cabe ao **commercial-api** calcular e autorizar valores e suprimir recortes pequenos. Não recalcular indicadores no tooltip com base em médias de valores exibidos.
+
+- **Desktop/mouse:** tooltip flutuante junto ao ponto **apenas durante interação**; desaparece ao sair; sem abrir página ou atualizar filtros.
+- **Tablet/celular por toque:** seleção da campanha abre **painel abaixo do gráfico apenas depois do toque**; por padrão fechado, atualizado ao selecionar outro ponto e explicitamente fechável. Tooltip grande não pode obstruir a área do gráfico.
+- **Teclado/leitor de tela:** mesma consulta e fechamento por mecanismo acessível; verificar foco, anúncio, seleções e rótulos completos. Não depender exclusivamente de mouse.
+- **Gap real:** o `MultiTypeSeriesChart` usa tooltip básico de Recharts, mas **não está comprovado** suporte pronto a conteúdo completo de detalhe, seleção persistente por toque nem equivalência por teclado. Primeiro investigar props e composição existentes; se necessário, menor extensão do **PluginUI** após Abstraction Gate, sem criar gráfico ou card nativo paralelo dentro de Marketing.
+
+### 5.5 Integridade, limitações reais e segurança
+
+1. Os eixos separados **existem** no `MultiTypeSeriesChart` via `axis`/ `secondaryDataKeys`, mas **os domínios fixos 1–5 e −100–100 não estão expostos como props confirmadas**. É **PENDING** a menor extensão do PluginUI, com teste regressivo nos gráficos já existentes; não simular eixos com CSS.
+2. O `MultiTypeSeriesChart` tem `connectNulls` nas linhas; períodos sem pesquisa **não** devem criar pontos artificiais zero nem conexão enganosa. Resolver representação das lacunas com dados oficiais/menor ajuste, sem inventar campanhas.
+3. Campanhas **encerradas** são pontos consolidados; se houver campanhas abertas, marcar claramente como parciais segundo contrato oficial. Seleções ano completo devem ser recomputadas no backend sobre respostas válidas e bases corretas, nunca média simples de NPS.
+4. Mudança de população e amostra deve ficar visível no detalhe; uma linha ascendente não comprova causalidade ou melhora para o mesmo conjunto de clientes.
+5. `commercial.access`: somente agregados protegidos; regras de supressão valem para gráfico, tooltip, painel e **exportação**. Personalização de gráfico não altera autorização nem recupera dados restritos.
+6. Preferências de tipo/cor/série não pertencem ao Hero; todos os filtros que alteram o conjunto de dados ficam exclusivamente no Hero.
+
+### 5.6 Critérios de aceite — Evolução Histórica
+
+1. Um único `SectionCard`, um `MultiTypeSeriesChart` IGS + NPS dual-axis; **sem tabela histórica fixa**.
+2. Toolbar oficial `ChartViewShell` com tipo, configuração individual de séries e exportação. Ano, campanha, grupo, período histórico e outros recortes ficam dentro do `CommercialPageHero`.
+3. Tipo inicial linhas; alternância entre linhas, colunas e área com eixos/legendas/unidades corretos, sem alterar cálculos.
+4. Inspector oficial: cores, visibilidade, tendência individual e estilo, reset individual/geral; persistir preferência no navegador com chave própria.
+5. Domínio IGS fixo 1–5, NPS −100–100 **após validação e adaptação mínima**; até lá não declarar integração final concluída.
+6. Desktop tooltip apenas ao interagir; celular/tablet painel **abaixo**, inicialmente fechado, abre após toque, permite trocar seleção e fechar.
+7. Equivalência por teclado e leitor de tela; controles e dois eixos legíveis sem scroll horizontal, inclusive zoom 200–400%.
+8. Detalhe: campanha, IGS, NPS, participantes, respostas e taxa; nunca dados protegidos. Exportação apenas de agregados autorizados.
+9. Nenhum `0` para ausência; lacunas reais não interpoladas artificialmente; erros, carregamento e amostra suprimida com estados próprios.
+10. Testar desktop/tablet/celular com capturas, tipo de gráfico, inspector, exportação, toque/foco, eixos e regressão dos gráficos de ROL/Closing Rate; relatório com HEAD, diff, testes, outcome e gaps.
 
 ## 6. Avaliação das dez dimensões — ranking justificável
 
@@ -310,14 +406,14 @@ Seção única “Comparação de clientes” com `SectionCard` + `CommercialDat
 | Acesso negado | `EmptyState` apropriado; não montar consultas restritas | Backend |
 | Comparação anterior inexistente | Delta “—” com contexto “Sem comparação disponível” | Ausência de período comparável |
 
-Desktop: Hero compacto, faixas de KPI responsivas, gráfico com largura total; dimensões em colunas. Tablet: Hero quebra filtros e KPIs conforme classes oficiais. Mobile: Hero empilha controles, ranking usa `layout="stacked"`, tabelas usam responsividade real de `CommercialDataTable`, sem implementar `MobileSurveyTable`. Foco, teclado, zoom 200%, descrições acessíveis e rótulos diferenciando pontos vs p.p. são critérios de aceite.
+Desktop: Hero compacto, KPIs em 5 colunas quando couber, gráfico combinado e tooltip sob interação. Tablet: KPIs em 2 colunas e gráfico combinado com barra responsiva; detalhes abaixo após toque. Celular: KPIs em 1 coluna, Hero empilhado, gráfico combinado com ambos os eixos sem scroll horizontal e detalhe abaixo **somente após toque, fechável**. Ranking usa `layout="stacked"`; tabelas das outras seções usam `CommercialDataTable`. Foco, teclado, zoom 200–400%, descrições acessíveis e unidades distintas são critérios de aceite.
 
 ## 10. API e paridade CAIO
 
 | Necessidade | Fonte planejada / autoridade | Consumidor |
 |---|---|---|
 | Lista de campanhas e anos com resultados | Consultas oficiais `GET /satisfaction-surveys/campaigns` (ou projeção agregada autorizada, a ajustar na etapa) | Hero sem expor campos restritos a `access` |
-| Resultados e comparações | `GET /satisfaction-surveys/results`, com ano/campanha/grupo e filtros oficiais; retorno exclusivamente agregado para `access` | KPIs, ranking, gráfico e tabela |
+| Resultados e comparações | `GET /satisfaction-surveys/results`, com ano/campanha/grupo e filtros oficiais; retorno exclusivamente agregado para `access` | KPIs, ranking, gráfico combinado, detalhes contextuais e exportação autorizada |
 | Respostas identificadas | `GET /satisfaction-surveys/campaigns/{campaign_id}/responses`, `GET /satisfaction-surveys/responses/{response_id}` | Somente gestores, consulta separada |
 | Configuração | Navegação para [UI-02](./UI-02-CONFIGURACAO-PESQUISAS.md) | Gestores; servidor autoriza cada write |
 
@@ -335,20 +431,22 @@ Desktop: Hero compacto, faixas de KPI responsivas, gráfico com largura total; d
 | Painéis | `SectionCard`, `CommercialSectionCard` | PluginUI / `commercialUi.ts` |
 | KPI | `CommercialMetricCard` | `commercialUi.ts` → `createMetricKpiCard` |
 | Delta | `CommercialTrendDelta` | `commercialUi.ts` → `createDashboardTrendDelta` |
-| Gráfico | `ChartViewShell`, `MultiTypeSeriesChart` | PluginUI, uso real `AnalyticsClosingRateSeriesChart.tsx` |
+| Gráfico + controles | `ChartViewShell`, `MultiTypeSeriesChart`, `ChartTypeSegmentToggle`, `ChartSeriesColorsPopover` | PluginUI; padrão completo em `AnalyticsRolSeriesChart.tsx` |
+| Preferências | `usePersistedChartPreferences`, `applySeriesViewPreferences`, `buildChartSeriesConfigItems`, `resetSeriesViewPreferences` | PluginUI |
+| Exportação do gráfico | `CommercialTabularExportButtons` | `commercialUi.ts` → PluginUI |
 | Barras dimensões | `CommercialHorizontalValueBars` | `commercialUi.ts` → `HorizontalValueBars`, contrato `max`, `items[].meta`, `layout` conferido |
 | Tabelas | `CommercialDataTable`, `CommercialPagination` | `commercialUi.ts` → PluginUI |
 | Leitura detalhe | `CommercialHostDrawer`, `CommercialDetailCard`, `CommercialDetailFieldGrid` | `commercialUi.ts` |
 | Estados | `CommercialLoadingCard`, `EmptyState`, `CommercialStateBanner` | PluginUI e `commercialUi.ts` |
 
-**Lacunas honestas:** props de `CommercialTrendDelta`, expansão exata do filtro “Mais filtros”, comportamento responsivo do `CommercialDataTable` e tokens/paleta do gráfico precisam ser conferidos no código e nos testes durante a execução; existência dos exports acima foi observada, mas sua adequação final a todas as interações não é prova de integração. Não criar wrappers/abstrações novas sem necessidade verificada.
+**Lacunas honestas:** `CommercialTrendDelta` formata `%` e não serve aos deltas em pontos do Resumo. PENDING: expansão de “Mais filtros”, domínio fixo de eixos, tooltip completo e seleção por toque/teclado, lacunas temporais (`connectNulls`), responsividade real e paleta. Exports existentes não provam integração final. Não criar abstrações sem Abstraction Gate.
 
 ## 12. Critérios de aceite e testes
 
 1. `CommercialPagePath` + **um Hero real do PluginUI**, com **todos** os filtros e ações globais dentro dele; Configuração só para gestão. Sem toolbar de filtros espalhada sob o Hero.
-2. Após o Hero: **Resumo → Evolução histórica → Dez dimensões → Comparativos → Respostas privadas**; sem tabela anual redundante fora da Evolução.
+2. Após o Hero: **Resumo → Evolução histórica → Dez dimensões → Comparativos → Respostas privadas**; sem tabela histórica fixa na Evolução.
 3. Cinco KPIs; base e período explícitos; trend apenas quando calculável; delta pontual correto, sem cor induzida.
-4. Gráfico aceita multi-anos, linhas por campanhas cronológicas; tabela auxiliar apresenta amostras e NPS; ano completo recalcula sobre respostas, sem média de médias.
+4. Gráfico combinado IGS/NPS dual-axis, sem tabela fixa, com tipo, inspector, preferências e exportação do PluginUI; detalhes por campanha sob demanda e ano completo recalculado pelo backend, sem média de médias.
 5. `CommercialHorizontalValueBars` usa `max={5}`, ranking, `meta=n válido`, dez perguntas oficiais e layout responsivo.
 6. Comparativo possui denominações/amostras, não inventa estratificação; `commercial.access` não consegue inferir pequenos grupos ou acessar dados privados por filtros/combinações.
 7. Com `commercial.access`, nenhum request a endpoints identificados ou montagem do drawer; gestor lê resposta imutável. Backend decide todas as autorizações.
