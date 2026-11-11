@@ -61,7 +61,7 @@ Paths internos são **propostos**, não encontrados implementados. A nomenclatur
 - Tabela de participantes: empresa (nome + código/loja), contato/e-mail opcional do convite, **Pendente/Respondido** e ações **Copiar link** / **Copiar mensagem**. Permitido ajustar contato do convite sem editar TOTVS. Não exibir “Enviado”, “Entregue” ou contadores de tentativas, pois o Portal não controla esses eventos.
 - **Copiar mensagem** monta texto do convite com link estável retornado pela API; pode usar um texto aprovado no próprio cliente, sem template CRUD de campanha. Não criar botão **Enviar e-mail**. Copiar novamente usa o mesmo link; não gerar token no navegador.
 - Ação de remover participante (R09) **não aparece na primeira entrega**, salvo definição e implementação segura posterior.
-- As respostas por empresa aparecem apenas para quem tem gestão; clicando numa linha, visualizar notas, NPS e três respostas abertas em painel de leitura. Sem edição ou exclusão.
+- As respostas por empresa aparecem apenas para quem tem gestão; clicando em **Ver resposta**, navegar à **UI-07 — página independente**, sem modal/drawer, exibindo notas individuais e os três comentários em leitura. Sem edição ou exclusão.
 
 ### 3.3 Formulário externo (Cliente)
 

@@ -49,7 +49,7 @@ A entrada `Início > Marketing > Pesquisa de satisfação do cliente` abre diret
 │ valores supressos se amostra abaixo do limiar do backend                 │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ CONSULTA INDIVIDUAL EM PÁGINA PRÓPRIA* (sem seção nesta página)                        │
-│ Tabela apenas leitura → abrir resposta em CommercialHostDrawer           │
+│ Lista UI-06 → navegar à página de Detalhes UI-07           │
 └──────────────────────────────────────────────────────────────────────────┘
 * Controle e autorização no backend. **Cliente individual não é filtro
   disponível ao público agregado se permitir reidentificação.
@@ -593,7 +593,7 @@ Os números servem **apenas de exemplo**, não podem ser copiados para dados de 
 
 **Entrada sem redundância de topbar:** manter a topbar principal intacta. No **`CommercialPageHero` de Resultados**: `Atualizar`, `Respostas por empresa`, `Configuração`, nessa ordem de intenção; dois últimos somente para Marketing/Manage autorizado. `CommercialPagePath` mostra a trilha; usar `pluginRoutes.ts` / navegação existente, sem URLs absolutas improvisadas. Na UI-06, o Hero oferece `Ver resultados`, `Configuração` e `Atualizar`. A UI-02 oferece caminho contextual para Respostas por Empresa e retorno a Resultados. **Rotas são propostas, não implementadas.**
 
-**Padrão de identidade aprovado:** dentro da lista e dos cards de Respostas por Empresa reutilizar **`CustomerAvatar` real** de `plugins/commercial/src/features/customers/components/CustomerAvatar.tsx` (que usa `createInitialsAvatar("cm")` do PluginUI). Avatar e nome levam à **Conta do Cliente** via helpers de navegação atuais; `Ver resposta` é ação independente que abre o **`CommercialHostDrawer`** somente leitura, sem desviar para a conta. A identidade é **`customer_code + customer_store`**. A imagem só é consultada se `hasAvatar` oficial estiver disponível; caso contrário, iniciais do kit, **sem dados inventados nem armazenamento de avatar duplicado**.
+**Padrão de identidade aprovado:** dentro da lista e dos cards de Respostas por Empresa reutilizar **`CustomerAvatar` real** de `plugins/commercial/src/features/customers/components/CustomerAvatar.tsx` (que usa `createInitialsAvatar("cm")` do PluginUI). Avatar e nome levam à **Conta do Cliente** via helpers de navegação atuais; `Ver resposta` é ação independente que navega à **página própria UI-07** somente leitura, sem desviar para a conta. A identidade é **`customer_code + customer_store`**. A imagem só é consultada se `hasAvatar` oficial estiver disponível; caso contrário, iniciais do kit, **sem dados inventados nem armazenamento de avatar duplicado**.
 
 A página independente lista **respondidas e pendentes**, sem criar participantes nem copiar convites; essas ações pertencem exclusivamente à Configuração. Consulta privada e drill-down exigem autorização definitiva no `commercial-api`; `commercial.access` isolado não autoriza acesso. As notas individuais são `overall_score` (1–5) e `recommendation_score` (0–10); **não rotular notas por empresa como IGS ou NPS agregados**.
 
@@ -642,7 +642,7 @@ Desktop: Hero compacto, KPIs em 5 colunas quando couber, gráfico combinado e to
 | Comparação por grupos | `CommercialSectionCard`, `CommercialDataTable`, `DataTableColumn<T>` | wrappers de `commercialUi.ts` → `SectionCard` / `DataTable` do PluginUI; 5+10 linhas |
 | Responsividade em cards (a validar) | `DataTableSection`, `CommercialDataCardsGrid`, `CommercialDataRecordCard` | PluginUI e `commercialUi.ts`; conferir integração em mobile antes de implementar |
 | Tabelas de outras seções | `CommercialDataTable`, `CommercialPagination` | `commercialUi.ts` → PluginUI |
-| Leitura detalhe | `CommercialHostDrawer`, `CommercialDetailCard`, `CommercialDetailFieldGrid` | `commercialUi.ts` |
+| Leitura detalhe em página própria | `CommercialPageHero`, `CommercialDetailCard`, `CommercialDetailFieldGrid`; `RatingDots` candidato | Ver [UI-07](./UI-07-DETALHES-RESPOSTA.md); sem drawer |
 | Estados | `CommercialLoadingCard`, `EmptyState`, `CommercialStateBanner` | PluginUI e `commercialUi.ts` |
 
 **Lacunas honestas:** `CommercialTrendDelta` formata `%` e não serve aos deltas em pontos do Resumo. PENDING: expansão de “Mais filtros”, domínio fixo de eixos, tooltip completo e seleção por toque/teclado, lacunas temporais (`connectNulls`), responsividade real e paleta. Exports existentes não provam integração final. Não criar abstrações sem Abstraction Gate.
@@ -655,7 +655,7 @@ Desktop: Hero compacto, KPIs em 5 colunas quando couber, gráfico combinado e to
 4. Gráfico combinado IGS/NPS dual-axis, sem tabela fixa, com tipo, inspector, preferências e exportação do PluginUI; detalhes por campanha sob demanda e ano completo recalculado pelo backend, sem média de médias.
 5. `CommercialHorizontalValueBars` usa `max={5}`, ranking, `meta=n válido`, dez perguntas oficiais e layout responsivo.
 6. Comparativo aprovado: cinco indicadores visíveis + dez dimensões expansíveis **na mesma tabela**; Geral/Estratégicos/Demais, desktop em quatro colunas e celular em cards por indicador; mostrar bases autorizadas, não inventar estratificação, e `commercial.access` não consegue inferir grupos pequenos por diferença ou filtros.
-7. Com `commercial.access`, nenhum request a endpoints identificados ou montagem do drawer; gestor consulta respostas imutáveis **na UI-06**, não no corpo de Resultados. Backend decide todas as autorizações.
+7. Com `commercial.access`, nenhum request a endpoints identificados ou montagem da UI-07; gestor consulta respostas imutáveis **na UI-06**, não no corpo de Resultados. Backend decide todas as autorizações.
 8. Loading, vazio, erro, supressão e indisponibilidade de fonte diferentes; retry global no Hero.
 9. Todos os visuais vêm do PluginUI/CommercialUi existente; inventário residual de exports/props e testes de regressão do Portal antes do diff; nenhuma abstração/CSS novo sem Abstraction Gate.
 10. Desktop/tablet/mobile, teclado, zoom, foco, contraste e leitores de tela verificados.

@@ -6,7 +6,7 @@
 
 ## 1. Escopo e navegação — decisão aprovada
 
-Página **somente de consulta**, separada da UI-01 de [Resultados](./UI-01-RESULTADOS-PESQUISA.md) e da UI-02 de [Configuração](./UI-02-CONFIGURACAO-PESQUISAS.md). Lista empresas **respondentes e pendentes** da campanha selecionada. Resposta enviada é definitiva e aberta somente em drawer de leitura. **Não** adicionar participante, criar campanha, alterar contato, editar resposta, copiar/reenviar link ou disparar convite nesta UI; estas operações pertencem à Configuração, quando autorizadas.
+Página **somente de consulta**, separada da UI-01 de [Resultados](./UI-01-RESULTADOS-PESQUISA.md) e da UI-02 de [Configuração](./UI-02-CONFIGURACAO-PESQUISAS.md). Lista empresas **respondentes e pendentes** da campanha selecionada. Resposta enviada é definitiva e consultada somente na **página própria UI-07 — Detalhes da Resposta**, sem modal nem drawer. **Não** adicionar participante, criar campanha, alterar contato, editar resposta, copiar/reenviar link ou disparar convite nesta UI; estas operações pertencem à Configuração, quando autorizadas.
 
 **Uma única topbar principal**, sem barra duplicada nem nova área de navegação. Ações contextuais no `CommercialPageHero`: **Ver resultados**, **Configuração** e **Atualizar** (com autorização); filtros de campanha, situação, grupo e busca por cliente **dentro do mesmo Hero**, conforme fonte e permissão. `CommercialPagePath` mostra a trilha. Entradas: botão **Respostas por empresa** no Hero da UI-01, e ligação contextual da UI-02 que pode preservar a campanha escolhida. Rotas exatas a definir com `pluginRoutes.ts` / `pluginNavigation.ts`, sem presumir que já existam.
 
@@ -22,7 +22,7 @@ Usuários com somente `commercial.access` não acessam esta página nem os endpo
 - **Identidade canônica:** `customer_code` **e** `customer_store` (não usar nome isolado, nem assumir loja `01` para identidade desconhecida).
 - **Imagem:** só requisitar se `hasAvatar` vier de fonte oficial autorizada. **TO_INVENTORY:** se a projeção de participantes/respostas disponibiliza `hasAvatar` e nome oficial ou se exige leitura de enriquecimento já existente. Quando sem imagem/metadado, **iniciais** da mesma implementação; não inventar flag nem persistir imagem na pesquisa.
 - **Coluna Cliente (tabela):** avatar **`size="sm"`**, razão/nome oficial e código/loja no padrão já usado em `CustomersTable.tsx` e `OtdCustomerIdentityCell.tsx`. No celular, mesma identidade no cabeçalho do card, não um avatar alternativo.
-- **Interações separadas:** avatar e nome levam à **Conta do Cliente** com `buildCustomerDetailHref` / navegação oficial e retorno contextual quando suportado; **“Ver resposta”** abre exclusivamente o drawer da **resposta da campanha**, sem navegar à conta. Link de avatar não deve abrir preview/lightbox quando for navegação; verificar `href`/destino autorizado. Cliente pendente não tem ação ativa de abrir resposta.
+- **Interações separadas:** avatar e nome levam à **Conta do Cliente** com `buildCustomerDetailHref` / navegação oficial e retorno contextual quando suportado; **“Ver resposta”** navega à **página UI-07** da resposta daquela empresa/campanha, sem navegar à conta. Link de avatar não deve abrir preview/lightbox quando for navegação; verificar `href`/destino autorizado. Cliente pendente não tem ação ativa de abrir resposta.
 
 ## 3. Estrutura funcional (visual em revisão)
 
@@ -42,7 +42,7 @@ EMPRESAS PARTICIPANTES — lista oficial
   [avatar] Empresa Gama  003570/02       Respondida   11/12/2026    [Ver resposta]
 
 AO ACIONAR VER RESPOSTA:
-  CommercialHostDrawer — Empresa / Campanha / data
+  Página completa UI-07 — Empresa / Campanha / data (não modal/drawer)
   Satisfação geral 1–5; recomendação 0–10; as 10 dimensões (1–5 ou N/A);
   três respostas abertas opcionais; somente leitura.
 ```
@@ -60,13 +60,15 @@ AO ACIONAR VER RESPOSTA:
 | Avatar | **`CustomerAvatar`** | Componente real em `features/customers/components`; não duplicar imagem |
 | Link da conta | `CommercialEntityLink`, `buildCustomerDetailHref` | Mesmo padrão de Minha Carteira/OTD |
 | Mobile | `CommercialDataCardsGrid` / `CommercialInteractiveDataCard` ou modo oficial de `DataTableSection` | **PENDING:** conferir melhor integração e props reais, sem CSS paralelo |
-| Detalhes da resposta | `CommercialHostDrawer`, `CommercialDetailCard`, `CommercialDetailFieldGrid` | Apenas leitura, sem formulário de edição |
+| Detalhes da resposta | [UI-07 — página própria](./UI-07-DETALHES-RESPOSTA.md), `CommercialPageHero`, `CommercialDetailCard`, `CommercialDetailFieldGrid` | Somente leitura, navegação própria, sem drawer |
 | Estados | `CommercialLoadingCard`, `CommercialEmptyState`, `CommercialStateBanner` | Sem dados ≠ erro ≠ sem permissão |
 
 ## 5. Responsividade e critérios de aceite da identidade
 
-**Desktop:** avatar pequeno à esquerda do nome e do código/loja dentro da coluna Cliente; ação “Ver resposta” em coluna própria. **Tablet:** preservar a identidade visível e reorganizar colunas conforme largura. **Celular:** um card por empresa com `CustomerAvatar`, nome, código/loja, situação e ação separada. Somente o clique no avatar/nome navega para a Conta; a ação “Ver resposta” abre o drawer. Em todos os tamanhos, se a empresa não tiver imagem, exibir iniciais do kit sem salto de layout.
+**Desktop:** avatar pequeno à esquerda do nome e do código/loja dentro da coluna Cliente; ação “Ver resposta” em coluna própria. **Tablet:** preservar a identidade visível e reorganizar colunas conforme largura. **Celular:** um card por empresa com `CustomerAvatar`, nome, código/loja, situação e ação separada. Somente o clique no avatar/nome navega para a Conta; a ação “Ver resposta” navega para a página UI-07. Em todos os tamanhos, se a empresa não tiver imagem, exibir iniciais do kit sem salto de layout.
 
-Aceite: (1) avatar, nome e identidade reproduzem o padrão de `CustomersTable`/`CustomerListCard`/`OtdCustomerIdentityCell`; (2) nenhum avatar customizado; (3) com `hasAvatar=false` ou metadado indisponível, iniciais; (4) imagem só carregada se informada e autorizada; (5) código+loja preservados; (6) navegação para Conta separada da ação de resposta; (7) pendente sem drawer; (8) sem writes na página; (9) backend nega leitura individual ao perfil somente `commercial.access`; (10) testes de desktop/tablet/mobile, foco/teclado, zoom, regressão e autorização.
+Aceite: (1) avatar, nome e identidade reproduzem o padrão de `CustomersTable`/`CustomerListCard`/`OtdCustomerIdentityCell`; (2) nenhum avatar customizado; (3) com `hasAvatar=false` ou metadado indisponível, iniciais; (4) imagem só carregada se informada e autorizada; (5) código+loja preservados; (6) navegação para Conta separada da ação de resposta; (7) pendente sem página de resposta; (8) sem writes na página; (9) backend nega leitura individual ao perfil somente `commercial.access`; (10) testes de desktop/tablet/mobile, foco/teclado, zoom, regressão e autorização.
+
+**Visual aprovado:** na UI-07, cinco pontos preenchidos/neutros para cada nota de dimensão, via `RatingDots` **CANDIDATO** do PluginUI, condicionado a Abstraction Gate; ver [UI-07](./UI-07-DETALHES-RESPOSTA.md).
 
 **Status real:** aprovação de especificação, não prova de código da nova página, rota, integração de avatar ou API. Antes de implementar: revalidar HEAD, branch e working tree, inspecionar consumidor e fonte de `hasAvatar`, conferir contratos de permissão e teste, fazer menor diff e verificar resultado.
