@@ -902,10 +902,22 @@ class TableStructureEngine:
                 # Tokens qty órfãos (centro 1–3px fora do polígono):
                 # preencher célula vazia alinhada à banda Y da linha.
                 from engineering_app.application.drawing.perception_contract import (  # noqa: E501
+                    fill_empty_cells_from_unassigned_grid_extent,
                     fill_empty_quantity_cells_from_unassigned,
                 )
                 association["unassigned"] = (
                     fill_empty_quantity_cells_from_unassigned(
+                        cells,
+                        page_tokens,
+                        association.get("unassigned") or [],
+                    )
+                )
+                # Células vazias cujo bbox declarado não cobre o texto
+                # (típico em rowspan com texto centrado): o token órfão
+                # dentro da extensão de grade é associado com
+                # proveniência registrada — informação válida não some.
+                association["unassigned"] = (
+                    fill_empty_cells_from_unassigned_grid_extent(
                         cells,
                         page_tokens,
                         association.get("unassigned") or [],

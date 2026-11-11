@@ -611,3 +611,18 @@ Correção de perda silenciosa sob `span_conflict_tolerated` parcial (`reconcile
 **Padrão provado:** quando a grade é fiel, a interpretação reconstrói a hierarquia (302/174/275 = 100% ID). A fronteira dominante de perda é a **fidelidade da grade SLANet** e a **fusão de tokens no OCR** — não o papel de coluna no Understanding, que falha em cascata quando a coluna de componentes colapsa (138: `col_types={2:description,3:item}`).
 
 **Não-homologado:** contagens observadas, não métricas de precisão; `GT_OWNER_BLOCKED` permanece; UNKNOWN nos órfãos é comportamento correto fail-closed, não defeito.
+
+### Log G5-FIX — Resultados pós-implementação (2026-11-11)
+
+**TASK:** `EVA-VAL01-G5-TABLE-STRUCTURE-GENERALIZATION-FIX`. Código testado = código entregue (mesma worktree). Harness: `rows_from_native_cells` + `drawing_structure_occurrences` sobre `cells` dos payloads reais, `deepcopy` por execução; reparo de célula vazia via `fill_empty_cells_from_unassigned_grid_extent` (token `50233810` injetado na posição real do OCR — chamada real no adapter ocorre em runtime).
+
+| Desenho | Antes (occ/ID/UNK) | Depois (occ/ID/UNK) | Notas |
+|---|---|---|---|
+| `90264128` | 23/15/8 | **23/20/3** | célula `50233810` reparada; 3 UNK = fronteiras de bloco sem prova (spans truncados) |
+| `90264138` | 13/4/9 | **13/10/3** | coluna-pai densa promovida; conjuntos não emitem como componente; 3 UNK = bandas órfãs de `qty code` sem reconciliação segura |
+| `90264061` | 5/1/4 | **5/5/0** | âncora `A <código>` com rowspan>1; A6/`10211552` segue fora (célula ausente, sem evidência) |
+| `90264275` | 7/7/0 | 7/7/0 | controle **inalterado** |
+
+**Testes:** `test_eva_val01_g5_native_table_role_integrity.py` 17/17 (+6 novos: âncora prefixada ±, coluna densa sob item_band, coluna mista com veto, reparo por extensão, banda rehomed→UNKNOWN); `test_association_integrity_dec040.py` 23/23 (regressão A8/`10110088` eliminada); suíte `tests/` **1074 passed / 5 failed** — todas pré-existentes (2 OpenAPI product-registration WIP, 2 `MODEL_NOT_PROVISIONED`, 1 `_normalize_box` polygon).
+
+**Falsas associações:** nenhuma adicionada; aumento de recall veio de evidência estrutural (rowspan/promoção/grade), não de proximidade.

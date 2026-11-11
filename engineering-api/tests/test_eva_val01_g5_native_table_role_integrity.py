@@ -389,3 +389,189 @@ def test_tc09_fallback_rows_preserved_when_native_rejected():
     )
     rows = updated["component_table"]["rows"]
     assert rows and rows[0]["component_code"] == "10070001"
+
+
+# ---------- generalização G5-RCA: classes de falha 128/138/061 ----------
+
+
+def _prefixed_anchor_cells():
+    """Classe 90264061: letra de zona fundida ao código (token atômico).
+
+    'A 90001111' rowspan=4 cobre 3 linhas de componentes; '80002222'
+    rowspan=2 cobre a última. Sem prefixo reconhecido → 0 pais.
+    """
+    cells = [
+        _cell(0, 0, "A 90001111", _quad(0, 20, 90, 140), rowspan=4,
+              token_centers=[[45.0, 80.0]]),
+        _cell(0, 1, "CHICOTE", _quad(100, 20, 300, 140), rowspan=4),
+        _cell(4, 0, "80002222", _quad(0, 140, 90, 180), rowspan=2),
+        _cell(4, 1, "CABO PRETO", _quad(100, 140, 300, 180), rowspan=2),
+    ]
+    rows = [("A1", "10090001"), ("A2", "10090002"), ("A3", "10090003"),
+            ("A5", "10090005")]
+    ys = [40, 70, 100, 160]
+    for i, (item, code) in enumerate(rows):
+        r = i if i < 3 else 4
+        y = ys[i]
+        cells += [
+            _cell(r, 2, item, _quad(310, y, 360, y + 20)),
+            _cell(r, 3, "1", _quad(370, y, 400, y + 20)),
+            _cell(r, 4, code, _quad(410, y, 480, y + 20)),
+        ]
+    return cells
+
+
+def test_prefixed_group_anchor_with_rowspan_recovers_parent():
+    rows, _ = rows_from_native_cells(_prefixed_anchor_cells(), page=1)
+    by_item = {r.get("item"): r for r in rows}
+    # A linha do marcador 'A' perde o item quando o OCR a funde ao
+    # código (comportamento real do PDF 061); o pai é preservado.
+    assert by_item["A2"]["parent_group_candidate"] == "90001111"
+    assert by_item["A3"]["parent_group_candidate"] == "90001111"
+    assert by_item["A5"]["parent_group_candidate"] == "80002222"
+    assert rows[0].get("parent_group_candidate") == "90001111"
+
+
+def test_prefixed_code_without_rowspan_is_not_anchor():
+    cells = _prefixed_anchor_cells()
+    cells[0]["rowspan"] = 1
+    # Sem segunda âncora e sem rowspan a coluna não é promovida:
+    # prefixo isolado não é evidência estrutural de bloco-pai.
+    cells = [c for c in cells if c["text"] != "80002222"]
+    rows, _ = rows_from_native_cells(cells, page=1)
+    assert rows and all(
+        r.get("parent_group_candidate") != "90001111" for r in rows
+    )
+
+
+def _dense_parent_col_cells():
+    """Classe 90264138: cada conjunto abre bloco curto na coluna-pai.
+
+    c1 = códigos de conjunto densos (6 pais em 14 linhas), c3 = item,
+    c4 = QTD+componente fundidos. Promoção por posição sob item_band,
+    não por esparsidade — e bloco de 1 linha é âncora legítima.
+    """
+    cells = [
+        _cell(0, 1, "Código 80010001", _quad(60, 0, 200, 20),
+              line_texts=["Código", "80010001"],
+              line_centers=[8.0, 12.0]),
+        _cell(0, 2, "Descrição", _quad(210, 0, 380, 20)),
+        _cell(0, 3, "Item", _quad(390, 0, 440, 20)),
+        _cell(0, 4, "QTD. Componente", _quad(450, 0, 560, 20)),
+    ]
+    parents = ["80010002", "80010003", "80010004", "80010005"]
+    comps = [["1 10070001"], ["1 10070002"], ["1 10070003"],
+             ["1 10070004"]]
+    items = [["C"], ["A"], ["B"], ["A"]]
+    r = 1
+    for pi, parent in enumerate(parents):
+        cells.append(
+            _cell(r, 1, parent, _quad(60, 20 + r * 20, 200, 40 + r * 20))
+        )
+        cells.append(_cell(r, 2, f"CB18PRET-{pi}",
+                           _quad(210, 20 + r * 20, 380, 40 + r * 20)))
+        for bi, (item, qc) in enumerate(zip(items[pi], comps[pi])):
+            rr = r + bi
+            code = qc.split()[-1]
+            cells.append(_cell(rr, 3, item,
+                               _quad(390, 20 + rr * 20, 440, 40 + rr * 20)))
+            cells.append(_cell(rr, 4, qc,
+                               _quad(450, 20 + rr * 20, 520, 40 + rr * 20)))
+            cells.append(_cell(rr, 5, code,
+                               _quad(530, 20 + rr * 20, 600, 40 + rr * 20)))
+        r += len(items[pi])
+    return cells
+
+
+def test_dense_parent_column_promoted_under_item_band():
+    rows, col_types = rows_from_native_cells(
+        _dense_parent_col_cells(), page=1
+    )
+    assert col_types.get("1") == "parent_code"
+    occ = drawing_structure_occurrences(rows, product_code="80010000")
+    parents = {o["parent_code"] for o in occ if o.get("item")}
+    assert parents == {"80010002", "80010003", "80010004", "80010005"}
+    assert all(o["parent_state"] == "IDENTIFIED" for o in occ)
+    # Códigos de conjunto nunca emitem como componente.
+    assert not {o["component_code"] for o in occ} & {
+        "80010002", "80010003", "80010004", "80010005"
+    }
+
+
+def test_mixed_column_is_not_promoted_to_parent():
+    """Coluna com componentes avulsos + conjuntos não vira parent_code.
+
+    Classe DEC040: códigos de linha sem componente em outra coluna são
+    componentes, não pais — o veto preserva a emissão de componente.
+    """
+    cells = [
+        _cell(0, 0, "Codigo", _quad(0, 0, 100, 16)),
+        _cell(0, 2, "Item", _quad(200, 0, 250, 16)),
+    ]
+    for i in range(1, 4):
+        y = i * 20
+        cells += [
+            _cell(i, 0, f"1011008{i}", _quad(0, y, 100, y + 16)),
+            _cell(i, 1, f"ETIQUETA A{i}", _quad(110, y, 190, y + 16)),
+            _cell(i, 2, f"A{i}", _quad(200, y, 250, y + 16)),
+            _cell(i, 3, "1", _quad(260, y, 290, y + 16)),
+        ]
+    rows, col_types = rows_from_native_cells(cells, page=1)
+    assert col_types.get("0") != "parent_code"
+    by_item = {r.get("item"): r for r in rows}
+    assert by_item["A1"]["component_code"] == "10110081"
+
+
+def test_grid_extent_fill_repairs_empty_cell_and_anchors_block():
+    """Classe 90264128: célula rowspan vazia com bbox truncada.
+
+    Token órfão dentro da extensão linhas×colunas da grade é associado
+    com proveniência; fora da extensão permanece unassigned.
+    """
+    from engineering_app.application.drawing.perception_contract import (
+        fill_empty_cells_from_unassigned_grid_extent as fill,
+    )
+
+    cells = [
+        _cell(0, 0, "PAI", _quad(10, 0, 100, 30)),
+        _cell(1, 0, "", _quad(10, 30, 100, 60), rowspan=3),
+        _cell(1, 1, "A1", _quad(110, 30, 160, 50)),
+        _cell(2, 1, "A2", _quad(110, 50, 160, 70)),
+        _cell(3, 1, "A3", _quad(110, 70, 160, 90)),
+    ]
+    tokens = [
+        {"text": "80005005", "bounding_box_px": _quad(30, 62, 90, 78)},
+        {"text": "LIXO", "bounding_box_px": _quad(300, 300, 320, 320)},
+    ]
+    remaining = fill(cells, tokens, [0, 1])
+    assert remaining == [1]
+    assert cells[1]["text"] == "80005005"
+    assert cells[1]["association_method"] == "grid_extent_unassigned"
+    assert cells[1]["ambiguous"] is True
+
+
+def test_rehomed_band_crossing_parent_boundary_stays_unknown():
+    """Banda que migra para linha de outro bloco-pai: pai ≠ IDENTIFIED."""
+    cells = [
+        _cell(0, 0, "80020001", _quad(0, 0, 90, 40), rowspan=2,
+              token_centers=[[40.0, 20.0]]),
+        _cell(2, 0, "80020002", _quad(0, 40, 90, 80), rowspan=2,
+              token_centers=[[40.0, 60.0]]),
+        _cell(0, 1, "A", _quad(100, 0, 140, 20)),
+        _cell(0, 2, "1 10080001", _quad(150, 0, 260, 20)),
+        # banda do componente migrada para a linha do bloco seguinte
+        _cell(1, 1, "B", _quad(100, 20, 140, 40)),
+        _cell(2, 2, "1 10080002", _quad(150, 40, 260, 60),
+              _rehomed_from_row=0, _split_done=True,
+              _split_text="1 10080002"),
+        _cell(3, 1, "C", _quad(100, 60, 140, 80)),
+        _cell(3, 2, "1 10080003", _quad(150, 60, 260, 80)),
+    ]
+    rows, _ = rows_from_native_cells(cells, page=1)
+    occ = drawing_structure_occurrences(rows, product_code="80020000")
+    migrated = [
+        o for o in occ if o["component_code"] == "10080002"
+    ]
+    assert migrated and all(
+        o["parent_state"] == "UNKNOWN" for o in migrated
+    )

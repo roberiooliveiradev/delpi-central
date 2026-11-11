@@ -458,6 +458,137 @@ def fill_empty_quantity_cells_from_unassigned(
     return remaining
 
 
+def fill_empty_cells_from_unassigned_grid_extent(
+    cells: list[dict],
+    tokens: list,
+    unassigned: list[int],
+) -> list[int]:
+    """Preenche célula vazia com token órfão dentro da extensão de grade.
+
+    Quando o SLANet declara bbox truncada para uma célula (típico em
+    células mescladas cujo texto fica no centro vertical do bloco), a
+    contenção falha e o token vira ``unassigned`` — a informação existe
+    no OCR mas some da célula (ex.: código de conjunto ``50233810``).
+
+    A extensão real da célula é o retângulo linhas×colunas que ela
+    cobre, derivado das bandas dos irmãos da grade — não do quad
+    declarado. Só preenche quando:
+
+    - a célula está vazia;
+    - o centro do token cai **dentro** da extensão de grade (evidência
+      estrita, sem padding);
+    - nenhum concorrente reivindica o mesmo token.
+
+    O preenchimento preserva proveniência (``association_method`` e
+    ``ambiguous=True`` — a associação reparada é evidência mais fraca
+    que a bbox declarada) e nunca remove texto já associado.
+    """
+    if not cells or not tokens or not unassigned:
+        return list(unassigned)
+
+    def _extents(cb: list) -> tuple[float, float, float, float] | None:
+        if len(cb) >= 8:
+            xs, ys = cb[0::2], cb[1::2]
+        elif len(cb) >= 4:
+            xs, ys = [cb[0], cb[2]], [cb[1], cb[3]]
+        else:
+            return None
+        return min(xs), min(ys), max(xs), max(ys)
+
+    # Bandas de linha e de coluna derivadas de TODAS as células da
+    # grade — a extensão verdadeira de uma célula rowspan N é a união
+    # das bandas das N linhas × M colunas que ela cobre.
+    row_bands: dict[int, list[float]] = {}
+    col_bands: dict[int, list[float]] = {}
+    for cell in cells:
+        ext = _extents(cell.get("bounding_box_px") or [])
+        if ext is None:
+            continue
+        x1, y1, x2, y2 = ext
+        row = int(cell.get("row") or 0)
+        col = int(cell.get("col") or 0)
+        band = row_bands.setdefault(row, [y1, y2])
+        band[0], band[1] = min(band[0], y1), max(band[1], y2)
+        cband = col_bands.setdefault(col, [x1, x2])
+        cband[0], cband[1] = min(cband[0], x1), max(cband[1], x2)
+
+    def _grid_extent(cell: dict) -> tuple[float, float, float, float] | None:
+        row = int(cell.get("row") or 0)
+        col = int(cell.get("col") or 0)
+        rowspan = max(1, int(cell.get("rowspan") or 1))
+        colspan = max(1, int(cell.get("colspan") or 1))
+        x1 = y1 = float("inf")
+        x2 = y2 = float("-inf")
+        own = _extents(cell.get("bounding_box_px") or [])
+        if own is not None:
+            x1, y1, x2, y2 = own
+        for r in range(row, row + rowspan):
+            band = row_bands.get(r)
+            if band:
+                y1, y2 = min(y1, band[0]), max(y2, band[1])
+        for c in range(col, col + colspan):
+            cband = col_bands.get(c)
+            if cband:
+                x1, x2 = min(x1, cband[0]), max(x2, cband[1])
+        if x1 == float("inf") or y1 == float("inf"):
+            return None
+        return x1, y1, x2, y2
+
+    empty_cells = [
+        c for c in cells if not str(c.get("text") or "").strip()
+    ]
+    if not empty_cells:
+        return list(unassigned)
+    extents = {id(c): _grid_extent(c) for c in empty_cells}
+
+    remaining: list[int] = []
+    for ti in unassigned:
+        if ti >= len(tokens) or not isinstance(tokens[ti], dict):
+            remaining.append(ti)
+            continue
+        tok = tokens[ti]
+        center = _token_center_px(tok.get("bounding_box_px"))
+        if center is None:
+            remaining.append(ti)
+            continue
+        cx, cy = center
+        hits = [
+            c
+            for c in empty_cells
+            if (e := extents[id(c)]) is not None
+            and e[0] <= cx <= e[2]
+            and e[1] <= cy <= e[3]
+        ]
+        # Mais de uma célula reivindicando o token → a grade está
+        # ambígua; não associar é a resposta honesta.
+        if len(hits) != 1:
+            remaining.append(ti)
+            continue
+        cell = hits[0]
+        raw = str(
+            tok.get("normalized_text")
+            or tok.get("raw_text")
+            or tok.get("text")
+            or ""
+        ).strip()
+        if not raw:
+            remaining.append(ti)
+            continue
+        cell["text"] = raw if not cell.get("text") else (
+            str(cell["text"]).strip() + " " + raw
+        )
+        cell["ambiguous"] = True
+        cell["association_method"] = "grid_extent_unassigned"
+        tcs = list(cell.get("token_centers") or [])
+        tcs.append([round(cx, 1), round(cy, 1)])
+        cell["token_centers"] = tcs
+        refs = list(cell.get("token_refs") or [])
+        if ti not in refs:
+            refs.append(ti)
+        cell["token_refs"] = refs
+    return remaining
+
+
 def resolve_requested_page(
     pages: list[int] | None, page_count: int
 ) -> tuple[int | None, str | None]:

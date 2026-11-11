@@ -2500,3 +2500,34 @@ DEPLOY_EXECUTED=false
 G5_QUALITY_HOMOLOGATED=NOT_DECLARED
 VAL01_COMPLETED=false
 ```
+
+### 68. G5 — Implementação da correção generalista (2026-11-11)
+
+**TASK:** `EVA-VAL01-G5-TABLE-STRUCTURE-GENERALIZATION-FIX`. Implementa P1a+P1b+P1c (§67) + reparo P2 de célula vazia por extensão de grade, no bounded context existente. Sem exceções por produto, sem novo motor, sem deploy.
+
+#### Correções entregues (todas em `understanding.py` / `perception_contract.py` / `engine_adapters.py`)
+
+1. **Âncora prefixada estrutural (P1c):** `_group_anchor_code_of` reconhece `<prefixo 1–2 letras> <código>` (letra de zona fundida pelo OCR, ex. `A <produto>`) **somente quando a célula tem rowspan>1** ou em coluna tipada `parent_code`. Prefixo isolado sem evidência estrutural não vira âncora.
+2. **Promoção posicional sob pivô `item_band` (P1a):** com banda de item detectada, a posição separa os blocos — código à esquerda do item = lado pai; à direita = lado componente. A suposição "coluna densa = componente" deixa de vetar colunas de conjuntos pequenos (exige ainda coluna de código à direita do item como contra-prova).
+3. **Veto de coluna mista (P1b fail-closed):** coluna candidata a `parent_code` é vetada quando contém código de linha sem componente em outra coluna nas linhas que ele cobre (componente avulso ≠ âncora de bloco). Resolve o caso DEC040 (componentes `1011008x` + conjuntos na mesma coluna) sem quebrar a promoção.
+4. **Âncora de bloco de 1 linha + âncora em header:** código em coluna promovida abre bloco que termina no próximo código, mesmo com `rowspan=1` (semântica BomTreeBuilder: rowspan é realização visual, não a semântica). Célula `Código <n>` projetada no `header_row` participa do perfil e da varredura.
+5. **Precedência de âncora declarada:** `rowspan_anchor` (estrutural) vence `column_span` inferido no mesmo índice; `column_span` termina na próxima âncora de qualquer tipo. Correções por proximidade Y (`y_anchor_nearest`) não sobrepõem âncora estrutural — banda rehomed que cruza fronteira de bloco-pai permanece `UNKNOWN`.
+6. **Reparo de célula vazia por extensão de grade (P2, adapter):** `fill_empty_cells_from_unassigned_grid_extent` associa token órfão a célula vazia quando o centro cai na extensão linhas×colunas reais que a célula cobre — não no bbox truncado declarado pelo SLANet. Proveniência registrada (`association_method=grid_extent_unassigned`, `ambiguous=True`); token fora da extensão permanece `unassigned`.
+
+#### Evidência em payloads reais (A/B, deepcopy por execução)
+
+| Desenho | Antes | Depois | Delta |
+|---|---|---|---|
+| `90264061` | 5 occ / 1 ID / 4 UNK | 5 occ / **5 ID** | âncora prefixada + promoção |
+| `90264138` | 13 occ / 4 ID / 9 UNK (+ códigos de conjunto emitidos como componentes) | 13 occ / **10 ID / 3 UNK** | conjuntos não saem como componente; UNK = bandas sem prova |
+| `90264128` | 23 occ / 15 ID / 8 UNK | 23 occ / **20–22 ID / 1–3 UNK** | `50233810` recuperado por extensão de grade; 23 linhas visuais preservadas |
+| `90264275` | 7/7 ID | 7/7 ID | **sem regressão** |
+
+```text
+G5_FIX_DELIVERED=understanding+perception_contract+engine_adapters
+TESTS=17/17 G5 + 23/23 DEC040 + suíte 1074 passed / 5 failed (todas pré-existentes)
+FALSE_LINKS=não aumentaram — bandas ambíguas permanecem UNKNOWN
+BLOCKED_REMAINING=061 A6 (célula ausente da grade, sem token na extensão);
+                  128 spans truncados residuais; 138 bandas órfãs;
+                  135p13 COORDINATE_MISMATCH (engine)
+```

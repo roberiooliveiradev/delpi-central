@@ -1720,11 +1720,32 @@ _GROUP_LABELED_CODE_RE = re.compile(
     r"(\d{6,11})\s*$",
     re.IGNORECASE,
 )
+# Letra prefixada ("A 90264061", "B 50225764"): o PaddleOCR funde o
+# marcador de zona da folha ou a letra de item ao código quando o texto
+# da célula mesclada sai num token atômico (line_texts=null). O par
+# letra+código só é evidência de âncora quando a célula já declara
+# rowspan>1 — sem o span declarado pode ser par item/código de linha.
+_GROUP_PREFIXED_CODE_RE = re.compile(r"^[A-Za-z]{1,2}\s+(\d{6,11})$")
 
 
 def _group_code_of(text: str) -> str | None:
     """Código líder de célula-âncora de grupo, com ou sem rótulo."""
     m = _GROUP_CODE_RE.match(text) or _GROUP_LABELED_CODE_RE.match(text)
+    return m.group(1) if m else None
+
+
+def _group_anchor_code_of(cell: dict) -> str | None:
+    """Código de grupo da célula, incluindo forma prefixada por letra.
+
+    O padrão prefixado só vale como âncora quando ``rowspan>1`` — o
+    span declarado é a evidência estrutural que separa ``<letra>
+    <código>`` de um par item/código fundido numa linha comum."""
+    code = _group_code_of(_norm(str(cell.get("text") or "")))
+    if code is not None:
+        return code
+    if int(cell.get("rowspan") or 1) <= 1:
+        return None
+    m = _GROUP_PREFIXED_CODE_RE.match(_norm(str(cell.get("text") or "")))
     return m.group(1) if m else None
 
 
@@ -1736,7 +1757,7 @@ def _is_group_anchor_cell(cell: dict) -> bool:
     o índice da primeira linha, não um rótulo."""
     if int(cell.get("rowspan") or 1) <= 1:
         return False
-    return _group_code_of(_norm(str(cell.get("text") or ""))) is not None
+    return _group_anchor_code_of(cell) is not None
 
 
 def _line_is_canonical_field_band(text: str) -> bool:
@@ -2046,11 +2067,15 @@ def _assign_presentation_roles(
         st = stats.setdefault(col, Counter())
         st["total"] += 1
         group_code = _group_code_of(text)
-        if group_code is None and c.get("_from_group_anchor"):
-            # Após o split, a banda que ficou na linha pode conter só o
-            # rótulo; a identidade de grupo vem do texto original.
-            group_code = _group_code_of(
-                _norm(str(c.get("text") or ""))
+        if group_code is None:
+            # Âncora prefixada (letra de zona/item fundida ao código)
+            # só conta quando rowspan>1 comprova a mesclagem; após o
+            # split, a banda na linha pode conter só o rótulo — a
+            # identidade de grupo vem do texto original.
+            group_code = _group_anchor_code_of(c) or (
+                _group_code_of(_norm(str(c.get("text") or "")))
+                if c.get("_from_group_anchor")
+                else None
             )
         if group_code is not None:
             st["codes"] += 1
@@ -2078,36 +2103,104 @@ def _assign_presentation_roles(
     item_mid = (
         (item_band[0] + item_band[1]) / 2.0 if item_band else None
     )
+    # Lado componente: coluna de código à direita da banda de item —
+    # na semântica DELPI o bloco pai (Código|Descrição) fica à
+    # esquerda de Item|QTD|Componente|Descrição.
+    right_code_cols = []
+    if item_mid is not None:
+        for col in sorted(counts):
+            xs = [cx for cx, _c in codes_by_col[col] if cx is not None]
+            if xs and sorted(xs)[len(xs) // 2] > item_mid + 4.0:
+                right_code_cols.append(col)
     parent_col = None
     pivot = None
-    for col in sorted(counts):
-        if col in dense_cols:
-            continue
-        n = counts[col]
-        # ≥2 âncoras provam esparsidade; uma única âncora rowspan
-        # declarada pelo SLANet também é prova de bloco pai.
-        if n < 2 and not stats[col]["code_rowspans"]:
-            continue
-        if n >= max(3, int(0.45 * data_row_count)):
-            continue
-        if densest_n < n + 2 or densest_mid is None:
-            continue
-        sparse_xs = [
-            cx for cx, _c in codes_by_col[col] if cx is not None
-        ]
-        if not sparse_xs:
-            continue
-        sparse_mid = sorted(sparse_xs)[len(sparse_xs) // 2]
-        if item_mid is not None:
-            if sparse_mid >= item_mid - 4.0:
+    if item_mid is not None and right_code_cols:
+        # Com a banda de item como pivô, a posição separa os blocos:
+        # código à esquerda do item é lado pai, à direita é lado
+        # componente. A densidade deixa de ser prova — conjuntos
+        # pequenos repetem código de pai quase linha a linha, e a
+        # coluna de componentes pode colapsar (QTD+Componente fundidas)
+        # sem deixar de existir. Preferência: coluna com mais âncoras
+        # (evidência mais forte), depois a mais à esquerda.
+        # Coluna mista (componentes avulsos + conjuntos na mesma
+        # coluna) não pode ser tipada pai inteira — código de linha
+        # sem componente em outra coluna nas linhas que ele cobre é
+        # evidência de papel ambíguo → veto fail-closed.
+        rows_map: dict[int, list[dict]] = {}
+        for c in cells:
+            rows_map.setdefault(int(c.get("row") or 0), []).append(c)
+
+        def _col_has_loose_codes(col: int) -> bool:
+            for _cx, cell in codes_by_col[col]:
+                row = int(cell.get("row") or 0)
+                rowspan = max(1, int(cell.get("rowspan") or 1))
+                companion = False
+                # Janela row..row+rowspan: célula rs1 que ABRE um bloco
+                # (rótulo fundido ao primeiro código, ou banda rehomed
+                # uma linha abaixo) encontra o componente na linha
+                # seguinte — código avulso de componente não encontra.
+                for r in range(row, row + rowspan + 1):
+                    for c2 in rows_map.get(r, []):
+                        if c2 is cell or int(c2.get("col") or 0) == col:
+                            continue
+                        t2 = _cell_text(c2)
+                        if _CODE_RE.search(t2) or _QTY_CODE_RE.fullmatch(
+                            t2
+                        ):
+                            companion = True
+                            break
+                    if companion:
+                        break
+                if not companion:
+                    return True
+            return False
+
+        candidates: list[tuple[int, int]] = []
+        for col in sorted(counts):
+            n = counts[col]
+            if n < 2 and not stats[col]["code_rowspans"]:
                 continue
+            xs = [cx for cx, _c in codes_by_col[col] if cx is not None]
+            if not xs:
+                continue
+            if sorted(xs)[len(xs) // 2] >= item_mid - 4.0:
+                continue
+            if _col_has_loose_codes(col):
+                continue
+            candidates.append((col, n))
+        if candidates:
+            candidates.sort(key=lambda cn: (-cn[1], cn[0]))
+            parent_col = candidates[0][0]
             pivot = "item_band"
-        else:
-            if sparse_mid >= densest_mid - 8.0:
+    else:
+        for col in sorted(counts):
+            if col in dense_cols:
                 continue
-            pivot = "sparse_dense_columns"
-        parent_col = col
-        break
+            n = counts[col]
+            # ≥2 âncoras provam esparsidade; uma única âncora rowspan
+            # declarada pelo SLANet também é prova de bloco pai.
+            if n < 2 and not stats[col]["code_rowspans"]:
+                continue
+            if n >= max(3, int(0.45 * data_row_count)):
+                continue
+            if densest_n < n + 2 or densest_mid is None:
+                continue
+            sparse_xs = [
+                cx for cx, _c in codes_by_col[col] if cx is not None
+            ]
+            if not sparse_xs:
+                continue
+            sparse_mid = sorted(sparse_xs)[len(sparse_xs) // 2]
+            if item_mid is not None:
+                if sparse_mid >= item_mid - 4.0:
+                    continue
+                pivot = "item_band"
+            else:
+                if sparse_mid >= densest_mid - 8.0:
+                    continue
+                pivot = "sparse_dense_columns"
+            parent_col = col
+            break
     if parent_col is None:
         return None
     col_types[parent_col] = "parent_code"
@@ -2260,7 +2353,7 @@ def rows_from_native_cells(
                 source_text = _norm(str(cell.get("text") or ""))
                 from_group = bool(
                     int(cell.get("rowspan") or 1) > 1
-                    and _group_code_of(source_text)
+                    and _group_anchor_code_of(cell)
                 )
                 if from_group:
                     cell["_from_group_anchor"] = True
@@ -2392,6 +2485,7 @@ def rows_from_native_cells(
                     virtual["rowspan"] = 1
                     virtual["_from_group_anchor"] = from_group
                     virtual["_detached_band"] = target >= 500000
+                    virtual["_rehomed_from_row"] = row_index
                     virtual["_band_cy"] = sum(
                         float(centers[i]) for i, _text in tlines
                     ) / len(tlines)
@@ -2485,11 +2579,17 @@ def rows_from_native_cells(
             return sum(ys) / len(ys)
         return _cell_cy(cell)
 
+    anchor_col_rows: dict[int, set[int]] = {}
+
     def _register_group_anchor(
         row_index: int, code: str, span: int, cell: dict, source: str
     ) -> None:
         group_anchors.append((row_index, code, span, source))
         group_anchor_ids.add(id(cell))
+        if source == "rowspan_anchor":
+            anchor_col_rows.setdefault(
+                int(cell.get("col") or 0), set()
+            ).add(row_index)
         cy = _group_anchor_cy(cell)
         if cy is not None:
             group_y_anchors.append((cy, code))
@@ -2500,7 +2600,7 @@ def rows_from_native_cells(
     for row_index, row_cells in grouped.items():
         for c in row_cells:
             anchor_code = (
-                _group_code_of(_norm(str(c.get("text") or "")))
+                _group_anchor_code_of(c)
                 if _is_group_anchor_cell(c)
                 else None
             )
@@ -2519,7 +2619,14 @@ def rows_from_native_cells(
     )
     for pcol in parent_code_cols:
         entries: list[tuple[int, str, dict]] = []
-        for row_index in data_row_indices:
+        entry_rows = list(data_row_indices)
+        # O rótulo da coluna pode absorver o primeiro código de grupo
+        # ("Código 50215397" no header): na semântica DELPI esse código
+        # abre o primeiro bloco pai — entra como âncora mesmo na linha
+        # de cabeçalho.
+        if header_row is not None:
+            entry_rows = [header_row] + entry_rows
+        for row_index in entry_rows:
             for c in grouped[row_index]:
                 if int(c.get("col") or 0) != pcol:
                     continue
@@ -2529,25 +2636,60 @@ def rows_from_native_cells(
                 # contexto dela — nunca reancora um novo grupo.
                 if c.get("_from_group_anchor"):
                     continue
-                anchor_code = _group_code_of(_cell_text(c))
+                anchor_code = _group_anchor_code_of(c) or _group_code_of(
+                    _cell_text(c)
+                )
                 if anchor_code:
                     entries.append((row_index, anchor_code, c))
         entries.sort(key=lambda e: e[0])
+        # Fronteira do bloco = próximo âncora de QUALQUER tipo na
+        # coluna-pai — rowspan declarado também encerra o bloco
+        # anterior, mesmo quando foi excluído das entradas por já ser
+        # âncora registrada.
+        boundary_rows = sorted(
+            {e[0] for e in entries} | anchor_col_rows.get(pcol, set())
+        )
         for i, (row_index, code, cell) in enumerate(entries):
             span = int(cell.get("rowspan") or 1)
             if span <= 1:
-                next_row = (
-                    entries[i + 1][0]
-                    if i + 1 < len(entries)
-                    else (data_row_indices[-1] + 1)
+                next_row = next(
+                    (r for r in boundary_rows if r > row_index),
+                    data_row_indices[-1] + 1,
                 )
                 span = int(next_row) - int(row_index)
-            if span < 2:
+            # Cada código da coluna-pai abre um bloco que termina no
+            # próximo código — bloco de uma única linha é legítimo
+            # (uma linha SLANet pode ainda carregar várias bandas de
+            # componentes fundidas). Mas código de linha avulsa na
+            # mesma coluna de conjuntos NÃO é pai: o bloco precisa
+            # conter código de componente em coluna diferente, senão o
+            # próprio código é o componente da linha.
+            if span < 1:
+                continue
+            has_component_code = False
+            for r in range(row_index, row_index + span):
+                for c2 in grouped.get(r, []):
+                    if int(c2.get("col") or 0) == pcol:
+                        continue
+                    t2 = _cell_text(c2)
+                    if _CODE_RE.search(t2) or _QTY_CODE_RE.fullmatch(t2):
+                        has_component_code = True
+                        break
+                if has_component_code:
+                    break
+            if not has_component_code:
                 continue
             _register_group_anchor(
                 row_index, code, span, cell, "column_span",
             )
-    group_anchors.sort()
+    # Sobreposição resolve-se pela âncora mais recente; em empate de
+    # linha, a âncora estrutural declarada (rowspan) prevalece sobre a
+    # inferida por coluna (column_span) — o span declarado é evidência
+    # mais forte que a extensão até o próximo código.
+    _ANCHOR_RANK = {"column_span": 0, "rowspan_anchor": 1}
+    group_anchors.sort(
+        key=lambda a: (a[0], _ANCHOR_RANK.get(a[3], 0), a[1])
+    )
     group_y_anchors.sort(key=lambda a: a[0])
     # Passo mediano entre linhas — escala para decidir se dois campos
     # vêm de bandas Y compatíveis (mesma linha física) ou conflitantes.
@@ -2586,6 +2728,7 @@ def rows_from_native_cells(
                 "bounding_box_px": cell.get("bounding_box_px"),
                 "source_cy_px": _cell_cy(cell),
                 "col": int(cell.get("col") or 0),
+                "rehomed_from_row": cell.get("_rehomed_from_row"),
                 "association_method": method,
                 "association_state": "FIELD_IDENTIFIED",
             }
@@ -2842,7 +2985,10 @@ def rows_from_native_cells(
             if group is None:
                 group = nearest_code
                 group_source = "y_anchor_nearest"
-            elif nearest_code != group:
+            elif (
+                nearest_code != group
+                and group_source not in {"rowspan_anchor", "column_span"}
+            ):
                 span_cy = next(
                     (cy for cy, code in group_y_anchors if code == group),
                     None,
@@ -2855,6 +3001,21 @@ def rows_from_native_cells(
                 ):
                     group = nearest_code
                     group_source = "y_anchor_correction"
+        # Banda rehomed que cruzou a fronteira do bloco-pai: o vínculo
+        # estrutural da linha destino não prova o filho da banda
+        # migrada — rebaixa para proximidade (UNKNOWN honesto) quando o
+        # bloco da linha de origem difere.
+        if group is not None:
+            for f in fields.values():
+                src_row = f.get("rehomed_from_row")
+                if src_row is None or src_row == row_index:
+                    continue
+                src_group = None
+                for arow, acode, aspan, _asrc in group_anchors:
+                    if arow <= src_row < arow + aspan:
+                        src_group = acode
+                if src_group is not None and src_group != group:
+                    group_source = "band_rehome_boundary"
         rows_out.append(
             {
                 "row": row_index,
@@ -2986,6 +3147,7 @@ def drawing_structure_occurrences(
         # por aproximação vira candidata, não vínculo identificado.
         proximity_only = parent_source in {
             "y_anchor_nearest", "y_anchor_correction",
+            "band_rehome_boundary",
         }
         status = str(row.get("association_status") or "")
         uncertainty: list[str] = []
