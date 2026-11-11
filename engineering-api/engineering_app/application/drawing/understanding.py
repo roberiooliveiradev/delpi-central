@@ -2229,7 +2229,11 @@ def _assign_presentation_roles(
 
 
 def rows_from_native_cells(
-    cells: list[dict], *, page: int, profile_out: dict | None = None
+    cells: list[dict],
+    *,
+    page: int,
+    profile_out: dict | None = None,
+    marker_tokens: list[dict] | None = None,
 ) -> tuple[list[dict], dict[str, str]]:
     """Linhas do Understanding a partir da grade nativa.
 
@@ -3048,7 +3052,7 @@ def rows_from_native_cells(
                 "topology_source": "native_table_cells",
             }
         )
-    _recover_item_markers(rows_out, band_gap_px)
+    _recover_item_markers(rows_out, band_gap_px, marker_tokens)
     _rehome_across_bands(rows_out, band_gap_px)
     return rows_out, {str(k): v for k, v in col_types.items()}
 
@@ -3059,7 +3063,11 @@ _ITEM_MARKER_FUSED_RE = re.compile(
 )
 
 
-def _recover_item_markers(rows: list[dict], band_gap_px: float) -> None:
+def _recover_item_markers(
+    rows: list[dict],
+    band_gap_px: float,
+    marker_tokens: list[dict] | None = None,
+) -> None:
     """Resgata marcador de item em célula de papel incorreto.
 
     Classe comprovada (VAL-01 RQ-A02): células ``A5``/``A6``/``A1 1``
@@ -3086,55 +3094,117 @@ def _recover_item_markers(rows: list[dict], band_gap_px: float) -> None:
             continue
         ref_cx: float | None = None
         ref_cy: float | None = None
-        for kind in ("quantity", "component_code"):
+        for kind in ("component_code", "quantity"):
             f = fields.get(kind) or {}
             box = f.get("bounding_box_px")
-            cy = f.get("source_cy_px")
             if isinstance(box, (list, tuple)) and len(box) >= 4:
                 xs = [float(box[i]) for i in (0, 2, 4, 6) if i < len(box)]
                 if xs:
                     ref_cx = sum(xs) / len(xs)
-                if isinstance(cy, (int, float)):
-                    ref_cy = float(cy)
+                fval = str(f.get("normalized_value") or "")
+                fcol = f.get("col")
+                for c in row.get("cells") or []:
+                    if fcol is not None and int(
+                        c.get("col") or -1
+                    ) != int(fcol):
+                        continue
+                    if fval and fval not in str(c.get("text") or ""):
+                        continue
+                    tcs = c.get("token_centers") or []
+                    if tcs and isinstance(tcs[0], (list, tuple)):
+                        ref_cy = float(tcs[0][1])
+                    break
+                if ref_cy is None:
+                    cy = f.get("source_cy_px")
+                    if isinstance(cy, (int, float)):
+                        ref_cy = float(cy)
                 break
         if ref_cx is None:
             continue
         parent = str(row.get("parent_group_candidate") or "")
         comp = str((fields.get("component_code") or {}).get(
             "normalized_value") or "")
+        def _marker_of(text: str) -> str | None:
+            if _ITEM_MARKER_RE.fullmatch(text):
+                return text.upper()
+            m = _ITEM_MARKER_FUSED_RE.fullmatch(text)
+            return m.group(1).upper() if m else None
+
+        def _dist_cy(obj: dict) -> float | None:
+            tcs = obj.get("token_centers") or []
+            cy = (
+                float(tcs[0][1])
+                if tcs and isinstance(tcs[0], (list, tuple))
+                and len(tcs[0]) >= 2
+                else _cell_cy(obj)
+            )
+            if cy is None or ref_cy is None:
+                return cy
+            return abs(cy - ref_cy)
+
+        def _accept(obj: dict) -> bool:
+            d = _dist_cy(obj)
+            if ref_cy is not None and d is not None and d > tol:
+                return False
+            cx = _cell_cx(obj)
+            return not (cx is not None and cx > ref_cx + 2)
+
+        # Tokens órfãos primeiro: a geometria do token OCR é
+        # autoritativa — células SLANet podem estar deslocadas uma
+        # linha (classe comprovada: AA/10400035).
         found: list[tuple[str, dict]] = []
-        for other in by_page.get(int(row.get("page") or 1), []):
-            for cell in other.get("cells") or []:
-                text = str(cell.get("text") or "").strip()
-                if _CODE_FIND_RE.search(text):
+        for tok in marker_tokens or []:
+            if int(tok.get("page") or row.get("page") or 1) != int(
+                row.get("page") or 1
+            ):
+                continue
+            text = str(
+                tok.get("normalized_text") or tok.get("raw_text") or ""
+            ).strip()
+            if not text or (parent and parent in text) or (
+                comp and comp in text
+            ):
+                continue
+            marker = _marker_of(text)
+            if marker and _accept(tok):
+                found.append((marker, tok))
+        if len({m for m, _ in found}) != 1:
+            found = []
+            for other in by_page.get(int(row.get("page") or 1), []):
+                for cell in other.get("cells") or []:
+                    text = str(cell.get("text") or "").strip()
+                    if not text or _CODE_FIND_RE.search(text) or (
+                        parent and parent in text
+                    ) or (comp and comp in text):
+                        continue
+                    marker = _marker_of(text)
+                    if marker and _accept(cell):
+                        found.append((marker, cell))
+        if len({m for m, _ in found}) > 1:
+            # Desempate por evidência: o marcador cuja geometria está
+            # mais próxima da banda da linha vence — empate real
+            # permanece fail-closed.
+            best: dict[float, set[str]] = {}
+            for m, obj in found:
+                d = _dist_cy(obj)
+                if d is None:
                     continue
-                if not text or (parent and parent in text) or (
-                    comp and comp in text
-                ):
-                    continue
-                marker = None
-                if _ITEM_MARKER_RE.fullmatch(text):
-                    marker = text.upper()
-                else:
-                    m = _ITEM_MARKER_FUSED_RE.fullmatch(text)
-                    if m:
-                        marker = m.group(1).upper()
-                if not marker:
-                    continue
-                cy = _cell_cy(cell)
-                if ref_cy is not None and cy is not None and (
-                    abs(cy - ref_cy) > tol
-                ):
-                    continue
-                cx = _cell_cx(cell)
-                if cx is not None and cx > ref_cx + 2:
-                    continue
-                found.append((marker, cell))
+                best.setdefault(round(d, 1), set()).add(m)
+            if not best:
+                continue
+            closest = best[sorted(best)[0]]
+            if len(closest) != 1:
+                continue
+            marker = next(iter(closest))
+            found = [f for f in found if f[0] == marker]
         if len({m for m, _ in found}) != 1:
             continue
         marker, cell = found[0]
         fields["item"] = {
-            "raw_text": str(cell.get("text") or "").strip(),
+            "raw_text": str(
+                cell.get("text") or cell.get("normalized_text")
+                or cell.get("raw_text") or ""
+            ).strip(),
             "normalized_value": marker,
             "bounding_box_px": cell.get("bounding_box_px"),
             "source_cy_px": _cell_cy(cell),
@@ -3571,7 +3641,12 @@ def apply_native_table_observations(
             continue
         profile_meta: dict = {}
         native_rows, col_types = rows_from_native_cells(
-            native_cells, page=page, profile_out=profile_meta
+            native_cells,
+            page=page,
+            profile_out=profile_meta,
+            marker_tokens=(
+                (result.get("association") or {}).get("unassigned_tokens")
+            ),
         )
         if profile_meta:
             pp = dict(table.get("presentation_profile") or {})

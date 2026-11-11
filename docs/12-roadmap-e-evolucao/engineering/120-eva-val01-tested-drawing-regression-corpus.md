@@ -696,3 +696,21 @@ verificado em runtime. Validação funcional E2E fica com EVA/Coordination.
 
 Testes: +4 (papel errado, fora da banda, âncora, empate). Foco: 104 pass /
 3 falhas pré-existentes. GT/holdout: EVAL_PENDING (owner).
+
+## AA-GEOMETRY — marcadores órfãos por geometria de token (2026-11-11)
+
+**Primeira perda (prova real):** células SLANet da coluna de marcadores
+deslocadas ~1 linha; `token_centers` das células e tokens órfãos trazem a
+geometria correta (AA cy458 ≡ linha de 10400035; A9 cy423 ≡ linha de
+10080065). Correção: `_recover_item_markers` aceita tokens órfãos
+(`association.unassigned_tokens`, aditivo no adapter) e usa
+`token_centers`/`source_cy` como referência de banda; desempate por menor
+distância à banda (empate real → fail-closed).
+
+| PDF | item completude |
+|---|---|
+| 90264004 | AA→10400035 ✓, A9→10080065 ✓, B→10080065(478) ✓, 0 null |
+| 90264061 | A1–A6 completos |
+| demais | 0 null, zero regressão |
+
+Testes +2; foco 86 pass/2 falhas pré-existentes de ambiente.

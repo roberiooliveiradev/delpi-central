@@ -829,3 +829,53 @@ def test_item_marker_two_candidates_fail_closed():
         "parent_group_candidate": "90264061"}]
     _recover_item_markers(rows, band_gap_px=12.0)
     assert rows[0].get("item") is None
+
+
+def test_orphan_marker_token_recovered_by_token_geometry():
+    """Token órfão AA na banda do componente (cy 458) vence célula
+    deslocada (cy 409) — geometria do token é autoritativa."""
+    from engineering_app.application.drawing.understanding import (
+        _recover_item_markers,
+    )
+
+    comp_cell = _cell(11, 5, "10400035", _quad(532, 424, 643, 456))
+    comp_cell["token_centers"] = [[608.5, 458.0]]
+    rows = [
+        {"page": 1, "fields": {"component_code": {
+            "normalized_value": "10400035",
+            "bounding_box_px": _quad(532, 424, 643, 456),
+            "source_cy_px": 440.0, "col": 5},
+            "quantity": {"normalized_value": "6",
+                         "bounding_box_px": _quad(480, 424, 520, 456),
+                         "source_cy_px": 440.0}},
+         "cells": [comp_cell], "parent_group_candidate": "50225479"},
+        {"page": 1, "fields": {},
+         "cells": [_cell(10, 3, "AA", _quad(464, 392, 525, 428))]},
+    ]
+    tokens = [{"raw_text": "AA", "page": 1,
+               "bounding_box_px": _quad(465, 445, 499, 471)}]
+    _recover_item_markers(rows, band_gap_px=20.0, marker_tokens=tokens)
+    assert rows[0]["item"] == "AA"
+
+
+def test_marker_nearest_band_wins_over_displaced_cell():
+    """Marcador da linha vizinha (token cy real) não migra para a
+    linha cuja célula foi deslocada."""
+    from engineering_app.application.drawing.understanding import (
+        _recover_item_markers,
+    )
+
+    rows = [{"page": 1, "fields": {"component_code": {
+        "normalized_value": "10080065",
+        "bounding_box_px": _quad(532, 400, 643, 432),
+        "source_cy_px": 423.5}, "quantity": {
+        "normalized_value": "6", "bounding_box_px": _quad(480, 400, 520, 432),
+        "source_cy_px": 423.0}},
+        "cells": [_cell(10, 3, "AA", _quad(464, 392, 525, 428))],
+        "parent_group_candidate": "50225479"}]
+    tokens = [{"raw_text": "A9", "page": 1,
+               "bounding_box_px": _quad(465, 410, 497, 437)},
+              {"raw_text": "AA", "page": 1,
+               "bounding_box_px": _quad(465, 445, 499, 471)}]
+    _recover_item_markers(rows, band_gap_px=20.0, marker_tokens=tokens)
+    assert rows[0]["item"] == "A9"

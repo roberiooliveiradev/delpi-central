@@ -923,6 +923,11 @@ class TableStructureEngine:
                         association.get("unassigned") or [],
                     )
                 )
+                association["unassigned_tokens"] = [
+                    page_tokens[ti]
+                    for ti in association["unassigned"]
+                    if isinstance(ti, int) and 0 <= ti < len(page_tokens)
+                ]
             _res = make_result(
                 provider_id=self.provider_id,
                 provider_version="slanet_7.67MB",
