@@ -56,7 +56,7 @@ Paths internos são **propostos**, não encontrados implementados. A nomenclatur
 
 **Acessibilidade:** controles radio com rótulos e agrupamento semântico, navegação por teclado, descrições de escala, foco previsível, mensagens de erro junto ao campo, contraste e layout móvel; não substituir escala por emoji como único indicador.
 
-### 3.4 Resultados e indicadores (Access e Gestão)
+### 3.4 Análise detalhada dos resultados (Access e Gestão)
 
 - Filtro principal por campanha/intervalo; indicadores canônicos **IGS**, **NPS**, **Taxa de resposta**, **Satisfeitos (%)** e **Críticos (%)**; médias e número de respostas válidas nas 10 dimensões; evolução semestral/anual e comparação com pesquisa anterior.
 - Tabela comparativa **Geral / Clientes estratégicos / Demais** como a do plano, somente quando os segmentos tiverem fonte oficial e agregação segura. Não usar números do exemplo do plano como dados reais.
@@ -65,20 +65,21 @@ Paths internos são **propostos**, não encontrados implementados. A nomenclatur
 - Para Gestão, a consulta individual fica na página da campanha, usando endpoints restritos. **Indicador de planos de ação concluídos não estará disponível nesta versão** e não deve ser exibido como `0`.
 - Tratar carregamento, ausência de campanhas, nenhuma resposta, amostra insuficiente para agregação e indisponibilidade real como estados distintos. Exibir denominadores/contagens de amostras e rótulos das fórmulas oficiais, sem cálculo de números no navegador.
 
-### 3.5 Card público interno na Visão Geral (decisão de 11/11/2026)
+### 3.5 Seção "Pesquisa de Satisfação do Cliente" na Visão Geral (decisão 11/11/2026)
 
-**Objetivo:** permitir que **todos os usuários do Comercial com `commercial.access`** acompanhem a satisfação geral sem acessar as respostas individuais. Owner funcional: Comercial; owner técnico dos cálculos e da autorização: `commercial-api`.
+**Decisão funcional:** manter **uma única seção chamada "Pesquisa de Satisfação do Cliente"** na página **Visão Geral** que já existe no MFE Comercial. A seção mostra o conjunto de indicadores gerais da primeira entrega, e não apenas um card de IGS. Não criar nova página para esse resumo, nem novas entradas de menu ou seções separadas por indicador.
 
-- **Local:** a página existente `plugins/commercial/src/features/overview/OverviewPage.tsx`, na sua composição atual de indicadores. Reutilizar `CommercialMetricCard`/`CommercialDashboardKpiCard`, `SectionCard` e o layout existente. **Não criar uma página adicional nem um novo card por indicador**.
-- **Conteúdo mínimo:** título **Satisfação dos Clientes**, IGS da **última campanha encerrada** (nota 1–5, exibida como `4,3 / 5` quando houver cálculo válido), período/campanha e `respostas / participantes cadastrados` para fornecer contexto. Os números do exemplo visual são ilustrativos, nunca dados reais da DELPI.
-- **Ação:** link **Ver resultados consolidados**, apontando para `/apps/commercial/satisfaction-results`, preservando a navegação do MFE. Esse destino é o painel agregado já planejado, acessível a `commercial.access`.
-- **Estado sem resultado:** apresentar **Pesquisa ainda sem resultados consolidados** se não houver campanha encerrada com respostas. Se houver campanha encerrada sem respostas, não renderizar IGS `0`; exibir `—` e contagens corretas. Diferenciar erro de serviço de ausência real de dados.
-- **Segurança:** fonte exclusiva da `commercial-api`, reutilizando o serviço canônico de indicadores em uma projeção **exclusivamente agregada**. Não carregar, armazenar no frontend ou retornar por esse endpoint nomes, códigos de clientes, destinatários, respostas/textos individuais, tokens ou valores que permitam reidentificação. Restringir grupos pequenos conforme contrato de privacidade do backend. Ocultação no frontend **não substitui** autorização no backend.
-- **Filtros:** o card é sempre **geral da última campanha encerrada**, sem filtros de carteira/cliente/vendedor herdados da Visão Geral; não confundir com recortes da pesquisa nem deixar os filtros operacionais alterarem seu significado.
-- **Contrato REST:** preferir extensão/consulta resumida do serviço agregado `GET /satisfaction-surveys/results` existente no padrão aprovado, por exemplo seleção `latest_closed` e projeção `summary`, **sem criar endpoint novo se o atual for suficiente**. A forma exata e eventual supressão por amostra devem ser confirmadas durante a etapa de indicadores.
-- **Verificação:** usuário `commercial.access` consegue ver o card e navegar somente para agregados; Marketing/Manage também veem o geral; ausência de dados, carregamento e falha são distinguidos; dados privados nunca saem do backend para a Visão Geral; nenhuma requisição das respostas individuais é iniciada pelo card; testes estruturais da Visão Geral e testes negativos da API.
+**Composição enxuta da seção:** mostrar a última campanha encerrada e seu período; IGS (1–5), NPS (-100 a +100), taxa de resposta (respondentes/participantes), porcentagem de satisfeitos (notas 4–5), porcentagem de críticos (notas 1–2), médias das dez dimensões e evolução em relação à campanha anterior, quando houver. Usar os componentes existentes da Visão Geral (`SectionCard`, `CommercialMetricCard`/`CommercialDashboardKpiCard` e visualização compacta); não duplicar o painel detalhado.
 
-**Natureza:** melhoria de ferramenta para ampliar visibilidade do resultado da pesquisa. **Estado: decisão funcional informada pelo solicitante, não implementação comprovada.**
+**Acesso:** todos os usuários autorizados do Comercial com `commercial.access` e os perfis gestores com `commercial.marketing` ou `commercial.manage`, conforme contrato backend. Apenas dados consolidados: não carregar nem mostrar empresas identificadas, notas e comentários individuais ou tokens. A autoridade para agregar e suprimir grupos pequenos é a `commercial-api`; o frontend não recalcula esses valores nem substitui a autorização.
+
+**Consulta:** reutilizar `GET /satisfaction-surveys/results` com seleção da última campanha encerrada e uma projeção de resumo, sem nova rota por indicador. O resumo é geral, independente dos filtros de pedidos, carteira e faturamento da Visão Geral.
+
+**Navegação:** ação discreta **"Ver análise completa"** para a página de resultados da pesquisa, onde ficam filtros, segmentações e comparações detalhadas; respostas por empresa continuam exclusivas de Marketing/Manage em sua área restrita.
+
+**Estados:** sem pesquisa encerrada, sem respostas, amostra insuficiente, carregamento ou erro devem aparecer corretamente, sem inventar zero nem expor valores que permitam reidentificação. O indicador de **planos de ação concluídos** do Word permanece fora da primeira entrega, pois não haverá gestão de ações nem fonte desse cálculo.
+
+**Verificação por etapa:** garantir a apresentação dos indicadores gerais, a fidelidade aos cálculos da API, a restrição da informação, a navegação e a responsividade. **Planejado, não implementado.**
 
 ## 4. Mapa de contrato frontend → backend
 
@@ -92,7 +93,7 @@ Paths internos são **propostos**, não encontrados implementados. A nomenclatur
 | Respostas identificadas | `GET /satisfaction-surveys/campaigns/{id}/responses`, `GET /satisfaction-surveys/responses/{id}` | Gestão |
 | Formulário público | `GET /public/satisfaction-surveys/{token}`, `POST .../{token}/response` | Link válido, sem JWT interno |
 | Resumo e comparação | `GET /satisfaction-surveys/results` | Access ou Gestão; privacidade da agregação no backend |
-| Card da Visão Geral | Mesmo serviço agregado de resultados, seleção última campanha encerrada, projeção resumida | `commercial.access`, sem respostas individuais |
+| Seção da Visão Geral | Mesmo serviço agregado de resultados, seleção da última campanha encerrada e resumo dos indicadores gerais | `commercial.access`, sem respostas individuais |
 
 **Clientes HTTP:** usar `plugins/commercial/src/api/httpClient.ts` e respostas/erros oficiais para gestão e indicadores, criando `satisfactionSurveysApi.ts` quando necessário. Para a página pública, usar `plugins/public-hub/src/apps/commercial/api.ts`, seguindo o `fetch` sem bearer do módulo público existente. **Não chamar `api-delpi` diretamente**. O código público pertence ao shell público compartilhado, sem assumir o CRUD de formulários de Customer Experience.
 
@@ -116,6 +117,6 @@ Paths internos são **propostos**, não encontrados implementados. A nomenclatur
 
 ## 7. Limites do planejamento
 
-**Fechado agora:** duas páginas internas no MFE Comercial, um card agregado na **Visão Geral já existente** e um formulário por token em `public-hub`, rota candidata `/p/commercial/form/{token}`, experiências e contratos HTTP. **A confirmar apenas na implementação:** teste do roteamento `/p/` e GET/POST públicos, mecanismo oficial de capability Marketing no host, componentes exatos e disponibilidade de filtros oficiais. O padrão de hospedagem pública já existe; não reabrir sua arquitetura sem bloqueio comprovado. Esses pontos não exigem nova rodada geral de descoberta.
+**Fechado agora:** duas páginas internas no MFE Comercial, uma única seção **Pesquisa de Satisfação do Cliente** na Visão Geral existente e um formulário por token em `public-hub`, rota candidata `/p/commercial/form/{token}`, experiências e contratos HTTP. **A confirmar apenas na implementação:** teste do roteamento `/p/` e GET/POST públicos, mecanismo oficial de capability Marketing no host, componentes exatos e disponibilidade de filtros oficiais. O padrão de hospedagem pública já existe; não reabrir sua arquitetura sem bloqueio comprovado. Esses pontos não exigem nova rodada geral de descoberta.
 
 **Não criar outros documentos/fluxos sem bloqueio material.** Executar a frente com HEAD, branch, working tree, owners e testes confirmados e menor diff; registrar resultado de execução no índice após prova.
