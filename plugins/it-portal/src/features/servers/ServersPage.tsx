@@ -111,6 +111,7 @@ export function ServersPage() {
   return (
     <>
       <ItpPageHero
+        variant="immersive"
         aria-label="Servidores"
         eyebrow="Inventário"
         title="Servidores"

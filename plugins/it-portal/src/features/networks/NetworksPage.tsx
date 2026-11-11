@@ -109,6 +109,7 @@ export function NetworksPage() {
   return (
     <>
       <ItpPageHero
+        variant="immersive"
         aria-label="Redes"
         eyebrow="Inventário"
         title="Redes"

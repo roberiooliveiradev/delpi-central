@@ -102,6 +102,7 @@ export function IntegrationsPage() {
   return (
     <>
       <ItpPageHero
+        variant="immersive"
         aria-label="Integrações"
         eyebrow="Inventário"
         title="Integrações"
