@@ -228,6 +228,18 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 
 **Estado após esta fatia:** residual de sanitização aninhada **ATENDIDO_NO_CODIGO** (sujeito a revisão independente). Demais gates S2S/smoke/timer permanecem **PENDING**. `COMPLETE` não declarado.
 
+## E4.S1 — primeiro submit S2S bloqueado pela borda HTTP (11/11/2026)
+
+**Evidência reportada pelo operador:**
+- A execução manual no `srv-api` completou a validação local (`VALIDACAO: PASS`) e as sete seções do coletor (`COLETA: complete`), com `run_id=c603a7a4-f088-4209-9bcd-fb9ffd907134`.
+- O `submit` para `https://minhadelpi.com.br/apps/it-portal-api` retornou `HTTP 403`, corpo literal `error code: 1010\n`. Esse código é atribuído pela documentação Cloudflare ao bloqueio de assinatura do cliente HTTP. **CAUSA PROVÁVEL**: camada web pública rejeitando o cliente `urllib`; **sem evidência** de rejeição do token pelo validador S2S da API.
+- Não presumir gravação ou ausência de gravação a partir de `HTTP 403` isoladamente. **PENDING** consulta somente leitura em `it_portal.server_observations` por esse `run_id`.
+- O Compose vigente publica `delpi-gateway` em `80:80` e o Nginx encaminha `/apps/it-portal-api/` para `it-portal-api:8000` (prefixo removido). **TARGET para investigação**: testar `http://127.0.0.1/apps/it-portal-api/health` com `Host: minhadelpi.com.br`, sem credenciais, antes de tentar um único `submit` interno com autenticação S2S inalterada.
+- Não desativar Cloudflare/WAF, não expor novas portas, não colocar secrets em logs ou argumentos, não mudar Keycloak, não habilitar timer; primeiro smoke produtivo e visualização no MFE continuam `PENDING`.
+- Provisionamento Keycloak e allowlists na API foram reportados pelo operador como funcionais em passos anteriores, mas ainda carecem de read-back independente nesta ocorrência.
+
+**Status:** `IMPLEMENTED_PENDING_SMOKE`; falha inicial classificada como `BLOCKED_AT_PUBLIC_EDGE` até prova adicional. Chamada do GLPI #1571 deve permanecer aberta.
+
 ## Residuais abertos
 
 | ID | Residual | Dono da decisão |
