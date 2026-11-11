@@ -178,6 +178,25 @@ Criar campanhas e selecionar clientes existentes no TOTVS para que o usuário po
 
 Os limiares acima são **faixas de teste propostas**, não equivalem automaticamente aos media queries/tokens atuais; validar nos tamanhos reais do Portal, inclusive zoom 200%, teclado e modo claro/escuro. A largura da página é a **largura útil do shell Comercial**, não `100vw` nem um novo `max-width` arbitrário. Respeitar `cm-page-stack` e tokens/camadas de spacing que realmente existam; medidas explicitadas aqui servem como metas de revisão, não autorização para override CSS.
 
+### Diretriz aprovada — paridade exata com tabelas e gráficos existentes no Comercial (11/11/2026)
+
+**APROVADO PELO SOLICITANTE:** na UI-02 e demais páginas da Pesquisa, **inventariar a tabela/gráfico de referência já em uso no microfrontend Comercial e reproduzir o mesmo conjunto de funcionalidades, composição e comportamento**, somente quando aplicáveis ao caso. **Não criar funcionalidade adicional**, configuração exclusiva, novo componente nem controle visual inventado. A prévia de Campanhas com 5 colunas e controles de fonte/colunas foi **ilustração**, e NÃO aprovação de controles ou estrutura inédita. Não repetir perguntas sobre funcionalidades já padronizadas; revisar apenas conteúdo/semântica e lacunas comprovadas.
+
+**Inventário inicial confirmado no código do HEAD `7f66ff0c824017806744e35fd26ff051364e920d`** (é evidência de componentes e consumidores, **não** comprovação de funcionamento de toda a UI em runtime):
+
+| Área | Evidência verificada | Regra de adoção |
+|---|---|---|
+| Tabela e lista de clientes | `plugins/commercial/src/features/customers/components/CustomersTable.tsx` usa `CommercialDataListToolbar`, `CommercialDataTable`, `CommercialDataCardsGrid`, `CommercialDataCardsSortBar`, `CommercialTableColumnVisibilityMenu`, `CommercialTableFontSizeControls` e `CommercialExcelExportButton` | É **referência principal de inventário**, não licença para incluir exportação de campanha/participantes ou todas as ações sem autorização e objetivo explícitos |
+| Ordenação/paginação de tabela analítica | `plugins/commercial/src/features/analytics/AnalyticsOtdPage.tsx` usa `CommercialDataTable` e `CommercialPagination`, ordenação e parâmetros remotos `sort_by`/`sort_dir` | Reutilizar semântica remota, tamanho/paginação oficial e estados; conferir contratos antes de transportar |
+| Kit de tabela | `plugins/commercial/src/app/commercialUi.ts` exporta os wrappers e `app/dataTableUi.ts` exporta `CommercialDataTableSection` e `TABLE_PAGE_SIZE_OPTIONS` | Usar nomes, props, estilos, tokens e ferramentas reais; não criar toolbar própria ou replicar CSS |
+| Gráficos temporais em Analytics | `plugins/commercial/src/features/analytics/components/AnalyticsClosingRateSeriesChart.tsx` e `AnalyticsRolSeriesChart.tsx` usam `ChartViewShell`, `MultiTypeSeriesChart`, `usePersistedChartPreferences` e controles de séries/exportação | Na **UI-01** reutilizar ferramentas reais de gráfico conforme tipo de visualização. Não adicionar alternância de gráfico em ranking fixo ou funções sem aderência; cálculos e dados oficiais seguem backend |
+
+**Critérios de paridade para tabela UI-02A, a inventariar por consumidor antes de fechar especificação visual:** toolbar oficial e conteúdo real; alternância tabela/cards se for padrão aplicável; ordenação e colunas efetivamente suportadas; fonte; paginação e tamanhos oficiais; comportamento mobile, vazios, erro e loading. **Exportação Excel NÃO está aprovada especificamente para UI-02A**: ter o botão existente em Clientes não aprova divulgar dados de campanhas/participantes. Colunas concretas dependem de dados oficiais, utilidade operacional e autorizações; não forçar cinco colunas do protótipo. As dimensões/padding/margens devem **herdar do componente original**; medir e registrar CSS/tokens concretos durante refinamento, sem sobrescrever para fazer parecer igual.
+
+**Gráficos:** UI-02A não precisa de gráfico novo. A UI-01 já contém especificações de `ChartViewShell`/séries e gráficos de dimensão apropriados; verificar cada tipo e controle de apresentação em seus consumidores canônicos antes de implementar. Filtros de dados continuam no Hero; ajustes de apresentação permanecem no contêiner original do gráfico. **A regra aprovada é reutilizar, não transplantar indiscriminadamente todos os controles para todo gráfico.**
+
+**PENDING técnico:** inspeção dos estilos CSS e breakpoints exatos do PluginUI, comparação visual em execução e testes de equivalência com Clientes/Analytics; nenhuma implementação foi executada por esta decisão.
+
 ### 1.2.3 Navegação e comportamentos
 
 - **APROVADO:** **Ver resultados** global no Hero → UI-01 geral padrão. **Resultados** contextual em linha/card → UI-01 filtrada naquela campanha. **Abrir** → UI-02B; **Nova campanha** → diálogo oficial UI-02A.1.
