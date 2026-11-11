@@ -286,3 +286,33 @@ describe("applySupplierLinkOps", () => {
     expect(applySupplierLinkOps(null, null)).toEqual([]);
   });
 });
+
+describe("PrcRequestForm — CORRECTION-10 suppliers obrigatório (CREATE)", () => {
+  it("bloqueia avanço de edição CREATE sem nenhum fornecedor", async () => {
+    const dp = provider();
+    render(
+      <PrcRequestForm
+        source="my-requests"
+        dataProvider={dp as never}
+        onCancel={() => undefined}
+        onCompleted={() => undefined}
+        editCase={{
+          requestId: "req-1",
+          expectedVersion: 3,
+          requestType: "create",
+          draft: { ...CREATE_DRAFT, suppliers: [] },
+        }}
+      />,
+    );
+    await waitFor(() => screen.getAllByDisplayValue("RESINA EPOXI"));
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Avançar" })[0],
+    );
+    await waitFor(() =>
+      expect(
+        screen.getAllByText(/ao menos um fornecedor oficial/i).length,
+      ).toBeGreaterThanOrEqual(1),
+    );
+    expect(dp.saveDraft).not.toHaveBeenCalled();
+  });
+});

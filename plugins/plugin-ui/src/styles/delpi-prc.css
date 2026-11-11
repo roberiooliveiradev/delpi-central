@@ -611,6 +611,12 @@
   accent-color: var(--delpi-ui-accent, #1d4ed8);
 }
 
+.delpi-prc__correction-current {
+  margin: 0 0 0 24px;
+  font-size: 0.8rem;
+  color: var(--delpi-ui-muted, #64748b);
+}
+
 .delpi-prc__correction-reason {
   display: flex;
   flex-direction: column;

@@ -13,6 +13,7 @@ import { createDashboardDetailCard } from "../layout/DetailCard";
 import { detailCardRichBemClasses } from "../layout/DetailCard";
 import { FieldLabel } from "../help/FieldLabel";
 import {
+  PRC_FIELD_GROUPS,
   PRC_FIELD_LABELS,
   PRC_SUPPLIER_LABELS,
   PRC_ENUM_OPTION_LABELS,
@@ -28,27 +29,7 @@ const PrcSheetCard = createDashboardDetailCard({
 });
 
 /** Mesma ordem de grupos/campos da ficha do Portal Engenharia. */
-const FIELD_GROUPS: { title: string; paths: string[] }[] = [
-  {
-    title: "Identificação e classificação",
-    paths: [
-      "officialProductCode",
-      "description",
-      "group",
-      "productKind",
-      "unit",
-    ],
-  },
-  {
-    title: "Estoque e contabilidade",
-    paths: [
-      "defaultWarehouse",
-      "accountingAccount",
-      "thirdPartyProduct",
-      "customerReference",
-    ],
-  },
-];
+const FIELD_GROUPS = PRC_FIELD_GROUPS;
 
 export type PrcSheetChange = { path: string; reason: string };
 

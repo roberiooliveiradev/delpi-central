@@ -62,6 +62,7 @@ import {
   PRC_ATTACHMENT_MAX_COUNT,
   PRC_ATTACHMENT_MAX_MB,
   PRC_CATALOG_KINDS,
+  PRC_FIELD_GROUPS,
   PRC_FIELD_HELP,
   PRC_FIELD_LABELS,
   PRC_SUPPLIER_LABELS,
@@ -240,21 +241,12 @@ const STEPS = [
   { id: "review", label: "Revisar e enviar" },
 ];
 
-const FIELD_GROUPS: { title: string; paths: string[] }[] = [
-  {
-    title: "Identificação e classificação",
-    paths: ["description", "group", "productKind", "unit"],
-  },
-  {
-    title: "Estoque e contabilidade",
-    paths: [
-      "defaultWarehouse",
-      "accountingAccount",
-      "thirdPartyProduct",
-      "customerReference",
-    ],
-  },
-];
+// Agrupamento canônico (``PRC_FIELD_GROUPS``) sem o código oficial —
+// informado na etapa de identificação/conclusão, não na ficha.
+const FIELD_GROUPS = PRC_FIELD_GROUPS.map((g) => ({
+  title: g.title,
+  paths: g.paths.filter((p) => p !== "officialProductCode"),
+}));
 
 const CATALOG_UNAVAILABLE =
   "Não foi possível consultar as opções oficiais no TOTVS. Tente novamente.";
@@ -545,6 +537,15 @@ export function PrcRequestForm({
           if (!v && spec.kind !== "text") {
             return `Preencha «${PRC_FIELD_LABELS[spec.path] || spec.path}».`;
           }
+        }
+        // CORRECTION-10 — CREATE exige ≥1 vínculo: lista vazia não
+        // satisfaz requiredCreateIntake (o backend rejeita também).
+        if (!suppliers.length) {
+          const msg =
+            "Adicione ao menos um fornecedor oficial (código + loja + Part Number).";
+          setFieldErrors((s) => ({ ...s, suppliers: msg }));
+          setSupplierErrorsVisible(true);
+          return msg;
         }
       }
       if (
@@ -1250,7 +1251,9 @@ export function PrcRequestForm({
               />
             ) : (
               <p className="delpi-prc__muted">
-                Nenhum fornecedor adicionado.
+                {requestType === "create"
+                  ? "Nenhum fornecedor adicionado — o cadastro de matéria-prima exige ao menos um fornecedor oficial válido."
+                  : "Nenhum fornecedor adicionado."}
               </p>
             )}
           </PrcSectionCard>

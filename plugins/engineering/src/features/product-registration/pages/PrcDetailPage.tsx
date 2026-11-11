@@ -520,6 +520,7 @@ export function PrcDetailPage({
               requesterLabel={prcRequesterLabel(detail.requester)}
               fieldSpecs={fieldSpecs}
               suppliers={infoSuppliers}
+              draft={detail.technicalDraft}
               onRunAction={runAction}
               onEditDraft={() => {
                 selectTab("draft");

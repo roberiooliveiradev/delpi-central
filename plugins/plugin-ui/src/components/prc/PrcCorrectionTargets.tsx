@@ -71,10 +71,13 @@ export type PrcCorrectionLink = {
   catalogNumber?: string | null;
 };
 
-/** Campo elegível à devolução (path oficial + label). */
+/** Campo elegível à devolução (path oficial + label). ``group``
+ * agrupa o campo em uma seção do seletor (ex.: identificação,
+ * estoque/contabilidade) — sem group o campo fica na seção padrão. */
 export type PrcCorrectionFieldOption = {
   path: string;
   label: string;
+  group?: string | null;
 };
 
 /** Spec mínimo para renderizar o editor correto de um campo devolvido. */
@@ -512,6 +515,7 @@ export function PrcCorrectionTargetSelector({
   selection,
   onChange,
   busy,
+  draft,
   idPrefix = "prc-return",
 }: {
   fieldOptions: PrcCorrectionFieldOption[];
@@ -519,6 +523,8 @@ export function PrcCorrectionTargetSelector({
   selection: PrcCorrectionSelection;
   onChange: (next: PrcCorrectionSelection) => void;
   busy?: boolean;
+  /** Ficha atual — mostra "Atual:" por campo (vazio também é alvo). */
+  draft?: Record<string, unknown> | null;
   idPrefix?: string;
 }) {
   const links = useMemo(() => dedupeCorrectionLinks(suppliers), [suppliers]);
@@ -608,51 +614,76 @@ export function PrcCorrectionTargetSelector({
     }
   }
 
+  const fieldGroups = useMemo(() => {
+    const map = new Map<string, PrcCorrectionFieldOption[]>();
+    for (const opt of fieldOptions) {
+      const g = (opt.group || "").trim() || "Campos da ficha";
+      const list = map.get(g) || [];
+      list.push(opt);
+      map.set(g, list);
+    }
+    return [...map.entries()];
+  }, [fieldOptions]);
+
+  const renderField = (opt: PrcCorrectionFieldOption) => {
+    const sel = selection.fields[opt.path];
+    const checked = Boolean(sel?.selected);
+    const current = draft ? scalarCurrent(draft, opt.path) : "";
+    return (
+      <div key={opt.path} className="delpi-prc__correction-field">
+        <label className="delpi-prc__correction-check">
+          <input
+            type="checkbox"
+            id={`${idPrefix}-field-${opt.path}`}
+            checked={checked}
+            disabled={busy}
+            onChange={(e) => toggleField(opt.path, e.target.checked)}
+          />
+          <span>{opt.label}</span>
+        </label>
+        {draft ? (
+          <p className="delpi-prc__correction-current">
+            Atual: {current || "— (vazio)"}
+          </p>
+        ) : null}
+        {checked ? (
+          <label className="delpi-prc__correction-reason">
+            <span className="delpi-prc__muted">
+              Motivo da correção — {opt.label}
+            </span>
+            <textarea
+              id={`${idPrefix}-reason-field-${opt.path}`}
+              value={sel?.reason || ""}
+              disabled={busy}
+              required
+              maxLength={1000}
+              rows={2}
+              onChange={(e) => setFieldReason(opt.path, e.target.value)}
+            />
+          </label>
+        ) : null}
+      </div>
+    );
+  };
+
   return (
     <div className="delpi-prc__correction-selector">
-      <fieldset className="delpi-prc__correction-group">
-        <legend>Campos da ficha</legend>
-        <div className="delpi-prc__correction-field-list">
-          {fieldOptions.map((opt) => {
-            const sel = selection.fields[opt.path];
-            const checked = Boolean(sel?.selected);
-            return (
-              <div key={opt.path} className="delpi-prc__correction-field">
-                <label className="delpi-prc__correction-check">
-                  <input
-                    type="checkbox"
-                    id={`${idPrefix}-field-${opt.path}`}
-                    checked={checked}
-                    disabled={busy}
-                    onChange={(e) => toggleField(opt.path, e.target.checked)}
-                  />
-                  <span>{opt.label}</span>
-                </label>
-                {checked ? (
-                  <label className="delpi-prc__correction-reason">
-                    <span className="delpi-prc__muted">
-                      Motivo da correção — {opt.label}
-                    </span>
-                    <textarea
-                      id={`${idPrefix}-reason-field-${opt.path}`}
-                      value={sel?.reason || ""}
-                      disabled={busy}
-                      required
-                      maxLength={1000}
-                      rows={2}
-                      onChange={(e) => setFieldReason(opt.path, e.target.value)}
-                    />
-                  </label>
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
-      </fieldset>
+      {fieldGroups.map(([title, opts]) => (
+        <fieldset key={title} className="delpi-prc__correction-group">
+          <legend>{title}</legend>
+          <div className="delpi-prc__correction-field-list">
+            {opts.map(renderField)}
+          </div>
+        </fieldset>
+      ))}
 
-      {links.length ? (
-        <fieldset className="delpi-prc__correction-group">
-          <legend>Fornecedores</legend>
+      <fieldset className="delpi-prc__correction-group">
+        <legend>Tabelas e relacionamentos — Fornecedores</legend>
+        {!links.length ? (
+          <p className="delpi-prc__muted">
+            Nenhum registro na tabela — não há vínculos para devolver.
+          </p>
+        ) : (
           <div className="delpi-prc__supplier-table-wrap">
             <table className="delpi-prc__supplier-table delpi-prc__correction-table">
               <caption className="delpi-prc__sr-only">
@@ -755,7 +786,8 @@ export function PrcCorrectionTargetSelector({
               </tbody>
             </table>
           </div>
-          {selectedCellReasons.map(({ key, cell, link, label }) => {
+        )}
+        {selectedCellReasons.map(({ key, cell, link, label }) => {
             const sel = cellOf(key);
             return (
               <label
@@ -778,7 +810,6 @@ export function PrcCorrectionTargetSelector({
             );
           })}
         </fieldset>
-      ) : null}
 
       <p className="delpi-prc__muted delpi-prc__correction-summary">
         {summary.scalarFields} campo(s) da ficha · {summary.suppliers}{" "}

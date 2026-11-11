@@ -818,6 +818,35 @@ export const PRC_FIELD_LABELS: Record<string, string> = {
   suppliers: "Fornecedores",
 };
 
+/** Agrupamento canônico dos campos da ficha PRC — ordem da ficha
+ * técnica, reutilizada por formulário, leitura e devolução. */
+export const PRC_FIELD_GROUPS: { title: string; paths: string[] }[] = [
+  {
+    title: "Identificação e classificação",
+    paths: [
+      "officialProductCode",
+      "description",
+      "group",
+      "productKind",
+      "unit",
+    ],
+  },
+  {
+    title: "Estoque e contabilidade",
+    paths: [
+      "defaultWarehouse",
+      "accountingAccount",
+      "thirdPartyProduct",
+      "customerReference",
+    ],
+  },
+];
+
+/** ``path`` → título do grupo canônico (lookup do seletor de devolução). */
+export const PRC_FIELD_GROUP_BY_PATH: Record<string, string> = Object.fromEntries(
+  PRC_FIELD_GROUPS.flatMap((g) => g.paths.map((p) => [p, g.title])),
+);
+
 export const PRC_SUPPLIER_LABELS: Record<string, string> = {
   supplierCode: "Código",
   store: "Loja",

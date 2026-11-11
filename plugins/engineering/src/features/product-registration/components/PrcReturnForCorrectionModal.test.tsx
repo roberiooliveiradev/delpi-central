@@ -107,3 +107,32 @@ describe("PrcReturnForCorrectionModal — composição compartilhada", () => {
     expect(SRC).toMatch(/suppliers=\{suppliers \|\| \[\]\}/);
   });
 });
+
+describe("CORRECTION-10 — seções canônicas + valor atual", () => {
+  it("opções carregam o grupo canônico do campo", () => {
+    const options = prcReturnFieldOptions(SPECS);
+    const byPath = new Map(options.map((o) => [o.path, o.group]));
+    expect(byPath.get("description")).toBe(
+      "Identificação e classificação",
+    );
+    expect(byPath.get("accountingAccount")).toBe(
+      "Estoque e contabilidade",
+    );
+  });
+
+  it("modal repassa a ficha ao seletor (campo vazio também é alvo)", () => {
+    expect(SRC).toContain("draft={draft}");
+    expect(SRC).toContain("mesmo que estejam vazios");
+  });
+
+  it("ficha em correção usa o editor compartilhado do kit", () => {
+    const sheet = readFileSync(
+      join(here, "PrcTechnicalSheet.tsx"),
+      "utf8",
+    );
+    expect(sheet).toContain("PrcReturnedFieldsEditor");
+    expect(sheet).toContain('targets={openReturn?.targets || []}');
+    // Sem implementação vertical paralela de correção na ficha.
+    expect(sheet).not.toContain("returnedSupplierAttrs");
+  });
+});

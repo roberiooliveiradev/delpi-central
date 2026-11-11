@@ -1718,6 +1718,22 @@ class ProductRegistrationService:
                         fields={"suppliers": "baseline_precondition"},
                     )
                 extra_draft_fields = {"supplierLinkChanges": ops}
+        # CORRECTION-10 — edição de caso CREATE em ``submitted`` não pode
+        # salvar estado final sem fornecedor (remoção do último vínculo).
+        # A regra só dispara quando ``suppliers`` está no change set:
+        # casos legados incompletos seguem legíveis/editáveis em outros
+        # campos — sem deadlock retroativo.
+        elif request.get("request_type") == "create":
+            supplier_change = next(
+                (c for c in validated if c["path"] == "suppliers"), None
+            )
+            if supplier_change is not None and not supplier_change[
+                "proposedValue"
+            ]:
+                raise PrcValidationError(
+                    "A ficha de cadastro exige ao menos um fornecedor.",
+                    fields={"suppliers": "required"},
+                )
         fp = _fingerprint(
             {
                 "action": "update_draft",

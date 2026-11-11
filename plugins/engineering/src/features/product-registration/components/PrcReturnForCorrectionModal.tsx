@@ -9,6 +9,7 @@ import {
   PrcCorrectionTargetSelector,
   correctionTargetsFromSelection,
   emptyCorrectionSelection,
+  PRC_FIELD_GROUP_BY_PATH,
   type PrcCorrectionFieldOption,
   type PrcCorrectionSelection,
 } from "@delpi/plugin-ui/index";
@@ -46,7 +47,11 @@ export function prcReturnFieldOptions(
   const base = Array.from(
     new Set(fromSpec.length ? fromSpec : FIELD_CANDIDATES),
   );
-  return base.map((path) => ({ path, label: prcFieldLabel(path) }));
+  return base.map((path) => ({
+    path,
+    label: prcFieldLabel(path),
+    group: PRC_FIELD_GROUP_BY_PATH[path] || null,
+  }));
 }
 
 export function PrcReturnForCorrectionModal({
@@ -54,6 +59,7 @@ export function PrcReturnForCorrectionModal({
   busy,
   fieldSpecs,
   suppliers,
+  draft,
   onSubmit,
   onCancel,
 }: {
@@ -63,6 +69,8 @@ export function PrcReturnForCorrectionModal({
   /** Vínculos da ficha — origem das opções SA5 e da identidade técnica
    * enviada ao backend (nunca input do analista). */
   suppliers?: InfoSupplierOption[];
+  /** Ficha atual — valor "Atual:" por campo (vazio também é alvo). */
+  draft?: Record<string, unknown> | null;
   onSubmit: (targets: PrcCorrectionTargetInput[]) => void;
   onCancel: () => void;
 }) {
@@ -119,12 +127,13 @@ export function PrcReturnForCorrectionModal({
     >
       <p className="engineering-prc__muted">
         Selecione os campos que precisam ser corrigidos e informe o motivo
-        de cada um. O solicitante editará somente os alvos devolvidos, no
-        mesmo chamado.
+        de cada um — mesmo que estejam vazios. O solicitante editará
+        somente os alvos devolvidos, no mesmo chamado.
       </p>
       <PrcCorrectionTargetSelector
         fieldOptions={fieldOptions}
         suppliers={suppliers || []}
+        draft={draft}
         selection={selection}
         onChange={(next) => {
           setSelection(next);

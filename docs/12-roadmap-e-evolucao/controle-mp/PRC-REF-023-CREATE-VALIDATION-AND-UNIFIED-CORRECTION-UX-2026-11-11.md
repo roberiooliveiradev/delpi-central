@@ -149,3 +149,41 @@ A **tabela de fornecedores é uma instância** do padrão de linhas: chave \`sup
 \`HEAD → git status → AGENTS.md → fontes oficiais → contratos → matriz RQ/AC → menor diff backend-first → testes no SHA → rebuild DEV → evidência E2E → residual search → ledger/issue\`.
 
 **Status:** documento de decisão/target, **não** evidência de implementação. A issue #154 permanece aberta; E2E autenticado prévio segue \`TEST_NOT_RUN\`.
+
+---
+
+## 8. Registro de execução — CORRECTION-10 (11/11/2026)
+
+**Status: PROVEN por testes (backend + kit + MFEs) — E2E autenticado pendente.**
+
+Implementado no fluxo descrito neste documento:
+
+- **Backend (autoridade):** `validate_create_payload` rejeita
+  `suppliers=[]` (`fields.suppliers=required`), `null` e path ausente;
+  `validate_supplier_list` rejeita duplicidade `(supplierCode, store)`
+  no intake e no `PATCH /draft`; `update_draft` impede remover o último
+  vínculo de caso CREATE em `submitted` — somente quando `suppliers`
+  está no change set (legados incompletos seguem editáveis em outros
+  campos, sem deadlock retroativo). UPDATE preserva baseline/ops SA5.
+- **Kit `@delpi/plugin-ui`:** `PrcRequestForm` bloqueia avanço/envio de
+  CREATE sem fornecedor (mensagem contextual + `fieldErrors.suppliers`);
+  `PrcCorrectionTargetSelector` ganhou `draft` (linha «Atual:», vazio
+  também é alvo), `group` por campo (seções canônicas
+  `PRC_FIELD_GROUPS`/`PRC_FIELD_GROUP_BY_PATH`, extraídas de
+  `utils/prcProductRegistration` para os 3 consumidores) e estado vazio
+  visível da tabela de fornecedores; `PrcTechnicalSheetView` e
+  `PrcRequestForm` passaram a consumir `PRC_FIELD_GROUPS`.
+- **Engenharia:** modal recebe `draft` + grupos e orientação do
+  wireframe; `PrcTechnicalSheet` em `needs_correction` agora renderiza
+  o mesmo `PrcReturnedFieldsEditor` do kit usado por Minhas
+  Solicitações — implementação vertical inline removida (~200 linhas).
+- **Testes:** `tests/test_prc_ref023_correction10.py` (8 casos:
+  lista vazia/nula/ausente/duplicada, catálogo opcional, remoção do
+  último vínculo, sem-PN no patch, legado sem deadlock);
+  +2 casos no kit (seções/«Atual:»/estado vazio) e +1 form editCase;
+  +3 estruturais no modal/ficha da Engenharia.
+- **Compatibilidade:** contrato `/returned-fields`, `return-for-correction`,
+  CAS `expectedVersion`, `Idempotency-Key`, `requestId`, AuthZ por
+  objeto e histórico inalterados — zero mudança de rotas/DTOs/migrations.
+- **Pendente:** E2E autenticado com screenshots (TEST_NOT_RUN);
+  issue #154 atualização depende de credenciais gh.

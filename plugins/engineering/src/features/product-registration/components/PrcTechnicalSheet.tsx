@@ -5,7 +5,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { PrcTechnicalSheetView } from "@delpi/plugin-ui/index";
+import {
+  PrcReturnedFieldsEditor,
+  PrcTechnicalSheetView,
+} from "@delpi/plugin-ui/index";
 
 import {
   EngineeringActionButton,
@@ -200,72 +203,6 @@ export function PrcTechnicalSheet({
     detail.status === "needs_correction" &&
     Boolean(detail.correctionExchange?.canCorrect);
   const openReturn = detail.correctionExchange?.openReturn;
-  const returnedPaths = useMemo(() => {
-    const paths = new Set<string>();
-    for (const t of openReturn?.targets || []) {
-      if (t.targetType === "FIELD" && t.targetPath) paths.add(t.targetPath);
-      if (t.targetType === "SUPPLIER_LINK") paths.add("suppliers");
-    }
-    return paths;
-  }, [openReturn]);
-  const returnReasonByPath = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const t of openReturn?.targets || []) {
-      if (t.targetType === "FIELD" && t.targetPath) {
-        map.set(t.targetPath, t.reason);
-      }
-      if (t.targetType === "SUPPLIER_LINK") {
-        map.set("suppliers", t.reason);
-      }
-    }
-    return map;
-  }, [openReturn]);
-
-  /* PRC-REF-022-FIX-01 — granularidade por vínculo+atributo: mapa
-   * `code|store` → atributos devolvidos + motivo por alvo. Alvo sem
-   * `targetAttribute` (link integral) libera PN e Catálogo. */
-  const returnedSupplierAttrs = useMemo(() => {
-    const map = new Map<string, Set<string>>();
-    for (const t of openReturn?.targets || []) {
-      if (t.targetType !== "SUPPLIER_LINK" || !t.supplierKey) continue;
-      const key = `${String(t.supplierKey.supplierCode || "").trim()}|${String(
-        t.supplierKey.store || "",
-      ).trim()}`;
-      const set = map.get(key) || new Set<string>();
-      if (t.targetAttribute) {
-        set.add(t.targetAttribute);
-      } else {
-        set.add("partNumber");
-        set.add("catalogNumber");
-      }
-      map.set(key, set);
-    }
-    return map;
-  }, [openReturn]);
-  const supplierAttrReasons = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const t of openReturn?.targets || []) {
-      if (t.targetType !== "SUPPLIER_LINK" || !t.supplierKey) continue;
-      const key = `${String(t.supplierKey.supplierCode || "").trim()}|${String(
-        t.supplierKey.store || "",
-      ).trim()}|${t.targetAttribute || "link"}`;
-      map.set(key, t.reason);
-    }
-    return map;
-  }, [openReturn]);
-  const supplierRowKey = (code: string, store: string) =>
-    `${String(code || "").trim()}|${String(store || "").trim()}`;
-  const supplierAttrEditable = (
-    row: SupplierRow,
-    attr: "partNumber" | "catalogNumber",
-  ) =>
-    !correctionMode ||
-    Boolean(
-      returnedSupplierAttrs
-        .get(supplierRowKey(row.supplierCode, row.store))
-        ?.has(attr),
-    );
-
   useEffect(() => {
     if (!focusElementId) return;
     const timer = window.setTimeout(() => {
@@ -321,45 +258,7 @@ export function PrcTechnicalSheet({
   const [supplierReason, setSupplierReason] = useState("");
   const [formError, setFormError] = useState("");
 
-  useEffect(() => {
-    if (!correctionMode) return;
-    const values: Record<string, string> = {};
-    for (const path of returnedPaths) {
-      if (path === "suppliers") continue;
-      values[path] =
-        scalarText(draft[path]) === "—" ? "" : String(draft[path] ?? "");
-    }
-    setSelected(new Set(returnedPaths));
-    setEditValues(values);
-    setSuppliersDraft(
-      returnedPaths.has("suppliers")
-        ? toSupplierRows(draft.suppliers)
-        : null,
-    );
-  }, [correctionMode, returnedPaths, detail.id, detail.caseVersion]);
-
   const enterEdit = () => {
-    if (correctionMode) {
-      const preselected = new Set(returnedPaths);
-      const values: Record<string, string> = {};
-      for (const path of preselected) {
-        if (path === "suppliers") continue;
-        values[path] =
-          scalarText(draft[path]) === "—" ? "" : String(draft[path] ?? "");
-      }
-      setSelected(preselected);
-      setEditValues(values);
-      setEditReasons({});
-      setSuppliersDraft(
-        returnedPaths.has("suppliers")
-          ? toSupplierRows(draft.suppliers)
-          : null,
-      );
-      setSupplierReason("");
-      setFormError("");
-      onStartEdit();
-      return;
-    }
     setSelected(new Set());
     setEditValues({});
     setEditReasons({});
@@ -370,7 +269,6 @@ export function PrcTechnicalSheet({
   };
 
   const togglePath = (path: string, checked: boolean) => {
-    if (correctionMode) return;
     setSelected((prev) => {
       const next = new Set(prev);
       if (checked) {
@@ -399,114 +297,6 @@ export function PrcTechnicalSheet({
     String(editValues[path] ?? "") !== currentScalar(path);
 
   const save = () => {
-    if (correctionMode) {
-      const changes: PrcReturnedFieldChange[] = [];
-      for (const path of selected) {
-        if (path === "suppliers") continue;
-        const reason =
-          (editReasons[path] || "").trim() ||
-          returnReasonByPath.get(path) ||
-          "";
-        const dirty = isDirty(path);
-        if (!dirty) {
-          if (reason.length < 3) {
-            setFormError(
-              `Confirme «${fieldLabel(path)}» com uma justificativa (mín. 3).`,
-            );
-            return;
-          }
-          changes.push({
-            path,
-            proposedValue: draft[path],
-            reason,
-            mode: "confirmed",
-          });
-          continue;
-        }
-        if (reason.length < 3) {
-          setFormError(
-            `Informe a justificativa para «${fieldLabel(path)}».`,
-          );
-          return;
-        }
-        changes.push({
-          path,
-          proposedValue: editValues[path] ?? "",
-          reason,
-          mode: "changed",
-        });
-      }
-      if (suppliersDraft !== null && selected.has("suppliers")) {
-        const reason =
-          supplierReason.trim() || returnReasonByPath.get("suppliers") || "";
-        if (reason.length < 3) {
-          setFormError("Informe a justificativa dos fornecedores.");
-          return;
-        }
-        /* PRC-REF-022-FIX-01 — somente atributos devolvidos podem mudar;
-         * vínculo alterado exige Part Number válido. */
-        const currentRows = toSupplierRows(draft.suppliers) || [];
-        const currentByKey = new Map(
-          currentRows.map((r) => [
-            supplierRowKey(r.supplierCode, r.store),
-            r,
-          ]),
-        );
-        const linkChanged = (r: SupplierRow) => {
-          const attrs = returnedSupplierAttrs.get(
-            supplierRowKey(r.supplierCode, r.store),
-          );
-          const current = currentByKey.get(
-            supplierRowKey(r.supplierCode, r.store),
-          );
-          return Boolean(
-            attrs &&
-              (Array.from(attrs) as Array<"partNumber" | "catalogNumber">)
-                .some(
-                  (attr) =>
-                    String(r[attr] ?? "").trim() !==
-                    String(current?.[attr] ?? "").trim(),
-                ),
-          );
-        };
-        const pnMissing = suppliersDraft.findIndex(
-          (r) => linkChanged(r) && !r.partNumber.trim(),
-        );
-        if (pnMissing >= 0) {
-          setFormError(
-            `Fornecedor ${pnMissing + 1}: Part Number é obrigatório para alterar o vínculo.`,
-          );
-          return;
-        }
-        /* CORRECTION-09 — `changed` só endereça vínculos alterados no
-         * backend; quando há mudança enviamos também `confirmed` para
-         * endereçar os vínculos devolvidos e mantidos. Sem mudança,
-         * `confirmed` ratifica todos os alvos do vínculo. */
-        const anyChanged = suppliersDraft.some(linkChanged);
-        changes.push({
-          path: "suppliers",
-          proposedValue: supplierRowsToPayload(suppliersDraft),
-          reason,
-          mode: anyChanged ? "changed" : "confirmed",
-        });
-        if (anyChanged) {
-          changes.push({
-            path: "suppliers",
-            proposedValue: supplierRowsToPayload(suppliersDraft),
-            reason,
-            mode: "confirmed",
-          });
-        }
-      }
-      if (!changes.length) {
-        setFormError("Nenhuma correção para salvar.");
-        return;
-      }
-      setFormError("");
-      onSaveReturned?.(changes);
-      return;
-    }
-
     const changes: Array<{
       path: string;
       proposedValue: unknown;
@@ -573,18 +363,6 @@ export function PrcTechnicalSheet({
       {!sheetEditing ? (
         <PrcAttendanceFlagsProvider requestId={detail.id}>
           <PrcAttendanceFlagsSummary />
-          {correctionMode ? (
-            <EngineeringStateBanner variant="error">
-              {`A Engenharia solicitou correção em ${returnedPaths.size} campo(s). Use Editar ficha técnica ou corrija abaixo.`}
-              <EngineeringActionButton
-                variant="primary"
-                softDisabled={busy}
-                onClick={enterEdit}
-              >
-                Corrigir campos devolvidos
-              </EngineeringActionButton>
-            </EngineeringStateBanner>
-          ) : null}
           <PrcTechnicalSheetRead
             detail={detail}
             draft={draft}
@@ -592,33 +370,46 @@ export function PrcTechnicalSheet({
             changedReasons={changedReasons}
             specByPath={specByPath}
             enterEdit={
-              detail.allowedActions.includes("edit_draft") || correctionMode
+              detail.allowedActions.includes("edit_draft")
                 ? enterEdit
                 : () => undefined
             }
           />
         </PrcAttendanceFlagsProvider>
+      ) : correctionMode ? (
+        /* CORRECTION-10 — o editor da correção é o componente
+         * compartilhado do kit (mesmo renderer de Minhas Solicitações):
+         * alvos oficiais devolvidos, identidade de vínculo, modos
+         * changed/confirmed e payload do contrato /returned-fields. */
+        <EngineeringDetailCard
+          title="Corrigir campos devolvidos"
+          hint="Somente os campos devolvidos são editáveis. Confirme ou altere cada um."
+        >
+          <PrcReturnedFieldsEditor
+            targets={openReturn?.targets || []}
+            fieldSpecs={fieldSpecs || []}
+            draft={draft}
+            busy={busy}
+            idPrefix="eng-prc-correct"
+            onSubmit={(changes) => onSaveReturned?.(changes)}
+          />
+        </EngineeringDetailCard>
       ) : (
         <EngineeringDetailCard
           title={
-            correctionMode
-              ? "Corrigir campos devolvidos"
-              : isUpdate
-                ? "Edição seletiva da ficha"
-                : "Editar ficha técnica"
+            isUpdate
+              ? "Edição seletiva da ficha"
+              : "Editar ficha técnica"
           }
           hint={
-            correctionMode
-              ? "Somente os campos devolvidos são editáveis. Confirme ou altere cada um."
-              : isUpdate
-                ? "Marque somente os campos a alterar — valores atuais já vêm preenchidos."
-                : "Ajuste os campos com os valores atuais preenchidos. Justificativa só quando houver mudança."
+            isUpdate
+              ? "Marque somente os campos a alterar — valores atuais já vêm preenchidos."
+              : "Ajuste os campos com os valores atuais preenchidos. Justificativa só quando houver mudança."
           }
         >
           <div className="engineering-prc__edit-list">
             {scalarPaths
               .filter((p) => p !== "officialProductCode")
-              .filter((p) => (correctionMode ? returnedPaths.has(p) : true))
               .map((p) => {
                 const spec = specByPath.get(p);
                 const allowed = editable.size ? editable.has(p) : true;
@@ -626,7 +417,7 @@ export function PrcTechnicalSheet({
                 const dirty = isDirty(p);
                 return (
                   <div key={p} className="engineering-prc__edit-row">
-                    {isUpdate && !correctionMode ? (
+                    {isUpdate ? (
                       <EngineeringCheckboxControl
                         checked={picked}
                         disabled={!allowed || busy}
@@ -639,12 +430,7 @@ export function PrcTechnicalSheet({
                         {fieldLabel(p)}
                       </span>
                     )}
-                    {correctionMode && returnReasonByPath.get(p) ? (
-                      <p className="engineering-prc__change-notes">
-                        Motivo: {returnReasonByPath.get(p)}
-                      </p>
-                    ) : null}
-                    {isUpdate && !correctionMode && !picked ? (
+                    {isUpdate && !picked ? (
                       <span className="engineering-prc__muted">
                         {scalarText(draft[p])} — não alterado
                       </span>
@@ -681,19 +467,15 @@ export function PrcTechnicalSheet({
                             disabled={busy}
                           />
                         )}
-                        {dirty || correctionMode ? (
+                        {dirty ? (
                           <EngineeringTextField
                             id={`prc-edit-reason-${p}`}
-                            label={
-                              correctionMode && !dirty
-                                ? "Confirmação / justificativa"
-                                : "Justificativa da alteração"
-                            }
+                            label="Justificativa da alteração"
                             value={editReasons[p] ?? ""}
                             onChange={(v) =>
                               setEditReasons((s) => ({ ...s, [p]: v }))
                             }
-                            required={dirty || correctionMode}
+                            required={dirty}
                             maxLength={500}
                             disabled={busy}
                           />
@@ -708,7 +490,7 @@ export function PrcTechnicalSheet({
           <div className="engineering-prc__edit-suppliers">
             <div className="engineering-prc__edit-suppliers-head">
               <strong>Fornecedores</strong>
-              {suppliersDraft === null && !correctionMode ? (
+              {suppliersDraft === null ? (
                 <EngineeringActionButton
                   variant="ghost"
                   disabled={!editable.has("suppliers") && editable.size > 0}
@@ -723,35 +505,11 @@ export function PrcTechnicalSheet({
             {suppliersDraft !== null ? (
               <>
                 {suppliersDraft.map((row, index) => {
-                  const rowKey = supplierRowKey(
-                    row.supplierCode,
-                    row.store,
-                  );
-                  const returnedAttrs = correctionMode
-                    ? returnedSupplierAttrs.get(rowKey)
-                    : undefined;
-                  const rowReasons =
-                    correctionMode && returnedAttrs
-                      ? (["partNumber", "catalogNumber"] as const)
-                          .filter((a) => returnedAttrs.has(a))
-                          .map(
-                            (a) =>
-                              `${PRC_SUPPLIER_LABELS[a]}: ${supplierAttrReasons.get(
-                                `${rowKey}|${a}`,
-                              ) || supplierAttrReasons.get(`${rowKey}|link`) || ""}`,
-                          )
-                          .filter((s) => !s.endsWith(": "))
-                      : [];
                   return (
                     <div
                       key={index}
                       className="engineering-prc__supplier-row"
                     >
-                      {rowReasons.length ? (
-                        <p className="engineering-prc__change-notes">
-                          Correção solicitada — {rowReasons.join(" · ")}
-                        </p>
-                      ) : null}
                       <EngineeringTextField
                         id={`prc-sup-code-${index}`}
                         label={PRC_SUPPLIER_LABELS.supplierCode}
@@ -764,7 +522,7 @@ export function PrcTechnicalSheet({
                           )
                         }
                         required
-                        disabled={busy || correctionMode}
+                        disabled={busy}
                       />
                       <EngineeringTextField
                         id={`prc-sup-store-${index}`}
@@ -778,7 +536,7 @@ export function PrcTechnicalSheet({
                           )
                         }
                         required
-                        disabled={busy || correctionMode}
+                        disabled={busy}
                       />
                       <EngineeringTextField
                         id={`prc-sup-name-${index}`}
@@ -792,7 +550,7 @@ export function PrcTechnicalSheet({
                           )
                         }
                         required
-                        disabled={busy || correctionMode}
+                        disabled={busy}
                       />
                       <EngineeringTextField
                         id={`prc-sup-pn-${index}`}
@@ -807,9 +565,7 @@ export function PrcTechnicalSheet({
                           )
                         }
                         required
-                        disabled={
-                          busy || !supplierAttrEditable(row, "partNumber")
-                        }
+                        disabled={busy}
                       />
                       <EngineeringTextField
                         id={`prc-sup-cat-${index}`}
@@ -822,28 +578,23 @@ export function PrcTechnicalSheet({
                             ),
                           )
                         }
-                        disabled={
-                          busy || !supplierAttrEditable(row, "catalogNumber")
-                        }
+                        disabled={busy}
                       />
-                      {!correctionMode ? (
-                        <EngineeringActionButton
-                          variant="ghost"
-                          disabled={busy}
-                          onClick={() =>
-                            setSuppliersDraft((rows) =>
-                              rows!.filter((_, i) => i !== index),
-                            )
-                          }
-                        >
-                          Remover
-                        </EngineeringActionButton>
-                      ) : null}
+                      <EngineeringActionButton
+                        variant="ghost"
+                        disabled={busy}
+                        onClick={() =>
+                          setSuppliersDraft((rows) =>
+                            rows!.filter((_, i) => i !== index),
+                          )
+                        }
+                      >
+                        Remover
+                      </EngineeringActionButton>
                     </div>
                   );
                 })}
-                {!correctionMode ? (
-                  <div className="engineering-prc__supplier-add">
+                <div className="engineering-prc__supplier-add">
                     <EngineeringActionButton
                       variant="ghost"
                       disabled={busy}
@@ -857,7 +608,6 @@ export function PrcTechnicalSheet({
                       + Adicionar fornecedor
                     </EngineeringActionButton>
                   </div>
-                ) : null}
                 <EngineeringTextField
                   id="prc-sup-reason"
                   label="Justificativa da alteração de fornecedores"
@@ -878,23 +628,19 @@ export function PrcTechnicalSheet({
           ) : null}
 
           <EngineeringFormActions align="end">
-            {!correctionMode ? (
-              <EngineeringActionButton
-                variant="ghost"
-                softDisabled={busy}
-                onClick={onCancelEdit}
-              >
-                Cancelar
-              </EngineeringActionButton>
-            ) : null}
+            <EngineeringActionButton
+              variant="ghost"
+              softDisabled={busy}
+              onClick={onCancelEdit}
+            >
+              Cancelar
+            </EngineeringActionButton>
             <EngineeringActionButton
               variant="primary"
               softDisabled={busy}
               onClick={save}
             >
-              {correctionMode
-                ? "Salvar alterações"
-                : "Salvar alterações"}
+              Salvar alterações
             </EngineeringActionButton>
           </EngineeringFormActions>
         </EngineeringDetailCard>

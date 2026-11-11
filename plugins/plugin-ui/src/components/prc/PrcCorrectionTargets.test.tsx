@@ -741,3 +741,46 @@ describe("PrcReturnedFieldsEditor — correção granular", () => {
     expect(inputs).toHaveLength(2);
   });
 });
+
+describe("PrcCorrectionTargetSelector — CORRECTION-10", () => {
+  it("agrupa campos por seção e exibe 'Atual:' inclusive vazio", () => {
+    const options: PrcCorrectionFieldOption[] = [
+      { path: "description", label: "Descrição", group: "Identificação" },
+      { path: "unit", label: "Unidade", group: "Identificação" },
+      {
+        path: "accountingAccount",
+        label: "Conta contábil",
+        group: "Estoque",
+      },
+    ];
+    render(
+      <PrcCorrectionTargetSelector
+        fieldOptions={options}
+        suppliers={[]}
+        selection={emptyCorrectionSelection()}
+        onChange={vi.fn()}
+        draft={{ description: "CABO 2,5MM", unit: "", accountingAccount: null }}
+      />,
+    );
+    expect(screen.getByText("Identificação")).toBeTruthy();
+    expect(screen.getByText("Estoque")).toBeTruthy();
+    expect(screen.getByText("Atual: CABO 2,5MM")).toBeTruthy();
+    // Campo vazio permanece alvo elegível — nunca ocultado por if(value).
+    expect(screen.getAllByText(/— \(vazio\)/).length).toBe(2);
+  });
+
+  it("tabela de fornecedores vazia mostra estado vazio em vez de ocultar", () => {
+    render(
+      <PrcCorrectionTargetSelector
+        fieldOptions={FIELDS}
+        suppliers={[]}
+        selection={emptyCorrectionSelection()}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByText("Tabelas e relacionamentos — Fornecedores"),
+    ).toBeTruthy();
+    expect(screen.getByText(/Nenhum registro na tabela/)).toBeTruthy();
+  });
+});

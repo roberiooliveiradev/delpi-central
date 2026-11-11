@@ -277,6 +277,19 @@ def validate_supplier(item: Any) -> dict[str, Any]:
     return out
 
 
+def validate_supplier_list(items: list[dict[str, Any]]) -> None:
+    """CORRECTION-10 — duplicidade de ``(supplierCode, store)`` proibida."""
+    seen: set[tuple[str, str]] = set()
+    for it in items:
+        key = (str(it.get("supplierCode") or ""), str(it.get("store") or ""))
+        if key in seen:
+            raise PrcValidationError(
+                "Fornecedor duplicado (código + loja).",
+                fields={"suppliers": "duplicate"},
+            )
+        seen.add(key)
+
+
 def validate_create_payload(payload: Any) -> dict[str, Any]:
     """Valida `requestedData` de create contra o catálogo v1 de intake.
 
@@ -333,7 +346,14 @@ def validate_create_payload(payload: Any) -> dict[str, Any]:
             elif spec.kind == "suppliers":
                 if not isinstance(raw, list):
                     raise PrcValidationError("suppliers deve ser lista.")
-                out[spec.path] = [validate_supplier(i) for i in raw]
+                # CORRECTION-10 — CREATE exige ≥1 vínculo válido: lista
+                # vazia não satisfaz a obrigatoriedade de intake.
+                items = [validate_supplier(i) for i in raw]
+                if spec.required_create_intake and not items:
+                    fields[spec.path] = "required"
+                    continue
+                validate_supplier_list(items)
+                out[spec.path] = items
         except PrcValidationError as exc:
             fields[spec.path] = "invalid"
             fields.update(exc.fields)
@@ -389,7 +409,9 @@ def validate_draft_change(path: Any, proposed_value: Any) -> tuple[str, Any]:
                 "suppliers deve ser lista de objetos.",
                 fields={spec.path: "type"},
             )
-        return spec.path, [validate_supplier(i) for i in proposed_value]
+        items = [validate_supplier(i) for i in proposed_value]
+        validate_supplier_list(items)
+        return spec.path, items
     raise PrcValidationError("Tipo de campo desconhecido.")
 
 

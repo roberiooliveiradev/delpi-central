@@ -38,6 +38,7 @@ export function PrcActionBar({
   requesterLabel,
   fieldSpecs,
   suppliers,
+  draft,
   onRunAction,
   onEditDraft,
 }: {
@@ -52,6 +53,8 @@ export function PrcActionBar({
   fieldSpecs?: PrcFieldSpec[] | null;
   /** Fornecedores da ficha técnica (atalho para alvos SUPPLIER_LINK). */
   suppliers?: InfoSupplierOption[];
+  /** Ficha atual — "Atual:" por campo no modal de devolução. */
+  draft?: Record<string, unknown> | null;
   onRunAction: (spec: PrcActionSpec, extras: PrcActionExtras) => void;
   onEditDraft?: () => void;
 }) {
@@ -192,6 +195,7 @@ export function PrcActionBar({
           busy={busy}
           fieldSpecs={fieldSpecs}
           suppliers={suppliers}
+          draft={draft}
           onCancel={() => setReturnSpec(null)}
           onSubmit={(targets) => {
             onRunAction(returnSpec, { targets });

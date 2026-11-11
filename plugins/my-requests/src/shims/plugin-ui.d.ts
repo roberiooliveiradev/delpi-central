@@ -1347,7 +1347,11 @@ declare module "@delpi/plugin-ui/index" {
     partNumber?: string | null;
     catalogNumber?: string | null;
   };
-  export type PrcCorrectionFieldOption = { path: string; label: string };
+  export type PrcCorrectionFieldOption = {
+    path: string;
+    label: string;
+    group?: string | null;
+  };
   export type PrcFieldSpecLike = {
     path: string;
     kind: string;
@@ -1424,6 +1428,7 @@ declare module "@delpi/plugin-ui/index" {
     selection: PrcCorrectionSelection;
     onChange: (next: PrcCorrectionSelection) => void;
     busy?: boolean;
+    draft?: Record<string, unknown> | null;
     idPrefix?: string;
   }): JSX.Element;
   export function PrcReturnedFieldsEditor(props: {

@@ -2819,6 +2819,8 @@ declare module "@delpi/plugin-ui/index" {
   export const PRC_STATUS_LABELS: Record<string, string>;
   export const PRC_TYPE_LABELS: Record<string, string>;
   export const PRC_FIELD_LABELS: Record<string, string>;
+  export const PRC_FIELD_GROUPS: { title: string; paths: string[] }[];
+  export const PRC_FIELD_GROUP_BY_PATH: Record<string, string>;
   export const PRC_SUPPLIER_LABELS: Record<string, string>;
   export const PRC_FIELD_HELP: Record<string, string>;
   export const PRC_STATUS_VARIANTS: Record<
@@ -3089,7 +3091,11 @@ declare module "@delpi/plugin-ui/index" {
     partNumber?: string | null;
     catalogNumber?: string | null;
   };
-  export type PrcCorrectionFieldOption = { path: string; label: string };
+  export type PrcCorrectionFieldOption = {
+    path: string;
+    label: string;
+    group?: string | null;
+  };
   export type PrcFieldSpecLike = {
     path: string;
     kind: string;
@@ -3166,6 +3172,7 @@ declare module "@delpi/plugin-ui/index" {
     selection: PrcCorrectionSelection;
     onChange: (next: PrcCorrectionSelection) => void;
     busy?: boolean;
+    draft?: Record<string, unknown> | null;
     idPrefix?: string;
   }): JSX.Element;
   export function PrcReturnedFieldsEditor(props: {

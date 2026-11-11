@@ -1223,9 +1223,25 @@ class TestSupplierPartNumber:
         obs = [{"supplier_code": "000001", "supplier_store": "01",
                 "supplier_name": "FORNECEDOR X",
                 "supplier_part_number": "PN-1", "catalog_code": None}]
-        r, _ = self._verify(
-            client, jwks_env, core_rbac, prc_service_repo,
-            [self._sup(), self._sup()], obs)
+        # CORRECTION-10 — intake agora rejeita (code,store) duplicado;
+        # o estado ambíguo legado é injetado direto no draft para
+        # continuar provando o gate de conclusão.
+        prc_service_repo["reader"] = FakeReader(
+            {"status": "available",
+             "product": _product()["product"], "suppliers": obs})
+        rid = self._submit(
+            client, jwks_env, core_rbac, [self._sup()]
+        ).json()["data"]["requestId"]
+        draft = prc_service_repo["repo"]._drafts[rid]
+        draft["technical_data"]["suppliers"].append(
+            dict(draft["technical_data"]["suppliers"][0])
+        )
+        v = _advance_to_attendance(client, jwks_env, core_rbac, rid)
+        r = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/complete",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": v, "officialCode": "001234"})
         assert r.status_code == 409
 
 
