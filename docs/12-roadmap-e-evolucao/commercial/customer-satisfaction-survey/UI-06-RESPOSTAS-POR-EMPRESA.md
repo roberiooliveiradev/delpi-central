@@ -51,6 +51,16 @@ AO ACIONAR VER RESPOSTA:
 
 **Valores/nomes/datas ilustrativos.** Não chamar nota individual de `IGS` ou `NPS`: estes são indicadores agregados da pesquisa. Situação “Pendente” indica **sem resposta definitiva**, não comprova envio, leitura do convite ou atraso do cliente.
 
+### Decisão visual — contagens rápidas da campanha (11/11/2026)
+
+**APROVADO PELO SOLICITANTE:** manter **três contagens rápidas acima da tabela/lista** na UI-06: **Participantes**, **Respondidas** e **Pendentes**, como na prévia de página completa. São contagens operacionais de contexto, **não** IGS, NPS, taxa oficial de resposta ou novos indicadores agregados da UI-01.
+
+- **Escopo:** todas as empresas oficialmente incluídas na **campanha selecionada**, independentemente de filtros locais de busca, grupo, situação, ordenação ou página; não variar as três contagens quando o usuário pesquisa/filtra a tabela. Ao mudar de campanha, recalcular a partir do resultado autorizado dessa campanha.
+- **Semântica:** Participantes = empresas incluídas na campanha; Respondidas = empresas com resposta definitiva; Pendentes = participantes sem resposta definitiva. Assim, Participantes = Respondidas + Pendentes no conjunto válido. “Pendente” não comprova convite enviado, recebido ou atraso.
+- **Autoridade:** a `commercial-api` deve fornecer totais confiáveis junto da consulta/listagem (ou em contrato oficial de agregação restrita); não calcular totais globais a partir de uma página parcial de registros. A definição exata do campo/endpoint é **PENDING_IMPLEMENTATION**, não inventar no frontend.
+- **Apresentação:** três cards compactos, discretos e somente leitura, antes da lista; desktop lado a lado, celular empilhados/reorganizados sem rolagem horizontal; tratar loading/erro/vazio com estados oficiais. Sem tendências, percentuais, cores de alerta, ações adicionais ou novas permissões.
+- **Estado:** **aprovação visual e funcional registrada; NÃO IMPLEMENTADO**. Reutilizar componentes do PluginUI/CommercialUi existentes, inspecionando os consumidores e props na etapa de desenvolvimento.
+
 ## 4. Mapa de componentes oficiais
 
 | Região | Componente/padrão já existente | Observação |
