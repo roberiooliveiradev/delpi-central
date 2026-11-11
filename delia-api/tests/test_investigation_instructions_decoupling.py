@@ -7,7 +7,6 @@ appended per tool from published inputSchema remain legitimate.
 
 from __future__ import annotations
 
-import ast
 import asyncio
 import re
 from pathlib import Path
@@ -64,27 +63,25 @@ def test_r10_removed_legacy_tool_names_not_required_by_instructions() -> None:
         assert name.casefold() not in lowered
 
 
-def test_instruction_source_is_module_constant_not_owner_json() -> None:
-    """Load path: module constant → Agent(instructions=...)."""
-    path = Path(
-        "app/infrastructure/orchestration/pydantic_ai_investigation.py"
-    )
-    # Resolve relative to this test's package root.
+def test_instruction_source_is_governed_resource_not_inline_prose() -> None:
+    """Load path: investigation_instructions.delpi.json → select → Agent."""
     module_path = (
         Path(__file__).resolve().parents[1]
         / "app/infrastructure/orchestration/pydantic_ai_investigation.py"
     )
     source = module_path.read_text(encoding="utf-8")
-    tree = ast.parse(source)
-    assigned = {
-        node.targets[0].id
-        for node in tree.body
-        if isinstance(node, ast.Assign)
-        and len(node.targets) == 1
-        and isinstance(node.targets[0], ast.Name)
-    }
-    assert "_INVESTIGATION_INSTRUCTIONS" in assigned
-    assert path.as_posix() in str(module_path).replace("\\", "/")
+    assert "load_selected_investigation_instructions" in source
+    assert "investigation_instructions.delpi.json" in source
+    assert "You are DÉLIA's generalist semantic investigation agent" not in source
+    resource = (
+        Path(__file__).resolve().parents[1]
+        / "config"
+        / "investigation_instructions.delpi.json"
+    )
+    assert resource.is_file()
+    # Compatibility exports remain for harnesses/tests.
+    assert _INVESTIGATION_INSTRUCTION_VERSION.startswith("generalist")
+    assert _INVESTIGATION_INSTRUCTIONS.strip()
 
 
 def test_envelope_hint_is_schema_derived_not_owner_hardcoded() -> None:

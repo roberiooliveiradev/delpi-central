@@ -284,3 +284,7 @@ NEXT=COORDINATION_INT1_PUBLISHED_CAUSAL_REPORT_REVIEW
 ```
 
 Publishing this report does **not** accept INT-1. Independent coordination review follows.
+
+## Related
+
+Doc **295** records the subsequent instruction-isolation A/B; this doc 294 remains the historical causal eval of `or-qwen14b-35aaf1a4174b` and must not be overwritten.

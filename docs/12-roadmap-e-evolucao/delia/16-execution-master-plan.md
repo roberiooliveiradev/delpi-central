@@ -2100,3 +2100,7 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 ### 2026-11-11 — INT-1 causal report published (doc 294)
 
 **TASK:** `DELIA-C3-T2-INT1-OPENROUTER-CAUSAL-REPORT-PERSISTENCE-01`. Relatório sanitizado da eval `or-qwen14b-35aaf1a4174b` versionado em `294-int1-openrouter-qwen14b-instrumented-causal-evaluation.md`. Sem nova inferência. Artefatos `.battery` permanecem locais/gitignored. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_PUBLISHED_CAUSAL_REPORT_REVIEW`**.
+
+### 2026-11-11 — INT-1 instruction isolation + bounded A/B (PO exception)
+
+**TASK:** `DELIA-C3-T2-INT1-SPECIALIZED-INSTRUCTIONS-AND-REAL-GENERALIZATION-EVOLUTION-01`. PO authorized one bounded INT-1 rework for instruction isolation/evolution despite exhausted budget. Instructions moved to governed JSON; baseline remains default. Candidate `v3-objective-progress` improved P3/G1/H4 but **regressed P1/P2** → not promoted. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_SPECIALIZED_INSTRUCTIONS_INDEPENDENT_REVIEW`**. No INT-2/T3/prod.

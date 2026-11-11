@@ -1187,3 +1187,16 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-STAGE | **BLOCKED** | Publication ≠ acceptance |
 
 **NEXT=`COORDINATION_INT1_PUBLISHED_CAUSAL_REPORT_REVIEW`**.
+
+## 2026-11-11 — INT-1 instruction candidate not promoted
+
+**TASK:** `DELIA-C3-T2-INT1-SPECIALIZED-INSTRUCTIONS-AND-REAL-GENERALIZATION-EVOLUTION-01`
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-INSTR-ISOLATION | **DONE** | JSON resource + loader; baseline default |
+| INT1-CANDIDATE-V3 | **NOT_PROMOTED** | P1 structure regression; P2 grounding regression |
+| INT1-P3-G1-GAIN | **OBSERVED_NOT_SUFFICIENT** | Gains do not outweigh known-case regressions |
+| INT1-STAGE | **BLOCKED** | Review required |
+
+**NEXT=`COORDINATION_INT1_SPECIALIZED_INSTRUCTIONS_INDEPENDENT_REVIEW`**.

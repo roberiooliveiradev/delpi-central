@@ -153,6 +153,26 @@ def test_external_provider_blocked_in_development(monkeypatch):
     assert "provider.example" in settings.llm_egress_blocked_reason
 
 
+def test_openrouter_blocked_in_development_without_eval_flag(monkeypatch):
+    monkeypatch.delenv("DELIA_EVAL_EGRESS_AUTHORIZED", raising=False)
+    _env(monkeypatch, "https://openrouter.ai/api/v1")
+    assert Settings().llm_egress_blocked_reason is not None
+
+
+def test_openrouter_allowed_in_development_with_eval_flag(monkeypatch):
+    """PO-authorized INT-1 eval: real OpenRouter host (not localhost proxy)."""
+    monkeypatch.setenv("DELIA_EVAL_EGRESS_AUTHORIZED", "1")
+    monkeypatch.delenv("DELIA_EVAL_ALLOWED_LLM_HOSTS", raising=False)
+    _env(monkeypatch, "https://openrouter.ai/api/v1")
+    assert Settings().llm_egress_blocked_reason is None
+
+
+def test_eval_flag_does_not_allow_arbitrary_external_host(monkeypatch):
+    monkeypatch.setenv("DELIA_EVAL_EGRESS_AUTHORIZED", "1")
+    _env(monkeypatch, EXTERNAL_URL)
+    assert Settings().llm_egress_blocked_reason is not None
+
+
 def test_external_provider_blocked_in_testing(monkeypatch):
     _env(monkeypatch, EXTERNAL_URL, environment="testing")
     assert Settings().llm_egress_blocked_reason is not None

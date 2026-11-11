@@ -666,3 +666,7 @@ Delivered: `delia-api/scripts/int1_secure_decision_trace.py`, `tests/test_int1_s
 ### 2026-11-11 — Causal report persistence for independent review
 
 **TASK:** `DELIA-C3-T2-INT1-OPENROUTER-CAUSAL-REPORT-PERSISTENCE-01`. Sanitized report published as sibling doc **294** (`294-int1-openrouter-qwen14b-instrumented-causal-evaluation.md`) for evaluation `or-qwen14b-35aaf1a4174b`. No re-run of P1/P3/G1. Raw traces remain local. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_PUBLISHED_CAUSAL_REPORT_REVIEW`**.
+
+### 2026-11-11 — INT-1 specialized instructions evolution (bounded PO exception)
+
+**TASK:** `DELIA-C3-T2-INT1-SPECIALIZED-INSTRUCTIONS-AND-REAL-GENERALIZATION-EVOLUTION-01`. See sibling **295**. Instruction resource isolated; real A/B vs baseline; candidate **not** promoted (P1/P2 regressions). Stage remains BLOCKED.

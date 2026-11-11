@@ -71,12 +71,34 @@ def is_local_llm_host(host: str) -> bool:
         return "." not in normalized
 
 
+def eval_authorized_external_llm_hosts() -> frozenset[str]:
+    """Hosts allowed for nonprod LLM only under explicit eval authorization.
+
+    Requires ``DELIA_EVAL_EGRESS_AUTHORIZED=1``. Default allowlist is
+    ``openrouter.ai`` (override via comma-separated
+    ``DELIA_EVAL_ALLOWED_LLM_HOSTS``). This is not a localhost proxy
+    bypass — the application must call the real allowlisted host.
+    """
+    if (os.getenv("DELIA_EVAL_EGRESS_AUTHORIZED") or "").strip() != "1":
+        return frozenset()
+    raw = (
+        os.getenv("DELIA_EVAL_ALLOWED_LLM_HOSTS") or "openrouter.ai"
+    ).strip()
+    return frozenset(
+        part.strip().lower()
+        for part in raw.split(",")
+        if part.strip()
+    )
+
+
 def llm_egress_blocked_reason(environment: str, base_url: str) -> str | None:
     """Return why ``base_url`` is refused, or ``None`` when it is allowed."""
     if environment == "production" or not base_url:
         return None
     host = urllib.parse.urlsplit(base_url).hostname or ""
     if is_local_llm_host(host):
+        return None
+    if host.lower() in eval_authorized_external_llm_hosts():
         return None
     return (
         "external LLM endpoint refused outside production "

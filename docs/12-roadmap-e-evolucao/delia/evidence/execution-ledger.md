@@ -6312,3 +6312,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **LIVE_MODEL_CALLS=0**; **FUNCTIONAL_CODE_CHANGED=NO**; **RAW_TRACES_COMMITTED=NO**.
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/T3=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_PUBLISHED_CAUSAL_REPORT_REVIEW`.
+
+| DELIA-C3-T2-INT1-SPECIALIZED-INSTRUCTIONS-AND-REAL-GENERALIZATION-EVOLUTION-01 | Isolated INT-1 instructions into governed JSON; baseline fp 7dbc94c5035b0f19 preserved as default; candidate v3-objective-progress A/B on Qwen14B: P3/G1/H4 improved, P1/P2 regress → DO_NOT_PROMOTE; no prod | INSTR_ISOLATION=DONE; CANDIDATE=NOT_PROMOTED; NEXT=COORDINATION_INT1_SPECIALIZED_INSTRUCTIONS_INDEPENDENT_REVIEW |
+
+### INT-1 specialized instructions + real A/B — 2026-11-11
+
+- **TASK:** `DELIA-C3-T2-INT1-SPECIALIZED-INSTRUCTIONS-AND-REAL-GENERALIZATION-EVOLUTION-01`. PO bounded rework exception.
+- **BASELINE:** `generalist-semantic-v2` / fp `7dbc94c5035b0f19` (default).
+- **CANDIDATE:** `generalist-semantic-v3-objective-progress` / fp `658d3da51783e23d` — **DO_NOT_PROMOTE**.
+- **REAL_EVAL:** OpenRouter qwen/qwen3-14b; known+holdout; prod untouched.
+- **Doc:** `295-int1-specialized-instructions-and-real-generalization-evolution.md`.
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.

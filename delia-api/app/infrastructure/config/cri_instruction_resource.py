@@ -457,3 +457,174 @@ def load_orchestration_instructions(
             canonical.encode("utf-8")
         ).hexdigest(),
     )
+
+
+# INT-1 investigation Agent instructions — same governed resource
+# pattern as orchestration admissions text, different consumer/kind.
+# Instruction *content* is declarative; selection of which version is
+# active is configuration (default + optional env), never a second
+# Agent framework.
+_INVESTIGATION_RESOURCE_ID = "delia.investigation.instructions"
+_INVESTIGATION_KIND = "investigation_instructions"
+_INVESTIGATION_RESOURCE_VERSIONS = frozenset({"1"})
+_INVESTIGATION_KEYS = frozenset(
+    {
+        "resource_id",
+        "version",
+        "kind",
+        "owner",
+        "default_instruction_version",
+        "instructions",
+    }
+)
+_MAX_INVESTIGATION_INSTRUCTION_ENTRIES = 16
+_MAX_INVESTIGATION_INSTRUCTION_BYTES = 16384
+_INVESTIGATION_VERSION_ENV = "DELIA_INVESTIGATION_INSTRUCTION_VERSION"
+
+
+@dataclass(frozen=True)
+class InvestigationInstructions:
+    """Validated INT-1 investigation instruction set (all versions)."""
+
+    resource_id: str
+    resource_version: str
+    default_instruction_version: str
+    instructions: Mapping[str, str]
+    content_hash: str
+
+    def select(
+        self, instruction_version: str | None = None
+    ) -> "SelectedInvestigationInstructions":
+        """Return one active instruction text + fingerprints."""
+        version = (instruction_version or "").strip() or (
+            self.default_instruction_version
+        )
+        text = self.instructions.get(version)
+        if text is None:
+            raise CriInstructionResourceError(
+                "investigation_instruction_version_unknown",
+                f"unknown instruction version: {version!r}; "
+                f"available={sorted(self.instructions)}",
+            )
+        return SelectedInvestigationInstructions(
+            instruction_version=version,
+            text=text,
+            text_fingerprint=hashlib.sha256(
+                text.encode("utf-8")
+            ).hexdigest()[:16],
+            resource_version=self.resource_version,
+            resource_content_hash=self.content_hash,
+        )
+
+
+@dataclass(frozen=True)
+class SelectedInvestigationInstructions:
+    """One active INT-1 instruction version ready for Agent construction."""
+
+    instruction_version: str
+    text: str
+    text_fingerprint: str
+    resource_version: str
+    resource_content_hash: str
+
+
+def load_investigation_instructions(
+    path: str | Path,
+) -> InvestigationInstructions:
+    """Load and validate the governed INT-1 investigation instruction set.
+
+    Fail-closed: wrong identity/kind/version, missing default, empty or
+    oversized entries raise ``CriInstructionResourceError``.
+    """
+
+    data = _load_resource_object(path)
+    extra = set(data) - _INVESTIGATION_KEYS
+    if extra:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            f"unsupported fields: {sorted(extra)}",
+        )
+    missing = {k for k in _INVESTIGATION_KEYS if not data.get(k)}
+    if missing:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            f"missing fields: {sorted(missing)}",
+        )
+    if str(data.get("resource_id")) != _INVESTIGATION_RESOURCE_ID:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            f"unexpected resource_id: {data.get('resource_id')!r}",
+        )
+    resource_version = _validate_identity(
+        data,
+        kind=_INVESTIGATION_KIND,
+        versions=_INVESTIGATION_RESOURCE_VERSIONS,
+    )
+    default_version = str(data.get("default_instruction_version") or "")
+    instructions = data["instructions"]
+    if not isinstance(instructions, Mapping) or not instructions:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            "instructions not a non-empty object",
+        )
+    if len(instructions) > _MAX_INVESTIGATION_INSTRUCTION_ENTRIES:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            "instructions oversized",
+        )
+    out: dict[str, str] = {}
+    for name, text in instructions.items():
+        if (
+            not isinstance(name, str)
+            or not name.strip()
+            or not isinstance(text, str)
+            or not text.strip()
+            or len(text.encode("utf-8"))
+            > _MAX_INVESTIGATION_INSTRUCTION_BYTES
+        ):
+            raise CriInstructionResourceError(
+                "cri_instruction_resource_invalid",
+                f"instruction {name!r} empty or oversized",
+            )
+        out[name] = text
+    if default_version not in out:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            f"default_instruction_version {default_version!r} "
+            "missing from instructions",
+        )
+    canonical = json.dumps(out, sort_keys=True, ensure_ascii=False)
+    return InvestigationInstructions(
+        resource_id=_INVESTIGATION_RESOURCE_ID,
+        resource_version=resource_version,
+        default_instruction_version=default_version,
+        instructions=out,
+        content_hash=hashlib.sha256(
+            canonical.encode("utf-8")
+        ).hexdigest(),
+    )
+
+
+def resolve_investigation_instruction_version(
+    explicit: str | None = None,
+) -> str | None:
+    """Resolve active INT-1 instruction version.
+
+    Precedence: explicit argument → ``DELIA_INVESTIGATION_INSTRUCTION_VERSION``
+    → resource default (``None`` signals default).
+    """
+    if explicit is not None and str(explicit).strip():
+        return str(explicit).strip()
+    import os
+
+    env = (os.environ.get(_INVESTIGATION_VERSION_ENV) or "").strip()
+    return env or None
+
+
+def default_investigation_instructions_path() -> Path:
+    """Repo-fixed path next to other governed config resources."""
+    return (
+        Path(__file__).resolve().parents[3]
+        / "config"
+        / "investigation_instructions.delpi.json"
+    )
