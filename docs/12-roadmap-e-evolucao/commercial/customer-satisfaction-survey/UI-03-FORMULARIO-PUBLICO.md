@@ -49,7 +49,13 @@
 * Obrigatórias: seleção de uma alternativa em cada uma das dez dimensões e resposta nas duas notas gerais; os três comentários são opcionais. **No produto, exibir o texto integral das 15 perguntas do catálogo canônico; o wireframe usa títulos resumidos.**
 ```
 
-**A escolha de uma pergunta por página ou bloco único** deve favorecer legibilidade e menor custo de navegação. Recomendação atual: blocos de assunto na mesma página, com seção de revisão final, como acima; não forçar quinze etapas individuais porque a biblioteca suporta wizard.
+**DECISÃO POSTERIOR DO SOLICITANTE (11/11/2026):** substituir a proposta anterior de formulário único por **três seções/etapas principais de preenchimento**, percorridas sequencialmente, para reduzir a fadiga. Depois, manter uma **quarta tela de revisão obrigatória**, com retorno para corrigir respostas, seguida de confirmação definitiva e sucesso. O wireframe contínuo acima é apenas referência do conteúdo; **não** é a navegação aprovada. Não criar quinze passos individuais.
+
+**Proposta de distribuição a validar na próxima revisão de UX (ainda NÃO aprovada):** etapa 1 = dimensões 1–5; etapa 2 = dimensões 6–10; etapa 3 = satisfação geral, recomendação e três perguntas abertas opcionais. Preservar em todas as etapas a ordem canônica das 15 perguntas.
+
+**Progresso — comportamento aprovado, fórmula detalhada pendente:** exibir indicador percentual visível no topo das etapas e **atualizá-lo a cada pergunta respondida**, sem calcular apenas pela etapa aberta. A seleção de nota ou “Não se aplica” conta como escolha concluída nas dez dimensões; satisfação geral e recomendação contam depois de selecionadas. As três perguntas abertas são opcionais e **não devem impedir 100% nem o avanço/revisão quando deixadas vazias**. Como critério simples proposto, usar as **12 escolhas obrigatórias** como denominador do percentual de conclusão, informando “X de 12 avaliações concluídas”; o comportamento da contagem dos comentários opcionais permanece **PENDING de aceite visual/funcional**, sem transformar opcional em obrigatório. Ao voltar e corrigir, recalcular o progresso; não persistir rascunho no backend. Avanço entre etapas deve sinalizar escolhas obrigatórias ainda faltantes sem perda do que já foi preenchido.
+
+**Fluxo de navegação aprovado em nível funcional:** abertura pública → etapa 1/3 → etapa 2/3 → etapa 3/3 → revisão obrigatória → confirmação e sucesso. Ter **Anterior/Próxima** nas etapas com identificação clara da seção; permitir retorno para corrigir sem apagar respostas. Não efetuar POST nas transições entre seções. A revisão inclui as 15 perguntas e respostas/ausências opcionais, com aviso de imutabilidade depois da confirmação.
 
 ## 3. Wireframe — revisão, envio e estados
 
