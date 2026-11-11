@@ -685,3 +685,14 @@ engineering-api`. Imagem nova `sha256:32d79d0ab067`; anterior
 `sha256:86a20bc05caa` preservada para rollback (`git revert` + rebuild).
 Container healthy, `/health` 200, `_disambiguate_by_column_role`
 verificado em runtime. Validação funcional E2E fica com EVA/Coordination.
+
+## FIELD-COMPLETENESS — campo item (2026-11-11)
+
+| PDF | Antes | Depois |
+|---|---|---|
+| 90264061 | item A2–A4; A1/A5/A6=null | A1–A6 completos |
+| 90264004 | A1–A5,A9; +4 null | +A6,A7; AA=null (evidência fora da banda); A9↔10080065 correto |
+| 90264128/138/302/174/275 | inalterados | inalterados |
+
+Testes: +4 (papel errado, fora da banda, âncora, empate). Foco: 104 pass /
+3 falhas pré-existentes. GT/holdout: EVAL_PENDING (owner).

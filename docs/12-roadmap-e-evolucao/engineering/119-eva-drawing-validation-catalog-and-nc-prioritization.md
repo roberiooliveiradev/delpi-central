@@ -2613,3 +2613,36 @@ justificados); AuthZ/estrutura real TOTVS = BLOCKED-EXTERNAL (contrato oficial
 não exercitável no ambiente de dev — fixture documental usada).
 
 **Suíte:** 1107 passed / 5 failed (mesmas pré-existentes).
+
+## 72. Completude de campos — campo `item` (RQ-A02) + Frentes B/C — 2026-11-11
+
+**Primeira perda do `item` (prova real, 7 PDFs):** marcadores `A1`/`A5`/`A6`/`AA`
+existiam como células mas tipadas como `parent_description`/`description`
+(erro de col_typing), ou deslocadas uma linha pela grade SLANet — a extração
+de `item` só aceitava papel `item`/`item_band` → campo emitido `null`.
+
+**Correção generalista `_recover_item_markers`:** forma de marcador
+(letra+≤2 dígitos, ou fundida `item+qty`), centro-Y na banda dos campos
+(grade pode deslocar o marcador uma linha — prova: `AA` cy 445–471 pertence
+à linha de `10400035` cy 446–470), posição à esquerda de QTD, exclusão de
+células com código ≥6 dígitos, candidato único (empate → fail-closed),
+método `item_marker_positional`.
+
+**Resultado real:** 061 A1–A6 completos (item+code+qty+pai); 004 +A6/A7
+(`10110091`/`10110092`); A9→`10080065` correto (geometria provada).
+`AA→10400035` permanece `null` — a única célula `AA` está 50px fora da
+banda (fail-closed honesto, não associação errada). Marcador `A6`/`A7`
+tipados `parent_code` em col0 foram recuperados (forma é o guarda).
+
+**association_conflict (RQ-A04):** classificado — o flag dispara por
+`conflicting_fields` (conflito real) **ou** qualquer célula `ambiguous`
+(incluindo reparos resolvidos por precedência). Não removido: é sinal
+conservador legítimo de ambiguidade de campo; renomear/dividir exige
+decisão de contrato (`ARCHITECTURE_DECISION_REQUIRED` se priorizado).
+
+**FRENTE B:** contrato oficial `GET /products/{code}/structure` —
+BLOCKED_EXTERNAL (sem credencial TOTVS/AuthZ real em dev); caminho
+governado provado por contrato interno + fixtures (ver §71).
+
+**FRENTE C:** modelo de GT proposto em Doc 120; métricas exigem owner —
+`QUALITY_HOMOLOGATION=EVAL_PENDING`; `VAL01_COMPLETED=false`.

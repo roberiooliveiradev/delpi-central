@@ -754,3 +754,78 @@ def test_recovered_cell_counts_as_visual_evidence_for_dedup():
         tokens=tokens,
     )
     assert recovered == []
+
+
+# ---------- RQ-A02: recuperação do campo item (marcador em papel incorreto) ----
+
+
+def test_item_marker_in_wrong_role_cell_recovered():
+    """Célula 'A5' tipada parent_description na banda da linha → item."""
+    from engineering_app.application.drawing.understanding import (
+        _recover_item_markers,
+    )
+
+    qty = {"normalized_value": "2", "bounding_box_px": _quad(50, 10, 70, 30),
+           "source_cy_px": 20.0}
+    rows = [{"page": 1, "fields": {"quantity": qty, "component_code": {
+        "normalized_value": "10081799",
+        "bounding_box_px": _quad(80, 10, 140, 30), "source_cy_px": 20.0}},
+        "cells": [
+            _cell(0, 0, "50225531", _quad(0, 0, 40, 60)),
+            _cell(0, 2, "A5", _quad(42, 10, 50, 30)),
+        ], "parent_group_candidate": "50225531"}]
+    _recover_item_markers(rows, band_gap_px=12.0)
+    assert rows[0]["item"] == "A5"
+
+
+def test_item_marker_outside_row_band_not_recovered():
+    """Marcador de outra linha (deslocamento de grade) não migra."""
+    from engineering_app.application.drawing.understanding import (
+        _recover_item_markers,
+    )
+
+    qty = {"normalized_value": "6", "bounding_box_px": _quad(50, 100, 70, 120),
+           "source_cy_px": 110.0}
+    rows = [{"page": 1, "fields": {"quantity": qty, "component_code": {
+        "normalized_value": "10400035",
+        "bounding_box_px": _quad(80, 100, 140, 120), "source_cy_px": 110.0}},
+        "cells": [], "parent_group_candidate": "50225479"},
+        {"page": 1, "fields": {},
+         "cells": [_cell(1, 0, "AA", _quad(30, 60, 50, 80))]}]
+    _recover_item_markers(rows, band_gap_px=12.0)
+    assert rows[0].get("item") is None
+
+
+def test_item_marker_anchor_like_cell_not_recovered():
+    """'A 90264061' contém código longo — nunca vira marcador."""
+    from engineering_app.application.drawing.understanding import (
+        _recover_item_markers,
+    )
+
+    qty = {"normalized_value": "1", "bounding_box_px": _quad(50, 10, 70, 30),
+           "source_cy_px": 20.0}
+    rows = [{"page": 1, "fields": {"quantity": qty, "component_code": {
+        "normalized_value": "10091505",
+        "bounding_box_px": _quad(80, 10, 140, 30), "source_cy_px": 20.0}},
+        "cells": [_cell(0, 0, "A 90264061", _quad(0, 0, 40, 60))],
+        "parent_group_candidate": "90264061"}]
+    _recover_item_markers(rows, band_gap_px=12.0)
+    assert rows[0].get("item") is None
+
+
+def test_item_marker_two_candidates_fail_closed():
+    """Dois marcadores distintos na banda → nenhum promovido."""
+    from engineering_app.application.drawing.understanding import (
+        _recover_item_markers,
+    )
+
+    qty = {"normalized_value": "1", "bounding_box_px": _quad(50, 10, 70, 30),
+           "source_cy_px": 20.0}
+    rows = [{"page": 1, "fields": {"quantity": qty, "component_code": {
+        "normalized_value": "10091505",
+        "bounding_box_px": _quad(80, 10, 140, 30), "source_cy_px": 20.0}},
+        "cells": [_cell(0, 2, "A1", _quad(30, 10, 45, 30)),
+                  _cell(0, 2, "A5", _quad(31, 10, 46, 30))],
+        "parent_group_candidate": "90264061"}]
+    _recover_item_markers(rows, band_gap_px=12.0)
+    assert rows[0].get("item") is None

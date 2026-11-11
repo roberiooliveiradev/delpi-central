@@ -3048,8 +3048,102 @@ def rows_from_native_cells(
                 "topology_source": "native_table_cells",
             }
         )
+    _recover_item_markers(rows_out, band_gap_px)
     _rehome_across_bands(rows_out, band_gap_px)
     return rows_out, {str(k): v for k, v in col_types.items()}
+
+
+_ITEM_MARKER_RE = re.compile(r"^[A-Z]{1,3}\d{0,2}$", re.IGNORECASE)
+_ITEM_MARKER_FUSED_RE = re.compile(
+    r"^([A-Z]{1,3}\d{0,2})\s+\d{1,3}$", re.IGNORECASE
+)
+
+
+def _recover_item_markers(rows: list[dict], band_gap_px: float) -> None:
+    """Resgata marcador de item em célula de papel incorreto.
+
+    Classe comprovada (VAL-01 RQ-A02): células ``A5``/``A6``/``A1 1``
+    tipadas como ``parent_description``/``description`` deixam o campo
+    ``item`` vazio embora o marcador exista na linha. Evidência exigida:
+
+    - forma de marcador (letra+opcional dígitos, ou fundida
+      ``item + quantidade``);
+    - centro-Y dentro da banda dos campos da linha — linhas SLANet
+      podem deslocar a célula de marcador uma linha para cima/baixo;
+    - posição à esquerda da célula de quantidade/componente — a
+      coluna Item precede QTD na apresentação DELPI;
+    - não pode ser a célula de âncora de pai nem conter o código do
+      componente/pai;
+    - candidato único — empate permanece ``item`` ausente (fail-closed).
+    """
+    tol = max(12.0, band_gap_px) if band_gap_px else 12.0
+    by_page: dict[int, list[dict]] = {}
+    for r in rows or []:
+        by_page.setdefault(int(r.get("page") or 1), []).append(r)
+    for row in rows or []:
+        fields = row.get("fields") or {}
+        if (fields.get("item") or {}).get("normalized_value"):
+            continue
+        ref_cx: float | None = None
+        ref_cy: float | None = None
+        for kind in ("quantity", "component_code"):
+            f = fields.get(kind) or {}
+            box = f.get("bounding_box_px")
+            cy = f.get("source_cy_px")
+            if isinstance(box, (list, tuple)) and len(box) >= 4:
+                xs = [float(box[i]) for i in (0, 2, 4, 6) if i < len(box)]
+                if xs:
+                    ref_cx = sum(xs) / len(xs)
+                if isinstance(cy, (int, float)):
+                    ref_cy = float(cy)
+                break
+        if ref_cx is None:
+            continue
+        parent = str(row.get("parent_group_candidate") or "")
+        comp = str((fields.get("component_code") or {}).get(
+            "normalized_value") or "")
+        found: list[tuple[str, dict]] = []
+        for other in by_page.get(int(row.get("page") or 1), []):
+            for cell in other.get("cells") or []:
+                text = str(cell.get("text") or "").strip()
+                if _CODE_FIND_RE.search(text):
+                    continue
+                if not text or (parent and parent in text) or (
+                    comp and comp in text
+                ):
+                    continue
+                marker = None
+                if _ITEM_MARKER_RE.fullmatch(text):
+                    marker = text.upper()
+                else:
+                    m = _ITEM_MARKER_FUSED_RE.fullmatch(text)
+                    if m:
+                        marker = m.group(1).upper()
+                if not marker:
+                    continue
+                cy = _cell_cy(cell)
+                if ref_cy is not None and cy is not None and (
+                    abs(cy - ref_cy) > tol
+                ):
+                    continue
+                cx = _cell_cx(cell)
+                if cx is not None and cx > ref_cx + 2:
+                    continue
+                found.append((marker, cell))
+        if len({m for m, _ in found}) != 1:
+            continue
+        marker, cell = found[0]
+        fields["item"] = {
+            "raw_text": str(cell.get("text") or "").strip(),
+            "normalized_value": marker,
+            "bounding_box_px": cell.get("bounding_box_px"),
+            "source_cy_px": _cell_cy(cell),
+            "col": int(cell.get("col") or 0),
+            "rehomed_from_row": cell.get("_rehomed_from_row"),
+            "association_method": "item_marker_positional",
+            "association_state": "FIELD_IDENTIFIED",
+        }
+        row["item"] = marker
 
 
 def _derive_occurrence_paths(
