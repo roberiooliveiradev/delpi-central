@@ -101,6 +101,17 @@ Estados alternativos via backend:
 [Erro de conexão — tentar novamente com dados locais mantidos na sessão]
 ```
 
+### Decisão aprovada — confirmação com agradecimento simples (11/11/2026)
+
+**APROVADO PELO SOLICITANTE — OPÇÃO A:** após a **confirmação efetiva da gravação pela `commercial-api`**, substituir a experiência de preenchimento/revisão por uma **tela simples de agradecimento**: título **“Obrigado por participar!”**, mensagem breve informando que a avaliação foi registrada e valorizando a contribuição para melhorar produtos, serviços e relacionamento da DELPI. **Não exibir resumo das notas, respostas, comentários ou identificadores da empresa nessa tela**; não oferecer botão para responder novamente nem direcionar para páginas internas do Portal.
+
+- **Condição de sucesso:** a tela só aparece com confirmação autoritativa do backend após persistência da única resposta definitiva. Não inferir sucesso pelo clique, percentual de progresso 100%, estado local, timeout ou início do POST. Se a resposta já houver sido registrada, exibir o **estado específico “Resposta já registrada”**, não simular novo envio com sucesso.
+- **Mensagem de conclusão:** apresentar de modo acessível que o processo terminou e que a resposta não poderá ser alterada. Reutilizar padrões visuais do `PublicShell` e componentes já existentes no PluginUI, sem UI paralela, navegação adicional ou novo serviço.
+- **Privacidade:** a tela terminal não deve mostrar notas, comentários, token, dados de contato ou dados de cliente; não incluir publicidade, rastreamento de terceiros ou links a páginas de gestão.
+- **Estados alternativos permanecem distintos:** erro de conexão/timeout, campanha não aberta, encerrada, link inválido e duplicidade não produzem falso agradecimento. Se a API retornar um estado incerto após falha de rede, não refazer gravação automaticamente; orientar tentativa segura conforme contrato de unicidade do backend.
+- **Testes:** sucesso somente após commit, ausência de resumo, ausência de segundo envio, tratamento de conflitos e erro de rede, teclado/leitor de tela e celular. Após sucesso, desativar aviso de saída com respostas não salvas.
+- **Status:** **APROVADO/DOCUMENTADO**; UI-03 e integração reais ainda **NÃO IMPLEMENTADOS / NÃO TESTADOS**.
+
 ## 4. Inventário e escolha dos componentes visuais
 
 | Região | Componente/fonte existente | Aplicação |
