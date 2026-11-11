@@ -8,6 +8,10 @@
 
 Para cada questão, manter status, resposta, owner, data, justificativa, impacto e fonte. `DECIDED` significa decisão funcional, **não** implementação. Registros `PENDING`/`TO_INVENTORY` referem-se principalmente a detalhes técnicos, segurança ou validações formais; não reabrir a entrevista inteira sem bloqueio real. O [índice mestre](./REQUIREMENTS-INDEX.md) é a entrada principal. A [arquitetura REST/CAIO](./BACKEND-API-PROPOSAL.md) foi aceita em 10/11/2026 e ainda não está implementada.
 
+## Atualização de escopo em 11/11/2026 — decisão posterior do solicitante
+
+A primeira entrega deverá permitir **criação de campanhas, escolha de participantes TOTVS, cópia manual de link ou mensagem de convite, formulário público, respostas definitivas e indicadores históricos**. A decisão posterior **revoga** a previsão inicial (Q06/Q07) de envio direto/reenvio de e-mail pelo Portal. **Não haverá envio por integração nem confirmação de entrega**; o usuário fará o envio fora da aplicação. O tratamento e os planos de ação descritos em Q15–Q17 permanecem objetivos do documento original, porém **não terão desenvolvimento de tabela, rota, gestão ou CAIO nesta primeira entrega**; o Comercial cuidará deles fora da funcionalidade. A nova permissão `commercial.marketing` será tratada durante a implementação; nenhuma outra nova permissão. CAIO e testes deverão acompanhar cada etapa. **Fonte posterior prevalece sobre os textos históricos abaixo.** Contrato: [SURVEY-FIRST-RELEASE-CONTRACT.md](./SURVEY-FIRST-RELEASE-CONTRACT.md).
+
 ## A. Público, contatos e identificação
 
 ### Q01 — Unidade de resposta
@@ -67,7 +71,7 @@ Para cada questão, manter status, resposta, owner, data, justificativa, impacto
 
 ### Q06 — Canal de distribuição
 **Pergunta:** Qual será o canal inicial (e-mail, WhatsApp, SMS ou combinação), e o envio será manual, assistido ou automático?
-**Status:** DECIDED quanto aos canais e modos iniciais; PENDING quanto à integração concreta de e-mail, registro de entrega e condições de disparo.
+**Status:** SUPERSEDED pela decisão de 11/11/2026 — envio somente manual, por cópia de link/mensagem; sem integração de e-mail.
 **Resposta:** O Portal Comercial deverá oferecer envio direto de convite exclusivamente por e-mail para o contato configurável da empresa cliente. Também deverá permitir copiar o link exclusivo por cliente/campanha para compartilhamento manual pelo usuário em WhatsApp, Microsoft Teams, e-mail externo ou outros canais. Não incluir integrações de disparo direto por WhatsApp ou Teams neste escopo.
 **Distinção importante:** Abertura automática de campanha (Q05) não significa envio automático de convites; nenhum disparo em lote, agendado ou automático foi aprovado nesta decisão. O acionamento do envio direto será feito pelo usuário autorizado, até definição contrária.
 **Fonte:** Resposta do solicitante em 2026-11-10: "Concordo com você", à proposta de envio direto apenas por e-mail e cópia manual para outros canais.
@@ -77,7 +81,7 @@ Para cada questão, manter status, resposta, owner, data, justificativa, impacto
 
 ### Q07 — Lembretes e tentativas
 **Pergunta:** Quantos convites/lembretes podem ser enviados por contato? Quais prazos, expiração e regras para reenvio?
-**Status:** DECIDED quanto ao reenvio manual e à ausência de lembretes automáticos; PENDING quanto a limites e regras complementares.
+**Status:** SUPERSEDED quanto ao reenvio direto — o usuário recopia e encaminha o mesmo link externamente, sem disparo no Portal.
 **Resposta:** Usuários autorizados de Marketing e Manager poderão visualizar empresas que ainda não responderam e reenviar manualmente o convite. O reenvio utiliza o mesmo link exclusivo da empresa na campanha, sem criar outro link nem permitir uma segunda resposta. Não implementar lembretes automáticos por prazo ou intervalo.
 **Fonte:** Resposta expressa do solicitante em 2026-11-10: "Manual", após a proposta de reenvio manual de convites aos clientes pendentes com o mesmo link.
 **Condições:** A validade do link continua restrita às datas da campanha (Q05), e o envio direto pelo Portal permanece somente por e-mail, com cópia manual do link para os demais canais (Q06).

@@ -8,6 +8,12 @@
 
 **Decisão (10/11/2026, solicitante):** "perfeito, aceito o padrão". Este documento torna-se a **referência arquitetural aceita para implementação incremental**, vinculada ao [índice mestre](./REQUIREMENTS-INDEX.md). O conjunto de 20 rotas descreve operações candidatas, **não 20 obrigações de implementação imediata**. R09 (remoção de destinatário), nomes físicos, filtros sem fonte comprovada e demais detalhes técnicos dependem de inventário delimitado. O CAIO continuará com seis tools. **Aprovação do padrão ≠ execução nem homologação.**
 
+## Escopo da primeira entrega — decisão de 11/11/2026
+
+**Decisão do solicitante:** Priorizar campanha, destinatários, link para copiar/colar, formulário público, registro de respostas e indicadores históricos. **Não há envio de e-mail pelo Portal**; o próprio usuário copia o convite/link e envia por seu canal. **Não haverá desenvolvimento de planos de ação nem integração com `commercial.tasks` nesta entrega.** A permissão nova `commercial.marketing` será tratada durante o desenvolvimento; não criar outras permissões. A ampliação semântica do CAIO e os testes/homologação serão obrigatórios **a cada etapa**, sem tools MCP adicionais.
+
+**Contrato técnico da primeira entrega:** [SURVEY-FIRST-RELEASE-CONTRACT.md](./SURVEY-FIRST-RELEASE-CONTRACT.md) — três tabelas, fluxo, formulário, indicadores e testes. Este recorte posterior **substitui** os itens incompatíveis da proposta anterior (envio direto R11; tabela/rotas de planos de ação R17–R20; autorização para criar infraestrutura de tarefas). O restante do padrão arquitetural segue aceito. **Banco físico e rotas ainda não implementados.**
+
 ## 1. Ownership e segurança — contrato funcional
 
 - **commercial-api**: autoridade das campanhas, convites, respostas, tratamentos e indicadores; dados próprios em schema/tabelas do domínio `commercial`. MFE nunca implementa autorização ou cálculos canônicos.
@@ -18,7 +24,7 @@
 - **CAIO**: seis tools já existentes; o gate MCP atual exige **`commercial.access`** ao ingressar nas tools, inclusive antes do despacho por ação. Marketing/Manager deverão ter acesso ao produto ou esse gate deverá ser revisto com testes de não regressão. **Não ampliar a permissão global do CAIO sem revisar todos os consumidores/handlers**; a permissão de cada operação é rechecada no caso de uso oficial.
 - **Retenção**: histórico das respostas e campanhas por tempo indeterminado como objetivo de negócio, preservando LGPD, controle de acesso, auditoria e eventual obrigação legal de exclusão/anonimização de dado pessoal.
 
-## 2. Rotas REST propostas
+## 2. Rotas REST de referência (com recorte atualizado no contrato da primeira entrega)
 
 O prefixo abaixo refere-se a paths **internos** da `commercial-api` (`/satisfaction-surveys`), não a novas rotas da `api-delpi` nem ao path externo do gateway. Métodos, payloads e schemas precisam passar pelo inventário bounded antes de implantação.
 
@@ -34,16 +40,16 @@ O prefixo abaixo refere-se a paths **internos** da `commercial-api` (`/satisfact
 | R08 | `PATCH /satisfaction-surveys/campaigns/{campaign_id}/recipients/{recipient_id}` | Ajustar contato/e-mail do convite, sem gravar no ERP | Gestão |
 | R09 | `DELETE /satisfaction-surveys/campaigns/{campaign_id}/recipients/{recipient_id}` | Desvincular **somente antes de envio e resposta**, mediante regra auditada | Gestão; exclusão limitada |
 | R10 | `GET /satisfaction-surveys/campaigns/{campaign_id}/recipients/{recipient_id}/link` | Recuperar o **mesmo** link copiável, somente para autorizado | Gestão; retorno sensível |
-| R11 | `POST /satisfaction-surveys/campaigns/{campaign_id}/recipients/{recipient_id}/send-email` | Envio/reenvio manual do mesmo convite, sem job de lembretes | Gestão; idempotência/auditoria |
+| R11 | ~~`POST /satisfaction-surveys/campaigns/{campaign_id}/recipients/{recipient_id}/send-email`~~ | **RETIRADA da entrega e do padrão de envio**; usuário copia o convite/link e envia externamente | Não implementar |
 | R12 | `GET /satisfaction-surveys/campaigns/{campaign_id}/responses` | Tabela de respostas por empresa e campanha | Gestão |
 | R13 | `GET /satisfaction-surveys/responses/{response_id}` | Notas e comentários individuais, somente interna | Gestão |
 | R14 | `GET /public/satisfaction-surveys/{token}` | Formulário externo e estado da janela | Token de convite, sem JWT de colaborador |
 | R15 | `POST /public/satisfaction-surveys/{token}/response` | Uma única submissão final e atômica; sem edição posterior | Token de convite e validação no servidor |
 | R16 | `GET /satisfaction-surveys/results` | IGS, NPS, taxa, dimensões, percentuais e comparação histórica com filtros permitidos | `commercial.access` ou Gestão; somente agregados |
-| R17 | `GET /satisfaction-surveys/campaigns/{campaign_id}/cases` | Lista dos problemas e planos de ação da campanha | Gestão |
-| R18 | `POST /satisfaction-surveys/campaigns/{campaign_id}/cases` | Abrir tratamento de resposta/comentário relevante | Gestão |
-| R19 | `GET /satisfaction-surveys/cases/{case_id}` | Detalhe do problema, ação e retorno | Gestão |
-| R20 | `PATCH /satisfaction-surveys/cases/{case_id}` | Categoria, causa, ação, responsável, prazo, status, retorno, reavaliação | Gestão |
+| R17 | `GET /satisfaction-surveys/campaigns/{campaign_id}/cases` | Lista dos problemas e planos de ação da campanha | **FORA DA PRIMEIRA ENTREGA** — não implementar neste ciclo |
+| R18 | `POST /satisfaction-surveys/campaigns/{campaign_id}/cases` | Abrir tratamento de resposta/comentário relevante | **FORA DA PRIMEIRA ENTREGA** — não implementar neste ciclo |
+| R19 | `GET /satisfaction-surveys/cases/{case_id}` | Detalhe do problema, ação e retorno | **FORA DA PRIMEIRA ENTREGA** — não implementar neste ciclo |
+| R20 | `PATCH /satisfaction-surveys/cases/{case_id}` | Categoria, causa, ação, responsável, prazo, status, retorno, reavaliação | **FORA DA PRIMEIRA ENTREGA** — não implementar neste ciclo |
 
 **Não criar por padrão:** `POST/PUT/PATCH/DELETE` de perguntas (questionário fixo), `PATCH/DELETE` de respostas definitivas (imutabilidade e histórico), `DELETE` irrestrito de campanhas/conclusões, endpoint para cada indicador, disparo automático em WhatsApp/Teams, fluxo separado de cadastro TOTVS ou rotas públicas de resultados individuais. Campanhas abrem/fecham **pela comparação das datas no backend**, sem exigir scheduler para mudar flag; a janela de corte e fuso serão definidos no contrato técnico. O R09 é **proposta condicionada** à necessidade de corrigir público antes de qualquer convite, não autorização para apagar evidência histórica.
 
@@ -51,14 +57,14 @@ O prefixo abaixo refere-se a paths **internos** da `commercial-api` (`/satisfact
 
 ## 3. Persistência mínima proposta
 
-Começar avaliando **quatro agregados/tabelas** no schema comercial (nomes sujeitos ao padrão de migrations): `satisfaction_campaigns`, `satisfaction_recipients`, `satisfaction_responses` e `satisfaction_cases`.
+**Base da primeira entrega: três tabelas próprias**, conforme [contrato fechado](./SURVEY-FIRST-RELEASE-CONTRACT.md); a quarta entidade abaixo fica fora do escopo inicial. A lista histórica anterior avaliava quatro agregados/tabelas no schema comercial (nomes sujeitos ao padrão de migrations): `satisfaction_campaigns`, `satisfaction_recipients`, `satisfaction_responses` e `satisfaction_cases`.
 
 | Tabela candidata | Responsabilidade | Invariantes principais |
 |---|---|---|
 | `campaigns` | Identidade, nome, início/fim, questionário oficial/versionamento de referência, autor e auditoria | Configuração por campanha; abertura/fecho pela data |
 | `recipients` | Par **cliente TOTVS (código+loja)**, campanha, e-mail ajustável, status de envio, link/token protegido | `UNIQUE(campaign_id, customer_code, customer_store)`; link estável por empresa/campanha |
 | `responses` | Uma submissão definitiva por recipient, notas IGS/NPS e 10 dimensões, três respostas abertas, timestamp, versão do formulário | `UNIQUE(recipient_id)` + verificação transacional de campanha e token; sem update/delete operacional |
-| `cases` | Classificação (8 categorias), problema, cliente/resposta vinculada, causa, ação, responsável, prazo, status, retorno/reavaliação | Histórico auditável; somente perfis gestores; evitar CRUD de workflows genéricos |
+| ~~`cases`~~ | **Fora da primeira entrega** — o plano prevê tratamento posterior, mas o Portal não o desenvolverá agora | Não criar tabela nem rotas nesta entrega |
 
 **Alternativas sujeitas ao Abstraction Gate:** respostas dimensionais podem usar campos tipados ou tabela de itens, conforme consulta e migração comprovadas; não assumir JSONB sem medir o contrato de indicadores. Ações podem integrar a `commercial.tasks` existente **somente** se os acessos comuns a tarefas não expuserem problemas, notas e comentários restritos. A migração V003 já prevê assignee, due, status e vínculo com cliente/entidade, mas suas rotas atuais são acessíveis por `commercial.access`. Caso o isolamento seja mais simples com `cases`, não criar um segundo gerenciador genérico de tarefas.
 
@@ -82,10 +88,10 @@ Arquivos prováveis da futura ampliação (a confirmar no HEAD da execução): `
 
 ## 5. Entrega limitada e critérios de verificação
 
-**Sequência proposta, sem novos documentos obrigatórios:** (A) base de campanhas, questionário fixo e destinatários; (B) link público + submissão definitiva; (C) agregações e filtros; (D) tratamento/retorno; (E) paridade CAIO em cada frente, e não só no final.
+**Sequência aprovada para a primeira entrega:** (A) banco, campanhas, questionário fixo e destinatários; (B) link copiável e formulário público com submissão definitiva; (C) agregações, filtros e histórico; **CAIO e testes em cada etapa**. (D) tratamento/retorno **não integra este ciclo**. Detalhes no [contrato da primeira entrega](./SURVEY-FIRST-RELEASE-CONTRACT.md).
 
 Para cada frente: reancorar HEAD, branch, working tree; consultar owners/contratos e consumidores; diferenciar dados públicos/agregados/restritos; definir teste de acesso positivo/negativo, teste de invariantes e leitura posterior do resultado; menor diff, sem refactor lateral.
 
-**Testes indispensáveis:** acesso `marketing`/ `manage` e negação a `access` para dados individuais; CAIO com ator humano e sem elevação; token inexistente/expirado/compartilhado; POST simultâneo duplicado (apenas uma resposta); datas antes/durante/depois; recópia do mesmo link; reenvio apenas manual; IGS/NPS/“não se aplica”; conjunto pequeno com filtro; ausência de detalhes privados em endpoints agregados e logs; auditoria; operação de e-mail sem falsa confirmação de entrega; paridade REST/MCP e status honesto no catálogo.
+**Testes indispensáveis:** acesso `marketing`/ `manage` e negação a `access` para dados individuais; CAIO com ator humano e sem elevação; token inexistente/expirado/compartilhado; POST simultâneo duplicado (apenas uma resposta); datas antes/durante/depois; recópia do mesmo link; recópia e compartilhamento apenas manual; IGS/NPS/“não se aplica”; conjunto pequeno com filtro; ausência de detalhes privados em endpoints agregados e logs; auditoria; operação de e-mail sem falsa confirmação de entrega; paridade REST/MCP e status honesto no catálogo.
 
-**Gaps a fechar no inventário bounded:** disponibilidade e autorização para cadastro/filtros TOTVS; serviço de e-mail e outbox; estrutura de migration posterior à vigente; status simples das ações; fuso e corte de datas; retenção de dados pessoais/LGPD; proteção dos tokens; compatibilidade de `commercial.marketing` com a entrada no CAIO. Tais detalhes **não reabrem** as decisões principais nem justificam a criação de novas abstrações sem evidência.
+**Gaps a fechar no inventário bounded:** disponibilidade e autorização para cadastro/filtros TOTVS; estrutura de migration posterior à vigente; status simples das ações; fuso e corte de datas; retenção de dados pessoais/LGPD; proteção dos tokens; compatibilidade de `commercial.marketing` com a entrada no CAIO. Tais detalhes **não reabrem** as decisões principais nem justificam a criação de novas abstrações sem evidência.
