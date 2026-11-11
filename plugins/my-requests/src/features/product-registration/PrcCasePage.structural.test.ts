@@ -80,6 +80,34 @@ describe("PrcCasePage — composição compartilhada", () => {
     expect(page).toMatch(/resubmitPrcCorrection\(\s*requestId/);
   });
 
+  it("CORRECTION-09 — correção granular usa o editor compartilhado do kit", () => {
+    // Editor único do kit: campos + células de fornecedor, motivos por
+    // alvo, modos changed/confirmed — sem formulário genérico local.
+    expect(page).toMatch(/PrcReturnedFieldsEditor/);
+    expect(page).toMatch(/targets=\{openTargets\}/);
+    expect(page).toMatch(/fieldSpecs=\{fieldSpecs\}/);
+    expect(page).toMatch(/draft=\{detail\.technicalDraft \|\| \{\}\}/);
+    // Sem campo genérico "Novo valor — Fornecedores" nem editor manual
+    // de alvo — a granularidade vem dos targets devolvidos.
+    expect(page).not.toMatch(/Novo valor — /);
+    expect(page).not.toMatch(/TextField/);
+    // O envio vai direto ao contrato: PATCH returned-fields + resubmit
+    // no mesmo requestId, CAS via versão retornada pelo PATCH.
+    expect(page).toMatch(
+      /onSubmit=\{\(changes\) => void saveAndResubmit\(changes\)\}/,
+    );
+    expect(page).toMatch(/savePrcReturnedFields\(\s*requestId,/);
+    // Wire type carrega a granularidade do vínculo.
+    expect(api).toMatch(/targetAttribute\?: string \| null/);
+    expect(api).toMatch(
+      /supplierKey\?: \{ supplierCode: string; store: string \} \| null/,
+    );
+    // Specs oficiais alimentam os editores (select de catálogo, não
+    // TextField genérico).
+    expect(page).toMatch(/fetchPrcReferenceData/);
+    expect(page).toMatch(/setFieldSpecs\(ref\.fields \|\| \[\]\)/);
+  });
+
   it("edição pré-atendimento só quando o backend emite edit_draft (FIX-08)", () => {
     // Ação visível exclusivamente por allowedActions do backend.
     expect(page).toMatch(/allowedActions\?\.includes\("edit_draft"\)/);

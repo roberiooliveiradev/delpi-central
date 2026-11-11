@@ -293,3 +293,32 @@ export {
   type PrcTechnicalSheetViewProps,
 } from "./components/prc/PrcTechnicalSheetView";
 export { PrcWorkflowProgress } from "./components/prc/PrcWorkflowProgress";
+
+/** PRC-REF-023-GRANULAR-CORRECTION-09 — devolução granular (seletor do
+ * analista) e correção granular (editor do solicitante). Apresentação
+ * pura: AuthZ/allowlist/CAS permanecem na Engineering API. */
+export {
+  PrcCorrectionTargetSelector,
+  PrcReturnedFieldsEditor,
+  buildReturnedChanges,
+  correctionTargetsFromSelection,
+  dedupeCorrectionLinks,
+  emptyCorrectionSelection,
+  fieldTargetsOf,
+  hasSupplierTargets,
+  prcSupplierLinkKey,
+  returnedSupplierAttrMap,
+  returnedSupplierReasonMap,
+  summarizeCorrectionSelection,
+  type PrcCorrectionFieldOption,
+  type PrcCorrectionLink,
+  type PrcCorrectionSelection,
+  type PrcCorrectionSelectionSummary,
+  type PrcCorrectionTargetInput,
+  type PrcCorrectionTargetWire,
+  type PrcFieldSpecLike,
+  type PrcReturnedChangesResult,
+  type PrcReturnedFieldChange,
+  type PrcSupplierCellSelection,
+  type PrcSupplierEditableAttribute,
+} from "./components/prc/PrcCorrectionTargets";

@@ -86,11 +86,22 @@ export type PrcRequestList = {
   statusCounts?: Record<string, number>;
 };
 
+/** Alvo devolvido — wire shape de ``correctionExchange.openReturn``.
+ * GRANULAR-CORRECTION-09: alvos SUPPLIER_LINK carregam identidade do
+ * vínculo + atributo devolvido; ``addressedMode`` reflete o estado de
+ * tratamento gravado pelo PATCH /returned-fields. */
 export type PrcCorrectionTarget = {
+  id?: string;
+  ordinal?: number;
   targetType: string;
   targetPath?: string | null;
+  targetAttribute?: string | null;
+  supplierKey?: { supplierCode: string; store: string } | null;
   targetKey?: string | null;
+  targetLabel?: string | null;
   reason: string;
+  baselineValue?: unknown;
+  addressedMode?: "changed" | "confirmed" | null;
 };
 
 export type PrcCorrectionReturn = {

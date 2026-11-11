@@ -80,6 +80,11 @@ export type InfoSupplierOption = {
   supplierCode: string;
   store: string;
   supplierName?: string;
+  /** GRANULAR-CORRECTION-09 — atributos do vínculo exibidos na tabela
+   * de seleção da devolução (PN/Catálogo/fantasia atuais). */
+  supplierShortName?: string;
+  partNumber?: string;
+  catalogNumber?: string;
 };
 
 /** Fornecedores já presentes na ficha técnica (atalho de preenchimento). */
@@ -100,6 +105,9 @@ export function supplierOptionsFromTechnicalDraft(
       supplierCode: code,
       store,
       supplierName: row.supplierName || undefined,
+      supplierShortName: row.supplierShortName || undefined,
+      partNumber: row.partNumber || undefined,
+      catalogNumber: row.catalogNumber || undefined,
     });
   }
   return out;

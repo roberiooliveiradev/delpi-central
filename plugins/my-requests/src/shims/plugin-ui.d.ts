@@ -211,6 +211,19 @@ declare module "@delpi/plugin-ui/index" {
     prefix: string;
   }): ComponentType<DashboardTopBarProps>;
 
+  export type DashboardUnderlineNavProps = {
+    items: UnderlineNavItem[];
+    activeId: string;
+    mode?: "navigation" | "tabs";
+    layout?: "row" | "wrap";
+    density?: "default" | "compact";
+    className?: string;
+    "aria-label"?: string;
+  };
+  export function createDashboardUnderlineNav(config: {
+    prefix: string;
+  }): ComponentType<DashboardUnderlineNavProps>;
+
   export type DashboardEmptyStateProps = {
     title?: string;
     message?: string;
@@ -1302,6 +1315,125 @@ declare module "@delpi/plugin-ui/index" {
   ): JSX.Element;
   export function PrcWorkflowProgress(props: {
     status: string;
+  }): JSX.Element;
+
+  /* GRANULAR-CORRECTION-09 — devolução/correção granular compartilhada.
+   * Apresentação pura: AuthZ/allowlist/CAS ficam na Engineering API. */
+  export type PrcCorrectionTargetInput = {
+    targetType: "FIELD" | "SUPPLIER_LINK";
+    targetPath?: string | null;
+    targetAttribute?: string | null;
+    supplierKey?: { supplierCode: string; store: string } | null;
+    reason: string;
+  };
+  export type PrcCorrectionTargetWire = {
+    id?: string;
+    ordinal?: number;
+    targetType: string;
+    targetPath?: string | null;
+    targetAttribute?: string | null;
+    supplierKey?: { supplierCode: string; store: string } | null;
+    targetKey?: string | null;
+    targetLabel?: string | null;
+    reason: string;
+    baselineValue?: unknown;
+    addressedMode?: "changed" | "confirmed" | null;
+  };
+  export type PrcCorrectionLink = {
+    supplierCode: string;
+    store: string;
+    supplierName?: string | null;
+    supplierShortName?: string | null;
+    partNumber?: string | null;
+    catalogNumber?: string | null;
+  };
+  export type PrcCorrectionFieldOption = { path: string; label: string };
+  export type PrcFieldSpecLike = {
+    path: string;
+    kind: string;
+    enumValues?: string[] | null;
+    maxLength?: number;
+    note?: string | null;
+  };
+  export type PrcReturnedFieldChange = {
+    path: string;
+    proposedValue: unknown;
+    reason: string;
+    mode: "changed" | "confirmed";
+  };
+  export type PrcSupplierEditableAttribute =
+    | "partNumber"
+    | "catalogNumber";
+  export type PrcSupplierCellSelection = {
+    link: { selected: boolean; reason: string };
+    partNumber: { selected: boolean; reason: string };
+    catalogNumber: { selected: boolean; reason: string };
+  };
+  export type PrcCorrectionSelection = {
+    fields: Record<string, { selected: boolean; reason: string }>;
+    suppliers: Record<string, PrcSupplierCellSelection>;
+  };
+  export type PrcCorrectionSelectionSummary = {
+    scalarFields: number;
+    suppliers: number;
+    supplierAttributes: number;
+    totalTargets: number;
+    firstMissingReason: string | null;
+  };
+  export type PrcReturnedChangesResult = {
+    changes: PrcReturnedFieldChange[] | null;
+    error: string;
+  };
+  export function emptyCorrectionSelection(): PrcCorrectionSelection;
+  export function dedupeCorrectionLinks(
+    links: PrcCorrectionLink[] | null | undefined,
+  ): PrcCorrectionLink[];
+  export function summarizeCorrectionSelection(
+    selection: PrcCorrectionSelection,
+    suppliers: PrcCorrectionLink[],
+  ): PrcCorrectionSelectionSummary;
+  export function correctionTargetsFromSelection(
+    selection: PrcCorrectionSelection,
+    fieldOptions: PrcCorrectionFieldOption[],
+    suppliers: PrcCorrectionLink[],
+  ): { targets: PrcCorrectionTargetInput[] | null; error: string };
+  export function returnedSupplierAttrMap(
+    targets: PrcCorrectionTargetWire[] | null | undefined,
+  ): Map<string, Set<PrcSupplierEditableAttribute>>;
+  export function returnedSupplierReasonMap(
+    targets: PrcCorrectionTargetWire[] | null | undefined,
+  ): Map<string, string>;
+  export function fieldTargetsOf(
+    targets: PrcCorrectionTargetWire[] | null | undefined,
+  ): PrcCorrectionTargetWire[];
+  export function hasSupplierTargets(
+    targets: PrcCorrectionTargetWire[] | null | undefined,
+  ): boolean;
+  export function prcSupplierLinkKey(code: string, store: string): string;
+  export function buildReturnedChanges(input: {
+    targets: PrcCorrectionTargetWire[];
+    draft: Record<string, unknown>;
+    supplierRows: SupplierRow[];
+    fieldValues: Record<string, string>;
+    justifications: Record<string, string>;
+    supplierJustification?: string;
+  }): PrcReturnedChangesResult;
+  export function PrcCorrectionTargetSelector(props: {
+    fieldOptions: PrcCorrectionFieldOption[];
+    suppliers: PrcCorrectionLink[];
+    selection: PrcCorrectionSelection;
+    onChange: (next: PrcCorrectionSelection) => void;
+    busy?: boolean;
+    idPrefix?: string;
+  }): JSX.Element;
+  export function PrcReturnedFieldsEditor(props: {
+    targets: PrcCorrectionTargetWire[];
+    fieldSpecs: PrcFieldSpecLike[];
+    draft: Record<string, unknown>;
+    busy?: boolean;
+    idPrefix?: string;
+    onSubmit: (changes: PrcReturnedFieldChange[]) => void;
+    onCancel?: () => void;
   }): JSX.Element;
   /* UI-FIX-03 — rótulos/formatadores de timeline compartilhados */
   export const PRC_EVENT_LABELS: Record<string, string>;

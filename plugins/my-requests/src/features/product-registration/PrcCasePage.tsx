@@ -14,17 +14,19 @@ import {
   ActionButton,
   PRC_ATTACHMENT_MAX_MB,
   PRC_ATTACHMENT_STATE_LABELS,
-  PRC_FIELD_LABELS,
   PRC_STATUS_LABELS,
   PRC_TYPE_LABELS,
   PrcRequestForm,
+  PrcReturnedFieldsEditor,
   PrcTechnicalSheetView,
   PrcWorkflowProgress,
   addSupportFiles,
   prcFormatSize,
   prcRequesterLabel,
   prcTimelineItemViews,
+  type PrcFieldSpec,
   type PrcFormDataProvider,
+  type PrcReturnedFieldChange,
   type PrcSupportFile,
 } from "@delpi/plugin-ui/index";
 
@@ -60,7 +62,6 @@ import {
   MyRequestsStateBanner,
   MyRequestsStatusBadge,
   MyRequestsUnderlineNav,
-  TextField,
 } from "../../ui/mrUi";
 
 type Props = {
@@ -85,14 +86,14 @@ export function PrcCasePage({ requestId, onBack }: Props) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<CaseTab>("sheet");
-  const [changes, setChanges] = useState<
-    Record<string, { value: string; reason: string; mode: "changed" | "confirmed" }>
-  >({});
   const [newFiles, setNewFiles] = useState<PrcSupportFile[]>([]);
   const [fileError, setFileError] = useState("");
   /* FIX-08 — edição livre pré-atendimento: o backend só emite
    * `edit_draft` ao criador em ``submitted`` (allowedActions). */
   const [editing, setEditing] = useState(false);
+  /* CORRECTION-09 — specs dos campos para o editor granular usar os
+   * controles oficiais (select de catálogo, nunca caixa genérica). */
+  const [fieldSpecs, setFieldSpecs] = useState<PrcFieldSpec[]>([]);
 
   const dataProvider = useMemo<PrcFormDataProvider>(
     () => ({
@@ -156,42 +157,37 @@ export function PrcCasePage({ requestId, onBack }: Props) {
     detail?.status === "needs_correction" &&
     detail?.correctionExchange?.canCorrect === true;
 
-  const saveAndResubmit = async () => {
-    if (!detail || busy) return;
+  /* CORRECTION-09 — specs carregados sob demanda: o editor granular
+   * usa os controles oficiais (enum vira select) por campo devolvido. */
+  useEffect(() => {
+    if (!canCorrect || fieldSpecs.length) return;
+    const ac = new AbortController();
+    fetchPrcReferenceData(ac.signal)
+      .then((ref) => setFieldSpecs(ref.fields || []))
+      .catch(() => setFieldSpecs([]));
+    return () => ac.abort();
+  }, [canCorrect, fieldSpecs.length]);
+
+  /** Reenvio do mesmo requestId: PATCH /returned-fields (CAS +
+   * idempotência) e depois POST resubmit-correction. O editor
+   * compartilhado já cobre todos os alvos (changed/confirmed) —
+   * o backend revalida a allowlist granular por vínculo+atributo. */
+  const saveAndResubmit = async (changes: PrcReturnedFieldChange[]) => {
+    if (!detail || busy || !changes.length) return;
     setBusy(true);
     setError("");
     try {
-      const payload = openTargets
-        .filter((t) => t.targetPath)
-        .map((t) => {
-          const c = changes[t.targetPath!] || {
-            value: "",
-            reason: "",
-            mode: "changed" as const,
-          };
-          return {
-            path: t.targetPath!,
-            proposedValue: c.value,
-            reason: c.reason || "Correção do solicitante.",
-            mode: c.mode,
-          };
-        });
-      let version = detail.caseVersion;
-      if (payload.length) {
-        const saved = await savePrcReturnedFields(
-          requestId,
-          version,
-          payload,
-          `mr-save-${Date.now()}`,
-        );
-        version = saved.caseVersion;
-      }
+      const saved = await savePrcReturnedFields(
+        requestId,
+        detail.caseVersion,
+        changes,
+        `mr-save-${Date.now()}`,
+      );
       await resubmitPrcCorrection(
         requestId,
-        version,
+        saved.caseVersion,
         `mr-resub-${Date.now()}`,
       );
-      setChanges({});
       load();
     } catch (e) {
       setError((e as Error).message);
@@ -333,7 +329,7 @@ export function PrcCasePage({ requestId, onBack }: Props) {
 
           <MyRequestsUnderlineNav
             mode="tabs"
-            ariaLabel="Seções do acompanhamento"
+            aria-label="Seções do acompanhamento"
             activeId={tab}
             items={CASE_TABS.map((t) => ({
               id: t.key,
@@ -354,8 +350,8 @@ export function PrcCasePage({ requestId, onBack }: Props) {
               <>
                 {canCorrect ? (
                   <MyRequestsSectionCard
-                    title="Correção solicitada pela Engenharia"
-                    hint="Ajuste somente os campos devolvidos e reenvie o mesmo chamado."
+                    title="Corrigir campos devolvidos"
+                    hint="Apenas os campos indicados pela Engenharia podem ser modificados."
                   >
                     {detail.correctionExchange?.openReturn?.reason ? (
                       <p>
@@ -363,57 +359,14 @@ export function PrcCasePage({ requestId, onBack }: Props) {
                         {detail.correctionExchange.openReturn.reason}
                       </p>
                     ) : null}
-                    {openTargets
-                      .filter((t) => t.targetPath)
-                      .map((t) => {
-                        const path = t.targetPath!;
-                        const label = PRC_FIELD_LABELS[path] || path;
-                        const entry = changes[path] || {
-                          value: "",
-                          reason: "",
-                          mode: "changed" as const,
-                        };
-                        return (
-                          <div key={path}>
-                            <p>
-                              <strong>{label}:</strong> {t.reason}
-                            </p>
-                            <TextField
-                              label={`Novo valor — ${label}`}
-                              value={entry.value}
-                              onChange={(v) =>
-                                setChanges((s) => ({
-                                  ...s,
-                                  [path]: {
-                                    ...entry,
-                                    value: v,
-                                    mode: "changed" as const,
-                                  },
-                                }))
-                              }
-                            />
-                            <TextField
-                              label="Justificativa (opcional)"
-                              value={entry.reason}
-                              onChange={(v) =>
-                                setChanges((s) => ({
-                                  ...s,
-                                  [path]: { ...entry, reason: v },
-                                }))
-                              }
-                            />
-                          </div>
-                        );
-                      })}
-                    <MyRequestsFormActions>
-                      <ActionButton
-                        variant="primary"
-                        disabled={busy}
-                        onClick={() => void saveAndResubmit()}
-                      >
-                        Salvar correções e reenviar
-                      </ActionButton>
-                    </MyRequestsFormActions>
+                    <PrcReturnedFieldsEditor
+                      targets={openTargets}
+                      fieldSpecs={fieldSpecs}
+                      draft={detail.technicalDraft || {}}
+                      busy={busy}
+                      idPrefix="mr-prc-correct"
+                      onSubmit={(changes) => void saveAndResubmit(changes)}
+                    />
                   </MyRequestsSectionCard>
                 ) : null}
 

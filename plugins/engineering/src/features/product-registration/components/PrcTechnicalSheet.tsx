@@ -445,12 +445,21 @@ export function PrcTechnicalSheet({
         }
         /* PRC-REF-022-FIX-01 — somente atributos devolvidos podem mudar;
          * vínculo alterado exige Part Number válido. */
-        const pnMissing = suppliersDraft.findIndex((r, i) => {
+        const currentRows = toSupplierRows(draft.suppliers) || [];
+        const currentByKey = new Map(
+          currentRows.map((r) => [
+            supplierRowKey(r.supplierCode, r.store),
+            r,
+          ]),
+        );
+        const linkChanged = (r: SupplierRow) => {
           const attrs = returnedSupplierAttrs.get(
             supplierRowKey(r.supplierCode, r.store),
           );
-          const current = (toSupplierRows(draft.suppliers) || [])[i];
-          const willChange = Boolean(
+          const current = currentByKey.get(
+            supplierRowKey(r.supplierCode, r.store),
+          );
+          return Boolean(
             attrs &&
               (Array.from(attrs) as Array<"partNumber" | "catalogNumber">)
                 .some(
@@ -459,20 +468,35 @@ export function PrcTechnicalSheet({
                     String(current?.[attr] ?? "").trim(),
                 ),
           );
-          return willChange && !r.partNumber.trim();
-        });
+        };
+        const pnMissing = suppliersDraft.findIndex(
+          (r) => linkChanged(r) && !r.partNumber.trim(),
+        );
         if (pnMissing >= 0) {
           setFormError(
             `Fornecedor ${pnMissing + 1}: Part Number é obrigatório para alterar o vínculo.`,
           );
           return;
         }
+        /* CORRECTION-09 — `changed` só endereça vínculos alterados no
+         * backend; quando há mudança enviamos também `confirmed` para
+         * endereçar os vínculos devolvidos e mantidos. Sem mudança,
+         * `confirmed` ratifica todos os alvos do vínculo. */
+        const anyChanged = suppliersDraft.some(linkChanged);
         changes.push({
           path: "suppliers",
           proposedValue: supplierRowsToPayload(suppliersDraft),
           reason,
-          mode: "changed",
+          mode: anyChanged ? "changed" : "confirmed",
         });
+        if (anyChanged) {
+          changes.push({
+            path: "suppliers",
+            proposedValue: supplierRowsToPayload(suppliersDraft),
+            reason,
+            mode: "confirmed",
+          });
+        }
       }
       if (!changes.length) {
         setFormError("Nenhuma correção para salvar.");

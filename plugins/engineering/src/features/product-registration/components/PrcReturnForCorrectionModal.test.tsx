@@ -1,12 +1,16 @@
-/** PRC-REF-022-FIX-02 — devolução simplificada: lista única de
- * checkboxes (SB1 + SA5) sem seção especial de fornecedores. */
+/** PRC-REF-022-FIX-02 / GRANULAR-CORRECTION-09 — modal de devolução:
+ * lista unificada de alvos (SB1 + células SA5) delegada ao componente
+ * compartilhado do kit. A seleção granular por vínculo+atributo e o
+ * payload do contrato são testados no próprio kit
+ * (PrcCorrectionTargets.test.tsx); aqui ficam o contrato do modal e
+ * as garantias de não-duplicação de UI. */
 
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import { prcReturnEntryList } from "./PrcReturnForCorrectionModal";
+import { prcReturnFieldOptions } from "./PrcReturnForCorrectionModal";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const SRC = readFileSync(
@@ -27,119 +31,79 @@ const SPECS = [
   { path: "suppliers", kind: "suppliers" },
 ] as never[];
 
-const SUP_A = { supplierCode: "000123", store: "01", supplierName: "F1" };
-const SUP_B = { supplierCode: "000456", store: "02", supplierName: "F2" };
-
-describe("PrcReturnForCorrectionModal — FIX-02 lista unificada", () => {
-  it("campos SB1 viram entradas checkbox na lista única", () => {
-    const entries = prcReturnEntryList(SPECS, []);
-    const fields = entries.filter((e) => e.kind === "field");
-    expect(fields.map((f) => f.key)).toEqual([
-      "FIELD:description",
-      "FIELD:group",
-      "FIELD:productKind",
-      "FIELD:unit",
-      "FIELD:defaultWarehouse",
-      "FIELD:accountingAccount",
-      "FIELD:thirdPartyProduct",
-      "FIELD:customerReference",
+describe("prcReturnFieldOptions — campos elegíveis", () => {
+  it("campos SB1 do catálogo viram opções com label oficial", () => {
+    const options = prcReturnFieldOptions(SPECS);
+    expect(options.map((o) => o.path)).toEqual([
+      "description",
+      "group",
+      "productKind",
+      "unit",
+      "defaultWarehouse",
+      "accountingAccount",
+      "thirdPartyProduct",
+      "customerReference",
     ]);
     // officialProductCode imutável nunca é devolvível.
-    expect(entries.some((e) => e.key.includes("officialProductCode"))).toBe(
+    expect(options.some((o) => o.path === "officialProductCode")).toBe(
       false,
     );
-    // path agregado 'suppliers' nunca é checkbox direto.
+    // path agregado 'suppliers' nunca é checkbox direto — vínculos
+    // têm alvo próprio (SUPPLIER_LINK por célula).
+    expect(options.some((o) => o.path === "suppliers")).toBe(false);
+  });
+
+  it("sem specs, usa os candidatos oficiais", () => {
+    const options = prcReturnFieldOptions(null);
+    expect(options.length).toBeGreaterThan(0);
+    expect(options.some((o) => o.path === "description")).toBe(true);
+    expect(options.some((o) => o.path === "officialProductCode")).toBe(
+      false,
+    );
+  });
+
+  it("paths duplicados no catálogo não repetem checkbox", () => {
+    const dup = [...SPECS, { path: "unit", kind: "text" }] as never[];
+    const options = prcReturnFieldOptions(dup);
     expect(
-      entries.some((e) => e.kind === "field" && e.path === "suppliers"),
-    ).toBe(false);
+      options.filter((o) => o.path === "unit"),
+    ).toHaveLength(1);
+  });
+});
+
+describe("PrcReturnForCorrectionModal — composição compartilhada", () => {
+  it("a seleção granular é o componente do kit — sem UI duplicada", () => {
+    expect(SRC).toContain("PrcCorrectionTargetSelector");
+    expect(SRC).toContain("@delpi/plugin-ui");
+    // Nenhuma tabela/checklist própria reimplementada no modal.
+    expect(SRC).not.toMatch(/<table|<fieldset/);
+    expect(SRC).not.toMatch(/entries\.map/);
+    expect(SRC).not.toMatch(/EngineeringCheckboxControl/);
   });
 
-  it("vínculo único gera Fornecedor, Part Number e Catálogo como checkboxes", () => {
-    const entries = prcReturnEntryList(SPECS, [SUP_A]);
-    const sup = entries.filter((e) => e.kind === "supplier");
-    expect(sup.map((e) => e.targetAttribute)).toEqual([
-      null,
-      "partNumber",
-      "catalogNumber",
-    ]);
-    expect(sup.map((e) => e.label)).toEqual([
-      "Fornecedor",
-      "Part Number",
-      "Catálogo",
-    ]);
-    // Identidade técnica preservada na entrada — invisível ao analista.
-    for (const e of sup) {
-      expect(e.supplierCode).toBe("000123");
-      expect(e.store).toBe("01");
-    }
+  it("o payload sai do contrato único do kit", () => {
+    expect(SRC).toContain("correctionTargetsFromSelection");
+    // Nenhum builder local de alvo.
+    expect(SRC).not.toMatch(/targetType: "SUPPLIER_LINK"/);
+    expect(SRC).not.toMatch(/supplierKey: \{/);
   });
 
-  it("múltiplos fornecedores preservam identidade no rótulo e na chave", () => {
-    const entries = prcReturnEntryList(SPECS, [SUP_A, SUP_B]);
-    const sup = entries.filter((e) => e.kind === "supplier");
-    expect(sup).toHaveLength(6);
-    expect(sup.map((e) => e.label)).toContain(
-      "Part Number — Fornecedor 000123 / 01",
-    );
-    expect(sup.map((e) => e.label)).toContain(
-      "Catálogo — Fornecedor 000456 / 02",
-    );
-    expect(sup.map((e) => e.label)).toContain("Fornecedor 000123 / 01");
-    const keys = sup.map((e) => e.key);
-    expect(new Set(keys).size).toBe(6);
-    expect(keys).toContain("SUP:000123|01:partNumber");
-    expect(keys).toContain("SUP:000456|02:catalogNumber");
+  it("nenhum alvo ou motivo inválido bloqueia o envio", () => {
+    expect(SRC).toMatch(/if \(!targets\)/);
+    expect(SRC).toContain("setFormError(error)");
   });
 
-  it("zeros à esquerda e vínculos duplicados são tratados", () => {
-    const entries = prcReturnEntryList(SPECS, [SUP_A, SUP_A, SUP_A]);
-    const sup = entries.filter((e) => e.kind === "supplier");
-    expect(sup).toHaveLength(3); // dedup por (code, store)
-    expect(sup[1].supplierCode).toBe("000123");
-    expect(sup[1].store).toBe("01");
-  });
-
-  it("sem fornecedores a lista tem apenas campos SB1", () => {
-    const entries = prcReturnEntryList(SPECS, []);
-    expect(entries.every((e) => e.kind === "field")).toBe(true);
-  });
-
-  it("sem seção especial: sem botão Adicionar vínculo nem pesquisa de fornecedor", () => {
+  it("diálogo host-contained com título e ações canônicas", () => {
+    expect(SRC).toContain("EngineeringHostDialog");
+    expect(SRC).toContain("Devolver para correção");
+    expect(SRC).toContain("EngineeringFormActions");
     expect(SRC).not.toMatch(/Adicionar vínculo/);
+    expect(SRC).not.toMatch(/useSupplierSearch/);
+  });
+
+  it("fornecedores vêm da ficha — nunca de busca manual", () => {
     expect(SRC).not.toMatch(/PrcOfficialSupplierSearchField/);
     expect(SRC).not.toMatch(/EngineeringSearchableSelect/);
-    expect(SRC).not.toMatch(/supplierTargets|SupplierTargetDraft/);
-    expect(SRC).not.toMatch(/useSupplierSearch/);
-    expect(SRC).not.toMatch(/Vínculos de fornecedores/);
-  });
-
-  it("cada entrada rende checkbox + motivo no mesmo padrão", () => {
-    // Um único loop de renderização para todas as entradas.
-    expect(SRC).toMatch(/entries\.map\(\(entry\)/);
-    expect(SRC).toMatch(/EngineeringCheckboxControl/);
-    expect(SRC).toMatch(/Motivo da correção/);
-    expect(SRC).toMatch(/reason\.length < 3/);
-  });
-
-  it("payload: entradas SA5 viram SUPPLIER_LINK com identidade completa", () => {
-    expect(SRC).toMatch(/targetType: "SUPPLIER_LINK"/);
-    expect(SRC).toMatch(/targetPath: "suppliers"/);
-    expect(SRC).toMatch(/targetAttribute: entry\.targetAttribute/);
-    expect(SRC).toMatch(/supplierKey: \{/);
-    expect(SRC).toMatch(/supplierCode: entry\.supplierCode/);
-    expect(SRC).toMatch(/store: entry\.store/);
-  });
-
-  it("nenhum campo selecionado bloqueia a devolução", () => {
-    expect(SRC).toMatch(/!targets\.length/);
-    expect(SRC).toMatch(/Selecione ao menos um campo/);
-  });
-
-  it("entrada 'Fornecedor' (link integral) não envia targetAttribute", () => {
-    const [link] = prcReturnEntryList(SPECS, [SUP_A]).filter(
-      (e) => e.kind === "supplier" && e.targetAttribute === null,
-    );
-    expect(link).toBeDefined();
-    expect(link?.kind).toBe("supplier");
+    expect(SRC).toMatch(/suppliers=\{suppliers \|\| \[\]\}/);
   });
 });
