@@ -100,6 +100,26 @@ function percentLabel(value: number | null): string {
   return value === null ? "—" : value.toLocaleString("pt-BR", { maximumFractionDigits: 2 }) + "%";
 }
 
+function stateLabel(value: unknown): string {
+  const state = textValue(value);
+  const labels: Record<string, string> = {
+    running: "Em execução",
+    active: "Ativo",
+    started: "Iniciado",
+    stopped: "Parado",
+    inactive: "Inativo",
+    failed: "Falha",
+    automatic: "Automático",
+    manual: "Manual",
+    disabled: "Desativado",
+    up: "Ativa",
+    down: "Inativa",
+    connected: "Conectada",
+    disconnected: "Desconectada",
+  };
+  return labels[state.toLowerCase()] ?? state;
+}
+
 function uptimeLabel(value: unknown): string {
   const seconds = numberValue(value);
   if (seconds === null) return "—";
@@ -284,12 +304,21 @@ function ObservationBody({ observation }: { observation: Observation }) {
           progress={memoryUsed}
           level={usageLevel(memoryUsed)}
         />
-        <Metric
-          label="Atividade"
-          icon={Clock3}
-          value={uptimeLabel(summary.uptime_seconds)}
-          detail="Tempo desde a última inicialização"
-        />
+        {isWindows ? (
+          <Metric
+            label="Atividade"
+            icon={Clock3}
+            value={uptimeLabel(summary.uptime_seconds)}
+            detail="Tempo desde a última inicialização"
+          />
+        ) : (
+          <Metric
+            label="Serviços"
+            icon={Activity}
+            value={numberLabel(services.length)}
+            detail="Serviços verificados na coleta"
+          />
+        )}
         <Metric
           label="Armazenamento"
           icon={HardDrive}
@@ -349,7 +378,7 @@ function ObservationBody({ observation }: { observation: Observation }) {
                       <strong>{textValue(nic.name)}</strong>
                       <p>{addresses.length ? addresses.join(", ") : "Nenhum endereço informado"}</p>
                     </div>
-                    {nic.state ? <span className="itp-observation-inline-status">{textValue(nic.state)}</span> : null}
+                    {nic.state ? <span className="itp-observation-inline-status">{stateLabel(nic.state)}</span> : null}
                   </div>
                 );
               })}
@@ -367,11 +396,11 @@ function ObservationBody({ observation }: { observation: Observation }) {
                   <div className="itp-observation-compact-row" key={String(service.name ?? index)}>
                     <div>
                       <strong>{textValue(service.name)}</strong>
-                      {service.sub_state ? <p>{isWindows ? "Inicialização: " : "Subestado: "}{textValue(service.sub_state)}</p> : null}
+                      {service.sub_state ? <p>{isWindows ? "Inicialização: " : "Subestado: "}{stateLabel(service.sub_state)}</p> : null}
                     </div>
                     <span className={"itp-observation-inline-status" + (running ? " is-running" : "")}>
                       {running ? <CheckCircle2 size={13} aria-hidden="true" /> : null}
-                      {state}
+                      {stateLabel(state)}
                     </span>
                   </div>
                 );
@@ -390,7 +419,7 @@ function ObservationBody({ observation }: { observation: Observation }) {
                 <Detail label="Imagens" value={numberLabel(docker.images)} />
               </dl>
             ) : (
-              <p className="itp-muted">Docker indisponível nesta coleta{docker.unavailable_reason ? " (" + String(docker.unavailable_reason) + ")" : ""}.</p>
+              <p className="itp-muted">Docker indisponível nesta coleta{docker.unavailable_reason ? " (" + (docker.unavailable_reason === "no_permission" ? "sem permissão para consultar" : String(docker.unavailable_reason)) + ")" : ""}.</p>
             )}
           </Surface>
         ) : null}
