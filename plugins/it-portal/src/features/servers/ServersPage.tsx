@@ -115,7 +115,7 @@ export function ServersPage() {
         aria-label="Servidores"
         eyebrow="Inventário"
         title="Servidores"
-        description="Cadastro manual dos servidores da infraestrutura. A situação é informada pela equipe de TI — não há monitoramento automático nesta etapa."
+        description="Gerencie o cadastro dos servidores e consulte o inventário automático disponível na ficha de cada host. Os dados observados não substituem o cadastro manual."
         actions={createButton}
       />
       {serversQuery.error && !serversQuery.data ? (
