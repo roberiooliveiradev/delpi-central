@@ -269,6 +269,30 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 
 **Gates pendentes:** corrigir pacote e entregar SHA verificável; `git pull --ff-only` no host após checar divergência e working tree; executar instalador versionado; verificar permissões e diagnose como conta técnica; smoke oneshot → novo `run_id` no PostgreSQL → UI; só então `systemctl enable --now` de timer com autorização do operador; observar duas execuções agendadas. Não declarar COMPLETE nem solucionar GLPI #1571 antes desse outcome.
 
+## E4.S1 — REWORK de segurança do instalador systemd (11/11/2026)
+
+**Status:** `ATENDIDO_NO_CODIGO` (sujeito a revisão independente). Instalação produtiva / enable do timer **não** executados nesta fatia.
+
+| RQ | Estado |
+|---|---|
+| RQ-OWN-01 Artefatos em `/opt/...` root-owned, sem escrita pelo serviço | ATENDIDO |
+| RQ-OWN-02 Somente `/var/lib/it-portal-collector` gravável por `delpi-collector` | ATENDIDO |
+| RQ-OWN-03 Env `root:delpi-collector` 0640 | ATENDIDO |
+| RQ-DEP-01 Vendor só `delpi_auth` + manifesto mínimo (sem `shared/` completo) | ATENDIDO |
+| RQ-DEP-02 pip não-editable / harden antes e depois do pip | ATENDIDO |
+| RQ-TMR-01 Timer sem `Requires=` no oneshot; `OnCalendar=hourly` | ATENDIDO |
+| RQ-VAL-01 Negativa de escrita no código/venv + positiva no state | ATENDIDO (verify script + teste local de modelo) |
+| RQ-SCO-01 Sem Keycloak/V004/API/S2S/frontend/docker/timer prod | ATENDIDO |
+
+**Mudanças canônicas:** `harden_install_tree` / `harden_state_and_env`; `verify-collector-permissions.sh`; `vendor-delpi-auth-pyproject.toml`; `pip install --no-deps` (não `-e`); timer sem `Requires=`; `ReadOnlyPaths` + `PYTHONDONTWRITEBYTECODE`.
+
+**Evidência local (antes do push):**
+- `pytest tests/test_linux_collector_parsing.py` → PASS (5), incl. modelo de permissões negativo/positivo e asserts de ownership/deps/timer/idempotência do instalador;
+- `systemd-analyze verify` (service+timer) → exit 0;
+- Architecture Phase 3 + platform guardrails `--check --base c135a9823e` → OK / 0 findings.
+
+**Fora desta fatia (permanecem PENDING):** `git pull` + instalador no srv-api; smoke oneshot; enable timer; GLPI #1571.
+
 ## Residuais abertos
 
 | ID | Residual | Dono da decisão |

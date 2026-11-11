@@ -28,5 +28,7 @@ source "${ENV_FILE}"
 set +a
 
 export PYTHONPATH="${INSTALL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+# Árvore de código é root-owned (sem escrita pelo serviço) — não gerar __pycache__.
+export PYTHONDONTWRITEBYTECODE=1
 cd "${INSTALL_ROOT}"
 exec "${PYTHON_BIN}" -m collectors.linux_host "${COMMAND}"

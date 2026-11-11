@@ -1,5 +1,5 @@
-# Dependências do coletor Linux (venv isolado em /opt/delpi/it-portal-collector).
-# O SDK shared/delpi_auth é instalado em modo editable a partir de vendor/shared
-# pelo instalador — não listar secrets nem pins de ambiente de produção aqui.
+# Dependências do coletor Linux (venv root-owned em /opt/delpi/it-portal-collector).
+# delpi_auth é instalado NÃO-EDITABLE a partir de vendor/shared (somente o pacote
+# delpi_auth + manifesto mínimo), nunca a árvore shared/ completa.
 requests>=2.31.0,<3
 python-jose[cryptography]>=3.3.0,<4

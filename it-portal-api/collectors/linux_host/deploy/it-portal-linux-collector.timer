@@ -1,7 +1,7 @@
 [Unit]
 Description=Portal de TI — agendamento horário do coletor Linux (E4.S1)
-Requires=it-portal-linux-collector.service
 Documentation=file:///opt/delpi/it-portal-collector/README.md
+# Sem Requires= no serviço oneshot: o timer dispara só no calendário (OnCalendar).
 
 [Timer]
 OnCalendar=hourly

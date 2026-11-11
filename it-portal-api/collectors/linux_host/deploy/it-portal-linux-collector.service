@@ -20,8 +20,11 @@ LockPersonality=true
 # Env obrigatório: sem o arquivo o systemd falha de forma explícita (sem "-").
 EnvironmentFile=/etc/delpi/it-portal-linux-collector.env
 Environment=PYTHONPATH=/opt/delpi/it-portal-collector
+Environment=PYTHONDONTWRITEBYTECODE=1
 WorkingDirectory=/opt/delpi/it-portal-collector
+# Código/venv root-owned: o serviço só grava no state dir.
 ReadWritePaths=/var/lib/it-portal-collector
+ReadOnlyPaths=/opt/delpi/it-portal-collector
 # Timeout limitado para diagnóstico + token + POST.
 TimeoutStartSec=120
 # flock evita overlap se o timer disparar com execução anterior ainda ativa.

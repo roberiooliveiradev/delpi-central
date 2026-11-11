@@ -7,12 +7,14 @@ horária só após gates operacionais e smoke manual do serviço.
 
 ## Layout canônico
 
-| Caminho | Função |
-|---|---|
-| `/opt/delpi/it-portal-collector` | Artefatos + venv isolado |
-| `/etc/delpi/it-portal-linux-collector.env` | Credenciais S2S (0640, fora do Git) |
-| `/var/lib/it-portal-collector` | Lock/state |
-| usuário `delpi-collector` | Sem login; **sem** grupo docker por padrão |
+| Caminho | Owner / modo | Função |
+|---|---|---|
+| `/opt/delpi/it-portal-collector` | `root:root` 0755 (sem escrita pelo serviço) | Código, vendor, venv |
+| `/etc/delpi/it-portal-linux-collector.env` | `root:delpi-collector` 0640 | Credenciais S2S (fora do Git) |
+| `/var/lib/it-portal-collector` | `delpi-collector:delpi-collector` 0750 | Lock/state (único gravável) |
+| usuário `delpi-collector` | sem login; **sem** grupo docker por padrão | Execução do oneshot |
+
+O instalador sincroniza **somente** `shared/delpi_auth` (+ manifesto mínimo), instala o SDK de forma **não-editable** no venv e reaplica ownership root após cada `pip`.
 
 ## Instalar / atualizar (idempotente)
 
@@ -27,9 +29,9 @@ sudo ./it-portal-api/collectors/linux_host/deploy/install-it-portal-linux-collec
 O script:
 
 1. cria o usuário técnico se ausente (não altera grupos existentes);
-2. sincroniza `collectors/` + `shared/` para `/opt/delpi/it-portal-collector`;
-3. cria/atualiza venv com `requirements-collector.txt` + `delpi_auth`;
-4. instala units em `/etc/systemd/system/` e roda `systemd-analyze verify`;
+2. sincroniza `collectors/` + somente `shared/delpi_auth` (manifesto mínimo; sem árvore `shared/` completa);
+3. cria/atualiza venv root-owned com `requirements-collector.txt` + `delpi_auth` **não-editable**;
+4. reaplica ownership root, instala units e roda `verify-collector-permissions` + `systemd-analyze verify`;
 5. **não** executa `systemctl enable` no timer.
 
 ## Ambiente

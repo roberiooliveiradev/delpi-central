@@ -1,0 +1,21 @@
+# Manifesto mínimo para vender apenas delpi_auth no coletor (sem o monorepo shared completo).
+[project]
+name = "delpi-auth"
+version = "0.1.0"
+description = "DELPI shared authentication SDK (collector subset)"
+requires-python = ">=3.10"
+dependencies = [
+  "python-jose[cryptography]>=3.3.0,<4",
+  "requests>=2.31.0,<3",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["delpi_auth*"]
+exclude = ["delpi_auth.tests*", "delpi_auth.*.tests*"]
+
+[tool.setuptools]
+zip-safe = false
