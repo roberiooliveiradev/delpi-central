@@ -674,3 +674,7 @@ Delivered: `delia-api/scripts/int1_secure_decision_trace.py`, `tests/test_int1_s
 ### 2026-11-11 — INT-1 instruction ablation (2º ciclo PO)
 
 **TASK:** `DELIA-C3-T2-INT1-INSTRUCTION-ABLATION-AND-REGRESSION-FREE-EVOLUTION-01`. See sibling **296**. Three single-group ablations; no regression-free composite; default `generalist-semantic-v2`. `INT1_STAGE_ACCEPTANCE=BLOCKED`. `NEXT=COORDINATION_INT1_INCREMENTAL_EVOLUTION_INDEPENDENT_REVIEW`.
+
+### 2026-11-11 — INT-1 v2 stability diagnostic (no rework)
+
+**TASK:** `DELIA-C3-T2-INT1-V2-STABILITY-AND-OBJECTIVE-SATISFACTION-DIAGNOSTIC-01`. See sibling **297**. SHA-traced 24-run baseline; MCP auth collapse invalidated 17 runs; ownership points first to eval harness token refresh, then bounded INT-1 recovery only after valid multi-rep sample. `INT1_STAGE_ACCEPTANCE=BLOCKED`. `NEXT=COORDINATION_INT1_STABILITY_AND_OWNERSHIP_INDEPENDENT_REVIEW`.

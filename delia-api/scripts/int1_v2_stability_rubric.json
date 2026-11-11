@@ -1,0 +1,95 @@
+{
+  "task_id": "DELIA-C3-T2-INT1-V2-STABILITY-AND-OBJECTIVE-SATISFACTION-DIAGNOSTIC-01",
+  "rubric_kind": "experiment_review_only",
+  "not_runtime_business_rule": true,
+  "instruction_version": "generalist-semantic-v2",
+  "frozen_before_eval": true,
+  "dimensions": {
+    "TOOL_SELECTION": ["SUITABLE", "PARTIALLY_SUITABLE", "UNSUITABLE", "INCONCLUSIVE"],
+    "ARGUMENTS": ["VALID", "INVALID", "NOT_OBSERVED"],
+    "TOOL_OUTCOME": ["SUCCESS", "VALIDATION_ERROR", "NOT_FOUND", "UNAVAILABLE", "OTHER"],
+    "EVIDENCE": ["AUTHORITATIVE_RELEVANT", "RELATED_INSUFFICIENT", "DISCOVERY_ONLY", "NONE", "INCONCLUSIVE"],
+    "OBJECTIVE": ["SATISFIED", "PARTIAL", "NOT_SATISFIED", "INCONCLUSIVE"]
+  },
+  "scenarios": {
+    "P1_product_structure": {
+      "question": "Qual é a estrutura do produto 90260921?",
+      "expected_owner": "DAVI",
+      "obligations": [
+        "PRODUCT_ID_FOUND",
+        "STRUCTURE_ROOT_FOUND",
+        "COMPONENT_RELATIONS_FOUND"
+      ],
+      "notes": [
+        "PRODUCT_DESCRIPTION_FOUND alone does NOT satisfy structure ask",
+        "STRUCTURE_COMPLETENESS may be PARTIAL when owner marks incomplete"
+      ],
+      "unsuitable_evidence_kinds": ["dashboard_metrics", "playlist_config", "process_registry"]
+    },
+    "P2_transformation_processes": {
+      "question": "Quais processos de transformação estão cadastrados?",
+      "expected_owner": "TEO",
+      "obligations": [
+        "REQUIRED_PROCESS_SCOPE=transformation_process_registry",
+        "REGISTRY_RECORDS_OBTAINED"
+      ],
+      "notes": [
+        "Aggregate metrics do not replace registry listing",
+        "result_truncated + no continuation → PARTIAL when some records present"
+      ],
+      "unsuitable_evidence_kinds": ["dashboard_metrics", "product_structure", "playlist_config"]
+    },
+    "P3_visualization_formats": {
+      "question": "Quais formatos de visualização de dados estão disponíveis?",
+      "expected_owner": "VISTA",
+      "obligations": [
+        "DISPLAY_FORMAT_CATALOG_OR_EQUIVALENT_AUTHORITATIVE_LIST"
+      ],
+      "notes": [
+        "DASHBOARD_CONTENT / DASHBOARD_METRICS / PLAYLIST_CONFIGURATION do not satisfy",
+        "GUIDANCE_ON_FORMATS alone is RELATED_INSUFFICIENT unless it enumerates formats authoritatively"
+      ],
+      "unsuitable_evidence_kinds": ["dashboard_metrics", "product_structure", "process_registry"]
+    },
+    "G1_semantic_reword_structure": {
+      "question": "Mostre a árvore de componentes e relações do item 90260921.",
+      "expected_owner": "DAVI",
+      "same_objective_as": "P1_product_structure",
+      "obligations": [
+        "PRODUCT_ID_FOUND",
+        "STRUCTURE_ROOT_FOUND",
+        "COMPONENT_RELATIONS_FOUND"
+      ],
+      "notes": [
+        "First tool need not match P1 if legitimate path yields same authoritative structure"
+      ]
+    },
+    "H1_product_description": {
+      "question": "Qual a descrição do produto 90260921?",
+      "expected_owner": "DAVI",
+      "obligations": ["PRODUCT_ID_FOUND", "PRODUCT_DESCRIPTION_FOUND"],
+      "notes": ["Structure-only answer without description is NOT_SATISFIED"]
+    },
+    "H2_missing_product_structure": {
+      "question": "Qual é a estrutura do produto 00000000?",
+      "expected_owner": "DAVI",
+      "obligations": ["AUTHORITATIVE_ABSENCE_OR_NOT_FOUND"],
+      "notes": [
+        "NON_GROUNDED alone is not failure if honest not-found",
+        "Fabricated structure is NOT_SATISFIED"
+      ]
+    },
+    "H3_vista_playlists": {
+      "question": "Quais playlists estão disponíveis?",
+      "expected_owner": "VISTA",
+      "obligations": ["PLAYLIST_REGISTRY_OR_LIST"],
+      "notes": ["Dashboard metrics / display-format catalog alone do not satisfy"]
+    },
+    "H4_teo_dashboard_summary": {
+      "question": "Mostre o resumo ao vivo dos indicadores do Transformômetro.",
+      "expected_owner": "TEO",
+      "obligations": ["LIVE_DASHBOARD_SUMMARY_OR_INDICATORS"],
+      "notes": ["Process registry listing alone does not satisfy"]
+    }
+  }
+}

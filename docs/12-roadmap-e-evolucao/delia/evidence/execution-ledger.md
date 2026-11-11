@@ -6338,3 +6338,16 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `296-int1-instruction-ablation-and-regression-free-evolution.md` (+ causal revision stamp on 295).
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_INCREMENTAL_EVOLUTION_INDEPENDENT_REVIEW`.
+
+| DELIA-C3-T2-INT1-V2-STABILITY-AND-OBJECTIVE-SATISFACTION-DIAGNOSTIC-01 | Baseline v2 Qwen14B 8×3; SHA+image digest frozen; 17/24 MCP-auth ENV_INVALID; valid-env n=7; no instruction/Agent change; doc 297 | STABILITY_DIAG=DONE; NEXT=COORDINATION_INT1_STABILITY_AND_OWNERSHIP_INDEPENDENT_REVIEW |
+
+### INT-1 v2 stability + objective satisfaction diagnostic — 2026-11-11
+
+- **TASK:** `DELIA-C3-T2-INT1-V2-STABILITY-AND-OBJECTIVE-SATISFACTION-DIAGNOSTIC-01`. PO diagnostic; `FUNCTIONAL_CODE_CHANGED=NO`; `INSTRUCTION_CHANGED=NO`.
+- **EVALUATED_SHA:** `57cb214f2f19900c851f8558a6008b1c8111ffe5` (host-injected). **IMAGE_DIGEST:** `infra-delia-api@sha256:28af6035…`. **FP:** `7dbc94c5035b0f19`. **CONFIG_FP:** `b42a0da3f3be8154`.
+- **RUNS:** planned 24 / executed 24 / env_invalid 17 / valid_env 7. **PROD_UNTOUCHED=YES**.
+- **VALID-ENV:** first tools suitable P1–P3/G1/H1–H3; P1 NOT_SATISFIED after davi→teo drift; P2/P3/G1/H3 PARTIAL; H1/H2 SATISFIED; H4 no valid sample.
+- **OWNERSHIP:** primary blocker = eval MCP token/catalog auth lifetime; INT-2/INT-3 implementation **not** justified by this battery; INT-1 recovery only after valid multi-rep re-run.
+- **Doc:** `297-int1-v2-stability-objective-satisfaction-and-responsibility-attribution.md`.
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_STABILITY_AND_OWNERSHIP_INDEPENDENT_REVIEW`.

@@ -2108,3 +2108,7 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 ### 2026-11-11 — INT-1 instruction ablation + regression-free evolution (PO 2º ciclo)
 
 **TASK:** `DELIA-C3-T2-INT1-INSTRUCTION-ABLATION-AND-REGRESSION-FREE-EVOLUTION-01`. PO bounded second cycle (does **not** erase historical `INT1_REWORK_BUDGET_EXHAUSTED=YES`). Diff v2↔v3 → three single-group ablations (`obj`/`prog`/`disc`) + live Qwen14B diagnostic (20 runs). No `SUPPORTED_IMPROVEMENT` at promotion strength; **FINAL_CANDIDATE=NONE**; default remains `generalist-semantic-v2`. Doc 296. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_INCREMENTAL_EVOLUTION_INDEPENDENT_REVIEW`**. No INT-2/T3/prod.
+
+### 2026-11-11 — INT-1 v2 stability + objective satisfaction diagnostic
+
+**TASK:** `DELIA-C3-T2-INT1-V2-STABILITY-AND-OBJECTIVE-SATISFACTION-DIAGNOSTIC-01`. Baseline v2 frozen (`7dbc94c5035b0f19`); Qwen14B 8×3=24 runs with host-injected `EVALUATED_SHA`. **17/24 ENV_INVALID** (MCP auth/catalog failure after early scenarios) — not attributable to instruction selection. Valid-env n=7: first tools suitable on P1–P3/G1/H1–H3; P1 drifted davi→teo; H4 no valid sample. Doc 297. No instruction/Agent change. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_STABILITY_AND_OWNERSHIP_INDEPENDENT_REVIEW`**.

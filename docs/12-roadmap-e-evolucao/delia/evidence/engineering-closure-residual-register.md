@@ -1218,3 +1218,20 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-STAGE | **BLOCKED** | Independent review of ablation |
 
 **NEXT=`COORDINATION_INT1_INCREMENTAL_EVOLUTION_INDEPENDENT_REVIEW`**. `INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+## 2026-11-11 — INT-1 v2 stability diagnostic residuals
+
+**TASK:** `DELIA-C3-T2-INT1-V2-STABILITY-AND-OBJECTIVE-SATISFACTION-DIAGNOSTIC-01`
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-EVAL-MCP-AUTH-LIFETIME | **OPEN / PROVEN** | 17/24 runs `catalog_failure:mcp_authentication_failed` or zero-tool `delpi_source_unverified` after early scenarios |
+| INT1-V2-SELECTION-STABILITY | **INCONCLUSIVE** | Cannot claim 3-rep stability until harness auth fixed |
+| INT1-P1-DAVI-TO-TEO-DRIFT | **OBSERVED (n=1 valid)** | Suitable first tool then TEO product reads; finalize unverified |
+| INT1-P2-PAGINATION | **KNOWN_RESIDUAL** | Truncation without continuation (valid-env PARTIAL) |
+| INT1-H4-VALID-SAMPLE | **MISSING** | All H4 reps env-invalid in this battery |
+| INT1-CREDENTIAL-ISOLATION | **RESIDUAL** | Shared infra OpenRouter key scope |
+| INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED / NOT_JUSTIFIED_BY_THIS_BATTERY** | Fix eval validity first |
+| INT1-STAGE | **BLOCKED** | Review ownership recommendations in doc 297 |
+
+**NEXT=`COORDINATION_INT1_STABILITY_AND_OWNERSHIP_INDEPENDENT_REVIEW`**.
