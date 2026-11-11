@@ -42,6 +42,12 @@ from app.application.capability_provision.contracts import (
 from app.application.capability_provision.conversational_response import (
     MAX_RENDER_CONTENT_CHARS,
 )
+from app.application.capability_provision.generic_evidence_renderer import (
+    extract_pagination_envelope,
+)
+from app.application.interaction.contracts import (
+    LIMITATION_RESULT_TRUNCATED,
+)
 from app.application.capability_provision.governed_stage_gates import (
     SupportsGovernedStageGates,
 )
@@ -262,11 +268,17 @@ class _EnvelopeHintedToolset:
                     )
                 hint = "".join(hints)
                 if hint and hint.strip() not in desc:
+                    # Preserve the published MCP description in full.
+                    # Truncating ``(desc + hint)[:500]`` destroyed owner
+                    # semantic discrimination (long TEO/DAVI contracts).
+                    # Hints stay schema-derived and length-bounded; the
+                    # owner text is never shortened to make room for them.
+                    hint_bounded = hint[:280]
                     tt = _dc.replace(
                         tt,
                         tool_def=_dc.replace(
                             tdef,
-                            description=(desc + hint)[:500],
+                            description=desc + hint_bounded,
                         ),
                     )
             hinted[name] = tt
@@ -555,6 +567,31 @@ def _attempt_projection(
     elif progress == INVESTIGATION_PROGRESS_DISCOVERY:
         projection["coverage_note"] = (
             "Discovery/catalog metadata is not business evidence."
+        )
+    # Reuse the canonical owner pagination detector — do not invent
+    # cursors. Surface page/has_more so the model can continue a
+    # truncated list with the same tool schema (P2 continuity).
+    envelope = extract_pagination_envelope(structured)
+    if envelope is not None:
+        projection["pagination"] = {
+            "page": envelope.page,
+            "page_size": envelope.page_size,
+            "has_more": envelope.has_more,
+            "total_count": envelope.total_count,
+            "items_in_page": len(envelope.items),
+        }
+    truncated = LIMITATION_RESULT_TRUNCATED in (
+        attempt.limitations or ()
+    )
+    needs_continuation = truncated or (
+        envelope is not None and envelope.has_more is True
+    )
+    if needs_continuation:
+        projection["continuation_note"] = (
+            "Owner result is truncated or an incomplete page. If the "
+            "tool schema exposes page/page_size (or equivalent), call "
+            "again with the next page parameters to continue — do not "
+            "treat a single page as the full population."
         )
     return projection
 

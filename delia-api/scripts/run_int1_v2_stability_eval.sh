@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# INT-1 v2 STABILITY diagnostic eval on OpenRouter qwen/qwen3-14b.
-# Baseline-only; no instruction candidate; no functional Agent change.
+# INT-1 v2 stability / context-recovery eval on OpenRouter qwen/qwen3-14b.
+# Baseline instructions frozen; host-mounted delia-api (evaluated SHA).
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-EVAL_NAME="delpi-delia-eval-int1-v2-stab"
-ARTIFACT_DIR="${REPO_ROOT}/delia-api/.battery/int1-v2-stability-rerun"
+EVAL_NAME="delpi-delia-eval-int1-ctx-rec"
+ARTIFACT_DIR="${REPO_ROOT}/delia-api/.battery/int1-context-recovery-rerun"
 TRACE_DIR="${REPO_ROOT}/delia-api/.battery/int1-secure-decision-trace"
 EVAL_ENV="$(mktemp /tmp/delia-eval-stab-env.XXXXXX)"
 PROD_STARTED_BEFORE="$(docker inspect -f '{{.State.StartedAt}}' delpi-delia-api 2>/dev/null || echo missing)"
@@ -199,7 +199,7 @@ docker exec -i \
   | tee "${ARTIFACT_DIR}/stability-eval-output.jsonl"
 
 docker run --rm -v "${REPO_ROOT}/delia-api/.battery:/b" alpine \
-  chown -R "$(id -u):$(id -g)" /b/int1-secure-decision-trace /b/int1-v2-stability-rerun \
+  chown -R "$(id -u):$(id -g)" /b/int1-secure-decision-trace /b/int1-context-recovery-rerun \
   >/dev/null 2>&1 || true
 
 echo "STABILITY_EVAL_COMPLETE=YES"

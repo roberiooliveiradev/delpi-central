@@ -6368,3 +6368,18 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `298-int1-mcp-eval-auth-lifecycle-remediation-and-v2-stability-rerun.md`.
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_VALID_STABILITY_INDEPENDENT_REVIEW`.
+
+| DELIA-C3-T2-INT1-INVESTIGATION-CONTEXT-TOOL-SURFACE-AND-RECOVERY-REMEDIATION-01 | Audit model-visible context; EXTEND EnvelopeHint + pagination projection; live Qwen14B vs doc298; P3/VISTA selection improved; G1 TEO attractor OPEN; doc 299 | CONTEXT_RECOVERY=DONE; NEXT=COORDINATION_INT1_CONTEXT_AND_RECOVERY_INDEPENDENT_REVIEW |
+
+### INT-1 investigation context / MCP surface / recovery — 2026-11-11
+
+- **TASK:** `DELIA-C3-T2-INT1-INVESTIGATION-CONTEXT-TOOL-SURFACE-AND-RECOVERY-REMEDIATION-01`.
+- **EXISTING_EQUIVALENT=YES**. **REUSE_DECISION=EXTEND** (`_EnvelopeHintedToolset`, `extract_pagination_envelope`, same Agent).
+- **PROVEN_DEFECTS:** tool description truncation `[:500]`; observation projection without pagination envelope.
+- **TESTS:** RED/GREEN `test_int1_tool_description_and_pagination_projection.py` + related investigation suites PASS.
+- **LIVE:** `ctx-rec-1bc5578991`; baseline fp `7dbc94c5035b0f19`; core 24/24 VALID_ENV + 5 generalization; P3 no teo.analyze first; N2 pages 1→7; G1 still TEO-first.
+- **OBJECTIVES (core scorer proposal):** SAT 6 · PARTIAL 13 · NOT_SAT 5 (vs doc298 SAT6/PART12/NOT5/INC1).
+- **FUNCTIONAL:** orchestrator projection/hint only; **INSTRUCTION_CHANGED=NO**; **NEW_AGENT=NO**; **PROD_UNTOUCHED=YES**.
+- **Doc:** `299-int1-investigation-context-model-visible-mcp-tool-surface-semantic-selection-and-recovery-audit.md`.
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_CONTEXT_AND_RECOVERY_INDEPENDENT_REVIEW`.

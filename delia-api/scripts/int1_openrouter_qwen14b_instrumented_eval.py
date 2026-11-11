@@ -174,6 +174,8 @@ def _install_catalog_and_progress_capture(
                 "uncovered_user_identifiers": projection.get(
                     "uncovered_user_identifiers"
                 ),
+                "pagination": projection.get("pagination"),
+                "continuation_note": projection.get("continuation_note"),
                 "owner_result_content_head": (attempt.content or "")[:400]
                 or None,
             },

@@ -682,3 +682,7 @@ Delivered: `delia-api/scripts/int1_secure_decision_trace.py`, `tests/test_int1_s
 ### 2026-11-11 — INT-1 MCP eval auth remediation + valid v2 stability rerun
 
 **TASK:** `DELIA-C3-T2-INT1-MCP-EVAL-AUTH-LIFETIME-REMEDIATION-AND-V2-STABILITY-RERUN-01`. See sibling **298**. Harness EXTEND of existing subject password-grant acquire (per-scenario); root cause proven; 24/24 valid-env Qwen14B v2 rerun. Stage remains BLOCKED pending independent review of ownership (INT1_BOUNDED_REWORK_CANDIDATE on selection/continuity; INT-2/INT-3 not auto-authorized). `PRODUCTION_DEPLOY=NOT_AUTHORIZED`. `NEXT=COORDINATION_INT1_VALID_STABILITY_INDEPENDENT_REVIEW`.
+
+### 2026-11-11 — INT-1 context / MCP surface / recovery remediation
+
+**TASK:** `DELIA-C3-T2-INT1-INVESTIGATION-CONTEXT-TOOL-SURFACE-AND-RECOVERY-REMEDIATION-01`. See sibling **299**. Proven: EnvelopeHint description truncation + missing pagination projection. Minimal EXTEND of existing mechanisms; live comparison vs 298; G1 TEO attractor remains. `INT1_STAGE_ACCEPTANCE=BLOCKED`. `NEXT=COORDINATION_INT1_CONTEXT_AND_RECOVERY_INDEPENDENT_REVIEW`.

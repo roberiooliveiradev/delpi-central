@@ -1,0 +1,40 @@
+{
+  "frozen_before_live": true,
+  "task_id": "DELIA-C3-T2-INT1-INVESTIGATION-CONTEXT-TOOL-SURFACE-AND-RECOVERY-REMEDIATION-01",
+  "instruction_version": "generalist-semantic-v2",
+  "instruction_fingerprint": "7dbc94c5035b0f19",
+  "repetitions_per_scenario": 1,
+  "purpose": "Small novel holdout for generalization after context/pagination remediation — not used to tune the fix.",
+  "scenarios": [
+    {
+      "id": "N1_product_stock_near_capability",
+      "family": "generalization",
+      "tests": "semantically_near_capability",
+      "question": "Qual é o estoque disponível do produto 90260921?"
+    },
+    {
+      "id": "N2_process_list_pagination",
+      "family": "generalization",
+      "tests": "paginated_result_continuation",
+      "question": "Liste todos os processos cadastrados no Transformômetro, página a página se necessário."
+    },
+    {
+      "id": "N3_vista_vs_teo_display",
+      "family": "generalization",
+      "tests": "specialist_selection",
+      "question": "Como configuro a exibição de uma playlist na TV Dashboard?"
+    },
+    {
+      "id": "N4_missing_identifier_honest",
+      "family": "generalization",
+      "tests": "honest_close_without_evidence",
+      "question": "Qual é a estrutura do produto que mencionei ontem?"
+    },
+    {
+      "id": "N5_partial_dashboard_family",
+      "family": "generalization",
+      "tests": "partial_or_related_result",
+      "question": "Quais alertas ao vivo o Transformômetro está mostrando agora?"
+    }
+  ]
+}

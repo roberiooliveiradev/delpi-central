@@ -1254,3 +1254,21 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-STAGE | **BLOCKED** | Doc 298; independent review of valid stability + ownership |
 
 **NEXT=`COORDINATION_INT1_VALID_STABILITY_INDEPENDENT_REVIEW`**. `INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+## 2026-11-11 — INT-1 context / tool-surface / recovery residuals
+
+**TASK:** `DELIA-C3-T2-INT1-INVESTIGATION-CONTEXT-TOOL-SURFACE-AND-RECOVERY-REMEDIATION-01`
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-TOOL-DESC-TRUNCATION-500 | **REMEDIATED** | EnvelopeHint no longer shortens published MCP descriptions |
+| INT1-PAGINATION-PROJECTION | **REMEDIATED** | `_attempt_projection` reuses `extract_pagination_envelope`; N2 live pages 1→7 |
+| INT1-P3-TEO-ANALYZE-FIRST | **IMPROVED** | Corrected battery: VISTA-first only (0× teo.analyze first) |
+| INT1-G1-TEO-DECOMPOSITION-ATTRACTOR | **OPEN** | Still TEO-first ×3 after description fix; owner semantic overlap |
+| INT1-P2-CONTINUITY-RELIABILITY | **PARTIAL** | Some page continuation; not consistent across 3 reps |
+| INT1-CATALOG-DTO-DESC-320 | **RESIDUAL** | Catalog DTO still caps descriptions at 320 (budget path) |
+| INT1-CREDENTIAL-ISOLATION | **RESIDUAL** | Unchanged |
+| INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | Not auto-justified |
+| INT1-STAGE | **BLOCKED** | Doc 299 independent review |
+
+**NEXT=`COORDINATION_INT1_CONTEXT_AND_RECOVERY_INDEPENDENT_REVIEW`**.

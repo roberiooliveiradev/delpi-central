@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""INT-1 v2 stability diagnostic — repeated baseline-only real eval.
+"""INT-1 v2 stability / context-recovery real eval harness.
 
 EXTENDS existing OpenRouter / decision-trace / MCP harnesses.
-No Agent functional changes. No instruction candidate.
+Baseline instructions frozen (generalist-semantic-v2). Used for
+auth-lifetime and investigation-context remediation batteries.
 """
 
 from __future__ import annotations
@@ -159,9 +160,47 @@ SCHEDULE = [
     for spec in SCENARIOS
 ]
 
-MAX_SCENARIO_RUNS = len(SCHEDULE)  # 24
+
+def _load_generalization_scenarios() -> list[dict]:
+    """Novel holdout frozen before live remediation eval (1 rep each)."""
+    path = (
+        Path(_APP_ROOT) / "scripts" / "int1_context_recovery_generalization.json"
+    )
+    if not path.is_file():
+        return []
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    scenarios = payload.get("scenarios") or []
+    out: list[dict] = []
+    for item in scenarios:
+        if not isinstance(item, Mapping):
+            continue
+        sid = str(item.get("id") or "").strip()
+        question = str(item.get("question") or "").strip()
+        if not sid or not question:
+            continue
+        out.append(
+            {
+                "id": sid,
+                "family": str(item.get("family") or "generalization"),
+                "question": question,
+                "tests": item.get("tests"),
+            }
+        )
+    return out
+
+
+GENERALIZATION_SCENARIOS = _load_generalization_scenarios()
+GENERALIZATION_SCHEDULE = [(spec, 1) for spec in GENERALIZATION_SCENARIOS]
+FULL_SCHEDULE = SCHEDULE + GENERALIZATION_SCHEDULE
+
+MAX_CORE_RUNS = len(SCHEDULE)  # 24
+MAX_SCENARIO_RUNS = len(FULL_SCHEDULE)  # 24 + generalization
 MAX_WALL_SECONDS = 90 * 60  # 90 min soft wall
 MAX_AUTHORIZED_COST = "UNAVAILABLE_PROVIDER_METER_NULL"
+TASK_ID = (
+    "DELIA-C3-T2-INT1-INVESTIGATION-CONTEXT-"
+    "TOOL-SURFACE-AND-RECOVERY-REMEDIATION-01"
+)
 
 
 def _env_identity() -> dict:
@@ -289,33 +328,34 @@ def main() -> int:
         print(json.dumps(gate, ensure_ascii=False, indent=2), flush=True)
         return 5
 
-    evaluation_id = f"stab-v2-{uuid.uuid4().hex[:10]}"
+    evaluation_id = f"ctx-rec-{uuid.uuid4().hex[:10]}"
     ensure_trace_dir()
     artifact = Path(
         os.environ.get("DELIA_EVAL_ARTIFACT_DIR")
-        or (Path(_APP_ROOT) / ".battery" / "int1-v2-stability-rerun")
+        or (Path(_APP_ROOT) / ".battery" / "int1-context-recovery-rerun")
     )
     artifact.mkdir(parents=True, exist_ok=True)
 
     cost_ceiling = {
         "max_scenario_runs": MAX_SCENARIO_RUNS,
+        "max_core_runs": MAX_CORE_RUNS,
+        "max_generalization_runs": len(GENERALIZATION_SCHEDULE),
         "max_wall_seconds": MAX_WALL_SECONDS,
         "max_authorized_cost": MAX_AUTHORIZED_COST,
         "max_model_requests_note": (
             "profile request_limit=12 per turn; not a global budget"
         ),
         "max_tool_calls_note": "profile tool_calls_limit=8 per turn",
-        "planned_runs": MAX_SCENARIO_RUNS,
+        "planned_runs": MAX_CORE_RUNS,
+        "planned_generalization_runs": len(GENERALIZATION_SCHEDULE),
         "repetitions_per_scenario": REPETITIONS,
         "scenarios": len(SCENARIOS),
+        "generalization_scenarios": len(GENERALIZATION_SCENARIOS),
     }
     print(json.dumps({"COST_CEILING": cost_ceiling}, ensure_ascii=False), flush=True)
 
     meta = {
-        "task_id": (
-            "DELIA-C3-T2-INT1-MCP-EVAL-AUTH-LIFETIME-"
-            "REMEDIATION-AND-V2-STABILITY-RERUN-01"
-        ),
+        "task_id": TASK_ID,
         "evaluation_id": evaluation_id,
         "evaluation_timestamp": datetime.now(timezone.utc).isoformat(),
         "instruction_version": selected.instruction_version,
@@ -344,6 +384,16 @@ def main() -> int:
         "schedule": [
             {"scenario_id": s["id"], "repetition_id": r} for s, r in SCHEDULE
         ],
+        "generalization_schedule": [
+            {"scenario_id": s["id"], "repetition_id": r}
+            for s, r in GENERALIZATION_SCHEDULE
+        ],
+        "remediation": {
+            "envelope_hint_preserves_owner_description": True,
+            "pagination_projected_to_observations": True,
+            "baseline_reference_doc": 298,
+            "baseline_evaluation_id": "stab-v2-5b0e914eb9",
+        },
     }
     append_event(
         evaluation_id,
@@ -387,7 +437,7 @@ def main() -> int:
     wall_started = time.monotonic()
     executed = 0
     env_invalid = 0
-    for spec, rep in SCHEDULE:
+    for spec, rep in FULL_SCHEDULE:
         if time.monotonic() - wall_started > MAX_WALL_SECONDS:
             print("BUDGET_STOP=wall", flush=True)
             break
@@ -552,6 +602,8 @@ def main() -> int:
         executed += 1
         print(json.dumps(record, ensure_ascii=False)[:500], flush=True)
 
+    core_runs = [r for r in runs if r.get("family") != "generalization"]
+    gen_runs = [r for r in runs if r.get("family") == "generalization"]
     out = {
         "task_id": meta["task_id"],
         "evaluation_id": evaluation_id,
@@ -563,10 +615,15 @@ def main() -> int:
             "skew_seconds": AUTH_SKEW_SECONDS,
         },
         "executed_runs": executed,
-        "planned_runs": MAX_SCENARIO_RUNS,
+        "planned_runs": MAX_CORE_RUNS,
+        "planned_generalization_runs": len(GENERALIZATION_SCHEDULE),
         "invalid_runs": env_invalid,
         "valid_env_runs": executed - env_invalid,
+        "core_executed_runs": len(core_runs),
+        "generalization_executed_runs": len(gen_runs),
         "runs": runs,
+        "core_runs": core_runs,
+        "generalization_runs": gen_runs,
     }
     path = artifact / "stability-comparison.json"
     path.write_text(
