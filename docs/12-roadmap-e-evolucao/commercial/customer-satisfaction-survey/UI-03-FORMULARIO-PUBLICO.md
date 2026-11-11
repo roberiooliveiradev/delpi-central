@@ -57,6 +57,18 @@
 
 **Fluxo de navegação aprovado em nível funcional:** abertura pública → etapa 1/3 → etapa 2/3 → etapa 3/3 → revisão obrigatória → confirmação e sucesso. Ter **Anterior/Próxima** nas etapas com identificação clara da seção; permitir retorno para corrigir sem apagar respostas. Não efetuar POST nas transições entre seções. A revisão inclui as 15 perguntas e respostas/ausências opcionais, com aviso de imutabilidade depois da confirmação.
 
+### Decisão aprovada — avançar somente com a etapa completa (11/11/2026)
+
+**APROVADO PELO SOLICITANTE — OPÇÃO A:** a navegação para a próxima etapa da UI-03 só é permitida depois que **todas as avaliações obrigatórias da etapa atual** tiverem escolha explícita; não deixar pendências para resolver somente na revisão final.
+
+- **Etapa 1 (perguntas 01–05):** exigir seleção em cada uma das cinco dimensões, por nota inteira de 1–5 **ou** “Não se aplica”; ambas contam como respondida, e deixar em branco não conta.
+- **Etapa 2 (perguntas 06–10):** mesmo critério nas cinco dimensões seguintes.
+- **Etapa 3 (perguntas 11–15):** exigir somente satisfação geral de 1–5 e recomendação de 0–10; os três comentários abertos continuam **opcionais**, sem bloquear avanço ou revisão quando vazios.
+- O botão **Próxima / Revisar respostas** deve validar a etapa atual, indicar visualmente os campos ainda sem seleção e conduzir o foco à primeira pendência para correção. Evitar perda dos campos já preenchidos e permitir **Anterior / Voltar e corrigir**; ao regressar e alterar uma seleção, o progresso deve refletir o estado atual.
+- O **percentual de progresso** continua atualizando por resposta realizada, não apenas por mudança de etapa. A fórmula de exibição detalhada e os três comentários opcionais permanecem para decisão de UX separada; não os converter em obrigatórios.
+- **Segurança:** avanço entre etapas é somente estado local do formulário. **Não gravar rascunhos nem enviar respostas parciais** no backend; a `commercial-api` valida novamente todas as seleções e a janela/token no envio definitivo, com persistência única e resposta imutável.
+- **Estado:** decisão funcional e UX **APROVADA/DOCUMENTADA**, implementação e testes **PENDING**.
+
 ## 3. Wireframe — revisão, envio e estados
 
 ```text
