@@ -99,7 +99,7 @@ import type {
 } from "../ui/helpdeskUi";
 import { helpdeskListPaginationBounds } from "../presentation/listPagination";
 import { shouldForceTicketCards } from "../presentation/listViewport";
-import { glpiTicketFormUrl } from "../presentation/glpiPublicLinks";
+import { glpiConsoleUrl, glpiTicketFormUrl } from "../presentation/glpiPublicLinks";
 import {
   clearGlpiAutoLinkAttempt,
   markGlpiAutoLinkAttempted,
@@ -592,6 +592,19 @@ function TicketListPage() {
         description="Acompanhe suas solicitações e atendimentos de TI."
         actions={
           <div className="helpdesk-list-hero-actions">
+            <HintAction hint={helpTooltips.listUi.openInGlpi} ariaLabel="Ajuda: Abrir no helpdesk">
+              <ActionButton
+                variant="ghost"
+                type="button"
+                aria-label="Abrir no helpdesk"
+                onClick={() => {
+                  window.open(glpiConsoleUrl(), "_blank", "noopener,noreferrer");
+                }}
+              >
+                <ExternalLink size={16} aria-hidden />
+                Helpdesk
+              </ActionButton>
+            </HintAction>
             <HintAction hint={helpTooltips.listUi.refreshPage} ariaLabel="Ajuda: Atualizar">
               <ActionButton
                 variant="ghost"
@@ -2578,6 +2591,18 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
         title={ticket?.title || "Chamado"}
         compact
         nav={<HelpdeskBackButton hint={helpTooltips.detailUi.back} />}
+        actions={
+          <HintAction hint={helpTooltips.detailUi.openInGlpi} ariaLabel="Ajuda: Abrir no helpdesk">
+            <HelpdeskIconButton
+              aria-label="Abrir chamado no helpdesk"
+              onClick={() => {
+                window.open(glpiTicketFormUrl(Number(ticketId)), "_blank", "noopener,noreferrer");
+              }}
+            >
+              <ExternalLink size={16} aria-hidden />
+            </HelpdeskIconButton>
+          </HintAction>
+        }
         onRefresh={load}
         refreshing={loading}
       />

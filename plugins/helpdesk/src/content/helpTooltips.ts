@@ -39,7 +39,7 @@ export const helpTooltips = {
     send: "Envia a resposta neste chamado. Em chamado fechado o botão some.",
     assignee: "Busque o responsável por nome ou e-mail. Só aparece se o helpdesk permitir atribuir no seu perfil.",
     assigneeAction: "Grava a atribuição ou reatribuição neste chamado.",
-    openInGlpi: "Abre este chamado no helpdesk (GLPI) para fluxos que ainda não estão na Minha DELPI.",
+    openInGlpi: "Abre este chamado no helpdesk (GLPI) em nova aba, já autenticado com a Minha DELPI.",
     acceptSolution: "Aceita a solução e fecha o chamado no helpdesk.",
     rejectSolution: "Recusa a solução e reabre o chamado para novo atendimento.",
     submitSatisfaction: "Envia sua nota de 1 a 5 e o comentário opcional.",
@@ -108,6 +108,7 @@ export const helpTooltips = {
 
   listUi: {
     refreshPage: "Atualiza a lista com o mesmo recorte da URL.",
+    openInGlpi: "Abre o console do helpdesk (GLPI) em nova aba, já autenticado com a Minha DELPI.",
     openTicket: "Abre o formulário de um chamado novo no seu nome.",
     clearFilters: "Remove o recorte; mantém ordenação e tamanho da página.",
     viewLayout: "Alterna tabela e cards no desktop. Em telas estreitas a lista usa cards automaticamente.",

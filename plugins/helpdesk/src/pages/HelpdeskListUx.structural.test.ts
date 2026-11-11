@@ -200,6 +200,21 @@ describe("Helpdesk list UX structural", () => {
     expect(links).toContain("ticket.form.php");
   });
 
+  it("hero da lista e do chamado abrem o GLPI sem alterar o manifest", () => {
+    const page = read("HelpdeskPage.tsx");
+    const links = read("../presentation/glpiPublicLinks.ts");
+    const tips = read("../content/helpTooltips.ts");
+    const manifest = read("../../helpdesk.manifest.json");
+    expect(page).toContain("glpiConsoleUrl()");
+    expect(page).toContain('aria-label="Abrir no helpdesk"');
+    expect(page).toContain('aria-label="Abrir chamado no helpdesk"');
+    expect(page).toContain("glpiTicketFormUrl(Number(ticketId))");
+    expect(links).toContain("export function glpiConsoleUrl");
+    expect(tips).toContain("openInGlpi");
+    expect(manifest).toContain('"/apps/helpdesk/console"');
+    expect(page).not.toContain('path": "/apps/helpdesk/console"');
+  });
+
   it("resposta e descrição têm help próprio + Anexar ao lado de Enviar", () => {
     const page = read("HelpdeskPage.tsx");
     expect(page).toContain("hint={helpTooltips.createUi.attach}");
