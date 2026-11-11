@@ -9,14 +9,19 @@
  * componente apenas monta o payload oficial e acompanha o upload.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   ActionButton,
   FilePreviewModal,
   addSupportFiles,
   buildCreateIntakeBody,
   buildUpdateIntakeBody,
-  catalogOptions,
   computeLinkDiff,
   computeLinkDiffDetailed,
   computeScalarDiff,
@@ -33,10 +38,11 @@ import {
   PRC_SUPPLIER_LABELS,
   prcFormatSize,
   removeSupportFile,
-  supplierHitMain,
-  supplierHitSecondary,
-  supplierOfficialKey,
   withSelectedOption,
+  PrcCatalogStore,
+  PrcReasonField,
+  PrcSupplierTable,
+  type PrcCatalogView,
   type PrcReferenceData,
   type PrcSupportFile,
   type SupplierRow,
@@ -51,7 +57,6 @@ import {
   searchPrcSuppliers,
   uploadPrcAttachment,
   type PrcEditContext,
-  type PrcSupplierHit,
 } from "./prcApi";
 import {
   DetailFields,
@@ -110,10 +115,20 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [suppliers, setSuppliers] = useState<SupplierRow[]>([]);
   const [removeMarks, setRemoveMarks] = useState<Set<string>>(new Set());
-  const [catalogs, setCatalogs] = useState<
-    Record<string, { code: string; label?: string | null }[]>
-  >({});
-  const [hits, setHits] = useState<Record<string, PrcSupplierHit[]>>({});
+  const [supplierErrorsVisible, setSupplierErrorsVisible] =
+    useState(false);
+  const [catalogStore] = useState(
+    () =>
+      new PrcCatalogStore((kind, query, signal) =>
+        fetchPrcCatalog(kind, query, signal).then((items) => ({
+          data: { items },
+        })),
+      ),
+  );
+  const catalogViews = useSyncExternalStore(
+    catalogStore.subscribe,
+    catalogStore.getSnapshot,
+  );
   const [supportFiles, setSupportFiles] = useState<PrcSupportFile[]>([]);
   const [uploadedIds, setUploadedIds] = useState<Set<string>>(new Set());
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
@@ -150,29 +165,73 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
     fetchPrcReferenceData(ac.signal)
       .then((data) => {
         setRefData(data);
-        const kinds = new Set(
-          data.fields
-            .filter((s) => PRC_CATALOG_KINDS[s.path])
-            .map((s) => PRC_CATALOG_KINDS[s.path]),
-        );
-        return Promise.all(
-          [...kinds].map((kind) =>
-            fetchPrcCatalog(kind, "", ac.signal).then(
-              (items) => [kind, items] as const,
-            ),
-          ),
-        ).then((entries) => setCatalogs(Object.fromEntries(entries)));
+        catalogStore.loadAll(Object.keys(PRC_CATALOG_KINDS), ac.signal);
       })
       .catch((e: Error) => setLoadError(e.message));
-    return () => ac.abort();
-  }, []);
+    return () => {
+      ac.abort();
+      catalogStore.abortAll();
+    };
+  }, [catalogStore]);
 
   const set = (path: string, v: string) =>
     setValues((s) => ({ ...s, [path]: v }));
+
+  /* mutações por `rowId` (nunca índice) — mesmas regras do wizard oficial */
   const patchRow = (rowId: string, patch: Partial<SupplierRow>) =>
     setSuppliers((rows) =>
       rows.map((r) => (r.rowId === rowId ? { ...r, ...patch } : r)),
     );
+  const toggleRowSearch = (rowId: string) =>
+    setSuppliers((rows) =>
+      rows.map((r) => ({
+        ...r,
+        searchOpen: r.rowId === rowId ? !r.searchOpen : false,
+        selectionError:
+          r.rowId === rowId ? undefined : r.selectionError,
+      })),
+    );
+  const closeRowSearch = (rowId: string) =>
+    patchRow(rowId, { searchOpen: false });
+  const toggleSupplierReason = (
+    rowId: string,
+    flag: "pnReasonOpen" | "catReasonOpen" | "opReasonOpen",
+  ) =>
+    setSuppliers((rows) =>
+      rows.map((r) =>
+        r.rowId === rowId ? { ...r, [flag]: !r[flag] } : r,
+      ),
+    );
+  const setSupplierReason = (
+    rowId: string,
+    flag: "pnReason" | "catReason" | "opReason",
+    v: string,
+  ) =>
+    setSuppliers((rows) =>
+      rows.map((r) => (r.rowId === rowId ? { ...r, [flag]: v } : r)),
+    );
+  const discardDraftRow = (rowId: string) => {
+    setSuppliers((rows) => rows.filter((r) => r.rowId !== rowId));
+    setRemoveMarks((prev) => {
+      if (!prev.has(rowId)) return prev;
+      const next = new Set(prev);
+      next.delete(rowId);
+      return next;
+    });
+  };
+  const markOfficialRemove = (rowId: string) =>
+    setRemoveMarks((prev) => new Set(prev).add(rowId));
+  const undoOfficialRemove = (rowId: string) =>
+    setRemoveMarks((prev) => {
+      const next = new Set(prev);
+      next.delete(rowId);
+      return next;
+    });
+  const addSupplierRow = () =>
+    setSuppliers((rows) => [
+      ...rows.map((r) => ({ ...r, searchOpen: false })),
+      emptySupplierRow(),
+    ]);
 
   const loadEditContext = (): Promise<boolean> => {
     const code = officialCode.trim();
@@ -255,13 +314,17 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
         return "Nenhuma alteração identificada — edite um campo, vínculo ou adicione um fornecedor.";
       }
       const bad = suppliers.findIndex(
-        (r) => !r.supplierCode.trim() || !r.store.trim(),
+        (r) =>
+          !r.supplierCode.trim() ||
+          !r.store.trim() ||
+          !r.supplierName.trim(),
       );
       if (bad >= 0) {
         return `Fornecedor ${bad + 1}: escolha um fornecedor oficial na busca.`;
       }
       const missingPn = suppliers.findIndex((r) => !r.partNumber.trim());
       if (missingPn >= 0) {
+        setSupplierErrorsVisible(true);
         return `Fornecedor ${missingPn + 1}: Part Number é obrigatório para vincular.`;
       }
       if (duplicateDraftRowIds(suppliers).size > 0) {
@@ -414,45 +477,6 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
     [thumbUrls],
   );
 
-  const searchSuppliers = async (row: SupplierRow) => {
-    const q = row.query.trim();
-    if (q.length < 2) return;
-    try {
-      const items = await searchPrcSuppliers(q);
-      setHits((s) => ({ ...s, [row.rowId]: items }));
-    } catch (e) {
-      patchRow(row.rowId, {
-        selectionError: (e as Error).message,
-      });
-    }
-  };
-
-  const pickSupplier = (row: SupplierRow, hit: PrcSupplierHit) => {
-    const code = String(hit.supplier_code || "").trim();
-    const store = String(hit.supplier_store || "").trim();
-    const clash = suppliers.some(
-      (r) =>
-        r.rowId !== row.rowId &&
-        supplierOfficialKey(r.supplierCode, r.store) ===
-          supplierOfficialKey(code, store),
-    );
-    if (clash) {
-      patchRow(row.rowId, {
-        selectionError:
-          "Esse fornecedor já está na lista (mesmo código e loja).",
-      });
-      return;
-    }
-    patchRow(row.rowId, {
-      supplierCode: code,
-      store,
-      supplierName: supplierHitMain(hit),
-      supplierShortName: String(hit.supplier_short_name || ""),
-      selectionError: undefined,
-    });
-    setHits((s) => ({ ...s, [row.rowId]: [] }));
-  };
-
   if (loadError) {
     return (
       <AppShell title="Matéria-prima / produto">
@@ -475,6 +499,63 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
     );
   }
 
+  const renderCatalogField = (
+    path: string,
+    label: string,
+    required: boolean,
+    view: PrcCatalogView,
+  ) => {
+    const loading = view.status === "loading" || view.status === "idle";
+    const hint = loading
+      ? "Carregando catálogo oficial TOTVS…"
+      : view.status === "empty"
+        ? "Catálogo oficial sem itens disponíveis."
+        : view.status === "error"
+          ? "Falha ao consultar o catálogo oficial TOTVS."
+          : PRC_FIELD_HELP[path] || "Catálogo oficial TOTVS";
+    const options = withSelectedOption(view.options, values[path] || "");
+    return (
+      <div key={path}>
+        <SelectField
+          label={required ? `${label} *` : label}
+          hint={hint}
+          options={options}
+          value={values[path] || ""}
+          onChange={(v) => set(path, v)}
+          searchable
+          disabled={
+            busy ||
+            loading ||
+            view.status === "empty" ||
+            (view.status === "error" && !options.length)
+          }
+        />
+        {view.status === "error" ? (
+          <div className="delpi-prc__catalog-error">
+            <p className="delpi-prc__field-error" role="alert">
+              {values[path]
+                ? "Catálogo oficial indisponível — o valor selecionado foi preservado, mas ainda não foi revalidado."
+                : "Catálogo oficial indisponível no momento."}
+            </p>
+            <ActionButton
+              variant="ghost"
+              disabled={busy}
+              onClick={() => catalogStore.retry(path)}
+            >
+              Tentar novamente
+            </ActionButton>
+          </div>
+        ) : null}
+        {view.hasMore ? (
+          <p className="delpi-prc__muted">
+            Exibindo os primeiros {view.options.length} itens — refine
+            pela busca.
+          </p>
+        ) : null}
+      </div>
+    );
+  };
+
   const renderField = (path: string) => {
     const spec = specsByPath.get(path);
     if (!spec) return null;
@@ -483,48 +564,91 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
     const required =
       requestType === "create" && spec.requiredCreateIntake;
     const errMsg = fieldErrors[path];
-    if (spec.kind === "text") {
-      return (
-        <TextField
-          key={path}
-          label={required ? `${label} *` : label}
-          hint={hint}
-          value={values[path] || ""}
-          onChange={(v) => set(path, v)}
-        />
-      );
-    }
-    const options =
-      spec.kind === "enum"
-        ? enumOptions(path, spec.enumValues || [])
-        : catalogOptions(
-            catalogs[PRC_CATALOG_KINDS[path] || ""] || [],
-          );
+    const changed =
+      requestType === "update" &&
+      scalarDiff.some((c) => c.path === path);
+    const baseline = editCtx?.fields?.[path]?.value;
+    const reasonVisible =
+      changed || (requestType === "create" && (values[path] || "").trim());
     return (
-      <div key={path}>
-        <SelectField
-          label={required ? `${label} *` : label}
-          hint={hint}
-          options={withSelectedOption(options, values[path] || "")}
-          value={values[path] || ""}
-          onChange={(v) => set(path, v)}
-          searchable
-        />
-        {errMsg ? (
-          <MyRequestsStateBanner variant="error">
-            {errMsg}
-          </MyRequestsStateBanner>
+      <div
+        key={path}
+        className={`delpi-prc__edit-row${
+          changed ? " delpi-prc__edit-row--changed" : ""
+        }`}
+      >
+        {changed ? (
+          <div className="delpi-prc__diff-badge">
+            <span className="delpi-prc__diff-tag">Alterado</span>
+            <span className="delpi-prc__muted">
+              Anterior no TOTVS:{" "}
+              <strong>{String(baseline ?? "") || "vazio"}</strong>
+            </span>
+            <button
+              type="button"
+              className="delpi-prc__lookup-clear"
+              onClick={() =>
+                set(
+                  path,
+                  baseline === null || baseline === undefined
+                    ? ""
+                    : String(baseline),
+                )
+              }
+            >
+              Desfazer
+            </button>
+          </div>
         ) : null}
-        {requestType === "update" &&
-        scalarDiff.some((c) => c.path === path) ? (
-          <TextField
-            label={`Justificativa — ${label}`}
-            value={reasons[path] || ""}
-            onChange={(v) =>
-              setReasons((s) => ({ ...s, [path]: v }))
-            }
-          />
-        ) : null}
+        <div className="delpi-prc__edit-controls">
+          {PRC_CATALOG_KINDS[path] ? (
+            renderCatalogField(
+              path,
+              label,
+              required,
+              catalogViews.get(path) ?? {
+                status: "idle",
+                options: [],
+                hasMore: false,
+              },
+            )
+          ) : spec.kind === "enum" ? (
+            <SelectField
+              label={required ? `${label} *` : label}
+              hint={hint}
+              options={withSelectedOption(
+                enumOptions(path, spec.enumValues || []),
+                values[path] || "",
+              )}
+              value={values[path] || ""}
+              onChange={(v) => set(path, v)}
+              searchable
+              disabled={busy}
+            />
+          ) : (
+            <TextField
+              label={required ? `${label} *` : label}
+              hint={hint}
+              value={values[path] || ""}
+              onChange={(v) => set(path, v)}
+            />
+          )}
+          {errMsg ? (
+            <p className="delpi-prc__field-error" role="alert">
+              {errMsg}
+            </p>
+          ) : null}
+          {reasonVisible ? (
+            <PrcReasonField
+              id={`prc-reason-${path}`}
+              value={reasons[path] || ""}
+              onChange={(v) =>
+                setReasons((s) => ({ ...s, [path]: v }))
+              }
+              disabled={busy}
+            />
+          ) : null}
+        </div>
       </div>
     );
   };
@@ -624,7 +748,9 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
         <>
           {FIELD_GROUPS.map((group) => (
             <MyRequestsSectionCard key={group.title} title={group.title}>
-              {group.paths.map(renderField)}
+              <div className="delpi-prc__form-grid">
+                {group.paths.map(renderField)}
+              </div>
             </MyRequestsSectionCard>
           ))}
 
@@ -637,172 +763,47 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
                 {fieldErrors.suppliers}
               </MyRequestsStateBanner>
             ) : null}
-            {suppliers.map((row) => {
-              const marked = removeMarks.has(row.rowId);
-              return (
-                <div
-                  key={row.rowId}
-                  style={{
-                    border: "1px solid var(--delpi-border, #d5dce4)",
-                    borderRadius: 8,
-                    padding: 12,
-                    marginBottom: 8,
-                    opacity: marked ? 0.55 : 1,
-                  }}
-                >
-                  {row.supplierCode ? (
-                    <div>
-                      <strong>
-                        {row.supplierCode}/{row.store} — {row.supplierName}
-                      </strong>
-                      {row.supplierShortName ? (
-                        <span> ({row.supplierShortName})</span>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <div>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 8,
-                          alignItems: "end",
-                        }}
-                      >
-                        <TextField
-                          label="Buscar fornecedor"
-                          value={row.query}
-                          onChange={(v) =>
-                            patchRow(row.rowId, { query: v })
-                          }
-                          placeholder="Razão social, código ou loja"
-                        />
-                        <ActionButton
-                          variant="default"
-                          disabled={row.query.trim().length < 2}
-                          onClick={() => void searchSuppliers(row)}
-                        >
-                          Buscar
-                        </ActionButton>
-                      </div>
-                      {(hits[row.rowId] || []).map((hit) => (
-                        <ActionButton
-                          key={`${hit.supplier_code}|${hit.supplier_store}`}
-                          variant="ghost"
-                          onClick={() => pickSupplier(row, hit)}
-                        >
-                          {supplierHitMain(hit)} —{" "}
-                          {supplierHitSecondary(hit)}
-                        </ActionButton>
-                      ))}
-                      {row.selectionError ? (
-                        <MyRequestsStateBanner variant="error">
-                          {row.selectionError}
-                        </MyRequestsStateBanner>
-                      ) : null}
-                    </div>
-                  )}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: 8,
-                      marginTop: 8,
-                    }}
-                  >
-                    <TextField
-                      label={`${PRC_SUPPLIER_LABELS.partNumber} *`}
-                      value={row.partNumber}
-                      onChange={(v) =>
-                        patchRow(row.rowId, { partNumber: v })
-                      }
-                      disabled={marked}
-                    />
-                    <TextField
-                      label={PRC_SUPPLIER_LABELS.catalogNumber}
-                      value={row.catalogNumber}
-                      onChange={(v) =>
-                        patchRow(row.rowId, { catalogNumber: v })
-                      }
-                      disabled={marked}
-                    />
-                  </div>
-                  {row.origin === "official" ? (
-                    <>
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: 8,
-                          marginTop: 8,
-                        }}
-                      >
-                        <TextField
-                          label="Justificativa — Part Number"
-                          value={row.pnReason || ""}
-                          onChange={(v) =>
-                            patchRow(row.rowId, { pnReason: v })
-                          }
-                        />
-                        <TextField
-                          label="Justificativa — Catálogo"
-                          value={row.catReason || ""}
-                          onChange={(v) =>
-                            patchRow(row.rowId, { catReason: v })
-                          }
-                        />
-                      </div>
-                      <TextField
-                        label="Justificativa da operação (opcional)"
-                        value={row.opReason || ""}
-                        onChange={(v) =>
-                          patchRow(row.rowId, { opReason: v })
-                        }
-                      />
-                    </>
-                  ) : null}
-                  <MyRequestsFormActions>
-                    {row.origin === "official" ? (
-                      <ActionButton
-                        variant="ghost"
-                        onClick={() =>
-                          setRemoveMarks((s) => {
-                            const next = new Set(s);
-                            if (next.has(row.rowId)) next.delete(row.rowId);
-                            else next.add(row.rowId);
-                            return next;
-                          })
-                        }
-                      >
-                        {marked
-                          ? "Desfazer remoção"
-                          : "Solicitar remoção do vínculo"}
-                      </ActionButton>
-                    ) : (
-                      <ActionButton
-                        variant="ghost"
-                        onClick={() =>
-                          setSuppliers((rows) =>
-                            rows.filter((r) => r.rowId !== row.rowId),
-                          )
-                        }
-                      >
-                        Remover
-                      </ActionButton>
-                    )}
-                  </MyRequestsFormActions>
-                </div>
-              );
-            })}
-            <ActionButton
-              variant="default"
-              onClick={() =>
-                setSuppliers((rows) => [...rows, emptySupplierRow()])
-              }
-            >
+            {requestType === "update" && !editCtx ? (
+              <p className="delpi-prc__muted">
+                Consultando vínculos oficiais…
+              </p>
+            ) : null}
+            {editCtx && editCtx.linksComplete === false ? (
+              <p className="delpi-prc__field-error" role="alert">
+                A lista de vínculos pode estar incompleta — revise antes
+                de propor alterações.
+              </p>
+            ) : null}
+            {suppliers.length ? (
+              <PrcSupplierTable
+                suppliers={suppliers}
+                removeMarks={removeMarks}
+                baselineLinks={editCtx?.links || []}
+                requestType={requestType}
+                busy={busy}
+                errorsVisible={supplierErrorsVisible}
+                partNumberLabel={PRC_SUPPLIER_LABELS.partNumber}
+                catalogLabel={PRC_SUPPLIER_LABELS.catalogNumber}
+                searchSuppliers={searchPrcSuppliers}
+                onPatchRow={patchRow}
+                onToggleSearch={toggleRowSearch}
+                onCloseSearch={closeRowSearch}
+                onToggleReason={toggleSupplierReason}
+                onSetReason={setSupplierReason}
+                onDiscardDraft={discardDraftRow}
+                onMarkRemove={markOfficialRemove}
+                onUndoRemove={undoOfficialRemove}
+              />
+            ) : (
+              <p className="delpi-prc__muted">
+                Nenhum fornecedor adicionado.
+              </p>
+            )}
+            <ActionButton variant="default" onClick={addSupplierRow}>
               Adicionar fornecedor
             </ActionButton>
             {requestType === "update" && linkOps.length ? (
-              <p>
+              <p className="delpi-prc__muted">
                 Operações de vínculo:{" "}
                 {linkOps
                   .map((o) =>

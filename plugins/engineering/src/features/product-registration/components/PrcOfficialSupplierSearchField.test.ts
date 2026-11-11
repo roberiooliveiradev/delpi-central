@@ -8,7 +8,15 @@ const read = (rel: string) => readFileSync(join(here, rel), "utf8");
 
 describe("PrcOfficialSupplierSearchField — REF-021-REF-01", () => {
   const src = read("PrcOfficialSupplierSearchField.tsx");
-  const lookup = read("PrcSupplierLookup.tsx");
+  /* UX-PARITY-FIX-02 — lookup/reason migraram para o kit compartilhado
+   * (`@delpi/plugin-ui`), fonte única dos dois MFEs. */
+  const lookup = readFileSync(
+    join(
+      here,
+      "../../../../../plugin-ui/src/components/prc/PrcSupplierForm.tsx",
+    ),
+    "utf-8",
+  );
   const api = read("../api/productRegistrationApi.ts");
 
   it("reuses official SA2 search contract and cancels stale responses", () => {

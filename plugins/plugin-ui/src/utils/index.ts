@@ -16,3 +16,4 @@ export * from "./portalGreeting";
 export * from "./periodPreset";
 export * from "./hostNavigation";
 export * from "./prcProductRegistration";
+export * from "./prcCatalogStore";

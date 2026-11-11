@@ -11,7 +11,8 @@ import {
 import type { PrcSupplierHit } from "../api/productRegistrationApi";
 import { PRC_INFO_COPY } from "../prcCopy";
 import { supplierHitMain, supplierHitSecondary } from "../prcSuppliers";
-import { useSupplierSearch } from "./PrcSupplierLookup";
+import { searchPrcSuppliers } from "../api/productRegistrationApi";
+import { useSupplierSearch } from "@delpi/plugin-ui/index";
 
 const MAX_VISIBLE = 12;
 
@@ -39,7 +40,9 @@ export function PrcOfficialSupplierSearchField({
   const fieldId = id || autoId;
   const listId = `${fieldId}-list`;
   const [query, setQuery] = useState("");
-  const { items, open, state, setOpen } = useSupplierSearch(query);
+  const { items, open, state, setOpen } = useSupplierSearch(query, (q, sig) =>
+    searchPrcSuppliers(q, sig).then((env) => env.data?.items || []),
+  );
   const [activeIndex, setActiveIndex] = useState(-1);
   const anchorRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);

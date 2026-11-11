@@ -1,0 +1,495 @@
+/* PRC-REF-023-UX-PARITY-FIX-02 — estilos neutros compartilhados do
+ * formulário PRC (ficha técnica, grade, busca e tabela de fornecedores,
+ * justificativas contextuais). Fonte canônica única para Portal
+ * Engenharia e Minhas Solicitações — prefixo `delpi-prc__`. */
+
+.delpi-prc__muted {
+  color: var(--en-text-muted);
+  font-size: 0.85rem;
+}
+
+.delpi-prc__field-error {
+  color: var(--en-danger);
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.delpi-prc__edit-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-block-end: 8px;
+  border-bottom: 1px solid var(--en-border);
+}
+
+.delpi-prc__edit-row:last-child {
+  border-bottom: 0;
+}
+
+.delpi-prc__edit-row-label {
+  font-weight: 600;
+}
+
+.delpi-prc__edit-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.delpi-prc__supplier-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+  padding-block-end: 12px;
+  border-bottom: 1px solid var(--en-border);
+}
+
+.delpi-prc__supplier-add {
+  display: flex;
+}
+
+.delpi-prc__supplier-diff {
+  margin: 0;
+  padding-inline-start: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+/* PRC-REF-020 / UX-01 — destaque de campos/SA5 bloqueantes na verificação. */
+.delpi-prc__field-mismatch,
+.delpi-prc__supplier-mismatch {
+  color: var(--engineering-danger, #b42318);
+  font-weight: 600;
+}
+
+.delpi-prc__supplier-mismatch {
+  outline: 1px solid color-mix(in srgb, var(--engineering-danger, #b42318) 35%, transparent);
+  border-radius: 4px;
+  padding: 4px 6px;
+  margin-inline-start: -6px;
+}
+
+.delpi-prc__supplier-diff--detailed li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.delpi-prc__lookup {
+  position: relative;
+}
+
+/* Dropdown de fornecedores: renderizado via AnchoredPanelPortal (body)
+ * — a superfície/sombra vive no painel do portal, nunca dentro do
+ * overflow do wrapper da tabela (causa do clipping D8). */
+.delpi-prc__lookup-panel {
+  min-width: 280px;
+  max-width: min(420px, calc(100vw - 24px));
+  background: var(--en-surface);
+  border: 1px solid var(--en-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+.delpi-prc__lookup-list {
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.delpi-prc__lookup-item {
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.delpi-prc__lookup-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--en-text);
+  font: inherit;
+  cursor: pointer;
+  white-space: normal;
+}
+
+.delpi-prc__lookup-option:hover,
+.delpi-prc__lookup-option:focus-visible,
+.delpi-prc__lookup-item--active .delpi-prc__lookup-option {
+  background: var(--en-surface-muted);
+  outline: none;
+}
+
+.delpi-prc__lookup-legal {
+  display: block;
+  font-weight: 600;
+  white-space: normal;
+}
+
+.delpi-prc__lookup-meta {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--en-text-muted);
+  white-space: normal;
+}
+
+.delpi-prc__lookup-empty {
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  color: var(--en-text-muted);
+}
+
+.delpi-prc__form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.delpi-prc__form-grid--wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .delpi-prc__supplier-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .delpi-prc__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.delpi-prc__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.delpi-prc__catalog-error {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.delpi-prc__supplier-table-wrap {
+  overflow-x: auto;
+}
+
+.delpi-prc__supplier-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+/* Tabela V2 — 8 colunas: lupa estreita + identidade separada +
+ * atributos editáveis + ações compactas. */
+.delpi-prc__supplier-table th:nth-child(1) { width: 44px; }
+.delpi-prc__supplier-table th:nth-child(2) { width: 9%; }
+.delpi-prc__supplier-table th:nth-child(3) { width: 6%; }
+.delpi-prc__supplier-table th:nth-child(4) { width: 24%; }
+.delpi-prc__supplier-table th:nth-child(5) { width: 14%; }
+.delpi-prc__supplier-table th:nth-child(6) { width: 14%; }
+.delpi-prc__supplier-table th:nth-child(7) { width: 13%; }
+.delpi-prc__supplier-table th:nth-child(8) { width: 9%; }
+
+.delpi-prc__supplier-td--search {
+  text-align: center;
+  padding-inline: 4px !important;
+}
+
+.delpi-prc__supplier-td--actions {
+  white-space: normal;
+}
+
+/* Linha auxiliar da `<tr>` — busca SA2 expansível e editores de
+ * justificativa contextual fora da célula (não estouram altura/largura
+ * da linha principal). */
+.delpi-prc__supplier-aux > td {
+  background: var(--en-surface-muted);
+  padding: 8px 10px !important;
+}
+
+.delpi-prc__supplier-aux > td::before {
+  content: none !important;
+}
+
+.delpi-prc__supplier-search {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 560px;
+}
+
+.delpi-prc__supplier-search-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.delpi-prc__supplier-search-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--en-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.delpi-prc__cell-error {
+  display: block;
+  color: var(--en-danger);
+  font-size: 0.78rem;
+  margin-top: 2px;
+}
+
+.delpi-prc__cell-diff {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 3px 0 0;
+  font-size: 0.72rem;
+  flex-wrap: wrap;
+}
+
+.delpi-prc__supplier-table td {
+  overflow-wrap: anywhere;
+}
+
+.delpi-prc__supplier-table th {
+  text-align: left;
+  padding: 6px 10px;
+  color: var(--en-text-muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--en-border);
+  white-space: nowrap;
+}
+
+.delpi-prc__supplier-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--en-border);
+  vertical-align: top;
+}
+
+.delpi-prc__supplier-tr--error td {
+  background: rgba(176, 0, 32, 0.04);
+}
+
+.delpi-prc__cell-input,
+.delpi-prc__lookup-input {
+  width: 100%;
+  min-width: 120px;
+  padding: 6px 8px;
+  border: 1px solid var(--en-border);
+  border-radius: 6px;
+  font: inherit;
+  background: var(--en-surface);
+  color: var(--en-text);
+}
+
+.delpi-prc__cell-input:focus-visible,
+.delpi-prc__lookup-input:focus-visible {
+  outline: 2px solid var(--en-accent);
+  outline-offset: 1px;
+}
+
+.delpi-prc__lookup-selected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.delpi-prc__lookup-clear {
+  border: 0;
+  background: none;
+  color: var(--en-accent);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px 4px;
+}
+
+.delpi-prc__lookup-clear:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .delpi-prc__supplier-table thead {
+    display: none;
+  }
+  .delpi-prc__supplier-table,
+  .delpi-prc__supplier-table tbody,
+  .delpi-prc__supplier-table tr,
+  .delpi-prc__supplier-table td {
+    display: block;
+    width: 100%;
+  }
+  .delpi-prc__supplier-table tr {
+    border: 1px solid var(--en-border);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    padding: 6px;
+  }
+  .delpi-prc__supplier-table td {
+    border-bottom: 0;
+    padding: 4px 6px;
+  }
+  .delpi-prc__supplier-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--en-text-muted);
+    margin-bottom: 2px;
+  }
+}
+
+/* D13 — edição direta + diff automático */
+.delpi-prc__edit-row--changed {
+  border-left: 3px solid var(--en-accent);
+  padding-left: 10px;
+}
+
+.delpi-prc__diff-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 0.78rem;
+}
+
+.delpi-prc__diff-tag {
+  background: var(--en-accent);
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-weight: 600;
+  font-size: 0.72rem;
+}
+
+.delpi-prc__supplier-tr--remove td {
+  background: rgba(176, 0, 32, 0.06);
+  text-decoration: line-through;
+  text-decoration-color: rgba(176, 0, 32, 0.4);
+}
+
+.delpi-prc__supplier-tr--added td {
+  background: rgba(21, 128, 61, 0.06);
+}
+
+.delpi-prc__remove-tag,
+.delpi-prc__add-tag {
+  margin: 2px 0 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.delpi-prc__remove-tag { color: var(--en-danger); }
+.delpi-prc__add-tag { color: var(--en-success); }
+
+/* D14-FIX — justificativa contextual compacta: gatilho `link` do kit
+ * ajustado à margem do campo; largura do conteúdo (nunca 100% da
+ * coluna); editor na linha auxiliar/inline, nunca aberto por padrão. */
+.delpi-prc__reason-toggle {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  gap: 4px;
+  width: max-content;
+  max-width: 100%;
+  align-self: flex-start;
+  min-height: 0;
+  padding: 0;
+}
+
+.delpi-prc__reason-filled {
+  font-size: 0.7rem;
+  color: var(--en-text-muted);
+}
+
+.delpi-prc__reason {
+  margin-top: 6px;
+  max-width: 560px;
+}
+
+.delpi-prc__reason-label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--en-text-muted);
+  margin-bottom: 2px;
+}
+
+.delpi-prc__reason-input {
+  width: 100%;
+  min-width: 0;
+  padding: 5px 7px;
+  border: 1px solid var(--en-border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.8rem;
+  background: var(--en-surface);
+  color: var(--en-text);
+  resize: vertical;
+}
+
+.delpi-prc__reason-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2px;
+  gap: 8px;
+}
+
+.delpi-prc__reason-count {
+  font-size: 0.7rem;
+  color: var(--en-text-muted);
+}
+
+.delpi-prc__reason-count--full { color: var(--en-danger); }
+
+.delpi-prc__reason-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.delpi-prc__reason + .delpi-prc__reason {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--en-border);
+}
+
+.delpi-prc__flagged-field:hover .delpi-prc__field-flag--add,
+.delpi-prc__flagged-field:focus .delpi-prc__field-flag--add,
+.delpi-prc__flagged-field:focus-within .delpi-prc__field-flag--add,
+.delpi-prc__flagged-field-label:hover .delpi-prc__field-flag--add,
+.delpi-prc__flagged-field-label:focus-within .delpi-prc__field-flag--add,
+.delpi-prc__supplier-flag-cell:hover .delpi-prc__field-flag--add,
+.delpi-prc__supplier-flag-cell:focus-within .delpi-prc__field-flag--add {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.delpi-prc__supplier-flag-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+}
+
+.delpi-prc__lookup--modal {
+  width: 100%;
+}

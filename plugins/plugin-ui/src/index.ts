@@ -251,3 +251,21 @@ export * from "./hooks";
 export * from "./types/chartGranularity";
 export * from "./export";
 export * from "./overlayLayers";
+
+/* PRC-REF-023-UX-PARITY-FIX-02 — controles compartilhados do formulário
+ * PRC (fornecedores SA2/SA5, justificativas, catálogos) usados por
+ * Portal Engenharia e Minhas Solicitações. */
+export {
+  PRC_REASON_MAX,
+  PRC_SUPPLIER_TEXT,
+  PrcReasonToggle,
+  PrcReasonEditor,
+  PrcReasonField,
+  PrcSupplierCellLookup,
+  PrcSupplierTable,
+  useSupplierSearch,
+  type PrcSupplierHitLike,
+  type PrcSupplierSearchFn,
+  type PrcBaselineLink,
+  type PrcSupplierTableProps,
+} from "./components/prc/PrcSupplierForm";

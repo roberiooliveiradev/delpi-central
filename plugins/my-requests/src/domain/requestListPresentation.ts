@@ -95,6 +95,15 @@ const PRC_STATUS_VARIANTS: Record<
   rejected: "danger",
 };
 
+/* FIX-02A — semântica da listagem: a coluna Tipo mostra a categoria
+ * da solicitação (distinta de Assunto). PRC CREATE → "Criação de
+ * matéria-prima"; UPDATE → "Alteração de produto". Assunto = ação:
+ * "Criação" ou "Alteração — {código oficial}" (zeros preservados). */
+const PRC_LIST_TYPE_LABELS: Record<string, string> = {
+  create: "Criação de matéria-prima",
+  update: "Alteração de produto",
+};
+
 export function prcToUnifiedRow(
   row: {
     id: string;
@@ -107,16 +116,21 @@ export function prcToUnifiedRow(
   statusLabels: Record<string, string>,
   destination: string,
 ): UnifiedRequestRow {
-  const typeLabel = typeLabels[row.requestType] || row.requestType;
+  const typeLabel =
+    PRC_LIST_TYPE_LABELS[row.requestType] ||
+    typeLabels[row.requestType] ||
+    row.requestType;
+  const subject =
+    row.requestType === "update"
+      ? `Alteração${row.officialCode ? ` — ${row.officialCode}` : ""}`
+      : "Criação";
   return {
     id: row.id,
     source: "engineering-prc",
     displayNumber: `PRC-${row.id.slice(0, 8).toUpperCase()}`,
     fullIdentifier: row.id,
     typeLabel,
-    subject: row.officialCode
-      ? `${typeLabel} — ${row.officialCode}`
-      : typeLabel,
+    subject,
     status: row.status,
     statusLabel: statusLabels[row.status] || row.status,
     statusVariant: PRC_STATUS_VARIANTS[row.status] || "info",

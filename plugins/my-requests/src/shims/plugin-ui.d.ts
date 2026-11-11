@@ -1091,5 +1091,125 @@ declare module "@delpi/plugin-ui/index" {
     options: readonly PrcCatalogOption[],
     value: string,
   ): PrcCatalogOption[];
+
+  /* PRC-REF-023-UX-PARITY-FIX-02 — controles PRC compartilhados do kit */
+  export const PRC_REASON_MAX: number;
+  export const PRC_SUPPLIER_TEXT: Record<string, string>;
+  export function PrcReasonToggle(props: {
+    id: string;
+    value: string;
+    open: boolean;
+    onToggle: () => void;
+    disabled?: boolean;
+    label?: string;
+  }): JSX.Element;
+  export function PrcReasonEditor(props: {
+    id: string;
+    value: string;
+    onChange: (v: string) => void;
+    onCollapse: () => void;
+    disabled?: boolean;
+    label?: string;
+  }): JSX.Element;
+  export function PrcReasonField(props: {
+    id: string;
+    value: string;
+    onChange: (v: string) => void;
+    disabled?: boolean;
+    label?: string;
+  }): JSX.Element;
+  export type PrcSupplierHitLike = {
+    supplier_code?: string;
+    supplier_store?: string;
+    supplier_name?: string;
+    supplier_short_name?: string;
+    [key: string]: unknown;
+  };
+  export type PrcSupplierSearchFn = (
+    query: string,
+    signal?: AbortSignal,
+  ) => Promise<PrcSupplierHitLike[]>;
+  export function useSupplierSearch(
+    query: string,
+    fetcher: PrcSupplierSearchFn,
+  ): {
+    items: PrcSupplierHitLike[];
+    open: boolean;
+    state: "idle" | "loading" | "error";
+    setOpen: (v: boolean) => void;
+    setItems: (v: PrcSupplierHitLike[]) => void;
+  };
+  export function PrcSupplierCellLookup(props: {
+    id: string;
+    query: string;
+    disabled?: boolean;
+    searchSuppliers: PrcSupplierSearchFn;
+    portalScopeClassName?: string;
+    onQueryChange: (v: string) => void;
+    onSelect: (hit: PrcSupplierHitLike) => void;
+    onClose: () => void;
+  }): JSX.Element;
+  export type PrcBaselineLink = {
+    supplierCode: string;
+    store: string;
+    supplierName?: string | null;
+    partNumber?: string | null;
+    catalogNumber?: string | null;
+  };
+  export type PrcSupplierTableProps = {
+    suppliers: SupplierRow[];
+    removeMarks: Set<string>;
+    baselineLinks: PrcBaselineLink[];
+    requestType: "create" | "update";
+    busy?: boolean;
+    errorsVisible?: boolean;
+    partNumberLabel: string;
+    catalogLabel: string;
+    searchSuppliers: PrcSupplierSearchFn;
+    portalScopeClassName?: string;
+    onPatchRow: (rowId: string, patch: Partial<SupplierRow>) => void;
+    onToggleSearch: (rowId: string) => void;
+    onCloseSearch: (rowId: string) => void;
+    onToggleReason: (
+      rowId: string,
+      flag: "pnReasonOpen" | "catReasonOpen" | "opReasonOpen",
+    ) => void;
+    onSetReason: (
+      rowId: string,
+      flag: "pnReason" | "catReason" | "opReason",
+      value: string,
+    ) => void;
+    onDiscardDraft: (rowId: string) => void;
+    onMarkRemove: (rowId: string) => void;
+    onUndoRemove: (rowId: string) => void;
+  };
+  export function PrcSupplierTable(
+    props: PrcSupplierTableProps,
+  ): JSX.Element;
+  export type PrcCatalogStatus =
+    | "idle" | "loading" | "success" | "empty" | "error";
+  export type PrcCatalogView = {
+    status: PrcCatalogStatus;
+    options: PrcCatalogOption[];
+    hasMore: boolean;
+    errorKind?: string;
+  };
+  export const PRC_CATALOG_PAGE_LIMIT: number;
+  export type PrcCatalogFetcher = (
+    kind: string,
+    query: string | undefined,
+    signal: AbortSignal | undefined,
+    limit: number,
+  ) => Promise<{ data?: { items?: unknown[]; hasMore?: boolean } }>;
+  export class PrcCatalogStore {
+    constructor(fetchCatalog: PrcCatalogFetcher, limit?: number);
+    view(path: string): PrcCatalogView;
+    getSnapshot(): Map<string, PrcCatalogView>;
+    subscribe(listener: () => void): () => void;
+    load(path: string, signal?: AbortSignal): void;
+    loadAll(paths: Iterable<string>, signal?: AbortSignal): void;
+    retry(path: string): void;
+    abortAll(): void;
+  }
 }
 
