@@ -598,6 +598,10 @@ DOES NOT OWN: identidade do usuário, cálculo de métricas, filtros de domínio
 
 Highlights aceitam `label`, `value`, `description?`, `tone?` e `loading?`. Não criar um segundo Hero.
 
+`variant="immersive"` renderiza o hero marinho (gradiente/onda via CSS, texto claro) com slot
+`decorative` opcional (`aria-hidden`, some em ≤768px); o default `surface` mantém o card claro atual.
+Combina com `density="compact"` para páginas internas.
+
 ### `PortalUserProfilePage`
 
 Página de perfil de usuário de um portal: `PagePath` → `PageHero` → grid `Identidade | Atalhos` → `sections` do portal.

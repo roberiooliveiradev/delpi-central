@@ -116,6 +116,31 @@ describe("PageHero", () => {
     expect(container.querySelectorAll("[role='button']").length).toBe(1);
   });
 
+  it("aplica variant immersive e slot decorativo", () => {
+    const cn = pageHeroBemClasses("cm");
+    const { container } = render(
+      <PageHero
+        classNames={cn}
+        title="Início"
+        variant="immersive"
+        decorative={<span>Arte</span>}
+      />,
+    );
+    const root = container.querySelector("[data-variant='immersive']");
+    expect(root?.className).toContain("delpi-ui-page-hero--immersive");
+    expect(root?.className).toContain("cm-page-hero--immersive");
+    const decorative = container.querySelector(".delpi-ui-page-hero__decorative");
+    expect(decorative?.getAttribute("aria-hidden")).toBe("true");
+    expect(decorative?.textContent).toBe("Arte");
+  });
+
+  it("variant default é surface sem decorativo", () => {
+    const cn = pageHeroBemClasses("cm");
+    const { container } = render(<PageHero classNames={cn} title="Início" />);
+    expect(container.querySelector("[data-variant='surface']")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-page-hero__decorative")).toBeNull();
+  });
+
   it("aplica density compact no root", () => {
     const cn = pageHeroBemClasses("cm");
     const { container } = render(

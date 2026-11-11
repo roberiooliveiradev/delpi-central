@@ -114,8 +114,8 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   }),
   vc("layout", "PageHero", {
     addedAt: "2026-08-06",
-    updatedAt: "2026-09-21",
-    changeNote: "Highlights aceitam description e loading; chrome sem domínio.",
+    updatedAt: "2026-11-11",
+    changeNote: "Variant immersive (hero marinho) com slot decorativo opcional.",
     description:
       "Card hero de overview/saudação: eyebrow, título, descrição, actions, badge, highlights e body/filters.",
   }),

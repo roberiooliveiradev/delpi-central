@@ -6,6 +6,8 @@ export type PageHeroHighlightTone = "neutral" | "warning" | "danger";
 
 export type PageHeroDensity = "comfortable" | "compact";
 
+export type PageHeroVariant = "surface" | "immersive";
+
 export type PageHeroHighlight = {
   id: string;
   label: ReactNode;
@@ -42,6 +44,7 @@ export type PageHeroClassNames = {
   highlightValue: string;
   highlightDescription: string;
   body: string;
+  decorative?: string;
 };
 
 export type PageHeroProps = {
@@ -57,6 +60,10 @@ export type PageHeroProps = {
   children?: ReactNode;
   /** Densidade vertical — `compact` reduz padding/título/highlights. */
   density?: PageHeroDensity;
+  /** `immersive` — hero marinho com texto claro; `surface` (default) mantém o card atual. */
+  variant?: PageHeroVariant;
+  /** Conteúdo decorativo (aria-hidden) ancorado à direita no variant immersive. */
+  decorative?: ReactNode;
   className?: string;
   "aria-label"?: string;
 };
@@ -90,6 +97,7 @@ export function pageHeroBemClasses(prefix: string): PageHeroClassNames {
       `${ui}__highlight-description`,
     ),
     body: pair(`${base}__body`, `${ui}__body`),
+    decorative: pair(`${base}__decorative`, `${ui}__decorative`),
   };
 }
 
@@ -103,11 +111,15 @@ export function PageHero({
   highlights,
   children,
   density = "comfortable",
+  variant = "surface",
+  decorative,
   className,
   "aria-label": ariaLabel,
 }: PageHeroProps) {
+  const variantRoot =
+    variant === "immersive" ? withBemModifier(classNames.root, "immersive") : classNames.root;
   const rootClass = [
-    density === "compact" ? withBemModifier(classNames.root, "compact") : classNames.root,
+    density === "compact" ? withBemModifier(variantRoot, "compact") : variantRoot,
     className,
   ]
     .filter(Boolean)
@@ -115,8 +127,18 @@ export function PageHero({
   const hasHighlights = Boolean(highlights?.length);
 
   return (
-    <section className={rootClass} aria-label={ariaLabel} data-density={density}>
+    <section
+      className={rootClass}
+      aria-label={ariaLabel}
+      data-density={density}
+      data-variant={variant}
+    >
       <span className={classNames.glow} aria-hidden="true" />
+      {decorative ? (
+        <span className={classNames.decorative} aria-hidden="true">
+          {decorative}
+        </span>
+      ) : null}
       <div className={classNames.content}>
         {eyebrow ? <p className={classNames.eyebrow}>{eyebrow}</p> : null}
         <div className={classNames.headline}>

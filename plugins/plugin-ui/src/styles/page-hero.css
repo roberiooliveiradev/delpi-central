@@ -394,3 +394,92 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Variant immersive — hero marinho (gradiente + onda via CSS, sem asset). */
+.delpi-ui-page-hero--immersive {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 45%,
+    transparent
+  );
+  background:
+    radial-gradient(
+      120% 150% at 88% -20%,
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 55%, transparent) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      90% 130% at 62% 115%,
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 38%, transparent) 0%,
+      transparent 60%
+    ),
+    linear-gradient(
+      118deg,
+      color-mix(in srgb, var(--delpi-ui-title, var(--secundary, #003866)) 88%, black) 0%,
+      color-mix(in srgb, var(--delpi-ui-title, var(--secundary, #003866)) 72%, var(--delpi-ui-accent, var(--primary, #089bdb))) 52%,
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 78%, black) 100%
+    );
+  color: #ffffff;
+}
+
+.delpi-ui-page-hero--immersive .delpi-ui-page-hero__eyebrow {
+  color: color-mix(in srgb, #ffffff 78%, var(--delpi-ui-accent, var(--primary, #089bdb)));
+}
+
+.delpi-ui-page-hero--immersive .delpi-ui-page-hero__title {
+  color: #ffffff;
+}
+
+.delpi-ui-page-hero--immersive .delpi-ui-page-hero__description {
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.delpi-ui-page-hero--immersive .delpi-ui-page-hero__glow {
+  background: color-mix(in srgb, #ffffff 22%, transparent);
+  opacity: 0.35;
+}
+
+.delpi-ui-page-hero--immersive .delpi-ui-page-hero__body {
+  border-top-color: rgba(255, 255, 255, 0.22);
+}
+
+.delpi-ui-page-hero--immersive .delpi-ui-page-hero__highlight {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.delpi-ui-page-hero--immersive .delpi-ui-page-hero__highlight-label,
+.delpi-ui-page-hero--immersive .delpi-ui-page-hero__highlight-description {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.delpi-ui-page-hero--immersive .delpi-ui-page-hero__highlight-value {
+  color: #ffffff;
+}
+
+.delpi-ui-page-hero__decorative {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: min(46%, 430px);
+  padding: 20px 28px;
+  pointer-events: none;
+  opacity: 0.9;
+  overflow: hidden;
+}
+
+.delpi-ui-page-hero__decorative > * {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+@media (max-width: 768px) {
+  .delpi-ui-page-hero__decorative {
+    display: none;
+  }
+}
