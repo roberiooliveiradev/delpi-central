@@ -118,6 +118,50 @@ Criar campanhas e selecionar clientes existentes no TOTVS para que o usuário po
 
 **Ordem futura de refinamento visual:** (1) UI-02A lista — trilha, Hero, filtros, tabela e base; (2) UI-02A.1 criação; (3) UI-02B Hero/abas/resumo; (4) UI-02B.1 seleção e resultado do lote; (5) UI-02B.2 mensagem; (6) UI-02C detalhe e cópia; (7) UI-02C.1 contato; (8) revisão de transições UI-01/UI-06/UI-07. Atualizar esta fonte canônica, sem duplicar documentos.
 
+## 1.2 Refinamento visual de UI-02A — listagem de campanhas (proposta para revisão, 11/11/2026)
+
+> **Status:** especificação visual **PROPOSTA, PENDING aprovação do solicitante**, sem código executado. Componente/props abaixo examinados em `main` HEAD `e2b341d87785345ffcabf784bd6314c3ce0115d7`: `plugins/commercial/src/app/commercialUi.ts` e `plugins/plugin-ui/src/components/layout/PageHero.tsx`; `CommercialPageHero` envolve `createDashboardPageHero` com `density="compact"` por padrão. Tamanhos em px são **alvos de layout** a confrontar com tokens/CSS do PluginUI e captura real; não afirmar que são dimensões já implementadas. Este bloco inicia a rodada de refinamento da página, do topo para baixo.
+
+### 1.2.1 Estrutura e componentes oficiais (do topo para a base)
+
+| Ordem | Componente/owner | Localização e função | Dimensão/spacing alvo PROPOSTO |
+|---|---|---|---|
+| 1 | `CommercialPagePath` (factory em `commercialUi.ts`, PluginUI) | Trilha acima do Hero: Comercial / Marketing / Pesquisa de Satisfação / Configuração; respeitar roteamento oficial | Distância inferior até Hero: **12px**; altura intrínseca, sem fixar |
+| 2 | `CommercialPageHero` (wrapper do `PageHero` real) | Hero único, `density="compact"`, `variant="surface"`; título, descrição, ações e filhos (filtros) | Padding alvo **20–24px desktop**, **16px mobile**; raio e sombra herdados do kit (não customizar) |
+| 3 | `CommercialActionButton` | No `actions` do Hero, à direita no desktop: **Ver resultados** (secundária, visão global padrão) e **Nova campanha** (primária) | Alvo mínimo de toque **44px**; gap **8px**; texto completo e sem truncar |
+| 4 | `CommercialSelectField`, `CommercialTextField`, `CommercialClearFiltersButton` / `CommercialFilterBarShell` | No `children` do Hero: Ano, Situação, Pesquisa por nome, Limpar filtros; atualização automática | Grade de filtros: desktop **4 colunas lógicas ou 3 campos + limpar alinhado**; gap **12px**. Altura dos campos conforme kit, alvo **40–44px** |
+| 5 | `CommercialSectionCard` (ou wrapper oficial validado) | Abaixo do Hero: seção **Campanhas**, título à esquerda e contador de registros à direita | Gap Hero→seção **16–20px**; padding seção **16–20px** |
+| 6 | `CommercialDataTable` | Colunas: campanha/período, situação, participantes, respostas, taxa (se API oficial), ações **Abrir** e **Resultados**. Ordenação remota quando paginada | Densidade compacta do kit, alvos de altura de linha **52–64px**, números alinhados à direita; não fixar largura de nome rígida |
+| 7 | `CommercialPagination` de `dataTableUi.ts`/comercialUi | Rodapé da listagem, total/posição, páginas e tamanho de página se componente existente suportar | Alvo gap superior **12px** e rodapé **12–16px**, default **20 registros**, tamanho pela fonte de dados |
+| 8 | `CommercialDataCardsGrid` e `CommercialDataCardsSortBar` | Alternativa em mobile, preservando nome/período/status, contagens e ações; respeitar controle de visualização existente quando aplicável | Cards com padding alvo **12–16px**, espaço entre cards **12px**, sem rolagem horizontal na página |
+| 9 | `CommercialStateBanner`, `EmptyState`, loading kit | Estados de carregar, sem campanhas, sem resultados no filtro, erro/indisponível, sem permissão | Dentro do espaço da seção, com ações pertinentes e sem criar zeros fictícios |
+
+**Nota de comprovação do PluginUI:** `PageHeroProps` realmente suporta `eyebrow`, `title`, `description`, `badge`, `actions`, `children`, `density` e `variant`; o wrapper Comercial define `compact`. Os valores exatos de padding, fontes, bordas e breakpoints **não foram provados pelo TSX** e devem ser obtidos do CSS/tokens reais antes de implementar. **Não criar CSS próprio para imitar o Hero**.
+
+### 1.2.2 Layout responsivo PROPOSTO, a testar com kit real
+
+| Área | Desktop largo (>=1200px úteis) | Intermediário (768–1199px úteis) | Mobile (<768px úteis) |
+|---|---|---|---|
+| Trilha | Uma linha, quebra se necessário | Quebra sem ellipsis de contexto relevante | Voltar + trilha compacta acessível |
+| Hero título/descrição | Texto esquerda; ações na direita | Ações podem quebrar para nova linha dentro do Hero | Título e descrição sobre ações; primária visível, ações quebram sem overflow |
+| Filtros | Ano e situação menores + pesquisa maior + limpar; alinhamento consistente | Grade de duas colunas; busca ocupa linha inteira se necessário | **Uma coluna**, campos em largura total; Limpar filtros no próprio Hero |
+| Campanhas | Tabela oficial de largura útil | Tabela responsiva oficial ou cards quando sem legibilidade | **Cards**, sem mini tabela ilegível nem rolagem horizontal da página |
+| Colunas | Campanha/período flexível, status, contagens e ações | Reduzir colunas secundárias somente conforme kit | Cards com nome, período, status, participantes, respostas, ações |
+| Paginação | Rodapé oficial e tamanho por página | Controles refluem | Paginação compacta conforme kit, alvos táteis adequados |
+
+Os limiares acima são **faixas de teste propostas**, não equivalem automaticamente aos media queries/tokens atuais; validar nos tamanhos reais do Portal, inclusive zoom 200%, teclado e modo claro/escuro. A largura da página é a **largura útil do shell Comercial**, não `100vw` nem um novo `max-width` arbitrário. Respeitar `cm-page-stack` e tokens/camadas de spacing que realmente existam; medidas explicitadas aqui servem como metas de revisão, não autorização para override CSS.
+
+### 1.2.3 Navegação e comportamentos
+
+- **APROVADO:** **Ver resultados** global no Hero → UI-01 geral padrão. **Resultados** contextual em linha/card → UI-01 filtrada naquela campanha. **Abrir** → UI-02B; **Nova campanha** → diálogo oficial UI-02A.1.
+- Ano, situação e busca aplicam automaticamente. **Limpar filtros** redefine apenas os filtros da lista. Paginação e ordenação da tabela devem refletir a consulta da API, nunca somente os 20 itens locais.
+- Situação **Agendada/Aberta/Encerrada** deriva do backend, não cor fixa por lógica local. Participantes significa cadastro na campanha, não convite enviado. `commercial.access` isolado não gerencia/consulta participantes privados.
+- **PENDING implementação:** confirmar CSS/tokens/props exatos dos componentes, comportamento de filtro e paginação remotos, modo cards do kit, acessibilidade e testes nos três intervalos.
+
+### 1.2.4 Ordem da revisão visual proposta
+
+**Passo 1:** trilha + Hero + título/descrição + posição e hierarquia de ações. **Passo 2:** filtros no Hero. **Passo 3:** cabeçalho e tabela de campanhas. **Passo 4:** paginação/estados/desktop e mobile. Cada aprovação deve atualizar este bloco com os valores confirmados, marcando decisões em vez de tratar todos os alvos como aprovados.
+
 ## 2. Wireframe A — lista e criação
 
 ```text
