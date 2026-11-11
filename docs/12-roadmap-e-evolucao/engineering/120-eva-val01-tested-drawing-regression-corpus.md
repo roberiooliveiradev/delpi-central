@@ -626,3 +626,21 @@ Correção de perda silenciosa sob `span_conflict_tolerated` parcial (`reconcile
 **Testes:** `test_eva_val01_g5_native_table_role_integrity.py` 17/17 (+6 novos: âncora prefixada ±, coluna densa sob item_band, coluna mista com veto, reparo por extensão, banda rehomed→UNKNOWN); `test_association_integrity_dec040.py` 23/23 (regressão A8/`10110088` eliminada); suíte `tests/` **1074 passed / 5 failed** — todas pré-existentes (2 OpenAPI product-registration WIP, 2 `MODEL_NOT_PROVISIONED`, 1 `_normalize_box` polygon).
 
 **Falsas associações:** nenhuma adicionada; aumento de recall veio de evidência estrutural (rowspan/promoção/grade), não de proximidade.
+
+### Log G5-RELEASE — Regressões reais A/B no pipeline fiel (2026-11-11)
+
+Harness: benchmark OCR + TableStructureEngine (código candidato `d6da831c9f` via PYTHONPATH `/tmp/candidate` no container `delpi-engineering-api`) → `build_document_understanding` + `apply_native_table_observations` local. Baseline: mesmos payloads consumidos pelo understanding de `74712e41` (pré-fix).
+
+| Desenho | Página(s) | OLD (occ/ID/UNK) | NEW (occ/ID/UNK) | Veredito |
+|---|---|---|---|---|
+| `90264302` | 1 | 4/4/0 | 4/4/0 | **PASS** — 2 conjuntos, componentes repetidos preservados |
+| `90264174` | 1 | 4/4/0 | 4/4/0 | **PASS** — B/`10130020`, qty 1,1,1,3, pai `90264174` |
+| `90264017` | 9 | 12/0/12 | 12/0/12 | **PASS** — baseline já UNKNOWN (grid sem coluna-pai tipável); componentes idênticos, zero falsos vínculos |
+| `90264135` | 10,12,13 | 102/67/35 | **102/70/32** | **PASS+** — +3 ID; p13 processou (sem COORDINATE_MISMATCH nesta config) |
+| `90264004` | 1 | 9/8/1 | **9/9/0** | **PASS+** — A1–A8 + conjuntos `50225478/79`; +1 ID legítimo |
+| `90264275` | 1 | 7/7/0 | 7/7/0 | **PASS** — inalterado |
+| `90264128` | 1 | 23/17/6 | **23/20/3** | **PASS+** — `50233810` reparado; 3 UNK = spans truncados (INCONCLUSIVE) |
+| `90264138` | 1 | 13/4/9 | **13/10/3** | **PASS+** — conjuntos não emitem como componente; 3 UNK honestos |
+| `90264061` | 1 | 5/1/4 | **5/5/0** | **PASS+** — âncora prefixada + bloco rs4 |
+
+**Saldo:** +18 ID líquidos, 0 regressões, 0 falsos vínculos, UNKNOWN preservado onde não há prova.

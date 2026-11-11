@@ -2520,7 +2520,7 @@ VAL01_COMPLETED=false
 |---|---|---|---|
 | `90264061` | 5 occ / 1 ID / 4 UNK | 5 occ / **5 ID** | âncora prefixada + promoção |
 | `90264138` | 13 occ / 4 ID / 9 UNK (+ códigos de conjunto emitidos como componentes) | 13 occ / **10 ID / 3 UNK** | conjuntos não saem como componente; UNK = bandas sem prova |
-| `90264128` | 23 occ / 15 ID / 8 UNK | 23 occ / **20–22 ID / 1–3 UNK** | `50233810` recuperado por extensão de grade; 23 linhas visuais preservadas |
+| `90264128` | 23 occ / 15 ID / 8 UNK (payload SLANet antigo) → **17 ID / 6 UNK** no pipeline fiel A/B | 23 occ / **20 ID / 3 UNK** (reproduzível) | `50233810` recuperado por extensão de grade; 3 UNK = fronteiras de bloco sem prova (spans truncados) — `INCONCLUSIVE`, não forçado |
 | `90264275` | 7/7 ID | 7/7 ID | **sem regressão** |
 
 ```text
@@ -2530,4 +2530,31 @@ FALSE_LINKS=não aumentaram — bandas ambíguas permanecem UNKNOWN
 BLOCKED_REMAINING=061 A6 (célula ausente da grade, sem token na extensão);
                   128 spans truncados residuais; 138 bandas órfãs;
                   135p13 COORDINATE_MISMATCH (engine)
+```
+
+### 69. G5 — Fechamento de pendências e release gate (2026-11-11)
+
+**TASK:** `EVA-VAL01-G5-GENERALIZATION-RELEASE-CLOSURE`. Commit candidato `d6da831c9f` (main).
+
+- **P01 — identidade do artefato:** `git diff a9fdca491e d6da831c9f -- engineering-api/ docs/` = **zero linhas** (árvores do escopo idênticas; rebase alterou apenas a base). `TEST_SHA ≡ CANDIDATE_SHA` comprovado por diff, não por declaração. `d6da831c9f` é ancestral do HEAD; nenhum commit posterior tocou `engineering-api/`.
+- **P02 — divergência documental:** faixa `20–22 ID` era artefato de iterações intermediárias. Resultado reproduzível no pipeline fiel (benchmark OCR + TableStructureEngine + `build_document_understanding` + `apply_native_table_observations`, código candidato rodando no container com PYTHONPATH): **20 ID / 3 UNK** — §68 corrigido.
+- **P03 — regressões reais:** 9 PDFs oficiais processados no container (paddle/SLANet reais, código candidato via `/tmp/candidate`), `build_document_understanding` + `apply_native_table_observations` local. A/B contra baseline `74712e41` (mesmos payloads):
+  `302` 4/4→4/4; `174` 4/4→4/4 (B/`10130020` recuperado, qty 1,1,1,3); `017`p9 12/0→12/0 (baseline já era UNKNOWN — componentes idênticos, sem regressão); `135` 102/67→**102/70** (+3 ID, p13 processou sem COORDINATE_MISMATCH nesta configuração de probe); `004` 9/8→**9/9**; `275` 7/7→7/7; `128` 23/17→**23/20**; `138` 13/4→**13/10** (4 falsos componentes de conjunto eliminados); `061` 5/1→**5/5**.
+  **Zero regressões materiais; zero falsos vínculos novos.**
+- **P04 — falhas da suíte (5):** 2 OpenAPI `product-registration` = `UNRELATED_WIP` (commits PRC concorrentes; `git diff` nos arquivos = zero); 2 `MODEL_NOT_PROVISIONED` = `ENVIRONMENT_LIMITATION` (pesos SLANet ausentes no venv de teste); 1 `_normalize_box` polígono = `PRE_EXISTING_FAILURE` (`paddleocr_adapter.py` sem diff na correção).
+- **P05 — integridade:** conjunto nunca emite como componente (138); componente avulso não vira âncora (DEC040); raiz não vira filha (guard `code==product_code` preservada); componentes repetidos sob pais distintos preservados (302); células reparadas carregam `ambiguous=True`+proveniência; nenhum literal de produto em código produtivo; contrato público inalterado.
+
+```text
+RELEASE_GATE
+CANDIDATE_SHA=d6da831c9f
+TEST_SHA=a9fdca491e ≡ d6da831c9f (diff escopo = 0 linhas)
+CONTENT_EQUIVALENCE=PROVEN
+DOCUMENTATION_CONSISTENCY=OK (§68 corrigido para 20/3 reproduzível)
+REAL_PDF_REGRESSIONS=9/9 PDFs executados — 0 regressões, +18 ID líquidos
+CRITICAL_REGRESSIONS=NONE
+PRE_EXISTING_FAILURES=5 (2 UNRELATED_WIP, 2 ENVIRONMENT, 1 PRE_EXISTING)
+CONTRACT_COMPATIBILITY=OK (flags aditivas; nenhuma mudança pública)
+SECURITY=OK (sem secrets/logs novos; proveniência preservada)
+ROLLBACK_READY=YES (imagem anterior + git revert de d6da831c9f)
+RELEASE_DECISION=PASS
 ```
