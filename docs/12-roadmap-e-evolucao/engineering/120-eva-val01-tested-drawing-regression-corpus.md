@@ -676,3 +676,12 @@ invariantes de composição:
 | Idempotência | fill só preenche célula vazia; BOM-path só age sobre `missing` — 2ª execução não duplica |
 
 Suíte: `1107 passed, 5 failed` (mesmas 5 pré-existentes fora do escopo).
+
+## G6-PROD-DEPLOY — implantação da recuperação visual (2026-11-11)
+
+Deploy canônico: servidor alinhado via `git pull --rebase` (commit local
+infra Keycloak preservado) + `up-prod-sequential.sh --build
+engineering-api`. Imagem nova `sha256:32d79d0ab067`; anterior
+`sha256:86a20bc05caa` preservada para rollback (`git revert` + rebuild).
+Container healthy, `/health` 200, `_disambiguate_by_column_role`
+verificado em runtime. Validação funcional E2E fica com EVA/Coordination.
