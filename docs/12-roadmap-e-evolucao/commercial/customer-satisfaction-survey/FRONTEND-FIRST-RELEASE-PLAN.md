@@ -65,7 +65,7 @@ Paths internos são **propostos**, não encontrados implementados. A nomenclatur
 ### 3.2 Detalhe da campanha — participantes e convites (Gestão)
 
 - Cabeçalho com nome, janela e situação. Seções **Participantes** e **Respostas** dentro da página; sem hierarquia adicional de telas nesta versão.
-- Buscar cliente pelo fluxo existente `commercial-api → api-delpi/TOTVS`, selecionar o par completo `customer_code/customer_store` e adicionar à campanha. Não criar cliente no Portal.
+- **Seleção múltipla e inclusão em lote aprovadas (11/11/2026):** buscar empresas pelo fluxo existente `commercial-api → api-delpi/TOTVS`, selecionar **vários pares completos** `customer_code/customer_store`, revisar a seleção e adicionar à campanha em uma operação com validação final no backend. Não criar cliente no Portal. Não confundir inclusão em lote com envio de convites; nenhum disparo automático. Contrato de lote/erros e suporte HTTP são **PENDING** de implementação.
 - Tabela de participantes: empresa (nome + código/loja), contato/e-mail opcional do convite, **Pendente/Respondido** e ações **Copiar link** / **Copiar mensagem**. Permitido ajustar contato do convite sem editar TOTVS. Não exibir “Enviado”, “Entregue” ou contadores de tentativas, pois o Portal não controla esses eventos.
 - **Copiar mensagem** monta texto do convite com link estável retornado pela API; pode usar um texto aprovado no próprio cliente, sem template CRUD de campanha. Não criar botão **Enviar e-mail**. Copiar novamente usa o mesmo link; não gerar token no navegador.
 - Ação de remover participante (R09) **não aparece na primeira entrega**, salvo definição e implementação segura posterior.
