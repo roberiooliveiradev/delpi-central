@@ -2990,6 +2990,8 @@ declare module "@delpi/plugin-ui/index" {
     occurredAt: string;
     timeLabel: string;
     actorLabel: string;
+    actorUserId: string | null;
+    actorEmail: string | null;
     transition: string | null;
     reasonText: string | null;
     channel: string | null;

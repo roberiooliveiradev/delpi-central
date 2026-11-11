@@ -33,6 +33,8 @@ import {
   type PrcRequestDetail,
   type PrcTimelineEvent,
 } from "./prcApi";
+import { RequestHistoryTimeline } from "../../components/RequestHistoryTimeline";
+import { useParticipantAvatarUrls } from "../../hooks/useParticipantAvatarUrls";
 import {
   MyRequestsAttachmentPreviewStrip,
   MyRequestsFileDropzone,
@@ -41,7 +43,6 @@ import {
   MyRequestsSectionCard,
   MyRequestsStateBanner,
   MyRequestsStatusBadge,
-  MyRequestsTimeline,
   TextField,
 } from "../../ui/mrUi";
 
@@ -85,6 +86,11 @@ export function PrcCasePage({ requestId, onBack }: Props) {
   }, [requestId]);
 
   useEffect(() => load(), [load]);
+
+  const historyViews = useMemo(() => prcTimelineItemViews(timeline), [timeline]);
+  const avatarByUserId = useParticipantAvatarUrls(
+    historyViews.map((v) => v.actorUserId),
+  );
 
   const openTargets = useMemo(
     () => detail?.correctionExchange?.openReturn?.targets || [],
@@ -335,21 +341,20 @@ export function PrcCasePage({ requestId, onBack }: Props) {
             ) : null}
           </MyRequestsSectionCard>
 
-          <MyRequestsSectionCard title="Histórico">
-            <MyRequestsTimeline
-              items={prcTimelineItemViews(timeline).map((v) => ({
+          <MyRequestsSectionCard title="Linha do tempo">
+            <RequestHistoryTimeline
+              items={historyViews.map((v) => ({
                 id: v.id,
                 title: v.title,
                 occurredAt: v.occurredAt,
                 timeLabel: v.timeLabel,
-                detail: [
-                  v.transition ? `${v.transition} ·` : null,
-                  v.reasonText,
-                ]
-                  .filter(Boolean)
-                  .join(" "),
-                meta: v.metaText,
+                actorName: v.actorLabel || null,
+                actorUserId: v.actorUserId,
+                transition: v.transition,
+                detailText: v.reasonText,
+                metaText: v.metaText,
               }))}
+              avatarByUserId={avatarByUserId}
             />
           </MyRequestsSectionCard>
         </>

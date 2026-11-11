@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { listEvents } from "../api/requestsApi";
-import { PersonIdentity } from "./PersonIdentity";
+import { RequestHistoryTimeline } from "./RequestHistoryTimeline";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   formatDateTimePtBr,
@@ -10,12 +10,7 @@ import {
 } from "../content/presentationLabels";
 import { useParticipantAvatarUrls } from "../hooks/useParticipantAvatarUrls";
 import type { TimelineEvent } from "../types/requests";
-import {
-  MyRequestsEmptyState,
-  MyRequestsSectionCard,
-  MyRequestsStateBanner,
-  MyRequestsTimeline,
-} from "../ui/mrUi";
+import { MyRequestsSectionCard } from "../ui/mrUi";
 
 type TimelinePanelProps = {
   requestId: string;
@@ -44,33 +39,16 @@ export function TimelinePanel({ requestId, refreshKey = 0 }: TimelinePanelProps)
 
   const timelineItems = useMemo(
     () =>
-      items.map((item) => {
-        const name = (item.actor_name || "").trim();
-        const userId = (item.actor_user_id || "").trim();
-        const justification = timelineEventJustification(item.payload);
-        return {
-          id: item.id,
-          title: timelineEventTitle(item),
-          occurredAt: item.created_at || undefined,
-          timeLabel: formatDateTimePtBr(item.created_at),
-          detail:
-            name || userId || justification ? (
-              <div className="my-requests-timeline-detail">
-                {name || userId ? (
-                  <PersonIdentity
-                    name={name || null}
-                    userId={userId || null}
-                    src={userId ? avatarByUserId.get(userId) || null : null}
-                  />
-                ) : null}
-                {justification ? (
-                  <p className="my-requests-timeline-detail__reason">{justification}</p>
-                ) : null}
-              </div>
-            ) : undefined,
-        };
-      }),
-    [items, avatarByUserId],
+      items.map((item) => ({
+        id: item.id,
+        title: timelineEventTitle(item),
+        occurredAt: item.created_at || undefined,
+        timeLabel: formatDateTimePtBr(item.created_at),
+        actorName: (item.actor_name || "").trim() || null,
+        actorUserId: (item.actor_user_id || "").trim() || null,
+        detailText: timelineEventJustification(item.payload),
+      })),
+    [items],
   );
 
   return (
@@ -79,13 +57,11 @@ export function TimelinePanel({ requestId, refreshKey = 0 }: TimelinePanelProps)
       hint={MY_REQUESTS_HELP_TOOLTIPS.timeline.section}
     >
       <div data-help="timeline">
-        {error ? (
-          <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
-        ) : null}
-        {!error && items.length === 0 ? (
-          <MyRequestsEmptyState message="Ainda não há eventos registrados." />
-        ) : null}
-        {timelineItems.length > 0 ? <MyRequestsTimeline items={timelineItems} /> : null}
+        <RequestHistoryTimeline
+          items={timelineItems}
+          avatarByUserId={avatarByUserId}
+          error={error}
+        />
       </div>
     </MyRequestsSectionCard>
   );

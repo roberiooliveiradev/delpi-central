@@ -19,14 +19,18 @@ describe("PersonIdentity / avatar surfaces", () => {
   it("Solicitante e Timeline usam PersonIdentity + hook de avatar", () => {
     const detail = read("pages/RequestDetailPage.tsx");
     const timeline = read("components/TimelinePanel.tsx");
+    const history = read("components/RequestHistoryTimeline.tsx");
     expect(detail).toMatch(/PersonIdentity/);
     expect(detail).toMatch(/useParticipantAvatarUrls/);
     expect(detail).toMatch(/created_by_user_id/);
-    expect(timeline).toMatch(/PersonIdentity/);
+    // PRC-REF-023-UI-FIX-04: o container tradicional delega a
+    // identidade ao renderer compartilhado.
+    expect(timeline).toMatch(/RequestHistoryTimeline/);
     expect(timeline).toMatch(/useParticipantAvatarUrls/);
     expect(timeline).toMatch(/actor_user_id/);
     expect(timeline).toMatch(/timelineEventTitle/);
     expect(timeline).toMatch(/timelineEventJustification/);
+    expect(history).toMatch(/PersonIdentity/);
     expect(detail).not.toMatch(/commercial-api/);
     expect(timeline).not.toMatch(/core-api\/person/);
   });

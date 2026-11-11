@@ -963,6 +963,8 @@ export type PrcTimelineItemView = {
   occurredAt: string;
   timeLabel: string;
   actorLabel: string;
+  actorUserId: string | null;
+  actorEmail: string | null;
   transition: string | null;
   reasonText: string | null;
   channel: string | null;
@@ -998,6 +1000,8 @@ export function prcTimelineItemViews(
         occurredAt: ev.occurred_at,
         timeLabel: prcFormatTimelineDate(ev.occurred_at),
         actorLabel: actor,
+        actorUserId: ev.actor_subject || null,
+        actorEmail: ev.actor_email || null,
         transition,
         reasonText: ev.reason?.trim() || null,
         channel,
