@@ -112,6 +112,17 @@ Estados alternativos via backend:
 - **Testes:** sucesso somente após commit, ausência de resumo, ausência de segundo envio, tratamento de conflitos e erro de rede, teclado/leitor de tela e celular. Após sucesso, desativar aviso de saída com respostas não salvas.
 - **Status:** **APROVADO/DOCUMENTADO**; UI-03 e integração reais ainda **NÃO IMPLEMENTADOS / NÃO TESTADOS**.
 
+### Decisão aprovada — apresentação numérica das escalas 1–5 (11/11/2026)
+
+**APROVADO PELO SOLICITANTE — OPÇÃO A:** nas dez perguntas de dimensão e na pergunta de **satisfação geral**, usar **seleção numérica explícita de 1, 2, 3, 4 ou 5**, com **o significado da escala sempre visível**. Não substituir esses controles por estrelas, emojis ou símbolos sem valor numérico. Para as dez dimensões, oferecer **“Não se aplica”** como alternativa **exclusiva dentro do mesmo grupo de resposta**, claramente separada visualmente das cinco notas. Na satisfação geral, manter apenas 1–5, sem “Não se aplica”, conforme contrato.
+
+- **Legenda canônica da escala 1–5 (conforme Word):** 1 = Muito insatisfeito; 2 = Insatisfeito; 3 = Neutro; 4 = Satisfeito; 5 = Muito satisfeito. Exibir a interpretação para cada escolha, não depender somente de rótulos de extremos; fornecer nome acessível a cada opção.
+- **Seleção única:** marcar uma nota desmarca “Não se aplica” e vice-versa. Antes de qualquer seleção, a questão está **sem resposta** (não presumir nota padrão ou N/A). A escolha explícita de “Não se aplica” satisfaz o preenchimento obrigatório da dimensão, mas não compõe média da dimensão; não aplicar essa alternativa às duas notas gerais.
+- **Recomendação é outra escala:** a pergunta 12 mantém seleção numérica **0–10** com seus rótulos e comportamento próprio. Esta aprovação **não** altera a escala da recomendação nem a redação literal das 15 perguntas.
+- **Responsividade e acesso:** botões/controles com seleção visível, alvos adequados ao toque, foco e teclado, agrupamento semântico e contraste. Reutilizar primitiva comprovada do `@delpi/plugin-ui` compatível com `plugins/public-hub`; os nomes/exportações exatos dos controles continuam **TO_INVENTORY**. Não criar conjunto paralelo de estrelas/ratings.
+- **Interação com decisões anteriores:** a escolha válida atualiza imediatamente a contagem das 12 avaliações; a etapa só avança quando suas obrigatórias estão respondidas; revisão oferece “Editar” por seção. A API continua autoridade para validação final.
+- **Status:** experiência **APROVADA E DOCUMENTADA**, implementação/testes **PENDING**.
+
 ## 4. Inventário e escolha dos componentes visuais
 
 | Região | Componente/fonte existente | Aplicação |
