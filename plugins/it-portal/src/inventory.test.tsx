@@ -454,3 +454,49 @@ describe("databases", () => {
     expect(screen.getByText("SVC-0001 · Portal Interno usa DB-0001 · ERP_PROD")).toBeTruthy();
   });
 });
+
+
+describe("Windows automatic inventory (E4.S3)", () => {
+  it("shows Windows CPU, memory, volumes, uptime and services without Linux-only sections", async () => {
+    mockApi({
+      ...serverDetailRoutes(INVENTORY_VIEWER),
+      [`/servers/${SERVER_ID}/observations/latest`]: {
+        data: {
+          id: "1c1f1c1e-2f8a-4c3b-9d7e-0a1b2c3d4e5f",
+          server_id: SERVER_ID,
+          run_id: "win-obs-0001",
+          source: "windows_host_collector",
+          collector_client_id: "it-portal-windows-pilot01",
+          observed_at: "2026-11-11T16:49:09Z",
+          received_at: "2026-11-11T16:49:10Z",
+          schema_version: "1",
+          status: "complete",
+          summary: {
+            os: { name: "Microsoft Windows Server 2019 Standard", version: "10.0.17763" },
+            cpu_logical: 8,
+            cpu_usage_percent: 33,
+            uptime_seconds: 7824971,
+            memory: { total_bytes: 47243603968, available_bytes: 5511974912 },
+            volumes: [{ mount_point: "I:", size_bytes: 323175000000,
+                        used_bytes: 314775000000, used_percent: 97.39 }],
+            windows_services: [{ name: "EventLog", active_state: "running", sub_state: "automatic" }],
+          },
+          sections_status: { os: "ok", cpu: "ok", memory: "ok", volumes: "ok", windows_services: "ok" },
+          divergences: [],
+          created_at: "2026-11-11T16:49:10Z",
+          presentation_status: "available",
+        },
+      },
+    });
+    renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
+    expect(await screen.findByText("Serviços Windows observados")).toBeTruthy();
+    expect(screen.getByText("Uso de CPU (amostra)")).toBeTruthy();
+    expect(screen.getByText("33%")).toBeTruthy();
+    expect(screen.getByText("Uptime")).toBeTruthy();
+    expect(screen.getByText("Memória usada (amostra)")).toBeTruthy();
+    expect(screen.getByText(/97\\.39%/)).toBeTruthy();
+    expect(screen.getByText(/EventLog/)).toBeTruthy();
+    expect(screen.queryByText("Docker")).toBeNull();
+    expect(screen.queryByText("Swap total")).toBeNull();
+  });
+});
