@@ -47,8 +47,17 @@ $files = @(
     'Invoke-ItPortalWindowsScheduledObservation.ps1'
 )
 foreach ($name in $files) {
-    if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot $name) -PathType Leaf)) {
+    $sourceFile = Join-Path $PSScriptRoot $name
+    if (-not (Test-Path -LiteralPath $sourceFile -PathType Leaf)) {
         throw "Arquivo obrigatorio nao encontrado no pacote de origem: $name"
+    }
+    $tokens = $null
+    $parseErrors = $null
+    [void][System.Management.Automation.Language.Parser]::ParseFile(
+        $sourceFile, [ref]$tokens, [ref]$parseErrors
+    )
+    if ($parseErrors.Count -gt 0) {
+        throw "Erro de sintaxe no arquivo aprovado: $name"
     }
 }
 
