@@ -331,6 +331,45 @@ export const SHELL_CONTENT = {
   },
 } as const;
 
+export const HOME_CONTENT = {
+  heroSearchLabel: "Buscar servidores, serviços, integrações…",
+  health: {
+    title: "Saúde do inventário",
+    subtitle: "Criticidade cadastrada — não é monitoramento nem disponibilidade.",
+    centerLabel: "sem criticidade alta ou crítica",
+    highOrCritical: "Alta ou crítica",
+    lowOrMedium: "Baixa ou média",
+  },
+  quickAccess: {
+    title: "Acesso rápido",
+    subtitle: "Principais áreas do portal.",
+  },
+  upcomingActions: {
+    title: "Próximas ações",
+    subtitle: "Cronograma das próximas entregas e evoluções.",
+    items: [
+      {
+        id: "monitoring",
+        title: "Monitoramento da infraestrutura",
+        description: "Implantação do módulo de monitoramento.",
+        when: "Nov/2026",
+      },
+      {
+        id: "glpi",
+        title: "Integração com GLPI",
+        description: "Sincronização de ativos e chamados.",
+        when: "Dez/2026",
+      },
+      {
+        id: "discovery",
+        title: "Descoberta automática",
+        description: "Inventário automatizado de servidores e serviços.",
+        when: "Jan/2027",
+      },
+    ],
+  },
+} as const;
+
 export const STATE_CONTENT = {
   forbiddenTitle: "Acesso restrito",
   forbiddenPortal:

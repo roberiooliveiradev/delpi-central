@@ -1,5 +1,14 @@
 import { AppWindow, BookOpen, ClipboardList, Database, LayoutDashboard, Network, Server, Workflow } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 import { SHELL_CONTENT } from "../content/labels";
 import {
@@ -24,6 +33,15 @@ const NAV_ICONS: Record<NavId, ReactNode> = {
   action_plans: <ClipboardList size={16} strokeWidth={1.75} aria-hidden="true" />,
   help: <BookOpen size={16} strokeWidth={1.75} aria-hidden="true" />,
 };
+
+const ShellSearchContext = createContext<{ openPalette: () => void }>({
+  openPalette: () => undefined,
+});
+
+/** Abre a mesma CommandPalette da TopBar (usado pela busca do hero da Home). */
+export function useShellSearch(): { openPalette: () => void } {
+  return useContext(ShellSearchContext);
+}
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -78,9 +96,14 @@ export function PluginShell({ view, children }: { view: PluginView; children: Re
     setPaletteQuery("");
   }, []);
 
+  const openPalette = useCallback(() => {
+    if (navIds.length > 0) setPaletteOpen(true);
+  }, [navIds.length]);
+
   return (
     <div className={`${ITP_PORTAL_SCOPE} dashboard-page`}>
-      <div className="itp-page-stack">
+      <ShellSearchContext.Provider value={{ openPalette }}>
+        <div className="itp-page-stack">
         <ItpTopBar
           aria-label={SHELL_CONTENT.navAriaLabel}
           activeId={activeNavId(view) ?? ""}
@@ -123,8 +146,9 @@ export function PluginShell({ view, children }: { view: PluginView; children: Re
             />
           }
         />
-        {children}
-      </div>
+          {children}
+        </div>
+      </ShellSearchContext.Provider>
 
       <ItpCommandPalette
         open={paletteOpen && navIds.length > 0}
