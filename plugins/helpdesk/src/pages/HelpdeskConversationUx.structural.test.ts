@@ -35,7 +35,8 @@ describe("HELPDESK-MFE-UX-001-R3 conversation detail", () => {
     expect(detail).not.toMatch(/isTechnician|isRequester|participantRole/);
     expect(view).toContain("mine: ticket.requester_mine === true");
     expect(view).toContain("mine: entry.mine === true");
-    expect(view).toContain('entry.kind === "followup" || entry.kind === "solution" || entry.kind === "task"');
+    expect(view).toContain('entry.kind === "document"');
+    expect(view).toContain('kind: "document"');
   });
 
   it("composer starts compact without fill and keeps attach/send + rich text", () => {

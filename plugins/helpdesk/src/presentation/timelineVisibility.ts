@@ -33,13 +33,14 @@ export const TIMELINE_VISIBILITY_OPTIONS: {
 ];
 
 export function conversationMessageVisible(
-  kind: "opening" | "followup" | "solution" | "task",
+  kind: "opening" | "followup" | "solution" | "task" | "document",
   visibility: TimelineVisibilityState,
 ): boolean {
   if (kind === "opening") return visibility.description;
   if (kind === "followup") return visibility.followups;
   if (kind === "task") return visibility.tasks;
   if (kind === "solution") return visibility.solutions;
+  if (kind === "document") return visibility.documents;
   return true;
 }
 

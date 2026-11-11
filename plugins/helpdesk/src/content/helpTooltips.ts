@@ -65,7 +65,8 @@ export const helpTooltips = {
       "Nome do nível de serviço associado ao chamado. Não é o prazo absoluto de atendimento ou solução.",
     approvalsSurface:
       "Solicitações de aprovação deste chamado. Aceite ou recuse quando for sua vez, ou peça uma nova aprovação.",
-    attachments: "Arquivos ligados ao chamado. Clique para prévia ou baixar.",
+    attachments:
+      "Arquivos do chamado. Documentos da conversa aparecem na bolha de quem enviou; órfãos ficam em Documentos.",
     actionFields: {
       reply: {
         model:

@@ -146,6 +146,8 @@ class TimelineEntry:
     planned_end: str = ""
     solution_type_name: str = ""
     solution_status: int | None = None
+    # Timeline type Document — sibling bubble (GLPI), not nested under followup.
+    document_id: int | None = None
 
 
 @dataclass(frozen=True)

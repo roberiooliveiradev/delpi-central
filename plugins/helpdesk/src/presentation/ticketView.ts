@@ -355,13 +355,15 @@ export type ConversationSource = {
     planned_end?: string;
     solution_type_name?: string;
     solution_status?: number | null;
+    /** Present when kind=document (GLPI Timeline Document sibling). */
+    document_id?: number | null;
   }[];
   attachments: TicketAttachment[];
 };
 
 export type ConversationMessage = {
   id: string;
-  kind: "opening" | "followup" | "solution" | "task";
+  kind: "opening" | "followup" | "solution" | "task" | "document";
   headingText: string;
   bodyText: string;
   bodyHtml: string;
@@ -588,7 +590,7 @@ function entryAttachmentIds(
 
 /**
  * Documents with no known owner and not embedded in any message — consolidated
- * "Documentos do chamado" area (spec: never invent a message association).
+ * "Documentos do chamado" area (true orphans only; Timeline Document is a bubble).
  */
 export function unassignedTicketAttachments(
   ticket: ConversationSource,
@@ -608,6 +610,15 @@ export function unassignedTicketAttachments(
 
 export function conversationMessages(ticket: ConversationSource, now: Date): ConversationMessage[] {
   const attachments = dedupeTicketAttachments(ticket.attachments);
+  const documentTimelineIds = new Set(
+    ticket.timeline
+      .filter((entry) => entry.kind === "document")
+      .map((entry) => Number(entry.document_id))
+      .filter((id) => Number.isFinite(id) && id > 0),
+  );
+  const openingAttachments = attachments.filter(
+    (file) => !documentTimelineIds.has(file.document_id),
+  );
   const requester = ticket.requester_display_name.trim();
   const requesterDirectoryId = (ticket.requester_directory_user_id || "").trim();
   const openingHtml = stampHelpdeskAttachmentIds(ticket.description_html || "");
@@ -625,15 +636,34 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
       "opening",
       0,
       ticket.description_html || "",
-      attachments,
+      openingAttachments,
     ),
   };
   const replies = ticket.timeline
     .filter(
       (entry) =>
-        entry.kind === "followup" || entry.kind === "solution" || entry.kind === "task",
+        entry.kind === "followup" ||
+        entry.kind === "solution" ||
+        entry.kind === "task" ||
+        entry.kind === "document",
     )
     .map((entry): ConversationMessage => {
+      if (entry.kind === "document") {
+        const documentId = Number(entry.document_id);
+        const attachmentIds =
+          Number.isFinite(documentId) && documentId > 0 ? [documentId] : [];
+        return {
+          id: `document-${attachmentIds[0] || entry.id}`,
+          kind: "document",
+          headingText: "",
+          bodyText: "",
+          bodyHtml: "",
+          createdAtLabel: relativeTimeLabel(entry.created_at, now),
+          authorName: entry.author_display_name.trim(),
+          mine: entry.mine === true,
+          attachmentIds,
+        };
+      }
       const bodyHtml = stampHelpdeskAttachmentIds(entry.content_html || "");
       const kind =
         entry.kind === "solution" ? "solution" : entry.kind === "task" ? "task" : "followup";

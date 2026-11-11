@@ -190,6 +190,10 @@ describe("timelineVisibility", () => {
     const hiddenTasks = { ...DEFAULT_TIMELINE_VISIBILITY, tasks: false };
     expect(conversationMessageVisible("task", hiddenTasks)).toBe(false);
     expect(conversationMessageVisible("followup", hiddenTasks)).toBe(true);
+    expect(conversationMessageVisible("document", DEFAULT_TIMELINE_VISIBILITY)).toBe(true);
+    expect(conversationMessageVisible("document", { ...DEFAULT_TIMELINE_VISIBILITY, documents: false })).toBe(
+      false,
+    );
     expect(conversationMessageVisible("opening", { ...DEFAULT_TIMELINE_VISIBILITY, description: false })).toBe(
       false,
     );

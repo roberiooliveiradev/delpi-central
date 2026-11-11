@@ -412,11 +412,14 @@ def test_mapping_publishes_sanitized_html_and_rewrites_owned_documents():
     assert "<script" not in detail.description_html.lower()
     assert "javascript:" not in detail.description_html.lower()
     assert "onerror" not in detail.description_html.lower()
-    assert detail.timeline[0].content == "Cabo ok"
-    assert "/front/document.send.php" not in detail.timeline[0].content_html
-    assert 'src="/apps/helpdesk-api/tickets/1108/attachments/391"' in detail.timeline[0].content_html
-    assert "alheio-fu" not in detail.timeline[0].content_html
-    assert "<script" not in detail.timeline[0].content_html.lower()
+    assert [entry.kind for entry in detail.timeline] == ["document", "followup"]
+    assert detail.timeline[0].document_id == 391
+    assert detail.timeline[0].content == "placa.png"
+    assert detail.timeline[1].content == "Cabo ok"
+    assert "/front/document.send.php" not in detail.timeline[1].content_html
+    assert 'src="/apps/helpdesk-api/tickets/1108/attachments/391"' in detail.timeline[1].content_html
+    assert "alheio-fu" not in detail.timeline[1].content_html
+    assert "<script" not in detail.timeline[1].content_html.lower()
     assert [item.document_id for item in detail.attachments] == [391]
     detail = parse_ticket_detail(
         {
@@ -607,7 +610,19 @@ def test_mapping_keeps_followup_document_and_task():
             {"type": "Document", "item": {"documents_id": 4, "name": "foto.jpg", "mime": "image/jpeg"}},
         ],
     )
-    assert [entry.content for entry in detail.timeline] == ["Cabo ok", "interno"]
+    assert [entry.kind for entry in detail.timeline] == [
+        "followup",
+        "document",
+        "task",
+        "document",
+    ]
+    assert [entry.content for entry in detail.timeline] == [
+        "Cabo ok",
+        "logo.png",
+        "interno",
+        "foto.jpg",
+    ]
+    assert [entry.document_id for entry in detail.timeline if entry.kind == "document"] == [2, 4]
     assert detail.attachments == (
         Attachment(2, "logo.png", "image/png"),
         Attachment(4, "foto.jpg", "image/jpeg"),

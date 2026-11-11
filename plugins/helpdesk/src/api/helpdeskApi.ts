@@ -118,6 +118,8 @@ export type TimelineEntry = {
   planned_end?: string;
   solution_type_name?: string;
   solution_status?: number | null;
+  /** Set when kind=document (GLPI Timeline Document sibling bubble). */
+  document_id?: number | null;
 };
 
 export type TicketValidation = {

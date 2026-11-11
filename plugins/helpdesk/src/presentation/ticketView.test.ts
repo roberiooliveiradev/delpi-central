@@ -485,6 +485,73 @@ describe("conversationMessages", () => {
     expect(messages[1]?.attachmentIds).toEqual([200]);
     expect(unassignedTicketAttachments(source, messages)).toEqual([]);
   });
+
+  it("Timeline Document vira bolha própria e não cai em Documentos", () => {
+    const source = {
+      title: "CPV Filial",
+      description: "Problema no cálculo",
+      created_at: "2026-10-21T10:00:00Z",
+      requester_display_name: "Joici Motta",
+      timeline: [
+        {
+          id: 9001,
+          kind: "document",
+          content: "CPV Filial.docx",
+          created_at: "2026-10-21T10:05:00Z",
+          author_display_name: "Joici Motta",
+          document_id: 4401,
+          mine: false,
+        },
+        {
+          id: 42,
+          kind: "followup",
+          content: "Perguntas",
+          created_at: "2026-10-21T11:00:00Z",
+          author_display_name: "Robério Oliveira",
+          mine: true,
+        },
+      ],
+      attachments: [
+        { document_id: 4401, filename: "CPV Filial.docx", mime: "application/vnd.openxmlformats", itemtype: "" },
+      ],
+    };
+    const messages = conversationMessages(source, now);
+    expect(messages.map((item) => item.kind)).toEqual(["opening", "document", "followup"]);
+    expect(messages[1]).toMatchObject({
+      kind: "document",
+      authorName: "Joici Motta",
+      attachmentIds: [4401],
+      bodyText: "",
+      mine: false,
+    });
+    expect(messages[0]?.attachmentIds).toEqual([]);
+    expect(unassignedTicketAttachments(source, messages)).toEqual([]);
+  });
+
+  it("Document na timeline não duplica anexo na abertura mesmo com itemtype Ticket", () => {
+    const source = {
+      title: "Arquivo",
+      description: "texto",
+      created_at: "2026-09-21T10:00:00Z",
+      requester_display_name: "Ana",
+      timeline: [
+        {
+          id: 7,
+          kind: "document",
+          content: "doc.pdf",
+          created_at: "2026-09-21T10:30:00Z",
+          author_display_name: "Ana",
+          document_id: 77,
+        },
+      ],
+      attachments: [{ document_id: 77, itemtype: "Ticket", items_id: 1, filename: "doc.pdf" }],
+    };
+    const messages = conversationMessages(source, now);
+    expect(messages[0]?.attachmentIds).toEqual([]);
+    expect(messages[1]?.kind).toBe("document");
+    expect(messages[1]?.attachmentIds).toEqual([77]);
+    expect(unassignedTicketAttachments(source, messages)).toEqual([]);
+  });
 });
 
 describe("relativeTimeLabel", () => {

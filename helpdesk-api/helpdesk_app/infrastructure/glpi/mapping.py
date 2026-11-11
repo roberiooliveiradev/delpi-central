@@ -869,6 +869,35 @@ def _timeline_entry(
     entry_kind = _timeline_kind(kind)
     if entry_kind is None:
         return None
+    if entry_kind == "document":
+        attachment = _attachment(row)
+        if attachment is None:
+            return None
+        if _is_private(payload):
+            return None
+        user = payload.get("user") or payload.get("users_id") or {}
+        if isinstance(user, int):
+            user = {"id": user}
+        author = _person_name(user) if isinstance(user, dict) else ""
+        try:
+            entry_id = int(payload.get("id") or attachment.document_id)
+        except (TypeError, ValueError):
+            entry_id = int(attachment.document_id)
+        return TimelineEntry(
+            id=entry_id,
+            kind="document",
+            content=attachment.filename or "Documento",
+            content_html="",
+            created_at=str(
+                payload.get("date_creation")
+                or payload.get("date")
+                or payload.get("date_mod")
+                or ""
+            ),
+            author_display_name=author,
+            author_identity=_person_identity(user if isinstance(user, dict) else {}),
+            document_id=int(attachment.document_id),
+        )
     row = payload
     if _is_private(row):
         return None
@@ -937,7 +966,8 @@ def _timeline_kind(raw: str) -> str | None:
     """Map HLAPI Timeline types exposed in Helpdesk conversation.
 
     Validation stays on ``validations[]`` (not inline timeline). Task is included so
-    technician workspace can verify create-task postconditions.
+    technician workspace can verify create-task postconditions. Document is a
+    sibling timeline bubble (GLPI), not nested under a followup.
     """
     if raw in {"Followup", "ITILFollowup"}:
         return "followup"
@@ -945,6 +975,8 @@ def _timeline_kind(raw: str) -> str | None:
         return "solution"
     if raw in {"Task", "TicketTask", "ITILTask"}:
         return "task"
+    if raw == "Document":
+        return "document"
     return None
 
 

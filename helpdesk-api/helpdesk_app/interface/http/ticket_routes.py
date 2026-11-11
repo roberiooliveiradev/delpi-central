@@ -587,6 +587,7 @@ def get_ticket(request: Request, ticket_id: int):
                 "planned_end": entry.planned_end,
                 "solution_type_name": entry.solution_type_name,
                 "solution_status": entry.solution_status,
+                "document_id": entry.document_id,
             }
             for entry in ticket.timeline
         ],
