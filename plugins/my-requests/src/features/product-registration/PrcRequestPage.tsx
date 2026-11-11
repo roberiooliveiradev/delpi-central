@@ -1,10 +1,12 @@
-/** PRC-REF-023-F03 — formulário completo do solicitante de
- * matéria-prima/produto em Minhas Solicitações.
+/** PRC-REF-023-F03/F04 — formulário completo do solicitante de
+ * matéria-prima/produto em Minhas Solicitações, em wizard de 3 etapas
+ * com paridade funcional ao PrcCreatePage do Portal Engenharia:
+ * Identificação → Ficha técnica → Revisar e enviar.
  *
  * Mesmo contrato PRC da Engineering API (ficha completa, CREATE/UPDATE,
- * fornecedores, documentos opcionais). A autoridade de validação,
- * workflow e identificador é sempre o backend; este componente apenas
- * monta o payload oficial e acompanha o upload de documentos.
+ * fornecedores SA2/SA5, documentos opcionais). A autoridade de
+ * validação, workflow e identificador é sempre o backend; este
+ * componente apenas monta o payload oficial e acompanha o upload.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -16,6 +18,7 @@ import {
   buildUpdateIntakeBody,
   catalogOptions,
   computeLinkDiff,
+  computeLinkDiffDetailed,
   computeScalarDiff,
   duplicateDraftRowIds,
   emptySupplierRow,
@@ -51,10 +54,12 @@ import {
   type PrcSupplierHit,
 } from "./prcApi";
 import {
+  DetailFields,
   MyRequestsAttachmentPreviewStrip,
   MyRequestsFileDropzone,
   MyRequestsFormActions,
   MyRequestsLoadingState,
+  MyRequestsProgressTracker,
   MyRequestsSectionCard,
   MyRequestsStateBanner,
   SegmentToggle,
@@ -63,15 +68,28 @@ import {
 } from "../../ui/mrUi";
 
 const PRC_SOURCE = "my-requests";
-const FIELD_ORDER = [
-  "description",
-  "group",
-  "productKind",
-  "unit",
-  "defaultWarehouse",
-  "accountingAccount",
-  "thirdPartyProduct",
-  "customerReference",
+
+const STEPS = [
+  { id: "identify", label: "Identificação" },
+  { id: "sheet", label: "Ficha técnica" },
+  { id: "review", label: "Revisar e enviar" },
+];
+
+/** Agrupamento da ficha — paridade com o wizard do Portal Engenharia. */
+const FIELD_GROUPS: { title: string; paths: string[] }[] = [
+  {
+    title: "Identificação e classificação",
+    paths: ["description", "group", "productKind", "unit"],
+  },
+  {
+    title: "Estoque e contabilidade",
+    paths: [
+      "defaultWarehouse",
+      "accountingAccount",
+      "thirdPartyProduct",
+      "customerReference",
+    ],
+  },
 ];
 
 type Props = {
@@ -80,6 +98,7 @@ type Props = {
 };
 
 export function PrcRequestPage({ onCancel, onDone }: Props) {
+  const [step, setStep] = useState(0);
   const [refData, setRefData] = useState<PrcReferenceData | null>(null);
   const [loadError, setLoadError] = useState("");
   const [requestType, setRequestType] = useState<"create" | "update">(
@@ -110,14 +129,21 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
   const [uploadSummary, setUploadSummary] = useState("");
   const idemKey = useRef(`mr-prc-${crypto.randomUUID()}`);
 
-  const fieldSpecs = useMemo(() => {
-    const specs = (refData?.fields || []).filter(
-      (s) => s.kind !== "suppliers" && s.path !== "officialProductCode",
-    );
-    return [...specs].sort(
-      (a, b) => FIELD_ORDER.indexOf(a.path) - FIELD_ORDER.indexOf(b.path),
-    );
+  const specsByPath = useMemo(() => {
+    const map = new Map<string, PrcReferenceData["fields"][number]>();
+    for (const s of refData?.fields || []) map.set(s.path, s);
+    return map;
   }, [refData]);
+
+  const scalarPaths = useMemo(
+    () =>
+      (refData?.fields || [])
+        .filter(
+          (s) => s.kind !== "suppliers" && s.path !== "officialProductCode",
+        )
+        .map((s) => s.path),
+    [refData],
+  );
 
   useEffect(() => {
     const ac = new AbortController();
@@ -148,12 +174,12 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
       rows.map((r) => (r.rowId === rowId ? { ...r, ...patch } : r)),
     );
 
-  const loadEditContext = () => {
+  const loadEditContext = (): Promise<boolean> => {
     const code = officialCode.trim();
-    if (!code || busy) return;
+    if (!code) return Promise.resolve(false);
     setBusy(true);
     setError("");
-    fetchPrcEditContext(code)
+    return fetchPrcEditContext(code)
       .then((ctx) => {
         setEditCtx(ctx);
         const next: Record<string, string> = {};
@@ -173,10 +199,12 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
           ),
         );
         setRemoveMarks(new Set());
+        return true;
       })
-      .catch((e: Error) =>
-        setError(e.message || "Falha ao consultar o cadastro oficial."),
-      )
+      .catch((e: Error) => {
+        setError(e.message || "Falha ao consultar o cadastro oficial.");
+        return false;
+      })
       .finally(() => setBusy(false));
   };
 
@@ -186,65 +214,96 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
     for (const [path, f] of Object.entries(editCtx.fields || {})) {
       baseline[path] = f?.value;
     }
-    return computeScalarDiff(
-      baseline,
-      values,
-      fieldSpecs.map((s) => s.path),
-    );
-  }, [requestType, editCtx, values, fieldSpecs]);
+    return computeScalarDiff(baseline, values, scalarPaths);
+  }, [requestType, editCtx, values, scalarPaths]);
+
+  const officialLinks = useMemo(
+    () =>
+      (editCtx?.links || []).map((l) => ({
+        supplierCode: l.supplierCode,
+        store: l.store,
+        supplierName: l.supplierName,
+        partNumber: l.partNumber ?? undefined,
+        catalogNumber: l.catalogNumber ?? undefined,
+      })),
+    [editCtx],
+  );
 
   const linkOps = useMemo(() => {
     if (requestType !== "update" || !editCtx) return [];
-    const official = (editCtx.links || []).map((l) => ({
-      supplierCode: l.supplierCode,
-      store: l.store,
-      supplierName: l.supplierName,
-      partNumber: l.partNumber ?? undefined,
-      catalogNumber: l.catalogNumber ?? undefined,
-    }));
-    return computeLinkDiff(official, suppliers, removeMarks);
-  }, [requestType, editCtx, suppliers, removeMarks]);
+    return computeLinkDiff(officialLinks, suppliers, removeMarks);
+  }, [requestType, editCtx, officialLinks, suppliers, removeMarks]);
 
-  const validate = (): boolean => {
-    const errs: Record<string, string> = {};
-    if (requestType === "update" && !editCtx) {
-      setError("Carregue o cadastro oficial antes de solicitar a alteração.");
-      return false;
+  const validateStep = (index: number): string => {
+    if (index === 0) {
+      if (requestType === "update" && !officialCode.trim()) {
+        return "Informe o código oficial do produto a alterar.";
+      }
+      return "";
     }
-    for (const spec of fieldSpecs) {
-      const v = (values[spec.path] || "").trim();
+    if (index === 1) {
       if (requestType === "create") {
-        if (spec.requiredCreateIntake && !v) {
-          errs[spec.path] = "Campo obrigatório.";
+        for (const spec of refData?.fields || []) {
+          if (!spec.requiredCreateIntake) continue;
+          if (spec.kind === "suppliers") continue;
+          const v = (values[spec.path] || "").trim();
+          if (!v) {
+            return `Preencha «${PRC_FIELD_LABELS[spec.path] || spec.path}».`;
+          }
+        }
+      } else if (!scalarDiff.length && !linkOps.length) {
+        return "Nenhuma alteração identificada — edite um campo, vínculo ou adicione um fornecedor.";
+      }
+      const bad = suppliers.findIndex(
+        (r) => !r.supplierCode.trim() || !r.store.trim(),
+      );
+      if (bad >= 0) {
+        return `Fornecedor ${bad + 1}: escolha um fornecedor oficial na busca.`;
+      }
+      const missingPn = suppliers.findIndex((r) => !r.partNumber.trim());
+      if (missingPn >= 0) {
+        return `Fornecedor ${missingPn + 1}: Part Number é obrigatório para vincular.`;
+      }
+      if (duplicateDraftRowIds(suppliers).size > 0) {
+        return "Há fornecedores duplicados (mesmo código e loja).";
+      }
+      if (requestType === "update" && editCtx) {
+        const detailed = computeLinkDiffDetailed(
+          officialLinks,
+          suppliers,
+          removeMarks,
+        );
+        if (detailed.ambiguousOfficialKeys.length) {
+          return "Há vínculos oficiais ambíguos para a mesma chave — operação bloqueada.";
+        }
+        if (detailed.conflictingKeys.length) {
+          return "Há fornecedores duplicados (mesmo código e loja).";
         }
       }
+      return "";
     }
-    if (requestType === "update" && !scalarDiff.length && !linkOps.length) {
-      setError("Nenhuma alteração identificada em relação ao cadastro.");
-      return false;
+    return "";
+  };
+
+  const next = () => {
+    const msg = validateStep(step);
+    if (msg) {
+      setError(msg);
+      return;
     }
-    const complete = suppliers.filter(
-      (r) => r.supplierCode.trim() && r.store.trim(),
-    );
-    if (!suppliers.length) {
-      errs.suppliers = "Informe ao menos um fornecedor.";
-    } else if (
-      suppliers.some(
-        (r) =>
-          (!r.supplierCode.trim() || !r.store.trim()) &&
-          (r.query.trim() || r.partNumber.trim() || r.supplierName.trim()),
-      )
-    ) {
-      errs.suppliers = "Há linha de fornecedor incompleta.";
-    } else if (complete.some((r) => !r.partNumber.trim())) {
-      errs.suppliers =
-        "Part Number é obrigatório em todo vínculo de fornecedor.";
-    } else if (duplicateDraftRowIds(suppliers).size) {
-      errs.suppliers =
-        "Há fornecedores duplicados (mesmo código e loja).";
+    setError("");
+    if (requestType === "update" && step === 0 && !editCtx) {
+      void loadEditContext().then((ok) => {
+        if (ok) setStep((s) => Math.min(s + 1, STEPS.length - 1));
+      });
+      return;
     }
-    setFieldErrors(errs);
-    return !Object.keys(errs).length;
+    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+  };
+
+  const back = () => {
+    setError("");
+    setStep((s) => Math.max(0, s - 1));
   };
 
   const uploadSupportFiles = async (requestId: string) => {
@@ -268,7 +327,13 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
   };
 
   const submit = async () => {
-    if (busy || !validate()) return;
+    if (busy) return;
+    const msg = validateStep(1);
+    if (msg) {
+      setError(msg);
+      setStep(1);
+      return;
+    }
     setBusy(true);
     setError("");
     setUploadSummary("");
@@ -307,6 +372,7 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
               `${Object.keys(failures).length} falha(ram) — corrija e ` +
               "tente novamente sem recriar a solicitação.",
           );
+          setStep(1);
           return;
         }
       }
@@ -409,120 +475,158 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
     );
   }
 
-  const linkLabel = (op: { operation: string; key: { supplierCode: string; store: string } }) =>
-    `${op.key.supplierCode}/${op.key.store}`;
+  const renderField = (path: string) => {
+    const spec = specsByPath.get(path);
+    if (!spec) return null;
+    const label = PRC_FIELD_LABELS[path] || path;
+    const hint = PRC_FIELD_HELP[path] || undefined;
+    const required =
+      requestType === "create" && spec.requiredCreateIntake;
+    const errMsg = fieldErrors[path];
+    if (spec.kind === "text") {
+      return (
+        <TextField
+          key={path}
+          label={required ? `${label} *` : label}
+          hint={hint}
+          value={values[path] || ""}
+          onChange={(v) => set(path, v)}
+        />
+      );
+    }
+    const options =
+      spec.kind === "enum"
+        ? enumOptions(path, spec.enumValues || [])
+        : catalogOptions(
+            catalogs[PRC_CATALOG_KINDS[path] || ""] || [],
+          );
+    return (
+      <div key={path}>
+        <SelectField
+          label={required ? `${label} *` : label}
+          hint={hint}
+          options={withSelectedOption(options, values[path] || "")}
+          value={values[path] || ""}
+          onChange={(v) => set(path, v)}
+          searchable
+        />
+        {errMsg ? (
+          <MyRequestsStateBanner variant="error">
+            {errMsg}
+          </MyRequestsStateBanner>
+        ) : null}
+        {requestType === "update" &&
+        scalarDiff.some((c) => c.path === path) ? (
+          <TextField
+            label={`Justificativa — ${label}`}
+            value={reasons[path] || ""}
+            onChange={(v) =>
+              setReasons((s) => ({ ...s, [path]: v }))
+            }
+          />
+        ) : null}
+      </div>
+    );
+  };
+
+  const linkLabel = (op: {
+    operation: string;
+    key: { supplierCode: string; store: string };
+  }) => `${op.key.supplierCode}/${op.key.store}`;
+
+  const reviewItems =
+    requestType === "create"
+      ? Object.entries(values)
+          .filter(([, v]) => v.trim())
+          .map(([path, v]) => ({
+            label: PRC_FIELD_LABELS[path] || path,
+            value: v,
+          }))
+      : scalarDiff.map((change) => ({
+          label: `${PRC_FIELD_LABELS[change.path] || change.path} (alterado)`,
+          value: `${change.before || "vazio"} → ${change.after || "vazio"}${
+            reasons[change.path] ? ` — ${reasons[change.path]}` : ""
+          }`,
+        }));
 
   return (
     <AppShell title="Matéria-prima / produto">
-      <MyRequestsSectionCard
-        title="Tipo da solicitação"
-        hint="Criação de novo item ou alteração de cadastro existente."
-      >
-        <SegmentToggle
-          ariaLabel="Tipo da solicitação"
-          options={[
-            { value: "create" as const, label: "Criação de matéria-prima" },
-            { value: "update" as const, label: "Alteração de produto" },
-          ]}
-          value={requestType}
-          onChange={(v) => {
-            setRequestType(v);
-            setEditCtx(null);
-            setError("");
-          }}
-        />
-        {requestType === "update" ? (
-          <div style={{ display: "flex", gap: 8, alignItems: "end", marginTop: 12 }}>
-            <TextField
-              label={`${PRC_FIELD_LABELS.officialProductCode} *`}
-              hint={PRC_FIELD_HELP.officialProductCode}
-              value={officialCode}
-              onChange={setOfficialCode}
-            />
-            <ActionButton
-              variant="default"
-              disabled={busy || !officialCode.trim()}
-              onClick={loadEditContext}
-            >
-              {editCtx ? "Recarregar cadastro" : "Carregar cadastro"}
-            </ActionButton>
-          </div>
-        ) : null}
-      </MyRequestsSectionCard>
+      <MyRequestsProgressTracker
+        steps={STEPS.map((s, i) => ({
+          id: s.id,
+          label: s.label,
+          state:
+            i < step ? "complete" : i === step ? "current" : "available",
+        }))}
+        currentStepId={STEPS[step].id}
+        interactive
+        onStepChange={(id) => {
+          const target = STEPS.findIndex((s) => s.id === id);
+          if (target >= 0 && target <= step) setStep(target);
+        }}
+      />
 
-      {requestType === "update" && !editCtx ? (
-        <MyRequestsSectionCard title="Ficha técnica">
-          <MyRequestsStateBanner variant="default">
-            Informe o código oficial e carregue o cadastro para alterar
-            os campos desejados.
-          </MyRequestsStateBanner>
+      {step === 0 ? (
+        <MyRequestsSectionCard
+          title="Tipo da solicitação"
+          hint="Criação de novo item ou alteração de cadastro existente."
+        >
+          <SegmentToggle
+            ariaLabel="Tipo da solicitação"
+            options={[
+              {
+                value: "create" as const,
+                label: "Criação de matéria-prima",
+              },
+              { value: "update" as const, label: "Alteração de produto" },
+            ]}
+            value={requestType}
+            onChange={(v) => {
+              setRequestType(v);
+              setEditCtx(null);
+              setError("");
+            }}
+          />
+          {requestType === "update" ? (
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                alignItems: "end",
+                marginTop: 12,
+              }}
+            >
+              <TextField
+                label={`${PRC_FIELD_LABELS.officialProductCode} *`}
+                hint={PRC_FIELD_HELP.officialProductCode}
+                value={officialCode}
+                onChange={setOfficialCode}
+              />
+              <ActionButton
+                variant="default"
+                disabled={busy || !officialCode.trim()}
+                onClick={() => void loadEditContext()}
+              >
+                {editCtx ? "Recarregar cadastro" : "Carregar cadastro"}
+              </ActionButton>
+            </div>
+          ) : null}
+          {requestType === "update" && editCtx ? (
+            <MyRequestsStateBanner variant="default">
+              Cadastro oficial de {officialCode.trim()} carregado —
+              avance para editar os campos desejados.
+            </MyRequestsStateBanner>
+          ) : null}
         </MyRequestsSectionCard>
-      ) : (
+      ) : null}
+
+      {step === 1 ? (
         <>
-          <MyRequestsSectionCard
-            title="Ficha técnica"
-            hint={
-              requestType === "update"
-                ? "Somente os campos alterados serão enviados à Engenharia."
-                : "Dados do novo produto/matéria-prima."
-            }
-          >
-            {fieldSpecs.map((spec) => {
-              const label =
-                PRC_FIELD_LABELS[spec.path] || spec.path;
-              const hint = PRC_FIELD_HELP[spec.path] || undefined;
-              const required =
-                requestType === "create" && spec.requiredCreateIntake;
-              const errMsg = fieldErrors[spec.path];
-              if (spec.kind === "text") {
-                return (
-                  <TextField
-                    key={spec.path}
-                    label={required ? `${label} *` : label}
-                    hint={hint}
-                    value={values[spec.path] || ""}
-                    onChange={(v) => set(spec.path, v)}
-                  />
-                );
-              }
-              const options =
-                spec.kind === "enum"
-                  ? enumOptions(spec.path, spec.enumValues || [])
-                  : catalogOptions(
-                      catalogs[PRC_CATALOG_KINDS[spec.path] || ""] || [],
-                    );
-              return (
-                <div key={spec.path}>
-                  <SelectField
-                    label={required ? `${label} *` : label}
-                    hint={hint}
-                    options={withSelectedOption(
-                      options,
-                      values[spec.path] || "",
-                    )}
-                    value={values[spec.path] || ""}
-                    onChange={(v) => set(spec.path, v)}
-                    searchable
-                  />
-                  {errMsg ? (
-                    <MyRequestsStateBanner variant="error">
-                      {errMsg}
-                    </MyRequestsStateBanner>
-                  ) : null}
-                  {requestType === "update" &&
-                  scalarDiff.some((c) => c.path === spec.path) ? (
-                    <TextField
-                      label={`Justificativa — ${label}`}
-                      value={reasons[spec.path] || ""}
-                      onChange={(v) =>
-                        setReasons((s) => ({ ...s, [spec.path]: v }))
-                      }
-                    />
-                  ) : null}
-                </div>
-              );
-            })}
-          </MyRequestsSectionCard>
+          {FIELD_GROUPS.map((group) => (
+            <MyRequestsSectionCard key={group.title} title={group.title}>
+              {group.paths.map(renderField)}
+            </MyRequestsSectionCard>
+          ))}
 
           <MyRequestsSectionCard
             title={PRC_FIELD_LABELS.suppliers}
@@ -622,6 +726,40 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
                       disabled={marked}
                     />
                   </div>
+                  {row.origin === "official" ? (
+                    <>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: 8,
+                          marginTop: 8,
+                        }}
+                      >
+                        <TextField
+                          label="Justificativa — Part Number"
+                          value={row.pnReason || ""}
+                          onChange={(v) =>
+                            patchRow(row.rowId, { pnReason: v })
+                          }
+                        />
+                        <TextField
+                          label="Justificativa — Catálogo"
+                          value={row.catReason || ""}
+                          onChange={(v) =>
+                            patchRow(row.rowId, { catReason: v })
+                          }
+                        />
+                      </div>
+                      <TextField
+                        label="Justificativa da operação (opcional)"
+                        value={row.opReason || ""}
+                        onChange={(v) =>
+                          patchRow(row.rowId, { opReason: v })
+                        }
+                      />
+                    </>
+                  ) : null}
                   <MyRequestsFormActions>
                     {row.origin === "official" ? (
                       <ActionButton
@@ -745,23 +883,93 @@ export function PrcRequestPage({ onCancel, onDone }: Props) {
             ) : null}
           </MyRequestsSectionCard>
         </>
-      )}
+      ) : null}
+
+      {step === 2 ? (
+        <MyRequestsSectionCard
+          title="Resumo da solicitação"
+          hint="Confira os dados antes de enviar à Engenharia."
+        >
+          <DetailFields
+            fields={[
+              {
+                label: "Tipo",
+                value:
+                  requestType === "create"
+                    ? "Criação de matéria-prima"
+                    : "Alteração de produto",
+              },
+              ...(requestType === "update"
+                ? [
+                    { label: "Código oficial", value: officialCode },
+                    {
+                      label: "Operações de vínculo",
+                      value: linkOps.length
+                        ? linkOps
+                            .map((o) => {
+                              const k = `${o.key.supplierCode}/${o.key.store}`;
+                              if (o.operation === "add") return `+ ${k}`;
+                              if (o.operation === "remove")
+                                return `− ${k} (remoção solicitada)`;
+                              return `~ ${k}`;
+                            })
+                            .join(" · ")
+                        : "Não alterado",
+                    },
+                  ]
+                : []),
+              ...reviewItems,
+              {
+                label: "Fornecedores",
+                value:
+                  requestType === "create"
+                    ? `${suppliers.length} vínculo(s)`
+                    : `${linkOps.length} operação(ões)`,
+              },
+              {
+                label: "Documentos",
+                value: supportFiles.length
+                  ? `${supportFiles.length} arquivo(s) selecionado(s)`
+                  : "Nenhum documento anexado",
+              },
+            ]}
+          />
+          {Object.keys(fieldErrors).length ? (
+            <MyRequestsStateBanner variant="error">
+              {Object.entries(fieldErrors)
+                .map(([k, v]) => `${PRC_FIELD_LABELS[k] || k}: ${v}`)
+                .join(" · ")}
+            </MyRequestsStateBanner>
+          ) : null}
+        </MyRequestsSectionCard>
+      ) : null}
 
       {error ? (
         <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
       ) : null}
 
-      <MyRequestsFormActions>
+      <MyRequestsFormActions align="end">
         <ActionButton variant="ghost" disabled={busy} onClick={onCancel}>
           Cancelar
         </ActionButton>
-        <ActionButton
-          variant="primary"
-          disabled={busy || (requestType === "update" && !editCtx)}
-          onClick={() => void submit()}
-        >
-          Enviar solicitação
-        </ActionButton>
+        {step > 0 ? (
+          <ActionButton variant="default" disabled={busy} onClick={back}>
+            Voltar
+          </ActionButton>
+        ) : null}
+        {step < STEPS.length - 1 ? (
+          <ActionButton variant="primary" disabled={busy} onClick={next}>
+            Avançar
+          </ActionButton>
+        ) : (
+          <ActionButton
+            variant="primary"
+            disabled={busy}
+            onClick={() => void submit()}
+          >
+            Enviar solicitação
+          </ActionButton>
+        )}
       </MyRequestsFormActions>
 
       <FilePreviewModal

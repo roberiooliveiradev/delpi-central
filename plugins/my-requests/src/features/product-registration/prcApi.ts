@@ -213,9 +213,22 @@ export function prcIntakeSubmit(
 
 export function listMyPrcRequests(
   signal?: AbortSignal,
+  query?: {
+    page?: number;
+    pageSize?: number;
+    status?: string;
+    search?: string;
+    source?: string;
+  },
 ): Promise<PrcRequestList> {
+  const params = new URLSearchParams();
+  if (query?.page) params.set("page", String(query.page));
+  params.set("pageSize", String(query?.pageSize ?? 50));
+  if (query?.status) params.set("status", query.status);
+  if (query?.search) params.set("search", query.search);
+  if (query?.source) params.set("source", query.source);
   return httpGet<Envelope<PrcRequestList>>(
-    `${PRC_BASE}/requests?pageSize=50`,
+    `${PRC_BASE}/requests?${params.toString()}`,
     { signal },
   ).then(unwrap);
 }

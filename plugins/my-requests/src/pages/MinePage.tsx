@@ -9,11 +9,7 @@ import {
 
 import { useMyRequestsListSync } from "../app/MyRequestsRealtimeProvider";
 import { listMyRequests, listRequestTypes } from "../api/requestsApi";
-import {
-  listMyPrcRequests,
-  type PrcRequestSummary,
-} from "../features/product-registration/prcApi";
-import { myRequestsPrcPath } from "../hooks/myRequestsNavigation";
+import { listMyPrcRequests } from "../features/product-registration/prcApi";
 import { AppShell } from "../components/AppShell";
 import { RequestListFilters } from "../components/RequestListFilters";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -25,13 +21,20 @@ import {
   REQUEST_LIST_PAGE_SIZE,
   type RequestListFiltersState,
 } from "../content/requestListFilters";
-import { requestListTitle } from "../domain/requestListPresentation";
+import {
+  mergeUnifiedRows,
+  prcToUnifiedRow,
+  requestListTitle,
+  toUnifiedRow,
+  type UnifiedRequestRow,
+} from "../domain/requestListPresentation";
 import {
   myRequestsPath,
+  myRequestsPrcPath,
   navigateMyRequestsPath,
 } from "../hooks/myRequestsNavigation";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
-import type { RequestSummary, RequestTypeSummary } from "../types/requests";
+import type { RequestTypeSummary } from "../types/requests";
 import {
   MyRequestsCompactPagination,
   MyRequestsEmptyState,
@@ -51,13 +54,21 @@ const INITIAL_FILTERS: RequestListFiltersState = {
   page: 1,
 };
 
+/* Janela de merge honesta: para compor a página N unificada por data,
+ * basta a janela page*PAGE_SIZE de cada fonte (ambas paginadas e
+ * ordenadas por criação desc). Limitada a 100 por chamada (contrato). */
+const MERGE_WINDOW_MAX = 100;
+/** Tipo requests-api equivalente ao caso PRC da Engineering API. */
+const PRC_TYPE_CODE = "raw-material-creation";
+
 export function MinePage() {
   const access = useRequestsPermissions();
-  const [items, setItems] = useState<RequestSummary[]>([]);
+  const [rows, setRows] = useState<UnifiedRequestRow[]>([]);
   const [total, setTotal] = useState(0);
   const [types, setTypes] = useState<RequestTypeSummary[]>([]);
   const [filters, setFilters] = useState<RequestListFiltersState>(INITIAL_FILTERS);
   const [error, setError] = useState<string | null>(null);
+  const [prcError, setPrcError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [listEpoch, setListEpoch] = useState(0);
 
@@ -84,35 +95,105 @@ export function MinePage() {
     const ac = new AbortController();
     setLoading(true);
     setError(null);
-    listMyRequests({
+    setPrcError(null);
+
+    const windowSize = Math.min(
+      filters.page * REQUEST_LIST_PAGE_SIZE,
+      MERGE_WINDOW_MAX,
+    );
+    /* typeCode: `raw-material-creation` é o tipo requests-api equivalente
+     * ao caso PRC; qualquer outro tipo exclui PRC honestamente. Filial:
+     * o PRC não possui filial no contrato — excluído quando filtrada. */
+    const includePrc =
+      (!filters.typeCode || filters.typeCode === PRC_TYPE_CODE) &&
+      !filters.branch;
+
+    const reqPromise = listMyRequests({
       signal: ac.signal,
-      page: filters.page,
-      pageSize: REQUEST_LIST_PAGE_SIZE,
+      page: 1,
+      pageSize: windowSize,
       typeCode: filters.typeCode || undefined,
       status: filters.status || undefined,
       branch: filters.branch || undefined,
       q: filters.q || undefined,
-    })
-      .then((data) => {
-        setItems(data.items || []);
-        setTotal(Number(data.total) || 0);
+    });
+
+    const prcPromise = includePrc
+      ? listMyPrcRequests(ac.signal, {
+          page: 1,
+          pageSize: windowSize,
+          status: filters.status || undefined,
+          search: filters.q || undefined,
+        })
+      : Promise.resolve(null);
+
+    Promise.allSettled([reqPromise, prcPromise])
+      .then(([reqRes, prcRes]) => {
+        if (ac.signal.aborted) return;
+        const typeNameByCode = new Map(
+          types.map((item) => [item.code, item.name]),
+        );
+        const reqRows: UnifiedRequestRow[] = [];
+        let reqTotal = 0;
+        if (reqRes.status === "fulfilled") {
+          reqTotal = Number(reqRes.value.total) || 0;
+          for (const row of reqRes.value.items || []) {
+            reqRows.push(
+              toUnifiedRow(
+                row,
+                requestTypeLabel(
+                  row.type_code,
+                  typeNameByCode.get(row.type_code),
+                ),
+                statusLabel(row.status, row.status_alias),
+                requestListTitle(row) || "—",
+              ),
+            );
+          }
+        } else {
+          setError(
+            (reqRes.reason as Error)?.message ||
+              "Falha ao carregar suas solicitações.",
+          );
+        }
+
+        const prcRows: UnifiedRequestRow[] = [];
+        let prcTotal = 0;
+        if (prcRes.status === "fulfilled" && prcRes.value) {
+          prcTotal = Number(prcRes.value.total) || prcRes.value.items.length;
+          for (const row of prcRes.value.items) {
+            prcRows.push(
+              prcToUnifiedRow(
+                row,
+                PRC_TYPE_LABELS,
+                PRC_STATUS_LABELS,
+                myRequestsPrcPath(row.id),
+              ),
+            );
+          }
+        } else if (prcRes.status === "rejected") {
+          setPrcError(
+            (prcRes.reason as Error)?.message ||
+              "Falha ao carregar os casos de cadastro de produto.",
+          );
+        }
+
+        const merged = mergeUnifiedRows(reqRows, prcRows);
+        const start = (filters.page - 1) * REQUEST_LIST_PAGE_SIZE;
+        setRows(
+          merged.slice(start, start + REQUEST_LIST_PAGE_SIZE),
+        );
+        setTotal(reqTotal + prcTotal);
       })
-      .catch((err: Error) => {
-        if (err.name !== "AbortError") setError(err.message);
-      })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!ac.signal.aborted) setLoading(false);
+      });
     return () => ac.abort();
-  }, [filters, listEpoch]);
+  }, [filters, listEpoch, types]);
 
   const totalPages = Math.max(1, Math.ceil(total / REQUEST_LIST_PAGE_SIZE) || 1);
 
-  const typeNameByCode = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const item of types) map.set(item.code, item.name);
-    return map;
-  }, [types]);
-
-  const columns = useMemo<DataTableColumn<RequestSummary>[]>(
+  const columns = useMemo<DataTableColumn<UnifiedRequestRow>[]>(
     () => [
       {
         key: "number",
@@ -120,53 +201,63 @@ export function MinePage() {
         render: (row) => (
           <ActionButton
             type="button"
-            title={`Abrir ${row.request_number}`}
+            title={
+              row.source === "engineering-prc"
+                ? `Abrir caso PRC ${row.fullIdentifier}`
+                : `Abrir ${row.displayNumber}`
+            }
             variant="link"
             onClick={() =>
-              navigateMyRequestsPath(myRequestsPath({ requestId: row.id }))
+              navigateMyRequestsPath(
+                row.source === "engineering-prc"
+                  ? row.destination
+                  : myRequestsPath({ requestId: row.id }),
+              )
             }
           >
-            {row.request_number}
+            {row.displayNumber}
           </ActionButton>
         ),
       },
       {
         key: "type",
         header: "Tipo",
-        render: (row) =>
-          requestTypeLabel(row.type_code, typeNameByCode.get(row.type_code)),
+        render: (row) => row.typeLabel,
       },
       {
         key: "title",
         header: "Assunto",
-        render: (row) => requestListTitle(row) || "—",
+        render: (row) => row.subject,
       },
       {
         key: "status",
         header: "Status",
         render: (row) => (
           <MyRequestsStatusBadge
-            label={statusLabel(row.status, row.status_alias)}
-            variant="info"
+            label={row.statusLabel}
+            variant={row.statusVariant}
           />
         ),
       },
-      { key: "branch", header: "Filial", render: (row) => row.branch_code || "—" },
+      {
+        key: "branch",
+        header: "Filial",
+        render: (row) => row.branch,
+      },
+      {
+        key: "date",
+        header: "Data",
+        render: (row) =>
+          row.createdAt
+            ? new Date(row.createdAt).toLocaleDateString("pt-BR")
+            : "—",
+      },
     ],
-    [typeNameByCode],
+    [],
   );
 
-  /* PRC-REF-023-F04 — casos oficiais de cadastro de produto na
-   * Engineering API (mesmo requestId; sem registro duplicado). */
-  const [prcItems, setPrcItems] = useState<PrcRequestSummary[]>([]);
-  useEffect(() => {
-    const ac = new AbortController();
-    listMyPrcRequests(ac.signal)
-      .then((res) => setPrcItems(res.items))
-      .catch(() => setPrcItems([]));
-    return () => ac.abort();
-  }, []);
-
+  const hasRows = rows.length > 0;
+  const hasError = Boolean(error) && Boolean(prcError);
   const emptyMessage =
     filters.q || filters.typeCode || filters.status || filters.branch
       ? "Nenhuma solicitação para os filtros selecionados."
@@ -187,16 +278,21 @@ export function MinePage() {
           {error ? (
             <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
           ) : null}
+          {prcError ? (
+            <MyRequestsStateBanner variant="error">
+              {prcError}
+            </MyRequestsStateBanner>
+          ) : null}
           {loading ? <MyRequestsLoadingState /> : null}
-          {!loading && !error && items.length === 0 ? (
+          {!loading && !hasRows && !error && !prcError ? (
             <MyRequestsEmptyState message={emptyMessage} />
           ) : null}
-          {!loading && items.length > 0 ? (
+          {!loading && hasRows ? (
             <>
               <DataTable
                 columns={columns}
-                rows={items}
-                rowKey={(row) => row.id}
+                rows={rows}
+                rowKey={(row) => `${row.source}-${row.id}`}
                 layout="embedded"
                 classNames={mrDataTableClassNames}
                 labels={mrDataTableLabels}
@@ -211,37 +307,9 @@ export function MinePage() {
               />
             </>
           ) : null}
+          {!loading && hasError ? null : null}
         </div>
       </MyRequestsSectionCard>
-      {prcItems.length ? (
-        <MyRequestsSectionCard
-          title="Cadastro de produtos e matérias-primas"
-          hint="Acompanhamento oficial junto à Engenharia."
-        >
-          {prcItems.map((row) => (
-            <p key={row.id}>
-              <a href={myRequestsPrcPath(row.id)}>
-                {PRC_TYPE_LABELS[row.requestType] || row.requestType} —{" "}
-                {row.id.slice(0, 8)}
-              </a>{" "}
-              <MyRequestsStatusBadge
-                label={PRC_STATUS_LABELS[row.status] || row.status}
-                variant={
-                  row.status === "completed"
-                    ? "success"
-                    : row.status === "rejected"
-                      ? "danger"
-                      : row.status === "needs_correction"
-                        ? "warning"
-                        : "info"
-                }
-              />{" "}
-              {new Date(row.createdAt).toLocaleDateString("pt-BR")}
-              {row.officialCode ? ` · ${row.officialCode}` : ""}
-            </p>
-          ))}
-        </MyRequestsSectionCard>
-      ) : null}
     </AppShell>
   );
 }
