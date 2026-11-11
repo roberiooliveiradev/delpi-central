@@ -2360,3 +2360,62 @@ G5_QUALITY_HOMOLOGATED=NOT_DECLARED
 G6_G7=NOT_AUTHORIZED
 VAL01_COMPLETED=false
 ```
+
+### 66. G5 — Integridade de papéis em tabela nativa com célula mesclada rotulada (2026-11-11)
+
+**TASK_ID:** `EVA-VAL01-G5-NATIVE-TABLE-ROLE-INTEGRITY`. **Tracker:** Issue #131 (comentário `6777594129`). **Base:** `1e75d95d00`. **Escopo:** `engineering-api` — pipeline existente PDFium → PaddleOCR → SLANet → Understanding. **Sem deploy.**
+
+**Caso motivador:** produto `90264174` (SHA `0671f076…0ffaf6` MATCH, 2 páginas, job `aj-60de2276cd2f4867`). Página 1: coluna mesclada `Código 90264174` (rowspan=7) + quatro componentes A→10070988/1, B→10130020/1, C→10140027/1, D→10350009/3. SLANet detecta os 4 códigos; `structure_occurrences` emitia só A/C/D sem pai.
+
+**First-loss PROVEN (cadeia causal completa):**
+
+1. `_GROUP_CODE_RE` (`^(\d{6,11})`) exige dígitos na posição zero → `Código 90264174` não é reconhecido como âncora de grupo.
+2. `_split_multiline_cells` fragmenta a célula-âncora: a banda `90264174` (cy≈119.5) é rehomed sobre a linha B e colide como `component_code` FIELD_AMBIGUOUS contra `10130020`.
+3. A mesma regex impede `_assign_presentation_roles` e o scan de âncoras de promover a coluna do pai → `parent_group_candidate=null`.
+4. `drawing_structure_occurrences` aplica corretamente `code == product_code` e descarta a linha — perda anterior à emissão, não na guarda.
+5. Segunda variante provada no PDF real: a célula-âncora é projetada pelo SLANet sobre o índice da `header_row` (rótulo da coluna absorvido pela mesclagem) — o scan pulava a linha inteira.
+
+**Fix generalista (menor diff no algoritmo existente):**
+
+- `_GROUP_LABELED_CODE_RE` + `_group_code_of(text)`: código de grupo em célula rotulada **somente** quando o texto é exatamente `<rótulo estrutural> <código>` (código|cod|conjunto|conj|produto) — texto adicional mantém a célula ambígua (fail-closed).
+- `_from_group_anchor`: bandas do split preservam a identidade de grupo da célula original; fragmentos nunca reancoram novo grupo.
+- `_is_group_anchor_cell`: célula `rowspan>1` com código de grupo na linha de cabeçalho é dado estrutural (rótulo de header nunca tem rowspan>1) — entra na estatística do perfil e no scan de âncoras.
+- `y_anchor_nearest`/`y_anchor_correction` continuam proximidade → `parent_state=UNKNOWN`; guarda de raiz inalterada; estados `ambiguous` do SLANet preservados como INCONCLUSIVE.
+
+**Testes:** RED 6/11 falhando na classe do defeito → GREEN 11/11 (`tests/test_eva_val01_g5_native_table_role_integrity.py` — pai rotulado mesclado, colisão pai/componente, âncora na header row, raiz excluída, repetidos sob pais distintos, negativo sem evidência, round-trip `native cells → rows_from_native_cells → apply_native_table_observations → drawing_structure_occurrences`). Suítes drawing/EVA/DEC-040–043/comparador/round-trip/presentation/SLANet-perception/recovery/architecture: **594 passed**. Suite completa `tests/`: **1089 passed, 2 failed** — falhas pré-existentes em asserts de superfície OpenAPI (`test_health`, `test_auth_middleware`) causadas por rotas `/v1/product-registration/*` de WIP concorrente não relacionado (não tocadas por este diff).
+
+**Real PDF 90264174 (payload SLANet real, baseline vs candidato no mesmo payload):**
+
+| Métrica | BASE `1e75d95d00` | CAND |
+|---|---|---|
+| occurrences p1 | 3 (A, C, D) | **4 (A, B, C, D)** |
+| B/10130020 | perdido | recuperado, qty 1 |
+| parent | null | `90264174` IDENTIFIED (`rowspan_anchor`) |
+| root as component | false | false |
+| drawing_level | — | 1 (`chain_to_product_code`) |
+
+**Regressões reais (mesmo payload, A/B):**
+
+| PDF | BASE | CAND | Δ |
+|---|---|---|---|
+| `90264302` p1 | 4 vínculos (2 conjuntos, componente repetido) | idêntico | **zero** |
+| `90264135` p10 | A2/10080192, A3/10090316 + qty/desc | idêntico | **zero** |
+| `90264135` p12 | 50225702→AE/AH/AG | idêntico | **zero** |
+| `90264135` p13 | 0 células nativas, `COORDINATE_MISMATCH` em limitations, sem código falso | idêntico | **zero** |
+
+**Limitações restantes:** p13 do 135 segue sem grade nativa (erro de engine registrado, fallback apenas); `INCONCLUSIVE` de campos ambíguos SLANet preservado (não convertido em PASS); homologação G5 de qualidade segue `GT_OWNER_BLOCKED`; corpus de 13 desenhos live `TEST_NOT_RUN` (requer identidade delegada).
+
+```text
+FIRST_LOSS=PROVEN (labeled group anchor regex + header_row projection)
+COMPONENT_B_RECOVERED=PASS (4/4)
+ROOT_AS_COMPONENT=false
+PARENT_EVIDENCE=rowspan_anchor (structural, not proximity)
+REGRESSION_90264302=PASS_IDENTICAL
+REGRESSION_90264135_P10_P12_P13=PASS_IDENTICAL
+UNIT_SUITE=594+1089 passed (2 unrelated-WIP openapi failures)
+REAL_PDF_SHA=MATCH
+G5_QUALITY_HOMOLOGATED=NOT_DECLARED (GT owner)
+G6_G7=NOT_AUTHORIZED
+DEPLOY_STATUS=NOT_EXECUTED
+VAL01_COMPLETED=false
+```

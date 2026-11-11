@@ -1711,6 +1711,32 @@ _QTY_CODE_RE = re.compile(r"^(\d{1,4}(?:[.,]\d+)?)\s+(\d{6,11})$")
 _CODE_TAIL_RE = re.compile(r"^(\d{6,11})\s+(\S.*)$")
 _ITEM_TAIL_RE = re.compile(r"^(" + _ITEM_BODY + r")\s+(\S.*)$")
 _GROUP_CODE_RE = re.compile(r"^(\d{6,11})\b")
+# Célula mesclada do bloco-pai pode absorver o rótulo da própria
+# coluna estrutural ("Código 90264174"): só prova âncora de grupo
+# quando o texto é exatamente ``<rótulo estrutural> <código>`` —
+# texto adicional depois do código mantém a célula ambígua.
+_GROUP_LABELED_CODE_RE = re.compile(
+    r"^(?:c[óo]digo|codigo|cod|conjunto|conj|produto)\.?\s*:?\s*"
+    r"(\d{6,11})\s*$",
+    re.IGNORECASE,
+)
+
+
+def _group_code_of(text: str) -> str | None:
+    """Código líder de célula-âncora de grupo, com ou sem rótulo."""
+    m = _GROUP_CODE_RE.match(text) or _GROUP_LABELED_CODE_RE.match(text)
+    return m.group(1) if m else None
+
+
+def _is_group_anchor_cell(cell: dict) -> bool:
+    """Célula de bloco-pai: rowspan>1 liderado por código de grupo.
+
+    Rótulo de cabeçalho nunca tem rowspan>1 — uma célula mesclada
+    com código na linha de cabeçalho é o bloco-pai projetado sobre
+    o índice da primeira linha, não um rótulo."""
+    if int(cell.get("rowspan") or 1) <= 1:
+        return False
+    return _group_code_of(_norm(str(cell.get("text") or ""))) is not None
 
 
 def _line_is_canonical_field_band(text: str) -> bool:
@@ -2019,7 +2045,14 @@ def _assign_presentation_roles(
             continue
         st = stats.setdefault(col, Counter())
         st["total"] += 1
-        if _GROUP_CODE_RE.match(text):
+        group_code = _group_code_of(text)
+        if group_code is None and c.get("_from_group_anchor"):
+            # Após o split, a banda que ficou na linha pode conter só o
+            # rótulo; a identidade de grupo vem do texto original.
+            group_code = _group_code_of(
+                _norm(str(c.get("text") or ""))
+            )
+        if group_code is not None:
             st["codes"] += 1
             if int(c.get("rowspan") or 1) > 1:
                 st["code_rowspans"] += 1
@@ -2227,7 +2260,7 @@ def rows_from_native_cells(
                 source_text = _norm(str(cell.get("text") or ""))
                 from_group = bool(
                     int(cell.get("rowspan") or 1) > 1
-                    and _GROUP_CODE_RE.match(source_text)
+                    and _group_code_of(source_text)
                 )
                 if from_group:
                     cell["_from_group_anchor"] = True
@@ -2415,8 +2448,19 @@ def rows_from_native_cells(
     data_row_indices = sorted(
         i for i in grouped if i != header_row
     )
+    # Células-âncora do bloco-pai podem ser projetadas no índice da
+    # linha de cabeçalho (rótulo da coluna absorvido pela mesclagem):
+    # entram na estatística do perfil porque são dados estruturais,
+    # não rótulos — rótulo de cabeçalho nunca tem rowspan>1.
+    profile_cells = [
+        c for ri in data_row_indices for c in grouped[ri]
+    ]
+    if header_row is not None:
+        profile_cells.extend(
+            c for c in grouped[header_row] if _is_group_anchor_cell(c)
+        )
     profile_meta = _assign_presentation_roles(
-        [c for ri in data_row_indices for c in grouped[ri]],
+        profile_cells,
         col_types,
         item_band=role_bands.get("item"),
         data_row_count=len(data_row_indices),
@@ -2450,18 +2494,19 @@ def rows_from_native_cells(
         if cy is not None:
             group_y_anchors.append((cy, code))
 
+    # A âncora pode viver na linha de cabeçalho (bloco mesclado
+    # absorvendo o rótulo): rowspan>1 + código de grupo já exclui
+    # qualquer rótulo de header, então a linha não é pulada.
     for row_index, row_cells in grouped.items():
-        if row_index == header_row:
-            continue
         for c in row_cells:
-            if int(c.get("rowspan") or 1) <= 1:
-                continue
-            m = _GROUP_CODE_RE.match(
-                _norm(str(c.get("text") or ""))
+            anchor_code = (
+                _group_code_of(_norm(str(c.get("text") or "")))
+                if _is_group_anchor_cell(c)
+                else None
             )
-            if m:
+            if anchor_code:
                 _register_group_anchor(
-                    row_index, m.group(1), int(c.get("rowspan") or 1), c,
+                    row_index, anchor_code, int(c.get("rowspan") or 1), c,
                     "rowspan_anchor",
                 )
     # Âncora por papel de coluna (perfil DELPI): célula liderada por
@@ -2480,9 +2525,13 @@ def rows_from_native_cells(
                     continue
                 if id(c) in group_anchor_ids:
                     continue
-                m = _GROUP_CODE_RE.match(_cell_text(c))
-                if m:
-                    entries.append((row_index, m.group(1), c))
+                # Fragmento de banda de uma âncora já registrada é
+                # contexto dela — nunca reancora um novo grupo.
+                if c.get("_from_group_anchor"):
+                    continue
+                anchor_code = _group_code_of(_cell_text(c))
+                if anchor_code:
+                    entries.append((row_index, anchor_code, c))
         entries.sort(key=lambda e: e[0])
         for i, (row_index, code, cell) in enumerate(entries):
             span = int(cell.get("rowspan") or 1)

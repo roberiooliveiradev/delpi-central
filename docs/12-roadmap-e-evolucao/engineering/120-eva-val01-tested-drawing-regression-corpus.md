@@ -576,3 +576,23 @@ Correção de perda silenciosa sob `span_conflict_tolerated` parcial (`reconcile
 **P10 desc:** mixed não bloqueia description; split multilinha em 2ª passagem.  
 **Real:** p12 AE/AH/AG qty+desc PASS; p10 A2/A3 descrições PASS; p13 sem `4 5`. Unit **72 passed**. Corpus 13 `TEST_NOT_RUN`. `VAL01_COMPLETED=false`.
 
+
+### Log G5 — Integridade de papéis nativos 90264174 + regressão A/B (2026-11-11)
+
+**TASK:** `EVA-VAL01-G5-NATIVE-TABLE-ROLE-INTEGRITY`. Sem deploy. Ledger: Doc 119 §66.
+
+**PDF 90264174:** SHA `0671f076…0ffaf6` `MATCH`, 2 páginas. SLANet p1: 22 células nativas, pai mesclado `Código 90264174` rowspan=7 com `line_texts=["Código","90264174"]` projetado na `header_row` — banda do código cai sobre a linha B.
+
+**A/B no mesmo payload real (baseline `1e75d95d00` vs candidato):**
+
+| Desenho | BASE | CAND | Veredito |
+|---|---|---|---|
+| `90264174` p1 | 3 occ (A/C/D), pai null | 4 occ, pai `90264174` IDENTIFIED `rowspan_anchor`, B recuperado | **corrigido** |
+| `90264302` p1 | 4 vínculos, 2 conjuntos, repetido sob pais distintos | idêntico | **sem regressão** |
+| `90264135` p10 | A2/10080192, A3/10090316 + qty/desc | idêntico | **sem regressão** |
+| `90264135` p12 | `50225702`→AE/AH/AG | idêntico | **sem regressão** |
+| `90264135` p13 | sem código falso (0 células, `COORDINATE_MISMATCH` registrado) | idêntico | **sem regressão** |
+
+**Nota de harness:** `rows_from_native_cells` muta as células in-place (`_split_text`, `_from_group_anchor`) — comparações A/B exigem `deepcopy` das observações por execução, senão o segundo passe herda flags do primeiro (artefato de medição, não de produção — apply é chamado uma única vez por observação no fluxo real).
+
+**Holdout/GT:** `TRUE_UNSEEN_HOLDOUT=NOT_AVAILABLE`; `GT_APPROVAL_STATUS=OWNER_BLOCKED`. `VAL01_COMPLETED=false`.
