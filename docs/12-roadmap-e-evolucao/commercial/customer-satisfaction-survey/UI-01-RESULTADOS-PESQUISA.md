@@ -1,6 +1,6 @@
 # UI-01 — Página de Resultados da Pesquisa de Satisfação do Cliente
 
-> **Status:** proposta de UX; **Resumo Executivo, Evolução Histórica e Avaliação das Dez Dimensões aprovados visualmente**, demais seções ainda em revisão; **não implementada**. Regra do Hero com todos os filtros e ações globais: **decisão aprovada**. A nova ordem das seções e composição do resumo foram aceitas para registro, sujeitas à revisão por etapas. Branch consultada: `main`, HEAD-base desta revisão `620ddc99e622240b3c31430abd388c83a110f04c` (revalidar antes da implementação).
+> **Status:** proposta de UX; **Resumo Executivo, Evolução Histórica, Avaliação das Dez Dimensões e Comparação entre Grupos aprovados visualmente**, demais seções ainda em revisão; **não implementada**. Regra do Hero com todos os filtros e ações globais: **decisão aprovada**. A nova ordem das seções e composição do resumo foram aceitas para registro, sujeitas à revisão por etapas. Branch consultada: `main`, HEAD-base desta revisão `4155399bb77e0b675916fcbc117d2db58d997f14` (revalidar antes da implementação).
 >
 > **Owner visual:** `plugins/commercial` (MFE). **Autoridade de regras, métricas, acesso e privacidade:** `commercial-api`; origem de clientes e atributos comerciais conforme fonte oficial via `api-delpi`/TOTVS. Esta especificação não concede autorização de implementação ou alteração de contrato backend.
 >
@@ -44,7 +44,8 @@ A entrada `Início > Marketing > Pesquisa de satisfação do cliente` abre diret
 │ ... completar dez itens; eixo/máximo fixo 5                              │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ COMPARAÇÃO GERAL / ESTRATÉGICOS / DEMAIS                                 │
-│ IGS, NPS, taxa, satisfeitos, críticos, dimensões; amostra por grupo      │
+│ [Indicador | Geral | Estratégicos | Demais] — 5 indicadores visíveis    │
+│ [Comparar também as dez dimensões ▾] — 10 linhas extras na mesma tabela │
 │ valores supressos se amostra abaixo do limiar do backend                 │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ RESPOSTAS POR EMPRESA* (somente marketing/manage)                        │
@@ -85,7 +86,8 @@ A entrada `Início > Marketing > Pesquisa de satisfação do cliente` abre diret
 │ [10 barras empilhadas]    │
 ├───────────────────────────┤
 │ Comparações               │
-│ [tabela adaptativa]       │
+│ [5 cards comparativos]    │
+│ [10 extras após expandir] │
 ├───────────────────────────┤
 │ Respostas restritas*      │
 └───────────────────────────┘
@@ -463,16 +465,127 @@ As dez **chaves técnicas confirmadas no contrato da entrega 1**, para mapeament
 9. Testar os três tamanhos, nomes longos, contraste, zoom 200–400%, foco/leitor de tela e regressão visual do `HorizontalValueBars` já usado no Portal.
 10. Execução depende de HEAD e working tree verificados, contrato versionado das perguntas e relatório de alterações/testes/gaps.
 
-## 7. Comparativo de segmentos — evidência e proteção
+## 7. Comparação entre grupos de clientes — VISUAL APROVADO
 
-Seção única “Comparação de clientes” com `SectionCard` + `CommercialDataTable`. Colunas: Indicador / Geral / Estratégicos / Demais, contendo IGS, NPS, taxa, satisfeitos, críticos e as dez dimensões (via estrutura de tabela existente com exibição responsiva/paginação se necessária). Mostrar `n` de cada grupo **na tabela ou cabeçalho da coluna**, sem cabeçalhos gigantes e sem inventar população.
+> **Estado:** composição, expansão e comportamentos responsivos **aprovados para especificação em 11/11/2026**, sem implementação. A definição exata da classificação “cliente estratégico”, dos denominadores, limites de amostra, contrato da API e renderização responsiva continuam **TO_INVENTORY/PENDING** e não podem ser declarados existentes.
 
-- Grupos e atributos somente quando o backend conhecer origem, período e classificação oficial; caso ausentes, “Comparação indisponível”, não substituir por proxy.
-- Limiar de privacidade e supressão no `commercial-api` **antes** da resposta da API, também impedindo reconstrução por subtração de grupos expostos (total − subgrupo).
-- Não calcular percentuais reconstituindo registros no frontend. Valores da tabela são agregados autorizados.
-- Taxas requerem denominadores compatíveis; comparações com campanhas diferentes precisam rótulo explícito.
-- `CommercialPagination` e `CommercialDataListToolbar` apenas se o volume exigir, sem botões globais adicionais fora do Hero.
-- `commercial.access` não recebe lista identificável de clientes, mesmo que o usuário tenha selecionado outro filtro de carteira.
+### 7.1 Finalidade, conteúdo e hierarquia
+
+Comparar, no **mesmo recorte oficial de campanha/ano e filtros aplicados no Hero**, os resultados de **Geral**, **Clientes Estratégicos** e **Demais Clientes**, para identificar diferenças que merecem investigação sem duplicar o Resumo Executivo nem o ranking de dimensões. Esta seção aparece **depois da Avaliação das Dez Dimensões**, em **um único painel** “Comparação entre grupos”, com subtítulo do recorte e ajuda sobre população, escala, bases e proteção de amostras.
+
+**Decisão aprovada:** exibir de início **somente cinco indicadores** em uma comparação lado a lado: (1) IGS (`x,x / 5`), (2) NPS (`+/-n` pontos), (3) taxa de resposta (%), (4) satisfeitos (%), (5) críticos (%). Um acionador local de apresentação **“Comparar também as dez dimensões”** mostra **dez linhas adicionais dentro da mesma tabela**, logo abaixo das cinco primeiras, com as **médias por dimensão (1–5)**. Ao recolher, as dez linhas desaparecem e os cinco indicadores permanecem. **Fechado inicialmente**; reabrir não altera filtros, dados nem autorização. Sem tabela duplicada, navegação, paginação, pesquisa local, alternância arbitrária de tipos de gráfico ou ordenação por colunas numéricas de unidades diferentes.
+
+As dez dimensões usam as chaves canônicas `quality`, `delivery_deadline`, `service`, `agility`, `communication`, `technical_support`, `commercial_support`, `flexibility`, `reliability`, `partnership`; rótulos curtos nos exemplos **não substituem o texto/versionamento oficiais**. A ordem das linhas expandidas deve seguir a **ordem oficial do questionário**, mantendo comparação consistente entre colunas; o ranking crescente da seção 6 **não** se aplica à tabela de grupos.
+
+### 7.2 Wireframes por tamanho (dados exclusivamente fictícios)
+
+**Desktop, área útil larga (alvo ≥ 1200 px):** quatro colunas dentro do painel, sempre na ordem Indicador / Geral / Estratégicos / Demais. Abaixo de cada título de grupo, exibir **respostas / participantes** quando autorizado e com denominadores compatíveis; não confundir “cadastrados na campanha” com prova de convite efetivamente enviado. Valores numéricos alinhados à direita.
+
+```text
+┌─ COMPARAÇÃO ENTRE GRUPOS ────────────────────────────────────────────────────┐
+│ Pesquisa 2026/2 · Quem respondeu e como avaliou? · Ajuda de indicadores     │
+│ Indicador        Geral                Estratégicos          Demais           │
+│                  72/100 respostas     34/40 respostas       38/60 respostas  │
+│ IGS              4,3 / 5              4,5 / 5              4,1 / 5          │
+│ NPS              +48                  +61                  +37              │
+│ Taxa resposta    72%                  85%                  63,3%            │
+│ Satisfeitos      84%                  90%                  80%              │
+│ Críticos         6%                   3%                   8%               │
+│ [Comparar também as dez dimensões ▾]                                       │
+│                                                                           │
+│ APÓS EXPANDIR, NAS MESMAS COLUNAS:                                        │
+│ Qualidade        4,5                  4,7                  4,3              │
+│ Prazo entrega    3,6                  4,0                  3,3              │
+│ Atendimento      4,2                  4,4                  4,0              │
+│ Agilidade        4,0                  4,2                  3,8              │
+│ Comunicação      3,9                  4,1                  3,7              │
+│ Suporte técnico  4,1                  4,3                  3,9              │
+│ Suporte comercial4,3                  4,5                  4,1              │
+│ Flexibilidade    3,8                  4,1                  3,5              │
+│ Confiabilidade   4,4                  4,6                  4,2              │
+│ Parceria         4,6                  4,8                  4,4              │
+│ [Ocultar as dez dimensões ▴]                                              │
+└───────────────────────────────────────────────────────────────────────────┘
+```
+
+**Tablet (alvo 600–1199 px úteis):** preferir **as mesmas quatro colunas** enquanto os rótulos e números couberem sem truncamento ambíguo. Se a largura útil impedir legibilidade, usar o modo de apresentação responsiva **oficial** do PluginUI, não introduzir rolagem horizontal na página. O acionador de dez dimensões permanece visível na seção, e não no Hero.
+
+```text
+┌─ COMPARAÇÃO ENTRE GRUPOS ───────────────────────────────┐
+│ Indicador   Geral     Estratégicos      Demais         │
+│ IGS         4,3/5       4,5/5           4,1/5         │
+│ NPS         +48         +61             +37           │
+│ ... cinco indicadores no total                         │
+│ [Comparar também as dez dimensões ▾]                   │
+│ [10 linhas adicionais na mesma grade, quando expandido]│
+└────────────────────────────────────────────────────────┘
+```
+
+**Celular (< 600 px úteis):** **um bloco/card por indicador**, dentro do mesmo painel lógico, com **os três grupos lado a lado em cada indicador** e rótulos compreensíveis, preservando comparabilidade sem rolagem horizontal. O usuário vê os cinco blocos principais; ao acionar **“Comparar também as dez dimensões”**, surgem **dez blocos adicionais equivalentes** na mesma sequência lógica, não outra tabela nem modal. A UI é a **mesma coleção de linhas de dados em dois modos de apresentação**, não dois contratos nem duas consultas.
+
+```text
+┌─ COMPARAÇÃO ENTRE GRUPOS ──┐
+│ IGS                       │
+│ Geral    Estrat.   Demais │
+│ 4,3/5    4,5/5     4,1/5 │
+│ ───────────────────────── │
+│ NPS                       │
+│ Geral    Estrat.   Demais │
+│ +48      +61       +37    │
+│ ... resposta/satis./crít. │
+│ [Comparar dez dimensões ▾]│
+│                           │
+│ AO EXPANDIR:              │
+│ Qualidade                 │
+│ Geral    Estrat.   Demais │
+│ 4,5      4,7       4,3   │
+│ ... até dez dimensões     │
+└───────────────────────────┘
+```
+
+Os números servem **apenas de exemplo**, não podem ser copiados para dados de produção. Os breakpoints são **alvos visuais**, não estilos existentes comprovados; testar viewport útil real, ampliação 200–400%, nomes longos, teclado, leitor de tela e contraste.
+
+### 7.3 Componentes reais e decisões de composição
+
+**Fonte investigada:** `plugins/commercial/src/app/commercialUi.ts`, `plugins/plugin-ui/src/components/data/{DataTable.tsx,DataTableSection.tsx}`, `plugins/plugin-ui/src/components/layout/SectionCard.tsx`, e padrão de consumo em `plugins/commercial/src/features/analytics/components/CommercialProposalsTable.tsx`.
+
+| Responsabilidade | Componente/contrato existente | Utilização aprovada / limitação |
+|---|---|---|
+| Painel, título e ajuda | `CommercialSectionCard` (wrapper de `createDashboardSectionCard`) | `title`, `subtitle`, `hint`, `children`; `SectionCard.collapsible` fecha **todo o corpo** do painel, **não** atende isoladamente à expansão só das dez dimensões |
+| Tabela principal | `CommercialDataTable<T>` → `DataTable<T>` | `columns`, `rows`, `rowKey`, `compact`, `layout`, `loading`, `emptyMessage`; `DataTableColumn<T>` aceita `header`, `render`, `align`, `mobileLabel`; 4 colunas/5 linhas inicialmente |
+| Linhas adicionais ao expandir | Estado local de composição React + mesmo `CommercialDataTable` | Alternar **somente o conjunto de linhas**: 5 indicadores + 10 dimensões quando aberto; sem renderizar segunda tabela. Usar acionador oficial do kit após localizar componente apropriado; acessibilidade `aria-expanded`/`aria-controls` |
+| Expansão nativa de linha individual | `DataTable.expandedRowKey`, `renderExpandedRow`, `isRowExpandable` | **Existe, mas expande o detalhe de uma única linha**; não equivale automaticamente a inserir dez linhas irmãs. Não apresentar como solução pronta para o acionador geral de dimensões |
+| Modo responsivo cards | `DataTableSection` com `viewLayoutPreferencesKey`, `renderCard`, `viewLayoutMobileMaxWidthPx` | Kit permite modo Tabela/Cards e padrão mobile ≤ 768 px quando habilitado; **não vem automaticamente de `CommercialDataTable`**. Validar composição oficial `DataTableSection`/ `DataCardsGrid` sem duplicar `SectionCard` ou toolbar e sem impor busca/paginação a 15 linhas |
+| Card de dados opcional | `CommercialDataRecordCard`, `CommercialDataCardsGrid` | Componentes já exportados em `commercialUi.ts`; **props/adequação exatas à célula com três grupos: TO_INVENTORY**; evitar desenvolver card nativo com CSS paralelo |
+| Ação local de expandir/recolher | Priorizar controle oficial PluginUI/Comercial, verificar exports e props na etapa de implementação | É comando de **apresentação local**, permitido neste painel; `CommercialActionButton` é candidato existente, mas validar semântica de disclosure acessível e densidade |
+| Ajuda contextual | `hint` de `CommercialSectionCard` → tooltip oficial | Explicar diferença entre IGS/nota por dimensão, taxa e tamanhos dos grupos |
+| Estados | `CommercialLoadingCard`, `CommercialEmptyState`, `CommercialStateBanner` | Carregamento/sem campanhas/erro/fonte indisponível/supressão diferenciados |
+
+**Abstraction Gate:** não introduzir `SurveyGroupTable`, `MarketingCompareAccordion`, `MarketingMobileCards`, CSS responsivo independente ou uma segunda biblioteca. Se a montagem com `DataTableSection` não permitir facilmente o modo mobile, registrar gap e avaliar **menor extensão transversal** no kit com regressão antes de criar abstração.
+
+**Não incluir por padrão:** `CommercialPagination`, `CommercialDataListToolbar`, filtros locais, seleção de linhas, sorting de indicadores heterogêneos, drawer ou botões de exportação não solicitados. A decisão de expandir/recolher não mexe na consulta nem nas escolhas do Hero.
+
+### 7.4 Regras de dados, comparabilidade e proteção
+
+1. **Geral = agregados autorizados para o mesmo recorte**; Estratégicos/Demais vêm de classificação oficial na fonte de autoridade ainda **TO_INVENTORY** (ex.: dados de referência do TOTVS por `api-delpi`, apenas após confirmação), não de regra improvisada no frontend. Os grupos só devem formar partição quando o domínio comprovar classificação completa/exclusiva; sem isso, não prometer `Geral = Estratégicos + Demais` nem reconstruir valores na tela.
+2. Amostra por grupo tem **respostas e participantes cadastrados/elegíveis** quando autorizados; taxa = respostas/base oficial no `commercial-api`. “Participantes cadastrados” **não comprova envio entregue**. Diferença entre recortes e populações deve ser identificada; o usuário não deve confundir percentual de resposta com satisfação.
+3. `IGS`, `NPS`, satisfeitos, críticos, taxas e médias das dez dimensões vêm de **agregação oficial do backend**, não de subtração entre percentuais, média simples de médias ou reconstituição de indivíduos no frontend.
+4. Supressão de grupos pequenos é **backend-first**, incluindo inferência por diferença (`Geral − Estratégicos = Demais`), cruzamento com filtros, contagens, linhas expandidas, histórico e quaisquer exportações. O Portal **não** tenta esconder dados apenas com componentes: recebe somente valores autorizados e representa estado protegido.
+5. Quando classificação fonte/cobertura é inexistente: indicar **“Comparação indisponível”**, sem fabricar proxy de cliente estratégico; quando grupos não possuem base válida, não converter ausência em zero. Quando dado é suprimido, não mostrar `n` que permita reidentificação.
+6. `commercial.access` vê **apenas agregados autorizados**, mesmo após a expansão; respostas por cliente ficam restritas a `commercial.marketing` ou `commercial.manage` segundo contrato da frente, sempre com validação do `commercial-api`.
+
+### 7.5 Critérios objetivos de aceite
+
+1. Seção depois do ranking das dez dimensões, em **um único painel** com descrição do recorte e orientação sobre os grupos.
+2. **Cinco linhas visíveis inicialmente**, na ordem IGS, NPS, Taxa de resposta, Satisfeitos, Críticos; quatro colunas (Indicador, Geral, Estratégicos, Demais) em desktop, dados e unidades corretos.
+3. Acionador local “Comparar também as dez dimensões” inicia **recolhido**; expande **dez linhas da mesma tabela** imediatamente após as cinco principais; ação inversa as recolhe. Não criar outra tabela nem alterar filtros.
+4. Dimensões usam nomes oficiais, chave estável e **ordem canônica do questionário**, com médias 1–5 e contagens válidas disponibilizadas conforme autorização.
+5. Desktop quatro colunas; tablet mantém tabela enquanto legível; celular usa **cards por indicador, três grupos lado a lado**, mantendo a expansão dentro da **mesma coleção de dados**. Sem rolagem horizontal da página, elementos cortados nem cabeçalhos ilegíveis.
+6. Usar `CommercialSectionCard` e `CommercialDataTable` e reutilizar kit oficial para disclosure e cards; **validar integração concreta** de `DataTableSection`/ `DataCardsGrid` antes de alegar suporte pronto em mobile.
+7. Sem busca, paginação, seleção, filtros locais ou sort numérico sem justificativa; controle de apresentação local não é filtro de Hero.
+8. Exibir respostas/participantes por grupo **somente quando permitidos**; proteção contra inferência por complemento e recortes deve existir no backend antes dos dados chegarem ao frontend.
+9. Loading, vazio, sem classificação, amostra suprimida e erro distintos; nenhum valor ausente/suprimido renderizado como zero.
+10. Testes em desktop, tablet, celular, zoom 200–400%, com teclado/leitor de tela; verificar expansão, recolhimento, foco, nomes longos, preservação de unidades, segurança e regressão dos componentes compartilhados. Relatório de execução com HEAD/branch/working tree, diff, testes, outcome e gaps.
 
 ## 8. Consulta individual — somente Marketing/Manage
 
@@ -525,7 +638,9 @@ Desktop: Hero compacto, KPIs em 5 colunas quando couber, gráfico combinado e to
 | Preferências | `usePersistedChartPreferences`, `applySeriesViewPreferences`, `buildChartSeriesConfigItems`, `resetSeriesViewPreferences` | PluginUI |
 | Exportação do gráfico | `CommercialTabularExportButtons` | `commercialUi.ts` → PluginUI |
 | Barras dimensões | `CommercialHorizontalValueBars` | `commercialUi.ts` → `HorizontalValueBars`, contrato `max`, `items[].meta`, `layout` conferido |
-| Tabelas | `CommercialDataTable`, `CommercialPagination` | `commercialUi.ts` → PluginUI |
+| Comparação por grupos | `CommercialSectionCard`, `CommercialDataTable`, `DataTableColumn<T>` | wrappers de `commercialUi.ts` → `SectionCard` / `DataTable` do PluginUI; 5+10 linhas |
+| Responsividade em cards (a validar) | `DataTableSection`, `CommercialDataCardsGrid`, `CommercialDataRecordCard` | PluginUI e `commercialUi.ts`; conferir integração em mobile antes de implementar |
+| Tabelas de outras seções | `CommercialDataTable`, `CommercialPagination` | `commercialUi.ts` → PluginUI |
 | Leitura detalhe | `CommercialHostDrawer`, `CommercialDetailCard`, `CommercialDetailFieldGrid` | `commercialUi.ts` |
 | Estados | `CommercialLoadingCard`, `EmptyState`, `CommercialStateBanner` | PluginUI e `commercialUi.ts` |
 
@@ -538,7 +653,7 @@ Desktop: Hero compacto, KPIs em 5 colunas quando couber, gráfico combinado e to
 3. Cinco KPIs; base e período explícitos; trend apenas quando calculável; delta pontual correto, sem cor induzida.
 4. Gráfico combinado IGS/NPS dual-axis, sem tabela fixa, com tipo, inspector, preferências e exportação do PluginUI; detalhes por campanha sob demanda e ano completo recalculado pelo backend, sem média de médias.
 5. `CommercialHorizontalValueBars` usa `max={5}`, ranking, `meta=n válido`, dez perguntas oficiais e layout responsivo.
-6. Comparativo possui denominações/amostras, não inventa estratificação; `commercial.access` não consegue inferir pequenos grupos ou acessar dados privados por filtros/combinações.
+6. Comparativo aprovado: cinco indicadores visíveis + dez dimensões expansíveis **na mesma tabela**; Geral/Estratégicos/Demais, desktop em quatro colunas e celular em cards por indicador; mostrar bases autorizadas, não inventar estratificação, e `commercial.access` não consegue inferir grupos pequenos por diferença ou filtros.
 7. Com `commercial.access`, nenhum request a endpoints identificados ou montagem do drawer; gestor lê resposta imutável. Backend decide todas as autorizações.
 8. Loading, vazio, erro, supressão e indisponibilidade de fonte diferentes; retry global no Hero.
 9. Todos os visuais vêm do PluginUI/CommercialUi existente; inventário residual de exports/props e testes de regressão do Portal antes do diff; nenhuma abstração/CSS novo sem Abstraction Gate.
