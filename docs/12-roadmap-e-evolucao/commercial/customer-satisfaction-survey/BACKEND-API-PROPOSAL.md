@@ -8,11 +8,15 @@
 
 **Decisão (10/11/2026, solicitante):** "perfeito, aceito o padrão". Este documento torna-se a **referência arquitetural aceita para implementação incremental**, vinculada ao [índice mestre](./REQUIREMENTS-INDEX.md). O conjunto de 20 rotas descreve operações candidatas, **não 20 obrigações de implementação imediata**. R09 (remoção de destinatário), nomes físicos, filtros sem fonte comprovada e demais detalhes técnicos dependem de inventário delimitado. O CAIO continuará com seis tools. **Aprovação do padrão ≠ execução nem homologação.**
 
+## Produto completo em duas entregas — decisão de 11/11/2026
+
+**Escopo obrigatório do produto:** entrega 1 = campanhas, seleção de empresas, convite por cópia, formulário público, respostas, histórico e indicadores oficiais; entrega 2 = consolidação para tratamento, classificação nas oito categorias, planos de ação (problema/cliente/causa/ação/responsável/prazo/status), acompanhamento, retorno, reavaliação e indicador de ações concluídas. O plano Word (§§1–10) é a referência de cobertura. **R17–R20 e `satisfaction_cases` são candidatos reservados para a entrega 2, não funcionalidades descartadas.** Seus contratos exatos devem ser verificados antes da segunda implementação, respeitando o owner e o Abstraction Gate; não criar nova permissão ou tool MCP por conveniência. O primeiro ciclo não implementa essas rotas.
+
 ## Escopo da primeira entrega — decisão de 11/11/2026
 
 **Decisão do solicitante:** Priorizar campanha, destinatários, link para copiar/colar, formulário público, registro de respostas e indicadores históricos. **Não há envio de e-mail pelo Portal**; o próprio usuário copia o convite/link e envia por seu canal. **Não haverá desenvolvimento de planos de ação nem integração com `commercial.tasks` nesta entrega.** A permissão nova `commercial.marketing` será tratada durante o desenvolvimento; não criar outras permissões. A ampliação semântica do CAIO e os testes/homologação serão obrigatórios **a cada etapa**, sem tools MCP adicionais.
 
-**Contrato técnico da primeira entrega:** [SURVEY-FIRST-RELEASE-CONTRACT.md](./SURVEY-FIRST-RELEASE-CONTRACT.md) — três tabelas, fluxo, formulário, indicadores e testes. Este recorte posterior **substitui** os itens incompatíveis da proposta anterior (envio direto R11; tabela/rotas de planos de ação R17–R20; autorização para criar infraestrutura de tarefas). O restante do padrão arquitetural segue aceito. **Banco físico e rotas ainda não implementados.**
+**Contrato técnico da primeira entrega:** [SURVEY-FIRST-RELEASE-CONTRACT.md](./SURVEY-FIRST-RELEASE-CONTRACT.md) — três tabelas, fluxo, formulário, indicadores e testes. Este recorte retira definitivamente o envio direto R11, mas **apenas adia** tabela/rotas de plano de ação R17–R20 para a segunda entrega, sem autorizar infraestrutura de tarefas antes do inventário pertinente. O restante do padrão arquitetural segue aceito. **Banco físico e rotas ainda não implementados.**
 
 ## 1. Ownership e segurança — contrato funcional
 
@@ -46,10 +50,10 @@ O prefixo abaixo refere-se a paths **internos** da `commercial-api` (`/satisfact
 | R14 | `GET /public/satisfaction-surveys/{token}` | Formulário externo e estado da janela | Token de convite, sem JWT de colaborador |
 | R15 | `POST /public/satisfaction-surveys/{token}/response` | Uma única submissão final e atômica; sem edição posterior | Token de convite e validação no servidor |
 | R16 | `GET /satisfaction-surveys/results` | IGS, NPS, taxa, dimensões, percentuais e comparação histórica com filtros permitidos | `commercial.access` ou Gestão; somente agregados |
-| R17 | `GET /satisfaction-surveys/campaigns/{campaign_id}/cases` | Lista dos problemas e planos de ação da campanha | **FORA DA PRIMEIRA ENTREGA** — não implementar neste ciclo |
-| R18 | `POST /satisfaction-surveys/campaigns/{campaign_id}/cases` | Abrir tratamento de resposta/comentário relevante | **FORA DA PRIMEIRA ENTREGA** — não implementar neste ciclo |
-| R19 | `GET /satisfaction-surveys/cases/{case_id}` | Detalhe do problema, ação e retorno | **FORA DA PRIMEIRA ENTREGA** — não implementar neste ciclo |
-| R20 | `PATCH /satisfaction-surveys/cases/{case_id}` | Categoria, causa, ação, responsável, prazo, status, retorno, reavaliação | **FORA DA PRIMEIRA ENTREGA** — não implementar neste ciclo |
+| R17 | `GET /satisfaction-surveys/campaigns/{campaign_id}/cases` | Lista dos problemas e planos de ação da campanha | **ENTREGA 2 PLANEJADA** — não implementar neste ciclo |
+| R18 | `POST /satisfaction-surveys/campaigns/{campaign_id}/cases` | Abrir tratamento de resposta/comentário relevante | **ENTREGA 2 PLANEJADA** — não implementar neste ciclo |
+| R19 | `GET /satisfaction-surveys/cases/{case_id}` | Detalhe do problema, ação e retorno | **ENTREGA 2 PLANEJADA** — não implementar neste ciclo |
+| R20 | `PATCH /satisfaction-surveys/cases/{case_id}` | Categoria, causa, ação, responsável, prazo, status, retorno, reavaliação | **ENTREGA 2 PLANEJADA** — não implementar neste ciclo |
 
 **Não criar por padrão:** `POST/PUT/PATCH/DELETE` de perguntas (questionário fixo), `PATCH/DELETE` de respostas definitivas (imutabilidade e histórico), `DELETE` irrestrito de campanhas/conclusões, endpoint para cada indicador, disparo automático em WhatsApp/Teams, fluxo separado de cadastro TOTVS ou rotas públicas de resultados individuais. Campanhas abrem/fecham **pela comparação das datas no backend**, sem exigir scheduler para mudar flag; a janela de corte e fuso serão definidos no contrato técnico. O R09 é **proposta condicionada** à necessidade de corrigir público antes de qualquer convite, não autorização para apagar evidência histórica.
 
@@ -57,14 +61,14 @@ O prefixo abaixo refere-se a paths **internos** da `commercial-api` (`/satisfact
 
 ## 3. Persistência mínima proposta
 
-**Base da primeira entrega: três tabelas próprias**, conforme [contrato fechado](./SURVEY-FIRST-RELEASE-CONTRACT.md); a quarta entidade abaixo fica fora do escopo inicial. A lista histórica anterior avaliava quatro agregados/tabelas no schema comercial (nomes sujeitos ao padrão de migrations): `satisfaction_campaigns`, `satisfaction_recipients`, `satisfaction_responses` e `satisfaction_cases`.
+**Base da primeira entrega: três tabelas próprias**, conforme [contrato fechado](./SURVEY-FIRST-RELEASE-CONTRACT.md); a quarta entidade está **reservada para a entrega 2**, sem implementação na primeira. A lista histórica anterior avaliava quatro agregados/tabelas no schema comercial (nomes sujeitos ao padrão de migrations): `satisfaction_campaigns`, `satisfaction_recipients`, `satisfaction_responses` e `satisfaction_cases`.
 
 | Tabela candidata | Responsabilidade | Invariantes principais |
 |---|---|---|
 | `campaigns` | Identidade, nome, início/fim, questionário oficial/versionamento de referência, autor e auditoria | Configuração por campanha; abertura/fecho pela data |
 | `recipients` | Par **cliente TOTVS (código+loja)**, campanha, e-mail ajustável, status de envio, link/token protegido | `UNIQUE(campaign_id, customer_code, customer_store)`; link estável por empresa/campanha |
 | `responses` | Uma submissão definitiva por recipient, notas IGS/NPS e 10 dimensões, três respostas abertas, timestamp, versão do formulário | `UNIQUE(recipient_id)` + verificação transacional de campanha e token; sem update/delete operacional |
-| ~~`cases`~~ | **Fora da primeira entrega** — o plano prevê tratamento posterior, mas o Portal não o desenvolverá agora | Não criar tabela nem rotas nesta entrega |
+| `cases` | **Entrega 2 obrigatória** — classificação de problemas, ações, retornos e reavaliação previstos no Word | Não criar na entrega 1; planejar e implementar na entrega 2, após verificar isolamento/contratos |
 
 **Alternativas sujeitas ao Abstraction Gate:** respostas dimensionais podem usar campos tipados ou tabela de itens, conforme consulta e migração comprovadas; não assumir JSONB sem medir o contrato de indicadores. Ações podem integrar a `commercial.tasks` existente **somente** se os acessos comuns a tarefas não expuserem problemas, notas e comentários restritos. A migração V003 já prevê assignee, due, status e vínculo com cliente/entidade, mas suas rotas atuais são acessíveis por `commercial.access`. Caso o isolamento seja mais simples com `cases`, não criar um segundo gerenciador genérico de tarefas.
 
@@ -88,7 +92,7 @@ Arquivos prováveis da futura ampliação (a confirmar no HEAD da execução): `
 
 ## 5. Entrega limitada e critérios de verificação
 
-**Sequência aprovada para a primeira entrega:** (A) banco, campanhas, questionário fixo e destinatários; (B) link copiável e formulário público com submissão definitiva; (C) agregações, filtros e histórico; **CAIO e testes em cada etapa**. (D) tratamento/retorno **não integra este ciclo**. Detalhes no [contrato da primeira entrega](./SURVEY-FIRST-RELEASE-CONTRACT.md).
+**Sequência aprovada para a primeira entrega:** (A) banco, campanhas, questionário fixo e destinatários; (B) link copiável e formulário público com submissão definitiva; (C) agregações, filtros e histórico; **CAIO e testes em cada etapa**. (D) classificação, planos de ação, retorno/reavaliação e indicador de conclusão **integram obrigatoriamente a entrega 2**, não o primeiro ciclo. Detalhes no [contrato da primeira entrega](./SURVEY-FIRST-RELEASE-CONTRACT.md).
 
 Para cada frente: reancorar HEAD, branch, working tree; consultar owners/contratos e consumidores; diferenciar dados públicos/agregados/restritos; definir teste de acesso positivo/negativo, teste de invariantes e leitura posterior do resultado; menor diff, sem refactor lateral.
 

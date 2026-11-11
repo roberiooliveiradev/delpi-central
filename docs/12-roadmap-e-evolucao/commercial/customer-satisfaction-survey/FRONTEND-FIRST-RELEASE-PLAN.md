@@ -2,13 +2,14 @@
 
 > **Status: PLANEJAMENTO FUNCIONAL/TÉCNICO PROPOSTO, NÃO IMPLEMENTADO.** Em 11/11/2026; base consultada: branch `main`, HEAD `1e75d95d000bda6c664c246ee0ba67f27a31a7a3` (revalidar antes de modificar código). Não há telas de pesquisa identificadas no plugin atual.
 >
-> **Fontes canônicas:** [índice mestre](./REQUIREMENTS-INDEX.md), [decisões](./BUSINESS-DECISIONS.md), [contrato da primeira entrega](./SURVEY-FIRST-RELEASE-CONTRACT.md) e o plano integral nas fontes do projeto. Este documento descreve **a interface para o escopo aprovado**, não altera o ownership ou aprova desenvolvimento de planos de ação.
+> **Planejamento por etapas:** esta especificação é exclusiva da **entrega 1**. A **entrega 2 está assumida como obrigatória** e incluirá gestão de classificação, planos de ação, retornos e reavaliações, com suas interfaces a detalhar ao iniciar essa frente. Não eliminar requisitos do Word por não aparecerem nas páginas deste ciclo.
+>\n> **Fontes canônicas:** [índice mestre](./REQUIREMENTS-INDEX.md), [decisões](./BUSINESS-DECISIONS.md), [contrato da primeira entrega](./SURVEY-FIRST-RELEASE-CONTRACT.md) e o plano integral nas fontes do projeto. Este documento descreve **a interface para o escopo aprovado**, não altera o ownership ou aprova desenvolvimento de planos de ação.
 
 ## 1. Escopo e experiência
 
 **Entregar nesta versão:** o usuário autorizado cria campanha, seleciona empresas TOTVS, copia link/mensagem e distribui **por conta própria**, acompanha respostas e analisa resultados. O cliente abre o formulário pelo link, revisa e envia uma resposta definitiva. O Comercial usa os resultados para suas ações **fora da aplicação**.
 
-**Não entregar:** disparo de e-mail, integração WhatsApp/Teams, envio em lote, lembretes automáticos, confirmação de entrega, CRUD das perguntas, editor de respostas definitivas, telas/tarefas de planos de ação, retorno ou reavaliação, nova permissão além de `commercial.marketing`, novo MCP/novas tools. O CAIO é estendido por entidade/ação em cada etapa do backend, não pelo frontend.
+**Não entregar na primeira versão:** disparo integrado de e-mail/WhatsApp/Teams, envio em lote, lembretes automáticos, confirmação de entrega, CRUD das perguntas, editor de respostas definitivas, telas/tarefas de planos de ação, retorno ou reavaliação, nova permissão além de `commercial.marketing`, novo MCP/novas tools. **Planos de ação, retorno e reavaliação serão desenvolvidos na entrega 2**, não descartados. O CAIO é estendido por entidade/ação em cada etapa do backend, não pelo frontend.
 
 **Reutilizar o Portal Comercial:** `plugins/commercial` já possui `App.tsx`, roteamento próprio (`app/pluginRoutes.ts` e `app/pluginNavigation.ts`), catálogo de navegação (`content/shellNav.ts`, `content/pluginRouteCatalog.ts`), shell (`app/PluginShell.tsx`), HTTP `api/httpClient.ts`, componentes `CommercialPageHero`, `CommercialMetricCard`, `CommercialDataTable`, filtros, seletores, estados de carregamento e mensagens em `app/commercialUi.ts`/`@delpi/plugin-ui`. Reaproveitar contratos e componentes existentes antes de novas abstrações. **Não criar microfrontend separado para a gestão interna.**
 
@@ -77,7 +78,7 @@ Paths internos são **propostos**, não encontrados implementados. A nomenclatur
 
 **Navegação:** ação discreta **"Ver análise completa"** para a página de resultados da pesquisa, onde ficam filtros, segmentações e comparações detalhadas; respostas por empresa continuam exclusivas de Marketing/Manage em sua área restrita.
 
-**Estados:** sem pesquisa encerrada, sem respostas, amostra insuficiente, carregamento ou erro devem aparecer corretamente, sem inventar zero nem expor valores que permitam reidentificação. O indicador de **planos de ação concluídos** do Word permanece fora da primeira entrega, pois não haverá gestão de ações nem fonte desse cálculo.
+**Estados:** sem pesquisa encerrada, sem respostas, amostra insuficiente, carregamento ou erro devem aparecer corretamente, sem inventar zero nem expor valores que permitam reidentificação. O indicador de **planos de ação concluídos** do Word será acrescentado na **entrega 2**, quando houver dados oficiais de ações; não mostrar zero na entrega 1.
 
 **Verificação por etapa:** garantir a apresentação dos indicadores gerais, a fidelidade aos cálculos da API, a restrição da informação, a navegação e a responsividade. **Planejado, não implementado.**
 
