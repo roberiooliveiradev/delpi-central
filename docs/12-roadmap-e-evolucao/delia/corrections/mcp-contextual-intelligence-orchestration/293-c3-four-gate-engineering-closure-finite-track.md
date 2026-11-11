@@ -686,3 +686,7 @@ Delivered: `delia-api/scripts/int1_secure_decision_trace.py`, `tests/test_int1_s
 ### 2026-11-11 — INT-1 context / MCP surface / recovery remediation
 
 **TASK:** `DELIA-C3-T2-INT1-INVESTIGATION-CONTEXT-TOOL-SURFACE-AND-RECOVERY-REMEDIATION-01`. See sibling **299**. Proven: EnvelopeHint description truncation + missing pagination projection. Minimal EXTEND of existing mechanisms; live comparison vs 298; G1 TEO attractor remains. `INT1_STAGE_ACCEPTANCE=BLOCKED`. `NEXT=COORDINATION_INT1_CONTEXT_AND_RECOVERY_INDEPENDENT_REVIEW`.
+
+### 2026-11-11 — INT-1 full context + MCP semantic contract remediation
+
+**TASK:** `DELIA-C3-T2-INT1-FULL-CONTEXT-AND-MCP-SEMANTIC-CONTRACT-REMEDIATION-01`. See sibling **300**. Removed silent catalog/content/`_bounded_json` truncations; `openrouter_qwen` window 40960; G1 owner ambiguity TEO `decomposition_tree` (process WBS) vs DAVI BOM recorded for owner change — no local description rewrite. Live eval **TEST_NOT_RUN** (security gate). `INT1_STAGE_ACCEPTANCE=BLOCKED`. `NEXT=COORDINATION_INT1_FULL_CONTEXT_INDEPENDENT_REVIEW`.

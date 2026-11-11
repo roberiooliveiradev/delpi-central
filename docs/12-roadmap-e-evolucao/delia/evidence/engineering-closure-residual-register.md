@@ -1266,12 +1266,32 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-P3-TEO-ANALYZE-FIRST | **IMPROVED** | Corrected battery: VISTA-first only (0× teo.analyze first) |
 | INT1-G1-TEO-DECOMPOSITION-ATTRACTOR | **OPEN** | Still TEO-first ×3 after description fix; owner semantic overlap |
 | INT1-P2-CONTINUITY-RELIABILITY | **PARTIAL** | Some page continuation; not consistent across 3 reps |
-| INT1-CATALOG-DTO-DESC-320 | **RESIDUAL** | Catalog DTO still caps descriptions at 320 (budget path) |
-| INT1-CATALOG-HARD-CAP-80 | **RESIDUAL_AT_SCALE / NOT_PROVEN_IN_INT1_SAMPLE** | `_project_semantic_tool_catalog` bounds `catalog[:80]`; with current INT-1 surface n=12 all DAVI/TÉO/VISTA tools remained model-visible — not a proven cause of P1/P2/P3/G1 in docs 298–299 |
+| INT1-CATALOG-DTO-DESC-320 | **REMEDIATED** | Catalog DTO preserves full owner descriptions (doc 300) |
+| INT1-CATALOG-HARD-CAP-80 | **REMEDIATED→CAP256** | Soft cap raised to safety 256 + overflow log; INT-1 surface ≪ cap |
+| INT1-BOUNDED-JSON-SILENT-OVERVIEW | **REMEDIATED** | Essential-field overflow preserves pagination/limitations/continuation |
+| INT1-CONTENT-SLICE-2000 | **REMEDIATED** | Projection/compose no longer hard-slice content before budget serializer |
+| INT1-QWEN-CONTEXT-32768 | **REMEDIATED** | `openrouter_qwen` effective window = 40960 |
+| INT1-G1-TEO-DECOMPOSITION-ATTRACTOR | **OPEN / OWNER_CHANGE_REQUIRED** | TEO `decomposition_tree` = process WBS ≠ product BOM; no local DÉLIA rewrite |
+| INT1-LIVE-FULL-CONTEXT-RERUN | **BLOCKED** | Security/credential gate; live 8×3 not run in doc 300 |
 | INT1-CREDENTIAL-ISOLATION | **RESIDUAL** | Unchanged |
 | INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | Not auto-justified |
-| INT1-STAGE | **BLOCKED** | Doc 299 independent review |
+| INT1-STAGE | **BLOCKED** | Doc 300 independent review |
 
 **Independent inventory corroboration (post-299):** [Investigation context audit](21a43e92-fe4a-457c-94eb-8ea775194bce) reconfirmed F1/F2 (description `[:500]`, missing pagination fields), native Pydantic AI loop, deps non-visible, and owner-agnostic selection — consistent with remediations already landed in `5b0fbab313`.
 
 **NEXT=`COORDINATION_INT1_CONTEXT_AND_RECOVERY_INDEPENDENT_REVIEW`**.
+
+## 2026-11-11 — INT-1 full context + MCP semantic contract residuals
+
+**TASK:** `DELIA-C3-T2-INT1-FULL-CONTEXT-AND-MCP-SEMANTIC-CONTRACT-REMEDIATION-01`
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-FULL-CONTEXT-CODE | **REMEDIATED** | Catalog/bounded_json/content/config path |
+| INT1-MCP-G1-OWNER-AMBIGUITY | **OPEN** | Owner TEO must clarify decomposition_tree ≠ BOM |
+| INT1-LIVE-EVAL-THIS-TASK | **TEST_NOT_RUN** | `SECURE_EVAL_GATE=BLOCKED` |
+| INT1-CREDENTIAL-ISOLATION | **RESIDUAL** | Unchanged |
+| INT1-STAGE | **BLOCKED** | Doc 300 review |
+| INT1-CLOSED | **NO** | — |
+
+**NEXT=`COORDINATION_INT1_FULL_CONTEXT_INDEPENDENT_REVIEW`**. `INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

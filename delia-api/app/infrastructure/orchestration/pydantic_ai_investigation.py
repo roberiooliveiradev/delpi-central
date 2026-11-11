@@ -326,45 +326,92 @@ class InvestigationDeps:
     owner_argument_retry_used: bool = False
 
 
-def _bounded_json(payload: Any, *, limit: int = 6000) -> str:
-    """Serialize tool observations with structural truncation.
+# Keys that must survive projection overflow — continuity, provenance,
+# coverage and recovery. Never silently drop these for a bare overview.
+_BOUNDED_ESSENTIAL_KEYS: frozenset[str] = frozenset(
+    {
+        "status",
+        "error_code",
+        "limitations",
+        "investigation_progress",
+        "pagination",
+        "continuation_note",
+        "coverage_note",
+        "evidence_citable",
+        "evidence_handle",
+        "observation_index",
+        "action_id",
+        "operation_class",
+        "authoritative_root_code",
+        "owner_validation_hint",
+        "uncovered_user_identifiers",
+        "provenance_specialist",
+        "provenance_capability",
+        "source_ids",
+        "has_verified_composition",
+        "entity",
+        "candidates",
+        "repeated_observation_no_progress",
+    }
+)
 
-    Truncation is applied to string fields / list length BEFORE the
-    final dump so the returned document is always valid JSON and
-    carries an explicit ``truncated`` flag when reduced.
+
+def _bounded_json(payload: Any, *, limit: int = 6000) -> str:
+    """Serialize tool observations with explicit, recoverable truncation.
+
+    Scale field/list caps with the configured projection budget. When the
+    final payload still exceeds ``limit``, keep essential continuity /
+    provenance / pagination fields and mark incompleteness — never replace
+    the observation with a status/content stub that drops recovery signals.
     """
     truncated = False
+    safe_limit = max(500, int(limit))
+    # Scale with budget so a 20k projection is not crushed by historical
+    # 1200/40 magic constants; still bounded for runaway nesting.
+    str_cap = max(1200, min(safe_limit // 2, 50_000))
+    list_cap = max(40, min(safe_limit // 100, 500))
+    key_cap = max(48, min(safe_limit // 80, 256))
 
     def _shrink(value: Any, *, depth: int = 0) -> Any:
         nonlocal truncated
-        if depth > 6:
+        if depth > 8:
             truncated = True
             return None
         if isinstance(value, Mapping):
             out: dict[str, Any] = {}
-            for idx, (key, item) in enumerate(value.items()):
-                if idx >= 48:
+            items = list(value.items())
+            # Prefer essential keys first so overflow drops voluminous
+            # business fields, not recovery/provenance metadata.
+            ordered = sorted(
+                items,
+                key=lambda pair: (
+                    0 if str(pair[0]) in _BOUNDED_ESSENTIAL_KEYS else 1,
+                    str(pair[0]),
+                ),
+            )
+            for idx, (key, item) in enumerate(ordered):
+                if idx >= key_cap:
                     truncated = True
                     break
                 out[str(key)[:120]] = _shrink(item, depth=depth + 1)
             return out
         if isinstance(value, (list, tuple)):
             items = list(value)
-            if len(items) > 40:
+            if len(items) > list_cap:
                 truncated = True
-                items = items[:40]
+                items = items[:list_cap]
             return [_shrink(item, depth=depth + 1) for item in items]
         if isinstance(value, str):
-            if len(value) > 1200:
+            if len(value) > str_cap:
                 truncated = True
-                return value[:1200]
+                return value[:str_cap]
             return value
         if isinstance(value, (int, float, bool)) or value is None:
             return value
         text = str(value)
-        if len(text) > 400:
+        if len(text) > min(400, str_cap):
             truncated = True
-            return text[:400]
+            return text[: min(400, str_cap)]
         return text
 
     body = _shrink(payload)
@@ -372,27 +419,75 @@ def _bounded_json(payload: Any, *, limit: int = 6000) -> str:
         if isinstance(body, dict):
             body = dict(body)
             body["truncated"] = True
+            body.setdefault(
+                "note",
+                "tool_observation_fields_reduced_for_model_budget",
+            )
         else:
             body = {"value": body, "truncated": True}
     raw = json.dumps(body, ensure_ascii=False, default=str)
-    if len(raw) <= limit:
+    if len(raw) <= safe_limit:
         return raw
-    overview = {
+
+    # Final-budget overflow: preserve essential investigation fields.
+    overview: dict[str, Any] = {
         "truncated": True,
-        "status": (
-            body.get("status") if isinstance(body, Mapping) else None
-        ),
-        "error_code": (
-            body.get("error_code") if isinstance(body, Mapping) else None
-        ),
-        "content": (
-            str(body.get("content") or "")[:800]
-            if isinstance(body, Mapping)
-            else str(body)[:800]
-        ),
         "note": "tool_observation_exceeded_model_budget",
+        "coverage_note": (
+            "Observation projection exceeded the configured model "
+            "budget. Essential continuity fields are preserved; "
+            "remaining business payload was not fully delivered — "
+            "do not treat this as a complete population."
+        ),
     }
-    return json.dumps(overview, ensure_ascii=False, default=str)
+    if isinstance(body, Mapping):
+        for key in _BOUNDED_ESSENTIAL_KEYS:
+            if key in body and key not in overview:
+                overview[key] = body[key]
+        content = body.get("content")
+        if content is not None:
+            content_budget = max(200, safe_limit // 4)
+            text = str(content)
+            overview["content"] = (
+                text
+                if len(text) <= content_budget
+                else text[:content_budget]
+            )
+    else:
+        overview["content"] = str(body)[: max(200, safe_limit // 4)]
+
+    overflow_raw = json.dumps(overview, ensure_ascii=False, default=str)
+    if len(overflow_raw) <= safe_limit:
+        return overflow_raw
+    # Last resort: drop voluminous optional essentials, keep recovery spine.
+    spine_keys = (
+        "status",
+        "error_code",
+        "limitations",
+        "pagination",
+        "continuation_note",
+        "investigation_progress",
+        "evidence_handle",
+        "observation_index",
+        "authoritative_root_code",
+        "uncovered_user_identifiers",
+        "provenance_specialist",
+        "provenance_capability",
+        "action_id",
+    )
+    spine: dict[str, Any] = {
+        "truncated": True,
+        "note": "tool_observation_exceeded_model_budget",
+        "coverage_note": overview["coverage_note"],
+    }
+    for key in spine_keys:
+        if key in overview:
+            spine[key] = overview[key]
+    if "content" in overview:
+        spine["content"] = str(overview["content"])[
+            : max(120, safe_limit // 8)
+        ]
+    return json.dumps(spine, ensure_ascii=False, default=str)
 
 
 def _declared_container_only(declared: object) -> bool:
@@ -515,8 +610,11 @@ def _attempt_projection(
         "evidence_citable": _is_business_evidence_attempt(attempt),
         "investigation_progress": progress,
         "status": attempt.status.value,
-        "content": (attempt.content or "")[:2000] or None,
-        "limitations": list(attempt.limitations)[:12],
+        # Full owner content — size policy lives solely in ``_bounded_json``
+        # (configured ``tool_projection_limit``). Silent ``[:2000]`` here
+        # destroyed business records before the budget serializer ran.
+        "content": (attempt.content or "") or None,
+        "limitations": list(attempt.limitations),
         "error_code": attempt.error_code,
         "has_verified_composition": (
             attempt.verified_composition is not None
@@ -1635,8 +1733,10 @@ class PydanticAiInvestigationOrchestrator:
                 {
                     "status": composed.status.value,
                     "has_verified_composition": True,
-                    "content": (composed.content or "")[:2000],
-                    "limitations": list(composed.limitations)[:12],
+                    # Size policy is ``_bounded_json`` / tool_projection_limit.
+                    "content": composed.content or None,
+                    "limitations": list(composed.limitations),
+                    "error_code": composed.error_code,
                 }
             )
 

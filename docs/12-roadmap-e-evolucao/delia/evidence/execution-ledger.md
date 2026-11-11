@@ -6383,3 +6383,19 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `299-int1-investigation-context-model-visible-mcp-tool-surface-semantic-selection-and-recovery-audit.md`.
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_CONTEXT_AND_RECOVERY_INDEPENDENT_REVIEW`.
+
+| DELIA-C3-T2-INT1-FULL-CONTEXT-AND-MCP-SEMANTIC-CONTRACT-REMEDIATION-01 | Full-context inventory; remove catalog/desc/content silent truncations; essential `_bounded_json`; openrouter_qwen 40960/20k/32; MCP G1 owner ambiguity recorded; live BLOCKED by security gate; doc 300 | FULL_CONTEXT=CODE_DONE; LIVE=TEST_NOT_RUN; NEXT=COORDINATION_INT1_FULL_CONTEXT_INDEPENDENT_REVIEW |
+
+### INT-1 full context + MCP semantic contract remediation — 2026-11-11
+
+- **TASK:** `DELIA-C3-T2-INT1-FULL-CONTEXT-AND-MCP-SEMANTIC-CONTRACT-REMEDIATION-01`.
+- **EXISTING_EQUIVALENT=YES**. **REUSE_DECISION=EXTEND** (catalog projection, `_bounded_json`, runtime profile).
+- **PROVEN_DEFECTS:** catalog `description[:320]` / prop `[:160]` / `catalog[:80]`; `_attempt_projection` `content[:2000]`; `_bounded_json` overflow dropping pagination/limitations; context window 32768 < provider 40960.
+- **CONFIG:** `openrouter_qwen` → `effective_context_window_tokens=40960`, `max_projection_chars=20000`, `prior_turns_limit=32`; validator `prior_turns_limit` max 64.
+- **MCP AUDIT:** TEO `decomposition_tree` = process WBS; DAVI product structure = BOM; `OWNER_CHANGE_REQUIRED=YES` (TEO) — no DÉLIA parallel description.
+- **TESTS:** `test_int1_full_context_projection_remediation.py` + related PASS.
+- **LIVE:** `SECURE_EVAL_GATE=BLOCKED` → **TEST_NOT_RUN** (no egress flag / credential scope residual).
+- **INSTRUCTION_CHANGED=NO**; **NEW_AGENT=NO**; **PROD_UNTOUCHED=YES**.
+- **Doc:** `300-int1-full-context-delivery-mcp-contract-semantics-and-model-context-configuration-remediation.md`.
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_FULL_CONTEXT_INDEPENDENT_REVIEW`.

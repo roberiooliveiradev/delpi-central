@@ -90,8 +90,8 @@
         "llm_call_max_attempts": 3
       },
       "context": {
-        "effective_context_window_tokens": 32768,
-        "prior_turns_limit": 4
+        "effective_context_window_tokens": 40960,
+        "prior_turns_limit": 32
       },
       "budgets": {
         "provider_call_timeout_seconds": 90.0,
@@ -102,7 +102,7 @@
         "max_governed_attempts": 2
       },
       "tool_results": {
-        "max_projection_chars": 6000
+        "max_projection_chars": 20000
       },
       "observability": {
         "record_model_id": true,

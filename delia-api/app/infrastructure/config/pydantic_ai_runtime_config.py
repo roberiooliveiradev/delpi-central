@@ -118,7 +118,9 @@ _INT_RANGES: Mapping[str, tuple[int, int]] = {
     "retries": (0, 3),
     "llm_call_max_attempts": (1, LLM_CALL_MAX_ATTEMPTS),
     "effective_context_window_tokens": (256, 2_000_000),
-    "prior_turns_limit": (0, 16),
+    # 0 = no prior history injected (explicit empty). Positive values are
+    # turn caps; ProcessHistory still trims by effective context window.
+    "prior_turns_limit": (0, 64),
     "max_governed_attempts": (1, MAX_GOVERNED_ATTEMPTS),
     "max_projection_chars": (500, 20_000),
 }

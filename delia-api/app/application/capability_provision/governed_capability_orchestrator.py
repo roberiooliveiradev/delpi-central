@@ -2172,49 +2172,50 @@ class OperationalCapabilityOrchestrator:
                 schema = cap.input_schema if isinstance(
                     cap.input_schema, Mapping
                 ) else {}
-                # Bound schema projection — property names + types only.
+                # Preserve owner-published property semantics for budget
+                # estimation and eligibility metadata. Do not invent
+                # alternate descriptions; never silently slice owner text.
                 props = schema.get("properties") if isinstance(
                     schema.get("properties"), Mapping
                 ) else {}
-                slim_props = {
-                    str(name): {
-                        "type": (
-                            spec.get("type")
-                            if (
-                                isinstance(spec, Mapping)
-                                and spec.get("type") is not None
+                slim_props: dict[str, Any] = {}
+                for name, spec in props.items():
+                    if not isinstance(spec, Mapping):
+                        slim_props[str(name)] = {"type": None}
+                        continue
+                    prop_type = (
+                        spec.get("type")
+                        if spec.get("type") is not None
+                        else (
+                            sorted(
+                                {
+                                    str(variant.get("type"))
+                                    for union_key in (
+                                        "anyOf",
+                                        "oneOf",
+                                    )
+                                    for variant in (
+                                        spec.get(union_key) or []
+                                    )
+                                    if isinstance(variant, Mapping)
+                                    and variant.get("type")
+                                }
                             )
-                            else (
-                                sorted(
-                                    {
-                                        str(variant.get("type"))
-                                        for union_key in (
-                                            "anyOf",
-                                            "oneOf",
-                                        )
-                                        for variant in (
-                                            spec.get(union_key)
-                                            or []
-                                        )
-                                        if isinstance(
-                                            variant, Mapping
-                                        )
-                                        and variant.get("type")
-                                    }
-                                )
-                                or None
-                            )
-                            if isinstance(spec, Mapping)
-                            else None
-                        ),
-                        "description": (
-                            str(spec.get("description") or "")[:160]
-                            if isinstance(spec, Mapping)
-                            else None
-                        ),
-                    }
-                    for name, spec in list(props.items())[:24]
-                }
+                            or None
+                        )
+                    )
+                    entry_prop: dict[str, Any] = {"type": prop_type}
+                    raw_desc = spec.get("description")
+                    if isinstance(raw_desc, str) and raw_desc.strip():
+                        entry_prop["description"] = raw_desc
+                    if "enum" in spec and isinstance(
+                        spec.get("enum"), (list, tuple)
+                    ):
+                        entry_prop["enum"] = [
+                            item for item in spec["enum"]
+                        ]
+                    slim_props[str(name)] = entry_prop
+                required = list(schema.get("required") or [])
                 catalog.append(
                     {
                         "capability_id": cap.capability_id,
@@ -2223,17 +2224,19 @@ class OperationalCapabilityOrchestrator:
                         "remote_name": cap.remote_name,
                         "owner": cap.owner,
                         "operation_class": cap.operation_class.value,
-                        "description": (cap.description or "")[:320],
+                        "description": cap.description or "",
                         "input_schema": {
                             "type": "object",
                             "properties": slim_props,
-                            "required": list(schema.get("required") or [])[
-                                :24
-                            ],
+                            "required": required,
                         },
                     }
                 )
-        bounded = catalog[:80]
+        # Safety ceiling only — not an investigation completeness policy.
+        # Authorized INT-1 surfaces are far below this; overflow is logged.
+        catalog_cap = 256
+        bounded = catalog[:catalog_cap]
+        catalog_overflow = len(catalog) > catalog_cap
         by_owner: dict[str, int] = {}
         for entry in bounded:
             owner = str(entry.get("owner") or entry.get("provider_id") or "?")
@@ -2241,9 +2244,12 @@ class OperationalCapabilityOrchestrator:
         _logger.info(
             "orchestration stage=semantic_tool_catalog "
             "decision=project actor=%s catalog_len=%d "
+            "catalog_total=%d catalog_overflow=%s "
             "owners=%s failures=%s correlation_id=%s",
             (actor_user_id or "")[:64] or "-",
             len(bounded),
+            len(catalog),
+            catalog_overflow,
             ",".join(f"{k}:{v}" for k, v in sorted(by_owner.items())[:12])
             or "-",
             ",".join(str(item) for item in failures[:8]) or "-",
