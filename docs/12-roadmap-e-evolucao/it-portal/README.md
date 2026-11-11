@@ -183,6 +183,15 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 
 **Estado:** `IMPLEMENTED_PENDING_SMOKE`, mesmo após o diagnóstico local `PASS`. A E4.S1 só recebe aceite completo após envio autenticado, persistência, visualização, controles de segurança e decisão de agendamento respaldados por evidência.
 
+## E4.S1 — diagnóstico do Keycloak --check no host (11/11/2026)
+
+**Evidência operacional (saída enviada pelo operador):**
+- No `srv-api` host, `python3 infra/scripts/keycloak_s2s_it_portal_collector.py --check` escolheu `base=http://keycloak:8080/auth` (nome de serviço resolvido apenas na rede Docker apropriada). A emissão do token de consulta falhou em `socket.getaddrinfo` com `Temporary failure in name resolution`, antes de verificar se o cliente `it-portal-host-collector` existe.
+- **Diagnóstico:** não há evidência de Keycloak indisponível nem de cliente inexistente. Resultado `CHECK = INCONCLUSIVE` por conectividade host → nome Docker. Nenhuma configuração foi aplicada.
+- `systemctl is-enabled it-portal-linux-collector.timer` retornou `not-found`: unidade systemd não instalada no host; agendamento **não ativo**. Não interpretar como `disabled`.
+- **Próximo gate somente leitura:** identificar um `KC_BASE_URL` HTTPS alcançável pelo host, preferencialmente URL corporativa válida, sem vazar segredos; executar `KC_BASE_URL=... python3 infra/scripts/keycloak_s2s_it_portal_collector.py --check`. Se for inacessível, investigar topologia/entrypoint sem modificar DNS ou abrir acesso administrativo desnecessário.
+- Permanecem bloqueados `--apply`, `submit` e ativação do timer até saneamento do contrato de ingestão JSON e revisão dos gates de segurança anteriormente registrados.
+
 ## Residuais abertos
 
 | ID | Residual | Dono da decisão |
