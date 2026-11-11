@@ -10,6 +10,7 @@ Este diretório (`infra/`) concentra os compose e as variáveis compartilhadas p
 | `docker-compose.yml` | Produção: Gunicorn, imagens `*.prod`, logging limitado |
 | `docker-compose.minimal.yml` | Override dev — desliga Ollama/LanguageTool/SearXNG e limita RAM do chat |
 | `docker-compose.prod.cpu.yml` | Override prod — hosts com ~8 GB RAM (LanguageTool/SearXNG em profile `optional-heavy`) |
+| `docker-compose.hml.yml` | Homologação `delpi-hml` — estende só o cenário-base; não sobe sem `--profile` |
 | `docker-compose.vision.yml` | **Override legado** — equivalente a `Dockerfile.dev` (desde jun/2026 visão já vem no dev) |
 | `docker-compose.prod.vision.yml` | **Override legado** prod — redundante; compose base já inclui visão |
 | `.env.dev.example` | Modelo para copiar → `.env` no dia a dia |
@@ -163,8 +164,27 @@ Cada serviço sobe com `up -d --no-deps` (a ordem vem do script, não do `depend
 
 **Gateway e upstreams estáticos.** Serviços em `proxy_pass` estático no `gateway/nginx.conf` (hoje `portal`, `core-api`, `api-delpi`, `keycloak`) são resolvidos pelo nginx só no start/reload. Recriar um deles muda o IP e o site responde **502** até o gateway recarregar. Os scripts `up-*-sequential.sh` fazem `nginx -t` + `nginx -s reload` no `delpi-gateway` logo após subir esses serviços (lista lida do próprio conf); em produção, ao final, rodam o healthcheck do gateway e saem com erro se algum upstream falhar.
 
-- Recriou fora do script (`docker compose up` manual)? → `docker restart delpi-gateway`.
+- Recriou fora do script (`docker compose up` manual)? → `docker restart delpi-gateway` (somente o gateway de produção).
 - Diagnóstico: `docker ps --filter name=delpi-gateway` mostra `unhealthy` quando um upstream estático não responde (healthcheck em `gateway/healthcheck.sh`); `docker logs --tail 50 delpi-gateway` mostra `connect() failed (111: Connection refused)` com o IP antigo. O Docker **não** reinicia o gateway sozinho em `unhealthy`.
+
+### Homologação (`delpi-hml`)
+
+Checkout independente em `/home/operador/projetos-teste/delpi-central`. A VM só consome o Git: `git fetch` e, quando autorizado, `git pull --ff-only`. Não há commit, push nem hook de deploy nesse checkout. O remoto de leitura usa o alias `github.com-delpi-hml` e uma Deploy Key sem permissão de escrita, separado do HTTPS de produção.
+
+Não compartilha `infra/.env`, volumes ou a rede da produção. O Compose estende o cenário-base de `docker-compose.yml`.
+
+```bash
+cp infra/env.hml.example infra/.env.hml   # só no checkout de homologação; fora do Git
+./infra/scripts/hml-compose.sh list
+./infra/scripts/hml-compose.sh validate
+./infra/scripts/hml-compose.sh simulate --scenario databases
+./infra/scripts/hml-compose.sh up --scenario databases   # somente os 3 PostgreSQL
+./infra/scripts/hml-compose.sh status
+```
+
+`up` sem `--profile` não seleciona serviço. Perfis: `databases` (somente os três PostgreSQL), `platform` (portal, core, api-delpi, plugin-ui, Keycloak, Postgres, Redis, gateway) e `baseline` / `production-control` (o anterior mais Production Control). Gateway planejado em `127.0.0.1:18080`, rede `delpi-hml-network`, volumes `delpi-hml-*`, dados em `infra/hml-data/`. Keycloak segue a imagem `quay.io/keycloak/keycloak:24.0` e o `start` de produção, com banco, hostname parametrizado (`DELPI_HML_PUBLIC_HOST`) e segredos próprios — não inicia na etapa databases.
+
+Nesta etapa o script autoriza apenas `up --scenario databases` (postgres-core, keycloak-db, postgres-plugins, sequencial com `--no-deps`). `build`, `pull`, `down`, `stop` e qualquer outro profile de `up` permanecem recusados. TOTVS, e-mail, Protheus, schedulers, publicadores MyWEG, Ollama, LanguageTool e o Nginx do host permanecem fora. O virtual host HTTPS da intranet ainda não está implantado; o example usa `hml.delpi.invalid` como placeholder (não `127.0.0.1`).
 
 ### Evitar
 
@@ -176,6 +196,8 @@ Cada serviço sobe com `up -d --no-deps` (a ordem vem do script, não do `depend
 | `docker compose up --build gateway` (sem `--no-deps`) | Rebuild em cascata — gateway `depends_on` lista todos os MFEs |
 | `--env-file infra/.env` com cwd já em `infra/` | Path duplicado `infra/infra/.env` |
 | `docker volume prune` ou `docker system prune --volumes` | Apaga volumes Postgres/Ollama ou dados de upload órfãos |
+| `docker compose -f docker-compose.yml` no checkout de homologação | Reutiliza nome, porta 80, rede e binds de produção |
+| `docker ps --filter name=delpi-` para “só homologação” | O prefixo `delpi-` também seleciona a produção; usar `delpi-hml-` |
 
 Detalhes de RAM, recuperação e compose manual: § [Memória RAM](#memória-ram--diagnóstico-e-mitigação) e § [Checklist deploy produção](#checklist-deploy-produção).
 

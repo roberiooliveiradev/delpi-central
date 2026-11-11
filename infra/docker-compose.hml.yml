@@ -1,0 +1,387 @@
+# Homologação Minha DELPI — projeto Docker `delpi-hml`.
+#
+# EXISTING_EQUIVALENT:
+#   docker-compose.yml          produção (não alterar daqui)
+#   docker-compose.dev.yml      desenvolvimento local
+#   docker-compose.minimal.yml  override de RAM do dev (profiles !override)
+#   docker-compose.qa-override.yml  pin de imagem do Keycloak; não é um ambiente
+#   up-prod-sequential.sh / up-dev-sequential.sh  subida sequencial por fase
+#   compose-filter-services.sh  filtro de serviços já usado pelos scripts
+#
+# REUSE_DECISION:
+#   Estender somente o cenário-base a partir de docker-compose.yml.
+#   Não copiar o Compose de produção. `extends` reaproveita build, imagem
+#   upstream e ambiente; cada serviço troca, com !override, o que a mesclagem
+#   do Compose concatenaria (portas, volumes, redes, depends_on, env_file).
+#   COMPOSE_PROJECT_NAME sozinho não isola container_name, bind absoluto,
+#   porta 80 nem a rede/volume com nome explícito.
+#
+# Este arquivo não publica 80/443, não anexa `delpi-network` e não monta
+# /var/lib/delpi nem /mnt/fileserver. `docker compose up` sem --profile
+# não sobe serviço nenhum: todo serviço exige profile.
+#
+# Profile `databases`: somente postgres-core, keycloak-db e postgres-plugins.
+# Sem depends_on entre eles — `up --profile databases --no-deps` não puxa
+# Keycloak, APIs, Portal nem gateway.
+#
+# Checkout previsto no servidor: /home/operador/projetos-teste/delpi-central
+# Operação: infra/scripts/hml-compose.sh
+
+name: delpi-hml
+
+services:
+  postgres-core:
+    extends:
+      file: docker-compose.yml
+      service: postgres-core
+    profiles: [databases, baseline, platform, production-control]
+    image: postgres:15
+    container_name: delpi-hml-postgres-core
+    ports: !override []
+    networks: !override
+      - delpi-hml
+    volumes: !override
+      - delpi-hml-postgres-core:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    mem_limit: 1g
+    cpus: 1.0
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  keycloak-db:
+    extends:
+      file: docker-compose.yml
+      service: keycloak-db
+    profiles: [databases, baseline, platform, production-control]
+    image: postgres:15
+    container_name: delpi-hml-keycloak-db
+    ports: !override []
+    networks: !override
+      - delpi-hml
+    volumes: !override
+      - delpi-hml-keycloak:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    mem_limit: 768m
+    cpus: 0.5
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  postgres-plugins:
+    extends:
+      file: docker-compose.yml
+      service: postgres-plugins
+    profiles: [databases, baseline, platform, production-control]
+    image: pgvector/pgvector:pg15
+    container_name: delpi-hml-postgres-plugins
+    ports: !override []
+    networks: !override
+      - delpi-hml
+    volumes: !override
+      - delpi-hml-postgres-plugins:/var/lib/postgresql/data
+      - ./docker/postgres/plugins-init.sql:/docker-entrypoint-initdb.d/plugins-init.sql:ro
+    mem_limit: 1g
+    cpus: 1.0
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  delpi-redis:
+    extends:
+      file: docker-compose.yml
+      service: delpi-redis
+    profiles: [baseline, platform, production-control]
+    image: redis:7-alpine
+    container_name: delpi-hml-redis
+    ports: !override []
+    networks: !override
+      - delpi-hml
+    volumes: !override []
+    mem_limit: 256m
+    cpus: 0.5
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  keycloak:
+    extends:
+      file: docker-compose.yml
+      service: keycloak
+    profiles: [baseline, platform, production-control]
+    # Paridade de versão com produção (quay.io/keycloak/keycloak:24.0).
+    # Digest produtivo observado: sha256:f8ade94c1d0ad2f2fa7734a455fee5392764f402c43ca35e9af6bf63a2541dc9
+    # Banco, secrets, realm e sessões são exclusivos de HML — nunca compartilhar.
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: delpi-hml-keycloak
+    ports: !override []
+    depends_on: !override
+      keycloak-db:
+        condition: service_started
+    networks: !override
+      delpi-hml:
+        aliases:
+          - keycloak
+    volumes: !override
+      - ./keycloak/themes:/opt/keycloak/themes:ro
+    mem_limit: 1g
+    cpus: 1.0
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  core-api:
+    extends:
+      file: docker-compose.yml
+      service: core-api
+    profiles: [baseline, platform, production-control]
+    image: delpi-hml/core-api:local
+    container_name: delpi-hml-core-api
+    ports: !override []
+    depends_on: !override
+      postgres-core:
+        condition: service_started
+      keycloak:
+        condition: service_started
+    networks: !override
+      - delpi-hml
+    volumes: !override
+      - ${DELPI_HML_DATA_HOST_DIR:-./hml-data}/core-user-avatars:/app/data/core-user-avatars
+    environment:
+      API_DELPI_ENV: homologation
+      DELPI_API_URL: http://api-delpi:8000
+      NOTIFICATIONS_DISPATCH_SCHEDULER_ENABLED: "false"
+      CORE_NOTIFICATION_MAIL_ENABLED: "false"
+      GRAPH_REPORTS_TENANT_ID: ""
+      GRAPH_REPORTS_CLIENT_ID: ""
+      GRAPH_REPORTS_CLIENT_SECRET: ""
+      REDIS_URL: redis://:${DELPI_REDIS_PASSWORD}@delpi-redis:6379/0
+    mem_limit: 1g
+    cpus: 1.0
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  api-delpi:
+    extends:
+      file: docker-compose.yml
+      service: api-delpi
+    profiles: [baseline, platform, production-control]
+    image: delpi-hml/api-delpi:local
+    container_name: delpi-hml-api-delpi
+    ports: !override []
+    env_file: !override
+      - path: env.hml.example
+        required: true
+      - path: .env.hml
+        required: false
+    depends_on: !override
+      keycloak:
+        condition: service_started
+      postgres-plugins:
+        condition: service_healthy
+    networks: !override
+      - delpi-hml
+    volumes: !override
+      - ${DELPI_HML_DATA_HOST_DIR:-./hml-data}/drawing-pdfs:/drawing-pdfs:ro
+      - ${DELPI_HML_DATA_HOST_DIR:-./hml-data}/api-delpi-logs:/app/logs
+    environment:
+      # TOTVS permanece inalcançável até a cópia sanitizada autorizada.
+      # Estes valores vencem env_file e o shell: não há caminho de escrita
+      # para o SQL Server de produção a partir deste Compose.
+      API_DELPI_ENV: homologation
+      DB_HOST: totvs-disabled.hml.invalid
+      DB_PORT: "1433"
+      DB_USER: hml_disabled
+      DB_PASSWORD: hml_disabled
+      DB_DATABASE: DISABLED
+      PORTAL_RH_API_URL: ""
+      PORTAL_RH_API_SERVICE_TOKEN: ""
+      PORTAL_RH_DB_HOST: ""
+      PORTAL_RH_DB_PORT: ""
+      PORTAL_RH_DB_NAME: ""
+      PORTAL_RH_DB_USER: ""
+      PORTAL_RH_DB_PASSWORD: ""
+      PROTHEUS_SUPPLIER_CREATE_ENABLED: "false"
+      PROTHEUS_SUPPLIER_UPDATE_ENABLED: "false"
+      PROTHEUS_REST_EXPECTED_BASE_URL: ""
+      OPENAPI_CONSUMER_NOTIFY_ON_STARTUP: "false"
+      OPENAPI_CONSUMER_NOTIFY_ENABLED: "false"
+      OPENAPI_CONSUMER_CHAT_SYNC_URL: ""
+      OPENAPI_CONSUMER_TV_SYNC_URL: ""
+      CONSOLE_ALERT_WEBHOOK_ENABLED: "false"
+      CONSOLE_ALERT_WEBHOOK_URL: ""
+      AUDIT_5S_NOTIFICATIONS_ENABLED: "false"
+      LNF_NOTIFICATIONS_ENABLED: "false"
+      INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED: "false"
+      SCHEDULING_NOTIFICATIONS_ENABLED: "false"
+      GRAPH_TENANT_ID: ""
+      GRAPH_CLIENT_ID: ""
+      GRAPH_CLIENT_SECRET: ""
+      GRAPH_REPORTS_TENANT_ID: ""
+      GRAPH_REPORTS_CLIENT_ID: ""
+      GRAPH_REPORTS_CLIENT_SECRET: ""
+      MCP_RESOURCE_URL: http://127.0.0.1:18080/apps/api-delpi/mcp
+      TRANSFORMOMETRO_API_BASE_URL: ""
+      FINANCIAL_API_BASE_URL: ""
+      REDIS_URL: redis://:${DELPI_REDIS_PASSWORD}@delpi-redis:6379/0
+    mem_limit: 1536m
+    cpus: 1.0
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  portal:
+    extends:
+      file: docker-compose.yml
+      service: portal
+    profiles: [baseline, platform, production-control]
+    image: delpi-hml/portal:local
+    container_name: delpi-hml-portal
+    ports: !override []
+    depends_on: !override
+      core-api:
+        condition: service_started
+    networks: !override
+      - delpi-hml
+    volumes: !override []
+    mem_limit: 512m
+    cpus: 0.5
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  plugin-ui:
+    extends:
+      file: docker-compose.yml
+      service: plugin-ui
+    profiles: [baseline, platform, production-control]
+    image: delpi-hml/plugin-ui:local
+    container_name: delpi-hml-plugin-ui
+    ports: !override []
+    networks: !override
+      - delpi-hml
+    volumes: !override []
+    mem_limit: 512m
+    cpus: 0.5
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  production-control:
+    extends:
+      file: docker-compose.yml
+      service: production-control
+    profiles: [baseline, production-control]
+    image: delpi-hml/production-control:local
+    container_name: delpi-hml-production-control
+    ports: !override []
+    depends_on: !override
+      plugin-ui:
+        condition: service_started
+    networks: !override
+      - delpi-hml
+    volumes: !override []
+    mem_limit: 512m
+    cpus: 0.5
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  production-control-api:
+    extends:
+      file: docker-compose.yml
+      service: production-control-api
+    profiles: [baseline, production-control]
+    image: delpi-hml/production-control-api:local
+    container_name: delpi-hml-production-control-api
+    ports: !override []
+    env_file: !override
+      - path: env.hml.example
+        required: true
+      - path: .env.hml
+        required: false
+    depends_on: !override
+      keycloak:
+        condition: service_started
+      postgres-plugins:
+        condition: service_healthy
+      core-api:
+        condition: service_started
+      api-delpi:
+        condition: service_started
+    networks: !override
+      - delpi-hml
+    volumes: !override
+      - ${DELPI_HML_DATA_HOST_DIR:-./hml-data}/product-3d-models:/app/data/product-3d-models
+    environment:
+      DELPI_API_URL: http://api-delpi:8000
+      PRODUCTION_PULSE_API_URL: ""
+      REQUESTS_API_URL: ""
+      PORTAL_RH_API_URL: ""
+      PORTAL_RH_API_SERVICE_TOKEN: ""
+      PC_MES_CT_AUTONOMOUS_ENABLED: "false"
+      PC_MES_CT_AUTONOMOUS_WORK_CENTERS: ""
+      PC_MES_DOWNTIME_ALERTS_ENABLED: "false"
+      CORE_API_BASE_URL: http://core-api:8000
+    mem_limit: 1g
+    cpus: 1.0
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  gateway:
+    extends:
+      file: docker-compose.yml
+      service: gateway
+    profiles: [baseline, platform, production-control]
+    image: delpi-hml/gateway:local
+    container_name: delpi-hml-gateway
+    build:
+      context: ../gateway
+      dockerfile: Dockerfile.hml
+    ports: !override
+      - "127.0.0.1:18080:80"
+    depends_on: !override
+      portal:
+        condition: service_started
+      core-api:
+        condition: service_started
+      keycloak:
+        condition: service_started
+      api-delpi:
+        condition: service_started
+    networks: !override
+      - delpi-hml
+    volumes: !override []
+    environment:
+      GATEWAY_HEALTHCHECK_HOST: 127.0.0.1
+    mem_limit: 256m
+    cpus: 0.5
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+networks:
+  delpi-hml:
+    name: delpi-hml-network
+    driver: bridge
+
+volumes:
+  delpi-hml-postgres-core:
+    name: delpi-hml-postgres-core
+  delpi-hml-keycloak:
+    name: delpi-hml-keycloak
+  delpi-hml-postgres-plugins:
+    name: delpi-hml-postgres-plugins

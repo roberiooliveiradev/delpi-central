@@ -44,6 +44,8 @@ Thumbs.dbdist/
 # Infra — overrides locais por desenvolvedor (não commitar)
 infra/docker-compose.local.yml
 infra/docker-compose.override.yml
+# Dados locais de homologação (nunca /var/lib/delpi de produção)
+infra/hml-data/
 
 # SearXNG — sobrescrito pelo container (volume rw); use os .example
 infra/searxng/settings.yml

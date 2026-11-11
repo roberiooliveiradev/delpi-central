@@ -1,0 +1,14 @@
+# Gateway de homologação. Não substitui Dockerfile.prod.
+# Publica nginx.hml.conf: sem vhost de produção, sem GLPI, sem porta 443.
+
+FROM nginx:alpine
+
+RUN rm -rf /etc/nginx/conf.d/*
+
+COPY nginx.hml.conf /etc/nginx/nginx.conf
+COPY healthcheck.sh /usr/local/bin/gateway-healthcheck.sh
+RUN chmod 0755 /usr/local/bin/gateway-healthcheck.sh
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

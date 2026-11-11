@@ -12,7 +12,8 @@
 |---|---|
 | `infra/docker-compose.dev.yml` | Desenvolvimento local |
 | `infra/docker-compose.yml` | Produção (imagens prod, sem volumes de código) |
-| `infra/.env` | Variáveis compartilhadas (não versionar segredos) |
+| `infra/docker-compose.hml.yml` | Homologação `delpi-hml`, checkout independente, só com `--profile` |
+| `infra/.env` | Variáveis do checkout atual (não versionar segredos; homologação não usa este arquivo) |
 
 Comando base:
 
@@ -105,6 +106,24 @@ Em **produção**, apenas o gateway expõe `80`; bancos ficam na rede interna.
 | Gateway config | Volume `nginx.dev.conf` | Embutido na imagem |
 | Ollama | Sim, porta 11434 | Sim |
 | Logs rotacionados | Parcial | `json-file` 10m×3 em serviços críticos |
+
+---
+
+## 5.1 Homologação (`delpi-hml`)
+
+A homologação não é um segundo `COMPOSE_PROJECT_NAME` em cima do Compose de produção. `infra/docker-compose.hml.yml` estende apenas o cenário-base e troca container, rede, volume, porta, imagem de build e integrações externas. O checkout da VM fica em `/home/operador/projetos-teste/delpi-central` e recebe código só por `git pull --ff-only`, com Deploy Key de leitura.
+
+| Item | Homologação |
+|---|---|
+| Checkout | `/home/operador/projetos-teste/delpi-central` |
+| Projeto | `delpi-hml` |
+| Rede | `delpi-hml-network` |
+| Porta no host | `127.0.0.1:18080` somente (gateway; não sobe na etapa databases) |
+| Dados | volumes `delpi-hml-*` e `infra/hml-data/` |
+| Env | `infra/env.hml.example` → `infra/.env.hml` |
+| Operação | `./infra/scripts/hml-compose.sh` |
+
+`up` sem profile não seleciona serviço. Profile `databases` sobe só os três PostgreSQL; o script autoriza somente esse `up` nesta etapa. TOTVS, schedulers, publicadores, Keycloak, APIs, Portal e o Nginx do host ficam de fora. Detalhe operacional: `infra/README-ambiente.md`.
 
 ---
 
