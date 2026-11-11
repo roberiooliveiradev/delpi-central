@@ -52,12 +52,14 @@
 | `recipient_id` | UUID NOT NULL UNIQUE FK | Uma resposta por convite/empresa/campanha; sem cascata |
 | `overall_score` | SMALLINT NOT NULL | 1–5, `CHECK` |
 | `recommendation_score` | SMALLINT NOT NULL | 0–10, `CHECK` |
-| `dimensions` | JSONB NOT NULL | Objeto de **10 chaves canônicas fixas**; cada valor inteiro 1–5 ou `null` para não aplicável/não preenchido; validação forte no caso de uso e versionamento do contrato; sem campos livres |
+| `dimensions` | JSONB NOT NULL | Objeto de **10 chaves canônicas fixas**; cada valor inteiro 1–5 ou `null` **exclusivamente quando a empresa selecionou “Não se aplica”**; todas as dez chaves presentes e cada dimensão explicitamente selecionada antes da submissão, sem omissões; validação forte no caso de uso e versionamento do contrato; sem campos livres |
 | `strengths`, `improvements`, `unmet_needs` | TEXT nullable | Três respostas abertas opcionais |
 | `questionnaire_version` | TEXT NOT NULL | Mesma versão que o convite/campanha |
 | `submitted_at` | TIMESTAMPTZ NOT NULL | Instante definitivo da submissão |
 
 **Regras imutáveis:** `UNIQUE(recipient_id)` no banco + transação para verificar token, empresa, campanha e janela ao enviar. Concorrência simultânea resulta em **uma** resposta; outra tentativa retorna conflito/estado `already_submitted`, nunca sobrescreve. Não disponibilizar `PATCH/DELETE` de resposta. Evitar guardar nome ou e-mail da pessoa física respondente; o vínculo operacional é a empresa convidada. Não criar tabela própria de `answers` enquanto o questionário permanecer fixo.
+
+**Validação canônica de seleção (Q08, 11/11/2026):** O formulário exige em todas as dez dimensões uma escolha explícita entre nota 1–5 e “Não se aplica”. O cliente pode revisar antes de confirmar. A `commercial-api` valida presença das dez chaves e rejeita omissões, valores indefinidos ou tentativas de deixar a questão em branco; `null` significa somente a opção “Não se aplica” efetivamente selecionada. Payload serializado com `null` deve ser produzido apenas a partir dessa escolha, não como default de campo intocado. As duas notas gerais continuam obrigatórias, os três textos opcionais. Reforçar testes de tentativa de envio parcial/omissões e de `null` selecionado. Trata-se de **contrato de implementação, não de comportamento já implantado**.
 
 **Chaves canônicas de `dimensions` (correspondentes às dez dimensões do plano):** `quality`, `delivery_deadline`, `service`, `agility`, `communication`, `technical_support`, `commercial_support`, `flexibility`, `reliability`, `partnership`. Textos **exatos** de cada pergunta e ordem devem vir do plano integral e constar em contrato versionado; a tradução técnica das chaves não altera as perguntas.
 

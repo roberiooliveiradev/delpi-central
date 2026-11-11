@@ -87,7 +87,7 @@ Estados alternativos via backend:
 
 ## 5. Regras de UX e validações
 
-- **15 perguntas, mesma ordem/texto oficial do Word**: 10 dimensões 1–5 ou `Não se aplica`; satisfação geral 1–5 obrigatória; NPS 0–10 obrigatório; três abertas opcionais. O rascunho está **somente na memória do navegador** até o envio, sem API de salvar parcial.
+- **15 perguntas, mesma ordem/texto oficial do Word**: em **cada uma das dez dimensões** é obrigatória uma **seleção explícita**, entre nota inteira de 1–5 **ou** `Não se aplica` (sem exigir nota numérica quando a alternativa for N/A). Não permitir deixar dimensão em branco ao enviar; diferenciar estado inicial sem seleção de N/A marcado. Satisfação geral 1–5 e recomendação 0–10 também obrigatórias; três abertas opcionais. Backend valida as dez escolhas, sem aceitar omissão/estado intocado. O rascunho está **somente na memória do navegador** até o envio, sem API de salvar parcial.
 - **Nunca perguntar nome, e-mail ou CPF do respondente.** A associação é à empresa pelo token gerado na campanha. Não expor código/loja, carteira, outros clientes nem dados internos.
 - Revisão obrigatória antes do envio final; usuário pode voltar e corrigir antes de confirmar; após sucesso, imutável.
 - Desabilitar múltiplos cliques enquanto POST estiver pendente, mas **não usar disable como única garantia**: banco/servidor controlam unicidade e janela. Resposta concorrente retorna estado “já registrada”, sem duplicar.
