@@ -190,11 +190,14 @@ docker exec -i -e DELIA_APP_ROOT=/app -e DELIA_EVAL_TRACE_DIR=/traces \
   "${EVAL_NAME}" python scripts/int1_secure_decision_trace.py --dry-run \
   | tee "${ARTIFACT_DIR}/dry-run.json"
 
-# Real instrumented P3/G1/P1
+# Real instrumented eval. Optional filter (default: historical full list).
+# G1/P1-only INT-1 runs: export DELIA_EVAL_SCENARIO_IDS before invoking.
+SCENARIO_IDS="${DELIA_EVAL_SCENARIO_IDS:-}"
 docker exec -i \
   -e DELIA_APP_ROOT=/app \
   -e DELIA_EVAL_TRACE_DIR=/traces \
   -e DELIA_EVAL_ARTIFACT_DIR=/traces/artifacts \
+  -e "DELIA_EVAL_SCENARIO_IDS=${SCENARIO_IDS}" \
   "${EVAL_NAME}" \
   python scripts/int1_openrouter_qwen14b_instrumented_eval.py \
   | tee "${ARTIFACT_DIR}/eval-output.jsonl"

@@ -2132,3 +2132,7 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 ### 2026-11-11 — INT-1 minimal real intent vs tool selection (G1+P1)
 
 **TASK:** `DELIA-C3-T2-INT1-INTENT-VS-TOOL-SELECTION-MINIMAL-REAL-QWEN-EVAL-01`. PO authorized 2 scenarios only. **LIVE_EVAL=BLOCKED**: security gate FAIL (`DELIA_EVAL_EGRESS_AUTHORIZED` absent; Settings model ≠ qwen/qwen3-14b; credential scope residual `NONE_PROVEN_SEPARATE_FROM_PROD` without credential-owner approval). `MODEL_REQUESTS=0`. No functional/instruction change. Doc 302. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_MINIMAL_REAL_INTENT_EVAL_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+### 2026-11-11 — INT-1 G1/P1 real Qwen intent/selection eval-02
+
+**TASK:** `DELIA-C3-T2-INT1-G1-P1-REAL-QWEN-INTENT-SELECTION-EVAL-02`. PO authorized G1+P1 once each on isolated OpenRouter Qwen14B. Harness EXTEND: `DELIA_EVAL_SCENARIO_IDS` (doc 302 host-Settings misread corrected). Eval `or-qwen14b-198e127edee9` @ SHA `3d1a445189…` / fp `7dbc94c5035b0f19` / config `e4a5b706a3b3156b` / window 40960. **G1:** first tool TEO `decomposition_tree`; recovery to DAVI `get_product_structure` SUCCESS; GROUNDED+PARTIAL. **P1:** DAVI-first; GROUNDED+PARTIAL. Explicit `declare_investigation_goal` NOT_OBSERVED. No Agent/instruction/owner functional change; prod untouched. Doc 303. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_G1_P1_REAL_EVAL_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

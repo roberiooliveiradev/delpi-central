@@ -1327,3 +1327,26 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-CLOSED | **NO** | — |
 
 **NEXT=`COORDINATION_INT1_MINIMAL_REAL_INTENT_EVAL_REVIEW`**. `INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+## 2026-11-11 — INT-1 G1/P1 real Qwen eval-02 residuals
+
+**TASK:** `DELIA-C3-T2-INT1-G1-P1-REAL-QWEN-INTENT-SELECTION-EVAL-02`  
+**EVAL_ID:** `or-qwen14b-198e127edee9` · **SHA:** `3d1a445189…` · Doc **303**
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-MINIMAL-LIVE-G1-P1 | **EXECUTED** | Isolated OpenRouter runner; supersedes doc302 host-Settings false-negative |
+| INT1-G1-FIRST-TOOL-TEO-DECOMPOSITION | **PROVEN_IN_SAMPLE (live)** | `teo.read` entity=`decomposition_tree` params.id=90260921 despite DAVI BOM visible |
+| INT1-G1-RECOVERY-TO-DAVI-BOM | **PROVEN_IN_SAMPLE** | After TEO miss → `davi.get_context` → `davi.read` `get_product_structure` |
+| INT1-P1-DAVI-FIRST | **PROVEN_IN_SAMPLE** | Control: DAVI catalog → product structure; TEO unused |
+| INT1-GOAL-DECLARATION-UNUSED | **PROVEN_IN_SAMPLE (live)** | 0/2 scenarios called `declare_investigation_goal` |
+| INT1-OBJECTIVE-PARTIAL-OWNER | **OPEN** | Both GROUNDED+PARTIAL with `owner_result_incomplete` / depth |
+| INT1-TEO-OWNER-DESC-AMBIGUITY | **OPEN / OWNER_CHANGE_REQUIRED** | Process WBS vs product BOM attractor unchanged |
+| INT1-STATISTICAL-STABILITY | **UNPROVEN** | n=1 each; no full battery |
+| INT1-HARNESS-SCENARIO-FILTER | **REMEDIATED (EXTEND)** | `DELIA_EVAL_SCENARIO_IDS` on existing OpenRouter runner |
+| INT1-CREDENTIAL-ISOLATION | **RESIDUAL** | Unchanged; prod untouched this run |
+| INT1-STAGE | **BLOCKED** | Doc 303 coordination review |
+| INT1-CLOSED | **NO** | — |
+| INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
+
+**NEXT=`COORDINATION_INT1_G1_P1_REAL_EVAL_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

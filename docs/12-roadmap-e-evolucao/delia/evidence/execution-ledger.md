@@ -6429,3 +6429,24 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `302-int1-minimal-real-intent-understanding-vs-mcp-tool-selection-causal-evaluation.md`.
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_MINIMAL_REAL_INTENT_EVAL_REVIEW`.
+
+| DELIA-C3-T2-INT1-G1-P1-REAL-QWEN-INTENT-SELECTION-EVAL-02 | Isolated OpenRouter Qwen14B G1+P1 once each; harness EXTEND scenario filter; G1 TEO→DAVI recovery; P1 DAVI-first; PARTIAL both; doc 303 | LIVE=EXECUTED; NEXT=COORDINATION_INT1_G1_P1_REAL_EVAL_REVIEW |
+
+### INT-1 G1/P1 real Qwen intent/selection eval-02 — 2026-11-11
+
+- **TASK:** `DELIA-C3-T2-INT1-G1-P1-REAL-QWEN-INTENT-SELECTION-EVAL-02`.
+- **PO_SCOPE:** G1 + P1 only; 1 rep; external LLM authorized for these two; no full battery; no Agent/instruction rework; no prod deploy.
+- **EXISTING_EQUIVALENT=YES**; **REUSE_DECISION=EXTEND** (`DELIA_EVAL_SCENARIO_IDS` filter on `run_int1_openrouter_qwen14b_instrumented_eval`).
+- **EVALUATED_SHA:** `3d1a44518972ffc0fcdae840fa83c86988488941`; ancestors include `a3ca78934c…` + `3d1a445189…`.
+- **RUNTIME:** container `delpi-delia-eval-int1-or-qwen14b`; profile `openrouter_qwen`; model `qwen/qwen3-14b`; window 40960; instruction `generalist-semantic-v2` / fp `7dbc94c5035b0f19`; config_fp `e4a5b706a3b3156b`.
+- **GATE:** `SECURE_EVAL_GATE=READY_FOR_ISOLATED_EVAL` (isolated runner; **not** host Settings `qwen3:8b`).
+- **EVAL_ID:** `or-qwen14b-198e127edee9`.
+- **LIVE:** EXECUTED — MODEL_REQUESTS=2; TOOL_CALLS(MCP)=5; latency_ms_total≈47459; tokens UNAVAILABLE (meter 0).
+- **G1:** goal declare NOT_OBSERVED; first=`teo.read` `decomposition_tree` id=90260921; recovery SUCCESS → `davi.read` `get_product_structure`; GROUNDED + PARTIAL.
+- **P1:** goal declare NOT_OBSERVED; first=`davi.get_context` catalog → `get_product_structure`; GROUNDED + PARTIAL; TEO unused.
+- **CAUSAL (PROVEN_IN_SAMPLE):** first divergence = tool selection under TEO contract attractor; not missing tools; intent explicit not observed ≠ proven misunderstanding.
+- **FUNCTIONAL_AGENT_CODE_CHANGED=NO**; **INSTRUCTION_CHANGED=NO**; **OWNER_CONTRACT_CHANGED=NO**; **PROD_UNTOUCHED=YES**.
+- **TARGETED_TESTS:** `test_int1_openrouter_scenario_filter.py` + `test_int1_secure_decision_trace.py` PASS.
+- **Doc:** `303-int1-minimal-real-intent-understanding-vs-mcp-tool-selection-g1-p1-causal-evaluation.md`.
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_G1_P1_REAL_EVAL_REVIEW`.

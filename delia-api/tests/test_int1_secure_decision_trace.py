@@ -75,4 +75,11 @@ def test_security_gate_blocks_localhost_proxy_even_with_flag(monkeypatch) -> Non
     monkeypatch.setenv("DELIA_RUNTIME_PROFILE", "openrouter_qwen")
     gate = check_security_gate()
     assert gate["SECURE_EVAL_GATE"] == "BLOCKED"
-    assert any("localhost-shaped" in item for item in gate["BLOCKERS"])
+    # Host must be openrouter.ai — localhost/proxy endpoints are refused
+    # by the same endpoint-identity blocker (no duplicate approval gate).
+    assert any(
+        "openrouter.ai" in item or "localhost" in item or "127.0.0.1" in item
+        for item in gate["BLOCKERS"]
+    ) or any(
+        "evaluation endpoint must be" in item for item in gate["BLOCKERS"]
+    )

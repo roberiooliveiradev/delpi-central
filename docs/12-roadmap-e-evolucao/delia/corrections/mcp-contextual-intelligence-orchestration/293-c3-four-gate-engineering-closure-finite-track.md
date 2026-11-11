@@ -698,3 +698,7 @@ Delivered: `delia-api/scripts/int1_secure_decision_trace.py`, `tests/test_int1_s
 ### 2026-11-11 — INT-1 minimal real intent vs tool selection (blocked)
 
 **TASK:** `DELIA-C3-T2-INT1-INTENT-VS-TOOL-SELECTION-MINIMAL-REAL-QWEN-EVAL-01`. See sibling **302**. Authorized G1+P1 only; live not started — security/credential gates BLOCKED; `MODEL_REQUESTS=0`. `INT1_STAGE_ACCEPTANCE=BLOCKED`. `NEXT=COORDINATION_INT1_MINIMAL_REAL_INTENT_EVAL_REVIEW`.
+
+### 2026-11-11 — INT-1 G1/P1 real Qwen intent/selection eval-02
+
+**TASK:** `DELIA-C3-T2-INT1-G1-P1-REAL-QWEN-INTENT-SELECTION-EVAL-02`. See sibling **303**. Isolated OpenRouter Qwen14B; filter G1+P1 only (`EXISTING_EQUIVALENT=YES` / EXTEND). Eval `or-qwen14b-198e127edee9` on SHA `3d1a445189…`. G1: first TEO `decomposition_tree`, recovery to DAVI BOM SUCCESS, PARTIAL. P1: DAVI-first, PARTIAL. Explicit goal NOT_OBSERVED. No Agent/instruction/owner change. `INT1_STAGE_ACCEPTANCE=BLOCKED`. `NEXT=COORDINATION_INT1_G1_P1_REAL_EVAL_REVIEW`.

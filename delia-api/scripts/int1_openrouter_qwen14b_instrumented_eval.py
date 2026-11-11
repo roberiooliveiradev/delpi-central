@@ -74,6 +74,8 @@ TARGET_PROFILE = "openrouter_qwen"
 TARGET_HOST = "openrouter.ai"
 
 # Exact scenarios from the prior real-eval harness (G1 independent reword).
+# Optional filter: DELIA_EVAL_SCENARIO_IDS=comma-separated ids (order preserved).
+# Unset → full historical list. INT-1 G1/P1-only evals set the filter explicitly.
 SCENARIOS = [
     {
         "id": "P3_visualization_formats",
@@ -91,6 +93,21 @@ SCENARIOS = [
         "prior": (),
     },
 ]
+
+
+def _selected_scenarios() -> list[dict]:
+    raw = (os.environ.get("DELIA_EVAL_SCENARIO_IDS") or "").strip()
+    if not raw:
+        return list(SCENARIOS)
+    wanted = [item.strip() for item in raw.split(",") if item.strip()]
+    by_id = {str(spec["id"]): spec for spec in SCENARIOS}
+    missing = [item for item in wanted if item not in by_id]
+    if missing:
+        raise SystemExit(
+            "refused: unknown DELIA_EVAL_SCENARIO_IDS: "
+            + ",".join(missing)
+        )
+    return [by_id[item] for item in wanted]
 
 
 def _refuse_insecure() -> None:
@@ -363,14 +380,16 @@ def main() -> int:
     settings = Settings()
     evaluation_id = f"or-qwen14b-{uuid.uuid4().hex[:12]}"
     gate = check_security_gate()
+    scenarios = _selected_scenarios()
+    if not scenarios:
+        raise SystemExit("refused: empty scenario selection")
 
     append_event(
         evaluation_id,
         "evaluation_meta",
         {
             "task_id": (
-                "DELIA-C3-T2-INT1-LOCAL-QWEN14B-SETUP-AND-INSTRUMENTED-"
-                "ROOT-CAUSE-EVAL-01"
+                "DELIA-C3-T2-INT1-G1-P1-REAL-QWEN-INTENT-SELECTION-EVAL-02"
             ),
             "model_id": settings.llm_model,
             "model_profile": settings.runtime_profile,
@@ -379,7 +398,11 @@ def main() -> int:
             "environment": settings.environment,
             "secure_eval_gate": gate.get("SECURE_EVAL_GATE"),
             "pydantic_ai": __import__("pydantic_ai").__version__,
-            "scenarios": [s["id"] for s in SCENARIOS],
+            "scenarios": [s["id"] for s in scenarios],
+            "scenario_filter": (
+                (os.environ.get("DELIA_EVAL_SCENARIO_IDS") or "").strip()
+                or None
+            ),
         },
         scenario_id="session",
         correlation_id=evaluation_id,
@@ -427,7 +450,7 @@ def main() -> int:
         "scenarios": {},
     }
 
-    for spec in SCENARIOS:
+    for spec in scenarios:
         scenario_holder["id"] = spec["id"]
         scenario_holder["correlation"] = f"{evaluation_id}-{spec['id']}"
         print(f"== starting {spec['id']}", flush=True)
