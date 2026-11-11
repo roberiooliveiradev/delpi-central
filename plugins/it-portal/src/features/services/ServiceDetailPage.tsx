@@ -65,6 +65,7 @@ export function ServiceDetailPage({ serviceId }: { serviceId: string }) {
     <>
       {pagePath(service.name)}
       <ItpPageHero
+        variant="immersive"
         aria-label={`Serviço ${service.name}`}
         eyebrow={service.code}
         title={service.name}

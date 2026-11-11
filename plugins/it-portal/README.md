@@ -11,7 +11,7 @@ Microfrontend do Portal de TI — Minha DELPI.
 
 | Rota | Área | Permissão de entrada |
 |---|---|---|
-| `/` | Início — KPIs reais do inventário, servidores recentes, ações que pedem atenção | `it-portal.access` |
+| `/` | Início — hero imersivo com busca (mesma palette do shell), KPIs clicáveis do inventário, servidores recentes, ações que pedem atenção, Saúde do inventário (% sem criticidade alta/crítica — não é uptime), acesso rápido por permissão e próximas ações | `it-portal.access` |
 | `/servers` | Inventário com busca, filtros, ordenação e paginação no servidor | `it-portal.servers.view` |
 | `/servers/{id}` | Detalhe: identificação, operação, componentes vinculados, serviços hospedados, bancos associados, redes, integrações dos serviços hospedados, notas, planos de ação, histórico | `it-portal.servers.view` (seções conforme `services.view` / `databases.view` / `networks.view` / `integrations.view`) |
 | `/services` | Serviços e aplicações com busca, filtros, ordenação e paginação no servidor | `it-portal.services.view` |
@@ -33,7 +33,7 @@ análise de impacto, notificações e anexos estão fora desta etapa.
 ## Runtime
 
 - React 19 + Vite 7 + `@originjs/vite-plugin-federation`
-- `@delpi/plugin-ui` via remote federado, prefixo `itp`, escopo `.dashboard-it-portal`
+- `@delpi/plugin-ui` via remote federado, prefixo `itp`, escopo `.dashboard-it-portal` — visual: `PageHero` variant `immersive`, `MetricKpiCard` acionável, `SemicircleProgressGauge`, `NavigationCard` e `Timeline`; no MFE ficam só tokens `--itp-*` e layout de página
 - TanStack Query (somente memória — nenhum dado de inventário em `localStorage`)
 
 ## Testes

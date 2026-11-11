@@ -56,6 +56,7 @@ export function NetworkDetailPage({ networkId }: { networkId: string }) {
     <>
       {pagePath(network.name)}
       <ItpPageHero
+        variant="immersive"
         aria-label={`Rede ${network.name}`}
         eyebrow={network.code}
         title={network.name}

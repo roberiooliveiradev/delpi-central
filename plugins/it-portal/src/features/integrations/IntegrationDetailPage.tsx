@@ -60,6 +60,7 @@ export function IntegrationDetailPage({ integrationId }: { integrationId: string
     <>
       {pagePath(integration.name)}
       <ItpPageHero
+        variant="immersive"
         aria-label={`Integração ${integration.name}`}
         eyebrow={integration.code}
         title={integration.name}

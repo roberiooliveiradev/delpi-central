@@ -58,6 +58,7 @@ export function DatabaseDetailPage({ databaseId }: { databaseId: string }) {
     <>
       {pagePath(database.name)}
       <ItpPageHero
+        variant="immersive"
         aria-label={`Instância de banco ${database.name}`}
         eyebrow={database.code}
         title={database.name}
