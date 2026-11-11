@@ -494,7 +494,7 @@ describe("Windows automatic inventory (E4.S3)", () => {
     expect(screen.getByText("33%")).toBeTruthy();
     expect(screen.getByText("Uptime")).toBeTruthy();
     expect(screen.getByText("Memória usada (amostra)")).toBeTruthy();
-    expect(screen.getByText(/97\\.39%/)).toBeTruthy();
+    expect(screen.getByText(/97\.39%/)).toBeTruthy();
     expect(screen.getByText(/EventLog/)).toBeTruthy();
     expect(screen.queryByText("Docker")).toBeNull();
     expect(screen.queryByText("Swap total")).toBeNull();
