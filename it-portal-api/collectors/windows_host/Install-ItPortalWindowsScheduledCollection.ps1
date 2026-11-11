@@ -56,7 +56,7 @@ foreach ($name in $files) {
     [void][System.Management.Automation.Language.Parser]::ParseFile(
         $sourceFile, [ref]$tokens, [ref]$parseErrors
     )
-    if ($parseErrors.Count -gt 0) {
+    if ($null -ne $parseErrors -and $parseErrors.Count -gt 0) {
         throw "Erro de sintaxe no arquivo aprovado: $name"
     }
 }
