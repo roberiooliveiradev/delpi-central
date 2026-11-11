@@ -311,62 +311,83 @@ describe("services", () => {
   });
 });
 
-describe("server detail — linked components", () => {
-  it("shows hosted services, associated databases and the summary", async () => {
-    mockApi(serverDetailRoutes(INVENTORY_MANAGER));
-    renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
-    expect(await screen.findByText("Componentes vinculados")).toBeTruthy();
-    expect(screen.getByText("Serviços hospedados")).toBeTruthy();
-    expect(screen.getByText("Bancos de dados associados")).toBeTruthy();
+describe("server detail — icon navigation and linked components", () => {
+  it("opens one destination at a time and keeps data hidden until requested", async () => {
+    const fetchMock = mockApi(serverDetailRoutes(INVENTORY_MANAGER));
+    renderAt("/apps/it-portal/servers/" + SERVER_ID);
+    const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
+    expect(await screen.findByText("Identificação")).toBeTruthy();
+    expect(screen.queryByText("Serviços hospedados")).toBeNull();
+    expect(screen.queryByText("Bancos de dados associados")).toBeNull();
+    expect(requestedPaths(fetchMock).some((p) => p.includes("/service-hostings"))).toBe(false);
+
+    fireEvent.click(within(navigation).getByRole("button", { name: /Serviços/ }));
+    expect(await screen.findByText("Serviços vinculados")).toBeTruthy();
     expect(await screen.findByText("1 serviço ativo")).toBeTruthy();
-    expect(await screen.findByText("1 instância ativa")).toBeTruthy();
     expect(await screen.findByText("Portal Interno")).toBeTruthy();
-    expect(await screen.findByText("ERP_PROD")).toBeTruthy();
     expect(screen.getByRole("button", { name: /Vincular serviço/ })).toBeTruthy();
+    expect(screen.queryByText("Identificação")).toBeNull();
+    expect(screen.queryByText("Bancos de dados associados")).toBeNull();
+
+    fireEvent.click(within(navigation).getByRole("button", { name: /Bancos de dados/ }));
+    expect(await screen.findByText("Bancos vinculados")).toBeTruthy();
+    expect(await screen.findByText("1 instância ativa")).toBeTruthy();
+    expect(await screen.findByText("ERP_PROD")).toBeTruthy();
     expect(screen.getByRole("button", { name: /Cadastrar instância/ })).toBeTruthy();
+    expect(screen.queryByText("Serviços hospedados")).toBeNull();
   });
 
-  it("removes a link after confirmation without deleting the service", async () => {
+  it("removes a service link after confirmation without deleting its underlying record", async () => {
     const fetchMock = mockApi(serverDetailRoutes(INVENTORY_MANAGER));
-    renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
+    renderAt("/apps/it-portal/servers/" + SERVER_ID);
+    const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
+    fireEvent.click(within(navigation).getByRole("button", { name: /Serviços/ }));
     fireEvent.click(
       await screen.findByRole("button", { name: "Remover vínculo entre Portal Interno e ERP Produção" }),
     );
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByText(/Nenhum cadastro é excluído/)).toBeTruthy();
     fireEvent.click(within(dialog).getByRole("button", { name: "Remover vínculo" }));
-    await waitFor(() => expect(requestedPaths(fetchMock, "DELETE")).toEqual([`/service-hostings/${HOSTING_ID}`]));
+    await waitFor(() => expect(requestedPaths(fetchMock, "DELETE")).toEqual(["/service-hostings/" + HOSTING_ID]));
     expect(requestedPaths(fetchMock, "DELETE").some((p) => p.startsWith("/services"))).toBe(false);
   });
 
-  it("hides link management for viewers", async () => {
+  it("keeps viewing allowed but hides link management from read-only viewers", async () => {
     mockApi(serverDetailRoutes(INVENTORY_VIEWER));
-    renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
+    renderAt("/apps/it-portal/servers/" + SERVER_ID);
+    const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
+    fireEvent.click(within(navigation).getByRole("button", { name: /Serviços/ }));
     expect(await screen.findByText("Portal Interno")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Vincular serviço/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /Remover vínculo/ })).toBeNull();
+    fireEvent.click(within(navigation).getByRole("button", { name: /Bancos de dados/ }));
+    expect(await screen.findByText("ERP_PROD")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Cadastrar instância/ })).toBeNull();
   });
 
-  it("only shows the databases section when only databases.view is granted", async () => {
+  it("does not show or request restricted destinations", async () => {
     const fetchMock = mockApi(
       serverDetailRoutes({ ...INVENTORY_VIEWER, can_view_services: false, can_manage_services: false }),
     );
-    renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
+    renderAt("/apps/it-portal/servers/" + SERVER_ID);
+    const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
+    expect(within(navigation).queryByRole("button", { name: /^Serviços/ })).toBeNull();
+    fireEvent.click(within(navigation).getByRole("button", { name: /Bancos de dados/ }));
     expect(await screen.findByText("Bancos de dados associados")).toBeTruthy();
     expect(screen.queryByText("Serviços hospedados")).toBeNull();
     expect(requestedPaths(fetchMock).some((p) => p.includes("service-hostings"))).toBe(false);
   });
 
-  it("shows automatic inventory empty state", async () => {
-    mockApi(serverDetailRoutes(INVENTORY_VIEWER));
-    renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
-    expect(
-      await screen.findByText(/Nenhuma observação automática registrada/),
-    ).toBeTruthy();
+  it("shows automatic inventory empty state only after entering its destination", async () => {
+    const fetchMock = mockApi(serverDetailRoutes(INVENTORY_VIEWER));
+    renderAt("/apps/it-portal/servers/" + SERVER_ID);
+    const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
+    expect(requestedPaths(fetchMock).some((p) => p.endsWith("/observations/latest"))).toBe(false);
+    fireEvent.click(within(navigation).getByRole("button", { name: /Coleta automática/ }));
+    expect(await screen.findByText(/Nenhuma observação automática registrada/)).toBeTruthy();
   });
 
-  it("shows automatic inventory snapshot, divergences and partial docker", async () => {
+  it("renders Linux telemetry and divergence with partial Docker state", async () => {
     const observation = {
       id: "obs-1",
       server_id: SERVER_ID,
@@ -388,27 +409,40 @@ describe("server detail — linked components", () => {
       },
       sections_status: { os: "ok", docker: "unavailable" },
       divergences: [
-        {
-          field: "operating_system",
-          registered: "Windows Server 2022",
-          observed: "Ubuntu 24.04",
-        },
+        { field: "operating_system", registered: "Windows Server 2022", observed: "Ubuntu 24.04" },
       ],
       created_at: "2026-11-11T10:00:05Z",
       presentation_status: "partial",
     };
     const fetchMock = mockApi({
       ...serverDetailRoutes(INVENTORY_VIEWER),
-      [`/servers/${SERVER_ID}/observations/latest`]: { data: observation },
+      ["/servers/" + SERVER_ID + "/observations/latest"]: { data: observation },
     });
-    renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
+    renderAt("/apps/it-portal/servers/" + SERVER_ID);
+    const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
+    fireEvent.click(within(navigation).getByRole("button", { name: /Coleta automática/ }));
     await waitFor(() =>
       expect(requestedPaths(fetchMock).some((p) => p.endsWith("/observations/latest"))).toBe(true),
     );
-    expect(await screen.findByText("SO e hardware")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Sistema e hardware" })).toBeTruthy();
     expect(screen.getByText("Parcial")).toBeTruthy();
-    expect(screen.getByText(/Divergências em relação ao cadastro/)).toBeTruthy();
+    expect(screen.getByText("Diferenças em relação ao cadastro")).toBeTruthy();
     expect(screen.getByText(/Docker indisponível/)).toBeTruthy();
+    expect(screen.getByText("8")).toBeTruthy();
+    expect(screen.getByText("CPUs lógicas · uso não coletado")).toBeTruthy();
+  });
+
+  it("renders only allowed destinations for a basic server user", async () => {
+    mockApi(serverDetailRoutes(E1_ONLY));
+    renderAt("/apps/it-portal/servers/" + SERVER_ID);
+    const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
+    expect(within(navigation).getByRole("button", { name: /Visão geral/ })).toHaveAttribute("aria-pressed", "true");
+    expect(within(navigation).getByRole("button", { name: /Coleta automática/ })).toBeTruthy();
+    expect(within(navigation).queryByRole("button", { name: /^Serviços/ })).toBeNull();
+    expect(within(navigation).queryByRole("button", { name: /Bancos de dados/ })).toBeNull();
+    expect(within(navigation).queryByRole("button", { name: /Redes/ })).toBeNull();
+    expect(within(navigation).queryByRole("button", { name: /Integrações/ })).toBeNull();
+    expect(within(navigation).queryByRole("button", { name: /Planos de ação/ })).toBeNull();
   });
 });
 
@@ -489,12 +523,15 @@ describe("Windows automatic inventory (E4.S3)", () => {
       },
     });
     renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
+    const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
+    fireEvent.click(within(navigation).getByRole("button", { name: /Coleta automática/ }));
     expect(await screen.findByText("Serviços Windows observados")).toBeTruthy();
-    expect(screen.getByText("Uso de CPU (amostra)")).toBeTruthy();
+    expect(screen.getByText("8 CPUs lógicas · amostra")).toBeTruthy();
     expect(screen.getByText("33%")).toBeTruthy();
-    expect(screen.getByText("Uptime")).toBeTruthy();
-    expect(screen.getByText("Memória usada (amostra)")).toBeTruthy();
-    expect(screen.getByText(/97\.39%/)).toBeTruthy();
+    expect(screen.getByText("Tempo desde a última inicialização")).toBeTruthy();
+    expect(screen.getByRole("progressbar", { name: "Utilização de Memória" })).toBeTruthy();
+    expect(screen.getAllByText(/97,39%/).length).toBeGreaterThan(0);
+    expect(screen.getByText("Uso elevado")).toBeTruthy();
     expect(screen.getByText(/EventLog/)).toBeTruthy();
     expect(screen.queryByText("Docker")).toBeNull();
     expect(screen.queryByText("Swap total")).toBeNull();
