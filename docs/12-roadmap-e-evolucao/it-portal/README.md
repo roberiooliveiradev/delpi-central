@@ -210,7 +210,23 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 - `it_portal.schema_migrations` registra `version=4`, `name=V004__server_observations.sql` (**PASS**: migration V004 aplicada; a consulta não demonstrou contagem de linhas ou grants da tabela).
 - Cadastro alvo na tabela `it_portal.servers`: `id=459fd1b8-643f-493d-9911-0ff7aaf91424`, `hostname=srv-api`, `active=true` (**PASS**: registro existente e elegível para conciliação por hostname).
 - Não há necessidade de criar outro cadastro do `srv-api`; preservar campos manuais.
-- **PENDING:** correção de sanitização/allowlist de payload JSON em profundidade e revisão, provisionamento Keycloak S2S, configuração segregada do coletor, smoke `submit` autenticado com `run_id`, leitura humana no MFE e agendamento systemd. `COMPLETE` continua pendente.
+- **PENDING (antes desta correção de segurança):** sanitização/allowlist de payload JSON em profundidade, provisionamento Keycloak S2S, configuração segregada do coletor, smoke `submit` autenticado com `run_id`, leitura humana no MFE e agendamento systemd. `COMPLETE` continua pendente.
+
+## E4.S1 — gate de segurança: allowlist estrita do summary (11/11/2026)
+
+**Causa raiz (CONFIRMADO_NO_CODIGO):** `_sanitize_summary` usava denylist só no nível superior e preservava chaves desconhecidas dentro de objetos/listas aninhadas (`os`, `memory`, `docker_summary`, etc.), permitindo persistência JSONB de campos fora do contrato do coletor.
+
+**Correção (owner `it-portal-api/it_portal_app/domain/observations.py`):**
+- allowlist de seções/campos alinhada ao coletor Linux v1;
+- varredura recursiva rejeita chaves sensíveis (`password`, `token`, `secret`, `env`, `credentials`, `authorization`, `private_key`, etc.);
+- campos desconhecidos não sensíveis são descartados; limites de tamanho/cardinalidade preservados;
+- `sections_status` restrito às seções do coletor.
+
+**Evidência de testes (local, antes do commit desta fatia):**
+- `pytest tests/test_observations_domain.py tests/test_observations_http.py tests/test_http_contract.py` → PASS (positivo com snapshot realista + negativos aninhados parametrizados).
+- Sem alteração de V004, cadastro manual, escopos S2S, Keycloak `--apply`, `submit` ou timer.
+
+**Estado após esta fatia:** residual de sanitização aninhada **ATENDIDO_NO_CODIGO** (sujeito a revisão independente). Demais gates S2S/smoke/timer permanecem **PENDING**. `COMPLETE` não declarado.
 
 ## Residuais abertos
 
