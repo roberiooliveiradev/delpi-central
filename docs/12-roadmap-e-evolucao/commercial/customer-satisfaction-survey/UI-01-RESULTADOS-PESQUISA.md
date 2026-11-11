@@ -12,19 +12,28 @@ Abrir **diretamente em Resultados** ao escolher `Início > Marketing > Pesquisa 
 
 **Decisão de navegação:** neste ciclo o acesso a Configuração pode ser uma aba/ação no cabeçalho para o gestor, mas os dados de gestão não são montados nem buscados para `access`. A lista/detalhe de campanhas constitui a segunda página especificada em [02](./UI-02-CONFIGURACAO-PESQUISAS.md). Não criar intermediária “Home Marketing”.
 
+## Decisão visual aprovada — Hero único para controles da página (11/11/2026)
+
+**Todos os filtros globais e botões de ação da página de Resultados devem ficar no `CommercialPageHero` existente**, com densidade compacta, reproduzindo o padrão real das páginas analíticas do Comercial (`OverviewPage.tsx`, `AnalyticsOtdPage.tsx`, `AnalyticsOpportunitiesPage.tsx`). `CommercialPagePath` continua acima do Hero se exigido pelo padrão de rota. **Não** criar header próprio, barra de filtros separada abaixo do Hero, nem abas decorativas que dupliquem a navegação.
+
+- **Headline do Hero:** título “Pesquisa de Satisfação do Cliente”, descrição curta, ajuda contextual via `CommercialSectionHintLabel`, ações à direita via `CommercialActionButton`: **Atualizar**, **Configuração** (somente `commercial.marketing`/`commercial.manage`). Nenhum indicador é exibido no Hero.
+- **Corpo inferior do Hero:** controles `CommercialSelectField`, `CommercialMultiSelectField`, `CommercialFilterBarShell`/`cmFiltersKit` e `CommercialClearFiltersButton`: Ano, Campanha/Ano completo, segmento/estratégicos, cliente, vendedor, região, tempo de relacionamento e faturamento — **apenas quando a origem e a segurança forem confirmadas no backend**. `Limpar filtros` no próprio Hero. Não usar filtros operacionais de pedidos por herança.
+- **Exceção semântica necessária:** ações **contextuais de linha ou conteúdo** (abrir uma resposta, copiar link de participante) permanecem junto ao item afetado; confirmação/cancelamento continuam no diálogo/formulário correspondente. Essa exceção não autoriza ações globais fora do Hero.
+- **Responsividade:** controles quebram em linhas ou recolhem dentro da área inferior do mesmo Hero usando kit existente; nunca mover filtros globais para um card separado. A seção seguinte inicia diretamente pelo **Resumo executivo**.
+- **Status:** decisão de composição visual aprovada pelo solicitante; sem implementação neste commit.
+
 ## 2. Wireframe desktop — ordem e hierarquia
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ Portal Comercial / Marketing                                                 │
-│ Pesquisa de satisfação do cliente                       [Configuração]*     │
-│ Analise os resultados de pesquisas e sua evolução                            │
-├──────────────────────────────────────────────────────────────────────────────┤
-│ [Resultados ativo] [Configuração]*       *somente marketing/manage           │
-├──────────────────────────────────────────────────────────────────────────────┤
-│ PERÍODO E FILTROS                                                            │
-│ [Ano ▼] [Campanha: ano completo / específica ▼] [Segmento ▼] [Mais filtros] │
-│ [Limpar filtros]               Base: 72 respostas / 100 participantes        │
+│ [CommercialPagePath: Marketing / Pesquisa]                                 │
+├─ COMMERCIAL PAGE HERO (compacto) ────────────────────────────────────────────┤
+│ Pesquisa de satisfação do cliente        [Atualizar] [Configuração]*         │
+│ Acompanhe os resultados e a evolução da satisfação                           │
+│                                                                              │
+│ [Ano ▼] [Campanha / Ano completo ▼] [Segmento ▼] [Mais filtros ▼]          │
+│ [Cliente ▼] [Vendedor ▼] [Região ▼] [Tempo ▼] [Faturamento ▼]              │
+│ [Limpar filtros]                              *somente marketing/manage     │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ RESUMO EXECUTIVO                                                             │
 │ [IGS /5] [NPS] [Taxa resposta] [Satisfeitos %] [Críticos %]                 │
@@ -69,10 +78,10 @@ Não substituir falta de resposta por `0`. Onde a fonte não possui dimensão, m
 
 | Região | Reuso verificado | Fonte real / regra |
 |---|---|---|
-| Hero/título/ação | `CommercialPageHero`, `CommercialSectionHintLabel`, `CommercialActionButton` | Wrappers de PluginUI em `plugins/commercial/src/app/commercialUi.ts`; `OverviewPage.tsx` |
+| Hero/título/todas ações globais | `CommercialPageHero`, `CommercialSectionHintLabel`, `CommercialActionButton`, `CommercialPagePath` | Hero compacto com ações Atualizar e Configuração; wrappers PluginUI de `commercialUi.ts`, padrão `OverviewPage.tsx` |
 | Organização visual | `SectionCard` ou `CommercialSectionCard` | PluginUI + wrapper; mesmas classes/labels do Portal |
 | Navegação Resultados/Configuração | `CommercialUnderlineNav` | Wrapper de `createDashboardUnderlineNav` já exportado; adequar às props atuais |
-| Barra de filtros | `CommercialFilterBarShell`, `CommercialSelectField`, `CommercialMultiSelectField`, `CommercialClearFiltersButton`, `cmFiltersKit` | `commercialUi.ts`; padrão de `AnalyticsFilters.tsx` |
+| Filtros globais dentro do Hero | `CommercialFilterBarShell`, `CommercialSelectField`, `CommercialMultiSelectField`, `CommercialClearFiltersButton`, `cmFiltersKit` | **Como children do `CommercialPageHero`**, não abaixo; `commercialUi.ts`, padrão `AnalyticsFilters.tsx` |
 | 5 KPIs | `CommercialMetricCard` | Wrapper existente; não usar `CommercialDashboardKpiCard` se não houver metas/IDD |
 | 10 dimensões | `CommercialHorizontalValueBars` | Wrapper real do PluginUI em `commercialUi.ts`; confirmar formato das props antes do código |
 | Evolução IGS/NPS | `ChartViewShell`, `MultiTypeSeriesChart`, `ChartTypeSegmentToggle`, `ChartOverlayOptionsPopover` quando necessários | PluginUI, usados em `AnalyticsClosingRateSeriesChart.tsx`; **não copiar seu serviço de dados** |

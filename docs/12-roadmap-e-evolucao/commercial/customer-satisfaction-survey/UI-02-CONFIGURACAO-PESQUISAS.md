@@ -12,15 +12,20 @@ Criar campanhas e selecionar clientes existentes no TOTVS para que o usuário po
 
 **Rotas de UI previstas:** `/apps/commercial/satisfaction-surveys` (lista/configuração) e `/apps/commercial/satisfaction-surveys/{campaignId}` (detalhe como continuação da mesma área). Entrada por ação/aba Configuração da página de resultados, não outro MFE; a gestão pode voltar a Resultados sem perder contexto básico.
 
+## Regra de composição visual — Hero da gestão (11/11/2026)
+
+**Os filtros globais e botões de ação da página de Configuração também ficam no `CommercialPageHero`**, com `density="compact"`, título/descrição e ações superiores. No listagem: **Nova campanha**, **Ver resultados** e filtros de ano/situação/busca/limpar. No detalhe: **Ver resultados**, eventual **Editar datas** permitido e filtros globais da lista de participantes. O `CommercialPagePath` continua acima do Hero. Ações de cada linha (`Copiar link`, `Copiar mensagem`, `Abrir resposta`) continuam na linha correspondente; botões `Cancelar`/`Criar` ficam no diálogo, por serem ações do formulário. Ações indisponíveis por estado/permissão não são renderizadas como controles ativos. **Não criar barra de filtros solta abaixo do Hero nem componente próprio de cabeçalho.** A validação visual final será feita na revisão desta página; decisão de princípio aprovada, implementação ainda pendente.
+
 ## 2. Wireframe A — lista e criação
 
 ```text
 ┌───────────────────────────────────────────────────────────────────────────┐
 │ Marketing / Pesquisa de satisfação                                        │
-│ Configuração das pesquisas                             [Ver resultados]   │
+│ [CommercialPageHero compacto]                                             │
+│ Configuração das pesquisas                [Ver resultados] [+ Nova]        │
+│ [Pesquisar campanha] [Situação ▼] [Ano ▼] [Limpar filtros]                │
 ├───────────────────────────────────────────────────────────────────────────┤
-│ CAMPANHAS                                                    [+ Nova]     │
-│ [Pesquisar campanha] [Situação: todas ▼] [Ano ▼] [Limpar]                 │
+│ CAMPANHAS                                                                  │
 │                                                                           │
 │ Nome / período           Situação       Participantes  Respostas   Ação   │
 │ Satisfação 2026/2        Aberta         100            72          Abrir  │
