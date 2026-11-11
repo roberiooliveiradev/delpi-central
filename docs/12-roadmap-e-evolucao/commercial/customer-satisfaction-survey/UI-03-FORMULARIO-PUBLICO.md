@@ -12,6 +12,8 @@
 
 **Não usar o formulário de Customer Experience como contrato de dados:** sua implementação atual em `FormPage.tsx` exige nome do respondente e usa tipos de formulário personalizável; a pesquisa DELPI é fixa, vinculada somente à **empresa convidada**. Reusar padrões visuais, shell e estados, **sem** importar lógica/endpoint/identificação pessoal indevidos.
 
+**Fonte única das perguntas para este formulário:** [catálogo literal das 15 perguntas no contrato](./SURVEY-FIRST-RELEASE-CONTRACT.md#14-catálogo-textual-canônico-das-15-perguntas--conferência-com-o-word-em-11112026). O wireframe abaixo é abreviado apenas para visualização; no formulário real, mostrar **a pergunta integral do Word** como rótulo acessível para cada uma das dez dimensões, das duas notas e das três abertas, preservando a sequência canônica. Não tratar a redação resumida do wireframe como pergunta publicada. As escalas e a alternativa “Não se aplica” seguem Q08; opção N/A não é texto literal do Word. `questionnaire_version` deve vir da autoridade da API; o ID técnico concreto permanece PENDING.
+
 ## 2. Wireframe — abertura e formulário, desktop
 
 ```text
@@ -44,7 +46,7 @@
 │ Necessidades não atendidas   [____________________________________]      │
 │                                           [Revisar respostas]             │
 └───────────────────────────────────────────────────────────────────────────┘
-* Obrigatório. Texto integral e ordem vêm do plano/contrato oficial.
+* Obrigatórias: seleção de uma alternativa em cada uma das dez dimensões e resposta nas duas notas gerais; os três comentários são opcionais. **No produto, exibir o texto integral das 15 perguntas do catálogo canônico; o wireframe usa títulos resumidos.**
 ```
 
 **A escolha de uma pergunta por página ou bloco único** deve favorecer legibilidade e menor custo de navegação. Recomendação atual: blocos de assunto na mesma página, com seção de revisão final, como acima; não forçar quinze etapas individuais porque a biblioteca suporta wizard.

@@ -109,6 +109,7 @@ A primeira entrega deverá permitir **criação de campanhas, escolha de partici
 **Fonte:** Concordância explícita do solicitante à pergunta 9 da entrevista, em 2026-11-10.
 **Owner da decisão:** Comercial — validação formal PENDING.
 **Data:** 2026-11-10.
+**Complemento de conferência documental (11/11/2026):** as 15 perguntas literais e a ordem das seções 3–6 do Word foram conferidas e transcritas no [catálogo da primeira entrega](./SURVEY-FIRST-RELEASE-CONTRACT.md#14-catálogo-textual-canônico-das-15-perguntas--conferência-com-o-word-em-11112026), associadas às chaves técnicas existentes. **Gate textual FECHADO (15/15).** A criação do identificador técnico concreto de `questionnaire_version` e sua verificação em API, banco, telas e histórico permanecem **PENDING**. Não reabrir a Q09 funcional para decidir novamente textos fixos ou personalização por campanha.
 **Justificativa:** Garantir comparabilidade entre campanhas.
 **Impacto:** Questionário padronizado e comparabilidade histórica; detalhes técnicos de versionamento e contratos permanecem TO_INVENTORY.
 

@@ -61,7 +61,35 @@
 
 **Validação canônica de seleção (Q08, 11/11/2026):** O formulário exige em todas as dez dimensões uma escolha explícita entre nota 1–5 e “Não se aplica”. O cliente pode revisar antes de confirmar. A `commercial-api` valida presença das dez chaves e rejeita omissões, valores indefinidos ou tentativas de deixar a questão em branco; `null` significa somente a opção “Não se aplica” efetivamente selecionada. Payload serializado com `null` deve ser produzido apenas a partir dessa escolha, não como default de campo intocado. As duas notas gerais continuam obrigatórias, os três textos opcionais. Reforçar testes de tentativa de envio parcial/omissões e de `null` selecionado. Trata-se de **contrato de implementação, não de comportamento já implantado**.
 
-**Chaves canônicas de `dimensions` (correspondentes às dez dimensões do plano):** `quality`, `delivery_deadline`, `service`, `agility`, `communication`, `technical_support`, `commercial_support`, `flexibility`, `reliability`, `partnership`. Textos **exatos** de cada pergunta e ordem devem vir do plano integral e constar em contrato versionado; a tradução técnica das chaves não altera as perguntas.
+**Chaves canônicas de `dimensions` (correspondentes às dez dimensões do plano):** `quality`, `delivery_deadline`, `service`, `agility`, `communication`, `technical_support`, `commercial_support`, `flexibility`, `reliability`, `partnership`. Os textos **literais** e a ordem foram transcritos do Word e mapeados na seção **1.4** abaixo; a tradução técnica das chaves não altera as perguntas.
+
+### 1.4 Catálogo textual canônico das 15 perguntas — conferência com o Word em 11/11/2026
+
+**Fonte literal:** arquivo original *Plano de Monitoramento da Satisfação dos Clientes — Delpi.docx*, seção **3, tabela “Dimensão | Pergunta”** (10 perguntas), seções **4 e 5** (satisfação e recomendação) e seção **6** (3 abertas). A transcrição abaixo preserva pontuação, acentuação e ordem da fonte. Os rótulos curtos são da coluna “Dimensão” ou nomes de apresentação, **não substituem a pergunta completa**. Nenhuma pergunta foi inventada. A escala 1–5 da seção 3 é: **1 = Muito insatisfeito; 2 = Insatisfeito; 3 = Neutro; 4 = Satisfeito; 5 = Muito satisfeito**.
+
+| Ordem | Chave de payload/armazenamento | Título de apresentação | Pergunta literal do Word | Resposta permitida |
+|---|---|---|---|---|
+| 01 | `quality` | Qualidade | Como você avalia a qualidade dos produtos fornecidos pela Delpi? | 1–5 ou “Não se aplica” (seleção obrigatória; Q08) |
+| 02 | `delivery_deadline` | Prazo de entrega | Como você avalia o cumprimento dos prazos acordados? | 1–5 ou “Não se aplica” (seleção obrigatória; Q08) |
+| 03 | `service` | Atendimento | Como você avalia o atendimento da equipe Delpi? | 1–5 ou “Não se aplica” (seleção obrigatória; Q08) |
+| 04 | `agility` | Agilidade | Como você avalia a velocidade de resposta às suas solicitações? | 1–5 ou “Não se aplica” (seleção obrigatória; Q08) |
+| 05 | `communication` | Comunicação | Como você avalia a clareza e efetividade da comunicação? | 1–5 ou “Não se aplica” (seleção obrigatória; Q08) |
+| 06 | `technical_support` | Suporte técnico | Como você avalia o suporte técnico oferecido pela Delpi? | 1–5 ou “Não se aplica” (seleção obrigatória; Q08) |
+| 07 | `commercial_support` | Suporte comercial | Como você avalia o suporte comercial oferecido pela Delpi? | 1–5 ou “Não se aplica” (seleção obrigatória; Q08) |
+| 08 | `flexibility` | Flexibilidade | Como você avalia a capacidade da Delpi de atender necessidades específicas? | 1–5 ou “Não se aplica” (seleção obrigatória; Q08) |
+| 09 | `reliability` | Confiabilidade | Quanto você considera a Delpi confiável como fornecedora? | 1–5 ou “Não se aplica” (seleção obrigatória; Q08) |
+| 10 | `partnership` | Parceria | Como você avalia a Delpi como parceira de longo prazo? | 1–5 ou “Não se aplica” (seleção obrigatória; Q08) |
+| 11 | `overall_score` | Satisfação geral | De forma geral, qual é o seu nível de satisfação com a Delpi como fornecedor? | 1–5, obrigatório |
+| 12 | `recommendation_score` | Recomendação | Em uma escala de 0 a 10, o quanto você recomendaria a Delpi para outra empresa que busca um fornecedor de chicotes elétricos e componentes? | 0–10, obrigatório |
+| 13 | `strengths` | Pontos fortes | O que a Delpi faz bem e você considera importante manter? | Texto opcional |
+| 14 | `improvements` | Oportunidades de melhoria | O que a Delpi poderia melhorar para atender melhor sua empresa? | Texto opcional |
+| 15 | `unmet_needs` | Necessidades não atendidas | Existe alguma necessidade ou expectativa que a Delpi ainda não esteja atendendo? | Texto opcional |
+
+**Atenção sobre origem de regras:** o **Word** fornece textos/escalas e a ordem (10 dimensões → satisfação geral → recomendação → 3 abertas). A opção **“Não se aplica”**, a exigência de escolha explícita para cada dimensão e a opcionalidade dos textos vêm das **decisões complementares Q08**, e não devem ser atribuídas literalmente ao Word. As chaves técnicas são mapeamentos do contrato `commercial-api`, não nomes escritos no Word.
+
+**Gate de fidelidade textual Q09: FECHADO no nível documental.** Conferidos 10/10 textos de dimensões, 2/2 perguntas gerais e 3/3 abertas: **15/15 textos localizados** e mapeados às 15 chaves previstas. A **UI-03** deve renderizar a pergunta literal em cada campo de resposta; a **UI-07** deve apresentar as dez perguntas literais abaixo dos títulos das dimensões, as duas perguntas literais junto às notas individuais (visíveis ou em ajuda acessível, conforme UX) e as três perguntas abertas literais sob seus títulos. A ordem oficial acima deve ser preservada em formulário e leitura, sem usar rótulos ilustrativos como autoridade.
+
+**Gate de versionamento: decisão funcional fechada, implementação técnica PENDING.** `questionnaire_version` já existe no contrato de campanha/resposta como intenção, mas **o identificador técnico concreto da primeira versão ainda não foi estabelecido nem observado em backend**. Não inventar valor como `v1` em payload/API. Na implementação escolher identificador imutável e explícito, vincular o catálogo oficial de textos e escalas a ele, registrar no convite/campanha/resposta e devolver a versão correta nos endpoints internos/públicos. Validar que a resposta histórica sempre usa o catálogo da versão persistida; Q09 proíbe personalização por campanha. O contrato futuro deve ser verificado no código, migrações e testes antes de declarar runtime pronto.
 
 ## 2. Fluxo de campanhas e participantes
 
