@@ -635,3 +635,122 @@ def test_grid_extent_competition_without_role_stays_unassigned():
     remaining = fill(cells, [token], [0])
     assert remaining == [0]
     assert all(c["text"] == "" for c in cells[2:])
+
+
+# ---------- G6-closure: costura entre recuperação visual e recovery BOM ----------
+
+
+def test_bom_guided_recovery_skips_code_present_in_tokens():
+    """Dedup de camadas: código já observado nos tokens não dispara
+    reinspeção — a BOM guia a hipótese, nunca o resultado."""
+    from engineering_app.application.drawing.drawing_investigation import (
+        apply_localized_recovery,
+    )
+
+    u = {
+        "component_table": {
+            "rows": [
+                {"page": 1, "cells": [{"text": "10080010"}]},
+            ],
+        },
+        "document_hash_sha256": "x" * 64,
+    }
+    tokens = [{"normalized_text": "10211552", "raw_text": "10211552",
+               "page": 1, "bounding_box_px": [0, 0, 5, 0, 5, 5, 0, 5]}]
+    class _NoopRenderer:
+        def render_region(self, *a, **k):  # pragma: no cover
+            raise AssertionError("crop indiscriminado não permitido")
+    recovered = apply_localized_recovery(
+        u, product_code="90009999",
+        bom_component_codes=["10211552"],
+        opts={"renderer": _NoopRenderer(), "ocr": None,
+              "pdf_bytes": b"%PDF"},
+        tokens=tokens,
+    )
+    assert recovered == []
+
+
+def test_bom_guided_recovery_never_fabricates_absent_code():
+    """Código oficial ausente de células E tokens → hipótese de
+    reinspeção, mas sem evidência visual o resultado é vazio."""
+    from engineering_app.application.drawing.drawing_investigation import (
+        apply_localized_recovery,
+    )
+
+    class _NoopOcr:
+        def extract_text(self, _img):
+            class _R:
+                tokens = []
+            return _R()
+
+    class _Renderer:
+        def render_region(self, *a, **k):
+            class _R:
+                image_bytes = b"png"
+                offset_px = (0.0, 0.0)
+                width = height = 10
+                page = 1
+                dpi = 150
+            return _R()
+
+    u = {
+        "component_table": {
+            "rows": [
+                {"page": 1,
+                 "cells": [{"text": "10080010",
+                            "bounding_box_px": [0, 0, 5, 0, 5, 5, 0, 5]}]},
+            ],
+        },
+        "document_hash_sha256": "x" * 64,
+    }
+    recovered = apply_localized_recovery(
+        u, product_code="90009999",
+        bom_component_codes=["99999999"],
+        opts={"renderer": _Renderer(), "ocr": _NoopOcr(),
+              "pdf_bytes": b"%PDF",
+              "budget": {"max_crops": 1, "max_dpi": 200,
+                         "max_pixels": 4_000_000},
+              "reference_dpi": 150},
+        tokens=[],
+    )
+    assert recovered == []
+    assert not u.get("localized_recovery")
+
+
+def test_recovered_cell_counts_as_visual_evidence_for_dedup():
+    """Célula reparada pelo fill (token órfão → célula vazia) alimenta
+    o conjunto visível — a camada BOM não re-processa o que já foi
+    provado visualmente."""
+    from engineering_app.application.drawing.perception_contract import (
+        fill_empty_cells_from_unassigned_grid_extent as fill,
+    )
+    from engineering_app.application.drawing.drawing_investigation import (
+        apply_localized_recovery,
+    )
+
+    cells = [
+        _cell(0, 0, "A1", _quad(10, 10, 40, 30)),
+        _cell(0, 1, "1", _quad(50, 10, 70, 30)),
+        _cell(0, 2, "10080010", _quad(80, 10, 140, 30)),
+        _cell(1, 0, "A2", _quad(10, 30, 40, 50)),
+        _cell(1, 1, "1", _quad(50, 30, 70, 50)),
+        _cell(1, 2, "", _quad(80, 30, 140, 50)),
+    ]
+    tokens = [{"raw_text": "10211552", "page": 1,
+               "bounding_box_px": _quad(80, 32, 140, 46)}]
+    remaining = fill(cells, tokens, [0])
+    assert remaining == [] and cells[5]["text"] == "10211552"
+    u = {
+        "component_table": {
+            "rows": [
+                {"page": 1, "cells": [{"text": c["text"]} for c in cells]},
+            ],
+        },
+    }
+    recovered = apply_localized_recovery(
+        u, product_code="90009999",
+        bom_component_codes=["10211552"],
+        opts={"renderer": None, "ocr": None, "pdf_bytes": b"%PDF"},
+        tokens=tokens,
+    )
+    assert recovered == []

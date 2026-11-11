@@ -2588,3 +2588,28 @@ G6_LOCALIZED_RECOVERY=grid-extent-disambiguation (2-stage evidence)
 FALSE_LINKS=0 novos — empate e perfil ambíguo permanecem unassigned
 IDEMPOTENCY=preenche apenas célula vazia, proveniência registrada
 ```
+
+## 71. Fechamento da integração governada (G6-CLOSURE) — 2026-11-11
+
+**RQ-04/RQ-05 — estado:** a integração governada BOM→reinspeção já existia e
+foi **provada, não reimplementada** (nenhum segundo comparador/planner criado):
+
+- `apply_localized_recovery` (`drawing_investigation.py`): códigos oficiais
+  ausentes das células **e** dos tokens → `recover_absent_table_cells`
+  (crop único por faixa de tabela, budget `max_crops/max_dpi/max_pixels`,
+  similaridade ≥0.85, proveniência `localized_ocr_recheck`). A BOM seleciona
+  a hipótese; nunca o resultado.
+- Camada 1 (adapter): `fill_empty_cells_from_unassigned_grid_extent` +
+  desambiguação por papel (`c39a578eea`) prova códigos presentes nos tokens
+  **antes** da comparação — elimina reinspeções desnecessárias.
+- **Costura provada (3 testes + payload real 061):** código em tokens não
+  dispara crop; código BOM-only ausente de tudo → resultado vazio (nunca
+  fabricado); célula reparada pelo fill conta como evidência visível → dedup
+  entre camadas. No 061 real: 9 códigos oficiais → `missing=[]` → 0 crops.
+
+**Classificação RQ/AC:** RQ-01/02/03/05 = SATISFIED por inventário+prova de
+costura; RQ-04 (planner) = SATISFIED (reinspeção com região/hipótese/budget
+justificados); AuthZ/estrutura real TOTVS = BLOCKED-EXTERNAL (contrato oficial
+não exercitável no ambiente de dev — fixture documental usada).
+
+**Suíte:** 1107 passed / 5 failed (mesmas pré-existentes).

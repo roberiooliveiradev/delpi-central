@@ -660,3 +660,19 @@ Mecanismo: `fill_empty_cells_from_unassigned_grid_extent` + `_disambiguate_by_co
 | `90264275` | 7/7 | 7/7 | controle |
 
 **Testes:** 19/19 G5 file (2 novos RED→GREEN: desambiguação por papel + empate fail-closed); suíte `tests/` **1104 passed / 5 failed** — mesmas 5 pré-existentes classificadas em §69.
+
+## G6-CLOSURE — prova de costura das camadas de recuperação (2026-11-11)
+
+Commit de testes + docs após `c39a578eea`. Sem alteração de código
+produtivo — os mecanismos RQ-04/RQ-05 já existiam; a task prova os
+invariantes de composição:
+
+| Prova | Resultado |
+|---|---|
+| 061 real — BOM oficial (9 códigos) vs. entendimento pós-fill | `missing=[]` → 0 crops disparados: a camada visual já provou tudo |
+| Token presente / célula perdida | camada 1 (grid-extent fill) prova; BOM não re-inspeciona |
+| Código BOM-only (ausente de células E tokens) | hipótese de reinspeção → OCR localizado sem evidência → `recovered=[]`, `localized_recovery` vazio — nunca fabricado |
+| Célula reparada (`grid_extent_unassigned`) | entra em `cell_codes` → dedup correto entre camadas |
+| Idempotência | fill só preenche célula vazia; BOM-path só age sobre `missing` — 2ª execução não duplica |
+
+Suíte: `1107 passed, 5 failed` (mesmas 5 pré-existentes fora do escopo).
