@@ -82,6 +82,7 @@ export function ServerDetailPage({ serverId }: { serverId: string }) {
     <>
       {pagePath(server.name)}
       <ItpPageHero
+        variant="immersive"
         aria-label={`Servidor ${server.name}`}
         eyebrow={server.code}
         title={server.name}
