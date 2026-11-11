@@ -14,7 +14,7 @@
 
 1. **Identificação da empresa — APROVADO dentro do Hero:** utilizar `CommercialPageHero.children`, com `CustomerAvatar` real (mesmo da Minha Carteira), nome vinculável à Conta, **código e loja**, campanha, data/hora de resposta e situação oficial, com `CommercialDetailFieldGrid` e `CommercialStatusBadge` quando apropriados. **Não renderizar `CommercialDetailCard` separado só para repetir identidade**. No celular reorganizar dados verticalmente, sem ocultar código/loja.
 2. **Avaliação geral — APROVADO:** exatamente dois `CommercialMetricCard` neutros **e não interativos**, **Satisfação geral** `overall_score / 5` e **Recomendação** `recommendation_score / 10`. Cada card tem nota grande, ícone Lucide discreto, `hint` curto “Nota registrada pela empresa” e `titleHint` para o texto da pergunta oficial. Props previstas: `label`, `value`, `hint`, `titleHint`, `icon`, `hero=false`, `tone="default"`; **não passar `onClick`**, nem tendências, estados comparativos, percentuais ou cores que rotulem o cliente como crítico. **Não nomear IGS nem NPS** (indicadores agregados). Não colocar `RatingDots` na avaliação geral; reservado às dez dimensões. Desktop/tablet: dois lado a lado quando couberem; celular: empilhar.
-3. **Avaliação das dez dimensões:** `CommercialSectionCard`, dez linhas **sempre visíveis** e em **ordem oficial do questionário**, cada uma com nome completo, **cinco pontos preenchidos/neutros** e texto `n / 5`. Se `null`: texto **“Não se aplica”**, sem pontuação zero. Visual de pontos aprovado; usar `RatingDots` apenas **após** sua criação verificada no PluginUI.
+3. **Avaliação das dez dimensões — APROVADO:** `CommercialSectionCard` em **uma única lista vertical de dez linhas**, nunca duas colunas de cinco, em desktop, tablet e celular. Manter dez dimensões **sempre visíveis** e na **ordem oficial do questionário**, cada uma com nome completo, **cinco pontos preenchidos/neutros** e valor numérico `n / 5`. No desktop e tablet alinhar rótulo à esquerda e pontos/nota à direita; no celular, quando a largura for insuficiente, pontos/nota podem passar para baixo do nome, **sem rolagem horizontal**. Se `null`: texto **“Não se aplica”**, sem pontos nem nota zero. Não interpretar notas como críticas automaticamente; pontos somente leitura, com texto acessível e cores por tokens de tema. Visual aprovado; usar `RatingDots` apenas **após** sua criação verificada no PluginUI.
 4. **Comentários:** `CommercialDetailCard` contendo **Pontos fortes**, **Oportunidades de melhoria** e **Necessidades não atendidas**. Sem truncamento, preservar parágrafos/quebras de linha; texto ausente = **“Não informado”**.
 
 ```text
@@ -42,6 +42,10 @@ TOPBAR EXISTENTE
 **Dados fictícios, rótulos ilustrativos:** texto integral e ordem oficial vêm do Word/questionário versionado; chaves canônicas do backend, não posição de array.
 
 **Responsivo:** Hero reorganiza identidade dentro de `children`, sem outro card; desktop com dois cartões numéricos lado a lado, rótulos/pontos/nota na mesma linha; tablet adapta sem esconder conteúdo; celular mostra os dois cards empilhados, dez linhas em fluxo vertical e comentários empilhados. Sem rolagem horizontal; testar nomes longos, zoom 200–400%, contraste, teclado e leitores de tela. Sempre manter **nota numérica legível** além dos pontos.
+
+### Decisão de layout das dez dimensões (11/11/2026)
+
+**Aprovado:** **lista vertical única** em todos os tamanhos de tela, sem distribuir dimensões em duas colunas no desktop. Nome à esquerda, pontos e nota à direita quando couberem; no celular, quebrar a composição de cada linha verticalmente se necessário, sem esconder dados. `RatingDots` permanece candidato do PluginUI, **não implementado**. Essa decisão é exclusivamente de apresentação; não altera as respostas nem seu contrato.
 
 ## 3. Componentes verificados versus candidato
 
