@@ -83,6 +83,7 @@ services:
     platform: linux/amd64
     container_name: delpi-keycloak
     command: ["start-dev"]
+    restart: unless-stopped
 
     environment:
       KC_DB: postgres
