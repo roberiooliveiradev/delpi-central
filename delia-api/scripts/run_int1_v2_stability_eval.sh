@@ -5,7 +5,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 EVAL_NAME="delpi-delia-eval-int1-v2-stab"
-ARTIFACT_DIR="${REPO_ROOT}/delia-api/.battery/int1-v2-stability"
+ARTIFACT_DIR="${REPO_ROOT}/delia-api/.battery/int1-v2-stability-rerun"
 TRACE_DIR="${REPO_ROOT}/delia-api/.battery/int1-secure-decision-trace"
 EVAL_ENV="$(mktemp /tmp/delia-eval-stab-env.XXXXXX)"
 PROD_STARTED_BEFORE="$(docker inspect -f '{{.State.StartedAt}}' delpi-delia-api 2>/dev/null || echo missing)"
@@ -199,7 +199,7 @@ docker exec -i \
   | tee "${ARTIFACT_DIR}/stability-eval-output.jsonl"
 
 docker run --rm -v "${REPO_ROOT}/delia-api/.battery:/b" alpine \
-  chown -R "$(id -u):$(id -g)" /b/int1-secure-decision-trace /b/int1-v2-stability \
+  chown -R "$(id -u):$(id -g)" /b/int1-secure-decision-trace /b/int1-v2-stability-rerun \
   >/dev/null 2>&1 || true
 
 echo "STABILITY_EVAL_COMPLETE=YES"

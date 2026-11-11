@@ -6351,3 +6351,20 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `297-int1-v2-stability-objective-satisfaction-and-responsibility-attribution.md`.
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_STABILITY_AND_OWNERSHIP_INDEPENDENT_REVIEW`.
+
+| DELIA-C3-T2-INT1-MCP-EVAL-AUTH-LIFETIME-REMEDIATION-AND-V2-STABILITY-RERUN-01 | Harness-only: subject token lifetime proven (`expires_in=300` reuse); per-scenario reacquire EXTEND; offline+probe PASS; v2 Qwen14B 24/24 VALID_ENV; doc 298; no Agent/INT2/INT3/prod | AUTH_REMEDIATED; VALID_STABILITY=DONE; NEXT=COORDINATION_INT1_VALID_STABILITY_INDEPENDENT_REVIEW |
+
+### INT-1 MCP eval auth lifetime remediation + v2 stability rerun — 2026-11-11
+
+- **TASK:** `DELIA-C3-T2-INT1-MCP-EVAL-AUTH-LIFETIME-REMEDIATION-AND-V2-STABILITY-RERUN-01`.
+- **EXISTING_EQUIVALENT=YES** (`acquire_subject_access_session` / password-grant gateway). **REUSE_DECISION=EXTEND** (per-scenario reacquire + catalog preflight; no parallel auth).
+- **AUTH_ROOT_CAUSE:** `SUBJECT_ACCESS_TOKEN_REUSED_BEYOND_EXPIRES_IN` (PROVEN). Prior battery collapse ≈413s vs `expires_in=300`.
+- **TESTS:** `tests/test_int1_eval_subject_token_lifecycle.py` PASS; live MCP LIST probe DAVI/TEO/VISTA + reacquire fingerprint change PASS.
+- **EVAL:** `stab-v2-5b0e914eb9`; SHA `c39a578eea…`; image `28af6035…`; fp `7dbc94c5035b0f19`; rubric file sha16 `268db33af5f24770`.
+- **RUNS:** planned/executed 24; **valid_env 24**; **env_invalid 0**; auth fingerprints 24 unique.
+- **OBJECTIVES (scorer proposal):** SAT 6 · PARTIAL 12 · NOT_SAT 5 · INCONCLUSIVE 1; Gwo 2. Material: G1 TEO-first; P3 selection variance; P2 continuity PARTIAL×3; H4 analyze PARTIAL×3.
+- **FUNCTIONAL_AGENT_CODE_CHANGED=NO**; **INSTRUCTION_CHANGED=NO**; **PROD_UNTOUCHED=YES**.
+- **CREDENTIAL_SCOPE residual:** `NONE_PROVEN_SEPARATE_FROM_PROD`.
+- **Doc:** `298-int1-mcp-eval-auth-lifecycle-remediation-and-v2-stability-rerun.md`.
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_VALID_STABILITY_INDEPENDENT_REVIEW`.

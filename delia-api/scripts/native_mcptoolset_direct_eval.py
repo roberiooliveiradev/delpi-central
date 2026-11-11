@@ -69,26 +69,27 @@ def _env(name: str) -> str:
     return (os.environ.get(name) or "").strip()
 
 
+# Re-export eval subject-auth helpers (thin module; offline-testable).
+import importlib.util as _ilu
+from pathlib import Path as _Path
+
+_auth_path = _Path(__file__).resolve().parent / "int1_eval_subject_auth.py"
+_auth_spec = _ilu.spec_from_file_location("int1_eval_subject_auth", _auth_path)
+if _auth_spec is None or _auth_spec.loader is None:
+    raise RuntimeError("cannot load int1_eval_subject_auth")
+_auth_mod = _ilu.module_from_spec(_auth_spec)
+import sys as _sys
+
+_sys.modules[_auth_spec.name] = _auth_mod
+_auth_spec.loader.exec_module(_auth_mod)
+SubjectAccessSession = _auth_mod.SubjectAccessSession
+acquire_subject_access_session = _auth_mod.acquire_subject_access_session
+subject_session_is_fresh = _auth_mod.subject_session_is_fresh
+subject_session_public_meta = _auth_mod.subject_session_public_meta
+
+
 def _subject_token() -> str:
-    # Mint via the approved gateway surface — the real Portal path.
-    # The token-exchange validates the subject token's issuer; a token
-    # minted on the internal backchannel (keycloak:8080) carries
-    # iss=localhost:8080 and is rejected with "Invalid token".
-    token_url = (
-        _env("KC_GATEWAY_TOKEN_BASE") or "http://delpi-gateway/auth"
-    ).rstrip("/") + "/realms/delpi/protocol/openid-connect/token"
-    data = urllib.parse.urlencode(
-        {
-            "grant_type": "password",
-            "client_id": _env("VITE_KC_CLIENT_ID") or "delpi-central",
-            "username": _env("DEV_PORTAL_USERNAME"),
-            "password": _env("DEV_PORTAL_PASSWORD"),
-            "scope": "openid",
-        }
-    ).encode()
-    req = urllib.request.Request(token_url, data=data)
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        return json.loads(resp.read().decode()).get("access_token")
+    return acquire_subject_access_session().access_token
 
 
 class _CountingMcpAdapter:

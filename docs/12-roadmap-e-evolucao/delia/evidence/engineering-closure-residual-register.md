@@ -1235,3 +1235,22 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-STAGE | **BLOCKED** | Review ownership recommendations in doc 297 |
 
 **NEXT=`COORDINATION_INT1_STABILITY_AND_OWNERSHIP_INDEPENDENT_REVIEW`**.
+
+## 2026-11-11 — INT-1 MCP auth remediation + valid v2 stability rerun residuals
+
+**TASK:** `DELIA-C3-T2-INT1-MCP-EVAL-AUTH-LIFETIME-REMEDIATION-AND-V2-STABILITY-RERUN-01`
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-EVAL-MCP-AUTH-LIFETIME | **REMEDIATED_IN_HARNESS** | Per-scenario `acquire_subject_access_session`; 24 unique token fingerprints; catalog preflight OK×24 |
+| INT1-V2-SELECTION-STABILITY | **OBSERVABLE (n=3 valid/scenario)** | G1 TEO-first 3/3; P3 first-tool unstable (vista/teo/vista); H4 teo:analyze 3/3 PARTIAL |
+| INT1-P2-PAGINATION | **CONFIRMED_VALID_ENV** | PARTIAL×3; continuity gap remains |
+| INT1-G1-SELECTION | **OPEN_MATERIAL** | UNSUITABLE/PARTIALLY_SUITABLE TEO path vs DAVI structure obligation |
+| INT1-P3-SELECTION | **OPEN_MATERIAL** | Includes one `teo:analyze` + Gwo dashboard-as-formats |
+| INT1-H4-VALID-SAMPLE | **OBTAINED** | 3/3 env-valid; objective PARTIAL (not SAT) |
+| INT1-CREDENTIAL-ISOLATION | **RESIDUAL** | `NONE_PROVEN_SEPARATE_FROM_PROD` unchanged |
+| INT1-INT2-IMPL | **NOT_AUTHORIZED / NOT_PROVEN_REQUIRED** | Objective representation gap not proven mandatory |
+| INT1-INT3-IMPL | **NOT_AUTHORIZED / NOT_AUTO_JUSTIFIED** | One coverage-gap signal; inventory before any INT-3 |
+| INT1-STAGE | **BLOCKED** | Doc 298; independent review of valid stability + ownership |
+
+**NEXT=`COORDINATION_INT1_VALID_STABILITY_INDEPENDENT_REVIEW`**. `INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

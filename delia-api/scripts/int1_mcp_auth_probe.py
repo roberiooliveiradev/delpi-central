@@ -36,7 +36,9 @@ from app.infrastructure.auth.subject_bearer import (  # noqa: E402
 from app.infrastructure.config.settings import Settings  # noqa: E402
 
 _compose = _native._compose
-_subject_token = _native._subject_token
+acquire_subject_access_session = _native.acquire_subject_access_session
+subject_session_public_meta = _native.subject_session_public_meta
+subject_session_is_fresh = _native.subject_session_is_fresh
 
 REFS = (
     SpecialistRef(
@@ -65,9 +67,12 @@ def main() -> int:
         "endpoints",
         {k: v for k, v in settings.mcp_specialist_endpoints.items() if v},
     )
-    token = _subject_token()
-    print("token_len", len(token or ""))
-    binding = bind_subject_bearer(token)
+    session = acquire_subject_access_session()
+    meta = subject_session_public_meta(session)
+    print("AUTH_META", meta)
+    print("AUTH_FRESH", subject_session_is_fresh(session))
+    print("token_len", len(session.access_token or ""))
+    binding = bind_subject_bearer(session.access_token)
     try:
         _handler, mcp = _compose()
         for ref in REFS:
@@ -90,6 +95,26 @@ def main() -> int:
                     exc,
                 )
                 traceback.print_exc()
+        # Second acquisition proves distinct session for long batteries.
+        session2 = acquire_subject_access_session()
+        meta2 = subject_session_public_meta(session2)
+        print("AUTH_REACQUIRE_META", meta2)
+        print(
+            "AUTH_FINGERPRINT_CHANGED",
+            meta["auth_token_fingerprint"] != meta2["auth_token_fingerprint"],
+        )
+        binding2 = bind_subject_bearer(session2.access_token)
+        try:
+            for ref in REFS:
+                tools = mcp.list_remote_tools(ref, timeout_seconds=12.0)
+                print(
+                    "LIST_OK_AFTER_REACQUIRE",
+                    ref.specialist_id,
+                    "n",
+                    len(tools or []),
+                )
+        finally:
+            unbind_subject_bearer(binding2)
     finally:
         unbind_subject_bearer(binding)
     print("PROBE_DONE")

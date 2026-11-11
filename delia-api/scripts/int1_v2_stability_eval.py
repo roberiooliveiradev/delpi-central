@@ -65,13 +65,38 @@ _LLM_USAGE = _native._LLM_USAGE
 _compose = _native._compose
 _install_finalize_capture = _native._install_finalize_capture
 _install_usage_meter = _native._install_usage_meter
-_subject_token = _native._subject_token
+acquire_subject_access_session = _native.acquire_subject_access_session
+subject_session_is_fresh = _native.subject_session_is_fresh
+subject_session_public_meta = _native.subject_session_public_meta
 _install_catalog_and_progress_capture = (
     _or._install_catalog_and_progress_capture
 )
 _install_catalog_capture = _or._install_catalog_capture
 run_scenario = _or.run_scenario
 _refuse_insecure = _or._refuse_insecure
+
+from app.domain.specialist_interop.model import SpecialistRef  # noqa: E402
+from app.infrastructure.auth.subject_bearer import (  # noqa: E402
+    bind_subject_bearer,
+    unbind_subject_bearer,
+)
+
+_PREFLIGHT_REFS = (
+    SpecialistRef(
+        specialist_id="davi", display_name="DAVI", owner_ref="api-delpi"
+    ),
+    SpecialistRef(
+        specialist_id="teo",
+        display_name="TEO",
+        owner_ref="transformometro-api",
+    ),
+    SpecialistRef(
+        specialist_id="vista",
+        display_name="VISTA",
+        owner_ref="tv-dashboard-api",
+    ),
+)
+AUTH_SKEW_SECONDS = 90.0
 
 BASELINE = "generalist-semantic-v2"
 EXPECTED_FP = "7dbc94c5035b0f19"
@@ -193,6 +218,37 @@ def _load_rubric() -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _preflight_mcp_catalog(mcp, token: str) -> dict:
+    """Authorized catalog probe without LLM. Never logs the bearer."""
+    binding = bind_subject_bearer(token)
+    results: dict[str, dict] = {}
+    try:
+        for ref in _PREFLIGHT_REFS:
+            started = time.time()
+            try:
+                tools = mcp.list_remote_tools(ref, timeout_seconds=12.0)
+                results[ref.specialist_id] = {
+                    "status": "OK",
+                    "tool_count": len(tools or ()),
+                    "elapsed_s": round(time.time() - started, 2),
+                }
+            except Exception as exc:  # noqa: BLE001 — preflight reports
+                code = getattr(exc, "code", None) or type(exc).__name__
+                results[ref.specialist_id] = {
+                    "status": "FAIL",
+                    "error_code": str(code),
+                    "elapsed_s": round(time.time() - started, 2),
+                }
+    finally:
+        unbind_subject_bearer(binding)
+    ok = all(v.get("status") == "OK" and v.get("tool_count", 0) > 0 for v in results.values())
+    return {
+        "auth_valid": ok,
+        "mcp_catalog_available": ok,
+        "owners": results,
+    }
+
+
 def main() -> int:
     _refuse_insecure()
     identity = _env_identity()
@@ -237,7 +293,7 @@ def main() -> int:
     ensure_trace_dir()
     artifact = Path(
         os.environ.get("DELIA_EVAL_ARTIFACT_DIR")
-        or (Path(_APP_ROOT) / ".battery" / "int1-v2-stability")
+        or (Path(_APP_ROOT) / ".battery" / "int1-v2-stability-rerun")
     )
     artifact.mkdir(parents=True, exist_ok=True)
 
@@ -257,8 +313,8 @@ def main() -> int:
 
     meta = {
         "task_id": (
-            "DELIA-C3-T2-INT1-V2-STABILITY-AND-"
-            "OBJECTIVE-SATISFACTION-DIAGNOSTIC-01"
+            "DELIA-C3-T2-INT1-MCP-EVAL-AUTH-LIFETIME-"
+            "REMEDIATION-AND-V2-STABILITY-RERUN-01"
         ),
         "evaluation_id": evaluation_id,
         "evaluation_timestamp": datetime.now(timezone.utc).isoformat(),
@@ -326,13 +382,11 @@ def main() -> int:
         return result
 
     mcp.call_remote_tool = _call_with_values  # type: ignore[method-assign]
-    token = _subject_token()
-    if not token:
-        raise SystemExit("refused: empty subject token")
 
     runs: list[dict] = []
     wall_started = time.monotonic()
     executed = 0
+    env_invalid = 0
     for spec, rep in SCHEDULE:
         if time.monotonic() - wall_started > MAX_WALL_SECONDS:
             print("BUDGET_STOP=wall", flush=True)
@@ -347,6 +401,77 @@ def main() -> int:
         scenario_holder["correlation"] = f"{evaluation_id}-{run_id}"
         print(f"== {scenario_id}", flush=True)
 
+        # Reacquire subject token per scenario — prior battery reused one
+        # password-grant token across ~17 min and hit MCP auth failures
+        # after ~6–7 min (subject expiry). Existing mint path only.
+        session = acquire_subject_access_session()
+        auth_meta = subject_session_public_meta(session)
+        auth_meta["scenario_started_at_epoch"] = time.time()
+        auth_meta["subject_session_fresh"] = subject_session_is_fresh(
+            session, skew_seconds=AUTH_SKEW_SECONDS
+        )
+        preflight = _preflight_mcp_catalog(mcp, session.access_token)
+        auth_meta["catalog_enumeration_started_at_epoch"] = time.time()
+        auth_meta["catalog_auth_result"] = preflight
+        append_event(
+            evaluation_id,
+            "auth_preflight",
+            sanitize_mapping(auth_meta),
+            scenario_id=scenario_id,
+            correlation_id=scenario_holder["correlation"],
+        )
+        print(
+            json.dumps(
+                {
+                    "AUTH_PREFLIGHT": {
+                        "fresh": auth_meta["subject_session_fresh"],
+                        "expires_in": auth_meta["auth_expires_in_seconds"],
+                        "fp": auth_meta["auth_token_fingerprint"],
+                        "catalog_ok": preflight.get("mcp_catalog_available"),
+                        "owners": {
+                            k: v.get("status")
+                            for k, v in (preflight.get("owners") or {}).items()
+                        },
+                    }
+                },
+                ensure_ascii=False,
+            ),
+            flush=True,
+        )
+
+        if not preflight.get("mcp_catalog_available"):
+            env_invalid += 1
+            record = {
+                "run_id": run_id,
+                "scenario_id": spec["id"],
+                "repetition_id": rep,
+                "family": spec["family"],
+                "question": spec["question"],
+                "env_validity": "INVALID",
+                "objective_satisfaction": "INCONCLUSIVE",
+                "skip_llm": True,
+                "auth_meta": auth_meta,
+                "evaluated_sha": identity["evaluated_sha"],
+                "runtime_image_digest": identity["runtime_image_digest"],
+                "instruction_fingerprint": selected.text_fingerprint,
+                "error": "ENV_PREFLIGHT_MCP_AUTH",
+                "grounding": None,
+                "first_mcp_target": None,
+                "tool_calls": 0,
+                "limitations": ["catalog_failure:mcp_authentication_failed"],
+                "content_head": "",
+                "llm_runs": {
+                    "count": 0,
+                    "input_tokens": None,
+                    "output_tokens": None,
+                    "elapsed_ms": 0,
+                },
+            }
+            runs.append(record)
+            executed += 1
+            print(json.dumps(record, ensure_ascii=False)[:500], flush=True)
+            continue
+
         before = len(mcp.invoke_records)
         before_u = len(_LLM_USAGE)
         started = time.monotonic()
@@ -359,7 +484,7 @@ def main() -> int:
                 "question": spec["question"],
                 "prior": (),
             },
-            token=token,
+            token=session.access_token,
         )
         invokes = mcp.invoke_records[before:]
         usage = _LLM_USAGE[before_u:]
@@ -368,12 +493,22 @@ def main() -> int:
         if snap:
             caps = list(snap.get("eligible_capabilities") or [])
         first = invokes[0].get("target") if invokes else None
+        lim = list(res.get("limitations") or [])
+        env_validity = "VALID"
+        if any(
+            "catalog_failure:mcp_authentication_failed" in str(x)
+            for x in lim
+        ) and len(invokes) == 0:
+            env_validity = "INVALID"
+            env_invalid += 1
         record = {
             "run_id": run_id,
             "scenario_id": spec["id"],
             "repetition_id": rep,
             "family": spec["family"],
             "question": spec["question"],
+            "env_validity": env_validity,
+            "auth_meta": auth_meta,
             "evaluated_sha": identity["evaluated_sha"],
             "runtime_image_digest": identity["runtime_image_digest"],
             "runtime_image_id": identity["runtime_image_id"],
@@ -396,7 +531,7 @@ def main() -> int:
             ],
             "owner_errors": [i.get("error") for i in invokes],
             "tool_calls": len(invokes),
-            "limitations": res.get("limitations"),
+            "limitations": lim,
             "declared_answer": res.get("declared_answer"),
             "content_head": (res.get("content") or "")[:280],
             "llm_runs": {
@@ -411,6 +546,7 @@ def main() -> int:
                 or None,
                 "elapsed_ms": sum(u["elapsed_ms"] for u in usage),
             },
+            "scenario_finished_at_epoch": time.time(),
         }
         runs.append(record)
         executed += 1
@@ -421,9 +557,15 @@ def main() -> int:
         "evaluation_id": evaluation_id,
         "freeze": meta,
         "rubric_path": "scripts/int1_v2_stability_rubric.json",
+        "auth_lifecycle": {
+            "strategy": "reacquire_subject_token_per_scenario",
+            "existing_mechanism": "acquire_subject_access_session/password_grant_gateway",
+            "skew_seconds": AUTH_SKEW_SECONDS,
+        },
         "executed_runs": executed,
         "planned_runs": MAX_SCENARIO_RUNS,
-        "invalid_runs": 0,
+        "invalid_runs": env_invalid,
+        "valid_env_runs": executed - env_invalid,
         "runs": runs,
     }
     path = artifact / "stability-comparison.json"
