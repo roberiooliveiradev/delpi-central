@@ -28,18 +28,21 @@ class ListProductStructureUseCase:
         bom_validity = ProductBomValidityFilterService.response_metadata()
 
         if not root:
+            # Full-mode empty: omit null pagination placeholders. Emitting
+            # page/page_size/total_pages=null made MCP completeness UNKNOWN
+            # (is_complete=false) even when the empty set was authoritative.
             return {
                 "root": None,
                 "items": [],
-                "page": None,
-                "page_size": None,
                 "total": 0,
-                "total_pages": 0,
                 "bom_validity": bom_validity,
             }
 
-        # modo full
+        # modo full — entire direct-component set for the requested depth;
+        # do not emit null page/page_size/total_pages (those classify as
+        # pagination UNKNOWN and falsely mark the BOM incomplete).
         if request.page is None or request.page_size is None:
+            items = [c.to_dict() for c in root.components]
             return {
                 "root": {
                     "code": root.code,
@@ -48,11 +51,8 @@ class ListProductStructureUseCase:
                     "unit": root.unit,
                     "quantity": root.quantity
                 },
-                "items": [c.to_dict() for c in root.components],
-                "page": None,
-                "page_size": None,
-                "total": len(root.components),
-                "total_pages": None,
+                "items": items,
+                "total": len(items),
                 "bom_validity": bom_validity,
             }
 

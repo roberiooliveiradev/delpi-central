@@ -6432,6 +6432,21 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 
 | DELIA-C3-T2-INT1-G1-P1-REAL-QWEN-INTENT-SELECTION-EVAL-02 | Isolated OpenRouter Qwen14B G1+P1 once each; harness EXTEND scenario filter; G1 TEO→DAVI recovery; P1 DAVI-first; PARTIAL both; doc 303 | LIVE=EXECUTED; NEXT=COORDINATION_INT1_G1_P1_REAL_EVAL_REVIEW |
 
+| DELIA-C3-T2-INT1-TEO-SEMANTIC-CONTRACT-AND-DAVI-BOM-COMPLETENESS-REMEDIATION-01 | TEO read description ecoa Process WBS; DAVI full-mode omite pagination null + classifier null-as-absent; targeted tests PASS; doc 304; no LLM | CONTRACT_REMEDIATED; NEXT=COORDINATION_INT1_TEO_DAVI_INDEPENDENT_REVIEW |
+
+### INT-1 TEO contract + DAVI BOM completeness remediation — 2026-11-11
+
+- **TASK:** `DELIA-C3-T2-INT1-TEO-SEMANTIC-CONTRACT-AND-DAVI-BOM-COMPLETENESS-REMEDIATION-01`.
+- **FRONT_A:** `decomposition_tree` = process WBS (PROVEN); MCP `read` description clarified via REUSE of `ENTITY_DESCRIPTIONS`; publication verified `list_tools`.
+- **FRONT_B:** first loss = full-mode `page/page_size/total_pages=null` → pagination UNKNOWN → `is_complete=false` (not depth truncation on SKU 90260921).
+- **FIXES:** TEO `server.py` description; DAVI `ListProductStructureUseCase` omit nulls; `classify_source_pagination` null-as-absent.
+- **TESTS:** TEO mcp contract + metadata/surface adjacent PASS; DAVI pagination completeness + full-mode UC + bom tree PASS.
+- **EXTERNAL_LLM_CALLS=0**; **AGENT/INSTRUCTION unchanged**; **PROD_UNTOUCHED=YES**.
+- **Doc:** `304-int1-teo-semantic-contract-clarity-and-davi-product-structure-completeness-causal-remediation.md`.
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_TEO_DAVI_INDEPENDENT_REVIEW`.
+
+
 ### INT-1 G1/P1 real Qwen intent/selection eval-02 — 2026-11-11
 
 - **TASK:** `DELIA-C3-T2-INT1-G1-P1-REAL-QWEN-INTENT-SELECTION-EVAL-02`.

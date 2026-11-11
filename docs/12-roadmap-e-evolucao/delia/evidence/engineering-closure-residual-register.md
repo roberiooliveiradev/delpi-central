@@ -1350,3 +1350,21 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
 
 **NEXT=`COORDINATION_INT1_G1_P1_REAL_EVAL_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+## 2026-11-11 — INT-1 TEO contract + DAVI BOM completeness residuals
+
+**TASK:** `DELIA-C3-T2-INT1-TEO-SEMANTIC-CONTRACT-AND-DAVI-BOM-COMPLETENESS-REMEDIATION-01` · Doc **304**
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-TEO-DECOMPOSITION-DESC-AMBIGUITY | **REMEDIATED** | MCP `read` publishes Process WBS / processo_id / not materials BOM |
+| INT1-TEO-LIVE-RESELECTION | **TEST_NOT_RUN** | External LLM not authorized this task |
+| INT1-DAVI-FULLMODE-NULL-PAGINATION | **REMEDIATED** | UC omits null page keys; classifier treats null as absent |
+| INT1-DAVI-FALSE-INCOMPLETE | **REMEDIATED (deterministic)** | flat BOM total==items → is_complete true |
+| INT1-DAVI-SKU-MULTILEVEL-LIVE-SQL | **TO_INVENTORY** | 90260921 observed depth=1; no live SG1 probe here |
+| INT1-G1-P1-LIVE-AFTER-FIX | **NOT_AUTHORIZED** | needs PO minimal live |
+| INT1-STAGE | **BLOCKED** | Doc 304 coordination review |
+| INT1-CLOSED | **NO** | — |
+| INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
+
+**NEXT=`COORDINATION_INT1_TEO_DAVI_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

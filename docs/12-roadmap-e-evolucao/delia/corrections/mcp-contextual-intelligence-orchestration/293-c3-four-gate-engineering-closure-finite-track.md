@@ -702,3 +702,7 @@ Delivered: `delia-api/scripts/int1_secure_decision_trace.py`, `tests/test_int1_s
 ### 2026-11-11 — INT-1 G1/P1 real Qwen intent/selection eval-02
 
 **TASK:** `DELIA-C3-T2-INT1-G1-P1-REAL-QWEN-INTENT-SELECTION-EVAL-02`. See sibling **303**. Isolated OpenRouter Qwen14B; filter G1+P1 only (`EXISTING_EQUIVALENT=YES` / EXTEND). Eval `or-qwen14b-198e127edee9` on SHA `3d1a445189…`. G1: first TEO `decomposition_tree`, recovery to DAVI BOM SUCCESS, PARTIAL. P1: DAVI-first, PARTIAL. Explicit goal NOT_OBSERVED. No Agent/instruction/owner change. `INT1_STAGE_ACCEPTANCE=BLOCKED`. `NEXT=COORDINATION_INT1_G1_P1_REAL_EVAL_REVIEW`.
+
+### 2026-11-11 — INT-1 TEO semantic contract + DAVI BOM completeness
+
+**TASK:** `DELIA-C3-T2-INT1-TEO-SEMANTIC-CONTRACT-AND-DAVI-BOM-COMPLETENESS-REMEDIATION-01`. See sibling **304**. TEO MCP `read` description clarifies `decomposition_tree` as process WBS. DAVI full-mode no longer emits null pagination that forced `is_complete=false`. Deterministic targeted tests PASS; no external LLM; no Agent change. `INT1_STAGE_ACCEPTANCE=BLOCKED`. `NEXT=COORDINATION_INT1_TEO_DAVI_INDEPENDENT_REVIEW`.

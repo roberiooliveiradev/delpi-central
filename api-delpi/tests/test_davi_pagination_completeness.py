@@ -81,10 +81,64 @@ def _items(n: int) -> list[dict[str, Any]]:
         ({"page_size": 0, "items": _items(1)}, "unknown"),
         ({"total": 1, "items": _items(3)}, "unknown"),
         ({"total": 10, "total_pages": 0, "items": _items(1)}, "unknown"),
+        # INT-1 Front B — hierarchy full-mode null placeholders are not evidence.
+        (
+            {
+                "page": None,
+                "page_size": None,
+                "total": 1,
+                "total_pages": None,
+                "items": _items(1),
+            },
+            "complete",
+        ),
+        (
+            {
+                "page": None,
+                "page_size": None,
+                "total": 10,
+                "total_pages": None,
+                "items": _items(1),
+            },
+            "partial",
+        ),
+        ({"total": 1, "items": _items(1)}, "complete"),
     ],
 )
 def test_classify_source_pagination_matrix(payload, expected_state):
     assert classify_source_pagination(payload) == expected_state
+
+
+def test_hierarchy_full_mode_null_pagination_does_not_force_incomplete() -> None:
+    """Reproduce INT-1 G1/P1 false owner_result_incomplete on flat BOM.
+
+    Authoritative full-mode payload historically included page/page_size/
+    total_pages=null with total==len(items). That must not yield
+    is_complete=false when the visible set covers total.
+    """
+    payload = {
+        "root": {"code": "90260921", "description": "CHICOTE", "type": "PA"},
+        "items": [
+            {
+                "code": "10020003",
+                "description": "CABO",
+                "type": "MP",
+                "quantity": 175.0,
+                "components": [],
+            }
+        ],
+        "page": None,
+        "page_size": None,
+        "total": 1,
+        "total_pages": None,
+    }
+    assert classify_source_pagination(payload) == "complete"
+    is_complete, truncated = derive_response_completeness(payload)
+    assert is_complete is True
+    assert truncated is False
+    bounded = bound_response_payload(payload, max_bytes=200_000, max_items=50)
+    assert bounded["is_complete"] is True
+    assert bounded["truncated"] is False
 
 
 def test_source_pagination_proves_partial_compat_mapping():

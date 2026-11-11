@@ -355,7 +355,14 @@ def classify_source_pagination(payload: dict[str, Any]) -> str:
       unknown  — pagination keys present but untrustworthy/insufficient
     """
     surface = _pagination_view(payload)
-    present = [key for key in _PAGINATION_KEYS if key in surface]
+    # Explicit JSON null is not pagination evidence — treat as absent for
+    # that key (owners historically emitted page/page_size/total_pages=null
+    # in hierarchy full-mode, which falsely became UNKNOWN/incomplete).
+    present = [
+        key
+        for key in _PAGINATION_KEYS
+        if key in surface and surface.get(key) is not None
+    ]
     if not present:
         if surface.get("has_more") is True:
             return _PAGINATION_PARTIAL
@@ -366,7 +373,7 @@ def classify_source_pagination(payload: dict[str, Any]) -> str:
 
     parsed: dict[str, int | None] = {}
     for key in _PAGINATION_KEYS:
-        if key not in surface:
+        if key not in surface or surface.get(key) is None:
             parsed[key] = None
             continue
         value = _as_non_negative_int(surface.get(key))

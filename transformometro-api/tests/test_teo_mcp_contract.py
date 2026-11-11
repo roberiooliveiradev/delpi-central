@@ -269,3 +269,21 @@ def test_read_description_documents_search_get_and_entity_scoped_filters() -> No
     assert "get_context" in desc
     # Pagination is NOT universal: department only accepts filial_id.
     assert "department: filial_id only" in desc
+
+
+def test_read_description_publishes_decomposition_tree_as_process_wbs() -> None:
+    """INT-1 Front A — tools/list must distinguish process WBS from a
+    materials/product structure. Reuses ENTITY_DESCRIPTIONS semantics
+    (processo_id / Process WBS); must not hardcode sibling product routing.
+    """
+    mcp = create_mcp_server()
+    tools = {t.name: t for t in asyncio.run(mcp.list_tools())}
+    desc = tools["read"].description or ""
+    assert "decomposition_tree" in desc
+    assert "Process WBS" in desc or "process WBS" in desc
+    assert "processo_id" in desc
+    assert "bill-of-materials" in desc.lower() or "materials/product" in desc.lower()
+    # No cross-product routing or eval hardcodes in the published contract.
+    assert "davi" not in desc.lower()
+    assert "90260921" not in desc
+    assert "use DAVI" not in desc
