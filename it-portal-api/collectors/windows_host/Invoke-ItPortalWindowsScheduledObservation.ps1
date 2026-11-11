@@ -55,7 +55,7 @@ try {
 } catch {
     # Nao registrar Exception.Message / response body: podem conter dados do host.
     $errorType = $_.Exception.GetType().Name
-    if ($null -ne $_.Exception.Response) {
+    if ($_.Exception -is [System.Net.WebException] -and $null -ne $_.Exception.Response) {
         try {
             $httpStatus = [string][int]$_.Exception.Response.StatusCode
         } catch {
