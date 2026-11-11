@@ -5,6 +5,8 @@
 > **Planejamento por etapas:** esta especificação é exclusiva da **entrega 1**. A **entrega 2 está assumida como obrigatória** e incluirá gestão de classificação, planos de ação, retornos e reavaliações, com suas interfaces a detalhar ao iniciar essa frente. Não eliminar requisitos do Word por não aparecerem nas páginas deste ciclo.
 >\n> **Fontes canônicas:** [índice mestre](./REQUIREMENTS-INDEX.md), [decisões](./BUSINESS-DECISIONS.md), [contrato da primeira entrega](./SURVEY-FIRST-RELEASE-CONTRACT.md) e o plano integral nas fontes do projeto. Este documento descreve **a interface para o escopo aprovado**, não altera o ownership ou aprova desenvolvimento de planos de ação.
 
+> **Revisão UX da UI-01 em 11/11/2026:** o wireframe detalhado foi atualizado para **Hero com todas as ações/filtros globais → Resumo executivo → Evolução histórica (gráfico e tabela no mesmo bloco) → Dez dimensões → Comparativos → Respostas restritas**. Cinco KPIs com contexto e tendências comparáveis, barras com máximo fixo 5, sem cores de alerta por limiar não aprovado; a página mantém componentes oficiais PluginUI e `CommercialUi`. Consulte [UI-01](./UI-01-RESULTADOS-PESQUISA.md) como fonte **mais específica** para o desenho da página. Estado: proposta registrada, implementação pendente.
+
 ## Especificações completas por página — wireframes e PluginUI
 
 O [plano de frontend](./FRONTEND-FIRST-RELEASE-PLAN.md) permanece como **visão geral**; cada superfície possui um documento específico, com wireframe, inventário de componentes reais, regras de segurança, contratos, estados e critérios de aceite. **Não criar componentes visuais nativos nas páginas**: reutilizar PluginUI e componentes já utilizados no Comercial, submetendo qualquer lacuna ao Abstraction Gate.
