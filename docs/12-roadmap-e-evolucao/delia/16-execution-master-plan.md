@@ -2104,3 +2104,7 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 ### 2026-11-11 — INT-1 instruction isolation + bounded A/B (PO exception)
 
 **TASK:** `DELIA-C3-T2-INT1-SPECIALIZED-INSTRUCTIONS-AND-REAL-GENERALIZATION-EVOLUTION-01`. PO authorized one bounded INT-1 rework for instruction isolation/evolution despite exhausted budget. Instructions moved to governed JSON; baseline remains default. Candidate `v3-objective-progress` improved P3/G1/H4 but **regressed P1/P2** → not promoted. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_SPECIALIZED_INSTRUCTIONS_INDEPENDENT_REVIEW`**. No INT-2/T3/prod.
+
+### 2026-11-11 — INT-1 instruction ablation + regression-free evolution (PO 2º ciclo)
+
+**TASK:** `DELIA-C3-T2-INT1-INSTRUCTION-ABLATION-AND-REGRESSION-FREE-EVOLUTION-01`. PO bounded second cycle (does **not** erase historical `INT1_REWORK_BUDGET_EXHAUSTED=YES`). Diff v2↔v3 → three single-group ablations (`obj`/`prog`/`disc`) + live Qwen14B diagnostic (20 runs). No `SUPPORTED_IMPROVEMENT` at promotion strength; **FINAL_CANDIDATE=NONE**; default remains `generalist-semantic-v2`. Doc 296. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_INCREMENTAL_EVOLUTION_INDEPENDENT_REVIEW`**. No INT-2/T3/prod.

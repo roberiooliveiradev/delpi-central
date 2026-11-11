@@ -6323,3 +6323,18 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **REAL_EVAL:** OpenRouter qwen/qwen3-14b; known+holdout; prod untouched.
 - **Doc:** `295-int1-specialized-instructions-and-real-generalization-evolution.md`.
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+
+| DELIA-C3-T2-INT1-INSTRUCTION-ABLATION-AND-REGRESSION-FREE-EVOLUTION-01 | Ablation of ≤3 v3 instruction groups vs v2 on Qwen14B; OBJ/PROG/DISC → no sustained regression-free gains; FINAL_CANDIDATE=NONE; default v2; doc 296 | ABLATION=DONE; COMPOSE=SKIPPED; NEXT=COORDINATION_INT1_INCREMENTAL_EVOLUTION_INDEPENDENT_REVIEW |
+
+### INT-1 instruction ablation + incremental evolution — 2026-11-11
+
+- **TASK:** `DELIA-C3-T2-INT1-INSTRUCTION-ABLATION-AND-REGRESSION-FREE-EVOLUTION-01`. PO 2º ciclo bounded (histórico `INT1_REWORK_BUDGET_EXHAUSTED=YES` preservado).
+- **REFERENCE_HEAD (task):** `f0c053f2d76c856d4aecd6c74c989a0f11cbc915` (ancestral de `origin/main`).
+- **EVALUATED_SHA (live arms):** `5220eef522b4ca250dae2db78741beeb586a24da`.
+- **VARIANTS:** v2 `7dbc94c5035b0f19`; abl-obj `d455ef41408ccdea`; abl-prog `7d38c1237ea79909`; abl-disc `30d80637559e6ec8`.
+- **CLASSIFICATION:** OBJ/PROG = REGRESSION_ASSOCIATED; DISC = NO_DEMONSTRATED_BENEFIT (+P3 regress); G1 first-tool = PROMISING_BUT_INCONCLUSIVE; G-EFF = NOT_EVALUATED; SUPPORTED_IMPROVEMENT=none.
+- **FINAL_CANDIDATE:** NONE (no composite A/B). **PROMOTION:** DO_NOT_PROMOTE. **DEFAULT:** `generalist-semantic-v2`.
+- **FUNCTIONAL_AGENT_CODE_CHANGED=NO**. **PROD_UNTOUCHED=YES** (process-separated eval).
+- **Doc:** `296-int1-instruction-ablation-and-regression-free-evolution.md` (+ causal revision stamp on 295).
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_INCREMENTAL_EVOLUTION_INDEPENDENT_REVIEW`.

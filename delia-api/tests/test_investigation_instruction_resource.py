@@ -112,6 +112,23 @@ def test_candidate_is_provider_agnostic() -> None:
         assert token not in lowered
 
 
+def test_ablation_variants_load_distinct_fingerprints() -> None:
+    bundle = load_investigation_instructions(
+        default_investigation_instructions_path()
+    )
+    names = (
+        "generalist-semantic-ablation-obj-v1",
+        "generalist-semantic-ablation-prog-v1",
+        "generalist-semantic-ablation-disc-v1",
+    )
+    fps = {n: bundle.select(n).text_fingerprint for n in names}
+    assert fps["generalist-semantic-ablation-obj-v1"] == "d455ef41408ccdea"
+    assert fps["generalist-semantic-ablation-prog-v1"] == "7d38c1237ea79909"
+    assert fps["generalist-semantic-ablation-disc-v1"] == "30d80637559e6ec8"
+    assert len(set(fps.values())) == 3
+    assert bundle.default_instruction_version == _BASELINE
+
+
 def test_inline_instruction_constant_removed_from_source() -> None:
     """After isolation, the long prose must not live as a Python literal."""
     module_path = Path(pai.__file__).resolve()

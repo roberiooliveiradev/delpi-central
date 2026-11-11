@@ -71,11 +71,27 @@ Reasons:
 
 Process value delivered: versioned instruction resource, fingerprinting, A/B harness, holdout discipline.
 
-## 5. Architecture boundary
+## 5. Causal revision (post-ablation, doc 296)
+
+PO authorized a second bounded cycle (`DELIA-C3-T2-INT1-INSTRUCTION-ABLATION-AND-REGRESSION-FREE-EVOLUTION-01`) to isolate which v3 themes caused gains vs regressions.
+
+| Theme group | Ablation class | Implication for this candidate |
+|---|---|---|
+| G-OBJ (objective/evidence-kind + description↔schema↔shape) | **REGRESSION_ASSOCIATED** (P2/P3) | Do not re-bundle into a promotion candidate |
+| G-PROG (“new info ≠ progress” / continue only if path remains) | **REGRESSION_ASSOCIATED** (P3 wrong evidence while GROUNDED) | Do not re-bundle |
+| G-DISC (discovery-before-incompatible + published error-kind) | **NO_DEMONSTRATED_BENEFIT** / P3 regression | Do not re-bundle |
+| G1 first-tool davi on OBJ/PROG | **PROMISING_BUT_INCONCLUSIVE** (1 rep; baseline also BOM this run) | Keep as investigation note only |
+| G-EFF (efficiency) | **NOT_EVALUATED** | Outside ablation budget |
+
+**Stochasticity:** In the ablation diagnostic run, baseline v2 already GROUNDED P3/G1/H4. Therefore the §3 claims that v3 “improved” P3/G1/H4 versus v2 are **historical observations of one A/B sample**, not stable causal proofs of those instruction phrases.
+
+No composed regression-free successor was justified. Default remains `generalist-semantic-v2`. Detail: [296](./296-int1-instruction-ablation-and-regression-free-evolution.md).
+
+## 6. Architecture boundary
 
 Defects that remain after one candidate are not solved by further unbounded prompt iteration in this task. Material remaining gaps may belong to INT-2 (objective/evidence obligations) or INT-3 (coverage acceptance) — **not authorized here**.
 
-## 6. Status
+## 7. Status
 
 ```text
 INT1_STAGE_ACCEPTANCE=BLOCKED
@@ -83,5 +99,6 @@ INT1_CLOSED=NO
 INT2_AUTHORIZED=NO
 T3_AUTHORIZED=NO
 PRODUCTION_DEPLOY=NOT_AUTHORIZED
-NEXT=COORDINATION_INT1_SPECIALIZED_INSTRUCTIONS_INDEPENDENT_REVIEW
+NEXT=COORDINATION_INT1_INCREMENTAL_EVOLUTION_INDEPENDENT_REVIEW
 ```
+

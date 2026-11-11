@@ -1200,3 +1200,21 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-STAGE | **BLOCKED** | Review required |
 
 **NEXT=`COORDINATION_INT1_SPECIALIZED_INSTRUCTIONS_INDEPENDENT_REVIEW`**.
+
+## 2026-11-11 — INT-1 instruction ablation (2º ciclo PO; no composite)
+
+**TASK:** `DELIA-C3-T2-INT1-INSTRUCTION-ABLATION-AND-REGRESSION-FREE-EVOLUTION-01`
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-ABLATION-G-OBJ | **REGRESSION_ASSOCIATED** | P2 NON_GROUNDED; P3 NON_GROUNDED + tool limit |
+| INT1-ABLATION-G-PROG | **REGRESSION_ASSOCIATED** | P3 GROUNDED with TEO dashboard metrics (wrong evidence) |
+| INT1-ABLATION-G-DISC | **NO_DEMONSTRATED_BENEFIT** | P3 clarification; no unique gain vs v2 |
+| INT1-ABLATION-G-EFF | **NOT_EVALUATED** | Outside 3-group budget |
+| INT1-ABLATION-G1-FIRST-TOOL | **PROMISING_BUT_INCONCLUSIVE** | davi-first on OBJ/PROG (1 rep; stochastic baseline also BOM) |
+| INT1-COMPOSITE-CANDIDATE | **NONE** | No sustained regression-free package |
+| INT1-DEFAULT | **v2 preserved** | `7dbc94c5035b0f19` |
+| INT1-CREDENTIAL-ISOLATION | **RESIDUAL** | Shared infra LLM key scope unchanged |
+| INT1-STAGE | **BLOCKED** | Independent review of ablation |
+
+**NEXT=`COORDINATION_INT1_INCREMENTAL_EVOLUTION_INDEPENDENT_REVIEW`**. `INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

@@ -670,3 +670,7 @@ Delivered: `delia-api/scripts/int1_secure_decision_trace.py`, `tests/test_int1_s
 ### 2026-11-11 — INT-1 specialized instructions evolution (bounded PO exception)
 
 **TASK:** `DELIA-C3-T2-INT1-SPECIALIZED-INSTRUCTIONS-AND-REAL-GENERALIZATION-EVOLUTION-01`. See sibling **295**. Instruction resource isolated; real A/B vs baseline; candidate **not** promoted (P1/P2 regressions). Stage remains BLOCKED.
+
+### 2026-11-11 — INT-1 instruction ablation (2º ciclo PO)
+
+**TASK:** `DELIA-C3-T2-INT1-INSTRUCTION-ABLATION-AND-REGRESSION-FREE-EVOLUTION-01`. See sibling **296**. Three single-group ablations; no regression-free composite; default `generalist-semantic-v2`. `INT1_STAGE_ACCEPTANCE=BLOCKED`. `NEXT=COORDINATION_INT1_INCREMENTAL_EVOLUTION_INDEPENDENT_REVIEW`.
