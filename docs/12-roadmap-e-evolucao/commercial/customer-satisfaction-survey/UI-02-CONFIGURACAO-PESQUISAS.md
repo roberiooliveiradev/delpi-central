@@ -138,6 +138,16 @@ Criar campanhas e selecionar clientes existentes no TOTVS para que o usuário po
 
 **Nota de comprovação do PluginUI:** `PageHeroProps` realmente suporta `eyebrow`, `title`, `description`, `badge`, `actions`, `children`, `density` e `variant`; o wrapper Comercial define `compact`. Os valores exatos de padding, fontes, bordas e breakpoints **não foram provados pelo TSX** e devem ser obtidos do CSS/tokens reais antes de implementar. **Não criar CSS próprio para imitar o Hero**.
 
+### Decisão visual aprovada — topo e Hero da UI-02A (11/11/2026)
+
+**APROVADO PELO SOLICITANTE:** composição de topo da página de Campanhas. **CommercialPagePath** aparece antes do **CommercialPageHero compacto**. No desktop, **título e descrição alinhados à esquerda**, e **ações do Hero alinhadas à direita**; em larguras menores, as ações quebram para uma linha abaixo do título sem truncamento ou sobreposição. **Filtros continuam no corpo inferior do mesmo Hero**, reorganizados em duas colunas na faixa intermediária/tablet e uma coluna no celular. Não criar segundo cabeçalho, segunda barra de ações ou barra de filtros externa.
+
+- **Componentes confirmados por inspeção:** `CommercialPagePath` (factory do `commercialUi.ts`), `CommercialPageHero` (wrapper de `PageHero` com `density="compact"` por padrão), `CommercialActionButton`, `CommercialSelectField`, `CommercialTextField` e `CommercialClearFiltersButton`. **Posicionamento e responsividade aprovados**; não afirmar que o CSS existente já entrega os tamanhos propostos.
+- **Hierarquia das ações:** **Nova campanha** = ação principal; **Ver resultados** = secundária e global, abrindo UI-01 na visão geral padrão. Ambas permanecem dentro de `actions` do Hero, sem mudar o efeito da navegação contextual por campanha.
+- **Medidas de referência discutidas:** trilha → Hero **12px**; Hero padding alvo **20–24px desktop**, **16px mobile**; gap entre ações **8px**; alvo tocável dos botões **44px**. Esses números são **alvos de refinamento**, sujeitos a compatibilidade com tokens, CSS e testes do PluginUI antes de virarem contrato de código. Raio, sombra, font-size e margens da página seguem o kit.
+- **Faixas de verificação propostas:** desktop útil a partir de 1200px; intermediário 768–1199px; celular abaixo de 768px. Esses pontos **não são breakpoints implementados comprovados**; verificar faixas oficiais e zoom/teclado. A disposição detalhada e medidas **dos filtros** serão refinadas na próxima etapa, embora sua permanência no Hero e 2/1 colunas já tenham aceite.
+- **Status:** composição **APROVADA**, valores CSS concretos e implementação **PENDING**.
+
 ### 1.2.2 Layout responsivo PROPOSTO, a testar com kit real
 
 | Área | Desktop largo (>=1200px úteis) | Intermediário (768–1199px úteis) | Mobile (<768px úteis) |
