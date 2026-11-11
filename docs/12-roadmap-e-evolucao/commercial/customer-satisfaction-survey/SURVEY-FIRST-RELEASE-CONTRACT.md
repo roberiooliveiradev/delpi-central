@@ -2,7 +2,8 @@
 
 > **Estado:** planejamento técnico consolidado em 11/11/2026, segundo orientação do solicitante. **NÃO IMPLEMENTADO/NÃO MIGRADO.** Este arquivo especifica a primeira entrega sem depender de novas entrevistas. É subordinado ao [índice mestre](./REQUIREMENTS-INDEX.md), às [decisões de negócio](./BUSINESS-DECISIONS.md) e ao [padrão REST/CAIO aceito](./BACKEND-API-PROPOSAL.md).
 >
-> **Escopo aprovado para a primeira entrega:** campanhas, escolha de empresas TOTVS, convites por **copiar/colar**, formulário externo, uma resposta definitiva por empresa/campanha, consultas privadas das respostas e indicadores oficiais com filtros aplicáveis. **Fora da primeira entrega:** envio de e-mail pela aplicação, lembretes automatizados, gestão de problemas/planos de ação/retornos, CRUD de perguntas, edição de respostas já submetidas e novas tools MCP.
+> **Produto completo em duas entregas:** a primeira implementa a pesquisa e seus indicadores; a segunda implementará classificação, planos de ação, acompanhamento, retorno/reavaliação e percentual de ações concluídas, conforme o Word. A exclusão nesta especificação **não remove obrigações da segunda entrega**.
+>\n> **Escopo aprovado para a primeira entrega:** campanhas, escolha de empresas TOTVS, convites por **copiar/colar**, formulário externo, uma resposta definitiva por empresa/campanha, consultas privadas das respostas e indicadores oficiais com filtros aplicáveis. **Fora da primeira entrega:** envio de e-mail pela aplicação, lembretes automatizados, gestão de problemas/planos de ação/retornos, CRUD de perguntas, edição de respostas já submetidas e novas tools MCP.
 
 ## 1. Autoridades e formato físico
 
@@ -90,7 +91,7 @@
 | Satisfeitos/críticos | Percentual de `overall_score IN (4,5)` e `IN (1,2)` entre notas gerais válidas; `3` neutro/intermediário |
 | Dez dimensões | Média apenas das notas 1–5 em cada dimensão, desconsiderando `null`; retornar contagem válida por dimensão |
 | Histórico | Comparação semestral/anual e com campanha anterior; exibir período, quantidade de respondentes e ausência de base quando aplicável |
-| Planos de ação concluídos | **Fora da entrega inicial**; indicador previsto no plano mas **indisponível/sem fonte**, não devolver como zero ou valor inventado |
+| Planos de ação concluídos | **Entrega 2 obrigatória**; sem fonte na entrega 1, não devolver como zero ou dado fictício. Quando houver ações registradas: concluídas ÷ identificadas |
 
 **Consulta interna agregada:** `GET /satisfaction-surveys/results` com seleção de campanha e filtros por atributos **oficiais disponíveis**, sem cadastrar dimensões fictícias. Filtros pedidos pelo plano: cliente, segmento, vendedor, região, tempo de relacionamento, volume/faturamento e estratégico vs. demais. A origem, período de referência e resolução desses campos devem ser confirmados na frente de indicadores; se atributo faltar, registrar indisponibilidade honesta, sem inventar proxy. Comparações Geral / Estratégicos / Demais seguem o exemplo do plano.
 
@@ -106,7 +107,7 @@
 
 ## 6. Fora da primeira entrega e critérios de conclusão
 
-**Excluídos:** `satisfaction_cases` (tabela, rotas R17–R20 e ações CAIO), integração com `commercial.tasks` para pesquisa, workflows de triagem, retorno, reavaliação ou plano de ação; todo envio direto por e-mail; notificações/ligações automáticas; indicadores de ações concluídas. Esses temas permanecem registrados como **necessidades do plano original, não backlog aprovado**. Os usuários irão utilizar os resultados da pesquisa e conduzir seus planos de ação fora desta funcionalidade, por processo próprio.
+**Adiados para entrega 2:** persistência e rotas de classificação/tratamento (candidatas `satisfaction_cases`, R17–R20 e ações CAIO), fluxos de plano de ação, retorno e reavaliação e indicador de ações concluídas. **Reutilizar `commercial.tasks` é alternativa técnica a avaliar**, não obrigação de integração nem autorização para expor dados restritos. **Fora do produto por decisão específica:** envio direto por e-mail e notificações/ligações automáticas. **Classificação de problemas, planos de ação, acompanhamento, retorno, reavaliação e seu indicador fazem parte da entrega 2 obrigatória.** Até sua implementação, o Comercial poderá conduzir o acompanhamento manualmente; isto é transição, **não exclusão do produto**. O envio direto de e-mail segue não previsto por decisão explícita do solicitante.
 
 **Pronto para iniciar implementação:** somente na frente escolhida, verificar HEAD/working tree e fontes canônicas; criar migration e testes em seguida; não presumir banco migrado ou serviço no ar pelo fato de este contrato estar completo. **Critério da primeira entrega:** uma campanha configurável com empresas TOTVS; link copiável estável; uma resposta definitiva por empresa; questionário fiel ao plano; dados históricos persistidos; listagem privada de respostas; indicadores oficiais e agregação segura; CAIO com paridade nas capabilities efetivamente entregues. Segurança e LGPD verificadas na etapa pertinente.
 
