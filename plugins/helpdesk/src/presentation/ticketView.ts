@@ -614,14 +614,22 @@ export function unassignedTicketAttachments(
 }
 
 /** Stable chronological order for timeline siblings (Document between followups). */
-export function sortTimelineChronologically<T extends { created_at: string }>(
-  timeline: readonly T[],
-): T[] {
+export function sortTimelineChronologically<
+  T extends { created_at: string; kind?: string },
+>(timeline: readonly T[], fallbackDocumentCreatedAt = ""): T[] {
+  const fallbackTs = Date.parse(fallbackDocumentCreatedAt || "");
+  const stamp = (entry: T): number => {
+    const own = Date.parse(entry.created_at || "");
+    if (Number.isFinite(own)) return own;
+    // Undated Document → ticket opening time (never leave it at array tail).
+    if (entry.kind === "document" && Number.isFinite(fallbackTs)) return fallbackTs;
+    return Number.NaN;
+  };
   return timeline
     .map((entry, index) => ({ entry, index }))
     .sort((left, right) => {
-      const leftTs = Date.parse(left.entry.created_at || "");
-      const rightTs = Date.parse(right.entry.created_at || "");
+      const leftTs = stamp(left.entry);
+      const rightTs = stamp(right.entry);
       const leftOk = Number.isFinite(leftTs);
       const rightOk = Number.isFinite(rightTs);
       if (leftOk && rightOk && leftTs !== rightTs) return leftTs - rightTs;
@@ -665,16 +673,7 @@ function conversationAuthorPresentation(
 
 export function conversationMessages(ticket: ConversationSource, now: Date): ConversationMessage[] {
   const attachments = dedupeTicketAttachments(ticket.attachments);
-  const timeline = sortTimelineChronologically(ticket.timeline);
-  const documentTimelineIds = new Set(
-    timeline
-      .filter((entry) => entry.kind === "document")
-      .map((entry) => Number(entry.document_id))
-      .filter((id) => Number.isFinite(id) && id > 0),
-  );
-  const openingAttachments = attachments.filter(
-    (file) => !documentTimelineIds.has(file.document_id),
-  );
+  const timeline = sortTimelineChronologically(ticket.timeline, ticket.created_at);
   const requester = ticket.requester_display_name.trim();
   const requesterDirectoryId = (ticket.requester_directory_user_id || "").trim();
   const openingHtml = stampHelpdeskAttachmentIds(ticket.description_html || "");
@@ -688,14 +687,14 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
     authorName: requester,
     authorUserId: requesterDirectoryId || undefined,
     mine: ticket.requester_mine === true,
-    attachmentIds: entryAttachmentIds(
-      "opening",
-      0,
-      ticket.description_html || "",
-      openingAttachments,
-    ),
+    // Ticket-level files are sibling Document bubbles (GLPI), not nested on opening.
+    attachmentIds: [],
   };
-  const replies = timeline
+
+  type Sortable = { sortAt: string; index: number; message: ConversationMessage };
+  const sortable: Sortable[] = [];
+
+  timeline
     .filter(
       (entry) =>
         entry.kind === "followup" ||
@@ -703,40 +702,95 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
         entry.kind === "task" ||
         entry.kind === "document",
     )
-    .map((entry): ConversationMessage => {
+    .forEach((entry, index) => {
       const author = conversationAuthorPresentation(ticket, entry);
+      const sortAt =
+        (entry.created_at || "").trim() ||
+        (entry.kind === "document" ? ticket.created_at : "") ||
+        "";
       if (entry.kind === "document") {
         const documentId = Number(entry.document_id);
         const attachmentIds =
           Number.isFinite(documentId) && documentId > 0 ? [documentId] : [];
-        return {
-          id: `document-${attachmentIds[0] || entry.id}`,
-          kind: "document",
-          headingText: "",
-          bodyText: "",
-          bodyHtml: "",
-          createdAtLabel: relativeTimeLabel(entry.created_at, now),
-          authorName: author.authorName,
-          authorUserId: author.authorUserId,
-          mine: entry.mine === true,
-          attachmentIds,
-        };
+        sortable.push({
+          sortAt,
+          index,
+          message: {
+            id: `document-${attachmentIds[0] || entry.id}`,
+            kind: "document",
+            headingText: "",
+            bodyText: "",
+            bodyHtml: "",
+            createdAtLabel: relativeTimeLabel(sortAt, now),
+            authorName: author.authorName,
+            authorUserId: author.authorUserId,
+            mine: entry.mine === true,
+            attachmentIds,
+          },
+        });
+        return;
       }
       const bodyHtml = stampHelpdeskAttachmentIds(entry.content_html || "");
       const kind =
         entry.kind === "solution" ? "solution" : entry.kind === "task" ? "task" : "followup";
-      return {
-        id: String(entry.id),
-        kind,
-        headingText: timelineEntryHeadingText(entry),
-        bodyText: entry.content,
-        bodyHtml,
-        createdAtLabel: relativeTimeLabel(entry.created_at, now),
-        authorName: author.authorName,
-        authorUserId: author.authorUserId,
-        mine: entry.mine === true,
-        attachmentIds: entryAttachmentIds(kind, entry.id, entry.content_html || "", attachments),
-      };
+      sortable.push({
+        sortAt,
+        index,
+        message: {
+          id: String(entry.id),
+          kind,
+          headingText: timelineEntryHeadingText(entry),
+          bodyText: entry.content,
+          bodyHtml,
+          createdAtLabel: relativeTimeLabel(entry.created_at, now),
+          authorName: author.authorName,
+          authorUserId: author.authorUserId,
+          mine: entry.mine === true,
+          attachmentIds: entryAttachmentIds(kind, entry.id, entry.content_html || "", attachments),
+        },
+      });
     });
-  return [opening, ...replies];
+
+  const claimed = new Set(sortable.flatMap((row) => row.message.attachmentIds));
+  const inline = new Set<number>([
+    ...listHelpdeskAttachmentIdsInHtml(ticket.description_html || ""),
+    ...ticket.timeline.flatMap((entry) =>
+      listHelpdeskAttachmentIdsInHtml(entry.content_html || ""),
+    ),
+  ]);
+  let syntheticIndex = timeline.length;
+  for (const file of attachments) {
+    if (claimed.has(file.document_id) || inline.has(file.document_id)) continue;
+    // Orphan / ticket-level upload with no Timeline Document row — still a
+    // sibling bubble at opening time, never a trailing "Documentos" dump.
+    const sortAt = (ticket.created_at || "").trim();
+    sortable.push({
+      sortAt,
+      index: syntheticIndex++,
+      message: {
+        id: `document-${file.document_id}`,
+        kind: "document",
+        headingText: "",
+        bodyText: "",
+        bodyHtml: "",
+        createdAtLabel: relativeTimeLabel(sortAt, now),
+        authorName: requester,
+        authorUserId: requesterDirectoryId || undefined,
+        mine: ticket.requester_mine === true,
+        attachmentIds: [file.document_id],
+      },
+    });
+    claimed.add(file.document_id);
+  }
+
+  sortable.sort((left, right) => {
+    const leftTs = Date.parse(left.sortAt || "");
+    const rightTs = Date.parse(right.sortAt || "");
+    const leftOk = Number.isFinite(leftTs);
+    const rightOk = Number.isFinite(rightTs);
+    if (leftOk && rightOk && leftTs !== rightTs) return leftTs - rightTs;
+    return left.index - right.index;
+  });
+
+  return [opening, ...sortable.map((row) => row.message)];
 }

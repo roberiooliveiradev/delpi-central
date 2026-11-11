@@ -1088,6 +1088,88 @@ def test_person_name_prefers_the_most_complete_label():
     assert detail.timeline[0].author_display_name == "Robério Oliveira"
 
 
+def test_document_ignores_date_mod_and_anchors_undated_to_ticket_created():
+    detail = parse_ticket_detail(
+        {
+            "id": 1399,
+            "name": "CPV Filial",
+            "content": "texto",
+            "status": {"name": "Novo"},
+            "urgency": 2,
+            "date_creation": "2026-10-21T14:00:00Z",
+            "team": [{"role": "requester", "id": 55, "firstname": "Joici", "realname": "Motta"}],
+        },
+        {
+            "results": [
+                {
+                    "type": "Followup",
+                    "item": {
+                        "id": 9,
+                        "content": "ok",
+                        "date_creation": "2026-10-21T15:00:00Z",
+                        "user": {"id": 12, "name": "Roberio"},
+                    },
+                },
+                {
+                    "type": "Document",
+                    "item": {
+                        "id": 77,
+                        "documents_id": 4401,
+                        "filename": "CPV Filial.docx",
+                        "mime": "application/pdf",
+                        # Recent touch must NOT become created_at.
+                        "date_mod": "2026-11-10T16:00:00Z",
+                    },
+                },
+            ]
+        },
+    )
+    document = next(entry for entry in detail.timeline if entry.kind == "document")
+    assert document.created_at == "2026-10-21T14:00:00Z"
+    assert "2026-11-10" not in document.created_at
+
+
+def test_document_ignores_date_mod_and_anchors_undated_to_ticket_created():
+    detail = parse_ticket_detail(
+        {
+            "id": 1399,
+            "name": "CPV Filial",
+            "content": "texto",
+            "status": {"name": "Novo"},
+            "urgency": 2,
+            "date_creation": "2026-10-21T14:00:00Z",
+            "team": [{"role": "requester", "id": 55, "firstname": "Joici", "realname": "Motta"}],
+        },
+        {
+            "results": [
+                {
+                    "type": "Followup",
+                    "item": {
+                        "id": 9,
+                        "content": "ok",
+                        "date_creation": "2026-10-21T15:00:00Z",
+                        "user": {"id": 12, "name": "Roberio"},
+                    },
+                },
+                {
+                    "type": "Document",
+                    "item": {
+                        "id": 77,
+                        "documents_id": 4401,
+                        "filename": "CPV Filial.docx",
+                        "mime": "application/pdf",
+                        # Recent touch must NOT become created_at.
+                        "date_mod": "2026-11-10T16:00:00Z",
+                    },
+                },
+            ]
+        },
+    )
+    document = next(entry for entry in detail.timeline if entry.kind == "document")
+    assert document.created_at == "2026-10-21T14:00:00Z"
+    assert "2026-11-10" not in document.created_at
+
+
 def test_canonicalize_timeline_authors_reuses_requester_label():
     from helpdesk_app.infrastructure.glpi.mapping import canonicalize_timeline_authors
 

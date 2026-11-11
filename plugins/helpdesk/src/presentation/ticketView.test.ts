@@ -155,8 +155,11 @@ describe("conversationMessages", () => {
       createdAtLabel: "Criado em 2 horas atrás",
       authorName: "William Ricardo Jacomini",
       mine: false,
-      attachmentIds: [2, 4],
+      attachmentIds: [],
     });
+    expect(messages.map((item) => item.kind)).toEqual(["opening", "document", "document"]);
+    expect(messages[1]?.attachmentIds).toEqual([2]);
+    expect(messages[2]?.attachmentIds).toEqual([4]);
     expect(conversationAuthorSrc(messages[0].mine, "blob:me")).toBeUndefined();
   });
 
@@ -249,7 +252,13 @@ describe("conversationMessages", () => {
       },
       now,
     );
+    expect(messages.map((item) => item.kind)).toEqual(["opening", "document", "followup"]);
     expect(messages[1]).toMatchObject({
+      kind: "document",
+      attachmentIds: [2],
+      authorName: "Robério Teixeira",
+    });
+    expect(messages[2]).toMatchObject({
       id: "9",
       kind: "followup",
       authorName: "Ana",
@@ -258,7 +267,7 @@ describe("conversationMessages", () => {
       createdAtLabel: "1 hora atrás",
       attachmentIds: [],
     });
-    expect(messages[0]?.attachmentIds).toEqual([2]);
+    expect(messages[0]?.attachmentIds).toEqual([]);
   });
 
   it("mostra tarefa da timeline com título Tarefa", () => {
@@ -433,10 +442,17 @@ describe("conversationMessages", () => {
       ],
     };
     const messages = conversationMessages(source, now);
-    expect(messages[0]?.attachmentIds).toEqual([100]);
-    expect(messages[1]?.attachmentIds).toEqual([200]);
-    const orphan = unassignedTicketAttachments(source, messages);
-    expect(orphan.map((item) => item.document_id)).toEqual([300]);
+    expect(messages.map((item) => item.kind)).toEqual([
+      "opening",
+      "document",
+      "document",
+      "followup",
+    ]);
+    expect(messages[0]?.attachmentIds).toEqual([]);
+    expect(messages[1]?.attachmentIds).toEqual([100]);
+    expect(messages[2]?.attachmentIds).toEqual([300]);
+    expect(messages[3]?.attachmentIds).toEqual([200]);
+    expect(unassignedTicketAttachments(source, messages)).toEqual([]);
   });
 
   it("não repete como anexo a imagem já incorporada no corpo da mensagem", () => {
@@ -454,10 +470,44 @@ describe("conversationMessages", () => {
       ],
     };
     const messages = conversationMessages(source, now);
-    expect(messages[0]?.attachmentIds).toEqual([392]);
+    expect(messages[0]?.attachmentIds).toEqual([]);
+    expect(messages.map((item) => item.kind)).toEqual(["opening", "document"]);
+    expect(messages[1]?.attachmentIds).toEqual([392]);
     expect(
       unassignedTicketAttachments(source, messages).map((item) => item.document_id),
     ).toEqual([]);
+  });
+
+  it("documento sem data (ou só no fim do array) fica após a abertura, antes do followup", () => {
+    const messages = conversationMessages(
+      {
+        title: "CPV",
+        description: "texto",
+        created_at: "2026-10-21T14:00:00Z",
+        requester_display_name: "Joici Motta",
+        timeline: [
+          {
+            id: 9,
+            kind: "followup",
+            content: "perguntas",
+            created_at: "2026-10-21T15:00:00Z",
+            author_display_name: "Robério",
+          },
+          {
+            id: 77,
+            kind: "document",
+            content: "CPV Filial.docx",
+            created_at: "",
+            author_display_name: "Joici Motta",
+            document_id: 4401,
+          },
+        ],
+        attachments: [{ document_id: 4401, filename: "CPV Filial.docx" }],
+      },
+      now,
+    );
+    expect(messages.map((item) => item.kind)).toEqual(["opening", "document", "followup"]);
+    expect(messages[1]?.attachmentIds).toEqual([4401]);
   });
 
   it("deduplica document_id mantendo o vínculo mais específico", () => {

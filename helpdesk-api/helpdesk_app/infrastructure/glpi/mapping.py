@@ -433,6 +433,17 @@ def parse_ticket_detail(
         for entry in (_timeline_entry(row, ticket_id=summary.id, allowed_document_ids=allowed_docs) for row in rows)
         if entry is not None
     )
+    # Undated Document bubbles must not keep a late Timeline array index —
+    # anchor them to the ticket opening so they sit next to the description
+    # (GLPI "Criado em" for ticket-level uploads).
+    ticket_created = str(summary.created_at or "").strip()
+    if ticket_created:
+        timeline = tuple(
+            replace(entry, created_at=ticket_created)
+            if entry.kind == "document" and not str(entry.created_at or "").strip()
+            else entry
+            for entry in timeline
+        )
     return TicketDetail(
         id=summary.id,
         title=summary.title,
@@ -883,17 +894,15 @@ def _timeline_entry(
             entry_id = int(payload.get("id") or attachment.document_id)
         except (TypeError, ValueError):
             entry_id = int(attachment.document_id)
+        # Never fall back to date_mod — Document.date_mod often tracks a later
+        # touch and would push the bubble to the end of the conversation.
+        created_at = str(payload.get("date_creation") or payload.get("date") or "").strip()
         return TimelineEntry(
             id=entry_id,
             kind="document",
             content=attachment.filename or "Documento",
             content_html="",
-            created_at=str(
-                payload.get("date_creation")
-                or payload.get("date")
-                or payload.get("date_mod")
-                or ""
-            ),
+            created_at=created_at,
             author_display_name=author,
             author_identity=_person_identity(user if isinstance(user, dict) else {}),
             document_id=int(attachment.document_id),
