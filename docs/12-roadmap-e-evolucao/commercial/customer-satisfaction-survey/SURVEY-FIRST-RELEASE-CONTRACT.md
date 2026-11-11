@@ -154,6 +154,8 @@ Semântica: catálogo das 15 perguntas conferidas com o Word em 11/11/2026 (seç
 }
 ```
 
+**Complemento de processo confirmado (11/11/2026):** ao criar uma campanha, o gestor entra na configuração dessa própria campanha (dados/período, participantes TOTVS e mensagem padrão salva). A lista de participantes é **cumulativa**: durante uma campanha **aberta**, o gestor pode retornar e incluir empresas adicionais, inclusive por seleção múltipla/lote, sem regenerar links anteriores ou alterar respostas já recebidas. Cada inclusão é autorizada/validada pela `commercial-api` segundo janela e estado reais; campanha encerrada não recebe novas inclusões na proposta, preservando o histórico. Empresa adicionada passa a ter link estável, copiado manualmente no seu detalhe com nome e URL exclusivos. Não inferir envio. Regras de alteração posterior em campanha apenas agendada e contrato HTTP específico continuam PENDING.
+
 ## 2. Fluxo de campanhas e participantes
 
 1. Usuário interno autorizado cria a campanha, nome e datas. O backend armazena timestamps e deriva `scheduled | open | closed`; esses estados são **respostas derivadas**, não workflow manual.

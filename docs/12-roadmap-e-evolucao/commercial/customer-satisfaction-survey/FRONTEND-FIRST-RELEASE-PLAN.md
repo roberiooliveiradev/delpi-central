@@ -62,6 +62,8 @@ Paths internos são **propostos**, não encontrados implementados. A nomenclatur
 - Ao abrir uma campanha: detalhe da campanha (não modal com todas as ações). Loading, vazio, erro/retry, acesso negado; manter filtros básicos de campanha se existirem.
 - O frontend **não calcula** situação, validade do convite ou taxa: usa o valor/contrato retornado pela API, sem criar relógio de autoridade.
 
+**Fluxo confirmado de configuração (11/11/2026):** ação **Nova campanha** persiste nome/datas e abre a configuração/detalhe daquela campanha; ali o usuário seleciona clientes TOTVS (um ou muitos), configura/salva mensagem padrão por campanha e vê a lista acumulada. Pode retornar à **campanha ainda aberta** para adicionar mais clientes, com inclusão parcial por lote, sem modificar participantes/links anteriores ou respostas definitivas. Ao abrir o detalhe de cada empresa da lista, copia mensagem resolvida com nome/link exclusivos, sem envio pelo Portal. A situação e autorização de cada inclusão são validadas pela `commercial-api`; inclusão pós-encerramento não autorizada, alterações posteriores em campanhas agendadas sujeitas a contrato e verificação. Isso não é um assistente obrigatório nem uma criação única e imutável de participantes.
+
 ### 3.2 Detalhe da campanha — participantes e convites (Gestão)
 
 - Cabeçalho com nome, janela e situação. Seções **Participantes** e **Respostas** dentro da página; sem hierarquia adicional de telas nesta versão.
