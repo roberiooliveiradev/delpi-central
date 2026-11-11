@@ -10,7 +10,7 @@ Página **somente de consulta**, separada da UI-01 de [Resultados](./UI-01-RESUL
 
 **Uma única topbar principal**, sem barra duplicada nem nova área de navegação. Ações contextuais no `CommercialPageHero`: **Ver resultados**, **Configuração** e **Atualizar** (com autorização); filtros de campanha, situação, grupo e busca por cliente **dentro do mesmo Hero**, conforme fonte e permissão. `CommercialPagePath` mostra a trilha. Entradas: botão **Respostas por empresa** no Hero da UI-01, e ligação contextual da UI-02 que pode preservar a campanha escolhida.
 
-**Contrato de rota (G02 — `CLOSED_SPEC`, não implementado):** lista em `/apps/commercial/satisfaction-survey-responses` com query `campaign_id`/`status`/`group`/`q`/`page`/`sort`/`dir`; **Ver resposta** navega para `/apps/commercial/satisfaction-survey-responses/:responseId` com `returnTo`+`returnLabel` via `commercialNavigationReturn.ts`. Detalhe e owners: [UI-07 §1.1](./UI-07-DETALHES-RESPOSTA.md#11-contrato-de-rota-e-navegação-g02--closed_spec-não-implementado).
+**Contrato de rota (G02 — `CLOSED_SPEC`, não implementado):** lista em `/apps/commercial/satisfaction-survey-responses` com query `campaign_id`/`status`/`group`/`q`/`page`/`sort`/`dir`; **Abrir a linha/card respondido** navega para `/apps/commercial/satisfaction-survey-responses/:responseId` com `returnTo`+`returnLabel` via `commercialNavigationReturn.ts`. Detalhe e owners: [UI-07 §1.1](./UI-07-DETALHES-RESPOSTA.md#11-contrato-de-rota-e-navegação-g02--closed_spec-não-implementado).
 
 Usuários com somente `commercial.access` não acessam esta página nem os endpoints identificados. Para consulta privada, exigir `commercial.marketing` ou `commercial.manage` efetivamente validados no backend. A simples ocultação dos botões não substitui autorização.
 
@@ -24,7 +24,7 @@ Usuários com somente `commercial.access` não acessam esta página nem os endpo
 - **Identidade canônica:** `customer_code` **e** `customer_store` (não usar nome isolado, nem assumir loja `01` para identidade desconhecida).
 - **Imagem:** só requisitar se `hasAvatar` vier de fonte oficial autorizada. **TO_INVENTORY:** se a projeção de participantes/respostas disponibiliza `hasAvatar` e nome oficial ou se exige leitura de enriquecimento já existente. Quando sem imagem/metadado, **iniciais** da mesma implementação; não inventar flag nem persistir imagem na pesquisa.
 - **Coluna Cliente (tabela):** avatar **`size="sm"`**, razão/nome oficial e código/loja no padrão já usado em `CustomersTable.tsx` e `OtdCustomerIdentityCell.tsx`. No celular, mesma identidade no cabeçalho do card, não um avatar alternativo.
-- **Interações separadas:** avatar e nome levam à **Conta do Cliente** com `buildCustomerDetailHref` / navegação oficial e retorno contextual quando suportado; **“Ver resposta”** navega à **página UI-07** da resposta daquela empresa/campanha, sem navegar à conta. Link de avatar não deve abrir preview/lightbox quando for navegação; verificar `href`/destino autorizado. Cliente pendente não tem ação ativa de abrir resposta.
+- **Interações separadas:** avatar e nome levam à **Conta do Cliente** com `buildCustomerDetailHref` / navegação oficial e retorno contextual quando suportado; **clique/toque no restante da linha/card respondido** navega à **página UI-07** da resposta daquela empresa/campanha, sem navegar à conta. Link de avatar não deve abrir preview/lightbox quando for navegação; verificar `href`/destino autorizado. Cliente pendente não tem ação ativa de abrir resposta.
 
 ## 3. Estrutura funcional (visual em revisão)
 
@@ -38,12 +38,12 @@ COMMERCIAL PAGE HERO COMPACTO
   [Pesquisar por código, loja ou empresa]
 
 EMPRESAS PARTICIPANTES — lista oficial
-  Cliente [avatar | nome | código/loja] | Situação | Data resposta | Ver resposta
-  [avatar] Empresa Alpha 001245/01       Respondida   10/12/2026    [Ver resposta]
+  Cliente [avatar | nome | código/loja] | Situação | Data da resposta
+  [avatar] Empresa Alpha 001245/01       Respondida   10/12/2026    [linha clicável]
   [avatar] Empresa Beta  002318/01       Pendente     —             —
-  [avatar] Empresa Gama  003570/02       Respondida   11/12/2026    [Ver resposta]
+  [avatar] Empresa Gama  003570/02       Respondida   11/12/2026    [linha clicável]
 
-AO ACIONAR VER RESPOSTA:
+AO CLICAR/TOCAR EM LINHA OU CARD RESPONDIDO (EXCETO NO LINK DA CONTA):
   Página completa UI-07 — Empresa / Campanha / data (não modal/drawer)
   Satisfação geral 1–5; recomendação 0–10; as 10 dimensões (1–5 ou N/A);
   três respostas abertas opcionais; somente leitura.
@@ -60,6 +60,14 @@ AO ACIONAR VER RESPOSTA:
 - **Autoridade:** a `commercial-api` deve fornecer totais confiáveis junto da consulta/listagem (ou em contrato oficial de agregação restrita); não calcular totais globais a partir de uma página parcial de registros. A definição exata do campo/endpoint é **PENDING_IMPLEMENTATION**, não inventar no frontend.
 - **Apresentação:** três cards compactos, discretos e somente leitura, antes da lista; desktop lado a lado, celular empilhados/reorganizados sem rolagem horizontal; tratar loading/erro/vazio com estados oficiais. Sem tendências, percentuais, cores de alerta, ações adicionais ou novas permissões.
 - **Estado:** **aprovação visual e funcional registrada; NÃO IMPLEMENTADO**. Reutilizar componentes do PluginUI/CommercialUi existentes, inspecionando os consumidores e props na etapa de desenvolvimento.
+
+### Decisão visual — coluna de data e navegação pela linha/card (11/11/2026)
+
+**APROVADO PELO SOLICITANTE:** a tabela de computador tem exatamente as colunas **Cliente**, **Situação** e **Data da resposta**; a data ocupa **coluna própria**. **Não criar coluna “Ação” nem botão “Ver resposta”.** Uma linha de empresa **Respondida** abre a UI-07 pelo clique/toque em sua superfície; no celular, o **card respondido** tem o mesmo comportamento. Uma empresa **Pendente** não tem resposta para abrir e sua linha/card não é clicável para esse fim. Na data de pendentes, exibir travessão ou “Sem resposta registrada”, sem atribuir atraso/convite enviado.
+
+**Convivência de navegações:** preservar o acesso à **Conta do Cliente** por avatar/nome como link identificado e independente, sem disparar a navegação da linha/card para UI-07. Na implementação, usar o comportamento recomendado pelos componentes existentes para eventos aninhados; evitar botão/link interativo envolvendo outro link interativo. Linha/card respondido requer foco por teclado, ativação por Enter (e Espaço se o controle escolhido exigir), indicação visual de interação, nome acessível (“Abrir resposta de [empresa]”), e não deve interferir em seleção de texto ou outros controles. Validar a semântica HTML/acessibilidade do kit antes de implementar.
+
+**Contagens aprovadas:** manter Participantes/Respondidas/Pendentes acima da lista, sem afetar essa decisão. **Estado:** UX aprovada, documentação registrada, **não implementado**; testar clique/toque/teclado na linha/card e ausência de navegação em pendentes.
 
 ## 4. Mapa de componentes oficiais
 
@@ -79,16 +87,16 @@ AO ACIONAR VER RESPOSTA:
 
 **APROVADO PELO SOLICITANTE — OPÇÃO A:** mostrar **tabela no computador** e **cards por empresa no celular**. Esta é uma regra de apresentação da **mesma consulta autorizada**, não duas listas ou fontes de dados diferentes.
 
-- **Desktop:** usar o padrão oficial `CommercialDataTable`, com Cliente (avatar `CustomerAvatar`, nome, código/loja), Situação, Data da resposta e ação contextual “Ver resposta” somente para respondidas.
-- **Celular:** usar o padrão existente de cards de dados do PluginUI/CommercialUi, após confirmar as props na implementação; cada card deve mostrar no cabeçalho avatar, nome completo, código/loja e situação, e na área inferior a data ou “Sem resposta registrada” e a ação separada “Ver resposta”, se existir resposta definitiva.
+- **Desktop:** usar o padrão oficial `CommercialDataTable`, com **três colunas**: Cliente (avatar `CustomerAvatar`, nome, código/loja), Situação e **Data da resposta em coluna própria**; **sem coluna ou botão “Ver resposta”**. Para respondidas, a linha abre a UI-07 ao clicar/tocar fora do link da Conta.
+- **Celular:** usar o padrão existente de cards de dados do PluginUI/CommercialUi, após confirmar as props na implementação; cada card deve mostrar no cabeçalho avatar, nome completo, código/loja e situação, e na área inferior a data ou “Sem resposta registrada”; **sem botão “Ver resposta”**. O card inteiro de empresa respondida abre UI-07 ao tocar fora do link da Conta; pendentes não abrem detalhes.
 - **Tablet/larguras intermediárias:** adaptar pelo comportamento responsivo oficial do kit, sem impor tabela comprimida ou rolagem horizontal; validar breakpoint na execução, não fixar valor arbitrário na especificação.
-- **Mesmas regras em todas as telas:** ordenação, filtros, identidade `customer_code` + `customer_store`, contagens gerais da campanha e autorização do backend; avatar/nome navegam para Conta do Cliente, enquanto “Ver resposta” navega para UI-07. Pendente não tem resposta para abrir. Sem duplicar carregamentos, componentes de avatar ou lógica de negócio.
+- **Mesmas regras em todas as telas:** ordenação, filtros, identidade `customer_code` + `customer_store`, contagens gerais da campanha e autorização do backend; avatar/nome seguem como links separados para Conta do Cliente, enquanto o restante da linha/card respondido navega para UI-07. Pendente não tem resposta para abrir. Sem duplicar carregamentos, componentes de avatar ou lógica de negócio.
 - **Testes de aceite:** desktop/tabela, celular/cards, tablet, teclado, zoom, leitor de tela, nomes longos, estado vazio/erro/loading, separação de ações e preservação do retorno à lista filtrada.
 - **Estado:** decisão de UX **APROVADA e documentada**, implementação e testes **PENDING**.
 
 ## 5. Responsividade e critérios de aceite da identidade
 
-**Desktop:** avatar pequeno à esquerda do nome e do código/loja dentro da coluna Cliente; ação “Ver resposta” em coluna própria. **Tablet:** preservar a identidade visível e reorganizar colunas conforme largura. **Celular:** um card por empresa com `CustomerAvatar`, nome, código/loja, situação e ação separada. Somente o clique no avatar/nome navega para a Conta; a ação “Ver resposta” navega para a página UI-07. Em todos os tamanhos, se a empresa não tiver imagem, exibir iniciais do kit sem salto de layout.
+**Desktop:** avatar pequeno à esquerda do nome e código/loja dentro da coluna Cliente; **Data da resposta em coluna própria**, sem coluna de ação; a linha respondida abre a UI-07. **Tablet:** preservar identidade e data visíveis, reorganizando conforme largura. **Celular:** um card por empresa com `CustomerAvatar`, nome, código/loja, situação e data; card respondido abre UI-07. Em todos os formatos, avatar/nome são links separados para a Conta do Cliente e não acionam a navegação da linha/card. Em todos os tamanhos, se a empresa não tiver imagem, exibir iniciais do kit sem salto de layout.
 
 Aceite: (1) avatar, nome e identidade reproduzem o padrão de `CustomersTable`/`CustomerListCard`/`OtdCustomerIdentityCell`; (2) nenhum avatar customizado; (3) com `hasAvatar=false` ou metadado indisponível, iniciais; (4) imagem só carregada se informada e autorizada; (5) código+loja preservados; (6) navegação para Conta separada da ação de resposta; (7) pendente sem página de resposta; (8) sem writes na página; (9) backend nega leitura individual ao perfil somente `commercial.access`; (10) testes de desktop/tablet/mobile, foco/teclado, zoom, regressão e autorização.
 
