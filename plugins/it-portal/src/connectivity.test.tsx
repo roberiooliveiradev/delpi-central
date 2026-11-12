@@ -375,29 +375,46 @@ describe("networks", () => {
 });
 
 describe("server page — AC-08", () => {
-  it("shows hosted services, databases, networks and integrations together", async () => {
+  it("navigates services, databases, networks and integrations without a giant page", async () => {
     mockApi(serverPageRoutes(CONNECTIVITY_MANAGER));
-    renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
+    renderAt("/apps/it-portal/servers/" + SERVER_ID);
+    const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
+    expect(screen.queryByText("Serviços hospedados")).toBeNull();
+
+    fireEvent.click(within(navigation).getByRole("button", { name: /Serviços/ }));
     expect(await screen.findByText("Serviços hospedados")).toBeTruthy();
-    expect(screen.getByText("Bancos de dados associados")).toBeTruthy();
-    expect(screen.getByText("Integrações dos serviços hospedados")).toBeTruthy();
+    fireEvent.click(within(navigation).getByRole("button", { name: /Bancos de dados/ }));
+    expect(await screen.findByText("Bancos de dados associados")).toBeTruthy();
+    expect(screen.queryByText("Serviços hospedados")).toBeNull();
+
+    fireEvent.click(within(navigation).getByRole("button", { name: /Redes/ }));
     expect(await screen.findByText("VLAN Servidores")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Vincular rede/ })).toBeTruthy();
+
+    fireEvent.click(within(navigation).getByRole("button", { name: /Integrações/ }));
+    expect(await screen.findByText("Integrações dos serviços hospedados")).toBeTruthy();
     expect(await screen.findByText("Envio de NF-e")).toBeTruthy();
     expect(screen.getByText("SEFAZ")).toBeTruthy();
-    expect(screen.getByRole("button", { name: /Vincular rede/ })).toBeTruthy();
+    expect(screen.queryByText("VLAN Servidores")).toBeNull();
   });
 
-  it("hides connectivity management for viewers", async () => {
+  it("hides connectivity management from viewers in the selected area", async () => {
     mockApi(serverPageRoutes(CONNECTIVITY_VIEWER));
-    renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
+    renderAt("/apps/it-portal/servers/" + SERVER_ID);
+    const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
+    fireEvent.click(within(navigation).getByRole("button", { name: /Redes/ }));
     expect(await screen.findByText("VLAN Servidores")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Vincular rede/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /Remover vínculo/ })).toBeNull();
   });
 
-  it("never requests networks or integrations without their capabilities", async () => {
+  it("does not render or fetch restricted connectivity areas", async () => {
     const fetchMock = mockApi(serverPageRoutes(NO_CONNECTIVITY));
-    renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
+    renderAt("/apps/it-portal/servers/" + SERVER_ID);
+    const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
+    expect(within(navigation).queryByRole("button", { name: /^Redes/ })).toBeNull();
+    expect(within(navigation).queryByRole("button", { name: /^Integrações/ })).toBeNull();
+    fireEvent.click(within(navigation).getByRole("button", { name: /^Serviços/ }));
     expect(await screen.findByText("Serviços hospedados")).toBeTruthy();
     expect(screen.queryByText("Integrações dos serviços hospedados")).toBeNull();
     const paths = requestedPaths(fetchMock);
@@ -503,6 +520,8 @@ describe("integrations", () => {
       },
     });
     renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
+    const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
+    fireEvent.click(within(navigation).getByRole("button", { name: /^Histórico/ }));
     expect(await screen.findByText("Vínculo servidor–rede removido")).toBeTruthy();
     expect(screen.getByText("SRV-0001 · SRV-API na rede NET-0001 · VLAN Servidores com IP 10.0.1.20")).toBeTruthy();
   });
