@@ -26,11 +26,16 @@ import {
   PrcCorrectionTargetSelector,
   PrcReturnedFieldsEditor,
   buildReturnedChanges,
+  correctionReasonControlId,
   correctionTargetsFromSelection,
   dedupeCorrectionLinks,
   emptyCorrectionSelection,
   fieldTargetsOf,
+  firstInvalidCorrectionTarget,
   hasSupplierTargets,
+  mapApiFieldsToCorrectionErrors,
+  orderedCorrectionTargetKeys,
+  pruneCorrectionErrors,
   returnedSupplierAttrMap,
   summarizeCorrectionSelection,
   type PrcCorrectionFieldOption,
@@ -189,13 +194,13 @@ describe("correctionTargetsFromSelection — payload oficial", () => {
   });
 
   it("motivo ausente bloqueia e nomeia o alvo", () => {
-    const { targets, error } = correctionTargetsFromSelection(
+    const { targets, errors } = correctionTargetsFromSelection(
       selectionWith({ description: "motivo ok", unit: "" }, {}),
       FIELDS,
       [],
     );
     expect(targets).toBeNull();
-    expect(error).toContain("Unidade");
+    expect(errors["field|unit"]).toContain("Unidade");
   });
 
   it("célula de fornecedor vira SUPPLIER_LINK com identidade + atributo", () => {
@@ -339,7 +344,7 @@ describe("buildReturnedChanges — correção do solicitante", () => {
   });
 
   it("campo alterado sem justificativa bloqueia", () => {
-    const { changes, error } = buildReturnedChanges({
+    const { changes, errors } = buildReturnedChanges({
       targets: [FIELD_TARGET],
       draft: DRAFT,
       supplierRows: [],
@@ -347,7 +352,7 @@ describe("buildReturnedChanges — correção do solicitante", () => {
       justifications: {},
     });
     expect(changes).toBeNull();
-    expect(error).toContain("justificativa");
+    expect(errors["field|description"]).toContain("justificativa");
   });
 
   it("campo mantido sai confirmed e endereça o alvo", () => {
@@ -432,7 +437,7 @@ describe("buildReturnedChanges — correção do solicitante", () => {
   });
 
   it("vínculo alterado exige Part Number", () => {
-    const { changes, error } = buildReturnedChanges({
+    const { changes, errors } = buildReturnedChanges({
       targets: [PN_TARGET],
       draft: DRAFT,
       supplierRows: [
@@ -452,11 +457,13 @@ describe("buildReturnedChanges — correção do solicitante", () => {
       supplierJustification: "ok",
     });
     expect(changes).toBeNull();
-    expect(error).toContain("Part Number");
+    expect(
+      errors["supplier|000123|01|partNumber"],
+    ).toContain("Part Number");
   });
 
   it("mudança de fornecedor exige justificativa", () => {
-    const { changes, error } = buildReturnedChanges({
+    const { changes, errors } = buildReturnedChanges({
       targets: [PN_TARGET],
       draft: DRAFT,
       supplierRows: [
@@ -475,7 +482,7 @@ describe("buildReturnedChanges — correção do solicitante", () => {
       justifications: {},
     });
     expect(changes).toBeNull();
-    expect(error).toContain("justificativa");
+    expect(errors["suppliers"]).toContain("justificativa");
   });
 });
 
@@ -822,5 +829,258 @@ describe("PrcCorrectionTargets — FIX-11 contrato CSS da tabela", () => {
       /\.delpi-prc__correction-table th:nth-child\(7\),[\s\S]*?\}/,
     )?.[0] || "";
     expect(linkCol).toContain("text-align: center");
+  });
+});
+
+/* ---------------------------------------------------------------- */
+/* FIX-12 — erros contextuais por alvo                               */
+/* ---------------------------------------------------------------- */
+
+describe("FIX-12 — validação coleta TODOS os alvos inválidos", () => {
+  it("dois motivos vazios geram dois erros com chaves estáveis", () => {
+    const sel = selectionWith(
+      { description: "", unit: "  " },
+      {},
+    );
+    const out = correctionTargetsFromSelection(sel, FIELDS, []);
+    expect(out.targets).toBeNull();
+    expect(out.errors["field|description"]).toMatch(/Descrição/);
+    expect(out.errors["field|unit"]).toMatch(/Unidade/);
+    expect(out.error).toBe("");
+  });
+
+  it("célula de fornecedor identifica vínculo + atributo na chave", () => {
+    const sel = selectionWith({}, {
+      "000123|01": { partNumber: "" },
+      "000456|01": { catalogNumber: "ok motivo válido" },
+    });
+    const out = correctionTargetsFromSelection(sel, [], [SUP_A, SUP_B]);
+    expect(out.errors["supplier|000123|01|partNumber"]).toMatch(
+      /Part Number/,
+    );
+    expect(out.errors["supplier|000456|01|catalogNumber"]).toBeUndefined();
+    // O alvo válido do fornecedor B ainda não gera payload — o envio
+    // só acontece quando TODOS os selecionados estão válidos.
+    expect(out.targets).toBeNull();
+  });
+
+  it("nenhum alvo → erro global sem erros por campo", () => {
+    const out = correctionTargetsFromSelection(
+      emptyCorrectionSelection(),
+      FIELDS,
+      [SUP_A],
+    );
+    expect(out.targets).toBeNull();
+    expect(out.error).toMatch(/Selecione ao menos/);
+    expect(Object.keys(out.errors)).toHaveLength(0);
+  });
+
+  it("vínculo integral inválido usa a célula 'link' na chave", () => {
+    const sel = selectionWith({}, { "000123|01": { link: "" } });
+    const out = correctionTargetsFromSelection(sel, [], [SUP_A]);
+    expect(out.errors["supplier|000123|01|link"]).toMatch(
+      /Fornecedor 000123 \/ 01/,
+    );
+  });
+});
+
+describe("FIX-12 — pruneCorrectionErrors (limpeza incremental)", () => {
+  it("motivo corrigido remove só o erro daquele alvo", () => {
+    const errors = {
+      "field|description": "err desc",
+      "field|unit": "err unit",
+    };
+    const sel = selectionWith(
+      { description: "motivo válido agora", unit: "" },
+      {},
+    );
+    const next = pruneCorrectionErrors(errors, sel, FIELDS, []);
+    expect(next["field|description"]).toBeUndefined();
+    expect(next["field|unit"]).toBe("err unit");
+  });
+
+  it("alvo desmarcado não deixa erro órfão", () => {
+    const errors = { "field|description": "err" };
+    const next = pruneCorrectionErrors(
+      errors,
+      emptyCorrectionSelection(),
+      FIELDS,
+      [],
+    );
+    expect(Object.keys(next)).toHaveLength(0);
+  });
+});
+
+describe("FIX-12 — ordem visual e foco no primeiro inválido", () => {
+  it("orderedCorrectionTargetKeys segue campos depois fornecedores", () => {
+    const keys = orderedCorrectionTargetKeys(FIELDS, [SUP_A, SUP_B]);
+    expect(keys[0]).toBe("field|description");
+    expect(keys).toContain("supplier|000123|01|partNumber");
+    expect(keys.indexOf("supplier|000123|01|link")).toBeGreaterThan(
+      keys.indexOf("supplier|000123|01|partNumber"),
+    );
+  });
+
+  it("firstInvalidCorrectionTarget respeita a ordem visual", () => {
+    const errors = {
+      "field|unit": "err",
+      "supplier|000123|01|partNumber": "err",
+      "field|description": "err",
+    };
+    const first = firstInvalidCorrectionTarget(
+      errors,
+      orderedCorrectionTargetKeys(FIELDS, [SUP_A]),
+    );
+    expect(first).toBe("field|description");
+  });
+
+  it("correctionReasonControlId mapeia chave → id do textarea", () => {
+    expect(
+      correctionReasonControlId("p", "field|description"),
+    ).toBe("p-reason-field-description");
+    expect(
+      correctionReasonControlId("p", "supplier|000123|01|partNumber"),
+    ).toBe("p-reason-sup-000123-01-partNumber");
+  });
+});
+
+describe("FIX-12 — seletor renderiza erro junto ao motivo", () => {
+  it("textarea inválido recebe aria-invalid + describedby", () => {
+    const sel = selectionWith({ description: "" }, {});
+    render(
+      <PrcCorrectionTargetSelector
+        fieldOptions={FIELDS}
+        suppliers={[SUP_A]}
+        selection={sel}
+        onChange={() => undefined}
+        errors={{ "field|description": "Informe o motivo." }}
+      />,
+    );
+    const ta = document.getElementById(
+      "prc-return-reason-field-description",
+    ) as HTMLTextAreaElement;
+    expect(ta.getAttribute("aria-invalid")).toBe("true");
+    expect(ta.getAttribute("aria-describedby")).toBe(
+      "prc-return-reason-field-description-error",
+    );
+    expect(
+      document.getElementById(
+        "prc-return-reason-field-description-error",
+      )?.textContent,
+    ).toContain("Informe o motivo.");
+  });
+
+  it("erro de célula aparece no bloco de motivo do vínculo+atributo", () => {
+    const sel = selectionWith({}, { "000123|01": { partNumber: "" } });
+    render(
+      <PrcCorrectionTargetSelector
+        fieldOptions={[]}
+        suppliers={[SUP_A]}
+        selection={sel}
+        onChange={() => undefined}
+        errors={{
+          "supplier|000123|01|partNumber": "Motivo do PN ausente.",
+        }}
+      />,
+    );
+    const ta = document.getElementById(
+      "prc-return-reason-sup-000123-01-partNumber",
+    ) as HTMLTextAreaElement;
+    expect(ta.getAttribute("aria-invalid")).toBe("true");
+    expect(
+      document.getElementById(
+        "prc-return-reason-sup-000123-01-partNumber-error",
+      )?.textContent,
+    ).toContain("Motivo do PN ausente.");
+  });
+});
+
+describe("FIX-12 — editor de correção", () => {
+  it("buildReturnedChanges retorna erros por alvo (não aborta)", () => {
+    const out = buildReturnedChanges({
+      targets: [FIELD_TARGET],
+      draft: DRAFT,
+      supplierRows: [],
+      fieldValues: { description: "NOVO VALOR" },
+      justifications: {},
+    });
+    expect(out.changes).toBeNull();
+    expect(out.errors["field|description"]).toMatch(/justificativa/);
+  });
+
+  it("justificativa inválida aparece abaixo do input do campo", () => {
+    render(
+      <PrcReturnedFieldsEditor
+        targets={[FIELD_TARGET]}
+        fieldSpecs={[{ path: "description", kind: "text" }]}
+        draft={DRAFT}
+        externalErrors={{ "field|description": "Justificativa curta." }}
+        onSubmit={vi.fn()}
+      />,
+    );
+    const input = document.getElementById(
+      "prc-correct-justify-description",
+    ) as HTMLInputElement;
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(
+      document.getElementById("prc-correct-justify-description-error")
+        ?.textContent,
+    ).toContain("Justificativa curta.");
+  });
+
+  it("submeter com justificativa vazia foca o campo inválido", async () => {
+    render(
+      <PrcReturnedFieldsEditor
+        targets={[FIELD_TARGET]}
+        fieldSpecs={[{ path: "description", kind: "text" }]}
+        draft={DRAFT}
+        onSubmit={vi.fn()}
+      />,
+    );
+    const value = document.getElementById(
+      "prc-correct-field-description",
+    ) as HTMLInputElement;
+    fireEvent.change(value, { target: { value: "NOVO VALOR" } });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Salvar correções/ }),
+    );
+    await vi.waitFor(() => {
+      const justify = document.getElementById(
+        "prc-correct-justify-description",
+      );
+      expect(document.activeElement).toBe(justify);
+    });
+    expect(
+      document.getElementById("prc-correct-justify-description-error"),
+    ).toBeTruthy();
+  });
+});
+
+describe("FIX-12 — mapApiFieldsToCorrectionErrors", () => {
+  const changes = [
+    { path: "description", proposedValue: "x", reason: "r", mode: "changed" as const },
+    { path: "suppliers", proposedValue: [], reason: "r", mode: "confirmed" as const },
+  ];
+
+  it("mapeia changes[i].path para o campo e proposedValue de suppliers", () => {
+    const { targetErrors, unmapped } = mapApiFieldsToCorrectionErrors(
+      {
+        "changes[0].path": "allowlist",
+        "changes[1].proposedValue": "no_change",
+        "expectedVersion": "conflict",
+      },
+      changes,
+    );
+    expect(targetErrors["field|description"]).toBe("allowlist");
+    expect(targetErrors["suppliers"]).toBe("no_change");
+    expect(unmapped.expectedVersion).toBe("conflict");
+  });
+
+  it("field direto correspondente a um path enviado vira erro contextual", () => {
+    const { targetErrors } = mapApiFieldsToCorrectionErrors(
+      { description: "invalid" },
+      changes,
+    );
+    expect(targetErrors["field|description"]).toBe("invalid");
   });
 });

@@ -24,6 +24,7 @@ import type {
   PrcRequestDetail,
   PrcReturnedFieldChange,
 } from "../api/productRegistrationApi";
+import type { PrcCorrectionTargetErrors } from "@delpi/plugin-ui/index";
 import {
   PRC_FIELD_LABELS,
   PRC_SUPPLIER_HELP,
@@ -181,6 +182,7 @@ export function PrcTechnicalSheet({
   onCancelEdit,
   onSave,
   onSaveReturned,
+  correctionFieldErrors,
 }: {
   detail: PrcRequestDetail;
   fieldSpecs: PrcFieldSpec[] | null;
@@ -197,6 +199,9 @@ export function PrcTechnicalSheet({
   ) => void;
   /** PRC-REF-022 — patch allowlisted do solicitante. */
   onSaveReturned?: (changes: PrcReturnedFieldChange[]) => void;
+  /** FIX-12 — erros de campo vindos do backend (data.fields mapeados
+   * para targetKeys) exibidos junto ao editor da correção. */
+  correctionFieldErrors?: PrcCorrectionTargetErrors;
 }) {
   const draft = detail.technicalDraft || {};
   const correctionMode =
@@ -391,6 +396,7 @@ export function PrcTechnicalSheet({
             draft={draft}
             busy={busy}
             idPrefix="eng-prc-correct"
+            externalErrors={correctionFieldErrors}
             onSubmit={(changes) => onSaveReturned?.(changes)}
           />
         </EngineeringDetailCard>

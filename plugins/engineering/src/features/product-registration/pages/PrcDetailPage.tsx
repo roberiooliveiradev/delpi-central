@@ -35,6 +35,10 @@ import {
   type PrcVerification,
 } from "../api/productRegistrationApi";
 import {
+  mapApiFieldsToCorrectionErrors,
+  type PrcCorrectionTargetErrors,
+} from "@delpi/plugin-ui/index";
+import {
   buildPrcQueueUrl,
   EMPTY_PRC_QUEUE_URL,
   navigatePrcHref,
@@ -113,6 +117,10 @@ export function PrcDetailPage({
   } | null>(null);
   const [busy, setBusy] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  /* FIX-12 — erros de campo do PATCH /returned-fields contextualizados
+   * no editor compartilhado. */
+  const [correctionFieldErrors, setCorrectionFieldErrors] =
+    useState<PrcCorrectionTargetErrors>({});
   const [editing, setEditing] = useState(false);
   const [mismatchFields, setMismatchFields] = useState<Record<
     string,
@@ -331,6 +339,7 @@ export function PrcDetailPage({
       if (!detail || busy) return;
       setBusy(true);
       setFeedback(null);
+      setCorrectionFieldErrors({});
       try {
         const res = await prcUpdateReturnedFields(
           requestId,
@@ -345,6 +354,13 @@ export function PrcDetailPage({
         await load();
       } catch (e) {
         const err = e as HomeApiError;
+        /* FIX-12/AC-09 — fields identificáveis do contrato viram
+         * erro contextual no editor; o restante permanece global. */
+        const { targetErrors } = mapApiFieldsToCorrectionErrors(
+          (err as { fields?: Record<string, string> }).fields,
+          changes,
+        );
+        setCorrectionFieldErrors(targetErrors);
         setFeedback({
           kind: "error",
           text:
@@ -610,6 +626,7 @@ export function PrcDetailPage({
               onCancelEdit={() => setEditing(false)}
               onSave={saveDraft}
               onSaveReturned={saveReturnedFields}
+              correctionFieldErrors={correctionFieldErrors}
             />
             <PrcAttachmentsSection
               requestId={detail.id}

@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActionButton,
+  mapApiFieldsToCorrectionErrors,
   PRC_ATTACHMENT_MAX_MB,
   PRC_ATTACHMENT_STATE_LABELS,
   PRC_STATUS_LABELS,
@@ -27,6 +28,7 @@ import {
   type PrcFieldSpec,
   type PrcFormDataProvider,
   type PrcReturnedFieldChange,
+  type PrcCorrectionTargetErrors,
   type PrcSupportFile,
 } from "@delpi/plugin-ui/index";
 
@@ -49,6 +51,7 @@ import {
   type PrcRequestDetail,
   type PrcTimelineEvent,
 } from "./prcApi";
+import { ApiClientError } from "../../api/httpClient";
 import { RequestHistoryTimeline } from "../../components/RequestHistoryTimeline";
 import { useParticipantAvatarUrls } from "../../hooks/useParticipantAvatarUrls";
 import {
@@ -94,6 +97,10 @@ export function PrcCasePage({ requestId, onBack }: Props) {
   /* CORRECTION-09 — specs dos campos para o editor granular usar os
    * controles oficiais (select de catálogo, nunca caixa genérica). */
   const [fieldSpecs, setFieldSpecs] = useState<PrcFieldSpec[]>([]);
+  /* FIX-12 — erros de campo do PATCH /returned-fields contextualizados
+   * no editor compartilhado. */
+  const [correctionFieldErrors, setCorrectionFieldErrors] =
+    useState<PrcCorrectionTargetErrors>({});
 
   const dataProvider = useMemo<PrcFormDataProvider>(
     () => ({
@@ -176,6 +183,7 @@ export function PrcCasePage({ requestId, onBack }: Props) {
     if (!detail || busy || !changes.length) return;
     setBusy(true);
     setError("");
+    setCorrectionFieldErrors({});
     try {
       const saved = await savePrcReturnedFields(
         requestId,
@@ -190,6 +198,13 @@ export function PrcCasePage({ requestId, onBack }: Props) {
       );
       load();
     } catch (e) {
+      /* FIX-12/AC-09 — fields identificáveis do contrato viram erro
+       * contextual no editor; o restante permanece banner global. */
+      const { targetErrors } = mapApiFieldsToCorrectionErrors(
+        e instanceof ApiClientError ? e.fields : undefined,
+        changes,
+      );
+      setCorrectionFieldErrors(targetErrors);
       setError((e as Error).message);
     } finally {
       setBusy(false);
@@ -365,6 +380,7 @@ export function PrcCasePage({ requestId, onBack }: Props) {
                       draft={detail.technicalDraft || {}}
                       busy={busy}
                       idPrefix="mr-prc-correct"
+                      externalErrors={correctionFieldErrors}
                       onSubmit={(changes) => void saveAndResubmit(changes)}
                     />
                   </MyRequestsSectionCard>

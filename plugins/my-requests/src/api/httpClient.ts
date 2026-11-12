@@ -50,26 +50,67 @@ function looksLikeHtml(body: string, contentType: string | null): boolean {
 export class ApiClientError extends Error {
   readonly status: number;
   readonly code: string | null;
+  /** Campos identificáveis do envelope de erro (``data.fields``) —
+   * usado pela validação contextual FIX-12 quando o contrato
+   * identifica o campo responsável. */
+  readonly fields?: Record<string, string>;
 
-  constructor(status: number, message: string, code: string | null = null) {
+  constructor(
+    status: number,
+    message: string,
+    code: string | null = null,
+    fields?: Record<string, string>,
+  ) {
     super(message);
     this.name = "ApiClientError";
     this.status = status;
     this.code = code;
+    this.fields = fields;
   }
 }
 
-async function parseError(response: Response, bodyText?: string): Promise<string> {
+type ParsedError = { message: string; fields?: Record<string, string> };
+
+async function errorFromResponse(
+  response: Response,
+  bodyText?: string,
+): Promise<ApiClientError> {
+  const { message, fields } = await parseErrorDetails(response, bodyText);
+  return new ApiClientError(response.status, message, null, fields);
+}
+
+async function parseErrorDetails(
+  response: Response,
+  bodyText?: string,
+): Promise<ParsedError> {
   const text = bodyText ?? (await readBodyText(response));
   if (looksLikeHtml(text, response.headers.get("content-type"))) {
-    return "API de Minhas Solicitações indisponível. Verifique o serviço requests-api e o gateway.";
+    return {
+      message:
+        "API de Minhas Solicitações indisponível. Verifique o serviço requests-api e o gateway.",
+    };
   }
+  let fields: Record<string, string> | undefined;
   try {
     const body = JSON.parse(text) as {
       message?: string;
       detail?: string | unknown;
-      data?: { message?: string; code?: string; field?: string };
+      data?: {
+        message?: string;
+        code?: string;
+        field?: string;
+        fields?: Record<string, string>;
+      };
     };
+    if (
+      body?.data?.fields &&
+      typeof body.data.fields === "object" &&
+      !Array.isArray(body.data.fields)
+    ) {
+      fields = Object.fromEntries(
+        Object.entries(body.data.fields).map(([k, v]) => [k, String(v)]),
+      );
+    }
     const code =
       typeof body?.data?.code === "string" ? body.data.code.trim() : "";
     const field =
@@ -81,35 +122,49 @@ async function parseError(response: Response, bodyText?: string): Promise<string
       "";
     if (rawMessage) {
       if (isTechnicalErrorCode(rawMessage)) {
-        return (
-          humanizeApiErrorCode(rawMessage, { field }) ||
-          humanizeApiErrorCode(code, { field }) ||
-          rawMessage
-        );
+        return {
+          message:
+            humanizeApiErrorCode(rawMessage, { field }) ||
+            humanizeApiErrorCode(code, { field }) ||
+            rawMessage,
+          fields,
+        };
       }
-      return rawMessage;
+      return { message: rawMessage, fields };
     }
     if (code) {
-      return humanizeApiErrorCode(code, { field }) || code;
+      return { message: humanizeApiErrorCode(code, { field }) || code, fields };
     }
   } catch {
     // ignore
   }
-  if (response.status === 401) return "Sessão expirada. Faça login novamente.";
+  if (response.status === 401) {
+    return { message: "Sessão expirada. Faça login novamente." };
+  }
   if (response.status === 403) {
-    return "Você não possui permissão para esta operação em Minhas Solicitações.";
+    return {
+      message:
+        "Você não possui permissão para esta operação em Minhas Solicitações.",
+    };
   }
-  if (response.status === 404) return "Solicitação não encontrada ou indisponível.";
+  if (response.status === 404) {
+    return { message: "Solicitação não encontrada ou indisponível." };
+  }
   if (response.status === 502 || response.status === 503) {
-    return "API de Minhas Solicitações indisponível. Tente novamente em instantes.";
+    return {
+      message:
+        "API de Minhas Solicitações indisponível. Tente novamente em instantes.",
+    };
   }
-  return `Não foi possível concluir a operação (erro ${response.status}).`;
+  return {
+    message: `Não foi possível concluir a operação (erro ${response.status}).`,
+  };
 }
 
 async function parseJson<T>(response: Response): Promise<T> {
   const text = await readBodyText(response);
   if (looksLikeHtml(text, response.headers.get("content-type"))) {
-    throw new ApiClientError(response.status, await parseError(response, text));
+    throw await errorFromResponse(response, text);
   }
   try {
     return JSON.parse(text) as T;
@@ -125,7 +180,7 @@ export async function httpGet<T>(url: string, options: RequestOptions = {}): Pro
     signal: options.signal,
   });
   if (!response.ok) {
-    throw new ApiClientError(response.status, await parseError(response));
+    throw await errorFromResponse(response);
   }
   return parseJson<T>(response);
 }
@@ -146,7 +201,7 @@ export async function httpPost<T>(
     signal: options.signal,
   });
   if (!response.ok) {
-    throw new ApiClientError(response.status, await parseError(response));
+    throw await errorFromResponse(response);
   }
   return parseJson<T>(response);
 }
@@ -167,7 +222,7 @@ export async function httpPatch<T>(
     signal: options.signal,
   });
   if (!response.ok) {
-    throw new ApiClientError(response.status, await parseError(response));
+    throw await errorFromResponse(response);
   }
   return parseJson<T>(response);
 }
@@ -182,7 +237,7 @@ export async function httpDelete<T>(
     signal: options.signal,
   });
   if (!response.ok) {
-    throw new ApiClientError(response.status, await parseError(response));
+    throw await errorFromResponse(response);
   }
   if (response.status === 204) {
     return undefined as T;
