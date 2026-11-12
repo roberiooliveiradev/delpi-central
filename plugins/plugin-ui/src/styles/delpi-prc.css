@@ -701,24 +701,6 @@
   outline-offset: 1px;
 }
 
-/* FIX-12 — estado inválido contextual: a mensagem fica junto ao
- * controle (.delpi-prc__field-error / .delpi-prc__cell-error) e o
- * campo recebe a borda de perigo do design system. */
-.delpi-prc__correction-reason textarea[aria-invalid="true"],
-.delpi-prc__correction-reason input[aria-invalid="true"],
-.delpi-prc__correction-cell input[aria-invalid="true"] {
-  border-color: var(--delpi-ui-danger, #b42318);
-}
-.delpi-prc__correction-reason textarea[aria-invalid="true"]:focus-visible,
-.delpi-prc__correction-reason input[aria-invalid="true"]:focus-visible,
-.delpi-prc__correction-cell input[aria-invalid="true"]:focus-visible {
-  outline-color: var(--delpi-ui-danger, #b42318);
-}
-.delpi-prc__field-error,
-.delpi-prc__cell-error {
-  margin-top: 4px;
-}
-
 .delpi-prc__correction-cell {
   vertical-align: top;
 }

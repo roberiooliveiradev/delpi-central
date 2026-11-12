@@ -7,16 +7,11 @@ import { useMemo, useState } from "react";
 
 import {
   PrcCorrectionTargetSelector,
-  correctionReasonControlId,
   correctionTargetsFromSelection,
   emptyCorrectionSelection,
-  firstInvalidCorrectionTarget,
-  orderedCorrectionTargetKeys,
-  pruneCorrectionErrors,
   PRC_FIELD_GROUP_BY_PATH,
   type PrcCorrectionFieldOption,
   type PrcCorrectionSelection,
-  type PrcCorrectionTargetErrors,
 } from "@delpi/plugin-ui/index";
 
 import {
@@ -83,10 +78,6 @@ export function PrcReturnForCorrectionModal({
     emptyCorrectionSelection,
   );
   const [formError, setFormError] = useState("");
-  /* FIX-12 — erros por alvo exibidos junto ao motivo; o resumo global
-   * fica só para o caso sem campo responsável (nenhum alvo marcado). */
-  const [fieldErrors, setFieldErrors] =
-    useState<PrcCorrectionTargetErrors>({});
 
   const fieldOptions = useMemo(
     () => prcReturnFieldOptions(fieldSpecs),
@@ -96,34 +87,16 @@ export function PrcReturnForCorrectionModal({
   if (!open) return null;
 
   const submit = () => {
-    const { targets, error, errors } = correctionTargetsFromSelection(
+    const { targets, error } = correctionTargetsFromSelection(
       selection,
       fieldOptions,
       suppliers || [],
     );
     if (!targets) {
       setFormError(error);
-      setFieldErrors(errors);
-      /* FIX-12 — foca o primeiro inválido na ordem visual e rola o
-       * conteúdo interno do modal até ele. */
-      const first = firstInvalidCorrectionTarget(
-        errors,
-        orderedCorrectionTargetKeys(fieldOptions, suppliers || []),
-      );
-      if (first) {
-        requestAnimationFrame(() => {
-          const el = document.getElementById(
-            correctionReasonControlId("eng-prc-return", first),
-          );
-          if (!el) return;
-          el.scrollIntoView({ block: "center", behavior: "auto" });
-          el.focus({ preventScroll: true });
-        });
-      }
       return;
     }
     setFormError("");
-    setFieldErrors({});
     onSubmit(targets);
   };
 
@@ -165,17 +138,7 @@ export function PrcReturnForCorrectionModal({
         onChange={(next) => {
           setSelection(next);
           setFormError("");
-          /* FIX-12 — corrige/desmarca um alvo → some só o erro dele. */
-          setFieldErrors((prev) =>
-            pruneCorrectionErrors(
-              prev,
-              next,
-              fieldOptions,
-              suppliers || [],
-            ),
-          );
         }}
-        errors={fieldErrors}
         busy={busy}
         idPrefix="eng-prc-return"
       />

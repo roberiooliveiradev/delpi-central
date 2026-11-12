@@ -214,140 +214,24 @@ export function summarizeCorrectionSelection(
   };
 }
 
-/* ------------------------------------------------------------------ */
-/* FIX-12 — erros por alvo (identidade estável, nunca índice)           */
-/* ------------------------------------------------------------------ */
-
-/** Chave de erro de campo escalar: ``field|path``. */
-export function correctionFieldTargetKey(path: string): string {
-  return `field|${path}`;
-}
-
-/** Chave de erro de célula de fornecedor:
- * ``supplier|code|store|cell`` (cell = link|partNumber|catalogNumber). */
-export function correctionSupplierTargetKey(
-  link: { supplierCode: string; store: string },
-  cell: "link" | PrcSupplierEditableAttribute,
-): string {
-  return `supplier|${prcSupplierLinkKey(link.supplierCode, link.store)}|${cell}`;
-}
-
-/** Mapa ``targetKey → mensagem`` exibido junto ao campo. */
-export type PrcCorrectionTargetErrors = Record<string, string>;
-
-/** Ordem visual dos alvos — usada para focar o primeiro inválido. */
-export function orderedCorrectionTargetKeys(
-  fieldOptions: PrcCorrectionFieldOption[],
-  suppliers: PrcCorrectionLink[],
-): string[] {
-  const keys = fieldOptions.map((o) => correctionFieldTargetKey(o.path));
-  for (const link of dedupeCorrectionLinks(suppliers)) {
-    keys.push(correctionSupplierTargetKey(link, "partNumber"));
-    keys.push(correctionSupplierTargetKey(link, "catalogNumber"));
-    keys.push(correctionSupplierTargetKey(link, "link"));
-  }
-  return keys;
-}
-
-/** Id do controle (textarea/input de motivo) associado a um targetKey
- * no seletor — permite foco programático no primeiro inválido. */
-export function correctionReasonControlId(
-  idPrefix: string,
-  targetKey: string,
-): string {
-  const [kind, ...rest] = targetKey.split("|");
-  if (kind === "field") {
-    return `${idPrefix}-reason-field-${rest.join("|")}`;
-  }
-  const [code, store, cell] = rest;
-  return `${idPrefix}-reason-sup-${code}-${store}-${cell}`;
-}
-
-/** Primeira chave inválida na ordem visual, ou null. */
-export function firstInvalidCorrectionTarget(
-  errors: PrcCorrectionTargetErrors,
-  orderedKeys: string[],
-): string | null {
-  for (const key of orderedKeys) {
-    if (errors[key]) return key;
-  }
-  return Object.keys(errors)[0] || null;
-}
-
-/** Remove erros resolvidos (motivo válido ou alvo desmarcado) e
- * mantém os demais — limpeza incremental sem reflagir o usuário. */
-export function pruneCorrectionErrors(
-  errors: PrcCorrectionTargetErrors,
-  selection: PrcCorrectionSelection,
-  fieldOptions: PrcCorrectionFieldOption[],
-  suppliers: PrcCorrectionLink[],
-): PrcCorrectionTargetErrors {
-  const validPaths = new Set(fieldOptions.map((o) => o.path));
-  const byKey = new Map(
-    dedupeCorrectionLinks(suppliers).map((l) => [
-      prcSupplierLinkKey(l.supplierCode, l.store),
-      l,
-    ]),
-  );
-  const next: PrcCorrectionTargetErrors = {};
-  for (const [key, message] of Object.entries(errors)) {
-    const [kind, ...rest] = key.split("|");
-    if (kind === "field") {
-      const path = rest.join("|");
-      const sel = selection.fields[path];
-      if (
-        sel?.selected &&
-        validPaths.has(path) &&
-        (sel.reason || "").trim().length < 3
-      ) {
-        next[key] = message;
-      }
-      continue;
-    }
-    if (kind === "supplier") {
-      const [code, store, cell] = rest;
-      const link = byKey.get(prcSupplierLinkKey(code, store));
-      const sel = selection.suppliers[prcSupplierLinkKey(code, store)];
-      const cellSel =
-        cell === "link"
-          ? sel?.link
-          : sel?.[cell as PrcSupplierEditableAttribute];
-      if (link && cellSel?.selected && (cellSel.reason || "").trim().length < 3) {
-        next[key] = message;
-      }
-    }
-  }
-  return next;
-}
-
-export type PrcCorrectionSelectionValidation = {
-  targets: PrcCorrectionTargetInput[] | null;
-  /** Erro global (nenhum alvo selecionado) — sem campo responsável. */
-  error: string;
-  /** Erros por alvo — chave estável, nunca índice. */
-  errors: PrcCorrectionTargetErrors;
-};
-
 /** Constrói os alvos do contrato a partir da seleção — vínculo
  * integral (link) e cada atributo são alvos independentes. Retorna
- * ``null`` quando a seleção é inválida para envio. FIX-12: coleta
- * TODOS os alvos inválidos (não aborta no primeiro) para a
- * apresentação contextual por campo. */
+ * ``null`` quando a seleção é inválida para envio. */
 export function correctionTargetsFromSelection(
   selection: PrcCorrectionSelection,
   fieldOptions: PrcCorrectionFieldOption[],
   suppliers: PrcCorrectionLink[],
-): PrcCorrectionSelectionValidation {
+): { targets: PrcCorrectionTargetInput[] | null; error: string } {
   const targets: PrcCorrectionTargetInput[] = [];
-  const errors: PrcCorrectionTargetErrors = {};
   const validPaths = new Set(fieldOptions.map((o) => o.path));
   for (const [path, sel] of Object.entries(selection.fields)) {
     if (!sel.selected || !validPaths.has(path)) continue;
     const reason = (sel.reason || "").trim();
     if (reason.length < 3) {
-      errors[correctionFieldTargetKey(path)] =
-        `Informe o motivo (mín. 3 caracteres) para «${PRC_FIELD_LABELS[path] || path}».`;
-      continue;
+      return {
+        targets: null,
+        error: `Informe o motivo (mín. 3 caracteres) para «${PRC_FIELD_LABELS[path] || path}».`,
+      };
     }
     targets.push({
       targetType: "FIELD",
@@ -372,25 +256,27 @@ export function correctionTargetsFromSelection(
     if (sel.link.selected) {
       const reason = (sel.link.reason || "").trim();
       if (reason.length < 3) {
-        errors[correctionSupplierTargetKey(link, "link")] =
-          `Informe o motivo (mín. 3 caracteres) para «${display}».`;
-      } else {
-        targets.push({
-          targetType: "SUPPLIER_LINK",
-          targetPath: "suppliers",
-          targetAttribute: null,
-          supplierKey,
-          reason,
-        });
+        return {
+          targets: null,
+          error: `Informe o motivo (mín. 3 caracteres) para «${display}».`,
+        };
       }
+      targets.push({
+        targetType: "SUPPLIER_LINK",
+        targetPath: "suppliers",
+        targetAttribute: null,
+        supplierKey,
+        reason,
+      });
     }
     for (const attr of PRC_SUPPLIER_EDITABLE_ATTRIBUTES) {
       if (!sel[attr].selected) continue;
       const reason = (sel[attr].reason || "").trim();
       if (reason.length < 3) {
-        errors[correctionSupplierTargetKey(link, attr)] =
-          `Informe o motivo (mín. 3 caracteres) para «${PRC_SUPPLIER_LABELS[attr]} — ${display}».`;
-        continue;
+        return {
+          targets: null,
+          error: `Informe o motivo (mín. 3 caracteres) para «${PRC_SUPPLIER_LABELS[attr]} — ${display}».`,
+        };
       }
       targets.push({
         targetType: "SUPPLIER_LINK",
@@ -401,17 +287,13 @@ export function correctionTargetsFromSelection(
       });
     }
   }
-  if (!targets.length && !Object.keys(errors).length) {
+  if (!targets.length) {
     return {
       targets: null,
       error: "Selecione ao menos um campo para devolver.",
-      errors,
     };
   }
-  if (Object.keys(errors).length) {
-    return { targets: null, error: "", errors };
-  }
-  return { targets, error: "", errors };
+  return { targets, error: "" };
 }
 
 /* ------------------------------------------------------------------ */
@@ -495,10 +377,6 @@ function scalarCurrent(draft: Record<string, unknown>, path: string): string {
 export type PrcReturnedChangesResult = {
   changes: PrcReturnedFieldChange[] | null;
   error: string;
-  /** FIX-12 — erros por alvo: ``field|path`` (justificativa),
-   * ``supplier|code|store|partNumber`` (PN obrigatório) e
-   * ``suppliers`` (justificativa do grupo de fornecedores). */
-  errors: PrcCorrectionTargetErrors;
 };
 
 /** Monta o payload do PATCH /returned-fields cobrindo TODOS os alvos
@@ -520,7 +398,6 @@ export function buildReturnedChanges(input: {
   supplierJustification?: string;
 }): PrcReturnedChangesResult {
   const changes: PrcReturnedFieldChange[] = [];
-  const errors: PrcCorrectionTargetErrors = {};
   const fieldTargets = fieldTargetsOf(input.targets);
   for (const t of fieldTargets) {
     const path = String(t.targetPath || "");
@@ -529,9 +406,10 @@ export function buildReturnedChanges(input: {
     const dirty = next !== current.trim() && next !== "";
     const justification = (input.justifications[path] || "").trim();
     if (dirty && justification.length < 3) {
-      errors[correctionFieldTargetKey(path)] =
-        `Informe a justificativa da correção para «${PRC_FIELD_LABELS[path] || path}».`;
-      continue;
+      return {
+        changes: null,
+        error: `Informe a justificativa da correção para «${PRC_FIELD_LABELS[path] || path}».`,
+      };
     }
     const reason =
       justification || String(t.reason || "").trim() || "Correção do solicitante.";
@@ -576,41 +454,38 @@ export function buildReturnedChanges(input: {
       });
       if (missing >= 0) {
         const row = input.supplierRows[missing];
-        errors[
-          correctionSupplierTargetKey(
-            { supplierCode: row.supplierCode, store: row.store },
-            "partNumber",
-          )
-        ] =
-          `Fornecedor ${row.supplierCode} / ${row.store}: Part Number é obrigatório para alterar o vínculo.`;
+        return {
+          changes: null,
+          error: `Fornecedor ${row.supplierCode} / ${row.store}: Part Number é obrigatório para alterar o vínculo.`,
+        };
       }
     }
     const firstTarget = (input.targets || []).find(
       (t) => t.targetType === "SUPPLIER_LINK",
     );
-    if (anyChanged && !Object.keys(errors).length) {
+    if (anyChanged) {
       const justification = (input.supplierJustification || "").trim();
       if (justification.length < 3) {
-        errors["suppliers"] =
-          "Informe a justificativa da correção dos fornecedores.";
-      } else {
-        changes.push({
-          path: "suppliers",
-          proposedValue: supplierRowsToPayload(input.supplierRows),
-          reason: justification,
-          mode: "changed",
-        });
-        /* ``changed`` só endereça vínculos alterados; o ``confirmed``
-         * abaixo endereça os demais vínculos devolvidos e mantidos. */
-        changes.push({
-          path: "suppliers",
-          proposedValue: supplierRowsToPayload(input.supplierRows),
-          reason: justification,
-          mode: "confirmed",
-        });
+        return {
+          changes: null,
+          error:
+            "Informe a justificativa da correção dos fornecedores.",
+        };
       }
-    } else if (anyChanged) {
-      /* Erros já registrados (PN ausente) — não empilha justificativa. */
+      changes.push({
+        path: "suppliers",
+        proposedValue: supplierRowsToPayload(input.supplierRows),
+        reason: justification,
+        mode: "changed",
+      });
+      /* ``changed`` só endereça vínculos alterados; o ``confirmed``
+       * abaixo endereça os demais vínculos devolvidos e mantidos. */
+      changes.push({
+        path: "suppliers",
+        proposedValue: supplierRowsToPayload(input.supplierRows),
+        reason: justification,
+        mode: "confirmed",
+      });
     } else {
       const reason =
         (input.supplierJustification || "").trim() ||
@@ -624,17 +499,10 @@ export function buildReturnedChanges(input: {
       });
     }
   }
-  if (!changes.length && !Object.keys(errors).length) {
-    return {
-      changes: null,
-      error: "Nenhum campo devolvido para corrigir.",
-      errors,
-    };
+  if (!changes.length) {
+    return { changes: null, error: "Nenhum campo devolvido para corrigir." };
   }
-  if (Object.keys(errors).length) {
-    return { changes: null, error: "", errors };
-  }
-  return { changes, error: "", errors };
+  return { changes, error: "" };
 }
 
 /* ------------------------------------------------------------------ */
@@ -648,7 +516,6 @@ export function PrcCorrectionTargetSelector({
   onChange,
   busy,
   draft,
-  errors,
   idPrefix = "prc-return",
 }: {
   fieldOptions: PrcCorrectionFieldOption[];
@@ -658,9 +525,6 @@ export function PrcCorrectionTargetSelector({
   busy?: boolean;
   /** Ficha atual — mostra "Atual:" por campo (vazio também é alvo). */
   draft?: Record<string, unknown> | null;
-  /** FIX-12 — erros por targetKey (campo/célula) exibidos junto ao
-   * motivo correspondente; o consumidor limpa ao corrigir/desmarcar. */
-  errors?: PrcCorrectionTargetErrors;
   idPrefix?: string;
 }) {
   const links = useMemo(() => dedupeCorrectionLinks(suppliers), [suppliers]);
@@ -787,39 +651,15 @@ export function PrcCorrectionTargetSelector({
             <span className="delpi-prc__muted">
               Motivo da correção — {opt.label}
             </span>
-            {(() => {
-              const key = correctionFieldTargetKey(opt.path);
-              const message = errors?.[key];
-              const reasonId = `${idPrefix}-reason-field-${opt.path}`;
-              return (
-                <>
-                  <textarea
-                    id={reasonId}
-                    value={sel?.reason || ""}
-                    disabled={busy}
-                    required
-                    maxLength={1000}
-                    rows={2}
-                    aria-invalid={message ? true : undefined}
-                    aria-describedby={
-                      message ? `${reasonId}-error` : undefined
-                    }
-                    onChange={(e) =>
-                      setFieldReason(opt.path, e.target.value)
-                    }
-                  />
-                  {message ? (
-                    <p
-                      id={`${reasonId}-error`}
-                      className="delpi-prc__field-error"
-                      role="alert"
-                    >
-                      {message}
-                    </p>
-                  ) : null}
-                </>
-              );
-            })()}
+            <textarea
+              id={`${idPrefix}-reason-field-${opt.path}`}
+              value={sel?.reason || ""}
+              disabled={busy}
+              required
+              maxLength={1000}
+              rows={2}
+              onChange={(e) => setFieldReason(opt.path, e.target.value)}
+            />
           </label>
         ) : null}
       </div>
@@ -949,9 +789,6 @@ export function PrcCorrectionTargetSelector({
         )}
         {selectedCellReasons.map(({ key, cell, link, label }) => {
             const sel = cellOf(key);
-            const targetKey = correctionSupplierTargetKey(link, cell);
-            const message = errors?.[targetKey];
-            const reasonId = `${idPrefix}-reason-sup-${link.supplierCode}-${link.store}-${cell}`;
             return (
               <label
                 key={`${key}-${cell}`}
@@ -961,25 +798,14 @@ export function PrcCorrectionTargetSelector({
                   Motivo da correção — {label}
                 </span>
                 <textarea
-                  id={reasonId}
+                  id={`${idPrefix}-reason-sup-${link.supplierCode}-${link.store}-${cell}`}
                   value={sel[cell].reason}
                   disabled={busy}
                   required
                   maxLength={1000}
                   rows={2}
-                  aria-invalid={message ? true : undefined}
-                  aria-describedby={message ? `${reasonId}-error` : undefined}
                   onChange={(e) => setCellReason(link, cell, e.target.value)}
                 />
-                {message ? (
-                  <p
-                    id={`${reasonId}-error`}
-                    className="delpi-prc__field-error"
-                    role="alert"
-                  >
-                    {message}
-                  </p>
-                ) : null}
               </label>
             );
           })}
@@ -1000,70 +826,12 @@ export function PrcCorrectionTargetSelector({
 /* Editor de correção — card do solicitante                            */
 /* ------------------------------------------------------------------ */
 
-/** FIX-12 — id do controle associado a um targetKey no editor de
- * correção: ``field|path`` → justificativa do campo;
- * ``supplier|code|store|attr`` → input da célula; ``suppliers`` →
- * justificativa do grupo. */
-/** FIX-12/AC-09 — mapeia ``data.fields`` do envelope de erro da
- * Engineering API para targetKeys do editor. O backend nomeia os
- * campos por posição do change (``changes[i].path`` /
- * ``changes[i].proposedValue``) ou pelo path direto; o que não for
- * identificável volta em ``unmapped`` e permanece erro global. */
-export function mapApiFieldsToCorrectionErrors(
-  fields: Record<string, string> | null | undefined,
-  changes: PrcReturnedFieldChange[],
-): {
-  targetErrors: PrcCorrectionTargetErrors;
-  unmapped: Record<string, string>;
-} {
-  const targetErrors: PrcCorrectionTargetErrors = {};
-  const unmapped: Record<string, string> = {};
-  for (const [field, message] of Object.entries(fields || {})) {
-    const idxMatch = field.match(/^changes\[(\d+)\]\.(.+)$/);
-    if (idxMatch) {
-      const change = changes[Number(idxMatch[1])];
-      if (!change) {
-        unmapped[field] = message;
-        continue;
-      }
-      targetErrors[
-        change.path === "suppliers"
-          ? "suppliers"
-          : correctionFieldTargetKey(change.path)
-      ] = message;
-      continue;
-    }
-    if (field === "suppliers" || field.startsWith("suppliers")) {
-      targetErrors["suppliers"] = message;
-      continue;
-    }
-    if (changes.some((c) => c.path === field)) {
-      targetErrors[correctionFieldTargetKey(field)] = message;
-      continue;
-    }
-    unmapped[field] = message;
-  }
-  return { targetErrors, unmapped };
-}
-
-export function returnedFieldControlId(
-  idPrefix: string,
-  targetKey: string,
-): string {
-  const [kind, ...rest] = targetKey.split("|");
-  if (kind === "field") return `${idPrefix}-justify-${rest.join("|")}`;
-  if (kind === "suppliers") return `${idPrefix}-justify-suppliers`;
-  const [code, store, attr] = rest;
-  return `${idPrefix}-sup-${code}-${store}-${attr}`;
-}
-
 export function PrcReturnedFieldsEditor({
   targets,
   fieldSpecs,
   draft,
   busy,
   idPrefix = "prc-correct",
-  externalErrors,
   onSubmit,
   onCancel,
 }: {
@@ -1073,9 +841,6 @@ export function PrcReturnedFieldsEditor({
   draft: Record<string, unknown>;
   busy?: boolean;
   idPrefix?: string;
-  /** FIX-12 — erros vindos do backend (``data.fields`` mapeados para
-   * targetKeys pelo consumidor) exibidos junto ao campo. */
-  externalErrors?: PrcCorrectionTargetErrors;
   onSubmit: (changes: PrcReturnedFieldChange[]) => void;
   onCancel?: () => void;
 }) {
@@ -1109,22 +874,6 @@ export function PrcReturnedFieldsEditor({
     toSupplierRows(draft.suppliers),
   );
   const [formError, setFormError] = useState("");
-  /* FIX-12 — erros por alvo: validação local + erros externos (API)
-   * mesclados, exibidos junto ao campo. */
-  const [fieldErrors, setFieldErrors] = useState<PrcCorrectionTargetErrors>({});
-  const mergedErrors = useMemo<PrcCorrectionTargetErrors>(
-    () => ({ ...fieldErrors, ...(externalErrors || {}) }),
-    [fieldErrors, externalErrors],
-  );
-
-  const clearTargetError = (key: string) => {
-    setFieldErrors((prev) => {
-      if (!prev[key]) return prev;
-      const next = { ...prev };
-      delete next[key];
-      return next;
-    });
-  };
 
   const supplierRowsChanged = useMemo(() => {
     const current = toSupplierRows(draft.suppliers);
@@ -1141,7 +890,7 @@ export function PrcReturnedFieldsEditor({
   }, [supplierRows, draft.suppliers]);
 
   const submit = () => {
-    const { changes, error, errors } = buildReturnedChanges({
+    const { changes, error } = buildReturnedChanges({
       targets,
       draft,
       supplierRows,
@@ -1151,41 +900,9 @@ export function PrcReturnedFieldsEditor({
     });
     if (!changes) {
       setFormError(error);
-      setFieldErrors(errors);
-      /* FIX-12 — foca o primeiro alvo inválido na ordem visual e
-       * rola até ele dentro do card. */
-      const ordered = [
-        ...fieldTargets.map((t) =>
-          correctionFieldTargetKey(String(t.targetPath || "")),
-        ),
-        ...supplierRows.flatMap((row) => {
-          const link = {
-            supplierCode: row.supplierCode,
-            store: row.store,
-          };
-          return [
-            correctionSupplierTargetKey(link, "partNumber"),
-            correctionSupplierTargetKey(link, "catalogNumber"),
-            correctionSupplierTargetKey(link, "link"),
-          ];
-        }),
-        "suppliers",
-      ];
-      const first = firstInvalidCorrectionTarget(errors, ordered);
-      if (first) {
-        requestAnimationFrame(() => {
-          const el = document.getElementById(
-            returnedFieldControlId(idPrefix, first),
-          );
-          if (!el) return;
-          el.scrollIntoView({ block: "center", behavior: "auto" });
-          el.focus({ preventScroll: true });
-        });
-      }
       return;
     }
     setFormError("");
-    setFieldErrors({});
     onSubmit(changes);
   };
 
@@ -1284,42 +1001,19 @@ export function PrcReturnedFieldsEditor({
                       ? "Justificativa da correção"
                       : "Confirmação / justificativa (opcional)"}
                   </span>
-                  {(() => {
-                    const key = correctionFieldTargetKey(path);
-                    const message = mergedErrors[key];
-                    const inputId = `${idPrefix}-justify-${path}`;
-                    return (
-                      <>
-                        <input
-                          id={inputId}
-                          type="text"
-                          value={justifications[path] || ""}
-                          disabled={busy}
-                          maxLength={500}
-                          aria-invalid={message ? true : undefined}
-                          aria-describedby={
-                            message ? `${inputId}-error` : undefined
-                          }
-                          onChange={(e) => {
-                            setJustifications((s) => ({
-                              ...s,
-                              [path]: e.target.value,
-                            }));
-                            if (message) clearTargetError(key);
-                          }}
-                        />
-                        {message ? (
-                          <p
-                            id={`${inputId}-error`}
-                            className="delpi-prc__field-error"
-                            role="alert"
-                          >
-                            {message}
-                          </p>
-                        ) : null}
-                      </>
-                    );
-                  })()}
+                  <input
+                    id={`${idPrefix}-justify-${path}`}
+                    type="text"
+                    value={justifications[path] || ""}
+                    disabled={busy}
+                    maxLength={500}
+                    onChange={(e) =>
+                      setJustifications((s) => ({
+                        ...s,
+                        [path]: e.target.value,
+                      }))
+                    }
+                  />
                 </label>
               </div>
             );
@@ -1382,63 +1076,23 @@ export function PrcReturnedFieldsEditor({
                           >
                             {editable ? (
                               <>
-                                {(() => {
-                                  const targetKey =
-                                    correctionSupplierTargetKey(
-                                      {
-                                        supplierCode: row.supplierCode,
-                                        store: row.store,
-                                      },
-                                      attr,
-                                    );
-                                  const message = mergedErrors[targetKey];
-                                  const inputId = `${idPrefix}-sup-${row.supplierCode}-${row.store}-${attr}`;
-                                  return (
-                                    <>
-                                      <input
-                                        id={inputId}
-                                        type="text"
-                                        className="delpi-prc__cell-input"
-                                        aria-label={`${PRC_SUPPLIER_LABELS[attr]} — ${row.supplierCode} / ${row.store}`}
-                                        value={row[attr]}
-                                        disabled={busy}
-                                        aria-invalid={
-                                          message ? true : undefined
-                                        }
-                                        aria-describedby={
-                                          message
-                                            ? `${inputId}-error`
-                                            : undefined
-                                        }
-                                        onChange={(e) => {
-                                          setSupplierRows((rows) =>
-                                            rows.map((r) =>
-                                              r.rowId === row.rowId
-                                                ? {
-                                                    ...r,
-                                                    [attr]:
-                                                      e.target.value,
-                                                  }
-                                                : r,
-                                            ),
-                                          );
-                                          if (message) {
-                                            clearTargetError(targetKey);
-                                          }
-                                        }}
-                                      />
-                                      {message ? (
-                                        <p
-                                          id={`${inputId}-error`}
-                                          className="delpi-prc__cell-error"
-                                          role="alert"
-                                        >
-                                          {message}
-                                        </p>
-                                      ) : null}
-                                    </>
-                                  );
-                                })()}
+                                <input
+                                  id={`${idPrefix}-sup-${row.supplierCode}-${row.store}-${attr}`}
+                                  type="text"
+                                  className="delpi-prc__cell-input"
+                                  aria-label={`${PRC_SUPPLIER_LABELS[attr]} — ${row.supplierCode} / ${row.store}`}
+                                  value={row[attr]}
+                                  disabled={busy}
+                                  onChange={(e) =>
+                                    setSupplierRows((rows) =>
+                                      rows.map((r) =>
+                                        r.rowId === row.rowId
+                                          ? { ...r, [attr]: e.target.value }
+                                          : r,
+                                      ),
+                                    )
+                                  }
+                                />
                                 {attrReason ? (
                                   <span className="delpi-prc__change-notes">
                                     Correção solicitada — {attrReason}
@@ -1464,38 +1118,14 @@ export function PrcReturnedFieldsEditor({
               <span className="delpi-prc__muted">
                 Justificativa da correção dos fornecedores
               </span>
-              {(() => {
-                const message = mergedErrors["suppliers"];
-                const inputId = `${idPrefix}-justify-suppliers`;
-                return (
-                  <>
-                    <input
-                      id={inputId}
-                      type="text"
-                      value={supplierJustification}
-                      disabled={busy}
-                      maxLength={500}
-                      aria-invalid={message ? true : undefined}
-                      aria-describedby={
-                        message ? `${inputId}-error` : undefined
-                      }
-                      onChange={(e) => {
-                        setSupplierJustification(e.target.value);
-                        if (message) clearTargetError("suppliers");
-                      }}
-                    />
-                    {message ? (
-                      <p
-                        id={`${inputId}-error`}
-                        className="delpi-prc__field-error"
-                        role="alert"
-                      >
-                        {message}
-                      </p>
-                    ) : null}
-                  </>
-                );
-              })()}
+              <input
+                id={`${idPrefix}-justify-suppliers`}
+                type="text"
+                value={supplierJustification}
+                disabled={busy}
+                maxLength={500}
+                onChange={(e) => setSupplierJustification(e.target.value)}
+              />
             </label>
           ) : null}
         </fieldset>

@@ -1387,49 +1387,7 @@ declare module "@delpi/plugin-ui/index" {
   export type PrcReturnedChangesResult = {
     changes: PrcReturnedFieldChange[] | null;
     error: string;
-    errors: PrcCorrectionTargetErrors;
   };
-  /* FIX-12 — erros contextuais por alvo (chave estável). */
-  export type PrcCorrectionTargetErrors = Record<string, string>;
-  export type PrcCorrectionSelectionValidation = {
-    targets: PrcCorrectionTargetInput[] | null;
-    error: string;
-    errors: PrcCorrectionTargetErrors;
-  };
-  export function correctionFieldTargetKey(path: string): string;
-  export function correctionSupplierTargetKey(
-    link: { supplierCode: string; store: string },
-    cell: "link" | PrcSupplierEditableAttribute,
-  ): string;
-  export function orderedCorrectionTargetKeys(
-    fieldOptions: PrcCorrectionFieldOption[],
-    suppliers: PrcCorrectionLink[],
-  ): string[];
-  export function correctionReasonControlId(
-    idPrefix: string,
-    targetKey: string,
-  ): string;
-  export function returnedFieldControlId(
-    idPrefix: string,
-    targetKey: string,
-  ): string;
-  export function mapApiFieldsToCorrectionErrors(
-    fields: Record<string, string> | null | undefined,
-    changes: PrcReturnedFieldChange[],
-  ): {
-    targetErrors: PrcCorrectionTargetErrors;
-    unmapped: Record<string, string>;
-  };
-  export function firstInvalidCorrectionTarget(
-    errors: PrcCorrectionTargetErrors,
-    orderedKeys: string[],
-  ): string | null;
-  export function pruneCorrectionErrors(
-    errors: PrcCorrectionTargetErrors,
-    selection: PrcCorrectionSelection,
-    fieldOptions: PrcCorrectionFieldOption[],
-    suppliers: PrcCorrectionLink[],
-  ): PrcCorrectionTargetErrors;
   export function emptyCorrectionSelection(): PrcCorrectionSelection;
   export function dedupeCorrectionLinks(
     links: PrcCorrectionLink[] | null | undefined,
@@ -1442,7 +1400,7 @@ declare module "@delpi/plugin-ui/index" {
     selection: PrcCorrectionSelection,
     fieldOptions: PrcCorrectionFieldOption[],
     suppliers: PrcCorrectionLink[],
-  ): PrcCorrectionSelectionValidation;
+  ): { targets: PrcCorrectionTargetInput[] | null; error: string };
   export function returnedSupplierAttrMap(
     targets: PrcCorrectionTargetWire[] | null | undefined,
   ): Map<string, Set<PrcSupplierEditableAttribute>>;
@@ -1471,7 +1429,6 @@ declare module "@delpi/plugin-ui/index" {
     onChange: (next: PrcCorrectionSelection) => void;
     busy?: boolean;
     draft?: Record<string, unknown> | null;
-    errors?: PrcCorrectionTargetErrors;
     idPrefix?: string;
   }): JSX.Element;
   export function PrcReturnedFieldsEditor(props: {
@@ -1480,7 +1437,6 @@ declare module "@delpi/plugin-ui/index" {
     draft: Record<string, unknown>;
     busy?: boolean;
     idPrefix?: string;
-    externalErrors?: PrcCorrectionTargetErrors;
     onSubmit: (changes: PrcReturnedFieldChange[]) => void;
     onCancel?: () => void;
   }): JSX.Element;
