@@ -22,6 +22,7 @@ const BFF_PERMISSIONS = [
   "it-portal.access",
   "it-portal.servers.view",
   "it-portal.servers.manage",
+  "it-portal.host-services.manage",
   "it-portal.notes.create",
   "it-portal.actions.view",
   "it-portal.actions.manage",
