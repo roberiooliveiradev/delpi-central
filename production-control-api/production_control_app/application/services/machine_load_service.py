@@ -3610,19 +3610,6 @@ class MachineLoadService:
                 ) from exc
 
             batch = dict_items(payload)
-            # Segurança na origem: a API deve devolver somente operações da
-            # filial consultada. Não persistir uma nova fila contaminada.
-            foreign_rows = [
-                item for item in batch
-                if (source_branch := _norm_code(item.get("branch")))
-                and source_branch != _norm_code(branch)
-            ]
-            if foreign_rows:
-                raise DelpiGatewayError(
-                    "A integração retornou operações de outra filial na Carga "
-                    "Máquina. A atualização foi interrompida; confira os filtros "
-                    "de filial do Protheus antes de publicar."
-                )
             collected.extend(batch)
             pagination = payload.get("pagination")
             if isinstance(pagination, dict):
