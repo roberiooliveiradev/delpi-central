@@ -371,6 +371,10 @@ class LineFeederService:
                 "foreign_branch_operations_excluded": (
                     queues.get("publication") or {}
                 ).get("foreign_branch_operations_excluded", 0),
+                "missing_order_operations_excluded": sum(
+                    len(group.get("excluded_missing_orders") or [])
+                    for group in ct_results
+                ),
             },
             "balances_as_of": balances_as_of,
             "sources": {
@@ -882,6 +886,7 @@ class LineFeederService:
         result: WorkCenterHorizonResult | None = None
         ops = list(group.get("operations") or [])
         saturated = False
+        excluded_missing_orders: list[dict[str, str]] = []
 
         for index, op in enumerate(ops):
             operations_evaluated += 1
@@ -890,6 +895,14 @@ class LineFeederService:
                 _text(op.get("operation_code")),
             )
             live = balance_map.get(key)
+            if isinstance(live, dict) and live.get("order_exists") is False:
+                # Não consta SC2 nesta filial segundo consulta autoritativa.
+                # Exclui a operação órfã sem fabricar saldo zero nem ignorar
+                # outros saldos desconhecidos (inclusive APIs antigas).
+                excluded_missing_orders.append(
+                    {"production_order": key[0], "operation_code": key[1]}
+                )
+                continue
             if live is None:
                 pending = None
                 produced = None
@@ -1006,6 +1019,7 @@ class LineFeederService:
             )
 
         payload = work_center_result_payload(result)
+        payload["excluded_missing_orders"] = excluded_missing_orders
         # Bloqueio técnico na preparação prevalece sobre shortfall do prefixo.
         if incomplete_reason:
             payload["completeness"] = COMPLETENESS_INCOMPLETE
