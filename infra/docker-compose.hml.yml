@@ -215,13 +215,8 @@ services:
         required: true
       - path: .env.hml
         required: false
-    depends_on: !override
-      keycloak:
-        condition: service_started
-      postgres-plugins:
-        condition: service_healthy
-      delpi-redis:
-        condition: service_healthy
+    # Dependências checadas pelo hml-compose (script) + --no-deps.
+    depends_on: !override {}
     networks: !override
       - delpi-hml
     volumes: !override
@@ -343,9 +338,7 @@ services:
     image: delpi-hml/production-control:local
     container_name: delpi-hml-production-control
     ports: !override []
-    depends_on: !override
-      plugin-ui:
-        condition: service_started
+    depends_on: !override {}
     networks: !override
       - delpi-hml
     volumes: !override []
@@ -374,15 +367,7 @@ services:
         required: true
       - path: .env.hml
         required: false
-    depends_on: !override
-      keycloak:
-        condition: service_started
-      postgres-plugins:
-        condition: service_healthy
-      core-api:
-        condition: service_started
-      api-delpi:
-        condition: service_started
+    depends_on: !override {}
     networks: !override
       - delpi-hml
     volumes: !override
