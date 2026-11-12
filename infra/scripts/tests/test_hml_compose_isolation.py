@@ -259,6 +259,10 @@ def assert_source_files() -> None:
             fail("bootstrap HML não declara política de direct grants")
     if "oidc-audience-mapper" not in boot or "audience-delpi" not in boot:
         fail("bootstrap HML sem provisionamento de audience delpi-central")
+    if "loginTheme" not in boot or "delpi-energy" not in boot:
+        fail("bootstrap HML sem loginTheme delpi-energy no realm")
+    if "chmod -R a+rX" not in boot or "keycloak/themes" not in boot:
+        fail("bootstrap HML sem garantia de legibilidade do tema ao Keycloak")
     # Guardrails negativas (recusa se origem/client apontar produção) são OK.
     if re.search(r'(ORIGIN|URL|ISSUER)=https?://[^\\s]*minhadelpi\\.com\\.br', boot):
         fail("bootstrap HML configura URL produtiva")
