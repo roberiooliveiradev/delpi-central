@@ -1064,3 +1064,61 @@ def test_continuous_units_do_not_round_to_integer_pieces() -> None:
     result = allocate_work_center_horizon([op], hours=0.5, work_center="CT-27")
     assert result.operations[0].covered_qty == 2.0
     assert result.operations[0].productive_seconds == 1800.0
+
+
+def test_foreign_branch_snapshot_row_never_blocks_valid_work_center() -> None:
+    """Linha externa explicitamente identificada não vira balance_unknown."""
+    foreign = {
+        **_op_row(work_center="CT-00", order="11301901001"),
+        "branch": "02",
+    }
+    legitimate = {
+        **_op_row(work_center="CT-A", order="11302401001"),
+        "branch": "01",
+    }
+    service, _pubs, _snapshots, gateway = _service(
+        published=_payload([foreign, legitimate]),
+        balances={
+            ("11302401001", "01"): {
+                "operation_pending_qty": 1,
+                "operation_produced_qty": 0,
+            }
+        },
+        standard_times={
+            ("11302401001", "01"): _complete_st(1200),
+        },
+    )
+    result = service.preview_horizon(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-00", "CT-A"],
+        hours_per_work_center=1,
+    )
+    assert result["publication"]["foreign_branch_operations_excluded"] == 1
+    assert result["preview_completeness"] != "incomplete"
+    assert result["work_centers"][0]["operations"] == []
+    assert result["work_centers"][1]["operations"][0]["production_order"] == (
+        "11302401001"
+    )
+    assert gateway.st_calls == 1
+
+
+def test_unknown_balance_still_blocks_same_branch_in_horizon() -> None:
+    operation = {
+        **_op_row(work_center="CT-00", order="SAME-UNRESOLVED"),
+        "branch": "01",
+    }
+    service, *_ = _service(
+        published=_payload([operation]),
+        balances={},
+        standard_times={},
+    )
+    result = service.preview_horizon(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-00"],
+        hours_per_work_center=1,
+    )
+    assert result["publication"]["foreign_branch_operations_excluded"] == 0
+    assert result["preview_completeness"] == "incomplete"
+    assert result["work_centers"][0]["stop_reason"] == "balance_unknown"
