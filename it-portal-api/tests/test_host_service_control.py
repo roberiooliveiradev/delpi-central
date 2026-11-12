@@ -112,10 +112,10 @@ def test_control_http_permission_and_agent_binding(client, repository, principal
         assert client.get(f"/servers/{sid}/host-services/actions/{job['id']}").status_code == 200
         agent_headers = {"X-Delpi-Service-Authorization": "Bearer agent-token"}
         claim_url = f"/collector/v1/servers/{sid}/host-services/control/next"
-        assert client.get(claim_url, params={"hostname": server["hostname"]}).status_code == 401
-        assert client.get(claim_url, params={"hostname": "wrong-host"}, headers=agent_headers).status_code == 409
-        claimed = client.get(
-            claim_url, params={"hostname": server["hostname"]}, headers=agent_headers,
+        assert client.post(claim_url, json={"hostname": server["hostname"]}).status_code == 401
+        assert client.post(claim_url, json={"hostname": "wrong-host"}, headers=agent_headers).status_code == 409
+        claimed = client.post(
+            claim_url, json={"hostname": server["hostname"]}, headers=agent_headers,
         )
         assert claimed.status_code == 200, claimed.text
         assert claimed.json()["data"]["action"] == "restart"
