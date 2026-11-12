@@ -99,3 +99,86 @@ def test_complete_260_service_inventory_preserves_manual_server(pg_client, monke
     manual = pg_client.get("/servers/" + sid).json()["data"]
     assert manual["revision"] == host["revision"]
     assert manual["hostname"] == host["hostname"]
+
+
+def test_retention_prunes_only_old_unreferenced_runs(pg_client, monkeypatch):
+    """30 dias: preserva ultima coleta, rastros de servicos e outros hosts."""
+    from it_portal_app.infrastructure.persistence.db import db_connect
+    from it_portal_app.infrastructure.persistence.postgres_host_service_repository import (
+        PostgresHostServiceRepository,
+    )
+
+    main = pg_client.post("/servers", json=server_payload(name="Host da coleta")).json()["data"]
+    other = pg_client.post(
+        "/servers", json=server_payload(
+            name="Outro host", hostname="srv-erp-02.delpi.local",
+        ),
+    ).json()["data"]
+    sid = main["id"]
+    monkeypatch.setenv("IT_PORTAL_COLLECTOR_SERVER_ALLOWLIST", sid)
+    monkeypatch.setenv("IT_PORTAL_WINDOWS_COLLECTOR_BINDINGS", CLIENT + "=" + sid)
+    uri = "/collector/v1/servers/" + sid + "/host-services/batches"
+    headers = {"X-Delpi-Service-Authorization": "Bearer scope-token"}
+    oldest = str(uuid.uuid4())
+    response = pg_client.post(
+        uri, json=payload(run_id=oldest, services=[service("Legacy")]), headers=headers,
+    )
+    assert response.status_code == 201
+    assert response.json()["data"]["applied"] is True
+
+    abandoned = str(uuid.uuid4())
+    other_old = str(uuid.uuid4())
+    with db_connect() as conn:
+        conn.execute(
+            "UPDATE it_portal.host_service_runs "
+            "SET created_at = now() - interval '45 days' WHERE run_id=%s",
+            (oldest,),
+        )
+        for run_id, server_id in ((abandoned, sid), (other_old, other["id"])):
+            conn.execute(
+                """INSERT INTO it_portal.host_service_runs
+                   (run_id, server_id, collector_client_id, observed_at, batch_count, created_at)
+                   VALUES (%s, %s, %s, now() - interval '45 days', 1,
+                           now() - interval '45 days')""",
+                (run_id, server_id, CLIENT),
+            )
+        # Mesmo antigo, run atual nao pode ser removida por FK e protecao explicita.
+        PostgresHostServiceRepository._prune_old_runs(conn, sid, abandoned)
+        assert conn.execute(
+            "SELECT count(*) AS n FROM it_portal.host_service_runs WHERE run_id=%s",
+            (oldest,),
+        ).fetchone()["n"] == 1
+
+    newer = str(uuid.uuid4())
+    body = payload(run_id=newer, services=[service("Legacy")])
+    body["observed_at"] = "2026-11-12T10:00:00Z"
+    response = pg_client.post(uri, json=body, headers=headers)
+    assert response.status_code == 201
+    assert response.json()["data"]["applied"] is True
+
+    with db_connect() as conn:
+        assert conn.execute(
+            "SELECT count(*) AS n FROM it_portal.host_service_runs WHERE run_id=%s",
+            (oldest,),
+        ).fetchone()["n"] == 0
+        assert conn.execute(
+            "SELECT count(*) AS n FROM it_portal.host_service_batches WHERE run_id=%s",
+            (oldest,),
+        ).fetchone()["n"] == 0
+        assert conn.execute(
+            "SELECT count(*) AS n FROM it_portal.host_service_runs WHERE run_id=%s",
+            (abandoned,),
+        ).fetchone()["n"] == 0
+        assert conn.execute(
+            "SELECT count(*) AS n FROM it_portal.host_service_runs WHERE run_id=%s",
+            (other_old,),
+        ).fetchone()["n"] == 1
+        assert conn.execute(
+            "SELECT run_id::text AS id FROM it_portal.host_service_current WHERE server_id=%s",
+            (sid,),
+        ).fetchone()["id"] == newer
+        assert conn.execute(
+            "SELECT count(*) AS n FROM it_portal.host_service_batches "
+            "WHERE run_id=%s AND services IS NULL",
+            (newer,),
+        ).fetchone()["n"] == 1
