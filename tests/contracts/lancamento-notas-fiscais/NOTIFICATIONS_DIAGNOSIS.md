@@ -19,3 +19,10 @@ A paridade de payload de notificação será coberta por teste unitário com cli
 
 - `TEST_QUERY_ISSUE` — a consulta ao histórico do Core responde 200; o contador 0 reflete ausência de emissão.
 - `BUG_AS_IS` — a omissão de auto-notificação é regra explícita do serviço.
+
+## F3-R R2 (2026-11-12)
+
+Tentativa caixa-preta P6→P6B: block/comentário 200, mas Core `/integrations/notifications` responde 400
+`no recipients have access to the source application` mesmo com `lancamento-notas-fiscais.access` em P6B.
+Classificação caixa-preta: **INCONCLUSIVE** (gate RBAC de app no Core, não falha do módulo LNF).
+Paridade de payload coberta por `test_notification_payload_parity.py` (**PASS** api-delpi × BFF).

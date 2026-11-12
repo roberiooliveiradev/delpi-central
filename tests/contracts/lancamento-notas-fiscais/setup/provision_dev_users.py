@@ -30,7 +30,15 @@ PROFILES: dict[str, dict] = {
     "P4": {"username": "lnf-contract-p4", "permissions": ["lancamento-notas-fiscais.view"], "superadmin": False},
     "P5": {"username": "lnf-contract-p5", "permissions": ["lancamento-notas-fiscais.create"], "superadmin": False},
     "P6": {"username": "lnf-contract-p6", "permissions": ["lancamento-notas-fiscais.process"], "superadmin": False},
-    "P6B": {"username": "lnf-contract-p6b", "permissions": ["lancamento-notas-fiscais.process"], "superadmin": False},
+    # access + process: Core exige acesso ao sourceApp para entregar notificação LNF (F3-R R2)
+    "P6B": {
+        "username": "lnf-contract-p6b",
+        "permissions": [
+            "lancamento-notas-fiscais.access",
+            "lancamento-notas-fiscais.process",
+        ],
+        "superadmin": False,
+    },
     "P7": {"username": "lnf-contract-p7", "permissions": ["lancamento-notas-fiscais.manage"], "superadmin": False},
     "P8": {"username": "lnf-contract-p8", "permissions": ["lancamento-notas-fiscais.review-unmapped-products"], "superadmin": False},
     "P9": {"username": "lnf-contract-p9", "permissions": [], "superadmin": True},
@@ -55,7 +63,10 @@ EXPECTED_LNF = {
     "P4": {"lancamento-notas-fiscais.view"},
     "P5": {"lancamento-notas-fiscais.create"},
     "P6": {"lancamento-notas-fiscais.process"},
-    "P6B": {"lancamento-notas-fiscais.process"},
+    "P6B": {
+        "lancamento-notas-fiscais.access",
+        "lancamento-notas-fiscais.process",
+    },
     "P7": {"lancamento-notas-fiscais.manage"},
     "P8": {"lancamento-notas-fiscais.review-unmapped-products"},
     "P11": {"lancamento-notas-fiscais.create", "lancamento-notas-fiscais.view.filial-01"},
