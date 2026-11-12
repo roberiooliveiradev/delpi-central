@@ -5,7 +5,7 @@
 #   1. realm `delpi` exists and is enabled;
 #   2. public client `delpi-central` exists (standard flow + direct grants);
 #   3. the dev portal user exists and its password matches the DEV_PORTAL_*
-#      vars in infra/.env (canonical; infra/.env.local overrides if present).
+#      vars in infra/.env (canonical exclusive source).
 #
 # Safe to re-run: existing realm/client/users are repaired in place, never
 # wiped. Use when local login drifts (e.g. after volume/env divergence).
@@ -18,7 +18,7 @@
 #     bash infra/scripts/keycloak-dev-bootstrap.sh
 #
 # Requires: infra/.env (KEYCLOAK_ADMIN*, POSTGRES_KC_*, DEV_PORTAL_* —
-# template .env.dev.example). infra/.env.local is an optional legacy override.
+# template .env.dev.example). .env.local legado NÃO é carregado.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -28,13 +28,9 @@ env_val() { # KEY file — tolerant to values with spaces/comments
   grep -E "^$1=" "$2" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"'"'"'\r' || true
 }
 
-dev_val() { # KEY — .env.local (optional override) wins over .env
-  local v
-  v="$(env_val "$1" "$INFRA_DIR/.env.local")"
-  [ -n "$v" ] || v="$(env_val "$1" "$INFRA_DIR/.env")"
-  printf '%s' "$v"
+dev_val() { # KEY — canonical exclusive source infra/.env
+  printf '%s' "$(env_val "$1" "$INFRA_DIR/.env")"
 }
-
 KC_BASE="$(env_val KC_BASE_URL "$INFRA_DIR/.env")"; KC_BASE="${KC_BASE:-http://localhost}/auth"
 REALM="$(env_val KEYCLOAK_REALM "$INFRA_DIR/.env")"; REALM="${REALM:-delpi}"
 CLIENT_ID="$(dev_val DEV_KC_CLIENT_ID)"; CLIENT_ID="${CLIENT_ID:-delpi-central}"

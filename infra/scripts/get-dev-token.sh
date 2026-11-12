@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Obtém access_token JWT do Keycloak (dev local).
-# Credenciais DEV_*: fonte canônica infra/.env (template .env.dev.example);
-# infra/.env.local (legado, opcional) sobrescreve se existir.
+# Credenciais DEV_*: fonte canônica exclusiva infra/.env
+# (template: .env.dev.example). .env.local legado NÃO é carregado.
 # Uso:
 #   export TOKEN="$(bash infra/scripts/get-dev-token.sh)"
 #   bash plugins/cultura-delpi/scripts/register-manifest.sh
@@ -10,17 +10,16 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INFRA_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 ENV_FILE="$INFRA_DIR/.env"
-ENV_LOCAL="$INFRA_DIR/.env.local"
 
-if [ ! -f "$ENV_FILE" ] && [ ! -f "$ENV_LOCAL" ]; then
-  echo "[ERRO] Nenhum env encontrado. Copie infra/.env.dev.example → infra/.env" >&2
+if [ ! -f "$ENV_FILE" ]; then
+  echo "[ERRO] infra/.env não encontrado. Copie infra/.env.dev.example → infra/.env" >&2
   exit 1
 fi
 
 # shellcheck disable=SC1090
 set -a
-[ -f "$ENV_FILE" ] && source "$ENV_FILE"
-[ -f "$ENV_LOCAL" ] && source "$ENV_LOCAL"
+# shellcheck disable=SC1091
+source "$ENV_FILE"
 set +a
 
 BASE_URL="${DEV_BASE_URL:-http://localhost}"
