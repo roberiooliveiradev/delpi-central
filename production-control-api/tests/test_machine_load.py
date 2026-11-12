@@ -4484,3 +4484,36 @@ def test_withdraw_operations_http_409_and_422(machine_load_routes_module) -> Non
         json={"operations": [], "expected_keys": []},
     )
     assert invalid.status_code == 422
+
+
+def test_machine_load_import_rejects_foreign_branch_rows_before_snapshot() -> None:
+    """Não armazenar nova fila da filial 02 contaminada por OP da matriz."""
+    gateway = FakeGateway(
+        operations=[
+            {**_OPERATION, "branch": "01", "production_order": "11301901001"}
+        ]
+    )
+    service = _service(gateway)
+    with pytest.raises(DelpiGatewayError, match="outra filial"):
+        service._fetch_all_operations(
+            branch="02",
+            delivery_start=None,
+            delivery_end="20261231",
+            page_size=100,
+        )
+
+
+def test_machine_load_import_accepts_matching_or_legacy_branch() -> None:
+    gateway = FakeGateway(operations=[
+        {**_OPERATION, "branch": "02", "production_order": "11302401001"},
+        {**_OPERATION, "production_order": "LEGACY"},
+    ])
+    result = _service(gateway)._fetch_all_operations(
+        branch="02",
+        delivery_start=None,
+        delivery_end="20261231",
+        page_size=100,
+    )
+    assert [item["production_order"] for item in result] == [
+        "11302401001", "LEGACY"
+    ]
