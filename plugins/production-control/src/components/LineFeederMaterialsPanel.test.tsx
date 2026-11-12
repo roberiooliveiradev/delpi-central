@@ -210,7 +210,7 @@ describe("LineFeederMaterialsPanel", () => {
         query={{ workCenters: ["CT-A"], hoursPerWorkCenter: 2 }}
       />,
     );
-    expect(screen.getByText(/operações? de outra filial foram desconsideradas/i)).toBeTruthy();
+    expect(screen.getByText(/operação de outra filial foi desconsiderada/i)).toBeTruthy();
     expect(screen.getByText(/Solicite ao PCP que atualize e republique/i)).toBeTruthy();
     expect(screen.getByText(/MP-001/)).toBeTruthy();
   });
