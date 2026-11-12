@@ -38,7 +38,7 @@ foreach ($name in $AllowedServices.Split(',')) {
 }
 if ($allow.Count -lt 1) { throw 'Nenhum servico local autorizado.' }
 
-$pollUrl = '{0}/collector/v1/servers/{1}/host-services/control/next?hostname={2}' -f $ApiBaseUrl.TrimEnd('/'),$ServerId,[uri]::EscapeDataString([Environment]::MachineName.ToLowerInvariant())
+$pollUrl = '{0}/collector/v1/servers/{1}/host-services/control/next' -f $ApiBaseUrl.TrimEnd('/'),$ServerId
 $reportPrefix = '{0}/collector/v1/servers/{1}/host-services/control' -f $ApiBaseUrl.TrimEnd('/'),$ServerId
 $lastTokenTime = [datetime]::MinValue
 $accessToken = $null
@@ -164,7 +164,8 @@ while ($true) {
             $lastTokenTime = Get-Date
         }
         $headers = @{'X-Delpi-Service-Authorization'="Bearer $accessToken"}
-        $response = Invoke-RestMethod -Uri $pollUrl -Method Get -Headers $headers -TimeoutSec 15
+        $pollBody = @{hostname=[Environment]::MachineName.ToLowerInvariant()} | ConvertTo-Json -Compress
+        $response = Invoke-RestMethod -Uri $pollUrl -Method Post -Headers $headers -ContentType 'application/json' -Body $pollBody -TimeoutSec 15
         $failures = 0
         if ($null -ne $response.data) {
             $job = $response.data
