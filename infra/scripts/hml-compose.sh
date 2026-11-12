@@ -915,10 +915,13 @@ cmd_up_production_control_ui() {
     echo "[ERRO] delpi-hml-plugin-ui não está healthy. Rode up --scenario plugin-ui antes." >&2
     exit 1
   }
-  docker ps --format '{{.Names}} {{.Status}}' | grep -E '^delpi-hml-production-control-api .*healthy' >/dev/null || {
-    echo "[ERRO] delpi-hml-production-control-api não está healthy. Rode up --scenario production-control-api antes." >&2
-    exit 1
-  }
+  if ! docker ps --format '{{.Names}} {{.Status}}' | grep -E '^delpi-hml-production-control-api .*healthy' >/dev/null; then
+    if ! docker exec delpi-hml-production-control-api python -c \
+      "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)" >/dev/null 2>&1; then
+      echo "[ERRO] delpi-hml-production-control-api não está healthy. Rode up --scenario production-control-api antes." >&2
+      exit 1
+    fi
+  fi
 
   echo "ATIVACAO=production-control-ui"
   echo "project=$PROJECT"

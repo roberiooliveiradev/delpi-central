@@ -384,6 +384,18 @@ services:
       CORE_API_BASE_URL: http://core-api:8000
       # Migrations canônicas no banco plugins HML (one-shot no cenário).
       PC_RUN_MIGRATIONS_ON_STARTUP: "true"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
     mem_limit: 1g
     cpus: 1.0
     labels:
