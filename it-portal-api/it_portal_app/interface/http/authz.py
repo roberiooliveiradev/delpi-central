@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 ACCESS = "it-portal.access"
 SERVERS_VIEW = "it-portal.servers.view"
 SERVERS_MANAGE = "it-portal.servers.manage"
+HOST_SERVICES_MANAGE = "it-portal.host-services.manage"
 NOTES_CREATE = "it-portal.notes.create"
 ACTIONS_VIEW = "it-portal.actions.view"
 ACTIONS_MANAGE = "it-portal.actions.manage"
@@ -45,6 +46,7 @@ ALL_PERMISSIONS = (
     ACCESS,
     SERVERS_VIEW,
     SERVERS_MANAGE,
+    HOST_SERVICES_MANAGE,
     NOTES_CREATE,
     ACTIONS_VIEW,
     ACTIONS_MANAGE,

@@ -113,6 +113,7 @@ HistoryEntityType = Literal[
     "server_network_link",
     "integration",
     "service_dependency",
+    "host_service_preference",
 ]
 
 
@@ -188,6 +189,7 @@ class CapabilitiesOut(BaseModel):
     display_name: str
     can_view_servers: bool
     can_manage_servers: bool
+    can_manage_host_services: bool
     can_create_notes: bool
     can_view_action_plans: bool
     can_manage_action_plans: bool
@@ -582,7 +584,21 @@ class HostServiceBatchReceipt(BaseModel):
     applied: bool
     service_count: int
 
+class HostServicePreferenceInput(_Input):
+    is_favorite: bool
+    criticality: Literal["normal", "high", "critical"]
+
+
+class HostServicePreferenceOut(BaseModel):
+    service_key: str
+    is_favorite: bool
+    criticality: Literal["normal", "high", "critical"]
+
+
 class HostServiceOut(BaseModel):
+    service_key: str
+    is_favorite: bool
+    criticality: Literal["normal", "high", "critical"]
     name: str
     display_name: str
     description: str | None
@@ -600,6 +616,7 @@ class HostServiceCurrentOut(BaseModel):
     service_count: int
 
 class HostServicePage(BaseModel):
+    favorites_count: int
     items: list[HostServiceOut]
     total: int
     page: int

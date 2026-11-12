@@ -60,6 +60,7 @@ class FakeInventory:
         self.rows = {}
         self.runs = {}
         self.current = None
+        self.preferences = {}
 
     def ingest_batch(self, server_id, client_id, batch):
         run = self.runs.setdefault(batch.run_id, {"batches": {}, "client": client_id,
@@ -91,20 +92,31 @@ class FakeInventory:
                 "batch_count": batch.batch_count, "status": "complete" if complete else "collecting",
                 "applied": applied, "service_count": count}
 
-    def list_services(self, server_id, *, q, state, start_mode, present, page, page_size):
+    def list_services(self, server_id, *, q, state, start_mode, present, page, page_size, favorites_only=False):
         data = []
         for svc in self.rows.values():
+            pref = self.preferences.get(svc["service_key"], {"is_favorite": False, "criticality": "normal"})
+            if favorites_only and not pref["is_favorite"]:
+                continue
             if q and q.lower() not in (svc["name"] + svc["display_name"]).lower():
                 continue
             if state and svc["state"] != state:
                 continue
             if start_mode and svc["start_mode"] != start_mode:
                 continue
-            data.append({**{k: v for k, v in svc.items() if k != "service_key"},
+            data.append({**svc, **pref,
                          "is_present": True, "observed_at": self.current["observed_at"],
                          "updated_at": self.current["received_at"]})
         data.sort(key=lambda row: row["display_name"])
-        return data[(page - 1) * page_size:page * page_size], len(data), self.current
+        count = sum(1 for pref in self.preferences.values() if pref["is_favorite"])
+        return data[(page - 1) * page_size:page * page_size], len(data), self.current, count
+
+
+    def save_preference(self, server_id, service_key, *, is_favorite, criticality, actor):
+        if service_key not in self.rows:
+            return None
+        self.preferences[service_key] = {"is_favorite": is_favorite, "criticality": criticality}
+        return {"service_key": service_key, **self.preferences[service_key]}
 
 
 def test_pagination_and_completion_are_not_exposed_before_all_batches(client, repository, monkeypatch):

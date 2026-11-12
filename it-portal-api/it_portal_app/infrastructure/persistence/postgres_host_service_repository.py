@@ -3,9 +3,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import uuid
 
 from psycopg.types.json import Jsonb
 
+from it_portal_app.application.ports import Actor, AuditEvent
 from it_portal_app.domain.errors import ConflictError
 from it_portal_app.domain.host_services import HostServiceBatch
 from it_portal_app.infrastructure.persistence.postgres_base import PostgresRepositoryBase
@@ -175,38 +177,126 @@ class PostgresHostServiceRepository(PostgresRepositoryBase):
             (server_id, active_run_id, _RUN_HISTORY_DAYS, _PRUNE_LIMIT),
         )
 
+    def save_preference(
+        self, server_id: str, service_key: str, *,
+        is_favorite: bool, criticality: str, actor: Actor,
+    ) -> dict | None:
+        """Classifica um servico real; nao altera nem aciona o Windows.
+
+        Auditoria e preferencia sao gravadas na mesma transacao. O lock do
+        servidor serializa com a consolidacao do inventario a cada 5 min.
+        """
+        with self._tx() as conn:
+            server = conn.execute(
+                f"SELECT archived_at FROM {_S}.servers WHERE id=%s FOR UPDATE",
+                (server_id,),
+            ).fetchone()
+            if server is None:
+                return None
+            if server["archived_at"] is not None:
+                raise ConflictError("server_archived", "Servidor arquivado não permite edição de favoritos.")
+            service = conn.execute(
+                f"""SELECT name, display_name FROM {_S}.host_services
+                    WHERE server_id=%s AND service_key=%s""",
+                (server_id, service_key),
+            ).fetchone()
+            if service is None:
+                return None
+            old = conn.execute(
+                f"""SELECT * FROM {_S}.host_service_preferences
+                    WHERE server_id=%s AND service_key=%s FOR UPDATE""",
+                (server_id, service_key),
+            ).fetchone()
+            previous_favorite = bool(old["is_favorite"]) if old else False
+            previous_criticality = old["criticality"] if old else "normal"
+            if previous_favorite == is_favorite and previous_criticality == criticality:
+                return {
+                    "service_key": service_key, "is_favorite": is_favorite,
+                    "criticality": criticality,
+                }
+
+            conn.execute(
+                f"""INSERT INTO {_S}.host_service_preferences
+                    (id, server_id, service_key, is_favorite, criticality,
+                     updated_by_id, updated_by_name)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s)
+                    ON CONFLICT (server_id, service_key) DO UPDATE SET
+                    is_favorite=EXCLUDED.is_favorite,
+                    criticality=EXCLUDED.criticality,
+                    updated_at=now(),
+                    updated_by_id=EXCLUDED.updated_by_id,
+                    updated_by_name=EXCLUDED.updated_by_name""",
+                (str(uuid.uuid4()), server_id, service_key, is_favorite, criticality,
+                 actor.id, actor.name),
+            )
+            record = conn.execute(
+                f"""SELECT id FROM {_S}.host_service_preferences
+                    WHERE server_id=%s AND service_key=%s""",
+                (server_id, service_key),
+            ).fetchone()
+            self._audit(
+                conn,
+                AuditEvent(
+                    entity_type="host_service_preference",
+                    entity_id=str(record["id"]),
+                    server_id=server_id,
+                    event_type="host_service_preference_updated",
+                    changes={
+                        "service": service["display_name"],
+                        "name": service["name"],
+                        "is_favorite": {"from": previous_favorite, "to": is_favorite},
+                        "criticality": {"from": previous_criticality, "to": criticality},
+                    },
+                ),
+                actor,
+            )
+            return {
+                "service_key": service_key, "is_favorite": is_favorite,
+                "criticality": criticality,
+            }
+
     def list_services(self, server_id: str, *, q: str | None, state: str | None,
-                      start_mode: str | None, present: str, page: int, page_size: int):
-        where = ["server_id = %(sid)s"]
+                      start_mode: str | None, present: str, favorites_only: bool, page: int, page_size: int):
+        where = ["hs.server_id = %(sid)s"]
         args: dict = {"sid": server_id, "limit": page_size, "offset": (page - 1) * page_size}
         if present != "all":
-            where.append("is_present = %(present)s")
+            where.append("hs.is_present = %(present)s")
             args["present"] = present == "yes"
         if state:
-            where.append("state = %(state)s")
+            where.append("hs.state = %(state)s")
             args["state"] = state
         if start_mode:
-            where.append("start_mode = %(start_mode)s")
+            where.append("hs.start_mode = %(start_mode)s")
             args["start_mode"] = start_mode
         if q:
-            where.append("(name ILIKE %(q)s OR display_name ILIKE %(q)s)")
+            where.append("(hs.name ILIKE %(q)s OR hs.display_name ILIKE %(q)s)")
             args["q"] = "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        if favorites_only:
+            where.append("p.is_favorite IS TRUE")
         clause = " AND ".join(where)
+        source = f"{_S}.host_services AS hs LEFT JOIN {_S}.host_service_preferences AS p ON p.server_id=hs.server_id AND p.service_key=hs.service_key"
         with self._tx() as conn:
             total = conn.execute(
-                f"SELECT count(*) AS total FROM {_S}.host_services WHERE {clause}", args
+                f"SELECT count(*) AS total FROM {source} WHERE {clause}", args
             ).fetchone()["total"]
             rows = conn.execute(
-                f"""SELECT name, display_name, description, state, start_mode, can_stop,
-                           is_present, observed_at, updated_at
-                    FROM {_S}.host_services WHERE {clause}
-                    ORDER BY display_name COLLATE "C", service_key COLLATE "C"
+                f"""SELECT hs.service_key, hs.name, hs.display_name, hs.description,
+                           hs.state, hs.start_mode, hs.can_stop, hs.is_present,
+                           hs.observed_at, hs.updated_at,
+                           COALESCE(p.is_favorite, false) AS is_favorite,
+                           COALESCE(p.criticality, 'normal') AS criticality
+                    FROM {source} WHERE {clause}
+                    ORDER BY hs.display_name COLLATE "C", hs.service_key COLLATE "C"
                     LIMIT %(limit)s OFFSET %(offset)s""", args,
             ).fetchall()
+            favorites_count = conn.execute(
+                f"SELECT count(*) AS total FROM {_S}.host_service_preferences WHERE server_id=%s AND is_favorite",
+                (server_id,),
+            ).fetchone()["total"]
             current = conn.execute(
                 f"""SELECT run_id, observed_at, received_at, service_count
                     FROM {_S}.host_service_current WHERE server_id=%s""", (server_id,)
             ).fetchone()
         if current:
             current = {**current, "run_id": str(current["run_id"])}
-        return [dict(row) for row in rows], total, current
+        return [dict(row) for row in rows], total, current, favorites_count

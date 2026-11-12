@@ -10,6 +10,7 @@ const ALL_CAPS: Capabilities = {
   display_name: "Ana Souza",
   can_view_servers: true,
   can_manage_servers: true,
+  can_manage_host_services: true,
   can_create_notes: true,
   can_view_action_plans: true,
   can_manage_action_plans: true,

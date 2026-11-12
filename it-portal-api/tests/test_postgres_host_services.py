@@ -182,3 +182,103 @@ def test_retention_prunes_only_old_unreferenced_runs(pg_client, monkeypatch):
             "WHERE run_id=%s AND services IS NULL",
             (newer,),
         ).fetchone()["n"] == 1
+
+
+def test_favorites_are_shared_durable_audited_and_never_control_windows(pg_client, principal, monkeypatch):
+    """#1583: preferencias independentes do coletor, RBAC fresh e filtro SQL."""
+    from it_portal_app.infrastructure.persistence.db import db_connect
+
+    host = "srv-favorites-01.delpi.local"
+    created = pg_client.post(
+        "/servers", json=server_payload(name="Host favoritos", hostname=host),
+    )
+    assert created.status_code == 201, created.text
+    sid = created.json()["data"]["id"]
+    monkeypatch.setenv("IT_PORTAL_COLLECTOR_SERVER_ALLOWLIST", sid)
+    monkeypatch.setenv("IT_PORTAL_WINDOWS_COLLECTOR_BINDINGS", CLIENT + "=" + sid)
+    uri = "/collector/v1/servers/" + sid + "/host-services/batches"
+    headers = {"X-Delpi-Service-Authorization": "Bearer scope-token"}
+    first = pg_client.post(
+        uri, json=payload(
+            run_id=str(uuid.uuid4()), hostname=host,
+            services=[service("REST$PROD"), service("WindowsTime")],
+        ), headers=headers,
+    )
+    assert first.status_code == 201, first.text
+
+    listing = pg_client.get("/servers/" + sid + "/host-services").json()["data"]
+    assert listing["favorites_count"] == 0
+    assert listing["items"][0]["is_favorite"] is False
+    assert listing["items"][0]["criticality"] == "normal"
+    pref_uri = "/servers/" + sid + "/host-services/rest$prod/preferences"
+    body = {"is_favorite": True, "criticality": "critical"}
+
+    principal.permissions = ["it-portal.access", "it-portal.servers.view"]
+    assert pg_client.put(pref_uri, json=body).status_code == 403
+    principal.permissions = ["it-portal.access", "it-portal.host-services.manage"]
+    assert pg_client.put(pref_uri, json=body).status_code == 403
+    principal.permissions = [
+        "it-portal.access", "it-portal.servers.view", "it-portal.host-services.manage",
+    ]
+    principal.fresh_permissions = ["it-portal.access", "it-portal.servers.view"]
+    assert pg_client.put(pref_uri, json=body).status_code == 403
+    principal.fresh_permissions = None
+    before = principal.fresh_lookups
+    saved = pg_client.put(pref_uri, json=body)
+    assert saved.status_code == 200, saved.text
+    assert principal.fresh_lookups == before + 1
+    assert saved.json()["data"] == {
+        "service_key": "rest$prod", "is_favorite": True, "criticality": "critical",
+    }
+
+    all_rows = pg_client.get("/servers/" + sid + "/host-services").json()["data"]
+    assert all_rows["total"] == 2
+    assert all_rows["favorites_count"] == 1
+    rest = next(row for row in all_rows["items"] if row["name"] == "REST$PROD")
+    assert rest["is_favorite"] is True
+    assert rest["criticality"] == "critical"
+    starred = pg_client.get(
+        "/servers/" + sid + "/host-services?favorites_only=true",
+    ).json()["data"]
+    assert starred["total"] == 1
+    assert [row["service_key"] for row in starred["items"]] == ["rest$prod"]
+
+    # Repetir escrita nao gera um segundo evento de auditoria.
+    assert pg_client.put(pref_uri, json=body).status_code == 200
+    with db_connect() as conn:
+        audit_count = conn.execute(
+            """SELECT count(*) AS total FROM it_portal.audit_events
+                WHERE server_id=%s AND event_type='host_service_preference_updated'""",
+            (sid,),
+        ).fetchone()["total"]
+    assert audit_count == 1
+
+    # A coleta posterior nao substitui preferencia e preserva servico ausente.
+    second = payload(
+        run_id=str(uuid.uuid4()), hostname=host, services=[service("WindowsTime")],
+    )
+    second["observed_at"] = "2026-11-12T10:00:00Z"
+    reingest = pg_client.post(uri, json=second, headers=headers)
+    assert reingest.status_code == 201, reingest.text
+    absent = pg_client.get(
+        "/servers/" + sid + "/host-services?favorites_only=true&present=no",
+    ).json()["data"]
+    assert absent["total"] == 1
+    assert absent["items"][0]["is_present"] is False
+    assert absent["items"][0]["criticality"] == "critical"
+
+    # Revalidacao da autoridade e validacao de input.
+    assert pg_client.put(pref_uri, json={"is_favorite": False, "criticality": "critical"}).status_code == 422
+    assert pg_client.put(pref_uri, json={"is_favorite": True, "criticality": "invalid"}).status_code == 422
+    assert pg_client.put(
+        "/servers/" + sid + "/host-services/nonexistent/preferences", json=body,
+    ).status_code == 404
+    principal.fresh_unavailable = True
+    assert pg_client.put(pref_uri, json=body).status_code == 503
+    principal.fresh_unavailable = False
+
+    reset = pg_client.put(pref_uri, json={"is_favorite": False, "criticality": "normal"})
+    assert reset.status_code == 200
+    assert pg_client.get(
+        "/servers/" + sid + "/host-services?favorites_only=true&present=all",
+    ).json()["data"]["total"] == 0

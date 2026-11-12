@@ -9,10 +9,12 @@ from it_portal_app.application.host_service_inventory import HostServiceInventor
 from it_portal_app.core.responses import ok
 from it_portal_app.domain.host_services import VALID_STATES, VALID_START_MODES
 from it_portal_app.domain.errors import ValidationError
-from it_portal_app.interface.http.authz import SERVERS_VIEW, authorize
+from it_portal_app.interface.http.authz import (
+    SERVERS_VIEW, HOST_SERVICES_MANAGE, authorize, authorize_write, actor_from,
+)
 from it_portal_app.interface.http.dependencies import get_host_service_inventory
 from it_portal_app.interface.http.s2s_auth import require_collector_identity
-from it_portal_app.interface.http.schemas import Envelope, ERROR_RESPONSES, HostServiceBatchInput, HostServiceBatchReceipt, HostServicePage
+from it_portal_app.interface.http.schemas import Envelope, ERROR_RESPONSES, HostServiceBatchInput, HostServiceBatchReceipt, HostServicePage, HostServicePreferenceInput, HostServicePreferenceOut
 
 router = APIRouter(tags=["Windows Host Services"], responses=ERROR_RESPONSES)
 INGEST_SCOPE = "it-portal.host-services.ingest"
@@ -33,6 +35,7 @@ def list_host_services(request: Request, server_id: UUID,
     state: str | None = Query(default=None),
     start_mode: str | None = Query(default=None),
     present: Literal["yes","no","all"] = Query(default="yes"),
+    favorites_only: bool = Query(default=False),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=25, ge=1, le=100),
     service: HostServiceInventory = Depends(get_host_service_inventory)):
@@ -42,5 +45,21 @@ def list_host_services(request: Request, server_id: UUID,
     if start_mode is not None and start_mode not in VALID_START_MODES:
         raise ValidationError("invalid_start_mode", "Filtro de inicialização inválido.")
     data = service.list_services(str(server_id), q=q, state=state, start_mode=start_mode,
-        present=present, page=page, page_size=page_size)
+        present=present, page=page, page_size=page_size, favorites_only=favorites_only)
     return ok(data, operation_id="list_it_windows_host_services")
+
+
+@router.put("/servers/{server_id}/host-services/{service_name}/preferences",
+    operation_id="set_it_windows_host_service_preference",
+    response_model=Envelope[HostServicePreferenceOut])
+def set_host_service_preference(request: Request, server_id: UUID, service_name: str,
+    body: HostServicePreferenceInput,
+    service: HostServiceInventory = Depends(get_host_service_inventory)):
+    # Permissao dedicada para preferencias compartilhadas; revalida no Core.
+    user = authorize_write(request, SERVERS_VIEW, HOST_SERVICES_MANAGE)
+    result = service.save_preference(
+        str(server_id), service_name, is_favorite=body.is_favorite,
+        criticality=body.criticality, actor=actor_from(user),
+    )
+    return ok(result, "Preferência do serviço atualizada.",
+              operation_id="set_it_windows_host_service_preference")
