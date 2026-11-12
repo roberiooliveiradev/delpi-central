@@ -123,7 +123,7 @@ A homologação não é um segundo `COMPOSE_PROJECT_NAME` em cima do Compose de 
 | Env | `infra/env.hml.example` → `infra/.env.hml` |
 | Operação | `./infra/scripts/hml-compose.sh` |
 
-`up` sem profile não seleciona serviço. Profile `databases` sobe só os três PostgreSQL; o script autoriza somente esse `up` nesta etapa. TOTVS, schedulers, publicadores, Keycloak, APIs, Portal e o Nginx do host ficam de fora. Detalhe operacional: `infra/README-ambiente.md`.
+`up` sem profile não seleciona serviço. Profiles autorizados: `databases` (3 PostgreSQL) e `keycloak` (instância HML com `--no-deps`). Gateway/Portal/APIs continuam bloqueados. Entrada HTTP LAN: `${DELPI_HML_BIND_ADDR}:18080`. Detalhe: `infra/README-ambiente.md`.
 
 ---
 

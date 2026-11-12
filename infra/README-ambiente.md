@@ -184,7 +184,7 @@ cp infra/env.hml.example infra/.env.hml   # só no checkout de homologação; fo
 
 `up` sem `--profile` não seleciona serviço. Perfis: `databases` (somente os três PostgreSQL), `platform` (portal, core, api-delpi, plugin-ui, Keycloak, Postgres, Redis, gateway) e `baseline` / `production-control` (o anterior mais Production Control). Gateway planejado em `127.0.0.1:18080`, rede `delpi-hml-network`, volumes `delpi-hml-*`, dados em `infra/hml-data/`. Keycloak segue a imagem `quay.io/keycloak/keycloak:24.0` e o `start` de produção, com banco, hostname parametrizado (`DELPI_HML_PUBLIC_HOST`) e segredos próprios — não inicia na etapa databases.
 
-Nesta etapa o script autoriza apenas `up --scenario databases` (postgres-core, keycloak-db, postgres-plugins, sequencial com `--no-deps`). `build`, `pull`, `down`, `stop` e qualquer outro profile de `up` permanecem recusados. TOTVS, e-mail, Protheus, schedulers, publicadores MyWEG, Ollama, LanguageTool e o Nginx do host permanecem fora. O virtual host HTTPS da intranet ainda não está implantado; o example usa `hml.delpi.invalid` como placeholder (não `127.0.0.1`).
+Nesta etapa o script autoriza `up --scenario databases` e `up --scenario keycloak` (Keycloak com `--no-deps`, sem gateway/apps). `build`, `pull`, `down`, `stop` e demais profiles de `up` permanecem recusados. Entrada HTTP LAN planejada em `${DELPI_HML_BIND_ADDR}:18080` (ex.: `http://192.168.1.237:18080`); sem HTTPS nesta fase. TOTVS, e-mail, Protheus, schedulers, publicadores MyWEG, Ollama, LanguageTool e o Nginx do host permanecem fora. Bootstrap mínimo: `./infra/scripts/hml-compose.sh bootstrap-keycloak`.
 
 ### Evitar
 

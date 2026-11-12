@@ -2,18 +2,22 @@
 # Homologação delpi-hml — operação controlada.
 #
 # Leitura/simulação: list, validate, config, simulate, status.
-# Ativação autorizada somente para o profile `databases`
-# (postgres-core, keycloak-db, postgres-plugins), com --no-deps.
+# Ativação autorizada:
+#   - databases  → postgres-core, keycloak-db, postgres-plugins
+#   - keycloak   → somente o serviço keycloak (--no-deps; DB já ativo)
 # Qualquer outro up/build/pull/down/stop continua recusado.
+# Gateway/Portal/Core/PC permanecem bloqueados.
 #
 # Uso, a partir da raiz do repositório:
 #   ./infra/scripts/hml-compose.sh list
 #   ./infra/scripts/hml-compose.sh validate
-#   ./infra/scripts/hml-compose.sh config [--scenario databases|baseline|platform|production-control]
+#   ./infra/scripts/hml-compose.sh config [--scenario databases|keycloak|baseline|platform|production-control]
 #   ./infra/scripts/hml-compose.sh simulate [--scenario ...] [--services a,b]
 #   ./infra/scripts/hml-compose.sh status
 #   ./infra/scripts/hml-compose.sh up --scenario databases
-#   ./infra/scripts/hml-compose.sh up|down|stop|build|pull   # demais cenários: recusa
+#   ./infra/scripts/hml-compose.sh up --scenario keycloak
+#   ./infra/scripts/hml-compose.sh bootstrap-keycloak
+#   ./infra/scripts/hml-compose.sh up|down|stop|build|pull   # demais: recusa
 
 set -euo pipefail
 
@@ -24,13 +28,16 @@ PROJECT="delpi-hml"
 COMPOSE_FILE="docker-compose.hml.yml"
 ENV_EXAMPLE="env.hml.example"
 ENV_LOCAL=".env.hml"
-ACTIVATION_STATUS="HOMOLOGATION_DATABASES_ONLY_AUTHORIZED"
-HEALTH_TIMEOUT_SEC="${DELPI_HML_HEALTH_TIMEOUT_SEC:-120}"
+ACTIVATION_STATUS="HOMOLOGATION_DATABASES_AND_KEYCLOAK_AUTHORIZED"
+HEALTH_TIMEOUT_SEC="${DELPI_HML_HEALTH_TIMEOUT_SEC:-180}"
 
 DATABASE_SERVICES=(
   postgres-core
   keycloak-db
   postgres-plugins
+)
+KEYCLOAK_SERVICES=(
+  keycloak
 )
 PLATFORM_SERVICES=(
   postgres-core
@@ -62,17 +69,18 @@ START_ORDER=(
   production-control-api
   gateway
 )
+AUTHORIZED_UP_SCENARIOS=(databases keycloak)
 
 usage() {
-  sed -n '2,16p' "$0"
+  sed -n '2,20p' "$0"
 }
 
 refuse_activation() {
   local action="$1"
   echo "HOMOLOGATION_ACTIVATION_NOT_AUTHORIZED" >&2
-  echo "Ação '$action' não executada fora do profile databases." >&2
-  echo "Somente './infra/scripts/hml-compose.sh up --scenario databases' está autorizado nesta etapa." >&2
-  echo "Nenhum container adicional foi criado, iniciado, parado ou removido." >&2
+  echo "Ação '$action' não executada fora dos profiles autorizados." >&2
+  echo "Autorizados: up --scenario databases | up --scenario keycloak | bootstrap-keycloak." >&2
+  echo "Gateway, Portal, Core API e Production Control permanecem bloqueados." >&2
   exit 2
 }
 
@@ -80,6 +88,7 @@ scenario_services() {
   local scenario="$1"
   case "$scenario" in
     databases) printf '%s\n' "${DATABASE_SERVICES[@]}" ;;
+    keycloak) printf '%s\n' "${KEYCLOAK_SERVICES[@]}" ;;
     baseline) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" ;;
     platform) printf '%s\n' "${PLATFORM_SERVICES[@]}" ;;
     production-control) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" ;;
@@ -88,6 +97,14 @@ scenario_services() {
       exit 1
       ;;
   esac
+}
+
+is_authorized_up() {
+  local scenario="$1" s
+  for s in "${AUTHORIZED_UP_SCENARIOS[@]}"; do
+    [[ "$s" == "$scenario" ]] && return 0
+  done
+  return 1
 }
 
 ordered_selection() {
@@ -174,36 +191,36 @@ compose_config() {
 wait_healthy() {
   local service="$1"
   local env_file="$2"
+  local profile="${3:-databases}"
   local deadline=$((SECONDS + HEALTH_TIMEOUT_SEC))
-  local status
+  local status cid health
   echo "Aguardando health de $service (timeout ${HEALTH_TIMEOUT_SEC}s)..."
   while (( SECONDS < deadline )); do
     status="$(
       cd "$COMPOSE_DIR"
       docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
-        -f "$COMPOSE_FILE" --env-file "$env_file" --profile databases \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile "$profile" \
         ps --status running --format '{{.Health}}' "$service" 2>/dev/null || true
     )"
     if [[ "$status" == "healthy" ]]; then
       echo "HEALTH=$service:healthy"
       return 0
     fi
-    # Fallback: alguns ps formats retornam vazio; consultar docker inspect.
-    local cid
-    cid="$(docker ps -q --filter "name=^/${PROJECT}-${service}-" --filter "name=^/delpi-hml-${service}$" | head -n 1 || true)"
-    if [[ -z "$cid" ]]; then
-      cid="$(docker ps -q --filter "name=delpi-hml-${service}" | head -n 1 || true)"
-    fi
+    cid="$(docker ps -q --filter "name=delpi-hml-${service}" | head -n 1 || true)"
     if [[ -n "$cid" ]]; then
-      local health
       health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$cid" 2>/dev/null || true)"
-      if [[ "$health" == "healthy" || "$health" == "running" ]]; then
-        if docker exec "$cid" pg_isready -U "$(docker exec "$cid" printenv POSTGRES_USER)" -d "$(docker exec "$cid" printenv POSTGRES_DB)" >/dev/null 2>&1; then
-          echo "HEALTH=$service:pg_isready"
+      if [[ "$health" == "healthy" ]]; then
+        echo "HEALTH=$service:healthy"
+        return 0
+      fi
+      if [[ "$service" == keycloak ]]; then
+        if docker exec "$cid" bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080' >/dev/null 2>&1; then
+          echo "HEALTH=$service:tcp8080"
           return 0
         fi
-        if [[ "$health" == "healthy" ]]; then
-          echo "HEALTH=$service:healthy"
+      elif [[ "$health" == "running" ]]; then
+        if docker exec "$cid" pg_isready -U "$(docker exec "$cid" printenv POSTGRES_USER)" -d "$(docker exec "$cid" printenv POSTGRES_DB)" >/dev/null 2>&1; then
+          echo "HEALTH=$service:pg_isready"
           return 0
         fi
       fi
@@ -220,22 +237,24 @@ project: $PROJECT
 compose: infra/$COMPOSE_FILE
 checkout_previsto: /home/operador/projetos-teste/delpi-central
 activation: $ACTIVATION_STATUS
-porta_host: 127.0.0.1:18080 (container 80; sem 80/443 no host; não sobe nesta etapa)
+porta_host: \${DELPI_HML_BIND_ADDR}:18080 (gateway planejado; não sobe nesta etapa)
 rede: delpi-hml-network
 env: infra/$ENV_EXAMPLE → copiar para infra/$ENV_LOCAL no checkout de homologação
 
 cenários:
-  databases             somente postgres-core, keycloak-db, postgres-plugins (autorizado)
-  baseline              plataforma + production-control (ainda não autorizado a up)
+  databases             postgres-core, keycloak-db, postgres-plugins (autorizado)
+  keycloak              somente delpi-hml-keycloak (autorizado; --no-deps)
+  baseline              plataforma + production-control (up bloqueado)
   platform              portal, core, api-delpi, plugin-ui, auth, bancos, redis, gateway
   production-control    platform + MFE e API de Production Control
 
-ordem de subida (databases nesta etapa):
+ordem databases:
 $(printf '  %s\n' "${DATABASE_SERVICES[@]}")
+ordem keycloak:
+$(printf '  %s\n' "${KEYCLOAK_SERVICES[@]}")
 
-desligados por ausência no Compose de homologação:
-  ollama, vllm, searxng, languagetool, chat, schedulers myweg,
-  external-data-scheduler, demais plugins e APIs
+bloqueados nesta etapa:
+  gateway, portal, core-api, api-delpi, plugin-ui, production-control*, redis
 EOF
 }
 
@@ -244,6 +263,8 @@ cmd_validate() {
   env_file="$(env_file_for example)"
   echo "Renderizando config (profile databases, $env_file)..."
   compose_config databases "$env_file" >/dev/null
+  echo "Renderizando config (profile keycloak, $env_file)..."
+  compose_config keycloak "$env_file" >/dev/null
   echo "Renderizando config (profile baseline, $env_file)..."
   compose_config baseline "$env_file" >/dev/null
   echo "Render sem profile (não deve publicar serviços)..."
@@ -272,10 +293,9 @@ cmd_simulate() {
   fi
   local -a known=()
   mapfile -t known < <(scenario_services "$scenario")
-  local svc ok
+  local svc ok have
   for svc in "${wanted[@]}"; do
     ok=false
-    local have
     for have in "${known[@]}"; do
       [[ "$svc" == "$have" ]] && ok=true
     done
@@ -292,9 +312,9 @@ cmd_simulate() {
   echo "activation=$ACTIVATION_STATUS"
   echo "serviços, na ordem:"
   printf '  %s\n' "${plan[@]}"
-  if [[ "$scenario" == "databases" ]]; then
+  if is_authorized_up "$scenario"; then
     echo "comando autorizado (ainda não executado neste simulate):"
-    echo "  ./infra/scripts/hml-compose.sh up --scenario databases"
+    echo "  ./infra/scripts/hml-compose.sh up --scenario $scenario"
   else
     echo "comando que NÃO foi executado (up ainda não autorizado para este cenário):"
     echo "  docker compose --project-name $PROJECT -f infra/$COMPOSE_FILE --env-file infra/$ENV_LOCAL --profile $scenario up -d --no-deps ${plan[*]}"
@@ -314,20 +334,25 @@ cmd_status() {
   )
 }
 
-cmd_up_databases() {
+require_local_env() {
   local env_file
   env_file="$(env_file_for local)"
   assert_env_file_allowed "$env_file"
   assert_compose_identity
   if [[ ! -f "$COMPOSE_DIR/$ENV_LOCAL" ]]; then
-    echo "infra/$ENV_LOCAL ausente. Copie de env.hml.example e defina credenciais exclusivas antes do up." >&2
+    echo "infra/$ENV_LOCAL ausente. Copie de env.hml.example e defina credenciais exclusivas." >&2
     exit 1
   fi
   if [[ "$(basename "$env_file")" != "$ENV_LOCAL" ]]; then
-    echo "up databases exige infra/$ENV_LOCAL (não o example)." >&2
+    echo "operação exige infra/$ENV_LOCAL (não o example)." >&2
     exit 1
   fi
+  printf '%s\n' "$env_file"
+}
 
+cmd_up_databases() {
+  local env_file
+  env_file="$(require_local_env)"
   echo "ATIVACAO=databases"
   echo "project=$PROJECT"
   echo "env=infra/$ENV_LOCAL"
@@ -344,7 +369,7 @@ cmd_up_databases() {
           -f "$COMPOSE_FILE" --env-file "$env_file" --profile databases \
           up -d --no-deps --no-build "$svc"
     )
-    wait_healthy "$svc" "$env_file"
+    wait_healthy "$svc" "$env_file" databases
   done
 
   echo "HML_DATABASES_UP=PASS"
@@ -353,6 +378,52 @@ cmd_up_databases() {
     docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
       -f "$COMPOSE_FILE" --env-file "$env_file" --profile databases ps
   )
+}
+
+cmd_up_keycloak() {
+  local env_file
+  env_file="$(require_local_env)"
+
+  # Bancos HML devem continuar saudáveis; não reiniciar.
+  local db
+  for db in delpi-hml-postgres-core delpi-hml-keycloak-db delpi-hml-postgres-plugins; do
+    docker ps --format '{{.Names}} {{.Status}}' | grep -E "^${db} .*healthy" >/dev/null || {
+      echo "[ERRO] $db não está healthy. Abortado sem iniciar Keycloak." >&2
+      exit 1
+    }
+  done
+
+  echo "ATIVACAO=keycloak"
+  echo "project=$PROJECT"
+  echo "env=infra/$ENV_LOCAL"
+  echo "servicos=keycloak"
+  echo "modo=up -d --no-deps --no-build (não sobe gateway/apps)"
+
+  (
+    cd "$COMPOSE_DIR"
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile keycloak \
+        up -d --no-deps --no-build keycloak
+  )
+  wait_healthy keycloak "$env_file" keycloak
+
+  # Garantir que nada além dos 3 DBs + keycloak subiu.
+  local extras
+  extras="$(docker ps -a --filter name=delpi-hml --format '{{.Names}}' | grep -Ev 'delpi-hml-(postgres-core|keycloak-db|postgres-plugins|keycloak)$' || true)"
+  if [[ -n "$extras" ]]; then
+    echo "[ERRO] containers HML inesperados após up keycloak:" >&2
+    echo "$extras" >&2
+    exit 1
+  fi
+
+  echo "HML_KEYCLOAK_UP=PASS"
+  docker ps --filter name=delpi-hml --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+}
+
+cmd_bootstrap_keycloak() {
+  require_local_env >/dev/null
+  bash "$SCRIPT_DIR/keycloak-hml-bootstrap.sh"
 }
 
 SCENARIO="baseline"
@@ -394,15 +465,20 @@ case "$ACTION" in
     fi
     ;;
   status) cmd_status ;;
+  bootstrap-keycloak) cmd_bootstrap_keycloak ;;
   up)
-    if [[ "$SCENARIO" != "databases" ]]; then
+    if ! is_authorized_up "$SCENARIO"; then
       refuse_activation "up --scenario $SCENARIO"
     fi
     if [[ -n "$SERVICES" ]]; then
-      echo "up databases não aceita --services parcial nesta etapa; sobe os três bancos na ordem canônica." >&2
+      echo "up autorizado não aceita --services parcial; use o cenário canônico." >&2
       exit 1
     fi
-    cmd_up_databases
+    case "$SCENARIO" in
+      databases) cmd_up_databases ;;
+      keycloak) cmd_up_keycloak ;;
+      *) refuse_activation "up --scenario $SCENARIO" ;;
+    esac
     ;;
   down|stop|start|restart|build|pull|rm|kill|push)
     refuse_activation "$ACTION"

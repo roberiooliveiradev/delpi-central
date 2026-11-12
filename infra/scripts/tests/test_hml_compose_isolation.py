@@ -29,6 +29,9 @@ DATABASES = {
     "keycloak-db",
     "postgres-plugins",
 }
+# Profile keycloak inclui keycloak-db só para satisfazer depends_on no config;
+# o up operacional usa --no-deps e sobe apenas o serviço keycloak.
+KEYCLOAK_ONLY = {"keycloak", "keycloak-db"}
 BASELINE = {
     "postgres-core",
     "keycloak-db",
@@ -44,11 +47,16 @@ BASELINE = {
     "gateway",
 }
 PLATFORM = BASELINE - {"production-control", "production-control-api"}
+KEYCLOAK_DIGEST = (
+    "quay.io/keycloak/keycloak@sha256:"
+    "f8ade94c1d0ad2f2fa7734a455fee5392764f402c43ca35e9af6bf63a2541dc9"
+)
 UPSTREAM_IMAGES = {
     "postgres:15",
     "pgvector/pgvector:pg15",
     "redis:7-alpine",
     "quay.io/keycloak/keycloak:24.0",
+    KEYCLOAK_DIGEST,
 }
 PROD_DATA_MARKERS = (
     "/var/lib/delpi",
@@ -162,14 +170,33 @@ def assert_source_files() -> None:
         fail("nginx de produção foi alterado e perdeu o server_name vigente")
     if "KEYCLOAK_ISSUER=http://127.0.0.1" in example or "KC_HOSTNAME=127.0.0.1" in example:
         fail("env.hml.example fixa 127.0.0.1 como issuer/hostname permanente")
-    if "DELPI_HML_PUBLIC_HOST=" not in example or "hml.delpi.invalid" not in example:
-        fail("origem pública parametrizada ausente no env de homologação")
-    if "quay.io/keycloak/keycloak:24.0" not in hml:
-        fail("Keycloak HML sem pin de versão 24.0 alinhado à produção")
-    if "up --scenario databases" not in script:
-        fail("script sem caminho autorizado de up databases")
-    if "HOMOLOGATION_DATABASES_ONLY_AUTHORIZED" not in script:
-        fail("script sem marcador de autorização databases-only")
+    if "https://hml.delpi.invalid" in example or "KEYCLOAK_ISSUER=https://" in example:
+        fail("env.hml.example ainda usa HTTPS placeholder nesta fase HTTP")
+    if "DELPI_HML_PUBLIC_HOST=" not in example or "DELPI_HML_PUBLIC_ORIGIN=http://" not in example:
+        fail("origem pública HTTP parametrizada ausente no env de homologação")
+    if "DELPI_HML_BIND_ADDR=" not in example:
+        fail("DELPI_HML_BIND_ADDR ausente no env de homologação")
+    if KEYCLOAK_DIGEST not in hml and "quay.io/keycloak/keycloak@sha256:f8ade94c1d0ad2f2" not in hml:
+        fail("Keycloak HML sem pin por digest alinhado à produção")
+    if "profiles: [keycloak" not in hml and "keycloak, baseline" not in hml:
+        fail("profile keycloak ausente no Compose")
+    if "up --scenario databases" not in script or "up --scenario keycloak" not in script:
+        fail("script sem caminhos autorizados databases/keycloak")
+    if "HOMOLOGATION_DATABASES_AND_KEYCLOAK_AUTHORIZED" not in script:
+        fail("script sem marcador de autorização databases+keycloak")
+    if "X-Forwarded-Port 18080" not in nginx:
+        fail("nginx HML não fixa X-Forwarded-Port 18080 para redirects")
+    bootstrap = INFRA / "scripts" / "keycloak-hml-bootstrap.sh"
+    if not bootstrap.is_file():
+        fail("keycloak-hml-bootstrap.sh ausente")
+    boot = bootstrap.read_text(encoding="utf-8")
+    if "directAccessGrantsEnabled\": False" not in boot and "directAccessGrantsEnabled\": false" not in boot:
+        # script embeds JSON via python with False
+        if "directAccessGrantsEnabled" not in boot:
+            fail("bootstrap HML não declara política de direct grants")
+    # Guardrails negativas (recusa se origem/client apontar produção) são OK.
+    if re.search(r'(ORIGIN|URL|ISSUER)=https?://[^\\s]*minhadelpi\\.com\\.br', boot):
+        fail("bootstrap HML configura URL produtiva")
 
 
 def published_ports(service: dict) -> list[dict]:
@@ -237,6 +264,9 @@ def assert_isolation(rendered: dict, prod_names: set[str], *, require_gateway: b
         image = service.get("image") or ""
         if image in UPSTREAM_IMAGES:
             pass
+        elif image.startswith("quay.io/keycloak/keycloak@sha256:"):
+            if image != KEYCLOAK_DIGEST:
+                fail(f"{name} digest Keycloak divergente: {image}")
         elif image.startswith("delpi-hml/") and image.endswith(":local"):
             pass
         else:
@@ -252,8 +282,10 @@ def assert_isolation(rendered: dict, prod_names: set[str], *, require_gateway: b
         for port in published_ports(service):
             host_ip = str(port.get("host_ip") or "")
             published = str(port.get("published") or "")
-            if host_ip != "127.0.0.1":
-                fail(f"{name} publica em {host_ip or '0.0.0.0'}:{published}")
+            # Homologação: bind LAN específico (ex. 192.168.1.237) ou loopback.
+            # Nunca 0.0.0.0/:: sem necessidade.
+            if host_ip in {"", "0.0.0.0", "::", "*"}:
+                fail(f"{name} publica em wildcard {host_ip or '0.0.0.0'}:{published}")
             if published in {"80", "443", "11434"}:
                 fail(f"{name} publica porta ocupada pela produção: {published}")
         for source in bind_sources(service):
@@ -325,9 +357,18 @@ def assert_isolation(rendered: dict, prod_names: set[str], *, require_gateway: b
     gateway_ports = published_ports(services["gateway"])
     if len(gateway_ports) != 1 or str(gateway_ports[0].get("published")) != "18080":
         fail(f"gateway deveria publicar só 18080, veio {gateway_ports}")
+    host_ip = str(gateway_ports[0].get("host_ip") or "")
+    if host_ip in {"", "0.0.0.0", "::"}:
+        fail(f"gateway HML não deve bindar em wildcard ({host_ip!r})")
     for name, service in services.items():
         if name != "gateway" and published_ports(service):
             fail(f"{name} não deveria publicar porta no host")
+    kc = services["keycloak"]
+    kc_image = kc.get("image") or ""
+    if KEYCLOAK_DIGEST not in kc_image and not kc_image.endswith(
+        "f8ade94c1d0ad2f2fa7734a455fee5392764f402c43ca35e9af6bf63a2541dc9"
+    ):
+        fail(f"keycloak sem digest produtivo: {kc_image}")
 
 
 def assert_prod_source_unchanged() -> None:
@@ -374,6 +415,12 @@ def main() -> None:
     databases = assert_rendered("databases", DATABASES)
     assert_isolation(databases, prod_names, require_gateway=False)
     assert_databases_no_implicit_deps(databases)
+    keycloak = assert_rendered("keycloak", KEYCLOAK_ONLY)
+    assert_isolation(keycloak, prod_names, require_gateway=False)
+    if "gateway" in keycloak["services"] or "core-api" in keycloak["services"] or "portal" in keycloak["services"]:
+        fail("profile keycloak puxou apps/gateway")
+    if set(keycloak["services"]) - {"keycloak", "keycloak-db"}:
+        fail(f"profile keycloak com serviços extras: {sorted(keycloak['services'])}")
     platform = assert_rendered("platform", PLATFORM)
     if "production-control" in platform["services"]:
         fail("profile platform inclui Production Control")
@@ -382,7 +429,8 @@ def main() -> None:
     print("HML_COMPOSE_ISOLATION=PASS")
     print(
         f"services_baseline={len(BASELINE)} services_databases={len(DATABASES)} "
-        "network=delpi-hml-network port=127.0.0.1:18080"
+        f"services_keycloak={len(KEYCLOAK_ONLY)} network=delpi-hml-network "
+        "port=${DELPI_HML_BIND_ADDR}:18080"
     )
 
 

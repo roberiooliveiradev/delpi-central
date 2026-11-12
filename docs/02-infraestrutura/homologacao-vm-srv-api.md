@@ -1,10 +1,10 @@
 # Minha DELPI — Homologação na VM srv-api — registro de continuidade
 
-> **Atualizado:** 11/11/2026 · **Estado:** Compose HML na `main`; **três PostgreSQL HML ativos** e isolados; apps/Keycloak/gateway **não** iniciados.  
+> **Atualizado:** 12/11/2026 · **Estado:** HTTP LAN parametrizado; Keycloak HML autorizado a iniciar após publish; gateway/apps **não** iniciados.  
 > **Repositório:** `roberiooliveiradev/delpi-central`.  
-> **TASK_ID:** `HML-COMPOSE-PUBLISH-AND-DATABASES-01`.  
-> **SHA integrado:** `211fa666378f28cb2b020c7af0b27f57bfeb5219` (`main`).  
-> **HEAD base observado na reancoragem:** ancestral `a531cba71e5f` confirmado; publicação sobre `b6f3e4e392` → `ab1d59557f` (compose) → `211fa66637` (modo +x do script).
+> **TASK_ID:** `HML-HTTP-KEYCLOAK-01`.  
+> **BASE_HEAD (reancoragem):** `98e7657d4c311d14d7b1d3978d6b8930e98729b4` (`origin/main`).  
+> **SHA integrado:** *preencher após push* (compose HTTP + Keycloak).
 
 ## 1. Objetivo e regras congeladas
 
@@ -13,69 +13,77 @@ Ambiente de homologação independente na mesma VM `srv-api`, sem interferir em 
 - Produção: `/home/operador/projetos/delpi-central`.
 - Homologação: `/home/operador/projetos-teste/delpi-central`.
 - Git: commit/push só no computador local; VM apenas `git pull --ff-only`.
-- **Autorizado e executado nesta rodada:** somente `postgres-core`, `keycloak-db`, `postgres-plugins` do projeto `delpi-hml`.
-- **Ainda proibido:** Keycloak app, Core API, Portal, Production Control, gateway, migrations de apps, restore sanitizado, exposição intranet.
+- **Autorizado nesta rodada:** configurar HTTP LAN, publicar, iniciar **somente** `delpi-hml-keycloak`, bootstrap mínimo de realm/client/usuário de teste.
+- **Ainda proibido:** gateway HML, Portal, Core API, Production Control, restore sanitizado, HTTPS/intranet pública, exposição internet.
 
-## 2. Situação factual e evidências
+## 2. Inventário de portas (leitura — 12/11/2026)
 
-| Frente | Estado | Evidência |
-|---|---|---|
-| VM | **PROVEN** | 16 vCPUs; ~47 GiB RAM; disco `/dev/sda2` ~394G (~227G livres); swap 8G `/dev/sdb` (0B usado antes/depois). |
-| Compose HML | **PASS / na main** | `infra/docker-compose.hml.yml` + script/testes/gateway HML + docs. |
-| Isolamento estático | **PASS** | `hml-compose.sh validate` local e na VM → `HML_COMPOSE_ISOLATION=PASS`. |
-| `.env.hml` | **PASS (não versionado)** | Criado no checkout HML a partir de `env.hml.example`; mode `0600`; placeholders `CHANGE_ME_*` substituídos; **não** copiado de produção. |
-| Bancos HML | **PASS / running healthy** | `delpi-hml-postgres-core`, `delpi-hml-keycloak-db`, `delpi-hml-postgres-plugins`. |
-| Produção | **PRESERVADA** | IDs/`StartedAt` de `delpi-postgres-core`, `delpi-keycloak-db`, `delpi-postgres-plugins`, `delpi-gateway`, `delpi-core-api` inalterados após o `up` HML. |
-| Keycloak HML | **NÃO INICIADO** | Pin `quay.io/keycloak/keycloak:24.0`; digest produtivo observado `sha256:f8ade94c1d0ad2f2fa7734a455fee5392764f402c43ca35e9af6bf63a2541dc9`; issuer placeholder `hml.delpi.invalid` (não `127.0.0.1` permanente). |
-| Apps/gateway HML | **NÃO INICIADOS** | Apenas os 3 containers `delpi-hml-*` existem. |
+IP LAN confirmado: **192.168.1.237/24** (`ens192`).
 
-### Recursos criados
+| Bind | Porta | Responsável (amostra) | Finalidade |
+|---|---|---|---|
+| 0.0.0.0 / :: | 80 | `delpi-gateway` + nginx host | Produção HTTP |
+| 0.0.0.0 | 443 / 8443 | nginx host | Produção TLS / auxiliar |
+| 0.0.0.0 | 22 | sshd | Administração |
+| 0.0.0.0 | 5432 | Postgres host (não HML) | Serviço externo/local |
+| 0.0.0.0 | 8080 | `inventario-ti-glpi-1` | GLPI |
+| 0.0.0.0 | 8082/8083/8085 | PAC nginx / Evolution | Outros produtos |
+| 0.0.0.0 | 11434 | `delpi-ollama` | Ollama |
+| 127.0.0.1 | 18088 | `controle-mp-prod-front` | Controles MP |
+| 127.0.0.1 | 3000 / 8001 | api-delpi local / aux | Loopback |
+| — | **18080** | **livre** (IPv4/IPv6) | **Reservada HML** |
 
-| Tipo | Nome |
+Decisão: entrada única HML = `http://192.168.1.237:18080` (sem HTTPS nesta fase). Não publicar portas de Postgres/Keycloak/APIs HML no host.
+
+Firewall UFW: sem regras verbosas retornadas na coleta; acesso permanece na LAN/Tailscale existentes — não abrir internet.
+
+## 3. Configuração OIDC / HTTP
+
+| Variável | Valor de exemplo (`.env.hml` / example) |
 |---|---|
-| Rede | `delpi-hml-network` |
-| Volumes | `delpi-hml-postgres-core`, `delpi-hml-keycloak`, `delpi-hml-postgres-plugins` |
-| Containers | `delpi-hml-postgres-core` (`postgres:15`), `delpi-hml-keycloak-db` (`postgres:15`), `delpi-hml-postgres-plugins` (`pgvector/pgvector:pg15`) |
+| `DELPI_HML_BIND_ADDR` | `192.168.1.237` |
+| `DELPI_HML_PUBLIC_ORIGIN` | `http://192.168.1.237:18080` |
+| `KC_HOSTNAME` / `KC_HOSTNAME_PORT` | `192.168.1.237` / `18080` |
+| `KC_HOSTNAME_STRICT_HTTPS` | `false` |
+| `KC_PROXY` | `edge` |
+| `KEYCLOAK_ISSUER` | `http://192.168.1.237:18080/auth/realms/delpi` |
+| `KEYCLOAK_JWKS_URL` | interno `http://keycloak:8080/.../certs` |
+| `VITE_KC_*` | origem HTTP `:18080` |
 
-Limites aplicados: core/plugins `1g`/1.0 CPU; keycloak-db `768m`/0.5 CPU. Memória observada ~25 MiB por banco HML.
+Keycloak imagem: `quay.io/keycloak/keycloak@sha256:f8ade94c1d0ad2f2fa7734a455fee5392764f402c43ca35e9af6bf63a2541dc9` (tag efetiva 24.0 / digest produtivo reconfirmado).
 
-### Isolamento dos bancos
+Gateway HML: bind `${DELPI_HML_BIND_ADDR}:18080:80`; `X-Forwarded-Port 18080` no `/auth/`. **Não iniciado nesta etapa** → login browser/Portal = **PENDING**.
 
-- Rede exclusiva `delpi-hml-network` (sem `infra_delpi-network`).
-- Volumes distintos dos produtivos (`infra_postgres_*` / `infra_keycloak_data`).
-- Sem portas publicadas no host.
-- Conexão interna OK (`psql` via `docker exec`); schemas `public` com **0** tabelas (só init controlado / vazio — sem restore).
-- Checkout HML em `211fa66637`.
+## 4. Situação factual
+
+| Frente | Estado |
+|---|---|
+| 3 PostgreSQL HML | **PASS** (healthy, isolados) |
+| Compose/tests estáticos | **PASS** (`validate`) |
+| Keycloak HML container | **PENDING ativação pós-publish** |
+| Bootstrap realm/client/user | **PENDING pós-ativação** (`keycloak-hml-bootstrap.sh`) |
+| Gateway / Portal login | **PENDING / BLOQUEADO** |
+| Produção | **PRESERVAR** (IDs monitorados antes/depois) |
 
 ### REUSE GATE
 
 | Capacidade | Decisão |
 |---|---|
-| Compose prod via `extends` + `!override` | **REUSE** |
-| Subida sequencial `--no-deps` | **EXTEND** em `hml-compose.sh` |
-| Novo mecanismo paralelo de deploy | **NEW rejeitado** |
+| Compose `extends` + profiles | **REUSE/EXTEND** (`keycloak` profile) |
+| `keycloak-dev-bootstrap.sh` Admin REST | **EXTEND** → `keycloak-hml-bootstrap.sh` (sem MCP/direct grants) |
+| Deploy paralelo | **NEW rejeitado** |
 
-## 3. Próxima fila
+## 5. Próxima fila
 
 | Ordem | Entrega | Estado |
 |---|---|---|
-| 1 | Publicar Compose + ativar 3 PostgreSQL | **CONCLUÍDO (executor; sem autoaceite)** |
-| 2 | Definir hostname HTTPS intranet + clients OIDC HML | **PENDING** |
-| 3 | Bootstrap Keycloak HML (sem cadastro produtivo) | **BLOQUEADO até autorização** |
-| 4 | Apps/Portal/gateway HML | **BLOQUEADO** |
-| 5 | Restore sanitizado de dados | **BLOQUEADO** |
+| 1 | Publish HTTP + Keycloak config | **EM CURSO** |
+| 2 | `up --scenario keycloak` + bootstrap | **PENDING** |
+| 3 | Gateway HML + validação browser | **BLOQUEADO** |
+| 4 | Apps / restore | **BLOQUEADO** |
 
-## 4. Protocolo de retomada
-
-1. Reancorar `origin/main` e este documento.
-2. Operar só no checkout `projetos-teste` com `hml-compose.sh`.
-3. Não iniciar Keycloak/apps sem nova autorização explícita.
-4. Não copiar `.env` de produção; não push a partir da VM.
-
-**STOP:** qualquer referência a recurso produtivo; OOM/degradação; `up` fora de `databases`.
-
-## 5. Referências
+## 6. Referências
 
 - [Docker Compose](./docker-compose.md) §5.1
-- `infra/README-ambiente.md` (Homologação)
-- `.cursor/rules/platform-delivery-runtime-operations.mdc`, `local-first-deploy.mdc`, `infra-sequential-container-startup.mdc`
+- `infra/README-ambiente.md`
+- `infra/scripts/hml-compose.sh`, `infra/scripts/keycloak-hml-bootstrap.sh`
