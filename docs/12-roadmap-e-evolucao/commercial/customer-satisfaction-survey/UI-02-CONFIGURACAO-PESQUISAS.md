@@ -271,6 +271,23 @@ Os limiares acima são **faixas de teste propostas**, não equivalem automaticam
 
 Números das linhas **ilustrativos**; não codificar no frontend. Situação vem do backend, derivada da janela. “Participantes” significa cadastrados na campanha, não convites efetivamente enviados; o sistema não comprova contato.
 
+### Decisão visual aprovada — diálogo Nova campanha, UI-02A.1 (12/11/2026)
+
+**APROVADO PELO SOLICITANTE:** a criação é um **diálogo curto**, seguindo os componentes, tokens e comportamento responsivo já existentes no Portal Comercial, sem nova tela ou formulário complexo. O conteúdo editável inicial limita-se a **Nome da campanha**, **Data de início** e **Data de término**, todos obrigatórios; participantes e mensagem serão configurados no detalhe da campanha **após** criação confirmada.
+
+**Ordem visual do topo à base:**
+1. **Cabeçalho do diálogo oficial:** título **Nova campanha** à esquerda e fechamento conforme padrão de `CommercialHostDialog`; descrição curta imediatamente abaixo, orientando que mensagem e participantes vêm depois.
+2. **Nome da campanha:** campo obrigatório, largura útil completa, rótulo visível, exemplo de nome no placeholder sem substituir o rótulo.
+3. **Datas:** **Data de início** e **Data de término**, rótulos e indicadores obrigatórios, **lado a lado em desktop** e **empilhados no celular**, respeitando componente/calendário real e fuso/contrato da API. Não inventar formatação independente do kit.
+4. **Informação de questionário:** bloco informativo discreto — **Questionário oficial: 15 perguntas fixas** — sem edição, seleção ou cadastro de perguntas nesta versão.
+5. **Rodapé do diálogo:** **Cancelar** (secundária) e **Criar campanha** (primária), alinhados à direita conforme padrão do modal. Não posicionar ações globais da página dentro do corpo do formulário.
+
+**Comportamentos:** botão Criar indisponível enquanto os três campos obrigatórios não forem válidos; término posterior ao início, com validação final na `commercial-api`. Exibir carregamento/erro usando feedback oficial sem duplicar criação; manter dados preenchidos quando houver falha. **Somente após confirmação persistida** fechar o diálogo e navegar à **UI-02B, configuração da campanha criada** (Participantes / Mensagem padrão / Dados), onde se adicionam clientes TOTVS e se salva mensagem por campanha. Cancelar descarta a criação sem gerar campanha local falsa.
+
+**Dimensões, padding, margens, fonte e responsividade:** herdar dos tokens e da implantação real do `CommercialHostDialog` e controles oficiais; duas colunas de datas somente quando comportadas, uma em mobile. **PENDING inventário de CSS/props exatos e teste visual** antes de fixar medidas numéricas; não inventar overrides.
+
+**Status:** composição e três campos **APROVADOS**; contratos técnicos, implementação e validação em dispositivos **PENDING**. Não incluir envio automático, editor de questionário, inclusão de empresas ou mensagem padrão dentro do diálogo.
+
 ## 3. Wireframe B — detalhe de campanha
 
 ```text
