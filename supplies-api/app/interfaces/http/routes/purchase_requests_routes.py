@@ -8,6 +8,8 @@ from urllib.parse import urlencode
 from flask import Blueprint, Response, g, jsonify, request
 
 from app.domain.exceptions import AuthorizationError
+from app.infrastructure.gateways.delpi_api_gateway import DelpiApiGateway, DelpiApiGatewayError
+from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
 from app.infrastructure.gateways.purchase_requests_gateway import (
     PurchaseRequestsGateway,
     PurchaseRequestsGatewayError,
@@ -32,6 +34,7 @@ from app.interfaces.http.auth_decorators import require_policy, require_unit, re
 purchase_requests_bp = Blueprint("purchase_requests", __name__)
 
 _GATEWAY = PurchaseRequestsGateway()
+_APPROVAL_DELPI = DelpiApiGateway()
 _REQUESTER_IDENTITY = RequesterIdentityService()
 _PHOTO_SCOPE = RequesterPhotoScopeGuard()
 
@@ -91,6 +94,38 @@ def list_portal_purchase_requests():
     data = _REQUESTER_IDENTITY.enrich_payload(
         _unwrap_data(payload), access_token=_access_token()
     )
+    return jsonify(data), 200
+
+
+
+@purchase_requests_bp.get("/purchase-requests/approval-lead-time")
+@require_policy(can_use_purchase_requests)
+@require_units("branch")
+def get_portal_approval_lead_time():
+    """HD #1004: verified SCR history only; BFF is the sole browser gateway."""
+    allowed = {"branch", "date_from", "date_to", "request_number", "page", "page_size"}
+    if any(key not in allowed for key in request.args.keys()):
+        return jsonify({"detail": "Filtro não suportado.", "code": "unprocessable"}), 422
+    params = [(key, value) for key in request.args.keys()
+              for value in request.args.getlist(key)]
+    try:
+        payload = _APPROVAL_DELPI.get(
+            "/supplies/purchase-requests/approval-lead-time",
+            access_token=_access_token(),
+            params=params,
+        )
+    except DelpiApiGatewayError as exc:
+        if exc.status_code == 422:
+            return jsonify({"detail": "Revise os filtros, período ou paginação.", "code": "unprocessable"}), 422
+        if exc.status_code in (401, 403):
+            return jsonify({"detail": "Acesso negado.", "code": "forbidden"}), 403
+        return jsonify({"detail": "Não foi possível consultar as aprovações.", "code": "bad_gateway"}), 502
+    data = unwrap_delpi_envelope(payload)
+    if (not isinstance(data, dict) or data.get("source") != "SCR010"
+            or data.get("scope") != "confirmed_history_only"
+            or not isinstance(data.get("summary"), dict)
+            or not isinstance(data.get("items"), list)):
+        return jsonify({"detail": "Resposta inválida do indicador.", "code": "bad_gateway"}), 502
     return jsonify(data), 200
 
 
