@@ -185,7 +185,7 @@ export function ServerDetailPage({ serverId }: { serverId: string }) {
 
         {activeSection === "inventory" ? <ServerAutomaticInventorySection serverId={server.id} /> : null}
 
-        {activeSection === "host_services" ? <ServerWindowsServicesSection serverId={server.id} /> : null}
+        {activeSection === "host_services" ? <ServerWindowsServicesSection serverId={server.id} canManageFavorites={capabilities?.can_manage_host_services === true && !server.archived} /> : null}
 
         {activeSection === "services" ||
         activeSection === "databases" ||
