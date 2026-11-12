@@ -1392,6 +1392,47 @@ def _table_engine_summary(result: dict) -> dict:
     }
 
 
+async def _run_understanding_visual_benchmark(ctx, code: str):
+    """OCR evidence para o caminho de understanding.
+
+    Pipeline primário do perfil primeiro; o(s) pipeline(s) de
+    comparação do benchmark só roda(m) como fallback quando o
+    primário não produz evidência utilizável. Antes ambos rodavam em
+    série e só o `best` era consumido — ~2x de custo OCR por página,
+    o que estourava o orçamento do job em documentos multipágina.
+    Retorna (out, runs_utilizaveis)."""
+    from engineering_app.application.drawing.document_benchmark_service import (  # noqa: E501
+        run_official_document_benchmark,
+    )
+
+    pipelines = list(
+        _BENCHMARK_PROFILES["approved_local_visual_ocr"].get("pipelines")
+        or []
+    )
+
+    async def _call(visual_pipelines):
+        out = await run_official_document_benchmark(
+            code=code,
+            source=bridge.build_delegated_auxiliary_source(),
+            ctx=ctx,
+            providers=None,
+            visual_pipelines=visual_pipelines or None,
+            corpus_id="official_drawing",
+            environment="mcp_governed",
+        )
+        return out, [
+            r
+            for r in out["runs"]
+            if r.get("status") in {"ok", "partial"}
+            and r.get("_tokens_sample")
+        ]
+
+    out, runs = await _call(pipelines[:1])
+    if not runs and len(pipelines) > 1:
+        out, runs = await _call(pipelines[1:])
+    return out, runs
+
+
 async def _produce_drawing_understanding(context, code: str):
     """Produção compartilhada de evidência visual (R12.1) — caso de uso
     interno do bridge, NÃO um handler MCP. Chamável por composição
@@ -1399,9 +1440,6 @@ async def _produce_drawing_understanding(context, code: str):
     sem dependência circular entre handlers. Retorna
     (understanding, structure, best_run, tokens) ou lança
     DrawingAnalysisError."""
-    from engineering_app.application.drawing.document_benchmark_service import (  # noqa: E501
-        run_official_document_benchmark,
-    )
     from engineering_app.application.drawing.drawing_analysis_service import (  # noqa: E501
         DrawingAnalysisError,
     )
@@ -1412,22 +1450,8 @@ async def _produce_drawing_understanding(context, code: str):
         build_understanding,
     )
 
-    spec = _BENCHMARK_PROFILES["approved_local_visual_ocr"]
     ctx = bridge._source_context(context)
-    out = await run_official_document_benchmark(
-        code=code,
-        source=bridge.build_delegated_auxiliary_source(),
-        ctx=ctx,
-        providers=None,
-        visual_pipelines=spec.get("pipelines"),
-        corpus_id="official_drawing",
-        environment="mcp_governed",
-    )
-    runs = [
-        r
-        for r in out["runs"]
-        if r.get("status") in {"ok", "partial"} and r.get("_tokens_sample")
-    ]
+    out, runs = await _run_understanding_visual_benchmark(ctx, code)
     if not runs:
         raise DrawingAnalysisError(
             "no_ocr_evidence",
