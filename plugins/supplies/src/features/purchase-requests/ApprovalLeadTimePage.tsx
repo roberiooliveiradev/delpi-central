@@ -18,6 +18,8 @@ import {
   type ApprovalLeadTimeFilters,
   type ApprovalLeadTimeResponse,
 } from "./approvalLeadTimeApi";
+import { ApprovalLeadTimeApproverInsights } from "./ApprovalLeadTimeApproverInsights";
+import { ApprovalLeadTimePendingRequests } from "./ApprovalLeadTimePendingRequests";
 import "./ApprovalLeadTimePage.css";
 
 function localToday(): string {
@@ -121,13 +123,6 @@ export function ApprovalLeadTimePage({ basePath }: { basePath: string }) {
   };
 
   const summary = data?.summary;
-  const buckets = summary ? [
-    { label: "Mesmo dia", value: summary.same_day },
-    { label: "1 a 2 dias", value: summary.one_to_two_days },
-    { label: "3 a 5 dias", value: summary.three_to_five_days },
-    { label: "6 a 10 dias", value: summary.six_to_ten_days },
-    { label: "Acima de 10 dias", value: summary.over_10_days },
-  ] : [];
   const listHref = buildPluginPath("purchase_requests", basePath);
 
   return (
@@ -198,6 +193,7 @@ export function ApprovalLeadTimePage({ basePath }: { basePath: string }) {
               { title: "Tempo médio de aprovação", value: summary?.avg_lead_days == null ? "—" : `${numberLabel(summary.avg_lead_days, 2)} dias` },
               { title: "Aprovadas no mesmo dia", value: numberLabel(summary?.same_day) },
               { title: "Com mais de um nível", value: numberLabel(summary?.multi_level) },
+              { title: "SCs com alçada pendente na SCR", value: numberLabel(summary?.pending_requests) },
             ].map((metric) => (
               <div className="sp-approval-lead-time__metric" key={metric.title}>
                 <span>{metric.title}</span>
@@ -206,22 +202,17 @@ export function ApprovalLeadTimePage({ basePath }: { basePath: string }) {
             ))}
           </section>
 
-          <SuppliesSectionCard title="Distribuição por prazo" hint="Faixas completas em dias corridos, sem estimar aprovações sem SCR.">
-            <div className="sp-approval-lead-time__buckets">
-              {buckets.map((bucket) => {
-                const pct = summary?.total_requests ? (bucket.value / summary.total_requests) * 100 : 0;
-                return (
-                  <div key={bucket.label} className="sp-approval-lead-time__bucket">
-                    <div className="sp-approval-lead-time__bucket-label">
-                      <span>{bucket.label}</span>
-                      <strong>{numberLabel(bucket.value)} · {numberLabel(pct, 1)}%</strong>
-                    </div>
-                    <div className="sp-approval-lead-time__bar"><div style={{ width: `${pct}%` }} /></div>
-                  </div>
-                );
-              })}
-            </div>
-          </SuppliesSectionCard>
+          <ApprovalLeadTimePendingRequests
+            items={data.pending_items}
+            total={data.pending_total}
+            truncated={data.pending_truncated}
+            basePath={basePath}
+          />
+
+          <ApprovalLeadTimeApproverInsights
+            summary={data.summary}
+            approvers={data.approver_stats}
+          />
 
           <SuppliesSectionCard title="Solicitações com histórico comprovado" hint="Clique na SC para abrir a ficha. Expanda a linha para consultar cada nível registrado.">
             {data.items.length === 0 ? (
@@ -231,7 +222,7 @@ export function ApprovalLeadTimePage({ basePath }: { basePath: string }) {
                 <table className="sp-approval-lead-time__table">
                   <thead><tr>
                     <th>SC</th><th>Unidade</th><th>Solicitante</th>
-                    <th>Criação</th><th>Última aprovação</th><th>Níveis</th><th>Prazo</th><th>Etapas</th>
+                    <th>Criação</th><th>Última aprovação</th><th>Último aprovador</th><th>Níveis</th><th>Prazo</th><th>Etapas</th>
                   </tr></thead>
                   <tbody>
                     {data.items.map((item) => (
@@ -245,6 +236,13 @@ export function ApprovalLeadTimePage({ basePath }: { basePath: string }) {
                         <td>{item.requester_name || "Não identificado"}</td>
                         <td>{dateLabel(item.issue_date)}</td>
                         <td>{dateLabel(item.final_approval_date)}</td>
+                        <td className="sp-approval-lead-time__name-cell">
+                          {Array.from(new Set(
+                            item.events
+                              .filter((event) => event.approved_at === item.final_approval_date)
+                              .map((event) => event.approver_name || event.approver_code),
+                          )).join(" · ") || "—"}
+                        </td>
                         <td>{item.approval_levels}</td>
                         <td><strong>{item.lead_days} d</strong></td>
                         <td>
@@ -255,7 +253,11 @@ export function ApprovalLeadTimePage({ basePath }: { basePath: string }) {
                                 {item.events.map((event, index) => (
                                   <li key={`${event.level}:${event.approved_at}:${event.approver_code}:${index}`}>
                                     <strong>Nível {event.level}</strong> · {dateLabel(event.approved_at)}
-                                    <span>Aprovador {event.approver_code} · Usuário executor {event.action_user_code}</span>
+                                    <span>
+                                      {event.approver_name || `Aprovador ${event.approver_code}`}
+                                      {" · "}código {event.approver_code}
+                                      {" · "}usuário Protheus {event.approver_user_code || event.action_user_code}
+                                    </span>
                                   </li>
                                 ))}
                               </ol>
@@ -278,9 +280,11 @@ export function ApprovalLeadTimePage({ basePath }: { basePath: string }) {
           </SuppliesSectionCard>
 
           <p className="sp-approval-lead-time__note">
-            Fonte: SCR010 (aprovações 03) + SC1010 (criação e estado). Pedidos de compra,
-            liberações sem SCR, aprovações automáticas presumidas e observações do monitoramento
-            não entram na média. O prazo mede dias corridos, não horas de trabalho.
+            Fonte: SCR010 para aprovações e pendências (status 03 e 02); SAK010 apenas para
+            nomes de aprovadores; SC1010 para emissão e estado atual. Pendências, aprovações
+            automáticas presumidas e solicitações sem SCR não entram no tempo médio das SCs
+            concluídas. Os prazos medem dias corridos, não horas úteis. Reaprovações podem
+            influenciar os históricos e devem ser homologadas com Suprimentos.
           </p>
         </>
       ) : null}

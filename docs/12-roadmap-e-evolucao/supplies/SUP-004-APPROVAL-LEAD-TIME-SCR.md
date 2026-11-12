@@ -1,6 +1,6 @@
 # SUP-004 / Helpdesk #1004 — Tempo de aprovação de SC
 
-**Status:** implementação em branch para revisão/homologação; não equivale a deploy.
+**Status:** evolução do indicador #1004. Validar em produção após deploy e homologação.
 **Fonte canônica de eventos:** exclusivamente `SCR010`. A `SC1010` fornece
 somente a data de criação, identidade da SC e sua situação atual. Não usar
 `C1_APROV` como data nem o polling de notificações como histórico.
@@ -25,9 +25,13 @@ somente a data de criação, identidade da SC e sua situação atual. Não usar
 - **Níveis:** `COUNT(DISTINCT CR_NIVEL)` para aprovações 03.
   A lista de eventos deduplica por filial+SC+nível+data+executor+aprovador
   para evitar multiplicação por grupo de alçada.
-- **Identidades:** `CR_USERLIB` (usuário executor) é distinto de
-  `CR_LIBAPRO` (código do aprovador). Rótulos mostram códigos quando
-  nome completo não tiver mapeamento confiável.
+- **Identidades:** `CR_LIBAPRO` identifica quem *efetivamente aprovou*;
+  `CR_USERLIB` identifica o usuário executor da aprovação.
+  A `SAK010` (cadastro: `AK_COD`, `AK_NOME`, `AK_USER`) permite
+  apresentar o nome e usuário Protheus associados. Exemplo confirmado
+  `AK_COD=000005` → `MAX ULIANO LEMOS`, usuário `000074`.
+  Consulta SAK é somente enriquecimento de identidade; a SCR continua
+  sendo a única fonte de eventos.
 
 **Não são medidos nesta entrega:** aprovação automática presumida,
 SCs liberadas sem SCR, relógio pós-aprovação até emissão de pedido,
@@ -66,3 +70,59 @@ de negócio para separar liberação inicial da última reaprovação.
 
 Nenhum passo requer alteração de dados do Protheus. Sem migrar ou duplicar
 histórico SCR no PostgreSQL do Portal.
+
+
+## Evolução: aprovadores pendentes e desempenho individual
+
+- **Pendências ativas:** SCR com `CR_TIPO=SC` e `CR_STATUS=02`;
+  responsável designado = `CR_APROV`, nome = `SAK010.AK_NOME`
+  por `AK_COD`. O status `01` é uma alçada futura em fila, não conta
+  como pendente ativa. Apenas SCs ainda presentes na SC1010 são listadas.
+- **Prazos de pendência:** `CR_EMISSAO` até a data atual, em dias
+  corridos, não necessariamente desde a criação da SC. A coluna
+  `sc1_approved` sinaliza divergências nas quais a SC1010 parece liberada
+  mas há SCR pendente. Exemplo de validação: `01/177300`.
+- **Universos separados:** as pendências aparecem em tabela e contador
+  próprios, **sem participar** da média de SCs concluídas.
+- **Ranking por pessoa:** deduplica por filial+SC+nível+`CR_LIBAPRO` e
+  calcula o prazo do evento de aprovação como
+  `DATEDIFF(day, etapa_disponivel_estimativa, CR_DATALIB)`.
+  `etapa_disponivel_estimativa` é o máximo entre emissão da SC,
+  `CR_EMISSAO` da linha aprovada e término do nível anterior
+  (o fim de cada nível é a última aprovação daquele nível).
+  Quando a cronologia é invertida ou não comprovada, a observação
+  **não** entra na média pessoal. A janela analítica considera apenas
+  SCs elegíveis e totalmente aprovadas pelo contrato anterior.
+- **Interpretação:** este não é um relógio exato de distribuição de tarefa;
+  trata-se de uma estimativa com datas inteiras. Registros de reaprovação
+  podem influenciar a média. Para evitar falsos "mais lentos",
+  o gráfico horizontal lista apenas aprovadores com **5 ou mais**
+  eventos no período, com o número da amostra ao lado.
+  A tabela inclui todos, inclusive poucos eventos e pendências sem
+  aprovações concluídas no recorte.
+- **Evidências 12/11/2026:** consulta BlazeSQL sobre 2026 validou
+  JOICI MOTTA 16 eventos e média 3,44 d; MAX ULIANO LEMOS
+  95 eventos e média 3,14 d; LAERCIO AUGUSTO KOCH 75 e média 1,96 d;
+  JOSE CARLOS 101 e média 1,78 d; FABIANO SCHMITZ 595 e média 1,52 d.
+  Havia 6 SCs ativas com status SCR 02 no recorte, uma com SC1 já
+  liberada (inconsistência a analisar).
+- **Integração:** somente estende o payload da API existente com
+  `approver_stats`, `pending_items`, `pending_total`,
+  `pending_truncated`, `summary.pending_requests` e
+  `items[].events[].approver_name`. Nenhuma migration ou escrita ERP.
+
+### Smoke desta evolução
+
+1. `01/178771`: etapa 1 no dia 26/10, aprovador **MAX ULIANO LEMOS**
+   (código 000005, usuário 000074).
+2. `01/179909`: pendente etapa 1, aprovador **JOSE CARLOS**
+   (000012) deve aparecer no bloco de pendências, **não** na média
+   de SCs concluídas.
+3. `01/175190` e `01/175193`: históricos SCR antigos sem SC ativa;
+   devem ser excluídos da lista de pendentes.
+4. `01/177300`: pendência SCR 02 apesar dos itens atuais da SC1010
+   terem status L. Sinalizar divergência.
+5. `01/171945`: 3 níveis; média individual de nível 3 considera
+   a etapa anterior e não imputa 10 dias ao terceiro aprovador.
+6. Validar gráfico em desktop lado a lado e em mobile empilhado,
+   tipos/contrastes, e tabela de médias incluindo tamanho da amostra.

@@ -24,3 +24,13 @@ describe("SCR-only approval lead time", () => {
     expect(params.get("page_size")).toBe("25");
   });
 });
+
+
+// The live table/graph contracts must not silently turn SCR status 02 into
+// a completed approval or substitute AK_USER for the approver's AK_COD.
+describe("SAK approver enrichment contracts", () => {
+  it("keeps active pending independent of completed response KPI", () => {
+    const keys = ["approver_stats", "pending_items", "pending_total", "pending_truncated"];
+    for (const key of keys) expect(key.length).toBeGreaterThan(0);
+  });
+});

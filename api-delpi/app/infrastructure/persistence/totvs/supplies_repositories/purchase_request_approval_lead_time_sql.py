@@ -167,8 +167,20 @@ SELECT DISTINCT
     RTRIM(SCR.CR_NIVEL) AS level,
     CONVERT(varchar(10), TRY_CONVERT(date, SCR.CR_DATALIB, 112), 23) AS approved_at,
     RTRIM(SCR.CR_USERLIB) AS action_user_code,
-    RTRIM(SCR.CR_LIBAPRO) AS approver_code
+    RTRIM(SCR.CR_LIBAPRO) AS approver_code,
+    SAK.approver_name AS approver_name,
+    SAK.approver_user_code AS approver_user_code
 FROM SCR010 SCR WITH (NOLOCK)
+OUTER APPLY (
+    SELECT TOP (1)
+        NULLIF(RTRIM(AK.AK_NOME), '') AS approver_name,
+        NULLIF(RTRIM(AK.AK_USER), '') AS approver_user_code
+    FROM SAK010 AK WITH (NOLOCK)
+    WHERE AK.D_E_L_E_T_ = ''
+      AND AK.AK_COD = SCR.CR_LIBAPRO
+      AND RTRIM(AK.AK_FILIAL) IN ('', RTRIM(SCR.CR_FILIAL))
+    ORDER BY CASE WHEN RTRIM(AK.AK_FILIAL) = RTRIM(SCR.CR_FILIAL) THEN 0 ELSE 1 END
+) SAK
 WHERE SCR.D_E_L_E_T_ = ''
   AND SCR.CR_TIPO = 'SC'
   AND SCR.CR_STATUS = '03'
@@ -176,3 +188,196 @@ WHERE SCR.D_E_L_E_T_ = ''
 ORDER BY branch, request_number, level, approved_at, approver_code
 """
     return sql, params
+
+
+
+MAX_PENDING_REQUESTS = 100
+
+
+def build_lead_time_pending_sql(where_clause: str) -> str:
+    """Current SCR status 02 (active pending), never status 01 (queued later level).
+
+    The first 100 distinct active SCs are selected before joining pending
+    approvers, so parallel approval groups cannot hide another SC. Pending
+    totals are computed before paging; the approved mean is not affected.
+    """
+    return f"""
+WITH request_headers AS (
+    SELECT
+        RTRIM(SC1.C1_FILIAL) AS branch,
+        RTRIM(SC1.C1_NUM) AS request_number,
+        MIN(TRY_CONVERT(date, NULLIF(RTRIM(SC1.C1_EMISSAO), ''), 112)) AS issue_date,
+        MIN(NULLIF(RTRIM(SC1.C1_SOLICIT), '')) AS requester_name,
+        SUM(CASE WHEN RTRIM(SC1.C1_APROV) = 'L' THEN 0 ELSE 1 END) AS unapproved_items,
+        SUM(CASE WHEN TRY_CONVERT(date, NULLIF(RTRIM(SC1.C1_EMISSAO), ''), 112)
+                      IS NULL THEN 1 ELSE 0 END) AS invalid_issue_items
+    FROM SC1010 SC1 WITH (NOLOCK)
+    WHERE {where_clause}
+    GROUP BY RTRIM(SC1.C1_FILIAL), RTRIM(SC1.C1_NUM)
+),
+pending_heads AS (
+    SELECT H.*,
+        COUNT(*) OVER () AS pending_total,
+        ROW_NUMBER() OVER (
+            ORDER BY H.issue_date DESC, H.branch, H.request_number DESC
+        ) AS rn
+    FROM request_headers H
+    WHERE H.issue_date IS NOT NULL AND H.invalid_issue_items = 0
+      AND EXISTS (
+          SELECT 1 FROM SCR010 SCR WITH (NOLOCK)
+          WHERE SCR.D_E_L_E_T_ = '' AND SCR.CR_TIPO = 'SC'
+            AND RTRIM(SCR.CR_STATUS) = '02'
+            AND RTRIM(SCR.CR_FILIAL) = H.branch
+            AND RTRIM(SCR.CR_NUM) = H.request_number
+      )
+)
+SELECT DISTINCT
+    H.branch, H.request_number,
+    CONVERT(varchar(10), H.issue_date, 23) AS issue_date,
+    H.requester_name, H.unapproved_items, H.pending_total,
+    RTRIM(SCR.CR_NIVEL) AS level,
+    RTRIM(SCR.CR_APROV) AS approver_code,
+    SAK.approver_name,
+    SAK.approver_user_code,
+    CONVERT(varchar(10), TRY_CONVERT(date, NULLIF(RTRIM(SCR.CR_EMISSAO), ''), 112), 23)
+        AS pending_since,
+    CASE WHEN TRY_CONVERT(date, NULLIF(RTRIM(SCR.CR_EMISSAO), ''), 112)
+              <= CAST(GETDATE() AS date)
+        THEN DATEDIFF(day,
+            TRY_CONVERT(date, NULLIF(RTRIM(SCR.CR_EMISSAO), ''), 112),
+            CAST(GETDATE() AS date))
+        ELSE NULL END AS waiting_days
+FROM pending_heads H
+JOIN SCR010 SCR WITH (NOLOCK)
+  ON RTRIM(SCR.CR_FILIAL) = H.branch
+ AND RTRIM(SCR.CR_NUM) = H.request_number
+ AND SCR.D_E_L_E_T_ = ''
+ AND SCR.CR_TIPO = 'SC'
+ AND RTRIM(SCR.CR_STATUS) = '02'
+OUTER APPLY (
+    SELECT TOP (1)
+        NULLIF(RTRIM(AK.AK_NOME), '') AS approver_name,
+        NULLIF(RTRIM(AK.AK_USER), '') AS approver_user_code
+    FROM SAK010 AK WITH (NOLOCK)
+    WHERE AK.D_E_L_E_T_ = ''
+      AND AK.AK_COD = SCR.CR_APROV
+      AND RTRIM(AK.AK_FILIAL) IN ('', RTRIM(SCR.CR_FILIAL))
+    ORDER BY CASE WHEN RTRIM(AK.AK_FILIAL) = RTRIM(SCR.CR_FILIAL) THEN 0 ELSE 1 END
+) SAK
+WHERE H.rn <= {MAX_PENDING_REQUESTS}
+ORDER BY issue_date DESC, H.branch, H.request_number DESC, level, approver_code
+"""
+
+
+def build_lead_time_approvers_sql(where_clause: str) -> str:
+    """Fair per-approver estimate: time from stage activation to each approval.
+
+    Stage start uses max(SC created, SCR record created, previous level
+    completely approved). We cannot claim an exact queue-entry timestamp.
+    Count one event per (branch, SC, level, actual approver); ignore reversed
+    chronology. Only *completed, verified* SCs feed the average.
+    """
+    return _eligible_cte(where_clause) + """
+,
+approved_rows AS (
+    SELECT
+        E.branch, E.request_number, E.issue_date,
+        RTRIM(SCR.CR_NIVEL) AS level,
+        RTRIM(SCR.CR_LIBAPRO) AS approver_code,
+        TRY_CONVERT(date, NULLIF(RTRIM(SCR.CR_EMISSAO), ''), 112)
+            AS registered_at,
+        TRY_CONVERT(date, NULLIF(RTRIM(SCR.CR_DATALIB), ''), 112)
+            AS approved_at,
+        ROW_NUMBER() OVER (
+            PARTITION BY E.branch, E.request_number,
+                         RTRIM(SCR.CR_NIVEL), RTRIM(SCR.CR_LIBAPRO)
+            ORDER BY SCR.CR_DATALIB DESC, SCR.R_E_C_N_O_ DESC
+        ) AS rn
+    FROM eligible E
+    JOIN SCR010 SCR WITH (NOLOCK)
+      ON SCR.D_E_L_E_T_ = ''
+     AND SCR.CR_TIPO = 'SC'
+     AND RTRIM(SCR.CR_STATUS) = '03'
+     AND RTRIM(SCR.CR_FILIAL) = E.branch
+     AND RTRIM(SCR.CR_NUM) = E.request_number
+),
+level_completion AS (
+    SELECT branch, request_number, level, MAX(approved_at) AS level_finished
+    FROM approved_rows WHERE rn = 1
+    GROUP BY branch, request_number, level
+),
+level_sequence AS (
+    SELECT branch, request_number, level,
+        LAG(level_finished) OVER (
+            PARTITION BY branch, request_number ORDER BY level
+        ) AS previous_level_finished
+    FROM level_completion
+),
+timed_events AS (
+    SELECT E.approver_code,
+        DATEDIFF(day, T.started_at, E.approved_at) AS response_days
+    FROM approved_rows E
+    JOIN level_sequence L ON
+        L.branch = E.branch AND L.request_number = E.request_number
+        AND L.level = E.level
+    CROSS APPLY (
+        SELECT MAX(V.d) AS started_at
+        FROM (VALUES (E.issue_date), (E.registered_at),
+                     (L.previous_level_finished)) V(d)
+    ) T
+    WHERE E.rn = 1 AND T.started_at IS NOT NULL
+      AND E.approved_at >= T.started_at
+),
+approver_metrics AS (
+    SELECT approver_code,
+        COUNT(*) AS approvals,
+        CAST(AVG(CAST(response_days AS decimal(18, 2))) AS decimal(12, 2))
+            AS avg_days,
+        MAX(response_days) AS max_days,
+        SUM(CASE WHEN response_days = 0 THEN 1 ELSE 0 END) AS same_day
+    FROM timed_events GROUP BY approver_code
+),
+pending_people AS (
+    SELECT DISTINCT H.branch, H.request_number,
+        RTRIM(SCR.CR_APROV) AS approver_code
+    FROM request_headers H
+    JOIN SCR010 SCR WITH (NOLOCK)
+      ON SCR.D_E_L_E_T_ = '' AND SCR.CR_TIPO = 'SC'
+     AND RTRIM(SCR.CR_STATUS) = '02'
+     AND RTRIM(SCR.CR_FILIAL) = H.branch
+     AND RTRIM(SCR.CR_NUM) = H.request_number
+    WHERE H.invalid_issue_items = 0
+      AND NULLIF(RTRIM(SCR.CR_APROV), '') IS NOT NULL
+),
+pending_totals AS (
+    SELECT approver_code, COUNT(*) AS pending_count
+    FROM pending_people GROUP BY approver_code
+),
+all_codes AS (
+    SELECT approver_code FROM approver_metrics
+    UNION
+    SELECT approver_code FROM pending_totals
+)
+SELECT
+    Codes.approver_code,
+    COALESCE(SAK.approver_name, Codes.approver_code) AS approver_name,
+    SAK.approver_user_code,
+    COALESCE(M.approvals, 0) AS approvals,
+    M.avg_days, M.max_days,
+    COALESCE(M.same_day, 0) AS same_day,
+    COALESCE(P.pending_count, 0) AS pending_count
+FROM all_codes Codes
+LEFT JOIN approver_metrics M ON M.approver_code = Codes.approver_code
+LEFT JOIN pending_totals P ON P.approver_code = Codes.approver_code
+OUTER APPLY (
+    SELECT TOP (1)
+        NULLIF(RTRIM(AK.AK_NOME), '') AS approver_name,
+        NULLIF(RTRIM(AK.AK_USER), '') AS approver_user_code
+    FROM SAK010 AK WITH (NOLOCK)
+    WHERE AK.D_E_L_E_T_ = '' AND AK.AK_COD = Codes.approver_code
+    ORDER BY CASE WHEN RTRIM(AK.AK_FILIAL) = '' THEN 0 ELSE 1 END
+) SAK
+ORDER BY
+    CASE WHEN M.avg_days IS NULL THEN 1 ELSE 0 END,
+    M.avg_days DESC, M.approvals DESC, Codes.approver_code
+"""

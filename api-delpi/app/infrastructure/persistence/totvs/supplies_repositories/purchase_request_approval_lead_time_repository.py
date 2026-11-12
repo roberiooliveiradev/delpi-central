@@ -10,6 +10,9 @@ from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request
     DEFAULT_PAGE_SIZE,
     MAX_PAGE_SIZE,
     build_lead_time_events_sql,
+    build_lead_time_pending_sql,
+    build_lead_time_approvers_sql,
+    MAX_PENDING_REQUESTS,
     build_lead_time_filter,
     build_lead_time_page_sql,
     build_lead_time_summary_sql,
@@ -62,6 +65,12 @@ class PurchaseRequestApprovalLeadTimeRepository(BaseRepository):
                 events = repo.execute_query(events_sql, tuple(events_params))
             else:
                 events = []
+            pending_rows = repo.execute_query(
+                build_lead_time_pending_sql(where), tuple(params)
+            )
+            approver_rows = repo.execute_query(
+                build_lead_time_approvers_sql(where), tuple(params)
+            )
 
         events_by_sc: dict[tuple[str, str], list[dict[str, str]]] = {}
         seen_events: set[tuple[str, str, str, str, str, str]] = set()
@@ -75,6 +84,8 @@ class PurchaseRequestApprovalLeadTimeRepository(BaseRepository):
                 "approved_at": str(event.get("approved_at") or "").strip(),
                 "action_user_code": str(event.get("action_user_code") or "").strip(),
                 "approver_code": str(event.get("approver_code") or "").strip(),
+                "approver_name": str(event.get("approver_name") or "").strip() or None,
+                "approver_user_code": str(event.get("approver_user_code") or "").strip() or None,
             }
             identity = (*key, *payload.values())
             if identity in seen_events:
@@ -99,6 +110,52 @@ class PurchaseRequestApprovalLeadTimeRepository(BaseRepository):
                 "events": events_by_sc.get((branch, number_value), []),
             })
 
+        # Pending is a separate SCR fact, never a completed approval. The
+        # number of pending SCs is calculated before limiting the list.
+        pending_by_sc: dict[tuple[str, str], dict[str, Any]] = {}
+        for row in pending_rows:
+            branch = str(row.get("branch") or "").strip()
+            number_value = str(row.get("request_number") or "").strip()
+            key = (branch, number_value)
+            item = pending_by_sc.setdefault(key, {
+                "branch": branch,
+                "request_number": number_value,
+                "issue_date": row.get("issue_date"),
+                "requester_name": row.get("requester_name"),
+                "sc1_approved": int(row.get("unapproved_items") or 0) == 0,
+                "pending_approvers": [],
+            })
+            approver = {
+                "level": str(row.get("level") or "").strip(),
+                "approver_code": str(row.get("approver_code") or "").strip(),
+                "approver_name": str(row.get("approver_name") or "").strip() or None,
+                "approver_user_code": str(row.get("approver_user_code") or "").strip() or None,
+                "pending_since": row.get("pending_since"),
+                "waiting_days": (
+                    int(row["waiting_days"]) if row.get("waiting_days") is not None else None
+                ),
+            }
+            if approver not in item["pending_approvers"]:
+                item["pending_approvers"].append(approver)
+
+        pending_total = (
+            int(pending_rows[0].get("pending_total") or 0) if pending_rows else 0
+        )
+        approver_stats = [{
+            "approver_code": str(row.get("approver_code") or "").strip(),
+            "approver_name": str(row.get("approver_name") or row.get("approver_code") or "").strip(),
+            "approver_user_code": str(row.get("approver_user_code") or "").strip() or None,
+            "approvals": int(row.get("approvals") or 0),
+            "avg_days": (
+                float(row["avg_days"]) if row.get("avg_days") is not None else None
+            ),
+            "max_days": (
+                int(row["max_days"]) if row.get("max_days") is not None else None
+            ),
+            "same_day": int(row.get("same_day") or 0),
+            "pending_count": int(row.get("pending_count") or 0),
+        } for row in approver_rows]
+
         total = int(summary_row.get("total_requests") or 0)
         return {
             "source": "SCR010",
@@ -122,7 +179,12 @@ class PurchaseRequestApprovalLeadTimeRepository(BaseRepository):
                 "six_to_ten_days": int(summary_row.get("six_to_ten_days") or 0),
                 "over_10_days": int(summary_row.get("over_10_days") or 0),
                 "multi_level": int(summary_row.get("multi_level") or 0),
+                "pending_requests": pending_total,
             },
+            "approver_stats": approver_stats,
+            "pending_items": list(pending_by_sc.values()),
+            "pending_total": pending_total,
+            "pending_truncated": pending_total > MAX_PENDING_REQUESTS,
             "items": items,
             "total": total,
             "page": page,

@@ -66,3 +66,25 @@
 .sp-approval-lead-time__footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-top: 16px; }
 .sp-approval-lead-time__footer > div { display: flex; gap: 8px; }
 .sp-approval-lead-time__note { font-size: 0.78rem; opacity: 0.78; line-height: 1.6; }
+
+.sp-approval-lead-time__charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+.sp-approval-lead-time__charts > * { min-width: 0; }
+.sp-approval-lead-time__name-cell { min-width: 170px; white-space: normal; }
+.sp-approval-lead-time__pending-cell { min-width: 220px; white-space: normal; }
+.sp-approval-lead-time__pending-entry { display: flex; flex-direction: column; gap: 3px; margin: 5px 0; }
+.sp-approval-lead-time__pending-entry > small { opacity: 0.76; }
+.sp-approval-lead-time__warning { font-size: 0.78rem; color: #b45309; display: block; max-width: 290px; white-space: normal; }
+.sp-approval-lead-time__table-note { margin-top: 10px; opacity: 0.77; font-size: 0.79rem; line-height: 1.5; }
+.sp-approval-lead-time__bar--approver > div { background: #023667; }
+.sp-approval-lead-time__ranking { display: flex; flex-direction: column; gap: 14px; }
+.sp-approval-lead-time__ranking-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-approval-lead-time__ranking-count { opacity: 0.7; font-size: 0.77rem; }
+.sp-approval-lead-time__ranking .sp-approval-lead-time__bucket-label { align-items: center; }
+@media (max-width: 980px) {
+  .sp-approval-lead-time__charts { grid-template-columns: minmax(0, 1fr); }
+}

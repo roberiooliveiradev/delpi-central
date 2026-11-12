@@ -5,6 +5,37 @@ export type ApprovalLeadTimeEvent = {
   approved_at: string;
   action_user_code: string;
   approver_code: string;
+  approver_name: string | null;
+  approver_user_code: string | null;
+};
+
+export type ApprovalPendingApprover = {
+  level: string;
+  approver_code: string;
+  approver_name: string | null;
+  approver_user_code: string | null;
+  pending_since: string | null;
+  waiting_days: number | null;
+};
+
+export type ApprovalPendingRequest = {
+  branch: string;
+  request_number: string;
+  issue_date: string;
+  requester_name: string | null;
+  sc1_approved: boolean;
+  pending_approvers: ApprovalPendingApprover[];
+};
+
+export type ApprovalApproverStats = {
+  approver_code: string;
+  approver_name: string;
+  approver_user_code: string | null;
+  approvals: number;
+  avg_days: number | null;
+  max_days: number | null;
+  same_day: number;
+  pending_count: number;
 };
 
 export type ApprovalLeadTimeRecord = {
@@ -39,7 +70,12 @@ export type ApprovalLeadTimeResponse = {
     six_to_ten_days: number;
     over_10_days: number;
     multi_level: number;
+    pending_requests: number;
   };
+  approver_stats: ApprovalApproverStats[];
+  pending_items: ApprovalPendingRequest[];
+  pending_total: number;
+  pending_truncated: boolean;
   items: ApprovalLeadTimeRecord[];
   total: number;
   page: number;
