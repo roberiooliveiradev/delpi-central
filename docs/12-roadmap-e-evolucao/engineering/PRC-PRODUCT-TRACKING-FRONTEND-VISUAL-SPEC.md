@@ -118,3 +118,61 @@ Reutilizar tema claro/escuro e design system existente. Não fixar tokens novos 
 6. Provar visualmente em browser real, desktop/mobile, claro/escuro e acesso por teclado; nesta documentação, **TEST_NOT_RUN**.
 
 **Classificação:** decisões de UX do usuário = **TARGET documentado**; existência/compatibilidade dos componentes, contratos e runtime = **TO_INVENTORY**. Nenhum teste de frontend foi executado nesta tarefa documental.
+
+## 9. Página 1 — Controle e Cadastro de Produtos: composição visual APROVADA pelo PO (2026-11-12)
+
+**Status:** `UX_APPROVED / TARGET_IMPLEMENTATION`. Aprovação funcional/visual do desenho conceitual, **não** implementação ou QA browser.
+
+### Hierarquia fixa
+
+1. **Top bar global do Portal** (host; não duplicar no MFE).
+2. **Breadcrumb** com `EngineeringPagePath`.
+3. **Um único hero compacto** `EngineeringPageHero`, título **Controle e Cadastro de Produtos** e subtítulo **Gerencie solicitações e acompanhe evoluções confirmadas de produtos.**
+4. **Seletor segmentado dentro do hero, logo após título/subtítulo:** `Solicitações | Produtos acompanhados`, via `EngineeringSegmentToggle` do Plugin UI; **Solicitações** é o segmento padrão.
+5. **Filtros dentro do próprio hero**, trocando com o segmento, sem segunda barra de cabeçalho.
+6. **Conteúdo logo abaixo do hero**, conforme segmento, com estados loading/empty/error e paginação.
+
+### Segmento Solicitações
+
+Preservar o comportamento atual da fila PRC: busca por número/código/descrição, filtro de status e tipo, indicador Campos sinalizados, ação **Nova solicitação** apenas neste segmento, e alternância de visualizações **Tabela / Cards / Kanban**. A mudança de hero não autoriza regressão de realtime, ações, filtros, fluxo ou deep links existentes.
+
+### Segmento Produtos acompanhados
+
+Mostrar **somente** produtos que têm versões confirmadas de acompanhamento na Engineering API; não listar o universo do Catálogo TOTVS. Filtros: busca por **código oficial ou descrição**, estado de bandeiras (**todas/com abertas/sem abertas**), ordenação (**última evolução** como padrão; código; descrição), sempre sujeitos a contrato e AuthZ.
+
+Tabela em desktop com **cinco colunas prioritárias nesta ordem**:
+
+| Código oficial | Descrição | Versão atual | Flags abertas | Última evolução |
+|---|---|---|---|---|
+| código do snapshot confirmado | descrição do snapshot confirmado | Vn | número de flags OPEN atuais | data da última evolução confirmada |
+
+Sem coluna de status do cadastro oficial TOTVS, sem ação Novo produto acompanhado e sem Kanban obrigatório nesse segmento. Uma linha por identidade de produto acompanhada, não por versão; clique/teclado abre o detalhe, quando autorizado.
+
+### Comportamento responsivo alvo
+
+| Largura viewport | Hero/filtros | Conteúdo e layout | Envelope lateral proposto |
+|---|---|---|---|
+| Desktop ≥1024px | título, seletor e filtros dentro do hero; busca larga e dois filtros lado a lado quando couber | tabela completa; ações no contexto | 20–24px TARGET |
+| Tablet 768–1023px | busca largura total + dois filtros em duas colunas; quebra natural do seletor/ações | tabela com overflow interno controlado | 16px TARGET |
+| Celular 320–767px | título, seletor e filtros empilhados; alvos acessíveis por toque | tabela com rolagem horizontal controlada **ou apresentação compacta via componentes existentes do Plugin UI**, a validar na implementação sem perder informação/acesso | 12px TARGET |
+
+Espaçamento entre seções proposto: 20–24px desktop, 16px tablet/mobile (12px apenas em telas muito estreitas, se o kit permitir). **Paddings intrínsecos do hero, tabela e inputs são do Plugin UI e não devem ser sobrescritos por valores arbitrários.** Usar tokens após inspeção. Garantir navegação teclado, foco, contraste claro/escuro, 320px sem overflow da página.
+
+### Navegação e estado
+
+- Alternância de segmentos, filtros, ordenação e paginação representados por estado navegável/URL apropriada, com F5, back/forward e retorno do detalhe preservando o contexto.
+- Não descartar dados de formulário em andamento sem tratamento; manter o workflow PRC atual.
+- Separar empty state **nenhum produto acompanhado** de **sem resultados para filtros** e de erros 403/API.
+- Componentes visuais devem vir do `@delpi/plugin-ui/index` (diretamente ou via façade); **nenhum novo primitivo visual local de Engenharia**.
+- O plano [PRC-UI-EXTRACT-01](./PRC-PLUGIN-UI-COMPONENT-EXTRACTION-MIGRATION-PLAN.md) continua com evidência visual e commit final pendentes segundo relatório do executor. Aprovação desta página não libera implementação antes dos gates.
+
+### Critérios de aceite específicos (P1)
+
+1. Uma top bar e um hero; segmentado logo abaixo do título; filtros no hero.
+2. Segmento Solicitações padrão e funcionalidade existente preservada.
+3. Produtos acompanhados com cinco colunas exatas prioritárias, sem status TOTVS e sem cadastro manual.
+4. Busca/filtros/ordenação isolados por contexto; resultado autorizado, paginação e estado de URL consistentes.
+5. Layout responsivo desktop/tablet/mobile, incluindo 320px sem overflow de documento, controles acessíveis por teclado e toque.
+6. Kit-first: todos os primitivos/visuais compartilháveis importados do Plugin UI; nenhuma duplicação no MFE.
+
+**Próximo desenho a fechar:** Página 2 — Detalhe do produto acompanhado, aba **Ficha técnica**. Não antecipar sua aprovação.
