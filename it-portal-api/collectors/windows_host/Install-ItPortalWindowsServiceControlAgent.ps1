@@ -1,7 +1,7 @@
 #requires -Version 5.1
 <#
 .SYNOPSIS
-  Provisao assistida do agente piloto Windows do #1585.
+  Provisao assistida e restrita do agente de controle Windows do #1585.
 .DESCRIPTION
   So apos revisao do PR, CI verde, allowlists BFF/Windows, Keycloak
   e autorizacao da operacao. Nao altera coletor SCM existente.
@@ -15,6 +15,11 @@ param(
     [ValidatePattern('^[A-Za-z0-9_.-]{3,100}$')]
     [string]$ClientId = 'it-portal-windows-control-srv-db01',
     [guid]$ServerId = 'e6b46ca6-7b02-449b-b42e-6ddc498f9894',
+
+    [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9-]{0,62}$')]
+    [string]$ExpectedHostname = 'srv-db01',
+    [ValidatePattern('^[A-Za-z0-9_.-]{5,120}$')]
+    [string]$TaskName = 'Delpi-PortalTI-WindowsControl-SRV-DB01',
     [Parameter(Mandatory=$true)][string]$ApprovedServiceNames,
     [switch]$Activate
 )
@@ -22,11 +27,19 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-if ([Environment]::MachineName.ToLowerInvariant() -ne 'srv-db01') {
-    throw 'Instalacao permitida somente no servidor piloto SRV-DB01.'
+$localHostname = [Environment]::MachineName.ToLowerInvariant()
+if ($localHostname -ne $ExpectedHostname.ToLowerInvariant()) {
+    throw ("Hostname incorreto: esperado {0}; host atual {1}." -f $ExpectedHostname, $localHostname)
 }
-$taskName = 'Delpi-PortalTI-WindowsControl-SRV-DB01'
-if (Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue) {
+# Novo host deve ter identidade propria, nunca copiar valores do piloto.
+if ($localHostname -ne 'srv-db01' -and (
+    $ClientId -match 'srv-db01' -or
+    $ServerId.ToString() -eq 'e6b46ca6-7b02-449b-b42e-6ddc498f9894' -or
+    $TaskName -match 'SRV-DB01'
+)) {
+    throw 'Configuracao do piloto SRV-DB01 nao pode ser reutilizada em outro servidor.'
+}
+if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
     throw 'Agente ja instalado: nao sobrescrever tarefa sem procedimento de alteracao.'
 }
 if (-not $env:LOCALAPPDATA -or -not [IO.Path]::IsPathRooted($env:LOCALAPPDATA) -or $env:LOCALAPPDATA.StartsWith('\')) {
@@ -108,7 +121,7 @@ try {
     $token = $null
 }
 $exe = Join-Path $PSHOME 'powershell.exe'
-$args = '-NoLogo -NoProfile -NonInteractive -File "{0}" -ApiBaseUrl "{1}" -S2sTokenUrl "{2}" -ClientId "{3}" -ServerId "{4}" -SecretFile "{5}" -AllowedServices "{6}"' -f $runner,$ApiBaseUrl,$S2sTokenUrl,$ClientId,$ServerId,$secretFile,($names -join ',')
+$args = '-NoLogo -NoProfile -NonInteractive -File "{0}" -ApiBaseUrl "{1}" -S2sTokenUrl "{2}" -ClientId "{3}" -ServerId "{4}" -SecretFile "{5}" -AllowedServices "{6}" -ExpectedHostname "{7}"' -f $runner,$ApiBaseUrl,$S2sTokenUrl,$ClientId,$ServerId,$secretFile,($names -join ','),$ExpectedHostname
 $action = New-ScheduledTaskAction -Execute $exe -Argument $args -WorkingDirectory $installDir
 $triggers = @((New-ScheduledTaskTrigger -AtStartup), (New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1)))
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
@@ -118,11 +131,11 @@ try {
     $ptr2 = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($password)
     $plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr2)
     if ([string]::IsNullOrWhiteSpace($plainPassword)) { throw 'Senha Windows vazia.' }
-    Register-ScheduledTask -TaskName $taskName -Description 'Agente piloto outbound de controle Windows; SOMENTE servicos previamente autorizados' -Action $action -Trigger $triggers -Settings $settings -User $identity.Name -Password $plainPassword -RunLevel Limited -ErrorAction Stop | Out-Null
+    Register-ScheduledTask -TaskName $TaskName -Description 'Agente piloto outbound de controle Windows; SOMENTE servicos previamente autorizados' -Action $action -Trigger $triggers -Settings $settings -User $identity.Name -Password $plainPassword -RunLevel Limited -ErrorAction Stop | Out-Null
 } finally {
     $plainPassword = $null
     if ($ptr2 -ne [IntPtr]::Zero) { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr2) }
     if ($null -ne $password) { $password.Dispose() }
 }
-Write-Output ('INSTALADO: ' + $taskName)
+Write-Output ('INSTALADO: ' + $TaskName)
 Write-Output 'O agente inicia em aproximadamente um minuto; verifique task state Running e logs agent.csv.'
