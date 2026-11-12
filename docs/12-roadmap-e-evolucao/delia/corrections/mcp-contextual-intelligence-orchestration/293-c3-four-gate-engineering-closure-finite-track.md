@@ -710,3 +710,7 @@ Delivered: `delia-api/scripts/int1_secure_decision_trace.py`, `tests/test_int1_s
 ### 2026-11-11 — INT-1 TEO/DAVI integrated validation + production deploy
 
 **TASK:** `DELIA-C3-T2-INT1-TEO-DAVI-INTEGRATED-VALIDATION-AND-PRODUCTION-DEPLOY-01`. See sibling **305**. Predeploy PASS; live G1/P1 `or-qwen14b-3863d58c5327`; production deploy api-delpi → transformometro-api → delia-api @ `e2b341d877…`. Completeness contracts active; G1 TEO-first residual remains. `INT1_STAGE_ACCEPTANCE=BLOCKED`. `NEXT=COORDINATION_INT1_PRODUCTION_VALIDATION_INDEPENDENT_REVIEW`.
+
+### 2026-11-12 — INT-1 G1 first-tool semantic selection causal investigation
+
+**TASK:** `DELIA-C3-T2-INT1-G1-FIRST-TOOL-SEMANTIC-SELECTION-ROOT-CAUSE-INVESTIGATION-01`. See sibling **306**. Causal offline: information delivery OK post-304; no deterministic router; first-tool G1 = model selection PROVEN_IN_SAMPLE; observability capture EXTEND. `INT1_STAGE_ACCEPTANCE=BLOCKED`. `NEXT=COORDINATION_INT1_G1_SELECTION_CAUSAL_REVIEW`.

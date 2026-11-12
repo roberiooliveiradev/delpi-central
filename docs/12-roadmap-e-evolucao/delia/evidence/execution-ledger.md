@@ -6436,6 +6436,21 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 
 | DELIA-C3-T2-INT1-TEO-DAVI-INTEGRATED-VALIDATION-AND-PRODUCTION-DEPLOY-01 | Predeploy PASS; G1/P1 live or-qwen14b-3863d58c5327; deploy api-delpi→TEO→delia @ e2b341d877; G1 TEO-first residual; completeness fixed; doc 305 | PROD_DEPLOY=YES; NEXT=COORDINATION_INT1_PRODUCTION_VALIDATION_INDEPENDENT_REVIEW |
 
+| DELIA-C3-T2-INT1-G1-FIRST-TOOL-SEMANTIC-SELECTION-ROOT-CAUSE-INVESTIGATION-01 | Offline causal: H1/H4 rejected; H3 model selection PROVEN_IN_SAMPLE; observability EXTEND for description capture; doc 306; no LLM | CAUSAL=DONE; NEXT=COORDINATION_INT1_G1_SELECTION_CAUSAL_REVIEW |
+
+### INT-1 G1 first-tool semantic selection causal investigation — 2026-11-12
+
+- **TASK:** `DELIA-C3-T2-INT1-G1-FIRST-TOOL-SEMANTIC-SELECTION-ROOT-CAUSE-INVESTIGATION-01`.
+- **EVIDENCE:** compare `or-qwen14b-198e127edee9` vs `or-qwen14b-3863d58c5327`.
+- **H1 information loss post-304:** REJECTED (WBS present; EnvelopeHint preserves).
+- **H4 deterministic routing:** REJECTED.
+- **H3 model selection:** PROVEN_IN_SAMPLE (identical toolset; G1 TEO-first despite WBS).
+- **H2 goal declare:** unused 0/4; optional; does not gate MCP — GAP not proven causal.
+- **FIX (observability EXTEND):** sanitize description limit + catalog snapshot no hard [:500]; tests PASS.
+- **EXTERNAL_LLM_CALLS=0**; **AGENT/INSTRUCTION unchanged**; **PROD_DEPLOY=NOT_AUTHORIZED**.
+- **Doc:** `306-int1-g1-first-tool-semantic-selection-model-visible-context-and-objective-representation-causal-investigation.md`.
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **NEXT:** `COORDINATION_INT1_G1_SELECTION_CAUSAL_REVIEW`.
+
 ### INT-1 TEO/DAVI integrated validation + production deploy — 2026-11-11
 
 - **TASK:** `DELIA-C3-T2-INT1-TEO-DAVI-INTEGRATED-VALIDATION-AND-PRODUCTION-DEPLOY-01`.

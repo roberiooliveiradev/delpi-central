@@ -2144,3 +2144,7 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 ### 2026-11-11 — INT-1 TEO/DAVI integrated validation + production deploy
 
 **TASK:** `DELIA-C3-T2-INT1-TEO-DAVI-INTEGRATED-VALIDATION-AND-PRODUCTION-DEPLOY-01`. Release `e2b341d877…`. Predeploy targeted PASS. Live G1/P1 `or-qwen14b-3863d58c5327` against rebuilt DAVI+TEO: G1 still TEO-first then DAVI recovery; P1 DAVI-first; `owner_result_incomplete` cleared; declared complete. Deploy `up-prod-sequential --build` api-delpi → transformometro-api → delia-api; health OK; rollback not required. Doc 305. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_PRODUCTION_VALIDATION_INDEPENDENT_REVIEW`**.
+
+### 2026-11-12 — INT-1 G1 first-tool semantic selection causal investigation
+
+**TASK:** `DELIA-C3-T2-INT1-G1-FIRST-TOOL-SEMANTIC-SELECTION-ROOT-CAUSE-INVESTIGATION-01`. Offline compare evals 198e vs 3863. Post-304 WBS clarification reaches model-visible catalog; no app router forces TEO; G1 TEO-first attributed to **MODEL_TOOL_SELECTION_ERROR (PROVEN_IN_SAMPLE)** with declare_goal unused (optional). Observability EXTEND for description capture; no Agent/instruction change; no LLM. Doc 306. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_G1_SELECTION_CAUSAL_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

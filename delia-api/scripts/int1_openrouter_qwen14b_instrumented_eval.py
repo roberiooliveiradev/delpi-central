@@ -210,6 +210,13 @@ def _install_catalog_and_progress_capture(
 
 
 def _catalog_snapshot(live_catalog: list) -> dict:
+    """Snapshot the catalog projection used before Agent tool selection.
+
+    Descriptions are preserved in full (sanitizer applies a higher limit for
+    ``description`` keys). Hard ``[:500]`` slicing previously hid TEO
+    process-WBS clarifications from forensic comparison even when the
+    Agent path still carried them (EnvelopeHint is append-only).
+    """
     tools = []
     specialists: set[str] = set()
     for entry in live_catalog:
@@ -225,13 +232,22 @@ def _catalog_snapshot(live_catalog: list) -> dict:
         )
         if specialist:
             specialists.add(specialist)
+        description = str(entry.get("description") or "")
+        lowered = description.lower()
         tools.append(
             {
                 "capability_id": cap,
                 "remote_name": remote,
                 "specialist": specialist,
                 "operation_class": entry.get("operation_class"),
-                "description": (entry.get("description") or "")[:500],
+                "description": description,
+                "description_len": len(description),
+                "description_has_process_wbs": "wbs" in lowered
+                and "process" in lowered,
+                "description_has_bom_negative": (
+                    "bill-of-materials" in lowered
+                    or "materials/product" in lowered
+                ),
                 "input_schema": sanitize_mapping(entry.get("input_schema") or {}),
             }
         )
@@ -241,6 +257,7 @@ def _catalog_snapshot(live_catalog: list) -> dict:
         "model_visible_tool_names": [t["capability_id"] for t in tools],
         "tools": tools,
         "tool_count": len(tools),
+        "capture_boundary": "catalog_projection_pre_envelope_hint",
     }
 
 

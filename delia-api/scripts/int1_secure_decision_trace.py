@@ -70,7 +70,19 @@ def _is_sensitive_key(key: str) -> bool:
     return any(frag in lowered for frag in _SENSITIVE_KEY_FRAGMENTS)
 
 
-def sanitize_mapping(value: Any, *, depth: int = 0) -> Any:
+# Owner MCP tool descriptions are often 1–3k chars (TEO read contract).
+# Truncating every string to 500 destroyed observability of process-WBS
+# clarifications in model_visible_toolset captures (INT-1 G1 forensics).
+_DEFAULT_STRING_LIMIT = 500
+_TOOL_DESCRIPTION_STRING_LIMIT = 4000
+
+
+def sanitize_mapping(
+    value: Any,
+    *,
+    depth: int = 0,
+    string_limit: int | None = None,
+) -> Any:
     """Redact secrets; keep structural arg types and allowlisted ids."""
     if depth > 6:
         return "<max_depth>"
@@ -80,14 +92,23 @@ def sanitize_mapping(value: Any, *, depth: int = 0) -> Any:
             key = str(raw_k)
             if _is_sensitive_key(key):
                 out[key] = "<redacted>"
+            elif key == "description" and isinstance(raw_v, str):
+                out[key] = sanitize_mapping(
+                    raw_v,
+                    depth=depth + 1,
+                    string_limit=_TOOL_DESCRIPTION_STRING_LIMIT,
+                )
             else:
                 out[key] = sanitize_mapping(raw_v, depth=depth + 1)
         return out
     if isinstance(value, (list, tuple)):
         return [sanitize_mapping(item, depth=depth + 1) for item in value[:32]]
     if isinstance(value, str):
-        if len(value) > 500:
-            return value[:500] + "<truncated>"
+        limit = (
+            _DEFAULT_STRING_LIMIT if string_limit is None else int(string_limit)
+        )
+        if len(value) > limit:
+            return value[:limit] + "<truncated>"
         return value
     if isinstance(value, (int, float, bool)) or value is None:
         return value

@@ -1386,3 +1386,21 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
 
 **NEXT=`COORDINATION_INT1_PRODUCTION_VALIDATION_INDEPENDENT_REVIEW`**.
+
+## 2026-11-12 — INT-1 G1 first-tool semantic selection residuals
+
+**TASK:** `DELIA-C3-T2-INT1-G1-FIRST-TOOL-SEMANTIC-SELECTION-ROOT-CAUSE-INVESTIGATION-01` · Doc **306**
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-G1-TEO-FIRST-ATTRACTOR | **PROVEN_IN_SAMPLE (model selection)** | Post-WBS surface intact; G1 still TEO-first then recovery |
+| INT1-H1-INFO-LOSS-POST304 | **REJECTED** | WBS+BOM-neg present in capture; EnvelopeHint preserves |
+| INT1-H4-DETERMINISTIC-ROUTING | **REJECTED** | No forced first-tool router |
+| INT1-GOAL-DECLARE-UNUSED | **PROVEN_IN_SAMPLE** | 0/4 G1/P1 calls; optional by v2; does not gate MCP |
+| INT1-TRACE-DESC-TRUNCATION | **REMEDIATED (observability)** | catalog snapshot + sanitize description limit EXTEND |
+| INT1-PROVIDER-REQUEST-WIRE | **TO_INVENTORY** | raw OpenRouter tools[] not captured |
+| INT1-STAGE | **BLOCKED** | Doc 306 coordination review |
+| INT1-CLOSED | **NO** | — |
+| INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
+
+**NEXT=`COORDINATION_INT1_G1_SELECTION_CAUSAL_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

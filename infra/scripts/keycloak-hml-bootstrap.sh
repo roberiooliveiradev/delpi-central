@@ -222,10 +222,11 @@ JWKS="$(kc_curl "$INTERNAL_BASE/realms/$REALM/protocol/openid-connect/certs")"
 python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("keys"), "jwks vazio"; print("JWKS=PASS keys=", len(d["keys"]))' <<<"$JWKS"
 
 # Confirma ausência de redirect para produção no client
-admin_api GET "/realms/$REALM/clients/$CID" | python3 - <<'PY'
-import json,sys
-c=json.load(sys.stdin)
-blob=json.dumps(c)
+CLIENT_RAW="$(admin_api GET "/realms/$REALM/clients/$CID")"
+python3 - "$CLIENT_RAW" <<'PY'
+import json, sys
+c = json.loads(sys.argv[1])
+blob = json.dumps(c)
 if "minhadelpi.com.br" in blob:
     raise SystemExit("FAIL client referencia domínio produtivo")
 if c.get("directAccessGrantsEnabled"):
