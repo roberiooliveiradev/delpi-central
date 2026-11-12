@@ -4,8 +4,8 @@
 > **Repositório:** `roberiooliveiradev/delpi-central`.  
 > **TASK_ID:** `HML-CORE-PORTAL-01`.  
 > **BASE_HEAD:** `24a7a8a144f2a009d6eacdc22eb248a7b074abab`.  
-> **MAIN_INTEGRATED_SHA:** `86eef5aedc02775a2d1c77876b18bb76897f51d2` (Portal bake `__none__` + revert de plugins acidentais).  
-> **SHA funcional Core/Portal auth:** `4f22f6a7b5` (cenários) + `86eef5aedc` (bundle sem URLs produtivas).
+> **MAIN_INTEGRATED_SHA:** `183097786b140a57e496b9737587e3666473c346`.  
+> **SHA funcional Core/Portal auth:** `4f22f6a7b5` (cenários) + `86eef5aedc` (bundle sem URLs produtivas) + docs em `183097786b`.
 
 ## 1. Objetivo e regras congeladas
 
