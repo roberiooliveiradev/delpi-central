@@ -83,6 +83,13 @@ class PostgresHostServiceActions(PostgresRepositoryBase):
                 (svc["observed_at"],),
             ).fetchone()["stale"]:
                 raise ConflictError("control_inventory_stale", "Inventário desatualizado; aguarde uma nova coleta.")
+            limited = conn.execute(
+                f"""SELECT count(*) AS total FROM {_S}.host_service_actions
+                    WHERE server_id=%s AND requested_at > now()-interval '1 hour'""",
+                (server_id,),
+            ).fetchone()["total"]
+            if limited >= 20:
+                raise ConflictError("control_rate_limited", "Limite de ações por hora atingido.")
             job_id = str(uuid.uuid4())
             conn.execute(
                 f"""INSERT INTO {_S}.host_service_actions (
