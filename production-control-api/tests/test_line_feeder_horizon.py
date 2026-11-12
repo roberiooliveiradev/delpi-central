@@ -995,3 +995,72 @@ def test_preview_horizon_does_not_reject_large_published_queue_for_short_hours()
     assert data["preview_completeness"] in {"complete", "incomplete"}
     assert len(covered) == 3
     assert [op["production_order"] for op in covered] == ["OP0001", "OP0002", "OP0003"]
+
+
+# Regressão: OP de cabo em MT (e material contínuo KG) não usa peças físicas.
+@pytest.mark.parametrize(
+    ("unit", "unit_hours", "expected_covered"),
+    [("MT", "0.1", 8.4), ("KG", "0.02", 42.0)],
+)
+def test_continuous_units_use_standard_hours_per_operational_unit(
+    unit: str, unit_hours: str, expected_covered: float
+) -> None:
+    from dataclasses import replace
+
+    op = replace(
+        _hop(order="09564601002", pending=700, cycle=1, setup=576),
+        unit=unit,
+        ideal_cycle_seconds=None,
+        pieces_conversion_factor=None,
+        standard_time_quality="piece_conversion_unavailable",
+        standard_time_unit_hours=Decimal(unit_hours),
+    )
+    result = allocate_work_center_horizon([op], hours=1, work_center="CT-27")
+    assert result.completeness == "complete"
+    assert len(result.operations) == 1
+    allocated = result.operations[0]
+    assert allocated.coverage == "partial"
+    assert allocated.covered_qty == pytest.approx(expected_covered)
+    assert allocated.remaining_outside_qty == pytest.approx(700 - expected_covered)
+    assert allocated.productive_seconds + allocated.setup_seconds_applied <= 3600
+    assert allocated.quantity_basis == "operational_unit"
+    assert allocated.pending_physical_pieces is None
+    assert allocated.covered_physical_pieces is None
+    assert allocated.pieces_conversion_factor is None
+    assert allocated.standard_time_quality == "complete"
+
+
+@pytest.mark.parametrize("unit", ["MT", "KG", "LT"])
+def test_continuous_fallback_does_not_invent_unknown_standard_time(unit: str) -> None:
+    from dataclasses import replace
+
+    op = replace(
+        _hop(order="MISSING", pending=100, cycle=1),
+        unit=unit,
+        ideal_cycle_seconds=None,
+        pieces_conversion_factor=None,
+        standard_time_quality="piece_conversion_unavailable",
+        standard_time_unit_hours=(
+            None if unit != "LT" else Decimal("0.1")
+        ),
+    )
+    result = allocate_work_center_horizon([op], hours=3, work_center="CT-27")
+    assert result.completeness == "incomplete"
+    assert result.stop_reason == "piece_conversion_unavailable"
+    assert result.operations == ()
+
+
+def test_continuous_units_do_not_round_to_integer_pieces() -> None:
+    from dataclasses import replace
+
+    op = replace(
+        _hop(order="CONT", pending=10, cycle=1),
+        unit="MT",
+        ideal_cycle_seconds=None,
+        pieces_conversion_factor=None,
+        standard_time_quality="piece_conversion_unavailable",
+        standard_time_unit_hours=Decimal("0.25"),
+    )
+    result = allocate_work_center_horizon([op], hours=0.5, work_center="CT-27")
+    assert result.operations[0].covered_qty == 2.0
+    assert result.operations[0].productive_seconds == 1800.0
