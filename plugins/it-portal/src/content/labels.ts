@@ -255,6 +255,8 @@ export const INTEGRATION_FIELD_LABELS: Record<string, string> = {
 
 export const HISTORY_EVENT_LABELS: Record<string, string> = {
   host_service_preference_updated: "Favoritos de serviço Windows atualizados",
+  host_service_action_requested: "Ação solicitada no serviço Windows",
+  host_service_action_finished: "Resultado da ação no serviço Windows",
   server_created: "Servidor cadastrado",
   server_updated: "Cadastro atualizado",
   server_archived: "Servidor arquivado",

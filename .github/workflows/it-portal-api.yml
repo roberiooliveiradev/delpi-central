@@ -46,6 +46,8 @@ jobs:
             'it-portal-api/collectors/windows_host/Send-ItPortalWindowsServices.ps1'
             'it-portal-api/collectors/windows_host/Invoke-ItPortalWindowsScheduledServices.ps1'
             'it-portal-api/collectors/windows_host/Install-ItPortalWindowsScheduledServices.ps1'
+            'it-portal-api/collectors/windows_host/Invoke-ItPortalWindowsServiceControlAgent.ps1'
+            'it-portal-api/collectors/windows_host/Install-ItPortalWindowsServiceControlAgent.ps1'
           )
           foreach ($file in $files) {
             $tokens = $null
@@ -59,7 +61,7 @@ jobs:
       - name: Unit and HTTP tests
         working-directory: it-portal-api
         run: python -m pytest -q
-      - name: Real Postgres V006 integration
+      - name: Real Postgres SCM / control integration
         working-directory: it-portal-api
         env:
           IT_PORTAL_TEST_DSN: postgresql://postgres:test-password@localhost:5432/postgres

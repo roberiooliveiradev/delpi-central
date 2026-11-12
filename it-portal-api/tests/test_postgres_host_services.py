@@ -282,3 +282,119 @@ def test_favorites_are_shared_durable_audited_and_never_control_windows(pg_clien
     assert pg_client.get(
         "/servers/" + sid + "/host-services?favorites_only=true&present=all",
     ).json()["data"]["total"] == 0
+
+
+def test_windows_remote_actions_queue_is_audited_durable_and_at_most_once(pg_client, principal, monkeypatch):
+    """#1585: fila real, estado confirmado, lease nao-reutilizavel e expiracao."""
+    from datetime import datetime, timezone
+    from delpi_auth.service_identity import ServiceIdentity
+    from it_portal_app.infrastructure.persistence.db import db_connect
+    from it_portal_app.interface.http import s2s_auth
+
+    hostname = "srv-control-01.delpi.local"
+    created = pg_client.post(
+        "/servers", json=server_payload(name="Host controle", hostname=hostname),
+    )
+    assert created.status_code == 201
+    sid = created.json()["data"]["id"]
+    monkeypatch.setenv("IT_PORTAL_COLLECTOR_SERVER_ALLOWLIST", sid)
+    monkeypatch.setenv("IT_PORTAL_WINDOWS_COLLECTOR_BINDINGS", CLIENT + "=" + sid)
+    inventory = payload(run_id=str(uuid.uuid4()), hostname=hostname,
+                        services=[service("TEST_DELPI")])
+    inventory["observed_at"] = datetime.now(timezone.utc).isoformat()
+    sent = pg_client.post(
+        "/collector/v1/servers/" + sid + "/host-services/batches",
+        json=inventory, headers={"X-Delpi-Service-Authorization": "Bearer scope-token"},
+    )
+    assert sent.status_code == 201, sent.text
+
+    monkeypatch.setenv("IT_PORTAL_WINDOWS_CONTROL_ENABLED", "true")
+    monkeypatch.setenv("IT_PORTAL_WINDOWS_CONTROL_TARGETS", sid + "=TEST_DELPI")
+    monkeypatch.setenv("IT_PORTAL_WINDOWS_CONTROL_AGENT_BINDINGS", "itp-control-agent=" + sid)
+
+    class ControlValidator:
+        def validate(self, token, *, required_scopes=None, allowed_clients=None):
+            assert token == "agent-token"
+            assert set(required_scopes or ()) == {"it-portal.host-services.control-agent"}
+            return ServiceIdentity(
+                client_id="itp-control-agent", subject="itp-control-agent",
+                scopes=frozenset(required_scopes or ()), audience=("it-portal-api",),
+                issuer="https://auth.example/realms/delpi",
+            )
+
+    monkeypatch.setattr(s2s_auth, "_shared_validator", ControlValidator())
+    url = "/servers/" + sid + "/host-services/test_delpi/actions"
+    request_id = str(uuid.uuid4())
+    body = {"action": "stop", "confirmed": True, "request_id": request_id}
+    queued = pg_client.post(url, json=body)
+    assert queued.status_code == 202, queued.text
+    action_id = queued.json()["data"]["id"]
+    assert queued.json()["data"]["status"] == "queued"
+    assert pg_client.post(url, json=body).json()["data"]["id"] == action_id
+    assert pg_client.post(url, json={**body, "request_id": str(uuid.uuid4())}).status_code == 409
+    assert pg_client.post(url, json={**body, "action": "restart"}).status_code == 409
+
+    headers = {"X-Delpi-Service-Authorization": "Bearer agent-token"}
+    poll = "/collector/v1/servers/" + sid + "/host-services/control/next"
+    claim = pg_client.post(poll, json={"hostname": hostname}, headers=headers)
+    assert claim.status_code == 200, claim.text
+    job = claim.json()["data"]
+    assert job["id"] == action_id
+    assert job["action"] == "stop"
+    assert job["service_name"] == "TEST_DELPI"
+    assert pg_client.post(poll, json={"hostname": hostname}, headers=headers).json()["data"] is None
+
+    report = "/collector/v1/servers/" + sid + "/host-services/control/" + action_id + "/result"
+    bad = pg_client.post(report, headers=headers, json={
+        "lease": "00000000" + "0"*40, "status": "succeeded", "state_after": "stopped",
+    })
+    assert bad.status_code == 409
+    done = pg_client.post(report, headers=headers, json={
+        "lease": job["lease"], "status": "succeeded", "state_after": "stopped",
+    })
+    assert done.status_code == 200, done.text
+    assert done.json()["data"]["status"] == "succeeded"
+    assert pg_client.post(report, headers=headers, json={
+        "lease": job["lease"], "status": "succeeded", "state_after": "stopped",
+    }).status_code == 200
+    assert pg_client.post(report, headers=headers, json={
+        "lease": job["lease"], "status": "failed",
+        "state_after": "running", "error_code": "execution_failed",
+    }).status_code == 409
+
+    listing = pg_client.get("/servers/" + sid + "/host-services").json()["data"]
+    assert listing["items"][0]["state"] == "stopped"
+    assert listing["items"][0]["control_allowed"] is True
+    history = pg_client.get("/servers/" + sid + "/history").json()["data"]
+    events = [e["event_type"] for e in history]
+    assert "host_service_action_requested" in events
+    assert "host_service_action_finished" in events
+    assert events.count("host_service_action_finished") == 1
+
+    # Nao repete comando se o agente nao pegou em ate 30 segundos.
+    new = pg_client.post(url, json={
+        "action": "start", "request_id": str(uuid.uuid4()), "confirmed": True,
+    })
+    assert new.status_code == 202, new.text
+    new_id = new.json()["data"]["id"]
+    with db_connect() as conn:
+        conn.execute(
+            "UPDATE it_portal.host_service_actions "
+            "SET requested_at = now() - interval '40 seconds' WHERE id=%s",
+            (new_id,),
+        )
+    timed_out = pg_client.get(
+        "/servers/" + sid + "/host-services/actions/" + new_id,
+    ).json()["data"]
+    assert timed_out["status"] == "timeout"
+    assert pg_client.post(poll, json={"hostname": hostname}, headers=headers).json()["data"] is None
+
+    principal.permissions = ["it-portal.access", "it-portal.servers.view"]
+    assert pg_client.post(url, json=body).status_code == 403
+    principal.permissions = [
+        "it-portal.access", "it-portal.servers.view",
+        "it-portal.host-services.control",
+    ]
+    principal.fresh_permissions = ["it-portal.access", "it-portal.servers.view"]
+    assert pg_client.post(url, json=body).status_code == 403
+    principal.fresh_permissions = None

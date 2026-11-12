@@ -15,6 +15,7 @@ from it_portal_app.application.integration_inventory import IntegrationInventory
 from it_portal_app.application.network_inventory import NetworkInventory
 from it_portal_app.application.observation_service import ObservationService
 from it_portal_app.application.host_service_inventory import HostServiceInventory
+from it_portal_app.application.host_service_control import HostServiceControl
 from it_portal_app.application.ports import (
     ConnectivityRepository,
     InventoryRepository,
@@ -30,6 +31,7 @@ from it_portal_app.infrastructure.persistence.postgres_inventory_repository impo
     PostgresInventoryRepository,
 )
 from it_portal_app.infrastructure.persistence.postgres_host_service_repository import PostgresHostServiceRepository
+from it_portal_app.infrastructure.persistence.postgres_host_service_actions import PostgresHostServiceActions
 from it_portal_app.infrastructure.persistence.postgres_observation_repository import (
     PostgresObservationRepository,
 )
@@ -117,3 +119,7 @@ def get_observation_service(
 
 def get_host_service_inventory(servers: ItPortalRepository = Depends(get_repository)) -> HostServiceInventory:
     return HostServiceInventory(PostgresHostServiceRepository(), servers)
+
+
+def get_host_service_control(servers: ItPortalRepository = Depends(get_repository)) -> HostServiceControl:
+    return HostServiceControl(PostgresHostServiceActions(), servers)

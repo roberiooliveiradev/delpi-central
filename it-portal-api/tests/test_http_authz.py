@@ -131,6 +131,7 @@ def test_capabilities_reflect_effective_permissions(client, principal):
         "can_view_servers": True,
         "can_manage_servers": False,
         "can_manage_host_services": False,
+        "can_control_host_services": False,
         "can_create_notes": True,
         "can_view_action_plans": False,
         "can_manage_action_plans": False,

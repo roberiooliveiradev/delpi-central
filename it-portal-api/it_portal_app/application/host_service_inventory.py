@@ -4,6 +4,7 @@ from __future__ import annotations
 from it_portal_app.application.observation_service import (
     _allowlist_server_ids, _windows_collector_bindings,
 )
+from it_portal_app.application.host_service_control import HostServiceControl
 from it_portal_app.application.ports import Actor
 from it_portal_app.domain.errors import ConflictError, NotFoundError, ValidationError
 from it_portal_app.domain.host_services import build_host_service_batch
@@ -42,6 +43,7 @@ class HostServiceInventory:
             server_id, q=q, state=state, start_mode=start_mode,
             present=present, page=page, page_size=page_size, favorites_only=favorites_only,
         )
+        rows = HostServiceControl(self.repository, self.servers).decorate(server_id, rows)
         return {"items": rows, "total": total, "page": page, "page_size": page_size,
                 "current": current, "favorites_count": favorites_count}
 

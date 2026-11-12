@@ -4,7 +4,7 @@
   "name": "Portal de TI",
   "description": "Inventário de servidores, serviços, aplicações, bancos de dados, redes e integrações, com relacionamentos, notas técnicas e planos de ação da infraestrutura de TI.",
   "icon": "server",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "type": "microfrontend",
   "basePath": "/apps/it-portal",
   "entry": "/apps/it-portal/assets/remoteEntry.js",
@@ -31,6 +31,12 @@
       "code": "it-portal.host-services.manage",
       "name": "Portal de TI — gerenciar serviços Windows favoritos",
       "description": "Marcar favoritos e classificar criticidade dos serviços Windows coletados. Requer ver servidores; não permite iniciar, parar ou reiniciar serviços.",
+      "module": "it-portal"
+    },
+    {
+      "code": "it-portal.host-services.control",
+      "name": "Portal de TI — executar ações nos serviços Windows",
+      "description": "Solicita iniciar, interromper ou reiniciar somente serviços Windows explicitamente liberados, com confirmação e auditoria. Requer ver servidores.",
       "module": "it-portal"
     },
     {

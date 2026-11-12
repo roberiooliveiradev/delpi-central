@@ -2194,3 +2194,173 @@
     transform: none;
   }
 }
+
+
+/* #1585 — ações remotas só no detalhe: atmosfera limpa, foco e estados inequívocos. */
+.dashboard-it-portal .itp-scm__control {
+  display: grid;
+  gap: 13px;
+  padding: 15px 16px;
+  border: 1px solid var(--itp-border);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--itp-surface-muted) 65%, var(--itp-surface));
+}
+.dashboard-it-portal .itp-scm__control-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.dashboard-it-portal .itp-scm__control-heading strong {
+  color: var(--itp-title);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.dashboard-it-portal .itp-scm__control-heading p {
+  margin: 4px 0 0;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: var(--itp-text-muted);
+}
+.dashboard-it-portal .itp-scm__control-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 9px;
+  border: 1px solid var(--itp-border);
+  border-radius: 999px;
+  background: var(--itp-surface);
+  color: var(--itp-text-muted);
+  font-size: 0.69rem;
+}
+.dashboard-it-portal .itp-scm__control-live > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--itp-text-muted);
+}
+.dashboard-it-portal .itp-scm__control-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dashboard-it-portal .itp-scm__control-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid var(--itp-border);
+  border-radius: 9px;
+  background: var(--itp-surface);
+  color: var(--itp-title);
+  font: inherit;
+  font-size: 0.77rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+.dashboard-it-portal .itp-scm__control-button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--itp-accent) 55%, var(--itp-border));
+  background: color-mix(in srgb, var(--itp-accent) 6%, var(--itp-surface));
+}
+.dashboard-it-portal .itp-scm__control-button.is-stop {
+  color: var(--itp-danger);
+}
+.dashboard-it-portal .itp-scm__control-button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+.dashboard-it-portal .itp-scm__confirm {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 11px;
+  padding: 13px;
+  border-radius: 11px;
+  border: 1px solid color-mix(in srgb, var(--itp-warning) 32%, var(--itp-border));
+  background: color-mix(in srgb, var(--itp-warning) 5%, var(--itp-surface));
+  color: var(--itp-warning);
+}
+.dashboard-it-portal .itp-scm__confirm strong {
+  color: var(--itp-title);
+  font-size: 0.78rem;
+}
+.dashboard-it-portal .itp-scm__confirm p {
+  margin: 4px 0 0;
+  color: var(--itp-text-muted);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+.dashboard-it-portal .itp-scm__confirm-buttons {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.dashboard-it-portal .itp-scm__confirm-buttons button {
+  min-height: 34px;
+  padding: 7px 11px;
+  border: 1px solid var(--itp-border);
+  border-radius: 9px;
+  color: var(--itp-title);
+  background: var(--itp-surface);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+.dashboard-it-portal .itp-scm__confirm-buttons .is-confirm {
+  color: white;
+  border-color: var(--itp-title);
+  background: var(--itp-title);
+}
+.dashboard-it-portal .itp-scm__confirm-buttons button:disabled { opacity: 0.45; }
+.dashboard-it-portal .itp-scm__control-feedback {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: var(--itp-surface);
+  border: 1px solid var(--itp-border);
+  color: var(--itp-title);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+.dashboard-it-portal .itp-scm__control-feedback.is-succeeded {
+  border-color: color-mix(in srgb, #14956b 28%, var(--itp-border));
+  color: #138158;
+}
+.dashboard-it-portal .itp-scm__control-feedback.is-error,
+.dashboard-it-portal .itp-scm__control-feedback.is-failed {
+  border-color: color-mix(in srgb, var(--itp-danger) 27%, var(--itp-border));
+  color: var(--itp-danger);
+}
+.dashboard-it-portal .itp-scm__control-feedback.is-timeout { color: var(--itp-warning); }
+.dashboard-it-portal .itp-scm__control-feedback button {
+  padding: 4px 7px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: inherit;
+  text-decoration: underline;
+}
+@media (max-width: 850px) {
+  .dashboard-it-portal .itp-scm__confirm {
+    grid-template-columns: auto 1fr;
+  }
+  .dashboard-it-portal .itp-scm__confirm-buttons {
+    grid-column: 1 / -1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-it-portal .itp-scm__control-button {
+    transition: none;
+  }
+}

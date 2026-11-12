@@ -73,6 +73,10 @@ EXPECTED_OPERATIONS = {
     ("post", "/collector/v1/servers/{server_id}/host-services/batches"): "ingest_it_windows_host_service_batch",
     ("get", "/servers/{server_id}/host-services"): "list_it_windows_host_services",
     ("put", "/servers/{server_id}/host-services/{service_name}/preferences"): "set_it_windows_host_service_preference",
+    ("post", "/servers/{server_id}/host-services/{service_name}/actions"): "request_it_windows_host_service_action",
+    ("get", "/servers/{server_id}/host-services/actions/{action_id}"): "get_it_windows_host_service_action",
+    ("post", "/collector/v1/servers/{server_id}/host-services/control/next"): "claim_it_windows_host_service_action",
+    ("post", "/collector/v1/servers/{server_id}/host-services/control/{action_id}/result"): "report_it_windows_host_service_action",
     # E4.S1 — observações automáticas
     ("post", "/collector/v1/servers/{server_id}/observations"): "ingest_it_server_observation",
     ("get", "/servers/{server_id}/observations/latest"): "get_it_server_latest_observation",
