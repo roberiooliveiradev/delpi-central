@@ -3,7 +3,7 @@
 .SYNOPSIS
   Instala coleta horaria do Portal de TI no Windows (instalacao assistida).
 .DESCRIPTION
-  Rodar interativamente NO SRV-DB01 com a conta Windows escolhida para a tarefa.
+  Rodar interativamente no Windows autorizado com a conta escolhida para a tarefa.
   Copia arquivos revisados para o perfil LOCAL da conta, armazena o segredo
   S2S cifrado com DPAPI e registra tarefa sem guardar o segredo em argumentos.
   A senha da conta Windows e solicitada apenas para o Task Scheduler.
@@ -22,6 +22,9 @@ param(
 
     [guid]$ServerId = 'e6b46ca6-7b02-449b-b42e-6ddc498f9894',
 
+    [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9-]{0,62}$')]
+    [string]$ExpectedHostname = 'srv-db01',
+
     [ValidateRange(30, 1440)]
     [int]$IntervalMinutes = 60,
 
@@ -30,8 +33,17 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-if ([Environment]::MachineName.ToLowerInvariant() -ne 'srv-db01') {
-    throw 'Instalacao bloqueada: este pacote e destinado ao hostname srv-db01.'
+$localHostname = [Environment]::MachineName.ToLowerInvariant()
+if ($localHostname -ne $ExpectedHostname.ToLowerInvariant()) {
+    throw ("Hostname incorreto: esperado {0}; host atual {1}." -f $ExpectedHostname, $localHostname)
+}
+# Novo host deve ter identidade propria, nunca copiar valores do piloto.
+if ($localHostname -ne 'srv-db01' -and (
+    $ClientId -match 'srv-db01' -or
+    $ServerId.ToString() -eq 'e6b46ca6-7b02-449b-b42e-6ddc498f9894' -or
+    $TaskName -match 'SRV-DB01'
+)) {
+    throw 'Configuracao do piloto SRV-DB01 nao pode ser reutilizada em outro servidor.'
 }
 if (-not $env:LOCALAPPDATA -or $env:LOCALAPPDATA.StartsWith('\\')) {
     throw 'LOCALAPPDATA precisa apontar para uma pasta local do perfil Windows.'
@@ -146,4 +158,4 @@ $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction Stop
 Write-Output ("TAREFA_REGISTRADA: {0}; estado={1}; conta={2}; intervalo={3}min" -f `
     $TaskName, $task.State, $currentIdentity.Name, $IntervalMinutes)
 Write-Output ("INSTALADO_EM: {0}" -f $installDir)
-Write-Output 'EXECUTAR_TESTE_DA_TAREFA: Start-ScheduledTask -TaskName Delpi-PortalTI-Windows-SRV-DB01'
+Write-Output ("EXECUTAR_TESTE_DA_TAREFA: Start-ScheduledTask -TaskName '{0}'" -f $TaskName)

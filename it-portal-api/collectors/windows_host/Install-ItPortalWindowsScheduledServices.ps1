@@ -1,7 +1,7 @@
 #requires -Version 5.1
 <#
 .SYNOPSIS
-  Instala a coleta Windows SCM do SRV-DB01 a cada 5 minutos.
+  Instala coleta Windows SCM do host autorizado a cada 5 minutos.
 .DESCRIPTION
   Instalacao assistida, separada da tarefa Windows E4.S4. Executar na mesma
   conta Windows nao administrativa destinada a executar o agendamento.
@@ -21,6 +21,9 @@ param(
 
     [guid]$ServerId = 'e6b46ca6-7b02-449b-b42e-6ddc498f9894',
 
+    [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9-]{0,62}$')]
+    [string]$ExpectedHostname = 'srv-db01',
+
     [ValidateRange(5,1440)]
     [int]$IntervalMinutes = 5,
 
@@ -30,8 +33,17 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-if ([Environment]::MachineName.ToLowerInvariant() -ne 'srv-db01') {
-    throw 'Instalacao bloqueada: destino deve ser SRV-DB01.'
+$localHostname = [Environment]::MachineName.ToLowerInvariant()
+if ($localHostname -ne $ExpectedHostname.ToLowerInvariant()) {
+    throw ("Hostname incorreto: esperado {0}; host atual {1}." -f $ExpectedHostname, $localHostname)
+}
+# Novo host deve ter identidade propria, nunca copiar valores do piloto.
+if ($localHostname -ne 'srv-db01' -and (
+    $ClientId -match 'srv-db01' -or
+    $ServerId.ToString() -eq 'e6b46ca6-7b02-449b-b42e-6ddc498f9894' -or
+    $TaskName -match 'SRV-DB01'
+)) {
+    throw 'Configuracao do piloto SRV-DB01 nao pode ser reutilizada em outro servidor.'
 }
 if (-not $env:LOCALAPPDATA -or -not [IO.Path]::IsPathRooted($env:LOCALAPPDATA) -or
     $env:LOCALAPPDATA.StartsWith('\\')) {

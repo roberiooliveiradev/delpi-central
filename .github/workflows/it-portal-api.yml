@@ -42,6 +42,10 @@ jobs:
         shell: pwsh
         run: |
           $files = @(
+            'it-portal-api/collectors/windows_host/Collect-ItPortalWindowsInventory.ps1'
+            'it-portal-api/collectors/windows_host/Send-ItPortalWindowsObservation.ps1'
+            'it-portal-api/collectors/windows_host/Invoke-ItPortalWindowsScheduledObservation.ps1'
+            'it-portal-api/collectors/windows_host/Install-ItPortalWindowsScheduledCollection.ps1'
             'it-portal-api/collectors/windows_host/Collect-ItPortalWindowsServices.ps1'
             'it-portal-api/collectors/windows_host/Send-ItPortalWindowsServices.ps1'
             'it-portal-api/collectors/windows_host/Invoke-ItPortalWindowsScheduledServices.ps1'
