@@ -1678,7 +1678,9 @@ def test_order_level_commitments_counted_once_across_two_work_centers() -> None:
     assert all(b.origins[0].operation_code == "" for b in buckets)
     assert all(b.origins[0].work_center == "" for b in buckets)
     assert all(b.work_centers == [] for b in buckets)
-    assert sum(w["code"] == "order_level_commitment_without_operation" for w in warnings) == 1
+    assert sum(
+        w["code"] == "order_level_commitment_without_operation" for w in warnings
+    ) == 1
     items = apply_factory_stock(
         buckets,
         factory_balances={"10480008": 2},
@@ -1720,26 +1722,37 @@ def test_order_level_and_operation_level_commitments_remain_distinct() -> None:
 
 
 def test_service_mt_order_level_sd4_end_to_end() -> None:
-    op_01 = {**_op("CT-27", "09564601002"), "unit": "MT", "pieces_conversion_factor": None}
+    op_01 = {
+        **_op("CT-27", "09564601002"),
+        "unit": "MT",
+        "pieces_conversion_factor": None,
+    }
     op_03 = {
         **_op("CT-99", "09564601002"),
         "operation_code": "03",
         "unit": "MT",
         "pieces_conversion_factor": None,
     }
-    raw_st = lambda hours: {
-        "standard_time_unit_hours": hours,
-        "ideal_cycle_seconds": None,
-        "setup_seconds": 0,
-        "pieces_conversion_factor": None,
-        "standard_time_source": "shy_tempad",
-        "data_quality": "piece_conversion_unavailable",
-    }
+    def raw_st(hours: float) -> dict[str, Any]:
+        return {
+            "standard_time_unit_hours": hours,
+            "ideal_cycle_seconds": None,
+            "setup_seconds": 0,
+            "pieces_conversion_factor": None,
+            "standard_time_source": "shy_tempad",
+            "data_quality": "piece_conversion_unavailable",
+        }
     service = _service(
         published=_payload([op_01, op_03]),
         balances_ops={
-            ("09564601002", "01"): {"operation_pending_qty": 700, "operation_produced_qty": 300},
-            ("09564601002", "03"): {"operation_pending_qty": 700, "operation_produced_qty": 300},
+            ("09564601002", "01"): {
+                "operation_pending_qty": 700,
+                "operation_produced_qty": 300,
+            },
+            ("09564601002", "03"): {
+                "operation_pending_qty": 700,
+                "operation_produced_qty": 300,
+            },
         },
         standard_times={
             ("09564601002", "01"): raw_st(0.1),
