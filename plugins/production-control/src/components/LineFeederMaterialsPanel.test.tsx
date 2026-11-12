@@ -215,6 +215,23 @@ describe("LineFeederMaterialsPanel", () => {
     expect(screen.getByText(/MP-001/)).toBeTruthy();
   });
 
+  it("informa quando SC2 confirma OP inexistente na filial", () => {
+    const baseline = basePayload();
+    render(
+      <LineFeederMaterialsPanel
+        data={basePayload({
+          publication: {
+            ...baseline.publication,
+            missing_order_operations_excluded: 1,
+          },
+        })}
+        query={{ workCenters: ["CT-A"], hoursPerWorkCenter: 2 }}
+      />,
+    );
+    expect(screen.getByText(/OP não foi encontrada no Protheus da filial/i)).toBeTruthy();
+    expect(screen.getByText(/Nenhum saldo foi inventado/i)).toBeTruthy();
+  });
+
   it("não apresenta lista operacional quando operational_list_safe=false", () => {
     render(
       <LineFeederMaterialsPanel
