@@ -20,6 +20,7 @@ import { ItpSectionCard } from "../../app/itPortalUi";
 import { toApiError } from "../../app/PortalContext";
 import { LoadingBlock, QueryErrorState } from "../../app/QueryStates";
 import { queryKeys } from "../../app/queryKeys";
+import { HostServiceActionsPanel } from "./HostServiceActionsPanel";
 
 const PAGE_SIZE = 25;
 
@@ -58,8 +59,10 @@ const criticalityLabels: Record<HostServiceCriticality, string> = {
   normal: "Normal", high: "Alta", critical: "Crítica",
 };
 
-function ServiceRow({ service, expanded, onToggle, canManageFavorites, saving, onFavoriteToggle, onCriticalityChange }: {
+function ServiceRow({ service, expanded, onToggle, serverId, canControlServices, canManageFavorites, saving, onFavoriteToggle, onCriticalityChange }: {
   service: HostService;
+  serverId: string;
+  canControlServices: boolean;
   expanded: boolean;
   onToggle: () => void;
   canManageFavorites: boolean;
@@ -171,6 +174,7 @@ function ServiceRow({ service, expanded, onToggle, canManageFavorites, saving, o
                   </div>
                 ) : null}
               </div>
+              <HostServiceActionsPanel serverId={serverId} service={service} canControl={canControlServices} />
             </div>
           </td>
         </tr>
@@ -179,9 +183,10 @@ function ServiceRow({ service, expanded, onToggle, canManageFavorites, saving, o
   );
 }
 
-export function ServerWindowsServicesSection({ serverId, canManageFavorites = false }: {
+export function ServerWindowsServicesSection({ serverId, canManageFavorites = false, canControlServices = false }: {
   serverId: string;
   canManageFavorites?: boolean;
+  canControlServices?: boolean;
 }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
@@ -303,7 +308,7 @@ export function ServerWindowsServicesSection({ serverId, canManageFavorites = fa
               Uma visão organizada dos serviços coletados diretamente no Windows Server.
             </p>
             <div className="itp-scm__heading-meta">
-              <span className="itp-scm__read-only"><ShieldCheck size={14} aria-hidden="true" /> Somente leitura</span>
+              <span className="itp-scm__read-only"><ShieldCheck size={14} aria-hidden="true" /> {canControlServices ? "Controle restrito" : "Somente leitura"}</span>
               <span className="itp-scm__last-sync"><Clock3 size={14} aria-hidden="true" />
                 {payload?.current
                   ? "Última coleta: " + formatDateTime(payload.current.observed_at)
@@ -447,7 +452,7 @@ export function ServerWindowsServicesSection({ serverId, canManageFavorites = fa
                   </thead>
                   <tbody>
                     {payload.items.map((svc) => (
-                      <ServiceRow key={svc.name} service={svc}
+                      <ServiceRow key={svc.name} service={svc} serverId={serverId} canControlServices={canControlServices}
                         expanded={expandedService === svc.name}
                         canManageFavorites={canManageFavorites}
                         saving={savePreference.isPending}
