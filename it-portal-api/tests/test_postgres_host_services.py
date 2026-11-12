@@ -108,10 +108,10 @@ def test_retention_prunes_only_old_unreferenced_runs(pg_client, monkeypatch):
         PostgresHostServiceRepository,
     )
 
-    main = pg_client.post("/servers", json=server_payload(name="Host da coleta")).json()["data"]
+    main = pg_client.post("/servers", json=server_payload(name="Host da coleta", hostname="srv-erp-03.delpi.local")).json()["data"]
     other = pg_client.post(
         "/servers", json=server_payload(
-            name="Outro host", hostname="srv-erp-02.delpi.local",
+            name="Outro host", hostname="srv-erp-04.delpi.local",
         ),
     ).json()["data"]
     sid = main["id"]
@@ -121,7 +121,7 @@ def test_retention_prunes_only_old_unreferenced_runs(pg_client, monkeypatch):
     headers = {"X-Delpi-Service-Authorization": "Bearer scope-token"}
     oldest = str(uuid.uuid4())
     response = pg_client.post(
-        uri, json=payload(run_id=oldest, services=[service("Legacy")]), headers=headers,
+        uri, json=payload(run_id=oldest, services=[service("Legacy")], hostname="srv-erp-03.delpi.local"), headers=headers,
     )
     assert response.status_code == 201
     assert response.json()["data"]["applied"] is True
@@ -150,7 +150,7 @@ def test_retention_prunes_only_old_unreferenced_runs(pg_client, monkeypatch):
         ).fetchone()["n"] == 1
 
     newer = str(uuid.uuid4())
-    body = payload(run_id=newer, services=[service("Legacy")])
+    body = payload(run_id=newer, services=[service("Legacy")], hostname="srv-erp-03.delpi.local")
     body["observed_at"] = "2026-11-12T10:00:00Z"
     response = pg_client.post(uri, json=body, headers=headers)
     assert response.status_code == 201
