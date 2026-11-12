@@ -98,7 +98,9 @@ def list_portal_purchase_requests():
 
 
 
-@purchase_requests_bp.get("/purchase-requests/approval-lead-time")
+# Flask Blueprint uses .route; FastAPI-only operation_id is not supported here.
+# The canonical BFF operation name is get_portal_approval_lead_time.
+@purchase_requests_bp.route("/purchase-requests/approval-lead-time", methods=["GET"])
 @require_policy(can_use_purchase_requests)
 @require_units("branch")
 def get_portal_approval_lead_time():
