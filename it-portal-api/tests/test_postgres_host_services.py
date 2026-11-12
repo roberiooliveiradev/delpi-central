@@ -342,7 +342,7 @@ def test_windows_remote_actions_queue_is_audited_durable_and_at_most_once(pg_cli
     assert job["id"] == action_id
     assert job["action"] == "stop"
     assert job["service_name"] == "TEST_DELPI"
-    assert pg_client.get(poll, params={"hostname": hostname}, headers=headers).json()["data"] is None
+    assert pg_client.post(poll, json={"hostname": hostname}, headers=headers).json()["data"] is None
 
     report = "/collector/v1/servers/" + sid + "/host-services/control/" + action_id + "/result"
     bad = pg_client.post(report, headers=headers, json={
@@ -387,7 +387,7 @@ def test_windows_remote_actions_queue_is_audited_durable_and_at_most_once(pg_cli
         "/servers/" + sid + "/host-services/actions/" + new_id,
     ).json()["data"]
     assert timed_out["status"] == "timeout"
-    assert pg_client.get(poll, params={"hostname": hostname}, headers=headers).json()["data"] is None
+    assert pg_client.post(poll, json={"hostname": hostname}, headers=headers).json()["data"] is None
 
     principal.permissions = ["it-portal.access", "it-portal.servers.view"]
     assert pg_client.post(url, json=body).status_code == 403
