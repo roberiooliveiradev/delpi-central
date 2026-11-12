@@ -167,8 +167,8 @@ IDs e `StartedAt` do gateway produtivo preservados. Portas 80/443 produtivas int
 
 ### SHA integrado
 
-- HEAD local/remoto pós-ativação: acompanhar `main` (commits `3fa89ca925` → `895a4b8bc0` → `9c3fc9ed04` + docs).
-- Checkout HML: `git pull --ff-only` em `/home/operador/projetos-teste/delpi-central`.
+- HEAD local/remoto pós-ativação: `184f8e088a9fa9dcb70f700614137d0b84f69748`.
+- Checkout HML: `git pull --ff-only` em `/home/operador/projetos-teste/delpi-central` (alinhado).
 
 ### Produção
 
