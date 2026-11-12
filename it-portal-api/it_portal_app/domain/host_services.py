@@ -60,7 +60,7 @@ def build_host_service_batch(raw: dict) -> HostServiceBatch:
 
     host = raw.get("host_identity")
     hostname = normalize_hostname(host.get("hostname")) if isinstance(host, dict) else ""
-    if not is_valid_hostname(hostname) or (isinstance(host, dict) and set(host) != {"hostname"}):
+    if not is_valid_hostname(hostname) or (isinstance(host, dict) and (set(host) - {"hostname", "machine_id"} or host.get("machine_id") is not None)):
         errors["host_identity"] = "Informe exclusivamente hostname válido."
     for field, maximum in (("batch_index", MAX_BATCHES - 1), ("batch_count", MAX_BATCHES)):
         value = raw.get(field)
@@ -88,6 +88,9 @@ def build_host_service_batch(raw: dict) -> HostServiceBatch:
             continue
         name = name.strip()
         key = name.casefold()
+        if len(key) > 200:
+            errors[f"services[{i}].name"] = "Nome normalizado excede 200 caracteres."
+            continue
         if key in seen:
             errors[f"services[{i}].name"] = "Nome duplicado no lote."
             continue
