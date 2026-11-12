@@ -1021,11 +1021,14 @@ cmd_up_requests_api() {
   echo "modo=build + up -d --no-deps (migrations plugins HML; outbox worker OFF)"
   echo "anexos=DELPI_HML_DATA_HOST_DIR/my-requests-{attachments,artifacts}"
 
-  mkdir -p \
-    "${COMPOSE_DIR}/${DELPI_HML_DATA_HOST_DIR:-hml-data}/my-requests-attachments" \
-    "${COMPOSE_DIR}/${DELPI_HML_DATA_HOST_DIR:-hml-data}/my-requests-artifacts" 2>/dev/null || true
-  # Path relative to compose dir when DELPI_HML_DATA_HOST_DIR is ./hml-data
-  mkdir -p "$COMPOSE_DIR/hml-data/my-requests-attachments" "$COMPOSE_DIR/hml-data/my-requests-artifacts"
+  # hml-data costuma ser root-owned por mounts Docker; não falhar o up.
+  mkdir -p "$COMPOSE_DIR/hml-data/my-requests-attachments" \
+    "$COMPOSE_DIR/hml-data/my-requests-artifacts" 2>/dev/null || true
+  if [[ ! -d "$COMPOSE_DIR/hml-data/my-requests-attachments" ]]; then
+    docker run --rm -v "$COMPOSE_DIR/hml-data:/data" alpine:3.20 \
+      sh -c 'mkdir -p /data/my-requests-attachments /data/my-requests-artifacts && chmod 777 /data/my-requests-attachments /data/my-requests-artifacts' \
+      >/dev/null
+  fi
 
   (
     cd "$COMPOSE_DIR"
@@ -1143,7 +1146,13 @@ cmd_up_engineering_api() {
   echo "modo=build + up -d --no-deps (EVA/OCR/ACT fail-closed; S2S opcional)"
   echo "volumes=hml-data/prc-attachments + hml-data/ocr-models (vazio)"
 
-  mkdir -p "$COMPOSE_DIR/hml-data/prc-attachments" "$COMPOSE_DIR/hml-data/ocr-models"
+  mkdir -p "$COMPOSE_DIR/hml-data/prc-attachments" \
+    "$COMPOSE_DIR/hml-data/ocr-models" 2>/dev/null || true
+  if [[ ! -d "$COMPOSE_DIR/hml-data/prc-attachments" ]]; then
+    docker run --rm -v "$COMPOSE_DIR/hml-data:/data" alpine:3.20 \
+      sh -c 'mkdir -p /data/prc-attachments /data/ocr-models && chmod 777 /data/prc-attachments /data/ocr-models' \
+      >/dev/null
+  fi
 
   (
     cd "$COMPOSE_DIR"
