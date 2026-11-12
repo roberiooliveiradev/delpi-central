@@ -313,6 +313,14 @@ class GetProductionMachineLoadOperationBalancesUseCase:
                     "operation_code": operation,
                     "operation_produced_qty": mapped["operation_produced_qty"],
                     "operation_pending_qty": mapped["operation_pending_qty"],
+                    # Evidência autoritativa: registro SC2 existe nesta filial?
+                    # None em adapters antigos sem consulta de SC2; não inventar
+                    # "não encontrado" por ausência de capacidade da integração.
+                    "order_exists": (
+                        order in order_flags
+                        if callable(getattr(self._repository, "get_order_finish_flags", None))
+                        else None
+                    ),
                 }
             )
 
