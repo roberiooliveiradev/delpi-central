@@ -122,11 +122,32 @@ const NON_SCALAR_CHANGE_PATHS = new Set([
   "supplierLinkChanges",
 ]);
 
+/** Entrada de campo do baseline oficial: `{value, present,
+ * officialField}` — formato produzido pelo contrato D15 da
+ * Engineering API (`officialBaseline.fields`). */
+type BaselineFieldEntry = {
+  value?: unknown;
+  present?: boolean;
+  officialField?: string;
+};
+
+function isBaselineFieldEntry(value: unknown): value is BaselineFieldEntry {
+  return (
+    typeof value === "object" && value !== null && "value" in value
+  );
+}
+
 /** Valor «antes» tipado: baseline ausente, path ausente ou estrutura
- * não escalar → estado explícito, nunca objeto bruto (R7–R9). */
+ * não reconhecida → estado explícito, nunca objeto bruto (R7–R9).
+ * Entradas `{value, present}` do contrato são desempacotadas. */
 function beforeText(path: string, baselineFields: Props["baselineFields"]) {
   if (!baselineFields || !(path in baselineFields)) return UNAVAILABLE_TEXT;
-  return displayValue(path, baselineFields[path]);
+  const raw = baselineFields[path];
+  if (isBaselineFieldEntry(raw)) {
+    if (raw.present === false) return "Não informado no cadastro oficial";
+    return displayValue(path, raw.value);
+  }
+  return displayValue(path, raw);
 }
 
 function linkAttrLabel(attr: LinkAttr): string {

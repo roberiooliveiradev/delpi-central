@@ -205,7 +205,32 @@ describe("PrcTechnicalSheetView — modo UPDATE (alterações solicitadas)", () 
     expect(screen.queryByText(/object Object/)).toBeNull();
   });
 
-  it("múltiplos campos aparecem juntos; baseline objeto vira estado indisponível", () => {
+  it("extrai o valor das entradas {value,present} do baseline (contrato D15)", () => {
+    render(
+      <PrcTechnicalSheetView
+        requestType="update"
+        draft={UPDATE_DRAFT}
+        changedPaths={[
+          { path: "description", reason: "" },
+          { path: "unit", reason: "" },
+        ]}
+        baselineFields={{
+          description: {
+            value: "TERM. OLHAL M6 ESTANHADO",
+            present: true,
+            officialField: "description",
+          },
+          unit: { value: "UN", present: true, officialField: "unit" },
+        }}
+      />,
+    );
+    expect(screen.getByText("TERM. OLHAL M6 ESTANHADO")).toBeTruthy();
+    expect(screen.getByText("UN")).toBeTruthy();
+    expect(screen.queryByText(/object Object/)).toBeNull();
+    expect(screen.queryByText("Não disponível")).toBeNull();
+  });
+
+  it("múltiplos campos; baseline com estrutura não reconhecida vira estado indisponível", () => {
     render(
       <PrcTechnicalSheetView
         requestType="update"
@@ -217,18 +242,34 @@ describe("PrcTechnicalSheetView — modo UPDATE (alterações solicitadas)", () 
         ]}
         baselineFields={{
           description: { valor: "estrutura legada" },
-          unit: "UN",
+          unit: { value: "UN", present: true },
         }}
       />,
     );
-    // Descrição com baseline estruturado → estado explícito, nunca bruto.
+    // Descrição com baseline de formato desconhecido → estado explícito.
     expect(screen.getAllByText("Não disponível").length).toBeGreaterThan(0);
     expect(screen.queryByText(/object Object/)).toBeNull();
-    // Unidade: antes correto.
+    // Unidade: antes correto via entry {value,present}.
     expect(screen.getByText("UN")).toBeTruthy();
     expect(screen.getByText("PC")).toBeTruthy();
     // Path suppliers não vira linha escalar.
     expect(screen.queryByText("Fornecedores")).toBeNull();
+  });
+
+  it("campo ausente no produto oficial (present:false) exibe estado correto", () => {
+    render(
+      <PrcTechnicalSheetView
+        requestType="update"
+        draft={UPDATE_DRAFT}
+        changedPaths={[{ path: "customerReference", reason: "" }]}
+        baselineFields={{
+          customerReference: { value: "", present: false },
+        }}
+      />,
+    );
+    expect(
+      screen.getByText("Não informado no cadastro oficial"),
+    ).toBeTruthy();
   });
 
   it("renderiza operação de inclusão de fornecedor", () => {
