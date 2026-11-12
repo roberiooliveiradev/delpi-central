@@ -1,10 +1,10 @@
 # Minha DELPI — Homologação na VM srv-api — registro de continuidade
 
-> **Atualizado:** 12/11/2026 · **Estado:** Plataforma HML com 12 containers principais ativos (Gates A–F).  
+> **Atualizado:** 12/11/2026 · **Estado:** Plataforma HML com **16** containers principais saudáveis.  
 > **Repositório:** `roberiooliveiradev/delpi-central`.  
-> **TASK_ID:** `HML-PLATFORM-SERVICES-01`.  
-> **BASE_HEAD (plano):** `c5bd6bc70885cddfc9d0bc367ed38d23197e9450`.  
-> **MAIN_INTEGRATED_SHA:** ver §8 (HEAD pós-ativação).
+> **TASK_ID:** `HML-MY-REQUESTS-ENGINEERING-01` (continuidade de `HML-PLATFORM-SERVICES-01`).  
+> **BASE_HEAD (plano):** `a7f9caf1d944fb9a1c1a824ca2b4bdaf1c3d108c`.  
+> **MAIN_INTEGRATED_SHA:** ver §8.1.
 
 ## 1. Objetivo e regras congeladas
 
@@ -16,8 +16,8 @@ Ambiente de homologação independente na mesma VM `srv-api`.
 - **Executado (pré-TLS):** DBs → Keycloak → Gateway → Core API → Portal (HTTP `:18080`).
 - **Causa raiz PKCE:** Chromium não expõe `crypto.subtle` em HTTP por IP privado → `Web Crypto API is not available`.
 - **Decisão:** Alternativa C — HTTPS interno porta `18443`, CA local, sem domínio público/internet.
-- **Autorizado e ativado (Gates B–F):** Redis; API DELPI; Plugin UI; Production Control API/UI — isolados, TOTVS/ERP/e-mail/jobs produtivos bloqueados.
-- **Ainda proibido sem autorização:** restore de dados produtivos; ERP real; exposição à internet; remoção da chave CA sem backup+auth operacional.
+- **Autorizado e ativado (plataforma + apps):** Redis; API DELPI; Plugin UI; Production Control; **Minha Solicitações**; **Portal de Engenharia** — isolados, TOTVS/ERP/e-mail/jobs produtivos bloqueados.
+- **Ainda proibido sem autorização:** restore de dados produtivos; ERP real; exposição à internet; remoção da chave CA sem backup+auth operacional; EVA ACT/OCR mutável.
 
 ## 2. Diagnóstico PKCE / Web Crypto (comprovado)
 
@@ -165,25 +165,49 @@ IDs e `StartedAt` do gateway produtivo preservados. Portas 80/443 produtivas int
 - Remoção da chave live exige autorização operacional explícita + verificação do backup.
 - Certificado público Windows **não** regenerado nesta etapa.
 
-### SHA integrado
+### SHA integrado (plataforma)
 
-- HEAD local/remoto pós-ativação: `184f8e088a9fa9dcb70f700614137d0b84f69748`.
-- Checkout HML: `git pull --ff-only` em `/home/operador/projetos-teste/delpi-central` (alinhado).
+- Checkout HML alinhado via `git pull --ff-only` em `/home/operador/projetos-teste/delpi-central`.
 
 ### Produção
 
-- Gateway produtivo `StartedAt=2026-11-11T16:59:38Z` preservado após Gates A–F.
+- Gateway produtivo `StartedAt=2026-11-11T16:59:38Z` preservado.
 - Redes distintas: HML `delpi-hml-network` vs prod `infra_delpi-network`.
 
-Relatório operacional: `HOMOLOGATION_PLATFORM_SERVICES_ACTIVATION_REPORT`.
+Relatório operacional anterior: `HOMOLOGATION_PLATFORM_SERVICES_ACTIVATION_REPORT`.
+
+## 8.1 Minha Solicitações + Portal de Engenharia (`HML-MY-REQUESTS-ENGINEERING-01`)
+
+`EXISTING_EQUIVALENT=YES` · `REUSE_DECISION=REUSE/EXTEND`
+
+| Gate | Cenário | Container | Resultado |
+|---|---|---|---|
+| A | preparação | — | **PASS** — 12 base healthy; Compose/profiles/gateway estendidos |
+| B | `requests-api` | `delpi-hml-requests-api` | **PASS** — health 200; migrations my-requests no plugins HML; outbox **OFF**; volumes anexos HML |
+| C | `my-requests` | `delpi-hml-my-requests` | **PASS** — `remoteEntry.js` HTTPS |
+| D | `engineering-api` | `delpi-hml-engineering-api` | **PASS** — health 200; EVA/OCR/ACT fail-closed; S2S vazio; JWT inválido 401 |
+| E | `engineering` | `delpi-hml-engineering` | **PASS** — `remoteEntry.js` HTTPS |
+
+### Isolamento
+
+- Imagens `delpi-hml/*:local`; rede só `delpi-hml-network`; sem publish de portas de app.
+- `DELPI_API_URL=http://api-delpi:8000`; `REQUESTS_API_URL=http://requests-api:8000`.
+- Anexos: `infra/hml-data/my-requests-{attachments,artifacts}`, `prc-attachments`, `ocr-models` (vazio).
+- Gateway HML: `/apps/requests-api/`, `/apps/engineering-api/` + MFE assets dinâmicos.
+- Cliente S2S `engineering-api` / scope `engineering-facts.read`: **não provisionado** nesta etapa (facts fail-closed) — **PENDING** se leitura LMP for necessária.
+
+### SHA integrado (esta task)
+
+- `MAIN_INTEGRATED_SHA`: acompanhar `main` pós-commits `feat(hml): ativar Minha Solicitações…` + fixes (`7485b2ce02`+).
 
 ## 9. Drift / pendências
 
-- Logout UI browser com sessão completa: validar com `hml-tester` pós-rotação (smoke API `/core-api/me` 401 sem token = PASS; fluxo menu logout = **PENDING** se CA Windows não estiver confiável neste agente).
-- Dados de negócio / funcionalidades PC com dados reais: **não homologados** (ambiente vazio por desenho).
+- Logout UI browser / CA Windows: **PENDING** (frente anterior; não expandida aqui).
+- Custódia CA: backup ok; remoção da VM exige auth operacional.
+- Concessão RBAC mínima a `hml-tester` para Apps my-requests/engineering: **PENDING** (owner Core) — sem superadmin artificial.
+- Provisionamento S2S engineering-facts no Keycloak HML: **PENDING** (só se necessário).
+- Dados de negócio / funcionalidades com dados reais: **não homologados**.
 - Drift `5c20be0311` (DÉLIA) permanece para owner DÉLIA.
-- Custódia CA: backup criptografado preparado; remoção da VM exige autorização explícita.
-- Credenciais HML rotacionadas no Gate A (+ Redis por exposição em diagnóstico); valores só em `.env.hml` privado.
 
 ## 10. Referências
 
