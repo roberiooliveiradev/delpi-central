@@ -18,6 +18,8 @@ param(
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+# ServiceController is not loaded automatically in a clean -NoProfile PowerShell task.
+Add-Type -AssemblyName System.ServiceProcess -ErrorAction Stop
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 if ([Environment]::MachineName.ToLowerInvariant() -ne 'srv-db01') {
