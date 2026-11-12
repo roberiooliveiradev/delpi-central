@@ -332,3 +332,21 @@ export {
   type PrcSupplierCellSelection,
   type PrcSupplierEditableAttribute,
 } from "./components/prc/PrcCorrectionTargets";
+
+// ENG-REALTIME-01 — transporte WS neutro + contrato Engineering realtime.
+export {
+  RealtimeSocketClient,
+  createEventDispatcher,
+  type RealtimeSocketOptions,
+  type RealtimeSocketState,
+} from "./realtime/realtimeSocket";
+export {
+  ENGINEERING_PRC_DOMAIN,
+  ENGINEERING_RESOURCE_CHANGED,
+  buildEngineeringRealtimeWsUrl,
+  buildEngineeringSubscribePayload,
+  buildEngineeringUnsubscribePayload,
+  parseEngineeringRealtimeMessage,
+  type EngineeringRealtimeMessage,
+  type EngineeringResourceChangedEvent,
+} from "./realtime/engineeringRealtime";

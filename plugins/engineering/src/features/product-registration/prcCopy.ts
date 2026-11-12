@@ -102,6 +102,8 @@ export const PRC_COPY = {
     "Fila de cadastros e alterações de matérias-primas sob atendimento da Engenharia.",
   newRequest: "Nova solicitação",
   refresh: "Atualizar",
+  remoteUpdatePending:
+    "Esta solicitação foi atualizada em outra sessão. Suas edições estão preservadas; os dados serão recarregados ao concluir.",
   clearFilters: "Limpar filtros",
   emptyQueue: "Nenhuma solicitação no escopo atual.",
   emptyFiltered: "Nenhum resultado para os filtros aplicados.",

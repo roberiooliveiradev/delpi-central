@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { HomeApiError } from "../../../api/httpClient";
+import { usePrcQueueSync } from "../../../app/EngineeringRealtimeProvider";
 import { navigateEngineeringView } from "../../../app/engineeringRoutes";
 import {
   EngineeringActionButton,
@@ -146,6 +147,17 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
     void load(applied, controller.signal);
     return () => controller.abort();
   }, [applied, load]);
+
+  /* ENG-REALTIME-01 — evento de mudança invalida e rebusca a fila com
+   * os filtros atuais (debounce no provider; WS nunca carrega dado). */
+  const appliedRef = useRef(applied);
+  appliedRef.current = applied;
+  usePrcQueueSync(
+    useCallback(() => {
+      const controller = new AbortController();
+      void load(appliedRef.current, controller.signal);
+    }, [load]),
+  );
 
   /* Debounce da busca → URL (replace, sem poluir histórico). */
   useEffect(() => {

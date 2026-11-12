@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 import { configureHttpClient } from "./api/httpClient";
 import { EngineeringPluginShell } from "./app/EngineeringPluginShell";
+import { EngineeringRealtimeProvider } from "./app/EngineeringRealtimeProvider";
 import { openCatalogRoute } from "./app/openCatalogRoute";
 import {
   ENGINEERING_BASE_PATH,
@@ -108,11 +109,13 @@ export default function App({
         <ProductsFeature relativePath={resolved.relativePath} />
       ) : null}
       {resolved.view === "product-registration" ? (
-        <ProductRegistrationFeature
-          relativePath={resolved.relativePath}
-          basePath={basePath}
-          getAccessToken={getAccessToken}
-        />
+        <EngineeringRealtimeProvider getAccessToken={getAccessToken}>
+          <ProductRegistrationFeature
+            relativePath={resolved.relativePath}
+            basePath={basePath}
+            getAccessToken={getAccessToken}
+          />
+        </EngineeringRealtimeProvider>
       ) : null}
       {resolved.view === "help" ? <HelpPage basePath={basePath} /> : null}
     </EngineeringPluginShell>

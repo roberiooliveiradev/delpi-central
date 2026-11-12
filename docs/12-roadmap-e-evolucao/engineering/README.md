@@ -48,7 +48,7 @@ Portal de Engenharia
 | Documento | Papel |
 |---|---|
 | [README.md](./README.md) | índice e decisões mestre |
-| [ENG-REALTIME-01](./ENG-REALTIME-01-websocket-transversal-prc-plano.md) | **Plano atual (12/11/2026):** capacidade WebSocket transversal Engineering API, PRC primeiro consumidor, integração Engineering + My Requests, limites de AuthZ/pós-commit/escala — TARGET/PLANNED |
+| [ENG-REALTIME-01](./ENG-REALTIME-01-websocket-transversal-prc-plano.md) | **Implementado:** WebSocket transversal Engineering API (`/v1/realtime/ws`), PRC primeiro consumidor, invalidação + refetch nos MFEs Engineering e My Requests, AuthZ por objeto com revogação ativa — ver seção 11 do plano |
 | [INVENTARIO-ATIVOS.md](./INVENTARIO-ATIVOS.md) | ativos atuais, owners, destino e evidências |
 | [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md) | escopo funcional e fronteiras de ownership |
 | [PLAYBOOK-MODULO-ENGENHARIA.md](./PLAYBOOK-MODULO-ENGENHARIA.md) | regras de produto/arquitetura e invariantes de implementação |

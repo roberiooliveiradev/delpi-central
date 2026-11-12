@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -27,6 +28,9 @@ from engineering_app.interface.http.routes.nonconformity_routes import (
 )
 from engineering_app.interface.http.routes.product_registration_routes import (
     router as product_registration_router,
+)
+from engineering_app.interface.http.routes.realtime_routes import (
+    router as realtime_router,
 )
 from engineering_app.interface.http.routes.product_routes import (
     router as product_router,
@@ -66,7 +70,19 @@ async def lifespan(_app: FastAPI):
         settings.APP_ENV,
         settings.ENGINEERING_API_ROOT_PATH,
     )
-    yield
+    # ENG-REALTIME-01 — hub process-local (1 worker uvicorn): o loop só
+    # existe dentro do lifespan; schedule_broadcast é thread-safe.
+    from engineering_app.application.services.engineering_realtime_hub import (
+        engineering_realtime_hub,
+    )
+
+    loop = asyncio.get_running_loop()
+    engineering_realtime_hub.bind_loop(loop)
+    worker = asyncio.create_task(engineering_realtime_hub.worker())
+    try:
+        yield
+    finally:
+        worker.cancel()
 
 
 app = FastAPI(
@@ -119,6 +135,7 @@ app.include_router(lmp_router)
 app.include_router(nonconformity_router)
 app.include_router(product_router)
 app.include_router(product_registration_router)
+app.include_router(realtime_router)
 
 # Streamable HTTP MCP (path público: /apps/engineering-api/mcp) —
 # AuthN/AuthZ via jwt_middleware (transporte OAuth + delpi_auth).

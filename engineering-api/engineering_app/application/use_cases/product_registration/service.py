@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -18,6 +19,11 @@ from engineering_app.application.ports.product_registration import (
     AttachmentStoragePort,
     OfficialProductReaderPort,
     ProductRegistrationRepository,
+)
+from engineering_app.application.ports.realtime import (
+    NullRealtimePublisher,
+    RealtimeEvent,
+    RealtimePublisher,
 )
 from engineering_app.domain.product_registration import (
     attachments as attachments_mod,
@@ -95,6 +101,9 @@ _ANALYST_ONLY_ACTIONS = frozenset(
 
 # Status a partir dos quais a conclusão verificada é permitida (REF-020).
 _COMPLETE_FROM = frozenset({"in_progress", "under_review"})
+
+
+logger = logging.getLogger(__name__)
 
 
 def _now() -> str:
@@ -210,11 +219,13 @@ class ProductRegistrationService:
         official_reader: OfficialProductReaderPort | None = None,
         allowed_sources: tuple[str, ...] | None = None,
         attachment_storage: "AttachmentStoragePort | None" = None,
+        realtime_publisher: RealtimePublisher | None = None,
     ) -> None:
         self._repo = repository
         self._reader = official_reader
         self._sources = allowed_sources or _ALLOWED_SOURCES_DEFAULT
         self._storage = attachment_storage
+        self._realtime = realtime_publisher or NullRealtimePublisher()
 
     def _filter_actions_for_actor(
         self,
@@ -430,17 +441,73 @@ class ProductRegistrationService:
         status: int,
         payload: dict[str, Any],
     ) -> None:
-        if not key:
-            return
-        self._repo.save_idempotent(
-            actor_or_source=actor.user_id,
-            operation=operation,
-            idempotency_key=key,
-            request_fingerprint=fingerprint,
-            request_id=request_id,
-            response_status=status,
-            response_payload=payload,
-        )
+        if key:
+            self._repo.save_idempotent(
+                actor_or_source=actor.user_id,
+                operation=operation,
+                idempotency_key=key,
+                request_fingerprint=fingerprint,
+                request_id=request_id,
+                response_status=status,
+                response_payload=payload,
+            )
+        # ENG-REALTIME-01 — a mutação do caso (e o registro idempotente)
+        # já commitaram neste ponto: emitir aqui é pós-commit real.
+        # Replays retornam antes da mutação → nunca chegam aqui.
+        if request_id:
+            self._emit_change(request_id, reason=operation, actor=actor)
+
+    # --- realtime (ENG-REALTIME-01) ------------------------------------------
+
+    def _emit_change(
+        self,
+        request_id: str,
+        *,
+        reason: str,
+        actor: PrcActor,
+    ) -> None:
+        """Evento leve pós-commit — best-effort, nunca falha a mutação."""
+        try:
+            request = self._repo.get_request(request_id) or {}
+            recipients = tuple(
+                uid
+                for uid in (
+                    str(request.get("requester_subject") or "").strip(),
+                    str(request.get("assigned_to_subject") or "").strip(),
+                )
+                if uid
+            )
+            self._realtime.publish(
+                RealtimeEvent(
+                    domain="product-registration",
+                    resource_type="request",
+                    resource_id=str(request_id),
+                    reason=reason,
+                    occurred_at=_now(),
+                    event_id=_uuid(),
+                    version=request.get("version"),
+                    status=request.get("status"),
+                    actor_user_id=actor.user_id,
+                    actor_client_id=getattr(actor, "client_id", None),
+                    recipient_user_ids=recipients,
+                )
+            )
+        except Exception:  # noqa: BLE001
+            logger.exception(
+                "prc_realtime_emit_failed request_id=%s reason=%s",
+                request_id,
+                reason,
+            )
+
+    def can_observe(self, request_id: str, actor: PrcActor) -> bool:
+        """Autorização de assinatura WS: leitura do módulo + escopo por
+        objeto (solicitante/atribuído ou analista). Fail-closed."""
+        try:
+            _require_actor_read(actor)
+            self._get_scoped(request_id, actor)
+        except Exception:  # noqa: BLE001
+            return False
+        return True
 
     # --- INTAKE ------------------------------------------------------------------
 
@@ -2099,6 +2166,9 @@ class ProductRegistrationService:
             raise
         record = outcome["record"]
         revision = outcome["revision"]
+        self._emit_change(
+            request_id, reason=action_name, actor=actor
+        )
         return {
             "status": "completed",
             "requestId": request_id,
@@ -3580,6 +3650,9 @@ class ProductRegistrationService:
             except Exception:
                 pass
             raise
+        self._emit_change(
+            request_id, reason="attachment_upload", actor=actor
+        )
         return {
             "attachment": attachments_mod.attachment_to_api(row),
             "deduplicated": False,

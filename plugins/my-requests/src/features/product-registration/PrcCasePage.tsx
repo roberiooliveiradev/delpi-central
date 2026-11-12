@@ -9,7 +9,7 @@
  * contextual na própria ficha; o backend valida escopo de objeto,
  * estado, versão e idempotência. */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActionButton,
   mapApiFieldsToCorrectionErrors,
@@ -52,6 +52,7 @@ import {
   type PrcTimelineEvent,
 } from "./prcApi";
 import { ApiClientError } from "../../api/httpClient";
+import { usePrcCaseSync } from "../../app/PrcRealtimeProvider";
 import { RequestHistoryTimeline } from "../../components/RequestHistoryTimeline";
 import { useParticipantAvatarUrls } from "../../hooks/useParticipantAvatarUrls";
 import {
@@ -150,6 +151,31 @@ export function PrcCasePage({ requestId, onBack }: Props) {
   }, [requestId]);
 
   useEffect(() => load(), [load]);
+
+  /* ENG-REALTIME-01 — evento do próprio caso invalida e refaz o
+   * refetch HTTP oficial. Enquanto `editing` (wizard com rascunho),
+   * o refetch é adiado; ao sair da edição, recarrega. */
+  const editingRef = useRef(editing);
+  const [remoteChanged, setRemoteChanged] = useState(false);
+  useEffect(() => {
+    editingRef.current = editing;
+  }, [editing]);
+  usePrcCaseSync(
+    requestId,
+    useCallback(() => {
+      if (editingRef.current) {
+        setRemoteChanged(true);
+        return;
+      }
+      load();
+    }, [load]),
+  );
+  useEffect(() => {
+    if (!editing && remoteChanged) {
+      setRemoteChanged(false);
+      load();
+    }
+  }, [editing, remoteChanged, load]);
 
   const historyViews = useMemo(() => prcTimelineItemViews(timeline), [timeline]);
   const avatarByUserId = useParticipantAvatarUrls(
@@ -287,6 +313,8 @@ export function PrcCasePage({ requestId, onBack }: Props) {
       {error ? (
         <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
       ) : null}
+      {/* `remoteChanged` enquanto edita não renderiza banner aqui — o
+       * wizard substitui a página; o refetch pendente roda ao sair. */}
       {detail ? (
         <>
           <MyRequestsSectionCard

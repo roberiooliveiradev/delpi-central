@@ -4,9 +4,10 @@
  * allowedActions é a única autoridade de ações; CAS via
  * expectedVersion; nenhuma conclusão otimista. */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { HomeApiError } from "../../../api/httpClient";
+import { usePrcCaseSync } from "../../../app/EngineeringRealtimeProvider";
 import { getSubjectFromAccessToken } from "../../../app/authDisplayName";
 import {
   EngineeringActionButton,
@@ -173,6 +174,31 @@ export function PrcDetailPage({
     setState("loading");
     void load();
   }, [load]);
+
+  /* ENG-REALTIME-01 — evento do próprio caso invalida e refaz o
+   * refetch HTTP oficial. Enquanto `editing`, o refetch é adiado para
+   * não sobrescrever o rascunho; ao sair da edição, recarrega. */
+  const editingRef = useRef(editing);
+  const [remoteChanged, setRemoteChanged] = useState(false);
+  useEffect(() => {
+    editingRef.current = editing;
+  }, [editing]);
+  usePrcCaseSync(
+    requestId,
+    useCallback(() => {
+      if (editingRef.current) {
+        setRemoteChanged(true);
+        return;
+      }
+      void load();
+    }, [load]),
+  );
+  useEffect(() => {
+    if (!editing && remoteChanged) {
+      setRemoteChanged(false);
+      void load();
+    }
+  }, [editing, remoteChanged, load]);
 
   /* `?tab=` inválido → normaliza sem poluir o histórico. */
   useEffect(() => {
@@ -564,6 +590,11 @@ export function PrcDetailPage({
         <EngineeringStateBanner variant="success">
           Correções recebidas do solicitante — revise a ficha e continue o
           atendimento.
+        </EngineeringStateBanner>
+      ) : null}
+      {remoteChanged && editing ? (
+        <EngineeringStateBanner>
+          {PRC_COPY.remoteUpdatePending}
         </EngineeringStateBanner>
       ) : null}
 

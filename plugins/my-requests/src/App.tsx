@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { MyRequestsFloatingNoticeProvider } from "./app/MyRequestsFloatingNoticeProvider";
 import { MyRequestsRealtimeProvider } from "./app/MyRequestsRealtimeProvider";
+import { PrcRealtimeProvider } from "./app/PrcRealtimeProvider";
 import { configureHttpClient } from "./api/httpClient";
 import { AppShell } from "./components/AppShell";
 import { PrcCasePage } from "./features/product-registration/PrcCasePage";
@@ -123,7 +124,9 @@ export default function App({
     <RequestsPermissionsProvider permissions={permissions} isSuperadmin={isSuperadmin}>
       <MyRequestsFloatingNoticeProvider>
         <MyRequestsRealtimeProvider getAccessToken={getAccessToken} enabled>
-          {page}
+          <PrcRealtimeProvider getAccessToken={getAccessToken} enabled>
+            {page}
+          </PrcRealtimeProvider>
         </MyRequestsRealtimeProvider>
       </MyRequestsFloatingNoticeProvider>
     </RequestsPermissionsProvider>

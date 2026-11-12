@@ -160,5 +160,24 @@ def build_prc_service() -> ProductRegistrationService:
         official_reader=build_official_product_reader(),
         allowed_sources=_sources_allowlist(),
         attachment_storage=build_prc_attachment_storage(),
+        realtime_publisher=build_realtime_publisher(),
     )
     return _SERVICE_SINGLETON
+
+
+def build_realtime_publisher():
+    """Adapter WS pós-commit (ENG-REALTIME-01) — ``ENG_REALTIME_ENABLED``
+    false → publisher nulo (HTTP segue autoritativo)."""
+    from engineering_app.config import settings
+
+    if not settings.ENG_REALTIME_ENABLED:
+        from engineering_app.application.ports.realtime import (
+            NullRealtimePublisher,
+        )
+
+        return NullRealtimePublisher()
+    from engineering_app.application.services.engineering_realtime_notify import (
+        engineering_realtime_notifier,
+    )
+
+    return engineering_realtime_notifier

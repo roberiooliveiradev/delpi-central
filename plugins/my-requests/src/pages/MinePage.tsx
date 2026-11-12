@@ -8,6 +8,7 @@ import {
 } from "@delpi/plugin-ui/index";
 
 import { useMyRequestsListSync } from "../app/MyRequestsRealtimeProvider";
+import { usePrcListSync } from "../app/PrcRealtimeProvider";
 import { listMyRequests, listRequestTypes } from "../api/requestsApi";
 import { listMyPrcRequests } from "../features/product-registration/prcApi";
 import { AppShell } from "../components/AppShell";
@@ -80,6 +81,9 @@ export function MinePage() {
     setListEpoch((value) => value + 1);
   }, []);
   useMyRequestsListSync(bumpList);
+  /* ENG-REALTIME-01 — casos PRC vivem na Engineering API; evento dela
+   * também reindexa a lista unificada (mesmo epoch/refetch oficial). */
+  usePrcListSync(bumpList);
 
   useEffect(() => {
     const ac = new AbortController();

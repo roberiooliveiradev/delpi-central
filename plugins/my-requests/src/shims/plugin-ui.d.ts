@@ -1531,3 +1531,63 @@ declare module "@delpi/plugin-ui/index" {
   ): PrcTimelineItemView[];
 }
 
+
+// ENG-REALTIME-01 — transporte WS neutro + contrato Engineering realtime.
+declare module "@delpi/plugin-ui/index" {
+  export class RealtimeSocketClient {
+    constructor(options: RealtimeSocketOptions);
+    getState(): RealtimeSocketState;
+    start(): void;
+    stop(): void;
+    subscribe(payload: string): void;
+    unsubscribe(payload: string): void;
+  }
+  export type RealtimeSocketState = { connected: boolean; error: string | null };
+  export type RealtimeSocketOptions = {
+    buildUrl: () => string | null;
+    pingMs?: number;
+    reconnectMs?: number;
+    onMessage: (raw: string) => void;
+    onStateChange?: (state: RealtimeSocketState) => void;
+  };
+  export function createEventDispatcher(options: {
+    debounceMs?: number;
+    dedupeWindowMs?: number;
+    onFlush: (events: unknown[]) => void;
+  }): (event: unknown) => void;
+
+  export const ENGINEERING_PRC_DOMAIN: string;
+  export const ENGINEERING_RESOURCE_CHANGED: string;
+  export type EngineeringResourceChangedEvent = {
+    type: string;
+    domain: string;
+    resourceType: string;
+    resourceId: string;
+    reason: string;
+    version?: number | null;
+    status?: string | null;
+    eventId?: string | null;
+    occurredAt?: string | null;
+    actorUserId?: string | null;
+    actorClientId?: string | null;
+  };
+  export type EngineeringRealtimeMessage = unknown;
+  export function buildEngineeringRealtimeWsUrl(options: {
+    apiBase: string;
+    token: string;
+    clientId: string;
+  }): string;
+  export function buildEngineeringSubscribePayload(
+    domain: string,
+    resourceId: string,
+    resourceType?: string,
+  ): string;
+  export function buildEngineeringUnsubscribePayload(
+    domain: string,
+    resourceId: string,
+    resourceType?: string,
+  ): string;
+  export function parseEngineeringRealtimeMessage(
+    raw: string,
+  ): EngineeringRealtimeMessage | null;
+}

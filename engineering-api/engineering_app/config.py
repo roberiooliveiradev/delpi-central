@@ -73,6 +73,14 @@ class Settings:
         _get_env("ENGINEERING_LMP_FACTS_TIMEOUT_SECONDS", default="30.0")
     )
 
+    # ENG-REALTIME-01 — feature flag do tempo real transversal.
+    # ``false`` desliga handshake WS e publicação; HTTP permanece
+    # integralmente funcional.
+    ENG_REALTIME_ENABLED: bool = (
+        _get_env("ENG_REALTIME_ENABLED", default="true").lower()
+        not in ("0", "false", "no", "off")
+    )
+
     def resolved_log_level(self) -> int:
         import logging
 

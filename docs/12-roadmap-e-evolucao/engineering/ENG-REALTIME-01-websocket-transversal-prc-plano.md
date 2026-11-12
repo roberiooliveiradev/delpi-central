@@ -1,7 +1,7 @@
 # ENG-REALTIME-01 — Tempo real transversal da Engineering API (PRC como primeiro consumidor)
 
 > **Data da decisão de planejamento:** 2026-11-12
-> **Status:** **TARGET / PLANNED — não implementado, não autorizado como contrato final**.
+> **Status:** **IMPLEMENTADO (backend + ambos os MFEs) — evidência de execução na seção 11.**
 > **Issue de coordenação:** [delpi-central#154](https://github.com/roberiooliveiradev/delpi-central/issues/154).
 > **Repo:** \`roberiooliveiradev/delpi-central\`, branch \`main\`.
 > **Owner:** Engenharia / Engineering API; **consumers iniciais:** \`plugins/engineering\` e \`plugins/my-requests\`.
@@ -204,12 +204,18 @@ Contrato conceitual, não um DTO implementado:
 
 | Item | Estado |
 |---|---|
-| Requests WS e provider frontend | **PROVEN** (código inspecionado) |
-| Gateway headers Engineering em DEV/PROD | **PROVEN** (configuração textual; handshake real \`TEST_NOT_RUN\`) |
-| Engineering API WS PRC, publisher PRC | **TO_INVENTORY / TARGET** (não identificado na árvore inspecionada) |
-| PRC realtime nos dois MFEs | **TARGET**, não implementado |
-| AuthZ sala/escala/pós-commit confiável | **PLANNED**, contrato a fechar |
-| E2E de PRC WebSocket | **TEST_NOT_RUN** |
+| Requests WS e provider frontend | **PROVEN** (código inspecionado; preservado intacto) |
+| Gateway headers Engineering em DEV/PROD | **PROVEN** (configuração textual; handshake real em gateway \`TEST_NOT_RUN\`) |
+| Engineering API WS transversal | **PROVEN** — \`engineering_app/interface/http/routes/realtime_routes.py\` (\`/v1/realtime/ws?token&client_id\`), hub \`application/services/engineering_realtime_hub.py\`, protocolo \`engineering_realtime_protocol.py\`, port \`application/ports/realtime.py\`, feature flag \`ENG_REALTIME_ENABLED\` |
+| Publisher PRC pós-commit | **PROVEN** — emissão em \`service.py\` após mutação + \`save_idempotent\`; replay idempotente não reemite; falhas de validação/concorrência não emitem |
+| AuthZ de subscription + revogação | **PROVEN** — \`can_observe\` do service reexecutado na assinatura e a cada entrega; \`tests/test_eng_realtime.py\` cobre A/B/C, revogação em conexão ativa e payload mínimo |
+| Cliente neutro \`@delpi/plugin-ui\` | **PROVEN** — \`plugin-ui/src/realtime/{realtimeSocket,engineeringRealtime}.ts\` (ping 25 s, reconnect 4 s, rejoin, dedupe por \`eventId\`, debounce) |
+| Portal Engenharia fila/detalhe | **PROVEN** — \`EngineeringRealtimeProvider\` + \`usePrcQueueSync\`/\`usePrcCaseSync\`; refetch HTTP oficial; rascunho preservado durante edição |
+| My Requests lista/detalhe | **PROVEN** — \`PrcRealtimeProvider\` separado (socket Engineering); \`usePrcListSync\` no \`MinePage\` e \`usePrcCaseSync\` no \`PrcCasePage\`; provider Requests intacto |
+| Testes backend | **PROVEN** — \`tests/test_eng_realtime.py\` 14 testes (hub, protocolo, AuthZ, revogação, replay, validação, payload); regressão PRC 203 passed |
+| Testes frontend | **PROVEN** — \`realtimeSocket.test.ts\` 5 testes (heartbeat, reconnect, rejoin, dedupe/debounce); MFEs: eng 364/364, my-requests 190/192 (2 falhas \`process-issue\` pré-existentes, fora do escopo) |
+| E2E autenticado A/B/C no browser | **TEST_NOT_RUN** — não executado; fluxo coberto por testes de integração TestClient |
+| Multi-instância | **BLOCKED** — hub é process-local (1 worker uvicorn, mesma premissa do Requests); scale-out exige decisão arquitetural (\`ARCHITECTURE_DECISION_REQUIRED\`) |
 
 **Definition of Done:** revalidar SHA, contratos, owners, código e políticas na execução; testes em SHA efetivo, residual search, docs/issue e outcome real. Este documento **não é autorização para alterar runtime**, não é promessa de entrega, nem substitui as authorities atuais. Se houver mudança de owner/authority, \`ARCHITECTURE_DECISION_REQUIRED\`.
 
