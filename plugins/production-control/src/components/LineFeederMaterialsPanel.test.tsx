@@ -197,6 +197,61 @@ describe("LineFeederMaterialsPanel", () => {
     expect(screen.getByText(/OP OP1 · empenho sem operação definida/i)).toBeTruthy();
   });
 
+
+  it("mostra OP excluída na prévia segura, sem incluir empenhos dela", () => {
+    const data = basePayload({
+      horizon: {
+        covered_operation_count: 2,
+        work_centers: [
+          {
+            work_center: "CT-00",
+            excluded_deleted_orders: [
+              { production_order: "11301901001", operation_code: "01" },
+            ],
+          },
+        ],
+      },
+    });
+    render(
+      <LineFeederMaterialsPanel
+        data={data}
+        query={{ workCenters: ["CT-00"], hoursPerWorkCenter: 3 }}
+      />,
+    );
+    expect(screen.getByText(/operação de OP excluída desconsiderada/i)).toBeTruthy();
+    expect(screen.getByText(/CT-00 · OP 11301901001 · operação 01/)).toBeTruthy();
+    expect(screen.getByText(/Seus empenhos não foram considerados/i)).toBeTruthy();
+    expect(screen.getByText(/MP-001/)).toBeTruthy();
+  });
+
+  it("também identifica OP excluída quando outra operação bloqueia a prévia", () => {
+    const data = basePayload({
+      operational_list_safe: false,
+      preview_completeness: "incomplete",
+      stop_reasons: ["horizon_incomplete"],
+      horizon: {
+        covered_operation_count: 0,
+        work_centers: [
+          {
+            work_center: "CT-00",
+            excluded_deleted_orders: [
+              { production_order: "11301901001", operation_code: "01" },
+            ],
+          },
+        ],
+      },
+    });
+    render(
+      <LineFeederMaterialsPanel
+        data={data}
+        query={{ workCenters: ["CT-00"], hoursPerWorkCenter: 3 }}
+      />,
+    );
+    expect(screen.getByText(/CT-00 · OP 11301901001 · operação 01/)).toBeTruthy();
+    expect(screen.getByText(/Prévia incompleta/i)).toBeTruthy();
+    expect(screen.queryByText(/Coletar:.*60/i)).toBeNull();
+  });
+
   it("não apresenta lista operacional quando operational_list_safe=false", () => {
     render(
       <LineFeederMaterialsPanel

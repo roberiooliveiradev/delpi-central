@@ -875,6 +875,11 @@ export const copy = {
     orderLevelOrigin: "empenho sem operação definida",
     orderLevelWarning:
       "Alguns materiais têm empenho vinculado apenas à OP, sem operação/CT. Foram contabilizados uma única vez. Confirme com o PCP o posto de entrega antes de movimentar.",
+    deletedOrdersTitle: (count: number) =>
+      `${count} ${count === 1 ? "operação de OP excluída" : "operações de OPs excluídas"} desconsiderada${count === 1 ? "" : "s"}`,
+    deletedOrdersExplanation:
+      "O Protheus confirmou a exclusão dessas OPs após a publicação da Carga Máquina. Seus empenhos não foram considerados nesta prévia. Solicite ao PCP que atualize e republique a programação.",
+    deletedOrdersMore: (count: number) => `E mais ${count} operação(ões) excluída(s).`,
     columns: {
       product: "Material",
       workCenter: "CT",

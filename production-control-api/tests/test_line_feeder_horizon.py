@@ -1064,3 +1064,68 @@ def test_continuous_units_do_not_round_to_integer_pieces() -> None:
     result = allocate_work_center_horizon([op], hours=0.5, work_center="CT-27")
     assert result.operations[0].covered_qty == 2.0
     assert result.operations[0].productive_seconds == 1800.0
+
+
+def test_deleted_op_in_published_queue_is_skipped_without_fake_zero_balance() -> None:
+    """Regression: fila congelada guardou OP excluída depois no SC2."""
+    published = _payload([
+        _op_row(work_center="CT-00", order="11301901001"),
+        _op_row(work_center="CT-00", order="CURRENT-OP"),
+    ])
+    service, _pubs, _snapshots, gateway = _service(
+        published=published,
+        balances={
+            ("11301901001", "01"): {
+                "order_deleted": True,
+                "operation_pending_qty": None,
+                "operation_produced_qty": None,
+            },
+            ("CURRENT-OP", "01"): {
+                "order_deleted": False,
+                "operation_pending_qty": 1,
+                "operation_produced_qty": 0,
+            },
+        },
+        standard_times={("CURRENT-OP", "01"): _complete_st(3600)},
+    )
+    result = service.preview_horizon(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-00"],
+        hours_per_work_center=1,
+    )
+    assert result["preview_completeness"] == "complete"
+    center = result["work_centers"][0]
+    assert [op["production_order"] for op in center["operations"]] == [
+        "CURRENT-OP"
+    ]
+    assert center["excluded_deleted_orders"] == [
+        {"production_order": "11301901001", "operation_code": "01"}
+    ]
+    assert gateway.st_calls == 1
+
+
+def test_absent_order_or_unknown_balance_must_still_block_collection() -> None:
+    for balance in (
+        {},
+        {"order_deleted": None, "operation_pending_qty": None},
+        {"order_deleted": False, "operation_pending_qty": None},
+    ):
+        published = _payload([
+            _op_row(work_center="CT-00", order="UNKNOWN")
+        ])
+        service, _pubs, _snapshots, gateway = _service(
+            published=published,
+            balances={("UNKNOWN", "01"): balance} if balance else {},
+            standard_times={},
+        )
+        result = service.preview_horizon(
+            _user(*FULL_PERMS),
+            branch="01",
+            work_centers=["CT-00"],
+            hours_per_work_center=1,
+        )
+        assert result["preview_completeness"] == "incomplete"
+        assert result["work_centers"][0]["stop_reason"] == "balance_unknown"
+        assert result["work_centers"][0]["excluded_deleted_orders"] == []
+        assert gateway.st_calls == 0

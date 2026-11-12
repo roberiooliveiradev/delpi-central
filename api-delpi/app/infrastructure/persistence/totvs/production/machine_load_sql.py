@@ -501,6 +501,7 @@ def build_order_finish_flags_query(
     *,
     branch: str,
     production_orders: list[str],
+    include_deleted: bool = False,
 ) -> tuple[str, tuple] | None:
     """Encerramento (C2_DATRF), quantidade e saldo da OP para o enrich do snapshot.
 
@@ -513,15 +514,23 @@ def build_order_finish_flags_query(
     if not orders:
         return None
     placeholders = ", ".join("?" for _ in orders)
+    # Só o Alimentador precisa enxergar exclusões lógicas de OPs antigas.
+    # Mantém uma única consulta SC2 por lote; outros consumidores continuam
+    # consultando apenas OPs ativas, como antes.
+    deletion_filter = (
+        "OP.D_E_L_E_T_ IN ('', '*')" if include_deleted
+        else "OP.D_E_L_E_T_ = ''"
+    )
     query = f"""
         SELECT
             LTRIM(RTRIM(OP.C2_OP)) AS production_order,
             CASE WHEN {_ORDER_FINISHED_EXPR} THEN 1 ELSE 0 END AS is_finished,
             NULLIF(LTRIM(RTRIM(OP.C2_DATRF)), '') AS finish_date,
+            CASE WHEN OP.D_E_L_E_T_ = '*' THEN 1 ELSE 0 END AS is_deleted,
             CAST(OP.C2_QUANT AS DECIMAL(18, 6)) AS planned_qty,
             CAST(OP.C2_QUANT - OP.C2_QUJE AS DECIMAL(18, 6)) AS pending_qty
         FROM {MACHINE_LOAD_ORDER_TABLE} OP WITH (NOLOCK)
-        WHERE OP.D_E_L_E_T_ = ''
+        WHERE {deletion_filter}
           AND OP.C2_FILIAL = ?
           AND LTRIM(RTRIM(OP.C2_OP)) IN ({placeholders})
     """

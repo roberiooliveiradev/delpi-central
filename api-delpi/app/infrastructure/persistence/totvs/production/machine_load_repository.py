@@ -108,9 +108,12 @@ class MachineLoadRepository(BaseRepository, MachineLoadRepositoryPort):
         *,
         branch: str,
         production_orders: list[str],
+        include_deleted: bool = False,
     ) -> list[dict[str, Any]]:
         built = build_order_finish_flags_query(
-            branch=branch, production_orders=production_orders
+            branch=branch,
+            production_orders=production_orders,
+            include_deleted=include_deleted,
         )
         if built is None:
             return []

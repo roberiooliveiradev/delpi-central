@@ -1337,6 +1337,10 @@ export type LineFeederMaterialsPreviewPayload = {
         operation_id?: string | null;
       } | null;
       diagnostic_message?: string | null;
+      excluded_deleted_orders?: Array<{
+        production_order: string;
+        operation_code: string;
+      }>;
     }>;
   };
   summary: LineFeederMaterialsSummary;

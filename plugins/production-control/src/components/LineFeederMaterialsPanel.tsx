@@ -62,6 +62,28 @@ export function LineFeederMaterialsPanel({ data, query }: Props) {
 
   const safe = data.operational_list_safe === true;
   const materials = data.materials ?? [];
+  const deletedOperations = (data.horizon?.work_centers ?? []).flatMap((center) =>
+    (center.excluded_deleted_orders ?? []).map((operation) => ({
+      ...operation,
+      work_center: center.work_center,
+    })),
+  );
+  const deletedNotice = deletedOperations.length > 0 ? (
+    <div className="ppc-state" role="status">
+      <strong>{texts.deletedOrdersTitle(deletedOperations.length)}</strong>
+      <p>{texts.deletedOrdersExplanation}</p>
+      <ul>
+        {deletedOperations.slice(0, 10).map((item, index) => (
+          <li key={`${item.work_center}-${item.production_order}-${item.operation_code}-${index}`}>
+            {item.work_center} · OP {item.production_order} · operação {item.operation_code}
+          </li>
+        ))}
+      </ul>
+      {deletedOperations.length > 10 ? (
+        <p>{texts.deletedOrdersMore(deletedOperations.length - 10)}</p>
+      ) : null}
+    </div>
+  ) : null;
 
   const filtered = useMemo(() => {
     const rows = materials.filter((row) => matchesMaterialsFilter(row.status, filter));
@@ -155,6 +177,7 @@ export function LineFeederMaterialsPanel({ data, query }: Props) {
     const hasRichDiag = diagnostics.length > 0 || horizonMessages.length > 0;
     return (
       <div className="ppc-board">
+        {deletedNotice}
         <div className="ppc-state ppc-state--error" role="alert">
           <strong>{texts.materialsPreview.incompleteTitle}</strong>
           <p>{texts.materialsPreview.incompleteMessage}</p>
@@ -209,6 +232,7 @@ export function LineFeederMaterialsPanel({ data, query }: Props) {
 
   return (
     <div className="ppc-board">
+      {deletedNotice}
       {data.summary.unknown_count > 0 ? (
         <div className="ppc-state ppc-state--error" role="status">
           {texts.stockUnavailable}

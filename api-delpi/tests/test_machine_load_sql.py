@@ -428,3 +428,22 @@ def test_appointment_status_query_without_orders_keeps_branch_aggregate() -> Non
     )
     assert "HZA_OP IN" not in query
     assert params == (_ACTIVE_SINCE, "02", _HISTORY_SINCE)
+
+
+def test_order_finish_flags_can_include_deleted_op_without_extra_query() -> None:
+    active = sql.build_order_finish_flags_query(
+        branch="02", production_orders=["11301901001"]
+    )
+    assert active is not None
+    active_query, active_params = active
+    deleted = sql.build_order_finish_flags_query(
+        branch="02",
+        production_orders=["11301901001"],
+        include_deleted=True,
+    )
+    assert deleted is not None
+    query, params = deleted
+    assert active_params == params == ("02", "11301901001")
+    assert "OP.D_E_L_E_T_ = ''" in active_query
+    assert "OP.D_E_L_E_T_ IN ('', '*')" in query
+    assert "AS is_deleted" in query

@@ -451,6 +451,7 @@ class LineFeederService:
                     "stop_reason": group.get("stop_reason"),
                     "blocking_operation": group.get("blocking_operation"),
                     "diagnostic_message": group.get("diagnostic_message"),
+                    "excluded_deleted_orders": group.get("excluded_deleted_orders") or [],
                 }
                 for group in horizon.get("work_centers") or []
             ],
@@ -879,6 +880,7 @@ class LineFeederService:
         result: WorkCenterHorizonResult | None = None
         ops = list(group.get("operations") or [])
         saturated = False
+        excluded_deleted_orders: list[dict[str, str]] = []
 
         for index, op in enumerate(ops):
             operations_evaluated += 1
@@ -887,6 +889,14 @@ class LineFeederService:
                 _text(op.get("operation_code")),
             )
             live = balance_map.get(key)
+            if isinstance(live, dict) and live.get("order_deleted") is True:
+                # Exclusão lógica SC2 confirmada pelo Protheus. Não consome
+                # horas nem empenhos e não consulta tempo padrão dessa OP.
+                excluded_deleted_orders.append({
+                    "production_order": key[0],
+                    "operation_code": key[1],
+                })
+                continue
             if live is None:
                 pending = None
                 produced = None
@@ -1003,6 +1013,7 @@ class LineFeederService:
             )
 
         payload = work_center_result_payload(result)
+        payload["excluded_deleted_orders"] = excluded_deleted_orders
         # Bloqueio técnico na preparação prevalece sobre shortfall do prefixo.
         if incomplete_reason:
             payload["completeness"] = COMPLETENESS_INCOMPLETE

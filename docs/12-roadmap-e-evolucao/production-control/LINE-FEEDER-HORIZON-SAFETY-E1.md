@@ -51,3 +51,44 @@ Ainda fora (Etapa 3 / pós-OPT):
 2. Nos logs da `production-control-api`, filtrar `line_feeder_materials_preview` / `line_feeder_horizon_preview`.  
 3. Comparar `phases_ms.*` e contadores (`work_center_count`, `standard_time_calls`, `materials_skipped`).  
 4. Latência em produção só após amostragem real — testes comprovam **chamadas evitadas**, não ms de rede.
+
+ 
+## Correção 2026-11-12: OP excluída após publicação da Carga Máquina
+
+**Causa raiz confirmada em SQL Server:** SC2010, filial 02,
+`C2_OP='11301901001'`, `R_E_C_N_O_=1004678`, produto `71140302`,
+`C2_QUANT=200`, `D_E_L_E_T_='*'`. A OP constava na fila publicada
+antiga, mas foi excluída do Protheus depois; a consulta de saldo
+por operação só enxergava SC2 ativo e retornava saldo desconhecido,
+bloqueando a lista de coleta. A OP de mesmo número na filial 01
+é outro registro e **não** é a causa do incidente.
+
+### Regra
+
+- O endpoint de saldos em lote `production/machine-load/operation-balances`
+  usa a **mesma** consulta ao SC2 já executada e passa
+  `include_deleted=True` somente neste consumidor. O SQL consulta
+  `D_E_L_E_T_ IN ('', '*')` e devolve `is_deleted`, sem chamadas SQL
+  extras por OP nem alteração de consulta dos outros consumidores.
+- Resposta por operação acrescenta `order_deleted`:
+  `true` somente se SC2 confirmar exclusão lógica (sem registro
+  ativo mais recente com a mesma OP); `false` para OP ativa;
+  `null` quando não há evidência conclusiva. OP não localizada
+  **não** é tratada automaticamente como excluída.
+- O Alimentador exclui do horizonte **somente** operações com
+  `order_deleted=true`, não consulta tempo padrão nem inclui suas
+  OPs no batch de empenhos SD4. Não adiciona horas ou saldo fictícios.
+- A resposta de prévia expõe `horizon.work_centers[].excluded_deleted_orders`
+  para a UI informar CT, OP e operação, mesmo havendo outro bloqueio.
+  O PCP deve atualizar e republicar a programação para sanear a fila.
+- Saldos desconhecidos, OP sem confirmação de exclusão ou erro upstream
+  seguem bloqueando o horizonte. Não é realizada mutação da fila
+  publicada, de estoque, empenhos ou registros TOTVS.
+
+### Implantação e aceite
+
+Validar branch 02 com todos os CTs após o merge e deploy coordenado de
+`api-delpi`, `production-control-api` e `production-control`.
+Confirmar aviso de OP 11301901001 excluída e seus materiais ausentes
+da lista de coleta, enquanto outras OPs abertas continuam. Publicar
+uma fila atualizada via PCP para remover a referência obsoleta.
