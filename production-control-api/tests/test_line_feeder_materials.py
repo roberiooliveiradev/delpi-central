@@ -1811,3 +1811,66 @@ def test_service_mt_order_level_sd4_end_to_end() -> None:
         item["code"] == "order_level_commitment_without_operation"
         for item in data["demand_warnings"]
     )
+
+
+def test_materials_do_not_include_commitments_of_deleted_op() -> None:
+    service = _service(
+        published=_payload([
+            _op("CT-00", "11301901001"),
+            _op("CT-00", "ACTIVE-02"),
+        ]),
+        balances_ops={
+            ("11301901001", "01"): {
+                "order_deleted": True,
+                "operation_pending_qty": None,
+                "operation_produced_qty": None,
+            },
+            ("ACTIVE-02", "01"): {
+                "order_deleted": False,
+                "operation_pending_qty": 2,
+                "operation_produced_qty": 0,
+            },
+        },
+        standard_times={
+            ("ACTIVE-02", "01"): {
+                "ideal_cycle_seconds": 600,
+                "setup_seconds": 0,
+                "pieces_conversion_factor": 1,
+                "standard_time_source": "shy_tempad",
+                "data_quality": "complete",
+            },
+        },
+        commitments=[
+            {
+                "production_order": "11301901001",
+                "operation": "01",
+                "product_code": "MP-DELETED",
+                "unit": "KG",
+                "product_type": "MP",
+                "open_qty": 500,
+            },
+            {
+                "production_order": "ACTIVE-02",
+                "operation": "01",
+                "product_code": "MP-ACTIVE",
+                "unit": "PC",
+                "product_type": "MP",
+                "open_qty": 2,
+            },
+        ],
+        factory_stock={"MP-ACTIVE": 0},
+        source_stock={"MP-ACTIVE": 10},
+    )
+    result = service.preview_materials(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-00"],
+        hours_per_work_center=1,
+    )
+    assert result["operational_list_safe"] is True
+    assert [item["product_code"] for item in result["materials"]] == [
+        "MP-ACTIVE"
+    ]
+    assert result["horizon"]["work_centers"][0]["excluded_deleted_orders"] == [
+        {"production_order": "11301901001", "operation_code": "01"}
+    ]
