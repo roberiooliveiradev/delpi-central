@@ -321,7 +321,7 @@ describe("server detail — icon navigation and linked components", () => {
     expect(screen.queryByText("Bancos de dados associados")).toBeNull();
     expect(requestedPaths(fetchMock).some((p) => p.includes("/service-hostings"))).toBe(false);
 
-    fireEvent.click(within(navigation).getByRole("button", { name: /Serviços/ }));
+    fireEvent.click(within(navigation).getByRole("button", { name: /Serviços Aplicações hospedadas/ }));
     expect(await screen.findByText("Serviços vinculados")).toBeTruthy();
     expect(await screen.findByText("1 serviço ativo")).toBeTruthy();
     expect(await screen.findByText("Portal Interno")).toBeTruthy();
@@ -341,7 +341,7 @@ describe("server detail — icon navigation and linked components", () => {
     const fetchMock = mockApi(serverDetailRoutes(INVENTORY_MANAGER));
     renderAt("/apps/it-portal/servers/" + SERVER_ID);
     const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
-    fireEvent.click(within(navigation).getByRole("button", { name: /Serviços/ }));
+    fireEvent.click(within(navigation).getByRole("button", { name: /Serviços Aplicações hospedadas/ }));
     fireEvent.click(
       await screen.findByRole("button", { name: "Remover vínculo entre Portal Interno e ERP Produção" }),
     );
@@ -356,7 +356,7 @@ describe("server detail — icon navigation and linked components", () => {
     mockApi(serverDetailRoutes(INVENTORY_VIEWER));
     renderAt("/apps/it-portal/servers/" + SERVER_ID);
     const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
-    fireEvent.click(within(navigation).getByRole("button", { name: /Serviços/ }));
+    fireEvent.click(within(navigation).getByRole("button", { name: /Serviços Aplicações hospedadas/ }));
     expect(await screen.findByText("Portal Interno")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Vincular serviço/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /Remover vínculo/ })).toBeNull();
@@ -371,7 +371,7 @@ describe("server detail — icon navigation and linked components", () => {
     );
     renderAt("/apps/it-portal/servers/" + SERVER_ID);
     const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
-    expect(within(navigation).queryByRole("button", { name: /^Serviços/ })).toBeNull();
+    expect(within(navigation).queryByRole("button", { name: /Serviços Aplicações hospedadas/ })).toBeNull();
     fireEvent.click(within(navigation).getByRole("button", { name: /Bancos de dados/ }));
     expect(await screen.findByText("Bancos de dados associados")).toBeTruthy();
     expect(screen.queryByText("Serviços hospedados")).toBeNull();
@@ -438,7 +438,7 @@ describe("server detail — icon navigation and linked components", () => {
     const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
     expect(within(navigation).getByRole("button", { name: /Visão geral/ }).getAttribute("aria-pressed")).toBe("true");
     expect(within(navigation).getByRole("button", { name: /Coleta automática/ })).toBeTruthy();
-    expect(within(navigation).queryByRole("button", { name: /^Serviços/ })).toBeNull();
+    expect(within(navigation).queryByRole("button", { name: /Serviços Aplicações hospedadas/ })).toBeNull();
     expect(within(navigation).queryByRole("button", { name: /Bancos de dados/ })).toBeNull();
     expect(within(navigation).queryByRole("button", { name: /Redes/ })).toBeNull();
     expect(within(navigation).queryByRole("button", { name: /Integrações/ })).toBeNull();

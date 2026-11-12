@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, cleanup, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ServerWindowsServicesSection } from "./ServerWindowsServicesSection";
@@ -32,8 +32,8 @@ describe("Windows SCM read-only services inventory", () => {
     setup();
     expect(await screen.findByText("REST de apontamento")).toBeTruthy();
     expect(screen.getByText("REST$PROD")).toBeTruthy();
-    expect(screen.getByText("Em execução")).toBeTruthy();
-    expect(screen.getByText("Automático")).toBeTruthy();
+    expect(within(screen.getByRole("table", { name: "Inventário de serviços do Windows" })).getByText("Em execução")).toBeTruthy();
+    expect(within(screen.getByRole("table", { name: "Inventário de serviços do Windows" })).getByText("Automático")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /reiniciar|parar|iniciar/i })).toBeNull();
     fireEvent.change(screen.getByRole("searchbox", { name: "Pesquisar serviço Windows" }),
       { target: { value: "REST" } });
