@@ -209,6 +209,13 @@ export function LineFeederMaterialsPanel({ data, query }: Props) {
 
   return (
     <div className="ppc-board">
+      {(data.publication?.foreign_branch_operations_excluded ?? 0) > 0 ? (
+        <div className="ppc-state" role="status">
+          {texts.foreignBranchWarning(
+            data.publication.foreign_branch_operations_excluded ?? 0,
+          )}
+        </div>
+      ) : null}
       {data.summary.unknown_count > 0 ? (
         <div className="ppc-state ppc-state--error" role="status">
           {texts.stockUnavailable}
