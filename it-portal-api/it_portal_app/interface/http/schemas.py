@@ -648,6 +648,10 @@ class HostServiceActionOut(BaseModel):
     requested_by_name: str
 
 
+class HostServiceAgentPollInput(_Input):
+    hostname: str = Field(min_length=1, max_length=255)
+
+
 class HostServiceAgentClaimOut(BaseModel):
     id: str
     service_key: str
