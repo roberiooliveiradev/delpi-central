@@ -92,6 +92,18 @@ def test_flag_off_does_not_mount_lnf_routes() -> None:
     assert settings.LNF_HOSTED_ENABLED is False
 
 
+def test_flag_off_auth_middleware_returns_404_for_lnf_paths() -> None:
+    mw_src = (
+        PKG_ROOT
+        / "controllership_finance_app"
+        / "middleware"
+        / "auth_middleware.py"
+    ).read_text()
+    assert 'not settings.LNF_HOSTED_ENABLED' in mw_src
+    assert '"/lancamento-notas-fiscais"' in mw_src
+    assert "status_code=404" in mw_src
+
+
 def test_scoped_validation_handler_does_not_change_closing_shape() -> None:
     from controllership_finance_app.core.responses import fail
     from controllership_finance_app.interface.http.routes.invoice_posting.responses import (

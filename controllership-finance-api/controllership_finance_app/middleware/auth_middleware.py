@@ -1,3 +1,5 @@
+from fastapi.responses import JSONResponse
+
 from delpi_auth.jwt_validator import validate_token
 from delpi_auth.middleware.fastapi_auth import (
     is_public_path,
@@ -13,6 +15,7 @@ from delpi_mcp.auth import (
     mcp_transport_auth,
 )
 
+from controllership_finance_app.config import settings
 from controllership_finance_app.interface.mcp.oauth_contract import (
     MCP_OAUTH_SCOPES,
     resolve_required_mcp_resource_audience,
@@ -78,6 +81,12 @@ async def jwt_middleware(request, call_next):
     if _is_controllership_finance_public_path(request.url.path):
         return await call_next(request)
     normalized = normalize_path(_strip_root_path(request))
+    # Dark LNF: sem mount do router → 404 explícito (não 401 do JWT global).
+    if (
+        not settings.LNF_HOSTED_ENABLED
+        and "/lancamento-notas-fiscais" in (normalized or "")
+    ):
+        return JSONResponse(status_code=404, content={"detail": "Not Found"})
     if is_mcp_data_path(normalized):
         return await mcp_transport_auth(
             request,
