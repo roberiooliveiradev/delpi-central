@@ -18,6 +18,8 @@ import {
   screen,
   within,
 } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -782,5 +784,43 @@ describe("PrcCorrectionTargetSelector — CORRECTION-10", () => {
       screen.getByText("Tabelas e relacionamentos — Fornecedores"),
     ).toBeTruthy();
     expect(screen.getByText(/Nenhum registro na tabela/)).toBeTruthy();
+  });
+});
+
+describe("PrcCorrectionTargets — FIX-11 contrato CSS da tabela", () => {
+  const CSS = readFileSync(
+    join(__dirname, "../../styles/delpi-prc.css"),
+    "utf8",
+  );
+
+  it("razão social tem prioridade de espaço e quebra natural", () => {
+    const col3 = CSS.match(
+      /\.delpi-prc__correction-table th:nth-child\(3\),[\s\S]*?\}/,
+    )?.[0] || "";
+    expect(col3).toContain("min-width: 200px");
+    expect(col3).toContain("overflow-wrap: break-word");
+    expect(col3).not.toContain("anywhere");
+  });
+
+  it("tabela de correção não herda o fixed de 8 colunas e scrolla no wrap", () => {
+    const table = CSS.match(
+      /\.delpi-prc__correction-table \{[\s\S]*?\}/,
+    )?.[0] || "";
+    expect(table).toContain("table-layout: auto");
+    expect(table).toContain("min-width: 720px");
+    expect(CSS).toContain(
+      ".delpi-prc__supplier-table-wrap {\n  overflow-x: auto;",
+    );
+  });
+
+  it("identidade (código/loja) compacta e vínculo centralizado", () => {
+    const idCols = CSS.match(
+      /\.delpi-prc__correction-table th:nth-child\(1\),[\s\S]*?\}/,
+    )?.[0] || "";
+    expect(idCols).toContain("white-space: nowrap");
+    const linkCol = CSS.match(
+      /\.delpi-prc__correction-table th:nth-child\(7\),[\s\S]*?\}/,
+    )?.[0] || "";
+    expect(linkCol).toContain("text-align: center");
   });
 });

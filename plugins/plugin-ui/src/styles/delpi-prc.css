@@ -368,6 +368,58 @@
   background: rgba(176, 0, 32, 0.04);
 }
 
+/* CORRECTION-11 — tabelas de correção (seletor da devolução e editor
+ * do solicitante) têm 7/6 colunas e não podem herdar os percentuais
+ * fixos da tabela V2 de 8 colunas (a 3ª coluna — razão social —
+ * caía para 6% e quebrava letra a letra). Layout intrínseco com
+ * prioridade de espaço para a razão social e scroll horizontal
+ * contido no wrapper quando o container aperta. */
+.delpi-prc__correction-table {
+  table-layout: auto;
+  min-width: 720px;
+}
+/* Código + Loja: identidade compacta, sem quebra. */
+.delpi-prc__correction-table th:nth-child(1),
+.delpi-prc__correction-table td:nth-child(1),
+.delpi-prc__correction-table th:nth-child(2),
+.delpi-prc__correction-table td:nth-child(2) {
+  width: 1%;
+  white-space: nowrap;
+}
+/* Razão social: coluna flexível com prioridade de espaço —
+ * quebra natural entre palavras, nunca letra a letra. */
+.delpi-prc__correction-table th:nth-child(3),
+.delpi-prc__correction-table td:nth-child(3) {
+  width: 30%;
+  min-width: 200px;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+/* Nome fantasia: proporcional e legível. */
+.delpi-prc__correction-table th:nth-child(4),
+.delpi-prc__correction-table td:nth-child(4) {
+  width: 22%;
+  min-width: 140px;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+/* Part Number + Catálogo: espaço para checkbox/editor utilizável. */
+.delpi-prc__correction-table th:nth-child(5),
+.delpi-prc__correction-table td:nth-child(5) {
+  min-width: 140px;
+}
+.delpi-prc__correction-table th:nth-child(6),
+.delpi-prc__correction-table td:nth-child(6) {
+  min-width: 130px;
+}
+/* Vínculo (só no seletor — 7ª coluna): compacto e centralizado. */
+.delpi-prc__correction-table th:nth-child(7),
+.delpi-prc__correction-table td:nth-child(7) {
+  width: 1%;
+  white-space: nowrap;
+  text-align: center;
+}
+
 .delpi-prc__cell-input,
 .delpi-prc__lookup-input {
   width: 100%;
@@ -407,6 +459,15 @@
 }
 
 @media (max-width: 768px) {
+  /* Cards responsivos continuam valendo — o min-width da correção
+   * não pode forçar scroll quando a linha vira card. */
+  .delpi-prc__correction-table {
+    min-width: 0;
+  }
+  .delpi-prc__correction-table td {
+    min-width: 0;
+    white-space: normal;
+  }
   .delpi-prc__supplier-table thead {
     display: none;
   }
