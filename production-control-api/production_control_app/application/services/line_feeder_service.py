@@ -368,6 +368,9 @@ class LineFeederService:
                 "generation_id": _text(row.get("generation_id")) or None,
                 "publication_revision": revision_end or None,
                 "published_at": _iso(row.get("published_at")),
+                "foreign_branch_operations_excluded": (
+                    queues.get("publication") or {}
+                ).get("foreign_branch_operations_excluded", 0),
             },
             "balances_as_of": balances_as_of,
             "sources": {
