@@ -14,7 +14,8 @@ param(
     [Parameter(Mandatory=$true)][ValidatePattern('^[A-Za-z0-9_.-]{3,100}$')][string]$ClientId,
     [Parameter(Mandatory=$true)][guid]$ServerId,
     [Parameter(Mandatory=$true)][string]$SecretFile,
-    [Parameter(Mandatory=$true)][string]$AllowedServices
+    [Parameter(Mandatory=$true)][string]$AllowedServices,
+    [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9-]{0,62}$')][string]$ExpectedHostname = 'srv-db01'
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -22,8 +23,15 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.ServiceProcess -ErrorAction Stop
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-if ([Environment]::MachineName.ToLowerInvariant() -ne 'srv-db01') {
-    throw 'Piloto do controle remoto autorizado apenas em SRV-DB01.'
+$localHostname = [Environment]::MachineName.ToLowerInvariant()
+if ($localHostname -ne $ExpectedHostname.ToLowerInvariant()) {
+    throw 'Execucao bloqueada: hostname nao corresponde a configuracao aprovada.'
+}
+if ($localHostname -ne 'srv-db01' -and (
+    $ClientId -match 'srv-db01' -or
+    $ServerId.ToString() -eq 'e6b46ca6-7b02-449b-b42e-6ddc498f9894'
+)) {
+    throw 'Credenciais do servidor piloto nao podem controlar outro host.'
 }
 if (-not [IO.Path]::IsPathRooted($SecretFile) -or -not (Test-Path -LiteralPath $SecretFile -PathType Leaf)) {
     throw 'Credencial DPAPI indisponivel.'
