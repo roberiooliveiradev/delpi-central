@@ -92,9 +92,19 @@ def load_infra() -> dict[str, str]:
 
 
 def assert_local(url: str) -> None:
-    host = urllib.parse.urlparse(url).hostname or ""
-    if host not in {"localhost", "127.0.0.1"}:
-        raise Fail(f"host não local: {host}")
+    """Aceita DEV local e HML (192.168.1.237:18443/18080). Recusa PROD."""
+    parsed = urllib.parse.urlparse(url)
+    host = parsed.hostname or ""
+    if host in {"localhost", "127.0.0.1"}:
+        return
+    if host == "192.168.1.237":
+        port = parsed.port
+        if port is None:
+            port = 443 if (parsed.scheme or "").lower() == "https" else 80
+        if port in {18443, 18080}:
+            return
+        raise Fail(f"host PROD recusado: {host}:{port} (HML só :18443/:18080)")
+    raise Fail(f"host não local/HML: {host}")
 
 
 def http_json(

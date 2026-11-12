@@ -1,7 +1,8 @@
 # 163 — PLANO: Migração do módulo Lançamento de Notas Fiscais (api-delpi → controllership-finance-api)
 
-> Status: **F3 implementado dark na main (`155e0cc4de`); LNF_HOSTED_ENABLED=false em todos os ambientes; F3-R em andamento**
+> Status: **F4 em andamento — HML parity + checagens PROD; runbook 164 DRAFT**
 > Baseline F2b: HEAD `857b17ce03550eb6add765ad8176609c5a9de838` (`feat/lnf-migration-f2` / origem F3)
+> F3 dark: `155e0cc4de`; F3-R: `287a534220`; resíduos F4 passo 0: `4bd9307b0e`
 > Governança de git: **trabalho direto na `main`, sem branches** (decisão do owner — 2026-11-12)
 > Natureza: **transferência de owner de runtime sem mudança de comportamento** (contrato, permissões e dados preservados)
 

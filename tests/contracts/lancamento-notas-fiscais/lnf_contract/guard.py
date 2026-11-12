@@ -10,9 +10,13 @@ PROD_HOSTS = frozenset(
     {
         "minhadelpi.com.br",
         "www.minhadelpi.com.br",
-        "192.168.1.237",
     }
 )
+
+# srv-api (192.168.1.237) hospeda PROD e HML no mesmo IP; a distinção é a porta.
+# HML canônico: HTTPS 18443 (e HTTP legado 18080). Qualquer outra porta no IP = PROD.
+HML_HOST = "192.168.1.237"
+HML_PORTS = frozenset({18443, 18080})
 
 PROFILES = (
     "P0",
@@ -80,11 +84,21 @@ def target_name() -> str:
 def assert_not_production(url: str) -> None:
     if not url:
         return
-    host = (urlparse(url).hostname or "").lower()
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
     if host in PROD_HOSTS or host.endswith(".minhadelpi.com.br"):
         raise ProductionTargetError(
             f"LNF_BASE_URL aponta para host de produção ({host}). A suíte abortou."
         )
+    if host == HML_HOST:
+        port = parsed.port
+        if port is None:
+            port = 443 if (parsed.scheme or "").lower() == "https" else 80
+        if port not in HML_PORTS:
+            raise ProductionTargetError(
+                f"LNF_BASE_URL em {host}:{port} é produção (HML só {sorted(HML_PORTS)}). "
+                "A suíte abortou."
+            )
 
 
 def profile_token(profile: str) -> str | None:
