@@ -1,6 +1,6 @@
 # Portal Controladoria & Finanças — Fonte de navegação e estado
 
-> **12/11/2026 — F5a parcial (`496644bbb7`): smoke MFE HML PASS + preflight CLI + compose/env dark; deploy dark PROD bloqueado (DECISION_REQUIRED api-delpi).** Corte F5b pendente de janela + decisão de rebuild da api-delpi. [Doc 163](./163-plano-migracao-lancamento-notas-fiscais.md) · [Runbook 164](./164-runbook-corte-lancamento-notas-fiscais.md) · ADR [ADR-001](./adr/ADR-001-hospedagem-lancamento-notas-fiscais.md).
+> **12/11/2026 — F5a BLOCKED R4 (`496644bbb7` código / `9d0d591b0a` docs):** smoke MFE HML PASS + preflight + compose/env dark; deploy dark PROD parado (commits não-LNF em `api-delpi`). Trilha oficial [165](./165-trilha-execucao-migracao-lnf-ate-clara.md). [Doc 163](./163-plano-migracao-lancamento-notas-fiscais.md) · [Runbook 164](./164-runbook-corte-lancamento-notas-fiscais.md) · ADR [ADR-001](./adr/ADR-001-hospedagem-lancamento-notas-fiscais.md).
 
 > **12/11/2026 — F3 implementado dark na main (`155e0cc4de`); LNF_HOSTED_ENABLED=false em todos os ambientes; F3-R em andamento:** [Doc 163 — Plano de migração do Lançamento de Notas Fiscais para a BFF](./163-plano-migracao-lancamento-notas-fiscais.md). ADR [ADR-001](./adr/ADR-001-hospedagem-lancamento-notas-fiscais.md) `ACCEPTED`. Trabalho direto na `main`, sem branches (decisão do owner).
 
