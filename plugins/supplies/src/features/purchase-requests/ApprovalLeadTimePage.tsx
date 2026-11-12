@@ -125,6 +125,7 @@ export function ApprovalLeadTimePage({ basePath }: { basePath: string }) {
     { label: "Mesmo dia", value: summary.same_day },
     { label: "1 a 2 dias", value: summary.one_to_two_days },
     { label: "3 a 5 dias", value: summary.three_to_five_days },
+    { label: "6 a 10 dias", value: summary.six_to_ten_days },
     { label: "Acima de 10 dias", value: summary.over_10_days },
   ] : [];
   const listHref = buildPluginPath("purchase_requests", basePath);
@@ -205,7 +206,7 @@ export function ApprovalLeadTimePage({ basePath }: { basePath: string }) {
             ))}
           </section>
 
-          <SuppliesSectionCard title="Distribuição por prazo" hint="Aprovações entre 6 e 10 dias também compõem o total, mas não são exibidas nesta divisão simplificada.">
+          <SuppliesSectionCard title="Distribuição por prazo" hint="Faixas completas em dias corridos, sem estimar aprovações sem SCR.">
             <div className="sp-approval-lead-time__buckets">
               {buckets.map((bucket) => {
                 const pct = summary?.total_requests ? (bucket.value / summary.total_requests) * 100 : 0;

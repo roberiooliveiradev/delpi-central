@@ -119,6 +119,7 @@ class PurchaseRequestApprovalLeadTimeRepository(BaseRepository):
                 "same_day": int(summary_row.get("same_day") or 0),
                 "one_to_two_days": int(summary_row.get("one_to_two_days") or 0),
                 "three_to_five_days": int(summary_row.get("three_to_five_days") or 0),
+                "six_to_ten_days": int(summary_row.get("six_to_ten_days") or 0),
                 "over_10_days": int(summary_row.get("over_10_days") or 0),
                 "multi_level": int(summary_row.get("multi_level") or 0),
             },

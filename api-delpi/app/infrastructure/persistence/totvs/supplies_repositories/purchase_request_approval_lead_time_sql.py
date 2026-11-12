@@ -131,6 +131,7 @@ SELECT
     SUM(CASE WHEN lead_days = 0 THEN 1 ELSE 0 END) AS same_day,
     SUM(CASE WHEN lead_days BETWEEN 1 AND 2 THEN 1 ELSE 0 END) AS one_to_two_days,
     SUM(CASE WHEN lead_days BETWEEN 3 AND 5 THEN 1 ELSE 0 END) AS three_to_five_days,
+    SUM(CASE WHEN lead_days BETWEEN 6 AND 10 THEN 1 ELSE 0 END) AS six_to_ten_days,
     SUM(CASE WHEN lead_days > 10 THEN 1 ELSE 0 END) AS over_10_days,
     SUM(CASE WHEN approval_levels > 1 THEN 1 ELSE 0 END) AS multi_level
 FROM eligible

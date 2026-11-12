@@ -36,6 +36,7 @@ export type ApprovalLeadTimeResponse = {
     same_day: number;
     one_to_two_days: number;
     three_to_five_days: number;
+    six_to_ten_days: number;
     over_10_days: number;
     multi_level: number;
   };

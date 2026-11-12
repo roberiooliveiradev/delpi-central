@@ -23,6 +23,7 @@ def test_sql_uses_scr_as_exclusive_approval_evidence_and_sc_header_grain():
     summary = build_lead_time_summary_sql(where)
     page = build_lead_time_page_sql(where)
     assert params == ["01", "02", "20260101", "20261112"]
+    assert "six_to_ten_days" in summary
     assert "SC1010" in summary and "SCR010" in summary
     assert "SC7010" not in summary
     assert "purchase_request_approval_states" not in summary
@@ -79,7 +80,7 @@ class FakeRepository(PurchaseRequestApprovalLeadTimeRepository):
         return {
             "total_requests": 1, "avg_lead_days": 10,
             "same_day": 0, "one_to_two_days": 0,
-            "three_to_five_days": 0, "over_10_days": 0, "multi_level": 1,
+            "three_to_five_days": 0, "six_to_ten_days": 0, "over_10_days": 0, "multi_level": 1,
         }
 
     def execute_query(self, sql, params):

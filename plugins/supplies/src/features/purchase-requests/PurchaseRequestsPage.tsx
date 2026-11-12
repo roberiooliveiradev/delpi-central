@@ -289,6 +289,13 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
             <SuppliesActionButton
               type="button"
               variant="ghost"
+              onClick={() => navigatePluginView("approval_lead_time", { basePath })}
+            >
+              Tempo de aprovação
+            </SuppliesActionButton>
+            <SuppliesActionButton
+              type="button"
+              variant="ghost"
               onClick={reload}
               disabled={loading || !units.length}
               title={SP_HELP.purchaseRequestsRefresh}
