@@ -72,6 +72,7 @@ EXPECTED_OPERATIONS = {
     # #1576 P1 — inventário completo e dedicado Windows SCM
     ("post", "/collector/v1/servers/{server_id}/host-services/batches"): "ingest_it_windows_host_service_batch",
     ("get", "/servers/{server_id}/host-services"): "list_it_windows_host_services",
+    ("put", "/servers/{server_id}/host-services/{service_name}/preferences"): "set_it_windows_host_service_preference",
     # E4.S1 — observações automáticas
     ("post", "/collector/v1/servers/{server_id}/observations"): "ingest_it_server_observation",
     ("get", "/servers/{server_id}/observations/latest"): "get_it_server_latest_observation",
