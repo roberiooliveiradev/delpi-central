@@ -485,7 +485,7 @@ class ProductRegistrationService:
                     reason=reason,
                     occurred_at=_now(),
                     event_id=_uuid(),
-                    version=request.get("version"),
+                    version=request.get("row_version"),
                     status=request.get("status"),
                     actor_user_id=actor.user_id,
                     actor_client_id=getattr(actor, "client_id", None),

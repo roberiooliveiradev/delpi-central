@@ -301,6 +301,7 @@ class TestPostCommitPublish:
             assert event["resourceId"] == rid
             assert event["reason"] == "start"
             assert event["status"] == "in_progress"
+            assert event["version"] is not None
             assert event["eventId"]
             assert event["occurredAt"]
             # Payload leve: sem dados de ficha/fornecedores
