@@ -190,6 +190,7 @@ class CapabilitiesOut(BaseModel):
     can_view_servers: bool
     can_manage_servers: bool
     can_manage_host_services: bool
+    can_control_host_services: bool
     can_create_notes: bool
     can_view_action_plans: bool
     can_manage_action_plans: bool
@@ -596,6 +597,7 @@ class HostServicePreferenceOut(BaseModel):
 
 
 class HostServiceOut(BaseModel):
+    control_allowed: bool
     service_key: str
     is_favorite: bool
     criticality: Literal["normal", "high", "critical"]
@@ -622,6 +624,46 @@ class HostServicePage(BaseModel):
     page: int
     page_size: int
     current: HostServiceCurrentOut | None
+
+class HostServiceActionInput(_Input):
+    action: Literal["start", "stop", "restart"]
+    request_id: UUID
+    confirmed: bool
+
+
+class HostServiceActionOut(BaseModel):
+    id: str
+    server_id: str
+    service_key: str
+    service_name: str
+    action: Literal["start", "stop", "restart"]
+    state_before: str
+    status: Literal["queued", "running", "succeeded", "failed", "timeout"]
+    state_after: str | None
+    error_code: str | None
+    requested_at: datetime
+    claimed_at: datetime | None
+    finished_at: datetime | None
+    requested_by_name: str
+
+
+class HostServiceAgentClaimOut(BaseModel):
+    id: str
+    service_key: str
+    service_name: str
+    action: Literal["start", "stop", "restart"]
+    state_before: str
+    lease: str
+
+
+class HostServiceAgentReportInput(_Input):
+    lease: str = Field(min_length=24, max_length=128)
+    status: Literal["succeeded", "failed"]
+    state_after: Literal["running", "stopped", "paused", "unknown"] | None
+    error_code: Literal["access_denied", "service_not_found", "not_allowed",
+                        "precondition_failed", "dependent_services", "timeout",
+                        "execution_failed", "disabled"] | None = None
+
 
 class HealthOut(BaseModel):
     status: str
