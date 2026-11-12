@@ -250,7 +250,7 @@ describe("servers", () => {
     expect(screen.queryByRole("button", { name: /Editar/ })).toBeNull();
     const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
     fireEvent.click(within(navigation).getByRole("button", { name: /Notas técnicas/ }));
-    expect(await screen.findByRole("heading", { name: "Notas técnicas", level: 2 })).toBeTruthy();
+    expect(await screen.findByText("Nenhuma nota registrada.")).toBeTruthy();
     expect(screen.queryByRole("note")).toBeNull();
     fireEvent.click(within(navigation).getByRole("button", { name: /Planos de ação/ }));
     expect(screen.queryByRole("button", { name: /Novo plano/ })).toBeNull();
