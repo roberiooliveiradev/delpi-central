@@ -12,6 +12,8 @@ autenticação Keycloak do coletor ou o Task Scheduler.
 - Controle segmentado **Todos os serviços | Favoritos (n)**, com total
   persistido calculado pelo backend para todo o servidor, não somente
   para os 25 itens exibidos na página.
+- Favoritos inclui por padrão serviços temporariamente ausentes, para não
+  esconder exatamente o que merece atenção.
 - Filtro de favoritos executado no servidor e combinado com busca,
   estado, modo de inicialização, presença e paginação.
 - Criticidade **Normal / Alta / Crítica**, editável no detalhe expandido
