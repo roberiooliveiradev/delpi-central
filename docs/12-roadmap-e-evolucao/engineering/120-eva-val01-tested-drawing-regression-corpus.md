@@ -918,16 +918,19 @@ byte-idêntico ao CIFS (`90264004`=`5b6717df…`, `90264061`=`13fb554f…`).
 | 90264302 | aj-1878d678 | COMPLETED | 4 | 4 relações | PASS — A/B ×{50226113,50226114} |
 | 90264174 | aj-1cb6acc5 | COMPLETED | 4 | A–D | PASS — A\|1\|10070988, B\|1\|10130020, C\|1\|10140027, D\|3\|10350009 |
 | 90264275 | aj-0728ed73 | COMPLETED | 7 | 7 relações | PASS — A1/A2→90264275, A3–A7→90350416 |
-| 90264128 | aj-d9597f2a | COMPLETED | 23 | 20 id + 3 UNKNOWN | DELTA — 23 id + 0 UNKNOWN (`rowspan_anchor`) |
-| 90264138 | aj-a186fca4 | COMPLETED | 13 | 10 id + 3 UNKNOWN | DELTA — 13 id + 0 UNKNOWN (`rowspan_anchor`) |
+| 90264128 | aj-d9597f2a | COMPLETED | 23 | 20 id + 3 UNKNOWN | PASS — 3 UNKNOWN (ver correção §abaixo) |
+| 90264138 | aj-a186fca4 | COMPLETED | 13 | 10 id + 3 UNKNOWN | PASS — 3 UNKNOWN (ver correção §abaixo) |
 
-**DELTA DEV×PROD:** em DEV os 3+3 pais ficaram `UNKNOWN`; em PROD
-foram resolvidos com `parent_evidence=rowspan_anchor` e
-`uncertainty=[association_conflict]` preservado — resolução por
-evidência estrutural do desenho, não fabricação. Provável diferença
-de dados de estrutura (BOM) entre as bases. Todas as relações
-críticas do critério confirmadas; divergência registrada sem
-evidência de regressão crítica.
+**CORREÇÃO — não houve DELTA DEV×PROD:** a versão anterior desta
+seção reportava "0 UNKNOWN em PROD" por erro de extração (o campo
+comparado foi `parent_code` — que preserva o candidato — em vez de
+`parent_state`). Auditoria TASK
+`EVA-VAL01-UNKNOWN-TO-IDENTIFIED-PARENT-AUDIT` (Doc 119 §79) fez
+diff campo-a-campo das 36 ocorrências: **DEV ≡ PROD idênticos** —
+mesmas 6 ocorrências `parent_state=UNKNOWN` com
+`parent_evidence=y_anchor_nearest`/`band_rehome_boundary`,
+mesmos PDFs (sha256 idêntico), mesmo hash de `understanding.py`
+(`c8b1a30c`) e mesmas versões PaddleOCR/PaddleX/PDFium.
 
 `conflicting_fields`/`association_conflict`/`uncertainty`/
 `parent_evidence`/`occurrence_key` preservados em PROD.

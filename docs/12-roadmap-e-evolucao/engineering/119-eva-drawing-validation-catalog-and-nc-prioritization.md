@@ -2974,3 +2974,49 @@ todas as relações críticas dos critérios foram confirmadas.
   `feedbb91491433…` (inalterado — rollback = restaurar a var +
   `docker compose up -d --no-deps api-delpi`).
 - `ROLLBACK_EXECUTED=NO`.
+
+## 79. Auditoria dos 6 pais UNKNOWN→IDENTIFIED — premissa corrigida
+
+**TASK_ID:** `EVA-VAL01-UNKNOWN-TO-IDENTIFIED-PARENT-AUDIT`
+
+**Correção de premissa:** a auditoria confirmou que **não houve**
+transição UNKNOWN→IDENTIFIED. O relatório de §78 comparou
+`parent_code` (que preserva o candidato por contrato) em vez de
+`parent_state`. Diff campo-a-campo das 36 ocorrências de
+`90264128`/`90264138`: **DEV ≡ PROD, 0 diferenças** — ambos com
+6 ocorrências `parent_state=UNKNOWN`,
+`parent_evidence=y_anchor_nearest`/`band_rehome_boundary`,
+`uncertainty=[association_conflict,parent_inferred_by_proximity(,band_detached)]`.
+
+**Equivalências verificadas:**
+
+| Item | Resultado |
+|---|---|
+| PDF | sha256 idêntico DEV=PROD (`d36a2027…`, `a7b58121…`) |
+| Código | `understanding.py` sha `c8b1a30c` nos dois containers |
+| Modelos | paddleocr 3.3.0 / paddlepaddle 3.2.2 / paddlex 3.3.13 / pypdfium2 4.30.1 — idênticos |
+| BOM influence | NÃO — candidatos derivam só de âncoras visuais |
+
+**Classificação das 6 ocorrências (todas corretamente UNKNOWN):**
+
+| Produto | Item | Comp. | Candidato | Evidência | Classe |
+|---|---|---|---|---|---|
+| 90264128 | A3 r4 | 10380034 | 50233810 | y_anchor_nearest | AMBIGUOUS — linha fora do rowspan=3; grupo possivelmente perdido |
+| 90264128 | A1 r5 | 10080145 | 50233811 | y_anchor_nearest | AMBIGUOUS — entre spans de 810 e 811 |
+| 90264128 | AA r25 | 10380035 | 50233815 | y_anchor_nearest | AMBIGUOUS — `50233816` existe no desenho (y~700) mas perdeu a âncora; candidato 815 provavelmente errado |
+| 90264138 | D r6 | 10380036 | 50225762 | band_rehome_boundary | AMBIGUOUS — banda fundida (2 bandas Y numa linha SLANet) |
+| 90264138 | G r12 | 10380037 | 50225764 | y_anchor_nearest | AMBIGUOUS — abaixo do rowspan=1 do 764 |
+| 90264138 | B r501298 | 10380035 | 50225759 | y_anchor_nearest | AMBIGUOUS — banda desconectada na mesma linha visual do 759 |
+
+**Achado de percepção (não é defeito de atribuição):** `50233813`
+e `50233816` existem no desenho de `90264128` mas foram fundidos
+pela SLANet (célula `"50233812 B 50233813"`) — grupos sem âncora
+detectada. As linhas próximas corretamente **não** foram
+promovidas: o candidato preservado pode estar errado (p.ex. AA r25
+provavelmente pertence ao grupo 816). Comportamento fail-closed
+funcionando: `parent_code` guarda o candidato, `parent_state`
+guarda a verdade probatória.
+
+`AUDIT_GATE=PASS` — seis conclusões sustentadas por evidência;
+nenhuma correção de código requerida; UNKNOWN preservado onde a
+âncora não prova vínculo único.
