@@ -61,6 +61,7 @@ def test_balances_return_produced_and_pending_per_operation() -> None:
     item = result["items"][0]
     assert item["operation_produced_qty"] == 3.0
     assert item["operation_pending_qty"] == 4.8
+    assert item["order_exists"] is True
     assert repo.hza_calls == 0
     assert repo.produced_calls[0]["production_orders"] == ["10964501004"]
 
@@ -191,6 +192,23 @@ def test_repository_without_balance_methods_returns_null_fields() -> None:
     item = result["items"][0]
     assert item["operation_produced_qty"] is None
     assert item["operation_pending_qty"] is None
+    assert item["order_exists"] is None
+
+
+def test_missing_op_in_selected_branch_has_explicit_not_found_flag() -> None:
+    """Uma OP da filial 01 não deve ser confundida com saldo unknown na 02."""
+    repo = FakeRepo(
+        finish_rows=[],
+        produced_rows=[],
+    )
+    result = GetProductionMachineLoadOperationBalancesUseCase(repo).execute(
+        branch="02",
+        items=[{"production_order": "11301901001", "operation_code": "01"}],
+    )
+    item = result["items"][0]
+    assert item["order_exists"] is False
+    assert item["operation_pending_qty"] is None
+    assert repo.finish_calls[0]["branch"] == "02"
 
 
 def test_empty_items_returns_empty_items() -> None:
