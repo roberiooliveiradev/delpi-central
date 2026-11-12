@@ -8,6 +8,7 @@ responde 422 com erros por campo.
 from __future__ import annotations
 
 from datetime import date, datetime
+from uuid import UUID
 from typing import Generic, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
