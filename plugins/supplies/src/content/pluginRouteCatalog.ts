@@ -109,6 +109,13 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         requiredCap: "purchaseRequests",
         keywords: ["sc", "solicitacao", "compras"],
       },
+      {
+        id: "approval_lead_time",
+        label: "Tempo de aprovação",
+        viewId: "approval_lead_time",
+        requiredCap: "purchaseRequests",
+        keywords: ["alcada", "aprovação", "aprovacao", "indicador", "scr", "tempo"],
+      },
     ],
   },
   {

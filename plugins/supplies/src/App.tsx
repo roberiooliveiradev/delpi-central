@@ -24,6 +24,7 @@ import { PurchaseOrderDetailPage } from "./features/purchase-orders/PurchaseOrde
 import { PurchaseOrdersPage } from "./features/purchase-orders/PurchaseOrdersPage";
 import { PurchaseRequestDetailPage } from "./features/purchase-requests/PurchaseRequestDetailPage";
 import { PurchaseRequestsPage } from "./features/purchase-requests/PurchaseRequestsPage";
+import { ApprovalLeadTimePage } from "./features/purchase-requests/ApprovalLeadTimePage";
 import { ConsumptionAuditPage } from "./features/consumption-audit/ConsumptionAuditPage";
 import { SafetyStockDetailPage } from "./features/safety-stock/SafetyStockDetailPage";
 import { SafetyStockPage } from "./features/safety-stock/SafetyStockPage";
@@ -143,6 +144,8 @@ function AppRoutes({
     content = <UserManualPage basePath={basePath} />;
   } else if (view === "purchase_requests") {
     content = <PurchaseRequestsPage basePath={basePath} />;
+  } else if (view === "approval_lead_time") {
+    content = <ApprovalLeadTimePage basePath={basePath} />;
   } else if (view === "purchase_request_detail") {
     content = (
       <PurchaseRequestDetailPage

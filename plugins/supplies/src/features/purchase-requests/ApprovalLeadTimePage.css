@@ -1,0 +1,68 @@
+.sp-approval-lead-time__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+.sp-approval-lead-time__filters label {
+  display: flex;
+  flex: 1 1 150px;
+  min-width: 140px;
+  gap: 6px;
+  flex-direction: column;
+  color: var(--delpi-ui-text-secondary, inherit);
+  font-size: 0.82rem;
+}
+.sp-approval-lead-time__filters input,
+.sp-approval-lead-time__filters select {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--delpi-ui-border, #cbd5e1);
+  border-radius: 9px;
+  color: var(--delpi-ui-text-primary, inherit);
+  background: var(--delpi-ui-surface, transparent);
+  font: inherit;
+}
+.sp-approval-lead-time__metrics {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+.sp-approval-lead-time__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--delpi-ui-border, #cbd5e1);
+  border-radius: 14px;
+  background: var(--delpi-ui-surface, transparent);
+}
+.sp-approval-lead-time__metric span { font-size: 0.8rem; opacity: 0.75; }
+.sp-approval-lead-time__metric strong { font-size: 1.6rem; font-weight: 700; }
+.sp-approval-lead-time__buckets { display: grid; gap: 15px; }
+.sp-approval-lead-time__bucket-label { display: flex; justify-content: space-between; gap: 12px; font-size: 0.83rem; }
+.sp-approval-lead-time__bar {
+  height: 9px; border-radius: 99px;
+  background: var(--delpi-ui-surface-secondary, #e2e8f0); overflow: hidden;
+}
+.sp-approval-lead-time__bar > div {
+  min-height: 100%; border-radius: inherit; background: #00a6de;
+}
+.sp-approval-lead-time__table-scroll { overflow-x: auto; }
+.sp-approval-lead-time__table { width: 100%; border-collapse: collapse; font-size: 0.85rem; white-space: nowrap; }
+.sp-approval-lead-time__table th, .sp-approval-lead-time__table td {
+  padding: 12px 10px; border-bottom: 1px solid var(--delpi-ui-border, #cbd5e1);
+  text-align: left; vertical-align: top;
+}
+.sp-approval-lead-time__table th { font-weight: 600; opacity: 0.8; }
+.sp-approval-lead-time__link {
+  border: 0; background: transparent; color: #00a6de;
+  padding: 0; cursor: pointer; font-weight: 700; text-decoration: underline;
+}
+.sp-approval-lead-time__events { white-space: normal; min-width: 230px; padding-left: 18px; line-height: 1.6; }
+.sp-approval-lead-time__events li { margin: 7px 0; }
+.sp-approval-lead-time__events span { display: block; font-size: 0.75rem; opacity: 0.8; }
+.sp-approval-lead-time__footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-top: 16px; }
+.sp-approval-lead-time__footer > div { display: flex; gap: 8px; }
+.sp-approval-lead-time__note { font-size: 0.78rem; opacity: 0.78; line-height: 1.6; }

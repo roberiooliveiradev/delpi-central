@@ -7,6 +7,7 @@ export type PluginView =
   | "analytics_otd"
   | "my_tasks"
   | "purchase_requests"
+  | "approval_lead_time"
   | "purchase_request_detail"
   | "purchase_orders"
   | "purchase_order_detail"
@@ -80,6 +81,7 @@ const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   "analytics/otd": "analytics_otd",
   "my-tasks": "my_tasks",
   "purchase-requests": "purchase_requests",
+  "purchase-requests/approval-lead-time": "approval_lead_time",
   "purchase-orders": "purchase_orders",
   deliveries: "deliveries",
   suppliers: "suppliers",
@@ -101,6 +103,7 @@ export const PLUGIN_VIEW_RELATIVE_PATHS: Record<PluginRoutableView, string> = {
   analytics_otd: "analytics/otd",
   my_tasks: "my-tasks",
   purchase_requests: "purchase-requests",
+  approval_lead_time: "purchase-requests/approval-lead-time",
   purchase_orders: "purchase-orders",
   deliveries: "deliveries",
   suppliers: "suppliers",
@@ -275,6 +278,7 @@ export function resolveActiveNavId(view: PluginView): PluginNavId | null {
     case "my_tasks":
       return "my_tasks";
     case "purchase_requests":
+    case "approval_lead_time":
     case "purchase_request_detail":
       return "purchase_requests";
     case "purchase_orders":
