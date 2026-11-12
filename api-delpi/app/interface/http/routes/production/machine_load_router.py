@@ -127,7 +127,7 @@ _OPERATION_BALANCE_FIELDS = {
     "operation_code": {"label": "Operação", "type": "string"},
     "operation_produced_qty": {"label": "Produzido na operação", "type": "number"},
     "operation_pending_qty": {"label": "Saldo da operação", "type": "number"},
-    "order_exists": {"label": "OP encontrada na filial", "type": "boolean"},
+    "order_deleted": {"label": "OP excluída logicamente", "type": "boolean"},
 }
 
 
