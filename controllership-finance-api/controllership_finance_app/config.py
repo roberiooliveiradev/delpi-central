@@ -111,6 +111,42 @@ class Settings:
         "CLARA_CONSENT_CHANNEL", default="portal"
     )
 
+    # --- LNF hosted (invoice_posting) — dark by default ---
+    LNF_HOSTED_ENABLED: bool = _get_env(
+        "LNF_HOSTED_ENABLED", default="false"
+    ).lower() in ("1", "true", "yes")
+    LNF_MIGRATIONS_MODE: str = _get_env(
+        "LNF_MIGRATIONS_MODE", default="verify"
+    ).strip().lower()
+    LNF_NOTIFICATIONS_ENABLED: bool = _get_env(
+        "LNF_NOTIFICATIONS_ENABLED", default="true"
+    ).lower() in ("1", "true", "yes")
+    LNF_DANFE_UPLOAD_DIR: str = _get_env(
+        "LNF_DANFE_UPLOAD_DIR",
+        default="/app/data/lancamento-notas-fiscais-danfe",
+    )
+    FINANCIAL_API_BASE_URL: str = _get_env(
+        "FINANCIAL_API_BASE_URL", default="http://financial-api:8000"
+    )
+    FINANCIAL_API_TIMEOUT_SECONDS: float = float(
+        _get_env("FINANCIAL_API_TIMEOUT_SECONDS", default="30")
+    )
+    API_DELPI_INTERNAL_SERVICE_TOKEN: str = _get_env(
+        "API_DELPI_INTERNAL_SERVICE_TOKEN", default=""
+    )
+
+    # Protheus / TOTVS (alias DB_* like api-delpi)
+    TOTVS_DB_HOST: str = _get_env("TOTVS_DB_HOST", default="")
+    TOTVS_DB_PORT: str = _get_env("TOTVS_DB_PORT", default="1433")
+    TOTVS_DB_DATABASE: str = _get_env("TOTVS_DB_DATABASE", default="")
+    TOTVS_DB_USER: str = _get_env("TOTVS_DB_USER", default="")
+    TOTVS_DB_PASSWORD: str = _get_env("TOTVS_DB_PASSWORD", default="")
+    DB_HOST: str = _get_env("DB_HOST", default="")
+    DB_PORT: str = _get_env("DB_PORT", default="1433")
+    DB_DATABASE: str = _get_env("DB_DATABASE", default="")
+    DB_USER: str = _get_env("DB_USER", default="")
+    DB_PASSWORD: str = _get_env("DB_PASSWORD", default="")
+
 
 settings = Settings()
 

@@ -1,0 +1,429 @@
+"""Cria a solicitação e, quando a origem é uma NF-e, anexa o DANFE já baixado."""
+from __future__ import annotations
+
+import re
+from typing import Any
+
+from controllership_finance_app.application.invoice_posting.danfe_storage import (
+    LancamentoDanfeStorage,
+    LancamentoDanfeStorageError,
+)
+from controllership_finance_app.application.invoice_posting.fiscal_attachment_storage import (
+    LancamentoFiscalAttachmentStorage,
+    LancamentoFiscalAttachmentStorageError,
+)
+from controllership_finance_app.application.invoice_posting.unmapped_supplier_product_service import (
+    UnmappedSupplierProductRecorder,
+)
+from controllership_finance_app.application.invoice_posting.use_cases import (
+    Actor,
+    CreateInvoicePostingRequestUseCase,
+)
+from controllership_finance_app.domain.invoice_posting.exceptions import (
+    InvoicePostingUpstreamError,
+    InvoicePostingValidationError,
+)
+from controllership_finance_app.infrastructure.invoice_posting.financial_received_invoice_gateway import (
+    FinancialReceivedInvoiceGateway,
+    FinancialReceivedInvoiceGatewayError,
+)
+from controllership_finance_app.application.invoice_posting.logging_util import log_error
+
+
+class ReceivedInvoiceAttachmentService:
+    def __init__(
+        self,
+        *,
+        create_request: CreateInvoicePostingRequestUseCase,
+        gateway: FinancialReceivedInvoiceGateway,
+        storage: LancamentoDanfeStorage,
+        requests: Any,
+        fiscal_storage: LancamentoFiscalAttachmentStorage | None = None,
+        unmapped_products: UnmappedSupplierProductRecorder | None = None,
+    ) -> None:
+        self._create_request = create_request
+        self._gateway = gateway
+        self._storage = storage
+        self._requests = requests
+        self._fiscal_storage = fiscal_storage or LancamentoFiscalAttachmentStorage(str(storage.base_dir))
+        self._unmapped_products = unmapped_products
+
+    def execute(
+        self,
+        payload: dict[str, Any],
+        actor: Actor,
+        *,
+        authorization: str,
+    ) -> dict[str, Any]:
+        source = str(payload.get("source") or "manual").strip() or "manual"
+        if source == "manual":
+            return self._create_request.execute(payload, actor)
+        if source == "received_nfe":
+            return self._attach_received_nfe(payload, actor, authorization=authorization)
+        if source == "questor":
+            kind = _normalized_model(payload.get("source_document_type")) or "nfse"
+            if kind == "cte":
+                return self._attach_questor_cte(payload, actor, authorization=authorization)
+            return self._attach_questor_nfse(payload, actor, authorization=authorization)
+        raise InvoicePostingValidationError("Origem da solicitação inválida.")
+
+    def _attach_received_nfe(
+        self,
+        payload: dict[str, Any],
+        actor: Actor,
+        *,
+        authorization: str,
+    ) -> dict[str, Any]:
+        fiscal_model = _normalized_model(payload.get("fiscal_model"))
+        if fiscal_model in {"cte", "ct-e"}:
+            raise InvoicePostingValidationError("CT-e não anexa o DANFE de uma NF-e.")
+        if fiscal_model == "nfse":
+            raise InvoicePostingValidationError("NFS-e não usa o anexo de DANFE.")
+        declared = _normalized_model(payload.get("source_document_type"))
+        if declared and declared != "nfe":
+            raise InvoicePostingValidationError("O tipo do documento de origem não confere com a solicitação.")
+        if fiscal_model and fiscal_model != "nfe":
+            raise InvoicePostingValidationError("O tipo do documento de origem não confere com a solicitação.")
+        document_id = str(payload.get("document_id") or "").strip()
+        access_key = str(payload.get("access_key") or "").strip()
+        provider_entity_id = _optional_hex24(payload.get("provider_entity_id"))
+        source_branch = _matching_branch(payload)
+        content, filename = self._gateway.download_danfe(
+            authorization=authorization,
+            document_id=document_id,
+            access_key=access_key,
+            branch=source_branch,
+        )
+        created = self._create_request.execute(payload, actor)
+        request_id = str(created.get("id") or "")
+        stored_name: str | None = None
+        try:
+            stored_name = self._storage.save(request_id=request_id, content=content)
+            self._requests.insert_danfe_attachment(
+                request_id=request_id,
+                document_id=document_id.lower(),
+                access_key=access_key,
+                stored_name=stored_name,
+                original_name=filename,
+                size_bytes=len(content),
+                provider_entity_id=provider_entity_id,
+            )
+        except (LancamentoDanfeStorageError, FinancialReceivedInvoiceGatewayError, OSError) as exc:
+            self._compensate_danfe(request_id, stored_name)
+            raise InvoicePostingUpstreamError("Não foi possível anexar o DANFE.") from exc
+        except Exception as exc:
+            self._compensate_danfe(request_id, stored_name)
+            log_error(f"Falha ao anexar DANFE da solicitação {request_id}: {type(exc).__name__}")
+            raise InvoicePostingUpstreamError("Não foi possível anexar o DANFE.") from exc
+        created["danfe"] = {
+            "available": True,
+            "document_id": document_id.lower(),
+            "access_key": access_key,
+            "provider_entity_id": provider_entity_id,
+            "file_name": filename,
+            "size_bytes": len(content),
+        }
+        self._observe_unmapped_products(
+            created=created,
+            payload=payload,
+            authorization=authorization,
+            document_id=document_id,
+            provider_entity_id=provider_entity_id or "",
+            access_key=access_key,
+            branch=source_branch,
+        )
+        return created
+
+    def _observe_unmapped_products(
+        self,
+        *,
+        created: dict[str, Any],
+        payload: dict[str, Any],
+        authorization: str,
+        document_id: str,
+        provider_entity_id: str,
+        access_key: str,
+        branch: str,
+    ) -> None:
+        recorder = self._unmapped_products
+        request_id = str(created.get("id") or "").strip()
+        if recorder is None or not request_id:
+            return
+        try:
+            recorder.record(
+                authorization=authorization,
+                document_id=document_id,
+                provider_entity_id=provider_entity_id,
+                access_key=access_key,
+                branch=str(created.get("branch_code") or branch or ""),
+                supplier_code=str(
+                    created.get("supplier_code") or payload.get("supplier_code") or ""
+                ),
+                supplier_store=str(
+                    created.get("supplier_store") or payload.get("supplier_store") or ""
+                ),
+                supplier_name=str(
+                    created.get("supplier_name") or payload.get("supplier_name") or ""
+                ),
+                document_number=str(
+                    created.get("document_number") or payload.get("document_number") or ""
+                ),
+                series=str(created.get("series") or payload.get("series") or ""),
+                request_id=request_id,
+            )
+        except Exception:
+            log_error(
+                "Falha ao registrar produtos sem código Delpi "
+                f"na solicitação {request_id}."
+            )
+
+    def _attach_questor_nfse(
+        self,
+        payload: dict[str, Any],
+        actor: Actor,
+        *,
+        authorization: str,
+    ) -> dict[str, Any]:
+        fiscal_model = _normalized_model(payload.get("fiscal_model"))
+        source_type = _normalized_model(payload.get("source_document_type")) or "nfse"
+        if fiscal_model != "nfse" or source_type != "nfse":
+            raise InvoicePostingValidationError("O tipo do documento de origem não confere com a solicitação.")
+        document_id = str(payload.get("document_id") or payload.get("source_document_id") or "").strip()
+        source_branch = _matching_branch(payload)
+        provider_number = str(payload.get("provider_document_number") or "").strip()
+        original, original_name = self._gateway.download_nfse_xml(
+            authorization=authorization,
+            document_id=document_id,
+            variant="original",
+            branch=source_branch,
+        )
+        standard, standard_name = self._gateway.download_nfse_xml(
+            authorization=authorization,
+            document_id=document_id,
+            variant="standard",
+            branch=source_branch,
+        )
+        created = self._create_request.execute(payload, actor)
+        request_id = str(created.get("id") or "")
+        stored: list[str] = []
+        public: list[dict[str, Any]] = []
+        try:
+            for attachment_type, content, filename in (
+                ("xml_original", original, original_name),
+                ("xml_standard", standard, standard_name),
+            ):
+                stored_name = self._fiscal_storage.save(
+                    request_id=request_id,
+                    attachment_type=attachment_type,
+                    content=content,
+                )
+                stored.append(stored_name)
+                self._requests.insert_fiscal_attachment(
+                    request_id=request_id,
+                    document_type="nfse",
+                    attachment_type=attachment_type,
+                    provider_document_id=document_id.lower(),
+                    provider_document_number=provider_number,
+                    provider_document_key=None,
+                    branch_code=source_branch,
+                    stored_name=stored_name,
+                    original_name=filename,
+                    content_type="text/xml",
+                    size_bytes=len(content),
+                )
+                public.append(
+                    {
+                        "document_type": "nfse",
+                        "attachment_type": attachment_type,
+                        "provider_document_id": document_id.lower(),
+                        "provider_document_number": provider_number,
+                        "branch_code": source_branch,
+                        "file_name": filename,
+                        "content_type": "text/xml",
+                        "size_bytes": len(content),
+                    }
+                )
+        except (
+            LancamentoFiscalAttachmentStorageError,
+            FinancialReceivedInvoiceGatewayError,
+            OSError,
+        ) as exc:
+            self._compensate_fiscal(request_id, stored)
+            raise InvoicePostingUpstreamError("Não foi possível anexar o XML da NFS-e.") from exc
+        except Exception as exc:
+            self._compensate_fiscal(request_id, stored)
+            log_error(f"Falha ao anexar XML da solicitação {request_id}: {type(exc).__name__}")
+            raise InvoicePostingUpstreamError("Não foi possível anexar o XML da NFS-e.") from exc
+        created["fiscal_attachments"] = public
+        return created
+
+    def _attach_questor_cte(
+        self,
+        payload: dict[str, Any],
+        actor: Actor,
+        *,
+        authorization: str,
+    ) -> dict[str, Any]:
+        fiscal_model = _normalized_model(payload.get("fiscal_model"))
+        source_type = _normalized_model(payload.get("source_document_type"))
+        if fiscal_model != "cte" or source_type != "cte":
+            raise InvoicePostingValidationError("O tipo do documento de origem não confere com a solicitação.")
+        document_id = str(payload.get("document_id") or payload.get("source_document_id") or "").strip()
+        file_id = str(payload.get("provider_file_id") or "").strip()
+        access_key = str(payload.get("access_key") or payload.get("provider_document_key") or "").strip()
+        if not file_id or not access_key:
+            raise InvoicePostingValidationError("Informe o arquivo e a chave do CT-e.")
+        source_branch = _matching_branch(payload)
+        detail = self._gateway.get_cte_detail(
+            authorization=authorization,
+            document_id=document_id,
+            file_id=file_id,
+            access_key=access_key,
+            branch=source_branch,
+        )
+        number = str(detail.get("number") or "")
+        series = str(detail.get("series") or "")
+        _require_same_document(payload, number)
+        _require_same_series(payload, series)
+        trusted = dict(payload)
+        trusted["linked_invoices"] = [
+            {"document": str(item.get("documentNumber") or ""), "series": str(item.get("series") or "")}
+            for item in detail.get("linkedInvoices") or []
+            if isinstance(item, dict)
+        ]
+        original, original_name = self._gateway.download_cte_xml(
+            authorization=authorization,
+            document_id=document_id,
+            file_id=file_id,
+            branch=source_branch,
+        )
+        dacte: bytes | None = None
+        dacte_name = ""
+        try:
+            dacte, dacte_name = self._gateway.download_dacte(
+                authorization=authorization,
+                document_id=document_id,
+                file_id=file_id,
+                access_key=access_key,
+                branch=source_branch,
+            )
+        except FinancialReceivedInvoiceGatewayError as exc:
+            if exc.status_code != 404:
+                raise
+        created = self._create_request.execute(trusted, actor)
+        request_id = str(created.get("id") or "")
+        stored: list[str] = []
+        public: list[dict[str, Any]] = []
+        files: list[tuple[str, bytes, str, str]] = [
+            ("xml_original", original, original_name, "text/xml"),
+        ]
+        if dacte is not None:
+            files.append(("dacte", dacte, dacte_name, "application/pdf"))
+        try:
+            for attachment_type, content, filename, content_type in files:
+                stored_name = self._fiscal_storage.save(
+                    request_id=request_id,
+                    attachment_type=attachment_type,
+                    content=content,
+                )
+                stored.append(stored_name)
+                self._requests.insert_fiscal_attachment(
+                    request_id=request_id,
+                    document_type="cte",
+                    attachment_type=attachment_type,
+                    provider_document_id=document_id.lower(),
+                    provider_document_number=number,
+                    provider_document_key=access_key,
+                    branch_code=source_branch,
+                    stored_name=stored_name,
+                    original_name=filename,
+                    content_type=content_type,
+                    size_bytes=len(content),
+                )
+                public.append(
+                    {
+                        "document_type": "cte",
+                        "attachment_type": attachment_type,
+                        "provider_document_id": document_id.lower(),
+                        "provider_document_number": number,
+                        "provider_document_key": access_key,
+                        "branch_code": source_branch,
+                        "file_name": filename,
+                        "content_type": content_type,
+                        "size_bytes": len(content),
+                    }
+                )
+        except (
+            LancamentoFiscalAttachmentStorageError,
+            FinancialReceivedInvoiceGatewayError,
+            OSError,
+        ) as exc:
+            self._compensate_fiscal(request_id, stored)
+            raise InvoicePostingUpstreamError("Não foi possível anexar o CT-e.") from exc
+        except Exception as exc:
+            self._compensate_fiscal(request_id, stored)
+            log_error(f"Falha ao anexar CT-e da solicitação {request_id}: {type(exc).__name__}")
+            raise InvoicePostingUpstreamError("Não foi possível anexar o CT-e.") from exc
+        created["fiscal_attachments"] = public
+        return created
+
+    def _compensate_danfe(self, request_id: str, stored_name: str | None) -> None:
+        if stored_name:
+            try:
+                self._storage.delete(stored_name)
+            except OSError:
+                log_error(f"Falha ao remover DANFE órfão da solicitação {request_id}.")
+        self._delete_request(request_id)
+
+    def _compensate_fiscal(self, request_id: str, stored_names: list[str]) -> None:
+        for stored_name in stored_names:
+            try:
+                self._fiscal_storage.delete(stored_name)
+            except OSError:
+                log_error(f"Falha ao remover XML órfão da solicitação {request_id}.")
+        self._delete_request(request_id)
+
+    def _delete_request(self, request_id: str) -> None:
+        try:
+            self._requests.delete_request(request_id)
+        except Exception as exc:  # noqa: BLE001
+            log_error(f"Falha ao desfazer solicitação {request_id} sem anexo: {type(exc).__name__}")
+
+
+def _optional_hex24(value: object) -> str | None:
+    text = str(value or "").strip().lower()
+    if not text:
+        return None
+    if not re.fullmatch(r"[0-9a-f]{24}", text):
+        raise InvoicePostingValidationError("Identificador do XML da NF-e inválido.")
+    return text
+
+
+def _normalized_model(value: object) -> str:
+    return str(value or "").strip().lower().replace(" ", "").replace("-", "")
+
+
+def _require_same_document(payload: dict[str, Any], expected: str) -> None:
+    raw = str(payload.get("document_number") or payload.get("document") or "")
+    digits = re.sub(r"\D", "", raw)
+    if not digits or len(digits) > 9 or digits.zfill(9) != expected:
+        raise InvoicePostingValidationError("O número do CT-e não confere com o XML.")
+
+
+def _require_same_series(payload: dict[str, Any], expected: str) -> None:
+    raw = re.sub(r"\D", "", str(payload.get("series") or ""))
+    wanted = re.sub(r"\D", "", expected)
+    if not raw or not wanted or raw.zfill(3) != wanted.zfill(3):
+        raise InvoicePostingValidationError("A série do CT-e não confere com o XML.")
+
+
+def _matching_branch(payload: dict[str, Any]) -> str:
+    source_branch = str(payload.get("source_branch") or "").strip()
+    request_branch = str(payload.get("branch_code") or payload.get("branch") or "").strip()
+    if source_branch not in {"01", "02"}:
+        raise InvoicePostingValidationError("Informe a filial de origem da nota fiscal.")
+    if source_branch != request_branch:
+        raise InvoicePostingValidationError(
+            "A nota fiscal pertence a outra filial e não pode ser lançada nesta solicitação."
+        )
+    return source_branch

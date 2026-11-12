@@ -6,6 +6,8 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from delpi_auth.credential_guard import check_credentials
 from delpi_auth.cors_policy import build_allowed_origins
@@ -97,10 +99,25 @@ ALLOWED_ORIGINS = build_allowed_origins(
 )
 
 
+def _is_lnf_path(request: Request) -> bool:
+    return "/lancamento-notas-fiscais" in (request.url.path or "")
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     check_credentials()
     run_migrations_on_startup()
+    if settings.LNF_HOSTED_ENABLED:
+        if settings.LNF_MIGRATIONS_MODE != "verify":
+            raise RuntimeError(
+                "LNF_MIGRATIONS_MODE deve ser 'verify' nesta fase "
+                f"(recebido={settings.LNF_MIGRATIONS_MODE!r})"
+            )
+        from controllership_finance_app.infrastructure.invoice_posting.migrations_verify import (
+            verify_lnf_migrations,
+        )
+
+        verify_lnf_migrations()
     pollers: list[asyncio.Task] = []
     if settings.CF_NOTIFICATION_DISPATCH_ENABLED not in ("0", "false"):
         # R-105-05: recuperação da outbox sem nova ação do usuário —
@@ -136,7 +153,18 @@ app = FastAPI(
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(_request: Request, exc: RequestValidationError):
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    if settings.LNF_HOSTED_ENABLED and _is_lnf_path(request):
+        from controllership_finance_app.interface.http.routes.invoice_posting.responses import (
+            error_response,
+        )
+
+        return error_response(
+            "Parâmetros inválidos",
+            status_code=422,
+            code="VALIDATION_ERROR",
+            recoverable=True,
+        )
     details = exc.errors()
     first = details[0] if details else {}
     loc = ".".join(str(part) for part in first.get("loc", []))
@@ -145,9 +173,37 @@ async def validation_exception_handler(_request: Request, exc: RequestValidation
     return fail(message, 422)
 
 
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if settings.LNF_HOSTED_ENABLED and _is_lnf_path(request):
+        from controllership_finance_app.interface.http.routes.invoice_posting.responses import (
+            error_response,
+            not_found_response,
+        )
+
+        detail = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
+        if exc.status_code == 404:
+            return not_found_response(detail or "Recurso não encontrado")
+        typed_code = getattr(exc, "error_code", None)
+        if typed_code:
+            code = typed_code
+        else:
+            code = "VALIDATION_ERROR" if exc.status_code == 422 else "HTTP_ERROR"
+        return error_response(detail, status_code=exc.status_code, code=code)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+    )
+
+
 @app.exception_handler(Exception)
-async def unhandled_exception_handler(_request: Request, exc: Exception):
+async def unhandled_exception_handler(request: Request, exc: Exception):
     logging.getLogger(__name__).exception("unhandled_exception")
+    if settings.LNF_HOSTED_ENABLED and _is_lnf_path(request):
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal Server Error"},
+        )
     return fail("Erro interno do servidor.", 500)
 
 
@@ -186,6 +242,14 @@ app.include_router(me_router)
 app.include_router(admin_checklist_router)
 app.include_router(admin_catalogs_router)
 app.include_router(clara_consent_router)
+
+# LNF (invoice_posting) — dark by default; mount only when flagged.
+if settings.LNF_HOSTED_ENABLED:
+    from controllership_finance_app.interface.http.routes.invoice_posting.router import (
+        router as invoice_posting_router,
+    )
+
+    app.include_router(invoice_posting_router)
 
 # Streamable HTTP MCP — CLARA (external path:
 # /apps/controllership-finance-api/mcp). Auth via jwt_middleware com

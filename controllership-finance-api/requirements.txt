@@ -10,3 +10,4 @@ pytest
 psycopg[binary]==3.2.4
 python-multipart
 mcp>=2,<3
+pyodbc

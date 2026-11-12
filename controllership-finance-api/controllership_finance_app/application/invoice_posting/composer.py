@@ -1,0 +1,210 @@
+"""Composition root — lançamento-notas-fiscais."""
+from __future__ import annotations
+
+from controllership_finance_app.application.invoice_posting.danfe_storage import (
+    LancamentoDanfeStorage,
+)
+from controllership_finance_app.application.invoice_posting.received_invoice_attachment_service import (
+    ReceivedInvoiceAttachmentService,
+)
+from controllership_finance_app.application.invoice_posting.received_nfe_item_service import (
+    ReceivedNfeItemService,
+)
+from controllership_finance_app.application.invoice_posting.unmapped_supplier_product_service import (
+    ListUnmappedSupplierProductsUseCase,
+    UnmappedSupplierProductRecorder,
+)
+from controllership_finance_app.application.invoice_posting.use_cases import (
+    AddInvoicePostingCommentUseCase,
+    BlockInvoicePostingRequestUseCase,
+    CancelInvoicePostingRequestUseCase,
+    CreateInvoicePostingRequestUseCase,
+    GetInvoicePostingRequestUseCase,
+    LinkRequestPurchaseOrderUseCase,
+    ListInvoicePostingRequestsUseCase,
+    ListOpenPurchaseOrdersUseCase,
+    ListRequestOpenPurchaseOrdersUseCase,
+    PostManualInvoicePostingRequestUseCase,
+    RefreshInvoicePostingReconciliationUseCase,
+    ResumeInvoicePostingRequestUseCase,
+    RunInvoicePostingReconciliationUseCase,
+    SearchSuppliersUseCase,
+    StartInvoicePostingRequestUseCase,
+    UpdateInvoicePostingRequestUseCase,
+)
+from controllership_finance_app.infrastructure.invoice_posting.financial_received_invoice_gateway import (
+    FinancialReceivedInvoiceGateway,
+)
+from controllership_finance_app.infrastructure.invoice_posting.postgres_invoice_posting_repository import (
+    PostgresInvoicePostingRepository,
+)
+from controllership_finance_app.infrastructure.invoice_posting.totvs_invoice_posting_sc7_repository import (
+    TotvsInvoicePostingSc7Repository,
+)
+from controllership_finance_app.infrastructure.invoice_posting.totvs_invoice_posting_sf1_repository import (
+    TotvsInvoicePostingSf1Repository,
+)
+from controllership_finance_app.infrastructure.invoice_posting.totvs_supplier_product_mapping_repository import (
+    TotvsSupplierProductMappingRepository,
+)
+from controllership_finance_app.infrastructure.invoice_posting.totvs_supplier_repository import (
+    TotvsSupplierRepository,
+)
+
+
+def build_invoice_posting_request_repository() -> PostgresInvoicePostingRepository:
+    return PostgresInvoicePostingRepository()
+
+
+def build_supplier_repository() -> TotvsSupplierRepository:
+    return TotvsSupplierRepository()
+
+
+def build_invoice_posting_sf1_repository() -> TotvsInvoicePostingSf1Repository:
+    return TotvsInvoicePostingSf1Repository()
+
+
+def build_search_suppliers_use_case() -> SearchSuppliersUseCase:
+    return SearchSuppliersUseCase(build_supplier_repository())
+
+
+def build_create_invoice_posting_request_use_case() -> CreateInvoicePostingRequestUseCase:
+    return CreateInvoicePostingRequestUseCase(
+        build_invoice_posting_request_repository(),
+        build_supplier_repository(),
+        build_invoice_posting_sc7_repository(),
+    )
+
+
+def build_financial_received_invoice_gateway() -> FinancialReceivedInvoiceGateway:
+    return FinancialReceivedInvoiceGateway()
+
+
+def build_received_nfe_item_service() -> ReceivedNfeItemService:
+    return ReceivedNfeItemService(
+        gateway=build_financial_received_invoice_gateway(),
+        suppliers=build_supplier_repository(),
+        mappings=TotvsSupplierProductMappingRepository(),
+    )
+
+
+def build_unmapped_supplier_product_recorder() -> UnmappedSupplierProductRecorder:
+    return UnmappedSupplierProductRecorder(
+        items=build_received_nfe_item_service(),
+        requests=build_invoice_posting_request_repository(),
+    )
+
+
+def build_list_unmapped_supplier_products_use_case() -> ListUnmappedSupplierProductsUseCase:
+    return ListUnmappedSupplierProductsUseCase(build_invoice_posting_request_repository())
+
+
+def build_received_invoice_attachment_service() -> ReceivedInvoiceAttachmentService:
+    repository = build_invoice_posting_request_repository()
+    return ReceivedInvoiceAttachmentService(
+        create_request=CreateInvoicePostingRequestUseCase(
+            repository,
+            build_supplier_repository(),
+            build_invoice_posting_sc7_repository(),
+        ),
+        gateway=build_financial_received_invoice_gateway(),
+        storage=LancamentoDanfeStorage(),
+        requests=repository,
+        unmapped_products=build_unmapped_supplier_product_recorder(),
+    )
+
+
+def build_list_invoice_posting_requests_use_case() -> ListInvoicePostingRequestsUseCase:
+    return ListInvoicePostingRequestsUseCase(build_invoice_posting_request_repository())
+
+
+def build_invoice_posting_sc7_repository() -> TotvsInvoicePostingSc7Repository:
+    return TotvsInvoicePostingSc7Repository()
+
+
+def build_get_invoice_posting_request_use_case() -> GetInvoicePostingRequestUseCase:
+    return GetInvoicePostingRequestUseCase(build_invoice_posting_request_repository())
+
+
+def build_list_open_purchase_orders_use_case() -> ListOpenPurchaseOrdersUseCase:
+    return ListOpenPurchaseOrdersUseCase(
+        build_invoice_posting_sc7_repository(),
+        build_supplier_repository(),
+    )
+
+
+def build_list_request_open_purchase_orders_use_case() -> (
+    ListRequestOpenPurchaseOrdersUseCase
+):
+    return ListRequestOpenPurchaseOrdersUseCase(
+        build_invoice_posting_request_repository(),
+        build_invoice_posting_sc7_repository(),
+    )
+
+
+def build_link_request_purchase_order_use_case() -> LinkRequestPurchaseOrderUseCase:
+    return LinkRequestPurchaseOrderUseCase(
+        build_invoice_posting_request_repository(),
+        build_invoice_posting_sc7_repository(),
+    )
+
+
+def build_update_invoice_posting_request_use_case() -> UpdateInvoicePostingRequestUseCase:
+    repo = build_invoice_posting_request_repository()
+    reconciler = RunInvoicePostingReconciliationUseCase(
+        repo,
+        build_invoice_posting_sf1_repository(),
+    )
+    return UpdateInvoicePostingRequestUseCase(
+        repo,
+        build_supplier_repository(),
+        reconciler=reconciler,
+    )
+
+
+def build_start_invoice_posting_request_use_case() -> StartInvoicePostingRequestUseCase:
+    return StartInvoicePostingRequestUseCase(build_invoice_posting_request_repository())
+
+
+def build_block_invoice_posting_request_use_case() -> BlockInvoicePostingRequestUseCase:
+    return BlockInvoicePostingRequestUseCase(build_invoice_posting_request_repository())
+
+
+def build_resume_invoice_posting_request_use_case() -> ResumeInvoicePostingRequestUseCase:
+    return ResumeInvoicePostingRequestUseCase(build_invoice_posting_request_repository())
+
+
+def build_cancel_invoice_posting_request_use_case() -> CancelInvoicePostingRequestUseCase:
+    return CancelInvoicePostingRequestUseCase(build_invoice_posting_request_repository())
+
+
+def build_post_manual_invoice_posting_request_use_case() -> (
+    PostManualInvoicePostingRequestUseCase
+):
+    return PostManualInvoicePostingRequestUseCase(
+        build_invoice_posting_request_repository()
+    )
+
+
+def build_add_invoice_posting_comment_use_case() -> AddInvoicePostingCommentUseCase:
+    return AddInvoicePostingCommentUseCase(build_invoice_posting_request_repository())
+
+
+def build_run_invoice_posting_reconciliation_use_case() -> (
+    RunInvoicePostingReconciliationUseCase
+):
+    return RunInvoicePostingReconciliationUseCase(
+        build_invoice_posting_request_repository(),
+        build_invoice_posting_sf1_repository(),
+    )
+
+
+def build_refresh_invoice_posting_reconciliation_use_case() -> (
+    RefreshInvoicePostingReconciliationUseCase
+):
+    repo = build_invoice_posting_request_repository()
+    run_uc = RunInvoicePostingReconciliationUseCase(
+        repo,
+        build_invoice_posting_sf1_repository(),
+    )
+    return RefreshInvoicePostingReconciliationUseCase(repo, run_uc)

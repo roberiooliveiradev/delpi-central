@@ -1,0 +1,252 @@
+"""Normalização fiscal do domínio lançamento-notas-fiscais."""
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+
+class FiscalNormalizationError(ValueError):
+    """Entrada fiscal inválida para persistência."""
+
+
+@dataclass(frozen=True, slots=True)
+class NormalizedDocument:
+    document_number: str
+    document_match_key: str
+
+
+def normalize_document(raw: str | None) -> NormalizedDocument:
+    cleaned = str(raw or "").strip()
+    if not cleaned or not cleaned.isdigit():
+        raise FiscalNormalizationError(
+            "Número da nota deve conter somente dígitos (1 a 9)."
+        )
+    if len(cleaned) < 1 or len(cleaned) > 9:
+        raise FiscalNormalizationError(
+            "Número da nota deve ter entre 1 e 9 dígitos."
+        )
+    document_number = cleaned.zfill(9)
+    document_match_key = cleaned.zfill(9)
+    return NormalizedDocument(
+        document_number=document_number,
+        document_match_key=document_match_key,
+    )
+
+
+FISCAL_MODELS = frozenset({"nfe", "nfse", "cte"})
+_FISCAL_MODEL_ALIASES = {
+    "nfe": "nfe",
+    "nf-e": "nfe",
+    "nfse": "nfse",
+    "nfs-e": "nfse",
+    "cte": "cte",
+    "ct-e": "cte",
+}
+MAX_LINKED_INVOICES = 30
+
+
+def normalize_fiscal_model(raw: str | None, *, required: bool = True) -> str | None:
+    """Modelo da nota na solicitação: ``nfe``, ``nfse`` ou ``cte`` (frete)."""
+    token = str(raw or "").strip().lower().replace(" ", "")
+    if not token:
+        if required:
+            raise FiscalNormalizationError("Informe se a nota é NF-e, NFS-e ou CT-e.")
+        return None
+    mapped = _FISCAL_MODEL_ALIASES.get(token)
+    if mapped not in FISCAL_MODELS:
+        raise FiscalNormalizationError("Tipo da nota deve ser NF-e, NFS-e ou CT-e.")
+    return mapped
+
+
+def normalize_linked_invoices(
+    raw: object,
+    *,
+    fiscal_model: str | None,
+) -> list[dict[str, str]]:
+    """Notas amarradas a um CT-e. Nos demais tipos a lista tem de estar vazia."""
+    if raw is None:
+        items: list[object] = []
+    elif isinstance(raw, list):
+        items = raw
+    else:
+        raise FiscalNormalizationError("As notas vinculadas devem ser uma lista.")
+    if fiscal_model != "cte":
+        if items:
+            raise FiscalNormalizationError(
+                "Notas vinculadas só podem ser informadas em CT-e."
+            )
+        return []
+    if len(items) > MAX_LINKED_INVOICES:
+        raise FiscalNormalizationError(
+            f"Informe no máximo {MAX_LINKED_INVOICES} notas vinculadas ao CT-e."
+        )
+    normalized: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for item in items:
+        if not isinstance(item, dict):
+            raise FiscalNormalizationError("Cada nota vinculada precisa de número e série.")
+        document = normalize_document(item.get("document_number") or item.get("document"))
+        series = normalize_series(item.get("series"), required=True)
+        key = (document.document_match_key, series)
+        if key in seen:
+            raise FiscalNormalizationError("Há notas vinculadas repetidas.")
+        seen.add(key)
+        normalized.append(
+            {
+                "document_number": document.document_number,
+                "document_match_key": document.document_match_key,
+                "series": series,
+            }
+        )
+    return normalized
+
+
+def linked_invoices_differ(
+    current: object,
+    desired: list[dict[str, str]],
+) -> bool:
+    return _linked_invoice_signature(current) != _linked_invoice_signature(desired)
+
+
+def public_linked_invoices(raw: object) -> list[dict[str, str]]:
+    public: list[dict[str, str]] = []
+    if not isinstance(raw, list):
+        return public
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        document = str(item.get("document_number") or "").strip()
+        series = str(item.get("series") or "").strip()
+        if document or series:
+            public.append({"document_number": document, "series": series})
+    return public
+
+
+def _linked_invoice_signature(raw: object) -> list[tuple[str, str]]:
+    signature: list[tuple[str, str]] = []
+    if not isinstance(raw, list):
+        return signature
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        document = str(
+            item.get("document_match_key") or item.get("document_number") or ""
+        ).strip()
+        series = series_match_key(item.get("series"))
+        signature.append((document, series))
+    return signature
+
+
+def series_is_required(fiscal_model: str | None) -> bool:
+    """Série é obrigatória na NF-e. Na NFS-e pode ficar vazia."""
+    return fiscal_model != "nfse"
+
+
+def series_match_key(raw: str | None) -> str:
+    """Chave canônica de série para match (LNF ↔ vínculo CT-e ↔ SF1).
+
+    Série só dígitos: remove zeros à esquerda (``001`` ≡ ``1``).
+    ``000`` vira ``0``. Série alfanumérica permanece trim+upper.
+    """
+    series = str(raw or "").strip().upper()
+    if not series:
+        return ""
+    if series.isdigit():
+        stripped = series.lstrip("0")
+        return stripped if stripped else "0"
+    return series
+
+
+def series_match_key_sql(column_sql: str) -> str:
+    """Expressão SQL (Postgres) equivalente a :func:`series_match_key`."""
+    col = column_sql.strip()
+    return (
+        "CASE"
+        f" WHEN btrim(COALESCE({col}, '')) ~ '^[0-9]+$'"
+        f" THEN COALESCE(NULLIF(LTRIM(btrim({col}), '0'), ''), '0')"
+        f" ELSE upper(btrim(COALESCE({col}, '')))"
+        " END"
+    )
+
+
+def normalize_series(raw: str | None, *, required: bool = False) -> str:
+    series = str(raw or "").strip().upper()
+    if len(series) > 3:
+        raise FiscalNormalizationError("Série deve ter no máximo 3 caracteres.")
+    if required and not series:
+        raise FiscalNormalizationError(
+            "Informe a série da nota (como no Protheus)."
+        )
+    # Persiste já canônica: evita drift 001 vs 1 entre CT-e (chave) e NF / Protheus.
+    return series_match_key(series)
+
+
+def normalize_branch(raw: str | None) -> str:
+    branch = str(raw or "").strip()
+    if branch not in {"01", "02"}:
+        raise FiscalNormalizationError("Filial deve ser 01 ou 02.")
+    return branch
+
+
+BLOCK_REASONS = frozenset(
+    {
+        "purchase_order",
+        "supplier_registration",
+        "information_correction",
+        "other",
+    }
+)
+
+PURCHASE_ORDER_BLOCK_REASON = "purchase_order"
+
+
+def should_auto_resume_after_purchase_order_link(
+    *,
+    status: str | None,
+    block_reason: str | None,
+    has_linked_purchase_orders: bool,
+) -> bool:
+    """Pendência «falta de PC» + amarração com ao menos 1 pedido → retoma automática."""
+    return (
+        str(status or "").strip() == "blocked"
+        and str(block_reason or "").strip() == PURCHASE_ORDER_BLOCK_REASON
+        and bool(has_linked_purchase_orders)
+    )
+
+TERMINAL_STATUSES = frozenset({"posted", "cancelled"})
+NON_TERMINAL_STATUSES = frozenset({"pending", "in_progress", "blocked"})
+RECONCILIATION_ELIGIBLE_STATUSES = NON_TERMINAL_STATUSES
+
+# Filtro de listagem: fila aberta (não confundir com status persistido `pending`).
+LIST_STATUS_FILTER_OPEN = "open"
+VALID_LIST_STATUS_FILTERS = frozenset(
+    {*NON_TERMINAL_STATUSES, *TERMINAL_STATUSES, LIST_STATUS_FILTER_OPEN}
+)
+
+
+def resolve_list_status_filter(status: str | None) -> tuple[str, ...] | None:
+    """Converte o query ``status`` da listagem em tupla de status persistidos.
+
+    ``open`` → pending + in_progress + blocked.
+    Status individual → singleton.
+    Vazio → sem filtro de status.
+    """
+    if status is None:
+        return None
+    normalized = str(status).strip().lower()
+    if not normalized:
+        return None
+    if normalized not in VALID_LIST_STATUS_FILTERS:
+        raise ValueError(
+            "status inválido. Use open, pending, in_progress, blocked, posted ou cancelled."
+        )
+    if normalized == LIST_STATUS_FILTER_OPEN:
+        return tuple(sorted(NON_TERMINAL_STATUSES))
+    return (normalized,)
+
+DEFAULT_RECONCILIATION_LIMIT = 50
+MAX_RECONCILIATION_LIMIT = 200
+RECONCILIATION_REFRESH_COOLDOWN_SECONDS = 45
+
+# pg_advisory_lock(classid, objid) — exclusivo do reconciliador LNF
+RECONCILIATION_LOCK_CLASS_ID = 88442201
+RECONCILIATION_LOCK_OBJECT_ID = 1
