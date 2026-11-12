@@ -38,6 +38,24 @@ jobs:
         run: |
           python -m pip install -r it-portal-api/requirements.txt
           python -m pip install -e './shared[dev]'
+      - name: Check Windows SCM PowerShell syntax
+        shell: pwsh
+        run: |
+          $files = @(
+            'it-portal-api/collectors/windows_host/Collect-ItPortalWindowsServices.ps1'
+            'it-portal-api/collectors/windows_host/Send-ItPortalWindowsServices.ps1'
+            'it-portal-api/collectors/windows_host/Invoke-ItPortalWindowsScheduledServices.ps1'
+            'it-portal-api/collectors/windows_host/Install-ItPortalWindowsScheduledServices.ps1'
+          )
+          foreach ($file in $files) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $file).Path, [ref]$tokens, [ref]$errors)
+            if ($errors.Count -gt 0) {
+              Write-Error ("Script invalido: {0} ({1} erros)" -f $file, $errors.Count)
+              exit 1
+            }
+          }
       - name: Unit and HTTP tests
         working-directory: it-portal-api
         run: python -m pytest -q
