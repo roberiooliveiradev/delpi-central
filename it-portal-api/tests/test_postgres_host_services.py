@@ -257,7 +257,7 @@ def test_favorites_are_shared_durable_audited_and_never_control_windows(pg_clien
     second = payload(
         run_id=str(uuid.uuid4()), hostname=host, services=[service("WindowsTime")],
     )
-    second["observed_at"] = "2026-11-12T18:00:00Z"
+    second["observed_at"] = "2026-11-12T10:00:00Z"
     reingest = pg_client.post(uri, json=second, headers=headers)
     assert reingest.status_code == 201, reingest.text
     absent = pg_client.get(
