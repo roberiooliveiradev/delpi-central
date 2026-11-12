@@ -468,13 +468,20 @@ def group_by_work_center(
 
 def normalize_commitments(
     items: Iterable[dict[str, Any]],
+    *,
+    include_unassigned: bool = False,
 ) -> dict[tuple[str, str], list[dict[str, Any]]]:
-    """Indexa os empenhos da api-delpi por (OP, operação) normalizados."""
+    """Indexa SD4 por OP/operação; opt-in para empenhos em nível de OP.
+
+    O default preserva o contrato estrito de consumidores legados.
+    Na prévia dinâmica E3, uma operação vazia vira a chave (OP, "") e
+    só poderá ser contada uma vez pela consolidação global.
+    """
     indexed: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for item in items:
         order = _text(item.get("production_order"))
         operation = _normalize_operation_code(item.get("operation"))
-        if not order or not operation:
+        if not order or (not operation and not include_unassigned):
             continue
         indexed.setdefault((order, operation), []).append(item)
     return indexed
