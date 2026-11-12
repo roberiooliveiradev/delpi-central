@@ -290,6 +290,8 @@ export {
 export {
   PrcTechnicalSheetView,
   type PrcSheetChange,
+  type PrcSheetLinkOp,
+  type PrcSheetBaselineLink,
   type PrcTechnicalSheetViewProps,
 } from "./components/prc/PrcTechnicalSheetView";
 export { PrcWorkflowProgress } from "./components/prc/PrcWorkflowProgress";

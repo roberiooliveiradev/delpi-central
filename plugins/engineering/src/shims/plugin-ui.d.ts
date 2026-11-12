@@ -3039,9 +3039,26 @@ declare module "@delpi/plugin-ui/index" {
   /* UI-FIX-07 — ficha técnica em leitura + andamento do workflow,
    * mesma composição consumida por Minhas Solicitações. */
   export type PrcSheetChange = { path: string; reason: string };
+  export type PrcSheetLinkOp = {
+    operation: "update" | "add" | "remove";
+    key: { supplierCode: string; store: string };
+    fields?: { partNumber?: string; catalogNumber?: string };
+    supplierName?: string;
+    reason?: string;
+  };
+  export type PrcSheetBaselineLink = {
+    supplierCode: string;
+    store: string;
+    supplierName?: string;
+    partNumber?: string;
+    catalogNumber?: string;
+  };
   export type PrcTechnicalSheetViewProps = {
     draft: Record<string, unknown> | null | undefined;
+    requestType?: "create" | "update";
     changedPaths?: PrcSheetChange[];
+    supplierLinkChanges?: PrcSheetLinkOp[] | null;
+    baselineLinks?: PrcSheetBaselineLink[] | null;
     specNotes?: Record<string, string | null | undefined> | null;
     baselineFields?: Record<string, unknown> | null;
     suppliersHeaderActions?: React.ReactNode;

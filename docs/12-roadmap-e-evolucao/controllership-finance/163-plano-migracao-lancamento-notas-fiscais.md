@@ -1,7 +1,7 @@
 # 163 — PLANO: Migração do módulo Lançamento de Notas Fiscais (api-delpi → controllership-finance-api)
 
-> Status: **APPROVED — ADR-001 ACCEPTED; F2 autorizado (somente testes); runtime NÃO autorizado**
-> Baseline: HEAD `1bee257518d092925525ce54f67bc9c5ece6094a` (main) — inventário F0
+> Status: **F3 autorizado — implementação dark na BFF atrás de LNF_HOSTED_ENABLED=false; produção NÃO alterada**
+> Baseline F2b: HEAD `857b17ce03550eb6add765ad8176609c5a9de838` (`feat/lnf-migration-f2` / origem F3)
 > Natureza: **transferência de owner de runtime sem mudança de comportamento** (contrato, permissões e dados preservados)
 
 ---

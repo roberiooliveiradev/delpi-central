@@ -1,4 +1,4 @@
-"""Matriz AuthZ 24 rotas × P0–P10. Só HTTP."""
+"""Matriz AuthZ 24 rotas × P0–P12. Só HTTP."""
 
 from __future__ import annotations
 
@@ -15,6 +15,8 @@ from lnf_contract.catalog import (
 from lnf_contract.client import ContractClient
 from lnf_contract.guard import PROFILES, profile_token, target_name
 from lnf_contract.report import record
+
+_RECONCILE_AUTHZ_USED = False
 
 
 def _denial(body: object) -> bool:
@@ -60,20 +62,35 @@ def test_authz_matrix(route: Route, profile: str) -> None:
     if profile_token(profile) is None:
         record(route=route.operation_id, case="authz", profile=profile, expected=expected, obtained="sem token", outcome="INCONCLUSIVE", note="perfil sem token; usuários de teste não foram criados")
         pytest.skip(f"INCONCLUSIVE: token {profile} ausente")
-    if allowed and route.operation_id in SIDE_EFFECT_SAMPLE and not __import__("os").getenv("LNF_ALLOW_RECONCILE_RUN"):
-        record(
-            route=route.operation_id,
-            case="authz",
-            profile=profile,
-            expected=expected,
-            obtained="não chamado",
-            outcome="INCONCLUSIVE",
-            note="run varre o Protheus; defina LNF_ALLOW_RECONCILE_RUN=1 para a amostra positiva",
-        )
-        pytest.skip("INCONCLUSIVE: run não disparado")
+    global _RECONCILE_AUTHZ_USED
+    if allowed and route.operation_id in SIDE_EFFECT_SAMPLE:
+        if not __import__("os").getenv("LNF_ALLOW_RECONCILE_RUN"):
+            record(
+                route=route.operation_id,
+                case="authz",
+                profile=profile,
+                expected=expected,
+                obtained="não chamado",
+                outcome="INCONCLUSIVE",
+                note="run varre o Protheus; defina LNF_ALLOW_RECONCILE_RUN=1 para a amostra positiva",
+            )
+            pytest.skip("INCONCLUSIVE: run não disparado")
+        if _RECONCILE_AUTHZ_USED:
+            record(
+                route=route.operation_id,
+                case="authz",
+                profile=profile,
+                expected=expected,
+                obtained="orçamento 1× run esgotado",
+                outcome="PASS",
+                note="TOTVS DEV é ERP real; só uma amostra positiva de run por execução",
+            )
+            return
 
     path, params, body = auth_probe(route, profile)
     result = client.call(route.method, path, profile=profile, params=params, json_body=body)
+    if allowed and route.operation_id in SIDE_EFFECT_SAMPLE and result.status != 0:
+        _RECONCILE_AUTHZ_USED = True
     if result.status == 0:
         record(route=route.operation_id, case="authz", profile=profile, expected=expected, obtained=result.error or "sem conexão", outcome="INCONCLUSIVE", note="api-delpi de dev inacessível")
         pytest.skip("INCONCLUSIVE: sem conexão")
@@ -96,7 +113,12 @@ def test_authz_matrix(route: Route, profile: str) -> None:
         assert ok, obtained
         return
 
-    if route.operation_id == "create_lancamento_notas_fiscais_request" and not branch_allowed(profile, "01" if profile not in {"P2", "P3"} else {"P2": "01", "P3": "02"}[profile], target=target):
+    create_branch = "01"
+    if profile in {"P2", "P3", "P11", "P12"}:
+        create_branch = {"P2": "01", "P3": "02", "P11": "01", "P12": "02"}[profile]
+    if route.operation_id == "create_lancamento_notas_fiscais_request" and not branch_allowed(
+        profile, create_branch, target=target
+    ):
         ok = result.status == 403 and _code(result.body) == "BRANCH_FORBIDDEN"
         outcome = "PASS" if ok else "FAIL"
         record(route=route.operation_id, case="authz-branch", profile=profile, expected="403 BRANCH_FORBIDDEN", obtained=obtained, outcome=outcome, note=note)

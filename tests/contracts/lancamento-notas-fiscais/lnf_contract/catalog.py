@@ -11,9 +11,9 @@ from dataclasses import dataclass
 FAKE_REQUEST_ID = "00000000-0000-4000-8000-000000000099"
 
 # @require_permission(CREATE) — só create (não process/manage).
-CREATE_STRICT = frozenset({"P5"})
+CREATE_STRICT = frozenset({"P5", "P11", "P12"})
 # @require_any_permission(CREATE_PERMISSIONS) — create | process | manage.
-CREATE_SET = frozenset({"P5", "P6", "P7"})
+CREATE_SET = frozenset({"P5", "P6", "P7", "P11", "P12"})
 # @require_any_permission(PROCESS_PERMISSIONS)
 PROCESS_SET = frozenset({"P6", "P7"})
 # @require_permission(MANAGE)
@@ -21,10 +21,10 @@ MANAGE_ONLY = frozenset({"P7"})
 # @require_permission(REVIEW_UNMAPPED_PRODUCTS)
 REVIEW_ONLY = frozenset({"P8"})
 # @require_any_permission(READ_PERMISSIONS) — access|create|view|filiais|process|manage
-READ = frozenset({"P1", "P2", "P3", "P4", "P5", "P6", "P7"})
+READ = frozenset({"P1", "P2", "P3", "P4", "P5", "P6", "P7", "P11", "P12"})
 # Branch global: view | process | manage (não create nem access).
 GLOBAL_BRANCH = frozenset({"P4", "P6", "P7"})
-FILIAL = {"P2": "01", "P3": "02"}
+FILIAL = {"P2": "01", "P3": "02", "P11": "01", "P12": "02"}
 
 
 @dataclass(frozen=True)

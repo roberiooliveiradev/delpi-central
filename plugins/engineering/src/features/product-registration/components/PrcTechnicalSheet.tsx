@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   PrcReturnedFieldsEditor,
   PrcTechnicalSheetView,
+  type PrcSheetLinkOp,
 } from "@delpi/plugin-ui/index";
 
 import {
@@ -98,10 +99,17 @@ function PrcTechnicalSheetRead({
   return (
     <PrcTechnicalSheetView
       draft={draft}
+      requestType={detail.requestType === "update" ? "update" : "create"}
       changedPaths={Array.from(changedPaths).map((p) => ({
         path: p,
         reason: changedReasons.get(p) || "",
       }))}
+      supplierLinkChanges={
+        (detail.requestedChanges?.supplierLinkChanges as
+          | PrcSheetLinkOp[]
+          | undefined) || null
+      }
+      baselineLinks={detail.officialBaseline?.links || null}
       specNotes={Object.fromEntries(
         Array.from(specByPath, ([p, s]) => [p, s.note]),
       )}

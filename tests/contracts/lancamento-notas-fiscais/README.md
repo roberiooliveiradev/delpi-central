@@ -17,7 +17,11 @@ Perfis relevantes para o ciclo:
 | P5 | `create` | Passa `@require_permission(create)`; create com filial cai em `BRANCH_FORBIDDEN` (sem view/process/manage) |
 | P6 / P6B | `process` | Start/block/resume; **não** passa rotas `@require_permission(create)` |
 | P7 | `manage` | Run/reconciliation; **não** passa rotas create estritas |
-| P9 | superadmin | Único perfil provisionado que cria solicitação real + branch |
+| P9 | superadmin | Cria em qualquer filial (bypass) |
+| P11 | `create` + `view.filial-01` | Perfil combinado realista — cria na 01 |
+| P12 | `create` + `view.filial-02` | Perfil combinado realista — cria na 02 |
+
+`TOTVS_DB_HOST` do DEV aponta para ERP real (`192.168.1.230`/`DELPI`); a suíte limita `reconciliation/run` a **1× por execução**.
 
 ## Rodar
 

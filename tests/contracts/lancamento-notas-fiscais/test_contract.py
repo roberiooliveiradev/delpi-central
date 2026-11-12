@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import os
-from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime
 
 import pytest
@@ -448,46 +447,20 @@ def test_reconciliation_refresh_cooldown_as_is() -> None:
 
 
 def test_reconciliation_busy_concurrent_run() -> None:
-    client = _client()
-    actor = _actor_manage()
-    if client is None or actor is None:
-        record(route="run_lancamento_notas_fiscais_reconciliation", case="busy", profile="-", expected="409 invoice_posting_reconciliation.busy", obtained="sem manage", outcome="INCONCLUSIVE")
-        pytest.skip("INCONCLUSIVE")
-    if not os.getenv("LNF_ALLOW_RECONCILE_RUN"):
-        record(route="run_lancamento_notas_fiscais_reconciliation", case="busy", profile=actor, expected="409 busy", obtained="LNF_ALLOW_RECONCILE_RUN ausente", outcome="INCONCLUSIVE")
-        pytest.skip("INCONCLUSIVE")
+    """ERP DEV é base real: a suíte limita reconciliation/run a 1× por execução.
 
-    def _run() -> object:
-        return client.call("POST", "/lancamento-notas-fiscais/reconciliation/run", profile=actor, json_body={"limit": 5}, timeout=120.0)
-
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        futures = [pool.submit(_run), pool.submit(_run)]
-        results = [future.result() for future in futures]
-    statuses = sorted(result.status for result in results)
-    codes = [_error_code(result.body) for result in results]
-    busy_hit = any(result.status == 409 and _error_code(result.body) == "invoice_posting_reconciliation.busy" for result in results)
-    if busy_hit:
-        outcome = "PASS"
-        note = ""
-    else:
-        outcome = "INCONCLUSIVE"
-        note = "corrida não reteve o lock o suficiente; ambos concluíram sem 409"
+    Dois POSTs concorrentes violariam esse limite; busy fica NOT_COVERED nesta fase.
+    """
     record(
         route="run_lancamento_notas_fiscais_reconciliation",
         case="busy",
-        profile=actor,
-        expected="409 invoice_posting_reconciliation.busy em ao menos uma das duas",
-        obtained=f"statuses={statuses} codes={codes}",
-        outcome=outcome,
-        note=note,
+        profile="P7",
+        expected="409 invoice_posting_reconciliation.busy",
+        obtained="não provocado",
+        outcome="NOT_COVERED_BLACKBOX",
+        note="TOTVS_DB_HOST=192.168.1.230/DELPI é ERP real; suíte limita run a 1×/execução",
     )
-    for result in results:
-        if isinstance(result.body, dict) and _error_code(result.body) == "invoice_posting_reconciliation.busy":
-            _write_golden("run_lancamento_notas_fiscais_reconciliation", "busy", {"http_status": result.status, "snapshot": envelope_snapshot(result.body)})
-            break
-    if outcome == "INCONCLUSIVE":
-        pytest.skip(note)
-    assert busy_hit
+    pytest.skip("NOT_COVERED_BLACKBOX: limite 1× run contra ERP real")
 
 
 def test_binary_signature_when_present() -> None:

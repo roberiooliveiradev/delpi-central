@@ -119,6 +119,11 @@ export function PrcAttachmentsSection({
     [preview, requestId],
   );
 
+  /* PRC-UX-CHANGE-01 — sem anexos, sem card: só renderiza quando há
+   * documentos ou uma falha a reportar (estado de carregamento não
+   * exibe shell vazio). */
+  if (loaded && !items.length && !error) return null;
+
   return (
     <EngineeringSectionCard
       title="Documentos de apoio"
@@ -126,11 +131,6 @@ export function PrcAttachmentsSection({
     >
       {error ? (
         <EngineeringStateBanner variant="error">{error}</EngineeringStateBanner>
-      ) : null}
-      {loaded && !items.length && !error ? (
-        <p className="engineering-prc__muted">
-          Nenhum documento de apoio anexado.
-        </p>
       ) : null}
       {items.length ? (
         <EngineeringAttachmentPreviewStrip

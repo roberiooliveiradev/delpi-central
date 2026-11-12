@@ -10,9 +10,14 @@ _ID_KEYS = re.compile(
     re.IGNORECASE,
 )
 _TS_KEYS = re.compile(r"(at$|_at$|date$|_date$|timestamp|createdAt|updatedAt|executed_at|received_at)", re.IGNORECASE)
-_USER_KEYS = re.compile(r"(user_id|user_name|assignee_name|actor_name|created_by|email)$", re.IGNORECASE)
+_USER_KEYS = re.compile(
+    r"(user_id|user_name|assignee_name|actor_name|created_by(_name)?|cancelled_by(_name)?|email)$",
+    re.IGNORECASE,
+)
+_DOC_KEYS = re.compile(r"(tax_id|cpf|cnpj|document_tax|federal_tax)$", re.IGNORECASE)
 _VOLATILE_KEYS = re.compile(r"^(total|count|page|page_size|pages|elapsed|duration|cooldown)", re.IGNORECASE)
 _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE)
+_DIGITS_DOC = re.compile(r"^\d{11}$|^\d{14}$")
 
 
 def mask(value: Any, key: str | None = None) -> Any:
@@ -26,10 +31,16 @@ def mask(value: Any, key: str | None = None) -> Any:
         return "<ts>"
     if key and _USER_KEYS.search(key):
         return "<user>"
+    if key and _DOC_KEYS.search(key):
+        return "<tax_id>"
     if key and _VOLATILE_KEYS.search(key):
         return "<volatile>"
     if isinstance(value, str) and _UUID.match(value):
         return "<id>"
+    if isinstance(value, str):
+        digits = re.sub(r"\D", "", value)
+        if len(digits) in {11, 14} and _DIGITS_DOC.match(digits):
+            return "<tax_id>"
     return value
 
 

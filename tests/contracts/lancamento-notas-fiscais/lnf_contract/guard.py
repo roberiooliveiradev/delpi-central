@@ -26,6 +26,8 @@ PROFILES = (
     "P8",
     "P9",
     "P10",
+    "P11",
+    "P12",
 )
 
 _ENV_LOCAL = Path(__file__).resolve().parents[1] / ".env.local"

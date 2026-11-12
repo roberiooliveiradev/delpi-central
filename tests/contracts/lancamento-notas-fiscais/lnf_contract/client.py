@@ -8,6 +8,10 @@ import httpx
 
 from lnf_contract.guard import assert_not_production, base_url, profile_token, target_name
 
+# TOTVS_DB_HOST do DEV (192.168.1.230/DELPI) é base REAL do ERP — somente leitura.
+# A suíte limita reconciliation/run a no máximo uma chamada positiva por processo.
+_RECONCILE_RUN_COUNT = 0
+
 
 @dataclass
 class CallResult:
@@ -37,8 +41,24 @@ class ContractClient:
         json_body: dict | None = None,
         timeout: float = 60.0,
     ) -> CallResult:
+        global _RECONCILE_RUN_COUNT
         if not self.url:
             raise RuntimeError("LNF_BASE_URL ausente")
+        if method.upper() == "POST" and path.rstrip("/").endswith("/reconciliation/run"):
+            if _RECONCILE_RUN_COUNT >= 1:
+                return CallResult(
+                    0,
+                    "application/json",
+                    {
+                        "success": False,
+                        "message": "suíte: reconciliation/run limitado a 1× por execução (ERP real)",
+                        "data": None,
+                        "error": {"code": "SUITE_RECONCILE_RUN_LIMIT", "recoverable": True},
+                    },
+                    b"",
+                    error="SUITE_RECONCILE_RUN_LIMIT",
+                )
+            _RECONCILE_RUN_COUNT += 1
         headers: dict[str, str] = {"Accept": "application/json"}
         token = profile_token(profile) if profile else None
         if profile == "P10" and token:

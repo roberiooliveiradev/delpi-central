@@ -164,3 +164,176 @@ describe("PrcTechnicalSheetView — pontos de extensão por perfil", () => {
     expect(screen.getByText("Editar ficha")).toBeTruthy();
   });
 });
+
+describe("PrcTechnicalSheetView — modo UPDATE (alterações solicitadas)", () => {
+  const UPDATE_DRAFT = {
+    officialProductCode: "10080025",
+    description: "Terminal olhal M6 estanhado com isolação",
+    unit: "PC",
+    group: "02",
+    productKind: "MP",
+    defaultWarehouse: "01",
+  };
+
+  it("exibe apenas o campo alterado com antes/solicitado — sem duplicação nem objeto bruto", () => {
+    render(
+      <PrcTechnicalSheetView
+        requestType="update"
+        draft={UPDATE_DRAFT}
+        changedPaths={[
+          { path: "description", reason: "Padronização" },
+        ]}
+        baselineFields={{
+          description: "Terminal olhal M6 estanhado",
+        }}
+      />,
+    );
+    expect(screen.getByText("Identificação do produto")).toBeTruthy();
+    expect(screen.getByText("10080025")).toBeTruthy();
+    expect(screen.getByText("Alterações solicitadas")).toBeTruthy();
+    expect(screen.getByText("Antes")).toBeTruthy();
+    expect(screen.getByText("Solicitado")).toBeTruthy();
+    expect(
+      screen.getByText("Terminal olhal M6 estanhado"),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Terminal olhal M6 estanhado com isolação"),
+    ).toBeTruthy();
+    // Campo não alterado não aparece; sem card de fornecedores/documentos.
+    expect(screen.queryByText("Estoque e contabilidade")).toBeNull();
+    expect(screen.queryByText("Fornecedores")).toBeNull();
+    expect(screen.queryByText(/object Object/)).toBeNull();
+  });
+
+  it("múltiplos campos aparecem juntos; baseline objeto vira estado indisponível", () => {
+    render(
+      <PrcTechnicalSheetView
+        requestType="update"
+        draft={UPDATE_DRAFT}
+        changedPaths={[
+          { path: "description", reason: "" },
+          { path: "unit", reason: "" },
+          { path: "suppliers", reason: "" },
+        ]}
+        baselineFields={{
+          description: { valor: "estrutura legada" },
+          unit: "UN",
+        }}
+      />,
+    );
+    // Descrição com baseline estruturado → estado explícito, nunca bruto.
+    expect(screen.getAllByText("Não disponível").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/object Object/)).toBeNull();
+    // Unidade: antes correto.
+    expect(screen.getByText("UN")).toBeTruthy();
+    expect(screen.getByText("PC")).toBeTruthy();
+    // Path suppliers não vira linha escalar.
+    expect(screen.queryByText("Fornecedores")).toBeNull();
+  });
+
+  it("renderiza operação de inclusão de fornecedor", () => {
+    render(
+      <PrcTechnicalSheetView
+        requestType="update"
+        draft={UPDATE_DRAFT}
+        changedPaths={[]}
+        supplierLinkChanges={[
+          {
+            operation: "add",
+            key: { supplierCode: "000125", store: "01" },
+            fields: { partNumber: "PN-NEW", catalogNumber: "CAT-1" },
+            supplierName: "ABC Componentes Ltda.",
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Adicionar fornecedor")).toBeTruthy();
+    expect(screen.getByText(/000125 \/ 01 — ABC Componentes/)).toBeTruthy();
+    expect(screen.getByText("PN-NEW")).toBeTruthy();
+    // Sem alegação de que outros fornecedores inexistem.
+    expect(screen.queryByText("Nenhum fornecedor vinculado.")).toBeNull();
+  });
+
+  it("renderiza remoção como solicitada (não efetivada)", () => {
+    render(
+      <PrcTechnicalSheetView
+        requestType="update"
+        draft={UPDATE_DRAFT}
+        changedPaths={[]}
+        supplierLinkChanges={[
+          {
+            operation: "remove",
+            key: { supplierCode: "000987", store: "02" },
+          },
+        ]}
+        baselineLinks={[
+          {
+            supplierCode: "000987",
+            store: "02",
+            supplierName: "Resinas do Sul SA",
+            partNumber: "PN-77",
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Remover vínculo")).toBeTruthy();
+    expect(screen.getByText(/Resinas do Sul SA/)).toBeTruthy();
+    expect(screen.getByText(/pendente de efetivação/)).toBeTruthy();
+    expect(screen.getByText("PN-77")).toBeTruthy();
+  });
+
+  it("update de vínculo compara apenas o atributo alterado", () => {
+    render(
+      <PrcTechnicalSheetView
+        requestType="update"
+        draft={UPDATE_DRAFT}
+        changedPaths={[]}
+        supplierLinkChanges={[
+          {
+            operation: "update",
+            key: { supplierCode: "000123", store: "01" },
+            fields: { partNumber: "PN-55-B" },
+          },
+        ]}
+        baselineLinks={[
+          {
+            supplierCode: "000123",
+            store: "01",
+            supplierName: "Fornecedor Química LTDA",
+            partNumber: "PN-55-A",
+            catalogNumber: "CAT-9",
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Alterar vínculo")).toBeTruthy();
+    expect(screen.getByText("PN-55-A")).toBeTruthy();
+    expect(screen.getByText("PN-55-B")).toBeTruthy();
+    // Catálogo não alterado → não listado.
+    expect(screen.queryByText("CAT-9")).toBeNull();
+  });
+
+  it("antes indisponível quando baseline não contém o path", () => {
+    render(
+      <PrcTechnicalSheetView
+        requestType="update"
+        draft={UPDATE_DRAFT}
+        changedPaths={[{ path: "description", reason: "" }]}
+        baselineFields={{}}
+      />,
+    );
+    expect(screen.getByText("Não disponível")).toBeTruthy();
+  });
+
+  it("mantém ids de alvo para navegação/flags nos campos alterados", () => {
+    render(
+      <PrcTechnicalSheetView
+        requestType="update"
+        draft={UPDATE_DRAFT}
+        changedPaths={[{ path: "unit", reason: "" }]}
+        baselineFields={{ unit: "UN" }}
+      />,
+    );
+    expect(document.getElementById("prc-field-unit")).toBeTruthy();
+  });
+});

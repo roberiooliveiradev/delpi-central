@@ -29,6 +29,7 @@ import {
   type PrcFormDataProvider,
   type PrcReturnedFieldChange,
   type PrcCorrectionTargetErrors,
+  type PrcSheetLinkOp,
   type PrcSupportFile,
 } from "@delpi/plugin-ui/index";
 
@@ -416,10 +417,20 @@ export function PrcCasePage({ requestId, onBack }: Props) {
 
                 <PrcTechnicalSheetView
                   draft={detail.technicalDraft}
+                  requestType={
+                    detail.requestType === "update" ? "update" : "create"
+                  }
                   changedPaths={detail.changedPaths || []}
+                  supplierLinkChanges={
+                    (detail.requestedChanges?.supplierLinkChanges as
+                      | PrcSheetLinkOp[]
+                      | undefined) || null
+                  }
+                  baselineLinks={detail.officialBaseline?.links || null}
                   baselineFields={detail.officialBaseline?.fields || null}
                 />
 
+                {attachments.length || canUpload ? (
                 <MyRequestsSectionCard title="Documentos de apoio">
                   {attachments.length ? (
                     <MyRequestsAttachmentPreviewStrip
@@ -480,6 +491,7 @@ export function PrcCasePage({ requestId, onBack }: Props) {
                     </>
                   ) : null}
                 </MyRequestsSectionCard>
+                ) : null}
               </>
             ) : null}
 

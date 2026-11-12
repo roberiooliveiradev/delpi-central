@@ -23,17 +23,28 @@ MANIFEST = REPO / "plugins" / "lancamento-notas-fiscais" / "lancamento-notas-fis
 ENV_LOCAL = ROOT / ".env.local"
 
 PROFILES: dict[str, dict] = {
-    "P0": {"username": "lnf-contract-p0", "permission": None, "superadmin": False},
-    "P1": {"username": "lnf-contract-p1", "permission": "lancamento-notas-fiscais.access", "superadmin": False},
-    "P2": {"username": "lnf-contract-p2", "permission": "lancamento-notas-fiscais.view.filial-01", "superadmin": False},
-    "P3": {"username": "lnf-contract-p3", "permission": "lancamento-notas-fiscais.view.filial-02", "superadmin": False},
-    "P4": {"username": "lnf-contract-p4", "permission": "lancamento-notas-fiscais.view", "superadmin": False},
-    "P5": {"username": "lnf-contract-p5", "permission": "lancamento-notas-fiscais.create", "superadmin": False},
-    "P6": {"username": "lnf-contract-p6", "permission": "lancamento-notas-fiscais.process", "superadmin": False},
-    "P6B": {"username": "lnf-contract-p6b", "permission": "lancamento-notas-fiscais.process", "superadmin": False},
-    "P7": {"username": "lnf-contract-p7", "permission": "lancamento-notas-fiscais.manage", "superadmin": False},
-    "P8": {"username": "lnf-contract-p8", "permission": "lancamento-notas-fiscais.review-unmapped-products", "superadmin": False},
-    "P9": {"username": "lnf-contract-p9", "permission": None, "superadmin": True},
+    "P0": {"username": "lnf-contract-p0", "permissions": [], "superadmin": False},
+    "P1": {"username": "lnf-contract-p1", "permissions": ["lancamento-notas-fiscais.access"], "superadmin": False},
+    "P2": {"username": "lnf-contract-p2", "permissions": ["lancamento-notas-fiscais.view.filial-01"], "superadmin": False},
+    "P3": {"username": "lnf-contract-p3", "permissions": ["lancamento-notas-fiscais.view.filial-02"], "superadmin": False},
+    "P4": {"username": "lnf-contract-p4", "permissions": ["lancamento-notas-fiscais.view"], "superadmin": False},
+    "P5": {"username": "lnf-contract-p5", "permissions": ["lancamento-notas-fiscais.create"], "superadmin": False},
+    "P6": {"username": "lnf-contract-p6", "permissions": ["lancamento-notas-fiscais.process"], "superadmin": False},
+    "P6B": {"username": "lnf-contract-p6b", "permissions": ["lancamento-notas-fiscais.process"], "superadmin": False},
+    "P7": {"username": "lnf-contract-p7", "permissions": ["lancamento-notas-fiscais.manage"], "superadmin": False},
+    "P8": {"username": "lnf-contract-p8", "permissions": ["lancamento-notas-fiscais.review-unmapped-products"], "superadmin": False},
+    "P9": {"username": "lnf-contract-p9", "permissions": [], "superadmin": True},
+    # Perfis combinados (realidade de produção): create + view.filial-XX
+    "P11": {
+        "username": "lnf-contract-p11",
+        "permissions": ["lancamento-notas-fiscais.create", "lancamento-notas-fiscais.view.filial-01"],
+        "superadmin": False,
+    },
+    "P12": {
+        "username": "lnf-contract-p12",
+        "permissions": ["lancamento-notas-fiscais.create", "lancamento-notas-fiscais.view.filial-02"],
+        "superadmin": False,
+    },
 }
 
 EXPECTED_LNF = {
@@ -47,6 +58,8 @@ EXPECTED_LNF = {
     "P6B": {"lancamento-notas-fiscais.process"},
     "P7": {"lancamento-notas-fiscais.manage"},
     "P8": {"lancamento-notas-fiscais.review-unmapped-products"},
+    "P11": {"lancamento-notas-fiscais.create", "lancamento-notas-fiscais.view.filial-01"},
+    "P12": {"lancamento-notas-fiscais.create", "lancamento-notas-fiscais.view.filial-02"},
 }
 
 
@@ -267,7 +280,7 @@ def list_permissions(core: str, token: str) -> dict[str, str]:
     return mapping
 
 
-def ensure_role(core: str, token: str, name: str, permission_id: str | None) -> str:
+def ensure_role(core: str, token: str, name: str, permission_ids: list[str]) -> str:
     status, body = http_json(
         "GET",
         f"{core}/admin/rbac/roles?q={urllib.parse.quote(name)}&page=1&page_size=50",
@@ -295,7 +308,6 @@ def ensure_role(core: str, token: str, name: str, permission_id: str | None) -> 
             role_id = str(created["id"])
         else:
             raise Fail(f"falha ao criar papel {name}")
-    permission_ids = [permission_id] if permission_id else []
     http_json(
         "PUT",
         f"{core}/admin/rbac/roles/{role_id}/permissions",
@@ -418,9 +430,14 @@ def main() -> int:
         if not user_id:
             raise Fail(f"/me sem id para {username}")
         role_name = f"lnf-contract-{profile.lower()}"
-        permission_code = meta["permission"]
-        permission_id = perm_map.get(permission_code) if permission_code else None
-        role_id = ensure_role(core, admin_jwt, role_name, permission_id)
+        permission_codes = list(meta.get("permissions") or [])
+        permission_ids: list[str] = []
+        for code in permission_codes:
+            pid = perm_map.get(code)
+            if not pid:
+                raise Fail(f"permission {code} ausente para {profile}")
+            permission_ids.append(pid)
+        role_id = ensure_role(core, admin_jwt, role_name, permission_ids)
         ensure_user_roles(core, admin_jwt, user_id, [role_id], superadmin=bool(meta["superadmin"]))
         # refresh /me after role change
         user_jwt = password_token(base, realm, client_id, username, password)

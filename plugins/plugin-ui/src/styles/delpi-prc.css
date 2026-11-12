@@ -86,6 +86,117 @@
   font-size: 0.85rem;
 }
 
+/* PRC-UX-CHANGE-01 — comparação «antes × solicitado» e operações de
+ * vínculo na visualização de alterações (modo UPDATE). */
+.delpi-prc__change-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.delpi-prc__change-item {
+  border: 1px solid var(--delpi-ui-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.delpi-prc__change-reason {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  color: var(--delpi-ui-text-muted);
+}
+
+.delpi-prc__change-compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin-top: 8px;
+}
+
+.delpi-prc__change-compare--attrs {
+  grid-template-columns: 1fr;
+}
+
+.delpi-prc__change-compare--inline {
+  margin-top: 4px;
+}
+
+.delpi-prc__change-side {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.delpi-prc__change-side-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--delpi-ui-text-muted);
+}
+
+.delpi-prc__change-side-value {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.delpi-prc__change-side-value--before {
+  color: var(--delpi-ui-text-muted);
+}
+
+.delpi-prc__change-side-value--after {
+  font-weight: 600;
+}
+
+.delpi-prc__change-attr {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.delpi-prc__change-op-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.delpi-prc__change-op-tag {
+  border-radius: 4px;
+  padding: 1px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.delpi-prc__change-op-tag--add {
+  background: rgba(21, 128, 61, 0.12);
+  color: var(--delpi-ui-success);
+}
+
+.delpi-prc__change-op-tag--remove {
+  background: rgba(176, 0, 32, 0.08);
+  color: var(--delpi-ui-danger);
+}
+
+.delpi-prc__change-op-tag--update {
+  background: color-mix(in srgb, var(--delpi-ui-accent) 12%, transparent);
+  color: var(--delpi-ui-accent);
+}
+
+.delpi-prc__change-identity {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .delpi-prc__change-compare {
+    grid-template-columns: 1fr;
+  }
+}
+
 .delpi-prc__field-error {
   color: var(--delpi-ui-danger);
   font-size: 0.82rem;

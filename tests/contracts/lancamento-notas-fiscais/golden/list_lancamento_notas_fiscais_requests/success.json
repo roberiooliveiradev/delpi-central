@@ -54,7 +54,7 @@
           "assignee_name": "str",
           "cancelled_at": "str",
           "cancelled_by_user_id": "str",
-          "cancelled_by_name": "null",
+          "cancelled_by_name": "str",
           "cancel_justification": "null",
           "completion_source": "null",
           "sf1_recno": "null",

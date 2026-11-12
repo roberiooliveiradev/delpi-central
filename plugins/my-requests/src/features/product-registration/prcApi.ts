@@ -161,6 +161,13 @@ export type PrcRequestDetail = {
   /** Baseline oficial UPDATE capturado no intake (visão pública). */
   officialBaseline?: {
     fields?: Record<string, unknown>;
+    links?: Array<{
+      supplierCode: string;
+      store: string;
+      supplierName?: string;
+      partNumber?: string;
+      catalogNumber?: string;
+    }>;
     linksComplete?: boolean;
     fingerprint?: string;
   } | null;
