@@ -1120,3 +1120,115 @@
 :root[data-theme="dark"] .dashboard-it-portal .itp-observation-inline-status.is-running {
   color: #69d9a0;
 }
+
+
+/*
+ * Contraste da header imersiva do Portal de TI.
+ * O PageHero compartilhado usa --delpi-ui-title na composicao do fundo.
+ * No tema escuro, esse token vira quase branco; search e status badges
+ * tambem herdam cores de superficies claras. Fix local, sem alterar
+ * a barra de navegacao ou os componentes compartilhados.
+ */
+.dashboard-it-portal .itp-page-hero--immersive,
+:root[data-theme="dark"] .dashboard-it-portal .itp-page-hero--immersive,
+.theme-dark .dashboard-it-portal .itp-page-hero--immersive {
+  --itp-hero-control-text: #ffffff;
+  --itp-hero-search-bg: #073452;
+  --itp-hero-search-hover: #0b4868;
+  --itp-hero-badge-neutral-bg: #173950;
+  --itp-hero-badge-info-bg: #0b4868;
+  --itp-hero-badge-success-bg: #105138;
+  --itp-hero-badge-warning-bg: #69400f;
+  --itp-hero-badge-danger-bg: #782a36;
+  background:
+    radial-gradient(ellipse 78% 150% at 95% -25%, rgba(25, 152, 196, 0.38), transparent 67%),
+    radial-gradient(ellipse 90% 125% at 65% 125%, rgba(0, 147, 185, 0.18), transparent 73%),
+    linear-gradient(115deg, #06243d 0%, #073c5e 55%, #085476 100%);
+  color: var(--itp-hero-control-text);
+}
+
+/* Busca no card de cabecalho: superficie visivel, icone/label e atalho legiveis. */
+.dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search {
+  border: 1px solid rgba(224, 246, 255, 0.72);
+  background: var(--itp-hero-search-bg);
+  color: var(--itp-hero-control-text);
+  box-shadow: 0 5px 16px rgba(0, 18, 34, 0.18);
+  min-height: 44px;
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search__label,
+.dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search > svg {
+  color: var(--itp-hero-control-text);
+  opacity: 1;
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search__kbd {
+  color: var(--itp-hero-control-text);
+  background: #104665;
+  border: 1px solid rgba(224, 246, 255, 0.65);
+  font-weight: 700;
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search:hover,
+.dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search[aria-expanded="true"] {
+  color: var(--itp-hero-control-text);
+  background: var(--itp-hero-search-hover);
+  border-color: #e0f6ff;
+  box-shadow: 0 6px 18px rgba(0, 18, 34, 0.24);
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search:focus-visible {
+  outline: 3px solid #c9f4ff;
+  outline-offset: 3px;
+}
+
+/*
+ * Badges no titulo do hero: tons distintos, mas todos com texto branco
+ * sobre superfices opacas escuras, inclusive em modo escuro.
+ * Nao altera os badges usados nas tabelas e em cards claros.
+ */
+.dashboard-it-portal .itp-page-hero--immersive .itp-page-hero__badge .itp-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 11px;
+  color: var(--itp-hero-control-text);
+  background: var(--itp-hero-badge-neutral-bg);
+  border: 1px solid rgba(224, 246, 255, 0.64);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 3px 10px rgba(0, 18, 34, 0.14);
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-page-hero__badge .itp-status-badge--info {
+  background: var(--itp-hero-badge-info-bg);
+  border-color: #8fdbf5;
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-page-hero__badge .itp-status-badge--success {
+  background: var(--itp-hero-badge-success-bg);
+  border-color: #87e6b3;
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-page-hero__badge .itp-status-badge--warning {
+  background: var(--itp-hero-badge-warning-bg);
+  border-color: #ffdb88;
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-page-hero__badge .itp-status-badge--danger {
+  background: var(--itp-hero-badge-danger-bg);
+  border-color: #ffb0b7;
+}
+
+@media (max-width: 768px) {
+  .dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search {
+    max-width: 100%;
+  }
+
+  .dashboard-it-portal .itp-page-hero--immersive .itp-page-hero__badge .itp-status-badge {
+    white-space: normal;
+    text-align: center;
+  }
+}
