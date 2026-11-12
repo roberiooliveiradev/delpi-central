@@ -110,7 +110,7 @@ try {
 $exe = Join-Path $PSHOME 'powershell.exe'
 $args = '-NoLogo -NoProfile -NonInteractive -File "{0}" -ApiBaseUrl "{1}" -S2sTokenUrl "{2}" -ClientId "{3}" -ServerId "{4}" -SecretFile "{5}" -AllowedServices "{6}"' -f $runner,$ApiBaseUrl,$S2sTokenUrl,$ClientId,$ServerId,$secretFile,($names -join ',')
 $action = New-ScheduledTaskAction -Execute $exe -Argument $args -WorkingDirectory $installDir
-$triggers = @(New-ScheduledTaskTrigger -AtStartup, New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1))
+$triggers = @((New-ScheduledTaskTrigger -AtStartup), (New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1)))
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
 $password = Read-Host -Prompt "Senha WINDOWS da conta $($identity.Name), com login em lote" -AsSecureString
 $ptr2 = [IntPtr]::Zero
