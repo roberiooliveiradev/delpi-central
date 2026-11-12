@@ -11,6 +11,10 @@ from it_portal_app.domain.host_services import HostServiceBatch
 from it_portal_app.infrastructure.persistence.postgres_base import PostgresRepositoryBase
 
 _S = "it_portal"
+# Coletas a cada 5 min: 288 runs/dia/host. Reter metadados por 30 dias;
+# nunca apagar a coleta atual nem runs ainda referenciadas por servicos.
+_RUN_HISTORY_DAYS = 30
+_PRUNE_LIMIT = 200
 
 
 def _payload_hash(services: tuple[dict, ...]) -> str:
@@ -123,6 +127,9 @@ class PostgresHostServiceRepository(PostgresRepositoryBase):
                     f"UPDATE {_S}.host_service_batches SET services=NULL WHERE run_id=%s",
                     (batch.run_id,),
                 )
+                # Manutencao incremental, so apos a consolidacao completa.
+                # Limite evita transacoes prolongadas e mantem rastreabilidade.
+                self._prune_old_runs(conn, server_id, batch.run_id)
             else:
                 # Completed replays carry a stable result.
                 if run and run["status"] == "complete":
@@ -136,6 +143,37 @@ class PostgresHostServiceRepository(PostgresRepositoryBase):
                 "status": "complete" if complete else "collecting",
                 "applied": bool(applied), "service_count": count,
             }
+
+
+    @staticmethod
+    def _prune_old_runs(conn, server_id: str, active_run_id: str) -> None:
+        """Retem 30 dias de runs e lotes, preservando referencias atuais.
+
+        Executa sob o mesmo lock por servidor da ingestao. Uma execucao antiga
+        ainda referenciada por host_services e mantida para rastreabilidade.
+        A FK ON DELETE CASCADE remove apenas os lotes dos runs expurgados.
+        """
+        conn.execute(
+            f"""WITH stale AS (
+                SELECT r.run_id FROM {_S}.host_service_runs AS r
+                WHERE r.server_id = %s
+                  AND r.run_id <> %s
+                  AND r.created_at < now() - (%s * interval '1 day')
+                  AND NOT EXISTS (
+                      SELECT 1 FROM {_S}.host_service_current AS c
+                      WHERE c.run_id = r.run_id
+                  )
+                  AND NOT EXISTS (
+                      SELECT 1 FROM {_S}.host_services AS s
+                      WHERE s.server_id = r.server_id AND s.last_run_id = r.run_id
+                  )
+                ORDER BY r.created_at, r.run_id
+                LIMIT %s
+            )
+            DELETE FROM {_S}.host_service_runs AS r
+            USING stale WHERE r.run_id = stale.run_id""",
+            (server_id, active_run_id, _RUN_HISTORY_DAYS, _PRUNE_LIMIT),
+        )
 
     def list_services(self, server_id: str, *, q: str | None, state: str | None,
                       start_mode: str | None, present: str, page: int, page_size: int):
