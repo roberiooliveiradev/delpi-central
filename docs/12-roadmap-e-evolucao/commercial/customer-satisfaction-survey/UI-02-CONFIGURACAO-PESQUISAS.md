@@ -207,6 +207,17 @@ Os limiares acima são **faixas de teste propostas**, não equivalem automaticam
 - **Responsividade, padding, margens e dimensões:** herdados dos wrappers e tokens reais do PluginUI. A disposição mobile, tamanhos de células e ações serão verificados na próxima rodada contra os consumidores existentes; **não fixar números arbitrários**.
 - **Status:** informações e ações funcionais **APROVADAS**; contrato de dados, aplicação concreta dos componentes e teste visual **PENDING**. Especificação, não implementação.
 
+### Decisão aprovada — responsividade idêntica à lista de Clientes (12/11/2026)
+
+**APROVADO PELO SOLICITANTE:** na UI-02A, a listagem de Campanhas deve adotar **o mesmo comportamento responsivo da listagem de Clientes do microfrontend Comercial**, com os componentes oficiais já utilizados no consumidor `plugins/commercial/src/features/customers/components/CustomersTable.tsx`. Não criar variante própria de tabela ou cards para a Pesquisa.
+
+- **Desktop:** `CommercialDataTable` com a identidade visual, células, alinhamentos, hierarquia, seleção/ações e densidade que o padrão de Clientes efetivamente suportar, respeitando apenas as cinco informações aprovadas para campanhas e as duas ações contextuais.
+- **Celular:** `CommercialDataCardsGrid` e, quando a listagem de Clientes utiliza, `CommercialDataCardsSortBar`, preservando informações e ações com a organização, toque, foco e espaçamentos do padrão existente. Sem novo breakpoint ou CSS específico para simular a tabela.
+- **Tablet e transições:** adotar a alternância/reflow existente no consumidor de Clientes, não inventar intervalo fixo de largura. Verificar os breakpoints reais no CSS e os tokens do PluginUI durante a implementação; documentar os valores reais quando inspecionados.
+- **Toolbar, paginação e estados:** manter os controles reutilizáveis efetivamente aplicáveis já previstos no Comercial; não acrescentar exportação ou outras capacidades não aprovadas por existir botão em Clientes. Ordenação e paginação devem consultar a fonte oficial de campanhas quando remotas.
+- **Dimensões, paddings e margens:** herdar valores reais dos componentes e da composição do microfrontend; os números ilustrativos do blueprint não autorizam overrides. A confirmação exata de medidas, CSS e comportamento em execução continua **PENDING de inventário técnico/testes**.
+- **Status:** paridade responsiva com Clientes **APROVADA e DOCUMENTADA**, implementação não executada. Próximo refinamento será **paginação e estados da listagem**, sem solicitar nova aprovação do padrão já existente.
+
 ### 1.2.3 Navegação e comportamentos
 
 - **APROVADO:** **Ver resultados** global no Hero → UI-01 geral padrão. **Resultados** contextual em linha/card → UI-01 filtrada naquela campanha. **Abrir** → UI-02B; **Nova campanha** → diálogo oficial UI-02A.1.
