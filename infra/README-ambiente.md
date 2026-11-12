@@ -11,6 +11,13 @@ Este diretório (`infra/`) concentra os compose e as variáveis compartilhadas p
 | `docker-compose.hml.yml` | Homologação `delpi-hml` — estende só o cenário-base; não sobe sem `--profile` |
 | `.env.dev.example` | Modelo para copiar → `.env` no dia a dia |
 | `.env.prod.example` | Modelo para servidor / CI de deploy |
+| `env.hml.example` | Contrato do ambiente HML (`env_file` required do compose HML) |
+
+> **Inventário fechado** — não criar novos `docker-compose.*.yml`, `env.*.example`
+> ou `.env.<variante>` sem autorização explícita. Variação de comportamento vai em
+> env var (`${VAR:-default}`) ou profile (`chat`, `plugins`, `optional-heavy`);
+> vars novas entram nos examples canônicos. Regra canônica:
+> `.cursor/rules/platform-delivery-runtime-operations.mdc`.
 
 ```bash
 # Desenvolvimento — stack essencial + TV (portal + api-delpi + plugin-ui + tv-dashboard*)

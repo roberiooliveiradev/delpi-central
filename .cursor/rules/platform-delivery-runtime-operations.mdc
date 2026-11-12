@@ -24,6 +24,36 @@ runtime discovery
 
 `.env.example` contém placeholders seguros. Secret real não entra no Git.
 
+### Arquivos canônicos de env e Compose (inventário fechado)
+
+O inventário de arquivos de ambiente e orquestração é **fechado**. Agente **não cria** novo `docker-compose.*.yml`, `env.*.example`, `.env.<variante>` ou overlay sem autorização explícita do usuário.
+
+Envs canônicas (`infra/`):
+
+| Arquivo | Papel |
+|---|---|
+| `.env.dev.example` | Fonte de verdade dev — copiar para `infra/.env` |
+| `.env.prod.example` | Fonte de verdade prod — copiar para `infra/.env` no host de deploy |
+| `env.hml.example` | Contrato do ambiente HML (`env_file` required do compose HML) |
+| `.env` | Runtime local real (gitignored; preservar valores ao reorganizar) |
+
+Compose canônicos (`infra/`):
+
+| Arquivo | Ambiente |
+|---|---|
+| `docker-compose.yml` | Produção |
+| `docker-compose.dev.yml` | Dev local |
+| `docker-compose.hml.yml` | Homologação (`delpi-hml`) |
+
+Regras:
+
+- var nova → adicionar nos examples relevantes (+ HML se aplicável), nunca em arquivo paralelo;
+- comportamento variante → `.env`/`${VAR:-default}` ou profile (`optional-heavy`, `chat`, `plugins`), nunca overlay `-f outro.yml`;
+- tuning de CPU/RAM/GPU → env var ou profile, não arquivo de compose alternativo;
+- `env.<plugin>.example` e padrão "append em .env" estão proibidos — vars de plugin vivem nas seções temáticas dos canônicos;
+- var aposentada pelo código → remover dos examples no mesmo diff (boot fail-closed não pode descobrir isso em produção);
+- referência a arquivo inexistente em script/doc → corrigir para o canônico, não recriar o arquivo.
+
 ## Containers
 
 Todo serviço/container deve ter:

@@ -19,6 +19,11 @@
 - Regras canônicas de engenharia: `.cursor/rules/` (ver
   `development-standards-index.mdc` e `delia-execution-protocol.mdc`
   para tasks DÉLIA).
+- Inventário de env/Compose é **fechado**: só `infra/.env.dev.example`,
+  `infra/.env.prod.example`, `infra/env.hml.example` + `docker-compose.yml`,
+  `docker-compose.dev.yml`, `docker-compose.hml.yml`. Não criar overlays,
+  `env.<x>.example` ou `.env.<variante>` — variação vai em env var ou
+  profile (`platform-delivery-runtime-operations.mdc`).
 
 ## Git Branch and Worktree Governance — User Approval Required
 
