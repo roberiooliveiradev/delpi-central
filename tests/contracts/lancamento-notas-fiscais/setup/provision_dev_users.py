@@ -18,9 +18,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO = ROOT.parents[2]
-INFRA_ENV = REPO / "infra" / ".env"
+# DEV: infra/.env | HML: LNF_PROVISION_ENV=infra/.env.hml (no servidor)
+INFRA_ENV = Path(
+    __import__("os").environ.get("LNF_PROVISION_ENV")
+    or (REPO / "infra" / ".env")
+)
 MANIFEST = REPO / "plugins" / "lancamento-notas-fiscais" / "lancamento-notas-fiscais.manifest.json"
-ENV_LOCAL = ROOT / ".env.local"
+ENV_LOCAL = Path(
+    __import__("os").environ.get("LNF_ENV_LOCAL") or (ROOT / ".env.local")
+)
 
 PROFILES: dict[str, dict] = {
     "P0": {"username": "lnf-contract-p0", "permissions": [], "superadmin": False},
@@ -241,14 +247,21 @@ def ensure_kc_user(base: str, realm: str, adm: str, username: str, password: str
     return uid
 
 
-def ensure_bootstrap_admin(base: str, realm: str, adm: str, passwords: dict[str, str]) -> str:
+def ensure_bootstrap_admin(
+    base: str,
+    realm: str,
+    adm: str,
+    passwords: dict[str, str],
+    *,
+    email: str,
+) -> str:
     status, users = http_json(
         "GET",
-        f"{base}/auth/admin/realms/{realm}/users?email=user%40local.com&exact=true",
+        f"{base}/auth/admin/realms/{realm}/users?email={urllib.parse.quote(email)}&exact=true",
         token=adm,
     )
     if not isinstance(users, list) or not users:
-        raise Fail("superadmin local user@local.com ausente no Keycloak DEV")
+        raise Fail(f"superadmin {email} ausente no Keycloak do alvo")
     uid = str(users[0]["id"])
     password = passwords.get("LNF_BOOTSTRAP_ADMIN_PASSWORD") or gen_password()
     http_json(
@@ -258,7 +271,7 @@ def ensure_bootstrap_admin(base: str, realm: str, adm: str, passwords: dict[str,
         body={"type": "password", "value": password, "temporary": False},
         ok={204},
     )
-    passwords["LNF_BOOTSTRAP_ADMIN_USERNAME"] = "user@local.com"
+    passwords["LNF_BOOTSTRAP_ADMIN_USERNAME"] = email
     passwords["LNF_BOOTSTRAP_ADMIN_PASSWORD"] = password
     return password
 
@@ -385,15 +398,25 @@ def write_env_local(values: dict[str, str]) -> None:
 
 def main() -> int:
     if not INFRA_ENV.is_file():
-        raise Fail("infra/.env ausente")
+        raise Fail(f"env ausente: {INFRA_ENV}")
     infra = load_infra()
-    base = (infra.get("DEV_BASE_URL") or "http://localhost").rstrip("/")
+    base = (
+        infra.get("DEV_BASE_URL")
+        or infra.get("PUBLIC_BASE_URL")
+        or infra.get("DELPI_HML_PUBLIC_ORIGIN")
+        or "http://localhost"
+    ).rstrip("/")
     assert_local(base)
     core = f"{base}/core-api"
     assert_local(core)
     realm = infra.get("DEV_KC_REALM") or infra.get("KEYCLOAK_REALM") or "delpi"
-    client_id = infra.get("DEV_KC_CLIENT_ID") or "delpi-central"
+    client_id = infra.get("DEV_KC_CLIENT_ID") or infra.get("VITE_KC_CLIENT_ID") or "delpi-central"
     adm = admin_token(base, infra["KEYCLOAK_ADMIN"], infra["KEYCLOAK_ADMIN_PASSWORD"])
+    admin_email = (
+        infra.get("LNF_BOOTSTRAP_ADMIN_USERNAME")
+        or infra.get("INITIAL_SUPERADMIN_EMAIL")
+        or "user@local.com"
+    )
 
     passwords: dict[str, str] = {}
     if ENV_LOCAL.exists():
@@ -402,13 +425,15 @@ def main() -> int:
                 key, value = line.split("=", 1)
                 passwords[key] = value
 
-    bootstrap_password = ensure_bootstrap_admin(base, realm, adm, passwords)
-    admin_jwt = password_token(base, realm, client_id, "user@local.com", bootstrap_password)
+    bootstrap_password = ensure_bootstrap_admin(
+        base, realm, adm, passwords, email=admin_email
+    )
+    admin_jwt = password_token(base, realm, client_id, admin_email, bootstrap_password)
     admin_me = me(core, admin_jwt)
     if not (admin_me.get("isSuperadmin") or admin_me.get("is_superadmin")):
-        raise Fail("user@local.com não é superadmin no Core DEV")
+        raise Fail(f"{admin_email} não é superadmin no Core do alvo")
 
-    print("[setup] registrando manifesto LNF no Core DEV")
+    print("[setup] registrando manifesto LNF no Core")
     register_manifest(core, admin_jwt)
     perm_map = list_permissions(core, admin_jwt)
     missing = [
@@ -433,7 +458,7 @@ def main() -> int:
         "LNF_BASE_URL": f"{base}/apps/api-delpi",
         "LNF_TARGET": "api-delpi",
         "LNF_CORE_BASE_URL": core,
-        "LNF_BOOTSTRAP_ADMIN_USERNAME": "user@local.com",
+        "LNF_BOOTSTRAP_ADMIN_USERNAME": admin_email,
         "LNF_BOOTSTRAP_ADMIN_PASSWORD": bootstrap_password,
         "API_DELPI_INTERNAL_SERVICE_TOKEN": infra.get("API_DELPI_INTERNAL_SERVICE_TOKEN", ""),
         "LNF_TOKEN_P10": infra.get("API_DELPI_INTERNAL_SERVICE_TOKEN", ""),
