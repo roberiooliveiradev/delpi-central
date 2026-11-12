@@ -116,6 +116,58 @@ Keycloak autentica; Core governa RBAC; Engineering API aplica autorização back
 - Definir corte temporal do estado histórico, reabertura, soft-delete e alvo removido.
 - Definir política no-op, concorrência, retries e recuperação de materialização pós-conclusão.
 - Validar contratos de leitura TOTVS, cobertura do snapshot e verificação de fornecedor.
-- Delimitar futuras jornadas frontend (produto, versões, diff, flags atuais/históricas) em etapa posterior.
+- Inventariar componentes de ficha técnica PRC, contratos e permissões antes do reuso; validar a UX TARGET descrita na seção 9, sem presumir backend transversal implementado.
 
 **Nenhuma decisão acima autoriza modificar código, banco, frontend ou infraestrutura nesta fase.**
+
+## 9. Jornada frontend consolidada — UX TARGET (2026-11-12)
+
+### 9.1 Entrada única na ferramenta
+
+- Preservar **Controle e Cadastro de Produtos** como uma única ferramenta/rota de entrada do Portal Engenharia, sem novo aplicativo nem segunda top bar.
+- Um **hero único** contém o seletor segmentado **Solicitações | Produtos acompanhados**. Alternar o contexto troca filtros e conteúdo abaixo do hero, sem duplicar cabeçalhos ou navegação global.
+- **Solicitações** preserva fila, ações, filtros, tabela/cards/kanban e fluxo PRC existentes. **Produtos acompanhados** apresenta somente produtos efetivamente registrados no acompanhamento da Engineering API, nunca o catálogo inteiro TOTVS.
+- A lista de acompanhados usa padrão visual da tabela do Catálogo de Produtos, uma linha por produto (fonte + código), com descrição da versão acompanhada, número da última versão, flags abertas e última evolução conforme contratos e autorização. Não oferecer cadastro manual paralelo de produto acompanhado.
+- Clicar no produto abre detalhe próprio de acompanhamento; preservar rotas/deep links do Catálogo de Produtos e das solicitações. Roteamento concreto: TO_INVENTORY/TARGET.
+
+### 9.2 Detalhe: somente Ficha técnica e Versões
+
+- **Hero do produto:** código oficial, descrição identificadora e identificação inequívoca da versão acompanhada. Não confundir versão de acompanhamento com revisão oficial TOTVS.
+- **Ficha técnica:** reaproveitar o **padrão funcional da ficha das solicitações PRC**, não apenas a aparência. Mostrar atributos em **cards por seções técnicas** (p.ex. Identificação e classificação; Estoque e contabilidade), com **fornecedores em tabela** e seus atributos. Evitar abas próprias de fornecedores ou flags, e evitar card separado de “flags abertas”.
+- **Flags integradas:** bandeira junto ao label/campo ou célula/atributo de fornecedor, com descoberta por hover **e acesso por foco/teclado/toque**. Bandeira vermelha indica acompanhamento aberto; resolvida usa semântica/legenda do componente PRC existente. Preservar o padrão atual de modal/detalhe de bandeira com título, descrição, alvo e valor contextual, sem tornar o valor técnico editável por esse modal.
+- **Acompanhamento técnico:** se reutilizada, a faixa discreta de resumo/legenda já presente na solicitação pode auxiliar a localização das bandeiras; não criar um card adicional nem duplicar informações por campo.
+- **Versões:** listar cronologicamente V1…Vn, data, solicitação de origem e mudanças confirmadas; permitir abrir a ficha de uma versão e comparar **quaisquer duas versões**, inclusive não consecutivas, por diferenças estruturadas de campos e vínculos. Separar eventos de flags de diferenças do cadastro oficial.
+- A ficha permite selecionar uma versão. Dados técnicos exibidos são sempre o **snapshot imutável daquela versão**, com indicação explícita de consulta histórica. Não substituir silenciosamente dados antigos pelo estado atual TOTVS. Links entre versão e solicitação de origem devem ser bidirecionais quando autorizados.
+
+### 9.3 Operação das flags a partir do produto acompanhado
+
+- A ficha do produto **não permite editar diretamente dados técnicos oficiais ou snapshots**. Entretanto, usuários autorizados podem **criar, consultar, resolver e reabrir flags** diretamente no campo/alvo do produto, mesmo após a solicitação de origem ter sido concluída. Cancelamento/soft-delete e demais transições seguem contrato governado, com trilha auditável.
+- Ação sobre flag altera o acompanhamento técnico e **não cria nova versão Vn+1** do produto. Versão nova resulta somente da conclusão PRC confirmada segundo seção 2.
+- Uma flag OPEN já existente no mesmo produto/alvo deve ser **reutilizada e apresentada para tratamento**, não duplicada. Garantir unicidade no backend de forma concorrente/idempotente; frontend não é autoridade para prevenção de duplicatas.
+- Flag de fornecedor deve apontar para **vínculo estável fornecedor + loja + atributo** (p.ex. partNumber), não para posição na tabela. Se o vínculo deixar de existir na versão atual, conservar trilha e evitar oferecer criação sobre alvo inexistente.
+- Ao consultar a **última versão**, mostrar flags atuais nos campos correspondentes. Ao consultar **versão histórica**, mostrar as flags existentes e seus estados **no corte daquela versão**, com acesso explícito ao estado atual e ao histórico de transições. Resolução posterior não deve reescrever a bandeira histórica.
+- **Regra UX proposta:** criação de flag nova somente na última versão acompanhada, após validar existência atual do alvo; em versões antigas, permitir consulta histórica e navegação para a flag atual antes de qualquer mutação. Exigir ratificação de contrato/owner para a política exata de mutações a partir de vistas históricas.
+- Se o mesmo alvo estiver sinalizado em uma solicitação aberta e no produto acompanhado, apresentar a **mesma identidade lógica** da flag e refletir mudanças autorizadas em ambas as experiências; resolver conflitos por estado atual/versão de concorrência, não por sobrescrita do cliente.
+- Respeitar RBAC Core, AuthZ live da Engineering API e permissão por objeto em leitura e escrita; não inferir autorização pelo hover, visibilidade do botão, JWT isolado ou socket. Em mudanças concorrentes, retornar conflito tratável e reconciliar a tela sem perder entradas do usuário.
+
+### 9.4 Reuso técnico e limites
+
+- Inventariar componentes reais de cards, campos sinalizáveis, tabela de fornecedores, modal, legenda e histórico das flags usados no PRC antes de extrair ou criar abstrações. Preferir reuso por contratos de apresentação; não acoplar bounded contexts nem importar lógica privada de outro aplicativo.
+- Fonte de dados de **Solicitações** continua sendo os contratos PRC; fonte de **Produtos acompanhados** é o histórico versionado governado da Engineering API. O Catálogo TOTVS não se torna a fonte do histórico acompanhado.
+- Contratos de leitura devem expor snapshot por versão, alvos sinalizáveis, flags no corte temporal, flags atuais e histórico de transições. Contratos de escrita devem aplicar autorização, unicidade por produto/alvo, idempotência, conflito de concorrência e auditoria.
+- O estado desta seção é **TARGET funcional**, não prova de implementação. A transversalidade de flags e a materialização versionada permanecem sujeitas ao inventário e à decisão arquitetural das seções 4–8.
+
+### 9.5 Critérios de aceite frontend futuros
+
+1. Alternar Solicitações/Produtos acompanhados no hero não duplica top bar, não perde rotas existentes e apresenta filtros próprios.
+2. Listagem de acompanhados exclui produtos sem histórico Engineering API e não duplica linha por versão.
+3. Ficha usa cards técnicos e fornecedores em tabela no padrão PRC; flags aparecem nos alvos, sem card separado.
+4. Hover, teclado e toque permitem acessar flag; modal reutiliza contexto, título, descrição e ações permitidas.
+5. Usuário autorizado cria/trata flag no produto após encerramento da solicitação, sem alterar snapshot ou criar nova versão.
+6. Flag OPEN preexistente no mesmo alvo abre tratamento da mesma flag, sem duplicação, inclusive sob concorrência.
+7. Trocar V5 por V3 altera valores técnicos para o snapshot V3 e mostra flags no corte V3; estado atual é identificável separadamente.
+8. Comparar V1 com V5 ou V4 com V5 mostra somente diferenças reais entre snapshots, com fornecedores identificados por vínculo.
+9. Flags em fornecedores removidos permanecem consultáveis historicamente, sem aparentar vínculo ativo.
+10. Usuário sem autorização não consulta/muta flags; testes cobrem conflito, acessibilidade, navegação e regressão PRC.
+
+**Status da seção:** UX_RULES_DEFINED / TARGET; sem autorização para migration, implementação ou deploy. Mudança de owner/authority segue ARCHITECTURE_DECISION_REQUIRED.
