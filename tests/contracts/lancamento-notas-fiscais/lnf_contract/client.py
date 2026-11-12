@@ -2,11 +2,21 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 
 import httpx
 
 from lnf_contract.guard import assert_not_production, base_url, profile_token, target_name
+
+
+def _tls_verify() -> bool | str:
+    """HML usa CA local: SSL_CERT_FILE / REQUESTS_CA_BUNDLE."""
+    for key in ("SSL_CERT_FILE", "REQUESTS_CA_BUNDLE", "CURL_CA_BUNDLE"):
+        path = (os.getenv(key) or "").strip()
+        if path:
+            return path
+    return True
 
 # TOTVS_DB_HOST do DEV (192.168.1.230/DELPI) é base REAL do ERP — somente leitura.
 # Limite 1× de reconciliation/run que PASSOU AuthZ (status ∉ {401,403}).
@@ -79,7 +89,10 @@ class ContractClient:
             )
         try:
             with httpx.Client(
-                base_url=self.url, timeout=timeout, follow_redirects=False
+                base_url=self.url,
+                timeout=timeout,
+                follow_redirects=False,
+                verify=_tls_verify(),
             ) as client:
                 response = client.request(
                     method, path, params=params, json=json_body, headers=headers
