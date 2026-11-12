@@ -33,6 +33,8 @@ DATABASES = {
 # o up operacional usa --no-deps e sobe apenas o serviço keycloak.
 KEYCLOAK_ONLY = {"keycloak", "keycloak-db"}
 GATEWAY_ONLY = {"gateway"}
+CORE_API_ONLY = {"core-api"}
+PORTAL_ONLY = {"portal"}
 BASELINE = {
     "postgres-core",
     "keycloak-db",
@@ -185,8 +187,12 @@ def assert_source_files() -> None:
         fail("script sem caminhos autorizados databases/keycloak")
     if "up --scenario gateway" not in script:
         fail("script sem caminho autorizado de up gateway")
-    if "HOMOLOGATION_DATABASES_KEYCLOAK_AND_GATEWAY_AUTHORIZED" not in script:
-        fail("script sem marcador de autorização databases+keycloak+gateway")
+    if "up --scenario core-api" not in script or "up --scenario portal" not in script:
+        fail("script sem caminhos autorizados core-api/portal")
+    if "HOMOLOGATION_CORE_API_AND_PORTAL_AUTHORIZED" not in script:
+        fail("script sem marcador de autorização core-api+portal")
+    if "cmd_up_core_api" not in script or "cmd_up_portal" not in script:
+        fail("script sem handlers de up core-api/portal")
     if "X-Forwarded-Port 18080" not in nginx:
         fail("nginx HML não fixa X-Forwarded-Port 18080 para redirects")
     if "set $upstream_keycloak" not in nginx or "set $upstream_portal" not in nginx:
@@ -206,6 +212,12 @@ def assert_source_files() -> None:
         fail("nginx HML ainda tem proxy_pass estático para keycloak")
     if "profiles: [gateway" not in hml and "gateway, baseline" not in hml:
         fail("profile gateway ausente no Compose")
+    if "profiles: [core-api" not in hml and "core-api, baseline" not in hml:
+        fail("profile core-api ausente no Compose")
+    if "profiles: [portal" not in hml and "portal, baseline" not in hml:
+        fail("profile portal ausente no Compose")
+    if "USER_PRESENCE_STORE: memory" not in hml:
+        fail("core-api HML deve forçar stores em memória (sem Redis)")
     bootstrap = INFRA / "scripts" / "keycloak-hml-bootstrap.sh"
     if not bootstrap.is_file():
         fail("keycloak-hml-bootstrap.sh ausente")
@@ -214,6 +226,8 @@ def assert_source_files() -> None:
         # script embeds JSON via python with False
         if "directAccessGrantsEnabled" not in boot:
             fail("bootstrap HML não declara política de direct grants")
+    if "oidc-audience-mapper" not in boot or "audience-delpi" not in boot:
+        fail("bootstrap HML sem provisionamento de audience delpi-central")
     # Guardrails negativas (recusa se origem/client apontar produção) são OK.
     if re.search(r'(ORIGIN|URL|ISSUER)=https?://[^\\s]*minhadelpi\\.com\\.br', boot):
         fail("bootstrap HML configura URL produtiva")
@@ -474,6 +488,25 @@ def main() -> None:
         fail(f"profile gateway ainda declara depends_on: {gw.get('depends_on')}")
     if set(gateway["services"]) != GATEWAY_ONLY:
         fail(f"profile gateway com serviços extras: {sorted(gateway['services'])}")
+    core = assert_rendered("core-api", CORE_API_ONLY)
+    assert_isolation(core, prod_names, require_gateway=False)
+    core_svc = core["services"]["core-api"]
+    if core_svc.get("depends_on"):
+        fail(f"profile core-api ainda declara depends_on: {core_svc.get('depends_on')}")
+    core_env = core_svc.get("environment") or {}
+    if isinstance(core_env, list):
+        core_env = dict(item.split("=", 1) for item in core_env if "=" in item)
+    if str(core_env.get("USER_PRESENCE_STORE") or "").lower() != "memory":
+        fail("core-api HML não força USER_PRESENCE_STORE=memory")
+    if str(core_env.get("REDIS_URL") or "") not in {"", "None", "null"}:
+        # empty string is OK; non-empty redis URL without redis service is a footgun
+        if "delpi-redis" in str(core_env.get("REDIS_URL")):
+            fail("core-api HML ainda aponta REDIS_URL para delpi-redis nesta etapa")
+    portal = assert_rendered("portal", PORTAL_ONLY)
+    assert_isolation(portal, prod_names, require_gateway=False)
+    portal_svc = portal["services"]["portal"]
+    if portal_svc.get("depends_on"):
+        fail(f"profile portal ainda declara depends_on: {portal_svc.get('depends_on')}")
     platform = assert_rendered("platform", PLATFORM)
     if "production-control" in platform["services"]:
         fail("profile platform inclui Production Control")
@@ -483,6 +516,7 @@ def main() -> None:
     print(
         f"services_baseline={len(BASELINE)} services_databases={len(DATABASES)} "
         f"services_keycloak={len(KEYCLOAK_ONLY)} services_gateway={len(GATEWAY_ONLY)} "
+        f"services_core_api={len(CORE_API_ONLY)} services_portal={len(PORTAL_ONLY)} "
         "network=delpi-hml-network port=${DELPI_HML_BIND_ADDR}:18080"
     )
 

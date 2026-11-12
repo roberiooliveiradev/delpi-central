@@ -167,6 +167,102 @@ else
   echo "[hml-kc] client $CLIENT_ID atualizado (redirect/webOrigin HTTP HML)."
 fi
 
+# --- audience delpi-central (Core API KEYCLOAK_AUDIENCE) ---
+# Client scope default + mapper Audience (Keycloak 24), idempotente.
+SCOPE_NAME="audience-delpi"
+SCOPES_RAW="$(admin_api GET "/realms/$REALM/client-scopes")"
+SCOPE_ID="$(python3 - "$SCOPES_RAW" "$SCOPE_NAME" <<'PY'
+import json, sys
+for s in json.loads(sys.argv[1]):
+    if s.get("name") == sys.argv[2]:
+        print(s["id"])
+        break
+PY
+)"
+if [ -z "$SCOPE_ID" ]; then
+  admin_api POST "/realms/$REALM/client-scopes" \
+    "$(python3 - "$SCOPE_NAME" <<'PY'
+import json, sys
+print(json.dumps({
+  "name": sys.argv[1],
+  "protocol": "openid-connect",
+  "attributes": {
+    "include.in.token.scope": "false",
+    "display.on.consent.screen": "false",
+  },
+}))
+PY
+)" >/dev/null
+  SCOPES_RAW="$(admin_api GET "/realms/$REALM/client-scopes")"
+  SCOPE_ID="$(python3 - "$SCOPES_RAW" "$SCOPE_NAME" <<'PY'
+import json, sys
+for s in json.loads(sys.argv[1]):
+    if s.get("name") == sys.argv[2]:
+        print(s["id"])
+        break
+PY
+)"
+  echo "[hml-kc] client-scope $SCOPE_NAME criado."
+else
+  echo "[hml-kc] client-scope $SCOPE_NAME já existe."
+fi
+MAPPER_NAME="audience-delpi-central"
+MAPPERS_RAW="$(admin_api GET "/realms/$REALM/client-scopes/$SCOPE_ID/protocol-mappers/models")"
+MAPPER_ID="$(python3 - "$MAPPERS_RAW" "$MAPPER_NAME" <<'PY'
+import json, sys
+for m in json.loads(sys.argv[1]):
+    if m.get("name") == sys.argv[2]:
+        print(m["id"])
+        break
+PY
+)"
+MAPPER_JSON="$(python3 - "$MAPPER_NAME" "$CLIENT_ID" <<'PY'
+import json, sys
+print(json.dumps({
+  "name": sys.argv[1],
+  "protocol": "openid-connect",
+  "protocolMapper": "oidc-audience-mapper",
+  "config": {
+    "included.client.audience": sys.argv[2],
+    "id.token.claim": "false",
+    "access.token.claim": "true",
+    "userinfo.token.claim": "false",
+  },
+}))
+PY
+)"
+if [ -z "$MAPPER_ID" ]; then
+  admin_api POST "/realms/$REALM/client-scopes/$SCOPE_ID/protocol-mappers/models" \
+    "$MAPPER_JSON" >/dev/null
+  echo "[hml-kc] mapper audience $CLIENT_ID criado."
+else
+  admin_api PUT "/realms/$REALM/client-scopes/$SCOPE_ID/protocol-mappers/models/$MAPPER_ID" \
+    "$MAPPER_JSON" >/dev/null
+  echo "[hml-kc] mapper audience $CLIENT_ID sincronizado."
+fi
+# Default realm scope + default client scope binding
+DEFAULT_SCOPES_RAW="$(admin_api GET "/realms/$REALM/default-default-client-scopes")"
+DEFAULT_SCOPE_IDS="$(python3 - "$DEFAULT_SCOPES_RAW" <<'PY'
+import json, sys
+print(" ".join(s["id"] for s in json.loads(sys.argv[1])))
+PY
+)"
+if [[ " $DEFAULT_SCOPE_IDS " != *" $SCOPE_ID "* ]]; then
+  admin_api PUT "/realms/$REALM/default-default-client-scopes/$SCOPE_ID" "{}" >/dev/null || \
+    admin_api POST "/realms/$REALM/default-default-client-scopes/$SCOPE_ID" "{}" >/dev/null || true
+  echo "[hml-kc] $SCOPE_NAME vinculado como default-default-client-scope."
+fi
+CLIENT_SCOPES_RAW="$(admin_api GET "/realms/$REALM/clients/$CID/default-client-scopes")"
+CLIENT_DEFAULT_SCOPES="$(python3 - "$CLIENT_SCOPES_RAW" <<'PY'
+import json, sys
+print(" ".join(s["id"] for s in json.loads(sys.argv[1])))
+PY
+)"
+if [[ " $CLIENT_DEFAULT_SCOPES " != *" $SCOPE_ID "* ]]; then
+  admin_api PUT "/realms/$REALM/clients/$CID/default-client-scopes/$SCOPE_ID" "{}" >/dev/null || true
+  echo "[hml-kc] $SCOPE_NAME vinculado ao client $CLIENT_ID."
+fi
+
 # --- test user (sem roles admin) ---
 if [ -z "${TEST_PASS}" ] || [[ "$TEST_PASS" == CHANGE_ME_* ]]; then
   echo "[ERRO] HML_TEST_PASSWORD inválido em .env.hml (defina secret forte exclusivo)." >&2
@@ -278,5 +374,5 @@ print("webOrigins=", c.get("webOrigins"))
 PY
 
 echo "[hml-kc] BOOTSTRAP_HML=PASS"
-echo "[hml-kc] Login completo no Portal Minha DELPI permanece PENDING enquanto Portal/Core HML estiverem desligados."
+echo "[hml-kc] Audience $CLIENT_ID provisionada para validação JWT do Core API HML."
 echo "[hml-kc] DONE"

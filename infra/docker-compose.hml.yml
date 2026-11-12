@@ -162,15 +162,12 @@ services:
     extends:
       file: docker-compose.yml
       service: core-api
-    profiles: [baseline, platform, production-control]
+    # Profile `core-api`: up isolado (DBs/KC já healthy; script usa --no-deps).
+    profiles: [core-api, baseline, platform, production-control]
     image: delpi-hml/core-api:local
     container_name: delpi-hml-core-api
     ports: !override []
-    depends_on: !override
-      postgres-core:
-        condition: service_started
-      keycloak:
-        condition: service_started
+    depends_on: !override {}
     networks: !override
       - delpi-hml
     volumes: !override
@@ -183,7 +180,21 @@ services:
       GRAPH_REPORTS_TENANT_ID: ""
       GRAPH_REPORTS_CLIENT_ID: ""
       GRAPH_REPORTS_CLIENT_SECRET: ""
-      REDIS_URL: redis://:${DELPI_REDIS_PASSWORD}@delpi-redis:6379/0
+      # Redis HML permanece desligado nesta etapa; stores em memória.
+      USER_PRESENCE_STORE: memory
+      APP_USAGE_STORE: memory
+      WORKSPACE_CONTEXT_STORE: memory
+      REDIS_URL: ""
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)\"",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 90s
     mem_limit: 1g
     cpus: 1.0
     labels:
@@ -263,16 +274,22 @@ services:
     extends:
       file: docker-compose.yml
       service: portal
-    profiles: [baseline, platform, production-control]
+    # Profile `portal`: up isolado após Gate A (script exige core-api healthy).
+    # Build args VITE_KC_* vêm do --env-file .env.hml (bake-time; nunca imagem prod).
+    profiles: [portal, baseline, platform, production-control]
     image: delpi-hml/portal:local
     container_name: delpi-hml-portal
     ports: !override []
-    depends_on: !override
-      core-api:
-        condition: service_started
+    depends_on: !override {}
     networks: !override
       - delpi-hml
     volumes: !override []
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null -T 3 http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     mem_limit: 512m
     cpus: 0.5
     labels:

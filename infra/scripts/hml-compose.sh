@@ -6,18 +6,22 @@
 #   - databases  → postgres-core, keycloak-db, postgres-plugins
 #   - keycloak   → somente o serviço keycloak (--no-deps; DB já ativo)
 #   - gateway    → somente delpi-hml-gateway (build imagem HML; --no-deps)
+#   - core-api   → somente delpi-hml-core-api (build; migrations no Postgres Core HML)
+#   - portal     → somente delpi-hml-portal (build Vite HML; exige Core healthy)
 # Qualquer outro up/build/pull/down/stop continua recusado.
-# Portal/Core/API DELPI/PC permanecem bloqueados.
+# Redis, API DELPI, Plugin UI e Production Control permanecem bloqueados.
 #
 # Uso, a partir da raiz do repositório:
 #   ./infra/scripts/hml-compose.sh list
 #   ./infra/scripts/hml-compose.sh validate
-#   ./infra/scripts/hml-compose.sh config [--scenario databases|keycloak|gateway|baseline|...]
+#   ./infra/scripts/hml-compose.sh config [--scenario databases|keycloak|gateway|core-api|portal|...]
 #   ./infra/scripts/hml-compose.sh simulate [--scenario ...] [--services a,b]
 #   ./infra/scripts/hml-compose.sh status
 #   ./infra/scripts/hml-compose.sh up --scenario databases
 #   ./infra/scripts/hml-compose.sh up --scenario keycloak
 #   ./infra/scripts/hml-compose.sh up --scenario gateway
+#   ./infra/scripts/hml-compose.sh up --scenario core-api
+#   ./infra/scripts/hml-compose.sh up --scenario portal
 #   ./infra/scripts/hml-compose.sh bootstrap-keycloak
 #   ./infra/scripts/hml-compose.sh up|down|stop|build|pull   # demais: recusa
 
@@ -30,8 +34,8 @@ PROJECT="delpi-hml"
 COMPOSE_FILE="docker-compose.hml.yml"
 ENV_EXAMPLE="env.hml.example"
 ENV_LOCAL=".env.hml"
-ACTIVATION_STATUS="HOMOLOGATION_DATABASES_KEYCLOAK_AND_GATEWAY_AUTHORIZED"
-HEALTH_TIMEOUT_SEC="${DELPI_HML_HEALTH_TIMEOUT_SEC:-180}"
+ACTIVATION_STATUS="HOMOLOGATION_CORE_API_AND_PORTAL_AUTHORIZED"
+HEALTH_TIMEOUT_SEC="${DELPI_HML_HEALTH_TIMEOUT_SEC:-300}"
 
 DATABASE_SERVICES=(
   postgres-core
@@ -43,6 +47,12 @@ KEYCLOAK_SERVICES=(
 )
 GATEWAY_SERVICES=(
   gateway
+)
+CORE_API_SERVICES=(
+  core-api
+)
+PORTAL_SERVICES=(
+  portal
 )
 PLATFORM_SERVICES=(
   postgres-core
@@ -74,13 +84,21 @@ START_ORDER=(
   production-control-api
   gateway
 )
-AUTHORIZED_UP_SCENARIOS=(databases keycloak gateway)
+AUTHORIZED_UP_SCENARIOS=(databases keycloak gateway core-api portal)
 ALLOWED_HML_CONTAINERS_AFTER_GATEWAY=(
   delpi-hml-postgres-core
   delpi-hml-keycloak-db
   delpi-hml-postgres-plugins
   delpi-hml-keycloak
   delpi-hml-gateway
+)
+ALLOWED_HML_CONTAINERS_AFTER_CORE_API=(
+  "${ALLOWED_HML_CONTAINERS_AFTER_GATEWAY[@]}"
+  delpi-hml-core-api
+)
+ALLOWED_HML_CONTAINERS_AFTER_PORTAL=(
+  "${ALLOWED_HML_CONTAINERS_AFTER_CORE_API[@]}"
+  delpi-hml-portal
 )
 
 usage() {
@@ -91,8 +109,8 @@ refuse_activation() {
   local action="$1"
   echo "HOMOLOGATION_ACTIVATION_NOT_AUTHORIZED" >&2
   echo "Ação '$action' não executada fora dos profiles autorizados." >&2
-  echo "Autorizados: up --scenario databases|keycloak|gateway | bootstrap-keycloak." >&2
-  echo "Portal, Core API, API DELPI e Production Control permanecem bloqueados." >&2
+  echo "Autorizados: up --scenario databases|keycloak|gateway|core-api|portal | bootstrap-keycloak." >&2
+  echo "Redis, API DELPI, Plugin UI e Production Control permanecem bloqueados." >&2
   exit 2
 }
 
@@ -102,6 +120,8 @@ scenario_services() {
     databases) printf '%s\n' "${DATABASE_SERVICES[@]}" ;;
     keycloak) printf '%s\n' "${KEYCLOAK_SERVICES[@]}" ;;
     gateway) printf '%s\n' "${GATEWAY_SERVICES[@]}" ;;
+    core-api) printf '%s\n' "${CORE_API_SERVICES[@]}" ;;
+    portal) printf '%s\n' "${PORTAL_SERVICES[@]}" ;;
     baseline) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" ;;
     platform) printf '%s\n' "${PLATFORM_SERVICES[@]}" ;;
     production-control) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" ;;
@@ -110,6 +130,49 @@ scenario_services() {
       exit 1
       ;;
   esac
+}
+
+assert_no_prod_markers_in_env() {
+  local env_file="$1"
+  local blob
+  blob="$(grep -E '^(KEYCLOAK_ISSUER|VITE_KC_URL|VITE_KC_REDIRECT_URI|PUBLIC_BASE_URL|DELPI_HML_PUBLIC_ORIGIN|KC_HOSTNAME)=' \
+    "$COMPOSE_DIR/$ENV_LOCAL" 2>/dev/null || true)"
+  if grep -Eiq 'minhadelpi\.com\.br' <<<"$blob"; then
+    echo "[ERRO] .env.hml referencia domínio produtivo em OIDC/URLs públicas. STOP." >&2
+    exit 1
+  fi
+  if ! grep -Eq '^KEYCLOAK_ISSUER=http://192\.168\.1\.237:18080/auth/realms/delpi' "$COMPOSE_DIR/$ENV_LOCAL"; then
+    echo "[ERRO] KEYCLOAK_ISSUER HML esperado ausente/divergente em .env.hml. STOP." >&2
+    exit 1
+  fi
+  if ! grep -Eq '^KEYCLOAK_AUDIENCE=delpi-central' "$COMPOSE_DIR/$ENV_LOCAL"; then
+    echo "[ERRO] KEYCLOAK_AUDIENCE=delpi-central ausente em .env.hml. STOP." >&2
+    exit 1
+  fi
+  if ! grep -Eq '^DB_HOST=postgres-core' "$COMPOSE_DIR/$ENV_LOCAL"; then
+    echo "[ERRO] DB_HOST deve ser postgres-core (rede HML). STOP." >&2
+    exit 1
+  fi
+}
+
+assert_hml_container_allowlist() {
+  local -n allowed_ref=$1
+  local name extras="" allowed ok
+  while read -r name; do
+    [[ -z "$name" ]] && continue
+    allowed=false
+    for ok in "${allowed_ref[@]}"; do
+      [[ "$name" == "$ok" ]] && allowed=true
+    done
+    if [[ "$allowed" != true ]]; then
+      extras+="$name"$'\n'
+    fi
+  done < <(docker ps -a --filter name=delpi-hml --format '{{.Names}}')
+  if [[ -n "${extras//[[:space:]]/}" ]]; then
+    echo "[ERRO] containers HML inesperados:" >&2
+    printf '%s' "$extras" >&2
+    exit 1
+  fi
 }
 
 is_authorized_up() {
@@ -236,6 +299,16 @@ wait_healthy() {
           echo "HEALTH=$service:auth_realm"
           return 0
         fi
+      elif [[ "$service" == core-api ]]; then
+        if docker exec "$cid" python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)" >/dev/null 2>&1; then
+          echo "HEALTH=$service:http_health"
+          return 0
+        fi
+      elif [[ "$service" == portal ]]; then
+        if docker exec "$cid" wget -q -O /dev/null -T 3 http://127.0.0.1/ >/dev/null 2>&1; then
+          echo "HEALTH=$service:http_root"
+          return 0
+        fi
       elif [[ "$health" == "running" ]]; then
         if docker exec "$cid" pg_isready -U "$(docker exec "$cid" printenv POSTGRES_USER)" -d "$(docker exec "$cid" printenv POSTGRES_DB)" >/dev/null 2>&1; then
           echo "HEALTH=$service:pg_isready"
@@ -263,6 +336,8 @@ cenários:
   databases             postgres-core, keycloak-db, postgres-plugins (autorizado)
   keycloak              somente delpi-hml-keycloak (autorizado; --no-deps)
   gateway               somente delpi-hml-gateway (autorizado; build + --no-deps)
+  core-api              somente delpi-hml-core-api (autorizado; build + --no-deps)
+  portal                somente delpi-hml-portal (autorizado; build Vite HML + --no-deps)
   baseline              plataforma + production-control (up bloqueado)
   platform              portal, core, api-delpi, plugin-ui, auth, bancos, redis, gateway
   production-control    platform + MFE e API de Production Control
@@ -273,9 +348,13 @@ ordem keycloak:
 $(printf '  %s\n' "${KEYCLOAK_SERVICES[@]}")
 ordem gateway:
 $(printf '  %s\n' "${GATEWAY_SERVICES[@]}")
+ordem core-api:
+$(printf '  %s\n' "${CORE_API_SERVICES[@]}")
+ordem portal:
+$(printf '  %s\n' "${PORTAL_SERVICES[@]}")
 
 bloqueados nesta etapa:
-  portal, core-api, api-delpi, plugin-ui, production-control*, redis
+  api-delpi, plugin-ui, production-control*, redis
 EOF
 }
 
@@ -288,6 +367,10 @@ cmd_validate() {
   compose_config keycloak "$env_file" >/dev/null
   echo "Renderizando config (profile gateway, $env_file)..."
   compose_config gateway "$env_file" >/dev/null
+  echo "Renderizando config (profile core-api, $env_file)..."
+  compose_config core-api "$env_file" >/dev/null
+  echo "Renderizando config (profile portal, $env_file)..."
+  compose_config portal "$env_file" >/dev/null
   echo "Renderizando config (profile baseline, $env_file)..."
   compose_config baseline "$env_file" >/dev/null
   echo "Render sem profile (não deve publicar serviços)..."
@@ -524,6 +607,150 @@ cmd_up_gateway() {
   docker ps --filter name=delpi-hml --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
 }
 
+cmd_up_core_api() {
+  local env_file
+  env_file="$(require_local_env)"
+  assert_no_prod_markers_in_env "$env_file"
+
+  local db
+  for db in delpi-hml-postgres-core delpi-hml-keycloak-db delpi-hml-postgres-plugins; do
+    docker ps --format '{{.Names}} {{.Status}}' | grep -E "^${db} .*healthy" >/dev/null || {
+      echo "[ERRO] $db não está healthy. Abortado sem iniciar core-api." >&2
+      exit 1
+    }
+  done
+  docker ps --format '{{.Names}} {{.Status}}' | grep -E '^delpi-hml-keycloak .*healthy' >/dev/null || {
+    echo "[ERRO] delpi-hml-keycloak não está healthy. Abortado." >&2
+    exit 1
+  }
+  docker ps --format '{{.Names}} {{.Status}}' | grep -E '^delpi-hml-gateway .*healthy' >/dev/null || {
+    echo "[ERRO] delpi-hml-gateway não está healthy. Abortado." >&2
+    exit 1
+  }
+
+  # Confirma destino DB exclusivo HML (não prod) via env do compose renderizado.
+  local db_host
+  db_host="$(
+    cd "$COMPOSE_DIR"
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile core-api \
+        config --format json \
+      | python3 -c 'import json,sys; s=json.load(sys.stdin)["services"]["core-api"]["environment"];
+print(s.get("DB_HOST") if isinstance(s,dict) else "")'
+  )"
+  if [[ "$db_host" != "postgres-core" ]]; then
+    echo "[ERRO] DB_HOST renderizado='$db_host' (esperado postgres-core). STOP." >&2
+    exit 1
+  fi
+
+  echo "ATIVACAO=core-api"
+  echo "project=$PROJECT"
+  echo "env=infra/$ENV_LOCAL"
+  echo "servicos=core-api"
+  echo "modo=build core-api + up -d --no-deps (migrations Alembic no Postgres Core HML)"
+  echo "redis=nao_iniciado (stores memory)"
+
+  (
+    cd "$COMPOSE_DIR"
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile core-api \
+        build core-api
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile core-api \
+        up -d --no-deps --no-build core-api
+  )
+  wait_healthy core-api "$env_file" core-api
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_CORE_API
+
+  # Smoke via gateway (sem token)
+  local code
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 15 \
+    http://192.168.1.237:18080/core-api/health || echo FAIL)"
+  if [[ "$code" != "200" ]]; then
+    echo "[ERRO] /core-api/health via gateway retornou $code (esperado 200). STOP." >&2
+    exit 1
+  fi
+
+  echo "HML_CORE_API_UP=PASS"
+  docker ps --filter name=delpi-hml --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+}
+
+cmd_up_portal() {
+  local env_file
+  env_file="$(require_local_env)"
+  assert_no_prod_markers_in_env "$env_file"
+
+  docker ps --format '{{.Names}} {{.Status}}' | grep -E '^delpi-hml-keycloak .*healthy' >/dev/null || {
+    echo "[ERRO] delpi-hml-keycloak não está healthy. Abortado." >&2
+    exit 1
+  }
+  docker ps --format '{{.Names}} {{.Status}}' | grep -E '^delpi-hml-core-api .*healthy' >/dev/null || {
+    echo "[ERRO] delpi-hml-core-api não está healthy (Gate A). Abortado." >&2
+    exit 1
+  }
+  docker ps --format '{{.Names}} {{.Status}}' | grep -E '^delpi-hml-gateway .*healthy' >/dev/null || {
+    echo "[ERRO] delpi-hml-gateway não está healthy. Abortado." >&2
+    exit 1
+  }
+
+  # Guard bake-time: VITE_* devem apontar para HML HTTP LAN.
+  local vite_blob
+  vite_blob="$(grep -E '^VITE_KC_(URL|REALM|CLIENT_ID|REDIRECT_URI)=' "$COMPOSE_DIR/$ENV_LOCAL" || true)"
+  if ! grep -Eq '^VITE_KC_URL=http://192\.168\.1\.237:18080/auth' <<<"$vite_blob"; then
+    echo "[ERRO] VITE_KC_URL HML ausente/divergente. STOP (evita bake produtivo)." >&2
+    exit 1
+  fi
+  if ! grep -Eq '^VITE_KC_REDIRECT_URI=http://192\.168\.1\.237:18080/' <<<"$vite_blob"; then
+    echo "[ERRO] VITE_KC_REDIRECT_URI HML ausente/divergente. STOP." >&2
+    exit 1
+  fi
+  if grep -Eiq 'minhadelpi\.com\.br' <<<"$vite_blob"; then
+    echo "[ERRO] VITE_KC_* referencia produção. STOP." >&2
+    exit 1
+  fi
+
+  echo "ATIVACAO=portal"
+  echo "project=$PROJECT"
+  echo "env=infra/$ENV_LOCAL"
+  echo "servicos=portal"
+  echo "modo=build portal (VITE HML) + up -d --no-deps"
+  echo "plugin-ui=nao_iniciado"
+
+  (
+    cd "$COMPOSE_DIR"
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile portal \
+        build portal
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile portal \
+        up -d --no-deps --no-build portal
+  )
+  wait_healthy portal "$env_file" portal
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PORTAL
+
+  local code
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 15 \
+    http://192.168.1.237:18080/ || echo FAIL)"
+  if [[ "$code" != "200" ]]; then
+    echo "[ERRO] / via gateway retornou $code (esperado 200). STOP." >&2
+    exit 1
+  fi
+
+  # Bundle não deve conter domínio produtivo
+  if docker exec delpi-hml-portal sh -c 'grep -R -l minhadelpi.com.br /usr/share/nginx/html 2>/dev/null | head -5' | grep -q .; then
+    echo "[ERRO] assets do Portal HML contêm minhadelpi.com.br. STOP." >&2
+    exit 1
+  fi
+
+  echo "HML_PORTAL_UP=PASS"
+  docker ps --filter name=delpi-hml --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+}
+
 SCENARIO="baseline"
 SERVICES=""
 ACTION="${1:-}"
@@ -576,6 +803,8 @@ case "$ACTION" in
       databases) cmd_up_databases ;;
       keycloak) cmd_up_keycloak ;;
       gateway) cmd_up_gateway ;;
+      core-api) cmd_up_core_api ;;
+      portal) cmd_up_portal ;;
       *) refuse_activation "up --scenario $SCENARIO" ;;
     esac
     ;;
