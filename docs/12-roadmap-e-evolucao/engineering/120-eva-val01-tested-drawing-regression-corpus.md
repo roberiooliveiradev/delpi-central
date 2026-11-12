@@ -823,3 +823,19 @@ baseline). Fix: merge por coincidência de centro de banda
 - Multiplicidade preservada (mesmo código em páginas/pais distintos).
 - p10 residual honesto: `A1` item None (evidência insuficiente — não
   fabricado).
+
+## PRODUCTION DEPLOY — field completeness + multipage reconciliation — 2026-11-12
+
+| Campo | Valor |
+|---|---|
+| Deployed commit | `baaf0aa05d` (≡ origin/main; `a154ee559f` ancestral) |
+| understanding.py blob | `639dae31509e…` ≡ candidato testado |
+| Imagem | `infra-engineering-api:latest` `0c29de92f0f8` |
+| Health | container healthy, `/apps/engineering-api/health` 200 |
+| Rollback | `pre-g5-a380c852bc-rollback`, `pre-dec043-e59a13f688-rollback` |
+| E2E autenticado | PENDING_COORDINATION (rober/consumidor EVA) |
+| Residual | REAL_PDF pipeline não reexecutado; validação por GT G1 + replay |
+
+Plano pós-deploy (Coordination): `90264004` A9/AA×478/479; `90264061`
+A1–A6; controles 302/174/275/128/138; multipágina 017/135 vs
+baselines+GT (não homologados).

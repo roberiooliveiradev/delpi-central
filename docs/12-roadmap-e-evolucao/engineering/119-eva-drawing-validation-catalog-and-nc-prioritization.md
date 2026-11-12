@@ -2785,3 +2785,26 @@ são a melhor evidência visual disponível no host.
 **Gate:** reconciliação completa, zero perda de ocorrência legítima
 comprovada por GT; remoções = duplicatas fundidas ou correções.
 Detalhe por delta no Doc 120.
+
+## 76. Deploy produtivo — completude de campos + reconciliação — 2026-11-12
+
+**TASK_ID:** `EVA-VAL01-FIELD-COMPLETENESS-PRODUCTION-RELEASE`.
+Coordination gate `PASS_FOR_CODE_RELEASE_WITH_DOCUMENTED_RESIDUAL`.
+
+**Deploy:** srv-api `git pull --ff-only` (HEAD `baaf0aa05d` ≡
+origin/main; `a154ee559f` ancestral) +
+`up-prod-sequential.sh --build engineering-api`. Imagem
+`infra-engineering-api:latest` `sha256:0c29de92f0f8` (11:45 UTC);
+container `delpi-engineering-api` healthy; gateway `/health` 200.
+
+**Identidade do artefato:** blob `understanding.py` no container
+`639dae3150…` ≡ blob do candidato `a154ee559f` (byte-a-byte).
+`_merge_same_band_rows`/`_recover_item_markers`/`anchor_codes`/
+`conflicting_fields` presentes no runtime; `_recover_orphan_component_codes`
+ausente; zero literal de produto/página na lógica.
+
+**Rollback:** imagens `pre-g5-a380c852bc-rollback` e
+`pre-dec043-e59a13f688-rollback` preservadas + `git revert` das
+frentes EVA. Residual conhecido: verificação por render físico não
+executada (GT G1 + token-geometry como evidência visual).
+E2E autenticado pós-deploy fica para a Coordination/consumidor EVA.
