@@ -97,7 +97,12 @@ export type ServerNote = {
   created_at: string;
 };
 
+export type HostServiceCriticality = "normal" | "high" | "critical";
+
 export type HostService = {
+  service_key: string;
+  is_favorite: boolean;
+  criticality: HostServiceCriticality;
   name: string;
   display_name: string;
   description: string | null;
@@ -110,6 +115,7 @@ export type HostService = {
 };
 
 export type HostServicesPage = {
+  favorites_count: number;
   items: HostService[];
   total: number;
   page: number;
@@ -118,6 +124,7 @@ export type HostServicesPage = {
 };
 
 export type HostServiceQuery = {
+  favorites_only?: boolean;
   q?: string;
   state?: string;
   start_mode?: string;
@@ -503,6 +510,7 @@ export type Capabilities = {
   display_name: string;
   can_view_servers: boolean;
   can_manage_servers: boolean;
+  can_manage_host_services: boolean;
   can_create_notes: boolean;
   can_view_action_plans: boolean;
   can_manage_action_plans: boolean;
@@ -623,6 +631,9 @@ export const itPortalApi = {
     ),
   listHostServices: (serverId: string, query: HostServiceQuery, signal?: AbortSignal) =>
     apiGet<HostServicesPage>(apiUrl(`/servers/${encodeURIComponent(serverId)}/host-services`, query), signal),
+  setHostServicePreference: (serverId: string, serviceKey: string, input: { is_favorite: boolean; criticality: HostServiceCriticality }) =>
+    apiPut<{ service_key: string; is_favorite: boolean; criticality: HostServiceCriticality }>(
+      apiUrl(`/servers/${encodeURIComponent(serverId)}/host-services/${encodeURIComponent(serviceKey)}/preferences`), input),
   listObservations: (serverId: string, signal?: AbortSignal) =>
     apiGet<Observation[]>(apiUrl(`/servers/${encodeURIComponent(serverId)}/observations`), signal),
 
