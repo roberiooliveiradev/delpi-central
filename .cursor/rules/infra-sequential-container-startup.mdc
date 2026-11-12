@@ -17,8 +17,9 @@ Doc operacional: `infra/README-ambiente.md` § **Inicialização segura de conta
 |--------|----------|---------|
 | `infra/scripts/up-dev-sequential.sh` | Desenvolvimento (WSL/local) | `docker-compose.dev.yml` + `minimal.yml` + profiles |
 | `infra/scripts/up-prod-sequential.sh` | Produção (`srv-api`, deploy) | `docker-compose.yml` (+ `prod.cpu.yml` com `--cpu`) |
+| `infra/scripts/up-hml-sequential.sh` | Homologação (`delpi-hml`) | `docker-compose.hml.yml` + `.env.hml` |
 
-Ambos definem `COMPOSE_PARALLEL_LIMIT=1`, sobem **um serviço por vez**, aguardam Postgres quando necessário e respeitam a ordem **core → chat (prod) → remote (`plugin-ui`) → mfe → api**.
+Os três definem `COMPOSE_PARALLEL_LIMIT=1`, sobem **um serviço por vez**, aguardam Postgres quando necessário e respeitam a ordem **core → (chat em prod) → remote (`plugin-ui`) → mfe → api**. HML só lista serviços do inventário atual do compose HML; `hml-compose.sh` fica para validate/simulate e ativação gated.
 
 ## Pré-condição de produção (obrigatório)
 
@@ -61,9 +62,15 @@ Orientar o script sequencial quando o usuário:
 ./infra/scripts/up-prod-sequential.sh --fase remote --build plugin-ui
 ./infra/scripts/up-prod-sequential.sh --fase mfe --build dashboard-commercial
 ./infra/scripts/up-prod-sequential.sh --build 'minha*'
+
+# HML — inventário fechado (16 serviços atuais)
+./infra/scripts/up-hml-sequential.sh --list
+./infra/scripts/up-hml-sequential.sh --pull --build
+./infra/scripts/up-hml-sequential.sh --fase api --build engineering-api
+./infra/scripts/up-hml-sequential.sh --build '*-api'
 ```
 
-Executar **a partir da raiz do repo** (`./infra/scripts/...`). O script prod usa `infra/.env`; o dev idem (`cp infra/.env.dev.example infra/.env`).
+Executar **a partir da raiz do repo** (`./infra/scripts/...`). O script prod usa `infra/.env`; o dev idem (`cp infra/.env.dev.example infra/.env`); HML usa `infra/.env.hml` (`cp infra/env.hml.example`).
 
 ## O que NÃO recomendar
 

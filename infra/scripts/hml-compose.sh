@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Homologação delpi-hml — operação controlada.
+# Homologação delpi-hml — ativação gated por cenário + leituras/simulação.
 #
-# Leitura/simulação: list, validate, config, simulate, status.
-# Ativação autorizada:
-#   - databases    → postgres-core, keycloak-db, postgres-plugins
-#   - keycloak     → somente o serviço keycloak (--no-deps; DB já ativo)
-#   - gateway      → somente delpi-hml-gateway (build imagem HML; --no-deps; exige certs TLS)
-#   - core-api     → somente delpi-hml-core-api (build; migrations no Postgres Core HML)
-#   - portal       → somente delpi-hml-portal (build Vite HML HTTPS; exige Core healthy)
-#   - tls-activate → cutover HTTPS coordenado (gateway+keycloak+bootstrap+core-api+portal)
-# Qualquer outro up/build/pull/down/stop continua recusado.
-# Redis, API DELPI, Plugin UI e Production Control permanecem bloqueados.
+# Dia a dia (rebuild/subir qualquer serviço do inventário HML atual):
+#   ./infra/scripts/up-hml-sequential.sh --list
+#   ./infra/scripts/up-hml-sequential.sh --build engineering-api
+#   ./infra/scripts/up-hml-sequential.sh --fase api --build
+# (espelho de up-prod-sequential.sh; inventário = docker-compose.hml.yml)
+#
+# Este script permanece para:
+#   - list / validate / config / simulate / status
+#   - up --scenario <um cenário> na primeira ativação (hooks TLS/bootstrap/allowlist)
+#   - bootstrap-keycloak
 #
 # Uso, a partir da raiz do repositório:
 #   ./infra/scripts/hml-compose.sh list
@@ -34,7 +34,7 @@
 #   ./infra/scripts/hml-compose.sh up --scenario engineering-api
 #   ./infra/scripts/hml-compose.sh up --scenario engineering
 #   ./infra/scripts/hml-compose.sh bootstrap-keycloak
-#   ./infra/scripts/hml-compose.sh up|down|stop|build|pull   # demais: recusa
+#   ./infra/scripts/up-hml-sequential.sh   # preferir para rebuild/up genérico
 
 set -euo pipefail
 
@@ -204,7 +204,8 @@ refuse_activation() {
   echo "HOMOLOGATION_ACTIVATION_NOT_AUTHORIZED" >&2
   echo "Ação '$action' não executada fora dos profiles autorizados." >&2
   echo "Autorizados: up --scenario databases|keycloak|gateway|core-api|portal|tls-activate|redis|api-delpi|plugin-ui|production-control-api|production-control-ui|requests-api|my-requests|engineering-api|engineering | bootstrap-keycloak." >&2
-  echo "Profiles amplos baseline/platform/production-control continuam bloqueados como up único." >&2
+  echo "Dia a dia / qualquer serviço do inventário HML: ./infra/scripts/up-hml-sequential.sh --build <serviço>" >&2
+  echo "Profiles amplos baseline/platform/production-control continuam bloqueados como up único neste script." >&2
   exit 2
 }
 

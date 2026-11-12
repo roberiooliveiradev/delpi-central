@@ -59,6 +59,8 @@ O Compose lê **`infra/.env`** por padrão quando o comando é executado com `-f
 |--------|-------------|
 | [`scripts/up-dev-sequential.sh`](scripts/up-dev-sequential.sh) | Desenvolvimento local / WSL — rebuild de plugins, stack com chat ou MFEs |
 | [`scripts/up-prod-sequential.sh`](scripts/up-prod-sequential.sh) | Produção (`srv-api`) — deploy, `git pull`, rebuild após merge |
+| [`scripts/up-hml-sequential.sh`](scripts/up-hml-sequential.sh) | Homologação (`delpi-hml`) — rebuild/up de qualquer serviço do inventário HML atual |
+| [`scripts/hml-compose.sh`](scripts/hml-compose.sh) | Homologação — validate/simulate + ativação gated por cenário (TLS/bootstrap) |
 
 ### Desenvolvimento
 
@@ -174,20 +176,35 @@ Cada serviço sobe com `up -d --no-deps` (a ordem vem do script, não do `depend
 
 Checkout independente em `/home/operador/projetos-teste/delpi-central`. A VM só consome o Git: `git fetch` e, quando autorizado, `git pull --ff-only`. Não há commit, push nem hook de deploy nesse checkout. O remoto de leitura usa o alias `github.com-delpi-hml` e uma Deploy Key sem permissão de escrita, separado do HTTPS de produção.
 
-Não compartilha `infra/.env`, volumes ou a rede da produção. O Compose estende o cenário-base de `docker-compose.yml`.
+Não compartilha `infra/.env`, volumes ou a rede da produção. O Compose HML (`docker-compose.hml.yml`) declara o inventário fechado atual (16 serviços). Dia a dia, use o sequencial — espelho do prod:
 
 ```bash
 cp infra/env.hml.example infra/.env.hml   # só no checkout de homologação; fora do Git
+
+./infra/scripts/up-hml-sequential.sh --list
+
+# Rebuild/up de qualquer serviço do inventário HML (um por vez, --no-deps)
+./infra/scripts/up-hml-sequential.sh --pull --build
+./infra/scripts/up-hml-sequential.sh --fase api --build engineering-api requests-api
+./infra/scripts/up-hml-sequential.sh --fase mfe --build my-requests engineering
+./infra/scripts/up-hml-sequential.sh --build '*-api'
+./infra/scripts/up-hml-sequential.sh --dry-run --fase core gateway
+```
+
+Fases HML: `core` (postgres*, redis, keycloak, core-api, api-delpi, portal, gateway) → `remote` (`plugin-ui`) → `mfe` → `api`. O script falha se o compose ganhar serviço novo sem atualizar as fases (drift de inventário). Hooks: dirs em `hml-data/` + `hml-provision-eng-prc.sh` ao subir `engineering-api` (desligável com `--skip-provision`).
+
+Ativação gated / validação / bootstrap Keycloak continuam em `hml-compose.sh`:
+
+```bash
 ./infra/scripts/hml-compose.sh list
 ./infra/scripts/hml-compose.sh validate
 ./infra/scripts/hml-compose.sh simulate --scenario databases
-./infra/scripts/hml-compose.sh up --scenario databases   # somente os 3 PostgreSQL
+./infra/scripts/hml-compose.sh up --scenario databases   # primeira ativação por cenário
+./infra/scripts/hml-compose.sh bootstrap-keycloak
 ./infra/scripts/hml-compose.sh status
 ```
 
-`up` sem `--profile` não seleciona serviço. Perfis: `databases` (somente os três PostgreSQL), `platform` (portal, core, api-delpi, plugin-ui, Keycloak, Postgres, Redis, gateway) e `baseline` / `production-control` (o anterior mais Production Control). Gateway planejado em `127.0.0.1:18080`, rede `delpi-hml-network`, volumes `delpi-hml-*`, dados em `infra/hml-data/`. Keycloak segue a imagem `quay.io/keycloak/keycloak:24.0` e o `start` de produção, com banco, hostname parametrizado (`DELPI_HML_PUBLIC_HOST`) e segredos próprios — não inicia na etapa databases.
-
-Nesta etapa o script autoriza `up --scenario databases` e `up --scenario keycloak` (Keycloak com `--no-deps`, sem gateway/apps). `build`, `pull`, `down`, `stop` e demais profiles de `up` permanecem recusados. Entrada HTTP LAN planejada em `${DELPI_HML_BIND_ADDR}:18080` (ex.: `http://192.168.1.237:18080`); sem HTTPS nesta fase. TOTVS, e-mail, Protheus, schedulers, publicadores MyWEG, Ollama, LanguageTool e o Nginx do host permanecem fora. Bootstrap mínimo: `./infra/scripts/hml-compose.sh bootstrap-keycloak`.
+Rede `delpi-hml-network`, volumes `delpi-hml-*`, dados em `infra/hml-data/`, entrada HTTPS em `${DELPI_HML_PUBLIC_ORIGIN}` (ex.: `https://192.168.1.237:18443`). TOTVS, e-mail, Protheus, schedulers, MyWEG, Ollama, LanguageTool e o Nginx do host permanecem fora do inventário HML atual.
 
 ### Evitar
 

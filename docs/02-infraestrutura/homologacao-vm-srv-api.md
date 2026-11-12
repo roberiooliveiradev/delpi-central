@@ -219,5 +219,6 @@ Relatório operacional anterior: `HOMOLOGATION_PLATFORM_SERVICES_ACTIVATION_REPO
 
 - `portal/src/data/keycloakClient.ts`, `keycloak-js@26.2.3`
 - `infra/scripts/hml-tls-prepare.sh`, `infra/scripts/hml-compose.sh` (`tls-activate`)
+- `infra/scripts/up-hml-sequential.sh` — dia a dia (espelho de `up-prod-sequential.sh` para o inventário HML)
 - `gateway/nginx.hml.conf`, `gateway/snippets/hml-proxy-locations.conf`, `gateway/Dockerfile.hml`
 - `infra/env.hml.example`, `infra/docker-compose.hml.yml`
