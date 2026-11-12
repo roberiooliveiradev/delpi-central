@@ -275,10 +275,19 @@ services:
       file: docker-compose.yml
       service: portal
     # Profile `portal`: up isolado após Gate A (script exige core-api healthy).
-    # Build args VITE_KC_* vêm do --env-file .env.hml (bake-time; nunca imagem prod).
+    # Build args VITE_* vêm do --env-file .env.hml (bake-time; nunca imagem prod).
     profiles: [portal, baseline, platform, production-control]
     image: delpi-hml/portal:local
     container_name: delpi-hml-portal
+    build:
+      context: ..
+      dockerfile: portal/Dockerfile.prod
+      args:
+        VITE_KC_URL: ${VITE_KC_URL}
+        VITE_KC_REALM: ${VITE_KC_REALM}
+        VITE_KC_CLIENT_ID: ${VITE_KC_CLIENT_ID}
+        VITE_KC_REDIRECT_URI: ${VITE_KC_REDIRECT_URI}
+        VITE_FRONT_CHANNEL_LOGOUT_URLS: ${VITE_FRONT_CHANNEL_LOGOUT_URLS:-__none__}
     ports: !override []
     depends_on: !override {}
     networks: !override

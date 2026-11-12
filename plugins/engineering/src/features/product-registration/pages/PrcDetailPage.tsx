@@ -28,6 +28,7 @@ import {
   prcUpdateReturnedFields,
   type PrcFieldResult,
   type PrcReturnedFieldChange,
+  type PrcCorrectionTargetErrors,
   type PrcFieldSpec,
   type PrcRequestDetail,
   type PrcRevisionSummary,
@@ -331,6 +332,7 @@ export function PrcDetailPage({
       if (!detail || busy) return;
       setBusy(true);
       setFeedback(null);
+      setCorrectionFieldErrors({});
       try {
         const res = await prcUpdateReturnedFields(
           requestId,
@@ -345,6 +347,13 @@ export function PrcDetailPage({
         await load();
       } catch (e) {
         const err = e as HomeApiError;
+        /* FIX-12/AC-09 — fields identificáveis do contrato viram
+         * erro contextual no editor; o restante permanece global. */
+        const { targetErrors } = mapApiFieldsToCorrectionErrors(
+          (err as { fields?: Record<string, string> }).fields,
+          changes,
+        );
+        setCorrectionFieldErrors(targetErrors);
         setFeedback({
           kind: "error",
           text:

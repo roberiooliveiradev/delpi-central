@@ -104,20 +104,26 @@ function clearLoginRedirectGuard(): void {
  *
  * Exemplo:
  * VITE_FRONT_CHANNEL_LOGOUT_URLS=https://app1/logout-from-parent,https://app2/logout-from-parent
+ *
+ * Homologação: `VITE_FRONT_CHANNEL_LOGOUT_URLS=__none__` evita bake de URLs
+ * produtivas no bundle (filhos SSO fora do escopo HML).
+ * Build sem a variável (ou `USE_DEFAULT`) preserva os defaults produtivos.
  */
 function getFrontChannelLogoutUrls(): string[] {
   const raw = import.meta.env.VITE_FRONT_CHANNEL_LOGOUT_URLS;
 
-  if (!raw || typeof raw !== "string") {
+  if (raw === undefined || raw === "USE_DEFAULT") {
     return DEFAULT_FRONT_CHANNEL_LOGOUT_URLS;
   }
 
-  const urls = raw
+  if (typeof raw !== "string" || raw.trim() === "" || raw.trim() === "__none__") {
+    return [];
+  }
+
+  return raw
     .split(",")
     .map((url) => url.trim())
     .filter(Boolean);
-
-  return urls.length > 0 ? urls : DEFAULT_FRONT_CHANNEL_LOGOUT_URLS;
 }
 
 export const AuthContext = createContext<AuthContextType>({
