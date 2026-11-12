@@ -1760,6 +1760,22 @@ def _is_group_anchor_cell(cell: dict) -> bool:
     return _group_anchor_code_of(cell) is not None
 
 
+def _fragment_group_code_of(cell: dict) -> str | None:
+    """Código de conjunto em fragmento de banda de célula-âncora.
+
+    Só deve ser chamado em fragmentos ``_from_group_anchor``: a
+    proveniência (banda projetada de uma célula com rowspan
+    declarado em coluna de âncoras) já garante que ``<letra>
+    <código>`` é marcador de seção/código de conjunto — não par
+    item/componente de linha comum, para o qual o prefixo por
+    letra permanece proibido."""
+    code = _group_code_of(_cell_text(cell))
+    if code is not None:
+        return code
+    m = _GROUP_PREFIXED_CODE_RE.match(_cell_text(cell))
+    return m.group(1) if m else None
+
+
 def _line_is_canonical_field_band(text: str) -> bool:
     """Banda textual que, sozinha, já é campo tipado de ocorrência.
 
@@ -2690,7 +2706,12 @@ def rows_from_native_cells(
     # linha, a âncora estrutural declarada (rowspan) prevalece sobre a
     # inferida por coluna (column_span) — o span declarado é evidência
     # mais forte que a extensão até o próximo código.
-    _ANCHOR_RANK = {"column_span": 0, "rowspan_anchor": 1}
+    _ANCHOR_RANK = {
+        "column_span": 0,
+        "recovered_fused_anchor": 0,
+        "recovered_token_anchor": 0,
+        "rowspan_anchor": 1,
+    }
     group_anchors.sort(
         key=lambda a: (a[0], _ANCHOR_RANK.get(a[3], 0), a[1])
     )
@@ -2714,6 +2735,152 @@ def rows_from_native_cells(
     steps.sort()
     median_step = steps[len(steps) // 2] if steps else 18.0
     band_gap_px = median_step * 0.6
+    # Âncoras recuperadas por evidência de banda (percepção VAL-01):
+    # (a) fragmento de banda de célula-âncora carregando OUTRO
+    # código de conjunto — a SLANet fundiu dois grupos numa célula;
+    # (b) token órfão com código de conjunto na faixa-X da coluna-
+    # pai — código real sem célula emitida. A cobertura começa na
+    # primeira linha cuja banda dominante alcança a banda do código
+    # recuperado: a linha que hospeda o fragmento pode ainda
+    # pertencer ao grupo anterior. Código que também aparece como
+    # componente da tabela nunca ancora (par item/componente não é
+    # conjunto).
+    component_col_codes: set[str] = set()
+    for _r in data_row_indices:
+        for _c in grouped.get(_r, []):
+            if col_types.get(int(_c.get("col") or 0)) == "component_code":
+                component_col_codes.update(
+                    _CODE_FIND_RE.findall(_cell_text(_c))
+                )
+
+    def _anchor_start_row(from_row: int, cy: float) -> int | None:
+        return next(
+            (
+                r
+                for r in data_row_indices
+                if r >= from_row
+                and row_cy.get(r) is not None
+                and row_cy[r] >= cy - band_gap_px
+            ),
+            None,
+        )
+
+    recovered_any = False
+    for _r in data_row_indices:
+        for _c in grouped.get(_r, []):
+            if not _c.get("_from_group_anchor"):
+                continue
+            _code = _fragment_group_code_of(_c)
+            if (
+                not _code
+                or _code in anchor_codes
+                or _code in component_col_codes
+            ):
+                continue
+            _cy = _group_anchor_cy(_c)
+            if _cy is None:
+                continue
+            _start = _anchor_start_row(_r, _cy)
+            if _start is None:
+                continue
+            _next = next(
+                (a[0] for a in group_anchors if a[0] > _start),
+                data_row_indices[-1] + 1 if data_row_indices else _start + 1,
+            )
+            if _next - _start < 1:
+                continue
+            _register_group_anchor(
+                _start, _code, _next - _start, _c,
+                "recovered_fused_anchor",
+            )
+            anchor_codes.add(_code)
+            recovered_any = True
+    # Token órfão com código de conjunto na faixa-X da coluna-pai:
+    # o OCR viu o código dentro da região da tabela, mas a SLANet
+    # não emitiu a célula. Só cobre linhas ainda sem âncora
+    # estrutural — um código solto nunca divide um bloco já provado.
+    if marker_tokens:
+        # Faixa-X da região de âncoras: união da coluna-pai tipada
+        # com o envelope X das células-âncora já registradas —
+        # o código de conjunto vive na região das âncoras, que
+        # pode atravessar mais de uma coluna (célula fundida).
+        _pxs: list[float] = []
+        for _r in data_row_indices:
+            for _c in grouped.get(_r, []):
+                if not (
+                    int(_c.get("col") or 0) in parent_code_cols
+                    or _is_group_anchor_cell(_c)
+                    or _c.get("_from_group_anchor")
+                ):
+                    continue
+                _b = _c.get("bounding_box_px") or []
+                if len(_b) >= 8:
+                    _pxs.extend((min(_b[0::2]), max(_b[0::2])))
+        if _pxs:
+            _px_lo = min(_pxs) - 6.0
+            _px_hi = max(_pxs) + 6.0
+            _covered_rows: set[int] = set()
+            for _arow, _acode, _aspan, _asrc in group_anchors:
+                _covered_rows.update(range(_arow, _arow + _aspan))
+            for _tok in marker_tokens:
+                if int(_tok.get("page") or page) != page:
+                    continue
+                _t = _norm(
+                    str(
+                        _tok.get("raw_text")
+                        or _tok.get("normalized_text")
+                        or _tok.get("text")
+                        or ""
+                    )
+                )
+                _code = _group_code_of(_t)
+                if (
+                    not _code
+                    or _code in anchor_codes
+                    or _code in component_col_codes
+                ):
+                    continue
+                _b = _tok.get("bounding_box_px") or _tok.get("box") or []
+                if len(_b) < 4:
+                    continue
+                _xs = [float(_b[i]) for i in range(0, len(_b), 2)]
+                _ys = [float(_b[i]) for i in range(1, len(_b), 2)]
+                _tcx = (min(_xs) + max(_xs)) / 2.0
+                _tcy = (min(_ys) + max(_ys)) / 2.0
+                if not (_px_lo <= _tcx <= _px_hi):
+                    continue
+                _start = next(
+                    (
+                        r
+                        for r in data_row_indices
+                        if r not in _covered_rows
+                        and row_cy.get(r) is not None
+                        and row_cy[r] >= _tcy - band_gap_px
+                    ),
+                    None,
+                )
+                if _start is None:
+                    continue
+                _next = next(
+                    (a[0] for a in group_anchors if a[0] > _start),
+                    data_row_indices[-1] + 1
+                    if data_row_indices
+                    else _start + 1,
+                )
+                if _next - _start < 1:
+                    continue
+                _register_group_anchor(
+                    _start, _code, _next - _start, _tok,
+                    "recovered_token_anchor",
+                )
+                anchor_codes.add(_code)
+                _covered_rows.update(range(_start, _next))
+                recovered_any = True
+    if recovered_any:
+        group_anchors.sort(
+            key=lambda a: (a[0], _ANCHOR_RANK.get(a[3], 0), a[1])
+        )
+        group_y_anchors.sort(key=lambda a: a[0])
     rows_out: list[dict] = []
     prev_dominant_cy: float | None = None
     for row_index in sorted(grouped):
