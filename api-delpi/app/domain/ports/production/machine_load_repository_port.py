@@ -43,6 +43,7 @@ class MachineLoadRepositoryPort(ABC):
         *,
         branch: str,
         production_orders: list[str],
+        include_deleted: bool = False,
     ) -> list[dict[str, Any]]:
         ...
 
