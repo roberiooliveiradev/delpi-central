@@ -3182,3 +3182,37 @@ primário-sozinho, fallback por falta de evidência, fallback por erro)
 `ARCHITECTURE_DECISION_REQUIRED=NO`, `RELEASE_GATE=PASS` (candidato).
 Produção não alterada nesta tarefa. `VAL01_COMPLETED=false`
 (homologação visual de qualidade segue pendente do owner).
+
+## 83. Deploy produtivo do fix multipágina — 2026-11-12
+
+**TASK_ID:** `EVA-VAL01-MULTIPAGE-PRODUCTION-DEPLOY`
+
+| Item | Valor |
+|---|---|
+| Código implantado | `a5a465bf44` (origin/main; único diff em `engineering-api` = `424ba095c0`) |
+| Imagem anterior (rollback) | `sha256:27eb1e1b…` — preservada no host |
+| Imagem implantada | `sha256:f3d640c406bfc2ec25466dcda8024646316e08425db25a107381a1067cc58663` |
+| Procedimento | `up-prod-sequential.sh --build engineering-api` — somente o serviço; Keycloak/Core/api-delpi/CIFS/.env/`JOB_RUNNING_CAP_S` intocados |
+| Health | container `healthy`; `/health` 200 interno; gateway 200 |
+| Fix no runtime | `_run_understanding_visual_benchmark` presente; F1 (`d11a7d761d`) preservado |
+| Gate de código | 8/8 testes (pipeline selection + job store + offload) |
+
+**Smoke multipágina — `90264135` REAL_PDF em PROD**
+(job `aj-547c28cde3774672`, COMPLETED em **~182 s**, PDF sha
+`af47dd4c…` = esperado): **paridade total com DEV** —
+
+| Critério | DEV | PROD |
+|---|---:|---:|
+| Páginas OCR | 13/13 | 13/13 |
+| Tokens | 2 775 | 2 775 |
+| Ocorrências únicas | 280 | 280 |
+| IDENTIFIED / UNKNOWN | 198 / 82 | 198 / 82 |
+| Linhas `association_conflict` | 24 | 24 |
+| Duração | ~396 s | ~182 s |
+
+Itens-alvo idênticos: p10 `A2|16|10080192`→90264135 IDENTIFIED
+`rowspan_anchor`; p12 `A9|1|10120148`→90264135 IDENTIFIED; p13
+AQ/AR/AS→`50225749` IDENTIFIED `rowspan_anchor`. `UNKNOWN` e
+incertezas preservados; pipeline `pdfium_render_paddleocr` único —
+fallback opencv não disparado. Rollback disponível, não executado.
+`VAL01_COMPLETED=false` (homologação visual segue com o owner).
