@@ -336,6 +336,10 @@ class InvestigationDeps:
     # One-shot owner_argument_rejected recovery via ModelRetry with
     # the owner validation hint — never infinite equivalent retries.
     owner_argument_retry_used: bool = False
+    # One-shot continuity nudge when an observation made NO_PROGRESS
+    # while user identifiers remain uncovered — never forces an owner
+    # or capability; asks the model to re-select from live contracts.
+    no_progress_continuity_retry_used: bool = False
 
 
 # Keys that must survive projection overflow — continuity, provenance,
@@ -677,6 +681,12 @@ def _attempt_projection(
     elif progress == INVESTIGATION_PROGRESS_DISCOVERY:
         projection["coverage_note"] = (
             "Discovery/catalog metadata is not business evidence."
+        )
+    elif progress == INVESTIGATION_PROGRESS_NONE and uncovered_after:
+        projection["coverage_note"] = (
+            "No objective progress for open identifiers. Preserve the "
+            "original objective and select a different live capability "
+            "whose description matches the still-missing evidence."
         )
     # Surface open identifiers in the same projection the Agent reads.
     # Callers historically appended these after ``_attempt_projection``,
@@ -1445,6 +1455,27 @@ class PydanticAiInvestigationOrchestrator:
                         "schema and any owner_validation_hint — do not "
                         "resubmit an equivalent rejected payload."
                     )
+            # Continuity: NO_PROGRESS with open identifiers must not
+            # silently become an unrelated specialist tour. One-shot
+            # ModelRetry re-asks for semantic re-selection — never
+            # names an owner or hardcodes a capability.
+            if (
+                projection.get("investigation_progress")
+                == INVESTIGATION_PROGRESS_NONE
+                and uncovered
+                and not ctx.deps.no_progress_continuity_retry_used
+                and ctx.deps.tool_calls < self._tool_calls_limit
+            ):
+                ctx.deps.no_progress_continuity_retry_used = True
+                raise ModelRetry(
+                    "Observation made no progress on open user "
+                    "identifiers. Preserve the original objective. "
+                    "Select a different live capability whose "
+                    "description and schema match the still-missing "
+                    "business evidence — do not repeat an equivalent "
+                    "call or treat guidance/documentation as "
+                    "operational records."
+                )
             return _proj(projection)
 
         # Prefetch live catalog once so each capability is a native tool.

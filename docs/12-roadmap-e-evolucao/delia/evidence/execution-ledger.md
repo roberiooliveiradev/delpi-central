@@ -6511,3 +6511,19 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `307-int1-provider-request-integrity-and-real-qwen-semantic-tool-selection-causal-evaluation.md`.
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_REAL_SEMANTIC_SELECTION_INDEPENDENT_REVIEW`.
+
+### INT-1 semantic selection + investigation continuity remediation — 2026-11-12
+
+- **TASK:** `DELIA-C3-T2-INT1-PROVIDER-NEUTRAL-SEMANTIC-SELECTION-AND-INVESTIGATION-CONTINUITY-REMEDIATION-01`.
+- **EXISTING_EQUIVALENT=YES**; **REUSE_DECISION=EXTEND** (instruction v2-1 + citability + projection/ModelRetry; harness `.env`).
+- **INSTRUCTION:** default `generalist-semantic-v2-1-object-continuity` / fp `4ebd5260b6cf9ba9`; historical v2 fp `7dbc94c5035b0f19` intact.
+- **FIXES:** GUIDANCE_NOT_DOMAIN_TRUTH non-citable; NO_PROGRESS continuity coverage_note; one-shot continuity ModelRetry; harness portal+OpenRouter key from `infra/.env`.
+- **TARGETED_TESTS:** `test_int1_semantic_continuity_remediation` + instruction resource (+ adjacent) PASS.
+- **EVAL:** `or-qwen14b-99c72442b8d9`; model `qwen/qwen3-14b`; profile `openrouter_qwen`; config `e4a5b706a3b3156b`; pydantic-ai `2.50.0`; TOTAL_INVESTIGATIONS=3; FULL_BATTERY=NOT_RUN.
+- **G1:** TEO-first → DAVI gps attempted; continuity notes YES; NOT_SATISFIED (AUTHZ).
+- **P1:** DAVI-first (control); NOT_SATISFIED (AUTHZ).
+- **M1:** TEO-first; notes YES; residual tour/args; NOT_SATISFIED.
+- **AGENT_COUNT=1**; **NEW_ROUTER=NO**; **NEW_PLANNER=NO**; **GOAL_DECLARATION_REQUIRED=NO**; **PROD_UNTOUCHED=YES**.
+- **Doc:** `308-int1-provider-neutral-semantic-selection-and-investigation-continuity-remediation-with-real-qwen-evaluation.md`.
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_SEMANTIC_CONTINUITY_INDEPENDENT_REVIEW`.

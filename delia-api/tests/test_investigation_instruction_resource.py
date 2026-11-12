@@ -18,23 +18,26 @@ from app.infrastructure.orchestration import pydantic_ai_investigation as pai
 
 
 _BASELINE = "generalist-semantic-v2"
+_DEFAULT = "generalist-semantic-v2-1-object-continuity"
 _CANDIDATE = "generalist-semantic-v3-objective-progress"
 _BASELINE_FP = "7dbc94c5035b0f19"
+_DEFAULT_FP = "4ebd5260b6cf9ba9"
 
 
 def test_shipped_resource_loads_and_selects_baseline() -> None:
     bundle = load_investigation_instructions(
         default_investigation_instructions_path()
     )
-    assert bundle.default_instruction_version == _BASELINE
+    assert bundle.default_instruction_version == _DEFAULT
     assert _BASELINE in bundle.instructions
+    assert _DEFAULT in bundle.instructions
     assert _CANDIDATE in bundle.instructions
     selected = bundle.select(None)
-    assert selected.instruction_version == _BASELINE
-    assert selected.text_fingerprint == _BASELINE_FP
+    assert selected.instruction_version == _DEFAULT
+    assert selected.text_fingerprint == _DEFAULT_FP
     assert (
         hashlib.sha256(selected.text.encode()).hexdigest()[:16]
-        == _BASELINE_FP
+        == _DEFAULT_FP
     )
 
 
@@ -44,13 +47,13 @@ def test_baseline_text_matches_historical_fingerprint() -> None:
         instruction_version=_BASELINE
     )
     assert selected.text_fingerprint == _BASELINE_FP
-    # Module compatibility exports also expose baseline at import.
-    assert pai._INVESTIGATION_INSTRUCTION_VERSION == _BASELINE
+    # Module compatibility exports expose the *default* at import.
+    assert pai._INVESTIGATION_INSTRUCTION_VERSION == _DEFAULT
     assert (
         hashlib.sha256(
             pai._INVESTIGATION_INSTRUCTIONS.encode()
         ).hexdigest()[:16]
-        == _BASELINE_FP
+        == _DEFAULT_FP
     )
 
 
@@ -126,7 +129,7 @@ def test_ablation_variants_load_distinct_fingerprints() -> None:
     assert fps["generalist-semantic-ablation-prog-v1"] == "7d38c1237ea79909"
     assert fps["generalist-semantic-ablation-disc-v1"] == "30d80637559e6ec8"
     assert len(set(fps.values())) == 3
-    assert bundle.default_instruction_version == _BASELINE
+    assert bundle.default_instruction_version == _DEFAULT
 
 
 def test_inline_instruction_constant_removed_from_source() -> None:

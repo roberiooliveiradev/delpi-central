@@ -2,7 +2,7 @@
 # INT-1 instrumented eval: OpenRouter qwen/qwen3-14b (profile openrouter_qwen).
 # - No openrouter_local_egress_proxy
 # - No docker exec printenv from production
-# - Selective keys from infra/.env + DEV portal from infra/.env.local
+# - Selective keys from infra/.env (LLM + exchange + DEV portal)
 # - Host-persistent traces under delia-api/.battery/
 set -euo pipefail
 
@@ -76,7 +76,10 @@ chmod 600 "${EVAL_ENV}"
   echo "DELIA_APP_ROOT=/app"
 } >>"${EVAL_ENV}"
 
-# Selective secrets from gitignored infra/.env (LLM + exchange only)
+# Selective secrets from gitignored infra/.env (LLM + exchange + portal).
+# OpenRouter eval requires a real provider key: when DELIA_LLM_API_KEY is a
+# local placeholder, reuse the OpenRouter key already present as
+# KIMI_API_KEY / DELIA_STT_API_KEY in the same .env (never printed).
 python3 - <<PY
 from pathlib import Path
 src = Path("${REPO_ROOT}") / "infra" / ".env"
@@ -85,8 +88,12 @@ wanted = {
     "DELIA_LLM_API_KEY",
     "DELIA_EXCHANGE_CLIENT_SECRET",
     "KEYCLOAK_REALM",
+    "DEV_PORTAL_USERNAME",
+    "DEV_PORTAL_PASSWORD",
+    "KIMI_API_KEY",
+    "DELIA_STT_API_KEY",
 }
-found = set()
+values = {}
 if src.is_file():
     for line in src.read_text(encoding="utf-8", errors="replace").splitlines():
         line = line.strip()
@@ -95,26 +102,55 @@ if src.is_file():
         key, _, val = line.partition("=")
         key = key.strip()
         if key in wanted and val.strip():
-            with dst.open("a", encoding="utf-8") as fh:
-                fh.write(f"{key}={val}\\n")
-            found.add(key)
-missing = wanted - found - {"KEYCLOAK_REALM"}
-print("SELECTIVE_KEYS_LOADED=" + ",".join(sorted(found)) if found else "SELECTIVE_KEYS_LOADED=NONE")
-if "DELIA_LLM_API_KEY" not in found:
-    raise SystemExit("missing DELIA_LLM_API_KEY in infra/.env")
-if "DELIA_EXCHANGE_CLIENT_SECRET" not in found:
-    raise SystemExit("missing DELIA_EXCHANGE_CLIENT_SECRET in infra/.env")
-PY
+            values[key] = val.strip()
 
-# DEV portal identity from .env.local (evaluation user — not prod printenv)
-set -a
-# shellcheck disable=SC1091
-source "${REPO_ROOT}/infra/.env.local"
-set +a
-{
-  echo "DEV_PORTAL_USERNAME=${DEV_PORTAL_USERNAME}"
-  echo "DEV_PORTAL_PASSWORD=${DEV_PORTAL_PASSWORD}"
-} >>"${EVAL_ENV}"
+
+def _is_openrouter_key(raw: str) -> bool:
+    return raw.startswith("sk-or-") and len(raw) >= 20
+
+
+llm_key = values.get("DELIA_LLM_API_KEY", "")
+llm_source = "DELIA_LLM_API_KEY"
+if not _is_openrouter_key(llm_key):
+    for alt in ("KIMI_API_KEY", "DELIA_STT_API_KEY"):
+        cand = values.get(alt, "")
+        if _is_openrouter_key(cand):
+            llm_key = cand
+            llm_source = alt
+            break
+values["DELIA_LLM_API_KEY"] = llm_key
+
+emit_keys = [
+    "DELIA_LLM_API_KEY",
+    "DELIA_EXCHANGE_CLIENT_SECRET",
+    "KEYCLOAK_REALM",
+    "DEV_PORTAL_USERNAME",
+    "DEV_PORTAL_PASSWORD",
+]
+found = set()
+with dst.open("a", encoding="utf-8") as fh:
+    for key in emit_keys:
+        val = values.get(key, "")
+        if not val:
+            continue
+        fh.write(f"{key}={val}\\n")
+        found.add(key)
+optional = {"KEYCLOAK_REALM"}
+required = set(emit_keys) - optional
+missing = required - found
+print("SELECTIVE_KEYS_LOADED=" + ",".join(sorted(found)) if found else "SELECTIVE_KEYS_LOADED=NONE")
+print(f"LLM_KEY_SOURCE={llm_source}")
+print(f"LLM_KEY_SHAPE=openrouter" if _is_openrouter_key(llm_key) else "LLM_KEY_SHAPE=non_openrouter")
+if missing:
+    raise SystemExit(
+        "missing required keys in infra/.env: " + ",".join(sorted(missing))
+    )
+if not _is_openrouter_key(llm_key):
+    raise SystemExit(
+        "missing OpenRouter API key in infra/.env "
+        "(DELIA_LLM_API_KEY/KIMI_API_KEY/DELIA_STT_API_KEY)"
+    )
+PY
 
 # Detect docker network used by prod delia (name only)
 NETWORK="$(docker inspect delpi-delia-api --format '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}')"

@@ -1425,3 +1425,24 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
 
 **NEXT=`COORDINATION_INT1_REAL_SEMANTIC_SELECTION_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+## 2026-11-12 — INT-1 semantic selection + continuity remediation residuals
+
+**TASK:** `DELIA-C3-T2-INT1-PROVIDER-NEUTRAL-SEMANTIC-SELECTION-AND-INVESTIGATION-CONTINUITY-REMEDIATION-01` · Doc **308** · Eval `or-qwen14b-99c72442b8d9`
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-INSTRUCTION-OBJECT-CONTINUITY | **REMEDIATED (default v2-1)** | fp `4ebd5260b6cf9ba9`; v2 preserved |
+| INT1-GUIDANCE-NON-CITABLE | **REMEDIATED** | `GUIDANCE_NOT_DOMAIN_TRUTH` |
+| INT1-NO-PROGRESS-CONTINUITY-NOTE | **REMEDIATED** | coverage_note + optional one-shot ModelRetry |
+| INT1-G1-TEO-FIRST-ATTRACTOR | **OPEN** | still observed live |
+| INT1-P1-DAVI-CONTROL | **PASS (selection)** | DAVI-first; satisfaction blocked by AUTHZ |
+| INT1-M1-CONTINUITY | **PARTIAL** | notes present; tour/args residual; NOT_SATISFIED |
+| INT1-EVAL-SUBJECT-AUTHZ | **OPEN** | DAVI `AUTHORIZATION_DENIED`; TEO missing `transformometro.access` |
+| INT1-EVAL-LLM-KEY-PLACEHOLDER | **REMEDIATED_IN_HARNESS** | OpenRouter key from same `.env` when LLM key is local placeholder |
+| INT1-GENERALIZATION | **NOT_PROVEN** | G1/P1/M1 only; no scenario hardcode in instructions |
+| INT1-STAGE | **BLOCKED** | Doc 308 coordination review |
+| INT1-CLOSED | **NO** | — |
+| INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
+
+**NEXT=`COORDINATION_INT1_SEMANTIC_CONTINUITY_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

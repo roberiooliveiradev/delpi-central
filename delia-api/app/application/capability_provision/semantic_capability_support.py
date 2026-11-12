@@ -1935,6 +1935,36 @@ def _structured_owner_incomplete(outcome: SpecialistOutcome | None) -> bool:
     return False
 
 
+def _owner_declares_guidance_only(
+    structured: Mapping[str, Any] | None,
+) -> bool:
+    """True when the owner labels the payload as guidance, not domain truth.
+
+    Reads the published ``authority`` / ``knowledge_kind`` fields only —
+    never specialist names or user wording. GUIDANCE is not citable
+    operational evidence for structure/inventory/registry objectives.
+    """
+    if not isinstance(structured, Mapping):
+        return False
+    nodes: list[Mapping[str, Any]] = [structured]
+    data = structured.get("data")
+    if isinstance(data, Mapping):
+        nodes.append(data)
+    for node in nodes:
+        authority = node.get("authority")
+        if isinstance(authority, str) and authority.strip() == (
+            "GUIDANCE_NOT_DOMAIN_TRUTH"
+        ):
+            return True
+        knowledge_kind = node.get("knowledge_kind")
+        if (
+            isinstance(knowledge_kind, str)
+            and knowledge_kind.strip().upper() == "GUIDANCE"
+        ):
+            return True
+    return False
+
+
 def _is_business_evidence_attempt(
     attempt: GovernedCapabilityAttempt,
 ) -> bool:
@@ -1955,6 +1985,11 @@ def _is_business_evidence_attempt(
         return False
     outcome = attempt.outcome
     if outcome is not None and not outcome.is_complete:
+        return False
+    structured = outcome.structured if outcome is not None else None
+    if _owner_declares_guidance_only(
+        structured if isinstance(structured, Mapping) else None
+    ):
         return False
     return True
 
