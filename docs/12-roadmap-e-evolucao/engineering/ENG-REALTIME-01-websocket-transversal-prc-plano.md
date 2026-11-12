@@ -216,7 +216,7 @@ Contrato conceitual, não um DTO implementado:
 ## 12. Fontes de consulta
 
 - [Requests WS existente](../../../requests-api/docs/architecture/realtime-requests.md).
-- [Padrão event-driven e Socket.IO Core](../../../01-arquitetura/event-driven-e-socket.md) — fonte canônica: \`docs/01-arquitetura/event-driven-e-socket.md\`.
+- [Padrão event-driven e Socket.IO Core](../../01-arquitetura/event-driven-e-socket.md) — fonte canônica: \`docs/01-arquitetura/event-driven-e-socket.md\`.
 - \`requests-api/requests_app/application/services/requests_realtime_hub.py\`
 - \`requests-api/requests_app/application/services/requests_realtime_notify.py\`
 - \`requests-api/requests_app/interface/http/routes/realtime_routes.py\`
