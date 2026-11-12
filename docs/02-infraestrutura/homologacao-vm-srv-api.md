@@ -1,10 +1,10 @@
 # Minha DELPI — Homologação na VM srv-api — registro de continuidade
 
-> **Atualizado:** 12/11/2026 · **Estado:** Portal + Core API + Gateway HML ativos em `http://192.168.1.237:18080`.  
+> **Atualizado:** 12/11/2026 · **Estado:** Portal/Core/Gateway HML ativos em HTTP LAN; **login browser PKCE bloqueado** por Secure Context.  
 > **Repositório:** `roberiooliveiradev/delpi-central`.  
-> **TASK_ID:** `HML-PORTAL-STATIC-403-01` (após `HML-CORE-PORTAL-01`).  
-> **BASE_HEAD (esta correção):** `c3f042bde95be38075f1d2c7b286caecab690dd1`.  
-> **MAIN_INTEGRATED_SHA:** `6e2916da2441897ce81987093475bbf055925487`.
+> **TASK_ID:** `HML-PKCE-BROWSER-CRYPTO-01`.  
+> **BASE_HEAD:** `c9510cf0bd253eb09420bd605fb410be32b92493` (reconfirmado ancestral; HEAD ao iniciar `a154ee559f`).  
+> **MAIN_INTEGRATED_SHA:** *(atualizar após push deste pacote)*.
 
 ## 1. Objetivo e regras congeladas
 
@@ -13,75 +13,71 @@ Ambiente de homologação independente na mesma VM `srv-api`.
 - Produção: `/home/operador/projetos/delpi-central`.
 - Homologação: `/home/operador/projetos-teste/delpi-central`.
 - Git: commit/push só no computador local; VM apenas `git pull --ff-only`.
-- **Executado:** DBs → Keycloak → Gateway → **Core API** → **Portal**.
-- **Ainda proibido:** Redis, API DELPI, Plugin UI, Production Control, restore produtivo, exposição internet.
+- **Executado:** DBs → Keycloak → Gateway → Core API → Portal (HTTP `:18080`).
+- **Bloqueio atual:** PKCE no **navegador** exige Secure Context (`crypto.subtle`).
+- **Ainda proibido sem autorização:** ativar HTTPS HML; Redis; API DELPI; Plugin UI; PC; restore; internet.
 
-## 2. REUSE GATE (Etapa 4)
+## 2. Diagnóstico PKCE / Web Crypto (comprovado)
+
+| Evidência | Resultado |
+|---|---|
+| Origem | `http://192.168.1.237:18080/login` |
+| `window.isSecureContext` | **false** |
+| `typeof crypto` | `object` |
+| `typeof crypto.getRandomValues` | `function` |
+| `typeof crypto.subtle` | **undefined** |
+| Biblioteca | `keycloak-js@26.2.3` (`pkceMethod: "S256"` em `portal/src/data/keycloakClient.ts`) |
+| Código lib | `sha256Digest()` / PKCE lança `Error: Web Crypto API is not available.` se `crypto.subtle` ausente |
+| Clique **Entrar com DELPI SSO** | Erro uncaught; **sem** redirect ao Keycloak (`stillOnLogin=true`) |
+| `requestStorageAccess` | Irrelevante — não é a causa |
+
+**Causa raiz:** Chromium (e navegadores modernos) **não** expõem `crypto.subtle` em HTTP para IP privado. PKCE S256 do `keycloak-js` depende de `subtle.digest('SHA-256')`. Não é falha do Keycloak HML nem do Core API (fluxos server-side/curl com PKCE continuam válidos).
+
+## 3. Alternativas avaliadas
+
+| Alt | Descrição | Veredito |
+|---|---|---|
+| **A** HTTP LAN atual | Manter `:18080` HTTP | **INVIÁVEL** sem enfraquecer PKCE (proibido: desligar PKCE, polyfill fraco, “marcar HTTP como seguro” no browser) |
+| **B** Túnel SSH → localhost | `localhost` é Secure Context mesmo em HTTP | **INSUFICIENTE** para intranet multi-máquina: exigiria re-bake de `VITE_KC_*`, issuer, redirects e JWT todos em `localhost`; não atende outros PCs da LAN |
+| **C** HTTPS interno | Porta exclusiva (ex. `18443`), CA local confiável nos PCs de teste, sem domínio público/internet | **SELECIONADA** (menor caminho que preserva PKCE S256 + LAN multi-cliente + isolamento) |
+
+### REUSE GATE
 
 | Capacidade | Decisão |
 |---|---|
-| Serviços Compose `core-api` / `portal` | **REUSE** via `extends` + profiles isolados |
-| Dockerfiles Core/Portal | **REUSE** (`Dockerfile.prod`); Portal aceita `VITE_FRONT_CHANNEL_LOGOUT_URLS` |
-| Migrations Core (Alembic `flask db upgrade`) | **REUSE** no entrypoint — destino só `delpi-hml-postgres-core` |
-| `hml-compose.sh` | **EXTEND** — `up --scenario core-api|portal` |
-| Bootstrap KC audience `delpi-central` | **EXTEND** — client scope `audience-delpi` |
-| Redis | **REUSE** deferido — stores `memory`, `REDIS_URL=""` |
-| plugin-ui / MFEs | **REUSE** deferido — shell Portal sem remotes |
+| Gateway HML HTTP | **REUSE** até ativação TLS autorizada |
+| CA/certs | **NEW** preparatório (`hml-tls-prepare.sh` → `infra/hml-certs/`, fora do Git) |
+| nginx TLS HML | **NEW** exemplo `gateway/nginx.hml.tls.example.conf` (não ligado ao Dockerfile.hml) |
+| keycloak-js / PKCE S256 | **REUSE** — sem mudança de política OIDC |
+| Ativação `up --scenario tls` | **BLOQUEADA** até autorização explícita |
 
-## 3. Endpoint e OIDC
+**Decisão:** não alterar HTTP em execução; **não** ativar HTTPS sem autorização. Entregar apenas preparativos seguros.
 
-| Item | Valor |
-|---|---|
-| Entrada | `http://192.168.1.237:18080` (bind LAN) |
-| Keycloak | `http://192.168.1.237:18080/auth/` |
-| Issuer | `http://192.168.1.237:18080/auth/realms/delpi` |
-| Audience | `delpi-central` |
-| Client | `delpi-central` (PKCE S256) |
-| Usuário | `hml-tester` (`hml-tester@hml.invalid`, sem superadmin) |
+## 4. Preparativos entregues (sem ativação)
 
-## 4. Gate A — Core API
+- `infra/scripts/hml-tls-prepare.sh` — gera CA + cert SAN `IP:192.168.1.237` + `DNS:localhost`
+- `infra/hml-certs/` — gitignore de chaves; README de confiança
+- `gateway/nginx.hml.tls.example.conf` — esboço listener `:18443`
+- Comentários em `infra/env.hml.example` com mapa de variáveis HTTPS futuras
 
-- Imagem: `delpi-hml/core-api:local`
-- Migrations aplicadas no volume HML: `alembic_version=u7v8w9x0y1` (28 tabelas)
-- `/core-api/health` via gateway → **200**
-- `/core-api/me` sem token → **401**
-- Token HML (PKCE) → **200**, usuário reconhecido, `is_superadmin=false`
-- Token com issuer produtivo sintético → **401**
-- Rede exclusiva `delpi-hml-network`; Redis **não** iniciado
+Quando autorizado, a ativação deverá: gerar/confiar CA → publicar só porta TLS HML → rebuild Portal com `VITE_KC_*` https → bootstrap KC (issuer/redirects) → validar login browser → preservar 80/443 prod.
 
-## 5. Gate B — Portal
+## 5. Estado dos serviços HML
 
-- Imagem: `delpi-hml/portal:local` (bake `VITE_KC_*` HML + `VITE_FRONT_CHANNEL_LOGOUT_URLS=__none__`)
-- `/` via gateway → **200**
-- Bundle sem `minhadelpi.com.br`; contém `192.168.1.237:18080/auth`
-- Login PKCE + `/core-api/me` + revoke logout → **PASS**
-- MFEs/plugin-ui → **PENDING** (não iniciados)
+Sete containers healthy na rede `delpi-hml-network` (HTTP `:18080` intacto). Login **browser** PKCE: **FAIL** (Secure Context). Login scriptado/server-side PKCE: permanece válido como evidência de IdP.
 
-### 5.1 Correção 403 em estáticos da tela de login
+## 6. Produção
 
-- **Sintoma:** `/manifest.webmanifest` e `/logoMinhaDelpi.svg` → **403** via gateway (nginx/1.31.6).  
-  Nota: `/loginMinhaDelpi.svg` **não existe** no bundle; a UI usa `/logoMinhaDelpi.svg`.
-- **Causa:** no checkout HML da VM, `portal/public/*` chega com modo **660** (ACL `rw-rw----+`); o `COPY` do Docker preserva o modo; o worker nginx (não-root) não lê o arquivo → 403. `index.html`/`assets` gerados no build ficam 644 e respondem 200.
-- **Correção:** `portal/Dockerfile.prod` passa a executar `chmod -R a+rX /usr/share/nginx/html` após o COPY do `dist`.
-- **Aceite esperado:** SVG `image/svg+xml` e manifest `application/manifest+json` (ou equivalente) com HTTP 200; login/Keycloak intactos; somente rebuild/recreate de `delpi-hml-portal`.
+Nenhum container produtivo alterado nesta tarefa de diagnóstico/preparação.
 
-## 6. Containers HML (7)
-
-`postgres-core`, `keycloak-db`, `postgres-plugins`, `keycloak`, `gateway`, `core-api`, `portal` — todos healthy na rede `delpi-hml-network`.
-
-## 7. Produção
-
-IDs/`StartedAt` de containers críticos **inalterados** após Gate A e Gate B. Portas 80/443 intactas; 18080 só no IP LAN. Swap 0; mem ~14 GiB / 47 GiB.
-
-## 8. Drift / pendências
+## 7. Drift / pendências
 
 - Drift `5c20be0311` (DÉLIA) permanece para owner DÉLIA.
-- Commit `6e52cf94b3` incluiu paths PRC por engano; corrigido em `86eef5aedc` (revert dos plugins).
-- Próxima etapa: Plugin UI / API DELPI / Redis sob autorização explícita.
-- Expiração longa de sessão e navegação MFE: **PENDING**.
+- **Próxima ação:** autorização explícita para ativar HTTPS interno HML (`HML-TLS-ACTIVATE`).
+- Redis / API DELPI / Plugin UI: fora de escopo.
 
-## 9. Referências
+## 8. Referências
 
-- `infra/docker-compose.hml.yml`, `infra/scripts/hml-compose.sh`
-- `infra/scripts/keycloak-hml-bootstrap.sh`
-- `portal/Dockerfile.prod`, `portal/src/state/AuthContext.tsx`
+- `portal/src/data/keycloakClient.ts`, `keycloak-js@26.2.3`
+- `infra/scripts/hml-tls-prepare.sh`, `infra/hml-certs/README.md`
+- `gateway/nginx.hml.tls.example.conf`

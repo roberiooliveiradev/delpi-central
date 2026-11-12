@@ -1,0 +1,4 @@
+# Certificados e chaves de homologação — nunca versionar material privado.
+*
+!.gitignore
+!README.md
