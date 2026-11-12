@@ -4,7 +4,7 @@
 > **Repositório:** `roberiooliveiradev/delpi-central`.  
 > **TASK_ID:** `HML-PKCE-BROWSER-CRYPTO-01`.  
 > **BASE_HEAD:** `c9510cf0bd253eb09420bd605fb410be32b92493` (reconfirmado ancestral; HEAD ao iniciar `a154ee559f`).  
-> **MAIN_INTEGRATED_SHA:** *(atualizar após push deste pacote)*.
+> **MAIN_INTEGRATED_SHA:** `6e91242cce155142e2c11f0f7bad3cea58a8ff54`.
 
 ## 1. Objetivo e regras congeladas
 
