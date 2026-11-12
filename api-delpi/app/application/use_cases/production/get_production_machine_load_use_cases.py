@@ -42,6 +42,7 @@ def _order_flags_by_code(
     *,
     branch: str,
     production_orders: list[str],
+    include_deleted: bool = False,
 ) -> dict[str, dict[str, Any]]:
     """Encerramento/quantidades SC2 por OP, em lotes — limite de parâmetros."""
     if not production_orders or not hasattr(repository, "get_order_finish_flags"):
@@ -49,15 +50,23 @@ def _order_flags_by_code(
     rows: list[dict[str, Any]] = []
     for offset in range(0, len(production_orders), _BALANCE_ORDER_CHUNK):
         chunk = production_orders[offset : offset + _BALANCE_ORDER_CHUNK]
-        rows.extend(
-            repository.get_order_finish_flags(
-                branch=branch, production_orders=chunk
-            )
-        )
+        kwargs: dict[str, Any] = {
+            "branch": branch,
+            "production_orders": chunk,
+        }
+        if include_deleted:
+            kwargs["include_deleted"] = True
+        rows.extend(repository.get_order_finish_flags(**kwargs))
     out: dict[str, dict[str, Any]] = {}
     for row in rows:
         order = str(row.get("production_order") or "").strip()
         if not order:
+            continue
+        is_deleted = int(float(row.get("is_deleted") or 0)) > 0
+        # Caso SC2 mantenha histórico excluído e uma nova OP ativa com a
+        # mesma chave, o registro ativo prevalece independentemente da ordem
+        # em que o SQL devolveu as linhas.
+        if is_deleted and order in out and not out[order]["is_deleted"]:
             continue
         is_finished = int(float(row.get("is_finished") or 0)) > 0
         finish_raw = row.get("finish_date")
@@ -69,6 +78,7 @@ def _order_flags_by_code(
             else:
                 finish_date = text[:10]
         out[order] = {
+            "is_deleted": is_deleted,
             "is_finished": is_finished,
             "finish_date": finish_date,
             "planned_qty": _optional_float(row.get("planned_qty")),
@@ -281,18 +291,35 @@ class GetProductionMachineLoadOperationBalancesUseCase:
 
         order_codes = sorted({order for order, _operation in wanted})
         order_flags = _order_flags_by_code(
-            self._repository, branch=branch, production_orders=order_codes
-        )
-        produced_by_operation = _produced_by_operation(
             self._repository,
             branch=branch,
             production_orders=order_codes,
-            keys=wanted,
+            include_deleted=True,
+        )
+        # Evita consultar a SH6 de OPs comprovadamente excluídas.
+        active_keys = [
+            (order, operation) for order, operation in wanted
+            if not (order_flags.get(order) or {}).get("is_deleted")
+        ]
+        produced_by_operation = _produced_by_operation(
+            self._repository,
+            branch=branch,
+            production_orders=sorted({order for order, _ in active_keys}),
+            keys=active_keys,
         )
 
         result_items: list[dict[str, Any]] = []
         for order, operation in wanted:
             flags = order_flags.get(order) or {}
+            if flags.get("is_deleted") is True:
+                result_items.append({
+                    "production_order": order,
+                    "operation_code": operation,
+                    "operation_produced_qty": None,
+                    "operation_pending_qty": None,
+                    "order_deleted": True,
+                })
+                continue
             mapped = MachineLoadAppointmentStatusMapper.map_row(
                 {
                     "branch": branch,
@@ -313,14 +340,9 @@ class GetProductionMachineLoadOperationBalancesUseCase:
                     "operation_code": operation,
                     "operation_produced_qty": mapped["operation_produced_qty"],
                     "operation_pending_qty": mapped["operation_pending_qty"],
-                    # Evidência autoritativa: registro SC2 existe nesta filial?
-                    # None em adapters antigos sem consulta de SC2; não inventar
-                    # "não encontrado" por ausência de capacidade da integração.
-                    "order_exists": (
-                        order in order_flags
-                        if callable(getattr(self._repository, "get_order_finish_flags", None))
-                        else None
-                    ),
+                    # False = OP ativa, None = sem evidência conclusiva (e.g.
+                    # ausente/adapter legado). Somente True autoriza excluir.
+                    "order_deleted": False if order in order_flags else None,
                 }
             )
 
