@@ -100,3 +100,38 @@ Limites de lote: BFF fatia por `commitmentBatchSize` / `maxCommitmentBatches`; f
 ## Dependência Etapa 4
 
 A UI consome este contrato para exibir a lista dinâmica — sem reimplementar fórmulas no MFE.
+
+
+## Correção de compatibilidade (2026-11-12): unidades contínuas e SD4 sem operação
+
+**Motivação:** OP `09564601002`, filial 02, produto `71250220` em MT,
+com operações 01/02 no CT-27 e 03 no CT-99. A prévia falhava com
+`piece_conversion_unavailable` porque MT não tem equivalência física
+confiável para peças. Os empenhos da OP (cobre nu, PVC e pigmento, todos em
+KG) aparecem no SD4 com `D4_OPERAC` vazio.
+
+- **Horizonte:** apenas para `MT`/`KG` sem fator de peças, o motor E2 usa
+  `standard_time_unit_hours` do contrato canônico de tempo padrão da
+  api-delpi, em horas por unidade operacional; setup continua separado.
+  Arredonda para baixo a 6 casas. Não altera a normalização por peça
+  `MI/UN/PC`, nem o contrato MES/Pulse. Se faltar tempo padrão ou a unidade
+  for desconhecida, permanece fail-closed.
+- **Empenhos:** somente o consumidor E3 habilita `include_unassigned` na
+  indexação do SD4. Cada empenho com operação em branco é associado uma
+  única vez à **OP contemplada**, com `operation_code=""` e
+  `operation_id="order-level:<OP>"`; nunca é rateado entre os CTs nem
+  associado arbitrariamente à primeira operação. O saldo SD4 é integral.
+  Permanecem intactos os demais consumidores do índice estrito.
+- **Interface:** origens dessa categoria aparecem como
+  "empenho sem operação definida", com CT indefinido e alerta para consultar
+  o PCP antes de entregar. O saldo do 99 continua abatido uma única vez
+  por material, e o almoxarifado 01 é apenas informativo.
+- **Não escopo:** mudança no ERP, no catálogo `piecesFactor` da api-delpi,
+  no MES/Pulse, na fila publicada e em processos de confirmação da entrega.
+- **Regressões:** testes de horizonte MT/KG e da falha segura para padrões
+  ausentes; material de OP sem operação contado uma vez em múltiplos CTs;
+  mistura com empenhos de operação explícita; teste E3 completo e aviso UI.
+
+**Atenção operacional:** itens com `D4_OPERAC` em branco não têm CT
+autoritativo. A prévia mostra a necessidade e avisa o usuário, mas a
+atribuição de posto de entrega deve ser confirmada com o PCP.
