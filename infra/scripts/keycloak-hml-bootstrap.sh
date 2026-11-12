@@ -60,6 +60,21 @@ if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
   echo "[ERRO] container $CONTAINER não está em execução." >&2
   exit 1
 fi
+
+# Tema de login de produção (somente leitura no container). Checkout HML
+# frequentemente cria arquivos 660 do usuário host; Keycloak roda como uid 1000
+# e precisa ler — espelha legibilidade do mount produtivo sem redesenhar o tema.
+THEMES_DIR="$INFRA_DIR/keycloak/themes"
+if [[ -d "$THEMES_DIR/delpi-energy/login" ]]; then
+  chmod -R a+rX "$THEMES_DIR" || {
+    echo "[ERRO] não foi possível tornar $THEMES_DIR legível ao Keycloak (uid 1000)." >&2
+    exit 1
+  }
+  echo "[hml-kc] tema delpi-energy legível (a+rX)."
+else
+  echo "[AVISO] tema delpi-energy ausente em $THEMES_DIR — login usará tema padrão." >&2
+fi
+
 # Isolamento: deve estar só na rede HML.
 nets="$(docker inspect --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}' "$CONTAINER")"
 echo "$nets" | grep -q "$NETWORK" || {
@@ -127,14 +142,16 @@ admin_code() {
 
 # --- realm ---
 # sslRequired=external: clientes externos HTTPS; HTTP interno Compose permanece OK.
+# loginTheme=delpi-energy: reutiliza tema já versionado em infra/keycloak/themes (HML only).
 if [ "$(admin_code GET "/realms/$REALM")" = "404" ]; then
   admin_api POST /realms \
-    "{\"realm\":\"$REALM\",\"enabled\":true,\"sslRequired\":\"external\",\"registrationAllowed\":false,\"resetPasswordAllowed\":false,\"rememberMe\":true}" >/dev/null
-  echo "[hml-kc] realm $REALM criado (sslRequired=external, HTTPS público)."
+    "{\"realm\":\"$REALM\",\"enabled\":true,\"sslRequired\":\"external\",\"loginTheme\":\"delpi-energy\",\"registrationAllowed\":false,\"resetPasswordAllowed\":false,\"rememberMe\":true}" >/dev/null
+  echo "[hml-kc] realm $REALM criado (sslRequired=external, loginTheme=delpi-energy)."
 else
-  admin_api PUT "/realms/$REALM" \
-    "{\"realm\":\"$REALM\",\"enabled\":true,\"sslRequired\":\"external\"}" >/dev/null
-  echo "[hml-kc] realm $REALM já existe — sslRequired=external aplicado."
+  # Preserva representação atual; só reforça ssl + tema de login.
+  REALM_JSON="$(admin_api GET "/realms/$REALM" | python3 -c 'import json,sys; r=json.load(sys.stdin); r["sslRequired"]="external"; r["loginTheme"]="delpi-energy"; r["enabled"]=True; print(json.dumps(r))')"
+  admin_api PUT "/realms/$REALM" "$REALM_JSON" >/dev/null
+  echo "[hml-kc] realm $REALM já existe — sslRequired=external + loginTheme=delpi-energy aplicados."
 fi
 
 # --- public portal client (sem direct grants) ---
