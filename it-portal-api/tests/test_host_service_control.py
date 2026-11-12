@@ -129,6 +129,6 @@ def test_control_http_permission_and_agent_binding(client, repository, principal
             "error_code": None,
         }).status_code == 200
         monkeypatch.setenv("IT_PORTAL_WINDOWS_CONTROL_AGENT_BINDINGS", "other-agent=" + sid)
-        assert client.get(claim_url, params={"hostname": server["hostname"]}, headers=agent_headers).status_code == 409
+        assert client.post(claim_url, json={"hostname": server["hostname"]}, headers=agent_headers).status_code == 409
     finally:
         app.dependency_overrides.pop(get_host_service_control, None)
