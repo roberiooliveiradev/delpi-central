@@ -53,6 +53,8 @@ class HostServiceInventory:
         if (not service_name or len(service_name) > 200 or
                 any(ord(ch) < 32 or ch in "\\\\/" for ch in service_name)):
             raise ValidationError("invalid_service_name", "Nome do serviço inválido.")
+        if not is_favorite and criticality != "normal":
+            raise ValidationError("invalid_favorite_criticality", "Serviço não favorito deve ter criticidade normal.")
         key = service_name.casefold()
         if len(key) > 200:
             raise ValidationError("invalid_service_name", "Nome do serviço excede o limite.")
