@@ -216,6 +216,13 @@ export function LineFeederMaterialsPanel({ data, query }: Props) {
           )}
         </div>
       ) : null}
+      {(data.publication?.missing_order_operations_excluded ?? 0) > 0 ? (
+        <div className="ppc-state" role="status">
+          {texts.missingOrderWarning(
+            data.publication.missing_order_operations_excluded ?? 0,
+          )}
+        </div>
+      ) : null}
       {data.summary.unknown_count > 0 ? (
         <div className="ppc-state ppc-state--error" role="status">
           {texts.stockUnavailable}
