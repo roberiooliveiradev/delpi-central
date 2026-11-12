@@ -1292,7 +1292,7 @@ cmd_up_gateway() {
   wait_healthy gateway "$env_file" gateway
 
   # Após Core/Portal já ativos (cutover TLS), o allowlist canônico é o conjunto completo (7).
-  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PORTAL
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING
 
   echo "HML_GATEWAY_UP=PASS"
   docker ps --filter name=delpi-hml --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
@@ -1355,7 +1355,7 @@ print(s.get("DB_HOST") if isinstance(s,dict) else "")'
   )
   wait_healthy core-api "$env_file" core-api
   # Portal pode já existir no cutover TLS; allowlist = conjunto completo (7).
-  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PORTAL
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING
 
   # Smoke via gateway (sem token) — HTTP legado + HTTPS canônico
   local code
@@ -1432,7 +1432,7 @@ cmd_up_portal() {
         up -d --no-deps --no-build portal
   )
   wait_healthy portal "$env_file" portal
-  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PORTAL
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING
 
   local code
   code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 15 \
