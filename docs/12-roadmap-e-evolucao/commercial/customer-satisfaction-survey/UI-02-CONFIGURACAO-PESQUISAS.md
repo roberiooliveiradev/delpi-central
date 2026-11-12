@@ -197,6 +197,16 @@ Os limiares acima são **faixas de teste propostas**, não equivalem automaticam
 
 **PENDING técnico:** inspeção dos estilos CSS e breakpoints exatos do PluginUI, comparação visual em execução e testes de equivalência com Clientes/Analytics; nenhuma implementação foi executada por esta decisão.
 
+### Decisão aprovada — conteúdo da tabela de campanhas UI-02A (12/11/2026)
+
+**APROVADO PELO SOLICITANTE:** a tabela de Campanhas apresenta cinco **informações** (não presumir cinco colunas físicas quando o padrão do kit exige separar ações): **(1) Campanha / Período** (nome principal + início e término em segunda linha), **(2) Situação** (Agendada/Aberta/Encerrada, calculada pela `commercial-api`), **(3) Participantes** (empresas cadastradas na campanha), **(4) Respostas** (empresas que responderam), **(5) Taxa de resposta** (indicador oficial, sem cálculos improvisados no frontend). Ações contextuais padrão do Comercial: **Abrir configuração** → UI-02B e **Resultados** → UI-01 filtrada pela campanha explícita. Não acrescentar nesta etapa responsável, data de criação, mensagens enviadas, última atualização ou outras colunas não solicitadas.
+
+- **Padrão obrigatório:** reutilizar `CommercialDataTable` e seus padrões reais de linha, toolbar, ordenação, paginação e responsividade observados nos consumidores existentes do microfrontend, especialmente `CustomersTable` e Analytics. Não construir toolbar ou controles adicionais, nem assumir que todos os recursos de outras tabelas são aplicáveis por padrão. `ExcelExportButton` não fica automaticamente autorizado.
+- **Semântica:** a taxa e as contagens devem vir da autoridade de resultados/participantes; `Pendente` e número de participantes não significam convite entregue/enviado. Para zero participantes, exibir `—` como taxa indisponível, não taxa inventada. Tratamento de privacidade e grupos pequenos permanece responsabilidade do backend quando aplicável.
+- **Identificação e interação:** nome da campanha é elemento principal, período na linha secundária; a ação Abrir leva à configuração; Resultados é contextual e não modifica o comportamento do botão global Ver resultados no Hero. A apresentação exata das ações (coluna/menu/ações por card) deve **seguir o padrão comprovado do microfrontend**, não ser inventada aqui.
+- **Responsividade, padding, margens e dimensões:** herdados dos wrappers e tokens reais do PluginUI. A disposição mobile, tamanhos de células e ações serão verificados na próxima rodada contra os consumidores existentes; **não fixar números arbitrários**.
+- **Status:** informações e ações funcionais **APROVADAS**; contrato de dados, aplicação concreta dos componentes e teste visual **PENDING**. Especificação, não implementação.
+
 ### 1.2.3 Navegação e comportamentos
 
 - **APROVADO:** **Ver resultados** global no Hero → UI-01 geral padrão. **Resultados** contextual em linha/card → UI-01 filtrada naquela campanha. **Abrir** → UI-02B; **Nova campanha** → diálogo oficial UI-02A.1.
