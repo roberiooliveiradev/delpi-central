@@ -900,3 +900,35 @@ recreate `api-delpi`.
 **Residual honesto:** `90264017`/`90264135` multipágina não foram
 submetidos nesta bateria (job visual completo por produto é pesado);
 validação multipágina segue por GT G1 + replay, não homologada.
+
+## PROD — bateria E2E executada em produção (srv-api, 2026-11-12)
+
+Após correção da fonte (Doc 119 §78): `DRAWING_PDF_FILESERVER_HOST_PATH`
+→ `/mnt/fileserver/desenhos`, recreate controlado de `api-delpi`
+(mesma imagem `feedbb91491433…`, config-only), auth `rober` via OAuth
+auth-code no client `mcp-engineering`, PDFs retornados com sha256
+byte-idêntico ao CIFS (`90264004`=`5b6717df…`, `90264061`=`13fb554f…`).
+
+**Jobs (MCP `analyze`, polling até terminal — 7/7 COMPLETED):**
+
+| Produto | Job | Estado | Ocorrências | Critério | Resultado |
+|---|---|---|---|---|---|
+| 90264004 | aj-955c49bf | COMPLETED | 11 | A9/AA ×{478,479} q2/q6 | PASS — 4/4 relações; 0 marcador B de margem |
+| 90264061 | aj-33ecf929 | COMPLETED | 6 | A1–A6 | PASS — A6\|2\|10211552\|50225531 |
+| 90264302 | aj-1878d678 | COMPLETED | 4 | 4 relações | PASS — A/B ×{50226113,50226114} |
+| 90264174 | aj-1cb6acc5 | COMPLETED | 4 | A–D | PASS — A\|1\|10070988, B\|1\|10130020, C\|1\|10140027, D\|3\|10350009 |
+| 90264275 | aj-0728ed73 | COMPLETED | 7 | 7 relações | PASS — A1/A2→90264275, A3–A7→90350416 |
+| 90264128 | aj-d9597f2a | COMPLETED | 23 | 20 id + 3 UNKNOWN | DELTA — 23 id + 0 UNKNOWN (`rowspan_anchor`) |
+| 90264138 | aj-a186fca4 | COMPLETED | 13 | 10 id + 3 UNKNOWN | DELTA — 13 id + 0 UNKNOWN (`rowspan_anchor`) |
+
+**DELTA DEV×PROD:** em DEV os 3+3 pais ficaram `UNKNOWN`; em PROD
+foram resolvidos com `parent_evidence=rowspan_anchor` e
+`uncertainty=[association_conflict]` preservado — resolução por
+evidência estrutural do desenho, não fabricação. Provável diferença
+de dados de estrutura (BOM) entre as bases. Todas as relações
+críticas do critério confirmadas; divergência registrada sem
+evidência de regressão crítica.
+
+`conflicting_fields`/`association_conflict`/`uncertainty`/
+`parent_evidence`/`occurrence_key` preservados em PROD.
+Rollback disponível e não executado (Doc 119 §78 P09).

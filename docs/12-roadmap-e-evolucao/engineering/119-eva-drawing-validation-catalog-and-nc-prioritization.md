@@ -2881,3 +2881,96 @@ Resultados terminais e validação de ocorrências: ver seção de jobs
 no Doc 120. PROD intocado nesta frente — fix recomendado:
 `DRAWING_PDF_FILESERVER_HOST_PATH=/mnt/fileserver/desenhos` no
 `.env` prod + recreate da api-delpi (decisão da Coordination).
+
+## 78. Correção produtiva da fonte de desenhos + E2E EVA em produção (srv-api)
+
+**TASK_ID:** `EVA-VAL01-PROD-DRAWING-SOURCE-RESTORE-AND-E2E` —
+escopo exclusivamente operacional: config da fonte de desenhos +
+recriação controlada de `api-delpi`. Zero alteração de código EVA,
+Keycloak, Core, gateway ou credenciais.
+
+### P01 — CIFS oficial (PASS)
+
+- `findmnt /mnt/fileserver/desenhos` → `cifs`, `ro`, `vers=3.0`,
+  origem `//delpi-srv001/DELPI_DFS/FILESERVER/DESENHOS DELPI EM PDF`.
+- 4839 PDFs legíveis; os 7 do corpus presentes.
+- `CIFS_OFFICIAL_SOURCE=PASS`.
+
+### P02/P03 — Config efetiva (PASS)
+
+- Antes: `DRAWING_PDF_FILESERVER_HOST_PATH="/mnt/x/DESENHOS DELPI
+  EM PDF"` (stub vazio criado pelo Docker) com precedência sobre
+  `PC_DRAWING_PDF_HOST_PATH=/mnt/fileserver/desenhos`.
+- Depois: `DRAWING_PDF_FILESERVER_HOST_PATH=/mnt/fileserver/desenhos`.
+- `docker compose config` confirmou bind efetivo
+  `/mnt/fileserver/desenhos → /drawing-pdfs` (`read_only: true`).
+- Backup `.env` preservado para rollback (não commitada).
+
+### P04 — Recriação controlada de `api-delpi` (PASS)
+
+- Projeto `infra`, serviço `delpi-api-delpi`; recriação única, sem
+  rebuild de stack, sem `--no-deps` violado, imagem preservada
+  (`infra-api-delpi:latest`, digest `feedbb91491433…` — **mesma
+  imagem, mudança somente de config**).
+- Container anterior `5fe91474e7a7` → novo `37e5dfda9f90`, `healthy`.
+- Mount real inspecionado dentro do container: CIFS ro em
+  `/drawing-pdfs`, 4839 PDFs, `90264004.pdf` presente.
+
+### P05 — Leitura autenticada do PDF oficial (PASS)
+
+- Auth `rober` via fluxo OAuth/OIDC oficial: admin REST →
+  impersonation → authorization-code flow no client `mcp-engineering`
+  (mesmo fluxo do consumidor EVA; aud = resource URL do MCP,
+  scope `openid mcp:tools`). Host `localhost/auth` no srv-api
+  emite iss público canônico; Cloudflare bloqueia scripts externos
+  no endpoint público (error 1010) — não foi necessário contornar.
+- `GET /apps/api-delpi/products/90264004/drawing` → 200 JSON.
+- `GET /apps/api-delpi/products/90264004/drawing/pdf` → 200
+  `application/pdf`, 210756 B, `%PDF-`,
+  sha256 `5b6717dfa7b8dcdc…` ≡ arquivo CIFS ≡ acervo DEV.
+- `GET .../90264061/drawing/pdf` → 200, 245060 B,
+  sha256 `13fb554f56ed32ce…` ≡ arquivo CIFS ≡ acervo DEV.
+- `PDF_SHA_MATCH=YES` — API retorna byte-a-byte o arquivo oficial.
+
+### P06/P07 — Sete jobs EVA em produção (COMPLETED)
+
+Submissão via MCP `analyze` (`product.drawing_understanding`,
+`compose_understanding=true`), sessão MCP autenticada, polling
+dedicado com renovação automática de token:
+
+| Produto | job_id | status final |
+|---|---|---|
+| 90264004 | `aj-955c49bf05054e4c` | COMPLETED |
+| 90264061 | `aj-33ecf92956d940d1` | COMPLETED |
+| 90264302 | `aj-1878d67853ad4517` | COMPLETED |
+| 90264174 | `aj-1cb6acc59dbd469f` | COMPLETED |
+| 90264275 | `aj-0728ed7398bd4316` | COMPLETED |
+| 90264128 | `aj-d9597f2ac9754b1e` | COMPLETED |
+| 90264138 | `aj-a186fca46f024176` | COMPLETED |
+
+- `ENG_DRAWING_OCR_MAX_CONCURRENCY=1` em prod → processamento
+  serial interno; nenhum restart durante a bateria.
+- Nenhum `job_not_found`/401 irrecuperável — token MCP renovado
+  pelo mesmo fluxo OAuth durante o polling.
+
+### P08 — Divergência DEV × PROD nos UNKNOWNs (registrada)
+
+Em DEV (baseline): `90264128` = 20 identificados + 3 UNKNOWN;
+`90264138` = 10 + 3. Em PROD: 23/13 **todos identificados**,
+`parent_state=IDENTIFIED`, `parent_evidence=rowspan_anchor`
+(evidência estrutural da tabela — rowspan da célula de parente,
+não fabricação por BOM) e `uncertainty=["association_conflict"]`
+preservado. Hipótese primária: resolução de parente depende de
+dados de estrutura (BOM) que divergem entre as bases DEV e PROD —
+prod resolveu candidatos que dev não tinha. Registrado como
+divergência de ambiente, não como regressão crítica comprovada;
+todas as relações críticas dos critérios foram confirmadas.
+
+### P09 — Rollback
+
+- `PREVIOUS_CONFIG`: `DRAWING_PDF_FILESERVER_HOST_PATH="/mnt/x/
+  DESENHOS DELPI EM PDF"` (backup `.env` timestamped no host).
+- `PREVIOUS_CONTAINER`=`5fe91474e7a7`, `PREVIOUS_IMAGE`=digest
+  `feedbb91491433…` (inalterado — rollback = restaurar a var +
+  `docker compose up -d --no-deps api-delpi`).
+- `ROLLBACK_EXECUTED=NO`.
