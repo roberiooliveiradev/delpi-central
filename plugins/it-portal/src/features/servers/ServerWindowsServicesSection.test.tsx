@@ -160,7 +160,8 @@ describe("Windows SCM read-only services inventory", () => {
     ]));
     fireEvent.click(screen.getByRole("button", { name: /Favoritos/ }));
     await waitFor(() => expect(fetchMock.mock.calls.some(([input]) =>
-      new URL(String(input), "http://localhost").searchParams.get("favorites_only") === "true"
+      new URL(String(input), "http://localhost").searchParams.get("favorites_only") === "true" &&
+      new URL(String(input), "http://localhost").searchParams.get("present") === "all"
     )).toBe(true));
     expect(screen.queryByRole("button", { name: /reiniciar|parar serviço|iniciar serviço/i })).toBeNull();
   });
