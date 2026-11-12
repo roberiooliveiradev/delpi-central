@@ -102,6 +102,7 @@ export type HostServiceCriticality = "normal" | "high" | "critical";
 export type HostService = {
   service_key: string;
   is_favorite: boolean;
+  control_allowed: boolean;
   criticality: HostServiceCriticality;
   name: string;
   display_name: string;
@@ -112,6 +113,22 @@ export type HostService = {
   is_present: boolean;
   observed_at: string;
   updated_at: string;
+};
+
+export type HostServiceAction = {
+  id: string;
+  server_id: string;
+  service_key: string;
+  service_name: string;
+  action: "start" | "stop" | "restart";
+  state_before: string;
+  state_after: string | null;
+  status: "queued" | "running" | "succeeded" | "failed" | "timeout";
+  error_code: string | null;
+  requested_at: string;
+  claimed_at: string | null;
+  finished_at: string | null;
+  requested_by_name: string;
 };
 
 export type HostServicesPage = {
@@ -512,6 +529,7 @@ export type Capabilities = {
   can_view_servers: boolean;
   can_manage_servers: boolean;
   can_manage_host_services: boolean;
+  can_control_host_services: boolean;
   can_create_notes: boolean;
   can_view_action_plans: boolean;
   can_manage_action_plans: boolean;
@@ -635,6 +653,11 @@ export const itPortalApi = {
   setHostServicePreference: (serverId: string, serviceKey: string, input: { is_favorite: boolean; criticality: HostServiceCriticality }) =>
     apiPut<{ service_key: string; is_favorite: boolean; criticality: HostServiceCriticality }>(
       apiUrl(`/servers/${encodeURIComponent(serverId)}/host-services/${encodeURIComponent(serviceKey)}/preferences`), input),
+  requestHostServiceAction: (serverId: string, serviceKey: string, action: "start" | "stop" | "restart", requestId: string) =>
+    apiPost<HostServiceAction>(apiUrl(`/servers/${encodeURIComponent(serverId)}/host-services/${encodeURIComponent(serviceKey)}/actions`),
+      { action, request_id: requestId, confirmed: true }),
+  getHostServiceAction: (serverId: string, actionId: string, signal?: AbortSignal) =>
+    apiGet<HostServiceAction>(apiUrl(`/servers/${encodeURIComponent(serverId)}/host-services/actions/${encodeURIComponent(actionId)}`), signal),
   listObservations: (serverId: string, signal?: AbortSignal) =>
     apiGet<Observation[]>(apiUrl(`/servers/${encodeURIComponent(serverId)}/observations`), signal),
 
