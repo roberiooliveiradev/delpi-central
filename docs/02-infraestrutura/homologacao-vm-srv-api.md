@@ -185,7 +185,7 @@ Relatório operacional anterior: `HOMOLOGATION_PLATFORM_SERVICES_ACTIVATION_REPO
 | A | preparação | — | **PASS** — 12 base healthy; Compose/profiles/gateway estendidos |
 | B | `requests-api` | `delpi-hml-requests-api` | **PASS** — health 200; migrations my-requests no plugins HML; outbox **OFF**; volumes anexos HML |
 | C | `my-requests` | `delpi-hml-my-requests` | **PASS** — `remoteEntry.js` HTTPS |
-| D | `engineering-api` | `delpi-hml-engineering-api` | **PASS** — health 200; EVA/OCR/ACT fail-closed; S2S vazio; JWT inválido 401 |
+| D | `engineering-api` | `delpi-hml-engineering-api` | **PASS** — health 200; EVA/OCR/ACT fail-closed; S2S vazio; JWT inválido 401; **PRC** `ENG_PRC_REPOSITORY=postgres` + role `eng_prc` |
 | E | `engineering` | `delpi-hml-engineering` | **PASS** — `remoteEntry.js` HTTPS |
 
 ### Isolamento

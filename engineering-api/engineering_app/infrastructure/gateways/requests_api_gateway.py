@@ -1,9 +1,9 @@
 """Adapters oficiais de leitura — requests-api (owner: Minhas Solicitações).
 
-Contratos comprovados no G0:
-- `GET /requests/work-queue` — fila de trabalho/pendências atribuídas ao
+Contratos oficiais (requests-api router prefix `/v1`):
+- `GET /v1/requests/work-queue` — fila de trabalho/pendências atribuídas ao
   usuário autenticado (escopo server-side por usuário).
-- `GET /requests/mine` — solicitações criadas pelo usuário autenticado.
+- `GET /v1/requests/mine` — solicitações criadas pelo usuário autenticado.
 
 Envelope: `{"success", "data": {"items": [...], "total", "page", "page_size"}}`.
 Item (serialize_request): id, request_number, type_code, status,
@@ -107,11 +107,11 @@ class _RequestsApiSource:
 
 class RequestsApiWorkQueueSource(_RequestsApiSource):
     system = _SYSTEM
-    endpoint = "GET /requests/work-queue"
+    endpoint = "GET /v1/requests/work-queue"
     _kind = "task"
 
 
 class RequestsApiMineSource(_RequestsApiSource):
     system = _SYSTEM
-    endpoint = "GET /requests/mine"
+    endpoint = "GET /v1/requests/mine"
     _kind = "request"

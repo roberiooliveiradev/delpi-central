@@ -1143,7 +1143,7 @@ cmd_up_engineering_api() {
   echo "ATIVACAO=engineering-api"
   echo "project=$PROJECT"
   echo "servicos=engineering-api"
-  echo "modo=build + up -d --no-deps (EVA/OCR/ACT fail-closed; S2S opcional)"
+  echo "modo=build + up -d --no-deps (EVA/OCR/ACT fail-closed; PRC=postgres + eng_prc)"
   echo "volumes=hml-data/prc-attachments + hml-data/ocr-models (vazio)"
 
   mkdir -p "$COMPOSE_DIR/hml-data/prc-attachments" \
@@ -1153,6 +1153,9 @@ cmd_up_engineering_api() {
       sh -c 'mkdir -p /data/prc-attachments /data/ocr-models && chmod 777 /data/prc-attachments /data/ocr-models' \
       >/dev/null
   fi
+
+  # Principal dedicado eng_prc no postgres-plugins HML (idempotente; senha não logada).
+  bash "$SCRIPT_DIR/hml-provision-eng-prc.sh" "$COMPOSE_DIR/$ENV_LOCAL"
 
   (
     cd "$COMPOSE_DIR"

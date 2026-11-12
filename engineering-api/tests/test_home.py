@@ -68,10 +68,10 @@ def home_gateways(monkeypatch):
     def _builder():
         return GetEngineeringHome(
             tasks_source=_StubSource(
-                "requests-api", "GET /requests/work-queue", _noop("tasks")
+                "requests-api", "GET /v1/requests/work-queue", _noop("tasks")
             ),
             requests_source=_StubSource(
-                "requests-api", "GET /requests/mine", _noop("requests")
+                "requests-api", "GET /v1/requests/mine", _noop("requests")
             ),
             lmps_source=_StubSource(
                 "api-delpi", "GET /engineering/lmps", _noop("lmps")

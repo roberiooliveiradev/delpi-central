@@ -515,6 +515,17 @@ services:
       ENG_NC_DB_PASSWORD: ""
       ENG_NC_IMPORT_REPLACE_ENABLED: ""
       INSTALL_VISION_EXTRAS: "false"
+      # Product Registration — schema engineering já migrado pelo api-delpi;
+      # principal dedicado eng_prc (nunca PLUGINS_DB_USER).
+      ENG_PRC_REPOSITORY: postgres
+      ENG_PRC_DB_HOST: postgres-plugins
+      ENG_PRC_DB_PORT: "5432"
+      ENG_PRC_DB_NAME: ${PLUGINS_DB_NAME:-plugins_hub}
+      ENG_PRC_DB_USER: eng_prc
+      ENG_PRC_DB_PASSWORD: ${ENG_PRC_DB_PASSWORD}
+      ENG_PRC_DB_SSLMODE: ${ENG_PRC_DB_SSLMODE:-prefer}
+      ENG_PRC_ATTACHMENTS_STORAGE: disk
+      ENG_PRC_ATTACHMENTS_DIR: /app/data/prc-attachments
     healthcheck:
       test:
         [

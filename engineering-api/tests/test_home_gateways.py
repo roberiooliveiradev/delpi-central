@@ -103,7 +103,7 @@ async def test_work_queue_maps_items_and_delegation(monkeypatch):
     assert item.meta["type_code"] == "raw-material-creation"
 
     request = captured["request"]
-    assert request.url.path == "/requests/work-queue"
+    assert request.url.path == "/v1/requests/work-queue"
     assert request.url.params["page_size"] == "5"
     assert request.headers["Authorization"] == "Bearer user-jwt-1"
     assert request.headers["X-Delpi-Caller-App"] == "engineering-api"
@@ -128,7 +128,7 @@ async def test_mine_source_uses_mine_endpoint(monkeypatch):
 
     assert result.status == "empty"
     assert result.total == 0
-    assert captured["request"].url.path == "/requests/mine"
+    assert captured["request"].url.path == "/v1/requests/mine"
 
 
 async def test_requests_forbidden_maps_to_forbidden(monkeypatch):
