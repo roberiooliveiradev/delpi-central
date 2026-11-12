@@ -875,10 +875,11 @@ export const copy = {
     orderLevelOrigin: "empenho sem operação definida",
     orderLevelWarning:
       "Alguns materiais têm empenho vinculado apenas à OP, sem operação/CT. Foram contabilizados uma única vez. Confirme com o PCP o posto de entrega antes de movimentar.",
-    foreignBranchWarning: (count: number) =>
-      `${count} ${count === 1 ? "operação de outra filial foi desconsiderada" : "operações de outras filiais foram desconsideradas"} da programação publicada. O cálculo usa apenas operações da filial selecionada. Solicite ao PCP que atualize e republique a Carga Máquina para corrigir a origem da fila.`,
-    missingOrderWarning: (count: number) =>
-      `${count} ${count === 1 ? "operação foi desconsiderada" : "operações foram desconsideradas"} porque a OP não foi encontrada no Protheus da filial selecionada. Nenhum saldo foi inventado. O PCP deve atualizar e republicar a Carga Máquina para remover referências obsoletas.`,
+    deletedOrdersTitle: (count: number) =>
+      `${count} ${count === 1 ? "operação de OP excluída" : "operações de OPs excluídas"} desconsiderada${count === 1 ? "" : "s"}`,
+    deletedOrdersExplanation:
+      "O Protheus confirmou a exclusão dessas OPs após a publicação da Carga Máquina. Seus empenhos não foram considerados nesta prévia. Solicite ao PCP que atualize e republique a programação.",
+    deletedOrdersMore: (count: number) => `E mais ${count} operação(ões) excluída(s).`,
     columns: {
       product: "Material",
       workCenter: "CT",
