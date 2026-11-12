@@ -1120,3 +1120,178 @@
 :root[data-theme="dark"] .dashboard-it-portal .itp-observation-inline-status.is-running {
   color: #69d9a0;
 }
+
+
+/*
+ * Contraste dos headers do Portal de TI.
+ * O PageHero immersive usa azul-marinho e texto claro; a busca e os badges
+ * do kit compartilham estilos neutros feitos para superficies claras.
+ * Corrigimos SOMENTE o escopo deste portal, sem impactar outros MFEs.
+ *
+ * Pares de cores abaixo preservam contraste >= 4.5:1 para texto normal,
+ * inclusive quando o host esta em dark mode (hero continua marinho).
+ */
+.dashboard-it-portal .itp-page-hero--immersive {
+  --itp-hero-search-background: #f7fbff;
+  --itp-hero-search-foreground: #143550;
+  --itp-hero-search-muted: #496580;
+  --itp-hero-badge-neutral-background: #edf2f7;
+  --itp-hero-badge-neutral-foreground: #17324a;
+  --itp-hero-badge-info-background: #e3f4ff;
+  --itp-hero-badge-info-foreground: #064b74;
+  --itp-hero-badge-success-background: #e4f8ee;
+  --itp-hero-badge-success-foreground: #12613c;
+  --itp-hero-badge-warning-background: #fff0d5;
+  --itp-hero-badge-warning-foreground: #754300;
+  --itp-hero-badge-danger-background: #ffe8ed;
+  --itp-hero-badge-danger-foreground: #811e36;
+}
+
+/* Busca na TopBar geral: superficie e borda distinguiveis do canvas. */
+.dashboard-it-portal .itp-topbar .itp-topbar-search {
+  border: 1px solid #a5bdd0;
+  background: var(--itp-surface);
+  color: var(--itp-text);
+  box-shadow: 0 2px 9px rgba(12, 47, 73, 0.05);
+}
+
+.dashboard-it-portal .itp-topbar .itp-topbar-search__kbd {
+  border-color: #afc5d7;
+  color: var(--itp-text);
+  background: var(--itp-surface-muted);
+}
+
+.dashboard-it-portal .itp-topbar .itp-topbar-search:hover,
+.dashboard-it-portal .itp-topbar .itp-topbar-search[aria-expanded="true"] {
+  border-color: var(--itp-accent);
+  background: color-mix(in srgb, var(--itp-accent) 8%, var(--itp-surface));
+}
+
+.dashboard-it-portal .itp-topbar .itp-topbar-search:focus-visible {
+  outline: 3px solid var(--itp-accent);
+  outline-offset: 3px;
+}
+
+:root[data-theme="dark"] .dashboard-it-portal .itp-topbar .itp-topbar-search,
+.theme-dark .dashboard-it-portal .itp-topbar .itp-topbar-search {
+  border-color: #718aa4;
+  background: #152b42;
+  color: #f0f7ff;
+}
+
+:root[data-theme="dark"] .dashboard-it-portal .itp-topbar .itp-topbar-search__kbd,
+.theme-dark .dashboard-it-portal .itp-topbar .itp-topbar-search__kbd {
+  border-color: #718aa4;
+  background: #253c53;
+  color: #f0f7ff;
+}
+
+/* Busca dentro do header imersivo: campo reconhecivel e legivel. */
+.dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search {
+  display: inline-flex;
+  justify-content: flex-start;
+  width: min(100%, 520px);
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px 15px;
+  gap: 10px;
+  border: 1px solid #c2d9e9;
+  border-radius: 14px;
+  background: var(--itp-hero-search-background);
+  color: var(--itp-hero-search-foreground);
+  box-shadow: 0 9px 24px -17px rgba(4, 22, 40, 0.72);
+  font-size: 0.875rem;
+  font-weight: 620;
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search > svg {
+  flex: 0 0 auto;
+  color: #12618f;
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  color: var(--itp-hero-search-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search__kbd {
+  flex: 0 0 auto;
+  margin-left: auto;
+  border: 1px solid #b6cedf;
+  border-radius: 6px;
+  background: #e8f2f9;
+  color: #35556f;
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search:hover,
+.dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search[aria-expanded="true"] {
+  background: #ffffff;
+  border-color: #88b8d5;
+  box-shadow: 0 12px 28px -16px rgba(4, 22, 40, 0.78);
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search:focus-visible {
+  outline: 3px solid #9ae0ff;
+  outline-offset: 3px;
+}
+
+/* Badges do header: fundos opacos preservam contraste no gradiente. */
+.dashboard-it-portal .itp-page-hero--immersive .itp-status-badge {
+  border: 1px solid rgba(23, 50, 74, 0.12);
+  border-radius: 999px;
+  padding: 6px 11px;
+  font-weight: 700;
+  line-height: 1.35;
+  background: var(--itp-hero-badge-neutral-background);
+  color: var(--itp-hero-badge-neutral-foreground);
+  box-shadow: 0 4px 12px -10px rgba(4, 22, 40, 0.7);
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-status-badge--info {
+  background: var(--itp-hero-badge-info-background);
+  color: var(--itp-hero-badge-info-foreground);
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-status-badge--success {
+  background: var(--itp-hero-badge-success-background);
+  color: var(--itp-hero-badge-success-foreground);
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-status-badge--warning {
+  background: var(--itp-hero-badge-warning-background);
+  color: var(--itp-hero-badge-warning-foreground);
+}
+
+.dashboard-it-portal .itp-page-hero--immersive .itp-status-badge--danger {
+  background: var(--itp-hero-badge-danger-background);
+  color: var(--itp-hero-badge-danger-foreground);
+}
+
+@media (max-width: 720px) {
+  /* O kit oculta rotulos da TopBar no mobile; no hero, a busca precisa manter
+     sua legenda visivel e clicavel, mesmo em tela pequena. */
+  .dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search {
+    width: 100%;
+  }
+
+  .dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search__label {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    clip: auto;
+    border: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .dashboard-it-portal .itp-page-hero--immersive .itp-topbar-search__kbd {
+    display: none;
+  }
+}
