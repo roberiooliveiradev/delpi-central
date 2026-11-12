@@ -1,4 +1,6 @@
 # PRC — Inventário GitHub + wireframes responsivos + especificação dimensional
+> **GATE OBRIGATÓRIO ANTES DO FRONTEND:** executar e aceitar [PRC-UI-EXTRACT-01 — migração de componentes visuais para Plugin UI](./PRC-PLUGIN-UI-COMPONENT-EXTRACTION-MIGRATION-PLAN.md). Nenhum novo componente primitivo/personalizado reutilizável deve permanecer implementado exclusivamente no MFE Engenharia; adapters de dados/domínio continuam locais.
+
 
 > **2026-11-12 · PROVEN_SOURCE / TARGET_LAYOUT / VISUAL_TEST_NOT_RUN**  
 > Complementa [especificação visual](./PRC-PRODUCT-TRACKING-FRONTEND-VISUAL-SPEC.md) e [regras de domínio](./PRC-PRODUCT-TRACKING-VERSIONS-TRANSVERSAL-FLAGS-DECISIONS.md).  
