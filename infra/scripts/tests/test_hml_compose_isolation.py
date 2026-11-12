@@ -177,6 +177,18 @@ def assert_source_files() -> None:
         fail("nginx de homologação não encaminha production-control-api")
     if "include /etc/nginx/snippets/hml-proxy-locations.conf" not in nginx:
         fail("nginx HML não inclui snippet de locations compartilhadas")
+    if "location ^~ /auth/resources/" not in locations or "location ^~ /auth/admin/" not in locations:
+        fail("nginx HML sem locations sem rate-limit para assets/Admin Console Keycloak")
+    if "limit_req zone=auth_zone" not in locations:
+        fail("nginx HML perdeu auth_zone nos endpoints sensíveis de autenticação")
+    if re.search(
+        r"location /auth/\s*\{[^}]*limit_req zone=auth_zone",
+        locations,
+        re.DOTALL,
+    ):
+        fail("nginx HML ainda aplica auth_zone no catch-all /auth/ (quebra Admin Console)")
+    if "openid-connect/(token|auth|logout)" not in locations:
+        fail("nginx HML sem rate-limit nos endpoints OIDC sensíveis")
     if PROD_NGINX.read_text(encoding="utf-8").find("server_name minhadelpi.com.br") < 0:
         fail("nginx de produção foi alterado e perdeu o server_name vigente")
     if "KEYCLOAK_ISSUER=http://127.0.0.1" in example or "KC_HOSTNAME=127.0.0.1" in example:

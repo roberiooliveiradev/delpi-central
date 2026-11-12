@@ -116,15 +116,22 @@ Sem evidência no navegador com CA confiável: nunca declarar `PASS` de login.
 - Remoção da VM **não** executada: exige backup + autorização operacional explícita.
 - Gateway continua usando só `hml-gateway.{crt,key}`.
 
-## 6. Produção
+## 6. Admin Console Keycloak HML (rate-limit)
+
+**Causa raiz (CONFIRMADO):** `limit_req zone=auth_zone` no catch-all `location /auth/` + `error_page 429 → JSON` fazia o Admin Console receber módulos JS com HTTP 429 e MIME `application/json` (`error loading dynamically imported module`).
+
+**Correção (somente HML):** `gateway/snippets/hml-proxy-locations.conf` — sem `auth_zone` em `/auth/resources/` e `/auth/admin/`; `auth_zone` preservado em `openid-connect/(token|auth|logout)` e `login-actions/`. Gateway produtivo não alterado.
+
+Relatório de revisão: `HML_KEYCLOAK_ADMIN_CONSOLE_REVIEW` (entrega operacional no chat da task).
+
+## 7. Produção
 
 IDs e `StartedAt` do gateway produtivo preservados. Portas 80/443 produtivas intactas; HML exclusivo em `:18443`/`:18080`.
 
-## 7. Drift / pendências
+## 8. Drift / pendências
 
 - Drift `5c20be0311` (DÉLIA) permanece para owner DÉLIA.
 - Redis / API DELPI / Plugin UI / Production Control: fora de escopo.
-- **Próxima ação:** concluir instalação da CA no Windows (README na Desktop) e validar login browser.
 - Custódia: backup autorizado de `hml-local-ca.key` → só então remover da VM.
 
 ## 8. Referências
