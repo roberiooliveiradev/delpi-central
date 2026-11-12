@@ -1247,10 +1247,6 @@ export type LineFeederPublishedQueuePayload = {
     source_refreshed_at: string | null;
     start_date: string | null;
     end_date: string | null;
-    /** Linhas de outra filial excluídas da fila publicada do Alimentador. */
-    foreign_branch_operations_excluded?: number;
-    /** Operações excluídas após confirmação de ausência de SC2 na filial. */
-    missing_order_operations_excluded?: number;
   };
   work_centers: LineFeederPublishedWorkCenter[];
   operation_count: number;
@@ -1341,6 +1337,10 @@ export type LineFeederMaterialsPreviewPayload = {
         operation_id?: string | null;
       } | null;
       diagnostic_message?: string | null;
+      excluded_deleted_orders?: Array<{
+        production_order: string;
+        operation_code: string;
+      }>;
     }>;
   };
   summary: LineFeederMaterialsSummary;
