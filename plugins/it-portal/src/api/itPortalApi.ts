@@ -188,7 +188,8 @@ export type HistoryEntityType =
   | "server_network_link"
   | "integration"
   | "service_dependency"
-  | "host_service_preference";
+  | "host_service_preference"
+  | "host_service_action";
 
 export type HistoryEvent = {
   id: string;
