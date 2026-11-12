@@ -62,8 +62,8 @@ serviços nucleares do Windows mesmo com allowlist. Limite inicial de
 - `GET /servers/{server_id}/host-services` inclui `control_allowed`;
   `GET /me/capabilities` inclui `can_control_host_services`.
 ### Agente S2S exclusivo
-- `GET /collector/v1/servers/{server_id}/host-services/control/next?hostname=...`:
-  solicita um comando com lease aleatório; exige token de escopo exclusivo,
+- `POST /collector/v1/servers/{server_id}/host-services/control/next`:
+  com body `{"hostname":"srv-db01"}`: solicita um comando com lease aleatório; exige token de escopo exclusivo,
   client bindado ao host, hostname verificado, allowlist e flag ativa.
 - `POST /collector/v1/servers/{server_id}/host-services/control/{id}/result`:
   reporta `lease,status,state_after,error_code`. Só um resultado válido
