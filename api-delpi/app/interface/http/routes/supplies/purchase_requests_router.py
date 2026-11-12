@@ -13,6 +13,7 @@ from delpi_auth.authorization import require_any_permission, require_auth
 
 from app.interface.http.supplies_bff_service_access import (
     PURCHASE_REQUESTS_API_CALLER,
+    is_trusted_supplies_bff_call,
     require_any_permission_or_trusted_caller,
 )
 
@@ -29,6 +30,9 @@ from app.composition.supplies_composer import (
     build_list_supplies_purchase_request_recent_linked_receipts_use_case,
     build_list_supplies_purchase_request_requesters_use_case,
     build_list_supplies_purchase_request_cost_centers_use_case,
+)
+from app.application.use_cases.supplies.get_purchase_request_approval_lead_time_use_case import (
+    GetPurchaseRequestApprovalLeadTimeUseCase,
 )
 from app.core.exceptions import DatabaseConnectionError
 from app.core.responses import error_response
@@ -466,6 +470,51 @@ def get_supplies_purchase_request_lines_route(
             "Erro interno ao obter linhas da solicitação de compra.",
             status_code=500,
         )
+
+
+
+@router.get(
+    "/approval-lead-time",
+    operation_id="get_supplies_purchase_request_approval_lead_time",
+)
+@require_auth()
+def get_supplies_purchase_request_approval_lead_time_route(
+    branch: Annotated[list[str] | None, Query()] = None,
+    date_from: str | None = Query(default=None),
+    date_to: str | None = Query(default=None),
+    request_number: str | None = Query(default=None),
+    page: int = Query(1, ge=1, le=100000),
+    page_size: int = Query(25, ge=1, le=100),
+):
+    """SCR-only approved-history KPI; only trusted supplies-api may query globally.
+
+    This endpoint never accepts a user-supplied branch scope as an authorization
+    substitute: caller must be the authenticated internal supplies BFF.
+    """
+    if not is_trusted_supplies_bff_call():
+        return error_response("Acesso negado.", status_code=403)
+    try:
+        result = GetPurchaseRequestApprovalLeadTimeUseCase().execute(
+            branches=branch or [],
+            date_from=date_from,
+            date_to=date_to,
+            request_number=request_number,
+            page=page,
+            page_size=page_size,
+        )
+        return api_delpi_success(
+            result,
+            operation_id="get_supplies_purchase_request_approval_lead_time",
+            message="Indicador de alçadas com histórico SCR comprovado carregado.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=422)
+    except DatabaseConnectionError as exc:
+        log_error(f"Falha no banco ao consultar indicador de alçadas: {exc}")
+        return error_response("Base TOTVS indisponível.", status_code=503)
+    except Exception as exc:
+        log_error(f"Falha no indicador de alçadas: {exc}")
+        return error_response("Não foi possível consultar o indicador.", status_code=500)
 
 
 @router.get(
