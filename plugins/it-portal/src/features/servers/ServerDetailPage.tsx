@@ -24,6 +24,7 @@ import { SERVER_FIELD_LABELS, SERVER_TYPE_LABELS, UNIT_LABELS } from "../../cont
 import { ActionPlanFormModal } from "../action-plans/ActionPlanModals";
 import { ActionPlanTable, useListState } from "../action-plans/ActionPlanTable";
 import { ServerAutomaticInventorySection } from "./ServerAutomaticInventorySection";
+import { ServerWindowsServicesSection } from "./ServerWindowsServicesSection";
 import { ServerComponentsSections } from "./ServerComponentsSections";
 import { ServerFormModal, useInvalidateInventory } from "./ServerFormModal";
 import { ServerHistorySection } from "./ServerHistorySection";
@@ -183,6 +184,8 @@ export function ServerDetailPage({ serverId }: { serverId: string }) {
         ) : null}
 
         {activeSection === "inventory" ? <ServerAutomaticInventorySection serverId={server.id} /> : null}
+
+        {activeSection === "host_services" ? <ServerWindowsServicesSection serverId={server.id} /> : null}
 
         {activeSection === "services" ||
         activeSection === "databases" ||
