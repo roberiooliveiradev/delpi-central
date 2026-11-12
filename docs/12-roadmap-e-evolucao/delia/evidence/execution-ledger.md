@@ -6495,3 +6495,19 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `303-int1-minimal-real-intent-understanding-vs-mcp-tool-selection-g1-p1-causal-evaluation.md`.
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_G1_P1_REAL_EVAL_REVIEW`.
+
+### INT-1 provider-request integrity + real Qwen semantic selection — 2026-11-12
+
+- **TASK:** `DELIA-C3-T2-INT1-PYDANTIC-AI-PROVIDER-WIRE-AND-REAL-SEMANTIC-SELECTION-REMEDIATION-01`.
+- **EXISTING_EQUIVALENT=YES**; **REUSE_DECISION=EXTEND** (WrapperModel B3 capture + EnvelopeHint WrapperToolset/anyOf).
+- **B3:** `ModelRequestParameters.declared_function_tools` after prepare_request; **HTTP_WIRE_BYTES=NOT_OBSERVED**.
+- **FIXES:** `_EnvelopeHintedToolset` → `WrapperToolset`; `_schema_declares_object` for nullable anyOf live schemas.
+- **EVALS:** `or-qwen14b-303e1f9f4ed3` (round1) + `or-qwen14b-118289112bdf` (round2 revalidation); model `qwen/qwen3-14b`; fp `7dbc94c5035b0f19`; TOTAL_INVESTIGATIONS=6.
+- **G1:** TEO-first both rounds; recovery DAVI BOM; SATISFIED/GROUNDED.
+- **P1:** DAVI-first both; SATISFIED.
+- **M1:** wording sensitivity unstable; recovery FAIL both rounds.
+- **CAUSAL:** H1 owner-delivery REJECTED; EnvelopeHint delivery REMEDIATED; H3 MODEL_SELECTION_ERROR PROVEN_IN_SAMPLE; H5 REJECTED; H6 M1 PROVEN_IN_SAMPLE.
+- **AGENT/INSTRUCTION unchanged**; no keyword router; **PROD_UNTOUCHED=YES**; FULL_BATTERY=NOT_RUN.
+- **Doc:** `307-int1-provider-request-integrity-and-real-qwen-semantic-tool-selection-causal-evaluation.md`.
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_REAL_SEMANTIC_SELECTION_INDEPENDENT_REVIEW`.

@@ -1404,3 +1404,24 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
 
 **NEXT=`COORDINATION_INT1_G1_SELECTION_CAUSAL_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+## 2026-11-12 — INT-1 provider-request + real semantic selection residuals
+
+**TASK:** `DELIA-C3-T2-INT1-PYDANTIC-AI-PROVIDER-WIRE-AND-REAL-SEMANTIC-SELECTION-REMEDIATION-01` · Doc **307**
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-PROVIDER-REQUEST-WIRE | **PROVEN (B3 pre-HTTP)** | `WrapperModel.request` MRP; HTTP bytes NOT_OBSERVED |
+| INT1-ENVELOPEHINT-DROPPED-ON-FOR-RUN | **REMEDIATED** | subclass `WrapperToolset` |
+| INT1-ENVELOPEHINT-ANYOF-OBJECT-MISS | **REMEDIATED** | `_schema_declares_object` |
+| INT1-H1-OWNER-CONTRACT-LOSS | **REJECTED** | TEO WBS + DAVI gps at live B3 |
+| INT1-G1-TEO-FIRST-ATTRACTOR | **PROVEN_IN_SAMPLE (live×2)** | rounds 303e + 1182; recovery to DAVI OK |
+| INT1-P1-DAVI-CONTROL | **PASS** | both rounds |
+| INT1-M1-WORDING-SENSITIVITY | **UNSTABLE_IN_SAMPLE** | DAVI-first then TEO-first across rounds |
+| INT1-M1-RECOVERY-FAILURE | **PROVEN_IN_SAMPLE** | both rounds NOT_SATISFIED |
+| INT1-GOAL-DECLARE-UNUSED | **PROVEN_IN_SAMPLE** | 0/6 |
+| INT1-STAGE | **BLOCKED** | Doc 307 independent review |
+| INT1-CLOSED | **NO** | — |
+| INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
+
+**NEXT=`COORDINATION_INT1_REAL_SEMANTIC_SELECTION_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

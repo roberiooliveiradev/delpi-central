@@ -52,6 +52,13 @@ _native = _load_script(
 )
 
 from app.infrastructure.config.settings import Settings  # noqa: E402
+from pydantic_ai.models.wrapper import WrapperModel  # noqa: E402
+from tests.support.provider_request_boundary import (  # noqa: E402
+    CAPTURE_MECHANISM,
+    HTTP_WIRE_BYTES,
+    capture_b3_from_model_request_parameters,
+    public_b3_summary,
+)
 
 append_event = _trace.append_event
 check_security_gate = _trace.check_security_gate
@@ -90,6 +97,14 @@ SCENARIOS = [
     {
         "id": "P1_product_structure_control",
         "question": "Qual é a estrutura do produto 90260921?",
+        "prior": (),
+    },
+    {
+        "id": "M1_product_wording_metamorphic",
+        "question": (
+            "Mostre a árvore de componentes e relações que compõem "
+            "o produto 90260921."
+        ),
         "prior": (),
     },
 ]
@@ -291,6 +306,81 @@ def _install_catalog_capture(
     )
 
 
+
+def _persist_b3_full(
+    *,
+    evaluation_id: str,
+    scenario_id: str,
+    capture: dict,
+) -> Path:
+    """Full B3 (incl. descriptions) — host-mounted traces only."""
+    out_dir = ensure_trace_dir() / evaluation_id / "provider_request_b3"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / f"{scenario_id}.json"
+    payload = {k: v for k, v in capture.items() if k != "tools_by_name"}
+    path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, default=str),
+        encoding="utf-8",
+    )
+    try:
+        path.chmod(0o600)
+    except OSError:
+        pass
+    return path
+
+
+def _install_b3_provider_request_capture(
+    *,
+    evaluation_id: str,
+    scenario_holder: dict,
+    b3_box: dict,
+) -> None:
+    """Wrap investigation model — capture first request MRP per scenario.
+
+    EXISTING_EQUIVALENT=YES (WrapperModel + ModelRequestParameters).
+    REUSE_DECISION=EXTEND (eval-only instrumentation; no Agent change).
+    """
+    from app.infrastructure.orchestration import pydantic_ai_investigation as pai
+
+    original_build = pai.build_openai_compatible_investigation_model
+
+    class _B3CaptureModel(WrapperModel):
+        async def request(self, messages, model_settings, model_request_parameters):
+            scenario_id = scenario_holder.get("id")
+            if scenario_id and scenario_id not in b3_box:
+                snap = capture_b3_from_model_request_parameters(
+                    model_request_parameters,
+                    messages,
+                )
+                b3_box[scenario_id] = snap
+                full_path = _persist_b3_full(
+                    evaluation_id=evaluation_id,
+                    scenario_id=str(scenario_id),
+                    capture=snap,
+                )
+                append_event(
+                    evaluation_id,
+                    "provider_request_b3",
+                    {
+                        **public_b3_summary(snap),
+                        "full_artifact_relpath": str(
+                            Path(full_path).relative_to(ensure_trace_dir())
+                        ),
+                    },
+                    scenario_id=scenario_id,
+                    correlation_id=scenario_holder.get("correlation"),
+                )
+            return await self.wrapped.request(
+                messages, model_settings, model_request_parameters
+            )
+
+    def _build_captured(**kwargs):
+        return _B3CaptureModel(original_build(**kwargs))
+
+    pai.build_openai_compatible_investigation_model = _build_captured  # type: ignore[assignment]
+
+
+
 def run_scenario(
     *,
     handler,
@@ -406,7 +496,8 @@ def main() -> int:
         "evaluation_meta",
         {
             "task_id": (
-                "DELIA-C3-T2-INT1-G1-P1-REAL-QWEN-INTENT-SELECTION-EVAL-02"
+                "DELIA-C3-T2-INT1-PYDANTIC-AI-PROVIDER-WIRE-AND-"
+                "REAL-SEMANTIC-SELECTION-REMEDIATION-01"
             ),
             "model_id": settings.llm_model,
             "model_profile": settings.runtime_profile,
@@ -415,6 +506,8 @@ def main() -> int:
             "environment": settings.environment,
             "secure_eval_gate": gate.get("SECURE_EVAL_GATE"),
             "pydantic_ai": __import__("pydantic_ai").__version__,
+            "b3_capture_mechanism": CAPTURE_MECHANISM,
+            "http_wire_bytes": HTTP_WIRE_BYTES,
             "scenarios": [s["id"] for s in scenarios],
             "scenario_filter": (
                 (os.environ.get("DELIA_EVAL_SCENARIO_IDS") or "").strip()
@@ -427,6 +520,7 @@ def main() -> int:
 
     scenario_holder: dict = {"id": None, "correlation": evaluation_id}
     catalog_box: dict = {}
+    b3_box: dict = {}
     _install_finalize_capture()
     _install_usage_meter()
     _install_catalog_and_progress_capture(
@@ -436,6 +530,11 @@ def main() -> int:
         evaluation_id=evaluation_id,
         scenario_holder=scenario_holder,
         catalog_box=catalog_box,
+    )
+    _install_b3_provider_request_capture(
+        evaluation_id=evaluation_id,
+        scenario_holder=scenario_holder,
+        b3_box=b3_box,
     )
 
     handler, mcp = _compose()
@@ -478,6 +577,7 @@ def main() -> int:
             scenario=spec,
             token=token,
         )
+        b3 = b3_box.get(spec["id"])
         summary["scenarios"][spec["id"]] = {
             "elapsed_s": res.get("elapsed_s"),
             "error": res.get("error"),
@@ -487,6 +587,7 @@ def main() -> int:
             "limitations": res.get("limitations"),
             "content_head": (res.get("content") or "")[:160],
             "llm_runs": res.get("llm_runs"),
+            "provider_request_b3": public_b3_summary(b3) if b3 else None,
         }
         print(
             f"== {spec['id']}: "

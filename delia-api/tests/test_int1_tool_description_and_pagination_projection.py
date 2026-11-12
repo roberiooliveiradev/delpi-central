@@ -128,6 +128,69 @@ def test_envelope_hint_preserves_short_description_and_adds_hint():
     assert "arguments object" in desc.casefold() or "capability" in desc
 
 
+def test_envelope_hint_recognizes_nullable_object_anyof_live_schema():
+    """Production MCP schemas publish nullable objects via anyOf."""
+    live_davi_schema = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "capability": {"type": "string", "minLength": 1},
+            "arguments": {
+                "anyOf": [
+                    {"additionalProperties": True, "type": "object"},
+                    {"type": "null"},
+                ],
+                "default": None,
+            },
+        },
+        "required": ["capability"],
+    }
+    live_teo_schema = {
+        "type": "object",
+        "properties": {
+            "entity": {"type": "string"},
+            "action": {
+                "anyOf": [{"type": "string"}, {"type": "null"}],
+                "default": None,
+            },
+            "params": {
+                "anyOf": [
+                    {"additionalProperties": True, "type": "object"},
+                    {"type": "null"},
+                ],
+                "default": None,
+            },
+        },
+        "required": ["entity"],
+    }
+
+    class _Wrapped:
+        async def get_tools(self, ctx):
+            return {
+                "davi.read": _FakeTool(
+                    _FakeDef("DAVI read owner text.", live_davi_schema)
+                ),
+                "teo.read": _FakeTool(
+                    _FakeDef("TEO read owner text.", live_teo_schema)
+                ),
+            }
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return None
+
+    tools = asyncio.run(_EnvelopeHintedToolset(_Wrapped()).get_tools(None))
+    davi = tools["davi.read"].tool_def.description
+    teo = tools["teo.read"].tool_def.description
+    assert davi.startswith("DAVI read owner text.")
+    assert "arguments object" in davi.casefold()
+    assert "JSON objects" in teo
+    assert len(davi) > len("DAVI read owner text.")
+    assert len(teo) > len("TEO read owner text.")
+
+
 def test_pagination_envelope_extract_reusable_for_projection():
     structured = {
         "items": [{"id": "p1"}, {"id": "p2"}],

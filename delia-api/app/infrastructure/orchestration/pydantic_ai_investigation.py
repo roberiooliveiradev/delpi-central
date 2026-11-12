@@ -90,6 +90,7 @@ from app.application.specialist_interop.errors import (
     OWNER_ARGUMENT_REJECTED,
     SpecialistInteropError,
 )
+from pydantic_ai.toolsets import WrapperToolset
 
 _logger = logging.getLogger(__name__)
 
@@ -196,7 +197,8 @@ def _build_native_mcp_toolset(config, *, process_tool_call):
     )
 
 
-class _EnvelopeHintedToolset:
+@dataclass
+class _EnvelopeHintedToolset(WrapperToolset):
     """Wrapper toolset adding bounded, schema-derived usage guidance.
 
     The old synthesized Python tools carried ``Pass arguments as an
@@ -205,25 +207,37 @@ class _EnvelopeHintedToolset:
     ``arguments`` envelope. The hint is derived ONLY from the
     published inputSchema (presence of ``candidate_token`` /
     ``arguments``): never owner-specific, never fabricated args.
+
+    Must subclass ``WrapperToolset`` (not a duck-typed ``__getattr__``
+    proxy): ``Agent.for_run`` / ``for_run_step`` rebind wrapped leaves
+    via ``dataclasses.replace``. A plain proxy forwarded those methods
+    to the inner MCP toolset and dropped the hint layer before the
+    provider request (B3).
+
+    Live owner schemas often publish nullable objects as
+    ``anyOf: [{type: object}, {type: null}]``; hint detection must
+    recognize that shape or EnvelopeHint stays silent on B3.
     """
 
-    def __init__(self, wrapped):
-        self._wrapped = wrapped
-
-    def __getattr__(self, name):
-        return getattr(self._wrapped, name)
-
-    async def __aenter__(self):
-        await self._wrapped.__aenter__()
-        return self
-
-    async def __aexit__(self, *args):
-        return await self._wrapped.__aexit__(*args)
+    @staticmethod
+    def _schema_declares_object(prop: Any) -> bool:
+        if not isinstance(prop, Mapping):
+            return False
+        if prop.get("type") == "object":
+            return True
+        for key in ("anyOf", "oneOf"):
+            alts = prop.get(key)
+            if not isinstance(alts, Sequence):
+                continue
+            for alt in alts:
+                if isinstance(alt, Mapping) and alt.get("type") == "object":
+                    return True
+        return False
 
     async def get_tools(self, ctx):
         import dataclasses as _dc
 
-        tools = await self._wrapped.get_tools(ctx)
+        tools = await self.wrapped.get_tools(ctx)
         hinted = {}
         for name, tt in tools.items():
             tdef = getattr(tt, "tool_def", None)
@@ -248,8 +262,7 @@ class _EnvelopeHintedToolset:
                 if (
                     "capability" in props
                     and "arguments" in props
-                    and isinstance(props.get("arguments"), Mapping)
-                    and props["arguments"].get("type") == "object"
+                    and self._schema_declares_object(props.get("arguments"))
                 ):
                     hints.append(
                         " Business fields declared by the selected "
@@ -258,8 +271,7 @@ class _EnvelopeHintedToolset:
                         "of capability."
                     )
                 if any(
-                    isinstance(prop, Mapping)
-                    and prop.get("type") == "object"
+                    self._schema_declares_object(prop)
                     for prop in props.values()
                 ):
                     hints.append(

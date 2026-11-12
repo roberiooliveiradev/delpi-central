@@ -2148,3 +2148,7 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 ### 2026-11-12 — INT-1 G1 first-tool semantic selection causal investigation
 
 **TASK:** `DELIA-C3-T2-INT1-G1-FIRST-TOOL-SEMANTIC-SELECTION-ROOT-CAUSE-INVESTIGATION-01`. Offline compare evals 198e vs 3863. Post-304 WBS clarification reaches model-visible catalog; no app router forces TEO; G1 TEO-first attributed to **MODEL_TOOL_SELECTION_ERROR (PROVEN_IN_SAMPLE)** with declare_goal unused (optional). Observability EXTEND for description capture; no Agent/instruction change; no LLM. Doc 306. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_G1_SELECTION_CAUSAL_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+### 2026-11-12 — INT-1 provider-request integrity + real Qwen G1/P1/M1
+
+**TASK:** `DELIA-C3-T2-INT1-PYDANTIC-AI-PROVIDER-WIRE-AND-REAL-SEMANTIC-SELECTION-REMEDIATION-01`. B3 capture via `WrapperModel`/`ModelRequestParameters` (HTTP wire NOT_OBSERVED). EnvelopeHint: WrapperToolset + `anyOf` object detection REMEDIATED. Live Qwen14B G1/P1/M1 rounds `or-qwen14b-303e1f9f4ed3` + `or-qwen14b-118289112bdf`: G1 TEO-first both rounds (MODEL_SELECTION_ERROR PROVEN_IN_SAMPLE); P1 DAVI control OK; M1 wording sensitivity unstable + recovery FAIL. No instruction/Agent/router change; prod untouched. Doc 307. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_REAL_SEMANTIC_SELECTION_INDEPENDENT_REVIEW`**.
