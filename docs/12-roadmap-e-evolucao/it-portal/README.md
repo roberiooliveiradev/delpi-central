@@ -4,6 +4,19 @@ Estado de entrega e aceite do Portal de TI (`plugins/it-portal` + `it-portal-api
 Arquitetura, contrato e permissões vigentes: `it-portal-api/README.md` e
 `plugins/it-portal/README.md`. Histórico de implementação fica no Git.
 
+## Windows Servers — runbook operacional vigente (12/11/2026)
+
+O **SRV-DB01** foi homologado pelo responsável da TI em produção para coleta técnica
+horária, inventário completo de serviços Windows a cada cinco minutos e controle
+remoto restrito Iniciar/Interromper/Reiniciar (chamado #1585 solucionado).
+Para adicionar **outro servidor Windows**, começar pelo procedimento único
+[GUIA-IMPLANTACAO-SERVIDORES-WINDOWS.md](GUIA-IMPLANTACAO-SERVIDORES-WINDOWS.md):
+cadastrar host e UUID próprios, criar três identidades técnicas distintas,
+configurar bindings e allowlists no BFF sem afetar o piloto, instalar as
+três tarefas separadas e cumprir os testes de segurança e rollback.
+Os documentos antigos E4.S4, #1576 e #1585 preservam histórico e decisões
+do piloto; não devem ser copiados literalmente para novos servidores.
+
 ## Etapas
 
 | Etapa | Escopo | Commit | Estado | Aceite |
