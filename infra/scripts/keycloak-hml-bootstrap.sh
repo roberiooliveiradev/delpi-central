@@ -174,17 +174,58 @@ if [ -z "${TEST_PASS}" ] || [[ "$TEST_PASS" == CHANGE_ME_* ]]; then
 fi
 UID_="$(admin_api GET "/realms/$REALM/users?username=$TEST_USER&exact=true" \
   | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["id"] if d else "")')"
+USER_JSON="$(python3 - "$TEST_USER" <<'PY'
+import json, sys
+print(json.dumps({
+  "username": sys.argv[1],
+  "enabled": True,
+  "emailVerified": True,
+  "email": f"{sys.argv[1]}@hml.invalid",
+  "firstName": "Hml",
+  "lastName": "Tester",
+  "requiredActions": [],
+}))
+PY
+)"
 if [ -z "$UID_" ]; then
-  admin_api POST "/realms/$REALM/users" \
-    "{\"username\":\"$TEST_USER\",\"enabled\":true,\"emailVerified\":true}" >/dev/null
+  admin_api POST "/realms/$REALM/users" "$USER_JSON" >/dev/null
   UID_="$(admin_api GET "/realms/$REALM/users?username=$TEST_USER&exact=true" \
     | python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["id"])')"
   echo "[hml-kc] user $TEST_USER criado."
 else
-  admin_api PUT "/realms/$REALM/users/$UID_" \
-    '{"enabled":true,"emailVerified":true}' >/dev/null
-  echo "[hml-kc] user $TEST_USER já existe."
+  admin_api PUT "/realms/$REALM/users/$UID_" "$USER_JSON" >/dev/null
+  echo "[hml-kc] user $TEST_USER já existe — perfil/requiredActions sincronizados."
 fi
+# Evita VERIFY_PROFILE default no primeiro login HTTP LAN.
+RA_RAW="$(admin_api GET "/realms/$REALM/authentication/required-actions")"
+python3 - "$RA_RAW" <<'PY' >/tmp/hml-ra-aliases.txt
+import json, sys
+for a in json.loads(sys.argv[1]):
+    if a.get("alias"):
+        print(a["alias"])
+PY
+while read -r alias; do
+  [[ -z "$alias" ]] && continue
+  case "$alias" in
+    VERIFY_PROFILE|UPDATE_PROFILE|VERIFY_EMAIL)
+      admin_api PUT "/realms/$REALM/authentication/required-actions/$alias" \
+        "$(python3 - "$alias" <<'PY'
+import json,sys
+print(json.dumps({
+  "alias": sys.argv[1],
+  "name": sys.argv[1],
+  "providerId": sys.argv[1],
+  "enabled": False,
+  "defaultAction": False,
+  "priority": 90,
+}))
+PY
+)" >/dev/null || true
+      echo "[hml-kc] required-action $alias desabilitada (HML)."
+      ;;
+  esac
+done < /tmp/hml-ra-aliases.txt
+rm -f /tmp/hml-ra-aliases.txt
 admin_api PUT "/realms/$REALM/users/$UID_/reset-password" \
   "$(python3 - "$TEST_PASS" <<'PY'
 import json,sys
