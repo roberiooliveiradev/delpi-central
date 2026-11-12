@@ -90,6 +90,15 @@ SCENARIOS = [
         "prior": (),
     },
     {
+        # Original PO P2 (Doc 16 §2026-11-10): processes registered in
+        # Transformômetro — canonical wording from the frozen v2
+        # stability corpus. Re-run only to refresh stale Doc-299
+        # evidence at the current SHA (Doc 313 consolidated-evidence gap).
+        "id": "P2_processes_registered",
+        "question": "Quais processos de transformação estão cadastrados?",
+        "prior": (),
+    },
+    {
         "id": "G1_semantic_reword_structure",
         "question": "Mostre a árvore de componentes e relações do item 90260921.",
         "prior": (),

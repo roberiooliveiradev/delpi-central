@@ -1544,3 +1544,26 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-CLOSED | **NO** | — |
 
 **CAUSAL REVIEW RULE:** model-selection hypothesis is never the default explanation. Check B1/B2/B3 contract delivery, local argument mutation/schema, owner/AuthZ, evidence coverage and user outcome before attributing to the LLM. First-divergence evidence is mandatory. **NEXT=`COORDINATION_INT1_REQUIREMENTS_EVIDENCE_MATRIX_AND_FINITE_ACCEPTANCE_DECISION`**. No new task loop without bounded evidence-based blocker.
+
+## 2026-11-12 — INT-1 finite acceptance review residuals (Doc 314)
+
+**TASK:** `DELIA-C3-T2-INT1-REQUIREMENTS-EVIDENCE-MATRIX-AND-FINITE-ACCEPTANCE-DECISION-01` · Doc **314** · Evals `or-qwen14b-123ff3f94c37`/`3eac383d5237`/`b51e9ecf9f5d`/`5ad8d570cfdc`/`7c97bac72237`
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-OWNER-TYPED-REJECTION-FEEDBACK | **CLOSED** | `error_kind="validation"`+`recoverable:true` (VISTA `INVALID_CHANGE`/`QUERY_REQUIRED`, etc.) now `OWNER_ARGUMENT_REJECTED`+hint→ModelRetry; was `mcp_protocol_error`→`SOURCE_UNAVAILABLE`; proven live `error=owner_argument_rejected` |
+| INT1-PO-P1 | **SATISFIED_PROVEN** | Doc 310 DAVI-first GROUNDED |
+| INT1-PO-P2 | **PARTIALLY_SATISFIED** | honest insufficient — filtered `process.search` empty, no unfiltered retry; model-caused argument strategy, no proven code defect; optional bounded instruction/contract iteration |
+| INT1-PO-P3 | **PARTIALLY_SATISFIED** | post-fix GROUNDED partial (real formats via `vista.knowledge`+`teo.analyze`) / honest insufficient; full formats enumeration needs VISTA contract capability — EXTERNAL_OWNER_DEPENDENCY |
+| INT1-PROJECTION-BUDGET | **OPEN** | large TÉO trees truncate honestly (Doc 312) |
+| INT1-ATTEMPT-STATUS-CONFLATION | **OPEN_MINOR** | `attempt.status=SOURCE_UNAVAILABLE` also for `owner_argument_rejected`; `error_code`+`owner_hint` carry correct semantics — observability debt only |
+| INT1-MCP-HEAVY-VIEW-TIMEOUT | **OPEN_MINOR** | one real `mcp_timeout` (15s) on heavy `teo.analyze` — reliability, not INT-1 |
+| INT1-DAVI-NONEXECUTABLE-CAPS | **OPEN** | inherited Doc 310; owner DAVI |
+| DELIA-PREEXISTING-TEST-DEBT | **OPEN** | `test_runtime_profiles_share_execution_policy` + `test_module_exposes_native_first_tools` baseline failures — unrelated to this task |
+| INT1-GATE-R-FULL-REGRESSION | **TEST_NOT_RUN** | full battery not authorized in this task; pending gate if canonical DoD requires — owner + condition registered in Doc 314 §6 |
+| INT1-GENERALIZATION | **PROVEN_IN_SAMPLE** | no statistical/universal claim |
+| INT1-STAGE | **PENDING_COORDINATION_REVIEW** | recommendation `ACCEPT_WITH_RESIDUAL` submitted — NOT self-approved |
+| INT1-CLOSED | **NO** | — |
+| INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
+
+**NEXT=`COORDINATION_INT1_FINITE_ACCEPTANCE_DECISION`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

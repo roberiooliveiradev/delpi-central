@@ -577,6 +577,64 @@ def test_typed_argument_validation_recoverable_is_argument_rejected():
     assert exc.owner_hint == "product_type inválido"
 
 
+def test_owner_validation_kind_recoverable_is_argument_rejected():
+    # VISTA-family envelopes type the rejection class in
+    # ``error_kind: "validation"`` while ``code`` carries owner-specific
+    # vocabulary (INVALID_CHANGE, QUERY_REQUIRED). With recoverable:true
+    # the caller may correct and retry — the rejection must reach the
+    # agent as an argument rejection, never as source unavailability.
+    exc = _davi_invoke(
+        RemoteToolOutcome(
+            content_text="ref é obrigatório para data_model.inspect.",
+            structured={
+                "status": "error",
+                "error_kind": "validation",
+                "code": "INVALID_CHANGE",
+                "recoverable": True,
+                "message": "ref é obrigatório para data_model.inspect.",
+            },
+            is_error=True,
+        )
+    )
+    assert exc.code == "owner_argument_rejected"
+    assert exc.owner_hint == "ref é obrigatório para data_model.inspect."
+
+
+def test_owner_validation_kind_without_recoverable_stays_terminal():
+    exc = _davi_invoke(
+        RemoteToolOutcome(
+            content_text="ref é obrigatório.",
+            structured={
+                "status": "error",
+                "error_kind": "validation",
+                "code": "QUERY_REQUIRED",
+                "message": "q é obrigatório para data_route.search.",
+            },
+            is_error=True,
+        )
+    )
+    assert exc.code == "mcp_protocol_error"
+
+
+def test_non_validation_kind_recoverable_stays_terminal():
+    # ``recoverable`` is owner-declared only for the validation class —
+    # a different error_kind must not be widened into the repair loop.
+    exc = _davi_invoke(
+        RemoteToolOutcome(
+            content_text="recurso não encontrado.",
+            structured={
+                "status": "error",
+                "error_kind": "not_found",
+                "code": "RESOURCE_NOT_FOUND",
+                "recoverable": True,
+                "message": "recurso não encontrado.",
+            },
+            is_error=True,
+        )
+    )
+    assert exc.code == "mcp_protocol_error"
+
+
 def test_generic_validation_error_code_stays_terminal():
     # Review P1: the legacy ambiguous code must NOT open recovery even
     # with a plausible message — repairability needs the typed code +

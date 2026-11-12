@@ -365,9 +365,23 @@ class SpecialistInterop:
                 if isinstance(structured, Mapping)
                 else None
             )
-            if (
+            # Typed repairability comes in two owner-declared shapes:
+            # the canonical argument code set, or the delpi_mcp
+            # ``error_kind: "validation"`` class marker — owners reuse it
+            # for domain-scoped argument vocabulary (VISTA
+            # INVALID_CHANGE / QUERY_REQUIRED read-path rejects) whose
+            # code is not in the canonical set. Both still require
+            # explicit ``recoverable: true`` — undeclared, untyped and
+            # non-recoverable results stay terminal.
+            _owner_typed_rejection = (
                 isinstance(error_code, str)
                 and error_code in _OWNER_ARG_VALIDATION_CODES
+            ) or (
+                isinstance(structured, Mapping)
+                and structured.get("error_kind") == "validation"
+            )
+            if (
+                _owner_typed_rejection
                 and isinstance(structured, Mapping)
                 and structured.get("recoverable") is True
             ):
