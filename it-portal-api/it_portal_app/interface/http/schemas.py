@@ -115,6 +115,7 @@ HistoryEntityType = Literal[
     "integration",
     "service_dependency",
     "host_service_preference",
+    "host_service_action",
 ]
 
 
