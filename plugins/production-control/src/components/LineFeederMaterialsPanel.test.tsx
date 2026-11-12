@@ -163,6 +163,40 @@ describe("LineFeederMaterialsPanel", () => {
     expect(screen.queryByText(/Op\./)).toBeNull();
   });
 
+
+  it("identifica empenho de OP sem operação e não inventa um CT de destino", () => {
+    const source = basePayload().materials[0];
+    const data = basePayload({
+      materials: [
+        {
+          ...source,
+          work_centers: [],
+          origins: [
+            {
+              ...source.origins[0],
+              operation_id: "order-level:OP1",
+              work_center: "",
+              operation_code: "",
+              covered_qty: 0,
+              pending_qty: 0,
+              fraction: 0,
+            },
+          ],
+        },
+      ],
+    });
+    render(
+      <LineFeederMaterialsPanel
+        data={data}
+        query={{ workCenters: ["CT-A", "CT-B"], hoursPerWorkCenter: 3 }}
+      />,
+    );
+    expect(screen.getByText(/Sem CT definido/i)).toBeTruthy();
+    expect(screen.getByText(/Confirme com o PCP o posto de entrega/i)).toBeTruthy();
+    fireEvent.click(screen.getByText(/MP-001/i).closest("button")!);
+    expect(screen.getByText(/OP OP1 · empenho sem operação definida/i)).toBeTruthy();
+  });
+
   it("não apresenta lista operacional quando operational_list_safe=false", () => {
     render(
       <LineFeederMaterialsPanel

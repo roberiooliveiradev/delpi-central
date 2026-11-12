@@ -41,6 +41,20 @@ function firstWorkCenterCode(workCenters: string[] | undefined): string {
   return code ?? "";
 }
 
+function hasOrderLevelOrigin(item: LineFeederMaterialItem): boolean {
+  return (item.origins ?? []).some((origin) =>
+    origin.operation_id.startsWith("order-level:"),
+  );
+}
+
+function materialWorkCenterLabel(item: LineFeederMaterialItem): string {
+  const first = firstWorkCenterCode(item.work_centers);
+  if (hasOrderLevelOrigin(item)) {
+    return first ? `${first} + sem CT` : copy.lineFeeder.orderLevelWorkCenter;
+  }
+  return first || copy.lineFeeder.firstWorkCenterEmpty;
+}
+
 export function LineFeederMaterialsPanel({ data, query }: Props) {
   const texts = copy.lineFeeder;
   const [filter, setFilter] = useState<MaterialsListFilter>("to_collect");
@@ -78,7 +92,7 @@ export function LineFeederMaterialsPanel({ data, query }: Props) {
     {
       key: "work_center",
       header: texts.columns.workCenter,
-      render: (row) => firstWorkCenterCode(row.work_centers) || texts.firstWorkCenterEmpty,
+      render: (row) => materialWorkCenterLabel(row),
     },
     {
       key: "unit",
@@ -245,6 +259,12 @@ export function LineFeederMaterialsPanel({ data, query }: Props) {
         </div>
       ) : null}
 
+      {materials.some(hasOrderLevelOrigin) ? (
+        <div className="ppc-state" role="status">
+          {texts.orderLevelWarning}
+        </div>
+      ) : null}
+
       <div
         className="ppc-feeder-materials__filters"
         role="toolbar"
@@ -296,7 +316,7 @@ export function LineFeederMaterialsPanel({ data, query }: Props) {
             </header>
             <p className="ppc-feeder-materials__ct">
               {texts.columns.workCenter}:{" "}
-              {firstWorkCenterCode(row.work_centers) || texts.firstWorkCenterEmpty}
+              {materialWorkCenterLabel(row)}
             </p>
             <p>
               Necessário: {qty(row.required_qty, row.unit)}
@@ -354,11 +374,13 @@ function OriginsDetail({
         <ul>
           {item.origins.map((origin) => (
             <li key={`${origin.operation_id}-${origin.sequence_position}`}>
-              {texts.originRow(
-                origin.work_center,
-                origin.production_order,
-                (origin.pa_product_code ?? "").trim(),
-              )}
+              {origin.operation_id.startsWith("order-level:")
+                ? `OP ${origin.production_order} · ${texts.orderLevelOrigin}`
+                : texts.originRow(
+                    origin.work_center,
+                    origin.production_order,
+                    (origin.pa_product_code ?? "").trim(),
+                  )}
               {" — "}
               {qty(origin.required_qty, item.unit)}
             </li>

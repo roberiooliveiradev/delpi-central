@@ -1625,3 +1625,189 @@ def test_materials_timing_payload_is_present_without_secrets() -> None:
         assert forbidden not in blob
     assert data["operational_list_safe"] is True
     assert data["materials"]
+
+
+# Regressão 12/11/2026: SD4 da OP 09564601002 não traz D4_OPERAC.
+def test_order_level_commitments_counted_once_across_two_work_centers() -> None:
+    operations = [
+        CoveredOperationDemand(
+            work_center=center,
+            work_center_name=center,
+            production_order="09564601002",
+            operation_code=code,
+            operation_id=f"{center}|09564601002|{code}",
+            sequence_position=position,
+            covered_qty=Decimal("10"),
+            pending_qty=Decimal("700"),
+        )
+        for position, (center, code) in enumerate(
+            [("CT-27", "01"), ("CT-99", "03")], 1
+        )
+    ]
+    raw = [
+        {
+            "production_order": "09564601002",
+            "operation": "",
+            "product_code": material,
+            "description": material,
+            "unit": "KG",
+            "product_type": "MP",
+            "open_qty": qty,
+        }
+        for material, qty in [
+            ("10480008", 8.4),
+            ("10520002", 5.6),
+            ("10520003", 0.112),
+        ]
+    ]
+    from production_control_app.domain.services.line_feeder_requirements import (
+        normalize_commitments,
+    )
+
+    # Clientes legados continuam estritos; E3 preserva a chave (OP, "").
+    assert normalize_commitments(raw) == {}
+    indexed = normalize_commitments(raw, include_unassigned=True)
+    assert set(indexed) == {("09564601002", "")}
+    buckets, warnings, ok = build_material_demands(operations, indexed)
+    assert ok
+    assert len(buckets) == 3
+    assert [b.required_qty for b in buckets] == [
+        Decimal("8.4"), Decimal("5.6"), Decimal("0.112")
+    ]
+    assert all(len(b.origins) == 1 for b in buckets)
+    assert all(b.origins[0].operation_code == "" for b in buckets)
+    assert all(b.origins[0].work_center == "" for b in buckets)
+    assert all(b.work_centers == [] for b in buckets)
+    assert sum(
+        w["code"] == "order_level_commitment_without_operation" for w in warnings
+    ) == 1
+    items = apply_factory_stock(
+        buckets,
+        factory_balances={"10480008": 2},
+        source_balances={"10480008": 10, "10520002": 10, "10520003": 10},
+        balances_available=True,
+    )
+    assert [item["to_collect_qty"] for item in items] == [6.4, 5.6, 0.112]
+
+
+def test_order_level_and_operation_level_commitments_remain_distinct() -> None:
+    operations = [
+        CoveredOperationDemand(
+            work_center="CT-27",
+            work_center_name="",
+            production_order="OP1",
+            operation_code="01",
+            operation_id="CT-27|OP1|01",
+            sequence_position=1,
+            covered_qty=Decimal("3"),
+            pending_qty=Decimal("5"),
+        )
+    ]
+    commitments = {
+        ("OP1", "1"): [
+            {"product_code": "MP1", "unit": "KG", "product_type": "MP", "open_qty": 2},
+        ],
+        ("OP1", ""): [
+            {"product_code": "MP1", "unit": "KG", "product_type": "MP", "open_qty": 3},
+        ],
+    }
+    buckets, warnings, ok = build_material_demands(operations, commitments)
+    assert ok
+    assert len(buckets) == 1
+    assert buckets[0].required_qty == Decimal("5")
+    assert len(buckets[0].origins) == 2
+    assert buckets[0].work_centers == ["CT-27"]
+    assert {o.operation_code for o in buckets[0].origins} == {"01", ""}
+    assert any(w["code"] == "order_level_commitment_without_operation" for w in warnings)
+
+
+def test_service_mt_order_level_sd4_end_to_end() -> None:
+    op_01 = {
+        **_op("CT-27", "09564601002"),
+        "unit": "MT",
+        "pieces_conversion_factor": None,
+    }
+    op_03 = {
+        **_op("CT-99", "09564601002"),
+        "operation_code": "03",
+        "unit": "MT",
+        "pieces_conversion_factor": None,
+    }
+    def raw_st(hours: float) -> dict[str, Any]:
+        return {
+            "standard_time_unit_hours": hours,
+            "ideal_cycle_seconds": None,
+            "setup_seconds": 0,
+            "pieces_conversion_factor": None,
+            "standard_time_source": "shy_tempad",
+            "data_quality": "piece_conversion_unavailable",
+        }
+    service = _service(
+        published=_payload([op_01, op_03]),
+        balances_ops={
+            ("09564601002", "01"): {
+                "operation_pending_qty": 700,
+                "operation_produced_qty": 300,
+            },
+            ("09564601002", "03"): {
+                "operation_pending_qty": 700,
+                "operation_produced_qty": 300,
+            },
+        },
+        standard_times={
+            ("09564601002", "01"): raw_st(0.1),
+            ("09564601002", "03"): raw_st(0.02),
+        },
+        commitments=[
+            {
+                "production_order": "09564601002",
+                "operation": "",
+                "product_code": "10480008",
+                "description": "Cobre nu",
+                "unit": "KG",
+                "product_type": "MP",
+                "open_qty": 8.4,
+            },
+            {
+                "production_order": "09564601002",
+                "operation": "",
+                "product_code": "10520002",
+                "description": "PVC",
+                "unit": "KG",
+                "product_type": "MP",
+                "open_qty": 5.6,
+            },
+            {
+                "production_order": "09564601002",
+                "operation": "",
+                "product_code": "10520003",
+                "description": "Pigmento",
+                "unit": "KG",
+                "product_type": "MP",
+                "open_qty": 0.112,
+            },
+        ],
+        factory_stock={"10480008": 2},
+        source_stock={"10480008": 50, "10520002": 50, "10520003": 50},
+    )
+    data = service.preview_materials(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-27", "CT-99"],
+        hours_per_work_center=2,
+    )
+    assert data["operational_list_safe"] is True
+    assert data["preview_completeness"] != "incomplete"
+    assert {x["product_code"] for x in data["materials"]} == {
+        "10480008", "10520002", "10520003"
+    }
+    material = next(x for x in data["materials"] if x["product_code"] == "10480008")
+    assert material["required_qty"] == 8.4
+    assert material["to_collect_qty"] == 6.4
+    assert material["work_centers"] == []
+    assert len(material["origins"]) == 1
+    assert material["origins"][0]["operation_code"] == ""
+    assert any(
+        item["code"] == "order_level_commitment_without_operation"
+        for item in data["demand_warnings"]
+    )

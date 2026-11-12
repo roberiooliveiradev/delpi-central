@@ -164,11 +164,45 @@ def build_material_demands(
     buckets: dict[tuple[str, str], _MaterialBucket] = {}
     warnings: list[dict[str, Any]] = []
     demands_ok = True
-    # Evita duplicar o mesmo empenho se a mesma OP/operação aparecer 2× no horizonte.
+    # Empenhos D4_OPERAC vazio pertencem à OP, não a um CT determinado.
+    # Usamos uma origem sintética por OP presente no horizonte para não
+    # duplicar o saldo entre as operações 01/02/03 (nem entre postos).
+    first_covered_by_order: dict[str, CoveredOperationDemand] = {}
+    for op in operations:
+        if op.covered_qty > _EPSILON and op.production_order:
+            first_covered_by_order.setdefault(op.production_order, op)
+    order_level_origins: list[CoveredOperationDemand] = []
+    for order, first_op in first_covered_by_order.items():
+        if not commitments_by_operation.get((order, "")):
+            continue
+        order_level_origins.append(
+            CoveredOperationDemand(
+                work_center="",
+                work_center_name="",
+                production_order=order,
+                operation_code="",
+                operation_id=f"order-level:{order}",
+                sequence_position=0,
+                covered_qty=Decimal("0"),
+                pending_qty=Decimal("0"),
+                pa_product_code=first_op.pa_product_code,
+            )
+        )
+        warnings.append({
+            "code": "order_level_commitment_without_operation",
+            "production_order": order,
+            "message": (
+                "A OP possui empenhos sem operação definida. "
+                "A necessidade será contabilizada uma vez, sem indicar CT de entrega."
+            ),
+        })
+
+    # Mantém primeiro as operações explícitas, depois empenhos da OP sem posto.
+    # Evita duplicar a mesma operação publicada em mais de um CT.
     seen_ops: set[tuple[str, str]] = set()
 
-    for op in operations:
-        if op.covered_qty <= _EPSILON:
+    for op in [*operations, *order_level_origins]:
+        if op.covered_qty <= _EPSILON and op.operation_code:
             continue
         op_key = (op.production_order, _normalize_operation_code(op.operation_code))
         if op_key in seen_ops:

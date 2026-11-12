@@ -871,6 +871,10 @@ export const copy = {
     inventoryFreeShort: "Livre",
     pickupLocationEmpty: "Sem local cadastrado",
     firstWorkCenterEmpty: "—",
+    orderLevelWorkCenter: "Sem CT definido",
+    orderLevelOrigin: "empenho sem operação definida",
+    orderLevelWarning:
+      "Alguns materiais têm empenho vinculado apenas à OP, sem operação/CT. Foram contabilizados uma única vez. Confirme com o PCP o posto de entrega antes de movimentar.",
     columns: {
       product: "Material",
       workCenter: "CT",

@@ -831,6 +831,7 @@ class LineFeederService:
         pieces_conversion_factor: Decimal | None,
         standard_time_quality: str,
         standard_time_source: str,
+        standard_time_unit_hours: Decimal | None = None,
     ) -> HorizonOperationInput:
         return HorizonOperationInput(
             operation_id=_text(op.get("operation_id")),
@@ -850,6 +851,7 @@ class LineFeederService:
             standard_time_quality=standard_time_quality,
             standard_time_source=standard_time_source,
             pa_product_code=_text(op.get("pa_product_code")),
+            standard_time_unit_hours=standard_time_unit_hours,
         )
 
     def _allocate_work_center_progressively(
@@ -945,6 +947,7 @@ class LineFeederService:
                 factor = _optional_decimal(
                     (raw_st or {}).get("pieces_conversion_factor")
                 )
+            raw_st = snap.get("_raw") if isinstance(snap.get("_raw"), dict) else {}
             inputs.append(
                 self._horizon_input(
                     op,
@@ -961,6 +964,9 @@ class LineFeederService:
                     standard_time_quality=quality,
                     standard_time_source=str(
                         snap.get("standard_time_source") or "unavailable"
+                    ),
+                    standard_time_unit_hours=_optional_decimal(
+                        (raw_st or {}).get("standard_time_unit_hours")
                     ),
                 )
             )
@@ -1456,7 +1462,10 @@ class LineFeederService:
                     chunk,
                 )
                 continue
-            commitments.update(normalize_commitments(items))
+            # Só a prévia dinâmica E3 inclui empenhos em nível de OP.
+            indexed = normalize_commitments(items, include_unassigned=True)
+            for key, rows in indexed.items():
+                commitments.setdefault(key, []).extend(rows)
         return commitments, response_ok
 
     def _fetch_balances(
