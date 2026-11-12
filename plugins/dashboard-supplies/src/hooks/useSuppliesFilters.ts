@@ -34,6 +34,18 @@ export function useSuppliesFilters(options?: SuppliesFiltersOptions) {
     setCompetence,
     replaceAll,
   } = useCompetenceLinkedDates(initial);
+  // Change dates and clear stale monthly competence in one render.
+  // Branches, warehouse and the other filters remain untouched.
+  const setPeriodRange = useCallback(
+    (range: { dateStart: string; dateEnd: string }) => {
+      replaceAll({
+        dateStart: range.dateStart,
+        dateEnd: range.dateEnd,
+        competence: "",
+      });
+    },
+    [replaceAll],
+  );
   const [branches, setBranchesState] = useState(initial.branches);
   const [location, setLocationState] = useState(initial.location);
 
@@ -88,6 +100,7 @@ export function useSuppliesFilters(options?: SuppliesFiltersOptions) {
     setDateStart,
     setDateEnd,
     setCompetence,
+    setPeriodRange,
     setBranches: useCallback((v: string[]) => setBranchesState(v), []),
     setLocation: useCallback((v: string) => setLocationState(v), []),
     apiBranches,

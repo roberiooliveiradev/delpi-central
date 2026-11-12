@@ -3,8 +3,8 @@ export function inputDateToApi(value: string | undefined): string | undefined {
   return value;
 }
 
-export function getTodayInputValue(): string {
-  const today = new Date();
+export function getTodayInputValue(reference: Date = new Date()): string {
+  const today = reference;
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const day = String(today.getDate()).padStart(2, "0");

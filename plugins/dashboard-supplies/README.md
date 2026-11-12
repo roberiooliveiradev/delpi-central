@@ -39,3 +39,30 @@ Quando a consulta do detalhamento falha, a tela mostra o erro e **Tentar novamen
 ela não apresenta essa falha como uma consulta bem-sucedida com zero registros.
 A ordenação por data/produto preserva desempate estável sem repetir colunas.
 Para validação com DAVI, ver `api-delpi/docs/integrations/davi-supplies-inventory-validation.md`.
+
+
+
+### GLPI #1197 — atalhos de estoque sem giro (nov/2026)
+
+A aba **Estoque sem giro** oferece **Últimos 6 meses** e **Últimos
+12 meses**, calculados até o dia atual. Cada atalho substitui as duas
+datas de forma atômica e limpa a competência mensal anterior, mantendo
+unidade, armazém e demais filtros de detalhamento. KPIs e tabela são
+atualizados juntos; a paginação volta à primeira página.
+
+O botão ativo é inferido das datas (inclusive após restauração de URL).
+Alterar manualmente datas ou a competência muda o contexto para
+**Período personalizado**, e clicar novamente no atalho recupera a
+janela móvel. O atalho de 12 meses continua usando o comportamento
+padrão canônico da API, sem parâmetros explícitos de datas; 6 meses
+reutiliza os parâmetros de datas existentes.
+
+A janela examina **consumos efetivos** naquele intervalo, enquanto
+os valores financeiros permanecem baseados no **estoque atual** (SB2),
+não no valor histórico do estoque no mês selecionado. Por isso uma
+janela maior pode resultar em menos valor classificado como sem giro.
+
+Testes: `cd plugins/dashboard-supplies && npm run test`,
+`npm run lint` e `npm run build`. Para homologação, testar
+setembro/2026 → 6m → 12m → personalizado → 6m, com diferentes
+unidades e armazéns, confirmando os mesmos KPIs do período padrão.

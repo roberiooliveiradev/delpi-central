@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { PackageX, Percent, ShieldAlert, TrendingDown } from "lucide-react";
+import { CalendarDays, Info, PackageX, Percent, ShieldAlert, TrendingDown } from "lucide-react";
+import { SegmentToggle } from "@delpi/plugin-ui/index";
 import type { DataTableSelection } from "@delpi/plugin-ui/index";
 
 import {
@@ -43,6 +44,12 @@ import {
   formatInteger,
   formatPercent,
 } from "../utils/format";
+import {
+  detectNonMovingWindowPreset,
+  getNonMovingWindowDates,
+  NON_MOVING_WINDOW_PRESET_OPTIONS,
+  type NonMovingWindowPreset,
+} from "../utils/nonMovingWindowPresets";
 
 type NonMovingStockPageProps = { pathname?: string };
 
@@ -123,6 +130,7 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
     setDateStart,
     setDateEnd,
     setCompetence,
+    setPeriodRange,
     setBranches,
     setLocation,
     filterState,
@@ -161,9 +169,17 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
     location,
   ]);
 
-  const isDefaultWindow =
-    dateStart === getRollingMonthsAgoInputValue(12) &&
-    dateEnd === getTodayInputValue();
+  // Keep the 12-month rolling API default, not a custom date window.
+  const activeWindow = detectNonMovingWindowPreset(dateStart, dateEnd);
+  const isDefaultWindow = activeWindow === "last_12_months";
+  const handleQuickWindowChange = useCallback(
+    (preset: NonMovingWindowPreset) => {
+      if (preset === "custom") return;
+      setSelection(null);
+      setPeriodRange(getNonMovingWindowDates(preset));
+    },
+    [setPeriodRange],
+  );
 
   const warehouse = APPROVED_WAREHOUSES.has(location) ? location : "";
 
@@ -227,9 +243,12 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
     reloadItems();
   }, [reload, reloadItems]);
 
-  const periodLabel = isDefaultWindow
-    ? "Últimos 12 meses"
-    : formatPeriodLabel(dateStart, dateEnd);
+  const periodLabel =
+    activeWindow === "last_12_months"
+      ? "Últimos 12 meses"
+      : activeWindow === "last_6_months"
+        ? "Últimos 6 meses"
+        : formatPeriodLabel(dateStart, dateEnd);
   const branchLabel = formatBranchFilterLabel(branches);
   const locationLabel = warehouse ? `Armazém ${warehouse}` : "01 + 99";
 
@@ -406,6 +425,37 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
         onRefresh={refreshAll}
         refreshing={refreshing || items.refreshing}
       />
+
+      <section className="ds-non-moving-window-controls" aria-label="Atalhos do período de consumo">
+        <div className="ds-non-moving-window-controls__toolbar">
+          <div className="ds-non-moving-window-controls__heading">
+            <CalendarDays size={17} aria-hidden="true" />
+            <span>Período rápido</span>
+          </div>
+          <SegmentToggle
+            ariaLabel="Selecionar janela de consumo"
+            idPrefix="non-moving-window"
+            prefix="ds"
+            size="sm"
+            widthMode="content"
+            value={activeWindow}
+            options={NON_MOVING_WINDOW_PRESET_OPTIONS}
+            onChange={handleQuickWindowChange}
+          />
+          <span className="ds-non-moving-window-controls__current" aria-live="polite">
+            {activeWindow === "custom" ? "Período personalizado" : "Período selecionado"}
+          </span>
+        </div>
+        <p className="ds-non-moving-window-controls__explanation">
+          <Info size={16} aria-hidden="true" />
+          <span>
+            O período indica quando o material teve consumo. Os valores representam
+            o <strong> estoque atual</strong>, não o estoque daquela data.
+            Ao ampliar a janela, o valor sem giro pode diminuir porque mais
+            movimentações de consumo são consideradas.
+          </span>
+        </p>
+      </section>
       <SuppliesStatusAlerts
         error={error}
         loading={loading}

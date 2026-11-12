@@ -56,7 +56,7 @@ export const SUPPLIES_HELP_TOOLTIPS = {
     savingsEntries: "Quantidade de lançamentos na planilha IDD no recorte.",
     savingsPeriod: "Economia acumulada no intervalo de datas filtrado.",
     nonMovingStockValue:
-      "Valor do estoque de matérias-primas sem utilização efetiva (consumo de produção ou outras saídas de utilização) na janela de análise. Transferências entre armazéns e ajustes de inventário não reiniciam o prazo.",
+      "Valor do estoque atual das matérias-primas sem utilização efetiva durante o período selecionado. O filtro define quando houve consumo, mas a valoração utiliza o saldo atual, não o estoque histórico daquele período. Transferências entre armazéns e ajustes de inventário não reiniciam o prazo.",
     nonMovingPercentage:
       "Percentual do valor sem giro sobre o estoque avaliável (produtos com cobertura histórica suficiente para a janela).",
     nonMovingCoverage:
