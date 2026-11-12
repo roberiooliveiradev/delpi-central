@@ -664,7 +664,9 @@ def test_authz_denied_is_deterministic_terminal_no_model_prose():
     )
     assert model.requests == []
     assert result.epistemic_class is EpistemicClass.HYPOTHESIS
-    assert "negado" in result.content.lower()
+    lowered = result.content.lower()
+    assert "permissão" in lowered or "permissoes" in lowered or "permissões" in lowered
+    assert "não há registro" not in lowered
 
 
 # --- F. Typed turn commands — execution-scope contract (B2, §6.184) -----

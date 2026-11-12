@@ -263,10 +263,13 @@ def create_mcp_server() -> MCPServer:
         name="read",
         title="Read",
         description=(
-            "Semantic read — never writes. entity + typed action + params "
-            "object. Domain entities (process, instance, revision, "
-            "measurement, investment, shared_resource, resource_cost, "
-            "resource_link, meeting_minute, process_document, "
+            "Semantic read — never writes. Process-engineering domain "
+            "(processes, WBS/decomposition, BPMN, resources) — not "
+            "product/item materials composition or bill-of-materials. "
+            "entity + typed action + params object. Domain entities "
+            "(process, instance, revision, measurement, investment, "
+            "shared_resource, resource_cost, resource_link, "
+            "meeting_minute, process_document, "
             "decomposition_tree (process WBS/decomposition tree; "
             "id=processo_id — hierarchical process mapeamento macro, "
             "not a materials/product bill-of-materials), "

@@ -87,6 +87,7 @@ from app.infrastructure.config.cri_instruction_resource import (
     resolve_investigation_instruction_version,
 )
 from app.application.specialist_interop.errors import (
+    MCP_AUTHORIZATION_DENIED,
     OWNER_ARGUMENT_REJECTED,
     SpecialistInteropError,
 )
@@ -342,12 +343,46 @@ class InvestigationDeps:
     no_progress_continuity_retry_used: bool = False
 
 
+def _is_authorization_denial(attempt: GovernedCapabilityAttempt) -> bool:
+    """True when Core/Domain/MCP denied access — never a NO_PROGRESS retry."""
+    if attempt.status is GovernedCapabilityStatus.AUTHZ_DENIED:
+        return True
+    return attempt.error_code in (
+        MCP_AUTHORIZATION_DENIED,
+        "authz_denied",
+    )
+
+
+def continuity_model_retry_allowed(
+    *,
+    attempt: GovernedCapabilityAttempt,
+    investigation_progress: str | None,
+    uncovered: Sequence[str] | tuple[str, ...] | list[str],
+    already_used: bool,
+    under_tool_limit: bool,
+) -> bool:
+    """Gate for the one-shot NO_PROGRESS continuity ModelRetry.
+
+    Authorization denials are terminal for the protected evidence: a
+    generic continuity retry must never encourage bypass via another
+    owner for the same data.
+    """
+    if _is_authorization_denial(attempt):
+        return False
+    if already_used or not under_tool_limit:
+        return False
+    if not uncovered:
+        return False
+    return investigation_progress == INVESTIGATION_PROGRESS_NONE
+
+
 # Keys that must survive projection overflow — continuity, provenance,
 # coverage and recovery. Never silently drop these for a bare overview.
 _BOUNDED_ESSENTIAL_KEYS: frozenset[str] = frozenset(
     {
         "status",
         "error_code",
+        "authorization_denied",
         "limitations",
         "investigation_progress",
         "pagination",
@@ -672,7 +707,20 @@ def _attempt_projection(
     owner_hint = getattr(attempt, "owner_hint", None)
     if isinstance(owner_hint, str) and owner_hint.strip():
         projection["owner_validation_hint"] = owner_hint.strip()[:500]
-    if progress == INVESTIGATION_PROGRESS_RELATED:
+    if _is_authorization_denial(attempt):
+        # Fail-closed projection: denial is not missing data, not a
+        # validation miss, and not a recoverable NO_PROGRESS cue.
+        projection["authorization_denied"] = True
+        projection["evidence_citable"] = False
+        projection["coverage_note"] = (
+            "Authorization denied by the governing authority. This is "
+            "not missing data, not an argument error, and not technical "
+            "unavailability. Do not retry equivalent access through "
+            "another capability for the same protected evidence. "
+            "Communicate the access limitation; preserve any separately "
+            "authorized observations."
+        )
+    elif progress == INVESTIGATION_PROGRESS_RELATED:
         projection["coverage_note"] = (
             "Observation is related but does not satisfy the user "
             "objective. Choose a live capability whose contract "
@@ -1458,13 +1506,18 @@ class PydanticAiInvestigationOrchestrator:
             # Continuity: NO_PROGRESS with open identifiers must not
             # silently become an unrelated specialist tour. One-shot
             # ModelRetry re-asks for semantic re-selection — never
-            # names an owner or hardcodes a capability.
-            if (
-                projection.get("investigation_progress")
-                == INVESTIGATION_PROGRESS_NONE
-                and uncovered
-                and not ctx.deps.no_progress_continuity_retry_used
-                and ctx.deps.tool_calls < self._tool_calls_limit
+            # names an owner or hardcodes a capability. AUTHZ_DENIED
+            # is excluded: never encourage bypass of a denial.
+            if continuity_model_retry_allowed(
+                attempt=attempt,
+                investigation_progress=projection.get(
+                    "investigation_progress"
+                ),
+                uncovered=uncovered,
+                already_used=ctx.deps.no_progress_continuity_retry_used,
+                under_tool_limit=(
+                    ctx.deps.tool_calls < self._tool_calls_limit
+                ),
             ):
                 ctx.deps.no_progress_continuity_retry_used = True
                 raise ModelRetry(

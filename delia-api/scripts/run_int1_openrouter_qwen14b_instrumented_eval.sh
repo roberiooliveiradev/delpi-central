@@ -120,6 +120,21 @@ if not _is_openrouter_key(llm_key):
             break
 values["DELIA_LLM_API_KEY"] = llm_key
 
+# Optional subject override for AUTH-DENY evaluations: when
+# DELIA_EVAL_SUBJECT_USERNAME/PASSWORD are exported, they replace the
+# canonical DEV_PORTAL_* subject for this isolated run only. The .env
+# file is never modified; overrides exist solely inside the ephemeral
+# eval container env file.
+import os as _os
+_ovr_user = _os.environ.get("DELIA_EVAL_SUBJECT_USERNAME", "").strip()
+_ovr_pass = _os.environ.get("DELIA_EVAL_SUBJECT_PASSWORD", "").strip()
+if _ovr_user and _ovr_pass:
+    values["DEV_PORTAL_USERNAME"] = _ovr_user
+    values["DEV_PORTAL_PASSWORD"] = _ovr_pass
+    print("SUBJECT_OVERRIDE=e2e_restricted")
+else:
+    print("SUBJECT_OVERRIDE=none")
+
 emit_keys = [
     "DELIA_LLM_API_KEY",
     "DELIA_EXCHANGE_CLIENT_SECRET",

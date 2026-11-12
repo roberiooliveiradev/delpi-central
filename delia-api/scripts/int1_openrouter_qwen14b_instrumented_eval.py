@@ -107,6 +107,16 @@ SCENARIOS = [
         ),
         "prior": (),
     },
+    {
+        # INT-1 AUTH-DENY: same business question as P1 but evaluated
+        # with a legitimately restricted subject (e2e-delia: delia.access
+        # + transformometro.access, no api-delpi.access). The Domain
+        # authority must deny at MCP admission and DÉLIA must communicate
+        # the access limitation instead of a not-found/technical error.
+        "id": "AUTH_DENY_product_structure",
+        "question": "Qual é a estrutura do produto 90260921?",
+        "prior": (),
+    },
 ]
 
 

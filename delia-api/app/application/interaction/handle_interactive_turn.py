@@ -172,8 +172,11 @@ DELPI_SOURCE_UNAVAILABLE_MESSAGE = (
     "novamente em instantes ou reformule o pedido."
 )
 DELPI_SOURCE_DENIED_MESSAGE = (
-    "O acesso à fonte autoritativa necessária para esta solicitação "
-    "foi negado. Nenhum dado operacional foi verificado."
+    "Você não possui permissão para consultar essa informação. "
+    "O acesso é controlado pelas permissões do Minha DELPI. "
+    "Nenhum dado operacional foi verificado. "
+    "Caso necessite desses dados, solicite a autorização ao "
+    "responsável pelo acesso."
 )
 DELPI_OWNER_RECORD_NOT_FOUND_MESSAGE = (
     "A fonte consultada informou que não há registro para esta "

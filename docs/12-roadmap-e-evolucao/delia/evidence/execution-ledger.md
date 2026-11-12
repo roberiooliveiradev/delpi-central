@@ -6542,3 +6542,19 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `309-int1-evaluation-environment-restoration-authorized-owner-access-and-real-qwen-revalidation.md`.
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_AUTHORIZED_REAL_EVAL_INDEPENDENT_REVIEW`.
+
+### INT-1 semantic root cause + governed authorization denial communication — 2026-11-12
+
+- **TASK:** `DELIA-C3-T2-INT1-SEMANTIC-ROOT-CAUSE-AND-AUTHORIZATION-DENIAL-COMMUNICATION-01`.
+- **EXISTING_EQUIVALENT=YES**; **REUSE_DECISION=EXTEND** (instruction v2-2, projection/ModelRetry gate, finalization precedence, message kind, MCP descriptions, eval harness).
+- **INSTRUCTION:** `generalist-semantic-v2-2-object-authz-continuity` / fp `3692299dac74c26e` MATCH runtime; supersedes v2-1 `4ebd5260b6cf9ba9`.
+- **SEMANTIC CAUSE:** H1+H5 contract vocabulary overlap (process vs product decomposition) + H2 instruction gap = first divergence at `MODEL-VISIBLE TOOL CONTRACTS → SEMANTIC TOOL SELECTION`; fixed at owner descriptions + generalist instruction; no routing/keywords/agent added.
+- **AUTHZ FIX:** `AUTHORIZATION_DENIED` now terminal — `evidence_citable=false`, coverage note, `ModelRetry` blocked for denial, governed `MESSAGE_KIND_AUTHZ_DENIED` user message.
+- **TARGETED_TESTS:** authz-comm + continuity + instruction + interaction + TEO contract suites PASS in `delpi-delia-api`; 3 pre-existing config-profile failures unrelated to WIP scope.
+- **EVAL:** `or-qwen14b-985d439b1653` (G1/P1/M1, subject `ti_delpi`) + `or-qwen14b-525ed88ac205` (AUTH-DENY, subject `e2e-delia` — Core user pre-existent, Keycloak identity provisioned, zero grant changes); model `qwen/qwen3-14b`; TOTAL_INVESTIGATIONS=6 (incl. 2 discarded AUTH-DENY formulations).
+- **G1/P1/M1:** all DAVI-first (`davi.get_context`→`davi.read` for G1; direct `davi.read get_product_structure` P1/M1); GROUNDED; **SATISFIED** — no TÉO attractor hit in-sample.
+- **AUTH-DENY:** `davi.read get_product_structure` → owner `AUTHORIZATION_DENIED/Forbidden` → projection AUTHZ_DENIED → no retry/bypass → governed permission message; `AUTH_DENIAL_PRESERVED=YES`, `NO_PROTECTED_DATA_LEAK=YES`, `USER_FACING_EXPLANATION=PASS`.
+- **AGENT_COUNT=1**; **NEW_ROUTER=NO**; **NEW_PLANNER=NO**; **PERMISSIONS_CHANGED=NO**; **PROD_UNTOUCHED=YES**; FULL_BATTERY=NOT_RUN.
+- **Doc:** `310-int1-semantic-root-cause-and-governed-authorization-denial-communication.md`.
+- **INT1_STAGE_ACCEPTANCE=PENDING_COORDINATION_REVIEW**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_SEMANTIC_AND_AUTHZ_INDEPENDENT_REVIEW`.

@@ -133,15 +133,17 @@ def test_no_progress_projection_emits_continuity_coverage_note():
     assert "teo" not in note.lower()
 
 
-def test_default_instruction_is_v2_1_object_continuity():
+def test_default_instruction_is_v2_2_object_authz_continuity():
     selected = pai.load_selected_investigation_instructions()
     assert (
         selected.instruction_version
-        == "generalist-semantic-v2-1-object-continuity"
+        == "generalist-semantic-v2-2-object-authz-continuity"
     )
-    assert selected.text_fingerprint == "4ebd5260b6cf9ba9"
+    assert selected.text_fingerprint == "3692299dac74c26e"
     text = selected.text
     assert "Linguistic similarity alone is not enough" in text
+    assert "Shared hierarchical vocabulary" in text
+    assert "AUTHZ_DENIED" in text
     assert "GUIDANCE_NOT_DOMAIN_TRUTH" in text
     for banned in (
         "90260921",
@@ -154,12 +156,16 @@ def test_default_instruction_is_v2_1_object_continuity():
         assert banned not in text
 
 
-def test_historical_v2_fingerprint_preserved_for_rollback():
-    selected = pai.load_selected_investigation_instructions(
+def test_historical_v2_and_v2_1_fingerprints_preserved_for_rollback():
+    v2 = pai.load_selected_investigation_instructions(
         instruction_version="generalist-semantic-v2"
     )
-    assert selected.text_fingerprint == "7dbc94c5035b0f19"
+    assert v2.text_fingerprint == "7dbc94c5035b0f19"
     assert (
-        hashlib.sha256(selected.text.encode()).hexdigest()[:16]
+        hashlib.sha256(v2.text.encode()).hexdigest()[:16]
         == "7dbc94c5035b0f19"
     )
+    v21 = pai.load_selected_investigation_instructions(
+        instruction_version="generalist-semantic-v2-1-object-continuity"
+    )
+    assert v21.text_fingerprint == "4ebd5260b6cf9ba9"

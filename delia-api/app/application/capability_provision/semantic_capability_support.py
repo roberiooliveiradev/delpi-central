@@ -2683,6 +2683,19 @@ def _finalize_agent_collected_attempts(
             if body and body not in seen_bodies:
                 seen_bodies.add(body)
                 parts.append(body)
+        partial_limits = [
+            "identifier_coverage_incomplete",
+            *[f"uncovered_identifier:{item}" for item in pending[:8]],
+        ]
+        if any(
+            item.status is GovernedCapabilityStatus.AUTHZ_DENIED
+            or item.error_code
+            in {"authz_denied", "mcp_authorization_denied"}
+            for item in collected
+        ):
+            # Authorized evidence may remain; denied evidence must not
+            # be disclosed or recovered by alternate-owner bypass.
+            partial_limits.append("authorization_denied_partial")
         return GovernedCapabilityAttempt(
             status=GovernedCapabilityStatus.NOT_APPLICABLE,
             correlation_id=correlation,
@@ -2690,10 +2703,7 @@ def _finalize_agent_collected_attempts(
                 "\n\n---\n\n".join(parts)[:MAX_RENDER_CONTENT_CHARS]
                 or None
             ),
-            limitations=tuple(
-                ["identifier_coverage_incomplete"]
-                + [f"uncovered_identifier:{item}" for item in pending[:8]]
-            ),
+            limitations=tuple(partial_limits),
             error_code="investigation_partial_coverage",
             admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
         )
@@ -3079,37 +3089,68 @@ def _finalize_agent_collected_attempts(
         )
 
     last = collected[-1]
+    denied = next(
+        (
+            item
+            for item in reversed(collected)
+            if item.status is GovernedCapabilityStatus.AUTHZ_DENIED
+            or item.error_code
+            in {"authz_denied", "mcp_authorization_denied"}
+        ),
+        None,
+    )
+    terminal = denied if denied is not None else last
     _logger.info(
         "orchestration stage=semantic_finalize "
         "decision=no_business_evidence status=%s correlation_id=%s",
-        last.status.value,
+        terminal.status.value,
         correlation,
     )
     pending = _uncovered_named_identifiers(input_text, ())
-    gap_limitations = list(last.limitations) + [
+    gap_limitations = list(terminal.limitations) + [
         LIMITATION_INSUFFICIENT_EVIDENCE
     ]
+    if denied is not None:
+        gap_limitations.append("authorization_denied")
     if pending:
         gap_limitations.append("identifier_coverage_incomplete")
         gap_limitations.extend(
             f"uncovered_identifier:{item}" for item in pending[:8]
         )
-    return GovernedCapabilityAttempt(
-        status=last.status
-        if last.status is not GovernedCapabilityStatus.SUCCESS
-        else GovernedCapabilityStatus.NOT_APPLICABLE,
-        correlation_id=correlation,
-        content=last.content,
-        limitations=tuple(dict.fromkeys(gap_limitations))[:24],
-        error_code=(
+    preserved_codes = {
+        "authz_denied",
+        "mcp_authorization_denied",
+        "owner_query_miss",
+        "catalog_owner_unavailable",
+    }
+    if denied is not None:
+        status = GovernedCapabilityStatus.AUTHZ_DENIED
+        error_code = (
+            denied.error_code
+            if denied.error_code in preserved_codes
+            else "mcp_authorization_denied"
+        )
+    else:
+        status = (
+            last.status
+            if last.status is not GovernedCapabilityStatus.SUCCESS
+            else GovernedCapabilityStatus.NOT_APPLICABLE
+        )
+        error_code = (
             last.error_code
-            if last.error_code
-            in {"authz_denied", "owner_query_miss", "catalog_owner_unavailable"}
+            if last.error_code in preserved_codes
             else "investigation_no_business_evidence"
-        ),
+        )
+    return GovernedCapabilityAttempt(
+        status=status,
+        correlation_id=correlation,
+        content=terminal.content,
+        limitations=tuple(dict.fromkeys(gap_limitations))[:24],
+        error_code=error_code,
         admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
-        provenance=last.provenance,
-        outcome=last.outcome,
+        provenance=terminal.provenance,
+        outcome=terminal.outcome,
+        owner_hint=getattr(terminal, "owner_hint", None),
     )
 
 

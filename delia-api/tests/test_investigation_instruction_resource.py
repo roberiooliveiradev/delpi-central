@@ -18,10 +18,12 @@ from app.infrastructure.orchestration import pydantic_ai_investigation as pai
 
 
 _BASELINE = "generalist-semantic-v2"
-_DEFAULT = "generalist-semantic-v2-1-object-continuity"
+_PRIOR_DEFAULT = "generalist-semantic-v2-1-object-continuity"
+_DEFAULT = "generalist-semantic-v2-2-object-authz-continuity"
 _CANDIDATE = "generalist-semantic-v3-objective-progress"
 _BASELINE_FP = "7dbc94c5035b0f19"
-_DEFAULT_FP = "4ebd5260b6cf9ba9"
+_PRIOR_DEFAULT_FP = "4ebd5260b6cf9ba9"
+_DEFAULT_FP = "3692299dac74c26e"
 
 
 def test_shipped_resource_loads_and_selects_baseline() -> None:
@@ -30,6 +32,7 @@ def test_shipped_resource_loads_and_selects_baseline() -> None:
     )
     assert bundle.default_instruction_version == _DEFAULT
     assert _BASELINE in bundle.instructions
+    assert _PRIOR_DEFAULT in bundle.instructions
     assert _DEFAULT in bundle.instructions
     assert _CANDIDATE in bundle.instructions
     selected = bundle.select(None)
@@ -39,6 +42,8 @@ def test_shipped_resource_loads_and_selects_baseline() -> None:
         hashlib.sha256(selected.text.encode()).hexdigest()[:16]
         == _DEFAULT_FP
     )
+    prior = bundle.select(_PRIOR_DEFAULT)
+    assert prior.text_fingerprint == _PRIOR_DEFAULT_FP
 
 
 def test_baseline_text_matches_historical_fingerprint() -> None:

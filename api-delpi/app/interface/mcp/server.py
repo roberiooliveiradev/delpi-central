@@ -379,7 +379,10 @@ def create_mcp_server() -> MCPServer:
         name=MCP_TOOL_READ,
         title=MCP_TOOL_READ_TITLE,
         description=(
-            "Read DELPI business data through one governed capability. "
+            "Read DELPI business data through one governed capability, "
+            "including product/item records and hierarchical product "
+            "composition / bill-of-materials when the live catalog "
+            "exposes those capabilities. "
             "capability: id published by get_context action=catalog/schema "
             "(e.g. search_products, get_product_structure, get_product_stock). "
             "arguments: object whose keys come from that capability's "

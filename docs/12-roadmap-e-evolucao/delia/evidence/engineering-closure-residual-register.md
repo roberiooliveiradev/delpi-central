@@ -1465,3 +1465,25 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
 
 **NEXT=`COORDINATION_INT1_AUTHORIZED_REAL_EVAL_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+## 2026-11-12 — INT-1 semantic root cause + governed authz denial residuals
+
+**TASK:** `DELIA-C3-T2-INT1-SEMANTIC-ROOT-CAUSE-AND-AUTHORIZATION-DENIAL-COMMUNICATION-01` · Doc **310** · Evals `or-qwen14b-985d439b1653` + `or-qwen14b-525ed88ac205`
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-G1-TEO-FIRST-ATTRACTOR | **MITIGATED_IN_SAMPLE** | v2-2 + owner contract clarity; G1/P1/M1 all DAVI-first, GROUNDED/SATISFIED |
+| INT1-P1-DAVI-CONTROL | **PASS** | DAVI-first + SATISFIED (re-validated) |
+| INT1-M1-CONTINUITY | **PASS_IN_SAMPLE** | DAVI-first + SATISFIED (re-validated) |
+| INT1-AUTHZ-DENIAL-PROPAGATION | **PASS** | real e2e: owner `AUTHORIZATION_DENIED` → projection → no retry → governed message |
+| INT1-AUTHZ-RETRY-BYPASS | **CLOSED** | `ModelRetry` blocked for authorization denial; single invocation observed |
+| INT1-PEDIDOS-TAREFAS-AMBIGUITY | **OPEN** | "pedidos em aberto" still attracts TÉO task entities; formulation-level residual |
+| INT1-DAVI-NONEXECUTABLE-CAPS | **OPEN** | `NEEDS_*_PROJECTION` capabilities absent from eligible catalog; fine-grained domain deny unreachable via DAVI for `api-delpi.access` holders |
+| INT1-E2E-DELIA-IDENTITY | **PROVISIONED_LOCAL** | Keycloak user bound to pre-existent restricted Core user; no grants changed; DEV-only |
+| INT1-RUNTIME-PROFILE-TESTS | **OPEN_PREEXISTING** | 3 config-profile failures at HEAD unrelated to this scope |
+| INT1-GENERALIZATION | **NOT_PROVEN** | G1/P1/M1 known scenarios only; no scenario hardcode added |
+| INT1-STAGE | **BLOCKED** | Doc 310 independent coordination review |
+| INT1-CLOSED | **NO** | — |
+| INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
+
+**NEXT=`COORDINATION_INT1_SEMANTIC_AND_AUTHZ_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

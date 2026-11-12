@@ -283,6 +283,7 @@ def test_read_description_publishes_decomposition_tree_as_process_wbs() -> None:
     assert "Process WBS" in desc or "process WBS" in desc
     assert "processo_id" in desc
     assert "bill-of-materials" in desc.lower() or "materials/product" in desc.lower()
+    assert "process-engineering domain" in desc.lower()
     # No cross-product routing or eval hardcodes in the published contract.
     assert "davi" not in desc.lower()
     assert "90260921" not in desc
