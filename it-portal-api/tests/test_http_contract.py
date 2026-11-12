@@ -69,6 +69,9 @@ EXPECTED_OPERATIONS = {
     ("get", "/services/{service_id}/dependencies"): "list_it_service_dependencies",
     ("post", "/service-dependencies"): "create_it_service_dependency",
     ("delete", "/service-dependencies/{dependency_id}"): "delete_it_service_dependency",
+    # #1576 P1 — inventário completo e dedicado Windows SCM
+    ("post", "/collector/v1/servers/{server_id}/host-services/batches"): "ingest_it_windows_host_service_batch",
+    ("get", "/servers/{server_id}/host-services"): "list_it_windows_host_services",
     # E4.S1 — observações automáticas
     ("post", "/collector/v1/servers/{server_id}/observations"): "ingest_it_server_observation",
     ("get", "/servers/{server_id}/observations/latest"): "get_it_server_latest_observation",
