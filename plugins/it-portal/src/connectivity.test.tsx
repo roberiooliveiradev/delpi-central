@@ -414,7 +414,7 @@ describe("server page — AC-08", () => {
     const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
     expect(within(navigation).queryByRole("button", { name: /^Redes/ })).toBeNull();
     expect(within(navigation).queryByRole("button", { name: /^Integrações/ })).toBeNull();
-    fireEvent.click(within(navigation).getByRole("button", { name: /^Serviços/ }));
+    fireEvent.click(within(navigation).getByText("Serviços"));
     expect(await screen.findByText("Serviços hospedados")).toBeTruthy();
     expect(screen.queryByText("Integrações dos serviços hospedados")).toBeNull();
     const paths = requestedPaths(fetchMock);
