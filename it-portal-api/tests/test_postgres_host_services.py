@@ -336,7 +336,7 @@ def test_windows_remote_actions_queue_is_audited_durable_and_at_most_once(pg_cli
 
     headers = {"X-Delpi-Service-Authorization": "Bearer agent-token"}
     poll = "/collector/v1/servers/" + sid + "/host-services/control/next"
-    claim = pg_client.get(poll, params={"hostname": hostname}, headers=headers)
+    claim = pg_client.post(poll, json={"hostname": hostname}, headers=headers)
     assert claim.status_code == 200, claim.text
     job = claim.json()["data"]
     assert job["id"] == action_id
