@@ -170,7 +170,8 @@ export type HistoryEntityType =
   | "network"
   | "server_network_link"
   | "integration"
-  | "service_dependency";
+  | "service_dependency"
+  | "host_service_preference";
 
 export type HistoryEvent = {
   id: string;
