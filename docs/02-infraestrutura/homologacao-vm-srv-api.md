@@ -128,13 +128,27 @@ Relatório de revisão: `HML_KEYCLOAK_ADMIN_CONSOLE_REVIEW` (entrega operacional
 
 IDs e `StartedAt` do gateway produtivo preservados. Portas 80/443 produtivas intactas; HML exclusivo em `:18443`/`:18080`.
 
-## 8. Drift / pendências
+## 8. Ativação plataforma HML (Gates B–F) — cenários seletivos
+
+`hml-compose.sh` autoriza ups isolados (não desbloqueia `baseline`/`platform`/`production-control` como pacote):
+
+| Cenário | Container | Dependências prévias |
+|---|---|---|
+| `redis` | `delpi-hml-redis` | 7 base healthy; **sem** publish `:6379` |
+| `api-delpi` | `delpi-hml-api-delpi` | Redis + plugins DB; TOTVS=`totvs-disabled.hml.invalid`; migrations plugins on start |
+| `plugin-ui` | `delpi-hml-plugin-ui` | Gateway HTTPS; `remoteEntry.js` |
+| `production-control-api` | `delpi-hml-production-control-api` | api-delpi; `PC_RUN_MIGRATIONS_ON_STARTUP=true` (HML only) |
+| `production-control-ui` | `delpi-hml-production-control` | plugin-ui + PC API |
+
+Relatório operacional: `HOMOLOGATION_PLATFORM_SERVICES_ACTIVATION_REPORT`.
+
+## 9. Drift / pendências
 
 - Drift `5c20be0311` (DÉLIA) permanece para owner DÉLIA.
-- Redis / API DELPI / Plugin UI / Production Control: fora de escopo.
-- Custódia: backup autorizado de `hml-local-ca.key` → só então remover da VM.
+- Custódia CA: backup criptografado preparado; remoção da VM exige autorização explícita.
+- Credenciais HML (`KEYCLOAK_ADMIN_PASSWORD`, `HML_TEST_PASSWORD`) rotacionadas no Gate A (valores só em `.env.hml` privado).
 
-## 8. Referências
+## 10. Referências
 
 - `portal/src/data/keycloakClient.ts`, `keycloak-js@26.2.3`
 - `infra/scripts/hml-tls-prepare.sh`, `infra/scripts/hml-compose.sh` (`tls-activate`)

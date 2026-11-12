@@ -219,6 +219,40 @@ def assert_source_files() -> None:
         fail("script sem caminho autorizado tls-activate")
     if "cmd_up_core_api" not in script or "cmd_up_portal" not in script:
         fail("script sem handlers de up core-api/portal")
+    for scenario in (
+        "redis",
+        "api-delpi",
+        "plugin-ui",
+        "production-control-api",
+        "production-control-ui",
+    ):
+        if f"up --scenario {scenario}" not in script:
+            fail(f"script sem caminho autorizado {scenario}")
+        handler = f"cmd_up_{scenario.replace('-', '_')}" if scenario != "redis" else "cmd_up_redis"
+        if scenario == "production-control-ui":
+            handler = "cmd_up_production_control_ui"
+        elif scenario == "production-control-api":
+            handler = "cmd_up_production_control_api"
+        elif scenario == "api-delpi":
+            handler = "cmd_up_api_delpi"
+        elif scenario == "plugin-ui":
+            handler = "cmd_up_plugin_ui"
+        if handler not in script:
+            fail(f"script sem handler {handler}")
+    if "profiles: [redis" not in hml and "redis, baseline" not in hml:
+        fail("compose HML sem profile redis no delpi-redis")
+    if "profiles: [api-delpi" not in hml and "api-delpi, baseline" not in hml:
+        fail("compose HML sem profile api-delpi")
+    if "profiles: [plugin-ui" not in hml and "plugin-ui, baseline" not in hml:
+        fail("compose HML sem profile plugin-ui")
+    if "production-control-ui" not in hml:
+        fail("compose HML sem profile production-control-ui")
+    if "production-control-api" not in hml:
+        fail("compose HML sem profile production-control-api")
+    if 'totvs-disabled.hml.invalid' not in hml:
+        fail("compose HML sem bloqueio TOTVS canônico")
+    if "ports: !override []" not in hml:
+        fail("compose HML sem override de ports vazias (redis/apps)")
     if "X-Forwarded-Port $hml_forwarded_port" not in locations:
         fail("snippet HML sem X-Forwarded-Port $hml_forwarded_port")
     if "set $hml_forwarded_port 18080" not in nginx or "set $hml_forwarded_port 18443" not in nginx:

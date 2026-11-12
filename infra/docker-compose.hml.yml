@@ -101,7 +101,8 @@ services:
     extends:
       file: docker-compose.yml
       service: delpi-redis
-    profiles: [baseline, platform, production-control]
+    # Profile `redis`: up isolado (--no-deps). Sem porta no host.
+    profiles: [redis, baseline, platform, production-control]
     image: redis:7-alpine
     container_name: delpi-hml-redis
     ports: !override []
@@ -204,7 +205,8 @@ services:
     extends:
       file: docker-compose.yml
       service: api-delpi
-    profiles: [baseline, platform, production-control]
+    # Profile `api-delpi`: up isolado após Redis + plugins DB healthy.
+    profiles: [api-delpi, baseline, platform, production-control]
     image: delpi-hml/api-delpi:local
     container_name: delpi-hml-api-delpi
     ports: !override []
@@ -217,6 +219,8 @@ services:
       keycloak:
         condition: service_started
       postgres-plugins:
+        condition: service_healthy
+      delpi-redis:
         condition: service_healthy
     networks: !override
       - delpi-hml
@@ -263,6 +267,8 @@ services:
       TRANSFORMOMETRO_API_BASE_URL: ""
       FINANCIAL_API_BASE_URL: ""
       REDIS_URL: redis://:${DELPI_REDIS_PASSWORD}@delpi-redis:6379/0
+      # Schema plugins HML: migrations canônicas no primeiro up do cenário.
+      RUN_PLUGINS_MIGRATIONS_ON_STARTUP: "true"
     mem_limit: 1536m
     cpus: 1.0
     labels:
@@ -308,13 +314,19 @@ services:
     extends:
       file: docker-compose.yml
       service: plugin-ui
-    profiles: [baseline, platform, production-control]
+    profiles: [plugin-ui, baseline, platform, production-control]
     image: delpi-hml/plugin-ui:local
     container_name: delpi-hml-plugin-ui
     ports: !override []
     networks: !override
       - delpi-hml
     volumes: !override []
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null -T 3 http://127.0.0.1/assets/remoteEntry.js || wget -q -O /dev/null -T 3 http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     mem_limit: 512m
     cpus: 0.5
     labels:
@@ -325,7 +337,9 @@ services:
     extends:
       file: docker-compose.yml
       service: production-control
-    profiles: [baseline, production-control]
+    # Profile dedicado `production-control-ui` (frontend). O profile
+    # `production-control` continua agrupando API+UI no cenário amplo.
+    profiles: [production-control-ui, baseline, production-control]
     image: delpi-hml/production-control:local
     container_name: delpi-hml-production-control
     ports: !override []
@@ -335,6 +349,12 @@ services:
     networks: !override
       - delpi-hml
     volumes: !override []
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null -T 3 http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     mem_limit: 512m
     cpus: 0.5
     labels:
@@ -345,7 +365,7 @@ services:
     extends:
       file: docker-compose.yml
       service: production-control-api
-    profiles: [baseline, production-control]
+    profiles: [production-control-api, baseline, production-control]
     image: delpi-hml/production-control-api:local
     container_name: delpi-hml-production-control-api
     ports: !override []
@@ -377,6 +397,8 @@ services:
       PC_MES_CT_AUTONOMOUS_WORK_CENTERS: ""
       PC_MES_DOWNTIME_ALERTS_ENABLED: "false"
       CORE_API_BASE_URL: http://core-api:8000
+      # Migrations canônicas no banco plugins HML (one-shot no cenário).
+      PC_RUN_MIGRATIONS_ON_STARTUP: "true"
     mem_limit: 1g
     cpus: 1.0
     labels:
