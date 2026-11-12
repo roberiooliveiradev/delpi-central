@@ -1,5 +1,6 @@
 import { useId } from "react";
 
+import { splitFiniteSeriesChartSegments } from "../seriesChartOptions";
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   CHART_SERIES_LINE_STROKE_WIDTH,
@@ -59,17 +60,10 @@ export function ChartSeriesArea({
     moveWhenSelected: false,
   });
 
-  const baseline = margin.top + plotH;
-  const anchors = visiblePoints.map((point) => ({
-    x: toX(point.sourceIndex, points.length),
-    y: toY(Number(point.value)),
-  }));
-  const topCurve = resolveSeriesChartStrokePoints(anchors, smooth);
-  const topPoints = seriesChartPointsAttr(topCurve);
-  const first = topCurve[0]!;
-  const last = topCurve[topCurve.length - 1]!;
-  const areaPoints = [`${first.x},${baseline}`, topPoints, `${last.x},${baseline}`].join(" ");
+  const segments = splitFiniteSeriesChartSegments(visiblePoints);
+  if (segments.length === 0) return null;
 
+  const baseline = margin.top + plotH;
   const fill = getChartPartState(chartParts, ref)?.style?.fill ?? seriesColor;
 
   return (
@@ -88,21 +82,37 @@ export function ChartSeriesArea({
           </linearGradient>
         </defs>
       ) : null}
-      <polygon
-        points={areaPoints}
-        fill={gradient ? `url(#${gradientId})` : fill}
-        fillOpacity={gradient ? 1 : fillOpacity}
-        stroke="none"
-      />
-      <polyline
-        points={topPoints}
-        fill="none"
-        stroke={seriesColor}
-        strokeWidth={strokeWidth}
-        vectorEffect="non-scaling-stroke"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
+      {segments.map((segment, segmentIndex) => {
+        if (segment.length < 2) return null;
+        const anchors = segment.map((point) => ({
+          x: toX(point.sourceIndex, points.length),
+          y: toY(Number(point.value)),
+        }));
+        const topCurve = resolveSeriesChartStrokePoints(anchors, smooth);
+        const topPoints = seriesChartPointsAttr(topCurve);
+        const first = topCurve[0]!;
+        const last = topCurve[topCurve.length - 1]!;
+        const areaPoints = [`${first.x},${baseline}`, topPoints, `${last.x},${baseline}`].join(" ");
+        return (
+          <g key={`area-seg-${seriesIndex}-${segmentIndex}`}>
+            <polygon
+              points={areaPoints}
+              fill={gradient ? `url(#${gradientId})` : fill}
+              fillOpacity={gradient ? 1 : fillOpacity}
+              stroke="none"
+            />
+            <polyline
+              points={topPoints}
+              fill="none"
+              stroke={seriesColor}
+              strokeWidth={strokeWidth}
+              vectorEffect="non-scaling-stroke"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          </g>
+        );
+      })}
     </g>
   );
 }

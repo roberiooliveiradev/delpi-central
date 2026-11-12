@@ -7,6 +7,7 @@ import {
 } from "../seriesChartDataLabels";
 import {
   SERIES_CHART_CATEGORY_PALETTE,
+  isSeriesChartFiniteValue,
   resolveSeriesCategoryColor,
 } from "../seriesChartOptions";
 import { useSeriesChartClasses } from "../seriesChartClasses";
@@ -397,14 +398,13 @@ export function ChartValueLabels({
     return (
       <>
         {visiblePoints.map((point) => {
+          if (!isSeriesChartFiniteValue(point.value)) return null;
           const raw = Number(point.value);
-          const value = Number.isFinite(raw) ? raw : 0;
+          const value = raw;
           if (shouldHideDataLabel({ config: dataLabels, value, total })) return null;
           const text = labelText(point, value);
           if (!text) return null;
-          const clamped = Number.isFinite(raw)
-            ? Math.min(axisMax, Math.max(axisMin, raw))
-            : axisMin;
+          const clamped = Math.min(axisMax, Math.max(axisMin, raw));
           const slot = resolveSeriesChartCategoryBarSlot({
             layout,
             categoryIndex: point.sourceIndex,

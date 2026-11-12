@@ -6,7 +6,7 @@ import {
   type SeriesChartInteraction,
   resolveMarkerStyle,
 } from "../seriesChartParts";
-import type { SeriesChartMarkerMode } from "../seriesChartOptions";
+import { isSeriesChartFiniteValue, type SeriesChartMarkerMode } from "../seriesChartOptions";
 import type { SeriesChartSharedProps } from "./types";
 
 export type ChartDataPointsProps = Pick<SeriesChartSharedProps, "layout" | "points" | "seriesColor"> & {
@@ -22,7 +22,7 @@ export type ChartDataPointsProps = Pick<SeriesChartSharedProps, "layout" | "poin
 /** Índice do último ponto com valor numérico — o «hoje» da série. */
 function lastValuedIndex(points: ChartDataPointsProps["points"]): number {
   for (let index = points.length - 1; index >= 0; index -= 1) {
-    if (Number.isFinite(Number(points[index]?.value))) return index;
+    if (isSeriesChartFiniteValue(points[index]?.value)) return index;
   }
   return -1;
 }
@@ -49,6 +49,7 @@ export function ChartDataPoints({
     <>
       {points.map((point, index) => {
         if (mode === "last" && index !== onlyIndex) return null;
+        if (!isSeriesChartFiniteValue(point.value)) return null;
         const pointIndex =
           typeof point.sourceIndex === "number" && Number.isFinite(point.sourceIndex)
             ? point.sourceIndex

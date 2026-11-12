@@ -1,5 +1,6 @@
 import {
   resolveSeriesChartLegendSort,
+  seriesChartPointsHaveFiniteValue,
   seriesOriginIndex,
   type SeriesChartColorScale,
   type SeriesChartKind,
@@ -115,7 +116,9 @@ export function applySeriesChartLegendSort(args: {
   usesCategoryLegend: boolean;
 } {
   const { chartType, points, seriesList, sort } = args;
-  const seriesWithData = seriesList?.filter((series) => series.points.length > 0);
+  const seriesWithData = seriesList?.filter((series) =>
+    seriesChartPointsHaveFiniteValue(series.points),
+  );
   const seriesCount = seriesWithData?.length ?? 1;
   const usesCategoryLegend = seriesChartUsesCategoryLegend(chartType, seriesCount);
   const resolvedSort = resolveSeriesChartLegendSort({
@@ -245,7 +248,9 @@ export function buildSeriesChartLegendItems(args: {
     colorScale,
     goalValue,
   } = args;
-  const seriesWithData = seriesList?.filter((series) => series.points.length > 0);
+  const seriesWithData = seriesList?.filter((series) =>
+    seriesChartPointsHaveFiniteValue(series.points),
+  );
   const multiSeries = Boolean(seriesWithData && seriesWithData.length > 1);
   const seriesCount = seriesWithData?.length ?? 1;
   const usesCategoryLegend = seriesChartUsesCategoryLegend(chartType, seriesCount);

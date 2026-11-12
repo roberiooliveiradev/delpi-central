@@ -502,20 +502,90 @@ export function resolveSeriesChartLegendSort(args: {
   return "data";
 }
 
+/**
+ * Valor plotável (não é lacuna). `Number(null) === 0` — nunca use só `Number.isFinite(Number(value))`.
+ */
+export function isSeriesChartFiniteValue(value: unknown): boolean {
+  if (value === null || value === undefined || value === "") return false;
+  return Number.isFinite(Number(value));
+}
+
+/**
+ * Tipos de distribuição / degraus: remove o ponto inteiro (categoria + valor).
+ * Séries categóricas/temporais preservam a categoria e tratam null como lacuna.
+ */
+export function seriesChartCompactsNullPoints(chartType: SeriesChartKind): boolean {
+  return (
+    chartType === "pie" ||
+    chartType === "funnel" ||
+    chartType === "waterfall" ||
+    chartType === "histogram"
+  );
+}
+
+/**
+ * Normaliza pontos para eixo categórico/temporal: preserva null como lacuna e
+ * reindexa `sourceIndex` densamente na mesma coleção (categoria ≡ valor).
+ * Não muta o array recebido.
+ */
 export function usableSeriesChartPoints(points: SeriesChartPoint[]): SeriesChartPoint[] {
-  return points
-    .map((point, index) => ({
+  return points.map((point, index) => ({
+    ...point,
+    sourceIndex: index,
+  }));
+}
+
+/**
+ * Remove pontos sem valor finito e reindexa. Usar só onde a fatia/degrau sem
+ * valor não deve ocupar categoria (pizza, funil, waterfall, histograma).
+ */
+export function compactFiniteSeriesChartPoints(points: SeriesChartPoint[]): SeriesChartPoint[] {
+  const out: SeriesChartPoint[] = [];
+  for (const point of points) {
+    if (!isSeriesChartFiniteValue(point.value)) continue;
+    out.push({
       ...point,
-      sourceIndex:
-        typeof point.sourceIndex === "number" && Number.isFinite(point.sourceIndex)
-          ? point.sourceIndex
-          : index,
-    }))
-    .filter((point) => {
-      const raw = point.value;
-      if (raw === null || raw === undefined) return false;
-      return Number.isFinite(Number(raw));
+      sourceIndex: out.length,
     });
+  }
+  return out;
+}
+
+/** Escolhe preservação de lacuna vs compactação conforme o tipo. */
+export function normalizeSeriesChartPointsForKind(
+  chartType: SeriesChartKind,
+  points: SeriesChartPoint[],
+): SeriesChartPoint[] {
+  return seriesChartCompactsNullPoints(chartType)
+    ? compactFiniteSeriesChartPoints(points)
+    : usableSeriesChartPoints(points);
+}
+
+export function seriesChartPointsHaveFiniteValue(points: readonly SeriesChartPoint[]): boolean {
+  return points.some((point) => isSeriesChartFiniteValue(point.value));
+}
+
+/**
+ * Segmentos contíguos com valor finito — linhas/áreas quebram a lacuna em vez de
+ * ligar por cima do null ou deslocar categorias.
+ */
+export function splitFiniteSeriesChartSegments<T extends { value?: number | null }>(
+  points: readonly T[],
+): T[][] {
+  const segments: T[][] = [];
+  let current: T[] = [];
+  for (const point of points) {
+    if (isSeriesChartFiniteValue(point.value)) {
+      current.push(point);
+      continue;
+    }
+    if (current.length > 0) {
+      segments.push(current);
+      current = [];
+    }
+  }
+  if (current.length > 0) segments.push(current);
+  return segments;
 }
 
 export function resolveSeriesChartValueDisplaySpec(

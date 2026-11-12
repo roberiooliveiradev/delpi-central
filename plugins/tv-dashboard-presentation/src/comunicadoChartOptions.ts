@@ -31,4 +31,10 @@ export {
   resolveSeriesChartLegendSort as resolveChartLegendSort,
   resolveSeriesChartTicks,
   usableSeriesChartPoints,
+  compactFiniteSeriesChartPoints,
+  normalizeSeriesChartPointsForKind,
+  isSeriesChartFiniteValue,
+  seriesChartCompactsNullPoints,
+  seriesChartPointsHaveFiniteValue,
+  splitFiniteSeriesChartSegments,
 } from "@delpi/plugin-ui/index";

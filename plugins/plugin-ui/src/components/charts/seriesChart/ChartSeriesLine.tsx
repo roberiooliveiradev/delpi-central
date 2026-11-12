@@ -1,4 +1,5 @@
 import { useSeriesChartClasses } from "../seriesChartClasses";
+import { splitFiniteSeriesChartSegments } from "../seriesChartOptions";
 import {
   CHART_SERIES_LINE_STROKE_WIDTH,
   bindChartPartPointer,
@@ -55,26 +56,45 @@ export function ChartSeriesLine({
     moveWhenSelected: false,
   });
 
-  const anchors = visiblePoints.map((point) => ({
-    x: toX(point.sourceIndex, points.length),
-    y: mapY(Number(point.value)),
-  }));
-  const strokePoints = resolveSeriesChartStrokePoints(anchors, smooth);
+  const segments = splitFiniteSeriesChartSegments(visiblePoints);
+  if (segments.length === 0) return null;
+
+  const lineClass = [cn.seriesLine, selected ? `${cn.root}__part--selected` : ""]
+    .filter(Boolean)
+    .join(" ");
+  const renderSegment = (segment: (typeof segments)[number], segmentIndex: number) => {
+    const anchors = segment.map((point) => ({
+      x: toX(point.sourceIndex, points.length),
+      y: mapY(Number(point.value)),
+    }));
+    // 1 ponto: mantém o nó da série (marcador isolado); traço aparece com 2+.
+    const strokePoints = resolveSeriesChartStrokePoints(anchors, smooth);
+    return (
+      <polyline
+        key={`line-seg-${seriesIndex}-${segmentIndex}`}
+        points={seriesChartPointsAttr(strokePoints)}
+        fill="none"
+        stroke={seriesColor}
+        strokeWidth={effectiveWidth}
+        {...(effectiveDash ? { strokeDasharray: effectiveDash } : {})}
+        vectorEffect="non-scaling-stroke"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        className={lineClass}
+        {...(segments.length === 1 ? dom : {})}
+        onPointerDown={segments.length === 1 ? onPointerDown : undefined}
+        onDoubleClick={segments.length === 1 ? onDoubleClick : undefined}
+      />
+    );
+  };
+
+  if (segments.length === 1) {
+    return renderSegment(segments[0]!, 0);
+  }
 
   return (
-    <polyline
-      points={seriesChartPointsAttr(strokePoints)}
-      fill="none"
-      stroke={seriesColor}
-      strokeWidth={effectiveWidth}
-      {...(effectiveDash ? { strokeDasharray: effectiveDash } : {})}
-      vectorEffect="non-scaling-stroke"
-      strokeLinejoin="round"
-      strokeLinecap="round"
-      className={[cn.seriesLine, selected ? `${cn.root}__part--selected` : ""].filter(Boolean).join(" ")}
-      {...dom}
-      onPointerDown={onPointerDown}
-      onDoubleClick={onDoubleClick}
-    />
+    <g {...dom} onPointerDown={onPointerDown} onDoubleClick={onDoubleClick}>
+      {segments.map((segment, segmentIndex) => renderSegment(segment, segmentIndex))}
+    </g>
   );
 }

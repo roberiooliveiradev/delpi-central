@@ -1,5 +1,6 @@
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
+  isSeriesChartFiniteValue,
   resolveSeriesCategoryColor,
   resolveValueScaleColor,
   resolveGoalThresholdColor,
@@ -111,10 +112,9 @@ export function ChartSeriesBar({
       }
     >
       {points.map((point, index) => {
+        if (!isSeriesChartFiniteValue(point.value)) return null;
         const raw = Number(point.value);
-        const value = Number.isFinite(raw)
-          ? Math.min(axisMax, Math.max(axisMin, raw))
-          : axisMin;
+        const value = Math.min(axisMax, Math.max(axisMin, raw));
         const slotIndex =
           typeof point.sourceIndex === "number" && Number.isFinite(point.sourceIndex)
             ? point.sourceIndex

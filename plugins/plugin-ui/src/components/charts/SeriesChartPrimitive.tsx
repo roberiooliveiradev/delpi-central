@@ -10,7 +10,8 @@ import {
 import {
   resolveSeriesChartLegendLayout,
   seriesChartThemeStyle,
-  usableSeriesChartPoints,
+  normalizeSeriesChartPointsForKind,
+  seriesChartPointsHaveFiniteValue,
   type SeriesChartKind,
   type SeriesChartOptions,
   type SeriesChartPoint,
@@ -118,15 +119,17 @@ export function SeriesChartPrimitive({
             typeof series.sourceIndex === "number" && Number.isFinite(series.sourceIndex)
               ? series.sourceIndex
               : index,
-          points: usableSeriesChartPoints(series.points),
+          points: normalizeSeriesChartPointsForKind(chartType, series.points),
         }))
       : undefined;
-  // Multi-série: série vazia (ex.: campo fantasma «quantidade») não pode zerar o gráfico.
-  const seriesWithDataRaw = normalizedSeries?.filter((series) => series.points.length > 0);
+  // Multi-série: série só com lacunas (ex.: campo fantasma «quantidade») não zera o gráfico.
+  const seriesWithDataRaw = normalizedSeries?.filter((series) =>
+    seriesChartPointsHaveFiniteValue(series.points),
+  );
   const usableRaw =
     seriesWithDataRaw && seriesWithDataRaw.length > 0
       ? seriesWithDataRaw[0]!.points
-      : usableSeriesChartPoints(points);
+      : normalizeSeriesChartPointsForKind(chartType, points);
   const legendSorted = applySeriesChartLegendSort({
     chartType,
     points: usableRaw,
@@ -135,7 +138,9 @@ export function SeriesChartPrimitive({
   });
   const seriesWithData =
     legendSorted.seriesList && legendSorted.seriesList.length > 0
-      ? legendSorted.seriesList.filter((series) => series.points.length > 0)
+      ? legendSorted.seriesList.filter((series) =>
+          seriesChartPointsHaveFiniteValue(series.points),
+        )
       : seriesWithDataRaw;
   const usable = legendSorted.points;
   const multiSeries = Boolean(seriesWithData && seriesWithData.length > 1);
@@ -220,7 +225,7 @@ export function SeriesChartPrimitive({
     // Tipografia live no resize do bloco muda title/legend → host flex muda de altura.
   }, [usable.length, chartParts, options?.title, options?.showLegend, options?.legendPosition]);
 
-  if (usable.length === 0) {
+  if (!seriesChartPointsHaveFiniteValue(usable)) {
     const emptyArea = resolveChartAreaStyle(config, chartParts);
     const title = config.title?.trim();
     const partTitle = getChartPartState(chartParts, { kind: "title" })?.content?.trim();
