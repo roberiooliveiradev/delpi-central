@@ -52,66 +52,43 @@ Ainda fora (Etapa 3 / pós-OPT):
 3. Comparar `phases_ms.*` e contadores (`work_center_count`, `standard_time_calls`, `materials_skipped`).  
 4. Latência em produção só após amostragem real — testes comprovam **chamadas evitadas**, não ms de rede.
 
+ 
+## Correção 2026-11-12: OP excluída após publicação da Carga Máquina
 
-## Incidente 2026-11-12: CT-00, OP de outra filial
+**Causa raiz confirmada em SQL Server:** SC2010, filial 02,
+`C2_OP='11301901001'`, `R_E_C_N_O_=1004678`, produto `71140302`,
+`C2_QUANT=200`, `D_E_L_E_T_='*'`. A OP constava na fila publicada
+antiga, mas foi excluída do Protheus depois; a consulta de saldo
+por operação só enxergava SC2 ativo e retornava saldo desconhecido,
+bloqueando a lista de coleta. A OP de mesmo número na filial 01
+é outro registro e **não** é a causa do incidente.
 
-No Alimentador da filial 02, a prévia indicou `balance_unknown` para
-`CT-00 / 11301901001 / operação 01`. Consulta somente leitura ao SC2010:
-a OP `11301901001` existe apenas na filial 01, com `C2_DATRF=20130520`,
-`C2_QUANT=C2_QUJE=4.5 MI`. A tela de empenhos fornecida correspondia a uma
-**OP diferente**, `11302401001`, da filial 02, com produto `90263782`
-em MI, 0,350 planejado e ainda não produzido.
+### Regra
 
-**Correção defensiva:**
-- A projeção do Alimentador rejeita somente operações cuja filial de
-  origem, presente em `payload_json.operations[].branch`, difere da
-  filial da publicação solicitada. Não muda o payload nem o cockpit.
-- Tanto o catálogo `published-queue` quanto a prévia de horizonte
-  usam o mesmo filtro. A publicação contém contagem aditiva
-  `foreign_branch_operations_excluded` para auditoria e alerta visual.
-- A importação de uma nova Carga Máquina recusa lotes com
-  `item.branch` explicitamente divergente da filial solicitada,
-  interrompendo a atualização antes de gravar novo snapshot.
-- Snapshot legado **sem** informação de filial continua fail-closed:
-  o saldo vivo é obrigatório; não assumir que a OP foi concluída,
-  não substituir por `C2_QUANT - C2_QUJE` e não ignorar saldo desconhecido.
-- Uma operação legítima da filial com saldo indisponível continua
-  retornando `balance_unknown` e bloqueando a coleta.
+- O endpoint de saldos em lote `production/machine-load/operation-balances`
+  usa a **mesma** consulta ao SC2 já executada e passa
+  `include_deleted=True` somente neste consumidor. O SQL consulta
+  `D_E_L_E_T_ IN ('', '*')` e devolve `is_deleted`, sem chamadas SQL
+  extras por OP nem alteração de consulta dos outros consumidores.
+- Resposta por operação acrescenta `order_deleted`:
+  `true` somente se SC2 confirmar exclusão lógica (sem registro
+  ativo mais recente com a mesma OP); `false` para OP ativa;
+  `null` quando não há evidência conclusiva. OP não localizada
+  **não** é tratada automaticamente como excluída.
+- O Alimentador exclui do horizonte **somente** operações com
+  `order_deleted=true`, não consulta tempo padrão nem inclui suas
+  OPs no batch de empenhos SD4. Não adiciona horas ou saldo fictícios.
+- A resposta de prévia expõe `horizon.work_centers[].excluded_deleted_orders`
+  para a UI informar CT, OP e operação, mesmo havendo outro bloqueio.
+  O PCP deve atualizar e republicar a programação para sanear a fila.
+- Saldos desconhecidos, OP sem confirmação de exclusão ou erro upstream
+  seguem bloqueando o horizonte. Não é realizada mutação da fila
+  publicada, de estoque, empenhos ou registros TOTVS.
 
-**Condição de aceite na produção:** com o cliente na filial 02,
-verificar que `11301901001` não apareça na seleção da prévia; conferir
-as operações e materiais reais da `11302401001` e o aviso de integridade
-se a fila ainda contiver registros de outra filial. Solicitar ao PCP a
-atualização e republicação para sanear o snapshot; não alterar SD4/SC2
-diretamente.
+### Implantação e aceite
 
-**Limitação diagnóstica:** foi comprovada a divergência no SQL Server,
-mas o `payload_json` da publicação atual não pôde ser lido por esta
-investigação; o filtro corrige o caso quando a filial de origem estiver
-gravada na linha, conforme o contrato normal da api-delpi.
-
-
-### Proteção adicional: confirmação de inexistência no SC2
-
-Como `payload_json` da publicação não foi inspecionado, o filtro por
-`operations[].branch` pode não identificar uma OP obsoleta cuja filial
-tenha sido registrada incorretamente ou não esteja disponível. A consulta
-autoritativa de saldos `POST /production/machine-load/operation-balances`
-agora devolve o campo aditivo `order_exists` por OP+operação:
-
-- `true`: SC2010 confirmou a OP na filial informada;
-- `false`: consulta SC2010 executada, mas não encontrou a OP na filial;
-- `null`: adapter legado sem capacidade de consulta de existência.
-
-O Alimentador só exclui a operação em caso de `order_exists=false`
-explícito e contabiliza `missing_order_operations_excluded` para aviso
-visível. Não cria quantidade produzida ou saldo fictício. `null`,
-`order_exists` ausente, resposta inválida ou erro S2S continuam
-respeitando o bloqueio `balance_unknown`/integração indisponível.
-A filial ecoada pelo contrato de saldos também é confrontada com a filial
-solicitada, e divergência gera erro controlado.
-
-**Deploy:** esta evolução requer reconstrução coordenada de
-`api-delpi`, `production-control-api` e `production-control`
-após testes e revisão do PR. A proteção de leitura e a importação
-continuam sem atualizar ERP, nem alterar o snapshot publicado.
+Validar branch 02 com todos os CTs após o merge e deploy coordenado de
+`api-delpi`, `production-control-api` e `production-control`.
+Confirmar aviso de OP 11301901001 excluída e seus materiais ausentes
+da lista de coleta, enquanto outras OPs abertas continuam. Publicar
+uma fila atualizada via PCP para remover a referência obsoleta.
