@@ -555,6 +555,57 @@ class ObservationOut(BaseModel):
     presentation_status: str | None = None
 
 
+class HostServiceInput(_Input):
+    name: str = Field(min_length=1, max_length=200)
+    display_name: str = Field(min_length=1, max_length=240)
+    description: str | None = Field(default=None, max_length=500)
+    state: str
+    start_mode: str
+    can_stop: bool
+
+class HostServiceBatchInput(_Input):
+    run_id: str = Field(max_length=64)
+    schema_version: str
+    observed_at: str = Field(max_length=64)
+    host_identity: HostIdentityInput
+    batch_index: int
+    batch_count: int
+    services: list[HostServiceInput] = Field(min_length=1, max_length=100)
+
+class HostServiceBatchReceipt(BaseModel):
+    run_id: str
+    server_id: str
+    batch_index: int
+    received_batches: int
+    batch_count: int
+    status: str
+    applied: bool
+    service_count: int
+
+class HostServiceOut(BaseModel):
+    name: str
+    display_name: str
+    description: str | None
+    state: str
+    start_mode: str
+    can_stop: bool
+    is_present: bool
+    observed_at: datetime
+    updated_at: datetime
+
+class HostServiceCurrentOut(BaseModel):
+    run_id: str
+    observed_at: datetime
+    received_at: datetime
+    service_count: int
+
+class HostServicePage(BaseModel):
+    items: list[HostServiceOut]
+    total: int
+    page: int
+    page_size: int
+    current: HostServiceCurrentOut | None
+
 class HealthOut(BaseModel):
     status: str
     service: str
