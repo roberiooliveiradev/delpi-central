@@ -78,7 +78,7 @@ Transferir o módulo **Lançamento de Notas Fiscais (LNF)** da `api-delpi` para 
 | Fase | Nome | Status | Ambiente atual | SHA(s) | Data | Evidência |
 |---|---|---|---|---|---|---|
 | F0–F4b | Inventário, contrato, implementação dark, ensaio HML | DONE | — | até `fddd4bb813` | 2026-11-12 | 163/164, suíte |
-| F5a | Preparação dark de PROD | BLOCKED R4 | PROD (sem deploy) | código `496644bbb7` · docs `9d0d591b0a` | 2026-11-12 | smoke HML PASS; preflight DEV 5/5 HML 4/5; compose/env dark; deploy PROD parado — commits não-LNF em `api-delpi` |
+| F5a | Preparação dark de PROD | IN_PROGRESS (F5a.4) | PROD | código `496644bbb7` · docs HEAD | 2026-11-12 | R4 api-delpi desbloqueado pelo owner (pacote main + salvaguardas F5a.4-API); PROD dark autorizado AGORA |
 | F5b | Corte em PROD | TODO | | | | |
 | F5c | Estabilização (hypercare) | TODO | | | | |
 | F7.0 | CLARA — inventário e contrato | TODO | | | | |
@@ -124,7 +124,7 @@ Parar **imediatamente** (status BLOCKED) se ocorrer qualquer item abaixo. Não c
 | R1 | **Dados:** contagem diferente entre antes/depois, ledger divergente, necessidade de DDL/migration nova, qualquer risco de perda ou duplicação de dados. |
 | R2 | **Segurança:** qualquer divergência de AuthZ além de D8; rota acessível sem autenticação; usuário ganhando/perdendo acesso; CLARA não usando a identidade do próprio usuário final; necessidade de relaxar D8. |
 | R3 | **PROD:** falha que o rollback não resolveu, ou segunda falha na mesma etapa após correção. |
-| R4 | **Deploy misturado:** commits de outros trabalhos nas pastas dos serviços que vão para PROD. |
+| R4 | **Deploy misturado:** commits de outros trabalhos nas pastas dos serviços que vão para PROD. **Exceção (owner, 2026-11-12):** publicar a `api-delpi` com **todos** os commits pendentes da `main` está autorizado, **somente** com as salvaguardas **F5a.4-API (a→f)** abaixo. A exceção não cobre outros serviços nem dispensa R1/R3/R5/R8. |
 | R5 | **Fora da trilha:** necessidade de alterar permissões no Core, tela/fluxo do MFE, outros serviços não listados, persona/ficha da CLARA, ou qualquer arquivo de HML com alterações alheias pendentes. |
 | R6 | **Escrita no Protheus** detectada em qualquer código. |
 | R7 | Golden precisaria ser alterado (exceto D8) para um teste passar. |
@@ -153,10 +153,28 @@ Gatilhos obrigatórios de rollback em PROD: 5xx nas rotas LNF acima de 1% em 10 
 Prompt já entregue: `prompt-cursor-F5a-migracao-lancamento-notas-fiscais.md`. Resumo:
 - Passo 0: smoke do MFE em HML pelo navegador (P11, P6, P2; filial-01/02; prova pela aba Network de que tudo vai para a BFF); rollback HML.
 - Preflight CLI (`lnf_preflight`): ledger, `SELECT 1` no Protheus, health financial-api/Core, volume gravável.
-- Compose/env de PROD com chaves explícitas no default; controle de commits por serviço (R4); deploy dark BFF → api-delpi → MFE; preflight em PROD.
+- Compose/env de PROD com chaves explícitas no default; controle de commits por serviço (R4); deploy dark.
 - Docs: runbook 164 + risco D9 aceito no ADR-001.
 
-**Saída (DONE quando):** smoke MFE HML PASS; preflight PROD todo PASS; PROD sem mudança para o usuário (BFF 112 paths sem LNF; api-delpi com 22 paths LNF; bundle do MFE com o endereço atual).
+#### F5a.4 — Deploy dark em PROD (ordem fixa)
+
+**Baseline antes (registrar):** BFF OpenAPI paths (esperado 112, LNF=0); api-delpi LNF paths (esperado 22); string do MFE = `/apps/api-delpi/lancamento-notas-fiscais`; health 200.
+
+1. **BFF dark** — `git pull --ff-only` + `./infra/scripts/up-prod-sequential.sh --build controllership-finance-api`  
+   Verificar: health/ready 200; OpenAPI ainda 112 sem LNF; `GET …/lancamento-notas-fiscais/requests` = **404**; rotas de fechamento OK; **preflight PROD 5/5 PASS** (`python -m controllership_finance_app.interface.cli.lnf_preflight` no container).
+2. **MFE dark** — `./infra/scripts/up-prod-sequential.sh --build lancamento-notas-fiscais`  
+   Verificar: remoteEntry/bundle servindo; string `/apps/api-delpi/lancamento-notas-fiscais` presente; **sem** base da BFF.
+3. **F5a.4-API (a→f)** — obrigatório antes/durante o rebuild da `api-delpi` (exceção R4):
+   - **(a)** Inventário do pacote PROD→HEAD em `api-delpi/` + **diff de OpenAPI** (paths/operationIds LNF devem permanecer 22 / mesmos IDs; listar paths novos não-LNF).
+   - **(b)** **Migrations pendentes** do runner da api-delpi / plugins: nenhuma migration LNF nova; demais schemas — inventariar e **não aplicar** nada fora do fluxo canônico; se DDL arriscada → **R1**.
+   - **(c)** **Envs novos** exigidos pelos commits do pacote: nomes presentes em `infra/.env` (sem imprimir valores); faltando → **R5/R8**.
+   - **(d)** **Suíte completa** da api-delpi em DEV (ou CI local) — FAIL → não sobe.
+   - **(e)** **HML** com `api-delpi` no HEAD: deploy HML + health + smoke LNF (fila/OpenAPI 22 paths) PASS.
+   - **(f)** **PROD** `./infra/scripts/up-prod-sequential.sh --build api-delpi` com OK do owner (janela ou autorização explícita); health 200; OpenAPI LNF=22; fila MFE ainda via api-delpi; **observação 15 min** de 5xx / apps quebrados → rollback imediato da imagem anterior se aumentar 5xx ou outro app quebrar.
+
+Qualquer FAIL em (a)–(f) ou nas verificações BFF/MFE → parada R1/R3/R5/R8 (não contornar).
+
+**Saída (DONE quando):** smoke MFE HML PASS; preflight PROD 5/5; BFF/MFE/api-delpi dark em PROD sem mudança para o usuário (BFF 112 sem LNF; api-delpi 22 LNF; bundle MFE com endereço atual); F5a.4-API (a→f) PASS + observação 15 min sem incidente.
 
 ---
 
@@ -329,4 +347,7 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-12 | F5a.4 | PROD | Deploy dark BFF→api-delpi→MFE | TEST_NOT_RUN | — | parado por R4; baseline OpenAPI registrada no 164 |
 | 2026-11-12 | F5a.5 | docs | 164/ADR-001/163/README + trilha 165 no repo | PASS | docs `9d0d591b0a` + este arquivo | D9/logs aceitos owner |
 | 2026-11-12 17:51 -03 | F5a | — | Ingresso na trilha 165; status F5a → BLOCKED R4 | BLOCKED R4 | `3cde750655` | aguarda decisão owner sobre rebuild api-delpi |
-| 2026-11-12 17:52 -03 | F7 princípios | docs | Owner reforça paridade funcional total CLARA (leitura+escrita+delete) | registrado | (este commit) | F5a permanece BLOCKED R4; upload 610678e5 mesclado sem apagar Registro |
+| 2026-11-12 17:52 -03 | F7 princípios | docs | Owner reforça paridade funcional total CLARA (leitura+escrita+delete) | registrado | `0b2652553b` | F5a permanece BLOCKED R4; upload 610678e5 mesclado sem apagar Registro |
+| 2026-11-12 17:53 -03 | F5a.R4 | — | Owner: publicar api-delpi com todos os commits pendentes da main + salvaguardas F5a.4-API | DECISÃO | — | desbloqueia R4 só para api-delpi nesta fase |
+| 2026-11-12 17:54 -03 | F5a.4 | PROD | Owner: deploys F5a.4 (incl. api-delpi) autorizados AGORA fora da janela | DECISÃO | — | manter observação 15 min + rollback se 5xx/app quebrar |
+| 2026-11-12 17:55 -03 | F5a | docs | 165: exceção R4 + F5a.4 detalhada; status → IN_PROGRESS (F5a.4) | IN_PROGRESS | (este commit) | Downloads sem texto F5a.4-API; conteúdo mesclado da decisão do owner + Registro preservado |
