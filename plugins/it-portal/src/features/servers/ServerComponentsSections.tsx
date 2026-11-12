@@ -45,38 +45,56 @@ function countLabel(count: number | undefined, singular: string, plural: string)
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
-/** Seções de inventário da página do servidor; cada uma só aparece com a permissão de leitura correspondente. */
-export function ServerComponentsSections({ server }: { server: Server }) {
+/**
+ * Cada grupo so monta quando o usuario escolhe seu icone. Alem de reduzir
+ * a extensao da tela, evita requisitar dados de secoes nao abertas.
+ */
+export function ServerComponentsSections({
+  server,
+  section,
+}: {
+  server: Server;
+  section: "services" | "databases" | "networks" | "integrations";
+}) {
   const { capabilities } = usePortal();
-  return (
-    <>
-      <ServerInventorySummary server={server} />
-      {capabilities?.can_view_networks ? (
-        <NetworkLinksSection
-          owner={{ serverId: server.id }}
-          title="Redes"
-          emptyMessage="Nenhuma rede vinculada a este servidor."
-          canManage={capabilities.can_manage_networks}
-          ownerArchived={server.archived}
-        />
-      ) : null}
-      {capabilities?.can_view_integrations ? (
-        <IntegrationsSection
-          owner={{ serverId: server.id }}
-          title="Integrações dos serviços hospedados"
-          emptyMessage="Nenhuma integração registrada para os serviços hospedados neste servidor."
-          canManage={false}
-          ownerArchived={server.archived}
-        />
-      ) : null}
-    </>
-  );
+
+  if (section === "networks") {
+    return capabilities?.can_view_networks ? (
+      <NetworkLinksSection
+        owner={{ serverId: server.id }}
+        title="Redes vinculadas"
+        emptyMessage="Nenhuma rede vinculada a este servidor."
+        canManage={capabilities.can_manage_networks}
+        ownerArchived={server.archived}
+      />
+    ) : null;
+  }
+
+  if (section === "integrations") {
+    return capabilities?.can_view_integrations ? (
+      <IntegrationsSection
+        owner={{ serverId: server.id }}
+        title="Integrações dos serviços hospedados"
+        emptyMessage="Nenhuma integração registrada para os serviços hospedados neste servidor."
+        canManage={false}
+        ownerArchived={server.archived}
+      />
+    ) : null;
+  }
+
+  return <ServerInventorySummary server={server} section={section} />;
 }
 
-function ServerInventorySummary({ server }: { server: Server }) {
+function ServerInventorySummary({
+  server,
+  section,
+}: {
+  server: Server;
+  section: "services" | "databases";
+}) {
   const { capabilities } = usePortal();
-  const canSeeServices = capabilities?.can_view_services === true;
-  const canSeeDatabases = capabilities?.can_view_databases === true;
+  const canSeeServices = section === "services" && capabilities?.can_view_services === true;
+  const canSeeDatabases = section === "databases" && capabilities?.can_view_databases === true;
   const hostings = useServerHostings(server.id, canSeeServices);
   const databases = useServerDatabases(server.id, canSeeDatabases);
 
@@ -89,8 +107,8 @@ function ServerInventorySummary({ server }: { server: Server }) {
   return (
     <>
       <ItpSectionCard
-        title="Componentes vinculados"
-        subtitle="Resumo do que depende deste servidor, conforme o inventário manual."
+        title={canSeeServices ? "Serviços vinculados" : "Bancos vinculados"}
+        subtitle="Vínculos do inventário manual, independentes da coleta automática."
       >
         <dl className="itp-field-list">
           {canSeeServices ? (

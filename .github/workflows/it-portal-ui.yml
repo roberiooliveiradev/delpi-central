@@ -1,0 +1,56 @@
+name: Portal de TI - UI
+
+on:
+  pull_request:
+    paths:
+      - "plugins/it-portal/**"
+      - "plugins/plugin-ui/**"
+      - "plugins/vite/**"
+      - ".github/workflows/it-portal-ui.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "plugins/it-portal/**"
+      - "plugins/plugin-ui/**"
+      - "plugins/vite/**"
+      - ".github/workflows/it-portal-ui.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-it-portal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            plugins/it-portal/package-lock.json
+            plugins/plugin-ui/package-lock.json
+
+      - name: Install UI kit dependencies
+        working-directory: plugins/plugin-ui
+        run: npm ci
+
+      - name: Install Portal de TI dependencies
+        working-directory: plugins/it-portal
+        run: npm ci
+
+      - name: ESLint
+        working-directory: plugins/it-portal
+        run: npm run lint
+
+      - name: Unit and integration tests
+        working-directory: plugins/it-portal
+        run: npm run test
+
+      - name: TypeScript and production build
+        working-directory: plugins/it-portal
+        run: npm run build
