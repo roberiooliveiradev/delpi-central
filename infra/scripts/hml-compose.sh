@@ -643,24 +643,8 @@ cmd_up_gateway() {
   )
   wait_healthy gateway "$env_file" gateway
 
-  local name extras allowed
-  extras=""
-  while read -r name; do
-    [[ -z "$name" ]] && continue
-    allowed=false
-    local ok
-    for ok in "${ALLOWED_HML_CONTAINERS_AFTER_GATEWAY[@]}"; do
-      [[ "$name" == "$ok" ]] && allowed=true
-    done
-    if [[ "$allowed" != true ]]; then
-      extras+="$name"$'\n'
-    fi
-  done < <(docker ps -a --filter name=delpi-hml --format '{{.Names}}')
-  if [[ -n "${extras//[[:space:]]/}" ]]; then
-    echo "[ERRO] containers HML inesperados após up gateway:" >&2
-    printf '%s' "$extras" >&2
-    exit 1
-  fi
+  # Após Core/Portal já ativos (cutover TLS), o allowlist canônico é o conjunto completo (7).
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PORTAL
 
   echo "HML_GATEWAY_UP=PASS"
   docker ps --filter name=delpi-hml --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
