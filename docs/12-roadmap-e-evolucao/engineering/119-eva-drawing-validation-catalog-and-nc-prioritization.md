@@ -3020,3 +3020,75 @@ guarda a verdade probatória.
 `AUDIT_GATE=PASS` — seis conclusões sustentadas por evidência;
 nenhuma correção de código requerida; UNKNOWN preservado onde a
 âncora não prova vínculo único.
+
+## 80. Recuperação de âncoras fundidas + validação multipágina — 2026-11-12
+
+**TASK_ID:** `EVA-VAL01-FUSED-GROUP-ANCHORS-AND-MULTIPAGE-VALIDATION`
+**Commit:** `d11a7d761d` (fix generalista + 8 testes + probe multipágina).
+
+### F1 — Primeira perda e correção
+
+Rastreamento `token→célula→âncora` em `90264128` (sha `d36a2027…`):
+
+| Grupo | Evidência | Primeira perda |
+|---|---|---|
+| `50233813` | OCR o vê (bbox ~[42,379,118,400]); SLANet funde na célula `"50233812 B 50233813"` (r9 c0, rowspan=8, token_refs [71,85,86], bandas separáveis y302/y391) | **extração da âncora** — só 1 código lido por célula |
+| `50233816` | token `identifier_candidate` (bbox ~[43,700,118,721], conf 0.9998) | **formação de célula** — nunca virou célula/âncora |
+
+**Fix generalista** (`understanding.py`, +168 linhas): duas
+recuperações por evidência de banda, ambas fail-closed:
+
+1. `recovered_fused_anchor` — fragmento de banda de célula-âncora
+   (`_from_group_anchor`) carregando OUTRO código de conjunto abre
+   grupo na primeira linha cuja banda dominante alcança a banda do
+   fragmento.
+2. `recovered_token_anchor` — token órfão na faixa-X da região de
+   âncoras (união coluna-pai tipada + envelope X das células-
+   âncora) ancora somente linhas sem cobertura estrutural.
+
+Guardas: código presente como componente nunca ancora; linha de
+banda mista permanece `band_rehome_boundary`→UNKNOWN; token solto
+nunca divide bloco provado; zero regras por produto/código.
+
+### Resultado real `90264128` (job `aj-0148b94bf6f44fc6`)
+
+| Ocorrência | Antes | Depois | Classe |
+|---|---|---|---|
+| B\|10090067 (r12) | 812 IDENTIFIED | **813 UNKNOWN** | banda mista — fail-closed |
+| A6\|10380040 (r13) | 812 IDENTIFIED | **813 IDENTIFIED** | `recovered_fused_anchor` |
+| A1\|10080145 (r14) | 812 IDENTIFIED | **814 UNKNOWN** | gap real entre âncoras |
+| AA\|10380035 (r25) | 815 UNKNOWN | **816 IDENTIFIED** | `recovered_token_anchor` — grupo provado |
+
+`90264138`: **zero diffs** — 3 ambiguidades preservadas UNKNOWN.
+Regressão: `90264004`/`90264061`/`90264302`/`90264174`/`90264275`
+**zero diffs**.
+
+### F2 — Multipágina (achado operacional)
+
+O caminho MCP `analyze` estoura `JOB_RUNNING_CAP_S=2700s` para
+PDFs de 9–13 páginas no hardware DEV (jobs `aj-9dad9d40`,
+`aj-2babdf37` → `FAILED/timeout` terminal). Validação executada
+por **probe escopado de pipeline real** (PDF→PDFium→PaddleOCR→
+SLANet→Understanding, páginas-alvo; `scripts/eva_multipage_probe.py`):
+
+| Produto | sha256 | Páginas | Resultado |
+|---|---|---|---|
+| `90264017` | `b99be1e8…` | 9 | 11 occs; A\|1\|70260008, E\|2\|10091368, F\|9\|70260008 ✓; todas UNKNOWN — página sem âncoras de conjunto |
+| `90264135` | `af47dd4c…` | 10/12/13 | 98 occs; G1-DRAFT: p10 10/14 exatos, p12 14/15, p13 12/15 (+3 `UNKNOWN_SUBSET` não adjudicados pelo owner); misses são UNKNOWN fail-closed, zero falsos IDENTIFIED |
+
+Limitação recorrente documentada: linhas finais do conjunto
+principal caem fora do rowspan detectado → UNKNOWN com candidato
+vizinho (fail-closed correto, mas pai real perdido).
+
+### Gates
+
+```text
+FUSED_ANCHOR_RECOVERY_GATE=PASS
+MULTIPAGE_REAL_PDF_GATE=INCONCLUSIVE — páginas-alvo PASS; job
+  full-document excede orçamento operacional (decisão arquitetural)
+REGRESSION_GATE=PASS
+RELEASE_CANDIDATE_GATE=BLOCKED — budget multipágina pendente
+QUALITY_HOMOLOGATION=EVAL_PENDING
+```
+
+`VAL01_COMPLETED=false`. Produção inalterada.

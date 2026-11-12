@@ -935,3 +935,64 @@ mesmos PDFs (sha256 idêntico), mesmo hash de `understanding.py`
 `conflicting_fields`/`association_conflict`/`uncertainty`/
 `parent_evidence`/`occurrence_key` preservados em PROD.
 Rollback disponível e não executado (Doc 119 §78 P09).
+
+## FUSED ANCHORS + MULTIPAGE — bateria DEV pós-fix — 2026-11-12
+
+Incremento `d11a7d761d`: recuperação generalista de âncoras de
+conjunto (`recovered_fused_anchor`, `recovered_token_anchor`).
+
+**Jobs MCP `analyze` (REAL_PDF_PIPELINE, `understanding.py` sha do
+fix) — 9 disparados:**
+
+| Produto | Job | Estado | Ocorrências | Δ vs baseline |
+|---|---|---|---|---|
+| 90264004 | aj-8cdadc2a | COMPLETED | 11 | zero diffs (A9/AA ×2 conjuntos preservado) |
+| 90264061 | aj-f2c2fe1a | COMPLETED | 6 | zero diffs (A1–A6, A6\|2\|10211552\|50225531) |
+| 90264302 | aj-513dcafe | COMPLETED | 4 | zero diffs |
+| 90264174 | aj-c4d86e1d | COMPLETED | 4 | zero diffs (A–D) |
+| 90264275 | aj-3b10c7bb | COMPLETED | 7 | zero diffs |
+| 90264128 | aj-0148b94b | COMPLETED | 23 (19 id + 4 unk) | **3 ocorrências movidas por evidência** — ver tabela |
+| 90264138 | aj-bd7ebd07 | COMPLETED | 13 | zero diffs (3 UNKNOWN preservados) |
+| 90264017 | aj-9dad9d40 | **FAILED/timeout** | — | job excedeu cap 2700s (9 páginas) |
+| 90264135 | aj-2babdf37 | **FAILED/timeout** | — | job excedeu cap 2700s (13 páginas) |
+
+**Δ 90264128 (occurrence_key):**
+
+| Ocorrência | parent_code | parent_state | Evidência nova |
+|---|---|---|---|
+| B\|10090067 r12 | 812→**813** | IDENTIFIED→**UNKNOWN** | `band_rehome_boundary` — banda mista, fail-closed |
+| A6\|10380040 r13 | 812→**813** | IDENTIFIED | `recovered_fused_anchor` — célula "812 B 813" separada por bandas |
+| A1\|10080145 r14 | 812→**814** | IDENTIFIED→**UNKNOWN** | `y_anchor_correction` — gap real entre 813 e 814 |
+| AA\|10380035 r25 | 815→**816** | UNKNOWN→**IDENTIFIED** | `recovered_token_anchor` — token 816 provou o grupo |
+
+**Multipágina — probe escopado de pipeline real**
+(`eva_multipage_probe.py`: PDF oficial → PDFium → PaddleOCR →
+SLANet → `rows_from_native_cells` → `structure_occurrences`):
+
+`90264017` p9 (sha `b99be1e8…`): 11 ocorrências, todas
+`parent_state=UNKNOWN` (página sem âncoras de conjunto). Itens
+esperados presentes: A\|1\|70260008, E\|2\|10091368, F\|9\|70260008.
+
+`90264135` (sha `af47dd4c…`) vs anotações G1 (estado DRAFT,
+`gt_approval_status=OWNER_BLOCKED` — comparação, não homologação):
+
+| Página | G1 anot. | EVA | Match exato c/ pai | Misses | Observação |
+|---|---|---|---|---|---|
+| p10 | 14 | 49 | 10 | 4 | A1\|7\|10080182 e AC/AD/AG do conjunto principal → UNKNOWN com candidato vizinho (fora do rowspan detectado); A2\|16\|10080192 ✓ |
+| p12 | 15 | 30 | 14 | 1 | AE\|1\|10010028 do 50225740 ausente; A9\|1\|10120148, AE/AH/AG ✓ |
+| p13 | 18 | 19 | 12 | 3 | AC/AD/AG → UNKNOWN candidato 50225749; AQ/AR/AS = `UNKNOWN_SUBSET` em G1, EVA âncora 50225749 (pendente de owner) |
+
+Multiplicidade preservada (AE/10010028 sob 6+ pais);
+reconciliação same-band ativa; `association_conflict` e
+`conflicting_fields` intactos; zero falsos IDENTIFIED — misses
+são UNKNOWN fail-closed.
+
+**Limitações registradas:** (a) orçamento do job MCP (2700s) não
+cobre multipágina em DEV — decisão de arquitetura pendente;
+(b) linhas finais de conjunto grande caem fora do rowspan —
+classe de percepção residual; (c) probe é por-página — não
+substitui o E2E full-document para homologação.
+
+Gates: `FUSED_ANCHOR_RECOVERY_GATE=PASS`,
+`MULTIPAGE_REAL_PDF_GATE=INCONCLUSIVE`, `REGRESSION_GATE=PASS`,
+`RELEASE_CANDIDATE_GATE=BLOCKED`, `QUALITY_HOMOLOGATION=EVAL_PENDING`.
