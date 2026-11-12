@@ -154,7 +154,8 @@ class PostgresHostServiceActions(PostgresRepositoryBase):
             return {**_public(row), "lease": lease}
 
     def finish(self, server_id: str, action_id: str, client_id: str, lease: str,
-               *, status: str, state_after: str | None, error_code: str | None) -> dict:
+               *, status: str, state_after: str | None, error_code: str | None,
+               can_stop: bool | None = None) -> dict:
         if not isinstance(lease, str) or not 24 <= len(lease) <= 128:
             raise ConflictError("control_lease_invalid", "Comprovação da execução inválida.")
         with self._tx() as conn:
@@ -187,9 +188,10 @@ class PostgresHostServiceActions(PostgresRepositoryBase):
             if status == "succeeded":
                 # Observacao operacional imediata, confirmada pelo SCM e independente da coleta 5min.
                 conn.execute(
-                    f"""UPDATE {_S}.host_services SET state=%s, observed_at=now(),
+                    f"""UPDATE {_S}.host_services SET state=%s,
+                        can_stop=COALESCE(%s, can_stop), observed_at=now(),
                         updated_at=now() WHERE server_id=%s AND service_key=%s""",
-                    (state_after, server_id, row["service_key"]),
+                    (state_after, can_stop, server_id, row["service_key"]),
                 )
             actor = Actor(id=str(row["requested_by_id"]), name=row["requested_by_name"])
             self._audit(conn, AuditEvent(
@@ -198,6 +200,7 @@ class PostgresHostServiceActions(PostgresRepositoryBase):
                 changes={"service": row["service_name"], "action": row["action"],
                          "status": status, "state_before": row["state_before"],
                          "state_after": state_after, "error_code": error_code,
+                         "can_stop": can_stop if status == "succeeded" else None,
                          "confirmed_by_agent": client_id},
             ), actor)
             result = conn.execute(
