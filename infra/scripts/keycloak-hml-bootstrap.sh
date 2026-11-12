@@ -278,5 +278,5 @@ print("webOrigins=", c.get("webOrigins"))
 PY
 
 echo "[hml-kc] BOOTSTRAP_HML=PASS"
-echo "[hml-kc] Browser/gateway login permanece PENDING até ativação do gateway HML."
+echo "[hml-kc] Login completo no Portal Minha DELPI permanece PENDING enquanto Portal/Core HML estiverem desligados."
 echo "[hml-kc] DONE"
