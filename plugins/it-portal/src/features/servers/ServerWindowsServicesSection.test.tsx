@@ -2,13 +2,13 @@ import { render, screen, fireEvent, waitFor, cleanup, within } from "@testing-li
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ServerWindowsServicesSection } from "./ServerWindowsServicesSection";
-import { mockApi, requestedPaths } from "../../test/harness";
+import { mockApi, requestedPaths, requestBodies } from "../../test/harness";
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
-function setup() {
+function setup(canManageFavorites = false) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  render(<QueryClientProvider client={client}><ServerWindowsServicesSection serverId="dc7da8d3-b7d6-48b2-83ad-619b481f2183" /></QueryClientProvider>);
+  render(<QueryClientProvider client={client}><ServerWindowsServicesSection serverId="dc7da8d3-b7d6-48b2-83ad-619b481f2183" canManageFavorites={canManageFavorites} /></QueryClientProvider>);
 }
 
 describe("Windows SCM read-only services inventory", () => {
@@ -130,4 +130,71 @@ describe("Windows SCM read-only services inventory", () => {
     expect((screen.getByRole("combobox", { name: "Presença no inventário" }) as HTMLSelectElement).value).toBe("yes");
     expect(fetchMock.mock.calls.every(([, init]) => !init?.method || init.method === "GET")).toBe(true);
   });
+
+  it("keeps favorites precise and server-side with a one-click star", async () => {
+    const id = "dc7da8d3-b7d6-48b2-83ad-619b481f2183";
+    const fetchMock = mockApi({
+      ["/servers/" + id + "/host-services"]: {
+        data: {
+          items: [{
+            service_key: "rest$prod", name: "REST$PROD", display_name: "REST de apontamento",
+            description: "API", state: "running", start_mode: "auto", is_present: true,
+            is_favorite: false, criticality: "normal", can_stop: true,
+            observed_at: "2026-11-12T10:00:00Z", updated_at: "2026-11-12T10:00:00Z",
+          }],
+          favorites_count: 0, total: 1, page: 1, page_size: 25,
+          current: { run_id: "11111111-1111-4111-8111-111111111111",
+            observed_at: "2026-11-12T10:00:00Z", received_at: "2026-11-12T10:00:00Z", service_count: 1 },
+        },
+      },
+      ["PUT /servers/" + id + "/host-services/rest%24prod/preferences"]: {
+        data: { service_key: "rest$prod", is_favorite: true, criticality: "normal" },
+      },
+    });
+    setup(true);
+    expect(await screen.findByText("REST de apontamento")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Adicionar REST de apontamento aos favoritos" }).getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar REST de apontamento aos favoritos" }));
+    await waitFor(() => expect(requestBodies(fetchMock, "PUT")).toEqual([
+      { is_favorite: true, criticality: "normal" },
+    ]));
+    fireEvent.click(screen.getByRole("button", { name: /Favoritos/ }));
+    await waitFor(() => expect(fetchMock.mock.calls.some(([input]) =>
+      new URL(String(input), "http://localhost").searchParams.get("favorites_only") === "true"
+    )).toBe(true));
+    expect(screen.queryByRole("button", { name: /reiniciar|parar serviço|iniciar serviço/i })).toBeNull();
+  });
+
+  it("shows criticality as a discreet accent and keeps the editor inside details", async () => {
+    const id = "dc7da8d3-b7d6-48b2-83ad-619b481f2183";
+    const fetchMock = mockApi({
+      ["/servers/" + id + "/host-services"]: {
+        data: {
+          items: [{
+            service_key: "rest$prod", name: "REST$PROD", display_name: "REST de apontamento",
+            description: "API", state: "running", start_mode: "auto", is_present: true,
+            is_favorite: true, criticality: "high", can_stop: true,
+            observed_at: "2026-11-12T10:00:00Z", updated_at: "2026-11-12T10:00:00Z",
+          }],
+          favorites_count: 1, total: 1, page: 1, page_size: 25,
+          current: { run_id: "11111111-1111-4111-8111-111111111111",
+            observed_at: "2026-11-12T10:00:00Z", received_at: "2026-11-12T10:00:00Z", service_count: 1 },
+        },
+      },
+      ["PUT /servers/" + id + "/host-services/rest%24prod/preferences"]: {
+        data: { service_key: "rest$prod", is_favorite: true, criticality: "critical" },
+      },
+    });
+    setup(true);
+    expect(await screen.findByText("REST de apontamento")).toBeTruthy();
+    expect(screen.getByText("Alta")).toBeTruthy();
+    expect(screen.queryByRole("combobox", { name: "Criticidade de REST de apontamento" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Ver detalhes de REST de apontamento" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Criticidade de REST de apontamento" }),
+      { target: { value: "critical" } });
+    await waitFor(() => expect(requestBodies(fetchMock, "PUT")).toContainEqual({
+      is_favorite: true, criticality: "critical",
+    }));
+  });
+
 });
