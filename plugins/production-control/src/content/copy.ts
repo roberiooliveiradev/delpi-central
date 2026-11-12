@@ -876,7 +876,7 @@ export const copy = {
     orderLevelWarning:
       "Alguns materiais têm empenho vinculado apenas à OP, sem operação/CT. Foram contabilizados uma única vez. Confirme com o PCP o posto de entrega antes de movimentar.",
     foreignBranchWarning: (count: number) =>
-      `${count} operação(ões) de outra filial foram desconsideradas da programação publicada. O cálculo usa apenas operações da filial selecionada. Solicite ao PCP que atualize e republique a Carga Máquina para corrigir a origem da fila.`,
+      `${count} ${count === 1 ? "operação de outra filial foi desconsiderada" : "operações de outras filiais foram desconsideradas"} da programação publicada. O cálculo usa apenas operações da filial selecionada. Solicite ao PCP que atualize e republique a Carga Máquina para corrigir a origem da fila.`,
     columns: {
       product: "Material",
       workCenter: "CT",
