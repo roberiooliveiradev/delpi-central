@@ -91,7 +91,7 @@ def test_v004_observation_persists_idempotent_without_mutating_server(
         row["version"]
         for row in _sql("SELECT version FROM it_portal.schema_migrations ORDER BY version")
     ]
-    assert versions == [1, 2, 3, 4]
+    assert versions == [1, 2, 3, 4, 5, 6]
 
     created = pg_client.post(
         "/servers",

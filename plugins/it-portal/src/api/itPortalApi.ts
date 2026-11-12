@@ -97,6 +97,35 @@ export type ServerNote = {
   created_at: string;
 };
 
+export type HostService = {
+  name: string;
+  display_name: string;
+  description: string | null;
+  state: string;
+  start_mode: string;
+  can_stop: boolean;
+  is_present: boolean;
+  observed_at: string;
+  updated_at: string;
+};
+
+export type HostServicesPage = {
+  items: HostService[];
+  total: number;
+  page: number;
+  page_size: number;
+  current: { run_id: string; observed_at: string; received_at: string; service_count: number } | null;
+};
+
+export type HostServiceQuery = {
+  q?: string;
+  state?: string;
+  start_mode?: string;
+  present?: "yes" | "no" | "all";
+  page?: number;
+  page_size?: number;
+};
+
 export type ObservationPresentationStatus = "available" | "partial" | "stale" | "unavailable";
 
 export type ObservationDivergence = {
@@ -592,6 +621,8 @@ export const itPortalApi = {
       apiUrl(`/servers/${encodeURIComponent(serverId)}/observations/latest`),
       signal,
     ),
+  listHostServices: (serverId: string, query: HostServiceQuery, signal?: AbortSignal) =>
+    apiGet<HostServicesPage>(apiUrl(`/servers/${encodeURIComponent(serverId)}/host-services`, query), signal),
   listObservations: (serverId: string, signal?: AbortSignal) =>
     apiGet<Observation[]>(apiUrl(`/servers/${encodeURIComponent(serverId)}/observations`), signal),
 

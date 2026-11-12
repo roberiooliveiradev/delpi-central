@@ -67,6 +67,8 @@ def migrated(database):
         "V002__services_and_database_instances.sql",
         "V003__networks_integrations_relationships.sql",
         "V004__server_observations.sql",
+        "V005__allow_windows_server_observations.sql",
+        "V006__windows_host_service_inventory.sql",
     ]
     return database
 
@@ -96,6 +98,8 @@ def test_migrations_are_idempotent(migrated):
         (2, "V002__services_and_database_instances.sql"),
         (3, "V003__networks_integrations_relationships.sql"),
         (4, "V004__server_observations.sql"),
+        (5, "V005__allow_windows_server_observations.sql"),
+        (6, "V006__windows_host_service_inventory.sql"),
     ]
 
 

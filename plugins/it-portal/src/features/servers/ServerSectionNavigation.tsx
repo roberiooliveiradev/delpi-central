@@ -1,5 +1,6 @@
 import {
   Activity,
+  Cog,
   Boxes,
   ClipboardList,
   Database,
@@ -15,6 +16,7 @@ import type { Capabilities } from "../../api/itPortalApi";
 export type ServerSectionId =
   | "overview"
   | "inventory"
+  | "host_services"
   | "services"
   | "databases"
   | "networks"
@@ -34,6 +36,7 @@ type SectionDefinition = {
 const SECTIONS: readonly SectionDefinition[] = [
   { id: "overview", label: "Visão geral", description: "Cadastro e operação", icon: LayoutGrid },
   { id: "inventory", label: "Coleta automática", description: "Indicadores do host", icon: Activity },
+  { id: "host_services", label: "Serviços Windows", description: "Inventário do sistema operacional", icon: Cog },
   {
     id: "services",
     label: "Serviços",

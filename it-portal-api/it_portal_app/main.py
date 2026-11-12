@@ -16,6 +16,7 @@ from it_portal_app.domain.errors import DomainError
 from it_portal_app.interface.http.routes.action_plans_routes import (
     router as action_plans_router,
 )
+from it_portal_app.interface.http.routes.host_services_routes import router as host_services_router
 from it_portal_app.interface.http.routes.collector_routes import (
     router as collector_router,
 )
@@ -136,6 +137,7 @@ app.include_router(database_router)
 app.include_router(network_router)
 app.include_router(integration_router)
 app.include_router(collector_router)
+app.include_router(host_services_router)
 
 
 def custom_openapi():
