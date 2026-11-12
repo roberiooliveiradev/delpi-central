@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const css = readFileSync(new URL("./index.css", import.meta.url), "utf8");
+const css = readFileSync(resolve(process.cwd(), "src/index.css"), "utf8");
 
 function tokenColor(token: string): string {
   const match = css.match(new RegExp(`--${token}:\\s*(#[0-9a-fA-F]{6})\\s*;`));
