@@ -1,14 +1,18 @@
 # Gateway de homologação. Não substitui Dockerfile.prod.
-# Publica nginx.hml.conf: sem vhost de produção, sem GLPI, sem porta 443.
+# Publica nginx.hml.conf: HTTP :80 + HTTPS :443 (certs via volume em runtime).
+# Sem vhost de produção, sem GLPI, sem bind 80/443 do host produtivo.
 
 FROM nginx:alpine
 
-RUN rm -rf /etc/nginx/conf.d/*
+RUN rm -rf /etc/nginx/conf.d/* \
+  && mkdir -p /etc/nginx/hml-certs
 
 COPY nginx.hml.conf /etc/nginx/nginx.conf
+COPY snippets/ /etc/nginx/snippets/
 COPY healthcheck.sh /usr/local/bin/gateway-healthcheck.sh
 RUN chmod 0755 /usr/local/bin/gateway-healthcheck.sh
 
-EXPOSE 80
+# Certificados NÃO entram na imagem — montados em runtime a partir de infra/hml-certs/.
+EXPOSE 80 443
 
 CMD ["nginx", "-g", "daemon off;"]

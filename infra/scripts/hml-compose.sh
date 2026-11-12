@@ -3,18 +3,19 @@
 #
 # Leitura/simulação: list, validate, config, simulate, status.
 # Ativação autorizada:
-#   - databases  → postgres-core, keycloak-db, postgres-plugins
-#   - keycloak   → somente o serviço keycloak (--no-deps; DB já ativo)
-#   - gateway    → somente delpi-hml-gateway (build imagem HML; --no-deps)
-#   - core-api   → somente delpi-hml-core-api (build; migrations no Postgres Core HML)
-#   - portal     → somente delpi-hml-portal (build Vite HML; exige Core healthy)
+#   - databases    → postgres-core, keycloak-db, postgres-plugins
+#   - keycloak     → somente o serviço keycloak (--no-deps; DB já ativo)
+#   - gateway      → somente delpi-hml-gateway (build imagem HML; --no-deps; exige certs TLS)
+#   - core-api     → somente delpi-hml-core-api (build; migrations no Postgres Core HML)
+#   - portal       → somente delpi-hml-portal (build Vite HML HTTPS; exige Core healthy)
+#   - tls-activate → cutover HTTPS coordenado (gateway+keycloak+bootstrap+core-api+portal)
 # Qualquer outro up/build/pull/down/stop continua recusado.
 # Redis, API DELPI, Plugin UI e Production Control permanecem bloqueados.
 #
 # Uso, a partir da raiz do repositório:
 #   ./infra/scripts/hml-compose.sh list
 #   ./infra/scripts/hml-compose.sh validate
-#   ./infra/scripts/hml-compose.sh config [--scenario databases|keycloak|gateway|core-api|portal|...]
+#   ./infra/scripts/hml-compose.sh config [--scenario databases|keycloak|gateway|core-api|portal|tls-activate|...]
 #   ./infra/scripts/hml-compose.sh simulate [--scenario ...] [--services a,b]
 #   ./infra/scripts/hml-compose.sh status
 #   ./infra/scripts/hml-compose.sh up --scenario databases
@@ -22,6 +23,7 @@
 #   ./infra/scripts/hml-compose.sh up --scenario gateway
 #   ./infra/scripts/hml-compose.sh up --scenario core-api
 #   ./infra/scripts/hml-compose.sh up --scenario portal
+#   ./infra/scripts/hml-compose.sh up --scenario tls-activate
 #   ./infra/scripts/hml-compose.sh bootstrap-keycloak
 #   ./infra/scripts/hml-compose.sh up|down|stop|build|pull   # demais: recusa
 
@@ -34,7 +36,7 @@ PROJECT="delpi-hml"
 COMPOSE_FILE="docker-compose.hml.yml"
 ENV_EXAMPLE="env.hml.example"
 ENV_LOCAL=".env.hml"
-ACTIVATION_STATUS="HOMOLOGATION_CORE_API_AND_PORTAL_AUTHORIZED"
+ACTIVATION_STATUS="HOMOLOGATION_TLS_ACTIVATE_AUTHORIZED"
 HEALTH_TIMEOUT_SEC="${DELPI_HML_HEALTH_TIMEOUT_SEC:-300}"
 
 DATABASE_SERVICES=(
@@ -84,7 +86,7 @@ START_ORDER=(
   production-control-api
   gateway
 )
-AUTHORIZED_UP_SCENARIOS=(databases keycloak gateway core-api portal)
+AUTHORIZED_UP_SCENARIOS=(databases keycloak gateway core-api portal tls-activate)
 ALLOWED_HML_CONTAINERS_AFTER_GATEWAY=(
   delpi-hml-postgres-core
   delpi-hml-keycloak-db
@@ -109,8 +111,8 @@ refuse_activation() {
   local action="$1"
   echo "HOMOLOGATION_ACTIVATION_NOT_AUTHORIZED" >&2
   echo "Ação '$action' não executada fora dos profiles autorizados." >&2
-  echo "Autorizados: up --scenario databases|keycloak|gateway|core-api|portal | bootstrap-keycloak." >&2
-  echo "Redis, API DELPI, Plugin UI, Production Control e TLS/HTTPS HML permanecem bloqueados." >&2
+  echo "Autorizados: up --scenario databases|keycloak|gateway|core-api|portal|tls-activate | bootstrap-keycloak." >&2
+  echo "Redis, API DELPI, Plugin UI e Production Control permanecem bloqueados." >&2
   exit 2
 }
 
@@ -122,6 +124,7 @@ scenario_services() {
     gateway) printf '%s\n' "${GATEWAY_SERVICES[@]}" ;;
     core-api) printf '%s\n' "${CORE_API_SERVICES[@]}" ;;
     portal) printf '%s\n' "${PORTAL_SERVICES[@]}" ;;
+    tls-activate) printf '%s\n' "${GATEWAY_SERVICES[@]}" "${KEYCLOAK_SERVICES[@]}" "${CORE_API_SERVICES[@]}" "${PORTAL_SERVICES[@]}" ;;
     baseline) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" ;;
     platform) printf '%s\n' "${PLATFORM_SERVICES[@]}" ;;
     production-control) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" ;;
@@ -141,8 +144,12 @@ assert_no_prod_markers_in_env() {
     echo "[ERRO] .env.hml referencia domínio produtivo em OIDC/URLs públicas. STOP." >&2
     exit 1
   fi
-  if ! grep -Eq '^KEYCLOAK_ISSUER=http://192\.168\.1\.237:18080/auth/realms/delpi' "$COMPOSE_DIR/$ENV_LOCAL"; then
-    echo "[ERRO] KEYCLOAK_ISSUER HML esperado ausente/divergente em .env.hml. STOP." >&2
+  if ! grep -Eq '^KEYCLOAK_ISSUER=https://192\.168\.1\.237:18443/auth/realms/delpi' "$COMPOSE_DIR/$ENV_LOCAL"; then
+    echo "[ERRO] KEYCLOAK_ISSUER HTTPS HML esperado ausente/divergente em .env.hml. STOP." >&2
+    exit 1
+  fi
+  if ! grep -Eq '^DELPI_HML_PUBLIC_ORIGIN=https://192\.168\.1\.237:18443$' "$COMPOSE_DIR/$ENV_LOCAL"; then
+    echo "[ERRO] DELPI_HML_PUBLIC_ORIGIN HTTPS HML ausente/divergente. STOP." >&2
     exit 1
   fi
   if ! grep -Eq '^KEYCLOAK_AUDIENCE=delpi-central' "$COMPOSE_DIR/$ENV_LOCAL"; then
@@ -153,6 +160,32 @@ assert_no_prod_markers_in_env() {
     echo "[ERRO] DB_HOST deve ser postgres-core (rede HML). STOP." >&2
     exit 1
   fi
+}
+
+assert_hml_tls_certs() {
+  local crt="$COMPOSE_DIR/hml-certs/hml-gateway.crt"
+  local key="$COMPOSE_DIR/hml-certs/hml-gateway.key"
+  local ca="$COMPOSE_DIR/hml-certs/hml-local-ca.crt"
+  if [[ ! -f "$crt" || ! -f "$key" ]]; then
+    echo "[ERRO] certs TLS HML ausentes ($crt / $key). Rode ./infra/scripts/hml-tls-prepare.sh" >&2
+    exit 1
+  fi
+  if [[ ! -f "$ca" ]]; then
+    echo "[ERRO] CA pública HML ausente ($ca). Necessária para smoke com confiança." >&2
+    exit 1
+  fi
+  if [[ -f "$COMPOSE_DIR/hml-certs/hml-local-ca.key" ]]; then
+    # Permitido na VM durante geração; aviso operacional (não montar no gateway).
+    echo "[AVISO] chave privada da CA presente em hml-certs — transferir para custódia e remover após backup." >&2
+  fi
+  openssl x509 -in "$crt" -noout -checkend 86400 >/dev/null 2>&1 || {
+    echo "[ERRO] certificado do gateway expirado ou inválido." >&2
+    exit 1
+  }
+  openssl x509 -in "$crt" -noout -text 2>/dev/null | grep -q 'IP Address:192.168.1.237' || {
+    echo "[ERRO] SAN IP:192.168.1.237 ausente no certificado do gateway." >&2
+    exit 1
+  }
 }
 
 assert_hml_container_allowlist() {
@@ -328,16 +361,18 @@ project: $PROJECT
 compose: infra/$COMPOSE_FILE
 checkout_previsto: /home/operador/projetos-teste/delpi-central
 activation: $ACTIVATION_STATUS
-porta_host: \${DELPI_HML_BIND_ADDR}:18080 (gateway autorizado nesta etapa)
+porta_host: \${DELPI_HML_BIND_ADDR}:18080 (HTTP legado) + :18443 (HTTPS canônico)
 rede: delpi-hml-network
 env: infra/$ENV_EXAMPLE → copiar para infra/$ENV_LOCAL no checkout de homologação
+certs: infra/hml-certs/ (hml-tls-prepare.sh; fora do Git)
 
 cenários:
   databases             postgres-core, keycloak-db, postgres-plugins (autorizado)
   keycloak              somente delpi-hml-keycloak (autorizado; --no-deps)
-  gateway               somente delpi-hml-gateway (autorizado; build + --no-deps)
+  gateway               somente delpi-hml-gateway (autorizado; build TLS + --no-deps)
   core-api              somente delpi-hml-core-api (autorizado; build + --no-deps)
-  portal                somente delpi-hml-portal (autorizado; build Vite HML + --no-deps)
+  portal                somente delpi-hml-portal (autorizado; build Vite HTTPS + --no-deps)
+  tls-activate          cutover HTTPS coordenado (autorizado)
   baseline              plataforma + production-control (up bloqueado)
   platform              portal, core, api-delpi, plugin-ui, auth, bancos, redis, gateway
   production-control    platform + MFE e API de Production Control
@@ -375,11 +410,24 @@ cmd_validate() {
   compose_config baseline "$env_file" >/dev/null
   echo "Render sem profile (não deve publicar serviços)..."
   compose_config "" "$env_file" >/dev/null
-  # nginx -t em container isolado (sem publicar porta; conf HML montada).
-  echo "Validando sintaxe nginx.hml.conf..."
+  # nginx -t em container isolado (conf + snippets + certs efêmeros ou reais).
+  echo "Validando sintaxe nginx.hml.conf (HTTP+HTTPS)..."
+  local cert_dir tmp_certs=""
+  if [[ -f "$COMPOSE_DIR/hml-certs/hml-gateway.crt" && -f "$COMPOSE_DIR/hml-certs/hml-gateway.key" ]]; then
+    cert_dir="$COMPOSE_DIR/hml-certs"
+  else
+    tmp_certs="$(mktemp -d)"
+    cert_dir="$tmp_certs"
+    openssl req -x509 -newkey rsa:2048 -nodes -keyout "$cert_dir/hml-gateway.key" \
+      -out "$cert_dir/hml-gateway.crt" -days 1 -subj "/CN=hml-validate" >/dev/null 2>&1
+  fi
   docker run --rm \
     -v "$REPO_ROOT/gateway/nginx.hml.conf:/etc/nginx/nginx.conf:ro" \
+    -v "$REPO_ROOT/gateway/snippets:/etc/nginx/snippets:ro" \
+    -v "$cert_dir/hml-gateway.crt:/etc/nginx/hml-certs/hml-gateway.crt:ro" \
+    -v "$cert_dir/hml-gateway.key:/etc/nginx/hml-certs/hml-gateway.key:ro" \
     nginx:alpine nginx -t
+  [[ -n "$tmp_certs" ]] && rm -rf "$tmp_certs"
   python3 "$SCRIPT_DIR/tests/test_hml_compose_isolation.py"
   echo "VALIDACAO_ESTATICA=PASS"
   echo "$ACTIVATION_STATUS"
@@ -538,10 +586,14 @@ cmd_bootstrap_keycloak() {
 }
 
 cmd_up_gateway() {
-  local env_file bind_addr
+  local env_file bind_addr tls_port
   env_file="$(require_local_env)"
+  assert_no_prod_markers_in_env "$env_file"
+  assert_hml_tls_certs
   bind_addr="$(grep -E '^DELPI_HML_BIND_ADDR=' "$COMPOSE_DIR/$ENV_LOCAL" | head -1 | cut -d= -f2- | tr -d '"'"'"'\r')"
   bind_addr="${bind_addr:-192.168.1.237}"
+  tls_port="$(grep -E '^DELPI_HML_TLS_PORT=' "$COMPOSE_DIR/$ENV_LOCAL" | head -1 | cut -d= -f2- | tr -d '"'"'"'\r')"
+  tls_port="${tls_port:-18443}"
 
   local db
   for db in delpi-hml-postgres-core delpi-hml-keycloak-db delpi-hml-postgres-plugins; do
@@ -563,13 +615,20 @@ cmd_up_gateway() {
       exit 1
     fi
   fi
+  if ss -lnt 2>/dev/null | grep -E ":${tls_port}\\s" >/dev/null; then
+    if ! docker ps --format '{{.Names}} {{.Ports}}' | grep -q "delpi-hml-gateway.*${tls_port}"; then
+      echo "[ERRO] porta ${tls_port} ocupada por outro processo. STOP." >&2
+      ss -lnt | grep "${tls_port}" || true
+      exit 1
+    fi
+  fi
 
   echo "ATIVACAO=gateway"
   echo "project=$PROJECT"
   echo "env=infra/$ENV_LOCAL"
-  echo "bind=${bind_addr}:18080"
+  echo "bind=${bind_addr}:18080 (HTTP) + ${bind_addr}:${tls_port} (HTTPS)"
   echo "servicos=gateway"
-  echo "modo=build gateway + up -d --no-deps (não sobe apps)"
+  echo "modo=build gateway TLS + up -d --no-deps (não sobe apps)"
 
   (
     cd "$COMPOSE_DIR"
@@ -665,12 +724,20 @@ print(s.get("DB_HOST") if isinstance(s,dict) else "")'
   wait_healthy core-api "$env_file" core-api
   assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_CORE_API
 
-  # Smoke via gateway (sem token)
+  # Smoke via gateway (sem token) — HTTP legado + HTTPS canônico
   local code
   code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 15 \
     http://192.168.1.237:18080/core-api/health || echo FAIL)"
   if [[ "$code" != "200" ]]; then
-    echo "[ERRO] /core-api/health via gateway retornou $code (esperado 200). STOP." >&2
+    echo "[ERRO] /core-api/health via gateway HTTP retornou $code (esperado 200). STOP." >&2
+    exit 1
+  fi
+  assert_hml_tls_certs
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 15 \
+    --cacert "$COMPOSE_DIR/hml-certs/hml-local-ca.crt" \
+    https://192.168.1.237:18443/core-api/health || echo FAIL)"
+  if [[ "$code" != "200" ]]; then
+    echo "[ERRO] /core-api/health via gateway HTTPS retornou $code (esperado 200). STOP." >&2
     exit 1
   fi
 
@@ -682,6 +749,7 @@ cmd_up_portal() {
   local env_file
   env_file="$(require_local_env)"
   assert_no_prod_markers_in_env "$env_file"
+  assert_hml_tls_certs
 
   docker ps --format '{{.Names}} {{.Status}}' | grep -E '^delpi-hml-keycloak .*healthy' >/dev/null || {
     echo "[ERRO] delpi-hml-keycloak não está healthy. Abortado." >&2
@@ -696,15 +764,15 @@ cmd_up_portal() {
     exit 1
   }
 
-  # Guard bake-time: VITE_* devem apontar para HML HTTP LAN.
+  # Guard bake-time: VITE_* devem apontar para HML HTTPS LAN.
   local vite_blob
   vite_blob="$(grep -E '^VITE_KC_(URL|REALM|CLIENT_ID|REDIRECT_URI)=' "$COMPOSE_DIR/$ENV_LOCAL" || true)"
-  if ! grep -Eq '^VITE_KC_URL=http://192\.168\.1\.237:18080/auth' <<<"$vite_blob"; then
-    echo "[ERRO] VITE_KC_URL HML ausente/divergente. STOP (evita bake produtivo)." >&2
+  if ! grep -Eq '^VITE_KC_URL=https://192\.168\.1\.237:18443/auth' <<<"$vite_blob"; then
+    echo "[ERRO] VITE_KC_URL HTTPS HML ausente/divergente. STOP (evita bake produtivo)." >&2
     exit 1
   fi
-  if ! grep -Eq '^VITE_KC_REDIRECT_URI=http://192\.168\.1\.237:18080/' <<<"$vite_blob"; then
-    echo "[ERRO] VITE_KC_REDIRECT_URI HML ausente/divergente. STOP." >&2
+  if ! grep -Eq '^VITE_KC_REDIRECT_URI=https://192\.168\.1\.237:18443/' <<<"$vite_blob"; then
+    echo "[ERRO] VITE_KC_REDIRECT_URI HTTPS HML ausente/divergente. STOP." >&2
     exit 1
   fi
   if grep -Eiq 'minhadelpi\.com\.br' <<<"$vite_blob"; then
@@ -737,19 +805,84 @@ cmd_up_portal() {
   code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 15 \
     http://192.168.1.237:18080/ || echo FAIL)"
   if [[ "$code" != "200" ]]; then
-    echo "[ERRO] / via gateway retornou $code (esperado 200). STOP." >&2
+    echo "[ERRO] / via gateway HTTP legado retornou $code (esperado 200). STOP." >&2
+    exit 1
+  fi
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 15 \
+    --cacert "$COMPOSE_DIR/hml-certs/hml-local-ca.crt" \
+    https://192.168.1.237:18443/ || echo FAIL)"
+  if [[ "$code" != "200" ]]; then
+    echo "[ERRO] / via gateway HTTPS retornou $code (esperado 200). STOP." >&2
     exit 1
   fi
 
-  # Bundle não deve conter domínio produtivo
+  # Bundle não deve conter domínio produtivo nem issuer HTTP antigo
   if docker exec delpi-hml-portal sh -c 'grep -R -l minhadelpi.com.br /usr/share/nginx/html 2>/dev/null | head -5' | grep -q .; then
     echo "[ERRO] assets do Portal HML contêm minhadelpi.com.br. STOP." >&2
+    exit 1
+  fi
+  if docker exec delpi-hml-portal sh -c 'grep -R -l "192.168.1.237:18080" /usr/share/nginx/html 2>/dev/null | head -5' | grep -q .; then
+    echo "[ERRO] assets do Portal HML ainda embutem origem HTTP :18080. STOP." >&2
+    exit 1
+  fi
+  if ! docker exec delpi-hml-portal sh -c 'grep -R -l "192.168.1.237:18443" /usr/share/nginx/html 2>/dev/null | head -5' | grep -q .; then
+    echo "[ERRO] assets do Portal HML sem origem HTTPS :18443. STOP." >&2
     exit 1
   fi
 
   echo "HML_PORTAL_UP=PASS"
   docker ps --filter name=delpi-hml --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
 }
+
+cmd_up_tls_activate() {
+  local env_file
+  env_file="$(require_local_env)"
+  assert_no_prod_markers_in_env "$env_file"
+  assert_hml_tls_certs
+
+  echo "ATIVACAO=tls-activate"
+  echo "project=$PROJECT"
+  echo "cutover=HTTPS https://192.168.1.237:18443"
+  echo "ordem=gateway → keycloak --force-recreate → bootstrap → core-api → portal"
+
+  # 1) Gateway TLS
+  cmd_up_gateway
+
+  # 2) Keycloak com KC_HOSTNAME_PORT/HTTPS (recreate para aplicar env)
+  echo "=== recreate keycloak com issuer HTTPS ==="
+  (
+    cd "$COMPOSE_DIR"
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile keycloak \
+        up -d --no-deps --force-recreate --no-build keycloak
+  )
+  wait_healthy keycloak "$env_file" keycloak
+
+  # 3) Bootstrap realm/client/redirects HTTPS
+  cmd_bootstrap_keycloak
+
+  # 4) Core API com KEYCLOAK_ISSUER HTTPS
+  cmd_up_core_api
+
+  # 5) Portal bake Vite HTTPS
+  cmd_up_portal
+
+  # Smoke OIDC discovery público HTTPS
+  local issuer disc
+  disc="$(curl -sS --connect-timeout 5 --max-time 20 \
+    --cacert "$COMPOSE_DIR/hml-certs/hml-local-ca.crt" \
+    https://192.168.1.237:18443/auth/realms/delpi/.well-known/openid-configuration)"
+  issuer="$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("issuer",""))' <<<"$disc")"
+  if [[ "$issuer" != "https://192.168.1.237:18443/auth/realms/delpi" ]]; then
+    echo "[ERRO] issuer público HTTPS divergente: $issuer" >&2
+    exit 1
+  fi
+  echo "OIDC_PUBLIC_DISCOVERY=PASS issuer=$issuer"
+  echo "HML_TLS_ACTIVATE=PASS"
+  docker ps --filter name=delpi-hml --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+}
+
 
 SCENARIO="baseline"
 SERVICES=""
@@ -805,6 +938,7 @@ case "$ACTION" in
       gateway) cmd_up_gateway ;;
       core-api) cmd_up_core_api ;;
       portal) cmd_up_portal ;;
+      tls-activate) cmd_up_tls_activate ;;
       *) refuse_activation "up --scenario $SCENARIO" ;;
     esac
     ;;

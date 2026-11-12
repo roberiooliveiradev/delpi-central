@@ -7,7 +7,7 @@
 #   - fala apenas com o container delpi-hml-keycloak na rede delpi-hml-network;
 #   - NÃO provisiona clients DÉLIA/MCP nem apps ainda não ativados;
 #   - NÃO habilita direct grants;
-#   - sslRequired=none (fase HTTP LAN, sem TLS).
+#   - sslRequired=external com origem HTTPS pública (HTTP só na rede Compose).
 #
 # Uso (checkout HML, Keycloak já healthy):
 #   ./infra/scripts/keycloak-hml-bootstrap.sh
@@ -49,10 +49,12 @@ TEST_PASS="$(env_val HML_TEST_PASSWORD "$ENV_FILE")"
   echo "[ERRO] KEYCLOAK_ADMIN* ausentes em .env.hml" >&2; exit 1; }
 [ -n "$PUBLIC_ORIGIN" ] || {
   echo "[ERRO] DELPI_HML_PUBLIC_ORIGIN/PUBLIC_BASE_URL ausente em .env.hml" >&2; exit 1; }
-[[ "$PUBLIC_ORIGIN" == http://* ]] || {
-  echo "[ERRO] origem HML deve ser http:// na fase LAN (recebido: $PUBLIC_ORIGIN)" >&2; exit 1; }
+[[ "$PUBLIC_ORIGIN" == https://* ]] || {
+  echo "[ERRO] origem HML deve ser https:// (Secure Context / PKCE). Recebido: $PUBLIC_ORIGIN" >&2; exit 1; }
 [[ "$PUBLIC_ORIGIN" != *minhadelpi.com.br* ]] || {
   echo "[ERRO] origem HML não pode usar o domínio de produção" >&2; exit 1; }
+[[ "$PUBLIC_ORIGIN" == https://192.168.1.237:18443 ]] || {
+  echo "[ERRO] origem HML esperada https://192.168.1.237:18443 (recebido: $PUBLIC_ORIGIN)" >&2; exit 1; }
 
 if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
   echo "[ERRO] container $CONTAINER não está em execução." >&2
@@ -124,14 +126,15 @@ admin_code() {
 }
 
 # --- realm ---
+# sslRequired=external: clientes externos HTTPS; HTTP interno Compose permanece OK.
 if [ "$(admin_code GET "/realms/$REALM")" = "404" ]; then
   admin_api POST /realms \
-    "{\"realm\":\"$REALM\",\"enabled\":true,\"sslRequired\":\"none\",\"registrationAllowed\":false,\"resetPasswordAllowed\":false,\"rememberMe\":true}" >/dev/null
-  echo "[hml-kc] realm $REALM criado (sslRequired=none, HTTP LAN)."
+    "{\"realm\":\"$REALM\",\"enabled\":true,\"sslRequired\":\"external\",\"registrationAllowed\":false,\"resetPasswordAllowed\":false,\"rememberMe\":true}" >/dev/null
+  echo "[hml-kc] realm $REALM criado (sslRequired=external, HTTPS público)."
 else
   admin_api PUT "/realms/$REALM" \
-    "{\"realm\":\"$REALM\",\"enabled\":true,\"sslRequired\":\"none\"}" >/dev/null
-  echo "[hml-kc] realm $REALM já existe — sslRequired=none aplicado."
+    "{\"realm\":\"$REALM\",\"enabled\":true,\"sslRequired\":\"external\"}" >/dev/null
+  echo "[hml-kc] realm $REALM já existe — sslRequired=external aplicado."
 fi
 
 # --- public portal client (sem direct grants) ---
@@ -164,7 +167,7 @@ if [ -z "$CID" ]; then
   echo "[hml-kc] client $CLIENT_ID criado."
 else
   admin_api PUT "/realms/$REALM/clients/$CID" "$CLIENT_JSON" >/dev/null
-  echo "[hml-kc] client $CLIENT_ID atualizado (redirect/webOrigin HTTP HML)."
+  echo "[hml-kc] client $CLIENT_ID atualizado (redirect/webOrigin HTTPS HML)."
 fi
 
 # --- audience delpi-central (Core API KEYCLOAK_AUDIENCE) ---

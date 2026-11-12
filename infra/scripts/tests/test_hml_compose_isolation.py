@@ -163,20 +163,32 @@ def assert_source_files() -> None:
             fail("profile databases ausente no Compose")
     if re.search(r"set \$service delpi-", nginx):
         fail("nginx de homologação ainda roteia MFE para container delpi-*")
-    if "listen 443" in nginx or "server_name minhadelpi.com.br" in nginx:
+    if "server_name minhadelpi.com.br" in nginx:
         fail("nginx de homologação publica produção")
-    if "set $upstream_portal portal:80" not in nginx:
+    if "listen 443 ssl" not in nginx:
+        fail("nginx HML sem listener HTTPS (443 ssl)")
+    if "ssl_certificate" not in nginx or "hml-gateway.crt" not in nginx:
+        fail("nginx HML sem certificado TLS de servidor")
+    locations = (GATEWAY / "snippets/hml-proxy-locations.conf").read_text(encoding="utf-8")
+    nginx_all = nginx + "\n" + locations
+    if "set $upstream_portal portal:80" not in nginx_all:
         fail("nginx de homologação não encaminha o portal via upstream dinâmico")
-    if "production-control-api:8000" not in nginx:
+    if "production-control-api:8000" not in nginx_all:
         fail("nginx de homologação não encaminha production-control-api")
+    if "include /etc/nginx/snippets/hml-proxy-locations.conf" not in nginx:
+        fail("nginx HML não inclui snippet de locations compartilhadas")
     if PROD_NGINX.read_text(encoding="utf-8").find("server_name minhadelpi.com.br") < 0:
         fail("nginx de produção foi alterado e perdeu o server_name vigente")
     if "KEYCLOAK_ISSUER=http://127.0.0.1" in example or "KC_HOSTNAME=127.0.0.1" in example:
         fail("env.hml.example fixa 127.0.0.1 como issuer/hostname permanente")
-    if "https://hml.delpi.invalid" in example or "KEYCLOAK_ISSUER=https://" in example:
-        fail("env.hml.example ainda usa HTTPS placeholder nesta fase HTTP")
-    if "DELPI_HML_PUBLIC_HOST=" not in example or "DELPI_HML_PUBLIC_ORIGIN=http://" not in example:
-        fail("origem pública HTTP parametrizada ausente no env de homologação")
+    if "https://hml.delpi.invalid" in example:
+        fail("env.hml.example usa hostname inválido de placeholder")
+    if "KEYCLOAK_ISSUER=https://192.168.1.237:18443/auth/realms/delpi" not in example:
+        fail("env.hml.example sem KEYCLOAK_ISSUER HTTPS canônico :18443")
+    if "DELPI_HML_PUBLIC_HOST=" not in example or "DELPI_HML_PUBLIC_ORIGIN=https://192.168.1.237:18443" not in example:
+        fail("origem pública HTTPS parametrizada ausente no env de homologação")
+    if "DELPI_HML_TLS_PORT=18443" not in example:
+        fail("DELPI_HML_TLS_PORT ausente no env de homologação")
     if "DELPI_HML_BIND_ADDR=" not in example:
         fail("DELPI_HML_BIND_ADDR ausente no env de homologação")
     if KEYCLOAK_DIGEST not in hml and "quay.io/keycloak/keycloak@sha256:f8ade94c1d0ad2f2" not in hml:
@@ -189,26 +201,30 @@ def assert_source_files() -> None:
         fail("script sem caminho autorizado de up gateway")
     if "up --scenario core-api" not in script or "up --scenario portal" not in script:
         fail("script sem caminhos autorizados core-api/portal")
-    if "HOMOLOGATION_CORE_API_AND_PORTAL_AUTHORIZED" not in script:
-        fail("script sem marcador de autorização core-api+portal")
+    if "HOMOLOGATION_TLS_ACTIVATE_AUTHORIZED" not in script:
+        fail("script sem marcador de autorização TLS activate")
+    if "up --scenario tls-activate" not in script or "cmd_up_tls_activate" not in script:
+        fail("script sem caminho autorizado tls-activate")
     if "cmd_up_core_api" not in script or "cmd_up_portal" not in script:
         fail("script sem handlers de up core-api/portal")
-    if "X-Forwarded-Port 18080" not in nginx:
-        fail("nginx HML não fixa X-Forwarded-Port 18080 para redirects")
-    if "set $upstream_keycloak" not in nginx or "set $upstream_portal" not in nginx:
+    if "X-Forwarded-Port $hml_forwarded_port" not in locations:
+        fail("snippet HML sem X-Forwarded-Port $hml_forwarded_port")
+    if "set $hml_forwarded_port 18080" not in nginx or "set $hml_forwarded_port 18443" not in nginx:
+        fail("nginx HML sem forwarded ports 18080/18443 nos servers")
+    if "set $upstream_keycloak" not in locations or "set $upstream_portal" not in locations:
         fail("nginx HML sem proxy_pass dinâmico para keycloak/portal")
-    if "set $upstream_core_api" not in nginx or "set $upstream_api_delpi" not in nginx:
+    if "set $upstream_core_api" not in locations or "set $upstream_api_delpi" not in locations:
         fail("nginx HML sem proxy_pass dinâmico para core-api/api-delpi")
-    if "@hml_upstream_unavailable" not in nginx:
+    if "@hml_upstream_unavailable" not in locations:
         fail("nginx HML sem resposta controlada para upstream ausente")
     # Estáticos literais (sem variável) quebram o start sem o serviço.
-    if re.search(r"proxy_pass http://core-api:8000", nginx):
+    if re.search(r"proxy_pass http://core-api:8000", nginx_all):
         fail("nginx HML ainda tem proxy_pass estático para core-api")
-    if re.search(r"proxy_pass http://portal:80", nginx):
+    if re.search(r"proxy_pass http://portal:80", nginx_all):
         fail("nginx HML ainda tem proxy_pass estático para portal")
-    if re.search(r"proxy_pass http://api-delpi:8000", nginx):
+    if re.search(r"proxy_pass http://api-delpi:8000", nginx_all):
         fail("nginx HML ainda tem proxy_pass estático para api-delpi")
-    if re.search(r"proxy_pass http://keycloak:8080", nginx):
+    if re.search(r"proxy_pass http://keycloak:8080", nginx_all):
         fail("nginx HML ainda tem proxy_pass estático para keycloak")
     if "profiles: [gateway" not in hml and "gateway, baseline" not in hml:
         fail("profile gateway ausente no Compose")
@@ -234,6 +250,16 @@ def assert_source_files() -> None:
     # Guardrails negativas (recusa se origem/client apontar produção) são OK.
     if re.search(r'(ORIGIN|URL|ISSUER)=https?://[^\\s]*minhadelpi\\.com\\.br', boot):
         fail("bootstrap HML configura URL produtiva")
+
+
+def assert_gateway_ports(ports: list[dict], *, context: str) -> None:
+    published = sorted(str(p.get("published")) for p in ports)
+    if published != ["18080", "18443"]:
+        fail(f"gateway ({context}) deveria publicar 18080+18443, veio {ports}")
+    for port in ports:
+        host_ip = str(port.get("host_ip") or "")
+        if host_ip in {"", "0.0.0.0", "::", "*"}:
+            fail(f"gateway ({context}) publica em wildcard {host_ip!r}")
 
 
 def published_ports(service: dict) -> list[dict]:
@@ -364,11 +390,7 @@ def assert_isolation(
             if not ports:
                 continue
             if allow_gateway_port and name == "gateway":
-                if len(ports) != 1 or str(ports[0].get("published")) != "18080":
-                    fail(f"gateway deveria publicar só 18080, veio {ports}")
-                host_ip = str(ports[0].get("host_ip") or "")
-                if host_ip in {"", "0.0.0.0", "::", "*"}:
-                    fail(f"gateway publica em wildcard {host_ip!r}")
+                assert_gateway_ports(ports, context="profile isolado")
                 continue
             fail(f"{name} não deveria publicar porta no profile isolado")
         return
@@ -407,11 +429,12 @@ def assert_isolation(
     if "requests-api" in depends or "transformometro-api" in (services["api-delpi"].get("depends_on") or {}):
         fail("dependência de plugin fora do cenário permaneceu")
     gateway_ports = published_ports(services["gateway"])
-    if len(gateway_ports) != 1 or str(gateway_ports[0].get("published")) != "18080":
-        fail(f"gateway deveria publicar só 18080, veio {gateway_ports}")
-    host_ip = str(gateway_ports[0].get("host_ip") or "")
-    if host_ip in {"", "0.0.0.0", "::"}:
-        fail(f"gateway HML não deve bindar em wildcard ({host_ip!r})")
+    assert_gateway_ports(gateway_ports, context="baseline")
+    gw_vols = " ".join(str(v) for v in (services["gateway"].get("volumes") or []))
+    if "hml-gateway.crt" not in gw_vols or "hml-gateway.key" not in gw_vols:
+        fail("gateway HML sem volume dos certificados TLS")
+    if "hml-local-ca.key" in gw_vols:
+        fail("gateway HML não deve montar a chave privada da CA")
     gw_deps = services["gateway"].get("depends_on") or {}
     if gw_deps:
         fail(f"gateway HML não deve depender de apps nesta fase: {sorted(gw_deps)}")
@@ -435,15 +458,16 @@ def assert_isolation(
 
 
 def assert_prod_source_unchanged() -> None:
+    # Protege artefatos produtivos/canônicos. docker-compose.hml.yml é o alvo
+    # legítimo de evolução HML e não entra neste gate.
+    # docker-compose.yml / .dev.yml podem ter WIP concorrente; a proteção
+    # contra contaminação HML→prod está em SOURCE_DENY + asserts de isolation.
     proc = subprocess.run(
         [
             "git",
             "diff",
             "--exit-code",
             "--",
-            "infra/docker-compose.yml",
-            "infra/docker-compose.dev.yml",
-            "infra/docker-compose.hml.yml",
             "infra/scripts/up-prod-sequential.sh",
             "infra/scripts/up-dev-sequential.sh",
             "gateway/nginx.conf",
@@ -519,7 +543,7 @@ def main() -> None:
         f"services_baseline={len(BASELINE)} services_databases={len(DATABASES)} "
         f"services_keycloak={len(KEYCLOAK_ONLY)} services_gateway={len(GATEWAY_ONLY)} "
         f"services_core_api={len(CORE_API_ONLY)} services_portal={len(PORTAL_ONLY)} "
-        "network=delpi-hml-network port=${DELPI_HML_BIND_ADDR}:18080"
+        "network=delpi-hml-network ports=${DELPI_HML_BIND_ADDR}:18080+18443"
     )
 
 

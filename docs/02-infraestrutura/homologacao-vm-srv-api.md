@@ -1,10 +1,10 @@
 # Minha DELPI — Homologação na VM srv-api — registro de continuidade
 
-> **Atualizado:** 12/11/2026 · **Estado:** Portal/Core/Gateway HML ativos em HTTP LAN; **login browser PKCE bloqueado** por Secure Context.  
+> **Atualizado:** 12/11/2026 · **Estado:** HTTPS interno HML autorizado (`HML-TLS-ACTIVATE`); endpoint canônico `https://192.168.1.237:18443`.  
 > **Repositório:** `roberiooliveiradev/delpi-central`.  
-> **TASK_ID:** `HML-PKCE-BROWSER-CRYPTO-01`.  
-> **BASE_HEAD:** `c9510cf0bd253eb09420bd605fb410be32b92493` (reconfirmado ancestral; HEAD ao iniciar `a154ee559f`).  
-> **MAIN_INTEGRATED_SHA:** `6e91242cce155142e2c11f0f7bad3cea58a8ff54`.
+> **TASK_ID:** `HML-TLS-ACTIVATE`.  
+> **BASE_HEAD:** `6f58adcad4582b25f7d7055d55a436dee1148471`.  
+> **MAIN_INTEGRATED_SHA:** *(preencher após push)*.
 
 ## 1. Objetivo e regras congeladas
 
@@ -13,71 +13,92 @@ Ambiente de homologação independente na mesma VM `srv-api`.
 - Produção: `/home/operador/projetos/delpi-central`.
 - Homologação: `/home/operador/projetos-teste/delpi-central`.
 - Git: commit/push só no computador local; VM apenas `git pull --ff-only`.
-- **Executado:** DBs → Keycloak → Gateway → Core API → Portal (HTTP `:18080`).
-- **Bloqueio atual:** PKCE no **navegador** exige Secure Context (`crypto.subtle`).
-- **Ainda proibido sem autorização:** ativar HTTPS HML; Redis; API DELPI; Plugin UI; PC; restore; internet.
+- **Executado (pré-TLS):** DBs → Keycloak → Gateway → Core API → Portal (HTTP `:18080`).
+- **Causa raiz PKCE:** Chromium não expõe `crypto.subtle` em HTTP por IP privado → `Web Crypto API is not available`.
+- **Decisão:** Alternativa C — HTTPS interno porta `18443`, CA local, sem domínio público/internet.
+- **Ainda proibido sem autorização:** Redis; API DELPI; Plugin UI; Production Control; restore; exposição à internet; confiança indiscriminada da CA.
 
 ## 2. Diagnóstico PKCE / Web Crypto (comprovado)
 
 | Evidência | Resultado |
 |---|---|
-| Origem | `http://192.168.1.237:18080/login` |
+| Origem HTTP | `http://192.168.1.237:18080/login` |
 | `window.isSecureContext` | **false** |
-| `typeof crypto` | `object` |
-| `typeof crypto.getRandomValues` | `function` |
 | `typeof crypto.subtle` | **undefined** |
-| Biblioteca | `keycloak-js@26.2.3` (`pkceMethod: "S256"` em `portal/src/data/keycloakClient.ts`) |
-| Código lib | `sha256Digest()` / PKCE lança `Error: Web Crypto API is not available.` se `crypto.subtle` ausente |
-| Clique **Entrar com DELPI SSO** | Erro uncaught; **sem** redirect ao Keycloak (`stillOnLogin=true`) |
-| `requestStorageAccess` | Irrelevante — não é a causa |
+| Biblioteca | `keycloak-js@26.2.3` (`pkceMethod: "S256"`) |
+| Clique SSO | Erro antes do redirect ao Keycloak |
 
-**Causa raiz:** Chromium (e navegadores modernos) **não** expõem `crypto.subtle` em HTTP para IP privado. PKCE S256 do `keycloak-js` depende de `subtle.digest('SHA-256')`. Não é falha do Keycloak HML nem do Core API (fluxos server-side/curl com PKCE continuam válidos).
+## 3. HTTPS interno — arquitetura ativada
 
-## 3. Alternativas avaliadas
-
-| Alt | Descrição | Veredito |
-|---|---|---|
-| **A** HTTP LAN atual | Manter `:18080` HTTP | **INVIÁVEL** sem enfraquecer PKCE (proibido: desligar PKCE, polyfill fraco, “marcar HTTP como seguro” no browser) |
-| **B** Túnel SSH → localhost | `localhost` é Secure Context mesmo em HTTP | **INSUFICIENTE** para intranet multi-máquina: exigiria re-bake de `VITE_KC_*`, issuer, redirects e JWT todos em `localhost`; não atende outros PCs da LAN |
-| **C** HTTPS interno | Porta exclusiva (ex. `18443`), CA local confiável nos PCs de teste, sem domínio público/internet | **SELECIONADA** (menor caminho que preserva PKCE S256 + LAN multi-cliente + isolamento) |
+| Item | Valor |
+|---|---|
+| Origem canônica | `https://192.168.1.237:18443` |
+| HTTP legado | `http://192.168.1.237:18080` (health/rollback; login browser não é o caminho) |
+| Issuer | `https://192.168.1.237:18443/auth/realms/delpi` |
+| Certs | `infra/hml-certs/` (fora do Git); gerar com `hml-tls-prepare.sh` |
+| Gateway | `nginx.hml.conf` listen 80 + 443 ssl; volume só `hml-gateway.{crt,key}` |
+| Cutover | `./infra/scripts/hml-compose.sh up --scenario tls-activate` |
 
 ### REUSE GATE
 
 | Capacidade | Decisão |
 |---|---|
-| Gateway HML HTTP | **REUSE** até ativação TLS autorizada |
-| CA/certs | **NEW** preparatório (`hml-tls-prepare.sh` → `infra/hml-certs/`, fora do Git) |
-| nginx TLS HML | **NEW** exemplo `gateway/nginx.hml.tls.example.conf` (não ligado ao Dockerfile.hml) |
-| keycloak-js / PKCE S256 | **REUSE** — sem mudança de política OIDC |
-| Ativação `up --scenario tls` | **BLOQUEADA** até autorização explícita |
+| Gateway HML / DNS dinâmico | **EXTEND** — dual HTTP+HTTPS |
+| CA/certs | **NEW** (`hml-tls-prepare.sh`) — sem CA corporativa inventariada |
+| keycloak-js / PKCE S256 | **REUSE** |
+| Bootstrap KC | **EXTEND** — origem HTTPS + `sslRequired=external` |
+| Portal Vite bake | **EXTEND** — `VITE_KC_*` https `:18443` |
+| Core API JWT | **REUSE** — `KEYCLOAK_ISSUER` HTTPS exclusivo HML |
 
-**Decisão:** não alterar HTTP em execução; **não** ativar HTTPS sem autorização. Entregar apenas preparativos seguros.
+### Confiança da CA
 
-## 4. Preparativos entregues (sem ativação)
+1. Gerar certs na VM HML: `./infra/scripts/hml-tls-prepare.sh`.
+2. Confirmar fingerprint SHA-256 da CA por canal confiável.
+3. Instalar **somente** `hml-local-ca.crt` no store do PC de teste autorizado.
+4. Nunca distribuir `hml-local-ca.key`. Gateway não monta a chave da CA.
+5. Sem evidência no cliente → confiança = `PENDING` (não declarar PASS).
 
-- `infra/scripts/hml-tls-prepare.sh` — gera CA + cert SAN `IP:192.168.1.237` + `DNS:localhost`
-- `infra/hml-certs/` — gitignore de chaves; README de confiança
-- `gateway/nginx.hml.tls.example.conf` — esboço listener `:18443`
-- Comentários em `infra/env.hml.example` com mapa de variáveis HTTPS futuras
+### Rollback
 
-Quando autorizado, a ativação deverá: gerar/confiar CA → publicar só porta TLS HML → rebuild Portal com `VITE_KC_*` https → bootstrap KC (issuer/redirects) → validar login browser → preservar 80/443 prod.
+1. Não promover o endpoint HTTPS se login falhar.
+2. Gateway/Portal/Core/Keycloak HML podem voltar a imagens anteriores via Git + rebuild HML.
+3. HTTP `:18080` permanece operacional para health, mas **sem** Secure Context / PKCE browser.
+4. Não usar `docker compose down -v`; não resetar bancos; não tocar produção.
 
-## 5. Estado dos serviços HML
+## 4. Operação na VM
 
-Sete containers healthy na rede `delpi-hml-network` (HTTP `:18080` intacto). Login **browser** PKCE: **FAIL** (Secure Context). Login scriptado/server-side PKCE: permanece válido como evidência de IdP.
+```bash
+cd /home/operador/projetos-teste/delpi-central
+git pull --ff-only
+# Atualizar infra/.env.hml para URLs HTTPS (espelhar env.hml.example; preservar secrets)
+./infra/scripts/hml-tls-prepare.sh   # se certs ainda não existirem
+./infra/scripts/hml-compose.sh up --scenario tls-activate
+```
+
+## 5. Teste browser (obrigatório no PC com CA)
+
+```text
+https://192.168.1.237:18443/login
+window.isSecureContext === true
+typeof crypto.subtle === "object"
+Entrar com DELPI SSO → Keycloak HML → hml-tester → /core-api/me → logout
+```
+
+Sem evidência efetiva no navegador com CA confiável: classificar `PENDING` / `INCONCLUSIVE`, nunca `PASS`.
 
 ## 6. Produção
 
-Nenhum container produtivo alterado nesta tarefa de diagnóstico/preparação.
+Comparar IDs/`StartedAt`/portas 80/443 antes e depois de qualquer up HML. STOP se houver interferência.
 
 ## 7. Drift / pendências
 
 - Drift `5c20be0311` (DÉLIA) permanece para owner DÉLIA.
-- **Próxima ação:** autorização explícita para ativar HTTPS interno HML (`HML-TLS-ACTIVATE`).
-- Redis / API DELPI / Plugin UI: fora de escopo.
+- Redis / API DELPI / Plugin UI / Production Control: fora de escopo.
+- Confiança da CA nos PCs de teste: processo de TI / evidência no cliente.
 
 ## 8. Referências
 
 - `portal/src/data/keycloakClient.ts`, `keycloak-js@26.2.3`
-- `infra/scripts/hml-tls-prepare.sh`, `infra/hml-certs/README.md`
-- `gateway/nginx.hml.tls.example.conf`
+- `infra/scripts/hml-tls-prepare.sh`, `infra/scripts/hml-compose.sh` (`tls-activate`)
+- `gateway/nginx.hml.conf`, `gateway/snippets/hml-proxy-locations.conf`, `gateway/Dockerfile.hml`
+- `infra/env.hml.example`, `infra/docker-compose.hml.yml`

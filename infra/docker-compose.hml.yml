@@ -137,9 +137,9 @@ services:
       - ./keycloak/themes:/opt/keycloak/themes:ro
     environment:
       KC_HOSTNAME: ${KC_HOSTNAME}
-      KC_HOSTNAME_PORT: ${KC_HOSTNAME_PORT:-18080}
+      KC_HOSTNAME_PORT: ${KC_HOSTNAME_PORT:-18443}
       KC_HOSTNAME_STRICT: ${KC_HOSTNAME_STRICT:-false}
-      KC_HOSTNAME_STRICT_HTTPS: ${KC_HOSTNAME_STRICT_HTTPS:-false}
+      KC_HOSTNAME_STRICT_HTTPS: ${KC_HOSTNAME_STRICT_HTTPS:-true}
       KC_PROXY: ${KC_PROXY:-edge}
       KC_PROXY_HEADERS: ${KC_PROXY_HEADERS:-xforwarded}
       KC_HTTP_RELATIVE_PATH: ${KC_HTTP_RELATIVE_PATH:-/auth}
@@ -396,14 +396,18 @@ services:
       context: ../gateway
       dockerfile: Dockerfile.hml
     # Bind no IP LAN da VM (parametrizado). Não usar 0.0.0.0 sem necessidade.
+    # :18080 → HTTP legado (health/rollback); :18443 → HTTPS canônico (login PKCE).
     ports: !override
       - "${DELPI_HML_BIND_ADDR}:18080:80"
+      - "${DELPI_HML_BIND_ADDR}:${DELPI_HML_TLS_PORT:-18443}:443"
     depends_on: !override {}
     networks: !override
       - delpi-hml
-    volumes: !override []
+    volumes: !override
+      - ./hml-certs/hml-gateway.crt:/etc/nginx/hml-certs/hml-gateway.crt:ro
+      - ./hml-certs/hml-gateway.key:/etc/nginx/hml-certs/hml-gateway.key:ro
     environment:
-      # REUSE healthcheck.sh produtivo com paths só do Keycloak nesta fase.
+      # REUSE healthcheck.sh: HTTP interno :80 (não exige CA no container).
       GATEWAY_HEALTHCHECK_HOST: ${DELPI_HML_PUBLIC_HOST:-${DELPI_HML_BIND_ADDR}}
       GATEWAY_HEALTHCHECK_PATHS: /auth/realms/master
     healthcheck:
