@@ -120,3 +120,7 @@ A pasta é documentação permanente. Arquivos `.cursor/plans/*.plan.md` são es
 ## Decisões funcionais PRC — acompanhamento versionado
 
 - [PRC — Produtos acompanhados, versões confirmadas e flags transversais](./PRC-PRODUCT-TRACKING-VERSIONS-TRANSVERSAL-FLAGS-DECISIONS.md): regras de negócio consolidadas para criação/alteração, V1 em primeiro acompanhamento, snapshots oficiais após conclusão validada, flags persistentes por produto/alvo e histórico temporal. **Decisões funcionais registradas; arquitetura/persistência dependem de inventário e ratificação.**
+
+## Especificação visual PRC — produtos acompanhados
+
+- [PRC — Especificação visual e de interação](./PRC-PRODUCT-TRACKING-FRONTEND-VISUAL-SPEC.md): hero único com seletor Solicitações/Produtos acompanhados, tabela, ficha técnica em cards, fornecedores em tabela, flags nos campos e aba Versões com navegação/comparação. **UX TARGET; componentes, contratos e runtime ainda exigem inventário.**
