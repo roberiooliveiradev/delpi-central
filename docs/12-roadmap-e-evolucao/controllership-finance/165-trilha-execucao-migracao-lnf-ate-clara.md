@@ -78,7 +78,7 @@ Transferir o módulo **Lançamento de Notas Fiscais (LNF)** da `api-delpi` para 
 | Fase | Nome | Status | Ambiente atual | SHA(s) | Data | Evidência |
 |---|---|---|---|---|---|---|
 | F0–F4b | Inventário, contrato, implementação dark, ensaio HML | DONE | — | até `fddd4bb813` | 2026-11-12 | 163/164, suíte |
-| F5a | Preparação dark de PROD | IN_PROGRESS (F5a.4) | PROD | código `496644bbb7` · docs HEAD | 2026-11-12 | R4 api-delpi desbloqueado pelo owner (pacote main + salvaguardas F5a.4-API); PROD dark autorizado AGORA |
+| F5a | Preparação dark de PROD | DONE | PROD | `fdc31ad48e` + deploys 2026-11-12 | 2026-11-12 | BFF/MFE/api-delpi dark; preflight 5/5; OpenAPI BFF 112/0 LNF; api 731/22 LNF; MFE base api-delpi; observação 15 min sem incidente |
 | F5b | Corte em PROD | TODO | | | | |
 | F5c | Estabilização (hypercare) | TODO | | | | |
 | F7.0 | CLARA — inventário e contrato | TODO | | | | |
@@ -350,4 +350,13 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-12 17:52 -03 | F7 princípios | docs | Owner reforça paridade funcional total CLARA (leitura+escrita+delete) | registrado | `0b2652553b` | F5a permanece BLOCKED R4; upload 610678e5 mesclado sem apagar Registro |
 | 2026-11-12 17:53 -03 | F5a.R4 | — | Owner: publicar api-delpi com todos os commits pendentes da main + salvaguardas F5a.4-API | DECISÃO | — | desbloqueia R4 só para api-delpi nesta fase |
 | 2026-11-12 17:54 -03 | F5a.4 | PROD | Owner: deploys F5a.4 (incl. api-delpi) autorizados AGORA fora da janela | DECISÃO | — | manter observação 15 min + rollback se 5xx/app quebrar |
-| 2026-11-12 17:55 -03 | F5a | docs | 165: exceção R4 + F5a.4 detalhada; status → IN_PROGRESS (F5a.4) | IN_PROGRESS | (este commit) | Downloads sem texto F5a.4-API; conteúdo mesclado da decisão do owner + Registro preservado |
+| 2026-11-12 17:55 -03 | F5a | docs | 165: exceção R4 + F5a.4 detalhada; status → IN_PROGRESS (F5a.4) | IN_PROGRESS | `fdc31ad48e` | Downloads sem texto F5a.4-API; conteúdo mesclado da decisão do owner + Registro preservado |
+| 2026-11-12 18:00 -03 | F5a.4.1 | PROD | BFF dark rebuild + verify + preflight | PASS 5/5 | imagem nova CF | OpenAPI 112/LNF0; LNF 404; closing 401 sem JWT |
+| 2026-11-12 18:01 -03 | F5a.4.2 | PROD | MFE dark rebuild | PASS | imagem nova MFE | bundle api-delpi=1 bff=0 |
+| 2026-11-12 18:02 -03 | F5a.4-API.a | — | Inventário 68 commits api-delpi; OpenAPI LNF 22 paths / 24 ops | PASS | — | LNF path/ops estáveis before=after |
+| 2026-11-12 18:02 -03 | F5a.4-API.b | PROD DB | Migrations eng≤V023 quality≤V047 já no ledger | PASS | — | sem DDL pendente LNF; PRC/quality já aplicadas |
+| 2026-11-12 18:02 -03 | F5a.4-API.c | PROD .env | PORTAL_RH_* + LNF_MODULE_ENABLED presentes | PASS | — | só nomes |
+| 2026-11-12 18:03 -03 | F5a.4-API.d | imagem | pytest HEAD vs imagem PROD antiga | PASS (paridade) | `a674524ce866` | 61 failed idênticos (only_new=0); 5889 vs 5887 passed |
+| 2026-11-12 18:04 -03 | F5a.4-API.e | HML | up-hml api-delpi HEAD | PASS | HML healthy | paths 731 LNF 22; LNF_MODULE_ENABLED=true |
+| 2026-11-12 18:05–18:20 -03 | F5a.4-API.f | PROD | up-prod api-delpi + observação 15 min | PASS | `a674524ce866` | 1×502 healthcheck no recreate; depois 0 5xx; scrap TV 200 |
+| 2026-11-12 18:20 -03 | F5a | — | Critérios de saída F5a atendidos | DONE | (este commit) | próximo: F5b (janela + smoke owner) |

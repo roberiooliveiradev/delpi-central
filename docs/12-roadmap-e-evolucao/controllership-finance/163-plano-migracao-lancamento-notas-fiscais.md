@@ -110,14 +110,7 @@ Até F6: redeploy da versão anterior (api-delpi com módulo + MFE com base anti
 
 ### Status F5a — 2026-11-12
 
-**F5a parcialmente concluído** (`origin/main` `496644bbb7`):
-
-- Smoke MFE HML (shell federado) PASS + rollback;
-- CLI `python -m controllership_finance_app.interface.cli.lnf_preflight` (DEV 5/5; HML 4/5 — financial-api ausente);
-- Compose/env PROD com defaults dark;
-- **Deploy dark PROD NÃO executado:** `DECISION_REQUIRED` — rebuild de `api-delpi` traria dezenas de commits não-LNF (ver runbook 164).
-
-**Produção preparada dark (código/versionado/env); corte F5b pendente de janela + decisão do owner sobre o rebuild da api-delpi.**
+**F5a DONE** (2026-11-12): smoke HML + preflight + compose/env + **deploy dark PROD** BFF/MFE/api-delpi (exceção R4 owner + F5a.4-API a→f). Usuário sem mudança (flags AS-IS). Corte **F5b** pendente de janela. Ver trilha [165](./165-trilha-execucao-migracao-lnf-ate-clara.md).
 
 | Item | Achado F1 (PROVEN) | Decisão / regra |
 |---|---|---|

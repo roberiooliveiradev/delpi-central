@@ -1,10 +1,10 @@
 # 164 — Runbook do corte F5 · Lançamento de Notas Fiscais (api-delpi → BFF)
 
-> Status: **F5a PARCIAL** — dark versionado/env OK; **deploy PROD bloqueado** (`DECISION_REQUIRED` api-delpi)  
+> Status: **F5a DONE** — dark PROD BFF+MFE+api-delpi; **F5b** pendente de janela  
 > Owner de execução: operador de plataforma + PO (janela combinada)  
 > Schema: **imutável** no corte (V001–V014; sem apply)  
 > Princípio: o corte é **troca de configuração** (flags). Defaults = comportamento atual.  
-> HEAD prep: `496644bbb7` (2026-11-12)
+> HEAD prep: `fdc31ad48e` + imagens dark 2026-11-12
 
 ---
 
@@ -34,7 +34,7 @@ Com defaults, qualquer deploy futuro de PROD **não muda** o comportamento.
 | P7 | D9 Chat/TV | risco aceito owner | **ACEITO 2026-11-12** |
 | P8 | Logs 7d callers (F4 2e) | risco aceito owner | **ACEITO 2026-11-12** |
 | P9 | Janela + RACI | combinados | — |
-| P10 | Gate commits PROD→HEAD | só LNF ou owner aceita | **BLOQUEADO api-delpi** |
+| P10 | Gate commits PROD→HEAD | só LNF ou owner aceita | **ACEITO owner** (pacote api-delpi main + F5a.4-API) |
 
 ---
 
@@ -57,7 +57,7 @@ Ver ADR-001 adendo F5a.
 | `docker-compose.yml` api-delpi | `LNF_MODULE_ENABLED=true` explícito |
 | MFE | default `VITE_LNF_API_BASE` = api-delpi (sem build-arg) |
 | `infra/.env` PROD | nomes `LNF_HOSTED_ENABLED=false`, `LNF_MIGRATIONS_MODE=verify`, `LNF_MODULE_ENABLED=true` adicionados |
-| Deploy dark PROD | **NÃO EXECUTADO** — ver §1d |
+| Deploy dark PROD | **EXECUTADO 2026-11-12** — BFF + MFE + api-delpi (exceção R4 + F5a.4-API); preflight 5/5; obs. 15 min OK |
 
 ### Baseline PROD (antes do dark, 2026-11-12)
 
@@ -164,10 +164,11 @@ HML sem `delpi-hml` chat/TV → **N/A** (PENDING_OWNER 2d em PROD).
 - Ensaio HML before/after `diffs=0` (exceto D8) + rollback PASS → **atendido em F4b**  
 - Smoke MFE HML federado PASS + HML ROLLED BACK → **atendido em F5a**  
 - Compose/env PROD dark versionados → **atendido em F5a**  
-- Gate commits PROD→HEAD só LNF (ou owner aceita pacote) → **BLOQUEADO api-delpi** (`DECISION_REQUIRED`)  
-- D9 / logs 7d → **risco aceito owner 2026-11-12**
+- Gate commits PROD→HEAD só LNF (ou owner aceita pacote) → **ACEITO** (api-delpi pacote main + F5a.4-API)  
+- D9 / logs 7d → **risco aceito owner 2026-11-12**  
+- Dark PROD BFF/MFE/api-delpi + preflight 5/5 + obs. 15 min → **DONE 2026-11-12**
 
-**GO corte (F5b)** somente se dark PROD estiver em produção com preflight PASS e janela combinada.
+**GO corte (F5b)** somente com janela combinada + preflight PROD PASS ≤1 h antes.
 
 **NO-GO** se verify do ledger falhar, dual-write, ou consumers não mapeados com uso > 0 (D9 aceito = risco consciente).
 
