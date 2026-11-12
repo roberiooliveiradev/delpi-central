@@ -1,0 +1,31 @@
+{
+  "http_status": 200,
+  "snapshot": {
+    "status_class": "envelope",
+    "keys": [
+      "data",
+      "error",
+      "message",
+      "meta",
+      "success"
+    ],
+    "success": true,
+    "error": null,
+    "meta_keys": [
+      "dataVersion",
+      "entity",
+      "operationId",
+      "shape"
+    ],
+    "dataVersion": "2026-07",
+    "operationId": "refresh_lancamento_notas_fiscais_reconciliation",
+    "entity": "invoice_posting_reconciliation_refresh",
+    "shape": "scalar",
+    "pagination": null,
+    "data_types": {
+      "status": "str",
+      "updated": "int"
+    },
+    "message": "<message>"
+  }
+}

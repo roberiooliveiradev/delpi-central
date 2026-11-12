@@ -1,0 +1,25 @@
+{
+  "http_status": 503,
+  "snapshot": {
+    "status_class": "envelope",
+    "keys": [
+      "data",
+      "error",
+      "message",
+      "success"
+    ],
+    "success": false,
+    "error": {
+      "code": "financial_invoices.upstream",
+      "recoverable": true
+    },
+    "meta_keys": [],
+    "dataVersion": null,
+    "operationId": null,
+    "entity": null,
+    "shape": null,
+    "pagination": null,
+    "data_types": "null",
+    "message": "<message>"
+  }
+}

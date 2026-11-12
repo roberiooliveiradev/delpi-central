@@ -1,0 +1,41 @@
+{
+  "http_status": 200,
+  "snapshot": {
+    "status_class": "envelope",
+    "keys": [
+      "data",
+      "error",
+      "message",
+      "meta",
+      "success"
+    ],
+    "success": true,
+    "error": null,
+    "meta_keys": [
+      "dataVersion",
+      "entity",
+      "operationId",
+      "shape"
+    ],
+    "dataVersion": "2026-07",
+    "operationId": "search_lancamento_notas_fiscais_suppliers",
+    "entity": "invoice_posting_supplier",
+    "shape": "paged_list",
+    "pagination": null,
+    "data_types": {
+      "items": [
+        {
+          "supplier_id": "str",
+          "supplier_code": "str",
+          "supplier_store": "str",
+          "supplier_name": "str",
+          "supplier_short_name": "str",
+          "tax_id": "str",
+          "state": "str",
+          "blocked": "bool"
+        }
+      ]
+    },
+    "message": "<message>"
+  }
+}
