@@ -94,9 +94,9 @@ class ContractClient:
             headers["Authorization"] = (
                 token if token.lower().startswith("bearer ") else f"Bearer {token}"
             )
-        # HML gateway api_zone: matriz AuthZ estoura burst=50 se for rajada.
+        # HML gateway api_zone (~10r/s burst=50): matriz AuthZ precisa de pacing.
         if (urlparse(self.url).hostname or "").lower() == HML_HOST:
-            time.sleep(0.05)
+            time.sleep(0.12)
         try:
             with httpx.Client(
                 base_url=self.url,
