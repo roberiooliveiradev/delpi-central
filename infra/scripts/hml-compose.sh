@@ -706,7 +706,8 @@ print(s.get("DB_HOST") if isinstance(s,dict) else "")'
         up -d --no-deps --no-build core-api
   )
   wait_healthy core-api "$env_file" core-api
-  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_CORE_API
+  # Portal pode já existir no cutover TLS; allowlist = conjunto completo (7).
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PORTAL
 
   # Smoke via gateway (sem token) — HTTP legado + HTTPS canônico
   local code
