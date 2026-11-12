@@ -779,6 +779,15 @@ class LineFeederService:
             ) from exc
         data = payload.get("data") if isinstance(payload, dict) else None
         source = data if isinstance(data, dict) else payload
+        source_branch = _text(
+            (source.get("branch") if isinstance(source, dict) else None)
+            or (payload.get("branch") if isinstance(payload, dict) else None)
+        )
+        if source_branch and source_branch != branch:
+            raise DelpiGatewayError(
+                "A integração devolveu saldos de uma filial diferente da "
+                "solicitada. Não é seguro calcular a coleta."
+            )
         rows = source.get("items") if isinstance(source, dict) else None
         result: dict[tuple[str, str], dict[str, Any]] = {}
         if not isinstance(rows, list):
