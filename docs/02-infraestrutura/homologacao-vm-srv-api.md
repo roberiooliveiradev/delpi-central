@@ -4,7 +4,7 @@
 > **Repositório:** `roberiooliveiradev/delpi-central`.  
 > **TASK_ID:** `HML-PORTAL-STATIC-403-01` (após `HML-CORE-PORTAL-01`).  
 > **BASE_HEAD (esta correção):** `c3f042bde95be38075f1d2c7b286caecab690dd1`.  
-> **MAIN_INTEGRATED_SHA:** `184f6ed747cac2fee1471c1ba0977c696153e729` (+ follow-up mime webmanifest se aplicável).
+> **MAIN_INTEGRATED_SHA:** `6e2916da2441897ce81987093475bbf055925487`.
 
 ## 1. Objetivo e regras congeladas
 
