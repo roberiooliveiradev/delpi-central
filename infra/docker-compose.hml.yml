@@ -362,30 +362,31 @@ services:
     extends:
       file: docker-compose.yml
       service: gateway
-    profiles: [baseline, platform, production-control]
+    # Profile `gateway`: sobe só o nginx HML (Keycloak já ativo).
+    # Sem depends_on de portal/core-api/api-delpi — nginx resolve DNS sob demanda.
+    profiles: [gateway, baseline, platform, production-control]
     image: delpi-hml/gateway:local
     container_name: delpi-hml-gateway
     build:
       context: ../gateway
       dockerfile: Dockerfile.hml
     # Bind no IP LAN da VM (parametrizado). Não usar 0.0.0.0 sem necessidade.
-    # Gateway HML permanece NÃO autorizado a subir nesta etapa Keycloak.
     ports: !override
       - "${DELPI_HML_BIND_ADDR}:18080:80"
-    depends_on: !override
-      portal:
-        condition: service_started
-      core-api:
-        condition: service_started
-      keycloak:
-        condition: service_started
-      api-delpi:
-        condition: service_started
+    depends_on: !override {}
     networks: !override
       - delpi-hml
     volumes: !override []
     environment:
-      GATEWAY_HEALTHCHECK_HOST: ${DELPI_HML_BIND_ADDR}
+      # REUSE healthcheck.sh produtivo com paths só do Keycloak nesta fase.
+      GATEWAY_HEALTHCHECK_HOST: ${DELPI_HML_PUBLIC_HOST:-${DELPI_HML_BIND_ADDR}}
+      GATEWAY_HEALTHCHECK_PATHS: /auth/realms/master
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/gateway-healthcheck.sh"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
     mem_limit: 256m
     cpus: 0.5
     labels:

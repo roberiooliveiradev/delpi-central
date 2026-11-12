@@ -5,17 +5,19 @@
 # Ativação autorizada:
 #   - databases  → postgres-core, keycloak-db, postgres-plugins
 #   - keycloak   → somente o serviço keycloak (--no-deps; DB já ativo)
+#   - gateway    → somente delpi-hml-gateway (build imagem HML; --no-deps)
 # Qualquer outro up/build/pull/down/stop continua recusado.
-# Gateway/Portal/Core/PC permanecem bloqueados.
+# Portal/Core/API DELPI/PC permanecem bloqueados.
 #
 # Uso, a partir da raiz do repositório:
 #   ./infra/scripts/hml-compose.sh list
 #   ./infra/scripts/hml-compose.sh validate
-#   ./infra/scripts/hml-compose.sh config [--scenario databases|keycloak|baseline|platform|production-control]
+#   ./infra/scripts/hml-compose.sh config [--scenario databases|keycloak|gateway|baseline|...]
 #   ./infra/scripts/hml-compose.sh simulate [--scenario ...] [--services a,b]
 #   ./infra/scripts/hml-compose.sh status
 #   ./infra/scripts/hml-compose.sh up --scenario databases
 #   ./infra/scripts/hml-compose.sh up --scenario keycloak
+#   ./infra/scripts/hml-compose.sh up --scenario gateway
 #   ./infra/scripts/hml-compose.sh bootstrap-keycloak
 #   ./infra/scripts/hml-compose.sh up|down|stop|build|pull   # demais: recusa
 
@@ -28,7 +30,7 @@ PROJECT="delpi-hml"
 COMPOSE_FILE="docker-compose.hml.yml"
 ENV_EXAMPLE="env.hml.example"
 ENV_LOCAL=".env.hml"
-ACTIVATION_STATUS="HOMOLOGATION_DATABASES_AND_KEYCLOAK_AUTHORIZED"
+ACTIVATION_STATUS="HOMOLOGATION_DATABASES_KEYCLOAK_AND_GATEWAY_AUTHORIZED"
 HEALTH_TIMEOUT_SEC="${DELPI_HML_HEALTH_TIMEOUT_SEC:-180}"
 
 DATABASE_SERVICES=(
@@ -38,6 +40,9 @@ DATABASE_SERVICES=(
 )
 KEYCLOAK_SERVICES=(
   keycloak
+)
+GATEWAY_SERVICES=(
+  gateway
 )
 PLATFORM_SERVICES=(
   postgres-core
@@ -69,7 +74,14 @@ START_ORDER=(
   production-control-api
   gateway
 )
-AUTHORIZED_UP_SCENARIOS=(databases keycloak)
+AUTHORIZED_UP_SCENARIOS=(databases keycloak gateway)
+ALLOWED_HML_CONTAINERS_AFTER_GATEWAY=(
+  delpi-hml-postgres-core
+  delpi-hml-keycloak-db
+  delpi-hml-postgres-plugins
+  delpi-hml-keycloak
+  delpi-hml-gateway
+)
 
 usage() {
   sed -n '2,20p' "$0"
@@ -79,8 +91,8 @@ refuse_activation() {
   local action="$1"
   echo "HOMOLOGATION_ACTIVATION_NOT_AUTHORIZED" >&2
   echo "Ação '$action' não executada fora dos profiles autorizados." >&2
-  echo "Autorizados: up --scenario databases | up --scenario keycloak | bootstrap-keycloak." >&2
-  echo "Gateway, Portal, Core API e Production Control permanecem bloqueados." >&2
+  echo "Autorizados: up --scenario databases|keycloak|gateway | bootstrap-keycloak." >&2
+  echo "Portal, Core API, API DELPI e Production Control permanecem bloqueados." >&2
   exit 2
 }
 
@@ -89,6 +101,7 @@ scenario_services() {
   case "$scenario" in
     databases) printf '%s\n' "${DATABASE_SERVICES[@]}" ;;
     keycloak) printf '%s\n' "${KEYCLOAK_SERVICES[@]}" ;;
+    gateway) printf '%s\n' "${GATEWAY_SERVICES[@]}" ;;
     baseline) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" ;;
     platform) printf '%s\n' "${PLATFORM_SERVICES[@]}" ;;
     production-control) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" ;;
@@ -218,6 +231,11 @@ wait_healthy() {
           echo "HEALTH=$service:tcp8080"
           return 0
         fi
+      elif [[ "$service" == gateway ]]; then
+        if docker exec "$cid" wget -q -O /dev/null -T 3 http://127.0.0.1/auth/realms/master >/dev/null 2>&1; then
+          echo "HEALTH=$service:auth_realm"
+          return 0
+        fi
       elif [[ "$health" == "running" ]]; then
         if docker exec "$cid" pg_isready -U "$(docker exec "$cid" printenv POSTGRES_USER)" -d "$(docker exec "$cid" printenv POSTGRES_DB)" >/dev/null 2>&1; then
           echo "HEALTH=$service:pg_isready"
@@ -237,13 +255,14 @@ project: $PROJECT
 compose: infra/$COMPOSE_FILE
 checkout_previsto: /home/operador/projetos-teste/delpi-central
 activation: $ACTIVATION_STATUS
-porta_host: \${DELPI_HML_BIND_ADDR}:18080 (gateway planejado; não sobe nesta etapa)
+porta_host: \${DELPI_HML_BIND_ADDR}:18080 (gateway autorizado nesta etapa)
 rede: delpi-hml-network
 env: infra/$ENV_EXAMPLE → copiar para infra/$ENV_LOCAL no checkout de homologação
 
 cenários:
   databases             postgres-core, keycloak-db, postgres-plugins (autorizado)
   keycloak              somente delpi-hml-keycloak (autorizado; --no-deps)
+  gateway               somente delpi-hml-gateway (autorizado; build + --no-deps)
   baseline              plataforma + production-control (up bloqueado)
   platform              portal, core, api-delpi, plugin-ui, auth, bancos, redis, gateway
   production-control    platform + MFE e API de Production Control
@@ -252,9 +271,11 @@ ordem databases:
 $(printf '  %s\n' "${DATABASE_SERVICES[@]}")
 ordem keycloak:
 $(printf '  %s\n' "${KEYCLOAK_SERVICES[@]}")
+ordem gateway:
+$(printf '  %s\n' "${GATEWAY_SERVICES[@]}")
 
 bloqueados nesta etapa:
-  gateway, portal, core-api, api-delpi, plugin-ui, production-control*, redis
+  portal, core-api, api-delpi, plugin-ui, production-control*, redis
 EOF
 }
 
@@ -265,10 +286,17 @@ cmd_validate() {
   compose_config databases "$env_file" >/dev/null
   echo "Renderizando config (profile keycloak, $env_file)..."
   compose_config keycloak "$env_file" >/dev/null
+  echo "Renderizando config (profile gateway, $env_file)..."
+  compose_config gateway "$env_file" >/dev/null
   echo "Renderizando config (profile baseline, $env_file)..."
   compose_config baseline "$env_file" >/dev/null
   echo "Render sem profile (não deve publicar serviços)..."
   compose_config "" "$env_file" >/dev/null
+  # nginx -t em container isolado (sem publicar porta; conf HML montada).
+  echo "Validando sintaxe nginx.hml.conf..."
+  docker run --rm \
+    -v "$REPO_ROOT/gateway/nginx.hml.conf:/etc/nginx/nginx.conf:ro" \
+    nginx:alpine nginx -t
   python3 "$SCRIPT_DIR/tests/test_hml_compose_isolation.py"
   echo "VALIDACAO_ESTATICA=PASS"
   echo "$ACTIVATION_STATUS"
@@ -426,6 +454,76 @@ cmd_bootstrap_keycloak() {
   bash "$SCRIPT_DIR/keycloak-hml-bootstrap.sh"
 }
 
+cmd_up_gateway() {
+  local env_file bind_addr
+  env_file="$(require_local_env)"
+  bind_addr="$(grep -E '^DELPI_HML_BIND_ADDR=' "$COMPOSE_DIR/$ENV_LOCAL" | head -1 | cut -d= -f2- | tr -d '"'"'"'\r')"
+  bind_addr="${bind_addr:-192.168.1.237}"
+
+  local db
+  for db in delpi-hml-postgres-core delpi-hml-keycloak-db delpi-hml-postgres-plugins; do
+    docker ps --format '{{.Names}} {{.Status}}' | grep -E "^${db} .*healthy" >/dev/null || {
+      echo "[ERRO] $db não está healthy. Abortado sem iniciar gateway." >&2
+      exit 1
+    }
+  done
+  docker ps --format '{{.Names}} {{.Status}}' | grep -E '^delpi-hml-keycloak .*healthy' >/dev/null || {
+    echo "[ERRO] delpi-hml-keycloak não está healthy. Abortado." >&2
+    exit 1
+  }
+
+  # Porta 18080 livre no bind LAN (exceto se já for o próprio gateway HML).
+  if ss -lnt 2>/dev/null | grep -E ":18080\\s" >/dev/null; then
+    if ! docker ps --format '{{.Names}} {{.Ports}}' | grep -q 'delpi-hml-gateway.*18080'; then
+      echo "[ERRO] porta 18080 ocupada por outro processo. STOP." >&2
+      ss -lnt | grep 18080 || true
+      exit 1
+    fi
+  fi
+
+  echo "ATIVACAO=gateway"
+  echo "project=$PROJECT"
+  echo "env=infra/$ENV_LOCAL"
+  echo "bind=${bind_addr}:18080"
+  echo "servicos=gateway"
+  echo "modo=build gateway + up -d --no-deps (não sobe apps)"
+
+  (
+    cd "$COMPOSE_DIR"
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile gateway \
+        build gateway
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile gateway \
+        up -d --no-deps --no-build gateway
+  )
+  wait_healthy gateway "$env_file" gateway
+
+  local name extras allowed
+  extras=""
+  while read -r name; do
+    [[ -z "$name" ]] && continue
+    allowed=false
+    local ok
+    for ok in "${ALLOWED_HML_CONTAINERS_AFTER_GATEWAY[@]}"; do
+      [[ "$name" == "$ok" ]] && allowed=true
+    done
+    if [[ "$allowed" != true ]]; then
+      extras+="$name"$'\n'
+    fi
+  done < <(docker ps -a --filter name=delpi-hml --format '{{.Names}}')
+  if [[ -n "${extras//[[:space:]]/}" ]]; then
+    echo "[ERRO] containers HML inesperados após up gateway:" >&2
+    printf '%s' "$extras" >&2
+    exit 1
+  fi
+
+  echo "HML_GATEWAY_UP=PASS"
+  docker ps --filter name=delpi-hml --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+}
+
 SCENARIO="baseline"
 SERVICES=""
 ACTION="${1:-}"
@@ -477,6 +575,7 @@ case "$ACTION" in
     case "$SCENARIO" in
       databases) cmd_up_databases ;;
       keycloak) cmd_up_keycloak ;;
+      gateway) cmd_up_gateway ;;
       *) refuse_activation "up --scenario $SCENARIO" ;;
     esac
     ;;

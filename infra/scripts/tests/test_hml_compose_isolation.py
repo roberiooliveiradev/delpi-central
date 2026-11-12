@@ -32,6 +32,7 @@ DATABASES = {
 # Profile keycloak inclui keycloak-db só para satisfazer depends_on no config;
 # o up operacional usa --no-deps e sobe apenas o serviço keycloak.
 KEYCLOAK_ONLY = {"keycloak", "keycloak-db"}
+GATEWAY_ONLY = {"gateway"}
 BASELINE = {
     "postgres-core",
     "keycloak-db",
@@ -162,8 +163,8 @@ def assert_source_files() -> None:
         fail("nginx de homologação ainda roteia MFE para container delpi-*")
     if "listen 443" in nginx or "server_name minhadelpi.com.br" in nginx:
         fail("nginx de homologação publica produção")
-    if "proxy_pass http://portal:80" not in nginx:
-        fail("nginx de homologação não encaminha o portal")
+    if "set $upstream_portal portal:80" not in nginx:
+        fail("nginx de homologação não encaminha o portal via upstream dinâmico")
     if "production-control-api:8000" not in nginx:
         fail("nginx de homologação não encaminha production-control-api")
     if PROD_NGINX.read_text(encoding="utf-8").find("server_name minhadelpi.com.br") < 0:
@@ -182,10 +183,29 @@ def assert_source_files() -> None:
         fail("profile keycloak ausente no Compose")
     if "up --scenario databases" not in script or "up --scenario keycloak" not in script:
         fail("script sem caminhos autorizados databases/keycloak")
-    if "HOMOLOGATION_DATABASES_AND_KEYCLOAK_AUTHORIZED" not in script:
-        fail("script sem marcador de autorização databases+keycloak")
+    if "up --scenario gateway" not in script:
+        fail("script sem caminho autorizado de up gateway")
+    if "HOMOLOGATION_DATABASES_KEYCLOAK_AND_GATEWAY_AUTHORIZED" not in script:
+        fail("script sem marcador de autorização databases+keycloak+gateway")
     if "X-Forwarded-Port 18080" not in nginx:
         fail("nginx HML não fixa X-Forwarded-Port 18080 para redirects")
+    if "set $upstream_keycloak" not in nginx or "set $upstream_portal" not in nginx:
+        fail("nginx HML sem proxy_pass dinâmico para keycloak/portal")
+    if "set $upstream_core_api" not in nginx or "set $upstream_api_delpi" not in nginx:
+        fail("nginx HML sem proxy_pass dinâmico para core-api/api-delpi")
+    if "@hml_upstream_unavailable" not in nginx:
+        fail("nginx HML sem resposta controlada para upstream ausente")
+    # Estáticos literais (sem variável) quebram o start sem o serviço.
+    if re.search(r"proxy_pass http://core-api:8000", nginx):
+        fail("nginx HML ainda tem proxy_pass estático para core-api")
+    if re.search(r"proxy_pass http://portal:80", nginx):
+        fail("nginx HML ainda tem proxy_pass estático para portal")
+    if re.search(r"proxy_pass http://api-delpi:8000", nginx):
+        fail("nginx HML ainda tem proxy_pass estático para api-delpi")
+    if re.search(r"proxy_pass http://keycloak:8080", nginx):
+        fail("nginx HML ainda tem proxy_pass estático para keycloak")
+    if "profiles: [gateway" not in hml and "gateway, baseline" not in hml:
+        fail("profile gateway ausente no Compose")
     bootstrap = INFRA / "scripts" / "keycloak-hml-bootstrap.sh"
     if not bootstrap.is_file():
         fail("keycloak-hml-bootstrap.sh ausente")
@@ -231,7 +251,13 @@ def assert_rendered(profile: str | None, expected: set[str]) -> dict:
     return rendered
 
 
-def assert_isolation(rendered: dict, prod_names: set[str], *, require_gateway: bool) -> None:
+def assert_isolation(
+    rendered: dict,
+    prod_names: set[str],
+    *,
+    require_gateway: bool,
+    allow_gateway_port: bool = False,
+) -> None:
     services = rendered["services"]
     networks = rendered.get("networks") or {}
     volumes = rendered.get("volumes") or {}
@@ -317,8 +343,17 @@ def assert_isolation(rendered: dict, prod_names: set[str], *, require_gateway: b
 
     if not require_gateway:
         for name in services:
-            if published_ports(services[name]):
-                fail(f"{name} não deveria publicar porta no profile databases")
+            ports = published_ports(services[name])
+            if not ports:
+                continue
+            if allow_gateway_port and name == "gateway":
+                if len(ports) != 1 or str(ports[0].get("published")) != "18080":
+                    fail(f"gateway deveria publicar só 18080, veio {ports}")
+                host_ip = str(ports[0].get("host_ip") or "")
+                if host_ip in {"", "0.0.0.0", "::", "*"}:
+                    fail(f"gateway publica em wildcard {host_ip!r}")
+                continue
+            fail(f"{name} não deveria publicar porta no profile isolado")
         return
 
     api = services["api-delpi"]["environment"]
@@ -360,6 +395,17 @@ def assert_isolation(rendered: dict, prod_names: set[str], *, require_gateway: b
     host_ip = str(gateway_ports[0].get("host_ip") or "")
     if host_ip in {"", "0.0.0.0", "::"}:
         fail(f"gateway HML não deve bindar em wildcard ({host_ip!r})")
+    gw_deps = services["gateway"].get("depends_on") or {}
+    if gw_deps:
+        fail(f"gateway HML não deve depender de apps nesta fase: {sorted(gw_deps)}")
+    gw_env = services["gateway"].get("environment") or {}
+    if isinstance(gw_env, list):
+        gw_env = dict(item.split("=", 1) for item in gw_env if "=" in item)
+    paths = str(gw_env.get("GATEWAY_HEALTHCHECK_PATHS") or "")
+    if "/auth/realms/master" not in paths:
+        fail("healthcheck do gateway HML deve focar /auth nesta fase")
+    if "/core-api/health" in paths or "/apps/api-delpi/health" in paths:
+        fail("healthcheck do gateway HML ainda exige APIs desligadas")
     for name, service in services.items():
         if name != "gateway" and published_ports(service):
             fail(f"{name} não deveria publicar porta no host")
@@ -421,6 +467,13 @@ def main() -> None:
         fail("profile keycloak puxou apps/gateway")
     if set(keycloak["services"]) - {"keycloak", "keycloak-db"}:
         fail(f"profile keycloak com serviços extras: {sorted(keycloak['services'])}")
+    gateway = assert_rendered("gateway", GATEWAY_ONLY)
+    assert_isolation(gateway, prod_names, require_gateway=False, allow_gateway_port=True)
+    gw = gateway["services"]["gateway"]
+    if gw.get("depends_on"):
+        fail(f"profile gateway ainda declara depends_on: {gw.get('depends_on')}")
+    if set(gateway["services"]) != GATEWAY_ONLY:
+        fail(f"profile gateway com serviços extras: {sorted(gateway['services'])}")
     platform = assert_rendered("platform", PLATFORM)
     if "production-control" in platform["services"]:
         fail("profile platform inclui Production Control")
@@ -429,8 +482,8 @@ def main() -> None:
     print("HML_COMPOSE_ISOLATION=PASS")
     print(
         f"services_baseline={len(BASELINE)} services_databases={len(DATABASES)} "
-        f"services_keycloak={len(KEYCLOAK_ONLY)} network=delpi-hml-network "
-        "port=${DELPI_HML_BIND_ADDR}:18080"
+        f"services_keycloak={len(KEYCLOAK_ONLY)} services_gateway={len(GATEWAY_ONLY)} "
+        "network=delpi-hml-network port=${DELPI_HML_BIND_ADDR}:18080"
     )
 
 
