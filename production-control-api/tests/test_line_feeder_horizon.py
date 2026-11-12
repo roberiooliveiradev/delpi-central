@@ -1122,3 +1122,48 @@ def test_unknown_balance_still_blocks_same_branch_in_horizon() -> None:
     assert result["publication"]["foreign_branch_operations_excluded"] == 0
     assert result["preview_completeness"] == "incomplete"
     assert result["work_centers"][0]["stop_reason"] == "balance_unknown"
+
+
+def test_sc2_confirmed_missing_order_is_skipped_without_inventing_zero() -> None:
+    """Mesmo com branch do snapshot incorreta, SC2 vivo descarta OP órfã."""
+    orphan = {
+        **_op_row(work_center="CT-00", order="11301901001"),
+        "branch": "01",
+    }
+    valid = {
+        **_op_row(work_center="CT-A", order="ACTIVE-02"),
+        "branch": "01",
+    }
+    service, _pubs, _snaps, gateway = _service(
+        published=_payload([orphan, valid]),
+        balances={
+            ("11301901001", "01"): {
+                "order_exists": False,
+                "operation_pending_qty": None,
+                "operation_produced_qty": None,
+            },
+            ("ACTIVE-02", "01"): {
+                "order_exists": True,
+                "operation_pending_qty": 2,
+                "operation_produced_qty": 0,
+            },
+        },
+        standard_times={("ACTIVE-02", "01"): _complete_st(1800)},
+    )
+    result = service.preview_horizon(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-00", "CT-A"],
+        hours_per_work_center=1,
+    )
+    assert result["preview_completeness"] != "incomplete"
+    assert result["publication"]["missing_order_operations_excluded"] == 1
+    assert result["publication"]["foreign_branch_operations_excluded"] == 0
+    assert result["work_centers"][0]["operations"] == []
+    assert result["work_centers"][0]["excluded_missing_orders"] == [
+        {"production_order": "11301901001", "operation_code": "01"},
+    ]
+    assert result["work_centers"][1]["operations"][0]["production_order"] == (
+        "ACTIVE-02"
+    )
+    assert gateway.st_calls == 1
