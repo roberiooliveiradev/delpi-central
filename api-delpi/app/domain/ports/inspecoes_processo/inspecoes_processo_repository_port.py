@@ -77,6 +77,13 @@ class InspecoesProcessoRepositoryPort(Protocol):
         fetch_next: int,
     ) -> list[dict]: ...
 
+    def list_historico_inspecoes_por_operador_by_op(
+        self,
+        branch: str,
+        *,
+        ordem_producao: str,
+    ) -> list[dict]: ...
+
     def list_operation_inspections(
         self,
         *,

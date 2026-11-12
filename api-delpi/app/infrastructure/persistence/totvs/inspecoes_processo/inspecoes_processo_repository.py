@@ -1011,6 +1011,44 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
             )
         return rows[safe_offset:]
 
+    def list_historico_inspecoes_por_operador_by_op(
+        self,
+        branch: str,
+        *,
+        ordem_producao: str,
+    ) -> list[dict]:
+        """Conta sessões da OP por matrícula, sem multiplicar pelos ensaios QPR.
+
+        O agrupamento de sessão segue list_operation_inspections:
+        operador + operação + data + hora. Não pagina o total.
+        """
+        ordem = ordem_producao.strip()
+        branch_clause, params = _where_branch("Filial", branch)
+        params.append(f"{ordem}%")
+        sql = f"""
+        SELECT
+            RTRIM(Sessoes.Matricula_Ensaiador) AS Matricula_Ensaiador,
+            MAX(RTRIM(Sessoes.Nome_Ensaiador)) AS Nome_Ensaiador,
+            COUNT_BIG(*) AS Qtde_Inspecoes
+        FROM (
+            SELECT
+                Matricula_Ensaiador,
+                MAX(Nome_Ensaiador) AS Nome_Ensaiador,
+                Operacao,
+                Data_Medicao_Date,
+                Hora_Medicao
+            FROM {HISTORICO_TELA_VIEW} WITH (NOLOCK)
+            WHERE {branch_clause}
+              AND Ordem_Producao LIKE ?
+              AND RTRIM(ISNULL(Matricula_Ensaiador, '')) <> ''
+            GROUP BY Matricula_Ensaiador, Operacao, Data_Medicao_Date, Hora_Medicao
+        ) Sessoes
+        GROUP BY Sessoes.Matricula_Ensaiador
+        ORDER BY Qtde_Inspecoes DESC, Matricula_Ensaiador ASC
+        """
+        with self:
+            return self.execute_query(sql, tuple(params))
+
     def list_operation_inspections(
         self,
         *,

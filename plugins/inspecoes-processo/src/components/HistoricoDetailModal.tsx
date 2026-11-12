@@ -150,6 +150,7 @@ export function HistoricoDetailModal({
 
   const cabecalho = data?.cabecalho ?? null;
   const items = data?.items ?? [];
+  const operadores = data?.inspecoes_por_operador ?? [];
   const hasNext = resolveHasNext(data ?? {});
 
   return (
@@ -191,6 +192,47 @@ export function HistoricoDetailModal({
           ) : null}
 
           {!loading && !error && cabecalho ? <CabecalhoResumo cabecalho={cabecalho} /> : null}
+
+          {!loading && !error && cabecalho ? (
+            <section className="ip-panel" aria-label="Inspeções por operador na OP">
+              <div className="ip-panel__header">
+                <h3 className="ip-panel__title">Inspeções por operador</h3>
+                <p className="ip-panel__subtitle">
+                  Sessões realizadas nesta OP, independentemente da página de medições.
+                  Cada sessão é identificada por operador, operação, data e hora.
+                  Os ensaios de uma sessão não são contados individualmente.
+                </p>
+              </div>
+              {operadores.length > 0 ? (
+                <div className="ip-table-wrap">
+                  <table className="ip-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Matrícula</th>
+                        <th scope="col">Operador / ensaiador</th>
+                        <th scope="col">Qtd. inspeções na OP</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {operadores.map((operador) => (
+                        <tr key={operador.matricula_ensaiador}>
+                          <td>{textOrDash(operador.matricula_ensaiador)}</td>
+                          <td className="ip-table__cell--wrap">
+                            {textOrDash(operador.nome_ensaiador)}
+                          </td>
+                          <td>{formatNumber(operador.qtde_inspecoes)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="ip-muted-note">
+                  Não há sessões de inspeção com matrícula identificada nesta OP.
+                </p>
+              )}
+            </section>
+          ) : null}
 
           {!loading && !error && cabecalho && items.length === 0 ? (
             <div className="ip-alert ip-alert--info" role="status">

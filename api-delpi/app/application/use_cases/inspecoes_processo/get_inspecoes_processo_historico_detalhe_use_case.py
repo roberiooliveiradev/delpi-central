@@ -7,6 +7,7 @@ from typing import Any
 from app.application.dto.inspecoes_processo.inspecoes_processo_historico_detalhe_response import (
     InspecoesProcessoHistoricoDetalheItemResponse,
     InspecoesProcessoHistoricoDetalheResponse,
+    InspecoesProcessoHistoricoOperadorResumoResponse,
 )
 from app.application.use_cases.inspecoes_processo.list_inspecoes_processo_historico_use_case import (
     _as_int,
@@ -131,6 +132,15 @@ class GetInspecoesProcessoHistoricoDetalheUseCase:
             fetch_next=fetch_next,
         )
 
+        # Quantidade da OP inteira, independente da paginação de medições.
+        operador_rows = (
+            self._repository.list_historico_inspecoes_por_operador_by_op(
+                normalized_branch,
+                ordem_producao=normalized_op,
+            )
+            or []
+        )
+
         has_next = len(item_rows) > resolved_page_size
         items = [
             _normalize_detalhe_item(row, normalized_branch)
@@ -142,4 +152,12 @@ class GetInspecoesProcessoHistoricoDetalheUseCase:
             page=resolved_page,
             page_size=resolved_page_size,
             has_next=has_next,
+            inspecoes_por_operador=[
+                InspecoesProcessoHistoricoOperadorResumoResponse(
+                    matricula_ensaiador=_as_str(row.get("Matricula_Ensaiador")),
+                    nome_ensaiador=_as_str(row.get("Nome_Ensaiador")),
+                    qtde_inspecoes=max(_as_int(row.get("Qtde_Inspecoes")), 0),
+                )
+                for row in operador_rows
+            ],
         )

@@ -45,6 +45,12 @@ Período da Visão Geral (query, compartilhavel):
 
 O período da Visão Geral é independente da Auditoria. O Histórico exige OP ou produto.
 
+Ao abrir o detalhe de uma OP no Histórico, a seção **Inspeções por operador**
+mostra matrícula, nome e quantidade de sessões realizadas por cada operador
+em toda a OP (não só na página atual). A contagem considera sessões por
+operador + operação + data + hora, sem multiplicar pelos ensaios medidos
+na mesma sessão (melhoria #1508).
+
 ### Auditoria
 
 Lista apontamentos produtivos no período e confronta se o **mesmo operador** inspecionou a mesma OP+operação no QIP (`QPR_ENSR` → login via ranking por ensaiador). Também distingue OP/operação **sem inspeção amarrada** (QPK + QP7/QP8 na revisão `QPK_REVI`).

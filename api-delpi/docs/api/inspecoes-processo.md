@@ -67,6 +67,19 @@ O mesmo par `start_date`/`end_date` vale para `/por-produto`, `/por-ensaiador`, 
 
 Sem OP nem produto a API rejeita a busca (evita full scan no TOTVS). A UI exibe a 1ª página (25) na hora e pré-carrega páginas seguintes em cache local.
 
+### Detalhe da OP: contagem por operador (#1508)
+
+A resposta de `GET /inspecoes-processo/historico/detalhe` inclui `inspecoes_por_operador[]`:
+`matricula_ensaiador`, `nome_ensaiador` e `qtde_inspecoes` (aliases
+`inspector_registration`, `inspector_name`, `inspection_count`).
+
+A contagem é calculada na fonte oficial `historico_tela`, para **toda a OP**,
+independentemente da paginação das medições. Segue o conceito de sessão já
+usado por `/operations/inspections`: mesma matrícula, operação, data e hora
+formam uma inspeção, ainda que existam vários ensaios/leituras nessa sessão.
+Linhas sem matrícula são omitidas do consolidado, sem atribuição indevida a pessoas.
+O escopo por filial e OP é o mesmo do detalhe; apenas leitura, sem escrita no ERP.
+
 ---
 
 ## GET `/inspecoes-processo/auditoria-apontamentos`

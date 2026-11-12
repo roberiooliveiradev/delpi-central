@@ -192,9 +192,17 @@ export type InspecoesProcessoHistoricoDetalheItem = {
   qpr_recno: number | null;
 };
 
+export type InspecoesProcessoHistoricoOperadorResumo = {
+  matricula_ensaiador: string;
+  nome_ensaiador: string;
+  qtde_inspecoes: number;
+};
+
 export type InspecoesProcessoHistoricoDetalheResponse = {
   cabecalho: InspecoesProcessoHistoricoItem;
   items: InspecoesProcessoHistoricoDetalheItem[];
+  /** Consolidado para a OP inteira, não apenas os itens da página. */
+  inspecoes_por_operador?: InspecoesProcessoHistoricoOperadorResumo[];
   page: number;
   page_size: number;
   has_next: boolean;

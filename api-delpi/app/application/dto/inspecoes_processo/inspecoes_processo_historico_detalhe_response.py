@@ -127,17 +127,38 @@ class InspecoesProcessoHistoricoDetalheItemResponse:
 
 
 @dataclass
+class InspecoesProcessoHistoricoOperadorResumoResponse:
+    matricula_ensaiador: str
+    nome_ensaiador: str
+    qtde_inspecoes: int
+
+    def to_dict(self) -> dict:
+        return {
+            "matricula_ensaiador": self.matricula_ensaiador,
+            "nome_ensaiador": self.nome_ensaiador,
+            "qtde_inspecoes": self.qtde_inspecoes,
+            "inspector_registration": self.matricula_ensaiador,
+            "inspector_name": self.nome_ensaiador,
+            "inspection_count": self.qtde_inspecoes,
+        }
+
+
+@dataclass
 class InspecoesProcessoHistoricoDetalheResponse:
     cabecalho: InspecoesProcessoHistoricoItemResponse
     items: list[InspecoesProcessoHistoricoDetalheItemResponse]
     page: int
     page_size: int
     has_next: bool
+    inspecoes_por_operador: list[InspecoesProcessoHistoricoOperadorResumoResponse]
 
     def to_dict(self) -> dict:
         return {
             "cabecalho": self.cabecalho.to_dict(),
             "items": [item.to_dict() for item in self.items],
+            "inspecoes_por_operador": [
+                operador.to_dict() for operador in self.inspecoes_por_operador
+            ],
             "page": self.page,
             "page_size": self.page_size,
             "has_next": self.has_next,
