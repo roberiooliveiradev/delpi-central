@@ -108,6 +108,17 @@ Até F6: redeploy da versão anterior (api-delpi com módulo + MFE com base anti
 
 **Revisão:** F1 ACCEPT_WITH_RESIDUAL. ADR-001 ACCEPTED pelo owner. F2 autorizado (somente testes). Runtime NÃO autorizado.
 
+### Status F5a — 2026-11-12
+
+**F5a parcialmente concluído** (`origin/main` `496644bbb7`):
+
+- Smoke MFE HML (shell federado) PASS + rollback;
+- CLI `python -m controllership_finance_app.interface.cli.lnf_preflight` (DEV 5/5; HML 4/5 — financial-api ausente);
+- Compose/env PROD com defaults dark;
+- **Deploy dark PROD NÃO executado:** `DECISION_REQUIRED` — rebuild de `api-delpi` traria dezenas de commits não-LNF (ver runbook 164).
+
+**Produção preparada dark (código/versionado/env); corte F5b pendente de janela + decisão do owner sobre o rebuild da api-delpi.**
+
 | Item | Achado F1 (PROVEN) | Decisão / regra |
 |---|---|---|
 | R1 Banco | BFF já conecta no mesmo `postgres-plugins/plugins_hub` (`infra/docker-compose.yml:2966-2974`, `:2996`). Dev não declara `PLUGINS_DB_*` nem `depends_on` (`docker-compose.dev.yml:3199-3200`, `:3248-3252`). | D2 mantida sem nova rede/credencial. Ajuste do compose dev entra em F3. |

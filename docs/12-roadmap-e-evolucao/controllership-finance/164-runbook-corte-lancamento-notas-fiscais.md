@@ -1,10 +1,10 @@
 # 164 — Runbook do corte F5 · Lançamento de Notas Fiscais (api-delpi → BFF)
 
-> Status: **HML ENSAIO CONCLUÍDO (ROLLED BACK)** · PROD intocado  
+> Status: **F5a PARCIAL** — dark versionado/env OK; **deploy PROD bloqueado** (`DECISION_REQUIRED` api-delpi)  
 > Owner de execução: operador de plataforma + PO (janela combinada)  
 > Schema: **imutável** no corte (V001–V014; sem apply)  
 > Princípio: o corte é **troca de configuração** (flags). Defaults = comportamento atual.  
-> Ensaio F4b: `2026-11-12` · checkout HML `~/projetos-teste/delpi-central` · origin/main `@50cfd2d318` (+ commits de pacing da suíte)
+> HEAD prep: `496644bbb7` (2026-11-12)
 
 ---
 
@@ -27,76 +27,74 @@ Com defaults, qualquer deploy futuro de PROD **não muda** o comportamento.
 |---|---|---|---|
 | P1 | Ledger PROD | 14/14 = SHA256SUMS | OK (F4) |
 | P2 | Ensaio HML completo | before/after golden + rollback | **PASS** (D8 único; rollback OK) |
-| P3 | Imagem BFF com `invoice_posting` | presente no artefato | HML OK; **PROD ainda sem** |
-| P4 | Envs LNF na BFF | nomes em `.env` | HML OK; PROD faltam |
-| P5 | Mount DANFE na BFF | volume host | HML OK; **PROD ausente** |
-| P6 | Rede BFF→SQL/financial/Core | TCP/health | HML parcial (sem financial-api) |
-| P7 | D9 Chat/TV | PENDING_OWNER | aberto |
-| P8 | Logs 7d callers (F4 2e) | PENDING_OWNER | aberto |
+| P3 | Imagem BFF com `invoice_posting` | presente no artefato | HML OK; **PROD ainda sem** (deploy dark pendente) |
+| P4 | Envs LNF na BFF | nomes em `.env` | HML OK; **PROD nomes adicionados F5a** |
+| P5 | Mount DANFE na BFF | volume host | HML OK; host PROD dir existe; compose volume versionado F5a |
+| P6 | Rede BFF→SQL/financial/Core | TCP/health | preflight DEV 5/5; HML 4/5 (sem financial-api) |
+| P7 | D9 Chat/TV | risco aceito owner | **ACEITO 2026-11-12** |
+| P8 | Logs 7d callers (F4 2e) | risco aceito owner | **ACEITO 2026-11-12** |
 | P9 | Janela + RACI | combinados | — |
+| P10 | Gate commits PROD→HEAD | só LNF ou owner aceita | **BLOQUEADO api-delpi** |
 
 ---
 
-## 2. Sequência do corte por flags
+## 1b. Riscos aceitos pelo owner (2026-11-12)
 
-Ordem fixa. Sem `apply`.
+- **D9 Chat/TV** — seguir sem inventário prévio de usage em PROD.
+- **Logs 7 dias** — seguir sem análise de callers.
 
-### (1) Congelamento curto
+Ver ADR-001 adendo F5a.
 
-Aviso aos usuários LNF; pausar `reconciliation/run`.
+---
 
-### (2) BFF `LNF_HOSTED_ENABLED=true`
+## 1c. Preparação dark F5a (estado)
 
-**HML (cronometrado F4b):**
+| Item | Estado |
+|---|---|
+| Smoke MFE HML federado | PASS (artefatos em `tests/contracts/.../playwright-artifacts/f5a-smoke/`) + HML ROLLED BACK |
+| Preflight CLI | `python -m controllership_finance_app.interface.cli.lnf_preflight` · DEV **5/5 PASS** · HML **4/5** (financial FAIL esperado) |
+| `docker-compose.yml` BFF | `LNF_HOSTED_ENABLED=false` explícito, verify, TOTVS/FINANCIAL/CORE/token, volume DANFE |
+| `docker-compose.yml` api-delpi | `LNF_MODULE_ENABLED=true` explícito |
+| MFE | default `VITE_LNF_API_BASE` = api-delpi (sem build-arg) |
+| `infra/.env` PROD | nomes `LNF_HOSTED_ENABLED=false`, `LNF_MIGRATIONS_MODE=verify`, `LNF_MODULE_ENABLED=true` adicionados |
+| Deploy dark PROD | **NÃO EXECUTADO** — ver §1d |
 
-```bash
-cd /home/operador/projetos-teste/delpi-central
-git pull --ff-only
-# infra/.env.hml
-sed -i 's/^LNF_HOSTED_ENABLED=.*/LNF_HOSTED_ENABLED=true/' infra/.env.hml
-# LNF_MIGRATIONS_MODE=verify
-# Para smoke de notificação no ensaio: LNF_NOTIFICATIONS_ENABLED=true
-./infra/scripts/up-hml-sequential.sh --build controllership-finance-api
-```
+### Baseline PROD (antes do dark, 2026-11-12)
 
-**PROD (adaptar):**
+| Superfície | Medida |
+|---|---|
+| BFF OpenAPI | **112** paths · **0** LNF |
+| BFF LNF requests | N/A (módulo ausente na imagem) |
+| api-delpi OpenAPI LNF | **22** paths |
+| MFE bundle | `/apps/api-delpi/lancamento-notas-fiscais` (imagem de **2026-10-29**) |
 
-```bash
-cd ~/projetos/delpi-central
-git pull --ff-only
-# infra/.env — LNF_HOSTED_ENABLED=true; LNF_MIGRATIONS_MODE=verify
-# Mount DANFE obrigatório
-./infra/scripts/up-prod-sequential.sh --build controllership-finance-api
-```
+---
 
-Prova: LNF deixa de ser 404 (com JWT → 200/envelope); verify do ledger passa no boot (`lnf_migrations_verify_ok` V001–V014).
+## 1d. Gate de commits (F5a Passo 3) — DECISION_REQUIRED
 
-### (3) api-delpi `LNF_MODULE_ENABLED=false`
+| Serviço | Imagem PROD (aprox.) | → `origin/main` | Só LNF? |
+|---|---|---|---|
+| `controllership-finance-api` | sem `invoice_posting`; competences = `6c84b5939f` | `7403fcc527`…`496644bbb7` (F3+F5a) | **SIM** |
+| `lancamento-notas-fiscais` | 2026-10-29 | `00b6704d8f` (CT-e) + `04ddc620bc` (flag MFE) | **SIM** (domínio LNF) |
+| `api-delpi` | `main.py` = `3fe374279f` | **dezenas** de commits (supplies, quality, PRC, PCP, INT-1, LNF flag `04ddc620bc`, …) | **NÃO** |
 
-```bash
-# HML: infra/.env.hml
-sed -i 's/^LNF_MODULE_ENABLED=.*/LNF_MODULE_ENABLED=false/' infra/.env.hml
-./infra/scripts/up-hml-sequential.sh --build api-delpi
-# Prova: /apps/api-delpi/lancamento-notas-fiscais/* → 404 (com JWT)
-# Sem JWT o gateway/auth pode devolver 401 antes do 404 — validar com token.
-```
+**Pare e reporte:** rebuild de `api-delpi` na preparação dark **não é limpo**. Owner deve decidir se sobe o pacote inteiro ou se isola cherry-pick/`LNF_MODULE_ENABLED` de outro modo.
 
-### (4) MFE rebuild com base da BFF
+Até decisão: **não executar Passo 4** (deploy dark).
 
-```bash
-# HML
-sed -i 's|^VITE_LNF_API_BASE=.*|VITE_LNF_API_BASE=/apps/controllership-finance-api/lancamento-notas-fiscais|' infra/.env.hml
-./infra/scripts/up-hml-sequential.sh --build lancamento-notas-fiscais
-# grep no dist: controllership-finance-api/lancamento-notas-fiscais
-```
+---
 
-### (5) Catálogos Chat/TV
+## 2. Sequência do CORTE (após dark em PROD)
 
-Scripts `sync-api-delpi-openapi*.sh` se os serviços existirem no ambiente. **HML F4b:** sem chat/TV no stack `delpi-hml-*` → **N/A**.
+Ordem fixa. Sem `apply`. Já com imagens dark:
 
-### (6) Gateway
+1. BFF: `LNF_HOSTED_ENABLED=true` + restart/`up-prod-sequential.sh --build controllership-finance-api`  
+2. api-delpi: `LNF_MODULE_ENABLED=false` + restart  
+3. MFE: build com `VITE_LNF_API_BASE=/apps/controllership-finance-api/lancamento-notas-fiscais` + deploy  
+4. Regenerar catálogos chat/TV (`sync-api-delpi-openapi*.sh`)  
+5. Verificações: BFF LNF 200; api-delpi LNF 404; Network MFE só BFF; preflight PASS; smoke fila  
 
-HML: location `/apps/controllership-finance-api/` já no snippet (F4b). PROD: já em `nginx.conf`.
+Rollback = ordem inversa das flags + rebuilds.
 
 ---
 
@@ -161,13 +159,32 @@ HML sem `delpi-hml` chat/TV → **N/A** (PENDING_OWNER 2d em PROD).
 
 ## 5. Go / no-go
 
-**GO** somente se:
+**GO dark (F5a Passo 4)** somente se:
 
 - Ensaio HML before/after `diffs=0` (exceto D8) + rollback PASS → **atendido em F4b**  
-- PROD: imagem com `invoice_posting`, mount DANFE, envs LNF, TCP OK → **ainda faltam**  
-- PENDING_OWNER 2d/2e resolvidos ou aceitos pelo owner → **abertos**
+- Smoke MFE HML federado PASS + HML ROLLED BACK → **atendido em F5a**  
+- Compose/env PROD dark versionados → **atendido em F5a**  
+- Gate commits PROD→HEAD só LNF (ou owner aceita pacote) → **BLOQUEADO api-delpi** (`DECISION_REQUIRED`)  
+- D9 / logs 7d → **risco aceito owner 2026-11-12**
 
-**NO-GO** se verify do ledger falhar, dual-write, ou consumers não mapeados com uso > 0.
+**GO corte (F5b)** somente se dark PROD estiver em produção com preflight PASS e janela combinada.
+
+**NO-GO** se verify do ledger falhar, dual-write, ou consumers não mapeados com uso > 0 (D9 aceito = risco consciente).
+
+---
+
+## 5b. Smoke MFE HML federado (F5a Passo 0)
+
+Artefatos: `tests/contracts/lancamento-notas-fiscais/playwright-artifacts/f5a-smoke/` · Network: **to_bff=19 · to_api_delpi=0**.
+
+| Perfil | Ações | Resultado |
+|---|---|---|
+| P11 | fila filial-01, filtros, criar, filial-02 bloqueada | PASS |
+| P2 | fila filial-01; não vê filial-02 | PASS |
+| P6 | shell sem `process` → **P6B** (view+process) | P6 N/A → P6B |
+| P6B | fila, detalhe, iniciar, bloquear, comentar, retomar | PASS |
+
+HML deixado **ROLLED BACK** após o smoke.
 
 ---
 

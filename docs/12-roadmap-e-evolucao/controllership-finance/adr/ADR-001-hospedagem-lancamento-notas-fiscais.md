@@ -84,6 +84,15 @@ D4 não mantém as rotas antigas em paralelo. O rollback até a limpeza (F6) é 
 
 **Revisão:** F1 ACCEPT_WITH_RESIDUAL. ADR-001 ACCEPTED pelo owner. F2 autorizado (somente testes). Runtime NÃO autorizado.
 
+## Adendo F5a — Risco D9 e logs 7 dias aceitos pelo owner — 2026-11-12
+
+O owner **aceitou o risco** de seguir a preparação dark / corte sem verificação prévia de:
+
+1. **D9 (Chat/TV):** painéis TV e provider do chat com operationIds LNF (uso > 0 ou = 0 não foi inventariado em PROD nesta janela);
+2. **Logs de 7 dias** dos callers das rotas LNF (item F4 2e).
+
+Registro: risco aceito pelo owner em **2026-11-12**. Mitigação residual permanece no runbook 164 (rollback por flags + regeneração de catálogos no corte F5b).
+
 | Item | Achado F1 (PROVEN) | Decisão / regra |
 |---|---|---|
 | R1 Banco | BFF já conecta no mesmo `postgres-plugins/plugins_hub` (`infra/docker-compose.yml:2966-2974`, `:2996`). Dev não declara `PLUGINS_DB_*` nem `depends_on` (`docker-compose.dev.yml:3199-3200`, `:3248-3252`). | D2 mantida sem nova rede/credencial. Ajuste do compose dev entra em F3. |
