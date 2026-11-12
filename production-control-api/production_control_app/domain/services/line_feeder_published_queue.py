@@ -65,6 +65,27 @@ def pending_balance(item: dict[str, Any]) -> tuple[float | None, str, str]:
     return None, "unknown", BALANCE_SOURCE_UNAVAILABLE
 
 
+def _visible_for_branch(
+    operations: list[dict[str, Any]], *, branch: str
+) -> tuple[list[dict[str, Any]], int]:
+    """Remove somente linhas com filial de origem explicitamente divergente.
+
+    O snapshot guarda a filial real de cada linha vinda da api-delpi.
+    Não é seguro trocar essa filial pela solicitada ao projetar a publicação.
+    Para snapshots legados sem campo branch, mantém a operação: saldo desconhecido
+    continua bloqueando o horizonte, sem ser presumido zero/encerrado.
+    """
+    scoped: list[dict[str, Any]] = []
+    foreign_count = 0
+    for operation in operations:
+        actual = _literal(operation.get("branch"))
+        if actual and actual != branch:
+            foreign_count += 1
+            continue
+        scoped.append(operation)
+    return scoped, foreign_count
+
+
 def build_operation_id(
     *,
     branch: str,
@@ -113,7 +134,9 @@ def project_published_queue(
     code = _literal(branch)
     payload = decode_snapshot_payload(row)
     marks = withdrawn_marks(payload)
-    visible = visible_operations(payload_operations(payload), marks)
+    visible, excluded_foreign = _visible_for_branch(
+        visible_operations(payload_operations(payload), marks), branch=code
+    )
     eligible = [item for item in visible if _has_cockpit_open_balance(item)]
 
     requested = normalize_work_center(work_center) if work_center else ""
@@ -194,6 +217,7 @@ def project_published_queue(
             "source_refreshed_at": _iso(row.get("source_refreshed_at")),
             "start_date": _iso(row.get("start_date")),
             "end_date": _iso(row.get("end_date")),
+            "foreign_branch_operations_excluded": excluded_foreign,
         },
         "queue_status": "empty" if operation_count == 0 else "available",
         # Catálogo de seleção: código do CT em ordem alfabética.
@@ -231,7 +255,9 @@ def list_visible_published_queues(
     code = _literal(branch)
     payload = decode_snapshot_payload(row)
     marks = withdrawn_marks(payload)
-    visible = visible_operations(payload_operations(payload), marks)
+    visible, excluded_foreign = _visible_for_branch(
+        visible_operations(payload_operations(payload), marks), branch=code
+    )
 
     wanted = {
         normalize_work_center(center)
@@ -310,6 +336,7 @@ def list_visible_published_queues(
             "source_refreshed_at": _iso(row.get("source_refreshed_at")),
             "start_date": _iso(row.get("start_date")),
             "end_date": _iso(row.get("end_date")),
+            "foreign_branch_operations_excluded": excluded_foreign,
         },
         "work_center_queues": groups,
         "available_work_centers": [
