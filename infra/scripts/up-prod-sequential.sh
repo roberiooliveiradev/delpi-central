@@ -55,7 +55,7 @@ usage() {
   echo "  --build       Rebuild da imagem de cada serviço (compose build isolado; sem bake em cascata)"
   echo "  --no-cache    Passa --no-cache ao docker compose build (evita layer CACHED stale no MFE)"
   echo "  --pull        git pull em $REPO_ROOT antes de subir"
-  echo "  --cpu         Usa docker-compose.prod.cpu.yml (LanguageTool/SearXNG em optional-heavy)"
+  echo "  --cpu         Mantido p/ compat: modo enxuto já é o padrão (heavy só via --heavy)"
   echo "  --heavy       Inclui fase heavy (ou serviços searxng/languagetool)"
   echo "  --gpu         Inclui vllm (profile gpu)"
   echo "  --fase FASE   Limita a uma fase (opcional se passar SERVICO)"
@@ -63,7 +63,7 @@ usage() {
   echo "  --dry-run     Só imprime comandos"
   echo "  SERVICO ...   Filtra por nome/glob ('minha*', 'dashboard-*'); --fase não é obrigatório"
   echo ""
-  echo "Compose: docker-compose.yml + .env (+ prod.cpu.yml se --cpu)"
+  echo "Compose: docker-compose.yml + .env (searxng/languagetool: --heavy/profile optional-heavy)"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -71,7 +71,7 @@ while [[ $# -gt 0 ]]; do
     --build) BUILD=true; shift ;;
     --no-cache) NO_CACHE=true; shift ;;
     --pull) GIT_PULL=true; shift ;;
-    --cpu) USE_CPU=true; shift ;;
+    --cpu) USE_CPU=true; shift ;;  # legado: modo enxuto agora é o padrão (heavy só via --heavy)
     --heavy) INCLUDE_HEAVY=true; shift ;;
     --gpu) INCLUDE_GPU=true; shift ;;
     --fase) FASE="${2:?}"; shift 2 ;;
@@ -199,11 +199,8 @@ FASE_HEAVY=(
 FASE_GPU=(vllm)
 
 compose_cmd() {
-  if [[ "$USE_CPU" == true ]]; then
-    printf '%s\n' docker compose -f docker-compose.yml -f docker-compose.prod.cpu.yml --env-file .env
-  else
-    printf '%s\n' docker compose -f docker-compose.yml --env-file .env
-  fi
+  # searxng/languagetool vivem no profile optional-heavy do compose único.
+  printf '%s\n' docker compose -f docker-compose.yml --env-file .env
 }
 
 compose_profiles_for() {
@@ -211,9 +208,7 @@ compose_profiles_for() {
   case "$svc" in
     vllm) echo gpu ;;
     searxng|languagetool)
-      if [[ "$USE_CPU" == true ]]; then
-        echo optional-heavy
-      fi
+      echo optional-heavy
       ;;
   esac
 }

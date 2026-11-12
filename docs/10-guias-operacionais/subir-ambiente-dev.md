@@ -175,7 +175,7 @@ Content-Type: application/json
 
 Ou usar a aba **Apps** em `http://localhost/admin`.
 
-Guias: [registrar-plugin.md](./registrar-plugin.md) · [registrar-plugin-dev-local.md](./registrar-plugin-dev-local.md) (token via `infra/.env.local` + scripts).
+Guias: [registrar-plugin.md](./registrar-plugin.md) · [registrar-plugin-dev-local.md](./registrar-plugin-dev-local.md) (token via `infra/.env` (`DEV_*`) + scripts).
 
 ---
 

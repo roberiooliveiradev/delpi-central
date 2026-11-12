@@ -4,8 +4,8 @@
 # Ensures, via Keycloak Admin REST only (no SQL, no manual hash):
 #   1. realm `delpi` exists and is enabled;
 #   2. public client `delpi-central` exists (standard flow + direct grants);
-#   3. the dev portal user exists and its password matches infra/.env.local
-#      (DEV_PORTAL_USERNAME / DEV_PORTAL_PASSWORD).
+#   3. the dev portal user exists and its password matches the DEV_PORTAL_*
+#      vars in infra/.env (canonical; infra/.env.local overrides if present).
 #
 # Safe to re-run: existing realm/client/users are repaired in place, never
 # wiped. Use when local login drifts (e.g. after volume/env divergence).
@@ -17,8 +17,8 @@
 #     bash infra/scripts/up-dev-sequential.sh keycloak
 #     bash infra/scripts/keycloak-dev-bootstrap.sh
 #
-# Requires: infra/.env (KEYCLOAK_ADMIN*, POSTGRES_KC_*) and, for the dev user,
-# infra/.env.local (DEV_PORTAL_USERNAME / DEV_PORTAL_PASSWORD).
+# Requires: infra/.env (KEYCLOAK_ADMIN*, POSTGRES_KC_*, DEV_PORTAL_* —
+# template .env.dev.example). infra/.env.local is an optional legacy override.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -28,13 +28,20 @@ env_val() { # KEY file — tolerant to values with spaces/comments
   grep -E "^$1=" "$2" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"'"'"'\r' || true
 }
 
+dev_val() { # KEY — .env.local (optional override) wins over .env
+  local v
+  v="$(env_val "$1" "$INFRA_DIR/.env.local")"
+  [ -n "$v" ] || v="$(env_val "$1" "$INFRA_DIR/.env")"
+  printf '%s' "$v"
+}
+
 KC_BASE="$(env_val KC_BASE_URL "$INFRA_DIR/.env")"; KC_BASE="${KC_BASE:-http://localhost}/auth"
 REALM="$(env_val KEYCLOAK_REALM "$INFRA_DIR/.env")"; REALM="${REALM:-delpi}"
-CLIENT_ID="$(env_val DEV_KC_CLIENT_ID "$INFRA_DIR/.env.local")"; CLIENT_ID="${CLIENT_ID:-delpi-central}"
+CLIENT_ID="$(dev_val DEV_KC_CLIENT_ID)"; CLIENT_ID="${CLIENT_ID:-delpi-central}"
 ADMIN_USER="$(env_val KEYCLOAK_ADMIN "$INFRA_DIR/.env")"
 ADMIN_PASS="$(env_val KEYCLOAK_ADMIN_PASSWORD "$INFRA_DIR/.env")"
-DEV_USER="$(env_val DEV_PORTAL_USERNAME "$INFRA_DIR/.env.local")"
-DEV_PASS="$(env_val DEV_PORTAL_PASSWORD "$INFRA_DIR/.env.local")"
+DEV_USER="$(dev_val DEV_PORTAL_USERNAME)"
+DEV_PASS="$(dev_val DEV_PORTAL_PASSWORD)"
 [ -n "$ADMIN_USER" ] && [ -n "$ADMIN_PASS" ] || {
   echo "[ERRO] KEYCLOAK_ADMIN* ausentes em infra/.env" >&2; exit 1; }
 
@@ -132,7 +139,7 @@ KC_ADMIN_TOKEN="$ADMIN_TOKEN" KC_BASE="$KC_BASE" REALM="$REALM" \
   python3 "$SCRIPT_DIR/delia_mcp_keycloak_state.py" --apply \
     --install-secret-to "$INFRA_DIR/.env"
 
-# --- dev user (optional when .env.local not configured) ---
+# --- dev user (optional when DEV_PORTAL_* not configured) ---
 if [ -n "$DEV_USER" ] && [ -n "$DEV_PASS" ]; then
   UID_=$(admin_api GET "/realms/$REALM/users?username=$DEV_USER&exact=true" \
     | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["id"] if d else "")')
@@ -152,7 +159,7 @@ import json,sys
 print(json.dumps({"type":"password","value":sys.argv[1],"temporary":False}))
 PY
 )" >/dev/null
-  echo "[kc-bootstrap] senha de $DEV_USER sincronizada com infra/.env.local."
+  echo "[kc-bootstrap] senha de $DEV_USER sincronizada com infra/.env."
 
   TOKEN=$(curl -sf -X POST "$KC_BASE/realms/$REALM/protocol/openid-connect/token" \
     -H 'Content-Type: application/x-www-form-urlencoded' \
@@ -165,7 +172,7 @@ PY
     echo "[ERRO] bootstrap concluído mas o password grant falhou." >&2; exit 1
   fi
 else
-  echo "[kc-bootstrap] DEV_PORTAL_* não definido em infra/.env.local — realm/client ok, usuário pulado."
+  echo "[kc-bootstrap] DEV_PORTAL_* não definido em infra/.env — realm/client ok, usuário pulado."
 fi
 
 echo "[kc-bootstrap] DONE"

@@ -8,11 +8,7 @@ Este diretório (`infra/`) concentra os compose e as variáveis compartilhadas p
 |---------|-----|
 | `docker-compose.dev.yml` | Desenvolvimento local: **padrão = stack essencial + TV Dashboard**; profiles `chat`, `plugins`, `optional-heavy` |
 | `docker-compose.yml` | Produção: Gunicorn, imagens `*.prod`, logging limitado |
-| `docker-compose.minimal.yml` | Override dev — desliga Ollama/LanguageTool/SearXNG e limita RAM do chat |
-| `docker-compose.prod.cpu.yml` | Override prod — hosts com ~8 GB RAM (LanguageTool/SearXNG em profile `optional-heavy`) |
 | `docker-compose.hml.yml` | Homologação `delpi-hml` — estende só o cenário-base; não sobe sem `--profile` |
-| `docker-compose.vision.yml` | **Override legado** — equivalente a `Dockerfile.dev` (desde jun/2026 visão já vem no dev) |
-| `docker-compose.prod.vision.yml` | **Override legado** prod — redundante; compose base já inclui visão |
 | `.env.dev.example` | Modelo para copiar → `.env` no dia a dia |
 | `.env.prod.example` | Modelo para servidor / CI de deploy |
 
@@ -37,7 +33,7 @@ docker compose -f infra/docker-compose.dev.yml --profile plugins up -d controle-
 ./minha-delpi-ai-api/scripts/build_vision_profile.sh dev
 
 # Chat + RAM reduzida (dev WSL ~8 GB; sem Ollama)
-docker compose -f infra/docker-compose.dev.yml -f infra/docker-compose.minimal.yml \
+docker compose -f infra/docker-compose.dev.yml \
   --profile chat --env-file infra/.env up -d
 
 # Rebuild completo sem OOM — preferir em vez de up --build em lote
@@ -94,7 +90,7 @@ cp infra/.env.dev.example infra/.env
 
 Realm `delpi`, client `delpi-central` e usuários vivem no volume persistido
 `infra_keycloak_data` — **não há realm import automático**. Se o login local
-falhar (`invalid_grant`) ou as credenciais divergirem de `infra/.env.local`,
+falhar (`invalid_grant`) ou as credenciais divergirem de `infra/.env`,
 o procedimento canônico é o bootstrap por Admin REST:
 
 ```bash
@@ -103,7 +99,7 @@ bash infra/scripts/keycloak-dev-bootstrap.sh
 
 O script é **idempotente**: garante realm `delpi` ativo, client `delpi-central`
 (public, standard flow + direct grants) e sincroniza a senha de
-`DEV_PORTAL_USERNAME` com `DEV_PORTAL_PASSWORD` de `infra/.env.local`
+`DEV_PORTAL_USERNAME` com `DEV_PORTAL_PASSWORD` de `infra/.env`
 — sem SQL, sem hash manual, sem editar o banco do Keycloak.
 
 Se o **admin master** estiver divergente de `infra/.env` (bootstrap falha no
@@ -118,7 +114,7 @@ bash infra/scripts/keycloak-dev-bootstrap.sh   # recria realm/client/dev user
 ```
 
 Escopo: somente dev local (`localhost`); falha fechado fora dele. Não usar em
-produção. Credenciais sempre via `infra/.env` / `infra/.env.local` — nunca em
+produção. Credenciais sempre via `infra/.env` — nunca em
 comandos ou logs.
 
 ### Produção
@@ -254,7 +250,7 @@ Catálogo de proteção: [`scripts/maintenance-cache-manifest.sh`](scripts/maint
 | **Misturar dev + prod** (`-f docker-compose.yml -f docker-compose.dev.yml`) | Sobe **todos** os MFEs/APIs de prod (~40 containers) mesmo em dev |
 | **Prod completo** em máquina pequena | Ollama (~1 GB) + LanguageTool (~2,5 GB) + chat API + dezenas de plugins |
 | **`up --build` paralelo** | Build de 20+ plugins (`npm run build`) + PyTorch no chat API estoura RAM no pico |
-| **Profile `chat` sem `minimal`** | LanguageTool + SearXNG sobem junto com Ollama |
+| **Profile `optional-heavy` em host fraco** | Ollama + LanguageTool + SearXNG sobem juntos (~4 GB) |
 
 ### Comandos corretos (dev)
 
@@ -263,7 +259,7 @@ Catálogo de proteção: [`scripts/maintenance-cache-manifest.sh`](scripts/maint
 ./infra/scripts/up-minimal-dev.sh
 
 # Chat com RAM controlada (~13 containers, sem LanguageTool/SearXNG)
-docker compose -f infra/docker-compose.dev.yml -f infra/docker-compose.minimal.yml \
+docker compose -f infra/docker-compose.dev.yml \
   --profile chat --env-file infra/.env up -d
 
 # Build do chat sem paralelizar todos os serviços (evita OOM no build PyTorch/npm)
@@ -293,7 +289,7 @@ Se subiu prod+dev ou todos os plugins por engano:
 
 ```bash
 cd infra
-docker compose -f docker-compose.dev.yml -f docker-compose.minimal.yml down
+docker compose -f docker-compose.dev.yml down
 # ou parar extras manualmente:
 docker stop delpi-languagetool delpi-searxng 2>/dev/null || true
 docker stats --no-stream | sort -k4 -hr | head -10
@@ -302,11 +298,15 @@ docker stats --no-stream | sort -k4 -hr | head -10
 ### Produção em host com RAM limitada
 
 ```bash
-docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.cpu.yml \
-  --env-file infra/.env up -d
+# Default já é enxuto: SearXNG/LanguageTool NÃO sobem (profile optional-heavy).
+docker compose -f infra/docker-compose.yml --env-file infra/.env up -d
+
+# Host com RAM folgada — inclui os pesados:
+docker compose -f infra/docker-compose.yml --env-file infra/.env \
+  --profile optional-heavy up -d
 ```
 
-Ver também `infra/.env.prod.cpu.example` (desliga spell-check web e reduz contexto LLM).
+Tuning de RAM/LLM é via `.env` (`MAX_CONTEXT_CHARS`, `OLLAMA_NUM_CTX`, flags `CHAT_*`).
 
 ---
 
@@ -483,7 +483,7 @@ O `production-control-api` **não** monta mais a pasta de desenhos: o BFF chama 
 
 | Variável | Onde | Default dev |
 |----------|------|-------------|
-| `DRAWING_PDF_FILESERVER_HOST_PATH` | `infra/.env` / `.env.local` | `/mnt/x/DESENHOS DELPI EM PDF` |
+| `DRAWING_PDF_FILESERVER_HOST_PATH` | `infra/.env` | `/mnt/x/DESENHOS DELPI EM PDF` |
 | `DRAWING_PDF_LIBRARY_DIR` | container api-delpi | `/drawing-pdfs` |
 
 **Produção (`srv-api`):** o share do FILESERVER precisa estar montado no host (CIFS/SMB). O compose monta o bind `:ro` **somente** em `api-delpi`. Alias legado de host path: `PC_DRAWING_PDF_HOST_PATH` (ainda aceito como fallback). Sem o mount:
@@ -506,7 +506,7 @@ ls "/mnt/x/DESENHOS DELPI EM PDF" | wc -l
 **Aplicar no Docker:**
 
 ```bash
-# infra/.env.local — ver env.local.example
+# infra/.env — ver .env.dev.example
 DRAWING_PDF_FILESERVER_HOST_PATH=/mnt/x/DESENHOS DELPI EM PDF
 
 docker compose -f infra/docker-compose.dev.yml up -d --force-recreate api-delpi
@@ -812,7 +812,7 @@ Após deploy/recreate, arquivos enviados antes devem continuar acessíveis no ho
 
 ## Produção CPU (srv-api, 4 vCPU · ~15 GB)
 
-Perfil enxuto: **`infra/.env.prod.cpu.example`** — só tuning do host e overrides `false` (router, agentic, semantic rank, colunas R16, LanguageTool). O restante vem do default do `docker-compose.yml` prod.
+Perfil enxuto: o compose prod já sobe sem SearXNG/LanguageTool (profile `optional-heavy`); o tuning de RAM/LLM vem de `infra/.env.prod.example` → `infra/.env` (ex.: `MAX_CONTEXT_CHARS`, `OLLAMA_NUM_CTX`, flags `CHAT_*`).
 
 Catálogo completo (tudo ligado): **`infra/.env.prod.example`**.
 
@@ -937,7 +937,7 @@ Documentação completa: [docs/06-portal-frontend/portal-deploy-cache-cloudflare
 | `/app/data/travel-expenses/receipts` | `…/travel-expenses/receipts` |
 | `/app/data/travel-expenses/packages` | `…/travel-expenses/packages` |
 
-Recreate de `delpi-travel-expenses-api` **não** apaga cupons (metadado no schema `travel_expenses` + arquivo no host). Variáveis em `infra/env.travel-expenses.example`.
+Recreate de `delpi-travel-expenses-api` **não** apaga cupons (metadado no schema `travel_expenses` + arquivo no host). Variáveis na seção Travel Expenses de `infra/.env.dev.example` / `infra/.env.prod.example`.
 
 ### Production Pulse (IoT industrial)
 
@@ -952,7 +952,7 @@ JWKS em host network: **`PRODUCTION_PULSE_KEYCLOAK_JWKS_URL=http://127.0.0.1/aut
 
 Gateway dev proxy: **`172.17.0.1:8025`** (bridge Docker → serviço em `network_mode: host`). Se o bridge local usar outro CIDR, ajuste `gateway/nginx.dev.conf`.
 
-Homologação LAN: `curl -sf http://localhost/apps/production-pulse-api/health` e, com ESP na rede, poll HTTP a partir do container/host conforme [ADR-002](../docs/12-roadmap-e-evolucao/production-pulse/ADR-002-poll-scheduler-and-lan.md). Variáveis em `infra/env.production-pulse.example`.
+Homologação LAN: `curl -sf http://localhost/apps/production-pulse-api/health` e, com ESP na rede, poll HTTP a partir do container/host conforme [ADR-002](../docs/12-roadmap-e-evolucao/production-pulse/ADR-002-poll-scheduler-and-lan.md). Variáveis na seção Production Pulse de `infra/.env.dev.example` / `infra/.env.prod.example`.
 
 #### Binários OTA (P4)
 

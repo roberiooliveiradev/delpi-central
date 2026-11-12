@@ -42,7 +42,7 @@ Documentação técnica oficial do módulo **Strategic Indicators** no monorepo 
 | Migrations | [migrations/](../migrations/) |
 | MFE | [plugins/strategic-indicators/](../../plugins/strategic-indicators/) |
 | Compose | [infra/docker-compose.dev.yml](../../infra/docker-compose.dev.yml) |
-| Env exemplo | [infra/env.strategic-indicators.example](../../infra/env.strategic-indicators.example) |
+| Env exemplo | seção Strategic Indicators em `infra/.env.dev.example` / `.env.prod.example` |
 
 ## URLs (gateway dev)
 

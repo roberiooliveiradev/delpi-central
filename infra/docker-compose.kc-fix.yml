@@ -1,5 +1,0 @@
-services:
-  keycloak:
-    environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: tmpadmin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: tmpbootstrap24

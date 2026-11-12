@@ -6,7 +6,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INFRA_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ENV_FILE="${ENV_FILE:-${INFRA_DIR}/.env}"
-# Opcional: outro arquivo só para copiar tokens (ex.: backup). Em produção costuma existir só .env.
+# Opcional: outro arquivo só para copiar tokens (ex.: backup). Em produção costuma
+# existir só .env. A lista canônica de chaves é infra/.env.prod.example — este
+# script cobre apenas o subset legado de integração/SI (migrações antigas).
 REF_FILE="${REF_FILE:-}"
 
 if [[ ! -f "$ENV_FILE" ]]; then

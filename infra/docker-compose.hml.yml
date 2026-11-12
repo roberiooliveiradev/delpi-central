@@ -3,8 +3,7 @@
 # EXISTING_EQUIVALENT:
 #   docker-compose.yml          produção (não alterar daqui)
 #   docker-compose.dev.yml      desenvolvimento local
-#   docker-compose.minimal.yml  override de RAM do dev (profiles !override)
-#   docker-compose.qa-override.yml  pin de imagem do Keycloak; não é um ambiente
+#   (overrides antigos minimal/cpu/vision/kc-fix/qa foram absorvidos nos 3 canônicos)
 #   up-prod-sequential.sh / up-dev-sequential.sh  subida sequencial por fase
 #   compose-filter-services.sh  filtro de serviços já usado pelos scripts
 #

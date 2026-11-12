@@ -28,10 +28,10 @@ source "$SCRIPT_DIR/compose-filter-services.sh"
 source "$SCRIPT_DIR/gateway-static-upstreams.sh"
 cd "$COMPOSE_DIR"
 
-COMPOSE_BASE=(docker compose -f docker-compose.dev.yml -f docker-compose.minimal.yml --env-file .env)
-COMPOSE_PLUGINS=(docker compose -f docker-compose.dev.yml -f docker-compose.minimal.yml --profile plugins --env-file .env)
-COMPOSE_CHAT=(docker compose -f docker-compose.dev.yml -f docker-compose.minimal.yml --profile chat --env-file .env)
-COMPOSE_HEAVY=(docker compose -f docker-compose.dev.yml -f docker-compose.minimal.yml --profile optional-heavy --env-file .env)
+COMPOSE_BASE=(docker compose -f docker-compose.dev.yml --env-file .env)
+COMPOSE_PLUGINS=(docker compose -f docker-compose.dev.yml --profile plugins --env-file .env)
+COMPOSE_CHAT=(docker compose -f docker-compose.dev.yml --profile chat --env-file .env)
+COMPOSE_HEAVY=(docker compose -f docker-compose.dev.yml --profile optional-heavy --env-file .env)
 
 export COMPOSE_PARALLEL_LIMIT=1
 export DOCKER_BUILDKIT=1
@@ -65,7 +65,7 @@ usage() {
   echo "  --build       Rebuild da imagem de cada serviço (compose build isolado; sem bake em cascata)"
   echo "  --no-cache    Passa --no-cache ao docker compose build (evita layer CACHED stale no MFE)"
   echo "  --pull        git pull em $REPO_ROOT antes de subir"
-  echo "  --cpu         No-op em dev (já usa docker-compose.minimal.yml por padrão)"
+  echo "  --cpu         No-op em dev — dev.yml já traz o perfil enxuto"
   echo "  --heavy       Inclui fase heavy (ollama/searxng/languagetool)"
   echo "  --gpu         Indisponível em dev — use up-prod-sequential.sh para vllm"
   echo "  --fase FASE   Limita a uma fase (opcional se passar SERVICO)"
@@ -73,7 +73,7 @@ usage() {
   echo "  --dry-run     Só imprime comandos"
   echo "  SERVICO ...   Filtra por nome/glob ('minha*', 'dashboard-*'); --fase não é obrigatório"
   echo ""
-  echo "Compose: docker-compose.dev.yml + docker-compose.minimal.yml + .env"
+  echo "Compose: docker-compose.dev.yml + .env"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -363,7 +363,7 @@ if [[ ! -f .env ]]; then
 fi
 
 if [[ "$USE_CPU" == true ]]; then
-  echo "Nota: dev já usa docker-compose.minimal.yml (--cpu é equivalente ao padrão local)." >&2
+  echo "Nota: dev já usa dev.yml (--cpu é equivalente ao padrão local)." >&2
 fi
 
 if [[ "$GIT_PULL" == true ]]; then

@@ -110,7 +110,7 @@ refuse_activation() {
   echo "HOMOLOGATION_ACTIVATION_NOT_AUTHORIZED" >&2
   echo "Ação '$action' não executada fora dos profiles autorizados." >&2
   echo "Autorizados: up --scenario databases|keycloak|gateway|core-api|portal | bootstrap-keycloak." >&2
-  echo "Redis, API DELPI, Plugin UI e Production Control permanecem bloqueados." >&2
+  echo "Redis, API DELPI, Plugin UI, Production Control e TLS/HTTPS HML permanecem bloqueados." >&2
   exit 2
 }
 
@@ -222,7 +222,7 @@ assert_env_file_allowed() {
   local base
   base="$(basename "$env_file")"
   case "$base" in
-    .env|.env.prod|.env.prod.cpu|.env.dev)
+    .env|.env.prod|.env.dev)
       echo "Arquivo de ambiente recusado para homologação: $base" >&2
       exit 1
       ;;

@@ -195,6 +195,9 @@ services:
 
   searxng:
     image: searxng/searxng:latest
+    # Profile opcional: subir com `--profile optional-heavy` (hosts com RAM folgada).
+    profiles:
+      - optional-heavy
     container_name: delpi-searxng
     restart: unless-stopped
     environment:
@@ -207,6 +210,9 @@ services:
 
   languagetool:
     image: erikvl87/languagetool:latest
+    # Profile opcional: subir com `--profile optional-heavy` (hosts com RAM folgada).
+    profiles:
+      - optional-heavy
     container_name: delpi-languagetool
     restart: unless-stopped
     environment:
@@ -435,11 +441,19 @@ services:
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/chat-sources:/data/delpi/chat-sources
     
     depends_on:
-      - core-api
-      - postgres-plugins
-      - ollama
-      - searxng
-      - languagetool
+      core-api:
+        condition: service_started
+      postgres-plugins:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+      # SearXNG/LanguageTool são optional-heavy — chat sobe sem eles (flags off no .env).
+      searxng:
+        condition: service_started
+        required: false
+      languagetool:
+        condition: service_started
+        required: false
 
     networks:
       - delpi-network

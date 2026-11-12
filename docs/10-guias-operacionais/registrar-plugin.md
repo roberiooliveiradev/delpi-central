@@ -71,7 +71,7 @@ Superadmin ignora checagem de permissão nos decorators.
 
 ## 5. Registrar (curl)
 
-**Dev local (token via `infra/.env.local`):** ver [registrar-plugin-dev-local.md](./registrar-plugin-dev-local.md).
+**Dev local (token via `infra/.env`, vars `DEV_*`):** ver [registrar-plugin-dev-local.md](./registrar-plugin-dev-local.md).
 
 Na raiz do repositório, com token do Portal (DevTools → rede → header `Authorization`):
 

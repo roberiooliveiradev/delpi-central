@@ -7,7 +7,7 @@ set -euo pipefail
 COMPOSE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$COMPOSE_DIR"
 
-COMPOSE=(docker compose -f docker-compose.dev.yml -f docker-compose.minimal.yml --env-file .env)
+COMPOSE=(docker compose -f docker-compose.dev.yml --env-file .env)
 
 RESTORE=false
 BUILD=false

@@ -104,7 +104,7 @@ FastAPI · Postgres (`schema production_pulse` em postgres-plugins) · `delpi_au
 
 Em desenvolvimento o serviço usa **`network_mode: host`** para alcançar IPs industriais (ex.: `192.168.20.2`). Ver [ADR-002](../docs/12-roadmap-e-evolucao/production-pulse/ADR-002-poll-scheduler-and-lan.md).
 
-Variáveis relevantes (`infra/env.production-pulse.example`):
+Variáveis relevantes (fonte canônica: seção Production Pulse em `infra/.env.dev.example` / `.env.prod.example`):
 
 | Env | Uso |
 |-----|-----|

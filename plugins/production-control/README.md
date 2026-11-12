@@ -173,7 +173,7 @@ CSS escopado em `.dashboard-production-control` — zero `.delpi-ui-*` no MFE.
 ./infra/scripts/up-dev-sequential.sh --fase api --build production-control-api
 ./infra/scripts/up-dev-sequential.sh --fase mfe --build production-control
 # Nova location Nginx: recriar só o gateway (bind mount; sem --build em lote)
-# docker compose -f infra/docker-compose.dev.yml -f infra/docker-compose.minimal.yml --env-file infra/.env \
+# docker compose -f infra/docker-compose.dev.yml --env-file infra/.env \
 #   up -d --no-deps --force-recreate --no-build gateway
 ```
 

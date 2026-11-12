@@ -12,13 +12,13 @@ Passo a passo para **registrar ou atualizar** um manifesto na Core API em ambien
 
 | Etapa | Onde |
 |---|---|
-| Credenciais dev (gitignored) | `infra/.env.local` |
-| Modelo para copiar | `infra/env.local.example` |
+| Credenciais dev (gitignored) | `infra/.env` (vars `DEV_*`) |
+| Modelo para copiar | `infra/.env.dev.example` |
 | Obter JWT automaticamente | `infra/scripts/get-dev-token.sh` |
 | Registrar manifesto | `plugins/<id>/scripts/register-manifest.sh` |
 | Endpoint | `POST /core-api/admin/apps/register` |
 
-**Credenciais não ficam neste documento nem no Git.** Elas vivem somente em `infra/.env.local` (ignorado por `infra/.gitignore`).
+**Credenciais não ficam neste documento nem no Git.** Elas vivem somente em `infra/.env` (ignorado por `infra/.gitignore`).
 
 ---
 
@@ -27,10 +27,10 @@ Passo a passo para **registrar ou atualizar** um manifesto na Core API em ambien
 Na raiz do repositório:
 
 ```bash
-cp infra/env.local.example infra/.env.local
+cp infra/.env.dev.example infra/.env
 ```
 
-Edite `infra/.env.local` e preencha:
+Edite `infra/.env` e preencha (seção «Credenciais do usuário Portal dev»):
 
 | Variável | Descrição |
 |---|---|
@@ -72,7 +72,7 @@ export TOKEN="$(bash infra/scripts/get-dev-token.sh)"
 
 O script:
 
-1. Lê `infra/.env.local`
+1. Lê `infra/.env` (e `infra/.env.local` como override legado, se existir)
 2. Chama Keycloak (`password grant`)
 3. Imprime **somente** o `access_token` (para usar em `TOKEN=`)
 
@@ -161,8 +161,8 @@ Bump de versão no arquivo `*.manifest.json` antes de registrar de novo.
 
 | Sintoma | Causa provável | Ação |
 |---|---|---|
-| `[ERRO] infra/.env.local não encontrado` | Arquivo local não criado | `cp infra/env.local.example infra/.env.local` |
-| Keycloak `invalid_grant` | Usuário/senha errados no `.env.local` | Corrigir `DEV_PORTAL_*` |
+| `[ERRO] Nenhum env encontrado` | `infra/.env` não criado | `cp infra/.env.dev.example infra/.env` |
+| Keycloak `invalid_grant` | Usuário/senha errados no `.env` | Corrigir `DEV_PORTAL_*` |
 | 401 no register | Token expirado | Rodar `get-dev-token.sh` de novo |
 | 403 no register | Usuário sem `apps.manage` / superadmin | Usar conta admin ou ajustar RBAC |
 | 400 `version_already_exists` | Mesma versão já registrada | Incrementar `version` no manifesto |
@@ -172,7 +172,7 @@ Bump de versão no arquivo `*.manifest.json` antes de registrar de novo.
 
 ## 10. Checklist rápido
 
-- [ ] `infra/.env.local` existe (não versionado) com `DEV_PORTAL_USERNAME` / `DEV_PORTAL_PASSWORD`
+- [ ] `infra/.env` existe (não versionado) com `DEV_PORTAL_USERNAME` / `DEV_PORTAL_PASSWORD`
 - [ ] Stack dev up (`core-api`, `gateway`, `keycloak`)
 - [ ] `export TOKEN="$(bash infra/scripts/get-dev-token.sh)"`
 - [ ] `bash plugins/<id>/scripts/register-manifest.sh` → 201

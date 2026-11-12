@@ -61,7 +61,7 @@ Ver [gateway-nginx.md](../../docs/02-infraestrutura/gateway-nginx.md).
 | `DELPI_API_URL` | `http://delpi-api-delpi:8000` | Medições TOTVS via HTTP (não há pool ODBC no SI) |
 | `LOG_LEVEL` | `INFO` | Logs `strategic_indicators.*` |
 
-Exemplo: [infra/env.strategic-indicators.example](../../infra/env.strategic-indicators.example)
+Exemplo: seção Strategic Indicators em `infra/.env.dev.example` / `.env.prod.example`
 
 ### Autenticação
 
