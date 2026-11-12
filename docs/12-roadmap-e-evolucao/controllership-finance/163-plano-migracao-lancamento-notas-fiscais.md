@@ -1,6 +1,6 @@
 # 163 — PLANO: Migração do módulo Lançamento de Notas Fiscais (api-delpi → controllership-finance-api)
 
-> Status: **F3 autorizado — implementação dark na BFF atrás de LNF_HOSTED_ENABLED=false; produção NÃO alterada**
+> Status: **F3 autorizado — implementação dark na BFF atrás de LNF_HOSTED_ENABLED=false; produção NÃO alterada (entrega na `main`)**
 > Baseline F2b: HEAD `857b17ce03550eb6add765ad8176609c5a9de838` (`feat/lnf-migration-f2` / origem F3)
 > Natureza: **transferência de owner de runtime sem mudança de comportamento** (contrato, permissões e dados preservados)
 
