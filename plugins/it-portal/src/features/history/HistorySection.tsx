@@ -55,6 +55,14 @@ export function describeHistoryChange(event: HistoryEvent): string | null {
   if (event.entity_type === "service_dependency") {
     return `${refLabel(changes.dependent_service as Ref)} depende de ${refLabel(changes.required_service as Ref)}`;
   }
+  if (event.entity_type === "host_service_preference") {
+    const label = typeof changes.service === "string" ? changes.service : "Serviço Windows";
+    const favorite = changes.is_favorite as { to?: boolean } | undefined;
+    const criticality = changes.criticality as { to?: string } | undefined;
+    const rank: Record<string, string> = { normal: "Normal", high: "Alta", critical: "Crítica" };
+    const favText = favorite?.to ? "Adicionado aos favoritos" : "Removido dos favoritos";
+    return `${label} · ${favText} · Criticidade ${rank[criticality?.to ?? "normal"] ?? "Normal"}`;
+  }
   const fields = Object.keys(changes);
   if (event.event_type.endsWith("_updated") && fields.length > 0) {
     const labels = FIELD_LABELS_BY_ENTITY[event.entity_type] ?? SERVER_FIELD_LABELS;
