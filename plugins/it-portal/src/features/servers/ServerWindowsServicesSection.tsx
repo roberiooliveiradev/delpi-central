@@ -354,12 +354,12 @@ export function ServerWindowsServicesSection({ serverId, canManageFavorites = fa
           <div className="itp-scm__segments" role="group" aria-label="Visualização do inventário">
             <button type="button" className={!favoritesOnly ? "is-selected" : ""}
               aria-pressed={!favoritesOnly}
-              onClick={() => { setFavoritesOnly(false); changePage(1); }}>
+              onClick={() => { setFavoritesOnly(false); setPresent("yes"); changePage(1); }}>
               Todos os serviços
             </button>
             <button type="button" className={favoritesOnly ? "is-selected" : ""}
               aria-pressed={favoritesOnly}
-              onClick={() => { setFavoritesOnly(true); changePage(1); }}>
+              onClick={() => { setFavoritesOnly(true); setPresent("all"); changePage(1); }}>
               <Star size={14} strokeWidth={1.8} fill={favoritesOnly ? "currentColor" : "none"} aria-hidden="true" />
               Favoritos <span className="itp-scm__segment-count">{count(payload?.favorites_count ?? 0)}</span>
             </button>
