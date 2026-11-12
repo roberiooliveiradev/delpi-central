@@ -1,5 +1,7 @@
 # Portal Controladoria & Finanças — Fonte de navegação e estado
 
+> **12/11/2026 — APPROVED — ADR-001 ACCEPTED; F2 autorizado (somente testes); runtime NÃO autorizado:** [Doc 163 — Plano de migração do Lançamento de Notas Fiscais para a BFF](./163-plano-migracao-lancamento-notas-fiscais.md). ADR [ADR-001](./adr/ADR-001-hospedagem-lancamento-notas-fiscais.md) `ACCEPTED`. Sem runtime nesta revisão.
+
 > **10/11/2026 — CF-UX-054-UX-01 (no código, sem deploy desta revisão):** a exclusão de competência implantada em `03d194e6` passa a ter motivo opcional e o botão no hero da competência aberta. A digitação do período e o bloqueio por dependência permanecem. Setembro e outubro de 2026 não foram excluídos. Ver [doc 162](./162-cf-ux-054-exclusao-competencia-mensal.md).
 
 
