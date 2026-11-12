@@ -261,6 +261,7 @@ def test_notifications_p6_to_p6b_cross_user() -> None:
         outcome=outcome,
         note=note,
     )
+    # Sem campo target: compare_golden golden×golden-bff exige igualdade byte-a-byte.
     snapshot = {
         "http_status": 200 if matched else 0,
         "matched_count": len(matched),
@@ -275,7 +276,6 @@ def test_notifications_p6_to_p6b_cross_user() -> None:
                 for m in matched
             }
         ),
-        "target": target_name(),
     }
     _write_golden("notifications", "cross-user-p6-p6b", snapshot)
 

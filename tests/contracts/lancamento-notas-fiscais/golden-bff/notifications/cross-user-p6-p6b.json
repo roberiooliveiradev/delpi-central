@@ -1,7 +1,10 @@
 {
-  "http_status": 0,
-  "matched_count": 0,
-  "categories": [],
-  "sources": [],
-  "target": "bff"
+  "http_status": 200,
+  "matched_count": 2,
+  "categories": [
+    "lancamento_notas_fiscais"
+  ],
+  "sources": [
+    "lancamento-notas-fiscais"
+  ]
 }

@@ -30,12 +30,14 @@ PROFILES: dict[str, dict] = {
     "P4": {"username": "lnf-contract-p4", "permissions": ["lancamento-notas-fiscais.view"], "superadmin": False},
     "P5": {"username": "lnf-contract-p5", "permissions": ["lancamento-notas-fiscais.create"], "superadmin": False},
     "P6": {"username": "lnf-contract-p6", "permissions": ["lancamento-notas-fiscais.process"], "superadmin": False},
-    # access + process: Core exige acesso ao sourceApp para entregar notificação LNF (F3-R R2)
+    # process + view.filial-01: Core filter_user_ids_with_app_access só libera o
+    # sourceApp se o destinatário tiver permissão de alguma app_route (GET /me/apps).
+    # Rotas LNF usam view.filial-01/02 e review-unmapped-products — .access sozinho não destrava.
     "P6B": {
         "username": "lnf-contract-p6b",
         "permissions": [
-            "lancamento-notas-fiscais.access",
             "lancamento-notas-fiscais.process",
+            "lancamento-notas-fiscais.view.filial-01",
         ],
         "superadmin": False,
     },
@@ -64,8 +66,8 @@ EXPECTED_LNF = {
     "P5": {"lancamento-notas-fiscais.create"},
     "P6": {"lancamento-notas-fiscais.process"},
     "P6B": {
-        "lancamento-notas-fiscais.access",
         "lancamento-notas-fiscais.process",
+        "lancamento-notas-fiscais.view.filial-01",
     },
     "P7": {"lancamento-notas-fiscais.manage"},
     "P8": {"lancamento-notas-fiscais.review-unmapped-products"},

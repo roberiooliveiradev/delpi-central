@@ -88,8 +88,22 @@ def test_authz_matrix(route: Route, profile: str) -> None:
             return
 
     path, params, body = auth_probe(route, profile)
-    result = client.call(route.method, path, profile=profile, params=params, json_body=body)
-    if allowed and route.operation_id in SIDE_EFFECT_SAMPLE and result.status != 0:
+    # Amostra positiva consome orçamento 1×; negações AuthZ sempre batem no servidor.
+    result = client.call(
+        route.method,
+        path,
+        profile=profile,
+        params=params,
+        json_body=body,
+        budget_reconcile_run=bool(
+            allowed and route.operation_id in SIDE_EFFECT_SAMPLE
+        ),
+    )
+    if (
+        allowed
+        and route.operation_id in SIDE_EFFECT_SAMPLE
+        and result.status not in {0, 401, 403}
+    ):
         _RECONCILE_AUTHZ_USED = True
     if result.status == 0:
         record(route=route.operation_id, case="authz", profile=profile, expected=expected, obtained=result.error or "sem conexão", outcome="INCONCLUSIVE", note="api-delpi de dev inacessível")

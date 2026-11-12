@@ -9,7 +9,8 @@ import httpx
 from lnf_contract.guard import assert_not_production, base_url, profile_token, target_name
 
 # TOTVS_DB_HOST do DEV (192.168.1.230/DELPI) é base REAL do ERP — somente leitura.
-# A suíte limita reconciliation/run a no máximo uma chamada positiva por processo.
+# Limite 1× de reconciliation/run que PASSOU AuthZ (status ∉ {401,403}).
+# Negacoes AuthZ NUNCA consomem nem são curto-circuitadas (matriz 0c).
 _RECONCILE_RUN_COUNT = 0
 
 
@@ -40,34 +41,49 @@ class ContractClient:
         params: dict | None = None,
         json_body: dict | None = None,
         timeout: float = 60.0,
+        # True: amostra positiva — bloqueia 2º run pós-AuthZ.
+        # False (default para AuthZ): sempre atinge o servidor (401/403/400).
+        budget_reconcile_run: bool = False,
     ) -> CallResult:
         global _RECONCILE_RUN_COUNT
         if not self.url:
             raise RuntimeError("LNF_BASE_URL ausente")
-        if method.upper() == "POST" and path.rstrip("/").endswith("/reconciliation/run"):
-            if _RECONCILE_RUN_COUNT >= 1:
-                return CallResult(
-                    0,
-                    "application/json",
-                    {
-                        "success": False,
-                        "message": "suíte: reconciliation/run limitado a 1× por execução (ERP real)",
-                        "data": None,
-                        "error": {"code": "SUITE_RECONCILE_RUN_LIMIT", "recoverable": True},
-                    },
-                    b"",
-                    error="SUITE_RECONCILE_RUN_LIMIT",
-                )
-            _RECONCILE_RUN_COUNT += 1
+        is_reconcile_run = (
+            method.upper() == "POST"
+            and path.rstrip("/").endswith("/reconciliation/run")
+        )
+        if (
+            budget_reconcile_run
+            and is_reconcile_run
+            and _RECONCILE_RUN_COUNT >= 1
+        ):
+            return CallResult(
+                0,
+                "application/json",
+                {
+                    "success": False,
+                    "message": "suíte: reconciliation/run limitado a 1× por execução (ERP real)",
+                    "data": None,
+                    "error": {"code": "SUITE_RECONCILE_RUN_LIMIT", "recoverable": True},
+                },
+                b"",
+                error="SUITE_RECONCILE_RUN_LIMIT",
+            )
         headers: dict[str, str] = {"Accept": "application/json"}
         token = profile_token(profile) if profile else None
         if profile == "P10" and token:
             headers["X-Delpi-Service-Token"] = token
         elif token:
-            headers["Authorization"] = token if token.lower().startswith("bearer ") else f"Bearer {token}"
+            headers["Authorization"] = (
+                token if token.lower().startswith("bearer ") else f"Bearer {token}"
+            )
         try:
-            with httpx.Client(base_url=self.url, timeout=timeout, follow_redirects=False) as client:
-                response = client.request(method, path, params=params, json=json_body, headers=headers)
+            with httpx.Client(
+                base_url=self.url, timeout=timeout, follow_redirects=False
+            ) as client:
+                response = client.request(
+                    method, path, params=params, json=json_body, headers=headers
+                )
         except httpx.HTTPError as exc:
             return CallResult(0, "", None, b"", error=type(exc).__name__)
         content_type = response.headers.get("content-type", "")
@@ -79,4 +95,10 @@ class ContractClient:
                 body = None
         else:
             body = None
+        if (
+            budget_reconcile_run
+            and is_reconcile_run
+            and response.status_code not in {401, 403}
+        ):
+            _RECONCILE_RUN_COUNT += 1
         return CallResult(response.status_code, content_type, body, raw)
