@@ -311,6 +311,17 @@ Números das linhas **ilustrativos**; não codificar no frontend. Situação vem
 - **Contexto e responsabilidades:** frontend organiza visual e navegação; `commercial-api` é autoridade para nome/período/situação/contagens e autorização de gestão. Nenhuma preferência visual autoriza informação restrita. Exigir `commercial.marketing` OU `commercial.manage` com validação final no backend. UI-01 mantém resultados agregados segundo autorização e UI-06 não pode ser acessada por `commercial.access` isolado.
 - **Status:** composição e seção inicial **APROVADAS**; inventário numérico de CSS/spacing e implementação **PENDING/TO_INVENTORY**. Próximo refinamento: seção **Participantes**, do topo ao rodapé, reutilizando padrões do Comercial.
 
+### Decisão visual aprovada — indicadores de Participantes empilhados no celular (12/11/2026)
+
+**APROVADO PELO SOLICITANTE:** na seção **Participantes** da UI-02B, apresentar as três métricas **Participantes cadastrados**, **Respondidas** e **Pendentes** em **três cartões empilhados verticalmente no celular**, nesta ordem, mantendo componentes, estilos e medidas oficiais do PluginUI/Comercial. A mudança é exclusivamente de **composição responsiva**, não modifica cálculos, contrato dos dados ou permissões.
+
+- **Desktop:** três cartões compactos na mesma linha quando houver largura útil e legibilidade, com a estrutura oficial de cartão/indicador do Comercial.
+- **Tablet/intermediário:** utilizar o comportamento responsivo do componente real; conservar três na linha quando couber, mas permitir reorganização conforme tokens e breakpoints já existentes, sem fixar regra nova arbitrária.
+- **Celular:** uma coluna, três cartões em sequência (Participantes cadastrados → Respondidas → Pendentes), cada cartão usando a largura útil do contêiner e o padding/margens/gap/tipografia/raio oficiais. Não criar grid, componente ou CSS próprio que replique o PluginUI. Evitar rolagem horizontal e truncamento de rótulos ou valores.
+- **Componentes a confirmar no código de implementação:** wrapper de cartões/indicadores apropriado (por exemplo, `CommercialMetricCard` se suas propriedades e semântica forem adequadas) e layout/grid já empregado pelo Comercial. **TO_INVENTORY:** CSS real, tokens exatos de largura, gap, padding, margin, altura, fonte, raio, media queries e comportamento com zoom; documentar arquivo e seletor antes de codificar. Não atribuir valores em pixels sem evidência.
+- **Dados e segurança:** métricas com valores oficiais da `commercial-api`; pendentes = participantes sem resposta, não convidados não enviados. Tratamento de loading, falha, ausência de dados e autorização segue componentes oficiais; valores do protótipo são fictícios.
+- **Aceite visual posterior:** conferir desktop, tablet, celular e zoom, mantendo ordem, alinhamento, foco acessível e paridade com o kit. **Status:** decisão responsiva **APROVADA E DOCUMENTADA**; medidas efetivas/implementação/testes **PENDING**.
+
 ## 3. Wireframe B — detalhe de campanha
 
 ```text
