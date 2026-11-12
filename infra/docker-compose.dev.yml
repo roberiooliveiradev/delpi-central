@@ -2242,6 +2242,10 @@ services:
     build:
       context: ..
       dockerfile: engineering-api/Dockerfile
+      args:
+        # R7.2 — extras de visão (opencv/paddle) opt-in via .env:
+        # INSTALL_VISION_EXTRAS=true somente p/ execução OCR governada.
+        INSTALL_VISION_EXTRAS: ${INSTALL_VISION_EXTRAS:-false}
 
     container_name: delpi-engineering-api
     restart: unless-stopped
@@ -2334,6 +2338,9 @@ services:
       - ../shared:/shared
       - ../api-delpi/contracts:/api-delpi/contracts:ro
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/prc-attachments:/app/data/prc-attachments
+      # R7.2/R9.9 — modelos PaddleOCR provisionados read-only
+      # (mesmo padrão prod; vazio → model_not_provisioned honesto).
+      - ${OCR_MODELS_HOST_PATH:-${HOME}/.delpi/ocr-models}:/opt/ocr-models:ro
 
     depends_on:
       - keycloak

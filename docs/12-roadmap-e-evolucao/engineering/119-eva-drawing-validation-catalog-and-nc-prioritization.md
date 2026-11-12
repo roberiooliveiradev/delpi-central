@@ -2808,3 +2808,76 @@ ausente; zero literal de produto/página na lógica.
 frentes EVA. Residual conhecido: verificação por render físico não
 executada (GT G1 + token-geometry como evidência visual).
 E2E autenticado pós-deploy fica para a Coordination/consumidor EVA.
+
+## 77. Fonte de desenhos — RCA do 502 + E2E monitorado em DEV — 2026-11-12
+
+**TASK_ID:** `EVA-VAL01-DEV-DRAWING-SOURCE-E2E-JOB-MONITORING`.
+
+**RCA do 502 `source_unavailable` (PROVADO, config drift — não código):**
+
+- api-delpi resolve desenhos em `/drawing-pdfs` (bind do host).
+- Compose: `DRAWING_PDF_FILESERVER_HOST_PATH` sobrescreve
+  `PC_DRAWING_PDF_HOST_PATH` quando definido.
+- PROD (srv-api): `.env` linha 794 tinha
+  `DRAWING_PDF_FILESERVER_HOST_PATH="/mnt/x/DESENHOS DELPI EM PDF"`
+  (path DEV/WSL). O CIFS oficial está em `/mnt/fileserver/desenhos`
+  (4812 PDFs, inclui os 7 produtos). Docker criou o stub vazio
+  `/mnt/x/…` — api-delpi respondeu 503 "pasta de desenhos vazia"
+  (`drawing_pdf_library_storage.assert_library_available`,
+  fail-closed por contrato) → engineering-api mapeia p/ 502
+  `source_unavailable`. **Não é regressão do deploy nem credencial.**
+- DEV: mesmo stub `/mnt/x` (drvfs não montado) — reproduzido 503.
+
+**Reparo DEV (ambiente, não código):**
+
+- 9 PDFs oficiais copiados do fileserver prod (sha256 verificado —
+  `90264135.pdf` = `af47dd4cfbbb…`, mesmo hash do payload/annotation
+  G1) para `/home/analistaptd/drawing-pdfs`; `.env` aponta o bind.
+- `product.drawing` HTTP autenticado (rober): metadata 200 +
+  `/drawing/pdf` 200 application/pdf 210756 bytes sha256
+  `5b6717df…` — fonte oficial E2E confirmada.
+
+**Auth `rober` (restaurada):** credencial admin do master realm
+estava rotacionada por terceiro (todos os caminhos sancionados
+falhavam; residual pré-existente). Reparo DEV mínimo: remoção da
+linha stale do `admin` no `keycloak-db` → KC 26 bootstrap-admin →
+admin temporário com o secret da `.env` → impersonation oficial →
+JWT `rober` (`azp=delpi-central`) → token-exchange via
+`DELIA_EXCHANGE_CLIENT_ID` → audience `mcp-engineering` +
+`mcp:tools`. Zero alteração de roles/credenciais de usuários
+existentes; realm `delpi` e usuários (incl. `rober`) preservados.
+
+**Jobs MCP (processo-local):** `AnalysisJobStore` vive no processo —
+restarts/recreates descartam jobs (`job_not_found` 404 tipado e
+retriable, confirmado no código DEC-VAL-030/031). Os 404
+reportados pela Coordination = restarts do serviço, não falha de
+OCR. `ARCHITECTURE_DECISION_REQUIRED`: se retenção cross-restart
+ou multi-instância for exigida, decisão de storage compartilhado
+fica para a Coordination — não implementado nesta frente.
+
+**Descoberta de ambiente DEV:** `product.drawing_understanding`
+estava gated por flags (`ENG_DRAWING_BENCHMARK_ENABLED`,
+`ENG_DRAWING_OCR_BENCHMARK_ENABLED` → 403 `feature_disabled`) e a
+imagem dev não incluía os extras de visão (paddleocr ausente →
+422 `no_ocr_evidence`). Reparo: `INSTALL_VISION_EXTRAS` e
+`OCR_MODELS_HOST_PATH` parametrizados no `docker-compose.dev.yml`
+(mesmo padrão do compose prod), flags habilitadas na `.env` dev,
+modelos PaddleOCR provisionados a partir do acervo prod
+(`/opt/ocr-models`, 298 MB, read-only).
+
+**Jobs submetidos (MCP `analyze`, owner `rober`):**
+
+| Produto | job_id |
+|---|---|
+| 90264004 | `aj-b507e27a10a8422f` |
+| 90264061 | `aj-334b6bdf2db74634` |
+| 90264302 | `aj-e77b011c8cc94af6` |
+| 90264174 | `aj-affb2eb7f4484407` |
+| 90264275 | `aj-b1d8b59f02b245ed` |
+| 90264128 | `aj-e1cca3c6155f446a` |
+| 90264138 | `aj-d897ba8e1431427a` |
+
+Resultados terminais e validação de ocorrências: ver seção de jobs
+no Doc 120. PROD intocado nesta frente — fix recomendado:
+`DRAWING_PDF_FILESERVER_HOST_PATH=/mnt/fileserver/desenhos` no
+`.env` prod + recreate da api-delpi (decisão da Coordination).

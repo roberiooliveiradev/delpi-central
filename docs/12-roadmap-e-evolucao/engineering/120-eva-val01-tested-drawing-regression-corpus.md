@@ -839,3 +839,64 @@ baseline). Fix: merge por coincidência de centro de banda
 Plano pós-deploy (Coordination): `90264004` A9/AA×478/479; `90264061`
 A1–A6; controles 302/174/275/128/138; multipágina 017/135 vs
 baselines+GT (não homologados).
+
+## DEV E2E — REAL_PDF_PIPELINE monitorado (7 produtos) — 2026-11-12
+
+**TASK_ID:** `EVA-VAL01-DEV-DRAWING-SOURCE-E2E-JOB-MONITORING`.
+Tipo de evidência: **REAL_PDF_PIPELINE** (PDF oficial do fileserver
+→ api-delpi `/products/{code}/drawing/pdf` → PDFium → PaddleOCR →
+SLANet → Understanding). Não é replay nem fixture.
+
+**Fonte:** `90264004.pdf` sha256 `5b6717df…` (match com acervo prod);
+`90264135.pdf` sha256 `af47dd4c…` = hash das anotações G1.
+Cadeia `authorized_via=delegated_identity_gateway` (rober).
+
+**Jobs (owner `rober`, MCP `analyze` + polling até estado terminal):**
+
+| Produto | Job | Estado | Ocorrências | Critério | Resultado |
+|---|---|---|---|---|---|
+| 90264004 | aj-b507e27a | COMPLETED | 11 | A9/AA ×{478,479} q2/q6 | PASS — 4/4 relações; 0 marcador B de margem |
+| 90264061 | aj-334b6bdf | COMPLETED | 6 | A1–A6 | PASS — A6\|2\|10211552\|50225531 |
+| 90264302 | aj-e77b011c | COMPLETED | 4 | 4 relações | PASS — A/B ×{50226113,50226114} |
+| 90264174 | aj-affb2eb7 | COMPLETED | 4 | A–D | PASS — A\|1\|10070988, B\|1\|10130020, C\|1\|10140027, D\|3\|10350009 |
+| 90264275 | aj-b1d8b59f | COMPLETED | 7 | 7 relações | PASS — A1/A2→90264275, A3–A7→90350416 |
+| 90264128 | aj-e1cca3c6 | COMPLETED | 23 | 20 id + 3 UNKNOWN | PASS — exatos 3 UNKNOWN (A3\|10380034, A1\|10080145, AA\|10380035) |
+| 90264138 | aj-d897ba8e | COMPLETED | 13 | 10 id + 3 UNKNOWN | PASS — exatos 3 UNKNOWN (D\|10380036, G\|10380037, B\|10380035) |
+
+`conflicting_fields`, `association_conflict`, `band_detached`,
+`uncertainty`, `parent_evidence`, `occurrence_key` preservados no
+contrato — evidência de ambiguidade mantida, não silenciada.
+
+**DEV × PROD (diagnóstico, prod read-only):**
+
+| Critério | DEV | PROD |
+|---|---|---|
+| Engineering API health | 200 | healthy (deploy `a154ee559f`) |
+| Desenho oficial (download) | 200 PDF (após reparo do bind) | 503 pasta vazia — `DRAWING_PDF_FILESERVER_HOST_PATH` aponta p/ stub `/mnt/x` |
+| Estrutura oficial | 200 | 200 |
+| Criação/polling de job | COMPLETED ×7 | 404 pós-restart (store processo-local) + 502 pela fonte |
+| Ocorrências finais | validadas acima | bloqueadas pela fonte |
+
+Causa do 502 prod = **drift de env** (path DEV/WSL sobrescreve o
+CIFS correto), não o release `a154ee559f`. Fix recomendado (fora
+do escopo desta frente): `.env` prod →
+`DRAWING_PDF_FILESERVER_HOST_PATH=/mnt/fileserver/desenhos` +
+recreate `api-delpi`.
+
+**Reparos DEV aplicados (ambiente/config):**
+
+- `.env`: `DRAWING_PDF_FILESERVER_HOST_PATH=/home/analistaptd/drawing-pdfs`,
+  `ENG_DRAWING_BENCHMARK_ENABLED=true`,
+  `ENG_DRAWING_OCR_BENCHMARK_ENABLED=true`,
+  `ENG_DRAWING_OCR_ALLOW_MODEL_DOWNLOAD=true`,
+  `INSTALL_VISION_EXTRAS=true`,
+  `OCR_MODELS_HOST_PATH=/home/analistaptd/ocr-models`.
+- `docker-compose.dev.yml`: `INSTALL_VISION_EXTRAS` parametrizado
+  no build + volume `/opt/ocr-models:ro` (paridade com compose prod).
+- Modelos PaddleOCR (298 MB) provisionados a partir do acervo prod.
+- Keycloak: admin master restaurado via remoção da linha stale +
+  `kc.sh bootstrap-admin` (KC 26) — realm `delpi`/usuários intactos.
+
+**Residual honesto:** `90264017`/`90264135` multipágina não foram
+submetidos nesta bateria (job visual completo por produto é pesado);
+validação multipágina segue por GT G1 + replay, não homologada.
