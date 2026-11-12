@@ -81,7 +81,7 @@ export function HostServiceActionsPanel({
           <strong>Controle remoto</strong>
           <p>O resultado será confirmado diretamente pelo servidor Windows.</p>
         </div>
-        <span className="itp-scm__control-live"><span aria-hidden="true" /> Acesso restrito</span>
+        <span className="itp-scm__control-live"><span aria-hidden="true" /> Controle autorizado</span>
       </div>
       <div className="itp-scm__control-actions">
         {actions.map(({ name, allowed, icon: Icon }) => (
