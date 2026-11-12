@@ -1167,3 +1167,34 @@ def test_sc2_confirmed_missing_order_is_skipped_without_inventing_zero() -> None
         "ACTIVE-02"
     )
     assert gateway.st_calls == 1
+
+
+def test_horizon_rejects_balances_from_different_branch() -> None:
+    from production_control_app.domain.errors import DelpiGatewayError
+
+    service, _pubs, _snapshots, gateway = _service(
+        published=_payload([_op_row(work_center="CT-A", order="OP1")]),
+        balances={},
+        standard_times={},
+    )
+    gateway.fetch_machine_load_operation_balances = lambda **kwargs: {
+        "success": True,
+        "data": {
+            "branch": "02",
+            "items": [
+                {
+                    "production_order": "OP1",
+                    "operation_code": "01",
+                    "order_exists": True,
+                    "operation_pending_qty": 1,
+                }
+            ],
+        },
+    }
+    with pytest.raises(DelpiGatewayError, match="filial diferente"):
+        service.preview_horizon(
+            _user(*FULL_PERMS),
+            branch="01",
+            work_centers=["CT-A"],
+            hours_per_work_center=1,
+        )
