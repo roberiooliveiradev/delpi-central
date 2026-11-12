@@ -729,7 +729,8 @@ cmd_up_redis() {
         up -d --no-deps --pull missing delpi-redis
   )
   wait_healthy delpi-redis "$env_file" redis
-  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_REDIS
+  # Teto = plataforma completa autorizada (permite re-up redis após Gates C–F).
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PC_UI
 
   # Isolamento: PONG só na rede HML (via container).
   docker exec delpi-hml-redis sh -c 'redis-cli -a "$DELPI_REDIS_PASSWORD" ping' | grep -q PONG || {
@@ -791,7 +792,7 @@ print(s.get("PLUGINS_DB_HOST") if isinstance(s,dict) else "")'
         up -d --no-deps --no-build api-delpi
   )
   wait_healthy api-delpi "$env_file" api-delpi
-  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_API_DELPI
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PC_UI
 
   local code
   code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 20 \
@@ -836,7 +837,7 @@ cmd_up_plugin_ui() {
         up -d --no-deps --no-build plugin-ui
   )
   wait_healthy plugin-ui "$env_file" plugin-ui
-  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PLUGIN_UI
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PC_UI
 
   local code ctype
   code="$(curl -sS -o /tmp/hml_remote_entry.js -w '%{http_code}' --connect-timeout 5 --max-time 20 \
@@ -891,7 +892,7 @@ cmd_up_production_control_api() {
         up -d --no-deps --no-build production-control-api
   )
   wait_healthy production-control-api "$env_file" production-control-api
-  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PC_API
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PC_UI
 
   local code
   code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 20 \

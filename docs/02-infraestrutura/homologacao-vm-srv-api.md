@@ -1,10 +1,10 @@
 # Minha DELPI — Homologação na VM srv-api — registro de continuidade
 
-> **Atualizado:** 12/11/2026 · **Estado:** HTTPS HML ativo; CA pública preparada no PC de teste; login browser ainda **PENDING** até instalação da CA no store Windows.  
+> **Atualizado:** 12/11/2026 · **Estado:** Plataforma HML com 12 containers principais ativos (Gates A–F).  
 > **Repositório:** `roberiooliveiradev/delpi-central`.  
-> **TASK_ID:** `HML-TLS-BROWSER-VALIDATION-01` (continuidade de `HML-TLS-ACTIVATE`).  
-> **BASE_HEAD:** `def694b899537f279a000fff093b327e7f42f23a`.  
-> **MAIN_INTEGRATED_SHA:** *(docs desta validação)*.
+> **TASK_ID:** `HML-PLATFORM-SERVICES-01`.  
+> **BASE_HEAD (plano):** `c5bd6bc70885cddfc9d0bc367ed38d23197e9450`.  
+> **MAIN_INTEGRATED_SHA:** ver §8 (HEAD pós-ativação).
 
 ## 1. Objetivo e regras congeladas
 
@@ -16,7 +16,8 @@ Ambiente de homologação independente na mesma VM `srv-api`.
 - **Executado (pré-TLS):** DBs → Keycloak → Gateway → Core API → Portal (HTTP `:18080`).
 - **Causa raiz PKCE:** Chromium não expõe `crypto.subtle` em HTTP por IP privado → `Web Crypto API is not available`.
 - **Decisão:** Alternativa C — HTTPS interno porta `18443`, CA local, sem domínio público/internet.
-- **Ainda proibido sem autorização:** Redis; API DELPI; Plugin UI; Production Control; restore; exposição à internet; confiança indiscriminada da CA.
+- **Autorizado e ativado (Gates B–F):** Redis; API DELPI; Plugin UI; Production Control API/UI — isolados, TOTVS/ERP/e-mail/jobs produtivos bloqueados.
+- **Ainda proibido sem autorização:** restore de dados produtivos; ERP real; exposição à internet; remoção da chave CA sem backup+auth operacional.
 
 ## 2. Diagnóstico PKCE / Web Crypto (comprovado)
 
@@ -128,25 +129,61 @@ Relatório de revisão: `HML_KEYCLOAK_ADMIN_CONSOLE_REVIEW` (entrega operacional
 
 IDs e `StartedAt` do gateway produtivo preservados. Portas 80/443 produtivas intactas; HML exclusivo em `:18443`/`:18080`.
 
-## 8. Ativação plataforma HML (Gates B–F) — cenários seletivos
+## 8. Ativação plataforma HML (Gates A–F) — estado operacional
 
-`hml-compose.sh` autoriza ups isolados (não desbloqueia `baseline`/`platform`/`production-control` como pacote):
+`hml-compose.sh` autoriza ups isolados (não desbloqueia `baseline`/`platform`/`production-control` como pacote único). Allowlist de containers usa o teto da plataforma completa para permitir re-up seletivo.
 
-| Cenário | Container | Dependências prévias |
-|---|---|---|
-| `redis` | `delpi-hml-redis` | 7 base healthy; **sem** publish `:6379` |
-| `api-delpi` | `delpi-hml-api-delpi` | Redis + plugins DB; TOTVS=`totvs-disabled.hml.invalid`; migrations plugins on start |
-| `plugin-ui` | `delpi-hml-plugin-ui` | Gateway HTTPS; `remoteEntry.js` |
-| `production-control-api` | `delpi-hml-production-control-api` | api-delpi; `PC_RUN_MIGRATIONS_ON_STARTUP=true` (HML only) |
-| `production-control-ui` | `delpi-hml-production-control` | plugin-ui + PC API |
+| Gate | Cenário | Container | Resultado |
+|---|---|---|---|
+| A | segurança | — | **PASS** — `KEYCLOAK_ADMIN_PASSWORD`, `HML_TEST_PASSWORD` e `DELPI_REDIS_PASSWORD` rotacionados (sem valores no Git/logs); sessões admin/teste revogadas; Admin Console OK |
+| B | `redis` | `delpi-hml-redis` | **PASS** — `requirepass`; sem publish `:6379`; rede só `delpi-hml-network` |
+| C | `api-delpi` | `delpi-hml-api-delpi` | **PASS** — health `/apps/api-delpi/health`; migrations plugins no DB HML; TOTVS=`totvs-disabled.hml.invalid` |
+| D | `plugin-ui` | `delpi-hml-plugin-ui` | **PASS** — `remoteEntry.js` via HTTPS; MIME JS |
+| E | `production-control-api` | `delpi-hml-production-control-api` | **PASS** — health; migrations PC no plugins HML; MES/pulse/RH/jobs off |
+| F | `production-control-ui` | `delpi-hml-production-control` | **PASS** — MFE + `remoteEntry.js` HTTPS |
+
+### Persistência / migrations (somente HML)
+
+- Banco destino: `delpi-hml-postgres-plugins` (schema plugins + production-control).
+- Mecanismo: `RUN_PLUGINS_MIGRATIONS_ON_STARTUP=true` (api-delpi) e `PC_RUN_MIGRATIONS_ON_STARTUP=true` (PC API) **somente** no overlay HML.
+- Sem reset destrutivo; sem cópia de dados produtivos.
+
+### Integrações externas
+
+| Integração | Estado HML |
+|---|---|
+| TOTVS/Protheus | bloqueado (`totvs-disabled.hml.invalid` / `DISABLED`) |
+| E-mail / Graph / webhooks | desabilitados / vazios |
+| MES autonomous / downtime alerts | `false` |
+| Production Pulse / Portal RH / Requests | URLs vazias |
+| Schedulers de notificação | `false` |
+
+### Custódia CA
+
+- `infra/hml-certs/hml-local-ca.key` ainda na VM HML (não removida).
+- Backup criptografado: `~/custodia-hml-ca/hml-local-ca.key.enc` (operador@srv-api).
+- Remoção da chave live exige autorização operacional explícita + verificação do backup.
+- Certificado público Windows **não** regenerado nesta etapa.
+
+### SHA integrado
+
+- HEAD local/remoto pós-ativação: acompanhar `main` (commits `3fa89ca925` → `895a4b8bc0` → `9c3fc9ed04` + docs).
+- Checkout HML: `git pull --ff-only` em `/home/operador/projetos-teste/delpi-central`.
+
+### Produção
+
+- Gateway produtivo `StartedAt=2026-11-11T16:59:38Z` preservado após Gates A–F.
+- Redes distintas: HML `delpi-hml-network` vs prod `infra_delpi-network`.
 
 Relatório operacional: `HOMOLOGATION_PLATFORM_SERVICES_ACTIVATION_REPORT`.
 
 ## 9. Drift / pendências
 
+- Logout UI browser com sessão completa: validar com `hml-tester` pós-rotação (smoke API `/core-api/me` 401 sem token = PASS; fluxo menu logout = **PENDING** se CA Windows não estiver confiável neste agente).
+- Dados de negócio / funcionalidades PC com dados reais: **não homologados** (ambiente vazio por desenho).
 - Drift `5c20be0311` (DÉLIA) permanece para owner DÉLIA.
 - Custódia CA: backup criptografado preparado; remoção da VM exige autorização explícita.
-- Credenciais HML (`KEYCLOAK_ADMIN_PASSWORD`, `HML_TEST_PASSWORD`) rotacionadas no Gate A (valores só em `.env.hml` privado).
+- Credenciais HML rotacionadas no Gate A (+ Redis por exposição em diagnóstico); valores só em `.env.hml` privado.
 
 ## 10. Referências
 
