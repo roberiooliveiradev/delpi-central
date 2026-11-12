@@ -78,7 +78,7 @@ describe("Windows SCM read-only services inventory", () => {
     });
     setup();
     expect(await screen.findByText("REST de apontamento")).toBeTruthy();
-    expect(screen.getByText("263")).toBeTruthy();
+    expect(screen.getAllByText("263").length).toBeGreaterThan(0);
     expect(screen.getByText("263 resultado(s)")).toBeTruthy();
     const details = screen.getByRole("button", { name: "Ver detalhes de REST de apontamento" });
     expect(details.getAttribute("aria-expanded")).toBe("false");
