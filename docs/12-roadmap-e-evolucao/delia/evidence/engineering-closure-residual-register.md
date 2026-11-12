@@ -1527,3 +1527,20 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
 
 **NEXT=`COORDINATION_INT1_IDENTIFIER_RESOLUTION_AND_PARTIAL_AUTHZ_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+## 2026-11-12 — INT-1 independent coordination requirements and causal-review freeze (Doc 313)
+
+**TASK:** `DELIA-C3-T2-INT1-COORDINATION-REQUIREMENTS-AND-CAUSAL-CLOSURE-REVIEW-01` · **DOC_ONLY** · evidence reviewed at `a832b5318dfa388903a998ff8609d3dbf7931db1` · no functional changes or new eval.
+
+| Residual / gate | State | Required evidence or disposition |
+|---|---|---|
+| INT1-PO-P1-P2-P3-CONSOLIDATED-ACCEPTANCE | **PENDING** | Reconcile original PO failure vs later SHA/config/live user-facing outcomes; no automatic PASS from isolated probes |
+| INT1-PROJECTION-BUDGET | **OPEN** | Large TÉO trees truncate; investigate owner pagination/continuation before increasing context budget |
+| INT1-IDENTIFIER-COVERAGE-PROVENANCE | **TO_VERIFY** | Exact scalar match across arbitrary owner structured fields may be incidental; test authoritative object/root/obligation match and global walk budget |
+| INT1-PARTIAL-USER-GROUNDING | **TO_VERIFY** | Owner TÉO SUCCESS + DAVI DENY proven; confirm user-facing permitted evidence has provenance and truthful partial status on final path |
+| INT1-RENAMED-SCHEMA-GENERALIZATION | **TO_VERIFY** | Locate specific real proof for original acceptance requirement; do not infer from 4 independent known sample runs |
+| DELIA-PREEXISTING-TEST-DEBT | **OPEN** | Two baseline assertions reported failing; owner and impact on mandatory regression gate to be reconciled |
+| INT1-STAGE | **PENDING_COORDINATION_REVIEW** | No auto advancement; final independent evidence matrix required |
+| INT1-CLOSED | **NO** | — |
+
+**CAUSAL REVIEW RULE:** model-selection hypothesis is never the default explanation. Check B1/B2/B3 contract delivery, local argument mutation/schema, owner/AuthZ, evidence coverage and user outcome before attributing to the LLM. First-divergence evidence is mandatory. **NEXT=`COORDINATION_INT1_REQUIREMENTS_EVIDENCE_MATRIX_AND_FINITE_ACCEPTANCE_DECISION`**. No new task loop without bounded evidence-based blocker.
