@@ -614,9 +614,9 @@ services:
         required: true
       - path: .env.hml
         required: false
-    depends_on: !override
-      postgres-plugins:
-        condition: service_started
+    # Deps (postgres-plugins/core/keycloak) sobem por cenário; profile isolado
+    # não inclui databases — mesmo padrão de engineering-api/requests-api.
+    depends_on: !override {}
     networks: !override
       - delpi-hml
     volumes: !override
