@@ -10,6 +10,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request
     DEFAULT_PAGE_SIZE,
     MAX_PAGE_SIZE,
     build_lead_time_events_sql,
+    build_lead_time_products_sql,
     build_lead_time_pending_sql,
     build_lead_time_approvers_sql,
     MAX_PENDING_REQUESTS,
@@ -71,6 +72,36 @@ class PurchaseRequestApprovalLeadTimeRepository(BaseRepository):
             approver_rows = repo.execute_query(
                 build_lead_time_approvers_sql(where), tuple(params)
             )
+            pending_keys = [
+                (str(row["branch"]).strip(), str(row["request_number"]).strip())
+                for row in pending_rows
+            ]
+            # A single bounded query enriches both tables. It does not
+            # alter the SCR-based cohort or the average approval time.
+            product_keys = list(dict.fromkeys([*keys, *pending_keys]))
+            if product_keys:
+                products_sql, products_params = build_lead_time_products_sql(
+                    product_keys
+                )
+                product_rows = repo.execute_query(
+                    products_sql, tuple(products_params)
+                )
+            else:
+                product_rows = []
+
+        products_by_sc: dict[tuple[str, str], list[dict[str, Any]]] = {}
+        for row in product_rows:
+            key = (
+                str(row.get("branch") or "").strip(),
+                str(row.get("request_number") or "").strip(),
+            )
+            products_by_sc.setdefault(key, []).append({
+                "product_code": str(row.get("product_code") or "").strip(),
+                "product_description": (
+                    str(row.get("product_description") or "").strip() or None
+                ),
+                "line_count": int(row.get("line_count") or 0),
+            })
 
         events_by_sc: dict[tuple[str, str], list[dict[str, str]]] = {}
         seen_events: set[tuple[str, str, str, str, str, str]] = set()
@@ -104,6 +135,7 @@ class PurchaseRequestApprovalLeadTimeRepository(BaseRepository):
                 "requester_name": row.get("requester_name"),
                 "requester_user_id": row.get("requester_user_id"),
                 "item_count": int(row.get("item_count") or 0),
+                "products": products_by_sc.get((branch, number_value), []),
                 "final_approval_date": row.get("final_approval_date"),
                 "approval_levels": int(row.get("approval_levels") or 0),
                 "lead_days": int(row.get("lead_days") or 0),
@@ -123,6 +155,7 @@ class PurchaseRequestApprovalLeadTimeRepository(BaseRepository):
                 "issue_date": row.get("issue_date"),
                 "requester_name": row.get("requester_name"),
                 "sc1_approved": int(row.get("unapproved_items") or 0) == 0,
+                "products": products_by_sc.get(key, []),
                 "pending_approvers": [],
             })
             approver = {

@@ -381,3 +381,42 @@ ORDER BY
     CASE WHEN M.avg_days IS NULL THEN 1 ELSE 0 END,
     M.avg_days DESC, M.approvals DESC, Codes.approver_code
 """
+
+
+MAX_PRODUCT_SC_KEYS = MAX_PAGE_SIZE + MAX_PENDING_REQUESTS
+
+
+def build_lead_time_products_sql(
+    keys: list[tuple[str, str]],
+) -> tuple[str, list[str]]:
+    """Fetch products once for the visible approved/pending SCs.
+
+    Group by product code + description, not by individual SC1 line, so
+    repeated items do not multiply SCs or clutter either dashboard table.
+    All keys are bound parameters; never interpolate user document numbers.
+    """
+    if not keys or len(keys) > MAX_PRODUCT_SC_KEYS:
+        raise ValueError("Quantidade de SCs inválida para buscar produtos.")
+    clauses = [
+        "(RTRIM(SC1.C1_FILIAL) = ? AND RTRIM(SC1.C1_NUM) = ?)"
+        for _ in keys
+    ]
+    params = [value for key in keys for value in key]
+    sql = f"""
+SELECT
+    RTRIM(SC1.C1_FILIAL) AS branch,
+    RTRIM(SC1.C1_NUM) AS request_number,
+    RTRIM(SC1.C1_PRODUTO) AS product_code,
+    NULLIF(RTRIM(SC1.C1_DESCRI), '') AS product_description,
+    COUNT(*) AS line_count
+FROM SC1010 SC1 WITH (NOLOCK)
+WHERE SC1.D_E_L_E_T_ = ''
+  AND ({' OR '.join(clauses)})
+GROUP BY
+    RTRIM(SC1.C1_FILIAL),
+    RTRIM(SC1.C1_NUM),
+    RTRIM(SC1.C1_PRODUTO),
+    NULLIF(RTRIM(SC1.C1_DESCRI), '')
+ORDER BY branch, request_number, product_code, product_description
+"""
+    return sql, params

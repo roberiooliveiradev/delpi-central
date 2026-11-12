@@ -1,5 +1,11 @@
 import { httpGet, suppliesApiUrl } from "../../api/httpClient";
 
+export type ApprovalRequestProduct = {
+  product_code: string;
+  product_description: string | null;
+  line_count: number;
+};
+
 export type ApprovalLeadTimeEvent = {
   level: string;
   approved_at: string;
@@ -24,6 +30,7 @@ export type ApprovalPendingRequest = {
   issue_date: string;
   requester_name: string | null;
   sc1_approved: boolean;
+  products: ApprovalRequestProduct[];
   pending_approvers: ApprovalPendingApprover[];
 };
 
@@ -45,6 +52,7 @@ export type ApprovalLeadTimeRecord = {
   requester_name: string | null;
   requester_user_id: string | null;
   item_count: number;
+  products: ApprovalRequestProduct[];
   final_approval_date: string;
   approval_levels: number;
   lead_days: number;

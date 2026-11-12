@@ -20,6 +20,7 @@ import {
 } from "./approvalLeadTimeApi";
 import { ApprovalLeadTimeApproverInsights } from "./ApprovalLeadTimeApproverInsights";
 import { ApprovalLeadTimePendingRequests } from "./ApprovalLeadTimePendingRequests";
+import { ApprovalRequestProducts } from "./ApprovalRequestProducts";
 import "./ApprovalLeadTimePage.css";
 
 function localToday(): string {
@@ -221,7 +222,7 @@ export function ApprovalLeadTimePage({ basePath }: { basePath: string }) {
               <div className="sp-approval-lead-time__table-scroll">
                 <table className="sp-approval-lead-time__table">
                   <thead><tr>
-                    <th>SC</th><th>Unidade</th><th>Solicitante</th>
+                    <th>SC</th><th>Unidade</th><th>Solicitante</th><th>Produtos (código e descrição)</th>
                     <th>Criação</th><th>Última aprovação</th><th>Último aprovador</th><th>Níveis</th><th>Prazo</th><th>Etapas</th>
                   </tr></thead>
                   <tbody>
@@ -234,6 +235,9 @@ export function ApprovalLeadTimePage({ basePath }: { basePath: string }) {
                         </td>
                         <td>{item.branch}</td>
                         <td>{item.requester_name || "Não identificado"}</td>
+                        <td className="sp-approval-lead-time__product-cell">
+                          <ApprovalRequestProducts products={item.products} />
+                        </td>
                         <td>{dateLabel(item.issue_date)}</td>
                         <td>{dateLabel(item.final_approval_date)}</td>
                         <td className="sp-approval-lead-time__name-cell">

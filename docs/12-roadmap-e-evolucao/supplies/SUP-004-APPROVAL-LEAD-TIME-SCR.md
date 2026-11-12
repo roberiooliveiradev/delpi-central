@@ -126,3 +126,29 @@ histórico SCR no PostgreSQL do Portal.
    a etapa anterior e não imputa 10 dias ao terceiro aprovador.
 6. Validar gráfico em desktop lado a lado e em mobile empilhado,
    tipos/contrastes, e tabela de médias incluindo tamanho da amostra.
+
+
+
+## Evolução #1004: produtos nas tabelas de pendências e histórico
+
+- A coluna **Produtos (código e descrição)** aparece tanto em
+  **Aguardando aprovação** quanto em **Solicitações com histórico comprovado**.
+- Origem: `SC1010.C1_PRODUTO` e `SC1010.C1_DESCRI`, somente itens ativos
+  (`D_E_L_E_T_ = ''`). A descrição é a registrada na própria SC, não uma
+  descrição de catálogo posterior.
+- Uma SC pode conter diversos itens: a consulta agrupa por
+  **filial + número SC + código do produto + descrição**, exibindo
+  `line_count` quando o mesmo produto reaparece em várias linhas.
+  O primeiro produto fica visível e os demais podem ser expandidos.
+- O backend consulta os produtos em **um único SELECT parametrizado** para
+  as SCs da página histórica (até 100) e da lista de pendências (até 100);
+  não há uma consulta por linha. Se um produto não tem descrição, a UI informa
+  **Descrição não informada** em vez de inventar dados.
+- Os dados são acrescentados em `items[].products` e
+  `pending_items[].products`; `summary` e os indicadores permanecem
+  inalterados. SCR010 é a fonte exclusiva dos eventos de alçada.
+- Smoke: SC `01/178771` tem códigos `30194570` (**TUBO PVC 75MM**) e
+  `30193744` (**CAP ESGOTO 75MM**); SC pendente `01/179909` contém
+  `41000019` (**CURSOS E TREINAMENTO PESSOAL**). A SC `02/169847`
+  contém linhas repetidas do código `41000018` (**ALIMENTAÇÃO**), que
+  devem aparecer agrupadas sem duplicar o registro da solicitação.

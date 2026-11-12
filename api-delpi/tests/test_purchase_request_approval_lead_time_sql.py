@@ -4,6 +4,7 @@ import pytest
 
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_approval_lead_time_sql import (
     build_lead_time_events_sql,
+    build_lead_time_products_sql,
     build_lead_time_filter,
     build_lead_time_page_sql,
     build_lead_time_summary_sql,
@@ -99,6 +100,24 @@ def test_batch_events_deduplicate_groups_without_n_plus_one():
     assert params == ["01", "171945", "02", "169847"]
 
 
+def test_products_sql_is_batched_filtered_and_grouped_without_scr_fanout():
+    sql, params = build_lead_time_products_sql([
+        ("01", "178771"), ("01", "179909"), ("02", "169847")
+    ])
+    assert "SC1010 SC1" in sql
+    assert "C1_PRODUTO" in sql and "C1_DESCRI" in sql
+    assert "SC1.D_E_L_E_T_ = ''" in sql
+    assert "COUNT(*) AS line_count" in sql
+    assert "GROUP BY" in sql
+    assert "SCR010" not in sql and "SAK010" not in sql
+    assert "?" in sql and "178771" not in sql  # all keys are parameters
+    assert params == ["01", "178771", "01", "179909", "02", "169847"]
+    with pytest.raises(ValueError):
+        build_lead_time_products_sql([])
+    with pytest.raises(ValueError):
+        build_lead_time_products_sql([("01", str(i)) for i in range(201)])
+
+
 class FakeRepository(PurchaseRequestApprovalLeadTimeRepository):
     def __enter__(self):
         return self
@@ -115,6 +134,18 @@ class FakeRepository(PurchaseRequestApprovalLeadTimeRepository):
         }
 
     def execute_query(self, sql, params):
+        if "COUNT(*) AS line_count" in sql and "C1_PRODUTO" in sql:
+            assert params == ("01", "171945", "01", "179909")
+            return [
+                {"branch": "01", "request_number": "171945",
+                 "product_code": "51000026",
+                 "product_description": "SERVIÇOS PRESTADOS POR TERCEIROS",
+                 "line_count": 1},
+                {"branch": "01", "request_number": "179909",
+                 "product_code": "41000019",
+                 "product_description": "CURSOS E TREINAMENTO PESSOAL",
+                 "line_count": 1},
+            ]
         if "pending_heads AS" in sql:
             return [{
                 "branch": "01", "request_number": "179909",
@@ -147,7 +178,7 @@ class FakeRepository(PurchaseRequestApprovalLeadTimeRepository):
              "approver_code": "000007", "approver_name": "LAERCIO AUGUSTO KOCH"},
             {"branch": "01", "request_number": "171945", "level": "01",
              "approved_at": "2026-02-20", "action_user_code": "000047",
-             "approver_code": "000007"},
+             "approver_code": "000007", "approver_name": "LAERCIO AUGUSTO KOCH"},
             {"branch": "01", "request_number": "171945", "level": "03",
              "approved_at": "2026-02-23", "action_user_code": "000028",
              "approver_code": "000003", "approver_name": "DENNIS PICCOLI"},
@@ -163,6 +194,12 @@ def test_repository_counts_sc_once_and_deduplicates_approver_events():
     assert data["total"] == 1
     assert data["summary"]["avg_lead_days"] == 10
     assert data["items"][0]["lead_days"] == 10
+    assert data["items"][0]["products"] == [{
+        "product_code": "51000026",
+        "product_description": "SERVIÇOS PRESTADOS POR TERCEIROS",
+        "line_count": 1,
+    }]
+    assert data["pending_items"][0]["products"][0]["product_code"] == "41000019"
     assert len(data["items"][0]["events"]) == 2
     assert data["items"][0]["events"][0]["approver_name"] == "LAERCIO AUGUSTO KOCH"
     assert data["pending_total"] == 1

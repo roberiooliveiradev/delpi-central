@@ -2,6 +2,7 @@ import { buildPurchaseRequestDetailPath } from "../../app/pluginRoutes";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { SuppliesEmptyState, SuppliesSectionCard } from "../../app/suppliesUi";
 import type { ApprovalPendingRequest } from "./approvalLeadTimeApi";
+import { ApprovalRequestProducts } from "./ApprovalRequestProducts";
 
 function localDateLabel(value: string | null | undefined): string {
   if (!value) return "—";
@@ -32,7 +33,8 @@ export function ApprovalLeadTimePendingRequests({
           <table className="sp-approval-lead-time__table">
             <thead>
               <tr>
-                <th>SC</th><th>Filial</th><th>Solicitante</th><th>Criação da SC</th>
+                <th>SC</th><th>Filial</th><th>Solicitante</th>
+                <th>Produtos (código e descrição)</th><th>Criação da SC</th>
                 <th>Aprovador pendente</th><th>Nível</th>
                 <th>Aguardando desde</th><th>Dias em aberto</th>
                 <th>Consistência</th>
@@ -48,6 +50,9 @@ export function ApprovalLeadTimePendingRequests({
                   </td>
                   <td>{item.branch}</td>
                   <td>{item.requester_name || "Não identificado"}</td>
+                  <td className="sp-approval-lead-time__product-cell">
+                    <ApprovalRequestProducts products={item.products} />
+                  </td>
                   <td>{localDateLabel(item.issue_date)}</td>
                   <td className="sp-approval-lead-time__pending-cell">
                     {item.pending_approvers.map((person) => (

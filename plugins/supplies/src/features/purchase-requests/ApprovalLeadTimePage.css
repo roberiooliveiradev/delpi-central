@@ -88,3 +88,49 @@
 @media (max-width: 980px) {
   .sp-approval-lead-time__charts { grid-template-columns: minmax(0, 1fr); }
 }
+
+
+
+/* One SC stays one row, even when it has several SC1010 items/products. */
+.sp-approval-lead-time__product-cell {
+  min-width: 260px;
+  max-width: 370px;
+  white-space: normal;
+}
+.sp-approval-lead-time__products {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  max-width: 360px;
+}
+.sp-approval-lead-time__product-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  line-height: 1.35;
+}
+.sp-approval-lead-time__product-code {
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--delpi-ui-text-primary, inherit);
+}
+.sp-approval-lead-time__product-description {
+  font-size: 0.77rem;
+  color: var(--delpi-ui-text-secondary, inherit);
+  overflow-wrap: anywhere;
+}
+.sp-approval-lead-time__product-count {
+  font-size: 0.72rem;
+  opacity: 0.73;
+}
+.sp-approval-lead-time__products-more > summary {
+  width: fit-content;
+  font-size: 0.77rem;
+  color: #008dbd;
+  cursor: pointer;
+}
+.sp-approval-lead-time__products-expanded {
+  display: grid;
+  gap: 8px;
+  padding: 9px 0 2px;
+}
