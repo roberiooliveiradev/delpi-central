@@ -564,6 +564,42 @@ class GptActionsDispatchService:
             )
         return codigo
 
+    def _resolve_processo_row(self, processo_ref: str) -> dict[str, Any]:
+        """Resolve GPT `processo_id` (UUID or codigo_processo) to the row.
+
+        Reuses ProcessoRepository.get — the canonical resolver that
+        already accepts either the internal id or the user-facing
+        business code (PROC-XXXX).
+        """
+        ref = (processo_ref or "").strip()
+        if not ref:
+            raise GptActionsError(
+                "Unknown/invalid process reference (processo_id).",
+                400,
+            )
+        row = ProcessoRepository().get(ref)
+        if not row:
+            raise GptActionsError("Processo não encontrado.", 404)
+        return row
+
+    def _resolve_processo_ref(self, processo_ref: str) -> str:
+        """Normalize GPT `processo_id` (UUID or codigo_processo) to UUID.
+
+        Document/analyze paths then operate on the authoritative UUID
+        instead of degrading a code lookup into a uuid-cast repository
+        error (500).
+        """
+        resolved = str(
+            self._resolve_processo_row(processo_ref).get("processo_id")
+            or ""
+        ).strip()
+        if not resolved:
+            raise GptActionsError(
+                "Unknown/invalid process reference (processo_id).",
+                400,
+            )
+        return resolved
+
     _PROCESS_SCOPED_VIEWS = frozenset(
         {
             GptAnalysisView.PROCESS_REVISION_COMPARISON,
@@ -611,6 +647,8 @@ class GptActionsDispatchService:
 
         if analysis_view in self._PROCESS_SCOPED_VIEWS:
             pid = self._require_analyze_id(processo_id, "processo_id", analysis_view)
+            pid = self._resolve_processo_ref(pid)
+            processo_id = pid
             self._raise_http_err(check_processo_view_access(request, pid))
         elif analysis_view in self._REVISION_SCOPED_VIEWS:
             rid = self._require_analyze_id(revisao_id, "revisao_id", analysis_view)
@@ -631,8 +669,9 @@ class GptActionsDispatchService:
                     check_instancia_view_access(request, str(instancia_id))
                 )
             else:
+                processo_id = self._resolve_processo_ref(str(processo_id))
                 self._raise_http_err(
-                    check_processo_view_access(request, str(processo_id))
+                    check_processo_view_access(request, processo_id)
                 )
         elif analysis_view != GptAnalysisView.META:
             self._raise_http_err(
@@ -1540,11 +1579,20 @@ class GptActionsDispatchService:
                 raise
 
         if entity == GptEntity.DECOMPOSITION_TREE:
+            processo = self._resolve_processo_row(rid)
+            rid = str(processo.get("processo_id") or "").strip()
             self._raise_http_err(check_processo_view_access(request, rid))
             row = ProcessoDecomposicaoRepository().get(rid)
             if not row:
                 raise GptActionsError("Decomposição não encontrada.", 404)
-            return row_to_json(row)
+            out = row_to_json(row)
+            # Echo the resolved business identity — the caller asked by
+            # user-facing code, and the authoritative record attests the
+            # code↔document binding (identifier coverage needs owner
+            # data, not the rendered UUID alone).
+            out["codigo_processo"] = processo.get("codigo_processo")
+            out["nome_processo"] = processo.get("nome_processo")
+            return out
 
         if entity == GptEntity.INSTANCE_DECOMPOSITION_SCOPE:
             self._raise_http_err(check_instancia_view_access(request, rid))
@@ -1560,11 +1608,16 @@ class GptActionsDispatchService:
             return row_to_json(row)
 
         if entity == GptEntity.PROCESS_DIAGRAM:
+            processo = self._resolve_processo_row(rid)
+            rid = str(processo.get("processo_id") or "").strip()
             self._raise_http_err(check_processo_view_access(request, rid))
             row = ProcessoDiagramRepository().get(rid)
             if not row:
                 raise GptActionsError("Diagrama não encontrado.", 404)
-            return row_to_json(row)
+            out = row_to_json(row)
+            out["codigo_processo"] = processo.get("codigo_processo")
+            out["nome_processo"] = processo.get("nome_processo")
+            return out
 
         if entity == GptEntity.INSTANCE_DIAGRAM_SCOPE:
             self._raise_http_err(check_instancia_view_access(request, rid))
@@ -1584,6 +1637,8 @@ class GptActionsDispatchService:
             # working copy + revision list + latest migration record (G8).
             # READ only; canonical writes go through the document API and
             # the governed migration operation, never record_write.
+            processo = self._resolve_processo_row(rid)
+            rid = str(processo.get("processo_id") or "").strip()
             self._raise_http_err(check_processo_view_access(request, rid))
             docs = ProcessBpmnDocumentRepository()
             doc = docs.get_active(rid)
@@ -1598,6 +1653,8 @@ class GptActionsDispatchService:
             return row_to_json(
                 {
                     **doc.to_dict(),
+                    "codigo_processo": processo.get("codigo_processo"),
+                    "nome_processo": processo.get("nome_processo"),
                     "working_copy_xml": doc.working_copy_xml,
                     "revisions": [rev.to_dict() for rev in revisions],
                     "migration": migration,
@@ -3152,6 +3209,7 @@ class GptActionsDispatchService:
         """Persist document entities via canonical write services (UI parity)."""
         try:
             if entity == GptEntity.DECOMPOSITION_TREE:
+                parent_id = self._resolve_processo_ref(parent_id)
                 self._raise_http_err(check_processo_manage_access(request, parent_id))
                 conteudo = (
                     data.get("conteudo") if isinstance(data.get("conteudo"), dict) else data

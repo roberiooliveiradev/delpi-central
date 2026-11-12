@@ -2107,6 +2107,78 @@ def _authoritative_structure_root(
     return code.strip()
 
 
+def _owner_scalar_field_values(
+    value: Any,
+    *,
+    _depth: int = 0,
+    _budget: tuple[int, ...] = (256,),
+) -> set[str]:
+    """Scalar values inside an owner structured payload.
+
+    Bounded recursive walk — owner business records only. Strings are
+    collected verbatim; ints become their decimal form (business codes
+    such as ``code=90260147`` may serialize as JSON numbers). Rendered
+    content text is never consulted — callers filter to identifier
+    literals so a prose mention cannot close coverage.
+    """
+    if _depth > 8 or _budget[0] <= 0:
+        return set()
+    _budget = (_budget[0] - 1,)
+    if isinstance(value, str):
+        return {value.strip()} if value.strip() else set()
+    if isinstance(value, bool):
+        return set()
+    if isinstance(value, int):
+        return {str(value)}
+    if isinstance(value, Mapping):
+        found: set[str] = set()
+        for item in list(value.values())[:64]:
+            found |= _owner_scalar_field_values(
+                item, _depth=_depth + 1, _budget=_budget
+            )
+            if _budget[0] <= 0:
+                break
+        return found
+    if isinstance(value, (list, tuple)):
+        found = set()
+        for item in list(value)[:64]:
+            found |= _owner_scalar_field_values(
+                item, _depth=_depth + 1, _budget=_budget
+            )
+            if _budget[0] <= 0:
+                break
+        return found
+    return set()
+
+
+def _attempt_identifier_roots(
+    attempt: GovernedCapabilityAttempt,
+) -> frozenset[str]:
+    """Authoritative identifier values attested by one business attempt.
+
+    Union of the structure root (DAVI-style ``data.root.code`` /
+    flattened min-depth record code) and scalar field values the owner
+    returned that ARE identifier literals — ``codigo_processo=
+    PROC-0034`` closes coverage for ``PROC-0034``; a prose field merely
+    mentioning the code does not (fullmatch, never substring).
+    Capability names and rendered text are never consulted.
+    """
+    values = _owner_scalar_field_values(
+        attempt.outcome.structured
+        if attempt.outcome is not None
+        else None
+    )
+    roots = {
+        item
+        for item in values
+        if _IDENTIFIER_LITERAL_RE.fullmatch(item)
+    }
+    root = _authoritative_structure_root(attempt)
+    if isinstance(root, str) and root.strip():
+        roots.add(root.strip())
+    return frozenset(roots)
+
+
 def _identifier_arg_keys(
     properties: Mapping[str, Any],
     names: list[str] | None,
@@ -3893,9 +3965,9 @@ def _uncovered_named_identifiers(
     )
     covered: set[str] = set()
     for attempt in business:
-        root = _authoritative_structure_root(attempt)
-        if isinstance(root, str) and root.strip():
-            covered.add(root.strip().casefold())
+        covered.update(
+            item.casefold() for item in _attempt_identifier_roots(attempt)
+        )
     return [item for item in found if item.casefold() not in covered]
 
 

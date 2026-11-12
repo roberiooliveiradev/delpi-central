@@ -39,6 +39,7 @@ from app.application.interaction.activity import (
 from app.application.interaction.argument_validation import (
     MAX_ARGUMENT_KEYS,
     ORCHESTRATED_FIELDS,
+    explain_arguments as _explain_instance,
     validate_arguments as _validate_instance,
     validate_untyped_arguments,
 )
@@ -53,6 +54,7 @@ from app.application.interaction.capability_attempt import (
 )
 from app.application.interaction.contracts import (
     GovernedCapabilityProvenance,
+    LIMITATION_ARGUMENT_SCHEMA_REJECTED,
     LIMITATION_CAPABILITY_SURFACE_LISTING,
     LIMITATION_INSUFFICIENT_EVIDENCE,
     LIMITATION_RESULT_TRUNCATED,
@@ -2464,12 +2466,30 @@ class OperationalCapabilityOrchestrator:
                 return GovernedCapabilityAttempt(
                     status=GovernedCapabilityStatus.NOT_APPLICABLE,
                     correlation_id=correlation,
+                    content=(
+                        "INVALID_ARGUMENTS: arguments could not be "
+                        "validated against the owner schema."
+                    ),
+                    limitations=(LIMITATION_ARGUMENT_SCHEMA_REJECTED,),
                     error_code="arguments_schema_rejected",
                 )
             if validated is None:
+                # Actionable boundary feedback: name the offending
+                # field and the expected shape so the agent can correct
+                # the next call instead of blind-retrying the same
+                # rejection. Field names/types only — never values.
+                _reason = _explain_instance(
+                    args, descriptor.input_schema
+                )
                 return GovernedCapabilityAttempt(
                     status=GovernedCapabilityStatus.NOT_APPLICABLE,
                     correlation_id=correlation,
+                    content=(
+                        "INVALID_ARGUMENTS: "
+                        + (_reason or "arguments violate the owner schema")
+                        + "."
+                    ),
+                    limitations=(LIMITATION_ARGUMENT_SCHEMA_REJECTED,),
                     error_code="arguments_schema_rejected",
                 )
             args = dict(validated)

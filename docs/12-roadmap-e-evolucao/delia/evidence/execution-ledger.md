@@ -6577,3 +6577,17 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `311-int1-independent-semantic-generalization-and-partial-authorization-evaluation.md`.
 - **INT1_STAGE_ACCEPTANCE=PENDING_COORDINATION_REVIEW**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_GENERALIZATION_AND_PARTIAL_AUTHZ_INDEPENDENT_REVIEW`.
+
+### INT-1 business identifier resolution + partial authz schema remediation — 2026-11-12
+
+- **TASK:** `DELIA-C3-T2-INT1-IDENTIFIER-RESOLUTION-AND-PARTIAL-AUTHZ-SCHEMA-REMEDIATION-01`.
+- **EXISTING_EQUIVALENT=YES** (`ProcessoRepository.get` canonical uuid-or-code resolver); **REUSE_DECISION=REUSE** owner-side + **EXTEND** DÉLIA validation/projection (no new Agent/router/resolver engine).
+- **INSTRUCTION:** v2-2 `generalist-semantic-v2-2-object-authz-continuity` / fp `3692299dac74c26e` MATCH — **unchanged**.
+- **ROOT CAUSES:** A1 owner uuid-cast on decomposition/document paths; A2 coverage recognized only `data.root.code`; B1 silent schema rejection; B2 misleading "different capability" coverage_note; B3 null capability_id in rejected-attempt trace; **B4 focus helper injected undeclared top-level `query`** — self-inflicted `arguments_schema_rejected` ×7 / 0 MCP invokes (Doc 311 PARTIAL).
+- **DETERMINISTIC:** new `test_int1_identifier_resolution_and_schema_feedback.py` (19) + `test_gpt_process_business_code_resolution.py` PASS; adjacent suites PASS; full delia-api suite green minus 2 pre-existing baseline failures.
+- **EVAL REAL:** `or-qwen14b-64d9e5b4d58b` IG2 GROUNDED/partial (truncation, coverage closed); `or-qwen14b-a06d048c2597` R2 GROUNDED/complete + R3 honest clarification; `or-qwen14b-84c04f1194d2` R4 `e2e-delia` 5 invokes — TÉO SUCCESS (codigo_processo echoed) + DAVI AUTHZ_DENIED → partial answer, `authorization_denied_partial`, no bypass/leak. Diagnostic reproductions `or-qwen14b-63f52d5f8dfc`/`0369b7bfbd39`/`d95ed7d02ba9`. TOTAL_INVESTIGATIONS≤8; TOKEN_USAGE/COST=UNAVAILABLE.
+- **GENERALIZATION_PROVEN_IN_SAMPLE**; no universal claim.
+- **AGENT_COUNT=1**; **NEW_ROUTER=NO**; **NEW_PLANNER=NO**; **NEW_RESOLVER_ENGINE=NO**; **PERMISSIONS_CHANGED=NO**; **PROD_UNTOUCHED=YES**; eval TÉO isolated container + ephemeral egress host; FULL_BATTERY=NOT_RUN.
+- **Doc:** `312-int1-business-identifier-resolution-mcp-schema-integrity-and-partial-authorization-real-qwen-remediation.md`.
+- **INT1_STAGE_ACCEPTANCE=PENDING_COORDINATION_REVIEW**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_IDENTIFIER_RESOLUTION_AND_PARTIAL_AUTHZ_INDEPENDENT_REVIEW`.

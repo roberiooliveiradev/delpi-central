@@ -48,6 +48,12 @@ LIMITATION_CAPABILITY_SURFACE_LISTING = "capability_surface_listing"
 # evidence list is partial, never proof of owner-side completeness.
 LIMITATION_EVIDENCE_PROJECTION_PARTIAL = "evidence_projection_partial"
 
+# DELIA-C3-T2-INT1-IDENTIFIER-RESOLUTION-AND-PARTIAL-AUTHZ-01: the
+# governed boundary rejected the generated arguments against the live
+# owner schema — correction signal for the next call, never an owner
+# execution failure.
+LIMITATION_ARGUMENT_SCHEMA_REJECTED = "argument_schema_rejected"
+
 # DELIA-C3-NONBLOCKING-EVIDENCE-INTERPRETATION-01: bounded caveat — the
 # semantic judgment found returned records non-corresponding to the
 # goal. An annotation, never suppression: the authorized evidence is

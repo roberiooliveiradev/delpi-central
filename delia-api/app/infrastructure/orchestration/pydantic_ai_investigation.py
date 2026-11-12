@@ -33,7 +33,7 @@ import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Literal, Mapping, Sequence
+from typing import Any, Callable, Container, Literal, Mapping, Sequence
 
 from app.application.capability_provision.contracts import (
     InvestigationAnswer,
@@ -46,6 +46,7 @@ from app.application.capability_provision.generic_evidence_renderer import (
     extract_pagination_envelope,
 )
 from app.application.interaction.contracts import (
+    LIMITATION_ARGUMENT_SCHEMA_REJECTED,
     LIMITATION_RESULT_TRUNCATED,
 )
 from app.application.capability_provision.governed_stage_gates import (
@@ -58,7 +59,7 @@ from app.application.capability_provision.semantic_capability_support import (
     INVESTIGATION_PROGRESS_RELATED,
     _IDENTIFIER_LITERAL_RE,
     _LAST_CATALOG_FAILURES,
-    _authoritative_structure_root,
+    _attempt_identifier_roots,
     _emit_activity,
     _is_business_evidence_attempt,
     classify_investigation_progress,
@@ -365,9 +366,14 @@ def continuity_model_retry_allowed(
 
     Authorization denials are terminal for the protected evidence: a
     generic continuity retry must never encourage bypass via another
-    owner for the same data.
+    owner for the same data. Argument-schema rejections already carry
+    actionable INVALID_ARGUMENTS feedback in the observation — a
+    generic "select a different capability" retry would mask the real
+    correction and push the model away from the right tool.
     """
     if _is_authorization_denial(attempt):
+        return False
+    if LIMITATION_ARGUMENT_SCHEMA_REJECTED in (attempt.limitations or ()):
         return False
     if already_used or not under_tool_limit:
         return False
@@ -562,6 +568,7 @@ def _attempt_projection(
     plan: object | None = None,
     operation_class: str | None = None,
     prior_content_fingerprints: frozenset[str] | set[str] = frozenset(),
+    capability_id: str | None = None,
 ) -> dict[str, Any]:
     structured = (
         attempt.outcome.structured
@@ -654,6 +661,9 @@ def _attempt_projection(
     projection: dict[str, Any] = {
         "observation_index": observation_index,
         "evidence_handle": f"obs:{observation_index}",
+        # Requested capability — rejected attempts carry no provenance,
+        # so the id must come from the invocation boundary.
+        "capability_id": capability_id,
         # Same deterministic classification the governed acceptor
         # applies: discovery metadata, errors and empty results are
         # observations the model may READ, never citable business
@@ -719,6 +729,34 @@ def _attempt_projection(
             "another capability for the same protected evidence. "
             "Communicate the access limitation; preserve any separately "
             "authorized observations."
+        )
+    elif LIMITATION_ARGUMENT_SCHEMA_REJECTED in (attempt.limitations or ()):
+        # Fixable contract violation on THIS capability — the generic
+        # "select a different capability" note would push the model
+        # away from the right tool and replay the same rejection. When
+        # the owner exposes a context-discovery capability, name it:
+        # the nested argument contract lives there, not in the tool
+        # schema's top-level fields.
+        _group = (
+            capability_id.split(".", 1)[0].strip()
+            if isinstance(capability_id, str) and "." in capability_id
+            else ""
+        )
+        _discovery_hint = (
+            f" Call {_group}.get_context to learn the entity/argument "
+            "contract before retrying."
+            if _group
+            else " Consult the owner's context capability before "
+            "retrying."
+        )
+        projection["coverage_note"] = (
+            "Arguments were rejected by the owner schema — this is a "
+            "correctable contract violation, not missing data or a "
+            "dead end. Rebuild the arguments per the INVALID_ARGUMENTS "
+            "feedback and this capability's declared schema — nested "
+            "entity/action filters belong inside the declared object "
+            "fields."
+            + _discovery_hint
         )
     elif progress == INVESTIGATION_PROGRESS_RELATED:
         projection["coverage_note"] = (
@@ -791,9 +829,9 @@ def uncovered_user_identifiers(
     for attempt in collected:
         if not _is_business_evidence_attempt(attempt):
             continue
-        root = _authoritative_structure_root(attempt)
-        if isinstance(root, str) and root.strip():
-            covered.add(root.strip().casefold())
+        covered.update(
+            item.casefold() for item in _attempt_identifier_roots(attempt)
+        )
     return [item for item in found if item.casefold() not in covered]
 
 
@@ -802,6 +840,7 @@ def focus_arguments_on_next_identifier(
     *,
     input_text: str,
     collected: list[GovernedCapabilityAttempt] | tuple[GovernedCapabilityAttempt, ...],
+    declared_properties: Container[str] | None = None,
 ) -> dict[str, Any]:
     """Narrow a multi-identifier query to the next uncovered literal.
 
@@ -809,6 +848,11 @@ def focus_arguments_on_next_identifier(
     several identifiers from the user text, the owner schema that
     accepts one identifier at a time would otherwise repeat the same
     miss. Identifiers are copied from the user text only.
+
+    ``declared_properties`` is the tool's published top-level field
+    set: the focused literal may only be written into ``query`` when
+    the owner schema actually declares it — injecting an undeclared
+    top-level field would make DÉLIA reject its own mutation.
     """
     args = dict(arguments or {})
     uncovered = uncovered_user_identifiers(input_text, collected)
@@ -838,7 +882,9 @@ def focus_arguments_on_next_identifier(
         source,
     )
     narrowed = " ".join(narrowed.split())
-    if narrowed:
+    if narrowed and (
+        declared_properties is None or "query" in declared_properties
+    ):
         args["query"] = narrowed
     return args
 
@@ -1382,14 +1428,34 @@ class PydanticAiInvestigationOrchestrator:
                     "objects/arrays as declared in the tool schema, "
                     "not serialized strings — pass structured values."
                 )
+            cap_key = str(capability_id or "").strip()
+            catalog_entry = next(
+                (
+                    entry
+                    for entry in live_catalog
+                    if isinstance(entry, Mapping)
+                    and str(entry.get("capability_id") or "") == cap_key
+                ),
+                None,
+            )
+            _schema_props = (
+                (catalog_entry.get("input_schema") or {}).get(
+                    "properties"
+                )
+                if isinstance(catalog_entry, Mapping)
+                and isinstance(catalog_entry.get("input_schema"), Mapping)
+                else None
+            )
             raw_args = focus_arguments_on_next_identifier(
                 arguments if isinstance(arguments, dict) else {},
                 input_text=ctx.deps.input_text,
                 collected=ctx.deps.collected,
+                declared_properties=(
+                    _schema_props if isinstance(_schema_props, Mapping) else None
+                ),
             )
             focused_query = str(raw_args.get("query") or "").strip()
             invoke_text = focused_query or ctx.deps.input_text
-            cap_key = str(capability_id or "").strip()
             fingerprint = _invocation_fingerprint(cap_key, raw_args)
             previous = ctx.deps.non_progress_calls.get(fingerprint)
             if previous is not None:
@@ -1441,15 +1507,6 @@ class PydanticAiInvestigationOrchestrator:
                 ctx.deps.input_text, ctx.deps.collected
             )
             op_class = None
-            catalog_entry = next(
-                (
-                    entry
-                    for entry in live_catalog
-                    if isinstance(entry, Mapping)
-                    and str(entry.get("capability_id") or "") == cap_key
-                ),
-                None,
-            )
             if isinstance(catalog_entry, Mapping):
                 raw_op = catalog_entry.get("operation_class")
                 if isinstance(raw_op, str) and raw_op.strip():
@@ -1463,6 +1520,7 @@ class PydanticAiInvestigationOrchestrator:
                 prior_content_fingerprints=(
                     ctx.deps.observed_content_fingerprints
                 ),
+                capability_id=cap_key,
             )
             content_fp = observation_content_fingerprint(attempt)
             if content_fp is not None:

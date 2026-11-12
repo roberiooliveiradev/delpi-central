@@ -260,6 +260,20 @@ def _install_finalize_capture() -> None:
                     getattr(item, "capability_id", "") or ""
                 ),
                 "error_code": getattr(item, "error_code", None),
+                "limitations": [
+                    str(limitation)
+                    for limitation in (
+                        getattr(item, "limitations", None) or ()
+                    )
+                ][:8],
+                # Bounded validation feedback (INVALID_ARGUMENTS:
+                # field names/types only) — enough to audit rejected
+                # arguments without logging argument values.
+                "content_head": str(getattr(item, "content", "") or "")[
+                    :300
+                ]
+                if getattr(item, "error_code", None)
+                else None,
             }
             for item in collected
         ]

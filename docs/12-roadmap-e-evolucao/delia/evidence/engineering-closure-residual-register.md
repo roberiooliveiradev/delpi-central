@@ -1507,3 +1507,23 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
 
 **NEXT=`COORDINATION_INT1_GENERALIZATION_AND_PARTIAL_AUTHZ_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+## 2026-11-12 — INT-1 identifier resolution + partial authz residuals
+
+**TASK:** `DELIA-C3-T2-INT1-IDENTIFIER-RESOLUTION-AND-PARTIAL-AUTHZ-SCHEMA-REMEDIATION-01` · Doc **312** · Evals `or-qwen14b-64d9e5b4d58b` + `or-qwen14b-a06d048c2597` + `or-qwen14b-84c04f1194d2`
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-PROCESS-CODE-VS-UUID | **CLOSED_IN_SAMPLE** | TÉO resolves UUID/business code via canonical `ProcessoRepository.get`; decomposition/diagram/BPMN echo `codigo_processo`; R1/R2 real evals |
+| INT1-PARTIAL-AUTHZ-E2E-COMPOSED | **PROVEN_IN_SAMPLE** | e2e-delia: TÉO SUCCESS + DAVI AUTHZ_DENIED → partial answer; `authorization_denied_partial`; no bypass/leak |
+| INT1-PARTIAL-AUTHZ-DETERMINISTIC | **PASS** | A–E preserved from Doc 311 |
+| INT1-ARGS-SCHEMA-FEEDBACK | **MITIGATED** | `explain_arguments` + get_context hint + no self-injection; model budget on opaque nested schemas remains a capability residual |
+| INT1-PROJECTION-BUDGET | **OPEN** | large TÉO trees exceed `max_projection_chars` (20k) → honest `result_truncated`; owner pagination/continuation residual |
+| INT1-DAVI-NONEXECUTABLE-CAPS | **OPEN** | inherited Doc 310 |
+| DELIA-PREEXISTING-TEST-DEBT | **OPEN** | `test_runtime_profiles_share_execution_policy` + `test_module_exposes_native_first_tools` fail on clean baseline — unrelated to this task |
+| INT1-GENERALIZATION | **PROVEN_IN_SAMPLE** | code/title/multi-identifier; n=4; no statistical claim |
+| INT1-STAGE | **PENDING_COORDINATION_REVIEW** | Doc 312 |
+| INT1-CLOSED | **NO** | — |
+| INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
+
+**NEXT=`COORDINATION_INT1_IDENTIFIER_RESOLUTION_AND_PARTIAL_AUTHZ_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

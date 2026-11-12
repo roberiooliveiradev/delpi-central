@@ -275,6 +275,139 @@ def validate_arguments(
     return dict(arguments)
 
 
+def _expected_type_desc(schema: Mapping[str, Any]) -> str:
+    """Bounded type summary for one schema node (error feedback only)."""
+    types = _json_types(schema.get("type"))
+    if types:
+        return "|".join(sorted(types))
+    for combiner in ("anyOf", "oneOf"):
+        branches = schema.get(combiner)
+        if isinstance(branches, (list, tuple)) and branches:
+            parts = {
+                part
+                for branch in branches[:MAX_ANYOF_BRANCHES]
+                if isinstance(branch, Mapping)
+                for part in (
+                    _expected_type_desc(branch).split("|")
+                )
+                if part
+            }
+            if parts:
+                return "|".join(sorted(parts))
+    enum = schema.get("enum")
+    if isinstance(enum, (list, tuple)) and enum:
+        return "enum:" + ",".join(str(item)[:40] for item in enum[:8])
+    if isinstance(schema.get("properties"), Mapping):
+        return "object"
+    return "value"
+
+
+def _value_kind(value: Any) -> str:
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, Mapping):
+        return "object"
+    if isinstance(value, (list, tuple)):
+        return "array"
+    if isinstance(value, (int, float)):
+        return "number"
+    if isinstance(value, str):
+        return "string"
+    return "value"
+
+
+def explain_arguments(
+    arguments: Mapping[str, Any],
+    schema: Mapping[str, Any] | None,
+) -> str | None:
+    """Bounded actionable explanation of the first violation found.
+
+    Returns None when the instance is valid. Field names and expected
+    types only — never argument values (they may carry user data).
+    Top-level keys are the contract boundary the model controls; nested
+    owner payloads (``params``/``arguments`` objects) stay
+    owner-validated, so the explanation focuses on the declared
+    top-level fields, required keys and property types.
+    """
+    if not isinstance(schema, Mapping):
+        if dict(arguments or {}):
+            return (
+                "the owner declares no input schema for this tool; "
+                "call it with no arguments"
+            )
+        return None
+    if not isinstance(arguments, Mapping):
+        return "arguments must be a JSON object"
+    if len(arguments) > MAX_ARGUMENT_OBJECT_KEYS:
+        return (
+            f"arguments exceed the {MAX_ARGUMENT_OBJECT_KEYS}-key "
+            "object bound"
+        )
+    properties = schema.get("properties")
+    declared = (
+        [str(k) for k in properties]
+        if isinstance(properties, Mapping)
+        else []
+    )
+    required = schema.get("required")
+    if isinstance(required, (list, tuple)):
+        missing = [
+            str(name)
+            for name in required
+            if str(name) not in arguments
+            and str(name) not in ORCHESTRATED_FIELDS
+        ]
+        if missing:
+            return (
+                f"missing required field(s): {', '.join(missing[:6])}"
+            )
+    orchestrated = [
+        str(key) for key in arguments if str(key) in ORCHESTRATED_FIELDS
+    ]
+    if orchestrated:
+        return (
+            f"field(s) {orchestrated[:6]} are orchestration-managed and "
+            "must not be supplied"
+        )
+    undeclared = [
+        str(key) for key in arguments if str(key) not in declared
+    ]
+    if undeclared and isinstance(properties, Mapping):
+        typed_declared = ", ".join(
+            f"{name}({_expected_type_desc(node)})"
+            if isinstance(node := properties.get(name), Mapping)
+            else name
+            for name in declared[:8]
+        )
+        return (
+            f"unknown top-level field(s): {', '.join(undeclared[:6])}. "
+            f"Declared fields are: {typed_declared}. "
+            "Action/entity-specific values belong inside the declared "
+            "object fields per the tool schema, not as top-level "
+            "siblings."
+        )
+    for key in declared:
+        if key not in arguments:
+            continue
+        node = properties.get(key)
+        if not isinstance(node, Mapping):
+            continue
+        if not _check_value(
+            arguments[key], node, _Budget(), depth=0
+        ):
+            return (
+                f"field '{key}' rejects { _value_kind(arguments[key]) }; "
+                f"expected {_expected_type_desc(node)}"
+            )
+    if not _check_value(
+        arguments, schema, _Budget(), depth=0, top_level=True
+    ):
+        return "arguments violate the owner schema"
+    return None
+
+
 def validate_untyped_arguments(
     arguments: Mapping[str, Any],
 ) -> dict[str, Any] | None:

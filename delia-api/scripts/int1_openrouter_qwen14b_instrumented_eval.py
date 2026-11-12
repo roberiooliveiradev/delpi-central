@@ -155,6 +155,26 @@ SCENARIOS = [
         ),
         "prior": (),
     },
+    # R2/R3 identifier-resolution corpus (Doc 312): real TÉO rows
+    # verified live in DEV — a business-name lookup and a genuinely
+    # ambiguous name shared by two process records. Deliberately
+    # distinct from R1/IG2 (PROC-0034 business code).
+    {
+        "id": "R2_process_by_title",
+        "question": (
+            "Mostre a árvore de decomposição do processo "
+            "Avaliações de Desempenho."
+        ),
+        "prior": (),
+    },
+    {
+        "id": "R3_ambiguous_process_name",
+        "question": (
+            "Mostre a árvore de decomposição do processo "
+            "E2E probe proc."
+        ),
+        "prior": (),
+    },
 ]
 
 
@@ -223,7 +243,9 @@ def _install_catalog_and_progress_capture(
         seq["n"] += 1
         scenario_id = scenario_holder.get("id")
         correlation = scenario_holder.get("correlation")
-        caps = getattr(attempt, "capability_id", None)
+        caps = projection.get("capability_id") or getattr(
+            attempt, "capability_id", None
+        )
         append_event(
             evaluation_id,
             "tool_observation",
@@ -239,6 +261,9 @@ def _install_catalog_and_progress_capture(
                     "investigation_progress"
                 ),
                 "evidence_citable": projection.get("evidence_citable"),
+                "authorization_denied": projection.get(
+                    "authorization_denied"
+                ),
                 "coverage_note": projection.get("coverage_note"),
                 "authoritative_root_code": projection.get(
                     "authoritative_root_code"
