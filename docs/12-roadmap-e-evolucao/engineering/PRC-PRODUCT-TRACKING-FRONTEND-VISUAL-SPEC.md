@@ -175,4 +175,59 @@ Espaçamento entre seções proposto: 20–24px desktop, 16px tablet/mobile (12p
 5. Layout responsivo desktop/tablet/mobile, incluindo 320px sem overflow de documento, controles acessíveis por teclado e toque.
 6. Kit-first: todos os primitivos/visuais compartilháveis importados do Plugin UI; nenhuma duplicação no MFE.
 
-**Próximo desenho a fechar:** Página 2 — Detalhe do produto acompanhado, aba **Ficha técnica**. Não antecipar sua aprovação.
+**Página 2 — Ficha técnica:** aprovada pelo PO e detalhada na seção 10 abaixo.
+
+## 10. Página 2 — Detalhe do produto acompanhado / Ficha técnica — APROVADA pelo PO (2026-11-12)
+
+> **Status:** `UX_APPROVED / TARGET_IMPLEMENTATION` — aprovação do desenho conceitual pelo Product Owner, sem implementação, QA visual ou validação runtime. **Não autoriza desenvolvimento antes dos gates de Plugin UI, persistência e contratos.** A aba Versões ainda receberá detalhamento próprio na Página 3.
+
+### 10.1 Hierarquia e navegação
+
+1. Preservar top bar global do Portal; breadcrumb `Controle e Cadastro de Produtos / Produtos acompanhados / {código}`, via `EngineeringPagePath`.
+2. Hero único do **produto acompanhado**, via `EngineeringPageHero`, com **código oficial em destaque**, descrição do snapshot selecionado, identificação legível da versão acompanhada (`Vn`), data da evolução confirmada e vínculo para solicitação PRC de origem **quando autorizado**. Não representar a versão como revisão oficial do TOTVS nem exibir informação não disponível no snapshot.
+3. Apenas duas abas, `Ficha técnica | Versões`, via `EngineeringTabs`; Ficha técnica inicial. A aba Versões terá especificação de comparação e histórico à parte.
+4. **Seletor de versão dentro da aba Ficha técnica, acima dos cards**, inicialmente apontando à última versão. Não criar página separada para V1/V2/Vn: selecionar uma versão atualiza a ficha no mesmo detalhe. O hero permanece identificando o produto e deve atualizar a indicação da versão/descrição de maneira coerente com o snapshot selecionado.
+5. Faixa **discreta** de acompanhamento técnico com contagem de abertas/resolvidas e acesso à legenda, sem novo card autônomo de flags.
+
+### 10.2 Ficha técnica: o mesmo padrão PRC existente
+
+- Fonte de apresentação prioritária `PrcTechnicalSheetView` do `@delpi/plugin-ui/index`, **sem passar snapshot confirmado como `draft` por conveniência sem adaptar explicitamente o contrato**. O componente atual é orientado à solicitação PRC; mapear o novo modo de snapshot por contrato e sem regressão em CREATE/UPDATE e Minhas Solicitações.
+- Manter **cards por seções**, começando por `Identificação e classificação` e `Estoque e contabilidade`, com os mesmos labels, agrupamentos, ordem e ajuda do padrão PRC. Renderizar outros grupos somente quando representados no contrato e com dados/proveniência disponíveis.
+- Em desktop, grade **de duas colunas dentro dos cards** (`.delpi-prc__sheet-grid` comprovada no CSS); cada campo contém label, valor legível e bandeira contextual junto ao label. Valores técnicos são **sempre somente leitura**, inclusive na última versão.
+- **Fornecedores na mesma aba, em tabela** com `Código | Loja | Razão social | Part Number | Catálogo`, sem aba própria. A bandeira em atributo precisa corresponder ao vínculo fornecedor+loja+atributo, não ao índice da linha.
+- Não criar tab `Flags`, card avulso de bandeiras, edição direta do cadastro, nem segunda ficha visual concorrente à PRC.
+
+### 10.3 Bandeiras: componentes compartilhados e limites
+
+Conforme a migração **PRC-UI-EXTRACT-01 reportada pelo executor**, a apresentação alvo reutiliza `FlagFieldAction`, `FlagSummaryView`, `FlagLegend` e `FlagEditorDialog` do Plugin UI. **Status de disponibilidade runtime ainda condicionado ao aceite/commit da migração**; confirmar export MF no HEAD de implementação.
+
+- Bandeira **azul para adicionar**, **vermelha OPEN** e **verde RESOLVED** conforme o padrão atual. OPEN tem precedência visual. Não depender exclusivamente de cor: label/tooltip/aria e foco/teclado/toque.
+- Clique em bandeira existente apresenta e trata **o mesmo registro**, sem duplicação; criação, resolução e reabertura somente quando backend autoriza. O diálogo apresenta contexto do campo/alvo, valor técnico, título, descrição e ações disponíveis, sem editar dados do snapshot.
+- Na **última versão**, exibir flags atuais, permitir criar/tratar conforme AuthZ live do objeto. Mudança de flag **não cria Vn+1**.
+- Em **versão histórica**, apresentar valores e flags **no corte daquela versão** com aviso inequívoco `Versão histórica — somente leitura dos dados técnicos`; permitir consultar estado atual separadamente. Regra proposta a ratificar: novas flags apenas na última versão, com navegação para o alvo atual antes de mutação.
+- Ao trocar versão, atualizar **todos** os cards, vínculos de fornecedores, indicação de versão e flags históricas de maneira consistente; não misturar valores V3 com bandeiras V5.
+- O Plugin UI não detém HTTP, autorização, `requestId`, regras de ciclo ou fonte oficial. Engineering API continua autoridade; MFE somente adapta e compõe.
+
+### 10.4 Responsividade e dimensões
+
+| Largura | Composição da ficha | Comportamento de flags/fornecedores | Espaçamento externo proposto |
+|---|---|---|---|
+| Desktop ≥1024px | Hero de produto; abas; seletor junto ao cabeçalho da ficha; cards largura total, campos em duas colunas | Tabela fornecedor completa, tooltip/foco acessível | 20–24px TARGET |
+| Tablet 768–1023px | Hero e metadados com quebra; abas visíveis; seletor junto à ficha; duas colunas de campo enquanto houver espaço | Tabela com overflow horizontal **contido**, sem overflow do documento | 16px TARGET |
+| Celular 641–767px | Hero compacto; abas e seletor empilháveis; grade segue comportamento real do kit (2 colunas até 640px) | Ações de flags acessíveis por toque, sem dependência de hover | 12px TARGET |
+| Celular ≤640px (inclusive 320px) | **Uma coluna por card** conforme CSS comprovado em `.delpi-prc__sheet-grid`; seletor largura disponível | Fornecedores com rolagem horizontal contida e indicação, labels e botões acessíveis | 12px TARGET |
+
+**Valores CSS PROVEN (Plugin UI):** gap da grade `12px 16px`; label `0.85rem`/peso `600`; `gap:6px` label/ícone; `margin-top:4px` label→valor; tabela de fornecedores `font-size:.85rem` e `padding:6px 8px` nas células; breakpoint `max-width:640px` para uma coluna. Padding interno dos cards, do hero e do modal vem do kit — **não inventar override**.
+
+### 10.5 Estados e critérios de aceite
+
+1. Abrir produto acompanhado mostra identidade, versão atual confirmada e vínculo PRC autorizado, sem status de catálogo TOTVS não contratado.
+2. Somente `Ficha técnica` e `Versões`, com seletor de versão **dentro da ficha**; nenhuma rota nova por versão.
+3. Cards, grupos de atributos e fornecedor em tabela seguem a composição compartilhada PRC; campos técnicos não editáveis.
+4. Flags inline por campo e atributo de fornecedor; azul/vermelho/verde, mouse/teclado/toque, modal do kit e sem duplicação.
+5. Selecionar V3 em produto V5 substitui **todo** o snapshot e estado de flags no corte de V3; aviso histórico explícito; consulta ao estado atual separada.
+6. Usuário autorizado pode criar/tratar flag no produto atual sem criar nova versão; backend impõe autorização, unicidade, auditoria e conflitos.
+7. Desktop/tablet/celular (incluindo 320px), tema claro/escuro, tabelas largas, modal host-contained, teclado, carregamento, empty state, snapshot parcial, 403/409 e F5/back-forward devem ser verificados.
+8. Nenhum novo componente visual primitivo/personalizado local; consumir Plugin UI; PRC-UI-EXTRACT-01 necessita fechamento de evidências antes da implementação.
+
+**Próximo desenho a detalhar e submeter ao PO:** Página 3 — aba **Versões**, com linha do tempo, filtros, comparação Vx×Vy e diffs de fornecedores. Não antecipar aprovação.
