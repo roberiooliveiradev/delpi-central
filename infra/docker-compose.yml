@@ -1585,6 +1585,8 @@ services:
       AUDIT_5S_RESPONSE_UPLOAD_DIR: ${AUDIT_5S_RESPONSE_UPLOAD_DIR:-/app/data/audit-5s-responses}
       AUDIT_5S_NOTIFICATIONS_ENABLED: ${AUDIT_5S_NOTIFICATIONS_ENABLED:-true}
       LNF_NOTIFICATIONS_ENABLED: ${LNF_NOTIFICATIONS_ENABLED:-true}
+      # DARK default: módulo LNF permanece montado (comportamento atual).
+      LNF_MODULE_ENABLED: ${LNF_MODULE_ENABLED:-true}
       INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED: ${INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED:-true}
       INVOICE_ISSUANCE_UPLOAD_DIR: ${INVOICE_ISSUANCE_UPLOAD_DIR:-/app/data/invoice-issuance}
       LNF_DANFE_UPLOAD_DIR: ${LNF_DANFE_UPLOAD_DIR:-/app/data/lancamento-notas-fiscais-danfe}
@@ -2978,8 +2980,23 @@ services:
       # schema controllership_finance) — par indissociável.
       CF_DOCUMENT_UPLOAD_DIR: ${CF_DOCUMENT_UPLOAD_DIR:-/app/data/cf-closing-documents}
 
+      # LNF hosted (invoice_posting) — DARK por default (corte = trocar flags).
+      LNF_HOSTED_ENABLED: ${LNF_HOSTED_ENABLED:-false}
+      LNF_MIGRATIONS_MODE: ${LNF_MIGRATIONS_MODE:-verify}
+      LNF_NOTIFICATIONS_ENABLED: ${LNF_NOTIFICATIONS_ENABLED:-true}
+      LNF_DANFE_UPLOAD_DIR: ${LNF_DANFE_UPLOAD_DIR:-/app/data/lancamento-notas-fiscais-danfe}
+      FINANCIAL_API_BASE_URL: ${FINANCIAL_API_BASE_URL:-http://financial-api:8000}
+      FINANCIAL_API_TIMEOUT_SECONDS: ${FINANCIAL_API_TIMEOUT_SECONDS:-30}
+      API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
+      TOTVS_DB_HOST: ${TOTVS_DB_HOST:-}
+      TOTVS_DB_PORT: ${TOTVS_DB_PORT:-1433}
+      TOTVS_DB_DATABASE: ${TOTVS_DB_DATABASE:-}
+      TOTVS_DB_USER: ${TOTVS_DB_USER:-}
+      TOTVS_DB_PASSWORD: ${TOTVS_DB_PASSWORD:-}
+
     volumes:
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/cf-closing-documents:/app/data/cf-closing-documents
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/lancamento-notas-fiscais-danfe:/app/data/lancamento-notas-fiscais-danfe
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]

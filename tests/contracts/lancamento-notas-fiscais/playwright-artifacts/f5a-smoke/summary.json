@@ -1,0 +1,197 @@
+{
+  "results": [
+    {
+      "profile": "P11",
+      "action": "fila filial-01",
+      "result": "PASS",
+      "note": "Notificações 2 Apps Tema LL LNF lnf-contract-p11 Política de Privacidade  DELPI · LANÇAMENTO FISCAL  Lançamento de Notas Fiscais  Fila · Filial 01 (SC) · mais recentes primeiro (recebimento físico).  "
+    },
+    {
+      "profile": "P11",
+      "action": "filtros",
+      "result": "PASS",
+      "note": ""
+    },
+    {
+      "profile": "P11",
+      "action": "abrir criar",
+      "result": "PASS",
+      "note": ""
+    },
+    {
+      "profile": "P11",
+      "action": "filial-02 bloqueada",
+      "result": "PASS",
+      "note": "notificações 2 apps tema ll lnf lnf-contract-p11 política de privacidade acesso restrito acesso negado  você não possui permissão para acess"
+    },
+    {
+      "profile": "P2",
+      "action": "fila filial-01",
+      "result": "PASS",
+      "note": "Notificações 2 Apps Tema LL LNF lnf-contract-p2 Política de Privacidade  DELPI · LANÇAMENTO FISCAL  Lançamento de Notas Fiscais  Fila · Filial 01 (SC) · mais recentes primeiro (rec"
+    },
+    {
+      "profile": "P2",
+      "action": "não vê filial-02",
+      "result": "PASS",
+      "note": "notificações 2 apps tema ll lnf lnf-contract-p2 política de privacidade acesso restrito acesso negado  você não possui permissão para acessa"
+    },
+    {
+      "profile": "P6B",
+      "action": "fila filial-01",
+      "result": "PASS",
+      "note": ""
+    },
+    {
+      "profile": "P6B",
+      "action": "detalhe",
+      "result": "PASS",
+      "note": "9c32e40a-1b44-4067-9cbd-03e748fc7a12"
+    },
+    {
+      "profile": "P6B",
+      "action": "iniciar",
+      "result": "PASS",
+      "note": ""
+    },
+    {
+      "profile": "P6B",
+      "action": "bloquear com responsável",
+      "result": "PASS",
+      "note": ""
+    },
+    {
+      "profile": "P6B",
+      "action": "comentar",
+      "result": "PASS",
+      "note": ""
+    },
+    {
+      "profile": "P6B",
+      "action": "retomar",
+      "result": "PASS",
+      "note": ""
+    }
+  ],
+  "network_total": 52,
+  "to_bff": 19,
+  "to_api_delpi": 0,
+  "sample_bff": [
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests?page=1&page_size=20&status=open&branch=01"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/reconciliation/refresh",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/reconciliation/refresh"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests?page=1&page_size=20&status=open&branch=01"
+    },
+    {
+      "status": 403,
+      "method": "POST",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/reconciliation/refresh",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/reconciliation/refresh"
+    },
+    {
+      "status": 403,
+      "method": "GET",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests?page=1&page_size=20&status=open&branch=01"
+    },
+    {
+      "status": 403,
+      "method": "GET",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests?page=1&page_size=20&status=open&branch=01"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/reconciliation/refresh",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/reconciliation/refresh"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests?page=1&page_size=20&status=open&branch=01"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests?page=1&page_size=20&status=open&branch=01"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests?page=1&page_size=20&branch=01"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12/start",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12/start"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12/block",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12/block"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12/comments",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12/comments"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12/resume",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12/resume"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12",
+      "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12"
+    }
+  ],
+  "sample_api": [],
+  "seed_request_id": "9c32e40a-1b44-4067-9cbd-03e748fc7a12"
+}

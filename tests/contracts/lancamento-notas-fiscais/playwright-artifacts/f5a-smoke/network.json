@@ -1,0 +1,314 @@
+[
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/filial-01",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/filial-01"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/remoteEntry.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/remoteEntry.js"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/style-Y14OONr_.css",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/style-Y14OONr_.css"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/__federation_expose_App-DQCKPbT8.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/__federation_expose_App-DQCKPbT8.js?v=14"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/_virtual___federation__-DEfrUTBW.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/_virtual___federation__-DEfrUTBW.js"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/__federation_fn_import-CSkvuf8Q.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/__federation_fn_import-CSkvuf8Q.js?v=14"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-q540vByz.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-q540vByz.js?v=14"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-B4SFKWmm.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-B4SFKWmm.js?v=14"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-B4SFKWmm.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-B4SFKWmm.js"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/App-DsWlefEt.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/App-DsWlefEt.js?v=14"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests?page=1&page_size=20&status=open&branch=01"
+  },
+  {
+    "status": 200,
+    "method": "POST",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/reconciliation/refresh",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/reconciliation/refresh"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests?page=1&page_size=20&status=open&branch=01"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/filial-02",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/filial-02"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/filial-01",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/filial-01"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/filial-01",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/filial-01"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/remoteEntry.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/remoteEntry.js"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/style-Y14OONr_.css",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/style-Y14OONr_.css"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/__federation_expose_App-DQCKPbT8.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/__federation_expose_App-DQCKPbT8.js?v=14"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/_virtual___federation__-DEfrUTBW.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/_virtual___federation__-DEfrUTBW.js"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/__federation_fn_import-CSkvuf8Q.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/__federation_fn_import-CSkvuf8Q.js?v=14"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-B4SFKWmm.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-B4SFKWmm.js?v=14"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-q540vByz.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-q540vByz.js?v=14"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-B4SFKWmm.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-B4SFKWmm.js"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/App-DsWlefEt.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/App-DsWlefEt.js?v=14"
+  },
+  {
+    "status": 403,
+    "method": "POST",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/reconciliation/refresh",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/reconciliation/refresh"
+  },
+  {
+    "status": 403,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests?page=1&page_size=20&status=open&branch=01"
+  },
+  {
+    "status": 403,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests?page=1&page_size=20&status=open&branch=01"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/filial-02",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/filial-02"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/filial-01",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/filial-01"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/remoteEntry.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/remoteEntry.js"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/style-Y14OONr_.css",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/style-Y14OONr_.css"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/__federation_expose_App-DQCKPbT8.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/__federation_expose_App-DQCKPbT8.js?v=14"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/_virtual___federation__-DEfrUTBW.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/_virtual___federation__-DEfrUTBW.js"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/__federation_fn_import-CSkvuf8Q.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/__federation_fn_import-CSkvuf8Q.js?v=14"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-B4SFKWmm.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-B4SFKWmm.js?v=14"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-q540vByz.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-q540vByz.js?v=14"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-B4SFKWmm.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/index-B4SFKWmm.js"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/App-DsWlefEt.js",
+    "full": "https://192.168.1.237:18443/apps/lancamento-notas-fiscais/assets/App-DsWlefEt.js?v=14"
+  },
+  {
+    "status": 200,
+    "method": "POST",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/reconciliation/refresh",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/reconciliation/refresh"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests?page=1&page_size=20&status=open&branch=01"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests?page=1&page_size=20&status=open&branch=01"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests?page=1&page_size=20&branch=01"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12"
+  },
+  {
+    "status": 200,
+    "method": "POST",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12/start",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12/start"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12"
+  },
+  {
+    "status": 200,
+    "method": "POST",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12/block",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12/block"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12"
+  },
+  {
+    "status": 200,
+    "method": "POST",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12/comments",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12/comments"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12"
+  },
+  {
+    "status": 200,
+    "method": "POST",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12/resume",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12/resume"
+  },
+  {
+    "status": 200,
+    "method": "GET",
+    "url": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12",
+    "full": "https://192.168.1.237:18443/apps/controllership-finance-api/lancamento-notas-fiscais/requests/9c32e40a-1b44-4067-9cbd-03e748fc7a12"
+  }
+]
