@@ -1,10 +1,10 @@
 # Minha DELPI — Homologação na VM srv-api — registro de continuidade
 
-> **Atualizado:** 12/11/2026 · **Estado:** HTTPS HML ativo em `https://192.168.1.237:18443`; login browser aguarda CA confiável no PC de teste.  
+> **Atualizado:** 12/11/2026 · **Estado:** HTTPS HML ativo; CA pública preparada no PC de teste; login browser ainda **PENDING** até instalação da CA no store Windows.  
 > **Repositório:** `roberiooliveiradev/delpi-central`.  
-> **TASK_ID:** `HML-TLS-ACTIVATE`.  
-> **BASE_HEAD:** `6f58adcad4582b25f7d7055d55a436dee1148471`.  
-> **MAIN_INTEGRATED_SHA:** `baaf0aa05d20f5643f37bf518c7509927e984ba2`.
+> **TASK_ID:** `HML-TLS-BROWSER-VALIDATION-01` (continuidade de `HML-TLS-ACTIVATE`).  
+> **BASE_HEAD:** `def694b899537f279a000fff093b327e7f42f23a`.  
+> **MAIN_INTEGRATED_SHA:** *(docs desta validação)*.
 
 ## 1. Objetivo e regras congeladas
 
@@ -75,43 +75,57 @@ git pull --ff-only
 ./infra/scripts/hml-compose.sh up --scenario tls-activate
 ```
 
-## 5. Estado pós-ativação (12/11/2026)
+## 5. Estado pós-ativação + validação browser (12/11/2026)
 
 | Item | Resultado |
 |---|---|
 | Gateway `:18080` + `:18443` | **PASS** (healthy) |
-| Issuer público HTTPS | **PASS** `https://192.168.1.237:18443/auth/realms/delpi` |
-| Portal bake Vite HTTPS | **PASS** (sem `:18080` / sem `minhadelpi.com.br`) |
-| `/`, `/login`, OIDC discovery, `/core-api/health`, SVG, manifest | **PASS** via HTTPS com `--cacert` |
-| Produção (IDs gateway/`StartedAt`) | **PASS** inalterados |
-| Confiança CA no store do SO/navegador | **PENDING** (sistema ainda não confia sem instalação) |
-| Login browser PKCE completo | **PENDING** (depende da confiança da CA) |
+| Cert servidor SAN `IP:192.168.1.237` + cadeia CA | **PASS** (`openssl verify`, s_client) |
+| Fingerprint CA vs implantação | **PASS** (match exato) |
+| Issuer / JWKS HTTPS | **PASS** |
+| Portal bake Vite HTTPS | **PASS** (`https://192.168.1.237:18443/{,/auth}`) |
+| `/core-api/health` 200 · `/core-api/me` sem token 401 | **PASS** |
+| Produção gateway ID/`StartedAt` | **PASS** inalterado |
+| Pacote CA pública no PC (`Desktop\\delpi-hml-ca\\`) | **PASS** (só `.crt` + README) |
+| Confiança CA no store Windows/Chrome | **PENDING** (interop WSL/`certutil` falhou; wizard GUI não concluído) |
+| `isSecureContext` / `crypto.subtle` no browser | **TEST_NOT_RUN** |
+| Login PKCE / `/core-api/me` autenticado / logout | **PENDING** |
 
 ### Fingerprints (VM HML)
 
 - CA: `sha256 Fingerprint=B6:F7:02:A4:7A:21:4A:1B:D9:FB:1B:39:9D:29:A0:A8:AB:1F:4F:B4:EA:59:A3:56:8B:DC:A6:F9:89:07:5A:E5`
 - Server: `sha256 Fingerprint=46:72:1F:78:F0:54:C5:0D:D4:0A:41:ED:6B:A1:EB:B6:30:65:09:21:ED:B0:9C:7C:F0:B7:89:A4:01:AA:3A:8B`
 
-### Teste browser (PC com CA)
+### Instalação CA no Windows (PC autorizado)
 
-1. Confirmar fingerprint da CA por canal confiável.
-2. Instalar **somente** `infra/hml-certs/hml-local-ca.crt` (Windows: Autoridades de Certificação Raiz Confiáveis).
-3. Abrir `https://192.168.1.237:18443/login` **sem** aviso de certificado.
-4. DevTools: `isSecureContext === true` e `typeof crypto.subtle === "object"`.
-5. SSO → `hml-tester` → `/core-api/me` → logout.
+Arquivo: `C:\Users\analistaptd\Desktop\delpi-hml-ca\hml-local-ca.crt`  
+Instruções: `...\delpi-hml-ca\INSTALAR-CA-README.txt`
+
+1. Confirmar fingerprint SHA-256 acima.
+2. Duplo clique → Instalar Certificado → Usuário atual.
+3. **Colocar todos os certificados no repositório a seguir** → Procurar → **Autoridades de Certificação Raiz Confiáveis**.
+4. Concluir → reiniciar Chrome.
+5. `https://192.168.1.237:18443/login` sem aviso → F12: `isSecureContext===true`, `typeof crypto.subtle==="object"`.
+6. SSO `hml-tester` → sessão → `/core-api/me` → logout.
 
 Sem evidência no navegador com CA confiável: nunca declarar `PASS` de login.
 
+### Custódia da CA
+
+- `hml-local-ca.key` ainda **presente** na VM HML (`infra/hml-certs/`, permissões restritas).
+- Remoção da VM **não** executada: exige backup + autorização operacional explícita.
+- Gateway continua usando só `hml-gateway.{crt,key}`.
+
 ## 6. Produção
 
-IDs e `StartedAt` do gateway produtivo preservados durante o cutover HML. Diff de “Up X hours” é apenas relógio — sem recreate.
+IDs e `StartedAt` do gateway produtivo preservados. Portas 80/443 produtivas intactas; HML exclusivo em `:18443`/`:18080`.
 
 ## 7. Drift / pendências
 
 - Drift `5c20be0311` (DÉLIA) permanece para owner DÉLIA.
 - Redis / API DELPI / Plugin UI / Production Control: fora de escopo.
-- **Próxima ação:** instalar CA no PC de teste autorizado e validar login browser.
-- Custódia: remover `hml-local-ca.key` da VM após backup autorizado.
+- **Próxima ação:** concluir instalação da CA no Windows (README na Desktop) e validar login browser.
+- Custódia: backup autorizado de `hml-local-ca.key` → só então remover da VM.
 
 ## 8. Referências
 
