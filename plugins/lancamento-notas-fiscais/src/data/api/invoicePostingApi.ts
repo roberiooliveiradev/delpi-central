@@ -17,7 +17,12 @@ import type {
   UpdateRequestPayload,
 } from "../../domain/types";
 
-const API_BASE = "/apps/api-delpi/lancamento-notas-fiscais";
+/** Default = comportamento atual. Corte HML/PROD sobrescreve via VITE_LNF_API_BASE no build. */
+const API_BASE =
+  (typeof import.meta !== "undefined" &&
+    typeof import.meta.env?.VITE_LNF_API_BASE === "string" &&
+    import.meta.env.VITE_LNF_API_BASE.trim()) ||
+  "/apps/api-delpi/lancamento-notas-fiscais";
 
 function toQuery(filters: Record<string, string | number | undefined | null>): string {
   const params = new URLSearchParams();

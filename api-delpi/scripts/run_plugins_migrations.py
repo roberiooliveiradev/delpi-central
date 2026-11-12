@@ -284,6 +284,16 @@ def show_plugin_status(plugin_slug: str) -> None:
             print(f"- {version} | {name} | {status}")
 
 
+def _lnf_module_enabled() -> bool:
+    """Default true preserva comportamento atual. false = corte (não toca o schema LNF)."""
+    return str(os.getenv("LNF_MODULE_ENABLED", "true") or "true").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
 def list_plugin_slugs() -> list[str]:
     if not PLUGINS_MIGRATIONS_ROOT.exists():
         raise MigrationError(
@@ -294,6 +304,9 @@ def list_plugin_slugs() -> list[str]:
         p.name for p in PLUGINS_MIGRATIONS_ROOT.iterdir()
         if p.is_dir()
     )
+
+    if not _lnf_module_enabled():
+        slugs = [slug for slug in slugs if slug != "lancamento-notas-fiscais"]
 
     if not slugs:
         raise MigrationError(

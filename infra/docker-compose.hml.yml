@@ -250,6 +250,7 @@ services:
       CONSOLE_ALERT_WEBHOOK_URL: ""
       AUDIT_5S_NOTIFICATIONS_ENABLED: "false"
       LNF_NOTIFICATIONS_ENABLED: "false"
+      LNF_MODULE_ENABLED: ${LNF_MODULE_ENABLED:-true}
       INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED: "false"
       SCHEDULING_NOTIFICATIONS_ENABLED: "false"
       GRAPH_TENANT_ID: ""
@@ -349,6 +350,36 @@ services:
       retries: 12
       start_period: 20s
     mem_limit: 512m
+    cpus: 0.5
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  # MFE LNF — default API_BASE = api-delpi; corte sobrescreve VITE_LNF_API_BASE no build.
+  lancamento-notas-fiscais:
+    extends:
+      file: docker-compose.yml
+      service: lancamento-notas-fiscais
+    profiles: [lancamento-notas-fiscais, baseline, platform]
+    image: delpi-hml/lancamento-notas-fiscais:local
+    container_name: delpi-hml-lancamento-notas-fiscais
+    build:
+      context: ../plugins
+      dockerfile: lancamento-notas-fiscais/Dockerfile
+      args:
+        VITE_LNF_API_BASE: ${VITE_LNF_API_BASE:-/apps/api-delpi/lancamento-notas-fiscais}
+    ports: !override []
+    depends_on: !override {}
+    networks: !override
+      - delpi-hml
+    volumes: !override []
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null -T 3 http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    mem_limit: 256m
     cpus: 0.5
     labels:
       delpi.environment: homologation
@@ -564,6 +595,108 @@ services:
       start_period: 20s
     mem_limit: 512m
     cpus: 0.5
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  # BFF Controladoria & Finanças — ensaio F4b do corte LNF (dark por default).
+  # financial-api NÃO existe no stack HML: FINANCIAL_API_BASE_URL vazio → binários INCONCLUSIVE.
+  controllership-finance-api:
+    extends:
+      file: docker-compose.yml
+      service: controllership-finance-api
+    profiles: [controllership-finance-api, baseline, platform]
+    image: delpi-hml/controllership-finance-api:local
+    container_name: delpi-hml-controllership-finance-api
+    ports: !override []
+    env_file: !override
+      - path: env.hml.example
+        required: true
+      - path: .env.hml
+        required: false
+    depends_on: !override
+      postgres-plugins:
+        condition: service_started
+    networks: !override
+      - delpi-hml
+    volumes: !override
+      - ${DELPI_HML_DATA_HOST_DIR:-./hml-data}/cf-closing-documents:/app/data/cf-closing-documents
+      - ${DELPI_HML_DATA_HOST_DIR:-./hml-data}/lancamento-notas-fiscais-danfe:/app/data/lancamento-notas-fiscais-danfe
+    environment:
+      PORT: "8000"
+      CONTROLLERSHIP_FINANCE_API_ROOT_PATH: /apps/controllership-finance-api
+      MCP_RESOURCE_URL: ${PUBLIC_BASE_URL}/apps/controllership-finance-api/mcp
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      DELPI_AUTH_CORE_API_URL: http://core-api:8000
+      DELPI_API_URL: http://api-delpi:8000
+      DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-30}
+      DELPI_API_CALLER_APP: controllership-finance-api
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+      CORE_API_BASE_URL: http://core-api:8000
+      CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-${API_DELPI_INTERNAL_SERVICE_TOKEN:-}}
+      CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN: ${CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN:-}
+      CORE_API_TIMEOUT: ${CORE_API_TIMEOUT:-10}
+      S2S_TOKEN_URL: ${CF_S2S_TOKEN_URL:-${S2S_TOKEN_URL:-}}
+      S2S_CLIENT_ID: ${CF_S2S_CLIENT_ID:-controllership-finance-api}
+      S2S_CLIENT_SECRET: ${CF_S2S_CLIENT_SECRET:-}
+      S2S_SCOPE: ${CF_S2S_SCOPE:-}
+      S2S_TIMEOUT_SECONDS: ${CF_S2S_TIMEOUT_SECONDS:-10}
+      CF_DOCUMENT_UPLOAD_DIR: ${CF_DOCUMENT_UPLOAD_DIR:-/app/data/cf-closing-documents}
+      PLUGINS_DB_HOST: postgres-plugins
+      PLUGINS_DB_PORT: "5432"
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME:-plugins_hub}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT:-5}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE:-prefer}
+      CONTROLLERSHIP_FINANCE_RUN_MIGRATIONS_ON_STARTUP: ${CONTROLLERSHIP_FINANCE_RUN_MIGRATIONS_ON_STARTUP:-true}
+      # Protheus — mesmos NOMES de PROD/DEV; valores vêm de .env.hml (não hardcode).
+      TOTVS_DB_HOST: ${TOTVS_DB_HOST}
+      TOTVS_DB_PORT: ${TOTVS_DB_PORT:-1433}
+      TOTVS_DB_USER: ${TOTVS_DB_USER}
+      TOTVS_DB_PASSWORD: ${TOTVS_DB_PASSWORD}
+      TOTVS_DB_DATABASE: ${TOTVS_DB_DATABASE}
+      DB_HOST: ${TOTVS_DB_HOST}
+      DB_PORT: ${TOTVS_DB_PORT:-1433}
+      DB_USER: ${TOTVS_DB_USER}
+      DB_PASSWORD: ${TOTVS_DB_PASSWORD}
+      DB_DATABASE: ${TOTVS_DB_DATABASE}
+      TOTVS_CONNECT_TIMEOUT: ${TOTVS_CONNECT_TIMEOUT:-10}
+      TOTVS_QUERY_TIMEOUT: ${TOTVS_QUERY_TIMEOUT:-120}
+      TOTVS_POOL_ENABLED: ${TOTVS_POOL_ENABLED:-true}
+      TOTVS_POOL_MAX_SIZE: ${TOTVS_POOL_MAX_SIZE:-10}
+      TOTVS_POOL_ACQUIRE_TIMEOUT: ${TOTVS_POOL_ACQUIRE_TIMEOUT:-60}
+      TOTVS_POOL_MAX_WAITERS: ${TOTVS_POOL_MAX_WAITERS:-30}
+      # Sem financial-api no stack HML (1c): binários INCONCLUSIVE no ensaio.
+      FINANCIAL_API_BASE_URL: ${FINANCIAL_API_BASE_URL:-}
+      FINANCIAL_API_TIMEOUT_SECONDS: ${FINANCIAL_API_TIMEOUT_SECONDS:-30}
+      API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
+      # LNF hosted — dark no boot; ensaio liga via .env.hml / override.
+      LNF_HOSTED_ENABLED: ${LNF_HOSTED_ENABLED:-false}
+      LNF_MIGRATIONS_MODE: ${LNF_MIGRATIONS_MODE:-verify}
+      LNF_NOTIFICATIONS_ENABLED: ${LNF_NOTIFICATIONS_ENABLED:-false}
+      LNF_DANFE_UPLOAD_DIR: ${LNF_DANFE_UPLOAD_DIR:-/app/data/lancamento-notas-fiscais-danfe}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    mem_limit: 1g
+    cpus: 1.0
     labels:
       delpi.environment: homologation
       delpi.project: delpi-hml

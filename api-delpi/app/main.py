@@ -1,5 +1,6 @@
 # app/main.py
 import logging
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -392,7 +393,14 @@ app.include_router(
     prefix="/guias-procedimentos",
     tags=["Guias e Procedimentos — Admin Media"],
 )
-app.include_router(lancamento_notas_fiscais_router.router)
+# LNF_MODULE_ENABLED default true = comportamento atual. false = 404 (corte / ensaio HML).
+if str(os.getenv("LNF_MODULE_ENABLED", "true") or "true").lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}:
+    app.include_router(lancamento_notas_fiscais_router.router)
 app.include_router(invoice_issuance_router.router)
 app.include_router(request_lookups_router.router)
 app.include_router(planejamento_orcamentario_router.router)

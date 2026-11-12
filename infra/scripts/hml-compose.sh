@@ -92,6 +92,9 @@ ENGINEERING_API_SERVICES=(
 ENGINEERING_UI_SERVICES=(
   engineering
 )
+CF_API_SERVICES=(
+  controllership-finance-api
+)
 PLATFORM_SERVICES=(
   postgres-core
   keycloak-db
@@ -124,6 +127,7 @@ START_ORDER=(
   my-requests
   engineering-api
   engineering
+  controllership-finance-api
   gateway
 )
 AUTHORIZED_UP_SCENARIOS=(
@@ -142,6 +146,7 @@ AUTHORIZED_UP_SCENARIOS=(
   my-requests
   engineering-api
   engineering
+  controllership-finance-api
 )
 ALLOWED_HML_CONTAINERS_AFTER_GATEWAY=(
   delpi-hml-postgres-core
@@ -193,6 +198,8 @@ ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING_API=(
 ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING=(
   "${ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING_API[@]}"
   delpi-hml-engineering
+  delpi-hml-lancamento-notas-fiscais
+  delpi-hml-controllership-finance-api
 )
 
 usage() {
@@ -227,8 +234,9 @@ scenario_services() {
     my-requests) printf '%s\n' "${MY_REQUESTS_SERVICES[@]}" ;;
     engineering-api) printf '%s\n' "${ENGINEERING_API_SERVICES[@]}" ;;
     engineering) printf '%s\n' "${ENGINEERING_UI_SERVICES[@]}" ;;
-    baseline) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" "${REQUESTS_API_SERVICES[@]}" "${MY_REQUESTS_SERVICES[@]}" "${ENGINEERING_API_SERVICES[@]}" "${ENGINEERING_UI_SERVICES[@]}" ;;
-    platform) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${REQUESTS_API_SERVICES[@]}" "${MY_REQUESTS_SERVICES[@]}" "${ENGINEERING_API_SERVICES[@]}" "${ENGINEERING_UI_SERVICES[@]}" ;;
+    controllership-finance-api) printf '%s\n' "${CF_API_SERVICES[@]}" ;;
+    baseline) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" "${REQUESTS_API_SERVICES[@]}" "${MY_REQUESTS_SERVICES[@]}" "${ENGINEERING_API_SERVICES[@]}" "${ENGINEERING_UI_SERVICES[@]}" "${CF_API_SERVICES[@]}" ;;
+    platform) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${REQUESTS_API_SERVICES[@]}" "${MY_REQUESTS_SERVICES[@]}" "${ENGINEERING_API_SERVICES[@]}" "${ENGINEERING_UI_SERVICES[@]}" "${CF_API_SERVICES[@]}" ;;
     production-control) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" ;;
     *)
       echo "Cenário desconhecido: $scenario" >&2
