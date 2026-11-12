@@ -3092,3 +3092,35 @@ QUALITY_HOMOLOGATION=EVAL_PENDING
 ```
 
 `VAL01_COMPLETED=false`. Produção inalterada.
+
+## 81. Deploy produtivo da correção F1 — 2026-11-12
+
+**TASK_ID:** `EVA-CURRENT-STATE-PRODUCTION-DEPLOY`
+
+| Item | Valor |
+|---|---|
+| Código implantado | `b684aff4b7` (origin/main, contém `d11a7d761d`; mudanças posteriores só em `it-portal-api` — zero diff EVA) |
+| Imagem anterior (rollback) | `sha256:7cd79929c212…` |
+| Imagem implantada | `sha256:27eb1e1bf4154bb9132f148a7fea04acc804e7c937844e43f0c32f3dd855c69b` |
+| Procedimento | `./infra/scripts/up-prod-sequential.sh --build engineering-api` — somente o serviço |
+| Health | container `healthy`; `/health` 200; gateway `https://minhadelpi.com.br/apps/engineering-api/health` 200 |
+| Fix no runtime | `understanding.py` md5 `f036d29d…` = candidato DEV; fontes `recovered_*` presentes |
+| Fonte de desenhos | bind `/mnt/fileserver/desenhos→/drawing-pdfs` em `api-delpi` **preservado** (serviço não tocado) |
+| Gate de código | 8/8 testes `test_eva_val01_fused_group_anchor_recovery` — únicos executados |
+
+**Smoke funcional — `90264128` REAL_PDF_PIPELINE em PROD**
+(job `aj-f0b9d8c919564e86`, COMPLETED, PDF sha `d36a2027…`
+idêntico ao DEV): resultado **equivalente ao DEV** — 19
+IDENTIFIED + 4 UNKNOWN; `50233813`/`50233816` recuperados;
+
+| Ocorrência | parent_state | parent_evidence |
+|---|---|---|
+| A6\|10380040 → 50233813 | IDENTIFIED | `recovered_fused_anchor` |
+| AA\|10380035 → 50233816 | IDENTIFIED | `recovered_token_anchor` |
+| B\|10090067 → 50233813 | UNKNOWN | `band_rehome_boundary` (banda mista) |
+| A1\|10080145 r14 → 50233814 | UNKNOWN | `y_anchor_correction` (gap real) |
+
+`association_conflict` e incertezas preservados; nenhuma
+promoção indevida. `JOB_RUNNING_CAP_S` inalterado em PROD;
+multipágina permanece pendência separada. Rollback disponível
+(imagem anterior intacta), não executado.
