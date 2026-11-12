@@ -997,6 +997,83 @@ def test_upload_invalid_file_shape_blocked():
     assert "invalid_file" in out["validation_result"]["blocked"]
 
 
+def test_upload_sandbox_path_blocked_at_prepare():
+    """Raw /workspace and file:// refs must fail PREPARE — never reach
+    fetch/GLPI (remote MCP cannot read the agent filesystem)."""
+    facade, ports = _facade()
+    for file_arg in (
+        "/workspace/user_files/01-image.png",
+        "/workspace/output/slide.png",
+        "file:///workspace/user_files/01-image.png",
+        {
+            "download_url": "/workspace/user_files/01-image.png",
+            "file_id": "file_local",
+        },
+        {
+            "download_url": "https:///workspace/output/slide.png",
+            "file_id": "file_local",
+        },
+        {
+            "download_url": "file:///workspace/user_files/01-image.png",
+            "file_id": "file_local",
+        },
+    ):
+        out = _prepare(
+            facade, "upload_attachment", ticket_id=500, file=file_arg
+        )
+        assert out["proposal"]["ready"] is False, file_arg
+        assert "invalid_file.sandbox_path" in out["validation_result"]["blocked"], (
+            file_arg
+        )
+    assert ports.write_calls == []
+    assert ports.file_source.fetched == []
+
+
+def test_upload_bare_file_id_blocked_at_prepare():
+    facade, ports = _facade()
+    for file_arg in ("file_abc123", "libfile_xyz", "file-abc"):
+        out = _prepare(
+            facade, "upload_attachment", ticket_id=500, file=file_arg
+        )
+        assert out["proposal"]["ready"] is False, file_arg
+        assert "invalid_file.file_id_only" in out["validation_result"]["blocked"]
+    assert ports.write_calls == []
+    assert ports.file_source.fetched == []
+
+
+def test_upload_sandbox_act_fails_before_write_with_typed_code():
+    """Even if a sealed proposal somehow carries a sandbox download_url,
+    ACT must reject with FILE_PATH_NOT_SUPPORTED before any BFF write."""
+    from tm_app.application.governed_writes.proposal_store import (
+        get_proposal_store,
+        parse_proposal_handle,
+    )
+
+    facade, ports = _facade()
+    # Force a ready proposal with a legitimate shape, then poison the
+    # sealed change before commit — simulates transport/host drift.
+    out = _prepare(
+        facade, "upload_attachment", ticket_id=500, file=_FILE_OK
+    )
+    handle = _handle_of(out)
+    proposal = get_proposal_store().get(parse_proposal_handle(handle))
+    assert proposal is not None
+    proposal.exact_change["file"] = {
+        "download_url": "/workspace/user_files/01-image.png",
+        "file_id": "file_local",
+        "file_name": "01-image.png",
+        "mime_type": "image/png",
+    }
+    with pytest.raises(GovernedWriteError) as exc:
+        facade.commit_proposal(
+            _request(), proposal_handle=handle, confirmation=False
+        )
+    assert exc.value.status_code == 400
+    assert exc.value.data["error_code"] == "FILE_PATH_NOT_SUPPORTED"
+    assert ports.write_calls == []
+    assert ports.file_source.fetched == []
+
+
 def test_file_field_rejected_on_other_actions():
     facade, _ = _facade()
     out = _prepare(

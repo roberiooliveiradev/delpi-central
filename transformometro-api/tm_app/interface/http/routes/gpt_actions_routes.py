@@ -197,7 +197,8 @@ class GptHelpdeskChangeBody(BaseModel):
             "upload_attachment only — the file the user attached to this "
             "conversation, bound by the host as a fileParams object "
             "(download_url + file_id; mime_type/file_name optional). "
-            "Never an arbitrary URL or local path."
+            "Never an arbitrary URL, sandbox path (/workspace, /mnt/data, "
+            "file://), or bare file_*/libfile_* string."
         ),
     )
     description: str | None = None

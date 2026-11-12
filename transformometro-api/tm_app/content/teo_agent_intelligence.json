@@ -719,7 +719,7 @@
           "HELPDESK_DEMAND_GATE",
           "read(action=ticket) — estado atual antes de mutar; delete_ticket exige ticket resolvido de forma única (nunca apagar por referência vaga)",
           "catalogs relevantes (users purpose=assignee, categories, ...) — nunca inferir ids",
-          "execute(capability=upload_attachment, args={ticket_id, title?}, file=objeto fileParams do host) anexa ao chamado. Não existe tool pública dedicada. Nunca URL, path ou base64",
+          "execute(capability=upload_attachment, args={ticket_id, title?}, file=objeto fileParams do host) anexa ao chamado. Não existe tool pública dedicada. Nunca URL inventada, path (/workspace, /mnt/data, file://), file_id solto (file_*/libfile_*) ou base64 — o host hidrata download_url+file_id",
           "EXECUTION_CONTRACT_GATE",
           "execute — único ACT",
           "read(action=ticket|session) — read-back autoritativo",
@@ -812,7 +812,7 @@
     "tool_unavailable_after_attempt": "Após falha real: reportar erro + pedir reconectar OAuth se 401."
   },
   "not_exposed": {
-    "binary_upload": "evidence and interaction-room binaries stay UI-only / BLOCKED_BY_PLATFORM. Helpdesk ticket files use execute(capability=upload_attachment, file=host fileParams), not a separate tool",
+    "binary_upload": "evidence and interaction-room binaries stay UI-only / BLOCKED_BY_PLATFORM. Helpdesk ticket files use execute(capability=upload_attachment, file=host-bound openai/fileParams with HTTPS download_url+file_id). Sandbox paths (/workspace, /mnt/data) and bare file_* ids are rejected — remote MCP cannot read the agent filesystem",
     "interaction_room_attachment_binary": "UI-only / BLOCKED_BY_PLATFORM (metadata via gpt_collaboration_read action=attachments / read action=attachments)",
     "generic_proxy": "FORBIDDEN",
     "signature_pdf": "NOT via GPT/MCP search path"

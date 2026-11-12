@@ -410,8 +410,8 @@ def create_mcp_server() -> MCPServer:
             "proposal. Destructive deletes belong to the delete tool. "
             "helpdesk upload_attachment binds the user-uploaded file via "
             "the file argument (openai/fileParams object bound by the "
-            "host) — never a sandbox path (/mnt/data/...), local path or "
-            "arbitrary URL."
+            "host) — never a sandbox path (/workspace/..., /mnt/data/...), "
+            "file:// URI, bare file_id string, or arbitrary URL."
         ),
         annotations=_annotations("execute", "Execute"),
         # Canonical openai/fileParams binding (R4.2 parity on the V3
@@ -484,9 +484,10 @@ def create_mcp_server() -> MCPServer:
                     "Canonical openai/fileParams object bound by the "
                     "host — helpdesk upload_attachment only "
                     "({download_url, file_id, mime_type?, file_name?}). "
-                    "Pass the host-bound object verbatim — never a "
-                    "sandbox path (/mnt/data/...), local path or "
-                    "arbitrary URL (unregistered refs are rejected)."
+                    "Pass the host-bound object verbatim. Never pass "
+                    "/workspace/..., /mnt/data/..., file:// URIs, bare "
+                    "file_*/libfile_* strings, or invented HTTPS URLs — "
+                    "the host hydrates download_url for attached files."
                 )
             ),
         ] = None,

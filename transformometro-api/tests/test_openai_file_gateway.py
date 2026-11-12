@@ -209,10 +209,11 @@ def test_generic_azure_wildcard_not_present():
     assert "*.blob.core.windows.net" not in mod._allowed_hosts()
 
 
-def test_regional_oaiusercontent_hosts_allowed_by_default_suffix():
+def test_regional_oaiusercontent_hosts_allowed_by_default_suffix(monkeypatch):
     """R4.4 — fileParams download URLs are served from region-sharded
     oaiusercontent.com subdomains (observed: sdmntpr*). The shared suffix
     must be allowed while lookalike hosts still fail closed."""
+    monkeypatch.delenv("OPENAI_FILE_DOWNLOAD_HOSTS", raising=False)
     from tm_app.infrastructure.gateways.openai_file_gateway import (
         _host_allowed,
     )
@@ -224,3 +225,88 @@ def test_regional_oaiusercontent_hosts_allowed_by_default_suffix():
     assert not _host_allowed("oaiusercontent.com.evil.example")
     assert not _host_allowed("evil-oaiusercontent.com")
     assert not _host_allowed("example.com")
+
+
+# --------------------------------------------------------------------------
+# Sandbox / workspace path classification (remote MCP cannot read FS)
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "ref",
+    (
+        "/workspace/user_files/01-image.png",
+        "/workspace/output/slide-gr-jaragua-corrigido.png",
+        "/mnt/data/shot.png",
+        "file:///workspace/user_files/01-image.png",
+        "file:///mnt/data/shot.png",
+        # Model-mangled HTTPS forms observed when agents invent URLs
+        # from sandbox paths (empty host → previously FILE_URL_NOT_ALLOWED).
+        "https:///workspace/user_files/01-image.png",
+        "https://workspace/user_files/01-image.png",
+        "https://localhost/workspace/user_files/01-image.png",
+        "https://127.0.0.1/mnt/data/shot.png",
+    ),
+)
+def test_sandbox_refs_classified(ref):
+    assert mod.is_sandbox_file_reference(ref) is True
+
+
+@pytest.mark.parametrize(
+    "ref",
+    (
+        "https://files.oaiusercontent.com/file-1?sig=x",
+        "https://sdmntprbrazilsouth.oaiusercontent.com/a",
+        "https://evil.example.com/file",
+        "",
+        "file_abc123",
+        "libfile_xyz",
+    ),
+)
+def test_non_sandbox_refs_not_classified_as_sandbox(ref):
+    assert mod.is_sandbox_file_reference(ref) is False
+
+
+@pytest.mark.parametrize(
+    "ref",
+    (
+        "/workspace/user_files/01-image.png",
+        "/workspace/output/slide.png",
+        "file:///workspace/user_files/01-image.png",
+        "https:///workspace/user_files/01-image.png",
+        "https://workspace/user_files/01-image.png",
+    ),
+)
+def test_sandbox_fetch_returns_typed_path_error(ref):
+    with pytest.raises(GptActionsError) as exc:
+        _fetch(ref)
+    assert exc.value.status_code == 400
+    assert exc.value.data["error_code"] == "FILE_PATH_NOT_SUPPORTED"
+    # Must not be misclassified as an allowlist/SSRF rejection.
+    assert exc.value.data["error_code"] != "FILE_URL_NOT_ALLOWED"
+
+
+def test_sandbox_fetch_never_opens_http_client(monkeypatch):
+    """Fail closed before any network — no Client construction."""
+
+    def _boom(**_kwargs):
+        raise AssertionError("httpx.Client must not be constructed")
+
+    monkeypatch.setattr(mod.httpx, "Client", _boom)
+    with pytest.raises(GptActionsError) as exc:
+        _fetch("/workspace/user_files/x.png")
+    assert exc.value.data["error_code"] == "FILE_PATH_NOT_SUPPORTED"
+
+
+def test_allowlisted_https_still_fetches(_client):
+    """Positive sibling — host-hydrated fileParams download_url still works."""
+    _client(
+        _StreamResponse(
+            200,
+            b"\x89PNG",
+            {"content-type": "image/png"},
+        )
+    )
+    out = _fetch("https://files.oaiusercontent.com/file-ok?sig=abc")
+    assert out["content"] == b"\x89PNG"
+    assert out["mime"] == "image/png"

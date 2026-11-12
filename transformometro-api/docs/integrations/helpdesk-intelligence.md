@@ -623,8 +623,12 @@ run against the real session (user friction/re-auth, per spec §34).
   `{download_url, file_id, mime_type?, file_name?}`. The backend resolves
   the platform-authorized `download_url` through `OpenAIFileGateway`
   (HTTPS only, host allowlist `OPENAI_FILE_DOWNLOAD_HOSTS` default
-  `files.oaiusercontent.com`, no redirects, ≤20 MiB streamed cap,
-  no filesystem paths, no model-supplied URLs).
+  `files.oaiusercontent.com,oaiusercontent.com`, no redirects,
+  ≤20 MiB streamed cap, no filesystem paths, no model-supplied URLs).
+  Sandbox paths (`/workspace`, `/mnt/data`, `file://`, mangled
+  `https:///workspace/...`) fail with typed
+  `FILE_PATH_NOT_SUPPORTED` — remote MCP cannot read the agent FS;
+  the host must hydrate `openai/fileParams`.
 - **No base64-in-JSON**, no generic URL fetcher, no local path, no
   ticket/attachment mirror, no service account.
 
@@ -847,7 +851,33 @@ not source-code evidence. Status: ACCEPT / CLOSED.
   PENDING_RUNTIME_ACCEPTANCE (requires a real fileParams binding from
   the host — not mockable end-to-end).
 
-### 23.2 R4.10 — dedicated public tool removed
+### 23.2 R4.11 — sandbox path / bare file_id typed rejection
+
+**Defect (evidence: GLPI #1586 attempts)**: Agent Mode / Codex passed
+raw sandbox paths (`/workspace/user_files/...`, `/workspace/output/...`,
+`file:///workspace/...`) and bare `file_*`/`libfile_*` strings as the
+`file` argument. The gateway treated mangled forms
+(`https:///workspace/...`, empty host) as allowlist failures
+(`FILE_URL_NOT_ALLOWED`), which misled recovery. Remote MCP cannot read
+the agent filesystem; host hydration of `openai/fileParams` remains the
+only supported write path.
+
+**Fix**:
+- `is_sandbox_file_reference()` classifies bare paths, `file://`, and
+  mangled HTTPS forms → typed `FILE_PATH_NOT_SUPPORTED` (never
+  mislabeled as allowlist/SSRF).
+- PREPARE blocks `invalid_file.sandbox_path` /
+  `invalid_file.file_id_only` before fetch/GLPI.
+- ACT re-checks and fails closed before any BFF write.
+- Schema/intelligence/docs state the same contract: host-bound
+  `{download_url, file_id}` only; HTTPS allowlist unchanged; no FS
+  read, no redirect follow, no generic proxy.
+
+**Fail-closed residual on #1586**: attachment `document_id=1583`
+(`image.png`) / inline follow-up path is **not** attributable to the
+failed upload attempts — those returned 400 before BFF/GLPI write.
+
+### 23.3 R4.10 — dedicated public tool removed
 
 ChatGPT proved `execute(capability="upload_attachment")` on 2026-11-06:
 GLPI ticket #1533, file `dark-1440-library(1).png`, outcome

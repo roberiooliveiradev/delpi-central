@@ -74,6 +74,8 @@ TEO_MCP_INSTRUCTIONS = (
     "TÉO capability <= authenticated user capability. Profile is not authorization. "
     "Never invent IDs or use execute_capability / generic SQL or HTTP. "
     "Helpdesk ticket files: execute(capability='upload_attachment', "
-    "args={ticket_id, title?}, file=host-bound openai/fileParams). "
+    "args={ticket_id, title?}, file=host-bound openai/fileParams with "
+    "HTTPS download_url+file_id). Never /workspace, /mnt/data, file://, "
+    "or bare file_* ids — remote MCP cannot read the agent filesystem. "
     "Evidence and room binary upload remains UI-only / BLOCKED_BY_PLATFORM."
 )

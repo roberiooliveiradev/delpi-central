@@ -150,6 +150,16 @@ def _missing_fields(capability: str, args: dict[str, Any]) -> list[str]:
 def _file_object_errors(file_arg: Any) -> list[str]:
     """Shape validation for the platform file reference — fail closed on
     anything that is not the canonical fileParams object."""
+    if isinstance(file_arg, str):
+        text = file_arg.strip()
+        # Bare file_*/libfile_* or sandbox paths are never host-bound
+        # fileParams objects — reject with a typed reason, not a vague
+        # shape error, so the model can recover without inventing URLs.
+        if text.startswith(("/workspace", "/mnt/data", "file:")):
+            return ["file.sandbox_path"]
+        if text.startswith(("file_", "libfile_", "file-")):
+            return ["file.file_id_only"]
+        return ["file"]
     if not isinstance(file_arg, dict):
         return ["file"]
     missing = [
@@ -157,7 +167,17 @@ def _file_object_errors(file_arg: Any) -> list[str]:
         for key in ("download_url", "file_id")
         if not str(file_arg.get(key) or "").strip()
     ]
-    return [f"file.{key}" for key in missing]
+    if missing:
+        return [f"file.{key}" for key in missing]
+    # Import locally to keep the capability module free of gateway I/O
+    # coupling at import time; this is pure classification.
+    from tm_app.infrastructure.gateways.openai_file_gateway import (
+        is_sandbox_file_reference,
+    )
+
+    if is_sandbox_file_reference(str(file_arg.get("download_url") or "")):
+        return ["file.sandbox_path"]
+    return []
 
 
 def _validation_status(ticket: dict[str, Any], validation_id: int) -> int | None:
@@ -733,14 +753,39 @@ def execute(
                 code=VALIDATION,
                 status_code=500,
             )
-        file_arg = change.get("file") if isinstance(change.get("file"), dict) else {}
+        # Prefer the sealed dict; also classify non-dict leftovers so a
+        # smuggled string never reaches the fetcher as an empty object.
+        file_arg = change.get("file")
         errors = _file_object_errors(file_arg)
-        if errors:
+        if "file.sandbox_path" in errors:
+            raise GptActionsError(
+                "Caminho local/sandbox (/workspace, /mnt/data, file://) "
+                "não é fetchável pelo MCP remoto. Use o argumento file "
+                "hidratado pelo host (openai/fileParams com download_url "
+                "HTTPS e file_id).",
+                400,
+                {
+                    "error_kind": "validation",
+                    "error_code": "FILE_PATH_NOT_SUPPORTED",
+                },
+            )
+        if "file.file_id_only" in errors:
+            raise GptActionsError(
+                "file_id solto (file_*/libfile_*) não é um fileParams "
+                "válido — o host deve hidratar {download_url, file_id}.",
+                400,
+                {
+                    "error_kind": "validation",
+                    "error_code": "FILE_REF_INVALID",
+                },
+            )
+        if errors or not isinstance(file_arg, dict):
             raise GovernedWriteError(
-                f"Invalid file reference: {errors}.",
+                f"Invalid file reference: {errors or ['file']}.",
                 code=VALIDATION,
                 status_code=400,
             )
+        # Fetch BEFORE any BFF/GLPI write — rejection leaves no partial.
         fetched = stack.files.fetch(str(file_arg["download_url"]))
         filename = (
             str(file_arg.get("file_name") or "").strip()

@@ -2299,7 +2299,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                                 "upload_attachment only — the file the user "
                                 "attached to this conversation, bound by the "
                                 "host as an openai/fileParams object. Never "
-                                "an arbitrary URL or local path."
+                                "an arbitrary URL, sandbox path (/workspace, "
+                                "/mnt/data, file://), or bare file_id string."
                             ),
                             "properties": {
                                 "download_url": {"type": "string"},
