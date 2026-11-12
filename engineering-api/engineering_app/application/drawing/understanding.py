@@ -3160,7 +3160,125 @@ def rows_from_native_cells(
         )
     _recover_item_markers(rows_out, band_gap_px, marker_tokens)
     _rehome_across_bands(rows_out, band_gap_px)
+    _merge_same_band_rows(rows_out, band_gap_px)
     return rows_out, {str(k): v for k, v in col_types.items()}
+
+
+def _merge_same_band_rows(
+    rows: list[dict], band_gap_px: float | None
+) -> None:
+    """Funde fragmentos de uma mesma linha visual emitidos como linhas
+    distintas.
+
+    Classe comprovada (VAL-01 90264135): SLANet pode fragmentar uma
+    linha em dois ``row`` ids com células na mesma banda Y. A
+    associação por banda distribui os campos entre as duas linhas
+    (ex.: ``component_code`` numa, ``quantity``+``description`` na
+    outra); a linha sem código não emite ocorrência e o campo órfão é
+    perdido. Duas linhas reais da grade nunca compartilham o mesmo
+    centro de banda — coincidência de banda é prova de fragmentação.
+
+    Merge fail-closed: o fragmento mais completo vira a linha
+    principal; campos ausentes na principal são absorvidos do
+    fragmento; valores concorrentes do mesmo tipo ficam em
+    ``conflicting_fields`` (nunca descarte silencioso).
+    """
+    tol = max(6.0, (band_gap_px or 0.0) * 0.4)
+    by_page: dict[int, list[dict]] = {}
+    for r in rows or []:
+        by_page.setdefault(int(r.get("page") or 1), []).append(r)
+
+    def _row_cy(row: dict) -> float | None:
+        cys = [
+            float(v["source_cy_px"])
+            for v in (row.get("fields") or {}).values()
+            if (v or {}).get("source_cy_px") is not None
+        ]
+        if cys:
+            return sum(cys) / len(cys)
+        cell_cys = [
+            cy for cy in (_cell_cy(c) for c in row.get("cells") or [])
+            if cy is not None
+        ]
+        return sum(cell_cys) / len(cell_cys) if cell_cys else None
+
+    kinds = ("item", "quantity", "component_code", "description")
+    for page_rows in by_page.values():
+        page_rows.sort(key=lambda r: (_row_cy(r) or 0.0))
+        i = 0
+        while i < len(page_rows):
+            primary = page_rows[i]
+            cy_a = _row_cy(primary)
+            j = i + 1
+            while j < len(page_rows):
+                other = page_rows[j]
+                cy_b = _row_cy(other)
+                if cy_a is None or cy_b is None or abs(cy_a - cy_b) > tol:
+                    j += 1
+                    continue
+                # O fragmento mais completo vira a principal.
+                score = lambda r: sum(
+                    1
+                    for k in kinds
+                    if (r.get("fields") or {}).get(k, {}).get(
+                        "normalized_value"
+                    )
+                )
+                if score(other) > score(primary):
+                    primary, other = other, primary
+                pfields = primary.setdefault("fields", {})
+                pconf = primary.setdefault("conflicting_fields", {})
+                for kind, f in (other.get("fields") or {}).items():
+                    if not (f or {}).get("normalized_value"):
+                        continue
+                    cur = pfields.get(kind)
+                    if not (cur or {}).get("normalized_value"):
+                        pfields[kind] = f
+                    elif cur.get("normalized_value") != f.get(
+                        "normalized_value"
+                    ):
+                        f["association_state"] = "FIELD_BAND_CONFLICT"
+                        pconf.setdefault(kind, f)
+                for kind, f in (other.get("conflicting_fields") or {}).items():
+                    pconf.setdefault(kind, f)
+                primary.setdefault("cells", []).extend(
+                    other.get("cells") or []
+                )
+                if not primary.get("parent_group_candidate") and other.get(
+                    "parent_group_candidate"
+                ):
+                    primary["parent_group_candidate"] = other[
+                        "parent_group_candidate"
+                    ]
+                    primary["parent_group_source"] = other.get(
+                        "parent_group_source"
+                    )
+                elif (
+                    primary.get("parent_group_candidate")
+                    and other.get("parent_group_candidate")
+                    and primary["parent_group_candidate"]
+                    != other["parent_group_candidate"]
+                ):
+                    primary["association_conflict"] = True
+                primary["association_conflict"] = bool(
+                    primary.get("association_conflict")
+                    or other.get("association_conflict")
+                    or pconf
+                )
+                primary["band_detached"] = bool(
+                    primary.get("band_detached") or other.get("band_detached")
+                )
+                for kind in kinds:
+                    primary[kind] = (pfields.get(kind) or {}).get(
+                        "normalized_value"
+                    )
+                if pconf or primary["association_conflict"]:
+                    primary["association_status"] = "INCONCLUSIVE"
+                other["_merged_into_same_band"] = primary.get("row")
+                rows.remove(other)
+                page_rows.pop(j)
+                cy_a = _row_cy(primary)
+            i += 1
 
 
 _ITEM_MARKER_RE = re.compile(r"^[A-Z]{1,3}\d{0,2}$", re.IGNORECASE)

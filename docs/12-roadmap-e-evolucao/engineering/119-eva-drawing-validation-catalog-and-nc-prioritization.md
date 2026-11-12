@@ -2741,3 +2741,47 @@ Baseline HEAD `103cd058f4` vs candidato (commit desta frente, após
 uma causa real corrigida e retestada; integração oficial PASS no que
 foi exercitado (leitura autenticada + contrato), NOT_RUN apenas onde
 credencial/identidade restrita não existem no ambiente. Sem deploy.
+
+## 75. Reconciliação do delta de ocorrências 90264135 — 2026-11-12
+
+**TASK_ID:** `EVA-VAL01-90264135-OCCURRENCE-DELTA-RECONCILIATION`.
+Baseline `103cd058f4` vs candidato (HEAD desta frente). Nível
+`drawing_structure_occurrences`, replay fiel de payload real `nx_*`.
+
+**Fonte de verdade visual:** anotações G1 oficiais
+(`eva-val01-g1/annotations/90264135_p{10,12,13}.json`, schema
+`eva_val01_g1_page_annotation.v1`, pdf_sha256 `af47dd4c…` — coincide
+com o `occurrence_key.document_sha256` do payload). Drive `X:` segue
+desmontado (verificado); anotações DRAFT com render dpi200 referenciado
+são a melhor evidência visual disponível no host.
+
+**Reconciliação 288→284→282:**
+
+- Pré-merge: 28 removidas/24 adicionadas. Pareamento por (página,
+  código): nenhuma ocorrência desaparece por completo — mas 5 linhas
+  visuais perdiam a quantidade porque SLANet fragmentou a linha em
+  dois `row` ids na mesma banda Y (código num fragmento, qty+desc
+  noutro sem código → o fragmento sem código não emite ocorrência).
+- **Fix generalista:** `_merge_same_band_rows` — linhas cujo centro de
+  banda coincide (tol ≤ 6px/0,4·band_gap) são comprovadamente
+  fragmentos da mesma linha visual da grade; fundidas preservando
+  campos, células, conflitos e flags. RED→GREEN (2 testes novos).
+- Pós-merge: 32 removidas/26 adicionadas vs baseline — todas pareadas
+  como correção de campo (item/quantidade/código/pai) ou merge de
+  variante duplicada `item=None, qty=None`.
+
+**Validação contra GT anotada:**
+- p13: **14/14 linhas exatas** (A1–AG item+qty+código; B|1|10120137;
+  AQ/AR/AS presentes).
+- p10: 13/14 — `A1` sai como item `None` (qty 7 + código corretos,
+  INCONCLUSIVE honesto); baseline tinha `A2|10080182|16` (código da
+  linha 1 misturado com qty da linha 2) → candidato emite
+  `A2|16|10080192` exato per GT.
+- p12 subsets: `AE|1|10010028`, `AH|2|10080897`, `AG|2|10110676` sob
+  50225701/02/03/04 e qty 1 sob 50225740 — restaurados conforme GT.
+- Recuperações extras vs baseline: qty `AT|4|10110559` p13,
+  `AG|1|10110676` p2, itens `AF/AJ/AG` em subconjuntos p4/p10.
+
+**Gate:** reconciliação completa, zero perda de ocorrência legítima
+comprovada por GT; remoções = duplicatas fundidas ou correções.
+Detalhe por delta no Doc 120.

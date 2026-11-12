@@ -786,3 +786,40 @@ ocorrência em todas as páginas do bloco repetido (p2–p13).
 **Auth/E2E oficial:** token `rober` via impersonation+implicit OIDC →
 `GET /apps/api-delpi/products/90264004/structure` 200 (root + 10 itens
 + `bom_validity`); sem token 401; produto inexistente → envelope vazio.
+
+## OCCURRENCE DELTA RECONCILIATION — 90264135 — 2026-11-12
+
+Baseline `103cd058f4` (288 occ) → candidato pré-merge (284) →
+final com `_merge_same_band_rows` (282). Diff por identidade
+(página, pai, item, código, qty), replay fiel `nx_90264135.json`,
+pdf_sha256 `af47dd4c…` ≡ anotações G1.
+
+### Causa raiz do delta líquido
+
+Fragmentação SLANet: uma linha visual emitida como dois `row` ids na
+mesma banda Y (ex.: p4 cy134 → `row2` com `A3+10090316`, `row501345`
+com `1+descrição`). O fragmento sem `component_code` não emite
+ocorrência → qty órfã. 8 pares same-band detectados (4 já no
+baseline). Fix: merge por coincidência de centro de banda
+(`_merge_same_band_rows`), fail-closed — conflitos preservados.
+
+### Matriz de deltas pós-merge (32 rem / 26 add — todas explicadas)
+
+| Tipo | Exemplos | Classificação |
+|---|---|---|
+| ITEM_CHANGED | A2→A3 p12, U/F/None→AE p10, AE→AH p10, D→AG p4, AB→AC p8, AG→AM p6 | correção (GT/subset pattern) |
+| QUANTITY_CHANGED | `A3\|10090316` None→1, `A5\|10090926` None→1, `A6\|10110677` None→1, `AB\|10120150` None→1, `AT\|10110559` None→4, `AG\|10110676` None→1/2, `AF\|10010005` None→1 | correção (token GT) |
+| FIELD_CHANGED | `A2\|10080182\|16`→`A2\|10080192\|16` p10/p4 | correção (GT r2) |
+| MERGED | `None\|10110678\|None` p4 (dup da occ qty6), `None\|…\|None` p4/p6/p10 | remoção legítima de duplicata |
+| PARENT_CHANGED | `AF\|10010005` 50215396→50225715/50225718 p4 | correção (âncora rowspan da página) |
+| ADDED | `None\|10120146\|1` p4 | ocorrência legítima nova (item pendente) |
+| REMOVED sem par | — | nenhuma |
+
+### Integridade
+
+- Componente legítimo perdido: **0** (toda remoção tem par ou é dup).
+- Componente inventado: **0** (todo código existe em token/célula).
+- `UNKNOWN`/INCONCLUSIVE/association_conflict preservados.
+- Multiplicidade preservada (mesmo código em páginas/pais distintos).
+- p10 residual honesto: `A1` item None (evidência insuficiente — não
+  fabricado).

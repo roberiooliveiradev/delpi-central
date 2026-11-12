@@ -982,3 +982,67 @@ def test_margin_balloon_marker_rejected():
                "bounding_box_px": _quad(14, 381, 34, 403)}]
     _recover_item_markers(rows, band_gap_px=20.4, marker_tokens=tokens)
     assert not (rows[0].get("fields") or {}).get("item")
+
+
+# --------------------------------------------------------------------------
+# Fragmentação SLANet: duas linhas-fragmento na mesma banda Y fundem
+# --------------------------------------------------------------------------
+
+
+def test_same_band_fragment_rows_merge_fields():
+    """Classe 90264135-p4: SLANet fragmenta uma linha visual em dois
+    ``row`` ids com células na mesma banda Y. O código cai numa linha
+    e a quantidade fica órfã na outra (que não emite ocorrência por
+    falta de código). O merge por banda restaura a tupla completa."""
+    cells = [
+        _cell(0, 1, "Código", _quad(0, 0, 110, 16)),
+        _cell(0, 3, "Item", _quad(380, 0, 440, 16)),
+        _cell(0, 4, "QTD.", _quad(440, 0, 480, 16)),
+        _cell(0, 5, "Comp.", _quad(490, 0, 560, 16)),
+        _cell(0, 6, "Descrição", _quad(570, 0, 860, 16)),
+        # linha 1 normal
+        _cell(1, 3, "A2 16", _quad(380, 20, 480, 40),
+              token_centers=[[420.0, 30.0]]),
+        _cell(1, 5, "10080192", _quad(490, 20, 560, 40),
+              token_centers=[[525.0, 30.0]]),
+        _cell(1, 6, "TERMINAL", _quad(570, 20, 860, 40),
+              token_centers=[[700.0, 30.0]]),
+        # linha visual cy~60 fragmentada: item+código no row 2,
+        # qty+descrição no row sintético 501345 (mesma banda)
+        _cell(2, 3, "A3", _quad(380, 50, 440, 70),
+              token_centers=[[410.0, 60.0]]),
+        _cell(2, 5, "10090316", _quad(490, 50, 560, 70),
+              token_centers=[[525.0, 60.0]]),
+        _cell(501345, 4, "1", _quad(440, 50, 480, 70),
+              token_centers=[[460.0, 60.0]]),
+        _cell(501345, 6, "CONECTOR", _quad(570, 50, 860, 70),
+              token_centers=[[700.0, 60.0]]),
+    ]
+    rows, _ = rows_from_native_cells(cells, page=1)
+    data = [r for r in rows if r.get("component_code")]
+    assert len(data) == 2, data
+    a3 = [r for r in data if r["component_code"] == "10090316"]
+    assert len(a3) == 1
+    assert a3[0]["item"] == "A3"
+    assert a3[0]["quantity"] == "1"
+
+
+def test_distinct_band_rows_are_not_merged():
+    """Negativo: linhas em bandas Y distintas permanecem separadas."""
+    cells = [
+        _cell(0, 1, "Código", _quad(0, 0, 110, 16)),
+        _cell(0, 3, "Item", _quad(380, 0, 440, 16)),
+        _cell(0, 4, "QTD.", _quad(440, 0, 480, 16)),
+        _cell(0, 5, "Comp.", _quad(490, 0, 560, 16)),
+        _cell(1, 3, "A1", _quad(380, 20, 440, 40),
+              token_centers=[[410.0, 30.0]]),
+        _cell(1, 5, "10090001", _quad(490, 20, 560, 40),
+              token_centers=[[525.0, 30.0]]),
+        _cell(2, 3, "A2", _quad(380, 80, 440, 100),
+              token_centers=[[410.0, 90.0]]),
+        _cell(2, 5, "10090002", _quad(490, 80, 560, 100),
+              token_centers=[[525.0, 90.0]]),
+    ]
+    rows, _ = rows_from_native_cells(cells, page=1)
+    data = [r for r in rows if r.get("component_code")]
+    assert len(data) == 2
