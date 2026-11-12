@@ -996,3 +996,33 @@ substitui o E2E full-document para homologação.
 Gates: `FUSED_ANCHOR_RECOVERY_GATE=PASS`,
 `MULTIPAGE_REAL_PDF_GATE=INCONCLUSIVE`, `REGRESSION_GATE=PASS`,
 `RELEASE_CANDIDATE_GATE=BLOCKED`, `QUALITY_HOMOLOGATION=EVAL_PENDING`.
+
+---
+
+## MULTIPAGE JOB TIMEOUT — causa-raiz e E2E (`90264135`, 2026-11-12)
+
+**Causa-raiz medida:** `DUPLICATED_PROCESSING` — o caminho de
+understanding rodava 2 pipelines OCR em série
+(`pdfium_render_paddleocr` 123,9 s + `pdfium_render_opencv_paddleocr`
+76,4 s na p12 ≈ 200 s/página) e consumia só o `best`. Correção
+(`424ba095c0`): primário primeiro, comparação só como fallback.
+
+**E2E full-document via MCP** — job `aj-24864845515540e6`:
+**COMPLETED em ~396 s** (cap 2 700 s, inalterado). 13/13 páginas,
+coverage FULL, 2 775 tokens, 280 ocorrências únicas
+(198 IDENTIFIED / 82 UNKNOWN), `association_conflict` preservado,
+proveniência `occurrence_key` (hash+page+row) em 100%.
+
+| Página | Occs E2E | Occs probe anterior | IDENTIFIED |
+|---|---|---|---|
+| p10 | 49 | ~49 | 34 |
+| p12 | 30 | 30 | 22 |
+| p13 | 19 | 19 | 15 |
+
+p13: AQ/AR/AS passaram de `UNKNOWN_SUBSET` (pendente owner) para
+IDENTIFIED sob `50225749` via `rowspan_anchor` — a varredura
+completa resolveu a âncora do grupo. A1\|7\|10080182 (p10) segue
+sem promoção indevida (verificar em homologação).
+
+`MULTIPAGE_FULL_DOCUMENT=RESOLVED` (execução; qualidade visual da
+homologação permanece `EVAL_PENDING`). `VAL01_COMPLETED=false`.

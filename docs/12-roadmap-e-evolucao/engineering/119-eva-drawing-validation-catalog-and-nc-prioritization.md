@@ -3124,3 +3124,61 @@ IDENTIFIED + 4 UNKNOWN; `50233813`/`50233816` recuperados;
 promoção indevida. `JOB_RUNNING_CAP_S` inalterado em PROD;
 multipágina permanece pendência separada. Rollback disponível
 (imagem anterior intacta), não executado.
+
+## 82. Causa-raiz do timeout multipágina e correção — 2026-11-12
+
+**TASK_ID:** `EVA-VAL01-MULTIPAGE-JOB-TIMEOUT-ROOT-CAUSE`
+
+**Medição (página 12 de `90264135`, a mais densa):**
+
+| Pipeline | Duração | Tokens |
+|---|---|---|
+| `pdfium_render_paddleocr` | 123.9 s | 238 |
+| `pdfium_render_opencv_paddleocr` | 76.4 s | 184 |
+| **Ambos (serial, como antes)** | **~200 s/página** | só `best` consumido |
+
+**Causa-raiz:** `DUPLICATED_PROCESSING` — o caminho de
+`product.drawing_understanding` executava os DOIS pipelines do
+perfil `approved_local_visual_ocr` em série e consumia apenas o run
+`best` (max `token_count`). Em 13 páginas: ~2 600 s só de OCR, antes
+de SLANet/composição — estoura `JOB_RUNNING_CAP_S=2700`. Agravante
+histórico: os jobs multipágina anteriores também competiam com 7
+jobs concorrentes no mesmo container.
+
+Execução sequencial, um subprocesso por página por pipeline
+(`ENG_DRAWING_OCR_PAGE_BATCH=1`, DEC-VAL-036 — init de modelo por
+filho, memória devolvida na morte do processo). Sem lock espera;
+composição desprezível.
+
+**Correção mínima** (`424ba095c0`): `_run_understanding_visual_benchmark`
+em `semantic_bridge.py` — pipeline primário primeiro; pipeline(s) de
+comparação só como fallback quando o primário não produz evidência
+utilizável. `JOB_RUNNING_CAP_S` inalterado; perfil do tool de
+benchmark (comparação) inalterado; sem regra por produto/página.
+
+**Testes:** 3 novos (`test_drawing_understanding_ocr_pipelines.py` —
+primário-sozinho, fallback por falta de evidência, fallback por erro)
++ 13 existentes do job path/anchors → 16/16 PASS.
+
+**E2E — `90264135` REAL_PDF via MCP (`aj-24864845515540e6`):**
+
+| Campo | Valor |
+|---|---|
+| Status terminal | **COMPLETED** |
+| Duração | ~396 s (17:19:33 → 17:26:09) — antes: FAILED no cap 2 700 s |
+| PDF sha256 | `af47dd4c…` (esperado) |
+| Cobertura | FULL — 13/13 páginas OCR ok, 2 775 tokens |
+| Pipeline usado | `pdfium_render_paddleocr` (primário; opencv não disparou) |
+| Ocorrências | 280 únicas — 198 IDENTIFIED, 82 UNKNOWN |
+| `association_conflict` | preservado (24 linhas) |
+| Proveniência | `occurrence_key` = hash+page+row em 100% |
+| p10/p12/p13 | 49/30/19 occs — consistente com o probe escopado anterior |
+| p13 AQ/AR/AS | IDENTIFIED sob `50225749` via `rowspan_anchor` (grupo resolvido) |
+
+**Gates:** `ROOT_CAUSE=YES` (DUPLICATED_PROCESSING, medido),
+`PERFORMANCE_MEASURED=YES`, `MINIMAL_FIX=YES`,
+`TARGETED_TESTS=PASS`, `MULTIPAGE_JOB_TERMINAL=COMPLETED`,
+`MULTIPAGE_RESULT_INTEGRITY=PASS`,
+`ARCHITECTURE_DECISION_REQUIRED=NO`, `RELEASE_GATE=PASS` (candidato).
+Produção não alterada nesta tarefa. `VAL01_COMPLETED=false`
+(homologação visual de qualidade segue pendente do owner).
