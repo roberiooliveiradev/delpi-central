@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Request
 
 from it_portal_app.application.host_service_control import HostServiceControl
 from it_portal_app.core.responses import ok
@@ -14,6 +14,7 @@ from it_portal_app.interface.http.dependencies import get_host_service_control
 from it_portal_app.interface.http.s2s_auth import require_collector_identity
 from it_portal_app.interface.http.schemas import (
     Envelope, ERROR_RESPONSES, HostServiceActionInput, HostServiceActionOut,
+    HostServiceAgentPollInput,
     HostServiceAgentClaimOut, HostServiceAgentReportInput,
 )
 
@@ -47,14 +48,13 @@ def get_action(request: Request, server_id: UUID, action_id: UUID,
               operation_id="get_it_windows_host_service_action")
 
 
-@router.get("/collector/v1/servers/{server_id}/host-services/control/next",
+@router.post("/collector/v1/servers/{server_id}/host-services/control/next",
     operation_id="claim_it_windows_host_service_action",
     response_model=Envelope[HostServiceAgentClaimOut | None])
-def claim_action(request: Request, server_id: UUID,
-                 hostname: str = Query(min_length=1, max_length=255),
+def claim_action(request: Request, server_id: UUID, body: HostServiceAgentPollInput,
                  service: HostServiceControl = Depends(get_host_service_control)):
     identity = require_collector_identity(request, required_scopes=(AGENT_SCOPE,))
-    result = service.poll(str(server_id), identity.client_id, hostname)
+    result = service.poll(str(server_id), identity.client_id, body.hostname)
     return ok(result, operation_id="claim_it_windows_host_service_action")
 
 
