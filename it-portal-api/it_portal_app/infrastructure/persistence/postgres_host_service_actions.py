@@ -28,15 +28,26 @@ class PostgresHostServiceActions(PostgresRepositoryBase):
     @staticmethod
     def _expire(conn, server_id: str) -> None:
         # No automatic retry: a claimed Windows command could already have executed.
-        conn.execute(
+        rows = conn.execute(
             f"""UPDATE {_S}.host_service_actions
                 SET status='timeout', finished_at=now(), error_code='timeout'
                 WHERE server_id=%s AND (
                     (status='queued' AND requested_at < now()-interval '30 seconds')
                     OR (status='running' AND claimed_at < now()-interval '75 seconds')
-                )""",
+                ) RETURNING id, server_id, service_name, action, state_before,
+                            requested_by_id, requested_by_name""",
             (server_id,),
-        )
+        ).fetchall()
+        for row in rows:
+            actor = Actor(id=str(row["requested_by_id"]), name=row["requested_by_name"])
+            PostgresHostServiceActions._audit(conn, AuditEvent(
+                entity_type="host_service_action", entity_id=str(row["id"]),
+                server_id=server_id, event_type="host_service_action_finished",
+                changes={"service": row["service_name"], "action": row["action"],
+                         "status": "timeout", "state_before": row["state_before"],
+                         "state_after": None, "error_code": "timeout",
+                         "confirmed_by_agent": None},
+            ), actor)
 
     def enqueue(self, server_id: str, service_key: str, action: str,
                 request_id: str, actor: Actor) -> dict:
