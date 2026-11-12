@@ -222,6 +222,8 @@ describe("servers", () => {
       "/action-plans": { data: { items: [], total: 0, page: 1, page_size: 20 } },
     });
     renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
+    const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
+    fireEvent.click(within(navigation).getByRole("button", { name: /Notas técnicas/ }));
     expect(await screen.findByRole("note")).toBeTruthy();
     expect(screen.getByText(/Não registre senhas/)).toBeTruthy();
     expect(screen.getByRole("button", { name: /Arquivar/ })).toBeTruthy();
@@ -246,7 +248,11 @@ describe("servers", () => {
     renderAt(`/apps/it-portal/servers/${SERVER_ID}`);
     expect(await screen.findByRole("button", { name: /Restaurar/ })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Editar/ })).toBeNull();
+    const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
+    fireEvent.click(within(navigation).getByRole("button", { name: /Notas técnicas/ }));
+    expect(await screen.findByText("Notas técnicas")).toBeTruthy();
     expect(screen.queryByRole("note")).toBeNull();
+    fireEvent.click(within(navigation).getByRole("button", { name: /Planos de ação/ }));
     expect(screen.queryByRole("button", { name: /Novo plano/ })).toBeNull();
   });
 
