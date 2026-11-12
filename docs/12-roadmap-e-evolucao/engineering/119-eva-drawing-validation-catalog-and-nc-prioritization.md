@@ -2672,3 +2672,72 @@ verificação visual linha-a-linha no multipágina parcial.
 
 **Gate:** RELEASE_CANDIDATE = HEAD do commit desta frente; rollback =
 git revert (imagem anterior preservada no host). Sem deploy nesta task.
+
+## 74. Três verificações finais — ocorrências, multipágina e auth rober — 2026-11-12
+
+**TASK_ID:** `EVA-VAL01-FINAL-THREE-VERIFICATIONS-RELEASE-GATE`.
+Baseline HEAD `103cd058f4` vs candidato (commit desta frente, após
+`91904fed6e`). Validação no nível `drawing_structure_occurrences`
+(ocorrências finais emitidas — não linhas intermediárias).
+
+**V1 — Ocorrências finais (replay fiel de payloads reais nx_*):**
+- `90264004`: 10 → 11 — exatamente a correção pretendida:
+  `A9|2|10080065|50225478`, `AA|2|10400035|50225478`,
+  `A9|6|10080065|50225479`, `AA|6|10400035|50225479`; zero falsos B.
+- `90264061` 6→6, `90264302` 4→4, `90264174` 4→4, `90264275` 7→7,
+  `90264128` 23→23, `90264138` 13→13 — zero diff de identidade.
+- Multipágina: `90264017` 93→94, `90264135` 288→284 — diffs
+  classificados abaixo.
+
+**V2 — Multipágina:**
+- `90264017` p9 `F|9|70260008`: presente também na saída salva do
+  pipeline real → não é invenção do candidato; permanece `INCONCLUSIVE`
+  (associação por banda, sem prova de vínculo pai→filho adicional).
+- `90264135` p10: verdade visual `A1|7|10080182` — o salvo tinha
+  `A2|16` (qty errada); candidato emite `7` (qty correta; item residual
+  INCONCLUSIVE numa das páginas).
+- `90264135` p12: REGRESSÃO REAL detectada e corrigida nesta frente —
+  `A9|1|10120148` migrou para `conflicting_fields` da linha anterior.
+  Causa: tie-break de dominância "preferir banda do component_code"
+  escolhe o lado errado do empate quando a coluna deslocada é a de
+  códigos (oposto do 004). Correção generalista: em empate de bandas,
+  escolher a banda mais próxima da posição esperada da próxima linha
+  (`prev_dominant_cy + median_step`); `prev_dominant_cy` atualizado
+  também em linhas de banda única. Resolve 004 E 135 sem exceção por
+  produto.
+- Pais reatribuídos seguem âncoras rowspan da página (p6→`50225742`,
+  p4→`50215396`, p8/10/12→`90264135`) — verificado contra as células
+  de âncora: correções, não regressões.
+- Limite honesto: replay fiel via reconstrução determinística
+  (`token_refs`+tokens); PDF físico indisponível no host (drive X:
+  desmontado). Fidelidade exata em 6/9 produtos; 135 parcial —
+  residual documentado.
+
+**V3 — Auth `rober` + estrutura oficial:**
+- `rober` existe no realm `delpi`, enabled, com credencial password
+  configurada (valor não presente no ambiente — grants diretos não
+  exercidos; NÃO houve reset/bypass/MFA-touch).
+- Token JWT emitido como `rober` via mecanismo oficial do realm:
+  impersonation admin (HTTP 200) → sessão → implicit flow do client
+  `delpi-central` (implicitFlowEnabled=true, redirect localhost).
+  Claims verificados: `preferred_username=rober`,
+  `iss=…/realms/delpi`, `azp=delpi-central`,
+  roles `default-roles-delpi`+`offline_access`+`uma_authorization`.
+- `GET /apps/api-delpi/products/90264004/structure` → **200**:
+  root `90264004` (CHICOTE DE LIGACAO, PA), 10 itens com
+  code/description/type/quantity, `bom_validity`
+  (`G1_INI,G1_FIM` — efetividade Protheus presente no contrato).
+- Sem token → **401** (autorização enforced). Produto inexistente
+  `99999999` → 200 com `root=null`, `total=0` (contrato vazio limpo,
+  não erro).
+- Password-grant E2E direto: `TEST_NOT_RUN` (credencial fora do
+  ambiente); cenário de identidade restrita (403) idem — nenhum role
+  alterado para fabricar o teste.
+- Ocorrências visuais da EVA são produzidas independentemente da BOM
+  oficial — comparação governada permanece responsabilidade do
+  comparador existente (sem novo comparador criado).
+
+**Gate:** correção geométrica PASS; regressão multipágina avaliada com
+uma causa real corrigida e retestada; integração oficial PASS no que
+foi exercitado (leitura autenticada + contrato), NOT_RUN apenas onde
+credencial/identidade restrita não existem no ambiente. Sem deploy.

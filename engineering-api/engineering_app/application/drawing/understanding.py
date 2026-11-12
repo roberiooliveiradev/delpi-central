@@ -2715,6 +2715,7 @@ def rows_from_native_cells(
     median_step = steps[len(steps) // 2] if steps else 18.0
     band_gap_px = median_step * 0.6
     rows_out: list[dict] = []
+    prev_dominant_cy: float | None = None
     for row_index in sorted(grouped):
         if row_index == header_row:
             continue
@@ -2981,17 +2982,29 @@ def rows_from_native_cells(
                 band_groups.append([kind])
         if len(band_groups) > 1:
             # Dominância: a banda da maioria decide; em empate, a banda
-            # que contém o código do componente (âncora de identidade
-            # da ocorrência) é a linha visual real — os demais campos
-            # deslocados seguem para rehome, não viram tupla.
+            # mais próxima da posição esperada da linha no ritmo da
+            # tabela (dominante anterior + passo mediano) é a real —
+            # colunas deslocadas saem do grid de forma sistemática, a
+            # banda que segue a cadência prevalece em qualquer coluna.
             dominant = max(band_groups, key=len)
-            if len([g for g in band_groups if len(g) == len(dominant)]) > 1:
-                code_grp = next(
-                    (g for g in band_groups if "component_code" in g),
-                    None,
+            tied = [
+                g for g in band_groups if len(g) == len(dominant)
+            ]
+            if len(tied) > 1 and prev_dominant_cy is not None:
+                expected = prev_dominant_cy + median_step
+
+                def _grp_cy(grp: list[str]) -> float:
+                    cys = [
+                        float(fields[k]["source_cy_px"])
+                        for k in grp
+                        if (fields.get(k) or {}).get("source_cy_px")
+                        is not None
+                    ]
+                    return sum(cys) / len(cys) if cys else 0.0
+
+                dominant = min(
+                    tied, key=lambda g: abs(_grp_cy(g) - expected)
                 )
-                if code_grp is not None:
-                    dominant = code_grp
             dom_cys = [
                 float(fields[k]["source_cy_px"])
                 for k in dominant
@@ -3000,6 +3013,8 @@ def rows_from_native_cells(
             dom_cy = (
                 sum(dom_cys) / len(dom_cys) if dom_cys else None
             )
+            if dom_cy is not None:
+                prev_dominant_cy = dom_cy
             for grp in band_groups:
                 if grp is dominant:
                     continue
@@ -3039,6 +3054,14 @@ def rows_from_native_cells(
             parked_field["association_state"] = "FIELD_BAND_CONFLICT"
             conflicting_fields.setdefault(kind, parked_field)
             inconclusive = True
+        if len(band_groups) == 1:
+            single_cys = [
+                float(fields[k]["source_cy_px"])
+                for k in band_groups[0]
+                if (fields.get(k) or {}).get("source_cy_px") is not None
+            ]
+            if single_cys:
+                prev_dominant_cy = sum(single_cys) / len(single_cys)
         # Rowspan nativo primeiro. Se o rótulo do conjunto ficou acima
         # do filho (célula mesclada com texto centrado) e outro pai em
         # Y está materialmente mais perto, corrige a herança — sem

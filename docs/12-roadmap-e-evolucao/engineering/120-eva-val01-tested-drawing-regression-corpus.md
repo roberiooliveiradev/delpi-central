@@ -754,3 +754,35 @@ parcial — residual documentado, sem falha crítica provada.
 Testes: 32/32 arquivo alvo (76 suíte EVA focada). Novos: split em
 bloco-pai, âncora não-componente, competição célula×token, rejeição de
 balão de margem.
+
+## FINAL THREE VERIFICATIONS — saída em nível de ocorrência — 2026-11-12
+
+Verificação executada sobre `drawing_structure_occurrences` (saída
+final do Understanding), não sobre linhas intermediárias.
+
+| PDF | baseline | candidato | veredito |
+|---|---:|---:|---|
+| 90264004 | 10 | 11 | correção pretendida: A9/AA qty2+6 sob 50225478/50225479; zero falso B |
+| 90264061 | 6 | 6 | zero diff |
+| 90264302 | 4 | 4 | zero diff; âncora 50226114 não promovida |
+| 90264174 | 4 | 4 | zero diff (A–D intactas) |
+| 90264275 | 7 | 7 | zero diff |
+| 90264128 | 23 | 23 | zero diff |
+| 90264138 | 13 | 13 | zero diff |
+| 90264017 | 93 | 94 | diffs evidence-backed; F\|9\|70260008 já existia na saída salva → INCONCLUSIVE honesto |
+| 90264135 | 288 | 284 | 1 regressão real (A9\|10120148 p12) → corrigida por tie-break de ritmo de banda; pais reatribuídos conferem âncoras rowspan da página |
+
+**Regressão real corrigida:** dominância em empate por "banda do
+component_code" migrava `10120148` para `conflicting_fields` da linha
+anterior quando a coluna deslocada era a de códigos (135 p12), embora
+correta no 004 (onde o deslocado era item/qty). Fix: banda do empate
+mais próxima da posição esperada (`prev_dominant_cy + median_step`) —
+generalista, sem literal de produto/página.
+
+**Validação visual por token (135):** p10 `A1|7|10080182` (era `A2|16`
+no salvo — qty agora correta); p12 `A9|1|10120148` restaurado como
+ocorrência em todas as páginas do bloco repetido (p2–p13).
+
+**Auth/E2E oficial:** token `rober` via impersonation+implicit OIDC →
+`GET /apps/api-delpi/products/90264004/structure` 200 (root + 10 itens
++ `bom_validity`); sem token 401; produto inexistente → envelope vazio.
