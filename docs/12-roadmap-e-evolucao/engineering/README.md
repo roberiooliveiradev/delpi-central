@@ -48,6 +48,7 @@ Portal de Engenharia
 | Documento | Papel |
 |---|---|
 | [README.md](./README.md) | índice e decisões mestre |
+| [ENG-REALTIME-01](./ENG-REALTIME-01-websocket-transversal-prc-plano.md) | **Plano atual (12/11/2026):** capacidade WebSocket transversal Engineering API, PRC primeiro consumidor, integração Engineering + My Requests, limites de AuthZ/pós-commit/escala — TARGET/PLANNED |
 | [INVENTARIO-ATIVOS.md](./INVENTARIO-ATIVOS.md) | ativos atuais, owners, destino e evidências |
 | [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md) | escopo funcional e fronteiras de ownership |
 | [PLAYBOOK-MODULO-ENGENHARIA.md](./PLAYBOOK-MODULO-ENGENHARIA.md) | regras de produto/arquitetura e invariantes de implementação |
@@ -111,3 +112,7 @@ Toda página user-facing deve provar: contrato/BFF no owner correto; AuthZ backe
 A pasta é documentação permanente. Arquivos `.cursor/plans/*.plan.md` são estado temporário de execução e não substituem esta arquitetura. Antes de qualquer `E*.S*`, o Cursor deve reler `development-standards-index.mdc`, revalidar código/contratos atuais, classificar drifts e só executar decisões `READY_CONFIRMED` ou `READY_BOUNDED` com teste explícito.
 
 **Primeiro próximo passo técnico quando a implementação for autorizada:** executar somente `E0.S1` de [IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md), congelando o inventário real antes de criar qualquer scaffold.
+
+## Reancoragem de estado — 12/11/2026
+
+> Este README contém descrições históricas de arquitetura alvo (incluindo afirmações de que `engineering-api` e `plugins/engineering` ainda não existem e de que PRC seria de `requests-api`). **Esses trechos são baseline histórico, não retrato do runtime atual.** Para o PRC vigente, a **Engineering API é a autoridade do caso**, e os dois MFEs são consumidores. O [ENG-REALTIME-01](./ENG-REALTIME-01-websocket-transversal-prc-plano.md) documenta o planejamento atual do tempo real. Revisar as demais seções legadas em tarefa documental separada, sem sobrescrever decisões de ownership sem aprovação.
