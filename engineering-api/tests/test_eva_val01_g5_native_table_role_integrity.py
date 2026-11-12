@@ -879,3 +879,106 @@ def test_marker_nearest_band_wins_over_displaced_cell():
                "bounding_box_px": _quad(465, 445, 499, 471)}]
     _recover_item_markers(rows, band_gap_px=20.0, marker_tokens=tokens)
     assert rows[0]["item"] == "A9"
+
+
+def test_fused_qty_code_split_inside_group_block():
+    """Célula '2 10400035' dentro de bloco-pai: token_centers em
+    colunas X distintas provam qty+código — o split é autorizado.
+    Caso real: linha aa|2|10400035 sob 50225478 em desenho com
+    conjunto repetido."""
+    cells = [
+        _cell(8, 0, "50225478 B", _quad(40, 357, 131, 381), rowspan=2,
+              token_centers=[[85.0, 369.0]]),
+        _cell(8, 4, "10080065", _quad(534, 328, 626, 366),
+              token_centers=[[608.5, 355.5]]),
+        _cell(8, 6, "TERM. PINO", _quad(591, 328, 1079, 367),
+              token_centers=[[891.5, 355.0]]),
+        _cell(9, 2, "A9", _quad(420, 352, 508, 389),
+              token_centers=[[480.0, 356.0]]),
+        _cell(9, 3, "2", _quad(489, 353, 554, 389),
+              token_centers=[[534.5, 355.0]]),
+        _cell(9, 4, "2 10400035", _quad(524, 356, 617, 391),
+              token_centers=[[534.5, 389.5], [608.5, 389.5]]),
+        _cell(9, 6, "CABO SIL", _quad(678, 359, 1145, 394),
+              token_centers=[[855.5, 389.5]]),
+        _cell(10, 3, "AA", _quad(464, 392, 525, 428),
+              token_centers=[[481.5, 390.0]]),
+    ]
+    rows, _ = rows_from_native_cells(cells, page=1)
+    by_row = {r["row"]: r for r in rows}
+    r9 = by_row[9]
+    assert r9["component_code"] == "10400035"
+    assert r9["quantity"] == "2"
+    assert r9["item"] == "AA"
+    assert r9["parent_group_candidate"] == "50225478"
+    r8 = by_row[8]
+    assert r8["item"] == "A9"
+    assert r8["quantity"] == "2"
+    assert r8["component_code"] == "10080065"
+
+
+def test_fused_qty_code_never_splits_into_anchor_code():
+    """'1 50226114' em bloco-pai: o código fundido é a própria
+    âncora de grupo — nunca vira component_code (fail-closed)."""
+    cells = [
+        _cell(8, 0, "50225478 B", _quad(40, 357, 131, 381), rowspan=2,
+              token_centers=[[85.0, 369.0]]),
+        _cell(8, 1, "50225479", _quad(43, 420, 131, 450), rowspan=2,
+              token_centers=[[87.0, 437.5]]),
+        _cell(9, 1, "50225479", _quad(43, 420, 131, 450), rowspan=2,
+              token_centers=[[87.0, 437.5]]),
+        _cell(9, 4, "1 50225479", _quad(524, 356, 617, 391),
+              token_centers=[[534.5, 389.5], [608.5, 389.5]]),
+    ]
+    rows, _ = rows_from_native_cells(cells, page=1)
+    for r in rows:
+        assert r.get("component_code") != "50225479"
+
+
+def test_marker_closer_cell_beats_distant_orphan_token():
+    """Token órfão distante não eclipsa célula colada na banda:
+    candidatos de tokens e células competem por proximidade."""
+    from engineering_app.application.drawing.understanding import (
+        _recover_item_markers,
+    )
+
+    code_cell = _cell(9, 4, "10400035", _quad(524, 356, 617, 391))
+    code_cell["token_centers"] = [[608.5, 389.5]]
+    aa_cell = _cell(10, 3, "AA", _quad(464, 392, 525, 428))
+    aa_cell["token_centers"] = [[481.5, 390.0]]
+    rows = [
+        {"page": 1, "fields": {"component_code": {
+            "normalized_value": "10400035",
+            "bounding_box_px": _quad(524, 356, 617, 391),
+            "source_cy_px": 389.5, "col": 4}},
+         "cells": [code_cell], "parent_group_candidate": "50225478"},
+        {"page": 1, "fields": {}, "cells": [aa_cell]},
+    ]
+    tokens = [{"raw_text": "A9", "page": 1,
+               "bounding_box_px": _quad(465, 410, 497, 437)}]
+    _recover_item_markers(rows, band_gap_px=20.4, marker_tokens=tokens)
+    assert rows[0]["item"] == "AA"
+
+
+def test_margin_balloon_marker_rejected():
+    """Letra de balão na margem da folha (fora do extent-X da
+    tabela) não vira item — fail-closed."""
+    from engineering_app.application.drawing.understanding import (
+        _recover_item_markers,
+    )
+
+    anchor_cell = _cell(8, 0, "50225478", _quad(43, 357, 131, 381))
+    code_cell = _cell(8, 4, "10080065", _quad(534, 328, 626, 366))
+    code_cell["token_centers"] = [[608.5, 355.5]]
+    rows = [
+        {"page": 1, "fields": {"component_code": {
+            "normalized_value": "10080065",
+            "bounding_box_px": _quad(534, 328, 626, 366),
+            "source_cy_px": 355.5, "col": 4}},
+         "cells": [anchor_cell, code_cell],
+         "parent_group_candidate": "50225478"},
+    ]
+    tokens = [{"raw_text": "B", "page": 1,
+               "bounding_box_px": _quad(14, 381, 34, 403)}]
+    _recover_item_markers(rows, band_gap_px=20.4, marker_tokens=tokens)
+    assert not (rows[0].get("fields") or {}).get("item")

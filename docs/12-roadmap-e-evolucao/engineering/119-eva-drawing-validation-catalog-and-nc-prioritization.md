@@ -2646,3 +2646,29 @@ governado provado por contrato interno + fixtures (ver §71).
 
 **FRENTE C:** modelo de GT proposto em Doc 120; métricas exigem owner —
 `QUALITY_HOMOLOGATION=EVAL_PENDING`; `VAL01_COMPLETED=false`.
+
+## 73. Fechamento operacional AA/B + gate de release — 2026-11-12
+
+**Containers (host dev):** stack delpi ativa; `delpi-engineering-api`
+monta o worktree (`/app` rw) — o código candidato é o que roda local.
+Keycloak `delpi-keycloak` + `delpi-gateway` UP; identidade `rober`
+(Oberdev) existe no realm `delpi`. Password-grant para as identidades
+de teste conhecidas retornou `invalid_grant` — autenticação E2E com
+Oberdev e `/products/{code}/structure` ficam NOT_RUN por ausência de
+credencial válida (estado independente da correção geométrica; não é
+defeito do artefato modificado).
+
+**RCA B (90264004):** falso positivo de marcador — `b`@x14 é balão de
+margem fora do extent-X da tabela; corrigido com gate de borda de bloco
+por página. No mesmo bloco, prova geométrica de perda real: célula
+fundida `'2 10400035'` bloqueada por `group_context` e dedup por valor
+ignorando banda — corrigidos com evidência de `token_centers` e guarda
+`anchor_codes` (nunca promover código-âncora a componente).
+
+**Replay de regressão (payloads reais nx_*, baseline HEAD):** 6/9
+produtos zero diff em linhas com código; multipágina (017/135) com
+diffs evidence-backed + INCONCLUSIVE + conflitos preservados; resíduo:
+verificação visual linha-a-linha no multipágina parcial.
+
+**Gate:** RELEASE_CANDIDATE = HEAD do commit desta frente; rollback =
+git revert (imagem anterior preservada no host). Sem deploy nesta task.

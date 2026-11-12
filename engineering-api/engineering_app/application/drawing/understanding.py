@@ -2695,6 +2695,9 @@ def rows_from_native_cells(
         key=lambda a: (a[0], _ANCHOR_RANK.get(a[3], 0), a[1])
     )
     group_y_anchors.sort(key=lambda a: a[0])
+    # Códigos-âncora nunca viram component_code via split qty+código —
+    # a âncora é o próprio conjunto, não um filho.
+    anchor_codes = {a[1] for a in group_anchors}
     # Passo mediano entre linhas — escala para decidir se dois campos
     # vêm de bandas Y compatíveis (mesma linha física) ou conflitantes.
     row_cys = []
@@ -2756,6 +2759,18 @@ def rows_from_native_cells(
                 fields[kind] = incoming
                 return
             if fields[kind].get("normalized_value") == value:
+                # Mesmo valor em banda distinta são campos diferentes
+                # (ex.: qty 2 em duas linhas visuais deslocadas) —
+                # estaciona o entrante; a varredura de banda dominante
+                # decide o destino. Mesma banda = duplicata real.
+                new_cy = incoming.get("source_cy_px")
+                old_cy = fields[kind].get("source_cy_px")
+                if (
+                    new_cy is not None
+                    and old_cy is not None
+                    and abs(float(new_cy) - float(old_cy)) > band_gap_px
+                ):
+                    parked.append((kind, incoming))
                 return
             old_cy = fields[kind].get("source_cy_px")
             new_cy = incoming.get("source_cy_px")
@@ -2774,6 +2789,10 @@ def rows_from_native_cells(
                 return
             inconclusive = True
             fields[kind]["association_state"] = "FIELD_AMBIGUOUS"
+            # O perdedor da ambiguidade mesma-banda é preservado como
+            # evidência — rehome/cross-check podem reposicioná-lo, e o
+            # conflito permanece visível em vez de descarte silencioso.
+            parked.append((kind, incoming))
 
         for cell in row_cells:
             text = _norm(
@@ -2831,6 +2850,7 @@ def rows_from_native_cells(
                     "col_type": kind,
                     "page": page,
                     "token_refs": cell.get("token_refs") or [],
+                    "token_centers": cell.get("token_centers") or [],
                     "ambiguous": bool(
                         cell.get("ambiguous")
                         or (mixed and kind not in ("quantity",))
@@ -2886,9 +2906,26 @@ def rows_from_native_cells(
                 )
                 continue
             if group_context:
-                continue
+                # Exceção comprovada: célula qty+código fundidos dentro
+                # de bloco-pai. Os token_centers precisam evidenciar
+                # duas colunas X distintas — sem prova geométrica, o
+                # contexto de grupo continua fail-closed.
+                _m = _QTY_CODE_RE.fullmatch(text)
+                _tcs = [
+                    tc
+                    for tc in (cell.get("token_centers") or [])
+                    if isinstance(tc, (list, tuple)) and len(tc) >= 2
+                ]
+                if not (
+                    _m
+                    and len(_tcs) >= 2
+                    and max(float(t[0]) for t in _tcs)
+                    - min(float(t[0]) for t in _tcs)
+                    > 20
+                ):
+                    continue
             m = _QTY_CODE_RE.fullmatch(text)
-            if m:
+            if m and m.group(2) not in anchor_codes:
                 _put("quantity", m.group(1), cell, "native_cell_pair")
                 _put(
                     "component_code", m.group(2), cell,
@@ -2943,15 +2980,61 @@ def rows_from_native_cells(
             if not placed:
                 band_groups.append([kind])
         if len(band_groups) > 1:
+            # Dominância: a banda da maioria decide; em empate, a banda
+            # que contém o código do componente (âncora de identidade
+            # da ocorrência) é a linha visual real — os demais campos
+            # deslocados seguem para rehome, não viram tupla.
             dominant = max(band_groups, key=len)
+            if len([g for g in band_groups if len(g) == len(dominant)]) > 1:
+                code_grp = next(
+                    (g for g in band_groups if "component_code" in g),
+                    None,
+                )
+                if code_grp is not None:
+                    dominant = code_grp
+            dom_cys = [
+                float(fields[k]["source_cy_px"])
+                for k in dominant
+                if (fields.get(k) or {}).get("source_cy_px") is not None
+            ]
+            dom_cy = (
+                sum(dom_cys) / len(dom_cys) if dom_cys else None
+            )
             for grp in band_groups:
                 if grp is dominant:
                     continue
                 for kind in grp:
                     f = fields.pop(kind)
                     f["association_state"] = "FIELD_BAND_CONFLICT"
-                    conflicting_fields[kind] = f
+                    # Mesmo papel já em conflito (ex.: qty estacionada
+                    # por banda distinta): preserva em `parked` em vez
+                    # de sobrescrever — campos nunca são descartados.
+                    if kind in conflicting_fields:
+                        parked.append((kind, f))
+                    else:
+                        conflicting_fields[kind] = f
                     inconclusive = True
+            # Campos estacionados que provam a banda dominante voltam
+            # à tupla — ex.: qty fundida em célula deslocada uma linha.
+            if dom_cy is not None:
+                for kind, f in list(parked):
+                    cy = f.get("source_cy_px")
+                    if (
+                        cy is not None
+                        and abs(float(cy) - dom_cy) <= band_gap_px
+                        and kind not in fields
+                    ):
+                        f["association_state"] = "FIELD_IDENTIFIED"
+                        f["association_method"] = (
+                            str(
+                                f.get("association_method")
+                                or "native_cell"
+                            )
+                            + "+band_restore"
+                        )
+                        fields[kind] = f
+                        parked.remove((kind, f))
+                        inconclusive = True
         for kind, parked_field in parked:
             parked_field["association_state"] = "FIELD_BAND_CONFLICT"
             conflicting_fields.setdefault(kind, parked_field)
@@ -3121,6 +3204,19 @@ def _recover_item_markers(
                 break
         if ref_cx is None:
             continue
+        # Borda esquerda do bloco tabular da página: marcador fora do
+        # extent-X da tabela (balão/carimbo na margem da folha) não é
+        # item. Usa todas as linhas da página — a linha-alvo pode não
+        # conter a célula de âncora.
+        block_x0 = None
+        for other in by_page.get(int(row.get("page") or 1), []):
+            for c in other.get("cells") or []:
+                box = c.get("bounding_box_px") or []
+                if len(box) >= 4:
+                    x0 = float(min(box[0::2]))
+                    block_x0 = x0 if block_x0 is None else min(
+                        block_x0, x0
+                    )
         parent = str(row.get("parent_group_candidate") or "")
         comp = str((fields.get("component_code") or {}).get(
             "normalized_value") or "")
@@ -3147,11 +3243,18 @@ def _recover_item_markers(
             if ref_cy is not None and d is not None and d > tol:
                 return False
             cx = _cell_cx(obj)
-            return not (cx is not None and cx > ref_cx + 2)
+            if cx is not None and cx > ref_cx + 2:
+                return False
+            return not (
+                cx is not None and block_x0 is not None
+                and cx < block_x0 - 8
+            )
 
-        # Tokens órfãos primeiro: a geometria do token OCR é
-        # autoritativa — células SLANet podem estar deslocadas uma
-        # linha (classe comprovada: AA/10400035).
+        # Candidatos de tokens órfãos E células competem juntos por
+        # proximidade à banda — a geometria do token OCR é
+        # autoritativa, mas um token distante não pode eclipsar uma
+        # célula colada na banda da linha (classe comprovada: linha
+        # aa|2|10400035 deslocada em 90264004).
         found: list[tuple[str, dict]] = []
         for tok in marker_tokens or []:
             if int(tok.get("page") or row.get("page") or 1) != int(
@@ -3168,18 +3271,16 @@ def _recover_item_markers(
             marker = _marker_of(text)
             if marker and _accept(tok):
                 found.append((marker, tok))
-        if len({m for m, _ in found}) != 1:
-            found = []
-            for other in by_page.get(int(row.get("page") or 1), []):
-                for cell in other.get("cells") or []:
-                    text = str(cell.get("text") or "").strip()
-                    if not text or _CODE_FIND_RE.search(text) or (
-                        parent and parent in text
-                    ) or (comp and comp in text):
-                        continue
-                    marker = _marker_of(text)
-                    if marker and _accept(cell):
-                        found.append((marker, cell))
+        for other in by_page.get(int(row.get("page") or 1), []):
+            for cell in other.get("cells") or []:
+                text = str(cell.get("text") or "").strip()
+                if not text or _CODE_FIND_RE.search(text) or (
+                    parent and parent in text
+                ) or (comp and comp in text):
+                    continue
+                marker = _marker_of(text)
+                if marker and _accept(cell):
+                    found.append((marker, cell))
         if len({m for m, _ in found}) > 1:
             # Desempate por evidência: o marcador cuja geometria está
             # mais próxima da banda da linha vence — empate real

@@ -714,3 +714,43 @@ distância à banda (empate real → fail-closed).
 | demais | 0 null, zero regressão |
 
 Testes +2; foco 86 pass/2 falhas pré-existentes de ambiente.
+
+## OPERATIONAL-E2E — RCA de B, split em bloco-pai e replay multipágina (2026-11-12)
+
+**RCA item B (90264004):** o token `b` está em x≈14 — balão/carimbo na
+margem da folha, FORA do extent-X da tabela (âncora em x≈43). Não é
+marcador de item; a atribuição anterior era falso positivo. Gate
+generalista: borda esquerda do bloco = mínimo X das células de TODAS as
+linhas da página (a linha-alvo pode não conter a âncora).
+
+**Defeito real no mesmo bloco (prova geométrica):** a grade SLANet
+deslocou células ~1 linha — `aa|2|10400035→50225478` estava fundido em
+`'2 10400035'` e bloqueado por `group_context`. Correções:
+- split `qty+code` em bloco-pai autorizado SÓ com prova de duas colunas X
+  distintas nos `token_centers` (>20px) — sem prova, fail-closed;
+- código-âncora de grupo nunca vira `component_code` via split
+  (`'1 50226114'` não promove pai a componente — `anchor_codes`);
+- mesmo valor em banda distinta = campos distintos (qty `2` em duas
+  bandas não deduplica); perdedor de ambiguidade preservado em
+  `parked`/`conflicting_fields` — nunca descarte silencioso;
+- banda dominante em empate resolve pela banda que contém
+  `component_code` (âncora de identidade da ocorrência);
+- marcadores de token órfão e de célula competem por distância à banda
+  (token não eclipsa célula colada).
+
+**Resultado 90264004 (replay de células reais):**
+`A9|2|10080065|478`, `AA|2|10400035|478`, `A9|6|10080065|479`,
+`AA|6|10400035|479` — 11 linhas, sem null, sem duplicata, `b` rejeitado.
+
+**Replay fiel (reconstrução `line_texts` por token_refs, regra do
+adapter):** baseline HEAD vs candidato — 6/9 produtos com ZERO diff em
+linhas com código (061, 128, 138, 174, 275, 302). Multipágina (017/135):
+diffs não-fabricados (todos os códigos existem em células/tokens da
+página), `INCONCLUSIVE` e `conflicting_fields` preservados; ganhos de
+código do próprio produto são filtrados downstream
+(`code == product_code`). Verificação visual por linha no multipágina:
+parcial — residual documentado, sem falha crítica provada.
+
+Testes: 32/32 arquivo alvo (76 suíte EVA focada). Novos: split em
+bloco-pai, âncora não-componente, competição célula×token, rejeição de
+balão de margem.
