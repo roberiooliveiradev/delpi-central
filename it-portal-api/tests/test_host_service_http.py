@@ -1,5 +1,4 @@
 """S2S scope isolation and human read-only contract for #1576."""
-from types import SimpleNamespace
 import pytest
 
 from delpi_auth.service_identity import ServiceIdentity

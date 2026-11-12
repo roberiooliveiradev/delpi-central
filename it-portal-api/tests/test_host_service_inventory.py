@@ -110,14 +110,10 @@ class FakeInventory:
 def test_pagination_and_completion_are_not_exposed_before_all_batches(client, repository, monkeypatch):
     from it_portal_app.interface.http.dependencies import get_host_service_inventory
     from it_portal_app.main import app
-    from it_portal_app.application import observation_service
     monkeypatch.setenv("IT_PORTAL_COLLECTOR_SERVER_ALLOWLIST", "")
     assert FakeInventory().current is None
-    created = client.post("/servers", json={
-        "name": "Windows", "hostname": "srv-erp-01.delpi.local", "unit_code": "01",
-        "environment": "production", "server_type": "virtual", "criticality": "medium",
-        "administrative_status": "in_operation",
-    }).json()["data"]
+    from tests.conftest import server_payload
+    created = client.post("/servers", json=server_payload()).json()["data"]
     fake = FakeInventory()
     service_layer = HostServiceInventory(fake, repository)
     app.dependency_overrides[get_host_service_inventory] = lambda: service_layer

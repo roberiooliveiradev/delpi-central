@@ -97,7 +97,7 @@ def build_host_service_batch(raw: dict) -> HostServiceBatch:
         seen.add(key)
         display = item["display_name"]
         description = item["description"]
-        if not isinstance(display, str) or not (1 <= len(display.strip()) <= 240):
+        if not isinstance(display, str) or not (1 <= len(display.strip()) <= 240) or bool(_SECRET_PATTERN.search(display)):
             errors[f"services[{i}].display_name"] = "Descrição curta inválida."
             continue
         if description is not None and (
@@ -106,7 +106,8 @@ def build_host_service_batch(raw: dict) -> HostServiceBatch:
         ):
             errors[f"services[{i}].description"] = "Descrição inválida ou sensível."
             continue
-        if item["state"] not in VALID_STATES or item["start_mode"] not in VALID_START_MODES:
+        if (not isinstance(item["state"], str) or item["state"] not in VALID_STATES
+                or not isinstance(item["start_mode"], str) or item["start_mode"] not in VALID_START_MODES):
             errors[f"services[{i}].state"] = "Estado ou inicialização inválido."
             continue
         if type(item["can_stop"]) is not bool:
