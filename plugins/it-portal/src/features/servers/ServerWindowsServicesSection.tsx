@@ -1,11 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock3,
-  Cog,
+  Star,
   RefreshCw,
   Search,
   ShieldCheck,
@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Fragment, useEffect, useState } from "react";
 
-import { itPortalApi, type HostService, type HostServiceQuery } from "../../api/itPortalApi";
+import { itPortalApi, type HostService, type HostServiceCriticality, type HostServiceQuery } from "../../api/itPortalApi";
 import { formatDateTime } from "../../app/format";
 import { ItpSectionCard } from "../../app/itPortalUi";
 import { toApiError } from "../../app/PortalContext";
@@ -54,10 +54,18 @@ function count(value: number | undefined): string {
   return value === undefined ? "—" : value.toLocaleString("pt-BR");
 }
 
-function ServiceRow({ service, expanded, onToggle }: {
+const criticalityLabels: Record<HostServiceCriticality, string> = {
+  normal: "Normal", high: "Alta", critical: "Crítica",
+};
+
+function ServiceRow({ service, expanded, onToggle, canManageFavorites, saving, onFavoriteToggle, onCriticalityChange }: {
   service: HostService;
   expanded: boolean;
   onToggle: () => void;
+  canManageFavorites: boolean;
+  saving: boolean;
+  onFavoriteToggle: (service: HostService) => void;
+  onCriticalityChange: (service: HostService, value: HostServiceCriticality) => void;
 }) {
   const tone = statusTone(service.state);
   return (
@@ -65,9 +73,31 @@ function ServiceRow({ service, expanded, onToggle }: {
       <tr className={"itp-scm__row" + (expanded ? " is-expanded" : "") + (!service.is_present ? " is-absent" : "")}>
         <td>
           <div className="itp-scm__service">
-            <span className="itp-scm__service-icon" aria-hidden="true"><Cog size={17} strokeWidth={1.8} /></span>
+            {canManageFavorites ? (
+              <button type="button"
+                className={"itp-scm__star" + (service.is_favorite ? " is-active" : "")}
+                aria-label={(service.is_favorite ? "Remover " : "Adicionar ") + service.display_name + (service.is_favorite ? " dos favoritos" : " aos favoritos")}
+                aria-pressed={Boolean(service.is_favorite)}
+                title={service.is_favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                disabled={saving}
+                onClick={() => onFavoriteToggle(service)}>
+                <Star size={17} strokeWidth={1.8} fill={service.is_favorite ? "currentColor" : "none"} aria-hidden="true" />
+              </button>
+            ) : (
+              <span className={"itp-scm__star itp-scm__star--readonly" + (service.is_favorite ? " is-active" : "")}
+                aria-label={service.is_favorite ? "Serviço favorito" : "Serviço não favorito"}>
+                <Star size={17} strokeWidth={1.8} fill={service.is_favorite ? "currentColor" : "none"} aria-hidden="true" />
+              </span>
+            )}
             <div className="itp-scm__service-content">
-              <strong className="itp-scm__service-name">{service.display_name}</strong>
+              <span className="itp-scm__service-title">
+                <strong className="itp-scm__service-name">{service.display_name}</strong>
+                {service.is_favorite && service.criticality && service.criticality !== "normal" ? (
+                  <span className={"itp-scm__criticality is-" + service.criticality}>
+                    {criticalityLabels[service.criticality]}
+                  </span>
+                ) : null}
+              </span>
               <span className="itp-scm__service-technical" title={service.name}>{service.name}</span>
             </div>
           </div>
@@ -119,6 +149,27 @@ function ServiceRow({ service, expanded, onToggle }: {
                   <span className="itp-scm__detail-label">Última observação</span>
                   <span>{formatDateTime(service.observed_at)}</span>
                 </div>
+                {service.is_favorite ? (
+                  <div className="itp-scm__priority-control">
+                    {canManageFavorites ? (
+                      <label>
+                        <span className="itp-scm__detail-label">Criticidade do favorito</span>
+                        <select aria-label={"Criticidade de " + service.display_name}
+                          value={service.criticality || "normal"} disabled={saving}
+                          onChange={(event) => onCriticalityChange(service, event.target.value as HostServiceCriticality)}>
+                          <option value="normal">Normal</option>
+                          <option value="high">Alta</option>
+                          <option value="critical">Crítica</option>
+                        </select>
+                      </label>
+                    ) : (
+                      <>
+                        <span className="itp-scm__detail-label">Criticidade do favorito</span>
+                        <span>{criticalityLabels[service.criticality || "normal"]}</span>
+                      </>
+                    )}
+                  </div>
+                ) : null}
               </div>
             </div>
           </td>
@@ -128,12 +179,18 @@ function ServiceRow({ service, expanded, onToggle }: {
   );
 }
 
-export function ServerWindowsServicesSection({ serverId }: { serverId: string }) {
+export function ServerWindowsServicesSection({ serverId, canManageFavorites = false }: {
+  serverId: string;
+  canManageFavorites?: boolean;
+}) {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [state, setState] = useState("");
   const [startMode, setStartMode] = useState("");
   const [present, setPresent] = useState<"yes" | "no" | "all">("yes");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [expandedService, setExpandedService] = useState<string | null>(null);
 
@@ -144,6 +201,7 @@ export function ServerWindowsServicesSection({ serverId }: { serverId: string })
   }, [search]);
 
   const query: HostServiceQuery = {
+    favorites_only: favoritesOnly || undefined,
     q: searchTerm || undefined,
     state: state || undefined,
     start_mode: startMode || undefined,
@@ -178,11 +236,38 @@ export function ServerWindowsServicesSection({ serverId }: { serverId: string })
     staleTime: 60_000,
   });
 
+  const savePreference = useMutation({
+    mutationFn: (input: { service: HostService; is_favorite: boolean; criticality: HostServiceCriticality }) =>
+      itPortalApi.setHostServicePreference(serverId, input.service.service_key, {
+        is_favorite: input.is_favorite, criticality: input.criticality,
+      }),
+    onSuccess: () => {
+      setSaveError(null);
+      void queryClient.invalidateQueries({ queryKey: ["it-portal", "servers", serverId, "windows-host-services"] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.history(serverId) });
+    },
+    onError: (error) => setSaveError(toApiError(error).message),
+  });
+
+  function toggleFavorite(service: HostService) {
+    setSaveError(null);
+    savePreference.mutate({
+      service,
+      is_favorite: !service.is_favorite,
+      criticality: service.is_favorite ? "normal" : (service.criticality || "normal"),
+    });
+  }
+
+  function changeCriticality(service: HostService, criticality: HostServiceCriticality) {
+    setSaveError(null);
+    savePreference.mutate({ service, is_favorite: true, criticality });
+  }
+
   const payload = result.data;
   const totalPages = Math.max(1, Math.ceil((payload?.total ?? 0) / PAGE_SIZE));
   const first = payload && payload.total ? (page - 1) * PAGE_SIZE + 1 : 0;
   const last = payload ? Math.min(page * PAGE_SIZE, payload.total) : 0;
-  const hasFilters = Boolean(search.trim() || state || startMode || present !== "yes");
+  const hasFilters = Boolean(search.trim() || state || startMode || present !== "yes" || favoritesOnly);
   const isRefreshing = result.isFetching || running.isFetching || stopped.isFetching || disabled.isFetching;
 
   function resetFilters() {
@@ -191,6 +276,7 @@ export function ServerWindowsServicesSection({ serverId }: { serverId: string })
     setState("");
     setStartMode("");
     setPresent("yes");
+    setFavoritesOnly(false);
     setPage(1);
     setExpandedService(null);
   }
@@ -265,7 +351,20 @@ export function ServerWindowsServicesSection({ serverId }: { serverId: string })
               {payload ? count(payload.total) + " resultado(s)" : "Carregando…"}
             </span>
           </div>
-          <div className="itp-scm__filters">
+          <div className="itp-scm__segments" role="group" aria-label="Visualização do inventário">
+            <button type="button" className={!favoritesOnly ? "is-selected" : ""}
+              aria-pressed={!favoritesOnly}
+              onClick={() => { setFavoritesOnly(false); changePage(1); }}>
+              Todos os serviços
+            </button>
+            <button type="button" className={favoritesOnly ? "is-selected" : ""}
+              aria-pressed={favoritesOnly}
+              onClick={() => { setFavoritesOnly(true); changePage(1); }}>
+              <Star size={14} strokeWidth={1.8} fill={favoritesOnly ? "currentColor" : "none"} aria-hidden="true" />
+              Favoritos <span className="itp-scm__segment-count">{count(payload?.favorites_count ?? 0)}</span>
+            </button>
+          </div>
+                    <div className="itp-scm__filters">
             <label className="itp-scm__search-field">
               <span className="itp-scm__field-title">Buscar serviço</span>
               <span className="itp-scm__search-control">
@@ -318,6 +417,12 @@ export function ServerWindowsServicesSection({ serverId }: { serverId: string })
               <SlidersHorizontal size={14} aria-hidden="true" /> Limpar filtros
             </button>
           ) : null}
+          {saveError ? (
+            <div className="itp-scm__save-error" role="alert">
+              <span>Não foi possível salvar a preferência: {saveError}</span>
+              <button type="button" onClick={() => setSaveError(null)} aria-label="Dispensar erro"><X size={15} /></button>
+            </div>
+          ) : null}
           {result.isPending ? <LoadingBlock title="Carregando serviços Windows" /> : null}
           {result.error ? <QueryErrorState error={toApiError(result.error)} onRetry={refresh} /> : null}
 
@@ -344,16 +449,21 @@ export function ServerWindowsServicesSection({ serverId }: { serverId: string })
                     {payload.items.map((svc) => (
                       <ServiceRow key={svc.name} service={svc}
                         expanded={expandedService === svc.name}
+                        canManageFavorites={canManageFavorites}
+                        saving={savePreference.isPending}
+                        onFavoriteToggle={toggleFavorite}
+                        onCriticalityChange={changeCriticality}
                         onToggle={() => setExpandedService((current) => current === svc.name ? null : svc.name)} />
                     ))}
                     {payload.items.length === 0 ? (
                       <tr><td colSpan={5}>
                         <div className="itp-scm__empty">
-                          <Search size={27} strokeWidth={1.5} aria-hidden="true" />
-                          <strong>Nenhum serviço encontrado</strong>
-                          <p>{payload.current
-                            ? "Nenhum serviço corresponde aos filtros escolhidos."
-                            : "Aguardando o primeiro inventário completo do servidor."}</p>
+                          {favoritesOnly ? <Star size={27} strokeWidth={1.5} aria-hidden="true" /> :
+                            <Search size={27} strokeWidth={1.5} aria-hidden="true" />}
+                          <strong>{favoritesOnly ? "Nenhum favorito encontrado" : "Nenhum serviço encontrado"}</strong>
+                          <p>{!payload.current ? "Aguardando o primeiro inventário completo do servidor." :
+                            favoritesOnly ? "Marque a estrela dos serviços importantes para acompanhá-los aqui." :
+                            "Nenhum serviço corresponde aos filtros escolhidos."}</p>
                           {hasFilters ? <button type="button" onClick={resetFilters}>Limpar filtros</button> : null}
                         </div>
                       </td></tr>
