@@ -43,6 +43,8 @@ STOP_QUEUE_SHORTER_THAN_HORIZON = "queue_shorter_than_horizon"
 
 _SECONDS_PER_HOUR = Decimal("3600")
 _QTY_QUANTUM = Decimal("0.000001")
+# Unidades contínuas com tempo padrão por unidade operacional (não por peça).
+_CONTINUOUS_OPERATIONAL_UNITS = frozenset({"MT", "KG"})
 
 
 def _dec(value: Any) -> Decimal | None:
@@ -109,6 +111,7 @@ class HorizonOperationInput:
     standard_time_quality: str
     standard_time_source: str
     pa_product_code: str = ""
+    standard_time_unit_hours: Decimal | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -139,6 +142,8 @@ class HorizonOperationAllocation:
     standard_time_source: str
     balance_state: str
     pa_product_code: str = ""
+    quantity_basis: str = "physical_piece"
+    standard_time_unit_hours: float | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -216,26 +221,43 @@ def allocate_work_center_horizon(
             _mark_incomplete("balance_unknown", item)
             break
 
-        if item.standard_time_quality != "complete":
+        factor = _positive_dec(item.pieces_conversion_factor)
+        operational_hours = _positive_dec(item.standard_time_unit_hours)
+        # MT/KG são unidades contínuas. O tempo padrão da OP já está em
+        # horas por MT/KG: não existe conversão segura dessas medidas em peças.
+        # Este fallback é EXCLUSIVO do Alimentador; não altera o contrato
+        # canônico de peças físicas usado pelo MES/Pulse.
+        by_operational_unit = (
+            item.standard_time_quality == "piece_conversion_unavailable"
+            and factor is None
+            and (item.unit or "").strip().upper() in _CONTINUOUS_OPERATIONAL_UNITS
+            and operational_hours is not None
+        )
+        if item.standard_time_quality != "complete" and not by_operational_unit:
             _mark_incomplete(
                 item.standard_time_quality or "standard_time_unavailable",
                 item,
             )
             break
 
-        cycle = _positive_dec(item.ideal_cycle_seconds)
-        if cycle is None:
-            _mark_incomplete("standard_time_unavailable", item)
-            break
-
-        factor = _positive_dec(item.pieces_conversion_factor)
-        if factor is None:
-            _mark_incomplete("piece_conversion_unavailable", item)
-            break
+        if by_operational_unit:
+            cycle = operational_hours * _SECONDS_PER_HOUR
+        else:
+            cycle = _positive_dec(item.ideal_cycle_seconds)
+            if cycle is None:
+                _mark_incomplete("standard_time_unavailable", item)
+                break
+            if factor is None:
+                _mark_incomplete("piece_conversion_unavailable", item)
+                break
 
         pending = item.pending_qty
         assert pending is not None and pending > 0
-        remaining_physical = physical_pieces_from_operational(pending, factor)
+        remaining_physical = (
+            None
+            if by_operational_unit
+            else physical_pieces_from_operational(pending, factor)
+        )
 
         setup_applied, setup_policy, uncertain = resolve_setup_seconds(
             setup_seconds=_dec(item.setup_seconds) or Decimal("0"),
@@ -258,38 +280,56 @@ def allocate_work_center_horizon(
             _mark_shortfall("no_productive_time_after_setup")
             break
 
-        max_physical = (productive_budget / cycle).to_integral_value(
-            rounding=ROUND_DOWN
-        )
-        # Garante que covered * cycle + setup não ultrapasse o orçamento
-        # mesmo com arredondamento decimal residual.
-        while max_physical > 0 and setup_applied + max_physical * cycle > remaining_budget:
-            max_physical -= 1
+        if by_operational_unit:
+            # Quantidade fracionária em MT/KG, sempre arredondada para baixo:
+            # a previsão nunca pode exceder as horas solicitadas.
+            covered_operational = min(
+                pending,
+                (productive_budget / cycle).quantize(
+                    _QTY_QUANTUM, rounding=ROUND_DOWN
+                ),
+            )
+            covered_physical = None
+        else:
+            max_physical = (productive_budget / cycle).to_integral_value(
+                rounding=ROUND_DOWN
+            )
+            # Garante que covered * cycle + setup não ultrapasse o orçamento
+            # mesmo com arredondamento decimal residual.
+            while max_physical > 0 and setup_applied + max_physical * cycle > remaining_budget:
+                max_physical -= 1
 
-        covered_physical = min(remaining_physical, max_physical)
-        if covered_physical <= 0:
+            assert remaining_physical is not None and factor is not None
+            covered_physical = min(remaining_physical, max_physical)
+            covered_operational = (covered_physical / factor).quantize(
+                _QTY_QUANTUM, rounding=ROUND_DOWN
+            )
+            # Evita covered_qty > pending por artefato de quantize.
+            if covered_operational > pending:
+                covered_operational = pending
+
+        if covered_operational <= 0:
             _mark_shortfall("no_productive_time_after_setup")
             break
-
-        covered_operational = (covered_physical / factor).quantize(
-            _QTY_QUANTUM, rounding=ROUND_DOWN
+        outside = max(pending - covered_operational, Decimal("0"))
+        productive_seconds = (
+            covered_operational * cycle
+            if by_operational_unit
+            else covered_physical * cycle
         )
-        # Evita covered_qty > pending por artefato de quantize.
-        if covered_operational > pending:
-            covered_operational = pending
-        outside = pending - covered_operational
-        if outside < 0:
-            outside = Decimal("0")
-
-        productive_seconds = covered_physical * cycle
         total_seconds = setup_applied + productive_seconds
         offset_start = elapsed
         offset_end = elapsed + total_seconds
 
-        if covered_physical + Decimal("1e-12") < remaining_physical:
-            coverage = COVERAGE_PARTIAL
-        else:
-            coverage = COVERAGE_FULL
+        coverage = (
+            COVERAGE_PARTIAL
+            if (
+                covered_operational < pending
+                if by_operational_unit
+                else covered_physical + Decimal("1e-12") < remaining_physical
+            )
+            else COVERAGE_FULL
+        )
 
         allocations.append(
             HorizonOperationAllocation(
@@ -305,20 +345,32 @@ def allocate_work_center_horizon(
                 pending_qty=float(pending),
                 covered_qty=float(covered_operational),
                 remaining_outside_qty=float(outside),
-                pending_physical_pieces=float(remaining_physical),
-                covered_physical_pieces=float(covered_physical),
+                pending_physical_pieces=(
+                    float(remaining_physical) if remaining_physical is not None else None
+                ),
+                covered_physical_pieces=(
+                    float(covered_physical) if covered_physical is not None else None
+                ),
                 setup_seconds_applied=float(setup_applied),
                 setup_policy=setup_policy,
                 productive_seconds=float(productive_seconds),
                 total_seconds=float(total_seconds),
                 offset_start_seconds=float(offset_start),
                 offset_end_seconds=float(offset_end),
-                ideal_cycle_seconds=float(cycle),
-                pieces_conversion_factor=float(factor),
-                standard_time_quality=item.standard_time_quality,
+                ideal_cycle_seconds=(None if by_operational_unit else float(cycle)),
+                pieces_conversion_factor=(float(factor) if factor is not None else None),
+                standard_time_quality=(
+                    "complete" if by_operational_unit else item.standard_time_quality
+                ),
                 standard_time_source=item.standard_time_source,
                 balance_state=item.balance_state,
                 pa_product_code=item.pa_product_code,
+                quantity_basis=(
+                    "operational_unit" if by_operational_unit else "physical_piece"
+                ),
+                standard_time_unit_hours=(
+                    float(operational_hours) if by_operational_unit else None
+                ),
             )
         )
 
@@ -430,6 +482,8 @@ def work_center_result_payload(result: WorkCenterHorizonResult) -> dict[str, Any
                 "offset_end_seconds": op.offset_end_seconds,
                 "ideal_cycle_seconds": op.ideal_cycle_seconds,
                 "pieces_conversion_factor": op.pieces_conversion_factor,
+                "quantity_basis": op.quantity_basis,
+                "standard_time_unit_hours": op.standard_time_unit_hours,
                 "standard_time_quality": op.standard_time_quality,
                 "standard_time_source": op.standard_time_source,
                 "balance_state": op.balance_state,
