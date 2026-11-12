@@ -1,0 +1,25 @@
+{
+  "http_status": 404,
+  "snapshot": {
+    "status_class": "envelope",
+    "keys": [
+      "data",
+      "error",
+      "message",
+      "success"
+    ],
+    "success": false,
+    "error": {
+      "code": "supplier.not_found",
+      "recoverable": false
+    },
+    "meta_keys": [],
+    "dataVersion": null,
+    "operationId": null,
+    "entity": null,
+    "shape": null,
+    "pagination": null,
+    "data_types": "null",
+    "message": "<message>"
+  }
+}

@@ -1,7 +1,7 @@
 """Catálogo das 24 rotas e da matriz AuthZ derivada dos decorators e do branch gate.
 
 A suíte não importa o código da api-delpi. Os conjuntos abaixo espelham
-api_delpi_permissions.py e lancamento_notas_fiscais_branch_access.py.
+api_delpi_permissions.py, o router e lancamento_notas_fiscais_branch_access.py.
 """
 
 from __future__ import annotations
@@ -10,13 +10,19 @@ from dataclasses import dataclass
 
 FAKE_REQUEST_ID = "00000000-0000-4000-8000-000000000099"
 
-# Perfis com a permission que o decorator exige.
-READ = frozenset({"P1", "P2", "P3", "P4", "P5", "P6", "P7"})
-CREATE_ONLY = frozenset({"P5", "P6", "P7"})
+# @require_permission(CREATE) — só create (não process/manage).
+CREATE_STRICT = frozenset({"P5"})
+# @require_any_permission(CREATE_PERMISSIONS) — create | process | manage.
 CREATE_SET = frozenset({"P5", "P6", "P7"})
+# @require_any_permission(PROCESS_PERMISSIONS)
 PROCESS_SET = frozenset({"P6", "P7"})
+# @require_permission(MANAGE)
 MANAGE_ONLY = frozenset({"P7"})
+# @require_permission(REVIEW_UNMAPPED_PRODUCTS)
 REVIEW_ONLY = frozenset({"P8"})
+# @require_any_permission(READ_PERMISSIONS) — access|create|view|filiais|process|manage
+READ = frozenset({"P1", "P2", "P3", "P4", "P5", "P6", "P7"})
+# Branch global: view | process | manage (não create nem access).
 GLOBAL_BRANCH = frozenset({"P4", "P6", "P7"})
 FILIAL = {"P2": "01", "P3": "02"}
 
@@ -34,19 +40,19 @@ class Route:
 
 
 ROUTES: tuple[Route, ...] = (
-    Route("search_lancamento_notas_fiscais_suppliers", "GET", "/lancamento-notas-fiscais/suppliers", "create_only", "none", "invoice_posting_supplier", "paged_list"),
-    Route("list_lancamento_notas_fiscais_received_invoices", "GET", "/lancamento-notas-fiscais/received-invoices", "create_only", "none", "received_invoice", "paged_list"),
-    Route("get_lancamento_notas_fiscais_received_invoice_danfe", "GET", "/lancamento-notas-fiscais/received-invoices/contract-missing/danfe", "create_only", "none", "received_invoice_danfe", "scalar", True),
-    Route("get_lancamento_notas_fiscais_received_cte_dacte", "GET", "/lancamento-notas-fiscais/received-invoices/contract-missing/dacte", "create_only", "none", "received_cte_dacte", "scalar", True),
-    Route("get_lancamento_notas_fiscais_received_nfse_detail", "GET", "/lancamento-notas-fiscais/received-invoices/contract-missing/detail", "create_only", "none", "received_nfse_detail", "scalar"),
-    Route("get_lancamento_notas_fiscais_received_nfse_xml", "GET", "/lancamento-notas-fiscais/received-invoices/contract-missing/xml/nfe", "create_only", "none", "received_nfse_xml", "scalar", True),
-    Route("create_lancamento_notas_fiscais_request", "POST", "/lancamento-notas-fiscais/requests", "create_only", "body", "invoice_posting_request", "scalar"),
+    Route("search_lancamento_notas_fiscais_suppliers", "GET", "/lancamento-notas-fiscais/suppliers", "create_strict", "none", "invoice_posting_supplier", "paged_list"),
+    Route("list_lancamento_notas_fiscais_received_invoices", "GET", "/lancamento-notas-fiscais/received-invoices", "create_strict", "none", "received_invoice", "paged_list"),
+    Route("get_lancamento_notas_fiscais_received_invoice_danfe", "GET", "/lancamento-notas-fiscais/received-invoices/contract-missing/danfe", "create_strict", "none", "received_invoice_danfe", "scalar", True),
+    Route("get_lancamento_notas_fiscais_received_cte_dacte", "GET", "/lancamento-notas-fiscais/received-invoices/contract-missing/dacte", "create_strict", "none", "received_cte_dacte", "scalar", True),
+    Route("get_lancamento_notas_fiscais_received_nfse_detail", "GET", "/lancamento-notas-fiscais/received-invoices/contract-missing/detail", "create_strict", "none", "received_nfse_detail", "scalar"),
+    Route("get_lancamento_notas_fiscais_received_nfse_xml", "GET", "/lancamento-notas-fiscais/received-invoices/contract-missing/xml/nfe", "create_strict", "none", "received_nfse_xml", "scalar", True),
+    Route("create_lancamento_notas_fiscais_request", "POST", "/lancamento-notas-fiscais/requests", "create_strict", "body", "invoice_posting_request", "scalar"),
     Route("list_lancamento_notas_fiscais_unmapped_products", "GET", "/lancamento-notas-fiscais/unmapped-products", "review_only", "none", "invoice_posting_unmapped_product", "paged_list"),
     Route("list_lancamento_notas_fiscais_requests", "GET", "/lancamento-notas-fiscais/requests", "read", "query_optional", "invoice_posting_request", "paged_list"),
     Route("get_lancamento_notas_fiscais_request", "GET", f"/lancamento-notas-fiscais/requests/{FAKE_REQUEST_ID}", "read", "loaded", "invoice_posting_request", "scalar"),
     Route("get_lancamento_notas_fiscais_request_danfe", "GET", f"/lancamento-notas-fiscais/requests/{FAKE_REQUEST_ID}/danfe", "read", "loaded", "invoice_posting_danfe", "scalar", True),
     Route("get_lancamento_notas_fiscais_request_fiscal_attachment", "GET", f"/lancamento-notas-fiscais/requests/{FAKE_REQUEST_ID}/fiscal-attachments/xml_original", "read", "loaded", "invoice_posting_fiscal_attachment", "scalar", True),
-    Route("list_lancamento_notas_fiscais_open_purchase_orders", "GET", "/lancamento-notas-fiscais/purchase-orders/open", "create_only", "query_required", "invoice_posting_purchase_order", "paged_list"),
+    Route("list_lancamento_notas_fiscais_open_purchase_orders", "GET", "/lancamento-notas-fiscais/purchase-orders/open", "create_strict", "query_required", "invoice_posting_purchase_order", "paged_list"),
     Route("list_lancamento_notas_fiscais_request_purchase_orders", "GET", f"/lancamento-notas-fiscais/requests/{FAKE_REQUEST_ID}/purchase-orders", "read", "loaded", "invoice_posting_purchase_order", "paged_list"),
     Route("link_lancamento_notas_fiscais_request_purchase_order", "POST", f"/lancamento-notas-fiscais/requests/{FAKE_REQUEST_ID}/purchase-orders/link", "process", "loaded", "invoice_posting_request", "scalar"),
     Route("update_lancamento_notas_fiscais_request", "PATCH", f"/lancamento-notas-fiscais/requests/{FAKE_REQUEST_ID}", "create_set", "loaded", "invoice_posting_request", "scalar"),
@@ -64,7 +70,7 @@ assert len(ROUTES) == 24
 
 _AUTH_SETS = {
     "read": READ,
-    "create_only": CREATE_ONLY,
+    "create_strict": CREATE_STRICT,
     "create_set": CREATE_SET,
     "process": PROCESS_SET,
     "manage": MANAGE_ONLY,

@@ -1,5 +1,8 @@
+*.pyc
+.env.local
+.pytest_cache/
 .venv/
 __pycache__/
-.pytest_cache/
+golden-run-a/
+golden-run-b/
 results/
-*.pyc

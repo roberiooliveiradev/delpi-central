@@ -1,6 +1,5 @@
 {
   "http_status": 200,
-  "content_type": "application/json",
   "snapshot": {
     "status_class": "envelope",
     "keys": [
@@ -55,8 +54,8 @@
           "assignee_name": "str",
           "cancelled_at": "str",
           "cancelled_by_user_id": "str",
-          "cancelled_by_name": "str",
-          "cancel_justification": "str",
+          "cancelled_by_name": "null",
+          "cancel_justification": "null",
           "completion_source": "null",
           "sf1_recno": "null",
           "erp_entry_date": "str",

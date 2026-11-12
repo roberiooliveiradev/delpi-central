@@ -45,3 +45,16 @@ def flush() -> None:
         json.dumps(_ROWS, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+
+
+def write_golden(operation_id: str, case: str, payload: dict) -> None:
+    import os
+
+    if os.getenv("LNF_WRITE_GOLDEN") != "1":
+        return
+    folder = GOLDEN / operation_id
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / f"{case}.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )

@@ -1,0 +1,29 @@
+{
+  "http_status": 409,
+  "snapshot": {
+    "status_class": "envelope",
+    "keys": [
+      "data",
+      "error",
+      "message",
+      "meta",
+      "success"
+    ],
+    "success": false,
+    "error": {
+      "code": "invoice_posting_request.duplicate",
+      "recoverable": true
+    },
+    "meta_keys": [
+      "existing_request_id",
+      "existing_status"
+    ],
+    "dataVersion": null,
+    "operationId": null,
+    "entity": null,
+    "shape": null,
+    "pagination": null,
+    "data_types": "null",
+    "message": "<message>"
+  }
+}

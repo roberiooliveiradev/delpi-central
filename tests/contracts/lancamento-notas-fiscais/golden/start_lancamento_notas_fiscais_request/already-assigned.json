@@ -1,0 +1,28 @@
+{
+  "http_status": 409,
+  "snapshot": {
+    "status_class": "envelope",
+    "keys": [
+      "data",
+      "error",
+      "message",
+      "meta",
+      "success"
+    ],
+    "success": false,
+    "error": {
+      "code": "invoice_posting_request.already_assigned",
+      "recoverable": true
+    },
+    "meta_keys": [
+      "assignee_user_id"
+    ],
+    "dataVersion": null,
+    "operationId": null,
+    "entity": null,
+    "shape": null,
+    "pagination": null,
+    "data_types": "null",
+    "message": "<message>"
+  }
+}
