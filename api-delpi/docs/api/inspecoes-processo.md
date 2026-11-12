@@ -92,7 +92,7 @@ O escopo por filial e OP é o mesmo do detalhe; apenas leitura, sem escrita no E
 | `data` | não | Data única de produção `YYYY-MM-DD` (legado, default: hoje) |
 | `start_date` / `end_date` | não | Datas de produção inclusivas, usar ambas e não combinar com `data`; máximo 31 dias |
 | `export_all` | não | `true` retorna todas as linhas filtradas, até 10.000; erro 400 se excedido |
-| `inspecao_status` | não | `all` \| `nao_inspecionou` \| `inspecionou` \| `sem_cadastro` (default API: `all`; UI inicia em `nao_inspecionou`) |
+| `inspecao_status` | não | `all` \| `nao_inspecionou` \| `inspecionou` \| `sem_cadastro` \| `abaixo_minimo` \| `minimo_atingido` (default API: `all`; UI inicia em `abaixo_minimo`) |
 | `shift` | não | Turno de fábrica `1` \| `2` \| `3` (mesmas faixas do Eficiência Fabril; classifica pelo `hora_inicio`) |
 | `page` | não | Página (≥ 1, default 1) |
 | `page_size` | não | 1–100 (default 50) |
@@ -112,12 +112,16 @@ O escopo por filial e OP é o mesmo do detalhe; apenas leitura, sem escrita no E
 | `summary.ops_operacoes_pendentes` | Pares OP+operação com pelo menos uma pendência |
 | `summary.apontamentos_com_inspecao` | Linhas em que o mesmo operador inspecionou |
 | `summary.apontamentos_sem_cadastro` | Linhas sem inspeção cadastrada/exigível; não são pendências |
+| `summary.apontamentos_abaixo_minimo` | Linhas exigíveis com 0 ou 1 sessão do operador na OP + operação |
+| `summary.apontamentos_minimo_atingido` | Linhas com 2 ou mais sessões do mesmo operador na OP + operação |
 | `items[]` | Apontamentos do dia (filtrados por `inspecao_status` e opcionalmente `shift`; pendências primeiro quando `all`) |
 | `data` | Data inicial efetiva (campo legado) |
 | `start_date` / `end_date` | Período efetivo aplicado |
 | `page` / `page_size` / `has_next` | Paginação |
 
-Campos principais de cada item: `cod_operador`, `login_operador`, `nome_operador`, `op`, `produto`, `operacao`, `centro_trabalho`, `hora_inicio`, `hora_final`, `turno`, `turno_label`, `qtd_apontamentos`, `operador_inspecionou`, `tem_inspecao_na_op_operacao`, `tem_inspecao_amarrada` (especificação QP7/QP8 cadastrada). Os KPIs do `summary` consideram todas as classes de status no período e turno solicitados; `inspecao_status` restringe apenas `items`. Agrupamento por filial, data, turno, operador, OP, produto e operação. `summary.apontamentos_total = summary.apontamentos_com_inspecao + summary.apontamentos_pendentes + summary.apontamentos_sem_cadastro`. A consulta mantém a regra de QPR por OP/operação sem restringir o dia do ensaio.
+A coluna `qtd_inspecoes_operador` conta **sessões distintas por filial + OP + operação + matrícula**, com o mesmo critério do Histórico (data e hora da medição identificam a sessão; ensaios da mesma sessão não multiplicam a quantidade). A consulta à view `vw_minha_delpi_inspecoes_processo_historico_tela` é restrita às OPs da auditoria, em lotes. O total considera a OP inteira, não somente a data de produção filtrada, e a matrícula é vinculada ao operador pelo mesmo login/nome já usado para verificar se inspecionou. `abaixo_minimo` mantém apenas linhas com inspeção exigível e quantidade inferior a 2; `minimo_atingido` mantém as com pelo menos 2. Sem inspeção exigível, não há pendência. Os filtros se aplicam **antes** da paginação e também valem na exportação Excel.
+
+Campos principais de cada item: `cod_operador`, `login_operador`, `nome_operador`, `op`, `produto`, `operacao`, `centro_trabalho`, `hora_inicio`, `hora_final`, `turno`, `turno_label`, `qtd_apontamentos`, `qtd_inspecoes_operador`, `operador_inspecionou`, `tem_inspecao_na_op_operacao`, `tem_inspecao_amarrada` (especificação QP7/QP8 cadastrada). Os KPIs do `summary` consideram todas as classes de status no período e turno solicitados; `inspecao_status` restringe apenas `items`. Agrupamento por filial, data, turno, operador, OP, produto e operação. `summary.apontamentos_total = summary.apontamentos_com_inspecao + summary.apontamentos_pendentes + summary.apontamentos_sem_cadastro`. A consulta mantém a regra de QPR por OP/operação sem restringir o dia do ensaio.
 
 ### Exemplo
 

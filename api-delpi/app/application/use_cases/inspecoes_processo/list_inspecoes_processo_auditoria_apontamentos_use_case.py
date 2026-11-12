@@ -26,7 +26,8 @@ DEFAULT_PAGE = 1
 DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_50_100", None)
 MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_50_100") or 0)
 ALLOWED_STATUS = frozenset(
-    {"all", "nao_inspecionou", "inspecionou", "sem_cadastro"}
+    {"all", "nao_inspecionou", "inspecionou", "sem_cadastro",
+     "abaixo_minimo", "minimo_atingido"}
 )
 MAX_AUDITORIA_RANGE_DAYS = 31
 MAX_AUDITORIA_EXPORT_ROWS = 10000
@@ -124,7 +125,8 @@ def _parse_status(value: str | None) -> str:
     normalized = str(value).strip().lower()
     if normalized not in ALLOWED_STATUS:
         raise ValueError(
-            "status inválido. Use all, nao_inspecionou, inspecionou ou sem_cadastro."
+            "status inválido. Use all, nao_inspecionou, inspecionou, "
+            "sem_cadastro, abaixo_minimo ou minimo_atingido."
         )
     return normalized
 
@@ -153,6 +155,7 @@ def _normalize_item(
         turno=factory_shift_id(raw_hora),
         turno_label=factory_shift_label(raw_hora),
         qtd_apontamentos=_as_int(row.get("Qtde_Apontamentos")),
+        qtd_inspecoes_operador=_as_int(row.get("Qtde_Inspecoes_Operador")),
         operador_inspecionou=_as_bool(row.get("Operador_Inspecionou")),
         tem_inspecao_na_op_operacao=_as_bool(row.get("Tem_Inspecao_Na_Op_Operacao")),
         tem_inspecao_amarrada=_as_bool(row.get("Tem_Inspecao_Amarrada")),
@@ -173,6 +176,8 @@ def _normalize_summary(
         ops_operacoes_pendentes=_as_int(row.get("Ops_Operacoes_Pendentes")),
         apontamentos_com_inspecao=_as_int(row.get("Apontamentos_Com_Inspecao")),
         apontamentos_sem_cadastro=_as_int(row.get("Apontamentos_Sem_Cadastro")),
+        apontamentos_abaixo_minimo=_as_int(row.get("Apontamentos_Abaixo_Minimo")),
+        apontamentos_minimo_atingido=_as_int(row.get("Apontamentos_Minimo_Atingido")),
         apontamentos_total=_as_int(row.get("Apontamentos_Total")),
     )
 

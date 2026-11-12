@@ -7,6 +7,15 @@ function statusLabel(row: InspecoesProcessoAuditoriaApontamentoItem): string {
   return "Sem inspeção cadastrada";
 }
 
+
+function criterioMinimo(row: InspecoesProcessoAuditoriaApontamentoItem): string {
+  const qtd = row.qtd_inspecoes_operador ?? 0;
+  if (!qtd && !row.tem_inspecao_amarrada && !row.tem_inspecao_na_op_operacao) {
+    return "Sem exigência";
+  }
+  return qtd >= 2 ? "Mínimo atingido" : "Abaixo do mínimo";
+}
+
 export async function exportAuditWorkbook(
   items: InspecoesProcessoAuditoriaApontamentoItem[],
   branch: string,
@@ -20,13 +29,15 @@ export async function exportAuditWorkbook(
       headers: [
         "Filial", "Data produção", "Status", "Código operador", "Login", "Operador",
         "OP", "Produto", "Descrição", "Operação", "Centro trabalho", "Turno",
-        "Início", "Final", "Qtd. apontamentos", "Inspeção exigível", "Operador inspecionou",
+        "Início", "Final", "Qtd. apontamentos", "Qtd. inspeções na OP/operação",
+        "Mínimo 2 inspeções", "Inspeção exigível", "Operador inspecionou",
       ],
       rows: items.map((row) => [
         row.filial, row.data_producao ?? "", statusLabel(row), row.cod_operador,
         row.login_operador, row.nome_operador, row.op, row.produto, row.descricao_produto,
         row.operacao, row.centro_trabalho, row.turno_label ?? "", row.hora_inicio ?? "",
-        row.hora_final ?? "", row.qtd_apontamentos,
+        row.hora_final ?? "", row.qtd_apontamentos, row.qtd_inspecoes_operador ?? 0,
+        criterioMinimo(row),
         row.tem_inspecao_amarrada || row.tem_inspecao_na_op_operacao ? "Sim" : "Não",
         row.operador_inspecionou ? "Sim" : "Não",
       ]),

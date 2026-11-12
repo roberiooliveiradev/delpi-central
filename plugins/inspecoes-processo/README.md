@@ -57,9 +57,10 @@ Lista apontamentos produtivos no período e confronta se o **mesmo operador** in
 
 - Filtros de **data inicial e final** inclusivas; padrão: hoje; máximo: **31 dias**.
 - Turno (todos, primeiro, segundo, terceiro); os KPIs respeitam período e turno.
-- Filtro de status (default UI: **Não inspecionou**; Todos / Não inspecionou / Inspecionou / Sem cadastro). O status restringe somente a tabela e não os KPIs.
-- KPIs: total, pendentes, **sem inspeção cadastrada**, operadores pendentes e OK. As três classes de status fecham o total.
-- Exportação **Excel** de todos os registros filtrados (inclusive páginas adicionais), com limite de 10 mil linhas.
+- Filtro de status (default UI: **Abaixo de 2 inspeções**; também Todos / Mínimo atingido (2+) / Não inspecionou (0) / Inspecionou (1+) / Sem cadastro). O status restringe somente a tabela e não os KPIs.
+- Coluna **Qtd. inspeções (mín. 2)** com destaque para 0, 1 e 2+ sessões do mesmo operador na OP + operação, independentemente do dia/turno de produção; sem cadastro não entra como pendência.
+- KPIs: total, abaixo de 2 sessões, pendentes sem inspeção, **sem inspeção cadastrada**, operadores pendentes e inspecionou (1+). A regra antiga de 0 vs 1+ permanece para esses indicadores; a nova métrica identifica o mínimo de 2.
+- Exportação **Excel** de todos os registros filtrados (inclusive páginas adicionais), com quantidade de sessões por operador e indicador do mínimo de 2; limite de 10 mil linhas.
 - Agrupamento por filial, data, turno, operador, OP, produto e operação. A identidade de QPR/QPK inclui filial.
 - Status: inspecionou / não inspecionou / não possui inspeção cadastrada.
 

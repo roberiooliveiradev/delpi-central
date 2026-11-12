@@ -12,6 +12,7 @@ from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.inspecoes_processo.inspecoes_processo_auditoria_sql import (
     build_auditoria_apontamentos_base_sql,
     build_auditoria_ensaiador_map_sql,
+    build_auditoria_inspecoes_operador_sql,
     build_inspecao_cadastrada_for_product_revisions_sql,
     build_qpk_for_ops_sql,
     build_qpr_for_ops_sql,
@@ -128,6 +129,27 @@ def _index_qpr_rows(rows: list[dict]) -> dict[tuple[str, str, str], set[str]]:
     return indexed
 
 
+def _index_auditoria_inspecoes_operador(
+    rows: list[dict],
+) -> dict[tuple[str, str, str, str], int]:
+    """(filial, OP, operação, matrícula) -> sessões distintas na OP/operação."""
+    indexed: dict[tuple[str, str, str, str], int] = {}
+    for row in rows:
+        key = (
+            _as_text(row.get("Filial")),
+            _as_text(row.get("Ordem_Producao")),
+            _as_text(row.get("Operacao")),
+            _as_text(row.get("Matricula_Ensaiador")),
+        )
+        if not all(key):
+            continue
+        # O SQL devolve uma única linha por chave; max evita dupla contagem
+        # de resultados eventualmente duplicados na junção de lotes.
+        qtd = max(int(row.get("Qtde_Inspecoes") or 0), 0)
+        indexed[key] = max(indexed.get(key, 0), qtd)
+    return indexed
+
+
 def _index_qpk_rows(rows: list[dict]) -> dict[tuple[str, str], dict[str, str]]:
     """(filial, OP) -> produto/revisao do cabecalho QPK."""
     indexed: dict[tuple[str, str], dict[str, str]] = {}
@@ -191,6 +213,21 @@ def _auditoria_status_key(row: dict) -> str:
     return "sem_cadastro"
 
 
+AUDITORIA_MINIMO_INSPECOES = 2
+
+
+def _is_auditoria_abaixo_minimo(row: dict) -> bool:
+    """Exigência existe, mas o operador tem menos de 2 sessões na OP/operação."""
+    exigivel = row.get("Tem_Inspecao_Amarrada") or row.get(
+        "Tem_Inspecao_Na_Op_Operacao"
+    )
+    return bool(exigivel) and int(row.get("Qtde_Inspecoes_Operador") or 0) < AUDITORIA_MINIMO_INSPECOES
+
+
+def _is_auditoria_minimo_atingido(row: dict) -> bool:
+    return int(row.get("Qtde_Inspecoes_Operador") or 0) >= AUDITORIA_MINIMO_INSPECOES
+
+
 def _filter_auditoria_by_status(
     rows: list[dict],
     status: str | None,
@@ -198,6 +235,10 @@ def _filter_auditoria_by_status(
     normalized = str(status or "all").strip().lower()
     if not normalized or normalized == "all":
         return rows
+    if normalized == "abaixo_minimo":
+        return [row for row in rows if _is_auditoria_abaixo_minimo(row)]
+    if normalized == "minimo_atingido":
+        return [row for row in rows if _is_auditoria_minimo_atingido(row)]
     return [row for row in rows if _auditoria_status_key(row) == normalized]
 
 
@@ -232,11 +273,13 @@ def _mark_auditoria_rows(
     *,
     ensaiador_by_matricula: dict[tuple[str, str], dict[str, str]],
     qpr_by_op_oper: dict[tuple[str, str, str], set[str]],
+    inspecoes_por_operador: dict[tuple[str, str, str, str], int] | None = None,
     qpk_by_op: dict[tuple[str, str], dict[str, str]] | None = None,
     specs_by_product_rev_oper: set[tuple[str, str, str]] | None = None,
 ) -> list[dict]:
     specs = specs_by_product_rev_oper or set()
     qpk_map = qpk_by_op or {}
+    contagens = inspecoes_por_operador or {}
     marked: list[dict] = []
     for row in rows:
         branch = _as_text(row.get("Filial"))
@@ -259,21 +302,27 @@ def _mark_auditoria_rows(
                 )
                 else 0
             )
-        operador_inspecionou = 0
+        matriculas_do_operador: set[str] = set()
         for matricula in matriculas:
             identity = ensaiador_by_matricula.get((branch, matricula))
             if identity is None:
                 continue
-            if login and identity["login"] and identity["login"] == login:
-                operador_inspecionou = 1
-                break
-            if nome and identity["nome"] and identity["nome"] == nome:
-                operador_inspecionou = 1
-                break
+            if (
+                (login and identity["login"] and identity["login"] == login)
+                or (nome and identity["nome"] and identity["nome"] == nome)
+            ):
+                matriculas_do_operador.add(matricula)
+
+        operador_inspecionou = int(bool(matriculas_do_operador))
+        qtd_inspecoes = sum(
+            contagens.get((branch, op, operacao, matricula), 0)
+            for matricula in matriculas_do_operador
+        )
         marked.append(
             {
                 **row,
                 "Operador_Inspecionou": operador_inspecionou,
+                "Qtde_Inspecoes_Operador": qtd_inspecoes,
                 "Tem_Inspecao_Na_Op_Operacao": tem_inspecao,
                 "Tem_Inspecao_Executada": operador_inspecionou,
                 "Tem_Inspecao_Amarrada": tem_cadastro,
@@ -286,6 +335,8 @@ def _summarize_auditoria_rows(rows: list[dict]) -> dict:
     pendentes = [row for row in rows if _is_auditoria_pendente(row)]
     com_inspecao = [row for row in rows if row.get("Operador_Inspecionou")]
     sem_cadastro = [row for row in rows if _auditoria_status_key(row) == "sem_cadastro"]
+    abaixo_minimo = [row for row in rows if _is_auditoria_abaixo_minimo(row)]
+    minimo_atingido = [row for row in rows if _is_auditoria_minimo_atingido(row)]
     operadores = {
         (_as_text(row.get("Filial")), _as_text(row.get("Cod_Operador")))
         for row in pendentes
@@ -302,6 +353,8 @@ def _summarize_auditoria_rows(rows: list[dict]) -> dict:
         "Ops_Operacoes_Pendentes": len(ops_ops),
         "Apontamentos_Com_Inspecao": len(com_inspecao),
         "Apontamentos_Sem_Cadastro": len(sem_cadastro),
+        "Apontamentos_Abaixo_Minimo": len(abaixo_minimo),
+        "Apontamentos_Minimo_Atingido": len(minimo_atingido),
         "Apontamentos_Total": len(rows),
     }
 
@@ -1132,6 +1185,8 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
             "Ops_Operacoes_Pendentes": 0,
             "Apontamentos_Com_Inspecao": 0,
             "Apontamentos_Sem_Cadastro": 0,
+            "Apontamentos_Abaixo_Minimo": 0,
+            "Apontamentos_Minimo_Atingido": 0,
             "Apontamentos_Total": 0,
         }
 
@@ -1162,6 +1217,7 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
             )
             qpr_rows: list[dict] = []
             qpk_rows: list[dict] = []
+            contagem_rows: list[dict] = []
             if ops:
                 # Lotear para não estourar limite de parâmetros do ODBC.
                 chunk_size = 40
@@ -1175,6 +1231,14 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
                     )
                     qpk_params = (*qpk_branch_params, *[f"{op}%" for op in chunk])
                     qpk_rows.extend(self.execute_query(qpk_sql, qpk_params))
+                    count_sql, count_branch_params = build_auditoria_inspecoes_operador_sql(
+                        len(chunk), branch
+                    )
+                    count_params = (
+                        *count_branch_params,
+                        *[f"{op}%" for op in chunk],
+                    )
+                    contagem_rows.extend(self.execute_query(count_sql, count_params))
 
             qpk_by_op = _index_qpk_rows(qpk_rows)
             revision_pairs = sorted(
@@ -1202,11 +1266,13 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
         aggregated = _aggregate_auditoria_apontamentos(raw_rows)
         ensaiador_by_matricula = _index_ensaiador_map(ensaiador_rows)
         qpr_by_op_oper = _index_qpr_rows(qpr_rows)
+        inspecoes_por_operador = _index_auditoria_inspecoes_operador(contagem_rows)
         specs_by_product_rev_oper = _index_inspecao_cadastrada_rows(spec_rows)
         marked = _mark_auditoria_rows(
             aggregated,
             ensaiador_by_matricula=ensaiador_by_matricula,
             qpr_by_op_oper=qpr_by_op_oper,
+            inspecoes_por_operador=inspecoes_por_operador,
             qpk_by_op=qpk_by_op,
             specs_by_product_rev_oper=specs_by_product_rev_oper,
         )

@@ -26,6 +26,8 @@ const EMPTY_SUMMARY: InspecoesProcessoAuditoriaApontamentosSummary = {
   ops_operacoes_pendentes: 0,
   apontamentos_com_inspecao: 0,
   apontamentos_sem_cadastro: 0,
+  apontamentos_abaixo_minimo: 0,
+  apontamentos_minimo_atingido: 0,
   apontamentos_total: 0,
 };
 

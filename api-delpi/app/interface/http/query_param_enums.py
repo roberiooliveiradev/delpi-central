@@ -847,6 +847,8 @@ INSPECOES_PROCESSO_AUDITORIA_STATUS_VALUES = (
     "nao_inspecionou",
     "inspecionou",
     "sem_cadastro",
+    "abaixo_minimo",
+    "minimo_atingido",
 )
 
 
@@ -867,7 +869,7 @@ def INSPECOES_PROCESSO_AUDITORIA_STATUS_QUERY():
         "all",
         description=(
             "Inspection audit status filter: all, nao_inspecionou, "
-            "inspecionou or sem_cadastro."
+            "inspecionou, sem_cadastro, abaixo_minimo or minimo_atingido."
         ),
         pattern=_enum_pattern(INSPECOES_PROCESSO_AUDITORIA_STATUS_VALUES),
         json_schema_extra={"enum": list(INSPECOES_PROCESSO_AUDITORIA_STATUS_VALUES)},

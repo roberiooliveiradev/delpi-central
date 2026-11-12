@@ -25,6 +25,7 @@ class InspecoesProcessoAuditoriaApontamentoItemResponse:
     turno: str | None = None
     turno_label: str | None = None
     qtd_apontamentos: int = 0
+    qtd_inspecoes_operador: int = 0
     operador_inspecionou: bool = False
     tem_inspecao_na_op_operacao: bool = False
     tem_inspecao_amarrada: bool = False
@@ -48,6 +49,7 @@ class InspecoesProcessoAuditoriaApontamentoItemResponse:
             "turno": self.turno,
             "turno_label": self.turno_label,
             "qtd_apontamentos": self.qtd_apontamentos,
+            "qtd_inspecoes_operador": self.qtd_inspecoes_operador,
             "operador_inspecionou": self.operador_inspecionou,
             "tem_inspecao_na_op_operacao": self.tem_inspecao_na_op_operacao,
             "tem_inspecao_amarrada": self.tem_inspecao_amarrada,
@@ -62,6 +64,8 @@ class InspecoesProcessoAuditoriaApontamentosSummaryResponse:
     ops_operacoes_pendentes: int = 0
     apontamentos_com_inspecao: int = 0
     apontamentos_sem_cadastro: int = 0
+    apontamentos_abaixo_minimo: int = 0
+    apontamentos_minimo_atingido: int = 0
     apontamentos_total: int = 0
 
     def to_dict(self) -> dict:
@@ -71,6 +75,8 @@ class InspecoesProcessoAuditoriaApontamentosSummaryResponse:
             "ops_operacoes_pendentes": self.ops_operacoes_pendentes,
             "apontamentos_com_inspecao": self.apontamentos_com_inspecao,
             "apontamentos_sem_cadastro": self.apontamentos_sem_cadastro,
+            "apontamentos_abaixo_minimo": self.apontamentos_abaixo_minimo,
+            "apontamentos_minimo_atingido": self.apontamentos_minimo_atingido,
             "apontamentos_total": self.apontamentos_total,
         }
 

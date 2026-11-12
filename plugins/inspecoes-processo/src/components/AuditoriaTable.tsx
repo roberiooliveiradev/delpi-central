@@ -21,6 +21,33 @@ function statusClass(item: InspecoesProcessoAuditoriaApontamentoItem): string {
   return "ip-status-pill ip-status-pill--sem-cadastro";
 }
 
+function InspecoesMinimoCell({ item }: { item: InspecoesProcessoAuditoriaApontamentoItem }) {
+  const exigivel = item.tem_inspecao_amarrada || item.tem_inspecao_na_op_operacao;
+  const quantidade = item.qtd_inspecoes_operador ?? 0;
+  const atende = quantidade >= 2;
+  const classe = !exigivel && !quantidade
+    ? "ip-status-pill--sem-cadastro"
+    : atende
+      ? "ip-status-pill--ok"
+      : "ip-status-pill--pendente";
+  const descricao = !exigivel && !quantidade
+    ? "Sem exigência"
+    : atende
+      ? "Mínimo atingido"
+      : quantidade === 1
+        ? "Falta 1"
+        : "Faltam 2";
+  return (
+    <span
+      className={`ip-status-pill ${classe}`}
+      title="Sessões do mesmo operador nesta OP e operação, independentemente do dia/turno. Mínimo: 2."
+      aria-label={`${quantidade} inspeções, ${descricao.toLowerCase()}`}
+    >
+      {quantidade} · {descricao}
+    </span>
+  );
+}
+
 export function AuditoriaTable({ items }: AuditoriaTableProps) {
   return (
     <div className="ip-table-wrap">
@@ -29,6 +56,9 @@ export function AuditoriaTable({ items }: AuditoriaTableProps) {
           <tr>
             <th scope="col">Inspeção</th>
             <th scope="col">Operador</th>
+            <th scope="col" title="Sessões por operador, OP e operação. Mínimo 2, em toda a OP.">
+              Qtd. inspeções (mín. 2)
+            </th>
             <th scope="col">OP</th>
             <th scope="col">Produto</th>
             <th scope="col">Descrição</th>
@@ -49,6 +79,7 @@ export function AuditoriaTable({ items }: AuditoriaTableProps) {
               <td className="ip-table__cell--wrap">
                 {item.nome_operador?.trim() || "—"}
               </td>
+              <td><InspecoesMinimoCell item={item} /></td>
               <td>{item.op?.trim() || "—"}</td>
               <td>{item.produto?.trim() || "—"}</td>
               <td className="ip-table__cell--wrap">

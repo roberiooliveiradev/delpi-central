@@ -169,6 +169,8 @@ export function AuditoriaPage({
         {rangeError ? <p className="ip-period-error" role="alert">{rangeError}</p> : null}
         <p className="ip-auditoria-hint">
           Cada linha agrupa apontamentos por data, turno, operador, OP e operação.
+          A quantidade de inspeções é o total de sessões do mesmo operador na OP + operação,
+          mesmo fora do período filtrado. O mínimo solicitado é de 2 inspeções.
           "Sem inspeção cadastrada" não significa pendência do operador.
           Os indicadores consideram o período e o turno; o status filtra somente a tabela.
         </p>
@@ -198,7 +200,13 @@ export function AuditoriaPage({
           icon={<ListChecks size={22} strokeWidth={1.75} aria-hidden="true" />}
         />
         <KpiCard
-          title="Pendentes"
+          title="Abaixo de 2 inspeções"
+          value={formatNumber(summary.apontamentos_abaixo_minimo)}
+          subtitle="0 ou 1, com inspeção exigível"
+          icon={<AlertTriangle size={22} strokeWidth={1.75} aria-hidden="true" />}
+        />
+        <KpiCard
+          title="Pendentes (sem inspeção)"
           value={formatNumber(summary.apontamentos_pendentes)}
           subtitle="Mesmo operador não inspecionou"
           icon={
@@ -218,9 +226,9 @@ export function AuditoriaPage({
           icon={<Users size={22} strokeWidth={1.75} aria-hidden="true" />}
         />
         <KpiCard
-          title="OK (mesmo operador)"
+          title="Inspecionou (1+)"
           value={formatNumber(summary.apontamentos_com_inspecao)}
-          subtitle="Apontou e inspecionou"
+          subtitle={`Mínimo atingido (2+): ${formatNumber(summary.apontamentos_minimo_atingido)}`}
           icon={
             <CheckCircle2 size={22} strokeWidth={1.75} aria-hidden="true" />
           }
@@ -280,7 +288,8 @@ export function AuditoriaPage({
       {!loading && !error && summary.apontamentos_total > 0 ? (
         <p className="ip-muted-note">
           <ClipboardList size={14} strokeWidth={1.75} aria-hidden="true" />{" "}
-          Ordenação: pendências primeiro. Identidade do ensaiador via login
+          Ordenação: pendências primeiro. O filtro inicial destaca quem fez
+          menos de 2 inspeções exigíveis. Identidade do ensaiador via login
           (matrícula QIP → login) com fallback pelo nome.
         </p>
       ) : null}

@@ -95,6 +95,53 @@ WHERE QPR.D_E_L_E_T_ = ''
     return sql, branch_params
 
 
+HISTORICO_TELA_VIEW = "dbo.vw_minha_delpi_inspecoes_processo_historico_tela"
+
+
+def build_auditoria_inspecoes_operador_sql(
+    op_count: int, branch: str = "01"
+) -> tuple[str, list]:
+    """Sessões por filial, OP, operação e matrícula, sem contar ensaios repetidos.
+
+    Mesmo critério do detalhe da OP: matrícula + operação + data + hora.
+    Query limitada às OPs da auditoria, em lotes, sem corte pela data do apontamento.
+    """
+    if op_count < 1:
+        raise ValueError("op_count must be >= 1")
+    branch_pred, branch_params = _branch_pred("H.Filial", branch)
+    likes = " OR ".join(["H.Ordem_Producao LIKE ?" for _ in range(op_count)])
+    sql = f"""
+SELECT
+    S.Filial,
+    S.Ordem_Producao,
+    S.Operacao,
+    S.Matricula_Ensaiador,
+    COUNT_BIG(*) AS Qtde_Inspecoes
+FROM (
+    SELECT
+        RTRIM(H.Filial) AS Filial,
+        RTRIM(H.Ordem_Producao) AS Ordem_Producao,
+        RTRIM(H.Operacao) AS Operacao,
+        RTRIM(H.Matricula_Ensaiador) AS Matricula_Ensaiador,
+        H.Data_Medicao_Date AS Data_Medicao_Date,
+        RTRIM(ISNULL(H.Hora_Medicao, '')) AS Hora_Medicao
+    FROM {HISTORICO_TELA_VIEW} H WITH (NOLOCK)
+    WHERE {branch_pred}
+      AND RTRIM(ISNULL(H.Matricula_Ensaiador, '')) <> ''
+      AND ({likes})
+    GROUP BY
+        RTRIM(H.Filial),
+        RTRIM(H.Ordem_Producao),
+        RTRIM(H.Operacao),
+        RTRIM(H.Matricula_Ensaiador),
+        H.Data_Medicao_Date,
+        RTRIM(ISNULL(H.Hora_Medicao, ''))
+) S
+GROUP BY S.Filial, S.Ordem_Producao, S.Operacao, S.Matricula_Ensaiador
+"""
+    return sql, branch_params
+
+
 def build_qpk_for_ops_sql(op_count: int, branch: str = "01") -> tuple[str, list]:
     """Params: branch params (0–1) + one LIKE param per OP.
 

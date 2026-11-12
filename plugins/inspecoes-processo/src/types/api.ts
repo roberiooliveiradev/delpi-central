@@ -235,6 +235,8 @@ export type InspecoesProcessoAuditoriaApontamentoItem = {
   turno?: string | null;
   turno_label?: string | null;
   qtd_apontamentos: number;
+  /** Sessões do operador nesta OP + operação, não ensaios e não só no dia filtrado. */
+  qtd_inspecoes_operador: number;
   operador_inspecionou: boolean;
   tem_inspecao_na_op_operacao: boolean;
   tem_inspecao_amarrada: boolean;
@@ -247,6 +249,8 @@ export type InspecoesProcessoAuditoriaApontamentosSummary = {
   ops_operacoes_pendentes: number;
   apontamentos_com_inspecao: number;
   apontamentos_sem_cadastro: number;
+  apontamentos_abaixo_minimo: number;
+  apontamentos_minimo_atingido: number;
   apontamentos_total: number;
 };
 
