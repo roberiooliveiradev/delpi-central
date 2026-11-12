@@ -55,6 +55,16 @@ export function describeHistoryChange(event: HistoryEvent): string | null {
   if (event.entity_type === "service_dependency") {
     return `${refLabel(changes.dependent_service as Ref)} depende de ${refLabel(changes.required_service as Ref)}`;
   }
+  if (event.entity_type === "host_service_action") {
+    const service = typeof changes.service === "string" ? changes.service : "Serviço Windows";
+    const action = changes.action === "restart" ? "Reiniciar" : changes.action === "stop" ? "Interromper" : "Iniciar";
+    const statuses: Record<string, string> = {
+      succeeded: "confirmado no Windows", failed: "falhou no Windows",
+      timeout: "sem confirmação", queued: "aguardando",
+    };
+    const outcome = typeof changes.status === "string" ? statuses[changes.status] ?? changes.status : "solicitado";
+    return `${service} · ${action} · ${outcome}`;
+  }
   if (event.entity_type === "host_service_preference") {
     const label = typeof changes.service === "string" ? changes.service : "Serviço Windows";
     const favorite = changes.is_favorite as { to?: boolean } | undefined;
