@@ -218,6 +218,9 @@ def assert_source_files() -> None:
         fail("profile portal ausente no Compose")
     if "USER_PRESENCE_STORE: memory" not in hml:
         fail("core-api HML deve forçar stores em memória (sem Redis)")
+    portal_dockerfile = REPO / "portal" / "Dockerfile.prod"
+    if "chmod -R a+rX /usr/share/nginx/html" not in portal_dockerfile.read_text(encoding="utf-8"):
+        fail("portal Dockerfile.prod sem chmod a+rX (risco 403 em SVG/manifest com umask 660)")
     bootstrap = INFRA / "scripts" / "keycloak-hml-bootstrap.sh"
     if not bootstrap.is_file():
         fail("keycloak-hml-bootstrap.sh ausente")

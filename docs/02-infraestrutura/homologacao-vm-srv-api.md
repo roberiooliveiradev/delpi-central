@@ -2,10 +2,9 @@
 
 > **Atualizado:** 12/11/2026 · **Estado:** Portal + Core API + Gateway HML ativos em `http://192.168.1.237:18080`.  
 > **Repositório:** `roberiooliveiradev/delpi-central`.  
-> **TASK_ID:** `HML-CORE-PORTAL-01`.  
-> **BASE_HEAD:** `24a7a8a144f2a009d6eacdc22eb248a7b074abab`.  
-> **MAIN_INTEGRATED_SHA:** `183097786b140a57e496b9737587e3666473c346`.  
-> **SHA funcional Core/Portal auth:** `4f22f6a7b5` (cenários) + `86eef5aedc` (bundle sem URLs produtivas) + docs em `183097786b`.
+> **TASK_ID:** `HML-PORTAL-STATIC-403-01` (após `HML-CORE-PORTAL-01`).  
+> **BASE_HEAD (esta correção):** `c3f042bde95be38075f1d2c7b286caecab690dd1`.  
+> **MAIN_INTEGRATED_SHA:** *(preencher após push)*.
 
 ## 1. Objetivo e regras congeladas
 
@@ -57,6 +56,14 @@ Ambiente de homologação independente na mesma VM `srv-api`.
 - Bundle sem `minhadelpi.com.br`; contém `192.168.1.237:18080/auth`
 - Login PKCE + `/core-api/me` + revoke logout → **PASS**
 - MFEs/plugin-ui → **PENDING** (não iniciados)
+
+### 5.1 Correção 403 em estáticos da tela de login
+
+- **Sintoma:** `/manifest.webmanifest` e `/logoMinhaDelpi.svg` → **403** via gateway (nginx/1.31.6).  
+  Nota: `/loginMinhaDelpi.svg` **não existe** no bundle; a UI usa `/logoMinhaDelpi.svg`.
+- **Causa:** no checkout HML da VM, `portal/public/*` chega com modo **660** (ACL `rw-rw----+`); o `COPY` do Docker preserva o modo; o worker nginx (não-root) não lê o arquivo → 403. `index.html`/`assets` gerados no build ficam 644 e respondem 200.
+- **Correção:** `portal/Dockerfile.prod` passa a executar `chmod -R a+rX /usr/share/nginx/html` após o COPY do `dist`.
+- **Aceite esperado:** SVG `image/svg+xml` e manifest `application/manifest+json` (ou equivalente) com HTTP 200; login/Keycloak intactos; somente rebuild/recreate de `delpi-hml-portal`.
 
 ## 6. Containers HML (7)
 

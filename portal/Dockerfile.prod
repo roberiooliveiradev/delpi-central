@@ -43,6 +43,10 @@ FROM nginx:alpine
 
 COPY --from=build /app/dist /usr/share/nginx/html
 
+# Checkout com ACL/umask restritivo (ex.: 660 no host) preserva modos no COPY e o
+# worker nginx (usuário não-root) responde 403 em SVG/manifest. Garantir leitura.
+RUN chmod -R a+rX /usr/share/nginx/html
+
 COPY portal/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
