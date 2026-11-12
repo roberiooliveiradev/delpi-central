@@ -877,6 +877,8 @@ export const copy = {
       "Alguns materiais têm empenho vinculado apenas à OP, sem operação/CT. Foram contabilizados uma única vez. Confirme com o PCP o posto de entrega antes de movimentar.",
     foreignBranchWarning: (count: number) =>
       `${count} ${count === 1 ? "operação de outra filial foi desconsiderada" : "operações de outras filiais foram desconsideradas"} da programação publicada. O cálculo usa apenas operações da filial selecionada. Solicite ao PCP que atualize e republique a Carga Máquina para corrigir a origem da fila.`,
+    missingOrderWarning: (count: number) =>
+      `${count} ${count === 1 ? "operação foi desconsiderada" : "operações foram desconsideradas"} porque a OP não foi encontrada no Protheus da filial selecionada. Nenhum saldo foi inventado. O PCP deve atualizar e republicar a Carga Máquina para remover referências obsoletas.`,
     columns: {
       product: "Material",
       workCenter: "CT",
