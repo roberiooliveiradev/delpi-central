@@ -6527,3 +6527,18 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `308-int1-provider-neutral-semantic-selection-and-investigation-continuity-remediation-with-real-qwen-evaluation.md`.
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_SEMANTIC_CONTINUITY_INDEPENDENT_REVIEW`.
+
+### INT-1 eval env AUTHZ restoration + real Qwen revalidation — 2026-11-12
+
+- **TASK:** `DELIA-C3-T2-INT1-EVAL-ENV-AUTHZ-RESTORATION-AND-REAL-QWEN-REVALIDATION-01`.
+- **ENV:** `infra/.env` exclusive; `.env.local` override already removed (`c5bd6bc708`); targeted env-source test PASS.
+- **IDENTITY:** historical `rober@dev.local` (superadmin+owner perms); current `ti_delpi` canonical; Core owner grants restored locally + `delpi-core-api` restart (cache).
+- **PREFLIGHT:** DAVI READ `90260921` PASS; Core `/me` lists `api-delpi.access`+`transformometro.access`+`delia.access`+`tv-dashboard.read`.
+- **EVAL:** `or-qwen14b-be922c439302`; instruction v2-1 / `4ebd5260b6cf9ba9`; model `qwen/qwen3-14b`; TOTAL_INVESTIGATIONS=3; MODEL_REQUESTS=3; TOOL_CALLS=8; tokens UNAVAILABLE.
+- **G1:** TEO-first → DAVI recovery; GROUNDED; **SATISFIED**.
+- **P1:** DAVI-first; GROUNDED; **SATISFIED**.
+- **M1:** DAVI-first; GROUNDED; **SATISFIED**.
+- **AGENT_CHANGED=NO**; **NEW_ROUTER=NO**; **PROD_UNTOUCHED=YES**; FULL_BATTERY=NOT_RUN.
+- **Doc:** `309-int1-evaluation-environment-restoration-authorized-owner-access-and-real-qwen-revalidation.md`.
+- **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_AUTHORIZED_REAL_EVAL_INDEPENDENT_REVIEW`.

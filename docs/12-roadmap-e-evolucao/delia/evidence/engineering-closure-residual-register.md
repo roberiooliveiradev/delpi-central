@@ -1446,3 +1446,22 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
 
 **NEXT=`COORDINATION_INT1_SEMANTIC_CONTINUITY_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+## 2026-11-12 — INT-1 eval env restoration + authorized revalidation residuals
+
+**TASK:** `DELIA-C3-T2-INT1-EVAL-ENV-AUTHZ-RESTORATION-AND-REAL-QWEN-REVALIDATION-01` · Doc **309** · Eval `or-qwen14b-be922c439302`
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-EVAL-SUBJECT-AUTHZ | **REMEDIATED_LOCAL** | `ti_delpi` Core owner grants + RBAC cache clear; DAVI preflight PASS |
+| INT1-ENV-LOCAL-OVERRIDE | **CLOSED** | exclusive `infra/.env` (`c5bd6bc708` + targeted test) |
+| INT1-G1-TEO-FIRST-ATTRACTOR | **OPEN** | still TEO-first; recovery SATISFIED |
+| INT1-P1-DAVI-CONTROL | **PASS** | DAVI-first + SATISFIED |
+| INT1-M1-CONTINUITY | **PASS_IN_SAMPLE** | DAVI-first + SATISFIED under restored AUTHZ |
+| INT1-OPENROUTER-KEY-HOST-DRIFT | **OPEN** | harness uses `KIMI_API_KEY` when `DELIA_LLM_API_KEY` is local |
+| INT1-DEV-PORTAL-PERM-SEED | **OPEN** | grants locais não versionados; seed documental recomendado |
+| INT1-STAGE | **BLOCKED** | Doc 309 independent review |
+| INT1-CLOSED | **NO** | — |
+| INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
+
+**NEXT=`COORDINATION_INT1_AUTHORIZED_REAL_EVAL_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
