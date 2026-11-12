@@ -196,9 +196,15 @@ Relatório operacional anterior: `HOMOLOGATION_PLATFORM_SERVICES_ACTIVATION_REPO
 - Gateway HML: `/apps/requests-api/`, `/apps/engineering-api/` + MFE assets dinâmicos.
 - Cliente S2S `engineering-api` / scope `engineering-facts.read`: **não provisionado** nesta etapa (facts fail-closed) — **PENDING** se leitura LMP for necessária.
 
+### Correção PRC (UI 503 → fila vazia)
+
+- Causa: `ENG_PRC_REPOSITORY` ausente + role `eng_prc` inexistente no plugins HML (UI mapeava 503 como “API indisponível”).
+- Correção: `ENG_PRC_REPOSITORY=postgres`, `infra/scripts/hml-provision-eng-prc.sh`, recreate `engineering-api`; gateway home `/v1/requests/*`.
+- Evidência (`ebf1f6d321`): PRC unauth **401**; auth `hml-tester` PRC list **200** `items=[]`; `requests/mine` **200**; DB `eng_prc` `prc_rows=0`; 16 containers; gateway prod `StartedAt=2026-11-11T16:59:38Z` intacto.
+
 ### SHA integrado (esta task)
 
-- `MAIN_INTEGRATED_SHA`: acompanhar `main` pós-commits `feat(hml): ativar Minha Solicitações…` + fixes (`7485b2ce02`+).
+- `MAIN_INTEGRATED_SHA`: `ebf1f6d321` (PRC postgres + path `/v1`).
 
 ## 9. Drift / pendências
 
