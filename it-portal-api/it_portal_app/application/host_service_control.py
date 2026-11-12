@@ -14,6 +14,12 @@ from it_portal_app.domain.errors import ConflictError, NotFoundError, Validation
 from it_portal_app.domain.servers import normalize_hostname
 
 _ACTIONS = frozenset({"start", "stop", "restart"})
+# Protecao adicional contra configuracao acidental de servicos nucleares.
+_PROTECTED = frozenset({
+    "rpcss", "dcomlaunch", "eventlog", "plugplay", "schedule", "winmgmt",
+    "samss", "lsass", "power", "profsvc", "bfe", "mpssvc", "lanmanserver",
+    "netlogon", "wuauserv", "cryptsvc",
+})
 
 
 def enabled() -> bool:
@@ -44,6 +50,7 @@ def control_targets() -> dict[str, frozenset[str]]:
             keys = frozenset(_service_key(s.strip()) for s in services.split(",") if s.strip())
         except (ValueError, ValidationError):
             continue  # invalido: negar, nunca liberar parcial no bloco
+        keys = keys - _PROTECTED
         if keys:
             mapping[sid] = keys
     return mapping
