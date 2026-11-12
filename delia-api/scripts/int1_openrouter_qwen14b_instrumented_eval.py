@@ -117,6 +117,44 @@ SCENARIOS = [
         "question": "Qual é a estrutura do produto 90260921?",
         "prior": (),
     },
+    # Independent generalization corpus (Doc 311) — frozen before eval.
+    # Codes/process ids verified live in DEV; not the historical G1/P1/M1
+    # 90260921 wording set used to develop instruction v2/v2-1/v2-2.
+    {
+        "id": "IG1_product_structure_alt",
+        "question": (
+            "Qual é a estrutura de componentes do produto 90260147?"
+        ),
+        "prior": (),
+    },
+    {
+        "id": "IG2_process_decomposition",
+        "question": (
+            "Mostre a árvore de decomposição do processo PROC-0034 "
+            "(DELPI Indicadores)."
+        ),
+        "prior": (),
+    },
+    {
+        "id": "IG3_product_stock",
+        "question": "Qual o estoque disponível do produto 90260148?",
+        "prior": (),
+    },
+    {
+        "id": "IG4_ambiguous_item_tree",
+        "question": "Mostre a árvore do item 90264135.",
+        "prior": (),
+    },
+    {
+        # Partial authorization: TEO process (allowed for e2e-delia) +
+        # DAVI product structure (denied without api-delpi.access).
+        "id": "PARTIAL_AUTHZ_process_and_product",
+        "question": (
+            "Mostre a decomposição do processo PROC-0034 e a estrutura "
+            "do produto 90260147."
+        ),
+        "prior": (),
+    },
 ]
 
 

@@ -1487,3 +1487,23 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
 
 **NEXT=`COORDINATION_INT1_SEMANTIC_AND_AUTHZ_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+## 2026-11-12 — INT-1 independent generalization + partial authz residuals
+
+**TASK:** `DELIA-C3-T2-INT1-SEMANTIC-GENERALIZATION-AND-PARTIAL-AUTHORIZATION-REAL-EVALUATION-01` · Doc **311** · Evals `or-qwen14b-99d36aa86540` + `or-qwen14b-195dc9cf3bb6`
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-GENERALIZATION-SELECTION | **MITIGATED_IN_SAMPLE** | IG1–IG4 first-tool suitability 4/4; independent corpus; no keyword router |
+| INT1-GENERALIZATION-OBJECTIVE | **PARTIAL_IN_SAMPLE** | IG1/IG3/IG4 grounded; IG2 NOT_SATISFIED (process code↔UUID / continuity) |
+| INT1-PROCESS-CODE-VS-UUID | **OPEN** | IG2 TEO object match then id/args recovery incomplete |
+| INT1-PARTIAL-AUTHZ-DETERMINISTIC | **PASS** | A–E finalize preserve + denial/not_found/unavailable distinctions |
+| INT1-PARTIAL-AUTHZ-E2E-COMPOSED | **INCONCLUSIVE** | e2e-delia: schema_reject loop before TEO SUCCESS / DAVI DENY |
+| INT1-AUTHZ-DENIAL-PROPAGATION | **PASS (deterministic + Doc310 real deny)** | composed PARTIAL e2e not proven this sample |
+| INT1-DAVI-NONEXECUTABLE-CAPS | **OPEN** | inherited Doc 310 |
+| INT1-GENERALIZATION | **PROVEN_IN_SAMPLE** | first-tool/object; n=4; no statistical claim |
+| INT1-STAGE | **PENDING_COORDINATION_REVIEW** | Doc 311 |
+| INT1-CLOSED | **NO** | — |
+| INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
+
+**NEXT=`COORDINATION_INT1_GENERALIZATION_AND_PARTIAL_AUTHZ_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

@@ -6558,3 +6558,22 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `310-int1-semantic-root-cause-and-governed-authorization-denial-communication.md`.
 - **INT1_STAGE_ACCEPTANCE=PENDING_COORDINATION_REVIEW**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_SEMANTIC_AND_AUTHZ_INDEPENDENT_REVIEW`.
+
+### INT-1 independent semantic generalization + partial authorization — 2026-11-12
+
+- **TASK:** `DELIA-C3-T2-INT1-SEMANTIC-GENERALIZATION-AND-PARTIAL-AUTHORIZATION-REAL-EVALUATION-01`.
+- **EXISTING_EQUIVALENT=YES**; **REUSE_DECISION=EXTEND** (harness INT-1 scenarios + finalize preserve authorized+denial; no new Agent/router).
+- **INSTRUCTION:** v2-2 `generalist-semantic-v2-2-object-authz-continuity` / fp `3692299dac74c26e` MATCH — **unchanged before first real eval**.
+- **CORPUS:** IG1–IG4 + PARTIAL frozen in `docs/.../evidence/int1-independent-generalization-311/corpus-frozen.json` (local `.battery` mirror gitignored); novelty vs G1/P1/M1/`90260921` verified (live data 90260147/148/64135, PROC-0034).
+- **DETERMINISTIC PARTIAL AUTHZ:** cases A–E in `tests/test_int1_partial_authorization_finalize.py` PASS (10 tests with adjacent authz-comm); `_preserve_authorized_with_denial` / `authorization_denied_partial`.
+- **EVAL SEMANTIC:** `or-qwen14b-99d36aa86540`; subject `ti_delpi`; model `qwen/qwen3-14b`; profile `openrouter_qwen`; config `e4a5b706a3b3156b`; pydantic-ai `2.50.0`; TOTAL_INVESTIGATIONS=4; TOKEN_USAGE/COST=UNAVAILABLE.
+  - IG1: DAVI-first → GROUNDED **SATISFIED**
+  - IG2: TEO-first suitable; continuity/UUID residual → **NOT_SATISFIED** NON_GROUNDED
+  - IG3: DAVI stock → GROUNDED **SATISFIED**
+  - IG4: DAVI product tree (not TEO) → GROUNDED **PARTIAL/SATISFIED**
+- **EVAL PARTIAL REAL:** `or-qwen14b-195dc9cf3bb6`; subject `e2e-delia`; composed process+product; MCP invokes=0; arguments_schema_rejected×7 → **INCONCLUSIVE**; no data leak / no authz bypass.
+- **GENERALIZATION_PROVEN_IN_SAMPLE** (first-tool suitability 4/4); no universal claim; second round NOT run (no proven functional defect beyond deterministic preserve).
+- **AGENT_COUNT=1**; **NEW_ROUTER=NO**; **NEW_PLANNER=NO**; **PERMISSIONS_CHANGED=NO**; **PROD_UNTOUCHED=YES**; FULL_BATTERY=NOT_RUN.
+- **Doc:** `311-int1-independent-semantic-generalization-and-partial-authorization-evaluation.md`.
+- **INT1_STAGE_ACCEPTANCE=PENDING_COORDINATION_REVIEW**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_GENERALIZATION_AND_PARTIAL_AUTHZ_INDEPENDENT_REVIEW`.

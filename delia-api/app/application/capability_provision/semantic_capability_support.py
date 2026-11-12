@@ -2631,6 +2631,39 @@ def _apply_declared_answer(
     return terminal
 
 
+def _collected_has_authorization_denial(
+    collected: tuple[GovernedCapabilityAttempt, ...] | Sequence[GovernedCapabilityAttempt],
+) -> bool:
+    """True when any observation is a governing authorization denial."""
+    return any(
+        item.status is GovernedCapabilityStatus.AUTHZ_DENIED
+        or item.error_code
+        in {"authz_denied", "mcp_authorization_denied"}
+        for item in collected
+    )
+
+
+def _preserve_authorized_with_denial(
+    attempt: GovernedCapabilityAttempt,
+    *,
+    collected: tuple[GovernedCapabilityAttempt, ...] | Sequence[GovernedCapabilityAttempt],
+) -> GovernedCapabilityAttempt:
+    """Keep authorized business evidence while marking a partial denial.
+
+    A later or parallel AUTHORIZATION_DENIED must not erase legitimate
+    observations, invent a not-found, or widen access. The limitation
+    ``authorization_denied_partial`` is the contract signal for
+    user-facing communication.
+    """
+    if not _collected_has_authorization_denial(collected):
+        return attempt
+    limits = list(attempt.limitations) + ["authorization_denied_partial"]
+    return dataclasses.replace(
+        attempt,
+        limitations=tuple(dict.fromkeys(limits))[:24],
+    )
+
+
 def _finalize_agent_collected_attempts(
     orchestrator: "OperationalCapabilityOrchestrator",
     *,
@@ -2687,12 +2720,7 @@ def _finalize_agent_collected_attempts(
             "identifier_coverage_incomplete",
             *[f"uncovered_identifier:{item}" for item in pending[:8]],
         ]
-        if any(
-            item.status is GovernedCapabilityStatus.AUTHZ_DENIED
-            or item.error_code
-            in {"authz_denied", "mcp_authorization_denied"}
-            for item in collected
-        ):
+        if _collected_has_authorization_denial(collected):
             # Authorized evidence may remain; denied evidence must not
             # be disclosed or recovered by alternate-owner bypass.
             partial_limits.append("authorization_denied_partial")
@@ -2754,7 +2782,9 @@ def _finalize_agent_collected_attempts(
                     error_code="investigation_incomplete_coverage",
                     verified_composition=composed_attempt.verified_composition,
                 )
-        return composed_attempt
+        return _preserve_authorized_with_denial(
+            composed_attempt, collected=collected
+        )
 
     if not collected:
         _logger.info(
@@ -3000,15 +3030,21 @@ def _finalize_agent_collected_attempts(
         # F4: plan/obligations absent → evidence may still be returned on
         # the fast path, but coverage of the user objective is unproven.
         if not obligations:
-            return dataclasses.replace(
-                business[0],
-                limitations=tuple(
-                    dict.fromkeys(
-                        list(business[0].limitations) + ["coverage_unknown"]
-                    )
-                )[:24],
+            return _preserve_authorized_with_denial(
+                dataclasses.replace(
+                    business[0],
+                    limitations=tuple(
+                        dict.fromkeys(
+                            list(business[0].limitations)
+                            + ["coverage_unknown"]
+                        )
+                    )[:24],
+                ),
+                collected=collected,
             )
-        return business[0]
+        return _preserve_authorized_with_denial(
+            business[0], collected=collected
+        )
 
     if business:
         # R-E4: preserve every verified observation — do not drop all
@@ -3078,14 +3114,17 @@ def _finalize_agent_collected_attempts(
         ]
         if not obligations:
             multi_limits.append("coverage_unknown")
-        return GovernedCapabilityAttempt(
-            status=GovernedCapabilityStatus.SUCCESS,
-            correlation_id=correlation,
-            content=joined or last.content,
-            limitations=tuple(dict.fromkeys(multi_limits))[:24],
-            provenance=provenance,
-            outcome=last.outcome,
-            markdown_content=last.markdown_content,
+        return _preserve_authorized_with_denial(
+            GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.SUCCESS,
+                correlation_id=correlation,
+                content=joined or last.content,
+                limitations=tuple(dict.fromkeys(multi_limits))[:24],
+                provenance=provenance,
+                outcome=last.outcome,
+                markdown_content=last.markdown_content,
+            ),
+            collected=collected,
         )
 
     last = collected[-1]
