@@ -197,6 +197,24 @@ describe("LineFeederMaterialsPanel", () => {
     expect(screen.getByText(/OP OP1 · empenho sem operação definida/i)).toBeTruthy();
   });
 
+  it("avisa quando operações de outra filial foram excluídas", () => {
+    const baseline = basePayload();
+    render(
+      <LineFeederMaterialsPanel
+        data={basePayload({
+          publication: {
+            ...baseline.publication,
+            foreign_branch_operations_excluded: 1,
+          },
+        })}
+        query={{ workCenters: ["CT-A"], hoursPerWorkCenter: 2 }}
+      />,
+    );
+    expect(screen.getByText(/operações? de outra filial foram desconsideradas/i)).toBeTruthy();
+    expect(screen.getByText(/Solicite ao PCP que atualize e republique/i)).toBeTruthy();
+    expect(screen.getByText(/MP-001/)).toBeTruthy();
+  });
+
   it("não apresenta lista operacional quando operational_list_safe=false", () => {
     render(
       <LineFeederMaterialsPanel
