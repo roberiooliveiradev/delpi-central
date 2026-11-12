@@ -381,7 +381,7 @@ describe("server page — AC-08", () => {
     const navigation = await screen.findByRole("navigation", { name: "Seções deste servidor" });
     expect(screen.queryByText("Serviços hospedados")).toBeNull();
 
-    fireEvent.click(within(navigation).getByRole("button", { name: /Serviços/ }));
+    fireEvent.click(within(navigation).getByText("Serviços"));
     expect(await screen.findByText("Serviços hospedados")).toBeTruthy();
     fireEvent.click(within(navigation).getByRole("button", { name: /Bancos de dados/ }));
     expect(await screen.findByText("Bancos de dados associados")).toBeTruthy();
