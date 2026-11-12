@@ -402,6 +402,161 @@ services:
       delpi.environment: homologation
       delpi.project: delpi-hml
 
+  requests-api:
+    extends:
+      file: docker-compose.yml
+      service: requests-api
+    profiles: [requests-api, baseline, platform]
+    image: delpi-hml/requests-api:local
+    container_name: delpi-hml-requests-api
+    ports: !override []
+    env_file: !override
+      - path: env.hml.example
+        required: true
+      - path: .env.hml
+        required: false
+    depends_on: !override {}
+    networks: !override
+      - delpi-hml
+    volumes: !override
+      - ${DELPI_HML_DATA_HOST_DIR:-./hml-data}/my-requests-attachments:/app/data/my-requests-attachments
+      - ${DELPI_HML_DATA_HOST_DIR:-./hml-data}/my-requests-artifacts:/app/data/my-requests-artifacts
+    environment:
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      DELPI_API_URL: http://api-delpi:8000
+      CORE_API_URL: http://core-api:8000
+      REQUESTS_RUN_MIGRATIONS_ON_STARTUP: "true"
+      REQUESTS_OUTBOX_WORKER_ENABLED: "false"
+      MY_REQUESTS_ATTACHMENT_UPLOAD_DIR: /app/data/my-requests-attachments
+      MY_REQUESTS_ARTIFACT_UPLOAD_DIR: /app/data/my-requests-artifacts
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    mem_limit: 768m
+    cpus: 0.75
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  my-requests:
+    extends:
+      file: docker-compose.yml
+      service: my-requests
+    profiles: [my-requests, baseline, platform]
+    image: delpi-hml/my-requests:local
+    container_name: delpi-hml-my-requests
+    ports: !override []
+    depends_on: !override {}
+    networks: !override
+      - delpi-hml
+    volumes: !override []
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null -T 3 http://127.0.0.1/assets/remoteEntry.js || wget -q -O /dev/null -T 3 http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    mem_limit: 512m
+    cpus: 0.5
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  engineering-api:
+    extends:
+      file: docker-compose.yml
+      service: engineering-api
+    profiles: [engineering-api, baseline, platform]
+    image: delpi-hml/engineering-api:local
+    container_name: delpi-hml-engineering-api
+    ports: !override []
+    env_file: !override
+      - path: env.hml.example
+        required: true
+      - path: .env.hml
+        required: false
+    depends_on: !override {}
+    networks: !override
+      - delpi-hml
+    volumes: !override
+      - ${DELPI_HML_DATA_HOST_DIR:-./hml-data}/prc-attachments:/app/data/prc-attachments
+      - ${DELPI_HML_DATA_HOST_DIR:-./hml-data}/ocr-models:/opt/ocr-models:ro
+    environment:
+      APP_ENV: homologation
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      DELPI_AUTH_CORE_API_URL: http://core-api:8000
+      DELPI_API_URL: http://api-delpi:8000
+      REQUESTS_API_URL: http://requests-api:8000
+      MCP_RESOURCE_URL: ${PUBLIC_BASE_URL}/apps/engineering-api/mcp
+      # S2S HML opcional — vazio = facts fail-closed (sem credencial prod).
+      S2S_TOKEN_URL: ${ENG_S2S_TOKEN_URL:-${S2S_TOKEN_URL:-}}
+      S2S_CLIENT_ID: ${ENG_S2S_CLIENT_ID:-engineering-api}
+      S2S_CLIENT_SECRET: ${ENG_S2S_CLIENT_SECRET:-}
+      S2S_SCOPE: ${ENG_S2S_SCOPE:-}
+      # EVA/OCR/mutações — fail-closed em HML até autorização específica.
+      ENG_EVA_ACT_ENABLED: ""
+      ENG_EVA_ACT_DELETE_ENABLED: ""
+      ENG_EVA_ACT_IMPORT_ENABLED: ""
+      ENG_DRAWING_BENCHMARK_ENABLED: "false"
+      ENG_DRAWING_OCR_BENCHMARK_ENABLED: ""
+      ENG_DRAWING_OCR_MODEL_DIR: ""
+      ENG_NC_REPOSITORY: ""
+      ENG_NC_DB_HOST: ""
+      ENG_NC_DB_USER: ""
+      ENG_NC_DB_PASSWORD: ""
+      ENG_NC_IMPORT_REPLACE_ENABLED: ""
+      INSTALL_VISION_EXTRAS: "false"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    mem_limit: 1g
+    cpus: 1.0
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  engineering:
+    extends:
+      file: docker-compose.yml
+      service: engineering
+    profiles: [engineering, baseline, platform]
+    image: delpi-hml/engineering:local
+    container_name: delpi-hml-engineering
+    ports: !override []
+    depends_on: !override {}
+    networks: !override
+      - delpi-hml
+    volumes: !override []
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null -T 3 http://127.0.0.1/assets/remoteEntry.js || wget -q -O /dev/null -T 3 http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    mem_limit: 512m
+    cpus: 0.5
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
   gateway:
     extends:
       file: docker-compose.yml

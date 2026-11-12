@@ -47,6 +47,10 @@ BASELINE = {
     "plugin-ui",
     "production-control",
     "production-control-api",
+    "requests-api",
+    "my-requests",
+    "engineering-api",
+    "engineering",
     "gateway",
 }
 PLATFORM = BASELINE - {"production-control", "production-control-api"}
@@ -175,6 +179,10 @@ def assert_source_files() -> None:
         fail("nginx de homologação não encaminha o portal via upstream dinâmico")
     if "production-control-api:8000" not in nginx_all:
         fail("nginx de homologação não encaminha production-control-api")
+    if "requests-api:8000" not in nginx_all:
+        fail("nginx de homologação não encaminha requests-api")
+    if "engineering-api:8000" not in nginx_all:
+        fail("nginx de homologação não encaminha engineering-api")
     if "include /etc/nginx/snippets/hml-proxy-locations.conf" not in nginx:
         fail("nginx HML não inclui snippet de locations compartilhadas")
     if "location ^~ /auth/resources/" not in locations or "location ^~ /auth/admin/" not in locations:
@@ -225,6 +233,10 @@ def assert_source_files() -> None:
         "plugin-ui",
         "production-control-api",
         "production-control-ui",
+        "requests-api",
+        "my-requests",
+        "engineering-api",
+        "engineering",
     ):
         if f"up --scenario {scenario}" not in script:
             fail(f"script sem caminho autorizado {scenario}")
@@ -237,6 +249,14 @@ def assert_source_files() -> None:
             handler = "cmd_up_api_delpi"
         elif scenario == "plugin-ui":
             handler = "cmd_up_plugin_ui"
+        elif scenario == "requests-api":
+            handler = "cmd_up_requests_api"
+        elif scenario == "my-requests":
+            handler = "cmd_up_my_requests"
+        elif scenario == "engineering-api":
+            handler = "cmd_up_engineering_api"
+        elif scenario == "engineering":
+            handler = "cmd_up_engineering"
         if handler not in script:
             fail(f"script sem handler {handler}")
     if "profiles: [redis" not in hml and "redis, baseline" not in hml:
@@ -249,6 +269,16 @@ def assert_source_files() -> None:
         fail("compose HML sem profile production-control-ui")
     if "production-control-api" not in hml:
         fail("compose HML sem profile production-control-api")
+    if "profiles: [requests-api" not in hml and "requests-api, baseline" not in hml:
+        fail("compose HML sem profile requests-api")
+    if "profiles: [my-requests" not in hml and "my-requests, baseline" not in hml:
+        fail("compose HML sem profile my-requests")
+    if "profiles: [engineering-api" not in hml and "engineering-api, baseline" not in hml:
+        fail("compose HML sem profile engineering-api")
+    if "profiles: [engineering," not in hml and "profiles: [engineering]" not in hml:
+        # engineering MFE: profiles: [engineering, baseline, platform]
+        if "engineering, baseline" not in hml:
+            fail("compose HML sem profile engineering (MFE)")
     if 'totvs-disabled.hml.invalid' not in hml:
         fail("compose HML sem bloqueio TOTVS canônico")
     if "ports: !override []" not in hml:

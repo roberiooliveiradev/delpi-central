@@ -29,6 +29,10 @@
 #   ./infra/scripts/hml-compose.sh up --scenario plugin-ui
 #   ./infra/scripts/hml-compose.sh up --scenario production-control-api
 #   ./infra/scripts/hml-compose.sh up --scenario production-control-ui
+#   ./infra/scripts/hml-compose.sh up --scenario requests-api
+#   ./infra/scripts/hml-compose.sh up --scenario my-requests
+#   ./infra/scripts/hml-compose.sh up --scenario engineering-api
+#   ./infra/scripts/hml-compose.sh up --scenario engineering
 #   ./infra/scripts/hml-compose.sh bootstrap-keycloak
 #   ./infra/scripts/hml-compose.sh up|down|stop|build|pull   # demais: recusa
 
@@ -76,6 +80,18 @@ PC_API_SERVICES=(
 PC_UI_SERVICES=(
   production-control
 )
+REQUESTS_API_SERVICES=(
+  requests-api
+)
+MY_REQUESTS_SERVICES=(
+  my-requests
+)
+ENGINEERING_API_SERVICES=(
+  engineering-api
+)
+ENGINEERING_UI_SERVICES=(
+  engineering
+)
 PLATFORM_SERVICES=(
   postgres-core
   keycloak-db
@@ -104,6 +120,10 @@ START_ORDER=(
   plugin-ui
   production-control
   production-control-api
+  requests-api
+  my-requests
+  engineering-api
+  engineering
   gateway
 )
 AUTHORIZED_UP_SCENARIOS=(
@@ -118,6 +138,10 @@ AUTHORIZED_UP_SCENARIOS=(
   plugin-ui
   production-control-api
   production-control-ui
+  requests-api
+  my-requests
+  engineering-api
+  engineering
 )
 ALLOWED_HML_CONTAINERS_AFTER_GATEWAY=(
   delpi-hml-postgres-core
@@ -154,16 +178,32 @@ ALLOWED_HML_CONTAINERS_AFTER_PC_UI=(
   "${ALLOWED_HML_CONTAINERS_AFTER_PC_API[@]}"
   delpi-hml-production-control
 )
+ALLOWED_HML_CONTAINERS_AFTER_REQUESTS_API=(
+  "${ALLOWED_HML_CONTAINERS_AFTER_PC_UI[@]}"
+  delpi-hml-requests-api
+)
+ALLOWED_HML_CONTAINERS_AFTER_MY_REQUESTS=(
+  "${ALLOWED_HML_CONTAINERS_AFTER_REQUESTS_API[@]}"
+  delpi-hml-my-requests
+)
+ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING_API=(
+  "${ALLOWED_HML_CONTAINERS_AFTER_MY_REQUESTS[@]}"
+  delpi-hml-engineering-api
+)
+ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING=(
+  "${ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING_API[@]}"
+  delpi-hml-engineering
+)
 
 usage() {
-  sed -n '2,20p' "$0"
+  sed -n '2,40p' "$0"
 }
 
 refuse_activation() {
   local action="$1"
   echo "HOMOLOGATION_ACTIVATION_NOT_AUTHORIZED" >&2
   echo "Ação '$action' não executada fora dos profiles autorizados." >&2
-  echo "Autorizados: up --scenario databases|keycloak|gateway|core-api|portal|tls-activate|redis|api-delpi|plugin-ui|production-control-api|production-control-ui | bootstrap-keycloak." >&2
+  echo "Autorizados: up --scenario databases|keycloak|gateway|core-api|portal|tls-activate|redis|api-delpi|plugin-ui|production-control-api|production-control-ui|requests-api|my-requests|engineering-api|engineering | bootstrap-keycloak." >&2
   echo "Profiles amplos baseline/platform/production-control continuam bloqueados como up único." >&2
   exit 2
 }
@@ -182,8 +222,12 @@ scenario_services() {
     plugin-ui) printf '%s\n' "${PLUGIN_UI_SERVICES[@]}" ;;
     production-control-api) printf '%s\n' "${PC_API_SERVICES[@]}" ;;
     production-control-ui) printf '%s\n' "${PC_UI_SERVICES[@]}" ;;
-    baseline) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" ;;
-    platform) printf '%s\n' "${PLATFORM_SERVICES[@]}" ;;
+    requests-api) printf '%s\n' "${REQUESTS_API_SERVICES[@]}" ;;
+    my-requests) printf '%s\n' "${MY_REQUESTS_SERVICES[@]}" ;;
+    engineering-api) printf '%s\n' "${ENGINEERING_API_SERVICES[@]}" ;;
+    engineering) printf '%s\n' "${ENGINEERING_UI_SERVICES[@]}" ;;
+    baseline) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" "${REQUESTS_API_SERVICES[@]}" "${MY_REQUESTS_SERVICES[@]}" "${ENGINEERING_API_SERVICES[@]}" "${ENGINEERING_UI_SERVICES[@]}" ;;
+    platform) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${REQUESTS_API_SERVICES[@]}" "${MY_REQUESTS_SERVICES[@]}" "${ENGINEERING_API_SERVICES[@]}" "${ENGINEERING_UI_SERVICES[@]}" ;;
     production-control) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" ;;
     *)
       echo "Cenário desconhecido: $scenario" >&2
@@ -397,12 +441,12 @@ wait_healthy() {
           echo "HEALTH=$service:auth_realm"
           return 0
         fi
-      elif [[ "$service" == core-api || "$service" == api-delpi || "$service" == production-control-api ]]; then
+      elif [[ "$service" == core-api || "$service" == api-delpi || "$service" == production-control-api || "$service" == requests-api || "$service" == engineering-api ]]; then
         if docker exec "$cid" python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)" >/dev/null 2>&1; then
           echo "HEALTH=$service:http_health"
           return 0
         fi
-      elif [[ "$service" == portal || "$service" == plugin-ui || "$service" == production-control ]]; then
+      elif [[ "$service" == portal || "$service" == plugin-ui || "$service" == production-control || "$service" == my-requests || "$service" == engineering ]]; then
         if docker exec "$cid" wget -q -O /dev/null -T 3 http://127.0.0.1/ >/dev/null 2>&1; then
           echo "HEALTH=$service:http_root"
           return 0
@@ -730,7 +774,7 @@ cmd_up_redis() {
   )
   wait_healthy delpi-redis "$env_file" redis
   # Teto = plataforma completa autorizada (permite re-up redis após Gates C–F).
-  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PC_UI
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING
 
   # Isolamento: PONG só na rede HML (via container).
   docker exec delpi-hml-redis sh -c 'redis-cli -a "$DELPI_REDIS_PASSWORD" ping' | grep -q PONG || {
@@ -792,7 +836,7 @@ print(s.get("PLUGINS_DB_HOST") if isinstance(s,dict) else "")'
         up -d --no-deps --no-build api-delpi
   )
   wait_healthy api-delpi "$env_file" api-delpi
-  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PC_UI
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING
 
   local code
   code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 20 \
@@ -837,7 +881,7 @@ cmd_up_plugin_ui() {
         up -d --no-deps --no-build plugin-ui
   )
   wait_healthy plugin-ui "$env_file" plugin-ui
-  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PC_UI
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING
 
   local code ctype
   code="$(curl -sS -o /tmp/hml_remote_entry.js -w '%{http_code}' --connect-timeout 5 --max-time 20 \
@@ -892,7 +936,7 @@ cmd_up_production_control_api() {
         up -d --no-deps --no-build production-control-api
   )
   wait_healthy production-control-api "$env_file" production-control-api
-  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PC_UI
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING
 
   local code
   code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 20 \
@@ -941,7 +985,7 @@ cmd_up_production_control_ui() {
         up -d --no-deps --no-build production-control
   )
   wait_healthy production-control "$env_file" production-control-ui
-  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_PC_UI
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING
 
   local code
   code="$(curl -sS -o /tmp/hml_pc_index.html -w '%{http_code}' --connect-timeout 5 --max-time 20 \
@@ -958,6 +1002,234 @@ cmd_up_production_control_ui() {
   rm -f /tmp/hml_pc_index.html
 
   echo "HML_PRODUCTION_CONTROL_UI_UP=PASS"
+  docker ps --filter name=delpi-hml --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+}
+
+cmd_up_requests_api() {
+  local env_file
+  env_file="$(require_local_env)"
+  assert_no_prod_markers_in_env "$env_file"
+  require_hml_base_healthy
+  docker ps --format '{{.Names}} {{.Status}}' | grep -E '^delpi-hml-api-delpi .*healthy' >/dev/null || {
+    echo "[ERRO] delpi-hml-api-delpi não está healthy. Rode up --scenario api-delpi antes." >&2
+    exit 1
+  }
+
+  echo "ATIVACAO=requests-api"
+  echo "project=$PROJECT"
+  echo "servicos=requests-api"
+  echo "modo=build + up -d --no-deps (migrations plugins HML; outbox worker OFF)"
+  echo "anexos=DELPI_HML_DATA_HOST_DIR/my-requests-{attachments,artifacts}"
+
+  mkdir -p \
+    "${COMPOSE_DIR}/${DELPI_HML_DATA_HOST_DIR:-hml-data}/my-requests-attachments" \
+    "${COMPOSE_DIR}/${DELPI_HML_DATA_HOST_DIR:-hml-data}/my-requests-artifacts" 2>/dev/null || true
+  # Path relative to compose dir when DELPI_HML_DATA_HOST_DIR is ./hml-data
+  mkdir -p "$COMPOSE_DIR/hml-data/my-requests-attachments" "$COMPOSE_DIR/hml-data/my-requests-artifacts"
+
+  (
+    cd "$COMPOSE_DIR"
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile requests-api \
+        build requests-api
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile requests-api \
+        up -d --no-deps --no-build requests-api
+  )
+  wait_healthy requests-api "$env_file" requests-api
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING
+
+  local code
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 20 \
+    --cacert "$COMPOSE_DIR/hml-certs/hml-local-ca.crt" \
+    https://192.168.1.237:18443/apps/requests-api/health || echo FAIL)"
+  if [[ "$code" != "200" ]]; then
+    echo "[ERRO] /apps/requests-api/health retornou $code. STOP." >&2
+    exit 1
+  fi
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 15 \
+    --cacert "$COMPOSE_DIR/hml-certs/hml-local-ca.crt" \
+    -H 'Authorization: Bearer invalid' \
+    https://192.168.1.237:18443/apps/requests-api/health || echo FAIL)"
+  # health may be public; probe a protected path if available
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 15 \
+    --cacert "$COMPOSE_DIR/hml-certs/hml-local-ca.crt" \
+    -H 'Authorization: Bearer invalid' \
+    https://192.168.1.237:18443/apps/requests-api/me || echo FAIL)"
+  if [[ "$code" != "401" && "$code" != "403" && "$code" != "404" ]]; then
+    echo "[AVISO] /apps/requests-api/me com JWT inválido retornou $code (esperado 401/403/404)." >&2
+  fi
+
+  echo "HML_REQUESTS_API_UP=PASS"
+  docker ps --filter name=delpi-hml --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+}
+
+cmd_up_my_requests() {
+  local env_file
+  env_file="$(require_local_env)"
+  assert_no_prod_markers_in_env "$env_file"
+  require_hml_base_healthy
+  docker ps --format '{{.Names}} {{.Status}}' | grep -E '^delpi-hml-plugin-ui .*healthy' >/dev/null || {
+    echo "[ERRO] delpi-hml-plugin-ui não está healthy. Rode up --scenario plugin-ui antes." >&2
+    exit 1
+  }
+  if ! docker ps --format '{{.Names}} {{.Status}}' | grep -E '^delpi-hml-requests-api .*healthy' >/dev/null; then
+    if ! docker exec delpi-hml-requests-api python -c \
+      "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)" >/dev/null 2>&1; then
+      echo "[ERRO] delpi-hml-requests-api não está healthy. Rode up --scenario requests-api antes." >&2
+      exit 1
+    fi
+  fi
+
+  echo "ATIVACAO=my-requests"
+  echo "project=$PROJECT"
+  echo "servicos=my-requests"
+  echo "modo=build MFE + up -d --no-deps"
+
+  (
+    cd "$COMPOSE_DIR"
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile my-requests \
+        build my-requests
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile my-requests \
+        up -d --no-deps --no-build my-requests
+  )
+  wait_healthy my-requests "$env_file" my-requests
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING
+
+  local code
+  code="$(curl -sS -o /tmp/hml_my_requests_remote.js -w '%{http_code}' --connect-timeout 5 --max-time 20 \
+    --cacert "$COMPOSE_DIR/hml-certs/hml-local-ca.crt" \
+    https://192.168.1.237:18443/apps/my-requests/assets/remoteEntry.js || echo FAIL)"
+  if [[ "$code" != "200" ]]; then
+    echo "[ERRO] /apps/my-requests/assets/remoteEntry.js retornou $code. STOP." >&2
+    exit 1
+  fi
+  if grep -Eiq 'minhadelpi\.com\.br' /tmp/hml_my_requests_remote.js 2>/dev/null; then
+    echo "[ERRO] my-requests remoteEntry contém domínio produtivo. STOP." >&2
+    exit 1
+  fi
+  rm -f /tmp/hml_my_requests_remote.js
+
+  echo "HML_MY_REQUESTS_UP=PASS"
+  docker ps --filter name=delpi-hml --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+}
+
+cmd_up_engineering_api() {
+  local env_file
+  env_file="$(require_local_env)"
+  assert_no_prod_markers_in_env "$env_file"
+  require_hml_base_healthy
+  docker ps --format '{{.Names}} {{.Status}}' | grep -E '^delpi-hml-api-delpi .*healthy' >/dev/null || {
+    echo "[ERRO] delpi-hml-api-delpi não está healthy. Rode up --scenario api-delpi antes." >&2
+    exit 1
+  }
+  if ! docker ps --format '{{.Names}} {{.Status}}' | grep -E '^delpi-hml-requests-api .*healthy' >/dev/null; then
+    if ! docker exec delpi-hml-requests-api python -c \
+      "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)" >/dev/null 2>&1; then
+      echo "[ERRO] delpi-hml-requests-api não está healthy. Rode up --scenario requests-api antes." >&2
+      exit 1
+    fi
+  fi
+
+  echo "ATIVACAO=engineering-api"
+  echo "project=$PROJECT"
+  echo "servicos=engineering-api"
+  echo "modo=build + up -d --no-deps (EVA/OCR/ACT fail-closed; S2S opcional)"
+  echo "volumes=hml-data/prc-attachments + hml-data/ocr-models (vazio)"
+
+  mkdir -p "$COMPOSE_DIR/hml-data/prc-attachments" "$COMPOSE_DIR/hml-data/ocr-models"
+
+  (
+    cd "$COMPOSE_DIR"
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile engineering-api \
+        build engineering-api
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile engineering-api \
+        up -d --no-deps --no-build engineering-api
+  )
+  wait_healthy engineering-api "$env_file" engineering-api
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING
+
+  local code
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 20 \
+    --cacert "$COMPOSE_DIR/hml-certs/hml-local-ca.crt" \
+    https://192.168.1.237:18443/apps/engineering-api/health || echo FAIL)"
+  if [[ "$code" != "200" ]]; then
+    echo "[ERRO] /apps/engineering-api/health retornou $code. STOP." >&2
+    exit 1
+  fi
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 15 \
+    --cacert "$COMPOSE_DIR/hml-certs/hml-local-ca.crt" \
+    -H 'Authorization: Bearer invalid' \
+    https://192.168.1.237:18443/apps/engineering-api/me || echo FAIL)"
+  if [[ "$code" != "401" && "$code" != "403" && "$code" != "404" ]]; then
+    echo "[AVISO] /apps/engineering-api/me JWT inválido → $code" >&2
+  fi
+
+  echo "HML_ENGINEERING_API_UP=PASS"
+  docker ps --filter name=delpi-hml --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+}
+
+cmd_up_engineering() {
+  local env_file
+  env_file="$(require_local_env)"
+  assert_no_prod_markers_in_env "$env_file"
+  require_hml_base_healthy
+  docker ps --format '{{.Names}} {{.Status}}' | grep -E '^delpi-hml-plugin-ui .*healthy' >/dev/null || {
+    echo "[ERRO] delpi-hml-plugin-ui não está healthy. Rode up --scenario plugin-ui antes." >&2
+    exit 1
+  }
+  if ! docker ps --format '{{.Names}} {{.Status}}' | grep -E '^delpi-hml-engineering-api .*healthy' >/dev/null; then
+    if ! docker exec delpi-hml-engineering-api python -c \
+      "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)" >/dev/null 2>&1; then
+      echo "[ERRO] delpi-hml-engineering-api não está healthy. Rode up --scenario engineering-api antes." >&2
+      exit 1
+    fi
+  fi
+
+  echo "ATIVACAO=engineering"
+  echo "project=$PROJECT"
+  echo "servicos=engineering"
+  echo "modo=build MFE + up -d --no-deps"
+
+  (
+    cd "$COMPOSE_DIR"
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile engineering \
+        build engineering
+    env -u COMPOSE_FILE -u COMPOSE_PROJECT_NAME \
+      docker compose --project-name "$PROJECT" --project-directory "$COMPOSE_DIR" \
+        -f "$COMPOSE_FILE" --env-file "$env_file" --profile engineering \
+        up -d --no-deps --no-build engineering
+  )
+  wait_healthy engineering "$env_file" engineering
+  assert_hml_container_allowlist ALLOWED_HML_CONTAINERS_AFTER_ENGINEERING
+
+  local code
+  code="$(curl -sS -o /tmp/hml_eng_remote.js -w '%{http_code}' --connect-timeout 5 --max-time 20 \
+    --cacert "$COMPOSE_DIR/hml-certs/hml-local-ca.crt" \
+    https://192.168.1.237:18443/apps/engineering/assets/remoteEntry.js || echo FAIL)"
+  if [[ "$code" != "200" ]]; then
+    echo "[ERRO] /apps/engineering/assets/remoteEntry.js retornou $code. STOP." >&2
+    exit 1
+  fi
+  if grep -Eiq 'minhadelpi\.com\.br' /tmp/hml_eng_remote.js 2>/dev/null; then
+    echo "[ERRO] engineering remoteEntry contém domínio produtivo. STOP." >&2
+    exit 1
+  fi
+  rm -f /tmp/hml_eng_remote.js
+
+  echo "HML_ENGINEERING_UP=PASS"
   docker ps --filter name=delpi-hml --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
 }
 
@@ -1305,6 +1577,10 @@ case "$ACTION" in
       plugin-ui) cmd_up_plugin_ui ;;
       production-control-api) cmd_up_production_control_api ;;
       production-control-ui) cmd_up_production_control_ui ;;
+      requests-api) cmd_up_requests_api ;;
+      my-requests) cmd_up_my_requests ;;
+      engineering-api) cmd_up_engineering_api ;;
+      engineering) cmd_up_engineering ;;
       *) refuse_activation "up --scenario $SCENARIO" ;;
     esac
     ;;
