@@ -831,12 +831,12 @@ Dev e produção injetam no `minha-delpi-ai-api` o **pacote padrão** de ferrame
 | `CHAT_PAGINATION_AUTO_FETCH_ENABLED` | `true` | `true` | Busca páginas extras quando pedido |
 | `CHAT_RAG_HYBRID_ENABLED` | `true` | `true` | RAG vetor + keyword |
 | `CHAT_RAG_RERANK_ENABLED` | `true` | `true` | Boost por overlap de keywords |
-| `CHAT_WEB_SEARCH_ENABLED` | `true` | `true` | Pesquisa web (SearXNG/Tavily/…) |
+| `CHAT_WEB_SEARCH_ENABLED` | `false` | `true` | Pesquisa web (SearXNG/Tavily/…) — só `minha-delpi-ai-api` consome |
 | `CHAT_DEFAULT_SQL_AUTHORING_SKILL` | `true` | `true` | Skill `sql` no chat sem agente |
 | `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` | `true` | `true` | Skill `company-knowledge` (RAG global) |
 | `CHAT_NATIVE_TOOL_CALLING_ENABLED` | `true` | `true` | Piloto tools nativas LLM |
 | `CHAT_TYPING_CORRECTION_FUZZY_ENABLED` | `true` | `true` | Fuzzy no corretor do composer (P14) |
-| `CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED` | `true` | `true` | Preflight LanguageTool na correção textual |
+| `CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED` | `false` | `true` | Preflight LanguageTool — só `minha-delpi-ai-api` consome |
 | `CHAT_PRESENTATION_COLUMN_LABEL_DISCOVERY_ENABLED` | `true` | `true` | Descoberta LLM de rótulos de coluna |
 | `CHAT_LEARNING_AUTO_APPROVE_ENABLED` | `true` | `true` | Auto-aprovar termos aprendidos |
 | `CHAT_DOCUMENT_VISION_PADDLE_USE_GPU` | `false` | `false` | GPU no PaddleOCR (**única exceção**) |
@@ -853,13 +853,13 @@ docker exec delpi-minha-delpi-ai-api printenv | grep -E '^(CHAT_TOOL_ROUTER|CHAT
 
 Após alterar `.env`: `docker compose … up -d --force-recreate minha-delpi-ai-api`.
 
-### LanguageTool (correção textual)
+### LanguageTool (correção textual) e SearXNG (pesquisa web)
 
-Serviço `languagetool` (`erikvl87/languagetool`) incluído em **dev** e **prod**. Usado apenas pela skill «corrija este texto» — **não** pelo corretor de typos operacionais do composer (Playbook 14).
+Serviços `languagetool` (`erikvl87/languagetool`) e `searxng` têm **consumo exclusivo da `minha-delpi-ai-api`** — nenhum outro serviço, plugin ou gateway os chama. Ambos rodam no profile **`optional-heavy`**: não sobem no `up -d` comum; exigem `--profile optional-heavy` (ou `--heavy` no script sequencial). LanguageTool é usado apenas pela skill «corrija este texto» — **não** pelo corretor de typos operacionais do composer (Playbook 14).
 
 | Variável | Default compose | Efeito |
 |----------|-----------------|--------|
-| `CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED` | `true` | Liga preflight LanguageTool no turno de correção |
+| `CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED` | `true` (prod) / `false` (dev) | Liga preflight LanguageTool no turno de correção |
 | `CHAT_LANGUAGETOOL_BASE_URL` | `http://languagetool:8010` | URL interna na rede Docker |
 | `CHAT_LANGUAGETOOL_TIMEOUT_SECONDS` | `4` | Timeout HTTP por turno |
 | `CHAT_LANGUAGETOOL_LANGUAGE` | `pt-BR` | Idioma enviado ao `/v2/check` |
@@ -867,9 +867,9 @@ Serviço `languagetool` (`erikvl87/languagetool`) incluído em **dev** e **prod*
 **Prod:** o serviço **não** expõe porta pública — só `minha-delpi-ai-api` acessa na rede interna. Reservar ~2,5 GB RAM.
 
 ```bash
-# Deploy / atualização
-docker compose -f infra/docker-compose.yml pull languagetool
-docker compose -f infra/docker-compose.yml up -d --force-recreate languagetool minha-delpi-ai-api
+# Deploy / atualização (profile optional-heavy)
+docker compose -f infra/docker-compose.yml --profile optional-heavy pull languagetool
+docker compose -f infra/docker-compose.yml --profile optional-heavy up -d --force-recreate languagetool minha-delpi-ai-api
 
 # Validar (na máquina de deploy, se 8010 não estiver exposto — use exec na API)
 docker exec delpi-minha-delpi-ai-api printenv | grep CHAT_TEXT_CORRECTION_SPELL
@@ -906,7 +906,7 @@ Checklist manual (além do script):
 - [ ] `CHAT_DOCUMENT_VISION_ENABLED=true` (padrão no `.env.prod.example`)
 - [ ] `CHAT_DOCUMENT_VISION_BACKEND=docling` ou `auto` conforme política do servidor
 - [ ] `ollama pull` dos modelos de chat e embedding (`OLLAMA_MODEL`, `EMBEDDING_MODEL`)
-- [ ] `CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED=true` + serviço `languagetool` no ar (opcional; ~2,5 GB RAM)
+- [ ] `CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED=true` + `languagetool` no ar (opcional; ~2,5 GB RAM; sobe com `--profile optional-heavy` ou `--heavy`)
 
 ### Após deploy do **portal** (tela escura / login em branco)
 

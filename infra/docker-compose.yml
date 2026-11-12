@@ -195,6 +195,7 @@ services:
 
   searxng:
     image: searxng/searxng:latest
+    # Consumo exclusivo da minha-delpi-ai-api (web search do chat).
     # Profile opcional: subir com `--profile optional-heavy` (hosts com RAM folgada).
     profiles:
       - optional-heavy
@@ -210,6 +211,7 @@ services:
 
   languagetool:
     image: erikvl87/languagetool:latest
+    # Consumo exclusivo da minha-delpi-ai-api (correção textual do chat).
     # Profile opcional: subir com `--profile optional-heavy` (hosts com RAM folgada).
     profiles:
       - optional-heavy

@@ -241,6 +241,7 @@ services:
 
   searxng:
     image: searxng/searxng:latest
+    # Consumo exclusivo da minha-delpi-ai-api (web search do chat).
     profiles:
       - optional-heavy
     container_name: delpi-searxng
@@ -258,6 +259,7 @@ services:
 
   languagetool:
     image: erikvl87/languagetool:latest
+    # Consumo exclusivo da minha-delpi-ai-api (correção textual do chat).
     container_name: delpi-languagetool
     restart: unless-stopped
     profiles:
