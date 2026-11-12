@@ -6591,3 +6591,11 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `312-int1-business-identifier-resolution-mcp-schema-integrity-and-partial-authorization-real-qwen-remediation.md`.
 - **INT1_STAGE_ACCEPTANCE=PENDING_COORDINATION_REVIEW**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_IDENTIFIER_RESOLUTION_AND_PARTIAL_AUTHZ_INDEPENDENT_REVIEW`.
+
+### INT-1 requirements + evidence-first causal review — 2026-11-12
+
+- **TASK:** `DELIA-C3-T2-INT1-COORDINATION-REQUIREMENTS-AND-CAUSAL-CLOSURE-REVIEW-01` (**DOC_ONLY**), **reviewed HEAD** `a832b5318dfa388903a998ff8609d3dbf7931db1`; **Doc 313**.
+- **Direction:** four cognitive responsibilities `comprehension/investigation/sufficiency/synthesis` are not four Agents; current INT-1 reuses one Pydantic AI Agent/MCPToolset. `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=REUSE/EXTEND` for reviewed investigation capabilities.
+- **Evidence:** Docs 307–312 show model-visible contract issues, environment/Core AuthZ and code defects (undeclared `query` injected by focus helper; owner UUID cast; projection/coverage), plus real Qwen tests of selection, identifier resolution and deny/partial communication. **Do not attribute issues solely to the LLM without first-divergence proof.**
+- **Review matrix:** selection/identity/authz `PROVEN_IN_SAMPLE`; complete original PO P1/P2/P3 homologation `PENDING`; TÉO large-tree truncation and identifier incidental coverage `OPEN`; full accept gates/regressions `TO_VERIFY`. No blanket PASS, no new real tests or code in this task.
+- **NEXT:** `COORDINATION_INT1_REQUIREMENTS_EVIDENCE_MATRIX_AND_FINITE_ACCEPTANCE_DECISION`; **`INT1_STAGE_ACCEPTANCE=PENDING_COORDINATION_REVIEW`**, **`INT1_CLOSED=NO`**, **`INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED`**. No stage advancement.
