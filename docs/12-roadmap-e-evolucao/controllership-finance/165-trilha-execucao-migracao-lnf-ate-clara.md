@@ -203,6 +203,7 @@ Prompt já entregue: `prompt-cursor-F5a-migracao-lancamento-notas-fiscais.md`. R
 ### F7 — CLARA
 
 **Princípios da F7 (não negociáveis):**
+- **Paridade funcional total (decisão do owner):** a CLARA deve executar **tudo o que o usuário consegue fazer no app**, dentro das permissões dele — leitura, análise, **escrita e deleção** — no padrão em que a CLARA já é desenvolvida. Não é uma entrega só de leitura. As 24 operações da API LNF estão cobertas na tabela abaixo: 19 viram entradas de catálogo e 5 são downloads de PDF/XML, entregues como link para a tela existente do app (o usuário baixa por lá).
 - **Nenhuma tool nova.** Somente novas entradas `(entity, action)` no catálogo semântico existente (`get_context`, `read`, `analyze`, `knowledge`, `execute`, `delete`).
 - A CLARA **espelha a BFF**: cada leitura/ação chama a rota LNF da BFF já existente, **com a identidade do usuário final**. A BFF continua sendo a autoridade (CLARA nunca autoriza).
 - Visibilidade no catálogo pelas permissões `lancamento-notas-fiscais.*` efetivas do usuário (mesmos conjuntos da BFF). Quem não tem LNF não vê as entradas.
@@ -327,4 +328,5 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-12 | F5a.3 | PROD→HEAD | Controle commits CF / MFE / api-delpi | **BLOCKED R4** | `9d0d591b0a` | CF+MFE só LNF; api-delpi dezenas de commits não-LNF |
 | 2026-11-12 | F5a.4 | PROD | Deploy dark BFF→api-delpi→MFE | TEST_NOT_RUN | — | parado por R4; baseline OpenAPI registrada no 164 |
 | 2026-11-12 | F5a.5 | docs | 164/ADR-001/163/README + trilha 165 no repo | PASS | docs `9d0d591b0a` + este arquivo | D9/logs aceitos owner |
-| 2026-11-12 17:51 -03 | F5a | — | Ingresso na trilha 165; status F5a → BLOCKED R4 | BLOCKED R4 | (este commit) | aguarda decisão owner sobre rebuild api-delpi |
+| 2026-11-12 17:51 -03 | F5a | — | Ingresso na trilha 165; status F5a → BLOCKED R4 | BLOCKED R4 | `3cde750655` | aguarda decisão owner sobre rebuild api-delpi |
+| 2026-11-12 17:52 -03 | F7 princípios | docs | Owner reforça paridade funcional total CLARA (leitura+escrita+delete) | registrado | (este commit) | F5a permanece BLOCKED R4; upload 610678e5 mesclado sem apagar Registro |
