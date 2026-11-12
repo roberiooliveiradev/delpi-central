@@ -124,3 +124,5 @@ A pasta é documentação permanente. Arquivos `.cursor/plans/*.plan.md` são es
 ## Especificação visual PRC — produtos acompanhados
 
 - [PRC — Especificação visual e de interação](./PRC-PRODUCT-TRACKING-FRONTEND-VISUAL-SPEC.md): hero único com seletor Solicitações/Produtos acompanhados, tabela, ficha técnica em cards, fornecedores em tabela, flags nos campos e aba Versões com navegação/comparação. **UX TARGET; componentes, contratos e runtime ainda exigem inventário.**
+
+- [PRC — Inventário Plugin UI e wireframes responsivos](./PRC-TRACKED-PRODUCTS-UI-COMPONENT-INVENTORY-RESPONSIVE-WIREFRAMES.md): 18 referências de componentes rastreadas ao GitHub, 7 wireframes textuais, medidas CSS PROVEN vs TARGET e matriz de QA desktop/tablet/mobile. **Documento de projeto; validação visual em browser pendente.**
