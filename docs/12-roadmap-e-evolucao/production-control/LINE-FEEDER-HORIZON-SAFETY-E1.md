@@ -89,3 +89,29 @@ diretamente.
 mas o `payload_json` da publicação atual não pôde ser lido por esta
 investigação; o filtro corrige o caso quando a filial de origem estiver
 gravada na linha, conforme o contrato normal da api-delpi.
+
+
+### Proteção adicional: confirmação de inexistência no SC2
+
+Como `payload_json` da publicação não foi inspecionado, o filtro por
+`operations[].branch` pode não identificar uma OP obsoleta cuja filial
+tenha sido registrada incorretamente ou não esteja disponível. A consulta
+autoritativa de saldos `POST /production/machine-load/operation-balances`
+agora devolve o campo aditivo `order_exists` por OP+operação:
+
+- `true`: SC2010 confirmou a OP na filial informada;
+- `false`: consulta SC2010 executada, mas não encontrou a OP na filial;
+- `null`: adapter legado sem capacidade de consulta de existência.
+
+O Alimentador só exclui a operação em caso de `order_exists=false`
+explícito e contabiliza `missing_order_operations_excluded` para aviso
+visível. Não cria quantidade produzida ou saldo fictício. `null`,
+`order_exists` ausente, resposta inválida ou erro S2S continuam
+respeitando o bloqueio `balance_unknown`/integração indisponível.
+A filial ecoada pelo contrato de saldos também é confrontada com a filial
+solicitada, e divergência gera erro controlado.
+
+**Deploy:** esta evolução requer reconstrução coordenada de
+`api-delpi`, `production-control-api` e `production-control`
+após testes e revisão do PR. A proteção de leitura e a importação
+continuam sem atualizar ERP, nem alterar o snapshot publicado.
