@@ -230,4 +230,122 @@ Conforme a migração **PRC-UI-EXTRACT-01 reportada pelo executor**, a apresenta
 7. Desktop/tablet/celular (incluindo 320px), tema claro/escuro, tabelas largas, modal host-contained, teclado, carregamento, empty state, snapshot parcial, 403/409 e F5/back-forward devem ser verificados.
 8. Nenhum novo componente visual primitivo/personalizado local; consumir Plugin UI; PRC-UI-EXTRACT-01 necessita fechamento de evidências antes da implementação.
 
-**Próximo desenho a detalhar e submeter ao PO:** Página 3 — aba **Versões**, com linha do tempo, filtros, comparação Vx×Vy e diffs de fornecedores. Não antecipar aprovação.
+**Página 3 — Versões e comparação:** aprovada pelo PO; ver seção 11.
+
+## 11. Página 3 — Aba Versões e comparação — APROVADA pelo PO (2026-11-12)
+
+> **Status:** `UX_APPROVED / TARGET_IMPLEMENTATION`. Trata-se da segunda aba do detalhe do produto acompanhado, compartilhando hero e identidade com a Ficha técnica. Aprovação de UX **não comprova contratos ou runtime** e **não autoriza desenvolver antes dos gates arquiteturais**.
+
+### 11.1 Estrutura aprovada
+
+1. Preservar **breadcrumb**, **hero do produto** (código oficial, descrição e versão acompanhada) e as duas abas `Ficha técnica | Versões` via `EngineeringTabs`. A aba **Versões** fica ativa, sem criar uma terceira aba ou página independente.
+2. Organizar o conteúdo em **duas seções verticais, uma abaixo da outra inclusive no desktop**: **Histórico de versões** e **Comparar versões**. Não dispor as seções inteiras lado a lado, pois a comparação exige largura útil para descrições e vínculos.
+3. Utilizar `EngineeringTimeline` ou composição equivalente comprovada do Plugin UI para a linha do tempo; `EngineeringDetailCard` para informações expandidas, `EngineeringActionButton` para ações, selects do kit para comparação e `EngineeringStateBanner`/`EngineeringEmptyState` para estados de UI. **Não desenvolver primitivos ou componentes visuais personalizados dentro do MFE Engenharia.** Confirmar exports e comportamento reais antes da implementação.
+
+### 11.2 Histórico de versões
+
+- **Linha do tempo vertical**, em ordem **Vn → V1** (mais recente primeiro); cada entrada indica **Vn, data/hora de confirmação, tipo da solicitação de origem (criação/alteração, quando aplicável), resumo das alterações e link autorizado para a PRC de origem**.
+- Destacar visual e textualmente a **versão mais recente**; o marcador `Atual` significa **última versão acompanhada pela Engenharia**, nunca estado ao vivo do TOTVS.
+- Cada entrada pode ser **expandida/recolhida** para apresentar metadados e resumo; usar controles com `aria-expanded`, foco visível e suporte a teclado/toque.
+- Ação **Ver ficha desta versão** seleciona a versão correspondente e abre a aba **Ficha técnica** dentro do **mesmo detalhe do produto**; a navegação deve preservar contexto por URL/back-forward/F5 conforme contrato de roteamento.
+- A **V1** recebe a descrição **Primeiro acompanhamento confirmado**; quando criada a partir de UPDATE não implica que o produto tenha sido criado no TOTVS.
+- Se apenas V1 existir, mostrar histórico normalmente; comparação entre versões fica indisponível com explicação, e não um erro.
+
+### 11.3 Comparação entre quaisquer duas versões
+
+- Dois controles selecionáveis: **Versão de origem** e **Versão de destino**, e ação **Comparar versões**. Permitir comparação não consecutiva (`V1 × V5`, `V2 × V4`), com sentido de origem/destino explícito.
+- Ao selecionar a **mesma versão** em ambos os controles, desabilitar a comparação e explicar que é necessário selecionar versões distintas; não inferir diff.
+- Apresentar **apenas diferenças realmente observadas** entre os dois snapshots imutáveis, organizadas pelos **mesmos grupos técnicos da Ficha técnica**, preservando labels e formatação do Plugin UI. Em cada campo alterado: **Antes (Vx) | Depois (Vy)**.
+- Na comparação de fornecedores, reconhecer o vínculo por **identidade estável fornecedor + loja**, e separar **vínculo adicionado, vínculo removido ou atributo modificado** (p.ex. Part Number, Catálogo). Não comparar por índice de linha nem inventar campos não disponíveis.
+- As diferenças entre V1 e V5 representam **diferenças acumuladas dos snapshots**, e **não** devem ser atribuídas à última PRC nem a alterações externas como causalidade comprovada. Mostrar solicitação de origem na entrada de cada versão.
+- **Eventos de bandeiras** (abertura, resolução, reabertura) aparecem em seção **separada das mudanças oficiais dos dados técnicos**; evento de flag não cria Vn+1. A consulta histórica não reescreve o estado das flags no passado.
+- Em caso de **nenhuma diferença** em atributos com cobertura comparável, apresentar mensagem explícita. Dados não observados/incomparáveis são sinalizados como **não disponíveis/incomparáveis**, nunca tratados como igualdade nem como exclusão. A política de no-op continua sujeita ao contrato de domínio.
+- Não comparar contra o estado TOTVS live por padrão; trabalhar exclusivamente com snapshots acompanhados, respeitando AuthZ.
+
+### 11.4 Wireframes textuais aprovados
+
+**Desktop (>=1024 CSS px): seções verticais, valores Antes/Depois lado a lado**
+
+```text
+[Portal global top bar — host, não duplicar]
+[Breadcrumb: Controle e Cadastro / Produtos acompanhados / CÓDIGO]
+┌──────────────────────── HERO DO PRODUTO / Plugin UI ────────────────────────┐
+│ CÓDIGO OFICIAL — DESCRIÇÃO                           Última acompanhada V5  │
+└────────────────────────────────────────────────────────────────────────────┘
+[ Ficha técnica ] [ ● Versões ]
+┌──────────────────────── HISTÓRICO DE VERSÕES ───────────────────────────────┐
+│ ● V5  Atual · Data/hora · Alteração · PRC origem                  [expandir] │
+│ │   Resumo técnico · [Ver ficha da V5] · [Ver solicitação]                  │
+│ ● V4  Data/hora · Alteração · PRC origem                         [expandir] │
+│ │                                                                          │
+│ ● V3  ...                                                                  │
+│ ● V2  ...                                                                  │
+│ ● V1  Primeiro acompanhamento confirmado                                  │
+└────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────── COMPARAR VERSÕES ────────────────────────────────────┐
+│ [Origem V1 ▼] [Destino V5 ▼]                          [Comparar versões]    │
+│ Identificação e classificação                                              │
+│ Descrição                                                                  │
+│ ┌──────────────── Antes · V1 ───────────────┐ ┌──── Depois · V5 ──────────┐ │
+│ │ valor confirmado                         │ │ valor confirmado          │ │
+│ └──────────────────────────────────────────┘ └───────────────────────────┘ │
+│ Fornecedores                                                               │
+│ Fornecedor+loja — [Adicionado/Removido/Alterado]                            │
+│ ── Eventos de bandeiras (linha separada, não são dados TOTVS) ──────────── │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Tablet (768–1023 CSS px): seções verticais de largura total**, timeline acima da comparação; pares Antes/Depois lado a lado somente se couber sem cortar textos, caso contrário empilhados.
+
+**Mobile (320–767 CSS px): seções verticais, campos Antes/Depois empilhados**
+
+```text
+[Hero produto compacto]
+[Ficha técnica | ● Versões]
+┌──────── HISTÓRICO ────────┐
+│ ● V5 · Atual              │
+│ │  [Expandir]             │
+│ ● V4                      │
+│ ● V3                      │
+│ ● V2                      │
+│ ● V1 · Primeiro acomp.    │
+└───────────────────────────┘
+┌──── COMPARAR VERSÕES ─────┐
+│ [Versão origem ▼]         │
+│ [Versão destino ▼]        │
+│ [Comparar versões]        │
+│ Descrição                 │
+│ Antes (V1): valor         │
+│ Depois (V5): valor        │
+│ Fornecedores              │
+│ vínculo e tipo de diff    │
+│ Eventos de bandeiras      │
+└───────────────────────────┘
+```
+
+### 11.5 Dimensionamento e responsividade
+
+| Tela | Hierarquia e grid | Margem externa proposta | Ritmo entre seções |
+|---|---|---|---|
+| Desktop largo ≥1440px | Histórico largura total **sobre** comparação largura total; em cada diff Antes/Depois em **duas colunas** | 24px `TARGET` | 24px `TARGET` |
+| Desktop 1024–1439px | Mesma hierarquia vertical; preservar largura de leitura dos valores | 20px `TARGET` | 20px `TARGET` |
+| Tablet 768–1023px | Histórico e comparação em uma coluna; selects e Antes/Depois adaptativos | 16px `TARGET` | 16px `TARGET` |
+| Mobile 320–767px | Controles, filtros e pares Antes/Depois **empilhados**; navegação por versão sem hover | 12px `TARGET` | 16px `TARGET` (reavaliar 320px) |
+
+**Paddings intrínsecos, bordas, tipografia, cores e dimensões de botões/cards devem vir dos tokens/componentes reais do Plugin UI**. As medidas externas são referências de composição `TARGET`, não medições do CSS do kit. Não fixar altura de timeline quando expandida; usar fluxo natural. Não criar overflow horizontal de página.
+
+### 11.6 Critérios de aceite específicos (P3)
+
+1. Apenas duas abas no detalhe, sem top bar extra; versão e produto identificados com clareza.
+2. Histórico **sempre acima** da comparação, inclusive em desktop, ambos com largura total.
+3. Timeline Vn→V1, versão atual identificada e entradas expansíveis acessíveis por teclado/toque.
+4. Link **Ver ficha desta versão** abre Ficha técnica com Vn selecionada e URL/back-forward/F5 coerentes.
+5. V1 descrita como primeiro acompanhamento, mesmo quando oriunda de UPDATE.
+6. Dois seletores permitem comparar versões **não consecutivas**; mesma versão bloqueia comparação com explicação.
+7. Diff agrupado como ficha PRC, com Antes/Depois lado a lado em desktop e empilhados no celular.
+8. Fornecedores comparados por fornecedor+loja; adição, remoção e alterações de atributos distinguíveis.
+9. Eventos de flags exibidos separadamente e não contam como nova versão de produto.
+10. V1 isolada, ausência de mudanças, valores parcialmente observados, loading/empty/error/403, acessibilidade e responsividade 320–1920px contemplados.
+11. Componentes visuais somente do Plugin UI; integração/contratos, AuthZ e causalidade permanecem no owner correto.
+
+**Estado de execução:** `TEST_NOT_RUN`. **Próximo passo:** consolidar a especificação das três páginas como pacote para implementação, condicionado aos gates de arquitetura, contratos e aceite da migração Plugin UI.
