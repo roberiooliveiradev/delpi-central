@@ -349,8 +349,12 @@ def test_windows_remote_actions_queue_is_audited_durable_and_at_most_once(pg_cli
         "lease": "00000000" + "0"*40, "status": "succeeded", "state_after": "stopped",
     })
     assert bad.status_code == 409
+    inconsistent = pg_client.post(report, headers=headers, json={
+        "lease": job["lease"], "status": "succeeded", "state_after": "stopped", "can_stop": True,
+    })
+    assert inconsistent.status_code == 422
     done = pg_client.post(report, headers=headers, json={
-        "lease": job["lease"], "status": "succeeded", "state_after": "stopped",
+        "lease": job["lease"], "status": "succeeded", "state_after": "stopped", "can_stop": False,
     })
     assert done.status_code == 200, done.text
     assert done.json()["data"]["status"] == "succeeded"
@@ -364,6 +368,7 @@ def test_windows_remote_actions_queue_is_audited_durable_and_at_most_once(pg_cli
 
     listing = pg_client.get("/servers/" + sid + "/host-services").json()["data"]
     assert listing["items"][0]["state"] == "stopped"
+    assert listing["items"][0]["can_stop"] is False
     assert listing["items"][0]["control_allowed"] is True
     history = pg_client.get("/servers/" + sid + "/history").json()["data"]
     events = [e["event_type"] for e in history]
@@ -388,6 +393,25 @@ def test_windows_remote_actions_queue_is_audited_durable_and_at_most_once(pg_cli
     ).json()["data"]
     assert timed_out["status"] == "timeout"
     assert pg_client.post(poll, json={"hostname": hostname}, headers=headers).json()["data"] is None
+
+    # A confirmacao do agente atualiza estado e capacidade SCM imediatamente;
+    # nao depende dos 5 minutos da proxima coleta de inventario.
+    resume = pg_client.post(url, json={
+        "action": "start", "request_id": str(uuid.uuid4()), "confirmed": True,
+    })
+    assert resume.status_code == 202, resume.text
+    claimed = pg_client.post(poll, json={"hostname": hostname}, headers=headers).json()["data"]
+    assert claimed["id"] == resume.json()["data"]["id"]
+    started = pg_client.post(
+        "/collector/v1/servers/" + sid + "/host-services/control/" + claimed["id"] + "/result",
+        headers=headers,
+        json={"lease": claimed["lease"], "status": "succeeded",
+              "state_after": "running", "can_stop": True},
+    )
+    assert started.status_code == 200, started.text
+    refreshed = pg_client.get("/servers/" + sid + "/host-services").json()["data"]["items"][0]
+    assert refreshed["state"] == "running"
+    assert refreshed["can_stop"] is True
 
     principal.permissions = ["it-portal.access", "it-portal.servers.view"]
     assert pg_client.post(url, json=body).status_code == 403

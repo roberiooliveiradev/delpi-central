@@ -135,7 +135,7 @@ class HostServiceControl:
 
     def report(self, server_id: str, client_id: str, action_id: str,
                lease: str, *, status: str, state_after: str | None,
-               error_code: str | None) -> dict:
+               error_code: str | None, can_stop: bool | None = None) -> dict:
         self._agent_server(server_id, client_id)
         if status not in {"succeeded", "failed"}:
             raise ValidationError("invalid_control_result", "Resultado inválido.")
@@ -149,6 +149,10 @@ class HostServiceControl:
             raise ValidationError("invalid_control_error", "Código de falha inválido.")
         if status == "succeeded" and error_code is not None:
             raise ValidationError("invalid_control_result", "Resultado inconsistente.")
+        if status == "failed" and can_stop is not None:
+            raise ValidationError("invalid_control_result", "Falha nao pode atualizar capacidade do servico.")
+        if status == "succeeded" and state_after == "stopped" and can_stop is True:
+            raise ValidationError("invalid_control_result", "Servico parado nao aceita interrupcao.")
         return self.repository.finish(server_id, action_id, client_id, lease,
                                       status=status, state_after=state_after,
-                                      error_code=error_code)
+                                      error_code=error_code, can_stop=can_stop)

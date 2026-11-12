@@ -85,7 +85,7 @@ function Get-ServiceState($svc) {
 }
 
 function Invoke-ApprovedAction($job) {
-    $result = @{status='failed';state_after=$null;error_code='execution_failed'}
+    $result = @{status='failed';state_after=$null;error_code='execution_failed';can_stop=$null}
     if (-not $job -or $job.action -notin @('start','stop','restart') -or [string]$job.service_name -notmatch '^[a-zA-Z0-9_.$-]{1,200}$' -or -not $allow.Contains([string]$job.service_name)) {
         $result.error_code = 'not_allowed'
         return $result
@@ -126,6 +126,7 @@ function Invoke-ApprovedAction($job) {
         if ($after -eq $expected) {
             $result.status = 'succeeded'
             $result.error_code = $null
+            $result.can_stop = [bool]$svc.CanStop
         } else {
             $result.error_code = 'precondition_failed'
         }
@@ -173,7 +174,7 @@ while ($true) {
             $job = $response.data
             $work = Invoke-ApprovedAction $job
             $reportUrl = '{0}/{1}/result' -f $reportPrefix,[uri]::EscapeDataString([string]$job.id)
-            $payload = @{lease=[string]$job.lease;status=[string]$work.status;state_after=$work.state_after;error_code=$work.error_code} | ConvertTo-Json -Compress
+            $payload = @{lease=[string]$job.lease;status=[string]$work.status;state_after=$work.state_after;error_code=$work.error_code;can_stop=$work.can_stop} | ConvertTo-Json -Compress
             $reported = $false
             for ($attempt = 0; $attempt -lt 2; $attempt++) {
                 try {

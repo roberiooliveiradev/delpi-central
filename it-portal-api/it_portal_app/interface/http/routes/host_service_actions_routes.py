@@ -68,5 +68,6 @@ def report_action(request: Request, server_id: UUID, action_id: UUID,
     result = service.report(
         str(server_id), identity.client_id, str(action_id), body.lease,
         status=body.status, state_after=body.state_after, error_code=body.error_code,
+        can_stop=body.can_stop,
     )
     return ok(result, operation_id="report_it_windows_host_service_action")

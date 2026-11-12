@@ -263,6 +263,7 @@ describe("Windows SCM read-only services inventory", () => {
     expect(await screen.findByText("Serviço de teste")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Reiniciar" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Ver detalhes de Serviço de teste" }));
+    expect(screen.getByText("Controle autorizado")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Reiniciar" }));
     expect(requestBodies(fetchMock, "POST")).toEqual([]);
     expect(screen.getByText(/pode interromper sistemas e usuários/)).toBeTruthy();

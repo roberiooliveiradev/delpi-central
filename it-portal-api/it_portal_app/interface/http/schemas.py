@@ -669,6 +669,7 @@ class HostServiceAgentReportInput(_Input):
     error_code: Literal["access_denied", "service_not_found", "not_allowed",
                         "precondition_failed", "dependent_services", "timeout",
                         "execution_failed", "disabled"] | None = None
+    can_stop: bool | None = None
 
 
 class HealthOut(BaseModel):

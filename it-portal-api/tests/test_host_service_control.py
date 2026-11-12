@@ -41,7 +41,7 @@ class FakeActions:
                 "service_key": "test_delpi", "action": "restart",
                 "state_before": "running", "lease": "claim-token-value-1234567890-xyz"}
 
-    def finish(self, server_id, action_id, client_id, lease, *, status, state_after, error_code):
+    def finish(self, server_id, action_id, client_id, lease, *, status, state_after, error_code, can_stop=None):
         return {**next(iter(self.entries.values())),
                 "status": status, "state_after": state_after, "error_code": error_code}
 

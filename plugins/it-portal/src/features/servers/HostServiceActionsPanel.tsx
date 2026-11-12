@@ -81,7 +81,7 @@ export function HostServiceActionsPanel({
           <strong>Controle remoto</strong>
           <p>O resultado será confirmado diretamente pelo servidor Windows.</p>
         </div>
-        <span className="itp-scm__control-live"><span aria-hidden="true" /> Acesso restrito</span>
+        <span className="itp-scm__control-live"><span aria-hidden="true" /> Controle autorizado</span>
       </div>
       <div className="itp-scm__control-actions">
         {actions.map(({ name, allowed, icon: Icon }) => (
@@ -94,6 +94,11 @@ export function HostServiceActionsPanel({
           </button>
         ))}
       </div>
+      {service.state === "running" && !service.can_stop ? (
+        <p className="itp-scm__control-feedback" role="status">
+          Interrupção indisponível: o Windows ainda não confirmou que este serviço pode ser interrompido.
+        </p>
+      ) : null}
       {selected ? (
         <div className="itp-scm__confirm" role="group" aria-label={"Confirmar " + labels[selected]}>
           <AlertTriangle size={19} strokeWidth={1.7} aria-hidden="true" />
