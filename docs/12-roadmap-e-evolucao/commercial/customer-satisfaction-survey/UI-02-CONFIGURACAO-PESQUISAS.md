@@ -288,6 +288,29 @@ Números das linhas **ilustrativos**; não codificar no frontend. Situação vem
 
 **Status:** composição e três campos **APROVADOS**; contratos técnicos, implementação e validação em dispositivos **PENDING**. Não incluir envio automático, editor de questionário, inclusão de empresas ou mensagem padrão dentro do diálogo.
 
+### Decisão visual aprovada — topo e navegação da UI-02B (12/11/2026)
+
+**APROVADO PELO SOLICITANTE:** na página de detalhe/configuração de campanha, exibir **CommercialPagePath** acima de um único **CommercialPageHero** do Portal; o Hero apresenta **nome da campanha** como título principal, **período início–término** como informação secundária e **situação derivada pela commercial-api** em badge oficial. Ações contextuais de gestão no Hero: **Ver resultados** (UI-01 já filtrada pela campanha) e **Respostas por empresa** (UI-06 restrita a gestão). O retorno da trilha leva à lista de campanhas. Não criar segundo cabeçalho nem menu de navegação paralelo.
+
+**Logo abaixo do Hero:** usar o padrão oficial **CommercialUnderlineNav** para três seções: **Participantes** (selecionada ao entrar), **Mensagem padrão** e **Dados**. Alternar seções na mesma área de configuração, sem mudar a campanha, duplicar páginas, perder contexto sem necessidade ou gravar mudanças implicitamente. Abaixo da navegação aparece somente o conteúdo da seção ativa. `Editar datas`, quando admitido pelo contrato do backend, permanece ação contextual autorizada; não presumir uma edição livre para todos os estados.
+
+#### Matriz visual e responsiva — contrato de composição
+
+| Região | Componente de referência | Desktop largo | Tablet / largura intermediária | Celular |
+|---|---|---|---|---|
+| Trilha acima do Hero | `CommercialPagePath` | Trilha com retorno e identificação da campanha | Quebra/compactação seguindo kit | Retorno acessível, sem overflow |
+| Hero e título | `CommercialPageHero` (`density="compact"`) | Título e período à esquerda; situação no badge do próprio Hero | Refluxo nativo do componente | Título pode quebrar em linhas, mantendo identificação |
+| Ações | `CommercialActionButton` no slot `actions` | Alinhadas à direita da linha do título | Quebram para linha inferior quando faltar espaço | Ordem lógica e alvos de toque herdados do kit, sem truncar |
+| Navegação abaixo do Hero | `CommercialUnderlineNav` | Seções em faixa horizontal, Participantes inicialmente ativa | Refluxo ou navegação do kit | Mesmo padrão responsivo de navegação já usado no Comercial, sem abas inventadas |
+| Conteúdo da seção | Cards, tabelas e campos oficiais conforme função | Ocupa largura útil do shell | Adapta ao container | Empilha conforme componente real, sem rolagem horizontal de página |
+
+#### Dimensões, spacing, margens, tipografia e regras de evidência
+
+- **Regra de padronização reiterada pelo solicitante:** para **cada região e componente** da UI-02B e próximas páginas, documentar explicitamente **owner, componente PluginUI ou wrapper Comercial, props e variantes, localização/hierarquia, largura/altura, padding interno, margens externas, gap, alinhamentos, fonte, peso, raio/sombra, estados, foco/teclado e comportamento por largura de tela**. Quando um valor vier de token CSS ou media query existente, citar **arquivo e símbolo/selector com valor real**; se ainda não inspecionado, indicar **TO_INVENTORY**, nunca inventar medida ou chamar proposta de existente.
+- **Herança visual:** `CommercialPageHero`, `CommercialPagePath`, `CommercialActionButton` e `CommercialUnderlineNav` devem utilizar tokens/estilos/componentes oficiais do microfrontend. Não criar paddings, margins, font-size, breakpoints, bordas, alturas mínimas ou sombras específicos da Pesquisa apenas para reproduzir a prévia. O wrapper `CommercialPageHero` já adota `density="compact"` por padrão em `plugins/commercial/src/app/commercialUi.ts`; seus valores CSS efetivos e os da navegação **TO_INVENTORY** antes de implementação.
+- **Contexto e responsabilidades:** frontend organiza visual e navegação; `commercial-api` é autoridade para nome/período/situação/contagens e autorização de gestão. Nenhuma preferência visual autoriza informação restrita. Exigir `commercial.marketing` OU `commercial.manage` com validação final no backend. UI-01 mantém resultados agregados segundo autorização e UI-06 não pode ser acessada por `commercial.access` isolado.
+- **Status:** composição e seção inicial **APROVADAS**; inventário numérico de CSS/spacing e implementação **PENDING/TO_INVENTORY**. Próximo refinamento: seção **Participantes**, do topo ao rodapé, reutilizando padrões do Comercial.
+
 ## 3. Wireframe B — detalhe de campanha
 
 ```text
