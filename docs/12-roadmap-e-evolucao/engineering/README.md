@@ -116,3 +116,7 @@ A pasta é documentação permanente. Arquivos `.cursor/plans/*.plan.md` são es
 ## Reancoragem de estado — 12/11/2026
 
 > Este README contém descrições históricas de arquitetura alvo (incluindo afirmações de que `engineering-api` e `plugins/engineering` ainda não existem e de que PRC seria de `requests-api`). **Esses trechos são baseline histórico, não retrato do runtime atual.** Para o PRC vigente, a **Engineering API é a autoridade do caso**, e os dois MFEs são consumidores. O [ENG-REALTIME-01](./ENG-REALTIME-01-websocket-transversal-prc-plano.md) documenta o planejamento atual do tempo real. Revisar as demais seções legadas em tarefa documental separada, sem sobrescrever decisões de ownership sem aprovação.
+
+## Decisões funcionais PRC — acompanhamento versionado
+
+- [PRC — Produtos acompanhados, versões confirmadas e flags transversais](./PRC-PRODUCT-TRACKING-VERSIONS-TRANSVERSAL-FLAGS-DECISIONS.md): regras de negócio consolidadas para criação/alteração, V1 em primeiro acompanhamento, snapshots oficiais após conclusão validada, flags persistentes por produto/alvo e histórico temporal. **Decisões funcionais registradas; arquitetura/persistência dependem de inventário e ratificação.**
