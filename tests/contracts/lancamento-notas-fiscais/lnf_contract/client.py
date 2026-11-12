@@ -3,12 +3,19 @@
 from __future__ import annotations
 
 import os
+import time
 from dataclasses import dataclass
+from urllib.parse import urlparse
 
 import httpx
 
-from lnf_contract.guard import assert_not_production, base_url, profile_token, target_name
-
+from lnf_contract.guard import (
+    HML_HOST,
+    assert_not_production,
+    base_url,
+    profile_token,
+    target_name,
+)
 
 def _tls_verify() -> bool | str:
     """HML usa CA local: SSL_CERT_FILE / REQUESTS_CA_BUNDLE."""
@@ -87,6 +94,9 @@ class ContractClient:
             headers["Authorization"] = (
                 token if token.lower().startswith("bearer ") else f"Bearer {token}"
             )
+        # HML gateway api_zone: matriz AuthZ estoura burst=50 se for rajada.
+        if (urlparse(self.url).hostname or "").lower() == HML_HOST:
+            time.sleep(0.05)
         try:
             with httpx.Client(
                 base_url=self.url,
