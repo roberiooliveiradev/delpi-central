@@ -169,8 +169,8 @@ Assinatura e entrega usam os mesmos predicados das rotas de leitura (list, detai
 
 | Sala | Regra |
 |---|---|
-| `lnf:branch:01`, `lnf:branch:02` | `branch_view_allowed` da filial **e** o predicado de `GET /requests`: `can_view_all` ou `create` (`use_cases.py:466-468`). Quem só tem `create` vê só as solicitações com o próprio `created_by_user_id` (`use_cases.py:468`). Não há filtro de autorização por status nem por responsável. |
-| `lnf:request:{uuid}` | O predicado de `GET /requests/{id}`: `can_view_all`, ou `create` e dono (`use_cases.py:485-487`), **e** `branch_view_allowed` da filial carregada (`router.py:722-724`). Id inválido, solicitação ausente ou predicado negado → `forbidden_room`. |
+| `lnf:branch:01`, `lnf:branch:02` | `branch_view_allowed` da filial **e** o predicado de `GET /requests`: `can_view_all` ou `create` (`use_cases.py:108-110`, chamado em `:511`). Quem só tem `create` vê só as solicitações com o próprio `created_by_user_id` (`use_cases.py:113-116`). Não há filtro de autorização por status nem por responsável. |
+| `lnf:request:{uuid}` | O predicado de `GET /requests/{id}`: `can_view_all`, ou `create` e dono (`use_cases.py:120-125`, chamado em `:530`), **e** `branch_view_allowed` da filial carregada. Id inválido, solicitação ausente ou predicado negado → `forbidden_room`. |
 | `lnf:unmapped-products` | A permission de `GET /unmapped-products` (`router.py:576`). A listagem não filtra por filial nem por dono (`unmapped_supplier_product_service.py:147-158`). |
 
 Entrega: se a listagem é por posse, cada evento de solicitação só sai para a conexão cujo predicado de leitura inclui aquela solicitação. `lnf.queue.reconciled` não carrega dono; só quem lê a filial inteira (`can_view_all`) o recebe.
