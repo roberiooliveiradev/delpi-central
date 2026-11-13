@@ -286,3 +286,23 @@ Encaminhar à Coordination **ADR-01 a ADR-06** com matriz de decisão e pergunta
 **AC CR09:** (01) flag OPEN na solicitação em andamento não altera ficha/lista/versões do produto; (02) conclusão validada incorpora apenas OPEN elegível; (03) flag RESOLVED/REMOVED antes de concluir não incorpora; (04) conclusão no-op com OPEN associa a Vn vigente sem criar Vn+1; (05) conclusão que gera Vn+1 incorpora após transação e associa a essa Vn+1; (06) falha, rejeição, cancelamento ou AuthZ negada não publicam alterações; (07) CR-08 backfill exclui PRCs não concluídas; (08) idempotência/CAS evita duplicação e race; (09) flags associadas seguem ADR-04 e CR-07.
 
 **Sem código, migration ou deploy.** Requer ratificação da Coordination sobre contrato, migração, autoridade e testes.
+
+
+## 16. Deliberação complementar do PO — CR-10: conflito OPEN bloqueia conclusão integral (13/11/2026)
+
+**Escolha expressa:** **A — Exigir resolução do conflito antes da conclusão, sem publicação parcial.** **Comentário:** sem comentário. **Estado:** `PO_APPROVED_BUSINESS_DECISION / COORDINATION_RATIFICATION_PENDING`.
+
+**Regra funcional aprovada:** se uma PRC candidata à conclusão contém uma bandeira `OPEN` para `recordId + targetKey` que já está ocupado por outra `OPEN` no produto acompanhado (ou por outra bandeira elegível na mesma conclusão), **bloquear a conclusão da solicitação** até tratamento explícito, autorizado e auditável da duplicidade. O bloqueio **não publica snapshot técnico, não cria Vn, não incorpora bandeira, não atualiza ponteiro de versão, não marca pedido como concluído e não produz conclusão parcial**. A solicitação permanece no estado anterior compatível com seu contrato, com erro de conflito e indicação do alvo quando permitido por AuthZ. Não fundir, resolver, remover, reabrir ou descartar flags automaticamente.
+
+**Compatibilidade com decisões anteriores:**
+- **ADR-03:** mantém invariante de **no máximo uma OPEN simultânea por produto/alvo**; impedir duplicidade inclusive concorrência e flags OPEN concorrentes da própria solicitação.
+- **CR-07:** bandeiras RESOLVED não reabrem; ocorrência encerrada permanece histórica; se houver reincidência após encerramento, criar novo ID, respeitando unicidade OPEN.
+- **CR-08:** durante associação de OPEN legadas na V1, colisões permanecem em fila de exceção **sem associação automática**; se a colisão pertence ao conjunto da solicitação que está tentando concluir, **CR-10 bloqueia essa conclusão inteira**. Backfill histórico offline não reabre/conclui PRC e não deve ser confundido com o fluxo transacional de conclusão.
+- **CR-09:** solicitações em andamento não alteram produto. Apenas uma conclusão válida pode promover dados e bandeiras, mas somente se todos os gates forem satisfeitos; o conflito é falha de pré-condição e impede commit integral.
+- **CR-02/03/04/05/06 + ADR-05:** a primeira V1, o diff real Vn+1 e o no-op só se efetivam se não houver conflito pendente; no-op não é motivo para ignorar duplicidade de OPEN.
+
+**Tratamento do conflito antes de nova tentativa:** exige ação humana/autorizada conforme os contratos vigentes das bandeiras request-local e product-tracking; a escolha do mecanismo (retirar bandeira duplicada da solicitação, encerrar ocorrência existente quando tecnicamente cabível, ou outro fluxo) **não foi autorizada automaticamente** por CR-10. Toda ação deve respeitar CR-07/ADR-04 e trilha histórica. Revalidar permissões, flags, revisão e versão com locking/CAS no retry; não contar com checagem apenas no frontend.
+
+**Critérios de aceite:** `CR10-AC01` duas OPEN mesmo produto/alvo antes de complete → 409/erro de conflito contratual, PRC não conclui; `CR10-AC02` snapshot, current_revision, association e status de conclusão permanecem inalterados; `CR10-AC03` caso no-op também bloqueia; `CR10-AC04` resolução autorizada do conflito seguida de retry idempotente pode concluir; `CR10-AC05` duas conclusões concorrentes não publicam duas OPEN; `CR10-AC06` campos de erro não vazam dados de bandeiras sem AuthZ; `CR10-AC07` nenhuma bandeira é automaticamente resolvida/removida/reaberta/fundida; `CR10-AC08` coexistência com legadas e backfill preserva requests concluídos.
+
+**Status de execução:** `TEST_NOT_RUN`. Nenhum código, migration, deploy ou alteração de schema autorizado. O contrato transacional exige ratificação pela Coordination.
