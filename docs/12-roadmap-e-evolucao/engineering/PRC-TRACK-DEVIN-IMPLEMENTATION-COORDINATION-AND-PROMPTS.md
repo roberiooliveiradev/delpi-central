@@ -496,3 +496,30 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 - **Fornecedores:** validação de `suppliers[]` obrigatória (supplierCode, store, supplierName, partNumber — A5_CODPRF required). PASS na validação; verificação TOTVS coberta pelo erp_mismatch.
 
 **Limites honestos:** cenários de conclusão com match real, multiuser entre dois solicitantes distintos, concorrência simultânea, outage mid-transaction e frontend (UI real) não foram executados — evidência é de API runtime. `E2E_PARTIAL_PASS_WITH_GAPS`.
+
+## 31. Pacote de decisão — integração Home × casos PRC nativos (13/11/2026)
+
+**TASK_ID:** ENG-HOME-PRC-NATIVE-INTEGRATION-IMPLEMENTATION-01 — fase de decisão. Conforme §2 da missão, a direção proposta pela Coordination (Home alimentada pelos casos PRC nativos) **não é ratificação automática**; este pacote formaliza a decisão requerida. Estado: `ARCHITECTURE_DECISION_REQUIRED` — nenhum código alterado nesta etapa.
+
+### Owners e superfícies
+
+| Elemento | Owner | Evidência |
+|---|---|---|
+| Casos PRC (identidade, workflow, AuthZ de objeto) | Engineering API / domínio PRC (`product_registration.service`) | `service.py::list_requests` já aplica `requester_subject` + `global_scope=is_analyst` |
+| Contrato e composição da Home | Engineering API (`get_engineering_home`, ports `HomeSectionSource`) | seções plugáveis com `SourceRef` + failure isolation |
+| Registros corporativos | Requests API / My Requests | owner preservado, sem escrita cruzada |
+| Home frontend | `plugins/engineering` (`homeViewModel.ts`) | consome `data.sections` por chave |
+
+### Contrato atual → proposto
+
+- **Atual:** `tasks` ← `requests-api /work-queue?type_code=raw-material-creation`; `requests` ← `requests-api /mine?type_code=raw-material-creation`; `lmps` ← api-delpi.
+- **Proposto (Opção A — recomendada):** `tasks` ← `ProductRegistrationService.list_requests(actor, global_scope)` (casos que o analista pode atender); `requests` ← `list_requests(actor, scope=mine)` (casos do solicitante); `lmps` inalterado. Adapter in-process `PrcHomeSource` implementa `HomeSectionSource` — **sem HTTP self-call**, reutilizando use case + AuthZ existentes. `SourceRef.system="engineering-api"`.
+- **Identidade/dedup:** `requestId` (UUID do caso PRC) é o `HomeItem.id` em todas as superfícies — zero deduplicação necessária porque as fontes Requests API saem da Home. `href=/apps/engineering/product-registration/requests/{id}` (rota real resolvida por `resolvePrcPath`), substituindo o href genérico de My Requests.
+- **Totais:** `repo.list_requests` retorna total pré-paginação — reuso direto.
+- **Registros legados:** `raw-material-creation` existentes na Requests API permanecem visíveis no My Requests (owner intacto, zero exclusão/migração) e **deixam de alimentar a Home** — é o comportamento-alvo: fluxo canônico novo só gera caso PRC. Registro PRD legado (`REQ-2026-000001`) documentado em §29; decisão pendente: aceitar remoção da Home (recomendado) vs manter seção híbrida com política de dedup explícita.
+- **Fallback/degradação:** fonte PRC é in-process; falha de repo → `unavailable` isolada por seção (semaphore+timeout do composer preservados); LMPs imunes.
+- **Rollback:** PR reverte a injeção de sources no composer — imagem anterior restaurada, sem migration/dados.
+- **Riscos:** (a) perda do filtro por tipo — mitigado: a fila PRC já é, por construção, só Cadastro de Produtos; (b) `requests_api_gateway` fica sem consumer na Home — manter como capacidade (sem deletar) ou deprecar documentadamente; (c) usuário sem `engineering.access` mas com casos próprios — `requests` continua servindo via scope=mine; `tasks` honestamente `forbidden` se o actor não for analista (comportamento equivalente ao atual 403 do work-queue).
+- **Testes de aceite:** matriz §9 da missão + AuthZ por objeto + isolamento de falha da fonte PRC + regressão LMP.
+
+**Decisão solicitada à Coordination:** ratificar Opção A (substituir as duas fontes Requests API por fontes PRC in-process) ou escolher alternativa documentada. Após ratificação, implementação, testes, PR governado e homologação HML seguem o pacote §5–§11 da missão.
