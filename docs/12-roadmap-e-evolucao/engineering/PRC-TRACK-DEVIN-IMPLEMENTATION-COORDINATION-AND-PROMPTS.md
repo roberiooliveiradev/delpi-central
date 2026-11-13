@@ -181,3 +181,18 @@ A coordenação abriu o **PR real [#180](https://github.com/roberiooliveiradev/d
 **Próximo gate de execução:** `CURSOR-PROD-01-HML-DATA-PARITY` — contas segregadas, duas sessões independentes quando aplicável, dados sintéticos com um registro concluído via fluxo PRC e um pendente, validar listagem/search/page/sort, 200/401/403/422; registrar SHA da imagem e provas redigidas. Se não houver forma governada de criar dados sintéticos, `BLOCKED_TEST_DATA` sem simular aprovação. É **homologação incremental da lista**, não o gate multiusuário completo de PROD-02/flags.
 
 **Sequência funcional:** Coordenar ratificação técnica T01/T02 para DEVIN-PROD-02. PROD-03, flags e frontend mantêm ordem do plano mestre; produção não autorizada por este registro.
+
+
+## 14. PROD-01 — HML com dados publicados, evidência do executor (13/11/2026)
+
+**Fonte e escopo:** relatório complementar do Devin, não testes reexecutados pela Coordination ou Cursor. SHA reportado em HML `0a29fbe72ed8496388620325e4aa68f272af2743`; imagem digest reportado `sha256:9c040dd4191a8617f826aa628cda6d3a17bd70555b1fb9949500ad7826b14fe2`; container saudável. O Devin reportou 13/13 cenários exercitados com sucesso e dois `TEST_NOT_RUN`: busca case-insensitive (somente códigos numéricos disponíveis) e ação de um **segundo usuário autorizado**. O resumo `HML_PASS` deve ser lido **somente para os cenários efetivamente testados pelo executor**, não como aceite independente ou multiusuário completo.
+
+**Dados e fluxo:** Devin reportou dois produtos acompanhados com V1 após intake/start/complete verificado no PRC, e um PRC submetido ainda pendente (não deve figurar na lista). Por se tratar de códigos efetivos e leitura/verificação oficiais, **confirmar com owner de Engenharia que os dados de HML são segregados, permitidos e não afetam produção**; sem pressupor que ausência de escrita TOTVS elimina todos os efeitos de negócio (o registro PRC em HML foi escrito).
+
+**Matriz reportada:** listagem autorizada total=2, ordem `updatedAt DESC`, paginação, busca exata, `%`/`_` literais retornando vazio, ausência do pendente, 403 sem `engineering.access`, 401 anônimo, detalhe de record e índice V1 com trilha do aprovador — todos PASS segundo Devin. Busca case-insensitive alfanumérica e concorrência entre dois atores autorizados: `TEST_NOT_RUN`.
+
+**Atenções para follow-up:** (i) detalhe `GET /technical-records/{recordId}` responde snake_case, enquanto a lista usa camelCase. A rota de detalhe é legado anterior ao PROD-01; registrar `CONTRACT_DRIFT`, **não alterar agora sem contrato/compatibilidade**, direcionar para PROD-03. (ii) relatório do executor expôs **novamente uma senha de teste**: considerar comprometida e rotacionar/revogar por owner autorizado, verificar se há outras cópias acessíveis, jamais reproduzir o segredo em documentos/prompts. (iii) usar contas separadas com identidade e permissão reais em Cursor; não criar grant novo.
+
+**Decisão da Coordination:** `DEVIN_PROD01_HML_SCOPED_PASS_REPORTED / CURSOR_INDEPENDENT_PENDING / MULTIUSER_TEST_NOT_RUN / PRODUCTION_NOT_DEPLOYED`. O PROD-01 não precisa de nova implementação só para repetir testes bem-sucedidos. O Cursor deve testar a mesma imagem/SHA, validar de modo independente cenários e registrar lacunas de case-insensitive e segundo usuário autorizado; se não houver segundo usuário ou dado alfanumérico permitido, `INCONCLUSIVE/TEST_NOT_RUN` com bloqueio factual, sem falso PASS. Corrigir falha concreta pelo Devin com limite anticíclo.
+
+**Próximo trabalho em paralelo:** finalizar ratificação T01/T02 (snapshot/proveniência e conclusão versionada/no-op) para liberar DEVIN-PROD-02. Não antecipar FLAG ou FRONT.
