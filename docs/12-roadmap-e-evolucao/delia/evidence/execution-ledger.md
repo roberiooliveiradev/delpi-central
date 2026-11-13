@@ -6707,3 +6707,11 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **P2 CLASSIFICADO — CASO B (cobertura parcial honesta):** `process.search q:"transformação"` (model-authored, termo da formulação do usuário) → owner `total:1` PROC-0001 → declared `complete` com `declared_status_overridden`+`coverage_unknown`+`declared_limitation` visíveis → `P2_COVERAGE=PARTIAL`, `P2_OBJECTIVE_SATISFACTION=PARTIAL`, `OUTCOME_HONEST=YES`. Sem promoção indevida de completude — marcadores do Outcome layer ativos no deploy.
 - **RESIDUAIS:** ZERO_OPEN_MATERIAL. Attempt-status conflation=OPEN_MINOR (honestidade preservada pelos marcadores); heavy-view timeout=OPEN_MINOR; DAVI non-exec caps=OPEN (owner); eval flakes=OPEN_OP; runtime profile + SEC-01=OPEN_EXTERNAL.
 - **DECISÃO:** `INT1_FINAL_ACCEPTANCE=SUBMITTED_FOR_INDEPENDENT_REVIEW`; `INT1_CLOSED=NO`; `NEXT=COORDINATION_INT1_FINAL_INDEPENDENT_ACCEPTANCE_DECISION`. Doc 322.
+
+### INT-1 — Independent final bounded acceptance (Doc 323; 2026-11-13)
+
+- **COORDINATION_VERDICT=ACCEPT**; **INT1_FINAL_ACCEPTANCE=ACCEPT**, **INT1_CLOSED=YES**, **L/A/O/R=PASS** on Docs317–322 evidence, publication SHA reviewed `19891d8309bf943c4de46cf8aeafb08d1e104936` (HEAD reanchored `a15f72813594d8cc351806d35a4b1f9ce421c842`). Reviewer did not rerun tests or directly probe production.
+- **P2 disposition:** prod `process.search q:"transformação"` returns `total=1` for filtered query; `P2_PRODUCTION_COVERAGE=PARTIAL`, `OUTCOME_HONEST=YES`; Doc314 §8 accepts bounded partial honesty **without** claiming full production enumeration. Doc317 unfiltered P2 showed total=109 in DEV sample. P1/P3 have grounded evidence from isolated Qwen with productive owners.
+- **Model-agnostic:** runtime prod Kimi, eval Qwen isolated; common governance contracts, no model comparison, no model swap or new production deploy. Prior release deployment Doc321 remains executed; SEC-01 separate.
+- **RESIDUALS:** observability/status, heavy-view timeout, DAVI non-exec caps, eval flakes and external ops profile/SEC-01 remain OPEN by own owners; none MATERIAL to accepted INT1 DoD.
+- **PHASE=C3/T2 (unchanged)**; **PHASE_ADVANCEMENT=NO**, **INT2/INT3/T3=NOT_AUTHORIZED**, **NEW_PRODUCTION_DEPLOY=NOT_AUTHORIZED**. **NEXT=`COORDINATION_C3_T2_POST_INT1_NEXT_BOUNDED_STEP_DECISION`**.
