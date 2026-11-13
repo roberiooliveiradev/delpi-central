@@ -106,7 +106,7 @@ def test_authz_matrix(route: Route, profile: str) -> None:
     ):
         _RECONCILE_AUTHZ_USED = True
     if result.status == 0:
-        record(route=route.operation_id, case="authz", profile=profile, expected=expected, obtained=result.error or "sem conexão", outcome="INCONCLUSIVE", note="api-delpi de dev inacessível")
+        record(route=route.operation_id, case="authz", profile=profile, expected=expected, obtained=result.error or "sem conexão", outcome="INCONCLUSIVE", note="alvo LNF inacessível")
         pytest.skip("INCONCLUSIVE: sem conexão")
     obtained = f"{result.status} code={_code(result.body) or _detail(result.body)}"
     note = "KNOWN_DIVERGENCE_D8" if profile == "P10" else ""

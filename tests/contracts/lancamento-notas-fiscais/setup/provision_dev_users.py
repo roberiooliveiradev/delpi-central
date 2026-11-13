@@ -461,21 +461,11 @@ def main() -> int:
         raise Fail(f"permissions ausentes após register: {missing}")
     print(f"[setup] permissions LNF OK ({len(perm_map)} no catálogo com prefixo)")
 
-    # HML/W5+: BFF hospeda o LNF; DEV legado ainda pode apontar api-delpi.
-    hosted = (infra.get("LNF_HOSTED_ENABLED") or "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
-    lnf_api = (
-        f"{base}/apps/controllership-finance-api"
-        if hosted
-        else f"{base}/apps/api-delpi"
-    )
+    # F6: alvo canônico = BFF.
+    lnf_api = f"{base}/apps/controllership-finance-api"
     out_env = {
         "LNF_BASE_URL": lnf_api,
-        "LNF_TARGET": "controllership-finance-api" if hosted else "api-delpi",
+        "LNF_TARGET": "bff",
         "LNF_CORE_BASE_URL": core,
         "LNF_BOOTSTRAP_ADMIN_USERNAME": admin_email,
         "LNF_BOOTSTRAP_ADMIN_PASSWORD": bootstrap_password,

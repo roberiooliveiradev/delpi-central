@@ -75,7 +75,7 @@ def base_url() -> str:
 
 def target_name() -> str:
     load_env_local()
-    raw = (os.getenv("LNF_TARGET") or "api-delpi").strip().lower()
+    raw = (os.getenv("LNF_TARGET") or "bff").strip().lower()
     if raw not in {"api-delpi", "bff"}:
         raise RuntimeError("LNF_TARGET deve ser api-delpi ou bff")
     return raw
@@ -119,7 +119,11 @@ def core_base_url() -> str | None:
     base = base_url()
     if not base:
         return None
-    if "/apps/api-delpi" in base:
-        origin = base.split("/apps/api-delpi", 1)[0]
-        return f"{origin}/core-api"
+    for marker in (
+        "/apps/controllership-finance-api",
+        "/apps/api-delpi",
+    ):
+        if marker in base:
+            origin = base.split(marker, 1)[0]
+            return f"{origin}/core-api"
     return None

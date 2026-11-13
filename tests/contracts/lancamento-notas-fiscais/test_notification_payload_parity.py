@@ -1,4 +1,4 @@
-"""F3-R R2b — paridade campo a campo do payload Core (api-delpi × BFF)."""
+"""F6 — payload Core do LNF (BFF only; api-delpi removida)."""
 
 from __future__ import annotations
 
@@ -14,15 +14,12 @@ REPO = Path(__file__).resolve().parents[3]
 
 
 @pytest.fixture(scope="module")
-def services():
+def bff_mod():
     sys.path.insert(0, str(REPO / "controllership-finance-api"))
     sys.path.insert(0, str(REPO / "shared"))
-    sys.path.insert(0, str(REPO / "api-delpi"))
-    bff = importlib.import_module(
+    return importlib.import_module(
         "controllership_finance_app.application.invoice_posting.lnf_portal_notification_service"
     )
-    api = importlib.import_module("app.application.services.lnf_portal_notification_service")
-    return api, bff
 
 
 def _capture_payload(mod, *, send_kwargs: dict) -> dict:
@@ -58,8 +55,7 @@ def _capture_payload(mod, *, send_kwargs: dict) -> dict:
     return captured[0]["json"]
 
 
-def test_block_assigned_payload_field_parity(services) -> None:
-    api, bff = services
+def test_block_assigned_payload_shape(bff_mod) -> None:
     kwargs = dict(
         recipient_user_id="u-compras",
         title="Pendência no lançamento",
@@ -69,16 +65,14 @@ def test_block_assigned_payload_field_parity(services) -> None:
         event_type="lnf_request_blocked_assigned",
         html_content="<p>Detalhe X</p>",
     )
-    p_api = _capture_payload(api, send_kwargs=kwargs)
-    p_bff = _capture_payload(bff, send_kwargs=kwargs)
-    # Compare all top-level keys and nested action
-    assert set(p_api.keys()) == set(p_bff.keys())
-    for key in sorted(p_api.keys()):
-        assert p_api[key] == p_bff[key], f"campo divergente: {key}"
+    payload = _capture_payload(bff_mod, send_kwargs=kwargs)
+    assert payload["category"] == "lancamento_notas_fiscais"
+    assert payload["title"] == "Pendência no lançamento"
+    assert payload["dedupe_key"] == "lnf:block_assigned:req-1:u-compras"
+    assert "action" in payload
 
 
-def test_notify_block_assignee_kwargs_parity(services) -> None:
-    api, bff = services
+def test_notify_block_assignee_kwargs(bff_mod) -> None:
     request = {
         "id": "req-1",
         "branch_code": "01",
@@ -92,16 +86,12 @@ def test_notify_block_assignee_kwargs_parity(services) -> None:
         "assignee_user_id": "u-compras",
         "assignee_name": "Compras",
     }
-    for mod, label in ((api, "api"), (bff, "bff")):
-        with patch.object(mod, "send_lnf_portal_notification", return_value=True) as send:
-            ok = mod.notify_block_assignee(
-                request=request,
-                actor_user_id="u-fiscal",
-                actor_name="Fiscal",
-            )
-            assert ok is True, label
-            setattr(test_notify_block_assignee_kwargs_parity, label, send.call_args.kwargs)
-    assert (
-        test_notify_block_assignee_kwargs_parity.api
-        == test_notify_block_assignee_kwargs_parity.bff
-    )
+    with patch.object(bff_mod, "send_lnf_portal_notification", return_value=True) as send:
+        ok = bff_mod.notify_block_assignee(
+            request=request,
+            actor_user_id="u-fiscal",
+            actor_name="Fiscal",
+        )
+        assert ok is True
+        assert send.call_args.kwargs["recipient_user_id"] == "u-compras"
+        assert "req-1" in send.call_args.kwargs["dedupe_key"]

@@ -1279,7 +1279,7 @@ services:
       target: production
       # Defaults = comportamento atual (api-delpi, tempo real desligado).
       args:
-        VITE_LNF_API_BASE: ${VITE_LNF_API_BASE:-/apps/api-delpi/lancamento-notas-fiscais}
+        VITE_LNF_API_BASE: ${VITE_LNF_API_BASE:-/apps/controllership-finance-api/lancamento-notas-fiscais}
         VITE_LNF_REALTIME_ENABLED: ${VITE_LNF_REALTIME_ENABLED:-false}
 
     container_name: delpi-lancamento-notas-fiscais
@@ -1466,12 +1466,8 @@ services:
       AUDIT_5S_NC_UPLOAD_DIR: ${AUDIT_5S_NC_UPLOAD_DIR:-/app/data/audit-5s-nc}
       AUDIT_5S_RESPONSE_UPLOAD_DIR: ${AUDIT_5S_RESPONSE_UPLOAD_DIR:-/app/data/audit-5s-responses}
       AUDIT_5S_NOTIFICATIONS_ENABLED: ${AUDIT_5S_NOTIFICATIONS_ENABLED:-true}
-      LNF_NOTIFICATIONS_ENABLED: ${LNF_NOTIFICATIONS_ENABLED:-true}
       INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED: ${INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED:-true}
       INVOICE_ISSUANCE_UPLOAD_DIR: ${INVOICE_ISSUANCE_UPLOAD_DIR:-/app/data/invoice-issuance}
-      LNF_DANFE_UPLOAD_DIR: ${LNF_DANFE_UPLOAD_DIR:-/app/data/lancamento-notas-fiscais-danfe}
-      FINANCIAL_API_BASE_URL: ${FINANCIAL_API_BASE_URL:-http://financial-api:8000}
-      FINANCIAL_API_TIMEOUT_SECONDS: ${FINANCIAL_API_TIMEOUT_SECONDS:-30}
       SCHEDULING_NOTIFICATIONS_ENABLED: ${SCHEDULING_NOTIFICATIONS_ENABLED:-true}
       SCHEDULING_APPROVAL_TTL_HOURS: ${SCHEDULING_APPROVAL_TTL_HOURS:-24}
       QUALITY_LABELS_QR_DIR: ${QUALITY_LABELS_QR_DIR:-/app/data/quality-labels/qr}
@@ -1525,7 +1521,6 @@ services:
       # Evidências PAC e anexos Auditoria 5S — persistir no host (sobrevive a rebuild do container)
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/pac-evidences:/app/data/pac-evidences
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/invoice-issuance:/app/data/invoice-issuance
-      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/lancamento-notas-fiscais-danfe:/app/data/lancamento-notas-fiscais-danfe
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/planejamento-orcamentario:/app/data/planejamento-orcamentario
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/pedidos-venda-abertos/avatars:/app/data/pedidos-venda-abertos/avatars
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/kaizen-evidences:/app/data/kaizen-evidences
@@ -3277,9 +3272,9 @@ services:
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
 
       # LNF hosted — dark by default (ligar só na sessão de teste)
-      LNF_HOSTED_ENABLED: ${LNF_HOSTED_ENABLED:-false}
+      LNF_HOSTED_ENABLED: ${LNF_HOSTED_ENABLED:-true}
       LNF_REALTIME_ENABLED: ${LNF_REALTIME_ENABLED:-false}
-      LNF_MIGRATIONS_MODE: ${LNF_MIGRATIONS_MODE:-verify}
+      LNF_MIGRATIONS_MODE: ${LNF_MIGRATIONS_MODE:-apply}
       LNF_NOTIFICATIONS_ENABLED: ${LNF_NOTIFICATIONS_ENABLED:-true}
       LNF_DANFE_UPLOAD_DIR: ${LNF_DANFE_UPLOAD_DIR:-/app/data/lancamento-notas-fiscais-danfe}
 
