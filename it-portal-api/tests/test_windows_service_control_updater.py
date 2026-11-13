@@ -25,6 +25,10 @@ def test_update_script_exists_with_dry_run_default() -> None:
     assert "Export-ScheduledTask" in text
     assert "Stop-ScheduledTask" in text
     assert "Set-ScheduledTask" in text
+    assert "-User $identityName -Password $taskPassword" in text
+    assert "Senha WINDOWS da conta" in text
+    assert text.index("Set-ScheduledTask -TaskName $TaskName -Action $newAction") < text.index("Stop-ScheduledTask -TaskName $TaskName -ErrorAction Stop")
+    assert "ESTADO_TAREFA:" in text
     assert "Start-ScheduledTask" in text
     assert "25" in text
     assert "client-secret.dpapi" in text

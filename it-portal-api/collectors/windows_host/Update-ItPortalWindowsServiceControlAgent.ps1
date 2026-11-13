@@ -113,35 +113,65 @@ Export-ScheduledTask -TaskName $TaskName -ErrorAction Stop |
     Set-Content -LiteralPath $backup -Encoding UTF8 -ErrorAction Stop
 Write-Output ('BACKUP_TAREFA: ' + $backup)
 $wasRunning = ($task.State -eq 'Running')
+$identityName = $currentIdentity.Name
+$securePassword = Read-Host -Prompt "Senha WINDOWS da conta $identityName (oculta)" -AsSecureString
+$passwordBstr = [IntPtr]::Zero
 try {
-    if ($wasRunning) {
-        Stop-ScheduledTask -TaskName $TaskName -ErrorAction Stop
-        for ($attempt=0; $attempt -lt 15; $attempt++) {
-            if ((Get-ScheduledTask -TaskName $TaskName).State -ne 'Running') { break }
-            Start-Sleep -Seconds 1
-        }
-        if ((Get-ScheduledTask -TaskName $TaskName).State -eq 'Running') {
-            throw 'Agente nao encerrou apos Stop-ScheduledTask.'
-        }
-    }
-    Set-ScheduledTask -TaskName $TaskName -Action $newAction -ErrorAction Stop | Out-Null
-    $observed = (Get-ScheduledTask -TaskName $TaskName).Actions[0].Arguments
-    if ($observed -ne $newArguments) { throw 'Argumentos nao foram persistidos.' }
-    if ($wasRunning) { Start-ScheduledTask -TaskName $TaskName -ErrorAction Stop }
-    Write-Output 'ATUALIZADO: agente de controle reconfigurado, sem executar acoes nos servicos.'
-    Write-Output ('EXECUCAO_ATUAL: ' + (Get-ScheduledTask -TaskName $TaskName).State)
-} catch {
-    $originalError = $_
-    Write-Warning 'Atualizacao falhou; tentando restaurar a acao antiga da tarefa.'
+    $passwordBstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword)
+    $taskPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($passwordBstr)
+    if ([string]::IsNullOrWhiteSpace($taskPassword)) { throw 'Senha vazia; tarefa preservada.' }
     try {
-        if ((Get-ScheduledTask -TaskName $TaskName).State -eq 'Running') {
-            Stop-ScheduledTask -TaskName $TaskName -ErrorAction Stop
+        # A tarefa usa logon por senha. Validar credenciais antes de parar o agente.
+        Set-ScheduledTask -TaskName $TaskName -Action $newAction -User $identityName -Password $taskPassword -ErrorAction Stop | Out-Null
+        if ((Get-ScheduledTask -TaskName $TaskName).Actions[0].Arguments -ne $newArguments) {
+            throw 'Argumentos nao foram persistidos.'
         }
-        Set-ScheduledTask -TaskName $TaskName -Action $originalAction -ErrorAction Stop | Out-Null
-        if ($wasRunning) { Start-ScheduledTask -TaskName $TaskName -ErrorAction Stop }
-        Write-Warning 'Tarefa anterior restaurada. Conferir status e logs.'
+        if ($wasRunning) {
+            if ((Get-ScheduledTask -TaskName $TaskName).State -eq 'Running') {
+                Stop-ScheduledTask -TaskName $TaskName -ErrorAction Stop
+            }
+            for ($attempt=0; $attempt -lt 15; $attempt++) {
+                if ((Get-ScheduledTask -TaskName $TaskName).State -ne 'Running') { break }
+                Start-Sleep -Seconds 1
+            }
+            if ((Get-ScheduledTask -TaskName $TaskName).State -eq 'Running') {
+                throw 'Agente nao encerrou apos Stop-ScheduledTask.'
+            }
+            Start-ScheduledTask -TaskName $TaskName -ErrorAction Stop
+        }
+        Write-Output 'ATUALIZADO: agente reconfigurado sem operar servicos Windows.'
+        Write-Output ('EXECUCAO_ATUAL: ' + (Get-ScheduledTask -TaskName $TaskName).State)
     } catch {
-        Write-Warning ('ROLLBACK_MANUAL_NECESSARIO: ' + $backup)
+        $failure = $_
+        Write-Warning 'Atualizacao falhou; verificando necessidade de restauracao.'
+        try {
+            $currentTask = Get-ScheduledTask -TaskName $TaskName -ErrorAction Stop
+            $currentArgs = [string]$currentTask.Actions[0].Arguments
+            if ($currentArgs -ne $arguments) {
+                if ($currentArgs -ne $newArguments) { throw 'Argumentos inesperados: revisar tarefa manualmente.' }
+                if ($currentTask.State -eq 'Running') { Stop-ScheduledTask -TaskName $TaskName -ErrorAction Stop }
+                Set-ScheduledTask -TaskName $TaskName -Action $originalAction -User $identityName -Password $taskPassword -ErrorAction Stop | Out-Null
+                if ((Get-ScheduledTask -TaskName $TaskName).Actions[0].Arguments -ne $arguments) {
+                    throw 'Rollback nao confirmado.'
+                }
+                Write-Warning 'Configuracao anterior restaurada.'
+            } else {
+                Write-Warning 'Configuracao original nao foi alterada.'
+            }
+            if ($wasRunning -and (Get-ScheduledTask -TaskName $TaskName).State -ne 'Running') {
+                Start-ScheduledTask -TaskName $TaskName -ErrorAction Stop
+            }
+            Write-Warning ('ESTADO_TAREFA: ' + (Get-ScheduledTask -TaskName $TaskName).State)
+        } catch {
+            Write-Warning ('ROLLBACK_MANUAL_NECESSARIO: ' + $backup)
+        }
+        throw $failure
+    } finally {
+        $taskPassword = $null
     }
-    throw $originalError
+} finally {
+    if ($passwordBstr -ne [IntPtr]::Zero) {
+        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($passwordBstr)
+    }
+    if ($null -ne $securePassword) { $securePassword.Dispose() }
 }
