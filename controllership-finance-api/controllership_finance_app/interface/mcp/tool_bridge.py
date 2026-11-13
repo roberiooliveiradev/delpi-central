@@ -218,6 +218,31 @@ def _user_and_access():
         user = authorized_user(request)
     except Exception as exc:  # noqa: BLE001 — literals canônicos do middleware
         msg = str(exc)
+        user = getattr(request.state, "user", None)
+        principal = getattr(user, "principal_type", None) if user else None
+        rbac_unavail = bool(getattr(user, "rbac_unavailable", False)) if user else None
+        has_access = (
+            bool(has_permission(user, ACCESS_PERMISSION)) if user else False
+        )
+        # Sem PII: só classifica o gate que negou (diagnóstico 403 MCP).
+        if msg == "Unauthorized":
+            gate = "unauthenticated_or_missing_user"
+        elif msg == "Service Unavailable" or rbac_unavail:
+            gate = "rbac_unavailable"
+        elif principal is not None and principal != "user":
+            gate = "principal_type_not_user"
+        elif user is not None and not has_access:
+            gate = "missing_controllership_finance_access"
+        else:
+            gate = "forbidden_other"
+        logger.warning(
+            "clara_mcp_authz_denied gate=%s principal_type=%s "
+            "has_cf_access=%s rbac_unavailable=%s",
+            gate,
+            principal,
+            has_access,
+            rbac_unavail,
+        )
         if msg == "Unauthorized":
             raise PermissionError("Unauthorized") from exc
         if msg == "Service Unavailable":
