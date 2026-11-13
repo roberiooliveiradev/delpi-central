@@ -206,3 +206,22 @@ Encaminhar à Coordination **ADR-01 a ADR-06** com matriz de decisão e pergunta
 **Critérios de aceite CR05:** (1) alterar somente descrição mantém unidade, classificação e fornecedores; (2) fornecedor não mencionado permanece; (3) atributo omitido não apaga valor; (4) exclusão explícita autorizada afeta apenas alvo correto, preservando histórico; (5) field-null e field-omission têm efeitos distintos definidos em contrato; (6) proveniência dos herdados permanece original; (7) merge sem diferença após V1 não gera Vn+1; (8) operação não verificada/sem autorização falha sem publicar revisão.
 
 **Sem código, migration ou deploy.** Esta decisão funcional não substitui ratificação da Coordination sobre contrato, autoridade, operações de remoção ou segurança.
+
+
+## 12. Deliberação complementar do PO — CR-06: limpeza explícita e validada (13/11/2026)
+
+**Escolha expressa:** **A — Limpeza explícita com validação do campo**. **Comentário:** sem comentário. **Classificação:** `PO_APPROVED_BUSINESS_DECISION / COORDINATION_RATIFICATION_PENDING`.
+
+**Regra funcional:** em UPDATE parcial, **campo omitido** preserva o valor consolidado e a proveniência anterior; **valor vazio/null recebido sem operação inequívoca de limpeza não é autorização para apagar**; para limpar um campo exige-se intenção **explícita de limpeza** expressa pelo contrato PRC, permissão do ator, compatibilidade com o catálogo técnico e confirmação oficial quando aplicável. Campos obrigatórios ou que não admitem vazio **não podem ser limpos**. Rejeitar operação inválida sem publicar revisão nem alterar estado técnico.
+
+**Compatibilidade:**
+- **CR-02:** somente operações aceitas compõem o snapshot técnico consolidado, preservando demais campos e vínculos.
+- **CR-03:** primeira conclusão validada inaugura V1; em V2+, limpeza que muda valor técnico pode gerar Vn+1; limpeza sem diferença efetiva é no-op auditado.
+- **CR-04:** limpar um campo não significa que a fonte ficou `unknown`: registrar **operação deliberada**, origem/evidência e estado de verificação; `unknown/unobserved` representa falta de informação, não limpeza.
+- **CR-05:** omissão é diferente de `CLEAR` explícito; fornecedores omitidos permanecem. **Não confundir limpeza de atributo de vínculo com remoção de todo vínculo**. Operação REMOVE de fornecedor segue gates próprios existentes, incluindo restrições SA5.
+
+**Regras técnicas para ratificação (não presumir contrato existente):** verificar catálogo de campos nuláveis/obrigatórios; inventariar DTOs atuais para escolher indicador explícito de operação (`CLEAR` ou equivalente) de modo backward-compatible; padronizar semântica de `null`, string vazia e espaços; distinguir operação `SET`/ `CLEAR`/ `REMOVE_LINK`/ omissão; validar solicitação, AuthZ live, CAS/idempotência, read-back oficial e auditabilidade. Não mapear automaticamente `null` para limpeza sem prova de intenção.
+
+**Critérios de aceite:** `CR06-AC01` campo omitido preserva valor; `CR06-AC02` vazio ambíguo sem CLEAR não apaga; `CR06-AC03` CLEAR explícito em campo que admite limpeza, autorizado e verificado, remove somente valor-alvo; `CR06-AC04` CLEAR em obrigatório/não suportado é rejeitado; `CR06-AC05` limpeza de atributo fornecedor não remove vínculo; `CR06-AC06` técnico diff real após V1 gera próxima versão, sem mudança mantém versão; `CR06-AC07` mismatch, 403, 409 ou source unavailable não publicam revisão; `CR06-AC08` provenance da operação de limpeza permanece auditável.
+
+**A decisão não confirma a existência de suporte CLEAR no runtime e não autoriza código, migrations ou deploy.** Ratificação de DTO, campos e segurança cabe à Coordination/Engineering API.
