@@ -222,3 +222,12 @@ Prevalece sobre AC textuais antigos que tratem RESOLVED e REMOVED como estados d
 **CR-06 APPROVED BY PO:** opção **A — Limpeza explícita com validação do campo**, sem comentário. Omissão preserva; vazio ou `null` ambíguo não limpa; intenção CLEAR explícita só em campo cuja regra permita e com AuthZ/verificação. Semântica de CLEAR não é REMOVE_LINK de fornecedor. O merge de CR-05 cria snapshot CR-02 com provenance CR-04; CR-03 cria V1 inicial e Vn+1 somente quando mudança técnica real após V1. Inventariar antes de evoluir DTO e UX; respeitar gates oficiais SA5 e modelos de permissões. **G1 ARCHITECTURE_DECISION_REQUIRED** para aprovação de contratos, catálogo de campos e migração. **TEST_NOT_RUN**.
 
 **AC adicionais:** campo ausente, vazio sem intenção, CLEAR válido/vedado, read-back, erro sem publicação, idempotência, CLEAR sem diff/no-op, fornecedor omitido vs REMOVE_LINK, compatibilidade de client antigo. [Registro PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) · [Proposta G1](./PRC-TRACK-G1-CONTRACT-RATIFICATION-PROPOSAL.md).
+
+
+## Complemento CR-07 — não reabrir bandeira resolvida; criar nova ocorrência (PO, 13/11/2026)
+
+**CR-07 APPROVED BY PO:** opção **C — Não permitir reabertura**, sem comentário. Uma ocorrência `RESOLVED/REMOVED` é terminal no novo acompanhamento por produto; reincidência exige `CREATE` de **nova bandeira com novo flagId**, mesmo `recordId+targetKey`, desde que não haja outra `OPEN`. Uma OPEN simultânea por alvo, mas múltiplas ocorrências históricas encerradas. ADR-04 preservada por ocorrência: OPEN V3, RESOLVED V4, ausente V5+; nova bandeira aberta V6 aparece desde V6 sem alterar histórico da anterior.
+
+**GATE B2 obrigatório:** inventariar o endpoint D16 legado `/requests/{request_id}/flags/{flag_id}/actions/reopen`, o use case `reopen_flag`, consumidores, autenticação/permission scopes e audit ledger. A nova política deve ser aplicada no backend com contrato e testes, não apenas ocultação de UI. Alterar ou descontinuar comportamento legado exige Coordination, migration/backward compatibility e rollback. Evidências HML: rejeição de reopen, nova identidade para reincidência, unicidade OPEN concorrente, estados temporais corretos, nenhum incremento Vn por flag.
+
+**Sem implementação autorizada; Coordination ratifica política/compatibilidade.** [PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) · [Contrato](./PRC-TRACK-G1-CONTRACT-RATIFICATION-PROPOSAL.md).
