@@ -20,8 +20,8 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 | W2b | plugin-ui — cliente, hook, indicador, aviso | DONE | `df1dd06cc4` | 2026-11-13 | cliente aditivo; hook, indicador e aviso. Suíte do pacote no registro |
 | W3 | Gateway DEV (+ conf HML commitada) | DONE | `57195a9e91` | 2026-11-13 | Handshake 101 pelo gateway com token real; access log da location com `<redacted>`; valor do token ausente nos logs do gateway e da BFF |
 | W4.1 | MFE — Fila | DONE | `6d69e742e5` | 2026-11-13 | sala branch, debounce 1s, sem POST refresh por evento, indicador junto de «Fila carregada em» |
-| W4.2 | MFE — Detalhe | DONE |  | 2026-11-13 | sala request, refetch silencioso, rascunho/modal → ConcurrentChangeNotice, forbidden_room mute |
-| W4.3 | MFE — Formulário de edição | TODO | | | |
+| W4.2 | MFE — Detalhe | DONE | `834bfa5ff2` | 2026-11-13 | sala request, refetch silencioso, rascunho/modal → ConcurrentChangeNotice, forbidden_room mute |
+| W4.3 | MFE — Formulário de edição | DONE | 3e6f956553 | 2026-11-13 | sala request, ConcurrentChangeNotice sem sobrescrever digitado |
 | W4.4 | MFE — Produtos sem código + Ajuda | TODO | | | |
 | W5 | Ensaio HML | TODO | | | |
 | W6 | PROD — ligar o tempo real | BLOCKED | | | entrada: W5 DONE. Ligar `LNF_REALTIME_ENABLED` na BFF de PROD, rebuild do MFE com a flag ligada e verificação, inclusive a CLARA |

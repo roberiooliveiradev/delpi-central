@@ -1,4 +1,6 @@
+import { ConcurrentChangeNotice } from "@delpi/plugin-ui/index";
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -17,6 +19,9 @@ import {
   sanitizeDocumentTyping,
 } from "../../domain/fiscal";
 import type { CreateRequestPayload, FiscalModel, ReceivedInvoiceItem, Supplier } from "../../domain/types";
+import { isDetailRefetchEvent } from "../../realtime/events";
+import { requestRoom } from "../../realtime/rooms";
+import { useLnfRoomEvents } from "../../realtime/useLnfRoomEvents";
 import { ReceivedInvoicePicker } from "../components/ReceivedInvoicePicker";
 import { branchLabel, type BranchCode } from "../../constants/branch";
 import { LnfPageHeader } from "../components/LnfPageHeader";
@@ -157,6 +162,7 @@ export function RequestFormPage({
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const [supplierHint, setSupplierHint] = useState<string | null>(null);
   const [linkedInvoices, setLinkedInvoices] = useState<LinkedInvoiceDraft[]>([]);
+  const [concurrentNotice, setConcurrentNotice] = useState(false);
 
   useEffect(() => {
     if (attachment?.document_type !== "nfe") {
@@ -230,23 +236,13 @@ export function RequestFormPage({
   );
   const seriesRequired = form.fiscal_model !== "nfse";
 
-  useEffect(() => {
-    if (mode === "create") {
-      setForm(buildCreateForm(lockedBranch));
-      setSupplier(null);
-      setLinkedInvoices([]);
-      setFieldErrors({});
-      setSubmitError(null);
-      setLoading(false);
-      return;
-    }
-    if (!requestId) return;
-    let cancelled = false;
-    setLoading(true);
-    api
-      .getRequest(requestId)
-      .then((detail) => {
-        if (cancelled) return;
+  const applyServerDetail = useCallback(
+    async (opts?: { showLoading?: boolean }) => {
+      if (!requestId) return;
+      const showLoading = opts?.showLoading ?? false;
+      if (showLoading) setLoading(true);
+      try {
+        const detail = await api.getRequest(requestId);
         const r = detail.request;
         setForm({
           branch: lockedBranch ?? r.branch_code,
@@ -273,19 +269,62 @@ export function RequestFormPage({
           state: null,
           blocked: false,
         });
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setSubmitError(err instanceof Error ? err.message : "Falha ao carregar.");
-        }
-      })
-      .finally(() => {
+        setConcurrentNotice(false);
+        setSubmitError(null);
+      } catch (err: unknown) {
+        setSubmitError(err instanceof Error ? err.message : "Falha ao carregar.");
+      } finally {
+        if (showLoading) setLoading(false);
+      }
+    },
+    [lockedBranch, requestId],
+  );
+
+  useEffect(() => {
+    if (mode === "create") {
+      setForm(buildCreateForm(lockedBranch));
+      setSupplier(null);
+      setLinkedInvoices([]);
+      setFieldErrors({});
+      setSubmitError(null);
+      setConcurrentNotice(false);
+      setLoading(false);
+      return;
+    }
+    if (!requestId) return;
+    let cancelled = false;
+    void (async () => {
+      setLoading(true);
+      try {
+        await applyServerDetail({ showLoading: false });
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    })();
     return () => {
       cancelled = true;
     };
-  }, [mode, requestId, lockedBranch]);
+  }, [mode, requestId, lockedBranch, applyServerDetail]);
+
+  const onRealtimeEvents = useCallback(
+    (events: unknown[]) => {
+      if (!requestId) return;
+      if (events.some((event) => isDetailRefetchEvent(event, requestId))) {
+        setConcurrentNotice(true);
+      }
+    },
+    [requestId],
+  );
+
+  useLnfRoomEvents({
+    rooms: requestId ? [requestRoom(requestId)] : [],
+    enabled: mode === "edit" && Boolean(requestId),
+    debounceMs: 1_000,
+    onEvents: onRealtimeEvents,
+    onResync: () => {
+      if (mode === "edit") setConcurrentNotice(true);
+    },
+  });
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -617,6 +656,17 @@ export function RequestFormPage({
           </button>
         }
       />
+
+      {concurrentNotice ? (
+        <ConcurrentChangeNotice
+          message="Esta solicitação foi alterada por outra pessoa"
+          actionLabel="Recarregar"
+          onAction={() => {
+            void applyServerDetail({ showLoading: false });
+          }}
+          onDismiss={() => setConcurrentNotice(false)}
+        />
+      ) : null}
 
       {attachment?.document_type === "cte" ? (
         <p className="lnf-hint" data-testid="cte-attach-notice">
