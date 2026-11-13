@@ -97,6 +97,16 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo:** operador com acesso SSH realiza deploy segundo runbook, confere saude, migration e registro 0.3.4; retorna evidencias para atualizar este diario e somente entao marcar G1-DOM/ API/UI IMPLANTADOS ou EM CORRECAO.
 
+## 2026-11-13 | G1-RELEASE | backup informado e alerta de collation
+
+**Evidencia comunicada pelo operador:** backup logico do schema `it_portal` em `plugins_hub` criado em arquivo privado e validado por listagem `pg_restore -l`; caminho nao incluido no repositorio publico por seguranca. Isto verifica legibilidade do catalogo do arquivo, **nao** constitui restauracao integral testada.
+
+**Aviso observado:** `database "plugins_hub" has a collation version mismatch` com versao registrada **2.41** e versao de runtime **2.36**. O aviso e de metadados de ordenacao do banco compartilhado, nao confirma falha no backup nem migration V009. Ha risco em indices e comparacoes de texto que precisa ser inspecionado e reparado com janela propria.
+
+**Orientacao de seguranca:** nao executar `ALTER DATABASE ... REFRESH COLLATION VERSION` isoladamente; PostgreSQL recomenda reconstruir objetos afetados, por exemplo via REINDEX planejado, **antes** de atualizar a versao registrada. Nao executar REINDEX geral no banco compartilhado no meio do deploy G1. Fazer leitura de `pg_database_collation_actual_version` e planejar revisao independente com infraestrutura.
+
+**Estado:** backup relatado, deploy **ainda sem evidencia de execucao**, sem alteracao remota pelo assistente. Proximo passo do G1: observar saude da API e aplicacao de V009 na publicacao autorizada, depois MFE, manifesto 0.3.4 e teste por usuario. Registrar resultados sem dados de acesso.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown
