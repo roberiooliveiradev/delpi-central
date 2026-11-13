@@ -1028,6 +1028,35 @@ class TicketService:
             )
             expected_sig = inline_content_signature(content_html)
             has_inline_images = any(kind == "img" for kind, _ in expected_sig)
+            if has_inline_images and followup_id:
+                # Native GLPI paste binds Document_Item to ITILFollowup.
+                # Our upload path creates Ticket links first — rebind so
+                # GLPI stops showing a ghost Document sibling beside the
+                # followup that already embeds the same image.
+                inline_docs = {
+                    int(doc_id)
+                    for kind, doc_id in expected_sig
+                    if kind == "img" and int(doc_id) > 0
+                }
+                opening_inline, _foreign = extract_inline_image_docrefs(
+                    ticket.description_html or "", ticket_id
+                )
+                try:
+                    self._glpi.relink_inline_documents_to_followup(
+                        self._token(subject),
+                        ticket_id=ticket_id,
+                        followup_id=int(followup_id),
+                        document_ids=inline_docs,
+                        keep_ticket_link_ids=opening_inline,
+                    )
+                except HelpdeskError:
+                    # Followup already persisted — never fail the write on
+                    # a best-effort ownership realignment.
+                    logger.info(
+                        "helpdesk_inline_relink_failed ticket_id=%s followup_id=%s",
+                        ticket_id,
+                        followup_id,
+                    )
             verified = not has_inline_images
             if has_inline_images:
                 # Authoritative read-back: the write only earns a 201 when

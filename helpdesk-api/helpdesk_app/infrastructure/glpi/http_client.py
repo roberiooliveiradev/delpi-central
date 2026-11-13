@@ -549,8 +549,12 @@ class HttpxGlpiClient:
                     display_text(row.get("filename") or row.get("name"))
                 ),
                 mime=str(row.get("mime") or ""),
-                itemtype="Ticket",
-                items_id=int(ticket_id),
+                itemtype=str(row.get("itemtype") or "Ticket"),
+                items_id=int(
+                    self._linked_items_id(row)
+                    if self._linked_items_id(row) is not None
+                    else ticket_id
+                ),
             )
             for doc_id, row in sorted(ticket_docs.items())
             if doc_id not in known
@@ -2642,19 +2646,52 @@ class HttpxGlpiClient:
         document_id: int,
         ticket_id: int,
     ) -> int:
-        """Ensure the Document_Item link exists for Timeline visibility.
+        """Ensure Ticket-level Document_Item link (upload path)."""
+        return self._legacy_ensure_document_item_link(
+            write_session_token=write_session_token,
+            read_session_token=read_session_token,
+            document_id=document_id,
+            itemtype="Ticket",
+            items_id=int(ticket_id),
+        )
 
-        The manifest's ``itemtype``/``items_id`` normally auto-links at
-        Document creation; when it does not, a bounded ``POST
-        /Document_Item`` runs on the ACTOR's session (no ``users_id`` —
-        GLPI stamps the session user). All row lookups run on
-        ``read_session_token`` (bounded read channel) because the
-        requester profile cannot read Document_Item via apirest.
+    def _legacy_document_item_link_row(
+        self,
+        *,
+        session_token: str,
+        document_id: int,
+        itemtype: str,
+        items_id: int,
+    ) -> dict | None:
+        wanted_type = str(itemtype or "")
+        wanted_id = int(items_id)
+        for row in self._legacy_document_item_rows(
+            session_token=session_token, document_id=document_id
+        ):
+            if str(row.get("itemtype") or "") == wanted_type and (
+                self._linked_items_id(row) == wanted_id
+            ):
+                return row
+        return None
+
+    def _legacy_ensure_document_item_link(
+        self,
+        *,
+        write_session_token: str,
+        read_session_token: str,
+        document_id: int,
+        itemtype: str,
+        items_id: int,
+    ) -> int:
+        """Ensure Document_Item for any itemtype/items_id (Ticket or ITILFollowup).
+
+        Writes on the actor session; reads on the bounded reader channel.
         """
-        existing = self._legacy_document_item_row(
+        existing = self._legacy_document_item_link_row(
             session_token=read_session_token,
             document_id=document_id,
-            ticket_id=ticket_id,
+            itemtype=itemtype,
+            items_id=items_id,
         )
         if existing is not None:
             return int(existing.get("id") or 0)
@@ -2671,47 +2708,172 @@ class HttpxGlpiClient:
                 json={
                     "input": {
                         "documents_id": int(document_id),
-                        "itemtype": "Ticket",
-                        "items_id": int(ticket_id),
+                        "itemtype": str(itemtype),
+                        "items_id": int(items_id),
                     }
                 },
             )
         except httpx.TimeoutException as exc:
             raise GlpiUnavailable("GLPI indisponível.") from exc
         logger.info(
-            "glpi_legacy_document_item status=%s document_id=%s ticket_id=%s",
+            "glpi_legacy_document_item status=%s document_id=%s itemtype=%s items_id=%s",
             response.status_code,
             document_id,
-            ticket_id,
+            itemtype,
+            items_id,
         )
         if response.status_code in {200, 201}:
             data = response.json() if response.content else {}
             link_id = data.get("id") if isinstance(data, dict) else None
             if link_id is None:
-                row = self._legacy_document_item_row(
+                row = self._legacy_document_item_link_row(
                     session_token=read_session_token,
                     document_id=document_id,
-                    ticket_id=ticket_id,
+                    itemtype=itemtype,
+                    items_id=items_id,
                 )
                 link_id = row.get("id") if row else None
             return int(link_id or 0)
-        # Already linked / duplicate / profile lacks direct-link rights —
-        # re-check for the row (manifest itemtype/items_id auto-links at
-        # Document creation); only a truly absent link is an error.
         if response.status_code in {400, 403, 422}:
             body = (response.text or "")[:240]
             logger.info("glpi_legacy_document_item_dup_or_reject body=%s", body)
-            row = self._legacy_document_item_row(
+            row = self._legacy_document_item_link_row(
                 session_token=read_session_token,
                 document_id=document_id,
-                ticket_id=ticket_id,
+                itemtype=itemtype,
+                items_id=items_id,
             )
             if row is not None:
                 return int(row.get("id") or 0)
-            raise GlpiValidation("O GLPI não ligou o documento ao chamado.")
+            raise GlpiValidation("O GLPI não ligou o documento ao item.")
         if response.status_code == 401:
             raise GlpiUnauthorized("Sessão do GLPI recusada.")
         raise GlpiUnavailable("GLPI indisponível.")
+
+    def _legacy_delete_document_item(
+        self,
+        *,
+        write_session_token: str,
+        link_row_id: int,
+    ) -> None:
+        """Delete one Document_Item row (actor session). Fail closed on 5xx."""
+        link_row_id = int(link_row_id)
+        if link_row_id <= 0:
+            return
+        try:
+            response = self._http.request(
+                "DELETE",
+                f"{self._base}/apirest.php/Document_Item/{link_row_id}",
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "App-Token": self._legacy_app_token,
+                    "Session-Token": write_session_token,
+                },
+                json={"input": {"id": link_row_id}},
+            )
+        except httpx.TimeoutException as exc:
+            raise GlpiUnavailable("GLPI indisponível.") from exc
+        logger.info(
+            "glpi_legacy_document_item_delete status=%s link_row_id=%s",
+            response.status_code,
+            link_row_id,
+        )
+        if response.status_code in {200, 204, 404}:
+            return
+        if response.status_code == 401:
+            raise GlpiUnauthorized("Sessão do GLPI recusada.")
+        if response.status_code in {400, 403, 422}:
+            # Already gone / no rights — treat as no-op for idempotent rebind.
+            return
+        raise GlpiUnavailable("GLPI indisponível.")
+
+    def relink_inline_documents_to_followup(
+        self,
+        access_token: str,
+        *,
+        ticket_id: int,
+        followup_id: int,
+        document_ids: set[int],
+        keep_ticket_link_ids: set[int] | None = None,
+    ) -> None:
+        """Move Ticket Document_Item → ITILFollowup for inline images.
+
+        Mirrors native GLPI paste-into-followup ownership so the Document
+        sibling bubble disappears from the ticket timeline. Documents also
+        referenced in the opening description keep the Ticket link.
+        Fail-soft: logs and returns on soft errors — the followup already
+        persisted.
+        """
+        ticket_id = int(ticket_id)
+        followup_id = int(followup_id)
+        keep = {int(x) for x in (keep_ticket_link_ids or set())}
+        targets = {int(x) for x in (document_ids or set()) if int(x) > 0} - keep
+        if ticket_id <= 0 or followup_id <= 0 or not targets:
+            return
+        if not self._legacy_ready():
+            logger.info(
+                "glpi_inline_relink_skipped_legacy_off ticket_id=%s followup_id=%s",
+                ticket_id,
+                followup_id,
+            )
+            return
+        try:
+            self._json(
+                "GET",
+                f"/api.php/v2.2/Assistance/Ticket/{ticket_id}",
+                token=access_token,
+            )
+            owner_user_id = self.session_user_id(access_token)
+            if owner_user_id is None:
+                logger.info(
+                    "glpi_inline_relink_skipped_no_actor ticket_id=%s", ticket_id
+                )
+                return
+            write_token = self._user_legacy_session(glpi_user_id=owner_user_id)
+            read_token = self._legacy_init_session()
+        except HelpdeskError as exc:
+            logger.info(
+                "glpi_inline_relink_unavailable ticket_id=%s err=%s",
+                ticket_id,
+                type(exc).__name__,
+            )
+            return
+        try:
+            for document_id in sorted(targets):
+                try:
+                    self._legacy_ensure_document_item_link(
+                        write_session_token=write_token,
+                        read_session_token=read_token,
+                        document_id=document_id,
+                        itemtype="ITILFollowup",
+                        items_id=followup_id,
+                    )
+                    ticket_link = self._legacy_document_item_row(
+                        session_token=read_token,
+                        document_id=document_id,
+                        ticket_id=ticket_id,
+                    )
+                    if ticket_link is not None:
+                        self._legacy_delete_document_item(
+                            write_session_token=write_token,
+                            link_row_id=int(ticket_link.get("id") or 0),
+                        )
+                    logger.info(
+                        "glpi_inline_relink_ok document_id=%s ticket_id=%s followup_id=%s",
+                        document_id,
+                        ticket_id,
+                        followup_id,
+                    )
+                except HelpdeskError as exc:
+                    logger.info(
+                        "glpi_inline_relink_item_failed document_id=%s err=%s",
+                        document_id,
+                        type(exc).__name__,
+                    )
+        finally:
+            self._legacy_kill_session(write_token)
+            self._legacy_kill_session(read_token)
 
     def _legacy_document_linked_to_ticket(
         self,
@@ -2811,6 +2973,18 @@ class HttpxGlpiClient:
                         linked in scope.get(itemtype, ())
                     ):
                         allowed.add(doc_id)
+                        # Keep followup-/task-scoped inline docs in the
+                        # attachments inventory after Ticket link rebind.
+                        if doc_id not in ticket_docs:
+                            ticket_docs[doc_id] = dict(row)
+                            try:
+                                doc = self._legacy_get_json(
+                                    session_token, f"/apirest.php/Document/{doc_id}"
+                                )
+                            except HelpdeskError:
+                                doc = None
+                            if isinstance(doc, dict):
+                                ticket_docs[doc_id] = {**ticket_docs[doc_id], **doc}
                         break
         finally:
             self._legacy_kill_session(session_token)

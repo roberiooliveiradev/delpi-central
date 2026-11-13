@@ -694,6 +694,15 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
   type Sortable = { sortAt: string; index: number; message: ConversationMessage };
   const sortable: Sortable[] = [];
 
+  // Documents already rendered as <img> in opening/followup/solution/task
+  // must not also become a sibling Document bubble (upload+inline flow).
+  const inlineDocumentIds = new Set<number>([
+    ...listHelpdeskAttachmentIdsInHtml(ticket.description_html || ""),
+    ...ticket.timeline.flatMap((entry) =>
+      listHelpdeskAttachmentIdsInHtml(entry.content_html || ""),
+    ),
+  ]);
+
   timeline
     .filter(
       (entry) =>
@@ -712,6 +721,13 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
         const documentId = Number(entry.document_id);
         const attachmentIds =
           Number.isFinite(documentId) && documentId > 0 ? [documentId] : [];
+        // Same document already inline in a message body → skip ghost bubble.
+        if (
+          attachmentIds.length > 0 &&
+          attachmentIds.every((id) => inlineDocumentIds.has(id))
+        ) {
+          return;
+        }
         sortable.push({
           sortAt,
           index,
@@ -724,7 +740,13 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
             createdAtLabel: relativeTimeLabel(sortAt, now),
             authorName: author.authorName,
             authorUserId: author.authorUserId,
-            mine: entry.mine === true,
+            // Prefer requester photo when the Document author is the
+            // requester — HLAPI Document rows often omit a usable mine flag.
+            mine:
+              entry.mine === true ||
+              (ticket.requester_mine === true &&
+                Boolean(author.authorUserId) &&
+                author.authorUserId === requesterDirectoryId),
             attachmentIds,
           },
         });

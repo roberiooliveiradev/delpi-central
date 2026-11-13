@@ -211,6 +211,51 @@ describe("conversationMessages", () => {
     expect(messages[1].attachmentIds).toEqual([]);
   });
 
+  it("não duplica Document timeline quando a imagem já está inline no followup", () => {
+    const messages = conversationMessages(
+      {
+        title: "Aceite upload",
+        description: "teste",
+        created_at: "2026-11-12T20:49:00Z",
+        requester_display_name: "Robério Oliveira",
+        requester_mine: true,
+        timeline: [
+          {
+            id: 1584,
+            kind: "document",
+            content: "01-dark.png",
+            created_at: "2026-11-13T11:31:00Z",
+            author_display_name: "Robério Oliveira",
+            document_id: 1584,
+            mine: false,
+          },
+          {
+            id: 9001,
+            kind: "followup",
+            content: "Aceite live",
+            content_html:
+              '<p>Aceite live</p><p><img src="/apps/helpdesk-api/tickets/1588/attachments/1584" alt="img" /></p>',
+            created_at: "2026-11-13T11:31:00Z",
+            author_display_name: "Robério Oliveira",
+            mine: true,
+          },
+        ],
+        attachments: [
+          {
+            document_id: 1584,
+            itemtype: "Ticket",
+            items_id: 1588,
+            filename: "01-dark.png",
+          },
+        ],
+      },
+      now,
+    );
+    expect(messages.map((item) => item.kind)).toEqual(["opening", "followup"]);
+    expect(messages[1]?.attachmentIds).toEqual([]);
+    expect(messages[1]?.bodyHtml).toContain('data-attachment-id="1584"');
+  });
+
   it("escreve a data calendário quando o chamado é antigo", () => {
     const messages = conversationMessages(
       {

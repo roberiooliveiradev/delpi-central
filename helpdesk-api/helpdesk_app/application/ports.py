@@ -110,6 +110,16 @@ class GlpiGateway(Protocol):
         request_type_id: int | None = None,
     ) -> int: ...
 
+    def relink_inline_documents_to_followup(
+        self,
+        access_token: str,
+        *,
+        ticket_id: int,
+        followup_id: int,
+        document_ids: set[int],
+        keep_ticket_link_ids: set[int] | None = None,
+    ) -> None: ...
+
     def update_followup(
         self,
         access_token: str,

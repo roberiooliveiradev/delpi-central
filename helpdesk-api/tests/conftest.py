@@ -79,6 +79,7 @@ class FakeGlpi:
         self.downloaded = []
         self.created = []
         self.followups = []
+        self.inline_relinks: list[tuple[int, int, set[int], set[int]]] = []
         self.updated_followups: list[tuple[int, int, str]] = []
         # When False, the PATCH returns ok but the read-back content stays
         # stale — simulates an upstream that lies about persistence.
@@ -575,6 +576,58 @@ class FakeGlpi:
                 timeline=self.detail.timeline + (entry,),
             )
         return 8
+
+    def relink_inline_documents_to_followup(
+        self,
+        access_token: str,
+        *,
+        ticket_id: int,
+        followup_id: int,
+        document_ids: set[int],
+        keep_ticket_link_ids: set[int] | None = None,
+    ) -> None:
+        assert access_token
+        keep = {int(x) for x in (keep_ticket_link_ids or set())}
+        targets = {int(x) for x in (document_ids or set()) if int(x) > 0} - keep
+        self.inline_relinks.append(
+            (int(ticket_id), int(followup_id), set(targets), set(keep))
+        )
+        for document_id in targets:
+            links = list(self.document_item_links.get(document_id) or [])
+            links = [
+                row
+                for row in links
+                if not (row[0] == "Ticket" and row[1] == int(ticket_id))
+            ]
+            links.append(("ITILFollowup", int(followup_id)))
+            self.document_item_links[document_id] = links
+            if self.document_links.get(document_id) == int(ticket_id):
+                del self.document_links[document_id]
+            if self.detail.id == ticket_id:
+                from dataclasses import replace as _replace
+
+                self.detail = _replace(
+                    self.detail,
+                    timeline=tuple(
+                        entry
+                        for entry in self.detail.timeline
+                        if not (
+                            entry.kind == "document"
+                            and int(getattr(entry, "document_id", 0) or 0)
+                            == int(document_id)
+                        )
+                    ),
+                    attachments=tuple(
+                        _replace(
+                            item,
+                            itemtype="ITILFollowup",
+                            items_id=int(followup_id),
+                        )
+                        if int(item.document_id) == int(document_id)
+                        else item
+                        for item in self.detail.attachments
+                    ),
+                )
 
     def update_followup(
         self,

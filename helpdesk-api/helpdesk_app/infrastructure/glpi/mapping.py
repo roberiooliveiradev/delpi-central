@@ -444,6 +444,16 @@ def parse_ticket_detail(
             else entry
             for entry in timeline
         )
+    # Upload → Document_Item(Ticket) creates a Document timeline sibling.
+    # When the same document_id is already rendered inline in the opening
+    # or a followup/solution/task body, keep it in attachments[] for
+    # inventory/download but drop the redundant Document bubble — otherwise
+    # the conversation shows the image twice (ghost attachment + inline).
+    timeline = _timeline_without_inline_document_bubbles(
+        timeline,
+        description_html=description_html,
+        ticket_id=summary.id,
+    )
     return TicketDetail(
         id=summary.id,
         title=summary.title,
@@ -1089,6 +1099,40 @@ def ticket_document_candidates(
         intended, _foreign = extract_inline_image_docrefs(text, ticket_id)
         candidates |= intended
     return candidates
+
+
+def _timeline_without_inline_document_bubbles(
+    timeline: tuple,
+    *,
+    description_html: str,
+    ticket_id: int,
+) -> tuple:
+    """Drop Document bubbles whose document_id is already inline in a body.
+
+    Attachments inventory is unchanged — only the redundant conversation
+    sibling is removed. Documents that are not embedded stay as bubbles.
+    """
+    inline: set[int] = set()
+    for text in (
+        description_html,
+        *(
+            str(entry.content_html or "")
+            for entry in timeline
+            if getattr(entry, "kind", None) != "document"
+        ),
+    ):
+        intended, _foreign = extract_inline_image_docrefs(text, ticket_id)
+        inline |= intended
+    if not inline:
+        return timeline
+    return tuple(
+        entry
+        for entry in timeline
+        if not (
+            getattr(entry, "kind", None) == "document"
+            and int(getattr(entry, "document_id", 0) or 0) in inline
+        )
+    )
 
 
 def _timeline_payload(row: dict) -> tuple[str, dict]:

@@ -672,6 +672,46 @@ def test_followup_keeps_inline_image_when_doc_only_on_document_item():
     )
     assert follow.status_code == 201
     assert f"docid={document_id}" in glpi.followups[0][1]
+    # Ownership moves Ticket → ITILFollowup (native GLPI paste semantics).
+    assert glpi.inline_relinks
+    ticket_id, followup_id, targets, keep = glpi.inline_relinks[-1]
+    assert ticket_id == 7
+    assert followup_id == 8
+    assert document_id in targets
+    assert keep == set()
+    assert ("ITILFollowup", 8) in glpi.document_item_links.get(document_id, [])
+    assert document_id not in glpi.document_links
+
+
+def test_followup_keeps_ticket_link_when_image_also_in_opening():
+    """Opening description already embeds the doc — keep Ticket Document_Item."""
+    client, glpi = build_client()
+    link(client)
+    from dataclasses import replace
+
+    glpi.detail = replace(
+        glpi.detail,
+        description_html=(
+            '<p><img src="/apps/helpdesk-api/tickets/7/attachments/2" '
+            'alt="abertura" /></p>'
+        ),
+    )
+    follow = client.post(
+        "/tickets/7/followups",
+        json={
+            "content": (
+                '<p>mesma</p><p><img src="/apps/helpdesk-api/tickets/7/attachments/2" '
+                'alt="fu" /></p>'
+            )
+        },
+        headers={**auth_headers(), "Idempotency-Key": "follow-keep-opening"},
+    )
+    assert follow.status_code == 201
+    assert glpi.inline_relinks
+    _ticket_id, _followup_id, targets, keep = glpi.inline_relinks[-1]
+    assert 2 in keep
+    assert targets == set()
+    assert glpi.document_links.get(2) == 7
 
 
 def test_followup_rejects_pending_inline_image():

@@ -412,14 +412,14 @@ def test_mapping_publishes_sanitized_html_and_rewrites_owned_documents():
     assert "<script" not in detail.description_html.lower()
     assert "javascript:" not in detail.description_html.lower()
     assert "onerror" not in detail.description_html.lower()
-    assert [entry.kind for entry in detail.timeline] == ["document", "followup"]
-    assert detail.timeline[0].document_id == 391
-    assert detail.timeline[0].content == "placa.png"
-    assert detail.timeline[1].content == "Cabo ok"
-    assert "/front/document.send.php" not in detail.timeline[1].content_html
-    assert 'src="/apps/helpdesk-api/tickets/1108/attachments/391"' in detail.timeline[1].content_html
-    assert "alheio-fu" not in detail.timeline[1].content_html
-    assert "<script" not in detail.timeline[1].content_html.lower()
+    # Document 391 is already inline in opening + followup — no ghost bubble.
+    assert [entry.kind for entry in detail.timeline] == ["followup"]
+    assert detail.timeline[0].content == "Cabo ok"
+    assert "/front/document.send.php" not in detail.timeline[0].content_html
+    assert 'src="/apps/helpdesk-api/tickets/1108/attachments/391"' in detail.timeline[0].content_html
+    assert "alheio-fu" not in detail.timeline[0].content_html
+    assert "<script" not in detail.timeline[0].content_html.lower()
+    # Inventory keeps the document for download / attachment_refs.
     assert [item.document_id for item in detail.attachments] == [391]
     detail = parse_ticket_detail(
         {
