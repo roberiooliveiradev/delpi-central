@@ -140,3 +140,21 @@ Se as interfaces de retorno/legado precisarem decisões locais de compatibilidad
 **Gate formal:** `ENGINEERING_OWNER_RATIFICATION_PENDING` até registro inequívoco do owner competente com `APPROVED/REVISE/REJECT`, versão de contrato e eventuais restrições de compatibilidade. O Devin pode fazer preparação documental e inventário mínimo condicionado à confirmação, mas **não iniciar mutações de contrato/código PROD-02** antes do gate formal exigido pelo projeto. Após esse registro, Coordination emite ordem executável DEVIN-PROD-02 com RQ/AC desta proposta.
 
 **Evidência:** decisão do PO neste chat de 13/11/2026; implementação PROD-02 `TEST_NOT_RUN`; nenhuma mudança de runtime nesta deliberação.
+
+
+## 8. RATIFICAÇÃO FORMAL DO OWNER DE ENGENHARIA — T01/T02 (13/11/2026)
+
+**Autoridade declarada neste chat pelo usuário:** “eu sou o owner de engenharia, pode ratificar”. A decisão é registrada como **manifestação explícita do owner de Engenharia** para os contratos T01 e T02, após sua aprovação de direção descrita no §7. A Coordination registra e operacionaliza essa decisão; não atribuir a assinatura a outros órgãos nem afirmar validação prévia de código/runtime.
+
+| Contrato | Decisão owner | Condição vinculante |
+|---|---|---|
+| **T01** | **RATIFIED / APPROVED_BY_ENGINEERING_OWNER** | Catálogo PRC Engineering API; snapshots consolidados versionados, coverage/provenance honestas, UPDATE omitido preservado, CLEAR explícito apenas se suportado, fornecedor `supplierCode+store`, legado imutável/dual-read quando necessário; verificar implementação exata/compatibilidade |
+| **T02** | **RATIFIED / APPROVED_BY_ENGINEERING_OWNER** | Primeira conclusão válida V1, diff técnico real para V2+, no-op com completion/verification/ledger sem INSERT revision, CAS, idempotência, consistência transacional, rollback/compatibilidade; verificar implementação exata/consumers |
+
+**CONTRACT_BASELINE:** este pacote §§2–5 + regras funcionais do plano canônico §§1–2, R01–R05/R18. Interfaces detalhadas e eventual migration não ficam “automaticamente aprovadas”: Devin verifica arquivos/consumers reais no SHA, escolhe a menor implementação compatível e submete diff/PR ao gate de revisão. Mudança de owner, source of truth, bounded context, autorização ou semântica funcional volta como `ARCHITECTURE_DECISION_REQUIRED`. Incompatibilidade técnica factual deve ser reportada com alternativa mínima, sem alterar silenciosamente contrato aprovado.
+
+**Liberação de trabalho:** `DEVIN-PROD-02 = IMPLEMENTATION_AUTHORIZED` **apenas** para código/contratos e testes pertencentes ao escopo PROD-02. Não significa `IMPLEMENTATION_PASS`, aceite de HML, merge sem proteções ou autorização de PRD. Migrations seguem owner e pipeline oficiais, backward-compatible, com rollback/revoke e teste; mudanças destrutivas ou sem reversibilidade voltam à Coordination.
+
+**Ambientes:** desenvolvimento e HML permitem testes com dados de teste segregados/autorizados; validação independente do Cursor permanece exigida. Produção exclusivamente smoke de saúde e leitura comprovadamente não mutável, zero escritas de negócio para teste.
+
+**Status operacional:** `T01_OWNER_RATIFIED / T02_OWNER_RATIFIED / DEVIN_PROD02_IMPLEMENTATION_AUTHORIZED / TEST_NOT_RUN`. O `ENGINEERING_OWNER_RATIFICATION_PENDING` no §7 é **SUPERSEDED POR ESTA SEÇÃO 8**. T03–T08, flags, frontend e produção não são ratificados por extensão.
