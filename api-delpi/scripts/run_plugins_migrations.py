@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import os
 import re
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -201,7 +202,22 @@ def validate_migration_history(conn: Any, schema_name: str, files: list[Path]) -
                     f"A migration já aplicada foi alterada."
                 )
 
+
+LNF_PLUGIN_SLUG = "lancamento-notas-fiscais"
+LNF_DESTRUCTIVE_BLOCKED = (
+    "O schema lancamento_notas_fiscais pertence à controllership-finance-api "
+    "(ADR-001 / trilha 165 D2). Operações destrutivas pela api-delpi estão bloqueadas."
+)
+
+
+def refuse_lnf_destructive_operation(plugin_slug: str) -> None:
+    """Bloqueia DROP/TRUNCATE do schema LNF. up e status seguem como estão."""
+    if plugin_slug == LNF_PLUGIN_SLUG:
+        raise MigrationError(LNF_DESTRUCTIVE_BLOCKED)
+
+
 def reset_plugin_migrations(plugin_slug: str) -> None:
+    refuse_lnf_destructive_operation(plugin_slug)
     schema_name = slug_to_schema(plugin_slug)
 
     with get_connection() as conn:
@@ -393,6 +409,11 @@ def main() -> None:
                 "Em produção use apenas 'up'. Para sandbox local, passe "
                 "--confirm-drop-schema explicitamente."
             )
+        try:
+            refuse_lnf_destructive_operation(args.plugin)
+        except MigrationError as exc:
+            print(str(exc), file=sys.stderr)
+            raise SystemExit(1) from exc
         reset_plugin_migrations(args.plugin)
         return
 

@@ -310,7 +310,7 @@ docker exec delpi-api-delpi python scripts/run_plugins_migrations.py status --pl
 docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin lancamento-notas-fiscais
 ```
 
-**⚠ `reset --plugin …` faz `DROP SCHEMA CASCADE` e apaga solicitações/histórico.** Em produção use só `up` após conferir no `status` que migrations anteriores já estão aplicadas e só a nova está pendente. Rebuild de API/MFE **não** exige reset de schema.
+**⚠ `reset --plugin lancamento-notas-fiscais` está bloqueado.** O schema `lancamento_notas_fiscais` pertence à controllership-finance-api (ADR-001 / trilha 165 D2). O runner da api-delpi recusa essa operação destrutiva com saída diferente de zero e não abre conexão com o banco. `up` e `status` do LNF continuam como estavam. O reset dos outros plugins não muda. Rebuild de API/MFE **não** exige reset de schema.
 
 ---
 

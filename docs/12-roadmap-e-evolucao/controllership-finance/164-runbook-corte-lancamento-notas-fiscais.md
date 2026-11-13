@@ -21,6 +21,8 @@
 
 Com defaults, qualquer deploy futuro de PROD **não muda** o comportamento.
 
+**Aviso operacional (SEC-01 B):** não executar reset do runner de plugins para lancamento-notas-fiscais em nenhum ambiente. O comando recusa a operação; a imagem de PROD da api-delpi ainda não recebeu esse bloqueio.
+
 ---
 
 ## 1. Pré-requisitos (checklist)
