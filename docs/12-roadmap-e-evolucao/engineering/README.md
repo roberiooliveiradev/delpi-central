@@ -1,5 +1,8 @@
 # Portal de Engenharia — documentação mestra
 
+> **FONTE CANÔNICA ATUAL — 2026-11-13:** [Regras de produto, inconsistências e plano central PRC-TRACK](./PRC-TRACK-CANONICAL-PRODUCT-RULES-AND-EXECUTION-PLAN.md). Este documento é referência histórica/setorial: em caso de divergência sobre no-op, V1, snapshot PRC, REOPEN, RESOLVED/REMOVED, flags durante solicitação, conclusão, permissões ou critérios de aceite, **o plano central prevalece**. Trechos legados contraditórios estão **SUPERSEDED**, não são perguntas abertas nem instruções para implementar. Regras UX não conflitantes continuam válidas. `G1_ARCHITECTURE_DECISION_REQUIRED / TEST_NOT_RUN`.
+
+
 > **Status:** baseline documental completa para implementação — 2026-09-11  
 > **Runtime alvo:** ainda não existe `plugins/engineering` nem `engineering-api` na `main`; os documentos desta pasta descrevem o produto e a arquitetura alvo.  
 > **Execução:** somente após revalidação contra código/contratos/regras `.cursor` vigentes e autorização explícita do Product Owner.
