@@ -89,6 +89,23 @@ Criar campanhas e selecionar clientes existentes no TOTVS para que o usuário po
 4. **Rodapé:** Cancelar/Reverter, Salvar mensagem. Persistir **uma mensagem por campanha**, confirmada pela commercial-api; não salvar links/tokens de participantes dentro do modelo. Futuras cópias usam texto atualizado; convites encaminhados fora do Portal não são rastreados.
 5. **Formatos de saída:** e-mail com HTML formatado e alternativa texto; WhatsApp/Teams/outros como texto simples. A cópia HTML rica e compatibilidade com Outlook continuam PENDING de testes. Não há envio automático nem três editores independentes.
 
+### Decisão visual — editor acima e prévia HTML abaixo (13/11/2026)
+
+**DEFINIDO PELO SOLICITANTE:** na seção **Mensagem padrão** de UI-02B, apresentar o **campo de edição acima** e uma **prévia HTML renderizada abaixo**, em fluxo vertical contínuo. Isso substitui qualquer proposta de mostrar só o editor ou de deixar a prévia em outra tela/coluna. **Não são dois editores:** a prévia é somente leitura e reflete o assunto e corpo em edição.
+
+**Ordem visual, de cima para baixo:**
+1. Título **Mensagem padrão** e instrução curta, seguindo `CommercialSectionCard` ou composição equivalente já existente.
+2. Campo **Assunto do e-mail** (`CommercialTextField`).
+3. Campo **Mensagem do convite** (`CommercialTextAreaField`) com controle próximo ao editor para inserir exatamente `{nome_empresa}` ou `{link_pesquisa}` na posição do cursor. O editor permanece textual e simples; não autorizar WYSIWYG novo.
+4. Cabeçalho **Prévia do e-mail (HTML)** e área de apresentação **abaixo do editor**, não editável, visualizando parágrafos, saudação, link e formatação final. O texto em edição alimenta a prévia sem salvar automaticamente. Em modo de configuração geral, substituir tokens por **valores fictícios claramente identificados** (empresa-exemplo e URL-exemplo não funcional); somente na UI-02C a prévia usa o nome e link reais do participante autorizado. Nunca exibir token real de outro cliente.
+5. Rodapé com ações oficiais **Reverter alterações** e **Salvar mensagem** abaixo da prévia. Persistir a configuração somente após confirmação da `commercial-api`; avisos e falhas pelo `CommercialFloatingNoticeProvider` já usado no Comercial.
+
+**Segurança/contrato:** o HTML é gerado de modo seguro a partir do texto; escapar dados, não executar HTML/script arbitrário escrito no campo. A formatação e apresentação devem corresponder ao formato rico que se pretende copiar para e-mail, sem afirmar compatibilidade com Outlook antes de testes. Uma fonte textual por campanha continua valendo para e-mail (HTML com alternativa texto), WhatsApp e Teams (texto simples). Não enviar convites.
+
+**Dimensões e responsividade:** editor e prévia ocupam a largura útil da seção no desktop/tablet/celular; **ordem vertical idêntica em todos os tamanhos**, sem layout lado a lado no desktop. As dimensões exatas do campo, área de prévia, padding, margins, gap, raio, fonte, altura mínima, overflow e breakpoints devem ser herdados dos componentes/tokens oficiais do PluginUI. **TO_INVENTORY** de seletores CSS, valores reais e componente/estratégia existente para renderização segura da prévia antes de implementar. Não criar medidas arbitrárias nem editor HTML próprio.
+
+**Status:** disposição **EDITOR ACIMA → PRÉVIA HTML ABAIXO APROVADA** como solicitação explícita; solução técnica para prévia, CSS e implementação **PENDING**.
+
 ### UI-02C — Detalhe do participante
 
 1. **Topo/trilha:** voltar à campanha e à lista no mesmo contexto; nome oficial, código e loja TOTVS; situação Pendente/Respondida oriunda da API.
