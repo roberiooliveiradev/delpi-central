@@ -1410,6 +1410,8 @@ def test_legacy_document_upload_uses_apirest_with_app_token():
             assert body["input"]["documents_id"] == 55
             assert body["input"]["items_id"] == 7
             assert body["input"]["itemtype"] == "Ticket"
+            # Native ticket attachment bubble (TIMELINE_LEFT).
+            assert body["input"]["timeline_position"] == 1
             return httpx.Response(201, json={"id": 1})
         if request.url.path.endswith("/apirest.php/killSession"):
             return httpx.Response(200, json={})
@@ -1454,6 +1456,92 @@ def test_legacy_document_upload_uses_apirest_with_app_token():
     assert any("/apirest.php/Document" in item for item in calls)
     assert any("/apirest.php/Document_Item" in item for item in calls)
     assert any("killSession" in item for item in calls)
+
+
+def test_relink_inline_document_uses_no_timeline_position():
+    """Native GLPI paste sets Document_Item.timeline_position=-1 on the
+    ITILFollowup link so the timeline does not render a duplicate thumb
+    under the follow-up that already embeds the image."""
+    posts: list[dict] = []
+    deletes: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path.endswith("/Assistance/Ticket/1588"):
+            return httpx.Response(200, json={"id": 1588})
+        if path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 11})
+        if path.endswith("/apirest.php/getFullSession"):
+            return httpx.Response(200, json={"session": {"glpiID": 11}})
+        if path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-1"})
+        if path.endswith("/apirest.php/Document/1586/Document_Item"):
+            # First read: only Ticket link. After POST: ITILFollowup too.
+            if posts:
+                return httpx.Response(
+                    200,
+                    json=[
+                        {
+                            "id": 10,
+                            "itemtype": "Ticket",
+                            "items_id": 1588,
+                            "timeline_position": 1,
+                        },
+                        {
+                            "id": 11,
+                            "itemtype": "ITILFollowup",
+                            "items_id": 811,
+                            "timeline_position": -1,
+                        },
+                    ],
+                )
+            return httpx.Response(
+                200,
+                json=[
+                    {
+                        "id": 10,
+                        "itemtype": "Ticket",
+                        "items_id": 1588,
+                        "timeline_position": 1,
+                    }
+                ],
+            )
+        if path.endswith("/apirest.php/Document_Item") and request.method == "POST":
+            body = json.loads(request.content.decode())
+            posts.append(body["input"])
+            return httpx.Response(201, json={"id": 11})
+        if (
+            path.endswith("/apirest.php/Document_Item/10")
+            and request.method == "DELETE"
+        ):
+            deletes.append(path)
+            return httpx.Response(200, json=[{"10": True}])
+        if path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": path})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        user_token_store=_token_store({11: "user-api-token"}),
+        transport=httpx.MockTransport(handler),
+    )
+    client.relink_inline_documents_to_followup(
+        "oauth-access",
+        ticket_id=1588,
+        followup_id=811,
+        document_ids={1586},
+    )
+    assert len(posts) == 1
+    assert posts[0]["itemtype"] == "ITILFollowup"
+    assert posts[0]["items_id"] == 811
+    assert posts[0]["timeline_position"] == -1
+    assert deletes, "Ticket Document_Item must be removed after rebind"
 
 
 def test_document_upload_verified_under_user_session():

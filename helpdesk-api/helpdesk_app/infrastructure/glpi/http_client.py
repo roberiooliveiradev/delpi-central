@@ -2646,13 +2646,18 @@ class HttpxGlpiClient:
         document_id: int,
         ticket_id: int,
     ) -> int:
-        """Ensure Ticket-level Document_Item link (upload path)."""
+        """Ensure Ticket-level Document_Item link (upload path).
+
+        ``timeline_position=1`` (TIMELINE_LEFT) matches native GLPI ticket
+        attachments that appear as Document bubbles in the timeline.
+        """
         return self._legacy_ensure_document_item_link(
             write_session_token=write_session_token,
             read_session_token=read_session_token,
             document_id=document_id,
             itemtype="Ticket",
             items_id=int(ticket_id),
+            timeline_position=1,
         )
 
     def _legacy_document_item_link_row(
@@ -2682,10 +2687,16 @@ class HttpxGlpiClient:
         document_id: int,
         itemtype: str,
         items_id: int,
+        timeline_position: int | None = None,
     ) -> int:
         """Ensure Document_Item for any itemtype/items_id (Ticket or ITILFollowup).
 
         Writes on the actor session; reads on the bounded reader channel.
+
+        ``timeline_position`` mirrors native GLPI:
+        - ``1`` (TIMELINE_LEFT) — Ticket attachment bubble in the timeline;
+        - ``-1`` (NO_TIMELINE) — inline paste on ITILFollowup (image lives in
+          the follow-up HTML only; no duplicate thumb under the bubble).
         """
         existing = self._legacy_document_item_link_row(
             session_token=read_session_token,
@@ -2694,8 +2705,27 @@ class HttpxGlpiClient:
             items_id=items_id,
         )
         if existing is not None:
-            return int(existing.get("id") or 0)
+            link_id = int(existing.get("id") or 0)
+            if (
+                timeline_position is not None
+                and link_id > 0
+                and int(existing.get("timeline_position") or 0)
+                != int(timeline_position)
+            ):
+                self._legacy_set_document_item_timeline(
+                    write_session_token=write_session_token,
+                    link_row_id=link_id,
+                    timeline_position=int(timeline_position),
+                )
+            return link_id
         self.post_calls += 1
+        payload: dict[str, object] = {
+            "documents_id": int(document_id),
+            "itemtype": str(itemtype),
+            "items_id": int(items_id),
+        }
+        if timeline_position is not None:
+            payload["timeline_position"] = int(timeline_position)
         try:
             response = self._http.post(
                 f"{self._base}/apirest.php/Document_Item",
@@ -2705,22 +2735,18 @@ class HttpxGlpiClient:
                     "App-Token": self._legacy_app_token,
                     "Session-Token": write_session_token,
                 },
-                json={
-                    "input": {
-                        "documents_id": int(document_id),
-                        "itemtype": str(itemtype),
-                        "items_id": int(items_id),
-                    }
-                },
+                json={"input": payload},
             )
         except httpx.TimeoutException as exc:
             raise GlpiUnavailable("GLPI indisponível.") from exc
         logger.info(
-            "glpi_legacy_document_item status=%s document_id=%s itemtype=%s items_id=%s",
+            "glpi_legacy_document_item status=%s document_id=%s itemtype=%s "
+            "items_id=%s timeline_position=%s",
             response.status_code,
             document_id,
             itemtype,
             items_id,
+            timeline_position,
         )
         if response.status_code in {200, 201}:
             data = response.json() if response.content else {}
@@ -2744,10 +2770,66 @@ class HttpxGlpiClient:
                 items_id=items_id,
             )
             if row is not None:
-                return int(row.get("id") or 0)
+                link_id = int(row.get("id") or 0)
+                if (
+                    timeline_position is not None
+                    and link_id > 0
+                    and int(row.get("timeline_position") or 0)
+                    != int(timeline_position)
+                ):
+                    self._legacy_set_document_item_timeline(
+                        write_session_token=write_session_token,
+                        link_row_id=link_id,
+                        timeline_position=int(timeline_position),
+                    )
+                return link_id
             raise GlpiValidation("O GLPI não ligou o documento ao item.")
         if response.status_code == 401:
             raise GlpiUnauthorized("Sessão do GLPI recusada.")
+        raise GlpiUnavailable("GLPI indisponível.")
+
+    def _legacy_set_document_item_timeline(
+        self,
+        *,
+        write_session_token: str,
+        link_row_id: int,
+        timeline_position: int,
+    ) -> None:
+        """Align Document_Item.timeline_position with native GLPI paste semantics."""
+        link_row_id = int(link_row_id)
+        if link_row_id <= 0:
+            return
+        try:
+            response = self._http.put(
+                f"{self._base}/apirest.php/Document_Item/{link_row_id}",
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "App-Token": self._legacy_app_token,
+                    "Session-Token": write_session_token,
+                },
+                json={
+                    "input": {
+                        "id": link_row_id,
+                        "timeline_position": int(timeline_position),
+                    }
+                },
+            )
+        except httpx.TimeoutException as exc:
+            raise GlpiUnavailable("GLPI indisponível.") from exc
+        logger.info(
+            "glpi_legacy_document_item_timeline status=%s link_row_id=%s "
+            "timeline_position=%s",
+            response.status_code,
+            link_row_id,
+            timeline_position,
+        )
+        if response.status_code in {200, 204}:
+            return
+        if response.status_code == 401:
+            raise GlpiUnauthorized("Sessão do GLPI recusada.")
+        if response.status_code in {400, 403, 404, 422}:
+            return
         raise GlpiUnavailable("GLPI indisponível.")
 
     def _legacy_delete_document_item(
@@ -2842,12 +2924,15 @@ class HttpxGlpiClient:
         try:
             for document_id in sorted(targets):
                 try:
+                    # Native GLPI paste uses timeline_position=-1 (NO_TIMELINE)
+                    # so the document is not rendered again under the follow-up.
                     self._legacy_ensure_document_item_link(
                         write_session_token=write_token,
                         read_session_token=read_token,
                         document_id=document_id,
                         itemtype="ITILFollowup",
                         items_id=followup_id,
+                        timeline_position=-1,
                     )
                     ticket_link = self._legacy_document_item_row(
                         session_token=read_token,
