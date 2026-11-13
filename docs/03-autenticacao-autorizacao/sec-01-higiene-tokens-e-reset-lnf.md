@@ -54,10 +54,8 @@ Opções, sem implementar:
 
 Recomendação: a opção 2. É a única que amarra a confirmação ao banco que o processo realmente vai abrir.
 
-## Pendências
+## Estado em 2026-11-13 à tarde
 
-- Reload do gateway de HML quando o container existir.
-- DECISION_REQUIRED dos access logs de aplicação.
-- DECISION_REQUIRED da publicação da api-delpi em PROD.
-- `error_log` do nginx em falha de upstream.
-- Trava de host genérica, se o owner aceitar a opção 2.
+ALINHAMENTO-01 (`57e55a8b85`) tira `up`, `status` e `reset` do LNF do runner da api-delpi. A pasta de SQL fica, porque a suíte da BFF compara o checksum. A location `/realtime` do LNF está em `gateway/nginx.conf` (`8d73567c37`) e ainda não foi publicada no gateway que está no ar. A publicação de HML e de PROD parou na regra Y5: o checkout `projetos-teste/delpi-central` tem mudanças locais de outra frente.
+
+D-S2 (access log das APIs), D-S3 (trava de host) e D-S4 (`error_log`) continuam sem implementação, à espera de decisão.

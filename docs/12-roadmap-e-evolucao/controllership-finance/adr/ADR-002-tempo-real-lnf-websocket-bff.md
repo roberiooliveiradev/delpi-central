@@ -25,6 +25,8 @@ Tempo real do LNF por WebSocket nativo na BFF, no módulo de lançamento de nota
 | D-W3 C | Não nasce job de conciliação agora. Refresh e run que já existem emitem aviso para as telas da filial. Job periódico é a W7, com decisão própria, depois do F5c. |
 | D-W4 A | DEV e HML agora. PROD só depois que o quadro da trilha 165 marcar F5c DONE. |
 
+Adendo D-W4 revista (2026-11-13): a entrada da W6 deixa de ser o fim do F5c. A W6 liga `LNF_REALTIME_ENABLED` na BFF de PROD, reconstrói o MFE com a flag ligada e verifica, inclusive a CLARA. A entrada é W5 DONE. O código da W2/W2R está na main com a flag default `false`. A location do gateway em `gateway/nginx.conf` está commitada e fica dormente enquanto a flag estiver desligada.
+
 Completam a decisão, pela evidência da W0 e sem reabrir:
 
 - o dono do canal é a BFF, não a Core e não o hub do Fechamento;
