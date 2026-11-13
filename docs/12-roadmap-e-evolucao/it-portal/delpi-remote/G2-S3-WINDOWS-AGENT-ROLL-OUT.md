@@ -1,6 +1,6 @@
 # G2-S3 | Pacote assistido Windows: agendamento e desinstalacao
 
-**Estado em 13/11/2026:** EM REVISAO. Codigo preparado; SEM assinatura corporativa, instalacao ou teste em Windows real. O operador nao esta no escritorio e retomara o piloto presencial depois.
+**Estado em 13/11/2026:** EM REVISAO. Codigo preparado; **CI aprovado**, sem assinatura corporativa, instalacao ou teste em Windows real. O operador nao esta no escritorio e retomara o piloto presencial depois.
 
 ## Escopo da entrega
 
@@ -65,3 +65,9 @@ A desinstalacao requer primeiro revogar no Keycloak e retirar o binding privado;
 Como G2-S3 so cria arquivos de script/CI/docs no repo, **nao ha deploy de API/frontend nem migration neste incremento**. Se o piloto nao foi ativado, rollback = nao distribuir pacote. Se ativado, revogar Keycloak e binding, depois desabilitar/remover tarefa e pasta exclusiva do UUID. Nao usar script para alterar outros servicos Windows/TOTVS.
 
 **Proximo passo presencial:** G2-S1 coleta local -> G2-S2 envio manual com token exclusivo -> assinatura de release -> G2-S3 instalacao desabilitada -> teste/Enable/Uninstall. Registrar provas e aceite na issue #179. Acesso remoto somente apos G0-SEC.
+
+## Evidencias automatizadas (13/11/2026)
+
+- [API: pipeline G2-S3 sucesso](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43521927703/job/132218077575): sintaxe PowerShell, PLAN somente leitura, pytest, integracao PostgreSQL V001..V011.
+- [Architecture gate sucesso](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43521927654/job/132218077597) e [auditoria sucesso](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43521927669/job/132218078353).
+- O CI **nao** substitui assinatura Authenticode corporativa, instalacao real no Windows 11, Keycloak individual, revogacao e testes de ScheduledTasks/DPAPI.

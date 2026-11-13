@@ -248,6 +248,18 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** validar CI e, depois, somente presencialmente, homologar coleta G2-S1 e envio G2-S2 antes de instalar/habilitar G2-S3. G0-SEC continua pendente para acesso remoto.
 
+## 2026-11-13 | G2-S3 | CI verde e arquivos versionados, piloto presencial pendente
+
+**Commit de codigo:** [02e3df851438](https://github.com/roberiooliveiradev/delpi-central/commit/02e3df85143898193eb400d6c372e00bf70fef4a).
+
+**Evidencias GitHub Actions:** [test-it-portal-api SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43521927703/job/132218077575), incluindo parser Windows PowerShell, simulacao segura de instalacao/habilitacao/desinstalacao G2-S3 default PLAN, suite pytest unit/HTTP, integracao PostgreSQL SCM/controle e migrations V001..V011. [architecture-gate SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43521927654/job/132218077597) e [audit SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43521927669/job/132218078353).
+
+**Limites:** CI com PowerShell 7 Linux testa sintaxe/PLAN, mas **NAO** valida ScheduledTasks, DPAPI, Authenticode real Windows 5.1, login interativo, assinatura corporativa, primeiro envio Keycloak nem desinstalacao em dispositivo. Nao marcar pacote como instalavel/homologado ainda; G2-S3 continua EM REVISAO.
+
+**Producao:** o commit apenas versionou scripts e docs. Nenhuma instalacao remota, agendamento, segredo, mudanca de banco ou feature flag aconteceu nesta atividade. A infraestrutura G2-S2 foi publicada pelo operador e segue com ingestao OFF; sem acao de deploy API/MFE necessaria para os arquivos de pacote.
+
+**Proximo passo unico:** preparar assinatura de release e plano de rollout sem usar estacao real. Quando presencial: coleta G2-S1, envio S2S G2-S2, comprovacao da revogacao e teste da tarefa G2-S3 Disabled -> Enable -> Uninstall, sob controles de G0-SEC para futuras fases remotas.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown
