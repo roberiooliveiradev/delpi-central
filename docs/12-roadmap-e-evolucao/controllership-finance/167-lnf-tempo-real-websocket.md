@@ -16,9 +16,9 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 | Fase | Nome | Status | SHA | Data | Evidência |
 |---|---|---|---|---|---|
 | W1.1 | Ajuste documental (D-W5, quadro) | DONE | `68e7c28512` | 2026-11-13 | D-W5, ADR-002 adendo, mapa de reuso PLANNED |
-| W2 | BFF — hub, rota, emissão (DEV) | IN_PROGRESS | `b0b4dae957` | 2026-11-13 | Código e T1–T18 no container. Pendências: smoke DEV de dois usuários; F2 P0–P12 ao vivo. EXECUTION_DRIFT: tinha sido marcada DONE sem esses critérios |
+| W2 | BFF — hub, rota, emissão (DEV) | IN_PROGRESS | `b0b4dae957` | 2026-11-13 | T1–T18 PASS; F2 P0–P12 ao vivo 314 PASS. Smoke de dois usuários parcial: isolamento da filial PASS; create por quem só tem process responde 403 e não emite |
 | W2b | plugin-ui — cliente, hook, indicador, aviso | DONE | `df1dd06cc4` | 2026-11-13 | cliente aditivo; hook, indicador e aviso. Suíte do pacote no registro |
-| W3 | Gateway DEV (+ conf HML commitada) | IN_PROGRESS | `57195a9e91` | 2026-11-13 | nginx -t e reload PASS; log da location redige o token. Handshake 101 pendente: BFF com as flags off |
+| W3 | Gateway DEV (+ conf HML commitada) | DONE | `57195a9e91` | 2026-11-13 | Handshake 101 pelo gateway com token real; access log da location com `<redacted>`; valor do token ausente nos logs do gateway e da BFF |
 | W4.1 | MFE — Fila | TODO | | | |
 | W4.2 | MFE — Detalhe | TODO | | | |
 | W4.3 | MFE — Formulário de edição | TODO | | | |
@@ -454,3 +454,28 @@ Não corrigir nesta frente. As locations de WebSocket de requests e engineering 
 | DEV | `gateway/nginx.dev.conf` | 359 | 443 |
 | HML | `gateway/snippets/hml-proxy-locations.conf` | 248 | 263 |
 | PROD | `gateway/nginx.conf` | 444 | 631 |
+
+### Fechamento DEV — 2026-11-13
+
+Flags só no `infra/.env` local (gitignored). Defaults commitados continuam `false`.
+
+| Flag | Valor em DEV |
+|---|---|
+| `LNF_HOSTED_ENABLED` | `true` |
+| `LNF_REALTIME_ENABLED` | `true` |
+| `LNF_MIGRATIONS_MODE` | `verify` |
+| `LNF_MODULE_ENABLED` (api-delpi) | `false` |
+
+Antes e depois do restart da BFF: ledger V001–V014, `schema_migrations` 14, `invoice_posting_requests` 0, `reconciliation_refresh_control` 1. Log `lnf_migrations_verify_ok`. Nenhuma migration aplicada. A api-delpi com token real responde 404 no path LNF. A BFF responde 400 `BRANCH_REQUIRED` para view da filial 01 sem o parâmetro.
+
+O MFE não está no compose que está no ar. `docker-compose.dev.yml` não passa `VITE_LNF_API_BASE`. A variável foi escrita no `.env` local e a imagem não foi reconstruída.
+
+Usuários: `lnf-dev-u1` criado em DEV (access + view.filial-01). `lnf-contract-p6` é process. `lnf-contract-p8` é review-unmapped-products. Token pelo mesmo `profile_token` de `tests/contracts/lancamento-notas-fiscais/lnf_contract/guard.py:104`.
+
+F2: `pytest test_authz.py` no venv do contrato, alvo BFF, 314 passed.
+
+Handshake de `lnf-contract-p6` pelo gateway: `101 Switching Protocols`. Access log com `<redacted>`. Os tokens usados não aparecem nos logs do gateway nem da BFF.
+
+Smoke: U1 em `lnf:branch:02` recebe `forbidden_room` e o socket segue aberto. U3 em `lnf:branch:01` recebe `forbidden_room`. Create na filial 02 por quem tem create+view.02 chega em U2 (`reason=created`, branch 02) e não chega em U1. PATCH, start, block, resume e comment feitos por U2 nessa nota repetem o mesmo isolamento. Create na filial 01 chega em U1 e em U2. post-manual na filial 01: 329 ms do início do HTTP até o frame `manual_posted` nos dois. Create feito por U2 (só process) responde 403 e não emite. Cancel responde 403 `not_owner` e não emite. Lista de PC em aberto do fornecedor da nota: 200 com zero itens, então o vínculo não rodou. Refresh: 200 e nenhum `queue.reconciled` (nenhuma nota casada).
+
+W2 permanece IN_PROGRESS por causa do create e do cancel que a permissão de process não conclui, e do vínculo de PC sem pedido em aberto. W4 não começa.
