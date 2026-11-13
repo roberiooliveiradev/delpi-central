@@ -163,12 +163,7 @@ npm run dev
 ./infra/scripts/up-dev-sequential.sh --fase mfe --build lancamento-notas-fiscais
 ```
 
-Migrations do plugin (startup da api-delpi ou manual). Em **produção**: só `up` — **nunca** `reset` (apaga a fila):
-
-```bash
-docker exec delpi-api-delpi python scripts/run_plugins_migrations.py status --plugin lancamento-notas-fiscais
-docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin lancamento-notas-fiscais
-```
+Migrations do LNF são aplicadas pela controllership-finance-api (owner do schema; ADR-001 / trilha 165 D2). A api-delpi recusa `up`, `status` e `reset` com `--plugin lancamento-notas-fiscais`.
 
 Assets: `http://localhost/apps/lancamento-notas-fiscais/assets/remoteEntry.js`
 
@@ -207,9 +202,8 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 ```bash
 git pull
 ./infra/scripts/up-prod-sequential.sh --fase api --build api-delpi
-# Conferir status: V001–V00N-1 já APLICADA; só a nova pendente. NUNCA reset.
-docker exec delpi-api-delpi python scripts/run_plugins_migrations.py status --plugin lancamento-notas-fiscais
-docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin lancamento-notas-fiscais
+# Migrations do LNF: controllership-finance-api (verify/apply na BFF). Nunca reset em PROD.
+./infra/scripts/up-prod-sequential.sh --fase api --build controllership-finance-api
 ./infra/scripts/up-prod-sequential.sh --fase mfe --build lancamento-notas-fiscais
 ```
 

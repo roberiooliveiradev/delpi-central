@@ -29,7 +29,7 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 
 Ordem: W1.1 → W2 → W2b → W3 → W4.1 → W4.2 → W4.3 → W4.4 → W5. Parar ao fim da W5.
 
-O código da W2/W2R está na main (`b0b4dae957`, `a26285e6f4`) com `LNF_REALTIME_ENABLED` default `false`. A location exata do gateway em PROD está commitada (`8d73567c37`) e fica dormente enquanto a flag estiver desligada. Ligar a flag em PROD é a W6, depois da W5.
+O código da W2/W2R está na main (`b0b4dae957`, `a26285e6f4`) com `LNF_REALTIME_ENABLED` default `false`. A location exata do gateway está commitada (`8d73567c37`); publicação em PROD pendente (ALINHAMENTO-01). Ligar a flag em PROD é a W6, depois da W5.
 
 ## 2.1 Objetivo, escopo e não-escopo
 
