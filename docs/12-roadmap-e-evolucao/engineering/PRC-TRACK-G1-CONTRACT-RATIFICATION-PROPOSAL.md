@@ -107,3 +107,15 @@ Coordination deve registrar por CR-01…CR-07: `APPROVED|REVISE|REJECT`, rationa
 Após ratificação: produzir primeiro contrato B1 com RQ/AC e prompt de implementação bounded, depois B2, B3, validação HML e frontend. O relatório do executor da migração Plugin UI continua `REPORTED` até commit/QA confirmados.
 
 **Nenhuma confirmação de runtime, ratificação, alteração de código ou deploy neste documento.**
+
+## 6. Resultado da deliberação CR-02 — PO aprovou ficha consolidada (13/11/2026)
+
+**Escolha:** `A — Ficha consolidada por versão` · **Comentário:** sem comentário · **Estado:** `PO_APPROVED / COORDINATION_RATIFICATION_PENDING`.
+
+A orientação do PO resolve a alternativa *estado consolidado vs somente delta*: **cada revisão Vn deve representar a ficha consolidada dos campos acompanhados pela Engineering API (catálogo PRC)**; a lista de mudanças da solicitação permanece separada e não substitui o snapshot. Em UPDATE parcial, preservar campos da última base confirmada válida sob contrato de cobertura e combinar as alterações efetivamente confirmadas, sem inferir valores não observados. Toda versão expõe `schemaVersion`, cobertura/proveniência e vínculos identificados por fornecedor+loja. Não confundir `draft_data` com observação oficial nem ampliar para todo o TOTVS.
+
+**Requisitos para contrato CR-02:** definir matriz de campos `present/unknown/not_applicable`, origem do valor, null/omissão/remoção, merge de fornecedores, evolução de schema, evidência de verificação, snapshots legados, atomicidade da conclusão e comportamento de falha. A comparação V1×V5 é entre snapshots consolidados; teste matched-no-op não cria Vn. Não reescrever histórico por mudanças posteriores.
+
+**Efeito sobre questões abertas:** a dúvida “consolidado ou delta?” está **DECIDIDA PELO PO**. Permanecem **PENDING_COORDINATION** (a) critérios concretos de origem/verificação dos dados, (b) fórmula de merge e cobertura de UPDATE parcial, (c) primeira V1 quando não existe baseline de acompanhamento, e (d) migrations/compatibilidade e AuthZ.
+
+**Estado de execução:** `TEST_NOT_RUN`; nenhum código ou schema foi alterado por esta decisão.
