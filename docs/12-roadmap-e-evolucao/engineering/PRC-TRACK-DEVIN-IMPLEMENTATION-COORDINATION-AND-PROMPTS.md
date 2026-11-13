@@ -153,3 +153,16 @@ A coordenação abriu o **PR real [#180](https://github.com/roberiooliveiradev/d
 **Decisão:** `CODE_REVIEW_PASS / READY_FOR_AUTHORIZED_MERGE_GATE`. **Encerrar loop de reancoragem do Devin; não solicitar novos merges de main sem conflito concreto.** O PR [#180](https://github.com/roberiooliveiradev/delpi-central/pull/180) permanece para integração governada. **Sem autorização explícita de merge nesta interação, a coordenação não executou merge**; verificar requisitos de proteção/CI e capacidade de merge no ato da aprovação. HML multiusuário e produção continuam `TEST_NOT_RUN/NOT_DEPLOYED`.
 
 **Próxima frente:** preparar ratificação **T01** (contrato catálogo/coverage/provenance/snapshot consolidado da Engineering API) e **T02** (V1/no-op, CAS, ledger da conclusão, compatibilidade, reversão), sem reabrir regras já aprovadas. PROD-02 só começa após a ratificação; flags e frontend continuam posteriores conforme plano mestre.
+
+
+## 12. HML-H0 — runtime stale, homologação PROD-01 bloqueada (relatório executor, 13/11/2026)
+
+**Relatório recebido (Devin, não teste independente do Cursor):** PR #180 aberto e não mergeado no momento da checagem; `origin/main` contém commit inicial `3c619a6ee0` com endpoint de listagem; checkout do host `srv-api` em `b5e74669a2`, mas o container HML `delpi-engineering-api` reportado usava imagem `sha256:f3d640c4...` construída 12/11/2026 20:34, **sem ocorrência de `list_records` no runtime**. Assim, API de listagem **não disponível naquela versão HML**. A coordenação não consultou diretamente host/container; classificação `REPORTED_RUNTIME_STALE / HML_H1_BLOCKED` (não `HML_FAIL` do endpoint).
+
+**Verificação GitHub:** comparação `main...devin/prc-track-prod-01-records-list` continua restrita aos três arquivos corretivos do PROD-01 (`+97/-2`), `ahead_by=3 / behind_by=12` no instante consultado. Branch atrás da main **não implica conflito** nem autoriza ciclos de reconciliação.
+
+**Gates separados, sem atalhos:** (A) integrar PR #180 sob autorização e proteção GitHub; (B) requisitar **deploy/rebuild HML** pelo owner de release autorizado, usando SHA e artefato rastreáveis; (C) Cursor confirma o SHA real do container e presença do endpoint no HML; (D) só então executar H1 (API de listagem) e matriz de acessos, sessões independentes, evidências. `git pull` no host **não atualiza container**. Nenhuma mudança em produção autorizada.
+
+**Escopo H0 parcial enquanto aguarda:** Cursor pode inventariar HML, perfis e acessos, testar rotas PRC já implantadas com dados autorizados e documentar regressões/limitações; deve classificar listagem H1 `BLOCKED_ENVIRONMENT`, PROD-02/03 e flags produto `NOT_IMPLEMENTED`, sem produzir falso PASS/FAIL. Teste multiusuário completo apenas após backend produtos+flags e deploy HML correspondentes.
+
+**Ação seguinte:** Coordination trata PR #180 e autorização explícita de implantação HML separadamente; responsável pela execução técnica do deploy deve ser designado conforme owner de release, não presumir que Cursor pode publicar. Devin continua como executor de código e Cursor como executor da homologação.
