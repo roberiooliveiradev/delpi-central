@@ -430,3 +430,21 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **F3 — evidência funcional (gateway público HML, usuário autorizado):** criados dados de teste identificados `ISOLATION-TEST-*` por fluxo governado (POST `/v1/requests` + `Idempotency-Key`) — `REQ-2026-000001` general-request, `REQ-2026-000002` raw-material-creation, `REQ-2026-000003` invoice-issuance, `REQ-2026-000004` process-issue, mesmo usuário/filial. `/v1/requests/mine` **sem** filtro retorna os 4 tipos; `GET /v1/home` retorna em `tasks` e `requests` **somente** `REQ-2026-000002 [raw-material-creation]` (`total=1` em ambas) — NF, chamado e process-issue excluídos das seções alimentadas por requests-api. `lmps` `available` (total=255), `href=/apps/my-requests` oficial, anônimo `401`, usuário denied `403`. **H13 outage controlada:** `docker stop delpi-hml-requests-api` → home `partial`, tasks/requests `unavailable` (`transport_error`), lmps `available`; restart → recuperação íntegra (`available`, total=1). My Requests corporativo segue exibindo todos os tipos (owner inalterado).
 
 **Estado:** `HML_DEPLOY_PASS / DEVIN_HML_FUNCTIONAL_PASS / CURSOR_INDEPENDENT_PENDING / PRD_NOT_DEPLOYED`. Dados `ISOLATION-TEST-*` aguardam decisão do owner HML sobre retenção/expurgo. F5–F7 permanecem bloqueados até aceite independente do Cursor e autorização operacional.
+
+## 28. PR #182 — handoff de validação independente Cursor (13/11/2026)
+
+**Objeto do aceite:** isolamento das fontes My Requests da Home do Portal Engenharia ao tipo canônico `raw-material-creation` (`MERGE_SHA=f1a625ff42a1c2b42dc700b92ee5044b09382e23`, PR #182).
+
+**Runtime homologado:** checkout HML `772b794c9433ef329bee6b9d70fe98cf114e6779`; container `delpi-hml-engineering-api` healthy na imagem `sha256:96b1d522acffea1a81f243403e7022f694afc8ca494b56c97db0ddf65e156836` (reconfirmado 13/11 23:1x UTC — digest e health inalterados).
+
+**Contrato sob teste:** `GET /apps/engineering-api/v1/home` (gateway `https://192.168.1.237:18443`, Bearer Keycloak realm `delpi`). Envelope `data.sections.{attention,tasks,requests,lmps,activity,collaboration}`; seções alimentadas pela requests-api carregam `source.system="requests-api"` e `meta.type_code` por item.
+
+**Dados de referência (somente HML, usuário hml-tester, filial 01):** `REQ-2026-000001` general-request, `REQ-2026-000002` raw-material-creation, `REQ-2026-000003` invoice-issuance, `REQ-2026-000004` process-issue — confirmados presentes via `GET /apps/requests-api/v1/requests/mine` sem filtro (4 itens). Esperado na Home: apenas `REQ-2026-000002`.
+
+**Matriz para reexecução independente:** H01 home 200/contrato; H02 `raw-material-creation` em `tasks`+`requests`; H03–H06 NF/processo/chamado/outros ausentes; H07–H08 escopo por permissão e por usuário; H09–H10 totais/paginação filtrados server-side; H11 denied→403, anônimo→401; H12 `lmps` available; H13 outage controlada da requests-api → home `partial`, demais fontes preservadas (restart obrigatório ao final); H14 `/v1/requests/mine` direto segue retornando todos os tipos; H15 `href=/apps/my-requests`.
+
+**Perfis:** autorizado `HML_TEST_USERNAME`, negado `HML_DENIED_TEST_USERNAME` (credenciais somente em `infra/.env.hml` do host HML — nunca em prompts/docs).
+
+**Resultado Devin (referência, não substitui aceite):** F3 PASS em todos os cenários acima (§27).
+
+**Estado:** `CURSOR_INDEPENDENT_PENDING / PRD_NOT_DEPLOYED`. F5–F7 bloqueados até `CURSOR_INDEPENDENT_PASS` + autorização operacional.
