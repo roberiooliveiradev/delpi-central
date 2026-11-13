@@ -137,3 +137,19 @@ Encaminhar à Coordination **ADR-01 a ADR-06** com matriz de decisão e pergunta
 **Contratos pendentes para Coordination:** (a) estado de exibição de revisão atual pode ser atualizado por evento sem alterar snapshot técnico imutável; (b) revisão do evento = última Vn vigente no instante da mutação, gravada de forma auditável; (c) regras de visibilidade em caso de reabertura e flags criadas antes da primeira V1; (d) integridade da projeção durante concorrência/soft-delete. Estes detalhes **não mudam o comportamento funcional aprovado**.
 
 **Novos AC obrigatórios:** B2-FLAG-01 criada em V3 → OPEN V3/V4/V5 enquanto não encerrada; B2-FLAG-02 resolvida durante V4 → OPEN V3, RESOLVED V4, AUSENTE V5; B2-FLAG-03 removida durante V4 → OPEN V3, AUSENTE V4/V5; B2-FLAG-04 resolver/remover não incrementa versão; B2-FLAG-05 eventos auditáveis e mesma identidade, AuthZ/CAS/idempotência.
+
+## 8. Deliberação complementar do PO — CR-02 (13/11/2026)
+
+**Escolha expressa:** **A — Ficha consolidada por versão**. **Comentário:** sem comentário. **Classificação:** `PO_APPROVED_BUSINESS_DECISION`; contrato e implementação sujeitos à Coordination.
+
+**Regra vinculante de produto:** cada Vn contém uma representação consolidada de todos os campos pertencentes ao catálogo de acompanhamento PRC da Engineering API, incluindo vínculos de fornecedores dentro da cobertura definida. Não é apenas o delta da solicitação. O delta é registrado separadamente para comparação/auditoria. Dados desconhecidos ou não cobertos não podem ser inventados nem apresentados como comprovadamente oficiais.
+
+**Consequências de contrato:**
+1. `schemaVersion` do catálogo e snapshot; identidade de produto, revisão, solicitação, confirmação e provenance.
+2. Em UPDATE parcial, recomposição a partir da última base conhecida e confirmada e dos campos efetivamente registrados/verificados na nova solicitação, com regras explícitas para omissão, `null`, remoção e desconhecido.
+3. Fornecedores por chave estável `supplierCode+store` e atributos acompanhados; separação entre vínculo ausente, removido e não observado.
+4. Diff Vx×Vy no backend usa os **dois estados consolidados**, não só `changedPaths` do draft.
+5. A comparação para criar Vn é normalizada e considera somente diferenças técnicas reais; conclusão no-op não cria revisão, preservando seu próprio ledger.
+6. Revisões imutáveis anteriores não devem sofrer backfill inferido; snapshot legado precisa `coverage/provenance` e aviso de qualidade dos dados.
+
+**Ainda requer ratificação técnica:** política de campos confirmados vs apenas registrados na API, esquema e cobertura; semântica de merge UPDATE parcial; suporte a V1 sem histórico prévio. **Não autoriza código/migration/deploy.**
