@@ -147,12 +147,6 @@ class TestPostgresIntegration:
             request_id=rid, expected_version=3,
             actor_subject="analyst-pg", official_code=official_code,
             official_source="api-delpi/totvs", base_revision=None,
-            revision_snapshot=data,
-            revision_changes=[
-                {"path": p, "before": None, "after": v,
-                 "reason": "initial_registration"}
-                for p, v in data.items()
-            ],
             verification={
                 "official_product_code": official_code,
                 "requested_by_subject": "analyst-pg",
@@ -169,10 +163,13 @@ class TestPostgresIntegration:
         )
         assert out["request"]["status"] == "completed"
         assert out["revision"]["revision_number"] == 1
+        assert out["change_kind"] == "baseline_initial"
         record = out["record"]
         assert record["official_product_code"] == official_code
         rev = repo.get_revision(record["id"], 1)
-        assert rev["technical_snapshot"]["description"] == "PG EDIT"
+        snap = rev["technical_snapshot"]
+        assert snap["schemaVersion"] == 2
+        assert snap["fields"]["description"]["value"] == "PG EDIT"
 
         # timeline append-only com sequência
         events = repo.list_events(rid)
@@ -559,24 +556,17 @@ class TestPostgresListRecords:
             reason=None, event_meta={},
         )
         official_code = f"PGRV{run}"
-        data = _DRAFT_PAYLOAD.copy()
         out = repo.complete_request(
             request_id=rid_done, expected_version=2,
             actor_subject="analyst-pg", official_code=official_code,
             official_source="totvs-test", base_revision=None,
-            revision_snapshot=data,
-            revision_changes=[
-                {"path": p, "before": None, "after": v,
-                 "reason": "initial_registration"}
-                for p, v in data.items()
-            ],
             verification={
                 "official_product_code": official_code,
                 "requested_by_subject": "analyst-pg",
                 "checked_at": "2026-11-13T00:00:00+00:00",
                 "official_source": "totvs-test",
                 "result": "matched",
-                "expected_fields": list(data),
+                "expected_fields": list(_DRAFT_PAYLOAD),
                 "observed_fields": {"product": {}},
                 "field_results": {},
                 "evidence_fingerprint": f"fp-{run}",
@@ -595,3 +585,116 @@ class TestPostgresListRecords:
         assert repo.list_records(
             search=rid_open[:8], page=1, page_size=25
         )["total"] == 0
+
+
+class TestPostgresSnapshotVersioning:
+    """PROD-02 — paridade PG real: V1 baseline, no-op e Vn+1."""
+
+    def _seed_update(self, repo, rid, code, unit):
+        repo.create_request(
+            request=_req(
+                rid, {},
+                request_type="update",
+                official_product_code=code,
+            ),
+            draft={
+                "request_id": rid, "schema_version": 1,
+                "technical_data": {"unit": unit},
+                "changed_paths": [{"path": "unit", "reason": "pg"}],
+                "row_version": 1, "updated_by_subject": "user-pg-1",
+                "updated_at": "2026-11-06T00:00:00+00:00",
+            },
+            event={
+                "event_type": "submitted", "actor_subject": "user-pg-1",
+                "reason": None,
+                "metadata": {"source": "engineering-test"},
+                "previous_status": None, "next_status": "submitted",
+            },
+        )
+        repo.apply_transition(
+            request_id=rid, expected_version=1,
+            allowed_from=frozenset({"submitted"}),
+            actor_label="A", actor_subject="analyst-pg",
+            event_type="started", next_status="in_progress",
+            set_fields={}, reason=None, event_meta={},
+        )
+
+    def _complete(self, repo, rid, code):
+        return repo.complete_request(
+            request_id=rid, expected_version=2,
+            actor_subject="analyst-pg", official_code=code,
+            official_source="api-delpi/totvs", base_revision=None,
+            verification={
+                "official_product_code": code,
+                "requested_by_subject": "analyst-pg",
+                "checked_at": "2026-11-13T00:00:00+00:00",
+                "official_source": "api-delpi/totvs",
+                "result": "matched",
+                "expected_fields": ["unit"],
+                "observed_fields": {"product": {"unit": "UN"}},
+                "field_results": {"unit": {"result": "matched"}},
+                "evidence_fingerprint": f"fp-{rid[:8]}",
+                "correlation_id": f"corr-{rid[:8]}",
+            },
+            reason=None, event_meta={},
+        )
+
+    def test_v1_noop_v2_real_pg(self, repo):
+        code = f"PGV{uuid.uuid4().hex[:8].upper()}"
+        # V1 — primeira conclusão matched (baseline_initial).
+        r1 = str(uuid.uuid4())
+        self._seed_update(repo, r1, code, "UN")
+        out1 = self._complete(repo, r1, code)
+        assert out1["change_kind"] == "baseline_initial"
+        assert out1["effective_revision_number"] == 1
+        rec_id = out1["record"]["id"]
+        snap1 = out1["revision"]["technical_snapshot"]
+        assert snap1["schemaVersion"] == 2
+        assert snap1["fields"]["unit"]["valueOrigin"] == (
+            "official_verified"
+        )
+        # no-op — mesma declaração verificada: sem revisão nova.
+        r2 = str(uuid.uuid4())
+        self._seed_update(repo, r2, code, "UN")
+        out2 = self._complete(repo, r2, code)
+        assert out2["change_kind"] == "no_technical_change"
+        assert out2["revision"] is None
+        assert out2["effective_revision_number"] == 1
+        rec = repo.get_record(rec_id)
+        assert rec["current_revision_number"] == 1
+        assert len(repo.list_revisions(rec_id)) == 1
+        # V2 — diferença técnica real.
+        r3 = str(uuid.uuid4())
+        self._seed_update(repo, r3, code, "BX")
+        out3 = repo.complete_request(
+            request_id=r3, expected_version=2,
+            actor_subject="analyst-pg", official_code=code,
+            official_source="api-delpi/totvs", base_revision=None,
+            verification={
+                "official_product_code": code,
+                "requested_by_subject": "analyst-pg",
+                "checked_at": "2026-11-13T00:00:00+00:00",
+                "official_source": "api-delpi/totvs",
+                "result": "matched",
+                "expected_fields": ["unit"],
+                "observed_fields": {"product": {"unit": "BX"}},
+                "field_results": {"unit": {"result": "matched"}},
+                "evidence_fingerprint": f"fp-{r3[:8]}",
+                "correlation_id": f"corr-{r3[:8]}",
+            },
+            reason=None, event_meta={},
+        )
+        assert out3["change_kind"] == "technical_change"
+        assert out3["revision"]["revision_number"] == 2
+        revs = repo.list_revisions(rec_id)
+        assert len(revs) == 2
+        snap2 = revs[1]["technical_snapshot"]
+        assert snap2["fields"]["unit"]["value"] == "BX"
+        # revisão anterior imutável
+        assert revs[0]["technical_snapshot"]["fields"]["unit"][
+            "value"
+        ] == "UN"
+        # request do no-op concluiu vinculado à revisão vigente
+        req2 = repo.get_request(r2)
+        assert req2["status"] == "completed"
+        assert req2["completed_record_id"] == rec_id

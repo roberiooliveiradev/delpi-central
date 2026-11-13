@@ -19,6 +19,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import Any, Iterator
 
+from engineering_app.domain.product_registration import snapshot
 from engineering_app.domain.product_registration.errors import (
     PrcConcurrencyError,
     PrcDuplicateError,
@@ -702,8 +703,6 @@ class PostgresProductRegistrationRepository:
         official_code: str,
         official_source: str,
         base_revision: int | None,
-        revision_snapshot: dict[str, Any],
-        revision_changes: list[dict[str, Any]],
         verification: dict[str, Any],
         reason: str | None,
         event_meta: dict[str, Any],
@@ -738,7 +737,24 @@ class PostgresProductRegistrationRepository:
                 rec["current_revision_number"]
             ):
                 raise PrcStaleRevisionError("stale_revision")
-            rev_number = int(rec["current_revision_number"]) + 1
+            # T01/T02 — snapshot candidato e diff canônico sob lock,
+            # contra a revisão vigente real (nunca estado pré-lock).
+            draft_row = conn.execute(
+                f"SELECT technical_data, changed_paths"
+                f" FROM {_T_DRAFT} WHERE request_id=%s",
+                (request_id,),
+            ).fetchone()
+            draft_data = (draft_row or {}).get("technical_data") or {}
+            draft_changes = (draft_row or {}).get("changed_paths") or []
+            current_rev_no = int(rec["current_revision_number"])
+            prior_snapshot = None
+            if current_rev_no >= 1:
+                prior = conn.execute(
+                    f"SELECT technical_snapshot FROM {_T_REV}"
+                    " WHERE record_id=%s AND revision_number=%s",
+                    (rec["id"], current_rev_no),
+                ).fetchone()
+                prior_snapshot = (prior or {}).get("technical_snapshot")
             ver_row = conn.execute(
                 f"INSERT INTO {_T_VER}"
                 " (id, request_id, official_product_code,"
@@ -763,27 +779,64 @@ class PostgresProductRegistrationRepository:
                     verification.get("error_code"),
                 ),
             ).fetchone()
-            rev = conn.execute(
-                f"INSERT INTO {_T_REV}"
-                " (id, record_id, revision_number, request_id,"
-                "  schema_version, technical_snapshot, changes,"
-                "  official_evidence_id, approved_by_subject,"
-                "  approved_at, created_at)"
-                " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-                " RETURNING *",
-                (
-                    _uuid(), rec["id"], rev_number, request_id, 1,
-                    json.dumps(revision_snapshot),
-                    json.dumps(revision_changes),
-                    ver_row["id"], actor_subject, _now(), _now(),
-                ),
-            ).fetchone()
-            conn.execute(
-                f"UPDATE {_T_REC} SET current_revision_number=%s,"
-                " last_official_verified_at=%s, updated_at=%s"
-                " WHERE id=%s",
-                (rev_number, _now(), _now(), rec["id"]),
+            candidate, buildable = snapshot.build_consolidated_snapshot(
+                request_type=req["request_type"],
+                draft_data=draft_data,
+                changed_paths=draft_changes,
+                link_ops=draft_data.get("supplierLinkChanges") or [],
+                field_results=verification["field_results"],
+                prior_snapshot=prior_snapshot,
+                baseline=req["official_baseline"],
+                verification_id=str(ver_row["id"]),
             )
+            if not buildable:
+                raise PrcStateConflictError("snapshot_incomparable")
+            changes, comparable = snapshot.compute_technical_diff(
+                prior_snapshot, candidate
+            )
+            if not comparable:
+                raise PrcStateConflictError("snapshot_incomparable")
+            if current_rev_no == 0:
+                publish = True
+                change_kind = snapshot.CHANGE_BASELINE_INITIAL
+            elif changes:
+                publish = True
+                change_kind = snapshot.CHANGE_TECHNICAL
+            else:
+                publish = False
+                change_kind = snapshot.CHANGE_NO_TECHNICAL
+            rev = None
+            if publish:
+                rev_number = current_rev_no + 1
+                rev = conn.execute(
+                    f"INSERT INTO {_T_REV}"
+                    " (id, record_id, revision_number, request_id,"
+                    "  schema_version, technical_snapshot, changes,"
+                    "  official_evidence_id, approved_by_subject,"
+                    "  approved_at, created_at)"
+                    " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                    " RETURNING *",
+                    (
+                        _uuid(), rec["id"], rev_number, request_id,
+                        snapshot.SNAPSHOT_SCHEMA_VERSION,
+                        json.dumps(candidate),
+                        json.dumps(changes),
+                        ver_row["id"], actor_subject, _now(), _now(),
+                    ),
+                ).fetchone()
+                conn.execute(
+                    f"UPDATE {_T_REC} SET current_revision_number=%s,"
+                    " last_official_verified_at=%s, updated_at=%s"
+                    " WHERE id=%s",
+                    (rev_number, _now(), _now(), rec["id"]),
+                )
+            else:
+                rev_number = current_rev_no
+                conn.execute(
+                    f"UPDATE {_T_REC} SET last_official_verified_at=%s,"
+                    " updated_at=%s WHERE id=%s",
+                    (_now(), _now(), rec["id"]),
+                )
             conn.execute(
                 f"UPDATE {_T_REQ} SET status='completed',"
                 " row_version=row_version+1, completed_at=%s,"
@@ -805,6 +858,9 @@ class PostgresProductRegistrationRepository:
                         "revision_number": rev_number,
                         "verification_id": str(ver_row["id"]),
                         "action": "complete",
+                        "change_kind": change_kind,
+                        "technical_change": publish,
+                        "effective_revision_number": rev_number,
                         **event_meta,
                     },
                     "previous_status": req["status"],
@@ -814,10 +870,12 @@ class PostgresProductRegistrationRepository:
         ver_row["id"] = str(ver_row["id"])
         ver_row["request_id"] = str(ver_row["request_id"])
         ver_row["checked_at"] = _iso(ver_row["checked_at"])
-        for k in ("id", "record_id", "request_id", "official_evidence_id"):
-            rev[k] = str(rev[k])
-        rev["approved_at"] = _iso(rev["approved_at"])
-        rev["created_at"] = _iso(rev["created_at"])
+        if rev is not None:
+            for k in ("id", "record_id", "request_id",
+                      "official_evidence_id"):
+                rev[k] = str(rev[k])
+            rev["approved_at"] = _iso(rev["approved_at"])
+            rev["created_at"] = _iso(rev["created_at"])
         rec["id"] = str(rec["id"])
         for k in ("created_at", "updated_at", "last_official_verified_at"):
             rec[k] = _iso(rec[k])
@@ -827,6 +885,9 @@ class PostgresProductRegistrationRepository:
             "record": rec,
             "revision": rev,
             "verification": ver_row,
+            "change_kind": change_kind,
+            "effective_revision_number": rev_number,
+            "technical_diff": changes,
         }
 
     # --- attendance flags (D16) ------------------------------------------------

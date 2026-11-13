@@ -141,15 +141,16 @@ class ProductRegistrationRepository(Protocol):
         official_code: str,
         official_source: str,
         base_revision: int | None,
-        revision_snapshot: dict[str, Any],
-        revision_changes: list[dict[str, Any]],
         verification: dict[str, Any],
         reason: str | None,
         event_meta: dict[str, Any],
     ) -> dict[str, Any]:
         """Transação única de conclusão: revalida CAS/estado/revisão-base,
-        cria revision imutável, move ponteiro do record, marca request
-        ``completed`` e grava verification matched + evento."""
+        monta o snapshot consolidado sob lock contra a revisão vigente,
+        publica V1 (``baseline_initial``) ou Vn+1 (``technical_change``)
+        quando há diff técnico real, ou conclui como ``no_technical_change``
+        sem INSERT em revisions nem incremento do ponteiro — sempre com
+        verification matched + evento + request ``completed``."""
         ...
 
     # --- attendance flags (D16) -----------------------------------------------
