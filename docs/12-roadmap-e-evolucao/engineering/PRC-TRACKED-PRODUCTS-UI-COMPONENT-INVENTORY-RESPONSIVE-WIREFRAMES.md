@@ -1,4 +1,7 @@
 # PRC — Inventário GitHub + wireframes responsivos + especificação dimensional
+
+> **FONTE CANÔNICA ATUAL — 2026-11-13:** [Regras de produto, inconsistências e plano central PRC-TRACK](./PRC-TRACK-CANONICAL-PRODUCT-RULES-AND-EXECUTION-PLAN.md). Este documento é referência histórica/setorial: em caso de divergência sobre no-op, V1, snapshot PRC, REOPEN, RESOLVED/REMOVED, flags durante solicitação, conclusão, permissões ou critérios de aceite, **o plano central prevalece**. Trechos legados contraditórios estão **SUPERSEDED**, não são perguntas abertas nem instruções para implementar. Regras UX não conflitantes continuam válidas. `G1_ARCHITECTURE_DECISION_REQUIRED / TEST_NOT_RUN`.
+
 > **GATE OBRIGATÓRIO ANTES DO FRONTEND:** executar e aceitar [PRC-UI-EXTRACT-01 — migração de componentes visuais para Plugin UI](./PRC-PLUGIN-UI-COMPONENT-EXTRACTION-MIGRATION-PLAN.md). Nenhum novo componente primitivo/personalizado reutilizável deve permanecer implementado exclusivamente no MFE Engenharia; adapters de dados/domínio continuam locais.
 
 
