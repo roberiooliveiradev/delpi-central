@@ -135,9 +135,6 @@ const detail = (overrides?: Partial<InvoicePostingDetail["request"]>): InvoicePo
   comments: [],
   allowed_actions: ["comment", "block"],
   danfe: null,
-  xml_original: null,
-  xml_standard: null,
-  dacte: null,
 });
 
 afterEach(() => {

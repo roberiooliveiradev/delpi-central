@@ -1,4 +1,5 @@
 import { RealtimeStatusIndicator } from "@delpi/plugin-ui/index";
+import { helpTooltips } from "../../content/helpTooltips";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FilePlus2, Inbox, SearchX } from "lucide-react";
 import { useLnfPermissions } from "../../application/useLnfPermissions";
@@ -253,7 +254,11 @@ export function QueuePage({ branch, highlightId, onCreate, onOpen }: Props) {
         subtitle={`Fila · ${branchLabel(branch)} · mais recentes primeiro (recebimento físico).`}
         meta={
           listLoadedAt || realtimeStatus !== "idle" ? (
-            <span className="lnf-queue-loaded-meta" data-testid="queue-loaded-meta">
+            <span
+              className="lnf-queue-loaded-meta"
+              data-testid="queue-loaded-meta"
+              title={`${helpTooltips.queueRealtime} ${helpTooltips.realtimeStatus}`}
+            >
               {listLoadedAt
                 ? `Fila carregada em ${formatDateTime(listLoadedAt)}`
                 : null}

@@ -8,6 +8,23 @@ import { UnmappedProductsPage } from "./UnmappedProductsPage";
 
 vi.mock("../../data/api/meApi");
 vi.mock("../../data/api/invoicePostingApi");
+vi.mock("@delpi/plugin-ui/index", () => ({
+  RealtimeStatusIndicator: () => null,
+  useRealtimeRooms: () => ({ status: "idle" }),
+  RealtimeSocketClient: class {
+    start() {}
+    stop() {}
+    getStatus() {
+      return "idle";
+    }
+    onStatusChange() {
+      return () => undefined;
+    }
+    addMessageListener() {
+      return () => undefined;
+    }
+  },
+}));
 
 const row: UnmappedSupplierProduct = {
   id: "row-1",

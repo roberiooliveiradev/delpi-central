@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { RealtimeStatusIndicator } from "@delpi/plugin-ui/index";
+import { useCallback, useEffect, useState } from "react";
 import { SearchX } from "lucide-react";
 import { useLnfPermissions } from "../../application/useLnfPermissions";
 import { branchLabel } from "../../constants/branch";
@@ -9,6 +10,9 @@ import type {
   UnmappedProductFilters,
   UnmappedSupplierProduct,
 } from "../../domain/types";
+import { isLnfUnmappedProductsChanged } from "../../realtime/events";
+import { unmappedProductsRoom } from "../../realtime/rooms";
+import { useLnfRoomEvents } from "../../realtime/useLnfRoomEvents";
 import { LnfPageHeader } from "../components/LnfPageHeader";
 import { formatDateTime, formatDocument } from "../format";
 
@@ -103,6 +107,37 @@ export function UnmappedProductsPage() {
     return () => controller.abort();
   }, [debounced, perms.loading, perms.canReviewUnmappedProducts]);
 
+  const refetchUnmappedFromRealtime = useCallback(async () => {
+    if (!perms.canReviewUnmappedProducts) return;
+    try {
+      const data = await api.listUnmappedProducts(debounced);
+      setItems(data.items ?? []);
+      setTotalPages(data.total_pages ?? 0);
+    } catch {
+      // refetch silencioso — lista atual permanece
+    }
+  }, [debounced, perms.canReviewUnmappedProducts]);
+
+  const onRealtimeEvents = useCallback(
+    (events: unknown[]) => {
+      if (events.some((event) => isLnfUnmappedProductsChanged(event))) {
+        void refetchUnmappedFromRealtime();
+      }
+    },
+    [refetchUnmappedFromRealtime],
+  );
+
+  const { status: realtimeStatus } = useLnfRoomEvents({
+    rooms: [unmappedProductsRoom()],
+    enabled:
+      !perms.loading && perms.canReviewUnmappedProducts && !forbidden,
+    debounceMs: 1_000,
+    onEvents: onRealtimeEvents,
+    onResync: () => {
+      void refetchUnmappedFromRealtime();
+    },
+  });
+
   const page = debounced.page ?? 1;
 
   function clearRequestFilter() {
@@ -120,6 +155,13 @@ export function UnmappedProductsPage() {
       <LnfPageHeader
         title="Produtos sem código Delpi"
         subtitle={helpTooltips.unmappedProducts}
+        meta={
+          realtimeStatus !== "idle" ? (
+            <span title={helpTooltips.realtimeStatus}>
+              <RealtimeStatusIndicator status={realtimeStatus} compact />
+            </span>
+          ) : undefined
+        }
       />
 
       {requestId ? (

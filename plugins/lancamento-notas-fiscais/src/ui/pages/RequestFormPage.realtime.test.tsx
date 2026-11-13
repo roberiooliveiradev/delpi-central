@@ -110,9 +110,6 @@ const detail: InvoicePostingDetail = {
   comments: [],
   allowed_actions: ["edit"],
   danfe: null,
-  xml_original: null,
-  xml_standard: null,
-  dacte: null,
 };
 
 afterEach(() => {
