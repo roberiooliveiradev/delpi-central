@@ -3663,3 +3663,43 @@ stash A/B).
 (DEV)` · `UNKNOWN_FAIL_CLOSED=PRESERVED` · `FALSE_PARENT_
 PROMOTIONS=0` · `PRODUCTION_CHANGED=NO` · `RELEASE_GATE=
 COORDINATION` · `VAL01_COMPLETED=false`.
+
+## §85.4 — Deploy produtivo do refinamento de bandas (2026-11-13)
+
+**TASK_ID:** `EVA-VAL01-EMPTY-CELL-BAND-SIGNAL-PRODUCTION-DEPLOY`
+
+**Implantado:** `engineering-api` somente — imagem
+`sha256:e3fc852e237ac5fd6508c7258d8614422cbb39b0e969c9d2a678ecd4774461ab`,
+container `f2a0ac4558f8`, código `0601e0002c` (contém `ab8772a410`
++ fix upstream revisado `d73b11e30b` no gateway de requests).
+Rollback: `infra-engineering-api:rollback-pre-ab8772a4` →
+`11802a0e` preservada.
+
+**Health:** container `healthy` 7s pós-boot; `/health` interno 200
+(healthcheck + log); gateway `…/apps/engineering-api/health` → 200.
+Startup limpa, sem erros de OCR/modelo/contrato.
+
+**Verificação do binário deployado** (replay da grade SLANet crua
+de 144 células + 106 tokens do job `aj-f5040788e5074c30`, dentro
+do próprio container):
+
+```text
+r15 → 50225702  IDENTIFIED rowspan_anchor   ← ocorrência-alvo
+r11 AG|16|10110676 → 50225701  UNKNOWN y_anchor_nearest  (negativo)
+AE→50225701/703/704/740, AH·AG→50225740, AF→50225741  preservados
+duplicatas=0, falsas promoções=0
+```
+
+**E2E real:** `AUTHZ_BLOCKED` — a identidade de avaliação
+(`user@local.com`) não possui `engineering.access` no Core e o
+principal de smoke anterior (`deploy01.smoke@delpi.local`) não tem
+identidade Keycloak nem credencial disponível. Mint de token com a
+audience MCP exigiria `directAccessGrants` em `mcp-engineering` +
+grant Core — mutações de AuthZ que a task proíbe repetir por
+conveniência. O job E2E real do PDF `90264135` fica pendente de
+identidade autorizada pela Coordination; o resultado funcional da
+mudança está comprovado pelo replay no binário deployado.
+
+`DEPLOY_GATE=PASS` · `HEALTH_GATE=PASS` · `EMPTY_CELL_SIGNAL_GATE=
+PASS (binary replay)` · `REAL_PDF_E2E_GATE=AUTHZ_BLOCKED` ·
+`VAL01_COMPLETED=false`.

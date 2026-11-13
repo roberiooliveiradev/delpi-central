@@ -1077,3 +1077,13 @@ de célula mesclada deixaram de contribuir para `row_spans`/
 (`ext[16]` 744–794→783–792); `AG|16` segue UNKNOWN; 0 diffs nos
 outros 7 desenhos preservados (599 células). DEV-only, sem
 deploy. Detalhe causal: Doc 119 §85.3.
+
+### Adendo — deploy produtivo (2026-11-13)
+
+`_cell_content_evidence` implantado em `engineering-api` (imagem
+`e3fc852e…`, código `0601e0002c`). Replay da grade crua p12 no
+binário deployado: `AE→50225702` IDENTIFIED `rowspan_anchor`,
+negativo `AG|16` UNKNOWN, demais âncoras preservadas, 0
+duplicatas. E2E real: `AUTHZ_BLOCKED` — identidade de avaliação
+sem `engineering.access`; mutações de AuthZ fora do escopo da task.
+Rollback: `rollback-pre-ab8772a4`. Detalhe: Doc 119 §85.4.
