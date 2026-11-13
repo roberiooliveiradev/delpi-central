@@ -1067,3 +1067,13 @@ candidata a refinamento futuro sob decisão da Coordination.
 
 `GROUP_BOUNDARY_PROD=PASS` · `PRODUCTION_CHANGED=YES
 (engineering-api)` · `VAL01_COMPLETED=false`.
+
+### Adendo — refinamento do sinal de banda (2026-11-13)
+
+Células SLANet vazias (sem texto/tokens) com polígono de altura
+de célula mesclada deixaram de contribuir para `row_spans`/
+`row_cy` (`_cell_content_evidence`). No payload cru p12:
+`AE|1|10010028 → 50225702` agora IDENTIFIED `rowspan_anchor`
+(`ext[16]` 744–794→783–792); `AG|16` segue UNKNOWN; 0 diffs nos
+outros 7 desenhos preservados (599 células). DEV-only, sem
+deploy. Detalhe causal: Doc 119 §85.3.

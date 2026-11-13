@@ -168,3 +168,77 @@ def test_no_duplicate_occurrences():
     occs = _occurrences()
     keys = [(o["row"], o["item"], o["component_code"]) for o in occs]
     assert len(keys) == len(set(keys))
+
+
+# --- Classe de poluição: células vazias com polígono de célula
+# mesclada inflando a banda de conteúdo (Issue #131, residual
+# AE→50225702). Uma célula sem texto e sem tokens não pode provar
+# uma banda de conteúdo — seu polígono SLANet herda a altura da
+# célula mesclada e mascara o desalinhamento da âncora.
+
+P1, P2 = "60000001", "60000002"
+
+
+def _polluted_anchor_cells(*, with_empty_cells: bool = True):
+    """Âncora declarada uma linha tarde (r2 rs2, real r1-3) com
+    células vazias cujos polígonos cobrem a altura da célula
+    mesclada — mesmo sinal degenerado do caso real."""
+    cells: list[dict] = []
+    # P1 real cobre r1-3 (centro ~153); SLANet declara r2 rs2.
+    cells += _anchor(2, P1, 153, rowspan=2, top=99, bottom=207)
+    # P2 real cobre r4-6, já alinhado (controle de fronteira).
+    cells += _anchor(4, P2, 267, rowspan=3, top=215, bottom=320)
+    for r, cy, item, code in (
+        (1, 115, "AX", "20000001"),
+        (2, 153, "AY", "20000002"),
+        (3, 191, "AZ", "20000003"),
+        (4, 229, "BA", "20000004"),
+        (5, 267, "BB", "20000005"),
+        (6, 305, "BC", "20000006"),
+    ):
+        cells += _child_cells(r, cy, item, code)
+    if with_empty_cells:
+        # Células vazias em r2: sem texto, sem token_centers —
+        # polígono cobre a extensão da célula mesclada inteira.
+        for col in (3, 4):
+            cells.append(
+                _cell(2, col, "", _quad(450, 99, 560, 207))
+            )
+    return cells
+
+
+def test_empty_cell_polygon_does_not_pollute_band_signal():
+    """O realinhamento deve enxergar a janela real mesmo com
+    células vazias de polígono inflado — a primeira linha do grupo
+    volta para a própria âncora."""
+    occs = _by_item(_occurrences(_polluted_anchor_cells()))
+    assert occs["AX"]["parent_code"] == P1
+    assert occs["AX"]["parent_state"] == "IDENTIFIED"
+    # Grupo seguinte preservado — a correção não invade.
+    for item in ("BA", "BB", "BC"):
+        assert occs[item]["parent_code"] == P2
+        assert occs[item]["parent_state"] == "IDENTIFIED"
+
+
+def test_empty_cells_do_not_change_table_structure():
+    """Células vazias continuam existindo na topologia; só saem do
+    sinal de banda de conteúdo."""
+    rows, _ = rows_from_native_cells(_polluted_anchor_cells(), page=1)
+    by_row = {r["row"]: r for r in rows}
+    assert 2 in by_row  # a linha continua existindo
+    occs = _by_item(_occurrences(_polluted_anchor_cells()))
+    assert not (occs["AY"]["parent_code"] == P2)
+
+
+def test_textless_cell_with_bbox_still_bounds_when_it_has_tokens():
+    """Célula com tokens mas sem texto continua marcando banda —
+    a exclusão só se aplica a células sem qualquer evidência."""
+    cells = _polluted_anchor_cells(with_empty_cells=False)
+    # Célula "vazia de texto" mas com tokens vinculados em r2.
+    cells.append(
+        _cell(2, 3, "", _quad(450, 140, 560, 168),
+              token_centers=[[500.0, 154.0]])
+    )
+    occs = _by_item(_occurrences(cells))
+    assert occs["AX"]["parent_code"] == P1
+    assert occs["AX"]["parent_state"] == "IDENTIFIED"

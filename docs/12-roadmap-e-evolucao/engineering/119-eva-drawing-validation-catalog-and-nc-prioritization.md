@@ -3616,3 +3616,50 @@ repositório, log ou documento.
 · `GROUP_BOUNDARY_GATE=PASS` · `UNKNOWN_FAIL_CLOSED=PASS` ·
 `ROLLBACK_EXECUTED=NO` (pronto) · `PRODUCTION_CHANGED=YES
 (engineering-api apenas)` · `VAL01_COMPLETED=false`.
+
+## §85.3 — Refinamento do sinal de bandas: células vazias (2026-11-13)
+
+**TASK_ID:** `EVA-VAL01-P12-EMPTY-CELL-BAND-SIGNAL-EVALUATION`
+(Decisão Coordination: Issue #131, comment 6866856308.)
+Modo `INVESTIGATION_FIRST / IMPLEMENTATION_CONDITIONAL / NO_DEPLOY`
+— implementação apenas em DEV, sem deploy.
+
+**Avaliação das alternativas:**
+
+| Alternativa | Resultado |
+|---|---|
+| **A — excluir células sem evidência de conteúdo do sinal de banda** | `ext[16]`=(744,794)→(783,792); `AE→50225702` UNKNOWN→IDENTIFIED no payload cru; 0 diffs em 599 células de 7 outros desenhos preservados; **SELECIONADA** |
+| **B — desempate por cobertura de linha populada** | Funciona, mas adiciona segundo sinal + regra de empate com novos casos de borda (linhas legitimamente vazias dentro da janela); mais invasiva que A para o mesmo ganho; **não selecionada** |
+
+**Implementação (DEV):** predicado `_cell_content_evidence` em
+`understanding.py` — célula sem texto, sem `token_centers`,
+sem `token_refs` e sem `line_texts`/`line_centers` não contribui
+`row_spans`/`row_cy` (fallback de `bounding_box_px` deixa de ser
+invocado para ela). A topologia da tabela é intocada: rowspan,
+colspan e os índices de linha permanecem; só a derivação de
+bandas de conteúdo ignora células sem evidência própria.
+
+**Medições (mesma grade crua de 144 células + 106
+unassigned_tokens do job `aj-f5040788e5074c30`):**
+
+```text
+AE→50225702   : UNKNOWN(y_anchor_nearest) → rowspan_anchor(IDENTIFIED)
+ext[16]       : (744,794) → (783,792)  — poluição removida
+score         : declared 0.5/cand 1.0 → declared 20.0/cand 1.0
+r11 AG|16     : UNKNOWN → UNKNOWN      (controle negativo intacto)
+outras 7 figs : 599 células, 0 diferenças de linha BASE×ALT_A
+```
+
+**Testes:** RED reproduziu o sinal poluído
+(`test_empty_cell_polygon_does_not_pollute_band_signal` falhou
+em base); GREEN 9/9 no arquivo de boundary — incluindo controles
+de âncora correta, grupo adjacente, célula vazia estrutural e
+célula com tokens sem texto. Bateria diretamente impactada:
+**125 passed**; 4 falhas pré-existentes/ambientais (3 async sem
+plugin, 1 roundtrip já falhando em base — verificado via
+stash A/B).
+
+`REFINEMENT_SUPPORTED=YES` · `RUNTIME_CHANGE_IMPLEMENTED=YES
+(DEV)` · `UNKNOWN_FAIL_CLOSED=PRESERVED` · `FALSE_PARENT_
+PROMOTIONS=0` · `PRODUCTION_CHANGED=NO` · `RELEASE_GATE=
+COORDINATION` · `VAL01_COMPLETED=false`.

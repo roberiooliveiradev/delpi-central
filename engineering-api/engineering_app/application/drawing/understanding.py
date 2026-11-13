@@ -2244,6 +2244,25 @@ def _assign_presentation_roles(
     }
 
 
+def _cell_content_evidence(cell: dict) -> bool:
+    """A célula carrega evidência própria de conteúdo?
+
+    Células estruturalmente vazias (sem texto e sem tokens
+    vinculados) não podem demarcar uma banda de conteúdo: o
+    polígono SLANet delas herda a altura da região/célula mesclada
+    e inflaria a extensão da banda, mascarando desalinhamentos de
+    âncora. A topologia (rowspan/colspan) permanece intacta —
+    este predicado governa apenas a derivação de bandas.
+    """
+    if _norm(str(cell.get("normalized_text") or cell.get("text") or "")):
+        return True
+    if cell.get("token_centers") or cell.get("token_refs"):
+        return True
+    if cell.get("line_texts") or cell.get("line_centers"):
+        return True
+    return False
+
+
 def rows_from_native_cells(
     cells: list[dict],
     *,
@@ -2298,6 +2317,8 @@ def rows_from_native_cells(
                 lo, hi = min(token_ys) - pad, max(token_ys) + pad
                 cys.extend(token_ys)
             else:
+                if not _cell_content_evidence(c):
+                    continue
                 b = c.get("bounding_box_px") or []
                 if len(b) >= 8:
                     _ys = [b[1], b[3], b[5], b[7]]
@@ -2330,6 +2351,8 @@ def rows_from_native_cells(
                     lo, hi = min(token_ys) - pad, max(token_ys) + pad
                     cys.extend(token_ys)
                 else:
+                    if not _cell_content_evidence(c):
+                        continue
                     b = c.get("bounding_box_px") or []
                     if len(b) >= 8:
                         _ys = [b[1], b[3], b[5], b[7]]
