@@ -380,6 +380,7 @@ def test_g2_snapshots_postgres_dedup_and_latest(pg_client):
         PostgresWorkstationSnapshotRepository,
     )
     from it_portal_app.domain.errors import ConflictError
+    from it_portal_app.domain.workstation_snapshots import validate_workstation_snapshot
     from tests.test_workstation_snapshots import sample
 
     row = pg_client.post("/workstations", json={
@@ -393,6 +394,8 @@ def test_g2_snapshots_postgres_dedup_and_latest(pg_client):
     snapshot = sample()
     snapshot["observed_at"] = datetime.now(timezone.utc).isoformat()
     snapshot["run_id"] = str(uuid4())
+    # O fluxo real passa pelo validador, que normaliza o hostname.
+    snapshot = validate_workstation_snapshot(snapshot)
     repo = PostgresWorkstationSnapshotRepository()
     digest = "a" * 64
     first = repo.save(
