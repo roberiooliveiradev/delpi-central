@@ -119,3 +119,13 @@ IT_PORTAL_TEST_DSN=postgresql://user@host:5432/postgres python -m pytest -q
 - Registros arquivados nao podem ser editados; restaurar sobre identidade ativa gera 409; auditoria transacional; `revision` evita sobrescrita silenciosa.
 - Testes: `pytest -q tests/test_workstations_domain.py tests/test_workstations_http.py tests/test_http_contract.py`, e com Postgres descartavel (`IT_PORTAL_TEST_DSN`), `pytest -q tests/test_postgres_integration.py`.
 - Roadmap em `docs/12-roadmap-e-evolucao/it-portal/delpi-remote/`.
+
+
+## Delpi Remote - G1-OWNER (em revisao)
+
+- Campo Responsavel do inventario passa a pesquisar usuarios ativos pelo endpoint Core `/me/directory/users`, com debounce e `include_self=true`.
+- Selecionar um resultado atribui seu UUID; texto pesquisado sozinho nao cria vinculo. Ficha mostra o nome e sinaliza status de conta.
+- Cadastros legados com nome textual permanecem visiveis ate vinculacao manual. Nenhuma permissao de suporte remoto decorre do ownership.
+- Sem mudanca estrutural do manifesto 0.3.4 (mesma rota e permissoes); build novo sera necessario apenas depois de homologacao da API com V010.
+- Testes preparados: `npm test -- --run src/features/workstations/WorkstationOwnerPicker.test.tsx src/features/workstations/WorkstationsPage.test.tsx`, `npm run lint`, `npm run build`.
+- [Runbook G1-OWNER](../../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G1-OWNER-RELEASE.md).

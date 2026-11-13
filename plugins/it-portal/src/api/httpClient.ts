@@ -135,3 +135,33 @@ export function apiPut<T>(url: string, body: unknown): Promise<T> {
 export function apiDelete<T>(url: string): Promise<T> {
   return request<T>("DELETE", url);
 }
+
+
+// Core responde JSON bruto, nao o envelope da BFF. Endpoints permitidos sao fixos.
+async function requestCore<T>(method: "GET" | "POST", url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
+  if (!url.startsWith("/core-api/me/directory/users?") && url !== "/core-api/me/directory/users/lookup") {
+    throw new ApiError(400, "Endpoint de diretório inválido.");
+  }
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method,
+      headers: buildHeaders(body !== undefined),
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    throw new ApiError(0, HTTP_ERROR_MESSAGES.network, "network_error");
+  }
+  if (!response.ok) throw await parseError(response);
+  return (await response.json()) as T;
+}
+
+export function coreApiGet<T>(url: string, signal?: AbortSignal): Promise<T> {
+  return requestCore<T>("GET", url, undefined, signal);
+}
+
+export function coreApiPost<T>(url: string, body: unknown, signal?: AbortSignal): Promise<T> {
+  return requestCore<T>("POST", url, body, signal);
+}

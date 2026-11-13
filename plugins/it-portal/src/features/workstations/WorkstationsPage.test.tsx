@@ -39,6 +39,7 @@ function computer(overrides: Partial<Workstation> = {}): Workstation {
     department: "Engenharia",
     location: "Matriz",
     responsible: "TI",
+    responsible_user_id: null,
     operating_system: "Windows 11",
     administrative_status: "in_operation",
     description: "Computador corporativo",

@@ -57,3 +57,13 @@ npm run build   # tsc -b && vite build
 - Manifesto estrutural `0.3.4`: nova rota visível no menu interno e permissão `it-portal.computers.view` preservada; registrar via versão estrutural no Core durante deploy, não somente PUT cosmético.
 - Testes de UI: `npm test -- --run src/app/routes.test.ts src/features/workstations/WorkstationsPage.test.tsx`, depois `npm run lint && npm run build`. Testes completos e deploy ainda pendentes.
 - Plano e evidências: `docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G1-UI.md`.
+
+
+## Delpi Remote - G1-OWNER (nao implantado)
+
+- Migration V010 adiciona `workstations.responsible_user_id UUID NULL`; coluna `responsible` preserva nome historico, sem FK entre os bancos Core/Portal.
+- BFF valida nova atribuicao/troca de responsavel no Core via `POST /me/directory/users/lookup`, usando o JWT do usuario com permissao fresh. Config: `DELPI_AUTH_CORE_API_URL` ja presente no Compose.
+- ID inexistente/inativo responde 422, Core indisponivel responde 503, sem gravacao. Alteracoes usam audit_events transacional. Edição com cliente antigo nao apaga o ID atual.
+- Rotas e permissoes continuam iguais ao G1; manifesto do MFE permanece 0.3.4.
+- Testes a executar antes de deploy: `python -m pytest -q tests/test_workstation_owner.py tests/test_workstations_http.py tests/test_workstations_domain.py`, e em banco descartavel `tests/test_postgres_integration.py`; nunca testar com DSN de producao.
+- [Documentacao G1-OWNER](../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G1-OWNER.md).

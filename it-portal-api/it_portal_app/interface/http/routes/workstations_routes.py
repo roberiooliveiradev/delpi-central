@@ -84,7 +84,10 @@ def create_it_workstation(
     service: WorkstationService = Depends(get_workstation_service),
 ):
     user = authorize_write(request, COMPUTERS_VIEW, COMPUTERS_MANAGE)
-    data = service.create_workstation(payload.model_dump(), actor_from(user))
+    data = service.create_workstation(
+        payload.model_dump(exclude_unset=True), actor_from(user),
+        access_token=str(getattr(user, "access_token", "") or ""),
+    )
     return ok(data, "Computador cadastrado.", 201, operation_id="create_it_workstation")
 
 
@@ -117,8 +120,9 @@ def update_it_workstation(
 ):
     user = authorize_write(request, COMPUTERS_VIEW, COMPUTERS_MANAGE)
     updated = service.update_workstation(
-        str(workstation_id), payload.model_dump(exclude={"revision"}),
+        str(workstation_id), payload.model_dump(exclude={"revision"}, exclude_unset=True),
         payload.revision, actor_from(user),
+        access_token=str(getattr(user, "access_token", "") or ""),
     )
     return ok(updated, "Computador atualizado.", operation_id="update_it_workstation")
 

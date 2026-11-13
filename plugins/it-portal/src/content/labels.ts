@@ -173,6 +173,7 @@ export const WORKSTATION_FIELD_LABELS: Record<string, string> = {
   department: "Setor",
   location: "Localização",
   responsible: "Responsável",
+  responsible_user_id: "Responsável vinculado",
   operating_system: "Sistema operacional",
   administrative_status: "Situação administrativa",
   description: "Descrição",

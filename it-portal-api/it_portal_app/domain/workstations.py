@@ -7,6 +7,7 @@ A identidade persistente do agente sera definida em outra camada no G2.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from uuid import UUID
 
 from it_portal_app.domain.catalogs import ADMINISTRATIVE_STATUSES, UNIT_CODES
 from it_portal_app.domain.errors import ValidationError
@@ -41,6 +42,7 @@ class WorkstationFields:
     department: str | None
     location: str | None
     responsible: str | None
+    responsible_user_id: str | None
     operating_system: str | None
     administrative_status: str
     description: str | None
@@ -97,6 +99,16 @@ def build_workstation_fields(raw: dict) -> WorkstationFields:
     department = _optional(raw, "department", DEPARTMENT_MAX, errors)
     location = _optional(raw, "location", LOCATION_MAX, errors)
     responsible = _optional(raw, "responsible", RESPONSIBLE_MAX, errors)
+    raw_owner_id = _clean(raw.get("responsible_user_id"))
+    responsible_user_id = None
+    if raw_owner_id:
+        try:
+            normalized_owner_id = UUID(raw_owner_id)
+            if normalized_owner_id.int == 0:
+                raise ValueError("zero UUID")
+            responsible_user_id = str(normalized_owner_id)
+        except (ValueError, AttributeError):
+            errors["responsible_user_id"] = "Selecione um usuario valido do Core."
     operating_system = _optional(raw, "operating_system", OS_MAX, errors)
     description = _optional(raw, "description", DESCRIPTION_MAX, errors)
 
@@ -126,6 +138,7 @@ def build_workstation_fields(raw: dict) -> WorkstationFields:
         department=department,
         location=location,
         responsible=responsible,
+        responsible_user_id=responsible_user_id,
         operating_system=operating_system,
         administrative_status=status,
         description=description,

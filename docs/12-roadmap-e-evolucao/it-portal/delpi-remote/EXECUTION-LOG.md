@@ -166,6 +166,24 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo:** continuar homologacao funcional do inventario e implementar G1-OWNER depois de validacao; G2-AGENT em fase posterior e G0-SEC obrigatorio para o motor remoto.
 
+## 2026-11-13 | G1-OWNER | codigo preparado, dependente de validacao
+
+**Objetivo:** permitir que o Responsavel da workstation seja selecionado entre usuarios ativos da Minha DELPI em vez de ser digitado como texto.
+
+**Contrato Core verificado em fonte oficial:** `GET /me/directory/users` com `include_self=true`, `POST /me/directory/users/lookup` para ID canonico. Somente usuarios ativos, sem precisar de usuario administrativo ou de nova tabela de funcionarios.
+
+**Arquivos:** migration `V010__workstation_responsible_user.sql`; CoreDirectoryOwnerResolver; dominio/servico/repositorio/rotas/DTO/config da API; cliente HTTP Core, componentes `WorkstationOwnerPicker` e `WorkstationOwnerStatus`, formulario/detalhe/estilos; testes `test_workstation_owner.py`, `WorkstationOwnerPicker.test.tsx` e integracao V010.
+
+**Implementado em codigo:** busca debounced no Core, escolha por ID UUID, nome canonico validado no backend e salvo como snapshot, compatibilidade com cadastros legados, historico e revogacao (Core offline = 503 / sem permissao = 403). V010 e apenas aditiva. Nenhum codigo de acesso remoto foi tocado.
+
+**Teste/evidencia neste ambiente:** leitura dos contratos e revisao estatica de arquivos; testes novos escritos. **NAO foram executados** Vitest/lint/build, suite HTTP real com dependencias e PostgreSQL descartavel. Nao declarar testes verdes/homologacao.
+
+**Producao:** sem migração V010 aplicada, sem deploy, sem alteracoes no banco produtivo ou no Portal Admin. A V009 e o G1 publicado anteriormente permanecem intactos.
+
+**Riscos/rollback:** dependendo do banco compartilhado `plugins_hub`, preparar backup antes de V010; verificar divergencia anterior de collation separadamente. Em caso de rollback, voltar imagens de API/MFE e preservar coluna V010 ja aplicada; nunca editar migration historica.
+
+**Proximo passo:** validar suites reais e PostgreSQL V001..V010, tratar incompatibilidades, liberar publicacao do G1-OWNER com aceite; depois iniciar desenho G2-AGENT de leitura de inventario. G0-SEC permanece gate para remoto.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

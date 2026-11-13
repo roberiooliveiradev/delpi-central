@@ -2364,3 +2364,73 @@
     transition: none;
   }
 }
+
+
+/* Delpi Remote G1-OWNER: seletor de colaboradores Core, sem detalhes sensiveis. */
+.dashboard-it-portal .itp-owner-picker {
+  display: grid;
+  gap: 7px;
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.dashboard-it-portal .itp-owner-picker label {
+  color: var(--itp-title);
+  font-size: 0.79rem;
+  font-weight: 650;
+}
+.dashboard-it-portal .itp-owner-picker__controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.dashboard-it-portal .itp-owner-picker__controls input {
+  min-width: 220px;
+  flex: 1 1 280px;
+  min-height: 40px;
+  border: 1px solid var(--itp-border);
+  border-radius: 10px;
+  background: var(--itp-surface);
+  color: var(--itp-title);
+  padding: 10px 12px;
+  font: inherit;
+}
+.dashboard-it-portal .itp-owner-picker__controls button,
+.dashboard-it-portal .itp-owner-picker__results button {
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--itp-border);
+  background: var(--itp-surface);
+  color: var(--itp-title);
+  font: inherit;
+  cursor: pointer;
+}
+.dashboard-it-portal .itp-owner-picker__controls input:focus-visible,
+.dashboard-it-portal .itp-owner-picker__controls button:focus-visible,
+.dashboard-it-portal .itp-owner-picker__results button:focus-visible {
+  outline: 2px solid var(--itp-accent, #00a6de);
+  outline-offset: 2px;
+}
+.dashboard-it-portal .itp-owner-picker__results {
+  border: 1px solid var(--itp-border);
+  border-radius: 10px;
+  background: var(--itp-surface);
+  padding: 8px;
+  max-height: 230px;
+  overflow: auto;
+}
+.dashboard-it-portal .itp-owner-picker__results [role="listbox"] {
+  display: grid;
+  gap: 4px;
+}
+.dashboard-it-portal .itp-owner-picker__results [role="option"] {
+  text-align: left;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dashboard-it-portal .itp-owner-picker__results [role="option"]:hover {
+  background: var(--itp-surface-muted, #eef7fc);
+}
+.dashboard-it-portal .itp-owner-picker p { margin: 0; font-size: 0.74rem; }

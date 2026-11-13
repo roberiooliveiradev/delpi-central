@@ -51,6 +51,7 @@ class WorkstationInput(_Input):
     department: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
     location: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
     responsible: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    responsible_user_id: str | None = Field(default=None, max_length=36)
     operating_system: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
     administrative_status: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
     description: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
@@ -123,6 +124,7 @@ class WorkstationOut(BaseModel):
     department: str | None
     location: str | None
     responsible: str | None
+    responsible_user_id: str | None
     operating_system: str | None
     administrative_status: str
     description: str | None

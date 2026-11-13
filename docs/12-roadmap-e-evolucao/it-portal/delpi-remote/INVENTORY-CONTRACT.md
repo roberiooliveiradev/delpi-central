@@ -1,6 +1,6 @@
 # Delpi Remote | Contrato G1 de inventario de estacoes (planejado)
 
-**Status em 13/11/2026:** G1-API e G1-UI implementados em codigo, AMBOS EM REVISAO e NAO implantados. A migration V009, rotas, tela e testes estao versionados, sem homologacao com Postgres real nem avaliacao de producao.
+**Status em 13/11/2026:** o backend e a tela de Computadores G1 foram publicados conforme evidencias de operador, V009 aplicada e abertura visual confirmada, ainda sem homologacao completa de CRUD/RBAC. G1-OWNER adiciona codigo e migration V010 EM REVISAO, nao implantados.
 
 **Objetivo:** entregar primeiro cadastro e consultas sem qualquer controle de tela, shell, mouse, teclado, clipboard ou arquivos.
 
@@ -40,10 +40,10 @@
 
 **Nota:** especificacao e contrato propostos; ainda nao corresponde a rotas disponiveis no backend.
 
-## Proxima evolucao planejada: G1-OWNER (vinculo ao usuario do Core)
+## Evolucao G1-OWNER em codigo, ainda nao implantada
 
-O campo `responsible` atual e texto livre. Depois de homologar o G1, desenvolver um campo de busca e selecao de **colaborador usuario da Minha DELPI**, persistindo referencia estavel ao usuario no Core (ID, nao o nome digitado).
+O campo `responsible` G1 permanece como snapshot de nome legado. O incremento G1-OWNER acrescenta no codigo um seletor de colaborador usuario da Minha DELPI que persiste `responsible_user_id UUID NULL`, validado no Core por lookup no backend.
 
 - Ver [G1-OWNER.md](G1-OWNER.md) para regras, migracao futura, tratamento de contas inativas, seguranca, API e criterios de aceite.
 - O **responsavel de uso** do ativo (colaborador a quem o computador foi atribuido) e diferente do **administrador de TI** com permissao para gerenciar/assistir a maquina. O vinculo de propriedade nao outorga acesso remoto.
-- Nenhuma mudanca na tabela, na API ou nas permissoes foi executada neste pedido de roadmap.
+- A migration V010 e o codigo estao preparados no repositorio, mas ainda nao foram executados em producao; nao ha permissoes adicionais ou botao remoto.

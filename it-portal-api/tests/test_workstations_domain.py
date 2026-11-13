@@ -36,6 +36,7 @@ def test_normalizes_workstation_and_keeps_remote_access_out_of_domain():
     assert value.ip_address == "192.0.2.14"
     assert value.unit_code == "01"
     assert value.device_kind == "desktop"
+    assert value.responsible_user_id is None
     assert "remote_access_enabled" not in WORKSTATION_FIELD_NAMES
     assert "password" not in WORKSTATION_FIELD_NAMES
     assert value.as_dict()["description"] == "Estacao de teste, sem dados pessoais."

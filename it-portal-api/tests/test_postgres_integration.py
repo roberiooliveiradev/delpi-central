@@ -72,6 +72,7 @@ def migrated(database):
         "V007__windows_service_favorites.sql",
         "V008__windows_host_service_actions.sql",
         "V009__workstations_inventory.sql",
+        "V010__workstation_responsible_user.sql",
     ]
     return database
 
@@ -106,6 +107,7 @@ def test_migrations_are_idempotent(migrated):
         (7, "V007__windows_service_favorites.sql"),
         (8, "V008__windows_host_service_actions.sql"),
         (9, "V009__workstations_inventory.sql"),
+        (10, "V010__workstation_responsible_user.sql"),
     ]
 
 
@@ -315,3 +317,54 @@ def test_g1_workstations_persist_and_audit(pg_client):
     assert {e["event_type"] for e in events} == {
         "workstation_created", "workstation_updated", "workstation_archived"
     }
+
+
+def test_g1_owner_postgres_persists_uuid_and_snapshot(pg_client):
+    """Atribuicao autenticada e auditoria transacional, sobre migrations V001..V010."""
+    from it_portal_app.interface.http.dependencies import get_workstation_owner_resolver
+    owner_id = "5bd659b9-3816-48e3-9d9e-a2f53e96b8b7"
+
+    class Resolver:
+        def resolve(self, user_id: str, access_token: str) -> str:
+            assert user_id == owner_id
+            assert access_token
+            return "Ana Colaboradora"
+
+    app.dependency_overrides[get_workstation_owner_resolver] = lambda: Resolver()
+    try:
+        payload = {
+            "name": "PC owner PG", "hostname": "pc-g1-owner-pg-001",
+            "ip_address": "192.0.2.31", "unit_code": "02",
+            "device_kind": "desktop", "department": "TI",
+            "location": "Laboratorio", "responsible": "Nome enviado pelo cliente",
+            "responsible_user_id": owner_id, "operating_system": "Windows 11",
+            "administrative_status": "in_operation", "description": "Teste isolado",
+        }
+        response = pg_client.post("/workstations", json=payload)
+        assert response.status_code == 201, response.text
+        row = response.json()["data"]
+        assert row["responsible_user_id"] == owner_id
+        assert row["responsible"] == "Ana Colaboradora"
+
+        saved = _sql(
+            "SELECT responsible_user_id::text AS responsible_user_id, responsible "
+            "FROM it_portal.workstations WHERE id = %s",
+            (row["id"],),
+        )[0]
+        assert saved["responsible_user_id"] == owner_id
+        assert saved["responsible"] == "Ana Colaboradora"
+        change = pg_client.put(
+            f"/workstations/{row['id']}",
+            json={**payload, "responsible_user_id": None, "revision": 1},
+        )
+        assert change.status_code == 200
+        assert change.json()["data"]["responsible_user_id"] is None
+        assert change.json()["data"]["responsible"] is None
+        events = _sql(
+            "SELECT event_type, changes FROM it_portal.audit_events WHERE entity_id = %s ORDER BY occurred_at",
+            (row["id"],),
+        )
+        assert len(events) == 2
+        assert events[1]["changes"]["responsible_user_id"] == {"from": owner_id, "to": None}
+    finally:
+        app.dependency_overrides.pop(get_workstation_owner_resolver, None)

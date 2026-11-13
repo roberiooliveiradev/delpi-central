@@ -41,6 +41,7 @@ from it_portal_app.infrastructure.persistence.postgres_repository import (
     PostgresItPortalRepository,
 )
 from it_portal_app.infrastructure.persistence.postgres_workstation_repository import PostgresWorkstationRepository
+from it_portal_app.infrastructure.gateways.core_directory_owner import CoreDirectoryOwnerResolver
 
 
 def get_repository() -> ItPortalRepository:
@@ -51,10 +52,15 @@ def get_workstation_repository() -> WorkstationRepository:
     return PostgresWorkstationRepository()
 
 
+def get_workstation_owner_resolver() -> CoreDirectoryOwnerResolver:
+    return CoreDirectoryOwnerResolver()
+
+
 def get_workstation_service(
     repository: WorkstationRepository = Depends(get_workstation_repository),
+    owner_resolver: CoreDirectoryOwnerResolver = Depends(get_workstation_owner_resolver),
 ) -> WorkstationService:
-    return WorkstationService(repository)
+    return WorkstationService(repository, owner_resolver)
 
 
 def get_inventory_repository() -> InventoryRepository:

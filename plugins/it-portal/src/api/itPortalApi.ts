@@ -60,6 +60,7 @@ export type Workstation = {
   department: string | null;
   location: string | null;
   responsible: string | null;
+  responsible_user_id: string | null;
   operating_system: string | null;
   administrative_status: AdministrativeStatus;
   description: string | null;
@@ -82,6 +83,7 @@ export type WorkstationInput = {
   department: string;
   location: string;
   responsible: string;
+  responsible_user_id: string | null;
   operating_system: string;
   administrative_status: string;
   description: string;

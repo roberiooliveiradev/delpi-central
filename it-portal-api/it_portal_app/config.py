@@ -25,6 +25,8 @@ class Settings:
 
     PUBLIC_BASE_URL: str | None = _get_env("PUBLIC_BASE_URL")
     VITE_KC_URL: str | None = _get_env("VITE_KC_URL")
+    # Mesma URL interna do Core usada pelo delpi_auth; sem URL, atribuir responsavel falha fechado.
+    CORE_API_URL: str | None = _get_env("DELPI_AUTH_CORE_API_URL", "CORE_API_BASE_URL")
 
     # postgres-plugins, schema próprio `it_portal`. IT_PORTAL_DB_USER/PASSWORD
     # permitem uma role dedicada ao domínio; sem elas, vale a credencial

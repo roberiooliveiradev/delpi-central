@@ -45,6 +45,7 @@ def workstation_row(row: dict) -> dict:
         "department": row["department"],
         "location": row["location"],
         "responsible": row["responsible"],
+        "responsible_user_id": str(row["responsible_user_id"]) if row["responsible_user_id"] else None,
         "operating_system": row["operating_system"],
         "administrative_status": row["administrative_status"],
         "description": row["description"],
@@ -114,13 +115,13 @@ class PostgresWorkstationRepository(PostgresRepositoryBase):
                     f"""
                     INSERT INTO {_S}.workstations
                         (id, name, hostname, ip_address, unit_code, device_kind,
-                         department, location, responsible, operating_system,
+                         department, location, responsible, responsible_user_id, operating_system,
                          administrative_status, description, created_by_id,
                          created_by_name, updated_by_id, updated_by_name)
                     VALUES
                         (%(id)s, %(name)s, %(hostname)s, %(ip_address)s,
                          %(unit_code)s, %(device_kind)s, %(department)s, %(location)s,
-                         %(responsible)s, %(operating_system)s, %(administrative_status)s,
+                         %(responsible)s, %(responsible_user_id)s, %(operating_system)s, %(administrative_status)s,
                          %(description)s, %(actor_id)s, %(actor_name)s,
                          %(actor_id)s, %(actor_name)s)
                     """,
@@ -150,6 +151,7 @@ class PostgresWorkstationRepository(PostgresRepositoryBase):
                         ip_address = %(ip_address)s, unit_code = %(unit_code)s,
                         device_kind = %(device_kind)s, department = %(department)s,
                         location = %(location)s, responsible = %(responsible)s,
+                        responsible_user_id = %(responsible_user_id)s,
                         operating_system = %(operating_system)s,
                         administrative_status = %(administrative_status)s,
                         description = %(description)s, revision = revision + 1,

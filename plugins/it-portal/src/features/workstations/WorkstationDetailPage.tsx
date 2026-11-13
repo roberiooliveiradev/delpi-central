@@ -28,6 +28,7 @@ import {
 import { HistorySection } from "../history/HistorySection";
 import { DetailField } from "../inventory/InventoryDialogs";
 import { WorkstationFormModal } from "./WorkstationFormModal";
+import { WorkstationOwnerStatus } from "./WorkstationOwnerStatus";
 
 type ActionDialog = "archive" | "restore";
 
@@ -178,7 +179,7 @@ export function WorkstationDetailPage({ workstationId }: { workstationId: string
           <dl className="itp-field-list">
             <DetailField label={WORKSTATION_FIELD_LABELS.department} value={orDash(workstation.department)} />
             <DetailField label={WORKSTATION_FIELD_LABELS.location} value={orDash(workstation.location)} />
-            <DetailField label={WORKSTATION_FIELD_LABELS.responsible} value={orDash(workstation.responsible)} />
+            <DetailField label={WORKSTATION_FIELD_LABELS.responsible} value={<WorkstationOwnerStatus userId={workstation.responsible_user_id} snapshot={workstation.responsible} />} />
             <DetailField label={WORKSTATION_FIELD_LABELS.operating_system} value={orDash(workstation.operating_system)} />
             <DetailField
               label={WORKSTATION_FIELD_LABELS.administrative_status}

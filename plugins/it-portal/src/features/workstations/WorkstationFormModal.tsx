@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { itPortalApi, type Workstation, type WorkstationInput } from "../../api/itPortalApi";
 import { FormErrors } from "../../app/FormErrors";
 import { ItpActionButton, ItpSelectField, ItpTextAreaField, ItpTextField, ItpWideDialog } from "../../app/itPortalUi";
+import { WorkstationOwnerPicker } from "./WorkstationOwnerPicker";
 import { toApiError, usePortal } from "../../app/PortalContext";
 import { queryKeys } from "../../app/queryKeys";
 import {
@@ -23,6 +24,7 @@ const EMPTY_FORM: WorkstationInput = {
   department: "",
   location: "",
   responsible: "",
+  responsible_user_id: null,
   operating_system: "",
   administrative_status: "in_operation",
   description: "",
@@ -38,6 +40,7 @@ function toForm(workstation: Workstation): WorkstationInput {
     department: workstation.department ?? "",
     location: workstation.location ?? "",
     responsible: workstation.responsible ?? "",
+    responsible_user_id: workstation.responsible_user_id ?? null,
     operating_system: workstation.operating_system ?? "",
     administrative_status: workstation.administrative_status,
     description: workstation.description ?? "",
@@ -127,7 +130,17 @@ export function WorkstationFormModal({
         <fieldset className="itp-form-grid">
           <legend className="itp-form-legend">Localização e operação</legend>
           <ItpTextField label={WORKSTATION_FIELD_LABELS.location} value={form.location} onChange={set("location")} />
-          <ItpTextField label={WORKSTATION_FIELD_LABELS.responsible} value={form.responsible} onChange={set("responsible")} />
+          <WorkstationOwnerPicker
+            selectedId={form.responsible_user_id}
+            selectedName={form.responsible}
+            legacyName={workstation && !workstation.responsible_user_id ? workstation.responsible : null}
+            disabled={mutation.isPending}
+            onSelect={(userId, name) => setForm((previous) => ({
+              ...previous,
+              responsible_user_id: userId,
+              responsible: name,
+            }))}
+          />
           <ItpTextField label={WORKSTATION_FIELD_LABELS.operating_system} value={form.operating_system} onChange={set("operating_system")} />
           <ItpSelectField
             label={WORKSTATION_FIELD_LABELS.administrative_status}
