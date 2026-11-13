@@ -122,16 +122,21 @@ async def lifespan(_app: FastAPI):
     check_credentials()
     run_migrations_on_startup()
     if settings.LNF_HOSTED_ENABLED:
-        if settings.LNF_MIGRATIONS_MODE != "verify":
+        mode = settings.LNF_MIGRATIONS_MODE
+        if mode not in ("verify", "apply"):
             raise RuntimeError(
-                "LNF_MIGRATIONS_MODE deve ser 'verify' nesta fase "
-                f"(recebido={settings.LNF_MIGRATIONS_MODE!r})"
+                "LNF_MIGRATIONS_MODE deve ser 'verify' ou 'apply' "
+                f"(recebido={mode!r})"
             )
         from controllership_finance_app.infrastructure.invoice_posting.migrations_verify import (
+            apply_lnf_migrations,
             verify_lnf_migrations,
         )
 
-        verify_lnf_migrations()
+        if mode == "apply":
+            apply_lnf_migrations()
+        else:
+            verify_lnf_migrations()
     pollers: list[asyncio.Task] = []
     if settings.CF_NOTIFICATION_DISPATCH_ENABLED not in ("0", "false"):
         # R-105-05: recuperação da outbox sem nova ação do usuário —

@@ -25,37 +25,23 @@ from controllership_finance_app.interface.http.routes.invoice_posting.router imp
 PKG_ROOT = Path(__file__).resolve().parents[1]
 BFF_MIGRATIONS = PKG_ROOT / "migrations" / "lancamento_notas_fiscais"
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
-MONOREPO = PKG_ROOT.parent if (PKG_ROOT.parent / "api-delpi").is_dir() else None
 
 
 def test_migration_files_match_sha256sums() -> None:
+    """Checksums locais da BFF — não dependem da cópia api-delpi (F6)."""
     sums = {
-        line.split()[0]: line.split()[1]
+        parts[1]: parts[0]
         for line in (BFF_MIGRATIONS / "SHA256SUMS.txt").read_text().splitlines()
         if line.strip() and not line.startswith("#")
+        for parts in [line.split()]
+        if len(parts) >= 2
     }
-    # SHA256SUMS format from port: "V00x...sql  src=.. dst=.. match=True"
-    # Prefer canonical sha256sum lines; fall back to recomputing + origin when available.
     files = sorted(BFF_MIGRATIONS.glob("V*.sql"))
-    assert len(files) == 14
+    assert len(files) >= 14
+    assert set(sums) == {f.name for f in files}
     for f in files:
         digest = hashlib.sha256(f.read_bytes()).hexdigest()
-        # SHA256SUMS.txt written as: name src=HEX dst=HEX match=True
-        line = next(
-            ln
-            for ln in (BFF_MIGRATIONS / "SHA256SUMS.txt").read_text().splitlines()
-            if ln.startswith(f.name)
-        )
-        assert f"dst={digest}" in line
-        assert "match=True" in line
-        if MONOREPO is not None:
-            origin = (
-                MONOREPO
-                / "api-delpi/migrations/plugins/lancamento-notas-fiscais"
-                / f.name
-            )
-            assert origin.is_file()
-            assert hashlib.sha256(origin.read_bytes()).hexdigest() == digest
+        assert sums[f.name] == digest
 
 
 def test_open_purchase_orders_sql_text_parity() -> None:
@@ -110,8 +96,11 @@ def test_flag_off_does_not_mount_lnf_routes() -> None:
     assert "invoice_posting_router" in main_src
     from controllership_finance_app.config import settings
 
-    assert settings.LNF_HOSTED_ENABLED is False
-
+    # F6: hosted on by default; flag still gates mount for emergency off.
+    assert settings.LNF_HOSTED_ENABLED is True
+    assert settings.LNF_MIGRATIONS_MODE == "apply"
+    assert "apply_lnf_migrations" in main_src
+    assert "verify_lnf_migrations" in main_src
 
 def test_flag_off_auth_middleware_returns_404_for_lnf_paths() -> None:
     mw_src = (
@@ -207,6 +196,69 @@ def test_migrations_verify_fails_on_checksum_mismatch(tmp_path: Path, monkeypatc
         with pytest.raises(mv.LnfMigrationsVerifyError) as exc:
             mv.verify_lnf_migrations()
     assert "mismatched" in str(exc.value)
+
+
+def test_migrations_apply_noop_when_ledger_complete(tmp_path: Path, monkeypatch):
+    from controllership_finance_app.infrastructure.invoice_posting import (
+        migrations_verify as mv,
+    )
+
+    fake_dir = tmp_path / "mig"
+    fake_dir.mkdir()
+    for src in sorted(BFF_MIGRATIONS.glob("V*.sql")):
+        (fake_dir / src.name).write_bytes(src.read_bytes())
+    monkeypatch.setattr(mv, "MIGRATIONS_DIR", fake_dir)
+
+    class FakeCursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def execute(self, *a, **k):
+            return None
+
+        def fetchall(self):
+            return [
+                {
+                    "version": f.stem.split("__", 1)[0],
+                    "checksum": hashlib.sha256(f.read_bytes()).hexdigest(),
+                }
+                for f in sorted(BFF_MIGRATIONS.glob("V*.sql"))
+            ]
+
+    class FakeConn:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def cursor(self):
+            return FakeCursor()
+
+        def commit(self):
+            return None
+
+        def rollback(self):
+            return None
+
+    monkeypatch.setattr(
+        mv,
+        "settings",
+        SimpleNamespace(
+            PLUGINS_DB_HOST="localhost",
+            PLUGINS_DB_PORT="5432",
+            PLUGINS_DB_NAME="plugins_hub",
+            PLUGINS_DB_USER="u",
+            PLUGINS_DB_PASSWORD="p",
+            PLUGINS_DB_CONNECT_TIMEOUT=5,
+            PLUGINS_DB_SSLMODE="prefer",
+        ),
+    )
+    with patch.object(mv.psycopg, "connect", return_value=FakeConn()):
+        assert mv.apply_lnf_migrations() == []
 
 
 def test_notification_payload_captured_with_fake_core(monkeypatch):

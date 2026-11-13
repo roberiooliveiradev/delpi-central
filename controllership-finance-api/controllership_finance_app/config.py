@@ -111,15 +111,15 @@ class Settings:
         "CLARA_CONSENT_CHANNEL", default="portal"
     )
 
-    # --- LNF hosted (invoice_posting) — dark by default ---
+    # --- LNF hosted (invoice_posting) — F6: on by default; owner único ---
     LNF_HOSTED_ENABLED: bool = _get_env(
-        "LNF_HOSTED_ENABLED", default="false"
+        "LNF_HOSTED_ENABLED", default="true"
     ).lower() in ("1", "true", "yes")
     LNF_REALTIME_ENABLED: bool = _get_env(
         "LNF_REALTIME_ENABLED", default="false"
     ).lower() in ("1", "true", "yes")
     LNF_MIGRATIONS_MODE: str = _get_env(
-        "LNF_MIGRATIONS_MODE", default="verify"
+        "LNF_MIGRATIONS_MODE", default="apply"
     ).strip().lower()
     LNF_NOTIFICATIONS_ENABLED: bool = _get_env(
         "LNF_NOTIFICATIONS_ENABLED", default="true"
