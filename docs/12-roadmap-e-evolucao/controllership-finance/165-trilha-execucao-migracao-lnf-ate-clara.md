@@ -35,6 +35,7 @@ A autorização vale **somente** para o que está escrito nesta trilha. Qualquer
 5. **Linguagem de evidência:** PASS | FAIL | INCONCLUSIVE | TEST_NOT_RUN | PENDING_OWNER | NOT_COVERED_BLACKBOX | AS_IS_BEHAVIOR | KNOWN_DIVERGENCE_D8. Teste não executado nunca é PASS.
 6. **Problema encontrado dentro da trilha:** corrija → reteste no mesmo ambiente → reteste nos ambientes anteriores → continue. Registre no Registro de Execução (causa, correção, SHA, reteste).
 7. **Teste instável:** até 3 reexecuções; se continuar instável, é FAIL.
+8. **Canal de consentimento da CLARA (`CLARA_CONSENT_CHANNEL`) em PROD é intangível nesta trilha.** PROD permanece no canal definido pelo owner após aceite operacional (`conversational` / `mcp_tool_confirmation_owner_risk_accepted_v2`). Se um teste de HML exigir outro canal, configure **somente** em HML (ex.: `infra/.env.hml`). **Nunca** altere canal/consentimento em PROD por conveniência de teste, smoke ou rework — isso é EXECUTION_DRIFT (afeta todas as ações governadas, inclusive fechamento).
 
 ---
 
@@ -387,6 +388,8 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-13 08:41 -03 | F7-R | HML | E2E prepare→commit (P9) + negativos + jsonschema tools/list | PASS 36/36 | — | `/tmp/f7r-hml-e2e.json`; expire via `handle_hash`; branch deny no commit P11×02 |
 | 2026-11-13 08:42 -03 | F7-R | PROD | Deploy BFF; forçar `CLARA_CONSENT_CHANNEL=portal`; tech checks | PASS | `348140ec53` | enum+6 tools+presentation; unit 36; health 200; **sem commit real** |
 | 2026-11-13 08:43 -03 | F7.4 | PROD | Roteiro owner reaberto pós-F7-R | PENDING_OWNER | `348140ec53` | refrescar tools no conector; retestar 4 e 6 |
+| 2026-11-13 09:14 -03 | F7-R2 | PROD | **EXECUTION_DRIFT F7-R** — canal PROD alterado sem autorização; revertido por decisão do owner | REVERT | config `infra/.env` (sem SHA de código) | portal ≈ 08:42→09:14 -03; restore `conversational`; recreate só CF API; logs CLARA_ACT no intervalo = 0 |
+| 2026-11-13 09:15 -03 | F7-R2 | PROD | Verificação pós-revert (sem mutar negócio) | PASS | — | instructions ACTIVE CHANNEL conversational; prepare LNF `reconciliation.run` + closing `pendency.create`: channel=conversational, armed=true, confirmation_url=null, displayable=true; tools=6; enum LNF |
 
 ### Roteiro de teste do owner — F7.4 (ChatGPT / CLARA em PROD)
 

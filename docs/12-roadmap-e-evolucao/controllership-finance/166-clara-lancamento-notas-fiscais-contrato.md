@@ -98,9 +98,14 @@ Gates mapeiam as mesmas famílias de permissão dos decorators BFF (`permissions
 - **F7-R:** E2E prepare→commit (create/start/update/block/resume/cancel/post_manual/recon.run) + expire + branch deny + batch; canal `conversational` **somente HML** para automação
 
 ### PROD
-- Deploy BFF; health; enum/tools/list; presentation; canal **`portal`**
-- **Sem commit** com dados reais no F7-R
+- Deploy BFF; health; enum/tools/list; presentation
+- Canal de consentimento: **`conversational`** (aceite operacional do owner — `mcp_tool_confirmation_owner_risk_accepted_v2`). **Não alterar** `CLARA_CONSENT_CHANNEL` em PROD nesta trilha; variação de canal só em HML.
+- **Sem commit** com dados reais nos reworks F7-R / F7-R2
 - Roteiro owner (F7.4) — ver Parte 6 da trilha 165; refrescar tools no conector
+
+### F7-R2 (2026-11-13) — EXECUTION_DRIFT
+
+No F7-R o Cursor forçou PROD para `portal` fora da trilha. Owner determinou reversão imediata para `conversational`. Regra permanente: trilha 165 §0.3 item 8.
 
 ---
 
