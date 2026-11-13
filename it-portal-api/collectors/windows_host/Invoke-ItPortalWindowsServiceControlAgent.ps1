@@ -36,7 +36,7 @@ if ($localHostname -ne 'srv-db01' -and (
 if (-not [IO.Path]::IsPathRooted($SecretFile) -or -not (Test-Path -LiteralPath $SecretFile -PathType Leaf)) {
     throw 'Credencial DPAPI indisponivel.'
 }
-$protected = @('rpcss','dcomlaunch','eventlog','plugplay','schedule','winmgmt','samss','lsass','power','profsvc','bfe','mpssvc','lanmanserver','netlogon','wuauserv','cryptsvc')
+$protected = @('rpcss','dcomlaunch','eventlog','plugplay','schedule','winmgmt','samss','lsass','power','profsvc','bfe','mpssvc','lanmanserver','netlogon','wuauserv','cryptsvc','licensevirtual','@01licensevirtual')
 $allow = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 foreach ($name in $AllowedServices.Split(',')) {
     $trimmed = $name.Trim()
