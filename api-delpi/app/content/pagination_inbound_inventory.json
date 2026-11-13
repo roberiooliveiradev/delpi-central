@@ -1,6 +1,6 @@
 {
  "version": "2026.09.04",
- "count": 125,
+ "count": 121,
  "entries": [
   {
    "file": "app/interface/http/propostas_comerciais_controller.py",
@@ -383,45 +383,6 @@
    "file": "app/interface/http/routes/invoice_issuance/invoice_issuance_router.py",
    "line": 292,
    "module": "invoice_issuance",
-   "param": "page_size",
-   "default": "20",
-   "ge": "1",
-   "le": "100",
-   "defaultResolved": 20,
-   "geResolved": 1,
-   "leResolved": 100,
-   "tierId": "page_20_100"
-  },
-  {
-   "file": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-   "line": 194,
-   "module": "lancamento_notas_fiscais",
-   "param": "limit",
-   "default": "20",
-   "ge": "1",
-   "le": "50",
-   "defaultResolved": 20,
-   "geResolved": 1,
-   "leResolved": 50,
-   "tierId": "limit_20_50"
-  },
-  {
-   "file": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-   "line": 255,
-   "module": "lancamento_notas_fiscais",
-   "param": "page_size",
-   "default": "20",
-   "ge": "1",
-   "le": "100",
-   "defaultResolved": 20,
-   "geResolved": 1,
-   "leResolved": 100,
-   "tierId": "page_20_100"
-  },
-  {
-   "file": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-   "line": 573,
-   "module": "lancamento_notas_fiscais",
    "param": "page_size",
    "default": "20",
    "ge": "1",
@@ -1548,19 +1509,6 @@
    "geResolved": 1,
    "leResolved": 50,
    "tierId": "page_50_50"
-  },
-  {
-   "file": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-   "line": 296,
-   "module": "lancamento_notas_fiscais",
-   "param": "page_size",
-   "default": "25",
-   "ge": "1",
-   "le": "100",
-   "defaultResolved": 25,
-   "geResolved": 1,
-   "leResolved": 100,
-   "tierId": "page_25_100"
   },
   {
    "file": "app/interface/http/routes/supplies/supplier_catalogs_router.py",

@@ -59,7 +59,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [comercial-sales-order-otd.md](./comercial-sales-order-otd.md) | OTD de pedidos de venda. |
 | [supplies-purchase-order-otd.md](./supplies-purchase-order-otd.md) | OTD de pedidos de compra (MP). |
 | [financeiro-inadimplencia.md](./financeiro-inadimplencia.md) | Indicador financeiro de inadimplência — resumo, série mensal, faixas, ranking de clientes e títulos. |
-| [lancamento-notas-fiscais.md](./lancamento-notas-fiscais.md) | Lançamento de NF de entrada — fila, atendimento, conciliação SF1, Já lançada. |
+| [lancamento-notas-fiscais.md](./lancamento-notas-fiscais.md) | Ponte para a BFF `controllership-finance-api`, owner do módulo. |
 | [invoice-issuance.md](./invoice-issuance.md) | Solicitação de emissão de NF (saída) — wizard, fila do Faturamento, lookups SA1/SA2/SB1. |
 | [scrap-monitoring.md](./scrap-monitoring.md) | Monitoramento de refugos / scrap. |
 | [inspecoes-entrada.md](./inspecoes-entrada.md) · [inspecoes-processo.md](./inspecoes-processo.md) · [process-inspection-plans.md](./process-inspection-plans.md) | Inspeções de entrada, execução de processo e **cadastro** de planos (QP6). |

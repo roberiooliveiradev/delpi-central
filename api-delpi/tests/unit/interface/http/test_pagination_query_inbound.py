@@ -45,14 +45,14 @@ def test_inventory_factories_match_defaults() -> None:
             encoding="utf-8"
         )
     )
-    assert inv["count"] == 125
+    assert inv["count"] == 121
     for entry in inv["entries"]:
         query = factories[entry["param"]](entry["tierId"])
         assert query.default == entry["defaultResolved"], entry
 
 
 def test_new_pagination_tiers_preserve_contract_defaults_and_caps() -> None:
-    """No implicit DAVI 50->100 widening or LNF 25->20 default regression."""
+    """Preserve the registered defaults and caps for active pagination tiers."""
     from app.domain.services.pagination_tier_service import PaginationTierService
     from app.interface.http.pagination_query import PAGE_SIZE_QUERY
 
@@ -78,7 +78,6 @@ def test_new_pagination_tiers_are_in_authoritative_inventory() -> None:
     )
     expected = {
         "page_50_50": ("gpt_actions_routes.py", 50),
-        "page_25_100": ("lancamento_notas_fiscais_router.py", 25),
     }
     for tier_id, (filename, default) in expected.items():
         entries = [

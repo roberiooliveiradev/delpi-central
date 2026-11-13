@@ -43,7 +43,7 @@ def plugins_unit_of_work(method: _F) -> _F:
     ``execute(auto_commit=False)`` sem lease externo devolve a conexão ao
     pool, que faz ``rollback()`` — o ``commit()`` posterior não persiste e a
     API pode devolver sucesso. O padrão explícito equivalente é
-    ``with self.db():`` (LNF, Auditoria 5S, Kaizen).
+    ``with self.db():`` (Auditoria 5S, Kaizen).
     """
 
     @functools.wraps(method)

@@ -4,7 +4,6 @@ import argparse
 import hashlib
 import os
 import re
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -203,33 +202,7 @@ def validate_migration_history(conn: Any, schema_name: str, files: list[Path]) -
                 )
 
 
-LNF_PLUGIN_SLUG = "lancamento-notas-fiscais"
-LNF_NOT_OPERATED = (
-    "O schema lancamento_notas_fiscais pertence à controllership-finance-api "
-    "(ADR-001 / trilha 165 D2). As migrations do LNF são aplicadas pela BFF; "
-    "a api-delpi não opera este schema."
-)
-LNF_SKIP_LOG = (
-    "[lancamento-notas-fiscais] Schema ignorado. "
-    "O owner é a controllership-finance-api (BFF)."
-)
-
-
-def refuse_lnf_operation(plugin_slug: str) -> None:
-    """up, status e reset do LNF não abrem o banco. O owner do schema é a BFF."""
-    if plugin_slug == LNF_PLUGIN_SLUG:
-        raise MigrationError(LNF_NOT_OPERATED)
-
-
-def _exit_if_lnf_plugin(plugin_slug: str | None) -> None:
-    if plugin_slug != LNF_PLUGIN_SLUG:
-        return
-    print(LNF_NOT_OPERATED, file=sys.stderr)
-    raise SystemExit(1)
-
-
 def reset_plugin_migrations(plugin_slug: str) -> None:
-    refuse_lnf_operation(plugin_slug)
     schema_name = slug_to_schema(plugin_slug)
 
     with get_connection() as conn:
@@ -261,7 +234,6 @@ def reset_plugin_migrations(plugin_slug: str) -> None:
 
 
 def run_plugin_migrations(plugin_slug: str, *, conn: Any | None = None) -> None:
-    refuse_lnf_operation(plugin_slug)
     if conn is not None:
         _run_plugin_migrations_with_conn(conn, plugin_slug)
         return
@@ -297,7 +269,6 @@ def _run_plugin_migrations_with_conn(conn: Any, plugin_slug: str) -> None:
 
 
 def show_plugin_status(plugin_slug: str) -> None:
-    refuse_lnf_operation(plugin_slug)
     schema_name = slug_to_schema(plugin_slug)
     files = list_migration_files(plugin_slug)
 
@@ -322,7 +293,7 @@ def list_plugin_slugs() -> list[str]:
 
     slugs = sorted(
         p.name for p in PLUGINS_MIGRATIONS_ROOT.iterdir()
-        if p.is_dir() and p.name != LNF_PLUGIN_SLUG
+        if p.is_dir()
     )
 
     if not slugs:
@@ -334,7 +305,6 @@ def list_plugin_slugs() -> list[str]:
 
 
 def run_all_plugins_migrations() -> None:
-    print(LNF_SKIP_LOG)
     with get_connection() as conn:
         acquire_migration_lock(conn)
         try:
@@ -351,7 +321,6 @@ def run_all_plugins_migrations() -> None:
 
 
 def show_all_plugins_status() -> None:
-    print(LNF_SKIP_LOG)
     for plugin_slug in list_plugin_slugs():
         try:
             show_plugin_status(plugin_slug)
@@ -388,7 +357,6 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "up":
-        _exit_if_lnf_plugin(args.plugin)
         if args.plugin:
             run_plugin_migrations(args.plugin)
         else:
@@ -396,7 +364,6 @@ def main() -> None:
         return
 
     if args.command == "status":
-        _exit_if_lnf_plugin(args.plugin)
         if args.plugin:
             show_plugin_status(args.plugin)
         else:
@@ -408,7 +375,6 @@ def main() -> None:
             raise MigrationError(
                 "O comando reset exige --plugin para evitar remoção acidental de todos os schemas."
             )
-        _exit_if_lnf_plugin(args.plugin)
         if not args.confirm_drop_schema:
             raise MigrationError(
                 "reset apaga TODOS os dados do plugin (DROP SCHEMA CASCADE). "

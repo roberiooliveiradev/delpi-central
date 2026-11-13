@@ -76,7 +76,6 @@ _DOMAIN_PREFIXES: tuple[tuple[str, str], ...] = (
     ("/dashboard", "dashboards"),
     ("/reports", "reports"),
     ("/guias-procedimentos", "engineering"),
-    ("/lancamento-notas-fiscais", "financial"),
     ("/invoice-issuance", "financial"),
     ("/mural-acessos", "admin"),
     ("/public/mural-acessos", "admin"),

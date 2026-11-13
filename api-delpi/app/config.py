@@ -358,29 +358,12 @@ class Settings:
         _get_env("AUDIT_5S_NOTIFICATIONS_ENABLED", default="true").lower() == "true"
     )
 
-    # ==========================
-    # Lançamento NF — notificações in-app (responsável da pendência)
-    # ==========================
-    LNF_NOTIFICATIONS_ENABLED: bool = (
-        _get_env("LNF_NOTIFICATIONS_ENABLED", default="true").lower() == "true"
-    )
     INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED: bool = (
         _get_env("INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED", default="true").lower() == "true"
     )
     INVOICE_ISSUANCE_UPLOAD_DIR: str = _get_env(
         "INVOICE_ISSUANCE_UPLOAD_DIR",
         default="/app/data/invoice-issuance",
-    )
-    LNF_DANFE_UPLOAD_DIR: str = _get_env(
-        "LNF_DANFE_UPLOAD_DIR",
-        default="/app/data/lancamento-notas-fiscais-danfe",
-    )
-    FINANCIAL_API_BASE_URL: str = _get_env(
-        "FINANCIAL_API_BASE_URL",
-        default="http://financial-api:8000",
-    )
-    FINANCIAL_API_TIMEOUT_SECONDS: float = float(
-        _get_env("FINANCIAL_API_TIMEOUT_SECONDS", default="30") or "30"
     )
     HELPDESK_API_BASE_URL: str = _get_env(
         "HELPDESK_API_BASE_URL",

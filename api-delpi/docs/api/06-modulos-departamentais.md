@@ -80,29 +80,11 @@ Qualidade de rotas: [padrao-qualidade-rotas.md](./padrao-qualidade-rotas.md).
 | GET | `/financeiro/despesas-centro-custo/ranking-fornecedores` | Ranking por fornecedor. |
 | GET | `/financeiro/despesas-centro-custo/lancamentos` | Lançamentos paginados. |
 
-### Lançamento de Notas Fiscais — `/lancamento-notas-fiscais`
+### Lançamento de Notas Fiscais
 
-Fila de solicitações de lançamento de NF de entrada (Postgres plugins + matching TOTVS `SF1`/`SA2`).  
-Plugin: `lancamento-notas-fiscais`.  
-**Permissões:** `lancamento-notas-fiscais.access|create|view|process|manage` (não só `api-delpi.access`).
-
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/lancamento-notas-fiscais/suppliers` | Busca fornecedores SA2. |
-| POST | `/lancamento-notas-fiscais/requests` | Criar solicitação. |
-| GET | `/lancamento-notas-fiscais/requests` | Fila paginada (FIFO por `received_at`). |
-| GET | `/lancamento-notas-fiscais/requests/{id}` | Detalhe + timeline + `allowed_actions`. |
-| PATCH | `/lancamento-notas-fiscais/requests/{id}` | Corrigir dados. |
-| POST | `/lancamento-notas-fiscais/requests/{id}/start` | Iniciar atendimento. |
-| POST | `/lancamento-notas-fiscais/requests/{id}/block` | Bloquear. |
-| POST | `/lancamento-notas-fiscais/requests/{id}/resume` | Retomar. |
-| POST | `/lancamento-notas-fiscais/requests/{id}/comments` | Comentar. |
-| POST | `/lancamento-notas-fiscais/requests/{id}/cancel` | Cancelar. |
-| POST | `/lancamento-notas-fiscais/requests/{id}/post-manual` | Marcar Já lançada. |
-| POST | `/lancamento-notas-fiscais/reconciliation/refresh` | Sync ao abrir fila (cooldown 45s). |
-| POST | `/lancamento-notas-fiscais/reconciliation/run` | Lote admin (`manage`). |
-
-Documentação completa: [lancamento-notas-fiscais.md](./lancamento-notas-fiscais.md) · playbook: [PLAYBOOK.md](../../../docs/12-roadmap-e-evolucao/lancamento-notas-fiscais/PLAYBOOK.md).
+O módulo e suas rotas pertencem à `controllership-finance-api`; a
+`api-delpi` não hospeda mais esse bounded context. Consulte a
+[ponte para a BFF](./lancamento-notas-fiscais.md).
 
 ### Emissão de Notas Fiscais — `/invoice-issuance`
 

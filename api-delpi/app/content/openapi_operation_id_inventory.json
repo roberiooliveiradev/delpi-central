@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 794,
-  "stableCount": 794,
+  "operationCount": 787,
+  "stableCount": 787,
   "autoCount": 0,
   "recommendationCollisions": [],
   "autoByTag": {},
@@ -1086,6 +1086,20 @@
       "stable": true
     },
     {
+      "operationId": "prc_catalog_items",
+      "method": "GET",
+      "path": "/engineering/product-registration/catalogs/{catalog}",
+      "tag": "Engineering — Product Registration",
+      "stable": true
+    },
+    {
+      "operationId": "prc_supplier_search",
+      "method": "GET",
+      "path": "/engineering/product-registration/suppliers",
+      "tag": "Engineering — Product Registration",
+      "stable": true
+    },
+    {
       "operationId": "list_transforma_mais_processes",
       "method": "GET",
       "path": "/engineering/transforma-mais/processes",
@@ -1104,6 +1118,48 @@
       "method": "GET",
       "path": "/engineering/transformometro/savings-investment/series",
       "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_billing_exclusion_roster",
+      "method": "GET",
+      "path": "/financeiro/billing-exclusion-roster",
+      "tag": "Financeiro — Billing Exclusion Roster",
+      "stable": true
+    },
+    {
+      "operationId": "export_financeiro_billing_exclusion_roster",
+      "method": "GET",
+      "path": "/financeiro/billing-exclusion-roster/export",
+      "tag": "Financeiro — Billing Exclusion Roster",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_billing_mod_breakdown",
+      "method": "GET",
+      "path": "/financeiro/billing-mod-breakdown",
+      "tag": "Financeiro — Billing MOD Breakdown",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_closing_state",
+      "method": "GET",
+      "path": "/financeiro/closing-state",
+      "tag": "Financeiro — Closing State",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_cost_center_expenses",
+      "method": "GET",
+      "path": "/financeiro/cost-center-expenses",
+      "tag": "Financeiro — Cost Center Expenses",
+      "stable": true
+    },
+    {
+      "operationId": "export_financeiro_cost_center_expenses",
+      "method": "GET",
+      "path": "/financeiro/cost-center-expenses/export",
+      "tag": "Financeiro — Cost Center Expenses",
       "stable": true
     },
     {
@@ -1618,6 +1674,13 @@
       "stable": true
     },
     {
+      "operationId": "list_inspecoes_entrada_ncs_fornecedores",
+      "method": "GET",
+      "path": "/inspecoes-entrada/ncs-fornecedores",
+      "tag": "Inspeções de Entrada",
+      "stable": true
+    },
+    {
       "operationId": "get_inspecoes_entrada_pendentes",
       "method": "GET",
       "path": "/inspecoes-entrada/pendentes",
@@ -1832,174 +1895,6 @@
       "method": "GET",
       "path": "/knowledge/technical-guides/{topic}",
       "tag": "Governed Knowledge",
-      "stable": true
-    },
-    {
-      "operationId": "list_lancamento_notas_fiscais_open_purchase_orders",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/purchase-orders/open",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "list_lancamento_notas_fiscais_received_invoices",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/received-invoices",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_received_cte_dacte",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/dacte",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_received_invoice_danfe",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/danfe",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_received_nfse_detail",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/detail",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_received_nfse_xml",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/xml/{variant}",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "refresh_lancamento_notas_fiscais_reconciliation",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/reconciliation/refresh",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "run_lancamento_notas_fiscais_reconciliation",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/reconciliation/run",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "list_lancamento_notas_fiscais_requests",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/requests",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "create_lancamento_notas_fiscais_request",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/requests",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_request",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "update_lancamento_notas_fiscais_request",
-      "method": "PATCH",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "block_lancamento_notas_fiscais_request",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/block",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "cancel_lancamento_notas_fiscais_request",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/cancel",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "add_lancamento_notas_fiscais_comment",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/comments",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_request_danfe",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/danfe",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_request_fiscal_attachment",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/fiscal-attachments/{attachment_type}",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "post_manual_lancamento_notas_fiscais_request",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/post-manual",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "list_lancamento_notas_fiscais_request_purchase_orders",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/purchase-orders",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "link_lancamento_notas_fiscais_request_purchase_order",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/purchase-orders/link",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "resume_lancamento_notas_fiscais_request",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/resume",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "start_lancamento_notas_fiscais_request",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/start",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "search_lancamento_notas_fiscais_suppliers",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/suppliers",
-      "tag": "Lançamento de Notas Fiscais",
-      "stable": true
-    },
-    {
-      "operationId": "list_lancamento_notas_fiscais_unmapped_products",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/unmapped-products",
-      "tag": "Lançamento de Notas Fiscais",
       "stable": true
     },
     {
@@ -2251,6 +2146,13 @@
       "operationId": "list_totvs_open_orders_by_customer",
       "method": "GET",
       "path": "/pedidos-venda-abertos/totvs-open-orders/{customer_code}/{customer_store}",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "list_customer_outbound_invoice_line_items",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/totvs-outbound-invoice-line-items",
       "tag": "Pedidos de Venda em Aberto",
       "stable": true
     },
@@ -3354,6 +3256,13 @@
       "stable": true
     },
     {
+      "operationId": "lookup_products_sb1_identity",
+      "method": "POST",
+      "path": "/products/sb1-identity-lookup",
+      "tag": "products",
+      "stable": true
+    },
+    {
       "operationId": "search_products",
       "method": "GET",
       "path": "/products/search",
@@ -4131,6 +4040,13 @@
       "stable": true
     },
     {
+      "operationId": "cancel_audit_5s_nc_candidate_without_plan",
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/nc-candidates/{response_id}/cancel",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
       "operationId": "list_audit_5s_nonconformities",
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
@@ -4635,6 +4551,20 @@
       "stable": true
     },
     {
+      "operationId": "get_nonconformity_operator_ranking",
+      "method": "GET",
+      "path": "/quality/nonconformities/operators",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "export_nonconformity_operator_ranking_excel",
+      "method": "GET",
+      "path": "/quality/nonconformities/operators/export.xlsx",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
       "operationId": "get_nonconformity_series",
       "method": "GET",
       "path": "/quality/nonconformities/series",
@@ -4908,6 +4838,13 @@
       "stable": true
     },
     {
+      "operationId": "get_pcp_stock_rupture_pendencies",
+      "method": "GET",
+      "path": "/reports/providers/safety_stock_shortage_30d/pcp-pendencies",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
       "operationId": "preview_report_provider_safety_stock_shortage_30d",
       "method": "GET",
       "path": "/reports/providers/safety_stock_shortage_30d/preview",
@@ -5101,6 +5038,20 @@
       "method": "PATCH",
       "path": "/scheduling/resources/{resource_id}",
       "tag": "Agendamento",
+      "stable": true
+    },
+    {
+      "operationId": "get_consumption_audit_comparison",
+      "method": "GET",
+      "path": "/supplies/consumption-audit/comparison",
+      "tag": "Supplies — Consumption Audit",
+      "stable": true
+    },
+    {
+      "operationId": "search_consumption_audit_orders",
+      "method": "GET",
+      "path": "/supplies/consumption-audit/orders",
+      "tag": "Supplies — Consumption Audit",
       "stable": true
     },
     {

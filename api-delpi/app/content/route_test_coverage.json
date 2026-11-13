@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-29",
-  "baselineOperationCount": 794,
-  "operationCount": 794,
-  "coveredCount": 714,
-  "gapCount": 79,
+  "generatedAt": "2026-11-13",
+  "baselineOperationCount": 787,
+  "operationCount": 787,
+  "coveredCount": 706,
+  "gapCount": 80,
   "exemptCount": 1,
   "byModule": {
     "addresses": {
@@ -50,15 +50,15 @@
       "exempt": 0
     },
     "engineering": {
-      "total": 43,
-      "covered": 43,
-      "gap": 0,
+      "total": 45,
+      "covered": 44,
+      "gap": 1,
       "exempt": 0
     },
     "financeiro": {
-      "total": 28,
-      "covered": 28,
-      "gap": 0,
+      "total": 34,
+      "covered": 33,
+      "gap": 1,
       "exempt": 0
     },
     "financial": {
@@ -98,8 +98,8 @@
       "exempt": 0
     },
     "inspecoes-entrada": {
-      "total": 7,
-      "covered": 7,
+      "total": 8,
+      "covered": 8,
       "gap": 0,
       "exempt": 0
     },
@@ -127,12 +127,6 @@
       "gap": 0,
       "exempt": 0
     },
-    "lancamento-notas-fiscais": {
-      "total": 24,
-      "covered": 19,
-      "gap": 5,
-      "exempt": 0
-    },
     "mural-acessos": {
       "total": 14,
       "covered": 14,
@@ -140,8 +134,8 @@
       "exempt": 0
     },
     "pedidos-venda-abertos": {
-      "total": 25,
-      "covered": 25,
+      "total": 26,
+      "covered": 26,
       "gap": 0,
       "exempt": 0
     },
@@ -164,9 +158,9 @@
       "exempt": 0
     },
     "products": {
-      "total": 39,
+      "total": 40,
       "covered": 39,
-      "gap": 0,
+      "gap": 1,
       "exempt": 0
     },
     "propostas-comerciais": {
@@ -188,9 +182,9 @@
       "exempt": 0
     },
     "quality": {
-      "total": 150,
+      "total": 153,
       "covered": 149,
-      "gap": 1,
+      "gap": 4,
       "exempt": 0
     },
     "refugos": {
@@ -200,8 +194,8 @@
       "exempt": 0
     },
     "reports": {
-      "total": 21,
-      "covered": 20,
+      "total": 22,
+      "covered": 21,
       "gap": 1,
       "exempt": 0
     },
@@ -230,8 +224,8 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 46,
-      "covered": 44,
+      "total": 48,
+      "covered": 46,
       "gap": 2,
       "exempt": 0
     },
@@ -1630,6 +1624,24 @@
       "status": "covered"
     },
     {
+      "operationId": "prc_catalog_items",
+      "method": "GET",
+      "path": "/engineering/product-registration/catalogs/{catalog}",
+      "module": "engineering",
+      "entity": "prc_catalog_items",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "prc_supplier_search",
+      "method": "GET",
+      "path": "/engineering/product-registration/suppliers",
+      "module": "engineering",
+      "entity": "prc_supplier_search",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
       "operationId": "list_transforma_mais_processes",
       "method": "GET",
       "path": "/engineering/transforma-mais/processes",
@@ -1654,6 +1666,60 @@
       "module": "engineering",
       "entity": "transformometro_savings_investment_series",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_financeiro_billing_exclusion_roster",
+      "method": "GET",
+      "path": "/financeiro/billing-exclusion-roster",
+      "module": "financeiro",
+      "entity": "financeiro_billing_exclusion_roster",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "export_financeiro_billing_exclusion_roster",
+      "method": "GET",
+      "path": "/financeiro/billing-exclusion-roster/export",
+      "module": "financeiro",
+      "entity": "financeiro_billing_exclusion_roster_export",
+      "shape": "document_export",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_financeiro_billing_mod_breakdown",
+      "method": "GET",
+      "path": "/financeiro/billing-mod-breakdown",
+      "module": "financeiro",
+      "entity": "financeiro_billing_mod_breakdown",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_financeiro_closing_state",
+      "method": "GET",
+      "path": "/financeiro/closing-state",
+      "module": "financeiro",
+      "entity": "financeiro_closing_state",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_financeiro_cost_center_expenses",
+      "method": "GET",
+      "path": "/financeiro/cost-center-expenses",
+      "module": "financeiro",
+      "entity": "financeiro_cost_center_expenses",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "export_financeiro_cost_center_expenses",
+      "method": "GET",
+      "path": "/financeiro/cost-center-expenses/export",
+      "module": "financeiro",
+      "entity": "financeiro_cost_center_expenses_export",
+      "shape": "document_export",
       "status": "covered"
     },
     {
@@ -2315,6 +2381,15 @@
       "status": "covered"
     },
     {
+      "operationId": "list_inspecoes_entrada_ncs_fornecedores",
+      "method": "GET",
+      "path": "/inspecoes-entrada/ncs-fornecedores",
+      "module": "inspecoes-entrada",
+      "entity": "inspecoes_entrada_ncs_fornecedores",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
       "operationId": "get_inspecoes_entrada_pendentes",
       "method": "GET",
       "path": "/inspecoes-entrada/pendentes",
@@ -2590,222 +2665,6 @@
       "path": "/knowledge/technical-guides/{topic}",
       "module": "knowledge",
       "entity": "governed_technical_knowledge",
-      "shape": "paged_list",
-      "status": "covered"
-    },
-    {
-      "operationId": "list_lancamento_notas_fiscais_open_purchase_orders",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/purchase-orders/open",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_purchase_order",
-      "shape": "paged_list",
-      "status": "covered"
-    },
-    {
-      "operationId": "list_lancamento_notas_fiscais_received_invoices",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/received-invoices",
-      "module": "lancamento-notas-fiscais",
-      "entity": "received_invoice",
-      "shape": "paged_list",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_received_cte_dacte",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/dacte",
-      "module": "lancamento-notas-fiscais",
-      "entity": "received_cte_dacte",
-      "shape": "scalar",
-      "status": "gap"
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_received_invoice_danfe",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/danfe",
-      "module": "lancamento-notas-fiscais",
-      "entity": "received_invoice_danfe",
-      "shape": "scalar",
-      "status": "gap"
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_received_nfse_detail",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/detail",
-      "module": "lancamento-notas-fiscais",
-      "entity": "received_nfse_detail",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_received_nfse_xml",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/xml/{variant}",
-      "module": "lancamento-notas-fiscais",
-      "entity": "received_nfse_xml",
-      "shape": "scalar",
-      "status": "gap"
-    },
-    {
-      "operationId": "refresh_lancamento_notas_fiscais_reconciliation",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/reconciliation/refresh",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_reconciliation_refresh",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "run_lancamento_notas_fiscais_reconciliation",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/reconciliation/run",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_reconciliation_batch",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "list_lancamento_notas_fiscais_requests",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/requests",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_request",
-      "shape": "paged_list",
-      "status": "covered"
-    },
-    {
-      "operationId": "create_lancamento_notas_fiscais_request",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/requests",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_request",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_request",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_request",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "update_lancamento_notas_fiscais_request",
-      "method": "PATCH",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_request",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "block_lancamento_notas_fiscais_request",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/block",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_request",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "cancel_lancamento_notas_fiscais_request",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/cancel",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_request",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "add_lancamento_notas_fiscais_comment",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/comments",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_comment",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_request_danfe",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/danfe",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_danfe",
-      "shape": "scalar",
-      "status": "gap"
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_request_fiscal_attachment",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/fiscal-attachments/{attachment_type}",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_fiscal_attachment",
-      "shape": "scalar",
-      "status": "gap"
-    },
-    {
-      "operationId": "post_manual_lancamento_notas_fiscais_request",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/post-manual",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_request",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "list_lancamento_notas_fiscais_request_purchase_orders",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/purchase-orders",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_purchase_order",
-      "shape": "paged_list",
-      "status": "covered"
-    },
-    {
-      "operationId": "link_lancamento_notas_fiscais_request_purchase_order",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/purchase-orders/link",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_request",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "resume_lancamento_notas_fiscais_request",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/resume",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_request",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "start_lancamento_notas_fiscais_request",
-      "method": "POST",
-      "path": "/lancamento-notas-fiscais/requests/{request_id}/start",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_request",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "search_lancamento_notas_fiscais_suppliers",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/suppliers",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_supplier",
-      "shape": "paged_list",
-      "status": "covered"
-    },
-    {
-      "operationId": "list_lancamento_notas_fiscais_unmapped_products",
-      "method": "GET",
-      "path": "/lancamento-notas-fiscais/unmapped-products",
-      "module": "lancamento-notas-fiscais",
-      "entity": "invoice_posting_unmapped_product",
       "shape": "paged_list",
       "status": "covered"
     },
@@ -3131,6 +2990,15 @@
       "module": "pedidos-venda-abertos",
       "entity": "open_sales_order",
       "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_customer_outbound_invoice_line_items",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/totvs-outbound-invoice-line-items",
+      "module": "pedidos-venda-abertos",
+      "entity": "customer_outbound_invoice_line_item",
+      "shape": "list",
       "status": "covered"
     },
     {
@@ -4547,6 +4415,15 @@
       "status": "covered"
     },
     {
+      "operationId": "lookup_products_sb1_identity",
+      "method": "POST",
+      "path": "/products/sb1-identity-lookup",
+      "module": "products",
+      "entity": "product_sb1_identity",
+      "shape": "composite_analysis",
+      "status": "gap"
+    },
+    {
       "operationId": "search_products",
       "method": "GET",
       "path": "/products/search",
@@ -5546,6 +5423,15 @@
       "status": "covered"
     },
     {
+      "operationId": "cancel_audit_5s_nc_candidate_without_plan",
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/nc-candidates/{response_id}/cancel",
+      "module": "quality",
+      "entity": "audit_5s_nc_candidate_without_plan",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
       "operationId": "list_audit_5s_nonconformities",
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
@@ -6194,6 +6080,24 @@
       "status": "covered"
     },
     {
+      "operationId": "get_nonconformity_operator_ranking",
+      "method": "GET",
+      "path": "/quality/nonconformities/operators",
+      "module": "quality",
+      "entity": "nonconformity_operator_ranking",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "export_nonconformity_operator_ranking_excel",
+      "method": "GET",
+      "path": "/quality/nonconformities/operators/export.xlsx",
+      "module": "quality",
+      "entity": "export_nonconformity_operator_ranking_excel",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
       "operationId": "get_nonconformity_series",
       "method": "GET",
       "path": "/quality/nonconformities/series",
@@ -6545,6 +6449,15 @@
       "status": "gap"
     },
     {
+      "operationId": "get_pcp_stock_rupture_pendencies",
+      "method": "GET",
+      "path": "/reports/providers/safety_stock_shortage_30d/pcp-pendencies",
+      "module": "reports",
+      "entity": "pcp_stock_rupture_pendencies",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "preview_report_provider_safety_stock_shortage_30d",
       "method": "GET",
       "path": "/reports/providers/safety_stock_shortage_30d/preview",
@@ -6794,6 +6707,24 @@
       "module": "scheduling",
       "entity": "scheduling_resource",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_consumption_audit_comparison",
+      "method": "GET",
+      "path": "/supplies/consumption-audit/comparison",
+      "module": "supplies",
+      "entity": "consumption_audit_comparison",
+      "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
+      "operationId": "search_consumption_audit_orders",
+      "method": "GET",
+      "path": "/supplies/consumption-audit/orders",
+      "module": "supplies",
+      "entity": "consumption_audit_order_summary",
+      "shape": "paged_list",
       "status": "covered"
     },
     {

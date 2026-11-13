@@ -324,7 +324,7 @@
    "ge": 1,
    "le": 100,
    "optional": false,
-   "description": "page_size default=25 ge=1 le=100 (LNF received invoices)"
+   "description": "page_size default=25 ge=1 le=100 (purchase request lines)"
   },
   "limit_200_500": {
    "id": "limit_200_500",
