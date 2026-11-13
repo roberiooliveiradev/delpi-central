@@ -1,5 +1,7 @@
 # PRC-TRACK-IMPLEMENTATION-PACKAGE — Plano integrado de execução governada
 
+> **AMENDMENT G1/PO — 2026-11-13:** As escolhas documentadas em [Deliberações G1 do PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) prevalecem sobre referências anteriores incompatíveis neste plano: **campos registrados pela Engineering API, não necessariamente snapshot TOTVS completo**; **somente diferenças técnicas reais geram nova Vn**; flags são únicas por produto/alvo e projetadas nas revisões; endpoints de diff no backend; HML API funcional + aceite completo Plugin UI antes do frontend. Fases/AC B1–B3 devem ser reespecificadas após ratificação; **não iniciar implementação com os AC antigos conflitantes**.
+
 > **Data:** 2026-11-13 · **Natureza:** pacote de planejamento para implementação futura; **nenhum código, schema ou deploy autorizado por este documento**.  
 > **Status do pacote:** `PLANNED / GATED`. UX das três páginas: `UX_APPROVED`. Contratos de produto acompanhado e flags: `TO_INVENTORY / ARCHITECTURE_DECISION_REQUIRED`. Evidência de execução global: `TEST_NOT_RUN`.  
 > **Princípio:** inteligência ampla, autoridade estreita, explícita e governada. Contrato e autorização antes de frontend.  
