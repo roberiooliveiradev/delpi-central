@@ -220,3 +220,22 @@ A forma final do DTO e seu versionamento dependem de inventário do contrato atu
 **HML / contract tests:** omissão preserva, vazio ambíguo falha sem limpar, CLEAR opcional validado altera alvo e provenance, CLEAR obrigatório rejeitado, CLEAR sem permissão rejeitado, CLEAR repetido sem diferença não gera Vn, REMOVE_LINK só com contrato/gate próprio, erro de verificação e concorrência não publica versão, cliente legado não executa limpeza implícita.
 
 **Pendente para Coordination:** matriz campo→`nullable/clearable`, desenho de DTO de operações, política de migração de payloads antigos, read-back oficial e observabilidade. `TEST_NOT_RUN`; sem implementação.
+
+
+## 11. Emenda CR-07 — flags resolvidas não reabrem; reincidência usa novo ID (PO, 13/11/2026)
+
+**PO escolheu C — Não permitir reabertura (sem comentário).** `PO_APPROVED / COORDINATION_RATIFICATION_PENDING`.
+
+**Contrato de domínio proposto:**
+- `OPEN -> RESOLVED` ou `OPEN -> REMOVED`: transições finais. **Sem `RESOLVED -> OPEN`** ou `REMOVED -> OPEN` no novo acompanhamento de produtos.
+- `CREATE` após encerramento para mesmo `recordId + targetKey`: gera **novo flagId**, nova ocorrência. Estados encerrados antigos preservados; no máximo **uma OPEN simultânea** por recordId+targetKey. Implementar restrição transacional/índice parcial quando ratificados os mecanismos de persistência.
+- Histórico de exibição: ocorrência #1 OPEN V3, RESOLVED V4, ausente V5+; ocorrência #2 criada V6 OPEN V6+ até seu encerramento. Não reutilizar flagId nem propagar ocorrência antiga.
+- Registrar `createdWhileRevision`, `resolvedWhileRevision`, `removedWhileRevision`, timestamp, ator, requestId de origem quando aplicável, evento e correlação; sem nova versão por ação de flag. Consultas históricas exibem estado por ocorrência e vigência.
+- **Contrato de erro:** reabertura não é ação permitida nos novos DTOs e `allowedActions`; tentativas diretas são rejeitadas **no backend**, sem depender de botão oculto; definir 409/422 ou equivalente na ratificação. AuthZ continua fail-closed.
+- **Compatibilidade obrigatória:** código existente D16 implementa `reopen_flag` e `POST /requests/{request_id}/flags/{flag_id}/actions/reopen`. Inventariar consumidores e distinguir flags legadas por solicitação de flags novas por produto. Política de bloquear, manter para legado com escopo estrito ou deprecar exige decisão Coordination, testes, rollback e nenhuma quebra silenciosa.
+
+**Correção de precedente:** ADR-03 “identidade única” designa **um ID por ocorrência** e limite de uma OPEN simultânea por alvo, não proibição de criar uma nova ocorrência após RESOLVED. ADR-04 permanece válida para cada ocorrência independente.
+
+**Novos HML tests:** flag resolvida não reabre pela API do produto; ação direta HTTP não contorna; nova ocorrência mesmo target pode abrir após finalização, com outro flagId; duas novas OPEN simultâneas produzem apenas uma; estados V3/V4/V5 permanecem; rota legada tem política testada e não permite escape; audit trail, AuthZ, idempotência, sem nova Vn.
+
+**Estado:** `PROPOSED_FOR_COORDINATION / TEST_NOT_RUN`. Nenhum código, schema, grant ou deploy alterado.
