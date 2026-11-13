@@ -11,12 +11,41 @@ export type RealtimeSocketState = {
   error: string | null;
 };
 
+export type RealtimeConnectionStatus =
+  | "idle"
+  | "connecting"
+  | "open"
+  | "reconnecting"
+  | "unavailable"
+  | "closed";
+
+export type RealtimeReconnectOptions = {
+  mode?: "fixed" | "exponential";
+  baseMs?: number;
+  maxMs?: number;
+  jitter?: boolean;
+};
+
+export type RealtimeCloseContext = {
+  closeCode: number;
+  attempt: number;
+  sameUrl: boolean;
+};
+
 export type RealtimeSocketOptions = {
   /** Devolve a URL pronta (token já embutido) ou `null` quando ainda
    * não há credencial — nesse caso reconecta depois. */
   buildUrl: () => string | null;
+  /** Se existir, é chamada a cada tentativa. Pode devolver uma Promise. */
+  resolveUrl?: () => string | null | Promise<string | null>;
   pingMs?: number;
   reconnectMs?: number;
+  /** Sem esta opção o reconnect continua fixo em 4s. */
+  reconnect?: RealtimeReconnectOptions;
+  shouldReconnect?: (ctx: RealtimeCloseContext) => boolean;
+  /** Default true: o cliente já reenvia as salas desejadas no open. */
+  resubscribeOnReconnect?: boolean;
+  onResync?: () => void;
   onMessage: (raw: string) => void;
   onStateChange?: (state: RealtimeSocketState) => void;
 };
@@ -31,7 +60,13 @@ export class RealtimeSocketClient {
   private stopped = true;
   private readonly desired = new Set<string>();
   private readonly options: RealtimeSocketOptions;
+  private readonly statusListeners = new Set<(status: RealtimeConnectionStatus) => void>();
+  private readonly messageListeners = new Set<(raw: string) => void>();
   private state: RealtimeSocketState = { connected: false, error: null };
+  private status: RealtimeConnectionStatus = "idle";
+  private attempt = 0;
+  private openedOnce = false;
+  private lastUrl: string | null = null;
 
   constructor(options: RealtimeSocketOptions) {
     this.options = options;
@@ -41,9 +76,28 @@ export class RealtimeSocketClient {
     return this.state;
   }
 
+  getStatus(): RealtimeConnectionStatus {
+    return this.status;
+  }
+
+  onStatusChange(listener: (status: RealtimeConnectionStatus) => void): () => void {
+    this.statusListeners.add(listener);
+    return () => {
+      this.statusListeners.delete(listener);
+    };
+  }
+
+  addMessageListener(listener: (raw: string) => void): () => void {
+    this.messageListeners.add(listener);
+    return () => {
+      this.messageListeners.delete(listener);
+    };
+  }
+
   start(): void {
     if (!this.stopped) return;
     this.stopped = false;
+    this.setStatus("connecting");
     this.connect();
   }
 
@@ -53,6 +107,7 @@ export class RealtimeSocketClient {
     this.socket?.close();
     this.socket = null;
     this.setState({ connected: false, error: null });
+    this.setStatus("closed");
   }
 
   /** Marca assinatura desejada e envia se o socket estiver aberto. */
@@ -77,6 +132,33 @@ export class RealtimeSocketClient {
     this.options.onStateChange?.(next);
   }
 
+  private setStatus(next: RealtimeConnectionStatus): void {
+    this.status = next;
+    for (const listener of this.statusListeners) listener(next);
+  }
+
+  private peekUrl(): string | null {
+    const resolved = this.options.resolveUrl?.();
+    if (resolved && typeof (resolved as Promise<string | null>).then === "function") {
+      return this.lastUrl;
+    }
+    if (resolved !== undefined) return resolved as string | null;
+    return this.options.buildUrl();
+  }
+
+  private delayMs(): number {
+    const mode = this.options.reconnect?.mode ?? "fixed";
+    if (mode !== "exponential") {
+      return this.options.reconnectMs ?? DEFAULT_RECONNECT_MS;
+    }
+    const base = this.options.reconnect?.baseMs ?? 1_000;
+    const max = this.options.reconnect?.maxMs ?? 30_000;
+    const exp = Math.min(max, base * 2 ** Math.max(0, this.attempt - 1));
+    if (this.options.reconnect?.jitter === false) return exp;
+    const spread = exp * (0.5 + Math.random() * 0.5);
+    return Math.min(max, Math.max(base, spread));
+  }
+
   private clearTimers(): void {
     if (this.pingTimer != null) {
       window.clearInterval(this.pingTimer);
@@ -93,14 +175,26 @@ export class RealtimeSocketClient {
     this.reconnectTimer = window.setTimeout(() => {
       this.reconnectTimer = null;
       this.connect();
-    }, this.options.reconnectMs ?? DEFAULT_RECONNECT_MS);
+    }, this.delayMs());
   }
 
   private connect(): void {
     this.clearTimers();
     this.socket?.close();
+    const resolved = this.options.resolveUrl?.();
+    if (resolved && typeof (resolved as Promise<string | null>).then === "function") {
+      void (resolved as Promise<string | null>).then((url) => {
+        if (this.stopped) return;
+        this.openSocket(url);
+      });
+      return;
+    }
+    const url =
+      resolved === undefined ? this.options.buildUrl() : (resolved as string | null);
+    this.openSocket(url);
+  }
 
-    const url = this.options.buildUrl();
+  private openSocket(url: string | null): void {
     if (!url) {
       this.setState({ connected: false, error: "not_ready" });
       this.scheduleReconnect();
@@ -117,12 +211,22 @@ export class RealtimeSocketClient {
     }
     this.socket = socket;
 
+    this.lastUrl = url;
+    const reconnecting = this.openedOnce;
+
     socket.onopen = () => {
       if (this.stopped) return;
       this.setState({ connected: true, error: null });
-      for (const payload of this.desired) {
-        socket.send(payload);
+      this.setStatus("open");
+      const resubscribe = this.options.resubscribeOnReconnect !== false;
+      if (!reconnecting || resubscribe) {
+        for (const payload of this.desired) {
+          socket.send(payload);
+        }
       }
+      if (reconnecting) this.options.onResync?.();
+      this.openedOnce = true;
+      this.attempt = 0;
       this.pingTimer = window.setInterval(() => {
         if (socket.readyState === WebSocket.OPEN) {
           socket.send("ping");
@@ -131,15 +235,29 @@ export class RealtimeSocketClient {
     };
 
     socket.onmessage = (message) => {
-      if (typeof message.data === "string") {
-        this.options.onMessage(message.data);
-      }
+      if (typeof message.data !== "string") return;
+      this.options.onMessage(message.data);
+      for (const listener of this.messageListeners) listener(message.data);
     };
 
-    socket.onclose = () => {
+    socket.onclose = (event?: { code?: number }) => {
       if (this.stopped) return;
       this.setState({ connected: false, error: null });
       this.clearTimers();
+      this.attempt += 1;
+      const code = event?.code ?? 1006;
+      const nextUrl = this.peekUrl();
+      const sameUrl = nextUrl != null && nextUrl === url;
+      const allow = this.options.shouldReconnect?.({
+        closeCode: code,
+        attempt: this.attempt,
+        sameUrl,
+      }) ?? true;
+      if (!allow) {
+        this.setStatus("unavailable");
+        return;
+      }
+      this.setStatus("reconnecting");
       this.scheduleReconnect();
     };
 

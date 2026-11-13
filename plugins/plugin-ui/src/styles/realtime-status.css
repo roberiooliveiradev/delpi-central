@@ -1,0 +1,50 @@
+.delpi-ui-realtime-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.72)));
+}
+
+.delpi-ui-realtime-status--compact {
+  font-size: 11px;
+}
+
+.delpi-ui-realtime-status--open::before,
+.delpi-ui-realtime-status--reconnecting::before,
+.delpi-ui-realtime-status--connecting::before,
+.delpi-ui-realtime-status--unavailable::before {
+  content: "";
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.delpi-ui-concurrent-change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  color: var(--delpi-ui-text, #111);
+  background: var(--delpi-ui-surface-muted, rgba(17, 17, 17, 0.06));
+}
+
+.delpi-ui-concurrent-change__message {
+  margin: 0;
+  flex: 1 1 12rem;
+}
+
+.delpi-ui-concurrent-change__action,
+.delpi-ui-concurrent-change__dismiss {
+  font: inherit;
+}
+
+@media (max-width: 640px) {
+  .delpi-ui-concurrent-change {
+    align-items: stretch;
+  }
+}

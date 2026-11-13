@@ -16,8 +16,8 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 | Fase | Nome | Status | SHA | Data | Evidência |
 |---|---|---|---|---|---|
 | W1.1 | Ajuste documental (D-W5, quadro) | DONE | `68e7c28512` | 2026-11-13 | D-W5, ADR-002 adendo, mapa de reuso PLANNED |
-| W2 | BFF — hub, rota, emissão (DEV) | DONE | commit desta fase | 2026-11-13 | T1–T18 e regressão LNF no container da BFF |
-| W2b | plugin-ui — cliente, hook, indicador, aviso | TODO | | | |
+| W2 | BFF — hub, rota, emissão (DEV) | DONE | `b0b4dae957` | 2026-11-13 | T1–T18 e regressão LNF no container da BFF. P0–P12 ao vivo não rodou. Smoke de dois usuários em DEV: INCONCLUSIVE (hosted off) |
+| W2b | plugin-ui — cliente, hook, indicador, aviso | DONE | commit desta fase | 2026-11-13 | cliente aditivo; hook, indicador e aviso. Suíte do pacote no registro |
 | W3 | Gateway DEV (+ conf HML commitada) | TODO | | | |
 | W4.1 | MFE — Fila | TODO | | | |
 | W4.2 | MFE — Detalhe | TODO | | | |
@@ -393,4 +393,20 @@ I4. `uvicorn` inclui a query no access log (`get_path_with_query_string`). A BFF
 
 Guarda de processo: `WEB_CONCURRENCY`, `UVICORN_WORKERS` e `--workers`. Réplica fora do processo não é visível; a restrição fica no README da BFF.
 
-Testes no container da BFF: `tests/test_lnf_realtime.py` mais use cases, reconciliação, contracts e guards F3 — 110 passed. A matriz HTTP P0–P12 não rodou: é o harness em `tests/contracts/lancamento-notas-fiscais`, com usuários de contrato. O pytest amplo do container teve falhas de CLARA que leem `/docs/...`, caminho que a imagem não monta; não são desta fase.
+Testes no container da BFF: `tests/test_lnf_realtime.py` mais use cases, reconciliação, contracts e guards F3 — 110 passed. A matriz HTTP P0–P12 não rodou: é o harness em `tests/contracts/lancamento-notas-fiscais`, com usuários de contrato. O pytest amplo do container teve falhas de CLARA que leem `/docs/...`, caminho que a imagem não monta; não são desta fase. SHA: `b0b4dae957`.
+
+### W2b — 2026-11-13
+
+B1. `RealtimeSocketClient` já reenviava as salas desejadas em todo `onopen`, inclusive na reconexão. Reconnect fixo de 4s. A URL vem de `buildUrl`. O ping é o texto `ping`. Consumidores do módulo: `EngineeringRealtimeProvider`, `PrcRealtimeProvider` e os shims desses dois MFEs. Por isso `resubscribeOnReconnect` default é `true` (o comportamento atual). Default `false` mudaria Engineering e PRC.
+
+B2. `createEventDispatcher` deduplica por `eventId` (janela 10s) e agrega em `onFlush` (debounce 400ms). O hook usa isso.
+
+B3. Não havia selo de «Ao vivo». `StateBanner` continua o banner de falha. Indicador e aviso novos usam classes `delpi-ui-*` e tokens do kit.
+
+B4. O pacote é workspace. Os shims declaram a classe com as opções antigas, todas opcionais nas novas. Nenhum consumidor precisa mudar para compilar.
+
+B5. Vitest. Caracterização antiga do cliente segue verde junto com os casos novos (exponencial, 1008 com a mesma URL, URL nova, status, `onResync`, re-assinatura desligada). Suíte do `@delpi/plugin-ui`: 397 arquivos, 2523 testes, PASS.
+
+Follow-up: MFEs que abrem `new WebSocket` por conta (requests, commercial e outros) não foram migrados.
+
+Regressão: Engineering 37 arquivos / 364 testes PASS; `vite build` da Engineering e de my-requests PASS. my-requests: 2 falhas em `ProcessIssuePayloadPanel.structural.test.ts` (texto «Ferramenta informada pelo operador» e o padrão `cockpit|operator-feedback`). O arquivo do painel não está no diff desta fase. S9: não corrigir.

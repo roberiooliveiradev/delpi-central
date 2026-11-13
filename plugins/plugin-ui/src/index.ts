@@ -339,9 +339,21 @@ export {
 export {
   RealtimeSocketClient,
   createEventDispatcher,
+  type RealtimeCloseContext,
+  type RealtimeConnectionStatus,
+  type RealtimeReconnectOptions,
   type RealtimeSocketOptions,
   type RealtimeSocketState,
 } from "./realtime/realtimeSocket";
+export { useRealtimeRooms, type UseRealtimeRoomsOptions } from "./realtime/useRealtimeRooms";
+export {
+  RealtimeStatusIndicator,
+  type RealtimeStatusIndicatorProps,
+} from "./realtime/RealtimeStatusIndicator";
+export {
+  ConcurrentChangeNotice,
+  type ConcurrentChangeNoticeProps,
+} from "./realtime/ConcurrentChangeNotice";
 export {
   ENGINEERING_PRC_DOMAIN,
   ENGINEERING_RESOURCE_CHANGED,

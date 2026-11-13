@@ -144,6 +144,7 @@
 @import "./styles/entity-avatar-label.css";
 @import "./styles/content-card.css";
 @import "./styles/state-banner.css";
+@import "./styles/realtime-status.css";
 @import "./styles/floating-notice.css";
 @import "./styles/document-reader.css";
 @import "./styles/markdown-document.css";

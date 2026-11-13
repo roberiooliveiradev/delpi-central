@@ -1108,13 +1108,13 @@ de ação que desabilitam durante o próprio clique (refresh) usam
 `aria-disabled` + guarda em vez de `disabled` nativo, preservando o
 foco; aplicado em «Atualizar consulta» e «Abrir fechamento».
 
-## Lançamento de Notas Fiscais — tempo real (PLANNED, D-W5, 2026-11-13)
+## Lançamento de Notas Fiscais — tempo real (PROVEN, D-W5, 2026-11-13)
 
-Nenhum destes componentes existe ainda no pacote. A W2b os cria no `@delpi/plugin-ui`, sem nome de LNF no código. O MFE só faz wiring. `StateBanner` não substitui o indicador: é o banner de falha do kit.
+A W2b criou estas peças no `@delpi/plugin-ui`. O código do pacote não cita LNF. O MFE só faz wiring. `StateBanner` não substitui o indicador: é o banner de falha do kit.
 
-| Peça | Estado | Onde vai nascer |
+| Peça | Estado | Caminho |
 |---|---|---|
-| `RealtimeSocketClient` evoluído (opções aditivas de reconnect, URL, close code e status) | PLANNED | `plugins/plugin-ui/src/realtime/realtimeSocket.ts` |
-| Hook de salas + refetch (`useRealtimeRooms`) | PLANNED | `plugins/plugin-ui/src/realtime/` |
-| Indicador de conexão (`RealtimeStatusIndicator`) | PLANNED | `plugins/plugin-ui/src/realtime/` |
-| Aviso de alteração concorrente (`ConcurrentChangeNotice`) | PLANNED | `plugins/plugin-ui/src/realtime/` |
+| `RealtimeSocketClient` evoluído (opções aditivas de reconnect, URL, close code e status) | PROVEN | `plugins/plugin-ui/src/realtime/realtimeSocket.ts` |
+| Hook de salas + refetch (`useRealtimeRooms`) | PROVEN | `plugins/plugin-ui/src/realtime/useRealtimeRooms.ts` |
+| Indicador de conexão (`RealtimeStatusIndicator`) | PROVEN | `plugins/plugin-ui/src/realtime/RealtimeStatusIndicator.tsx` |
+| Aviso de alteração concorrente (`ConcurrentChangeNotice`) | PROVEN | `plugins/plugin-ui/src/realtime/ConcurrentChangeNotice.tsx` |
