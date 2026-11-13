@@ -134,6 +134,18 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo:** cadastrar um equipamento corporativo de teste (sem credenciais), confirmar listagem e detalhe, editar, verificar historico, arquivar e restaurar; testar acesso negado em perfil sem `it-portal.computers.view`. Registrar os resultados antes de fechar G1 e avancar G2-AGENT.
 
+## 2026-11-13 | G1 piloto | proposta de nomenclatura e coleta inicial
+
+**Objetivo:** estruturar os campos do cadastro piloto de um desktop corporativo sem alterar o hostname Windows e sem instalar agente.
+
+**Evidencia:** usuario executou coleta PowerShell manual e enviou dados de modelo, CPU, RAM, disco, Windows, hostname e IP. Informacoes especificas do equipamento nao foram publicadas no GitHub publico.
+
+**Proposta:** adicionar `NAMING-CONVENTION.md` com `DLP-<UF>-<SETOR>-<TNN>`, exemplos ficticios, separacao entre codigo `PC-0001`, nome operacional, hostname real, UUID e IP. Caso piloto: `DLP-ES-TI-D01` (filial/setor sujeitos a confirmacao).
+
+**Estado:** cadastro preparado para preenchimento pelo operador no Portal, **ainda sem evidencias de registro salvo ou CRUD validado**. Nao atualizar G1 para VALIDADO.
+
+**Proximo passo:** usuario cadastra a estacao, envia a confirmacao e testa abertura da ficha, edicao, historico, arquivamento e restauracao; depois validar RBAC negativo e atualizar este diario.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

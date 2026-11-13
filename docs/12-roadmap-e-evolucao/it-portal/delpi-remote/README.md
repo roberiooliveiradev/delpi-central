@@ -57,4 +57,5 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 - [Arquitetura e decisoes](ARCHITECTURE.md)
 - [Gates de seguranca e matriz de riscos](SECURITY-GATES.md)
 - [Contrato inicial de inventario G1](INVENTORY-CONTRACT.md)
+- [Convencao de nomenclatura de computadores (proposta)](NAMING-CONVENTION.md)
 - [Diario de execucao e passagem de bastao](EXECUTION-LOG.md)
