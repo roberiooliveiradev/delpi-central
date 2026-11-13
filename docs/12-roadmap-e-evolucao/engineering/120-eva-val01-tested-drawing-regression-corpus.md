@@ -1026,3 +1026,35 @@ sem promoção indevida (verificar em homologação).
 
 `MULTIPAGE_FULL_DOCUMENT=RESOLVED` (execução; qualidade visual da
 homologação permanece `EVAL_PENDING`). `VAL01_COMPLETED=false`.
+
+---
+
+## PROD E2E — group boundary fix `3dbb46c6e1` (`90264135`, 2026-11-13)
+
+**TASK:** `EVA-VAL01-P12-GROUP-BOUNDARY-PRODUCTION-DEPLOY`. Deploy
+só `engineering-api` (imagem `sha256:11802a0e…`, rollback
+`f3d640c4…` preservado). Job `aj-f5040788e5074c30` **COMPLETED**
+(~131–253 s poll-bounded). PDF SHA `af47dd4c…edf3` MATCH exato,
+13/13 páginas FULL, 2 775 tokens, 280 ocorrências únicas, 0
+duplicatas.
+
+**p12 real vs PDF oficial:**
+
+| Vínculo | Veredito PROD |
+|---|---|
+| `AE|1|10010028` → `50225740` | IDENTIFIED `rowspan_anchor` (era ausente pré-fix) |
+| `AH|1`, `AG|1` → `50225740` | IDENTIFIED `rowspan_anchor` |
+| `AF|1|10010005` → `50225741` | IDENTIFIED `rowspan_anchor` (era falso `740`) |
+| `AJ`, `AG` → `50225741` | IDENTIFIED `rowspan_anchor` |
+| `AG|16|10110676` (negativo) | UNKNOWN `y_anchor_nearest` — fail-closed preservado |
+
+`FALSE_PARENT_PROMOTIONS=0` · `AF_under_740=0` ·
+`association_conflict` preservado (4 linhas p12) ·
+`quality_gate=EVAL_PENDING`.
+
+**Resíduo:** `AE|1|10010028` → `50225702` UNKNOWN no E2E real
+(replay DEV de células preservadas: IDENTIFIED) — divergência
+conservadora, sem falsa promoção; investigação bounded futura.
+
+`GROUP_BOUNDARY_PROD=PASS` · `PRODUCTION_CHANGED=YES
+(engineering-api)` · `VAL01_COMPLETED=false`.

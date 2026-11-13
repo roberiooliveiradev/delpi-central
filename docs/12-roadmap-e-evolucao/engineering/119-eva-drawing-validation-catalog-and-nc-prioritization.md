@@ -3462,3 +3462,82 @@ contrato de saída inalterado.
 `RUNTIME_FIX_REQUIRED=YES` (implementado) · `GENERALIST_FIX=YES`
 · `UNKNOWN_FAIL_CLOSED=PRESERVED` · `PRODUCTION_CHANGED=NO` ·
 `RELEASE_GATE=COORDINATION` · `VAL01_COMPLETED=false`.
+
+---
+
+## §85.1 — Deploy produtivo do fix de group boundary (2026-11-13)
+
+**TASK_ID:** `EVA-VAL01-P12-GROUP-BOUNDARY-PRODUCTION-DEPLOY`
+(Decisão Coordination: Issue #131, comment 6862371080.)
+
+**Deploy** — somente `engineering-api` reconstruído via
+`infra/scripts/up-prod-sequential.sh --build engineering-api`
+no host `srv-api` (procedimento canônico; Keycloak, Core,
+api-delpi, gateway e demais serviços intocados):
+
+```text
+DEPLOYED_CODE_SHA        = 93dc8bad9f (contém 3dbb46c6e1; commits
+                           posteriores só tocam docs/LNF — árvore
+                           engineering-api idêntica)
+PREVIOUS_IMAGE_DIGEST    = sha256:f3d640c406bf… (preservada como
+                           infra-engineering-api:rollback-pre-3dbb46c6)
+NEW_IMAGE_DIGEST         = sha256:11802a0ed087af13be0e55508cd9565b26
+                           0dff50b9ed6e14a1c3d292b9461ccc
+CONTAINER                = delpi-engineering-api healthy
+INTERNAL_HEALTH_HTTP     = 200  ·  GATEWAY_HEALTH_HTTP = 200
+```
+
+Fix em runtime confirmado por inspeção do código no container.
+Rollback não executado e permanece disponível.
+
+**Smoke E2E real** — um único job completo via MCP autenticado
+(`analyze` → `product.drawing_understanding`, sessão OAuth com
+audiência `…/apps/engineering-api/mcp`):
+
+```text
+JOB_ID            = aj-f5040788e5074c30
+SUBMITTED_AT      = 2026-11-13T19:33:10Z
+TERMINAL_STATUS   = COMPLETED (~131–253 s, poll-bounded)
+PDF_SHA256        = af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2ae
+                    ef0c6ceeb050d98edf3  (exato — fonte oficial
+                    api-delpi product/drawing/pdf)
+PAGE_COVERAGE     = FULL — 13/13 páginas, 0 falhas, 2775 tokens
+PIPELINE          = pdfium_render_paddleocr (provider oficial)
+```
+
+**Resultado p12 (produção, E2E real):**
+
+| Ocorrência | Antes (PROD pré-fix) | Depois (PROD pós-fix) |
+|---|---|---|
+| `AE|1|10010028` → `50225704` | IDENTIFIED | IDENTIFIED ✓ |
+| `AE|1|10010028` → `50225740` | ausente (ia p/704) | IDENTIFIED `rowspan_anchor` ✓ |
+| `AH|1|10080897` → `50225740` | IDENTIFIED | IDENTIFIED `rowspan_anchor` ✓ |
+| `AG|1|10110676` → `50225740` | IDENTIFIED | IDENTIFIED `rowspan_anchor` ✓ |
+| `AF|1|10010005` → `50225741` | IDENTIFIED em `50225740` (falso) | IDENTIFIED `rowspan_anchor` em `50225741` ✓ |
+| `AJ`, `AG` → `50225741` | — | IDENTIFIED `rowspan_anchor` ✓ |
+| `AG|16|10110676` (negativo) | UNKNOWN | UNKNOWN `y_anchor_nearest` ✓ |
+
+Controles de integridade: 280 ocorrências, 0 duplicatas, 0
+`AF` sob `50225740`, 4 linhas com `association_conflict`
+preservadas, `UNKNOWN` fail-closed mantido.
+`quality_gate=EVAL_PENDING` (esperado — avaliação humana).
+
+**Resíduo conhecido** — `AE|1|10010028 → 50225702` emitido
+`UNKNOWN` (`y_anchor_nearest`) no E2E real, enquanto o replay DEV
+de células preservadas emitia `IDENTIFIED`. Divergência
+conservadora (fail-closed, sem falsa promoção) — o pipeline real
+teve evidência de ancoragem marginalmente diferente para essa
+âncora específica. Não configura falso positivo nem viola gate;
+registrado para investigação futura de refinamento de evidência.
+
+**Higiene operacional** — mutações temporárias de acesso
+revertidas ao fim do smoke: `directAccessGrants` do client
+`mcp-engineering` retornado a `false`; grant temporário
+`engineering.access` do principal de avaliação removido do Core
+(0 linhas remanescentes). Nenhuma credencial persistida em
+repositório, log ou documento.
+
+`DEPLOY_GATE=PASS` · `HEALTH_GATE=PASS` · `REAL_PDF_E2E_GATE=PASS`
+· `GROUP_BOUNDARY_GATE=PASS` · `UNKNOWN_FAIL_CLOSED=PASS` ·
+`ROLLBACK_EXECUTED=NO` (pronto) · `PRODUCTION_CHANGED=YES
+(engineering-api apenas)` · `VAL01_COMPLETED=false`.
