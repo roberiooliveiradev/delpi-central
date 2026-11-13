@@ -59,3 +59,18 @@ Sem lista de clientes, tabela de respostas identificadas, comentários, tokens o
 4. Estados distintos carregando/sem campanha/sem respostas/amostra protegida/erro.
 5. Responsivo e acessível, usando somente componentes PluginUI/CommercialUi reais, respeitando o padrão visual atual.
 6. Testes de integração e de autorização + paridade do serviço agregado com CAIO `analyze`.
+
+## 6. Aprovação visual final do solicitante — seção na Visão Geral (13/11/2026)
+
+**APROVADO:** a UI-05 será **uma seção/card principal dentro da página Visão Geral existente**, não uma página nova. Internamente, agrupar os conteúdos em regiões visuais distintas, usando os componentes oficiais do Comercial/PluginUI, nessa ordem:
+
+1. **Resumo executivo:** cinco indicadores agregados (IGS /5, NPS, taxa de resposta, clientes satisfeitos %, clientes críticos %), identificando a **última campanha encerrada**, seu período e denominadores/respondentes.
+2. **Satisfação por dimensão:** gráfico compacto com as **dez dimensões oficiais** e suas médias na escala 1–5; nenhuma lista de clientes.
+3. **Evolução histórica:** gráfico de acompanhamento/comparação entre campanhas, com dados agregados oficiais disponíveis e sem fabricar série histórica.
+4. **Ver análise completa:** navega para **UI-01 Resultados gerais**, usando o roteador oficial e mantendo o escopo de autorização de cada usuário.
+
+**Permissão esclarecida ao solicitante:** `commercial.marketing` ou `commercial.manage` podem consultar a análise completa agregada **e** acessar gestão/consultas identificadas conforme autorização definitiva do backend. **`commercial.access` também consulta UI-01 de análise completa agregada**, mas **não** abre configuração, respostas por empresa, contatos, links e detalhes privados. Não converter o botão Ver análise completa em ação exclusiva de Marketing/Manage sem nova decisão explícita. A `commercial-api` deve negar dados não autorizados, inclusive agregados que permitam reidentificação.
+
+**Layout:** uma seção com sub-regiões separadas, sem desmembrar os cinco indicadores e gráficos em cartões independentes da Visão Geral; respeitar fluxo responsivo e tokens reais de `SectionCard`, `CommercialMetricCard`, `CommercialHorizontalValueBars` e gráficos existentes. **TO_INVENTORY** de CSS, padding, margens, gap, fontes, altura e pontos de quebra, com referência aos componentes reais antes da implementação. Em desktop/tablet/celular, reaproveitar comportamento existente, não criar kit ou CSS paralelo.
+
+**Ownership e status:** `commercial-api` é autoridade dos cálculos/contratos e autorização, `plugins/commercial` compõe a apresentação; fonte da identificação de campanhas e dados a validar com integração. **UI-05 visualmente APROVADA; não implementada; contratos, testes, permissões efetivas e CSS exato PENDING/TO_INVENTORY.**
