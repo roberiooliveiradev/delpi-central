@@ -1,5 +1,8 @@
 # PRC-TRACK-IMPLEMENTATION-PACKAGE — Plano integrado de execução governada
 
+> **FONTE CANÔNICA ATUAL — 2026-11-13:** [Regras de produto, inconsistências e plano central PRC-TRACK](./PRC-TRACK-CANONICAL-PRODUCT-RULES-AND-EXECUTION-PLAN.md). Este documento é referência histórica/setorial: em caso de divergência sobre no-op, V1, snapshot PRC, REOPEN, RESOLVED/REMOVED, flags durante solicitação, conclusão, permissões ou critérios de aceite, **o plano central prevalece**. Trechos legados contraditórios estão **SUPERSEDED**, não são perguntas abertas nem instruções para implementar. Regras UX não conflitantes continuam válidas. `G1_ARCHITECTURE_DECISION_REQUIRED / TEST_NOT_RUN`.
+
+
 > **CR-13 — SIMPLIFICAÇÃO DE ESCOPO APROVADA PELO PO (13/11/2026):** Adicionar, resolver e remover bandeiras são operações internas do Portal Engenharia executadas pela Engineering API com **as permissões já existentes de acesso autorizado ao portal**; não criar papel, grant específico, aprovação adicional, justificativa formal mandatória ou workflow independente de governança de bandeiras. Backend valida os direitos existentes e registra operações no histórico, sem depender de permissão derivada do frontend. CR-09 segue exigindo conclusão da solicitação para refletir alterações propostas no produto; ADR-04 rege visualização RESOLVED/REMOVED. Esta instrução tem precedência sobre requisitos de aprovação/justificativa adicionais nas seções anteriores. **Evitar novas rodadas de microdecisões:** o próximo passo é consolidar as decisões do PO e encaminhar apenas bloqueadores arquiteturais reais à Coordination. `PO_APPROVED_BUSINESS_DIRECTION / TEST_NOT_RUN`; sem implementação.
 
 
