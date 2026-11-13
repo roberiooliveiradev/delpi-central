@@ -61,6 +61,12 @@ PROFILES: dict[str, dict] = {
         "permissions": ["lancamento-notas-fiscais.create", "lancamento-notas-fiscais.view.filial-02"],
         "superadmin": False,
     },
+    # Segundo dono na filial 01 (ensaio W5 E3/E4).
+    "A2": {
+        "username": "lnf-contract-a2",
+        "permissions": ["lancamento-notas-fiscais.create", "lancamento-notas-fiscais.view.filial-01"],
+        "superadmin": False,
+    },
 }
 
 EXPECTED_LNF = {
@@ -79,6 +85,7 @@ EXPECTED_LNF = {
     "P8": {"lancamento-notas-fiscais.review-unmapped-products"},
     "P11": {"lancamento-notas-fiscais.create", "lancamento-notas-fiscais.view.filial-01"},
     "P12": {"lancamento-notas-fiscais.create", "lancamento-notas-fiscais.view.filial-02"},
+    "A2": {"lancamento-notas-fiscais.create", "lancamento-notas-fiscais.view.filial-01"},
 }
 
 
@@ -454,9 +461,21 @@ def main() -> int:
         raise Fail(f"permissions ausentes após register: {missing}")
     print(f"[setup] permissions LNF OK ({len(perm_map)} no catálogo com prefixo)")
 
+    # HML/W5+: BFF hospeda o LNF; DEV legado ainda pode apontar api-delpi.
+    hosted = (infra.get("LNF_HOSTED_ENABLED") or "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    lnf_api = (
+        f"{base}/apps/controllership-finance-api"
+        if hosted
+        else f"{base}/apps/api-delpi"
+    )
     out_env = {
-        "LNF_BASE_URL": f"{base}/apps/api-delpi",
-        "LNF_TARGET": "api-delpi",
+        "LNF_BASE_URL": lnf_api,
+        "LNF_TARGET": "controllership-finance-api" if hosted else "api-delpi",
         "LNF_CORE_BASE_URL": core,
         "LNF_BOOTSTRAP_ADMIN_USERNAME": admin_email,
         "LNF_BOOTSTRAP_ADMIN_PASSWORD": bootstrap_password,
