@@ -6680,3 +6680,12 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **GATES:** L/A/O=PASS reportados · **R=PASS_PROPOSED** — não autoaprovado.
 - **Doc:** `320-int1-teo-shared-resource-scope-fail-closed-remediation-and-gate-r-security-revalidation.md`. `AGENT_COUNT=1` · `NEW_ROUTER=NO` · `RBAC_MUTATION=NO` · `PRODUCTION_DEPLOY=NOT_AUTHORIZED` · `INT1_CLOSED=NO`.
 - **NEXT:** `COORDINATION_INT1_TEO_SCOPE_AND_GATE_R_INDEPENDENT_ACCEPTANCE_REVIEW`.
+
+### INT-1 formal engineering acceptance + production deploy authorization — 2026-11-13
+
+- **TASK:** `DELIA-C3-T2-INT1-FORMAL-ACCEPTANCE-PRODUCTION-DEPLOY-AND-OUTCOME-VERIFICATION-01`; **PO DECISION:** `PRODUCTION_DEPLOY=AUTHORIZED_FOR_INT1_SCOPE`. BASE_HEAD `413baef618` (=origin/main).
+- **ENGINEERING ACCEPTANCE:** evidências Docs 317–320 reconciliadas contra Doc 293 — P1/P2/P3 `SATISFIED_PROVEN_IN_SAMPLE`; L/A/O=PASS; **R=PASS** (4 suítes exit 0 no release; DELIA 1601 / TÉO 2140+62sk / VISTA 2535 / DAVI 5970+10sk — deltas de código desde os SHAs de evidência = zero para DELIA/VISTA/DAVI, TÉO coberto pela suíte no próprio HEAD). `INT1_ENGINEERING_ACCEPTANCE=ACCEPT` — distinto de validação produtiva.
+- **RELEASE FREEZE:** model `qwen/qwen3-14b` (`openrouter_qwen`, fp `fed20318b167`); instruction `generalist-semantic-v2-3-enumeration-intent` fp `95e265ee18cd`; MCP 6-tool surface. `AGENT_COUNT=1`, `RBAC_MUTATION=NO`.
+- **DEPLOY PLAN:** ordem `api-delpi → transformometro-api → tv-dashboard-api → delia-api` via `up-prod-sequential.sh --build` em srv-api; rollback por restore de imagem/serviço; critérios registrados no Doc 321.
+- **Doc:** `321-...formal-engineering-acceptance...md` (PARTE A). PARTE B/C pendentes de execução.
+- **NEXT:** execução do deploy controlado + validação P1/P2/P3 produtiva → `COORDINATION_INT1_PRODUCTION_OUTCOME_INDEPENDENT_ACCEPTANCE_REVIEW`.

@@ -1639,3 +1639,17 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-STAGE | PENDING_COORDINATION_REVIEW | R=PASS_PROPOSED no novo SHA; NOT self-approved |
 
 **NEXT=`COORDINATION_INT1_TEO_SCOPE_AND_GATE_R_INDEPENDENT_ACCEPTANCE_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+### INT-1 formal acceptance + deploy authorization — 2026-11-13
+
+**TASK:** `DELIA-C3-T2-INT1-FORMAL-ACCEPTANCE-PRODUCTION-DEPLOY-AND-OUTCOME-VERIFICATION-01` · Doc **321**
+
+| Residual | Status | Evidence |
+|---|---|---|
+| INT1-STAGE | **ENGINEERING_ACCEPT** | L/A/O/R=PASS formalizado sob autorização PO; produção autorizada escopo INT-1 |
+| INT1-ATTEMPT-STATUS-CONFLATION | OPEN_MINOR | não-material (observability) |
+| INT1-MCP-HEAVY-VIEW-TIMEOUT | OPEN_MINOR | não-material (reliability) |
+| INT1-DAVI-NONEXECUTABLE-CAPS | OPEN | herdado Doc 310 — owner DAVI |
+| INT1-EVAL-ENV-FLAKES | OPEN_OPERATIONAL | ambiente de eval, não produção |
+
+**NEXT=`COORDINATION_INT1_PRODUCTION_OUTCOME_INDEPENDENT_ACCEPTANCE_REVIEW`** (após evidências PARTE B/C).
