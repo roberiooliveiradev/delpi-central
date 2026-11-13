@@ -525,3 +525,73 @@ class TestPostgresListRecords:
         assert p1["items"][0]["official_product_code"] == c2
         assert p2["items"][0]["official_product_code"] == c1
         assert p2["total"] == 2
+
+    def test_search_special_chars_literal(self, repo):
+        """RV01 — paridade com in-memory: %/_ da busca são literais."""
+        run = uuid.uuid4().hex[:6].upper()
+        cu, cx, cp = (f"SP{run}_C", f"SP{run}XC", f"SP{run}%C")
+        self._insert(repo, code=cu, updated_at="2026-01-01T00:00:00Z")
+        self._insert(repo, code=cx, updated_at="2026-01-01T00:00:00Z")
+        self._insert(repo, code=cp, updated_at="2026-01-01T00:00:00Z")
+
+        hit = repo.list_records(
+            search=f"sp{run.lower()}_c", page=1, page_size=25
+        )
+        assert [r["official_product_code"] for r in hit["items"]] == [cu]
+        hit = repo.list_records(
+            search=f"sp{run.lower()}%c", page=1, page_size=25
+        )
+        assert [r["official_product_code"] for r in hit["items"]] == [cp]
+
+    def test_completed_request_is_listed(self, repo):
+        """RV02 — conclusão PRC publica produto; request pendente não."""
+        run = uuid.uuid4().hex[:6].upper()
+        rid_done, rid_open = str(uuid.uuid4()), str(uuid.uuid4())
+        _seed(repo, rid_done)
+        _seed(repo, rid_open)  # permanece submitted → não acompanhado
+
+        repo.apply_transition(
+            request_id=rid_done, expected_version=1,
+            allowed_from=frozenset({"submitted"}),
+            actor_label="Analyst", actor_subject="analyst-pg",
+            event_type="started", next_status="in_progress",
+            set_fields={"assigned_to_subject": "analyst-pg"},
+            reason=None, event_meta={},
+        )
+        official_code = f"PGRV{run}"
+        data = _DRAFT_PAYLOAD.copy()
+        out = repo.complete_request(
+            request_id=rid_done, expected_version=2,
+            actor_subject="analyst-pg", official_code=official_code,
+            official_source="totvs-test", base_revision=None,
+            revision_snapshot=data,
+            revision_changes=[
+                {"path": p, "before": None, "after": v,
+                 "reason": "initial_registration"}
+                for p, v in data.items()
+            ],
+            verification={
+                "official_product_code": official_code,
+                "requested_by_subject": "analyst-pg",
+                "checked_at": "2026-11-13T00:00:00+00:00",
+                "official_source": "totvs-test",
+                "result": "matched",
+                "expected_fields": list(data),
+                "observed_fields": {"product": {}},
+                "field_results": {},
+                "evidence_fingerprint": f"fp-{run}",
+                "correlation_id": f"corr-{run}",
+            },
+            reason=None, event_meta={},
+        )
+        listed = repo.list_records(search=official_code, page=1, page_size=25)
+        assert listed["total"] == 1
+        rec = listed["items"][0]
+        assert rec["id"] == out["record"]["id"]
+        assert rec["official_product_code"] == official_code
+        assert rec["current_revision_number"] == 1
+
+        # request ainda submitted não gera registro acompanhado
+        assert repo.list_records(
+            search=rid_open[:8], page=1, page_size=25
+        )["total"] == 0
