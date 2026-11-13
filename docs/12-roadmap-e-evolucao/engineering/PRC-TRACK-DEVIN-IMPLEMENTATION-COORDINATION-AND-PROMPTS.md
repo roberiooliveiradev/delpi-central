@@ -385,3 +385,16 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Gate de inventário+correção:** confirmar owner, caminho da rota `/apps/my-requests/mine`, consumer API, dependências de listagem, chamadas HTTP efetivas e motivo do erro PRC na UI; verificar se o problema era backend compartilhado ou dependência específica. Se acoplamento indevido comprovado, pedir correção mínima ao Devin sob contratos dos owners correspondentes. Cobrir testes genéricos sem Engineering API (lista deve operar), tipo criação MP com integração governada, demais tipos sem chamadas PRC, 401/403, falha/timeout PRC isolada, HML multiusuário; PRD somente health e leituras comprovadamente não mutáveis.
 
 **Estado:** `OWNER_BUSINESS_RULE_APPROVED / ROUTING_IMPLEMENTATION_TO_INVENTORY / NO_CODE_CHANGE_AUTHORIZED_BY_THIS_LEDGER`. Qualquer novo owner/authority/BC exige `ARCHITECTURE_DECISION_REQUIRED`. Não reclassificar as 36 solicitações legítimas PRD como teste, não apagá-las.
+
+
+## 24. MYREQUESTS-ENGINEERING-ISOLATION-01 — PR governado aberto (13/11/2026)
+
+**Implementação reportada por Devin:** branch `devin/myrequests-engineering-isolation-01` @ `aac52ed2753192863618883ee25592cc439d65bc`, 6 arquivos limitados ao plugin My Requests (gate PRC, MinePage, httpClient e testes). `requests-api` permanece independente, `raw-material-creation` identificado como tipo canônico; chamadas PRC na listagem unificada sem filtro são permitidas **apenas para compor a fatia de solicitações de criação MP**, via `Promise.allSettled` com falha isolada. A falha observada de mensagem SQL crua era um vazamento na UI, não evidência de que todos os tipos fossem processados pela Engenharia.
+
+**Verificação Coordination no GitHub:** compare `main...devin/myrequests-engineering-isolation-01`: `ahead_by=2, behind_by=14` no instante da consulta, 6 arquivos no escopo. Commit `aac52ed275...` inspecionado. **PR [#181](https://github.com/roberiooliveiradev/delpi-central/pull/181) aberto pela Coordination**, `head=aac52ed275...`, `base=main`. GitHub retornou `mergeable=false` na criação, estado a investigar antes da integração. **Nenhum merge/deploy executado por esta ação.**
+
+**Testes do executor (reported):** 20 novos testes, 200 PASS no plugin e 2 FAIL baseline alheios, TypeScript/Vite PASS. HML e validação Cursor `TEST_NOT_RUN/PENDING`.
+
+**Revisão obrigatória:** (1) confirmar que 30 s é budget seguro para chamadas do `httpClient` compartilhado, inclusive uploads e fluxos longos; preferir timeout por operação se houver consumidor legítimo incompatível; (2) garantir sinalização de timeout/cancelamento e mensagens saneadas sem engolir erros reais de `requests-api`; (3) avaliar conflito real do PR e políticas de branch, sem ciclo de reconciliações só por `behind`. Se necessário, devolver correção pontual ao Devin antes do merge.
+
+**Próximo gate:** revisão do PR #181, CI/branch protection, integração autorizada, deploy HML governado do plugin, outage da Engineering API somente em HML, filtros não-MP, listagem genérica e multiusuários, Cursor revalidação independente. Produção continua exclusiva para smoke READ-only, sem criação de dados ou deploy automático.
