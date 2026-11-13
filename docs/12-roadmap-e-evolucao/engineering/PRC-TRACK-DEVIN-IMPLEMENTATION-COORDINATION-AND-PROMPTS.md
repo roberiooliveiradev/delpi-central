@@ -166,3 +166,18 @@ A coordenação abriu o **PR real [#180](https://github.com/roberiooliveiradev/d
 **Escopo H0 parcial enquanto aguarda:** Cursor pode inventariar HML, perfis e acessos, testar rotas PRC já implantadas com dados autorizados e documentar regressões/limitações; deve classificar listagem H1 `BLOCKED_ENVIRONMENT`, PROD-02/03 e flags produto `NOT_IMPLEMENTED`, sem produzir falso PASS/FAIL. Teste multiusuário completo apenas após backend produtos+flags e deploy HML correspondentes.
 
 **Ação seguinte:** Coordination trata PR #180 e autorização explícita de implantação HML separadamente; responsável pela execução técnica do deploy deve ser designado conforme owner de release, não presumir que Cursor pode publicar. Devin continua como executor de código e Cursor como executor da homologação.
+
+
+## 13. DEVIN-PROD-01 entregue — merge confirmado e HML parcial (13/11/2026)
+
+**Integração GitHub PROVEN:** PR #180 mergeado em `0a29fbe72ed8496388620325e4aa68f272af2743`, commit encontrado pela coordenação. **PROD-01 IMPLEMENTATION_PASS / MERGE_PASS.**
+
+**Evidência HML fornecida pelo executor (não reexecutada independentemente nesta revisão):** checkout `0a29fbe72e`, imagem `delpi-hml/engineering-api:local` digest reportado `sha256:9c040dd4...`, container `delpi-hml-engineering-api` saudável e código `list_records` presente no runtime. Rota pública `/apps/engineering-api/v1/product-registration/technical-records`: autorizado 200 com `total=0`, sem token 401, não autorizado 403, query inválida 422. **HML_PARTIAL_PASS_REPORTED**, não `HML_FULL_PASS`.
+
+**Ainda faltam em HML:** paginação, busca case-insensitive e literal `%`/`_`, ordenação e isolamento publicado vs pendente com registros reais; `CURSOR_MULTIUSER_PENDING`. Testes `73/73` memory/HTTP e `9/9` PG descartável no SHA integrado foram reportados pelo Devin, não substituem dados reais em HML. Cursor deve executar testes HML com contas autorizadas e dados **sintéticos e segregados**; não forçar conclusão de produto real ou publicar dados oficiais.
+
+**INCIDENTE DE HIGIENE DE SEGREDOS:** relatório de handoff incluiu credencial temporária em texto claro, e outra conta usou senha sincronizada de configuração documentada. **Não reproduzir nem persistir valores.** Rotacionar as credenciais HML envolvidas por canal autorizado, avaliar ocorrência em logs/documentação/artefatos e revogar credenciais expostas. Cursor recebe identificadores das contas e mecanismo seguro de obtenção, nunca senha em prompt/commit/chat. Confirmar que `.env.hml` e evidências não estão versionadas com segredos; não registrar conteúdo.
+
+**Próximo gate de execução:** `CURSOR-PROD-01-HML-DATA-PARITY` — contas segregadas, duas sessões independentes quando aplicável, dados sintéticos com um registro concluído via fluxo PRC e um pendente, validar listagem/search/page/sort, 200/401/403/422; registrar SHA da imagem e provas redigidas. Se não houver forma governada de criar dados sintéticos, `BLOCKED_TEST_DATA` sem simular aprovação. É **homologação incremental da lista**, não o gate multiusuário completo de PROD-02/flags.
+
+**Sequência funcional:** Coordenar ratificação técnica T01/T02 para DEVIN-PROD-02. PROD-03, flags e frontend mantêm ordem do plano mestre; produção não autorizada por este registro.
