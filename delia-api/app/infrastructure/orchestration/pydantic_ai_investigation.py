@@ -1675,7 +1675,7 @@ class PydanticAiInvestigationOrchestrator:
             evidence_needed: list[str] | None = None,
             business_subject: str = "",
         ) -> str:
-            """Optionally declare a typed investigation goal.
+            """OPTIONAL typed investigation goal declaration.
 
             Use for multi-target / multi-obligation asks. Not required
             for a simple single READ. Semantic proposal only.

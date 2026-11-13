@@ -58,38 +58,41 @@ chmod 600 "${EVAL_ENV}"
   echo "KC_GATEWAY_TOKEN_BASE=http://delpi-gateway/auth"
   echo "CORE_API_URL=http://core-api:8000"
   echo "DELPI_AUTH_CORE_API_URL=http://core-api:8000"
-  echo "DELIA_MCP_DAVI_BASE_URL=http://delpi-api-delpi:8000/mcp"
+  # INT-1 evals may point each owner at an isolated patched container
+  # (DELIA_EVAL_*_BASE_URL) without touching the running shared
+  # services. Endpoint-egress trust is an explicit env allowlist:
+  # non-default hosts are declared in this ephemeral eval env only
+  # (never in infra/.env or code).
+  _TRUSTED_HOSTS=""
+  _add_trusted_host() {
+    local host
+    host="$(python3 -c "from urllib.parse import urlparse;print(urlparse('${1}').hostname or '')")"
+    if [[ -n "${host}" && "${host}" != "${2}" ]]; then
+      if [[ -n "${_TRUSTED_HOSTS}" ]]; then
+        _TRUSTED_HOSTS="${_TRUSTED_HOSTS},${host}"
+      else
+        _TRUSTED_HOSTS="${host}"
+      fi
+    fi
+  }
+  _DAVI_URL="${DELIA_EVAL_DAVI_BASE_URL:-http://delpi-api-delpi:8000/mcp}"
+  echo "DELIA_MCP_DAVI_BASE_URL=${_DAVI_URL}"
+  _add_trusted_host "${_DAVI_URL}" "delpi-api-delpi"
   echo "DELIA_MCP_DAVI_ENABLED=true"
   echo "DELIA_MCP_DAVI_HOST_HEADER=localhost:8000"
-  # INT-1 identifier-resolution evals may point TÉO at an isolated
-  # patched container (DELIA_EVAL_TEO_BASE_URL) without touching the
-  # running shared transformometro-api service.
   _TEO_URL="${DELIA_EVAL_TEO_BASE_URL:-http://transformometro-api:8000/mcp}"
   echo "DELIA_MCP_TEO_BASE_URL=${_TEO_URL}"
-  # Endpoint-egress trust is an explicit env allowlist: a non-default
-  # TÉO host must be declared in this ephemeral eval env only (never
-  # in infra/.env or code).
-  _TEO_HOST="$(python3 -c "from urllib.parse import urlparse;print(urlparse('${_TEO_URL}').hostname or '')")"
-  if [[ -n "${_TEO_HOST}" && "${_TEO_HOST}" != "transformometro-api" ]]; then
-    echo "DELIA_MCP_TRUSTED_ENDPOINT_HOSTS=${_TEO_HOST}"
-  fi
+  _add_trusted_host "${_TEO_URL}" "transformometro-api"
   echo "DELIA_MCP_TEO_ENABLED=true"
   echo "DELIA_MCP_TEO_HOST_HEADER=localhost:8000"
-  # Same isolated-container override for VISTA (INT-1 P3 read-surface
-  # evals): DELIA_EVAL_VISTA_BASE_URL points at a patched container
-  # without touching the running shared tv-dashboard-api service.
   _VISTA_URL="${DELIA_EVAL_VISTA_BASE_URL:-http://tv-dashboard-api:8000/mcp}"
   echo "DELIA_MCP_VISTA_BASE_URL=${_VISTA_URL}"
-  _VISTA_HOST="$(python3 -c "from urllib.parse import urlparse;print(urlparse('${_VISTA_URL}').hostname or '')")"
-  if [[ -n "${_VISTA_HOST}" && "${_VISTA_HOST}" != "tv-dashboard-api" ]]; then
-    if [[ -n "${_TEO_HOST}" && "${_TEO_HOST}" != "transformometro-api" ]]; then
-      echo "DELIA_MCP_TRUSTED_ENDPOINT_HOSTS=${_TEO_HOST},${_VISTA_HOST}"
-    else
-      echo "DELIA_MCP_TRUSTED_ENDPOINT_HOSTS=${_VISTA_HOST}"
-    fi
-  fi
+  _add_trusted_host "${_VISTA_URL}" "tv-dashboard-api"
   echo "DELIA_MCP_VISTA_ENABLED=true"
   echo "DELIA_MCP_VISTA_HOST_HEADER=localhost:8000"
+  if [[ -n "${_TRUSTED_HOSTS}" ]]; then
+    echo "DELIA_MCP_TRUSTED_ENDPOINT_HOSTS=${_TRUSTED_HOSTS}"
+  fi
   echo "DELIA_MCP_PROVIDER_REGISTRY_MODE=core"
   echo "DELIA_C4_DAVI_PRODUCT_READ_ENABLED=1"
   echo "DELIA_C4_TEO_DASHBOARD_ANALYZE_ENABLED=1"

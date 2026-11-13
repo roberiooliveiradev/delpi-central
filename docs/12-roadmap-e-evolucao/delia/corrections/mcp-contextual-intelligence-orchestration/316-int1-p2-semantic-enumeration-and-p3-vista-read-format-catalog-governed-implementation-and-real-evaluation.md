@@ -38,7 +38,7 @@ DEFEITO PROVADO: MODEL ARGUMENT CONSTRUCTION — q:"transformação" model-autho
 ### 2.2 Implementação (EXISTING_EQUIVALENT=YES · REUSE_DECISION=EXTEND)
 
 `investigation_instructions.delpi.json` recebeu a versão
-`generalist-semantic-v2-3-object-authz-continuity` (v2-2 + cláusula geral de
+`generalist-semantic-v2-3-enumeration-intent` (v2-2 + cláusula geral de
 intenção de enumeração), registrada no mecanismo canônico — sem novo código
 determinístico de roteamento, sem nouns hardcoded.
 
@@ -54,7 +54,7 @@ Regra introduzida (domínio- e provider-neutros):
 
 ```text
 P2_INSTRUCTION_BASELINE:    generalist-semantic-v2-2-object-authz-continuity fp 3692299dac74c26e
-P2_INSTRUCTION_NEW_VERSION: generalist-semantic-v2-3-object-authz-continuity
+P2_INSTRUCTION_NEW_VERSION: generalist-semantic-v2-3-enumeration-intent
 P2_INSTRUCTION_FINGERPRINT: 95e265ee18cd5d66
 ```
 
@@ -105,7 +105,7 @@ FONTE CANÔNICA:   TvDataPresentationModesService (displayModes + blockTypeByMod
                   + DATA_BLOCK_TYPES/DATA_VIEW_BLOCK_TYPES + block_type_vocabulary()
                   + DisplayFormatService.format_catalog_entries() (formatos de valor)
 RESPONSE:         {displayModes{modes, blockTypeByMode}, dataBlockTypes,
-                   blockTypeVocabulary, valueFormats} — projeção bounded, sem internals
+                   blockTypeVocabulary, displayFormats} — projeção bounded, sem internals
 ERRORS:           UNKNOWN_ENTITY/UNKNOWN_ACTION/VALIDATION_ERROR/AUTHORIZATION_DENIED
 POSTCONDITION:    read-only, nada persiste; TV_WRITE continua exigido para catalog/write
 ```
@@ -136,7 +136,7 @@ P3 ("Quais formatos de visualização de dados estão disponíveis?")
   CALL:   vista.read {entity:display_format, action:list} — seleção semântica
           pura (zero regra DÉLIA forçando VISTA)
   OWNER:  catalog canônico — displayModes [auto,bar_chart,chart,kpi,line_chart,
-          table] + blockTypeByMode + dataBlockTypes + valueFormats
+          table] + blockTypeByMode + dataBlockTypes + displayFormats
   RESULT: GROUNDED · resposta apresenta modos, tipos de bloco e formatos de
           valor reais · truncamento declarado honestamente
   ⇒ P3_TV_READ_ALLOWED=YES · TV_WRITE_NOT_REQUIRED=YES ·

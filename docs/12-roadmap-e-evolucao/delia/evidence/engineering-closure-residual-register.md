@@ -1587,3 +1587,18 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-EVAL-ENV-FLAKES | **OPEN_OPERATIONAL** | `model_unavailable` (provider) + `turn_budget_limited` (0 tool calls) occurred once each; environmental, not model evidence |
 
 **NEXT=`COORDINATION_INT1_P2_P3_REAL_OUTCOME_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+### INT-1 finite full regression + consolidated acceptance gate — 2026-11-13
+
+**TASK:** `DELIA-C3-T2-INT1-FINITE-FULL-REGRESSION-AND-CONSOLIDATED-ACCEPTANCE-GATE-01` · Doc **317** · Consolidated eval `or-qwen14b-e069f3b33be8` (candidate `ce9602744037`)
+
+| Residual | Status | Evidence |
+|---|---|---|
+| INT1-DOC-INSTRUCTION-NAME-DRIFT | **CLOSED** | Docs said `v2-3-object-authz-continuity`; registry has single v2-3 `generalist-semantic-v2-3-enumeration-intent` (fp `95e265ee18cd5d66`) — documentation-only divergence, corrected (runtime unchanged) |
+| INT1-DOC-VISTA-FIELD-DRIFT | **CLOSED** | Docs said `valueFormats`; real contract returns `displayFormats` — corrected in 316/16/ledger |
+| DELIA-PREEXISTING-TEST-DEBT | **PARTIALLY_CLOSED** | `test_module_exposes_native_first_tools` FIXED (OPTIONAL marker in docstring → GREEN); `test_runtime_profiles_share_execution_policy` remains — context-proportional profile budgets (ollama 16k→6000/4 vs qwen 40k→20000/32) is a deliberate policy divergence requiring canonical decision (BLOCKED_BY_POLICY_DECISION, owner: DÉLIA runtime config) |
+| INT1-EVAL-ENV-CATALOG-ARTIFACT | **OPEN_OPERATIONAL** | isolated VISTA eval container writes `tv-dashboard-api/data/tv-dashboard/catalog/tv_data_routes.json` into mounted working tree → catalog-sync suite failures; environment artifact, not code regression |
+
+**Gates proposed:** L=PASS · A=PASS · O=PASS · R=FAIL (one classified preexisting policy blocker). **NEW_REGRESSIONS=0** across DELIA/TÉO/VISTA/DAVI suites. Consolidated P1/P2/P3 = SATISFIED_PROVEN on frozen candidate.
+
+**NEXT=`COORDINATION_INT1_LAOR_AND_FINAL_ACCEPTANCE_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
