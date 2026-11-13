@@ -119,6 +119,18 @@ Criar campanhas e selecionar clientes existentes no TOTVS para que o usuário po
 
 **Status:** organização com dois modos de prévia **DEFINIDA PELO SOLICITANTE**; controle visual concreto, medidas CSS, representação de HTML, testes e implementação **PENDING/TO_INVENTORY**.
 
+### Decisão aprovada — preview do correio eletrônico com RichTextEditor (13/11/2026)
+
+**APROVADO:** manter um único editor textual simples da mensagem, em cima (`CommercialTextAreaField`, assunto em `CommercialTextField`). Abaixo, o seletor de prévias **Correio eletrônico | Mensageiro**. No primeiro modo, reutilizar o componente existente `RichTextEditor` do PluginUI com `mode="preview"` e `value` HTML seguro, estritamente somente leitura. No segundo, mostrar texto simples com quebras de linha preservadas, útil para WhatsApp, Teams e outros mensageiros. Não criar editor rico novo nem um renderizador customizado.
+
+**Evidência:** `plugins/plugin-ui/src/components/rich-text/RichTextEditor.tsx` define `RichTextEditorMode = "edit" | "preview"` e renderiza `resolvedHtml` via `dangerouslySetInnerHTML` no modo de prévia. A sanitização usada em caminhos de edição **não garante sanitização integral do `value` em preview**. **GATE DE SEGURANÇA:** nunca passar HTML arbitrário ou interpolação não escapada. Gerar HTML seguro a partir de texto e tokens, com escape de valores, validação de links e testes anti-XSS antes de implementar; se não for possível comprovar proteção, **PENDING**, não liberar a prévia. Não executar HTML escrito pelo usuário.
+
+**Regras preservadas:** somente `{nome_empresa}` e `{link_pesquisa}`; em configuração, mostrar dados fictícios identificados e URL não funcional; em detalhe autorizado UI-02C, usar apenas participante ativo. Assunto só no modo Correio eletrônico. Alternar modos não grava nem envia. Persistência única por campanha depende da `commercial-api`; feedback pelo aviso flutuante padrão.
+
+**Layout:** editor acima → seletor → prévia embaixo → ações Salvar/Reverter. Empilhado em desktop/tablet/celular. Reutilizar CSS e tokens de `RichTextEditor`/PluginUI para padding, margem, tipografia, gaps, largura, altura, foco e quebras. Medidas e seletores concretos **TO_INVENTORY** antes da implementação. Validar HTML copiado no Outlook, responsividade, teclado e acessibilidade; não presumir compatibilidade já testada.
+
+**Status:** decisão técnica **APROVADA E DOCUMENTADA**; implementação, estilos CSS exatos, segurança ponta a ponta e testes **PENDING**.
+
 ### UI-02C — Detalhe do participante
 
 1. **Topo/trilha:** voltar à campanha e à lista no mesmo contexto; nome oficial, código e loja TOTVS; situação Pendente/Respondida oriunda da API.
