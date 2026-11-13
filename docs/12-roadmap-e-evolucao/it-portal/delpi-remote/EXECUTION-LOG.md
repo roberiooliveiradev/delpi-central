@@ -230,6 +230,24 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** revisar credenciais Keycloak e seguranca, homologar G2-S1 no Windows piloto, executar release API+MFE com backup e flag off em janela aprovada; depois ativar somente 1 client_id vinculado a um workstation UUID para verificar ingestao/replay/revogacao e retroceder flag caso necessario. G0-SEC ainda bloqueia acesso remoto.
 
+## 2026-11-13 | G2-S2 deploy informado e G2-S3 preparado sem piloto
+
+**Retorno do operador:** apos o pull da ultima versao, o operador informou que os comandos de deploy em producao funcionaram. Estes incluíam backup do schema it_portal, confirmacao da flag WORKSTATION_INGEST_ENABLED=false, API healthy, V011 presente e deploy frontend. O assistente nao acessou o shell; registrar como **resultado operacional confirmado pelo operador**, sem afirmar prova independente de schema ou ambiente.
+
+**Objetivo G2-S3:** preparar instalaçao assistida futura sem esperar deslocamento do operador ao escritorio, e sem instalar em nenhum host agora.
+
+**Arquivos alterados:** novos scripts do pacote `collectors/windows_workstation/Install-ItPortalWorkstationAgent.ps1`, `Invoke-ItPortalWorkstationScheduledSnapshot.ps1`, `Enable-ItPortalWorkstationAgent.ps1`, `Uninstall-ItPortalWorkstationAgent.ps1`, `Test-ItPortalWorkstationAgentPlan.ps1`, teste estatico `tests/test_workstation_agent_package.py`, CI API e runbook `G2-S3-WINDOWS-AGENT-ROLL-OUT.md`.
+
+**Seguranca:** operacoes nao-mutantes por default; `-Activate` e assinatura Authenticode confiavel obrigatorios, vinculacao ao UUID + hostname, credencial do cliente S2S individual protegida com DPAPI CurrentUser e ACL, smoke antes de criar tarefa; cria ScheduledTask DESABILITADA (Interactive, Limited); Enable separado com segundo smoke; Uninstall exige declaracoes de revogacao Keycloak e retirada de binding. Sem senha Windows guardada nem acesso remoto. A tarefa nao executa quando a conta nao esta logada.
+
+**Testes e evidencias:** parser PowerShell + teste de plano Linux + pytest do pacote foram adicionados ao CI; **resultado do CI precisa ser consultado no commit final**. Nenhum Windows 11 real, certificado corporativo, client Keycloak real ou revogacao foi testado nesta atividade.
+
+**Producao:** nenhum novo deploy, schema, Compose, tarefa Windows ou agente instalado por G2-S3. Infraestrutura G2-S2 relatada como publicada, ingestao desligada.
+
+**Rollback:** sem instalacao, nao ha estado local para remover. No futuro, revogar client Keycloak e binding antes de desinstalar tarefa/pasta exclusiva por UUID. Sem rollback de banco.
+
+**Proximo passo unico:** validar CI e, depois, somente presencialmente, homologar coleta G2-S1 e envio G2-S2 antes de instalar/habilitar G2-S3. G0-SEC continua pendente para acesso remoto.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

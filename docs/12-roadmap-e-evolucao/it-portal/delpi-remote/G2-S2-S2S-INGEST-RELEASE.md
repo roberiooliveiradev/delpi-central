@@ -1,7 +1,7 @@
 # G2-S2 | Envio de inventario Windows por S2S, com feature gate desligado
 
 **Data:** 2026-11-13
-**Estado:** EM REVISAO, CI de API/PostgreSQL V011/PowerShell e UI verde em 13/11/2026; sem deploy produtivo, sem teste real do cliente Keycloak nem piloto Windows confirmados.
+**Estado:** EM REVISAO, CI de API/PostgreSQL V011/PowerShell e UI verde em 13/11/2026; operador informou pull/deploy produtivo concluido com sucesso. Sem teste real do cliente Keycloak, vinculacao S2S ativa ou piloto Windows confirmado.
 **Importante:** nenhum agente remoto foi instalado; este incremento nao concede controle de tela, teclado, mouse ou arquivos.
 
 ## O que esta implementado
@@ -84,3 +84,7 @@ Roadmap: [README](README.md) | Evidencias: [EXECUTION-LOG](EXECUTION-LOG.md) | I
 - [API: job test-it-portal-api sucesso](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43515628259/job/132196752412), commit `2295725e96eb991909fa390eb0a7db0bb0c9a0bc`, suite HTTP, syntax parser PowerShell, PostgreSQL real descartavel V001..V011 e integracao G2.
 - [UI: validate-it-portal sucesso](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43514437749/job/132192627676), commit `4a7318dea15c5d7b972a5c8cd0a8321d0eecc205`, lint, Vitest e build.
 - O status do CI nao comprova instalacao, rede/TLS do host, atuacao de S2S real, revogacao de clients ou backup da base produtiva.
+
+## Publicacao de infraestrutura informada e proximo incremento
+
+Em 13/11/2026, o operador confirmou sucesso do procedimento de backup + pull/deploy de it-portal-api e it-portal com V011 e feature flag desligada. Sem prova independente do host pelo assistente. A identificacao S2S por maquina ainda precisa de piloto presencial. O pacote futuro G2-S3 foi preparado sem deploy e esta documentado em [G2-S3](G2-S3-WINDOWS-AGENT-ROLL-OUT.md).

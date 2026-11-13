@@ -59,6 +59,11 @@ jobs:
             'it-portal-api/collectors/windows_host/Install-ItPortalWindowsScheduledServices.ps1'
             'it-portal-api/collectors/windows_workstation/Collect-ItPortalWorkstationSnapshot.ps1'
             'it-portal-api/collectors/windows_workstation/Send-ItPortalWorkstationSnapshot.ps1'
+            'it-portal-api/collectors/windows_workstation/Invoke-ItPortalWorkstationScheduledSnapshot.ps1'
+            'it-portal-api/collectors/windows_workstation/Install-ItPortalWorkstationAgent.ps1'
+            'it-portal-api/collectors/windows_workstation/Enable-ItPortalWorkstationAgent.ps1'
+            'it-portal-api/collectors/windows_workstation/Uninstall-ItPortalWorkstationAgent.ps1'
+            'it-portal-api/collectors/windows_workstation/Test-ItPortalWorkstationAgentPlan.ps1'
             'it-portal-api/collectors/windows_host/Invoke-ItPortalWindowsServiceControlAgent.ps1'
             'it-portal-api/collectors/windows_host/Install-ItPortalWindowsServiceControlAgent.ps1'
           )
@@ -71,6 +76,10 @@ jobs:
               exit 1
             }
           }
+      - name: G2-S3 PowerShell plan mode is non-mutating
+        shell: pwsh
+        run: |
+          & 'it-portal-api/collectors/windows_workstation/Test-ItPortalWorkstationAgentPlan.ps1'
       - name: Unit and HTTP tests
         working-directory: it-portal-api
         run: python -m pytest -q

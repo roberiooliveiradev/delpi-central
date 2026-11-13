@@ -150,3 +150,7 @@ IT_PORTAL_TEST_DSN=postgresql://user@host:5432/postgres python -m pytest -q
 - Nenhuma nova permissao humana/manifesto; nenhum comando remoto, instalacao, schedtask ou controle de servicos.
 - Testes escritos: `pytest -q tests/test_workstation_snapshots.py tests/test_workstation_snapshot_ingest.py`, `tests/test_postgres_integration.py` em DB descartavel; `npm test -- --run src/features/workstations/WorkstationSnapshotPanel.test.tsx`, `npm run lint`, `npm run build`. **Ainda nao executados neste runtime.**
 - [Runbook G2-S2](../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G2-S2-S2S-INGEST-RELEASE.md).
+
+## G2-S3 | Instalacao e agendamento assistidos (codigo em revisao)
+
+O pacote Windows de G2-S3 esta em `collectors/windows_workstation`: installer, runner, enable, uninstall e teste do plano. Modo padrao apenas PLAN; -Activate exige assinatura corporativa, identidade unica S2S/DPAPI e teste de envio, registra tarefa Disabled sob logon interativo. Enable e Uninstall sao separados. Este incremento nao muda a API, Docker Compose nem migrations. Ver `docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G2-S3-WINDOWS-AGENT-ROLL-OUT.md`.
