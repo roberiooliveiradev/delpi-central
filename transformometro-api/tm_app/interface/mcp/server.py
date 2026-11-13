@@ -44,14 +44,16 @@ _AnalysisViewParam = Literal[
 
 
 class _ChatGptFileParam(BaseModel):
-    """Canonical openai/fileParams file object (R4.2 contract).
+    """Hydrated openai/fileParams object received by remote MCP (R4.2).
 
-    The ChatGPT host binds user uploads to fields listed in the tool
-    descriptor _meta["openai/fileParams"] — each value is this
-    closed object. download_url/file_id are required by the host
-    contract; mime_type/file_name are optional but declared.
-    The declared properties are what enables host hydration: a bare
-    dict/object schema cannot be bound (R4.8 root cause).
+    Agent call may pass a workspace path selector for a conversation-
+    attached file (e.g. ``/workspace/user_files/<name>``). The ChatGPT
+    host binds fields listed in ``_meta["openai/fileParams"]`` and
+    replaces the selector with this closed object before the tool reaches
+    MCP. ``download_url``/``file_id`` are required on the wire;
+    ``mime_type``/``file_name`` are optional. Declared properties enable
+    host hydration (R4.8): a bare dict/object schema cannot be bound.
+    Remote MCP never reads the agent filesystem.
     """
 
     download_url: str
@@ -414,10 +416,12 @@ def create_mcp_server() -> MCPServer:
             "a typed sequence: $ops.N.<path> refs consume earlier "
             "read-backs; the chain stops on first failure or pending "
             "proposal. Destructive deletes belong to the delete tool. "
-            "helpdesk upload_attachment binds the user-uploaded file via "
-            "the file argument (openai/fileParams object bound by the "
-            "host) — never a sandbox path (/workspace/..., /mnt/data/...), "
-            "file:// URI, bare file_id string, or arbitrary URL."
+            "helpdesk upload_attachment: pass file=/workspace/user_files/"
+            "<attached> as the ChatGPT selector for a conversation-attached "
+            "file; the host hydrates openai/fileParams to "
+            "{download_url, file_id, ...}. Remote MCP receives only the "
+            "hydrated object and never reads /workspace. Bare file_* "
+            "strings fail host validation; invented URLs are rejected."
         ),
         annotations=_annotations("execute", "Execute"),
         # Canonical openai/fileParams binding (R4.2 parity on the V3
@@ -487,13 +491,15 @@ def create_mcp_server() -> MCPServer:
             _ChatGptFileParam | None,
             Field(
                 description=(
-                    "Canonical openai/fileParams object bound by the "
-                    "host — helpdesk upload_attachment only "
-                    "({download_url, file_id, mime_type?, file_name?}). "
-                    "Pass the host-bound object verbatim. Never pass "
-                    "/workspace/..., /mnt/data/..., file:// URIs, bare "
-                    "file_*/libfile_* strings, or invented HTTPS URLs — "
-                    "the host hydrates download_url for attached files."
+                    "helpdesk upload_attachment only. Agent may pass a "
+                    "workspace path selector for a conversation-attached "
+                    "file (e.g. /workspace/user_files/<name>); ChatGPT "
+                    "hydrates openai/fileParams into "
+                    "{download_url, file_id, mime_type?, file_name?} before "
+                    "the call reaches MCP. Remote MCP/BFF never read the "
+                    "agent filesystem. Bare file_*/libfile_* strings fail "
+                    "host tool_input_validation_failed; invented HTTPS "
+                    "URLs are rejected."
                 )
             ),
         ] = None,

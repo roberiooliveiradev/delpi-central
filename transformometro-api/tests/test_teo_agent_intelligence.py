@@ -93,6 +93,12 @@ def test_mcp_branding_obeys_directives_not_universal_package_confirm():
                       "record_read", "get_catalog", "get_methodology_guide",
                       "diagnostic_read", "meeting_minute_read"):
         assert tombstone not in text
+    # Helpdesk upload — three layers (#1588): workspace path selector,
+    # host hydration, MCP never reads agent FS.
+    assert "upload_attachment" in text
+    assert "/workspace/user_files" in text
+    assert "hydrat" in text.lower()
+    assert "never read" in text.lower()
 
 
 def test_intelligence_json_covers_all_gpt_ops_and_mcp_tools():

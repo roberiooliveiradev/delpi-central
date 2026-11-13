@@ -167,8 +167,9 @@ ROUTE_LEDGER: dict[tuple[str, str], tuple[str, str]] = {
     ),
     ("POST", "/tickets/{ticket_id}/attachments"): (
         "EXPOSED_WRITE",
-        "execute(capability=upload_attachment, file= openai/fileParams "
-        "object bound by the host) — V3 semantic route of the canonical "
+        "execute(capability=upload_attachment, "
+        "file=/workspace/user_files/<attached> selector → host hydrates "
+        "openai/fileParams) — V3 semantic route of the canonical "
         "prepare_helpdesk_change family",
     ),
     # --- Governed writes ------------------------------------------------------

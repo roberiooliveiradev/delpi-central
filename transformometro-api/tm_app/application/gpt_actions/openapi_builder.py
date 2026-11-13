@@ -2296,11 +2296,16 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "file": {
                             "type": "object",
                             "description": (
-                                "upload_attachment only — the file the user "
-                                "attached to this conversation, bound by the "
-                                "host as an openai/fileParams object. Never "
-                                "an arbitrary URL, sandbox path (/workspace, "
-                                "/mnt/data, file://), or bare file_id string."
+                                "upload_attachment only. Agent may select a "
+                                "conversation-attached file via a workspace "
+                                "path (e.g. /workspace/user_files/<name>); "
+                                "ChatGPT hydrates openai/fileParams into this "
+                                "object ({download_url HTTPS, file_id, "
+                                "mime_type?, file_name?}). Remote MCP/BFF "
+                                "receive only the hydrated object and never "
+                                "read the agent filesystem. Bare file_* "
+                                "strings fail host validation; invented URLs "
+                                "are rejected."
                             ),
                             "properties": {
                                 "download_url": {"type": "string"},

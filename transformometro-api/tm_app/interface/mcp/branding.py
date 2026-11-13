@@ -74,8 +74,10 @@ TEO_MCP_INSTRUCTIONS = (
     "TÉO capability <= authenticated user capability. Profile is not authorization. "
     "Never invent IDs or use execute_capability / generic SQL or HTTP. "
     "Helpdesk ticket files: execute(capability='upload_attachment', "
-    "args={ticket_id, title?}, file=host-bound openai/fileParams with "
-    "HTTPS download_url+file_id). Never /workspace, /mnt/data, file://, "
-    "or bare file_* ids — remote MCP cannot read the agent filesystem. "
+    "args={ticket_id, title?}, file=/workspace/user_files/<attached>). "
+    "The path is only a ChatGPT selector for a conversation-attached "
+    "file; the host hydrates openai/fileParams to HTTPS "
+    "download_url+file_id. Remote MCP/BFF never read the agent "
+    "filesystem. Bare file_* ids fail host validation. "
     "Evidence and room binary upload remains UI-only / BLOCKED_BY_PLATFORM."
 )

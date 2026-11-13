@@ -719,7 +719,7 @@
           "HELPDESK_DEMAND_GATE",
           "read(action=ticket) — estado atual antes de mutar; delete_ticket exige ticket resolvido de forma única (nunca apagar por referência vaga)",
           "catalogs relevantes (users purpose=assignee, categories, ...) — nunca inferir ids",
-          "execute(capability=upload_attachment, args={ticket_id, title?}, file=objeto fileParams do host) anexa ao chamado. Não existe tool pública dedicada. Nunca URL inventada, path (/workspace, /mnt/data, file://), file_id solto (file_*/libfile_*) ou base64 — o host hidrata download_url+file_id",
+          "execute(capability=upload_attachment, args={ticket_id, title?}, file=/workspace/user_files/<anexo>) anexa ao chamado. O path é só seletor do arquivo já anexado na conversa; o host ChatGPT hidrata openai/fileParams ({download_url HTTPS, file_id}); o MCP remoto recebe o objeto hidratado e nunca lê /workspace. Não existe tool pública dedicada. Nunca file_* solto (file_*/libfile_* — rejeitado pelo host), URL inventada ou base64",
           "EXECUTION_CONTRACT_GATE",
           "execute — único ACT",
           "read(action=ticket|session) — read-back autoritativo",
@@ -731,7 +731,7 @@
           "process_truth",
           "demand_analysis"
         ],
-        "rule": "PREPARE != ACT. can_* são orientação, não autorização — a BFF revalida no commit. O resultado só é declarado após read-back; mudança na proposta invalida confirmação anterior. delete_ticket move o chamado para a lixeira do GLPI (soft delete — nunca dizer apagado permanentemente); pós-condição = ticket ausente da visão ativa (not_found no read-back). unlink_glpi_session desvincula a sessão OAuth do próprio usuário; religar é fluxo browser/OAuth. upload_attachment anexa o arquivo que o usuario enviou na conversa (auto_act): PREPARE mostra file_name/mime_type; commit faz download do file_id autorizado pela plataforma - BFF - GLPI - read-back do document_id no ticket; 2xx sem document_id no inventory = OUTCOME_VERIFICATION_FAILED. Pedidos compostos (ex.: atribuir + anexar) reportam outcome por acao - sucesso parcial explicito.",
+        "rule": "PREPARE != ACT. can_* são orientação, não autorização — a BFF revalida no commit. O resultado só é declarado após read-back; mudança na proposta invalida confirmação anterior. delete_ticket move o chamado para a lixeira do GLPI (soft delete — nunca dizer apagado permanentemente); pós-condição = ticket ausente da visão ativa (not_found no read-back). unlink_glpi_session desvincula a sessão OAuth do próprio usuário; religar é fluxo browser/OAuth. upload_attachment anexa o arquivo que o usuario enviou na conversa (auto_act): na chamada use file=/workspace/user_files/<anexo> como seletor; o host hidrata openai/fileParams; PREPARE mostra file_name/mime_type; commit baixa o download_url autorizado - BFF - GLPI - read-back do document_id no ticket; 2xx sem document_id no inventory = OUTCOME_VERIFICATION_FAILED. Pedidos compostos (ex.: atribuir + anexar) reportam outcome por acao - sucesso parcial explicito.",
         "stop": "após verify, reportar o outcome exato (ex.: follow-up criado, assignee atualizado) — não continuar para outras writes nem análise sem novo pedido."
       }
     },
@@ -812,7 +812,7 @@
     "tool_unavailable_after_attempt": "Após falha real: reportar erro + pedir reconectar OAuth se 401."
   },
   "not_exposed": {
-    "binary_upload": "evidence and interaction-room binaries stay UI-only / BLOCKED_BY_PLATFORM. Helpdesk ticket files use execute(capability=upload_attachment, file=host-bound openai/fileParams with HTTPS download_url+file_id). Sandbox paths (/workspace, /mnt/data) and bare file_* ids are rejected — remote MCP cannot read the agent filesystem",
+    "binary_upload": "evidence and interaction-room binaries stay UI-only / BLOCKED_BY_PLATFORM. Helpdesk ticket files: execute(capability=upload_attachment, args={ticket_id, title?}, file=/workspace/user_files/<attached>) — path is the ChatGPT agent selector for a conversation-attached file; the host hydrates openai/fileParams to {download_url HTTPS, file_id}; remote MCP/BFF receive only that object and never read the agent filesystem. Bare file_*/libfile_* strings fail host tool_input_validation_failed. Raw sandbox paths that reach MCP as download_url still fail closed (FILE_PATH_NOT_SUPPORTED)",
     "interaction_room_attachment_binary": "UI-only / BLOCKED_BY_PLATFORM (metadata via gpt_collaboration_read action=attachments / read action=attachments)",
     "generic_proxy": "FORBIDDEN",
     "signature_pdf": "NOT via GPT/MCP search path"

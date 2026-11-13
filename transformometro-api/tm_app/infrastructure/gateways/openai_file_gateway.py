@@ -1,20 +1,23 @@
 """Platform-authorized file fetch for ChatGPT ``openai/fileParams``.
 
-When a user uploads a file in ChatGPT, the host may bind it to a tool
-argument declared in ``_meta["openai/fileParams"]`` — the argument carries
-``{download_url, file_id, mime_type?, file_name?}`` where ``download_url``
-is a short-lived URL pre-authorized by the host for this plugin.
+Three layers (do not collapse them):
 
-This adapter is the only place that resolves such URLs into bytes. It is
-deliberately narrow:
+1. Agent may pass ``file="/workspace/user_files/<attached>"`` as a
+   **selector** for a conversation-attached file.
+2. ChatGPT host hydrates ``_meta["openai/fileParams"]`` into
+   ``{download_url, file_id, mime_type?, file_name?}`` where
+   ``download_url`` is a short-lived HTTPS URL pre-authorized by the host.
+3. This adapter fetches **only** that hydrated ``download_url``. Remote
+   MCP never reads ``/workspace`` / ``/mnt/data``.
+
+Guards (unchanged intent):
 
 - HTTPS only;
 - host allowlist (``OPENAI_FILE_DOWNLOAD_HOSTS``, default
   ``files.oaiusercontent.com``) — a model-supplied URL to any other host
   fails closed (SSRF guard);
-- sandbox / workspace paths rejected with a typed error (remote MCP
-  cannot read ``/workspace`` or ``/mnt/data``; the host must hydrate
-  fileParams);
+- raw sandbox / workspace paths that reach this adapter as
+  ``download_url`` → typed ``FILE_PATH_NOT_SUPPORTED``;
 - no redirects;
 - bounded byte size (default 20 MiB, aligned with the Helpdesk BFF upload
   cap) enforced while streaming;
@@ -176,10 +179,10 @@ class OpenAIFileGateway(HelpdeskFileSourcePort):
                 ),
             )
             raise _validation(
-                "Caminho local/sandbox (/workspace, /mnt/data, file://) "
-                "não é fetchável pelo MCP remoto. Use o argumento file "
-                "hidratado pelo host (openai/fileParams com download_url "
-                "HTTPS e file_id) — nunca passe o path como download_url.",
+                "Caminho local/sandbox chegou ao MCP como download_url. "
+                "O path /workspace só é seletor no agente; o host ChatGPT "
+                "deve hidratar openai/fileParams ({download_url HTTPS, "
+                "file_id}). O MCP remoto nunca lê o filesystem do agente.",
                 "FILE_PATH_NOT_SUPPORTED",
             )
         parsed = urlparse(url)

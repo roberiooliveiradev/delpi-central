@@ -813,6 +813,14 @@ def test_execute_tool_declares_openai_fileparams_binding() -> None:
     assert meta.get("openai/fileParams") == ["file"]
     props = (dumped.get("inputSchema") or {}).get("properties") or {}
     assert "file" in props
+    # Agent-facing copy must keep the three layers distinct: workspace
+    # path as ChatGPT selector → host hydration → MCP never reads FS.
+    file_desc = str((props.get("file") or {}).get("description") or "").lower()
+    tool_desc = str(dumped.get("description") or "").lower()
+    blob = f"{file_desc}\n{tool_desc}"
+    assert "/workspace/user_files" in blob
+    assert "hydrat" in blob
+    assert "never read" in blob or "nunca lê" in blob or "never reads" in blob
 
 
 def test_execute_merges_host_bound_file_into_sealed_args() -> None:

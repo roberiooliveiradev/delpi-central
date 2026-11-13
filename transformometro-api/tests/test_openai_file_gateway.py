@@ -252,7 +252,8 @@ def test_regional_oaiusercontent_hosts_allowed_by_default_suffix(monkeypatch):
 
 
 # --------------------------------------------------------------------------
-# Sandbox / workspace path classification (remote MCP cannot read FS)
+# Sandbox / workspace path classification (wire defense — MCP never reads FS;
+# agent path selectors are host-hydrated before this adapter sees them)
 # --------------------------------------------------------------------------
 
 

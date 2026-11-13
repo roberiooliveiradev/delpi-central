@@ -618,19 +618,27 @@ run against the real session (user friction/re-auth, per spec §34).
   full document contract. Inline cap: 8 MiB per attachment; larger files
   return `content_delivery=too_large` (metadata only). BFF hard limit for
   upload/download remains 20 MiB.
-- **Write (ChatGPT → TÉO)**: canonical `_meta["openai/fileParams"]` —
-  the host binds the user-uploaded file to the `file` tool argument as
-  `{download_url, file_id, mime_type?, file_name?}`. The backend resolves
-  the platform-authorized `download_url` through `OpenAIFileGateway`
-  (HTTPS only, host allowlist `OPENAI_FILE_DOWNLOAD_HOSTS` default
-  `files.oaiusercontent.com,oaiusercontent.com`, no redirects,
-  ≤20 MiB streamed cap, no filesystem paths, no model-supplied URLs).
-  Sandbox paths (`/workspace`, `/mnt/data`, `file://`, mangled
-  `https:///workspace/...`) fail with typed
-  `FILE_PATH_NOT_SUPPORTED` — remote MCP cannot read the agent FS;
-  the host must hydrate `openai/fileParams`.
-- **No base64-in-JSON**, no generic URL fetcher, no local path, no
-  ticket/attachment mirror, no service account.
+- **Write (ChatGPT → TÉO)** — three layers (do not collapse them):
+  1. **Agent selector**: for a file the user attached to the conversation
+     (mounted under the agent workspace), the tool call may pass
+     `file="/workspace/user_files/<name>"` (validated live on GLPI #1588).
+     Bare `file_*` / `libfile_*` strings fail host
+     `tool_input_validation_failed` — they are not a valid selector.
+  2. **Host hydration**: ChatGPT binds `_meta["openai/fileParams"]` and
+     replaces the selector with
+     `{download_url, file_id, mime_type?, file_name?}` before the call
+     reaches remote MCP.
+  3. **MCP/BFF wire**: remote MCP receives only the hydrated object.
+     `OpenAIFileGateway` resolves the platform-authorized `download_url`
+     (HTTPS only, host allowlist `OPENAI_FILE_DOWNLOAD_HOSTS` /
+     SDMNT pattern, no redirects, ≤20 MiB streamed cap, no
+     model-supplied arbitrary URLs). Remote MCP/BFF **never** read
+     `/workspace` or `/mnt/data`. If a raw sandbox path / `file://` /
+     mangled `https:///workspace/...` reaches the wire as `download_url`,
+     it fails closed with typed `FILE_PATH_NOT_SUPPORTED` (defense in
+     depth — not the happy path).
+- **No base64-in-JSON**, no generic URL fetcher, no ticket/attachment
+  mirror, no service account, no MCP filesystem access.
 
 ### Architecture
 
@@ -639,9 +647,11 @@ READ:  TÉO helpdesk_read(action=attachment, ticket_id, document_id)
        → same-user Bearer → HelpdeskBffGateway.download_ticket_attachment
        → BFF GET /tickets/{t}/attachments/{d} (belongs-to-ticket + AuthZ)
        → bytes → ImageContent|EmbeddedResource + structured metadata
-WRITE: user file → openai/fileParams {file_id, download_url}
-       → prepare_helpdesk_change(action=upload_attachment) [AUTO_ACT]
-       → commit_proposal → OpenAIFileGateway.fetch(guarded)
+WRITE: agent selector file=/workspace/user_files/<attached>
+       → ChatGPT host hydrates openai/fileParams {file_id, download_url}
+       → execute(capability=upload_attachment) / prepare_helpdesk_change
+         [AUTO_ACT] — MCP sees only the hydrated object
+       → commit_proposal → OpenAIFileGateway.fetch(guarded HTTPS)
        → HelpdeskBffGateway.upload_ticket_document (multipart +
          proposal-bound Idempotency-Key)
        → BFF POST /tickets/{t}/attachments → GLPI
@@ -679,9 +689,10 @@ delete route; not invented at GLPI (ledger stays accurate).
   `fileParams` `_meta` binds user uploads to `prepare_helpdesk_change`.
 - **GPT Actions** (JSON-only): `action=attachment` returns
   `content_delivery=metadata_only` (never raw bytes in JSON);
-  `upload_attachment` accepts the same `file` object contract — usable
-  where the client supplies the authorized reference. OpenAPI enum/schema
-  changed → **Builder reimport required**.
+  `upload_attachment` documents the same three-layer contract — agent
+  may pass a workspace path selector; the OpenAPI `file` schema describes
+  the hydrated `{download_url, file_id}` object the host delivers.
+  OpenAPI enum/schema changed → **Builder reimport required**.
 
 ### Evidence
 
@@ -847,9 +858,8 @@ not source-code evidence. Status: ACCEPT / CLOSED.
   incident-name regression (`helpdesk_add_attachment` → typed
   `ARGUMENT_VALIDATION`), catalog advertises `upload_attachment` on
   both projections.
-- **Runtime residual**: live ChatGPT upload through the V3 surface is
-  PENDING_RUNTIME_ACCEPTANCE (requires a real fileParams binding from
-  the host — not mockable end-to-end).
+- **Runtime residual**: CLOSED by §23.5 (GLPI #1588 productive acceptance
+  on the V3 `execute` surface with host-hydrated fileParams).
 
 ### 23.2 R4.2-C3 — SDMNT Azure region rotation (ticket #1588)
 
@@ -868,16 +878,20 @@ updated with the newly observed region. Still **no**
 `*.blob.core.windows.net` wildcard. Residual: Azure account squatting on
 the `oaisdmntpr*` prefix (requires creating that storage account).
 
-### 23.3 R4.11 — sandbox path / bare file_id typed rejection
+### 23.3 R4.11 — sandbox path / bare file_id typed rejection (wire defense)
 
-**Defect (evidence: GLPI #1586 attempts)**: Agent Mode / Codex passed
-raw sandbox paths (`/workspace/user_files/...`, `/workspace/output/...`,
-`file:///workspace/...`) and bare `file_*`/`libfile_*` strings as the
-`file` argument. The gateway treated mangled forms
-(`https:///workspace/...`, empty host) as allowlist failures
-(`FILE_URL_NOT_ALLOWED`), which misled recovery. Remote MCP cannot read
-the agent filesystem; host hydration of `openai/fileParams` remains the
-only supported write path.
+**Defect (evidence: GLPI #1586 attempts)**: when a raw sandbox path
+(`/workspace/...`, `file://...`, mangled `https:///workspace/...`) or a
+bare `file_*`/`libfile_*` string reached remote MCP **as the wire
+`file` / `download_url` value** (without host hydration), the gateway
+mislabeled some mangled forms as `FILE_URL_NOT_ALLOWED`. That confused
+recovery. Remote MCP still cannot read the agent filesystem.
+
+**Clarification (do not confuse with §23.5)**: on ChatGPT Agent Mode the
+happy path is to pass `/workspace/user_files/<attached>` as a **selector**;
+the host hydrates `openai/fileParams` and MCP never sees the path.
+§23.3 covers only the fail-closed case when hydration is skipped or a
+raw path/`file_id` arrives on the wire.
 
 **Fix**:
 - `is_sandbox_file_reference()` classifies bare paths, `file://`, and
@@ -886,9 +900,8 @@ only supported write path.
 - PREPARE blocks `invalid_file.sandbox_path` /
   `invalid_file.file_id_only` before fetch/GLPI.
 - ACT re-checks and fails closed before any BFF write.
-- Schema/intelligence/docs state the same contract: host-bound
-  `{download_url, file_id}` only; HTTPS allowlist unchanged; no FS
-  read, no redirect follow, no generic proxy.
+- HTTPS allowlist unchanged; no FS read, no redirect follow, no generic
+  proxy.
 
 **Fail-closed residual on #1586**: attachment `document_id=1583`
 (`image.png`) / inline follow-up path is **not** attributable to the
@@ -900,23 +913,56 @@ ChatGPT proved `execute(capability="upload_attachment")` on 2026-11-06:
 GLPI ticket #1533, file `dark-1440-library(1).png`, outcome
 `executed_verified`, document id 1511, read-back PASS. Follow-up 749
 kept document 1511 in the message HTML. A visual Portal capture of that
-ticket was not recorded with this change.
+ticket was not recorded with that change.
 
 The public MCP tool of the same name is removed. The internal capability
 `helpdesk_upload_attachment` stays on workflow `helpdesk_change`, action
 `upload_attachment`, policy `auto_act`, owner `helpdesk-api`. Public
 tools are exactly `get_context`, `read`, `analyze`, `knowledge`,
 `execute` and `delete`. `execute.file` keeps the closed
-`_ChatGptFileParam` model and `_meta["openai/fileParams"] = ["file"]`.
-`file` stays a top-level argument. Other capabilities reject it.
+`_ChatGptFileParam` model (hydrated wire shape) and
+`_meta["openai/fileParams"] = ["file"]`. `file` stays a top-level
+argument. Other capabilities reject it.
 
 ```text
+# Agent call (ChatGPT) — path is a selector for an attached file:
 execute(
   capability="upload_attachment",
   args={"ticket_id": <int>, "title": "<optional>"},
-  file=<host-bound _ChatGptFileParam>
+  file="/workspace/user_files/<attached>.png"
 )
+
+# Wire received by remote MCP after host hydration:
+file={"download_url": "https://…", "file_id": "file_…", …}
 ```
+
+### 23.5 R4.12 — ChatGPT runtime acceptance (#1588) — three-layer contract
+
+**Evidence (productive, GLPI #1588, 2026-11-13)**:
+
+| Layer | Observed |
+|---|---|
+| Agent selector | `file="/workspace/user_files/…"` for a conversation-attached file |
+| Host rejection | bare `file_000…` → `tool_input_validation_failed` |
+| Host hydration | `openai/fileParams` → HTTPS `download_url` + `file_id` (MCP never opened `/workspace`) |
+| Outcome | `document_id=1584` in `attachments` / `attachment_refs`; inline follow-up OK; no Document ghost after ownership rebind |
+
+**Canonical agent shape**:
+
+```json
+{
+  "capability": "upload_attachment",
+  "args": {
+    "ticket_id": 1588,
+    "title": "Imagem de aceite"
+  },
+  "file": "/workspace/user_files/arquivo.png"
+}
+```
+
+**Invariants**: remote MCP/BFF never read the agent filesystem; allowlist /
+`FILE_PATH_NOT_SUPPORTED` / SSRF guards unchanged; documentation must
+keep the three layers distinct (selector ≠ hydrated object ≠ MCP payload).
 
 ## 24. Requester identity corrective — authenticated session user = GLPI requester
 

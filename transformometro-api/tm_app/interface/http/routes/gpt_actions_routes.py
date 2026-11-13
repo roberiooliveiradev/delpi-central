@@ -160,9 +160,13 @@ class GptGovernedOperationBody(BaseModel):
 
 
 class GptFileParam(BaseModel):
-    """Canonical openai/fileParams file object — populated by the host
-    when a user-uploaded file is bound to a tool argument. Fabricated
-    URLs fail closed at the platform-host allowlist."""
+    """Hydrated openai/fileParams object received after ChatGPT host binding.
+
+    The agent may pass a workspace path selector for a conversation-attached
+    file; the host replaces it with this object. Fabricated download_url
+    values fail closed at the platform allowlist. Remote MCP/BFF never read
+    the agent filesystem.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -194,11 +198,12 @@ class GptHelpdeskChangeBody(BaseModel):
     file: GptFileParam | None = Field(
         default=None,
         description=(
-            "upload_attachment only — the file the user attached to this "
-            "conversation, bound by the host as a fileParams object "
-            "(download_url + file_id; mime_type/file_name optional). "
-            "Never an arbitrary URL, sandbox path (/workspace, /mnt/data, "
-            "file://), or bare file_*/libfile_* string."
+            "upload_attachment only. Agent may select a conversation-attached "
+            "file via /workspace/user_files/<name>; ChatGPT hydrates "
+            "openai/fileParams into {download_url HTTPS, file_id, "
+            "mime_type?, file_name?}. Remote MCP/BFF receive only the "
+            "hydrated object and never read /workspace. Bare file_*/libfile_* "
+            "strings fail host validation; invented URLs are rejected."
         ),
     )
     description: str | None = None

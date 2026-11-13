@@ -131,10 +131,11 @@ _CREATE_TASK_BODY_KEYS = (
 
 _REQUEST_VALIDATION_BODY_KEYS = ("approver_type", "approver_id", "content")
 
-# Canonical OpenAI fileParams object — the ChatGPT host binds user uploads
-# to fields listed in the tool descriptor ``_meta["openai/fileParams"]``.
-# download_url/file_id are required by the host contract; mime_type and
-# file_name are optional but declared. Never an arbitrary URL/path.
+# Hydrated openai/fileParams object expected on the MCP/BFF wire after
+# ChatGPT host binding (``_meta["openai/fileParams"]``). Agent may pass
+# ``/workspace/user_files/<attached>`` as a selector; the host replaces
+# it with this object before remote MCP. download_url/file_id required;
+# mime_type/file_name optional. Raw paths/file_ids on the wire fail closed.
 _FILE_OBJECT_KEYS = ("download_url", "file_id", "mime_type", "file_name")
 
 
@@ -148,13 +149,16 @@ def _missing_fields(capability: str, args: dict[str, Any]) -> list[str]:
 
 
 def _file_object_errors(file_arg: Any) -> list[str]:
-    """Shape validation for the platform file reference — fail closed on
-    anything that is not the canonical fileParams object."""
+    """Shape validation for the wire file reference after host hydration.
+
+    Fail closed on anything that is not the hydrated fileParams object.
+    A workspace path string here means hydration was skipped (the agent
+    selector never reached MCP as a path on the happy path).
+    """
     if isinstance(file_arg, str):
         text = file_arg.strip()
-        # Bare file_*/libfile_* or sandbox paths are never host-bound
-        # fileParams objects — reject with a typed reason, not a vague
-        # shape error, so the model can recover without inventing URLs.
+        # Bare file_*/libfile_* or sandbox paths on the wire are not
+        # hydrated fileParams — typed reason, not a vague shape error.
         if text.startswith(("/workspace", "/mnt/data", "file:")):
             return ["file.sandbox_path"]
         if text.startswith(("file_", "libfile_", "file-")):
@@ -759,10 +763,11 @@ def execute(
         errors = _file_object_errors(file_arg)
         if "file.sandbox_path" in errors:
             raise GptActionsError(
-                "Caminho local/sandbox (/workspace, /mnt/data, file://) "
-                "não é fetchável pelo MCP remoto. Use o argumento file "
-                "hidratado pelo host (openai/fileParams com download_url "
-                "HTTPS e file_id).",
+                "Caminho local/sandbox chegou ao MCP sem hidratação. "
+                "No agente, file=/workspace/user_files/<anexo> é só "
+                "seletor; o host ChatGPT deve entregar openai/fileParams "
+                "({download_url HTTPS, file_id}). O MCP remoto nunca lê "
+                "o filesystem do agente.",
                 400,
                 {
                     "error_kind": "validation",
@@ -771,8 +776,10 @@ def execute(
             )
         if "file.file_id_only" in errors:
             raise GptActionsError(
-                "file_id solto (file_*/libfile_*) não é um fileParams "
-                "válido — o host deve hidratar {download_url, file_id}.",
+                "file_id solto (file_*/libfile_*) falha na validação do "
+                "host e não é fileParams no MCP — use o path do anexo em "
+                "/workspace/user_files/… como seletor para o host hidratar "
+                "{download_url, file_id}.",
                 400,
                 {
                     "error_kind": "validation",

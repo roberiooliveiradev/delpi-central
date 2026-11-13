@@ -998,8 +998,9 @@ def test_upload_invalid_file_shape_blocked():
 
 
 def test_upload_sandbox_path_blocked_at_prepare():
-    """Raw /workspace and file:// refs must fail PREPARE — never reach
-    fetch/GLPI (remote MCP cannot read the agent filesystem)."""
+    """If a raw /workspace or file:// ref reaches MCP as download_url
+    (hydration skipped), PREPARE must fail — never fetch/GLPI. Agent
+    path selectors are host-hydrated before this layer."""
     facade, ports = _facade()
     for file_arg in (
         "/workspace/user_files/01-image.png",
