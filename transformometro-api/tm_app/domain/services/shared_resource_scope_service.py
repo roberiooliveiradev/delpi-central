@@ -79,17 +79,20 @@ def resolve_instancia_anchor(
 def _same_filial(left: dict[str, Any], right: dict[str, Any]) -> bool:
     if left.get("todas_filiais_ativas") or right.get("todas_filiais_ativas"):
         return True
-    if left.get("filial_id") and right.get("filial_id"):
-        return str(left["filial_id"]) == str(right["filial_id"])
-    return str(left.get("codigo_filial") or "") == str(right.get("codigo_filial") or "")
+    for field in ("filial_id", "codigo_filial"):
+        left_value = str(left.get(field) or "").strip()
+        right_value = str(right.get(field) or "").strip()
+        if left_value and right_value and left_value == right_value:
+            return True
+    return False
 
 
 def _share_setor(left: dict[str, Any], right: dict[str, Any]) -> bool:
     left_keys = _setor_keys(left)
     right_keys = _setor_keys(right)
-    if left_keys and right_keys:
-        return bool(left_keys & right_keys)
-    return str(left.get("codigo_setor") or "") == str(right.get("codigo_setor") or "")
+    if not left_keys or not right_keys:
+        return False
+    return bool(left_keys & right_keys)
 
 
 def filter_rateio_pool(
@@ -112,7 +115,7 @@ def filter_rateio_pool(
         processos_by_id=processos_by_id,
     )
     if not anchor:
-        return links
+        return []
 
     scoped: list[dict] = []
     for link in links:

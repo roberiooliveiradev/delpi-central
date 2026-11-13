@@ -1628,3 +1628,14 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-STAGE | PENDING_COORDINATION_REVIEW | R=PASS_PROPOSED; NOT self-approved |
 
 **NEXT=`COORDINATION_INT1_GATE_R_PUBLISHED_CODE_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+### INT-1 TÉO scope fail-closed remediation — 2026-11-13
+
+**TASK:** `DELIA-C3-T2-INT1-TEO-SHARED-RESOURCE-SCOPE-FAIL-CLOSED-REMEDIATION-01` · Doc **320**
+
+| Residual | Status | Evidence |
+|---|---|---|
+| R-T3-SCOPE-FAIL-CLOSED | **CLOSED** | H1 (`_share_setor` `""==""`), H2 (âncora ausente → pool completo) e `_same_filial` análogo — 3 CONFIRMED_DEFECT corrigidos no owner; 13 testes S1–S12; TÉO 2140/0 fail |
+| INT1-STAGE | PENDING_COORDINATION_REVIEW | R=PASS_PROPOSED no novo SHA; NOT self-approved |
+
+**NEXT=`COORDINATION_INT1_TEO_SCOPE_AND_GATE_R_INDEPENDENT_ACCEPTANCE_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

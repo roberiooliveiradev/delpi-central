@@ -6667,3 +6667,16 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **GATES:** L/A/O=PASS reportados · **R=PASS_PROPOSED** — veredito formal aguarda revisão independente; **não autoaprovado**.
 - **Doc:** `319-int1-gate-r-residual-remediation-and-full-regression-closure.md`. `AGENT_COUNT=1` · `NEW_ROUTER=NO` · `RBAC_MUTATION=NO` · `PRODUCTION_DEPLOY=NOT_AUTHORIZED` · `INT1_CLOSED=NO`.
 - **NEXT:** `COORDINATION_INT1_GATE_R_PUBLISHED_CODE_INDEPENDENT_REVIEW`.
+
+### INT-1 TÉO shared-resource scope fail-closed remediation — 2026-11-13
+
+- **TASK:** `DELIA-C3-T2-INT1-TEO-SHARED-RESOURCE-SCOPE-FAIL-CLOSED-REMEDIATION-01`; **BASE_HEAD** `4a47a56c9d` (=origin/main; branch local `devin/prc-...` no mesmo SHA — Regra 7 registrada, push via `HEAD:main`). WIP concorrente engineering-api preservado.
+- **H1 CONFIRMED:** `_share_setor` caía em `codigo_setor == codigo_setor` com `"" == ""` → True quando qualquer lado sem keys (`setores`/top-level ausentes).
+- **H2 CONFIRMED:** `filter_rateio_pool` retornava **todos** os vínculos quando `resolve_instancia_anchor` não resolvia a revisão âncora.
+- **`_same_filial` CONFIRMED:** fallback `codigo_filial == codigo_filial` com `"" == ""` → True quando `filial_id` ausente em um lado (inclusive âncora identificada vs vínculo sem identidade).
+- **IMPACTO:** pool = denominador do rateio → fail-open diluía custo entre vínculos fora de escopo (sub-alocação por revisão). FIX: igualdade por campo homogêneo exigindo valor não-vazio; `_share_setor` fail-closed sem keys; âncora ausente → `[]` (contrato: sem match possível; consumidor faz skip graceful).
+- **MATRIZ S1–S12 (13 testes novos):** RED = s4/s6/s7; GREEN 17/17 + calculator 49/49. Fallback processo (S8), `todas_filiais_ativas` (S9), `SCOPE_EMPRESA` (S10), top-level setor (S11), match legado só-código (S12) preservados.
+- **TÉO FULL SUITE:** **2140 PASSED / 62 SKIPPED / 0 FAILED** (2127+13; skips inalterados). `MODEL_VISIBLE_CHANGE=NO` — VISTA/DAVI/DELIA não reexecutadas por escopo (Doc 293).
+- **GATES:** L/A/O=PASS reportados · **R=PASS_PROPOSED** — não autoaprovado.
+- **Doc:** `320-int1-teo-shared-resource-scope-fail-closed-remediation-and-gate-r-security-revalidation.md`. `AGENT_COUNT=1` · `NEW_ROUTER=NO` · `RBAC_MUTATION=NO` · `PRODUCTION_DEPLOY=NOT_AUTHORIZED` · `INT1_CLOSED=NO`.
+- **NEXT:** `COORDINATION_INT1_TEO_SCOPE_AND_GATE_R_INDEPENDENT_ACCEPTANCE_REVIEW`.
