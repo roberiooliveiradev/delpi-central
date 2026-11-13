@@ -1,5 +1,8 @@
 # PRC-TRACK — G0 inventário reancorado e G1 pacote de decisões para Coordination
 
+> **FONTE CANÔNICA ATUAL — 2026-11-13:** [Regras de produto, inconsistências e plano central PRC-TRACK](./PRC-TRACK-CANONICAL-PRODUCT-RULES-AND-EXECUTION-PLAN.md). Este documento é referência histórica/setorial: em caso de divergência sobre no-op, V1, snapshot PRC, REOPEN, RESOLVED/REMOVED, flags durante solicitação, conclusão, permissões ou critérios de aceite, **o plano central prevalece**. Trechos legados contraditórios estão **SUPERSEDED**, não são perguntas abertas nem instruções para implementar. Regras UX não conflitantes continuam válidas. `G1_ARCHITECTURE_DECISION_REQUIRED / TEST_NOT_RUN`.
+
+
 > **DECISÃO DO PO RECEBIDA — 2026-11-13:** Ler [Deliberações G1 do PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md). ADR-01–07 têm escolha funcional registrada; **isso não equivale à ratificação pela Coordination**. Os pontos de snapshot PRC vs valor oficialmente verificado, no-op, projeção de flags e corte temporal precisam de contratos. Referências anteriores neste inventário são evidência de código e propostas, não decisões finais conflitantes.
 
 > **Data:** 2026-11-13 · **Estado:** `G0_PARTIAL / G1_DECISION_REQUIRED`. **Não é ADR ratificada.**  
