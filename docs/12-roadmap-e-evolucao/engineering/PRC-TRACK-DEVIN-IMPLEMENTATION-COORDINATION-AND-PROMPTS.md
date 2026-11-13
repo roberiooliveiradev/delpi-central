@@ -411,3 +411,14 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Gate de revisão:** verificar contrato `type_code` no backend owner, filtragem antes de COUNT/paginação, 403 honesto de `work-queue` sem `process-right`, CI/proteções e compatibilidade com consumers; asserções de MockTransport não substituem HML. Depois de merge governado, deploy HML autorizado da Engineering API, verificar somente casos `raw-material-creation` na Home (tarefas+solicitações), totais e eventos, dois usuários e negativas, regressão LMP; Cursor aceite independente. **PRD somente após gates e autorização operacional**, com smoke exclusivamente health e GET comprovadamente read-only, **zero escritas de negócio**; os 36 `REQ-2026` legítimos permanecem preservados.
 
 **Dependência paralela:** PR [#181](https://github.com/roberiooliveiradev/delpi-central/pull/181) da correção do plugin My Requests é distinto deste PR; não confundir escopos ou assumir que foi integrado.
+
+
+## 26. PR #182 — integração governada concluída; HML e PRD ainda pendentes (13/11/2026)
+
+**Coordination executou merge oficial do [PR #182](https://github.com/roberiooliveiradev/delpi-central/pull/182)** via conector GitHub, fixando `expected_head_sha=d73b11e30b0acc6f12b7f41fffdec97e5332dc33`. **Resultado GitHub:** `merged=true`; `MERGE_SHA=f1a625ff42a1c2b42dc700b92ee5044b09382e23`. Não houve rebase/reconciliação extra pela Coordination.
+
+**Gate de CI observado:** workflow GitHub Actions `Architecture Enforcement` (run `43522051628`) no SHA do head, `completed/success`. A lista de reviews da API estava vazia, assim como a API de commit combined statuses; não afirmar que houve revisão humana ou que todas as proteções eram obrigatórias. O endpoint de merge oficial aceitou a operação, portanto não houve bypass manual da API. **Escopo compare:** 2 arquivos `requests_api_gateway.py` e `test_home_gateways.py`, filtro `type_code=raw-material-creation` aplicado em `/v1/requests/work-queue` e `/v1/requests/mine`.
+
+**Próximo gate autorizado como preparação, não resultado executado:** Devin pode retomar `F2: DEPLOY_HML` via mecanismo operacional de HML autorizado e registrar SHA `f1a625ff...`/digest; `F3` testes contra runtime (filtro de tipos, totais, fontes parciais, LMPs, multiuser), `F4` Cursor aceite independente. **F5 release PRD continua condicionado** a HML/Cursor, autoridade operacional, backup/rollback; nenhum deploy de PRD autorizado automaticamente por este registro. **PRD testes apenas health e consultas comprovadamente read-only**, zero escrita de dados de negócio. Os 36 registros legítimos My Requests permanecem preservados.
+
+**Estado:** `PR182_MERGED_PASS / HML_DEPLOY_PENDING / CURSOR_PENDING / PRD_NOT_DEPLOYED`. PR #181 (plugin My Requests) é mudança distinta; consultar seu estado separadamente, não considerá-la incluída neste merge.
