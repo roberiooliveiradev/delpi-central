@@ -3459,6 +3459,18 @@ medido no PDF. `r11 AG|16` permanece `UNKNOWN` (ambiguidade real,
 fail-closed). `FALSE_PARENT_PROMOTIONS=0`, sem duplicatas,
 contrato de saída inalterado.
 
+> **Adendo retificativo (2026-11-13, investigação
+> `EVA-VAL01-P12-AE-50225702-DEV-REPLAY-VS-PROD-E2E-INVESTIGATION`):**
+> a linha `AE|1|10010028 → 50225702 : UNKNOWN → IDENTIFIED`
+> acima superestimou o replay. O harness DEV alimentou as células
+> **pós-processadas** do job `aj-547c28cde3774672` (126 células,
+> já rehomenadas pelo código antigo), não a percepção SLANet crua
+> (144 células) que o pipeline real consome. Sobre o input fiel
+> (144 células + `unassigned_tokens`, preservado no payload do
+> job `aj-f5040788e5074c30`), o código deployado emite
+> deterministicamente `UNKNOWN`/`y_anchor_nearest` — igual ao E2E
+> produtivo. Ver §85.2 para a cadeia causal completa.
+
 `RUNTIME_FIX_REQUIRED=YES` (implementado) · `GENERALIST_FIX=YES`
 · `UNKNOWN_FAIL_CLOSED=PRESERVED` · `PRODUCTION_CHANGED=NO` ·
 `RELEASE_GATE=COORDINATION` · `VAL01_COMPLETED=false`.
@@ -3525,10 +3537,73 @@ preservadas, `UNKNOWN` fail-closed mantido.
 **Resíduo conhecido** — `AE|1|10010028 → 50225702` emitido
 `UNKNOWN` (`y_anchor_nearest`) no E2E real, enquanto o replay DEV
 de células preservadas emitia `IDENTIFIED`. Divergência
-conservadora (fail-closed, sem falsa promoção) — o pipeline real
-teve evidência de ancoragem marginalmente diferente para essa
-âncora específica. Não configura falso positivo nem viola gate;
-registrado para investigação futura de refinamento de evidência.
+conservadora (fail-closed, sem falsa promoção). **Diagnóstico
+concluído em §85.2:** `ROOT_CAUSE=REPLAY_NOT_EQUIVALENT` — sem
+defeito de runtime.
+
+## §85.2 — Investigação residual `AE→50225702` (2026-11-13)
+
+**TASK_ID:** `EVA-VAL01-P12-AE-50225702-DEV-REPLAY-VS-PROD-E2E-INVESTIGATION`.
+Investigação diagnóstica, sem mudança de código nem de produção.
+
+**Evidências comparadas** (ambas preservadas no host,
+proveniência verificável):
+
+- **E2E PROD:** job `aj-f5040788e5074c30` → 144 células SLANet
+  + 106 `unassigned_tokens` em `table_perception[p12]`.
+- **Fonte do replay DEV:** job `aj-547c28cde3774672` → as
+  mesmas 144 células (`TOTAL_DIFF_CELLS=0` entre jobs —
+  percepção determinística) **e** as 126 células
+  pós-processadas de `component_table.rows` (20 rehomed, 38
+  ausentes vs a grade crua).
+
+**Geometria real (PDF, dpi200):** célula mesclada `50225702`
+cobre y≈732–845 = 3 linhas físicas (`AE`@749, `AH`@788,
+`AG`@825). SLANet declara a âncora em r16 rs2 (real: r15–17).
+
+**Cadeia causal da divergência:**
+
+```text
+Input fiel (E2E):   r16 tem células VAZIAS ('' col2/col3) sem
+                    token_centers → fallback usa bounding_box_px
+                    SLANet (altura da célula mesclada inteira)
+                    → ext[16]=(744,794) ⊇ ext[15]=(745,754)
+                    → score declared(16,2)=0.5 vs cand(15,3)=1.0
+                    → Δ=0.5px << margem 5.7px → janela declarada
+                      mantida → AE r15 → y_anchor_nearest
+                    → UNKNOWN  (fail-closed correto)
+
+Input do replay:    células já rehomenadas — vazias removidas
+                    → ext[16]=(783,792) limpo
+                    → declared=20.0 vs cand=1.0 → Δ=19 ≥ margem
+                    → realinhou para (15,3) → IDENTIFIED
+```
+
+`FIRST_DIFFERENT_STAGE=INPUT` · `FIRST_DIFFERENT_FIELD=
+row_band_extent[16]` (744,794 vs 783,792).
+
+**Classificação:** `REPLAY_NOT_EQUIVALENT` +
+`CORRECT_FAIL_CLOSED`. O `UNKNOWN` produtivo não é defeito: o
+sinal de realinhamento (centro de bandas vs centróide da âncora)
+é genuinamente degenerado para esta âncora — a banda de r16,
+inflada por polígonos de células vazias, já cobre a região de
+r15, tornando as janelas indistinguíveis dentro da margem. O
+algoritmo recusou a mudança sem evidência, como projetado.
+
+**Limitação documentada (candidata a refinamento futuro, sem
+implementação nesta task):** a extensão de banda derivada de
+`bounding_box_px` de células sem texto/tokens herda a altura da
+célula mesclada, poluindo o sinal em âncoras com offset de ±1
+linha. Refinamentos possíveis (ex.: ignorar células vazias na
+derivação de banda, ou desempate por cobertura de linha
+populada) exigiriam validação adversarial própria e nova
+decisão da Coordination — **não implementado**;
+`RUNTIME_FIX_REQUIRED=NO`.
+
+`SOURCE_VERIFIED=YES` · `DEV_PAYLOAD_AVAILABLE=YES` ·
+`PROD_PAYLOAD_AVAILABLE=YES` · `INPUT_EQUIVALENCE=NO` ·
+`UNKNOWN_FAIL_CLOSED_PRESERVED=YES` · `PRODUCTION_CHANGED=NO` ·
+`VAL01_COMPLETED=false`.
 
 **Higiene operacional** — mutações temporárias de acesso
 revertidas ao fim do smoke: `directAccessGrants` do client

@@ -1053,8 +1053,17 @@ duplicatas.
 `quality_gate=EVAL_PENDING`.
 
 **Resíduo:** `AE|1|10010028` → `50225702` UNKNOWN no E2E real
-(replay DEV de células preservadas: IDENTIFIED) — divergência
-conservadora, sem falsa promoção; investigação bounded futura.
+(replay DEV de células preservadas: IDENTIFIED) — **investigação
+concluída (Doc 119 §85.2): `REPLAY_NOT_EQUIVALENT` +
+`CORRECT_FAIL_CLOSED`.** O replay DEV alimentou as 126 células
+pós-processadas (rehoming do código antigo já removia as células
+vazias), não a grade SLANet crua de 144 células. No input real,
+polígonos de células vazias em r16 herdam a altura da célula
+mesclada e inflam a banda `ext[16]=(744,794)` sobre `ext[15]`,
+tornando as janelas (16,2)/(15,3) indistinguíveis (Δscore 0.5px <
+margem 5.7px) → janela declarada mantida → UNKNOWN fail-closed.
+Sem defeito de runtime; limitação de sinal registrada como
+candidata a refinamento futuro sob decisão da Coordination.
 
 `GROUP_BOUNDARY_PROD=PASS` · `PRODUCTION_CHANGED=YES
 (engineering-api)` · `VAL01_COMPLETED=false`.
