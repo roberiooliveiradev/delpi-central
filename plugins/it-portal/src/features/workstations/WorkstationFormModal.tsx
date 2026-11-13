@@ -133,7 +133,7 @@ export function WorkstationFormModal({
           <WorkstationOwnerPicker
             selectedId={form.responsible_user_id}
             selectedName={form.responsible}
-            legacyName={workstation && !workstation.responsible_user_id ? workstation.responsible : null}
+            legacyName={workstation && !workstation.responsible_user_id && !form.responsible_user_id ? form.responsible : null}
             disabled={mutation.isPending}
             onSelect={(userId, name) => setForm((previous) => ({
               ...previous,
