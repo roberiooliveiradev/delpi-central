@@ -200,6 +200,24 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** piloto **local e manual** do script em um Windows nao critico, revendo apenas estrutura/resultado agregado. Em seguida projetar G2-S2 com escopo S2S por workstation, credencial individual e revogavel, ingestao idempotente e retencao. G0-SEC segue como gate do motor de acesso remoto.
 
+## 2026-11-13 | G2-S2 | canal de inventario S2S e painel preparados
+
+**Objetivo:** permitir que cada computador cadastrado envie um inventario read-only por identidade tecnica exclusiva, sem liberar comandos remotos.
+
+**Arquivos:** `V011__workstation_snapshots.sql`; `application/workstation_snapshot_service.py`; `infrastructure/persistence/postgres_workstation_snapshots.py`; `routes/workstation_snapshots_routes.py`; config, dependencies, main, Docker Compose; testes pytest, integracao PostgreSQL, UI Vitest; `WorkstationSnapshotPanel.tsx`, contratos/types/queryKeys/detail; script de envio manual PowerShell e runbook G2-S2.
+
+**Contrato e controles:** header S2S X-Delpi-Service-Authorization, escopo exclusivo `it-portal.workstations.ingest`, feature flag off e binding 1:1 client->workstation UUID, ambos obrigatorios. Verificacao de hostname em transacao, recusa de arquivado, payload JSON 32 KiB, replay idempotente por (workstation,run_id) com SHA-256, retenção por equipamento. GET de ultima coleta requer `it-portal.computers.view`. O snapshot nao altera cadastro curado.
+
+**Testes e evidencias:** testes de Pytest (flag, S2S, binding, replay, RBAC, arquivamento) e Vitest do painel foram **escritos**, incluindo integracao PostgreSQL V011, mas ainda nao foram executados com dependencias reais no runtime do repositorio; sem prova de Windows PS5.1, Keycloak real, CI ou backup. Nao declarar gates verdes.
+
+**Producao:** **NENHUM deploy**, migration nem cliente S2S ativados por esta entrega; `IT_PORTAL_WORKSTATION_INGEST_ENABLED=false` e binding vazio sao defaults do Compose. A migracao V011 sera aplicada apenas quando a API for atualizada em release aprovada, com backup. Sem instalar agente ou alterar firewall.
+
+**Riscos:** validacao S2S e scope real, compatibilidade Windows/DPAPI, simultaneidade, rate limit de gateway e retenção/LGPD precisam de testes. Nenhum segredo, hostname real, IP real ou token colocado no repositorio publico.
+
+**Rollback:** flag false, revogar cliente Keycloak e binding, restaurar imagens anteriores sem apagar schema V011 ja aplicado; migration historica imutavel.
+
+**Proximo passo unico:** testes integrados/homologacao em laboratorio e Windows piloto. Em seguida piloto Keycloak com um computador, depois G2-S3 para distribuicao/agendamento. Acesso remoto segue bloqueado por G0-SEC.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

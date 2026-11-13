@@ -73,6 +73,7 @@ def migrated(database):
         "V008__windows_host_service_actions.sql",
         "V009__workstations_inventory.sql",
         "V010__workstation_responsible_user.sql",
+        "V011__workstation_snapshots.sql",
     ]
     return database
 
@@ -108,6 +109,7 @@ def test_migrations_are_idempotent(migrated):
         (8, "V008__windows_host_service_actions.sql"),
         (9, "V009__workstations_inventory.sql"),
         (10, "V010__workstation_responsible_user.sql"),
+        (11, "V011__workstation_snapshots.sql"),
     ]
 
 
@@ -368,3 +370,50 @@ def test_g1_owner_postgres_persists_uuid_and_snapshot(pg_client):
         assert events[1]["changes"]["responsible_user_id"] == {"from": owner_id, "to": None}
     finally:
         app.dependency_overrides.pop(get_workstation_owner_resolver, None)
+
+
+def test_g2_snapshots_postgres_dedup_and_latest(pg_client):
+    """Integration only with IT_PORTAL_TEST_DSN pointing to disposable Postgres."""
+    from datetime import datetime, timezone
+    from uuid import uuid4
+    from it_portal_app.infrastructure.persistence.postgres_workstation_snapshots import (
+        PostgresWorkstationSnapshotRepository,
+    )
+    from it_portal_app.domain.errors import ConflictError
+    from tests.test_workstation_snapshots import sample
+
+    row = pg_client.post("/workstations", json={
+        "name": "Windows piloto", "hostname": "example-dev-01",
+        "unit_code": "02", "device_kind": "desktop",
+        "administrative_status": "in_operation",
+    })
+    assert row.status_code == 201, row.text
+    workstation_id = row.json()["data"]["id"]
+
+    snapshot = sample()
+    snapshot["observed_at"] = datetime.now(timezone.utc).isoformat()
+    snapshot["run_id"] = str(uuid4())
+    repo = PostgresWorkstationSnapshotRepository()
+    digest = "a" * 64
+    first = repo.save(
+        workstation_id, snapshot, client_id="pc-s2s-test", digest=digest, retention=50
+    )
+    assert first["duplicate"] is False
+    second = repo.save(
+        workstation_id, snapshot, client_id="pc-s2s-test", digest=digest, retention=50
+    )
+    assert second["duplicate"] is True
+    latest = repo.latest(workstation_id)
+    assert latest is not None
+    assert latest["payload"]["hardware"]["cpu_name"] == "CPU Test"
+    assert latest["status"] == "partial"
+
+    with pytest.raises(ConflictError):
+        repo.save(
+            workstation_id, snapshot, client_id="pc-s2s-test",
+            digest="b" * 64, retention=50,
+        )
+    assert _sql(
+        "SELECT COUNT(*) AS n FROM it_portal.workstation_snapshots WHERE workstation_id = %s",
+        (workstation_id,),
+    )[0]["n"] == 1

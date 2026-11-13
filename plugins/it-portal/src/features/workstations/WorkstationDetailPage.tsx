@@ -29,6 +29,7 @@ import { HistorySection } from "../history/HistorySection";
 import { DetailField } from "../inventory/InventoryDialogs";
 import { WorkstationFormModal } from "./WorkstationFormModal";
 import { WorkstationOwnerStatus } from "./WorkstationOwnerStatus";
+import { WorkstationSnapshotPanel } from "./WorkstationSnapshotPanel";
 
 type ActionDialog = "archive" | "restore";
 
@@ -202,13 +203,15 @@ export function WorkstationDetailPage({ workstationId }: { workstationId: string
         <p className="itp-prewrap">{workstation.description?.trim() || "Nenhuma observação registrada."}</p>
       </ItpSectionCard>
 
+      <WorkstationSnapshotPanel workstationId={workstation.id} />
+
       <ItpSectionCard
-        title="Monitoramento e suporte remoto"
-        subtitle="Etapas futuras do Delpi Remote."
+        title="Suporte remoto"
+        subtitle="Etapa futura do Delpi Remote."
       >
         <p className="itp-muted">
-          Agente de inventário e acesso remoto ainda não implantados. Não existe estado online,
-          controle de teclado, mouse ou transferência de arquivos nesta etapa.
+          A coleta automática exige ativação individual e validação do agente. O acesso remoto
+          ainda não foi implementado; não existe controle de teclado, mouse ou arquivos nesta etapa.
         </p>
       </ItpSectionCard>
 

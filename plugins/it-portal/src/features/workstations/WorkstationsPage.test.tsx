@@ -129,7 +129,7 @@ describe("G1-UI: computadores", () => {
     expect(await screen.findByRole("button", { name: /Restaurar/ })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^Editar$/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /Conectar/ })).toBeNull();
-    expect(screen.getByText(/Agente de inventário e acesso remoto ainda não implantados/)).toBeTruthy();
+    expect(screen.getByText(/A coleta automática exige ativação individual/)).toBeTruthy();
     expect(screen.getByText(/Computador arquivado em/)).toBeTruthy();
   });
 

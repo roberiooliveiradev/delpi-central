@@ -17,6 +17,7 @@ export const queryKeys = {
   workstationList: (query: WorkstationListQuery) => ["it-portal", "workstations", "list", query] as const,
   workstation: (id: string) => ["it-portal", "workstations", "detail", id] as const,
   workstationHistory: (id: string) => ["it-portal", "workstations", "history", id] as const,
+  workstationSnapshot: (id: string) => ["it-portal", "workstations", "snapshot", id] as const,
   servers: ["it-portal", "servers"] as const,
   serverList: (query: ServerListQuery) => ["it-portal", "servers", "list", query] as const,
   server: (id: string) => ["it-portal", "servers", "detail", id] as const,

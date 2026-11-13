@@ -25,6 +25,7 @@ from it_portal_app.application.ports import (
 from it_portal_app.application.server_service import ServerService
 from it_portal_app.application.workstation_ports import WorkstationRepository
 from it_portal_app.application.workstation_service import WorkstationService
+from it_portal_app.application.workstation_snapshot_service import WorkstationSnapshotService
 from it_portal_app.application.service_inventory import ServiceInventory
 from it_portal_app.infrastructure.persistence.postgres_connectivity_repository import (
     PostgresConnectivityRepository,
@@ -42,6 +43,7 @@ from it_portal_app.infrastructure.persistence.postgres_repository import (
 )
 from it_portal_app.infrastructure.persistence.postgres_workstation_repository import PostgresWorkstationRepository
 from it_portal_app.infrastructure.gateways.core_directory_owner import CoreDirectoryOwnerResolver
+from it_portal_app.infrastructure.persistence.postgres_workstation_snapshots import PostgresWorkstationSnapshotRepository
 
 
 def get_repository() -> ItPortalRepository:
@@ -61,6 +63,10 @@ def get_workstation_service(
     owner_resolver: CoreDirectoryOwnerResolver = Depends(get_workstation_owner_resolver),
 ) -> WorkstationService:
     return WorkstationService(repository, owner_resolver)
+
+
+def get_workstation_snapshot_service() -> WorkstationSnapshotService:
+    return WorkstationSnapshotService(PostgresWorkstationSnapshotRepository())
 
 
 def get_inventory_repository() -> InventoryRepository:

@@ -138,3 +138,15 @@ IT_PORTAL_TEST_DSN=postgresql://user@host:5432/postgres python -m pytest -q
 - Testes: `python -m pytest -q tests/test_workstation_snapshots.py` (nove casos Python executados em ambiente isolado; validacao de runtime PS5.1 pendente).
 - **Nenhuma nova migration, rota, RBAC, segredo, container ou deploy** nesta etapa. A identidade S2S e a ingestao segura pertencem a G2-S2.
 - Ver documentacao: `docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G2-S1-LOCAL-COLLECTOR.md`.
+
+
+## G2-S2 | Ingestao S2S exclusiva para estacoes (em revisao)
+
+- Migration V011 aditiva: `it_portal.workstation_snapshots`, JSONB de dados observados, run_id unico por workstation, digest SHA-256, retencao configuravel. Nunca modifica o cadastro manual.
+- `POST /collector/v1/workstations/{id}/snapshots`: `it-portal.workstations.ingest` S2S autenticado, binding client ID -> UUID explicito 1:1, guardas de arquivo/hostname e flag default off. Um token de usuario humano **nao** e suficiente para ingerir dados.
+- `GET /workstations/{id}/snapshot`: somente usuario com `it-portal.computers.view`; mostra a ultima coleta sem inventar status online.
+- Config defaults no Compose: `IT_PORTAL_WORKSTATION_INGEST_ENABLED=false`, `IT_PORTAL_WORKSTATION_COLLECTOR_BINDINGS=`, `IT_PORTAL_WORKSTATION_SNAPSHOT_RETENTION=50`.
+- Coletor local G2-S1 permanece independente; novo `Send-ItPortalWorkstationSnapshot.ps1` e manual e exige cliente S2S individual com secret protegido por DPAPI e TLS.
+- Nenhuma nova permissao humana/manifesto; nenhum comando remoto, instalacao, schedtask ou controle de servicos.
+- Testes escritos: `pytest -q tests/test_workstation_snapshots.py tests/test_workstation_snapshot_ingest.py`, `tests/test_postgres_integration.py` em DB descartavel; `npm test -- --run src/features/workstations/WorkstationSnapshotPanel.test.tsx`, `npm run lint`, `npm run build`. **Ainda nao executados neste runtime.**
+- [Runbook G2-S2](../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G2-S2-S2S-INGEST-RELEASE.md).

@@ -153,16 +153,25 @@ def custom_openapi():
         description=app.description,
         routes=app.routes,
     )
-    schema.setdefault("components", {}).setdefault("securitySchemes", {})["bearerAuth"] = {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT",
+    security = schema.setdefault("components", {}).setdefault("securitySchemes", {})
+    security["bearerAuth"] = {
+        "type": "http", "scheme": "bearer", "bearerFormat": "JWT",
+    }
+    security["workstationCollectorS2S"] = {
+        "type": "apiKey", "in": "header", "name": "X-Delpi-Service-Authorization",
+        "description": "Bearer JWT S2S Keycloak. Requer escopo dedicado por computador.",
     }
     for path, operations in schema.get("paths", {}).items():
         if path == "/health":
             continue
         for operation in operations.values():
-            operation["security"] = [{"bearerAuth": []}]
+            if not isinstance(operation, dict):
+                continue
+            operation["security"] = (
+                [{"workstationCollectorS2S": []}]
+                if path.startswith("/collector/v1/workstations/")
+                else [{"bearerAuth": []}]
+            )
     schema["servers"] = [{"url": settings.IT_PORTAL_API_ROOT_PATH}]
     app.openapi_schema = schema
     return schema

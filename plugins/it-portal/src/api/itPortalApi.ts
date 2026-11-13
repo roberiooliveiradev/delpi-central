@@ -74,6 +74,45 @@ export type Workstation = {
   updated_by_name: string;
 };
 
+export type WorkstationObservedSnapshot = {
+  source: string;
+  schema_version: string;
+  run_id: string;
+  observed_at: string;
+  status: "complete" | "partial" | "failed";
+  host: { hostname: string };
+  hardware: null | {
+    manufacturer: string | null;
+    model: string | null;
+    cpu_name: string | null;
+    logical_processors: number | null;
+    memory_total_bytes: number | null;
+  };
+  os: null | {
+    name: string | null;
+    version: string | null;
+    build_number: string | null;
+    architecture: string | null;
+    uptime_seconds: number | null;
+  };
+  volumes: Array<{
+    mount_point: string;
+    filesystem: string | null;
+    capacity_bytes: number;
+    free_bytes: number;
+  }>;
+  network: { private_ipv4: string[] };
+  sections_status: Record<string, "ok" | "partial" | "unavailable">;
+};
+
+export type WorkstationSnapshotLatest = {
+  observed_at: string;
+  received_at: string;
+  status: "complete" | "partial" | "failed";
+  freshness: "recent" | "stale";
+  snapshot: WorkstationObservedSnapshot;
+};
+
 export type WorkstationInput = {
   name: string;
   hostname: string;
@@ -727,6 +766,8 @@ export const itPortalApi = {
     apiGet<Page<Workstation>>(apiUrl("/workstations", query), signal),
   getWorkstation: (id: string, signal?: AbortSignal) =>
     apiGet<Workstation>(apiUrl(`/workstations/${encodeURIComponent(id)}`), signal),
+  getWorkstationSnapshot: (id: string, signal?: AbortSignal) =>
+    apiGet<WorkstationSnapshotLatest | null>(apiUrl(`/workstations/${encodeURIComponent(id)}/snapshot`), signal),
   createWorkstation: (input: WorkstationInput) =>
     apiPost<Workstation>(apiUrl("/workstations"), input),
   updateWorkstation: (id: string, input: WorkstationInput, revision: number) =>

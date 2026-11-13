@@ -31,7 +31,8 @@ Acesso sem pedir senha Windows por sessao **nao** significa acesso anonimo: toda
 | G1-OWNER | Selecionar colaborador usuario da plataforma como responsavel do computador; vinculo por identidade estavel | **VALIDADO** | Busca seletiva, vinculacao por ID do Core, exibicao do nome, auditoria de troca e tratamento de usuarios inativos |
 | G2-AGENT | Identidade por dispositivo e coletor read-only de telemetria Windows | **EM DESENVOLVIMENTO** | Piloto, autenticacao individual, reconciliacao idempotente e remocao segura |
 | G2-S1 | Coletor Windows LOCAL + contrato estrito de snapshot, sem envio automatico | **EM REVISAO** | Execucao em PowerShell 5.1 no Windows piloto, testes e aceite do snapshot |
-| G2-S2 | Identidade individual de agente e ingestao autenticada, revogavel e idempotente | **NAO INICIADO** | Threat model S2S, binding dispositivo, testes de replay/revogacao e primeiro envio aprovado |
+| G2-S2 | Identidade individual de agente e ingestao autenticada, revogavel e idempotente | **EM REVISAO** | Codigo de S2S com flag off, migration V011, testes integrados e piloto Keycloak pendentes |
+| G2-S3 | Enrolment governado, agendamento Windows e desinstalacao de agente | **NAO INICIADO** | Assinatura, instalacao/revogacao, teste de rotina e suporte de dispositivos |
 | G3-ENGINE | MeshCentral isolado e testado em laboratorio | **NAO INICIADO** | Licenca, versao fixada, atualizacoes, TLS, backup, recuperacao, restricao de rede |
 | G4-AUTH | Broker de sessoes, Keycloak/MFA e permissoes independentes | **NAO INICIADO** | Revogacao, tokens de uso unico, fail-closed, logs, kill switch |
 | G5-REMOTE | Tela, teclado e mouse no navegador para computador piloto | **NAO INICIADO** | Testes presenciais de concorrencia, UAC, lock-screen, desconexao e latency |
@@ -44,7 +45,9 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 
 **Aceite funcional G1-OWNER (13/11/2026):** o operador informou que o pull, deploy e a funcionalidade de responsavel vinculado funcionaram perfeitamente em producao. Esta e evidencia de aceite funcional comunicada pelo usuario, NAO prova independente de todos os testes integrados, RBAC negativo ou CI. Detalhes no diario.
 
-**Proximo passo executavel:** executar o coletor G2-S1 somente em um Windows corporativo piloto autorizado e validar seu JSON local sem envio. Ver [G2-S1](G2-S1-LOCAL-COLLECTOR.md). Depois de testar, iniciar G2-S2: definir identificador criptografico individual, binding revogavel e escopo S2S exclusivo antes de qualquer ingestao de inventario no banco. G0-SEC segue como gate obrigatorio para acesso remoto.
+**G2-S2 (13/11/2026):** codigo de canal S2S + migration V011, vinculo 1:1 por client ID, historico observado e painel na ficha preparado em revisao. **Feature flag de ingestao permanece DESLIGADA** e bindings vazios por padrao. Nenhum teste integrado/com Windows foi comprovado nem deploy realizado. Ver [G2-S2](G2-S2-S2S-INGEST-RELEASE.md).
+
+**Proximo passo executavel:** executar suites pytest/Vitest/lint/build e Postgres descartavel V001..V011, validar G2-S1 no PowerShell 5.1, revisar Keycloak (audiencia/escopo/service accounts), TLS/DPAPI, rate limit e revogacao. Preparar backup e change antes de publicar V011 com a feature off. So depois realizar piloto de 1 computador com binding exclusivo; nao ativar agendamento. G0-SEC continua gate obrigatorio para acesso remoto.
 
 ## Regras permanentes de engenharia
 
@@ -65,5 +68,6 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 - [G1-OWNER: vinculo do responsavel a usuario da plataforma](G1-OWNER.md)
 - [G1-OWNER: publicacao e verificacao futura](G1-OWNER-RELEASE.md)
 - [G2-S1: coletor local Windows e contrato de snapshot](G2-S1-LOCAL-COLLECTOR.md)
+- [G2-S2: API de ingestao, seguranca e runbook de release](G2-S2-S2S-INGEST-RELEASE.md)
 - [Convencao de nomenclatura de computadores (proposta)](NAMING-CONVENTION.md)
 - [Diario de execucao e passagem de bastao](EXECUTION-LOG.md)

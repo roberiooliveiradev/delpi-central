@@ -42,7 +42,7 @@
 - Validador exige tamanho total de ate 32768 bytes, maximo 16 volumes e 16 IPs, horario ate 24h atras e tolerancia de 5min futuros. Rejeita IP publico, segredos por chaves inesperadas, campos nao previstos, disk free > capacity, UUID invalido e status inconsistente.
 - Nao foram introduzidas rotas, permissoes, variaveis de ambiente, migrations, arquivos de credencial ou componentes de acesso remoto.
 
-## Proximo incremento G2-S2: identidade e ingestao segura
+## G2-S2: identidade e ingestao segura em revisao
 
 Planejar e testar antes de implementar: identidade tecnica **individual e revogavel** por workstation (nunca baseada em IP, hostname ou serial); escopo S2S exclusivo it-portal.workstations.ingest, distinto dos agentes de servidor e motor remoto; short-lived tokens Keycloak com client_id associado de forma privada ao UUID do computador aprovado; binding vazio = proibido; revogacao e rotacao de segredo, endpoint S2S com rate-limit/limite de tamanho, validação, UTC, protecao replay por (workstation_id, run_id), retencao e auditoria; migration aditiva propria para dados observados, leitura apenas sob computers.view, sem sobrescrever campos curados e sem conceder acesso grafico.
 
@@ -53,3 +53,5 @@ Somente depois do desenho de seguranca e testes da autenticacao em homologacao h
 O G2-S1 nao modificou banco nem producao. Basta nao executar/remover a copia do script na maquina piloto. Sem tarefa, agente instalado, canal remoto ou credencial para revogar.
 
 Referencias: [Roadmap](README.md), [Arquitetura](ARCHITECTURE.md), [Seguranca](SECURITY-GATES.md), [Diario](EXECUTION-LOG.md), [Issue #179](https://github.com/roberiooliveiradev/delpi-central/issues/179).
+
+**Atualizacao de 13/11/2026:** G2-S2 implementado em codigo, feature flag off e testes ainda nao executados com dependencias reais. Ver [G2-S2](G2-S2-S2S-INGEST-RELEASE.md). O script G2-S1 continua dependendo de piloto Windows 5.1 antes da ingestao habilitada.

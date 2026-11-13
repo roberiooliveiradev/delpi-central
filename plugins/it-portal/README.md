@@ -59,7 +59,7 @@ npm run build   # tsc -b && vite build
 - Plano e evidências: `docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G1-UI.md`.
 
 
-## Delpi Remote - G1-OWNER (nao implantado)
+## Delpi Remote - G1-OWNER (validado funcionalmente pelo operador em 13/11/2026)
 
 - Migration V010 adiciona `workstations.responsible_user_id UUID NULL`; coluna `responsible` preserva nome historico, sem FK entre os bancos Core/Portal.
 - BFF valida nova atribuicao/troca de responsavel no Core via `POST /me/directory/users/lookup`, usando o JWT do usuario com permissao fresh. Config: `DELPI_AUTH_CORE_API_URL` ja presente no Compose.
@@ -67,3 +67,12 @@ npm run build   # tsc -b && vite build
 - Rotas e permissoes continuam iguais ao G1; manifesto do MFE permanece 0.3.4.
 - Testes a executar antes de deploy: `python -m pytest -q tests/test_workstation_owner.py tests/test_workstations_http.py tests/test_workstations_domain.py`, e em banco descartavel `tests/test_postgres_integration.py`; nunca testar com DSN de producao.
 - [Documentacao G1-OWNER](../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G1-OWNER.md).
+
+
+## Delpi Remote - G2-S2 (codigo em revisao, sem deploy)
+
+- A ficha do computador passa a consultar `GET /workstations/{id}/snapshot` para mostrar ultima coleta (CPU/RAM/Windows/discos) e estado "recente/desatualizado", explicitamente **nao** estado online.
+- Em ausencia de dados, mostra "Nenhuma coleta automatica registrada". Falha de consulta mostra erro, sem quebrar o resto do cadastro.
+- Nenhum botao "Conectar", permissao remota, endpoint de shell ou manifest novo. O gateway/Keycloak devem passar por homologacao separada antes de habilitar S2S.
+- Testes escritos: `npm test -- --run src/features/workstations/WorkstationSnapshotPanel.test.tsx`; `npm run lint && npm run build` pendentes.
+- Ver [G2-S2](../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G2-S2-S2S-INGEST-RELEASE.md).
