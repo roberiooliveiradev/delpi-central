@@ -16,9 +16,9 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 | Fase | Nome | Status | SHA | Data | Evidência |
 |---|---|---|---|---|---|
 | W1.1 | Ajuste documental (D-W5, quadro) | DONE | `68e7c28512` | 2026-11-13 | D-W5, ADR-002 adendo, mapa de reuso PLANNED |
-| W2 | BFF — hub, rota, emissão (DEV) | DONE | `b0b4dae957` | 2026-11-13 | T1–T18 e regressão LNF no container da BFF. P0–P12 ao vivo não rodou. Smoke de dois usuários em DEV: INCONCLUSIVE (hosted off) |
+| W2 | BFF — hub, rota, emissão (DEV) | IN_PROGRESS | `b0b4dae957` | 2026-11-13 | Código e T1–T18 no container. Pendências: smoke DEV de dois usuários; F2 P0–P12 ao vivo. EXECUTION_DRIFT: tinha sido marcada DONE sem esses critérios |
 | W2b | plugin-ui — cliente, hook, indicador, aviso | DONE | `df1dd06cc4` | 2026-11-13 | cliente aditivo; hook, indicador e aviso. Suíte do pacote no registro |
-| W3 | Gateway DEV (+ conf HML commitada) | IN_PROGRESS | commit desta fase | 2026-11-13 | nginx -t e reload PASS; log da location redige o token. Handshake 101 não fechado: BFF com as flags off e sem token de sessão |
+| W3 | Gateway DEV (+ conf HML commitada) | IN_PROGRESS | `57195a9e91` | 2026-11-13 | nginx -t e reload PASS; log da location redige o token. Handshake 101 pendente: BFF com as flags off |
 | W4.1 | MFE — Fila | TODO | | | |
 | W4.2 | MFE — Detalhe | TODO | | | |
 | W4.3 | MFE — Formulário de edição | TODO | | | |
@@ -395,6 +395,8 @@ Guarda de processo: `WEB_CONCURRENCY`, `UVICORN_WORKERS` e `--workers`. Réplica
 
 Testes no container da BFF: `tests/test_lnf_realtime.py` mais use cases, reconciliação, contracts e guards F3 — 110 passed. A matriz HTTP P0–P12 não rodou: é o harness em `tests/contracts/lancamento-notas-fiscais`, com usuários de contrato. O pytest amplo do container teve falhas de CLARA que leem `/docs/...`, caminho que a imagem não monta; não são desta fase. SHA: `b0b4dae957`.
 
+EXECUTION_DRIFT (2026-11-13, revisão do owner). O quadro marcou a W2 como DONE com o smoke de dois usuários INCONCLUSIVE e a matriz F2 P0–P12 ao vivo não executada. O prompt mestre só permite avançar com todos os critérios de saída PASS. Causa raiz: a BFF de DEV estava com `LNF_HOSTED_ENABLED=false`, então a rota LNF e o WebSocket não existem nesse ambiente. Status corrigido para IN_PROGRESS. Pendências: smoke DEV de dois usuários; F2 P0–P12 ao vivo.
+
 ### W2b — 2026-11-13
 
 B1. `RealtimeSocketClient` já reenviava as salas desejadas em todo `onopen`, inclusive na reconexão. Reconnect fixo de 4s. A URL vem de `buildUrl`. O ping é o texto `ping`. Consumidores do módulo: `EngineeringRealtimeProvider`, `PrcRealtimeProvider` e os shims desses dois MFEs. Por isso `resubscribeOnReconnect` default é `true` (o comportamento atual). Default `false` mudaria Engineering e PRC.
@@ -442,3 +444,13 @@ location = /apps/controllership-finance-api/lancamento-notas-fiscais/realtime {
     access_log /var/log/nginx/access.log tv_access_sanitized;
 }
 ```
+
+## Achado transversal — token na query do access log
+
+Não corrigir nesta frente. As locations de WebSocket de requests e engineering não usam `tv_access_sanitized`, então o access log grava a query, inclusive o `token`. Vale para DEV, HML e PROD. O owner decide em frente separada.
+
+| Ambiente | Arquivo | requests | engineering |
+|---|---|---|---|
+| DEV | `gateway/nginx.dev.conf` | 359 | 443 |
+| HML | `gateway/snippets/hml-proxy-locations.conf` | 248 | 263 |
+| PROD | `gateway/nginx.conf` | 444 | 631 |
