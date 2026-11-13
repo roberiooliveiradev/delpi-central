@@ -124,3 +124,19 @@ Se as interfaces de retorno/legado precisarem decisões locais de compatibilidad
 **Liberação de Devin PROD-02:** somente depois de T01/T02 aprovados pelo owner competente e Coordination, e de eventual `ARCHITECTURE_DECISION_REQUIRED` encerrado. Até lá, `DEVIN_PROD02_BLOCKED_BY_COORDINATION`. Cursor pode finalizar revalidação PROD-01 em paralelo, sem ser bloqueador de ratificação.
 
 **Próximo executor após gate:** Devin implementa via branch dedicada com menor diff, testes SHA, PR governado, HML com escrita em dados segregados, Cursor aceite independente e PRD exclusivamente smoke READ-only após release autorizado.
+
+
+## 7. Deliberação registrada — aceite do PO sobre a proposta T01/T02 (13/11/2026)
+
+**Decisão expressa recebida neste chat:** PO concordou com as recomendações para T01 e T02 e autorizou registrar tudo no GitHub. **Status de negócio/direção de Coordination:** `PO_APPROVED / COORDINATION_RECOMMENDATION_ACCEPTED_WITH_CONDITIONS`. **Ratificação final do Engineering API domain owner:** `PENDING_OWNER_CONFIRMATION`, pois não há evidência de anuência formal desse owner nesta interação. Não converter o aceite do PO em assinatura de outro owner.
+
+| ID | Direção aceita | Condições de execução |
+|---|---|---|
+| **T01** | **APPROVED_BY_PO_WITH_CONDITIONS** — snapshot consolidado do catálogo PRC, schema/cobertura/provenance por campo, valores heredados/unknown honestos, UPDATE parcial omitido preserva, supplierCode+store, legado imutável | Engineering API owner confirma catálogo/DTO/contrato de official reader, adequação de `null/CLEAR/REMOVE_LINK`, compatibilidade das revisões legadas e migrations mínimas |
+| **T02** | **APPROVED_BY_PO_WITH_CONDITIONS** — primeira conclusão matched V1; após V1 Vn+1 só com diff real; no-op auditado sem nova revisão; uma transação local, CAS, locks, replay idempotente | Engineering API owner confirma serialização e postconditions, contrato de resposta e consumidores, tratamento de falha, migração/rollback e testes de paridade |
+
+**Proibições mantidas:** nenhuma nova permissão/BC/autoridade; nenhuma escrita TOTVS; produção sem qualquer escrita de dados de negócio para teste; não deduzir provenance oficial de drafts; nenhuma aprovação automática de deploy ou merge por este documento.
+
+**Gate formal:** `ENGINEERING_OWNER_RATIFICATION_PENDING` até registro inequívoco do owner competente com `APPROVED/REVISE/REJECT`, versão de contrato e eventuais restrições de compatibilidade. O Devin pode fazer preparação documental e inventário mínimo condicionado à confirmação, mas **não iniciar mutações de contrato/código PROD-02** antes do gate formal exigido pelo projeto. Após esse registro, Coordination emite ordem executável DEVIN-PROD-02 com RQ/AC desta proposta.
+
+**Evidência:** decisão do PO neste chat de 13/11/2026; implementação PROD-02 `TEST_NOT_RUN`; nenhuma mudança de runtime nesta deliberação.
