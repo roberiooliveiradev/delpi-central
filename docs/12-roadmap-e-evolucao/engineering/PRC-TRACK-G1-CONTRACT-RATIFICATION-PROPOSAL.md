@@ -311,3 +311,30 @@ A forma final do DTO e seu versionamento dependem de inventário do contrato atu
 **Matriz mínima HML:** conclusão com duas OPEN mesmo target bloqueia; nenhuma revisão nova se diff técnico houver; no-op bloqueado; V1 inicial bloqueada com conflito; após tratamento autorizado retry passa; concorrência de duas conclusões é serializada; 403 não vaza flag existente; replay bloqueado não produz duplicação; integração externa não causa sucesso parcial silencioso; legados CR-08 permanecem em exceção.
 
 **Gates de ratificação:** identificar owner do `complete_request`, bounded transaction, locks/índice parcial e integridade em DB, escopo D16 vs produto, rollback/compensação de side effects, erros HTTP, observabilidade, contract tests, compatibilidade e consumidores. Este contrato ainda é `TARGET`, não implementação comprovada.
+
+
+## 15. Emenda CR-11 — consulta de bandeira existente dentro da PRC, sem duplicação (PO, 13/11/2026)
+
+**Escolha PO:** **Outra proposta** — “quando vier a solciitação de alteração do campo já trás a bandeira, e se preciso o analista até resolve a solicitação. Geralmente é isso que vai acontecer.” `PO_APPROVED_BUSINESS_INTENT / ARCHITECTURE_DECISION_REQUIRED / TEST_NOT_RUN`.
+
+**Contrato proposto:** ao compor os dados autorizados de um campo/atributo de fornecedor numa PRC de UPDATE, oferecer **referência governada de leitura** à bandeira `OPEN` do produto para o mesmo alvo (identidade do produto e `targetKey` canônico). `request.referenceExistingFlagId` ou DTO equivalente **é referência**, não OPEN adicional, reabertura, fusão ou evento de mudança do produto. O payload da ficha/projeção oficial continua sob a Engineering API/PRC e AuthZ por objeto, sem import entre BCs.
+
+| Fase | Comportamento TARGET |
+|---|---|
+| Abrir PRC de campo X com flag F101 OPEN no produto | Exibir F101 com estado/histórico autorizado, sem criar F202 |
+| PRC em andamento | Valores/flags **do produto** imutáveis; draft e intenção de ação são request-local |
+| Analista conclui PRC sem ação sobre F101 | Aplicar apenas alterações técnicas válidas; F101 segue OPEN |
+| Analista registra intenção autorizada de RESOLVE de F101 | Pendurar intenção no request, **não** resolver no produto imediatamente; no commit válido, aplicar evento com `revisionContext` vigente no final da conclusão |
+| PRC falha/cancela ou sofre conflito | Sem publicação de snapshot/flags/status de conclusão; nenhuma RESOLVE antecipada |
+| PRC cria uma nova OPEN para mesmo X apesar de F101 OPEN | CR-10: falhar conclusão inteira, sem publicação parcial |
+| F101 é resolvida por outro fluxo antes do complete | Revalidar status e `expectedFlagVersion`; ação stale não é aplicada silenciosamente; decidir erro/conciliação em contrato |
+
+**Coerência temporal ADR-04:** RESOLVE aplicado na conclusão no-op enquanto V3 atual → F101 RESOLVED em V3, ausente em V4 futura. Se a mesma conclusão gera V4 por diff técnico → F101 RESOLVED em V4, preserva OPEN em V3; não associar retroativamente resultado à revisão errada. Se apenas o caso é “resolvido/concluído” (sem intenção de flag), **não alterar F101**. Interpretação literal do PO não implica resolução automática da flag.
+
+**CR-10 continua em vigor:** referências a flags já OPEN não contam como segunda OPEN. **Outra ocorrência OPEN real** gera conflito e bloqueia conclusão completa, salvo intervenção explícita autorizada antes do retry. Sem heurística que converta flag duplicada em referência de forma oculta.
+
+**Coordination deve ratificar:** onde vive a referência request↔flag, DTO de readonly/allowedActions, auth read, execução de intent `RESOLVE` após verificação matched, atomicidade de evento e revisão em commit, consistência com PRC flags D16 request-scoped/endpoint reopen legado, edição offline/stale, CAS, idempotência, compatibilidade My Requests, pós-condição, rollback e métricas. Não assumir permission grant ou migrate flag existente.
+
+**Cenários HML:** flag F101 OPEN carregada ao editar X; nenhum clone; flag não é resolvida ao completar somente request; intenção RESOLVE bloqueada até conclusão; diff/no-op com RESOLVE usa revisão de conclusão correta; cancelamento sem side-effect; colisão segunda flag bloqueia integral; auth denied não vaza F101; concorrência e retries com expectedFlagVersion.
+
+**Estado:** `PROPOSED_FOR_COORDINATION / TEST_NOT_RUN`; sem implementação, migrations ou deploy.
