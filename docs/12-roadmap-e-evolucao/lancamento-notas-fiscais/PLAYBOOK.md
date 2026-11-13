@@ -144,7 +144,8 @@ Não há `*-api` dedicada: tudo na **api-delpi** + Postgres plugins + leitura TO
 
 ```bash
 ./infra/scripts/up-dev-sequential.sh --fase api --build api-delpi
-docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin lancamento-notas-fiscais
+# up/status/reset --plugin lancamento-notas-fiscais na api-delpi está recusado.
+# O schema é operado pela controllership-finance-api (verify/apply da BFF).
 ./infra/scripts/up-dev-sequential.sh --fase mfe --build lancamento-notas-fiscais
 ```
 
@@ -152,7 +153,7 @@ docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin
 
 ```bash
 ./infra/scripts/up-prod-sequential.sh --fase api --build api-delpi
-docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin lancamento-notas-fiscais
+# Não operar o schema LNF pela api-delpi. A BFF é o owner.
 ./infra/scripts/up-prod-sequential.sh --fase mfe --build lancamento-notas-fiscais
 ```
 

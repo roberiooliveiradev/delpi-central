@@ -22,15 +22,9 @@ def _load_migrations_module():
     return module
 
 
-def test_list_plugin_slugs_includes_lnf_by_default(monkeypatch):
+def test_list_plugin_slugs_never_includes_lnf(monkeypatch):
     monkeypatch.delenv("LNF_MODULE_ENABLED", raising=False)
     module = _load_migrations_module()
-    slugs = module.list_plugin_slugs()
-    assert "lancamento-notas-fiscais" in slugs
-
-
-def test_list_plugin_slugs_skips_lnf_when_disabled(monkeypatch):
-    monkeypatch.setenv("LNF_MODULE_ENABLED", "false")
-    module = _load_migrations_module()
-    slugs = module.list_plugin_slugs()
-    assert "lancamento-notas-fiscais" not in slugs
+    assert "lancamento-notas-fiscais" not in module.list_plugin_slugs()
+    monkeypatch.setenv("LNF_MODULE_ENABLED", "true")
+    assert "lancamento-notas-fiscais" not in module.list_plugin_slugs()

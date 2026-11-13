@@ -21,7 +21,7 @@
 
 Com defaults, qualquer deploy futuro de PROD **não muda** o comportamento.
 
-**Aviso operacional (SEC-01 B):** não executar reset do runner de plugins para lancamento-notas-fiscais em nenhum ambiente. O comando recusa a operação; a imagem de PROD da api-delpi ainda não recebeu esse bloqueio.
+**Aviso operacional (ALINHAMENTO-01):** o rollback não mexe no runner. Com `LNF_MODULE_ENABLED=true` a api-delpi volta a servir as rotas sobre o schema que já existe. `up`, `status` e `reset` desse schema são da BFF. A api-delpi recusa os três.
 
 ---
 

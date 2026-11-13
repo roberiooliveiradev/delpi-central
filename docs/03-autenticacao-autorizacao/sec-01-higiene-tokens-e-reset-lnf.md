@@ -7,7 +7,7 @@ Pasta usada: `docs/03-autenticacao-autorizacao/`, que é o índice de identidade
 ## Decisões
 
 - D-W6 A. O access log redige `token` e `access_token` em toda location que pode levar esses parâmetros na query, em DEV, HML e PROD. O mapa já existente (`access_token|refresh_token|id_token|token|...`) não foi alterado. A saída das linhas de TV permanece a do formato `tv_access_sanitized`.
-- D-W7 A. O runner de plugins da api-delpi recusa operação destrutiva do plugin `lancamento-notas-fiscais`. Não há flag de bypass. `up` e `status` continuam como estavam.
+- D-W7 A, ampliado por D-S1. O runner de plugins da api-delpi não opera o schema do LNF: `up`, `status` e `reset` com `--plugin lancamento-notas-fiscais` recusam. O `up` sem plugin pula o LNF. A pasta de SQL permanece porque a BFF ainda confere o checksum.
 - Trava de host genérica para o reset de qualquer plugin: só inventário e opções. Não implementada.
 
 ## Parte A — access log

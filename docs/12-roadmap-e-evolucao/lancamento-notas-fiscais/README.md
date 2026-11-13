@@ -27,7 +27,7 @@ A nova solicitação também pode partir de uma NF-e de entrada: a api-delpi con
 | Plugin MFE | `plugins/lancamento-notas-fiscais/` |
 | Rotas HTTP | `api-delpi/app/interface/http/routes/lancamento_notas_fiscais/` |
 | Use cases | `api-delpi/app/application/use_cases/lancamento_notas_fiscais/` |
-| Migrations | `api-delpi/migrations/plugins/lancamento-notas-fiscais/` |
+| Migrations | cópia dona: `controllership-finance-api/migrations/lancamento_notas_fiscais/`. A pasta da api-delpi permanece só para o checksum da suíte da BFF; o runner da api-delpi não opera o schema. |
 | Inventário plugins | [08-plugins/README.md](../../08-plugins/README.md) |
 | Registro de plugin | [registrar-plugin.md](../../10-guias-operacionais/registrar-plugin.md) |
 

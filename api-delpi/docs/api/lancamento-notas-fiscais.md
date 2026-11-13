@@ -304,13 +304,7 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" \
 | `V005__linked_purchase_orders_many.sql` | Tabela `invoice_posting_request_linked_pos` (N PCs por solicitação) |
 | `V006__linked_purchase_order_lines.sql` | Tabela `invoice_posting_request_linked_po_lines` (itens SC7 por PC) |
 
-```bash
-# Produção / ambiente com dados: SOMENTE up (nunca reset)
-docker exec delpi-api-delpi python scripts/run_plugins_migrations.py status --plugin lancamento-notas-fiscais
-docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin lancamento-notas-fiscais
-```
-
-**⚠ `reset --plugin lancamento-notas-fiscais` está bloqueado.** O schema `lancamento_notas_fiscais` pertence à controllership-finance-api (ADR-001 / trilha 165 D2). O runner da api-delpi recusa essa operação destrutiva com saída diferente de zero e não abre conexão com o banco. `up` e `status` do LNF continuam como estavam. O reset dos outros plugins não muda. Rebuild de API/MFE **não** exige reset de schema.
+O schema `lancamento_notas_fiscais` pertence à controllership-finance-api (ADR-001 / trilha 165 D2). `up`, `status` e `reset --plugin lancamento-notas-fiscais` na api-delpi recusam a operação, saem com código diferente de zero e não abrem o banco. O `up` sem `--plugin` pula o LNF e registra que o owner é a BFF. A pasta `api-delpi/migrations/plugins/lancamento-notas-fiscais/` permanece no repositório porque a suíte da BFF ainda confere o SHA-256 desses arquivos com a cópia própria. Rebuild de API/MFE **não** exige reset de schema.
 
 ---
 

@@ -267,7 +267,12 @@ def _drop_plugin_schema_only(conn) -> None:
     conn.commit()
 
 
-@pytestmark_live
+@pytest.mark.skip(
+    reason=(
+        "O schema LNF é operado pela controllership-finance-api. "
+        "O runner da api-delpi não aplica nem apaga."
+    )
+)
 class TestLancamentoNotasFiscaisMigrationLive:
     @pytest.fixture(scope="class")
     @classmethod

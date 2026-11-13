@@ -12,7 +12,8 @@ import pytest
 
 MESSAGE = (
     "O schema lancamento_notas_fiscais pertence à controllership-finance-api "
-    "(ADR-001 / trilha 165 D2). Operações destrutivas pela api-delpi estão bloqueadas."
+    "(ADR-001 / trilha 165 D2). As migrations do LNF são aplicadas pela BFF; "
+    "a api-delpi não opera este schema."
 )
 
 
@@ -102,12 +103,38 @@ def test_reset_of_another_plugin_still_reaches_the_database(monkeypatch):
     assert "commit" in executed
 
 
-def test_up_of_lnf_is_not_blocked(monkeypatch):
+def test_up_and_status_of_lnf_refuse_without_touching_the_database(monkeypatch):
     module = _load_migrations_module()
-
-    def _touched():
-        raise RuntimeError("db-touched")
-
-    monkeypatch.setattr(module, "get_connection", _touched)
-    with pytest.raises(RuntimeError, match="db-touched"):
+    _forbid_database(module, monkeypatch)
+    with pytest.raises(module.MigrationError, match=re.escape(MESSAGE)):
         module.run_plugin_migrations("lancamento-notas-fiscais")
+    with pytest.raises(module.MigrationError, match=re.escape(MESSAGE)):
+        module.show_plugin_status("lancamento-notas-fiscais")
+
+
+@pytest.mark.parametrize("command", ["up", "status", "reset"])
+def test_cli_lnf_commands_exit_nonzero(monkeypatch, capsys, command):
+    module = _load_migrations_module()
+    _forbid_database(module, monkeypatch)
+    argv = ["run_plugins_migrations.py", command, "--plugin", "lancamento-notas-fiscais"]
+    if command == "reset":
+        argv.append("--confirm-drop-schema")
+    monkeypatch.setattr(sys, "argv", argv)
+    with pytest.raises(SystemExit) as caught:
+        module.main()
+    assert caught.value.code == 1
+    assert MESSAGE in capsys.readouterr().err
+
+
+def test_up_all_skips_lnf_and_logs_the_owner(monkeypatch, capsys):
+    module = _load_migrations_module()
+    assert "lancamento-notas-fiscais" not in module.list_plugin_slugs()
+    monkeypatch.setattr(module, "list_plugin_slugs", lambda: [])
+    monkeypatch.setattr(
+        module,
+        "get_connection",
+        lambda: (_ for _ in ()).throw(AssertionError("db")),
+    )
+    with pytest.raises(AssertionError, match="db"):
+        module.run_all_plugins_migrations()
+    assert module.LNF_SKIP_LOG in capsys.readouterr().out
