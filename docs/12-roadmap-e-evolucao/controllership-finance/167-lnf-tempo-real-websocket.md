@@ -17,8 +17,8 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 |---|---|---|---|---|---|
 | W1.1 | Ajuste documental (D-W5, quadro) | DONE | `68e7c28512` | 2026-11-13 | D-W5, ADR-002 adendo, mapa de reuso PLANNED |
 | W2 | BFF — hub, rota, emissão (DEV) | DONE | `b0b4dae957` | 2026-11-13 | T1–T18 e regressão LNF no container da BFF. P0–P12 ao vivo não rodou. Smoke de dois usuários em DEV: INCONCLUSIVE (hosted off) |
-| W2b | plugin-ui — cliente, hook, indicador, aviso | DONE | commit desta fase | 2026-11-13 | cliente aditivo; hook, indicador e aviso. Suíte do pacote no registro |
-| W3 | Gateway DEV (+ conf HML commitada) | TODO | | | |
+| W2b | plugin-ui — cliente, hook, indicador, aviso | DONE | `df1dd06cc4` | 2026-11-13 | cliente aditivo; hook, indicador e aviso. Suíte do pacote no registro |
+| W3 | Gateway DEV (+ conf HML commitada) | IN_PROGRESS | commit desta fase | 2026-11-13 | nginx -t e reload PASS; log da location redige o token. Handshake 101 não fechado: BFF com as flags off e sem token de sessão |
 | W4.1 | MFE — Fila | TODO | | | |
 | W4.2 | MFE — Detalhe | TODO | | | |
 | W4.3 | MFE — Formulário de edição | TODO | | | |
@@ -409,4 +409,36 @@ B5. Vitest. Caracterização antiga do cliente segue verde junto com os casos no
 
 Follow-up: MFEs que abrem `new WebSocket` por conta (requests, commercial e outros) não foram migrados.
 
-Regressão: Engineering 37 arquivos / 364 testes PASS; `vite build` da Engineering e de my-requests PASS. my-requests: 2 falhas em `ProcessIssuePayloadPanel.structural.test.ts` (texto «Ferramenta informada pelo operador» e o padrão `cockpit|operator-feedback`). O arquivo do painel não está no diff desta fase. S9: não corrigir.
+Regressão: Engineering 37 arquivos / 364 testes PASS; `vite build` da Engineering e de my-requests PASS. my-requests: 2 falhas em `ProcessIssuePayloadPanel.structural.test.ts` (texto «Ferramenta informada pelo operador» e o padrão `cockpit|operator-feedback`). O arquivo do painel não está no diff desta fase. S9: não corrigir. SHA: `df1dd06cc4`.
+
+### W3 — 2026-11-13
+
+Location exata em `gateway/nginx.dev.conf` e em `gateway/snippets/hml-proxy-locations.conf`. O prefixo `/apps/controllership-finance-api/` não mudou. `gateway/nginx.conf` (PROD) não foi editado.
+
+`nginx.hml.conf` não tinha o formato `tv_access_sanitized`. O mapa foi copiado do DEV para o http do HML, sem alterar as linhas de TV do DEV. Sem isso a location de HML não carrega.
+
+`nginx -t` no gateway de DEV: ok. Reload aplicado. `nginx -t` da conf de HML, com certificado temporário só no teste: ok.
+
+Probe pela location nova: a linha do access log do caminho `/realtime` contém `<redacted>` e não contém o valor enviado na query. `GET /apps/controllership-finance-api/health` respondeu 200. Requests e Engineering, no mesmo tipo de probe sem token válido, responderam 403 — o gateway entrega o upgrade até a API. 101 exige sessão válida; não havia token de sessão para usar. A BFF de DEV continua com `LNF_HOSTED_ENABLED=false`, então a rota do LNF não está montada. Handshake 101 do LNF fica para quando as duas flags estiverem ligadas e houver um usuário de DEV.
+
+Diff planejado da W6, ainda sem aplicar em `gateway/nginx.conf`, imediatamente antes do prefixo da BFF (por volta da linha 708). Copia os headers daquele prefixo e acrescenta Upgrade, timeouts de 86400 e o access log que o PROD já define:
+
+```nginx
+location = /apps/controllership-finance-api/lancamento-notas-fiscais/realtime {
+    limit_req zone=api_zone burst=50 nodelay;
+    set $upstream_cf_api controllership-finance-api:8000;
+    rewrite ^/apps/controllership-finance-api/?(.*)$ /$1 break;
+    proxy_pass http://$upstream_cf_api;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $delpi_proto;
+    proxy_read_timeout 86400;
+    proxy_send_timeout 86400;
+    proxy_buffering off;
+    access_log /var/log/nginx/access.log tv_access_sanitized;
+}
+```
