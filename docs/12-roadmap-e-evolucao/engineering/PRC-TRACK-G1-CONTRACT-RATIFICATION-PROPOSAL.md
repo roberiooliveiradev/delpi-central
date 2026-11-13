@@ -289,3 +289,25 @@ A forma final do DTO e seu versionamento dependem de inventário do contrato atu
 **Contratos e HML:** endpoints request-local e product-tracking segregados por AuthZ; testes de isolamento read, conclusão sem diff + OPEN, conclusão com diff + OPEN, flags encerradas antes da conclusão, race flag RESOLVE vs completar PRC, duas OPEN mesmo target, retry, PRC cancelada, dados legados e autorização negada. Atualizar os critérios e paths PROPOSED sem afirmar endpoints ativos. Manter compatibilidade com fluxo D16, My Requests e flags de solicitação sem importar internals de outro BC.
 
 **Status:** `PROPOSED_FOR_COORDINATION / TEST_NOT_RUN`; código/migrations/deploy não autorizados.
+
+
+## 14. Emenda CR-10 — conclusão atômica com conflito de flags OPEN (PO, 13/11/2026)
+
+**Decisão do PO:** **A — Exigir resolução do conflito antes da conclusão, sem publicação parcial**; comentário: sem comentário. `PO_APPROVED / ARCHITECTURE_DECISION_REQUIRED / TEST_NOT_RUN`.
+
+**Esta emenda resolve a alternativa aberta na seção CR-09:** no fluxo **online de conclusão de uma PRC** com colisão OPEN, **não** concluir a PRC com associação pendente via outbox; **não** publicar a ficha técnica separadamente; **bloquear a conclusão integral**. A Coordination ainda precisa ratificar o desenho das transações e a convivência com integrações externas que não compartilham transação local. Se efeitos externos ocorrerem antes da confirmação, definir preflight, postcondition, compensação e `EXECUTION_DRIFT` apropriado; nunca prometer rollback remoto não suportado.
+
+### Contrato de conclusão proposto (TARGET)
+
+- **Preconditions:** usuário/serviço autorizado (live AuthZ), request concluível e elegível, verificação oficial matched, produto/targetKey determinados, snapshot CR-02/04/05/06 validado e catálogo compatível, nenhuma OPEN conflitante no produto ou no conjunto de flags da PRC a incorporar.
+- **Concurrency:** lock/CAS de registro/versionamento e exclusão de OPEN por `recordId+targetKey`; capturar estado das flags no corte de conclusão. A checagem deve ser novamente feita dentro do limite transacional apropriado, com idempotency key.
+- **Conflict response:** resposta de erro tipada (proposta `409 FLAG_TARGET_ALREADY_OPEN`, sujeita a padronização), identificadores de correlação e target autorizado; não revelar conteúdo/ator/solicitação de terceiros fora das permissões. Solicitação não passa para COMPLETED e nenhuma escrita de publicação de produto é efetivada.
+- **Postconditions on success:** conclusão validada, ledger/evidência, V1 baseline ou Vn+1 por diff real ou no-op na mesma Vn, flags OPEN elegíveis associadas ao contexto da versão final e auditoria, tudo consistente e sem duplicação.
+- **Postconditions on conflict:** nenhuma mudança no snapshot/consolidated record/current revision/status de conclusão/associação de flags; histórico de tentativa e erro de segurança pode ser auditado, sem fingir sucesso. Retry só após intervenção autorizada e nova verificação da condição.
+- **No automatic resolution:** não mesclar, excluir, encerrar ou reabrir bandeira automaticamente para liberar a conclusão.
+
+**Limite de escopo CR-08:** em **backfill de flags de solicitações historicamente já concluídas**, colisão continua em `PENDING_OWNER_REVIEW` sem associação automática e sem reabrir request histórico. CR-10 não autoriza retroativamente invalidar/converter status concluído de solicitações antigas. Em solicitações **ainda não concluídas**, CR-10 bloqueia conclusão inteira.
+
+**Matriz mínima HML:** conclusão com duas OPEN mesmo target bloqueia; nenhuma revisão nova se diff técnico houver; no-op bloqueado; V1 inicial bloqueada com conflito; após tratamento autorizado retry passa; concorrência de duas conclusões é serializada; 403 não vaza flag existente; replay bloqueado não produz duplicação; integração externa não causa sucesso parcial silencioso; legados CR-08 permanecem em exceção.
+
+**Gates de ratificação:** identificar owner do `complete_request`, bounded transaction, locks/índice parcial e integridade em DB, escopo D16 vs produto, rollback/compensação de side effects, erros HTTP, observabilidade, contract tests, compatibilidade e consumidores. Este contrato ainda é `TARGET`, não implementação comprovada.
