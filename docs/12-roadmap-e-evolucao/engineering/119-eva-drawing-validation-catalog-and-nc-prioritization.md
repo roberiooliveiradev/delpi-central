@@ -3397,3 +3397,68 @@ Consequências:
    de correção generalista sob `EVA-VAL01-P12-GROUP-BOUNDARY…`.
 
 O texto original do §85 permanece acima como trilha histórica.
+
+### Correção generalista da fronteira de âncoras (task `EVA-VAL01-P12-GROUP-BOUNDARY-FIRST-LOSS-AND-GENERALIST-FIX`)
+
+**Primeira perda demonstrada** — rastreio por estágio sobre o
+payload real preservado do job PROD `aj-547c28cde3774672`
+(PDF `af47dd4c…edf3`):
+
+| Estágio | Estado |
+|---|---|
+| OCR tokens (`AE`@978/1092, `AH`@1130, `AG`@1168, `AF`@1206) | CORRECT — todos emitidos com centros corretos |
+| SLANet células-pai | **FIRST_INCORRECT** — `50225704` declarada em r22 (real r21), `50225740` em r25 (real r24), `50225741` em r28 (real r27); `702/703/704` também com rowspan 2 vs real 3 |
+| `rows_from_native_cells` | fiel à declaração — propaga a janela deslocada |
+| Understanding `arow <= row < arow+span` | fiel à âncora — publica o deslocamento |
+| Saída | `AE→740` ausente; `AF→740 IDENTIFIED` (falso) |
+
+`ROOT_CAUSE=SLANET_CELL_BOUNDARY_ERROR` propagado por
+`GROUP_ANCHOR_BOUNDARY` no Understanding.
+
+**Fix implementado** (`understanding.py`, sem regra por produto/
+página/código): realinhamento estrutural das janelas de âncora
+`rowspan`. O texto de célula mesclada é verticalmente centrado —
+o centróide dos tokens da âncora marca o centro da janela real.
+Candidatos a um passo do declarado (`start ±1`, `span ∈ {decl,
++1}`) são pontuados pela distância entre o centro da extensão de
+bandas coberta e o centróide; a âncora só se move com melhoria ≥
+margem e sem violar guardas estruturais: janela efetiva clampada
+na próxima âncora declarada, sem invadir cabeçalho nem o início
+da âncora anterior, sem abandonar banda povoada da própria
+janela, bandas extrapoladas pelo pitch mediano para linhas sem
+células-filhas, e clipe anti-sobreposição entre janelas
+corrigidas. Sem evidência compatível, a janela declarada
+permanece (fail-closed).
+
+**Testes** — `tests/test_eva_val01_group_anchor_boundary.py`
+(6 testes, códigos/geometria sintéticos): RED reproduziu o
+deslocamento (`AD→50000001` em vez de `50000002`); GREEN cobre
+primeira linha própria, não-roubo da linha seguinte, UNKNOWN
+preservado fora da célula, irmãos, âncora já alinhada (controle
+negativo) e ausência de duplicatas. Suítes diretamente
+impactadas: 122 passed; 5 falhas restantes são ambientais
+pré-existentes (`MODEL_NOT_PROVISIONED`, ausência de
+PDFium/modelos no ambiente local — idênticas no baseline).
+
+**Replay real p12 (células nativas preservadas, mesma payload →
+Understanding corrigido):**
+
+```text
+AE|1|10010028 → 50225704  : UNKNOWN(y_nearest)  → IDENTIFIED
+AE|1|10010028 → 50225740  : ausente (ia p/704)  → IDENTIFIED
+AH|1|10080897 → 50225740  : IDENTIFIED          → IDENTIFIED
+AG|1|10110676 → 50225740  : IDENTIFIED          → IDENTIFIED
+AF|1|10010005 → 50225741  : IDENTIFIED em 740!  → IDENTIFIED em 741
+AG|2|10110676 → 50225701  : UNKNOWN             → IDENTIFIED
+AE|1|10010028 → 50225702  : UNKNOWN             → IDENTIFIED
+AG|2|10110676 → 50225703  : UNKNOWN             → IDENTIFIED
+```
+
+Todos os 6 conjuntos de p12 agora emitem exatamente o conteúdo
+medido no PDF. `r11 AG|16` permanece `UNKNOWN` (ambiguidade real,
+fail-closed). `FALSE_PARENT_PROMOTIONS=0`, sem duplicatas,
+contrato de saída inalterado.
+
+`RUNTIME_FIX_REQUIRED=YES` (implementado) · `GENERALIST_FIX=YES`
+· `UNKNOWN_FAIL_CLOSED=PRESERVED` · `PRODUCTION_CHANGED=NO` ·
+`RELEASE_GATE=COORDINATION` · `VAL01_COMPLETED=false`.

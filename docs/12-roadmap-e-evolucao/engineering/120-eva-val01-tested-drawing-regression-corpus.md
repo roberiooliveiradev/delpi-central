@@ -979,7 +979,7 @@ esperados presentes: A\|1\|70260008, E\|2\|10091368, F\|9\|70260008.
 | Página | G1 anot. | EVA | Match exato c/ pai | Misses | Observação |
 |---|---|---|---|---|---|
 | p10 | 14 | 49 | 10 | 4 | A1\|7\|10080182 e AC/AD/AG do conjunto principal → UNKNOWN com candidato vizinho (fora do rowspan detectado); A2\|16\|10080192 ✓ |
-| p12 | 15 | 30 | 14 | 1 | AE\|1\|10010028 do 50225740 ausente; A9\|1\|10120148, AE/AH/AG ✓ — **correção retificada (Doc 119 §85-addendum): medição geométrica mostra que `AE→50225740` EXISTE no desenho; o subset 740 contém `{AE,AH,AG}` e `AF` pertence ao `50225741`. A divergência é real da EVA (âncora SLANet deslocada uma linha), não defeito da referência** |
+| p12 | 15 | 30 | 14 | 1 | AE\|1\|10010028 do 50225740 ausente; A9\|1\|10120148, AE/AH/AG ✓ — **correção retificada (Doc 119 §85-addendum): medição geométrica mostra que `AE→50225740` EXISTE no desenho; o subset 740 contém `{AE,AH,AG}` e `AF` pertence ao `50225741`. A divergência é real da EVA (âncora SLANet deslocada uma linha), não defeito da referência. Fix generalista aplicado: replay das células nativas p12 com o Understanding corrigido emite os 6 conjuntos exatamente como no PDF — `AE→740` recuperada e `AF→741` corrigida, ambos `IDENTIFIED`; ver §85 addendum** |
 | p13 | 18 | 19 | 12 | 3 | AC/AD/AG → UNKNOWN candidato 50225749; AQ/AR/AS = `UNKNOWN_SUBSET` em G1, EVA âncora 50225749 (pendente de owner) |
 
 Multiplicidade preservada (AE/10010028 sob 6+ pais);

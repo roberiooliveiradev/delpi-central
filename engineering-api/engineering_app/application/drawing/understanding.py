@@ -2587,6 +2587,7 @@ def rows_from_native_cells(
     group_anchors: list[tuple[int, str, int, str]] = []
     group_anchor_ids: set[int] = set()
     group_y_anchors: list[tuple[float, str]] = []
+    anchor_cell_cys: dict[tuple[int, str], float] = {}
 
     def _group_anchor_cy(cell: dict) -> float | None:
         tcs = cell.get("token_centers") or []
@@ -2613,6 +2614,7 @@ def rows_from_native_cells(
         cy = _group_anchor_cy(cell)
         if cy is not None:
             group_y_anchors.append((cy, code))
+            anchor_cell_cys[(row_index, code)] = cy
 
     # A âncora pode viver na linha de cabeçalho (bloco mesclado
     # absorvendo o rótulo): rowspan>1 + código de grupo já exclui
@@ -2881,6 +2883,141 @@ def rows_from_native_cells(
             key=lambda a: (a[0], _ANCHOR_RANK.get(a[3], 0), a[1])
         )
         group_y_anchors.sort(key=lambda a: a[0])
+    # Realinhamento estrutural das âncoras rowspan: a SLANet pode
+    # declarar a célula mesclada do conjunto uma linha fora da
+    # banda real (offset observado de ±1 linha, às vezes com
+    # rowspan aquém). O texto de uma célula mesclada é centrado
+    # verticalmente nela — o centróide dos tokens da âncora marca
+    # o centro da janela real de linhas cobertas. Candidatos de
+    # uma linha e um rowspan para cada lado são pontuados pela
+    # distância entre o centro da extensão de bandas coberta e o
+    # centróide do texto; só se move a âncora cuja janela
+    # alternativa é materialmente melhor centrada. Sem evidência
+    # compatível a janela declarada permanece (fail-closed).
+    row_band_extent: dict[int, tuple[float, float]] = {}
+    for _r in data_row_indices:
+        _spans = row_spans.get(_r)
+        if _spans:
+            row_band_extent[_r] = (
+                min(s[0] for s in _spans),
+                max(s[1] for s in _spans),
+            )
+    banded_rows = sorted(row_band_extent)
+
+    def _extent(r: int) -> tuple[float, float] | None:
+        ext = row_band_extent.get(r)
+        if ext is not None:
+            return ext
+        # Linha sem células-filhas mensuráveis (ex.: linha final de
+        # um rowspan que só contém a âncora) ainda pode pertencer à
+        # janela real — extrapola a banda vizinha pelo pitch mediano.
+        prev = next((k for k in reversed(banded_rows) if k < r), None)
+        nxt = next((k for k in banded_rows if k > r), None)
+        if prev is not None and nxt is not None and nxt - prev <= 2:
+            lo0, hi0 = row_band_extent[prev]
+            lo1, hi1 = row_band_extent[nxt]
+            t = (r - prev) / (nxt - prev)
+            return (lo0 + (lo1 - lo0) * t, hi0 + (hi1 - hi0) * t)
+        if prev is not None and r - prev <= 2:
+            lo, hi = row_band_extent[prev]
+            shift = (r - prev) * median_step
+            return (lo + shift, hi + shift)
+        if nxt is not None and nxt - r <= 2:
+            lo, hi = row_band_extent[nxt]
+            shift = (nxt - r) * median_step
+            return (lo - shift, hi - shift)
+        return None
+
+    def _anchor_true_window(
+        row_index: int,
+        code: str,
+        span: int,
+        next_declared_row: int,
+        prev_declared_row: int,
+    ) -> tuple[int, int]:
+        cy = anchor_cell_cys.get((row_index, code))
+        if cy is None or span < 2:
+            return row_index, row_index + span
+
+        def _score(start: int, sp: int) -> float | None:
+            # Pontua a janela EFETIVA: linhas além da próxima âncora
+            # declarada já pertencem a ela na resolução de
+            # sobreposição (última âncora que casa vence), então não
+            # contam para o centro desta janela.
+            last = min(start + sp, next_declared_row) - 1
+            if last < start:
+                return None
+            first = _extent(start)
+            final = _extent(last)
+            if first is None or final is None:
+                return None
+            return abs((first[0] + final[1]) / 2.0 - cy)
+
+        best = (row_index, span)
+        best_score = _score(row_index, span)
+        for cand_start in (row_index - 1, row_index, row_index + 1):
+            # Não invadir o início declarado da âncora anterior
+            # nem a linha de cabeçalho.
+            if cand_start <= prev_declared_row:
+                continue
+            if header_row is not None and cand_start <= header_row:
+                continue
+            # Âncoras ladrilham a tabela: um início que avança
+            # além do start declarado abandonando linhas povoadas
+            # da própria janela deixaria a banda órfã.
+            if cand_start > row_index and any(
+                r in row_band_extent for r in range(row_index, cand_start)
+            ):
+                continue
+            for cand_span in (span, span + 1):
+                if (cand_start, cand_span) == (row_index, span):
+                    continue
+                s = _score(cand_start, cand_span)
+                if s is None:
+                    continue
+                if best_score is None or s < best_score:
+                    best = (cand_start, cand_span)
+                    best_score = s
+        declared_score = _score(row_index, span)
+        margin = max(4.0, band_gap_px * 0.25)
+        if best != (row_index, span) and best_score is not None and (
+            declared_score is None
+            or declared_score - best_score >= margin
+        ):
+            return best[0], best[0] + best[1]
+        return row_index, row_index + span
+
+    group_windows: list[tuple[int, int, str, str]] = []
+    for i, (arow, acode, aspan, asource) in enumerate(group_anchors):
+        if asource == "rowspan_anchor":
+            nxt = (
+                group_anchors[i + 1][0]
+                if i + 1 < len(group_anchors)
+                # Última âncora não tem grupo seguinte a proteger:
+                # rowspan legítimo pode terminar além da última
+                # linha com células (a linha existe fisicamente
+                # sem células-filhas emitidas).
+                else max(arow + aspan, data_row_indices[-1]) + 1
+                if data_row_indices
+                else arow + aspan
+            )
+            start, end = _anchor_true_window(
+                arow,
+                acode,
+                aspan,
+                nxt,
+                group_anchors[i - 1][0] if i > 0 else -1,
+            )
+        else:
+            start, end = arow, arow + aspan
+        group_windows.append((start, end, acode, asource))
+    # Janelas não podem se sobrepor: a próxima âncora corrigida
+    # também delimita o bloco anterior.
+    for i in range(len(group_windows) - 1):
+        s, e, c, src = group_windows[i]
+        nxt_start = group_windows[i + 1][0]
+        if e > nxt_start:
+            group_windows[i] = (s, nxt_start, c, src)
     rows_out: list[dict] = []
     prev_dominant_cy: float | None = None
     for row_index in sorted(grouped):
@@ -3235,8 +3372,8 @@ def rows_from_native_cells(
         # trocar filhos que já estão acima do rótulo do próprio grupo.
         group = None
         group_source = None
-        for arow, acode, aspan, asource in group_anchors:
-            if arow <= row_index < arow + aspan:
+        for wstart, wend, acode, asource in group_windows:
+            if wstart <= row_index < wend:
                 group = acode
                 group_source = asource
         row_cy_val = None
@@ -3288,8 +3425,8 @@ def rows_from_native_cells(
                 if src_row is None or src_row == row_index:
                     continue
                 src_group = None
-                for arow, acode, aspan, _asrc in group_anchors:
-                    if arow <= src_row < arow + aspan:
+                for wstart, wend, acode, _asrc in group_windows:
+                    if wstart <= src_row < wend:
                         src_group = acode
                 if src_group is not None and src_group != group:
                     group_source = "band_rehome_boundary"
