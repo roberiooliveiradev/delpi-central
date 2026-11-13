@@ -364,6 +364,16 @@ Números das linhas **ilustrativos**; não codificar no frontend. Situação vem
 
 **Status:** filtragem de já participantes, ausência dos três indicadores e **notificação pelo toast oficial do Portal APROVADAS**; valores CSS, contrato de falhas e implementação da Pesquisa **PENDING**. Não implementado.
 
+### Ajuste de interação da lista de participantes — linha/card clicáveis, sem botão Abrir (13/11/2026)
+
+**CORREÇÃO SOLICITADA:** na lista de participantes da UI-02B, **a própria linha de tabela no desktop e o próprio card no celular** são os controles de navegação para o detalhe **UI-02C**. **Não criar coluna `Ação`, botão `Abrir` ou affordance redundante para essa navegação.** A coluna de identificação da empresa pode incluir avatar, nome oficial TOTVS e código/loja; `Contato` opcional e `Situação` Pendente/Respondida permanecem **conteúdo proposto, ainda sujeito à confirmação**, não uma aprovação adicional presumida.
+
+**Padrão comprovado no código:** `plugins/commercial/src/features/customers/components/CustomersTable.tsx` já utiliza `CommercialDataTable onRowClick={openCustomer} rowClickRole="button"`; na versão de cards, `CommercialDataCardsGrid` renderiza `CustomerListCard onOpenDetail={openCustomer}`. Reutilizar essa semântica real, incluindo foco, teclado, indicação de interatividade e toque conforme o PluginUI; **não inventar botão explícito nem implementações ad hoc de clique**. A navegação deve preservar contexto da campanha e carregar o participante correto, com autorização de backend.
+
+**Composição visual:** adotar tamanho, padding, gap, margens, hover/focus, altura da linha, dimensões do avatar, breakpoint tabela/cards e tipografia da lista de Clientes como referência. **TO_INVENTORY** de valores e tokens CSS exatos antes da implementação, registrando fonte/seletor. Desktop, tablet e celular obedecem à responsividade real do kit. Ações secundárias eventuais que exijam operação diferente de abrir detalhe deverão ser analisadas separadamente e não justificam coluna de abertura.
+
+**Status:** navegação pelo clique/toque na linha/card **CONFIRMADA COMO DIRETRIZ DO SOLICITANTE**; colunas definitivas, medidas verificadas e implementação **PENDING**.
+
 ## 3. Wireframe B — detalhe de campanha
 
 ```text
