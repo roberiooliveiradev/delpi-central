@@ -22,7 +22,7 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 | W4.1 | MFE — Fila | DONE | `6d69e742e5` | 2026-11-13 | sala branch, debounce 1s, sem POST refresh por evento, indicador junto de «Fila carregada em» |
 | W4.2 | MFE — Detalhe | DONE | `834bfa5ff2` | 2026-11-13 | sala request, refetch silencioso, rascunho/modal → ConcurrentChangeNotice, forbidden_room mute |
 | W4.3 | MFE — Formulário de edição | DONE | `14728911ee` | 2026-11-13 | sala request, ConcurrentChangeNotice sem sobrescrever digitado |
-| W4.4 | MFE — Produtos sem código + Ajuda | DONE | 4b7b10febf | 2026-11-13 | sala unmapped + helpTooltips (auto-update e 3 estados) |
+| W4.4 | MFE — Produtos sem código + Ajuda | DONE | `93dc8bad9f` | 2026-11-13 | sala unmapped + helpTooltips (auto-update e 3 estados) |
 | W5 | Ensaio HML | TODO | | | |
 | W6 | PROD — ligar o tempo real | BLOCKED | | | entrada: W5 DONE. Ligar `LNF_REALTIME_ENABLED` na BFF de PROD, rebuild do MFE com a flag ligada e verificação, inclusive a CLARA |
 | W7 | Job periódico de conciliação | BLOCKED | | | decisão própria |

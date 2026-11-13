@@ -1339,8 +1339,10 @@ services:
       context: ../plugins
       dockerfile: lancamento-notas-fiscais/Dockerfile
       # Default = api-delpi (AS-IS). Corte F5b: VITE_LNF_API_BASE=/apps/controllership-finance-api/lancamento-notas-fiscais
+      # Tempo real LNF (W6): VITE_LNF_REALTIME_ENABLED=true só com base na BFF
       args:
         VITE_LNF_API_BASE: ${VITE_LNF_API_BASE:-/apps/api-delpi/lancamento-notas-fiscais}
+        VITE_LNF_REALTIME_ENABLED: ${VITE_LNF_REALTIME_ENABLED:-false}
 
     container_name: delpi-lancamento-notas-fiscais
     restart: unless-stopped
