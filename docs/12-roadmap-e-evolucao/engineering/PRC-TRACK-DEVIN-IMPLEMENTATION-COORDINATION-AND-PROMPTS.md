@@ -448,3 +448,17 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Resultado Devin (referência, não substitui aceite):** F3 PASS em todos os cenários acima (§27).
 
 **Estado:** `CURSOR_INDEPENDENT_PENDING / PRD_NOT_DEPLOYED`. F5–F7 bloqueados até `CURSOR_INDEPENDENT_PASS` + autorização operacional.
+
+## 29. PR #182 — deploy produtivo executado e validação API read-only (13/11/2026)
+
+**Decisão de release:** Coordination substituiu o aceite Cursor, para esta correção pontual, por verificação automatizada via API — registrada como `F4_API_VALIDATION_EXCEPTION` (não `CURSOR_INDEPENDENT_PASS`). Autorização operacional de deploy informada pela Coordination.
+
+**F6 — deploy:** `up-prod-sequential.sh --build engineering-api`. Descoberta operacional relevante: o container prod anterior carregava bind-mount `/app` obsoleto (spec legado, código de ~30/out) que sombreava a imagem; o recreate removeu o mount divergente e a nova imagem `sha256:f4846e6220431967270fea2a5fa9f98117a78b1cf95f50c25d45b6382f50898e` passou a servir o código assado do checkout `bfaf93a6eb` (contém merge `f1a625ff`). Imagem anterior `sha256:6140677e0503…` preservada para rollback. Container healthy em ~13s; `type_code=_RAW_MATERIAL_TYPE_CODE` confirmado em `/app` dentro do container; zero `fe_sendauth`/5xx nos logs.
+
+**F7 — validação API read-only (PRD, zero escritas):**
+- `GET /v1/home` anônimo → 401; usuário sem `engineering.access` → 403 (fronteira AuthZ íntegra).
+- `GET /v1/requests/work-queue?type_code=raw-material-creation` como usuário sem process-right → 403 (contrato do owner preservado); work-queue sem filtro → 200 total=0.
+- Auditoria read-only `my_requests.requests` PRD: `REQ-2026-000001` raw-material-creation (1) + `REQ-2026-000002..011` invoice-issuance (10). Com o filtro server-side aplicado pelo owner em toda chamada das fontes `tasks`/`requests`, os 10 registros de NF não podem aparecer na Home da Engenharia para nenhum usuário; My Requests corporativo permanece intacto (11 registros preservados).
+- Resposta autenticada da Home com usuário `engineering.access`: `TEST_NOT_RUN` — nenhuma credencial funcional desse perfil disponível ao executor; coberto por construção (filtro server-side) + evidência E2E HML no mesmo código (§27). **Recomendação:** owner com acesso valida visualmente `/apps/engineering` quando conveniente.
+
+**Estado:** `PRD_DEPLOY_PASS / API_VALIDATION_PASS_WITH_SCOPE_NOTE / PRD_BUSINESS_TEST_WRITES=0`. Divergência `/app` bind-mount stale removida é melhoria incidental de conformidade — registrar para o runbook (containers prod devem servir imagem assada).
