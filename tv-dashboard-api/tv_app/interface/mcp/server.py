@@ -204,7 +204,11 @@ def _register_read_tools(mcp: MCPServer) -> None:
         description=(
             "Leitura por vocabulário fechado entity+action: "
             "playlist.list|get|context, playlist_history.history, "
-            "data_route.search, data_model.inspect, product_guide.guide. "
+            "data_route.search, data_model.inspect, "
+            "display_format.list — catálogo autoritativo de formatos "
+            "de visualização de dados (display modes, tipos de bloco, "
+            "formatos de valor), slide_preset.list, media_asset.list, "
+            "slide_template.list|get|export_mdd, product_guide.guide. "
             "filters aceita apenas chaves declaradas por ação — chave "
             "desconhecida falha tipada (VALIDATION_ERROR). "
             "Entidade/ação desconhecida → UNKNOWN_ENTITY/UNKNOWN_ACTION. "

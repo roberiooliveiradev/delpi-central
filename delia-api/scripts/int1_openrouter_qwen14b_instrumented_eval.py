@@ -99,6 +99,18 @@ SCENARIOS = [
         "prior": (),
     },
     {
+        # INT-1 P2 control (Doc 316): explicit-filter request — the
+        # v2-3 enumeration-intent clause must NOT drop user-stated
+        # criteria. Frozen before the eval; success keeps the
+        # requested criterion in the owner call (e.g. q="qualidade").
+        "id": "P2_explicit_filter_control",
+        "question": (
+            "Quais processos de transformação contêm \"qualidade\" "
+            "no nome?"
+        ),
+        "prior": (),
+    },
+    {
         "id": "G1_semantic_reword_structure",
         "question": "Mostre a árvore de componentes e relações do item 90260921.",
         "prior": (),

@@ -133,13 +133,18 @@ def test_no_progress_projection_emits_continuity_coverage_note():
     assert "teo" not in note.lower()
 
 
-def test_default_instruction_is_v2_2_object_authz_continuity():
+def test_default_instruction_is_v2_3_enumeration_intent():
     selected = pai.load_selected_investigation_instructions()
     assert (
         selected.instruction_version
-        == "generalist-semantic-v2-2-object-authz-continuity"
+        == "generalist-semantic-v2-3-enumeration-intent"
     )
-    assert selected.text_fingerprint == "3692299dac74c26e"
+    assert selected.text_fingerprint == "95e265ee18cd5d66"
+    # v2-2 remains selectable for rollback (preserved fingerprint).
+    v22 = pai.load_selected_investigation_instructions(
+        instruction_version="generalist-semantic-v2-2-object-authz-continuity"
+    )
+    assert v22.text_fingerprint == "3692299dac74c26e"
     text = selected.text
     assert "Linguistic similarity alone is not enough" in text
     assert "Shared hierarchical vocabulary" in text

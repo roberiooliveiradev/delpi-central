@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from tv_app.application.services.tv_data_route_catalog_service import DATA_BLOCK_TYPES
 
 _DISPLAY_MODES = frozenset({"kpi", "line_chart", "bar_chart", "table", "auto", "chart"})
@@ -20,6 +22,18 @@ _SHAPE_DEFAULT_MODES: dict[str, list[str]] = {
     "hierarchy": ["table", "auto"],
     "composite_analysis": ["kpi", "line_chart", "table", "auto"],
 }
+
+
+def supported_display_modes() -> dict[str, Any]:
+    """Canonical display-mode vocabulary and its declared data-block
+    bindings — read-only projection for governed catalog surfaces
+    (``read.display_format.list``). ``auto`` is a declared mode without
+    a fixed binding: the owner resolves it per data shape, so it never
+    appears under ``blockTypeByMode``."""
+    return {
+        "modes": sorted(_DISPLAY_MODES),
+        "blockTypeByMode": dict(sorted(_BLOCK_TYPE_FOR_MODE.items())),
+    }
 
 
 def normalize_display_mode(value: str | None) -> str:

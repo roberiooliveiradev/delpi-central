@@ -6625,3 +6625,15 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `315-int1-p2-process-enumeration-and-p3-vista-formats-contract-bounded-causal-remediation.md`.
 - **INT1_STAGE_ACCEPTANCE=PENDING_COORDINATION_REVIEW**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_P2_P3_INDEPENDENT_ACCEPTANCE_REVIEW`.
+
+### INT-1 P2 semantic enumeration + P3 VISTA read-only format catalog implementation — 2026-11-13
+
+- **TASK:** `DELIA-C3-T2-INT1-P2-SEMANTIC-ENUMERATION-AND-P3-VISTA-READ-FORMAT-CATALOG-IMPLEMENTATION-01`; **BASE_HEAD** `7dbc50bb2df3d85cc1c89b48ad7351bb4e5e23f7`; PO-authorized implementation of both bounded corrections.
+- **P2 (EXTEND existing instruction mechanism):** `generalist-semantic-v2-3-object-authz-continuity` (fp `95e265ee18cd5d66`) — v2-2 + general enumeration-intent rule: enumeration requests ⇒ unfiltered list/search (no invented `q`); explicit filters preserved; `FILTERED_SEARCH_EMPTY` ≠ `AUTHORIZED_CATALOG_EMPTY`; broaden only when justified. Domain/provider-neutral; zero hardcode of TÉO/process/"transformação". 21 instruction tests GREEN (E1–E6).
+- **P3 (EXTEND VISTA read surface):** `display_format` + `list` in `READ_ENTITY_ACTIONS` gated `TV_READ`; bounded projection composed from canonical sources (`TvDataPresentationModesService`, `DATA_BLOCK_TYPES`/`DATA_VIEW_BLOCK_TYPES`, `block_type_vocabulary()`, `format_catalog_entries()`); admin `get_catalog()` still `TV_WRITE`. Wire description of `vista.read` (`server.py add_tool`) now advertises `display_format.list` (sha `071279a8…`). 10 new tests GREEN; 130 adjacent + 94 read/facade/conformance GREEN.
+- **REAL EVALS (bounded 6/6, isolated containers `delpi-teo-eval-int1`/`delpi-vista-eval-int1`, prod untouched):** `or-qwen14b-2ff9e302c874` — P2 `teo.read{search}` no params → `total=109` **GROUNDED** (honest truncation/pagination); P3 answered via `knowledge` (wire lacked entity — diagnosed and fixed). `or-qwen14b-1ab21b3ca278` — P2-ctrl `q:"quality"`→0→`q:"qualidade"`→1→`get` (FILTER_PRESERVED; first attempt turn_budget_limited INCONCLUSIVE); P3 `model_unavailable` (provider env, 0 model requests). `or-qwen14b-393ea7510418` — P3 `vista.read{display_format,list}` → authoritative catalog **GROUNDED** (modes, block types, value formats; truncation declared).
+- **VERDICTS:** `P2_ACCEPTANCE=SATISFIED_PROVEN_IN_SAMPLE` (enumeration intent recognized, unfiltered search, honest pagination; explicit-filter control preserved); `P3_ACCEPTANCE=SATISFIED_PROVEN_IN_SAMPLE` (TV_READ catalog, semantic selection, grounded formats).
+- **METRICS:** 6 investigations (4 valid + 1 env + 1 inconclusive); 7 model requests; 12 tool calls; tokens/cost UNAVAILABLE; latency 55/74.2/56.4s.
+- **Doc:** `316-int1-p2-semantic-enumeration-and-p3-vista-read-format-catalog-governed-implementation-and-real-evaluation.md`.
+- **INT1_STAGE_ACCEPTANCE=PENDING_COORDINATION_REVIEW**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_P2_P3_REAL_OUTCOME_INDEPENDENT_REVIEW`.

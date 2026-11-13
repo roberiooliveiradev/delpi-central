@@ -570,6 +570,11 @@ class GptActionsDispatchService:
                 authorization=authorization,
                 include_runtime=bool(flt.get("includeRuntime", True)),
             )
+        if entity_key == "display_format" and action_key == "list":
+            self._semantic_filters(
+                filters, allowed=set(), context="read.display_format.list"
+            )
+            return self.list_display_formats(user=user)
         if entity_key == "slide_preset" and action_key == "list":
             self._semantic_filters(
                 filters, allowed=set(), context="read.slide_preset.list"
@@ -2199,6 +2204,51 @@ class GptActionsDispatchService:
         )
 
         return ProductGuideService().get_product_guide(topic=topic, section=section)
+
+    def list_display_formats(self, *, user: Any) -> dict[str, Any]:
+        """Read-only display-format catalog — ``read.display_format.list``.
+
+        TV_READ projection over the canonical owner services; never a
+        second registry and never the TV_WRITE administrative
+        ``get_catalog()`` document. Answers "which data-visualization
+        formats exist": display modes + declared data-block bindings,
+        data/view block types, canonical block vocabulary and the
+        value-display format catalog.
+        """
+        assert_permission(user, TV_READ)
+        from tv_app.application.services.data.display_format_service import (
+            DisplayFormatService,
+        )
+        from tv_app.application.services.data.presentation_ops_content_service import (
+            PresentationOpsContentService,
+        )
+        from tv_app.application.services.data.tv_data_presentation_modes_service import (
+            supported_display_modes,
+        )
+        from tv_app.application.services.tv_data_route_catalog_service import (
+            DATA_BLOCK_TYPES,
+            DATA_VIEW_BLOCK_TYPES,
+        )
+
+        return {
+            "entity": "display_format",
+            "displayModes": supported_display_modes(),
+            "dataBlockTypes": sorted(DATA_BLOCK_TYPES),
+            "dataViewBlockTypes": sorted(DATA_VIEW_BLOCK_TYPES),
+            "blockTypeVocabulary": (
+                PresentationOpsContentService.block_type_vocabulary()
+            ),
+            "displayFormats": [
+                {
+                    "formatId": entry["formatId"],
+                    "category": entry["category"],
+                    "label": entry["label"],
+                    "pattern": entry.get("pattern"),
+                    "compatibleTypes": list(entry["compatibleTypes"]),
+                }
+                for entry in DisplayFormatService.format_catalog_entries()
+            ],
+        }
 
     def list_playlists(
         self,

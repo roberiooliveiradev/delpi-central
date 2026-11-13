@@ -75,7 +75,19 @@ chmod 600 "${EVAL_ENV}"
   fi
   echo "DELIA_MCP_TEO_ENABLED=true"
   echo "DELIA_MCP_TEO_HOST_HEADER=localhost:8000"
-  echo "DELIA_MCP_VISTA_BASE_URL=http://tv-dashboard-api:8000/mcp"
+  # Same isolated-container override for VISTA (INT-1 P3 read-surface
+  # evals): DELIA_EVAL_VISTA_BASE_URL points at a patched container
+  # without touching the running shared tv-dashboard-api service.
+  _VISTA_URL="${DELIA_EVAL_VISTA_BASE_URL:-http://tv-dashboard-api:8000/mcp}"
+  echo "DELIA_MCP_VISTA_BASE_URL=${_VISTA_URL}"
+  _VISTA_HOST="$(python3 -c "from urllib.parse import urlparse;print(urlparse('${_VISTA_URL}').hostname or '')")"
+  if [[ -n "${_VISTA_HOST}" && "${_VISTA_HOST}" != "tv-dashboard-api" ]]; then
+    if [[ -n "${_TEO_HOST}" && "${_TEO_HOST}" != "transformometro-api" ]]; then
+      echo "DELIA_MCP_TRUSTED_ENDPOINT_HOSTS=${_TEO_HOST},${_VISTA_HOST}"
+    else
+      echo "DELIA_MCP_TRUSTED_ENDPOINT_HOSTS=${_VISTA_HOST}"
+    fi
+  fi
   echo "DELIA_MCP_VISTA_ENABLED=true"
   echo "DELIA_MCP_VISTA_HOST_HEADER=localhost:8000"
   echo "DELIA_MCP_PROVIDER_REGISTRY_MODE=core"

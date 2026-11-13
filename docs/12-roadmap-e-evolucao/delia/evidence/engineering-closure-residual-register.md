@@ -1554,8 +1554,8 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-OWNER-TYPED-REJECTION-FEEDBACK | **CLOSED** | `error_kind="validation"`+`recoverable:true` (VISTA `INVALID_CHANGE`/`QUERY_REQUIRED`, etc.) now `OWNER_ARGUMENT_REJECTED`+hint→ModelRetry; was `mcp_protocol_error`→`SOURCE_UNAVAILABLE`; proven live `error=owner_argument_rejected` |
 | INT1-OWNER-FORBIDDEN-CLASSIFICATION | **CLOSED** | Doc 315: owner envelope `code:"FORBIDDEN"` (`error_kind:"forbidden"`, httpStatus 403 — VISTA tool_bridge) mapped to `mcp_protocol_error`→`SOURCE_UNAVAILABLE`; now `MCP_AUTHORIZATION_DENIED` via `_OWNER_ERROR_CODE_MAP`; proven live `or-qwen14b-7c2d2bd54410` |
 | INT1-PO-P1 | **SATISFIED_PROVEN** | Doc 310 DAVI-first GROUNDED |
-| INT1-PO-P2 | **PARTIALLY_SATISFIED** | Doc 315: owner contract fixed+delivered (`read` description declares unfiltered enumeration; `filters_applied` echoed); live eval `or-qwen14b-7c2d2bd54410` — model still applied restrictive `q` and declared empty catalog ⇒ **model-caused proven post-fix**; needs bounded instruction iteration + P2-only re-run |
-| INT1-PO-P3 | **BLOCKED_BY_OWNER_CONTRACT** | Doc 315: authoritative `displayFormatCatalog`/`block_type_vocabulary` exist only behind `get_catalog()` (TV_WRITE) → 403 FORBIDDEN for TV_READ subject (live proven); `EXT-VISTA-READ-FORMAT-CATALOG` owner dependency — expose catalog under TV_READ in VISTA owner |
+| INT1-PO-P2 | **SATISFIED_PROVEN_IN_SAMPLE** | Doc 316: v2-3 enumeration-intent rule; live `or-qwen14b-2ff9e302c874` — unfiltered `process.search` → `total:109` GROUNDED with honest pagination; explicit-filter control run preserved filter |
+| INT1-PO-P3 | **SATISFIED_PROVEN_IN_SAMPLE** | Doc 316: `display_format.list` under TV_READ implemented in VISTA; live `or-qwen14b-393ea7510418` — semantic selection → authoritative catalog GROUNDED; TV_WRITE paths preserved |
 | INT1-PROJECTION-BUDGET | **OPEN** | large TÉO trees truncate honestly (Doc 312) |
 | INT1-ATTEMPT-STATUS-CONFLATION | **OPEN_MINOR** | `attempt.status=SOURCE_UNAVAILABLE` also for `owner_argument_rejected`; `error_code`+`owner_hint` carry correct semantics — observability debt only |
 | INT1-MCP-HEAVY-VIEW-TIMEOUT | **OPEN_MINOR** | one real `mcp_timeout` (15s) on heavy `teo.analyze` — reliability, not INT-1 |
@@ -1571,8 +1571,19 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 
 | ID | Classification | Notes |
 |---|---|---|
-| INT1-P2-MODEL-ENUMERATION-STRATEGY | **OPEN_MATERIAL** | model-caused: restrictive `q` on enumeration objective even with explicit contract + `filters_applied` echo; next: bounded instruction iteration + P2-only re-run |
-| EXT-VISTA-READ-FORMAT-CATALOG | **EXTERNAL_OWNER_DEPENDENCY** | VISTA owner: expose `displayFormatCatalog`/`block_type_vocabulary` under TV_READ (read action or re-gate catalog); decision belongs to tv-dashboard-api owner |
+| INT1-P2-MODEL-ENUMERATION-STRATEGY | **CLOSED** | Doc 316: v2-3 instruction (`95e265ee18cd5d66`) — eval `or-qwen14b-2ff9e302c874` model ran unfiltered `search` → total=109 GROUNDED; explicit-filter control preserved (`q:"quality"`→`q:"qualidade"`) |
+| EXT-VISTA-READ-FORMAT-CATALOG | **CLOSED** | Doc 316: `display_format.list` shipped in VISTA `READ_ENTITY_ACTIONS` under TV_READ — bounded projection of canonical displayModes/blockTypeByMode/dataBlockTypes/block_type_vocabulary/format_catalog_entries; admin catalog stays TV_WRITE; proven live `or-qwen14b-393ea7510418` |
 | INT1-EVAL-TEO-ROOTPATH | **CLOSED_OPERATIONAL** | isolated eval TÉO containers require canonical `--root-path /apps/transformometro-api` (missing → MCP POST 404); env defect of eval setup, not repo code |
 
 **NEXT=`COORDINATION_INT1_P2_P3_INDEPENDENT_ACCEPTANCE_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+### INT-1 P2/P3 governed implementation — 2026-11-13
+
+**TASK:** `DELIA-C3-T2-INT1-P2-SEMANTIC-ENUMERATION-AND-P3-VISTA-READ-FORMAT-CATALOG-IMPLEMENTATION-01` · Doc **316** · Evals `or-qwen14b-2ff9e302c874` / `or-qwen14b-1ab21b3ca278` / `or-qwen14b-393ea7510418`
+
+| Residual | Status | Evidence |
+|---|---|---|
+| INT1-VISTA-READ-WIRE-DISCOVERY | **CLOSED** | `vista.read` wire description (server.py `add_tool`) did not advertise new/existing READ entities — docstring is not the wire source; updated (sha `071279a8…`), P3 selection proven |
+| INT1-EVAL-ENV-FLAKES | **OPEN_OPERATIONAL** | `model_unavailable` (provider) + `turn_budget_limited` (0 tool calls) occurred once each; environmental, not model evidence |
+
+**NEXT=`COORDINATION_INT1_P2_P3_REAL_OUTCOME_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

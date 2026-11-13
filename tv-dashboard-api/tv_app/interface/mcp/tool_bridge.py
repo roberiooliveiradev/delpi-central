@@ -378,7 +378,10 @@ def tool_read(
     """READ — closed (entity, action) vocabulary over canonical handlers.
 
     Entities: playlist (list|get|context), playlist_history (history),
-    data_route (search), data_model (inspect), product_guide (guide),
+    data_route (search), data_model (inspect), display_format (list —
+    authoritative data-visualization formats: display modes, block
+    types, value formats), slide_preset (list), media_asset (list),
+    slide_template (list|get|export_mdd), product_guide (guide),
     avatar (get — official avatar as ImageContent).
     Unknown entity/action or undeclared filter key fails typed.
     """
