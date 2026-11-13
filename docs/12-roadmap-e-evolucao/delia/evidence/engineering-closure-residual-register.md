@@ -1733,3 +1733,13 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-* (menores/externos) | OPEN_NON_BLOCKING | inalterados — owners registrados (Docs 322–323) |
 
 **NEXT=`COORDINATION_INT2_REVIEW_AND_ARCHITECTURE_DECISION_ON_OBLIGATION_SEMANTICS`**
+
+### RC5 architecture decision — 2026-11-13 (Doc 327)
+
+| Residual | Status | Evidence / disposition |
+|---|---|---|
+| INT2-RC5-OBLIGATION-SEMANTICS | **PROPOSAL_READY** | Doc 327 — Obligation Evidence Anchors (D+A): `evidence_needed` items opcionais `{description,evidence_source,operation}`; verificação mecânica vs ecos owner; `INCONCLUSIVE`=BOUND, `SATISFIED`=DEMONSTRATED; COMPATIBLE_EXTEND; pendente aceite da coordenação |
+| INT2-RC5-TEO-ENVELOPE-ECHO | TO_VERIFY_IMPL | confirmar em implementação se TÉO structured ecoa `entity`/`action_id` como DAVI; fallback = `GovernedCapabilityBinding` de invoke |
+| demais INT2-* | inalterados | Doc 326/register |
+
+**NEXT=`COORDINATION_RC5_ARCHITECTURE_DECISION_REVIEW`**

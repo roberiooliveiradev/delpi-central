@@ -6744,3 +6744,12 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **REAL EVAL:** `or-qwen14b-9a854eeceab5` + retry `or-qwen14b-eef4645f0c27` (auth ambiental; prod intocada) — A "109" verificado; E/E2/F re-executados; falsos-pos subject-scope amplificados (D2/F) reforçando finding material.
 - **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — **não aceite**; `INT2_ACCEPTED=NO`, `PHASE_ADVANCEMENT/INT3/T3=NOT_AUTHORIZED`, `PRODUCTION_DEPLOY=NO`. Doc 326.
 - **NEXT:** `COORDINATION_INT2_REVIEW_AND_ARCHITECTURE_DECISION_ON_OBLIGATION_SEMANTICS`.
+
+### RC5 — decisão arquitetural obligation semantics (Doc 327; 2026-11-13)
+
+- **TASK:** `DELIA-C3-T2-RC5-EVIDENCE-SEMANTICS-CONTRACT-AND-REUSE-DECISION-01`; BASE `772b794c94`→HEAD `ab8772a410` (=origin/main). `TASK_TYPE=ARCHITECTURE_DECISION`, `CODE_IMPLEMENTATION=NOT_AUTHORIZED`.
+- **RECONFIRMAÇÃO NOS TRACES:** D — `get_product_structure` (entity=`product_structure`, empty-complete autoritativo) vs `search_products` (entity=`product_search`) — ecos `entity`/`action_id`/`shape`/`data.total` existem no structured e eram ignorados pelo matcher; D2 — `lista de transportadoras` bound a `product_search`/`shared_resource`; F — `process deletion confirmation` bound a READ sem nenhuma capability ACT elegível.
+- **INVENTÁRIO:** lacuna única = `evidence_needed: tuple[str]` sem âncora verificável. `entity`/`action_id`/`capability` echoes, `SpecialistOperationClass` (READ|ANALYSIS|PREPARE|ACT), `_WRITE_OPERATION_CLASSES`, `OBLIGATION_INCONCLUSIVE`, `get_context` catálogo vivo — todos PROVEN existentes.
+- **DECISÃO:** `D+A — Obligation Evidence Anchors`: items de `evidence_needed` ganham forma opcional `{description, evidence_source?, operation?}` declarada do vocabulário vivo do owner; verificação mecânica contra ecos `outcome.structured`+op_class; `INCONCLUSIVE`=BOUND não-verificado, `SATISFIED`=DEMONSTRATED (identidade/âncora/ausência autoritativa). `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND`, `CONTRACT_IMPACT=COMPATIBLE_EXTEND`. Rejeitadas: A-isolada, B-isolada, C (modelo-autoridade), keyword matching, novo estado/motor.
+- **RESULTADO:** `ARCHITECTURE_PROPOSAL_READY_FOR_COORDINATION`; `INT2_ACCEPTED=NO`; `PRODUCTION_DEPLOY/PHASE_ADVANCEMENT/INT3/T3=NOT_AUTHORIZED`. Doc 327.
+- **NEXT:** `COORDINATION_RC5_ARCHITECTURE_DECISION_REVIEW`.
