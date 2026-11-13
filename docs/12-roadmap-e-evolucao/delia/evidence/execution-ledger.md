@@ -6649,3 +6649,11 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `317-int1-finite-full-regression-consolidated-po-homologation-and-independent-acceptance-evidence.md`.
 - **INT1_STAGE_ACCEPTANCE=PENDING_COORDINATION_REVIEW**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_LAOR_AND_FINAL_ACCEPTANCE_INDEPENDENT_REVIEW`.
+
+### INT-1 Gate R independent multi-owner failure inventory — 2026-11-13
+
+- **TASK:** `DELIA-C3-T2-INT1-GATE-R-ALL-FAILURE-CLASSES-INVESTIGATION-01` (**REVIEW/DOC_ONLY**), reviewed HEAD `b875c4251f101bc30221e08b3a9c181f05e0b80f`; Doc **318**.
+- **PROVEN:** `test_runtime_profiles_share_execution_policy` compares `context.prior_turns_limit` and `tool_results.max_projection_chars` across profiles, while Doc 300 explicitly configures Qwen 32/20000 vs local Ollama 4/6000; technical-capacity policy reconciliation required, **not** arbitrary profile uniformization or blind test expectation removal. Large-tree truncation is a distinct residual.
+- **INVESTIGATE:** TÉO 28 fails (OAuth/realtime/~11 not individually classified); VISTA 17 fails (baseline/toolchain/eval-generated artifact, overlapping categories not reconciled); DAVI 61 fails with missing fixtures report; external owner contracts and baseline reproducibility pending. DAVI totals in Doc317 `5889+61+30=5980` while reported total 5979 — source logs required. `ZERO_NEW_REGRESSIONS` cannot be independently upgraded to PROVEN from zero diff alone.
+- **NO TESTS RUN / NO RUNTIME CHANGE** in this review. `L/A/O=PASS_REPORTED`, `R=FAIL`; `INT1_CLOSED=NO`, `INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+- **NEXT:** `COORDINATION_INT1_GATE_R_ALL_FAILURE_CLASSES_OWNER_BOUNDED_REMEDIATION` (after canonical owner/contract review; doc318).
