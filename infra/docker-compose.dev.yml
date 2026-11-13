@@ -1277,6 +1277,10 @@ services:
       context: ../plugins
       dockerfile: lancamento-notas-fiscais/Dockerfile
       target: production
+      # Defaults = comportamento atual (api-delpi, tempo real desligado).
+      args:
+        VITE_LNF_API_BASE: ${VITE_LNF_API_BASE:-/apps/api-delpi/lancamento-notas-fiscais}
+        VITE_LNF_REALTIME_ENABLED: ${VITE_LNF_REALTIME_ENABLED:-false}
 
     container_name: delpi-lancamento-notas-fiscais
     restart: unless-stopped

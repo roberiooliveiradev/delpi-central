@@ -16,6 +16,9 @@ WORKDIR /app/lancamento-notas-fiscais
 # Default = comportamento atual. Corte: --build-arg VITE_LNF_API_BASE=/apps/controllership-finance-api/lancamento-notas-fiscais
 ARG VITE_LNF_API_BASE=/apps/api-delpi/lancamento-notas-fiscais
 ENV VITE_LNF_API_BASE=$VITE_LNF_API_BASE
+# Default desligado. DEV liga só pelo .env local.
+ARG VITE_LNF_REALTIME_ENABLED=false
+ENV VITE_LNF_REALTIME_ENABLED=$VITE_LNF_REALTIME_ENABLED
 # tsc roda no CI/local; Docker só bundla (MF externaliza @delpi/plugin-ui).
 RUN npx vite build
 
