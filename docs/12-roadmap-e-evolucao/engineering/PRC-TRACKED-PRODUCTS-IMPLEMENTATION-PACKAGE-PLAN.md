@@ -191,3 +191,13 @@ Prevalece sobre AC textuais antigos que tratem RESOLVED e REMOVED como estados d
 ## Complemento CR-02 — decisão do PO em 13/11/2026
 
 **CR-02 APPROVED BY PO:** opção **A — Ficha consolidada por versão** (sem comentário). Cada Vn representa o estado consolidado dos campos PRC acompanhados pela Engineering API; delta e eventos de solicitação são separados. O backend compara Vx×Vy como estados consolidados, incluindo vínculos por supplierCode+store. UPDATE parcial combina dados confirmados com base válida, preservando cobertura/proveniência e sem inventar desconhecidos. Essa escolha **não ratifica** contratos, AuthZ, migration, source-of-truth adicional, nem autoriza implementação. Remanescentes: definição de valores registrados vs verificados, semântica de null/omissão/remoção, campos parciais, legado e primeira V1 sem baseline. [Decisão registrada](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) · [Proposta à Coordination](./PRC-TRACK-G1-CONTRACT-RATIFICATION-PROPOSAL.md).
+
+## Complemento CR-03 — exceção inicial à política de no-op (PO, 13/11/2026)
+
+**Decisão aprovada pelo PO:** `CR-03 A — V1 baseline inicial mesmo sem mudança técnica`, sem comentário. **Compatível** com ADR-05 B quando interpretada em duas fases:
+- **Sem versão anterior + primeira PRC concluída e matched:** gerar V1 com ficha consolidada CR-02, mesmo sem delta técnico, rotulada `primeiro acompanhamento`.
+- **Já existe Vn + PRC matched:** gerar Vn+1 **somente** com diferença técnica real; conclusão sem diferença permanece auditada na versão vigente, sem nova revisão.
+- **Não matched / não concluída:** nenhuma revisão.
+- **Idempotência/concurrency:** não duplicar V1 ou Vn, exigir locks/CAS/testes e tratamento de vínculo da solicitação que não gerou revisão.
+
+**Emenda aos gates B1/AC:** primeira UPDATE sem diferença gerando V1, segunda conclusão no-op sem incremento, alteração posterior gerando V2, conflito/rollback, snapshot consolidado/provenance, histórico V1 sem afirmar criação TOTVS. Critério anterior que bloqueava V1 por no-op está **superado pela decisão do PO**. [Registro PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) · [Ratificação Coordination](./PRC-TRACK-G1-CONTRACT-RATIFICATION-PROPOSAL.md). `ARCHITECTURE_DECISION_REQUIRED` permanece para contratos/execução.
