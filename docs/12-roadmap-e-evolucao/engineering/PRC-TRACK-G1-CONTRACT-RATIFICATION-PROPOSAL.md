@@ -265,3 +265,27 @@ A forma final do DTO e seu versionamento dependem de inventário do contrato atu
 **HML tests:** OPEN elegível → V1, resolvida anterior → não entra, removida anterior → não entra, GENERAL/target missing → quarantined, colisões → sem incorporação, migration retry → sem duplicação, autorização negada → sem vazamento, V1 sem V2 artificial, RESOLVE/REMOVE pós-V1, sem bypass da rota reopen legada.
 
 **Estado:** `PROPOSED_FOR_COORDINATION / TEST_NOT_RUN`. Nenhum código/migration/deploy executado.
+
+
+## 13. Emenda CR-09 — conclusão PRC como gate único de publicação em produto (PO, 13/11/2026)
+
+**Decisão do PO:** **B — Somente após conclusão da solicitação**, com comentário “a solicitação só deve alterar o produto após concluida, solicitação não é uma nova versão do produto.” `PO_APPROVED / ARCHITECTURE_DECISION_REQUIRED / TEST_NOT_RUN`.
+
+**Separação obrigatória de contratos:** `request-local` (draft técnico, flags D16 e eventos de solicitação, durante atendimento) **não** é `product-tracking` (snapshot confirmado e flags associadas ao registro). Proibir que GET/listas de produto mostrem mudanças locais pendentes sob aparência de dados publicados. A API de solicitação continua regida por seus contratos e permissões próprios.
+
+**Gate conceitual de conclusão validada, a ratificar:**
+1. Verificar resultado `matched` exigido pela Engineering API, permissões atuais, identidade oficial e escopo da solicitação.
+2. Construir e confirmar snapshot consolidado CR-02/04/05/06. Para produto sem revisão, criar V1 baseline (CR-03); com diff técnico real, criar próxima Vn; sem diff, manter revisão e registrar conclusão/no-op com ledger.
+3. Examinar flags da solicitação **no corte transacional da conclusão**. Apenas as `OPEN` com vínculo produto/alvo comprovado e sem conflito OPEN podem ser associadas à projeção do produto; `RESOLVED`/`REMOVED` antes da conclusão não passam à ficha do produto e permanecem auditáveis por requestId.
+4. Registrar `completedAt`, `associationAt`, `revisionContext`, `originRequestId`, eventId/idempotencyKey, actor e evidência; nomes TARGET. Transação, CAS e locks devem impedir que flag passe a RESOLVED enquanto um leitor tenta incorporá-la como OPEN com estado desatualizado.
+5. Não emitir nova versão técnica apenas por associação de bandeira. Solicitação concluída e versão nova são eventos distintos. Em no-op, OPEN aparece na Vn atual; em conclusão com diff, aparece na Vn+1 resultante. A semântica de consulta da revisão vigente precisa distinguir snapshot técnico imutável de projeção viva de flags.
+
+**CR-08 ajustada:** para flags PRC legadas a associar na V1, exigir **solicitação de origem concluída e verificável**, além de OPEN, record/source/code, targetKey e autorização; solicitação aberta ou status histórico indeterminado **não migra automaticamente**. Isso corrige qualquer leitura anterior de CR-08 que aceitasse somente o estado da flag sem considerar o estado da PRC. Em conflito ou ausência de evidência: `PENDING_OWNER_REVIEW` e sem associação automática.
+
+**CR-07/ADR-04:** nenhuma reabertura de RESOLVED; flags novas têm ID novo. Uma flag associada à Vn segue OPEN até RESOLVE (aparece RESOLVED somente na revisão de resolução) ou REMOVE (desaparece na revisão da remoção), sem mudanças retroativas a períodos anteriores à associação.
+
+**Operações falhas:** pedido em andamento, cancelado, rejeitado, concluído sem verificação válida, ou concluído com conflito de autorização/identidade **não publica alteração de produto**. Para conclusão técnica válida com colisão de flags OPEN, Coordination precisa ratificar se falha todo commit ou se conclui solicitação com associação pendente via outbox. **Não decidir atomicidade parcial por conta própria**; qualquer opção deve ter pós-condições explícitas, idempotência, compensação e trilha de auditoria.
+
+**Contratos e HML:** endpoints request-local e product-tracking segregados por AuthZ; testes de isolamento read, conclusão sem diff + OPEN, conclusão com diff + OPEN, flags encerradas antes da conclusão, race flag RESOLVE vs completar PRC, duas OPEN mesmo target, retry, PRC cancelada, dados legados e autorização negada. Atualizar os critérios e paths PROPOSED sem afirmar endpoints ativos. Manter compatibilidade com fluxo D16, My Requests e flags de solicitação sem importar internals de outro BC.
+
+**Status:** `PROPOSED_FOR_COORDINATION / TEST_NOT_RUN`; código/migrations/deploy não autorizados.
