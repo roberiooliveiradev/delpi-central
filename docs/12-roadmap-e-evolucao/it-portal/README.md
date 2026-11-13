@@ -312,3 +312,7 @@ automática GLPI/Zabbix é feita pelo Portal de TI.
 |---|---|---|
 | RES-GLPI-01 | Definir se registros vivos do GLPI (DatabaseInstance, Appliance, IPNetwork) passam a ser authority para algum cadastro do Portal de TI | PO |
 | RES-OPENAPI-01 | `/openapi.json`, `/docs` e `/redoc` são públicos (contrato, sem dados do inventário) | PO / segurança |
+
+## Delpi Remote (inventario de desktops e suporte remoto)
+
+Projeto iniciado em 13/11/2026. O [roadmap canonico](delpi-remote/README.md), [arquitetura](delpi-remote/ARCHITECTURE.md), [gates de seguranca](delpi-remote/SECURITY-GATES.md) e [diario de execucao](delpi-remote/EXECUTION-LOG.md) sao a fonte de continuidade. O projeto **nao habilita controle remoto em producao** nesta fase. A issue de acompanhamento e [#179](https://github.com/roberiooliveiradev/delpi-central/issues/179).

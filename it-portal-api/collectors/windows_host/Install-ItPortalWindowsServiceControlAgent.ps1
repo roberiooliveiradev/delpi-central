@@ -45,7 +45,7 @@ if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
 if (-not $env:LOCALAPPDATA -or -not [IO.Path]::IsPathRooted($env:LOCALAPPDATA) -or $env:LOCALAPPDATA.StartsWith('\')) {
     throw 'Perfil Windows local obrigatorio para DPAPI.'
 }
-$protected = @('rpcss','dcomlaunch','eventlog','plugplay','schedule','winmgmt','samss','lsass','power','profsvc','bfe','mpssvc','lanmanserver','netlogon','wuauserv','cryptsvc')
+$protected = @('rpcss','dcomlaunch','eventlog','plugplay','schedule','winmgmt','samss','lsass','power','profsvc','bfe','mpssvc','lanmanserver','netlogon','wuauserv','cryptsvc','licensevirtual','@01licensevirtual')
 $names = @($ApprovedServiceNames.Split(',') | ForEach-Object { $_.Trim() } | Where-Object { $_ })
 if ($names.Count -eq 0 -or $names.Count -gt 5) {
     throw 'Piloto: informe de 1 a 5 nomes tecnicos de servicos aprovados.'

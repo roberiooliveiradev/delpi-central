@@ -120,3 +120,14 @@ Implemente **somente** `GET /v1/product-registration/technical-records` para reg
 **Decisão de coordenação:** não pedir mais código de negócio PROD-01; Devin deve reancorar sem descartar trabalho concorrente, abrir PR real, confirmar CI/testes no SHA de integração e submeter merge ao gate governado. **`PROD-01_CODE_REVIEW_PASS / MERGE_PENDING / HML_TEST_NOT_RUN / PROD_NOT_DEPLOYED`**.
 
 **Próximo:** PROD-02 segue `BLOCKED_BY_COORDINATION_T01_T02`; preparar pacote técnico de ratificação de snapshots consolidados e no-op sem perguntas funcionais ao PO. Não iniciar bandeiras/frontend nem deploy.
+
+
+## 9. DEVIN-PROD-01 — PR #180 aberto pela coordenação; integração pendente (13/11/2026)
+
+A coordenação abriu o **PR real [#180](https://github.com/roberiooliveiradev/delpi-central/pull/180)** da branch `devin/prc-track-prod-01-records-list` para `main`, usando o GitHub conectado, **sem compartilhar token com executor**. HEAD da branch no PR: `d6b56517891a30e55b582ed47de12a6879f08ce6`.
+
+**Evidência GitHub no momento da abertura:** `changed_files=3`, `+97/-2` (Postgres adapter e testes PRC memory/Postgres), `mergeable=false`. A comparação `main...branch` mostrava `ahead_by=2,behind_by=5` e somente esses três arquivos. Portanto, **não declarar merge pronto**; main avançou por agentes concorrentes após o teste do SHA informado.
+
+**Status:** `PR_OPEN / CODE_REVIEW_PASS_WITH_INTEGRATION_GATE / MERGE_BLOCKED_OR_NOT_YET_MERGEABLE / HML_TEST_NOT_RUN`. O backend PROD-01 original já estava incorporado à main segundo relatório Devin; #180 contém correções RV01/RV02 e testes. Nenhum deploy, merge ou validação multiusuário realizada pela coordenação.
+
+**Próxima ação exclusiva de Devin:** reancorar no HEAD mais recente da main, sem force-push/stash destructivo nem perder alterações paralelas; investigar mergeability de #180 (conflito concreto versus avaliação pendente do GitHub), resolver apenas conflitos relativos ao pacote, executar novamente os testes focados e PostgreSQL **no novo SHA**, atualizar o PR. Se mergeable=true e evidências válidas, Coordination pode autorizar merge governado. Não avançar PROD-02 antes de T01/T02 ratificados.

@@ -49,7 +49,7 @@ class FakeActions:
 def test_control_policy_denies_by_default_and_protected_services(monkeypatch):
     monkeypatch.delenv("IT_PORTAL_WINDOWS_CONTROL_ENABLED", raising=False)
     monkeypatch.setenv("IT_PORTAL_WINDOWS_CONTROL_TARGETS",
-                       f"{uuid4()}=TEST_DELPI,RpcSs")
+                       f"{uuid4()}=TEST_DELPI,RpcSs,licenseVirtual,@01licenseVirtual")
     assert enabled() is False
     assert set().union(*control_targets().values()) == {"test_delpi"}
     with pytest.raises(ValidationError):
