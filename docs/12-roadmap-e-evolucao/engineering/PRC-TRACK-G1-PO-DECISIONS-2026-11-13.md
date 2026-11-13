@@ -153,3 +153,23 @@ Encaminhar à Coordination **ADR-01 a ADR-06** com matriz de decisão e pergunta
 6. Revisões imutáveis anteriores não devem sofrer backfill inferido; snapshot legado precisa `coverage/provenance` e aviso de qualidade dos dados.
 
 **Ainda requer ratificação técnica:** política de campos confirmados vs apenas registrados na API, esquema e cobertura; semântica de merge UPDATE parcial; suporte a V1 sem histórico prévio. **Não autoriza código/migration/deploy.**
+
+## 9. Deliberação complementar do PO — CR-03: nascimento da V1 (13/11/2026)
+
+**Escolha expressa:** **A — Criar V1 como baseline inicial mesmo sem mudança técnica**. **Comentário:** sem comentário. **Classificação:** `PO_APPROVED_BUSINESS_DECISION / COORDINATION_RATIFICATION_PENDING`.
+
+**Regra funcional com precedência sobre textos anteriores:**
+
+1. **Primeiro acompanhamento confirmado:** na primeira conclusão PRC validada para um produto sem registro de versão anterior, criar **V1** como *baseline técnico inicial dos campos PRC acompanhados*, mesmo que a solicitação não tenha provocado modificação técnica real. Esse snapshot usa o contrato CR-02 de ficha consolidada e requer proveniência/coverage adequadas. UPDATE preexistente pode originar V1: isso **não significa criação do produto no TOTVS**.
+2. **Produto já acompanhado:** somente conclusão PRC validada com **diferença técnica real** diante da última versão consolidada gera **Vn+1**.
+3. **No-op posterior:** conclusão PRC verificável sem diferença é auditada e vinculada ao record/revision atuais, sem nova revisão, sem alterar snapshot imutável, nem duplicar por replay.
+4. **Falha/divergência:** verificação não matched ou conclusão não efetivada **não cria V1 nem Vn+1**.
+5. **Invariante:** `revisionNumber` é sequência de *baseline inicial + alterações reais confirmadas*, não contagem de solicitações concluídas.
+
+**Compatibilidade com ADR-05:** a opção B da ADR-05 permanece válida para **V2 em diante**; CR-03-A é a **exceção explícita de inicialização do histórico**. Não há contradição se a regra for `IF no existing revision AND validated completion THEN V1 baseline ELSE IF real diff THEN next revision ELSE completion no-op`.
+
+**Impactos de contrato/implementação a ratificar:** caminho atômico de primeira V1; distinguir `baseline_initial` versus `technical_change` versus `no_technical_change` nos metadados/eventos; construir V1 com dados CR-02 e qualidade suficiente; testar dois fluxos CREATE/UPDATE e retries; associar no-op à versão vigente; migrações/grants somente após inventário; compatibilidade de `current_revision_number` e evidence ledger. O `complete_request` atual cria revisão em todas as conclusões matched, portanto a exceção V1 e a supressão subsequente de no-op exigem mudanças condicionais, não mero ajuste de frontend.
+
+**Aceite adicional:** `CR03-AC01` UPDATE primeira conclusão matched sem mudança → V1 baseline; `CR03-AC02` segunda matched sem diff → continua V1; `CR03-AC03` próxima matched com diff → V2; `CR03-AC04` falha, retry ou concorrência não produzem revisão indevida; `CR03-AC05` histórico rotula V1 como primeiro acompanhamento, não criação ERP.
+
+**Estado:** decisão funcional do PO registrada; ratificação de contrato, segurança, transação e rollout continua com Coordination. Nenhuma alteração de código/migration/deploy autorizada.
