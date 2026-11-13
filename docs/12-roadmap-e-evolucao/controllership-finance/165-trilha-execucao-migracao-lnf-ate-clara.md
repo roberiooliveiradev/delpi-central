@@ -84,9 +84,9 @@ Transferir o módulo **Lançamento de Notas Fiscais (LNF)** da `api-delpi` para 
 | F5c | Estabilização (hypercare) | IN_PROGRESS (dia 1; janela 5 DU a partir do corte) | PROD | — | 2026-11-13 | Checagens: total=1430; 5xx=0; HOSTED=true; recheck pós-F7 OK |
 | F7.0 | CLARA — inventário e contrato | DONE | docs | `0926f07160` | 2026-11-13 | doc 166; R2=SIM JWT usuário |
 | F7.1 | CLARA — leituras | DONE | HML/PROD | `1328cd0d85` | 2026-11-13 | 8 reads; HML JSON-RPC PASS; PROD health+import |
-| F7.2 | CLARA — análise | DONE (F7-R) | HML/PROD | `348140ec53` | 2026-11-13 | enum `invoice_posting_backlog` no tools/list; schema-callable |
-| F7.3 | CLARA — ações governadas | DONE (F7-R) | HML/PROD | `348140ec53` | 2026-11-13 | presentation displayable=true; HML prepare→commit E2E |
-| F7.4 | CLARA — produção + roteiro de teste do owner | PENDING_OWNER | PROD | `348140ec53` | 2026-11-13 | rework F7-R deployado; revisor refaz pelo conector |
+| F7.2 | CLARA — análise | DONE (F7-R3) | HML/PROD | `d9393bcde5` | 2026-11-13 | enum LNF; `review_aged_pending.value`=contagem ≥5d |
+| F7.3 | CLARA — ações governadas | DONE (F7-R3) | HML/PROD | `d9393bcde5` | 2026-11-13 | copy conversacional sem Portal; displayable=true |
+| F7.4 | CLARA — produção + roteiro de teste do owner | PENDING_OWNER | PROD | `d9393bcde5` | 2026-11-13 | F7-R3 deployado; revisor refaz 4 e 6 no conector |
 | F6 | Limpeza final (encerra o rollback) | TODO | | | | |
 
 Status possíveis: TODO · IN_PROGRESS · BLOCKED (regra de parada) · DONE.
@@ -390,6 +390,8 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-13 08:43 -03 | F7.4 | PROD | Roteiro owner reaberto pós-F7-R | PENDING_OWNER | `348140ec53` | refrescar tools no conector; retestar 4 e 6 |
 | 2026-11-13 09:14 -03 | F7-R2 | PROD | **EXECUTION_DRIFT F7-R** — canal PROD alterado sem autorização; revertido por decisão do owner | REVERT | config `infra/.env` (sem SHA de código) | portal ≈ 08:42→09:14 -03; restore `conversational`; recreate só CF API; logs CLARA_ACT no intervalo = 0 |
 | 2026-11-13 09:15 -03 | F7-R2 | PROD | Verificação pós-revert (sem mutar negócio) | PASS | — | instructions ACTIVE CHANNEL conversational; prepare LNF `reconciliation.run` + closing `pendency.create`: channel=conversational, armed=true, confirmation_url=null, displayable=true; tools=6; enum LNF |
+| 2026-11-13 09:30 -03 | F7-R3 | DEV | ITEM5 copy conversacional + `review_aged_pending` contagem; testes unitários | PASS 36 | `d9393bcde5` | sem Portal/ChatGPT no wire conversational; Portal V014 runtime preservado (portal/dual + ClaraConsentPage + step_up) |
+| 2026-11-13 09:30 -03 | F7-R3 | HML/PROD | Deploy CF API (+ MFE CF copy consent); prepare smoke sem mutar ACT real | PENDING | `d9393bcde5` | ver relatório Parte 8 após promote |
 
 ### Roteiro de teste do owner — F7.4 (ChatGPT / CLARA em PROD)
 
@@ -400,7 +402,7 @@ Pré-condição: usuário com `controllership-finance.access` **e** as permissõ
 3. "Abra a solicitação \<id\>." → detalhe + link do app para PDF/XML (sem binário na conversa).
 4. "Analise o backlog de lançamento de notas da filial 01." → tool `analyze` com `analysis_type=invoice_posting_backlog` (enum de tools/list); FACT com números/fonte; RECOMMENDATION sem lançar por inferência.
 5. "Comente na nota \<id\>: teste CLARA F7.4" → comentário aparece no app (direct).
-6. "Inicie o atendimento da nota \<id\>." → prepare com **presentation.displayable=true** (alvo/efeito legíveis) e **não executa** sem confirmação Portal; após step-up, app mostra Em atendimento.
+6. "Inicie o atendimento da nota \<id\>." → prepare com **presentation.displayable=true** (alvo/efeito legíveis) e **não executa** sem confirmação explícita no chat (`confirmation=true` no commit); após confirmar no chat, app mostra Em atendimento.
 7. Negativos: perfil só view não vê create/start; cancel/post_manual sem justificativa recusados; serviço/token de máquina não entra no MCP.
 
 **Após F7-R:** o revisor deve refrescar tools no conector e repetir 4 e 6 (enum + presentation). Marcar F7.4 DONE somente com PASS do owner neste roteiro.
