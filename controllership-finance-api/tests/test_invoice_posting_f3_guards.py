@@ -13,6 +13,8 @@ import pytest
 from fastapi import HTTPException
 
 from controllership_finance_app.infrastructure.invoice_posting.open_purchase_orders_sql import (
+    branch_filter_and,
+    branch_filter_sql,
     open_purchase_orders_sql as bff_open_purchase_orders_sql,
 )
 from controllership_finance_app.interface.http.routes.invoice_posting.router import (
@@ -60,6 +62,25 @@ def test_open_purchase_orders_sql_text_parity() -> None:
     origin_fn = (FIXTURES / "open_purchase_orders_sql_origin.py.txt").read_text()
     bff_src = inspect.getsource(bff_open_purchase_orders_sql)
     assert "".join(origin_fn.split()) == "".join(bff_src.split())
+
+
+def test_branch_filter_sql_concrete_and_all() -> None:
+    clause, params = branch_filter_sql("RTRIM(SC7.C7_FILIAL)", "01")
+    assert clause == "RTRIM(SC7.C7_FILIAL) = ?"
+    assert params == ["01"]
+    empty, no_params = branch_filter_sql("RTRIM(SC7.C7_FILIAL)", "all")
+    assert empty == "" and no_params == []
+    and_sql, and_params = branch_filter_and("RTRIM(SC7.C7_FILIAL)", "02")
+    assert and_sql == "AND RTRIM(SC7.C7_FILIAL) = ?"
+    assert and_params == ["02"]
+    sql, sql_params = bff_open_purchase_orders_sql(
+        branch="01",
+        product_param=None,
+        supplier_code_param="?",
+        supplier_store_param="?",
+    )
+    assert "AND RTRIM(SC7.C7_FILIAL) = ?" in sql
+    assert sql_params == ["01"]
 
 
 def test_d8_rejects_service_principal() -> None:

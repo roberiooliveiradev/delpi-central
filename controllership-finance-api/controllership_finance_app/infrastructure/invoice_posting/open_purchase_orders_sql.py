@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+
+def branch_filter_sql(column: str, scope: str) -> tuple[str, list]:
+    """all → sem predicado; 01/02 → ``column = ?`` (paridade api-delpi protheus_branches)."""
+    resolved = str(scope or "").strip()
+    if resolved.lower() in {"", "all", "todas", "todos"}:
+        return "", []
+    return f"{column} = ?", [resolved]
+
+
 def branch_filter_and(column: str, scope: str) -> tuple[str, list]:
     """Todas → sem predicado; 01/02 → ``AND column = ?``."""
     clause, params = branch_filter_sql(column, scope)
