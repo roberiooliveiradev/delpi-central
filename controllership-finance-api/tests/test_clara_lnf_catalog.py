@@ -93,6 +93,27 @@ def test_catalog_shows_lnf_reads_with_lnf_read():
     assert "invoice_posting.create" not in gov
 
 
+def test_resolved_route_kwargs_materializes_query_defaults():
+    from fastapi import Query
+
+    from controllership_finance_app.interface.mcp.invoice_posting_bridge import (
+        _resolved_route_kwargs,
+    )
+
+    def sample(
+        branch: str | None = Query(None),
+        page: int = Query(1),
+        status: str | None = Query(None),
+    ):
+        return branch, page, status
+
+    resolved = _resolved_route_kwargs(sample, {"branch": "01"})
+    assert resolved["branch"] == "01"
+    assert resolved["page"] == 1
+    assert resolved["status"] is None
+    assert not any(type(v).__name__ == "Query" for v in resolved.values())
+
+
 def test_catalog_create_and_process_gates():
     catalog = sb._semantic_catalog(
         {

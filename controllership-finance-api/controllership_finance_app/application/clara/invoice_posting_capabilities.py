@@ -6,10 +6,13 @@ Delegam às rotas/use cases da BFF com o ContextVar do usuário final
 
 from __future__ import annotations
 
+import inspect
 import json
 from typing import Any, Callable
 from uuid import UUID
 
+from fastapi.params import Param
+from pydantic_core import PydanticUndefined
 from starlette.responses import Response
 
 from controllership_finance_app.domain.closing_checklist.errors import (
@@ -35,6 +38,28 @@ _APP_BASE = "/apps/lancamento-notas-fiscais"
 class LnfRouteFailed(ChecklistDomainError):
     code = "lnf_route_failed"
     status = 400
+
+
+def _call_route(fn, **params: Any) -> Any:
+    """Chama rota LNF resolvendo defaults ``Query``/``Param``."""
+    resolved = dict(params)
+    try:
+        signature = inspect.signature(fn)
+    except (TypeError, ValueError):
+        signature = None
+    if signature is not None:
+        for name, param in signature.parameters.items():
+            if name in resolved:
+                continue
+            default = param.default
+            if default is inspect.Parameter.empty:
+                continue
+            if isinstance(default, Param):
+                value = default.default
+                resolved[name] = None if value is PydanticUndefined else value
+            else:
+                resolved[name] = default
+    return fn(**resolved)
 
 
 def _unwrap_route(result: Any) -> dict:
@@ -67,7 +92,7 @@ def _as_uuid(request_id: Any) -> UUID:
 
 def _request_snapshot(request_id: Any) -> dict:
     data = _unwrap_route(
-        lnf_router.get_request(request_id=_as_uuid(request_id))
+        _call_route(lnf_router.get_request, request_id=_as_uuid(request_id))
     )
     req = data.get("request") if isinstance(data, dict) else None
     if not isinstance(req, dict):
@@ -128,18 +153,22 @@ def _exec_comment(p: dict, *_a) -> dict:
         mentioned_user_ids=list(p.get("mentioned_user_ids") or []),
     )
     return _unwrap_route(
-        lnf_router.add_comment(request_id=_as_uuid(p["request_id"]), body=body)
+        _call_route(
+            lnf_router.add_comment,
+            request_id=_as_uuid(p["request_id"]),
+            body=body,
+        )
     )
 
 
 def _exec_refresh(_p: dict, *_a) -> dict:
-    return _unwrap_route(lnf_router.refresh_reconciliation())
+    return _unwrap_route(_call_route(lnf_router.refresh_reconciliation))
 
 
 def _exec_create(p: dict, *_a) -> dict:
     payload = {k: v for k, v in p.items() if k != "idempotency_key"}
     body = CreateRequestBody.model_validate(payload)
-    return _unwrap_route(lnf_router.create_request(body=body))
+    return _unwrap_route(_call_route(lnf_router.create_request, body=body))
 
 
 def _exec_update(p: dict, *_a) -> dict:
@@ -149,7 +178,9 @@ def _exec_update(p: dict, *_a) -> dict:
         for k, v in p.items()
         if k not in {"request_id", "idempotency_key"} and v is not None
     }
-    return _unwrap_route(lnf_router.update_request(request_id=rid, body=patch))
+    return _unwrap_route(
+        _call_route(lnf_router.update_request, request_id=rid, body=patch)
+    )
 
 
 def _exec_link(p: dict, *_a) -> dict:
@@ -166,13 +197,19 @@ def _exec_link(p: dict, *_a) -> dict:
             delivery_date=p.get("delivery_date"),
         )
     return _unwrap_route(
-        lnf_router.link_request_purchase_order(request_id=rid, body=body)
+        _call_route(
+            lnf_router.link_request_purchase_order,
+            request_id=rid,
+            body=body,
+        )
     )
 
 
 def _exec_start(p: dict, *_a) -> dict:
     return _unwrap_route(
-        lnf_router.start_request(request_id=_as_uuid(p["request_id"]))
+        _call_route(
+            lnf_router.start_request, request_id=_as_uuid(p["request_id"])
+        )
     )
 
 
@@ -184,13 +221,19 @@ def _exec_block(p: dict, *_a) -> dict:
         assignee_name=str(p["assignee_name"]),
     )
     return _unwrap_route(
-        lnf_router.block_request(request_id=_as_uuid(p["request_id"]), body=body)
+        _call_route(
+            lnf_router.block_request,
+            request_id=_as_uuid(p["request_id"]),
+            body=body,
+        )
     )
 
 
 def _exec_resume(p: dict, *_a) -> dict:
     return _unwrap_route(
-        lnf_router.resume_request(request_id=_as_uuid(p["request_id"]))
+        _call_route(
+            lnf_router.resume_request, request_id=_as_uuid(p["request_id"])
+        )
     )
 
 
@@ -200,15 +243,17 @@ def _exec_post_manual(p: dict, *_a) -> dict:
         raise LnfRouteFailed("justification é obrigatória para post_manual na CLARA.")
     body = PostManualBody(justification=str(justification).strip())
     return _unwrap_route(
-        lnf_router.post_manual_request(
-            request_id=_as_uuid(p["request_id"]), body=body
+        _call_route(
+            lnf_router.post_manual_request,
+            request_id=_as_uuid(p["request_id"]),
+            body=body,
         )
     )
 
 
 def _exec_run(p: dict, *_a) -> dict:
     body = ReconciliationRunBody(limit=p.get("limit"))
-    return _unwrap_route(lnf_router.run_reconciliation(body=body))
+    return _unwrap_route(_call_route(lnf_router.run_reconciliation, body=body))
 
 
 def _exec_cancel(p: dict, *_a) -> dict:
@@ -217,8 +262,10 @@ def _exec_cancel(p: dict, *_a) -> dict:
         raise LnfRouteFailed("justification é obrigatória para cancel.")
     body = CancelBody(justification=str(justification).strip())
     return _unwrap_route(
-        lnf_router.cancel_request(
-            request_id=_as_uuid(p["request_id"]), body=body
+        _call_route(
+            lnf_router.cancel_request,
+            request_id=_as_uuid(p["request_id"]),
+            body=body,
         )
     )
 

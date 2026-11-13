@@ -10,12 +10,15 @@ resposta aponta para a tela do app.
 from __future__ import annotations
 
 import calendar
+import inspect
 import json
 from datetime import date, datetime, timezone
 from typing import Any
 from uuid import UUID
 
+from fastapi.params import Param
 from mcp.types import CallToolResult
+from pydantic_core import PydanticUndefined
 from starlette.responses import Response
 
 from controllership_finance_app.interface.http.routes.invoice_posting import (
@@ -51,11 +54,37 @@ def _route_fail_status(result: Response) -> int:
         return 500
 
 
+def _resolved_route_kwargs(fn, params: dict[str, Any]) -> dict[str, Any]:
+    """Materializa defaults FastAPI ``Query``/``Param`` fora do framework.
+
+    Chamada direta da função decorada deixa ``Query(None)`` como objeto
+    truthy — ele vazaria para filtros/SQL (``cannot adapt type 'Query'``).
+    """
+    resolved = dict(params)
+    try:
+        signature = inspect.signature(fn)
+    except (TypeError, ValueError):
+        return resolved
+    for name, param in signature.parameters.items():
+        if name in resolved:
+            continue
+        default = param.default
+        if default is inspect.Parameter.empty:
+            continue
+        if isinstance(default, Param):
+            value = default.default
+            resolved[name] = None if value is PydanticUndefined else value
+        else:
+            resolved[name] = default
+    return resolved
+
+
 def _call_lnf_route(fn, **params) -> CallToolResult:
     """Invoca rota LNF sem Request posicional (rotas usam ContextVar)."""
     _user_and_access()
+    kwargs = _resolved_route_kwargs(fn, params)
     try:
-        result = fn(**params)
+        result = fn(**kwargs)
     except Exception as exc:  # noqa: BLE001 — literals canônicos authz
         msg = str(exc)
         if msg in ("Unauthorized", "Forbidden", "Service Unavailable"):
