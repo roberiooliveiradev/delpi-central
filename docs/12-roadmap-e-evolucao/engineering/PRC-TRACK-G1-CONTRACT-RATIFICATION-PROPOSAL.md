@@ -239,3 +239,29 @@ A forma final do DTO e seu versionamento dependem de inventário do contrato atu
 **Novos HML tests:** flag resolvida não reabre pela API do produto; ação direta HTTP não contorna; nova ocorrência mesmo target pode abrir após finalização, com outro flagId; duas novas OPEN simultâneas produzem apenas uma; estados V3/V4/V5 permanecem; rota legada tem política testada e não permite escape; audit trail, AuthZ, idempotência, sem nova Vn.
 
 **Estado:** `PROPOSED_FOR_COORDINATION / TEST_NOT_RUN`. Nenhum código, schema, grant ou deploy alterado.
+
+
+## 12. Emenda CR-08 — associação segura de flags PRC anteriores à V1 (PO, 13/11/2026)
+
+**Decisão PO:** **A — Incorporar bandeiras OPEN com vínculo comprovado**, sem comentário. `PO_APPROVED / ARCHITECTURE_DECISION_REQUIRED / TEST_NOT_RUN`.
+
+### Contrato proposto para ratificação (não implementado)
+
+**Fonte:** flags existentes do domínio PRC/D16, acompanhadas de requestId, status, subject, targetKey e evidência de vínculo ao produto oficial; Engineering API exerce autoridade sobre associação. **Não é importação de dados arbitrários nem alteração automática de TOTVS**.
+
+**Processo proposto:**
+1. Construir V1 de acordo com CR-02/03/04/05/06 e verificação PRC existente; associação das flags é etapa **separada, auditável e idempotente**.
+2. Selecionar somente `OPEN`, não deletadas, com correspondência documental/contratual inequívoca de `official_source+official_product_code` e FIELD/SUPPLIER_LINK com alvo ainda aplicável à V1.
+3. Verificar escopo do principal e política backend de acesso à solicitação de origem e ao produto acompanhado. Falhar fechado sem autorização suficiente.
+4. Se houver uma única OPEN elegível por `recordId+targetKey`, preservar identidade de ocorrência, associar a `recordId` e registrar `associatedAt`, `associatedAtRevision=V1`, `originRequestId`, evidence/correlationId (nomes apenas TARGET).
+5. Se houver duas ou mais OPEN para o mesmo alvo, vínculo incerto, alvo ausente ou status incompleto: **não migrar automaticamente**, registrar exceção revisável pelo owner. Não resolver, remover, fundir ou reabrir automaticamente.
+6. OPEN incorporada se propaga somente enquanto aberta. RESOLVED na revisão vigente continua visível na revisão do evento e desaparece na seguinte; REMOVED desaparece na revisão do evento; nenhuma dessas ações gera versão técnica.
+7. Backfill repetível e reversível da **associação**, sem apagar registros/ledger legados ou modificar snapshots técnicos. Definir comportamento de erro parcial, logs seguros, índices e grants antes de executar.
+
+**Invariantes:** `recordId + targetKey` tem no máximo uma ocorrência OPEN; encerradas antigas não são incorporadas à projeção corrente; nunca forjar V0 nem atribuir RESOLVED à V1; nenhum clone/duplicação de flag; nova reincidência após resolução exige novo flagId CR-07. A relação documental original continua consultável por requestId quando autorizado.
+
+**Coordination must ratify:** owner da migração e contrato de compatibilidade com D16, critério de prova de produto/alvo, janela temporal e política de inclusão de flags de solicitação ainda em andamento, conflito de múltiplas OPEN, esquema de associação/ledger, AuthZ incluindo owners de origem, e rollout/rollback. O usuário aprovou a **política funcional**, não uma implementação ou backfill em produção.
+
+**HML tests:** OPEN elegível → V1, resolvida anterior → não entra, removida anterior → não entra, GENERAL/target missing → quarantined, colisões → sem incorporação, migration retry → sem duplicação, autorização negada → sem vazamento, V1 sem V2 artificial, RESOLVE/REMOVE pós-V1, sem bypass da rota reopen legada.
+
+**Estado:** `PROPOSED_FOR_COORDINATION / TEST_NOT_RUN`. Nenhum código/migration/deploy executado.
