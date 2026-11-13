@@ -24,9 +24,15 @@ from controllership_finance_app.application.invoice_posting.permissions import (
     LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS,
     LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS,
 )
+from controllership_finance_app.application.invoice_posting.use_cases import (
+    actor_can_list_requests,
+    actor_can_read_request,
+    can_list_unmapped_products,
+)
 from controllership_finance_app.config import settings
 from controllership_finance_app.infrastructure.invoice_posting.realtime_hub import (
     UNMAPPED_ROOM,
+    RealtimeViewer,
     get_invoice_posting_realtime_hub,
 )
 from controllership_finance_app.interface.http.routes.invoice_posting.branch_access import (
@@ -56,16 +62,13 @@ def origin_allowed(origin: str | None) -> bool:
     return urlparse(origin).netloc.lower() == expected
 
 
-def lookup_request_branch(request_id: str) -> str | None:
+def lookup_request_row(request_id: str) -> dict | None:
     from controllership_finance_app.application.invoice_posting.composer import (
         build_invoice_posting_request_repository,
     )
 
     row = build_invoice_posting_request_repository().get_request(request_id)
-    if not row:
-        return None
-    branch = str(row.get("branch_code") or "").strip()
-    return branch or None
+    return row if isinstance(row, dict) else None
 
 
 async def _resolve_user(token: str) -> tuple[SimpleNamespace, dict]:
@@ -100,19 +103,29 @@ async def _resolve_user(token: str) -> tuple[SimpleNamespace, dict]:
     return user, claims
 
 
+def _current_actor():
+    from controllership_finance_app.interface.http.routes.invoice_posting.router import (
+        _actor,
+    )
+
+    return _actor()
+
+
 def room_error(room: str) -> str | None:
     """None quando a sala pode ser assinada. Não revela solicitação inexistente."""
+    actor = _current_actor()
     if room in _BRANCH_ROOMS:
-        if branch_view_allowed(_BRANCH_ROOMS[room]):
+        branch = _BRANCH_ROOMS[room]
+        if branch_view_allowed(branch) and actor_can_list_requests(actor):
             return None
         return "forbidden_room"
     if room == UNMAPPED_ROOM:
-        user = None
         from delpi_auth.request_context import get_current_user
 
         user = get_current_user()
-        if user is not None and has_permission(
-            user, LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS
+        if can_list_unmapped_products(
+            has_review_permission=user is not None
+            and has_permission(user, LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS)
         ):
             return None
         return "forbidden_room"
@@ -123,13 +136,18 @@ def room_error(room: str) -> str | None:
         except ValueError:
             return "unknown_room"
         try:
-            branch = lookup_request_branch(request_id)
+            row = lookup_request_row(request_id)
         except Exception:
             logger.warning("lnf_realtime_request_lookup_failed")
             raise
-        if branch is None or not branch_view_allowed(branch):
+        if not isinstance(row, dict):
             return "forbidden_room"
-        return None
+        branch = str(row.get("branch_code") or "").strip()
+        if actor_can_read_request(
+            actor, created_by_user_id=row.get("created_by_user_id")
+        ) and branch and branch_view_allowed(branch):
+            return None
+        return "forbidden_room"
     return "unknown_room"
 
 
@@ -191,11 +209,23 @@ async def invoice_posting_realtime(
     user_token = set_current_user(user)
     exp = float(claims["exp"])
     close_after = max(0.0, exp - time.time()) + 5.0
+    actor = _current_actor()
+    viewer = RealtimeViewer(
+        user_id=actor.user_id,
+        can_view_all=actor.can_view_all,
+        has_create=actor.has_create,
+        can_list_unmapped=can_list_unmapped_products(
+            has_review_permission=has_permission(
+                user, LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS
+            )
+        ),
+    )
     try:
         await hub.connect(
             websocket,
             on_text=_handle_text,
             close_after_seconds=close_after,
+            viewer=viewer,
         )
     finally:
         from delpi_auth.request_context import reset_current_user

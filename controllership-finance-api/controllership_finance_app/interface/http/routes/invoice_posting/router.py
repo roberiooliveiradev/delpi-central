@@ -40,6 +40,7 @@ from controllership_finance_app.application.invoice_posting.permissions import (
 )
 from controllership_finance_app.application.invoice_posting.use_cases import (
     Actor,
+    can_list_unmapped_products,
 )
 from controllership_finance_app.application.invoice_posting.fiscal_attachment_storage import (
     LancamentoFiscalAttachmentStorage,
@@ -583,6 +584,17 @@ def list_unmapped_products(
     page: int = Query(1, ge=1),
     page_size: int = PAGE_SIZE_QUERY("page_20_100"),
 ):
+    if not can_list_unmapped_products(
+        has_review_permission=has_permission(
+            get_current_user(), LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS
+        )
+    ):
+        return error_response(
+            "Sem permissão para consultar produtos sem código.",
+            status_code=403,
+            code="FORBIDDEN",
+            recoverable=False,
+        )
     normalized_branch = ""
     if branch and str(branch).strip():
         try:

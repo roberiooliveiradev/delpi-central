@@ -41,6 +41,7 @@ class InvoicePostingChangeNotifier(Protocol):
         request_id: str,
         reason: str,
         actor_origin: str,
+        created_by_user_id: str = "",
     ) -> None: ...
 
     def queue_reconciled(self, *, branch: str, updated_count: int) -> None: ...
@@ -56,6 +57,7 @@ class NoOpInvoicePostingChangeNotifier:
         request_id: str,
         reason: str,
         actor_origin: str,
+        created_by_user_id: str = "",
     ) -> None:
         return None
 
@@ -79,6 +81,7 @@ class SafeInvoicePostingChangeNotifier:
         request_id: str,
         reason: str,
         actor_origin: str,
+        created_by_user_id: str = "",
     ) -> None:
         self._call(
             self._inner.request_changed,
@@ -86,6 +89,7 @@ class SafeInvoicePostingChangeNotifier:
             request_id=request_id,
             reason=reason,
             actor_origin=actor_origin,
+            created_by_user_id=created_by_user_id,
         )
 
     def queue_reconciled(self, *, branch: str, updated_count: int) -> None:
@@ -185,4 +189,5 @@ def emit_request_changed(row: dict | None, *, reason: str, actor_origin: str) ->
         request_id=request_id,
         reason=reason,
         actor_origin=actor_origin,
+        created_by_user_id=str((row or {}).get("created_by_user_id") or ""),
     )

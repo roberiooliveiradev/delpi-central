@@ -16,7 +16,7 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 | Fase | Nome | Status | SHA | Data | Evidência |
 |---|---|---|---|---|---|
 | W1.1 | Ajuste documental (D-W5, quadro) | DONE | `68e7c28512` | 2026-11-13 | D-W5, ADR-002 adendo, mapa de reuso PLANNED |
-| W2 | BFF — hub, rota, emissão (DEV) | IN_PROGRESS | `b0b4dae957` | 2026-11-13 | REWORK de autorização (W2R). Latência e F2 314 PASS continuam. O socket estava mais largo que o GET /requests |
+| W2 | BFF — hub, rota, emissão (DEV) | DONE | `b0b4dae957` | 2026-11-13 | W2R: assinatura e entrega usam os predicados de leitura. Paridade P0–P12 PASS. F2 314 PASS. Smoke: view.filial-01 não assina a filial 01; create só recebe a própria solicitação |
 | W2b | plugin-ui — cliente, hook, indicador, aviso | DONE | `df1dd06cc4` | 2026-11-13 | cliente aditivo; hook, indicador e aviso. Suíte do pacote no registro |
 | W3 | Gateway DEV (+ conf HML commitada) | DONE | `57195a9e91` | 2026-11-13 | Handshake 101 pelo gateway com token real; access log da location com `<redacted>`; valor do token ausente nos logs do gateway e da BFF |
 | W4.1 | MFE — Fila | TODO | | | |
@@ -507,6 +507,17 @@ W2 volta a IN_PROGRESS.
 
 EXECUTION_DRIFT de autorização (2026-11-13, HEAD `6fde3bb294`). Fato: quem tem só `view.filial-01` recebe 403 em `GET /requests` (`use_cases.py:466-467` exige `can_view_all` ou `create`) e, mesmo assim, assinava `lnf:branch:01` e recebia eventos. A §2.7 antiga tratava a sala de filial como `branch_view_allowed`, predicado mais largo que a leitura HTTP. Correção planejada: o socket chama os mesmos predicados de list, detail e unmapped; a entrega filtra por posse quando a listagem filtra; o metadado de posse não entra no frame. O HTTP não muda. ADR-002: o socket nunca é mais largo que o HTTP.
 
-Os 49 registros medidos na W0 continuam ausentes. `TRUNCATE` não incrementa `n_tup_del` e o log padrão do Postgres não o registra. A causa fica INCONCLUSIVE. A varredura de scripts que apagam o schema entra no registro da W2R.
+Os 49 registros medidos na W0 continuam ausentes. `TRUNCATE` não incrementa `n_tup_del` e o log padrão do Postgres não o registra. A causa fica INCONCLUSIVE.
+
+Varredura de apagamento do schema `lancamento_notas_fiscais` (sem alterar os arquivos):
+
+| Ocorrência | Quem executa | Ambiente | Trava |
+|---|---|---|---|
+| `api-delpi/scripts/run_plugins_migrations.py:205-224` `DROP SCHEMA CASCADE` e `pg_terminate_backend` de todas as outras sessões do banco | operador, `reset --plugin lancamento-notas-fiscais` | o `PLUGINS_DB_*` do processo | exige `--plugin` e `--confirm-drop-schema` (`:385-395`). Não há trava de host. RISCO |
+| `postgres_invoice_posting_repository.py:324-328` `DELETE` de uma solicitação | compensação de anexo que falhou (`received_invoice_attachment_service.py:370-388`) | o banco da API | uma linha, não o schema |
+| `migrations/lancamento_notas_fiscais/V014__canonical_series_match_key.sql:12` `DELETE` de vínculo duplicado | migration já aplicada | o banco em que o `up` rodou | checksum imutável; não roda de novo sem reset |
+| testes, fixtures, CI e Makefile | — | — | nenhum `TRUNCATE`/`DROP` do schema LNF |
+
+W2R fechada. `tests/test_lnf_realtime.py` e `tests/test_lnf_realtime_read_parity.py`: 35 passed. Suíte da BFF no container: 1184 passed, 278 skipped, 39 failed. O fail de `test_flag_off_does_not_mount_lnf_routes` lê `LNF_HOSTED_ENABLED=true` do ambiente de DEV. Os outros 38 fails são de corpus/CLARA, fora deste diff. F2: `pytest test_authz.py` 314 passed em 53.41s. Smoke pelo gateway: U1 `lnf-contract-p11` (create + view.filial-01) assina a filial 01 e não a 02. U1b `lnf-contract-p2` (só view.filial-01) recebe `forbidden_room` na filial 01. U2 `lnf-contract-p6` (process) recebe o create de outro dono (`lnf-dev-owner-2`) em −1 ms e o create do U1 em 0 ms. U1 não recebe o frame do outro dono. O frame não contém `created_by_user_id`.
 
 MFE em DEV. O compose de DEV passa `VITE_LNF_API_BASE` e `VITE_LNF_REALTIME_ENABLED` com os defaults atuais (base api-delpi, flag false). O `.env` local aponta a base para a BFF e liga a flag. A imagem publicada contém a base da BFF e nenhum `new WebSocket`. Gateway: `/apps/lancamento-notas-fiscais/assets/remoteEntry.js` e o index respondem 200. Fila pela BFF: U2 nas filiais 01 e 02 responde 200. U1 na filial 02 responde 403 `BRANCH_FORBIDDEN`. U1 na filial 01 responde 403 porque a listagem exige `can_view_all` ou `create` (`use_cases.py:466-467`); `view.filial-01` sozinha não lista. O código da W4 ainda não abre socket.

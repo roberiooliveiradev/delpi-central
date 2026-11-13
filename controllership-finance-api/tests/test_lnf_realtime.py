@@ -21,8 +21,12 @@ from controllership_finance_app.application.invoice_posting.change_notifier impo
     set_invoice_posting_change_notifier,
 )
 from controllership_finance_app.application.invoice_posting.permissions import (
+    LANCAMENTO_NOTAS_FISCAIS_CREATE,
+    LANCAMENTO_NOTAS_FISCAIS_PROCESS,
     LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS,
+    LANCAMENTO_NOTAS_FISCAIS_VIEW,
     LANCAMENTO_NOTAS_FISCAIS_VIEW_FILIAL_01,
+    LANCAMENTO_NOTAS_FISCAIS_VIEW_FILIAL_02,
 )
 from controllership_finance_app.application.invoice_posting.unmapped_supplier_product_service import (
     UnmappedSupplierProductRecorder,
@@ -219,13 +223,15 @@ def test_t6_t7_t9_t14_room_errors_keep_the_socket(ws_client) -> None:
 
     def lookup(request_id: str):
         if request_id == other:
-            return "02"
+            return {"branch_code": "02", "created_by_user_id": "other-user"}
         return None
 
-    with patch(f"{ROUTE}.lookup_request_branch", lookup):
+    with patch(f"{ROUTE}.lookup_request_row", lookup):
         with _connect(
             ws_client, TOKEN, [LANCAMENTO_NOTAS_FISCAIS_VIEW_FILIAL_01]
         ) as ws:
+            ws.send_json({"type": "subscribe", "room": "lnf:branch:01"})
+            assert ws.receive_json()["code"] == "forbidden_room"
             ws.send_json({"type": "subscribe", "room": "lnf:branch:02"})
             denied = ws.receive_json()
             assert denied == {
@@ -246,9 +252,7 @@ def test_t6_t7_t9_t14_room_errors_keep_the_socket(ws_client) -> None:
 def test_t8_branch_02_event_does_not_reach_filial_01_socket(ws_client) -> None:
     hub = get_invoice_posting_realtime_hub()
     assert hub is not None
-    with _connect(
-        ws_client, TOKEN, [LANCAMENTO_NOTAS_FISCAIS_VIEW_FILIAL_01]
-    ) as ws:
+    with _connect(ws_client, TOKEN, [LANCAMENTO_NOTAS_FISCAIS_VIEW]) as ws:
         ws.send_json({"type": "subscribe", "room": "lnf:branch:01"})
         assert ws.receive_json()["type"] == "subscribed"
         hub.request_changed(
@@ -269,6 +273,7 @@ def test_t8_branch_02_event_does_not_reach_filial_01_socket(ws_client) -> None:
         assert event["requestId"] == own_id
         assert event["type"] == "lnf.request.changed"
         assert "supplier" not in event
+        assert "created_by_user_id" not in event
 
 
 def test_t13_closes_1000_at_exp_plus_grace(ws_client) -> None:
@@ -293,9 +298,7 @@ def test_t13_closes_1000_at_exp_plus_grace(ws_client) -> None:
 def test_t16_sync_emit_reaches_the_socket(ws_client) -> None:
     hub = get_invoice_posting_realtime_hub()
     assert hub is not None
-    with _connect(
-        ws_client, TOKEN, [LANCAMENTO_NOTAS_FISCAIS_VIEW_FILIAL_01]
-    ) as ws:
+    with _connect(ws_client, TOKEN, [LANCAMENTO_NOTAS_FISCAIS_VIEW]) as ws:
         ws.send_json({"type": "subscribe", "room": "lnf:branch:01"})
         assert ws.receive_json()["type"] == "subscribed"
         hub.request_changed(
@@ -303,6 +306,7 @@ def test_t16_sync_emit_reaches_the_socket(ws_client) -> None:
             request_id="11111111-1111-1111-1111-111111111111",
             reason="created",
             actor_origin="user",
+            created_by_user_id="someone-else",
         )
         event = ws.receive_json()
         assert event["reason"] == "created"
@@ -527,6 +531,63 @@ def test_t10_unmapped_emits_only_when_insert_persists(recorded) -> None:
             request_id=str(uuid4()),
         )
     assert recorded.events == [("unmapped", {})]
+
+
+def test_create_owner_does_not_receive_another_persons_event(ws_client) -> None:
+    hub = get_invoice_posting_realtime_hub()
+    assert hub is not None
+    own = str(uuid4())
+    other = str(uuid4())
+    with _connect(
+        ws_client,
+        TOKEN,
+        [LANCAMENTO_NOTAS_FISCAIS_CREATE, LANCAMENTO_NOTAS_FISCAIS_VIEW_FILIAL_01],
+    ) as ws:
+        ws.send_json({"type": "subscribe", "room": "lnf:branch:01"})
+        assert ws.receive_json()["type"] == "subscribed"
+        ws.send_json({"type": "subscribe", "room": "lnf:branch:02"})
+        assert ws.receive_json()["code"] == "forbidden_room"
+        hub.request_changed(
+            branch="01",
+            request_id=other,
+            reason="created",
+            actor_origin="user",
+            created_by_user_id="other-user",
+        )
+        ws.send_text("ping")
+        assert ws.receive_json() == {"type": "pong"}
+        hub.request_changed(
+            branch="01",
+            request_id=own,
+            reason="created",
+            actor_origin="user",
+            created_by_user_id="user-1",
+        )
+        event = ws.receive_json()
+        assert event["requestId"] == own
+        assert "created_by_user_id" not in event
+        hub.queue_reconciled(branch="01", updated_count=2)
+        ws.send_text("ping")
+        assert ws.receive_json() == {"type": "pong"}
+
+
+def test_process_receives_branch_events_of_any_owner(ws_client) -> None:
+    hub = get_invoice_posting_realtime_hub()
+    assert hub is not None
+    request_id = str(uuid4())
+    with _connect(ws_client, TOKEN, [LANCAMENTO_NOTAS_FISCAIS_PROCESS]) as ws:
+        ws.send_json({"type": "subscribe", "room": "lnf:branch:02"})
+        assert ws.receive_json()["type"] == "subscribed"
+        hub.request_changed(
+            branch="02",
+            request_id=request_id,
+            reason="updated",
+            actor_origin="user",
+            created_by_user_id="other-user",
+        )
+        event = ws.receive_json()
+        assert event["requestId"] == request_id
+        assert event["branch"] == "02"
 
 
 def test_review_unmapped_cannot_subscribe_a_branch(ws_client) -> None:

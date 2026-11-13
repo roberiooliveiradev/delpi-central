@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable
 from uuid import uuid4
@@ -19,6 +20,9 @@ from controllership_finance_app.application.invoice_posting.change_notifier impo
     REQUEST_REASONS,
     UNMAPPED_CHANGED,
 )
+from controllership_finance_app.application.invoice_posting.use_cases import (
+    subscriber_sees_event,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +31,16 @@ IDLE_SECONDS = 75.0
 UNMAPPED_ROOM = "lnf:unmapped-products"
 
 ClientTextHandler = Callable[[WebSocket, str], Awaitable[None]]
+
+
+@dataclass(frozen=True)
+class RealtimeViewer:
+    """Snapshot de leitura tomado no connect. Não vai para o frame."""
+
+    user_id: str
+    can_view_all: bool
+    has_create: bool
+    can_list_unmapped: bool
 
 
 def branch_room(branch: str) -> str:
@@ -52,9 +66,12 @@ class InMemoryInvoicePostingRealtimeHub:
     def __init__(self) -> None:
         self._rooms: dict[str, set[WebSocket]] = {}
         self._socket_rooms: dict[WebSocket, set[str]] = {}
+        self._viewers: dict[WebSocket, RealtimeViewer] = {}
         self._lock = asyncio.Lock()
         self._loop: asyncio.AbstractEventLoop | None = None
-        self._queue: asyncio.Queue[tuple[tuple[str, ...], dict[str, Any]]] | None = None
+        self._queue: asyncio.Queue[
+            tuple[tuple[str, ...], dict[str, Any], dict[str, str]]
+        ] | None = None
         self._worker_task: asyncio.Task | None = None
         self._sleep: Callable[[float], Awaitable[None]] = asyncio.sleep
 
@@ -69,6 +86,7 @@ class InMemoryInvoicePostingRealtimeHub:
         request_id: str,
         reason: str,
         actor_origin: str,
+        created_by_user_id: str = "",
     ) -> None:
         if reason not in REQUEST_REASONS or actor_origin not in ACTOR_ORIGINS:
             return
@@ -87,6 +105,7 @@ class InMemoryInvoicePostingRealtimeHub:
                     "actorOrigin": actor_origin,
                 },
             ),
+            {"kind": "request", "created_by_user_id": str(created_by_user_id or "")},
         )
 
     def queue_reconciled(self, *, branch: str, updated_count: int) -> None:
@@ -101,15 +120,22 @@ class InMemoryInvoicePostingRealtimeHub:
                 branch=clean_branch,
                 extra={"updatedCount": count},
             ),
+            {"kind": "queue", "created_by_user_id": ""},
         )
 
     def unmapped_products_changed(self) -> None:
         self.schedule_broadcast(
             [UNMAPPED_ROOM],
             _envelope(UNMAPPED_CHANGED, branch=None, extra={}),
+            {"kind": "unmapped", "created_by_user_id": ""},
         )
 
-    def schedule_broadcast(self, room_keys: list[str], payload: dict[str, Any]) -> None:
+    def schedule_broadcast(
+        self,
+        room_keys: list[str],
+        payload: dict[str, Any],
+        audience: dict[str, str] | None = None,
+    ) -> None:
         if self._loop is None or self._queue is None:
             return
         cleaned: list[str] = []
@@ -124,7 +150,8 @@ class InMemoryInvoicePostingRealtimeHub:
             return
         try:
             self._loop.call_soon_threadsafe(
-                self._queue.put_nowait, (tuple(cleaned), payload)
+                self._queue.put_nowait,
+                (tuple(cleaned), payload, dict(audience or {})),
             )
         except RuntimeError:
             logger.warning("lnf_realtime_loop_closed")
@@ -133,9 +160,9 @@ class InMemoryInvoicePostingRealtimeHub:
         if self._queue is None:
             return
         while True:
-            room_keys, payload = await self._queue.get()
+            room_keys, payload, audience = await self._queue.get()
             try:
-                await self.broadcast_now(room_keys, payload)
+                await self.broadcast_now(room_keys, payload, audience)
             except Exception:  # noqa: BLE001
                 logger.warning("lnf_realtime_broadcast_failed")
 
@@ -145,6 +172,7 @@ class InMemoryInvoicePostingRealtimeHub:
         *,
         on_text: ClientTextHandler | None = None,
         close_after_seconds: float | None = None,
+        viewer: RealtimeViewer | None = None,
     ) -> None:
         loop = asyncio.get_running_loop()
         if self._loop is not loop:
@@ -154,6 +182,8 @@ class InMemoryInvoicePostingRealtimeHub:
         await websocket.accept()
         async with self._lock:
             self._socket_rooms[websocket] = set()
+            if viewer is not None:
+                self._viewers[websocket] = viewer
         expiry_task: asyncio.Task | None = None
         if close_after_seconds is not None:
             expiry_task = asyncio.create_task(
@@ -218,6 +248,7 @@ class InMemoryInvoicePostingRealtimeHub:
 
     async def disconnect(self, websocket: WebSocket) -> None:
         async with self._lock:
+            self._viewers.pop(websocket, None)
             rooms = self._socket_rooms.pop(websocket, set())
             for key in rooms:
                 bucket = self._rooms.get(key)
@@ -227,7 +258,10 @@ class InMemoryInvoicePostingRealtimeHub:
                         del self._rooms[key]
 
     async def broadcast_now(
-        self, room_keys: tuple[str, ...] | list[str], payload: dict[str, Any]
+        self,
+        room_keys: tuple[str, ...] | list[str],
+        payload: dict[str, Any],
+        audience: dict[str, str] | None = None,
     ) -> None:
         async with self._lock:
             targets: list[WebSocket] = []
@@ -237,10 +271,27 @@ class InMemoryInvoicePostingRealtimeHub:
                     marker = id(socket)
                     if marker in seen:
                         continue
+                    if not self._delivers(socket, audience):
+                        continue
                     seen.add(marker)
                     targets.append(socket)
         for socket in targets:
             await self._send(socket, payload)
+
+    def _delivers(self, socket: WebSocket, audience: dict[str, str] | None) -> bool:
+        if not audience:
+            return True
+        viewer = self._viewers.get(socket)
+        if viewer is None:
+            return False
+        return subscriber_sees_event(
+            can_view_all=viewer.can_view_all,
+            has_create=viewer.has_create,
+            user_id=viewer.user_id,
+            can_list_unmapped=viewer.can_list_unmapped,
+            kind=str(audience.get("kind") or ""),
+            created_by_user_id=str(audience.get("created_by_user_id") or ""),
+        )
 
     async def _send(self, websocket: WebSocket, payload: dict[str, Any]) -> None:
         try:

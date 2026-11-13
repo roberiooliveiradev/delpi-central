@@ -105,6 +105,51 @@ class Actor:
         )
 
 
+def actor_can_list_requests(actor: Actor) -> bool:
+    """Mesma condição de GET /requests: ver a filial inteira ou criar."""
+    return bool(actor.can_view_all or actor.has_create)
+
+
+def list_owner_user_id(actor: Actor) -> str | None:
+    """None lista a filial. Caso contrário, só as solicitações deste usuário."""
+    if actor.can_view_all:
+        return None
+    return actor.user_id
+
+
+def actor_can_read_request(actor: Actor, *, created_by_user_id: str | None) -> bool:
+    """Mesma condição de GET /requests/{id}, antes do gate de filial."""
+    if actor.can_view_all:
+        return True
+    owner = str(created_by_user_id or "").strip()
+    return bool(actor.has_create and owner and owner == actor.user_id)
+
+
+def can_list_unmapped_products(*, has_review_permission: bool) -> bool:
+    """Mesma permission de GET /unmapped-products."""
+    return bool(has_review_permission)
+
+
+def subscriber_sees_event(
+    *,
+    can_view_all: bool,
+    has_create: bool,
+    user_id: str,
+    can_list_unmapped: bool,
+    kind: str,
+    created_by_user_id: str,
+) -> bool:
+    """Filtro de entrega. Não serializa o dono no frame."""
+    if kind == "unmapped":
+        return can_list_unmapped
+    if kind == "queue":
+        return can_view_all
+    if can_view_all:
+        return True
+    owner = str(created_by_user_id or "").strip()
+    return bool(has_create and owner and owner == user_id)
+
+
 def _field_values_equal(old: Any, new: Any) -> bool:
     """Compara valor persistido (já serializado na leitura) com valor tipado do update."""
     if old is None and new is None:
@@ -463,9 +508,9 @@ class ListInvoicePostingRequestsUseCase:
         page: int,
         page_size: int,
     ) -> dict[str, Any]:
-        if not actor.can_view_all and not actor.has_create:
+        if not actor_can_list_requests(actor):
             raise InvoicePostingForbiddenError("Sem permissão para consultar solicitações.")
-        owner_filter = None if actor.can_view_all else actor.user_id
+        owner_filter = list_owner_user_id(actor)
         return self._requests.list_requests(
             filters=filters,
             created_by_user_id=owner_filter,
@@ -482,8 +527,9 @@ class GetInvoicePostingRequestUseCase:
         request = self._requests.get_request(request_id)
         if request is None:
             raise InvoicePostingNotFoundError("Solicitação não encontrada.")
-        is_owner = request.get("created_by_user_id") == actor.user_id
-        if not actor.can_view_all and not (actor.has_create and is_owner):
+        if not actor_can_read_request(
+            actor, created_by_user_id=request.get("created_by_user_id")
+        ):
             raise InvoicePostingForbiddenError("Sem permissão para consultar esta solicitação.")
         load_danfe = getattr(self._requests, "get_danfe_attachment", None)
         danfe = load_danfe(request_id) if callable(load_danfe) else None
@@ -520,8 +566,9 @@ class ListRequestOpenPurchaseOrdersUseCase:
         request = self._requests.get_request(request_id)
         if request is None:
             raise InvoicePostingNotFoundError("Solicitação não encontrada.")
-        is_owner = request.get("created_by_user_id") == actor.user_id
-        if not actor.can_view_all and not (actor.has_create and is_owner):
+        if not actor_can_read_request(
+            actor, created_by_user_id=request.get("created_by_user_id")
+        ):
             raise InvoicePostingForbiddenError(
                 "Sem permissão para consultar pedidos desta solicitação."
             )
@@ -1480,6 +1527,7 @@ def _emit_reconciled(items: list[dict[str, Any]], posted: int) -> None:
             request_id=request_id,
             reason="reconciled",
             actor_origin="system",
+            created_by_user_id=str(item.get("created_by_user_id") or ""),
         )
         counts[branch] = counts.get(branch, 0) + 1
     for branch, count in counts.items():
@@ -1568,6 +1616,7 @@ class RunInvoicePostingReconciliationUseCase:
                 {
                     "request_id": decision.request["id"],
                     "branch_code": decision.request.get("branch_code"),
+                    "created_by_user_id": decision.request.get("created_by_user_id"),
                     "from_status": decision.request.get("status"),
                     "sf1_recno": decision.sf1_row.get("sf1_recno"),
                     "erp_entry_date": parse_erp_entry_date(
