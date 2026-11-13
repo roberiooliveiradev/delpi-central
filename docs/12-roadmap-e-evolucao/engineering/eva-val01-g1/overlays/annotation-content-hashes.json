@@ -1,9 +1,9 @@
 {
-  "schema": "eva_val01_g1_annotation_hashes.v1",
-  "files": {
-    "90264135_p10.json": "98d39af4d1f6c3b84c03069bca117fa9da750aa85d66ce1b200170ba9e26333c",
-    "90264135_p12.json": "73a27e2a2ebd76cacaf6b1aca21b7608b8e5f35f858ff1571871d53a23cf3551",
-    "90264135_p13.json": "31b557512109e0695fc93d41bd1f2bc7d335368b207cd3b2c71f86618f8181aa"
-  },
-  "validation": "scripts/validate_g1_annotations.py SUMMARY PASS"
+ "schema": "eva_val01_g1_annotation_hashes.v1",
+ "files": {
+  "90264135_p10.json": "98d39af4d1f6c3b84c03069bca117fa9da750aa85d66ce1b200170ba9e26333c",
+  "90264135_p12.json": "73a27e2a2ebd76cacaf6b1aca21b7608b8e5f35f858ff1571871d53a23cf3551",
+  "90264135_p13.json": "9743ad486c7eb2560bd03f8a0ccdccd360f2c874594ad74ef9da15096654c995"
+ },
+ "validation": "scripts/validate_g1_annotations.py SUMMARY PASS"
 }

@@ -3229,3 +3229,49 @@ fallback opencv não disparado. Rollback disponível, não executado.
 **Runtime:** job histórico `aj-547c28cde3774672` indisponível (`job_not_found` na sessão anterior); novo `aj-2f9438f544654c76` sem saída recuperada por `Transport closed`. Comparação com resumo §83 é histórica; saída atual `INCONCLUSIVE / NOT_VERIFIABLE`. Nenhuma causa-raiz presumida.
 
 **Status antes→depois:** revisão focal com problemas → aceite parcial e handoff documental para decisão; JSON/overlay/código/runtime inalterados. **RQ/AC:** registrar escopo/evidências/limites/decisões e verificar publicação remota dos documentos; testes runtime/evals `TEST_NOT_RUN`. **Responsável pela próxima decisão:** chat autor do prompt / Coordination com owner técnico aplicável. **Próxima ação:** decidir correção de anotação/geometria e recuperação de evidência; nenhum prompt de implementação emitido. `VAL01_COMPLETED=false`. Sem novo owner/source/authority, sem deploy aplicável.
+
+## 84. Correção G1 p13 (AQ/AR/AS → 50225749) e diagnóstico de jobs — 2026-11-13
+
+**TASK_ID:** `EVA-VAL01-P13-G1-CORRECTION-REAL-PDF-PRODUCTION`
+
+**Correção semântica (aceite parcial do responsável técnico):**
+AQ/AR/AS adjudicadas ao conjunto `50225749`
+(`CA0,75AZUL-05000/11/04-3800-9200`), `review_status=APPROVED`,
+`approval_ref` = relatório de retorno + Issue #131. IDs antigos
+`…:UNKNOWN:{item}` preservados em `superseded_occurrence_id`;
+placeholder `parent:UNKNOWN_SUBSET` marcado `superseded`.
+AT incluído como contexto geométrico `DRAFT` — **não homologado**.
+`annotation_status=DRAFT`, `gt_approval_status=OWNER_BLOCKED`
+inalterados.
+
+**Correção geométrica (medida no render dpi200, não inferida):**
+grade real da tabela era deslocada — colunas reais
+`[66,170,542,600,660,804,1758]` e linhas medidas (término y1604,
+linha AT incluída); região `[542,970,1758,1578]` → `[66,970,1758,1604]`;
+célula `50225749` rowspan=4 (AQ–AT) fundida confirmada sem
+divisórias internas. Todos os bboxes recalculados da grade real;
+validador `SUMMARY PASS` (3 arquivos). Overlay corrigido conferido
+visualmente sobre o PDF — célula alinhada, AT no contexto sem
+promoção, zona D/E/F fora da tabela.
+
+**Diagnóstico dos jobs (independente da qualidade EVA):**
+- `aj-547c28cde3774672` → `job_not_found` = **evicção TTL por
+  contrato** (`JOB_TTL_S=3600`: resultado consultável por 1h após
+  conclusão). Job havia completado; resultado real preservado.
+- `aj-2f9438f544654c76` → `Transport closed` = erro de transporte
+  do cliente (queda de conexão/sessão), **não prova falha de
+  processamento**; estado terminal não recuperável —
+  `INCONCLUSIVE` declarado.
+
+**Evidência real da EVA (recuperada, não reexecutada):**
+resultado terminal do job prod `aj-547c28cde3774672`
+(PDF sha `af47dd4c…`, 13/13): AQ|2|10010021, AR|2|10080438,
+AS|2|10081792 → `50225749` `IDENTIFIED` `rowspan_anchor` —
+**3/3 MATCH** com o aceite visual. EVA já interpreta corretamente;
+`RUNTIME_DEPLOY=NOT_REQUIRED` (nenhum rebuild executado).
+
+**Gates:** `G1_SEMANTIC_CORRECTION=PASS`,
+`G1_GEOMETRY_CORRECTION=PASS`, `OVERLAY_VISUAL_GATE=PASS`,
+`JOB_DIAGNOSIS=PASS`, `EVA_REAL_PDF_GATE=PASS`,
+`RUNTIME_CHANGE_REQUIRED=NO`, `PRODUCTION_CHANGED=NO`,
+`QUALITY_HOMOLOGATION=PARTIAL`, `VAL01_COMPLETED=false`.

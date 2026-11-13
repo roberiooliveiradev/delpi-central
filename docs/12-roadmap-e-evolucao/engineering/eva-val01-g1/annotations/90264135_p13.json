@@ -3,8 +3,8 @@
   "annotation_status": "DRAFT",
   "gt_approval_status": "OWNER_BLOCKED",
   "annotator": "cursor-agent",
-  "reviewer": null,
-  "review_date": null,
+  "reviewer": "owner-review (rober) via prompt session 2026-11-13",
+  "review_date": "2026-11-13",
   "document_id": "diag:90264135",
   "product_code": "90264135",
   "pdf_sha256": "af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3",
@@ -37,10 +37,10 @@
       "region_id": "90264135:p13:component_table",
       "region_type": "component_table",
       "bounding_box_px": [
-        542,
+        66,
         970,
         1758,
-        1578
+        1604
       ],
       "review_status": "DRAFT"
     }
@@ -51,51 +51,52 @@
       "page": 13,
       "region_type": "component_table",
       "table_bounding_box_px": [
-        542,
+        66,
         970,
         1758,
-        1578
+        1604
       ],
       "coordinate_system": "pixels_top_left",
       "render_dpi": 200,
-      "row_count": 19,
+      "row_count": 20,
       "column_count": 6,
       "row_boundaries": [
         970,
         1002,
         1034,
         1066,
-        1098,
-        1130,
-        1162,
-        1194,
-        1226,
-        1258,
-        1290,
-        1322,
-        1354,
-        1386,
-        1418,
-        1450,
-        1482,
-        1514,
-        1546,
-        1578
+        1097,
+        1128,
+        1160,
+        1192,
+        1224,
+        1255,
+        1287,
+        1319,
+        1350,
+        1382,
+        1414,
+        1446,
+        1477,
+        1508,
+        1540,
+        1572,
+        1604
       ],
       "column_boundaries": [
+        66,
+        170,
         542,
         600,
         660,
-        720,
         804,
-        960,
         1758
       ],
-      "annotation_coverage": "COMPLETE_SELECTED_REGION",
-      "expected_row_count": 19,
-      "annotated_row_count": 19,
-      "unannotated_row_ranges": "None within selected region; region ends after AS",
-      "coverage_limitations": "Selected region = visible component rows A1–AS in lower table. Parent of AQ/AR/AS left UNKNOWN (not invented).",
+      "annotation_coverage": "FULL_TABLE",
+      "expected_row_count": 20,
+      "annotated_row_count": 20,
+      "unannotated_row_ranges": [],
+      "coverage_limitations": "Full table geometry measured from dpi200 render; AQ/AR/AS approved to set 50225749; AT annotated as DRAFT geometric context only (not adjudicated)",
       "cells": [
         {
           "cell_id": "90264135:p13:t_main:r0:c0",
@@ -104,9 +105,9 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            542,
+            66,
             970,
-            600,
+            170,
             1002
           ],
           "is_empty": false,
@@ -127,9 +128,9 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            600,
+            170,
             970,
-            660,
+            542,
             1002
           ],
           "is_empty": false,
@@ -150,9 +151,9 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
+            542,
             970,
-            720,
+            600,
             1002
           ],
           "is_empty": false,
@@ -173,9 +174,9 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
+            600,
             970,
-            804,
+            660,
             1002
           ],
           "is_empty": false,
@@ -196,9 +197,9 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            804,
+            660,
             970,
-            960,
+            804,
             1002
           ],
           "is_empty": false,
@@ -219,7 +220,7 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
+            804,
             970,
             1758,
             1002
@@ -242,10 +243,10 @@
           "rowspan": 15,
           "colspan": 1,
           "bounding_box_px": [
-            542,
+            66,
             1002,
-            600,
-            1482
+            170,
+            1477
           ],
           "is_empty": false,
           "is_merged": true,
@@ -265,10 +266,10 @@
           "rowspan": 15,
           "colspan": 1,
           "bounding_box_px": [
-            600,
+            170,
             1002,
-            660,
-            1482
+            542,
+            1477
           ],
           "is_empty": false,
           "is_merged": true,
@@ -288,9 +289,9 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
+            542,
             1002,
-            720,
+            600,
             1034
           ],
           "is_empty": false,
@@ -311,9 +312,9 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
+            600,
             1002,
-            804,
+            660,
             1034
           ],
           "is_empty": false,
@@ -334,9 +335,9 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            804,
+            660,
             1002,
-            960,
+            804,
             1034
           ],
           "is_empty": false,
@@ -357,7 +358,7 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
+            804,
             1002,
             1758,
             1034
@@ -380,9 +381,9 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
+            542,
             1034,
-            720,
+            600,
             1066
           ],
           "is_empty": false,
@@ -403,9 +404,9 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
+            600,
             1034,
-            804,
+            660,
             1066
           ],
           "is_empty": false,
@@ -426,9 +427,9 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            804,
+            660,
             1034,
-            960,
+            804,
             1066
           ],
           "is_empty": false,
@@ -449,7 +450,7 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
+            804,
             1034,
             1758,
             1066
@@ -472,10 +473,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
+            542,
             1066,
-            720,
-            1098
+            600,
+            1097
           ],
           "is_empty": false,
           "is_merged": false,
@@ -495,10 +496,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
+            600,
             1066,
-            804,
-            1098
+            660,
+            1097
           ],
           "is_empty": false,
           "is_merged": false,
@@ -518,10 +519,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            804,
+            660,
             1066,
-            960,
-            1098
+            804,
+            1097
           ],
           "is_empty": false,
           "is_merged": false,
@@ -541,10 +542,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
+            804,
             1066,
             1758,
-            1098
+            1097
           ],
           "is_empty": false,
           "is_merged": false,
@@ -564,10 +565,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
-            1098,
-            720,
-            1130
+            542,
+            1097,
+            600,
+            1128
           ],
           "is_empty": false,
           "is_merged": false,
@@ -587,10 +588,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
-            1098,
-            804,
-            1130
+            600,
+            1097,
+            660,
+            1128
           ],
           "is_empty": false,
           "is_merged": false,
@@ -610,10 +611,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
+            660,
+            1097,
             804,
-            1098,
-            960,
-            1130
+            1128
           ],
           "is_empty": false,
           "is_merged": false,
@@ -633,10 +634,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
-            1098,
+            804,
+            1097,
             1758,
-            1130
+            1128
           ],
           "is_empty": false,
           "is_merged": false,
@@ -656,10 +657,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
-            1130,
-            720,
-            1162
+            542,
+            1128,
+            600,
+            1160
           ],
           "is_empty": false,
           "is_merged": false,
@@ -679,10 +680,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
-            1130,
-            804,
-            1162
+            600,
+            1128,
+            660,
+            1160
           ],
           "is_empty": false,
           "is_merged": false,
@@ -702,10 +703,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
+            660,
+            1128,
             804,
-            1130,
-            960,
-            1162
+            1160
           ],
           "is_empty": false,
           "is_merged": false,
@@ -725,10 +726,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
-            1130,
+            804,
+            1128,
             1758,
-            1162
+            1160
           ],
           "is_empty": false,
           "is_merged": false,
@@ -748,10 +749,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
-            1162,
-            720,
-            1194
+            542,
+            1160,
+            600,
+            1192
           ],
           "is_empty": false,
           "is_merged": false,
@@ -771,10 +772,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
-            1162,
-            804,
-            1194
+            600,
+            1160,
+            660,
+            1192
           ],
           "is_empty": false,
           "is_merged": false,
@@ -794,10 +795,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
+            660,
+            1160,
             804,
-            1162,
-            960,
-            1194
+            1192
           ],
           "is_empty": false,
           "is_merged": false,
@@ -817,10 +818,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
-            1162,
+            804,
+            1160,
             1758,
-            1194
+            1192
           ],
           "is_empty": false,
           "is_merged": false,
@@ -840,10 +841,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
-            1194,
-            720,
-            1226
+            542,
+            1192,
+            600,
+            1224
           ],
           "is_empty": false,
           "is_merged": false,
@@ -863,10 +864,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
-            1194,
-            804,
-            1226
+            600,
+            1192,
+            660,
+            1224
           ],
           "is_empty": false,
           "is_merged": false,
@@ -886,10 +887,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
+            660,
+            1192,
             804,
-            1194,
-            960,
-            1226
+            1224
           ],
           "is_empty": false,
           "is_merged": false,
@@ -909,10 +910,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
-            1194,
+            804,
+            1192,
             1758,
-            1226
+            1224
           ],
           "is_empty": false,
           "is_merged": false,
@@ -932,10 +933,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
-            1226,
-            720,
-            1258
+            542,
+            1224,
+            600,
+            1255
           ],
           "is_empty": false,
           "is_merged": false,
@@ -955,10 +956,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
-            1226,
-            804,
-            1258
+            600,
+            1224,
+            660,
+            1255
           ],
           "is_empty": false,
           "is_merged": false,
@@ -978,10 +979,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
+            660,
+            1224,
             804,
-            1226,
-            960,
-            1258
+            1255
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1001,10 +1002,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
-            1226,
+            804,
+            1224,
             1758,
-            1258
+            1255
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1024,10 +1025,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
-            1258,
-            720,
-            1290
+            542,
+            1255,
+            600,
+            1287
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1047,10 +1048,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
-            1258,
-            804,
-            1290
+            600,
+            1255,
+            660,
+            1287
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1070,10 +1071,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
+            660,
+            1255,
             804,
-            1258,
-            960,
-            1290
+            1287
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1093,10 +1094,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
-            1258,
+            804,
+            1255,
             1758,
-            1290
+            1287
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1116,10 +1117,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
-            1290,
-            720,
-            1322
+            542,
+            1287,
+            600,
+            1319
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1139,10 +1140,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
-            1290,
-            804,
-            1322
+            600,
+            1287,
+            660,
+            1319
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1162,10 +1163,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
+            660,
+            1287,
             804,
-            1290,
-            960,
-            1322
+            1319
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1185,10 +1186,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
-            1290,
+            804,
+            1287,
             1758,
-            1322
+            1319
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1208,10 +1209,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
-            1322,
-            720,
-            1354
+            542,
+            1319,
+            600,
+            1350
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1231,10 +1232,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
-            1322,
-            804,
-            1354
+            600,
+            1319,
+            660,
+            1350
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1254,10 +1255,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
+            660,
+            1319,
             804,
-            1322,
-            960,
-            1354
+            1350
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1277,10 +1278,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
-            1322,
+            804,
+            1319,
             1758,
-            1354
+            1350
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1300,10 +1301,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
-            1354,
-            720,
-            1386
+            542,
+            1350,
+            600,
+            1382
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1323,10 +1324,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
-            1354,
-            804,
-            1386
+            600,
+            1350,
+            660,
+            1382
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1346,10 +1347,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
+            660,
+            1350,
             804,
-            1354,
-            960,
-            1386
+            1382
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1369,10 +1370,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
-            1354,
+            804,
+            1350,
             1758,
-            1386
+            1382
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1392,10 +1393,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
-            1386,
-            720,
-            1418
+            542,
+            1382,
+            600,
+            1414
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1415,10 +1416,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
-            1386,
-            804,
-            1418
+            600,
+            1382,
+            660,
+            1414
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1438,10 +1439,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
+            660,
+            1382,
             804,
-            1386,
-            960,
-            1418
+            1414
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1461,10 +1462,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
-            1386,
+            804,
+            1382,
             1758,
-            1418
+            1414
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1484,10 +1485,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
-            1418,
-            720,
-            1450
+            542,
+            1414,
+            600,
+            1446
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1507,10 +1508,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
-            1418,
-            804,
-            1450
+            600,
+            1414,
+            660,
+            1446
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1530,10 +1531,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
+            660,
+            1414,
             804,
-            1418,
-            960,
-            1450
+            1446
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1553,10 +1554,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
-            1418,
+            804,
+            1414,
             1758,
-            1450
+            1446
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1576,10 +1577,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
-            1450,
-            720,
-            1482
+            542,
+            1446,
+            600,
+            1477
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1599,10 +1600,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
-            1450,
-            804,
-            1482
+            600,
+            1446,
+            660,
+            1477
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1622,10 +1623,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
+            660,
+            1446,
             804,
-            1450,
-            960,
-            1482
+            1477
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1645,10 +1646,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
-            1450,
+            804,
+            1446,
             1758,
-            1482
+            1477
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1665,43 +1666,49 @@
           "cell_id": "90264135:p13:t_main:r16:c0",
           "row_index": 16,
           "col_index": 0,
-          "rowspan": 1,
+          "rowspan": 4,
           "colspan": 1,
           "bounding_box_px": [
-            542,
-            1482,
-            600,
-            1514
+            66,
+            1477,
+            170,
+            1604
           ],
-          "is_empty": true,
-          "is_merged": false,
-          "text_lines": [],
-          "text_literal": "",
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "50225749"
+          ],
+          "text_literal": "50225749",
           "text_status": "CLEAR",
-          "role": "unknown",
+          "role": "set_code",
           "evidence_ref": "page13_dpi200_grid",
-          "review_status": "DRAFT"
+          "review_status": "APPROVED",
+          "notes": "Set code observed in PDF spanning rows AQ-AT; owner-approved for AQ/AR/AS relations (2026-11-13 review)"
         },
         {
           "cell_id": "90264135:p13:t_main:r16:c1",
           "row_index": 16,
           "col_index": 1,
-          "rowspan": 1,
+          "rowspan": 4,
           "colspan": 1,
           "bounding_box_px": [
-            600,
-            1482,
-            660,
-            1514
+            170,
+            1477,
+            542,
+            1604
           ],
-          "is_empty": true,
-          "is_merged": false,
-          "text_lines": [],
-          "text_literal": "",
+          "is_empty": false,
+          "is_merged": true,
+          "text_lines": [
+            "CA0,75AZUL-05000/11/04-3800-9200"
+          ],
+          "text_literal": "CA0,75AZUL-05000/11/04-3800-9200",
           "text_status": "CLEAR",
-          "role": "unknown",
+          "role": "set_description",
           "evidence_ref": "page13_dpi200_grid",
-          "review_status": "DRAFT"
+          "review_status": "APPROVED",
+          "notes": "Set description literal from PDF; spans rows AQ-AT"
         },
         {
           "cell_id": "90264135:p13:t_main:r16:c2",
@@ -1710,10 +1717,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
-            1482,
-            720,
-            1514
+            542,
+            1477,
+            600,
+            1508
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1733,10 +1740,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
-            1482,
-            804,
-            1514
+            600,
+            1477,
+            660,
+            1508
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1756,10 +1763,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
+            660,
+            1477,
             804,
-            1482,
-            960,
-            1514
+            1508
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1779,10 +1786,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
-            1482,
+            804,
+            1477,
             1758,
-            1514
+            1508
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1796,58 +1803,16 @@
           "review_status": "DRAFT"
         },
         {
-          "cell_id": "90264135:p13:t_main:r17:c0",
-          "row_index": 17,
-          "col_index": 0,
-          "rowspan": 1,
-          "colspan": 1,
-          "bounding_box_px": [
-            542,
-            1514,
-            600,
-            1546
-          ],
-          "is_empty": true,
-          "is_merged": false,
-          "text_lines": [],
-          "text_literal": "",
-          "text_status": "CLEAR",
-          "role": "unknown",
-          "evidence_ref": "page13_dpi200_grid",
-          "review_status": "DRAFT"
-        },
-        {
-          "cell_id": "90264135:p13:t_main:r17:c1",
-          "row_index": 17,
-          "col_index": 1,
-          "rowspan": 1,
-          "colspan": 1,
-          "bounding_box_px": [
-            600,
-            1514,
-            660,
-            1546
-          ],
-          "is_empty": true,
-          "is_merged": false,
-          "text_lines": [],
-          "text_literal": "",
-          "text_status": "CLEAR",
-          "role": "unknown",
-          "evidence_ref": "page13_dpi200_grid",
-          "review_status": "DRAFT"
-        },
-        {
           "cell_id": "90264135:p13:t_main:r17:c2",
           "row_index": 17,
           "col_index": 2,
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
-            1514,
-            720,
-            1546
+            542,
+            1508,
+            600,
+            1540
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1867,10 +1832,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
-            1514,
-            804,
-            1546
+            600,
+            1508,
+            660,
+            1540
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1890,10 +1855,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
+            660,
+            1508,
             804,
-            1514,
-            960,
-            1546
+            1540
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1913,10 +1878,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
-            1514,
+            804,
+            1508,
             1758,
-            1546
+            1540
           ],
           "is_empty": false,
           "is_merged": false,
@@ -1930,58 +1895,16 @@
           "review_status": "DRAFT"
         },
         {
-          "cell_id": "90264135:p13:t_main:r18:c0",
-          "row_index": 18,
-          "col_index": 0,
-          "rowspan": 1,
-          "colspan": 1,
-          "bounding_box_px": [
-            542,
-            1546,
-            600,
-            1578
-          ],
-          "is_empty": true,
-          "is_merged": false,
-          "text_lines": [],
-          "text_literal": "",
-          "text_status": "CLEAR",
-          "role": "unknown",
-          "evidence_ref": "page13_dpi200_grid",
-          "review_status": "DRAFT"
-        },
-        {
-          "cell_id": "90264135:p13:t_main:r18:c1",
-          "row_index": 18,
-          "col_index": 1,
-          "rowspan": 1,
-          "colspan": 1,
-          "bounding_box_px": [
-            600,
-            1546,
-            660,
-            1578
-          ],
-          "is_empty": true,
-          "is_merged": false,
-          "text_lines": [],
-          "text_literal": "",
-          "text_status": "CLEAR",
-          "role": "unknown",
-          "evidence_ref": "page13_dpi200_grid",
-          "review_status": "DRAFT"
-        },
-        {
           "cell_id": "90264135:p13:t_main:r18:c2",
           "row_index": 18,
           "col_index": 2,
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            660,
-            1546,
-            720,
-            1578
+            542,
+            1540,
+            600,
+            1572
           ],
           "is_empty": false,
           "is_merged": false,
@@ -2001,10 +1924,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            720,
-            1546,
-            804,
-            1578
+            600,
+            1540,
+            660,
+            1572
           ],
           "is_empty": false,
           "is_merged": false,
@@ -2024,10 +1947,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
+            660,
+            1540,
             804,
-            1546,
-            960,
-            1578
+            1572
           ],
           "is_empty": false,
           "is_merged": false,
@@ -2047,10 +1970,10 @@
           "rowspan": 1,
           "colspan": 1,
           "bounding_box_px": [
-            960,
-            1546,
+            804,
+            1540,
             1758,
-            1578
+            1572
           ],
           "is_empty": false,
           "is_merged": false,
@@ -2062,6 +1985,102 @@
           "role": "component_description",
           "evidence_ref": "page13_dpi200_grid",
           "review_status": "DRAFT"
+        },
+        {
+          "cell_id": "90264135:p13:t_main:r19:c2",
+          "row_index": 19,
+          "col_index": 2,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            542,
+            1572,
+            600,
+            1604
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "AT"
+          ],
+          "text_literal": "AT",
+          "text_status": "CLEAR",
+          "role": "item",
+          "evidence_ref": "page13_dpi200_grid",
+          "review_status": "DRAFT",
+          "notes": "Geometric context for set-cell extent; NOT adjudicated by owner"
+        },
+        {
+          "cell_id": "90264135:p13:t_main:r19:c3",
+          "row_index": 19,
+          "col_index": 3,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            600,
+            1572,
+            660,
+            1604
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "4"
+          ],
+          "text_literal": "4",
+          "text_status": "CLEAR",
+          "role": "quantity",
+          "evidence_ref": "page13_dpi200_grid",
+          "review_status": "DRAFT",
+          "notes": "Geometric context for set-cell extent; NOT adjudicated by owner"
+        },
+        {
+          "cell_id": "90264135:p13:t_main:r19:c4",
+          "row_index": 19,
+          "col_index": 4,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            660,
+            1572,
+            804,
+            1604
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "10110559"
+          ],
+          "text_literal": "10110559",
+          "text_status": "CLEAR",
+          "role": "component_code",
+          "evidence_ref": "page13_dpi200_grid",
+          "review_status": "DRAFT",
+          "notes": "Geometric context for set-cell extent; NOT adjudicated by owner"
+        },
+        {
+          "cell_id": "90264135:p13:t_main:r19:c5",
+          "row_index": 19,
+          "col_index": 5,
+          "rowspan": 1,
+          "colspan": 1,
+          "bounding_box_px": [
+            804,
+            1572,
+            1758,
+            1604
+          ],
+          "is_empty": false,
+          "is_merged": false,
+          "text_lines": [
+            "ETIQUETA TERMORETRATIL AMARELO LISO 3MMX0,6MM"
+          ],
+          "text_literal": "ETIQUETA TERMORETRATIL AMARELO LISO 3MMX0,6MM",
+          "text_status": "CLEAR",
+          "role": "component_description",
+          "evidence_ref": "page13_dpi200_grid",
+          "review_status": "DRAFT",
+          "notes": "Geometric context for set-cell extent; NOT adjudicated by owner"
         }
       ]
     }
@@ -2082,7 +2101,24 @@
     {
       "group_id": "90264135:p13:parent:UNKNOWN_SUBSET",
       "roles": {},
-      "notes": "Placeholder for AQ/AR/AS parent; owner to adjudicate"
+      "notes": "History preserved: placeholder used before owner adjudication; replaced by set:50225749 for AQ/AR/AS",
+      "status": "superseded",
+      "superseded_by": "90264135:p13:set:50225749"
+    },
+    {
+      "group_id": "90264135:p13:set:50225749",
+      "roles": {
+        "set_code": "50225749",
+        "set_description": "CA0,75AZUL-05000/11/04-3800-9200"
+      },
+      "rowspan_visual": 4,
+      "span_cells": [
+        "90264135:p13:t_main:r16:c0",
+        "90264135:p13:t_main:r16:c1"
+      ],
+      "review_status": "APPROVED",
+      "approval_ref": "EVA-VAL01-90264135-P13-RETURN-TO-PROMPT-CHAT-2026-11-13.md; Issue #131 comment 6858290055",
+      "notes": "Set cell spans AQ-AT; approval covers AQ/AR/AS relations only; AT not adjudicated"
     }
   ],
   "component_occurrences": [
@@ -2333,8 +2369,8 @@
       "text_status": "CLEAR"
     },
     {
-      "occurrence_id": "90264135:p13:UNKNOWN:AQ",
-      "parent_group_id": "90264135:p13:parent:UNKNOWN_SUBSET",
+      "occurrence_id": "90264135:p13:50225749:AQ",
+      "parent_group_id": "90264135:p13:set:50225749",
       "item": "AQ",
       "quantity": "2",
       "component_code": "10010021",
@@ -2347,11 +2383,14 @@
         "90264135:p13:t_main:r16:c5"
       ],
       "text_status": "CLEAR",
-      "notes": "Parent subset cell not asserted in this DRAFT; values from visual table only"
+      "notes": "Owner-approved association 2026-11-13",
+      "superseded_occurrence_id": "90264135:p13:UNKNOWN:AQ",
+      "review_status": "APPROVED",
+      "approval_ref": "EVA-VAL01-90264135-P13-RETURN-TO-PROMPT-CHAT-2026-11-13.md"
     },
     {
-      "occurrence_id": "90264135:p13:UNKNOWN:AR",
-      "parent_group_id": "90264135:p13:parent:UNKNOWN_SUBSET",
+      "occurrence_id": "90264135:p13:50225749:AR",
+      "parent_group_id": "90264135:p13:set:50225749",
       "item": "AR",
       "quantity": "2",
       "component_code": "10080438",
@@ -2364,11 +2403,14 @@
         "90264135:p13:t_main:r17:c5"
       ],
       "text_status": "CLEAR",
-      "notes": "Parent subset cell not asserted in this DRAFT; values from visual table only"
+      "notes": "Owner-approved association 2026-11-13",
+      "superseded_occurrence_id": "90264135:p13:UNKNOWN:AR",
+      "review_status": "APPROVED",
+      "approval_ref": "EVA-VAL01-90264135-P13-RETURN-TO-PROMPT-CHAT-2026-11-13.md"
     },
     {
-      "occurrence_id": "90264135:p13:UNKNOWN:AS",
-      "parent_group_id": "90264135:p13:parent:UNKNOWN_SUBSET",
+      "occurrence_id": "90264135:p13:50225749:AS",
+      "parent_group_id": "90264135:p13:set:50225749",
       "item": "AS",
       "quantity": "2",
       "component_code": "10081792",
@@ -2381,7 +2423,28 @@
         "90264135:p13:t_main:r18:c5"
       ],
       "text_status": "CLEAR",
-      "notes": "Parent subset cell not asserted in this DRAFT; values from visual table only"
+      "notes": "Owner-approved association 2026-11-13",
+      "superseded_occurrence_id": "90264135:p13:UNKNOWN:AS",
+      "review_status": "APPROVED",
+      "approval_ref": "EVA-VAL01-90264135-P13-RETURN-TO-PROMPT-CHAT-2026-11-13.md"
+    },
+    {
+      "occurrence_id": "90264135:p13:50225749:AT",
+      "parent_group_id": "90264135:p13:set:50225749",
+      "item": "AT",
+      "quantity": "4",
+      "component_code": "10110559",
+      "component_description": "ETIQUETA TERMORETRATIL AMARELO LISO 3MMX0,6MM",
+      "row_index": 19,
+      "cell_refs": [
+        "90264135:p13:t_main:r19:c2",
+        "90264135:p13:t_main:r19:c3",
+        "90264135:p13:t_main:r19:c4",
+        "90264135:p13:t_main:r19:c5"
+      ],
+      "text_status": "CLEAR",
+      "review_status": "DRAFT",
+      "notes": "Geometric context for merged set cell extent; NOT adjudicated by owner"
     }
   ],
   "structural_invariants": [
@@ -2413,8 +2476,8 @@
     {
       "id": "AMB-P13-02",
       "topic": "Parent of AQ/AR/AS",
-      "status": "PARTIAL",
-      "notes": "Rows annotated; parent subset UNKNOWN pending owner"
+      "status": "RESOLVED_PARTIAL",
+      "notes": "AQ/AR/AS approved to 50225749 by owner 2026-11-13; AT remains not adjudicated (DRAFT geometric context)"
     }
   ]
 }
