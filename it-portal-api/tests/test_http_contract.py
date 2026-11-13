@@ -8,6 +8,7 @@ EXPECTED_OPERATIONS = {
     ("get", "/health"): "get_it_portal_health",
     ("get", "/me/capabilities"): "get_it_portal_capabilities",
     ("get", "/dashboard"): "get_it_portal_dashboard",
+    ("get", "/dashboard/windows-services-health"): "get_it_windows_services_health",
     ("get", "/servers"): "list_it_servers",
     ("post", "/servers"): "create_it_server",
     ("get", "/servers/{server_id}"): "get_it_server",
