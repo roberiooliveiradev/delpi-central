@@ -1681,3 +1681,18 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-PROD-RUNTIME-PROFILE | OPEN_EXTERNAL — NOT MATERIAL | model-agnostic por decisão PO; contratos verificados preservados |
 | INT1-SEC01-API-DELPI | OPEN_EXTERNAL | task independente |
 | INT1-FINAL-DECISION | **SUBMITTED** | pacote Docs 317–322 + traces prod/dev → `COORDINATION_INT1_FINAL_INDEPENDENT_ACCEPTANCE_DECISION`; `INT1_CLOSED=NO` |
+
+### INT-1 independent final review — 2026-11-13 (Doc 323)
+
+| Residual | Status | Evidence / disposition |
+|---|---|---|
+| INT1-FINAL-DECISION | **ACCEPT / CLOSED** | Coordenação aceita INT-1 delimitada, L/A/O/R=PASS, Doc323; sem avanço de C3/T2 |
+| INT1-P2-PROD-ENUMERATION | **ACCEPTED_BOUNDED_PARTIAL / NOT_FULL_ENUMERATION_PROVEN** | Prod `q:"transformação"` `total=1` GROUNDED, cobertura parcial honesta; Doc314 §8 aceita residual, não declarar enumeração integral |
+| INT1-PROD-RUNTIME-PROFILE | **OPEN_EXTERNAL / NON_BLOCKING** | Kimi ativo, eval Qwen isolado; contratos model-agnostic aceitos, sem troca de modelo |
+| INT1-ATTEMPT-STATUS-CONFLATION | **OPEN_MINOR / NON_BLOCKING** | Observability, Outcome override/limitations presentes |
+| INT1-MCP-HEAVY-VIEW-TIMEOUT | **OPEN_MINOR / NON_BLOCKING** | Confiabilidade governada, owner/DoD posterior |
+| INT1-DAVI-NONEXECUTABLE-CAPS | **OPEN / NON_BLOCKING** | Owner DAVI, fora do escopo READ INT1 aceito |
+| INT1-EVAL-ENV-FLAKES | **OPEN_OPERATIONAL / NON_BLOCKING** | Eval infrastructure |
+| INT1-SEC01-API-DELPI | **OPEN_EXTERNAL / SEPARATE_TASK** | Deployment de outra task não autorizado por INT1 |
+
+**NEXT=`COORDINATION_C3_T2_POST_INT1_NEXT_BOUNDED_STEP_DECISION`**. `INT1_CLOSED=YES`; `INT2/INT3/T3=NOT_AUTHORIZED`; `NEW_PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
