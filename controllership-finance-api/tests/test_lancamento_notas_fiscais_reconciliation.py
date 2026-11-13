@@ -238,6 +238,7 @@ class FakeRequests:
                         "created_at": datetime.now(timezone.utc).isoformat(),
                     }
                 )
+                item["_posted"] = True
                 posted += 1
             self.rows = staging_rows
             self.history = staging_history

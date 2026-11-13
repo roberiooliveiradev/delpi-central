@@ -11,7 +11,14 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from delpi_auth.credential_guard import check_credentials
 from delpi_auth.cors_policy import build_allowed_origins
+from controllership_finance_app.application.invoice_posting.change_notifier import (
+    configure_invoice_posting_realtime,
+    lnf_realtime_should_mount,
+)
 from controllership_finance_app.config import settings
+from controllership_finance_app.infrastructure.invoice_posting.access_log_redaction import (
+    install_token_redaction_filter,
+)
 from controllership_finance_app.core.responses import fail
 from controllership_finance_app.interface.http.routes.admin_catalogs_routes import (
     router as admin_catalogs_router,
@@ -90,6 +97,13 @@ from controllership_finance_app.startup.run_migrations_on_startup import (
 logging.basicConfig(
     level=getattr(logging, str(settings.LOG_LEVEL).upper(), logging.INFO),
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+install_token_redaction_filter()
+_lnf_realtime_mounted = configure_invoice_posting_realtime(
+    enabled=lnf_realtime_should_mount(
+        hosted=settings.LNF_HOSTED_ENABLED,
+        realtime=settings.LNF_REALTIME_ENABLED,
+    )
 )
 
 
@@ -250,6 +264,12 @@ if settings.LNF_HOSTED_ENABLED:
     )
 
     app.include_router(invoice_posting_router)
+    if _lnf_realtime_mounted:
+        from controllership_finance_app.interface.http.routes.invoice_posting.realtime_routes import (
+            router as invoice_posting_realtime_router,
+        )
+
+        app.include_router(invoice_posting_realtime_router)
 
 # Streamable HTTP MCP — CLARA (external path:
 # /apps/controllership-finance-api/mcp). Auth via jwt_middleware com

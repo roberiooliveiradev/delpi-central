@@ -115,6 +115,9 @@ class Settings:
     LNF_HOSTED_ENABLED: bool = _get_env(
         "LNF_HOSTED_ENABLED", default="false"
     ).lower() in ("1", "true", "yes")
+    LNF_REALTIME_ENABLED: bool = _get_env(
+        "LNF_REALTIME_ENABLED", default="false"
+    ).lower() in ("1", "true", "yes")
     LNF_MIGRATIONS_MODE: str = _get_env(
         "LNF_MIGRATIONS_MODE", default="verify"
     ).strip().lower()

@@ -9,6 +9,10 @@ from typing import Any, Sequence
 from controllership_finance_app.domain.invoice_posting.history_serialization import (
     history_changes_json_safe,
 )
+from controllership_finance_app.application.invoice_posting.change_notifier import (
+    emit_request_changed,
+    get_invoice_posting_change_notifier,
+)
 from controllership_finance_app.application.invoice_posting.lnf_portal_notification_service import (
     notify_block_assignee,
     notify_block_resolved,
@@ -364,7 +368,7 @@ class CreateInvoicePostingRequestUseCase:
             supplier_store=supplier["supplier_store"],
         )
         try:
-            return self._requests.create_request_with_history(
+            created = self._requests.create_request_with_history(
                 request_fields=fields,
                 history_fields=history,
                 linked_invoices=linked_invoices,
@@ -381,6 +385,12 @@ class CreateInvoicePostingRequestUseCase:
                 series=series,
             )
             _raise_duplicate(existing)
+        emit_request_changed(created, reason="created", actor_origin="user")
+        if purchase_order_history:
+            emit_request_changed(
+                created, reason="purchase_order_linked", actor_origin="user"
+            )
+        return created
 
     def _optional_purchase_orders(
         self,
@@ -885,6 +895,9 @@ class LinkRequestPurchaseOrderUseCase:
             else:
                 updated["linked_purchase_orders"] = to_snapshots
 
+        emit_request_changed(
+            updated, reason="purchase_order_linked", actor_origin="user"
+        )
         if should_auto_resume_after_purchase_order_link(
             status=current.get("status"),
             block_reason=current.get("block_reason"),
@@ -1083,7 +1096,8 @@ class UpdateInvoicePostingRequestUseCase:
                 pass
             refreshed = self._requests.get_request(request_id)
             if refreshed is not None:
-                return refreshed
+                updated = refreshed
+        emit_request_changed(updated, reason="updated", actor_origin="user")
         return updated
 
 
@@ -1133,9 +1147,11 @@ class StartInvoicePostingRequestUseCase:
             },
             "justification": None,
         }
-        return self._requests.update_request_with_history(
+        updated = self._requests.update_request_with_history(
             request_id=request_id, updates=updates, history_fields=history
         )
+        emit_request_changed(updated, reason="status_changed", actor_origin="user")
+        return updated
 
 
 class BlockInvoicePostingRequestUseCase:
@@ -1212,6 +1228,7 @@ class BlockInvoicePostingRequestUseCase:
             actor_user_id=actor.user_id,
             actor_name=actor.user_name,
         )
+        emit_request_changed(updated, reason="status_changed", actor_origin="user")
         return updated
 
 
@@ -1271,6 +1288,7 @@ class ResumeInvoicePostingRequestUseCase:
             actor_user_id=actor.user_id,
             actor_name=actor.user_name,
         )
+        emit_request_changed(updated, reason="status_changed", actor_origin="user")
         return updated
 
 
@@ -1333,9 +1351,11 @@ class CancelInvoicePostingRequestUseCase:
             "changes": {},
             "justification": text,
         }
-        return self._requests.update_request_with_history(
+        updated = self._requests.update_request_with_history(
             request_id=request_id, updates=updates, history_fields=history
         )
+        emit_request_changed(updated, reason="cancelled", actor_origin="user")
+        return updated
 
 
 class PostManualInvoicePostingRequestUseCase:
@@ -1389,9 +1409,11 @@ class PostManualInvoicePostingRequestUseCase:
             "changes": {"completion_source": "manual"},
             "justification": text,
         }
-        return self._requests.update_request_with_history(
+        updated = self._requests.update_request_with_history(
             request_id=request_id, updates=updates, history_fields=history
         )
+        emit_request_changed(updated, reason="manual_posted", actor_origin="user")
+        return updated
 
 
 class AddInvoicePostingCommentUseCase:
@@ -1437,7 +1459,32 @@ class AddInvoicePostingCommentUseCase:
             actor_user_id=actor.user_id,
             actor_name=actor.user_name,
         )
+        emit_request_changed(current, reason="comment_added", actor_origin="user")
         return comment
+
+
+def _emit_reconciled(items: list[dict[str, Any]], posted: int) -> None:
+    if not posted:
+        return
+    tagged = [item for item in items if item.get("_posted")]
+    chosen = tagged if tagged else (list(items) if posted == len(items) else [])
+    counts: dict[str, int] = {}
+    notifier = get_invoice_posting_change_notifier()
+    for item in chosen:
+        branch = str(item.get("branch_code") or "").strip()
+        request_id = str(item.get("request_id") or "").strip()
+        if not branch or not request_id:
+            continue
+        notifier.request_changed(
+            branch=branch,
+            request_id=request_id,
+            reason="reconciled",
+            actor_origin="system",
+        )
+        counts[branch] = counts.get(branch, 0) + 1
+    for branch, count in counts.items():
+        if count > 0:
+            notifier.queue_reconciled(branch=branch, updated_count=count)
 
 
 def resolve_reconciliation_limit(limit: int | None) -> int:
@@ -1520,6 +1567,7 @@ class RunInvoicePostingReconciliationUseCase:
             batch_items.append(
                 {
                     "request_id": decision.request["id"],
+                    "branch_code": decision.request.get("branch_code"),
                     "from_status": decision.request.get("status"),
                     "sf1_recno": decision.sf1_row.get("sf1_recno"),
                     "erp_entry_date": parse_erp_entry_date(
@@ -1536,6 +1584,7 @@ class RunInvoicePostingReconciliationUseCase:
                 raise InvoicePostingError(
                     "Falha ao persistir conciliações."
                 ) from exc
+            _emit_reconciled(batch_items, posted)
 
         return {
             "examined": examined,

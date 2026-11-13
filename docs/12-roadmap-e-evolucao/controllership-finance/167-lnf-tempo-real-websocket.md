@@ -15,8 +15,8 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 
 | Fase | Nome | Status | SHA | Data | Evidência |
 |---|---|---|---|---|---|
-| W1.1 | Ajuste documental (D-W5, quadro) | DONE | commit desta fase | 2026-11-13 | D-W5, ADR-002 adendo, mapa de reuso PLANNED |
-| W2 | BFF — hub, rota, emissão (DEV) | TODO | | | |
+| W1.1 | Ajuste documental (D-W5, quadro) | DONE | `68e7c28512` | 2026-11-13 | D-W5, ADR-002 adendo, mapa de reuso PLANNED |
+| W2 | BFF — hub, rota, emissão (DEV) | DONE | commit desta fase | 2026-11-13 | T1–T18 e regressão LNF no container da BFF |
 | W2b | plugin-ui — cliente, hook, indicador, aviso | TODO | | | |
 | W3 | Gateway DEV (+ conf HML commitada) | TODO | | | |
 | W4.1 | MFE — Fila | TODO | | | |
@@ -379,4 +379,18 @@ Trechos que a W1.1 tinha de confirmar e que já estavam no arquivo:
 - a fila não dispara `POST /reconciliation/refresh` por evento (§2.10);
 - usuário só com `view.filial-01` não assina nem recebe a filial 02 (§2.7 e §2.13).
 
-Arquivos: este documento, ADR-002 (adendo D-W5), `30-plugin-ui-reuse-map.md` (entradas PLANNED). Sem código.
+Arquivos: este documento, ADR-002 (adendo D-W5), `30-plugin-ui-reuse-map.md` (entradas PLANNED). Sem código. SHA após rebase: `68e7c28512`.
+
+### W2 — 2026-11-13
+
+I1. O commit está dentro do repositório, antes do `return`: `create_request_with_history` (`postgres_invoice_posting_repository.py:186`), updates no mesmo padrão, `add_comment` (`:1132`), `mark_reconciled_posted_batch` (`:818`), `insert_unmapped_supplier_products` (`:1177`). O use case chama o notifier depois que o método retorna. O insert de produtos sem código é outra transação, depois do create já commitado.
+
+I2. Os use cases são síncronos. O hub usa `call_soon_threadsafe` e uma fila asyncio, como `engineering_realtime_hub.py:81`.
+
+I3. `jwt_middleware` é escopo HTTP (`main.py`). Não corre em WebSocket. O 404 da flag hosted também (`auth_middleware.py:84-89`). A rota autentica com `validate_token` + `load_user_rbac` e só é montada com as duas flags.
+
+I4. `uvicorn` inclui a query no access log (`get_path_with_query_string`). A BFF redige `token` com `TokenQueryRedactionFilter`. Requests e Engineering não foram alteradas: o mesmo uvicorn grava a query, e as locations delas no gateway não usam o formato da TV. Achado transversal.
+
+Guarda de processo: `WEB_CONCURRENCY`, `UVICORN_WORKERS` e `--workers`. Réplica fora do processo não é visível; a restrição fica no README da BFF.
+
+Testes no container da BFF: `tests/test_lnf_realtime.py` mais use cases, reconciliação, contracts e guards F3 — 110 passed. A matriz HTTP P0–P12 não rodou: é o harness em `tests/contracts/lancamento-notas-fiscais`, com usuários de contrato. O pytest amplo do container teve falhas de CLARA que leem `/docs/...`, caminho que a imagem não monta; não são desta fase.

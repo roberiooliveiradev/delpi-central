@@ -117,13 +117,19 @@ class UnmappedSupplierProductRecorder:
         if not rows:
             return
         try:
-            self._requests.insert_unmapped_supplier_products(rows)
+            inserted = self._requests.insert_unmapped_supplier_products(rows)
         except Exception:
             log_error(
                 "Falha ao gravar produtos sem código Delpi "
                 f"na solicitação {request_id}."
             )
             return
+        if inserted:
+            from controllership_finance_app.application.invoice_posting.change_notifier import (
+                get_invoice_posting_change_notifier,
+            )
+
+            get_invoice_posting_change_notifier().unmapped_products_changed()
         notify_unmapped_supplier_products(
             request_id=request_id,
             branch_code=branch,

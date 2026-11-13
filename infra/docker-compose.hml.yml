@@ -680,6 +680,7 @@ services:
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
       # LNF hosted — dark no boot; ensaio liga via .env.hml / override.
       LNF_HOSTED_ENABLED: ${LNF_HOSTED_ENABLED:-false}
+      LNF_REALTIME_ENABLED: ${LNF_REALTIME_ENABLED:-false}
       LNF_MIGRATIONS_MODE: ${LNF_MIGRATIONS_MODE:-verify}
       LNF_NOTIFICATIONS_ENABLED: ${LNF_NOTIFICATIONS_ENABLED:-false}
       LNF_DANFE_UPLOAD_DIR: ${LNF_DANFE_UPLOAD_DIR:-/app/data/lancamento-notas-fiscais-danfe}

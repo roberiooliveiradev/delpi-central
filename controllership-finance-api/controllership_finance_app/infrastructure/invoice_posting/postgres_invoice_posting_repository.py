@@ -815,6 +815,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
                         auto_commit=False,
                     )
                     posted += 1
+                    item["_posted"] = True
                 self.commit()
             return posted
         except Exception:
