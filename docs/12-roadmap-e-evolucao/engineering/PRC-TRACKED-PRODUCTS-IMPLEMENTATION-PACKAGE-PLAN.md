@@ -231,3 +231,12 @@ Prevalece sobre AC textuais antigos que tratem RESOLVED e REMOVED como estados d
 **GATE B2 obrigatório:** inventariar o endpoint D16 legado `/requests/{request_id}/flags/{flag_id}/actions/reopen`, o use case `reopen_flag`, consumidores, autenticação/permission scopes e audit ledger. A nova política deve ser aplicada no backend com contrato e testes, não apenas ocultação de UI. Alterar ou descontinuar comportamento legado exige Coordination, migration/backward compatibility e rollback. Evidências HML: rejeição de reopen, nova identidade para reincidência, unicidade OPEN concorrente, estados temporais corretos, nenhum incremento Vn por flag.
 
 **Sem implementação autorizada; Coordination ratifica política/compatibilidade.** [PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) · [Contrato](./PRC-TRACK-G1-CONTRACT-RATIFICATION-PROPOSAL.md).
+
+
+## Complemento CR-08 — flags OPEN legadas incorporadas na primeira V1 (PO, 13/11/2026)
+
+**CR-08 APPROVED BY PO:** opção **A — Incorporar bandeiras abertas com vínculo comprovado**, sem comentário. Na primeira V1, associar somente flags PRC legadas **OPEN** e com prova inequívoca do produto oficial e do alvo FIELD/SUPPLIER_LINK; nunca incorporar automaticamente RESOLVED/REMOVED/GENERAL sem target, ou casos ambíguos. Preservar ID/proveniência quando compatível; uma OPEN por produto+targetKey, colisões para revisão autorizada. A associação não cria V2 nem altera snapshot CR-02; flags seguem ADR-04 (RESOLVED visível na revisão da resolução, REMOVED ausente na revisão da remoção, ambas ausentes nas seguintes), e não podem reabrir sob CR-07. `CR-03` V1 baseline preservado.
+
+**Gate B2 de migração:** inventariar D16 e consumidores, definir fonte de identidade do produto e prova do alvo, pipeline idempotente de associação com relatório de exceções, migração não destrutiva/backward-compatible, AuthZ e grants, testes concorrentes e rollback. **Migration e alterações de endpoint continuam bloqueadas até Coordination ratificar.**
+
+**AC HML:** OPEN identificável→V1; encerradas→não entram; alvo/incerteza→exceção e não migra; duas OPEN no mesmo alvo→bloqueia associação automática; replay sem duplicar; sem efeito na contagem Vn; auditoria e lifecycle corretos, AuthZ negativa. [Decisões PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) · [Proposta Coordination](./PRC-TRACK-G1-CONTRACT-RATIFICATION-PROPOSAL.md).
