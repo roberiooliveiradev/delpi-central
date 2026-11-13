@@ -105,3 +105,18 @@ Implemente **somente** `GET /v1/product-registration/technical-records` para reg
 **PR/merge:** branch do Devin está disponível; link sugerido de criação não é prova de PR aberto. Devin deve abrir PR ou devolver URL de PR real após correções, testes no SHA final e rebase seguro sobre main. Coordenação não fará merge unilateral. `PROD-02/03` ainda `BLOCKED_BY_COORDINATION_T01_T02`. PRC-UI-EXTRACT drift não bloqueia este pacote. Nenhum deploy está autorizado nesta revisão.
 
 **Proposta de aceite após correção:** revisar diff mínimo, CI, relatórios direcionados e baseline das falhas; se conforme, emitir `CODE_REVIEW_PASS` para merge governado e DEV/HML. Não declarar `HML_PASS` sem execução autenticada multiusuário.
+
+
+## 8. Revisão de correções DEVIN-PROD-01 — 8af851a578 (13/11/2026)
+
+**Fonte:** diff GitHub do commit `8af851a57854d1c8e35f7c83181fb99ed40ba79a` e comparação `main...devin/prc-track-prod-01-records-list` na revisão. **Resultado:** `CODE_REVIEW_PASS_WITH_INTEGRATION_GATE`; correções RV01/RV02 aceitas, RV03 aceita como evidência parcial. **Não** equivale a CI/HML/prod aprovados.
+
+- **RV01 PASS (code review):** `list_records` no Postgres agora escapa backslash, `%`, `_` e aplica `ILIKE %s ESCAPE '\\'`; parâmetros SQL preservados. Testes de busca com `%` e `_` adicionados aos adapters memory/Postgres. Teste específico de backslash ainda não demonstrado — melhoria recomendável, não nova decisão funcional.
+- **RV02 PASS (code review):** integração Postgres cria request, inicia e conclui via `repo.complete_request`, verifica record e revisão V1 na listagem. O teste confirma o adapter/transação; **não executa endpoint HTTP nem official-reader completo**. Não declarar E2E PRC/HML a partir dele. Checagem de request pendente por busca do prefixo UUID é fraca; testes anteriores cobrem exclusão `rev=0`.
+- **RV03 EVIDENCE PARTIAL:** conforme relatório Devin, falha D16 reproduzida em imagem baseline; cache RBAC passou na imagem anterior mas falha em container DEV e foi classificado como environmental drift. Não declarar suíte completa PASS nem afirmar causa raiz provada.
+- **Testes reportados por Devin no SHA:** `73/73` PRC/health e `9/9` integração PostgreSQL, sem reexecução independente pela coordenação; status de CI no GitHub não encontrado.
+- **Integração pendente:** no momento da consulta `main...devin/prc-track-prod-01-records-list` estava `diverged` (`ahead_by=1,behind_by=1`); branch precisa rebase/merge controlado e novo teste no SHA final. Link `/compare/main...branch` **não é PR criado**.
+
+**Decisão de coordenação:** não pedir mais código de negócio PROD-01; Devin deve reancorar sem descartar trabalho concorrente, abrir PR real, confirmar CI/testes no SHA de integração e submeter merge ao gate governado. **`PROD-01_CODE_REVIEW_PASS / MERGE_PENDING / HML_TEST_NOT_RUN / PROD_NOT_DEPLOYED`**.
+
+**Próximo:** PROD-02 segue `BLOCKED_BY_COORDINATION_T01_T02`; preparar pacote técnico de ratificação de snapshots consolidados e no-op sem perguntas funcionais ao PO. Não iniciar bandeiras/frontend nem deploy.
