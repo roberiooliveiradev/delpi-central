@@ -59,3 +59,32 @@ O chat de coordenação deve avaliar: fonte canônica aplicada; nenhum escopo an
 ## 5. Estado inicial da atribuição
 
 `DEVIN_ASSIGNED` (PO designou executor). `DEVIN-PROD-00 NOT_DISPATCHED` até envio efetivo do prompt ao Devin por canal autorizado. `IMPLEMENTATION_NOT_STARTED / TEST_NOT_RUN / HML_PENDING / PROD_NOT_DEPLOYED`. Este documento constitui **brief e prompt pronto**, não representa entrega nem execução do Devin.
+
+
+## 6. Resultado recebido — DEVIN-PROD-00 e encaminhamento da coordenação (13/11/2026)
+
+**Origem:** relatório de inventário do Devin entregue ao chat de coordenação. **Evidência:** declarada pelo executor; a coordenação não executou os comandos DEV/HML, portanto `REVIEWED_REPORT / TEST_NOT_RUN`, não `PASS` de runtime. Baseline informado pelo executor: início `342092217d`, fim `37ee712640`, branch `main`, sem commit/PR do inventário. O executor relata tracked tree sem modificações, mas **untracked `PrcFlags.tsx` e `PrcFlags.test.tsx`** e cinco stashes — **não classificar como working tree totalmente limpa**.
+
+**Conclusão do gate:** **DEVIN-PROD-01 liberado para implementação aditiva de listagem de produtos**, pois não requer resolver T01/T02. O contrato de campos retornados deve se limitar ao registro atual e à AuthZ existente; sem adicionar `openFlagCount`, provenance inferida ou frontend. **Não liberar PROD-02/03/FLAG sem ratificação dos aspectos semânticos pendentes**; inventário/contratos de PROD-02 podem ser preparados em paralelo sem escrever runtime.
+
+**Inventário reportado e consistente com leitura anterior de código:** GET record, revisões e revision detalhe existem; lista GET `/technical-records` e comparison não foram identificadas; `_build_snapshot` parte do draft; `complete_request` cria Vn em toda conclusão; flags D16 continuam por request e têm `reopen`. Autorizações existentes no Portal devem ser reutilizadas, sem novos papéis.
+
+**Tratamento do drift PRC-UI-EXTRACT-01:** registrar `EXECUTION_DRIFT`; **não reaplicar extração agora**, não usar `git stash pop/apply`, `git clean` ou sobrescrever untracked de outros executores. Encaminhar estado dos cinco stashes, ownership e destino do trabalho de Plugin UI à Coordination. A extração fica pendente até gate de frontend; não bloqueia PROD-01.
+
+**Condição da autorização de PROD-01:** Devin inicia em branch próprio atualizado do HEAD remoto, sem mexer em WIP de terceiros; executa testes locais/DEV com logs e SHA, abre PR para revisão; não faz merge unilateral, migration ou deploy. Status de PROD-01: `AUTHORIZED_TO_IMPLEMENT / TEST_NOT_RUN`.
+
+### Prompt de execução — DEVIN-PROD-01
+
+Devin: reancore no HEAD remoto atual; reporte branch, SHA, git status incluindo untracked e stashes. Leia as regras canônicas e contratos atuais; não reabra decisões do PO.
+
+Implemente **somente** `GET /v1/product-registration/technical-records` para registros **realmente acompanhados** (não fila de requests), reaproveitando FastAPI, ProductRegistrationService, ProductRegistrationRepository e adapters Postgres, in-memory e unavailable.
+
+**Contrato proposto para este diff:** query `page>=1`, `pageSize=1..100` (padrão 25), `search` opcional por `official_product_code` com comparação sem distinção de caixa, ordenação determinística `updated_at DESC, id DESC`; DTO `{items,page,pageSize,total}` com `recordId, officialSource, officialCode, productType, currentRevisionNumber, lastOfficialVerifiedAt, updatedAt` obtidos exclusivamente dos campos existentes no registro. **Não retornar objetos do banco crus**, campos inexistentes, flags ou descrição fabricada. Listar somente registros com `current_revision_number>=1` e revisão publicável, compatível com schema real (confirmar invariante no inventário); não expor registros não concluídos. Aplicar acesso PRC/Engineering **já vigente**, inclusive edge e service, sem grant novo. Reusar envelope de resposta/erro e limites de paginação já existentes no projeto.
+
+**Implementação mínima:** adicionar operação do port, método do service, adapters Postgres/in-memory/unavailable, rota REST, testes no padrão existente. Queries Postgres parametrizadas com whitelist de ordenação; caso unavailable deve falhar honestamente. Não implementar comparison, no-op, snapshots, flags ou frontend neste pacote; não alterar migrations.
+
+**Testes obrigatórios:** records vazios e população mista (somente acompanhados), paginação não sobreposta, ordenação empatada por id, pesquisa case-insensitive, pageSize inválido, acesso permitido/negado, nenhum leak, unavailable fail-honest, paridade Postgres/memory onde infraestrutura autorizada permitir, regressão GET record/revisions, performance básica com índice existente (se faltar índice, reportar, não migrar). Relatar testes não executáveis como `TEST_NOT_RUN`, não declarar `PASS` de Postgres sem rodá-los.
+
+**Saída:** PR em branch própria com menor diff, SHA antes/depois, arquivos, contratos, testes e logs, status positivos/negativos, lacunas e riscos. Não fazer merge ou deploy sem gate. Retorne o relatório `DEVIN-PROD-01` ao chat para revisão. Próxima etapa PROD-02 só após Coordination ratificar T01/T02.
+
+**Observação de rastreabilidade:** o usuário definiu Devin como único executor de código; a coordenação registra prompts e analisa, não faz commits de runtime.
