@@ -1088,6 +1088,23 @@ class TestTechnicalRecordsList:
         ).json()["data"]
         assert data["total"] == 2
 
+    def test_search_special_chars_are_literal(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        """RV01 — % e _ da entrada não são curingas (paridade ILIKE)."""
+        repo = prc_service_repo["repo"]
+        self._seed(repo, code="AB_C", updated_at="2026-01-01T00:00:00Z")
+        self._seed(repo, code="ABXC", updated_at="2026-01-01T00:00:00Z")
+        self._seed(repo, code="AB%C", updated_at="2026-01-01T00:00:00Z")
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        tok = _token(jwks_env, "analyst-1")
+        # '_' literal: só AB_C
+        data = _get(client, f"{self.URL}?search=ab_c", tok).json()["data"]
+        assert [i["officialCode"] for i in data["items"]] == ["AB_C"]
+        # '%' literal: só AB%C
+        data = _get(client, f"{self.URL}?search=ab%25c", tok).json()["data"]
+        assert [i["officialCode"] for i in data["items"]] == ["AB%C"]
+
     def test_invalid_params(
         self, client, jwks_env, core_rbac, prc_service_repo
     ):

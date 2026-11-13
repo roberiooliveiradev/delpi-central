@@ -630,8 +630,16 @@ class PostgresProductRegistrationRepository:
         where = "current_revision_number >= 1"
         params: list[Any] = []
         if search:
-            where += " AND official_product_code ILIKE %s"
-            params.append(f"%{search.strip()}%")
+            # paridade com o adapter in-memory: busca literal, %/_ da
+            # entrada não são curingas do ILIKE
+            needle = (
+                search.strip()
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_")
+            )
+            where += " AND official_product_code ILIKE %s ESCAPE '\\'"
+            params.append(f"%{needle}%")
         with self._conn() as conn:
             total = conn.execute(
                 f"SELECT count(*) AS c FROM {_T_REC} WHERE {where}", params
