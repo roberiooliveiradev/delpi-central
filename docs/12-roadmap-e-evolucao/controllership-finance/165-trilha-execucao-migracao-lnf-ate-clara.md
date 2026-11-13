@@ -79,7 +79,7 @@ Transferir o módulo **Lançamento de Notas Fiscais (LNF)** da `api-delpi` para 
 |---|---|---|---|---|---|---|
 | F0–F4b | Inventário, contrato, implementação dark, ensaio HML | DONE | — | até `fddd4bb813` | 2026-11-12 | 163/164, suíte |
 | F5a | Preparação dark de PROD | DONE | PROD | `fdc31ad48e` + deploys 2026-11-12 | 2026-11-12 | BFF/MFE/api-delpi dark; preflight 5/5; OpenAPI BFF 112/0 LNF; api 731/22 LNF; MFE base api-delpi; observação 15 min sem incidente |
-| F5b | Corte em PROD | IN_PROGRESS | PROD | (virada em curso) | 2026-11-13 | Owner OK AGORA (horário comercial); smoke owner PENDING |
+| F5b | Corte em PROD | IN_PROGRESS (PENDING_OWNER smoke) | PROD | `f6950fdb0d` + virada 2026-11-13 | 2026-11-13 | Virada técnica PASS; smoke owner checklist entregue |
 | F5c | Estabilização (hypercare) | TODO | | | | |
 | F7.0 | CLARA — inventário e contrato | TODO | | | | |
 | F7.1 | CLARA — leituras | TODO | | | | |
@@ -361,4 +361,11 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-12 18:05–18:20 -03 | F5a.4-API.f | PROD | up-prod api-delpi + observação 15 min | PASS | `a674524ce866` | 1×502 healthcheck no recreate; depois 0 5xx; scrap TV 200 |
 | 2026-11-12 18:20 -03 | F5a | — | Critérios de saída F5a atendidos | DONE | `38f46c0eac` | próximo: F5b (janela + smoke owner) |
 | 2026-11-13 07:26 -03 | F5b | PROD | Owner: corte F5b autorizado AGORA (qualquer horário, incl. comercial) | DECISÃO | — | rollback imediato se gatilho Parte 5 |
-| 2026-11-13 07:27 -03 | F5b | docs | Quadro → IN_PROGRESS; compose PROD MFE build-arg VITE_LNF_API_BASE | IN_PROGRESS | (este commit) | espelha HML para permitir corte via script |
+| 2026-11-13 07:27 -03 | F5b | docs | Quadro → IN_PROGRESS; compose PROD MFE build-arg VITE_LNF_API_BASE | IN_PROGRESS | `f6950fdb0d` | espelha HML para permitir corte via script |
+| 2026-11-13 07:28 -03 | F5b.1 | PROD | Preflight 5/5 + baseline contagens/health/bundle | PASS | — | requests=1430; pending=21 posted=1383; MFE base api-delpi |
+| 2026-11-13 07:28 -03 | F5b.2.1 | PROD | BFF `LNF_HOSTED_ENABLED=true` + rebuild | PASS 13,4 s | — | `lnf_migrations_verify_ok` V001–V014; LNF noauth 401 |
+| 2026-11-13 07:28 -03 | F5b.2.2 | PROD | api-delpi `LNF_MODULE_ENABLED=false` + rebuild | PASS 15,1 s | — | service token LNF → 404 |
+| 2026-11-13 07:29 -03 | F5b.2.3 | PROD | MFE build `VITE_LNF_API_BASE`=BFF | PASS 56,3 s | — | runtime BFF; residual string api-delpi = fallback Vite morto |
+| 2026-11-13 07:31 -03 | F5b.2.4 | PROD | Sync catálogos chat/TV (OpenAPI sem LNF) | PASS | — | chat actions=788; TV routes=585; lnf_mentions=0 (wrapper script rc≠0 por logs NDJSON) |
+| 2026-11-13 07:31 -03 | F5b.3 | PROD | Verificação técnica (D8 403, api 404, OpenAPI, contagens) | PASS | — | BFF 134/22/24ops; api 709/0; contagens iguais; 5xx LNF=0 |
+| 2026-11-13 07:32 -03 | F5b.4 | PROD | Smoke do owner | PENDING_OWNER | — | checklist entregue no relatório; F5b não DONE até PASS do owner |

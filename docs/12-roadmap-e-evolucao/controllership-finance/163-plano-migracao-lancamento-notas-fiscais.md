@@ -110,7 +110,7 @@ Até F6: redeploy da versão anterior (api-delpi com módulo + MFE com base anti
 
 ### Status F5a — 2026-11-12
 
-**F5a DONE** (2026-11-12): smoke HML + preflight + compose/env + **deploy dark PROD** BFF/MFE/api-delpi (exceção R4 owner + F5a.4-API a→f). Usuário sem mudança (flags AS-IS). Corte **F5b** pendente de janela. Ver trilha [165](./165-trilha-execucao-migracao-lnf-ate-clara.md).
+**F5a DONE** (2026-11-12). **F5b virada técnica PROD DONE** (2026-11-13); status **PENDING_OWNER** até smoke do owner PASS — não marcar «CORTE CONCLUÍDO» antes. Ver trilha [165](./165-trilha-execucao-migracao-lnf-ate-clara.md).
 
 | Item | Achado F1 (PROVEN) | Decisão / regra |
 |---|---|---|

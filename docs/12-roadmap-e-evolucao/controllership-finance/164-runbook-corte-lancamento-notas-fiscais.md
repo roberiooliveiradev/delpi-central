@@ -1,10 +1,10 @@
 # 164 — Runbook do corte F5 · Lançamento de Notas Fiscais (api-delpi → BFF)
 
-> Status: **F5a DONE** — dark PROD BFF+MFE+api-delpi; **F5b** pendente de janela  
-> Owner de execução: operador de plataforma + PO (janela combinada)  
+> Status: **F5b IN_PROGRESS** — virada técnica PROD DONE; **smoke owner PENDING**  
+> Owner de execução: operador de plataforma + PO  
 > Schema: **imutável** no corte (V001–V014; sem apply)  
-> Princípio: o corte é **troca de configuração** (flags). Defaults = comportamento atual.  
-> HEAD prep: `fdc31ad48e` + imagens dark 2026-11-12
+> Princípio: o corte é **troca de configuração** (flags).  
+> Corte técnico: 2026-11-13 ~07:28–07:32 -03 · HEAD `f6950fdb0d`
 
 ---
 
@@ -95,6 +95,19 @@ Ordem fixa. Sem `apply`. Já com imagens dark:
 5. Verificações: BFF LNF 200; api-delpi LNF 404; Network MFE só BFF; preflight PASS; smoke fila  
 
 Rollback = ordem inversa das flags + rebuilds.
+
+### 2b. Execução PROD F5b (2026-11-13)
+
+| Etapa | Tempo | Resultado |
+|---|---|---|
+| Preflight | 0,3 s | 5/5 PASS |
+| BFF hosted=true | **13,4 s** | verify V001–V014 OK; LNF noauth 401 |
+| api-delpi module=false | **15,1 s** | service token LNF **404** |
+| MFE base BFF | **56,3 s** | runtime BFF (fallback Vite ainda contém string api-delpi) |
+| Catálogos chat/TV | ~8 s (+retry) | chat 788 actions; TV 585 routes; **0** LNF |
+| Tech verify | — | D8 BFF **403**; OpenAPI BFF 22 paths/24 ops; api 0 LNF; contagens 1430 iguais; 5xx LNF=0 |
+
+Baseline=após: requests **1430** (pending 21, posted 1383, blocked 1, cancelled 25). Smoke owner: **PENDING**.
 
 ---
 
