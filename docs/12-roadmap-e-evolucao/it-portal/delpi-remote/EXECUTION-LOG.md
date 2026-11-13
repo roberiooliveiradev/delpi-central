@@ -122,6 +122,18 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Rollback:** nao apagar V009 nem objetos; revogar as permissoes novas e restaurar imagens conforme o runbook se houver falha.
 
+## 2026-11-13 | G1-UI | validacao visual no portal
+
+**Evidencia do operador:** captura de tela da area `Computadores` no Portal de TI em producao, enviada no atendimento; o screenshot nao foi publicado no repositorio, para evitar dados pessoais no GitHub publico.
+
+**Comprovado visualmente:** menu Computadores ativo, cabecalho do inventario, botao `Cadastrar computador`, busca, paginacao, filtros Unidade/Tipo/Situacao/Cadastro e estado vazio `0 registros`, sem erro visivel. Usuario confirmou acesso.
+
+**Limites da prova:** o print nao comprova escrita/edicao no banco, versionamento do Core 0.3.4, persistencia, arquivamento/restauracao, trilha de auditoria, permissao de usuario sem acesso, nem execucao do agente. A presenca do botao de cadastro sugere `can_manage_computers` ativo para este usuario, nao prova a politica negativa de RBAC.
+
+**Status:** backend e MFE publicados conforme logs; UI inicial visualmente validada; G1-API/UI permanecem em homologacao funcional ate testar CRUD e controle de acesso. Nenhuma sessao remota ou agente ativado.
+
+**Proximo passo:** cadastrar um equipamento corporativo de teste (sem credenciais), confirmar listagem e detalhe, editar, verificar historico, arquivar e restaurar; testar acesso negado em perfil sem `it-portal.computers.view`. Registrar os resultados antes de fechar G1 e avancar G2-AGENT.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown
