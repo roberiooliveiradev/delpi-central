@@ -242,3 +242,24 @@ Encaminhar à Coordination **ADR-01 a ADR-06** com matriz de decisão e pergunta
 **AC:** `CR07-AC01` tentativa de reabrir RESOLVED por flagId rejeitada pela API de produtos acompanhados com erro contratual; `CR07-AC02` encerrada em V4 permanece RESOLVED só em V4; `CR07-AC03` nova flag mesmo target em V6 recebe novo flagId; `CR07-AC04` OPEN concorrente no mesmo produto+alvo rejeita duplicata; `CR07-AC05` V3/V4/V5 históricos não alterados por nova ocorrência; `CR07-AC06` eventos auditáveis, AuthZ live/CAS/idempotência; `CR07-AC07` endpoint legado de reopen não pode contornar política ratificada para flags de produto e tem comportamento de compatibilidade explicitamente testado.
 
 **Não autoriza** desativar endpoints existentes, migration, alteração de código, rollout ou mudança de owner. `ARCHITECTURE_DECISION_REQUIRED` para coexistência de D16 legado e nova política.
+
+
+## 14. Deliberação complementar do PO — CR-08: bandeiras anteriores à primeira V1 (13/11/2026)
+
+**Escolha expressa:** **A — Incorporar bandeiras abertas com vínculo comprovado**. **Comentário:** sem comentário. **Estado:** `PO_APPROVED_BUSINESS_DECISION / COORDINATION_RATIFICATION_PENDING`.
+
+**Regra funcional:** ao criar o primeiro acompanhamento V1 de produto já cadastrado, incorporar à projeção do produto **somente bandeiras PRC legadas que estejam OPEN** e para as quais seja possível provar, por fontes autorizadas, a correspondência inequívoca com (1) `official_source + official_product_code`, (2) o alvo técnico FIELD ou SUPPLIER_LINK com `supplierCode+store+attribute` e (3) o caso de origem. A integração à V1 é uma **associação/projeção governada**, não abertura retroativa de bandeira em V0 nem criação de revisão técnica adicional. Preservar ID da ocorrência quando comprovadamente seguro; não fundir ou renumerar flags sem plano de compatibilidade.
+
+**Exclusões explícitas:** RESOLVED, REMOVED, soft-deleted, GENERAL sem alvo identificável e vínculos ambíguos **não são ativados** na V1. Registros encerrados permanecem disponíveis no histórico de suas solicitações de origem, conforme escopo de acesso. Identidade incerta segue **quarentena para revisão autorizada** — nunca atribuição automática por descrição/código parcial, nem tentativa de gerar vínculo novo a partir de inferência de IA.
+
+**Compatibilidade com decisões anteriores:**
+- **CR-03:** primeira conclusão verificada cria V1 baseline independentemente de diff técnico; migração de bandeira OPEN **não cria V2** e não altera snapshot de campos PRC.
+- **ADR-04:** bandeira incorporada na V1 aparece OPEN e propaga às versões subsequentes enquanto aberta. Se RESOLVED em V4, é visível RESOLVED apenas na V4, ausente V5+; se REMOVED em V4, ausente já em V4 e posteriores. Estado anterior à V1 não deve ser inventado como versão técnica.
+- **CR-07:** incorporar OPEN **não reabre** flags encerradas. Reincidência posterior de problema encerrado gera nova ocorrência/ID, sem reutilização do antigo. Máximo uma OPEN por produto+alvo.
+- **ADR-03:** não clonar registros; rastrear a origem em requestId e a associação ao recordId. Em caso de múltiplas OPEN legadas no mesmo produto+alvo, **não escolher automaticamente** a vencedora.
+
+**Gates de autoridade e migração a submeter à Coordination:** definir owner Engineering API/PRC, regras oficiais de lookup de produto e alvo, compatibilidade de IDs e consumidores D16 por requestId, vínculo temporal da incorporação (`associationAt`/V1), colisões OPEN, permissões de leitura/escrita, trilha auditável, idempotência, backfill parcial/reversível, relatório de exceções e rollback sem reescrever passado. Não consultar banco de outro bounded context nem promover provider/MCP à authority. HML com principal autorizado.
+
+**Critérios de aceite:** `CR08-AC01` flag OPEN inequívoca de PRC anterior aparece OPEN em V1; `CR08-AC02` flag RESOLVED/REMOVED anterior não aparece na V1; `CR08-AC03` flag sem código/target confiável fica pendente e não aparece; `CR08-AC04` colisões OPEN no mesmo alvo impedem incorporação automática e geram exceção auditável; `CR08-AC05` associação não gera V2/alteração de snapshot; `CR08-AC06` lifecycle V1→V4 segue ADR-04; `CR08-AC07` nenhum flagId encerrado é reaberto; `CR08-AC08` backfill repetido não duplica, AuthZ/concurrency e histórico são preservados.
+
+**Sem alteração de código, migration, grants, runtime ou deploy.** A decisão do PO não equivale à ratificação da Coordination.
