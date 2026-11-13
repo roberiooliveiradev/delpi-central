@@ -16,7 +16,7 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 | Fase | Nome | Status | SHA | Data | Evidência |
 |---|---|---|---|---|---|
 | W1.1 | Ajuste documental (D-W5, quadro) | DONE | `68e7c28512` | 2026-11-13 | D-W5, ADR-002 adendo, mapa de reuso PLANNED |
-| W2 | BFF — hub, rota, emissão (DEV) | IN_PROGRESS | `b0b4dae957` | 2026-11-13 | T1–T18 PASS; F2 P0–P12 ao vivo 314 PASS. Smoke de dois usuários parcial: isolamento da filial PASS; create por quem só tem process responde 403 e não emite |
+| W2 | BFF — hub, rota, emissão (DEV) | DONE | `b0b4dae957` | 2026-11-13 | T1–T18 PASS; F2 P0–P12 ao vivo 314 PASS (`test_authz.py:1`). Latência t2−t1 ≤ 2 s. Create por process e cancel fora da regra do dono: negativo PASS |
 | W2b | plugin-ui — cliente, hook, indicador, aviso | DONE | `df1dd06cc4` | 2026-11-13 | cliente aditivo; hook, indicador e aviso. Suíte do pacote no registro |
 | W3 | Gateway DEV (+ conf HML commitada) | DONE | `57195a9e91` | 2026-11-13 | Handshake 101 pelo gateway com token real; access log da location com `<redacted>`; valor do token ausente nos logs do gateway e da BFF |
 | W4.1 | MFE — Fila | TODO | | | |
@@ -478,4 +478,29 @@ Handshake de `lnf-contract-p6` pelo gateway: `101 Switching Protocols`. Access l
 
 Smoke: U1 em `lnf:branch:02` recebe `forbidden_room` e o socket segue aberto. U3 em `lnf:branch:01` recebe `forbidden_room`. Create na filial 02 por quem tem create+view.02 chega em U2 (`reason=created`, branch 02) e não chega em U1. PATCH, start, block, resume e comment feitos por U2 nessa nota repetem o mesmo isolamento. Create na filial 01 chega em U1 e em U2. post-manual na filial 01: 329 ms do início do HTTP até o frame `manual_posted` nos dois. Create feito por U2 (só process) responde 403 e não emite. Cancel responde 403 `not_owner` e não emite. Lista de PC em aberto do fornecedor da nota: 200 com zero itens, então o vínculo não rodou. Refresh: 200 e nenhum `queue.reconciled` (nenhuma nota casada).
 
-W2 permanece IN_PROGRESS por causa do create e do cancel que a permissão de process não conclui, e do vínculo de PC sem pedido em aberto. W4 não começa.
+Reclassificação (2026-11-13): o 403 do create feito por quem só tem process e o 403 `invoice_posting_request.not_owner` do cancel são negativo PASS (AuthZ/regra de negócio AS-IS). O create da rota exige a permissão `create`. O cancel só é do dono quando ele tem `create` e o status é `pending` ou `cancelled`; `manage` cancela nos demais status (`use_cases.py:1315-1329`).
+
+Dados de DEV. A BFF e a api-delpi usam `PLUGINS_DB_HOST=postgres-plugins`, `PLUGINS_DB_PORT=5432`, `PLUGINS_DB_NAME=plugins_hub`, `PLUGINS_DB_USER=plugins_user`, schema `lancamento_notas_fiscais`. É o mesmo banco que a W0 nomeou. A relação atual tem 2 solicitações de smoke (filial 01 `posted`, filial 02 `in_progress`) mais as criadas na medição de latência. `pg_stat_user_tables` desde o postmaster de 2026-11-12 12:26: `n_tup_ins=2` e `n_tup_del=0` antes dessa medição. Os outros bancos locais (`cf_homolog`, `cf_test_notify`, `eng_prc_test`) não têm a tabela. Não há DELETE registrado nessa relação e o log do Postgres não mostra `TRUNCATE`/`DROP`. Os 49 da W0 não estão aqui. Classificação: divergência de ambiente em DEV, sem troca de conexão e sem mover dados. Em PROD, BFF e api-delpi leem o mesmo `PLUGINS_DB_NAME` (`infra/docker-compose.yml`, trilha 165 D2); esta ausência não foi medida em PROD.
+
+Latência com os dois sockets abertos antes do HTTP. t0 envio, t1 resposta, t2 frame. O frame chega no mesmo instante da resposta (t2−t1 entre −2 ms e 0 ms: o hub emite antes de o cliente HTTP terminar de ler o body). Critério ≤ 2 s: PASS.
+
+| Ação | HTTP | t2−t1 U1 | t2−t1 U2 | Sala | Resultado |
+|---|---|---|---|---|---|
+| create filial 01 | 193 ms | −1 ms | −1 ms | `lnf:branch:01` | PASS |
+| PATCH | 55 ms | −1 ms | −1 ms | `lnf:branch:01` | PASS |
+| start | 38 ms | −1 ms | 0 ms | `lnf:branch:01` | PASS |
+| block | 60 ms | −2 ms | −1 ms | `lnf:branch:01` | PASS |
+| resume | 37 ms | −1 ms | 0 ms | `lnf:branch:01` | PASS |
+| comment | 28 ms | −1 ms | −1 ms | `lnf:branch:01` | PASS |
+| post-manual | 35 ms | −1 ms | 0 ms | `lnf:branch:01` | PASS |
+| create filial 02 | 27 ms | sem frame | −1 ms | `lnf:branch:02` | PASS |
+| cancel pelo dono, filial 02, status pending | 34 ms | sem frame | −1 ms | `lnf:branch:02` | PASS |
+| cancel pelo dono, filial 01, status pending | 37 ms | −1 ms | −1 ms | `lnf:branch:01` | PASS |
+
+Vínculo de PC: 5 fornecedores reais consultados em `GET /purchase-orders/open`, 0 pedidos. INCONCLUSIVE por falta de dado. Conciliação: nenhuma solicitação de DEV casa com SF1; não foi forjado registro. INCONCLUSIVE por falta de dado. Produto sem código: não há NF-e real sem mapeamento para criar. INCONCLUSIVE por falta de dado. Os três entram como critério obrigatório da matriz 9.3 na W5.
+
+F2: `tests/contracts/lancamento-notas-fiscais/test_authz.py:1` é a matriz de 24 rotas × P0–P12. Comando: `cd tests/contracts/lancamento-notas-fiscais && ./.venv/bin/pytest test_authz.py -q --tb=line`. Resultado: 314 passed.
+
+W2 DONE.
+
+MFE em DEV. O compose de DEV passa `VITE_LNF_API_BASE` e `VITE_LNF_REALTIME_ENABLED` com os defaults atuais (base api-delpi, flag false). O `.env` local aponta a base para a BFF e liga a flag. A imagem publicada contém a base da BFF e nenhum `new WebSocket`. Gateway: `/apps/lancamento-notas-fiscais/assets/remoteEntry.js` e o index respondem 200. Fila pela BFF: U2 nas filiais 01 e 02 responde 200. U1 na filial 02 responde 403 `BRANCH_FORBIDDEN`. U1 na filial 01 responde 403 porque a listagem exige `can_view_all` ou `create` (`use_cases.py:466-467`); `view.filial-01` sozinha não lista. O código da W4 ainda não abre socket.
