@@ -87,7 +87,7 @@ Transferir o módulo **Lançamento de Notas Fiscais (LNF)** da `api-delpi` para 
 | F7.2 | CLARA — análise | DONE (F7-R3) | HML/PROD | `d9393bcde5` | 2026-11-13 | enum LNF; `review_aged_pending.value`=contagem ≥5d |
 | F7.3 | CLARA — ações governadas | DONE (F7-R3) | HML/PROD | `d9393bcde5` | 2026-11-13 | copy conversacional sem Portal; displayable=true |
 | F7.4 | CLARA — produção + teste automatizado | **IN_PROGRESS — teste automatizado via conector** | PROD | `bd4e26e98b` + `7f332cb39b` | 2026-11-13 | Cursor NÃO executa; conector externo dono do teste CLARA |
-| F6 | Limpeza final (encerra o rollback) | ensaio HML (PROD aguarda F5c DONE + F7.4 DONE) | HML | (commits F6) | 2026-11-13 | PROD só após F5c DONE (após 19/11) + F7.4 DONE |
+| F6 | Limpeza final (encerra o rollback) | **pronta, ensaiada em HML; PROD aguarda F5c DONE + F7.4 DONE** | HML | ver registro | 2026-11-13 | Código na main; ensaio HML; PROD bloqueado até F5c (após 19/11) + F7.4 |
 
 Status possíveis: TODO · IN_PROGRESS · BLOCKED (regra de parada) · DONE.
 **Ordem de execução obrigatória:** F5a → F5b → F5c (inicia o período de estabilização) → F7.0 → F7.1 → F7.2 → F7.3 → F7.4 → F6.
@@ -412,6 +412,8 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-13 ~16:30 -03 | F5c | docs | Data de término = 2026-11-19 (5 DU; 20/11 feriado) | IN_PROGRESS | (fechamento 167) | rotina diária segue |
 | 2026-11-13 ~16:30 -03 | F7.4 | docs | Cursor não executa; teste via conector | IN_PROGRESS | — | aguarda PASS do conector |
 | 2026-11-13 ~16:30 -03 | 167 | PROD/docs | Fechamento frente tempo real | DONE | (fechamento 167) | 0×5xx/traceback; WS ativo; 401→1006 documentado |
+| 2026-11-13 ~16:45 -03 | F6 | main | Remoção LNF api-delpi + default MFE BFF + apply runner | código | ver SHAs F6 | SHA local BFF; migrations api-delpi removidas |
+| 2026-11-13 ~17:00 -03 | F6 | HML | Ensaio: api sem módulo; rotas antigas 404; E1+realtime; contagens | (registro) | HML | PROD não publicado |
 
 ### F7.4 — teste automatizado via conector (fora do Cursor)
 
@@ -426,3 +428,29 @@ Smoke manual do owner **substituído** pela evidência automatizada: E1 HTTP aut
 Corte: **2026-11-13** (conta como DU1). Dias úteis: 13, 14, 17, 18, **19**. **Término do F5c = 2026-11-19**. Feriado nacional **20/11** → publicação F6 em PROD não antes de **2026-11-21**, e somente com F7.4 DONE.
 
 **F6:** ensaio em HML permitido agora; PROD aguarda F5c DONE + F7.4 DONE.
+
+### F6 — plano de publicação em PROD (não executar agora)
+
+Pré-condições: F5c DONE (≥2026-11-19 sem incidente) **e** F7.4 DONE (conector). Não antes de **2026-11-21** (20/11 feriado).
+
+Ordem no `srv-api` (`operador@192.168.1.237`, `~/projetos/delpi-central`):
+
+```bash
+# 0) Capturar digests de rollback AGORA (antes do rebuild)
+docker inspect delpi-api-delpi --format '{{.Image}}'
+docker inspect delpi-controllership-finance-api --format '{{.Image}}'
+docker inspect delpi-lancamento-notas-fiscais --format '{{.Image}}'
+docker inspect delpi-gateway --format '{{.Image}}'
+
+git pull --ff-only
+# 1) Garantir .env: LNF_HOSTED_ENABLED=true LNF_MIGRATIONS_MODE=apply
+#    (sem LNF_MODULE_ENABLED); VITE_LNF_API_BASE=BFF; realtime flags as-is
+./infra/scripts/up-prod-sequential.sh --build \
+  controllership-finance-api api-delpi lancamento-notas-fiscais gateway
+
+# 2) Provas: api-delpi /lancamento-notas-fiscais/* → 404;
+#    BFF LNF 401 sem token; E1-like contagens = pré; realtime 101 com token;
+#    apply_noop no log BFF (lnf_migrations_apply_noop)
+```
+
+Rollback: `docker tag`/`service update` para os digests capturados no passo 0 (ou rebuild no SHA pré-F6).
