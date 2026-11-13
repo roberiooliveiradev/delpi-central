@@ -29,7 +29,7 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 
 Ordem: W1.1 → W2 → W2b → W3 → W4.1 → W4.2 → W4.3 → W4.4 → W5. Parar ao fim da W5.
 
-O código da W2/W2R está na main (`b0b4dae957`, `a26285e6f4`) com `LNF_REALTIME_ENABLED` default `false`. A location exata do gateway está commitada (`8d73567c37`); publicação em PROD pendente (ALINHAMENTO-01). Ligar a flag em PROD é a W6, depois da W5.
+O código da W2/W2R (`b0b4dae957`, `a26285e6f4`) e a location do gateway (`8d73567c37`) estão em PROD, dormentes (flag off). Deploys ALINHAMENTO-01 (horário -03): api-delpi 15:33:49 / imagem `sha256:2ccc9bd7…`; BFF 15:34:37 / `sha256:ad4d7fbe…`; gateway 15:35:01 / `sha256:91cdaacf…`. Ligar a flag em PROD é a W6, depois da W5.
 
 ## 2.1 Objetivo, escopo e não-escopo
 

@@ -54,8 +54,14 @@ Opções, sem implementar:
 
 Recomendação: a opção 2. É a única que amarra a confirmação ao banco que o processo realmente vai abrir.
 
-## Estado em 2026-11-13 à tarde
+## Estado final (ALINHAMENTO-01 retomada)
 
-ALINHAMENTO-01 (`57e55a8b85`) tira `up`, `status` e `reset` do LNF do runner da api-delpi. A pasta de SQL fica, porque a suíte da BFF compara o checksum. A location `/realtime` do LNF está em `gateway/nginx.conf` (`8d73567c37`) e ainda não foi publicada no gateway que está no ar. A publicação de HML e de PROD parou na regra Y5: o checkout `projetos-teste/delpi-central` tem mudanças locais de outra frente.
+Runner: `57e55a8b85` (recusa up/status/reset) + `9fc0bb9a78` (remove a classe live que apagava o schema; README do plugin aponta a BFF).
 
-D-S2 (access log das APIs), D-S3 (trava de host) e D-S4 (`error_log`) continuam sem implementação, à espera de decisão.
+HML: Y5 resolvida sem destruir trabalho alheio. Backup `/home/operador/backups/hml-local-20261113-180954.tgz`, SHA-256 `fcaff9d8009032697a00529f75fd70bce24d6228ed94a7ca4ad052849902c33a`. Sobreposição com `origin/main` = 0; `git merge --ff-only`; 157 hashes locais idênticos. Publicados api-delpi, BFF e gateway.
+
+PROD api-delpi publicada (`sha256:2ccc9bd7…`, 15:33:49 -03). `status --plugin lancamento-notas-fiscais` recusa. `LNF_MODULE_ENABLED=false`. BFF e gateway publicados na sequência; location `/realtime` dormente com flag off; access log da location com `<redacted>`.
+
+Rollback (imagens anteriores): api-delpi `sha256:ee93e690be03490d433ce431e8e271dc25956144ce3c69629d11be71d001ebef`; BFF `sha256:49c894ba5eb6b5ffcff3e870d823dd2d8899d2852f44a4a5750248aab3e8b4f6`; gateway `sha256:e998f96c494f275a34ad39ca59aec4f4634746f0c0b92b22a620f4dd593516a0`. Recriar sem `--build` após `docker tag <digest> infra-<serviço>`.
+
+D-S2, D-S3 e D-S4 continuam sem implementação.
