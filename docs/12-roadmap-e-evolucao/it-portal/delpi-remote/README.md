@@ -1,0 +1,58 @@
+# Delpi Remote | Fonte de verdade do projeto
+
+**Estado em 2026-11-13:** inicio autorizado pelo responsavel de TI. Gate 0 (arquitetura e planejamento) documentado; revisao de seguranca e validacao operacional **pendentes**. NENHUM acesso remoto foi ativado por esta entrega.
+
+**Repositorio:** `roberiooliveiradev/delpi-central`. **Issue principal:** [#179](https://github.com/roberiooliveiradev/delpi-central/issues/179).
+
+## Como continuar este trabalho em outro chat ou por outro desenvolvedor
+
+1. Ler **este README**, `ARCHITECTURE.md`, `SECURITY-GATES.md` e `EXECUTION-LOG.md`, nesta ordem.
+2. Consultar a [issue #179](https://github.com/roberiooliveiradev/delpi-central/issues/179), o estado de `main`, os commits recentes e `AGENTS.md`.
+3. Confirmar os estados reais no codigo e em teste. **Nao** inferir que documentos ou merge significam implantacao/homologacao.
+4. Escolher a **primeira tarefa pendente** na tabela abaixo, sem saltar gates.
+5. Ao concluir **cada tarefa**, atualizar **na mesma entrega** o estado deste arquivo e acrescentar uma entrada com evidencias ao `EXECUTION-LOG.md`. Linkar commit, testes, riscos, rollback, proxima tarefa e issue.
+6. A integracao e o controle remoto devem permanecer **desabilitados por padrao** ate autorizacao e homologacao especificas.
+
+## Escopo aprovado
+
+Inventario corporativo de desktops e notebooks; agente de inventario; controle remoto pelo navegador usando servico self-hosted; tela, mouse, teclado, clipboard e transferencia de arquivos em fases; acesso nao assistido apenas para estacoes corporativas inscritas e autorizadas; auditoria e gestao pelo Portal de TI. Evitar custos de licencas de softwares proprietarios.
+
+Acesso sem pedir senha Windows por sessao **nao** significa acesso anonimo: toda sessao exige identidade humana forte, politica do equipamento, permissoes especificas e auditoria. **Nao** implementar senha mestre compartilhada.
+
+## Roadmap e checkpoints
+
+| ID | Entrega | Estado | Criterio para encerrar |
+|---|---|---|---|
+| G0-DOC | Arquitetura, desenho de seguranca, contrato de inventario e plano de continuidade | **DOCUMENTADO** | Este pacote versionado e ligado a issue #179 |
+| G0-SEC | Threat model/revisao de seguranca, LGPD, licenciamento, analise de compatibilidade de MeshCentral, redes e backups | **PENDENTE DE REVISAO** | Aceite formal do responsavel de TI e seguranca com registro |
+| G1-DOM | Regras puras para cadastro de estacoes + testes | **NAO INICIADO** | Normalizacao, limites, catalogos e rejeicao de segredos validados |
+| G1-API | Migration independente, CRUD de estacoes e RBAC separado de servidores | **NAO INICIADO** | API e testes integracao verdes; nenhum agente remoto |
+| G1-UI | Area Computadores, busca/filtros/detalhe no plugin it-portal | **NAO INICIADO** | Permissoes e testes de UI; sem botao remoto ativo |
+| G2-AGENT | Identidade por dispositivo e coletor read-only de telemetria Windows | **NAO INICIADO** | Piloto, autenticacao individual, reconciliacao idempotente e remocao segura |
+| G3-ENGINE | MeshCentral isolado e testado em laboratorio | **NAO INICIADO** | Licenca, versao fixada, atualizacoes, TLS, backup, recuperacao, restricao de rede |
+| G4-AUTH | Broker de sessoes, Keycloak/MFA e permissoes independentes | **NAO INICIADO** | Revogacao, tokens de uso unico, fail-closed, logs, kill switch |
+| G5-REMOTE | Tela, teclado e mouse no navegador para computador piloto | **NAO INICIADO** | Testes presenciais de concorrencia, UAC, lock-screen, desconexao e latency |
+| G6-EXTRAS | Clipboard bidirecional e arquivos | **NAO INICIADO** | Avaliacao e teste de DLP, escopos independentes, transferencia auditavel |
+| G7-ROLLOUT | Implantacao em ondas SC/ES | **NAO INICIADO** | Aceite, notificacao aos usuarios, playbook suporte, rollback e monitoramento |
+
+Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VALIDADO, IMPLANTADO, BLOQUEADO. Nunca marcar `IMPLANTADO` sem evidencias do runtime; `VALIDADO` nao e sinonimo de CI verde.
+
+**Proximo passo executavel:** G1-DOM, seguido de G1-API. G0-SEC deve ser concluido **antes** de qualquer teste de controle de tela, instalacao do motor remoto ou acesso nao assistido.
+
+## Regras permanentes de engenharia
+
+- Criar dominio `workstations` separado de `servers`, evitando assumir que estacoes sao servidores.
+- Reaproveitar convencoes React/TS, FastAPI, Postgres `it_portal`, Keycloak, Core RBAC fresh e logs estruturados.
+- O coletor de inventario e o motor remoto devem ter **identidades, segredos, permissoes e flags independentes**. Nunca ampliar `host-service-control` para shell arbitrario.
+- Toda migration deve ser nova e imutavel; nao editar migrations historicas.
+- Nao publicar segredos, tokens, certificados privados, nomes/IPs de maquinas reais ou inventario nominal no GitHub. **Este repositorio foi constatado publico** na verificacao inicial.
+- Nao habilitar agente ou acesso remoto em servidores de producao sem change e janela aprovada.
+- Nao criar branches nem mudar worktrees sem autorizacao especifica; ver `AGENTS.md`.
+- Avisar ao usuario se nao houver acesso real a teste/deploy. Nenhum comando de implantacao deve ser dado como executado sem evidencia.
+
+## Links do pacote
+
+- [Arquitetura e decisoes](ARCHITECTURE.md)
+- [Gates de seguranca e matriz de riscos](SECURITY-GATES.md)
+- [Contrato inicial de inventario G1](INVENTORY-CONTRACT.md)
+- [Diario de execucao e passagem de bastao](EXECUTION-LOG.md)
