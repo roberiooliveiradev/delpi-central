@@ -129,3 +129,12 @@ IT_PORTAL_TEST_DSN=postgresql://user@host:5432/postgres python -m pytest -q
 - Sem mudanca estrutural do manifesto 0.3.4 (mesma rota e permissoes); build novo sera necessario apenas depois de homologacao da API com V010.
 - Testes preparados: `npm test -- --run src/features/workstations/WorkstationOwnerPicker.test.tsx src/features/workstations/WorkstationsPage.test.tsx`, `npm run lint`, `npm run build`.
 - [Runbook G1-OWNER](../../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G1-OWNER-RELEASE.md).
+
+
+## Delpi Remote G2-S1 | Coletor local Windows (em revisao)
+
+- Implementado script independente em `collectors/windows_workstation/Collect-ItPortalWorkstationSnapshot.ps1`, local e somente leitura; sem servidor remoto, ScheduledTask, servico, install ou envio de dados.
+- Contrato validado por `it_portal_app/domain/workstation_snapshots.py`: hardware/OS/volumes, IP RFC1918 somente sob opt-in, schema/UTC e limites.
+- Testes: `python -m pytest -q tests/test_workstation_snapshots.py` (nove casos Python executados em ambiente isolado; validacao de runtime PS5.1 pendente).
+- **Nenhuma nova migration, rota, RBAC, segredo, container ou deploy** nesta etapa. A identidade S2S e a ingestao segura pertencem a G2-S2.
+- Ver documentacao: `docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G2-S1-LOCAL-COLLECTOR.md`.

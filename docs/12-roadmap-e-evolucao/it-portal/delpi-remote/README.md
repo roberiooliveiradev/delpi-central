@@ -28,8 +28,10 @@ Acesso sem pedir senha Windows por sessao **nao** significa acesso anonimo: toda
 | G1-DOM | Regras puras para cadastro de estacoes + testes | **EM REVISAO** | Normalizacao, limites, catalogos e rejeicao de segredos validados |
 | G1-API | Migration independente, CRUD de estacoes e RBAC separado de servidores | **EM REVISAO** | API e testes integracao verdes; nenhum agente remoto |
 | G1-UI | Area Computadores, busca/filtros/detalhe no plugin it-portal | **EM REVISAO** | Permissoes e testes de UI; sem botao remoto ativo |
-| G1-OWNER | Selecionar colaborador usuario da plataforma como responsavel do computador; vinculo por identidade estavel | **EM REVISAO** | Busca seletiva, vinculacao por ID do Core, exibicao do nome, auditoria de troca e tratamento de usuarios inativos |
-| G2-AGENT | Identidade por dispositivo e coletor read-only de telemetria Windows | **NAO INICIADO** | Piloto, autenticacao individual, reconciliacao idempotente e remocao segura |
+| G1-OWNER | Selecionar colaborador usuario da plataforma como responsavel do computador; vinculo por identidade estavel | **VALIDADO** | Busca seletiva, vinculacao por ID do Core, exibicao do nome, auditoria de troca e tratamento de usuarios inativos |
+| G2-AGENT | Identidade por dispositivo e coletor read-only de telemetria Windows | **EM DESENVOLVIMENTO** | Piloto, autenticacao individual, reconciliacao idempotente e remocao segura |
+| G2-S1 | Coletor Windows LOCAL + contrato estrito de snapshot, sem envio automatico | **EM REVISAO** | Execucao em PowerShell 5.1 no Windows piloto, testes e aceite do snapshot |
+| G2-S2 | Identidade individual de agente e ingestao autenticada, revogavel e idempotente | **NAO INICIADO** | Threat model S2S, binding dispositivo, testes de replay/revogacao e primeiro envio aprovado |
 | G3-ENGINE | MeshCentral isolado e testado em laboratorio | **NAO INICIADO** | Licenca, versao fixada, atualizacoes, TLS, backup, recuperacao, restricao de rede |
 | G4-AUTH | Broker de sessoes, Keycloak/MFA e permissoes independentes | **NAO INICIADO** | Revogacao, tokens de uso unico, fail-closed, logs, kill switch |
 | G5-REMOTE | Tela, teclado e mouse no navegador para computador piloto | **NAO INICIADO** | Testes presenciais de concorrencia, UAC, lock-screen, desconexao e latency |
@@ -40,7 +42,9 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 
 **Publicacao G1 (evidencia recebida 13/11/2026):** operador executou a implantacao da API e do MFE; API `healthy`, migration V009 e tabela `it_portal.workstations` verificadas no PostgreSQL, frontend recriado (`Up 2 seconds`). **Pendente:** registrar/confirmar manifesto estrutural `0.3.4` e RBAC no Core, validar assets web e executar testes de usuario antes de considerar G1 homologado. Detalhes em [runbook](G1-RELEASE.md) e [diario](EXECUTION-LOG.md).
 
-**Proximo passo executavel:** validar o codigo G1-OWNER no CI real (pytest, Vitest, lint/build), aplicar V010 somente em homologacao com PostgreSQL descartavel e verificar as rotas oficiais do Core. Depois, revisar backup e preparar deploy de API+MFE (sem alterar manifesto 0.3.4, pois nao foram criadas rotas/permissoes). Homologacao G1 existente continua aberta. G2-AGENT so apos gates atendidos; acesso remoto continua bloqueado por G0-SEC.
+**Aceite funcional G1-OWNER (13/11/2026):** o operador informou que o pull, deploy e a funcionalidade de responsavel vinculado funcionaram perfeitamente em producao. Esta e evidencia de aceite funcional comunicada pelo usuario, NAO prova independente de todos os testes integrados, RBAC negativo ou CI. Detalhes no diario.
+
+**Proximo passo executavel:** executar o coletor G2-S1 somente em um Windows corporativo piloto autorizado e validar seu JSON local sem envio. Ver [G2-S1](G2-S1-LOCAL-COLLECTOR.md). Depois de testar, iniciar G2-S2: definir identificador criptografico individual, binding revogavel e escopo S2S exclusivo antes de qualquer ingestao de inventario no banco. G0-SEC segue como gate obrigatorio para acesso remoto.
 
 ## Regras permanentes de engenharia
 
@@ -60,5 +64,6 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 - [Contrato inicial de inventario G1](INVENTORY-CONTRACT.md)
 - [G1-OWNER: vinculo do responsavel a usuario da plataforma](G1-OWNER.md)
 - [G1-OWNER: publicacao e verificacao futura](G1-OWNER-RELEASE.md)
+- [G2-S1: coletor local Windows e contrato de snapshot](G2-S1-LOCAL-COLLECTOR.md)
 - [Convencao de nomenclatura de computadores (proposta)](NAMING-CONVENTION.md)
 - [Diario de execucao e passagem de bastao](EXECUTION-LOG.md)

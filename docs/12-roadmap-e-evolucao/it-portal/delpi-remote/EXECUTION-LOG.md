@@ -184,6 +184,22 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo:** validar suites reais e PostgreSQL V001..V010, tratar incompatibilidades, liberar publicacao do G1-OWNER com aceite; depois iniciar desenho G2-AGENT de leitura de inventario. G0-SEC permanece gate para remoto.
 
+## 2026-11-13 | Aceite G1-OWNER e inicio G2-S1 (coletor offline)
+
+**Aceite relatado:** operador afirmou expressamente que a publicacao do G1-OWNER e a funcionalidade de vinculo a usuario funcionaram perfeitamente, autorizando a continuidade do roadmap. Aceite funcional informado pelo usuario; nao equivale a comprovacao de todos os testes CI e controles RBAC negativos.
+
+**Proxima entrega implementada no codigo:** G2-S1, coletor PowerShell independente para estacoes Windows, somente leitura e execucao manual, sem acesso remoto, instalacao, tarefa agendada, rede, API de ingestao, credenciais ou migration.
+
+**Arquivos:** `collectors/windows_workstation/Collect-ItPortalWorkstationSnapshot.ps1`, `domain/workstation_snapshots.py`, `tests/test_workstation_snapshots.py` e `G2-S1-LOCAL-COLLECTOR.md`.
+
+**Contrato:** JSON v1 (source/run_id/timestamp/host/hardware/os/volumes/network/status); limite de tamanho e listas, UTC e rejeicao de chaves desconhecidas e IP publico. Hostname e run_id nao autenticam a estacao.
+
+**Testes realmente executados:** nove testes unitarios do validador Python em ambiente isolado **PASS**, `py_compile` **PASS**. Hash de objeto Git do modulo e do script confrontado com os arquivos testados. Sem Windows PowerShell na ferramenta, portanto **NAO** houve execucao PS5.1 e nenhum computador foi consultado pelo assistente. Teste estatico do script sem APIs de rede/instalacao.
+
+**Producao:** nenhuma migracao, servico, agente, container ou permissao alterada pelo G2-S1. O G1-OWNER funciona conforme confirmacao do operador; o codigo do G2-S1 ainda nao foi publicado por deploy.
+
+**Proximo passo unico:** piloto **local e manual** do script em um Windows nao critico, revendo apenas estrutura/resultado agregado. Em seguida projetar G2-S2 com escopo S2S por workstation, credencial individual e revogavel, ingestao idempotente e retencao. G0-SEC segue como gate do motor de acesso remoto.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

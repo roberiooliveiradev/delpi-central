@@ -1,6 +1,6 @@
 # G1-OWNER | Responsavel do computador como usuario da Minha DELPI
 
-**Estado:** EM REVISAO em 2026-11-13. Codigo de vinculo, migracao V010, UI e testes preparados no repositorio; verificacao integrada e deploy pendentes. G1 anterior ainda aguarda homologacao funcional completa. Nada desta etapa foi implantado.
+**Estado:** VALIDADO FUNCIONALMENTE PELO OPERADOR em 2026-11-13. O solicitante informou que o pull, deploy e o seletor de responsavel funcionaram perfeitamente em producao. Esta evidencia de aceite nao substitui provas independentes de suites completas, integracao Postgres descartavel e RBAC negativo; nao inferir CI verde.
 
 ## Problema e objetivo
 
@@ -24,7 +24,7 @@ Hoje o formulario `Computadores > Cadastrar/Editar` solicita o campo `Responsave
 - Se o usuario for desativado/excluido/transferido, preservar a referencia historica e sinalizar `Inativo` ou `Vinculo indisponivel`, sem apagar historico ou assumir substituto automaticamente.
 - Manter referencia ao colaborador separada das credenciais de agente, identidade Windows e permissoes de suporte remoto. Atribuicao do equipamento nao autoriza conexao remota.
 
-## Implementacao preparada no codigo (sem deploy)
+## Implementacao versionada e validada funcionalmente pelo operador
 
 - Contratos oficiais do Core verificados: `GET /me/directory/users?q=...&include_self=true&limit=15` lista usuarios ativos; `POST /me/directory/users/lookup` resolve UUIDs existentes e **ativos**. O Core responde JSON `{items: [{id,name,email?}]}`, distinto do envelope da BFF. Nao usar endpoint administrativo.
 - Frontend usa o token do usuario logado (mesma sessao Keycloak) na chamada same-origin ao Core; busca debounced e selecao explicita, sem expor token em URL, logs ou cadastro. Permissoes de escrita permanecem `computers.manage` + `computers.view`.
@@ -36,7 +36,7 @@ Hoje o formulario `Computadores > Cadastrar/Editar` solicita o campo `Responsave
 - Nenhum agente, monitoramento online ou acesso remoto neste incremento.
 - Manifesto `0.3.4` permanece, pois nenhuma nova rota ou permissao estrutural foi criada nesta etapa.
 
-**Verificacao pendente:** testes HTTP de backend, PostgreSQL descartavel com V001..V010, Vitest, TypeScript/lint/build, revisao de UI e smoke em homologacao. Testes foram escritos mas nao executados no runtime de producao. Seguir [runbook de publicacao](G1-OWNER-RELEASE.md).
+**Verificacao complementar pendente:** evidencias independentes de suite HTTP real, PostgreSQL descartavel V001..V010, Vitest, TypeScript/lint/build e cenarios RBAC negativos. O solicitante confirmou sucesso da funcionalidade em producao. Consultar [runbook](G1-OWNER-RELEASE.md) e diario.
 
 ## Criterios de aceite
 
@@ -57,4 +57,4 @@ Hoje o formulario `Computadores > Cadastrar/Editar` solicita o campo `Responsave
 - Criacao de usuarios da plataforma pelo Portal de TI.
 - Sincronizacao irrestrita ou copia integral da base de usuarios para o inventario.
 
-**Proximo passo tecnico:** executar suites reais e homologacao V010, corrigir falhas de integracao, solicitar aceite para deploy conforme G1-OWNER-RELEASE.md e registrar o resultado. Nao marcar IMPLANTADO sem evidencia do host.
+**Proximo passo tecnico:** guardar evidencias dos testes complementares de G1-OWNER e iniciar G2-S1, sem confundir coleta local com instalacao de agente e sem ativar envio. G2-S2 so apos desenho de autenticacao e binding revogavel.
