@@ -81,13 +81,13 @@ Transferir o módulo **Lançamento de Notas Fiscais (LNF)** da `api-delpi` para 
 | F0–F4b | Inventário, contrato, implementação dark, ensaio HML | DONE | — | até `fddd4bb813` | 2026-11-12 | 163/164, suíte |
 | F5a | Preparação dark de PROD | DONE | PROD | `fdc31ad48e` + deploys 2026-11-12 | 2026-11-12 | BFF/MFE/api-delpi dark; preflight 5/5; OpenAPI BFF 112/0 LNF; api 731/22 LNF; MFE base api-delpi; observação 15 min sem incidente |
 | F5b | Corte em PROD | **DONE** | PROD | `630ca6f3b9` + fix PO `e43aa9558b` | 2026-11-13 | Owner (2026-11-13): smoke manual substituído por evidência automatizada (E1 HTTP HML; contagens/5xx PROD ALINHAMENTO-01 + W6) |
-| F5c | Estabilização (hypercare) | IN_PROGRESS | PROD | — | 2026-11-13 | Corte 13/11 = DU1; DU: 13,14,17,18,19; **término = 2026-11-19**; 20/11 feriado nacional → F6 PROD não antes de 2026-11-21 |
+| F5c | Estabilização (hypercare) | **DONE** (encerrado por decisão do owner 2026-11-13) | PROD | — | 2026-11-13 | Owner encerrou a janela antecipadamente para publicar F6 |
 | F7.0 | CLARA — inventário e contrato | DONE | docs | `0926f07160` | 2026-11-13 | doc 166; R2=SIM JWT usuário |
 | F7.1 | CLARA — leituras | DONE | HML/PROD | `1328cd0d85` | 2026-11-13 | 8 reads; HML JSON-RPC PASS; PROD health+import |
 | F7.2 | CLARA — análise | DONE (F7-R3) | HML/PROD | `d9393bcde5` | 2026-11-13 | enum LNF; `review_aged_pending.value`=contagem ≥5d |
 | F7.3 | CLARA — ações governadas | DONE (F7-R3) | HML/PROD | `d9393bcde5` | 2026-11-13 | copy conversacional sem Portal; displayable=true |
-| F7.4 | CLARA — produção + teste automatizado | **IN_PROGRESS — teste automatizado via conector** | PROD | `bd4e26e98b` + `7f332cb39b` | 2026-11-13 | Cursor NÃO executa; conector externo dono do teste CLARA |
-| F6 | Limpeza final (encerra o rollback) | **pronta, ensaiada em HML; PROD aguarda F5c DONE + F7.4 DONE** | HML | ver registro | 2026-11-13 | Código na main; ensaio HML; PROD bloqueado até F5c (após 19/11) + F7.4 |
+| F7.4 | CLARA — produção + teste automatizado | **verificação pela CLARA pós-deploy** | PROD | `bd4e26e98b` + `7f332cb39b` | 2026-11-13 | conector; pós F6 PROD |
+| F6 | Limpeza final (encerra o rollback) | **IN_PROGRESS — deploy PROD** | PROD | `bfaf93a6eb` | 2026-11-13 | Owner autorizou PROD agora; F5c encerrado; rollback por tags `rollback-f6-*` |
 
 Status possíveis: TODO · IN_PROGRESS · BLOCKED (regra de parada) · DONE.
 **Ordem de execução obrigatória:** F5a → F5b → F5c (inicia o período de estabilização) → F7.0 → F7.1 → F7.2 → F7.3 → F7.4 → F6.
@@ -429,28 +429,72 @@ Corte: **2026-11-13** (conta como DU1). Dias úteis: 13, 14, 17, 18, **19**. **T
 
 **F6:** ensaio em HML permitido agora; PROD aguarda F5c DONE + F7.4 DONE.
 
-### F6 — plano de publicação em PROD (não executar agora)
+### F6 — deploy PROD (2026-11-13, decisão do owner)
 
-Pré-condições: F5c DONE (≥2026-11-19 sem incidente) **e** F7.4 DONE (conector). Não antes de **2026-11-21** (20/11 feriado).
+Owner: publicar agora (fora do horário comercial); F5c encerrado; F7.4 segue pós-deploy pelo conector.
 
-Ordem no `srv-api` (`operador@192.168.1.237`, `~/projetos/delpi-central`):
+#### Linha de base PROD (pré-deploy)
+
+| Métrica | Valor |
+|---|---|
+| total `invoice_posting_requests` | **1446** |
+| 01 pending/posted/cancelled | 11 / 635 / 8 |
+| 02 pending/in_progress/posted/cancelled | 2 / 1 / 772 / 17 |
+| ledger | V001–V014 (14 linhas; checksums alinhados à BFF) |
+| 5xx/403 LNF BFF 30 min | 0 / 0 |
+| Traceback BFF 30 min | 0 |
+
+Contagens exatas por tabela (pré): requests=1446, comments=29, danfe=425, fiscal_att=238, history=3935, linked_invoices=191, linked_po_lines=2002, linked_pos=1073, unmapped=333, refresh_control=1, schema_migrations=14.
+
+#### Digests pré-deploy (rollback)
+
+| Serviço | Digest atual | Tag rollback |
+|---|---|---|
+| MFE | `sha256:f9b9b47ed6118357f138ff74bac6f3df03b2d0302637a60a4c972b5a7e226a48` | `rollback-f6-lancamento-notas-fiscais:pre` |
+| BFF | `sha256:ad4d7fbec4e9d5b3be7a23597b9915cab8cf53d22e612c46f2f41029c0ef6e97` | `rollback-f6-controllership-finance-api:pre` |
+| api-delpi | `sha256:2ccc9bd7cadec3d438fca002ab581b763b965fd03baa170092834f10fb59ef9a` | `rollback-f6-api-delpi:pre` |
+| gateway | `sha256:91cdaacf1a001906cb1c86d686b7faa8e3a1c446c9f85bfe325c1173aad94b47` | `rollback-f6-gateway:pre` (não republicar se F6 não alterou) |
+
+Pendência: remover tags `rollback-f6-*` após **7 dias sem incidente** (**2026-11-20**).
+
+#### Env LNF_* pré → alvo
+
+| Chave | BFF pré | BFF alvo | api-delpi pré | api-delpi alvo |
+|---|---|---|---|---|
+| `LNF_HOSTED_ENABLED` | true | true | true (residual) | residual OK / irrelevante |
+| `LNF_MIGRATIONS_MODE` | **verify** | **apply** | verify | irrelevante |
+| `LNF_MODULE_ENABLED` | false (residual) | residual | **false** | **removido** |
+| `LNF_REALTIME_ENABLED` | true | true | — | — |
+| `LNF_NOTIFICATIONS_ENABLED` | true | true | true | residual |
+| `LNF_DANFE_UPLOAD_DIR` | path BFF | igual | path | residual / sem mount LNF |
+| `VITE_LNF_*` | no .env compartilhado | iguais (só MFE build) | — | — |
+
+#### Comandos exatos de rollback (ANTES do rebuild)
 
 ```bash
-# 0) Capturar digests de rollback AGORA (antes do rebuild)
-docker inspect delpi-api-delpi --format '{{.Image}}'
-docker inspect delpi-controllership-finance-api --format '{{.Image}}'
-docker inspect delpi-lancamento-notas-fiscais --format '{{.Image}}'
-docker inspect delpi-gateway --format '{{.Image}}'
+cd ~/projetos/delpi-central/infra
+# MFE
+docker tag rollback-f6-lancamento-notas-fiscais:pre infra-lancamento-notas-fiscais:latest
+# restaurar env MFE/build-args se alterados; recreate sem build:
+../infra/scripts/up-prod-sequential.sh lancamento-notas-fiscais
+# (se o script reconstruir, forçar imagem:)
+docker compose up -d --no-build --force-recreate lancamento-notas-fiscais
 
-git pull --ff-only
-# 1) Garantir .env: LNF_HOSTED_ENABLED=true LNF_MIGRATIONS_MODE=apply
-#    (sem LNF_MODULE_ENABLED); VITE_LNF_API_BASE=BFF; realtime flags as-is
-./infra/scripts/up-prod-sequential.sh --build \
-  controllership-finance-api api-delpi lancamento-notas-fiscais gateway
+# BFF — restaurar LNF_MIGRATIONS_MODE=verify no infra/.env, depois:
+docker tag rollback-f6-controllership-finance-api:pre infra-controllership-finance-api:latest
+docker compose up -d --no-build --force-recreate controllership-finance-api
 
-# 2) Provas: api-delpi /lancamento-notas-fiscais/* → 404;
-#    BFF LNF 401 sem token; E1-like contagens = pré; realtime 101 com token;
-#    apply_noop no log BFF (lnf_migrations_apply_noop)
+# api-delpi — restaurar LNF_MODULE_ENABLED=false no infra/.env, depois:
+docker tag rollback-f6-api-delpi:pre infra-api-delpi:latest
+docker compose up -d --no-build --force-recreate api-delpi
+
+# gateway (só se foi republicado):
+docker tag rollback-f6-gateway:pre infra-gateway:latest
+docker compose up -d --no-build --force-recreate gateway
 ```
 
-Rollback: `docker tag`/`service update` para os digests capturados no passo 0 (ou rebuild no SHA pré-F6).
+Emergência (app inutilizável): runbook 164 na ordem documentada + rollback de todos na ordem inversa (api-delpi → BFF → MFE).
+
+#### Ordem de publicação
+
+1. MFE → 2. BFF → 3. api-delpi → 4. gateway só se necessário (F6 não alterou nginx).
