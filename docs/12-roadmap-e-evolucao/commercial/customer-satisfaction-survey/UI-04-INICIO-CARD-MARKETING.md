@@ -49,3 +49,11 @@ A posição final é resolvida pelo **grid responsivo existente**; não definir 
 - Card funciona em grid responsivo, busca, favoritos, recents, Ctrl+K e navegação voltar.
 - Nenhum texto de campanha, resposta, dado privado ou token é carregado no Início; é **somente navegação**.
 - Reuso estrito de `CommercialSectionRouteCard`; nenhum componente visual novo. Testes estruturais/funcionais de permissões e roteamento.
+
+## 5. Aprovação final do solicitante — composição do card (13/11/2026)
+
+**APROVADO:** acrescentar somente **um card Marketing** na seção existente **Caminhos e funcionalidades** do Início, com título **Marketing**, descrição curta **Satisfação dos clientes e relacionamento** e **uma única entrada** **Pesquisa de satisfação do cliente** que navega à **UI-01 Resultados gerais**, sem pré-selecionar campanha. Manter os mesmos padrões de card do catálogo, ícone oficial, favoritos/estrela, grid responsivo, busca, acessos recentes, atalhos e navegação do Portal. **Não** criar página Painel Marketing, nova topbar, outro MFE, indicadores no card ou links adicionais não implementados.
+
+**Acesso:** `commercial.access` pode acessar os resultados agregados; ações de gestão/configuração da campanha aparecem somente dentro das páginas autorizadas para `commercial.marketing` ou `commercial.manage`, sob verificação efetiva da API. Card é entrada de navegação, jamais prova de autorização.
+
+**Design e implementação:** `CommercialSectionRouteCard`/`createDashboardSectionRouteCard` e grid oficial. Posição final, tamanhos, colunas, fonte, padding, margens, gap e breakpoints vêm do PluginUI e CSS real; **TO_INVENTORY** dos valores e seletores específicos, sem fixar dimensão arbitrária nem criar CSS paralelo. Verificar comportamento desktop/tablet/celular, favoritos, busca e acesso por teclado. **Status:** composição visual **APROVADA**, implementação e testes **PENDING**.
