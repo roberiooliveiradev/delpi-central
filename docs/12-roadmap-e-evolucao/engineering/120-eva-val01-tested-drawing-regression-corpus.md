@@ -1087,3 +1087,13 @@ negativo `AG|16` UNKNOWN, demais âncoras preservadas, 0
 duplicatas. E2E real: `AUTHZ_BLOCKED` — identidade de avaliação
 sem `engineering.access`; mutações de AuthZ fora do escopo da task.
 Rollback: `rollback-pre-ab8772a4`. Detalhe: Doc 119 §85.4.
+
+### Adendo — E2E oficial DEV+PROD (2026-11-13)
+
+Job real prod `aj-fc70e1324afd47b6` (imagem `e3fc852e…`): COMPLETED,
+13/13, PDF sha `af47dd4c…`, `AE|1|10010028→50225702` IDENTIFIED
+`rowspan_anchor`; `AG|16` e `AG|2` UNKNOWN; demais âncoras
+preservadas; 279 ocorrências, 0 duplicatas. Job DEV
+`aj-1f2297e1a74d42d5`: mesmo resultado. Autenticação: impersonation
+`rober` → code+PKCE `mcp-engineering` (PROD) / implicit+exchange
+`delia-api` (DEV) — sem mutações KC/Core. Runbook: Doc 121.

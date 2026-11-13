@@ -3703,3 +3703,51 @@ mudança está comprovado pelo replay no binário deployado.
 `DEPLOY_GATE=PASS` · `HEALTH_GATE=PASS` · `EMPTY_CELL_SIGNAL_GATE=
 PASS (binary replay)` · `REAL_PDF_E2E_GATE=AUTHZ_BLOCKED` ·
 `VAL01_COMPLETED=false`.
+
+## §85.5 — E2E oficial DEV+PROD com o refinamento (2026-11-13)
+
+**TASK_ID:** `EVA-E2E-AUTH-AND-EXECUTION-OPERATIONALIZATION-01`
+
+**Caminho de autenticação operacionalizado** — zero mutações
+Keycloak/Core, sem `directAccessGrants`, sem grants ad hoc:
+
+- **PROD:** impersonation admin (`rober` =
+  `inovacao@delpi.com.br`, `is_superadmin` no Core — autorização
+  legítima preexistente) → authorization-code + PKCE no client
+  `mcp-engineering` (redirect oficial ChatGPT, secret via kcadm) →
+  token `aud=resource URL`, `scope=mcp:tools` → MCP.
+- **DEV:** impersonation → implicit `delpi-central` →
+  token-exchange `delia-api` → `mcp-engineering` (mesmo fluxo §77;
+  exchange para `mcp-engineering` é negado por política em PROD).
+- Runbook canônico: Doc 121 (`121-eva-mcp-authenticated-e2e-
+  execution-runbook.md`).
+
+**E2E real — PROD** (imagem `e3fc852e…`, código `0601e0002c`):
+
+```text
+JOB=aj-fc70e1324afd47b6  status=COMPLETED  13/13 páginas
+PDF sha256=af47dd4cfbbb…(match)  occurrences=279
+AE|1|10010028 → 50225702  IDENTIFIED rowspan_anchor   ← resíduo resolvido
+AG|16|10110676 → 50225701  UNKNOWN y_anchor_nearest   (fail-closed)
+AG|2|10110676  → 50225701  UNKNOWN band_rehome_boundary
+AE→701/703/704/740 · AH·AG→740 · AF→741  IDENTIFIED preservados
+falsas promoções=0 · duplicatas=0
+```
+
+**E2E real — DEV** (stack local, mesma capacidade):
+`aj-1f2297e1a74d42d5` COMPLETED, 13/13, 279 ocorrências — controles
+idênticos ao PROD.
+
+**Delta vs job anterior** (`aj-f5040788e5074c30`, código
+`93dc8bad9f`): 7 saídas / 6 entradas por chave (maioria = mesma
+ocorrência com `parent_path` distinto) e 14 mudanças de estado,
+todas coerentes com o refinamento: realinhamentos ganhos
+(UNKNOWN→IDENTIFIED, incl. `AE→50225702`) e casos de evidência
+insuficiente corretamente fail-closed (IDENTIFIED→UNKNOWN
+`band_rehome_boundary`/`y_anchor_nearest`). Atribuível ao diff
+`ab8772a410` — os demais commits do intervalo (`d73b11e30b`,
+`e98962472d`) não tocam o pipeline de desenho.
+
+`DEV_E2E=PASS` · `PROD_E2E=PASS` · `AUTHN=PASS` · `AUTHZ=PASS` ·
+`MCP_AUDIENCE=PASS` · `REPEATABLE_WORKFLOW=PASS` ·
+`VAL01_COMPLETED=false`.
