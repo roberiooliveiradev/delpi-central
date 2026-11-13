@@ -252,8 +252,13 @@ def main() -> int:
     st_dup, body_dup = http("POST", "/requests", p11, create_body)
     existing = None
     if isinstance(body_dup, dict):
-        existing = body_dup.get("existing_request_id") or (body_dup.get("details") or {}).get(
-            "existing_request_id"
+        meta = body_dup.get("meta") if isinstance(body_dup.get("meta"), dict) else {}
+        err = body_dup.get("error") if isinstance(body_dup.get("error"), dict) else {}
+        details = err.get("details") if isinstance(err.get("details"), dict) else {}
+        existing = (
+            body_dup.get("existing_request_id")
+            or meta.get("existing_request_id")
+            or details.get("existing_request_id")
         )
     results.append(
         row(
@@ -288,24 +293,7 @@ def main() -> int:
                 )
             )
 
-        # process actions by P6
-        for action, path, payload in [
-            ("start", f"/requests/{req_id}/start", {}),
-            ("block", f"/requests/{req_id}/block", {"reason": "other", "description": "w5"}),
-            ("resume", f"/requests/{req_id}/resume", {}),
-            ("comment", f"/requests/{req_id}/comments", {"body": "w5 comment"}),
-        ]:
-            st, _ = http("POST", path, p6, payload)
-            results.append(
-                row(
-                    f"E1.{action}",
-                    login(env, "P6"),
-                    "2xx",
-                    str(st),
-                    "PASS" if 200 <= st < 300 else "FAIL",
-                )
-            )
-
+        # cancel pelo dono enquanto pending
         st, _ = http("POST", f"/requests/{req_id}/cancel", p11, {"justification": "w5 cancel"})
         results.append(
             row(
@@ -316,6 +304,87 @@ def main() -> int:
                 "PASS" if 200 <= st < 300 else "FAIL",
             )
         )
+
+        # ciclo process em outra solicitação
+        stamp_p = str(int(time.time()))[-6:]
+        create_p = dict(create_body)
+        create_p["document"] = f"6{stamp_p}"
+        st_p, body_p = http("POST", "/requests", p11, create_p)
+        req_p = None
+        if isinstance(body_p, dict):
+            data_p = body_p.get("data") if isinstance(body_p.get("data"), dict) else body_p
+            req_p = (data_p or {}).get("id")
+        if req_p:
+            st, _ = http("POST", f"/requests/{req_p}/start", p6, {})
+            results.append(
+                row(
+                    "E1.start",
+                    login(env, "P6"),
+                    "2xx",
+                    str(st),
+                    "PASS" if 200 <= st < 300 else "FAIL",
+                )
+            )
+            st, _ = http(
+                "POST",
+                f"/requests/{req_p}/block",
+                p6,
+                {
+                    "block_reason": "other",
+                    "block_description": "w5",
+                    "assignee_user_id": "w5-assignee",
+                    "assignee_name": "W5 Assignee",
+                },
+            )
+            results.append(
+                row(
+                    "E1.block",
+                    login(env, "P6"),
+                    "2xx",
+                    str(st),
+                    "PASS" if 200 <= st < 300 else "FAIL",
+                )
+            )
+            st, _ = http("POST", f"/requests/{req_p}/resume", p6, {})
+            results.append(
+                row(
+                    "E1.resume",
+                    login(env, "P6"),
+                    "2xx",
+                    str(st),
+                    "PASS" if 200 <= st < 300 else "FAIL",
+                )
+            )
+            st, _ = http(
+                "POST",
+                f"/requests/{req_p}/comments",
+                p6,
+                {"body": "w5 comment"},
+            )
+            results.append(
+                row(
+                    "E1.comment",
+                    login(env, "P6"),
+                    "2xx",
+                    str(st),
+                    "PASS" if 200 <= st < 300 else "FAIL",
+                )
+            )
+            st, _ = http(
+                "POST",
+                f"/requests/{req_p}/post-manual",
+                p6,
+                {"justification": "w5 manual"},
+            )
+            results.append(
+                row(
+                    "E1.post_manual",
+                    login(env, "P6"),
+                    "2xx",
+                    str(st),
+                    "PASS" if 200 <= st < 300 else "FAIL",
+                )
+            )
 
     # --- E2/E3 realtime ---
     if websocket is None:
