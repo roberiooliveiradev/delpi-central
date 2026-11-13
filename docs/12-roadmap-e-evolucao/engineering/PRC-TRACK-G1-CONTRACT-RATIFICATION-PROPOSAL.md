@@ -119,3 +119,20 @@ A orientação do PO resolve a alternativa *estado consolidado vs somente delta*
 **Efeito sobre questões abertas:** a dúvida “consolidado ou delta?” está **DECIDIDA PELO PO**. Permanecem **PENDING_COORDINATION** (a) critérios concretos de origem/verificação dos dados, (b) fórmula de merge e cobertura de UPDATE parcial, (c) primeira V1 quando não existe baseline de acompanhamento, e (d) migrations/compatibilidade e AuthZ.
 
 **Estado de execução:** `TEST_NOT_RUN`; nenhum código ou schema foi alterado por esta decisão.
+
+## 7. Emenda CR-03 — baseline inicial V1 independente de diff (PO, 13/11/2026)
+
+**PO escolheu A, sem comentário.** Regra funcional a ratificar: na primeira conclusão PRC validada de um produto ainda não acompanhado, **materializar V1 como baseline da ficha consolidada CR-02**, mesmo se não houver mudança técnica. A partir daí, somente diff técnico real com último snapshot gera V2...Vn; no-op posterior conclui e registra evidence/ledger sem versão.
+
+**Algoritmo conceitual proposto (não código):**
+- `verified != matched` → não criar baseline/revisão.
+- `record não existe ou não tem revisão confirmada` e `matched` → construir snapshot consolidado, validar cobertura mínima contratada, persistir `V1` com evento `baseline_initial`, mesmo `diff=[]`.
+- `record já tem Vn`, `matched`, `canonicalDiff(Vn,current)=[]` → concluir caso e vincular `recordId/currentRevision` com `noTechnicalChange=true`; não incrementar.
+- `record já tem Vn`, `matched`, `canonicalDiff != []` → criar Vn+1 com evidência e vínculo ao request.
+- Em todos os caminhos: transação/locking/CAS, idempotência, AuthZ e proveniência; não assumir que V1 prova criação ERP.
+
+**A decisão elimina a dúvida anterior** “primeira V1 com no-op fica sem baseline?”: **deve criar V1**. Continuam pendentes da Engineering API/Coordination: campos/proveniência e cobertura mínima do baseline, semântica de UPDATE parcial e null/ausente, no-op canônico de fornecedores, migration backward-compatible, erro/retry/concurrency e contrato de conclusão com revisão inalterada. **Não modificar documentação legada silenciosamente**: esta emenda tem precedência.
+
+**Novos cenários HML:** primeira UPDATE matched/no-diff gera V1; primeira CREATE matched gera V1 sem atribuir prova ERP de criação além do contrato oficial; segunda no-op mantém V1; diff posterior gera V2; unmatched/forbidden não gera V1; replay e duas conclusões concorrentes não duplicam revisões; listagem mostra V1 e última evolução baseline.
+
+**Estado:** `PO_APPROVED / COORDINATION_RATIFICATION_PENDING / TEST_NOT_RUN`. Sem autorização de implementação.
