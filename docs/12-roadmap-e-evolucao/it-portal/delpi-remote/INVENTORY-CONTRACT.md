@@ -39,3 +39,11 @@
 7. Migration e rollback operacional documentados; nao editar V001...V008.
 
 **Nota:** especificacao e contrato propostos; ainda nao corresponde a rotas disponiveis no backend.
+
+## Proxima evolucao planejada: G1-OWNER (vinculo ao usuario do Core)
+
+O campo `responsible` atual e texto livre. Depois de homologar o G1, desenvolver um campo de busca e selecao de **colaborador usuario da Minha DELPI**, persistindo referencia estavel ao usuario no Core (ID, nao o nome digitado).
+
+- Ver [G1-OWNER.md](G1-OWNER.md) para regras, migracao futura, tratamento de contas inativas, seguranca, API e criterios de aceite.
+- O **responsavel de uso** do ativo (colaborador a quem o computador foi atribuido) e diferente do **administrador de TI** com permissao para gerenciar/assistir a maquina. O vinculo de propriedade nao outorga acesso remoto.
+- Nenhuma mudanca na tabela, na API ou nas permissoes foi executada neste pedido de roadmap.

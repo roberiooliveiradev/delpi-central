@@ -146,6 +146,16 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo:** usuario cadastra a estacao, envia a confirmacao e testa abertura da ficha, edicao, historico, arquivamento e restauracao; depois validar RBAC negativo e atualizar este diario.
 
+## 2026-11-13 | Planejamento G1-OWNER | responsavel vinculado a usuario da plataforma
+
+**Solicitacao:** substituir digitacao manual do campo Responsavel do cadastro de computador por seletor de colaboradores ja cadastrados na Minha DELPI. O responsavel representa o usuario principal do ativo, nao o administrador do Portal.
+
+**Alterado apenas no planejamento:** linha G1-OWNER inserida antes de G2-AGENT no roadmap, contrato de inventario complementado e documento `G1-OWNER.md` criado com escopo de UI, API/Core, migracao futura, historico, privacidade e criterios de aceite.
+
+**Implementacao:** NAO INICIADA. Nenhum campo, banco, permissao, manifesto ou deploy alterado. Atual campo texto livre continua funcionando durante a homologacao G1.
+
+**Proximo passo:** finalizar validacao funcional G1. Em seguida mapear diretorio autorizado do Core e desenvolver o seletor/vinculo com ID canonico; documentar entrega e testes no repositorio.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

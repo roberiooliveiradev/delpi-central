@@ -28,6 +28,7 @@ Acesso sem pedir senha Windows por sessao **nao** significa acesso anonimo: toda
 | G1-DOM | Regras puras para cadastro de estacoes + testes | **EM REVISAO** | Normalizacao, limites, catalogos e rejeicao de segredos validados |
 | G1-API | Migration independente, CRUD de estacoes e RBAC separado de servidores | **EM REVISAO** | API e testes integracao verdes; nenhum agente remoto |
 | G1-UI | Area Computadores, busca/filtros/detalhe no plugin it-portal | **EM REVISAO** | Permissoes e testes de UI; sem botao remoto ativo |
+| G1-OWNER | Selecionar colaborador usuario da plataforma como responsavel do computador; vinculo por identidade estavel | **NAO INICIADO** | Busca seletiva, vinculacao por ID do Core, exibicao do nome, auditoria de troca e tratamento de usuarios inativos |
 | G2-AGENT | Identidade por dispositivo e coletor read-only de telemetria Windows | **NAO INICIADO** | Piloto, autenticacao individual, reconciliacao idempotente e remocao segura |
 | G3-ENGINE | MeshCentral isolado e testado em laboratorio | **NAO INICIADO** | Licenca, versao fixada, atualizacoes, TLS, backup, recuperacao, restricao de rede |
 | G4-AUTH | Broker de sessoes, Keycloak/MFA e permissoes independentes | **NAO INICIADO** | Revogacao, tokens de uso unico, fail-closed, logs, kill switch |
@@ -39,7 +40,7 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 
 **Publicacao G1 (evidencia recebida 13/11/2026):** operador executou a implantacao da API e do MFE; API `healthy`, migration V009 e tabela `it_portal.workstations` verificadas no PostgreSQL, frontend recriado (`Up 2 seconds`). **Pendente:** registrar/confirmar manifesto estrutural `0.3.4` e RBAC no Core, validar assets web e executar testes de usuario antes de considerar G1 homologado. Detalhes em [runbook](G1-RELEASE.md) e [diario](EXECUTION-LOG.md).
 
-**Proximo passo executavel:** registrar/confirmar no Core a versao estrutural 0.3.4 e as permissoes computers.view/manage para o operador, verificar entrega de assets e validar fim-a-fim o CRUD + auditoria e RBAC. Suite integrada ainda pendente. G2-AGENT so com gates atendidos; acesso remoto continua bloqueado por G0-SEC. G0-SEC deve ser concluido **antes** de qualquer teste de controle de tela, instalacao do motor remoto ou acesso nao assistido.
+**Proximo passo executavel:** concluir a homologacao G1 (cadastro, edicao, arquivo, historico e RBAC); em seguida desenvolver G1-OWNER, conforme [especificacao](G1-OWNER.md), para escolher colaborador do Core como responsavel antes de iniciar G2-AGENT. Suite integrada ainda pendente. Acesso remoto continua bloqueado por G0-SEC, que exige aprovacao **antes** de teste de controle de tela, instalacao de motor remoto ou acesso nao assistido.
 
 ## Regras permanentes de engenharia
 
@@ -57,5 +58,6 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 - [Arquitetura e decisoes](ARCHITECTURE.md)
 - [Gates de seguranca e matriz de riscos](SECURITY-GATES.md)
 - [Contrato inicial de inventario G1](INVENTORY-CONTRACT.md)
+- [G1-OWNER: vinculo do responsavel a usuario da plataforma](G1-OWNER.md)
 - [Convencao de nomenclatura de computadores (proposta)](NAMING-CONVENTION.md)
 - [Diario de execucao e passagem de bastao](EXECUTION-LOG.md)
