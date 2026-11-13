@@ -1653,3 +1653,19 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-EVAL-ENV-FLAKES | OPEN_OPERATIONAL | ambiente de eval, não produção |
 
 **NEXT=`COORDINATION_INT1_PRODUCTION_OUTCOME_INDEPENDENT_ACCEPTANCE_REVIEW`** (após evidências PARTE B/C).
+
+### INT-1 deploy executado + validação produtiva — 2026-11-13 (Doc 321 PARTES B/C)
+
+| Residual | Status | Evidence |
+|---|---|---|
+| INT1-PRODUCTION-DEPLOY | **EXECUTED** | 4 serviços seqüenciais, healthy/running; imagens anteriores registradas (rollback pronto, não requerido) |
+| INT1-PRODUCTION-VALIDATION | **PASS_REPORTED** | eval `or-qwen14b-49cc26d53beb`: P1/P2/P3 GROUNDED em owners produtivos; aceite independente pendente |
+| INT1-EVAL-HARNESS-PROD-DEFAULTS | **CLOSED** | host header + issuer parametrizáveis (`c774b45655`, `50d107b3ba`) — defaults dev preservados |
+| INT1-PROD-RUNTIME-PROFILE | OPEN_EXTERNAL | prod `DELIA_RUNTIME_PROFILE=openrouter_kimi` ≠ perfil homologado `openrouter_qwen` — decisão ops/PO, fora do escopo |
+| INT1-SEC01-API-DELPI | OPEN_EXTERNAL | `ef2ea358f2` pós-build, task SEC-01 — não deployado (sem autorização INT-1) |
+| INT1-ATTEMPT-STATUS-CONFLATION | OPEN_MINOR | não-material |
+| INT1-MCP-HEAVY-VIEW-TIMEOUT | OPEN_MINOR | não-material |
+| INT1-DAVI-NONEXECUTABLE-CAPS | OPEN | herdado Doc 310 — owner DAVI |
+| INT1-EVAL-ENV-FLAKES | OPEN_OPERATIONAL | ambiente de eval |
+
+`PRODUCTION_VALIDATION=PASS` reportada com evidência; `INT1_CLOSED=NO` — NEXT=`COORDINATION_INT1_PRODUCTION_OUTCOME_INDEPENDENT_ACCEPTANCE_REVIEW`.
