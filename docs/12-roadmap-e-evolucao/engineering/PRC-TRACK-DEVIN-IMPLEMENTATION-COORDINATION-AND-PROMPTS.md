@@ -250,3 +250,16 @@ O [pacote técnico T01/T02 para ratificação](./PRC-TRACK-T01-T02-COORDINATION-
 **Gate de autoridade:** `ENGINEERING_OWNER_RATIFICATION_PENDING`. Necessário confirmar DTO/ports, consumidores existentes, migração mínima e rollback antes de autorizar implementação. Não escrever `OWNER_APPROVED` nem `PROD02_IMPLEMENTATION_PASS` sem evidência. Devin não precisa reabrir PROD-01 e não deve começar mudança de arquitetura unilateralmente. Após confirmação, emitir pacote bounded DEVIN-PROD-02 com T01/T02-AC01..09.
 
 **Testes:** DEV/HML podem usar dados governados e fluxos completos. **PRD apenas smoke READ-only/health**, zero escrita de dados de negócio para teste; nenhuma publicação produtiva autorizada.
+
+
+## 19. Ordem de execução — DEVIN-PROD-02 liberado por ratificação do owner (13/11/2026)
+
+**Autoridade:** owner de Engenharia declarou explicitamente sua titularidade e ratificou T01/T02 neste chat; deliberação formal [pacote T01/T02 §8](./PRC-TRACK-T01-T02-COORDINATION-TECHNICAL-RATIFICATION-PACKET.md). `T01_OWNER_RATIFIED / T02_OWNER_RATIFIED / IMPLEMENTATION_AUTHORIZED`. Status `ENGINEERING_OWNER_RATIFICATION_PENDING` do §18 fica **SUPERSEDED** para T01/T02 apenas.
+
+**TASK_ID:** `DEVIN-PROD-02-SNAPSHOT-VERSIONING-NOOP`. **Escopo fechado:** corrigir `_build_snapshot` e pipeline/ports/adapters `complete_request` para ficha consolidada PRC, campo/origem/coverage, merge UPDATE parcial, fornecedores `supplierCode+store`, V1 inicial, V2+ apenas com diff real, no-op auditado sem revision, CAS/locks/idempotência e paridade PG/memory. Nenhum novo papel, BC ou leitura direta TOTVS; manter gate `matched`/AuthZ existente.
+
+**Entrada obrigatória:** reancorar uma única vez no HEAD atual, `git status`, inventário objetivo de port/consumers/DTO/schema; declarar RQ/AC T01/T02 do pacote de contrato; menor diff com testes e compatibilidade. Resolver riscos técnicos locais no próprio owner sem reabrir negócios; registrar incompatibilidade factual ou mudança de authority como `ARCHITECTURE_DECISION_REQUIRED` e retornar.
+
+**Saída:** commit, push, PR, review/CI governados, merge somente sob autorização/política, HML apenas após deploy autorizado com SHA/digest comprovado, cenários V1/no-op/V2/mismatch/replay/CAS/parcial/legado/auth + dois usuários; handoff ao Cursor para aceite independente. Preservar histórico e reportar `PASS/FAIL/PENDING/TEST_NOT_RUN` sem falsa afirmação. PROD não autorizado; smoke READ-only se futuramente aprovado.
+
+**Anticíclo:** não refazer PROD-01 nem reconciliações repetidas de main; máximo uma reconciliação justificável por conflito real; falhas técnicas repetidas devem produzir pacote de evidências. T03–T08/flags/frontend fora do escopo.
