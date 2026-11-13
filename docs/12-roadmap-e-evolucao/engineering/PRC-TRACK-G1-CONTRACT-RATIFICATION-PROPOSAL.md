@@ -195,3 +195,28 @@ Requer owners explicitarem: catálogo de campos, leitura oficial, `null`/ausênc
 **HML / aceitação:** descrição modificada sem mexer em classificações/fornecedores; atributo de fornecedor atualizado mantendo demais; novo fornecedor ADD; fornecedor omitido preservado; REMOVE só quando habilitado pelo owner e oficialmente confirmável; campo omitido ≠ explicit-null; caso mismatch/403/409 não publica; primeiro V1, UPDATE com diff V2 e posterior no-op mantêm histórico/proveniência.
 
 **Estado:** `PROPOSED_FOR_COORDINATION / TEST_NOT_RUN`. Não autoriza implementation, migration ou deploy.
+
+
+## 10. Emenda CR-06 — limpeza explícita e validação por campo (PO, 13/11/2026)
+
+**Decisão PO:** opção **A — Limpeza explícita com validação do campo**, sem comentário. `PO_APPROVED / COORDINATION_RATIFICATION_PENDING`.
+
+### Contrato proposto, ainda sujeito a inventário e ratificação
+
+| Intenção recebida | Operação canônica TARGET | Efeito permitido |
+|---|---|---|
+| Campo não presente no delta | `UNCHANGED/OMITTED` | Herdar valor e provenance da última ficha consolidada |
+| Novo valor preenchido com intenção válida | `SET(value)` | Aplicar somente ao alvo explicitamente autorizado e verificado |
+| Limpeza deliberada de campo opcional | `CLEAR(target)` ou equivalente | Limpar somente quando o catálogo PRC e o sistema oficial admitirem |
+| `null`, `""` ou espaços sem intenção explícita | **AMBIGUOUS / validation error** | Nunca converter silenciosamente em CLEAR |
+| Campo obrigatoriamente preenchido | `CLEAR` inválido | Erro de validação, nenhuma mutação de snapshot |
+| Vínculo de fornecedor omitido | `UNCHANGED` | Preservar vínculo e atributos |
+| Remover todo vínculo | `REMOVE_LINK(supplierCode,store)` | Fluxo distinto e sujeito a gate SA5/owner, não dedutível de CLEAR do atributo |
+
+A forma final do DTO e seu versionamento dependem de inventário do contrato atual; **não assumir que os nomes das operações acima são implementados**. Definir nulabilidade e tipo por campo, regras de strings vazias/whitespace, compatibilidade com clients legados e erros determinísticos 400/409/422/403 conforme semântica confirmada. O valor limpo precisa registrar proveniência da solicitação/evidência de confirmação; `unknown` é um estado epistemológico diferente de `cleared`.
+
+**Integração com CR-02 a CR-05:** o merge do UPDATE trabalha sobre snapshot consolidado; CR-03 V1 baseline não exige alteração; para V2+, somente CLEAR validado com diferença técnica efetiva produz nova Vn; metadados e flags não alteram versão. Autorização backend-first e verificação `matched` continuam gates obrigatórios. Nunca forçar API oficial a apagar dado não suportado.
+
+**HML / contract tests:** omissão preserva, vazio ambíguo falha sem limpar, CLEAR opcional validado altera alvo e provenance, CLEAR obrigatório rejeitado, CLEAR sem permissão rejeitado, CLEAR repetido sem diferença não gera Vn, REMOVE_LINK só com contrato/gate próprio, erro de verificação e concorrência não publica versão, cliente legado não executa limpeza implícita.
+
+**Pendente para Coordination:** matriz campo→`nullable/clearable`, desenho de DTO de operações, política de migração de payloads antigos, read-back oficial e observabilidade. `TEST_NOT_RUN`; sem implementação.
