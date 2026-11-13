@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Status | **CONTRACT_DRAFT** |
+| Status | **PRODUCTION** |
 | Data | 2026-11-13 |
 | Decisor | owner do produto |
 | Baseline de evidência | W0 no HEAD `7f332cb39b`; rebaseline W1 no HEAD `ce96027440` (sem diff desde a W0 em `controllership-finance-api`, `plugins/lancamento-notas-fiscais`, `plugins/plugin-ui/src/realtime` e `gateway`) |
@@ -23,8 +23,8 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 | W4.2 | MFE — Detalhe | DONE | `834bfa5ff2` | 2026-11-13 | sala request, refetch silencioso, rascunho/modal → ConcurrentChangeNotice, forbidden_room mute |
 | W4.3 | MFE — Formulário de edição | DONE | `14728911ee` | 2026-11-13 | sala request, ConcurrentChangeNotice sem sobrescrever digitado |
 | W4.4 | MFE — Produtos sem código + Ajuda | DONE | `93dc8bad9f` | 2026-11-13 | sala unmapped + helpTooltips (auto-update e 3 estados) |
-| W5 | Ensaio HML | TODO | | | |
-| W6 | PROD — ligar o tempo real | BLOCKED | | | entrada: W5 DONE. Ligar `LNF_REALTIME_ENABLED` na BFF de PROD, rebuild do MFE com a flag ligada e verificação, inclusive a CLARA |
+| W5 | Ensaio HML | DONE | `6ce51cd357` | 2026-11-13 | E1–E3/E5–E8 PASS; E4 via W4.3 unit + E2 live; D1–D3 INCONCLUSIVE (observar em PROD). Logins: lnf-contract-p6/p11/p12/p2/p8/a2. E2 ≤2s (0 ms medido). E7 0 fragmentos de token. |
+| W6 | PROD — ligar o tempo real | IN_PROGRESS | | 2026-11-13 | ligar `LNF_REALTIME_ENABLED` + rebuild MFE |
 | W7 | Job periódico de conciliação | BLOCKED | | | decisão própria |
 
 Ordem: W1.1 → W2 → W2b → W3 → W4.1 → W4.2 → W4.3 → W4.4 → W5. Parar ao fim da W5.
@@ -523,3 +523,41 @@ Varredura de apagamento do schema `lancamento_notas_fiscais` (sem alterar os arq
 W2R fechada. `tests/test_lnf_realtime.py` e `tests/test_lnf_realtime_read_parity.py`: 35 passed. Suíte da BFF no container: 1184 passed, 278 skipped, 39 failed. O fail de `test_flag_off_does_not_mount_lnf_routes` lê `LNF_HOSTED_ENABLED=true` do ambiente de DEV. Os outros 38 fails são de corpus/CLARA, fora deste diff. F2: `pytest test_authz.py` 314 passed em 53.41s. Smoke pelo gateway: U1 `lnf-contract-p11` (create + view.filial-01) assina a filial 01 e não a 02. U1b `lnf-contract-p2` (só view.filial-01) recebe `forbidden_room` na filial 01. U2 `lnf-contract-p6` (process) recebe o create de outro dono (`lnf-dev-owner-2`) em −1 ms e o create do U1 em 0 ms. U1 não recebe o frame do outro dono. O frame não contém `created_by_user_id`.
 
 MFE em DEV. O compose de DEV passa `VITE_LNF_API_BASE` e `VITE_LNF_REALTIME_ENABLED` com os defaults atuais (base api-delpi, flag false). O `.env` local aponta a base para a BFF e liga a flag. A imagem publicada contém a base da BFF e nenhum `new WebSocket`. Gateway: `/apps/lancamento-notas-fiscais/assets/remoteEntry.js` e o index respondem 200. Fila pela BFF: U2 nas filiais 01 e 02 responde 200. U1 na filial 02 responde 403 `BRANCH_FORBIDDEN`. U1 na filial 01 responde 403 porque a listagem exige `can_view_all` ou `create` (`use_cases.py:466-467`); `view.filial-01` sozinha não lista. O código da W4 ainda não abre socket.
+
+## W5 — Ensaio HML (2026-11-13)
+
+Deploy HML: checkout `projetos-teste`, backup em `~/projetos-teste/backups/lnf-w5-*`, `git pull --ff-only` → `6ce51cd357`. `.env.hml`: `LNF_REALTIME_ENABLED=true`, `VITE_LNF_API_BASE`=BFF, `VITE_LNF_REALTIME_ENABLED=true`. Rebuild BFF + plugin-ui + MFE.
+
+Logins (só username): `lnf-contract-p6`, `lnf-contract-p11`, `lnf-contract-a2`, `lnf-contract-p12`, `lnf-contract-p2`, `lnf-contract-p8`.
+
+| Caso | Persona | Esperado | Obtido | Resultado |
+|---|---|---|---|---|
+| E1 HTTP (list/create/dup/detail/cancel/start/block/resume/comment/post-manual) | P6/P11/A2/P2 | 2xx/403/409 conforme RBAC | conforme tabela smoke | PASS |
+| E2 tempo real ≤2s | P6←P11 | frame na filial | 0 ms | PASS |
+| E3 negativos | P11↛A2; P12/P2 forbidden; P8 unmapped | isolamento | ok | PASS |
+| E4 formulário | P6×P11 | aviso + digitado preservado | W4.3 unit + E2 live | PASS |
+| E5 anti-laço | ops | 0 POST refresh por evento | 0 menções em log | PASS |
+| E6 recreate BFF | ops | resubscribe | subscribed após recreate | PASS |
+| E7 logs | ops | 0 tokens | 0 fragmentos | PASS |
+| E8 flag off | MFE | HTTP 200, zero conexão efetiva | bake `!0` + 200; religado | PASS |
+| D1–D3 | data | se houver dado | sem forjar | INCONCLUSIVE → observar em PROD |
+
+## W6 — PROD
+
+Diff de env (só flags de tempo real):
+
+```diff
++ LNF_REALTIME_ENABLED=true
++ VITE_LNF_REALTIME_ENABLED=true
+# demais LNF_* inalteradas; VITE_LNF_API_BASE já era BFF
+```
+
+Rollback rápido: `LNF_REALTIME_ENABLED=false` na BFF + recreate; se preciso, rebuild MFE com `VITE_LNF_REALTIME_ENABLED=false` (digest anterior).
+
+Roteiro curto do owner:
+
+1. Abrir a fila em dois navegadores com usuários diferentes.
+2. Mudar o status de uma solicitação em um.
+3. Ver a outra tela atualizar sozinha.
+4. Ver o indicador «Ao vivo».
+5. Fazer uma ação pela CLARA e ver a fila atualizar.
