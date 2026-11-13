@@ -837,9 +837,14 @@ def test_attachment_upload_via_legacy_path():
         headers={**auth_headers(), "Idempotency-Key": "up-follow"},
     )
     assert follow.status_code == 201
-    # Outbound stores the GLPI-native doc.send URL — renders inline in GLPI
-    # and is rewritten back to the authenticated BFF path on read.
-    assert "document.send.php?docid=100" in glpi.followups[0][1]
+    # Outbound stores the GLPI-native paste shape (anchored doc.send with
+    # Ticket itemtype/items_id) — rich preview in GLPI; inbound maps
+    # docid → authenticated BFF path on read.
+    stored = glpi.followups[0][1]
+    assert "document.send.php?docid=100" in stored
+    assert "itemtype=Ticket" in stored and "items_id=7" in stored
+    assert 'target="_blank"' in stored
+    assert stored.index("<a href=") < stored.index("<img") < stored.index("</a>")
     # Cross-ticket document refs are an unresolved intent — typed 422,
     # never a silently dropped image persisted as integral success.
     foreign_img = client.post(

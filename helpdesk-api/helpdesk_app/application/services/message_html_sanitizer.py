@@ -375,28 +375,64 @@ def prepare_outbound_message_html(
     )
     if not message_html_has_visible_text(cleaned):
         return ""
-    return _to_glpi_document_srcs(cleaned)
+    return _to_glpi_document_srcs(cleaned, ticket_id=int(ticket_id))
 
 
-def _to_glpi_document_srcs(html: str) -> str:
-    """Rewrite verified BFF attachment img srcs to the GLPI-native
-    ``/front/document.send.php?docid=N`` form before persisting.
+_IMG_ALT_RE = re.compile(
+    r"""(?is)\balt\s*=\s*(?P<q>["'])(?P<val>.*?)(?P=q)"""
+)
+_IMG_WIDTH_RE = re.compile(
+    r"""(?is)\bwidth\s*=\s*(?P<q>["']?)(?P<val>\d{1,4})(?P=q)"""
+)
+_IMG_HEIGHT_RE = re.compile(
+    r"""(?is)\bheight\s*=\s*(?P<q>["']?)(?P<val>\d{1,4})(?P=q)"""
+)
 
-    Storing the canonical GLPI URL means the image renders inline in the
-    GLPI UI itself and in Minha DELPI (the inbound sanitizer maps
-    docid→BFF path for tickets that own the document). Only BFF-path srcs
-    that already survived the allowlist are rewritten.
+
+def _to_glpi_document_srcs(html: str, *, ticket_id: int = 0) -> str:
+    """Rewrite verified BFF attachment imgs to the GLPI-native paste shape.
+
+    Native GLPI rich editor persists inline images as::
+
+        <a href="/front/document.send.php?docid=N&amp;itemtype=Ticket
+           &amp;items_id=T" target="_blank" >
+          <img alt="…" width="…"
+               src="/front/document.send.php?docid=N&amp;itemtype=Ticket
+                    &amp;items_id=T" />
+        </a>
+
+    Bare ``docid=N`` ``<img>`` without the Ticket-scoped anchor is what
+    makes the GLPI timeline render a tiny/link-like thumb instead of the
+    rich preview+modal. Only BFF-path srcs that survived the allowlist
+    are rewritten. ``alt``/``width``/``height`` are preserved when present.
     """
+    ticket_id = int(ticket_id or 0)
 
     def _repl(match: re.Match[str]) -> str:
         tag = match.group(0)
         doc_id = match.group(3)
-        return re.sub(
-            r'src\s*=\s*["\'][^"\']*["\']',
-            f'src="/front/document.send.php?docid={doc_id}"',
-            tag,
-            count=1,
-        )
+        glpi_url = f"/front/document.send.php?docid={doc_id}"
+        if ticket_id > 0:
+            glpi_url = (
+                f"/front/document.send.php?docid={doc_id}"
+                f"&amp;itemtype=Ticket&amp;items_id={ticket_id}"
+            )
+        attrs: list[str] = []
+        alt = _IMG_ALT_RE.search(tag)
+        if alt and alt.group("val"):
+            attrs.append(f'alt="{html_lib.escape(alt.group("val"), quote=True)}"')
+        width = _IMG_WIDTH_RE.search(tag)
+        if width and width.group("val").isdigit() and int(width.group("val")) <= 4096:
+            attrs.append(f'width="{width.group("val")}"')
+        height = _IMG_HEIGHT_RE.search(tag)
+        if height and height.group("val").isdigit() and int(height.group("val")) <= 4096:
+            attrs.append(f'height="{height.group("val")}"')
+        attr_prefix = (" " + " ".join(attrs)) if attrs else ""
+        # Match native GLPI spacing: space before /> and before > on <a>.
+        img = f'<img{attr_prefix} src="{glpi_url}" />'
+        if ticket_id > 0:
+            return f'<a href="{glpi_url}" target="_blank" >{img}</a>'
+        return img
 
     return _BFF_IMG_RE.sub(_repl, html)
 
