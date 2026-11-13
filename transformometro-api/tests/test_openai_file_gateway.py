@@ -179,11 +179,15 @@ def test_observed_fileparams_host_allowed_when_configured(monkeypatch):
     assert mod._host_allowed("files.oaiusercontent.com") is True
 
 
-def test_observed_host_denied_without_config(monkeypatch):
+def test_observed_sdmnt_host_allowed_by_default_pattern(monkeypatch):
     monkeypatch.delenv("OPENAI_FILE_DOWNLOAD_HOSTS", raising=False)
-    # Only the default OpenAI host survives — a configured deployment is
-    # what unlocks the observed delivery account, never a wildcard.
-    assert mod._host_allowed(_OBSERVED_HOST) is False
+    # R4.2-C3: OpenAI SDMNT Azure accounts are region-sharded and must
+    # work without waiting for another env edit — still not a generic
+    # Azure wildcard (see test_random_azure_blob_host_denied).
+    assert mod._host_allowed(_OBSERVED_HOST) is True
+    assert mod._host_allowed(
+        "oaisdmntprsouthcentralus.blob.core.windows.net"
+    ) is True
 
 
 def test_random_azure_blob_host_denied(monkeypatch):
@@ -199,6 +203,10 @@ def test_random_azure_blob_host_denied(monkeypatch):
         f"attacker-{_OBSERVED_HOST}",
         # Subdomain trick: observed host as a label under attacker zone.
         f"{_OBSERVED_HOST}.attacker.example",
+        # Must not widen to arbitrary Azure accounts.
+        "mystorageaccount.blob.core.windows.net",
+        "oaisdmntpr.evil.example",
+        "oaisdmntprsouthcentralus.blob.core.windows.net.evil.com",
     ):
         assert mod._host_allowed(host) is False, host
 
@@ -207,6 +215,22 @@ def test_generic_azure_wildcard_not_present():
     # The default allowlist must never resolve arbitrary Azure storage.
     assert "blob.core.windows.net" not in mod._allowed_hosts()
     assert "*.blob.core.windows.net" not in mod._allowed_hosts()
+
+
+def test_openai_sdmnt_azure_region_hosts_allowed_by_bounded_pattern(monkeypatch):
+    """R4.2-C3 — ChatGPT rotates SDMNT Azure regions (brazil south →
+    south central US observed on ticket #1588). Allow the exact
+    ``oaisdmntpr*.blob.core.windows.net`` pattern only."""
+    monkeypatch.delenv("OPENAI_FILE_DOWNLOAD_HOSTS", raising=False)
+    assert mod._host_allowed("oaisdmntprbrazilsouth.blob.core.windows.net")
+    assert mod._host_allowed("oaisdmntprsouthcentralus.blob.core.windows.net")
+    assert mod._host_allowed("oaisdmntpreastus.blob.core.windows.net")
+    # Still not a generic Azure trust.
+    assert not mod._host_allowed("evilcorp.blob.core.windows.net")
+    assert not mod._host_allowed("blob.core.windows.net")
+    assert not mod._is_openai_sdmnt_azure_blob_host(
+        "attacker-oaisdmntprx.blob.core.windows.net"
+    )
 
 
 def test_regional_oaiusercontent_hosts_allowed_by_default_suffix(monkeypatch):

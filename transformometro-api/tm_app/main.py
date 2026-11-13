@@ -145,7 +145,19 @@ app.add_middleware(
 
 @app.get("/health", tags=["Health"], operation_id="health")
 def health():
-    return {"status": "online", "service": "transformometro-api"}
+    import os
+
+    from tm_app.infrastructure.gateways.openai_file_gateway import (
+        FILE_GATEWAY_FEATURE_REVISION,
+    )
+
+    return {
+        "status": "online",
+        "service": "transformometro-api",
+        # Safe deploy drift fingerprint — no secrets / signed URLs.
+        "file_gateway_feature_revision": FILE_GATEWAY_FEATURE_REVISION,
+        "git_sha": os.getenv("DELPI_GIT_SHA") or None,
+    }
 
 
 app.include_router(mcp_metadata_router)

@@ -851,7 +851,24 @@ not source-code evidence. Status: ACCEPT / CLOSED.
   PENDING_RUNTIME_ACCEPTANCE (requires a real fileParams binding from
   the host — not mockable end-to-end).
 
-### 23.2 R4.11 — sandbox path / bare file_id typed rejection
+### 23.2 R4.2-C3 — SDMNT Azure region rotation (ticket #1588)
+
+**Defect (evidence: GLPI #1588 live 2026-11-13)**: ChatGPT hydrated
+`openai/fileParams` with HTTPS on
+`oaisdmntprsouthcentralus.blob.core.windows.net`. Prod allowlist only
+had `oaisdmntprbrazilsouth…` (+ oaiusercontent CDN). Logs:
+`openai_file_host_rejected host=oaisdmntprsouthcentralus.blob.core.windows.net`
+→ `FILE_URL_NOT_ALLOWED`. The agent narrative cited `/workspace/...`, but
+the wire payload was host-bound Azure — not a stale image (container
+already returned `FILE_PATH_NOT_SUPPORTED` for raw sandbox paths).
+
+**Fix**: bounded code allow for
+`^oaisdmntpr[a-z0-9]+\.blob\.core\.windows\.net$` plus env examples
+updated with the newly observed region. Still **no**
+`*.blob.core.windows.net` wildcard. Residual: Azure account squatting on
+the `oaisdmntpr*` prefix (requires creating that storage account).
+
+### 23.3 R4.11 — sandbox path / bare file_id typed rejection
 
 **Defect (evidence: GLPI #1586 attempts)**: Agent Mode / Codex passed
 raw sandbox paths (`/workspace/user_files/...`, `/workspace/output/...`,
@@ -877,7 +894,7 @@ only supported write path.
 (`image.png`) / inline follow-up path is **not** attributable to the
 failed upload attempts — those returned 400 before BFF/GLPI write.
 
-### 23.3 R4.10 — dedicated public tool removed
+### 23.4 R4.10 — dedicated public tool removed
 
 ChatGPT proved `execute(capability="upload_attachment")` on 2026-11-06:
 GLPI ticket #1533, file `dark-1440-library(1).png`, outcome

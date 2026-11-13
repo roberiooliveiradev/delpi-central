@@ -35,12 +35,19 @@ def module_health():
     except Exception as exc:
         db_hint = format_api_error(exc)
 
+    from tm_app.infrastructure.gateways.openai_file_gateway import (
+        FILE_GATEWAY_FEATURE_REVISION,
+    )
+
     return {
         "status": "online" if db_ready else "degraded",
         "module": "transformometro",
         "phase": "4-melhorias",
         "db_ready": db_ready,
         "db_hint": db_hint,
+        # Safe runtime fingerprint for deploy drift checks — no secrets.
+        "file_gateway_feature_revision": FILE_GATEWAY_FEATURE_REVISION,
+        "git_sha": __import__("os").getenv("DELPI_GIT_SHA") or None,
     }
 
 

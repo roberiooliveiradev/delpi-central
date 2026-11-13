@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from typing import Any
 from urllib.parse import unquote, urlparse
 
@@ -41,17 +42,31 @@ from tm_app.application.helpdesk.helpdesk_write_port import (
 
 logger = logging.getLogger(__name__)
 
+# Feature revision exposed for safe runtime diagnostics (no secrets).
+FILE_GATEWAY_FEATURE_REVISION = "r4.2-c3-openai-sdmnt-azure-regions"
+
 # Default allowlist: canonical delivery host + shared oaiusercontent.com
 # suffix — ChatGPT fileParams download URLs are region-sharded
-# (e.g. sdmntprbrazilsouth.oaiusercontent.com). The pre-authorized
-# Azure blob host stays an explicit env entry.
-_DEFAULT_HOSTS = "files.oaiusercontent.com,oaiusercontent.com"
+# (e.g. sdmntprbrazilsouth.oaiusercontent.com). Observed Azure SDMNT
+# accounts stay in env AND are matched by the bounded code pattern below.
+_DEFAULT_HOSTS = (
+    "files.oaiusercontent.com,oaiusercontent.com,"
+    "oaisdmntprbrazilsouth.blob.core.windows.net,"
+    "oaisdmntprsouthcentralus.blob.core.windows.net"
+)
 MAX_FILE_BYTES = int(os.getenv("OPENAI_FILE_MAX_BYTES", str(20 * 1024 * 1024)))
 _TIMEOUT_SECONDS = 20.0
 
 # Agent Mode / Codex sandbox roots — never fetchable by a remote MCP.
 _SANDBOX_PATH_PREFIXES = ("/workspace/", "/mnt/data/")
 _SANDBOX_HOSTS = frozenset({"workspace", "localhost", "127.0.0.1", "::1"})
+
+# OpenAI ChatGPT fileParams Azure delivery accounts are region-sharded
+# (observed: oaisdmntprbrazilsouth, oaisdmntprsouthcentralus). Allow the
+# exact SDMNT prefix only — NEVER ``*.blob.core.windows.net``.
+_OPENAI_SDMNT_AZURE_BLOB = re.compile(
+    r"^oaisdmntpr[a-z0-9]+\.blob\.core\.windows\.net$"
+)
 
 
 def _allowed_hosts() -> tuple[str, ...]:
@@ -61,12 +76,19 @@ def _allowed_hosts() -> tuple[str, ...]:
     )
 
 
+def _is_openai_sdmnt_azure_blob_host(hostname: str) -> bool:
+    """True for OpenAI SDMNT Azure blob delivery hosts only."""
+    return bool(_OPENAI_SDMNT_AZURE_BLOB.fullmatch(hostname.lower()))
+
+
 def _host_allowed(hostname: str) -> bool:
     host = hostname.lower()
-    return any(
+    if any(
         host == allowed or host.endswith(f".{allowed}")
         for allowed in _allowed_hosts()
-    )
+    ):
+        return True
+    return _is_openai_sdmnt_azure_blob_host(host)
 
 
 def is_sandbox_file_reference(download_url: str) -> bool:
