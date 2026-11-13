@@ -338,3 +338,23 @@ A forma final do DTO e seu versionamento dependem de inventário do contrato atu
 **Cenários HML:** flag F101 OPEN carregada ao editar X; nenhum clone; flag não é resolvida ao completar somente request; intenção RESOLVE bloqueada até conclusão; diff/no-op com RESOLVE usa revisão de conclusão correta; cancelamento sem side-effect; colisão segunda flag bloqueia integral; auth denied não vaza F101; concorrência e retries com expectedFlagVersion.
 
 **Estado:** `PROPOSED_FOR_COORDINATION / TEST_NOT_RUN`; sem implementação, migrations ou deploy.
+
+
+## 16. Emenda CR-12 — resolução da bandeira somente por intenção explícita no complete (PO, 13/11/2026)
+
+**PO aprovou A — Analista decide explicitamente; sem ação a bandeira permanece aberta.** Comentário: sem comentário. `PO_APPROVED / ARCHITECTURE_DECISION_REQUIRED / TEST_NOT_RUN`.
+
+### Proposta de contrato (TARGET, não implementado)
+
+- **Read:** PRC de UPDATE lê, com autorização, flag OPEN vinculada a campo/atributo (`flagId`, `targetKey`, estado, permittedActions, provenance). Essa referência não é nova OPEN (CR-11).
+- **Write request-local:** registrar `resolutionIntent` explícita, identificando `flagId`, `expectedFlagVersion`, motivo/justificativa e principal autorizado. Ausência de intent significa **KEEP_OPEN**, não RESOLVE implícito; nunca resolver por `changedPaths`, confirmação de valor ou mera conclusão da PRC.
+- **Complete:** só após `matched` e live AuthZ, revalidar identidade/estado `OPEN`, elegibilidade de ação, versão esperada, ausência de duplicidade (CR-10) e snapshot CR-02/04/05/06. Aplicar conclusão técnica e `flag.resolved` com causalidade/ledger no mesmo limite de consistência ratificado; sem sucesso parcial. Se houver falha, PRC continua não concluída e nenhuma publicação no produto é declarada.
+- **Contexto de revisão:** se conclusão no-op na V4, RESOLVED aparece em V4; se conclusão cria V5 por diff real, RESOLVED aparece em V5; em ambos os casos, ausência nas versões subsequentes. Eventos de flag não criam Vn por si.
+- **Idempotência e concorrência:** impedir dois eventos de resolução com mesmo request/key; se flag ficou encerrada antes do commit, erro de estado stale/409 sem presumir sucesso; não transformar RESOLVED em OPEN (CR-07); AuthZ fail-closed e auditoria.
+- **Proveniência:** manter flagId da ocorrência, requestId que propôs resolução, ator, motivo, evidenceId/approval quando exigido, instante e `revisionContext`; nomes ilustrativos para revisão de contrato.
+
+**Compatibilidade:** CR-09 protege produto até conclusão; CR-10 bloqueia conclusão com duplicata OPEN real; CR-11 apenas referencia flag existente; ADR-04 regula a visibilidade da RESOLVED na revisão do evento. Nenhuma mudança de permissão ou owner é implícita.
+
+**HML / AC:** alteração técnica sem intent → OPEN; no-op + intent validado → RESOLVED na mesma Vn; diff + intent → RESOLVED na nova Vn; intent sem AuthZ, stale, mismatched/cancelado, falha externa e colisão CR-10 → nenhuma publicação; retry idem, histórico e justificativa disponíveis somente a autorizados. Exigir testes com a rota D16 e consumidor de PRC para não introduzir efeito antecipado.
+
+**PENDENTE_COORDINATION:** forma de armazenar intent, approval/justificativa, combinação atômica de conclusão + evento, erro/rollback quando integração oficial é externa e contratos DTO. Sem código, migrations ou deploy.
