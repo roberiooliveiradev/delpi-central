@@ -263,3 +263,51 @@ O [pacote técnico T01/T02 para ratificação](./PRC-TRACK-T01-T02-COORDINATION-
 **Saída:** commit, push, PR, review/CI governados, merge somente sob autorização/política, HML apenas após deploy autorizado com SHA/digest comprovado, cenários V1/no-op/V2/mismatch/replay/CAS/parcial/legado/auth + dois usuários; handoff ao Cursor para aceite independente. Preservar histórico e reportar `PASS/FAIL/PENDING/TEST_NOT_RUN` sem falsa afirmação. PROD não autorizado; smoke READ-only se futuramente aprovado.
 
 **Anticíclo:** não refazer PROD-01 nem reconciliações repetidas de main; máximo uma reconciliação justificável por conflito real; falhas técnicas repetidas devem produzir pacote de evidências. T03–T08/flags/frontend fora do escopo.
+
+
+## 20. PROD-02 — implementação integrada e homologação HML reportada por Devin (13/11/2026)
+
+**Relatório do executor, não auditoria Cursor:** PROD-02 foi implementado, integrado em `main` e exercido em HML. Validação independente do Cursor permanece o gate formal.
+
+```text
+TASK_ID:               DEVIN-PROD-02-SNAPSHOT-VERSIONING-NOOP
+BASE_HEAD:             90f37a2bbd083acdb3605456ac1c149c0490d189
+FINAL_SHA:             e98962472d (branch devin/prc-track-prod-02-snapshot-versioning)
+MERGE_SHA:             4735718cf35b6ccdce2072a11f7c983fd0def001 (origin/main)
+DEV_TEST_RESULTS:      164 PRC-relacionados PASS (in-memory/API);
+                       suite completa 1192 PASS + 2 FAIL baseline
+                       pré-existentes fora do pacote (evidenciadas em
+                       HEAD: test_d16_attendance_flags::test_isolation_
+                       between_requests, test_lmp_domain::test_constants_
+                       match_semantics_spec — arquivo fora do mount)
+POSTGRES_TEST_RESULTS: 10/10 PASS em PostgreSQL real descartável,
+                       incluindo V1 -> no-op -> V2 (migrations V001-V023)
+HML_DEPLOY_SHA:        4735718cf35b6ccdce2072a11f7c983fd0def001
+HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6eeef2ffae262de
+                       (healthy; snapshot.py e changeKind confirmados no container)
+```
+
+**Implementado:** novo `domain/product_registration/snapshot.py` (snapshot consolidado `schemaVersion: 2`, proveniência por campo e por atributo de vínculo SA5, UPDATE parcial preserva omitidos, merge por `supplierCode+store`, dual-read legado sem reescrita). `complete_request` nos adapters PG/memória decidem `baseline_initial` / `technical_change` / `no_technical_change` **dentro da transação sob lock**, construindo o candidato contra a revisão vigente real. Resposta de `complete` estendida aditivamente (`changeKind`, `technicalChange`, `publishedRevisionNumber`; `revisionNumber` = revisão vigente). Bug real corrigido: shallow-copy mutava atributos de fornecedor do snapshot anterior e zerava o diff — resolvido com deep-copy.
+
+**HML — cenários executados (sessões `hml-tester` autorizado 1, `lnf-contract-p9` autorizado 2, `lnf-contract-p1` negado, anônimo):**
+
+| Cenário | Resultado reportado |
+|---|---|
+| V1 baseline (`30190125`, update `unit` matched) | PASS — `changeKind=baseline_initial`, `publishedRevisionNumber=1`, snapshot `schemaVersion:2` |
+| No-op (mesma declaração, 2 casos) | PASS — `no_technical_change`, sem revisão nova, vínculo à vigente |
+| V2 consolidação legado→novo (`30190123` era PROD-01) | PASS — `technical_change`, `publishedRevisionNumber=2`; V1 legada (`schemaVersion:None`) preservada imutável |
+| No-op pós-consolidação (`30190123`) | PASS — sem terceira revisão |
+| Proveniência | PASS — `official_verified` (declarado+verificado) vs `inherited_confirmed` (baseline); atributos de link `000113\|01` individuais |
+| CAS stale `expectedVersion` | PASS — 409 `stale_version` |
+| Double complete | PASS — 409, sem duplicar revisão |
+| Replay intake mesmo Idempotency-Key | PASS — 200 mesmo `requestId`, sem duplicar request |
+| Multiuser | PASS — `lnf-contract-p9` concluiu caso compartilhado |
+| Regressão PROD-01 (lista, `%`/`_` literal, pendente excluído) | PASS |
+| AuthZ negado / anônimo | PASS — 403 / 401 |
+| V2 por diferença de valor em produto já consolidado | TEST_NOT_RUN — TOTVS HML estático e fail-closed: qualquer declaração `matched` replica o valor oficial já presente no snapshot; diff de valor exige mudança oficial real (DEV cobre: V2 por valor em memória e PG) |
+
+**Credenciais:** senhas de `hml-tester`, `lnf-contract-p9`, `lnf-contract-p1` foram rotacionadas para o fluxo de testes (armazenadas em `infra/.env.hml` no host HML, não commitadas).
+
+**Classificação:** `PROD02_IMPLEMENTATION_MERGED / DEVIN_HML_PASS_REPORTED / CURSOR_INDEPENDENT_PENDING / PROD_DEPLOY_NOT_AUTHORIZED`. Incidente operacional no deploy: `up` sem `--env-file infra/.env.hml` interpolou `KEYCLOAK_*` vazios e derrubou o startup; corrigido reexecutando com o env file canônico (mesmo mecanismo de `infra/scripts/hml-compose.sh`).
+
+**Gate formal do Cursor:** revalidação independente sobre mesmo SHA/digest: V1, no-op, V2 (consolidação legado), proveniência, CAS, replay, dois usuários, negação. Dados de teste permanecem em `engineering.*` HML para a auditoria.
