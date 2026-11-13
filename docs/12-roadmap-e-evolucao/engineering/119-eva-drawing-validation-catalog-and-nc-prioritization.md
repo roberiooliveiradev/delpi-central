@@ -3216,3 +3216,16 @@ AQ/AR/AS→`50225749` IDENTIFIED `rowspan_anchor`. `UNKNOWN` e
 incertezas preservados; pipeline `pdfium_render_paddleocr` único —
 fallback opencv não disparado. Rollback disponível, não executado.
 `VAL01_COMPLETED=false` (homologação visual segue com o owner).
+
+
+## 84. Retorno ao chat autor do prompt — revisão visual 90264135 p13 (2026-11-13)
+
+**TASK_ID:** `EVA-VAL01-P13-INDEPENDENT-REVIEW-HANDOFF`. **Baseline documental:** `fa04c4e143c5f204782322aaf0afe5174c4ff297`. **Decisão do usuário:** APPROVE parcial para AQ/AR/AS → `50225749`, seguido de orientação explícita para retornar os problemas ao chat autor do prompt e decidir as correções lá. **Autorização atual:** publicar documento completo de retorno na main.
+
+**Relatório:** [EVA — retorno da revisão p13 ao chat autor do prompt](EVA-VAL01-90264135-P13-RETURN-TO-PROMPT-CHAT-2026-11-13.md). Documento de handoff, sem novo plano/tracker; esta seção continua sendo o ledger canônico e Issue #131 o tracker.
+
+**Evidência:** PDF oficial preservado, 13 páginas, SHA-256 `af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3` (rehash local MATCH); célula visual `50225749` abrange AQ–AT. G1-DRAFT mantém AQ/AR/AS em `UNKNOWN_SUBSET`, omite o pai e encerra o recorte em AS. **Não corrigido nesta entrega.** Aprovação focal não homologa AT, página/dataset, split ou thresholds.
+
+**Runtime:** job histórico `aj-547c28cde3774672` indisponível (`job_not_found` na sessão anterior); novo `aj-2f9438f544654c76` sem saída recuperada por `Transport closed`. Comparação com resumo §83 é histórica; saída atual `INCONCLUSIVE / NOT_VERIFIABLE`. Nenhuma causa-raiz presumida.
+
+**Status antes→depois:** revisão focal com problemas → aceite parcial e handoff documental para decisão; JSON/overlay/código/runtime inalterados. **RQ/AC:** registrar escopo/evidências/limites/decisões e verificar publicação remota dos documentos; testes runtime/evals `TEST_NOT_RUN`. **Responsável pela próxima decisão:** chat autor do prompt / Coordination com owner técnico aplicável. **Próxima ação:** decidir correção de anotação/geometria e recuperação de evidência; nenhum prompt de implementação emitido. `VAL01_COMPLETED=false`. Sem novo owner/source/authority, sem deploy aplicável.
