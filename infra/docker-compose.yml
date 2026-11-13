@@ -1338,6 +1338,9 @@ services:
     build:
       context: ../plugins
       dockerfile: lancamento-notas-fiscais/Dockerfile
+      # Default = api-delpi (AS-IS). Corte F5b: VITE_LNF_API_BASE=/apps/controllership-finance-api/lancamento-notas-fiscais
+      args:
+        VITE_LNF_API_BASE: ${VITE_LNF_API_BASE:-/apps/api-delpi/lancamento-notas-fiscais}
 
     container_name: delpi-lancamento-notas-fiscais
     restart: unless-stopped

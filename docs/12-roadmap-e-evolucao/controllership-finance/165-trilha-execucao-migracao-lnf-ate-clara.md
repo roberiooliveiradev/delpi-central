@@ -79,7 +79,7 @@ Transferir o módulo **Lançamento de Notas Fiscais (LNF)** da `api-delpi` para 
 |---|---|---|---|---|---|---|
 | F0–F4b | Inventário, contrato, implementação dark, ensaio HML | DONE | — | até `fddd4bb813` | 2026-11-12 | 163/164, suíte |
 | F5a | Preparação dark de PROD | DONE | PROD | `fdc31ad48e` + deploys 2026-11-12 | 2026-11-12 | BFF/MFE/api-delpi dark; preflight 5/5; OpenAPI BFF 112/0 LNF; api 731/22 LNF; MFE base api-delpi; observação 15 min sem incidente |
-| F5b | Corte em PROD | TODO | | | | |
+| F5b | Corte em PROD | IN_PROGRESS | PROD | (virada em curso) | 2026-11-13 | Owner OK AGORA (horário comercial); smoke owner PENDING |
 | F5c | Estabilização (hypercare) | TODO | | | | |
 | F7.0 | CLARA — inventário e contrato | TODO | | | | |
 | F7.1 | CLARA — leituras | TODO | | | | |
@@ -359,4 +359,6 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-12 18:03 -03 | F5a.4-API.d | imagem | pytest HEAD vs imagem PROD antiga | PASS (paridade) | `a674524ce866` | 61 failed idênticos (only_new=0); 5889 vs 5887 passed |
 | 2026-11-12 18:04 -03 | F5a.4-API.e | HML | up-hml api-delpi HEAD | PASS | HML healthy | paths 731 LNF 22; LNF_MODULE_ENABLED=true |
 | 2026-11-12 18:05–18:20 -03 | F5a.4-API.f | PROD | up-prod api-delpi + observação 15 min | PASS | `a674524ce866` | 1×502 healthcheck no recreate; depois 0 5xx; scrap TV 200 |
-| 2026-11-12 18:20 -03 | F5a | — | Critérios de saída F5a atendidos | DONE | (este commit) | próximo: F5b (janela + smoke owner) |
+| 2026-11-12 18:20 -03 | F5a | — | Critérios de saída F5a atendidos | DONE | `38f46c0eac` | próximo: F5b (janela + smoke owner) |
+| 2026-11-13 07:26 -03 | F5b | PROD | Owner: corte F5b autorizado AGORA (qualquer horário, incl. comercial) | DECISÃO | — | rollback imediato se gatilho Parte 5 |
+| 2026-11-13 07:27 -03 | F5b | docs | Quadro → IN_PROGRESS; compose PROD MFE build-arg VITE_LNF_API_BASE | IN_PROGRESS | (este commit) | espelha HML para permitir corte via script |
