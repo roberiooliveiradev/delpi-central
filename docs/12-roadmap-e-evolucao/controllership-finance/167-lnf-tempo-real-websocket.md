@@ -16,7 +16,7 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 | Fase | Nome | Status | SHA | Data | Evidência |
 |---|---|---|---|---|---|
 | W1.1 | Ajuste documental (D-W5, quadro) | DONE | `68e7c28512` | 2026-11-13 | D-W5, ADR-002 adendo, mapa de reuso PLANNED |
-| W2 | BFF — hub, rota, emissão (DEV) | DONE | `b0b4dae957` | 2026-11-13 | T1–T18 PASS; F2 P0–P12 ao vivo 314 PASS (`test_authz.py:1`). Latência t2−t1 ≤ 2 s. Create por process e cancel fora da regra do dono: negativo PASS |
+| W2 | BFF — hub, rota, emissão (DEV) | IN_PROGRESS | `b0b4dae957` | 2026-11-13 | REWORK de autorização (W2R). Latência e F2 314 PASS continuam. O socket estava mais largo que o GET /requests |
 | W2b | plugin-ui — cliente, hook, indicador, aviso | DONE | `df1dd06cc4` | 2026-11-13 | cliente aditivo; hook, indicador e aviso. Suíte do pacote no registro |
 | W3 | Gateway DEV (+ conf HML commitada) | DONE | `57195a9e91` | 2026-11-13 | Handshake 101 pelo gateway com token real; access log da location com `<redacted>`; valor do token ausente nos logs do gateway e da BFF |
 | W4.1 | MFE — Fila | TODO | | | |
@@ -114,7 +114,7 @@ WS {gateway}/apps/controllership-finance-api/lancamento-notas-fiscais/realtime?t
 
 - Assinatura e `exp` por `delpi_auth` (`validate_token`), o mesmo validador do HTTP.
 - Permissões efetivas pelo Core `GET /me`, o caminho de `load_user_rbac` (`shared/delpi_auth/middleware/fastapi_auth.py:104-148`).
-- Permissão mínima para **entrar**: qualquer item de `LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS` (a de `GET /requests`, `router.py:644-645`) **ou** `lancamento-notas-fiscais.review-unmapped-products`. O “ou” é ajuste do R4: a leitura de produtos sem código não está na lista do GET da fila (`permissions.py:9-24` e `router.py:576`). Sem isso, quem só tem a permission daquela tela não conecta. Assinar sala de filial ou de solicitação continua exigindo `branch_view_allowed`. Quem só tem a permission de unmapped e tenta a sala da filial recebe `forbidden_room`.
+- Permissão mínima para **entrar**: qualquer item de `LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS` (a de `GET /requests`, `router.py:644-645`) **ou** `lancamento-notas-fiscais.review-unmapped-products`. O “ou” é ajuste do R4: a leitura de produtos sem código não está na lista do GET da fila (`permissions.py:9-24` e `router.py:576`). Sem isso, quem só tem a permission daquela tela não conecta. Assinar sala de filial, de solicitação ou de produtos sem código usa os mesmos predicados das rotas de leitura. `branch_view_allowed` sozinho não basta. Quem só tem a permission de unmapped e tenta a sala da filial recebe `forbidden_room`.
 - **Origin:** requests e engineering não checam `Origin` no handshake. Checar o host do portal é endurecimento local do LNF, não padrão herdado.
 - O servidor agenda o fechamento no `exp` do token, com a folga de 5s que a Engineering já usa (`realtime_routes.py:141-144`), para o refresh do portal conseguir o handshake seguinte. Código na §2.5.
 - Log de aplicação não imprime o token, a query string nem o header `Authorization`. Pode registrar `user_id` e o código de fechamento.
@@ -165,15 +165,17 @@ O envelope `{type, code}` e o fato de a negação não derrubar o socket são o 
 
 ## 2.7 Salas e autorização na assinatura
 
-A autorização usa o mesmo `Actor` do HTTP e `branch_view_allowed`. Não há sala global.
+Assinatura e entrega usam os mesmos predicados das rotas de leitura (list, detail, unmapped). `branch_view_allowed` sozinho não basta. Não há sala global. O frame continua o da §2.8: metadado de posse usado no filtro não entra no JSON.
 
 | Sala | Regra |
 |---|---|
-| `lnf:branch:01`, `lnf:branch:02` | `branch_view_allowed` para aquela filial (`branch_access.py:36-50`). `view`, `process` ou `manage` passam nas duas. Só `view.filial-01` passa na 01. |
-| `lnf:request:{uuid}` | Carrega a filial da solicitação e aplica `branch_view_allowed`. Id inválido ou solicitação ausente → `forbidden_room`. |
-| `lnf:unmapped-products` | `lancamento-notas-fiscais.review-unmapped-products`, a mesma de `GET /unmapped-products` (`router.py:573-576`). |
+| `lnf:branch:01`, `lnf:branch:02` | `branch_view_allowed` da filial **e** o predicado de `GET /requests`: `can_view_all` ou `create` (`use_cases.py:466-468`). Quem só tem `create` vê só as solicitações com o próprio `created_by_user_id` (`use_cases.py:468`). Não há filtro de autorização por status nem por responsável. |
+| `lnf:request:{uuid}` | O predicado de `GET /requests/{id}`: `can_view_all`, ou `create` e dono (`use_cases.py:485-487`), **e** `branch_view_allowed` da filial carregada (`router.py:722-724`). Id inválido, solicitação ausente ou predicado negado → `forbidden_room`. |
+| `lnf:unmapped-products` | A permission de `GET /unmapped-products` (`router.py:576`). A listagem não filtra por filial nem por dono (`unmapped_supplier_product_service.py:147-158`). |
 
-Teste negativo obrigatório: usuário só com `view.filial-01` não assina `lnf:branch:02` nem `lnf:request` de solicitação da 02, e nenhum evento da 02 chega nesse socket.
+Entrega: se a listagem é por posse, cada evento de solicitação só sai para a conexão cujo predicado de leitura inclui aquela solicitação. `lnf.queue.reconciled` não carrega dono; só quem lê a filial inteira (`can_view_all`) o recebe.
+
+Teste negativo obrigatório: usuário só com `view.filial-01` recebe `forbidden_room` em `lnf:branch:01`, porque o GET da fila responde 403.
 
 ## 2.8 Catálogo de eventos
 
@@ -501,6 +503,10 @@ Vínculo de PC: 5 fornecedores reais consultados em `GET /purchase-orders/open`,
 
 F2: `tests/contracts/lancamento-notas-fiscais/test_authz.py:1` é a matriz de 24 rotas × P0–P12. Comando: `cd tests/contracts/lancamento-notas-fiscais && ./.venv/bin/pytest test_authz.py -q --tb=line`. Resultado: 314 passed.
 
-W2 DONE.
+W2 volta a IN_PROGRESS.
+
+EXECUTION_DRIFT de autorização (2026-11-13, HEAD `6fde3bb294`). Fato: quem tem só `view.filial-01` recebe 403 em `GET /requests` (`use_cases.py:466-467` exige `can_view_all` ou `create`) e, mesmo assim, assinava `lnf:branch:01` e recebia eventos. A §2.7 antiga tratava a sala de filial como `branch_view_allowed`, predicado mais largo que a leitura HTTP. Correção planejada: o socket chama os mesmos predicados de list, detail e unmapped; a entrega filtra por posse quando a listagem filtra; o metadado de posse não entra no frame. O HTTP não muda. ADR-002: o socket nunca é mais largo que o HTTP.
+
+Os 49 registros medidos na W0 continuam ausentes. `TRUNCATE` não incrementa `n_tup_del` e o log padrão do Postgres não o registra. A causa fica INCONCLUSIVE. A varredura de scripts que apagam o schema entra no registro da W2R.
 
 MFE em DEV. O compose de DEV passa `VITE_LNF_API_BASE` e `VITE_LNF_REALTIME_ENABLED` com os defaults atuais (base api-delpi, flag false). O `.env` local aponta a base para a BFF e liga a flag. A imagem publicada contém a base da BFF e nenhum `new WebSocket`. Gateway: `/apps/lancamento-notas-fiscais/assets/remoteEntry.js` e o index respondem 200. Fila pela BFF: U2 nas filiais 01 e 02 responde 200. U1 na filial 02 responde 403 `BRANCH_FORBIDDEN`. U1 na filial 01 responde 403 porque a listagem exige `can_view_all` ou `create` (`use_cases.py:466-467`); `view.filial-01` sozinha não lista. O código da W4 ainda não abre socket.
