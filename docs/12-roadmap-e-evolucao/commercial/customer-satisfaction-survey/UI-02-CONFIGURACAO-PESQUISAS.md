@@ -139,6 +139,16 @@ Criar campanhas e selecionar clientes existentes no TOTVS para que o usuário po
 4. **Prévia/cópia:** seletor **E-mail / WhatsApp / Teams**, com Copiar mensagem no formato correspondente e Copiar link independente. E-mail: conteúdo rico text/html e alternativa text/plain quando suportado; os demais em texto. Não enviar, não marcar entregue, não abrir app externo automaticamente.
 5. **Estados:** só confirmar cópia após clipboard realmente aceitar; quando negado, oferecer seleção/cópia manual. Nenhum token em logs, analytics ou conteúdo de terceiros. Não incorporar resposta privada completa no detalhe operacional; UI-06/UI-07 são áreas distintas.
 
+### Confirmação de navegação e composição — UI-02C página dedicada (13/11/2026)
+
+**APROVADO PELO SOLICITANTE:** UI-02C é **página dedicada de detalhe do participante**, **não modal**. Acesso por clique na linha da tabela ou toque no card da UI-02B, preservando contexto da campanha, identidade inequívoca `customer_code+customer_store` e retorno navegável à campanha pelos padrões oficiais de navegação do MFE Comercial. **Somente Editar contato (UI-02C.1) abre um diálogo oficial**, não o detalhe completo.
+
+**Ordem de apresentação aprovada:** (1) empresa oficial TOTVS com `CustomerAvatar`, nome, código/loja e situação Pendente/Respondida; (2) contato do convite opcional (nome/e-mail) e acionamento do diálogo Editar contato; (3) convite personalizado **em leitura**, resolvido exclusivamente para o participante ativo a partir de **uma mensagem padrão salva na campanha**, com modos **Correio eletrônico** (HTML seguro em `RichTextEditor mode="preview"`) e **Mensageiro** (texto simples); (4) ações **Copiar mensagem** no formato do modo selecionado e **Copiar link** independentes, abaixo da prévia. Não duplicar editor, não abrir canais externos e não enviar convite.
+
+**Layout:** usar padrões existentes de página, breadcrumb, hero compacto/seções, tipografia, padding, gap, margens, responsividade e feedback/toasts oficiais do Comercial/PluginUI. **TO_INVENTORY** dos valores CSS exatos/consumidores reais antes de implementar; não inventar largura/modalização ou medidas específicas. No desktop, tablet e celular, manter leitura confortável do convite e ações acessíveis. **Segurança:** backend autoriza acesso ao participante e vínculo antes de revelar link; conteúdo interpolado escapado antes de renderizar HTML, cópia rica só após testes de segurança e compatibilidade.
+
+**Status:** página dedicada e ordem visual **APROVADAS**; implementação, contratos e testes **PENDING**.
+
 ### UI-02C.1 — Diálogo Editar contato
 
 - Dialog oficial com empresa/código/loja somente leitura; campos opcionais **Nome do contato** e **E-mail do contato**, pré-preenchidos.
