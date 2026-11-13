@@ -201,3 +201,11 @@ Prevalece sobre AC textuais antigos que tratem RESOLVED e REMOVED como estados d
 - **Idempotência/concurrency:** não duplicar V1 ou Vn, exigir locks/CAS/testes e tratamento de vínculo da solicitação que não gerou revisão.
 
 **Emenda aos gates B1/AC:** primeira UPDATE sem diferença gerando V1, segunda conclusão no-op sem incremento, alteração posterior gerando V2, conflito/rollback, snapshot consolidado/provenance, histórico V1 sem afirmar criação TOTVS. Critério anterior que bloqueava V1 por no-op está **superado pela decisão do PO**. [Registro PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) · [Ratificação Coordination](./PRC-TRACK-G1-CONTRACT-RATIFICATION-PROPOSAL.md). `ARCHITECTURE_DECISION_REQUIRED` permanece para contratos/execução.
+
+## Complemento CR-04 — Proveniência de campos acompanhados (PO, 13/11/2026)
+
+**CR-04 APPROVED BY PO:** **A — Preservar valores e identificar sua confirmação**, sem comentário. `PO_APPROVED / COORDINATION_RATIFICATION_PENDING`.
+
+**Atualização do contrato alvo B1:** ficha consolidada CR-02 mantém valores de campos PRC acompanhados e associa metadados de proveniência, cobertura, evidência e status individual (`official_verified`, `inherited_confirmed`, `registered_unverified`, `unknown` — nomes ilustrativos sujeitos a contrato). Valores herdados não são rotulados como novamente confirmados; registrados não verificados não recebem falsa autoridade; ausência não é substituída por suposição. Conclusão continua exigindo gate de verificação `matched` e AuthZ. **CR-03** cria V1 inicial com cobertura real; para V2+ apenas diff técnico em valores/vínculos gera versão. Mudança de metadados de verificação sem alteração técnica não incrementa versão, mas deve ter ledger/auditoria. O backend B3 apresenta proveniência e sinaliza valores incomparáveis. Testar em HML acesso positivo/negativo, UPDATE parcial, V1, no-op, missing/unknown e mismatch.
+
+**Pendente de Coordination:** enums, DTO, regras null/ausência, cobertura, merge, contrato de evidência, versionamento e retrocompatibilidade. Sem autorização de implementação. [Registro PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) · [Proposta Coordination](./PRC-TRACK-G1-CONTRACT-RATIFICATION-PROPOSAL.md).
