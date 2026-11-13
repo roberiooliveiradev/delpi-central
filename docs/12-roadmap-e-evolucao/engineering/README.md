@@ -132,3 +132,5 @@ A pasta é documentação permanente. Arquivos `.cursor/plans/*.plan.md` são es
 - [PRC-TRACK-IMPLEMENTATION-PACKAGE](./PRC-TRACKED-PRODUCTS-IMPLEMENTATION-PACKAGE-PLAN.md): plano em fases G0/G1/B1–B3/U1–U3/Q/D, matriz páginas→Plugin UI, contratos da Engineering API, gaps PROVEN (snapshot atualmente derivado de draft), dependências, 16 critérios de aceite, QA 320–1920px e gates de Coordination. **PLANNED / GATED; não autoriza implementação nem deploy.**
 
 - [PRC-TRACK — G0 inventário e G1 decisões para Coordination](./PRC-TRACK-G0-INVENTORY-G1-COORDINATION-DECISION-PACKET.md): reancoragem no GitHub, drift do snapshot, gaps de flags por produto, 7 propostas de decisão e matriz de readiness. **G0_PARTIAL / G1_DECISION_REQUIRED; sem ratificação ou autorização de implementação.**
+
+- [PRC-TRACK — Deliberações G1 do Product Owner (13/11/2026)](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md): sete escolhas registradas, análise de conflitos (snapshot PRC, no-op, flags transversais e HML), 10 novos AC, pendências para ratificação da Coordination. **PO_DECISIONS_RECORDED / ARCHITECTURE_DECISION_REQUIRED**.
