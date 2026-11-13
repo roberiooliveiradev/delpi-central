@@ -15,6 +15,8 @@ EXPECTED_OPERATIONS = {
     ("post", "/workstations/{workstation_id}/archive"): "archive_it_workstation",
     ("post", "/workstations/{workstation_id}/restore"): "restore_it_workstation",
     ("get", "/workstations/{workstation_id}/history"): "list_it_workstation_history",
+    ("get", "/workstations/{workstation_id}/snapshot"): "get_it_workstation_latest_snapshot",
+    ("post", "/collector/v1/workstations/{workstation_id}/snapshots"): "ingest_it_workstation_snapshot",
     ("get", "/servers"): "list_it_servers",
     ("post", "/servers"): "create_it_server",
     ("get", "/servers/{server_id}"): "get_it_server",
@@ -115,13 +117,17 @@ def test_openapi_operation_ids_are_explicit_stable_and_unique():
     assert len(set(found.values())) == len(found)
 
 
-def test_openapi_declares_bearer_security_on_data_routes():
+def test_openapi_declares_distinct_security_for_workstation_collector():
     schema = app.openapi()
-    assert schema["components"]["securitySchemes"]["bearerAuth"]["scheme"] == "bearer"
+    security = schema["components"]["securitySchemes"]
+    assert security["bearerAuth"]["scheme"] == "bearer"
+    assert security["workstationCollectorS2S"]["name"] == "X-Delpi-Service-Authorization"
     for path, operations in schema["paths"].items():
         for operation in operations.values():
             if path == "/health":
                 assert "security" not in operation
+            elif path.startswith("/collector/v1/workstations/"):
+                assert operation["security"] == [{"workstationCollectorS2S": []}]
             else:
                 assert operation["security"] == [{"bearerAuth": []}]
 
