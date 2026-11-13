@@ -17,12 +17,12 @@ import type {
   UpdateRequestPayload,
 } from "../../domain/types";
 
-/** Default = comportamento atual. Corte HML/PROD sobrescreve via VITE_LNF_API_BASE no build. */
+/** Default = BFF (F6). Override via VITE_LNF_API_BASE no build se necessário. */
 const API_BASE =
   (typeof import.meta !== "undefined" &&
     typeof import.meta.env?.VITE_LNF_API_BASE === "string" &&
     import.meta.env.VITE_LNF_API_BASE.trim()) ||
-  "/apps/api-delpi/lancamento-notas-fiscais";
+  "/apps/controllership-finance-api/lancamento-notas-fiscais";
 
 export function getLnfApiBase(): string {
   return API_BASE;

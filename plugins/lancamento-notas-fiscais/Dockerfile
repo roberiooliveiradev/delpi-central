@@ -13,8 +13,8 @@ COPY lancamento-notas-fiscais ./lancamento-notas-fiscais
 COPY vite ./vite
 
 WORKDIR /app/lancamento-notas-fiscais
-# Default = comportamento atual. Corte: --build-arg VITE_LNF_API_BASE=/apps/controllership-finance-api/lancamento-notas-fiscais
-ARG VITE_LNF_API_BASE=/apps/api-delpi/lancamento-notas-fiscais
+# Default = BFF (F6).
+ARG VITE_LNF_API_BASE=/apps/controllership-finance-api/lancamento-notas-fiscais
 ENV VITE_LNF_API_BASE=$VITE_LNF_API_BASE
 # Default desligado. DEV liga só pelo .env local.
 ARG VITE_LNF_REALTIME_ENABLED=false

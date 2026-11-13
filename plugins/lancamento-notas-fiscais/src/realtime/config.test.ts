@@ -28,11 +28,9 @@ describe("lnf realtime config", () => {
     expect(shouldConnectLnfRealtime()).toBe(false);
   });
 
-  it("base api-delpi → shouldConnect false mesmo com flag on", () => {
+  it("base fora da BFF → shouldConnect false mesmo com flag on", () => {
     vi.stubEnv("VITE_LNF_REALTIME_ENABLED", "true");
-    vi.mocked(getLnfApiBase).mockReturnValue(
-      "/apps/api-delpi/lancamento-notas-fiscais",
-    );
+    vi.mocked(getLnfApiBase).mockReturnValue("/apps/other-api/lancamento-notas-fiscais");
     expect(isLnfApiBaseOnBff()).toBe(false);
     expect(shouldConnectLnfRealtime()).toBe(false);
   });
