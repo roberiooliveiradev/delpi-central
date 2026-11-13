@@ -49,6 +49,14 @@ class KnowledgeNotFound(ChecklistDomainError):
     status = 404
 
 
+class KnowledgeDomainForbidden(ChecklistDomainError):
+    """Item existe em escopo de domínio não liberado ao ator — 403
+    sem vazar título/trecho (F7-R4)."""
+
+    code = "forbidden"
+    status = 403
+
+
 SOURCE_TYPES = frozenset(
     {
         "DOCUMENT",
@@ -529,7 +537,8 @@ class ClaraKnowledgeRepository:
                     SELECT k.knowledge_id, k.source_id, k.topic,
                            k.business_step, k.related_report_ids,
                            k.origin_authority, k.evidence_classification,
-                           k.access_scope, k.citation_locator,
+                           k.access_scope, k.domain_scope,
+                           k.citation_locator,
                            k.last_verified_at, k.title, k.content,
                            {rank} AS rank
                       FROM {_q('clara_knowledge_item')} k
@@ -577,6 +586,8 @@ class ClaraKnowledgeRepository:
         ]
         item_domain = row.get("domain_scope") or DEFAULT_DOMAIN_SCOPE
         if item_domain not in allowed:
-            # Sem vazar título/trecho de escopo não liberado.
-            raise KnowledgeNotFound("Conhecimento não encontrado.")
+            # Sem vazar título/trecho de escopo não liberado (F7-R4).
+            raise KnowledgeDomainForbidden(
+                "Você não tem permissão para knowledge.get."
+            )
         return row

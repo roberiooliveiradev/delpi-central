@@ -191,3 +191,23 @@ def test_knowledge_domains_helper():
         "controllership",
         "lancamento-notas-fiscais",
     ]
+
+
+def test_knowledge_domain_forbidden_is_403_without_leak():
+    from controllership_finance_app.infrastructure.persistence.clara_knowledge_repository import (
+        KnowledgeDomainForbidden,
+    )
+
+    exc = KnowledgeDomainForbidden(
+        "Você não tem permissão para knowledge.get."
+    )
+    assert exc.status == 403
+    assert exc.code == "forbidden"
+    assert "PROC" not in str(exc)
+    fail = bridge._domain_fail(exc)
+    assert fail.is_error is True
+    data = fail.structured_content or {}
+    assert data.get("error_code") == "forbidden" or (
+        (data.get("data") or {}).get("error", {}).get("code")
+        == "forbidden"
+    )
