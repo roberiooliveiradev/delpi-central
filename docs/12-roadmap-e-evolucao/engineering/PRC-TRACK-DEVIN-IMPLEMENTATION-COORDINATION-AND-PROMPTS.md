@@ -88,3 +88,20 @@ Implemente **somente** `GET /v1/product-registration/technical-records` para reg
 **Saída:** PR em branch própria com menor diff, SHA antes/depois, arquivos, contratos, testes e logs, status positivos/negativos, lacunas e riscos. Não fazer merge ou deploy sem gate. Retorne o relatório `DEVIN-PROD-01` ao chat para revisão. Próxima etapa PROD-02 só após Coordination ratificar T01/T02.
 
 **Observação de rastreabilidade:** o usuário definiu Devin como único executor de código; a coordenação registra prompts e analisa, não faz commits de runtime.
+
+
+## 7. Review de coordenação — DEVIN-PROD-01, commit 3c619a6ee0 (13/11/2026)
+
+**Relatório recebido:** Devin reportou branch `devin/prc-track-prod-01-records-list`, commit `3c619a6ee00a4da0db29d3cadc43be300911a3d6` pushed, `9/9` testes novos, `72/72` regressão focalizada, `7/7` Postgres 16 descartável, suíte completa `1165 pass / 18 skip / 2 fail` classificados pelo executor como baseline. **Revisão da coordenação:** GitHub commit/diff inspecionados; testes não reexecutados pela coordenação. `CODE_REVIEW_CONDITIONAL / HML_TEST_NOT_RUN / CI_STATUS_NOT_FOUND`.
+
+**Conformidade identificada no diff:** operação `GET /v1/product-registration/technical-records` aditiva; DTO e filtros sobre record publicado `current_revision_number>=1`; service e edge com AuthZ existente; ports e memory/Postgres/unavailable; rota antes de `/{record_id}`; sem migration/flags/frontend/alteração de complete. Mantido o limite de escopo do PO.
+
+**Correções pequenas exigidas antes de aprovação de merge:**
+- `PROD01-RV01`: Postgres `ILIKE %search%` trata `%` e `_` como wildcards, mas memory usa substring literal; corrigir escape SQL com `ESCAPE` explícito e manter consulta parametrizada. Cobrir termos `%`/`_`/backslash e paridade real.
+- `PROD01-RV02`: teste Postgres injeta `current_revision_number=1` sem materializar uma revisão real. Manter teste de filtro unitário, mas incluir cenário de integração `complete → record publicado → listagem` ou prova equivalente que cobre invariante `record + published revision`. Não adicionar migration/novo escopo.
+
+**Falhas da suíte ampla:** aceitar como baseline apenas com comando, imagem/SHA e logs de reprodução para ambos os casos e evidência de não interseção com diff. Falha de cache RBAC pode ser drift da imagem compartilhada; não rotular `PASS` da suíte completa. Não pedir mudanças no BC alheio sem authority.
+
+**PR/merge:** branch do Devin está disponível; link sugerido de criação não é prova de PR aberto. Devin deve abrir PR ou devolver URL de PR real após correções, testes no SHA final e rebase seguro sobre main. Coordenação não fará merge unilateral. `PROD-02/03` ainda `BLOCKED_BY_COORDINATION_T01_T02`. PRC-UI-EXTRACT drift não bloqueia este pacote. Nenhum deploy está autorizado nesta revisão.
+
+**Proposta de aceite após correção:** revisar diff mínimo, CI, relatórios direcionados e baseline das falhas; se conforme, emitir `CODE_REVIEW_PASS` para merge governado e DEV/HML. Não declarar `HML_PASS` sem execução autenticada multiusuário.
