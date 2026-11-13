@@ -33,6 +33,10 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     CompetenceDeleteBlocked,
     MissingReason,
 )
+from controllership_finance_app.application.clara.invoice_posting_capabilities import (
+    build_lnf_capability_table,
+    snapshot_for as lnf_snapshot_for,
+)
 from controllership_finance_app.application.clara.operation_presentation import (
     present_operation,
 )
@@ -240,6 +244,14 @@ class ClaraGovernedWrites:
         flag = {
             "manage": bool(identity.get("is_manage")),
             "dre": bool(identity.get("is_dre")),
+            "lnf_read": bool(identity.get("lnf_read")),
+            "lnf_create": bool(identity.get("lnf_create")),
+            "lnf_write": bool(identity.get("lnf_write")),
+            "lnf_process": bool(identity.get("lnf_process")),
+            "lnf_manage": bool(identity.get("lnf_manage")),
+            "lnf_review_unmapped": bool(
+                identity.get("lnf_review_unmapped")
+            ),
         }.get(gate, False)
         if not flag:
             raise OperationForbidden(
@@ -267,6 +279,9 @@ class ClaraGovernedWrites:
 
     def _snapshot(self, capability: str, params: dict) -> dict:
         """Estado vigente do recurso no momento do PREPARE."""
+        lnf_state = lnf_snapshot_for(capability, params)
+        if lnf_state is not None:
+            return lnf_state
         period = params.get("period")
         try:
             if capability in (
@@ -791,7 +806,7 @@ class ClaraGovernedWrites:
     def _capability_table(self) -> dict[str, dict]:
         packages = self._packages
         validations = self._validations
-        return {
+        table: dict[str, dict] = {
             "evidence.decide_version": {
                 "gate": "manage",
                 "resource_type": "closing_document",
@@ -2233,6 +2248,8 @@ class ClaraGovernedWrites:
                 "postcondition": lambda p, result, actor: bool(result),
             },
         }
+        table.update(build_lnf_capability_table(require=_require))
+        return table
 
     def _docs(self) -> ClosingDocumentService:
         if self._documents_service is None:

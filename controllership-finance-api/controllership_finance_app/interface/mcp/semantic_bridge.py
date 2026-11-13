@@ -41,6 +41,9 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
 )
 from controllership_finance_app.interface.mcp import tool_bridge as bridge
+from controllership_finance_app.interface.mcp import (
+    invoice_posting_bridge as lnf_bridge,
+)
 from controllership_finance_app.interface.mcp.tool_bridge import (
     _batch_orchestrator,
     _domain_fail,
@@ -146,12 +149,14 @@ def _read_spec(
     ref_param: str | None = None,
     required: tuple[str, ...] = (),
     allowed: tuple[str, ...] = (),
+    gate: str = "access",
 ) -> dict:
     return {
         "handler": handler,
         "ref_param": ref_param,
         "required": required,
         "allowed": allowed,
+        "gate": gate,
     }
 
 
@@ -373,6 +378,84 @@ READ_ACTIONS: dict[tuple[str, str], dict] = {
         ref_param="batch_id",
         required=("batch_id",),
     ),
+    ("invoice_posting", "list"): _read_spec(
+        lnf_bridge.tool_list_invoice_postings,
+        allowed=(
+            "branch",
+            "status",
+            "supplier",
+            "document",
+            "issued_from",
+            "issued_to",
+            "received_from",
+            "received_to",
+            "page",
+            "page_size",
+        ),
+        gate="lnf_read",
+    ),
+    ("invoice_posting", "get"): _read_spec(
+        lnf_bridge.tool_get_invoice_posting,
+        ref_param="request_id",
+        required=("request_id",),
+        gate="lnf_read",
+    ),
+    ("invoice_posting", "purchase_orders"): _read_spec(
+        lnf_bridge.tool_list_invoice_posting_purchase_orders,
+        ref_param="request_id",
+        required=("request_id",),
+        gate="lnf_read",
+    ),
+    ("purchase_order", "open"): _read_spec(
+        lnf_bridge.tool_list_open_purchase_orders,
+        required=("branch", "supplier_code", "supplier_store"),
+        gate="lnf_create",
+    ),
+    ("received_invoice", "list"): _read_spec(
+        lnf_bridge.tool_list_received_invoices,
+        allowed=(
+            "invoice_number",
+            "supplier_cnpj",
+            "document_type",
+            "page",
+            "page_size",
+        ),
+        gate="lnf_create",
+    ),
+    ("received_invoice", "detail"): _read_spec(
+        lnf_bridge.tool_received_invoice_detail,
+        ref_param="document_id",
+        required=("document_id",),
+        allowed=(
+            "document_type",
+            "branch",
+            "file_id",
+            "access_key",
+            "provider_entity_id",
+            "supplier_code",
+            "supplier_store",
+        ),
+        gate="lnf_create",
+    ),
+    ("unmapped_product", "list"): _read_spec(
+        lnf_bridge.tool_list_unmapped_products,
+        allowed=(
+            "branch",
+            "supplier",
+            "product_code",
+            "mapping_status",
+            "request_id",
+            "page",
+            "page_size",
+        ),
+        gate="lnf_review_unmapped",
+    ),
+    ("supplier", "search"): _read_spec(
+        lnf_bridge.tool_search_suppliers,
+        required=("query",),
+        allowed=("limit",),
+        gate="lnf_create",
+    ),
 }
 
 
@@ -393,6 +476,8 @@ ANALYZE_ACTIONS: dict[str, dict] = {
         "handler": bridge.tool_analyze_closing_blockers,
         "required": ("period",),
         "allowed": (),
+        "entity": "closing",
+        "gate": "access",
         "description": (
             "Achados FACT/RECOMMENDATION sobre bloqueios do "
             "fechamento da competência."
@@ -405,12 +490,28 @@ ANALYZE_ACTIONS: dict[str, dict] = {
             "comparison_kind", "subjects", "measure", "grain",
             "baseline_index", "diff_page", "diff_page_size",
         ),
+        "entity": "closing",
+        "gate": "access",
         "description": (
             "Comparação transversal governada de relatórios "
             "(doc 126): 2–6 sujeitos {reportId, period, branch, "
             "filters}, kinds PERIOD|BRANCH|REPORT|DOCUMENT|TREND|"
             "EXPLAIN; classifica compatibilidade semântica por par "
             "e nunca trata ausência como zero."
+        ),
+    },
+    "invoice_posting.backlog": {
+        "handler": lnf_bridge.tool_analyze_invoice_posting_backlog,
+        "required": (),
+        "allowed": ("branch", "period", "page_size"),
+        "entity": "invoice_posting",
+        "action": "backlog",
+        "gate": "lnf_read",
+        "description": (
+            "Backlog LNF: FACT/RECOMMENDATION (pendentes por filial, "
+            "idade desde recebimento, bloqueadas por motivo). Só "
+            "compõe reads da BFF; ausência de fonte ≠ zero; nunca "
+            "lança/valida por inferência."
         ),
     },
 }
@@ -440,6 +541,25 @@ KNOWLEDGE_ACTIONS: dict[str, dict] = {
 # ------------------------------------------------------------------
 
 
+def _gate_allowed(identity: dict | None, gate: str) -> bool:
+    """Visibilidade de catálogo — espelha gates da BFF; nunca autoriza."""
+    ident = identity or {}
+    if gate in (None, "", "access"):
+        return True
+    return bool(
+        {
+            "manage": ident.get("is_manage"),
+            "dre": ident.get("is_dre"),
+            "lnf_read": ident.get("lnf_read"),
+            "lnf_create": ident.get("lnf_create"),
+            "lnf_write": ident.get("lnf_write"),
+            "lnf_process": ident.get("lnf_process"),
+            "lnf_manage": ident.get("lnf_manage"),
+            "lnf_review_unmapped": ident.get("lnf_review_unmapped"),
+        }.get(gate, False)
+    )
+
+
 def _semantic_catalog(identity: dict | None = None) -> dict:
     """Catálogo versionado de (entity, action) — sem schemas pesados;
     detalhe por action via get_context(topic="schema")."""
@@ -458,13 +578,28 @@ def _semantic_catalog(identity: dict | None = None) -> dict:
         }
 
     read_entries = [
-        _entry("read", e, a, "access", s["required"], s["handler"].__doc__ or "")
+        _entry(
+            "read",
+            e,
+            a,
+            s.get("gate", "access"),
+            s["required"],
+            s["handler"].__doc__ or "",
+        )
         for (e, a), s in sorted(READ_ACTIONS.items())
+        if _gate_allowed(identity, s.get("gate", "access"))
     ]
     analyze_entries = [
-        _entry("analyze", "closing", name, "access", spec["required"],
-               spec["description"])
+        _entry(
+            "analyze",
+            spec.get("entity", "closing"),
+            spec.get("action", name.rpartition(".")[-1] if "." in name else name),
+            spec.get("gate", "access"),
+            spec["required"],
+            spec["description"],
+        )
         for name, spec in sorted(ANALYZE_ACTIONS.items())
+        if _gate_allowed(identity, spec.get("gate", "access"))
     ]
     knowledge_entries = [
         _entry("knowledge", "knowledge", name, "access",
@@ -475,6 +610,8 @@ def _semantic_catalog(identity: dict | None = None) -> dict:
     try:
         for cap in _governed_writes().capabilities():
             if cap["capability"] == "competence.delete" and not managed:
+                continue
+            if not _gate_allowed(identity, cap.get("gate", "access")):
                 continue
             entity, _, action = cap["capability"].partition(".")
             governed.append(
@@ -506,6 +643,14 @@ def _semantic_catalog(identity: dict | None = None) -> dict:
             "access": True,
             "manage": managed,
             "dre": dre,
+            "lnf_read": bool((identity or {}).get("lnf_read")),
+            "lnf_create": bool((identity or {}).get("lnf_create")),
+            "lnf_write": bool((identity or {}).get("lnf_write")),
+            "lnf_process": bool((identity or {}).get("lnf_process")),
+            "lnf_manage": bool((identity or {}).get("lnf_manage")),
+            "lnf_review_unmapped": bool(
+                (identity or {}).get("lnf_review_unmapped")
+            ),
         },
         "actions": {
             "read": read_entries,
@@ -517,20 +662,22 @@ def _semantic_catalog(identity: dict | None = None) -> dict:
 
 
 def _identity_snapshot(user) -> dict:
-    is_dre = False
     try:
-        is_dre = bool(
-            _governed_writes()._identity().get("is_dre")
-        )
+        return dict(_governed_writes()._identity())
     except Exception:  # noqa: BLE001 — identidade best-effort
-        is_dre = False
-    return {
-        "subject": actor_subject(user),
-        "name": getattr(user, "name", None)
-        or getattr(user, "email", None),
-        "is_manage": bridge._is_manage(user),
-        "is_dre": is_dre,
-    }
+        return {
+            "subject": actor_subject(user),
+            "name": getattr(user, "name", None)
+            or getattr(user, "email", None),
+            "is_manage": bridge._is_manage(user),
+            "is_dre": False,
+            "lnf_read": False,
+            "lnf_create": False,
+            "lnf_write": False,
+            "lnf_process": False,
+            "lnf_manage": False,
+            "lnf_review_unmapped": False,
+        }
 
 
 def _schema_for(entity: str, action: str) -> dict | None:
@@ -758,7 +905,12 @@ def tool_analyze(
     if bad is not None:
         return bad
     result = spec["handler"](**_clean(params))
-    return _wrap("closing", atype, result)
+    entity = spec.get("entity", "closing")
+    action = spec.get(
+        "action",
+        atype.rpartition(".")[-1] if "." in atype else atype,
+    )
+    return _wrap(entity, action, result)
 
 
 def tool_knowledge(

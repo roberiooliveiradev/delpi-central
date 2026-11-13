@@ -79,12 +79,12 @@ Transferir o módulo **Lançamento de Notas Fiscais (LNF)** da `api-delpi` para 
 |---|---|---|---|---|---|---|
 | F0–F4b | Inventário, contrato, implementação dark, ensaio HML | DONE | — | até `fddd4bb813` | 2026-11-12 | 163/164, suíte |
 | F5a | Preparação dark de PROD | DONE | PROD | `fdc31ad48e` + deploys 2026-11-12 | 2026-11-12 | BFF/MFE/api-delpi dark; preflight 5/5; OpenAPI BFF 112/0 LNF; api 731/22 LNF; MFE base api-delpi; observação 15 min sem incidente |
-| F5b | Corte em PROD | IN_PROGRESS (PENDING_OWNER smoke) | PROD | `f6950fdb0d` + virada 2026-11-13 | 2026-11-13 | Virada técnica PASS; smoke owner checklist entregue |
-| F5c | Estabilização (hypercare) | TODO | | | | |
-| F7.0 | CLARA — inventário e contrato | TODO | | | | |
-| F7.1 | CLARA — leituras | TODO | | | | |
-| F7.2 | CLARA — análise | TODO | | | | |
-| F7.3 | CLARA — ações governadas | TODO | | | | |
+| F5b | Corte em PROD | técnico PASS; smoke PENDING_OWNER (não bloqueante) | PROD | `630ca6f3b9` + fix PO `e43aa9558b` | 2026-11-13 | Virada: BFF 13,4s / api 15,1s / MFE 56,3s; revisor: 22 paths/24 ops BFF, 0 LNF api-delpi; fallback Vite morto |
+| F5c | Estabilização (hypercare) | IN_PROGRESS (dia 1; janela 5 DU a partir do corte) | PROD | — | 2026-11-13 | 1ª checagem: tráfego LNF 200; 403 detail=AuthZ create; 5xx≈0; contagens estáveis |
+| F7.0 | CLARA — inventário e contrato | DONE | docs | (este ciclo) | 2026-11-13 | doc 166; R2=SIM JWT usuário |
+| F7.1 | CLARA — leituras | IN_PROGRESS | DEV | (este ciclo) | 2026-11-13 | 8 reads no clara-semantic-v1 |
+| F7.2 | CLARA — análise | IN_PROGRESS | DEV | (este ciclo) | 2026-11-13 | analyze invoice_posting.backlog |
+| F7.3 | CLARA — ações governadas | IN_PROGRESS | DEV | (este ciclo) | 2026-11-13 | comment/refresh direct; demais governed |
 | F7.4 | CLARA — produção + roteiro de teste do owner | TODO | | | | |
 | F6 | Limpeza final (encerra o rollback) | TODO | | | | |
 
@@ -369,3 +369,8 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-13 07:31 -03 | F5b.2.4 | PROD | Sync catálogos chat/TV (OpenAPI sem LNF) | PASS | — | chat actions=788; TV routes=585; lnf_mentions=0 (wrapper script rc≠0 por logs NDJSON) |
 | 2026-11-13 07:31 -03 | F5b.3 | PROD | Verificação técnica (D8 403, api 404, OpenAPI, contagens) | PASS | — | BFF 134/22/24ops; api 709/0; contagens iguais; 5xx LNF=0 |
 | 2026-11-13 07:32 -03 | F5b.4 | PROD | Smoke do owner | PENDING_OWNER | — | checklist entregue no relatório; F5b não DONE até PASS do owner |
+| 2026-11-13 ~08:00 -03 | DECISÃO | — | Owner: execução contínua F5b→F5c→F7.0…F7.4 sem pausa; gates HML/PROD autorizados; parada só H1–H4; F6 aguarda | DECISÃO | — | smoke F5b não bloqueante; tokens HML ok; nunca usuários PROD |
+| 2026-11-13 08:00 -03 | F5b | docs/PROD | Fechamento técnico: PASS; smoke PENDING_OWNER (não bloqueante) | técnico PASS | `630ca6f3b9` / `e43aa9558b` | tempos BFF 13,4s api 15,1s MFE 56,3s; fallback Vite morto confirmado pelo revisor |
+| 2026-11-13 08:04 -03 | F5c.d1 | PROD | 1ª checagem hypercare | PASS | — | total=1430; pending=15 posted=1389 blocked=1 cancelled=25; 5xx_60m=0; 403_60m=4 (detail create); HOSTED=true MODULE=false |
+| 2026-11-13 08:05 -03 | F7.0 | docs | Inventário CLARA + R2 + doc 166 | DONE | (ciclo F7) | MCP in-process BFF; JWT usuário SIM; catálogo alvo travado |
+| 2026-11-13 08:05 -03 | F7.1–F7.3 | DEV | Implementação reads/analyze/governed LNF nas 6 tools | IN_PROGRESS | (ciclo F7) | `invoice_posting_bridge` + `invoice_posting_capabilities` |

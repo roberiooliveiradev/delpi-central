@@ -1,10 +1,12 @@
 # 164 — Runbook do corte F5 · Lançamento de Notas Fiscais (api-delpi → BFF)
 
-> Status: **F5b IN_PROGRESS** — virada técnica PROD DONE; **smoke owner PENDING**  
+> Status: **F5b técnico PASS** — smoke owner **PENDING_OWNER (não bloqueante)**; **F5c IN_PROGRESS** (dia 1)  
 > Owner de execução: operador de plataforma + PO  
 > Schema: **imutável** no corte (V001–V014; sem apply)  
 > Princípio: o corte é **troca de configuração** (flags).  
-> Corte técnico: 2026-11-13 ~07:28–07:32 -03 · HEAD `f6950fdb0d`
+> Corte técnico: 2026-11-13 ~07:28–07:32 -03 · HEAD `630ca6f3b9` (+ fix PO `e43aa9558b`)  
+> Tempos de virada: BFF **13,4 s** · api-delpi **15,1 s** · MFE **56,3 s**  
+> Bundle MFE: runtime = BFF; string `api-delpi` residual = fallback Vite morto (confirmado pelo revisor)
 
 ---
 

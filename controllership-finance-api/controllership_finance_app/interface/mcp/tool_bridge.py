@@ -28,12 +28,20 @@ from mcp.types import CallToolResult
 
 from pathlib import Path
 
-from delpi_auth.authz_core import has_permission
+from delpi_auth.authz_core import has_any_permission, has_permission
 from delpi_mcp.avatar_image import build_avatar_delivery
 from delpi_mcp.errors import mcp_tool_result
 from delpi_mcp.identity import (
     build_mcp_request as _shared_build_request,
     require_mcp_context,
+)
+from controllership_finance_app.application.invoice_posting.permissions import (
+    LANCAMENTO_NOTAS_FISCAIS_CREATE,
+    LANCAMENTO_NOTAS_FISCAIS_CREATE_PERMISSIONS,
+    LANCAMENTO_NOTAS_FISCAIS_MANAGE,
+    LANCAMENTO_NOTAS_FISCAIS_PROCESS_PERMISSIONS,
+    LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS,
+    LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS,
 )
 
 from controllership_finance_app.domain.closing_checklist.errors import (
@@ -247,6 +255,30 @@ def _mcp_identity() -> dict:
         "is_manage": _is_manage(user),
         "is_dre": bool(
             has_permission(user, DRE_ACCESS_PERMISSION)
+        ),
+        "lnf_read": bool(
+            has_any_permission(user, LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS)
+        ),
+        "lnf_create": bool(
+            has_permission(user, LANCAMENTO_NOTAS_FISCAIS_CREATE)
+        ),
+        "lnf_write": bool(
+            has_any_permission(
+                user, LANCAMENTO_NOTAS_FISCAIS_CREATE_PERMISSIONS
+            )
+        ),
+        "lnf_process": bool(
+            has_any_permission(
+                user, LANCAMENTO_NOTAS_FISCAIS_PROCESS_PERMISSIONS
+            )
+        ),
+        "lnf_manage": bool(
+            has_permission(user, LANCAMENTO_NOTAS_FISCAIS_MANAGE)
+        ),
+        "lnf_review_unmapped": bool(
+            has_permission(
+                user, LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS
+            )
         ),
     }
 

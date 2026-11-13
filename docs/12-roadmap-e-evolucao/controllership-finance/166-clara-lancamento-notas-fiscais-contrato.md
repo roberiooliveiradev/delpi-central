@@ -1,0 +1,101 @@
+# 166 — CLARA × Lançamento de Notas Fiscais (contrato F7)
+
+> Status: **F7.0 DONE** · implementação F7.1–F7.3 na BFF (`controllership-finance-api`)  
+> Data: 2026-11-13  
+> Tools públicas: **sempre as 6** (`get_context`, `read`, `analyze`, `knowledge`, `execute`, `delete`)  
+> Catálogo: `clara-semantic-v1` — novas entradas `(entity, action)`, sem tool nova
+
+---
+
+## 1. Inventário (CONFIRMADO_NO_CODIGO)
+
+| Item | Evidência |
+|---|---|
+| Serviço MCP | In-process na BFF `controllership-finance-api` — mount `/mcp` (`main.py`) |
+| Pasta | `controllership_finance_app/interface/mcp/` + `application/clara/` |
+| Compose | `infra/docker-compose.yml` / `.hml.yml` serviço `controllership-finance-api` |
+| Catálogo | `semantic_bridge.py` → `SEMANTIC_CATALOG_VERSION = clara-semantic-v1` |
+| Governed | `governed_writes.py` + `invoice_posting_capabilities.py` |
+| HML | Mesma BFF (`delpi-hml-controllership-finance-api`) — sem container CLARA separado |
+| Endpoint | `POST {PUBLIC}/apps/controllership-finance-api/mcp` JSON-RPC |
+
+### Identidade (R2 / H2) — **SIM, JWT do usuário final**
+
+1. Transporte MCP exige JWT humano; **service token proibido** (`auth_middleware` + `delpi_mcp`).
+2. Tools leem ContextVar / Request reconstruída com o **mesmo Bearer**.
+3. Rotas LNF usam `get_current_user()` + `@require_*` — AuthZ na BFF.
+4. Não há hop MCP→BFF com principal de serviço.
+
+---
+
+## 2. Catálogo alvo (implementado)
+
+| Tool | entity.action | Rota BFF | Gate catálogo | Política |
+|---|---|---|---|---|
+| read | `invoice_posting.list` | GET `/requests` | `lnf_read` | — |
+| read | `invoice_posting.get` | GET `/requests/{id}` | `lnf_read` | + `app_links` (PDF/XML no app) |
+| read | `invoice_posting.purchase_orders` | GET `/requests/{id}/purchase-orders` | `lnf_read` | — |
+| read | `purchase_order.open` | GET `/purchase-orders/open` | `lnf_create` | — |
+| read | `received_invoice.list` | GET `/received-invoices` | `lnf_create` | — |
+| read | `received_invoice.detail` | GET `/received-invoices/{id}/detail` | `lnf_create` | — |
+| read | `unmapped_product.list` | GET `/unmapped-products` | `lnf_review_unmapped` | — |
+| read | `supplier.search` | GET `/suppliers` | `lnf_create` | — |
+| analyze | `invoice_posting.backlog` | composição dos reads | `lnf_read` | FACT/RECOMMENDATION |
+| execute | `invoice_posting.comment` | POST `.../comments` | `lnf_write` | **direct** |
+| execute | `reconciliation.refresh` | POST `/reconciliation/refresh` | `lnf_read` | **direct** |
+| execute | `invoice_posting.create` | POST `/requests` | `lnf_create` | governed |
+| execute | `invoice_posting.update` | PATCH `/requests/{id}` | `lnf_write` | governed |
+| execute | `invoice_posting.link_purchase_order` | POST `.../link` | `lnf_process` | governed |
+| execute | `invoice_posting.start` | POST `.../start` | `lnf_process` | governed |
+| execute | `invoice_posting.block` | POST `.../block` | `lnf_process` | governed |
+| execute | `invoice_posting.resume` | POST `.../resume` | `lnf_process` | governed |
+| execute | `invoice_posting.post_manual` | POST `.../post-manual` | `lnf_process` | governed + **justificativa** |
+| execute | `reconciliation.run` | POST `/reconciliation/run` | `lnf_manage` | governed |
+| delete | `invoice_posting.cancel` | POST `.../cancel` | `lnf_write` | destructive + **justificativa** |
+
+PDF/XML: **não** são tools — resposta aponta `app_links` → `/apps/lancamento-notas-fiscais`.
+
+Gates mapeiam as mesmas famílias de permissão dos decorators BFF (`permissions.py`).
+
+---
+
+## 3. Arquivos canônicos
+
+| Peça | Path |
+|---|---|
+| Reads/analyze | `interface/mcp/invoice_posting_bridge.py` |
+| Registry | `interface/mcp/semantic_bridge.py` |
+| Governed LNF | `application/clara/invoice_posting_capabilities.py` |
+| Merge/gates | `application/clara/governed_writes.py` |
+| Identity flags | `interface/mcp/tool_bridge.py` (`_mcp_identity`) |
+| Testes | `tests/test_clara_lnf_catalog.py` |
+
+---
+
+## 4. Plano de testes
+
+### DEV / unitário
+- `tools/list` = 6 tools
+- Catálogo: entradas LNF só com flags `lnf_*`
+- Capabilities: comment/refresh direct; demais governed; cancel destructive; justificativas obrigatórias
+
+### HML (JSON-RPC MCP, usuários `lnf-contract-p*`)
+- Positivo: perfil com permissão vê entrada e obtém mesmos dados que a rota BFF
+- Negativo: sem permissão → ausente no catálogo / 403 na tool
+- P10 serviço → 401/403 no `/mcp`
+- Prepare não muta; commit com `confirmation=true` muta; proposta de outro ator rejeitada
+- Cancel/post_manual sem justificativa → rejeitado
+
+### PROD
+- Deploy BFF; health; OpenAPI/MCP up
+- Roteiro owner (F7.4) — ver Parte 6 da trilha 165
+
+---
+
+## 5. Fora de escopo (explícito)
+
+- Persona/ficha da CLARA
+- MFE LNF
+- Tools MCP novas além das 6
+- Escrita Protheus (H3)
+- F6 limpeza
