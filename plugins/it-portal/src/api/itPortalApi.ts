@@ -516,6 +516,43 @@ export type LinkRemoved = { id: string };
 
 export type Page<T> = { items: T[]; total: number; page: number; page_size: number };
 
+
+export type WindowsServiceIssue = {
+  server_id: string;
+  server_name: string;
+  service_key: string;
+  service_name: string;
+  criticality: "high" | "critical";
+  state: string;
+  status: "stopped" | "attention" | "unverified";
+  reason: string;
+};
+
+export type WindowsServicesHealth = {
+  generated_at: string;
+  stale_after_minutes: number;
+  total: number;
+  running: number;
+  stopped: number;
+  attention: number;
+  unverified: number;
+  health_percent: number | null;
+  servers: {
+    server_id: string;
+    server_name: string;
+    hostname: string;
+    last_collected_at: string | null;
+    total: number;
+    running: number;
+    stopped: number;
+    attention: number;
+    unverified: number;
+    health_percent: number | null;
+  }[];
+  issues_total: number;
+  issues: WindowsServiceIssue[];
+};
+
 export type Dashboard = {
   reference_date: string;
   generated_at: string;
@@ -625,6 +662,8 @@ export type ActionPlanListQuery = {
 export const itPortalApi = {
   capabilities: (signal?: AbortSignal) => apiGet<Capabilities>(apiUrl("/me/capabilities"), signal),
   dashboard: (signal?: AbortSignal) => apiGet<Dashboard>(apiUrl("/dashboard"), signal),
+  windowsServicesHealth: (signal?: AbortSignal) =>
+    apiGet<WindowsServicesHealth>(apiUrl("/dashboard/windows-services-health"), signal),
 
   listServers: (query: ServerListQuery, signal?: AbortSignal) =>
     apiGet<Page<Server>>(apiUrl("/servers", query), signal),

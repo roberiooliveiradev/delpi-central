@@ -5,6 +5,7 @@ from it_portal_app.application.observation_service import (
     _allowlist_server_ids, _windows_collector_bindings,
 )
 from it_portal_app.application.host_service_control import HostServiceControl
+from it_portal_app.application.windows_service_health import summarize_windows_services_health
 from it_portal_app.application.ports import Actor
 from it_portal_app.domain.errors import ConflictError, NotFoundError, ValidationError
 from it_portal_app.domain.host_services import build_host_service_batch
@@ -67,3 +68,6 @@ class HostServiceInventory:
         if preference is None:
             raise NotFoundError("host_service_not_found", "Serviço Windows não encontrado neste servidor.")
         return preference
+
+    def prioritized_health(self) -> dict:
+        return summarize_windows_services_health(self.repository.prioritized_health_rows())

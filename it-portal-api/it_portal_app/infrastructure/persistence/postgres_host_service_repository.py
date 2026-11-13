@@ -300,3 +300,29 @@ class PostgresHostServiceRepository(PostgresRepositoryBase):
         if current:
             current = {**current, "run_id": str(current["run_id"])}
         return [dict(row) for row in rows], total, current, favorites_count
+
+    def prioritized_health_rows(self) -> list[dict]:
+        """One bounded SQL read for all high/critical favorite Windows services.
+
+        Include previously discovered but temporarily absent services to avoid
+        silently improving the health score when a service disappears.
+        """
+        with self._tx() as conn:
+            rows = conn.execute(
+                f"""SELECT hs.server_id::text AS server_id,
+                           s.name AS server_name, s.hostname,
+                           hs.service_key, hs.display_name AS service_name,
+                           p.criticality, hs.state, hs.is_present,
+                           c.observed_at AS collected_at
+                    FROM {_S}.host_service_preferences p
+                    JOIN {_S}.host_services hs
+                      ON hs.server_id=p.server_id AND hs.service_key=p.service_key
+                    JOIN {_S}.servers s ON s.id=hs.server_id
+                    LEFT JOIN {_S}.host_service_current c ON c.server_id=hs.server_id
+                    WHERE p.is_favorite IS TRUE
+                      AND p.criticality IN ('high', 'critical')
+                      AND s.archived_at IS NULL
+                    ORDER BY s.hostname COLLATE "C", hs.display_name COLLATE "C",
+                             hs.service_key COLLATE "C" """
+            ).fetchall()
+        return [dict(row) for row in rows]

@@ -14,7 +14,7 @@ from it_portal_app.interface.http.authz import (
 )
 from it_portal_app.interface.http.dependencies import get_host_service_inventory
 from it_portal_app.interface.http.s2s_auth import require_collector_identity
-from it_portal_app.interface.http.schemas import Envelope, ERROR_RESPONSES, HostServiceBatchInput, HostServiceBatchReceipt, HostServicePage, HostServicePreferenceInput, HostServicePreferenceOut
+from it_portal_app.interface.http.schemas import Envelope, ERROR_RESPONSES, HostServiceBatchInput, HostServiceBatchReceipt, HostServicePage, HostServicePreferenceInput, HostServicePreferenceOut, WindowsServicesHealthOut
 
 router = APIRouter(tags=["Windows Host Services"], responses=ERROR_RESPONSES)
 INGEST_SCOPE = "it-portal.host-services.ingest"
@@ -63,3 +63,13 @@ def set_host_service_preference(request: Request, server_id: UUID, service_name:
     )
     return ok(result, "Preferência do serviço atualizada.",
               operation_id="set_it_windows_host_service_preference")
+
+
+@router.get("/dashboard/windows-services-health",
+    operation_id="get_it_windows_services_health",
+    response_model=Envelope[WindowsServicesHealthOut],
+    summary="Saúde global de serviços favoritos com criticidade Alta ou Crítica")
+def get_windows_services_health(request: Request,
+    service: HostServiceInventory = Depends(get_host_service_inventory)):
+    authorize(request, SERVERS_VIEW)
+    return ok(service.prioritized_health(), operation_id="get_it_windows_services_health")

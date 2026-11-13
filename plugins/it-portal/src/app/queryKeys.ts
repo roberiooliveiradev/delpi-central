@@ -11,6 +11,7 @@ import type {
 export const queryKeys = {
   capabilities: ["it-portal", "capabilities"] as const,
   dashboard: ["it-portal", "dashboard"] as const,
+  windowsServicesHealth: ["it-portal", "dashboard", "windows-services-health"] as const,
   servers: ["it-portal", "servers"] as const,
   serverList: (query: ServerListQuery) => ["it-portal", "servers", "list", query] as const,
   server: (id: string) => ["it-portal", "servers", "detail", id] as const,

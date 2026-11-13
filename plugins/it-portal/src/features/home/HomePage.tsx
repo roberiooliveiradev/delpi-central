@@ -37,6 +37,7 @@ import { ForbiddenState, LoadingBlock, QueryErrorState } from "../../app/QuerySt
 import { queryKeys } from "../../app/queryKeys";
 import { buildPath } from "../../app/routes";
 import { ServerFormModal } from "../servers/ServerFormModal";
+import { WindowsServicesHealthPanel } from "./WindowsServicesHealthPanel";
 
 const UPCOMING_AREAS = ["Monitoramento", "Descoberta automática", "Integração com GLPI", "Notificações"];
 
@@ -80,7 +81,12 @@ export function HomePage() {
       </ItpEmptyState>
     );
   } else {
-    body = <DashboardContent data={dashboardQuery.data} basePath={basePath} />;
+    body = (
+      <>
+        <WindowsServicesHealthPanel basePath={basePath} />
+        <DashboardContent data={dashboardQuery.data} basePath={basePath} />
+      </>
+    );
   }
 
   return (

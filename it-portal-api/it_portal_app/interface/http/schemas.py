@@ -619,6 +619,45 @@ class HostServiceCurrentOut(BaseModel):
     received_at: datetime
     service_count: int
 
+
+class WindowsServiceHealthIssueOut(BaseModel):
+    server_id: str
+    server_name: str
+    service_key: str
+    service_name: str
+    criticality: Literal["high", "critical"]
+    state: str
+    status: Literal["stopped", "attention", "unverified"]
+    reason: str
+
+
+class WindowsServiceHealthServerOut(BaseModel):
+    server_id: str
+    server_name: str
+    hostname: str
+    last_collected_at: datetime | None
+    total: int
+    running: int
+    stopped: int
+    attention: int
+    unverified: int
+    health_percent: int | None
+
+
+class WindowsServicesHealthOut(BaseModel):
+    generated_at: datetime
+    stale_after_minutes: int
+    total: int
+    running: int
+    stopped: int
+    attention: int
+    unverified: int
+    health_percent: int | None
+    servers: list[WindowsServiceHealthServerOut]
+    issues_total: int
+    issues: list[WindowsServiceHealthIssueOut]
+
+
 class HostServicePage(BaseModel):
     favorites_count: int
     items: list[HostServiceOut]
