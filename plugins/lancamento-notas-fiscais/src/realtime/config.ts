@@ -33,3 +33,20 @@ export function buildLnfRealtimeWsUrl(token: string): string {
   url.searchParams.set("token", token);
   return url.toString();
 }
+
+/**
+ * Política de reconexão do LNF.
+ *
+ * Handshake recusado sem token responde HTTP 401 no servidor; no navegador
+ * isso chega como close 1006 (não 1008). Só 1008 + mesma URL encerra.
+ */
+export function shouldReconnectLnfRealtime({
+  closeCode,
+  sameUrl,
+}: {
+  closeCode: number;
+  sameUrl: boolean;
+}): boolean {
+  if (closeCode === 1008 && sameUrl) return false;
+  return true;
+}

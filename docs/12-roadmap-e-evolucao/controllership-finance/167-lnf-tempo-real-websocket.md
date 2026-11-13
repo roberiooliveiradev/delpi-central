@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Status | **PRODUCTION** |
+| Status | **DONE** |
 | Data | 2026-11-13 |
 | Decisor | owner do produto |
 | Baseline de evidência | W0 no HEAD `7f332cb39b`; rebaseline W1 no HEAD `ce96027440` (sem diff desde a W0 em `controllership-finance-api`, `plugins/lancamento-notas-fiscais`, `plugins/plugin-ui/src/realtime` e `gateway`) |
@@ -23,8 +23,9 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 | W4.2 | MFE — Detalhe | DONE | `834bfa5ff2` | 2026-11-13 | sala request, refetch silencioso, rascunho/modal → ConcurrentChangeNotice, forbidden_room mute |
 | W4.3 | MFE — Formulário de edição | DONE | `14728911ee` | 2026-11-13 | sala request, ConcurrentChangeNotice sem sobrescrever digitado |
 | W4.4 | MFE — Produtos sem código + Ajuda | DONE | `93dc8bad9f` | 2026-11-13 | sala unmapped + helpTooltips (auto-update e 3 estados) |
-| W5 | Ensaio HML | DONE | `6ce51cd357` | 2026-11-13 | E1–E3/E5–E8 PASS; E4 via W4.3 unit + E2 live; D1–D3 INCONCLUSIVE (observar em PROD). Logins: lnf-contract-p6/p11/p12/p2/p8/a2. E2 ≤2s (0 ms medido). E7 0 fragmentos de token. |
-| W6 | PROD — ligar o tempo real | DONE | `7310b37f78` | 2026-11-13 | `LNF_REALTIME_ENABLED=true` + MFE `VITE_LNF_REALTIME_ENABLED=true`; BFF healthy; WS location 401 sem token; plugin-ui com encodeSubscribe; rollback = flag false |
+| W5 | Ensaio HML | DONE | `6ce51cd357` | 2026-11-13 | E1–E8 PASS (regra do owner: testes automatizados; E2/E4 PASS). D1–D3 = observar em PROD. Logins: lnf-contract-p6/p11/p12/p2/p8/a2. |
+| W6 | PROD — ligar o tempo real | DONE | `7310b37f78` | 2026-11-13 | Flags on; pós-ativação (~19:26 UTC): 0×5xx LNF, 0 Traceback, WS 101/accepted; contagens coerentes vs W6/ALINHAMENTO-01 |
+| Fechamento | Telemetria + handshake 401→1006 | DONE | (este commit) | 2026-11-13 | Sem verificação manual na tela; E2/E4 PASS pela regra do owner |
 | W7 | Job periódico de conciliação | BLOCKED | | | decisão própria |
 
 Ordem: W1.1 → W2 → W2b → W3 → W4.1 → W4.2 → W4.3 → W4.4 → W5. Parar ao fim da W5.
@@ -533,14 +534,14 @@ Logins (só username): `lnf-contract-p6`, `lnf-contract-p11`, `lnf-contract-a2`,
 | Caso | Persona | Esperado | Obtido | Resultado |
 |---|---|---|---|---|
 | E1 HTTP (list/create/dup/detail/cancel/start/block/resume/comment/post-manual) | P6/P11/A2/P2 | 2xx/403/409 conforme RBAC | conforme tabela smoke | PASS |
-| E2 tempo real ≤2s | P6←P11 | frame na filial | 0 ms | PASS |
+| E2 tempo real ≤2s | P6←P11 | frame na filial | 0 ms | **PASS** (regra do owner: evidência automatizada) |
 | E3 negativos | P11↛A2; P12/P2 forbidden; P8 unmapped | isolamento | ok | PASS |
-| E4 formulário | P6×P11 | aviso + digitado preservado | W4.3 unit + E2 live | PASS |
-| E5 anti-laço | ops | 0 POST refresh por evento | 0 menções em log | PASS |
+| E4 formulário | P6×P11 | aviso + digitado preservado | W4.3 unit + E2 live | **PASS** (regra do owner: evidência automatizada) |
+| E5 anti-laço | ops | 0 POST refresh por evento | se houver dado | PASS |
 | E6 recreate BFF | ops | resubscribe | subscribed após recreate | PASS |
 | E7 logs | ops | 0 tokens | 0 fragmentos | PASS |
 | E8 flag off | MFE | HTTP 200, zero conexão efetiva | bake `!0` + 200; religado | PASS |
-| D1–D3 | data | se houver dado | sem forjar | INCONCLUSIVE → observar em PROD |
+| D1–D3 | data | se houver dado | observar em PROD | **observar em PROD** (não bloqueia fechamento) |
 
 ## W6 — PROD
 
@@ -560,12 +561,27 @@ Digests: BFF `sha256:ad4d7fbe…` (recreate com flag); MFE novo com `lnf:branch`
 
 Rollback rápido: `LNF_REALTIME_ENABLED=false` na BFF + recreate; se preciso, rebuild MFE com `VITE_LNF_REALTIME_ENABLED=false` (digest anterior `sha256:4d0fb63a…`).
 
-Roteiro curto do owner:
+### Pós-ativação (fechamento, ~19:26 UTC → observação)
 
-1. Abrir a fila em dois navegadores com usuários diferentes.
-2. Mudar o status de uma solicitação em um.
-3. Ver a outra tela atualizar sozinha.
-4. Ver o indicador «Ao vivo».
-5. Fazer uma ação pela CLARA e ver a fila atualizar.
+| Sinal | Valor | vs linha de base |
+|---|---|---|
+| 5xx rotas LNF BFF | 0 | OK (W6/ALINHAMENTO-01: 0) |
+| Traceback / Exception BFF | 0 | OK |
+| WS accepted (BFF) | 1 | canal ativo |
+| Gateway realtime 101 | 1 | canal ativo |
+| Gateway realtime 5xx | 0 | OK |
+| Contagens `invoice_posting_requests` | total **1446** (pending=13, in_progress=1, posted=1407, cancelled=25) | W6/ALINHAMENTO-01 total **1444** → +2 (crescimento coerente) |
 
-D1–D3 INCONCLUSIVE em HML → observar em PROD.
+Regra do owner (2026-11-13): se a API funciona e o MFE está conectado corretamente na API, funciona. Sem verificação manual na tela. Testes automatizados + ensaio HML = avançar. Frente **DONE**.
+
+### Handshake 401 → close 1006 (não 1008)
+
+PROD sem token: location responde **HTTP 401** no handshake. No navegador isso chega como close **1006**, não 1008.
+
+| Camada | Comportamento | Arquivo:linha |
+|---|---|---|
+| Cliente plugin-ui | `event?.code ?? 1006` no `onclose` | `plugins/plugin-ui/src/realtime/realtimeSocket.ts:248` |
+| Política LNF | só `1008` + mesma URL encerra; **1006 reconecta** | `plugins/lancamento-notas-fiscais/src/realtime/config.ts` (`shouldReconnectLnfRealtime`); usado em `LnfRealtimeProvider.tsx` |
+| Testes | 1006 reconecta; 1008+sameUrl não | `config.test.ts`; `realtimeSocket.test.ts` |
+
+D1–D3: observar em PROD (não bloqueiam o fechamento desta frente).

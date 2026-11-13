@@ -9,7 +9,11 @@ import {
   type ReactNode,
 } from "react";
 import { peekAccessToken } from "../data/api/httpClient";
-import { buildLnfRealtimeWsUrl, shouldConnectLnfRealtime } from "./config";
+import {
+  buildLnfRealtimeWsUrl,
+  shouldConnectLnfRealtime,
+  shouldReconnectLnfRealtime,
+} from "./config";
 import { parseLnfControlMessage } from "./events";
 
 type RealtimeConnectionStatus =
@@ -81,16 +85,7 @@ export function LnfRealtimeProvider({ getAccessToken, children }: Props) {
         jitter: true,
       },
       resubscribeOnReconnect: true,
-      shouldReconnect: ({
-        closeCode,
-        sameUrl,
-      }: {
-        closeCode: number;
-        sameUrl: boolean;
-      }) => {
-        if (closeCode === 1008 && sameUrl) return false;
-        return true;
-      },
+      shouldReconnect: shouldReconnectLnfRealtime,
       onMessage: () => undefined,
     }) as unknown as LnfRealtimeClient;
   }, [enabled]);

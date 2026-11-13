@@ -196,6 +196,23 @@ describe("RealtimeSocketClient opções aditivas", () => {
     client.stop();
   });
 
+  it("close sem code (handshake 401 → browser 1006) reconecta com política LNF", () => {
+    // realtimeSocket.ts:248 — event?.code ?? 1006
+    const client = new RealtimeSocketClient({
+      buildUrl: () => "wss://h/ws?token=a",
+      onMessage: () => undefined,
+      shouldReconnect: ({ closeCode, sameUrl }) =>
+        !(closeCode === 1008 && sameUrl),
+    });
+    client.start();
+    FakeWebSocket.instances[0].open();
+    FakeWebSocket.instances[0].emitClose(); // default 1006
+    vi.advanceTimersByTime(4_500);
+    expect(FakeWebSocket.instances.length).toBeGreaterThan(1);
+    expect(client.getStatus()).toBe("reconnecting");
+    client.stop();
+  });
+
   it("onResync só dispara depois da primeira conexão e o status passa por open", () => {
     const statuses: string[] = [];
     let resyncs = 0;

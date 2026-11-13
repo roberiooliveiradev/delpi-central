@@ -80,14 +80,14 @@ Transferir o módulo **Lançamento de Notas Fiscais (LNF)** da `api-delpi` para 
 |---|---|---|---|---|---|---|
 | F0–F4b | Inventário, contrato, implementação dark, ensaio HML | DONE | — | até `fddd4bb813` | 2026-11-12 | 163/164, suíte |
 | F5a | Preparação dark de PROD | DONE | PROD | `fdc31ad48e` + deploys 2026-11-12 | 2026-11-12 | BFF/MFE/api-delpi dark; preflight 5/5; OpenAPI BFF 112/0 LNF; api 731/22 LNF; MFE base api-delpi; observação 15 min sem incidente |
-| F5b | Corte em PROD | técnico PASS; smoke PENDING_OWNER (não bloqueante) | PROD | `630ca6f3b9` + fix PO `e43aa9558b` | 2026-11-13 | Virada: BFF 13,4s / api 15,1s / MFE 56,3s; revisor: 22 paths/24 ops BFF, 0 LNF api-delpi; fallback Vite morto |
-| F5c | Estabilização (hypercare) | IN_PROGRESS (dia 1; janela 5 DU a partir do corte) | PROD | — | 2026-11-13 | Checagens: total=1430; 5xx=0; HOSTED=true; recheck pós-F7 OK |
+| F5b | Corte em PROD | **DONE** | PROD | `630ca6f3b9` + fix PO `e43aa9558b` | 2026-11-13 | Owner (2026-11-13): smoke manual substituído por evidência automatizada (E1 HTTP HML; contagens/5xx PROD ALINHAMENTO-01 + W6) |
+| F5c | Estabilização (hypercare) | IN_PROGRESS | PROD | — | 2026-11-13 | Corte 13/11 = DU1; DU: 13,14,17,18,19; **término = 2026-11-19**; 20/11 feriado nacional → F6 PROD não antes de 2026-11-21 |
 | F7.0 | CLARA — inventário e contrato | DONE | docs | `0926f07160` | 2026-11-13 | doc 166; R2=SIM JWT usuário |
 | F7.1 | CLARA — leituras | DONE | HML/PROD | `1328cd0d85` | 2026-11-13 | 8 reads; HML JSON-RPC PASS; PROD health+import |
 | F7.2 | CLARA — análise | DONE (F7-R3) | HML/PROD | `d9393bcde5` | 2026-11-13 | enum LNF; `review_aged_pending.value`=contagem ≥5d |
 | F7.3 | CLARA — ações governadas | DONE (F7-R3) | HML/PROD | `d9393bcde5` | 2026-11-13 | copy conversacional sem Portal; displayable=true |
-| F7.4 | CLARA — produção + roteiro de teste do owner | técnico PASS; roteiro PENDING_OWNER | PROD | `bd4e26e98b` + `7f332cb39b` | 2026-11-13 | entrada CF∨LNF; knowledge por escopo; HML matriz PASS; PROD V022+corpus LNF 162; canal conversational intacto |
-| F6 | Limpeza final (encerra o rollback) | TODO | | | | |
+| F7.4 | CLARA — produção + teste automatizado | **IN_PROGRESS — teste automatizado via conector** | PROD | `bd4e26e98b` + `7f332cb39b` | 2026-11-13 | Cursor NÃO executa; conector externo dono do teste CLARA |
+| F6 | Limpeza final (encerra o rollback) | ensaio HML (PROD aguarda F5c DONE + F7.4 DONE) | HML | (commits F6) | 2026-11-13 | PROD só após F5c DONE (após 19/11) + F7.4 DONE |
 
 Status possíveis: TODO · IN_PROGRESS · BLOCKED (regra de parada) · DONE.
 **Ordem de execução obrigatória:** F5a → F5b → F5c (inicia o período de estabilização) → F7.0 → F7.1 → F7.2 → F7.3 → F7.4 → F6.
@@ -408,19 +408,21 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-13 15:34:37 -03 | ALINHAMENTO-01 | PROD | Deploy controllership-finance-api | PASS | `b5e74669a2` | Imagem `sha256:ad4d7fbec4e9d5b3be7a23597b9915cab8cf53d22e612c46f2f41029c0ef6e97`. Rollback: `sha256:49c894ba5eb6b5ffcff3e870d823dd2d8899d2852f44a4a5750248aab3e8b4f6`. Hosted/verify inalterados; realtime off. |
 | 2026-11-13 15:35:01 -03 | ALINHAMENTO-01 | PROD | Deploy gateway (location realtime dormente) | PASS | `8d73567c37` | Imagem `sha256:91cdaacf1a001906cb1c86d686b7faa8e3a1c446c9f85bfe325c1173aad94b47`. Rollback: `sha256:e998f96c494f275a34ad39ca59aec4f4634746f0c0b92b22a620f4dd593516a0`. Realtime ≠ 101; log `<redacted>`. |
 | 2026-11-13 15:42:37 -03 | ALINHAMENTO-01 | PROD | Linha de base pós-deploy (antecipada a pedido) | PASS | `b5e74669a2` | Contagens iguais à pré-deploy (total 1444). BFF: 1×403 do probe sem credencial, 0×5xx. Sem Y3. |
+| 2026-11-13 ~16:30 -03 | F5b | docs | Owner: smoke manual → evidência automatizada; F5b DONE | DONE | (fechamento 167) | E1 HML + contagens/5xx PROD ALINHAMENTO-01/W6 |
+| 2026-11-13 ~16:30 -03 | F5c | docs | Data de término = 2026-11-19 (5 DU; 20/11 feriado) | IN_PROGRESS | (fechamento 167) | rotina diária segue |
+| 2026-11-13 ~16:30 -03 | F7.4 | docs | Cursor não executa; teste via conector | IN_PROGRESS | — | aguarda PASS do conector |
+| 2026-11-13 ~16:30 -03 | 167 | PROD/docs | Fechamento frente tempo real | DONE | (fechamento 167) | 0×5xx/traceback; WS ativo; 401→1006 documentado |
 
-### Roteiro de teste do owner — F7.4 (ChatGPT / CLARA em PROD)
+### F7.4 — teste automatizado via conector (fora do Cursor)
 
-Pré-condição: usuário humano com **CF\* e/ou LNF\*** (só-LNF também entra). Perfil só-LNF deve ver apenas entradas LNF + knowledge LNF.
+Status: **IN_PROGRESS — teste automatizado via conector**. O Cursor não executa o roteiro CLARA; o conector externo é o dono da evidência. Marcar F7.4 DONE somente com PASS do conector.
 
-1. "CLARA, quais ações de lançamento de notas fiscais eu tenho?" → catálogo coerente com o perfil (sem entradas de create se não tiver create).
-2. "Liste as solicitações abertas da filial 01." → mesmos totais que o app.
-3. "Abra a solicitação \<id\>." → detalhe + link do app para PDF/XML (sem binário na conversa).
-4. "Analise o backlog de lançamento de notas da filial 01." → tool `analyze` com `analysis_type=invoice_posting_backlog` (enum de tools/list); FACT com números/fonte; RECOMMENDATION sem lançar por inferência.
-5. "Comente na nota \<id\>: teste CLARA F7.4" → comentário aparece no app (direct).
-6. "Inicie o atendimento da nota \<id\>." → prepare com **presentation.displayable=true** (alvo/efeito legíveis) e **não executa** sem confirmação explícita no chat (`confirmation=true` no commit); após confirmar no chat, app mostra Em atendimento.
-7. Negativos: perfil só view não vê create/start; cancel/post_manual sem justificativa recusados; serviço/token de máquina não entra no MCP.
+### F5b — decisão do owner (2026-11-13)
 
-**Após F7-R:** o revisor deve refrescar tools no conector e repetir 4 e 6 (enum + presentation). Marcar F7.4 DONE somente com PASS do owner neste roteiro.
+Smoke manual do owner **substituído** pela evidência automatizada: E1 HTTP autenticado em HML; contagens e 5xx de PROD dos registros ALINHAMENTO-01 e W6. F5b → **DONE**.
 
-**F6 (limpeza) — não inicia agora.** Pré-requisitos: (a) 5 dias úteis de F5c sem incidente a partir de 2026-11-13; (b) smoke F5b PASS do owner; (c) este roteiro F7.4 PASS. Data mais cedo possível para F6: **2026-11-20** (após o 5º DU: 13, 14, 17, 18, 19), se (b) e (c) estiverem PASS.
+### F5c — janela e data de término
+
+Corte: **2026-11-13** (conta como DU1). Dias úteis: 13, 14, 17, 18, **19**. **Término do F5c = 2026-11-19**. Feriado nacional **20/11** → publicação F6 em PROD não antes de **2026-11-21**, e somente com F7.4 DONE.
+
+**F6:** ensaio em HML permitido agora; PROD aguarda F5c DONE + F7.4 DONE.

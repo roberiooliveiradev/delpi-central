@@ -10,6 +10,7 @@ import {
   isLnfApiBaseOnBff,
   isLnfRealtimeFlagOn,
   shouldConnectLnfRealtime,
+  shouldReconnectLnfRealtime,
 } from "./config";
 
 describe("lnf realtime config", () => {
@@ -50,5 +51,21 @@ describe("lnf realtime config", () => {
       "/apps/controllership-finance-api/lancamento-notas-fiscais/realtime",
     );
     expect(url).toContain("token=tok-abc");
+  });
+
+  it("handshake 401 no browser vira close 1006 e reconecta na mesma URL", () => {
+    // PROD sem token: HTTP 401 no handshake; o browser fecha com 1006, não 1008.
+    expect(
+      shouldReconnectLnfRealtime({ closeCode: 1006, sameUrl: true }),
+    ).toBe(true);
+  });
+
+  it("1008 + mesma URL não reconecta; URL diferente reconecta", () => {
+    expect(
+      shouldReconnectLnfRealtime({ closeCode: 1008, sameUrl: true }),
+    ).toBe(false);
+    expect(
+      shouldReconnectLnfRealtime({ closeCode: 1008, sameUrl: false }),
+    ).toBe(true);
   });
 });
