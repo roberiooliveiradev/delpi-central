@@ -1,6 +1,8 @@
 # Portal Controladoria & Finanças — Fonte de navegação e estado
 
-> **13/11/2026 — Tempo real do LNF (W1):** [Doc 167](./167-lnf-tempo-real-websocket.md) `CONTRACT_DRAFT` · [ADR-002](./adr/ADR-002-tempo-real-lnf-websocket-bff.md) `ACCEPTED`. WebSocket na BFF, aviso + refetch. DEV/HML primeiro; PROD só depois do F5c DONE no quadro da trilha 165. Sem código nesta etapa.
+> **13/11/2026 — Regra de trabalho:** produção acompanha a main. Funcionalidade nova entra desligada por flag e é ligada depois do ensaio HML PASS.
+
+> **13/11/2026 — Tempo real do LNF (W1):** [Doc 167](./167-lnf-tempo-real-websocket.md) `CONTRACT_DRAFT` · [ADR-002](./adr/ADR-002-tempo-real-lnf-websocket-bff.md) `ACCEPTED`. WebSocket na BFF, aviso + refetch. D-W4 revista: a W6 entra quando a W5 estiver DONE.
 
 > **13/11/2026 — F5b virada técnica PROD DONE; smoke owner PENDING.** Flags: BFF hosted=true, api-delpi module=false, MFE→BFF. Trilha [165](./165-trilha-execucao-migracao-lnf-ate-clara.md) · [163](./163-plano-migracao-lancamento-notas-fiscais.md) · [164](./164-runbook-corte-lancamento-notas-fiscais.md) · [ADR-001](./adr/ADR-001-hospedagem-lancamento-notas-fiscais.md).
 

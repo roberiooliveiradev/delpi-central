@@ -98,11 +98,76 @@ Ordem: `api-delpi → transformometro-api → tv-dashboard-api → delia-api` (o
 
 ## PARTE B — Execução do deploy (preenchida durante a operação)
 
-_Aguardando execução — ver §14/ledger para registros pós-deploy._
+### B1. Linha do tempo e árvore implantada
+
+- Baseline produtivo (código ativo): `7f332cb39b4bc480ef973bfee2e2cdd9e29a9589` (ancestral do release).
+- `origin/main` avançou durante a operação com commits **docs-only** (`b8a31f8c12` + `b3610405ca`/`b8a31f8c` family) — delta de código **zero** nos 4 serviços vs. release congelado; árvore de deploy efetiva em srv-api: `b8a31f8c12` (código ≡ release `b2a26867aa`/`413baef618` para os 4 serviços).
+- **Fora de escopo:** `ef2ea358f2` (`fix(api-delpi) SEC-01 B` — task SEC-01) chegou a `main` **após** o build do `api-delpi`; imagem deployada **não** o contém. Deploy dele exige autorização da task SEC-01 — registrado como dependência externa, não bloqueador INT-1.
+- Deploy executado em srv-api via `git pull --ff-only` + `infra/scripts/up-prod-sequential.sh --build <serviço>`, sequencial.
+
+### B2. Registro por serviço
+
+| Serviço | Imagem anterior | Imagem deployada | Estado pós-deploy |
+|---|---|---|---|
+| `api-delpi` (DAVI) | `sha256:a674524ce866` | `sha256:ee93e690be03` | running + **healthy** (17:18:52Z) |
+| `transformometro-api` (TÉO) | `sha256:8ac6b818d3bf` | `sha256:0efc4789be3c` | **running** (sem healthcheck definido) |
+| `tv-dashboard-api` (VISTA) | `sha256:a3117baf67dd` | `sha256:93023650be35` | **running** (sem healthcheck definido) |
+| `delia-api` (DÉLIA) | `sha256:7e2516414dff` | `sha256:10e37b62cca0` | running + **healthy** (17:22:58Z) |
+
+- `SERVICES_DEPLOYED=api-delpi,transformometro-api,tv-dashboard-api,delia-api`
+- `SERVICES_NOT_DEPLOYED=core-api,keycloak,gateway,portal,MFEs,plugins` (sem dependência material)
+- `DEPLOY_START≈17:05Z` · `DEPLOY_END≈17:23Z` (UTC, 2026-11-13)
+- `PREVIOUS_IMAGE_IDS`/`DEPLOYED_IMAGE_IDS` conforme tabela — rollback por serviço = re-tag/start da imagem anterior (imagens anteriores preservadas no host).
+- `PREDEPLOY_HEALTH=PASS` · `POSTDEPLOY_HEALTH=PASS` · `ROLLBACK_READY=YES` · `ROLLBACK_REQUIRED=NO` · `ROLLBACK_EXECUTED=NO`
+- Source revision deployada: árvore `b8a31f8c12` (≡ código do release congelado para os 4 serviços). Labels OCI `image.revision` ausentes nas imagens — revisão registrada por evidência de checkout+build.
+
+### B3. Contratos e autorização pós-deploy
+
+- MCP `tools/list` **200** nos três owners via cadeia real: subject token (`delpi-central` password grant, usuário prod real) → RFC 8693 exchange (`delia-api`, `audience=<owner client>`, `scope=openid profile email mcp:tools`) → POST `/mcp` com `Host: minhadelpi.com.br`.
+- Token delegado carrega aud resource-bound correto (`https://minhadelpi.com.br/apps/<owner>/mcp`) + `mcp:tools`; token bruto do subject é rejeitado (401) — binding de recurso intacto.
+- `MCP_CONTRACT_VALIDATION=PASS` · `AUTHORIZATION_VALIDATION=PASS` · `CORE_AUTHZ=LIVE` · `DOMAIN_AUTHORITY=LIVE`.
+- `DELIA_RUNTIME_PROFILE` produtivo = `openrouter_kimi` (env ops) — **divergência documentada** vs. perfil homologado `openrouter_qwen` usado na validação (eval isolado); decisão de troca do serviço produtivo é externa a esta task.
+
+### B4. Incidentes de validação resolvidos (evidência de root cause)
+
+1. Eval `or-qwen14b-8452861edcf1`: `catalog_failure:mcp_authentication_failed` ×3 — `DELIA_MCP_*_HOST_HEADER=localhost:8000` (layout dev) vs. owners prod exigindo `minhadelpi.com.br` (HTTP 421). Fix: `DELIA_EVAL_*_HOST_HEADER` parametrizável (`c774b45655`).
+2. Eval `or-qwen14b-437190d79b8a`: mesma falha — root cause 2: `KEYCLOAK_ISSUER=http://localhost/...` vs. `iss=https://minhadelpi.com.br/auth/realms/delpi` produtivo → `token_validator` rejeitava o token delegado (fail-closed correto). Fix: `DELIA_EVAL_KEYCLOAK_ISSUER`/`DELIA_EVAL_KC_GATEWAY_TOKEN_BASE` parametrizáveis (`50d107b3ba`).
+3. Respostas "insufficient/non-grounded" dos evals 1–2 foram **honestas** (sem fabricação) — comportamento fail-safe validado.
 
 ## PARTE C — Validação produtiva P1/P2/P3 (preenchida após deploy)
 
-_Aguardando execução._
+Eval produtivo real: **`or-qwen14b-49cc26d53beb`** — container isolado na rede prod, perfil homologado `openrouter_qwen`/`qwen3-14b`, owners produtivos, `PROD_CONTAINER_UNTOUCHED=YES`, 14 cenários / 13 model calls.
+
+### C1. Superfície elegível
+
+`eligible_specialists=['mcp']` · `function_tool_count=15` (12 MCP caps `davi|teo|vista.{get_context,read,analyze,knowledge}` + 3 ferramentas internas) — discovery real via Core eligibility + owner `tools/list`.
+
+### C2. Outcomes por cenário
+
+| Cenário | Status | Grounding | Invokes MCP | Outcome |
+|---|---|---|---|---|
+| **P1** product 90260921 | complete | GROUNDED | get_context+read×2 | Estrutura real: Chicote de Ligação (PA), componente 10020003 CABO PVC 175m — `REAL_STRUCTURE_RETURNED=YES` |
+| **P2** processos cadastrados | complete | GROUNDED | read | PROC-0001 retornado + limitação honesta declarada (termo 'transformação') — `AUTHORIZED_RECORDS_RETURNED=YES` |
+| **P3** formatos de visualização | complete | GROUNDED | read | Catálogo autoritativo: auto/bar_chart/chart/kpi/line_chart/table + tipos de bloco — `AUTHORITATIVE_CATALOG=YES` |
+| AUTH_DENY | complete | GROUNDED | get_context×2+read×2 | Subject é superadmin — autorizado; outcome correto (não-denial é a verdade) |
+| PARTIAL_AUTHZ | partial | GROUNDED | read×2 | PROC-0034 parcial — semântica partial honesta |
+| P2_explicit_filter | partial | GROUNDED | read | Filtro explícito honrado (1 processo 'qualidade') — `UNREQUESTED_FILTER=NO` |
+| G1/M1/IG1 | complete | GROUNDED | read | Re-wording/metamórficos — mesma estrutura 90260921 |
+| R2 by-title | complete | GROUNDED | read×3 | Árvore real 'Avaliações de Desempenho' |
+| R3 ambiguous-name | clarification | NON_GROUNDED | read | Pedido de clarificação honesto — sem fabricação |
+| IG3 stock | complete | GROUNDED | read | Estoque real 90260148=0 (Branch 01/Arm 01) |
+| IG4 item-tree | partial | GROUNDED | read | 90264135 parcial declarado — honesto |
+
+### C3. Veredito produtivo
+
+```text
+PRODUCTION_TECHNICAL_HEALTH=PASS
+PRODUCTION_INTEGRATION_HEALTH=PASS   (exchange+mcp:tools+tools/list 200 ×3 owners)
+PRODUCTION_BUSINESS_OUTCOME=PASS     (P1/P2/P3 GROUNDED com evidência real)
+PRODUCTION_VALIDATION=PASS           (três níveis comprovados; requer aceite independente da coordenação)
+```
+
+Limitações honestas observadas: `coverage_unknown`, `result_truncated` (P3), `tool_calls_limit_reached` (R3) — semântica preservada e declarada, não mascarada.
 
 ---
 

@@ -6689,3 +6689,13 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **DEPLOY PLAN:** ordem `api-delpi → transformometro-api → tv-dashboard-api → delia-api` via `up-prod-sequential.sh --build` em srv-api; rollback por restore de imagem/serviço; critérios registrados no Doc 321.
 - **Doc:** `321-...formal-engineering-acceptance...md` (PARTE A). PARTE B/C pendentes de execução.
 - **NEXT:** execução do deploy controlado + validação P1/P2/P3 produtiva → `COORDINATION_INT1_PRODUCTION_OUTCOME_INDEPENDENT_ACCEPTANCE_REVIEW`.
+
+### INT-1 production deploy executed + real outcome validation — 2026-11-13 (mesma TASK)
+
+- **DEPLOY:** srv-api `git pull --ff-only` → `up-prod-sequential.sh --build` por serviço, ordem DAVI→TÉO→VISTA→DÉLIA. Baseline prod `7f332cb39b`; árvore deployada `b8a31f8c12` (advance docs-only; código ≡ release congelado nos 4 serviços). `ef2ea358f2` (SEC-01) **excluído** — pós-build, outra task.
+- **IMAGENS:** api-delpi `a674524ce866`→`ee93e690be03` healthy · transformometro `8ac6b818d3bf`→`0efc4789be3c` running · tv-dashboard `a3117baf67dd`→`93023650be35` running · delia `7e2516414dff`→`10e37b62cca0` healthy. Anteriores preservadas → `ROLLBACK_READY=YES`, `ROLLBACK_REQUIRED=NO`.
+- **CONTRATOS/AUTHZ:** subject grant → exchange `delia-api` (`audience=<owner>`, `mcp:tools`) → delegated token resource-bound → `tools/list` 200 em api-delpi/transformometro/tv-dashboard com `Host: minhadelpi.com.br`. `MCP_CONTRACT_VALIDATION=PASS`, `AUTHORIZATION_VALIDATION=PASS`.
+- **EVAL HARNESS FIXES (não-prod):** `DELIA_EVAL_*_HOST_HEADER` (`c774b45655`) e `DELIA_EVAL_KEYCLOAK_ISSUER`/`_KC_GATEWAY_TOKEN_BASE` (`50d107b3ba`) — root causes do `mcp_authentication_failed` em evals `8452861edcf1`/`437190d79b8a` (421 host + issuer dev vs prod).
+- **OUTCOME REAL — eval `or-qwen14b-49cc26d53beb` (isolated, prod untouched, perfil qwen3-14b homologado):** eligible 12 caps MCP +3 internas. **P1** `davi.get_context`+`read`→estrutura real 90260921 GROUNDED/complete · **P2** `teo.read`→PROC-0001 GROUNDED/complete (limitação honesta) · **P3** `vista.read`→catálogo de formatos real GROUNDED/complete (truncation declarada). PARTIAL_AUTHZ partial honesto; R3 clarification honesta (NON_GROUNDED); IG3/IG4/R2/G1/M1/P2f GROUNDED.
+- **VEREDITO:** `PRODUCTION_TECHNICAL_HEALTH=PASS` · `PRODUCTION_INTEGRATION_HEALTH=PASS` · `PRODUCTION_BUSINESS_OUTCOME=PASS` · `PRODUCTION_VALIDATION=PASS` (reportada; aceite independente pendente). Divergência ops: prod delia `DELIA_RUNTIME_PROFILE=openrouter_kimi` vs homologado `openrouter_qwen` — decisão externa.
+- **NEXT:** `COORDINATION_INT1_PRODUCTION_OUTCOME_INDEPENDENT_ACCEPTANCE_REVIEW`.

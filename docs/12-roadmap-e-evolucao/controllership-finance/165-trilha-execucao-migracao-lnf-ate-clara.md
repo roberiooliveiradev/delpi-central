@@ -401,7 +401,8 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-13 11:45 -03 | F7-R4 | HML | Redeploy CF + reteste analyze/get cross-scope | PASS | `7f332cb39b` | tools/list=6; P11 get CF→403; P1 analyze LNF→403 |
 | 2026-11-13 11:50 -03 | F7-R4 | PROD | Deploy CF API; V022; ingest LNF; health/ready; canal intacto | PASS | `7f332cb39b` | PUBLISHED CF=2211 LNF=162; `CLARA_CONSENT_CHANNEL=conversational`; `LNF_HOSTED_ENABLED=true`; sem ACT real; 5xx novos=0 |
 | 2026-11-13 14:30 -03 | F6 parcialmente antecipada (SEC-01 B) | DEV | runner bloqueia operações destrutivas do LNF | PASS no comando; PROD não publicado | `ef2ea358f2` | F6 parcialmente antecipada (SEC-01 B): runner bloqueia operações destrutivas do LNF — `ef2ea358f2`. Quadro de status inalterado. |
-| 2026-11-13 14:50 -03 | F6 item do runner | DEV | LNF fora do runner da api-delpi (up, status e reset) | PASS nos testes do runner | commit desta parte | F6 — item do runner antecipado (ALINHAMENTO-01). Pasta de SQL mantida: a BFF ainda confere o checksum. Quadro inalterado. |
+| 2026-11-13 14:50 -03 | F6 item do runner | DEV | LNF fora do runner da api-delpi (up, status e reset) | PASS nos testes do runner | `57e55a8b85` | F6 — item do runner antecipado (ALINHAMENTO-01): `57e55a8b85`. Pasta de SQL mantida. Quadro inalterado. |
+| 2026-11-13 15:00 -03 | ALINHAMENTO-01 | HML/PROD | Publicação de api-delpi, BFF e gateway | BLOCKED Y5 | `8d73567c37` | Checkout de HML (`projetos-teste/delpi-central`) tem mudanças locais que não são desta frente. Deploys de PROD não executados. |
 
 ### Roteiro de teste do owner — F7.4 (ChatGPT / CLARA em PROD)
 

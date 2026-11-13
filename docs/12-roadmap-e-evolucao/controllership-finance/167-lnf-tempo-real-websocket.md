@@ -24,10 +24,12 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 | W4.3 | MFE — Formulário de edição | TODO | | | |
 | W4.4 | MFE — Produtos sem código + Ajuda | TODO | | | |
 | W5 | Ensaio HML | TODO | | | |
-| W6 | PROD | BLOCKED | | | entrada: F5c DONE + go do owner |
+| W6 | PROD — ligar o tempo real | BLOCKED | | | entrada: W5 DONE. Ligar `LNF_REALTIME_ENABLED` na BFF de PROD, rebuild do MFE com a flag ligada e verificação, inclusive a CLARA |
 | W7 | Job periódico de conciliação | BLOCKED | | | decisão própria |
 
 Ordem: W1.1 → W2 → W2b → W3 → W4.1 → W4.2 → W4.3 → W4.4 → W5. Parar ao fim da W5.
+
+O código da W2/W2R está na main (`b0b4dae957`, `a26285e6f4`) com `LNF_REALTIME_ENABLED` default `false`. A location exata do gateway em PROD está commitada (`8d73567c37`) e fica dormente enquanto a flag estiver desligada. Ligar a flag em PROD é a W6, depois da W5.
 
 ## 2.1 Objetivo, escopo e não-escopo
 
@@ -51,7 +53,7 @@ Não-escopo:
 | D-W1 A | JWT na query `token` do handshake, igual aos WS de produto. A location nova do gateway redige `token` no access log, com o mesmo formato das locations de TV (`gateway/nginx.conf:25-40`, usado em `:805`). | Owner, 2026-11-13. Padrão: `requests-api/.../realtime_routes.py:112-116`, `engineering-api/.../realtime_routes.py:109-113`, `plugins/plugin-ui/src/realtime/engineeringRealtime.ts:50-54`. |
 | D-W2 A | Hub na memória do processo da BFF. Workers ou réplicas > 1 exigem broker antes; até lá o realtime fica desligado. | Owner. Hoje a BFF é 1 processo, sem `--workers` (`controllership-finance-api/Dockerfile:38`) e sem `replicas` no compose. Os hubs de requests e engineering também são `dict` no processo. |
 | D-W3 C | Sem job novo. Todo refresh e todo run que já rodam emitem aviso para as telas da filial. | Owner. Refresh só na abertura da fila (`plugins/lancamento-notas-fiscais/src/ui/pages/QueuePage.tsx:135-146`); run é `manage` e o MFE não chama (`router.py:1194-1198`). |
-| D-W4 A | DEV e HML agora. PROD só com F5c DONE e com go do owner (W6). | Owner. Quadro da trilha 165: F5c `IN_PROGRESS`. |
+| D-W4 A, revista em 2026-11-13 | DEV e HML agora. A W6 não espera o fim do F5c. Entrada da W6 = W5 DONE. | Owner, 2026-11-13. |
 | D-W5 A | Evoluir o `RealtimeSocketClient` de forma aditiva (defaults iguais aos de hoje). Indicador, hook de salas e aviso de alteração concorrente nascem no `@delpi/plugin-ui`. O MFE só faz o wiring do LNF: nomes de sala, evento → refetch e textos. Engineering, requests e os outros MFEs não migram nesta frente. | Owner, 2026-11-13. Substitui a opção «wrapper local» da §2.16. |
 | W0 | Dono do canal = BFF, módulo LNF. Não usar Socket.IO da Core. Não compartilhar hub com o Fechamento. | W0. Core emite `admin.changed` para o sino (`core-api/.../dispatch_notifications_use_case.py:183-197`). Outbox da BFF é do fechamento, não do LNF. |
 | W0 | Evento = aviso + refetch HTTP. Sem dados de negócio. | Padrão Engineering: `plugins/plugin-ui/src/realtime/engineeringRealtime.ts:1-6`. |
