@@ -324,3 +324,29 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Riscos residuais:** 2 testes baseline FAIL reportados fora do escopo; case-insensitive alfanumérico ausente em HML; DTO snake_case de detalhe legado para PROD-03; secrets HML em env operacional devem ser protegidos e não versionados; dados HML com owner de retenção/limpeza; erro de configuração KEYCLOAK durante deploy resolvido pelo executor mas requer checklist reprodutível de env sem revelar segredos. Nenhum deploy produtivo autorizado. Em PRD somente saúde e GET comprovadamente não mutável, zero dados de negócio de teste.
 
 **Próxima decisão:** Aguardar rodada de Cursor para aceite formal do PROD-02 e revisar se o pacote PROD-03 pode iniciar em paralelo após gate de produto, sem antecipar flags/frontend nem saltar requisitos do plano mestre.
+
+
+## 21. Incidente PRD — `fe_sendauth` PRC (My Requests) e 503 Engineering API — recuperado (13/11/2026)
+
+**TASK_ID:** `DELPI-PRD-INCIDENT-ENGINEERING-MYREQUESTS-RECOVERY-01`
+
+**Sintomas reportados:** `/apps/my-requests` exibia `postgres connect failed: ... 172.19.0.69 ... fe_sendauth: no password supplied`; `/apps/engineering/product-registration` apresentava 503.
+
+**Causa raiz (CONFIRMADO_NO_CODIGO+RUNTIME):** a Engineering API prod (`delpi-engineering-api`, projeto compose `infra`, `env_file: .env`) conectava ao `delpi-postgres-plugins` (172.19.0.69) como `eng_prc` — mas a role `eng_prc` **nunca fora provisionada em PRD** e `ENG_PRC_DB_PASSWORD` estava **vazia** no `infra/.env` prod (vazio já presente em backups de 12/11). Schema `engineering` existia (27 tabelas, migrado por outro principal) com **0 linhas** PRC — o contexto nunca operou em PRD.
+
+**Relação com PROD-02:** `NOT_RELATED` — gap de provisionamento anterior ao merge; o erro existiria com qualquer versão do código PRC.
+
+**Correção aplicada (mecanismo canônico):**
+
+1. Novo `infra/scripts/prod-provision-eng-prc.sh` (commit `c227a6ac9f` em main) — réplica do wrapper HML sobre `engineering-api/db/eng_prc_grants.sql` (idempotente, grants mínimos).
+2. Senha forte gerada no host e gravada em `infra/.env` (`ENG_PRC_DB_PASSWORD`, não versionada).
+3. Provisionamento executado: role `eng_prc` criada + grants + smoke `SELECT` = `PRD_ENG_PRC_PROVISION=PASS`.
+4. `docker compose up -d --no-deps engineering-api` → healthy, `env=production`, senha injetada.
+
+**Smoke read-only pós-recuperação (zero escrita de negócio):** `/apps/engineering-api/health` = 200; `technical-records` anônimo = 401 (era 503/`fe_sendauth`); `/apps/my-requests/` e `/apps/engineering/` = 200; logs sem `fe_sendauth` pós-restart.
+
+**Auditoria REQ-2026:** os 36 registros `REQ-2026-*` pertencem ao schema `my_requests` (`plugins_hub`) — bounded context Solicitações, criados por usuários reais entre 17/09 e 12/11 (tipos operacionais: Abertura de Chamado, Problema de Processo, Emissão NF). **Registros legítimos — preservados integralmente.** `engineering.product_registration_*` em PRD = 0 linhas: **nenhum registro de teste existe em produção**; os dados sintéticos vivem em `engineering.*` do HML (banco/container/rede distintos — sem conexão cruzada HML↔PRD confirmada).
+
+**Classificação:** `INCIDENT_RESOLVED / PROD_SMOKE_PASS / PRD_BUSINESS_WRITES:0 / CLEANUP:NOT_APPLICABLE`.
+
+**Prevenção proposta:** (a) `eng_prc` provisionado por script canônico agora versionado para PRD; (b) `ENG_PRC_DB_PASSWORD` presente em `.env` prod; (c) sugerir à Coordination: healthcheck/readiness que cubra dependência PRC-DB, checklist de provisionamento pós-deploy e alerta sobre conexão DB sem senha — avaliar em pacote próprio.
