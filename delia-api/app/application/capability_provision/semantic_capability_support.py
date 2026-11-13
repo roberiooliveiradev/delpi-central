@@ -2320,7 +2320,10 @@ def _attempt_satisfies_obligation(
             # scope (INT-2 evidence-by-kind): satisfied when
             # authoritative bound business evidence exists, since no
             # deterministic layer can verify semantic pertinence
-            # without a domain catalog (forbidden).
+            # without a domain catalog (forbidden). Digit-free single
+            # tokens stay strict: a code-shaped token without digits
+            # (``PROC-REGISTRY``) may still be an exact owner code the
+            # identifier grammar does not cover.
             return True
         # Single-token obligation may be an exact owner code the
         # identifier grammar does not cover — keep strict equality.
@@ -2331,6 +2334,16 @@ def _attempt_satisfies_obligation(
     outcome = attempt.outcome
     if outcome is None or not outcome.is_complete:
         return False
+    if root is None:
+        # Identifier-shaped scalars the owner attested in the
+        # structured payload (field-name agnostic — e.g. TÉO
+        # ``codigo_processo``) close the identity. A resolved root
+        # outside the keys keeps wrong-root protection active (REF05).
+        if keys & {
+            item.casefold()
+            for item in _attempt_identifier_roots(attempt)
+        }:
+            return True
     records = _comparison_records(outcome)
     if not records:
         return False
@@ -2681,6 +2694,20 @@ def _apply_declared_answer(
                 evidence_values.update(
                     _concrete_value_canonical(evidence_token)
                 )
+            # Owner-declared structured scalars (e.g. an authoritative
+            # ``total``/``total_count`` in the evidence payload) are
+            # bound evidence too — citing them is grounded, never
+            # invented. Field-name agnostic; rendered text alone was
+            # insufficient for totals exposed only as metadata.
+            for item in business:
+                for scalar in _owner_scalar_field_values(
+                    item.outcome.structured
+                    if item.outcome is not None
+                    else None
+                ):
+                    evidence_values.update(
+                        _concrete_value_canonical(scalar)
+                    )
             unverified = [
                 token
                 for token in _CONCRETE_VALUE_TOKENS.findall(answer_text)

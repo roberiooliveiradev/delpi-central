@@ -1718,3 +1718,18 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT2-CLARIFICATION-FIRST-NO-PLAN | OPEN_MINOR | D2: path clarificação-first não declara objetivo → `coverage_unknown` por construção honesta (sem plano) |
 | INT2-MODEL-TOTAL-COMPOSITION | OPEN_MINOR — guard ativo | "109" não-verificado rejeitado 3× por `declared_answer_unverified_values` + `result_truncated` preservado |
 | INT1-* (menores/externos) | OPEN_NON_BLOCKING | inalterados — owners registrados (Docs 322–323) |
+
+### INT-2 forensic review — 2026-11-13 (Doc 326)
+
+| Residual | Status | Evidence / disposition |
+|---|---|---|
+| INT2-RC1-SCALAR-IDENTIFIER-BINDING | **RESOLVED** | `_attempt_satisfies_obligation` agora reusa `_attempt_identifier_roots` (root=None, wrong-root gate) — `codigo_processo` e campos não-canônicos vinculam; +2 testes |
+| INT2-RC2-TOKEN-EXACT-CODE | OPEN_MINOR — contrato | correção "digit-free→subject-scope" regrediu em 3 protection tests → revertida; token único code-shaped permanece strict (B/C honestos) |
+| INT2-RC3-STRUCTURED-NUMERIC-POOL | **RESOLVED** | guard agora inclui escalares `outcome.structured` bound — "109" owner-declared verificado no eval real (A); +2 testes |
+| INT2-RC4-FIELD-BINDING | OPEN_MINOR — conservador | obrigações campo-a-campo no mesmo registro → falso-neg honesto (binding 1:1); relaxar cria falsos-pos heterogêneos |
+| INT2-RC5-OBLIGATION-SEMANTICS | **OPEN — ARCHITECTURE_DECISION_REQUIRED** | `OBLIGATION_SATISFIED`=`EVIDENCE_BOUND`≠`OBLIGATION_DEMONSTRATED`: D (kind), D2 (sujeito não-pertinente), F (write-claim bound a read) — honestidade preservada por limitations; correção exige entity-kind echo ou refinamento de estado → contrato congelado |
+| INT2-DELIVERY-LABEL-VARIANCE | OPEN_MINOR — documentado | C/E2 bounded-vocabulary variation, outcome servido (WS-2: 8 equiv / 2 partial / 0 incorrect) |
+| INT2-CLARIFICATION-FIRST-NO-PLAN | OPEN_MINOR | inalterado — path honesto por construção |
+| INT1-* (menores/externos) | OPEN_NON_BLOCKING | inalterados — owners registrados (Docs 322–323) |
+
+**NEXT=`COORDINATION_INT2_REVIEW_AND_ARCHITECTURE_DECISION_ON_OBLIGATION_SEMANTICS`**

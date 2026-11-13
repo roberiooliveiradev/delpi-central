@@ -1683,3 +1683,73 @@ def test_unmet_declared_preserved_when_answer_is_incomplete():
         for lim in out.limitations
     )
     assert "declared_unmet_overridden" not in out.limitations
+
+
+def test_owner_declared_structured_total_binds_numeric_claim():
+    """Eval a7c42fd4 replay: the owner declares ``total: 109`` in the
+    bound attempt's structured payload — an authoritative business
+    value absent from the rendered content text. Citing it is
+    grounded, never invented."""
+    class _Plan:
+        evidence_needed = ()
+
+    attempt = dataclasses.replace(
+        _attempt(),
+        content="listagem parcial de processos",
+        outcome=dataclasses.replace(
+            _outcome(),
+            structured={"data": {"items": [{"id": "1"}], "total": 109}},
+        ),
+    )
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.COMPLETE,
+        answer="O owner registra 109 processos no total.",
+        evidence_refs=(0,),
+    )
+    out = _apply_declared_answer(
+        terminal=_terminal(),
+        declared_answer=declared,
+        collected=(attempt,),
+        plan=_Plan(),
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert not any(
+        "unverified_values" in item for item in out.limitations
+    )
+    assert out.content == declared.answer
+
+
+def test_fabricated_value_absent_from_structured_still_rejects():
+    """Negative sibling: a number that appears neither in rendered
+    content nor in owner structured scalars remains unverified."""
+    class _Plan:
+        evidence_needed = ()
+
+    attempt = dataclasses.replace(
+        _attempt(),
+        content="listagem parcial de processos",
+        outcome=dataclasses.replace(
+            _outcome(),
+            structured={"data": {"items": [{"id": "1"}], "total": 109}},
+        ),
+    )
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.COMPLETE,
+        answer="O owner registra 77 processos no total.",
+        evidence_refs=(0,),
+    )
+    out = _apply_declared_answer(
+        terminal=_terminal(),
+        declared_answer=declared,
+        collected=(attempt,),
+        plan=_Plan(),
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert any(
+        "unverified_values" in item for item in out.limitations
+    )
+    assert out.content == "deterministic content"

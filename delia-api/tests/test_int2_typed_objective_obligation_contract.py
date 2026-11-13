@@ -13,6 +13,8 @@ the isolated real-model evaluation.
 
 from __future__ import annotations
 
+import dataclasses
+
 from app.application.model_invocation.invoke_model import InvokeModel
 from app.application.capability_provision.governed_capability_orchestrator import (
     OperationalCapabilityOrchestrator,
@@ -615,3 +617,87 @@ def test_partial_declared_with_unmet_obligation_stays_overridden():
     )
     assert "declared_status_overridden" in result.limitations
     assert "coverage_unknown" not in result.limitations
+
+
+# -------------------------------------------------------------------
+# WS-1 forensic remediation — eval or-qwen14b-a7c42fd4167f replays
+# -------------------------------------------------------------------
+
+
+def _bound_attempt_with_structured(
+    structured: dict, *, content: str = "owner record"
+):
+    """Complete, provenant business attempt carrying ``structured``."""
+    base = _bound_attempt(root="PROC-0001")
+    outcome = dataclasses.replace(
+        base.outcome, structured=structured, content_text=content
+    )
+    return dataclasses.replace(base, outcome=outcome, content=content)
+
+
+def test_identity_obligation_binds_owner_scalar_identifier_field():
+    """F replay: TÉO returns the process code in ``codigo_processo`` —
+    a field outside ``_EVIDENCE_CODE_KEYS``. The owner-attested
+    identifier scalar closes the strict obligation via the existing
+    ``_attempt_identifier_roots`` mechanism; before the fix the
+    correct record was falsely reported UNSATISFIED."""
+    attempt = _bound_attempt_with_structured(
+        {
+            "items": [
+                {
+                    "codigo_processo": "PROC-0034",
+                    "nome_processo": "DELPI Indicadores",
+                }
+            ]
+        }
+    )
+    coverage = _evaluate_material_obligations(
+        obligations=("process identifier PROC-0034",),
+        business=(attempt,),
+    )
+    assert coverage == (
+        ("process identifier PROC-0034", OBLIGATION_SATISFIED),
+    )
+
+
+def test_owner_scalar_identifier_respects_wrong_root():
+    """An identifier-shaped scalar under a *different* authoritative
+    root must NOT close the obligation — the scalar path keeps the
+    REF05 wrong-root protection."""
+    attempt = _bound_attempt_with_structured(
+        {
+            "data": {
+                "root": {"code": "90260921"},
+                "items": [{"component_code": "CABO-1234"}],
+            }
+        }
+    )
+    coverage = _evaluate_material_obligations(
+        obligations=("component CABO-1234",),
+        business=(attempt,),
+    )
+    assert coverage == (("component CABO-1234", OBLIGATION_UNSATISFIED),)
+
+
+def test_digit_free_single_token_stays_strict_code():
+    """B finding (eval a7c42fd4): ``total_count`` is digit-free yet
+    code-shaped — a single token may still be an exact owner code the
+    identifier grammar does not cover (e.g. ``PROC-REGISTRY``). It
+    keeps strict equality; the model-named obligation stays honestly
+    UNSATISFIED rather than relaxing into subject scope."""
+    coverage = _evaluate_material_obligations(
+        obligations=("total_count",),
+        business=(_bound_attempt(root="PROC-0001"),),
+    )
+    assert coverage == (("total_count", OBLIGATION_UNSATISFIED),)
+
+
+def test_digit_bearing_single_token_stays_strict_code():
+    """Negative sibling: a single token WITH digits keeps strict
+    exact-code matching — ``SPEC-1`` must never relax into subject
+    scope."""
+    coverage = _evaluate_material_obligations(
+        obligations=("SPEC-1",),
+        business=(_bound_attempt(root="PROC-0001"),),
+    )
+    assert coverage == (("SPEC-1", OBLIGATION_UNSATISFIED),)

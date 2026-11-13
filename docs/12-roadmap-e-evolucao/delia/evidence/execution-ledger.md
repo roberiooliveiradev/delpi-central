@@ -6732,3 +6732,15 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **REAL EVAL `or-qwen14b-a7c42fd4167f`** (isolada, qwen3-14b, prod intocada): cadeia `DECLARATION→PLAN→OBLIGATIONS→EVIDENCE→VERDICT≠unknown` em 9/10 cenários; A/C2 SATISFIED limpos; B `total_count` UNSATISFIED (sem inferência de totalidade); A2/C obrigações parciais honestas; D identidade bound + resposta honesta; E/E2 metamórficos OK; F zero write/escalonamento. Notas: D2 clarification-first sem plano (oráculo plan_declared parcial); labels delivery variam dentro do vocabulário bounded.
 - **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — **não aceite**. `PRODUCTION_DEPLOY=NO`, `INT3/INT5/T3=NOT_AUTHORIZED`, `PHASE=C3/T2`. Doc 325.
 - **NEXT:** `COORDINATION_INT2_INDEPENDENT_FUNCTIONAL_REVIEW`.
+
+### INT-2 — revisão forense 3-workstream + remediação bounded (Doc 326; 2026-11-13)
+
+- **TASK:** `DELIA-C3-T2-INT2-THREE-WORKSTREAM-FORENSIC-REVIEW-AND-BOUNDED-REMEDIATION-01`; BASE `90f37a2bbd` (INT-2 contido no HEAD).
+- **WS-1:** 13 obrigações auditadas em traces reais → 7 match; F falso-neg (RC1 matcher não reusa `_attempt_identifier_roots` — **CORRIGIDO**); B `total_count` falso-neg por contrato (RC2 correção "digit-free→subject" **regrediu** em 3 protection tests → revertida, mantido strict); A/C campo-a-campo falsos-neg (RC4 binding 1:1 — conservador mantido); D falso-pos contract-consistente (RC5 kind não-verificável → **ARCHITECTURE_DECISION_REQUIRED**). RC3: numeric guard cego a `structured` → "109" owner-declared rejeitado — **CORRIGIDO** (pool += `_owner_scalar_field_values`).
+- **WS-2:** 10 classificações — 8 EQUIVALENT, 2 PARTIALLY_EQUIVALENT (C record_detail↔explanation; E2 enumeration↔aggregation, outcome servido), 0 INCORRECT/ORACLE_DEFECT.
+- **WS-3:** 17 mecanismos inventariados — 0 duplicações de responsabilidade nativa; KEEP 14 / REUSE 3 (output_validator, bounded ModelRetry, FunctionToolset/UsageLimits/RunContext/run_sync já nativos).
+- **FINDING MATERIAL:** `OBLIGATION_SATISFIED` = `EVIDENCE_BOUND`, não `OBLIGATION_DEMONSTRATED` — D2 `lista de transportadoras` e F `process deletion confirmation` SATISFIED por evidência não-pertinente; honestidade user-facing preservada por limitations/override, mas veredito afirma mais que a evidência permite → decisão arquitetural (entity-kind echo vs estado refinado).
+- **TESTES:** +6 (scalar-identifier binding ×2, wrong-root neg, strict-token neg, structured-total ×2); suíte **1628 passed**.
+- **REAL EVAL:** `or-qwen14b-9a854eeceab5` + retry `or-qwen14b-eef4645f0c27` (auth ambiental; prod intocada) — A "109" verificado; E/E2/F re-executados; falsos-pos subject-scope amplificados (D2/F) reforçando finding material.
+- **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — **não aceite**; `INT2_ACCEPTED=NO`, `PHASE_ADVANCEMENT/INT3/T3=NOT_AUTHORIZED`, `PRODUCTION_DEPLOY=NO`. Doc 326.
+- **NEXT:** `COORDINATION_INT2_REVIEW_AND_ARCHITECTURE_DECISION_ON_OBLIGATION_SEMANTICS`.
