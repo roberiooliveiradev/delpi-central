@@ -107,6 +107,21 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Estado:** backup relatado, deploy **ainda sem evidencia de execucao**, sem alteracao remota pelo assistente. Proximo passo do G1: observar saude da API e aplicacao de V009 na publicacao autorizada, depois MFE, manifesto 0.3.4 e teste por usuario. Registrar resultados sem dados de acesso.
 
+## 2026-11-13 | G1-RELEASE | backend e frontend reiniciados, migration verificada
+
+**Evidencia fornecida pelo operador (nao executada remotamente pelo assistente):**
+- PostgreSQL `it_portal.schema_migrations`: version **9**, nome `V009__workstations_inventory.sql`, aplicada em **2026-11-13 15:38:05.181431-03**.
+- `SELECT to_regclass('it_portal.workstations')` retornou `it_portal.workstations` (tabela efetivamente criada).
+- Script de publicacao do frontend retornou `=== Concluido ===`; `delpi-it-portal` com `Up 2 seconds` na listagem, evidenciando recriacao do container.
+- `delpi-it-portal-api` com `Up 31 minutes (healthy)`. Os logs anteriores mostraram respostas HTTP 200 em /health e operacoes do agente de controle de servicos Windows.
+- Aviso de mismatch de collation em `plugins_hub` persistiu: 2.41 registrada vs 2.36 do SO; pendencia independente a ser agendada com infraestrutura.
+
+**Estado atual verificado:** deploy do backend/frontend relatado como concluido pelo script; migration V009 e estrutura de tabela comprovadas. Nao ha ainda teste fim-a-fim do frontend, prova de versao ativa 0.3.4 no Core, confirmacao de asset servido ou validacao RBAC. **G1 ainda em homologacao funcional, nao marcar concluido.**
+
+**Proximo passo unico:** no Portal Admin publicar e verificar manifesto **0.3.4** pelo fluxo de nova versao estrutural, atribuir permissoes `it-portal.computers.view` e `it-portal.computers.manage` aos perfis aprovados e realizar cadastro de uma maquina de teste, lista, edicao, arquivamento/restauracao e historico. Testar bloqueio sem permissao. Se possivel confirmar remoteEntry.js (HTTP 200 e JS) e checks de API.
+
+**Rollback:** nao apagar V009 nem objetos; revogar as permissoes novas e restaurar imagens conforme o runbook se houver falha.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

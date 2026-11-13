@@ -1,7 +1,7 @@
 # G1 | Publicacao coordenada do inventario de computadores
 
 **Data de autorizacao:** 2026-11-13 (responsavel de TI autorizou publicar para teste).
-**Estado de execucao:** PUBLICACAO AUTORIZADA, AGUARDANDO EXECUCAO MANUAL E EVIDENCIA. Nenhum acesso remoto/agent autorizado ou ativado.
+**Estado de execucao (13/11/2026):** backend e frontend reiniciados pelo operador; V009 aplicada e tabela `it_portal.workstations` comprovada. PENDENTE registro/confirmacao estrutural do manifesto 0.3.4 no Core e homologacao funcional. Nenhum acesso remoto/agent autorizado ou ativado.
 **Escopo unico:** \`it-portal-api\` + \`it-portal\`; manifesto estrutural \`0.3.4\` no Core; migration aditiva \`V009__workstations_inventory.sql\`.
 **Issue de controle:** [#179](https://github.com/roberiooliveiradev/delpi-central/issues/179).
 
