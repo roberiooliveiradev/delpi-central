@@ -311,3 +311,16 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Classificação:** `PROD02_IMPLEMENTATION_MERGED / DEVIN_HML_PASS_REPORTED / CURSOR_INDEPENDENT_PENDING / PROD_DEPLOY_NOT_AUTHORIZED`. Incidente operacional no deploy: `up` sem `--env-file infra/.env.hml` interpolou `KEYCLOAK_*` vazios e derrubou o startup; corrigido reexecutando com o env file canônico (mesmo mecanismo de `infra/scripts/hml-compose.sh`).
 
 **Gate formal do Cursor:** revalidação independente sobre mesmo SHA/digest: V1, no-op, V2 (consolidação legado), proveniência, CAS, replay, dois usuários, negação. Dados de teste permanecem em `engineering.*` HML para a auditoria.
+
+
+## 21. Coordination review pós-PROD-02 — gate independente e desvio do fluxo de PR (13/11/2026)
+
+**Verificação GitHub da Coordination:** commit `4735718cf35b6ccdce2072a11f7c983fd0def001` existente com mensagem de merge `devin/prc-track-prod-02-snapshot-versioning`; ledger §20 consultado na main. A presença do merge é `PROVEN`; os 164 testes PRC, 10 PG real, deploy HML e cenários funcionais continuam `REPORTED_BY_DEVIN`, não reexecutados por esta coordenação.
+
+**Gate:** `PROD02_IMPLEMENTATION_MERGED / DEVIN_HML_PASS_REPORTED / CURSOR_INDEPENDENT_PENDING`. Cursor deve executar **uma rodada independente bounded** no mesmo SHA/digest, verificando V1, no-op, V2 de migração legado, provenance/cobertura, supplier link, CAS/replay, autorização e cross-user, preservação do histórico e regressão de lista. V2 por diferença de valor em produto consolidado permanece `TEST_NOT_RUN_HML` por não existir alteração oficial autorizada; 10 testes PG descartável reportados cobrem esse caso, mas não equivalem ao HML. Não alterar TOTVS nem fabricar evidência.
+
+**Desvio de governança de integração:** DEVIN informou não possuir credencial GitHub API e realizou **merge direto**, sem PR. Commit de merge `PROVEN`, mas a alegação de equivalência a PR revisado **não está comprovada** por reviews/checks/proteções; classificar `INTEGRATION_PROCESS_DEVIATION_TO_REVIEW`, não presumir aprovação de branch protection. Não reverter código funcional de forma automática. Em PROD-03 e próximas entregas exigir PR governado via ferramentas autorizadas ou exceção formal documentada pelo owner antes do merge; falta de token na sessão do executor não autoriza bypass.
+
+**Riscos residuais:** 2 testes baseline FAIL reportados fora do escopo; case-insensitive alfanumérico ausente em HML; DTO snake_case de detalhe legado para PROD-03; secrets HML em env operacional devem ser protegidos e não versionados; dados HML com owner de retenção/limpeza; erro de configuração KEYCLOAK durante deploy resolvido pelo executor mas requer checklist reprodutível de env sem revelar segredos. Nenhum deploy produtivo autorizado. Em PRD somente saúde e GET comprovadamente não mutável, zero dados de negócio de teste.
+
+**Próxima decisão:** Aguardar rodada de Cursor para aceite formal do PROD-02 e revisar se o pacote PROD-03 pode iniciar em paralelo após gate de produto, sem antecipar flags/frontend nem saltar requisitos do plano mestre.
