@@ -4,9 +4,11 @@
 
 > **13/11/2026 — Tempo real do LNF (W1):** [Doc 167](./167-lnf-tempo-real-websocket.md) `CONTRACT_DRAFT` · [ADR-002](./adr/ADR-002-tempo-real-lnf-websocket-bff.md) `ACCEPTED`. WebSocket na BFF, aviso + refetch. D-W4 revista: a W6 entra quando a W5 estiver DONE.
 
-> **13/11/2026 — F5b virada técnica PROD DONE; smoke owner PENDING.** Flags: BFF hosted=true, api-delpi module=false, MFE→BFF. Trilha [165](./165-trilha-execucao-migracao-lnf-ate-clara.md) · [163](./163-plano-migracao-lancamento-notas-fiscais.md) · [164](./164-runbook-corte-lancamento-notas-fiscais.md) · [ADR-001](./adr/ADR-001-hospedagem-lancamento-notas-fiscais.md).
+> **13/11/2026 — F6 PROD DONE: migração do LNF concluída.** BFF dona do schema (`apply` noop V001–V014); MFE só BFF; api-delpi sem módulo/rotas LNF (auth→404). F5c encerrado por decisão do owner. F7.4 = verificação pela CLARA pós-deploy (conector). Tags `rollback-f6-*` até 2026-11-20. Trilha [165](./165-trilha-execucao-migracao-lnf-ate-clara.md) · [163](./163-plano-migracao-lancamento-notas-fiscais.md) · [164](./164-runbook-corte-lancamento-notas-fiscais.md) · [ADR-001](./adr/ADR-001-hospedagem-lancamento-notas-fiscais.md).
 
-> **12/11/2026 — F3 dark na main (`155e0cc4de`), histórico.** O estado vigente do LNF não é mais «`LNF_HOSTED_ENABLED=false` em todos os ambientes». Vale o [QUADRO DE STATUS da trilha 165](./165-trilha-execucao-migracao-lnf-ate-clara.md). F6 ainda não encerrou o rollback. Plano [163](./163-plano-migracao-lancamento-notas-fiscais.md) · [ADR-001](./adr/ADR-001-hospedagem-lancamento-notas-fiscais.md) `ACCEPTED`.
+> **13/11/2026 — F5b virada técnica PROD DONE (histórico).** Flags no corte: BFF hosted=true, api-delpi module=false, MFE→BFF. Superado pela F6 acima.
+
+> **12/11/2026 — F3 dark na main (`155e0cc4de`), histórico.** O estado vigente do LNF não é mais «`LNF_HOSTED_ENABLED=false` em todos os ambientes». Vale o [QUADRO DE STATUS da trilha 165](./165-trilha-execucao-migracao-lnf-ate-clara.md). Plano [163](./163-plano-migracao-lancamento-notas-fiscais.md) · [ADR-001](./adr/ADR-001-hospedagem-lancamento-notas-fiscais.md) `ACCEPTED`.
 
 > **10/11/2026 — CF-UX-054-UX-01 (no código, sem deploy desta revisão):** a exclusão de competência implantada em `03d194e6` passa a ter motivo opcional e o botão no hero da competência aberta. A digitação do período e o bloqueio por dependência permanecem. Setembro e outubro de 2026 não foram excluídos. Ver [doc 162](./162-cf-ux-054-exclusao-competencia-mensal.md).
 

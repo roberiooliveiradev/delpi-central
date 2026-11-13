@@ -110,7 +110,7 @@ Até F6: redeploy da versão anterior (api-delpi com módulo + MFE com base anti
 
 ### Status F5a — 2026-11-12
 
-**F5a DONE** (2026-11-12). **F5b virada técnica PROD DONE** (2026-11-13); status **PENDING_OWNER** até smoke do owner PASS — não marcar «CORTE CONCLUÍDO» antes. Ver trilha [165](./165-trilha-execucao-migracao-lnf-ate-clara.md).
+**Migração LNF concluída em PROD (2026-11-13).** F5a/F5b/F5c DONE; F6 DONE — a `api-delpi` não serve mais o LNF; BFF é dona do schema (`LNF_MIGRATIONS_MODE=apply`, noop V001–V014); MFE aponta só para a BFF. F7.4 permanece verificação pela CLARA pós-deploy (conector). Ver trilha [165](./165-trilha-execucao-migracao-lnf-ate-clara.md).
 
 | Item | Achado F1 (PROVEN) | Decisão / regra |
 |---|---|---|

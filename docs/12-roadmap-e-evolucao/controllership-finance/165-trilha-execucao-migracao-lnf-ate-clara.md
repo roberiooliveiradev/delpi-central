@@ -87,7 +87,7 @@ Transferir o módulo **Lançamento de Notas Fiscais (LNF)** da `api-delpi` para 
 | F7.2 | CLARA — análise | DONE (F7-R3) | HML/PROD | `d9393bcde5` | 2026-11-13 | enum LNF; `review_aged_pending.value`=contagem ≥5d |
 | F7.3 | CLARA — ações governadas | DONE (F7-R3) | HML/PROD | `d9393bcde5` | 2026-11-13 | copy conversacional sem Portal; displayable=true |
 | F7.4 | CLARA — produção + teste automatizado | **verificação pela CLARA pós-deploy** | PROD | `bd4e26e98b` + `7f332cb39b` | 2026-11-13 | conector; pós F6 PROD |
-| F6 | Limpeza final (encerra o rollback) | **IN_PROGRESS — deploy PROD** | PROD | `bfaf93a6eb` | 2026-11-13 | Owner autorizou PROD agora; F5c encerrado; rollback por tags `rollback-f6-*` |
+| F6 | Limpeza final (encerra o rollback) | **DONE** | PROD | `18e7fb00c1` + deploys 2026-11-13 | 2026-11-13 | MFE/BFF/api-delpi publicados; gateway intacto; contagens 1446=1446; ledger V001–V014; 0×5xx/traceback; tags `rollback-f6-*` até 2026-11-20 |
 
 Status possíveis: TODO · IN_PROGRESS · BLOCKED (regra de parada) · DONE.
 **Ordem de execução obrigatória:** F5a → F5b → F5c (inicia o período de estabilização) → F7.0 → F7.1 → F7.2 → F7.3 → F7.4 → F6.
@@ -414,24 +414,28 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-13 ~16:30 -03 | 167 | PROD/docs | Fechamento frente tempo real | DONE | (fechamento 167) | 0×5xx/traceback; WS ativo; 401→1006 documentado |
 | 2026-11-13 ~16:45 -03 | F6 | main | Remoção LNF api-delpi + default MFE BFF + apply runner | código | ver SHAs F6 | SHA local BFF; migrations api-delpi removidas |
 | 2026-11-13 ~19:45 -03 | F6 | HML | Ensaio PASS: api OpenAPI LNF=0; rota antiga auth→404; BFF list 200; apply_noop; contagens 39=39; authz 266 passed/48 skipped (P1/P9 sem credencial); realtime pong | a5d2aef169 | digests HML api `e9ebe5f8…` BFF `8cf57ab1…` MFE `423960a6…`; PROD não publicado |
+| 2026-11-13 20:24 -03 | F6 | PROD | Deploy MFE | PASS | `18e7fb00c1` | digest `359f668a…`; remoteEntry 200; base BFF |
+| 2026-11-13 20:24 -03 | F6 | PROD | Deploy BFF | PASS | `18e7fb00c1` | digest `2d414168…`; apply_noop V001–V014; MODE=apply |
+| 2026-11-13 20:32 -03 | F6 | PROD | Deploy api-delpi | PASS | `18e7fb00c1` | digest `a2ee7e9a…`; LNF auth→404; MODULE removido |
+| 2026-11-13 20:33 -03 | F6 | PROD | Verificação final | PASS | `18e7fb00c1` | 1446=1446; 0×5xx/traceback; DANFE+refresh OK; gateway skip |
+| 2026-11-13 20:33 -03 | F5c | docs | Encerrado por decisão do owner | DONE | — | janela 19/11 superada |
+| 2026-11-13 20:33 -03 | F6 | docs | Migração LNF concluída em PROD | DONE | (este commit) | api-delpi não serve mais o LNF |
 
-### F7.4 — teste automatizado via conector (fora do Cursor)
+### F7.4 — verificação pela CLARA pós-deploy
 
-Status: **IN_PROGRESS — teste automatizado via conector**. O Cursor não executa o roteiro CLARA; o conector externo é o dono da evidência. Marcar F7.4 DONE somente com PASS do conector.
+Status: **verificação pela CLARA pós-deploy**. O Cursor não executa o roteiro funcional da CLARA; o conector externo é o dono da evidência. Health do serviço da CLARA em PROD: OK (MFE `controllership-finance` Up; BFF `/ready` 200). Marcar F7.4 DONE somente com PASS do conector.
 
 ### F5b — decisão do owner (2026-11-13)
 
 Smoke manual do owner **substituído** pela evidência automatizada: E1 HTTP autenticado em HML; contagens e 5xx de PROD dos registros ALINHAMENTO-01 e W6. F5b → **DONE**.
 
-### F5c — janela e data de término
+### F5c — encerrado por decisão do owner (2026-11-13)
 
-Corte: **2026-11-13** (conta como DU1). Dias úteis: 13, 14, 17, 18, **19**. **Término do F5c = 2026-11-19**. Feriado nacional **20/11** → publicação F6 em PROD não antes de **2026-11-21**, e somente com F7.4 DONE.
+Janela original previa término em **2026-11-19**. Owner encerrou o F5c antecipadamente em **2026-11-13** para publicar a F6 em PROD (fora do horário comercial). F5c → **DONE**.
 
-**F6:** ensaio em HML permitido agora; PROD aguarda F5c DONE + F7.4 DONE.
+### F6 — deploy PROD (2026-11-13, decisão do owner) — DONE
 
-### F6 — deploy PROD (2026-11-13, decisão do owner)
-
-Owner: publicar agora (fora do horário comercial); F5c encerrado; F7.4 segue pós-deploy pelo conector.
+Owner: publicar agora (fora do horário comercial); F5c encerrado; F7.4 segue pós-deploy pelo conector. **Sem rollback**; **sem ciclo de correção**.
 
 #### Linha de base PROD (pré-deploy)
 
@@ -498,3 +502,24 @@ Emergência (app inutilizável): runbook 164 na ordem documentada + rollback de 
 #### Ordem de publicação
 
 1. MFE → 2. BFF → 3. api-delpi → 4. gateway só se necessário (F6 não alterou nginx).
+
+#### Resultado PROD (2026-11-13)
+
+| Serviço | Início (UTC) | Fim (UTC) | Digest antigo | Digest novo | Verificação |
+|---|---|---|---|---|---|
+| MFE `lancamento-notas-fiscais` | ~23:24 | ~23:24 | `f9b9b47e…` | `359f668a23dbb191d4e6c196fb11511d9e2e2d9f5ab3b01519500679960b49f1` | PASS — remoteEntry/index 200; bundle BFF; sem path api-delpi LNF; realtime no bundle |
+| BFF `controllership-finance-api` | ~23:24 | ~23:24 | `ad4d7fbe…` | `2d414168491906a1370a4aa7e74d06cfa4ffbe0946dd5c1f633540e7d75d81ba` | PASS — health; `lnf_migrations_apply_noop` V001–V014; LNF noauth 401 / auth fila 200; WS 101; closing/competences 200 |
+| api-delpi | 23:32:15 | 23:32:31 | `2ccc9bd7…` | `a2ee7e9a93e1b4fcab03fa33918c73616847472e87419f20991dbb4eacc043b4` | PASS — health; OpenAPI sem paths LNF; auth→404 em `/lancamento-notas-fiscais/*`; rotas irmãs 403 (vivas); sem ops no schema LNF; `LNF_MODULE_ENABLED` ausente |
+| gateway | — | — | `91cdaacf…` | **inalterado** | SKIP — F6 não alterou nginx |
+
+**Commits publicados (destaque não-LNF):**
+- MFE: `a8abf60923` (F6 base BFF); também `bb214955bf` / W4 realtime (não-exclusivo F6).
+- BFF: `941dbaaf4c` (F6 apply); também commits CLARA/realtime anteriores já em PROD parcialmente.
+- api-delpi: `5006fa013a` (F6 remoção LNF); `57e55a8b85`/`ef2ea358f2` (runner); `37ee712640` (delia — não-LNF, veio no rebuild da pasta).
+- gateway: nenhum rebuild F6.
+
+**Linha de base × final:** total requests **1446=1446**; tabelas sem redução; ledger V001–V014 idêntico; 5xx LNF BFF=0; traceback BFF/api=0; JWT em log=0.
+
+**Fluxo funcional read-only PROD:** fila 01/02 200; detalhe 200; DANFE PDF 200 (`%PDF-`); reconciliation/refresh POST 200 (`status=skipped`); sem create/edit/cancel/post.
+
+**Estado final:** PROD estável na main. Pendência: remover tags `rollback-f6-*` após 7 dias sem incidente (**2026-11-20**).
