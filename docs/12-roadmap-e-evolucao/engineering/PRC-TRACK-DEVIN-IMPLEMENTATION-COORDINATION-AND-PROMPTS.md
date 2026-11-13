@@ -226,3 +226,14 @@ A coordenação abriu o **PR real [#180](https://github.com/roberiooliveiradev/d
 **Gate release:** para cada pacote, Cursor valida fluxos de escrita e segurança em HML; owner autoriza publicação; no PRD executar **somente** smoke READ-only e rollback/observabilidade. Se um cenário requer escrita ou estado novo, classificá-lo `NOT_APPLICABLE_PRODUCTION` e referenciar evidência HML, jamais executá-lo em produção. Qualquer desvio ou autorização ambígua deve resultar em bloqueio da operação, não execução tentativa.
 
 **Escopo:** regra global para PRC-TRACK / Engenharia; replicar nos prompts Devin, Cursor, checklists de release e documentação canônica sem reabrir a decisão de negócio.
+
+
+## 17. T01/T02 — pacote técnico entregue à Coordination, sem falsa ratificação
+
+Após DEVIN-PROD-01, o executor relatou que não há código autorizado a executar enquanto T01/T02 não forem formalmente ratificados. **Coordination assume o desbloqueio como sua responsabilidade**, sem devolver ao Devin inventário ou testes repetitivos.
+
+O [pacote técnico T01/T02 para ratificação](./PRC-TRACK-T01-T02-COORDINATION-TECHNICAL-RATIFICATION-PACKET.md) foi preparado com base na fonte canônica, código verificado `_build_snapshot`/`complete_request`, contrato de coverage/provenance, baseline V1, no-op, serialização transacional, resposta/compatibilidade, testes e rollback.
+
+**Estado:** `TECHNICAL_PROPOSAL_READY / ENGINEERING_OWNER_RATIFICATION_PENDING / DEVIN_PROD02_BLOCKED`. Não declarar `APPROVED` até decisão explícita de Coordination + Engineering API owner no ledger. Não modificar runtime por este documento.
+
+**Em paralelo:** Cursor executa um único gate independente PROD-01, com rotação segura de credenciais já informada e sem exposição de segredos. Testes de escrita exclusivamente HML; em produção somente saúde, leitura e observabilidade, nunca dados de negócio de teste.
