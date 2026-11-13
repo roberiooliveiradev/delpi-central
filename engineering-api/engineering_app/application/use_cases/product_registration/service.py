@@ -2174,8 +2174,8 @@ class ProductRegistrationService:
             ),
             "correlation_id": correlation_id,
         }
-        snapshot = self._build_snapshot(request, data)
-        changes = self._revision_changes(request, data)
+        # T02 — a decisão V1/Vn+1/no-op é transacional e autoritativa
+        # dentro do repo (snapshot candidato + diff sob lock).
         try:
             outcome = self._repo.complete_request(
                 request_id=request_id,
@@ -2186,8 +2186,6 @@ class ProductRegistrationService:
                 official_code=code,
                 official_source=catalog.OFFICIAL_SOURCE,
                 base_revision=request.get("base_revision_number"),
-                revision_snapshot=snapshot,
-                revision_changes=changes,
                 verification=verification_payload,
                 reason=reason,
                 event_meta={"channel": actor.channel},
@@ -2203,7 +2201,12 @@ class ProductRegistrationService:
             "status": "completed",
             "requestId": request_id,
             "recordId": record["id"],
-            "revisionNumber": revision["revision_number"],
+            "revisionNumber": outcome["effective_revision_number"],
+            "publishedRevisionNumber": (
+                revision["revision_number"] if revision else None
+            ),
+            "technicalChange": revision is not None,
+            "changeKind": outcome["change_kind"],
             "verifiedAt": verification_payload["checked_at"],
             "verificationId": outcome["verification"]["id"],
             "officialCode": code,
@@ -2393,48 +2396,6 @@ class ProductRegistrationService:
             return
         except PrcConcurrencyError:
             return
-
-    def _build_snapshot(
-        self, request: dict, draft_data: dict[str, Any]
-    ) -> dict[str, Any]:
-        snapshot = dict(draft_data)
-        if request["request_type"] == "create":
-            snapshot.pop("officialProductCode", None)
-        return snapshot
-
-    def _revision_changes(
-        self, request: dict, draft_data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        if request["request_type"] == "create":
-            return [
-                {
-                    "path": p,
-                    "before": None,
-                    "after": v,
-                    "reason": "initial_registration",
-                }
-                for p, v in sorted(draft_data.items())
-                if p != "officialProductCode"
-            ]
-        record = self._repo.get_record_by_official_code(
-            official_source=catalog.OFFICIAL_SOURCE,
-            official_code=request.get("official_product_code") or "",
-        )
-        before = {}
-        if record is not None:
-            current = self._repo.get_revision(
-                record["id"], int(record["current_revision_number"])
-            )
-            before = (current or {}).get("technical_snapshot") or {}
-        return [
-            {
-                "path": c["path"],
-                "before": before.get(c["path"]),
-                "after": draft_data.get(c["path"]),
-                "reason": c.get("reason", ""),
-            }
-            for c in (request.get("draft") or {}).get("changed_paths", [])
-        ]
 
     # --- REFERENCE DATA + OUTBOUND ---------------------------------------------------
 

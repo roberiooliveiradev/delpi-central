@@ -12,6 +12,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+from engineering_app.domain.product_registration import snapshot
 from engineering_app.domain.product_registration.errors import (
     PrcConcurrencyError,
     PrcNotFoundError,
@@ -433,8 +434,6 @@ class InMemoryProductRegistrationRepository:
         official_code: str,
         official_source: str,
         base_revision: int | None,
-        revision_snapshot: dict[str, Any],
-        revision_changes: list[dict[str, Any]],
         verification: dict[str, Any],
         reason: str | None,
         event_meta: dict[str, Any],
@@ -468,27 +467,63 @@ class InMemoryProductRegistrationRepository:
             record["current_revision_number"]
         ):
             raise PrcStaleRevisionError("stale_revision")
-        revision_number = int(record["current_revision_number"]) + 1
+        # T01/T02 — snapshot consolidado e diff contra a revisão vigente.
+        draft = self._drafts.get(request_id) or {}
+        draft_data = draft.get("technical_data") or {}
+        current_rev_no = int(record["current_revision_number"])
+        prior_snapshot = None
+        if current_rev_no >= 1:
+            prior = self.get_revision(record_id, current_rev_no)
+            prior_snapshot = (prior or {}).get("technical_snapshot")
         verification_row = self.insert_verification(
             request_id=request_id, verification=verification
         )
-        revision = {
-            "id": _uuid(),
-            "record_id": record_id,
-            "revision_number": revision_number,
-            "request_id": request_id,
-            "schema_version": 1,
-            "technical_snapshot": copy.deepcopy(revision_snapshot),
-            "changes": copy.deepcopy(revision_changes),
-            "official_evidence_id": verification_row["id"],
-            "approved_by_subject": actor_subject,
-            "approved_at": _now(),
-            "created_at": _now(),
-        }
-        self._revisions.setdefault(record_id, []).append(revision)
-        record["current_revision_number"] = revision_number
-        record["last_official_verified_at"] = revision["approved_at"]
-        record["updated_at"] = revision["approved_at"]
+        candidate, buildable = snapshot.build_consolidated_snapshot(
+            request_type=req["request_type"],
+            draft_data=draft_data,
+            changed_paths=draft.get("changed_paths") or [],
+            link_ops=draft_data.get("supplierLinkChanges") or [],
+            field_results=verification["field_results"],
+            prior_snapshot=prior_snapshot,
+            baseline=req.get("official_baseline"),
+            verification_id=verification_row["id"],
+        )
+        if not buildable:
+            raise PrcStateConflictError("snapshot_incomparable")
+        changes, comparable = snapshot.compute_technical_diff(
+            prior_snapshot, candidate
+        )
+        if not comparable:
+            raise PrcStateConflictError("snapshot_incomparable")
+        if current_rev_no == 0:
+            publish = True
+            change_kind = snapshot.CHANGE_BASELINE_INITIAL
+        elif changes:
+            publish = True
+            change_kind = snapshot.CHANGE_TECHNICAL
+        else:
+            publish = False
+            change_kind = snapshot.CHANGE_NO_TECHNICAL
+        revision_number = current_rev_no + (1 if publish else 0)
+        revision = None
+        if publish:
+            revision = {
+                "id": _uuid(),
+                "record_id": record_id,
+                "revision_number": revision_number,
+                "request_id": request_id,
+                "schema_version": snapshot.SNAPSHOT_SCHEMA_VERSION,
+                "technical_snapshot": copy.deepcopy(candidate),
+                "changes": copy.deepcopy(changes),
+                "official_evidence_id": verification_row["id"],
+                "approved_by_subject": actor_subject,
+                "approved_at": _now(),
+                "created_at": _now(),
+            }
+            self._revisions.setdefault(record_id, []).append(revision)
+            record["current_revision_number"] = revision_number
+        record["last_official_verified_at"] = _now()
+        record["updated_at"] = record["last_official_verified_at"]
         prev = req["status"]
         req["status"] = "completed"
         req["row_version"] = int(req["row_version"]) + 1
@@ -510,6 +545,9 @@ class InMemoryProductRegistrationRepository:
                     "revision_number": revision_number,
                     "verification_id": verification_row["id"],
                     "action": "complete",
+                    "change_kind": change_kind,
+                    "technical_change": publish,
+                    "effective_revision_number": revision_number,
                     **event_meta,
                 },
                 "previous_status": prev,
@@ -519,8 +557,11 @@ class InMemoryProductRegistrationRepository:
         return {
             "request": self.get_request(request_id),
             "record": copy.deepcopy(record),
-            "revision": copy.deepcopy(revision),
+            "revision": copy.deepcopy(revision) if revision else None,
             "verification": verification_row,
+            "change_kind": change_kind,
+            "effective_revision_number": revision_number,
+            "technical_diff": changes,
         }
 
     # --- attendance flags (D16 / D16-REF-01) -----------------------------------
