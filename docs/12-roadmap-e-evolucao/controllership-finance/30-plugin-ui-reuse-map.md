@@ -1107,3 +1107,14 @@ CatalogsAdminPage.
 de ação que desabilitam durante o próprio clique (refresh) usam
 `aria-disabled` + guarda em vez de `disabled` nativo, preservando o
 foco; aplicado em «Atualizar consulta» e «Abrir fechamento».
+
+## Lançamento de Notas Fiscais — tempo real (PLANNED, D-W5, 2026-11-13)
+
+Nenhum destes componentes existe ainda no pacote. A W2b os cria no `@delpi/plugin-ui`, sem nome de LNF no código. O MFE só faz wiring. `StateBanner` não substitui o indicador: é o banner de falha do kit.
+
+| Peça | Estado | Onde vai nascer |
+|---|---|---|
+| `RealtimeSocketClient` evoluído (opções aditivas de reconnect, URL, close code e status) | PLANNED | `plugins/plugin-ui/src/realtime/realtimeSocket.ts` |
+| Hook de salas + refetch (`useRealtimeRooms`) | PLANNED | `plugins/plugin-ui/src/realtime/` |
+| Indicador de conexão (`RealtimeStatusIndicator`) | PLANNED | `plugins/plugin-ui/src/realtime/` |
+| Aviso de alteração concorrente (`ConcurrentChangeNotice`) | PLANNED | `plugins/plugin-ui/src/realtime/` |

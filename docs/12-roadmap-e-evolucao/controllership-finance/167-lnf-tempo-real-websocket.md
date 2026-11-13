@@ -9,7 +9,25 @@
 | ADR | [ADR-002](./adr/ADR-002-tempo-real-lnf-websocket-bff.md) |
 | Trilha de hospedagem | [165](./165-trilha-execucao-migracao-lnf-ate-clara.md) — este documento não a altera |
 
-Este arquivo é contrato. Não autoriza código, gateway, compose nem deploy.
+Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 165, a Core e a api-delpi ficam fora.
+
+## Quadro de status
+
+| Fase | Nome | Status | SHA | Data | Evidência |
+|---|---|---|---|---|---|
+| W1.1 | Ajuste documental (D-W5, quadro) | DONE | commit desta fase | 2026-11-13 | D-W5, ADR-002 adendo, mapa de reuso PLANNED |
+| W2 | BFF — hub, rota, emissão (DEV) | TODO | | | |
+| W2b | plugin-ui — cliente, hook, indicador, aviso | TODO | | | |
+| W3 | Gateway DEV (+ conf HML commitada) | TODO | | | |
+| W4.1 | MFE — Fila | TODO | | | |
+| W4.2 | MFE — Detalhe | TODO | | | |
+| W4.3 | MFE — Formulário de edição | TODO | | | |
+| W4.4 | MFE — Produtos sem código + Ajuda | TODO | | | |
+| W5 | Ensaio HML | TODO | | | |
+| W6 | PROD | BLOCKED | | | entrada: F5c DONE + go do owner |
+| W7 | Job periódico de conciliação | BLOCKED | | | decisão própria |
+
+Ordem: W1.1 → W2 → W2b → W3 → W4.1 → W4.2 → W4.3 → W4.4 → W5. Parar ao fim da W5.
 
 ## 2.1 Objetivo, escopo e não-escopo
 
@@ -33,7 +51,8 @@ Não-escopo:
 | D-W1 A | JWT na query `token` do handshake, igual aos WS de produto. A location nova do gateway redige `token` no access log, com o mesmo formato das locations de TV (`gateway/nginx.conf:25-40`, usado em `:805`). | Owner, 2026-11-13. Padrão: `requests-api/.../realtime_routes.py:112-116`, `engineering-api/.../realtime_routes.py:109-113`, `plugins/plugin-ui/src/realtime/engineeringRealtime.ts:50-54`. |
 | D-W2 A | Hub na memória do processo da BFF. Workers ou réplicas > 1 exigem broker antes; até lá o realtime fica desligado. | Owner. Hoje a BFF é 1 processo, sem `--workers` (`controllership-finance-api/Dockerfile:38`) e sem `replicas` no compose. Os hubs de requests e engineering também são `dict` no processo. |
 | D-W3 C | Sem job novo. Todo refresh e todo run que já rodam emitem aviso para as telas da filial. | Owner. Refresh só na abertura da fila (`plugins/lancamento-notas-fiscais/src/ui/pages/QueuePage.tsx:135-146`); run é `manage` e o MFE não chama (`router.py:1194-1198`). |
-| D-W4 A | DEV e HML agora. PROD só com F5c DONE. | Owner. Quadro da trilha 165: F5c `IN_PROGRESS`. |
+| D-W4 A | DEV e HML agora. PROD só com F5c DONE e com go do owner (W6). | Owner. Quadro da trilha 165: F5c `IN_PROGRESS`. |
+| D-W5 A | Evoluir o `RealtimeSocketClient` de forma aditiva (defaults iguais aos de hoje). Indicador, hook de salas e aviso de alteração concorrente nascem no `@delpi/plugin-ui`. O MFE só faz o wiring do LNF: nomes de sala, evento → refetch e textos. Engineering, requests e os outros MFEs não migram nesta frente. | Owner, 2026-11-13. Substitui a opção «wrapper local» da §2.16. |
 | W0 | Dono do canal = BFF, módulo LNF. Não usar Socket.IO da Core. Não compartilhar hub com o Fechamento. | W0. Core emite `admin.changed` para o sino (`core-api/.../dispatch_notifications_use_case.py:183-197`). Outbox da BFF é do fechamento, não do LNF. |
 | W0 | Evento = aviso + refetch HTTP. Sem dados de negócio. | Padrão Engineering: `plugins/plugin-ui/src/realtime/engineeringRealtime.ts:1-6`. |
 | W0 | Salas por filial e por solicitação, autorizadas na assinatura com `Actor` + `branch_view_allowed`. | `branch_access.py:36-50`, `router.py:187-201`. |
@@ -73,7 +92,19 @@ Flags:
 | `LNF_REALTIME_ENABLED` | BFF | `false` | Só monta a rota se também `LNF_HOSTED_ENABLED=true`. Off = rota inexistente (não 1008). |
 | `VITE_LNF_REALTIME_ENABLED` | build do MFE | desligado | Off, ou base ainda em `/apps/api-delpi/lancamento-notas-fiscais`: o MFE não abre socket e não mostra erro. |
 
-Restrição D-W2: se o Dockerfile passar a ter `--workers` > 1 ou o compose ganhar réplicas, a flag fica `false` até existir broker. Um hub em memória não atravessa processo.
+Restrição D-W2: se o Dockerfile passar a ter `--workers` > 1 ou o compose ganhar réplicas, a flag fica `false` até existir broker. Um hub em memória não atravessa processo. O nome do hub é `InMemoryInvoicePostingRealtimeHub` (convenção `InvoicePosting*` do módulo). O apelido `InMemoryLnfRealtimeHub` do brief de execução não cria uma segunda classe.
+
+Cliente, a partir da D-W5. Nada disso menciona LNF dentro do `@delpi/plugin-ui`:
+
+```text
+RealtimeSocketClient          opções novas opcionais; sem elas, o comportamento de hoje
+  → hook de salas             assina, desassina, dedupe, debounce, uma conexão por app
+  → RealtimeStatusIndicator   «Ao vivo» / «Reconectando…» / «Atualização automática indisponível»
+  → ConcurrentChangeNotice    aviso com ação, sem roubar foco
+  → MFE LNF                   salas, type guards do §2.8, refetch e textos
+```
+
+Defaults que não podem mudar: reconnect fixo de 4s, reconectar sempre, URL montada pelo chamador. O LNF liga, por opção, backoff exponencial com jitter (1s–30s), `resolveUrl` a cada tentativa, `shouldReconnect` falso em 1008 com a mesma URL, re-assinatura após reconectar e `onResync` para refazer a tela. Follow-up, fora desta frente: migrar MFEs que abrem `new WebSocket` por conta própria.
 
 ## 2.4 Endpoint e handshake
 
@@ -130,7 +161,7 @@ Assinatura negada responde `error` e **não** fecha a conexão. Sala malformada 
 
 O envelope `{type, code}` e o fato de a negação não derrubar o socket são o padrão (`engineering_realtime_protocol.py:8-10`, `requests_realtime_protocol.py:63-69`). Os códigos `forbidden_room` e `unknown_room` são do LNF: a plataforma usa códigos do domínio dela (`accessDenied`, `resourceIdInvalid`, `domainUnsupported`), não um enum único.
 
-`engineeringRealtime.ts` **não** serve para o LNF: a URL, o `domain` e o tipo `engineering.resource.changed` são da Engineering. O cliente genérico só transporta. A política de backoff e de close code do LNF não cabe nele sem alterá-lo — ver §2.16, opção do R2. A W4 usa wrapper local no MFE.
+`engineeringRealtime.ts` **não** serve para o LNF: a URL, o `domain` e o tipo `engineering.resource.changed` são da Engineering. O MFE usa o `RealtimeSocketClient` evoluído na W2b (D-W5), com as opções da §2.3. Sem essas opções, o cliente continua o de hoje.
 
 ## 2.7 Salas e autorização na assinatura
 
@@ -206,15 +237,15 @@ Estado de tela continua `useState` + carga HTTP. Sem React Query, sem polling no
 | Produtos sem código | `lnf:unmapped-products`, só com a permission | refetch da página e dos filtros atuais | não assinar sem a permission |
 | Notas recebidas, downloads, PCs em aberto no modal, sino | — | sem canal | busca sob demanda, blob sob clique, e o sino segue no shell |
 
-A própria ação também gera evento. Debounce e dedupe por `eventId` (janela curta) evitam o segundo refetch. `createEventDispatcher` em `realtimeSocket.ts:157-189` já faz dedupe por `eventId`; o wrapper pode usá-lo sem mudar o plugin-ui.
+A própria ação também gera evento. Debounce e dedupe por `eventId` (janela curta) evitam o segundo refetch. O hook do plugin-ui usa `createEventDispatcher` (`realtimeSocket.ts:157-189`). O MFE não reimplementa transporte.
 
 Conexão:
 
 - backoff exponencial com jitter, de 1s até 30s;
 - na reconexão, refetch da tela atual e reenvio das salas desejadas;
 - aba oculta: **igual ao `RealtimeSocketClient`, que não olha `document.hidden`**. A conexão e o `ping` (~25s, o intervalo default do cliente em `realtimeSocket.ts:24`) continuam. Não inventar pausa de aba.
-- indicador discreto: «Ao vivo» / «Reconectando…» / «Atualização automática indisponível». Não bloqueia a tela. PT-BR, claro/escuro, foco visível, `aria-live` polido.
-- Não existe componente de indicador de conexão no plugin-ui. `StateBanner` é o banner de falha do kit (`padrao-visual-portais-minha-delpi.md:362`), não um selo «Ao vivo». O selo fica no MFE. O estado indisponível pode usar `StateBanner` se couber sem cobrir a fila. Não criar primitivo novo no plugin-ui nesta frente.
+- indicador discreto, o `RealtimeStatusIndicator` do plugin-ui: «Ao vivo» / «Reconectando…» / «Atualização automática indisponível». Não bloqueia a tela. PT-BR, claro/escuro, foco visível, `aria-live` polido. Some em `idle` e `closed`.
+- aviso de alteração concorrente: `ConcurrentChangeNotice` do plugin-ui. O MFE passa a mensagem e o rótulo. `StateBanner` continua o banner de falha do kit (`padrao-visual-portais-minha-delpi.md:362`); não vira o selo «Ao vivo».
 - Base no api-delpi ou `VITE_LNF_REALTIME_ENABLED` off: zero tentativas de conexão e sem mensagem de erro.
 
 ## 2.11 Gateway (desenho; implementação na W3)
@@ -225,7 +256,7 @@ Location **mais longa** que o prefixo atual, para o `^~` existente não capturar
 location ^~ /apps/controllership-finance-api/lancamento-notas-fiscais/realtime
 ```
 
-Nos três arquivos: `gateway/nginx.conf` (PROD), `gateway/nginx.dev.conf` (DEV), `gateway/snippets/hml-proxy-locations.conf` (HML).
+Arquivos desta frente: `gateway/nginx.dev.conf` (DEV, aplicado) e `gateway/snippets/hml-proxy-locations.conf` (HML, commitado). `gateway/nginx.conf` (PROD) não é editado. O diff planejado para a W6 é o mesmo bloco, no mesmo path, sem publicar até F5c DONE e go do owner.
 
 Nessa location, e só nela:
 
@@ -237,7 +268,7 @@ Nessa location, e só nela:
 
 O bloco `location ^~ /apps/controllership-finance-api/` não muda.
 
-W3 publica DEV e HML. O bloco de PROD entra no arquivo, mas não sobe para o servidor enquanto a W6 não tiver F5c DONE.
+W3 publica DEV e commita a conf de HML. PROD fica só como diff planejado neste documento, para a W6.
 
 ## 2.12 Ajuda
 
@@ -278,12 +309,14 @@ Cada fase: brief → execução → report → revisão. Este contrato não exec
 
 | Fase | Entrega | Ambiente |
 |---|---|---|
+| W1.1 | D-W5, quadro, adendo do ADR, mapa de reuso | docs |
 | W2 | Port, hub, rota, emissão pós-commit, testes da §2.13 no BFF | DEV |
-| W3 | Location dos três arquivos de gateway; publicar só DEV e HML | DEV/HML; PROD só no arquivo |
-| W4 | MFE: fila → detalhe → formulário → produtos sem código, mais `helpTooltips.ts` | DEV |
+| W2b | Cliente aditivo, hook, indicador e aviso no plugin-ui | pacote compartilhado |
+| W3 | Location em `nginx.dev.conf` e no snippet HML. PROD intocado | DEV aplicado; HML commitado |
+| W4.1–W4.4 | Fila, detalhe, formulário, produtos sem código + `helpTooltips.ts` | DEV |
 | W5 | Ensaio com dois usuários e o negativo de filial | HML |
-| W6 | PROD | entrada = F5c DONE no quadro da trilha 165 |
-| W7 | Job periódico de conciliação | decisão própria, depois do F5c |
+| W6 | PROD | BLOCKED: F5c DONE + go do owner |
+| W7 | Job periódico de conciliação | BLOCKED: decisão própria |
 
 ## 2.15 Riscos e rollback
 
@@ -316,14 +349,7 @@ Não é protocolo de salas do LNF. Lá a sala é `domain` + `resourceId`, não `
 
 Não há indicador de conexão no plugin-ui (busca em `plugins/plugin-ui/src` por componente de realtime: só o cliente e o helper da Engineering).
 
-**Opções, sem escolher mudança no plugin-ui nesta frente:**
-
-| Opção | O que é | Por que não é o default da W4 |
-|---|---|---|
-| Generalizar `RealtimeSocketClient` | backoff com jitter, respeito a 1008, política de token renovado | mexe no kit compartilhado com Engineering e PRC; esta frente não autoriza esse diff |
-| Wrapper local no MFE | WebSocket próprio com o protocolo da §2.6 e a política da §2.10; pode importar `createEventDispatcher` | é o caminho que cumpre o contrato sem alterar `plugin-ui` |
-
-A W4 implementa o wrapper local. Generalizar o kit fica para uma decisão posterior, se um segundo consumidor pedir a mesma política.
+A W1 deixou as duas opções em aberto e adotou o wrapper local como caminho que não mexia no kit. A D-W5 A (2026-11-13) fecha isso: a evolução é aditiva no `RealtimeSocketClient`, com defaults idênticos, e o indicador, o hook e o aviso nascem no plugin-ui. O wrapper local e o indicador local ficam rejeitados. Engineering e PRC não são migrados nesta frente; os testes deles são a regressão da W2b.
 
 ### R3 — close codes encontrados
 
@@ -339,3 +365,18 @@ Por isso a §2.5 troca 4401 por 1008 e o exp por 1000. 1011 e 1001 permanecem s�
 ### R4 — produtos sem código
 
 Writer único: `UnmappedSupplierProductRecorder.record` (`unmapped_supplier_product_service.py:71-134`), insert em `:120`, chamado no fim do create com NF-e (`received_invoice_attachment_service.py:126-153`). Sem job e sem update. Leitura: `GET /unmapped-products` exige `lancamento-notas-fiscais.review-unmapped-products` (`router.py:573-576`). O evento da §2.8 existe por causa desse writer.
+
+## Registro de execução
+
+### W1.1 — 2026-11-13
+
+HEAD de partida: `731ce51cd5` (o contrato W1 está em `17ee2f4caf`; a main avançou com commits alheios, sem diff desta frente). Working tree alheio preservado (artefatos e docs DELIA/PRC não versionados).
+
+Decisão por evidência: o brief de execução chama o hub de `InMemoryLnfRealtimeHub`. O contrato já fixou `InMemoryInvoicePostingRealtimeHub`. A implementação usa o nome do contrato.
+
+Trechos que a W1.1 tinha de confirmar e que já estavam no arquivo:
+
+- a fila não dispara `POST /reconciliation/refresh` por evento (§2.10);
+- usuário só com `view.filial-01` não assina nem recebe a filial 02 (§2.7 e §2.13).
+
+Arquivos: este documento, ADR-002 (adendo D-W5), `30-plugin-ui-reuse-map.md` (entradas PLANNED). Sem código.

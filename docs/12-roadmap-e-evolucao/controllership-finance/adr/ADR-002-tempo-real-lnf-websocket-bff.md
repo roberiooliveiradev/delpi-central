@@ -53,3 +53,18 @@ Completam a decisão, pela evidência da W0 e sem reabrir:
 - O rollback da trilha 165 (MFE de volta à api-delpi, BFF do LNF desligada) continua válido: o MFE não tenta socket quando a base não é a BFF.
 - Close codes e o cliente seguem os ajustes do doc 167 §2.16: a plataforma usa 1008 no handshake e 1000 ao expirar a conexão já aceita; o `RealtimeSocketClient` não implementa o backoff do LNF, então o MFE usa wrapper local em vez de alterar o plugin-ui nesta frente.
 - Quem só tem `lancamento-notas-fiscais.review-unmapped-products` entra no socket por causa dessa permission, e não assina sala de filial sem `branch_view_allowed`.
+
+## Adendo — D-W5 (2026-11-13)
+
+O owner decidiu que o cliente de tempo real desta frente evolui dentro do `@delpi/plugin-ui`, de forma aditiva. Sem as opções novas, o `RealtimeSocketClient` permanece com reconnect fixo de 4s e reconexão sempre. O hook de salas, o indicador de conexão e o aviso de alteração concorrente também nascem nesse pacote. O MFE do LNF só liga salas, eventos e textos.
+
+| Alternativa rejeitada | Por que não |
+|---|---|
+| Cliente WebSocket local no MFE | Duplicaria transporte que o plugin-ui já tem e afastaria o LNF do kit. |
+| Indicador e aviso locais no MFE | A mesma frente já pede um selo e um aviso reutilizáveis. Mantê-los no app criaria o componente que o mapa de reuso manda não copiar. |
+
+Consequências:
+
+- a mudança é num pacote compartilhado; os defaults atuais são o contrato de compatibilidade com Engineering e PRC;
+- migrar os MFEs que abrem `new WebSocket` por conta própria (requests, commercial e outros) é follow-up, não esta frente;
+- a frase anterior deste ADR que mandava wrapper local no MFE fica superada por este adendo.
