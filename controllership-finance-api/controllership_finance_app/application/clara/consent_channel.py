@@ -51,20 +51,21 @@ def confirmation_instruction_for_prepare() -> str:
         return (
             "Apresente a operação exata ao usuário (quem, recurso, "
             "competência, versão, efeito, riscos, reversibilidade) e "
-            "aguarde confirmação explícita e específica no ChatGPT. "
+            "aguarde confirmação explícita e específica no chat. "
             "Somente então chame phase=commit com o proposal_handle "
             "(ou proposal_id) e confirmation=true. "
             "confirmation=true não substitui a autorização efetiva do "
             "Core — o backend revalida permissões, escopo, OCC, "
             "idempotência e read-back no ACT. "
-            "Canal definido explicitamente no backend após aceite "
-            "operacional do responsável da área. O sinal MCP não "
-            "equivale ao step-up Portal V014."
+            "Canal conversacional ativo no backend (aceite operacional "
+            "do responsável da área): a confirmação no chat sela a "
+            "proposta; o ACT continua sujeito a AuthZ Core, escopo, "
+            "OCC, idempotência e read-back."
         )
     # Portal fallback, including dual and invalid configuration.
     return (
         "Apresente a operação exata ao usuário (quem, recurso, "
-        "competência, versão, efeito, motivo, riscos) no ChatGPT. "
+        "competência, versão, efeito, motivo, riscos) no chat. "
         "A confirmação textual sozinha NÃO autoriza a execução. "
         "Direcione o usuário à confirmation_url no Portal "
         "Controladoria & Finanças para consentimento verificável "
@@ -79,10 +80,10 @@ def confirmation_instruction_for_prepare() -> str:
 def phase_policy_for_capability(*, direct: bool) -> str:
     """Schema/catalog phase_policy aligned with the active consent channel.
 
-    Hardcoding «Portal consent» while the contract is TÉO-shaped caused
-    ChatGPT to keep instructing an external page even after the MCP
-    tools already expose ``confirmation``. This helper keeps CURRENT
-    and TARGET honest in ``get_context(topic=schema)``.
+    Hardcoding a portal-only phrase while the contract is TÉO-shaped
+    caused clients to keep instructing an external page even after the
+    MCP tools already expose ``confirmation``. This helper keeps the
+    active channel honest in ``get_context(topic=schema)``.
     """
     if direct:
         return (
@@ -94,10 +95,9 @@ def phase_policy_for_capability(*, direct: bool) -> str:
         return (
             "phase=prepare → proposal_pending_confirmation (apresente "
             "a alteração selada) → após confirmação explícita do "
-            "usuário phase=commit com proposal_handle + "
-            "confirmation=true; AuthZ Core + OCC + read-back no ACT; "
-            "sem página Portal obrigatória (canal conversacional "
-            "armado)"
+            "usuário no chat phase=commit com proposal_handle + "
+            "confirmation=true; AuthZ Core + OCC + read-back no ACT "
+            "(canal conversacional ativo)"
         )
     return (
         "phase=prepare → proposal_pending_confirmation (apresente a "

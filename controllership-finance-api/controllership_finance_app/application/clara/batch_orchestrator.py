@@ -451,7 +451,8 @@ class ClaraBatchOrchestrator:
                 "confirmation_policy": CONVERSATIONAL_POLICY_VERSION,
                 "warning": (
                     "MCP conversational confirmation is a model-provided "
-                    "signal, not independent Portal V014 human proof."
+                    "signal; it never replaces Core AuthZ, scope, OCC, "
+                    "idempotency, audit or read-back."
                 ),
             }
             updated = self._batches.record_consent(

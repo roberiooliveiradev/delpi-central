@@ -13,9 +13,9 @@ Governance (política vigente — docs 94/106/124, CF-UX-053):
   live Core AuthZ via the canonical route functions.
 - ``execute``/``delete`` — TÉO-shaped PREPARE →
   ``proposal_pending_confirmation`` → COMMIT with exact handle +
-  ``confirmation``. CURRENT_RUNTIME default keeps Portal V014 as
-  human proof; conversational ACT only when the backend explicitly selects the
-  channel. ``confirmation=true`` is never AuthZ alone.
+  ``confirmation``. Human proof follows ``CLARA_CONSENT_CHANNEL``
+  (conversational or Portal V014); ``confirmation=true`` is never
+  AuthZ alone.
 - ``batch`` — consolidated plan; same channel policy as single-op.
 """
 
@@ -1063,7 +1063,7 @@ def _run_operations(
 
     Diretas executam já (com AuthZ + idempotência); governadas
     retornam proposta selada + instrução do canal efetivo, bloqueando
-    dependentes até o ACT autorizado (V014 segue default). Outcomes parciais são
+    dependentes até o ACT autorizado. Outcomes parciais são
     reportados honestamente — sem atomicidade global implícita.
     """
     operations = batch.get("operations") or []
@@ -1356,16 +1356,24 @@ def _governed_dispatch(
         )
     # Política proporcional ao risco (doc 126): DIRECT_ALLOWED
     # executa imediatamente por default e em phase=direct; operações
-    # sem o marcador seguem PREPARE → consentimento Portal → ACT.
+    # sem o marcador seguem PREPARE → confirmação do canal ativo → ACT.
     if phase_norm in ("", "direct", "immediate", "run"):
         if spec.get("direct") and not destructive_only:
             return _direct_single(ent, act, payload, actor)
         if phase_norm == "":
             return _prepare_single(ent, act, payload, actor)
+        consent_hint = (
+            "use phase=prepare e, após confirmação explícita no chat, "
+            "phase=commit com proposal_handle + confirmation=true"
+            if conversational_act_enabled()
+            else (
+                "use phase=prepare e o ACT com consentimento "
+                "registrado no Portal (doc 126)"
+            )
+        )
         return _err(
             f"{ent}.{act} exige confirmação humana verificável — "
-            "use phase=prepare e o ACT com consentimento registrado "
-            "no Portal (doc 126).",
+            f"{consent_hint}.",
             status_code=409,
             error_code="consent_required",
         )

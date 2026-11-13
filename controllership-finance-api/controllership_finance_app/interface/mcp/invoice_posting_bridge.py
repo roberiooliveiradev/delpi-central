@@ -504,17 +504,18 @@ def tool_analyze_invoice_posting_backlog(
                     "source": "received_at dos items listados",
                 }
             )
-            if max(ages) >= 5:
+            aged_count = sum(1 for age in ages if age >= 5)
+            if aged_count > 0:
                 findings.append(
                     {
                         "kind": "RECOMMENDATION",
                         "code": "review_aged_pending",
                         "message": (
-                            "Há solicitações com ≥5 dias desde o "
-                            "recebimento — priorize no app LNF "
+                            f"Há {aged_count} solicitações com ≥5 dias "
+                            "desde o recebimento — priorize no app LNF "
                             "(não lançar/validar por inferência)."
                         ),
-                        "value": max(ages),
+                        "value": aged_count,
                     }
                 )
 

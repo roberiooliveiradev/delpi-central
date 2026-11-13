@@ -221,10 +221,11 @@ def test_tool_descriptions_follow_active_consent_policy(
         assert "Portal V014" in instructions
         assert "do NOT authorize" in instructions
     else:
-        assert "No mandatory confirmation_url" in instructions
-        assert "Portal page" in instructions
         assert "ACTIVE CHANNEL: conversational" in instructions
+        assert "in chat" in instructions
         assert "Portal V014 consent" not in instructions
+        assert "Portal page" not in instructions
+        assert "ChatGPT" not in instructions
 
 
 def test_mount_path_normalization():

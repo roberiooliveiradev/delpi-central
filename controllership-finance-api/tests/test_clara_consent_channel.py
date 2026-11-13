@@ -37,8 +37,14 @@ def test_conversational_explicit_channel_needs_no_signature(channel_settings):
     channel_settings.CLARA_CONSENT_CHANNEL = "conversational"
     assert cc.conversational_act_enabled() is True
     assert cc.portal_consent_required() is False
-    assert "confirmation=true" in cc.confirmation_instruction_for_prepare()
-    assert "acknowledgement" not in cc.confirmation_instruction_for_prepare()
+    instruction = cc.confirmation_instruction_for_prepare()
+    assert "confirmation=true" in instruction
+    assert "acknowledgement" not in instruction
+    # F7-R3: canal conversacional não orienta Portal V014 nem host específico
+    assert "Portal V014" not in instruction
+    assert "ChatGPT" not in instruction
+    assert "no chat" in instruction
+
 
 
 def test_legacy_ack_cannot_activate_portal(channel_settings, monkeypatch):
@@ -73,8 +79,12 @@ def test_phase_policy_default_mentions_portal_and_teo(channel_settings):
 def test_phase_policy_armed_omits_mandatory_portal(channel_settings):
     channel_settings.CLARA_CONSENT_CHANNEL = "conversational"
     policy = cc.phase_policy_for_capability(direct=False)
-    assert "sem página Portal obrigatória" in policy
+    assert "canal conversacional ativo" in policy
+    assert "no chat" in policy
     assert "confirmation=true" in policy
+    assert "Portal" not in policy
+    assert "V014" not in policy
+    assert "confirmation_url" not in policy
 
 
 def test_phase_policy_direct_unchanged(channel_settings):

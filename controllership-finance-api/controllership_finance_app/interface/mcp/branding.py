@@ -98,10 +98,9 @@ def build_clara_mcp_instructions() -> str:
         policy = (
             "ACTIVE CHANNEL: conversational TÉO-shaped confirmation. "
             "Present the sealed proposal, await explicit user approval "
-            "in ChatGPT, then call commit with the exact proposal_handle "
-            "and confirmation=true. No mandatory confirmation_url or "
-            "Portal page. This MCP signal is not independent proof of "
-            "human presence and never replaces Core effective permission, "
-            "resource scope, OCC, idempotency, audit or read-back."
+            "in chat, then call commit with the exact proposal_handle "
+            "and confirmation=true. confirmation=true never replaces "
+            "Core effective permission, resource scope, OCC, "
+            "idempotency, audit or read-back."
         )
     return CLARA_MCP_INSTRUCTIONS.replace("{ACTIVE_CONSENT_POLICY}", policy)

@@ -85,9 +85,9 @@ class ClaraAgentIntelligenceService:
                 "proposal_pending_confirmation → confirmação humana "
                 "explícita da operação exata → commit com "
                 "proposal_handle + confirmation=true (padrão TÉO). "
-                "CURRENT_RUNTIME: human proof = Portal V014 "
-                "(confirmation_url) até Segurança armar o canal "
-                "conversacional; confirmation=true sozinho não é AuthZ."
+                "Canal efetivo e human_proof seguem "
+                "get_context/prepare (consent_channel); "
+                "confirmation=true sozinho nunca é AuthZ."
             ),
             "character": cls.persona_context(),
         }

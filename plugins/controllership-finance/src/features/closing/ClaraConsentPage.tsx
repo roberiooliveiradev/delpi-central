@@ -3,7 +3,7 @@
  * R-CLARA-01/02).
  *
  * Página LEGADA V014, disponível apenas quando a política efetiva da BFF
- * requer Portal; no canal conversacional o usuário confirma no ChatGPT.
+ * requer Portal; no canal conversacional o usuário confirma no chat.
  * A superfície V014 apresenta o plano selado (desafio emitido no PREPARE),
  * renova a sessão Keycloak e devolve o `challenge_id` à BFF — prova
  * de autorização vinculada ao plano exato, ao ator e à expiração.
@@ -306,12 +306,12 @@ export function ClaraConsentPage() {
       <section className="cf-page-stack cf-closing-layout" aria-label="Canal conversacional CLARA">
         <CfPageHero
           eyebrow="Central de Fechamento"
-          title="Confirmação da CLARA no ChatGPT"
+          title="Confirmação da CLARA no chat"
           description="Este link de consentimento foi substituído pelo fluxo conversacional."
         />
         <CfFeedbackMessage intent="info" title="Volte à conversa com a CLARA">
           O canal conversacional está habilitado. Apresente e confirme a proposta
-          diretamente no ChatGPT; nenhuma autorização é registrada nesta página.
+          diretamente no chat; nenhuma autorização é registrada nesta página.
         </CfFeedbackMessage>
       </section>
     );

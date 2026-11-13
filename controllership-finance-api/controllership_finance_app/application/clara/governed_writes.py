@@ -2389,10 +2389,21 @@ class ClaraGovernedWrites:
                     else "mcp_tool_confirmation_owner_risk_accepted_v2"
                 ),
                 "note": (
-                    "confirmation=true is a sealed-proposal ACT signal "
-                    "(TÉO-shaped). It is never AuthZ and, unless the "
-                    "server-side channel configuration enables ACT; "
-                    "Portal V014 remains default."
+                    (
+                        "confirmation=true is a sealed-proposal ACT "
+                        "signal (TÉO-shaped). It is never AuthZ; with "
+                        "the conversational channel active, commit "
+                        "requires confirmation=true after explicit "
+                        "user approval in chat, then Core AuthZ, "
+                        "scope, OCC, idempotency and read-back."
+                    )
+                    if not portal_required
+                    else (
+                        "confirmation=true is a sealed-proposal ACT "
+                        "signal (TÉO-shaped). It is never AuthZ; with "
+                        "portal_consent_required=true the Portal "
+                        "step-up (V014) remains mandatory before ACT."
+                    )
                 ),
             },
             "expires_at": (
@@ -2814,7 +2825,7 @@ class ClaraGovernedWrites:
             raise ConsentRequired(
                 "Canal conversacional armado exige confirmation=true "
                 "no ACT após o usuário confirmar explicitamente a "
-                "proposta selada no ChatGPT (padrão TÉO)."
+                "proposta selada no chat (padrão TÉO)."
             )
         payload = proposal["payload"]
         if isinstance(payload, str):
@@ -2842,7 +2853,8 @@ class ClaraGovernedWrites:
             "confirmation_policy": CONVERSATIONAL_POLICY_VERSION,
             "warning": (
                 "MCP conversational confirmation is a model-provided "
-                "signal, not independent Portal V014 human proof."
+                "signal; it never replaces Core AuthZ, scope, OCC, "
+                "idempotency, audit or read-back."
             ),
         }
         self._proposals.record_consent(
