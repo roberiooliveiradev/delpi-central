@@ -80,12 +80,12 @@ Transferir o módulo **Lançamento de Notas Fiscais (LNF)** da `api-delpi` para 
 | F0–F4b | Inventário, contrato, implementação dark, ensaio HML | DONE | — | até `fddd4bb813` | 2026-11-12 | 163/164, suíte |
 | F5a | Preparação dark de PROD | DONE | PROD | `fdc31ad48e` + deploys 2026-11-12 | 2026-11-12 | BFF/MFE/api-delpi dark; preflight 5/5; OpenAPI BFF 112/0 LNF; api 731/22 LNF; MFE base api-delpi; observação 15 min sem incidente |
 | F5b | Corte em PROD | técnico PASS; smoke PENDING_OWNER (não bloqueante) | PROD | `630ca6f3b9` + fix PO `e43aa9558b` | 2026-11-13 | Virada: BFF 13,4s / api 15,1s / MFE 56,3s; revisor: 22 paths/24 ops BFF, 0 LNF api-delpi; fallback Vite morto |
-| F5c | Estabilização (hypercare) | IN_PROGRESS (dia 1; janela 5 DU a partir do corte) | PROD | — | 2026-11-13 | 1ª checagem: tráfego LNF 200; 403 detail=AuthZ create; 5xx≈0; contagens estáveis |
-| F7.0 | CLARA — inventário e contrato | DONE | docs | (este ciclo) | 2026-11-13 | doc 166; R2=SIM JWT usuário |
-| F7.1 | CLARA — leituras | IN_PROGRESS | DEV | (este ciclo) | 2026-11-13 | 8 reads no clara-semantic-v1 |
-| F7.2 | CLARA — análise | IN_PROGRESS | DEV | (este ciclo) | 2026-11-13 | analyze invoice_posting.backlog |
-| F7.3 | CLARA — ações governadas | IN_PROGRESS | DEV | (este ciclo) | 2026-11-13 | comment/refresh direct; demais governed |
-| F7.4 | CLARA — produção + roteiro de teste do owner | TODO | | | | |
+| F5c | Estabilização (hypercare) | IN_PROGRESS (dia 1; janela 5 DU a partir do corte) | PROD | — | 2026-11-13 | Checagens: total=1430; 5xx=0; HOSTED=true; recheck pós-F7 OK |
+| F7.0 | CLARA — inventário e contrato | DONE | docs | `0926f07160` | 2026-11-13 | doc 166; R2=SIM JWT usuário |
+| F7.1 | CLARA — leituras | DONE | HML/PROD | `1328cd0d85` | 2026-11-13 | 8 reads; HML JSON-RPC PASS; PROD health+import |
+| F7.2 | CLARA — análise | DONE | HML/PROD | `1328cd0d85` | 2026-11-13 | backlog FACT/RECOMMENDATION via reads |
+| F7.3 | CLARA — ações governadas | DONE | HML/PROD | `1328cd0d85` | 2026-11-13 | comment/refresh direct; prepare sela; justificativas |
+| F7.4 | CLARA — produção + roteiro de teste do owner | PENDING_OWNER | PROD | `1328cd0d85` | 2026-11-13 | deploy PROD OK; roteiro abaixo |
 | F6 | Limpeza final (encerra o rollback) | TODO | | | | |
 
 Status possíveis: TODO · IN_PROGRESS · BLOCKED (regra de parada) · DONE.
@@ -373,4 +373,25 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-13 08:00 -03 | F5b | docs/PROD | Fechamento técnico: PASS; smoke PENDING_OWNER (não bloqueante) | técnico PASS | `630ca6f3b9` / `e43aa9558b` | tempos BFF 13,4s api 15,1s MFE 56,3s; fallback Vite morto confirmado pelo revisor |
 | 2026-11-13 08:04 -03 | F5c.d1 | PROD | 1ª checagem hypercare | PASS | — | total=1430; pending=15 posted=1389 blocked=1 cancelled=25; 5xx_60m=0; 403_60m=4 (detail create); HOSTED=true MODULE=false |
 | 2026-11-13 08:05 -03 | F7.0 | docs | Inventário CLARA + R2 + doc 166 | DONE | (ciclo F7) | MCP in-process BFF; JWT usuário SIM; catálogo alvo travado |
-| 2026-11-13 08:05 -03 | F7.1–F7.3 | DEV | Implementação reads/analyze/governed LNF nas 6 tools | IN_PROGRESS | (ciclo F7) | `invoice_posting_bridge` + `invoice_posting_capabilities` |
+| 2026-11-13 08:05 -03 | F7.1–F7.3 | DEV | Implementação reads/analyze/governed LNF nas 6 tools | PASS | `0926f07160` | `invoice_posting_bridge` + `invoice_posting_capabilities` |
+| 2026-11-13 08:20 -03 | F7.HML | HML | MCP clients Keycloak + CF.access nos perfis LNF + DAG HML | PASS | — | client `mcp-controllership-finance`; manifesto CF registrado |
+| 2026-11-13 08:25 -03 | F7.fix | DEV/HML | Query defaults quebravam list/analyze (`cannot adapt type Query`) | PASS | `1328cd0d85` | `_resolved_route_kwargs` / `_call_route` |
+| 2026-11-13 08:30 -03 | F7.1–F7.3 | HML | JSON-RPC: catalog por perfil, read, analyze, refresh, prepare, negativos | PASS | `1328cd0d85` | tools/list=6; P0=403; P10=401; justificativas obrigatórias |
+| 2026-11-13 08:35 -03 | F7.4 | PROD | Deploy BFF + health + OpenAPI 22/24 + import 8 reads + mcp 401 | PASS técnico | `1328cd0d85` | roteiro owner PENDING |
+| 2026-11-13 08:35 -03 | F5c | PROD | Recheck pós-F7 | PASS | — | total=1430; 5xx_15m=0; HOSTED=true |
+
+### Roteiro de teste do owner — F7.4 (ChatGPT / CLARA em PROD)
+
+Pré-condição: usuário com `controllership-finance.access` **e** as permissões LNF do perfil real.
+
+1. "CLARA, quais ações de lançamento de notas fiscais eu tenho?" → catálogo coerente com o perfil (sem entradas de create se não tiver create).
+2. "Liste as solicitações abertas da filial 01." → mesmos totais que o app.
+3. "Abra a solicitação \<id\>." → detalhe + link do app para PDF/XML (sem binário na conversa).
+4. "Analise o backlog de lançamento de notas da filial 01." → FACT com números/fonte; RECOMMENDATION sem lançar por inferência.
+5. "Comente na nota \<id\>: teste CLARA F7.4" → comentário aparece no app (direct).
+6. "Inicie o atendimento da nota \<id\>." → CLARA apresenta proposta e **não executa** sem confirmação; após confirmar, app mostra Em atendimento.
+7. Negativos: perfil só view não vê create/start; cancel/post_manual sem justificativa recusados; serviço/token de máquina não entra no MCP.
+
+Marcar F7.4 DONE somente com PASS do owner neste roteiro.
+
+**F6 (limpeza) — não inicia agora.** Pré-requisitos: (a) 5 dias úteis de F5c sem incidente a partir de 2026-11-13; (b) smoke F5b PASS do owner; (c) este roteiro F7.4 PASS. Data mais cedo possível para F6: **2026-11-20** (após o 5º DU: 13, 14, 17, 18, 19), se (b) e (c) estiverem PASS.

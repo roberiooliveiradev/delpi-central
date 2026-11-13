@@ -1,7 +1,7 @@
 # 166 — CLARA × Lançamento de Notas Fiscais (contrato F7)
 
-> Status: **F7.0 DONE** · implementação F7.1–F7.3 na BFF (`controllership-finance-api`)  
-> Data: 2026-11-13  
+> Status: **F7.0–F7.3 DONE** · **F7.4 PENDING_OWNER** (roteiro na trilha 165)  
+> SHA: `1328cd0d85` · Data: 2026-11-13  
 > Tools públicas: **sempre as 6** (`get_context`, `read`, `analyze`, `knowledge`, `execute`, `delete`)  
 > Catálogo: `clara-semantic-v1` — novas entradas `(entity, action)`, sem tool nova
 
