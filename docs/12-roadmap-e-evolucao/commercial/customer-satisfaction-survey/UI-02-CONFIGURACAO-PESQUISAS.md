@@ -345,6 +345,18 @@ Números das linhas **ilustrativos**; não codificar no frontend. Situação vem
 
 **Status:** substituição da decisão de modal **CONFIRMADA**; componente exato de expansão e detalhes CSS **TO_INVENTORY**, contrato de inclusão e implementação **PENDING**. A especificação não significa que a funcionalidade já esteja implementada.
 
+### Refinamento de retorno de inclusão — sem painel de contadores (13/11/2026)
+
+**ORIENTAÇÃO EXPRESSA DO SOLICITANTE, substitui propostas visuais anteriores:** **não** exibir indicadores adicionais permanentes de **Incluídas / Já existentes / Com falha** no card de adicionar clientes. A inclusão bem-sucedida fica visível na **lista de participantes** imediatamente abaixo, atualizada com dados confirmados pela `commercial-api`. Clientes já vinculados à campanha **não devem aparecer na pesquisa de disponíveis**, assim como os já selecionados na operação atual; o `CustomerSearchPicker` comprovadamente admite `excludeKeys`. Não confundir a especificação de um **retorno de lote por item no backend** com obrigação de mostrar três cards de contagem no frontend.
+
+**Fluxo visual simplificado:** card expansível → busca nome/código TOTVS → avatares de empresas elegíveis não vinculadas → seleção acumulada → botão Adicionar à pesquisa → atualização oficial da lista de participantes. Sem relatório de sucesso ou modal adicional na operação normal; feedback discreto do kit quando necessário. Em erro, mostrar mensagem **somente se houve falha confirmada** e vinculada a uma causa confiável. Exemplos de **hipóteses, não erros comprovados do contrato**: concorrência (outra pessoa inclui o mesmo cliente antes da gravação), término da campanha entre consulta e confirmação, perda de autorização, falha de rede ou mudança de elegibilidade TOTVS. A frase `Cadastro indisponível para inclusão` do protótipo anterior foi **fictícia e genérica**; não padronizar nem assumir que o TOTVS emite isso.
+
+**Backend ainda precisa tratar corretamente:** unicidade por `customer_code+customer_store`, escrita concorrente, retorno parcial por empresa, idempotência, autorização e auditoria. Se a API não puder confirmar o resultado da operação (erro de comunicação), a UI deve consultar o estado oficial antes de repetir a gravação; não afirmar inclusão nem repetição segura sem evidência. Se um item específico falhar, mostrar mensagem contextual e identidade dessa empresa, **sem painel fixo de três contadores**. Condições/códigos de erro efetivos **PENDING** do contrato da `commercial-api`.
+
+**Padronização visual:** mesmo card expansível e mesmos componentes de busca/avatar/seleção do Comercial; usar o componente oficial de feedback apenas em exceções, preservando tokens, dimensões, margens, padding, gap e breakpoints reais (**TO_INVENTORY**) em desktop/tablet/celular. Nenhuma nova visualização, badge ou gráfico de resultado de lote.
+
+**Status:** exclusão dos três indicadores e filtragem de já participantes **CONFIRMADAS na revisão do solicitante**; política de apresentação de falhas reais **proposta para confirmação**. Não implementado.
+
 ## 3. Wireframe B — detalhe de campanha
 
 ```text
