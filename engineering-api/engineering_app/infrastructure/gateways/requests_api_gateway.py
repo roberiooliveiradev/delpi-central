@@ -33,6 +33,12 @@ _SYSTEM = "requests-api"
 # Superfície existente do Portal para abrir uma solicitação (manifest
 # oficial do MFE my-requests — basePath comprovado no G0).
 _REQUESTS_HREF = "/apps/my-requests"
+# Tipo canônico do My Requests elegível à Home do Portal Engenharia
+# (decisão do owner de Engenharia): somente solicitações de criação de
+# matéria-prima integram as seções alimentadas pela requests-api. O
+# filtro é aplicado server-side pelo owner — antes da paginação e do
+# total — preservando escopo de autorização e contagens corretas.
+_RAW_MATERIAL_TYPE_CODE = "raw-material-creation"
 
 
 def _map_request_item(raw: Any, *, kind: str) -> HomeItem:
@@ -71,7 +77,11 @@ class _RequestsApiSource:
         try:
             data = await self._client.get(
                 path,
-                params={"page": 1, "page_size": limit},
+                params={
+                    "page": 1,
+                    "page_size": limit,
+                    "type_code": _RAW_MATERIAL_TYPE_CODE,
+                },
                 access_token=ctx.access_token,
                 request_id=ctx.request_id,
             )

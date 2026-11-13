@@ -105,6 +105,9 @@ async def test_work_queue_maps_items_and_delegation(monkeypatch):
     request = captured["request"]
     assert request.url.path == "/v1/requests/work-queue"
     assert request.url.params["page_size"] == "5"
+    # ISOLATION-PRD-01: filtro oficial server-side — somente criação de
+    # matéria-prima integra a Home da Engenharia via requests-api.
+    assert request.url.params["type_code"] == "raw-material-creation"
     assert request.headers["Authorization"] == "Bearer user-jwt-1"
     assert request.headers["X-Delpi-Caller-App"] == "engineering-api"
     assert request.headers["X-Request-Id"] == "req-1"
@@ -129,6 +132,9 @@ async def test_mine_source_uses_mine_endpoint(monkeypatch):
     assert result.status == "empty"
     assert result.total == 0
     assert captured["request"].url.path == "/v1/requests/mine"
+    assert (
+        captured["request"].url.params["type_code"] == "raw-material-creation"
+    )
 
 
 async def test_requests_forbidden_maps_to_forbidden(monkeypatch):
