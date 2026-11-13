@@ -240,3 +240,14 @@ Prevalece sobre AC textuais antigos que tratem RESOLVED e REMOVED como estados d
 **Gate B2 de migração:** inventariar D16 e consumidores, definir fonte de identidade do produto e prova do alvo, pipeline idempotente de associação com relatório de exceções, migração não destrutiva/backward-compatible, AuthZ e grants, testes concorrentes e rollback. **Migration e alterações de endpoint continuam bloqueadas até Coordination ratificar.**
 
 **AC HML:** OPEN identificável→V1; encerradas→não entram; alvo/incerteza→exceção e não migra; duas OPEN no mesmo alvo→bloqueia associação automática; replay sem duplicar; sem efeito na contagem Vn; auditoria e lifecycle corretos, AuthZ negativa. [Decisões PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) · [Proposta Coordination](./PRC-TRACK-G1-CONTRACT-RATIFICATION-PROPOSAL.md).
+
+
+## Complemento CR-09 — pedido não altera produto até conclusão validada (PO, 13/11/2026)
+
+**CR-09 APPROVED BY PO:** **B — Somente após conclusão da solicitação**; comentário do PO: “a solicitação só deve alterar o produto após concluida, solicitação não é uma nova versão do produto.” Flags durante `IN_PROGRESS` permanecem exclusivas da solicitação, não entram em produtos acompanhados. No corte da conclusão válida, somente flags OPEN com vínculo produto+alvo comprovado tornam-se elegíveis à projeção do produto; RESOLVED/REMOVED anteriormente não entram. Caso no-op após V1 pode associar OPEN à Vn vigente sem nova versão; diff técnico gera Vn+1; primeira conclusão gera V1 baseline, todas conforme CR-02/03/04/05/06.
+
+**Correção CR-08:** bandeiras legadas OPEN somente entram na V1 se também puder ser comprovado que a solicitação originária foi **concluída**. PRC aberta, cancelada, rejeitada ou status desconhecido não pode ser associada automaticamente. Isso não altera registros legados nem autoriza mutação de banco.
+
+**Gates B1/B2/B3:** separar flags request-local de flags product-projected; definir conclusão `matched` e postcondition de associação, idempotência e captura transacional de estado de flag; proibir leitura de draft como ficha oficial; proteger race com RESOLVE/REMOVE; especificar política em colisão de OPEN e eventual associação pendente via decisão Coordination. `ARCHITECTURE_DECISION_REQUIRED` sobre atomicidade e coexistência D16. Não ocultar apenas no frontend.
+
+**AC:** consulta produto não exibe bandeiras de PRC aberta; conclusão validada/OPEN aparece; concluída sem diff não cria versão; bandeira resolvida antes da conclusão não aparece; CANCEL/403/mismatch sem mudança; backfill legado apenas concluído; race e replay seguros; histórico por request preservado. `TEST_NOT_RUN`. [PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) · [Proposta Coordination](./PRC-TRACK-G1-CONTRACT-RATIFICATION-PROPOSAL.md). **Sem código/migrations/deploy.**
