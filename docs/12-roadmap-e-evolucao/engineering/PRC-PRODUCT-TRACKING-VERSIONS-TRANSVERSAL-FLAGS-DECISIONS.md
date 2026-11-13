@@ -1,5 +1,7 @@
 # PRC — Registro de produtos acompanhados, versões confirmadas e flags transversais
 
+> **ATUALIZAÇÃO PO — 2026-11-13:** [Deliberações G1 do PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) **substituem** regras conflitantes deste baseline: (a) acompanhar campos registrados pela Engineering API, com proveniência/cobertura a definir em contrato; (b) **no-op não gera Vn**; (c) propagação visual de flag única por produto/alvo a cada versão sem clones de identidade; (d) HML API funcional antes do novo frontend. Demais disposições permanecem sujeitas a Coordination. Documento antigo preservado para rastreabilidade.
+
 > **Data:** 2026-11-12  
 > **Natureza:** decisões funcionais do Product Owner consolidadas em conversa; desenho técnico TARGET e gaps TO_INVENTORY.  
 > **Status:** BUSINESS_RULES_DEFINED / ARCHITECTURE_DECISION_REQUIRED para confirmar ownership, contratos e mudanças persistentes. **Não autoriza migration, deploy ou implementação.**  
