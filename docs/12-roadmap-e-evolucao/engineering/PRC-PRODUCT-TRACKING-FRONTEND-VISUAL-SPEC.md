@@ -1,5 +1,7 @@
 # PRC — Especificação visual e de interação: Solicitações e Produtos acompanhados
 
+> **CORREÇÃO PO ADR-04 — 2026-11-13:** a partir do encerramento da bandeira, ela **não aparece em versões posteriores**. As fichas mostram propagação apenas enquanto `OPEN`; `RESOLVED`/removida permanece exclusivamente rastreável no histórico de eventos e nos cortes históricos em que estava aberta. A resolução não cria revisão. Ver [deliberações G1](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md). Esta instrução substitui exemplos de apresentação de flags resolvidas nas versões posteriores.
+
 > **Data:** 2026-11-12  
 > **Estado:** UX_DEFINED / TARGET; referência funcional e visual, **não** prova de implementação.  
 > **Fonte:** decisões do Product Owner e capturas de tela do Portal Engenharia e Catálogo de Produtos discutidas em 12/11/2026.  
