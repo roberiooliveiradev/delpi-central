@@ -237,3 +237,16 @@ O [pacote técnico T01/T02 para ratificação](./PRC-TRACK-T01-T02-COORDINATION-
 **Estado:** `TECHNICAL_PROPOSAL_READY / ENGINEERING_OWNER_RATIFICATION_PENDING / DEVIN_PROD02_BLOCKED`. Não declarar `APPROVED` até decisão explícita de Coordination + Engineering API owner no ledger. Não modificar runtime por este documento.
 
 **Em paralelo:** Cursor executa um único gate independente PROD-01, com rotação segura de credenciais já informada e sem exposição de segredos. Testes de escrita exclusivamente HML; em produção somente saúde, leitura e observabilidade, nunca dados de negócio de teste.
+
+
+## 18. T01/T02 — PO concordou; aguardando confirmação formal do Engineering API owner (13/11/2026)
+
+**Decisão PO:** `T01_APPROVED_BY_PO_WITH_CONDITIONS / T02_APPROVED_BY_PO_WITH_CONDITIONS`; registrada no [pacote de ratificação §7](./PRC-TRACK-T01-T02-COORDINATION-TECHNICAL-RATIFICATION-PACKET.md) e [plano canônico §11](./PRC-TRACK-CANONICAL-PRODUCT-RULES-AND-EXECUTION-PLAN.md). Sem novas perguntas funcionais.
+
+**T01:** catálogo e ficha PRC consolidados, schema/coverage, origem+confirmação por campo, UPDATE omitido preservado, supplierCode+store, legado honesto/imutável.
+
+**T02:** V1 primeira conclusão matched; V2+ apenas diff; no-op sem INSERT revision; verification+ledger completos; atomicidade PRC, locks/CAS, idempotência e compatibilidade dos consumers.
+
+**Gate de autoridade:** `ENGINEERING_OWNER_RATIFICATION_PENDING`. Necessário confirmar DTO/ports, consumidores existentes, migração mínima e rollback antes de autorizar implementação. Não escrever `OWNER_APPROVED` nem `PROD02_IMPLEMENTATION_PASS` sem evidência. Devin não precisa reabrir PROD-01 e não deve começar mudança de arquitetura unilateralmente. Após confirmação, emitir pacote bounded DEVIN-PROD-02 com T01/T02-AC01..09.
+
+**Testes:** DEV/HML podem usar dados governados e fluxos completos. **PRD apenas smoke READ-only/health**, zero escrita de dados de negócio para teste; nenhuma publicação produtiva autorizada.
