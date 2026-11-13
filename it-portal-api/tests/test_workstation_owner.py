@@ -8,7 +8,7 @@ import pytest
 from it_portal_app.domain.errors import PersistenceUnavailableError, ValidationError
 from it_portal_app.domain.workstations import build_workstation_fields
 from it_portal_app.infrastructure.gateways.core_directory_owner import CoreDirectoryOwnerResolver
-from tests.test_workstations_http import payload
+from tests.test_workstations_http import payload, workstation_client  # fixture compartilhada
 
 OWNER_A = "5bd659b9-3816-48e3-9d9e-a2f53e96b8b7"
 OWNER_B = "6e771f3a-75e7-45f1-b322-697687f8c6a1"

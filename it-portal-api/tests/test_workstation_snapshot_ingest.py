@@ -2,8 +2,6 @@
 from __future__ import annotations
 
 import copy
-import hashlib
-import json
 import uuid
 from datetime import datetime, timezone
 from types import SimpleNamespace
@@ -15,15 +13,12 @@ from it_portal_app.application.workstation_snapshot_service import (
 )
 from it_portal_app.config import settings
 from it_portal_app.domain.errors import ConflictError, PersistenceUnavailableError
-from it_portal_app.interface.http import (
-    routes,
-)
 from it_portal_app.interface.http.dependencies import get_workstation_snapshot_service
 from it_portal_app.interface.http.routes import workstation_snapshots_routes as snapshot_routes
 from it_portal_app.interface.http.s2s_auth import S2SHttpException
 from it_portal_app.main import app
 from tests.test_workstation_snapshots import sample
-from tests.test_workstations_http import payload
+from tests.test_workstations_http import payload, workstation_client  # fixture compartilhada
 
 CLIENT_ID = "pc-inventory-001"
 

@@ -130,6 +130,8 @@ def test_capabilities_reflect_effective_permissions(client, principal):
         "display_name": "Ana TI",
         "can_view_servers": True,
         "can_manage_servers": False,
+        "can_view_computers": False,
+        "can_manage_computers": False,
         "can_manage_host_services": False,
         "can_control_host_services": False,
         "can_create_notes": True,
