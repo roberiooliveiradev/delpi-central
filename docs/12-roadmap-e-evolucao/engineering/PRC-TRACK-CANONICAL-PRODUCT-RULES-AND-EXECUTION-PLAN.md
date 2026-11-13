@@ -137,3 +137,61 @@ Esses pontos não são convite a novas rodadas de perguntas de negócio: os cont
 - [Inventário visual e wireframes](./PRC-TRACKED-PRODUCTS-UI-COMPONENT-INVENTORY-RESPONSIVE-WIREFRAMES.md) — evidências UI e TARGET dimensional.
 - [G0/G1 inventory](./PRC-TRACK-G0-INVENTORY-G1-COORDINATION-DECISION-PACKET.md) — histórico das primeiras hipóteses de G1, superadas quando contradizem CR-02…CR-13.
 - [Migração Plugin UI](./PRC-PLUGIN-UI-COMPONENT-EXTRACTION-MIGRATION-PLAN.md) — plano técnico, mas não autoriza reabertura de bandeira no produto novo.
+
+
+## 9. Ordem de execução aprovada pelo PO — backend de produto → backend de bandeiras → frontend completo
+
+> **Direção de execução atual (prevalece sobre a decomposição antiga):** iniciar implementação com **todos os contratos de produto acompanhado**, só depois **todos os contratos de bandeiras**, e finalmente **frontend completo**, com rotas backend aceitas. Ambientes de teste: **DEV** e **homologação**, com **multiusuários em HML**. **Produção somente após testes, revisão, aprovação e deploy governado**; não confundir autorização para iniciar implementação com autorização para publicar mudança ainda não testada.
+
+### 9.1 Inventário de código efetuado antes da implementação
+
+| Contrato | Código existente observado no GitHub | Lacuna de produto acompanhado |
+|---|---|---|
+| `GET /v1/product-registration/technical-records/{record_id}` | Rota/service/repository existentes | DTO é registro PRC, não ficha consolidada CR-02/04/05/06 confirmada |
+| `GET /.../{record_id}/revisions` | Rota/service/repository existentes | Indexar baseline e deltas reais, associar no-op e provenance |
+| `GET /.../{record_id}/revisions/{revision_number}` | Rota/service/repository existentes | Cobertura e fonte de valores do snapshot precisam evoluir |
+| `GET /v1/product-registration/technical-records` | **Não identificado** no conjunto de rotas PRC lido | Listagem paginada de **produtos acompanhados**, não solicitações |
+| `GET /.../{record_id}/comparison?from=&to=` | **Não identificado** | Diff server-side Vx×Vy por campo, cobertura e fornecedor+loja |
+| `complete_request` | Existente; adapter Postgres insere revisão em toda conclusão | V1 baseline e V2+ somente com diff real; no-op auditado, transação e flags na conclusão |
+| Flags D16 por `requestId` | Rotas create/update/resolve/reopen/delete e dados request-scoped existem | Produto exige associação após conclusão, unicidade OPEN por record+target, REOPEN proibido e projeção por revisão |
+
+**Esta tabela descreve evidência de código, não runtime.** Verificar HEAD, tests e contratos do owner novamente em cada etapa.
+
+### 9.2 Fase P-BE — rotas e regras de PRODUTO (primeiro)
+
+**P-BE-00:** HEAD/status/owners e contrato de request/response/errors/AuthN/AuthZ antes de escrever; preservar módulos e consumidor PRC atual.
+
+**P-BE-01:** adicionar lista paginada autorizada `GET /v1/product-registration/technical-records` (distinta da fila de requests), com filtros `search`, ordenação determinística, page/pageSize, identidade oficial sem filial. Não incluir flags até contrato B2; `openFlagCount` opcional e não inventado. Resposta só de records acompanhados, com `recordId,officialSource,officialCode,currentRevisionNumber,updatedAt` e informações adicionais somente quando houver fonte contratada. **Novo endpoint não altera schema nem snapshots existentes.**
+
+**P-BE-02:** corrigir pipeline de conclusão e persistência para V1 inicial + consolidação de UPDATE parcial CR-02/04/05/06, provenance por campo, supplierCode+store, diferença canônica real e no-op sem revisão; preservar gate `matched`, AuthZ, ledger e consistência transacional, migrations oficiais do owner se indispensáveis e ratificadas.
+
+**P-BE-03:** estabilizar leitura de ficha/revisões, DTO de cobertura, origem e causalidade; assegurar que legado incompleto não se apresente como confirmado.
+
+**P-BE-04:** comparação `GET /v1/product-registration/technical-records/{record_id}/comparison?from=Vx&to=Vy` por backend, campos/vínculos com normalização e `incomparable` quando coverage insuficiente; auditoria read-safe. Não misturar eventos de bandeira com diff técnico.
+
+**Gate produto:** `P-BE-01..04` testados em DEV e/ou HML com matriz de autorização e efeitos negativos, idempotência e concorrência. *Nenhum frontend novo nesta fase.*
+
+### 9.3 Fase F-BE — rotas e regras de BANDEIRAS (depois de produto)
+
+**F-BE-01:** inventário D16 e compatibilidade; modelo da ocorrência única e até uma OPEN por produto+alvo; impedir reabertura no contrato novo sem quebrar consumidor legado silenciosamente. Sem papéis/aprovadores/grants novos.
+
+**F-BE-02:** leitura do estado atual, estado por revisão e histórico de flags no produto; resolver em Vn = RESOLVED na Vn e ausente na próxima, remover em Vn = ausente já nela; eventos independentes de versões.
+
+**F-BE-03:** PRC de UPDATE lê a flag OPEN existente por referência; enquanto request aberta nenhuma mudança de flag é publicada no produto. Ao completar com verificação matched, promover só flags locais OPEN elegíveis, executar intents expressas de RESOLVE de forma consistente; duplicata OPEN bloqueia conclusão integral (CR-10), e não apenas associação. Não resolver automaticamente por mudança técnica.
+
+**F-BE-04:** CR-08 legado: associar à primeira V1 somente OPEN provenientes de requests concluídos e comprovadamente vinculados; ambiguidade/colisão não migra automaticamente; compatibilidade reversível e teste de reexecução.
+
+**Gate bandeiras:** executar DEV e HML incluindo **dois ou mais usuários autorizados** em concorrência (CREATE/RESOLVE/REMOVE, complete/no-op, disputas por target), e usuários negados/fora de escopo. Exigir evidência SHA, idempotência, ausência de novo role e integridade da história.
+
+### 9.4 Fase FRONT — frontend completo só depois dos dois gates backend
+
+- **U1:** PRC existente com segmentos `Solicitações | Produtos acompanhados`, listagem paginada de produtos e filtro/URL. Uma topbar/hero.
+- **U2:** ficha consolidada, fornecedores em tabela, seletor de revisão, flags contextuais já governadas no backend; reutilização exclusiva de componentes existentes/extraídos do Plugin UI.
+- **U3:** timeline de versões acima da comparação Vx×Vy, responsável/dados de solicitação e indicadores de origem/comparabilidade; responsividade 320–1920, acessibilidade e temas.
+- **FRONT-GATE:** testes de integração e E2E HML com multiusuários, regressão PRC/My Requests, permissões, navegadores, paths e screenshots; Plugin UI remote aceito.
+
+### 9.5 Deploy produtivo
+
+**Ordem rígida:** DEV (quando disponível) → HML com acessos autorizados e multiusuários → evidências `PASS` + revisão técnica/Coordination → deploy produtivo governado do backend → smoke/monitoramento → deploy do frontend somente quando os dois backends estiverem contratados e funcionais → smoke/rollback. **Não fazer deploy automático em produção apenas porque passou teste local.** Estado atual: `IMPLEMENTATION_STARTED` apenas quando houver commit de código; `HML_TEST_NOT_RUN` até evidência, `PROD_NOT_DEPLOYED`.
+
+**Definição de pronto do backend para liberar FRONT:** endpoints necessários respondem e contratos estão verificados com dados autorizados; tests positivos, negativos e concorrentes em HML, provenance/coverage e no-op demonstrados; flags sem duplicação, sem reopen, isolamento por request e histórico temporal correto; log de SHA/rollback e validação de Plugin UI. Qualquer exceção real volta à Coordination com `EXECUTION_DRIFT`, não ao PO como nova micropergunta.
