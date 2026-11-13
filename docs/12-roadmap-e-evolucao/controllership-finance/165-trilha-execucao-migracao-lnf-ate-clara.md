@@ -86,7 +86,7 @@ Transferir o módulo **Lançamento de Notas Fiscais (LNF)** da `api-delpi` para 
 | F7.1 | CLARA — leituras | DONE | HML/PROD | `1328cd0d85` | 2026-11-13 | 8 reads; HML JSON-RPC PASS; PROD health+import |
 | F7.2 | CLARA — análise | DONE (F7-R3) | HML/PROD | `d9393bcde5` | 2026-11-13 | enum LNF; `review_aged_pending.value`=contagem ≥5d |
 | F7.3 | CLARA — ações governadas | DONE (F7-R3) | HML/PROD | `d9393bcde5` | 2026-11-13 | copy conversacional sem Portal; displayable=true |
-| F7.4 | CLARA — produção + roteiro de teste do owner | PENDING_OWNER | PROD | F7-R4 | 2026-11-13 | entrada CF∨LNF; knowledge por escopo; revisor refaz roteiro |
+| F7.4 | CLARA — produção + roteiro de teste do owner | técnico PASS; roteiro PENDING_OWNER | PROD | `bd4e26e98b` + `7f332cb39b` | 2026-11-13 | entrada CF∨LNF; knowledge por escopo; HML matriz PASS; PROD V022+corpus LNF 162; canal conversational intacto |
 | F6 | Limpeza final (encerra o rollback) | TODO | | | | |
 
 Status possíveis: TODO · IN_PROGRESS · BLOCKED (regra de parada) · DONE.
@@ -395,11 +395,15 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-13 09:30 -03 | F7-R3 | HML | pull `59a5606737` + up-hml CF API; wire check + pytest | PASS 36 | `d9393bcde5`/`59a5606737` | channel=conversational; GREP bad phrases=0; MFE CF ausente no compose HML |
 | 2026-11-13 09:32 -03 | F7-R3 | PROD | up-prod CF API + CF MFE; canal intacto; sem ACT real | PASS | `d9393bcde5`/`59a5606737` | CLARA_CONSENT_CHANNEL=conversational; health 200; instruction sem Portal/ChatGPT; aged unit 18 PASS |
 | 2026-11-13 10:15 -03 | F7-R3.403 | PROD | Investigação 403 Claude em todas as tools pós-deploy | NÃO_REGRESSÃO_CÓDIGO | `d9393bcde5` | authz.py/authz_core/middleware idênticos à imagem pré-F7-R3; ChatGPT openai-mcp payloads grandes OK; Claude ~250B≈Forbidden; sem rollback; log gate `clara_mcp_authz_denied` |
-| 2026-11-13 10:40 -03 | F7-R4 | DEV | Porta entrada CF∨LNF + domain_scope knowledge + testes unitários | PASS | (commit F7-R4) | `authorized_clara_mcp_entry`; gate access=CF; corpus LNF manifest; V022 |
+| 2026-11-13 10:40 -03 | F7-R4 | DEV | Porta entrada CF∨LNF + domain_scope knowledge + testes unitários | PASS | `bd4e26e98b` | `authorized_clara_mcp_entry`; gate access=CF; corpus LNF manifest; V022 |
+| 2026-11-13 11:20 -03 | F7-R4 | HML | Roles só-LNF (sem `clara-mcp-entry`); corpus CF reingerido; matriz MCP JSON-RPC | PASS | `bd4e26e98b` | P11/P2/P6B/P8 LNF-only; P1 só-CF; P7 CF+LNF; P0 entry 403; knowledge scopes OK |
+| 2026-11-13 11:40 -03 | F7-R4 | DEV | Fix search `domain_scope` no SELECT + get fora do escopo → 403 | PASS 11 | `7f332cb39b` | masking controllership corrigido |
+| 2026-11-13 11:45 -03 | F7-R4 | HML | Redeploy CF + reteste analyze/get cross-scope | PASS | `7f332cb39b` | tools/list=6; P11 get CF→403; P1 analyze LNF→403 |
+| 2026-11-13 11:50 -03 | F7-R4 | PROD | Deploy CF API; V022; ingest LNF; health/ready; canal intacto | PASS | `7f332cb39b` | PUBLISHED CF=2211 LNF=162; `CLARA_CONSENT_CHANNEL=conversational`; `LNF_HOSTED_ENABLED=true`; sem ACT real; 5xx novos=0 |
 
 ### Roteiro de teste do owner — F7.4 (ChatGPT / CLARA em PROD)
 
-Pré-condição: usuário com `controllership-finance.access` **e** as permissões LNF do perfil real.
+Pré-condição: usuário humano com **CF\* e/ou LNF\*** (só-LNF também entra). Perfil só-LNF deve ver apenas entradas LNF + knowledge LNF.
 
 1. "CLARA, quais ações de lançamento de notas fiscais eu tenho?" → catálogo coerente com o perfil (sem entradas de create se não tiver create).
 2. "Liste as solicitações abertas da filial 01." → mesmos totais que o app.
