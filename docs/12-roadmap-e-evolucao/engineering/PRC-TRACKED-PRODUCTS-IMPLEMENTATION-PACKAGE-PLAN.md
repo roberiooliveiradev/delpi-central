@@ -271,3 +271,12 @@ Prevalece sobre AC textuais antigos que tratem RESOLVED e REMOVED como estados d
 **AC:** campo com flag OPEN mostra flag existente na solicitação; ausência de flag não cria uma automaticamente; referência não conflita; não alterar flag produto durante andamento; conclusão sem action sobre flag mantém OPEN; se RESOLVE autorizado, publicar somente na conclusão, temporal ADR-04; duplicata OPEN bloqueia; falha/cancelamento sem side effects; leitura AuthZ e idempotência.
 
 **Status:** `PO_APPROVED_BUSINESS_INTENT / ARCHITECTURE_DECISION_REQUIRED / TEST_NOT_RUN`; código/migrations/deploy não autorizados. [PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) · [Coordination](./PRC-TRACK-G1-CONTRACT-RATIFICATION-PROPOSAL.md).
+
+
+## Complemento CR-12 — resolução explícita da flag na conclusão PRC (PO, 13/11/2026)
+
+**CR-12 APPROVED BY PO:** opção **A — Analista decide explicitamente; sem ação a bandeira permanece aberta**, sem comentário. A alteração técnica verificada **não** resolve automaticamente bandeira OPEN. Na PRC, o analista vê a ocorrência existente (CR-11) e pode registrar uma **intenção explícita de RESOLVE**, sujeita a AuthZ, motivo e validação. Até complete validado (CR-09), produto e flag permanecem inalterados. Conflito de duas OPEN reais (CR-10) bloqueia conclusão integral. RESOLVE aplicado na conclusão no-op é exibido na revisão vigente; com diff técnico é exibido na revisão recém-criada (ADR-04), sem versão adicional específica para evento de flag. RESOLVED não reabre (CR-07).
+
+**B1/B2 gate:** inventariar flags request-local, leitura de flags do produto dentro da PRC, DTO de intent `RESOLVE`, autorização, CAS e transação de conclusão, histórico e auditoria. Testar HML com/sem intent, no-op/diff, estado stale, conflitante/forbidden, cancelamento, concorrência e replay, preservando request e snapshot. **Não codificar até ratificação Coordination.**
+
+[Decisões PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) · [Proposta G1](./PRC-TRACK-G1-CONTRACT-RATIFICATION-PROPOSAL.md). `TEST_NOT_RUN`; sem código, migrations ou deploy.
