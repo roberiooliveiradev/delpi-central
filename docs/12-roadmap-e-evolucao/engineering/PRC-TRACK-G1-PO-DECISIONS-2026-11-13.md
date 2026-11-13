@@ -327,3 +327,23 @@ Encaminhar à Coordination **ADR-01 a ADR-06** com matriz de decisão e pergunta
 **AC CR11:** (01) PRC do campo X carrega F101 OPEN existente, autorizada; (02) referência a F101 não duplica flag nem bloqueia CR-10; (03) produto mantém F101 e V3 inalterados enquanto pedido aberto; (04) conclusão sem intenção de RESOLVE preserva OPEN; (05) intenção de resolução autorizada só produz efeito no corte de conclusão válida e estado por ADR-04; (06) duplicata F202 OPEN bloqueia toda conclusão por CR-10; (07) acesso sem permissão não expõe F101; (08) cancelamento/rejeição não altera estado no produto; (09) concorrência/retry são idempotentes.
 
 **Sem código, migrations, alterações de runtime ou deploy.** Esta interpretação preserva o sentido do comentário do PO sem transformar “resolver solicitação” em ordem implícita de encerrar bandeira.
+
+
+## 18. Deliberação complementar do PO — CR-12: resolução explícita pela Engenharia (13/11/2026)
+
+**Escolha expressa:** **A — Analista decide explicitamente; sem ação a bandeira permanece aberta.** **Comentário:** sem comentário. **Status:** `PO_APPROVED_BUSINESS_DECISION / COORDINATION_RATIFICATION_PENDING`.
+
+**Regra funcional:** a alteração técnica confirmada de um campo sinalizado **não implica resolução automática** de sua bandeira. Ao concluir a PRC, o analista pode manifestar **intenção explícita de RESOLVE**, com justificativa, sujeita à autorização e às validações do owner. Na ausência dessa intenção, a mesma ocorrência OPEN segue aberta no produto (e é propagada em revisões seguintes conforme ADR-04). A intenção não altera o produto durante o andamento da solicitação. Se a conclusão não for validada/autorizada, **não publicar nem a alteração técnica nem a resolução**.
+
+**Compatibilidade:**
+- **CR-09:** a solicitação só altera o produto após conclusão validada; RESOLVE é intenção request-local até esse gate. Conclusão pode gerar V1 (primeiro acompanhamento), Vn+1 por diferença real ou no-op sem nova Vn.
+- **CR-10:** duas ocorrências OPEN concorrentes para o mesmo produto/alvo continuam bloqueando **toda conclusão**; marcar RESOLVE não é atalho silencioso para contornar conflito. Revalidar unicidade e estado na transação.
+- **CR-11:** o analista vê a flag OPEN já existente no campo e usa **referência ao mesmo flagId**, sem criar uma nova ocorrência. “Resolver/concluir solicitação” continua distinto de marcar bandeira como resolvida.
+- **ADR-04:** se RESOLVE explícito é publicado ao completar enquanto V4 é a revisão vigente, a bandeira aparece **RESOLVED na V4**, não em V5+. Se a própria conclusão cria V5 por diferença técnica, a resolução aparece na **V5**; versões anteriores preservam sua projeção do contexto histórico. REMOVED continua operação distinta e não faz parte de RESOLVE.
+- **CR-07:** nenhuma reabertura de RESOLVED; reincidência futura exige novo flagId.
+
+**Regras de contrato a ratificar:** ação explícita no request (flagId, expectedFlagVersion, justificativa, ator, autorização, timestamp/eventId), validação de que ocorrência está OPEN e pertence ao produto/alvo autorizado, ordem transacional do snapshot e evento, revisionContext pós-conclusão, idempotência/CAS, comportamento quando outra ação alterou a flag antes do commit, limites de autorização para RESOLVE e política de justificativa. **A escolha do PO não define automaticamente o texto obrigatório exato de justificativa ou o critério de aprovação técnica**; o owner deve fixá-los.
+
+**AC:** `CR12-AC01` PRC modifica campo com OPEN mas sem intenção → flag segue OPEN; `CR12-AC02` RESOLVE explícito válido é registrado só na conclusão; `CR12-AC03` no-op V4 + RESOLVE → RESOLVED em V4, sem nova versão; `CR12-AC04` diff gerando V5 + RESOLVE → RESOLVED em V5, não V4; `CR12-AC05` falha/403/409/cancelamento não altera produto/flag; `CR12-AC06` colisão OPEN CR-10 bloqueia conclusão mesmo com intenção de RESOLVE; `CR12-AC07` retry não duplica evento nem revisão; `CR12-AC08` audit trail registra ação, justificativa, revisão e evidência.
+
+**Nenhum código, migration, alteração de schema ou deploy.** Contratos e transação sujeitos à Coordination.
