@@ -8,6 +8,8 @@ conclusão única, rejeição sem side-effect, permissões granulares.
 
 from __future__ import annotations
 
+import uuid
+
 import pytest
 
 from tests.conftest import rbac_payload
@@ -985,6 +987,188 @@ class TestVerifyAndComplete:
         assert resp.status_code == 200, resp.text
         assert resp.json()["data"]["officialCode"] == "001234"
         assert resp.json()["data"]["status"] == "completed"
+
+
+class TestTechnicalRecordsList:
+    """PRC-TRACK PROD-01 — listagem de produtos acompanhados."""
+
+    URL = "/v1/product-registration/technical-records"
+
+    @staticmethod
+    def _seed(repo, *, code, updated_at, rev=1, record_id=None,
+              source="totvs-prd", ptype="raw_material"):
+        rid = record_id or str(uuid.uuid4())
+        repo._records[rid] = {
+            "id": rid,
+            "product_type": ptype,
+            "official_product_code": code,
+            "current_revision_number": rev,
+            "last_official_verified_at": updated_at,
+            "official_source": source,
+            "created_at": updated_at,
+            "updated_at": updated_at,
+        }
+        repo._record_by_key[(source, code)] = rid
+        return rid
+
+    def test_empty_list(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        resp = _get(client, self.URL, _token(jwks_env, "analyst-1"))
+        assert resp.status_code == 200, resp.text
+        data = resp.json()["data"]
+        assert data["items"] == [] and data["total"] == 0
+
+    def test_lists_only_published_records(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        repo = prc_service_repo["repo"]
+        self._seed(repo, code="001", updated_at="2026-01-01T10:00:00+00:00")
+        self._seed(repo, code="002", updated_at="2026-01-02T10:00:00+00:00")
+        # registro preparatório sem revisão publicada não aparece
+        self._seed(
+            repo, code="003", rev=0,
+            updated_at="2026-01-03T10:00:00+00:00",
+        )
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        data = _get(
+            client, self.URL, _token(jwks_env, "analyst-1")
+        ).json()["data"]
+        assert data["total"] == 2
+        codes = [i["officialCode"] for i in data["items"]]
+        assert codes == ["002", "001"]  # updatedAt DESC
+        item = data["items"][0]
+        assert set(item) == {
+            "recordId", "officialSource", "officialCode", "productType",
+            "currentRevisionNumber", "lastOfficialVerifiedAt", "updatedAt",
+        }
+
+    def test_pagination_and_deterministic_tiebreak(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        repo = prc_service_repo["repo"]
+        ids = [
+            self._seed(
+                repo, code=f"10{i}",
+                updated_at="2026-01-01T10:00:00+00:00",
+            )
+            for i in range(3)
+        ]
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        p1 = _get(
+            client, f"{self.URL}?page=1&pageSize=2",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]
+        p2 = _get(
+            client, f"{self.URL}?page=2&pageSize=2",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]
+        assert p1["total"] == 3 and p1["page"] == 1 and p1["pageSize"] == 2
+        got = [i["recordId"] for i in p1["items"] + p2["items"]]
+        # updated_at empatado → desempate por id DESC
+        assert got == sorted(ids, reverse=True)
+        assert p2["page"] == 2 and len(p2["items"]) == 1
+
+    def test_search_case_insensitive(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        repo = prc_service_repo["repo"]
+        self._seed(repo, code="ABC123", updated_at="2026-01-01T00:00:00Z")
+        self._seed(repo, code="XYZ999", updated_at="2026-01-01T00:00:00Z")
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        data = _get(
+            client, f"{self.URL}?search=abc",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]
+        assert [i["officialCode"] for i in data["items"]] == ["ABC123"]
+        data = _get(
+            client, f"{self.URL}?search=  ",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]
+        assert data["total"] == 2
+
+    def test_invalid_params(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        tok = _token(jwks_env, "analyst-1")
+        assert _get(client, f"{self.URL}?page=0", tok).status_code == 422
+        assert (
+            _get(client, f"{self.URL}?pageSize=101", tok).status_code == 422
+        )
+        assert (
+            _get(client, f"{self.URL}?pageSize=0", tok).status_code == 422
+        )
+
+    def test_requester_without_engineering_access_denied(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        self._seed(
+            prc_service_repo["repo"], code="001",
+            updated_at="2026-01-01T00:00:00Z",
+        )
+        # requester de Minhas Solicitações sem engineering.access → 403
+        core_rbac["behavior"] = (
+            "data", rbac_payload(["my-requests.access"], id="req-1")
+        )
+        resp = _get(client, self.URL, _token(jwks_env, "req-1"))
+        assert resp.status_code == 403
+        assert "001" not in resp.text
+
+    def test_unauthenticated_denied(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        assert client.get(self.URL).status_code in (401, 403)
+
+    def test_repository_unavailable_fails_honest(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        import engineering_app.composition.prc_composer as comp
+        from engineering_app.infrastructure.persistence.product_registration.unavailable_repository import (  # noqa: E501
+            UnavailableProductRegistrationRepository,
+        )
+        from engineering_app.application.use_cases.product_registration.service import (  # noqa: E501
+            ProductRegistrationService,
+        )
+        comp.set_prc_service_for_tests(
+            ProductRegistrationService(
+                UnavailableProductRegistrationRepository(),
+                official_reader=None,
+                attachment_storage=None,
+            )
+        )
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        resp = _get(client, self.URL, _token(jwks_env, "analyst-1"))
+        assert resp.status_code in (503, 500)
+        assert resp.status_code != 200
+
+    def test_completed_request_appears_in_list(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid, version = TestVerifyAndComplete._ready_request(
+            TestVerifyAndComplete(), client, jwks_env, core_rbac,
+            prc_service_repo, FakeReader(_product()),
+        )
+        core_rbac["behavior"] = (
+            "data", rbac_payload(ANALYST, id="analyst-1")
+        )
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/complete",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": version, "officialCode": "001234"},
+        )
+        assert resp.status_code == 200, resp.text
+        record_id = resp.json()["data"]["recordId"]
+        data = _get(
+            client, self.URL, _token(jwks_env, "analyst-1")
+        ).json()["data"]
+        assert data["total"] == 1
+        item = data["items"][0]
+        assert item["recordId"] == record_id
+        assert item["officialCode"] == "001234"
+        assert item["currentRevisionNumber"] == 1
 
 
 class TestReferenceData:

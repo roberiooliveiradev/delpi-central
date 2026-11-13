@@ -386,6 +386,31 @@ class InMemoryProductRegistrationRepository:
         rid = self._record_by_key.get((official_source, official_code))
         return self.get_record(rid) if rid else None
 
+    def list_records(
+        self, *, search: str | None, page: int, page_size: int
+    ) -> dict[str, Any]:
+        items = [
+            r
+            for r in self._records.values()
+            if int(r.get("current_revision_number") or 0) >= 1
+        ]
+        if search:
+            needle = search.strip().lower()
+            items = [
+                r
+                for r in items
+                if needle in (r.get("official_product_code") or "").lower()
+            ]
+        items.sort(key=lambda r: (r["updated_at"], r["id"]), reverse=True)
+        total = len(items)
+        start = (page - 1) * page_size
+        return {
+            "items": copy.deepcopy(items[start : start + page_size]),
+            "page": page,
+            "pageSize": page_size,
+            "total": total,
+        }
+
     def list_revisions(self, record_id: str) -> list[dict[str, Any]]:
         return copy.deepcopy(self._revisions.get(record_id, []))
 

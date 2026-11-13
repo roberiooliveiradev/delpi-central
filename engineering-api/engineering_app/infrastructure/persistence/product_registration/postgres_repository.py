@@ -624,6 +624,34 @@ class PostgresProductRegistrationRepository:
             ).fetchone()
         return self.get_record(str(row["id"])) if row else None
 
+    def list_records(
+        self, *, search: str | None, page: int, page_size: int
+    ) -> dict[str, Any]:
+        where = "current_revision_number >= 1"
+        params: list[Any] = []
+        if search:
+            where += " AND official_product_code ILIKE %s"
+            params.append(f"%{search.strip()}%")
+        with self._conn() as conn:
+            total = conn.execute(
+                f"SELECT count(*) AS c FROM {_T_REC} WHERE {where}", params
+            ).fetchone()["c"]
+            rows = conn.execute(
+                f"SELECT * FROM {_T_REC} WHERE {where}"
+                " ORDER BY updated_at DESC, id DESC LIMIT %s OFFSET %s",
+                params + [page_size, (page - 1) * page_size],
+            ).fetchall()
+        for r in rows:
+            r["id"] = str(r["id"])
+            for k in ("created_at", "updated_at", "last_official_verified_at"):
+                r[k] = _iso(r[k])
+        return {
+            "items": rows,
+            "page": page,
+            "pageSize": page_size,
+            "total": int(total),
+        }
+
     def list_revisions(self, record_id: str) -> list[dict[str, Any]]:
         with self._conn() as conn:
             rows = conn.execute(

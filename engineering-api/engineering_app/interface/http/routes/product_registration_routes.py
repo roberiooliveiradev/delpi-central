@@ -1197,6 +1197,30 @@ async def prc_list_verifications(request_id: str = Path(...)):
 
 
 @router.get(
+    "/v1/product-registration/technical-records",
+    operation_id="prc_list_records",
+    summary="12b — Produtos acompanhados",
+)
+@require_any_permission(_READ_PERMS)
+async def prc_list_records(
+    search: str | None = Query(default=None, max_length=100),
+    page: int = Query(default=1, ge=1),
+    pageSize: int = Query(default=25, ge=1, le=100),
+):
+    op = "prc_list_records"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    try:
+        data = build_prc_service().list_records(
+            actor=_actor(user), search=search, page=page, page_size=pageSize
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(data, message="Produtos acompanhados listados.", operation_id=op)
+
+
+@router.get(
     "/v1/product-registration/technical-records/{record_id}",
     operation_id="prc_get_record",
     summary="13 — Ficha técnica vigente",

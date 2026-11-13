@@ -122,6 +122,10 @@ class ProductRegistrationRepository(Protocol):
         self, *, official_source: str, official_code: str
     ) -> dict[str, Any] | None: ...
 
+    def list_records(
+        self, *, search: str | None, page: int, page_size: int
+    ) -> dict[str, Any]: ...
+
     def list_revisions(self, record_id: str) -> list[dict[str, Any]]: ...
 
     def get_revision(

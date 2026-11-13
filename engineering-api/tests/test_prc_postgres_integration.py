@@ -472,3 +472,56 @@ class TestPostgresInformationRounds:
         listed = repo.list_information_rounds(request_id=rid)
         assert len(listed) == 1
         assert listed[0]["id"] == rnd["id"]
+
+
+class TestPostgresListRecords:
+    """PRC-TRACK PROD-01 — paridade da listagem de produtos acompanhados
+    no adapter Postgres (banco descartável via ENG_PRC_TEST_DSN)."""
+
+    def _insert(self, repo, *, code, updated_at, rev=1):
+        with repo._conn() as conn:
+            conn.execute(
+                "INSERT INTO engineering.product_registration_records"
+                " (id, product_type, official_product_code,"
+                "  current_revision_number, last_official_verified_at,"
+                "  official_source, created_at, updated_at)"
+                " VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                (
+                    str(uuid.uuid4()), "raw_material", code, rev,
+                    updated_at, "totvs-test", updated_at, updated_at,
+                ),
+            )
+
+    def test_list_records_parity(self, repo):
+        run = uuid.uuid4().hex[:6].upper()
+        c1, c2, c3 = (f"PG{run}-A1", f"PG{run}-B2", f"PG{run}-C3")
+        self._insert(
+            repo, code=c1, updated_at="2026-01-01T10:00:00+00:00",
+        )
+        self._insert(
+            repo, code=c2, updated_at="2026-01-02T10:00:00+00:00",
+        )
+        self._insert(
+            repo, code=c3, rev=0,
+            updated_at="2026-01-03T10:00:00+00:00",
+        )
+
+        data = repo.list_records(
+            search=f"PG{run}-", page=1, page_size=25
+        )
+        codes = [r["official_product_code"] for r in data["items"]]
+        assert codes == [c2, c1]
+        assert data["total"] == 2
+
+        # busca case-insensitive
+        hit = repo.list_records(
+            search=f"pg{run.lower()}-a", page=1, page_size=25
+        )
+        assert [r["official_product_code"] for r in hit["items"]] == [c1]
+
+        # paginação determinística
+        p1 = repo.list_records(search=f"PG{run}-", page=1, page_size=1)
+        p2 = repo.list_records(search=f"PG{run}-", page=2, page_size=1)
+        assert p1["items"][0]["official_product_code"] == c2
+        assert p2["items"][0]["official_product_code"] == c1
+        assert p2["total"] == 2

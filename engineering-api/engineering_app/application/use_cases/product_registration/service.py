@@ -1086,6 +1086,36 @@ class ProductRegistrationService:
             raise PrcNotFoundError("record", record_id)
         return record
 
+    def list_records(
+        self,
+        *,
+        actor: PrcActor,
+        search: str | None,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        _require_actor_read(actor)
+        if not actor.is_analyst:
+            raise PrcForbiddenError(
+                "Produtos acompanhados restritos a analistas autorizados."
+            )
+        data = self._repo.list_records(
+            search=search, page=page, page_size=page_size
+        )
+        data["items"] = [
+            {
+                "recordId": r["id"],
+                "officialSource": r["official_source"],
+                "officialCode": r["official_product_code"],
+                "productType": r["product_type"],
+                "currentRevisionNumber": r["current_revision_number"],
+                "lastOfficialVerifiedAt": r["last_official_verified_at"],
+                "updatedAt": r["updated_at"],
+            }
+            for r in data["items"]
+        ]
+        return data
+
     def list_revisions(
         self, record_id: str, *, actor: PrcActor
     ) -> dict[str, Any]:

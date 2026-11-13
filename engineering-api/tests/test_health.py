@@ -98,6 +98,7 @@ ALLOWED_BUSINESS_PATHS = {
         "/v1/product-registration/requests/{request_id}/attachments/{attachment_id}/download",
         "/v1/product-registration/requests/{request_id}/actions/verify-and-complete",
         "/v1/product-registration/requests/{request_id}/verifications",
+        "/v1/product-registration/technical-records",
         "/v1/product-registration/technical-records/{record_id}",
         "/v1/product-registration/technical-records/{record_id}/revisions",
         "/v1/product-registration/technical-records/{record_id}/revisions/{revision_number}",

@@ -35,6 +35,7 @@ class UnavailableProductRegistrationRepository:
     list_verifications = staticmethod(_unavailable)
     get_record = staticmethod(_unavailable)
     get_record_by_official_code = staticmethod(_unavailable)
+    list_records = staticmethod(_unavailable)
     list_revisions = staticmethod(_unavailable)
     get_revision = staticmethod(_unavailable)
     complete_request = staticmethod(_unavailable)

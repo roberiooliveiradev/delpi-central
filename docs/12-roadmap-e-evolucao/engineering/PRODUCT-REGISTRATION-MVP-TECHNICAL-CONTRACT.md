@@ -71,6 +71,7 @@ No domain/application imports de FastAPI, SQLAlchemy, DB, JWT SDK, LLM SDK, MCP 
 | 12 | GET | \`/requests/{requestId}/verifications\` | resource read | Tentativas de verificação, resultado e divergências, com dados redigidos |
 | 13 | GET | \`/technical-records/{recordId}\` | resource read | Ficha técnica vigente, código ERP, versão e origem da sincronização |
 | 14 | GET | \`/technical-records/{recordId}/revisions\` | resource read | Índice de versões e mudanças |
+| 14a | GET | \`/technical-records\` | resource read | Produtos acompanhados publicados (PRC-TRACK PROD-01): `page`/`pageSize`/`search` por código oficial (case-insensitive), `updatedAt DESC, id DESC`; somente registros com revisão publicada |
 | 15 | GET | \`/technical-records/{recordId}/revisions/{revisionNumber}\` | resource read | Snapshot histórico imutável + diff por campo |
 | 16 | GET | \`/reference-data\` | read/create/process | Enum de tipos, campos, allowedPaths, schema version e requisitos por operação; valores oficiais apenas se disponíveis |
 | 17 | GET | \`/outbound/requests/{requestId}\` | authorized consumer + resource scope | Contrato externo de status, tipo, resultado, verifiedAt, official code, revision link e provenance |
