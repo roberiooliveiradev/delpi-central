@@ -263,3 +263,26 @@ Encaminhar à Coordination **ADR-01 a ADR-06** com matriz de decisão e pergunta
 **Critérios de aceite:** `CR08-AC01` flag OPEN inequívoca de PRC anterior aparece OPEN em V1; `CR08-AC02` flag RESOLVED/REMOVED anterior não aparece na V1; `CR08-AC03` flag sem código/target confiável fica pendente e não aparece; `CR08-AC04` colisões OPEN no mesmo alvo impedem incorporação automática e geram exceção auditável; `CR08-AC05` associação não gera V2/alteração de snapshot; `CR08-AC06` lifecycle V1→V4 segue ADR-04; `CR08-AC07` nenhum flagId encerrado é reaberto; `CR08-AC08` backfill repetido não duplica, AuthZ/concurrency e histórico são preservados.
 
 **Sem alteração de código, migration, grants, runtime ou deploy.** A decisão do PO não equivale à ratificação da Coordination.
+
+
+## 15. Deliberação complementar do PO — CR-09: alterações só na conclusão da solicitação (13/11/2026)
+
+**Escolha expressa:** **B — Somente após conclusão da solicitação**. **Comentário literal do PO:** “a solicitação só deve alterar o produto após concluida, solicitação não é uma nova versão do produto.” **Status:** `PO_APPROVED_BUSINESS_DECISION / COORDINATION_RATIFICATION_PENDING`.
+
+**Regra funcional prevalente:** durante `OPEN/IN_PROGRESS` (ou estado equivalente a inventariar), os dados técnicos e as bandeiras permanecem **no escopo da solicitação PRC**, sem alterar a ficha consolidada, a projeção de bandeiras, o número da versão ou a lista de alterações do produto acompanhado. A conclusão **válida, autorizada e confirmada** é o único gate para integrar alterações da solicitação à projeção de produto. **Solicitação PRC não é sinônimo de versão**: a primeira conclusão válida de produto sem versões cria baseline V1 (CR-03); em versões posteriores, só diff técnico confirmado gera Vn+1 (ADR-05); conclusão no-op pode integrar bandeiras ainda OPEN sem criar nova versão.
+
+**Bandeiras:** se uma bandeira da solicitação estiver **OPEN no instante da conclusão válida**, pode ser incorporada ao produto apenas após validação de identidade oficial, alvo técnico, AuthZ e colisões OPEN. A bandeira não passa ao produto enquanto a solicitação estiver aberta. Se a bandeira foi RESOLVED/REMOVED **antes da conclusão**, não entra na projeção do produto; seus eventos permanecem auditáveis na solicitação. A resolução/remoção **depois da incorporação** segue ADR-04: RESOLVED visível na revisão vigente do evento, REMOVED ausente já naquela revisão, ambas ausentes nas posteriores. **Nenhuma ação de bandeira cria Vn.**
+
+**Compatibilidade:**
+- **CR-07:** não reabrir bandeira encerrada; novo problema exige novo ID. A conclusão não reativa uma bandeira RESOLVED.
+- **CR-08:** incorporação inicial em V1 de flags legadas OPEN com vínculo comprovado deve respeitar **também o gate de conclusão de suas solicitações de origem**. Um registro histórico OPEN de PRC ainda em andamento **não é elegível** para associação na V1 por mero backfill. A decisão CR-09 **restringe** o conjunto elegível da CR-08; o legado com estado de conclusão não verificável fica `PENDING_OWNER_REVIEW`, não entra automaticamente.
+- **ADR-04:** a visibilidade temporal da bandeira no produto só começa após conclusão/associação autorizada, na versão então vigente (ou V1 se criada na conclusão); não simular flag presente em revisões anteriores pela data de abertura na solicitação.
+- **CR-02/03/04/05/06 e ADR-05:** nenhuma alteração técnica no produto durante a solicitação; conclusão gera baseline V1, nova versão com diff, ou no-op com auditoria, conforme regras aprovadas.
+
+**Exemplo:** produto V3; solicitação UPDATE aberta cria flag F na PRC → **V3 produto sem F**. PRC concluída e validada sem mudança técnica, F continua OPEN → **produto segue V3**, F passa a aparecer OPEN em V3 (contexto de associação), sem V4. Se V4 surgir mais tarde por mudança técnica, F propaga enquanto OPEN. Se F foi encerrada antes da conclusão, F **não aparece** no produto em V3.
+
+**Conflitos técnicos a submeter à Coordination:** relação entre flag por request D16 e flag por record; prova de conclusão `matched`; momento de associação `completedAt / associatedAt / revisionContext`; concorrência entre conclusão e mutações de flag; caso de PRC cancelada/rejeitada e legado sem status comprovável; modo de consulta request-local separado da ficha de produto; rota legada `reopen`, migração idempotente e retrocompatibilidade. A documentação não presume que o runtime atual já implemente essa separação.
+
+**AC CR09:** (01) flag OPEN na solicitação em andamento não altera ficha/lista/versões do produto; (02) conclusão validada incorpora apenas OPEN elegível; (03) flag RESOLVED/REMOVED antes de concluir não incorpora; (04) conclusão no-op com OPEN associa a Vn vigente sem criar Vn+1; (05) conclusão que gera Vn+1 incorpora após transação e associa a essa Vn+1; (06) falha, rejeição, cancelamento ou AuthZ negada não publicam alterações; (07) CR-08 backfill exclui PRCs não concluídas; (08) idempotência/CAS evita duplicação e race; (09) flags associadas seguem ADR-04 e CR-07.
+
+**Sem código, migration ou deploy.** Requer ratificação da Coordination sobre contrato, migração, autoridade e testes.
