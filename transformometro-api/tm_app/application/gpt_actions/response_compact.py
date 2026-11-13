@@ -69,6 +69,8 @@ def project_search_records(payload: Mapping[str, Any]) -> dict[str, Any]:
         out["returned"] = len(slim)
     if isinstance(payload.get("pagination"), dict):
         out["pagination"] = payload["pagination"]
+    if isinstance(payload.get("filters_applied"), dict):
+        out["filters_applied"] = payload["filters_applied"]
     return out
 
 

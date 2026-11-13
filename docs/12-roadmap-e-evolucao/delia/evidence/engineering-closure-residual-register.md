@@ -1552,9 +1552,10 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | ID | Classification | Notes |
 |---|---|---|
 | INT1-OWNER-TYPED-REJECTION-FEEDBACK | **CLOSED** | `error_kind="validation"`+`recoverable:true` (VISTA `INVALID_CHANGE`/`QUERY_REQUIRED`, etc.) now `OWNER_ARGUMENT_REJECTED`+hint→ModelRetry; was `mcp_protocol_error`→`SOURCE_UNAVAILABLE`; proven live `error=owner_argument_rejected` |
+| INT1-OWNER-FORBIDDEN-CLASSIFICATION | **CLOSED** | Doc 315: owner envelope `code:"FORBIDDEN"` (`error_kind:"forbidden"`, httpStatus 403 — VISTA tool_bridge) mapped to `mcp_protocol_error`→`SOURCE_UNAVAILABLE`; now `MCP_AUTHORIZATION_DENIED` via `_OWNER_ERROR_CODE_MAP`; proven live `or-qwen14b-7c2d2bd54410` |
 | INT1-PO-P1 | **SATISFIED_PROVEN** | Doc 310 DAVI-first GROUNDED |
-| INT1-PO-P2 | **PARTIALLY_SATISFIED** | honest insufficient — filtered `process.search` empty, no unfiltered retry; model-caused argument strategy, no proven code defect; optional bounded instruction/contract iteration |
-| INT1-PO-P3 | **PARTIALLY_SATISFIED** | post-fix GROUNDED partial (real formats via `vista.knowledge`+`teo.analyze`) / honest insufficient; full formats enumeration needs VISTA contract capability — EXTERNAL_OWNER_DEPENDENCY |
+| INT1-PO-P2 | **PARTIALLY_SATISFIED** | Doc 315: owner contract fixed+delivered (`read` description declares unfiltered enumeration; `filters_applied` echoed); live eval `or-qwen14b-7c2d2bd54410` — model still applied restrictive `q` and declared empty catalog ⇒ **model-caused proven post-fix**; needs bounded instruction iteration + P2-only re-run |
+| INT1-PO-P3 | **BLOCKED_BY_OWNER_CONTRACT** | Doc 315: authoritative `displayFormatCatalog`/`block_type_vocabulary` exist only behind `get_catalog()` (TV_WRITE) → 403 FORBIDDEN for TV_READ subject (live proven); `EXT-VISTA-READ-FORMAT-CATALOG` owner dependency — expose catalog under TV_READ in VISTA owner |
 | INT1-PROJECTION-BUDGET | **OPEN** | large TÉO trees truncate honestly (Doc 312) |
 | INT1-ATTEMPT-STATUS-CONFLATION | **OPEN_MINOR** | `attempt.status=SOURCE_UNAVAILABLE` also for `owner_argument_rejected`; `error_code`+`owner_hint` carry correct semantics — observability debt only |
 | INT1-MCP-HEAVY-VIEW-TIMEOUT | **OPEN_MINOR** | one real `mcp_timeout` (15s) on heavy `teo.analyze` — reliability, not INT-1 |
@@ -1566,4 +1567,12 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-CLOSED | **NO** | — |
 | INT1-INT2-INT3-IMPL | **NOT_AUTHORIZED** | — |
 
-**NEXT=`COORDINATION_INT1_FINITE_ACCEPTANCE_DECISION`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+**TASK:** `DELIA-C3-T2-INT1-P2-PROCESS-ENUMERATION-AND-P3-VISTA-FORMATS-CONTRACT-REMEDIATION-01` · Doc **315** · Evals `or-qwen14b-4be3b315381e`(invalid-env)/`or-qwen14b-7c2d2bd54410`
+
+| ID | Classification | Notes |
+|---|---|---|
+| INT1-P2-MODEL-ENUMERATION-STRATEGY | **OPEN_MATERIAL** | model-caused: restrictive `q` on enumeration objective even with explicit contract + `filters_applied` echo; next: bounded instruction iteration + P2-only re-run |
+| EXT-VISTA-READ-FORMAT-CATALOG | **EXTERNAL_OWNER_DEPENDENCY** | VISTA owner: expose `displayFormatCatalog`/`block_type_vocabulary` under TV_READ (read action or re-gate catalog); decision belongs to tv-dashboard-api owner |
+| INT1-EVAL-TEO-ROOTPATH | **CLOSED_OPERATIONAL** | isolated eval TÉO containers require canonical `--root-path /apps/transformometro-api` (missing → MCP POST 404); env defect of eval setup, not repo code |
+
+**NEXT=`COORDINATION_INT1_P2_P3_INDEPENDENT_ACCEPTANCE_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.

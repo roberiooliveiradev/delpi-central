@@ -6612,3 +6612,16 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Doc:** `314-int1-canonical-requirements-evidence-reconciliation-and-finite-acceptance-matrix.md`.
 - **INT1_STAGE_ACCEPTANCE=PENDING_COORDINATION_REVIEW**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_FINITE_ACCEPTANCE_DECISION`.
+
+### INT-1 P2 enumeration + P3 VISTA formats bounded causal remediation — 2026-11-13
+
+- **TASK:** `DELIA-C3-T2-INT1-P2-PROCESS-ENUMERATION-AND-P3-VISTA-FORMATS-CONTRACT-REMEDIATION-01`; **BASE_HEAD** `c5b4a1c553d9d6c620099db064fd3d4fd9577f56`; instruction v2-2 fp `3692299dac74c26e` unchanged.
+- **P2 first divergence:** MODEL ARGUMENT CONSTRUCTION — `q:"transformação"` model-authored (zero DELIA mutation, schema clean, owner legit). Contract gaps fixed (owner TÉO): `read` description declares unfiltered enumeration + restrictive optional `q`; `filters_applied` echoed in `_wrap_search_rows` and preserved in `project_search_records`. 7 new tests GREEN; 18 adjacent GREEN; 5 pre-existing OAuth failures unchanged.
+- **P3 contract decision:** `BLOCKED_BY_OWNER_CONTRACT` — authoritative `displayFormatCatalog`/`block_type_vocabulary` exist but only via `get_catalog()` (TV_WRITE); live `vista.get_context catalog` → 403 FORBIDDEN for `ti_delpi` (TV_READ). Read paths partial (per-route `allowedDisplayModes`; miss≠absence). Formal owner dependency `EXT-VISTA-READ-FORMAT-CATALOG` registered; no DELIA-side catalog created.
+- **NEW DELIA DEFECT FIXED:** owner envelope `code:"FORBIDDEN"` (`error_kind:"forbidden"`, httpStatus 403 — VISTA tool_bridge) collapsed to `mcp_protocol_error`→`SOURCE_UNAVAILABLE`; `_OWNER_ERROR_CODE_MAP["FORBIDDEN"]=MCP_AUTHORIZATION_DENIED` + test GREEN (suite 33 green). EXISTING_EQUIVALENT=YES; REUSE_DECISION=EXTEND.
+- **REAL EVALS (bounded, qwen/qwen3-14b, subject ti_delpi):** `or-qwen14b-4be3b315381e` INVALID (isolated TÉO container missing `--root-path` → MCP 404; fixed, operational note recorded); `or-qwen14b-7c2d2bd54410` — P2: corrected contract delivered (B3 description + `filters_applied` echo) yet model repeated restrictive `q` → declared no processes (model-caused; live unfiltered enumeration proven `total:109`); P3: FORBIDDEN → honest permission answer.
+- **VERDICTS:** `P2_ACCEPTANCE=PARTIALLY_SATISFIED` (contract fixed+delivered; residual model strategy needs bounded instruction iteration + P2-only re-run); `P3_ACCEPTANCE=BLOCKED_BY_OWNER_CONTRACT` (not an LLM failure).
+- **AGENT_COUNT=1**; **NEW_ROUTER=NO**; **NEW_PLANNER=NO**; **PERMISSIONS_CHANGED=NO**; **PROD_UNTOUCHED=YES**; FULL_BATTERY=NOT_RUN.
+- **Doc:** `315-int1-p2-process-enumeration-and-p3-vista-formats-contract-bounded-causal-remediation.md`.
+- **INT1_STAGE_ACCEPTANCE=PENDING_COORDINATION_REVIEW**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+- **NEXT:** `COORDINATION_INT1_P2_P3_INDEPENDENT_ACCEPTANCE_REVIEW`.

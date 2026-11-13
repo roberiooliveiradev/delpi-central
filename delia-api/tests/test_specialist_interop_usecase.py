@@ -703,6 +703,29 @@ def test_typed_authorization_denied_maps_authz_not_repairable():
     assert exc.code == "mcp_authorization_denied"
 
 
+def test_vista_forbidden_envelope_maps_authz_not_protocol_noise():
+    # VISTA-family envelopes type owner authorization denial as
+    # ``code: "FORBIDDEN"`` with ``error_kind: "forbidden"`` and
+    # ``httpStatus: 403`` (tv_app/interface/mcp/tool_bridge.py). It must
+    # reach the agent as a governed authorization denial — projecting it
+    # to mcp_protocol_error misreports denial as source unavailability
+    # (proven live: or-qwen14b-7c2d2bd54410 P3 vista.get_context catalog).
+    exc = _davi_invoke(
+        RemoteToolOutcome(
+            content_text="Você não tem permissão para esta ação.",
+            structured={
+                "status": "forbidden",
+                "httpStatus": 403,
+                "error_kind": "forbidden",
+                "code": "FORBIDDEN",
+                "message": "Você não tem permissão para esta ação.",
+            },
+            is_error=True,
+        )
+    )
+    assert exc.code == "mcp_authorization_denied"
+
+
 def test_typed_authentication_required_maps_authn():
     exc = _davi_invoke(
         RemoteToolOutcome(

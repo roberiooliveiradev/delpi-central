@@ -1320,11 +1320,45 @@ class GptActionsDispatchService:
         if (date_from_v or date_to_v) and not date_field:
             raise _invalid("date_from/date_to require date_field.")
 
+        # Echo the provided search criteria so consumers (and the agent
+        # loop) can distinguish "filtered result with zero matches" from
+        # "empty catalog" — an empty ``filters_applied`` means a true
+        # unfiltered enumeration; a populated one proves the result is
+        # scoped by the caller's own criteria.
+        filters_applied = {
+            key: value
+            for key, value in {
+                "parent_id": parent_id,
+                "instance_id": instance_id,
+                "filial_id": filial_id,
+                "setor_id": setor_id,
+                "status": status,
+                "familia_processo": familia_processo,
+                "q": q,
+                "unit_code": unit_code,
+                "fase_melhoria": fase_melhoria,
+                "status_instancia": status_instancia,
+                "cenario_tipo": cenario_tipo,
+                "revisao_ativa": revisao_ativa,
+                "has_improvement": has_improvement,
+                "date_field": date_field,
+                "date_from": date_from,
+                "date_to": date_to,
+                "page": page,
+                "page_size": page_size,
+            }.items()
+            if value is not None and str(value).strip() != ""
+        }
+
         def _wrap_search_rows(rows: list[Any]) -> dict[str, Any]:
             """Unpaginated calls keep the legacy shape; page/page_size add a
             typed pagination block (page_size capped at the response budget)."""
             if page_n is None and page_size_n is None:
-                return {"total": len(rows), "items": rows_to_json(rows)}
+                return {
+                    "total": len(rows),
+                    "items": rows_to_json(rows),
+                    "filters_applied": filters_applied,
+                }
             p = page_n or 1
             size = page_size_n or self._SEARCH_PAGE_SIZE_MAX
             start = (p - 1) * size
@@ -1337,6 +1371,7 @@ class GptActionsDispatchService:
                     "page_size": size,
                     "has_more": start + size < len(rows),
                 },
+                "filters_applied": filters_applied,
             }
 
         if entity == GptEntity.BRANCH:

@@ -93,6 +93,11 @@ _OWNER_ERROR_CODE_MAP = {
     "AUTHENTICATION_REQUIRED": MCP_AUTHENTICATION_FAILED,
     "AUTHORIZATION_DENIED": MCP_AUTHORIZATION_DENIED,
     "CAPABILITY_NOT_ALLOWED": CAPABILITY_NOT_ALLOWED_IN_PHASE,
+    # VISTA-family envelopes type owner-side authorization denial as
+    # ``code: "FORBIDDEN"`` (error_kind "forbidden", httpStatus 403).
+    # It is a governed denial, never transport noise — projecting it to
+    # MCP_PROTOCOL_ERROR would misreport denial as source unavailability.
+    "FORBIDDEN": MCP_AUTHORIZATION_DENIED,
 }
 
 
