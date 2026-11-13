@@ -187,3 +187,7 @@ Verificar: uma top bar/hero; dimensões/tokens Plugin UI; busca/filters; grid t�
 - **B2-FLAG-05:** uma identidade lógica por produto+alvo, projeção temporal sem clones, histórico disponível com AuthZ.
 
 Prevalece sobre AC textuais antigos que tratem RESOLVED e REMOVED como estados de exibição equivalentes. `ARCHITECTURE_DECISION_REQUIRED` para contrato físico da projeção, sem alterar a intenção do PO.
+
+## Complemento CR-02 — decisão do PO em 13/11/2026
+
+**CR-02 APPROVED BY PO:** opção **A — Ficha consolidada por versão** (sem comentário). Cada Vn representa o estado consolidado dos campos PRC acompanhados pela Engineering API; delta e eventos de solicitação são separados. O backend compara Vx×Vy como estados consolidados, incluindo vínculos por supplierCode+store. UPDATE parcial combina dados confirmados com base válida, preservando cobertura/proveniência e sem inventar desconhecidos. Essa escolha **não ratifica** contratos, AuthZ, migration, source-of-truth adicional, nem autoriza implementação. Remanescentes: definição de valores registrados vs verificados, semântica de null/omissão/remoção, campos parciais, legado e primeira V1 sem baseline. [Decisão registrada](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) · [Proposta à Coordination](./PRC-TRACK-G1-CONTRACT-RATIFICATION-PROPOSAL.md).
