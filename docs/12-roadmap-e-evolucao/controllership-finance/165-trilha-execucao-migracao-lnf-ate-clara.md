@@ -393,6 +393,7 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-13 09:30 -03 | F7-R3 | DEV | ITEM5 copy conversacional + `review_aged_pending` contagem; testes unitários | PASS 36 | `d9393bcde5` | sem Portal/ChatGPT no wire conversational; Portal V014 runtime preservado (portal/dual + ClaraConsentPage + step_up) |
 | 2026-11-13 09:30 -03 | F7-R3 | HML | pull `59a5606737` + up-hml CF API; wire check + pytest | PASS 36 | `d9393bcde5`/`59a5606737` | channel=conversational; GREP bad phrases=0; MFE CF ausente no compose HML |
 | 2026-11-13 09:32 -03 | F7-R3 | PROD | up-prod CF API + CF MFE; canal intacto; sem ACT real | PASS | `d9393bcde5`/`59a5606737` | CLARA_CONSENT_CHANNEL=conversational; health 200; instruction sem Portal/ChatGPT; aged unit 18 PASS |
+| 2026-11-13 10:15 -03 | F7-R3.403 | PROD | Investigação 403 Claude em todas as tools pós-deploy | NÃO_REGRESSÃO_CÓDIGO | `d9393bcde5` | authz.py/authz_core/middleware idênticos à imagem pré-F7-R3; ChatGPT openai-mcp payloads grandes OK; Claude ~250B≈Forbidden; sem rollback; log gate `clara_mcp_authz_denied` |
 
 ### Roteiro de teste do owner — F7.4 (ChatGPT / CLARA em PROD)
 
