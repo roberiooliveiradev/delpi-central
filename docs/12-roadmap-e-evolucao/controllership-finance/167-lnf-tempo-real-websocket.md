@@ -449,7 +449,7 @@ location = /apps/controllership-finance-api/lancamento-notas-fiscais/realtime {
 
 ## Achado transversal — token na query do access log
 
-Não corrigir nesta frente. As locations de WebSocket de requests e engineering não usam `tv_access_sanitized`, então o access log grava a query, inclusive o `token`. Vale para DEV, HML e PROD. O owner decide em frente separada.
+Tratado em SEC-01 A (`221ad3b641`). O access log das locations que carregam `token` ou `access_token` na query passa a usar `tv_access_sanitized` em DEV, HML e PROD. O mapa de redação não mudou. A location `/realtime` do LNF não foi adicionada ao gateway de PROD.
 
 | Ambiente | Arquivo | requests | engineering |
 |---|---|---|---|
@@ -513,7 +513,7 @@ Varredura de apagamento do schema `lancamento_notas_fiscais` (sem alterar os arq
 
 | Ocorrência | Quem executa | Ambiente | Trava |
 |---|---|---|---|
-| `api-delpi/scripts/run_plugins_migrations.py:205-224` `DROP SCHEMA CASCADE` e `pg_terminate_backend` de todas as outras sessões do banco | operador, `reset --plugin lancamento-notas-fiscais` | o `PLUGINS_DB_*` do processo | exige `--plugin` e `--confirm-drop-schema` (`:385-395`). Não há trava de host. RISCO |
+| `api-delpi/scripts/run_plugins_migrations.py` `DROP SCHEMA CASCADE` | operador, `reset --plugin lancamento-notas-fiscais` | o `PLUGINS_DB_*` do processo | mitigado em SEC-01 B (`ef2ea358f2`); PROD pendente de decisão |
 | `postgres_invoice_posting_repository.py:324-328` `DELETE` de uma solicitação | compensação de anexo que falhou (`received_invoice_attachment_service.py:370-388`) | o banco da API | uma linha, não o schema |
 | `migrations/lancamento_notas_fiscais/V014__canonical_series_match_key.sql:12` `DELETE` de vínculo duplicado | migration já aplicada | o banco em que o `up` rodou | checksum imutável; não roda de novo sem reset |
 | testes, fixtures, CI e Makefile | — | — | nenhum `TRUNCATE`/`DROP` do schema LNF |
