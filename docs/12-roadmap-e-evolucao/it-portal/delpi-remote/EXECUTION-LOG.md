@@ -83,6 +83,20 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** validar G1-API + G1-UI com dependencias reais e banco descartavel, corrigir falhas, homologar e preparar deploy conjunto. Em seguida G2-AGENT (inventario read-only), nao acesso remoto.
 
+## 2026-11-13 | G1-RELEASE | publicacao autorizada, execucao pendente
+
+**Autorizacao:** responsavel de TI confirmou a publicacao do inventario para testar no Portal de TI.
+
+**Verificado:** script canonico `infra/scripts/up-prod-sequential.sh`, `AGENTS.md`, Compose com `it-portal-api` e `it-portal`, `V009` e manifesto `0.3.4`. O Core exige registro estrutural de nova versao para rota/permissao.
+
+**Validacao local (copia isolada atualizada):** `19 passed` para testes de dominio G1; smoke `test_local_service.py` passou. Suite HTTP, UI e banco real **nao executados**, CI do main nao cobre esse incremento via workflow `pull_request` apenas.
+
+**Acao:** runbook `G1-RELEASE.md` criado com preflight, backup, ordem de deploy, registro no Core, teste de permissao e plano de rollback. **Nao** ha sessao SSH remota neste chat para executar comandos no srv-api.
+
+**Estado real:** NAO implantado, nao testado em producao. Nada alterado em servidores, banco nem no Core por esta etapa.
+
+**Proximo passo:** operador com acesso SSH realiza deploy segundo runbook, confere saude, migration e registro 0.3.4; retorna evidencias para atualizar este diario e somente entao marcar G1-DOM/ API/UI IMPLANTADOS ou EM CORRECAO.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

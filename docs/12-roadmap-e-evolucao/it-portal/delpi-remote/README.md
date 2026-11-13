@@ -37,6 +37,8 @@ Acesso sem pedir senha Windows por sessao **nao** significa acesso anonimo: toda
 
 Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VALIDADO, IMPLANTADO, BLOQUEADO. Nunca marcar `IMPLANTADO` sem evidencias do runtime; `VALIDADO` nao e sinonimo de CI verde.
 
+**Publicacao G1:** autorizada pelo PO para teste em 13/11/2026, mas ainda NAO executada por falta de sessao SSH autenticada no srv-api. Seguir [runbook de release](G1-RELEASE.md) com backup, deploy API+MFE e registro estrutural do manifesto 0.3.4; NAO marcar IMPLANTADO antes de evidencias.
+
 **Proximo passo executavel:** validar G1-API (suite HTTP, PostgreSQL descartavel V001..V009), validar G1-UI (lint, Vitest, TypeScript/build) e revisar ambos antes de deploy conjunto. O manifesto estrutural vigente em codigo passa a **0.3.4**; registrar nova versao no Core e conceder computers.view/manage apenas a perfis autorizados. G2-AGENT so com gates atendidos; acesso remoto continua bloqueado por G0-SEC. G0-SEC deve ser concluido **antes** de qualquer teste de controle de tela, instalacao do motor remoto ou acesso nao assistido.
 
 ## Regras permanentes de engenharia
