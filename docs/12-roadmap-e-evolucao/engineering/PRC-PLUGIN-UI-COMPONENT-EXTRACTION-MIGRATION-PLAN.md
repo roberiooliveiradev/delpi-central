@@ -1,5 +1,8 @@
 # PRC-UI-EXTRACT-01 — Migração de componentes visuais para Plugin UI (pré-requisito frontend)
 
+> **FONTE CANÔNICA ATUAL — 2026-11-13:** [Regras de produto, inconsistências e plano central PRC-TRACK](./PRC-TRACK-CANONICAL-PRODUCT-RULES-AND-EXECUTION-PLAN.md). Este documento é referência histórica/setorial: em caso de divergência sobre no-op, V1, snapshot PRC, REOPEN, RESOLVED/REMOVED, flags durante solicitação, conclusão, permissões ou critérios de aceite, **o plano central prevalece**. Trechos legados contraditórios estão **SUPERSEDED**, não são perguntas abertas nem instruções para implementar. Regras UX não conflitantes continuam válidas. `G1_ARCHITECTURE_DECISION_REQUIRED / TEST_NOT_RUN`.
+
+
 > **Estado:** `PLANNED / EXECUTION_NOT_RUN` · **Data:** 2026-11-12 · **Owner de apresentação compartilhada:** `plugins/plugin-ui` · **Consumers:** `plugins/engineering` e, onde pertinente, `plugins/my-requests`.  
 > **Gate:** nenhuma implementação de frontend de Produtos acompanhados/Versões/Comparação antes de `PRC-UI-EXTRACT-01` alcançar `PASS` com evidência no SHA.  
 > [Inventário e wireframes](./PRC-TRACKED-PRODUCTS-UI-COMPONENT-INVENTORY-RESPONSIVE-WIREFRAMES.md) · [Especificação visual](./PRC-PRODUCT-TRACKING-FRONTEND-VISUAL-SPEC.md) · [Regras de negócio](./PRC-PRODUCT-TRACKING-VERSIONS-TRANSVERSAL-FLAGS-DECISIONS.md).
