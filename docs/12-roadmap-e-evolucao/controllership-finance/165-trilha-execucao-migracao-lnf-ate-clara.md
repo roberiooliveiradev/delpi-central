@@ -413,7 +413,7 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-13 ~16:30 -03 | F7.4 | docs | Cursor não executa; teste via conector | IN_PROGRESS | — | aguarda PASS do conector |
 | 2026-11-13 ~16:30 -03 | 167 | PROD/docs | Fechamento frente tempo real | DONE | (fechamento 167) | 0×5xx/traceback; WS ativo; 401→1006 documentado |
 | 2026-11-13 ~16:45 -03 | F6 | main | Remoção LNF api-delpi + default MFE BFF + apply runner | código | ver SHAs F6 | SHA local BFF; migrations api-delpi removidas |
-| 2026-11-13 ~17:00 -03 | F6 | HML | Ensaio: api sem módulo; rotas antigas 404; E1+realtime; contagens | (registro) | HML | PROD não publicado |
+| 2026-11-13 ~19:45 -03 | F6 | HML | Ensaio PASS: api OpenAPI LNF=0; rota antiga auth→404; BFF list 200; apply_noop; contagens 39=39; authz 266 passed/48 skipped (P1/P9 sem credencial); realtime pong | a5d2aef169 | digests HML api `e9ebe5f8…` BFF `8cf57ab1…` MFE `423960a6…`; PROD não publicado |
 
 ### F7.4 — teste automatizado via conector (fora do Cursor)
 
