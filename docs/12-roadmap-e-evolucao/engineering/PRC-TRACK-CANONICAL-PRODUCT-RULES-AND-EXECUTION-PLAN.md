@@ -199,3 +199,16 @@ Esses pontos não são convite a novas rodadas de perguntas de negócio: os cont
 ## 10. Responsabilidade de execução definida pelo PO — Devin
 
 **Devin é o executor exclusivo de todas as implementações** de código, migrations, testes de execução e pull requests. **ChatGPT/EVA é coordenador técnico e autor/revisor dos prompts de implementação**, faz supervisão de evidências, riscos e cumprimento de contratos, sem editar diretamente código da aplicação. Owners Engenharia/Core/Coordination mantêm as autoridades previstas; escolher Devin como executor **não altera ownership de domínio**. Sequência vinculante: **produto backend → bandeiras backend → DEV/HML multiusuário → frontend completo → validação HML → deploy produtivo aprovado**. [Plano de coordenação e primeiro prompt para Devin](./PRC-TRACK-DEVIN-IMPLEMENTATION-COORDINATION-AND-PROMPTS.md). A fase DEVIN-PROD-00 é inventário/contrato; não equivale a código implementado nem autoriza schema/prod.
+
+
+## 11. Decisão PO sobre T01/T02 — ratificação condicional de direção técnica (13/11/2026)
+
+O PO **aceitou as recomendações T01/T02** e autorizou seu registro no GitHub. Referência: [pacote técnico detalhado e decisão](./PRC-TRACK-T01-T02-COORDINATION-TECHNICAL-RATIFICATION-PACKET.md), §7.
+
+- **T01 — APPROVED_BY_PO_WITH_CONDITIONS:** usar catálogo PRC existente, snapshot consolidado com schema/coverage/provenance, UPDATE parcial preservando origem e omitidos, supplierCode+store e read de histórico legado sem inferência. Reutilizar adapters existentes e impedir falsa certificação TOTVS.
+- **T02 — APPROVED_BY_PO_WITH_CONDITIONS:** primeira conclusão válida gera V1; no-op posterior auditado sem nova revisão; V2+ só diff técnico real, fechamento transacional com CAS, locking, idempotência e compatibilidade.
+- **Validação técnica ainda necessária:** domain owner da Engineering API confirmar contratos concretos, consumers e rollback. **Não equiparar aprovação de direção pelo PO a autorização final de alteração arquitetural/produção.**
+- **Implementação:** até essa ratificação do owner, `DEVIN-PROD-02 = PENDING_OWNER_GATE / TEST_NOT_RUN`. Depois, executar menor diff no backend, PR, testes no SHA, HML governada e aceite independente Cursor.
+- **PRD:** pós-deploy apenas health, observabilidade e consultas explicitamente read-only; nunca escrita de dados de negócio para teste.
+
+Este §11 atualiza o status histórico `ARCHITECTURE_DECISION_REQUIRED` de T01/T02: a **direção PO está aprovada**, porém o **gate de contrato por autoridade técnica competente continua aberto**. Outras pendências T03–T08 não são implicitamente ratificadas.
