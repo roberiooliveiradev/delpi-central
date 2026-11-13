@@ -647,7 +647,7 @@ function TicketListPage() {
                   label="Buscar"
                   type="search"
                   value={searchDraft}
-                  placeholder="Buscar por número, título ou conteúdo…"
+                  placeholder="Buscar por número, título, conteúdo, categoria, requerente ou técnico…"
                   onChange={(value) => setSearchDraft(value)}
                 />
               </HintAction>

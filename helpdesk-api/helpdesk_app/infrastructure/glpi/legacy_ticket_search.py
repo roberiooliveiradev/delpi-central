@@ -9,9 +9,11 @@ descobrir ids; a hidratação e o ACL continuam no Bearer OAuth via HLAPI
 Não é caminho geral da listagem: sem ator/sort-ator → HLAPI puro.
 
 Busca textual (`q`): como os links são flat AND/OR sem parênteses, o grupo
-OR do HLAPI `(id==N, name~t, content~t)` vira uma sub-busca por campo
+OR do HLAPI vira uma sub-busca por campo
 (`build_legacy_ticket_search_paths_from_parts`) e os resultados são unidos
-e re-fatiados por `merge_legacy_ticket_search`.
+e re-fatiados por `merge_legacy_ticket_search`. Campos cobertos: id, título,
+conteúdo, categoria, requerente e técnico — mesma barra livre da UI,
+sem filtro especializado.
 """
 
 from __future__ import annotations
@@ -59,6 +61,14 @@ class LegacyTicketSearchResult:
 
 
 def ticket_list_needs_legacy_actor_search(query: TicketListQuery) -> bool:
+    """True when classic Search must discover ids (actors, actor-sort, or free-text).
+
+    Free-text ``q`` goes through legacy because HLAPI RSQL cannot match
+    requester/technician names (team is not a filterable column) and we
+    want one bar to also hit category/title/content/id.
+    """
+    if str(query.q or "").strip():
+        return True
     if query.assignee_id is not None:
         return True
     if query.requester_id is not None or query.requester_mine:
@@ -363,11 +373,19 @@ def _legacy_sort(sort: str) -> tuple[int, str]:
 
 
 def _term_criteria(term: str) -> tuple[tuple[int, str, str | int], ...]:
+    """One Search variant per free-text surface (OR via fan-out + merge).
+
+    Order mirrors the UI promise: number → title → content → category →
+    requester → technician.
+    """
     if not term:
         return ()
     variants: list[tuple[int, str, str | int]] = [
         (_FIELD_NAME, "contains", term),
         (_FIELD_CONTENT, "contains", term),
+        (_FIELD_CATEGORY, "contains", term),
+        (_FIELD_REQUESTER, "contains", term),
+        (_FIELD_ASSIGN, "contains", term),
     ]
     if term.isdigit():
         variants.insert(0, (_FIELD_ID, "equals", int(term)))

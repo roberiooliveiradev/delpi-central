@@ -319,9 +319,14 @@ def build_ticket_list_query(
     clauses: list[str] = ["is_deleted==false"]
     term = _search_term(q)
     if term:
-        # Numeric terms also match the ticket id (users search by number as
-        # often as by title); non-numeric terms never hit the id clause.
-        group = f"name=like=*{term}*,content=like=*{term}*"
+        # HLAPI fallback when classic Search is not used: title/content/id
+        # and category name. Requester/technician names are not RSQL-filterable
+        # on ``team`` — those surfaces require the legacy Search fan-out
+        # (see ``ticket_list_needs_legacy_actor_search``).
+        group = (
+            f"name=like=*{term}*,content=like=*{term}*,"
+            f"category.name=like=*{term}*"
+        )
         if term.isdigit():
             group = f"id=={int(term)}," + group
         clauses.append(f"({group})")

@@ -750,7 +750,10 @@ def test_list_query_uses_rsql_and_rejects_injection():
     )
     assert query.filter.startswith("is_deleted==false")
     assert "status==1" not in query.filter
-    assert "(name=like=*Monitorstatus1*,content=like=*Monitorstatus1*)" in query.filter
+    assert (
+        "(name=like=*Monitorstatus1*,content=like=*Monitorstatus1*,"
+        "category.name=like=*Monitorstatus1*)"
+    ) in query.filter
     assert "status.id=in=(1,10,2,3,4)" in query.filter
     assert build_ticket_list_query(status="pending").filter.endswith("status.id==4")
     assert build_ticket_list_query(status="approval").filter.endswith("status.id==10")
@@ -3219,12 +3222,18 @@ def test_revoke_requires_explicit_provisioner():
 
 def test_list_query_numeric_term_adds_ticket_id_clause():
     query = build_ticket_list_query(q="1465")
-    assert "(id==1465,name=like=*1465*,content=like=*1465*)" in query.filter
+    assert (
+        "(id==1465,name=like=*1465*,content=like=*1465*,"
+        "category.name=like=*1465*)"
+    ) in query.filter
 
 
-def test_list_query_text_term_keeps_name_content_group_without_id():
+def test_list_query_text_term_keeps_name_content_category_group_without_id():
     query = build_ticket_list_query(q="Portal Comercial")
-    assert "(name=like=*Portal Comercial*,content=like=*Portal Comercial*)" in query.filter
+    assert (
+        "(name=like=*Portal Comercial*,content=like=*Portal Comercial*,"
+        "category.name=like=*Portal Comercial*)"
+    ) in query.filter
     assert "id==" not in query.filter
 
 
@@ -3288,8 +3297,9 @@ def test_list_tickets_legacy_search_finds_numeric_id_title_and_content():
         legacy_user_token="user-token",
         transport=httpx.MockTransport(handler),
     )
-    listed = client.list_tickets("token", build_ticket_list_query(q="1465", assignee_id=22))
-    assert len(search_calls) == 3
+    listed = client.list_tickets("token", build_ticket_list_query(q="1465"))
+    # id + name + content + category + requester + technician
+    assert len(search_calls) == 6
     # Union dedupes the id hit, orders by date_mod desc, hydrates via actor Bearer.
     assert [row.id for row in listed.items] == [900, 1465]
     assert hydrate_filters == ["is_deleted==false;id=in=(900,1465)"]

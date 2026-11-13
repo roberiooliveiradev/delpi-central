@@ -120,7 +120,8 @@ export const helpTooltips = {
     sortBuilderToggle: "Abre a ordenação em um painel junto ao botão.",
     columns: "Mostra ou esconde colunas da tabela. Preferência neste navegador.",
     refreshList: "Atualiza a grade sem limpar filtros.",
-    search: "Busca no número, título ou conteúdo do chamado.",
+    search:
+      "Busca livre: número, título, conteúdo, categoria, requerente ou técnico. Digite o nome — sem filtro à parte.",
     statusChips: "Atalhos de recorte: Meus chamados e status. Sem contadores — o helpdesk não expõe totais por estado.",
     myTickets: "Alterna entre só os seus (você é o requerente) e todos os visíveis. Combina com o filtro de status. Só aparece se você já tiver chamado como requerente.",
     advancedFilters: "Refine os chamados com critérios adicionais alinhados às colunas da lista.",

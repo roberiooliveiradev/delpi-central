@@ -37,6 +37,10 @@ def test_needs_legacy_when_assignee_or_assigned_sort():
     assert ticket_list_needs_legacy_actor_search(
         build_ticket_list_query(sort="updated_at:desc,title:asc")
     ) is False
+    # Free-text q must use classic Search so requester/tech/category names hit.
+    assert ticket_list_needs_legacy_actor_search(
+        build_ticket_list_query(q="Robério")
+    ) is True
 
 
 def test_build_legacy_search_path_includes_assign_field():
@@ -112,29 +116,33 @@ def test_build_legacy_search_sort_requester():
     assert "forcedisplay[1]=4" in encoded
 
 
-def test_numeric_term_fanout_covers_id_name_and_content():
-    """q=1465 must match the ticket id as well as title/content hits."""
+def test_numeric_term_fanout_covers_id_name_content_category_actors():
+    """q=1465 must match id + title/content/category/requester/technician."""
     paths = build_legacy_ticket_search_paths_from_parts(q="1465", assignee_id=22)
-    assert len(paths) == 3
+    assert len(paths) == 6
     fields = []
     for path in paths:
         encoded = _encoded(path)
-        assert "criteria[0][field]=5" not in encoded  # term criterion comes first
-        assert "field]=5" in encoded  # assignee ANDed in every sub-search
+        # Term is always criteria[0]; assignee equals is ANDed afterwards.
+        assert "22" in encoded
         assert "forcedisplay[0]=2" in encoded
         fields.append(encoded.split("criteria[0][field]=")[1].split("&")[0])
-    assert fields == ["2", "1", "21"]  # id equals, name contains, content contains
+    # id, name, content, category, requester, technician
+    assert fields == ["2", "1", "21", "7", "4", "5"]
     assert "criteria[0][searchtype]=equals" in _encoded(paths[0])
 
 
-def test_text_term_fanout_covers_name_and_content_not_id():
+def test_text_term_fanout_covers_name_content_category_actors_not_id():
     paths = build_legacy_ticket_search_paths_from_parts(q="Portal Comercial")
-    assert len(paths) == 2
+    assert len(paths) == 5
     fields = [
         _encoded(path).split("criteria[0][field]=")[1].split("&")[0]
         for path in paths
     ]
-    assert fields == ["1", "21"]
+    assert fields == ["1", "21", "7", "4", "5"]
+    # Requester/technician use contains (name match), not equals (id).
+    assert "criteria[0][searchtype]=contains" in _encoded(paths[3])
+    assert "criteria[0][searchtype]=contains" in _encoded(paths[4])
 
 
 def test_no_term_single_search():
@@ -233,16 +241,20 @@ def test_build_ticket_list_query_keeps_assigned_client_sort():
 
 
 def test_numeric_query_parity_with_hlapi_group():
-    """HLAPI and legacy must express the same search surface for q=1465."""
+    """HLAPI and legacy must express the shared search surface for q=1465."""
     query = build_ticket_list_query(q="1465")
     assert "id==1465" in query.filter
     assert "name=like=*1465*" in query.filter
     assert "content=like=*1465*" in query.filter
+    assert "category.name=like=*1465*" in query.filter
     paths = build_legacy_ticket_search_paths_from_parts(q="1465")
     encoded = [_encoded(path) for path in paths]
     assert any("field]=2" in p and "equals" in p for p in encoded)
     assert any("field]=1" in p for p in encoded)
     assert any("field]=21" in p for p in encoded)
+    assert any("field]=7" in p for p in encoded)
+    assert any("field]=4" in p for p in encoded)
+    assert any("field]=5" in p for p in encoded)
 
 
 def test_legacy_rejects_invalid_sort():
