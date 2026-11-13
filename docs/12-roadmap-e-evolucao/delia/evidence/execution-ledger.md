@@ -6699,3 +6699,11 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **OUTCOME REAL — eval `or-qwen14b-49cc26d53beb` (isolated, prod untouched, perfil qwen3-14b homologado):** eligible 12 caps MCP +3 internas. **P1** `davi.get_context`+`read`→estrutura real 90260921 GROUNDED/complete · **P2** `teo.read`→PROC-0001 GROUNDED/complete (limitação honesta) · **P3** `vista.read`→catálogo de formatos real GROUNDED/complete (truncation declarada). PARTIAL_AUTHZ partial honesto; R3 clarification honesta (NON_GROUNDED); IG3/IG4/R2/G1/M1/P2f GROUNDED.
 - **VEREDITO:** `PRODUCTION_TECHNICAL_HEALTH=PASS` · `PRODUCTION_INTEGRATION_HEALTH=PASS` · `PRODUCTION_BUSINESS_OUTCOME=PASS` · `PRODUCTION_VALIDATION=PASS` (reportada; aceite independente pendente). Divergência ops: prod delia `DELIA_RUNTIME_PROFILE=openrouter_kimi` vs homologado `openrouter_qwen` — decisão externa.
 - **NEXT:** `COORDINATION_INT1_PRODUCTION_OUTCOME_INDEPENDENT_ACCEPTANCE_REVIEW`.
+
+### INT-1 model-agnostic reconciliation + final submission — 2026-11-13
+
+- **TASK:** `DELIA-C3-T2-INT1-MODEL-AGNOSTIC-PRODUCTION-OUTCOME-AND-FINAL-ACCEPTANCE-01`; BASE_HEAD `19ef59cf90` (ff de `c6bc49290b`).
+- **RUNTIME ATIVO (inspeção efetiva):** `openrouter_kimi`/`moonshotai/kimi-k3` (fp `fd70f7df67a06954`), pydantic_ai 2.50.0, registry=core, davi/teo/vista enabled + host headers corretos, exchange `delia-api`. Invariantes `PYDANTIC_AI/MCP_TOOLSET/CORE_AUTHZ/EVIDENCE_POLICY=YES`. Perfil não modificado.
+- **P2 CLASSIFICADO — CASO B (cobertura parcial honesta):** `process.search q:"transformação"` (model-authored, termo da formulação do usuário) → owner `total:1` PROC-0001 → declared `complete` com `declared_status_overridden`+`coverage_unknown`+`declared_limitation` visíveis → `P2_COVERAGE=PARTIAL`, `P2_OBJECTIVE_SATISFACTION=PARTIAL`, `OUTCOME_HONEST=YES`. Sem promoção indevida de completude — marcadores do Outcome layer ativos no deploy.
+- **RESIDUAIS:** ZERO_OPEN_MATERIAL. Attempt-status conflation=OPEN_MINOR (honestidade preservada pelos marcadores); heavy-view timeout=OPEN_MINOR; DAVI non-exec caps=OPEN (owner); eval flakes=OPEN_OP; runtime profile + SEC-01=OPEN_EXTERNAL.
+- **DECISÃO:** `INT1_FINAL_ACCEPTANCE=SUBMITTED_FOR_INDEPENDENT_REVIEW`; `INT1_CLOSED=NO`; `NEXT=COORDINATION_INT1_FINAL_INDEPENDENT_ACCEPTANCE_DECISION`. Doc 322.

@@ -1669,3 +1669,15 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-EVAL-ENV-FLAKES | OPEN_OPERATIONAL | ambiente de eval |
 
 `PRODUCTION_VALIDATION=PASS` reportada com evidência; `INT1_CLOSED=NO` — NEXT=`COORDINATION_INT1_PRODUCTION_OUTCOME_INDEPENDENT_ACCEPTANCE_REVIEW`.
+
+### INT-1 model-agnostic reconciliation — 2026-11-13 (Doc 322)
+
+| Residual | Status | Evidence |
+|---|---|---|
+| INT1-ATTEMPT-STATUS-CONFLATION | OPEN_MINOR — **NOT MATERIAL** | P2 real: `declared_status_overridden`+`coverage_unknown`+`declared_limitation` apresentados; completude não promovida indevidamente (CASO B) |
+| INT1-MCP-HEAVY-VIEW-TIMEOUT | OPEN_MINOR — NOT MATERIAL | não-bloqueante |
+| INT1-DAVI-NONEXECUTABLE-CAPS | OPEN — NOT MATERIAL | owner DAVI, fora da superfície read |
+| INT1-EVAL-ENV-FLAKES | OPEN_OPERATIONAL — NOT MATERIAL | ambiente de eval |
+| INT1-PROD-RUNTIME-PROFILE | OPEN_EXTERNAL — NOT MATERIAL | model-agnostic por decisão PO; contratos verificados preservados |
+| INT1-SEC01-API-DELPI | OPEN_EXTERNAL | task independente |
+| INT1-FINAL-DECISION | **SUBMITTED** | pacote Docs 317–322 + traces prod/dev → `COORDINATION_INT1_FINAL_INDEPENDENT_ACCEPTANCE_DECISION`; `INT1_CLOSED=NO` |
