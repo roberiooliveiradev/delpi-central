@@ -1,6 +1,6 @@
 # PRC — Especificação visual e de interação: Solicitações e Produtos acompanhados
 
-> **CORREÇÃO PO ADR-04 — 2026-11-13:** a partir do encerramento da bandeira, ela **não aparece em versões posteriores**. As fichas mostram propagação apenas enquanto `OPEN`; `RESOLVED`/removida permanece exclusivamente rastreável no histórico de eventos e nos cortes históricos em que estava aberta. A resolução não cria revisão. Ver [deliberações G1](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md). Esta instrução substitui exemplos de apresentação de flags resolvidas nas versões posteriores.
+> **REGRA FINAL DO PO — ADR-04 (2026-11-13; substitui todas as interpretações anteriores):** a bandeira é única por produto/alvo e propaga-se às revisões enquanto **OPEN**. Se **RESOLVED durante V4**, aparece em **V4 como RESOLVED** (verde), mas **não aparece em V5 em diante**. Se **REMOVED durante V4**, **não aparece nem em V4 nem nas posteriores**. V3 preserva OPEN nos dois cenários. O evento registra `revisionContext=V4`, instante, autor e operação; resolução/remoção não cria versão técnica. A ficha corrente da V4 reflete imediatamente resolução/remoção; versões anteriores preservam seu estado. Histórico de eventos continua auditável, inclusive após desaparecimento da bandeira. **A revisão de resolução é a revisão vigente quando ocorre a ação, e não uma revisão nova.** Se houver reabertura, definir contrato separado, não supor comportamento retroativo. Especificação de persistência/projeção ainda depende de Coordination.
 
 > **Data:** 2026-11-12  
 > **Estado:** UX_DEFINED / TARGET; referência funcional e visual, **não** prova de implementação.  
@@ -351,3 +351,14 @@ Conforme a migração **PRC-UI-EXTRACT-01 reportada pelo executor**, a apresenta
 11. Componentes visuais somente do Plugin UI; integração/contratos, AuthZ e causalidade permanecem no owner correto.
 
 **Estado de execução:** `TEST_NOT_RUN`. **Próximo passo:** consolidar a especificação das três páginas como pacote para implementação, condicionado aos gates de arquitetura, contratos e aceite da migração Plugin UI.
+
+
+### UX corrigida — bandeira resolvida versus removida na revisão vigente
+
+| Revisão | Criada V3, resolvida V4 | Criada V3, removida V4 |
+|---|---|---|
+| V3 | Vermelha **OPEN** | Vermelha **OPEN** |
+| V4 | Verde **RESOLVED**, visível junto ao campo/fornecedor | **Não renderizar bandeira** |
+| V5+ | **Não renderizar bandeira** | **Não renderizar bandeira** |
+
+Na última V4 a interação de resolver atualiza a visualização da própria V4 para verde, sem criar V5. A remoção retira o ícone da própria V4, com registro auditável acessível pelo histórico. A bandeira RESOLVED de V4 não se replica em V5. As revisões técnicas mantêm snapshots imutáveis: a exibição de flags é projeção de eventos separada dos dados técnicos. Adaptar o `FlagFieldAction` do Plugin UI sem lógica de domínio no kit; adapter do Portal Engenharia recebe estado autorizado da Engineering API. Exigir testes desktop/mobile e componentes históricos coerentes.
