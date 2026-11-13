@@ -1,6 +1,7 @@
 import { LnfPermissionsProvider } from "./application/LnfPermissionsContext";
 import { configureHttpClient } from "./data/api/httpClient";
 import { branchFromPathname, type BranchCode } from "./constants/branch";
+import { LnfRealtimeProvider } from "./realtime/LnfRealtimeProvider";
 import { QueuePage } from "./ui/pages/QueuePage";
 import { RequestDetailPage } from "./ui/pages/RequestDetailPage";
 import { RequestFormPage } from "./ui/pages/RequestFormPage";
@@ -61,9 +62,11 @@ export default function App({ getAccessToken, pathname }: AppProps) {
   if (isUnmappedProductsPath(pathname)) {
     return (
       <LnfPermissionsProvider>
-        <div className="dashboard-lancamento-notas-fiscais lnf-page">
-          <UnmappedProductsPage />
-        </div>
+        <LnfRealtimeProvider getAccessToken={getAccessToken}>
+          <div className="dashboard-lancamento-notas-fiscais lnf-page">
+            <UnmappedProductsPage />
+          </div>
+        </LnfRealtimeProvider>
       </LnfPermissionsProvider>
     );
   }
@@ -87,41 +90,43 @@ export default function App({ getAccessToken, pathname }: AppProps) {
 
   return (
     <LnfPermissionsProvider>
-      <div className="dashboard-lancamento-notas-fiscais lnf-page">
-        {view.name === "queue" && (
-          <QueuePage
-            branch={branch}
-            highlightId={view.highlightId}
-            onCreate={() => setView({ name: "create" })}
-            onOpen={(requestId) => setView({ name: "detail", requestId })}
-          />
-        )}
-        {view.name === "create" && (
-          <RequestFormPage
-            mode="create"
-            lockedBranch={branch}
-            onCancel={() => goQueue()}
-            onSuccess={(id) => goQueue(id)}
-          />
-        )}
-        {view.name === "edit" && (
-          <RequestFormPage
-            mode="edit"
-            requestId={view.requestId}
-            lockedBranch={branch}
-            onCancel={() => setView({ name: "detail", requestId: view.requestId })}
-            onSuccess={(id) => setView({ name: "detail", requestId: id })}
-          />
-        )}
-        {view.name === "detail" && (
-          <RequestDetailPage
-            requestId={view.requestId}
-            onBack={() => goQueue()}
-            onEdit={() => setView({ name: "edit", requestId: view.requestId })}
-            onOpenRequest={(id) => setView({ name: "detail", requestId: id })}
-          />
-        )}
-      </div>
+      <LnfRealtimeProvider getAccessToken={getAccessToken}>
+        <div className="dashboard-lancamento-notas-fiscais lnf-page">
+          {view.name === "queue" && (
+            <QueuePage
+              branch={branch}
+              highlightId={view.highlightId}
+              onCreate={() => setView({ name: "create" })}
+              onOpen={(requestId) => setView({ name: "detail", requestId })}
+            />
+          )}
+          {view.name === "create" && (
+            <RequestFormPage
+              mode="create"
+              lockedBranch={branch}
+              onCancel={() => goQueue()}
+              onSuccess={(id) => goQueue(id)}
+            />
+          )}
+          {view.name === "edit" && (
+            <RequestFormPage
+              mode="edit"
+              requestId={view.requestId}
+              lockedBranch={branch}
+              onCancel={() => setView({ name: "detail", requestId: view.requestId })}
+              onSuccess={(id) => setView({ name: "detail", requestId: id })}
+            />
+          )}
+          {view.name === "detail" && (
+            <RequestDetailPage
+              requestId={view.requestId}
+              onBack={() => goQueue()}
+              onEdit={() => setView({ name: "edit", requestId: view.requestId })}
+              onOpenRequest={(id) => setView({ name: "detail", requestId: id })}
+            />
+          )}
+        </div>
+      </LnfRealtimeProvider>
     </LnfPermissionsProvider>
   );
 }

@@ -20,6 +20,24 @@ vi.mock("@delpi/plugin-ui/index", () => ({
   }),
   FilePreviewView: () => null,
   UserDirectoryPicker: () => null,
+  RealtimeSocketClient: class {
+    start() {}
+    stop() {}
+    subscribe() {}
+    unsubscribe() {}
+    getStatus() {
+      return "idle";
+    }
+    onStatusChange() {
+      return () => undefined;
+    }
+    addMessageListener() {
+      return () => undefined;
+    }
+  },
+  useRealtimeRooms: () => ({ status: "idle" }),
+  RealtimeStatusIndicator: () => null,
+  ConcurrentChangeNotice: () => null,
 }));
 
 afterEach(() => {

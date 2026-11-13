@@ -15,6 +15,9 @@ export type UseRealtimeRoomsOptions = {
   onEvent: (events: unknown[]) => void;
   debounceMs?: number;
   onResync?: () => void;
+  /** Default: envia o nome da sala como payload (compatível com Engineering). */
+  encodeSubscribe?: (room: string) => string;
+  encodeUnsubscribe?: (room: string) => string;
 };
 
 export function useRealtimeRooms({
@@ -25,12 +28,18 @@ export function useRealtimeRooms({
   onEvent,
   debounceMs,
   onResync,
+  encodeSubscribe,
+  encodeUnsubscribe,
 }: UseRealtimeRoomsOptions): { status: RealtimeConnectionStatus } {
   const [status, setStatus] = useState<RealtimeConnectionStatus>("idle");
   const onEventRef = useRef(onEvent);
   const onResyncRef = useRef(onResync);
+  const encodeSubscribeRef = useRef(encodeSubscribe);
+  const encodeUnsubscribeRef = useRef(encodeUnsubscribe);
   onEventRef.current = onEvent;
   onResyncRef.current = onResync;
+  encodeSubscribeRef.current = encodeSubscribe;
+  encodeUnsubscribeRef.current = encodeUnsubscribe;
   const roomsKey = rooms.join("\n");
 
   useEffect(() => {
@@ -71,9 +80,13 @@ export function useRealtimeRooms({
       }
     });
     const wanted = roomsKey ? roomsKey.split("\n") : [];
-    for (const room of wanted) active.subscribe(room);
+    const toSub = (room: string) =>
+      encodeSubscribeRef.current ? encodeSubscribeRef.current(room) : room;
+    const toUnsub = (room: string) =>
+      encodeUnsubscribeRef.current ? encodeUnsubscribeRef.current(room) : room;
+    for (const room of wanted) active.subscribe(toSub(room));
     return () => {
-      for (const room of wanted) active.unsubscribe(room);
+      for (const room of wanted) active.unsubscribe(toUnsub(room));
       stopMessages();
       stopStatus();
       if (ownsClient) active.stop();

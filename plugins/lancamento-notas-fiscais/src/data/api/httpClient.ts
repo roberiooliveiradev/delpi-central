@@ -35,6 +35,10 @@ export function configureHttpClient(getAccessToken: () => string | undefined) {
   accessTokenGetter = getAccessToken;
 }
 
+export function peekAccessToken(): string | undefined {
+  return accessTokenGetter?.();
+}
+
 function authHeaders(json = false): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: "application/json",

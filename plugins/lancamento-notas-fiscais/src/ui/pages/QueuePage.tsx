@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { RealtimeStatusIndicator } from "@delpi/plugin-ui/index";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FilePlus2, Inbox, SearchX } from "lucide-react";
 import { useLnfPermissions } from "../../application/useLnfPermissions";
 import { branchLabel, type BranchCode } from "../../constants/branch";
@@ -6,6 +7,9 @@ import { statusTone } from "../../domain/status";
 import { ApiError } from "../../data/api/httpClient";
 import * as api from "../../data/api/invoicePostingApi";
 import type { InvoicePostingRequest, ListFilters } from "../../domain/types";
+import { isQueueRefetchEvent } from "../../realtime/events";
+import { branchRoom } from "../../realtime/rooms";
+import { useLnfRoomEvents } from "../../realtime/useLnfRoomEvents";
 import { RequestFilters } from "../components/RequestFilters";
 import { LnfPageHeader } from "../components/LnfPageHeader";
 import { StatusBadge } from "../components/StatusBadge";
@@ -189,6 +193,45 @@ export function QueuePage({ branch, highlightId, onCreate, onOpen }: Props) {
     };
   }, [perms.loading, perms.canRead]);
 
+  const refetchQueueFromRealtime = useCallback(async () => {
+    if (!mountedRef.current || !perms.canRead) return;
+    const scrollY =
+      typeof window !== "undefined" ? window.scrollY : 0;
+    const controller = new AbortController();
+    try {
+      const data = await api.listRequests(debouncedRef.current, controller.signal);
+      if (!mountedRef.current) return;
+      setItems(data.items ?? []);
+      setTotal(data.total ?? 0);
+      setTotalPages(data.total_pages ?? 0);
+      setListLoadedAt(new Date().toISOString());
+      if (typeof window !== "undefined") {
+        window.requestAnimationFrame(() => window.scrollTo(0, scrollY));
+      }
+    } catch {
+      // refetch silencioso — a fila atual permanece
+    }
+  }, [perms.canRead]);
+
+  const onRealtimeEvents = useCallback(
+    (events: unknown[]) => {
+      if (events.some((event) => isQueueRefetchEvent(event, branch))) {
+        void refetchQueueFromRealtime();
+      }
+    },
+    [branch, refetchQueueFromRealtime],
+  );
+
+  const { status: realtimeStatus } = useLnfRoomEvents({
+    rooms: [branchRoom(branch)],
+    enabled: perms.canRead && !perms.loading && !forbidden,
+    debounceMs: 1_000,
+    onEvents: onRealtimeEvents,
+    onResync: () => {
+      void refetchQueueFromRealtime();
+    },
+  });
+
   const page = debounced.page ?? 1;
   const filterDefaults = { branch, status: "open" as const };
   const filtersActive = hasActiveFilters(debounced, filterDefaults);
@@ -209,9 +252,14 @@ export function QueuePage({ branch, highlightId, onCreate, onOpen }: Props) {
         title="Lançamento de Notas Fiscais"
         subtitle={`Fila · ${branchLabel(branch)} · mais recentes primeiro (recebimento físico).`}
         meta={
-          listLoadedAt
-            ? `Fila carregada em ${formatDateTime(listLoadedAt)}`
-            : undefined
+          listLoadedAt || realtimeStatus !== "idle" ? (
+            <span className="lnf-queue-loaded-meta" data-testid="queue-loaded-meta">
+              {listLoadedAt
+                ? `Fila carregada em ${formatDateTime(listLoadedAt)}`
+                : null}
+              <RealtimeStatusIndicator status={realtimeStatus} compact />
+            </span>
+          ) : undefined
         }
         actions={
           perms.canCreate ? (

@@ -1,10 +1,10 @@
 import type {
   LinkedPurchaseOrderSnapshot,
   NfeMappedItem,
-  NfeProductMappingView,
   OpenPurchaseOrderGroup,
   OpenPurchaseOrderItem,
 } from "../../domain/types";
+import type { NfeProductMappingView } from "./NfeProductMappingPanel";
 
 export type InvoiceProductSummaryLine = {
   code: string;

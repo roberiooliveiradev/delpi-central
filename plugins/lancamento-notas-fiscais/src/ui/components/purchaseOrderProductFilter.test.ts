@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { NfeProductMappingView, OpenPurchaseOrderGroup } from "../../domain/types";
+import type { OpenPurchaseOrderGroup } from "../../domain/types";
+import type { NfeProductMappingView } from "./NfeProductMappingPanel";
 import {
   delpiProductCodesWhenFullyMapped,
   filterPurchaseOrderGroupsByProductCodes,

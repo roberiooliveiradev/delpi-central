@@ -24,6 +24,10 @@ const API_BASE =
     import.meta.env.VITE_LNF_API_BASE.trim()) ||
   "/apps/api-delpi/lancamento-notas-fiscais";
 
+export function getLnfApiBase(): string {
+  return API_BASE;
+}
+
 function toQuery(filters: Record<string, string | number | undefined | null>): string {
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {

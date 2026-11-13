@@ -8,6 +8,26 @@ import type { InvoicePostingRequest } from "../../domain/types";
 
 vi.mock("../../data/api/meApi");
 vi.mock("../../data/api/invoicePostingApi");
+vi.mock("@delpi/plugin-ui/index", () => ({
+  RealtimeSocketClient: class {
+    start() {}
+    stop() {}
+    subscribe() {}
+    unsubscribe() {}
+    getStatus() {
+      return "idle";
+    }
+    onStatusChange() {
+      return () => undefined;
+    }
+    addMessageListener() {
+      return () => undefined;
+    }
+  },
+  useRealtimeRooms: () => ({ status: "idle" }),
+  RealtimeStatusIndicator: () => null,
+  ConcurrentChangeNotice: () => null,
+}));
 
 const sample: InvoicePostingRequest = {
   id: "req-1",

@@ -17,6 +17,24 @@ vi.mock("@delpi/plugin-ui/index", () => ({
     if (open && source) void source();
     return null;
   },
+  RealtimeSocketClient: class {
+    start() {}
+    stop() {}
+    subscribe() {}
+    unsubscribe() {}
+    getStatus() {
+      return "idle";
+    }
+    onStatusChange() {
+      return () => undefined;
+    }
+    addMessageListener() {
+      return () => undefined;
+    }
+  },
+  useRealtimeRooms: () => ({ status: "idle" }),
+  RealtimeStatusIndicator: () => null,
+  ConcurrentChangeNotice: () => null,
 }));
 
 function renderCreate(ui: ReactElement) {
@@ -36,8 +54,9 @@ function mockOpenPurchaseOrders(groups: unknown[] = []) {
       groups.map((group) => (group as { order_number: string }).order_number),
     ).size,
     group_count: groups.length,
-    item_count: groups.reduce(
-      (total, group) => total + ((group as { items?: unknown[] }).items?.length ?? 0),
+    item_count: groups.reduce<number>(
+      (total, group) =>
+        total + ((group as { items?: unknown[] }).items?.length ?? 0),
       0,
     ),
     groups: groups as never,
@@ -1352,7 +1371,8 @@ describe("etapa Pedido de compra no cadastro", () => {
   });
 
   it("não cria duas solicitações no duplo clique", async () => {
-    let resolveCreate: (value: { id: string }) => void = () => undefined;
+    let resolveCreate: (value: Awaited<ReturnType<typeof api.createRequest>>) => void =
+      () => undefined;
     vi.mocked(api.createRequest).mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -1365,7 +1385,7 @@ describe("etapa Pedido de compra no cadastro", () => {
     fireEvent.click(submit);
     fireEvent.click(submit);
     expect(api.createRequest).toHaveBeenCalledTimes(1);
-    resolveCreate({ id: "once" });
+    resolveCreate({ id: "once" } as Awaited<ReturnType<typeof api.createRequest>>);
     await waitFor(() => expect(api.createRequest).toHaveBeenCalledTimes(1));
   });
 

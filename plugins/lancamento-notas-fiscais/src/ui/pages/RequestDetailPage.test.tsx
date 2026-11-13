@@ -6,6 +6,24 @@ import type { InvoicePostingDetail } from "../../domain/types";
 
 vi.mock("../../data/api/invoicePostingApi");
 vi.mock("@delpi/plugin-ui/index", () => ({
+  RealtimeSocketClient: class {
+    start() {}
+    stop() {}
+    subscribe() {}
+    unsubscribe() {}
+    getStatus() {
+      return "idle";
+    }
+    onStatusChange() {
+      return () => undefined;
+    }
+    addMessageListener() {
+      return () => undefined;
+    }
+  },
+  useRealtimeRooms: () => ({ status: "idle" }),
+  RealtimeStatusIndicator: () => null,
+  ConcurrentChangeNotice: () => null,
   FilePreviewModal: () => null,
   useFilePreviewLoader: () => ({
     kind: "pdf",
