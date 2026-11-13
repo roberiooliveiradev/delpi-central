@@ -211,3 +211,18 @@ A coordenação abriu o **PR real [#180](https://github.com/roberiooliveiradev/d
 **Gate formal do Cursor:** uma única sessão de revalidação independente contra mesmo deployment SHA/digest, com autorização positiva/negativa, dois usuários, pedido cross-user, listagem/paginação e histórico; não repetir caso de teste já comprovado sem risco novo além de amostragem de independência. `case-insensitive alfanumérico` permanece `TEST_NOT_RUN` enquanto não houver dado oficial autorizado.
 
 **Decisão operacional:** PROD-01 não retorna ao Devin para correções sem defeito concreto do Cursor. Desenvolver o produto conforme plano mestre depende agora da **ratificação técnica T01/T02** para DEVIN-PROD-02; não tratar Cursor como impedimento dessa ratificação. Sem alteração de frontend/bandeiras ou deploy produção.
+
+
+## 16. Regra PO vinculante — PRD smoke READ-only, nenhuma escrita de negócio (13/11/2026)
+
+**Decisão explícita do PO:** **em produção, testes de deploy verificam apenas disponibilidade, saúde, autenticação/autorização e APIs de leitura comprovadamente sem efeitos colaterais. É proibido gerar ou modificar dados de negócio para testar o sistema em PRD.** Homologação é o ambiente de testes com escrita, fluxos completos, múltiplos usuários, bandeiras e versionamento.
+
+**Matriz por ambiente:** DEV = testes locais e dados de teste; HML = execução autorizada de workflows e operações mutáveis em dados segregados, incluindo dois usuários; PRD = smoke checks não mutáveis, observabilidade e leituras autorizadas. Isto prevalece sobre qualquer texto genérico anterior que sugira E2E de escrita após o deploy produtivo.
+
+**Whitelist do smoke de PRD** (após confirmação do contrato e efeitos colaterais): health/readiness, versão/build/digest, documentação OpenAPI quando disponível e segura, `GET` de consulta autorizada de recursos já existentes e de dados adequados, validação 401/403 em operações de leitura, métricas de estabilidade/erros. Requisições `GET` que possuam efeitos colaterais não são elegíveis. Não expor informações sensíveis em evidências.
+
+**Proibido em PRD:** `POST/PATCH/PUT/DELETE` mutáveis de negócio; intake/complete/verify-and-complete, criar/alterar/remover/resolver bandeiras, cadastros, V1/Vn, migração de dados de teste, idempotency replay de escrita, SQL de escrita ou manipulação direta de banco para testes. `verify` somente pode ser chamado se comprovadamente read-only e sem registro/evidência mutável; o fluxo normal de verificação PRC escreve trilhas, portanto não é smoke permitido. Não invocar endpoints apenas pelo verbo ou nome sem confirmar seus efeitos. Mudanças operacionais necessárias ao deploy autorizado não são testes de escrita de negócio e exigem processo próprio.
+
+**Gate release:** para cada pacote, Cursor valida fluxos de escrita e segurança em HML; owner autoriza publicação; no PRD executar **somente** smoke READ-only e rollback/observabilidade. Se um cenário requer escrita ou estado novo, classificá-lo `NOT_APPLICABLE_PRODUCTION` e referenciar evidência HML, jamais executá-lo em produção. Qualquer desvio ou autorização ambígua deve resultar em bloqueio da operação, não execução tentativa.
+
+**Escopo:** regra global para PRC-TRACK / Engenharia; replicar nos prompts Devin, Cursor, checklists de release e documentação canônica sem reabrir a decisão de negócio.
