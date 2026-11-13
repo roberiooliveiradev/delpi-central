@@ -19,6 +19,8 @@ _PROTECTED = frozenset({
     "rpcss", "dcomlaunch", "eventlog", "plugplay", "schedule", "winmgmt",
     "samss", "lsass", "power", "profsvc", "bfe", "mpssvc", "lanmanserver",
     "netlogon", "wuauserv", "cryptsvc",
+    # Servidores TOTVS de licenciamento: apenas monitoramento, nunca controle remoto.
+    "licensevirtual", "@01licensevirtual",
 })
 
 
