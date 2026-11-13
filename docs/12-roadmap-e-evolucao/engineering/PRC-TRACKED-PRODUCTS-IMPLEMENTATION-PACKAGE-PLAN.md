@@ -1,5 +1,7 @@
 # PRC-TRACK-IMPLEMENTATION-PACKAGE — Plano integrado de execução governada
 
+> **CORREÇÃO ADR-04 — 2026-11-13:** Somente flags **OPEN** aparecem nas novas revisões; flags **RESOLVED/removidas não se propagam visualmente** nem aparecem nas fichas posteriores. Histórico de eventos e cortes anteriores preservados; sem criação de Vn por resolução. Ver [decisão PO atualizada](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md). Atualizar AC-08/09/12 no momento de detalhar B2; não interpretar `resolved` como bandeira ativa visível na versão atual.
+
 > **AMENDMENT G1/PO — 2026-11-13:** As escolhas documentadas em [Deliberações G1 do PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) prevalecem sobre referências anteriores incompatíveis neste plano: **campos registrados pela Engineering API, não necessariamente snapshot TOTVS completo**; **somente diferenças técnicas reais geram nova Vn**; flags são únicas por produto/alvo e projetadas nas revisões; endpoints de diff no backend; HML API funcional + aceite completo Plugin UI antes do frontend. Fases/AC B1–B3 devem ser reespecificadas após ratificação; **não iniciar implementação com os AC antigos conflitantes**.
 
 > **Data:** 2026-11-13 · **Natureza:** pacote de planejamento para implementação futura; **nenhum código, schema ou deploy autorizado por este documento**.  
