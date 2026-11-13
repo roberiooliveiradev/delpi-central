@@ -52,10 +52,12 @@ chmod 600 "${EVAL_ENV}"
   echo "KEYCLOAK_URL=http://keycloak:8080/auth"
   echo "KEYCLOAK_REALM=delpi"
   # Issuer must match gateway-minted subject tokens (Portal path).
-  echo "KEYCLOAK_ISSUER=http://localhost/auth/realms/delpi"
+  # Isolated evals against a productive realm must override via
+  # DELIA_EVAL_KEYCLOAK_ISSUER — the realm's public issuer claim.
+  echo "KEYCLOAK_ISSUER=${DELIA_EVAL_KEYCLOAK_ISSUER:-http://localhost/auth/realms/delpi}"
   echo "KEYCLOAK_JWKS_URL=http://keycloak:8080/auth/realms/delpi/protocol/openid-connect/certs"
   echo "KEYCLOAK_AUDIENCE=delpi-central"
-  echo "KC_GATEWAY_TOKEN_BASE=http://delpi-gateway/auth"
+  echo "KC_GATEWAY_TOKEN_BASE=${DELIA_EVAL_KC_GATEWAY_TOKEN_BASE:-http://delpi-gateway/auth}"
   echo "CORE_API_URL=http://core-api:8000"
   echo "DELPI_AUTH_CORE_API_URL=http://core-api:8000"
   # INT-1 evals may point each owner at an isolated patched container
