@@ -86,7 +86,7 @@ Transferir o módulo **Lançamento de Notas Fiscais (LNF)** da `api-delpi` para 
 | F7.1 | CLARA — leituras | DONE | HML/PROD | `1328cd0d85` | 2026-11-13 | 8 reads; HML JSON-RPC PASS; PROD health+import |
 | F7.2 | CLARA — análise | DONE (F7-R3) | HML/PROD | `d9393bcde5` | 2026-11-13 | enum LNF; `review_aged_pending.value`=contagem ≥5d |
 | F7.3 | CLARA — ações governadas | DONE (F7-R3) | HML/PROD | `d9393bcde5` | 2026-11-13 | copy conversacional sem Portal; displayable=true |
-| F7.4 | CLARA — produção + roteiro de teste do owner | PENDING_OWNER | PROD | `d9393bcde5` | 2026-11-13 | F7-R3 deployado; revisor refaz 4 e 6 no conector |
+| F7.4 | CLARA — produção + roteiro de teste do owner | PENDING_OWNER | PROD | F7-R4 | 2026-11-13 | entrada CF∨LNF; knowledge por escopo; revisor refaz roteiro |
 | F6 | Limpeza final (encerra o rollback) | TODO | | | | |
 
 Status possíveis: TODO · IN_PROGRESS · BLOCKED (regra de parada) · DONE.
@@ -225,7 +225,8 @@ Qualquer FAIL em (a)–(f) ou nas verificações BFF/MFE → parada R1/R3/R5/R8 
 - **Paridade funcional total (decisão do owner):** a CLARA deve executar **tudo o que o usuário consegue fazer no app**, dentro das permissões dele — leitura, análise, **escrita e deleção** — no padrão em que a CLARA já é desenvolvida. Não é uma entrega só de leitura. As 24 operações da API LNF estão cobertas na tabela abaixo: 19 viram entradas de catálogo e 5 são downloads de PDF/XML, entregues como link para a tela existente do app (o usuário baixa por lá).
 - **Nenhuma tool nova.** Somente novas entradas `(entity, action)` no catálogo semântico existente (`get_context`, `read`, `analyze`, `knowledge`, `execute`, `delete`).
 - A CLARA **espelha a BFF**: cada leitura/ação chama a rota LNF da BFF já existente, **com a identidade do usuário final**. A BFF continua sendo a autoridade (CLARA nunca autoriza).
-- Visibilidade no catálogo pelas permissões `lancamento-notas-fiscais.*` efetivas do usuário (mesmos conjuntos da BFF). Quem não tem LNF não vê as entradas.
+- **Entrada por CF OU LNF (F7-R4):** porta MCP = `principal_type=user` + (`controllership-finance.access|manage|access.dre` **ou** qualquer `lancamento-notas-fiscais.*`). Gates do catálogo seguem por entrada: fechamento exige CF; `lnf_*` exigem LNF. Knowledge tem escopo `controllership` / `lancamento-notas-fiscais`.
+- Visibilidade no catálogo pelas permissões efetivas do usuário (mesmos conjuntos da BFF). Quem só tem LNF não vê fechamento; quem só tem CF não vê LNF.
 - **Não alterar persona/ficha da CLARA** (R5). Não alterar o MFE.
 - PDFs/XML **não** passam pela CLARA: a resposta aponta para a tela existente do app (deep link para rota já existente do MFE).
 - Escritas seguem o padrão já existente da CLARA: `prepare → consentimento explícito → commit`, com Core, idempotência e read-back.
@@ -394,6 +395,7 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-13 09:30 -03 | F7-R3 | HML | pull `59a5606737` + up-hml CF API; wire check + pytest | PASS 36 | `d9393bcde5`/`59a5606737` | channel=conversational; GREP bad phrases=0; MFE CF ausente no compose HML |
 | 2026-11-13 09:32 -03 | F7-R3 | PROD | up-prod CF API + CF MFE; canal intacto; sem ACT real | PASS | `d9393bcde5`/`59a5606737` | CLARA_CONSENT_CHANNEL=conversational; health 200; instruction sem Portal/ChatGPT; aged unit 18 PASS |
 | 2026-11-13 10:15 -03 | F7-R3.403 | PROD | Investigação 403 Claude em todas as tools pós-deploy | NÃO_REGRESSÃO_CÓDIGO | `d9393bcde5` | authz.py/authz_core/middleware idênticos à imagem pré-F7-R3; ChatGPT openai-mcp payloads grandes OK; Claude ~250B≈Forbidden; sem rollback; log gate `clara_mcp_authz_denied` |
+| 2026-11-13 10:40 -03 | F7-R4 | DEV | Porta entrada CF∨LNF + domain_scope knowledge + testes unitários | PASS | (commit F7-R4) | `authorized_clara_mcp_entry`; gate access=CF; corpus LNF manifest; V022 |
 
 ### Roteiro de teste do owner — F7.4 (ChatGPT / CLARA em PROD)
 

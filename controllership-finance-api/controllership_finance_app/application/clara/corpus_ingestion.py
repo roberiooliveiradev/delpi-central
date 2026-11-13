@@ -44,6 +44,7 @@ class SourceSpec:
     business_step: str | None = None
     related_report_ids: tuple[str, ...] = ()
     access_scope: str = "PORTAL_ACCESS"
+    domain_scope: str = "controllership"
     description: str | None = None
 
 
@@ -147,6 +148,7 @@ def ingest_source(
         metadata={
             "path": spec.path,
             "ingested_by": actor,
+            "domain_scope": spec.domain_scope,
         },
     )
     segments = segment_markdown(raw)
@@ -225,6 +227,7 @@ def ingest_source(
             evidence_classification=spec.evidence_classification,
             citation_locator=locator,
             access_scope=spec.access_scope,
+            domain_scope=spec.domain_scope,
         )
         keep_ids.append(str(result["knowledge_id"]))
         if result.get("_deduplicated"):
@@ -296,18 +299,34 @@ def ingest_manifest(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Ingestão governada do corpus CLARA (PROC-0072)."
+        description="Ingestão governada do corpus CLARA."
     )
     parser.add_argument("--docs-root", required=True)
     parser.add_argument("--no-publish", action="store_true")
     parser.add_argument("--actor", default="clara-corpus-ingestion")
+    parser.add_argument(
+        "--manifest",
+        choices=("controllership", "lnf", "all"),
+        default="controllership",
+        help="Fontes: controllership (PROC-0072), lnf, ou ambos.",
+    )
     args = parser.parse_args()
     from controllership_finance_app.application.clara.corpus_manifest import (  # noqa: E501
         AUTHORIZED_SOURCES,
     )
+    from controllership_finance_app.application.clara.corpus_manifest_lnf import (  # noqa: E501
+        LNF_AUTHORIZED_SOURCES,
+    )
+
+    if args.manifest == "controllership":
+        specs = list(AUTHORIZED_SOURCES)
+    elif args.manifest == "lnf":
+        specs = list(LNF_AUTHORIZED_SOURCES)
+    else:
+        specs = list(AUTHORIZED_SOURCES) + list(LNF_AUTHORIZED_SOURCES)
 
     outcome = ingest_manifest(
-        AUTHORIZED_SOURCES,
+        specs,
         docs_root=Path(args.docs_root),
         publish=not args.no_publish,
         actor=args.actor,

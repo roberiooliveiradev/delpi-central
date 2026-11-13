@@ -80,6 +80,11 @@ ACCESS_SCOPES = frozenset(
     {"PORTAL_ACCESS", "PORTAL_MANAGE", "INTERNAL_ONLY"}
 )
 
+DOMAIN_SCOPES = frozenset(
+    {"controllership", "lancamento-notas-fiscais"}
+)
+DEFAULT_DOMAIN_SCOPE = "controllership"
+
 
 def _sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -165,6 +170,7 @@ class ClaraKnowledgeRepository:
         evidence_classification: str = "OWNER_REPORTED_VIA_PO",
         citation_locator: dict | None = None,
         access_scope: str = "PORTAL_ACCESS",
+        domain_scope: str = DEFAULT_DOMAIN_SCOPE,
         valid_from: str | None = None,
         supersedes: str | None = None,
     ) -> dict:
@@ -176,6 +182,8 @@ class ClaraKnowledgeRepository:
             )
         if access_scope not in ACCESS_SCOPES:
             raise ChecklistDomainError("access_scope inválido.")
+        if domain_scope not in DOMAIN_SCOPES:
+            raise ChecklistDomainError("domain_scope inválido.")
         content_hash = _sha256(content)
         locator = citation_locator or {}
         locator_key = locator.get("key")
@@ -204,6 +212,7 @@ class ClaraKnowledgeRepository:
                                    SET last_verified_at = now(),
                                        status = 'PUBLISHED',
                                        access_scope = %s,
+                                       domain_scope = %s,
                                        evidence_classification = %s,
                                        citation_locator = %s::jsonb
                                  WHERE knowledge_id = %s
@@ -211,6 +220,7 @@ class ClaraKnowledgeRepository:
                                 """,
                                 (
                                     access_scope,
+                                    domain_scope,
                                     evidence_classification,
                                     json.dumps(locator),
                                     row["knowledge_id"],
@@ -248,13 +258,15 @@ class ClaraKnowledgeRepository:
                             (source_id, topic, business_step,
                              related_report_ids, origin_authority,
                              evidence_classification, valid_from,
-                             access_scope, citation_locator, supersedes,
+                             access_scope, domain_scope,
+                             citation_locator, supersedes,
                              title, content, content_hash)
-                        VALUES (%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s::jsonb,
+                        VALUES (%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s,%s::jsonb,
                                 %s,%s,%s,%s)
                         RETURNING knowledge_id, topic, business_step,
                                   title, evidence_classification,
-                                  access_scope, citation_locator, status
+                                  access_scope, domain_scope,
+                                  citation_locator, status
                         """,
                         (
                             source_id,
@@ -265,6 +277,7 @@ class ClaraKnowledgeRepository:
                             evidence_classification,
                             valid_from,
                             access_scope,
+                            domain_scope,
                             json.dumps(locator),
                             supersedes,
                             title,
@@ -368,10 +381,22 @@ class ClaraKnowledgeRepository:
                 )
                 return cur.fetchone()
 
-    def list_sources(self, *, access_scope: str = "PORTAL_ACCESS") -> list[dict]:
+    def list_sources(
+        self,
+        *,
+        access_scope: str = "PORTAL_ACCESS",
+        domain_scopes: list[str] | None = None,
+    ) -> list[dict]:
         scope_filter = "AND k.access_scope <> 'INTERNAL_ONLY'"
         if access_scope == "INTERNAL_ONLY":
             scope_filter = ""
+        domains = [
+            d for d in (domain_scopes or [DEFAULT_DOMAIN_SCOPE])
+            if d in DOMAIN_SCOPES
+        ]
+        if not domains:
+            return []
+        domain_filter = "AND k.domain_scope = ANY(%s)"
         with self._conn() as conn:
             with conn.cursor(row_factory=dict_row) as cur:
                 cur.execute(
@@ -381,9 +406,11 @@ class ClaraKnowledgeRepository:
                       JOIN {_q('clara_knowledge_item')} k
                         ON k.source_id = s.source_id
                        AND k.status = 'PUBLISHED' {scope_filter}
+                       {domain_filter}
                      GROUP BY s.source_id
                      ORDER BY s.source_id
-                    """
+                    """,
+                    (domains,),
                 )
                 return cur.fetchall()
 
@@ -395,12 +422,14 @@ class ClaraKnowledgeRepository:
         business_step: str | None = None,
         report_id: str | None = None,
         access_scope: str = "PORTAL_ACCESS",
+        domain_scopes: list[str] | None = None,
         limit: int = 8,
     ) -> list[dict]:
         """Recuperação com citação — FTS português + filtros estruturados.
 
         `INTERNAL_ONLY` nunca alcança escopo de Portal; `PORTAL_MANAGE`
         só sai para manage efetivo (o caller decide o scope do ator).
+        F7-R4: ``domain_scopes`` limita controllership vs LNF.
         """
         clauses = ["k.status = 'PUBLISHED'"]
         where_params: list[Any] = []
@@ -408,6 +437,14 @@ class ClaraKnowledgeRepository:
             clauses.append("k.access_scope = 'PORTAL_ACCESS'")
         elif access_scope == "PORTAL_MANAGE":
             clauses.append("k.access_scope IN ('PORTAL_ACCESS','PORTAL_MANAGE')")
+        domains = [
+            d for d in (domain_scopes or [DEFAULT_DOMAIN_SCOPE])
+            if d in DOMAIN_SCOPES
+        ]
+        if not domains:
+            return []
+        clauses.append("k.domain_scope = ANY(%s)")
+        where_params.append(domains)
         if topic:
             clauses.append("k.topic ILIKE %s")
             where_params.append(f"%{topic}%")
@@ -505,7 +542,11 @@ class ClaraKnowledgeRepository:
                 return cur.fetchall()
 
     def get_item(
-        self, knowledge_id: str, *, access_scope: str = "PORTAL_ACCESS"
+        self,
+        knowledge_id: str,
+        *,
+        access_scope: str = "PORTAL_ACCESS",
+        domain_scopes: list[str] | None = None,
     ) -> dict:
         with self._conn() as conn:
             with conn.cursor(row_factory=dict_row) as cur:
@@ -529,5 +570,13 @@ class ClaraKnowledgeRepository:
         if scope == "INTERNAL_ONLY" or (
             scope == "PORTAL_MANAGE" and access_scope == "PORTAL_ACCESS"
         ):
+            raise KnowledgeNotFound("Conhecimento não encontrado.")
+        allowed = [
+            d for d in (domain_scopes or [DEFAULT_DOMAIN_SCOPE])
+            if d in DOMAIN_SCOPES
+        ]
+        item_domain = row.get("domain_scope") or DEFAULT_DOMAIN_SCOPE
+        if item_domain not in allowed:
+            # Sem vazar título/trecho de escopo não liberado.
             raise KnowledgeNotFound("Conhecimento não encontrado.")
         return row

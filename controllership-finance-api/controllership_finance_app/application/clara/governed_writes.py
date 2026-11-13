@@ -231,16 +231,20 @@ class ClaraGovernedWrites:
         return dict(self._identity_provider() or {})
 
     def _check_gate(self, capability: str) -> dict:
-        """Reaplica o gate de permission da rota Portal equivalente.
+        """Reaplica o gate de permission da rota Portal/LNF equivalente.
 
-        ``access`` já é garantido pelo entry-point MCP; ``manage`` e
-        ``dre`` são revalidados na identidade efetiva em PREPARE e ACT.
+        F7-R4: ``access`` exige CF efetiva (não basta entrada só-LNF);
+        ``lnf_*`` / ``manage`` / ``dre`` revalidados na identidade.
         """
         spec = self._capability_table()[capability]
         gate = spec.get("gate", "access")
-        if gate == "access":
-            return {}
         identity = self._identity()
+        if gate == "access":
+            if not bool(identity.get("has_cf_access")):
+                raise OperationForbidden(
+                    f"Você não tem permissão para {capability}."
+                )
+            return identity
         flag = {
             "manage": bool(identity.get("is_manage")),
             "dre": bool(identity.get("is_dre")),
@@ -255,7 +259,7 @@ class ClaraGovernedWrites:
         }.get(gate, False)
         if not flag:
             raise OperationForbidden(
-                "Permission efetiva ausente para a operação."
+                f"Você não tem permissão para {capability}."
             )
         return identity
 

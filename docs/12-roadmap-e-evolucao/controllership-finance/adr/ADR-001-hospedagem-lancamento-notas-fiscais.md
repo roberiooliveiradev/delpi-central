@@ -104,3 +104,13 @@ Registro: risco aceito pelo owner em **2026-11-12**. Mitigação residual perman
 | R4 Chat/TV | Catálogos `tv_data_routes.json` e contratos do chat são gerados do OpenAPI da api-delpi; TV chama GET via service token; vínculo de painel e authMode do provider do chat estão só em runtime. | **D9 (nova):** com o corte direto, chat e TV perdem as operações LNF na regeneração. Antes do corte (F4), verificar em produção painéis da TV com operationIds LNF e o provider do chat. Uso zero → aceita a perda. Uso > 0 → DECISION_REQUIRED ao owner. |
 | R8 Testes | Todos os testes LNF importam `app.*` da api-delpi. | F2 cria suíte **caixa-preta HTTP** parametrizada por URL base; os testes unitários existentes migram com o código em F3. |
 | Docs | README do portal (`README.md:89`) ainda diz "só access/manage", runtime já tem `controllership-finance.access.dre`. | Follow-up documental fora deste plano. |
+
+---
+
+## Adendo F7-R4 (2026-11-13) — CLARA aceita usuários só-LNF
+
+**Decisão do owner:** a porta de entrada da CLARA (MCP) não exige mais somente `controllership-finance.access`. Usuário humano com qualquer `lancamento-notas-fiscais.*` efetiva entra na CLARA; gates por entrada de catálogo e a BFF (JWT do usuário) continuam sendo a autoridade de cada ação.
+
+- Rotas HTTP do Portal/fechamento: inalteradas (`authorized_user` = CF.access).
+- D8 (service principal proibido nas rotas LNF / MCP humano): inalterado.
+- Knowledge: escopos `controllership` e `lancamento-notas-fiscais` separados por permissão efetiva.

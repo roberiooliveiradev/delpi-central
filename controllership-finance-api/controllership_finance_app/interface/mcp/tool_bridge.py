@@ -78,8 +78,10 @@ from controllership_finance_app.interface.http.authz import (
     ACCESS_PERMISSION,
     DRE_ACCESS_PERMISSION,
     MANAGE_PERMISSION,
-    authorized_user,
     actor_subject,
+    authorized_clara_mcp_entry,
+    has_cf_clara_entry,
+    has_lnf_clara_entry,
 )
 from controllership_finance_app.interface.http.routes import (
     admin_catalogs_routes,
@@ -211,37 +213,56 @@ def handle_tool_error(exc: Exception) -> CallToolResult:
     )
 
 
+def _log_authz_denied(
+    *,
+    gate: str,
+    principal_type: str | None,
+    has_cf_access: bool,
+    has_lnf_any: bool,
+    entity: str | None = None,
+    action: str | None = None,
+) -> None:
+    logger.warning(
+        "clara_mcp_authz_denied gate=%s entity=%s action=%s "
+        "principal_type=%s has_cf_access=%s has_lnf_any=%s",
+        gate,
+        entity or "-",
+        action or "-",
+        principal_type,
+        has_cf_access,
+        has_lnf_any,
+    )
+
+
 def _user_and_access():
-    """Mesmo gate das rotas: request reconstruída + authorized_user."""
+    """Porta de entrada CLARA: user + (CF* OU qualquer LNF)."""
     request = build_mcp_request()
     try:
-        user = authorized_user(request)
+        user = authorized_clara_mcp_entry(request)
     except Exception as exc:  # noqa: BLE001 — literals canônicos do middleware
         msg = str(exc)
         user = getattr(request.state, "user", None)
         principal = getattr(user, "principal_type", None) if user else None
-        rbac_unavail = bool(getattr(user, "rbac_unavailable", False)) if user else None
-        has_access = (
-            bool(has_permission(user, ACCESS_PERMISSION)) if user else False
+        rbac_unavail = (
+            bool(getattr(user, "rbac_unavailable", False)) if user else None
         )
-        # Sem PII: só classifica o gate que negou (diagnóstico 403 MCP).
+        has_cf = bool(has_cf_clara_entry(user)) if user else False
+        has_lnf = bool(has_lnf_clara_entry(user)) if user else False
         if msg == "Unauthorized":
             gate = "unauthenticated_or_missing_user"
         elif msg == "Service Unavailable" or rbac_unavail:
             gate = "rbac_unavailable"
         elif principal is not None and principal != "user":
             gate = "principal_type_not_user"
-        elif user is not None and not has_access:
-            gate = "missing_controllership_finance_access"
+        elif user is not None and not (has_cf or has_lnf):
+            gate = "entry"
         else:
-            gate = "forbidden_other"
-        logger.warning(
-            "clara_mcp_authz_denied gate=%s principal_type=%s "
-            "has_cf_access=%s rbac_unavailable=%s",
-            gate,
-            principal,
-            has_access,
-            rbac_unavail,
+            gate = "entry"
+        _log_authz_denied(
+            gate=gate,
+            principal_type=principal,
+            has_cf_access=has_cf,
+            has_lnf_any=has_lnf,
         )
         if msg == "Unauthorized":
             raise PermissionError("Unauthorized") from exc
@@ -258,29 +279,13 @@ def _is_manage(user) -> bool:
     )
 
 
-def _mcp_identity() -> dict:
-    """Identidade efetiva para os gates do catálogo governado.
-
-    Reconstroi a Request e resolve as permissions no Core a cada
-    chamada — PREPARE e ACT sempre leem a autorização vigente."""
-    request = build_mcp_request()
-    try:
-        user = authorized_user(request)
-    except Exception as exc:  # noqa: BLE001 — literals canônicos
-        msg = str(exc)
-        if msg == "Unauthorized":
-            raise PermissionError("Unauthorized") from exc
-        if msg == "Service Unavailable":
-            raise PermissionError("Service Unavailable") from exc
-        raise PermissionError(msg or "Forbidden") from exc
+def _identity_flags(user) -> dict:
+    """Flags de gate do catálogo a partir do principal humano."""
     return {
-        "subject": actor_subject(user),
-        "name": getattr(user, "name", None)
-        or getattr(user, "email", None),
+        "has_cf_access": bool(has_cf_clara_entry(user)),
+        "has_lnf_any": bool(has_lnf_clara_entry(user)),
         "is_manage": _is_manage(user),
-        "is_dre": bool(
-            has_permission(user, DRE_ACCESS_PERMISSION)
-        ),
+        "is_dre": bool(has_permission(user, DRE_ACCESS_PERMISSION)),
         "lnf_read": bool(
             has_any_permission(user, LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS)
         ),
@@ -305,6 +310,40 @@ def _mcp_identity() -> dict:
                 user, LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS
             )
         ),
+        "knowledge_domains": _knowledge_domains_for(user),
+    }
+
+
+def _knowledge_domains_for(user) -> list[str]:
+    domains: list[str] = []
+    if has_cf_clara_entry(user):
+        domains.append("controllership")
+    if has_lnf_clara_entry(user):
+        domains.append("lancamento-notas-fiscais")
+    return domains
+
+
+def _mcp_identity() -> dict:
+    """Identidade efetiva para os gates do catálogo governado.
+
+    Reconstroi a Request e resolve as permissions no Core a cada
+    chamada — PREPARE e ACT sempre leem a autorização vigente."""
+    request = build_mcp_request()
+    try:
+        user = authorized_clara_mcp_entry(request)
+    except Exception as exc:  # noqa: BLE001 — literals canônicos
+        msg = str(exc)
+        if msg == "Unauthorized":
+            raise PermissionError("Unauthorized") from exc
+        if msg == "Service Unavailable":
+            raise PermissionError("Service Unavailable") from exc
+        raise PermissionError(msg or "Forbidden") from exc
+    flags = _identity_flags(user)
+    return {
+        "subject": actor_subject(user),
+        "name": getattr(user, "name", None)
+        or getattr(user, "email", None),
+        **flags,
     }
 
 
@@ -1407,6 +1446,7 @@ def tool_search_closing_knowledge(
     limit: int = 8,
 ) -> CallToolResult:
     request, user = _user_and_access()
+    domains = _knowledge_domains_for(user)
     try:
         items = ClaraKnowledgeRepository().search(
             query=query,
@@ -1414,6 +1454,7 @@ def tool_search_closing_knowledge(
             business_step=business_step,
             report_id=report_id,
             access_scope=_access_scope_for(user),
+            domain_scopes=domains,
             limit=limit,
         )
     except ChecklistDomainError as exc:
@@ -1432,6 +1473,8 @@ def tool_search_closing_knowledge(
                     ],
                     "origin_authority": i["origin_authority"],
                     "citation_locator": i["citation_locator"],
+                    "domain_scope": i.get("domain_scope")
+                    or "controllership",
                     "excerpt": (i["content"] or "")[:600],
                     "rank": i.get("rank"),
                     "full_match": i.get("full_match", True),
@@ -1439,6 +1482,7 @@ def tool_search_closing_knowledge(
                 for i in items
             ],
             "count": len(items),
+            "knowledge_domains": domains,
             "corpus": _safe_corpus_version(),
         }
     )
@@ -1446,9 +1490,12 @@ def tool_search_closing_knowledge(
 
 def tool_get_knowledge_item(knowledge_id: str) -> CallToolResult:
     request, user = _user_and_access()
+    domains = _knowledge_domains_for(user)
     try:
         item = ClaraKnowledgeRepository().get_item(
-            knowledge_id, access_scope=_access_scope_for(user)
+            knowledge_id,
+            access_scope=_access_scope_for(user),
+            domain_scopes=domains,
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc)
@@ -1463,6 +1510,8 @@ def tool_get_knowledge_item(knowledge_id: str) -> CallToolResult:
             "evidence_classification": item["evidence_classification"],
             "origin_authority": item["origin_authority"],
             "citation_locator": item["citation_locator"],
+            "domain_scope": item.get("domain_scope")
+            or "controllership",
             "source": {
                 "source_id": item["source_id"],
                 "name": item["source_name"],
@@ -1478,9 +1527,11 @@ def tool_get_knowledge_item(knowledge_id: str) -> CallToolResult:
 
 def tool_list_knowledge_sources() -> CallToolResult:
     request, user = _user_and_access()
+    domains = _knowledge_domains_for(user)
     try:
         sources = ClaraKnowledgeRepository().list_sources(
-            access_scope=_access_scope_for(user)
+            access_scope=_access_scope_for(user),
+            domain_scopes=domains,
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc)
@@ -1498,6 +1549,7 @@ def tool_list_knowledge_sources() -> CallToolResult:
                 }
                 for s in sources
             ],
+            "knowledge_domains": domains,
             "corpus": _safe_corpus_version(),
         }
     )

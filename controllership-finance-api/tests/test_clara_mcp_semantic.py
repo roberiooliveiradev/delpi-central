@@ -45,6 +45,34 @@ def actor(monkeypatch):
     user.name = "Usuária Teste"
     user.email = "user@delpi.com.br"
     user.is_superadmin = False
+    # F7-R4: MagicMock sem permissions falharia o gate de catálogo CF.
+    user.permissions = [
+        "controllership-finance.access",
+        "controllership-finance.manage",
+        "lancamento-notas-fiscais.create",
+        "lancamento-notas-fiscais.view.filial-01",
+        "lancamento-notas-fiscais.process",
+    ]
+    user.principal_type = "user"
+    user.rbac_unavailable = False
+    identity = {
+        "subject": "sub-1",
+        "name": "Usuária Teste",
+        "has_cf_access": True,
+        "has_lnf_any": True,
+        "is_manage": True,
+        "is_dre": False,
+        "lnf_read": True,
+        "lnf_create": True,
+        "lnf_write": True,
+        "lnf_process": True,
+        "lnf_manage": False,
+        "lnf_review_unmapped": True,
+        "knowledge_domains": [
+            "controllership",
+            "lancamento-notas-fiscais",
+        ],
+    }
     monkeypatch.setattr(
         sb, "_user_and_access",
         lambda: (MagicMock(), user),
@@ -52,6 +80,12 @@ def actor(monkeypatch):
     monkeypatch.setattr(
         tool_bridge, "_user_and_access",
         lambda: (MagicMock(), user),
+    )
+    monkeypatch.setattr(
+        sb, "_identity_snapshot", lambda _u: dict(identity)
+    )
+    monkeypatch.setattr(
+        tool_bridge, "_mcp_identity", lambda: dict(identity)
     )
     monkeypatch.setattr(sb, "actor_subject", lambda _u: "sub-1")
     return user

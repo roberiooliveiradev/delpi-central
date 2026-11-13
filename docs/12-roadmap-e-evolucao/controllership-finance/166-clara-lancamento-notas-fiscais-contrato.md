@@ -1,9 +1,34 @@
 # 166 — CLARA × Lançamento de Notas Fiscais (contrato F7)
 
-> Status: **F7.0–F7.3 DONE (F7-R)** · **F7.4 PENDING_OWNER** (roteiro na trilha 165)  
-> SHA: `348140ec53` · Data: 2026-11-13  
+> Status: **F7-R4** (entrada CF∨LNF + knowledge por escopo) · **F7.4 PENDING_OWNER**  
+> Data: 2026-11-13  
 > Tools públicas: **sempre as 6** (`get_context`, `read`, `analyze`, `knowledge`, `execute`, `delete`)  
 > Catálogo: `clara-semantic-v1` — novas entradas `(entity, action)`, sem tool nova
+
+---
+
+## 0. Porta de entrada e knowledge (F7-R4)
+
+| Regra | Detalhe |
+|---|---|
+| Entrada MCP | `principal_type=user` (D8) **e** (`controllership-finance.access` **ou** `.manage` **ou** `.access.dre` **ou** qualquer `lancamento-notas-fiscais.*`) |
+| Sem nenhuma | 403 `forbidden` / `authz` — log `clara_mcp_authz_denied gate=entry` |
+| Catálogo | Gate `access` = CF efetiva; `lnf_*` = famílias LNF; `clara_entry` = knowledge visível a quem passou na porta |
+| Negação por ação | `Você não tem permissão para <entity.action>.` — `gate=catalog` |
+| BFF | Continua autoridade: CLARA chama a rota com o JWT do usuário |
+| Knowledge `controllership` | Corpus PROC-0072 (itens com `domain_scope=controllership`, default V022) — liberado a quem tem CF* |
+| Knowledge `lancamento-notas-fiscais` | Corpus LNF (`corpus_manifest_lnf.py`) — liberado a quem tem qualquer LNF* |
+| Ambos | União dos escopos; get de item fora do escopo → 404/not found (sem vazar título) |
+
+### Matriz perfil × tool (esperado)
+
+| Perfil | get_context catalog | read/analyze/execute LNF | fechamento | knowledge |
+|---|---|---|---|---|
+| Só-LNF (P11/P6B/P2/P8) | só `lnf_*` + knowledge | conforme gate LNF | 403 | só domínio LNF |
+| Só-CF | fechamento; sem `lnf_*` | 403 | igual hoje | só controllership |
+| CF+LNF | ambos | ambos | ambos | ambos |
+| P0 | 403 entry | 403 | 403 | 403 |
+| P10 serviço | 401/403 D8 | — | — | — |
 
 ---
 

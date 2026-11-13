@@ -554,10 +554,18 @@ KNOWLEDGE_ACTIONS: dict[str, dict] = {
 
 
 def _gate_allowed(identity: dict | None, gate: str) -> bool:
-    """Visibilidade de catálogo — espelha gates da BFF; nunca autoriza."""
+    """Visibilidade de catálogo — espelha gates da BFF; nunca autoriza.
+
+    F7-R4: ``access`` = CF efetiva; ``clara_entry`` = passou na porta
+    (CF ou LNF) — usado por knowledge; ``lnf_*``/manage/dre como hoje.
+    """
     ident = identity or {}
     if gate in (None, "", "access"):
-        return True
+        return bool(ident.get("has_cf_access"))
+    if gate == "clara_entry":
+        return bool(
+            ident.get("has_cf_access") or ident.get("has_lnf_any")
+        )
     return bool(
         {
             "manage": ident.get("is_manage"),
@@ -616,9 +624,16 @@ def _semantic_catalog(identity: dict | None = None) -> dict:
         if _gate_allowed(identity, spec.get("gate", "access"))
     ]
     knowledge_entries = [
-        _entry("knowledge", "knowledge", name, "access",
-               spec["required"], spec["handler"].__doc__ or "")
+        _entry(
+            "knowledge",
+            "knowledge",
+            name,
+            "clara_entry",
+            spec["required"],
+            spec["handler"].__doc__ or "",
+        )
         for name, spec in sorted(KNOWLEDGE_ACTIONS.items())
+        if _gate_allowed(identity, "clara_entry")
     ]
     governed = []
     try:
@@ -654,7 +669,9 @@ def _semantic_catalog(identity: dict | None = None) -> dict:
     return {
         "catalog_version": SEMANTIC_CATALOG_VERSION,
         "actor_capabilities": {
-            "access": True,
+            "access": bool((identity or {}).get("has_cf_access")),
+            "has_cf_access": bool((identity or {}).get("has_cf_access")),
+            "has_lnf_any": bool((identity or {}).get("has_lnf_any")),
             "manage": managed,
             "dre": dre,
             "lnf_read": bool((identity or {}).get("lnf_read")),
@@ -664,6 +681,9 @@ def _semantic_catalog(identity: dict | None = None) -> dict:
             "lnf_manage": bool((identity or {}).get("lnf_manage")),
             "lnf_review_unmapped": bool(
                 (identity or {}).get("lnf_review_unmapped")
+            ),
+            "knowledge_domains": list(
+                (identity or {}).get("knowledge_domains") or []
             ),
         },
         "actions": {
@@ -679,19 +699,35 @@ def _identity_snapshot(user) -> dict:
     try:
         return dict(_governed_writes()._identity())
     except Exception:  # noqa: BLE001 — identidade best-effort
+        flags = bridge._identity_flags(user)
         return {
             "subject": actor_subject(user),
             "name": getattr(user, "name", None)
             or getattr(user, "email", None),
-            "is_manage": bridge._is_manage(user),
-            "is_dre": False,
-            "lnf_read": False,
-            "lnf_create": False,
-            "lnf_write": False,
-            "lnf_process": False,
-            "lnf_manage": False,
-            "lnf_review_unmapped": False,
+            **flags,
         }
+
+
+def _deny_catalog(
+    entity: str,
+    action: str,
+    *,
+    identity: dict | None = None,
+) -> CallToolResult:
+    ident = identity or {}
+    bridge._log_authz_denied(
+        gate="catalog",
+        principal_type="user",
+        has_cf_access=bool(ident.get("has_cf_access")),
+        has_lnf_any=bool(ident.get("has_lnf_any")),
+        entity=entity,
+        action=action,
+    )
+    return _err(
+        f"Você não tem permissão para {entity}.{action}.",
+        status_code=403,
+        error_code="forbidden",
+    )
 
 
 def _resolve_analyze_action(
@@ -813,6 +849,13 @@ def tool_get_context(
                 status_code=404,
                 error_code="not_implemented",
             )
+        gate = schema.get("gate") or "access"
+        if entity_name == "knowledge":
+            gate = "clara_entry"
+        if not _gate_allowed(identity, gate):
+            return _deny_catalog(
+                entity_name, action_name, identity=identity
+            )
         return _ok(
             schema,
             message="Schema da action (contrato versionado).",
@@ -889,6 +932,8 @@ def tool_read(
     page_size: int | None = None,
     projection: str | None = None,
 ) -> CallToolResult:
+    _request, user = _user_and_access()
+    identity = _identity_snapshot(user)
     ent = (entity or "").strip().lower()
     act = (action or "").strip().lower()
     spec = READ_ACTIONS.get((ent, act))
@@ -899,6 +944,8 @@ def tool_read(
             status_code=404,
             error_code="not_implemented",
         )
+    if not _gate_allowed(identity, spec.get("gate", "access")):
+        return _deny_catalog(ent, act, identity=identity)
     params = dict(filters or {})
     accepted = set(spec["required"]) | set(spec["allowed"])
     if period is not None and "period" in accepted:
@@ -929,6 +976,8 @@ def tool_analyze(
     question: str | None = None,
     parameters: dict | None = None,
 ) -> CallToolResult:
+    _request, user = _user_and_access()
+    identity = _identity_snapshot(user)
     atype = (analysis_type or "").strip().lower()
     atype = _ANALYZE_TYPE_ALIASES.get(atype, atype)
     spec = ANALYZE_ACTIONS.get(atype)
@@ -939,6 +988,13 @@ def tool_analyze(
             status_code=404,
             error_code="not_implemented",
         )
+    entity = spec.get("entity", "closing")
+    action = spec.get(
+        "action",
+        atype.rpartition(".")[-1] if "." in atype else atype,
+    )
+    if not _gate_allowed(identity, spec.get("gate", "access")):
+        return _deny_catalog(entity, action, identity=identity)
     params = dict(parameters or {}) | dict(filters or {})
     if period is not None:
         params["period"] = period
@@ -946,11 +1002,6 @@ def tool_analyze(
     if bad is not None:
         return bad
     result = spec["handler"](**_clean(params))
-    entity = spec.get("entity", "closing")
-    action = spec.get(
-        "action",
-        atype.rpartition(".")[-1] if "." in atype else atype,
-    )
     return _wrap(entity, action, result)
 
 
@@ -963,6 +1014,8 @@ def tool_knowledge(
     knowledge_id: str | None = None,
     limit: int | None = None,
 ) -> CallToolResult:
+    _request, user = _user_and_access()
+    identity = _identity_snapshot(user)
     act = (action or "").strip().lower()
     spec = KNOWLEDGE_ACTIONS.get(act)
     if spec is None:
@@ -972,6 +1025,8 @@ def tool_knowledge(
             status_code=404,
             error_code="not_implemented",
         )
+    if not _gate_allowed(identity, "clara_entry"):
+        return _deny_catalog("knowledge", act, identity=identity)
     params = _clean(
         {
             "query": query,

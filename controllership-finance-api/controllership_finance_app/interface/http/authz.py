@@ -16,7 +16,11 @@ import uuid
 
 from fastapi import Request
 
-from delpi_auth.authz_core import has_permission
+from delpi_auth.authz_core import has_any_permission, has_permission
+
+from controllership_finance_app.application.invoice_posting.permissions import (
+    LANCAMENTO_NOTAS_FISCAIS_ANY_PERMISSIONS,
+)
 
 ACCESS_PERMISSION = "controllership-finance.access"
 MANAGE_PERMISSION = "controllership-finance.manage"
@@ -24,6 +28,13 @@ MANAGE_PERMISSION = "controllership-finance.manage"
 # a legada `closing-documents.read` foi descontinuada após a migração
 # comprovada do papel DRE no Core (doc 115 §11).
 DRE_ACCESS_PERMISSION = "controllership-finance.access.dre"
+
+# Entrada MCP CLARA (F7-R4): CF access/manage/dre OU qualquer LNF.
+CLARA_CF_ENTRY_PERMISSIONS = (
+    ACCESS_PERMISSION,
+    MANAGE_PERMISSION,
+    DRE_ACCESS_PERMISSION,
+)
 
 
 def _human_user(request: Request):
@@ -37,10 +48,38 @@ def _human_user(request: Request):
     return user
 
 
+def has_cf_clara_entry(user) -> bool:
+    """Permissão efetiva de Controladoria para a CLARA (não só .access)."""
+    return bool(has_any_permission(user, CLARA_CF_ENTRY_PERMISSIONS))
+
+
+def has_lnf_clara_entry(user) -> bool:
+    """Qualquer permissão LNF efetiva — porta de entrada só-LNF."""
+    return bool(
+        has_any_permission(user, LANCAMENTO_NOTAS_FISCAIS_ANY_PERMISSIONS)
+    )
+
+
 def authorized_user(request: Request):
-    """Usuário humano com `controllership-finance.access` efetivo."""
+    """Usuário humano com `controllership-finance.access` efetivo.
+
+    Gate das rotas HTTP do Portal/fechamento — inalterado (F7-R4).
+    A porta de entrada da CLARA MCP é ``authorized_clara_mcp_entry``.
+    """
     user = _human_user(request)
     if not has_permission(user, ACCESS_PERMISSION):
+        raise Exception("Forbidden")
+    return user
+
+
+def authorized_clara_mcp_entry(request: Request):
+    """Porta de entrada da CLARA: user + (CF* OU qualquer LNF).
+
+    Não autoriza ações do catálogo — cada entity.action revalida o
+    próprio gate; a BFF permanece autoridade nas rotas LNF/CF.
+    """
+    user = _human_user(request)
+    if not (has_cf_clara_entry(user) or has_lnf_clara_entry(user)):
         raise Exception("Forbidden")
     return user
 
