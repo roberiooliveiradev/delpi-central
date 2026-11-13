@@ -24,7 +24,7 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 | W4.3 | MFE — Formulário de edição | DONE | `14728911ee` | 2026-11-13 | sala request, ConcurrentChangeNotice sem sobrescrever digitado |
 | W4.4 | MFE — Produtos sem código + Ajuda | DONE | `93dc8bad9f` | 2026-11-13 | sala unmapped + helpTooltips (auto-update e 3 estados) |
 | W5 | Ensaio HML | DONE | `6ce51cd357` | 2026-11-13 | E1–E3/E5–E8 PASS; E4 via W4.3 unit + E2 live; D1–D3 INCONCLUSIVE (observar em PROD). Logins: lnf-contract-p6/p11/p12/p2/p8/a2. E2 ≤2s (0 ms medido). E7 0 fragmentos de token. |
-| W6 | PROD — ligar o tempo real | IN_PROGRESS | | 2026-11-13 | ligar `LNF_REALTIME_ENABLED` + rebuild MFE |
+| W6 | PROD — ligar o tempo real | DONE | `7310b37f78` | 2026-11-13 | `LNF_REALTIME_ENABLED=true` + MFE `VITE_LNF_REALTIME_ENABLED=true`; BFF healthy; WS location 401 sem token; plugin-ui com encodeSubscribe; rollback = flag false |
 | W7 | Job periódico de conciliação | BLOCKED | | | decisão própria |
 
 Ordem: W1.1 → W2 → W2b → W3 → W4.1 → W4.2 → W4.3 → W4.4 → W5. Parar ao fim da W5.
@@ -544,15 +544,21 @@ Logins (só username): `lnf-contract-p6`, `lnf-contract-p11`, `lnf-contract-a2`,
 
 ## W6 — PROD
 
+Horário (UTC): início ~19:26:18, verificação ~19:27:41 (2026-11-13). HEAD `7310b37f78`.
+
 Diff de env (só flags de tempo real):
 
 ```diff
 + LNF_REALTIME_ENABLED=true
 + VITE_LNF_REALTIME_ENABLED=true
 # demais LNF_* inalteradas; VITE_LNF_API_BASE já era BFF
+# LNF_HOSTED_ENABLED=true (unchanged)
+# LNF_MODULE_ENABLED=false (unchanged)
 ```
 
-Rollback rápido: `LNF_REALTIME_ENABLED=false` na BFF + recreate; se preciso, rebuild MFE com `VITE_LNF_REALTIME_ENABLED=false` (digest anterior).
+Digests: BFF `sha256:ad4d7fbe…` (recreate com flag); MFE novo com `lnf:branch`/`/realtime`/`Ao vivo`; plugin-ui com `encodeSubscribe`. Baseline 5xx BFF log 30 min: 0. Probe WS sem token: HTTP 401 na location. Gateway: 0 JWT em linhas realtime; redaction `<redacted>` presente. CLARA (`delpi-controllership-finance`) up.
+
+Rollback rápido: `LNF_REALTIME_ENABLED=false` na BFF + recreate; se preciso, rebuild MFE com `VITE_LNF_REALTIME_ENABLED=false` (digest anterior `sha256:4d0fb63a…`).
 
 Roteiro curto do owner:
 
@@ -561,3 +567,5 @@ Roteiro curto do owner:
 3. Ver a outra tela atualizar sozinha.
 4. Ver o indicador «Ao vivo».
 5. Fazer uma ação pela CLARA e ver a fila atualizar.
+
+D1–D3 INCONCLUSIVE em HML → observar em PROD.
