@@ -1,6 +1,6 @@
 # PRC-TRACK — Deliberações do Product Owner para G1 (13/11/2026)
 
-> **ESCLARECIMENTO PO — 2026-11-13, ADR-04 (prevalece sobre exemplos anteriores):** **Flag resolvida ou removida deixa de aparecer nas versões posteriores e na visualização corrente de bandeiras ativas.** Somente flags OPEN são propagadas como bandeiras visíveis para cada nova revisão. A flag mantém identidade única e eventos auditáveis; versões anteriores preservam o estado no seu corte e a resolução/remoção permanece consultável no histórico de eventos, **não como bandeira replicada nas fichas seguintes**. A ação de resolver não cria nova Vn. Se a resolução ocorrer entre V4 e V5, V4 preserva sua fotografia histórica e V5 não exibe a bandeira. Se ocorrer durante V5, a **ficha atual** já não exibe a bandeira OPEN, enquanto a consulta histórica de V5 no corte de publicação permanece fiel àquele corte. Casos de reabertura devem ser ratificados no contrato temporal (não supor reaparição retroativa). Esta regra modifica a interpretação anterior de exibição de resolvidas em V5/V6.
+> **REGRA FINAL DO PO — ADR-04 (2026-11-13; substitui todas as interpretações anteriores):** a bandeira é única por produto/alvo e propaga-se às revisões enquanto **OPEN**. Se **RESOLVED durante V4**, aparece em **V4 como RESOLVED** (verde), mas **não aparece em V5 em diante**. Se **REMOVED durante V4**, **não aparece nem em V4 nem nas posteriores**. V3 preserva OPEN nos dois cenários. O evento registra `revisionContext=V4`, instante, autor e operação; resolução/remoção não cria versão técnica. A ficha corrente da V4 reflete imediatamente resolução/remoção; versões anteriores preservam seu estado. Histórico de eventos continua auditável, inclusive após desaparecimento da bandeira. **A revisão de resolução é a revisão vigente quando ocorre a ação, e não uma revisão nova.** Se houver reabertura, definir contrato separado, não supor comportamento retroativo. Especificação de persistência/projeção ainda depende de Coordination.
 
 > **Status:** `PO_DECISIONS_RECORDED / ARCHITECTURE_DECISION_REQUIRED` para alterações de autoridade, contrato e persistência. **Não é ADR ratificada pela Coordination.**  
 > **Natureza:** registrar literalmente a intenção decisória, compatibilizar com o sistema existente e explicitar conflitos/bloqueios. **Sem autorização de migration, código ou deploy.**
@@ -121,3 +121,19 @@
 Encaminhar à Coordination **ADR-01 a ADR-06** com matriz de decisão e perguntas acima, exigir ratificação explícita da autoridade, compatibilidade e contratos. **ADR-07** é gate operacional a executar em HML autorizado. Após ratificação: ajustar plano B1 (campos PRC/provenance/no-op), B2 (flags ID estável/projeção temporal), B3 (reads/diff servidor) e validar API 100% funcional no escopo em HML antes de abrir U1.
 
 **Nenhuma implementação, schema migration, chamada de deploy ou ratificação da Coordination executada por este registro.**
+
+
+## 7. Emenda PO à ADR-04 — resolução visível somente na revisão do evento
+
+| Momento | Se flag criada em V3 é resolvida em V4 | Se flag criada em V3 é removida em V4 |
+|---|---|---|
+| V3 | **OPEN** — bandeira aberta | **OPEN** — bandeira aberta |
+| V4 (revisão vigente da ação) | **RESOLVED** — bandeira verde, visível | **AUSENTE** — bandeira não aparece |
+| V5 e seguintes | **AUSENTE** — não propaga a resolvida | **AUSENTE** — não propaga a removida |
+| Histórico de eventos | criação V3 + resolução no contexto V4 | criação V3 + remoção no contexto V4 |
+
+**Precedência:** esta emenda substitui a formulação antiga segundo a qual RESOLVED desapareceria imediatamente da ficha atual. **A resolução permanece visível na própria revisão do evento**, e não nas próximas. A remoção apaga a apresentação na própria revisão do evento. Ação não gera nova versão, apenas evento de flags. Manter mesma identidade técnica da bandeira nas revisões, sem clonar registro.
+
+**Contratos pendentes para Coordination:** (a) estado de exibição de revisão atual pode ser atualizado por evento sem alterar snapshot técnico imutável; (b) revisão do evento = última Vn vigente no instante da mutação, gravada de forma auditável; (c) regras de visibilidade em caso de reabertura e flags criadas antes da primeira V1; (d) integridade da projeção durante concorrência/soft-delete. Estes detalhes **não mudam o comportamento funcional aprovado**.
+
+**Novos AC obrigatórios:** B2-FLAG-01 criada em V3 → OPEN V3/V4/V5 enquanto não encerrada; B2-FLAG-02 resolvida durante V4 → OPEN V3, RESOLVED V4, AUSENTE V5; B2-FLAG-03 removida durante V4 → OPEN V3, AUSENTE V4/V5; B2-FLAG-04 resolver/remover não incrementa versão; B2-FLAG-05 eventos auditáveis e mesma identidade, AuthZ/CAS/idempotência.
