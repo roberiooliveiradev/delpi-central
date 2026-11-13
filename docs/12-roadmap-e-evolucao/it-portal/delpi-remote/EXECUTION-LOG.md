@@ -22,6 +22,25 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proxima tarefa:** G1-DOM (validacao pura de dados de estacao) e G1-API, sem coletor/controle remoto; registrar resultados aqui.
 
+
+## 2026-11-13 | G1-DOM | codigo inicial do inventario
+
+**Objetivo:** iniciar implementacao sem alterar runtime, isolando regras puras de estacoes.
+
+**Arquivos novos:** `it-portal-api/it_portal_app/domain/workstations.py` e `it-portal-api/tests/test_workstations_domain.py`.
+
+**Implementado:** tipo de estacao; normalizacao de hostname/IP; unidade, situacao e limites; rejeicao de segredos em campos livres; `PC-0001` como codigo publico; exclusao intencional de permissao de controle remoto do cadastro.
+
+**Testes feitos:** `python -m py_compile` local e `pytest -q tests/test_workstations_domain.py`: **17 testes aprovados em ambiente isolado com stubs de dependencias**. Testes da API completa, Postgres real, workflow de PR e deploy **NAO** foram executados; estes resultados nao equivalem a homologacao.
+
+**Producao:** nada instalado, nenhum banco alterado, nenhuma rota adicionada e nenhum dispositivo tocado.
+
+**Risco:** verificar modulo com dependencias reais e suite completa antes de G1-API/deploy. Nao marcar G1-DOM como validado ate isso ocorrer.
+
+**Rollback:** reverter somente os dois arquivos novos, se necessario; nenhum estado persistido.
+
+**Proximo passo:** executar suite real e criar migration nova, repositorio, rotas e RBAC de `workstations` (G1-API), sem acesso remoto.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown
