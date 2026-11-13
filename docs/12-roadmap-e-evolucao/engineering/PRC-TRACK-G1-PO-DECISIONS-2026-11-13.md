@@ -173,3 +173,19 @@ Encaminhar à Coordination **ADR-01 a ADR-06** com matriz de decisão e pergunta
 **Aceite adicional:** `CR03-AC01` UPDATE primeira conclusão matched sem mudança → V1 baseline; `CR03-AC02` segunda matched sem diff → continua V1; `CR03-AC03` próxima matched com diff → V2; `CR03-AC04` falha, retry ou concorrência não produzem revisão indevida; `CR03-AC05` histórico rotula V1 como primeiro acompanhamento, não criação ERP.
 
 **Estado:** decisão funcional do PO registrada; ratificação de contrato, segurança, transação e rollout continua com Coordination. Nenhuma alteração de código/migration/deploy autorizada.
+
+## 10. Deliberação complementar do PO — CR-04: proveniência e confirmação dos campos (13/11/2026)
+
+**Escolha expressa:** **A — Preservar valores e identificar sua confirmação**. **Comentário:** sem comentário. **Status:** `PO_APPROVED_BUSINESS_DECISION / COORDINATION_RATIFICATION_PENDING`.
+
+**Regra funcional:** o snapshot consolidado mantém os valores dos campos acompanhados pela Engineering API, sem apagar campos apenas porque não foram individualmente reverificados em determinada solicitação. **Cada campo precisa de origem, cobertura e estado de confirmação explícitos.** Distinguir pelo menos: (a) valor confirmado pela fonte oficial no contexto da verificação atual, (b) valor carregado de última versão previamente confirmada válida, (c) valor registrado pela Engenharia mas sem evidência individual suficiente para ser proclamado oficial, e (d) desconhecido/indisponível. Nenhum dos estados permite declarar verificação inexistente, nem contornar gates de conclusão PRC.
+
+**Compatibilidade:** 
+- **CR-02 — ficha consolidada:** preserva os campos acompanhados, com seus metadados de proveniência; UPDATE parcial não descarta dados mantidos da base anterior. O delta da PRC permanece separado.
+- **CR-03 — baseline inicial V1:** a primeira conclusão matched materializa V1 com os valores conhecidos e seus estados de confirmação/coverage; não presume que todos são observados no TOTVS nem que o produto foi criado por aquela PRC. Em V2+, somente diferença **técnica real de valores/vínculos** confirmada cria nova revisão; mudança exclusiva de metadados de confirmação **não** deve criar versão técnica sem nova decisão do owner. Correções de proveniência devem ser auditáveis e não reescrever snapshots imutáveis por inferência.
+
+**Gates de contrato (Coordination/Engineering API):** catálogo versionado de campos PRC; enum e significado do estado de confirmação; `valueOrigin`, `evidenceId`, `verifiedAt`, `sourceRevision`, `coverage`, `schemaVersion`; semântica de `null` vs ausência vs desconhecido; mecanismo de merge UPDATE parcial; confidencialidade e AuthZ por objeto; compatibilidade do DTO existente. O estado `registered_unverified` não pode ser promovido a `official_verified` por inferência. `matched` de uma conclusão ainda exige as validações obrigatórias pelo owner, independentemente da apresentação do campo.
+
+**AC adicionais:** `CR04-AC01` UPDATE de descrição preserva classificação anterior com origem herdada; `CR04-AC02` valor registrado não individualmente confirmado aparece com indicação explícita, não como confirmado TOTVS; `CR04-AC03` campo desconhecido não recebe valor fabricado; `CR04-AC04` primeira V1 contém cobertura declarada; `CR04-AC05` atualização somente de estado de confirmação não gera V2 sem diff técnico; `CR04-AC06` campos/vínculos comparados preservam rastreio de origem; `CR04-AC07` falha de verificação impede conclusão mesmo que ficha contenha campos registrados.
+
+**Não autoriza** implementação, migration, deploy ou mudança de owner; detalhes técnicos exigem ratificação pela Coordination.
