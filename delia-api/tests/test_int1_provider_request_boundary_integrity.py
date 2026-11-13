@@ -380,12 +380,16 @@ def test_g1_p1_m1_differ_only_in_user_prompt_at_b3():
     assert zeroed[0] == zeroed[1] == zeroed[2]
 
 
-def test_declare_investigation_goal_visible_optional_not_mcp_gate():
+def test_declare_investigation_goal_visible_semantic_proposal_not_mcp_gate():
+    # INT-2: goal declaration remains model-elected (UNFORCED tool
+    # choice), model-visible and NOT an authorization/MCP gate — the
+    # typed-objective wording replaced the v2-3 "optional" phrasing.
     b3 = _capture_b3_for_question(G1)
     goal = b3["tools_by_name"]["declare_investigation_goal"]
-    desc = goal["description"]
-    assert "Optionally declare" in desc or "optional" in desc.lower()
-    assert "Not required" in desc or "not required" in desc.lower()
+    desc = goal["description"].lower()
+    assert "typed" in desc or "declare" in desc
+    assert "semantic proposal" in desc
+    assert "never grants access" in desc or "not authorization" in desc
     assert "davi.read" in b3["tools_by_name"]
     assert "teo.read" in b3["tools_by_name"]
     assert b3["tool_choice_policy"] == "UNFORCED"

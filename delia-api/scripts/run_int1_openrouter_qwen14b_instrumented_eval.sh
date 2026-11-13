@@ -271,12 +271,15 @@ docker exec -i -e DELIA_APP_ROOT=/app -e DELIA_EVAL_TRACE_DIR=/traces \
 
 # Real instrumented eval. Optional filter (default: historical full list).
 # G1/P1-only INT-1 runs: export DELIA_EVAL_SCENARIO_IDS before invoking.
+# INT-2 typed-objective runs: export DELIA_EVAL_CORPUS=INT2.
 SCENARIO_IDS="${DELIA_EVAL_SCENARIO_IDS:-}"
+EVAL_CORPUS="${DELIA_EVAL_CORPUS:-INT1}"
 docker exec -i \
   -e DELIA_APP_ROOT=/app \
   -e DELIA_EVAL_TRACE_DIR=/traces \
   -e DELIA_EVAL_ARTIFACT_DIR=/traces/artifacts \
   -e "DELIA_EVAL_SCENARIO_IDS=${SCENARIO_IDS}" \
+  -e "DELIA_EVAL_CORPUS=${EVAL_CORPUS}" \
   "${EVAL_NAME}" \
   python scripts/int1_openrouter_qwen14b_instrumented_eval.py \
   | tee "${ARTIFACT_DIR}/eval-output.jsonl"

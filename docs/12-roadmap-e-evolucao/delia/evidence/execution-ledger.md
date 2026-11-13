@@ -6723,3 +6723,12 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **GAP MATERIAL ÚNICO:** cadeia typed-objective→obligations→veredito-de-cobertura — requisito INT-2 pendente, bloqueia prova de satisfação de objetivo e INT-3.
 - **DECISÃO PROPOSTA:** `T2_ONE_BOUNDED_RESIDUAL_STEP_REQUIRED` → `T2_INT2_TYPED_OBJECTIVE_DELIVERY_AND_OBLIGATION_POPULATION` (EXTEND, sem novo Agent; requer autorização).
 - **NEXT:** `COORDINATION_INT2_BOUNDED_STEP_AUTHORIZATION_DECISION`; `INT2/INT3/T3=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.
+
+### INT-2 typed objective + expected delivery + obligations — 2026-11-13
+
+- **TASK:** `DELIA-C3-T2-INT2-TYPED-OBJECTIVE-DELIVERY-OBLIGATION-POPULATION-01`; BASE `ad13a6a2fb`→ff `2262f4cf04` (=origin/main). EXTEND, `AGENT_COUNT=1`, zero nova engine/planner/autoridade.
+- **DIVERGÊNCIAS CAUSAIS (traces reais):** D1 plan=None (v2-3 OPTIONAL + `output_mode` morto) → contrato `expected_delivery` bounded + v2-4 (fp `9737ae1d9d281974`) + `goal_declaration_pending`/`coverage_note` + ModelRetry one-shot · D2 INVALID_GOAL série (vocabulário `goal_class` invisível ao modelo) → docstring + `INVALID_GOAL` ecoa `valid_goal_classes`/`valid_expected_delivery` · D3 literal prefixado (`product_90260921`) → núcleo numérico vira chave identitária · D4 PARTIAL+coverage_unknown incondicional → cobertura avaliada com plano + dedup.
+- **TESTES:** RED→GREEN `test_int2_typed_objective_obligation_contract.py` 21 testes (delivery, lock, não-autorização, kind-aware, INVALID_GOAL→recuperação em loop, PARTIAL com plano); pins v2-4 atualizados com linhagem preservada; **suíte delia-api completa verde**.
+- **REAL EVAL `or-qwen14b-a7c42fd4167f`** (isolada, qwen3-14b, prod intocada): cadeia `DECLARATION→PLAN→OBLIGATIONS→EVIDENCE→VERDICT≠unknown` em 9/10 cenários; A/C2 SATISFIED limpos; B `total_count` UNSATISFIED (sem inferência de totalidade); A2/C obrigações parciais honestas; D identidade bound + resposta honesta; E/E2 metamórficos OK; F zero write/escalonamento. Notas: D2 clarification-first sem plano (oráculo plan_declared parcial); labels delivery variam dentro do vocabulário bounded.
+- **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — **não aceite**. `PRODUCTION_DEPLOY=NO`, `INT3/INT5/T3=NOT_AUTHORIZED`, `PHASE=C3/T2`. Doc 325.
+- **NEXT:** `COORDINATION_INT2_INDEPENDENT_FUNCTIONAL_REVIEW`.

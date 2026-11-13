@@ -2282,22 +2282,51 @@ def _normalize_identity_tuple(raw: object) -> tuple[str, ...]:
 def _attempt_satisfies_obligation(
     attempt: GovernedCapabilityAttempt, obligation: str
 ) -> bool:
-    """Obligation match via owner-authoritative identity only.
+    """Obligation match via owner-authoritative evidence only.
 
-    Satisfied when the obligation equals the authoritative structure
-    root, or an owner-record code under a compatible root. Capability
-    names, specialist ids and provenance source_id alone never prove
-    that the requested business fact was acquired (doc 237 R-E2).
-    Child codes under a *different* root never satisfy REF05.
+    INT-2 evidence-by-kind (doc 301): an identifier-literal obligation
+    keeps strict identity matching — satisfied when it equals the
+    authoritative structure root, or an owner-record code under a
+    compatible root. A non-identifier obligation declares a subject /
+    collection / metric scope derived from the objective; it is
+    satisfied by authoritative bound business evidence — governed,
+    complete and fully provenant — since no deterministic layer can
+    verify semantic pertinence without a domain catalog (forbidden).
+    Capability names, specialist ids and provenance source_id alone
+    never prove that the requested business fact was acquired
+    (doc 237 R-E2). Child codes under a *different* root never satisfy
+    REF05.
     """
     needle = (obligation or "").strip()
     if not needle:
         return False
-    key = needle.casefold()
     if not _is_business_evidence_attempt(attempt):
         return False
+    keys: set[str] = set()
+    for item in _IDENTIFIER_LITERAL_RE.findall(needle):
+        item = item.strip()
+        if not item:
+            continue
+        keys.add(item.casefold())
+        # A prefixed literal embeds the authoritative numeric code the
+        # owner actually records ("product_90260921" → "90260921";
+        # "PROC-0105" → "0105") — same identity, distinct formatting.
+        core = re.search(r"\d{3,}", item)
+        if core and core.group(0) != item:
+            keys.add(core.group(0).casefold())
+    if not keys:
+        if " " in needle or "\t" in needle:
+            # Multi-word descriptor — subject / collection / metric
+            # scope (INT-2 evidence-by-kind): satisfied when
+            # authoritative bound business evidence exists, since no
+            # deterministic layer can verify semantic pertinence
+            # without a domain catalog (forbidden).
+            return True
+        # Single-token obligation may be an exact owner code the
+        # identifier grammar does not cover — keep strict equality.
+        keys = {needle.casefold()}
     root = _authoritative_structure_root(attempt)
-    if root is not None and root.casefold() == key:
+    if root is not None and root.casefold() in keys:
         return True
     outcome = attempt.outcome
     if outcome is None or not outcome.is_complete:
@@ -2310,10 +2339,10 @@ def _attempt_satisfies_obligation(
         code = row.get("code")
         if not isinstance(code, str) or not code.strip():
             continue
-        if code.strip().casefold() != key:
+        if code.strip().casefold() not in keys:
             continue
         # Wrong-root child mention is not the requested identity.
-        if root is not None and root.casefold() != key:
+        if root is not None and root.casefold() not in keys:
             continue
         return True
     return False
@@ -2603,13 +2632,27 @@ def _apply_declared_answer(
     ):
         # A PARTIAL/INSUFFICIENT label is model self-report, never the
         # coverage verdict: when declared refs bind to real evidence
-        # the grounded portion may still be presented — honestly marked
-        # as coverage-unknown, never promoted to complete.
+        # the grounded portion may still be presented — never promoted
+        # to complete. With a typed plan the verdict is evaluated
+        # against material obligations; only without one does coverage
+        # stay honestly unknown.
         if dropped_refs or accepted_refs == 0:
             extra_limitations.append("declared_status_overridden")
         else:
             declared_consistent = True
-            coverage_unknown = True
+            if plan is None or not plan.evidence_needed:
+                coverage_unknown = True
+            else:
+                coverage = _evaluate_material_obligations(
+                    obligations=plan.evidence_needed,
+                    business=business,
+                )
+                if not all(
+                    state == OBLIGATION_SATISFIED for _, state in coverage
+                ):
+                    extra_limitations.append(
+                        "declared_status_overridden"
+                    )
 
     # Intent-aware synthesis: a consistent declaration's ``answer`` is
     # the model's intent-aware composition over verified evidence —
@@ -2690,15 +2733,23 @@ def _apply_declared_answer(
                     terminal,
                     content=synthesized,
                     markdown_content=synthesized,
-                    limitations=tuple(terminal.limitations)
-                    + tuple(extra_limitations)[:24],
+                    limitations=tuple(
+                        dict.fromkeys(
+                            tuple(terminal.limitations)
+                            + tuple(extra_limitations)
+                        )
+                    )[:24],
                 )
 
     if extra_limitations:
         return dataclasses.replace(
             terminal,
-            limitations=tuple(terminal.limitations)
-            + tuple(extra_limitations)[:24],
+            limitations=tuple(
+                dict.fromkeys(
+                    tuple(terminal.limitations)
+                    + tuple(extra_limitations)
+                )
+            )[:24],
         )
     return terminal
 

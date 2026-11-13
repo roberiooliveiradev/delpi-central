@@ -20,12 +20,14 @@ from app.infrastructure.orchestration import pydantic_ai_investigation as pai
 _BASELINE = "generalist-semantic-v2"
 _PRIOR_DEFAULT = "generalist-semantic-v2-1-object-continuity"
 _V2_2 = "generalist-semantic-v2-2-object-authz-continuity"
-_DEFAULT = "generalist-semantic-v2-3-enumeration-intent"
+_V2_3 = "generalist-semantic-v2-3-enumeration-intent"
+_DEFAULT = "generalist-semantic-v2-4-typed-objective"
 _CANDIDATE = "generalist-semantic-v3-objective-progress"
 _BASELINE_FP = "7dbc94c5035b0f19"
 _PRIOR_DEFAULT_FP = "4ebd5260b6cf9ba9"
 _V2_2_FP = "3692299dac74c26e"
-_DEFAULT_FP = "95e265ee18cd5d66"
+_V2_3_FP = "95e265ee18cd5d66"
+_DEFAULT_FP = "9737ae1d9d281974"
 
 
 def test_shipped_resource_loads_and_selects_baseline() -> None:
@@ -36,6 +38,7 @@ def test_shipped_resource_loads_and_selects_baseline() -> None:
     assert _BASELINE in bundle.instructions
     assert _PRIOR_DEFAULT in bundle.instructions
     assert _V2_2 in bundle.instructions
+    assert _V2_3 in bundle.instructions
     assert _DEFAULT in bundle.instructions
     assert _CANDIDATE in bundle.instructions
     selected = bundle.select(None)
@@ -49,6 +52,8 @@ def test_shipped_resource_loads_and_selects_baseline() -> None:
     assert prior.text_fingerprint == _PRIOR_DEFAULT_FP
     v22 = bundle.select(_V2_2)
     assert v22.text_fingerprint == _V2_2_FP
+    v23 = bundle.select(_V2_3)
+    assert v23.text_fingerprint == _V2_3_FP
 
 
 def test_baseline_text_matches_historical_fingerprint() -> None:

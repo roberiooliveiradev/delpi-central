@@ -1706,3 +1706,15 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | T2-INT4-SYNTHESIS | OPEN — PARTIAL_PROVEN_IN_SAMPLE | avanço pleno depende INT-2/3 |
 | T2-INT5-INTEGRATED-ACCEPTANCE | GATED | gate final posterior |
 | INT1-* (menores/externos) | OPEN_NON_BLOCKING | inalterados — owners registrados (Doc 323) |
+
+### INT-2 typed objective implementation — 2026-11-13 (Doc 325)
+
+| Residual | Status | Evidence / disposition |
+|---|---|---|
+| T2-INT2-TYPED-OBJECTIVE | **EVIDENCE_READY_FOR_REVIEW** | cadeia declaration→plan→obligations→verdict provada em `or-qwen14b-a7c42fd4167f` (9/10 com veredito tipado); aceite é da coordenação |
+| INT2-DELIVERY-LABEL-VARIANCE | OPEN_MINOR — NOT MATERIAL | C/E2: modelo escolhe `record_detail`/`enumeration` onde oráculo esperava `explanation`/`aggregation` — vocabulário bounded correto, seleção fina = variância cognitiva; objetivo/obrigações corretos |
+| INT2-DISTINCT-BINDING-FIELD-OBLIGATIONS | OPEN_MINOR — conservador | obrigações campo-a-campo sobre o mesmo registro exigem tentativa distinta → UNSATISFIED honesto; declaração subject-level evita falso-negativo |
+| INT2-IDENTITY-BIND-VS-KIND | OPEN_MINOR — contrato | D: evidência bound à identidade satisfaz a obrigação mesmo quando o *tipo* pedido (estrutura) está ausente no owner — pertinência de tipo é model-declared; resposta permanece honesta |
+| INT2-CLARIFICATION-FIRST-NO-PLAN | OPEN_MINOR | D2: path clarificação-first não declara objetivo → `coverage_unknown` por construção honesta (sem plano) |
+| INT2-MODEL-TOTAL-COMPOSITION | OPEN_MINOR — guard ativo | "109" não-verificado rejeitado 3× por `declared_answer_unverified_values` + `result_truncated` preservado |
+| INT1-* (menores/externos) | OPEN_NON_BLOCKING | inalterados — owners registrados (Docs 322–323) |

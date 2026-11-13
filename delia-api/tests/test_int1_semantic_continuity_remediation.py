@@ -133,14 +133,19 @@ def test_no_progress_projection_emits_continuity_coverage_note():
     assert "teo" not in note.lower()
 
 
-def test_default_instruction_is_v2_3_enumeration_intent():
+def test_default_instruction_is_v2_4_typed_objective():
     selected = pai.load_selected_investigation_instructions()
     assert (
         selected.instruction_version
-        == "generalist-semantic-v2-3-enumeration-intent"
+        == "generalist-semantic-v2-4-typed-objective"
     )
-    assert selected.text_fingerprint == "95e265ee18cd5d66"
-    # v2-2 remains selectable for rollback (preserved fingerprint).
+    assert selected.text_fingerprint == "9737ae1d9d281974"
+    # v2-3 and v2-2 remain selectable for rollback (preserved
+    # fingerprints).
+    v23 = pai.load_selected_investigation_instructions(
+        instruction_version="generalist-semantic-v2-3-enumeration-intent"
+    )
+    assert v23.text_fingerprint == "95e265ee18cd5d66"
     v22 = pai.load_selected_investigation_instructions(
         instruction_version="generalist-semantic-v2-2-object-authz-continuity"
     )

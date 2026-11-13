@@ -274,7 +274,8 @@ def test_module_exposes_native_first_tools():
     assert "request_user_clarification" in src
     assert "compose_verified_observations" in src
     assert "arguments: dict[str, Any] | None" in src
-    assert "OPTIONAL" in src
+    # INT-2: typed goal declaration carries expected_delivery.
+    assert "expected_delivery" in src
     assert "run_governed_investigation" not in src
     assert "_COMPARE_INTENT" not in src
 

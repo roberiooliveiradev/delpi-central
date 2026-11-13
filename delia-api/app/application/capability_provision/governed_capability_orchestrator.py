@@ -600,6 +600,21 @@ class OperationalCapabilityOrchestrator:
         {"read", "analyze", "compare", "create_or_modify", "clarify"}
     )
 
+    # INT-2 typed expected-delivery vocabulary — how the user expects the
+    # objective delivered, orthogonal to goal_class intent. Bounded
+    # canonical set; "unspecified" is the honest unproven-delivery state,
+    # never a fabricated classification.
+    _DELIVERY_MODES = frozenset(
+        {
+            "enumeration",
+            "aggregation",
+            "explanation",
+            "record_detail",
+            "comparison",
+            "unspecified",
+        }
+    )
+
     @dataclasses.dataclass(frozen=True, slots=True)
     class _TurnGoal:
         """Bounded semantic interpretation of the user turn (LOOP-03R1).
@@ -2621,17 +2636,33 @@ class OperationalCapabilityOrchestrator:
         target_identities: object,
         evidence_needed: object = (),
         business_subject: str | None = None,
+        expected_delivery: object = "unspecified",
         correlation: str,
     ) -> SemanticInvestigationPlan | None:
         """Validate Agent-declared investigation plan into typed contract.
 
         Reuses ``_TurnGoal`` vocabulary — no parallel goal model.
+        ``expected_delivery`` maps onto the existing ``output_mode``
+        slot: INT-2 typed delivery (enumeration/aggregation/explanation/
+        record_detail/comparison) carried into finalize unchanged.
         """
         klass = (goal_class or "").strip()
         if klass not in self._GOAL_CLASSES:
             _logger.info(
                 "orchestration stage=semantic_plan "
                 "decision=invalid_class correlation_id=%s",
+                correlation,
+            )
+            return None
+        delivery = (
+            str(expected_delivery).strip().casefold()
+            if expected_delivery is not None
+            else ""
+        ) or "unspecified"
+        if delivery not in self._DELIVERY_MODES:
+            _logger.info(
+                "orchestration stage=semantic_plan "
+                "decision=invalid_expected_delivery correlation_id=%s",
                 correlation,
             )
             return None
@@ -2643,6 +2674,7 @@ class OperationalCapabilityOrchestrator:
         goal = self._TurnGoal(
             goal_class=klass,
             comparison_requested=bool(comparison_requested),
+            output_mode=delivery,
             business_subject=subject,
             declared=True,
         )

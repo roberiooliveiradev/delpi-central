@@ -786,6 +786,20 @@ def _attempt_projection(
                 "Named identifiers still lack an authoritative "
                 "observation. Choose the next owner tool yourself."
             )
+    # INT-2 typed objective: while no goal is declared the finalize
+    # coverage verdict stays coverage_unknown — surface that as a
+    # model-visible signal on every observation, never silently.
+    # Higher-priority notes (authorization denial, schema rejection)
+    # keep their coverage_note; the pending flag still travels.
+    if plan is None:
+        projection["goal_declaration_pending"] = True
+        if "coverage_note" not in projection:
+            projection["coverage_note"] = (
+                "Typed objective undeclared — coverage cannot be "
+                "evaluated. Declare the user's objective, expected "
+                "delivery and evidence obligations once via "
+                "declare_investigation_goal before finalizing."
+            )
     # Reuse the canonical owner pagination detector — do not invent
     # cursors. Surface page/has_more so the model can continue a
     # truncated list with the same tool schema (P2 continuity).
@@ -1674,14 +1688,36 @@ class PydanticAiInvestigationOrchestrator:
             target_identities: list[str] | None = None,
             evidence_needed: list[str] | None = None,
             business_subject: str = "",
+            expected_delivery: str = "unspecified",
         ) -> str:
-            """OPTIONAL typed investigation goal declaration.
+            """Typed investigation goal declaration (INT-2).
 
-            Use for multi-target / multi-obligation asks. Not required
-            for a simple single READ. Semantic proposal only.
+            Declare the user's objective, the expected delivery and the
+            material evidence obligations before or alongside the first
+            business-evidence call so coverage can be evaluated at
+            finalize. ``goal_class`` is one of: read, analyze, compare,
+            create_or_modify, clarify. ``expected_delivery`` is one of:
+            enumeration, aggregation, explanation, record_detail,
+            comparison, unspecified. ``evidence_needed`` names the
+            material obligations derived from the objective —
+            collection coverage for enumeration, metric+scope for
+            aggregation, pertinent facts for explanation. A
+            declaration is a semantic proposal only — it
+            never grants access or authorization. A goal may be
+            declared once per turn.
             """
             ctx.deps.deadline.check("tool_declare_goal")
             ctx.deps.tool_calls += 1
+            if ctx.deps.investigation_plan is not None:
+                # Goal mutation after acceptance would let untrusted
+                # mid-turn influence rewrite declared obligations — the
+                # first valid declaration stands (INT-2 Case F).
+                return _proj(
+                    {
+                        "status": "INVALID_GOAL",
+                        "error_code": "investigation_goal_already_declared",
+                    }
+                )
             targets = (
                 target_identities
                 if isinstance(target_identities, list)
@@ -1696,20 +1732,31 @@ class PydanticAiInvestigationOrchestrator:
                 target_identities=targets,
                 evidence_needed=needed,
                 business_subject=business_subject or None,
+                expected_delivery=expected_delivery,
                 correlation=ctx.deps.correlation,
             )
-            ctx.deps.investigation_plan = plan
             if plan is None:
+                # Owner-side schema feedback: echo the bounded
+                # vocabularies so a wrong proposal can be corrected on
+                # the next call instead of retried blindly.
                 return _proj(
                     {
                         "status": "INVALID_GOAL",
                         "error_code": "investigation_goal_rejected",
+                        "valid_goal_classes": sorted(
+                            ctx.deps.gates._GOAL_CLASSES
+                        ),
+                        "valid_expected_delivery": sorted(
+                            ctx.deps.gates._DELIVERY_MODES
+                        ),
                     }
                 )
+            ctx.deps.investigation_plan = plan
             accepted: dict[str, Any] = {
                 "status": "ACCEPTED",
                 "goal_class": plan.goal.goal_class,
                 "comparison_requested": plan.goal.comparison_requested,
+                "expected_delivery": plan.goal.output_mode,
                 "target_identities": list(plan.target_identities),
                 "evidence_needed": list(plan.evidence_needed),
             }
@@ -2053,6 +2100,38 @@ class PydanticAiInvestigationOrchestrator:
                         f"{citable}; report the rest under "
                         "limitations."
                     )
+            # INT-2 bounded correction (same one-shot budget,
+            # provider-neutral): finalizing with collected business
+            # evidence but NO declared typed goal leaves coverage
+            # permanently unevaluable (coverage_unknown). Buy ONE
+            # native pass so the model can declare the objective via
+            # declare_investigation_goal — never fabricates a plan; a
+            # second goal-less declaration finalizes honestly with the
+            # unknown verdict preserved.
+            if (
+                output.status
+                in (
+                    InvestigationAnswerStatus.COMPLETE,
+                    InvestigationAnswerStatus.PARTIAL,
+                    InvestigationAnswerStatus.INSUFFICIENT,
+                    InvestigationAnswerStatus.NO_EVIDENCE,
+                    InvestigationAnswerStatus.EMPTY,
+                )
+                and ctx.deps.collected
+                and ctx.deps.investigation_plan is None
+                and not ctx.deps.insufficiency_retry_used
+                and ctx.deps.tool_calls < self._tool_calls_limit
+            ):
+                ctx.deps.insufficiency_retry_used = True
+                raise ModelRetry(
+                    "You collected owner evidence but never declared "
+                    "the typed investigation goal — coverage cannot be "
+                    "evaluated without it. Call "
+                    "declare_investigation_goal once now with the "
+                    "objective's goal class, expected delivery and the "
+                    "material evidence obligations it required, then "
+                    "re-submit your answer."
+                )
             # Native technical retry (bounded by UsageLimits, one-shot
             # per run): a declaration of insufficiency while tool
             # budget remains may simply mean the selected capability

@@ -876,7 +876,9 @@ def test_unbound_evidence_ref_triggers_one_shot_native_retry():
     )
     with native_toolset_stub(alpha_beta_servers()):
         attempt = engine.attempt("estrutura 90260147")
-    assert calls["n"] == 4
+    # INT-2: the undeclared-goal bounded retry adds exactly one pass —
+    # evidence_ref retry + goal-declaration retry, each one-shot.
+    assert calls["n"] == 5
     assert not any(
         lim.startswith("evidence_ref_unbound")
         for lim in attempt.limitations
