@@ -180,8 +180,12 @@ def test_gpt_upsert_view_without_manage_is_403():
             "tm_app.application.gpt_actions.dispatch_service.check_processo_manage_access",
             return_value=denied,
         ),
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.ProcessoRepository"
+        ) as processo_repo,
         patch.object(svc._decomp_writes, "save_tree") as save,
     ):
+        processo_repo.return_value.get.return_value = {"processo_id": pid}
         with pytest.raises(GptActionsError) as exc:
             svc._upsert_document(
                 request,
@@ -204,6 +208,9 @@ def test_gpt_upsert_decomposition_tree_valid():
             "tm_app.application.gpt_actions.dispatch_service.check_processo_manage_access",
             return_value=None,
         ),
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.ProcessoRepository"
+        ) as processo_repo,
         patch.object(
             svc._decomp_writes,
             "save_tree",
@@ -212,6 +219,7 @@ def test_gpt_upsert_decomposition_tree_valid():
         patch.object(svc._decomp_writes, "read_back_tree", return_value=row),
         patch.object(svc, "_audit"),
     ):
+        processo_repo.return_value.get.return_value = {"processo_id": pid}
         data, message, status = svc._upsert_document(
             request,
             GptEntity.DECOMPOSITION_TREE,

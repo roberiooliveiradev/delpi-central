@@ -21,7 +21,7 @@ from tv_app.interface.mcp.constants import MCP_TOOL_NAMES
 
 SHARE_SVC = "tv_app.application.services.playlist_share_service"
 ACCESS_SVC = (
-    "tv_app.application.services.playlist_access_service."
+    "tv_app.application.services.playlist_share_service."
     "PlaylistAccessService"
 )
 

@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.1",
+  "source": "synthetic test fixture (not an operational export)",
+  "processos": [
+    {"processo_id": "p1", "filial_id": "01"},
+    {"processo_id": "p2", "filial_id": "02"}
+  ],
+  "setor_filiais": [
+    {"filial_id": "01", "setor_id": "engenharia"},
+    {"filial_id": "02", "setor_id": "pcp"}
+  ],
+  "filiais": [
+    {"codigo_filial": "01", "nome_filial": "Matriz"},
+    {"codigo_filial": "02", "nome_filial": "Filial 02"}
+  ]
+}

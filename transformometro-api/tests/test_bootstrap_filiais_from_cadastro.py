@@ -9,7 +9,7 @@ FIXTURE = (
     Path(__file__).resolve().parents[1]
     / "fixtures"
     / "cadastro"
-    / "transformometro-cadastro-20260612.json"
+    / "cadastro_bootstrap_filiais_synthetic.json"
 )
 
 

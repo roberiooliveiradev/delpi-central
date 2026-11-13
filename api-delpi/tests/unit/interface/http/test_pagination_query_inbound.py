@@ -45,7 +45,7 @@ def test_inventory_factories_match_defaults() -> None:
             encoding="utf-8"
         )
     )
-    assert inv["count"] == 123
+    assert inv["count"] == 125
     for entry in inv["entries"]:
         query = factories[entry["param"]](entry["tierId"])
         assert query.default == entry["defaultResolved"], entry
@@ -81,8 +81,11 @@ def test_new_pagination_tiers_are_in_authoritative_inventory() -> None:
         "page_25_100": ("lancamento_notas_fiscais_router.py", 25),
     }
     for tier_id, (filename, default) in expected.items():
-        entries = [row for row in inv["entries"] if row["tierId"] == tier_id]
+        entries = [
+            row
+            for row in inv["entries"]
+            if row["tierId"] == tier_id and row["file"].endswith(filename)
+        ]
         assert len(entries) == 1, tier_id
-        assert entries[0]["file"].endswith(filename)
         assert entries[0]["defaultResolved"] == default
         assert PaginationTierService.get(tier_id).default == default

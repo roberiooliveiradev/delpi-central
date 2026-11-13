@@ -28,6 +28,9 @@ def test_llm_tuning_comes_from_runtime_json(monkeypatch):
     # Doc 243: intelligence tunables resolve from the single JSON
     # artifact — retired env values fail closed (covered by
     # test_pydantic_ai_runtime_config).
+    # Default profile is asserted — a deployment-selected
+    # DELIA_RUNTIME_PROFILE would make this env-dependent.
+    monkeypatch.delenv("DELIA_RUNTIME_PROFILE", raising=False)
     settings = Settings()
     assert settings.llm_max_output_tokens is None
     assert settings.model_stage_timeout_seconds == 120.0

@@ -182,7 +182,7 @@ def test_upsert_keeps_nc_when_score_still_candidate() -> None:
         criterion_id="crit-1",
         score=3,
         is_not_applicable=False,
-        observation=None,
+        observation="NC motivo de teste",
         updated_by_user_id="u1",
         expected_version=1,
     )

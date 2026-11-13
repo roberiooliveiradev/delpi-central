@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock
 
 from tm_app.application.services.sign_invite_mail_trace_reconciliation_service import (
@@ -58,13 +58,13 @@ def test_pick_best_trace_match_prefers_closest_received_time():
 def test_reconcile_invite_updates_delivered():
     repo = MagicMock()
     trace_client = MagicMock()
-    sent_at = datetime(2026, 8, 27, 12, 0, tzinfo=timezone.utc)
+    sent_at = datetime.now(timezone.utc)
     trace_client.list_message_traces.return_value = [
         {
             "id": "trace-1",
             "recipientAddress": "a@delpi.com.br",
             "status": "Delivered",
-            "receivedDateTime": "2026-08-27T12:01:00Z",
+            "receivedDateTime": (sent_at + timedelta(minutes=1)).isoformat(),
         }
     ]
     trace_client.get_details_by_recipient.return_value = []

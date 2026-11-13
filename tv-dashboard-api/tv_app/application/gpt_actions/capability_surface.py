@@ -422,6 +422,14 @@ def _project_for_actions(surface: dict[str, Any]) -> dict[str, Any]:
     # vista_get_context already returns effectiveCapabilities + the
     # confirmation model. MCP keeps the vocabulary descriptor.
     projected.pop("semantic_verbs", None)
+    # O registro completo designMethodology (factRequirements/readiness/
+    # sufficiency) alimenta o avaliador server-side em analyze — não é
+    # contrato do especialista. O ponteiro canônico permanece em
+    # agent_directives.design_methodology (READ_FACTS_BEFORE_ASKING);
+    # o detalhe íntegro segue na projeção MCP e em design_intelligence.json.
+    design = projected.get("designIntelligence")
+    if isinstance(design, dict):
+        design.pop("designMethodology", None)
     return projected
 
 

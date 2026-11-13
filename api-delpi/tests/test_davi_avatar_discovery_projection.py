@@ -12,6 +12,7 @@ from pathlib import Path, PurePosixPath
 from app.application.external_capabilities.davi_agent_intelligence_service import (
     DaviAgentIntelligenceService as Svc,
 )
+from app.config import settings
 
 _SERVICE_ROOT = Path(__file__).resolve().parents[1]
 
@@ -24,7 +25,9 @@ def test_avatar_distribution_official_metadata():
     assert dist["url"].endswith(
         "/apps/api-delpi/public/characters/davi/avatar/avatar-v1.png"
     )
-    assert dist["url"].startswith("https://")
+    assert dist["url"].startswith(
+        (settings.PUBLIC_BASE_URL or "https://minhadelpi.com.br").rstrip("/")
+    )
     assert dist["version"] == "avatar-v1"
     assert dist["mime_type"] == "image/png"
     assert (
@@ -52,7 +55,9 @@ def test_avatar_distribution_sha_matches_asset_bytes():
 def test_avatar_distribution_in_persona_context():
     ctx = Svc.persona_context()
     assert ctx["avatar_status"] == "OFFICIAL_AVATAR_APPROVED"
-    assert ctx["avatar_distribution"]["url"].startswith("https://")
+    assert ctx["avatar_distribution"]["url"].startswith(
+        (settings.PUBLIC_BASE_URL or "https://minhadelpi.com.br").rstrip("/")
+    )
     # canonical internal reference is preserved untouched
     assert "avatar_reference" in ctx
 

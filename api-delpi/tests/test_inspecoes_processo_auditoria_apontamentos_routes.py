@@ -59,8 +59,11 @@ def test_inspecoes_processo_auditoria_apontamentos_returns_meta(
     response = get_inspecoes_processo_auditoria_apontamentos_route(
         branch="01",
         data="2026-07-13",
+        start_date=None,
+        end_date=None,
         inspecao_status="nao_inspecionou",
         shift=None,
+        export_all=False,
         page=1,
         page_size=50,
     )
@@ -75,10 +78,13 @@ def test_inspecoes_processo_auditoria_apontamentos_returns_meta(
     mock_use_case.execute.assert_called_once_with(
         branch="01",
         data="2026-07-13",
+        start_date=None,
+        end_date=None,
         page=1,
         page_size=50,
         status="nao_inspecionou",
         shift=None,
+        export_all=False,
     )
 
 

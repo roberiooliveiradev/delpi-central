@@ -38,11 +38,17 @@ class FakeClock:
 
 @pytest.fixture(autouse=True)
 def _clean_caches():
+    from tv_app.application.services.presentation_payload_service import (
+        reset_presentation_payload_cache,
+    )
+
     reset_comunicado_data_block_cache()
     reset_native_data_cache()
+    reset_presentation_payload_cache()
     yield
     reset_comunicado_data_block_cache()
     reset_native_data_cache()
+    reset_presentation_payload_cache()
 
 
 @pytest.fixture

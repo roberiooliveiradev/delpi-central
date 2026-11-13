@@ -118,6 +118,13 @@ def test_create_shared_resource_validation_exposes_fields_to_gpt(tm_client):
                 }
             },
         )
+    assert response.status_code == 200
+    handle = response.json()["data"]["proposal"]["handle"]
+    with patch.object(gpt_actions_routes._dispatch, "_require_capability"):
+        response = tm_client.post(
+            "/transformometro/gpt-actions/v1/proposals/commit",
+            json={"proposal_handle": handle, "confirmation": True},
+        )
     assert response.status_code == 400
     payload = response.json()
     assert payload["success"] is False

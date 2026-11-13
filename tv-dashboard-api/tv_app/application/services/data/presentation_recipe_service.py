@@ -179,19 +179,6 @@ class PresentationRecipeService:
         """
         full = cls.catalog_projection()
         tokens = full.get("designTokens") if isinstance(full.get("designTokens"), dict) else {}
-        part = tokens.get("partChrome") if isinstance(tokens.get("partChrome"), dict) else {}
-        slim_part: dict[str, Any] = {}
-        if isinstance(part.get("hierarchy"), dict):
-            slim_part["hierarchy"] = part["hierarchy"]
-        for family in ("kpi", "chart", "table", "input"):
-            row = part.get(family)
-            if isinstance(row, dict):
-                # Keep only min/size gates — drop verbose default style blobs.
-                slim_part[family] = {
-                    k: v
-                    for k, v in row.items()
-                    if "Min" in str(k) or k in {"valueMinFontSize", "titleMinFontSize"}
-                }
         typography_in = tokens.get("typography") if isinstance(tokens.get("typography"), dict) else {}
         typography_out: dict[str, Any] = {}
         for name, row in typography_in.items():
@@ -217,8 +204,9 @@ class PresentationRecipeService:
             "typography": typography_out,
             "spacing": tokens.get("spacing"),
             "brand": brand_out,
-            "roles": tokens.get("roles") if isinstance(tokens.get("roles"), dict) else {},
-            "partChrome": slim_part,
+            # partChrome floors + the slot-role vocabulary are server-side
+            # VERIFY authority — recipes already carry concrete ``roles`` and
+            # typography/minTvSize keeps the specialist-facing size gates.
             "chartTypeHints": tokens.get("chartTypeHints")
             if isinstance(tokens.get("chartTypeHints"), dict)
             else {},

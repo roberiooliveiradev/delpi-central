@@ -52,11 +52,12 @@ def resolve_instancia_anchor(
         if instancia:
             setores = instancia.get("setores") or []
             first = setores[0] if setores else {}
+            first = first if isinstance(first, dict) else {}
             return {
                 "filial_id": instancia.get("filial_id"),
-                "setor_id": first.get("setor_id") if isinstance(first, dict) else instancia.get("setor_id"),
+                "setor_id": first.get("setor_id") or instancia.get("setor_id"),
                 "codigo_filial": instancia.get("codigo_filial"),
-                "codigo_setor": first.get("codigo_setor") if isinstance(first, dict) else instancia.get("codigo_setor"),
+                "codigo_setor": first.get("codigo_setor") or instancia.get("codigo_setor"),
                 "todas_filiais_ativas": bool(instancia.get("todas_filiais_ativas")),
                 "setores": setores,
             }

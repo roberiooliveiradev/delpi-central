@@ -24,7 +24,9 @@ def test_avatar_distribution_official_metadata():
     assert dist["url"].endswith(
         "/apps/transformometro-api/public/characters/teo/avatar/avatar-v2.png"
     )
-    assert dist["url"].startswith("https://")
+    from tm_app.config import settings
+
+    assert dist["url"].startswith(settings.PUBLIC_BASE_URL.rstrip("/"))
     assert dist["version"] == "avatar-v2"
     assert dist["mime_type"] == "image/png"
     assert (
@@ -52,7 +54,11 @@ def test_avatar_distribution_sha_matches_asset_bytes():
 def test_avatar_distribution_in_persona_context():
     ctx = Svc.persona_context()
     assert ctx["avatar_status"] == "OFFICIAL_AVATAR_APPROVED"
-    assert ctx["avatar_distribution"]["url"].startswith("https://")
+    from tm_app.config import settings
+
+    assert ctx["avatar_distribution"]["url"].startswith(
+        settings.PUBLIC_BASE_URL.rstrip("/")
+    )
     # canonical internal reference is preserved untouched
     assert "avatar_reference" in ctx
 

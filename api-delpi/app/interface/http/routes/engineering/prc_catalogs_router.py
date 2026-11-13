@@ -21,7 +21,7 @@ from app.infrastructure.persistence.totvs.engineering_repositories.prc_catalogs_
     PRC_CATALOG_KINDS,
     PrcCatalogsRepository,
 )
-from app.interface.http.pagination_query import PAGE_SIZE_QUERY
+from app.interface.http.pagination_query import LIMIT_QUERY, PAGE_SIZE_QUERY
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 from delpi_auth.authorization import require_any_permission
@@ -41,7 +41,7 @@ def list_prc_catalog_items(
         max_length=60,
         description="Search by code prefix or description (accent-insensitive).",
     ),
-    limit: int = Query(default=200, ge=1, le=500),
+    limit: int = LIMIT_QUERY("limit_200_500"),
 ):
     if catalog not in PRC_CATALOG_KINDS:
         return error_response(

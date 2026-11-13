@@ -93,8 +93,11 @@ def _patch_preview(ops, policy="direct", risk="additive"):
 
 # --- surface ---------------------------------------------------------------
 
-def test_surface_has_eighteen_tools():
-    assert len(MCP_TOOL_NAMES) == 18
+def test_surface_has_six_tools():
+    # SEMANTIC_TOOLS_V1 consolidation (six-tools surface): execute and
+    # delete are facades over PREPARE→COMMIT; the 12 legacy per-op tools
+    # were removed and remain forbidden on the wire.
+    assert len(MCP_TOOL_NAMES) == 6
     assert {"execute", "delete"} <= set(MCP_TOOL_NAMES)
     assert "execute" not in MCP_FORBIDDEN_TOOLS
     assert "delete_data_model" in MCP_FORBIDDEN_TOOLS
@@ -161,8 +164,11 @@ def test_execute_commit_with_approved_artifact_verified():
             catalog_version=PresentationOpsContentService.catalog_version(),
         )
     challenge = prepared["consentChallenge"]
+    from tv_app.application.gpt_actions.proposal_store import (
+        parse_proposal_handle,
+    )
     proposal = get_proposal_store().get(
-        prepared["proposal"]["proposal_id"])
+        parse_proposal_handle(prepared["proposal_handle"]))
     svc.approve(
         challenge_id=challenge["challengeId"], actor_sub=ACTOR,
         token_claims={"sub": ACTOR, "iat": int(__import__("time").time())},
@@ -170,6 +176,7 @@ def test_execute_commit_with_approved_artifact_verified():
     from tv_app.application.gpt_actions.vista_consent_service import (
         _target_ref, confirm_op_names)
     echo = _target_ref(proposal, confirm_op_names(proposal))
+    writes.list_slides.return_value = []  # read-back post-delete
     with _patch_preview(ops, policy="confirm", risk="destructive"):
         out = d.semantic_execute(
             user=_user(), entity="presentation", action="apply_mutation",
@@ -186,10 +193,22 @@ def test_execute_commit_with_approved_artifact_verified():
 def test_delete_rejects_unapproved_entity():
     d, _, _ = _dispatch()
     with pytest.raises(GptActionsError) as exc:
-        d.semantic_delete(user=_user(), entity="data_model",
+        d.semantic_delete(user=_user(), entity="process",
                           target={"playlistId": PID})
     assert exc.value.code == "CAPABILITY_NOT_APPROVED"
     assert exc.value.status_code == 403
+
+
+def test_delete_data_model_without_model_id_fails_dependency_gate():
+    """data_model is mapped in DELETE_ENTITIES, but without ``modelId``
+    in target the canonical plan-dependency gate rejects the plan
+    (DEPENDENCY_UNSATISFIABLE) — the op name stays forbidden on the
+    wire via MCP_FORBIDDEN_TOOLS either way."""
+    d, _, _ = _dispatch()
+    with pytest.raises(GptActionsError) as exc:
+        d.semantic_delete(user=_user(), entity="data_model",
+                          target={"playlistId": PID})
+    assert exc.value.code == "DEPENDENCY_UNSATISFIABLE"
 
 
 def test_delete_slide_prepare_emits_challenge():
@@ -217,8 +236,9 @@ def test_delete_commit_without_artifact_fails_closed():
         )
     with pytest.raises(GptActionsError) as exc:
         d.semantic_delete(
-            user=_user(), proposal_handle=prepared["proposal_handle"],
-            confirmation=True, idempotency_key="k-del-1",
+            user=_user(), entity="slide", phase="commit",
+            proposal_handle=prepared["proposal_handle"],
+            idempotency_key="k-del-1",
         )
     assert exc.value.code == "CONFIRMATION_REQUIRED"
     writes.delete_slide.assert_not_called()
@@ -235,7 +255,11 @@ def test_delete_commit_consumes_artifact_single_use():
             catalog_version=PresentationOpsContentService.catalog_version(),
         )
     challenge = prepared["consentChallenge"]
-    proposal = get_proposal_store().get(prepared["proposal"]["proposal_id"])
+    from tv_app.application.gpt_actions.proposal_store import (
+        parse_proposal_handle,
+    )
+    proposal = get_proposal_store().get(
+        parse_proposal_handle(prepared["proposal_handle"]))
     svc.approve(
         challenge_id=challenge["challengeId"], actor_sub=ACTOR,
         token_claims={"sub": ACTOR, "iat": int(__import__("time").time())},
@@ -243,9 +267,11 @@ def test_delete_commit_consumes_artifact_single_use():
     from tv_app.application.gpt_actions.vista_consent_service import (
         _target_ref, confirm_op_names)
     echo = _target_ref(proposal, confirm_op_names(proposal))
+    writes.list_slides.return_value = []  # read-back post-delete
     with _patch_preview(ops, policy="confirm", risk="destructive"):
         out = d.semantic_delete(
-            user=_user(), proposal_handle=prepared["proposal_handle"],
+            user=_user(), entity="slide", phase="commit",
+            proposal_handle=prepared["proposal_handle"],
             consent_artifact=challenge["challengeId"], target_echo=echo,
             idempotency_key="k-del-2",
         )

@@ -31,6 +31,12 @@ def test_create_rejects_setor_not_linked_to_filial(monkeypatch):
         "tm_app.infrastructure.persistence.repositories.process_instance_repository.SetorRepository",
         lambda connection=None: setor_repo,
     )
+    filial_repo = MagicMock()
+    filial_repo.get.return_value = {"codigo_filial": "01"}
+    monkeypatch.setattr(
+        "tm_app.infrastructure.persistence.repositories.process_instance_repository.FilialRepository",
+        lambda connection=None: filial_repo,
+    )
 
     with pytest.raises(ProcessoInstanciaDomainError, match="não está vinculado"):
         repo.create(

@@ -20,6 +20,9 @@ def _default_active_filiais_count(monkeypatch):
         "tm_app.application.services.dashboard_view_scope_service.count_active_filiais",
         lambda: 2,
     )
+    from tm_app.application.services.dashboard_query_cache import dashboard_query_cache
+
+    dashboard_query_cache.invalidate()
 
 
 def _load_fixture(name: str) -> TransformometroRawData:

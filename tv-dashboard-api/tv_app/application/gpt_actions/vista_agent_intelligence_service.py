@@ -253,6 +253,26 @@ class VistaAgentIntelligenceService:
             # instructions.md) per the "persona in stable Instructions"
             # convention.
             raw.pop("character", None)
+            # `catalog_chart_types` é a lista literal dos tipos de chart —
+            # duplicata das chaves de designTokens.chartTypeHints, que seguem
+            # na projeção Actions como autoridade de forma→tipo.
+            visual_selection = raw.get("visual_selection")
+            if isinstance(visual_selection, dict):
+                visual_selection.pop("catalog_chart_types", None)
+            # `filter_layering.decision_table` é o restatement compacto da
+            # tabela de roteamento — a autoridade estrutural completa
+            # (camada → where/put/examples/avoid) permanece em `placement`.
+            filter_layering = raw.get("filter_layering")
+            if isinstance(filter_layering, dict):
+                filter_layering.pop("decision_table", None)
+            # `layout_perception.epistemology` é integralmente restated pelas
+            # rules/forbidden da própria seção (INFORMED geometria ↔
+            # "layoutDigest = fonte INFORMED"; prévia ≠ AuthZ/VERIFY ↔
+            # forbidden correspondente). screenshot_parity.epistemology é
+            # autoridade única e permanece.
+            layout_perception = raw.get("layout_perception")
+            if isinstance(layout_perception, dict):
+                layout_perception.pop("epistemology", None)
             write_flow = raw.get("write_flow")
             if isinstance(write_flow, dict):
                 write_flow.pop("surface", None)

@@ -1,6 +1,7 @@
 # Dados operacionais — não versionar
 *.json
 !README.md
+!cadastro_bootstrap_filiais_synthetic.json
 
 # Raiz do pacote (export casual)
 ../transformometro-backup.json

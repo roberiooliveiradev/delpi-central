@@ -344,6 +344,8 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "engineering_export_metallographic_report_pdf": RouteContract(
         "metallographic_report_pdf", "scalar"
     ),
+    "prc_catalog_items": RouteContract("prc_catalog_item", "list"),
+    "prc_supplier_search": RouteContract("prc_supplier", "list"),
     "list_transforma_mais_processes": RouteContract(
         "transforma_mais_process", "paged_list"
     ),
@@ -479,6 +481,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     ),
     "get_production_pcp_orders_ranking": RouteContract(
         "production_pcp_orders_ranking", "list"
+    ),
+    "get_pcp_stock_rupture_pendencies": RouteContract(
+        "pcp_stock_rupture_pendency", "paged_list"
     ),
     "get_production_machine_load_work_centers": RouteContract(
         "production_machine_load_work_centers", "list"
@@ -898,6 +903,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_nonconformity_streak": RouteContract("nonconformity_streak", "scalar"),
     "get_nonconformity_series": RouteContract("nonconformity_series", "scalar"),
     "list_nonconformities": RouteContract("nonconformity", "paged_list"),
+    "get_nonconformity_operator_ranking": RouteContract(
+        "nonconformity_operator_ranking", "list"
+    ),
+    "export_nonconformity_operator_ranking_excel": RouteContract(
+        "nonconformity_operator_ranking_export", "scalar"
+    ),
     "get_kaizen_summary": RouteContract("kaizen_summary", "scalar"),
     "get_kaizen_summary_series": RouteContract("kaizen_summary_series", "scalar"),
     "get_kaizen_by_id": RouteContract("kaizen", "scalar"),
@@ -1071,6 +1082,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "complete_audit_5s_evaluation": RouteContract("audit_5s_audit", "scalar"),
     "reopen_audit_5s_evaluation": RouteContract("audit_5s_audit", "scalar"),
     "list_audit_5s_nc_candidates": RouteContract("audit_5s_nc_candidate", "paged_list"),
+    "cancel_audit_5s_nc_candidate_without_plan": RouteContract(
+        "audit_5s_nc_candidate", "scalar"
+    ),
     "list_audit_5s_nonconformities": RouteContract("audit_5s_nonconformity", "paged_list"),
     "get_audit_5s_previous_criterion_nonconformities": RouteContract(
         "audit_5s_previous_criterion_nonconformity", "composite_analysis"

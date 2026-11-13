@@ -20,7 +20,7 @@ from typing import Any
 
 CORPUS_ID = "davi-governed-knowledge"
 CORPUS_VERSION = 1
-PUBLISHED_V1_MANIFEST_IDENTITY = "b830a6a979a27bdbf1845d4e7128cc00aaa2fe75d2b095cbdb4af56b79449f49"
+PUBLISHED_V1_MANIFEST_IDENTITY = "a439b3f70abd217aa0309e02c259d14e987c467f326a63c1ecf2eab66f10d52b"
 
 API_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = API_ROOT.parent
@@ -50,7 +50,7 @@ MEMBERSHIP_MARKER_V2 = "## FROZEN_CORPUS_V2"
 TOPIC_INDEX_V2_REPO_PATH = (
     "api-delpi/docs/integrations/evidence/davi-governed-knowledge-topics-v2.json"
 )
-PUBLISHED_V2_MANIFEST_IDENTITY = "b8be66246d63c12c678891c897ccd5494cfbb33ee8ea6455111257ee5795ebb5"
+PUBLISHED_V2_MANIFEST_IDENTITY = "10f1983cbbdfd7e229265ab9feebf11853f730a4040a37b305046d3a4b98beb1"
 
 
 @dataclass(frozen=True)

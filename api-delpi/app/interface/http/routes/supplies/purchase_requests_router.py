@@ -484,7 +484,7 @@ def get_supplies_purchase_request_approval_lead_time_route(
     date_to: str | None = Query(default=None),
     request_number: str | None = Query(default=None),
     page: int = Query(1, ge=1, le=100000),
-    page_size: int = Query(25, ge=1, le=100),
+    page_size: int = PAGE_SIZE_QUERY("page_25_100"),
 ):
     """SCR-only approved-history KPI; only trusted supplies-api may query globally.
 

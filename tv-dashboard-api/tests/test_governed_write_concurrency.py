@@ -175,6 +175,10 @@ def world(monkeypatch):
     )
     monkeypatch.setattr(fa, "_RBAC_CACHE", {})
     monkeypatch.setattr(fa, "_RBAC_LOCKS", {})
+    # Deterministic middleware coalescing: dev compose ships TTL=0 (no RBAC
+    # cache), which would make every request's middleware hit Core /me and
+    # break the exact call counts asserted below.
+    monkeypatch.setattr(fa, "RBAC_CACHE_TTL_SECONDS", 60)
     monkeypatch.setattr(
         fa, "validate_token", lambda token: {"sub": USER_ID, "email": "u@delpi.local"}
     )

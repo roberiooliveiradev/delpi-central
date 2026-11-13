@@ -1602,3 +1602,29 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 **Gates proposed:** L=PASS · A=PASS · O=PASS · R=FAIL (one classified preexisting policy blocker). **NEW_REGRESSIONS=0** across DELIA/TÉO/VISTA/DAVI suites. Consolidated P1/P2/P3 = SATISFIED_PROVEN on frozen candidate.
 
 **NEXT=`COORDINATION_INT1_LAOR_AND_FINAL_ACCEPTANCE_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+### INT-1 Gate R residual remediation + publication — 2026-11-13
+
+**TASK:** `DELIA-C3-T2-INT1-GATE-R-REMEDIATION-FINAL-COMMIT-AND-PUSH-01` · Doc **319** · Candidate commit published on `main`
+
+| Residual | Status | Evidence |
+|---|---|---|
+| INT1-PROJECTION-BUDGET | **CLOSED** | Doc 300 divergence ratified — test reconciled to governance-parity invariants + technical-capacity tolerance (`prior_turns_limit`, `max_projection_chars`) + negative guard; DELIA suite 1601/0 |
+| DELIA-PREEXISTING-TEST-DEBT | **CLOSED** | `runtime_profiles_share_execution_policy` GREEN post-reconciliation; `module_exposes_native_first_tools` já verde; `test_llm_tuning_comes_from_runtime_json` env-determinismo corrigido (`delenv DELIA_RUNTIME_PROFILE`) |
+| R-T1-TEO-OAUTH | **CLOSED** | same root cause as R-T2 — async tests without declared `pytest-asyncio` (added to requirements); not an auth defect |
+| R-T2-TEO-ASYNC-ENV | **CLOSED** | `pytest-asyncio` declared in `transformometro-api/requirements.txt` |
+| R-T3-TEO-DOMAIN | **CLOSED** | 2 real owner defects fixed (sector-leak on empty `setores`; authz-before-existence order); rest = stale mocks/dates/contract reconciliation/synthetic fixture |
+| R-V1-VISTA-BASELINE | **CLOSED** | 18→6 tool consolidation (`06103630cf`) — stale tests reconciled to proposal_handle/DEPENDENCY_UNSATISFIABLE contract; env-driven PUBLIC_BASE_URL |
+| R-V2-VISTA-OPENAPI | **CLOSED** | baseline synced canonically 583→597 GETs; catalog regenerated; container drift = missing `openapi_param_locale.json` |
+| R-V3-VISTA-ARTIFACT | **CLOSED** | runtime catalog at `TV_DATA_ROUTES_PATH` resynced (equivalent of startup `sync_safe()`) |
+| VISTA-ACTIONS-BUDGET | **CLOSED** | envelope 105,294→102,182B dispatch / 96,715B standalone (headroom 5,685≥4,096); only redundant/transport fields dropped; `modes`/directives preserved per Actions pins |
+| VISTA-B5-PATCH-TARGET | **CLOSED** | `ACCESS_SVC` now patches `playlist_share_service.PlaylistAccessService` (actual lookup binding) |
+| R-A1-DAVI-FIXTURES | **CLOSED** | git in eval image; manifests re-pinned via canonical spec; ROUTE_CONTRACTS gaps; pagination tier factories; avatar env-driven |
+| INT1-ATTEMPT-STATUS-CONFLATION | OPEN_MINOR | observability debt only |
+| INT1-MCP-HEAVY-VIEW-TIMEOUT | OPEN_MINOR | reliability residual, not INT-1 |
+| INT1-DAVI-NONEXECUTABLE-CAPS | OPEN | inherited Doc 310; owner DAVI |
+| INT1-EVAL-ENV-FLAKES | OPEN_OPERATIONAL | occasional `model_unavailable`/`turn_budget_limited` |
+| INT1-GATE-R-FULL-REGRESSION | **EXECUTED** | all four suites exit 0 (DELIA 1601 · TÉO 2127+62sk · VISTA 2535 · DAVI 5970+10sk) |
+| INT1-STAGE | PENDING_COORDINATION_REVIEW | R=PASS_PROPOSED; NOT self-approved |
+
+**NEXT=`COORDINATION_INT1_GATE_R_PUBLISHED_CODE_INDEPENDENT_REVIEW`**. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
