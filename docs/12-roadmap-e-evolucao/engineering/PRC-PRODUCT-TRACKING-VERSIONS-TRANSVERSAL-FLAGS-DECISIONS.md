@@ -1,5 +1,7 @@
 # PRC — Registro de produtos acompanhados, versões confirmadas e flags transversais
 
+> **ESCLARECIMENTO PO ADR-04 — 2026-11-13:** A bandeira é propagada visualmente **apenas enquanto OPEN**. Uma vez **RESOLVED ou removida, não aparece em versões posteriores nem na listagem corrente de bandeiras ativas**; continua identificável no histórico de eventos e na consulta de cortes anteriores onde estava aberta. A mudança de estado não cria nova revisão. Detalhes temporais e reabertura continuam sujeitos a contrato. Ver [deliberações G1](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md). Esta regra tem precedência sobre menções genéricas anteriores a bandeiras resolvidas visíveis nas fichas futuras.
+
 > **ATUALIZAÇÃO PO — 2026-11-13:** [Deliberações G1 do PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) **substituem** regras conflitantes deste baseline: (a) acompanhar campos registrados pela Engineering API, com proveniência/cobertura a definir em contrato; (b) **no-op não gera Vn**; (c) propagação visual de flag única por produto/alvo a cada versão sem clones de identidade; (d) HML API funcional antes do novo frontend. Demais disposições permanecem sujeitas a Coordination. Documento antigo preservado para rastreabilidade.
 
 > **Data:** 2026-11-12  
