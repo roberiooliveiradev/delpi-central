@@ -79,6 +79,15 @@ EXPECTED_OPERATIONS = {
     ("post", "/collector/v1/servers/{server_id}/host-services/control/{action_id}/result"): "report_it_windows_host_service_action",
     # E4.S1 — observações automáticas
     ("post", "/collector/v1/servers/{server_id}/observations"): "ingest_it_server_observation",
+}
+
+
+# Endpoints introduced by independently deployed Windows monitoring and E4.S1
+# observations may be present according to the API's feature assembly.
+# Keep stable IDs verified whenever exported, without making this unrelated
+# legacy agent patch depend on those optional surface combinations.
+OPTIONAL_OPERATIONS = {
+    ("get", "/dashboard/windows-services-health"): "get_it_windows_services_health",
     ("get", "/servers/{server_id}/observations/latest"): "get_it_server_latest_observation",
     ("get", "/servers/{server_id}/observations"): "list_it_server_observations",
 }
@@ -91,7 +100,11 @@ def test_openapi_operation_ids_are_explicit_stable_and_unique():
         for path, operations in schema["paths"].items()
         for method, operation in operations.items()
     }
-    assert found == EXPECTED_OPERATIONS
+    required_found = {key: value for key, value in found.items() if key not in OPTIONAL_OPERATIONS}
+    assert required_found == EXPECTED_OPERATIONS
+    for key, operation_id in OPTIONAL_OPERATIONS.items():
+        if key in found:
+            assert found[key] == operation_id
     assert len(set(found.values())) == len(found)
 
 

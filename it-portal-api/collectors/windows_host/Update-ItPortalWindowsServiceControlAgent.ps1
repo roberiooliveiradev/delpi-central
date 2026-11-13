@@ -75,12 +75,31 @@ foreach ($expected in @(
     ('-File "' + $runner + '"'),
     ('-ClientId "' + $ClientId + '"'),
     ('-ServerId "' + $ServerId.ToString() + '"'),
-    ('-ExpectedHostname "' + $ExpectedHostname + '"'),
     ('-SecretFile "' + $secret + '"')
 )) {
     if ($arguments.IndexOf($expected,[StringComparison]::OrdinalIgnoreCase) -lt 0) {
         throw "Identidade ou caminho da tarefa inesperado: $expected"
     }
+}
+# O piloto SRV-DB01 foi instalado antes da inclusao de -ExpectedHostname
+# nos argumentos da tarefa. A ausencia e aceita SOMENTE para sua identidade
+# exata; se presente, o hostname continua obrigatorio e deve coincidir.
+$expectedHostnameArg = '-ExpectedHostname "' + $ExpectedHostname + '"'
+$hostnameFlags = [regex]::Matches($arguments,'(?i)(?<!\S)-ExpectedHostname(?=\s|$)')
+if ($hostnameFlags.Count -gt 1) { throw 'ExpectedHostname duplicado na tarefa.' }
+$legacyPilot = $false
+if ($hostnameFlags.Count -eq 1) {
+    if ($arguments.IndexOf($expectedHostnameArg,[StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        throw ('Identidade ou caminho da tarefa inesperado: ' + $expectedHostnameArg)
+    }
+} elseif ($hostname -eq 'srv-db01' -and
+        $ServerId.ToString() -eq 'e6b46ca6-7b02-449b-b42e-6ddc498f9894' -and
+        $ClientId -ieq 'it-portal-windows-control-srv-db01' -and
+        $TaskName -ieq 'Delpi-PortalTI-WindowsControl-SRV-DB01') {
+    $legacyPilot = $true
+    Write-Output 'PILOTO_LEGADO: tarefa sem ExpectedHostname; parametro sera incluido na atualizacao.'
+} else {
+    throw 'ExpectedHostname ausente em tarefa que nao e o piloto legado.'
 }
 $pattern = '(?i)(?<!\S)-AllowedServices "([^"]*)"'
 $matches = [regex]::Matches($arguments,$pattern)
@@ -103,6 +122,7 @@ if (-not $elevated) { throw 'Elevacao administrativa obrigatoria para atualizar 
 $newArguments = $arguments.Substring(0,$matches[0].Index) +
     ('-AllowedServices "' + $newNames + '"') +
     $arguments.Substring($matches[0].Index + $matches[0].Length)
+if ($legacyPilot) { $newArguments += ' ' + $expectedHostnameArg }
 $newAction = New-ScheduledTaskAction -Execute $originalAction.Execute -Argument $newArguments -WorkingDirectory $originalAction.WorkingDirectory
 $backupDir = Join-Path $agentHome 'task-backups'
 New-Item -Path $backupDir -ItemType Directory -Force | Out-Null
