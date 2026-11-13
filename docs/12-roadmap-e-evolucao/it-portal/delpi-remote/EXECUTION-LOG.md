@@ -156,6 +156,16 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo:** finalizar validacao funcional G1. Em seguida mapear diretorio autorizado do Core e desenvolver o seletor/vinculo com ID canonico; documentar entrega e testes no repositorio.
 
+## 2026-11-13 | Helpdesk #1593 | retorno e solucao registrados
+
+**Evidencia GLPI:** o solicitante autorizou expressamente a solucao do chamado #1593. A operacao `helpdesk_add_solution` foi executada e verificada pelo Helpdesk BFF: status final **Solucionado** (id=5), solucao registrada (id=1352) e horario de solucao **2026-11-13 16:27:35-03**.
+
+**Conteudo do retorno:** resumo de G1-DOM, G1-API, G1-UI, V009 aplicada, API/frontend publicados, acesso a tela Computadores comprovado, coleta inicial de inventario, proposta de nomenclatura e G1-OWNER planejado. Solucao com cabecalho corporativo e referencia a issue #179.
+
+**Escopo da solucao:** somente o ticket referente ao registro de entregas ja realizadas ate 13/11/2026. **Nao** significa que o desenvolvimento do Delpi Remote acabou, nem que o CRUD completo, controles RBAC negativos ou o acesso remoto foram homologados. O roadmap tecnico permanece aberto.
+
+**Proximo passo:** continuar homologacao funcional do inventario e implementar G1-OWNER depois de validacao; G2-AGENT em fase posterior e G0-SEC obrigatorio para o motor remoto.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown
