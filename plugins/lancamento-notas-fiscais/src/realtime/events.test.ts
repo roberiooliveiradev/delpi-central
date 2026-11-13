@@ -87,4 +87,32 @@ describe("lnf realtime rooms and events", () => {
       ),
     ).toBe(false);
   });
+
+  it("isDetailRefetchEvent só da solicitação aberta", async () => {
+    const { isDetailRefetchEvent } = await import("./events");
+    expect(
+      isDetailRefetchEvent(
+        {
+          type: "lnf.request.changed",
+          eventId: "e1",
+          branch: "01",
+          requestId: "req-1",
+          reason: "updated",
+        },
+        "req-1",
+      ),
+    ).toBe(true);
+    expect(
+      isDetailRefetchEvent(
+        {
+          type: "lnf.request.changed",
+          eventId: "e1",
+          branch: "01",
+          requestId: "other",
+          reason: "updated",
+        },
+        "req-1",
+      ),
+    ).toBe(false);
+  });
 });

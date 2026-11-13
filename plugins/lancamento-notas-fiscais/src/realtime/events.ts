@@ -102,3 +102,11 @@ export function isQueueRefetchEvent(
   if (isLnfQueueReconciled(value) && value.branch === branch) return true;
   return false;
 }
+
+/** Detalhe / edição: request.changed da solicitação aberta. */
+export function isDetailRefetchEvent(
+  value: unknown,
+  requestId: string,
+): boolean {
+  return isLnfRequestChanged(value) && value.requestId === requestId;
+}

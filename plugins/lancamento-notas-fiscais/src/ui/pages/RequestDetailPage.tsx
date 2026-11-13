@@ -1,9 +1,17 @@
-import { FilePreviewView, useFilePreviewLoader } from "@delpi/plugin-ui/index";
+import {
+  ConcurrentChangeNotice,
+  FilePreviewView,
+  RealtimeStatusIndicator,
+  useFilePreviewLoader,
+} from "@delpi/plugin-ui/index";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError } from "../../data/api/httpClient";
 import * as api from "../../data/api/invoicePostingApi";
 import type { InvoicePostingDetail } from "../../domain/types";
 import { blockReasonLabel, hasAction, statusLabel } from "../../domain/status";
+import { isDetailRefetchEvent } from "../../realtime/events";
+import { requestRoom } from "../../realtime/rooms";
+import { useLnfRoomEvents } from "../../realtime/useLnfRoomEvents";
 import { BlockModal } from "../components/BlockModal";
 import { CancelModal } from "../components/CancelModal";
 import {
@@ -52,7 +60,15 @@ export function RequestDetailPage({ requestId, onBack, onEdit, onOpenRequest }: 
   const [commentMentions, setCommentMentions] = useState<MentionSelection[]>([]);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [productMapping, setProductMapping] = useState<NfeProductMappingView>({ status: "loading" });
+  const [concurrentNotice, setConcurrentNotice] = useState(false);
+  const [pendingRealtimeApply, setPendingRealtimeApply] = useState(false);
   const mappingRequestRef = useRef(0);
+  const commentRef = useRef(comment);
+  commentRef.current = comment;
+  const modalOpen =
+    blockOpen || cancelOpen || manualPostOpen || purchaseOrdersOpen;
+  const modalOpenRef = useRef(modalOpen);
+  modalOpenRef.current = modalOpen;
   const hasDanfe = Boolean(detail?.danfe);
   const showNfeItems = detail?.request.fiscal_model === "nfe" && Boolean(detail.danfe?.available);
 
@@ -122,9 +138,62 @@ export function RequestDetailPage({ requestId, onBack, onEdit, onOpenRequest }: 
     }
   }, [requestId]);
 
+  /** Refetch silencioso: não zera loading nem o rascunho de comentário. */
+  const silentReload = useCallback(async () => {
+    try {
+      const data = await api.getRequest(requestId);
+      setDetail(data);
+      setError(null);
+    } catch {
+      // refetch silencioso — detalhe atual permanece
+    }
+  }, [requestId]);
+
+  const applyRealtimeRefresh = useCallback(() => {
+    setConcurrentNotice(false);
+    setPendingRealtimeApply(false);
+    void silentReload();
+  }, [silentReload]);
+
+  const deferOrApplyRealtime = useCallback(() => {
+    if (modalOpenRef.current) {
+      setConcurrentNotice(true);
+      setPendingRealtimeApply(true);
+      return;
+    }
+    if (commentRef.current.trim().length > 0) {
+      setConcurrentNotice(true);
+      return;
+    }
+    void silentReload();
+  }, [silentReload]);
+
+  const onRealtimeEvents = useCallback(
+    (events: unknown[]) => {
+      if (events.some((event) => isDetailRefetchEvent(event, requestId))) {
+        deferOrApplyRealtime();
+      }
+    },
+    [deferOrApplyRealtime, requestId],
+  );
+
+  const { status: realtimeStatus } = useLnfRoomEvents({
+    rooms: [requestRoom(requestId)],
+    enabled: Boolean(requestId),
+    debounceMs: 1_000,
+    onEvents: onRealtimeEvents,
+    onResync: deferOrApplyRealtime,
+  });
+
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!modalOpen && pendingRealtimeApply) {
+      applyRealtimeRefresh();
+    }
+  }, [modalOpen, pendingRealtimeApply, applyRealtimeRefresh]);
 
   useEffect(() => {
     if (!showNfeItems || !detail?.danfe) {
@@ -216,12 +285,29 @@ export function RequestDetailPage({ requestId, onBack, onEdit, onOpenRequest }: 
       <LnfPageHeader
         title="Detalhes da solicitação"
         subtitle={`${formatDocument(request.document_number, request.series)} · Filial ${request.branch_code}`}
+        meta={
+          realtimeStatus !== "idle" ? (
+            <RealtimeStatusIndicator status={realtimeStatus} compact />
+          ) : undefined
+        }
         actions={
           <button type="button" className="lnf-btn lnf-btn--ghost" onClick={onBack}>
             Voltar
           </button>
         }
       />
+
+      {concurrentNotice ? (
+        <ConcurrentChangeNotice
+          message="Esta solicitação foi alterada por outra pessoa"
+          actionLabel="Recarregar"
+          onAction={applyRealtimeRefresh}
+          onDismiss={() => {
+            setConcurrentNotice(false);
+            setPendingRealtimeApply(false);
+          }}
+        />
+      ) : null}
 
       <div className="lnf-detail-board">
         <div className="lnf-detail-board__primary">

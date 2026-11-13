@@ -19,8 +19,8 @@ Este arquivo é o contrato. A execução segue o quadro abaixo. PROD, a trilha 1
 | W2 | BFF — hub, rota, emissão (DEV) | DONE | `b0b4dae957` | 2026-11-13 | W2R: assinatura e entrega usam os predicados de leitura. Paridade P0–P12 PASS. F2 314 PASS. Smoke: view.filial-01 não assina a filial 01; create só recebe a própria solicitação |
 | W2b | plugin-ui — cliente, hook, indicador, aviso | DONE | `df1dd06cc4` | 2026-11-13 | cliente aditivo; hook, indicador e aviso. Suíte do pacote no registro |
 | W3 | Gateway DEV (+ conf HML commitada) | DONE | `57195a9e91` | 2026-11-13 | Handshake 101 pelo gateway com token real; access log da location com `<redacted>`; valor do token ausente nos logs do gateway e da BFF |
-| W4.1 | MFE — Fila | DONE |  | 2026-11-13 | sala branch, debounce 1s, sem POST refresh por evento, indicador junto de «Fila carregada em» |
-| W4.2 | MFE — Detalhe | TODO | | | |
+| W4.1 | MFE — Fila | DONE | `6d69e742e5` | 2026-11-13 | sala branch, debounce 1s, sem POST refresh por evento, indicador junto de «Fila carregada em» |
+| W4.2 | MFE — Detalhe | DONE |  | 2026-11-13 | sala request, refetch silencioso, rascunho/modal → ConcurrentChangeNotice, forbidden_room mute |
 | W4.3 | MFE — Formulário de edição | TODO | | | |
 | W4.4 | MFE — Produtos sem código + Ajuda | TODO | | | |
 | W5 | Ensaio HML | TODO | | | |
