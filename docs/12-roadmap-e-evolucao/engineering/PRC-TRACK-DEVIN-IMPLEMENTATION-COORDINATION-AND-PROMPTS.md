@@ -350,3 +350,25 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Classificação:** `INCIDENT_RESOLVED / PROD_SMOKE_PASS / PRD_BUSINESS_WRITES:0 / CLEANUP:NOT_APPLICABLE`.
 
 **Prevenção proposta:** (a) `eng_prc` provisionado por script canônico agora versionado para PRD; (b) `ENG_PRC_DB_PASSWORD` presente em `.env` prod; (c) sugerir à Coordination: healthcheck/readiness que cubra dependência PRC-DB, checklist de provisionamento pós-deploy e alerta sobre conexão DB sem senha — avaliar em pacote próprio.
+
+
+## 22. Coordination — encerramento do incidente e pacote preventivo delimitado (13/11/2026)
+
+**Prova documental no GitHub:** commits `c227a6ac9f5fdad98f0445bda30e6fc4a0244369` (script canônico PRD de provisionamento PRC) e `7ee9b06cdf03e9721457ecf302492ecbfcb5db24` (registro do incidente) verificados pela Coordination. A verificação de runtime pós-recuperação e a auditoria de dados **são evidências reportadas pelo Devin**, não testes executados por esta coordenação.
+
+**Diagnóstico reportado:** `ENG_PRC_DB_PASSWORD` vazio em configuração PRD e role `eng_prc` não provisionada; 503 PRC/My Requests por autenticação de banco. Ausência já observada em backup anterior ao PROD-02, portanto `RELATION_TO_PROD02=NOT_RELATED_REPORTED`. Recuperação operacional `INCIDENT_RESOLVED_REPORTED / PRD_READ_ONLY_SMOKE_PASS_REPORTED`; sem novos registros de negócio. O fato de o container antigo aparecer healthy mesmo com rotas PRC em 503 demonstra gap de readiness, não necessariamente falha do liveness.
+
+**Auditoria e retenção:** 36 solicitações `REQ-2026` reportadas como registros legítimos `my_requests.requests`, preservados; PRC em `engineering.*` PRD reportado com zero linhas. **`CLEANUP_NOT_APPLICABLE`**: proibir exclusão oportunista de solicitações operacionais. Se nova evidência provar registro de teste, exigir plano de limpeza idempotente/backup/owner com aprovação específica, sem dedução por prefixo `REQ-`.
+
+**Decisão de Coordination para prevenção:** criar pacote técnico delimitado `PRD-ENG-PRC-OPERABILITY-GATE-01` como `PLANNED`, não como deploy já autorizado:
+1. Preflight **read-only** de configuração no container (presença, não valor), role/grants efetivos e `SELECT 1` autenticado no banco correto; fail-closed antes da promoção e mensagem de erro saneada.
+2. Liveness não deve depender de DB para evitar restart-loop; adicionar **readiness distinta** que só retorna sucesso quando a dependência PRC-DB essencial funciona. Contrato/readiness/consumers de gateway e orquestrador devem ser inventariados antes de modificar o health existente.
+3. Checklist de rollout/recovery de PRD e HML com env-file correto, SHA/digest, preflight, rollback, autorização e smoke GET/health; **zero POST/PUT/PATCH/DELETE de dados de negócio para teste em PRD**.
+4. Observabilidade/alerta de falhas PRC-DB e 503 com correlationId, sem logar DSN/credencial/segredos e sem inserir dados.
+5. Reproduzir falhas de secret ausente, role/grants ausentes e DB indisponível **somente em DEV/HML**; em PRD verificar leitura/saúde sem provocar falha intencional.
+
+**Gate de execução:** o pacote é manutenção de confiabilidade no owner correto, requer contrato para readiness, impacto de monitoramento/roteamento, teste DEV/HML, PR com revisão e autorização de implantação separada. Não criar novos papéis/serviços e não mudar Core, Keycloak ou banco de outros bounded contexts. Não confundir preflight de provisionamento **administrativo autorizado** com teste mutável de negócio.
+
+**Governança residual:** commits de recuperação foram diretos em main (sem PR); registrar `CHANGE_PROCESS_DEVIATION_TO_REVIEW`, não reverter recuperação saudável automaticamente. Em próximas mudanças, PR governado ou exceção expressa de emergência, sem usar falta de token Devin como justificativa para bypass. Os dois títulos históricos `## 21` existentes no ledger são mantidos por rastreabilidade; esta seção `## 22` é a continuidade canônica.
+
+**Próximo:** operação confirma estabilidade/alertas e owner operacional avalia eventual rollback ou release apenas se necessário; Cursor continua aceite independente PROD-02 em HML. PROD-03/flags/frontend sem liberação implícita por este incidente.
