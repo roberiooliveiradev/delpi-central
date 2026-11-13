@@ -462,3 +462,14 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 - Resposta autenticada da Home com usuário `engineering.access`: `TEST_NOT_RUN` — nenhuma credencial funcional desse perfil disponível ao executor; coberto por construção (filtro server-side) + evidência E2E HML no mesmo código (§27). **Recomendação:** owner com acesso valida visualmente `/apps/engineering` quando conveniente.
 
 **Estado:** `PRD_DEPLOY_PASS / API_VALIDATION_PASS_WITH_SCOPE_NOTE / PRD_BUSINESS_TEST_WRITES=0`. Divergência `/app` bind-mount stale removida é melhoria incidental de conformidade — registrar para o runbook (containers prod devem servir imagem assada).
+
+
+## 30. Coordination — revisão do aceite PRD pós-deploy (13/11/2026)
+
+**Evidência consultada:** ledger §29 (commit `036e14683c64293c4c165fa17fb636aaaeb13bb0`) e implementação atual em `engineering-api/engineering_app/infrastructure/gateways/requests_api_gateway.py`. Filtro técnico presente no código: **`_RAW_MATERIAL_TYPE_CODE = "raw-material-creation"`**. O texto do relatório do executor que menciona `raw-material-confirmation` é divergência de nomenclatura e **não** prova código incorreto.
+
+**Classificação revisada:** `PRD_DEPLOY_PASS_REPORTED / PRD_HEALTH_PASS_REPORTED / PRD_AUTH_BOUNDARY_401_403_PASS_REPORTED / PRD_FILTER_IMPLEMENTATION_PROVEN / PRD_HOME_AUTHENTICATED_SMOKE_TEST_NOT_RUN / PRD_FUNCTIONAL_ACCEPTANCE_INCONCLUSIVE`. A ausência de token de usuário `engineering.access` impediu verificar `data.sections.tasks`, `data.sections.requests`, `meta.type_code` e totais em PRD. Não chamar `API_VALIDATION_PASS` de aceite funcional completo com somente 401/403, testes de estrutura e SELECT read-only no banco. Nenhum novo deploy é justificado apenas por essa lacuna.
+
+**Divergência de inventário:** auditoria anterior do incidente PRD reportou 36 registros `my_requests.requests`; §29 reporta 11 (1 `raw-material-creation` + 10 `invoice-issuance`). **`RECONCILIATION_PENDING`**: coletar apenas evidências read-only da mesma fonte/ambiente, filtros, schema, timestamp, contagem total vs paginação, owner e eventuais diferenças de snapshot, sem sugerir perda ou apagar registros sem provas.
+
+**Próxima ação mínima:** um usuário autorizado com `engineering.access` executa **GET read-only** `/apps/engineering-api/v1/home` em PRD; confirmar HTTP 200, `tasks.items[*].meta.type_code` e `requests.items[*].meta.type_code` apenas `raw-material-creation`, totais honestos, fonte LMP, ausência de itens extrínsecos. Registrar somente metadados saneados (sem JWT, cookies, senhas, payload pessoal). Se a UI continuar mostrando outros tipos apesar do GET correto, investigar cache/versão frontend antes de novo deploy. Não criar dados PRD. Exceção F4 (Cursor dispensado para esta release) permanece registrada e **não** vira `CURSOR_INDEPENDENT_PASS`.
