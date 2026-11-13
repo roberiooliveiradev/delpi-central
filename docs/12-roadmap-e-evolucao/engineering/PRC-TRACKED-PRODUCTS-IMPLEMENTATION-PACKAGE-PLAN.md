@@ -1,6 +1,6 @@
 # PRC-TRACK-IMPLEMENTATION-PACKAGE — Plano integrado de execução governada
 
-> **CORREÇÃO ADR-04 — 2026-11-13:** Somente flags **OPEN** aparecem nas novas revisões; flags **RESOLVED/removidas não se propagam visualmente** nem aparecem nas fichas posteriores. Histórico de eventos e cortes anteriores preservados; sem criação de Vn por resolução. Ver [decisão PO atualizada](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md). Atualizar AC-08/09/12 no momento de detalhar B2; não interpretar `resolved` como bandeira ativa visível na versão atual.
+> **REGRA FINAL DO PO — ADR-04 (2026-11-13; substitui todas as interpretações anteriores):** a bandeira é única por produto/alvo e propaga-se às revisões enquanto **OPEN**. Se **RESOLVED durante V4**, aparece em **V4 como RESOLVED** (verde), mas **não aparece em V5 em diante**. Se **REMOVED durante V4**, **não aparece nem em V4 nem nas posteriores**. V3 preserva OPEN nos dois cenários. O evento registra `revisionContext=V4`, instante, autor e operação; resolução/remoção não cria versão técnica. A ficha corrente da V4 reflete imediatamente resolução/remoção; versões anteriores preservam seu estado. Histórico de eventos continua auditável, inclusive após desaparecimento da bandeira. **A revisão de resolução é a revisão vigente quando ocorre a ação, e não uma revisão nova.** Se houver reabertura, definir contrato separado, não supor comportamento retroativo. Especificação de persistência/projeção ainda depende de Coordination.
 
 > **AMENDMENT G1/PO — 2026-11-13:** As escolhas documentadas em [Deliberações G1 do PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md) prevalecem sobre referências anteriores incompatíveis neste plano: **campos registrados pela Engineering API, não necessariamente snapshot TOTVS completo**; **somente diferenças técnicas reais geram nova Vn**; flags são únicas por produto/alvo e projetadas nas revisões; endpoints de diff no backend; HML API funcional + aceite completo Plugin UI antes do frontend. Fases/AC B1–B3 devem ser reespecificadas após ratificação; **não iniciar implementação com os AC antigos conflitantes**.
 
@@ -176,3 +176,14 @@ Verificar: uma top bar/hero; dimensões/tokens Plugin UI; busca/filters; grid t�
 - Escopo/RQ/AC e rollback definidos por fase.
 
 **Este documento entrega planejamento e rastreabilidade, não autoriza implementation prompt, alteração de código ou publicação.**
+
+
+### Emenda de aceite B2 — FLAG-RESOLVE-REMOVE-REVISION (PO, 2026-11-13)
+
+- **B2-FLAG-01:** aberta em V3, sem evento de encerramento → OPEN nas V3/V4/V5.
+- **B2-FLAG-02:** criada V3, **resolvida enquanto V4 vigente** → OPEN em V3, **RESOLVED visível em V4**, **ausente em V5**.
+- **B2-FLAG-03:** criada V3, **removida enquanto V4 vigente** → OPEN em V3, **ausente em V4/V5**.
+- **B2-FLAG-04:** transição não cria Vn nem modifica snapshot técnico; gravar revisão vigente no evento, com ator/data/CAS.
+- **B2-FLAG-05:** uma identidade lógica por produto+alvo, projeção temporal sem clones, histórico disponível com AuthZ.
+
+Prevalece sobre AC textuais antigos que tratem RESOLVED e REMOVED como estados de exibição equivalentes. `ARCHITECTURE_DECISION_REQUIRED` para contrato físico da projeção, sem alterar a intenção do PO.
