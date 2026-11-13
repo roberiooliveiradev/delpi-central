@@ -355,7 +355,9 @@ Números das linhas **ilustrativos**; não codificar no frontend. Situação vem
 
 **Padronização visual:** mesmo card expansível e mesmos componentes de busca/avatar/seleção do Comercial; usar o componente oficial de feedback apenas em exceções, preservando tokens, dimensões, margens, padding, gap e breakpoints reais (**TO_INVENTORY**) em desktop/tablet/celular. Nenhuma nova visualização, badge ou gráfico de resultado de lote.
 
-**Status:** exclusão dos três indicadores e filtragem de já participantes **CONFIRMADAS na revisão do solicitante**; política de apresentação de falhas reais **proposta para confirmação**. Não implementado.
+**Decisão visual adicional APROVADA (13/11/2026):** quando houver **falha real confirmada** na inclusão, exibir **mensagem discreta e contextual dentro do mesmo card expansível**, identificando **empresa (nome, código e loja)** e **motivo seguro fornecido pela commercial-api**, sem painel de indicadores, relatório separado, modal adicional nem erro genérico inventado. Se não houver motivo confiável, não atribuir causa fictícia: informar que não foi possível confirmar/concluir a inclusão e orientar verificação do estado oficial antes de repetir. Em sucesso normal, atualizar a lista de participantes abaixo, sem cards de Incluídas/Já existentes/Com falha. Se houver itens não incluídos, preservar seleção pendente para correção quando seguro; participantes confirmados não devem continuar elegíveis à busca. O feedback herda componente, tipografia, padding, margem, gap, alinhamento e comportamento responsivo oficial do Comercial/PluginUI; **TO_INVENTORY** de valores CSS e variante concreta do feedback.
+
+**Status:** exclusão dos três indicadores, filtragem de já participantes e **mensagem contextual apenas para falhas reais APROVADAS**; contrato de falhas, medidas verificadas e implementação **PENDING**. Não implementado.
 
 ## 3. Wireframe B — detalhe de campanha
 
