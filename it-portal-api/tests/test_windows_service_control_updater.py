@@ -34,14 +34,15 @@ def test_update_script_parses_in_pwsh() -> None:
     exe = shutil.which("pwsh")
     if exe is None:
         pytest.skip("pwsh indisponivel no ambiente")
+    safe_path = str(SCRIPT).replace("'", "''")
     command = (
         "$tokens=$null; $errors=$null; "
         "[void][System.Management.Automation.Language.Parser]::ParseFile("
-        "$args[0],[ref]$tokens,[ref]$errors); "
+        f"'{safe_path}',[ref]$tokens,[ref]$errors); "
         "if ($errors.Count) { $errors | Out-String | Write-Error; exit 1 }"
     )
     completed = subprocess.run(
-        [exe, "-NoProfile", "-Command", command, str(SCRIPT)],
+        [exe, "-NoProfile", "-Command", command],
         text=True,
         capture_output=True,
         timeout=20,
