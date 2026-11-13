@@ -225,3 +225,20 @@ Encaminhar à Coordination **ADR-01 a ADR-06** com matriz de decisão e pergunta
 **Critérios de aceite:** `CR06-AC01` campo omitido preserva valor; `CR06-AC02` vazio ambíguo sem CLEAR não apaga; `CR06-AC03` CLEAR explícito em campo que admite limpeza, autorizado e verificado, remove somente valor-alvo; `CR06-AC04` CLEAR em obrigatório/não suportado é rejeitado; `CR06-AC05` limpeza de atributo fornecedor não remove vínculo; `CR06-AC06` técnico diff real após V1 gera próxima versão, sem mudança mantém versão; `CR06-AC07` mismatch, 403, 409 ou source unavailable não publicam revisão; `CR06-AC08` provenance da operação de limpeza permanece auditável.
 
 **A decisão não confirma a existência de suporte CLEAR no runtime e não autoriza código, migrations ou deploy.** Ratificação de DTO, campos e segurança cabe à Coordination/Engineering API.
+
+
+## 13. Deliberação complementar do PO — CR-07: resolução definitiva, sem reabertura (13/11/2026)
+
+**Escolha expressa:** **C — Não permitir reabertura**. **Comentário:** sem comentário. **Status:** `PO_APPROVED_BUSINESS_DECISION / COORDINATION_RATIFICATION_PENDING`.
+
+**Regra funcional:** uma bandeira `RESOLVED` não pode voltar para `OPEN` sob o mesmo `flagId`; encerramento é definitivo. Se o problema reincidir, a Engenharia deve criar **nova bandeira com novo ID**, mesmo que tenha o mesmo `recordId + targetKey`. Cada ocorrência tem ciclo de vida independente, proveniência da revisão de criação e auditoria própria. A bandeira anterior permanece encerrada e seu histórico não é reescrito. **Não exigir vínculo entre ocorrências nem criá-lo automaticamente:** relação opcional é `TO_DECIDE` com o owner.
+
+**Compatibilidade ADR-03:** a unicidade é de **no máximo uma bandeira OPEN por produto + alvo técnico**, e **não** unicidade eterna de um único registro por alvo. Múltiplas ocorrências históricas `RESOLVED/REMOVED` para o mesmo alvo são permitidas; nova OPEN após encerramento é válida desde que não haja outra OPEN no mesmo alvo. Preservar lock/constraint contra criação OPEN duplicada concorrente. Ajustar qualquer frase anterior “mesma bandeira reaberta” ou “identidade única perpétua por alvo” à regra substitutiva do PO.
+
+**Compatibilidade ADR-04:** criada V3 → OPEN V3; resolvida V4 → RESOLVED visível V4, **ausente V5+**; removida V4 → ausente em V4 e seguintes. Nova ocorrência aberta na V6 (outro ID) → OPEN na V6, sem retroagir a V3/V4/V5. Resolução/remoção/criação de flags não cria versão técnica. Uma nova bandeira pode nascer enquanto Vn é vigente, mesmo que a versão técnica Vn não tenha sido criada pela ocorrência.
+
+**Gap comprovado em código:** `engineering-api/engineering_app/application/use_cases/product_registration/service.py::reopen_flag` e rota `POST /v1/product-registration/requests/{request_id}/flags/{flag_id}/actions/reopen` existem no código consultado. A decisão do PO **não revoga automaticamente** este endpoint legado. Coordination deve definir compatibilidade, consumidores e estratégia de descontinuação/bloqueio da reabertura no **novo contrato de produtos acompanhados**, com segurança backend-first. Não ocultar botão apenas no frontend.
+
+**AC:** `CR07-AC01` tentativa de reabrir RESOLVED por flagId rejeitada pela API de produtos acompanhados com erro contratual; `CR07-AC02` encerrada em V4 permanece RESOLVED só em V4; `CR07-AC03` nova flag mesmo target em V6 recebe novo flagId; `CR07-AC04` OPEN concorrente no mesmo produto+alvo rejeita duplicata; `CR07-AC05` V3/V4/V5 históricos não alterados por nova ocorrência; `CR07-AC06` eventos auditáveis, AuthZ live/CAS/idempotência; `CR07-AC07` endpoint legado de reopen não pode contornar política ratificada para flags de produto e tem comportamento de compatibilidade explicitamente testado.
+
+**Não autoriza** desativar endpoints existentes, migration, alteração de código, rollout ou mudança de owner. `ARCHITECTURE_DECISION_REQUIRED` para coexistência de D16 legado e nova política.
