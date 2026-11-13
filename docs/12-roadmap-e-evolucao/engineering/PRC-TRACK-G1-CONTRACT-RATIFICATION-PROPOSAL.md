@@ -168,3 +168,30 @@ Requer owners explicitarem: catálogo de campos, leitura oficial, `null`/ausênc
 **Cenários HML a acrescentar:** campo alterado validado + campo herdado; valor registrado não conferido; ausência/unknown; primeira V1 com metadados; sem mudança técnica e evidência nova não gera V2; verificação mismatch/unverifiable permanece bloqueada; API de comparação distingue incomparabilidade.
 
 **Estado:** `PROPOSED_FOR_COORDINATION / TEST_NOT_RUN`. Sem alteração de código ou schema.
+
+## 9. Emenda CR-05 — merge governado de UPDATE parcial (PO, 13/11/2026)
+
+**Decisão do PO:** opção **A — Preservar campos e fornecedores não alterados e aplicar somente mudanças explícitas**, sem comentário. `PO_APPROVED / COORDINATION_RATIFICATION_PENDING`.
+
+### Contrato de domínio proposto para ratificação
+
+**Input conceitual:** `previousConsolidatedSnapshot` (CR-02 + CR-04), `validatedExplicitOperations` do PRC, `verificationEvidence`, `expectedRevision` e identidade oficial do produto. **Output:** `nextConsolidatedSnapshot`, `canonicalTechnicalDiff`, `changeProvenance` e resultado de conclusão (`baseline_initial | technical_change | no_technical_change`).
+
+| Tipo de input | Efeito requerido | Segurança/limitação |
+|---|---|---|
+| Campo **omitido** da operação | Preserva valor, origem, coverage e estado de confirmação da revisão anterior | Não inferir que foi reconfirmado |
+| Campo com **set explícito** | Substitui somente o campo alvo, se autorizado e validado | `null`/vazio devem ter semântica definida por field spec; erro se inválido |
+| Campo com **remoção explícita** | Aplica remoção somente se essa operação existir no contrato do campo e for autorizada/verificada | `remove` não equivale a atributo simplesmente não observado |
+| Fornecedor **não mencionado** | Preserva vínculo e seus atributos; identidade `supplierCode + store` | Não interpretar ausência na lista delta como exclusão |
+| Fornecedor com **ADD/UPDATE explícito** | Modifica apenas vínculo/atributo declarado e validado | Campos não alterados mantêm provenance; PN/catalog conforme gates oficiais |
+| Fornecedor com **REMOVE explícito** | Alvo ausente no próximo snapshot apenas se a operação estiver **autorizada e suportada** pela fonte oficial | A regra de negócio não revoga gates existentes de conclusão REMOVE/SA5; se não suportado: fail-closed |
+
+**Processamento determinístico recomendado:** validar operações e AuthZ → conferir baseline/expectedRevision (CAS) → aplicar delta à base consolidada com semântica estrita de omissão vs alteração vs remoção → confrontar operações verificáveis na fonte oficial → produzir snapshot consolidado/versionado com provenance → calcular diff técnico normalizado → materializar V1 se primeira confirmação (CR-03), Vn+1 só com diff real, ou concluir no-op e registrar auditoria. Exigir transação/idempotência e nenhuma publicação em caso de mismatch/unverifiable.
+
+**Alterações dos contratos de API:** não presumir endpoints novos de edição; reutilizar DTOs PRC existentes quando suportam `changedPaths` e `supplierLinkChanges`, evoluindo em versão compatível após inventário. Campos opcionais ausentes não devem sofrer coerção automática a `null`. Distinguir `notProvided`, `explicitNull`, `explicitRemove`, `unknown`. Lista de fornecedores e suas alterações precisam chaves estáveis, incluindo `store`. `canonicalTechnicalDiff` é computado no backend entre estados consolidados; metadados de verificação sozinhos não criam Vn.
+
+**Riscos que impedem codificação sem ratificação:** UPDATE parcial legado, snapshots anteriores do draft e sua cobertura, política de campo anulável, capacidade real de REMOVER fornecedor SA5 e read-back, colisão de supplier key, mudança de schema e migração não destrutiva, 409/CAS, AuthZ e testes negativos.
+
+**HML / aceitação:** descrição modificada sem mexer em classificações/fornecedores; atributo de fornecedor atualizado mantendo demais; novo fornecedor ADD; fornecedor omitido preservado; REMOVE só quando habilitado pelo owner e oficialmente confirmável; campo omitido ≠ explicit-null; caso mismatch/403/409 não publica; primeiro V1, UPDATE com diff V2 e posterior no-op mantêm histórico/proveniência.
+
+**Estado:** `PROPOSED_FOR_COORDINATION / TEST_NOT_RUN`. Não autoriza implementation, migration ou deploy.
