@@ -500,20 +500,32 @@ ANALYZE_ACTIONS: dict[str, dict] = {
             "e nunca trata ausência como zero."
         ),
     },
-    "invoice_posting.backlog": {
+    # Wire enum canônico sem ponto — clientes MCP (ChatGPT/Claude)
+    # validam ``analysis_type`` contra tools/list antes de enviar.
+    # Alias ``invoice_posting.backlog`` aceito em tool_analyze.
+    "invoice_posting_backlog": {
         "handler": lnf_bridge.tool_analyze_invoice_posting_backlog,
         "required": (),
         "allowed": ("branch", "period", "page_size"),
+        # action omitido de propósito: o action do catálogo = chave
+        # wire (analysis_type) — clientes MCP validam o enum de
+        # tools/list; ponto em action/enum quebra ChatGPT/Claude.
         "entity": "invoice_posting",
-        "action": "backlog",
         "gate": "lnf_read",
         "description": (
             "Backlog LNF: FACT/RECOMMENDATION (pendentes por filial, "
-            "idade desde recebimento, bloqueadas por motivo). Só "
-            "compõe reads da BFF; ausência de fonte ≠ zero; nunca "
-            "lança/valida por inferência."
+            "idade desde recebimento, bloqueadas por motivo). "
+            "Chamar analyze com analysis_type='invoice_posting_backlog'; "
+            "params em filters/parameters: branch, period "
+            "(competência YYYY-MM), page_size. Só compõe reads da "
+            "BFF; ausência de fonte ≠ zero; nunca lança/valida por "
+            "inferência."
         ),
     },
+}
+
+_ANALYZE_TYPE_ALIASES = {
+    "invoice_posting.backlog": "invoice_posting_backlog",
 }
 
 
@@ -593,11 +605,13 @@ def _semantic_catalog(identity: dict | None = None) -> dict:
         _entry(
             "analyze",
             spec.get("entity", "closing"),
-            spec.get("action", name.rpartition(".")[-1] if "." in name else name),
+            # action do catálogo = chave wire (analysis_type enum)
+            name,
             spec.get("gate", "access"),
             spec["required"],
             spec["description"],
         )
+        | {"analysis_type": name}
         for name, spec in sorted(ANALYZE_ACTIONS.items())
         if _gate_allowed(identity, spec.get("gate", "access"))
     ]
@@ -680,6 +694,30 @@ def _identity_snapshot(user) -> dict:
         }
 
 
+def _resolve_analyze_action(
+    entity: str | None, action: str | None
+) -> tuple[str | None, dict | None]:
+    """Resolve chave wire ``analysis_type`` a partir de catalog/schema.
+
+    Aceita a chave canônica (``invoice_posting_backlog``) e o alias
+    legado com ponto; também casa entity+action quando o action já é
+    a chave wire.
+    """
+    raw = (action or "").strip()
+    if not raw:
+        return None, None
+    candidate = _ANALYZE_TYPE_ALIASES.get(raw, raw)
+    if candidate in ANALYZE_ACTIONS:
+        return candidate, ANALYZE_ACTIONS[candidate]
+    ent = (entity or "").strip()
+    for name, spec in ANALYZE_ACTIONS.items():
+        if name == raw:
+            return name, spec
+        if ent and spec.get("entity") == ent and name == raw:
+            return name, spec
+    return None, None
+
+
 def _schema_for(entity: str, action: str) -> dict | None:
     """Schema JSON de uma action específica — sob demanda, nunca em
     massa (budget de contexto)."""
@@ -697,14 +735,16 @@ def _schema_for(entity: str, action: str) -> dict | None:
                 "page", "page_size", "projection",
             ],
         }
-    if action in ANALYZE_ACTIONS:
-        spec = ANALYZE_ACTIONS[action]
+    analyze_key, analyze_spec = _resolve_analyze_action(entity, action)
+    if analyze_spec is not None:
         return {
             "tool": "analyze",
-            "analysis_type": action,
-            "required_params": list(spec["required"]),
-            "optional_params": sorted(spec["allowed"]),
-            "description": spec["description"],
+            "analysis_type": analyze_key,
+            "entity": analyze_spec.get("entity", entity),
+            "action": analyze_key,
+            "required_params": list(analyze_spec["required"]),
+            "optional_params": sorted(analyze_spec["allowed"]),
+            "description": analyze_spec["description"],
         }
     if action in KNOWLEDGE_ACTIONS:
         spec = KNOWLEDGE_ACTIONS[action]
@@ -890,6 +930,7 @@ def tool_analyze(
     parameters: dict | None = None,
 ) -> CallToolResult:
     atype = (analysis_type or "").strip().lower()
+    atype = _ANALYZE_TYPE_ALIASES.get(atype, atype)
     spec = ANALYZE_ACTIONS.get(atype)
     if spec is None:
         return _err(

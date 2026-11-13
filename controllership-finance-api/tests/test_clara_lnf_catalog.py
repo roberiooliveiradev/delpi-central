@@ -30,10 +30,24 @@ def test_lnf_read_actions_registered():
 
 
 def test_lnf_analyze_registered():
-    assert "invoice_posting.backlog" in sb.ANALYZE_ACTIONS
-    spec = sb.ANALYZE_ACTIONS["invoice_posting.backlog"]
+    assert "invoice_posting_backlog" in sb.ANALYZE_ACTIONS
+    assert "invoice_posting.backlog" not in sb.ANALYZE_ACTIONS
+    spec = sb.ANALYZE_ACTIONS["invoice_posting_backlog"]
     assert spec["entity"] == "invoice_posting"
+    assert "action" not in spec  # action do catálogo = chave wire
     assert spec["gate"] == "lnf_read"
+    assert "invoice_posting_backlog" in sb.analysis_types()
+
+
+def test_analyze_alias_invoice_posting_dot_backlog():
+    assert sb._ANALYZE_TYPE_ALIASES["invoice_posting.backlog"] == (
+        "invoice_posting_backlog"
+    )
+    key, resolved = sb._resolve_analyze_action(
+        "invoice_posting", "invoice_posting.backlog"
+    )
+    assert key == "invoice_posting_backlog"
+    assert resolved is sb.ANALYZE_ACTIONS["invoice_posting_backlog"]
 
 
 def test_lnf_governed_capabilities():
@@ -64,7 +78,7 @@ def test_catalog_hides_lnf_without_flags():
     read_keys = {(e["entity"], e["action"]) for e in catalog["actions"]["read"]}
     assert ("invoice_posting", "list") not in read_keys
     analyze = {e["action"] for e in catalog["actions"]["analyze"]}
-    assert "backlog" not in analyze
+    assert "invoice_posting_backlog" not in analyze
     gov = {e["capability"] for e in catalog["actions"]["governed"]}
     assert "invoice_posting.comment" not in gov
 
@@ -86,8 +100,15 @@ def test_catalog_shows_lnf_reads_with_lnf_read():
     assert ("invoice_posting", "list") in read_keys
     assert ("invoice_posting", "get") in read_keys
     assert ("purchase_order", "open") not in read_keys  # create gate
-    analyze = {(e["entity"], e["action"]) for e in catalog["actions"]["analyze"]}
-    assert ("invoice_posting", "backlog") in analyze
+    analyze = {
+        (e["entity"], e["action"], e.get("analysis_type"))
+        for e in catalog["actions"]["analyze"]
+    }
+    assert (
+        "invoice_posting",
+        "invoice_posting_backlog",
+        "invoice_posting_backlog",
+    ) in analyze
     gov = {e["capability"] for e in catalog["actions"]["governed"]}
     assert "reconciliation.refresh" in gov
     assert "invoice_posting.create" not in gov

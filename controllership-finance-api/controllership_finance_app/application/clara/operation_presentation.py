@@ -17,6 +17,9 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
+from controllership_finance_app.application.clara.invoice_posting_presentation import (
+    LNF_PRESENTERS,
+)
 from controllership_finance_app.infrastructure.persistence.plugins_db import (
     SCHEMA_NAME,
     plugins_db_connect,
@@ -898,6 +901,7 @@ _PRESENTERS: dict[str, Callable[[dict], dict]] = {
     "checklist.version_publish": _present_tpl_publish,
     "checklist.version_inactivate": _present_tpl_inactivate,
     "checklist.doc_requirement": _present_tpl_doc_requirement,
+    **LNF_PRESENTERS,
 }
 
 

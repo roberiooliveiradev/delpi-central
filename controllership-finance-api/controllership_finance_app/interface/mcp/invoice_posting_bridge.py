@@ -533,7 +533,7 @@ def tool_analyze_invoice_posting_backlog(
 
         return _ok(
             {
-                "analysis_type": "invoice_posting.backlog",
+                "analysis_type": "invoice_posting_backlog",
                 "filters": {
                     "branch": branch,
                     "period": period,
