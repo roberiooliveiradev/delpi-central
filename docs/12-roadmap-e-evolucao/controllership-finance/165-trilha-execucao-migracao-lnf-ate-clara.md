@@ -83,9 +83,9 @@ Transferir o módulo **Lançamento de Notas Fiscais (LNF)** da `api-delpi` para 
 | F5c | Estabilização (hypercare) | IN_PROGRESS (dia 1; janela 5 DU a partir do corte) | PROD | — | 2026-11-13 | Checagens: total=1430; 5xx=0; HOSTED=true; recheck pós-F7 OK |
 | F7.0 | CLARA — inventário e contrato | DONE | docs | `0926f07160` | 2026-11-13 | doc 166; R2=SIM JWT usuário |
 | F7.1 | CLARA — leituras | DONE | HML/PROD | `1328cd0d85` | 2026-11-13 | 8 reads; HML JSON-RPC PASS; PROD health+import |
-| F7.2 | CLARA — análise | DONE | HML/PROD | `1328cd0d85` | 2026-11-13 | backlog FACT/RECOMMENDATION via reads |
-| F7.3 | CLARA — ações governadas | DONE | HML/PROD | `1328cd0d85` | 2026-11-13 | comment/refresh direct; prepare sela; justificativas |
-| F7.4 | CLARA — produção + roteiro de teste do owner | PENDING_OWNER | PROD | `1328cd0d85` | 2026-11-13 | deploy PROD OK; roteiro abaixo |
+| F7.2 | CLARA — análise | DONE (F7-R) | HML/PROD | `348140ec53` | 2026-11-13 | enum `invoice_posting_backlog` no tools/list; schema-callable |
+| F7.3 | CLARA — ações governadas | DONE (F7-R) | HML/PROD | `348140ec53` | 2026-11-13 | presentation displayable=true; HML prepare→commit E2E |
+| F7.4 | CLARA — produção + roteiro de teste do owner | PENDING_OWNER | PROD | `348140ec53` | 2026-11-13 | rework F7-R deployado; revisor refaz pelo conector |
 | F6 | Limpeza final (encerra o rollback) | TODO | | | | |
 
 Status possíveis: TODO · IN_PROGRESS · BLOCKED (regra de parada) · DONE.
@@ -246,7 +246,7 @@ Qualquer FAIL em (a)–(f) ou nas verificações BFF/MFE → parada R1/R3/R5/R8 
 | read | `received_invoice.detail` | GET `/received-invoices/{id}/detail` | create | — |
 | read | `unmapped_product.list` | GET `/unmapped-products` | review-unmapped-products | — |
 | read | `supplier.search` | GET `/suppliers` | create | — |
-| analyze | `invoice_posting.backlog` | composição dos reads | READ LNF | FACT/RECOMMENDATION: pendentes por filial, idade desde o recebimento, bloqueadas por motivo, divergências com o ERP, CT-e sem NF vinculada, notas recebidas sem solicitação; recorte por competência |
+| analyze | `invoice_posting_backlog` (wire enum; alias `invoice_posting.backlog`) | composição dos reads | READ LNF | FACT/RECOMMENDATION: pendentes por filial, idade desde o recebimento, bloqueadas por motivo, divergências com o ERP, CT-e sem NF vinculada, notas recebidas sem solicitação; recorte por competência |
 | execute | `invoice_posting.comment` | POST `/requests/{id}/comments` | create/process/manage | direct |
 | execute | `reconciliation.refresh` | POST `/reconciliation/refresh` | READ LNF | direct |
 | execute | `invoice_posting.create` | POST `/requests` | create (+filial) | governed |
@@ -269,15 +269,17 @@ Os conjuntos "Visível para" devem ser **idênticos** aos decorators da BFF (fon
 - PROD: deploy do serviço da CLARA (protocolo P6/P7); verificação técnica de health; teste funcional fica para F7.4.
 
 #### F7.2 — Análise
-- Implementar `analyze invoice_posting.backlog` sobre os reads (sem SQL próprio, sem acesso direto a banco).
+- Implementar `analyze` com `analysis_type=invoice_posting_backlog` (nome wire-safe no enum de `tools/list`; alias `invoice_posting.backlog` aceito no dispatch) sobre os reads (sem SQL próprio, sem acesso direto a banco).
 - Achados FACT (com números e origem) vs RECOMMENDATION; ausência de fonte ≠ zero; nunca "validar" ou "lançar" por inferência.
 - Testes DEV/HML com dados conhecidos (fixtures da suíte): números da análise batem com contagens da BFF.
+- **F7-R (2026-11-13):** clientes MCP reais validam o enum antes de enviar — o enum publicado **deve** incluir `invoice_posting_backlog`; teste automatizado valida cada entrada do catálogo contra o `inputSchema` de `tools/list` (jsonschema).
 
 #### F7.3 — Ações governadas
 - Implementar as entradas `execute`/`delete` da tabela, no padrão existente da CLARA (prepare sela a operação; commit exige `proposal_handle` + `confirmation=true`; read-back pós-commit; idempotência; proposta expirada/de outro ator rejeitada).
 - `direct` somente para `comment` e `reconciliation.refresh`.
 - Testes DEV/HML via API do MCP: para cada ação, prepare não altera nada (contagem igual); commit altera exatamente o esperado (read-back = resposta da BFF); perfil sem permissão → negado no prepare **e** no commit; commit com proposta de outro usuário → rejeitado; cancel exige justificativa; post_manual exige justificativa; batch respeita dependências.
 - Nenhuma ação dispara sem consentimento quando for governed.
+- **F7-R (2026-11-13):** apresentação selada (`displayable=true`) para **todas** as actions LNF governadas/destrutivas (e read-back legível em comment/refresh); HML E2E com **commit** (canal conversacional só em HML para automação; PROD permanece `portal`).
 
 #### F7.4 — Produção + roteiro de teste do owner
 - Deploy PROD do serviço da CLARA (P6/P7); health; catálogo publicado.
@@ -379,6 +381,12 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-13 08:30 -03 | F7.1–F7.3 | HML | JSON-RPC: catalog por perfil, read, analyze, refresh, prepare, negativos | PASS | `1328cd0d85` | tools/list=6; P0=403; P10=401; justificativas obrigatórias |
 | 2026-11-13 08:35 -03 | F7.4 | PROD | Deploy BFF + health + OpenAPI 22/24 + import 8 reads + mcp 401 | PASS técnico | `1328cd0d85` | roteiro owner PENDING |
 | 2026-11-13 08:35 -03 | F5c | PROD | Recheck pós-F7 | PASS | — | total=1430; 5xx_15m=0; HOSTED=true |
+| 2026-11-13 08:30 -03 | F7-R | PROD→docs | Revisor (conector Claude): enum analyze sem LNF; prepare start `displayable=false` | REWORK | — | prompt F7-R; commits só HML |
+| 2026-11-13 08:34 -03 | F7-R | DEV | enum `invoice_posting_backlog` + LNF presenters + testes schema/presentation | PASS | `348140ec53` | 36 unitários no container |
+| 2026-11-13 08:35 -03 | F7-R | HML | Deploy + `CLARA_CONSENT_CHANNEL=conversational` (só HML) | PASS | `348140ec53` | canal armado p/ E2E commit |
+| 2026-11-13 08:41 -03 | F7-R | HML | E2E prepare→commit (P9) + negativos + jsonschema tools/list | PASS 36/36 | — | `/tmp/f7r-hml-e2e.json`; expire via `handle_hash`; branch deny no commit P11×02 |
+| 2026-11-13 08:42 -03 | F7-R | PROD | Deploy BFF; forçar `CLARA_CONSENT_CHANNEL=portal`; tech checks | PASS | `348140ec53` | enum+6 tools+presentation; unit 36; health 200; **sem commit real** |
+| 2026-11-13 08:43 -03 | F7.4 | PROD | Roteiro owner reaberto pós-F7-R | PENDING_OWNER | `348140ec53` | refrescar tools no conector; retestar 4 e 6 |
 
 ### Roteiro de teste do owner — F7.4 (ChatGPT / CLARA em PROD)
 
@@ -387,11 +395,11 @@ Pré-condição: usuário com `controllership-finance.access` **e** as permissõ
 1. "CLARA, quais ações de lançamento de notas fiscais eu tenho?" → catálogo coerente com o perfil (sem entradas de create se não tiver create).
 2. "Liste as solicitações abertas da filial 01." → mesmos totais que o app.
 3. "Abra a solicitação \<id\>." → detalhe + link do app para PDF/XML (sem binário na conversa).
-4. "Analise o backlog de lançamento de notas da filial 01." → FACT com números/fonte; RECOMMENDATION sem lançar por inferência.
+4. "Analise o backlog de lançamento de notas da filial 01." → tool `analyze` com `analysis_type=invoice_posting_backlog` (enum de tools/list); FACT com números/fonte; RECOMMENDATION sem lançar por inferência.
 5. "Comente na nota \<id\>: teste CLARA F7.4" → comentário aparece no app (direct).
-6. "Inicie o atendimento da nota \<id\>." → CLARA apresenta proposta e **não executa** sem confirmação; após confirmar, app mostra Em atendimento.
+6. "Inicie o atendimento da nota \<id\>." → prepare com **presentation.displayable=true** (alvo/efeito legíveis) e **não executa** sem confirmação Portal; após step-up, app mostra Em atendimento.
 7. Negativos: perfil só view não vê create/start; cancel/post_manual sem justificativa recusados; serviço/token de máquina não entra no MCP.
 
-Marcar F7.4 DONE somente com PASS do owner neste roteiro.
+**Após F7-R:** o revisor deve refrescar tools no conector e repetir 4 e 6 (enum + presentation). Marcar F7.4 DONE somente com PASS do owner neste roteiro.
 
 **F6 (limpeza) — não inicia agora.** Pré-requisitos: (a) 5 dias úteis de F5c sem incidente a partir de 2026-11-13; (b) smoke F5b PASS do owner; (c) este roteiro F7.4 PASS. Data mais cedo possível para F6: **2026-11-20** (após o 5º DU: 13, 14, 17, 18, 19), se (b) e (c) estiverem PASS.

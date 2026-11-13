@@ -1,7 +1,7 @@
 # 166 — CLARA × Lançamento de Notas Fiscais (contrato F7)
 
-> Status: **F7.0–F7.3 DONE** · **F7.4 PENDING_OWNER** (roteiro na trilha 165)  
-> SHA: `1328cd0d85` · Data: 2026-11-13  
+> Status: **F7.0–F7.3 DONE (F7-R)** · **F7.4 PENDING_OWNER** (roteiro na trilha 165)  
+> SHA: `348140ec53` · Data: 2026-11-13  
 > Tools públicas: **sempre as 6** (`get_context`, `read`, `analyze`, `knowledge`, `execute`, `delete`)  
 > Catálogo: `clara-semantic-v1` — novas entradas `(entity, action)`, sem tool nova
 
@@ -16,6 +16,7 @@
 | Compose | `infra/docker-compose.yml` / `.hml.yml` serviço `controllership-finance-api` |
 | Catálogo | `semantic_bridge.py` → `SEMANTIC_CATALOG_VERSION = clara-semantic-v1` |
 | Governed | `governed_writes.py` + `invoice_posting_capabilities.py` |
+| Apresentação LNF | `application/clara/invoice_posting_presentation.py` → merge em `operation_presentation._PRESENTERS` |
 | HML | Mesma BFF (`delpi-hml-controllership-finance-api`) — sem container CLARA separado |
 | Endpoint | `POST {PUBLIC}/apps/controllership-finance-api/mcp` JSON-RPC |
 
@@ -40,22 +41,29 @@
 | read | `received_invoice.detail` | GET `/received-invoices/{id}/detail` | `lnf_create` | — |
 | read | `unmapped_product.list` | GET `/unmapped-products` | `lnf_review_unmapped` | — |
 | read | `supplier.search` | GET `/suppliers` | `lnf_create` | — |
-| analyze | `invoice_posting.backlog` | composição dos reads | `lnf_read` | FACT/RECOMMENDATION |
+| analyze | `invoice_posting_backlog` | composição dos reads | `lnf_read` | FACT/RECOMMENDATION; **wire enum** em `tools/list` (alias dispatch `invoice_posting.backlog`) |
 | execute | `invoice_posting.comment` | POST `.../comments` | `lnf_write` | **direct** |
 | execute | `reconciliation.refresh` | POST `/reconciliation/refresh` | `lnf_read` | **direct** |
-| execute | `invoice_posting.create` | POST `/requests` | `lnf_create` | governed |
-| execute | `invoice_posting.update` | PATCH `/requests/{id}` | `lnf_write` | governed |
-| execute | `invoice_posting.link_purchase_order` | POST `.../link` | `lnf_process` | governed |
-| execute | `invoice_posting.start` | POST `.../start` | `lnf_process` | governed |
-| execute | `invoice_posting.block` | POST `.../block` | `lnf_process` | governed |
-| execute | `invoice_posting.resume` | POST `.../resume` | `lnf_process` | governed |
-| execute | `invoice_posting.post_manual` | POST `.../post-manual` | `lnf_process` | governed + **justificativa** |
-| execute | `reconciliation.run` | POST `/reconciliation/run` | `lnf_manage` | governed |
-| delete | `invoice_posting.cancel` | POST `.../cancel` | `lnf_write` | destructive + **justificativa** |
+| execute | `invoice_posting.create` | POST `/requests` | `lnf_create` | governed + presentation |
+| execute | `invoice_posting.update` | PATCH `/requests/{id}` | `lnf_write` | governed + presentation |
+| execute | `invoice_posting.link_purchase_order` | POST `.../link` | `lnf_process` | governed + presentation |
+| execute | `invoice_posting.start` | POST `.../start` | `lnf_process` | governed + presentation |
+| execute | `invoice_posting.block` | POST `.../block` | `lnf_process` | governed + presentation |
+| execute | `invoice_posting.resume` | POST `.../resume` | `lnf_process` | governed + presentation |
+| execute | `invoice_posting.post_manual` | POST `.../post-manual` | `lnf_process` | governed + **justificativa** + presentation |
+| execute | `reconciliation.run` | POST `/reconciliation/run` | `lnf_manage` | governed + presentation |
+| delete | `invoice_posting.cancel` | POST `.../cancel` | `lnf_write` | destructive + **justificativa** + presentation |
 
 PDF/XML: **não** são tools — resposta aponta `app_links` → `/apps/lancamento-notas-fiscais`.
 
 Gates mapeiam as mesmas famílias de permissão dos decorators BFF (`permissions.py`).
+
+### F7-R — defeitos do conector (2026-11-13) e correção
+
+| Defeito | Correção |
+|---|---|
+| `analyze.analysis_type` enum só `closing_blockers`/`report_comparison` | chave canônica `invoice_posting_backlog` em `ANALYZE_ACTIONS` → publicada no enum |
+| `execute invoice_posting.start` prepare com `displayable=false` | `LNF_PRESENTERS` para todas as capabilities LNF |
 
 ---
 
@@ -66,9 +74,10 @@ Gates mapeiam as mesmas famílias de permissão dos decorators BFF (`permissions
 | Reads/analyze | `interface/mcp/invoice_posting_bridge.py` |
 | Registry | `interface/mcp/semantic_bridge.py` |
 | Governed LNF | `application/clara/invoice_posting_capabilities.py` |
+| Presentation LNF | `application/clara/invoice_posting_presentation.py` |
 | Merge/gates | `application/clara/governed_writes.py` |
 | Identity flags | `interface/mcp/tool_bridge.py` (`_mcp_identity`) |
-| Testes | `tests/test_clara_lnf_catalog.py` |
+| Testes | `tests/test_clara_lnf_catalog.py`, `test_clara_lnf_presentation.py`, `test_clara_catalog_schema_callable.py` |
 
 ---
 
@@ -78,6 +87,7 @@ Gates mapeiam as mesmas famílias de permissão dos decorators BFF (`permissions
 - `tools/list` = 6 tools
 - Catálogo: entradas LNF só com flags `lnf_*`
 - Capabilities: comment/refresh direct; demais governed; cancel destructive; justificativas obrigatórias
+- **F7-R:** enum contém `invoice_posting_backlog`; toda entrada do catálogo valida contra `inputSchema` (jsonschema); presenters LNF com `displayable=true`
 
 ### HML (JSON-RPC MCP, usuários `lnf-contract-p*`)
 - Positivo: perfil com permissão vê entrada e obtém mesmos dados que a rota BFF
@@ -85,10 +95,12 @@ Gates mapeiam as mesmas famílias de permissão dos decorators BFF (`permissions
 - P10 serviço → 401/403 no `/mcp`
 - Prepare não muta; commit com `confirmation=true` muta; proposta de outro ator rejeitada
 - Cancel/post_manual sem justificativa → rejeitado
+- **F7-R:** E2E prepare→commit (create/start/update/block/resume/cancel/post_manual/recon.run) + expire + branch deny + batch; canal `conversational` **somente HML** para automação
 
 ### PROD
-- Deploy BFF; health; OpenAPI/MCP up
-- Roteiro owner (F7.4) — ver Parte 6 da trilha 165
+- Deploy BFF; health; enum/tools/list; presentation; canal **`portal`**
+- **Sem commit** com dados reais no F7-R
+- Roteiro owner (F7.4) — ver Parte 6 da trilha 165; refrescar tools no conector
 
 ---
 
