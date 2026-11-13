@@ -1696,3 +1696,13 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT1-SEC01-API-DELPI | **OPEN_EXTERNAL / SEPARATE_TASK** | Deployment de outra task não autorizado por INT1 |
 
 **NEXT=`COORDINATION_C3_T2_POST_INT1_NEXT_BOUNDED_STEP_DECISION`**. `INT1_CLOSED=YES`; `INT2/INT3/T3=NOT_AUTHORIZED`; `NEW_PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+
+### C3/T2 post-INT-1 — requirements inventory (Doc 324; 2026-11-13)
+
+| Residual | Status | Evidence / disposition |
+|---|---|---|
+| T2-INT2-TYPED-OBJECTIVE | **OPEN — MATERIAL TO T2** | plan=None em prod real (tool nunca invocada) → coverage provável impossível; único passo bounded proposto, pendente autorização |
+| T2-INT3-SUFFICIENCY | OPEN — BLOCKED BY INT-2 | machinery existe, nunca exercitada |
+| T2-INT4-SYNTHESIS | OPEN — PARTIAL_PROVEN_IN_SAMPLE | avanço pleno depende INT-2/3 |
+| T2-INT5-INTEGRATED-ACCEPTANCE | GATED | gate final posterior |
+| INT1-* (menores/externos) | OPEN_NON_BLOCKING | inalterados — owners registrados (Doc 323) |

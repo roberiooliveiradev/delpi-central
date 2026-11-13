@@ -6715,3 +6715,11 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Model-agnostic:** runtime prod Kimi, eval Qwen isolated; common governance contracts, no model comparison, no model swap or new production deploy. Prior release deployment Doc321 remains executed; SEC-01 separate.
 - **RESIDUALS:** observability/status, heavy-view timeout, DAVI non-exec caps, eval flakes and external ops profile/SEC-01 remain OPEN by own owners; none MATERIAL to accepted INT1 DoD.
 - **PHASE=C3/T2 (unchanged)**; **PHASE_ADVANCEMENT=NO**, **INT2/INT3/T3=NOT_AUTHORIZED**, **NEW_PRODUCTION_DEPLOY=NOT_AUTHORIZED**. **NEXT=`COORDINATION_C3_T2_POST_INT1_NEXT_BOUNDED_STEP_DECISION`**.
+
+### C3/T2 post-INT-1 — requirements inventory + next step decision (Doc 324; 2026-11-13)
+
+- **TASK:** `DELIA-C3-T2-POST-INT1-REQUIREMENTS-AND-NEXT-BOUNDED-STEP-DECISION-01`; BASE `5a6ebcc9e5` (ff de `5667e18549`). Natureza: revisão/inventário — `CODE_CHANGED=NO`.
+- **RECONCILIAÇÃO:** INT-1 CLOSED. Compreensão (INT-2): contratos `declare_investigation_goal`/`SemanticInvestigationPlan` existem, não exercitados em runtime real (plan=None prod). Suficiência (INT-3): machinery existe, coverage sempre `unknown`. Síntese (INT-4): proven-in-sample. INT-5: gated.
+- **GAP MATERIAL ÚNICO:** cadeia typed-objective→obligations→veredito-de-cobertura — requisito INT-2 pendente, bloqueia prova de satisfação de objetivo e INT-3.
+- **DECISÃO PROPOSTA:** `T2_ONE_BOUNDED_RESIDUAL_STEP_REQUIRED` → `T2_INT2_TYPED_OBJECTIVE_DELIVERY_AND_OBLIGATION_POPULATION` (EXTEND, sem novo Agent; requer autorização).
+- **NEXT:** `COORDINATION_INT2_BOUNDED_STEP_AUTHORIZATION_DECISION`; `INT2/INT3/T3=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.
