@@ -106,6 +106,19 @@ Criar campanhas e selecionar clientes existentes no TOTVS para que o usuário po
 
 **Status:** disposição **EDITOR ACIMA → PRÉVIA HTML ABAIXO APROVADA** como solicitação explícita; solução técnica para prévia, CSS e implementação **PENDING**.
 
+### Decisão de UX — dois modos de prévia: Correio eletrônico e Mensageiro (13/11/2026)
+
+**SOLICITADO PELO USUÁRIO:** manter o **editor textual único acima** e oferecer **dois modos de prévia abaixo**, alternáveis por controle de seleção/abas oficial do Comercial/PluginUI: **Correio eletrônico** e **Mensageiro**. Não criar editores separados nem configuração por plataforma. Os nomes WhatsApp e Teams são canais de uso do mesmo modo Mensageiro (texto simples), não novas abas e não integrações de envio.
+
+- **Correio eletrônico:** prévia do conteúdo HTML seguro e visual formatado, com assunto do e-mail; corresponder ao conteúdo que futuramente será copiado como HTML rico com alternativa em texto. HTML é **saída renderizada**, não entrada HTML livre. Compatibilidade de colagem no Outlook é **PENDING de testes**.
+- **Mensageiro:** prévia de texto simples com quebras de linha e link legível, compatível conceitualmente com copiar e colar em WhatsApp, Teams e outros mensageiros. **Sem** assunto de e-mail na prévia de mensageiro, sem HTML e sem simular interface, bolhas, marca de mensagens ou estilos específicos dos aplicativos.
+- **Editor e dados:** assunto e corpo permanecem editáveis uma única vez na campanha. `{nome_empresa}` e `{link_pesquisa}` são os **únicos dois campos dinâmicos**; prévias da configuração usam empresa e URL de exemplo claramente marcadas como fictícias. No detalhe UI-02C, usar somente nome TOTVS e link estável oficiais autorizados para o participante ativo. Alterar o modo de prévia não grava nem altera o texto.
+- **Ordem de composição:** cabeçalho → assunto → editor de mensagem e Inserir campo → **seletor Correio eletrônico | Mensageiro** → **uma única área de prévia de leitura** correspondente ao modo selecionado → Reverter e Salvar mensagem. O seletor fica **acima da área de prévia, abaixo do editor**; rodapé permanece após a prévia. Salvar uma mensagem padrão por campanha sob autoridade da `commercial-api`. Não há envio automático ou rastreamento de entrega.
+- **Padrão visual e responsividade:** inventariar e reutilizar controle de alternância/abas oficialmente usado no Comercial (nome de wrapper, props, tokens e consumidor real **TO_INVENTORY**); não inventar novas abas próprias. Em desktop/tablet/celular, editor e prévia seguem **empilhados verticalmente**. O seletor, as dimensões, largura/altura, padding, margins, gaps, tipografia, bordas e comportamento móvel vêm do PluginUI, com valores concretos a extrair de CSS/props (**TO_INVENTORY**) e sem overrides exclusivos para Pesquisa.
+- **Segurança:** converter texto em HTML por renderização segura/escape; prévia não deve executar markup, imagens remotas ou scripts vindos do campo. A ação de cópia por canal acontece na UI-02C com autorização, não nesta seleção de prévia; nenhuma conexão com WhatsApp ou Teams.
+
+**Status:** organização com dois modos de prévia **DEFINIDA PELO SOLICITANTE**; controle visual concreto, medidas CSS, representação de HTML, testes e implementação **PENDING/TO_INVENTORY**.
+
 ### UI-02C — Detalhe do participante
 
 1. **Topo/trilha:** voltar à campanha e à lista no mesmo contexto; nome oficial, código e loja TOTVS; situação Pendente/Respondida oriunda da API.
