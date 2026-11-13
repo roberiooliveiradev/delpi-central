@@ -1,5 +1,7 @@
 # PRC-TRACK — G0 inventário reancorado e G1 pacote de decisões para Coordination
 
+> **DECISÃO DO PO RECEBIDA — 2026-11-13:** Ler [Deliberações G1 do PO](./PRC-TRACK-G1-PO-DECISIONS-2026-11-13.md). ADR-01–07 têm escolha funcional registrada; **isso não equivale à ratificação pela Coordination**. Os pontos de snapshot PRC vs valor oficialmente verificado, no-op, projeção de flags e corte temporal precisam de contratos. Referências anteriores neste inventário são evidência de código e propostas, não decisões finais conflitantes.
+
 > **Data:** 2026-11-13 · **Estado:** `G0_PARTIAL / G1_DECISION_REQUIRED`. **Não é ADR ratificada.**  
 > **Escopo:** preparação para B1–B3 do [pacote integrado](./PRC-TRACKED-PRODUCTS-IMPLEMENTATION-PACKAGE-PLAN.md).  
 > **Não autoriza:** migration, implementação, deploy, alteração de owner/authority ou conclusão do gate PRC-UI-EXTRACT-01.
