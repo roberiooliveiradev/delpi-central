@@ -196,3 +196,18 @@ A coordenação abriu o **PR real [#180](https://github.com/roberiooliveiradev/d
 **Decisão da Coordination:** `DEVIN_PROD01_HML_SCOPED_PASS_REPORTED / CURSOR_INDEPENDENT_PENDING / MULTIUSER_TEST_NOT_RUN / PRODUCTION_NOT_DEPLOYED`. O PROD-01 não precisa de nova implementação só para repetir testes bem-sucedidos. O Cursor deve testar a mesma imagem/SHA, validar de modo independente cenários e registrar lacunas de case-insensitive e segundo usuário autorizado; se não houver segundo usuário ou dado alfanumérico permitido, `INCONCLUSIVE/TEST_NOT_RUN` com bloqueio factual, sem falso PASS. Corrigir falha concreta pelo Devin com limite anticíclo.
 
 **Próximo trabalho em paralelo:** finalizar ratificação T01/T02 (snapshot/proveniência e conclusão versionada/no-op) para liberar DEVIN-PROD-02. Não antecipar FLAG ou FRONT.
+
+
+## 15. PROD-01 — teste multiusuário HML executado por Devin, aceite independente pendente (13/11/2026)
+
+**Relatório executor, não auditoria Cursor:** HML checkout `0a29fbe72ed8496388620325e4aa68f272af2743`; digest informado `sha256:9c040dd4191a8617f826aa628cda6d3a17bd70555b1fb9949500ad7826b14fe2`. Devin reportou 10/10 cenários A1–A10 `PASS`, além de escrita cross-user `PASS`; contas de teste `hml-tester` e `lnf-contract-p9` com `engineering.access`, `lnf-contract-p1` sem permissão e sessão anônima. Dois autorizados consultaram os mesmos dois produtos; segundo autorizado iniciou e concluiu um request criado pelo primeiro, gerando terceira V1 com sujeito do autor correto. São **sessões de usuários distintas**, mas o mesmo implementador executou os testes: campo `INDEPENDENT_TEST_RESULTS` do relatório não prova teste feito pelo Cursor.
+
+**Classificação:** `DEVIN_HML_MULTIUSER_PASS_REPORTED / CURSOR_INDEPENDENT_PENDING / PROD01_IMPLEMENTATION_ACCEPTED / PROD_DEPLOY_NOT_AUTHORIZED`. Cenário de busca case-insensitive alfanumérica `TEST_NOT_RUN` em HML por códigos oficiais numéricos; teste automatizado PG foi reportado previamente. Não falsificar PASS da condição não executada.
+
+**Credenciais:** Devin reportou rotação das senhas expostas e armazenamento local em `infra/.env.hml` sem commit. Checagem efetiva de rotação/revogação e de segredos em artefatos cabe aos owners; **nunca reproduzir senha, token ou conteúdo .env** no ledger/prompts. Segredos devem permanecer em secret manager/ambiente operacional controlado, não em Git.
+
+**Dados:** Devin reportou três records V1 em schema HML `engineering.*` e ausência de escrita no TOTVS (verify READ). Avaliar retenção/limpeza dos dados de teste pelo owner do HML após revalidação do Cursor; não executar exclusões automáticas.
+
+**Gate formal do Cursor:** uma única sessão de revalidação independente contra mesmo deployment SHA/digest, com autorização positiva/negativa, dois usuários, pedido cross-user, listagem/paginação e histórico; não repetir caso de teste já comprovado sem risco novo além de amostragem de independência. `case-insensitive alfanumérico` permanece `TEST_NOT_RUN` enquanto não houver dado oficial autorizado.
+
+**Decisão operacional:** PROD-01 não retorna ao Devin para correções sem defeito concreto do Cursor. Desenvolver o produto conforme plano mestre depende agora da **ratificação técnica T01/T02** para DEVIN-PROD-02; não tratar Cursor como impedimento dessa ratificação. Sem alteração de frontend/bandeiras ou deploy produção.
