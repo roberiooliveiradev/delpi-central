@@ -189,3 +189,20 @@ Encaminhar à Coordination **ADR-01 a ADR-06** com matriz de decisão e pergunta
 **AC adicionais:** `CR04-AC01` UPDATE de descrição preserva classificação anterior com origem herdada; `CR04-AC02` valor registrado não individualmente confirmado aparece com indicação explícita, não como confirmado TOTVS; `CR04-AC03` campo desconhecido não recebe valor fabricado; `CR04-AC04` primeira V1 contém cobertura declarada; `CR04-AC05` atualização somente de estado de confirmação não gera V2 sem diff técnico; `CR04-AC06` campos/vínculos comparados preservam rastreio de origem; `CR04-AC07` falha de verificação impede conclusão mesmo que ficha contenha campos registrados.
 
 **Não autoriza** implementação, migration, deploy ou mudança de owner; detalhes técnicos exigem ratificação pela Coordination.
+
+## 11. Deliberação complementar do PO — CR-05: UPDATE parcial e fornecedores (13/11/2026)
+
+**Escolha expressa:** **A — Preservar campos e fornecedores não alterados e aplicar somente mudanças explícitas.** **Comentário:** sem comentário. **Status:** `PO_APPROVED_BUSINESS_DECISION / COORDINATION_RATIFICATION_PENDING`.
+
+**Regra funcional:** em solicitação UPDATE, a nova ficha consolidada herda da última versão Vn os campos e vínculos de fornecedores não abrangidos por uma operação explícita. Somente alterações, inclusões e remoções declaradas, autorizadas e efetivamente validadas podem modificar o estado técnico consolidado. Omissão de atributo/cadastro de fornecedor **não é** comando para zerar, excluir ou substituir. Identidade do vínculo de fornecedor: `supplierCode + store`, com atributos técnicos registrados pelo PRC, sujeitos à identificação e cobertura válidas.
+
+**Compatibilidade com decisões anteriores:**
+- **CR-02:** cada revisão permanece um **snapshot consolidado completo do escopo de campos PRC conhecidos**, não apenas delta. O delta aplicado e a proveniência da solicitação continuam separados.
+- **CR-03:** na primeira conclusão válida, V1 é baseline inicial mesmo sem mudança. Nas demais, o merge de UPDATE parcial somente resulta em Vn+1 quando o diff técnico consolidado for real; no-op conclui e audita sem incrementar.
+- **CR-04:** cada valor herdado mantém a origem e o nível de verificação de sua evidência anterior; não é automaticamente reconfirmado. Valores alterados recebem proveniência e confirmação correspondentes. Lacunas continuam desconhecidas, sem valor inventado.
+
+**Semântica de domínio a ratificar:** `omitted` (nenhuma mudança), `set(value)` (mudança explícita, inclusive significado contratual de `null`), `remove` (remoção explícita autorizada), `unknown/not_observed` (cobertura insuficiente, não equivale a remoção), e operações em fornecedores por chave estável. A Engineeering API deve confirmar o formato canônico, permissões de remover fornecedor, limites da leitura oficial, idempotência/CAS, compatibilidade de DTOs e tratamento de valores legados. **Não inferir que uma operação REMOVE de fornecedores já pode ser concluída no runtime**: há gates existentes de SA5 a inventariar. A regra de negócio aprovada não os contorna.
+
+**Critérios de aceite CR05:** (1) alterar somente descrição mantém unidade, classificação e fornecedores; (2) fornecedor não mencionado permanece; (3) atributo omitido não apaga valor; (4) exclusão explícita autorizada afeta apenas alvo correto, preservando histórico; (5) field-null e field-omission têm efeitos distintos definidos em contrato; (6) proveniência dos herdados permanece original; (7) merge sem diferença após V1 não gera Vn+1; (8) operação não verificada/sem autorização falha sem publicar revisão.
+
+**Sem código, migration ou deploy.** Esta decisão funcional não substitui ratificação da Coordination sobre contrato, autoridade, operações de remoção ou segurança.
