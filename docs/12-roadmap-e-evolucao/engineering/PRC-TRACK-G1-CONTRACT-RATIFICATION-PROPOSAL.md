@@ -136,3 +136,35 @@ A orientação do PO resolve a alternativa *estado consolidado vs somente delta*
 **Novos cenários HML:** primeira UPDATE matched/no-diff gera V1; primeira CREATE matched gera V1 sem atribuir prova ERP de criação além do contrato oficial; segunda no-op mantém V1; diff posterior gera V2; unmatched/forbidden não gera V1; replay e duas conclusões concorrentes não duplicam revisões; listagem mostra V1 e última evolução baseline.
 
 **Estado:** `PO_APPROVED / COORDINATION_RATIFICATION_PENDING / TEST_NOT_RUN`. Sem autorização de implementação.
+
+## 8. Emenda CR-04 — origem e estado de confirmação de cada campo (PO, 13/11/2026)
+
+**Decisão do PO:** opção **A — Preservar valores e identificar sua confirmação**, sem comentário. `PO_APPROVED / COORDINATION_RATIFICATION_PENDING`.
+
+### Semântica proposta, ainda não contrato ratificado
+
+| Categoria de origem/estado | Conteúdo | Regra de apresentação e validação |
+|---|---|---|
+| `official_verified` | Valor conferido via fonte oficial no contexto da verificação documentada | Exibir como verificado, com `evidenceId`/timestamp e escopo de verificação |
+| `inherited_confirmed` | Valor vindo de última revisão com proveniência válida | Exibir valor e confirmação original, **não** atribuir nova verificação à solicitação atual |
+| `registered_unverified` | Valor mantido pela Engineering API, sem comprovação individual suficiente | Exibir como registrado/não confirmado; não chamá-lo de oficial |
+| `unknown` | Sem valor conhecido confiável ou não disponível | Exibir ausência/indisponibilidade, nunca inferir valor |
+| `not_applicable` (quando houver contrato) | Campo não aplicável sob regra de domínio | Diferenciar de `unknown` e de `null` |
+
+**Nota:** nomes de enum e DTO acima são `TARGET` e dependem de inventário de esquemas existentes, sem supor que já existam. O owner deve definir se `valueOrigin` e `verificationState` são atributos distintos (recomendado, pois origem e validação não são a mesma coisa), tipos, versão e compatibilidade. Não expor `evidence` sensível a usuários fora do escopo autorizado.
+
+### Consequências para B1/B3
+
+1. **CR-02:** snapshot Vn é consolidado e cobre o catálogo de campos PRC autorizado; cada valor conhecido carrega provenance, status e cobertura. UPDATE parcial mantém estado anterior com seu timestamp original, não o transforma em confirmado novamente.
+2. **CR-03:** primeiro matched, mesmo sem alteração, gera V1 com coverage real e prova de conclusão; campos não conferidos individualmente permanecem assim rotulados. Não criar V1 quando conclusão falhar.
+3. **ADR-05:** `canonicalTechnicalDiff` observa **valores técnicos e vínculos**, não mudanças isoladas de metadados de evidência; sem diff técnico após V1, sem Vn+1, com ledger de verificação atualizado.
+4. **B3:** diff servidor Vx×Vy pode indicar `unverifiable/incomparable` quando a qualidade da cobertura impede comparação; não mostrar igualdade confirmada quando fonte é desconhecida. Provenance não cria causalidade da PRC.
+5. **B2:** eventos de flags continuam separados; confirmação de campo não encerra bandeira automaticamente.
+
+### Contrato formal ainda pendente
+
+Requer owners explicitarem: catálogo de campos, leitura oficial, `null`/ausência/removido/desconhecido, tratamento de fonte de evidência, herança de estado sob UPDATE parcial, limites de acesso, erros de conclusão e testabilidade. A decisão do PO **não** flexibiliza a verificação `matched` exigida atualmente para conclusão, nem concede autoridade à interface ou ao modelo.
+
+**Cenários HML a acrescentar:** campo alterado validado + campo herdado; valor registrado não conferido; ausência/unknown; primeira V1 com metadados; sem mudança técnica e evidência nova não gera V2; verificação mismatch/unverifiable permanece bloqueada; API de comparação distingue incomparabilidade.
+
+**Estado:** `PROPOSED_FOR_COORDINATION / TEST_NOT_RUN`. Sem alteração de código ou schema.
