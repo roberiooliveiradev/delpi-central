@@ -212,3 +212,14 @@ O PO **aceitou as recomendações T01/T02** e autorizou seu registro no GitHub. 
 - **PRD:** pós-deploy apenas health, observabilidade e consultas explicitamente read-only; nunca escrita de dados de negócio para teste.
 
 Este §11 atualiza o status histórico `ARCHITECTURE_DECISION_REQUIRED` de T01/T02: a **direção PO está aprovada**, porém o **gate de contrato por autoridade técnica competente continua aberto**. Outras pendências T03–T08 não são implicitamente ratificadas.
+
+
+## 12. T01/T02 — owner de Engenharia ratificou; PROD-02 liberado (13/11/2026)
+
+**Decisão expressa do owner de Engenharia nesta conversa:** `T01=RATIFIED`; `T02=RATIFIED`, com as condições técnicas aceitas pelo PO e registradas no [pacote T01/T02 §8](./PRC-TRACK-T01-T02-COORDINATION-TECHNICAL-RATIFICATION-PACKET.md). Esta decisão **supersede o estado PENDING_OWNER_GATE** registrado no §11 para T01/T02, sem apagar o histórico.
+
+**Gate agora:** `DEVIN-PROD-02 IMPLEMENTATION_AUTHORIZED / IMPLEMENTATION_TEST_NOT_RUN`. Devin pode iniciar implementação bounded no backend de produto com inventário de consumidores/port/schema no SHA atual, diff mínimo, testes memory + Postgres, PR sob proteções e HML governada. Não esperar a revalidação independente Cursor do PROD-01 para começar trabalho T01/T02.
+
+**Sem alargar a autorização:** T03–T08, bandeiras, frontend, mudanças de domínio/permissões, migrations destrutivas e deploy de produção continuam sujeitos a seus próprios contratos/gates. Exigir evidência de compatibilidade e rollback antes de aceitar migration/merge. TESTAR escrita exclusivamente DEV/HML; em PRD somente disponibilidade, saúde, métricas e GET comprovadamente não mutável.
+
+**Owner decision ≠ implementação ou runtime PASS.** Qualquer `EXECUTION_DRIFT` concreto retorna à Coordination, não gera ciclo de hipóteses sem evidência.
