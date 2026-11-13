@@ -398,3 +398,16 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Revisão obrigatória:** (1) confirmar que 30 s é budget seguro para chamadas do `httpClient` compartilhado, inclusive uploads e fluxos longos; preferir timeout por operação se houver consumidor legítimo incompatível; (2) garantir sinalização de timeout/cancelamento e mensagens saneadas sem engolir erros reais de `requests-api`; (3) avaliar conflito real do PR e políticas de branch, sem ciclo de reconciliações só por `behind`. Se necessário, devolver correção pontual ao Devin antes do merge.
 
 **Próximo gate:** revisão do PR #181, CI/branch protection, integração autorizada, deploy HML governado do plugin, outage da Engineering API somente em HML, filtros não-MP, listagem genérica e multiusuários, Cursor revalidação independente. Produção continua exclusiva para smoke READ-only, sem criação de dados ou deploy automático.
+
+
+## 25. ENG-HOME-MYREQUESTS-DOMAIN-ISOLATION-PRD-01 — PR #182 (13/11/2026)
+
+**Executor Devin reportou:** `FINAL_SHA=d73b11e30b0acc6f12b7f41fffdec97e5332dc33`, branch `devin/eng-home-myrequests-isolation-prd-01`, 32/32 testes de Home/gateway PASS; suíte Engenharia 1182 PASS + 2 baseline FAIL de D16/RBAC (não tratados no diff). HML `TEST_NOT_RUN`, Cursor `PENDING`, PRD sem novas escritas/deploy.
+
+**Inspeção GitHub Coordination:** comparação com main mostrou **2 arquivos** somente: `engineering-api/engineering_app/infrastructure/gateways/requests_api_gateway.py` e `engineering-api/tests/test_home_gateways.py` (+17/-1), `ahead_by=1`, `behind_by=2` no instante consultado. Gateway agora envia `type_code=raw-material-creation` no query de **`/v1/requests/work-queue` e `/v1/requests/mine`**, respeitando filtro na fonte oficial e escopo AuthZ existente. Nenhum frontend, schema nem dado de produção modificado.
+
+**PR [#182](https://github.com/roberiooliveiradev/delpi-central/pull/182)** foi aberto pela Coordination com head `d73b11e30b0acc6f12b7f41fffdec97e5332dc33` e base main. GitHub retornou `mergeable=false` na criação: `MERGE_GATE_PENDING_REVIEW`; não afirmar conflito real sem inspeção atualizada e não exigir reconciliação repetida por simples atraso de branch. PR ainda não integrado; HML ainda não implantada.
+
+**Gate de revisão:** verificar contrato `type_code` no backend owner, filtragem antes de COUNT/paginação, 403 honesto de `work-queue` sem `process-right`, CI/proteções e compatibilidade com consumers; asserções de MockTransport não substituem HML. Depois de merge governado, deploy HML autorizado da Engineering API, verificar somente casos `raw-material-creation` na Home (tarefas+solicitações), totais e eventos, dois usuários e negativas, regressão LMP; Cursor aceite independente. **PRD somente após gates e autorização operacional**, com smoke exclusivamente health e GET comprovadamente read-only, **zero escritas de negócio**; os 36 `REQ-2026` legítimos permanecem preservados.
+
+**Dependência paralela:** PR [#181](https://github.com/roberiooliveiradev/delpi-central/pull/181) da correção do plugin My Requests é distinto deste PR; não confundir escopos ou assumir que foi integrado.
