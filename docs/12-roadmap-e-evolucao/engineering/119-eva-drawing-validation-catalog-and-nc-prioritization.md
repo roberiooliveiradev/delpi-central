@@ -3358,3 +3358,42 @@ de revisão de referência como no ciclo p13).
 `EVA_REAL_PDF_GATE=PASS (resultado terminal reutilizado)`,
 `ROOT_CAUSE=REFERENCE_DEFECT`, `RUNTIME_FIX_REQUIRED=NO`,
 `PRODUCTION_CHANGED=NO`, `VAL01_COMPLETED=false`.
+
+### Retificação do §85 (2026-11-13, decisão Coordination comment-6861638261)
+
+`PREVIOUS_CONCLUSION=INVALIDATED_BY_NEW_VISUAL_EVIDENCE`.
+`EXECUTION_DRIFT=YES`.
+
+A leitura do §85 alinhou incorretamente as faixas de linha ao
+interpretar o crop sem as divisórias físicas medidas. A medição
+geométrica independente — divisórias reais das células-pai
+(y960/1073/1187/1301) + centróides dos tokens (`50225740` cy=1128,
+centro exato da célula real 1074-1187) — estabelece:
+
+```text
+50225704 = {AE|1|10010028, AH|2|10080897, AG|2|10110676}
+50225740 = {AE|1|10010028, AH|1|10080897, AG|1|10110676}
+50225741 = {AF|1|10010005, AJ|1|10080181, AG|1|10110676}
+```
+
+Consequências:
+
+1. **G1-DRAFT p12 estava correta** em `AE→50225740` — a referência
+   não é defeituosa nesse ponto; a afirmação
+   `50225740={AH,AG,AF}` do §85 original é revogada.
+2. **A EVA diverge do PDF real**: publicou `{AH,AG,AF}` sob
+   `50225740` — omitiu `AE→740` (emitida como `AE→704`) e promoveu
+   `AF` do `50225741` para o `740`, ambos `IDENTIFIED`. Omissão +
+   falsa promoção é defeito real de interpretação, não
+   comportamento fail-closed.
+3. Causa técnica demonstrada por token-célula: as âncoras SLANet
+   `50225702/703/704/740/741` são declaradas **uma linha tarde**
+   (e `702/703/704` com rowspan 2 em vez de 3) — a herança
+   sequencial `arow <= row < arow+span` herda o deslocamento.
+   `FIRST_LOSS=SLANET_CELL_BOUNDARY` (percepção), propagada pela
+   associação de âncoras. O miss histórico `14/15` era divergência
+   real da EVA contra referência correta.
+4. A afirmação `RUNTIME_FIX_REQUIRED=NO` é revogada — investigação
+   de correção generalista sob `EVA-VAL01-P12-GROUP-BOUNDARY…`.
+
+O texto original do §85 permanece acima como trilha histórica.
