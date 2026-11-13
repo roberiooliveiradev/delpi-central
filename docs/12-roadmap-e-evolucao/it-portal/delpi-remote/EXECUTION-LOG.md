@@ -218,6 +218,18 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** testes integrados/homologacao em laboratorio e Windows piloto. Em seguida piloto Keycloak com um computador, depois G2-S3 para distribuicao/agendamento. Acesso remoto segue bloqueado por G0-SEC.
 
+## 2026-11-13 | G2-S2 | validacao CI concluida, pendente piloto e deploy
+
+**Evidencia efetiva:** GitHub Actions do commit `2295725e96eb991909fa390eb0a7db0bb0c9a0bc`, job `test-it-portal-api` **success**: instalação de dependencias, parse PowerShell, suite Unit and HTTP, integracao PostgreSQL SCM/control e **Real PostgreSQL migrations and G1/G2 inventory integration** todos **success**. [Job](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43515628259/job/132196752412). `architecture-gate` igualmente **success** no mesmo commit.
+
+**UI:** `validate-it-portal` **success** no commit `4a7318dea15c5d7b972a5c8cd0a8321d0eecc205` ([job](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43514437749/job/132192627676)); auditoria e architecture gate tambem aprovados naquele commit.
+
+**Falhas CI corrigidas antes da aprovacao:** fixture `workstation_client` e contrato de capabilities, inclusao da rota FastAPI G2-S2, contrato OpenAPI S2S separado, e normalizacao de hostname no teste PostgreSQL de V011 (passagem pelo validador). O CI final passou apos commit `2295725e96eb`, sem erros restantes nesses jobs.
+
+**Producao:** nenhuma autorizacao operacional usada para executar deploy neste atendimento; **V011 nao aplicada pelo assistente**, feature flag S2S desligada e sem identidades Keycloak / agendamentos instalados. Teste do coletor PS5.1 em Windows real e revogacao do cliente S2S ainda pendentes. G2-S2 continua **EM REVISAO** ate o piloto.
+
+**Proximo passo unico:** revisar credenciais Keycloak e seguranca, homologar G2-S1 no Windows piloto, executar release API+MFE com backup e flag off em janela aprovada; depois ativar somente 1 client_id vinculado a um workstation UUID para verificar ingestao/replay/revogacao e retroceder flag caso necessario. G0-SEC ainda bloqueia acesso remoto.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

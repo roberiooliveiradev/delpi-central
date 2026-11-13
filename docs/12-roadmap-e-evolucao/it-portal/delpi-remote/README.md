@@ -45,9 +45,9 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 
 **Aceite funcional G1-OWNER (13/11/2026):** o operador informou que o pull, deploy e a funcionalidade de responsavel vinculado funcionaram perfeitamente em producao. Esta e evidencia de aceite funcional comunicada pelo usuario, NAO prova independente de todos os testes integrados, RBAC negativo ou CI. Detalhes no diario.
 
-**G2-S2 (13/11/2026):** codigo de canal S2S + migration V011, vinculo 1:1 por client ID, historico observado e painel na ficha preparado em revisao. **Feature flag de ingestao permanece DESLIGADA** e bindings vazios por padrao. Nenhum teste integrado/com Windows foi comprovado nem deploy realizado. Ver [G2-S2](G2-S2-S2S-INGEST-RELEASE.md).
+**G2-S2 (13/11/2026):** codigo de canal S2S + migration V011, vinculo 1:1 por client ID, historico observado e painel na ficha preparado em revisao. **CI verificado**: testes HTTP e integracao PostgreSQL descartavel incluindo V011, parser PowerShell e arquitetura aprovados no commit `2295725e96eb`; UI Vitest/lint/build aprovados em `4a7318dea15c`. **Feature flag de ingestao permanece DESLIGADA** e bindings vazios por padrao. Nenhum teste real de coleta Windows/Keycloak nem deploy produtivo foram executados. Ver [G2-S2](G2-S2-S2S-INGEST-RELEASE.md).
 
-**Proximo passo executavel:** executar suites pytest/Vitest/lint/build e Postgres descartavel V001..V011, validar G2-S1 no PowerShell 5.1, revisar Keycloak (audiencia/escopo/service accounts), TLS/DPAPI, rate limit e revogacao. Preparar backup e change antes de publicar V011 com a feature off. So depois realizar piloto de 1 computador com binding exclusivo; nao ativar agendamento. G0-SEC continua gate obrigatorio para acesso remoto.
+**Proximo passo executavel:** validar o coletor G2-S1 em Windows PowerShell 5.1 e revisar Keycloak (audiencia/escopo/service accounts), TLS/DPAPI, rate limit e revogacao. Preparar backup e change antes de publicar V011 com a feature off. So depois realizar piloto de 1 computador com binding exclusivo; nao ativar agendamento. CI completo de G2-S2 aprovado, mas **sem homologacao no host**. G0-SEC continua gate obrigatorio para acesso remoto.
 
 ## Regras permanentes de engenharia
 

@@ -1,7 +1,7 @@
 # G2-S2 | Envio de inventario Windows por S2S, com feature gate desligado
 
 **Data:** 2026-11-13
-**Estado:** EM REVISAO, codigo versionado, sem testes integrados ou deploy confirmados.
+**Estado:** EM REVISAO, CI de API/PostgreSQL V011/PowerShell e UI verde em 13/11/2026; sem deploy produtivo, sem teste real do cliente Keycloak nem piloto Windows confirmados.
 **Importante:** nenhum agente remoto foi instalado; este incremento nao concede controle de tela, teclado, mouse ou arquivos.
 
 ## O que esta implementado
@@ -72,9 +72,15 @@ O aviso anterior de collation de `plugins_hub` (versao 2.41 versus 2.36) e manut
 
 ## Pendencias em aberto
 
-- CI/pytest, Vitest, lint/build e integracao PostgreSQL V001..V011 reais, testes Windows PowerShell 5.1 e envio S2S de ponta a ponta.
+- CI/pytest, Vitest/lint/build e integracao PostgreSQL V001..V011 executados e aprovados em GitHub Actions; testes Windows PowerShell 5.1 em host real e envio S2S de ponta a ponta ainda pendentes.
 - Testes de rate limit em gateway, revogacao em Keycloak, TTL real de tokens, rotate de segredo, duplo envio simultaneo e limites de retencao no Postgres.
 - G2-S3 para installer assinado, enrolment governado, agendamento e uninstall de agente, sem habilitar acesso remoto.
 - Gate G0-SEC para MeshCentral e controle remoto permanece pendente.
 
 Roadmap: [README](README.md) | Evidencias: [EXECUTION-LOG](EXECUTION-LOG.md) | Issue [#179](https://github.com/roberiooliveiradev/delpi-central/issues/179).
+
+## Evidencias CI registradas em 13/11/2026
+
+- [API: job test-it-portal-api sucesso](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43515628259/job/132196752412), commit `2295725e96eb991909fa390eb0a7db0bb0c9a0bc`, suite HTTP, syntax parser PowerShell, PostgreSQL real descartavel V001..V011 e integracao G2.
+- [UI: validate-it-portal sucesso](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43514437749/job/132192627676), commit `4a7318dea15c5d7b972a5c8cd0a8321d0eecc205`, lint, Vitest e build.
+- O status do CI nao comprova instalacao, rede/TLS do host, atuacao de S2S real, revogacao de clients ou backup da base produtiva.
