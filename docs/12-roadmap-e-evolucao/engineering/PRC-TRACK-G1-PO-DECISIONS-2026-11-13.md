@@ -1,5 +1,7 @@
 # PRC-TRACK — Deliberações do Product Owner para G1 (13/11/2026)
 
+> **ESCLARECIMENTO PO — 2026-11-13, ADR-04 (prevalece sobre exemplos anteriores):** **Flag resolvida ou removida deixa de aparecer nas versões posteriores e na visualização corrente de bandeiras ativas.** Somente flags OPEN são propagadas como bandeiras visíveis para cada nova revisão. A flag mantém identidade única e eventos auditáveis; versões anteriores preservam o estado no seu corte e a resolução/remoção permanece consultável no histórico de eventos, **não como bandeira replicada nas fichas seguintes**. A ação de resolver não cria nova Vn. Se a resolução ocorrer entre V4 e V5, V4 preserva sua fotografia histórica e V5 não exibe a bandeira. Se ocorrer durante V5, a **ficha atual** já não exibe a bandeira OPEN, enquanto a consulta histórica de V5 no corte de publicação permanece fiel àquele corte. Casos de reabertura devem ser ratificados no contrato temporal (não supor reaparição retroativa). Esta regra modifica a interpretação anterior de exibição de resolvidas em V5/V6.
+
 > **Status:** `PO_DECISIONS_RECORDED / ARCHITECTURE_DECISION_REQUIRED` para alterações de autoridade, contrato e persistência. **Não é ADR ratificada pela Coordination.**  
 > **Natureza:** registrar literalmente a intenção decisória, compatibilizar com o sistema existente e explicitar conflitos/bloqueios. **Sem autorização de migration, código ou deploy.**
 >
