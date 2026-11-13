@@ -3275,3 +3275,86 @@ AS|2|10081792 → `50225749` `IDENTIFIED` `rowspan_anchor` —
 `JOB_DIAGNOSIS=PASS`, `EVA_REAL_PDF_GATE=PASS`,
 `RUNTIME_CHANGE_REQUIRED=NO`, `PRODUCTION_CHANGED=NO`,
 `QUALITY_HOMOLOGATION=PARTIAL`, `VAL01_COMPLETED=false`.
+
+## 85. Diagnóstico da primeira perda — p12 `AE|1|10010028` sob `50225740` (2026-11-13)
+
+Task `EVA-VAL01-P12-AE-FIRST-LOSS-ROOT-CAUSE-AND-FIX` (Issue #131).
+Mudança de estratégia: prioridade em **qualidade real de
+interpretação** — uma ocorrência divergente só conta como ganho se
+passar a ser interpretada corretamente pela EVA, sem falsas
+associações.
+
+### Evidência recuperada (Fase A — sem novo OCR)
+
+Resultados completos reutilizados: DEV `aj-24864845515540e6` e PROD
+`aj-547c28cde3774672` (ambos `COMPLETED`, PDF `af47dd4c…edf3`,
+output `f3d640c4…`).
+
+EVA publica **5 ocorrências AE** em p12: sob `50225701`
+(`IDENTIFIED` rowspan), `50225702` (`UNKNOWN` y_anchor), `50225703`
+(`IDENTIFIED` rowspan), `50225704` (×2: `UNKNOWN` y_anchor +
+`IDENTIFIED` rowspan). **Nenhuma AE sob `50225740`.**
+
+Sob `50225740` a EVA publica exatamente:
+`AH|1|10080897`, `AG|1|10110676`, `AF|1|10010005` — todas
+`IDENTIFIED` `rowspan_anchor`.
+
+### Verificação do PDF oficial (Fase B — render dpi200)
+
+Crop inspecionado do bloco `50225740`
+(`CA1,00BRAN-00280/15/11-0000-9700`, célula fundida rowspan=3):
+
+```text
+5 | 50225740 | CA1,00BRAN-00280/15/11-0000-9700
+    ├── AH | 1 | 10080897 | TERM. TUBULAR 1,00MM2 COMP 8,00MM ESTANHADO
+    ├── AG | 1 | 10110676 | ETIQUETA TERMORETRATIL AMARELO LISO 4MMX0,6MM
+    └── AF | 1 | 10010005 | CABO PVC 70°C 2,50MM2 PT 450/750V BWF NM 247-3
+```
+
+A linha `AE|1|10010028` imediatamente acima do bloco é a **última
+linha do subset `50225704`** (padrão real dos subsets 02/03/04:
+AH, AG, AE — AE por último). **Não existe linha AE no subset
+`50225740` no PDF oficial.**
+
+### Classificação da causa (Fases C–D)
+
+| Fronteira | Estado |
+|---|---|
+| OCR `AE`/`10010028`/`1` | FOUND (5 ocorrências publicadas) |
+| SLANet célula-pai `50225740` | FOUND (rowspan=3, âncora OK) |
+| Linhas do bloco 740 | FOUND (AH/AG/AF — sem AE) |
+| Understanding | `IDENTIFIED` para as 3 linhas reais |
+| Consumidor | ocorrências publicadas com proveniência |
+| Referência G1 | `90264135:p12:50225740:AE` **não existe no PDF** |
+
+```text
+FIRST_LOSS=não ocorre na EVA
+ROOT_CAUSE=REFERENCE_DEFECT
+```
+
+A anotação G1-DRAFT p12 aplicou o padrão uniforme `{AE,AH,AG}` ao
+subset 5 (`row_index` 13–15), mas o subset real contém
+`{AH,AG,AF}` — `AF|1|10010005` (cabo 2,50 mm²) no lugar de
+`AE|1|10010028` (cabo 1,00 mm²). O miss histórico `14/15` do
+comparador (Doc 120) penalizava a EVA por uma relação
+**inexistente no desenho** — a EVA estava correta.
+
+Nota residual independente (não é o alvo desta task): a G1 p12
+também ordena AE como primeira linha de cada subset, enquanto o
+PDF real a coloca por último nos subsets 02–04; e a EVA emite AE
+duplicada sob `50225704` (r21 `UNKNOWN` + r24 `IDENTIFIED`) com
+flags de incerteza preservadas.
+
+### Decisão
+
+`RUNTIME_FIX_REQUIRED=NO`. Corrigir a EVA para emitir
+`AE→50225740` seria **fabricar vínculo sem evidência visual** —
+proibido pelos guardrails. A correção pertinente é da referência
+G1 p12 (remover `…:50225740:AE` e adicionar `AF|1|10010005`), que
+**não foi alterada nesta task** (escopo proibido; requer autorização
+de revisão de referência como no ciclo p13).
+
+**Gates:** `GATE_A=EVA_OCCURRENCE_FOUND (5× AE, 0 sob 740)`,
+`EVA_REAL_PDF_GATE=PASS (resultado terminal reutilizado)`,
+`ROOT_CAUSE=REFERENCE_DEFECT`, `RUNTIME_FIX_REQUIRED=NO`,
+`PRODUCTION_CHANGED=NO`, `VAL01_COMPLETED=false`.
