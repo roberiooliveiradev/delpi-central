@@ -391,7 +391,8 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-13 09:14 -03 | F7-R2 | PROD | **EXECUTION_DRIFT F7-R** — canal PROD alterado sem autorização; revertido por decisão do owner | REVERT | config `infra/.env` (sem SHA de código) | portal ≈ 08:42→09:14 -03; restore `conversational`; recreate só CF API; logs CLARA_ACT no intervalo = 0 |
 | 2026-11-13 09:15 -03 | F7-R2 | PROD | Verificação pós-revert (sem mutar negócio) | PASS | — | instructions ACTIVE CHANNEL conversational; prepare LNF `reconciliation.run` + closing `pendency.create`: channel=conversational, armed=true, confirmation_url=null, displayable=true; tools=6; enum LNF |
 | 2026-11-13 09:30 -03 | F7-R3 | DEV | ITEM5 copy conversacional + `review_aged_pending` contagem; testes unitários | PASS 36 | `d9393bcde5` | sem Portal/ChatGPT no wire conversational; Portal V014 runtime preservado (portal/dual + ClaraConsentPage + step_up) |
-| 2026-11-13 09:30 -03 | F7-R3 | HML/PROD | Deploy CF API (+ MFE CF copy consent); prepare smoke sem mutar ACT real | PENDING | `d9393bcde5` | ver relatório Parte 8 após promote |
+| 2026-11-13 09:30 -03 | F7-R3 | HML | pull `59a5606737` + up-hml CF API; wire check + pytest | PASS 36 | `d9393bcde5`/`59a5606737` | channel=conversational; GREP bad phrases=0; MFE CF ausente no compose HML |
+| 2026-11-13 09:32 -03 | F7-R3 | PROD | up-prod CF API + CF MFE; canal intacto; sem ACT real | PASS | `d9393bcde5`/`59a5606737` | CLARA_CONSENT_CHANNEL=conversational; health 200; instruction sem Portal/ChatGPT; aged unit 18 PASS |
 
 ### Roteiro de teste do owner — F7.4 (ChatGPT / CLARA em PROD)
 
