@@ -108,3 +108,14 @@ python -m pytest -q
 # integração com Postgres real (banco descartável por módulo):
 IT_PORTAL_TEST_DSN=postgresql://user@host:5432/postgres python -m pytest -q
 ```
+
+
+## Delpi Remote - G1-API (cadastro de computadores)
+
+- Migracao V009: tabela isolada `it_portal.workstations`, indice unico por unidade/hostname ativo e auditoria com `server_id` nulo, sem agente ou desktop remoto.
+- HTTP: `GET/POST /workstations`, `GET/PUT /workstations/{id}`, `POST /workstations/{id}/archive`, `POST /workstations/{id}/restore`, `GET /workstations/{id}/history`.
+- RBAC: `it-portal.access` + `it-portal.computers.view` para leitura; escritas exigem tambem `it-portal.computers.manage` com revalidacao fresh. Permissoes de servidores nao concedem controle sobre computadores.
+- Manifesto 0.3.3 adiciona permissoes, mas nao cria rotas visuais (G1-UI posterior). Registrar nova versao estrutural no Core e atribuir permissao somente apos revisao e deploy autorizado.
+- Registros arquivados nao podem ser editados; restaurar sobre identidade ativa gera 409; auditoria transacional; `revision` evita sobrescrita silenciosa.
+- Testes: `pytest -q tests/test_workstations_domain.py tests/test_workstations_http.py tests/test_http_contract.py`, e com Postgres descartavel (`IT_PORTAL_TEST_DSN`), `pytest -q tests/test_postgres_integration.py`.
+- Roadmap em `docs/12-roadmap-e-evolucao/it-portal/delpi-remote/`.

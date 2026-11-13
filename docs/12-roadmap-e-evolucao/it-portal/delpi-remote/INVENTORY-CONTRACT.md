@@ -1,5 +1,7 @@
 # Delpi Remote | Contrato G1 de inventario de estacoes (planejado)
 
+**Status do G1-API (13/11/2026):** backend implementado no codigo, EM REVISAO e NAO implantado. A migration V009, rotas e testes estao versionados, sem homologacao Postgres nem UI de computadores.
+
 **Objetivo:** entregar primeiro cadastro e consultas sem qualquer controle de tela, shell, mouse, teclado, clipboard ou arquivos.
 
 ## Entidade nova, separada de servidores

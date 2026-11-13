@@ -26,7 +26,7 @@ Acesso sem pedir senha Windows por sessao **nao** significa acesso anonimo: toda
 | G0-DOC | Arquitetura, desenho de seguranca, contrato de inventario e plano de continuidade | **DOCUMENTADO** | Este pacote versionado e ligado a issue #179 |
 | G0-SEC | Threat model/revisao de seguranca, LGPD, licenciamento, analise de compatibilidade de MeshCentral, redes e backups | **PENDENTE DE REVISAO** | Aceite formal do responsavel de TI e seguranca com registro |
 | G1-DOM | Regras puras para cadastro de estacoes + testes | **EM REVISAO** | Normalizacao, limites, catalogos e rejeicao de segredos validados |
-| G1-API | Migration independente, CRUD de estacoes e RBAC separado de servidores | **NAO INICIADO** | API e testes integracao verdes; nenhum agente remoto |
+| G1-API | Migration independente, CRUD de estacoes e RBAC separado de servidores | **EM REVISAO** | API e testes integracao verdes; nenhum agente remoto |
 | G1-UI | Area Computadores, busca/filtros/detalhe no plugin it-portal | **NAO INICIADO** | Permissoes e testes de UI; sem botao remoto ativo |
 | G2-AGENT | Identidade por dispositivo e coletor read-only de telemetria Windows | **NAO INICIADO** | Piloto, autenticacao individual, reconciliacao idempotente e remocao segura |
 | G3-ENGINE | MeshCentral isolado e testado em laboratorio | **NAO INICIADO** | Licenca, versao fixada, atualizacoes, TLS, backup, recuperacao, restricao de rede |
@@ -37,7 +37,7 @@ Acesso sem pedir senha Windows por sessao **nao** significa acesso anonimo: toda
 
 Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VALIDADO, IMPLANTADO, BLOQUEADO. Nunca marcar `IMPLANTADO` sem evidencias do runtime; `VALIDADO` nao e sinonimo de CI verde.
 
-**Proximo passo executavel:** validar G1-DOM no CI completo e avancar G1-API. G0-SEC deve ser concluido **antes** de qualquer teste de controle de tela, instalacao do motor remoto ou acesso nao assistido.
+**Proximo passo executavel:** executar suite completa e PostgreSQL descartavel para G1-API; revisar CI e registrar manifesto 0.3.3 em nova versao estrutural; liberar permissoes apenas apos aprovacao e entao iniciar G1-UI. O acesso remoto continua bloqueado por G0-SEC. G0-SEC deve ser concluido **antes** de qualquer teste de controle de tela, instalacao do motor remoto ou acesso nao assistido.
 
 ## Regras permanentes de engenharia
 

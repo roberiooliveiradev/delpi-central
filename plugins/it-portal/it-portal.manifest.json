@@ -4,7 +4,7 @@
   "name": "Portal de TI",
   "description": "Inventário de servidores, serviços, aplicações, bancos de dados, redes e integrações, com relacionamentos, notas técnicas e planos de ação da infraestrutura de TI.",
   "icon": "server",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "type": "microfrontend",
   "basePath": "/apps/it-portal",
   "entry": "/apps/it-portal/assets/remoteEntry.js",
@@ -25,6 +25,18 @@
       "code": "it-portal.servers.manage",
       "name": "Portal de TI — gerenciar servidores",
       "description": "Cadastra, edita, arquiva e restaura servidores. Requer também ver servidores.",
+      "module": "it-portal"
+    },
+    {
+      "code": "it-portal.computers.view",
+      "name": "Portal de TI - visualizar computadores",
+      "description": "Consulta inventario e historico de desktops e notebooks. Nao permite controle remoto.",
+      "module": "it-portal"
+    },
+    {
+      "code": "it-portal.computers.manage",
+      "name": "Portal de TI - gerenciar computadores",
+      "description": "Cadastra, edita, arquiva e restaura computadores. Requer tambem visualizar computadores; nao concede controle remoto.",
       "module": "it-portal"
     },
     {

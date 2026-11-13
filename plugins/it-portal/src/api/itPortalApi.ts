@@ -189,7 +189,8 @@ export type HistoryEntityType =
   | "integration"
   | "service_dependency"
   | "host_service_preference"
-  | "host_service_action";
+  | "host_service_action"
+  | "workstation";
 
 export type HistoryEvent = {
   id: string;
@@ -566,6 +567,8 @@ export type Capabilities = {
   display_name: string;
   can_view_servers: boolean;
   can_manage_servers: boolean;
+  can_view_computers: boolean;
+  can_manage_computers: boolean;
   can_manage_host_services: boolean;
   can_control_host_services: boolean;
   can_create_notes: boolean;

@@ -23,6 +23,8 @@ from it_portal_app.application.ports import (
     ObservationRepository,
 )
 from it_portal_app.application.server_service import ServerService
+from it_portal_app.application.workstation_ports import WorkstationRepository
+from it_portal_app.application.workstation_service import WorkstationService
 from it_portal_app.application.service_inventory import ServiceInventory
 from it_portal_app.infrastructure.persistence.postgres_connectivity_repository import (
     PostgresConnectivityRepository,
@@ -38,10 +40,21 @@ from it_portal_app.infrastructure.persistence.postgres_observation_repository im
 from it_portal_app.infrastructure.persistence.postgres_repository import (
     PostgresItPortalRepository,
 )
+from it_portal_app.infrastructure.persistence.postgres_workstation_repository import PostgresWorkstationRepository
 
 
 def get_repository() -> ItPortalRepository:
     return PostgresItPortalRepository()
+
+
+def get_workstation_repository() -> WorkstationRepository:
+    return PostgresWorkstationRepository()
+
+
+def get_workstation_service(
+    repository: WorkstationRepository = Depends(get_workstation_repository),
+) -> WorkstationService:
+    return WorkstationService(repository)
 
 
 def get_inventory_repository() -> InventoryRepository:

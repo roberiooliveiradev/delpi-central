@@ -108,6 +108,8 @@ def build_workstation_fields(raw: dict) -> WorkstationFields:
         )
 
     for key, value in (
+        ("name", name),
+        ("operating_system", operating_system),
         ("department", department),
         ("location", location),
         ("responsible", responsible),

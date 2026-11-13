@@ -69,6 +69,9 @@ def migrated(database):
         "V004__server_observations.sql",
         "V005__allow_windows_server_observations.sql",
         "V006__windows_host_service_inventory.sql",
+        "V007__windows_service_favorites.sql",
+        "V008__windows_host_service_actions.sql",
+        "V009__workstations_inventory.sql",
     ]
     return database
 
@@ -100,6 +103,9 @@ def test_migrations_are_idempotent(migrated):
         (4, "V004__server_observations.sql"),
         (5, "V005__allow_windows_server_observations.sql"),
         (6, "V006__windows_host_service_inventory.sql"),
+        (7, "V007__windows_service_favorites.sql"),
+        (8, "V008__windows_host_service_actions.sql"),
+        (9, "V009__workstations_inventory.sql"),
     ]
 
 
@@ -273,3 +279,39 @@ def test_persistence_unavailable_is_503(pg_client, monkeypatch):
     response = pg_client.get("/servers")
     assert response.status_code == 503
     assert response.json()["data"]["error"]["code"] == "persistence_unavailable"
+
+def test_g1_workstations_persist_and_audit(pg_client):
+    """Real Postgres: identidade, registro, revisao, historico e restauracao segura."""
+    payload = {
+        "name": "PC teste G1", "hostname": "pc-g1-pg-001",
+        "ip_address": "192.0.2.30", "unit_code": "01", "device_kind": "desktop",
+        "department": "TI", "location": None, "responsible": "TI",
+        "operating_system": "Windows 11", "administrative_status": "in_operation",
+        "description": "Piloto sem agente",
+    }
+    created = pg_client.post("/workstations", json=payload)
+    assert created.status_code == 201, created.text
+    row = created.json()["data"]
+    wid = row["id"]
+    assert row["code"].startswith("PC-")
+    assert pg_client.post("/workstations", json=payload).status_code == 409
+    assert pg_client.get(f"/workstations/{wid}").json()["data"]["hostname"] == "pc-g1-pg-001"
+
+    edited = pg_client.put(f"/workstations/{wid}", json={**payload, "name": "PC alterado", "revision": 1})
+    assert edited.status_code == 200 and edited.json()["data"]["revision"] == 2
+    assert pg_client.put(f"/workstations/{wid}", json={**payload, "revision": 1}).status_code == 409
+    archive = pg_client.post(f"/workstations/{wid}/archive", json={"revision": 2})
+    assert archive.status_code == 200
+    assert pg_client.get("/workstations", params={"q": "pc-g1-pg-001"}).json()["data"]["total"] == 0
+    assert pg_client.post("/workstations", json=payload).status_code == 201
+    assert pg_client.post(f"/workstations/{wid}/restore", json={"revision": 3}).status_code == 409
+    events = _sql(
+        "SELECT entity_type, server_id, event_type FROM it_portal.audit_events "
+        "WHERE entity_id = %s ORDER BY occurred_at",
+        (wid,),
+    )
+    assert len(events) == 3
+    assert all(e["entity_type"] == "workstation" and e["server_id"] is None for e in events)
+    assert {e["event_type"] for e in events} == {
+        "workstation_created", "workstation_updated", "workstation_archived"
+    }

@@ -61,7 +61,7 @@ def test_invalid_fields_fail_closed(field, value):
     assert field in exc.value.details["fields"]
 
 
-@pytest.mark.parametrize("field", ["department", "location", "responsible", "description"])
+@pytest.mark.parametrize("field", ["name", "operating_system", "department", "location", "responsible", "description"])
 def test_never_stores_labelled_credentials(field):
     with pytest.raises(ValidationError) as exc:
         build_workstation_fields(payload(**{field: "token=supersecretvalue"}))

@@ -42,6 +42,24 @@ class ServerUpdateInput(ServerInput):
     revision: int = Field(ge=1)
 
 
+class WorkstationInput(_Input):
+    name: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    hostname: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    ip_address: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    unit_code: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    device_kind: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    department: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    location: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    responsible: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    operating_system: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    administrative_status: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+    description: str | None = Field(default=None, max_length=_TRANSPORT_MAX)
+
+
+class WorkstationUpdateInput(WorkstationInput):
+    revision: int = Field(ge=1)
+
+
 class RevisionInput(_Input):
     revision: int = Field(ge=1)
 
@@ -94,6 +112,30 @@ class ServerOut(BaseModel):
     updated_by_name: str
 
 
+class WorkstationOut(BaseModel):
+    id: str
+    code: str
+    name: str
+    hostname: str
+    ip_address: str | None
+    unit_code: str
+    device_kind: str
+    department: str | None
+    location: str | None
+    responsible: str | None
+    operating_system: str | None
+    administrative_status: str
+    description: str | None
+    revision: int
+    archived: bool
+    archived_at: datetime | None
+    archived_by_name: str | None
+    created_at: datetime
+    created_by_name: str
+    updated_at: datetime
+    updated_by_name: str
+
+
 class NoteOut(BaseModel):
     id: str
     server_id: str
@@ -116,6 +158,7 @@ HistoryEntityType = Literal[
     "service_dependency",
     "host_service_preference",
     "host_service_action",
+    "workstation",
 ]
 
 
@@ -191,6 +234,8 @@ class CapabilitiesOut(BaseModel):
     display_name: str
     can_view_servers: bool
     can_manage_servers: bool
+    can_view_computers: bool
+    can_manage_computers: bool
     can_manage_host_services: bool
     can_control_host_services: bool
     can_create_notes: bool
