@@ -1,4 +1,4 @@
-import { AppWindow, BookOpen, ClipboardList, Database, LayoutDashboard, Network, Server, Workflow } from "lucide-react";
+import { AppWindow, BookOpen, ClipboardList, Database, LayoutDashboard, Network, Server, Monitor, Workflow } from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -25,6 +25,7 @@ import { activeNavId, buildPath, type NavId, type PluginView } from "./routes";
 
 const NAV_ICONS: Record<NavId, ReactNode> = {
   home: <LayoutDashboard size={16} strokeWidth={1.75} aria-hidden="true" />,
+  workstations: <Monitor size={16} strokeWidth={1.75} aria-hidden="true" />,
   servers: <Server size={16} strokeWidth={1.75} aria-hidden="true" />,
   services: <AppWindow size={16} strokeWidth={1.75} aria-hidden="true" />,
   databases: <Database size={16} strokeWidth={1.75} aria-hidden="true" />,
@@ -58,6 +59,7 @@ export function PluginShell({ view, children }: { view: PluginView; children: Re
   const navIds = useMemo<NavId[]>(() => {
     if (!capabilities) return [];
     const ids: NavId[] = ["home"];
+    if (capabilities.can_view_computers) ids.push("workstations");
     if (capabilities.can_view_servers) ids.push("servers");
     if (capabilities.can_view_services) ids.push("services");
     if (capabilities.can_view_databases) ids.push("databases");

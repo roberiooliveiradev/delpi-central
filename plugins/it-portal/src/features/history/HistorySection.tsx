@@ -14,6 +14,7 @@ import {
   INTEGRATION_FIELD_LABELS,
   NETWORK_FIELD_LABELS,
   SERVER_FIELD_LABELS,
+  WORKSTATION_FIELD_LABELS,
   SERVICE_FIELD_LABELS,
 } from "../../content/labels";
 
@@ -21,6 +22,7 @@ type Ref = { code?: string; name?: string } | undefined;
 
 const FIELD_LABELS_BY_ENTITY: Partial<Record<HistoryEntityType, Record<string, string>>> = {
   server: SERVER_FIELD_LABELS,
+  workstation: WORKSTATION_FIELD_LABELS,
   action_plan: ACTION_FIELD_LABELS,
   service: SERVICE_FIELD_LABELS,
   database_instance: DATABASE_FIELD_LABELS,

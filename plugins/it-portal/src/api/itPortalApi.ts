@@ -46,6 +46,59 @@ export type IntegrationProtocol =
   | "other";
 export type IntegrationDirection = "source_to_target" | "bidirectional";
 
+
+export type WorkstationKind = "desktop" | "notebook" | "mini_pc" | "workstation";
+
+export type Workstation = {
+  id: string;
+  code: string;
+  name: string;
+  hostname: string;
+  ip_address: string | null;
+  unit_code: UnitCode;
+  device_kind: WorkstationKind;
+  department: string | null;
+  location: string | null;
+  responsible: string | null;
+  operating_system: string | null;
+  administrative_status: AdministrativeStatus;
+  description: string | null;
+  revision: number;
+  archived: boolean;
+  archived_at: string | null;
+  archived_by_name: string | null;
+  created_at: string;
+  created_by_name: string;
+  updated_at: string;
+  updated_by_name: string;
+};
+
+export type WorkstationInput = {
+  name: string;
+  hostname: string;
+  ip_address: string;
+  unit_code: string;
+  device_kind: string;
+  department: string;
+  location: string;
+  responsible: string;
+  operating_system: string;
+  administrative_status: string;
+  description: string;
+};
+
+export type WorkstationListQuery = {
+  q?: string;
+  unit_code?: string;
+  device_kind?: string;
+  administrative_status?: string;
+  archived?: "active" | "archived" | "all";
+  sort?: string;
+  direction?: "asc" | "desc";
+  page?: number;
+  page_size?: number;
+};
+
 export type Server = {
   id: string;
   code: string;
@@ -667,6 +720,21 @@ export const itPortalApi = {
   dashboard: (signal?: AbortSignal) => apiGet<Dashboard>(apiUrl("/dashboard"), signal),
   windowsServicesHealth: (signal?: AbortSignal) =>
     apiGet<WindowsServicesHealth>(apiUrl("/dashboard/windows-services-health"), signal),
+
+  listWorkstations: (query: WorkstationListQuery, signal?: AbortSignal) =>
+    apiGet<Page<Workstation>>(apiUrl("/workstations", query), signal),
+  getWorkstation: (id: string, signal?: AbortSignal) =>
+    apiGet<Workstation>(apiUrl(`/workstations/${encodeURIComponent(id)}`), signal),
+  createWorkstation: (input: WorkstationInput) =>
+    apiPost<Workstation>(apiUrl("/workstations"), input),
+  updateWorkstation: (id: string, input: WorkstationInput, revision: number) =>
+    apiPut<Workstation>(apiUrl(`/workstations/${encodeURIComponent(id)}`), { ...input, revision }),
+  archiveWorkstation: (id: string, revision: number) =>
+    apiPost<Workstation>(apiUrl(`/workstations/${encodeURIComponent(id)}/archive`), { revision }),
+  restoreWorkstation: (id: string, revision: number) =>
+    apiPost<Workstation>(apiUrl(`/workstations/${encodeURIComponent(id)}/restore`), { revision }),
+  listWorkstationHistory: (id: string, signal?: AbortSignal) =>
+    apiGet<HistoryEvent[]>(apiUrl(`/workstations/${encodeURIComponent(id)}/history`), signal),
 
   listServers: (query: ServerListQuery, signal?: AbortSignal) =>
     apiGet<Page<Server>>(apiUrl("/servers", query), signal),

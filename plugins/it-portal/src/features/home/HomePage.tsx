@@ -7,6 +7,7 @@ import {
   Database,
   ListTodo,
   Network,
+  Monitor,
   Plus,
   Server as ServerIcon,
   ShieldAlert,
@@ -125,6 +126,13 @@ export function HomePage() {
           subtitle={HOME_CONTENT.quickAccess.subtitle}
         >
           <div className="itp-quick-grid">
+            {capabilities?.can_view_computers ? (
+              <ItpNavigationCard
+                title={SHELL_CONTENT.nav.workstations}
+                icon={<Monitor size={20} strokeWidth={1.75} aria-hidden="true" />}
+                onClick={() => navigateTo(buildPath(basePath, "workstations"))}
+              />
+            ) : null}
             {capabilities?.can_view_servers ? (
               <ItpNavigationCard
                 title={SHELL_CONTENT.nav.servers}

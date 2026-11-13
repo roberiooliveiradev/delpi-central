@@ -12,6 +12,8 @@ Microfrontend do Portal de TI — Minha DELPI.
 | Rota | Área | Permissão de entrada |
 |---|---|---|
 | `/` | Início — hero imersivo com busca (mesma palette do shell), KPIs clicáveis do inventário, servidores recentes, ações que pedem atenção, Saúde do inventário (% sem criticidade alta/crítica — não é uptime), acesso rápido por permissão e próximas ações | `it-portal.access` |
+| `/workstations` | Computadores corporativos com busca, filtros, paginação e cadastro manual | `it-portal.computers.view` |
+| `/workstations/{id}` | Ficha do computador, histórico, edição/arquivamento/restauração por permissão | `it-portal.computers.view` (`computers.manage` para escrita) |
 | `/servers` | Inventário com busca, filtros, ordenação e paginação no servidor | `it-portal.servers.view` |
 | `/servers/{id}` | Detalhe: identificação, operação, componentes vinculados, serviços hospedados, bancos associados, redes, integrações dos serviços hospedados, notas, planos de ação, histórico | `it-portal.servers.view` (seções conforme `services.view` / `databases.view` / `networks.view` / `integrations.view`) |
 | `/services` | Serviços e aplicações com busca, filtros, ordenação e paginação no servidor | `it-portal.services.view` |
@@ -44,3 +46,14 @@ npm test        # vitest (rotas, cliente HTTP, manifesto, páginas)
 npm run lint
 npm run build   # tsc -b && vite build
 ```
+
+
+## Delpi Remote - G1-UI (código preparado, não implantado)
+
+- Rotas internas `/workstations` e `/workstations/{id}` com menu e acesso rápido por `can_view_computers`.
+- Inventário manual (sem status online), filtros de unidade, tipo, situação, cadastro e busca; edição e arquivamento conforme `can_manage_computers`.
+- Histórico auditado em ficha; formulários exibem erros de validação da BFF; edição versionada por `revision`.
+- Não existe botão Conectar, agente nem controle remoto nesta etapa.
+- Manifesto estrutural `0.3.4`: nova rota visível no menu interno e permissão `it-portal.computers.view` preservada; registrar via versão estrutural no Core durante deploy, não somente PUT cosmético.
+- Testes de UI: `npm test -- --run src/app/routes.test.ts src/features/workstations/WorkstationsPage.test.tsx`, depois `npm run lint && npm run build`. Testes completos e deploy ainda pendentes.
+- Plano e evidências: `docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G1-UI.md`.

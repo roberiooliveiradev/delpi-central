@@ -10,6 +10,7 @@ describe("resolveRoute", () => {
     [BASE, "home"],
     [`${BASE}/`, "home"],
     [`${BASE}/servers`, "servers"],
+    [`${BASE}/workstations`, "workstations"],
     [`${BASE}/action-plans`, "action_plans"],
     [`${BASE}/help`, "help"],
     [`${BASE}/services`, "services"],
@@ -34,10 +35,15 @@ describe("resolveRoute", () => {
       view: "server_detail",
       serverId: SERVER_ID,
     });
+    expect(resolveRoute(`${BASE}/workstations/${SERVER_ID.toUpperCase()}`, BASE)).toEqual({
+      view: "workstation_detail",
+      workstationId: SERVER_ID,
+    });
   });
 
   it.each([
     `${BASE}/servers/not-a-uuid`,
+    `${BASE}/workstations/not-a-uuid`,
     `${BASE}/servers/${SERVER_ID}/extra`,
     `${BASE}/monitoring`,
     `${BASE}/action-plans/x`,
@@ -59,10 +65,13 @@ describe("navigation helpers", () => {
     expect(buildPath(BASE, { serviceId: SERVER_ID })).toBe(`${BASE}/services/${SERVER_ID}`);
     expect(buildPath(BASE, { databaseId: SERVER_ID })).toBe(`${BASE}/databases/${SERVER_ID}`);
     expect(buildPath(BASE, "databases")).toBe(`${BASE}/databases`);
+    expect(buildPath(BASE, "workstations")).toBe(`${BASE}/workstations`);
+    expect(buildPath(BASE, { workstationId: SERVER_ID })).toBe(`${BASE}/workstations/${SERVER_ID}`);
   });
 
   it("marks the list active on detail pages and nothing on not found", () => {
     expect(activeNavId("server_detail")).toBe("servers");
+    expect(activeNavId("workstation_detail")).toBe("workstations");
     expect(activeNavId("service_detail")).toBe("services");
     expect(activeNavId("database_detail")).toBe("databases");
     expect(activeNavId("not_found")).toBeNull();

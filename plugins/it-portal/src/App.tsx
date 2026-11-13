@@ -21,6 +21,8 @@ import { NetworkDetailPage } from "./features/networks/NetworkDetailPage";
 import { NetworksPage } from "./features/networks/NetworksPage";
 import { ServerDetailPage } from "./features/servers/ServerDetailPage";
 import { ServersPage } from "./features/servers/ServersPage";
+import { WorkstationsPage } from "./features/workstations/WorkstationsPage";
+import { WorkstationDetailPage } from "./features/workstations/WorkstationDetailPage";
 import { ServiceDetailPage } from "./features/services/ServiceDetailPage";
 import { ServicesPage } from "./features/services/ServicesPage";
 
@@ -67,6 +69,14 @@ function PortalRoutes({ pathnameFromHost }: { pathnameFromHost?: string }) {
     );
   } else if (route.view === "home") {
     content = <HomePage />;
+  } else if (route.view === "workstations") {
+    content = capabilities.can_view_computers ? <WorkstationsPage /> : <ForbiddenState />;
+  } else if (route.view === "workstation_detail" && route.workstationId) {
+    content = capabilities.can_view_computers ? (
+      <WorkstationDetailPage key={route.workstationId} workstationId={route.workstationId} />
+    ) : (
+      <ForbiddenState />
+    );
   } else if (route.view === "servers") {
     content = capabilities.can_view_servers ? <ServersPage /> : <ForbiddenState />;
   } else if (route.view === "server_detail" && route.serverId) {

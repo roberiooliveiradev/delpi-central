@@ -61,6 +61,28 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo:** validacao integrada do G1-API e, apos aceite, G1-UI. G0-SEC permanece pendente para a tecnologia de acesso remoto.
 
+## 2026-11-13 | G1-UI | interface de computadores preparada para revisao
+
+**Decisao:** nao executar deploy apenas de G1-API; combinar backend e frontend apos verificacao integrada, para evitar exposicao de API/migration sem fluxo visual e sem testes completos.
+
+**Objetivo:** integrar o cadastro de workstations a UI do Portal de TI sem controlar maquinas.
+
+**Arquivos criados:** `plugins/it-portal/src/features/workstations/WorkstationsPage.tsx`, `WorkstationFormModal.tsx`, `WorkstationDetailPage.tsx`, `WorkstationsPage.test.tsx`; `docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G1-UI.md`.
+
+**Arquivos alterados:** cliente `itPortalApi.ts`, queryKeys, rotas, App, menu/command palette, Home (acesso rapido), textos, historico, manifesto `0.3.4`, testes de rotas e fixtures `Capabilities`, README do plugin, roadmap e contrato.
+
+**Funcionalidade:** lista paginada e filtravel, busca por nome/hostname/IP/setor, cadastro/edicao com erros da BFF, arquivar/restaurar com confirmacao, ficha somente leitura quando arquivada, historico auditavel. Menu e rotas condicionados a `can_view_computers`, escrita a `can_manage_computers` mais RBAC do backend.
+
+**Seguranca:** nao criar botoes de acesso remoto, nao exibir monitoramento inventado (sem agente), nao expor telas ou arquivos, nao criar nova permissao de controle remoto.
+
+**Testes:** casos de Vitest escritos para negacao de acesso, leitura, formulario, arquivamento, historico e ausencia de conexao remota. Suite real com `node_modules` do projeto, `npm run lint`, `npm run build` e integracao Postgres **NAO EXECUTADAS nesta entrega**; nao declarar homologacao/CI verde. Validacao estatica de integracao por leitura de codigo e read-back apos commit.
+
+**Deploy:** NAO executado nem aprovado; a migration V009 e o manifesto 0.3.4 dependem de backup/revisao e registro estrutural. Nenhuma maquina sofreu alteracao; sem agente nem MeshCentral.
+
+**Risco/rollback:** discrepancias do Core/manifesto e da base exigem teste conjunto. Se nao implantado, reverter commit de UI com auditoria Git. Se implantado, nunca editar V009 ja aplicada; revogar permissoes, reverter imagens de API/MFE e preservar dados e logs conforme runbook.
+
+**Proximo passo unico:** validar G1-API + G1-UI com dependencias reais e banco descartavel, corrigir falhas, homologar e preparar deploy conjunto. Em seguida G2-AGENT (inventario read-only), nao acesso remoto.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

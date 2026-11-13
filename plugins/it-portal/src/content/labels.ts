@@ -11,6 +11,7 @@ import type {
   IntegrationProtocol,
   NetworkScope,
   ServerType,
+  WorkstationKind,
   ServiceKind,
   ServiceType,
 } from "../api/itPortalApi";
@@ -32,6 +33,13 @@ export const SERVER_TYPE_LABELS: Record<ServerType, string> = {
   physical: "Físico",
   virtual: "Virtual",
   cloud: "Nuvem",
+};
+
+export const WORKSTATION_KIND_LABELS: Record<WorkstationKind, string> = {
+  desktop: "Desktop",
+  notebook: "Notebook",
+  mini_pc: "Mini-PC",
+  workstation: "Estação de trabalho",
 };
 
 export const CRITICALITY_LABELS: Record<Criticality, string> = {
@@ -137,6 +145,7 @@ function toOptions<T extends string>(labels: Record<T, string>): Option<T>[] {
 export const UNIT_OPTIONS = toOptions(UNIT_LABELS as Record<"01" | "02", string>);
 export const ENVIRONMENT_OPTIONS = toOptions(ENVIRONMENT_LABELS);
 export const SERVER_TYPE_OPTIONS = toOptions(SERVER_TYPE_LABELS);
+export const WORKSTATION_KIND_OPTIONS = toOptions(WORKSTATION_KIND_LABELS);
 export const CRITICALITY_OPTIONS = toOptions(CRITICALITY_LABELS);
 export const ADMINISTRATIVE_STATUS_OPTIONS = toOptions(ADMINISTRATIVE_STATUS_LABELS);
 export const ACTION_PRIORITY_OPTIONS = toOptions(ACTION_PRIORITY_LABELS);
@@ -154,6 +163,20 @@ export const ARCHIVED_OPTIONS = [
   { value: "archived", label: "Arquivados" },
   { value: "all", label: "Todos" },
 ];
+
+export const WORKSTATION_FIELD_LABELS: Record<string, string> = {
+  name: "Nome",
+  hostname: "Hostname",
+  ip_address: "Endereço IP",
+  unit_code: "Unidade",
+  device_kind: "Tipo de computador",
+  department: "Setor",
+  location: "Localização",
+  responsible: "Responsável",
+  operating_system: "Sistema operacional",
+  administrative_status: "Situação administrativa",
+  description: "Descrição",
+};
 
 export const SERVER_FIELD_LABELS: Record<string, string> = {
   name: "Nome",
@@ -254,6 +277,10 @@ export const INTEGRATION_FIELD_LABELS: Record<string, string> = {
 };
 
 export const HISTORY_EVENT_LABELS: Record<string, string> = {
+  workstation_created: "Computador cadastrado",
+  workstation_updated: "Computador atualizado",
+  workstation_archived: "Computador arquivado",
+  workstation_restored: "Computador restaurado",
   host_service_preference_updated: "Favoritos de serviço Windows atualizados",
   host_service_action_requested: "Ação solicitada no serviço Windows",
   host_service_action_finished: "Resultado da ação no serviço Windows",
@@ -299,6 +326,7 @@ export const SHELL_CONTENT = {
   nav: {
     home: "Início",
     servers: "Servidores",
+    workstations: "Computadores",
     services: "Serviços",
     databases: "Bancos de dados",
     networks: "Redes",
@@ -309,6 +337,7 @@ export const SHELL_CONTENT = {
   navHints: {
     home: "Visão geral do inventário e das ações que pedem atenção.",
     servers: "Inventário de servidores da infraestrutura.",
+    workstations: "Desktops e notebooks corporativos. Cadastro e histórico; acesso remoto em fase futura.",
     services: "Aplicações e serviços de plataforma e onde estão hospedados.",
     databases: "Instâncias de bancos de dados e serviços que as utilizam.",
     networks: "Sub-redes, VLANs e os servidores conectados a cada uma.",

@@ -9,8 +9,11 @@ const SERVER_ID = "4b6f1c1e-2f8a-4c3b-9d7e-0a1b2c3d4e5f";
 const ALL_CAPS: Capabilities = {
   display_name: "Ana Souza",
   can_view_servers: true,
+  can_view_computers: false,
+  can_manage_computers: false,
   can_manage_servers: true,
   can_manage_host_services: true,
+  can_control_host_services: true,
   can_create_notes: true,
   can_view_action_plans: true,
   can_manage_action_plans: true,

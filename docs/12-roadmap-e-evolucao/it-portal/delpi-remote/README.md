@@ -27,7 +27,7 @@ Acesso sem pedir senha Windows por sessao **nao** significa acesso anonimo: toda
 | G0-SEC | Threat model/revisao de seguranca, LGPD, licenciamento, analise de compatibilidade de MeshCentral, redes e backups | **PENDENTE DE REVISAO** | Aceite formal do responsavel de TI e seguranca com registro |
 | G1-DOM | Regras puras para cadastro de estacoes + testes | **EM REVISAO** | Normalizacao, limites, catalogos e rejeicao de segredos validados |
 | G1-API | Migration independente, CRUD de estacoes e RBAC separado de servidores | **EM REVISAO** | API e testes integracao verdes; nenhum agente remoto |
-| G1-UI | Area Computadores, busca/filtros/detalhe no plugin it-portal | **NAO INICIADO** | Permissoes e testes de UI; sem botao remoto ativo |
+| G1-UI | Area Computadores, busca/filtros/detalhe no plugin it-portal | **EM REVISAO** | Permissoes e testes de UI; sem botao remoto ativo |
 | G2-AGENT | Identidade por dispositivo e coletor read-only de telemetria Windows | **NAO INICIADO** | Piloto, autenticacao individual, reconciliacao idempotente e remocao segura |
 | G3-ENGINE | MeshCentral isolado e testado em laboratorio | **NAO INICIADO** | Licenca, versao fixada, atualizacoes, TLS, backup, recuperacao, restricao de rede |
 | G4-AUTH | Broker de sessoes, Keycloak/MFA e permissoes independentes | **NAO INICIADO** | Revogacao, tokens de uso unico, fail-closed, logs, kill switch |
@@ -37,7 +37,7 @@ Acesso sem pedir senha Windows por sessao **nao** significa acesso anonimo: toda
 
 Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VALIDADO, IMPLANTADO, BLOQUEADO. Nunca marcar `IMPLANTADO` sem evidencias do runtime; `VALIDADO` nao e sinonimo de CI verde.
 
-**Proximo passo executavel:** executar suite completa e PostgreSQL descartavel para G1-API; revisar CI e registrar manifesto 0.3.3 em nova versao estrutural; liberar permissoes apenas apos aprovacao e entao iniciar G1-UI. O acesso remoto continua bloqueado por G0-SEC. G0-SEC deve ser concluido **antes** de qualquer teste de controle de tela, instalacao do motor remoto ou acesso nao assistido.
+**Proximo passo executavel:** validar G1-API (suite HTTP, PostgreSQL descartavel V001..V009), validar G1-UI (lint, Vitest, TypeScript/build) e revisar ambos antes de deploy conjunto. O manifesto estrutural vigente em codigo passa a **0.3.4**; registrar nova versao no Core e conceder computers.view/manage apenas a perfis autorizados. G2-AGENT so com gates atendidos; acesso remoto continua bloqueado por G0-SEC. G0-SEC deve ser concluido **antes** de qualquer teste de controle de tela, instalacao do motor remoto ou acesso nao assistido.
 
 ## Regras permanentes de engenharia
 

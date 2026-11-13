@@ -2,6 +2,8 @@ export const IT_PORTAL_BASE_PATH = "/apps/it-portal";
 
 export type PluginView =
   | "home"
+  | "workstations"
+  | "workstation_detail"
   | "servers"
   | "server_detail"
   | "services"
@@ -18,6 +20,7 @@ export type PluginView =
 
 export type NavId =
   | "home"
+  | "workstations"
   | "servers"
   | "services"
   | "databases"
@@ -29,6 +32,7 @@ export type NavId =
 export type ResolvedRoute = {
   view: PluginView;
   serverId?: string;
+  workstationId?: string;
   serviceId?: string;
   databaseId?: string;
   networkId?: string;
@@ -37,6 +41,7 @@ export type ResolvedRoute = {
 
 export type DetailTarget =
   | { serverId: string }
+  | { workstationId: string }
   | { serviceId: string }
   | { databaseId: string }
   | { networkId: string }
@@ -46,6 +51,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 
 /** Coleções com página de detalhe `/<segmento>/<uuid>`. */
 const COLLECTIONS = {
+  workstations: { list: "workstations", detail: "workstation_detail", idKey: "workstationId" },
   servers: { list: "servers", detail: "server_detail", idKey: "serverId" },
   services: { list: "services", detail: "service_detail", idKey: "serviceId" },
   databases: { list: "databases", detail: "database_detail", idKey: "databaseId" },
@@ -88,6 +94,7 @@ export function activeNavId(view: PluginView): NavId | null {
 
 const NAV_SEGMENTS: Record<NavId, string> = {
   home: "",
+  workstations: "/workstations",
   servers: "/servers",
   services: "/services",
   databases: "/databases",

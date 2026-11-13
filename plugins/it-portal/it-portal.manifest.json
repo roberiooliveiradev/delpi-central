@@ -4,7 +4,7 @@
   "name": "Portal de TI",
   "description": "Inventário de servidores, serviços, aplicações, bancos de dados, redes e integrações, com relacionamentos, notas técnicas e planos de ação da infraestrutura de TI.",
   "icon": "server",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "type": "microfrontend",
   "basePath": "/apps/it-portal",
   "entry": "/apps/it-portal/assets/remoteEntry.js",
@@ -181,6 +181,14 @@
       "permission": "it-portal.integrations.view",
       "icon": "workflow",
       "order": 52,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/it-portal/workstations",
+      "label": "Computadores",
+      "permission": "it-portal.computers.view",
+      "icon": "monitor",
+      "order": 53,
       "showInMenu": false
     }
   ],
