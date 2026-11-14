@@ -1164,7 +1164,7 @@ def _public_occurrence(row: dict, status: dict | None) -> dict:
         "field_label": field_label(str(row.get("field") or ""), str(row.get("stable_key") or "")),
         "protheus_value": row.get("protheus_value"),
         "xml_value": row.get("xml_value"),
-        "difference": row.get("difference"),
+        "difference": row.get("difference") if row.get("difference") not in {"", None} else None,
         "series": row.get("series") or "",
         "supplier_name": row.get("supplier_name") or "",
         "tes": row.get("tes") or "",

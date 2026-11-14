@@ -88,11 +88,11 @@ A1, D1 e a janela de 30 dias não mudaram. A verificação de PROD foi in-proces
 | B6 | FIXED | a filial 02 avançou `reading_xml` de 45/329 até 329/329 |
 | B7 | FIXED | o detalhe aponta `/entry-audit/xml/{chave}`. DANFE/DACTE continuam no pedido do LNF, quando existe |
 | B8 | FIXED | o CT-e da filial 01 traz emitente, tomador, CFOP, CST, base, ICMS, TES e notas vinculadas. A filial 02 nesse dia não teve CT-e |
-| B9 | ACCEPTED_RESIDUAL | a planilha de 12/11 filial 01 saiu com as 9 abas portadas (Resumo, TES, Divergências, Comparativo, Só no XML, Só no SF1, CT-e, Itens Divergências, Itens Excluídos). «Itens Comparativo» e «Itens Agrupados» da skill não têm fonte no export e ficam de fora |
+| B9 | FIXED | T9R4: 11 abas da skill; V028 persiste item_comparison/grouped_note/excluded; 12/11 filial 01 PROD: Itens Comparativo 13, Itens Agrupados 2, Itens Excluídos 7 |
 | C1 | FIXED | a tool `analyze` publica o enum com `entry_audit_findings`; `refs[0]` e `parameters.ref` chegam no handler; teste do schema publicado PASS |
 | C2 | FIXED | fichas com «Equipe fiscal/contábil (aciona as outras áreas)». Corpus HML `c10c8b3f-63ca-477d-bea5-0aae6bcf3d0d` e PROD `1c8d5014-3a4e-41f0-8698-bd55f777214c`: 104 ingeridas, 0 falhas, 2517 itens, 115 fontes. P2 sumiu das fichas AE. AE-15 não foi ingerida. P7 continua TO_INVENTORY |
 | D1 | ACCEPTED_RESIDUAL | escopo emprestado, como o owner decidiu |
-| D2 | ACCEPTED_RESIDUAL | o 15×13 virou a contagem real do catálogo (15, com a flag desligada). As fichas deixaram de exigir P2. Restam 18 falhas anteriores, fora desta trilha: contexto MCP sem usuário (`PermissionError: Unauthorized`) e um flag destrutivo a mais (`invoice_posting.cancel`). Não foram afrouxadas. Dono: suíte CLARA/fechamento |
+| D2 | FIXED | T9R4: fixtures MCP com `has_cf_access`; `invoice_posting.cancel` no conjunto destrutivo; gate `access` exige CF e devolve `{}`; suíte focada 321 PASS |
 | D3 | BLOCKED | a api-delpi de HML lê pelas variáveis `ENTRY_AUDIT_DB_*` e devolveu 2 filiais (01 e 02). `DB_HOST` segue `totvs-disabled.hml.invalid`. Falta o usuário de teste do Keycloak de HML para o MCP ponta a ponta. Não foi executado em PROD |
 | D4 | FIXED | canal `mcp/clara`: `entry_audit.run` na filial 02 de 12/11; `entry_audit.rerun` na filial 01 de 12/11 e de 13/11. Não há `run` gravado para a filial 01 de 13/11 |
 | D5 | FIXED | V027 (`last_used_at`, `cancelled`), limpeza em 90 dias. Filial 02, 12/11: primeira execução baixou 321 XML; a seguinte baixou 0 e reaproveitou 321. A filial 01 de 12/11, no meio, baixou 16 e reaproveitou 325 |
@@ -119,3 +119,18 @@ PASS: A2, A3, A4, A6, A7 (estrutura), B1, B2, B3, B4, B6 (relatado), B7 (links),
 | B9 | Média | planilha com 9 das 11 abas | report T9R3 | **DECIDIDO (owner, 2026-11-14): completar as 11 abas.** Guardar na análise o comparativo item a item e as notas agrupadas (o motor já calcula: `grouped_notes: 2` em 12/11); export com «Itens Comparativo» e «Itens Agrupados» no layout da skill |
 | D2 | Média | 18 falhas anteriores na suíte da BFF | report T9R3 | **DECIDIDO (owner, 2026-11-14): entram.** Corrigir sem afrouxar asserção; suíte verde |
 | D3 | — | MCP ponta a ponta em HML | report T9R3 | **DECIDIDO (owner, 2026-11-14): aceitar sem o teste** — ACCEPTED_RESIDUAL; provas in-process e pela CLARA em PROD |
+
+## Verificação T9R4 (2026-11-14) — FIXED
+
+Código `adaeafe2ea` (+ follow-up null em `difference`). Tags `rollback-entry-audit-t9r4-api-delpi` e `rollback-entry-audit-t9r4-controllership-finance-api` em `dd43e9617f`. HML imagens api `378f8d1100e9`, BFF `f515f20b8bbd`. PROD api `98dc8f26ad1c`, BFF `4b6f0bd9e0a2`. A1, D1, D3 e a janela de 30 dias não reabertos.
+
+| # | Estado | Causa (arquivo) | Serviço | MCP | PROD |
+|---|---|---|---|---|---|
+| E1 | FIXED | `_LIST_FILTERS` omitia `situation`; default sem `period` — `entry_audit_bridge.py`, `service.documents` | PASS | PASS (`situation=divergent` 11; default 38; outside 467 na análise 01+02) | 12/11 fil01: default 19, outside 250, divergent aplicado |
+| E2 | FIXED | `_difference` sem mapa de tipo — `vocabulary.difference_allowed` | PASS | PASS | origem `090`/`200` com `difference` null/vazio (não mais −110) |
+| E3 | FIXED | fallback genérico «lançamento» — `domain/entry_audit/causes.py` | PASS | PASS (`cause_for` + analyze) | tabela completa; `simples.near_sublimite` → fornecedor |
+| E4 | FIXED | SA2 sem loja exata em by-key — `entry_audit_sql.documents_by_access_keys_sql` + fallback XML | PASS | — | outside page: 0 nomes vazios |
+| E5 | FIXED | `_previous_kpis` incompleto — `service._previous_kpis` | PASS | — | `previous` = chaves de `kpis` |
+| E6 | FIXED | `fiscal_code: ""` no CT-e — removido de `_cte_comparison`; README §6 | PASS | — | CT-e sem `fiscal_code` |
+| B9 | FIXED | abas faltantes sem persistência — V028 + xlsx 11 abas | PASS | — | 12/11 fil01: 11 abas; Comparativo itens 13; Agrupados 2; Excluídos 7 |
+| D2 | FIXED | identidade MCP sem `has_cf_access`; DESTRUCTIVE_CAPS sem cancel | 321 PASS focado | — | — |

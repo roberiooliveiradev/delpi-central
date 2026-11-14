@@ -214,7 +214,7 @@ class PostgresEntryAuditStore:
                     row.get("theme") or "", row.get("title") or "", row.get("document_number") or "",
                     row.get("series") or "", row.get("supplier_name") or "", row.get("item") or "",
                     row.get("field") or "", row.get("protheus_value") or "", row.get("xml_value") or "",
-                    row.get("difference") or "", row.get("tes") or "", row.get("why") or "",
+                    row.get("difference"), row.get("tes") or "", row.get("why") or "",
                     row.get("action") or "", row.get("access_key") or "",
                 ),
             )
