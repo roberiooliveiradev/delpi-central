@@ -3751,3 +3751,41 @@ insuficiente corretamente fail-closed (IDENTIFIED→UNKNOWN
 `DEV_E2E=PASS` · `PROD_E2E=PASS` · `AUTHN=PASS` · `AUTHZ=PASS` ·
 `MCP_AUDIENCE=PASS` · `REPEATABLE_WORKFLOW=PASS` ·
 `VAL01_COMPLETED=false`.
+
+## §85.6 — Revisão de segurança IAM do fluxo E2E (2026-11-13)
+
+**TASK_ID:** `EVA-E2E-MCP-AUTH-IAM-SECURITY-AND-OPERATIONAL-GOVERNANCE-01`
+Sem impersonation, sem mutações, sem novos jobs nesta task.
+
+**Veredito:** os E2Es de §85.5 são evidência funcional **válida e
+preservada**, mas o mecanismo de autenticação (impersonation admin
+com credencial master + client secret via kcadm) **não está aprovado
+como procedimento permanente** — o precedente documental nunca
+recebeu aprovação formal IAM/Segurança. Doc 121 v2.0 reclassificado:
+`RUNBOOK_STATUS=PENDING_IAM_SECURITY_APPROVAL`,
+`APPROVED_OPERATIONAL_FLOW=NOT_YET_ESTABLISHED` — execução de
+13/11 movida para `HISTORICAL_EXECUTION`.
+
+**Contratos verificados:** aud = URL exata do recurso;
+`mcp:tools`; `mcp-engineering` confidencial+PKCE (redirect oficial
+ChatGPT); exchange `delia-api→mcp` negado por política em PROD
+(deliberado); gate Core `/me` exige humano com `engineering.access`
+ou superadmin; 142 testes de auth existentes PASS (matriz de
+negação coberta por fixtures).
+
+**Recomendação (Alternativa A):** identidade de avaliação dedicada —
+restaurar o usuário KC de `deploy01.smoke@delpi.local` (linha Core
+`b069ead1` com `engineering.access` já existe) + grant aprovado
+(password grant em client dedicado `eva-eval-mcp` recomendado, sem
+tocar o client oficial) — repetível, least-privilege, revogável.
+Owner: IAM (identidade+client) · Core (confirmação do grant) ·
+Segurança (registro do principal). Bloqueado para aprovação:
+`OWNER_APPROVAL_REQUIRED=YES`, `IMPLEMENTATION_BLOCKED=YES`.
+
+**Residual search:** apenas Doc 121 prescrevia impersonation como
+procedimento; os demais 18 docs são registros históricos de
+execução (não prescrevem) — nenhuma correção adicional necessária.
+
+`IAM_SECURITY_REVIEW=COMPLETE` · `AUTHZ_BOUNDARY=PRESERVED` ·
+`KEYCLOAK_CHANGES=NONE` · `PRODUCTION_CHANGED=NO` ·
+`VAL01_COMPLETED=false`.
