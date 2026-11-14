@@ -9,7 +9,7 @@
 
 ## 1. Objetivo
 
-É a porta de entrada. O usuário informa **o período (De/Até)** e **os tipos de nota** — os mesmos dois filtros que hoje são feitos na exportação do Protheus e no Excel — e as filiais, executa a auditoria e acompanha o andamento. Abaixo, a lista de **análises anteriores** para abrir uma já feita. Quando a análise termina, a página leva ao dashboard (doc 02).
+É a porta de entrada. O usuário informa **o período (De/Até)** e **os tipos de documento** — os mesmos dois filtros que hoje são feitos na exportação do Protheus e no Excel — e as filiais, executa a auditoria e acompanha o andamento. Abaixo, a lista de **análises anteriores** para abrir uma já feita. Quando a análise termina, a página leva ao dashboard (doc 02).
 
 Entradas possíveis:
 - menu do Portal → «Auditoria de entradas»;
@@ -18,7 +18,7 @@ Entradas possíveis:
 
 ## 2. Estado na URL
 
-`from`, `to`, `types`, `branches`, `analysis` (análise em andamento acompanhada). O período é livre: nenhuma data vem fixada nem sugerida — o usuário informa De e Até (pode ser um dia, uma semana, um mês). `types` vem com os tipos de nota padrão (a definir com os exemplos do Gustavo, mcp §7 P8); `branches` com todas as filiais permitidas.
+`from`, `to`, `docs`, `branches`, `analysis` (análise em andamento acompanhada). O período é livre: nenhuma data vem fixada nem sugerida — o usuário informa De e Até (pode ser um dia, uma semana, um mês). `docs` vem com NF-e e CT-e marcados; `branches` com todas as filiais permitidas.
 
 ## 3. Estrutura e dimensionamento
 
@@ -28,7 +28,7 @@ Entradas possíveis:
 │ h1: Auditoria de entradas                                    [▶ Executar]    │
 │ descrição: Protheus × XML de NF-e e CT-e                                      │
 │ ┌ FilterBar ────────────────────────────────────────────────────────────────┐ │
-│ │ De [__/__/____]  Até [__/__/____]  Tipos de nota ▾  Filiais ▾              │ │
+│ │ De [__/__/____]  Até [__/__/____]  Tipos de documento ▾  Filiais ▾              │ │
 │ │                                                                           │ │
 │ └───────────────────────────────────────────────────────────────────────────┘ │
 └───────────────────────────────────────────────────────────────────────────────┘
@@ -76,12 +76,12 @@ Campos dentro da barra, nesta ordem:
 |---|---|---|
 | De | `CfDateField` (← `DateField`) | `label="De"`, `type="date"`, `value={from}`, `onChange`, `required` |
 | Até | `CfDateField` | `label="Até"`, `type="date"`, `value={to}`, `onChange`, `required`; `hint="Data de recebimento das notas (como na exportação da SF1)."` |
-| Tipos de nota | `CfMultiSelectField` (← `MultiSelectField`) | `label="Tipos de nota"`, `options` da BFF (`GET …/options` → tipos de nota do Protheus com código e descrição), `selectedValues={types}`, `showBulkActions`, `searchable`, mínimo 1 |
+| Tipos de documento | `CfMultiSelectField` (← `MultiSelectField`) | `label="Tipos de documento"`, `options=[{value:"nfe",label:"NF-e"},{value:"cte",label:"CT-e"}]` (vindas de `GET …/options`), `selectedValues={docs}` (padrão: as duas), `showBulkActions`, mínimo 1 |
 | Filiais | `CfMultiSelectField` | `label="Filiais"`, `options` da BFF (filiais permitidas, rótulo «Matriz (01)», «Filial (02)»), `selectedValues`, `showSelectedTags={false}`, `showBulkActions`, `emptyLabel="Todas"` |
 
 Validação da página (sem componente novo): De e Até preenchidos e `De ≤ Até`; erro mostrado no `hint` do campo Até e «Executar» desabilitado.
 
-**Tipos de nota — a confirmar (TO_INVENTORY).** Hoje o usuário filtra no Excel por tipo de nota depois de exportar a SF1. A skill lê as colunas `Tipo da Nota` (F1_TIPO: N normal, D devolução, B beneficiamento, C complemento de preço/frete, I complemento de ICMS, P complemento de IPI) e `Espec.Docum.` (F1_ESPECIE: SPED, CTE, NFS…). Falta saber qual das duas o Gustavo filtra e quais valores ficam marcados — vem dos exemplos dele (mcp §7, P8).
+**Tipos de documento — decisão do owner (2026-11-13).** Hoje o usuário filtra a SF1 pela coluna **Espécie do documento** (`F1_ESPECIE`) em **SPED** e **CTE**, e exporta do Questor **NF-e** e **CT-e**. Na Delpi, SPED = NF-e (modelo 55) e CTE = CT-e (modelo 57), nos dois sistemas. O campo mostra «NF-e» e «CT-e» e aplica o mesmo filtro aos dois lados: Protheus por espécie (SPED/CTE), Questor por tipo (NF-e/CT-e). Outras espécies (NFS, CF…) ficam fora da auditoria.
 
 ### 4.3 Execução em andamento — `CfStateBanner` + `CfProgressTracker` + `CfInlineLoadingProgress` — existem
 
@@ -142,7 +142,7 @@ Mobile (≤ 768px): `DataTableSection` alterna para cards nativos; cada card usa
 
 | Bloco | Rota da BFF |
 |---|---|
-| Opções | `GET /entry-audit/analyses/options` → filiais permitidas (código, nome, UF) e tipos de nota (código, descrição, padrão marcado) |
+| Opções | `GET /entry-audit/analyses/options` → filiais permitidas (código, nome, UF) e tipos de documento (código, descrição, padrão marcado) |
 | Executar | `POST /entry-audit/analyses` (corpo no plano §4A.4) → 202 `{analysis}` |
 | Andamento | `GET /entry-audit/analyses/{id}` |
 | Reexecutar filial | `POST /entry-audit/analyses/{id}/rerun` |

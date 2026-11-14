@@ -19,10 +19,10 @@ D1 (motor na BFF), D2 (dados automáticos), D4 (tudo com `controllership-finance
 ### 3.1 Fluxo de uma auditoria
 
 1. Alguém pede a auditoria: botão na página **ou** um comando à CLARA («audita as entradas de outubro»).
-2. A BFF cria uma **análise** (`entry_audit_analysis`: período De/Até, tipos de nota, filiais) com uma **execução por filial** (`entry_audit_run`, status `queued`) e responde na hora com o identificador. Se já existe uma análise em andamento com os mesmos filtros de execução, devolve a mesma (idempotente).
+2. A BFF cria uma **análise** (`entry_audit_analysis`: período De/Até, tipos de documento, filiais) com uma **execução por filial** (`entry_audit_run`, status `queued`) e responde na hora com o identificador. Se já existe uma análise em andamento com os mesmos filtros de execução, devolve a mesma (idempotente).
 3. Um **worker dentro da BFF** pega a execução. É o mesmo padrão do job de notificações que já roda no `lifespan` da BFF (`startup/notification_dispatch_job`).
 4. O worker busca as fontes:
-   - Protheus pela api-delpi: SF1, SD1, SF4, SFT e fornecedores (SA2) da filial no período informado (pela data de recebimento, como na exportação da SF1 hoje), só dos **tipos de nota** escolhidos;
+   - Protheus pela api-delpi: SF1, SD1, SF4, SFT e fornecedores (SA2) da filial no período informado (pela data de recebimento, como na exportação da SF1 hoje), só dos **tipos de documento** escolhidos;
    - XML pela financial-api: NF-e e CT-e da filial pela data de emissão, com folga antes do início do período para pegar notas emitidas antes e recebidas dentro dele, e os eventos de cancelamento. XML já baixado antes é reaproveitado do cache por chave de acesso, porque XML não muda.
 5. O worker roda o **motor de regras** (domínio puro) e grava o resultado: notas casadas, ocorrências, notas sem par, CT-e, TES usadas.
 6. O status de «resolvido» das ocorrências que continuam existindo é mantido pela **chave estável**.
@@ -34,7 +34,7 @@ Prefixo no padrão dos relatórios financeiros: `/financeiro/entry-audit`. Só l
 
 | Método e rota | Parâmetros | Retorna |
 |---|---|---|
-| `GET /financeiro/entry-audit/documents` | `branch`, `received_from`, `received_to`, `note_types`, `page`, `page_size` | cabeçalhos SF1 + CNPJ/UF do fornecedor (SA2) |
+| `GET /financeiro/entry-audit/documents` | `branch`, `received_from`, `received_to`, `species` (`SPED`, `CTE`), `page`, `page_size` | cabeçalhos SF1 + CNPJ/UF do fornecedor (SA2) |
 | `GET /financeiro/entry-audit/items` | mesmos filtros | itens SD1 dos mesmos documentos |
 | `GET /financeiro/entry-audit/fiscal-book` | mesmos filtros | itens do livro fiscal (SFT) dos mesmos documentos |
 | `GET /financeiro/entry-audit/tes` | — | cadastro de TES (SF4) inteiro |
@@ -59,8 +59,8 @@ Prefixo `/entry-audit`. Todas exigem `controllership-finance.access` (D4). A uni
 
 | Método e rota | Uso |
 |---|---|
-| `POST /entry-audit/analyses` | body `{date_from, date_to, note_types: ["N", …], branches: ["01","02"]}` (período livre: nenhuma data fixada pela BFF) → 202 com a análise criada (ou a que já está em andamento com os mesmos filtros) |
-| `GET /entry-audit/analyses/options` | filiais permitidas (código, nome, UF) e tipos de nota do Protheus (código, descrição, marcado por padrão) |
+| `POST /entry-audit/analyses` | body `{date_from, date_to, document_types: ["nfe","cte"], branches: ["01","02"]}` (período livre: nenhuma data fixada pela BFF) → 202 com a análise criada (ou a que já está em andamento com os mesmos filtros) |
+| `GET /entry-audit/analyses/options` | filiais permitidas (código, nome, UF, CNPJ) e tipos de documento (NF-e, CT-e) com o padrão |
 | `GET /entry-audit/analyses` | histórico: filtros `date_from`, `date_to`, `branch`, `status`; paginação |
 | `GET /entry-audit/analyses/{id}` | status, andamento por filial (etapa, documentos lidos, XML baixados), contagens, erro |
 | `POST /entry-audit/analyses/{id}/rerun` | reexecuta com os mesmos filtros (ou só a filial que falhou: `{branches: ["02"]}`) |
@@ -122,11 +122,34 @@ A execução é **direta**, sem prepare/confirmação: não altera dado de negó
 
 ### 3.8 Filtros da execução e configuração
 
-Os filtros que o usuário informa são os **dois que ele usa hoje**: o **período** (De/Até, livre — a BFF não fixa nem sugere datas), aplicado na data de recebimento como na exportação da SF1, e os **tipos de nota**, que hoje ele filtra no Excel. A filial vem da escolha de filiais (a skill roda uma filial por vez).
+Os filtros que o usuário informa são os **dois que ele usa hoje**: o **período** (De/Até, livre — a BFF não fixa nem sugere datas), aplicado na data de recebimento como na exportação da SF1, e os **tipos de documento**, que hoje ele filtra no Excel. A filial vem da escolha de filiais (a skill roda uma filial por vez).
 
 Os parâmetros que na skill eram argumentos fixos — TES do crédito presumido de SC (`004`) e final do CFOP de frete (`352`) — viram **configuração da BFF** (variáveis de ambiente com esses padrões), fora da tela e fora do pedido. Cada análise grava a versão da configuração usada.
 
-**TO_INVENTORY:** qual coluna é o «tipo de nota» filtrado hoje — `Tipo da Nota` (F1_TIPO: N, D, B, C, I, P) ou `Espec.Docum.` (F1_ESPECIE: SPED, CTE, NFS…) — e quais valores ficam marcados. Vem dos exemplos do Gustavo (mcp §7, P8). A api-delpi devolve os dois campos de qualquer forma; o filtro é aplicado na consulta.
+**Tipo de documento (decisão do owner, 2026-11-13):** hoje a SF1 é filtrada pela **Espécie do documento** (`F1_ESPECIE`) em **SPED** e **CTE**, e o Questor é exportado em **NF-e** e **CT-e**. Na Delpi, SPED = NF-e (55) e CTE = CT-e (57) nos dois sistemas. A BFF traduz o filtro único «NF-e / CT-e» em `species=SPED,CTE` na api-delpi e em `type=nfe,cte` na financial-api. Outras espécies (NFS, CF…) ficam fora. O tipo de nota (`F1_TIPO`: N, C…) não é filtrado.
+
+### 3.9 O que a amostra real mostrou (12/11/2026, Matriz) e o que a plataforma faz melhor
+
+Amostra enviada pelo owner: SF1 e SD1 exportadas do Protheus (Genéricos) e dois ZIPs do Questor; a skill foi rodada sobre ela para servir de referência. Os dados ficam fora deste repositório (ele é público); só os números entram aqui.
+
+| Item | Amostra |
+|---|---|
+| Recorte da SF1 | **um dia**: recebimento 12/11/2026 (SD1 com a mesma data de digitação); 10 notas, 13 itens |
+| Espécies na SF1 exportada | SPED 4 · CTE 3 · NFS 2 · CF 1 (no uso normal, o usuário filtra SPED e CTE); tipos de nota N 7 · C 3 |
+| Recorte do Questor | **um dia**: emissão 11/11/2026, destinatário = CNPJ da Matriz; 15 NF-e (inclui 1 transferência da Filial) e 1 CT-e |
+| Resultado da skill | 2 NF-e casadas · 0 CT-e casados · **14 só no XML** (Média) · **5 só no SF1** (Info, emitidas antes de 11/11) · 3 ocorrências Média (origem da mercadoria) · «não apontado»: 5 ICMS em TES sem crédito, 3 CST 090 |
+| Tamanho | ~10 notas por dia na Matriz: volume pequeno; desempenho não é risco |
+
+**O que isso ensina.** Na skill, a SF1 é recortada pela data de **recebimento** e o XML pela data de **emissão**, em downloads separados. Quase tudo vira «sem par» por diferença de datas, e não por erro: das 16 notas do Questor, 14 ainda não tinham sido lançadas no dia (várias delas estavam na fila do Lançamento de Notas Fiscais no dia seguinte), e 5 notas da SF1 foram emitidas antes do dia baixado.
+
+A plataforma resolve isso sem mudar as regras:
+
+1. **XML pela chave.** Para cada nota da SF1 com chave, a BFF busca o XML **pela chave** no Questor (a financial-api já baixa por identificador; a listagem atual filtra por número, CNPJ e valor). «Só no SF1 por período» deixa de existir: só sobra o que de fato não tem XML.
+2. **Listagem por emissão só para achar o que não foi lançado.** A listagem do Questor no período (com folga antes do início) serve para encontrar XML sem lançamento.
+3. **Cruzamento com o Lançamento de Notas Fiscais.** O LNF está na mesma BFF. Uma nota «só no XML» que tem solicitação aberta no LNF (aguardando, em atendimento ou com pendência) recebe a situação **«Em lançamento (LNF)»**, com o status e o link da solicitação, em vez de «não escriturada». Sem solicitação e emitida há mais de N dias, continua Média.
+4. **CT-e pelo tomador.** O CT-e do download pode ter outro destinatário; a regra do tomador da skill (empresa tomadora → deve ser escriturado) continua valendo.
+
+Essas três mudanças (1–3) alteram as contagens de «sem par» em relação à skill. No teste de paridade (E2), elas são comparadas à parte: o motor com os mesmos insumos da skill tem de dar o mesmo resultado; as melhorias são uma camada a mais, documentada.
 
 ## 4. Dados necessários (a confirmar na E0)
 
@@ -147,7 +170,7 @@ Os parâmetros que na skill eram argumentos fixos — TES do crédito presumido 
 
 | Tabela | Conteúdo |
 |---|---|
-| `entry_audit_analysis` | período (De/Até), tipos de nota, filiais, versão da configuração usada, status agregado, quem pediu (usuário ou CLARA em nome do usuário), datas |
+| `entry_audit_analysis` | período (De/Até), tipos de documento, filiais, versão da configuração usada, status agregado, quem pediu (usuário ou CLARA em nome do usuário), datas |
 | `entry_audit_run` | uma por filial da análise: status (`queued`/`running`/`done`/`failed`), etapa e andamento, contagens, versão do motor, hash das fontes, erro |
 | `entry_audit_document` | notas casadas (cabeçalho comparado), situação |
 | `entry_audit_occurrence` | ocorrência: chave estável, severidade, tema, ocorrência, NF, fornecedor, item, campo, valor Protheus, valor XML, diferença, TES, por quê, ação sugerida, regra |

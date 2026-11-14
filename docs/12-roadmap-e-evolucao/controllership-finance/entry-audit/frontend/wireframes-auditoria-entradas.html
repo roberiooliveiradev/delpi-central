@@ -97,7 +97,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute
       <span class="ctl">De <b>01/10/2026</b></span><span class="ctl">Até <b>31/10/2026</b></span>
       
       <span class="ctl">Filiais: <b>Matriz, Filial ▾</b></span>
-      <span class="ctl">Tipos de nota: <b>N, C ▾</b></span>
+      <span class="ctl">Tipos de documento: <b>NF-e, CT-e ▾</b></span>
       
       <div class="lbl" style="margin:10px 0 4px">Filtros da análise <span class="sm" style="text-transform:none;letter-spacing:0">(recortam sem reexecutar)</span></div>
       <span class="ctl">Severidade: <b>Todas ▾</b></span>
@@ -173,7 +173,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute
   </div>
 
   <div class="callouts">
-    <div><span class="num">1</span>Os dois filtros de hoje: <b>período livre (De/Até)</b>, pela data de recebimento como na exportação da SF1, e <b>tipos de nota</b>, que hoje é filtrado no Excel. Nenhuma data vem fixada.</div>
+    <div><span class="num">1</span>Os dois filtros de hoje: <b>período livre (De/Até)</b>, pela data de recebimento como na exportação da SF1, e <b>tipos de documento</b>, que hoje é filtrado no Excel. Nenhuma data vem fixada.</div>
     <div><span class="num">2</span>«Filtros da execução» definem o que é auditado (pedem Executar). «Filtros da análise» só recortam o resultado já gerado e ficam na URL (F5 e link compartilhável).</div>
     <div><span class="num">3</span>Os parâmetros fixos da skill (TES 004 do presumido, final 352 do CFOP de frete) ficam na configuração da BFF, fora da tela.</div>
     <div><span class="num">4</span>Clique em KPI, dia, fornecedor, tema, severidade ou TES aplica filtro na página inteira (filtro cruzado, como no Raio-X). Esc limpa.</div>
@@ -188,7 +188,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute
     <div class="box"><div class="tags"><span class="tag t-ok">PageHero + FilterBar</span></div>
       <div style="font-size:19px;font-weight:800">Auditoria de entradas</div>
       <div class="sm">Escolha o período e as filiais e execute a auditoria.</div>
-      <div style="margin-top:8px"><span class="ctl">De __/__/____</span><span class="ctl">Até __/__/____</span><span class="ctl">Tipos de nota ▾</span><span class="ctl">Filiais: Matriz, Filial ▾</span><span class="ctl pri">▶ Executar auditoria</span></div>
+      <div style="margin-top:8px"><span class="ctl">De __/__/____</span><span class="ctl">Até __/__/____</span><span class="ctl">Tipos de documento ▾</span><span class="ctl">Filiais: Matriz, Filial ▾</span><span class="ctl pri">▶ Executar auditoria</span></div>
     </div>
     <div class="box" style="margin-top:12px"><div class="tags"><span class="tag t-ok">EmptyGuidance</span></div>
       <b>Nenhuma auditoria para este período</b>
@@ -259,7 +259,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute
 <tr><th>Bloco</th><th>Componente</th><th>Situação</th><th>O que falta</th></tr>
 <tr><td>Cabeçalho</td><td>PageHero (compact)</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
 <tr><td>Período</td><td>DateField ×2 (De/Até)</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
-<tr><td>Tipos de nota, filiais</td><td>MultiSelectField</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
+<tr><td>Tipos de documento, filiais</td><td>MultiSelectField</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
 <tr><td>Filtros</td><td>FilterBar, FiltersRow, FilterSelectField, MultiSelectField, ClearFiltersButton</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
 <tr><td>Filtros ativos</td><td>ScopeChipBar</td><td><span class="tag t-warn">evoluir</span></td><td><code>onRemove</code> por chip e ação «Limpar tudo»</td></tr>
 <tr><td>KPIs</td><td>MetricKpiCard + TrendDelta</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>

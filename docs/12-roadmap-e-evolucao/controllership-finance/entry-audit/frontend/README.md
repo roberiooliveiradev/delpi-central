@@ -17,7 +17,7 @@ Wireframes completos: [wireframes-auditoria-entradas.html](./wireframes-auditori
 TopBar do Portal
 PageHero compact ─ título, período, última execução, fontes   [Exportar] [Executar / Reexecutar]
 └─ FilterBar
-   ├─ Filtros da execução: De, Até, Tipos de nota, Filiais (os dois filtros de hoje: período e tipo de nota)
+   ├─ Filtros da execução: De, Até, Tipos de documento (NF-e, CT-e), Filiais — os dois filtros de hoje: período e tipo de documento
    └─ Filtros da análise: Severidade, Tema, Fornecedor, TES, Status, Limpar   (na URL; não reexecutam)
 ScopeChipBar ─ filtros ativos removíveis
 KPIs ×4 ─ Valor conferido · Notas sem divergência · Ocorrências pendentes · Diferença nas altas (com Δ vs período anterior)
@@ -32,7 +32,7 @@ Detalhe da ocorrência ─ painel lateral: valores, por quê, o que fazer, regra
 
 Estados: primeiro acesso (sem análise, com «Análises anteriores»), execução em andamento (etapas e progresso por filial), falha parcial (uma filial falhou, a outra concluiu), vazio por filtro. Mobile: KPIs em 2 colunas, gráficos empilhados, filtros num painel, tabela em cards.
 
-Filtros da execução = os dois que o usuário aplica hoje: **período (De/Até, livre)** e **tipos de nota**, mais as filiais (a skill roda uma filial por vez). Filtros da análise = os do painel Raio-X: unidade, severidade, tema, fornecedor, dia (clique no gráfico), status e busca, mais documento (NF-e/CT-e) e TES. Os parâmetros fixos da skill (TES 004 do presumido, final 352 do CFOP de frete) viram configuração da BFF, fora da tela.
+Filtros da execução = os dois que o usuário aplica hoje: **período (De/Até, livre)** e **tipos de documento**, mais as filiais (a skill roda uma filial por vez). Filtros da análise = os do painel Raio-X: unidade, severidade, tema, fornecedor, dia (clique no gráfico), status e busca, mais documento (NF-e/CT-e) e TES. Os parâmetros fixos da skill (TES 004 do presumido, final 352 do CFOP de frete) viram configuração da BFF, fora da tela.
 
 ### Componentes do `@delpi/plugin-ui` (resumo; parâmetros no doc 04)
 
@@ -42,7 +42,7 @@ Regra: componente novo nasce no `@delpi/plugin-ui`, genérico (sem «auditoria»
 |---|---|---|---|
 | Cabeçalho | `PageHero` (compact) | existe | — |
 | Período | `DateField` ×2 (De/Até) | existe | — |
-| Tipos de nota, filiais | `MultiSelectField` | existe | — |
+| Tipos de documento, filiais | `MultiSelectField` | existe | — |
 | Filtros | `FilterBar`, `FiltersRow`, `FilterSelectField`, `MultiSelectField`, `ClearFiltersButton` | existe | — |
 | Filtros ativos | `ScopeChipBar` | evoluir | `onRemove` por chip e «Limpar tudo» |
 | KPIs | `MetricKpiCard` + `TrendDelta` | existe | — |
@@ -109,7 +109,7 @@ Filtros que mudam o que se vê ficam na query string, para F5 e link compartilh�
 |---|---|---|
 | `from`, `to` | `2026-10-01`, `2026-10-31` | 01 |
 | `branches` | `01,02` | 01 |
-| `types` | códigos dos tipos de nota, separados por vírgula | 01 |
+| `docs` | `nfe,cte` | 01 |
 | `branch` | `01` \| `all` | 02 |
 | `severity` | `high` | 02 |
 | `theme` | `cte` | 02 |
