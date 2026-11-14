@@ -4,7 +4,7 @@
 **Implementado em:** task `DELIA-UX-CONVERSATION-RECEPTION-CURRENT-USER-GREETING-01` sobre HEAD `8786b605ae2ca3b108c31d64cc1cf32748a13c5f`.  
 **Escopo:** recepção da conversa antes do primeiro turno, com greeting opcional baseado na identidade legítima já publicada pela plataforma.  
 **Reanchor:** HEAD de elaboração `96e877cea61d6c4fe9260e1873b6ef0283d50f5c`; implementação futura deve revalidar HEAD/status e a cadeia Project Instructions/.cursor → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → arquitetura técnica → product spec → specs temáticas → ledger.  
-**Referências:** [50 — arquitetura standalone](./50-standalone-copilot-application-architecture.md), [73 — identidade/anatomia chat-first](./73-chat-first-visual-identity-and-message-anatomy-specification.md), [76 — Unified Avatar](./76-unified-avatar-visual-specification.md).
+**Referências:** [50 — arquitetura standalone](./50-standalone-copilot-application-architecture.md), [73 — identidade/anatomia chat-first](./73-chat-first-visual-identity-and-message-anatomy-specification.md), [76 — Unified Avatar](./76-unified-avatar-delia-motion-and-user-profile-visual-specification.md).
 
 ## 1. Estado factual atual
 

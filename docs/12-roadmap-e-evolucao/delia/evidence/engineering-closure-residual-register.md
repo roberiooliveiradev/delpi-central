@@ -1830,3 +1830,17 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 - **INT2_FINAL_ACCEPTANCE:** PENDING/INCONCLUSIVE (Doc334); falta uma decisão bounded com critérios específicos de compreensão. `required_args` model-declared é verificado contra a invocação, mas declaração integral do escopo pedido não é garantida universalmente; distinguir risco cognitivo de gate de suficiência INT-3. Reprovação material e necessidade de implementação devem ser demonstradas antes de rework.
 - **MULTIPAGE_POSITIVE_EVAL_CURRENT_SHA:** PENDING; validações determinísticas e trace positivo histórico não equivalem a reexecução positiva no SHA atual; falha intermitente de autenticação pertence ao ambiente, não é prova de defeito cognitivo.
 - **NEXT:** `COORDINATION_C3_T2_INT2_BOUNDED_ACCEPTANCE_AND_FOUR_AGENT_TARGET_RECONCILIATION`; `PHASE_ADVANCEMENT=NO`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`. Fonte: [Documento 335](../corrections/mcp-contextual-intelligence-orchestration/335-c3t2-four-cognitive-specialist-agents-po-product-direction-and-int2-resumption.md).
+
+### 2026-11-14 — Consolidação documental C3 + verificação INT-2 (task executor)
+
+| Residual | Estado | Nota |
+|---|---|---|
+| INT2-REQUIRED-ARGS-DECLARATION | OPEN_LOW | inalterado — verificação de escopo só vincula quando o modelo declara `required_args`; mesmo modelo de confiança de `evidence_source` |
+| INT2-REAL-MULTIPAGE-UNION-REPROOF | PENDING | reamostra `or-qwen14b-474cb529dd73` → insufficient honesto sem declaração tipada; prova determinística + histórica mantidas |
+| INT2-ARGUMENT-SEMANTICS-METADATA | DOCUMENTED_ABSENT | `tools/list` não marca filter-vs-window; janela validada por contrato owner (TÉO/VISTA) |
+| DOC-CHAIN-293-312-LEGACY | REMEDIATED | 19 relatórios causais pré-aceite do INT-1 removidos; aceite consolidado em 313–323; recuperação via git |
+| DOC-AUX-ORPHAN-ARTIFACTS | REMEDIATED | 9 auxiliares zero-consumer removidos; identificadores preservados como histórico no ledger |
+| DOC-DUPLICATE-NUMBERING | DOCUMENTED | numeração duplicada histórica (241/245/291 ×2) — não renumerada para preservar referências externas/git |
+| DOC-INDEX-README-HISTORICAL | DOCUMENTED | README do track C3 é roadmap datado (2026-10-19); auto-rotulado histórico — estado vigente em Doc16+ledger |
+
+**NEXT=`COORDINATION_C3_T2_INT2_BOUNDED_ACCEPTANCE_AND_FOUR_AGENT_TARGET_RECONCILIATION`**
