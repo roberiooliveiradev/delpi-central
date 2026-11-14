@@ -744,6 +744,7 @@ def _anchored_attempt(
     capability: str | None = None,
     specialist: str = "owner",
     remote: str = "read",
+    identity: tuple[str, ...] = (),
     shape: str | None = None,
     operation_class: str | None = "READ",
     vocabulary: tuple[str, ...] = (),
@@ -810,6 +811,7 @@ def _anchored_attempt(
             is_complete=True,
             operation_class=operation_class,
             invocation_vocabulary=vocabulary,
+            invocation_identity=identity,
         ),
         outcome=outcome,
     )
@@ -900,7 +902,7 @@ def test_rc5_05_authoritative_absence_satisfies_anchored():
     empty_structure = _anchored_attempt(
         root=None, entity="product_structure",
         capability="get_product_structure", shape="hierarchy",
-        items=[], total=0,
+        items=[], total=0, identity=("99999999",),
     )
     coverage = _evaluate_material_obligations(
         obligations=(_ob("estrutura do produto 99999999",
@@ -909,6 +911,20 @@ def test_rc5_05_authoritative_absence_satisfies_anchored():
     )
     assert coverage == (
         ("estrutura do produto 99999999", OBLIGATION_SATISFIED),
+    )
+    # Without a bound queried identity the scope is unverifiable.
+    unbound = _anchored_attempt(
+        root=None, entity="product_structure",
+        capability="get_product_structure", shape="hierarchy",
+        items=[], total=0,
+    )
+    coverage = _evaluate_material_obligations(
+        obligations=(_ob("estrutura do produto 99999999",
+                        "get_product_structure"),),
+        business=(unbound,),
+    )
+    assert coverage == (
+        ("estrutura do produto 99999999", OBLIGATION_INCONCLUSIVE),
     )
     # Incomplete response is NOT authoritative absence.
     partial = _anchored_attempt(
@@ -1084,14 +1100,25 @@ def test_rc5_13_act_without_postcondition_is_inconclusive():
         vocabulary=("process",),
         structured={
             "status": "ok",
-            "data": {"deleted": True, "codigo_processo": "PROC-0034"},
+            "data": {"verified": True,
+                     "postcondition": {"deleted": "PROC-0034"}},
         },
     )
+    # An anchored + ACT + owner-verified postcondition demonstrates.
+    coverage = _evaluate_material_obligations(
+        obligations=(_ob("exclusão confirmada", "process", "act"),),
+        business=(act_post,),
+    )
+    assert coverage == (("exclusão confirmada", OBLIGATION_SATISFIED),)
+    # Operation alone is a restriction, never pertinence (RC5-R2):
+    # even a verified write cannot satisfy an op-only obligation.
     coverage = _evaluate_material_obligations(
         obligations=(_ob("exclusão confirmada", operation="act"),),
         business=(act_post,),
     )
-    assert coverage == (("exclusão confirmada", OBLIGATION_SATISFIED),)
+    assert coverage == (
+        ("exclusão confirmada", OBLIGATION_INCONCLUSIVE),
+    )
 
 
 def test_rc5_15_injection_text_does_not_change_classification():

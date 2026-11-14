@@ -2404,6 +2404,18 @@ def _normalize_obligation_tuple(
             and obligation.operation not in _OBLIGATION_OPERATIONS
         ):
             return None
+        if (
+            obligation.evidence_source is not None
+            and "." in obligation.evidence_source
+        ):
+            # A dotted identifier is the governed transport surface
+            # (``{specialist}.{remote}``), never an owner evidence
+            # kind — reject the plan so the model receives bounded
+            # feedback and can re-declare the owner vocabulary token
+            # in the same turn (RC5-R1). Surface-level anchors can
+            # bind but never demonstrate, so keeping them silently
+            # would lock the obligation into INCONCLUSIVE.
+            return None
         normalized.append(obligation)
     seen: set[tuple[str, str | None, str | None]] = set()
     unique: list[MaterialObligation] = []
@@ -2549,6 +2561,44 @@ def _invocation_vocabulary(args: object) -> tuple[str, ...]:
     return tuple(tokens[:8])
 
 
+def _invocation_identity(args: object) -> tuple[str, ...]:
+    """Bounded identifier literals the invocation queried.
+
+    Only top-level arguments whose key names an identifier slot
+    (``_IDENTIFIER_ARG_KEY_RE``) and whose value is itself an
+    identifier literal (``_IDENTIFIER_LITERAL_RE`` fullmatch) are
+    captured — the governed record of WHICH identity the owner was
+    asked about. Never nested payload, never free text, never
+    authorization.
+    """
+    if not isinstance(args, Mapping):
+        return ()
+    # Scan top-level selector slots and, when an envelope nests the
+    # owner payload under a single Mapping argument (e.g. ``arguments``
+    # in ``{capability, arguments}``), one level inside it. Never
+    # deeper — payload trees are not selector surface.
+    scopes: list[Mapping] = [args]
+    for value in args.values():
+        if isinstance(value, Mapping):
+            scopes.append(value)
+    tokens: list[str] = []
+    for scope in scopes:
+        for key, value in scope.items():
+            if not _IDENTIFIER_ARG_KEY_RE.search(str(key)):
+                continue
+            if not isinstance(value, str):
+                continue
+            token = value.strip()
+            if not token or len(token) > 64:
+                continue
+            if not _IDENTIFIER_LITERAL_RE.fullmatch(token):
+                continue
+            if token.casefold() in {item.casefold() for item in tokens}:
+                continue
+            tokens.append(token)
+    return tuple(tokens[:8])
+
+
 # Owner structured keys whose emptiness/zeroness attests absence.
 _ABSENCE_COLLECTION_KEYS = frozenset(
     {"items", "results", "rows", "records", "entries", "children"}
@@ -2634,6 +2684,30 @@ def _attempt_operation_class(
     return None
 
 
+def _attempt_invocation_identity_keys(
+    attempt: GovernedCapabilityAttempt,
+) -> frozenset[str]:
+    """Casefolded identity literals the attempt's invocation queried.
+
+    Mirrors ``_obligation_identity_keys`` normalization — a prefixed
+    literal's numeric core is added so the same identity in different
+    formatting still binds (``PROC-0034`` ↔ ``0034``).
+    """
+    provenance = attempt.provenance
+    if provenance is None:
+        return frozenset()
+    keys: set[str] = set()
+    for token in provenance.invocation_identity or ():
+        if not isinstance(token, str) or not token.strip():
+            continue
+        token = token.strip().casefold()
+        keys.add(token)
+        core = re.search(r"\d{3,}", token)
+        if core and core.group(0) != token:
+            keys.add(core.group(0))
+    return frozenset(keys)
+
+
 def _attempt_declares_authoritative_absence(
     attempt: GovernedCapabilityAttempt,
 ) -> bool:
@@ -2686,12 +2760,13 @@ def _attempt_declares_authoritative_absence(
 def _attempt_postcondition_demonstrated(
     attempt: GovernedCapabilityAttempt,
 ) -> bool:
-    """Owner-attested write postcondition on a complete ACT outcome.
+    """Owner-attested write postcondition via the canonical verifier.
 
-    Governed execution success alone is not a business outcome: the
-    owner structured payload must carry a non-empty authoritative
-    ``data`` postcondition echo. Absent it, the attempt is bound but
-    never demonstrates the write.
+    Reuses ``project_write_outcome`` — the governed-write boundary
+    already defines the authoritative postcondition contract: only an
+    explicit owner ``verified`` echo projects VERIFIED; technical
+    success (``success: true``) is EXECUTION_REPORTED, never a
+    demonstrated business outcome (RC5-R4). No parallel verifier.
     """
     if attempt.status is not GovernedCapabilityStatus.SUCCESS:
         return False
@@ -2703,8 +2778,19 @@ def _attempt_postcondition_demonstrated(
     structured = outcome.structured
     if not isinstance(structured, Mapping):
         return False
-    data = structured.get("data")
-    return isinstance(data, Mapping) and len(data) > 0
+    projection = project_write_outcome(
+        capability_ref=(
+            f"{attempt.provenance.specialist_id}."
+            f"{attempt.provenance.remote_capability}"
+        ),
+        remote_capability=attempt.provenance.remote_capability,
+        owner_payload=structured,
+        specialist_id=attempt.provenance.specialist_id,
+        correlation_id=attempt.correlation_id,
+        occurred_at=attempt.provenance.observed_at,
+        limitations=attempt.limitations,
+    )
+    return projection.status is WriteOutcomeStatus.VERIFIED
 
 
 def _attempt_demonstrates_anchored(
@@ -2740,9 +2826,24 @@ def _attempt_demonstrates_anchored(
             return _attempt_postcondition_demonstrated(attempt)
     keys = _obligation_identity_keys(obligation.description)
     if keys:
-        if _attempt_declares_authoritative_absence(attempt):
+        if _attempt_matches_identity_keys(attempt, keys):
             return True
-        return _attempt_matches_identity_keys(attempt, keys)
+        # Authoritative absence demonstrates only inside the queried
+        # scope: the obligated identity must be bound to THIS attempt —
+        # an empty-complete answer for product A never proves absence
+        # for product B (RC5-R3). The invoked identity (governed args)
+        # is the query-scope proof; owner-echoed roots are the
+        # result-scope proof.
+        if not _attempt_declares_authoritative_absence(attempt):
+            return False
+        return bool(
+            keys & _attempt_invocation_identity_keys(attempt)
+            or keys
+            & {
+                item.casefold()
+                for item in _attempt_identifier_roots(attempt)
+            }
+        )
     if _is_business_evidence_attempt(attempt):
         return True
     return _attempt_declares_authoritative_absence(attempt)
@@ -2769,8 +2870,19 @@ def _attempt_satisfies_obligation(
     needle = item.description
     if not needle:
         return False
-    if item.evidence_source is not None or item.operation is not None:
+    if item.evidence_source is not None:
         return _attempt_demonstrates_anchored(attempt, item)
+    if item.operation is not None:
+        # ``operation`` alone is a restriction, never a pertinence
+        # proof (RC5-R2): a matching op-class cannot demonstrate the
+        # business subject. It gates identity matching below; a
+        # recorded contradiction disproves outright.
+        operation_class = _attempt_operation_class(attempt)
+        if (
+            operation_class is not None
+            and operation_class != item.operation
+        ):
+            return False
     keys = _obligation_identity_keys(needle)
     if not keys:
         if " " in needle or "\t" in needle:
@@ -2808,22 +2920,19 @@ def _attempt_binds_obligation(
         return False
     if "discovery_metadata_observation" in attempt.limitations:
         return False
-    anchored = (
-        item.evidence_source is not None or item.operation is not None
-    )
+    anchored = item.evidence_source is not None
     if anchored:
         tokens = _attempt_anchor_tokens(attempt)
-        if item.evidence_source is not None:
-            source = item.evidence_source.casefold()
-            if source not in tokens:
-                if _attempt_surface_anchor_match(attempt, source):
-                    # Envelope-surface match: bound only — a generic
-                    # envelope name never demonstrates evidence kind.
-                    pass
-                elif tokens:
-                    # Owner echoed/invoked a different kind — disproven.
-                    return False
-                # else: nothing verifiable — bound, unproven.
+        source = item.evidence_source.casefold()
+        if source not in tokens:
+            if _attempt_surface_anchor_match(attempt, source):
+                # Envelope-surface match: bound only — a generic
+                # envelope name never demonstrates evidence kind.
+                pass
+            elif tokens:
+                # Owner echoed/invoked a different kind — disproven.
+                return False
+            # else: nothing verifiable — bound, unproven.
         if item.operation is not None:
             operation_class = _attempt_operation_class(attempt)
             if (
@@ -2832,7 +2941,25 @@ def _attempt_binds_obligation(
             ):
                 # Operation class recorded and contradicts — disproven.
                 return False
+        keys = _obligation_identity_keys(item.description)
+        if keys:
+            invoked = _attempt_invocation_identity_keys(attempt)
+            if invoked and not (keys & invoked):
+                # The invocation provably queried a different identity
+                # — the bound evidence cannot speak for the obligated
+                # scope (RC5-R3); the bind is disproven.
+                return False
         return True
+    if item.operation is not None:
+        # Operation-only declaration: the restriction can disprove
+        # the bind but never carries pertinence (RC5-R2) — fall
+        # through to subject/identity binding below.
+        operation_class = _attempt_operation_class(attempt)
+        if (
+            operation_class is not None
+            and operation_class != item.operation
+        ):
+            return False
     keys = _obligation_identity_keys(item.description)
     if keys:
         # Identity obligations are strict-only; no weak binding.

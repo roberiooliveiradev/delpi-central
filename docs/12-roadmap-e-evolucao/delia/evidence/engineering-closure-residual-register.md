@@ -1751,3 +1751,16 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT2-RC5-MODEL-ENVELOPE-ANCHORS | OPEN_LOW | modelo qwen3-14b declara `evidence_source` como nome de envelope (`teo.read`) mesmo com instrução v2-5 — outcome correto (INCONCLUSIVE, jamais falso SATISFIED) mas limita demonstração; mitigação possível em futura iteração de instrução sem hardcode de vocabulário |
 
 **NEXT=`COORDINATION_RC5_INDEPENDENT_IMPLEMENTATION_REVIEW`**
+
+### RC5 rework — 2026-11-13 (Doc 329)
+
+| Residual | Status | Evidence / disposition |
+|---|---|---|
+| INT2-RC5-R1-ENVELOPE-ANCHORS | **REMEDIATED** | Âncoras dotted rejeitadas na declaração c/ `anchor_guidance`; correção no mesmo turno comprovada em modelo real (teo.read→process→SATISFIED) |
+| INT2-RC5-R2-GENERIC-OPERATION | **REMEDIATED** | `operation` sem âncora = restrição apenas; operation-only jamais demonstra |
+| INT2-RC5-R3-ABSENCE-IDENTITY | **REMEDIATED** | `invocation_identity` (top-level + 1 nível); ausência exige identidade vinculada; divergente = UNSATISFIED |
+| INT2-RC5-R4-WRITE-POSTCONDITION | **REMEDIATED** | ACT demonstra só via `project_write_outcome` VERIFIED; data não-vazio removido como prova |
+| INT2-RC5-MODEL-ENVELOPE-ANCHORS | OPEN_LOW (refinado) | Modelo ainda propõe dotted na 1ª tentativa; guidance resolve em 1–3 iterações quando converge; quando não converge, outcome honesto — nunca falso SATISFIED |
+| INT2-RC5-AGGREGATION-REAL-COVERAGE | OPEN_LOW | SATISFIED de agregação PROVEN determinístico; modelo 14B não convergiu declaração em B nas 2 runs — aguarda run futura ou modelo distinto |
+
+**NEXT=`COORDINATION_RC5_INDEPENDENT_REVIEW_AFTER_REWORK`**

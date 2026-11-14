@@ -1736,12 +1736,15 @@ class PydanticAiInvestigationOrchestrator:
             that you pass as an invocation selector — e.g.
             ``get_product_structure`` or ``process``); ``operation``
             requires a specific operation class (read, analysis,
-            prepare, act, discovery). Anchored obligations are
-            verified mechanically against owner-declared evidence
-            metadata; unanchored text binds evidence but never proves
-            pertinence. A declaration is a semantic proposal only — it
-            never grants access or authorization. A goal may be
-            declared once per turn.
+            prepare, act, discovery) and is a restriction only, never
+            a pertinence proof. ``evidence_source`` must be the owner
+            token, never the dotted envelope tool name — a surface
+            identifier is rejected with correction guidance. Anchored
+            obligations are verified mechanically against
+            owner-declared evidence metadata; unanchored text binds
+            evidence but never proves pertinence. A declaration is a
+            semantic proposal only — it never grants access or
+            authorization. A goal may be declared once per turn.
             """
             ctx.deps.deadline.check("tool_declare_goal")
             ctx.deps.tool_calls += 1
@@ -1776,21 +1779,39 @@ class PydanticAiInvestigationOrchestrator:
                 # Owner-side schema feedback: echo the bounded
                 # vocabularies so a wrong proposal can be corrected on
                 # the next call instead of retried blindly.
-                return _proj(
-                    {
-                        "status": "INVALID_GOAL",
-                        "error_code": "investigation_goal_rejected",
-                        "valid_goal_classes": sorted(
-                            ctx.deps.gates._GOAL_CLASSES
-                        ),
-                        "valid_expected_delivery": sorted(
-                            ctx.deps.gates._DELIVERY_MODES
-                        ),
-                        "valid_operations": sorted(
-                            _OBLIGATION_OPERATIONS
-                        ),
-                    }
-                )
+                rejected: dict[str, Any] = {
+                    "status": "INVALID_GOAL",
+                    "error_code": "investigation_goal_rejected",
+                    "valid_goal_classes": sorted(
+                        ctx.deps.gates._GOAL_CLASSES
+                    ),
+                    "valid_expected_delivery": sorted(
+                        ctx.deps.gates._DELIVERY_MODES
+                    ),
+                    "valid_operations": sorted(
+                        _OBLIGATION_OPERATIONS
+                    ),
+                }
+                surface_anchors = [
+                    item.get("evidence_source")
+                    for item in needed
+                    if isinstance(item, dict)
+                    and isinstance(item.get("evidence_source"), str)
+                    and "." in item["evidence_source"]
+                ]
+                if surface_anchors:
+                    # Dotted tokens name the governed transport surface
+                    # ({specialist}.{remote}), never the owner evidence
+                    # kind — bound only, never demonstrated (RC5-R1).
+                    rejected["rejected_anchors"] = surface_anchors[:8]
+                    rejected["anchor_guidance"] = (
+                        "evidence_source must be a live owner "
+                        "vocabulary token (an entity/action the owner "
+                        "echoes or that you pass as an invocation "
+                        "selector), never the dotted envelope tool "
+                        "name — declare again with the owner token."
+                    )
+                return _proj(rejected)
             ctx.deps.investigation_plan = plan
             accepted: dict[str, Any] = {
                 "status": "ACCEPTED",

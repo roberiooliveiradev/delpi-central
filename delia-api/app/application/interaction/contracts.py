@@ -151,6 +151,12 @@ class GovernedCapabilityProvenance:
     # the governed record of what kind of owner evidence was invoked.
     # Never user data, never authorization (RC5).
     invocation_vocabulary: tuple[str, ...] = ()
+    # Bounded identifier literals the invocation queried (identifier-
+    # shaped argument values — e.g. the product code passed to a
+    # get-by-code capability). The governed record of WHICH identity
+    # the owner was asked about — required to bind authoritative
+    # absence to the queried scope (RC5-R3). Never arbitrary payload.
+    invocation_identity: tuple[str, ...] = ()
 
     def to_projection(self) -> dict:
         """Bounded HTTP-safe projection — no tokens, URLs, wire internals.
@@ -186,6 +192,7 @@ class GovernedCapabilityProvenance:
             "action_id": self.action_id,
             "operation_class": self.operation_class,
             "invocation_vocabulary": list(self.invocation_vocabulary),
+            "invocation_identity": list(self.invocation_identity),
             "observed_at": self.observed_at,
             "correlation_id": self.correlation_id,
             "is_complete": self.is_complete,

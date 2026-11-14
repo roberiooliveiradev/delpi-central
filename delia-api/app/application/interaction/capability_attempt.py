@@ -159,6 +159,7 @@ class GovernedCapabilityBinding:
     # arguments (RC5 obligation anchors) — invocation context only.
     operation_class: str | None = None
     invocation_vocabulary: tuple[str, ...] = ()
+    invocation_identity: tuple[str, ...] = ()
 
 
 class _SupportsRenderedOutcome(Protocol):
@@ -209,6 +210,7 @@ def _success_attempt(
             capability_group_id=binding.capability_group_id,
             operation_class=binding.operation_class,
             invocation_vocabulary=binding.invocation_vocabulary,
+            invocation_identity=binding.invocation_identity,
         ),
         content=rendered.content,
         limitations=rendered.limitations,

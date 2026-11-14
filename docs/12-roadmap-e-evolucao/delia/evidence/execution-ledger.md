@@ -6762,3 +6762,16 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **REAL EVAL `or-qwen14b-0d53756cb6bb`** (isolada, qwen3-14b, `PROD_CONTAINER_UNTOUCHED=YES`): **zero falso SATISFIED 10/10** — âncoras de envelope do modelo → INCONCLUSIVE (bound); D `get_product_structure` owner-vocab → **SATISFIED por ausência autoritativa** (demonstração RC5 exata); D2/E2 insuficiência honesta; F `no_evidence` zero write. Modelo 14B prefere nomes de envelope como âncora — limita SATISFIED, jamais produz falsa demonstração.
 - **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — **não aceite**; `INT2_ACCEPTED=NO`, `PRODUCTION_DEPLOY/PHASE_ADVANCEMENT/INT3/T3=NOT_AUTHORIZED`. Doc 328.
 - **NEXT:** `COORDINATION_RC5_INDEPENDENT_IMPLEMENTATION_REVIEW`.
+
+### RC5 — rework: anchor correctness + positive coverage (Doc 329; 2026-11-13)
+
+- **TASK:** `DELIA-C3-T2-RC5-ANCHOR-CORRECTNESS-AND-POSITIVE-COVERAGE-REMEDIATION-01`; BASE `32c2f69fc1` (Doc 328); veredito coordenação REWORK sobre findings R1–R4.
+- **R1 (âncoras envelope):** `evidence_source` dotted (`teo.read`) rejeitada na normalização → `INVALID_GOAL` + `anchor_guidance`; lock não engaja → correção no mesmo turno sem planner. Real eval provou `teo.read`→`process`→SATISFIED (A/A2/C) e `davi.read`→`get_product_structure`→SATISFIED (C2).
+- **R2 (op genérica):** `operation` sem `evidence_source` = restrição, nunca pertinência — qualquer READ não demonstra mais obrigação não-ancorada.
+- **R3 (ausência+identidade):** novo `invocation_identity` bounded (args identifier-shaped, top-level + 1 nível Mapping — DAVI aninha `{arguments:{code}}`); ausência autoritativa exige identidade vinculada; identidade divergente = UNSATISFIED.
+- **R4 (postcondition):** ACT demonstra só via `project_write_outcome` VERIFIED (`verified is True`); `success`/data não-vazio = EXECUTION_REPORTED, não demonstra. Sem verificador paralelo; zero write real.
+- **TESTES:** +19 determinísticos RED→GREEN; fixtures ACT legados atualizados p/ `verified:true`; suíte completa verde.
+- **REAL EVAL:** `or-qwen14b-16e2a88ab0ae` + `or-qwen14b-b3988062a74f` (qwen3-14b, isolado, `PROD_CONTAINER_UNTOUCHED=YES`) — **Gate1 FALSE_SATISFIED=0** (20/20 execuções); **Gate2** 5 categorias com demonstração real: enum, enum filtrada, explicação, detalhe/estrutura, ausência autoritativa c/ identidade. Agregação PROVEN determinística; modelo não convergiu âncora em B. D/D2/E em r3 = `model_unavailable` (transiente provider).
+- **RESIDUAL:** `OPEN_LOW` — modelo 14B redeclara tokens dotted; converge na maioria (1–3 tentativas), outcome honesto quando não converge. Não é defeito do mecanismo.
+- **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — **não aceite**; `INT2_ACCEPTED=NO`, `PRODUCTION_DEPLOY/PHASE_ADVANCEMENT/INT3/T3=NOT_AUTHORIZED`. Doc 329.
+- **NEXT:** `COORDINATION_RC5_INDEPENDENT_REVIEW_AFTER_REWORK`.
