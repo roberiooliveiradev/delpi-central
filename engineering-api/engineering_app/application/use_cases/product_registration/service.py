@@ -808,6 +808,7 @@ class ProductRegistrationService:
         _require_actor_read(actor)
         return self._repo.list_requests(
             status=filters.get("status"),
+            statuses=filters.get("statuses"),
             request_type=filters.get("type"),
             assignee=filters.get("assignee"),
             source=filters.get("source"),
@@ -816,6 +817,9 @@ class ProductRegistrationService:
             date_to=filters.get("dateTo"),
             requester_subject=actor.user_id,
             global_scope=actor.is_analyst and not own_scope,
+            # own_scope = seção "minhas solicitações": estritamente casos
+            # criados pelo ator (requester), sem incluir atribuídos.
+            requester_only=own_scope,
             page=int(filters.get("page", 1)),
             page_size=int(filters.get("pageSize", 25)),
             sort_by=filters.get("sortBy"),

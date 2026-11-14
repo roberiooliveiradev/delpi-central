@@ -26,9 +26,21 @@ from engineering_app.application.ports.home_sources import (
 from engineering_app.domain.product_registration.errors import (
     PrcForbiddenError,
 )
-from engineering_app.domain.product_registration.models import PrcActor
+from engineering_app.domain.product_registration.models import (
+    PRC_STATUSES,
+    TERMINAL_STATUSES,
+    PrcActor,
+)
 
 logger = logging.getLogger(__name__)
+
+# Regra oficial de casos acionáveis da fila PRC (revisão PR #183):
+# ``tasks`` representa pendências reais — todo status PRC exceto os
+# terminais definidos no domínio (completed, rejected). Aplicado no
+# WHERE antes de COUNT/LIMIT — nunca sobre a página já retornada.
+_ACTIONABLE_STATUSES: tuple[str, ...] = tuple(
+    s for s in PRC_STATUSES if s not in TERMINAL_STATUSES
+)
 
 _SYSTEM = "engineering-api"
 _ENDPOINT = "GET /v1/product-registration/requests"
@@ -83,6 +95,7 @@ class _PrcSource:
     endpoint = _ENDPOINT
     _kind = "request"
     _own_scope = False
+    _actionable_only = False
 
     def __init__(self, service_factory: Callable[[], Any]) -> None:
         self._service_factory = service_factory
@@ -94,11 +107,14 @@ class _PrcSource:
             is_superadmin=ctx.is_superadmin,
             channel="portal",
         )
+        filters: dict[str, Any] = {"page": 1, "pageSize": limit}
+        if self._actionable_only:
+            filters["statuses"] = list(_ACTIONABLE_STATUSES)
         try:
             data = await asyncio.to_thread(
                 self._service_factory().list_requests,
                 actor=actor,
-                filters={"page": 1, "pageSize": limit},
+                filters=filters,
                 own_scope=self._own_scope,
             )
         except PrcForbiddenError:
@@ -134,10 +150,11 @@ class _PrcSource:
 
 
 class PrcQueueHomeSource(_PrcSource):
-    """``tasks`` — fila PRC que o ator tem capacidade de atender."""
+    """``tasks`` — pendências PRC acionáveis (sem completed/rejected)."""
 
     _kind = "task"
     _own_scope = False
+    _actionable_only = True
 
 
 class PrcMineHomeSource(_PrcSource):

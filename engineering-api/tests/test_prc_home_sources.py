@@ -36,7 +36,8 @@ def _ctx(user_id: str, permissions: frozenset[str]) -> HomeSourceContext:
 
 
 def _seed(repo, *, rid: str, requester: str, status: str = "submitted",
-          official: str | None = None, description: str | None = "MP teste"):
+          official: str | None = None, description: str | None = "MP teste",
+          assignee: str | None = None):
     repo.create_request(
         request={
             "id": rid,
@@ -45,7 +46,7 @@ def _seed(repo, *, rid: str, requester: str, status: str = "submitted",
             "source": "my-requests",
             "requester_subject": requester,
             "requester_display_name": "Solicitante",
-            "assigned_to_subject": None,
+            "assigned_to_subject": assignee,
             "assigned_to_display_name": None,
             "official_product_code": official,
             "row_version": 1,
@@ -120,6 +121,88 @@ async def test_mine_source_analyst_still_scoped_own(service_repo, mine_source):
     assert out.status == "available"
     assert out.total == 1
     assert [i.id for i in out.items] == [RID_A]
+
+
+async def test_mine_excludes_assigned_only_cases(service_repo, mine_source):
+    """PR#183 FIX-1: caso de terceiro apenas atribuído ao usuário NÃO entra."""
+    _seed(service_repo._repo, rid=RID_A, requester="user-1")
+    _seed(
+        service_repo._repo,
+        rid=RID_B,
+        requester="user-2",
+        assignee="user-1",
+    )
+    ctx = _ctx("user-1", frozenset({MR_ACCESS, MR_PRC_CREATE}))
+
+    out = await mine_source.fetch(ctx, limit=10)
+
+    assert out.status == "available"
+    assert out.total == 1
+    assert [i.id for i in out.items] == [RID_A]
+
+
+async def test_mine_analyst_excludes_assigned_only(service_repo, mine_source):
+    """Analista com caso de terceiro atribuído também vê só o que criou."""
+    _seed(service_repo._repo, rid=RID_A, requester="analyst-1")
+    _seed(
+        service_repo._repo,
+        rid=RID_B,
+        requester="user-2",
+        assignee="analyst-1",
+    )
+    ctx = _ctx("analyst-1", frozenset({ENG_ACCESS}))
+
+    out = await mine_source.fetch(ctx, limit=10)
+
+    assert out.status == "available"
+    assert out.total == 1
+    assert [i.id for i in out.items] == [RID_A]
+
+
+async def test_tasks_excludes_terminal_statuses(service_repo, queue_source):
+    """PR#183 FIX-2: completed/rejected não inflam pendências."""
+    _seed(service_repo._repo, rid=RID_A, requester="user-1")
+    _seed(
+        service_repo._repo,
+        rid=RID_B,
+        requester="user-2",
+        status="completed",
+    )
+    _seed(
+        service_repo._repo,
+        rid="33333333-3333-4333-8333-333333333333",
+        requester="user-3",
+        status="rejected",
+    )
+    ctx = _ctx("analyst-1", frozenset({ENG_ACCESS}))
+
+    out = await queue_source.fetch(ctx, limit=10)
+
+    assert out.status == "available"
+    assert out.total == 1
+    assert [i.id for i in out.items] == [RID_A]
+
+
+async def test_tasks_total_counts_filtered_universe(
+    service_repo, queue_source
+):
+    """Total reflete o universo acionável antes da paginação."""
+    for i, st in enumerate(
+        ["submitted", "in_progress", "needs_correction", "completed"]
+    ):
+        _seed(
+            service_repo._repo,
+            rid=f"44444444-4444-4444-8444-44444444444{i}",
+            requester="user-1",
+            status=st,
+        )
+    ctx = _ctx("analyst-1", frozenset({ENG_ACCESS}))
+
+    out = await queue_source.fetch(ctx, limit=2)
+
+    assert out.status == "available"
+    assert len(out.items) == 2
+    assert out.total == 3  # 3 acionáveis; completed fora do COUNT
 
 
 async def test_denied_user_maps_forbidden(service_repo, queue_source):
