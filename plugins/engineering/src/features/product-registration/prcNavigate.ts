@@ -121,6 +121,26 @@ export function parsePrcQueueUrl(search: string): PrcQueueUrlState {
   };
 }
 
+/** Valor exibido como selecionado no grupo Status do hero (§41):
+ * status explícito prevalece; `view=pending` sem status seleciona
+ * "Pendentes"; ausência de ambos seleciona "Todos". */
+export function prcQueueStatusFilterValue(state: PrcQueueUrlState): string {
+  return state.status || (state.view === "pending" ? "pending" : "");
+}
+
+/** Estado resultante da escolha no grupo Status: "pending" ativa o
+ * preset governado e remove status explícito; um status específico
+ * remove o preset e fixa o valor; "" (Todos) limpa ambos. Toda troca
+ * de filtro retorna à página 1. */
+export function prcQueueStateForStatusFilter(
+  state: PrcQueueUrlState,
+  value: string,
+): PrcQueueUrlState {
+  return value === "pending"
+    ? { ...state, view: "pending", status: "", page: 1 }
+    : { ...state, view: "", status: value, page: 1 };
+}
+
 export function buildPrcQueueUrl(
   basePath: string,
   state: PrcQueueUrlState,

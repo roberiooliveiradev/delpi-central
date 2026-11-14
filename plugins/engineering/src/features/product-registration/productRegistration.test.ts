@@ -14,6 +14,8 @@ import {
   buildPrcQueueUrl,
   parsePrcQueueUrl,
   parsePrcTab,
+  prcQueueStateForStatusFilter,
+  prcQueueStatusFilterValue,
   resolvePrcPath,
 } from "./prcNavigate";
 
@@ -95,6 +97,52 @@ describe("prcNavigate url state", () => {
     ).toBe("/apps/engineering/product-registration?view=pending");
     /* valor arbitrário não vira preset */
     expect(parsePrcQueueUrl("?view=foo").view).toBe("");
+  });
+
+  it("status filter group: view=pending seleciona 'pending'", () => {
+    expect(
+      prcQueueStatusFilterValue(parsePrcQueueUrl("?view=pending")),
+    ).toBe("pending");
+    /* status explícito prevalece sobre o preset na seleção exibida */
+    expect(
+      prcQueueStatusFilterValue(
+        parsePrcQueueUrl("?view=pending&status=completed"),
+      ),
+    ).toBe("completed");
+    expect(prcQueueStatusFilterValue(parsePrcQueueUrl(""))).toBe("");
+    expect(
+      prcQueueStatusFilterValue(parsePrcQueueUrl("?status=submitted")),
+    ).toBe("submitted");
+  });
+
+  it("status filter group: transições de estado (§41)", () => {
+    const pending = parsePrcQueueUrl("?view=pending&page=3&type=create");
+    /* Pendentes → mantém preset, remove status, reseta página */
+    const toPending = prcQueueStateForStatusFilter(
+      parsePrcQueueUrl("?status=completed"), "pending",
+    );
+    expect(toPending).toMatchObject({ view: "pending", status: "", page: 1 });
+    /* Todos → remove view e status, preserva demais filtros */
+    const toAll = prcQueueStateForStatusFilter(pending, "");
+    expect(toAll).toMatchObject({
+      view: "", status: "", type: "create", page: 1,
+    });
+    /* status específico → remove preset, fixa status, reseta página */
+    const toSubmitted = prcQueueStateForStatusFilter(pending, "submitted");
+    expect(toSubmitted).toMatchObject({
+      view: "", status: "submitted", page: 1,
+    });
+    expect(
+      buildPrcQueueUrl("/apps/engineering", toSubmitted),
+    ).toBe(
+      "/apps/engineering/product-registration?status=submitted&type=create",
+    );
+    /* URL serializada re-parseia com a mesma seleção */
+    expect(
+      prcQueueStatusFilterValue(
+        parsePrcQueueUrl("?status=completed"),
+      ),
+    ).toBe("completed");
   });
 
   it("builds queue url omitting defaults", () => {

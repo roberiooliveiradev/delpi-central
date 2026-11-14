@@ -13,7 +13,6 @@ import {
   EngineeringDataCardsGrid,
   EngineeringEmptyState,
   EngineeringFilterInput,
-  EngineeringFilterSelect,
   EngineeringFiltersRow,
   EngineeringInteractiveDataCard,
   EngineeringKanbanBoard,
@@ -35,12 +34,16 @@ import {
   navigatePrc,
   navigatePrcHref,
   parsePrcQueueUrl,
+  prcQueueStateForStatusFilter,
+  prcQueueStatusFilterValue,
   useLocationSearch,
   PRC_PATHS,
   type PrcQueueUrlState,
 } from "../prcNavigate";
 import {
   PRC_COPY,
+  PRC_QUEUE_STATUS_OPTIONS,
+  PRC_QUEUE_TYPE_OPTIONS,
   PRC_STATUS_LABELS,
   PRC_TYPE_LABELS,
   prcShortId,
@@ -51,22 +54,6 @@ import { PrcFlagsOpsPanel } from "../components/PrcFlagsOpsPanel";
 
 const PAGE_SIZE = 25;
 const SEARCH_DEBOUNCE_MS = 400;
-
-const STATUS_OPTIONS = [
-  { value: "", label: "Todos os status" },
-  ...Object.entries(PRC_STATUS_LABELS).map(([value, label]) => ({
-    value,
-    label,
-  })),
-];
-
-const TYPE_OPTIONS = [
-  { value: "", label: "Todos os tipos" },
-  ...Object.entries(PRC_TYPE_LABELS).map(([value, label]) => ({
-    value,
-    label,
-  })),
-];
 
 export function PrcQueuePage({ basePath }: { basePath: string }) {
   const search = useLocationSearch();
@@ -305,48 +292,54 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
       >
         <EngineeringFiltersRow ariaLabel="Filtros da fila de solicitações">
           <EngineeringFilterInput
-            label="Buscar"
+            label={PRC_COPY.searchLabel}
             type="search"
             value={searchDraft}
             onChange={setSearchDraft}
-            placeholder="Nº, código oficial ou descrição"
+            placeholder={PRC_COPY.searchPlaceholder}
           />
-          <EngineeringFilterSelect
-            label="Status"
-            value={applied.status}
-            onChange={(value) =>
-              commit({ ...applied, view: "", status: value, page: 1 })
-            }
-            options={STATUS_OPTIONS}
-          />
-          <EngineeringFilterSelect
-            label="Tipo"
-            value={applied.type}
-            onChange={(value) => commit({ ...applied, type: value, page: 1 })}
-            options={TYPE_OPTIONS}
-          />
+          {/* §41 — Status/Tipo como grupos de seleção exclusiva
+           * (SegmentToggle canônico, aria-pressed): o preset
+           * `view=pending` aparece como "Pendentes" ativo no próprio
+           * grupo, sem aviso desconectado de "Todos os status". */}
+          <div className="engineering-filter-box engineering-field delpi-ui-filter-box engineering-filter-box--wide delpi-ui-filter-box--wide">
+            <span className="engineering-field__label">
+              {PRC_COPY.filterStatusLabel}
+            </span>
+            <EngineeringSegmentToggle
+              ariaLabel={PRC_COPY.filterStatusAriaLabel}
+              idPrefix="prc-status-filter"
+              size="sm"
+              widthMode="content"
+              options={PRC_QUEUE_STATUS_OPTIONS}
+              value={prcQueueStatusFilterValue(applied)}
+              onChange={(value) =>
+                commit(prcQueueStateForStatusFilter(applied, value))
+              }
+            />
+          </div>
+          <div className="engineering-filter-box engineering-field delpi-ui-filter-box">
+            <span className="engineering-field__label">
+              {PRC_COPY.filterTypeLabel}
+            </span>
+            <EngineeringSegmentToggle
+              ariaLabel={PRC_COPY.filterTypeAriaLabel}
+              idPrefix="prc-type-filter"
+              size="sm"
+              widthMode="content"
+              options={PRC_QUEUE_TYPE_OPTIONS}
+              value={applied.type}
+              onChange={(value) =>
+                commit({ ...applied, type: value, page: 1 })
+              }
+            />
+          </div>
         </EngineeringFiltersRow>
         {/* PRC-REF-021-REF-01 — bandeiras compactas no hero (sem faixa externa). */}
         {!forbidden ? (
           <PrcFlagsOpsPanel basePath={basePath} compact />
         ) : null}
       </EngineeringPageHero>
-
-      {!forbidden && applied.view === "pending" ? (
-        <EngineeringStateBanner>
-          <strong>{PRC_COPY.pendingViewLabel}</strong>
-          {" — "}
-          {PRC_COPY.pendingViewDescription}{" "}
-          <EngineeringActionButton
-            variant="link"
-            onClick={() =>
-              commit({ ...applied, view: "", page: 1 })
-            }
-          >
-            {PRC_COPY.pendingViewClear}
-          </EngineeringActionButton>
-        </EngineeringStateBanner>
-      ) : null}
 
       {forbidden ? (
         <>

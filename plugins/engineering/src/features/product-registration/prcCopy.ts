@@ -94,6 +94,35 @@ export const PRC_VALIDATION = {
     "Não foi possível consultar as opções oficiais no TOTVS. Tente novamente.",
 } as const;
 
+/** Opções do grupo de seleção exclusiva de Status no hero da fila
+ * (§41): `"pending"` representa o preset governado `view=pending`;
+ * `""` representa "Todos" (sem filtro de status). Rótulos no plural —
+ * escopo de filtragem, distinto dos badges singulares do item. */
+export const PRC_QUEUE_STATUS_OPTIONS: readonly {
+  value: string;
+  label: string;
+}[] = [
+  { value: "pending", label: "Pendentes" },
+  { value: "", label: "Todos" },
+  { value: "submitted", label: "Enviadas" },
+  { value: "in_progress", label: "Em atendimento" },
+  { value: "needs_information", label: "Aguardando informações" },
+  { value: "needs_correction", label: "Aguardando correção" },
+  { value: "under_review", label: "Em revisão" },
+  { value: "completed", label: "Concluídas" },
+  { value: "rejected", label: "Rejeitadas" },
+];
+
+/** Opções do grupo de seleção exclusiva de Tipo no hero da fila. */
+export const PRC_QUEUE_TYPE_OPTIONS: readonly {
+  value: string;
+  label: string;
+}[] = [
+  { value: "", label: "Todos" },
+  { value: "create", label: PRC_TYPE_LABELS.create },
+  { value: "update", label: PRC_TYPE_LABELS.update },
+];
+
 export const PRC_COPY = {
   breadcrumbHome: "Início",
   breadcrumbRoot: "Controle e Cadastro de Produtos",
@@ -101,6 +130,12 @@ export const PRC_COPY = {
   listDescription:
     "Fila de cadastros e alterações de matérias-primas sob atendimento da Engenharia.",
   newRequest: "Nova solicitação",
+  searchLabel: "Buscar",
+  searchPlaceholder: "Número, código oficial ou descrição",
+  filterStatusLabel: "Status",
+  filterStatusAriaLabel: "Filtrar solicitações por status",
+  filterTypeLabel: "Tipo",
+  filterTypeAriaLabel: "Filtrar solicitações por tipo",
   refresh: "Atualizar",
   remoteUpdatePending:
     "Esta solicitação foi atualizada em outra sessão. Suas edições estão preservadas; os dados serão recarregados ao concluir.",
