@@ -140,3 +140,73 @@ class KeycloakWorkstationProvisioner:
                 if after.status_code != 200 or after.json() != []:
                     raise RuntimeError("Client ainda possui scopes inesperados.")
             return keycloak_id
+
+    def disable_client(
+        self, *, keycloak_uuid: str, client_id: str, workstation_id: str
+    ) -> None:
+        """Revoga somente Client criado pela DELPI para o UUID informado.
+
+        Read-back verifica dono, clientId e estado. Se falhar, o banco permanece
+        'failed/pending' e impede ingestao no modo dinamico.
+        """
+        from uuid import UUID
+
+        if (not CLIENT_RE.fullmatch(client_id)
+                or client_id != f"itp-ws-{UUID(workstation_id).hex}"
+                or str(UUID(keycloak_uuid)) != keycloak_uuid.lower()):
+            raise ValueError("Identidade Keycloak do computador invalida.")
+        base, realm, admin_client, admin_secret = self._config()
+        token_url = f"{base}/realms/{realm}/protocol/openid-connect/token"
+        item_url = f"{base}/admin/realms/{realm}/clients/{keycloak_uuid}"
+        with httpx.Client(
+            transport=self.transport, timeout=5.0, follow_redirects=False, verify=True,
+            headers={"Accept": "application/json"},
+        ) as client:
+            token = client.post(
+                token_url,
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": admin_client,
+                    "client_secret": admin_secret,
+                },
+            )
+            if token.status_code != 200:
+                raise RuntimeError("Autenticacao do provisionador Keycloak falhou.")
+            body = token.json()
+            bearer = body.get("access_token") if isinstance(body, dict) else None
+            if not isinstance(bearer, str) or not bearer:
+                raise RuntimeError("Token administrativo ausente.")
+            headers = {"Authorization": f"Bearer {bearer}"}
+            before = client.get(item_url, headers=headers)
+            if before.status_code != 200:
+                raise RuntimeError("Client nao encontrado no Keycloak.")
+            data = before.json()
+            attrs = data.get("attributes") if isinstance(data, dict) else None
+            if (not isinstance(data, dict)
+                    or data.get("id") != keycloak_uuid
+                    or data.get("clientId") != client_id
+                    or not isinstance(attrs, dict)
+                    or attrs.get("delpi.owner") != "it-portal-workstation-v1"
+                    or attrs.get("delpi.workstation_id") != workstation_id):
+                raise RuntimeError("Client Keycloak nao pertence a este computador.")
+            if data.get("enabled") is not False:
+                response = client.put(
+                    item_url,
+                    json={"id": keycloak_uuid, "clientId": client_id, "enabled": False},
+                    headers=headers,
+                )
+                if response.status_code not in (200, 204):
+                    raise RuntimeError("Desabilitacao no Keycloak falhou.")
+            verified = client.get(item_url, headers=headers)
+            if verified.status_code != 200:
+                raise RuntimeError("Nao foi possivel confirmar revogacao.")
+            after = verified.json()
+            owner = after.get("attributes") if isinstance(after, dict) else None
+            if (not isinstance(after, dict)
+                    or after.get("enabled") is not False
+                    or after.get("id") != keycloak_uuid
+                    or after.get("clientId") != client_id
+                    or not isinstance(owner, dict)
+                    or owner.get("delpi.owner") != "it-portal-workstation-v1"
+                    or owner.get("delpi.workstation_id") != workstation_id):
+                raise RuntimeError("Revogacao no Keycloak nao confirmada.")

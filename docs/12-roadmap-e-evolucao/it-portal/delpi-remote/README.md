@@ -38,7 +38,9 @@ Acesso sem pedir senha Windows por sessao **nao** significa acesso anonimo: toda
 | G2-S3 | Enrolment governado, agendamento Windows e desinstalacao de agente | **EM REVISAO** | Pacote assistido e testes em CI; assinatura corporativa, piloto Windows, revogacao e teste de rotina pendentes |
 | G2-S4 | Provisionamento automatizado de identidades individuais, sem cadastro manual por computador | **EM DESENVOLVIMENTO** | Preparacao automatica, bootstrap seguro, binding dinamico e revogacao |
 | G2-S4-S1 | Preparar Client Keycloak desabilitado pela ficha do Portal | **EM REVISAO** | CI API/UI/Postgres V012 aprovado; Keycloak HML, Windows real e feature off ate piloto |
-| G2-S4-S2 | Bootstrap local de uso unico, ativacao S2S e binding dinamico | **NAO INICIADO** | Sem segredos no navegador, validacao do piloto, rotacao e revogacao |
+| G2-S4-S2 | Bootstrap de uso unico, ativacao S2S, binding dinamico e revogacao | **EM DESENVOLVIMENTO** | S2a com vinculo DB/revogacao em codigo; S2b precisa Keycloak/Windows HML |
+| G2-S4-S2a | Vinculo S2S dinamico por DB e revogacao individual Keycloak | **EM REVISAO** | V013 com grant OFF, testes CI e homologacao real pendentes |
+| G2-S4-S2b | Bootstrap Windows de uso unico, attestation, ativacao e rotacao | **NAO INICIADO** | Sem secret no navegador; so ativar depois do piloto seguro e aceite |
 | G3-ENGINE | MeshCentral isolado e testado em laboratorio | **BLOQUEADO** | Somente apos G0-SEC com aceite formal, versao/licenca/SBOM, TLS, backup e piloto isolado |
 | G4-AUTH | Broker de sessoes, Keycloak/MFA e permissoes independentes | **NAO INICIADO** | Revogacao, tokens de uso unico, fail-closed, logs, kill switch |
 | G5-REMOTE | Tela, teclado e mouse no navegador para computador piloto | **NAO INICIADO** | Testes presenciais de concorrencia, UAC, lock-screen, desconexao e latency |
@@ -58,6 +60,8 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 **G2-S4-S1 (14/11/2026):** atendendo ao pedido de automatizar Clients individuais por computador. API/UI com client Keycloak desabilitado, migration V012 e trilha de auditoria, admin HTTPS restrito e feature flag OFF. Sem secret/token no frontend, sem ativacao de ingestao nem acesso remoto. Proxima fase S2 entrega bootstrap seguro e vinculo S2S dinamico. Ver [runbook](G2-S4-S1-AUTOMATED-KEYCLOAK-PREPARATION.md).
 
 **G2-S4-S1 CI (14/11/2026):** codigo `944fa6e13fe9` e ajustes de testes `749874c3f746` passaram no [CI da API/PostgreSQL V012](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43608815197) e [CI da interface](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43608815228), com [architecture gate](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43608815147) aprovado. Nao houve deploy da V012 nem criacao real de Clients no Keycloak; testes usaram mock e banco descartavel. Gate de provisionamento permanece OFF. G2-S4-S2 pendente.
+
+**G2-S4-S2a (14/11/2026):** preparado binding por PostgreSQL (V013, `ingest_authorized=false` por default) e revogacao individual com bloqueio DB antes de desabilitar Client Keycloak, auditoria e revisao manual em falha. JWT S2S continua validado por assinatura/issuer/audiencia/scope; Client esperado deriva do UUID do ativo, sem lista manual no env. `IT_PORTAL_WORKSTATION_DB_BINDINGS_ENABLED=false` e `IT_PORTAL_WORKSTATION_REVOKE_ENABLED=false` por default; sem fallback da allowlist estatica quando DB mode ativo. Nenhuma ativacao ou bootstrap Windows foi implementada; segue no S2b. Ver [runbook](G2-S4-S2A-DYNAMIC-BINDINGS-REVOCATION.md).
 
 **G0-SEC-S0 (13/11/2026):** o preflight offline foi implementado com checklist de 12 verificacoes pendentes, auditoria de rotas/manifesto/Compose e testes que falham ao detectar acesso remoto prematuro. **CI verde** no commit `b3972d753599`: gate BLOCKED, pytest, integracao PostgreSQL, architecture-gate e audit. A avaliacao ADR-002 identificou alerta urgente dos mantenedores do MeshCentral 1.3.1 (23/10/2026) sobre exploracao ativa; versao apenas **candidata**, nao aprovada. **G3-ENGINE permanece BLOQUEADO** ate signoff formal e demonstracao de mitigacao.
 
@@ -98,5 +102,6 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 - [G2-S2: API de ingestao, seguranca e runbook de release](G2-S2-S2S-INGEST-RELEASE.md)
 - [G2-S3: pacote de instalacao, tarefa desabilitada e rollback Windows](G2-S3-WINDOWS-AGENT-ROLL-OUT.md)
 - [G2-S4-S1: cadastro automatico de Client Keycloak DESABILITADO](G2-S4-S1-AUTOMATED-KEYCLOAK-PREPARATION.md)
+- [G2-S4-S2a: binding por banco e revogacao individual](G2-S4-S2A-DYNAMIC-BINDINGS-REVOCATION.md)
 - [Convencao de nomenclatura de computadores (proposta)](NAMING-CONVENTION.md)
 - [Diario de execucao e passagem de bastao](EXECUTION-LOG.md)

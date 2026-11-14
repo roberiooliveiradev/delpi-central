@@ -386,6 +386,22 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** teste de um Client DESABILITADO em Keycloak HML com conta tecnica de privilegio minimo, rollback e revogacao; depois G2-S4-S2 para bootstrap seguro de uso unico, binding dinamico por UUID e ativacao/auditoria. Piloto Windows continua presencial.
 
+## 2026-11-14 | G2-S4-S2a | binding por banco e revogacao individual
+
+**Objetivo:** remover edicao manual de cada vinculo client_id=uuid no .env, sem antecipar emissao de credenciais e ativacao Windows.
+
+**Arquivos:** nova migration V013 (grant de ingestao default FALSE + revogacao e auditoria), config/Compose flags OFF, verificacao JWT S2S dinamica derivada do UUID, verificacao transacional do grant no PostgreSQL, revogacao DB antes de chamada Keycloak com read-back, endpoint e botao de revogacao com Core RBAC fresh, testes unit/HTTP/Keycloak mock/PostgreSQL/Vitest e runbook.
+
+**Seguranca:** nenhuma identidade V012 e automaticamente autorizada a enviar dados; o Client Keycloak continua disabled ate S2b. Modo database ignora inteiramente binding legado .env; continua exigindo JWT assinado, issuer/audiencia/scope e grant DB. Revogacao Keycloak falha fechado no DB sem reativar automaticamente. Nenhuma credencial/secret enviada ao browser. Flags `IT_PORTAL_WORKSTATION_DB_BINDINGS_ENABLED=false` e `IT_PORTAL_WORKSTATION_REVOKE_ENABLED=false` por padrao, ingest OFF.
+
+**Testes e evidencias:** incluidos no commit de codigo; CI e revisao de qualidade a verificar antes de afirmar sucesso.
+
+**Producao:** nenhum deploy, migration V013 nem mudanca no Keycloak produtivo executados pelo assistente. As rotas de comando remoto continuam bloqueadas por G0-SEC.
+
+**Risco/rollback:** sem ativacao automatica e sem real Windows/Keycloak. Em futura liberacao, backup DB antes de V013, habilitacao por fases em HML e retorno dos flags a false em rollback; nao apagar migracoes historicas. Reconciliar qualquer `revocation_status=failed` manualmente.
+
+**Proximo passo unico:** obter CI verde e revisar seguranca do modelo DB em HML. Projetar e testar G2-S4-S2b bootstrap Windows de uso unico com prova de identidade fisica e sem secret no frontend, apos homologacao real.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

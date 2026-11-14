@@ -27,8 +27,12 @@ class FakeSnapshots:
     def __init__(self, machines):
         self.machines = machines
         self.rows = {}
+        # Simula grant transacional do banco no modo novo.
+        self.active_bindings: set[tuple[str, str]] = set()
 
-    def save(self, workstation_id, snapshot, *, client_id, digest, retention):
+    def save(self, workstation_id, snapshot, *, client_id, digest, retention, enforce_dynamic_binding=False):
+        if enforce_dynamic_binding and (client_id, workstation_id) not in self.active_bindings:
+            raise ConflictError("workstation_collector_binding_forbidden", "Identidade nao autorizada.")
         machine = self.machines.get_workstation(workstation_id)
         if machine is None:
             raise ConflictError("missing", "Computador nao encontrado.")
@@ -77,6 +81,7 @@ def snapshot_api(workstation_client, monkeypatch):
         lambda: WorkstationSnapshotService(snapshots)
     )
     monkeypatch.setattr(settings, "WORKSTATION_INGEST_ENABLED", True)
+    monkeypatch.setattr(settings, "WORKSTATION_DB_BINDINGS_ENABLED", False)
     monkeypatch.setattr(
         settings, "WORKSTATION_COLLECTOR_BINDINGS",
         f"{CLIENT_ID}={machine_id}",
@@ -185,4 +190,46 @@ def test_archived_machine_and_read_permission(snapshot_api, principal):
     assert send(client, wid, incoming()).status_code == 409
     principal.permissions = ["it-portal.access", "it-portal.servers.view"]
     assert client.get(f"/workstations/{wid}/snapshot").status_code == 403
+    assert snapshots.rows == {}
+
+
+def test_dynamic_mode_does_not_fallback_to_static_env_binding(snapshot_api, monkeypatch):
+    client, wid, machines, snapshots = snapshot_api
+    from it_portal_app.application.workstation_identity_service import device_client_id
+
+    expected = device_client_id(wid)
+    monkeypatch.setattr(settings, "WORKSTATION_DB_BINDINGS_ENABLED", True)
+    # Mesmo um env correto/antigo nao pode conceder acesso no novo modo.
+    monkeypatch.setattr(settings, "WORKSTATION_COLLECTOR_BINDINGS", f"{expected}={wid}")
+    def dynamic_identity(request, *, expected_client_id):
+        assert expected_client_id == expected
+        if request.headers.get("X-Delpi-Service-Authorization") != "Bearer test-s2s":
+            raise S2SHttpException(401, "Service authentication required", "S2S_TOKEN_MISSING")
+        return SimpleNamespace(client_id=expected)
+    monkeypatch.setattr(snapshot_routes, "require_dynamic_workstation_identity", dynamic_identity)
+
+    first = send(client, wid, incoming())
+    assert first.status_code == 409  # DB grant falso
+    assert snapshots.rows == {}
+    snapshots.active_bindings.add((expected, wid))
+    accepted = send(client, wid, incoming())
+    assert accepted.status_code == 201, accepted.text
+    snapshots.active_bindings.clear()
+    denied = send(client, wid, incoming())
+    assert denied.status_code == 409
+
+
+def test_dynamic_mode_requires_valid_s2s_not_user_or_other_device(snapshot_api, monkeypatch):
+    client, wid, _, snapshots = snapshot_api
+    from it_portal_app.application.workstation_identity_service import device_client_id
+
+    expected = device_client_id(wid)
+    monkeypatch.setattr(settings, "WORKSTATION_DB_BINDINGS_ENABLED", True)
+    snapshots.active_bindings.add((expected, wid))
+    assert client.post(f"/collector/v1/workstations/{wid}/snapshots", json=incoming()).status_code == 401
+    def denied(request, *, expected_client_id):
+        assert expected_client_id == expected
+        raise S2SHttpException(403, "Forbidden", "S2S_CLIENT_DENIED")
+    monkeypatch.setattr(snapshot_routes, "require_dynamic_workstation_identity", denied)
+    assert send(client, wid, incoming()).status_code == 403
     assert snapshots.rows == {}

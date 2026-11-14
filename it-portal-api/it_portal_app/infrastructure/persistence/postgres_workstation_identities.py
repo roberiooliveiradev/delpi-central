@@ -23,7 +23,8 @@ class PostgresWorkstationIdentityStore(PostgresRepositoryBase):
     def get(self, workstation_id: str) -> dict | None:
         with self._tx() as conn:
             row = conn.execute(
-                f"SELECT workstation_id, client_id, state, updated_at "
+                f"SELECT workstation_id, client_id, state, updated_at, "
+                "ingest_authorized, revocation_status "
                 f"FROM {T} WHERE workstation_id = %s",
                 (workstation_id,),
             ).fetchone()
@@ -96,3 +97,62 @@ class PostgresWorkstationIdentityStore(PostgresRepositoryBase):
             ).fetchone()
             if row:
                 self._event(conn, workstation_id, actor, "identity_prepare_failed")
+
+    def request_revocation(self, workstation_id: str, actor: Actor) -> dict | None:
+        """Deny DB ingestion BEFORE contacting Keycloak; never retry pending/failed."""
+        with self._tx() as conn:
+            row = conn.execute(
+                f"SELECT client_id, keycloak_client_uuid, state, revocation_status "
+                f"FROM {T} WHERE workstation_id = %s FOR UPDATE",
+                (workstation_id,),
+            ).fetchone()
+            if row is None:
+                raise NotFoundError("workstation_identity_not_found", "Identidade nao encontrada.")
+            if row["state"] == "revoked" and row["revocation_status"] == "confirmed":
+                return None  # revogacao completa, idempotente
+            if (row["state"] != "prepared" or row["revocation_status"] != "none"
+                    or row["keycloak_client_uuid"] is None):
+                raise ConflictError(
+                    "workstation_identity_revocation_review_required",
+                    "Revogacao anterior requer revisao manual pela TI.",
+                )
+            conn.execute(
+                f"UPDATE {T} SET ingest_authorized = FALSE, "
+                "revocation_status = 'pending', updated_at = now() "
+                "WHERE workstation_id = %s",
+                (workstation_id,),
+            )
+            self._event(conn, workstation_id, actor, "identity_revocation_requested")
+            return {
+                "client_id": row["client_id"],
+                "keycloak_client_uuid": str(row["keycloak_client_uuid"]),
+            }
+
+    def complete_revocation(self, workstation_id: str, actor: Actor) -> None:
+        with self._tx() as conn:
+            row = conn.execute(
+                f"UPDATE {T} SET state = 'revoked', revocation_status = 'confirmed', "
+                "ingest_authorized = FALSE, revoked_at = now(), revoked_by_id = %s, "
+                "updated_at = now() WHERE workstation_id = %s "
+                "AND state = 'prepared' AND revocation_status = 'pending' "
+                "RETURNING workstation_id",
+                (actor.id, workstation_id),
+            ).fetchone()
+            if not row:
+                raise ConflictError(
+                    "workstation_identity_revocation_state_invalid",
+                    "Revogacao precisa de conciliacao manual.",
+                )
+            self._event(conn, workstation_id, actor, "identity_revoked")
+
+    def fail_revocation(self, workstation_id: str, actor: Actor) -> None:
+        with self._tx() as conn:
+            row = conn.execute(
+                f"UPDATE {T} SET revocation_status = 'failed', "
+                "ingest_authorized = FALSE, updated_at = now() "
+                "WHERE workstation_id = %s AND revocation_status = 'pending' "
+                "RETURNING workstation_id",
+                (workstation_id,),
+            ).fetchone()
+            if row:
+                self._event(conn, workstation_id, actor, "identity_revocation_failed")

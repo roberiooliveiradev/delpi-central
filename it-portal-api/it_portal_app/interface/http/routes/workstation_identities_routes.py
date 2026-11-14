@@ -65,3 +65,25 @@ def prepare_identity(
         result, "Identidade reservada e preparada, aguardando ativacao em piloto.",
         operation_id="prepare_it_workstation_agent_identity",
     )
+
+
+@router.post(
+    "/{workstation_id}/agent-identity/revoke",
+    operation_id="revoke_it_workstation_agent_identity",
+    response_model=Envelope[dict],
+    summary="Revoga binding DB e desabilita Client Keycloak individual, sem acesso remoto",
+)
+def revoke_identity(
+    request: Request,
+    workstation_id: UUID,
+    payload: PrepareIdentityInput,
+    service: WorkstationIdentityService = Depends(get_workstation_identity_service),
+):
+    # Sempre RBAC fresh do Core para escrita sensivel e confirmacao explicita.
+    actor = actor_from(authorize_write(request, COMPUTERS_VIEW, COMPUTERS_MANAGE))
+    result = service.revoke(str(workstation_id), actor, confirmed=payload.confirmed)
+    return ok(
+        result,
+        "Identidade revogada. Ingestao por banco negada e Client Keycloak desabilitado.",
+        operation_id="revoke_it_workstation_agent_identity",
+    )

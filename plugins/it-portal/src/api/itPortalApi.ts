@@ -118,7 +118,9 @@ export type WorkstationAgentIdentity = {
   client_id: string | null;
   state: "not_prepared" | "preparing" | "prepared" | "failed" | "revoked";
   prepared_at: string | null;
+  revocation_status: "none" | "pending" | "failed" | "confirmed";
   can_prepare: boolean;
+  can_revoke: boolean;
   credentials_issued: boolean;
   collector_enabled: boolean;
   remote_access_enabled: boolean;
@@ -783,6 +785,8 @@ export const itPortalApi = {
     apiGet<WorkstationAgentIdentity>(apiUrl(`/workstations/${encodeURIComponent(id)}/agent-identity`), signal),
   prepareWorkstationAgentIdentity: (id: string) =>
     apiPost<WorkstationAgentIdentity>(apiUrl(`/workstations/${encodeURIComponent(id)}/agent-identity/prepare`), { confirmed: true }),
+  revokeWorkstationAgentIdentity: (id: string) =>
+    apiPost<WorkstationAgentIdentity>(apiUrl(`/workstations/${encodeURIComponent(id)}/agent-identity/revoke`), { confirmed: true }),
   createWorkstation: (input: WorkstationInput) =>
     apiPost<Workstation>(apiUrl("/workstations"), input),
   updateWorkstation: (id: string, input: WorkstationInput, revision: number) =>

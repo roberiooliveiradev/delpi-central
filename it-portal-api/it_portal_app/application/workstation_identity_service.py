@@ -27,10 +27,16 @@ class IdentityStore(Protocol):
     def reserve(self, workstation_id: str, client_id: str, actor: Actor) -> dict: ...
     def prepared(self, workstation_id: str, keycloak_uuid: str, actor: Actor) -> dict: ...
     def failed(self, workstation_id: str, actor: Actor) -> None: ...
+    def request_revocation(self, workstation_id: str, actor: Actor) -> dict | None: ...
+    def complete_revocation(self, workstation_id: str, actor: Actor) -> None: ...
+    def fail_revocation(self, workstation_id: str, actor: Actor) -> None: ...
 
 
 class DisabledClientProvisioner(Protocol):
     def create_disabled(self, client_id: str, workstation_id: str) -> str: ...
+    def disable_client(
+        self, *, keycloak_uuid: str, client_id: str, workstation_id: str
+    ) -> None: ...
 
 
 class WorkstationIdentityService:
@@ -40,14 +46,29 @@ class WorkstationIdentityService:
 
     def status(self, workstation_id: str) -> dict:
         found = self.store.get(workstation_id)
+        revocation = found.get("revocation_status", "none") if found else "none"
+        collector = bool(
+            settings.WORKSTATION_INGEST_ENABLED
+            and settings.WORKSTATION_DB_BINDINGS_ENABLED
+            and found
+            and found.get("ingest_authorized") is True
+            and found["state"] == "prepared"
+            and revocation == "none"
+        )
         return {
             "workstation_id": workstation_id,
             "client_id": found["client_id"] if found else None,
             "state": found["state"] if found else "not_prepared",
             "prepared_at": found["updated_at"] if found and found["state"] == "prepared" else None,
+            "revocation_status": revocation,
             "can_prepare": bool(settings.WORKSTATION_PROVISIONING_ENABLED and not found),
+            "can_revoke": bool(
+                settings.WORKSTATION_DB_BINDINGS_ENABLED
+                and settings.WORKSTATION_REVOKE_ENABLED
+                and found and found["state"] == "prepared" and revocation == "none"
+            ),
             "credentials_issued": False,
-            "collector_enabled": False,
+            "collector_enabled": collector,
             "remote_access_enabled": False,
         }
 
@@ -76,5 +97,40 @@ class WorkstationIdentityService:
             raise PersistenceUnavailableError(
                 "workstation_provisioning_unavailable",
                 "Nao foi possivel concluir o preparo. Revise o Keycloak e o cadastro antes de repetir.",
+            ) from None
+        return self.status(workstation_id)
+
+    def revoke(self, workstation_id: str, actor: Actor, *, confirmed: bool) -> dict:
+        """DB cutoff first, then Keycloak disable; no automatic retry on failures."""
+        if not confirmed:
+            raise ConflictError(
+                "workstation_identity_revocation_confirmation_required",
+                "Confirme a revogacao individual.",
+            )
+        if not (settings.WORKSTATION_DB_BINDINGS_ENABLED and settings.WORKSTATION_REVOKE_ENABLED):
+            raise ConflictError(
+                "workstation_revocation_disabled",
+                "Revogacao automatica disponivel apenas apos homologacao do modo banco.",
+            )
+        client = self.store.request_revocation(workstation_id, actor)
+        if client is None:
+            return self.status(workstation_id)
+        try:
+            self.provisioner.disable_client(
+                keycloak_uuid=client["keycloak_client_uuid"],
+                client_id=client["client_id"],
+                workstation_id=workstation_id,
+            )
+            self.store.complete_revocation(workstation_id, actor)
+        except Exception:
+            # Mesmo se Keycloak estiver inacessivel, o banco ja revogou o grant.
+            # Nao reabrir binding automaticamente nem anunciar sucesso.
+            try:
+                self.store.fail_revocation(workstation_id, actor)
+            except Exception:
+                pass
+            raise PersistenceUnavailableError(
+                "workstation_revocation_requires_review",
+                "Revogacao pendente de verificacao manual no Keycloak.",
             ) from None
         return self.status(workstation_id)

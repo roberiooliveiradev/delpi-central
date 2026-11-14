@@ -30,7 +30,8 @@ const workstation: Workstation = {
 function identity(canPrepare: boolean) {
   return {
     workstation_id: ID, client_id: null, state: "not_prepared",
-    prepared_at: null, can_prepare: canPrepare, credentials_issued: false,
+    prepared_at: null, revocation_status: "none", can_prepare: canPrepare,
+    can_revoke: false, credentials_issued: false,
     collector_enabled: false, remote_access_enabled: false,
   };
 }
@@ -67,7 +68,8 @@ describe("G2-S4: identidade exclusiva no Keycloak", () => {
       [`POST /workstations/${ID}/agent-identity/prepare`]: {
         data: {
           workstation_id: ID, client_id: "itp-ws-" + ID.replace(/-/g, ""),
-          state: "prepared", prepared_at: null, can_prepare: false,
+          state: "prepared", prepared_at: null, revocation_status: "none",
+          can_prepare: false, can_revoke: false,
           credentials_issued: false, collector_enabled: false,
           remote_access_enabled: false,
         },
@@ -81,6 +83,35 @@ describe("G2-S4: identidade exclusiva no Keycloak", () => {
     fireEvent.click(confirmationButtons[confirmationButtons.length - 1]);
     expect(await screen.findByText(/Identidade criada desabilitada no Keycloak/)).toBeTruthy();
     expect(requestedPaths(fetchMock, "POST").some((path) => path.endsWith("/agent-identity/prepare"))).toBe(true);
+  });
+
+
+  it("revokes only after explicit confirmation and keeps credentials invisible", async () => {
+    const fetchMock = mockApi({
+      "/me/capabilities": { data: CAPS },
+      [`/workstations/${ID}`]: { data: workstation },
+      [`/workstations/${ID}/history`]: { data: [] },
+      [`/workstations/${ID}/snapshot`]: { data: null },
+      [`/workstations/${ID}/agent-identity`]: {
+        data: {
+          ...identity(false), client_id: "itp-ws-" + ID.replace(/-/g, ""),
+          state: "prepared", can_revoke: true,
+        },
+      },
+      [`POST /workstations/${ID}/agent-identity/revoke`]: {
+        data: {
+          ...identity(false), state: "revoked", revocation_status: "confirmed",
+        },
+      },
+    });
+    renderAt(`/apps/it-portal/workstations/${ID}`);
+    fireEvent.click(await screen.findByRole("button", { name: /Revogar identidade/ }));
+    expect(screen.getByText(/Revogar o vinculo do inventario/)).toBeTruthy();
+    expect(requestedPaths(fetchMock, "POST").some(p => p.endsWith("/agent-identity/revoke"))).toBe(false);
+    const actions = screen.getAllByRole("button", { name: /Revogar identidade/ });
+    fireEvent.click(actions[actions.length - 1]);
+    expect(await screen.findByText(/Identidade revogada/)).toBeTruthy();
+    expect(requestedPaths(fetchMock, "POST").some(p => p.endsWith("/agent-identity/revoke"))).toBe(true);
   });
 
   it("never exposes the provisioning action to a read-only operator", async () => {

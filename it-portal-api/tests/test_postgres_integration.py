@@ -75,6 +75,7 @@ def migrated(database):
         "V010__workstation_responsible_user.sql",
         "V011__workstation_snapshots.sql",
         "V012__workstation_agent_identities.sql",
+        "V013__workstation_dynamic_binding_revocation.sql",
     ]
     return database
 
@@ -112,6 +113,7 @@ def test_migrations_are_idempotent(migrated):
         (10, "V010__workstation_responsible_user.sql"),
         (11, "V011__workstation_snapshots.sql"),
         (12, "V012__workstation_agent_identities.sql"),
+        (13, "V013__workstation_dynamic_binding_revocation.sql"),
     ]
 
 
@@ -467,3 +469,83 @@ def test_g2_s4_identity_reservation_audit_and_idempotency(pg_client):
         "SELECT COUNT(*) AS n FROM it_portal.workstation_agent_identities "
         "WHERE workstation_id = %s", (wid,),
     )[0]["n"] == 1
+
+
+def test_g2_s4_s2a_postgres_dynamic_binding_revoked_atomically(pg_client):
+    """Somente PostgreSQL descartavel de CI, NUNCA DB de producao."""
+    from datetime import datetime, timezone
+    from it_portal_app.application.ports import Actor
+    from it_portal_app.application.workstation_identity_service import device_client_id
+    from it_portal_app.infrastructure.persistence.postgres_workstation_identities import (
+        PostgresWorkstationIdentityStore,
+    )
+    from it_portal_app.infrastructure.persistence.postgres_workstation_snapshots import (
+        PostgresWorkstationSnapshotRepository,
+    )
+    from it_portal_app.domain.errors import ConflictError
+    from it_portal_app.domain.workstation_snapshots import validate_workstation_snapshot
+    from tests.test_workstation_snapshots import sample
+
+    created = pg_client.post("/workstations", json={
+        "name": "Piloto S2a", "hostname": "example-dev-01",
+        "unit_code": "02", "device_kind": "desktop",
+        "administrative_status": "in_operation",
+    })
+    assert created.status_code == 201, created.text
+    wid = created.json()["data"]["id"]
+    cid = device_client_id(wid)
+    actor = Actor(id="2b0c7a52-6f7e-4d3c-9a51-0f4f1c2d9e11", name="Ana TI")
+    identities = PostgresWorkstationIdentityStore()
+    identities.reserve(wid, cid, actor)
+    identities.prepared(wid, str(uuid.uuid4()), actor)
+
+    latest = sample()
+    latest["run_id"] = str(uuid.uuid4())
+    latest["observed_at"] = datetime.now(timezone.utc).isoformat()
+    snapshot = validate_workstation_snapshot(latest)
+    snapshots = PostgresWorkstationSnapshotRepository()
+
+    def send_snapshot():
+        return snapshots.save(
+            wid, snapshot, client_id=cid, digest="a" * 64, retention=50,
+            enforce_dynamic_binding=True,
+        )
+
+    with pytest.raises(ConflictError):
+        send_snapshot()  # prepared nao equivale a grant
+    assert _sql(
+        "SELECT ingest_authorized, revocation_status FROM "
+        "it_portal.workstation_agent_identities WHERE workstation_id=%s", (wid,),
+    )[0] == {"ingest_authorized": False, "revocation_status": "none"}
+
+    # Simula SOMENTE no DB descartavel o futuro gate de ativacao/attestation.
+    _sql(
+        "UPDATE it_portal.workstation_agent_identities "
+        "SET ingest_authorized = TRUE WHERE workstation_id=%s", (wid,),
+    )
+    assert send_snapshot()["duplicate"] is False
+    requested = identities.request_revocation(wid, actor)
+    assert requested["client_id"] == cid
+    assert _sql(
+        "SELECT ingest_authorized, revocation_status FROM "
+        "it_portal.workstation_agent_identities WHERE workstation_id=%s", (wid,),
+    )[0] == {"ingest_authorized": False, "revocation_status": "pending"}
+    with pytest.raises(ConflictError):
+        send_snapshot()
+    identities.complete_revocation(wid, actor)
+    assert identities.request_revocation(wid, actor) is None
+    final = _sql(
+        "SELECT state, ingest_authorized, revocation_status FROM "
+        "it_portal.workstation_agent_identities WHERE workstation_id=%s", (wid,),
+    )[0]
+    assert final == {
+        "state": "revoked", "ingest_authorized": False, "revocation_status": "confirmed",
+    }
+    events = _sql(
+        "SELECT event_type FROM it_portal.workstation_agent_identity_events "
+        "WHERE workstation_id=%s ORDER BY occurred_at, id", (wid,),
+    )
+    assert {x["event_type"] for x in events} == {
+        "identity_reserved", "identity_prepared",
+        "identity_revocation_requested", "identity_revoked",
+    }

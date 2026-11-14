@@ -178,3 +178,12 @@ Codigo puro sem rotas, migrations nem Docker em `it_portal_app/domain/remote_eng
 - Client ID deterministico pela UUID, Keycloak criado disabled e sem scopes, read-back obrigatorio. Falha exige revisao; nao faz retry automatico.
 - Feature IT_PORTAL_WORKSTATION_PROVISIONING_ENABLED=false por default; Admin URL HTTPS com credencial tecnica exclusiva.
 - Testes Python test_workstation_identity_provisioning.py, Postgres V012 e UI Vitest; [runbook](../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G2-S4-S1-AUTOMATED-KEYCLOAK-PREPARATION.md).
+
+
+## G2-S4-S2a | Vinculo S2S no PostgreSQL e revogacao (OFF)
+
+- V013 adiciona `ingest_authorized=false` a todas as identidades por default, estado de revogacao, responsavel e auditoria. Nenhuma ativacao/credencial incluida.
+- `IT_PORTAL_WORKSTATION_DB_BINDINGS_ENABLED=false` por default: modo legado no env preservado. Modo DB verifica JWT Keycloak (issuer/assinatura/audiencia/escopo), UUID derivado e grant positivo sob bloqueio transacional no mesmo INSERT; sem fallback para env.
+- `POST /workstations/{id}/agent-identity/revoke`: escrita fresh com computadores.view/manage e confirmacao; somente com DB mode + `IT_PORTAL_WORKSTATION_REVOKE_ENABLED=true`. Bloqueia DB primeiro, desabilita Client Keycloak individual e confirma; falha exige reconciliacao sem reativacao.
+- Testes `tests/test_workstation_dynamic_s2s_auth.py`, `tests/test_workstation_identity_provisioning.py`, `tests/test_workstation_snapshot_ingest.py` e migration PostgreSQL V013 em banco descartavel.
+- Sem deploy produtivo nem bootstrap de Windows neste incremento. [Runbook G2-S4-S2a](../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G2-S4-S2A-DYNAMIC-BINDINGS-REVOCATION.md).

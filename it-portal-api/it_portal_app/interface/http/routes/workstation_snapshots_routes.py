@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Request
 from it_portal_app.application.workstation_snapshot_service import (
     INGEST_SCOPE, WorkstationSnapshotService,
 )
+from it_portal_app.application.workstation_identity_service import device_client_id
 from it_portal_app.application.workstation_ports import WorkstationRepository
 from it_portal_app.core.responses import ok
 from it_portal_app.domain.errors import (
@@ -18,7 +19,7 @@ from it_portal_app.interface.http.authz import COMPUTERS_VIEW, authorize
 from it_portal_app.interface.http.dependencies import (
     get_workstation_repository, get_workstation_snapshot_service,
 )
-from it_portal_app.interface.http.s2s_auth import require_collector_identity
+from it_portal_app.interface.http.s2s_auth import (require_collector_identity, require_dynamic_workstation_identity)
 from it_portal_app.interface.http.schemas import Envelope, ERROR_RESPONSES
 from it_portal_app.config import settings
 from it_portal_app.domain.workstation_snapshots import MAX_PAYLOAD_BYTES
@@ -41,9 +42,14 @@ async def ingest_workstation_snapshot(
     # Nao aceitar credencial humana. A feature continua fechada se a flag estiver off.
     if not settings.WORKSTATION_INGEST_ENABLED:
         raise ConflictError("workstation_ingest_disabled", "Ingestao de computadores desabilitada.")
-    identity = require_collector_identity(
-        request, required_scopes=(INGEST_SCOPE,),
-    )
+    if settings.WORKSTATION_DB_BINDINGS_ENABLED:
+        identity = require_dynamic_workstation_identity(
+            request, expected_client_id=device_client_id(str(workstation_id)),
+        )
+    else:
+        identity = require_collector_identity(
+            request, required_scopes=(INGEST_SCOPE,),
+        )
     content_type = request.headers.get("content-type", "").split(";", 1)[0].lower().strip()
     if content_type != "application/json":
         raise ValidationError("snapshot_content_type_invalid", "Envie JSON em application/json.")

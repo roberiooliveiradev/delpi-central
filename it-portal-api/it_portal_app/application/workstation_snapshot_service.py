@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Protocol
 
 from it_portal_app.config import settings
+from it_portal_app.application.workstation_identity_service import device_client_id
 from it_portal_app.domain.errors import (
     ConflictError, NotFoundError, PersistenceUnavailableError, ValidationError,
 )
@@ -35,6 +36,7 @@ class SnapshotRepository(Protocol):
         client_id: str,
         digest: str,
         retention: int,
+        enforce_dynamic_binding: bool = False,
     ) -> dict: ...
 
     def latest(self, workstation_id: str) -> dict | None: ...
@@ -92,8 +94,15 @@ class WorkstationSnapshotService:
 
     def ingest(self, workstation_id: str, raw: object, *, client_id: str) -> dict:
         _enabled()
-        binding = parse_workstation_bindings(settings.WORKSTATION_COLLECTOR_BINDINGS)
-        if not binding or binding.get(client_id) != workstation_id:
+        dynamic = settings.WORKSTATION_DB_BINDINGS_ENABLED
+        if dynamic:
+            # Client ID derivado do UUID, verificado contra JWT assinado na rota.
+            # Permissao final e atomicamente checada no PostgreSQL com FOR SHARE.
+            valid_binding = client_id == device_client_id(workstation_id)
+        else:
+            binding = parse_workstation_bindings(settings.WORKSTATION_COLLECTOR_BINDINGS)
+            valid_binding = bool(binding) and binding.get(client_id) == workstation_id
+        if not valid_binding:
             raise ConflictError(
                 "workstation_collector_binding_forbidden",
                 "Identidade do coletor nao autorizada para este computador.",
@@ -119,6 +128,7 @@ class WorkstationSnapshotService:
             client_id=client_id,
             digest=digest,
             retention=_retention_limit(),
+            enforce_dynamic_binding=dynamic,
         )
 
     def latest(self, workstation_id: str) -> dict | None:

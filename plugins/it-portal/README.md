@@ -84,3 +84,10 @@ npm run build   # tsc -b && vite build
 - POST exige confirmacao e Core RBAC fresh; Keycloak retorna somente Client desabilitado, sem credenciais exibidas no browser.
 - G2-S4-S2 ainda devera prover bootstrap local, ativacao/revogacao e binding dinamico. Testes: npm test -- --run src/features/workstations/WorkstationAgentIdentityPanel.test.tsx.
 - [Runbook](../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G2-S4-S1-AUTOMATED-KEYCLOAK-PREPARATION.md).
+
+
+## Delpi Remote G2-S4-S2a | Revogacao individual (flag OFF)
+
+- Ficha de computador mostra estado de revogacao e opcao `Revogar identidade` apenas quando o backend permitir `can_revoke=true` e o usuario tiver computers.manage.
+- Revogacao exige confirmacao, verifica Core RBAC fresh, impede coleta no DB e desabilita Client Keycloak sem mostrar secrets no navegador.
+- Sem ativacao e sem Client Secret no frontend; `G2-S4-S2b` ainda pendente. [Runbook](../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G2-S4-S2A-DYNAMIC-BINDINGS-REVOCATION.md).

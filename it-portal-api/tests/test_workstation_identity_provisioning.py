@@ -39,6 +39,9 @@ class MemoryStore:
     def prepared(self, wid, keycloak_uuid, actor):
         self.rows[wid]["state"] = "prepared"
         self.rows[wid]["updated_at"] = None
+        self.rows[wid]["keycloak_client_uuid"] = keycloak_uuid
+        self.rows[wid]["ingest_authorized"] = False
+        self.rows[wid]["revocation_status"] = "none"
         self.events.append("identity_prepared")
         return self.rows[wid]
 
@@ -46,11 +49,43 @@ class MemoryStore:
         self.rows[wid]["state"] = "failed"
         self.events.append("identity_prepare_failed")
 
+    def request_revocation(self, wid, actor):
+        row = self.rows[wid]
+        if row["state"] == "revoked" and row["revocation_status"] == "confirmed":
+            return None
+        if row["state"] != "prepared" or row["revocation_status"] != "none":
+            raise ConflictError("identity_revocation_review", "Revisar revogacao anterior.")
+        row["ingest_authorized"] = False
+        row["revocation_status"] = "pending"
+        self.events.append("identity_revocation_requested")
+        return {"client_id": row["client_id"], "keycloak_client_uuid": row["keycloak_client_uuid"]}
+
+    def complete_revocation(self, wid, actor):
+        row = self.rows[wid]
+        if row["revocation_status"] != "pending":
+            raise ConflictError("revocation_state", "Revisar.")
+        row["state"] = "revoked"
+        row["revocation_status"] = "confirmed"
+        self.events.append("identity_revoked")
+
+    def fail_revocation(self, wid, actor):
+        row = self.rows[wid]
+        row["revocation_status"] = "failed"
+        row["ingest_authorized"] = False
+        self.events.append("identity_revocation_failed")
+
 
 class FakeKeycloak:
     def __init__(self, fails=False):
         self.calls = 0
         self.fails = fails
+        self.disable_calls = 0
+
+    def disable_client(self, *, keycloak_uuid, client_id, workstation_id):
+        self.disable_calls += 1
+        assert client_id == device_client_id(workstation_id)
+        if self.fails:
+            raise RuntimeError("SECRET HTTP ERROR should not leak")
 
     def create_disabled(self, client_id, workstation_id):
         self.calls += 1
@@ -70,6 +105,8 @@ def identity_api(workstation_client, monkeypatch):
     service = WorkstationIdentityService(store, kc)
     app.dependency_overrides[get_workstation_identity_service] = lambda: service
     monkeypatch.setattr(settings, "WORKSTATION_PROVISIONING_ENABLED", False)
+    monkeypatch.setattr(settings, "WORKSTATION_DB_BINDINGS_ENABLED", False)
+    monkeypatch.setattr(settings, "WORKSTATION_REVOKE_ENABLED", False)
     yield client, wid, store, kc, service
     app.dependency_overrides.pop(get_workstation_identity_service, None)
 
@@ -210,3 +247,128 @@ def test_keycloak_adapter_rejects_http_and_shared_admin(monkeypatch):
     monkeypatch.setattr(settings, "WORKSTATION_KC_PROVISIONER_CLIENT_ID", "delpi-core-admin")
     with pytest.raises(RuntimeError):
         KeycloakWorkstationProvisioner()._config()
+
+
+def test_revocation_requires_flags_and_confirmation(identity_api, monkeypatch):
+    client, wid, store, kc, _ = identity_api
+    monkeypatch.setattr(settings, "WORKSTATION_PROVISIONING_ENABLED", True)
+    assert client.post(f"/workstations/{wid}/agent-identity/prepare", json={"confirmed": True}).status_code == 200
+    url = f"/workstations/{wid}/agent-identity/revoke"
+    assert client.post(url, json={"confirmed": True}).status_code == 409
+    monkeypatch.setattr(settings, "WORKSTATION_DB_BINDINGS_ENABLED", True)
+    assert client.post(url, json={"confirmed": True}).status_code == 409
+    monkeypatch.setattr(settings, "WORKSTATION_REVOKE_ENABLED", True)
+    assert client.post(url, json={"confirmed": False}).status_code == 409
+    assert client.post(url, json={"confirmed": True, "secret": "not allowed"}).status_code == 422
+    assert kc.disable_calls == 0
+    assert store.rows[wid]["revocation_status"] == "none"
+
+
+def test_revoke_locally_first_then_keycloak_disable_and_idempotency(identity_api, monkeypatch):
+    client, wid, store, kc, _ = identity_api
+    monkeypatch.setattr(settings, "WORKSTATION_PROVISIONING_ENABLED", True)
+    assert client.post(f"/workstations/{wid}/agent-identity/prepare", json={"confirmed": True}).status_code == 200
+    monkeypatch.setattr(settings, "WORKSTATION_DB_BINDINGS_ENABLED", True)
+    monkeypatch.setattr(settings, "WORKSTATION_REVOKE_ENABLED", True)
+    store.rows[wid]["ingest_authorized"] = True  # simula grant do futuro bootstrap HML
+    url = f"/workstations/{wid}/agent-identity/revoke"
+    first = client.post(url, json={"confirmed": True})
+    assert first.status_code == 200, first.text
+    response = first.json()["data"]
+    assert response["state"] == "revoked"
+    assert response["revocation_status"] == "confirmed"
+    assert response["collector_enabled"] is False
+    assert response["remote_access_enabled"] is False
+    assert store.rows[wid]["ingest_authorized"] is False
+    assert kc.disable_calls == 1
+    assert client.post(url, json={"confirmed": True}).status_code == 200
+    assert kc.disable_calls == 1
+    assert store.events[-2:] == ["identity_revocation_requested", "identity_revoked"]
+
+
+def test_revoke_keycloak_failure_keeps_db_denied_and_requires_reconciliation(identity_api, monkeypatch):
+    client, wid, store, kc, _ = identity_api
+    monkeypatch.setattr(settings, "WORKSTATION_PROVISIONING_ENABLED", True)
+    assert client.post(f"/workstations/{wid}/agent-identity/prepare", json={"confirmed": True}).status_code == 200
+    monkeypatch.setattr(settings, "WORKSTATION_DB_BINDINGS_ENABLED", True)
+    monkeypatch.setattr(settings, "WORKSTATION_REVOKE_ENABLED", True)
+    store.rows[wid]["ingest_authorized"] = True
+    kc.fails = True
+    url = f"/workstations/{wid}/agent-identity/revoke"
+    response = client.post(url, json={"confirmed": True})
+    assert response.status_code == 503, response.text
+    assert "SECRET HTTP ERROR" not in response.text
+    assert store.rows[wid]["ingest_authorized"] is False
+    assert store.rows[wid]["revocation_status"] == "failed"
+    assert client.post(url, json={"confirmed": True}).status_code == 409
+    assert kc.disable_calls == 1
+
+
+def test_revoke_requires_fresh_manage_permission(identity_api, monkeypatch, principal):
+    client, wid, store, kc, _ = identity_api
+    monkeypatch.setattr(settings, "WORKSTATION_PROVISIONING_ENABLED", True)
+    assert client.post(f"/workstations/{wid}/agent-identity/prepare", json={"confirmed": True}).status_code == 200
+    monkeypatch.setattr(settings, "WORKSTATION_DB_BINDINGS_ENABLED", True)
+    monkeypatch.setattr(settings, "WORKSTATION_REVOKE_ENABLED", True)
+    principal.fresh_permissions = ["it-portal.access", "it-portal.computers.view"]
+    response = client.post(f"/workstations/{wid}/agent-identity/revoke", json={"confirmed": True})
+    assert response.status_code == 403
+    assert kc.disable_calls == 0
+    assert store.rows[wid]["revocation_status"] == "none"
+
+
+def test_keycloak_disable_checks_client_ownership_and_confirms_disabled(monkeypatch):
+    wid = str(uuid.uuid4())
+    cid = device_client_id(wid)
+    keycloak_id = str(uuid.uuid4())
+    attrs = {"delpi.owner": "it-portal-workstation-v1", "delpi.workstation_id": wid}
+    monkeypatch.setattr(settings, "WORKSTATION_KC_ADMIN_URL", "https://keycloak.test.invalid/auth")
+    monkeypatch.setattr(settings, "WORKSTATION_KC_REALM", "delpi")
+    monkeypatch.setattr(settings, "WORKSTATION_KC_PROVISIONER_CLIENT_ID", "itp-workstation-provisioner")
+    monkeypatch.setattr(settings, "WORKSTATION_KC_PROVISIONER_CLIENT_SECRET", "private-test-secret")
+    active = {"value": True}
+    calls = []
+    def handler(req):
+        calls.append((req.method, req.url.path))
+        if req.url.path.endswith("/protocol/openid-connect/token"):
+            return httpx.Response(200, json={"access_token": "test-token"})
+        assert req.headers.get("Authorization") == "Bearer test-token"
+        if req.method == "GET":
+            return httpx.Response(200, json={
+                "id": keycloak_id, "clientId": cid, "enabled": active["value"],
+                "attributes": attrs,
+            })
+        if req.method == "PUT":
+            import json
+            assert json.loads(req.content)["enabled"] is False
+            active["value"] = False
+            return httpx.Response(204)
+        raise AssertionError(req.method)
+    provisioner = KeycloakWorkstationProvisioner(transport=httpx.MockTransport(handler))
+    provisioner.disable_client(keycloak_uuid=keycloak_id, client_id=cid, workstation_id=wid)
+    assert active["value"] is False
+    assert [method for method, _ in calls] == ["POST", "GET", "PUT", "GET"]
+    provisioner.disable_client(keycloak_uuid=keycloak_id, client_id=cid, workstation_id=wid)
+    assert calls[-3:][0][0] == "POST"
+    assert [method for method, _ in calls][-3:] == ["POST", "GET", "GET"]
+
+
+def test_keycloak_rejects_wrong_owner_before_disabling(monkeypatch):
+    wid = str(uuid.uuid4())
+    cid = device_client_id(wid)
+    keycloak_id = str(uuid.uuid4())
+    monkeypatch.setattr(settings, "WORKSTATION_KC_ADMIN_URL", "https://keycloak.test.invalid/auth")
+    monkeypatch.setattr(settings, "WORKSTATION_KC_REALM", "delpi")
+    monkeypatch.setattr(settings, "WORKSTATION_KC_PROVISIONER_CLIENT_ID", "itp-workstation-provisioner")
+    monkeypatch.setattr(settings, "WORKSTATION_KC_PROVISIONER_CLIENT_SECRET", "private-test-secret")
+    def handler(req):
+        if req.url.path.endswith("/protocol/openid-connect/token"):
+            return httpx.Response(200, json={"access_token": "test-token"})
+        assert req.method == "GET"
+        return httpx.Response(200, json={
+            "id": keycloak_id, "clientId": cid, "enabled": True,
+            "attributes": {"delpi.owner": "other", "delpi.workstation_id": wid},
+        })
+    provisioner = KeycloakWorkstationProvisioner(transport=httpx.MockTransport(handler))
+    with pytest.raises(RuntimeError):
+        provisioner.disable_client(keycloak_uuid=keycloak_id, client_id=cid, workstation_id=wid)

@@ -66,6 +66,14 @@ class Settings:
     WORKSTATION_COLLECTOR_BINDINGS: str = _get_env(
         "IT_PORTAL_WORKSTATION_COLLECTOR_BINDINGS", default=""
     )
+    # G2-S4-S2a: modo de binding por banco, default OFF. Sem fallback para env.
+    WORKSTATION_DB_BINDINGS_ENABLED: bool = _get_env(
+        "IT_PORTAL_WORKSTATION_DB_BINDINGS_ENABLED", default="false"
+    ).lower() in ("1", "true", "yes")
+    # Revogacao so funciona em modo DB; nenhum Client e habilitado por S2a.
+    WORKSTATION_REVOKE_ENABLED: bool = _get_env(
+        "IT_PORTAL_WORKSTATION_REVOKE_ENABLED", default="false"
+    ).lower() in ("1", "true", "yes")
     WORKSTATION_SNAPSHOT_RETENTION: str = _get_env(
         "IT_PORTAL_WORKSTATION_SNAPSHOT_RETENTION", default="50"
     )

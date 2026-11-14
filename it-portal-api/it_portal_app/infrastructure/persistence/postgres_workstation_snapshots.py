@@ -15,6 +15,7 @@ class PostgresWorkstationSnapshotRepository(PostgresRepositoryBase):
     def save(
         self, workstation_id: str, payload: dict, *,
         client_id: str, digest: str, retention: int,
+        enforce_dynamic_binding: bool = False,
     ) -> dict:
         # Lock compartilhado impede arquivamento/troca de hostname durante a escrita.
         with self._tx() as conn:
@@ -29,6 +30,23 @@ class PostgresWorkstationSnapshotRepository(PostgresRepositoryBase):
                 raise ConflictError(
                     "workstation_archived", "Computador arquivado nao recebe inventario."
                 )
+            if enforce_dynamic_binding:
+                # Serializa escrita de inventario com revogacao administrativa.
+                # Uma revogacao nao pode entrar entre a verificacao e o INSERT.
+                grant = conn.execute(
+                    "SELECT state, revocation_status, ingest_authorized "
+                    "FROM it_portal.workstation_agent_identities "
+                    "WHERE workstation_id = %s AND client_id = %s FOR SHARE",
+                    (workstation_id, client_id),
+                ).fetchone()
+                if (not grant or grant["state"] != "prepared"
+                        or grant["revocation_status"] != "none"
+                        or grant["ingest_authorized"] is not True):
+                    raise ConflictError(
+                        "workstation_collector_binding_forbidden",
+                        "Identidade do coletor nao autorizada para este computador.",
+                    )
+
             if workstation["hostname"].lower().rstrip(".") != payload["host"]["hostname"]:
                 raise ValidationError(
                     "workstation_hostname_mismatch",
