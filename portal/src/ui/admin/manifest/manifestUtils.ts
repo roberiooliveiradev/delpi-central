@@ -181,14 +181,30 @@ export function applyIdSuggestions(m: ManifestSchema): ManifestSchema {
         : m.entry
       : m.entry;
 
-  const routes = (m.routes || []).map((r, idx) => ({
-    ...r,
-    path: r.path?.trim() || (idx === 0 ? basePath : `${basePath}/route-${idx + 1}`),
-    permission: r.permission?.startsWith(".")
-      ? firstPerm
-      : r.permission || firstPerm,
-    order: r.order ?? idx + 1,
-  }));
+  const routes = (m.routes || []).map((r, idx) => {
+    const raw = r.permission;
+    let permission: string | string[] = firstPerm;
+    if (Array.isArray(raw)) {
+      permission = raw.map((code) => {
+        const trimmed = String(code || "").trim();
+        if (!trimmed) return firstPerm;
+        return trimmed.startsWith(".") ? firstPerm : trimmed;
+      });
+    } else {
+      const trimmed = String(raw || "").trim();
+      permission = !trimmed
+        ? firstPerm
+        : trimmed.startsWith(".")
+          ? firstPerm
+          : trimmed;
+    }
+    return {
+      ...r,
+      path: r.path?.trim() || (idx === 0 ? basePath : `${basePath}/route-${idx + 1}`),
+      permission,
+      order: r.order ?? idx + 1,
+    };
+  });
 
   return {
     ...m,

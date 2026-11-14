@@ -241,11 +241,26 @@ export function ManifestRoutesTable({
 
               <FormField label="Permissão" htmlFor={`route-perm-${idx}`}>
                 <Select
-                  value={r.permission ?? ""}
+                  value={
+                    Array.isArray(r.permission)
+                      ? String(r.permission[0] ?? "")
+                      : (r.permission ?? "")
+                  }
                   disabled={disabled}
                   options={permOptions}
                   aria-label="Permissão da rota"
-                  onChange={(next) => updateAt(idx, { permission: next || null })}
+                  onChange={(next) => {
+                    // Editor admin continua editando o código primário; any-of
+                    // avançado (lista) é preservado se já existir no manifesto.
+                    if (Array.isArray(r.permission) && r.permission.length >= 2) {
+                      const rest = r.permission.slice(1);
+                      updateAt(idx, {
+                        permission: next ? [next, ...rest] : rest,
+                      });
+                      return;
+                    }
+                    updateAt(idx, { permission: next || null });
+                  }}
                 />
               </FormField>
 
