@@ -33,10 +33,14 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     CompetenceDeleteBlocked,
     MissingReason,
 )
+from controllership_finance_app.application.clara.entry_audit_capabilities import (
+    build_entry_audit_capability_table,
+)
 from controllership_finance_app.application.clara.invoice_posting_capabilities import (
     build_lnf_capability_table,
     snapshot_for as lnf_snapshot_for,
 )
+from controllership_finance_app.config import settings
 from controllership_finance_app.application.clara.operation_presentation import (
     present_operation,
 )
@@ -2253,6 +2257,8 @@ class ClaraGovernedWrites:
             },
         }
         table.update(build_lnf_capability_table(require=_require))
+        if settings.ENTRY_AUDIT_ENABLED:
+            table.update(build_entry_audit_capability_table(require=_require))
         return table
 
     def _docs(self) -> ClosingDocumentService:

@@ -24,6 +24,7 @@ from unittest.mock import MagicMock
 
 from mcp.types import CallToolResult
 
+from controllership_finance_app.config import settings
 from controllership_finance_app.interface.mcp import semantic_bridge as sb
 from controllership_finance_app.interface.mcp import tool_bridge
 from controllership_finance_app.interface.mcp.server import (
@@ -134,7 +135,10 @@ def test_get_context_summary(actor):
     assert res.is_error is False
     data = _payload(res)["data"]
     assert data["catalog_version"] == sb.SEMANTIC_CATALOG_VERSION
-    assert data["action_counts"]["read"] == len(sb.READ_ACTIONS)
+    hidden = 0 if settings.ENTRY_AUDIT_ENABLED else sum(
+        1 for entity, _action in sb.READ_ACTIONS if entity == "entry_audit"
+    )
+    assert data["action_counts"]["read"] == len(sb.READ_ACTIONS) - hidden
     assert data["actor"] is not None
 
 

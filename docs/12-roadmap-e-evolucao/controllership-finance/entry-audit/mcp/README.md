@@ -128,6 +128,7 @@ Proposta de bloco a acrescentar às instruções do servidor (PT-BR na conversa;
 
 | Data | Evento |
 |---|---|
+| 2026-11-14 | T7. Catálogo sem tool nova: leituras `entry_audit.*`, `entry_audit_findings` e execução direta `entry_audit.run|rerun|resolve|reopen`, atrás de `controllership-finance.access` e de `ENTRY_AUDIT_ENABLED`. Fichas AE-00 a AE-14 no corpus `controllership`. AE-15 e P2, P4, P5, P6, P7 seguem TO_INVENTORY. |
 | 2026-11-13 | Owner: tipo de documento = SPED/NF-e e CTE/CT-e (P8 respondida). |
 | 2026-11-13 | Owner: período De/Até livre e tipos de documento, como hoje; a CLARA usa o que o usuário disser e pergunta o período quando faltar (P1 respondida). P8 aberta: tipos de documento. |
 | 2026-11-13 | Owner: auditoria sob demanda, qualquer dia (P3 respondida; P1 parcial). Movido para `entry-audit/mcp/`. |

@@ -739,7 +739,7 @@ def test_only_canonical_fichas_are_operational(corpus):
     from controllership_finance_app.application.clara.corpus_manifest import (
         AUTHORIZED_SOURCES, OPERATIONAL_SOURCE_IDS,
     )
-    assert len(OPERATIONAL_SOURCE_IDS) == 17
+    assert len(OPERATIONAL_SOURCE_IDS) == 32
     assert len({s.source_id for s in AUTHORIZED_SOURCES}) == len(AUTHORIZED_SOURCES)
     assert {s.source_id for s in AUTHORIZED_SOURCES
             if s.access_scope == "PORTAL_ACCESS"} == OPERATIONAL_SOURCE_IDS

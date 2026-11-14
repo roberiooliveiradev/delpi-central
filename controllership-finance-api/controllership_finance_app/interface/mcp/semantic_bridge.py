@@ -41,6 +41,10 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
 )
 from controllership_finance_app.interface.mcp import tool_bridge as bridge
+from controllership_finance_app.config import settings
+from controllership_finance_app.interface.mcp import (
+    entry_audit_bridge as ea_bridge,
+)
 from controllership_finance_app.interface.mcp import (
     invoice_posting_bridge as lnf_bridge,
 )
@@ -456,6 +460,70 @@ READ_ACTIONS: dict[tuple[str, str], dict] = {
         allowed=("limit",),
         gate="lnf_create",
     ),
+    ("entry_audit", "options"): _read_spec(ea_bridge.tool_entry_audit_options),
+    ("entry_audit", "analysis"): _read_spec(
+        ea_bridge.tool_entry_audit_analysis,
+        ref_param="analysis_id",
+        allowed=("date_from", "date_to", "branch", "status", "page", "page_size"),
+    ),
+    ("entry_audit", "summary"): _read_spec(
+        ea_bridge.tool_entry_audit_summary,
+        ref_param="analysis_id",
+        required=("analysis_id",),
+        allowed=("branch", "severity", "theme", "supplier", "tes", "document_type", "day", "status", "q"),
+    ),
+    ("entry_audit", "daily"): _read_spec(
+        ea_bridge.tool_entry_audit_daily,
+        ref_param="analysis_id",
+        required=("analysis_id",),
+        allowed=("branch", "severity", "theme", "supplier", "tes", "document_type", "day", "status", "q"),
+    ),
+    ("entry_audit", "breakdowns"): _read_spec(
+        ea_bridge.tool_entry_audit_breakdowns,
+        ref_param="analysis_id",
+        required=("analysis_id",),
+        allowed=("branch", "severity", "theme", "supplier", "tes", "document_type", "day", "status", "q"),
+    ),
+    ("entry_audit", "trend"): _read_spec(
+        ea_bridge.tool_entry_audit_trend,
+        required=("date_from", "date_to"),
+        allowed=("branch", "page", "page_size"),
+    ),
+    ("entry_audit", "occurrences"): _read_spec(
+        ea_bridge.tool_entry_audit_occurrences,
+        ref_param="analysis_id",
+        required=("analysis_id",),
+        allowed=("branch", "severity", "theme", "supplier", "tes", "document_type", "day", "status", "q", "page", "page_size"),
+    ),
+    ("entry_audit", "occurrence"): _read_spec(
+        ea_bridge.tool_entry_audit_occurrence,
+        ref_param="analysis_id",
+        required=("analysis_id", "key"),
+    ),
+    ("entry_audit", "documents"): _read_spec(
+        ea_bridge.tool_entry_audit_documents,
+        ref_param="analysis_id",
+        required=("analysis_id",),
+        allowed=("branch", "severity", "theme", "supplier", "tes", "document_type", "day", "status", "q", "page", "page_size"),
+    ),
+    ("entry_audit", "unmatched"): _read_spec(
+        ea_bridge.tool_entry_audit_unmatched,
+        ref_param="analysis_id",
+        required=("analysis_id",),
+        allowed=("branch", "severity", "theme", "supplier", "tes", "document_type", "day", "status", "q", "page", "page_size"),
+    ),
+    ("entry_audit", "cte"): _read_spec(
+        ea_bridge.tool_entry_audit_cte,
+        ref_param="analysis_id",
+        required=("analysis_id",),
+        allowed=("branch", "severity", "theme", "supplier", "tes", "document_type", "day", "status", "q", "page", "page_size"),
+    ),
+    ("entry_audit", "tes"): _read_spec(
+        ea_bridge.tool_entry_audit_tes,
+        ref_param="analysis_id",
+        required=("analysis_id",),
+        allowed=("branch", "severity", "theme", "supplier", "tes", "document_type", "day", "status", "q", "page", "page_size"),
+    ),
 }
 
 
@@ -520,6 +588,22 @@ ANALYZE_ACTIONS: dict[str, dict] = {
             "(competência YYYY-MM), page_size. Só compõe reads da "
             "BFF; ausência de fonte ≠ zero; nunca lança/valida por "
             "inferência."
+        ),
+    },
+    "entry_audit_findings": {
+        "handler": ea_bridge.tool_analyze_entry_audit_findings,
+        "required": (),
+        "allowed": (
+            "ref", "analysis_id", "compare_to", "branch", "severity",
+            "theme", "supplier", "tes", "document_type", "day", "status", "q",
+        ),
+        "entity": "entry_audit",
+        "gate": "access",
+        "description": (
+            "Achados da auditoria de entradas agrupados pela causa "
+            "(TES, cadastro, fornecedor): FACT e RECOMMENDATION. "
+            "analysis_type='entry_audit_findings'; ref é o id da "
+            "análise; compare_to compara com outra análise."
         ),
     },
 }
@@ -608,6 +692,7 @@ def _semantic_catalog(identity: dict | None = None) -> dict:
         )
         for (e, a), s in sorted(READ_ACTIONS.items())
         if _gate_allowed(identity, s.get("gate", "access"))
+        and (e != "entry_audit" or settings.ENTRY_AUDIT_ENABLED)
     ]
     analyze_entries = [
         _entry(
@@ -622,6 +707,7 @@ def _semantic_catalog(identity: dict | None = None) -> dict:
         | {"analysis_type": name}
         for name, spec in sorted(ANALYZE_ACTIONS.items())
         if _gate_allowed(identity, spec.get("gate", "access"))
+        and (name != "entry_audit_findings" or settings.ENTRY_AUDIT_ENABLED)
     ]
     knowledge_entries = [
         _entry(
@@ -757,6 +843,10 @@ def _resolve_analyze_action(
 def _schema_for(entity: str, action: str) -> dict | None:
     """Schema JSON de uma action específica — sob demanda, nunca em
     massa (budget de contexto)."""
+    if not settings.ENTRY_AUDIT_ENABLED and (
+        entity == "entry_audit" or action == "entry_audit_findings"
+    ):
+        return None
     key = (entity, action)
     if key in READ_ACTIONS:
         spec = READ_ACTIONS[key]
@@ -937,6 +1027,8 @@ def tool_read(
     ent = (entity or "").strip().lower()
     act = (action or "").strip().lower()
     spec = READ_ACTIONS.get((ent, act))
+    if ent == "entry_audit" and not settings.ENTRY_AUDIT_ENABLED:
+        spec = None
     if spec is None:
         return _err(
             f"Read action desconhecida: {ent}.{act} — consulte "
@@ -981,6 +1073,8 @@ def tool_analyze(
     atype = (analysis_type or "").strip().lower()
     atype = _ANALYZE_TYPE_ALIASES.get(atype, atype)
     spec = ANALYZE_ACTIONS.get(atype)
+    if atype == "entry_audit_findings" and not settings.ENTRY_AUDIT_ENABLED:
+        spec = None
     if spec is None:
         return _err(
             f"analysis_type desconhecido: {atype!r} — disponíveis: "

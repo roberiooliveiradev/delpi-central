@@ -88,7 +88,7 @@ def test_ficha_source_paths_exist_and_unique():
     ficha_specs = [
         s for s in AUTHORIZED_SOURCES if s.source_id.startswith("ficha-")
     ]
-    assert len(ficha_specs) == 17  # 15 fichas + índice + processo
+    assert len(ficha_specs) == 32  # R01–R15 + índice + processo + AE-00–AE-14
     paths = [s.path for s in ficha_specs]
     assert len(paths) == len(set(paths))
     missing = [p for p in paths if not (REPO_ROOT / p).is_file()]

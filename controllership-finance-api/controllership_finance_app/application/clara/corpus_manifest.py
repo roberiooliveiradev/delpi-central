@@ -357,6 +357,51 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
     _s("ficha-r15", "fichas/R15-ficha.md",
        "DOCUMENT", "Ficha R15 — Cutoff / virada / SB9",
        "TARGET", "relatorios-r01-r15", report_ids=("R15",)),
+    _s("ficha-ae-00", "fichas/auditoria-entradas/AE-00.md",
+       "DOCUMENT", "AE-00 — Visão geral da auditoria de entradas",
+       "CURRENT_IMPLEMENTATION", "auditoria-entradas"),
+    _s("ficha-ae-01", "fichas/auditoria-entradas/AE-01.md",
+       "DOCUMENT", "AE-01 — Regras do cabeçalho",
+       "CURRENT_IMPLEMENTATION", "auditoria-entradas"),
+    _s("ficha-ae-02", "fichas/auditoria-entradas/AE-02.md",
+       "DOCUMENT", "AE-02 — Regras dos itens",
+       "CURRENT_IMPLEMENTATION", "auditoria-entradas"),
+    _s("ficha-ae-03", "fichas/auditoria-entradas/AE-03.md",
+       "DOCUMENT", "AE-03 — Coerência interna",
+       "CURRENT_IMPLEMENTATION", "auditoria-entradas"),
+    _s("ficha-ae-04", "fichas/auditoria-entradas/AE-04.md",
+       "DOCUMENT", "AE-04 — Simples Nacional e crédito presumido",
+       "CURRENT_IMPLEMENTATION", "auditoria-entradas"),
+    _s("ficha-ae-05", "fichas/auditoria-entradas/AE-05.md",
+       "DOCUMENT", "AE-05 — CT-e",
+       "CURRENT_IMPLEMENTATION", "auditoria-entradas"),
+    _s("ficha-ae-06", "fichas/auditoria-entradas/AE-06.md",
+       "DOCUMENT", "AE-06 — Chave, espécie e fornecedor",
+       "CURRENT_IMPLEMENTATION", "auditoria-entradas"),
+    _s("ficha-ae-07", "fichas/auditoria-entradas/AE-07.md",
+       "DOCUMENT", "AE-07 — Livro fiscal",
+       "CURRENT_IMPLEMENTATION", "auditoria-entradas"),
+    _s("ficha-ae-08", "fichas/auditoria-entradas/AE-08.md",
+       "DOCUMENT", "AE-08 — Notas sem par",
+       "CURRENT_IMPLEMENTATION", "auditoria-entradas"),
+    _s("ficha-ae-09", "fichas/auditoria-entradas/AE-09.md",
+       "DOCUMENT", "AE-09 — O que não se aponta",
+       "APPROVED_RULE", "auditoria-entradas"),
+    _s("ficha-ae-10", "fichas/auditoria-entradas/AE-10.md",
+       "DOCUMENT", "AE-10 — Crédito: TES × livro fiscal",
+       "APPROVED_RULE", "auditoria-entradas"),
+    _s("ficha-ae-11", "fichas/auditoria-entradas/AE-11.md",
+       "DOCUMENT", "AE-11 — Base legal citada",
+       "TO_INVENTORY", "auditoria-entradas"),
+    _s("ficha-ae-12", "fichas/auditoria-entradas/AE-12.md",
+       "DOCUMENT", "AE-12 — Glossário",
+       "APPROVED_RULE", "auditoria-entradas"),
+    _s("ficha-ae-13", "fichas/auditoria-entradas/AE-13.md",
+       "DOCUMENT", "AE-13 — Como ler o dashboard",
+       "CURRENT_IMPLEMENTATION", "auditoria-entradas"),
+    _s("ficha-ae-14", "fichas/auditoria-entradas/AE-14.md",
+       "DOCUMENT", "AE-14 — Como a CLARA conduz a auditoria",
+       "APPROVED_RULE", "auditoria-entradas"),
 ]
 
 
@@ -368,6 +413,7 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
 OPERATIONAL_SOURCE_IDS = frozenset(
     {"ficha-index", "ficha-processo"}
     | {f"ficha-r{n:02d}" for n in range(1, 16)}
+    | {f"ficha-ae-{n:02d}" for n in range(15)}
 )
 
 
@@ -390,7 +436,7 @@ def _operational_scope_only(spec: SourceSpec) -> SourceSpec:
 
 
 AUTHORIZED_SOURCES = [_operational_scope_only(spec) for spec in AUTHORIZED_SOURCES]
-assert len(OPERATIONAL_SOURCE_IDS) == 17
+assert len(OPERATIONAL_SOURCE_IDS) == 32
 assert {s.source_id for s in AUTHORIZED_SOURCES if s.access_scope == "PORTAL_ACCESS"} == OPERATIONAL_SOURCE_IDS
 
 

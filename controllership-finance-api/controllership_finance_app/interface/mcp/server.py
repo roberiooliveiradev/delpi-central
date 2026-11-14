@@ -205,12 +205,13 @@ def create_mcp_server() -> MCPServer:
         title="Analyze",
         description=(
             "Análises estruturadas sobre dados reais. "
-            "analysis_type='closing_blockers' (fechamento) ou "
+            "analysis_type='closing_blockers' (fechamento), "
             "'invoice_posting_backlog' (LNF: pendentes/bloqueadas "
             "por filial; params branch/period/page_size em "
-            "filters ou parameters). Achados FACT vs "
-            "RECOMMENDATION — nunca regra nova nem lançamento "
-            "por inferência."
+            "filters ou parameters) ou 'entry_audit_findings' "
+            "(auditoria de entradas; ref e compare_to). Achados "
+            "FACT vs RECOMMENDATION — nunca regra nova nem "
+            "lançamento por inferência."
         ),
         annotations=_annotations("analyze", "Analyze"),
         meta=meta,
