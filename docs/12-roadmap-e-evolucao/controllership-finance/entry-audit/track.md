@@ -55,7 +55,7 @@
 | T2 | api-delpi — leitura do Protheus | DONE | DEV (banco DELPI) | 85276cc429 | 2026-11-14 | 12 testes PASS; filial 01 em 12/11/2026 = 19 (12 SPED + 7 CTE), igual ao SQL direto |
 | T3 | financial-api — Questor por período, por chave e CT-e | DONE | leitura PROD (HML sem financial-api) | af72c82f2b | 2026-11-14 | 75 testes PASS; 12/11/2026 NF-e 10 e 20, CT-e 1 e 1; KeyCte devolve a mesma linha |
 | T4 | BFF — motor de regras + paridade com a skill | DONE | sintético + leitura DEV/PROD | d57aeae36a | 2026-11-14 | cobertura 100%; 77 PASS; paridade real 12/11 filial 01 sem diferença |
-| T5 | BFF — análise, worker, persistência, rotas, LNF, exportação | TODO | | | | |
+| T5 | BFF — análise, worker, persistência, rotas, LNF, exportação | IN_PROGRESS | | | 2026-11-14 | V023 escrita; worker, D11 e rotas ainda não |
 | T6 | Back-end em HML | TODO | | | | |
 | T7 | CLARA — catálogo, análise, conhecimento, diretivas | TODO | | | | |
 | T8 | CLARA em HML (testes MCP) | TODO | | | | |
@@ -249,6 +249,7 @@ A amostra do owner (SF1 exportada às 14h19 de 12/11) tinha 7 notas SPED+CTE na 
 | 2026-11-14 | T4 | 36ac362300 | DONE | Motor em `domain/entry_audit` e leitor em `infrastructure/entry_audit/xml_reader.py`. D11 desligado. Paridade por construção com `scripts/auditoria.py` no mesmo CSV+XML sintético: mesmas ocorrências (total, 3 origens, ICMS não creditado), o mesmo «não apontado» de CST 090, e as mesmas notas sem par. Nota limpa e CT-e conferido não geram ocorrência. 8 PASS. Famílias sem caso nesse corpus (livro fiscal, Simples presumido, chave inválida, CFOP trocado) continuam no motor na T5, antes do ensaio com dado real. Retomar em T5. |
 | 2026-11-14 | T4 | 6fb80fe9ea | IN_PROGRESS | EXECUTION_DRIFT — motor parcial (8/60); rework. A T4 só fecha com todas as regras de regras.md e de regras.py portadas, com teste positivo, negativo e caso no corpus de paridade. |
 | 2026-11-14 | T4 | d57aeae36a | DONE | Motor completo em `domain/entry_audit`. Cobertura §6.8 preenchida: cada `rule_id` tem teste positivo, negativo e caso no corpus sintético. Pytest do motor, da paridade pequena e da cobertura: 77 PASS. Paridade real, filial 01, recebimento 12/11/2026, SPED+CTE, D11 desligado, mesma entrada (api-delpi no banco DELPI e XML do Questor em leitura): 12 NF-e e 7 CT-e casados, 5 ocorrências, 0 sem par, 7 itens excluídos, «não apontado» 24+3, 0 chaves corrigidas, zero diferenças. Dado real fora do repositório. Adapter traduz as letras da TES; `Tipo do TES` e `Cod. Fiscal` não vêm da API. ADR-003 sem mudança. |
+| 2026-11-14 | T5 | | IN_PROGRESS | `V023__entry_audit_analysis.sql` cria as nove tabelas do contrato. Worker, D11, rotas e exportação ainda não. Retomar em T5. |
 
 ---
 
