@@ -260,6 +260,24 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** preparar assinatura de release e plano de rollout sem usar estacao real. Quando presencial: coleta G2-S1, envio S2S G2-S2, comprovacao da revogacao e teste da tarefa G2-S3 Disabled -> Enable -> Uninstall, sob controles de G0-SEC para futuras fases remotas.
 
+## 2026-11-13 | G0-SEC-S0 | preflight seguro antes de MeshCentral
+
+**Contexto:** G2-S3 versionado e CI verde, mas a homologacao Windows/Keycloak/assinatura permanece pendente ate o operador voltar ao escritorio. Para continuar sem acesso fisico, priorizada a seguranca do futuro motor remoto.
+
+**Fonte externa oficial:** release MeshCentral 1.3.1 de 23/10/2026 informa exploracao ativa de servidores/clientes e recomenda atualizacao urgente; **nao prova** que essa release esteja suficientemente segura para uso da DELPI. Ver [ADR-002](G3-ADR-002-MESHCENTRAL-SECURITY.md).
+
+**Objetivo:** tornar verificavel a regra "nenhum controle remoto antes de G0-SEC". Implementado `remote_security_readiness.py` como preflight offline sem chamadas de rede, side effects ou endpoints; checklist publico de 12 gates, todos sem aceite formal; testes de bypass contra permissoes remotas, rota remota, Compose MeshCentral, flag true e checklist adulterado. Adicionado step no CI da API.
+
+**Arquivos:** `it-portal-api/it_portal_app/domain/remote_security_readiness.py`, `tests/test_remote_security_readiness.py`, `.github/workflows/it-portal-api.yml`, `G0-SEC-CHECKPOINTS.json`, `G0-SEC-S0-AUTOMATED-PREFLIGHT.md`, `G3-ADR-002-MESHCENTRAL-SECURITY.md` e atualizacoes ao roadmap/seguranca/README.
+
+**Status:** G0-SEC-S0 em revisao ate retorno CI. **G0-SEC sem aprovacao humana**, G3-ENGINE BLOQUEADO. CI `BLOCKED` significa ausencia de exposicao prematura, **nao** direito de acesso remoto. Evidencias privadas e aceite nao foram criados.
+
+**Producao:** nenhuma migration, Docker, rota, RBAC, flag, MeshCentral, broker, agente remoto ou trabalho no host executado pelo assistente.
+
+**Rollback:** codigo e docs somente; sem estado no runtime. Reverter a alteracao documental/teste em novo commit caso defeito, sem remover gates de seguranca.
+
+**Proximo passo unico:** confirmar CI e submeter ADR-002 a TI/Seguranca; coletar provas de mitigacao/isolamento antes de G3-ENGINE. Piloto G2-S1 a G2-S3 continua presencial.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "scope": "delpi-remote",
+  "checkpoints": [
+    {
+      "id": "human_security_approval",
+      "state": "pending",
+      "public_reference": null
+    },
+    {
+      "id": "engine_release_and_vulnerability_review",
+      "state": "in_review",
+      "public_reference": "https://github.com/Ylianst/MeshCentral/releases/tag/1.3.1"
+    },
+    {
+      "id": "engine_license_and_supply_chain",
+      "state": "pending",
+      "public_reference": null
+    },
+    {
+      "id": "network_isolation_and_tls",
+      "state": "pending",
+      "public_reference": null
+    },
+    {
+      "id": "keycloak_mfa_fresh_rbac",
+      "state": "pending",
+      "public_reference": null
+    },
+    {
+      "id": "device_operator_allowlist",
+      "state": "pending",
+      "public_reference": null
+    },
+    {
+      "id": "one_time_session_and_revocation",
+      "state": "pending",
+      "public_reference": null
+    },
+    {
+      "id": "audit_and_retention",
+      "state": "pending",
+      "public_reference": null
+    },
+    {
+      "id": "employee_notice_and_lgpd",
+      "state": "pending",
+      "public_reference": null
+    },
+    {
+      "id": "backup_restore_and_kill_switch",
+      "state": "pending",
+      "public_reference": null
+    },
+    {
+      "id": "safe_browser_embedding",
+      "state": "pending",
+      "public_reference": null
+    },
+    {
+      "id": "windows_lab_pilot_and_rollback",
+      "state": "pending",
+      "public_reference": null
+    }
+  ]
+}

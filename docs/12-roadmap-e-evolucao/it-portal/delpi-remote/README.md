@@ -24,7 +24,8 @@ Acesso sem pedir senha Windows por sessao **nao** significa acesso anonimo: toda
 | ID | Entrega | Estado | Criterio para encerrar |
 |---|---|---|---|
 | G0-DOC | Arquitetura, desenho de seguranca, contrato de inventario e plano de continuidade | **DOCUMENTADO** | Este pacote versionado e ligado a issue #179 |
-| G0-SEC | Threat model/revisao de seguranca, LGPD, licenciamento, analise de compatibilidade de MeshCentral, redes e backups | **PENDENTE DE REVISAO** | Aceite formal do responsavel de TI e seguranca com registro |
+| G0-SEC | Threat model/revisao de seguranca, LGPD, licenciamento, analise de compatibilidade de MeshCentral, redes e backups | **EM REVISAO** | Preflight automatizado e risco da release avaliados; **aceite formal ainda ausente** |
+| G0-SEC-S0 | Auditoria estatica automatizada de bloqueio do controle remoto, matriz de 12 gates e ADR de risco | **EM REVISAO** | CI verde, revisao humana das evidencias e nenhum servico/rota remota habilitado |
 | G1-DOM | Regras puras para cadastro de estacoes + testes | **EM REVISAO** | Normalizacao, limites, catalogos e rejeicao de segredos validados |
 | G1-API | Migration independente, CRUD de estacoes e RBAC separado de servidores | **EM REVISAO** | API e testes integracao verdes; nenhum agente remoto |
 | G1-UI | Area Computadores, busca/filtros/detalhe no plugin it-portal | **EM REVISAO** | Permissoes e testes de UI; sem botao remoto ativo |
@@ -33,7 +34,7 @@ Acesso sem pedir senha Windows por sessao **nao** significa acesso anonimo: toda
 | G2-S1 | Coletor Windows LOCAL + contrato estrito de snapshot, sem envio automatico | **EM REVISAO** | Execucao em PowerShell 5.1 no Windows piloto, testes e aceite do snapshot |
 | G2-S2 | Identidade individual de agente e ingestao autenticada, revogavel e idempotente | **EM REVISAO** | Codigo de S2S com flag off, migration V011, testes integrados e piloto Keycloak pendentes |
 | G2-S3 | Enrolment governado, agendamento Windows e desinstalacao de agente | **EM REVISAO** | Pacote assistido e testes em CI; assinatura corporativa, piloto Windows, revogacao e teste de rotina pendentes |
-| G3-ENGINE | MeshCentral isolado e testado em laboratorio | **NAO INICIADO** | Licenca, versao fixada, atualizacoes, TLS, backup, recuperacao, restricao de rede |
+| G3-ENGINE | MeshCentral isolado e testado em laboratorio | **BLOQUEADO** | Somente apos G0-SEC com aceite formal, versao/licenca/SBOM, TLS, backup e piloto isolado |
 | G4-AUTH | Broker de sessoes, Keycloak/MFA e permissoes independentes | **NAO INICIADO** | Revogacao, tokens de uso unico, fail-closed, logs, kill switch |
 | G5-REMOTE | Tela, teclado e mouse no navegador para computador piloto | **NAO INICIADO** | Testes presenciais de concorrencia, UAC, lock-screen, desconexao e latency |
 | G6-EXTRAS | Clipboard bidirecional e arquivos | **NAO INICIADO** | Avaliacao e teste de DLP, escopos independentes, transferencia auditavel |
@@ -49,7 +50,9 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 
 **G2-S3 (13/11/2026):** pacote assistido Windows preparado em codigo para instalacao futura, com default PLAN, assinatura corporativa obrigatoria para ativar, DPAPI CurrentUser, tarefa criada DESABILITADA, habilitacao separada e desinstalacao apos revogacao. **CI VERDE** no commit `02e3df851438`: parser PowerShell, teste do plano nao mutante, pytest HTTP/API, banco de testes V001..V011, architecture-gate e audit. **NENHUMA maquina foi alterada.** Sem assinatura corporativa ou teste Windows real. Ver [G2-S3](G2-S3-WINDOWS-AGENT-ROLL-OUT.md).
 
-**Proximo passo executavel:** continuar a revisao de seguranca e preparar o processo corporativo de assinatura/distribuicao SEM ativar cliente ou tarefa. Somente quando o operador estiver presencialmente no escritorio: piloto G2-S1 Windows, Keycloak/audiencia/escopo/binding individual + TLS, primeiro envio G2-S2, pacote assinado e instalacao/Enable/Uninstall G2-S3 com evidencias. Nenhuma instalacao ou agendamento remoto agora. G0-SEC continua gate de acesso remoto.
+**G0-SEC-S0 (13/11/2026):** o preflight offline foi implementado com checklist de 12 verificacoes pendentes, auditoria de rotas/manifesto/Compose e testes que falham ao detectar acesso remoto prematuro. A avaliacao ADR-002 identificou alerta urgente dos mantenedores do MeshCentral 1.3.1 (23/10/2026) sobre exploracao ativa; versao apenas **candidata**, nao aprovada. **G3-ENGINE permanece BLOQUEADO** ate signoff formal e demonstracao de mitigacao.
+
+**Proximo passo executavel:** obter CI verde do G0-SEC-S0 e revisao privada de seguranca, sem instalar MeshCentral. Quando o operador estiver presencialmente no escritorio: piloto G2-S1 Windows, Keycloak/audiencia/escopo/binding individual + TLS, primeiro envio G2-S2, pacote assinado e instalacao/Enable/Uninstall G2-S3. O inicio de G3-ENGINE exige aceite formal de G0-SEC e infraestrutura de laboratorio isolada; nenhum motor remoto em producao.
 
 ## Regras permanentes de engenharia
 
@@ -66,6 +69,9 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 
 - [Arquitetura e decisoes](ARCHITECTURE.md)
 - [Gates de seguranca e matriz de riscos](SECURITY-GATES.md)
+- [G0-SEC-S0: preflight de seguranca offline e testes](G0-SEC-S0-AUTOMATED-PREFLIGHT.md)
+- [G0-SEC: checkpoint estruturado (sem aprovacao)](G0-SEC-CHECKPOINTS.json)
+- [G3-ADR-002: avaliacao inicial do MeshCentral e alerta de seguranca](G3-ADR-002-MESHCENTRAL-SECURITY.md)
 - [Contrato inicial de inventario G1](INVENTORY-CONTRACT.md)
 - [G1-OWNER: vinculo do responsavel a usuario da plataforma](G1-OWNER.md)
 - [G1-OWNER: publicacao e verificacao futura](G1-OWNER-RELEASE.md)

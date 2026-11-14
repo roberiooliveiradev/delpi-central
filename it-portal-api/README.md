@@ -154,3 +154,7 @@ IT_PORTAL_TEST_DSN=postgresql://user@host:5432/postgres python -m pytest -q
 ## G2-S3 | Instalacao e agendamento assistidos (codigo em revisao)
 
 O pacote Windows de G2-S3 esta em `collectors/windows_workstation`: installer, runner, enable, uninstall e teste do plano. Modo padrao apenas PLAN; -Activate exige assinatura corporativa, identidade unica S2S/DPAPI e teste de envio, registra tarefa Disabled sob logon interativo. Enable e Uninstall sao separados. Este incremento nao muda a API, Docker Compose nem migrations. Ver `docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G2-S3-WINDOWS-AGENT-ROLL-OUT.md`.
+
+## G0-SEC-S0 | Preflight offline para futuro motor remoto
+
+A API NAO possui endpoint ou credencial MeshCentral. Novo verificador puro `it_portal_app/domain/remote_security_readiness.py` consulta checklist `docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G0-SEC-CHECKPOINTS.json`, auditando que o controle remoto permanece **BLOQUEADO**. Rodar `python -m it_portal_app.domain.remote_security_readiness --repo-root ..` no diretório `it-portal-api`, ou pytest `tests/test_remote_security_readiness.py`. Retorno `G0-SEC BLOCKED` com exit 0 indica ausencia de exposicao remota prematura, **nao autorizacao de sessao**. Referencias `G0-SEC-S0-AUTOMATED-PREFLIGHT.md` e `G3-ADR-002-MESHCENTRAL-SECURITY.md`. Nenhum deploy/API/migration deste incremento.

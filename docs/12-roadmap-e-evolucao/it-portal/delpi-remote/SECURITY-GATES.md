@@ -2,6 +2,14 @@
 
 **Estado:** controles especificados; **NENHUM gate de infraestrutura ou acesso remoto aprovado nesta etapa**.
 
+## Incremento G0-SEC-S0 (13/11/2026)
+
+**Aprovacao formal:** ainda AUSENTE. O CI utiliza [preflight G0-SEC](G0-SEC-S0-AUTOMATED-PREFLIGHT.md) + [12 checkpoints](G0-SEC-CHECKPOINTS.json) para flagrar superficies de controle remoto introduzidas sem revisao. Resultado `BLOCKED` e **o estado seguro esperado**, nao uma autorizacao.
+
+**Risco externo atualizado:** [release MeshCentral 1.3.1 (23/10/2026)](https://github.com/Ylianst/MeshCentral/releases/tag/1.3.1) inclui aviso emergencial de exploracao ativa e controle indevido de servidores e clientes. Nao presumir mitigacao comprovada. A decisao, versao, artefato fixado, SSO e isolamento dependem de [ADR-002](G3-ADR-002-MESHCENTRAL-SECURITY.md) e aceite de Seguranca/TI. **G3-ENGINE BLOQUEADO**, sem deploy nem endpoints remotos.
+
+O checklist tecnicamente documentado no repositorio publico nao pode autorizar sessoes de controle. Evidencias nominais, topologia, credenciais, logs e aprovacao devem ficar em sistema privado acessivel aos responsaveis.
+
 ## Modelo de ameacas inicial
 
 | Ameaça | Controle obrigatorio | Teste/evidencia |

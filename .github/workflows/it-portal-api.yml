@@ -80,6 +80,9 @@ jobs:
         shell: pwsh
         run: |
           & 'it-portal-api/collectors/windows_workstation/Test-ItPortalWorkstationAgentPlan.ps1'
+      - name: G0-SEC Delpi Remote offline gate (must remain BLOCKED)
+        working-directory: it-portal-api
+        run: python -m it_portal_app.domain.remote_security_readiness --repo-root ..
       - name: Unit and HTTP tests
         working-directory: it-portal-api
         run: python -m pytest -q
