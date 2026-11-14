@@ -3987,3 +3987,22 @@ O pipeline real `run_visual_benchmark → build_document_understanding → SLANe
 **NEXT_BOUNDED_STEP:** `EVA-E1-POST-G6-DRAFT-STRUCTURE-REVIEW-WORKFLOW-INVENTORY-01` — inventariar um fluxo de **visualização/revisão humana da estrutura candidata** (hierarquia pai→filho, quantidade, posição, evidência por página/caixa, `IDENTIFIED/UNKNOWN`, revisão desconhecida), priorizando reutilização dos contratos e UI existentes. **Modo:** contrato/inventário, sem implementação automática nem gravação em produto/BOM. Executar Abstraction Gate e entregar RQ/AC e proposta mínima. Em paralelo, manter o residual `EVA-VAL01-G6-IAM-OWNER-BOUND-BOM-ACCEPTANCE-01` no backlog governado, sem repetir OCR sem necessidade.
 
 **IMPLEMENTATION_GATE:** `PENDING_COORDINATION_DECISION` após inventário; **RELEASE_GATE:** `NOT_AUTHORIZED`.
+
+
+## §90 — Coordination: backend/EVA/MCP-first; frontend somente após varredura completa (2026-11-14)
+
+**DECISION:** orientação explícita do owner do produto: **não desenvolver agora tela, MFE ou fluxo frontend de revisão** no Portal Engenharia. A proposta §89.3 de inventário de `DRAFT-STRUCTURE-REVIEW-WORKFLOW` com ênfase em UI fica **SUPERSEDED para o próximo bounded step** por esta decisão. O trabalho atual permanece estritamente em **Engineering API (backend) → inteligência EVA → contrato MCP → validação interativa pelo ChatGPT**. A tela Portal Engenharia será discutida **depois de varrer todos os componentes do desenho e consolidar as capacidades/contratos de análise**, com gate posterior e RQ/AC próprios.
+
+**Objeto de aceite já demonstrado (§88–89):** reconstrução visual de hierarquia pai→filho no produto 90264135, 13/13 páginas, 279 ocorrências (211 IDENTIFIED/68 UNKNOWN), controles visuais positivos e negativos `MATCH` nos itens verificados. Não converter isso em alegação de cobertura estrutural 100% nem de homologação de BOM/revisão.
+
+**NEXT_BOUNDED_STEP = `EVA-E1-G6-MCP-COMPLETE-DRAWING-STRUCTURE-CONSUMPTION-INVENTORY-01`** — inventariar e testar o caminho atual de consumo **completo e governado** do resultado de `product.drawing_understanding` pela EVA no MCP/ChatGPT, sem novo pipeline, nova tool ou nova UI antes do Abstraction Gate. Precisamos verificar se:
+1. a estrutura candidata completa é recuperável via contrato autorizado, sem truncamento silencioso e com integridade de documento, revisão e versão;
+2. cada ocorrência expõe `occurrence_key`, componente, pai quando `IDENTIFIED`, quantidade/unidade quando legíveis, status `IDENTIFIED/UNKNOWN`, página/região/bbox e provenance/limitações;
+3. a EVA consegue responder consultas direcionadas sobre componente, pai, hierarquia, quantidades e casos `UNKNOWN` sem promover inferência a fato;
+4. volume de 279 ocorrências e payload real (~2.4 MB do artefato bruto relatado) respeitam os limites do consumidor, observabilidade, paginação/projeção ou reuso de contrato **somente se necessidade comprovada**;
+5. AuthN/AuthZ live Core e owner-bound access se mantêm; resultado pode ser consultado em sessão legítima, sem impersonation, ROPC nem tokens expostos;
+6. o chat não substitui testes automatizados/artefatos preservados; se transporte ou identidade impedirem E2E, separar evidência `PIPELINE_PASS` de `MCP_E2E_BLOCKED` e reportar a primeira fronteira demonstrada.
+
+**RQ/AC:** (AC-01) contrato/capabilities atuais inventariados; (AC-02) respostas exemplares com evidências de itens AE/AF/AG|16/AT; (AC-03) relatório de cobertura e completude da saída; (AC-04) limites de payload/consulta e lifecycle classificados; (AC-05) segurança e ausência de leitura entre owners; (AC-06) nenhuma modificação em BOM/desenho oficial; (AC-07) lacunas e menor proposta contratual se defeito comprovado. **MODE: READ_ONLY / INVENTORY_AND_E2E / NO_FRONTEND / NO_CODE_CHANGE** inicialmente; autorização de implementação depende de evidência, RQ/AC e Coordination.
+
+**Separações obrigatórias:** `DRAWING_STRUCTURE_UNDERSTANDING=ACCEPT_WITH_RESIDUAL` para o caso testado; `MCP_COMPLETE_STRUCTURE_CONSUMPTION=TO_INVENTORY`; `OFFICIAL_BOM_THREE_WAY=INCONCLUSIVE` por identidade delegada; `OWNER_HOMOLOGATION=PENDING`; `VAL01_COMPLETED=false`. Planejamento da UI adiado, sem decisão de owner/authority nem release. A capacidade gerada permanece **DRAFT/CANDIDATE**.
