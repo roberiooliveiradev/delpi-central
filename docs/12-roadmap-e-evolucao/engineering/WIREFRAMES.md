@@ -406,3 +406,11 @@ Cada página user-facing deve validar:
 9. **Gates:** wireframe e decisão do PO → implementação na `main` pelo executor governado → testes e E2E HML → aceite visual PO → decisão separada de release PRD. O planejamento não constitui autorização de deploy.
 
 **Exemplo aprovado como referência de linguagem visual:** `MFE-PRODUCT-REGISTRATION-UX-WIREFRAMES.md`, seção `PRC-REF-024` (detalhe PRC V3). Esta diretriz de design não transforma automaticamente todos os wireframes históricos em implementações.
+
+### 17.1. Ratificação PO — primitivos visuais sempre do Plugin UI (14/11/2026)
+
+**Regra obrigatória transversal:** `@delpi/plugin-ui` é o **owner também dos primitivos visuais**, não apenas dos componentes compostos. Para telas do Portal Engenharia, usar do kit os primitivos de **Button/IconButton, Input/Search, Select/Combobox, Checkbox/Radio/Switch, Tabs/SegmentedControl, Tooltip/Popover/Dialog, Badge/Chip, Card/Surface, Table/DataTable, Skeleton/Loading/Empty/Alert, Avatar, tipografia, ícones e tokens de espaçamento/cor/borda** conforme exports reais disponíveis. O MFE Engenharia **não deve construir equivalentes visuais locais** a partir de tags estilizadas, CSS customizado ou shims quando o kit já oferecer o primitivo. HTML semântico nativo continua apropriado para estrutura, acessibilidade e formulários quando não se está recriando um componente visual de UI.
+
+**Abstraction Gate:** se faltar um primitivo neutro necessário, primeiro inventariar equivalentes e contratos; depois propor a menor extensão **no Plugin UI**, com owner/consumers definidos, testes e compatibilidade. Evitar duplicar visuais no MFE, alterar CSS global do host ou importar internals de outros MFEs. **Composição/fluxo/HTTP/AuthZ/adapters ficam no MFE/backend**, não no kit; o Plugin UI não se torna autoridade de domínio. Verificar no HEAD real os exports e tokens, sem presumir nomes exatos desta lista conceitual.
+
+**Gate de QA:** inventário explícito de primitivos usados por tela e residual search para componentes visuais duplicados, com testes light/dark, responsive/zoom200, foco/teclado e regressão das outras telas consumidoras do kit.
