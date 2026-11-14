@@ -951,3 +951,24 @@ E01 sete campos no card **PASS** (subchecks id/type/requester/officialCode/creat
 **Limitações:** paginação do painel não exercitada (total=1 < 25 — caminho condicional); eixo `left` usa clamp (left=8) em vez de `end` perfeito quando 760px não cabem à direita do gatilho — comportamento correto do hook.
 
 **Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
+
+## 50. Regressão de tema no painel Sinalizados — portalScopeClassName=portal-engineering (14/11/2026)
+
+**TASK:** `EVA-PRC-FLAGS-POPOVER-THEME-REGRESSION-HML-01`. Frontend exclusivo; **PRD não autorizado.**
+
+**Causa raiz:** com o corpo no `document.body` via AnchoredPanelPortal (§49), o wrapper do portal recebia apenas o escopo auto-inferido `dashboard-page` + `delpi-ui-shape-theme-host`. Os tokens `--en-*`/`--delpi-ui-*` do Engineering são definidos em `.portal-engineering` (index.css, incl. overrides `:root[data-theme="dark"] .portal-engineering`) — fora da árvore do painel. Resultado no tema escuro: `var(--en-surface, #fff)` caía no fallback `#fff` → fundo branco com textos `--en-text` indefinidos (praticamente invisíveis), enquanto selects do kit (tokens globais do shape-theme-host) escureciam corretamente — evidência exata do PO.
+
+**Correção (commit `2e319342b9`, 2 arquivos):** `portalScopeClassName={ENGINEERING_PORTAL_SCOPE}` ("portal-engineering") no `EngineeringAnchoredPanel` do modo compacto — mesmo padrão já usado pelo dropdown de fornecedores (`PrcOfficialSupplierSearchField`). O wrapper do portal passa a carregar a classe que define os tokens do MFE e herda o override dark de `:root`. Sem cor fixa, sem remover o portal. Teste estrutural +1 assertando a prop.
+
+**Testes:** engineering vitest **200/200 PASS**; `tsc` clean; build ok.
+
+**HML:** deploy `--fase mfe --build engineering` (checkout `2e319342b9`); imagem `sha256:5dfbb388749af1d811e1ffd2c9f79ae53a580f868f17148f4f460b0d2b7a832a` healthy; 21/21 containers. Rollback: `sha256:12845f713fba…` retida.
+
+**E2E visual (Chromium real, computed styles — não só DOM) — 23/23 PASS:**
+- Claro: scope `portal-engineering delpi-ui-shape-theme-host`, bg `rgb(255,255,255)`, texto `rgb(0,56,102)`, visível na viewport.
+- Escuro: bg `color(srgb 0.087 0.103 0.154)` (escuro), título `rgba(255,255,255,0.94)`, muted `0.78`, badge âmbar visível, contraste texto−fundo ≈255.
+- Alternância com o painel aberto: claro↔escuro reflete imediatamente nos computed styles.
+- Escape + clique externo fecham; Colunas abre/feca Sinalizados com bg escuro coerente; mobile 390px clamp `right≤390` + bg escuro; tabela sem regressão.
+- Evidências: `/tmp/theme-light.png`, `/tmp/theme-dark.png`, `/tmp/theme-dark-mobile.png`.
+
+**Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
