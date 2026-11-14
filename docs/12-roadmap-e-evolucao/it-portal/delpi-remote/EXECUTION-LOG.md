@@ -290,6 +290,24 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** revisao formal de risco de seguranca e evidencia de isolamento/mitigacao antes de propor G3 em lab; piloto Windows G2-S1..G2-S3 permanece presencial.
 
+## 2026-11-13 | G0-SEC-S1 | intake offline de release e bloqueio de laboratorio
+
+**Objetivo:** progredir no risco de supply chain do motor remoto enquanto o piloto Windows de G2 aguarda presenca do operador no escritorio, sem saltar G0-SEC.
+
+**Fontes verificadas:** a tag oficial MeshCentral 1.3.1 (23/10/2026) referencia o commit completo `f436143527458d56da0336ea3047c006703fb4e4`. A [issue upstream #8269](https://github.com/Ylianst/MeshCentral/issues/8269) estava aberta em 13/11 e reporta agentes Windows sem core/desktop apos upgrade. A nota de release adverte sobre exploit ativo; nao equiparar atualizacao a mitigacao comprovada.
+
+**Entrega:** `G3-LAB-CANDIDATE.json` (registro publico minimo sem hostname/IP/secret), `it_portal_app/domain/remote_engine_lab_intake.py` (parser e gate offline, version+commit upstream imutaveis no codigo, verifica rede segregada, flags de producao falsas, riscos abertos), `tests/test_remote_engine_lab_intake.py` (casos negativos e tentativa de forcar aprovacao), CI da API e [runbook G0-SEC-S1](G0-SEC-S1-ENGINE-INTAKE.md). Atualizados ADR-002, Security Gates e roadmap.
+
+**Estado:** G0-SEC-S1 EM REVISAO. A saida esperada `G3-LAB BLOCKED` e exit 0 significa SOMENTE que o gate esta correto, nao que motor foi aprovado. SHA-256 de artefato permanece null; nenhum aceite de seguranca registrado.
+
+**Producao:** nenhum software MeshCentral, endereco de lab, container, token, credencial, agente, rota, migration, permissão ou flag de controle remoto alterado. G3-ENGINE segue BLOQUEADO.
+
+**Testes:** testes novos e step de CI incluidos; aguardar CI do commit de codigo antes de afirmar que passaram.
+
+**Rollback:** nenhum estado do runtime; corrigir arquivos em novo commit se testes falharem, sem apagar historico ou desabilitar gate existente.
+
+**Proximo passo unico:** validar CI, recolher assinatura formal em canal privado e demonstrar artefato verificavel + isolamento da rede antes de autorizar qualquer motor em laboratorio. Retomar G2-S1..S3 somente presencial.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

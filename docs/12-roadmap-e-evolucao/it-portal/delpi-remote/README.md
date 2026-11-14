@@ -26,6 +26,7 @@ Acesso sem pedir senha Windows por sessao **nao** significa acesso anonimo: toda
 | G0-DOC | Arquitetura, desenho de seguranca, contrato de inventario e plano de continuidade | **DOCUMENTADO** | Este pacote versionado e ligado a issue #179 |
 | G0-SEC | Threat model/revisao de seguranca, LGPD, licenciamento, analise de compatibilidade de MeshCentral, redes e backups | **EM REVISAO** | Preflight automatizado e risco da release avaliados; **aceite formal ainda ausente** |
 | G0-SEC-S0 | Auditoria estatica automatizada de bloqueio do controle remoto, matriz de 12 gates e ADR de risco | **EM REVISAO** | CI verde, revisao humana das evidencias e nenhum servico/rota remota habilitado |
+| G0-SEC-S1 | Admissao offline de candidato MeshCentral, revisao de riscos conhecidos e integridade de artefatos | **EM REVISAO** | Gate CI `G3-LAB BLOCKED`, artefato exato/SHA256, mitigacao do exploit e teste Windows pendentes |
 | G1-DOM | Regras puras para cadastro de estacoes + testes | **EM REVISAO** | Normalizacao, limites, catalogos e rejeicao de segredos validados |
 | G1-API | Migration independente, CRUD de estacoes e RBAC separado de servidores | **EM REVISAO** | API e testes integracao verdes; nenhum agente remoto |
 | G1-UI | Area Computadores, busca/filtros/detalhe no plugin it-portal | **EM REVISAO** | Permissoes e testes de UI; sem botao remoto ativo |
@@ -52,7 +53,9 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 
 **G0-SEC-S0 (13/11/2026):** o preflight offline foi implementado com checklist de 12 verificacoes pendentes, auditoria de rotas/manifesto/Compose e testes que falham ao detectar acesso remoto prematuro. **CI verde** no commit `b3972d753599`: gate BLOCKED, pytest, integracao PostgreSQL, architecture-gate e audit. A avaliacao ADR-002 identificou alerta urgente dos mantenedores do MeshCentral 1.3.1 (23/10/2026) sobre exploracao ativa; versao apenas **candidata**, nao aprovada. **G3-ENGINE permanece BLOQUEADO** ate signoff formal e demonstracao de mitigacao.
 
-**Proximo passo executavel:** obter CI verde do G0-SEC-S0 e revisao privada de seguranca, sem instalar MeshCentral. Quando o operador estiver presencialmente no escritorio: piloto G2-S1 Windows, Keycloak/audiencia/escopo/binding individual + TLS, primeiro envio G2-S2, pacote assinado e instalacao/Enable/Uninstall G2-S3. O inicio de G3-ENGINE exige aceite formal de G0-SEC e infraestrutura de laboratorio isolada; nenhum motor remoto em producao.
+**G0-SEC-S1 (13/11/2026):** atualizado intake offline da release MeshCentral 1.3.1 com tag vinculada ao commit upstream `f436143527458d56da0336ea3047c006703fb4e4` e risco aberto de regressao dos agentes Windows ([issue #8269](https://github.com/Ylianst/MeshCentral/issues/8269)). O digest do artefato e a mitigacao do aviso emergencial continuam **pendentes**; configuracao publica exige ambiente de laboratorio isolado, sem rede/credenciais/estacoes produtivas. Nenhuma instalacao ou sessao remota autorizada. Ver [G0-SEC-S1](G0-SEC-S1-ENGINE-INTAKE.md).
+
+**Proximo passo executavel:** validar CI de G0-SEC-S1, obter evidencias formais de Seguranca/TI sobre a vulnerabilidade, artefato, rede e Keycloak. Continuar G2-S1..S3 presencial quando o operador voltar ao escritorio. **G3-ENGINE BLOQUEADO** ate gate formal, sem instalar servidor remoto ou liberar endpoints.
 
 ## Regras permanentes de engenharia
 
@@ -72,6 +75,8 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 - [G0-SEC-S0: preflight de seguranca offline e testes](G0-SEC-S0-AUTOMATED-PREFLIGHT.md)
 - [G0-SEC: checkpoint estruturado (sem aprovacao)](G0-SEC-CHECKPOINTS.json)
 - [G3-ADR-002: avaliacao inicial do MeshCentral e alerta de seguranca](G3-ADR-002-MESHCENTRAL-SECURITY.md)
+- [G0-SEC-S1: intake offline da versao candidata](G0-SEC-S1-ENGINE-INTAKE.md)
+- [G3-LAB-CANDIDATE: manifesto de riscos e bloqueio](G3-LAB-CANDIDATE.json)
 - [Contrato inicial de inventario G1](INVENTORY-CONTRACT.md)
 - [G1-OWNER: vinculo do responsavel a usuario da plataforma](G1-OWNER.md)
 - [G1-OWNER: publicacao e verificacao futura](G1-OWNER-RELEASE.md)

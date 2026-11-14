@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "purpose": "offline_review_only",
+  "engine": "meshcentral",
+  "source": {
+    "repository": "https://github.com/Ylianst/MeshCentral",
+    "tag": "1.3.1",
+    "tag_commit_sha": "f436143527458d56da0336ea3047c006703fb4e4",
+    "artifact_sha256": null,
+    "verified_on": "2026-11-13"
+  },
+  "environment": {
+    "network_isolation": "separate_lab_only",
+    "inbound_from_internet": false,
+    "production_credentials": false,
+    "production_devices_enrolled": false,
+    "remote_engine_installed": false,
+    "remote_sessions_enabled": false
+  },
+  "risks": [
+    {
+      "id": "upstream_emergency_security_notice",
+      "state": "open",
+      "public_reference": "https://github.com/Ylianst/MeshCentral/releases/tag/1.3.1"
+    },
+    {
+      "id": "windows_agent_desktop_regression",
+      "state": "open",
+      "public_reference": "https://github.com/Ylianst/MeshCentral/issues/8269"
+    },
+    {
+      "id": "supply_chain_artifact_verification",
+      "state": "in_review",
+      "public_reference": "https://github.com/Ylianst/MeshCentral/releases/tag/1.3.1"
+    },
+    {
+      "id": "sso_mfa_revocation_validation",
+      "state": "open",
+      "public_reference": "https://github.com/Ylianst/MeshCentral/security/advisories/GHSA-cp68-qrhr-g9h8"
+    },
+    {
+      "id": "private_network_and_recovery",
+      "state": "open",
+      "public_reference": "https://github.com/Ylianst/MeshCentral/releases/tag/1.3.1"
+    }
+  ]
+}

@@ -45,3 +45,11 @@ Referencias oficiais:
 6. Com evidencia e aceite **privado** de seguranca, registrar apenas referencia sanitizada no GitHub e atualizar G0-SEC; somente entao o desenvolvimento G3-ENGINE e G4-AUTH podera prosseguir em um laboratorio segregado.
 
 **Resultado em 13/11/2026:** nao ha provas de ambiente isolado, assinatura, revogacao, SSO/broker seguro ou mitigacao demonstrada da exploracao emergencial de 1.3.1. **G3-ENGINE BLOQUEADO.** Nenhuma infraestrutura foi instalada por esta analise.
+
+## Atualizacao G0-SEC-S1 (13/11/2026)
+
+- **Release upstream verificada:** `1.3.1` publicada em 23/10/2026; tag `refs/tags/1.3.1` aponta para commit completo `f436143527458d56da0336ea3047c006703fb4e4`. Ver [release oficial](https://github.com/Ylianst/MeshCentral/releases/tag/1.3.1) e [commit](https://github.com/Ylianst/MeshCentral/commit/f436143527458d56da0336ea3047c006703fb4e4). **Isto fixa codigo-fonte, NAO digest de artefato, imagem Docker ou versao de agente.**
+- **Regressao reportada:** [issue #8269](https://github.com/Ylianst/MeshCentral/issues/8269) permaneceu **aberta** na consulta (13/11), descrevendo agente Windows conectado sem core grafico/arquivos/terminal apos 1.3.1. Exige reprodutibilidade independente em lab; nao voltar para versao anterior nem misturar binarios como contorno sem analise.
+- **Exploit/emergencia:** avisos na release sao graves e usam linguagem cautelosa quanto a correcao. Nao ha atestado de mitigacao, pentest, assinatura, rollback ou verificacao de clean install neste projeto.
+- **Candidato:** [G3-LAB-CANDIDATE.json](G3-LAB-CANDIDATE.json) registra fonte/commit/riscos, `artifact_sha256=null` e flags negativas. O verificador `remote_engine_lab_intake.py` impede declarar `approved` no codigo publico, recusa mismatch de commit e falha se configurar exposicao externa/credenciais/dispositivos de producao.
+- **Decisao inalterada:** G3-ENGINE BLOQUEADO ate aprovacao formal de G0-SEC em canal privado e laboratorio isolado demonstrado. Ver [G0-SEC-S1](G0-SEC-S1-ENGINE-INTAKE.md).

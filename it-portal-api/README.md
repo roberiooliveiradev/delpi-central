@@ -158,3 +158,7 @@ O pacote Windows de G2-S3 esta em `collectors/windows_workstation`: installer, r
 ## G0-SEC-S0 | Preflight offline para futuro motor remoto
 
 A API NAO possui endpoint ou credencial MeshCentral. Novo verificador puro `it_portal_app/domain/remote_security_readiness.py` consulta checklist `docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G0-SEC-CHECKPOINTS.json`, auditando que o controle remoto permanece **BLOQUEADO**. Rodar `python -m it_portal_app.domain.remote_security_readiness --repo-root ..` no diretório `it-portal-api`, ou pytest `tests/test_remote_security_readiness.py`. Retorno `G0-SEC BLOCKED` com exit 0 indica ausencia de exposicao remota prematura, **nao autorizacao de sessao**. Referencias `G0-SEC-S0-AUTOMATED-PREFLIGHT.md` e `G3-ADR-002-MESHCENTRAL-SECURITY.md`. Nenhum deploy/API/migration deste incremento.
+
+## G0-SEC-S1 | Preflight offline de release MeshCentral
+
+Codigo puro sem rotas, migrations nem Docker em `it_portal_app/domain/remote_engine_lab_intake.py`; le `G3-LAB-CANDIDATE.json` publico e **reprova** tag/commit nao pinado, digest invalido, risco omitido, flag de producao, configuracao de rede publica e tentativa de marcar `approved`. `python -m it_portal_app.domain.remote_engine_lab_intake --repo-root ..` deve retornar `G3-LAB BLOCKED`, nunca `READY`. Tests em `tests/test_remote_engine_lab_intake.py`; detalhes `docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G0-SEC-S1-ENGINE-INTAKE.md`. Nenhum deploy necessario.

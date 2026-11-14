@@ -10,6 +10,12 @@
 
 O checklist tecnicamente documentado no repositorio publico nao pode autorizar sessoes de controle. Evidencias nominais, topologia, credenciais, logs e aprovacao devem ficar em sistema privado acessivel aos responsaveis.
 
+## G0-SEC-S1 (13/11/2026) | Admitir somente risco documentado
+
+O [intake offline da release](G0-SEC-S1-ENGINE-INTAKE.md) agora valida release MeshCentral 1.3.1 fixada ao commit upstream, riscos registrados, formato de evidencias e proibe `approved` no repositorio publico. A [regressao Windows #8269](https://github.com/Ylianst/MeshCentral/issues/8269) estava **aberta** no momento da consulta em 13/11. O SHA-256 do artefato **nao foi obtido/verificado**. A emergencia de seguranca continua sem mitigacao comprovada.
+
+CI verde com `G3-LAB BLOCKED` significa somente que o projeto nao tentou liberar MeshCentral por declaracao documental. O aceite de TI/Seguranca e o teste em laboratorio separado permanecem obrigatorios. Nao habilitar rede, escopo remoto, broker, agentes ou motor por este incremento.
+
 ## Modelo de ameacas inicial
 
 | Ameaça | Controle obrigatorio | Teste/evidencia |
