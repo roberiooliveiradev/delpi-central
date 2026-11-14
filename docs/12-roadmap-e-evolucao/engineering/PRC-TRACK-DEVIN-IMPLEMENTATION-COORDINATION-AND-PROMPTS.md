@@ -574,3 +574,14 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 - **FIX-2 (tasks acionáveis):** `PrcQueueHomeSource` aplica `statuses = PRC_STATUSES − TERMINAL_STATUSES` ({submitted, in_progress, needs_information, needs_correction, under_review}) no WHERE, antes de COUNT/LIMIT — completed/rejected não entram como pendência nem no total.
 - **Repos:** PG usa `status = ANY(%s)` + cláusula `requester_subject=%s` exclusiva; InMemory paridade. Ambos antes de count/paginação.
 - **Testes:** +5 cenários (assigned-only excluído p/ solicitante e analista, terminais excluídos, total pré-paginação filtrado). 27/27 focados; subconjunto PRC 181 pass / 1 fail baseline pré-existente (d16 isolation — fora do diff).
+
+
+## Coordination — PR #183 integrado; gate HML autorizado (13/11/2026)
+
+**TASK_ID:** `ENG-HOME-PRC-NATIVE-INTEGRATION-IMPLEMENTATION-01`. GitHub confirmou resolução da divergência: compare `main...eng-home-prc-native-integration` `ahead_by=4, behind_by=0`, diff efetivo de **9 arquivos**, limitado à Engineering API, testes e ledger. `HEAD=c5a889c6939122cff995020a0fd0909423d8531f` (merge de main na branch). Coordination executou `merge_pull_request` oficial no [PR #183](https://github.com/roberiooliveiradev/delpi-central/pull/183), com `expected_head_sha=c5a889c6939122cff995020a0fd0909423d8531f`. **GitHub: `merged=true`; `MERGE_SHA=96a641ad535462969f7a03e83129baa3206d709b`.**
+
+**Escopo do merge:** Home lê fontes PRC in-process para `tasks` (casos PRC não terminais, filtro antes de COUNT/LIMIT) e `requests` (requester-only, mesmo analista); `requestId`/href PRC oficial, autorização existente, LMPs inalteradas. Requests API continua owner dos seus registros e deixa de alimentar essas seções da Home. Sem migração, mirror, SQL alheio ou TOTVS write.
+
+**Evidência de testes:** Devin reportou 27/27 focados PASS pós-resolução, subconjunto 181 PASS e um baseline FAIL alheio. Consulta Coordination encontrou **nenhuma** review ou status/Actions associados ao HEAD na API GitHub; não imputar CI PASS nem aceite de runtime. Merge oficial foi aceito; HML ainda **PENDING**.
+
+**Próximo gate:** Devin autorizado a executar deploy da **Engineering API exclusivamente em HML**, verificar SHA/digest do runtime, casos PRC na Home (`tasks`/`requests` conforme ator), identidade, links, status, contagens, AuthZ incluindo requester-only para assigned-only, terminais fora das tarefas, regressões My Requests/LMP, negativo NF/chamados e degradação isolada. Reusar dados HML quando cabível; evitar novas escritas desnecessárias. `PRD_DEPLOY=NOT_AUTHORIZED`; `PRD_BUSINESS_TEST_WRITES=0`. Retornar evidência para decisão sobre próxima onda PRC-TRACK.
