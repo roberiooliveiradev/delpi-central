@@ -606,3 +606,13 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 | H06/H11 | HERDADO — workflow e isolamento de falha já provados (§30, testes unitários); sem repetição sem motivo |
 
 **Conclusão:** `HML_E2E_PASS` — integração Home × PRC nativo operacional em homologação, sem duplicidade, sem vazamento, sem regressões. Pendente apenas decisão sobre próximos itens PRC-TRACK (conclusão com match TOTVS, frontend E2E visual).
+
+## 36. Coordination — aceite do HML Home × PRC e decisão da próxima onda (14/11/2026)
+
+**Base de evidência:** §35/commit `08825074b0930b577c162801028e004700710182`, PR #183 merge `96a641ad535462969f7a03e83129baa3206d709b`, HML checkout `c360325472`, digest `sha256:97dd7b343ee623f90d62c4f658eb53d73d8ed7c5b18a1e0ef2ce66d7f77cead3`. Coordination conferiu o ledger no GitHub e **ACEITA `HML_E2E_PASS` no escopo executado/reportado**. Não é declaração de inspeção direta do container pela Coordination.
+
+**Cobertura:** Home `tasks`=5 casos acionáveis (terminais excluídos), `requests` total=14 requester-only com 10 itens paginados, ID/href PRC estáveis, solicitações Requests API genéricas fora da Home, AuthZ 401/403 e objeto, LMP 255 `available`. Negativo assigned-only não exercitado no dataset real; coberto por unitário/SQL. H06 transições e H11 isolamento são evidências herdadas, não reexecutadas neste ciclo; não convertê-las em runtime PASS novo.
+
+**Próxima onda decidida:** (1) **Frontend E2E visual somente em HML** para formulário PRC do My Requests → Home → fila/detalhe PRC, navegação, estados, permissões e regressões, com critérios claros de aceitação e sem duplicação de dados; (2) preparar em paralelo, por analista autorizado, cenário com match real na fonte oficial TOTVS HML para V1/no-op/Vn+1 e retry pós-sucesso, sem fabricar match nem escrita no TOTVS produtivo; (3) depois avaliar backend/contratos e roadmap Produtos acompanhados. Deploy PRD da integração PR #183 continua **PENDING_OPERATIONAL_RELEASE_DECISION** e não é consequência automática do aceite HML. **DEVIN: trabalhar em `main`; não abrir nova branch por iniciativa própria; se proteção impedir escrita direta, devolver à Coordination.**
+
+**Estado:** `HML_ACCEPTED / FRONTEND_E2E_PENDING / TOTVS_HML_MATCH_PENDING / PRD_RELEASE_NOT_AUTHORIZED / PRD_BUSINESS_TEST_WRITES=0`.
