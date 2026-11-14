@@ -4063,31 +4063,13 @@ visual `/tmp/tb_crops/`.
   folhas pares com carimbo, ímpares só tabela de componentes
   (detecção corretamente ausente onde não há carimbo).
 
-### 91.3 Conflito semântico de revisão (RQ-05) — OWNER_DECISION_REQUIRED
+### 91.3 Semântica de revisão — decisão do owner confirmada (2026-11-14)
 
-As fontes concordam que os domínios são independentes, mas divergem
-na atribuição dos papéis:
+**DECISION = RATIFIED_BY_PROJECT_OWNER:** `SB1.B1_REVATU` / `current_revision` no TOTVS controla a **revisão do CLIENTE**; `REV` impresso no carimbo do PDF controla a **revisão técnica da ENGENHARIA**. São domínios independentes. A regra de conhecimento EVA `ENG-REV-001` já estava correta; a redação antiga de `api-delpi/docs/api/02-produtos.md`, que invertia esses papéis, foi corrigida no próprio documento canônico (commit desta rodada). **Não comparar numericamente REV do carimbo × B1_REVATU**, nem mesmo para declarar conformidade. Regra `DRAW-REV-MATCH` continua superseded.
 
-- **Conhecimento EVA `ENG-REV-001`**: `current_revision` TOTVS =
-  controle de revisões do **CLIENTE**; `REV` do desenho = controle
-  técnico de **ENGENHARIA**.
-- **api-delpi `02-produtos.md` (canônica)**: `B1_REVATU` = revisão
-  cadastral **DELPI** (só existe no TOTVS); `REV` do PDF = revisão
-  do desenho do **CLIENTE**.
+**Limites ainda pendentes de modelagem/homologação contextual:** `drawing_library_revision` é um terceiro identificador de gestão documental; `REV: NA CAPA` exige ler a capa; diferenças entre cabeçalho e histórico (`REV 00` × entrada `REV 01`, `REV M` × histórico `01`) não provam erro sem entender folha/efetividade e papel da linha. Relações entre revisão de capa, histórico LMP/OV e revisão vigente do próprio desenho devem ser fundamentadas em fonte documental autorizada. Essas incertezas **não reabrem** a decisão sobre os dois domínios principais.
 
-Evidência nos desenhos: `REV: 00`+histórico 01 (135), `REV: M`+
-histórico 01 (161), `REV: NA CAPA` (554) — o campo impresso REV
-convive com histórico LMP/OV próprio; `source_revision=
-drawing_library_revision` já existe no pipeline (gestão documental).
-Pergunta ao owner Engenharia/api-delpi: **qual é o domínio de
-B1_REVATU (cliente×Delpi) e a qual pertence o REV impresso — e a
-revisão de capa/LMP/OV se relaciona a qual dos três?** Proibido
-escolher arbitrariamente; `ENG-REV-001` permanece semântica
-independente até ratificação. Bug relacionado (não corrigido —
-escopo read-only): `drawing_investigation` lê
-`rev_candidates[0]["revision"]` mas o contrato emite `value_text` →
-verificação de revisão sempre `NOT_CHECKED`; o teste M4 usa fixture
-com a chave errada, mascarando o defeito.
+**Revisão técnica de código pendente:** `drawing_investigation` lê `rev_candidates[0]["revision"]`, enquanto o contrato emite `value_text`; verificar e corrigir com teste de regressão (fixture M4 atual usa chave divergente). Sem alteração de código nesta adjudicação.
 
 ### 91.4 Equivalências oficiais (fonte: `02-produtos.md` + carimbos)
 
@@ -4113,7 +4095,7 @@ Evolução aditiva de `drawing_understanding.v1` — sem nova tool MCP:
   (`FIELD_IDENTIFIED`/`TEXT_ONLY`/`AMBIGUOUS_LABEL`/`NOT_PRESENT`).
 - `revision_history.entries[]`: `revision`, `date`, `lmp`, `ov`,
   `summary`, `executado`, `liberado`, `page`, `evidence`,
-  `revision_domain` (enum pendente de ratificação owner).
+  `revision_domain` (domínios principais ratificados: `CLIENT_TOTVS` para B1_REVATU e `ENGINEERING_DRAWING` para REV de carimbo; nome exato do enum e demais domínios sujeitos à revisão de contrato).
 - `document_identity`: promover `revision`/`customer`/`document`
   existentes no `report.identification` (contrato já exposto, hoje
   sempre `None`).
@@ -4134,8 +4116,8 @@ RQ-02-02 `page`/proveniência em todos os candidatos; RQ-02-03
 detecção de histórico embutido (linha-a-linha dentro do carimbo —
 Doc 96 §7.1); RQ-02-04 tipagem de identificadores por rótulo; RQ-02-05
 `document_identity` populada com `interpretation_state`; RQ-02-06
-correção da leitura `value_text`; RQ-02-07 enum de domínios de
-revisão pós-ratificação owner.
+correção da leitura `value_text`; RQ-02-07 tipagem dos domínios de revisão conforme decisão do owner,
+sem equivalência automática entre domínios.
 
 AC: fixtures carimbo convencional/deslocado/rotacionado; `REV: M`,
 `REV: NA CAPA`, `COD: P34`, códigos pontuados; histórico embutido
@@ -4144,8 +4126,7 @@ não-promoção de código de histórico a componente (já coberto);
 negativo: label ambíguo `DES:` não decide papel sem contexto.
 
 **GATES:** G1 inventário=PASS; G2 avaliação real=PASS (4 desenhos,
-evidência visual independente); G3 semântica=PARTIAL (conflito de
-revisão encaminhado — owner); G4 contrato=PREPARED; G5
+evidência visual independente); G3 semântica=PARTIAL (domínios principais RATIFIED; capa/histórico e papéis de COD/DES ainda condicionais); G4 contrato=PREPARED; G5
 implementação=NOT_AUTHORIZED; G6 homologação=NOT_AUTHORIZED.
 `VAL01_COMPLETED=false` permanece (Issue #131 aberta); VAL-02 em
 fase de inventário.
