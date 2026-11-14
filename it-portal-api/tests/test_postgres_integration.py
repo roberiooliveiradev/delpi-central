@@ -522,7 +522,7 @@ def test_g2_s4_s2a_postgres_dynamic_binding_revoked_atomically(pg_client):
     # Simula SOMENTE no DB descartavel o futuro gate de ativacao/attestation.
     _sql(
         "UPDATE it_portal.workstation_agent_identities "
-        "SET ingest_authorized = TRUE WHERE workstation_id=%s", (wid,),
+        "SET ingest_authorized = TRUE WHERE workstation_id=%s RETURNING workstation_id", (wid,),
     )
     assert send_snapshot()["duplicate"] is False
     requested = identities.request_revocation(wid, actor)
