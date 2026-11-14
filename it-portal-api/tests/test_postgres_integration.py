@@ -487,7 +487,7 @@ def test_g2_s4_s2a_postgres_dynamic_binding_revoked_atomically(pg_client):
     from tests.test_workstation_snapshots import sample
 
     created = pg_client.post("/workstations", json={
-        "name": "Piloto S2a", "hostname": "example-dev-01",
+        "name": "Piloto S2a", "hostname": "g2s4-s2a-test-01",
         "unit_code": "02", "device_kind": "desktop",
         "administrative_status": "in_operation",
     })
@@ -502,6 +502,7 @@ def test_g2_s4_s2a_postgres_dynamic_binding_revoked_atomically(pg_client):
     latest = sample()
     latest["run_id"] = str(uuid.uuid4())
     latest["observed_at"] = datetime.now(timezone.utc).isoformat()
+    latest["host"]["hostname"] = "g2s4-s2a-test-01"
     snapshot = validate_workstation_snapshot(latest)
     snapshots = PostgresWorkstationSnapshotRepository()
 
