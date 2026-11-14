@@ -33,7 +33,16 @@ import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Container, Literal, Mapping, Sequence
+from typing import (
+    Any,
+    Callable,
+    Container,
+    Literal,
+    Mapping,
+    NotRequired,
+    Sequence,
+    TypedDict,
+)
 
 from app.application.capability_provision.contracts import (
     InvestigationAnswer,
@@ -59,6 +68,7 @@ from app.application.capability_provision.semantic_capability_support import (
     INVESTIGATION_PROGRESS_RELATED,
     _IDENTIFIER_LITERAL_RE,
     _LAST_CATALOG_FAILURES,
+    _OBLIGATION_OPERATIONS,
     _attempt_identifier_roots,
     _emit_activity,
     _is_business_evidence_attempt,
@@ -197,6 +207,20 @@ def _build_native_mcp_toolset(config, *, process_tool_call):
         init_timeout=config.timeout_seconds,
         read_timeout=config.timeout_seconds,
     )
+
+
+class ObligationProposal(TypedDict):
+    """Typed material-obligation proposal for declare_investigation_goal.
+
+    ``description`` is required; ``evidence_source`` anchors the
+    obligation to live owner vocabulary (entity/action/capability
+    token) and ``operation`` requires a SpecialistOperationClass —
+    both verifiable proposals, never authorization (RC5).
+    """
+
+    description: str
+    evidence_source: NotRequired[str]
+    operation: NotRequired[str]
 
 
 @dataclass
@@ -1686,11 +1710,13 @@ class PydanticAiInvestigationOrchestrator:
             goal_class: str,
             comparison_requested: bool = False,
             target_identities: list[str] | None = None,
-            evidence_needed: list[str] | None = None,
+            evidence_needed: (
+                list[str | ObligationProposal] | None
+            ) = None,
             business_subject: str = "",
             expected_delivery: str = "unspecified",
         ) -> str:
-            """Typed investigation goal declaration (INT-2).
+            """Typed investigation goal declaration (INT-2/RC5).
 
             Declare the user's objective, the expected delivery and the
             material evidence obligations before or alongside the first
@@ -1701,8 +1727,19 @@ class PydanticAiInvestigationOrchestrator:
             comparison, unspecified. ``evidence_needed`` names the
             material obligations derived from the objective —
             collection coverage for enumeration, metric+scope for
-            aggregation, pertinent facts for explanation. A
-            declaration is a semantic proposal only — it
+            aggregation, pertinent facts for explanation. Each item is
+            a plain obligation text OR a typed object
+            ``{"description": ..., "evidence_source": ...,
+            "operation": ...}``: ``evidence_source`` anchors the
+            obligation to the live owner vocabulary (an entity,
+            action or capability token the owner echoes in results or
+            that you pass as an invocation selector — e.g.
+            ``get_product_structure`` or ``process``); ``operation``
+            requires a specific operation class (read, analysis,
+            prepare, act, discovery). Anchored obligations are
+            verified mechanically against owner-declared evidence
+            metadata; unanchored text binds evidence but never proves
+            pertinence. A declaration is a semantic proposal only — it
             never grants access or authorization. A goal may be
             declared once per turn.
             """
@@ -1749,6 +1786,9 @@ class PydanticAiInvestigationOrchestrator:
                         "valid_expected_delivery": sorted(
                             ctx.deps.gates._DELIVERY_MODES
                         ),
+                        "valid_operations": sorted(
+                            _OBLIGATION_OPERATIONS
+                        ),
                     }
                 )
             ctx.deps.investigation_plan = plan
@@ -1758,7 +1798,10 @@ class PydanticAiInvestigationOrchestrator:
                 "comparison_requested": plan.goal.comparison_requested,
                 "expected_delivery": plan.goal.output_mode,
                 "target_identities": list(plan.target_identities),
-                "evidence_needed": list(plan.evidence_needed),
+                "evidence_needed": [
+                    item.to_projection()
+                    for item in plan.evidence_needed
+                ],
             }
             # Echo the accepted subject so the Agent retains the same
             # declared interpretation across subsequent tool calls.

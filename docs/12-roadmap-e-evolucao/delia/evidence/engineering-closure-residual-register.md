@@ -1738,8 +1738,16 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 
 | Residual | Status | Evidence / disposition |
 |---|---|---|
-| INT2-RC5-OBLIGATION-SEMANTICS | **PROPOSAL_READY** | Doc 327 — Obligation Evidence Anchors (D+A): `evidence_needed` items opcionais `{description,evidence_source,operation}`; verificação mecânica vs ecos owner; `INCONCLUSIVE`=BOUND, `SATISFIED`=DEMONSTRATED; COMPATIBLE_EXTEND; pendente aceite da coordenação |
-| INT2-RC5-TEO-ENVELOPE-ECHO | TO_VERIFY_IMPL | confirmar em implementação se TÉO structured ecoa `entity`/`action_id` como DAVI; fallback = `GovernedCapabilityBinding` de invoke |
+| INT2-RC5-OBLIGATION-SEMANTICS | **IMPLEMENTED_PENDING_REVIEW** | Doc 328 — Obligation Evidence Anchors implementados (EXTEND): `MaterialObligation` tipado; âncora verificada vs echos owner + `invocation_vocabulary` (bind-only para superfície `specialist.remote`); ausência autoritativa ancorada; ACT exige postcondition; legado subject-scope removido; zero falso SATISFIED no eval real `or-qwen14b-0d53756cb6bb` (10/10); pendente revisão independente da coordenação |
+| INT2-RC5-TEO-ENVELOPE-ECHO | **RESOLVED** | Doc 328 — TÉO structured **não** ecoa `entity`/`action_id`; resolvido via `invocation_vocabulary` (seletores de vocabulário owner capturados dos args de invocação na provenance/binding) |
 | demais INT2-* | inalterados | Doc 326/register |
 
-**NEXT=`COORDINATION_RC5_ARCHITECTURE_DECISION_REVIEW`**
+**NEXT=`COORDINATION_RC5_INDEPENDENT_IMPLEMENTATION_REVIEW`**
+
+### RC5 implementation residual — 2026-11-13 (Doc 328)
+
+| Residual | Status | Evidence / disposition |
+|---|---|---|
+| INT2-RC5-MODEL-ENVELOPE-ANCHORS | OPEN_LOW | modelo qwen3-14b declara `evidence_source` como nome de envelope (`teo.read`) mesmo com instrução v2-5 — outcome correto (INCONCLUSIVE, jamais falso SATISFIED) mas limita demonstração; mitigação possível em futura iteração de instrução sem hardcode de vocabulário |
+
+**NEXT=`COORDINATION_RC5_INDEPENDENT_IMPLEMENTATION_REVIEW`**

@@ -1901,6 +1901,73 @@ _OBLIGATION_STATES = frozenset(
 )
 
 
+# Owner-operation vocabulary a declared obligation may require
+# (SpecialistOperationClass values, casefolded — UNKNOWN excluded:
+# an untyped capability never demonstrates a typed requirement).
+_OBLIGATION_OPERATIONS = frozenset(
+    {
+        SpecialistOperationClass.DISCOVERY.value.casefold(),
+        SpecialistOperationClass.READ.value.casefold(),
+        SpecialistOperationClass.ANALYSIS.value.casefold(),
+        SpecialistOperationClass.PREPARE.value.casefold(),
+        SpecialistOperationClass.ACT.value.casefold(),
+    }
+)
+
+
+@dataclasses.dataclass(frozen=True, slots=True, eq=False)
+class MaterialObligation:
+    """One typed material evidence obligation (RC5 anchors contract).
+
+    ``description`` is the model-declared business obligation.
+    ``evidence_source`` optionally anchors the obligation to the live
+    owner vocabulary — an entity/action/capability token the owner
+    echoes in structured results or that names a governed invocation
+    selector. ``operation`` optionally requires a specific
+    ``SpecialistOperationClass``. Both are verifiable proposals — the
+    deterministic layer checks them against owner-echoed metadata and
+    governed invocation records; they never grant authorization and
+    are never a domain catalog.
+    """
+
+    description: str
+    evidence_source: str | None = None
+    operation: str | None = None
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, MaterialObligation):
+            return (
+                self.description,
+                self.evidence_source,
+                self.operation,
+            ) == (
+                other.description,
+                other.evidence_source,
+                other.operation,
+            )
+        if isinstance(other, str):
+            return (
+                self.evidence_source is None
+                and self.operation is None
+                and self.description == other
+            )
+        return NotImplemented
+
+    def __hash__(self) -> int:
+        return hash(
+            (self.description, self.evidence_source, self.operation)
+        )
+
+    def to_projection(self) -> dict:
+        """Bounded observability projection of the declared anchors."""
+        projected: dict[str, str] = {"description": self.description}
+        if self.evidence_source is not None:
+            projected["evidence_source"] = self.evidence_source
+        if self.operation is not None:
+            projected["operation"] = self.operation
+        return projected
+
+
 @dataclasses.dataclass(frozen=True, slots=True)
 class SemanticInvestigationPlan:
     """Application-validated investigation plan from the Agent tool.
@@ -1908,11 +1975,14 @@ class SemanticInvestigationPlan:
     Semantic proposal only — never authorization. Target identities and
     evidence_needed are the REF05/material-obligation contract for
     finalize; comparison_requested comes from the typed ``_TurnGoal``.
+    ``evidence_needed`` items are ``MaterialObligation`` — a plain
+    description (legacy string input) carries no verified anchor and
+    can bind evidence but never demonstrate it.
     """
 
     goal: "OperationalCapabilityOrchestrator._TurnGoal"
     target_identities: tuple[str, ...] = ()
-    evidence_needed: tuple[str, ...] = ()
+    evidence_needed: tuple[MaterialObligation, ...] = ()
 
 
 def _structured_owner_incomplete(outcome: SpecialistOutcome | None) -> bool:
@@ -2279,29 +2349,93 @@ def _normalize_identity_tuple(raw: object) -> tuple[str, ...]:
     return tuple(unique)
 
 
-def _attempt_satisfies_obligation(
-    attempt: GovernedCapabilityAttempt, obligation: str
-) -> bool:
-    """Obligation match via owner-authoritative evidence only.
+def _obligation_item(obligation: object) -> MaterialObligation:
+    """Coerce one declared obligation into ``MaterialObligation``.
 
-    INT-2 evidence-by-kind (doc 301): an identifier-literal obligation
-    keeps strict identity matching — satisfied when it equals the
-    authoritative structure root, or an owner-record code under a
-    compatible root. A non-identifier obligation declares a subject /
-    collection / metric scope derived from the objective; it is
-    satisfied by authoritative bound business evidence — governed,
-    complete and fully provenant — since no deterministic layer can
-    verify semantic pertinence without a domain catalog (forbidden).
-    Capability names, specialist ids and provenance source_id alone
-    never prove that the requested business fact was acquired
-    (doc 237 R-E2). Child codes under a *different* root never satisfy
-    REF05.
+    Accepts the contract forms: ``MaterialObligation``, a plain string
+    (legacy — description only, no verified anchor) or a mapping
+    (``description`` plus optional ``evidence_source``/``operation``).
+    Unknown shapes collapse to an empty description — never satisfied.
     """
-    needle = (obligation or "").strip()
-    if not needle:
-        return False
-    if not _is_business_evidence_attempt(attempt):
-        return False
+    if isinstance(obligation, MaterialObligation):
+        return obligation
+    if isinstance(obligation, str):
+        return MaterialObligation(description=obligation.strip())
+    if isinstance(obligation, Mapping):
+        description = str(obligation.get("description") or "").strip()
+        source = obligation.get("evidence_source")
+        operation = obligation.get("operation")
+        return MaterialObligation(
+            description=description,
+            evidence_source=(
+                source.strip()
+                if isinstance(source, str) and source.strip()
+                else None
+            ),
+            operation=(
+                operation.strip().casefold()
+                if isinstance(operation, str) and operation.strip()
+                else None
+            ),
+        )
+    return MaterialObligation(description="")
+
+
+def _normalize_obligation_tuple(
+    raw: object,
+) -> tuple[MaterialObligation, ...] | None:
+    """Normalize declared evidence obligations; None on invalid vocab.
+
+    Each item may be a plain string (legacy subject/identity scope) or
+    a mapping ``{description, evidence_source?, operation?}`` — the
+    typed RC5 anchor form. An ``operation`` outside the owner
+    operation vocabulary rejects the whole plan so the model receives
+    bounded vocabulary feedback instead of a silently dropped field.
+    """
+    if not isinstance(raw, (list, tuple)):
+        return ()
+    normalized: list[MaterialObligation] = []
+    for item in raw:
+        obligation = _obligation_item(item)
+        if not obligation.description or len(obligation.description) > 200:
+            continue
+        if (
+            obligation.operation is not None
+            and obligation.operation not in _OBLIGATION_OPERATIONS
+        ):
+            return None
+        normalized.append(obligation)
+    seen: set[tuple[str, str | None, str | None]] = set()
+    unique: list[MaterialObligation] = []
+    for obligation in normalized[:16]:
+        key = (
+            obligation.description.casefold(),
+            (
+                obligation.evidence_source.casefold()
+                if obligation.evidence_source
+                else None
+            ),
+            obligation.operation,
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(obligation)
+    return tuple(unique)
+
+
+def _obligation_descriptions(
+    obligations: "tuple[MaterialObligation | str, ...]",
+) -> tuple[str, ...]:
+    return tuple(
+        _obligation_item(item).description
+        for item in obligations
+        if _obligation_item(item).description
+    )
+
+
+def _obligation_identity_keys(needle: str) -> set[str]:
+    """Strict identity literals declared inside an obligation text."""
     keys: set[str] = set()
     for item in _IDENTIFIER_LITERAL_RE.findall(needle):
         item = item.strip()
@@ -2314,20 +2448,15 @@ def _attempt_satisfies_obligation(
         core = re.search(r"\d{3,}", item)
         if core and core.group(0) != item:
             keys.add(core.group(0).casefold())
-    if not keys:
-        if " " in needle or "\t" in needle:
-            # Multi-word descriptor — subject / collection / metric
-            # scope (INT-2 evidence-by-kind): satisfied when
-            # authoritative bound business evidence exists, since no
-            # deterministic layer can verify semantic pertinence
-            # without a domain catalog (forbidden). Digit-free single
-            # tokens stay strict: a code-shaped token without digits
-            # (``PROC-REGISTRY``) may still be an exact owner code the
-            # identifier grammar does not cover.
-            return True
-        # Single-token obligation may be an exact owner code the
-        # identifier grammar does not cover — keep strict equality.
-        keys = {needle.casefold()}
+    return keys
+
+
+def _attempt_matches_identity_keys(
+    attempt: GovernedCapabilityAttempt, keys: set[str]
+) -> bool:
+    """Strict identity matching against owner-authoritative evidence."""
+    if not _is_business_evidence_attempt(attempt):
+        return False
     root = _authoritative_structure_root(attempt)
     if root is not None and root.casefold() in keys:
         return True
@@ -2361,15 +2490,380 @@ def _attempt_satisfies_obligation(
     return False
 
 
+# Owner-echoed metadata keys that carry the evidence anchor vocabulary.
+_ANCHOR_ECHO_KEYS = frozenset(
+    {
+        "entity",
+        "entity_kind",
+        "action_id",
+        "capability",
+        "action",
+        "view",
+        "kind",
+        "shape",
+        "subject",
+    }
+)
+
+# Top-level invocation argument keys that carry owner vocabulary
+# selectors (envelope vocabulary — never user data values like codes
+# or params payloads). Recorded as governed invocation context so
+# obligation anchors remain verifiable for owners whose structured
+# results do not echo entity/action metadata (RC5 namespace).
+_INVOCATION_VOCABULARY_KEYS = frozenset(
+    {
+        "entity",
+        "entity_kind",
+        "action",
+        "action_id",
+        "capability",
+        "view",
+        "kind",
+        "operation",
+        "subject",
+    }
+)
+
+
+def _invocation_vocabulary(args: object) -> tuple[str, ...]:
+    """Bounded owner-vocabulary selector tokens of one invocation.
+
+    Only top-level arguments whose key names owner-vocabulary
+    selectors are captured — exact token values, never nested payload
+    content. Naming a selector grants nothing; it records which owner
+    kind of evidence was invoked.
+    """
+    if not isinstance(args, Mapping):
+        return ()
+    tokens: list[str] = []
+    for key in _INVOCATION_VOCABULARY_KEYS:
+        value = args.get(key)
+        if not isinstance(value, str):
+            continue
+        token = value.strip()
+        if not token or len(token) > 64:
+            continue
+        if token.casefold() in {item.casefold() for item in tokens}:
+            continue
+        tokens.append(token)
+    return tuple(tokens[:8])
+
+
+# Owner structured keys whose emptiness/zeroness attests absence.
+_ABSENCE_COLLECTION_KEYS = frozenset(
+    {"items", "results", "rows", "records", "entries", "children"}
+)
+_ABSENCE_TOTAL_KEYS = frozenset({"total", "total_count", "count"})
+
+
+def _attempt_anchor_tokens(
+    attempt: GovernedCapabilityAttempt,
+) -> frozenset[str]:
+    """Owner-declared anchor vocabulary bound to one attempt.
+
+    Candidates are exact casefolded tokens: owner echoes in the
+    structured result (``entity``/``action_id``/``capability``/``shape``
+    family) and the bounded owner-vocabulary selectors recorded as
+    governed invocation context (e.g. envelope ``entity``/``action``
+    arguments). The proxy envelope names (``remote_capability`` /
+    ``action_id`` of the DÉLIA tool surface) are NOT owner evidence
+    vocabulary — they name the transport surface, not the business
+    kind. Never substring matching over free text, never
+    model-declared text.
+    """
+    tokens: set[str] = set()
+    provenance = attempt.provenance
+    if provenance is not None:
+        for token in provenance.invocation_vocabulary or ():
+            if isinstance(token, str) and token.strip():
+                tokens.add(token.strip().casefold())
+    outcome = attempt.outcome
+    structured = outcome.structured if outcome is not None else None
+    if isinstance(structured, Mapping):
+        for key in _ANCHOR_ECHO_KEYS:
+            value = structured.get(key)
+            if isinstance(value, str) and value.strip():
+                tokens.add(value.strip().casefold())
+        action = structured.get("action")
+        if isinstance(action, Mapping):
+            for key in ("id", "action_id", "entity", "name"):
+                value = action.get(key)
+                if isinstance(value, str) and value.strip():
+                    tokens.add(value.strip().casefold())
+    return frozenset(tokens)
+
+
+def _attempt_surface_anchor_match(
+    attempt: GovernedCapabilityAttempt, source: str
+) -> bool:
+    """Declared anchor equals the invoked governed-surface identity.
+
+    ``remote_capability``/``action_id`` and the composite
+    ``specialist_id.remote_capability`` are DÉLIA-side provenance
+    (which envelope was invoked), never owner evidence kind — a match
+    binds the attempt to the obligation but cannot demonstrate it.
+    """
+    provenance = attempt.provenance
+    if provenance is None:
+        return False
+    candidates = [
+        provenance.remote_capability,
+        provenance.action_id,
+        f"{provenance.specialist_id}.{provenance.remote_capability}",
+    ]
+    for token in candidates:
+        if (
+            isinstance(token, str)
+            and token.strip()
+            and token.strip().casefold() == source
+        ):
+            return True
+    return False
+
+
+def _attempt_operation_class(
+    attempt: GovernedCapabilityAttempt,
+) -> str | None:
+    """Owner-typed operation class recorded at the governed boundary."""
+    provenance = attempt.provenance
+    if provenance is None:
+        return None
+    value = getattr(provenance, "operation_class", None)
+    if isinstance(value, str) and value.strip():
+        return value.strip().casefold()
+    return None
+
+
+def _attempt_declares_authoritative_absence(
+    attempt: GovernedCapabilityAttempt,
+) -> bool:
+    """Complete owner response declaring absence inside its scope.
+
+    Authoritative absence requires: SUCCESS, complete provenance, a
+    complete outcome, no truncation/incompleteness flags, and either
+    an owner structured payload whose collections are empty (with no
+    contradicting positive totals), or the canonical empty-result
+    rendering. A partial or truncated empty page demonstrates nothing.
+    """
+    if attempt.status is not GovernedCapabilityStatus.SUCCESS:
+        return False
+    if attempt.provenance is None or not attempt.provenance.is_complete:
+        return False
+    outcome = attempt.outcome
+    if outcome is None or not outcome.is_complete:
+        return False
+    structured = outcome.structured
+    if isinstance(structured, Mapping):
+        inner = structured.get("data")
+        data = inner if isinstance(inner, Mapping) else structured
+        for envelope in (structured, data):
+            if envelope.get("is_complete") is False:
+                return False
+            if envelope.get("truncated") is True:
+                return False
+        collections = [
+            data[key]
+            for key in _ABSENCE_COLLECTION_KEYS
+            if isinstance(data.get(key), (list, tuple))
+        ]
+        totals = [
+            data[key]
+            for key in _ABSENCE_TOTAL_KEYS
+            if isinstance(data.get(key), (int, float))
+            and not isinstance(data.get(key), bool)
+        ]
+        if collections and all(len(entry) == 0 for entry in collections):
+            return not totals or all(value == 0 for value in totals)
+        if totals and all(value == 0 for value in totals):
+            return True
+        return False
+    content = (attempt.content or "").strip()
+    return content == EMPTY_RESULT_TEXT or content.startswith(
+        f"{EMPTY_RESULT_TEXT}\n"
+    )
+
+
+def _attempt_postcondition_demonstrated(
+    attempt: GovernedCapabilityAttempt,
+) -> bool:
+    """Owner-attested write postcondition on a complete ACT outcome.
+
+    Governed execution success alone is not a business outcome: the
+    owner structured payload must carry a non-empty authoritative
+    ``data`` postcondition echo. Absent it, the attempt is bound but
+    never demonstrates the write.
+    """
+    if attempt.status is not GovernedCapabilityStatus.SUCCESS:
+        return False
+    if attempt.provenance is None or not attempt.provenance.is_complete:
+        return False
+    outcome = attempt.outcome
+    if outcome is None or not outcome.is_complete:
+        return False
+    structured = outcome.structured
+    if not isinstance(structured, Mapping):
+        return False
+    data = structured.get("data")
+    return isinstance(data, Mapping) and len(data) > 0
+
+
+def _attempt_demonstrates_anchored(
+    attempt: GovernedCapabilityAttempt, obligation: MaterialObligation
+) -> bool:
+    """Anchored obligation demonstration via mechanical echo matching.
+
+    An anchored obligation is demonstrated only when the bound attempt
+    echoes the declared anchor vocabulary AND the declared operation
+    class AND carries the evidence of the declared kind — business
+    evidence for ordinary obligations, authoritative absence for
+    complete-empty owner answers, and an owner-attested postcondition
+    for ``operation=act``. READ never demonstrates ACT.
+    """
+    if attempt.status is not GovernedCapabilityStatus.SUCCESS:
+        return False
+    if attempt.provenance is None or not attempt.provenance.is_complete:
+        return False
+    if "discovery_metadata_observation" in attempt.limitations:
+        return False
+    if obligation.evidence_source is not None:
+        if (
+            obligation.evidence_source.casefold()
+            not in _attempt_anchor_tokens(attempt)
+        ):
+            return False
+    if obligation.operation is not None:
+        if _attempt_operation_class(attempt) != obligation.operation:
+            return False
+        if obligation.operation == (
+            SpecialistOperationClass.ACT.value.casefold()
+        ):
+            return _attempt_postcondition_demonstrated(attempt)
+    keys = _obligation_identity_keys(obligation.description)
+    if keys:
+        if _attempt_declares_authoritative_absence(attempt):
+            return True
+        return _attempt_matches_identity_keys(attempt, keys)
+    if _is_business_evidence_attempt(attempt):
+        return True
+    return _attempt_declares_authoritative_absence(attempt)
+
+
+def _attempt_satisfies_obligation(
+    attempt: GovernedCapabilityAttempt,
+    obligation: "MaterialObligation | str | Mapping",
+) -> bool:
+    """Obligation DEMONSTRATED check via owner-authoritative evidence.
+
+    RC5 (doc 327): satisfaction requires demonstrated evidence, not
+    mere binding. Identifier-literal obligations keep strict identity
+    matching. Anchored obligations (``evidence_source``/``operation``)
+    require mechanical echo/operation verification against
+    owner-declared metadata. A non-identifier obligation WITHOUT
+    anchors declares subject scope: bound evidence marks it
+    INCONCLUSIVE (see ``_attempt_binds_obligation``) — semantic
+    pertinence is not deterministically verifiable and must never be
+    presumed demonstrated. Capability names alone never prove that
+    the requested business fact was acquired (doc 237 R-E2).
+    """
+    item = _obligation_item(obligation)
+    needle = item.description
+    if not needle:
+        return False
+    if item.evidence_source is not None or item.operation is not None:
+        return _attempt_demonstrates_anchored(attempt, item)
+    keys = _obligation_identity_keys(needle)
+    if not keys:
+        if " " in needle or "\t" in needle:
+            # Subject/collection/metric scope without a declared anchor
+            # binds governed business evidence but never demonstrates it
+            # — semantic pertinence is not mechanically verifiable.
+            return False
+        # Single-token obligation may be an exact owner code the
+        # identifier grammar does not cover — keep strict equality.
+        keys = {needle.casefold()}
+    return _attempt_matches_identity_keys(attempt, keys)
+
+
+def _attempt_binds_obligation(
+    attempt: GovernedCapabilityAttempt,
+    obligation: "MaterialObligation | str | Mapping",
+) -> bool:
+    """BOUND-not-demonstrated check (RC5 EVIDENCE_BOUND state).
+
+    True when a governed, complete, fully-provenant observation is
+    bound to the obligation's declared scope/kind but demonstration is
+    unverifiable: unanchored subject scope with business evidence, an
+    anchored attempt whose echo cannot be checked (absent metadata) or
+    whose demonstration failed on completeness/postcondition. An
+    echoed DIFFERENT kind or operation disproves the bind outright.
+    """
+    item = _obligation_item(obligation)
+    if not item.description:
+        return False
+    if attempt.status is not GovernedCapabilityStatus.SUCCESS:
+        return False
+    if not (attempt.content or "").strip():
+        return False
+    if attempt.provenance is None or not attempt.provenance.is_complete:
+        return False
+    if "discovery_metadata_observation" in attempt.limitations:
+        return False
+    anchored = (
+        item.evidence_source is not None or item.operation is not None
+    )
+    if anchored:
+        tokens = _attempt_anchor_tokens(attempt)
+        if item.evidence_source is not None:
+            source = item.evidence_source.casefold()
+            if source not in tokens:
+                if _attempt_surface_anchor_match(attempt, source):
+                    # Envelope-surface match: bound only — a generic
+                    # envelope name never demonstrates evidence kind.
+                    pass
+                elif tokens:
+                    # Owner echoed/invoked a different kind — disproven.
+                    return False
+                # else: nothing verifiable — bound, unproven.
+        if item.operation is not None:
+            operation_class = _attempt_operation_class(attempt)
+            if (
+                operation_class is not None
+                and operation_class != item.operation
+            ):
+                # Operation class recorded and contradicts — disproven.
+                return False
+        return True
+    keys = _obligation_identity_keys(item.description)
+    if keys:
+        # Identity obligations are strict-only; no weak binding.
+        return False
+    needle = item.description
+    if " " in needle or "\t" in needle:
+        return _is_business_evidence_attempt(attempt)
+    return False
+
+
 def _evaluate_material_obligations(
     *,
-    obligations: tuple[str, ...],
+    obligations: tuple[MaterialObligation, ...] | tuple[str, ...],
     business: tuple[GovernedCapabilityAttempt, ...],
 ) -> tuple[tuple[str, str], ...]:
-    """Return ``(obligation_id, state)`` for each material obligation."""
+    """Return ``(obligation_description, state)`` per obligation.
+
+    State semantics (RC5): ``SATISFIED`` = demonstrated by
+    owner-authoritative evidence (strict identity, verified anchor, or
+    authoritative absence); ``INCONCLUSIVE`` = governed evidence is
+    bound but pertinence/kind/postcondition is not demonstrable;
+    ``UNSATISFIED`` = no bound evidence or a provably wrong kind/scope;
+    ``UNAVAILABLE`` = the authoritative source could not be reached.
+    One satisfied attempt binds at most one obligation (1:1); bound-
+    but-unverified attempts may corroborate several obligations since
+    INCONCLUSIVE claims nothing about sufficiency.
+    """
     results: list[tuple[str, str]] = []
     used: set[int] = set()
-    for obligation in obligations:
+    for raw_obligation in obligations:
+        obligation = _obligation_item(raw_obligation)
         matched = None
         for index, attempt in enumerate(business):
             if index in used:
@@ -2379,22 +2873,28 @@ def _evaluate_material_obligations(
             matched = attempt
             used.add(index)
             break
-        if matched is None:
-            unavailable = any(
-                item.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
-                for item in business
+        if matched is not None:
+            results.append(
+                (obligation.description, OBLIGATION_SATISFIED)
             )
-            state = (
-                OBLIGATION_UNAVAILABLE
-                if unavailable
-                else OBLIGATION_UNSATISFIED
+            continue
+        bound = any(
+            _attempt_binds_obligation(attempt, obligation)
+            for attempt in business
+        )
+        if bound:
+            results.append(
+                (obligation.description, OBLIGATION_INCONCLUSIVE)
             )
-            results.append((obligation, state))
             continue
-        if matched.provenance is None or not matched.provenance.is_complete:
-            results.append((obligation, OBLIGATION_INCONCLUSIVE))
-            continue
-        results.append((obligation, OBLIGATION_SATISFIED))
+        unavailable = any(
+            item.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+            for item in business
+        )
+        state = (
+            OBLIGATION_UNAVAILABLE if unavailable else OBLIGATION_UNSATISFIED
+        )
+        results.append((obligation.description, state))
     return tuple(results)
 
 
@@ -2835,7 +3335,7 @@ def _finalize_agent_collected_attempts(
     rendered text mentions.
     """
     if clarification_question:
-        missing = _normalize_identity_tuple(
+        missing = _obligation_descriptions(
             plan.evidence_needed if plan is not None else ()
         ) or ("clarification",)
         content = (

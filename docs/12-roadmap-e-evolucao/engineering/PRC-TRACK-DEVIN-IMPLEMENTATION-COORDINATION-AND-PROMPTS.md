@@ -539,7 +539,34 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 
 **Próximo gate:** `DEVIN_IMPLEMENTATION_AND_HML_VALIDATION`; entregar PR, diff e testes. Não chamar decisão aprovada de implementação PASS.
 
-## 33. PR #183 — correções de revisão aplicadas (13/11/2026)
+## 32. Opção A implementada — Home alimentada por casos PRC nativos (13/11/2026)
+
+**TASK_ID:** ENG-HOME-PRC-NATIVE-INTEGRATION-IMPLEMENTATION-01 — Coordination ratificou a Opção A (`ARCHITECTURE_DECISION_APPROVED`). Implementação entregue na branch `eng-home-prc-native-integration`, SHA `2ff3cf2bd45f7e0872999dd545c7a05bd26b9d7f` — **PR pendente de abertura/merge pela Coordination** (executor sem credencial GitHub).
+
+**Diff (8 arquivos, +373/−12):**
+- `infrastructure/gateways/prc_home_sources.py` (novo): `PrcQueueHomeSource` (tasks — fila global do analista) e `PrcMineHomeSource` (requests — `own_scope`, casos do próprio usuário). Adapters in-process sobre `ProductRegistrationService.list_requests` via `asyncio.to_thread`; `PrcActor` projetado do `HomeSourceContext`; `PrcForbiddenError`→`forbidden`; demais falhas → `unavailable` isolada; itens com `requestId` (UUID) como id, href `/apps/engineering/product-registration/{id}` (rota real do `resolvePrcPath`), `source="engineering-api"`, meta rico.
+- `composition/home_composer.py`: injeta as duas fontes PRC; remove construção do `requests_client` (requests-api deixa de alimentar a Home; registros corporativos intactos no My Requests).
+- `ports/home_sources.py`: `HomeSourceContext` ganha `permissions`/`is_superadmin` (fontes in-process decidem escopo por objeto).
+- `routes/home_routes.py`: popula os novos campos do contexto.
+- `service.py::list_requests`: novo `own_scope` — analista na seção `requests` vê apenas os próprios casos (`global_scope=actor.is_analyst and not own_scope`).
+- Repositórios PG + in-memory: item da lista expõe `description` (título legível no card).
+
+**Testes:** `tests/test_prc_home_sources.py` — 12 cenários (identidade, escopo mine×queue, analista com escopo próprio, denied→forbidden, empty, total pré-paginação, isolamento de falha, título, meta). Focados: **23/23 pass**. Suíte ampla: **1195 pass / 2 fails baseline documentados** (`test_d16...isolation_between_requests` — falha pré-existente; `test_lmp_domain` — path `/api-delpi/contracts` não montado no container descartável).
+
+**Pendente:** merge governado → deploy HML → homologação runtime (criar PRC → verificar seções Home, fila e My Requests com mesmo requestId; regressão NF/chamados; LMPs; AuthZ).
+
+
+## 33. Coordination — revisão pré-merge da implementação Home × PRC; PR #183 draft (13/11/2026)
+
+**Código revisado:** branch `eng-home-prc-native-integration` @ `2ff3cf2bd45f7e0872999dd545c7a05bd26b9d7f`; compare com main retornou 8 arquivos Engineering API (+373/-12), ahead 1/behind 2 no instante; atraso não é prova de conflito. **[PR #183](https://github.com/roberiooliveiradev/delpi-central/pull/183) criado como DRAFT** pela Coordination. `MERGE_PENDING_BLOCKING_REVIEW`, HML ainda sem novo deploy; relatórios de 23/23 testes e 1195 ampla são evidência do executor.
+
+**Blocker funcional #1 — requester-only não implementado:** `own_scope=True` apenas define `global_scope=False` no `ProductRegistrationService.list_requests`, porém os repositórios Postgres e InMemory usam `requester_subject=user OR assigned_to_subject=user` quando `global_scope=False`. Assim, `requests` da Home pode incluir casos de terceiros atribuídos ao analista — contraria o contrato ratificado `mine` apenas criados pelo usuário. Corrigir por parâmetro/consulta explícita `requester_only` preservando os consumers existentes e object AuthZ; testes para requester!=assignee nos dois adapters.
+
+**Blocker funcional #2 — tarefas acionáveis:** `PrcQueueHomeSource` chama `list_requests` global sem filtro de status/ação. Casos `completed`/`rejected` potencialmente aparecem em `tasks` e em totais como pendências. Verificar contrato da fila PRC; para Home aplicar recorte de casos realmente atendíveis e contagens pré-paginação. Não fazer filtro apenas após LIMIT/COUNT, nem supor status permitidos sem verificar regra oficial; se não houver contrato, devolver decisão pontual.
+
+**Próximo gate:** Devin corrige ambos no mesmo PR, acrescenta regressões, valida CI e reports SHA; Coordination revisa e só então decide integração. Deploy/testes exclusivamente HML depois do merge; **zero PRD deploy/escritas**. `ARCHITECTURE_DECISION_APPROVED` da Opção A permanece válida; **implementação não aceita ainda**.
+
+## 34. PR #183 — correções de revisão aplicadas (13/11/2026)
 
 **TASK_ID:** ENG-HOME-PRC-NATIVE-INTEGRATION-PR183-REVIEW-FIX-01 — novo HEAD `da9a64547d2b50f32fc0ae23bc1ae84a7380062c` na mesma branch (PR #183 atualizado).
 

@@ -251,6 +251,8 @@ from app.application.capability_provision.semantic_capability_support import (
     _activity_outcome_summary,
     _apply_declared_answer,
     _attempt_satisfies_obligation,
+    MaterialObligation,
+    _normalize_obligation_tuple,
     _authoritative_structure_root,
     _bind_attempt_to_target,
     _bind_identifier_args_from_utterance,
@@ -265,6 +267,7 @@ from app.application.capability_provision.semantic_capability_support import (
     _emit_activity,
     _evaluate_material_obligations,
     _evidence_rows_by_code,
+    _invocation_vocabulary,
     _finalize_agent_collected_attempts,
     _find_act_capability,
     _fit_json_block,
@@ -1381,6 +1384,14 @@ class OperationalCapabilityOrchestrator:
             source_system=group.owner_ref,
             provider_name=group.display_name,
         )
+        operation_class = next(
+            (
+                capability.operation_class.value
+                for capability in group.capabilities
+                if capability.remote_name == remote_used
+            ),
+            None,
+        )
         return GovernedCapabilityProvenance(
             source_refs=(
                 SourceRef(
@@ -1399,6 +1410,7 @@ class OperationalCapabilityOrchestrator:
             is_complete=outcome.is_complete,
             provider_id=group.provider_id,
             capability_group_id=group.group_id,
+            operation_class=operation_class,
         )
 
 
@@ -1449,6 +1461,14 @@ class OperationalCapabilityOrchestrator:
             ),
             provider_id=group.provider_id,
             capability_group_id=group.group_id,
+            operation_class=next(
+                (
+                    capability.operation_class.value
+                    for capability in group.capabilities
+                    if capability.remote_name == remote_used
+                ),
+                None,
+            ),
         )
 
         def _render(out: SpecialistOutcome) -> RenderedSpecialistOutcome:
@@ -2557,6 +2577,8 @@ class OperationalCapabilityOrchestrator:
             ),
             provider_id=group.provider_id,
             capability_group_id=group.group_id,
+            operation_class=descriptor.operation_class.value,
+            invocation_vocabulary=_invocation_vocabulary(args),
         )
 
         def _render(out: SpecialistOutcome) -> RenderedSpecialistOutcome:
@@ -2679,7 +2701,22 @@ class OperationalCapabilityOrchestrator:
             declared=True,
         )
         targets = _normalize_identity_tuple(target_identities)
-        needed = _normalize_identity_tuple(evidence_needed) or targets
+        normalized_needed = _normalize_obligation_tuple(evidence_needed)
+        if normalized_needed is None:
+            # An ``operation`` outside the owner operation vocabulary
+            # is a contract violation — reject the plan so the model
+            # receives bounded vocabulary feedback (RC5).
+            _logger.info(
+                "orchestration stage=semantic_plan "
+                "decision=invalid_obligation_operation "
+                "correlation_id=%s",
+                correlation,
+            )
+            return None
+        needed = normalized_needed or tuple(
+            MaterialObligation(description=target)
+            for target in targets
+        )
         return SemanticInvestigationPlan(
             goal=goal,
             target_identities=targets,

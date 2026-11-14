@@ -133,15 +133,21 @@ def test_no_progress_projection_emits_continuity_coverage_note():
     assert "teo" not in note.lower()
 
 
-def test_default_instruction_is_v2_4_typed_objective():
+def test_default_instruction_is_v2_5_obligation_anchors():
+    """RC5: v2-5 obligation-anchors instruction is the active default;
+    prior versions remain selectable for rollback."""
     selected = pai.load_selected_investigation_instructions()
     assert (
         selected.instruction_version
-        == "generalist-semantic-v2-4-typed-objective"
+        == "generalist-semantic-v2-5-obligation-anchors"
     )
-    assert selected.text_fingerprint == "9737ae1d9d281974"
-    # v2-3 and v2-2 remain selectable for rollback (preserved
+    assert selected.text_fingerprint == "4be504a714f320b3"
+    # v2-4, v2-3 and v2-2 remain selectable for rollback (preserved
     # fingerprints).
+    v24 = pai.load_selected_investigation_instructions(
+        instruction_version="generalist-semantic-v2-4-typed-objective"
+    )
+    assert v24.text_fingerprint == "9737ae1d9d281974"
     v23 = pai.load_selected_investigation_instructions(
         instruction_version="generalist-semantic-v2-3-enumeration-intent"
     )
