@@ -627,3 +627,31 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Aceite esperado:** clique em card de caso PRC na Home abre detalhe do PRC dentro de `/apps/engineering`, sem redirecionar a `/apps/my-requests`; back/forward, refresh/deep-link, estado de aba `Solicitações`, autorização/403 e navegação acessível preservados; não encaminhar usuário ao My Requests para atendimento/correção de PRC; teste visual+API em HML com o mesmo requestId. Comparar com atalho global `my_requests` e ajustar rótulo/escopo conforme UX para eliminar ambiguidade, sem alterar other-app flows.
 
 **Estado:** `PO_NAVIGATION_RULE_APPROVED / FRONTEND_IMPLEMENTATION_TO_INVENTORY / HML_VISUAL_E2E_PENDING / PRD_NOT_AUTHORIZED`. Trabalhar diretamente em `main` conforme convenção definida pelo PO; não criar branch automaticamente. Sem deploy ou escrita de teste em produção.
+
+## 38. Correção de navegação interna PRC — implementação, HML visual E2E e release PRD (14/11/2026)
+
+**TASK:** `EVA-PRC-PORTAL-INTERNAL-NAVIGATION-PRD-RELEASE-01`. Implementação em `main` conforme §37/PO.
+
+**Diagnóstico/causa raiz (CONFIRMADO_NO_CODIGO):** backend já emitia href interno correto (`/apps/engineering/product-registration/{uuid}`, §35). `navigateGovernedHref()` em `plugins/engineering/src/app/engineeringRoutes.ts` aplicava `window.location.assign()` a **todo** href `/apps/*` — destinos internos do próprio MFE sofriam navegação full-page, saindo do contexto do roteador da Engenharia. Hipótese de backend/contrato descartada por evidência HML (hrefs corretos no payload).
+
+**Diff (`198f2ddf07055b1a2ed5be35651cbcc228bd3305`, main direto, ff-only):**
+- `engineeringRoutes.ts`: `navigateGovernedHref(href, { basePath })` — destino sob o basePath da Engenharia navega via `pushState` + `PopStateEvent` (mesmo mecanismo de `navigateEngineeringView`/`navigatePrcHref`); destinos `/apps/*` externos (My Requests corporativo, LMPs) mantêm `location.assign`. Href não governado continua recusado sem efeito. Guard `typeof window === 'undefined'` para SSR/node.
+- `HomePage.tsx`: `openItem(item, basePath)` propaga basePath; dep array de `buildEventItems` inclui `basePath`.
+- `engineeringRoutes.test.ts`: +3 casos — interno→pushState/popstate sem assign; externo `/apps/my-requests`→assign; não governado→no-op.
+- `engineeringRouteCatalog.ts` **inalterado**: atalho `my_requests → /apps/my-requests` é acesso corporativo legítimo (§37), não rota de detalhe PRC.
+- Backend: **zero alteração** (contrato já correto; PRD já continha PR #183 — `prc_home_sources.py` presente no container `e17ea1dc1f`).
+
+**Testes:** vitest focado 25/25 (`engineeringRoutes` 11, `homeViewModel` 14); `tsc --noEmit` ok; `vite build` ok (`App-Ccx25OWd.js`).
+
+**HML (deploy canônico `up-hml-sequential.sh --fase mfe --build engineering`):** checkout `198f2ddf07`, imagem `delpi-hml/engineering:local` digest `sha256:fd917ff841e2b809d903c24ced9bb1ce881b095d6718d6a0faa971b80abcfa70` (anterior `56d892d04213`), container healthy.
+- API: Home `tasks`=5 não-terminais, `requests` total=14 requester-only — 100% hrefs internos; LMPs=255 (`/apps/dashboard-lmps`, externo correto); anon 401; denied 403; detalhe `1a808947` 200; deep-link e fila servem SPA (200); zero 5xx.
+- **Visual E2E em navegador real** (Playwright Chromium headless no host HML, credencial `HML_TEST_*`, usuário "Hml Tester"): login SSO→Home; clique "Abrir" em card PRC→URL `/apps/engineering/product-registration/1a808947-…` **sem** reload de documento (`window.__spaMarker` preservado); sem `/apps/my-requests`; back→Home; forward→detalhe; deep-link renderiza detalhe completo (Controle e Cadastro de Produtos, ações Concluir/Devolver/Rejeitar); refresh preserva detalhe; breadcrumb "Solicitações"→fila PRC. **9/9 verificações PASS.**
+
+**Release PRD (gates 1–10 satisfeitos; aprovação operacional = diretriz vigente AGENTS.md + esta missão; procedimento oficial `up-prod-sequential.sh --build engineering`):**
+- Checkout PRD `e4d66bb219`→`198f2ddf07` (ff-only). Somente MFE `engineering` reconstruído — backend `infra-engineering-api` já continha PR #183 (`e17ea1dc1f`), não requeria redeploy.
+- Anterior (rollback disponível): imagem `sha256:99904f3f4febdb82c5da997fdaa8e2ae0313c2012f814f8c30f1477098e364c8`.
+- Novo: imagem `infra-engineering` `sha256:117c335fa51d184861893986c7c08df4933d020eadb855d9240ccfe80038c380`, container `delpi-engineering` Up; bundle servido `App-Ccx25OWd.js` — **idêntico ao artefato aceito em HML**.
+- Smoke read-only: `https://minhadelpi.com.br` — deep-link PRC 200, remoteEntry 200, Home anon 401, zero 5xx nos logs `delpi-engineering`/`delpi-engineering-api` pós-deploy. **Zero escritas de negócio em PRD.**
+- Limitação honesta: smoke autenticado de clique em card não executado em PRD (sem credencial de usuário real autorizada para headless); evidência substituta = mesmo hash de bundle do artefato HML-aceito + contrato de href backend já verificado.
+
+**Estado:** `NAVIGATION_FIX_MERGED / HML_VISUAL_E2E_PASS / PRD_DEPLOYED_READONLY_SMOKE_PASS / ROLLBACK_IMAGE_RETAINED / PRD_BUSINESS_TEST_WRITES=0`.
