@@ -67,6 +67,37 @@ Dado real fica fora deste arquivo (repositório público). As evidências citam 
 | D5 | cache do XML | guardar por chave, limpeza após 90 dias sem uso |
 | D1 | escopo S2S próprio | manter o emprestado (`stock-inventory.read`) |
 
+## F — Estado depois da T9R3 (`1fa58c3dfc`)
+
+A1, D1 e a janela de 30 dias não mudaram. A verificação de PROD foi in-process (ator técnico); o grant de senha do portal continua desligado. A CLARA reconfere.
+
+| # | Estado | Prova |
+|---|---|---|
+| A1 | mantido | decisão do owner; o motor não foi alterado nessa regra |
+| A2 | FIXED | código `origin`, rótulo «CST (origem)», chave estável com o texto antigo. PROD: 3, 6 e 7 ocorrências de origem nas três análises |
+| A3 | FIXED | as ocorrências lidas trazem fornecedor, série, TES e diferença |
+| A4 | FIXED | nas três análises, nenhuma ocorrência ficou com a leitura igual à ação |
+| A5 | FIXED | `analyze` da filial 01 em 13/11: causas `cadastro` e `lançamento`; 6 achados citam a TES que a ocorrência tem |
+| A6 | FIXED | natureza preenchida em todas as sem par (72, 85 e 79) |
+| A7 | FIXED | resolver e reabrir na filial 01 de 13/11 gravaram dois eventos; a leitura devolveu os dois e o estado final `pending` |
+| B1 | FIXED | `daily.previous` com 1 dia, o tamanho do período |
+| B2 | FIXED | o ponto da tendência leva datas, filiais e as contagens; `group=month` agrega |
+| B3 | FIXED | o resumo passou a ter `gross_checked` e `high_difference` |
+| B4 | FIXED | lançadas fora do período em grupos por data: 21, 22 e 19 |
+| B5 | FIXED | `situation=clean` e `situation=divergent` filtram |
+| B6 | FIXED | a filial 02 avançou `reading_xml` de 45/329 até 329/329 |
+| B7 | FIXED | o detalhe aponta `/entry-audit/xml/{chave}`. DANFE/DACTE continuam no pedido do LNF, quando existe |
+| B8 | FIXED | o CT-e da filial 01 traz emitente, tomador, CFOP, CST, base, ICMS, TES e notas vinculadas. A filial 02 nesse dia não teve CT-e |
+| B9 | ACCEPTED_RESIDUAL | a planilha de 12/11 filial 01 saiu com as 9 abas portadas (Resumo, TES, Divergências, Comparativo, Só no XML, Só no SF1, CT-e, Itens Divergências, Itens Excluídos). «Itens Comparativo» e «Itens Agrupados» da skill não têm fonte no export e ficam de fora |
+| C1 | FIXED | a tool `analyze` publica o enum com `entry_audit_findings`; `refs[0]` e `parameters.ref` chegam no handler; teste do schema publicado PASS |
+| C2 | FIXED | fichas com «Equipe fiscal/contábil (aciona as outras áreas)». Corpus HML `c10c8b3f-63ca-477d-bea5-0aae6bcf3d0d` e PROD `1c8d5014-3a4e-41f0-8698-bd55f777214c`: 104 ingeridas, 0 falhas, 2517 itens, 115 fontes. P2 sumiu das fichas AE. AE-15 não foi ingerida. P7 continua TO_INVENTORY |
+| D1 | ACCEPTED_RESIDUAL | escopo emprestado, como o owner decidiu |
+| D2 | ACCEPTED_RESIDUAL | o 15×13 virou a contagem real do catálogo (15, com a flag desligada). As fichas deixaram de exigir P2. Restam 18 falhas anteriores, fora desta trilha: contexto MCP sem usuário (`PermissionError: Unauthorized`) e um flag destrutivo a mais (`invoice_posting.cancel`). Não foram afrouxadas. Dono: suíte CLARA/fechamento |
+| D3 | BLOCKED | a api-delpi de HML lê pelas variáveis `ENTRY_AUDIT_DB_*` e devolveu 2 filiais (01 e 02). `DB_HOST` segue `totvs-disabled.hml.invalid`. Falta o usuário de teste do Keycloak de HML para o MCP ponta a ponta. Não foi executado em PROD |
+| D4 | FIXED | canal `mcp/clara`: `entry_audit.run` na filial 02 de 12/11; `entry_audit.rerun` na filial 01 de 12/11 e de 13/11. Não há `run` gravado para a filial 01 de 13/11 |
+| D5 | FIXED | V027 (`last_used_at`, `cancelled`), limpeza em 90 dias. Filial 02, 12/11: primeira execução baixou 321 XML; a seguinte baixou 0 e reaproveitou 321. A filial 01 de 12/11, no meio, baixou 16 e reaproveitou 325 |
+| D6 | FIXED | calendário no track.md. Nenhuma tag foi apagada |
+
 ## Verificação desta lista
 
 - Filial 02, 12/11/2026, executada pela CLARA: `done`, 19 NF-e casadas, 10 ocorrências (8 Média, 2 Baixa), 85 sem par, 217 lançadas fora do período, 0 XML indisponível. Sem defeito novo além de B6.
