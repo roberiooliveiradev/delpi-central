@@ -2928,3 +2928,19 @@ Owner surface changed (`9fd77c0bd1`: TÉO 23→21 tools, consolidated `record_re
 | S19 sucesso técnico sem negócio | P1 get_context DISCOVERY_ONLY | PROVEN_IN_SAMPLE (não-evidência classificada) |
 
 **Métricas:** FALSE_COMPLETE=0 e FALSE_SATISFIED=0 na amostra executada; `MISSED_CONTINUATION` observável em call-before-declare; `NO_PROGRESS_LOOPS`=bounded; `GROUNDING`=presente nos completes; env failures classificadas como insuficiência honesta, não defeito. **Não generalizar para universal** — amostra finita com oráculo.
+
+
+### 2026-11-14 — INT-3 plano finito de rework R1–R6 (matriz de provas; Doc 16)
+
+**TASK:** \`DELIA-C3-T2-INT3-SIX-ISSUE-BOUNDED-REWORK-MASTER-PLAN-01\`. **Estado: PLAN_ONLY; TEST_NOT_RUN; CODE_CHANGED=NO.** Todas as correções precisam de baseline/corpus congelado, RED→GREEN, prova de generalização/safety/outcome no SHA/config, revisão independente por problema, sem avançar automaticamente.
+
+| Ordem | Verificação positiva e negativa | Encerramento |
+|---|---|---|
+| R1 \`CALL_BEFORE_DECLARE\` | Declaração aceita e **correta** antes do primeiro owner READ dependente de objetivo; \`coverage_note\` mid-flight tipado; casos discovery/clarificação sem leitura quando desnecessária; renaming de owner/schema; no mutation of plan | \`goal_accepted_index < first_dependent_read_index\` em controle apropriado; zero falso COMPLETE; comparação baseline × instrução especializada; AuthZ/regressão preservados |
+| R2 \`CONTINUATION/PAGINATION\` | Continua quando há evidência incompleta e caminho autorizado; evita repetir mesma página; não consulta extra para agregação completa; respeita tool budget | Multipage legítima/negativas; task outcome e custo |
+| R3 \`MCP_AUTH_ENV\` | Identity/catálogo/owner live auditado sem segredo; indisponibilidade distinta de permissão negada | Bateria executável com discovery real; sem \`eligible_capabilities=[]\` inexplicado |
+| R4 \`AUTH_DENY_ORACLE\` | Identidade sem permissão real e owner denegado; nenhuma tentativa de bypass | 403/deny + estado honesto, sem falsa denúncia em identidade permitida |
+| R5 \`MULTIPAGE_REPROOF\` | 3× página legítima 40+40+29=109 e negativa cross-owner/scope/diff-total/repeats | \`COMPLETE\` somente por cobertura autoritativa no SHA/config |
+| R6 \`CLARIFICATION\` | Ambiguidade verdadeira; usuário já especificou ID; evidência owner já disponível; continuação após resposta | Pergunta adequada apenas quando necessário; sem loop/no tool bypass |
+
+**Oráculos:** \`PASS\`, \`FAIL\`, \`INCONCLUSIVE\`, \`PENDING\`, \`TEST_NOT_RUN\`, \`STALE_EVIDENCE\`. Real model evaluation requer isolação, fingerprint de modelo/instrução/config e trace correlacionado; não usar credencial de produção. **R3/R4 são pré-condições para validade de amostras R1/R2/R5/R6**, não falsos negativos cognitivos. **Sem gate de INT-3 aceito nesta edição**; \`NEXT=COORDINATION_INT3_R1_CALL_BEFORE_DECLARE_BOUNDED_IMPLEMENTATION_AUTHORIZATION\`; ver Documento 16.
