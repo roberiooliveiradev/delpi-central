@@ -1,7 +1,4 @@
-import type {
-  AlertQueueItem,
-  PageHeroHighlight,
-} from "@delpi/plugin-ui/index";
+import type { PageHeroHighlight } from "@delpi/plugin-ui/index";
 
 import type {
   HomeItem,
@@ -148,59 +145,44 @@ export const CONTINUITY_SECTIONS: readonly HomeSectionSpec[] = [
 
 /* ---- F3.R1 — composição de portal (hero / eventos) --------------- */
 
-function isGovernedHref(href: string | null | undefined): href is string {
-  return typeof href === "string" && href.startsWith("/apps/");
-}
+/* ---- Indicador compacto de pendências PRC (PO §38) -------------
+ * Substitui a listagem extensa de eventos: um único indicador com o
+ * total oficial da seção `tasks` (casos acionáveis, filtrados no
+ * backend antes de COUNT/LIMIT) e ação para a fila PRC pré-filtrada.
+ * `forbidden` nunca renderiza o card (não expõe acesso sem permissão);
+ * `unavailable` nunca mostra zero — só estado honesto. */
 
-function itemDescription(item: HomeItem): string {
-  return [item.status_label || item.status, item.date]
-    .filter(Boolean)
-    .join(" · ");
-}
+export type PendingQueueIndicator =
+  | { kind: "ready"; total: number }
+  | { kind: "empty" }
+  | { kind: "unavailable"; message: string }
+  | { kind: "hidden" };
 
-/** Itens acionáveis do card Eventos — tarefas e solicitações do
- * contrato F2a (links só quando o backend devolve href oficial). */
-export function buildEventItems(
-  sections: Pick<HomeResponse["sections"], "attention" | "tasks" | "requests">,
-  openLabel: string,
-  onOpen: (item: HomeItem) => void,
-): AlertQueueItem[] {
-  const items: AlertQueueItem[] = [];
-  for (const key of ["attention", "tasks", "requests"] as const) {
-    const section = sections[key];
-    if (section.status !== "available") continue;
-    for (const item of section.items) {
-      const href = isGovernedHref(item.href) ? item.href : undefined;
-      items.push({
-        id: item.id,
-        title: item.title,
-        description: itemDescription(item) || undefined,
-        tone: key === "attention" ? "warning" : "neutral",
-        actionLabel: href ? openLabel : undefined,
-        onAction: href ? () => onOpen(item) : undefined,
-      });
-    }
+export function buildPendingQueueIndicator(
+  sections: Pick<HomeResponse["sections"], "tasks">,
+): PendingQueueIndicator {
+  const tasks = sections.tasks;
+  if (tasks.status === "forbidden") return { kind: "hidden" };
+  if (tasks.status === "unavailable") {
+    return {
+      kind: "unavailable",
+      message:
+        "A fila de solicitações está indisponível no momento. " +
+        "Tente novamente em instantes.",
+    };
   }
-  return items;
-}
-
-/** Se as fontes de evento falharam ou foram negadas — aviso discreto,
- * nunca tabela de erros. */
-export function eventsSourcesDegraded(
-  sections: Pick<HomeResponse["sections"], "attention" | "tasks" | "requests">,
-): boolean {
-  return (["attention", "tasks", "requests"] as const).some(
-    (key) =>
-      sections[key].status === "unavailable" ||
-      sections[key].status === "forbidden",
-  );
+  if (tasks.status !== "available") return { kind: "hidden" };
+  const total =
+    typeof tasks.total === "number" ? tasks.total : tasks.items.length;
+  return total === 0 ? { kind: "empty" } : { kind: "ready", total };
 }
 
 const HIGHLIGHT_SPECS: readonly {
   key: HomeSectionKey;
   label: string;
 }[] = [
-  { key: "tasks", label: "Minhas tarefas" },
+  /* tasks sai do hero: o indicador compacto de pendências é a única
+     representação acionável das tarefas PRC (PO §38). */
   { key: "requests", label: "Minhas solicitações" },
   { key: "lmps", label: "LMPs em acompanhamento" },
 ];

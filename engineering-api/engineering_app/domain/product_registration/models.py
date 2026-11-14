@@ -26,6 +26,14 @@ PRC_STATUSES: tuple[str, ...] = (
 )
 TERMINAL_STATUSES: frozenset[str] = frozenset({"completed", "rejected"})
 
+# Conjunto oficial de casos acionáveis da fila PRC — todo status exceto
+# os terminais. Fonte única de verdade: Home (tasks) e o preset
+# `view=pending` do endpoint de fila aplicam este universo no WHERE,
+# antes de COUNT/LIMIT/OFFSET.
+PRC_ACTIONABLE_STATUSES: tuple[str, ...] = tuple(
+    s for s in PRC_STATUSES if s not in TERMINAL_STATUSES
+)
+
 REQUEST_TYPES: tuple[str, ...] = ("create", "update")
 
 # Modelo de acesso aprovado pelo PO (PRODUCT-REGISTRATION-PO-DECISIONS

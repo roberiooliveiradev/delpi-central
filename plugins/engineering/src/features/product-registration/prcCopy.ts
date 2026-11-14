@@ -105,6 +105,10 @@ export const PRC_COPY = {
   remoteUpdatePending:
     "Esta solicitação foi atualizada em outra sessão. Suas edições estão preservadas; os dados serão recarregados ao concluir.",
   clearFilters: "Limpar filtros",
+  pendingViewLabel: "Pendências de atendimento",
+  pendingViewDescription:
+    "Exibindo somente solicitações que aguardam tratamento da Engenharia.",
+  pendingViewClear: "Ver todas as solicitações",
   emptyQueue: "Nenhuma solicitação no escopo atual.",
   emptyFiltered: "Nenhum resultado para os filtros aplicados.",
   awaitingCode: "Aguardando cadastro",
@@ -272,3 +276,18 @@ export {
   prcRequesterLabel,
   prcStatusLabel,
 };
+
+/** Rótulos de apresentação para a origem técnica da solicitação.
+ * O contrato persiste `detail.source` (ex.: `my-requests`); a UI
+ * nunca expõe o código bruto — desconhecido cai no fallback. */
+export const PRC_SOURCE_LABELS: Record<string, string> = {
+  "my-requests": "Canal corporativo (My Requests)",
+  my_requests: "Canal corporativo (My Requests)",
+  engineering: "Portal Engenharia",
+  "engineering-api": "Portal Engenharia",
+};
+
+export function prcSourceLabel(source: string | null | undefined): string {
+  if (!source) return "—";
+  return PRC_SOURCE_LABELS[source] ?? "Canal integrado";
+}

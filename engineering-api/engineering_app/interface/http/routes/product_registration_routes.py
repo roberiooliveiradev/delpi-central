@@ -37,6 +37,7 @@ from engineering_app.domain.product_registration.models import (
     ENG_ACCESS,
     MR_ACCESS,
     MR_PRC_CREATE,
+    PRC_ACTIONABLE_STATUSES,
 )
 from engineering_app.infrastructure.gateways.core_identity_lookup import (
     collect_identity_subjects,
@@ -434,6 +435,15 @@ async def prc_intake_submit(
 @require_any_permission(_REQUESTER_READ_PERMS)
 async def prc_list_requests(
     status: str | None = Query(default=None, max_length=32),
+    view: str | None = Query(
+        default=None,
+        pattern="^(pending)$",
+        description=(
+            "Preset governado: pending = casos acionáveis (status PRC "
+            "não terminais), filtrado no backend antes de COUNT/LIMIT. "
+            "`status` explícito prevalece sobre o preset."
+        ),
+    ),
     type: str | None = Query(default=None, pattern="^(create|update)$"),
     assignee: str | None = Query(default=None, max_length=200),
     source: str | None = Query(default=None, max_length=100),
@@ -456,7 +466,13 @@ async def prc_list_requests(
         data = build_prc_service().list_requests(
             actor=_actor(user),
             filters={
-                "status": status, "type": type, "assignee": assignee,
+                "status": status,
+                "statuses": (
+                    list(PRC_ACTIONABLE_STATUSES)
+                    if view == "pending" and not status
+                    else None
+                ),
+                "type": type, "assignee": assignee,
                 "source": source, "search": search,
                 "dateFrom": dateFrom, "dateTo": dateTo,
                 "page": page, "pageSize": pageSize,

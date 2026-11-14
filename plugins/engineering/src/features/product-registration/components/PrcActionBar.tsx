@@ -74,6 +74,8 @@ export function PrcActionBar({
 
   if (!actions.length) return null;
 
+  const firstPrimaryIndex = actions.findIndex((s) => s.primary && !s.danger);
+
   const close = () => {
     setPending(null);
     setReasonError("");
@@ -159,12 +161,23 @@ export function PrcActionBar({
 
   return (
     <>
-      <div className="engineering-prc__actions" role="group" aria-label="Ações da solicitação">
-        {actions.map((spec) => (
+      <div
+        className="engineering-prc__actions"
+        role="group"
+        aria-label="Ações de atendimento da solicitação"
+      >
+        {actions.map((spec, index) => (
+          /* Hierarquia PO §38: exatamente uma ação principal por estado —
+           * a primeira spec `primary` permitida pelo backend. Demais
+           * ficam secundárias; destrutivas sempre ghost, por último. */
           <EngineeringActionButton
             key={spec.action}
             variant={
-              spec.danger ? "ghost" : spec.primary ? "primary" : "default"
+              spec.danger
+                ? "ghost"
+                : spec.primary && index === firstPrimaryIndex
+                  ? "primary"
+                  : "default"
             }
             softDisabled={busy}
             onClick={() => click(spec)}

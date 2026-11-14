@@ -27,8 +27,7 @@ from engineering_app.domain.product_registration.errors import (
     PrcForbiddenError,
 )
 from engineering_app.domain.product_registration.models import (
-    PRC_STATUSES,
-    TERMINAL_STATUSES,
+    PRC_ACTIONABLE_STATUSES,
     PrcActor,
 )
 
@@ -38,9 +37,7 @@ logger = logging.getLogger(__name__)
 # ``tasks`` representa pendências reais — todo status PRC exceto os
 # terminais definidos no domínio (completed, rejected). Aplicado no
 # WHERE antes de COUNT/LIMIT — nunca sobre a página já retornada.
-_ACTIONABLE_STATUSES: tuple[str, ...] = tuple(
-    s for s in PRC_STATUSES if s not in TERMINAL_STATUSES
-)
+_ACTIONABLE_STATUSES = PRC_ACTIONABLE_STATUSES
 
 _SYSTEM = "engineering-api"
 _ENDPOINT = "GET /v1/product-registration/requests"

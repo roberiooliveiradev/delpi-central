@@ -277,3 +277,70 @@ async def test_meta_carries_request_identity(service_repo, queue_source):
     item = out.items[0]
     assert item.meta["request_id"] == RID_A
     assert item.meta["request_type"] == "create"
+
+
+@pytest.mark.anyio
+async def test_pending_view_matches_tasks_universe(service_repo):
+    """Preset `view=pending` da fila = mesmo universo de `tasks` Home:
+    status não terminais do domínio, filtrados antes de COUNT/LIMIT."""
+    from engineering_app.domain.product_registration.models import (
+        PRC_ACTIONABLE_STATUSES,
+        PRC_STATUSES,
+        TERMINAL_STATUSES,
+    )
+    from engineering_app.domain.product_registration.models import (
+        PrcActor,
+    )
+
+    assert PRC_ACTIONABLE_STATUSES == tuple(
+        s for s in PRC_STATUSES if s not in TERMINAL_STATUSES
+    )
+    _seed(service_repo._repo, rid="a1a1a1a1-1111-4111-8111-111111111111",
+          requester="u1", status="submitted")
+    _seed(service_repo._repo, rid="a2a2a2a2-2222-4222-8222-222222222222",
+          requester="u1", status="in_progress")
+    _seed(service_repo._repo, rid="a3a3a3a3-3333-4333-8333-333333333333",
+          requester="u1", status="completed")
+    _seed(service_repo._repo, rid="a4a4a4a4-4444-4444-8444-444444444444",
+          requester="u1", status="rejected")
+
+    actor = PrcActor(
+        user_id="analyst-1",
+        permissions=frozenset({ENG_ACCESS}),
+    )
+    res = service_repo.list_requests(
+        actor=actor,
+        filters={"statuses": list(PRC_ACTIONABLE_STATUSES), "page": 1,
+                 "pageSize": 25},
+    )
+    ids = {i["id"] for i in res["items"]}
+    assert ids == {
+        "a1a1a1a1-1111-4111-8111-111111111111",
+        "a2a2a2a2-2222-4222-8222-222222222222",
+    }
+    assert res["total"] == 2
+
+
+@pytest.mark.anyio
+async def test_pending_view_status_explicit_overrides(service_repo):
+    """`status` explícito prevalece sobre o preset — seleção explícita
+    de um terminal é respeitada (regra §38)."""
+    from engineering_app.domain.product_registration.models import PrcActor
+
+    _seed(service_repo._repo, rid="b1b1b1b1-1111-4111-8111-111111111111",
+          requester="u1", status="submitted")
+    _seed(service_repo._repo, rid="b2b2b2b2-2222-4222-8222-222222222222",
+          requester="u1", status="completed")
+
+    actor = PrcActor(
+        user_id="analyst-1",
+        permissions=frozenset({ENG_ACCESS}),
+    )
+    res = service_repo.list_requests(
+        actor=actor,
+        filters={"status": "completed", "page": 1, "pageSize": 25},
+    )
+    assert {i["id"] for i in res["items"]} == {
+        "b2b2b2b2-2222-4222-8222-222222222222"
+    }
+    assert res["total"] == 1

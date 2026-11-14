@@ -110,6 +110,7 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
         const env = await fetchPrcQueue(
           {
             status: state.status,
+            view: state.view,
             type: state.type,
             search: state.search,
             page: state.page,
@@ -169,6 +170,7 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
   }, [searchDraft, applied, commit]);
 
   const hasActiveFilters =
+    applied.view !== "" ||
     applied.status !== "" ||
     applied.type !== "" ||
     applied.search !== "" ||
@@ -176,7 +178,7 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
 
   const clearFilters = useCallback(() => {
     setSearchDraft("");
-    commit({ status: "", type: "", search: "", page: 1, sortBy: "", sortDir: "desc" });
+    commit({ view: "", status: "", type: "", search: "", page: 1, sortBy: "", sortDir: "desc" });
   }, [commit]);
 
   const openDetail = useCallback(
@@ -313,7 +315,7 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
             label="Status"
             value={applied.status}
             onChange={(value) =>
-              commit({ ...applied, status: value, page: 1 })
+              commit({ ...applied, view: "", status: value, page: 1 })
             }
             options={STATUS_OPTIONS}
           />
@@ -329,6 +331,22 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
           <PrcFlagsOpsPanel basePath={basePath} compact />
         ) : null}
       </EngineeringPageHero>
+
+      {!forbidden && applied.view === "pending" ? (
+        <EngineeringStateBanner>
+          <strong>{PRC_COPY.pendingViewLabel}</strong>
+          {" — "}
+          {PRC_COPY.pendingViewDescription}{" "}
+          <EngineeringActionButton
+            variant="link"
+            onClick={() =>
+              commit({ ...applied, view: "", page: 1 })
+            }
+          >
+            {PRC_COPY.pendingViewClear}
+          </EngineeringActionButton>
+        </EngineeringStateBanner>
+      ) : null}
 
       {forbidden ? (
         <>

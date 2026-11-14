@@ -65,6 +65,7 @@ describe("prcNavigate url state", () => {
     expect(
       parsePrcQueueUrl("?status=submitted&type=create&search=abc&page=3"),
     ).toEqual({
+      view: "",
       status: "submitted",
       type: "create",
       search: "abc",
@@ -76,6 +77,7 @@ describe("prcNavigate url state", () => {
 
   it("ignores invalid type and page", () => {
     expect(parsePrcQueueUrl("?type=foo&page=-2")).toEqual({
+      view: "",
       status: "",
       type: "",
       search: "",
@@ -85,9 +87,20 @@ describe("prcNavigate url state", () => {
     });
   });
 
+  it("view=pending → preset serializado na URL", () => {
+    const state = parsePrcQueueUrl("?view=pending");
+    expect(state.view).toBe("pending");
+    expect(
+      buildPrcQueueUrl("/apps/engineering", { ...state, view: "pending" }),
+    ).toBe("/apps/engineering/product-registration?view=pending");
+    /* valor arbitrário não vira preset */
+    expect(parsePrcQueueUrl("?view=foo").view).toBe("");
+  });
+
   it("builds queue url omitting defaults", () => {
     expect(
       buildPrcQueueUrl("/apps/engineering", {
+        view: "",
         status: "in_progress",
         type: "",
         search: "",

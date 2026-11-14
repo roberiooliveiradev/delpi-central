@@ -1,11 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  buildEventItems,
   buildHeroHighlights,
   buildOverviewRows,
+  buildPendingQueueIndicator,
   buildSectionView,
-  eventsSourcesDegraded,
   partialBannerMessage,
   sourceLabel,
 } from "./homeViewModel";
@@ -111,72 +110,72 @@ describe("sourceLabel", () => {
   });
 });
 
-describe("buildEventItems", () => {
-  it("agrega attention/tasks/requests com href oficial", () => {
-    const sections = sectionsWith({
-      tasks: { status: "available", items: [TASK] },
-      requests: { status: "available", items: [ITEM] },
-    });
-    const items = buildEventItems(sections, "Abrir", () => {});
-    expect(items).toHaveLength(2);
-    expect(items[0].actionLabel).toBe("Abrir");
-    expect(items[0].onAction).toBeDefined();
+describe("buildPendingQueueIndicator", () => {
+  it("tasks available com total → ready com contagem oficial", () => {
+    const indicator = buildPendingQueueIndicator(
+      sectionsWith({
+        tasks: { status: "available", items: [TASK], total: 5 },
+      }),
+    );
+    expect(indicator).toEqual({ kind: "ready", total: 5 });
   });
 
-  it("href fora de /apps/ não vira ação (não inventa link)", () => {
-    const sections = sectionsWith({
-      tasks: {
-        status: "available",
-        items: [{ ...TASK, href: "https://externo.invalid/x" }],
-      },
-    });
-    const items = buildEventItems(sections, "Abrir", () => {});
-    expect(items[0].actionLabel).toBeUndefined();
-    expect(items[0].onAction).toBeUndefined();
+  it("total zero → empty legítimo (não esconde a seção)", () => {
+    const indicator = buildPendingQueueIndicator(
+      sectionsWith({ tasks: { status: "available", items: [], total: 0 } }),
+    );
+    expect(indicator).toEqual({ kind: "empty" });
   });
 
-  it("seção forbidden/unavailable não contribui itens", () => {
-    const sections = sectionsWith({
-      tasks: { status: "forbidden", items: [] },
-      requests: { status: "unavailable", items: [] },
-    });
-    expect(buildEventItems(sections, "Abrir", () => {})).toHaveLength(0);
+  it("unavailable → estado honesto, nunca zero", () => {
+    const indicator = buildPendingQueueIndicator(
+      sectionsWith({ tasks: { status: "unavailable", items: [] } }),
+    );
+    expect(indicator.kind).toBe("unavailable");
   });
-});
 
-describe("eventsSourcesDegraded", () => {
-  it("sinaliza degraded quando fonte falha ou é negada", () => {
-    expect(
-      eventsSourcesDegraded(
-        sectionsWith({ tasks: { status: "forbidden", items: [] } }),
-      ),
-    ).toBe(true);
-    expect(eventsSourcesDegraded(sectionsWith({}))).toBe(false);
+  it("forbidden/not_implemented → hidden (sem card sem permissão)", () => {
+    for (const status of ["forbidden", "not_implemented"] as const) {
+      const indicator = buildPendingQueueIndicator(
+        sectionsWith({ tasks: { status, items: [] } }),
+      );
+      expect(indicator.kind).toBe("hidden");
+    }
   });
 });
 
 describe("buildHeroHighlights", () => {
-  it("só numera fontes autorizadas — forbidden/unavailable nunca vira 0", () => {
+  it("tasks sai do hero — o indicador de pendências é a fonte única", () => {
     const sections = sectionsWith({
       tasks: { status: "available", items: [TASK], total: 4 },
+      requests: { status: "available", items: [ITEM], total: 2 },
+      lmps: { status: "available", items: [TASK], total: 9 },
+    });
+    const highlights = buildHeroHighlights(sections, false);
+    expect(highlights.find((h) => h.id === "tasks")).toBeUndefined();
+    expect(highlights.map((h) => h.id)).toEqual(["requests", "lmps"]);
+  });
+
+  it("só numera fontes autorizadas — forbidden/unavailable nunca vira 0", () => {
+    const sections = sectionsWith({
       requests: { status: "forbidden", items: [] },
-      lmps: { status: "unavailable", items: [] },
+      lmps: { status: "available", items: [TASK], total: 9 },
     });
     const highlights = buildHeroHighlights(sections, false);
     expect(highlights).toHaveLength(1);
-    expect(highlights[0].id).toBe("tasks");
-    expect(highlights[0].value).toBe("4");
+    expect(highlights[0].id).toBe("lmps");
+    expect(highlights[0].value).toBe("9");
   });
 
   it("empty → 0 legítimo; available sem total usa tamanho da lista", () => {
     const sections = sectionsWith({
-      tasks: { status: "available", items: [TASK, TASK] },
+      requests: { status: "available", items: [ITEM, ITEM] },
       lmps: { status: "empty", items: [] },
     });
     const highlights = buildHeroHighlights(sections, false);
-    const tasks = highlights.find((h) => h.id === "tasks");
+    const requests = highlights.find((h) => h.id === "requests");
     const lmps = highlights.find((h) => h.id === "lmps");
-    expect(tasks?.value).toBe("2");
+    expect(requests?.value).toBe("2");
     expect(lmps?.value).toBe("0");
   });
 });

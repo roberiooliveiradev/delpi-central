@@ -275,15 +275,16 @@ export const HOME_COPY = {
     refreshLabel: "Atualizar",
     refreshingLabel: "Atualizando…",
   },
-  events: {
-    title: "Eventos e interações",
-    subtitle: "Tarefas e solicitações que pedem sua atenção",
-    listAriaLabel: "Lista de eventos e interações",
-    queueOkTitle: "Tudo em dia — nenhuma pendência no momento.",
-    sourcesNotice:
-      "Algumas fontes não responderam ou exigem permissão adicional — exibindo apenas o que está autorizado e disponível.",
-    openLabel: "Abrir",
-    emptyLabel: "Nenhum evento no momento.",
+  pending: {
+    title: "Solicitações pendentes de atendimento",
+    subtitle:
+      "Casos de cadastro de produtos aguardando tratamento da Engenharia",
+    countSingular: "solicitação",
+    countPlural: "solicitações",
+    openLabel: "Ver solicitações",
+    emptyLabel: "Nenhuma solicitação pendente de atendimento.",
+    unavailableLabel:
+      "A fila de solicitações está indisponível no momento.",
   },
   features: {
     title: "Caminhos e funcionalidades",

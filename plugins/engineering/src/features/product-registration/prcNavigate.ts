@@ -77,6 +77,10 @@ export function useLocationSearch(): string {
 // --- Fila: estado orientado por URL --------------------------------------
 
 export type PrcQueueUrlState = {
+  /** Preset governado da fila — `pending` = casos acionáveis
+   * (status não terminais), aplicado no backend antes de
+   * COUNT/LIMIT. `status` explícito prevalece sobre o preset. */
+  view: string;
   status: string;
   type: string;
   search: string;
@@ -86,6 +90,7 @@ export type PrcQueueUrlState = {
 };
 
 export const EMPTY_PRC_QUEUE_URL: PrcQueueUrlState = {
+  view: "",
   status: "",
   type: "",
   search: "",
@@ -106,6 +111,7 @@ export function parsePrcQueueUrl(search: string): PrcQueueUrlState {
   const sortBy = p.get("sortBy") ?? "";
   const sortDir = p.get("sortDir") === "asc" ? "asc" : "desc";
   return {
+    view: p.get("view") === "pending" ? "pending" : "",
     status: p.get("status") ?? "",
     type: type === "create" || type === "update" ? type : "",
     search: p.get("search") ?? "",
@@ -120,6 +126,7 @@ export function buildPrcQueueUrl(
   state: PrcQueueUrlState,
 ): string {
   const p = new URLSearchParams();
+  if (state.view === "pending") p.set("view", "pending");
   if (state.status) p.set("status", state.status);
   if (state.type) p.set("type", state.type);
   if (state.search) p.set("search", state.search);

@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 
 import { getDisplayNameFromAccessToken } from "../../app/authDisplayName";
-import { navigateGovernedHref } from "../../app/engineeringRoutes";
 import { openCatalogRoute } from "../../app/openCatalogRoute";
 import {
   getFavoriteRouteIds,
@@ -39,12 +38,15 @@ import {
   type CatalogRoute,
   type CatalogSection,
 } from "../../content/engineeringRouteCatalog";
-import type { HomeItem } from "../../types/home";
+import {
+  buildPrcQueueUrl,
+  navigatePrcHref,
+  EMPTY_PRC_QUEUE_URL,
+} from "../product-registration/prcNavigate";
 import {
   EngineeringActionButton,
   EngineeringCatalogSearchBar,
   EngineeringEmptyState,
-  EngineeringEventsSection,
   EngineeringLoadingActivityCard,
   EngineeringPageHero,
   EngineeringRecentAccessStrip,
@@ -53,9 +55,8 @@ import {
   EngineeringStateBanner,
 } from "../../ui/engineeringUi";
 import {
-  buildEventItems,
   buildHeroHighlights,
-  eventsSourcesDegraded,
+  buildPendingQueueIndicator,
 } from "./homeViewModel";
 import { useHomeData } from "./useHomeData";
 
@@ -78,8 +79,10 @@ const ROUTE_ICONS: Record<string, ReactNode> = {
 
 };
 
-function openItem(item: HomeItem, basePath: string): void {
-  navigateGovernedHref(item.href, { basePath });
+function openPendingQueue(basePath: string): void {
+  navigatePrcHref(
+    buildPrcQueueUrl(basePath, { ...EMPTY_PRC_QUEUE_URL, view: "pending" }),
+  );
 }
 
 type HomePageProps = {
@@ -155,16 +158,10 @@ export function HomePage({
     [home],
   );
 
-  const eventItems = useMemo(
-    () =>
-      home
-        ? buildEventItems(home.sections, copy.events.openLabel, (item) =>
-            openItem(item, basePath),
-          )
-        : [],
-    [home, copy.events.openLabel, basePath],
+  const pendingIndicator = useMemo(
+    () => (home ? buildPendingQueueIndicator(home.sections) : null),
+    [home],
   );
-  const degraded = home ? eventsSourcesDegraded(home.sections) : false;
 
   const filteredSections = useMemo(
     () => filterSectionsByQuery(sections, searchQuery),
@@ -217,24 +214,41 @@ export function HomePage({
 
       {home ? (
         <>
-          <EngineeringEventsSection
-            title={copy.events.title}
-            subtitle={copy.events.subtitle}
-            listAriaLabel={copy.events.listAriaLabel}
-            emptyMessage={copy.events.emptyLabel}
-            items={eventItems}
-          >
-            {degraded ? (
-              <p className="engineering-home-inline-note" role="status">
-                {copy.events.sourcesNotice}
-              </p>
-            ) : null}
-            {eventItems.length === 0 && !degraded ? (
-              <p className="engineering-home-inline-note" role="status">
-                {copy.events.queueOkTitle}
-              </p>
-            ) : null}
-          </EngineeringEventsSection>
+          {pendingIndicator && pendingIndicator.kind !== "hidden" ? (
+            <EngineeringSectionCard
+              title={copy.pending.title}
+              subtitle={copy.pending.subtitle}
+            >
+              <div className="engineering-home-pending">
+                {pendingIndicator.kind === "ready" ? (
+                  <>
+                    <p className="engineering-home-pending__count">
+                      <strong aria-live="polite">
+                        {pendingIndicator.total}
+                      </strong>{" "}
+                      {pendingIndicator.total === 1
+                        ? copy.pending.countSingular
+                        : copy.pending.countPlural}
+                    </p>
+                    <EngineeringActionButton
+                      variant="primary"
+                      onClick={() => openPendingQueue(basePath)}
+                    >
+                      {copy.pending.openLabel}
+                    </EngineeringActionButton>
+                  </>
+                ) : pendingIndicator.kind === "empty" ? (
+                  <p className="engineering-home-pending__state" role="status">
+                    {copy.pending.emptyLabel}
+                  </p>
+                ) : (
+                  <p className="engineering-home-pending__state" role="status">
+                    {pendingIndicator.message}
+                  </p>
+                )}
+              </div>
+            </EngineeringSectionCard>
+          ) : null}
 
           <EngineeringSectionCard
             title={copy.features.title}

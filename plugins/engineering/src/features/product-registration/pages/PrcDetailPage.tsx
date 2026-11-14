@@ -55,6 +55,7 @@ import {
   prcPersonLabel,
   prcRequesterLabel,
   prcShortId,
+  prcSourceLabel,
 } from "../prcCopy";
 import { PrcActionBar } from "../components/PrcActionBar";
 import { PrcAttachmentsSection } from "../components/PrcAttachmentsSection";
@@ -497,7 +498,7 @@ export function PrcDetailPage({
     },
     {
       label: "Origem",
-      value: detail.source,
+      value: prcSourceLabel(detail.source),
     },
     {
       label: "Referência externa",

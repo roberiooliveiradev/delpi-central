@@ -827,3 +827,27 @@
   min-height: 360px;
   width: 100%;
 }
+
+.engineering-home-pending {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.engineering-home-pending__count {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--en-text, #1a2b3c);
+}
+
+.engineering-home-pending__count strong {
+  font-size: 1.75rem;
+  margin-right: 6px;
+}
+
+.engineering-home-pending__state {
+  margin: 0;
+  color: var(--en-text-muted, #5b6b7c);
+}
