@@ -56,3 +56,10 @@ As variaveis `IT_PORTAL_WORKSTATION_INGEST_ENABLED=false` e `IT_PORTAL_WORKSTATI
 4. Nenhum acesso remoto foi criado; G0-SEC e G3 permanecem bloqueados. Piloto G2-S1..S3 continua aguardando Windows real presencial.
 
 Fontes: [API Admin oficial Keycloak](https://www.keycloak.org/docs-api/latest/rest-api/), [roadmap](README.md), [issue #179](https://github.com/roberiooliveiradev/delpi-central/issues/179).
+
+## Evidencias automatizadas da entrega (14/11/2026)
+
+- [API/HTTP/mock Keycloak + migration V012 em PostgreSQL descartavel: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43608815197), commit `749874c3f746`.
+- [Frontend lint, Vitest e build: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43608815228).
+- [Architecture gate: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43608815147).
+- **Atenção:** aprovado em CI, mas ainda sem teste de provisionamento em Keycloak real de HML nem migração/deploy G2-S4 em produção. A flag permanece desligada e nenhum Client real foi criado nesta atividade.

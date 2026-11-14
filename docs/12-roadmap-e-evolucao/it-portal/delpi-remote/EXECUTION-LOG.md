@@ -376,6 +376,16 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** CI verde, teste HML do preparo disabled. G2-S4-S2 implanta bootstrap 1-uso, ativacao Keycloak, binding DB dinamico e revogacao sem editar env manual.
 
+## 2026-11-14 | G2-S4-S1 | CI verde, provisionamento segue OFF
+
+**Implementacao:** [commit 944fa6e13fe9](https://github.com/roberiooliveiradev/delpi-central/commit/944fa6e13fe9814aedc3c2f3154eb23fb136864f) (23 arquivos). **Correcoes de teste:** [749874c3f746](https://github.com/roberiooliveiradev/delpi-central/commit/749874c3f7465cbe85fd51c0b6d11e6927d1eed2) (requisição POST no Vitest e V012 esperada na lista de migrações).
+
+**Evidencias:** [validate-it-portal SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43608815228), com lint, Vitest e build; [test-it-portal-api SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43608815197), com pytest unit/HTTP, simulacao Keycloak com MockTransport, integração PostgreSQL descartavel V001..V012; [architecture-gate SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43608815147). A auditoria do commit de implementacao 944fa6e tambem foi aprovada.
+
+**Limites:** CI NAO valida permissao real Keycloak Admin, desabilitacao e scopes em ambiente Keycloak de HML, handshake Windows, DPAPI nem vinculos dinamicos S2S. Nao declarar G2-S4-S1 homologado. `IT_PORTAL_WORKSTATION_PROVISIONING_ENABLED=false` continua default, sem segredos configurados, sem clients reais ou tokens entregues. O assistente nao executou deploy, migration V012 em producao ou Keycloak Admin.
+
+**Proximo passo unico:** teste de um Client DESABILITADO em Keycloak HML com conta tecnica de privilegio minimo, rollback e revogacao; depois G2-S4-S2 para bootstrap seguro de uso unico, binding dinamico por UUID e ativacao/auditoria. Piloto Windows continua presencial.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown
