@@ -317,7 +317,7 @@ export {
  * nunca expõe o código bruto — desconhecido cai no fallback. */
 export const PRC_SOURCE_LABELS: Record<string, string> = {
   "my-requests": "Canal corporativo (My Requests)",
-  my_requests: "Canal corporativo (My Requests)",
+  my_requests: "Minhas Solicitações",
   engineering: "Portal Engenharia",
   "engineering-api": "Portal Engenharia",
 };

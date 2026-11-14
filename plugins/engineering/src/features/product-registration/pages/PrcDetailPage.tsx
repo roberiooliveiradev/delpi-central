@@ -9,9 +9,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeApiError } from "../../../api/httpClient";
 import { usePrcCaseSync } from "../../../app/EngineeringRealtimeProvider";
 import { getSubjectFromAccessToken } from "../../../app/authDisplayName";
+import { Info, TriangleAlert } from "lucide-react";
 import {
+  ENGINEERING_PORTAL_SCOPE,
   EngineeringActionButton,
-  EngineeringDetailFieldGrid,
+  EngineeringAnchoredPanel,
   EngineeringLoadingActivityCard,
   EngineeringPageHero,
   EngineeringPagePath,
@@ -51,6 +53,7 @@ import {
 import {
   PRC_COPY,
   PRC_RESULT_LABELS,
+  PRC_RESULT_VARIANTS,
   PRC_TYPE_LABELS,
   prcPersonLabel,
   prcRequesterLabel,
@@ -65,6 +68,7 @@ import {
   type PrcActionExtras,
 } from "../components/prcActionSpecs";
 import { PrcInformationExchangePanel } from "../components/PrcInformationExchangePanel";
+import { PrcPersonCell } from "../components/PrcPersonCell";
 import { supplierOptionsFromTechnicalDraft } from "../prcInformationExchange";
 import { PrcRevisionsSection } from "../components/PrcRevisionsSection";
 import { PrcStatusBadge } from "../components/PrcStatusBadge";
@@ -133,6 +137,14 @@ export function PrcDetailPage({
     nonce: number;
   } | null>(null);
   const [navFallback, setNavFallback] = useState<string | null>(null);
+  /* UX V3 — metadados de auditoria em popover ancorado (sem grade de
+   * nove campos no hero). */
+  const [infoOpen, setInfoOpen] = useState(false);
+  const infoAnchorRef = useRef<HTMLElement>(null);
+  const infoPanelRef = useRef<HTMLDivElement>(null);
+  /* Alvo estável para "reexecutar conclusão" — substitui o antigo
+   * querySelector('.engineering-prc__hero-actions'). */
+  const actionsRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     try {
@@ -468,49 +480,17 @@ export function PrcDetailPage({
     );
   }
 
-  const identification = [
-    {
-      label: "Solicitante",
-      value: prcRequesterLabel(detail.requester),
-    },
-    {
-      label: "Responsável",
-      value: prcPersonLabel(detail.assignedTo),
-    },
-    {
-      label: "Código oficial TOTVS",
-      value: detail.officialCode || PRC_COPY.awaitingCode,
-    },
-    {
-      label: "Revisão base",
-      value:
-        detail.baseRevision != null
-          ? `R${detail.baseRevision}`
-          : "—",
-    },
-    {
-      label: "Abertura",
-      value: new Date(detail.createdAt).toLocaleString("pt-BR"),
-    },
-    {
-      label: "Última atualização",
-      value: new Date(detail.updatedAt).toLocaleString("pt-BR"),
-    },
-    {
-      label: "Origem",
-      value: prcSourceLabel(detail.source),
-    },
-    {
-      label: "Referência externa",
-      value: detail.externalRequestId || "—",
-    },
-    {
-      label: "Verificação oficial",
-      value: detail.verificationSummary
-        ? `${PRC_RESULT_LABELS[detail.verificationSummary.result] || detail.verificationSummary.result} em ${new Date(detail.verificationSummary.checkedAt).toLocaleString("pt-BR")}`
-        : "Nunca verificado",
-    },
-  ];
+  /* UX V3 — hero = identidade + estado + próxima ação. Metadados de
+   * auditoria/proveniência ficam no popover «Informações»; código
+   * oficial na Ficha técnica; verificação na aba dedicada. */
+  const productTypeLabel =
+    detail.productType === "raw_material"
+      ? "matéria-prima"
+      : detail.productType;
+  const verificationResult = detail.verificationSummary?.result || null;
+  const verificationBlocking = verificationResult
+    ? PRC_RESULT_VARIANTS[verificationResult] === "danger"
+    : false;
 
   return (
     <main className="engineering-prc">
@@ -530,28 +510,145 @@ export function PrcDetailPage({
       <EngineeringPageHero
         eyebrow={PRC_COPY.breadcrumbRoot}
         title={`Solicitação ${prcShortId(detail.id)}`}
-        description={`${PRC_TYPE_LABELS[detail.requestType] || detail.requestType} · ${detail.productType === "raw_material" ? "matéria-prima" : detail.productType} · versão ${detail.caseVersion}`}
+        description={`${PRC_TYPE_LABELS[detail.requestType] || detail.requestType} de ${productTypeLabel}`}
         badge={<PrcStatusBadge status={detail.status} />}
         actions={
           primaryAction ? (
             <EngineeringActionButton
               variant="primary"
+              title={primaryAction.help}
               softDisabled={busy}
               onClick={() => runAction(primaryAction, {})}
             >
+              {primaryAction.icon ? (
+                <primaryAction.icon size={14} aria-hidden />
+              ) : null}
               {primaryAction.label}
             </EngineeringActionButton>
           ) : null
         }
       >
-        <div className="engineering-prc__hero-meta">
-          <EngineeringDetailFieldGrid fields={identification} />
+        <div className="engineering-prc__hero-identity">
+          <div className="engineering-prc__hero-people">
+            <div className="engineering-prc__hero-person">
+              <span className="engineering-prc__hero-person-label">
+                Solicitante
+              </span>
+              <PrcPersonCell
+                subject={detail.requester.subject}
+                displayName={detail.requester.displayName}
+              />
+            </div>
+            {detail.assignedTo ? (
+              <div className="engineering-prc__hero-person">
+                <span className="engineering-prc__hero-person-label">
+                  Responsável
+                </span>
+                <PrcPersonCell
+                  subject={detail.assignedTo}
+                  displayName={detail.assignedToDisplayName}
+                />
+              </div>
+            ) : null}
+          </div>
+          <div className="engineering-prc__hero-meta-controls">
+            {detail.baseRevision != null ? (
+              <span
+                className="engineering-prc__hero-chip"
+                title="Revisão técnica base do produto — diferente da versão da solicitação"
+              >
+                Revisão base R{detail.baseRevision}
+              </span>
+            ) : null}
+            <span
+              ref={infoAnchorRef}
+              className="engineering-prc__info-anchor"
+            >
+              <EngineeringActionButton
+                variant="ghost"
+                aria-expanded={infoOpen}
+                aria-controls="prc-info-popover"
+                onClick={() => setInfoOpen((v) => !v)}
+              >
+                <Info size={14} aria-hidden /> Informações
+              </EngineeringActionButton>
+            </span>
+          </div>
         </div>
+        {infoOpen ? (
+          <EngineeringAnchoredPanel
+            open={infoOpen}
+            anchorRef={infoAnchorRef}
+            panelRef={infoPanelRef}
+            variant="bare"
+            className="engineering-prc__info-pop"
+            role="dialog"
+            aria-label="Informações da solicitação"
+            portalScopeClassName={ENGINEERING_PORTAL_SCOPE}
+            preferredPlacement="bottom"
+            horizontalAlign="end"
+            gap={6}
+            onDismiss={() => setInfoOpen(false)}
+          >
+            <dl className="engineering-prc__info-list">
+              <div className="engineering-prc__info-row">
+                <dt>Solicitante</dt>
+                <dd>{prcRequesterLabel(detail.requester)}</dd>
+              </div>
+              <div className="engineering-prc__info-row">
+                <dt>Responsável</dt>
+                <dd>
+                  {detail.assignedTo
+                    ? prcPersonLabel(
+                        detail.assignedTo,
+                        detail.assignedToDisplayName,
+                      )
+                    : PRC_COPY.unassigned}
+                </dd>
+              </div>
+              <div className="engineering-prc__info-row">
+                <dt>Abertura</dt>
+                <dd>{new Date(detail.createdAt).toLocaleString("pt-BR")}</dd>
+              </div>
+              <div className="engineering-prc__info-row">
+                <dt>Última atualização</dt>
+                <dd>{new Date(detail.updatedAt).toLocaleString("pt-BR")}</dd>
+              </div>
+              <div className="engineering-prc__info-row">
+                <dt>Canal</dt>
+                <dd>{prcSourceLabel(detail.source)}</dd>
+              </div>
+              <div className="engineering-prc__info-row">
+                <dt>Identificador no canal de origem</dt>
+                <dd>{detail.externalRequestId || "—"}</dd>
+              </div>
+              <div className="engineering-prc__info-row">
+                <dt>Versão da solicitação</dt>
+                <dd>{detail.caseVersion}</dd>
+              </div>
+              <div className="engineering-prc__info-row">
+                <dt>Revisão base</dt>
+                <dd>
+                  {detail.baseRevision != null
+                    ? `R${detail.baseRevision}`
+                    : "—"}
+                </dd>
+              </div>
+            </dl>
+            {detail.externalRequestId ? (
+              <p className="engineering-prc__info-hint">
+                Código usado para rastrear a solicitação no sistema de
+                origem — não corresponde necessariamente ao número interno
+                do caso.
+              </p>
+            ) : null}
+          </EngineeringAnchoredPanel>
+        ) : null}
         <div className="engineering-prc__hero-progress">
           <PrcWorkflowProgress status={detail.status} />
         </div>
         {detail.allowedActions.length ? (
-          <div className="engineering-prc__hero-actions">
+          <div className="engineering-prc__hero-actions" ref={actionsRef}>
             <PrcActionBar
               /* start/resume já saem no `actions` do hero — uma ação principal. */
               allowedActions={detail.allowedActions.filter(
@@ -576,6 +673,24 @@ export function PrcDetailPage({
             Solicitação encerrada — nenhuma ação disponível.
           </p>
         )}
+        {verificationBlocking ? (
+          <div
+            className="engineering-prc__verify-alert"
+            role="status"
+          >
+            <TriangleAlert size={14} aria-hidden />
+            <span>
+              Verificação oficial:{" "}
+              {PRC_RESULT_LABELS[verificationResult!] || verificationResult}
+            </span>
+            <EngineeringActionButton
+              variant="ghost"
+              onClick={() => selectTab("verification")}
+            >
+              Ver diagnóstico
+            </EngineeringActionButton>
+          </div>
+        ) : null}
       </EngineeringPageHero>
 
       {detail.status === "needs_correction" &&
@@ -685,9 +800,10 @@ export function PrcDetailPage({
               selectTab("draft");
             }}
             onRetryComplete={() => {
-              document
-                .querySelector(".engineering-prc__hero-actions")
-                ?.scrollIntoView({ behavior: "smooth", block: "center" });
+              actionsRef.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              });
               setFeedback({
                 kind: "success",
                 text:

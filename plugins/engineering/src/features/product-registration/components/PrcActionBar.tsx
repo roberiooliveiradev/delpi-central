@@ -166,25 +166,32 @@ export function PrcActionBar({
         role="group"
         aria-label="Ações de atendimento da solicitação"
       >
-        {actions.map((spec, index) => (
+        {actions.map((spec, index) => {
           /* Hierarquia PO §38: exatamente uma ação principal por estado —
            * a primeira spec `primary` permitida pelo backend. Demais
-           * ficam secundárias; destrutivas sempre ghost, por último. */
-          <EngineeringActionButton
-            key={spec.action}
-            variant={
-              spec.danger
-                ? "ghost"
-                : spec.primary && index === firstPrimaryIndex
-                  ? "primary"
-                  : "default"
-            }
-            softDisabled={busy}
-            onClick={() => click(spec)}
-          >
-            {spec.label}
-          </EngineeringActionButton>
-        ))}
+           * ficam secundárias; destrutivas sempre ghost, por último.
+           * UX V3 — ícone Lucide + rótulo + ajuda contextual (title). */
+          const Icon = spec.icon;
+          return (
+            <EngineeringActionButton
+              key={spec.action}
+              variant={
+                spec.danger
+                  ? "ghost"
+                  : spec.primary && index === firstPrimaryIndex
+                    ? "primary"
+                    : "default"
+              }
+              className={spec.danger ? "engineering-prc__action--danger" : undefined}
+              title={spec.help}
+              softDisabled={busy}
+              onClick={() => click(spec)}
+            >
+              {Icon ? <Icon size={14} aria-hidden /> : null}
+              {spec.label}
+            </EngineeringActionButton>
+          );
+        })}
       </div>
 
       {infoSpec ? (
