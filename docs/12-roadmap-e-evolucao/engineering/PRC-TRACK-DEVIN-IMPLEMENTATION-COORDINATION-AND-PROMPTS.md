@@ -760,3 +760,28 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Fronteira de escopo:** somente UI/UX e, se estritamente necessário, adapter de apresentação ou query read-only existente. Sem alteração de AuthZ, workflow, endpoints de escrita, TOTVS, produto oficial ou bounded context; não fabricar métricas. Preservar painel de bandeiras funcional e deixar redesenho de seu lifecycle fora do escopo (melhoria visual compacta no hero só se trivial e sem perda de acesso; senão backlog `FLAGS_HERO_UX_FOLLOW_UP`). Sem mudar identidade de casos PRC ou sair do Portal Engenharia.
 
 **Aceite HML:** comparar side-by-side capturas Helpdesk vs PRC, sem exigir pixel-perfect; hero PRC menor e hierarquia equivalente, filtro `Pendentes` ativo em `?view=pending`, filtros/status/tipo/busca e count corretos, menu Colunas mostra/oculta/reordena/restaura e persiste após reload, colunas de dados continuam adequadas a domínio PRC, ordenação e paginação server-side, modos de visualização, ações de detalhe e navegação interna, responsivo, teclado/ARIA, segurança, LMPs/My Requests corporativo sem regressão. Evidência Playwright desktop/mobile, testes no SHA, deploy HML e validação visual PO. **Trabalho somente em `main`, sem novas branches; PRD NÃO autorizado neste pacote.**
+
+## 44. Paridade UX Helpdesk na fila PRC — hero denso, chips, colunas elevadas e tabela (§43 PO) — implementação, HML e E2E (14/11/2026)
+
+**TASK:** `EVA-PRC-QUEUE-HELPDESK-UX-PARITY-HML-01`. Frontend exclusivo (MFE engineering); **PRD não autorizado.**
+
+**Referência inventariada (Helpdesk `/apps/helpdesk`):** `HelpdeskPage.tsx` — hero com título/ações → barra primária (busca dominante + controles compactos: limpar, filtros avançados, ordenação, **Colunas**, atualizar) → barra secundária (chips de status `ScopeChipBar` + `SegmentToggle` Tabela/Cards) → tabela densa com ordenação server + paginação. Componentes canônicos reutilizados **sem importar internals do Helpdesk**: `TableColumnVisibilityMenu`, `useTableColumnVisibility`, `createDashboardScopeChipBar`, `SegmentToggle`, `IconButton` — todos `@delpi/plugin-ui`.
+
+**Implementação (`PrcQueuePage.tsx`, `engineeringUi.ts`, `prc.css`):**
+- `EngineeringScopeChipBar` adicionado ao kit do MFE (mesma factory `createDashboardScopeChipBar({prefix:"engineering"})` usada pelo Helpdesk) — chips `aria-pressed`.
+- Hero reorganizado em 3 faixas: (1) título/descrição + `Atualizar` ghost + `Nova solicitação` primary; (2) `form` primário — `EngineeringFilterInput` Buscar dominante (`flex:1`, Enter confirma) + ações compactas: `Limpar filtros` (icon FilterX, só com filtro ativo), **menu Colunas** (só modo Tabela), `Atualizar` (icon); (3) chips de **Status** (Pendentes/Todos/7 status oficiais) + chips de **Tipo** (Todos/Criação/Alteração) + `SegmentToggle` Tabela/Cards/Kanban à direita. Toolbar duplicada acima da tabela removida (toggle+refresh migraram ao hero — sem controle duplicado).
+- **Menu Colunas elevado ao hero:** `useTableColumnVisibility` içado para a página com a **mesma storage key** `engineering:prc:requests:columns` (preferências antigas preservadas); `DataTableSection` recebe `columns` já filtradas/reordenadas e perde `columnPreferencesKey` — um único gerenciador, sem redundância (Abstraction Gate §43 respeitado).
+- `PrcFlagsOpsPanel compact` preservado dentro da área de controles (toggle pequeno existente; lifecycle/permissões/endpoints intactos; `FLAGS_HERO_UX_FOLLOW_UP` segue backlog).
+- Contratos preservados: `view=pending`/status explícito/`page=1` por troca/push de histórico em cliques discretos/replace na busca; sem alteração backend/AuthZ/workflow/TOTVS.
+
+**Diff:** commit `d46031d74e` (3 arquivos). `main` direto.
+
+**Testes:** vitest **37/371 PASS**; `tsc --noEmit` ok; `vite build` ok (`App-BmQcMiHf.js`).
+
+**HML (`up-hml-sequential.sh --fase mfe --build engineering`, checkout `d46031d74e`):** imagem `sha256:692056367ec7bf89e2cd5dc137f6a852cc4f60b28e75cc3b934be123f38f14b3` — healthy; bundle servido `App-BmQcMiHf.js` (hash = build local). Rollback: `sha256:42c9b1128033…` retida. Backend não reconstruído.
+
+**E2E visual (Chromium real) — 21/21 PASS:** E01 hero (título/CTA/Atualizar/Colunas) | E02 busca dominante (710 px de 892) | E03 chip Enviadas→`status=submitted` sem `view` | E04 tipo combinado `status+type` | E05 **Pendentes `aria-pressed`** em `?view=pending` | E06 sort header→`sortBy=createdAt&sortDir=desc` | E07 ocultar Responsável via menu | E08 reordenar (Status→1ª posição, persistido) | E09 Restaurar padrão | E10 preferência sobrevive reload | E11 paginação `registro(s)` | E12 detalhe interno | E13 Tabela/Cards/Kanban | E14 flags | E15 negado → `Aplicação indisponível` (plugin fora do manifest do usuário — negação mais ampla que 403) | E16 mobile overflow=0 | E17 teclado (focus+Enter no chip Rejeitadas→`status=rejected`) | E18 LMP/My Requests. Evidências: `/tmp/ux-parity-desktop.png`, `/tmp/ux-parity-mobile.png`, `/tmp/ux-denied2.png` (host HML).
+
+**Limitações honestas:** reordenação de colunas validada via persistência localStorage+reload (drag HTML5 headless não confiável); menu Colunas é drag-based (sem alternativa de teclado própria — limitação herdada do componente canônico); consentimento LGPD do usuário negado exigiu scroll+aceite no fluxo de teste.
+
+**Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS(E01–E18) / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
