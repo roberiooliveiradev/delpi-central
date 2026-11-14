@@ -1924,15 +1924,22 @@ class MaterialObligation:
     owner vocabulary — an entity/action/capability token the owner
     echoes in structured results or that names a governed invocation
     selector. ``operation`` optionally requires a specific
-    ``SpecialistOperationClass``. Both are verifiable proposals — the
-    deterministic layer checks them against owner-echoed metadata and
-    governed invocation records; they never grant authorization and
-    are never a domain catalog.
+    ``SpecialistOperationClass``. ``required_scope`` optionally binds
+    the obligation to a declared business scope — canonical
+    ``path=value`` pairs (plus ``__container__`` markers) derived from
+    the model-declared ``required_args`` and mechanically compared
+    against the governed ``invocation_scope``: a contradictory filter
+    disproves the evidence, a missing/extra one keeps it unproven.
+    All three are verifiable proposals — the deterministic layer
+    checks them against owner-echoed metadata and governed invocation
+    records; they never grant authorization and are never a domain
+    catalog.
     """
 
     description: str
     evidence_source: str | None = None
     operation: str | None = None
+    required_scope: tuple[str, ...] = ()
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, MaterialObligation):
@@ -1940,22 +1947,30 @@ class MaterialObligation:
                 self.description,
                 self.evidence_source,
                 self.operation,
+                self.required_scope,
             ) == (
                 other.description,
                 other.evidence_source,
                 other.operation,
+                other.required_scope,
             )
         if isinstance(other, str):
             return (
                 self.evidence_source is None
                 and self.operation is None
+                and not self.required_scope
                 and self.description == other
             )
         return NotImplemented
 
     def __hash__(self) -> int:
         return hash(
-            (self.description, self.evidence_source, self.operation)
+            (
+                self.description,
+                self.evidence_source,
+                self.operation,
+                self.required_scope,
+            )
         )
 
     def to_projection(self) -> dict:
@@ -1965,6 +1980,8 @@ class MaterialObligation:
             projected["evidence_source"] = self.evidence_source
         if self.operation is not None:
             projected["operation"] = self.operation
+        if self.required_scope:
+            projected["required_scope"] = list(self.required_scope)
         return projected
 
 
@@ -2365,6 +2382,7 @@ def _obligation_item(obligation: object) -> MaterialObligation:
         description = str(obligation.get("description") or "").strip()
         source = obligation.get("evidence_source")
         operation = obligation.get("operation")
+        required_args = obligation.get("required_args")
         return MaterialObligation(
             description=description,
             evidence_source=(
@@ -2376,6 +2394,14 @@ def _obligation_item(obligation: object) -> MaterialObligation:
                 operation.strip().casefold()
                 if isinstance(operation, str) and operation.strip()
                 else None
+            ),
+            # A non-Mapping declaration cannot be canonicalized — the
+            # incomplete sentinel fails closed instead of silently
+            # dropping a declared requirement.
+            required_scope=(
+                _required_scope_pairs(required_args)
+                if "required_args" in obligation
+                else ()
             ),
         )
     return MaterialObligation(description="")
@@ -2396,6 +2422,15 @@ def _normalize_obligation_tuple(
         return ()
     normalized: list[MaterialObligation] = []
     for item in raw:
+        if (
+            isinstance(item, Mapping)
+            and "required_args" in item
+            and not isinstance(item.get("required_args"), Mapping)
+        ):
+            # A malformed declared scope is a contract violation —
+            # reject the plan for bounded feedback rather than let a
+            # silently dropped requirement fake coverage (RC5).
+            return None
         obligation = _obligation_item(item)
         if not obligation.description or len(obligation.description) > 200:
             continue
@@ -2417,7 +2452,7 @@ def _normalize_obligation_tuple(
             # would lock the obligation into INCONCLUSIVE.
             return None
         normalized.append(obligation)
-    seen: set[tuple[str, str | None, str | None]] = set()
+    seen: set[tuple] = set()
     unique: list[MaterialObligation] = []
     for obligation in normalized[:16]:
         key = (
@@ -2428,6 +2463,7 @@ def _normalize_obligation_tuple(
                 else None
             ),
             obligation.operation,
+            obligation.required_scope,
         )
         if key in seen:
             continue
@@ -2659,21 +2695,27 @@ def _scope_value_token(value: object) -> str | None:
     return None
 
 
-def _strip_window_args(value: object) -> object:
-    """Remove window-selector keys at every Mapping level.
+def _strip_window_args(value: object, depth: int = 0) -> object:
+    """Remove proven window-selector keys near the invocation envelope.
 
-    Leaf-name matching is uniform across depths: ``params.page`` and
-    a top-level ``page`` are the same slice selector. Non-Mapping
-    structure is preserved as-is for the canonical digest.
+    Pagination selectors are flat query-window arguments: every real
+    owner contract observed places them at the envelope level or one
+    container in (``page``; ``params.page``; ``pagination.limit``).
+    A key named like a window selector buried two or more levels deep
+    (``params.criteria.page``) is NOT a proven slice selector — no
+    contract authorizes that interpretation, so it stays in scope
+    (UNKNOWN_ARGUMENT_SEMANTICS → preserve). Non-Mapping structure is
+    preserved as-is for the canonical digest.
     """
     if isinstance(value, Mapping):
         return {
-            key: _strip_window_args(item)
+            key: _strip_window_args(item, depth + 1)
             for key, item in value.items()
-            if str(key).strip().casefold() not in _PAGINATION_ARG_KEYS
+            if depth >= 2
+            or str(key).strip().casefold() not in _PAGINATION_ARG_KEYS
         }
     if isinstance(value, (list, tuple)):
-        return [_strip_window_args(item) for item in value]
+        return [_strip_window_args(item, depth) for item in value]
     return value
 
 
@@ -2687,9 +2729,23 @@ def _scope_pairs(value: object, prefix: str, depth: int) -> list[str]:
         if not name or len(name) > 64:
             continue
         if isinstance(item, Mapping):
-            pairs.extend(
-                _scope_pairs(item, f"{prefix}{name}.", depth + 1)
-            )
+            sub = _scope_pairs(item, f"{prefix}{name}.", depth + 1)
+            if sub:
+                pairs.extend(sub)
+            else:
+                try:
+                    nested_digest = hashlib.sha256(
+                        json.dumps(
+                            item, sort_keys=True, default=str
+                        ).encode()
+                    ).hexdigest()[:16]
+                except (TypeError, ValueError):
+                    nested_digest = hashlib.sha256(
+                        repr(item).encode()
+                    ).hexdigest()[:16]
+                pair = f"{prefix}{name}=<opaque:{nested_digest}>"
+                if len(pair) <= 192 and pair not in pairs:
+                    pairs.append(pair)
             continue
         token = _scope_value_token(item)
         if token is None:
@@ -2736,7 +2792,121 @@ def _invocation_scope(args: object) -> tuple[str, ...]:
         canonical = repr(sorted(stripped.items(), key=lambda kv: str(kv[0])))
     digest = hashlib.sha256(canonical.encode()).hexdigest()[:16]
     pairs = _scope_pairs(stripped, "", 0)
-    return tuple(sorted(pairs)[:24]) + (f"__scope_digest__={digest}",)
+    tokens = list(sorted(pairs)[:24])
+    if len(pairs) > 24:
+        # Observability cap reached: the digest still proves identity,
+        # but absent-vs-truncated must be distinguishable for
+        # required-scope checks — never treat invisible as absent.
+        tokens.append(f"__scope_pairs_dropped__={len(pairs) - 24}")
+    tokens.append(f"__scope_digest__={digest}")
+    return tuple(tokens)
+
+
+def _required_scope_pairs(args: object) -> tuple[str, ...]:
+    """Canonicalize model-declared ``required_args`` into scope tokens.
+
+    Same canonicalization as ``_invocation_scope`` (window keys
+    stripped, ``path=value`` leaf pairs) so a declared filter compares
+    mechanically against the governed invocation scope. Top-level
+    Mapping keys become ``__container__=<name>`` markers — an exact
+    equality domain: any extra scope argument inside that container
+    narrows the queried set beyond the declared requirement. Anything
+    unrepresentable collapses to the incomplete sentinel — a declared
+    scope that cannot be fully verified is never silently dropped.
+    """
+    if not isinstance(args, Mapping):
+        return ("__required_scope_incomplete__=true",)
+    stripped = _strip_window_args(args)
+    pairs = _scope_pairs(stripped, "", 0)
+    tokens = list(pairs[:32])
+    if len(pairs) > 32:
+        tokens.append("__required_scope_incomplete__=true")
+    for key, item in stripped.items():
+        if isinstance(item, Mapping):
+            name = str(key).strip().casefold()
+            if name and len(name) <= 64:
+                tokens.append(f"__container__={name}")
+    return tuple(tokens)
+
+
+def _required_scope_state(
+    required_scope: tuple[str, ...],
+    invocation_scope: tuple[str, ...] | None,
+) -> str:
+    """``ok`` | ``contradicted`` | ``unproven`` for a declared scope.
+
+    ``contradicted``: a scope key is present with a different value —
+    the queried set is provably not the requested one (evidence is
+    disproven, not merely unverified). ``unproven``: a required key is
+    absent (no contract proves a default equals it), an extra argument
+    narrows a declared container, or the scope set is itself
+    truncated — scope equivalence is unknowable, so the evidence can
+    bind but never demonstrate. ``ok``: every declared pair is echoed
+    and no extra business argument exists under declared containers.
+    """
+    if not required_scope:
+        return "ok"
+    scope_map: dict[str, set[str]] = {}
+    dropped = False
+    for token in invocation_scope or ():
+        if not isinstance(token, str):
+            continue
+        if token.startswith("__scope_pairs_dropped__="):
+            dropped = True
+            continue
+        if token.startswith("__"):
+            continue
+        key, sep, value = token.partition("=")
+        if sep:
+            scope_map.setdefault(key, set()).add(value)
+    unproven = False
+    for token in required_scope:
+        if token.startswith("__container__="):
+            prefix = token.partition("=")[2] + "."
+            declared = {
+                pair for pair in required_scope
+                if pair.startswith(prefix)
+            }
+            observed = {
+                f"{key}={value}"
+                for key, values in scope_map.items()
+                for value in values
+                if key.startswith(prefix)
+            }
+            if observed - declared:
+                unproven = True
+            continue
+        if token.startswith("__"):
+            if token == "__required_scope_incomplete__=true":
+                unproven = True
+            continue
+        key, sep, value = token.partition("=")
+        values = scope_map.get(key)
+        if values is None:
+            unproven = True
+        elif value not in values:
+            return "contradicted"
+    if dropped:
+        unproven = True
+    return "unproven" if unproven else "ok"
+
+
+def _attempt_scope_state(
+    attempt: GovernedCapabilityAttempt,
+    required_scope: tuple[str, ...],
+) -> str:
+    """Required-scope verdict for one attempt (empty scope → unproven
+    only when requirements exist; absence of provenance is never a
+    contradiction)."""
+    if not required_scope:
+        return "ok"
+    provenance = attempt.provenance
+    scope = (
+        tuple(provenance.invocation_scope or ())
+        if provenance is not None
+        else ()
+    )
+    return _required_scope_state(required_scope, scope)
 
 
 # Owner structured keys whose emptiness/zeroness attests absence.
@@ -3193,6 +3363,11 @@ def _attempt_satisfies_obligation(
     needle = item.description
     if not needle:
         return False
+    if _attempt_scope_state(attempt, item.required_scope) != "ok":
+        # A declared required scope that is contradicted or unproven
+        # can never be demonstrated by this attempt — coverage of a
+        # different/unknown query scope is not the requested one.
+        return False
     if item.evidence_source is not None:
         return _attempt_demonstrates_anchored(
             attempt, item, delivery=delivery
@@ -3244,6 +3419,14 @@ def _attempt_binds_obligation(
     if attempt.provenance is None or not attempt.provenance.is_complete:
         return False
     if "discovery_metadata_observation" in attempt.limitations:
+        return False
+    if (
+        _attempt_scope_state(attempt, item.required_scope)
+        == "contradicted"
+    ):
+        # The invocation provably queried a different business scope —
+        # the evidence cannot speak for the obligated scope, so it
+        # does not even bind (same rule as a contradicted identity).
         return False
     anchored = item.evidence_source is not None
     if anchored:
@@ -3395,7 +3578,15 @@ def _joint_collection_coverage(
         group = groups.setdefault(key, {"candidates": [], "totals": set()})
         group["candidates"].append(data)
         group["totals"].add(max(data_total))
-    for group in groups.values():
+    for key, group in groups.items():
+        if (
+            _required_scope_state(obligation.required_scope, key[5])
+            != "ok"
+        ):
+            # The group's proven scope contradicts or cannot prove the
+            # declared required scope — its coverage is of another
+            # query, never of this obligation.
+            continue
         candidates = group["candidates"]
         totals = group["totals"]
         if len(candidates) < 2 or len(totals) > 1:

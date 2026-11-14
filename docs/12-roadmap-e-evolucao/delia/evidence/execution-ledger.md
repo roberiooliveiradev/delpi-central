@@ -6819,3 +6819,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **REAL EVAL:** `or-qwen14b-fcfbab951da1` (12) — A2 SATISFIED c/ `declared_unmet_overridden`; maioria insufficient honesto (mcp_auth intermitente); `or-qwen14b-dce013ef2394` — A página única→INCONCLUSIVE (fail-closed real), B agg→SATISFIED; multipágina real já provada em `or-qwen14b-1f76a1a093d0`. FALSE_SATISFIED/COMPLETE/INCONCLUSIVE=0.
 - **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — não aceite; `INT2_ACCEPTED=NO`; `PRODUCTION_DEPLOY/PHASE_ADVANCEMENT/INT3/T3=NOT_AUTHORIZED`. Doc 333.
 - **NEXT:** `COORDINATION_INT2_SCOPE_INTEGRITY_AND_FINAL_ACCEPTANCE_REVIEW`.
+
+### INT-2 — requested-scope binding & final acceptance evidence (Doc 334; 2026-11-14)
+
+- **TASK:** `DELIA-C3-T2-INT2-FINAL-SCOPE-BINDING-AND-ACCEPTANCE-EVIDENCE-01`; BASE `502c402824`. Gate final de suficiência/escopo.
+- **F1 GAP REAL:** obrigação não carregava escopo exigido — `status=inativo` completo satisfazia "processos ativos". Fix: `MaterialObligation.required_scope` via `required_args` declarado (objeto aninhado espelhando args), verificado mecanicamente vs `invocation_scope` — contradito→UNSATISFIED, ausente/extra→INCONCLUSIVE. Semântica: interpretação no Agent, prova no contrato.
+- **F2 GAP PARCIAL:** `_strip_window_args` descartava chaves de janela em qualquer profundidade (`params.criteria.page` colidia). Fix: strip só depth≤1 (evidência TÉO `params.page`/`page_size`, VISTA `pagination.limit`); `pages` removido da lista.
+- **F3:** agrupamento exercido ao vivo no SHA (`or-qwen14b-198cc9ddeabc` A: 3 invocações mesmo escopo → união<total → INCONCLUSIVE correto); união positiva real não repetida (MODEL_CONVERGENCE); prova histórica `or-qwen14b-1f76a1a093d0` + determinística.
+- **Contrato adotado pelo modelo:** `required_args` emitido em D/D2/E/G2 reais.
+- **RED×7→GREEN**; +12 testes (AC-FINAL/AC-OWNER); suíte 51 testes; regressão completa verde.
+- **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`; `INT2_ACCEPTED=NO`; `PRODUCTION_DEPLOY/INT3=NOT_AUTHORIZED`. Doc 334.
+- **NEXT:** `COORDINATION_C3_T2_INT2_FINAL_ACCEPTANCE_DECISION`.

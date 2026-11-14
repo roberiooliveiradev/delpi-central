@@ -214,13 +214,17 @@ class ObligationProposal(TypedDict):
 
     ``description`` is required; ``evidence_source`` anchors the
     obligation to live owner vocabulary (entity/action/capability
-    token) and ``operation`` requires a SpecialistOperationClass —
-    both verifiable proposals, never authorization (RC5).
+    token), ``operation`` requires a SpecialistOperationClass, and
+    ``required_args`` binds the obligation to a declared business
+    scope (a nested argument object mirroring the invocation args —
+    e.g. ``{"params": {"status": "ativo"}}``) — all verifiable
+    proposals, never authorization (RC5).
     """
 
     description: str
     evidence_source: NotRequired[str]
     operation: NotRequired[str]
+    required_args: NotRequired[dict]
 
 
 @dataclass
@@ -1734,14 +1738,24 @@ class PydanticAiInvestigationOrchestrator:
             aggregation, pertinent facts for explanation. Each item is
             a plain obligation text OR a typed object
             ``{"description": ..., "evidence_source": ...,
-            "operation": ...}``: ``evidence_source`` anchors the
+            "operation": ..., "required_args": ...}``:
+            ``evidence_source`` anchors the
             obligation to the live owner vocabulary (an entity,
             action or capability token the owner echoes in results or
             that you pass as an invocation selector — e.g.
             ``get_product_structure`` or ``process``); ``operation``
             requires a specific operation class (read, analysis,
             prepare, act, discovery) and is a restriction only, never
-            a pertinence proof. ``evidence_source`` must be the owner
+            a pertinence proof. ``required_args`` declares the business
+            scope the user asked for, as a nested argument object
+            mirroring the invocation args you intend to pass — e.g.
+            ``{"params": {"status": "ativo"}}`` for "processos ativos"
+            or ``{"params": {}}`` for an unfiltered listing: a query
+            carrying a contradictory filter, missing the declared one,
+            or adding an extra business argument inside the declared
+            container cannot demonstrate the obligation. Declare only
+            the filters the user's request actually requires.
+            ``evidence_source`` must be the owner
             token, never the dotted envelope tool name — a surface
             identifier is rejected with correction guidance. Anchored
             obligations are verified mechanically against

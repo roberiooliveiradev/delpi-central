@@ -796,3 +796,234 @@ def test_f12_no_delivery_param_keeps_prior_semantics():
         )
     )
     assert coverage[obligation.description] == OBLIGATION_SATISFIED
+
+
+# -------------------------------------------------------------------
+# AC-FINAL — declared request scope vs observed query scope (F1)
+# -------------------------------------------------------------------
+
+from app.application.capability_provision.semantic_capability_support import (
+    OBLIGATION_UNSATISFIED,
+    _invocation_scope,
+    _obligation_item,
+)
+
+
+def _ob_req(desc, source, required_args):
+    """Anchored obligation declaring its required business scope — the
+    model-declared counterpart of the invocation args, mechanically
+    verified against provenance.invocation_scope."""
+    return _obligation_item(
+        {
+            "description": desc,
+            "evidence_source": source,
+            "required_args": required_args,
+        }
+    )
+
+
+def _qpage(*, start: int, count: int, total: int, args: dict):
+    """Scoped page whose scope comes from real invocation args (not a
+    hand-built pair tuple)."""
+    return _attempt(
+        entity="process",
+        vocabulary=("process", "search"),
+        items=[
+            {"code": f"PROC-{i:04d}"} for i in range(start, start + count)
+        ],
+        total=total,
+        scope=_invocation_scope(args),
+    )
+
+
+_Q_ACTIVE = {"entity": "process", "action": "search",
+             "params": {"status": "ativo"}}
+_Q_INACTIVE = {"entity": "process", "action": "search",
+               "params": {"status": "inativo"}}
+_Q_UNFILTERED = {"entity": "process", "action": "search", "params": {}}
+
+
+def test_final01_requested_scope_equality_satisfies():
+    """AC-FINAL-01 — declared required scope mirrored in the queried
+    args + complete collection → legitimate SATISFIED."""
+    obligation = _ob_req(
+        "list active processes", "process",
+        {"params": {"status": "ativo"}},
+    )
+    attempt = _qpage(start=0, count=3, total=3, args=_Q_ACTIVE)
+    coverage = _coverage(
+        (obligation,), (attempt,), delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_SATISFIED
+
+
+def test_final02_wrong_filter_value_rejected():
+    """AC-FINAL-02 — required status=ativo but the query consulted
+    status=inativo: the complete collection of the WRONG scope can
+    never demonstrate the requested one — provably contradicted."""
+    obligation = _ob_req(
+        "list active processes", "process",
+        {"params": {"status": "ativo"}},
+    )
+    attempt = _qpage(start=0, count=3, total=3, args=_Q_INACTIVE)
+    coverage = _coverage(
+        (obligation,), (attempt,), delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_UNSATISFIED
+
+
+def test_final03_missing_declared_filter_inconclusive():
+    """AC-FINAL-03 — the query lacks the declared filter entirely:
+    no owner contract proves a default equals the requested value,
+    so scope equivalence is unknown → INCONCLUSIVE."""
+    obligation = _ob_req(
+        "list active processes", "process",
+        {"params": {"status": "ativo"}},
+    )
+    attempt = _qpage(start=0, count=3, total=3, args=_Q_UNFILTERED)
+    coverage = _coverage(
+        (obligation,), (attempt,), delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
+
+
+def test_final04_wrong_unit_scope_rejected():
+    """AC-FINAL-04 — unit 02 consulted when unit 01 was obligated."""
+    obligation = _ob_req(
+        "processes of unit 01", "process",
+        {"params": {"filial_id": "01"}},
+    )
+    attempt = _qpage(
+        start=0, count=3, total=3,
+        args={"entity": "process", "action": "search",
+              "params": {"filial_id": "02"}},
+    )
+    coverage = _coverage(
+        (obligation,), (attempt,), delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_UNSATISFIED
+
+
+def test_final_unfiltered_request_extra_filter_unproven():
+    """'All processes' declared with an empty params scope: a query
+    narrowed by an EXTRA business filter delivers a different set —
+    not the requested whole → INCONCLUSIVE (never SATISFIED)."""
+    obligation = _ob_req(
+        "list all processes", "process", {"params": {}},
+    )
+    attempt = _qpage(
+        start=0, count=3, total=3,
+        args={"entity": "process", "action": "search",
+              "params": {"filial_id": "01"}},
+    )
+    coverage = _coverage(
+        (obligation,), (attempt,), delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
+
+
+def test_final_declared_container_extra_scope_unproven():
+    """Declared params scope {status:ativo} but the query also carried
+    an extra business arg inside the declared container: the narrowed
+    set is not the requested one."""
+    obligation = _ob_req(
+        "list active processes", "process",
+        {"params": {"status": "ativo"}},
+    )
+    attempt = _qpage(
+        start=0, count=3, total=3,
+        args={"entity": "process", "action": "search",
+              "params": {"status": "ativo", "setor_id": "ENG"}},
+    )
+    coverage = _coverage(
+        (obligation,), (attempt,), delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
+
+
+def test_final09_multipage_required_scope_union():
+    """AC-FINAL-09 — legitimate union: same required scope across three
+    pages + an unrelated observation; joint coverage proves the
+    declared scope, not any other."""
+    obligation = _ob_req(
+        "list active processes", "process",
+        {"params": {"status": "ativo"}},
+    )
+    args_p2 = dict(_Q_ACTIVE)
+    args_p2["params"] = {"status": "ativo", "page": 2}
+    args_p3 = dict(_Q_ACTIVE)
+    args_p3["params"] = {"status": "ativo", "page": 3}
+    attempts = (
+        _qpage(start=0, count=40, total=109, args=_Q_ACTIVE),
+        _qpage(start=40, count=40, total=109, args=args_p2),
+        _qpage(start=80, count=29, total=109, args=args_p3),
+        _attempt(
+            entity="process",
+            vocabulary=("process", "search"),
+            items=[{"code": "OTHER-1"}, {"code": "OTHER-2"}],
+            total=10,
+            scope=_invocation_scope(_Q_INACTIVE),
+        ),
+    )
+    coverage = _coverage(
+        (obligation,), attempts, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_SATISFIED
+
+
+def test_final10_multipage_wrong_scope_group_rejected():
+    """AC-FINAL-10 — a group whose scope contradicts the required scope
+    cannot satisfy via union even when its own coverage is complete."""
+    obligation = _ob_req(
+        "list active processes", "process",
+        {"params": {"status": "ativo"}},
+    )
+    pages = (
+        _qpage(start=0, count=60, total=109, args=_Q_INACTIVE),
+        _qpage(start=60, count=49, total=109, args=_Q_INACTIVE),
+    )
+    coverage = _coverage(
+        (obligation,), pages, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_UNSATISFIED
+
+
+# -------------------------------------------------------------------
+# AC-OWNER — window-argument semantics vs nested business args (F2)
+# -------------------------------------------------------------------
+
+
+def test_owner03_deep_nested_window_name_preserved():
+    """AC-OWNER-03 — ``params.criteria.page`` is NOT a proven window
+    selector (no owner contract paginates three levels deep): the key
+    must remain in scope and keep distinct values distinct."""
+    left = _invocation_scope(
+        {"params": {"criteria": {"page": "pagina-inicial"}}}
+    )
+    right = _invocation_scope(
+        {"params": {"criteria": {"page": "pagina-final"}}}
+    )
+    assert left != right
+    assert any("criteria.page" in pair for pair in left)
+
+
+def test_owner01_known_window_selector_still_stripped():
+    """AC-OWNER-01 — ``params.page``/``params.page_size`` are
+    contract-evidenced window selectors (teo.read allowlist) and must
+    not break same-scope equality across pages."""
+    p1 = _invocation_scope(
+        {"entity": "process", "params": {"status": "ativo", "page": 1}}
+    )
+    p2 = _invocation_scope(
+        {"entity": "process",
+         "params": {"status": "ativo", "page": 2, "page_size": 40}}
+    )
+    assert p1 == p2
+
+
+def test_owner04_unknown_argument_preserved():
+    """AC-OWNER-04 — an argument whose semantics is unknown is scope,
+    never silently classified."""
+    left = _invocation_scope({"params": {"prioridade": "alta"}})
+    right = _invocation_scope({"params": {"prioridade": "baixa"}})
+    assert left != right

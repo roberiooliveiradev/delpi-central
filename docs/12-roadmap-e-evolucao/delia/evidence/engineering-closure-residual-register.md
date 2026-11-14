@@ -1809,3 +1809,16 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT2-MODEL-DECLARATION-LOOPS | OPEN_LOW | honest outcomes only |
 
 **NEXT=`COORDINATION_INT2_SCOPE_INTEGRITY_AND_FINAL_ACCEPTANCE_REVIEW`**
+
+### Requested-scope binding — 2026-11-14 (Doc 334)
+
+| Residual | Status | Evidence / disposition |
+|---|---|---|
+| INT2-REQUEST-SCOPE-UNBOUND | **REMEDIATED** | `required_args` declarado + verificação mecânica vs `invocation_scope`; contradito→UNSATISFIED, desconhecido→INCONCLUSIVE |
+| INT2-DEEP-WINDOW-STRIP | **REMEDIATED** | window keys removidas só depth≤1; `params.criteria.page` preservado |
+| INT2-ARGUMENT-SEMANTICS-METADATA | DOCUMENTED_ABSENT | `tools/list` não marca filter-vs-window por argumento; janela validada por evidência de contrato (TÉO/VISTA) |
+| INT2-REQUIRED-ARGS-DECLARATION | OPEN_LOW | escopo só vincula quando o modelo declara `required_args`; declaração ausente mantém semântica anterior (âncoras) — mesmo modelo de confiança de `evidence_source` |
+| INT2-REAL-MULTIPAGE-UNION-REPROOF | DOCUMENTED | união real não repetida no SHA (convergência do modelo); agrupamento exercido ao vivo + prova determinística + prova histórica |
+| INT2-MODEL-DECLARATION-LOOPS | OPEN_LOW | honest outcomes only |
+
+**NEXT=`COORDINATION_C3_T2_INT2_FINAL_ACCEPTANCE_DECISION`**
