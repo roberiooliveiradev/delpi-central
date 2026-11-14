@@ -19,7 +19,7 @@ Levar para o Portal Controladoria & Finanças e para a CLARA a auditoria mensal 
 
 Resultado esperado:
 
-1. **Página «Auditoria de entradas»** no Portal: escolher filial e competência, executar a auditoria, ver o resultado (o conteúdo do Raio-X) e marcar ocorrências como resolvidas.
+1. **Página «Auditoria de entradas»** no Portal: escolher o período (De/Até) e as filiais, executar a auditoria, acompanhar o resultado num dashboard (o conteúdo do Raio-X) e marcar ocorrências como resolvidas.
 2. **CLARA**: ler o resultado, analisar («o que pede ação em outubro na matriz?»), executar a auditoria e marcar resolvido, ampliando só o catálogo das tools semânticas existentes.
 
 ## 2. Situação atual (AS-IS)
@@ -39,12 +39,14 @@ Limites do AS-IS: trabalho manual a cada mês; SF4 pode estar desatualizada; sem
 | ID | Tema | Decisão | Status |
 |---|---|---|---|
 | D1 | Onde fica o motor de regras | **controllership-finance-api (BFF)**, em Clean Architecture: regras puras no domain, fontes por adapters HTTP (api-delpi e financial-api) | recomendação — confirmar |
-| D2 | Entrada dos dados | **Automática**: filial + competência → a BFF busca Protheus (api-delpi) e XML (financial-api/Questor). Upload de arquivos só como alternativa se a listagem do Questor por período não for viável (ver E0) | recomendação — confirmar |
-| D3 | Visual | conteúdo do Raio-X no **padrão visual do Portal** (`@delpi/plugin-ui`, claro/escuro), tons de verde nos gráficos; sem o fundo animado | recomendação — confirmar |
+| D2 | Entrada dos dados | **Automática**: período + filiais → a BFF busca Protheus (api-delpi) e XML (financial-api/Questor). Upload de arquivos só como alternativa se a listagem do Questor por período não for viável (ver E0) | recomendação — confirmar |
+| D3 | Visual | conteúdo do Raio-X no **padrão visual do Portal** (`@delpi/plugin-ui`, claro/escuro); sem copiar o HTML | **DECIDIDO** (owner, 2026-11-13) |
 | D4 | Permissões | **`controllership-finance.access`** para tudo desta funcionalidade: ver, executar/reexecutar e marcar resolvido. `manage` herda `access`. Nenhuma permission nova | **DECIDIDO** (owner, 2026-11-13) |
-| D5 | Navegação | página própria **«Auditoria de entradas»**, com atalho a partir do Fechamento mensal da competência | recomendação — confirmar |
+| D5 | Navegação | página própria **«Auditoria de entradas»**, com atalho a partir do Fechamento mensal (abre já com o mês da competência) | recomendação — confirmar |
 | D6 | CLARA executa a auditoria | a CLARA tem acesso a todas as funcionalidades e audita as notas **num comando do usuário**; `entry_audit.run`, `resolve` e `reopen` são diretos (sem prepare/confirmação) | **DECIDIDO** (owner, 2026-11-13); execução direta proposta — confirmar |
-| D7 | Execução | assíncrona, por um worker dentro da BFF (padrão do job de notificações no `lifespan`), uma execução por filial e competência | recomendação — confirmar |
+| D8 | Recorte da análise | **período livre (De/Até)** escolhido pelo usuário, no lugar da competência fixa; filiais e tipos de documento como filtros da execução; os demais como filtros da análise | **DECIDIDO** (owner, 2026-11-13) |
+| D9 | Componentes | dashboard com `@delpi/plugin-ui`; primitivos novos criados no plugin-ui e importados pelo Portal; o HTML do Raio-X não é copiado | **DECIDIDO** (owner, 2026-11-13) |
+| D7 | Execução | assíncrona, por um worker dentro da BFF (padrão do job de notificações no `lifespan`), uma análise por período com uma execução por filial | recomendação — confirmar |
 
 ## 4. Arquitetura (TARGET)
 
@@ -55,7 +57,7 @@ Questor (XML NF-e/CT-e) ──► financial-api ─┤
                                          ▼
      controllership-finance-api
        domain:       motor de regras (porte de regras.py), sem framework/HTTP/DB
-       application:  executar auditoria (filial, competência), reexecutar, resolver/reabrir
+       application:  executar auditoria (período, filiais), reexecutar, resolver/reabrir
        adapters:     api-delpi (entradas e TES), financial-api (XML), Postgres (resultado)
                  │                                   │
      MFE controllership-finance              CLARA (read / analyze / execute)
@@ -73,11 +75,11 @@ Regras de fronteira (instruções do projeto):
 ### 4A.1 Fluxo de uma auditoria
 
 1. Alguém pede a auditoria: botão na página **ou** um comando à CLARA («audita as entradas de outubro»).
-2. A BFF cria uma **execução** por filial (`entry_audit_run`, status `queued`) e responde na hora com o identificador. Se já existe uma execução em andamento para a mesma filial e competência, devolve a mesma (idempotente).
+2. A BFF cria uma **análise** (`entry_audit_analysis`: período, data de referência, filiais, tipos de documento, parâmetros) com uma **execução por filial** (`entry_audit_run`, status `queued`) e responde na hora com o identificador. Se já existe uma análise em andamento com os mesmos filtros de execução, devolve a mesma (idempotente).
 3. Um **worker dentro da BFF** pega a execução. É o mesmo padrão do job de notificações que já roda no `lifespan` da BFF (`startup/notification_dispatch_job`).
 4. O worker busca as fontes:
-   - Protheus pela api-delpi: SF1, SD1, SF4, SFT e fornecedores (SA2) da filial no período de recebimento;
-   - XML pela financial-api: NF-e e CT-e recebidos da filial no período, com eventos de cancelamento. XML já baixado antes é reaproveitado do cache por chave de acesso, porque XML não muda.
+   - Protheus pela api-delpi: SF1, SD1, SF4, SFT e fornecedores (SA2) da filial no período (data de referência: recebimento, como a SF1 da skill);
+   - XML pela financial-api: NF-e e CT-e da filial pela data de emissão, com folga antes do início do período para pegar notas emitidas antes e recebidas dentro dele, e os eventos de cancelamento. XML já baixado antes é reaproveitado do cache por chave de acesso, porque XML não muda.
 5. O worker roda o **motor de regras** (domínio puro) e grava o resultado: notas casadas, ocorrências, notas sem par, CT-e, TES usadas.
 6. O status de «resolvido» das ocorrências que continuam existindo é mantido pela **chave estável**.
 7. A execução termina como `done` (ou `failed`, com o motivo). A página acompanha o andamento; a CLARA consulta o status e, ao terminar, apresenta o resultado.
@@ -107,24 +109,44 @@ A E0 confirma se já existe SQL reaproveitável para algum destes (há consultas
 
 ### 4A.4 controllership-finance-api — rotas da BFF
 
-Prefixo `/entry-audit`. Todas exigem `controllership-finance.access` (D4). `branch=all` vale nas leituras (consolidado) e, no POST, cria uma execução por filial.
+Prefixo `/entry-audit`. Todas exigem `controllership-finance.access` (D4). A unidade de trabalho é a **análise**: um período (De/Até) escolhido pelo usuário, as filiais e os tipos de documento. Cada análise tem uma execução por filial e fica guardada para acompanhamento.
+
+**Execução e histórico**
 
 | Método e rota | Uso |
 |---|---|
-| `POST /entry-audit/runs` | body `{competence, branch}` → 202 com as execuções criadas (ou as que já estão em andamento) |
-| `GET /entry-audit/runs` | execuções por `competence`/`branch` (histórico) |
-| `GET /entry-audit/runs/{run_id}` | status, andamento (etapa, documentos lidos, XML baixados), contagens, erro |
-| `GET /entry-audit/summary` | KPIs da competência (última execução concluída), comparação com o mês anterior, ocorrências por severidade e por tema, top fornecedores, divergências por dia |
-| `GET /entry-audit/occurrences` | filtros `severity`, `theme`, `supplier`, `status` (`pending`\|`resolved`\|`all`), `q`, paginação |
-| `GET /entry-audit/documents` | notas casadas com situação e número de ocorrências |
-| `GET /entry-audit/unmatched` | notas só no XML / só no SF1, com motivo |
-| `GET /entry-audit/cte` | comparativo dos CT-e (direito ao crédito, CFOP esperado, base, alíquota, ICMS, CST) |
-| `GET /entry-audit/tes` | TES usadas na competência, com a configuração da SF4 e os alertas |
-| `POST /entry-audit/occurrences/{key}/resolve` · `/reopen` | status compartilhado; registra quem e quando |
-| `POST /entry-audit/unmatched/{key}/resolve` · `/reopen` | idem para notas sem par |
-| `GET /entry-audit/export` | planilha no layout atual da skill (para a contabilidade) |
+| `POST /entry-audit/analyses` | body `{date_from, date_to, date_basis: "received", branches: ["01","02"], document_types: ["nfe","cte"], params: {presumed_credit_tes: "004", freight_cfop_suffix: "352"}}` → 202 com a análise criada (ou a que já está em andamento com os mesmos filtros) |
+| `GET /entry-audit/analyses` | histórico: filtros `date_from`, `date_to`, `branch`, `status`; paginação |
+| `GET /entry-audit/analyses/{id}` | status, andamento por filial (etapa, documentos lidos, XML baixados), contagens, erro |
+| `POST /entry-audit/analyses/{id}/rerun` | reexecuta com os mesmos filtros (ou só a filial que falhou: `{branches: ["02"]}`) |
 
-Envelope, erros e `meta` iguais aos das outras rotas da BFF.
+**Dashboard** (todas aceitam os filtros da análise: `branch`, `severity`, `theme`, `supplier`, `tes`, `document_type`, `day`, `status`, `q`; o servidor calcula, o MFE não recalcula regra)
+
+| Método e rota | Alimenta |
+|---|---|
+| `GET /entry-audit/analyses/{id}/summary` | os 4 KPIs, comparação com o período anterior de mesmo tamanho, conformidade (sem divergência, com divergência, sem par a resolver, sem par explicadas) |
+| `GET /entry-audit/analyses/{id}/daily` | notas com divergência por dia, do período e do período anterior |
+| `GET /entry-audit/analyses/{id}/breakdowns` | por severidade, por tema, top fornecedores (com % das notas com divergência) e TES com mais ocorrências |
+| `GET /entry-audit/analyses/{id}/facets` | listas para os selects de filtro (fornecedores, temas, TES, severidades) com contagem |
+| `GET /entry-audit/trend` | evolução entre análises: pendentes e altas por mês, filtros `branch`, `date_from`, `date_to` |
+
+**Tabelas, detalhe e ações**
+
+| Método e rota | Uso |
+|---|---|
+| `GET /entry-audit/analyses/{id}/occurrences` | aba Ocorrências; paginação e ordenação |
+| `GET /entry-audit/analyses/{id}/occurrences/{key}` | detalhe: valores, por quê, o que fazer, regra citada, chave e links de DANFE/DACTE/XML, histórico de status |
+| `GET /entry-audit/analyses/{id}/documents` | aba Notas casadas |
+| `GET /entry-audit/analyses/{id}/unmatched` | aba Notas sem par |
+| `GET /entry-audit/analyses/{id}/cte` | aba CT-e |
+| `GET /entry-audit/analyses/{id}/tes` | aba TES usadas |
+| `POST /entry-audit/occurrences/{key}/resolve` · `/reopen` | status compartilhado (quem e quando) |
+| `POST /entry-audit/unmatched/{key}/resolve` · `/reopen` | idem para notas sem par |
+| `GET /entry-audit/analyses/{id}/export` | planilha no layout atual da skill |
+
+A **chave estável** de uma ocorrência não depende do período: filial + chave de acesso do documento + ocorrência + campo + item. Assim, a mesma ocorrência que aparece em duas análises com períodos sobrepostos mostra o mesmo status de resolvida.
+
+Envelope, erros e `meta` iguais aos das outras rotas da BFF. Os DANFE/DACTE/XML usam as rotas que o LNF já expõe na BFF.
 
 ### 4A.5 Organização do código na BFF (Clean Architecture)
 
@@ -144,12 +166,14 @@ Migration `V023` no schema `controllership_finance`, com as tabelas da seção 7
 
 | Pedido do usuário | O que a CLARA faz |
 |---|---|
-| «Audita as entradas de outubro» | `execute entry_audit.run {competence: 2026-10, branch: all}` → recebe as execuções; consulta `read entry_audit.run` até terminar; chama `analyze entry_audit_findings`; responde no formato da skill: o que pede ação, o que corrigir, o que não tem impacto |
-| «O que ainda está pendente na matriz?» | `read entry_audit.occurrences {branch: 01, status: pending}` |
+| «Audita as entradas de outubro» | `execute entry_audit.run {date_from: 2026-10-01, date_to: 2026-10-31, branches: todas}` → recebe a análise; consulta `read entry_audit.analysis` até terminar; chama `analyze entry_audit_findings`; responde no formato da skill: o que pede ação, o que corrigir, o que não tem impacto |
+| «Me explica o dashboard» | `read entry_audit.summary` + `breakdowns` + `daily` → explica os KPIs, a conformidade, os temas e os fornecedores que concentram ocorrências, e compara com o período anterior |
+| «O que melhorou desde setembro?» | `read entry_audit.trend` + `analyze entry_audit_findings` → evolução e sugestão de direcionamento (por exemplo, cadastrar fornecedor no Configurador de Tributos, corrigir uma TES) |
+| «O que ainda está pendente na matriz?» | `read entry_audit.occurrences {branch: 01, status: pending}` da última análise |
 | «Por que essa CT-e deu alta?» | `read` da ocorrência + `knowledge` com a regra citada |
 | «Marca a NF 123 da WEG como resolvida» | `execute entry_audit.resolve` |
 
-A execução é **direta**, sem prepare/confirmação: não altera dado de negócio (só cria o resultado da auditoria), é idempotente por filial e competência e o owner quer que a CLARA faça o trabalho num comando só (D6). Resolver e reabrir também são diretos.
+A execução é **direta**, sem prepare/confirmação: não altera dado de negócio (só cria o resultado da auditoria), é idempotente por período e filiais e o owner quer que a CLARA faça o trabalho num comando só (D6). Resolver e reabrir também são diretos.
 
 ## 5. Ganhos em relação à skill
 
@@ -170,7 +194,7 @@ A execução é **direta**, sem prepare/confirmação: não altera dado de negó
 | SF4 | código, crédito ICMS, livro ICMS, crédito IPI, livro IPI, material de consumo, cálculo de ICMS/IPI | api-delpi |
 | SFT | documento, série, fornecedor/loja, item, valor ICMS/IPI creditado | api-delpi |
 | SA2 | CNPJ e UF do fornecedor por código/loja | api-delpi |
-| XML NF-e e CT-e | todos os documentos recebidos da competência por CNPJ destinatário/tomador, com eventos de cancelamento | financial-api |
+| XML NF-e e CT-e | todos os documentos do período por CNPJ destinatário/tomador, com eventos de cancelamento | financial-api |
 | Empresa | CNPJ e UF de cada filial (01, 02) | a inventariar |
 
 **Lacuna conhecida:** a listagem atual de notas recebidas da financial-api (`ReceivedInvoiceQuery`) filtra por número, CNPJ do fornecedor e valor, **não por período**. A E0 precisa provar se o Questor permite listar por data de emissão/recebimento e CNPJ do destinatário. Se não permitir, D2 cai para upload do ZIP.
@@ -179,35 +203,77 @@ A execução é **direta**, sem prepare/confirmação: não altera dado de negó
 
 | Tabela | Conteúdo |
 |---|---|
-| `entry_audit_run` | filial, competência, status (`running`/`done`/`failed`), início/fim, quem executou, contagens, versão do motor, hash das fontes |
+| `entry_audit_analysis` | período (De/Até), data de referência, filiais, tipos de documento, parâmetros, status agregado, quem pediu (usuário ou CLARA em nome do usuário), datas |
+| `entry_audit_run` | uma por filial da análise: status (`queued`/`running`/`done`/`failed`), etapa e andamento, contagens, versão do motor, hash das fontes, erro |
 | `entry_audit_document` | notas casadas (cabeçalho comparado), situação |
-| `entry_audit_occurrence` | ocorrência: chave estável, severidade, tema, ocorrência, NF, fornecedor, item, campo, valor Protheus, valor XML, diferença, TES, ação sugerida |
+| `entry_audit_occurrence` | ocorrência: chave estável, severidade, tema, ocorrência, NF, fornecedor, item, campo, valor Protheus, valor XML, diferença, TES, por quê, ação sugerida, regra |
 | `entry_audit_unmatched` | notas só no XML / só no SF1, com motivo e situação |
-| `entry_audit_occurrence_status` | resolvido/reaberto por **chave estável** (filial + competência + documento + ocorrência + campo + item), quem e quando |
+| `entry_audit_cte` | comparativo dos CT-e |
+| `entry_audit_tes_used` | TES usadas na análise, com a configuração da SF4 |
+| `entry_audit_status` | resolvido/reaberto por **chave estável** (independente do período), quem e quando |
+| `entry_audit_xml_cache` | XML por chave de acesso (compactado), data da busca |
 
-A chave estável é a mesma ideia do painel atual: uma reexecução substitui o resultado, mas a ocorrência que continua existindo mantém o status de resolvida.
+Uma reexecução substitui o resultado da filial, e o status de resolvido continua valendo pela chave estável.
 
-## 8. Página «Auditoria de entradas» (conteúdo do Raio-X)
+## 8. Dashboard «Auditoria de entradas» (wireframes)
 
-- Filtros: filial (01, 02, consolidado), competência, severidade.
-- Ação: **Executar auditoria** / **Reexecutar**, com andamento e data da última execução.
-- KPIs: valor conferido, notas sem divergência, ocorrências pendentes, diferença nas altas; comparação com o mês anterior.
-- Gráficos: notas com divergência por dia de emissão; conformidade (sem divergência, com divergência, sem par a resolver, sem par explicadas); top fornecedores; ocorrências por tema (ICMS, IPI, CFOP, CST e origem, Simples e presumido, Valores e datas, Livro fiscal). Clique filtra a página inteira.
-- Tabela: Ocorrências (pendentes/resolvidas/todas), Notas casadas, Notas sem par; busca; ordenação; **Resolver / Reabrir**.
-- Novidade em relação ao painel: aba **CT-e** (hoje o painel não lê o CT-e Comparativo) e aba **TES usadas** (configuração da SF4 do período).
-- Exportar a planilha no layout atual (para a contabilidade).
-- Ajuda no mesmo gate: o que cada severidade significa e o «não apontado» da regra da empresa.
+Wireframes completos: [168-anexos/wireframes-auditoria-entradas.html](./168-anexos/wireframes-auditoria-entradas.html). Família visual **analítica** do padrão dos Portais: PageHero → filtros → KPIs → gráficos → tabelas. O conteúdo vem do painel Raio-X; o HTML dele não é copiado.
+
+```text
+TopBar do Portal
+PageHero compact ─ título, período, última execução, fontes   [Exportar] [Executar / Reexecutar]
+└─ FilterBar
+   ├─ Filtros da execução: Período (preset + De/Até), Data de referência, Filiais, Documentos, Parâmetros avançados
+   └─ Filtros da análise: Severidade, Tema, Fornecedor, TES, Status, Limpar   (na URL; não reexecutam)
+ScopeChipBar ─ filtros ativos removíveis
+KPIs ×4 ─ Valor conferido · Notas sem divergência · Ocorrências pendentes · Diferença nas altas (com Δ vs período anterior)
+Linha: Notas com divergência por dia (período × anterior)   |   Conformidade (medidor + legenda clicável)
+Linha: Top 8 fornecedores                                    |   Ocorrências por tema (rosca + lista)
+Linha: Por severidade | TES com mais ocorrências | Evolução entre análises
+SectionCard ─ abas: Ocorrências | Notas casadas | Notas sem par | CT-e | TES usadas
+   └─ Pendentes / Resolvidas / Todas · busca · colunas · tabela com Resolver/Reabrir · progresso · paginação
+Pergunte à CLARA ─ sugestões prontas
+Detalhe da ocorrência ─ painel lateral: valores, por quê, o que fazer, regra, documentos, Resolver
+```
+
+Estados: primeiro acesso (sem análise, com «Análises anteriores»), execução em andamento (etapas e progresso por filial), falha parcial (uma filial falhou, a outra concluiu), vazio por filtro. Mobile: KPIs em 2 colunas, gráficos empilhados, filtros num painel, tabela em cards.
+
+Filtros vindos da skill e do painel: período (no lugar da competência fixa), filiais (matriz/filial, consolidado), severidade, tema, fornecedor, dia (clique no gráfico), status (pendente/resolvida), busca, mais tipo de documento e TES. Os parâmetros da skill (`--tes-presumido 004`, `--cfop-frete 352`) ficam em «Parâmetros avançados» com o padrão preenchido. `--cnpj`, `--uf` e `--filial` deixam de existir para o usuário: vêm do cadastro das filiais.
+
+### 8.1 Componentes do `@delpi/plugin-ui`
+
+Regra: componente novo nasce no `@delpi/plugin-ui`, genérico (sem «auditoria» no nome nem na API), e é importado pelo MFE. Evoluções são aditivas, com os padrões atuais preservados e testes de caracterização antes da mudança.
+
+| Bloco | Componente | Situação | O que falta |
+|---|---|---|---|
+| Cabeçalho | `PageHero` (compact) | existe | — |
+| Período | **`PeriodRangeFilter`** = `QuickPeriodSelector` + `DateField` ×2 | **novo** | composto genérico: preset + De/Até + rótulo da data de referência |
+| Filtros | `FilterBar`, `FiltersRow`, `FilterSelectField`, `MultiSelectField`, `ClearFiltersButton` | existe | — |
+| Filtros ativos | `ScopeChipBar` | evoluir | `onRemove` por chip e «Limpar tudo» |
+| KPIs | `MetricKpiCard` + `TrendDelta` | existe | — |
+| Por dia | `ChartCard` + `ComparativeAreaChart` | existe | conferir clique no ponto para filtrar o dia |
+| Conformidade | `SemicircleProgressGauge` | evoluir | legenda clicável |
+| Top fornecedores / TES | `HorizontalValueBars` | evoluir | `tone` por item e item selecionado |
+| Por tema | **`DistributionDonut`** (sobre `ChartSeriesPie`) | **novo** | rosca + lista com contagem/% e seleção |
+| Severidade / evolução | `BarSeriesChart`, `LineSeriesChart` | existe | — |
+| Abas e status | `UnderlineNav`, `SegmentToggle` | existe | — |
+| Tabelas | `DataTableSection`, `StatusBadge`, `TablePaginationNav`, `DataRecordCard` (mobile) | existe | — |
+| Resolver na linha | **`ResolutionStatusCell`** | **novo** | Resolver / «✓ data» / Reabrir, acessível, com estado de envio |
+| Progresso resolvido | `ProgressSummaryBar` | existe | — |
+| Execução | `StateBanner`, `ProgressTracker`, `InlineLoadingProgress` | existe | — |
+| Detalhe | `DrawerShell`, `DetailCard`, `HelpTooltip` | existe | — |
+| Vazio | `EmptyGuidance` | existe | — |
 
 ## 9. CLARA (só catálogo; sem tools novas)
 
 | Tool | Entrada | Uso |
 |---|---|---|
-| `read` | `entry_audit.summary` | resumo da competência por filial |
+| `read` | `entry_audit.analysis` | análises (histórico) e o status/andamento de uma análise |
+| `read` | `entry_audit.summary` / `entry_audit.daily` / `entry_audit.breakdowns` / `entry_audit.trend` | os mesmos números do dashboard, para a CLARA explicar o painel |
 | `read` | `entry_audit.occurrences` | ocorrências com filtros (severidade, tema, fornecedor, status) |
 | `read` | `entry_audit.unmatched` | notas sem par |
-| `analyze` | `analysis_type=entry_audit_findings` | FACT/RECOMMENDATION agrupado por causa (TES, cadastro, fornecedor), no formato «o que pede ação / corrigir / sem impacto» da skill |
-| `read` | `entry_audit.run` | status e andamento de uma execução |
-| `execute` | `entry_audit.run` | executar/reexecutar a auditoria de uma competência (uma filial ou todas), **direto** (D6) |
+| `analyze` | `analysis_type=entry_audit_findings` | FACT/RECOMMENDATION agrupado por causa (TES, cadastro, fornecedor), no formato «o que pede ação / corrigir / sem impacto» da skill, com direcionamentos e comparação com análises anteriores |
+| `execute` | `entry_audit.run` | executar/reexecutar a auditoria de um período (uma filial ou todas), **direto** (D6) |
 | `execute` | `entry_audit.resolve` / `entry_audit.reopen` | marcar status (direto, baixo impacto) |
 | `knowledge` | domínio Controladoria | catálogo de regras (`references/regras.md`) como conhecimento citável |
 
@@ -226,11 +292,11 @@ Regra de trabalho: teste de comportamento em HML; passou tudo, vai para PROD. Fu
 | E4 | Execução, persistência, reexecução com status preservado, exportação xlsx | testes PASS |
 | E5 | Página no MFE + Ajuda | testes e build PASS |
 | E6 | CLARA: catálogo, analyze, conhecimento | testes PASS |
-| E7 | Ensaio HML com competência real (outubro/2026, filiais 01 e 02) → PROD | paridade em HML + publicação |
+| E7 | Ensaio HML com período real (outubro/2026, filiais 01 e 02) → PROD | paridade em HML + publicação |
 
 ## 11. Critério central de aceite: paridade
 
-Para a mesma filial e competência, com os mesmos dados de entrada, o motor da BFF produz **as mesmas ocorrências** que a skill: mesma nota, item, ocorrência, campo e severidade, e os mesmos valores (tolerância de R$ 0,05).
+Para a mesma filial e período, com os mesmos dados de entrada, o motor da BFF produz **as mesmas ocorrências** que a skill: mesma nota, item, ocorrência, campo e severidade, e os mesmos valores (tolerância de R$ 0,05).
 
 Diferenças só são aceitas quando explicadas pela fonte ao vivo e documentadas, por exemplo: SF4 mais nova que a cópia da skill; SFT presente decidindo um «Depende da TES».
 
@@ -253,4 +319,5 @@ Lançar ou corrigir notas no Protheus; alterar TES ou cadastro de fornecedor; su
 | Data | Evento |
 |---|---|
 | 2026-11-13 | Plano criado. D4 decidida pelo owner (tudo com `controllership-finance.access`). D1, D2, D3 e D5 com recomendação, aguardando confirmação. Skill anexada como referência para o porte. |
+| 2026-11-13 | Dashboard: período livre (D8), plugin-ui com primitivos novos no kit (D9), D3 decidida. Rotas da BFF refeitas em torno da análise por período (§4A.4) e rotas do dashboard; persistência ajustada (§7); wireframes (§8 e anexo HTML); CLARA explica o dashboard e sugere direcionamentos. |
 | 2026-11-13 | Estrutura do back-end (§4A): rotas da api-delpi, da financial-api e da BFF; organização em camadas; worker; cache de XML; CLARA executando a auditoria num comando (D6). Visual da página fica para a próxima rodada. Planejamento em tabela à parte (`planejamento-auditoria-entradas.xlsx`). |

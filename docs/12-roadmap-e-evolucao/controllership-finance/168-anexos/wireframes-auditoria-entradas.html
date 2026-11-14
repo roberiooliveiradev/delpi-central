@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wireframes — Auditoria de entradas (Portal Controladoria & Finanças)</title>
+<style>
+:root{
+  --bg:#f4f5f4; --paper:#fff; --ink:#1b211d; --muted:#6a746d; --line:#c9cfcb; --soft:#eceeed; --soft2:#e2e6e3;
+  --ok:#1f8a5b; --warn:#b7791f; --new:#6b46c1; --bad:#c53030;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Segoe UI",system-ui,-apple-system,Arial,sans-serif}
+.wrap{max-width:1240px;margin:0 auto;padding:28px 20px 60px}
+h1{font-size:26px;margin:0 0 4px}
+h2{font-size:19px;margin:44px 0 6px;padding-top:14px;border-top:2px solid var(--ink)}
+h3{font-size:14px;margin:0;text-transform:uppercase;letter-spacing:.06em}
+p.lead{color:var(--muted);margin:0 0 16px;max-width:900px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 4px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;border:1.5px solid currentColor;white-space:nowrap;background:#fff}
+.t-ok{color:var(--ok)} .t-warn{color:var(--warn)} .t-new{color:var(--new)}
+.screen{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:12px;box-shadow:0 1px 0 rgba(0,0,0,.03)}
+.topbar{display:flex;justify-content:space-between;align-items:center;background:var(--soft2);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--muted);margin-bottom:12px}
+.box{border:1.5px dashed var(--line);border-radius:8px;padding:12px;background:#fafbfa;position:relative}
+.box>.tags{position:absolute;top:-10px;right:10px;display:flex;gap:6px}
+.row{display:grid;gap:12px;margin-top:12px}
+.r4{grid-template-columns:repeat(4,1fr)} .r2{grid-template-columns:1.7fr 1fr} .r2e{grid-template-columns:1fr 1fr} .r3{grid-template-columns:repeat(3,1fr)}
+.lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.big{font-size:24px;font-weight:800;margin:6px 0 2px}
+.sm{font-size:12px;color:var(--muted)}
+.ctl{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:6px;padding:6px 10px;background:#fff;font-size:12.5px;margin:3px 4px 3px 0}
+.ctl.pri{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:700}
+.ctl.on{border-color:var(--ink);font-weight:700}
+.chip{display:inline-flex;gap:6px;align-items:center;background:var(--soft);border-radius:999px;padding:3px 10px;font-size:12px;margin:3px 4px 3px 0}
+.chart{height:150px;border-radius:6px;background:repeating-linear-gradient(135deg,var(--soft) 0 8px,#f7f8f7 8px 16px);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;text-align:center;padding:8px}
+.chart.tall{height:190px}
+.bar{height:12px;border-radius:3px;background:var(--soft2);margin:6px 0 2px;position:relative}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:3px;background:#9aa49e}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{border-bottom:1px solid var(--soft2);padding:6px 8px;text-align:left}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.tabs{display:flex;gap:16px;border-bottom:2px solid var(--soft2);margin-bottom:8px}
+.tabs span{padding:6px 2px;font-weight:600;color:var(--muted)}
+.tabs span.on{color:var(--ink);border-bottom:2px solid var(--ink);margin-bottom:-2px}
+.note{font-size:12px;color:var(--muted);margin-top:8px}
+.num{display:inline-flex;width:20px;height:20px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;font-weight:800;align-items:center;justify-content:center;margin-right:6px;flex:none}
+.callouts{margin-top:14px;display:grid;gap:6px}
+.callouts div{display:flex;align-items:flex-start;font-size:13px}
+.split{display:grid;grid-template-columns:1fr 380px;gap:12px}
+.drawer{border-left:3px solid var(--ink);background:#fff}
+.mobile{width:360px;border:2px solid var(--ink);border-radius:22px;padding:14px;background:#fff}
+.mobiles{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px}
+.progress{height:10px;border-radius:999px;background:var(--soft2);overflow:hidden;margin:8px 0}
+.progress i{display:block;height:100%;width:62%;background:#7d8a82}
+.steps{display:flex;gap:8px;flex-wrap:wrap;font-size:12px}
+.steps span{padding:3px 8px;border-radius:999px;background:var(--soft)}
+.steps span.done{background:#d7eadf} .steps span.cur{background:var(--ink);color:#fff}
+.map td:first-child{font-weight:600;white-space:nowrap}
+.map td{vertical-align:top}
+@media (max-width:900px){.r4{grid-template-columns:repeat(2,1fr)}.r2,.r2e,.r3,.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Auditoria de entradas — wireframes do dashboard</h1>
+<p class="lead">Portal Controladoria &amp; Finanças · rota proposta <code>/apps/controllership-finance/entry-audit</code> · família visual <b>analítica</b> do padrão dos Portais (PageHero → filtros → KPIs → gráficos → tabelas). Baseado no conteúdo do painel Raio-X das Entradas, sem copiar o HTML: tudo montado com <code>@delpi/plugin-ui</code>. Wireframe de estrutura, sem cores finais.</p>
+<div class="legend">
+  <span class="tag t-ok">● EXISTE no plugin-ui</span>
+  <span class="tag t-warn">● EVOLUIR no plugin-ui (aditivo)</span>
+  <span class="tag t-new">● NOVO primitivo no plugin-ui</span>
+</div>
+
+<!-- ============================================================= -->
+<h2>1. Dashboard completo (desktop)</h2>
+<p class="lead">O usuário escolhe o período (principal), as filiais e, se quiser, os demais filtros. Os filtros de análise (severidade, tema, fornecedor, dia, TES, tipo) recortam a página inteira sem nova execução. Executar/Reexecutar gera uma nova análise para o período.</p>
+<div class="screen">
+  <div class="topbar"><span>TopBar do Portal (Minha DELPI)</span><span>Início · Visão geral · <b>Auditoria de entradas</b> · Minhas tarefas · Ajuda</span></div>
+
+  <div class="box">
+    <div class="tags"><span class="tag t-ok">PageHero (compact)</span></div>
+    <div class="lbl">Controladoria · Fiscal</div>
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:flex-start">
+      <div>
+        <div style="font-size:21px;font-weight:800">Auditoria de entradas</div>
+        <div class="sm">Protheus × XML de NF-e e CT-e · Matriz e Filial · 01/10/2026 a 31/10/2026 (recebimento)</div>
+      </div>
+      <div>
+        <span class="ctl">⤓ Exportar planilha</span>
+        <span class="ctl pri">▶ Reexecutar auditoria</span>
+      </div>
+    </div>
+    <div class="sm" style="margin-top:4px">Última execução: 13/11/2026 22:10 por Michael · concluída em 2 min 14 s · <span class="chip">Fontes ao vivo: SF1 · SD1 · SF4 · SFT · XML Questor</span></div>
+
+    <div class="box" style="margin-top:12px">
+      <div class="tags"><span class="tag t-ok">FilterBar + FiltersRow</span><span class="tag t-new">PeriodRangeFilter</span></div>
+      <div class="lbl" style="margin-bottom:4px">Filtros da execução</div>
+      <span class="ctl">Período: <b>Mês anterior ▾</b></span>
+      <span class="ctl">De <b>01/10/2026</b></span><span class="ctl">Até <b>31/10/2026</b></span>
+      <span class="ctl">Data de referência: <b>Recebimento ▾</b></span>
+      <span class="ctl">Filiais: <b>Matriz, Filial ▾</b></span>
+      <span class="ctl">Documentos: <b>NF-e e CT-e ▾</b></span>
+      <span class="ctl">⚙ Parâmetros avançados</span>
+      <div class="lbl" style="margin:10px 0 4px">Filtros da análise <span class="sm" style="text-transform:none;letter-spacing:0">(recortam sem reexecutar)</span></div>
+      <span class="ctl">Severidade: <b>Todas ▾</b></span>
+      <span class="ctl">Tema: <b>Todos ▾</b></span>
+      <span class="ctl">Fornecedor: <b>buscar… ▾</b></span>
+      <span class="ctl">TES: <b>Todas ▾</b></span>
+      <span class="ctl">Status: <b>Pendentes ▾</b></span>
+      <span class="ctl">Limpar filtros</span>
+    </div>
+  </div>
+
+  <div class="box" style="margin-top:12px">
+    <div class="tags"><span class="tag t-warn">ScopeChipBar (+ remover chip)</span></div>
+    <span class="lbl">Filtros ativos</span>
+    <span class="chip">Severidade: Alta ✕</span><span class="chip">Fornecedor: WEG Equipamentos ✕</span><span class="chip">Dia: 14 ✕</span><span class="chip">Limpar tudo</span>
+  </div>
+
+  <div class="row r4">
+    <div class="box"><div class="tags"><span class="tag t-ok">MetricKpiCard + TrendDelta</span></div><div class="lbl">Valor conferido</div><div class="big">R$ 4,82 mi</div><div class="sm">612 notas casadas · ▲ 6,1% vs set/2026</div></div>
+    <div class="box"><div class="tags"><span class="tag t-ok">MetricKpiCard</span></div><div class="lbl">Notas sem divergência</div><div class="big">548</div><div class="sm">89,5% das casadas · ▲ 2,3 p.p.</div></div>
+    <div class="box"><div class="tags"><span class="tag t-ok">MetricKpiCard</span></div><div class="lbl">Ocorrências pendentes</div><div class="big">97</div><div class="sm">31 resolvidas · ▼ 12% vs período anterior</div></div>
+    <div class="box"><div class="tags"><span class="tag t-ok">MetricKpiCard</span></div><div class="lbl">Diferença nas altas</div><div class="big">R$ 18,4 mil</div><div class="sm">22 ocorrências altas · clique para filtrar</div></div>
+  </div>
+
+  <div class="row r2">
+    <div class="box"><div class="tags"><span class="tag t-ok">ChartCard + ComparativeAreaChart</span></div>
+      <h3>Notas com divergência por dia</h3><div class="sm">período selecionado × período anterior de mesmo tamanho, por data de emissão · clique num dia para filtrar</div>
+      <div class="chart tall">linha do período atual + linha tracejada do período anterior · eixo X = dias</div></div>
+    <div class="box"><div class="tags"><span class="tag t-warn">SemicircleProgressGauge (legenda clicável)</span></div>
+      <h3>Conformidade</h3><div class="sm">notas casadas</div>
+      <div class="chart">medidor: 89,5% sem divergência</div>
+      <div class="sm">● Sem divergência 548 · ● Com divergência 64 · ● Sem par a resolver 11 · ● Sem par explicadas 37</div></div>
+  </div>
+
+  <div class="row r2e">
+    <div class="box"><div class="tags"><span class="tag t-warn">HorizontalValueBars (tom por item + seleção)</span></div>
+      <h3>Top 8 fornecedores</h3><div class="sm">por nº de ocorrências · cor = % das notas do fornecedor com divergência · clique para filtrar</div>
+      <div>WEG Equipamentos Elétricos SC<div class="bar"><i style="width:92%"></i></div></div>
+      <div>Cabos Lapp Brasil SP<div class="bar"><i style="width:64%"></i></div></div>
+      <div>J.J. Sul Transportes SC<div class="bar"><i style="width:41%"></i></div></div>
+      <div class="sm">…</div></div>
+    <div class="box"><div class="tags"><span class="tag t-new">DistributionDonut (rosca + lista clicável)</span></div>
+      <h3>Ocorrências por tema</h3><div class="sm">ICMS · IPI · CFOP · CST e origem · Simples e presumido · CT-e (frete) · Chave e cadastro · Valores e datas · Livro fiscal</div>
+      <div class="chart">rosca + lista com contagem e % · clique filtra</div></div>
+  </div>
+
+  <div class="row r3">
+    <div class="box"><div class="tags"><span class="tag t-ok">ChartCard + BarSeriesChart</span></div><h3>Por severidade</h3><div class="chart">Alta · Depende da TES · Média · Baixa</div></div>
+    <div class="box"><div class="tags"><span class="tag t-ok">ChartCard + HorizontalValueBars</span></div><h3>TES com mais ocorrências</h3><div class="chart">TES 004 · 036 · 102 … com alerta «crédito × livro»</div></div>
+    <div class="box"><div class="tags"><span class="tag t-ok">ChartCard + LineSeriesChart</span></div><h3>Evolução entre análises</h3><div class="chart">pendentes e altas por mês (análises anteriores do mesmo recorte)</div></div>
+  </div>
+
+  <div class="box" style="margin-top:12px">
+    <div class="tags"><span class="tag t-ok">SectionCard + UnderlineNav + DataTableSection</span><span class="tag t-new">ResolutionStatusCell</span></div>
+    <div class="tabs"><span class="on">Ocorrências 97</span><span>Notas casadas 612</span><span>Notas sem par 48</span><span>CT-e 134</span><span>TES usadas 27</span></div>
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+      <div><span class="tag t-ok">SegmentToggle</span> <span class="ctl on">Pendentes</span><span class="ctl">Resolvidas (31)</span><span class="ctl">Todas</span></div>
+      <div><span class="ctl">🔎 Buscar NF, fornecedor, ocorrência…</span><span class="ctl">Colunas</span></div>
+    </div>
+    <table>
+      <tr><th>Status</th><th>Unidade</th><th>Severidade</th><th>Ocorrência</th><th>NF</th><th>Fornecedor</th><th>Emissão</th><th>TES</th><th>Campo</th><th>Diferença</th><th>O que fazer</th></tr>
+      <tr><td><span class="ctl">Resolver</span></td><td>Matriz</td><td>● Alta</td><td>CT-e: crédito de ICMS em frete sem direito</td><td>25655</td><td>J.J. Sul Transportes</td><td>11/10</td><td>036</td><td>ICMS</td><td>R$ 29,43</td><td>Lançar na TES de frete sem crédito</td></tr>
+      <tr><td>✓ 13/11 <span class="sm">Reabrir</span></td><td>Filial</td><td>● Média</td><td>Origem divergente</td><td>504699</td><td>WEG Equipamentos</td><td>12/10</td><td>102</td><td>CST</td><td>—</td><td>Corrigir origem para 2</td></tr>
+      <tr><td><span class="ctl">Resolver</span></td><td>Matriz</td><td>● Depende da TES</td><td>ICMS calculado acima do XML</td><td>116280</td><td>Cabos Lapp</td><td>09/10</td><td>027</td><td>ICMS</td><td>R$ 412,10</td><td>Conferir TES 027</td></tr>
+    </table>
+    <div class="note">Linha clicável → abre o detalhe (seção 3). Rodapé: «31 de 128 resolvidas» com barra de progresso <span class="tag t-ok">ProgressSummaryBar</span> + paginação <span class="tag t-ok">TablePaginationNav</span>.</div>
+  </div>
+
+  <div class="box" style="margin-top:12px">
+    <div class="tags"><span class="tag t-ok">SectionCard + HelpTooltip</span></div>
+    <h3>Pergunte à CLARA</h3>
+    <div class="sm">Sugestões prontas para copiar: «Explique o resultado da auditoria de outubro» · «O que pede ação na matriz?» · «Por que as CT-e da J.J. Sul deram alta?» · «Compare com setembro».</div>
+  </div>
+
+  <div class="callouts">
+    <div><span class="num">1</span>Período é o filtro principal: presets (Mês anterior, Este mês, Personalizado) + datas De/Até. Data de referência = recebimento (como a SF1 da skill); o XML é buscado pela emissão com folga para pegar notas emitidas antes.</div>
+    <div><span class="num">2</span>«Filtros da execução» definem o que é auditado (pedem Executar). «Filtros da análise» só recortam o resultado já gerado e ficam na URL (F5 e link compartilhável).</div>
+    <div><span class="num">3</span>Parâmetros avançados = os da skill: TES do crédito presumido (004) e final do CFOP de frete (352), com os padrões já preenchidos.</div>
+    <div><span class="num">4</span>Clique em KPI, dia, fornecedor, tema, severidade ou TES aplica filtro na página inteira (filtro cruzado, como no Raio-X). Esc limpa.</div>
+    <div><span class="num">5</span>Abas novas em relação ao Raio-X: CT-e (comparativo do frete) e TES usadas (configuração da SF4 do período).</div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<h2>2. Primeiro acesso e execução em andamento</h2>
+<div class="row r2e">
+  <div class="screen">
+    <div class="box"><div class="tags"><span class="tag t-ok">PageHero + FilterBar</span></div>
+      <div style="font-size:19px;font-weight:800">Auditoria de entradas</div>
+      <div class="sm">Escolha o período e as filiais e execute a auditoria.</div>
+      <div style="margin-top:8px"><span class="ctl">Período: Mês anterior ▾</span><span class="ctl">De 01/10/2026</span><span class="ctl">Até 31/10/2026</span><span class="ctl">Filiais: Matriz, Filial ▾</span><span class="ctl pri">▶ Executar auditoria</span></div>
+    </div>
+    <div class="box" style="margin-top:12px"><div class="tags"><span class="tag t-ok">EmptyGuidance</span></div>
+      <b>Nenhuma auditoria para este período</b>
+      <div class="sm">A auditoria confere cada nota de entrada do Protheus com o XML do fornecedor e aponta o que a contabilidade costuma devolver: CT-e, CFOP, CST, base de ICMS/IPI, chave, CNPJ, Simples e presumido de SC.</div>
+    </div>
+    <div class="box" style="margin-top:12px"><div class="tags"><span class="tag t-ok">DataTableSection</span></div>
+      <h3>Análises anteriores</h3>
+      <table><tr><th>Período</th><th>Filiais</th><th>Executada em</th><th>Pendentes</th><th></th></tr>
+      <tr><td>01/09–30/09/2026</td><td>Matriz, Filial</td><td>05/10 09:12</td><td>14</td><td><span class="ctl">Abrir</span></td></tr></table>
+    </div>
+  </div>
+  <div class="screen">
+    <div class="box"><div class="tags"><span class="tag t-ok">StateBanner + ProgressTracker</span></div>
+      <b>Auditoria em andamento — Matriz e Filial, 01/10 a 31/10/2026</b>
+      <div class="progress"><i></i></div>
+      <div class="steps"><span class="done">✓ Notas do Protheus (612)</span><span class="done">✓ TES e livro fiscal</span><span class="cur">XML do Questor 418/680</span><span>Regras</span><span>Resultado</span></div>
+      <div class="sm" style="margin-top:8px">Pode sair desta página: a execução continua e aparece em Análises anteriores. A CLARA também acompanha.</div>
+    </div>
+    <div class="box" style="margin-top:12px"><div class="tags"><span class="tag t-ok">StateBanner (erro)</span></div>
+      <b>A execução da Filial falhou</b><div class="sm">O Questor não respondeu ao baixar os XML. A Matriz foi concluída. <span class="ctl">Tentar de novo a Filial</span></div>
+    </div>
+    <div class="note">Andamento por <code>GET /entry-audit/analyses/{id}</code> com refetch a cada poucos segundos enquanto <code>running</code> (ou aviso pelo canal de tempo real, se for ligado depois).</div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<h2>3. Detalhe da ocorrência</h2>
+<div class="screen">
+  <div class="split">
+    <div class="box"><div class="tags"><span class="tag t-ok">DataTableSection</span></div><div class="chart tall">tabela de ocorrências (seção 1), com a linha selecionada destacada</div></div>
+    <div class="box drawer"><div class="tags"><span class="tag t-ok">DrawerShell</span><span class="tag t-ok">DetailCard</span></div>
+      <div class="lbl">Ocorrência · Alta</div>
+      <div style="font-weight:800;font-size:16px;margin:4px 0">CT-e: crédito de ICMS em frete sem direito</div>
+      <div class="sm">CT-e 25655 · J.J. Sul Transportes · Matriz · emissão 11/10/2026 · TES 036</div>
+      <table style="margin-top:8px"><tr><th>Campo</th><th>Protheus</th><th>XML</th><th>Diferença</th></tr><tr><td>ICMS</td><td>R$ 29,43</td><td>R$ 0,00</td><td>R$ 29,43</td></tr></table>
+      <div style="margin-top:8px"><b>Por quê</b><div class="sm">As NF-e transportadas só têm CFOP de uso e consumo (x556); frete de consumo não dá direito a crédito. A TES 036 credita.</div></div>
+      <div style="margin-top:8px"><b>O que fazer</b><div class="sm">Lançar na TES de frete sem crédito (CST 090).</div></div>
+      <div style="margin-top:8px"><b>Regra</b><div class="sm">Catálogo de regras · CT-e · «crédito de ICMS em frete sem direito» <span class="tag t-ok">HelpTooltip</span></div></div>
+      <div style="margin-top:8px"><b>Documentos</b><div class="sm">Chave 4226…0040 · <span class="ctl">Ver DACTE</span> <span class="ctl">Ver XML</span></div></div>
+      <div style="margin-top:10px;border-top:1px solid var(--soft2);padding-top:8px"><span class="ctl pri">Marcar como resolvida</span><span class="ctl">Copiar pergunta para a CLARA</span></div>
+      <div class="sm" style="margin-top:6px">Histórico: aberta em 13/11 22:10 (execução) · ainda não resolvida.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<h2>4. Mobile</h2>
+<div class="mobiles">
+  <div class="mobile">
+    <div class="lbl">Auditoria de entradas</div><b>Out/2026 · Matriz e Filial</b>
+    <div style="margin:8px 0"><span class="ctl">Filtros (3)</span><span class="ctl pri">▶ Reexecutar</span></div>
+    <div class="row" style="grid-template-columns:1fr 1fr"><div class="box"><div class="lbl">Pendentes</div><div class="big">97</div></div><div class="box"><div class="lbl">Sem diverg.</div><div class="big">89%</div></div></div>
+    <div class="box" style="margin-top:10px"><h3>Por dia</h3><div class="chart" style="height:110px">gráfico rolável</div></div>
+    <div class="note">KPIs em 2 colunas; gráficos empilhados; filtros num painel <span class="tag t-ok">DrawerShell</span>.</div>
+  </div>
+  <div class="mobile">
+    <div class="tabs"><span class="on">Ocorrências</span><span>Notas</span><span>Sem par</span></div>
+    <div class="box"><div class="tags"><span class="tag t-ok">DataRecordCard</span></div><div class="lbl">● Alta · CT-e 25655</div><b>Crédito de ICMS em frete sem direito</b><div class="sm">J.J. Sul · R$ 29,43 · TES 036</div><div style="margin-top:6px"><span class="ctl">Resolver</span><span class="ctl">Detalhe</span></div></div>
+    <div class="box" style="margin-top:8px"><div class="lbl">● Média · NF 504699</div><b>Origem divergente</b><div class="sm">WEG · CST</div></div>
+    <div class="note">Tabela vira cards (DataTableSection com alternância Tabela/Cards nativa).</div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<h2>5. Mapa de componentes</h2>
+<div class="screen">
+<table class="map">
+<tr><th>Bloco</th><th>Componente</th><th>Situação</th><th>O que falta</th></tr>
+<tr><td>Cabeçalho</td><td>PageHero (compact)</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
+<tr><td>Período</td><td>QuickPeriodSelector + DateField ×2 → <b>PeriodRangeFilter</b></td><td><span class="tag t-new">novo</span></td><td>composto genérico: preset + De/Até + rótulo da data de referência; reaproveitável por todos os Portais</td></tr>
+<tr><td>Filtros</td><td>FilterBar, FiltersRow, FilterSelectField, MultiSelectField, ClearFiltersButton</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
+<tr><td>Filtros ativos</td><td>ScopeChipBar</td><td><span class="tag t-warn">evoluir</span></td><td><code>onRemove</code> por chip e ação «Limpar tudo»</td></tr>
+<tr><td>KPIs</td><td>MetricKpiCard + TrendDelta</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
+<tr><td>Por dia</td><td>ChartCard + ComparativeAreaChart</td><td><span class="tag t-ok">existe</span></td><td>conferir clique no ponto (dia) para filtrar</td></tr>
+<tr><td>Conformidade</td><td>SemicircleProgressGauge</td><td><span class="tag t-warn">evoluir</span></td><td>legenda clicável (<code>onLegendSelect</code>)</td></tr>
+<tr><td>Top fornecedores / TES</td><td>HorizontalValueBars</td><td><span class="tag t-warn">evoluir</span></td><td><code>tone</code> por item (ok/aviso/crítico) e item selecionado</td></tr>
+<tr><td>Por tema</td><td><b>DistributionDonut</b> (sobre ChartSeriesPie)</td><td><span class="tag t-new">novo</span></td><td>rosca + lista com contagem/% e seleção; hoje a rosca só existe dentro do ConfigurableSeriesChart</td></tr>
+<tr><td>Severidade / evolução</td><td>BarSeriesChart, LineSeriesChart</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
+<tr><td>Abas e status</td><td>UnderlineNav, SegmentToggle</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
+<tr><td>Tabelas</td><td>DataTableSection, StatusBadge, TablePaginationNav</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
+<tr><td>Resolver na linha</td><td><b>ResolutionStatusCell</b></td><td><span class="tag t-new">novo</span></td><td>botão Resolver / «✓ data» / Reabrir, acessível, com estado de envio</td></tr>
+<tr><td>Progresso resolvido</td><td>ProgressSummaryBar</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
+<tr><td>Execução</td><td>StateBanner, ProgressTracker, InlineLoadingProgress</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
+<tr><td>Detalhe</td><td>DrawerShell, DetailCard, HelpTooltip</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
+<tr><td>Vazio</td><td>EmptyGuidance</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
+</table>
+<div class="note">Regra do Portal: componente novo nasce no <code>@delpi/plugin-ui</code>, genérico (sem «auditoria» no nome nem na API), e é importado pelo MFE. Evoluções são aditivas, com os padrões atuais preservados e testes de caracterização antes da mudança.</div>
+</div>
+</div>
+</body>
+</html>
