@@ -4446,3 +4446,78 @@ está DOWN — a autorização cobre também a recuperação); G6-C=
 NOT_STARTED; G6-D=BLOCKED (serviço down + identidade eval
 não provisionada). Falha externa `test_d16` segue em main —
 owner prc-track.
+
+### 94.5 RCA do incidente (Fase A — evidências)
+
+Timeline (horário local -03):
+
+- **15:10–15:16** — múltiplos containers descartáveis de probe OCR
+  ativos (create/delete churn no journal; não existem mais).
+- **15:15:33** — kernel `warn_alloc` (WSL2): falha de alocação
+  order:7 em `vmbus_alloc_ring`; Mem-Info: free≈150MB, anon
+  ativo+inativo≈6,4GB, **~5GB dos 6GB de swap consumidos**.
+  `warn_alloc: 1 callbacks suppressed` — ratelimit de printk ativo.
+- **15:15:36** — último healthcheck OK (ExitCode 0, latência ~90ms).
+- **15:15:37.9** — dockerd `stopping restart-manager` → exit 137
+  às 15:15:38. **Sem** mensagem systemd "killed by the OOM killer"
+  para o scope 3de8e6eb; `OOMKilled=false`.
+- **15:17:58, 16:16, 16:38** — kernel OOM global (constraint=NONE)
+  mata 3 processos python3 (~2,1–2,5GB anon-rss) nos containers
+  descartáveis de probe — pressão persistiu ~80min após a morte.
+
+Classificação: **`HOST_MEMORY_PRESSURE_PROVEN`** — exaustão do host
+(10GB RAM total) comprovada no instante da morte. Agente exato do
+kill no engineering-api: **não registrado** — hipótese dominante é
+OOM global com printk suprimido (ratelimit ativo) e evento
+containerd não refletido em `OOMKilled`; alternativa de kill
+externo (API docker/systemd-oomd/manual) **sem evidência** —
+dockerd não registra kill/stop API e systemd-oomd não existe.
+Vetor comprovado: probes OCR paralelos (~2GB+ cada) em containers
+descartáveis sem `--memory`, bypass dos limites do serviço.
+
+Observação operacional: `restart=unless-stopped` não restaurou o
+serviço — dockerd avaliou e encerrou o restart-manager (comporta-
+mento consistente com kill tratado como parada, não falha).
+
+### 94.6 Inventário de controles existentes (Fase D)
+
+Já implementados no serviço (`subprocess_executor.py`,
+`analysis_jobs.py`):
+
+- `BoundedSemaphore(1)` — `ENG_DRAWING_OCR_MAX_CONCURRENCY=1`
+  (máx. 4) → serializa OCR dentro do processo; saturação devolve
+  erro tipado `ocr_concurrency_saturated`.
+- `RLIMIT_AS` por filho — `ENG_DRAWING_OCR_MAX_RSS_MB`.
+- `RLIMIT_CPU` — `ENG_DRAWING_OCR_CPU_SECONDS=900` (prod).
+- `RLIMIT_NOFILE=256`; timeout pai + cleanup em `finally`.
+- Isolamento `subprocess` (prod) — morte do filho não derruba o
+  uvicorn; `_MAX_PIXELS=40M` bounda RAM de decode por página.
+- Jobs: idempotência por chave, TTL 1h, running-cap 2700s,
+  `_JOB_MAX=64`.
+
+**Lacunas comprovadas pelo incidente:**
+
+1. `ENG_DRAWING_OCR_MAX_RSS_MB=16384` em prod > RAM do host
+   (~10GB) — bound ineficaz; recomendação: reduzir para orçamento
+   real do host (config compose — requer aprovação do owner).
+2. Container sem `mem_limit` — serviço compete sem bound e sem
+   proteção contra carga externa (e vice-versa).
+3. Containers descartáveis/probes bypassam TODOS os limites do
+   serviço — foi o vetor real; mitigação operacional: `--memory`
+   explícito + serialização (regra §94 owner já publicada).
+4. Sem endpoint de enumeração de jobs — impossível provar
+   quiescência antes de restart (drain por espera 2700s).
+5. `ENG_DRAWING_OCR_BENCHMARK_ENABLED=true` e
+   `ENG_DRAWING_BENCHMARK_ENABLED=true` em prod — superfície de
+   execuções pesadas; avaliar desligar (decisão do owner).
+6. `ENG_DRAWING_OCR_ALLOW_MODEL_DOWNLOAD=true` em prod —
+   download de modelo em runtime pode amplificar RAM/disco.
+
+### 94.7 Plano de recuperação (Fase B — aguardando autorização)
+
+Duas alternativas apresentadas ao owner via
+`PRODUCTION_RECOVERY_AUTHORIZATION_REQUEST` (abaixo no relatório):
+(a) mínima — `docker compose up -d engineering-api` na imagem
+existente (sem VAL-02); (b) recovery+upgrade VAL-02 num único
+restart (build no SHA alvo). Nenhuma executada — **sem
+autorização de produção até aqui**.
