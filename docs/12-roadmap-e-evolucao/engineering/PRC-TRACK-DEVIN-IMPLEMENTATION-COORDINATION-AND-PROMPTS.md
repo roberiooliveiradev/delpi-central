@@ -1130,3 +1130,22 @@ E01 sete campos no card **PASS** (subchecks id/type/requester/officialCode/creat
 **Prioridade:** P0-01 descrição/provenance; P0-02 lacuna comparability versus diff real; P1 compactação hero/tabela/ficha/timeline/comparação, overlay/foco/scroll; P2 IDs originais; G0→G1→G2→G3 com matriz de evidência, owner/consumer, testes e rollout HML. Usar os componentes e tokens oficiais de `@delpi/plugin-ui` (Abstraction Gate para componente novo); preservar snapshot imutável, comparação autoritativa backend, flags, AuthZ, no-op/revisions e fila PRC. Sem import entre MFEs, sem inventar estado TOTVS, **zero writes TOTVS**, **PRD não autorizado**.
 
 **Estado:** `PO_REFINEMENT_SCOPE_APPROVED / SPEC_RECORDED / CODE_NOT_CHANGED_BY_COORDINATION / IMPLEMENTATION_PENDING / HML_QA_NOT_RUN`. Próxima ação: briefing do Devin usando o documento acima como fonte, reancorar HEAD/status antes de qualquer diff. Não alterar gate de publicação de produtos por proposta de UX.
+
+
+## 61. Execução — Refinamento pós-HML Produtos Acompanhados implementado e homologado (14/11/2026)
+
+**Escopo:** pacote [PRC-TRACK-UX-REFINEMENT-POST-HML-2026-11-14.md](./PRC-TRACK-UX-REFINEMENT-POST-HML-2026-11-14.md) (§60) executado integralmente na `main` — G0 → G3, sem branch, DEV/HML apenas. Commits `2310b0ed52` (P0–P2) e `a472c1e33d` (regressão de recolhimento + spec de refinamento), `main` final push `a472c1e33d`.
+
+**G0 — prova de dados (Postgres HML, somente leitura):** `30190125` V1 schema-2 tem `fields.description.value="#"` literal, `coverageState=present`, `valueOrigin=inherited_confirmed` → `LEGITIMATE_DATA_WITH_UX_GAP` (não há evidência de valor alternativo; snapshot histórico preservado, nenhuma leitura TOTVS live). `30190123` V1 = snapshot legado esparso × V2 schema-2 populada; `changes` persistidos com `before:null` → mesmo veredito: lacuna de cobertura, não remoção comprovada.
+
+**G1 — backend (contrato aditivo, semântica preservada):** `compute_technical_diff` passa a emitir `beforePresent`/`afterPresent` por lado — fields, `linkState` added/removed e atributos de fornecedor — separando «campo não observado na versão» de «nulo registrado». Diff segue 100% server-side; R01–R18, imutabilidade, proveniência e flags por intervalo inalterados. Nova `TestDiffPresenceSemantics` (3 casos: legacy×v2, nulo registrado × não observado, attr de fornecedor). Suíte focada 104/104.
+
+**G2 — frontend/kit:** hero do produto usa `officialCode` como identidade (descrição `#` vira informação complementar); `PrcTechnicalSheetView` ganha prop `density="compact"` (tokens, opt-in só na ficha consolidada); composição kit `data-table.css` elimina duplo contorno `table-section > wrap--section` (superfície única para todos os consumers); timeline com resumo conciso + detalhe agrupado pelos grupos canônicos (`PRC_FIELD_GROUP_BY_PATH`); comparação agrupada com células presença-cientes («Sem dado nesta versão (Vx)» + legenda) e fornecedores legíveis `code|store` PN·Cat; `prcShortId` + tooltip ID completo. **Bug real encontrado na homologação:** `display:flex` anulava `[hidden]` — a timeline nunca recolhia visualmente; corrigido com guarda `[hidden]{display:none}` e coberto por asserção E2E de visibilidade.
+
+**G3 — homologação HML:** deploy governado `up-hml-sequential.sh --build` (plugin-ui, engineering, engineering-api). Digests servidos: API sha256:47b58ce877cb, MFE sha256:6c8b9ae4f5af, kit sha256:c25898633d3e; 22/22 healthy; bundle conferido (`Sem dado nesta` no `App-*.js` servido; `beforePresent:false` emitido pela API viva). E2E Chromium real `https://192.168.1.237:18443` (`PLAYWRIGHT_INSECURE=1`): **28/28 PASS** — desktop/mobile/tablet/mobile-320 × {P0-01, P0-02, tema escuro+zoom 200%+teclado, U1×2, U2, U3}. Zero chamadas a `/apps/api-delpi/`, zero pageerrors. Evidências `~/prc-e2e-run/e2e/artifacts/prc-refine-*` (16 screenshots).
+
+**Suites:** backend focado 104/104; MFE 430/430 (novo `prcSnapshot.test.ts` 12 casos — `#` literal, coverage, `diffCellState`, identidade de vínculo); plugin-ui 2517/2517; typecheck PASS; builds kit+MFE PASS.
+
+**TEST_NOT_RUN honestos:** 403 real (sem identidade sem-permissão autorizada em HML — não fabricado); estados error/forbidden de tela só cobertos por estados existentes (forbidden na listagem via backend já exercido na suíte). Falha preexistente `intake D16 422` na suíte backend ampla fora do escopo. `TOTVS_WRITES: 0`. `PRD_DEPLOY: NOT_EXECUTED`.
+
+**Rollback:** imagens anteriores + `git revert` dos dois commits; nenhuma migration nesta rodada.
