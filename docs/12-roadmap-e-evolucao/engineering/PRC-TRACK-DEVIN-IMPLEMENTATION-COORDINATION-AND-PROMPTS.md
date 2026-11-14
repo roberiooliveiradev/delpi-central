@@ -981,3 +981,17 @@ E01 sete campos no card **PASS** (subchecks id/type/requester/officialCode/creat
 **Documento autoritativo de wireframe atualizado:** `MFE-PRODUCT-REGISTRATION-UX-WIREFRAMES.md`, adendo **PRC-REF-024 — Wireframe V3**; commit `4bacf36cf775c8284a62959ed308a885776defdb`. Contém matriz campo→destino, wireframe desktop/mobile, estados, contratos e gates. Não substitui regras PRC-REF-022 nem PRC-TRACK. Conferida a implementação `PrcDetailPage.tsx`: identificação de nove campos no hero, `PrcWorkflowProgress`, `PrcActionBar` e abas Ficha/Verificação/Histórico/Revisões.
 
 **Estado:** `PO_DIRECTION_CAPTURED / UX_WIREFRAME_V3_FOR_REVIEW / IMPLEMENTATION_NOT_AUTHORIZED / HML_TEST_NOT_RUN / PRD_NOT_AUTHORIZED`. Próximo passo é revisar com o PO o desenho proposto e só então liberar pacote de implementação Devin em `main` sem criar branches; mudanças de owner/authority fora do escopo.
+
+
+## 52. Coordination — PO aprova detalhamento PRC V3 e padrão visual transversal (14/11/2026)
+
+**Ratificação:** PO aprovou explicitamente o wireframe V3 do detalhe da solicitação, com UX limpa, contextual e direcional, e determinou que esse padrão oriente as próximas telas do Portal Engenharia. Documentos alterados na `main`:
+
+- `docs/12-roadmap-e-evolucao/engineering/WIREFRAMES.md` §17 — princípios transversais, commit `c7952b0528adeb74017aaaaf7544f7ca577d9a80`.
+- `docs/12-roadmap-e-evolucao/engineering/MFE-PRODUCT-REGISTRATION-UX-WIREFRAMES.md` PRC-REF-024 §I — `PO_APPROVED_UX_V3 / IMPLEMENTATION_AUTHORIZED_IN_HML`, commit `12fb0c11f200a22668b98a5603606300c4b9240f`.
+
+**Pacote aprovado para Devin:** revisão integral da página `PrcDetailPage`: hero reduzido com status, tipo, avatar solicitante, responsável condicional, revisão base compacta, workflow visível e botões com ícones+ajuda; referências externas/datas/origem/histórico em área contextual, código TOTVS na Ficha, status de verificação na aba dedicada com aviso bloqueador compacto no hero quando necessário; aprimorar hierarquia de bandeiras, conteúdo das quatro abas, anexos, avisos e estados sem duplicar fontes. Aproveitar `plugin-ui`, `PrcPersonCell`, `PrcActionBar`, `PrcWorkflowProgress`; preservar `allowedActions`, edição por campo devolvido, verificação fail-closed, autorização por objeto e contratos. Casos submetido/em atendimento/devolvido/legados/terminais, desktop/mobile/zoom200/temas, deep-link, clique e teclado. Nenhum novo fluxo de produto, mudança de owner ou publicação.
+
+**Execução:** somente `main`, sem branch; reancorar HEAD/status, diff mínimo, testes no SHA, E2E visual HML, docs/ledger de entrega. `PRD_DEPLOY=NOT_AUTHORIZED`; `PRD_BUSINESS_TEST_WRITES=0`. PRD exige decisão explícita futura. Retorno do agente deve permitir aceite visual PO antes de liberar próxima etapa TOTVS/product tracking.
+
+**Estado:** `PO_APPROVED_TARGET / IMPLEMENTATION_PENDING / HML_DEPLOY_PENDING / PO_RUNTIME_ACCEPTANCE_PENDING`.
