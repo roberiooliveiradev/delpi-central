@@ -170,3 +170,11 @@ Codigo puro sem rotas, migrations nem Docker em `it_portal_app/domain/remote_eng
 - `python -m it_portal_app.domain.remote_policy_review --repo-root ..` deve indicar `G0-SEC-S2 BLOCKED` com exit 0. CI verde NAO autoriza motor remoto ou laboratorio.
 - Teste `python -m pytest -q tests/test_remote_policy_review.py`; [runbook](../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G0-SEC-S2-REVIEW-RUNBOOK.md).
 - Sem novas rotas, migrations, containers, Docker Compose, manifesto, secrets ou agentes.
+
+
+## G2-S4-S1 | Provisionamento Keycloak individual (OFF)
+
+- V012 cria tabela de identidades de agentes e auditoria, sem secretos. API GET /workstations/{id}/agent-identity e POST /workstations/{id}/agent-identity/prepare com Core RBAC fresh.
+- Client ID deterministico pela UUID, Keycloak criado disabled e sem scopes, read-back obrigatorio. Falha exige revisao; nao faz retry automatico.
+- Feature IT_PORTAL_WORKSTATION_PROVISIONING_ENABLED=false por default; Admin URL HTTPS com credencial tecnica exclusiva.
+- Testes Python test_workstation_identity_provisioning.py, Postgres V012 e UI Vitest; [runbook](../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G2-S4-S1-AUTOMATED-KEYCLOAK-PREPARATION.md).

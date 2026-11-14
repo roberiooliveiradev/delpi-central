@@ -41,6 +41,7 @@ from it_portal_app.interface.http.routes.services_routes import (
 )
 from it_portal_app.interface.http.routes.workstations_routes import router as workstations_router
 from it_portal_app.interface.http.routes.workstation_snapshots_routes import router as workstation_snapshots_router
+from it_portal_app.interface.http.routes.workstation_identities_routes import router as workstation_identities_router
 from it_portal_app.interface.http.s2s_auth import S2SHttpException
 from it_portal_app.middleware.auth_middleware import jwt_middleware
 from it_portal_app.observability import configure_logging, request_context_middleware
@@ -136,6 +137,7 @@ app.include_router(overview_router)
 app.include_router(servers_router)
 app.include_router(workstations_router)
 app.include_router(workstation_snapshots_router)
+app.include_router(workstation_identities_router)
 app.include_router(action_plans_router)
 app.include_router(services_router)
 app.include_router(database_router)

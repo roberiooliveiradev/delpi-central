@@ -30,6 +30,7 @@ import { DetailField } from "../inventory/InventoryDialogs";
 import { WorkstationFormModal } from "./WorkstationFormModal";
 import { WorkstationOwnerStatus } from "./WorkstationOwnerStatus";
 import { WorkstationSnapshotPanel } from "./WorkstationSnapshotPanel";
+import { WorkstationAgentIdentityPanel } from "./WorkstationAgentIdentityPanel";
 
 type ActionDialog = "archive" | "restore";
 
@@ -204,6 +205,7 @@ export function WorkstationDetailPage({ workstationId }: { workstationId: string
       </ItpSectionCard>
 
       <WorkstationSnapshotPanel workstationId={workstation.id} />
+      <WorkstationAgentIdentityPanel workstationId={workstation.id} canManage={canManage} archived={workstation.archived} />
 
       <ItpSectionCard
         title="Suporte remoto"

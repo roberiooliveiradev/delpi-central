@@ -360,6 +360,22 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** revisar formalmente as minutas em sistema privado antes de qualquer laboratorio; piloto G2 continua presencial.
 
+## 2026-11-14 | G2-S4-S1 | preparo automatico Keycloak por workstation
+
+**Objetivo:** eliminar cadastro manual de cada Client Keycloak sem permitir credencial compartilhada nem ativacao prematura.
+
+**Arquivos:** migration V012 identidades/eventos, servico de preparacao com reserva e idempotencia, Keycloak Admin REST HTTPS com client DESABILITADO e scopes vazios, endpoints GET/POST, config/Compose flag off, painel da ficha, testes pytest/Postgres/Vitest, contrato OpenAPI, runbook, roadmap e diario.
+
+**Seguranca:** JWT humano view/manage com RBAC fresh no Core; flag IT_PORTAL_WORKSTATION_PROVISIONING_ENABLED=false; conta de provisionador exclusiva; nenhuma senha/Token/Keycloak secret armazenada no banco ou retornada ao navegador. Sem habilitar S2S, agente ou remoto.
+
+**Testes:** adicionados e aguardando CI do commit da entrega. Nao declarar homologado antes do Keycloak de HML e Windows piloto.
+
+**Producao:** nenhum deploy nem administracao Keycloak executados pelo assistente. V012 somente aplicada em release futura com backup e flag off.
+
+**Risco/rollback:** em falha parcial, client permanece disabled, identidade failed para conciliacao manual. Desligar gate; nao editar migration nem habilitar credencial.
+
+**Proximo passo unico:** CI verde, teste HML do preparo disabled. G2-S4-S2 implanta bootstrap 1-uso, ativacao Keycloak, binding DB dinamico e revogacao sem editar env manual.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

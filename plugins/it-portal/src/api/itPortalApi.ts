@@ -113,6 +113,17 @@ export type WorkstationSnapshotLatest = {
   snapshot: WorkstationObservedSnapshot;
 };
 
+export type WorkstationAgentIdentity = {
+  workstation_id: string;
+  client_id: string | null;
+  state: "not_prepared" | "preparing" | "prepared" | "failed" | "revoked";
+  prepared_at: string | null;
+  can_prepare: boolean;
+  credentials_issued: boolean;
+  collector_enabled: boolean;
+  remote_access_enabled: boolean;
+};
+
 export type WorkstationInput = {
   name: string;
   hostname: string;
@@ -768,6 +779,10 @@ export const itPortalApi = {
     apiGet<Workstation>(apiUrl(`/workstations/${encodeURIComponent(id)}`), signal),
   getWorkstationSnapshot: (id: string, signal?: AbortSignal) =>
     apiGet<WorkstationSnapshotLatest | null>(apiUrl(`/workstations/${encodeURIComponent(id)}/snapshot`), signal),
+  getWorkstationAgentIdentity: (id: string, signal?: AbortSignal) =>
+    apiGet<WorkstationAgentIdentity>(apiUrl(`/workstations/${encodeURIComponent(id)}/agent-identity`), signal),
+  prepareWorkstationAgentIdentity: (id: string) =>
+    apiPost<WorkstationAgentIdentity>(apiUrl(`/workstations/${encodeURIComponent(id)}/agent-identity/prepare`), { confirmed: true }),
   createWorkstation: (input: WorkstationInput) =>
     apiPost<Workstation>(apiUrl("/workstations"), input),
   updateWorkstation: (id: string, input: WorkstationInput, revision: number) =>

@@ -17,6 +17,8 @@ EXPECTED_OPERATIONS = {
     ("get", "/workstations/{workstation_id}/history"): "list_it_workstation_history",
     ("get", "/workstations/{workstation_id}/snapshot"): "get_it_workstation_latest_snapshot",
     ("post", "/collector/v1/workstations/{workstation_id}/snapshots"): "ingest_it_workstation_snapshot",
+    ("get", "/workstations/{workstation_id}/agent-identity"): "get_it_workstation_agent_identity",
+    ("post", "/workstations/{workstation_id}/agent-identity/prepare"): "prepare_it_workstation_agent_identity",
     ("get", "/servers"): "list_it_servers",
     ("post", "/servers"): "create_it_server",
     ("get", "/servers/{server_id}"): "get_it_server",

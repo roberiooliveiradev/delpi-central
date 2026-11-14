@@ -76,3 +76,11 @@ npm run build   # tsc -b && vite build
 - Nenhum botao "Conectar", permissao remota, endpoint de shell ou manifest novo. O gateway/Keycloak devem passar por homologacao separada antes de habilitar S2S.
 - Testes escritos: `npm test -- --run src/features/workstations/WorkstationSnapshotPanel.test.tsx`; `npm run lint && npm run build` pendentes.
 - Ver [G2-S2](../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G2-S2-S2S-INGEST-RELEASE.md).
+
+
+## Delpi Remote G2-S4-S1 | Identidade no Keycloak (ainda OFF)
+
+- Nova secao na ficha do computador com estado/Client ID; botao Preparar identidade somente ao gestor quando a API expuser can_prepare=true.
+- POST exige confirmacao e Core RBAC fresh; Keycloak retorna somente Client desabilitado, sem credenciais exibidas no browser.
+- G2-S4-S2 ainda devera prover bootstrap local, ativacao/revogacao e binding dinamico. Testes: npm test -- --run src/features/workstations/WorkstationAgentIdentityPanel.test.tsx.
+- [Runbook](../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G2-S4-S1-AUTOMATED-KEYCLOAK-PREPARATION.md).

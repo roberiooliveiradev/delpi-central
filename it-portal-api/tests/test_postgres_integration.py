@@ -420,3 +420,48 @@ def test_g2_snapshots_postgres_dedup_and_latest(pg_client):
         "SELECT COUNT(*) AS n FROM it_portal.workstation_snapshots WHERE workstation_id = %s",
         (workstation_id,),
     )[0]["n"] == 1
+
+
+def test_g2_s4_identity_reservation_audit_and_idempotency(pg_client):
+    """V012: no secrets, one identity per active workstation, duplicate blocked."""
+    from it_portal_app.application.ports import Actor
+    from it_portal_app.domain.errors import ConflictError
+    from it_portal_app.application.workstation_identity_service import device_client_id
+    from it_portal_app.infrastructure.persistence.postgres_workstation_identities import (
+        PostgresWorkstationIdentityStore,
+    )
+    machine = pg_client.post("/workstations", json={
+        "name": "Piloto identity", "hostname": "g2s4-test-01",
+        "unit_code": "02", "device_kind": "desktop",
+        "administrative_status": "in_operation",
+    })
+    assert machine.status_code == 201, machine.text
+    wid = machine.json()["data"]["id"]
+    cid = device_client_id(wid)
+    actor = Actor(id="2b0c7a52-6f7e-4d3c-9a51-0f4f1c2d9e11", name="Ana TI")
+    store = PostgresWorkstationIdentityStore()
+    assert store.get(wid) is None
+    reserved = store.reserve(wid, cid, actor)
+    assert reserved["state"] == "preparing"
+    with pytest.raises(ConflictError):
+        store.reserve(wid, cid, actor)
+    keycloak_uuid = str(uuid.uuid4())
+    stored = store.prepared(wid, keycloak_uuid, actor)
+    assert stored["state"] == "prepared"
+    assert store.reserve(wid, cid, actor)["state"] == "prepared"
+    row = _sql(
+        "SELECT client_id, state, keycloak_client_uuid::text AS keycloak_uuid "
+        "FROM it_portal.workstation_agent_identities WHERE workstation_id = %s",
+        (wid,),
+    )[0]
+    assert row == {"client_id": cid, "state": "prepared", "keycloak_uuid": keycloak_uuid}
+    events = _sql(
+        "SELECT event_type FROM it_portal.workstation_agent_identity_events "
+        "WHERE workstation_id = %s ORDER BY occurred_at, id",
+        (wid,),
+    )
+    assert {r["event_type"] for r in events} == {"identity_reserved", "identity_prepared"}
+    assert _sql(
+        "SELECT COUNT(*) AS n FROM it_portal.workstation_agent_identities "
+        "WHERE workstation_id = %s", (wid,),
+    )[0]["n"] == 1

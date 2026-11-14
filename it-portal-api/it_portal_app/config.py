@@ -70,6 +70,19 @@ class Settings:
         "IT_PORTAL_WORKSTATION_SNAPSHOT_RETENTION", default="50"
     )
 
+    # G2-S4: Keycloak Admin estritamente opt-in, sem conta master reutilizada.
+    WORKSTATION_PROVISIONING_ENABLED: bool = _get_env(
+        "IT_PORTAL_WORKSTATION_PROVISIONING_ENABLED", default="false"
+    ).lower() in ("1", "true", "yes")
+    WORKSTATION_KC_ADMIN_URL: str = _get_env("IT_PORTAL_WS_KC_ADMIN_URL", default="")
+    WORKSTATION_KC_REALM: str = _get_env("IT_PORTAL_WS_KC_REALM", default="")
+    WORKSTATION_KC_PROVISIONER_CLIENT_ID: str = _get_env(
+        "IT_PORTAL_WS_KC_PROVISIONER_CLIENT_ID", default=""
+    )
+    WORKSTATION_KC_PROVISIONER_CLIENT_SECRET: str = _get_env(
+        "IT_PORTAL_WS_KC_PROVISIONER_CLIENT_SECRET", default=""
+    )
+
 
 settings = Settings()
 
