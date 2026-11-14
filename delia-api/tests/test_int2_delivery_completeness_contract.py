@@ -273,17 +273,93 @@ def test_scope_pairs_distinguish_filters():
     assert active != inactive
 
 
-def test_scope_pairs_scalar_list_order_insensitive():
-    """`{status:[a,b]}` vs `{status:[b,a]}` — same logical scope."""
+def test_scope_pairs_scalar_list_order_sensitive():
+    """AC-SCOPE-08 — no contract authorizes order normalization:
+    `{status:[a,b]}` vs `{status:[b,a]}` are conservatively distinct
+    scopes (fail-closed — never fabricate equivalence)."""
     from app.application.capability_provision.semantic_capability_support import (
         _invocation_scope,
     )
 
     assert _invocation_scope(
         {"params": {"status": ["ativo", "inativo"]}}
-    ) == _invocation_scope(
+    ) != _invocation_scope(
         {"params": {"status": ["inativo", "ativo"]}}
     )
+
+
+def test_scope_integrity_beyond_pair_cap():
+    """AC-SCOPE-01 — a difference in the 25th scope pair cannot be
+    silently truncated: the whole-args digest still separates the
+    scopes."""
+    from app.application.capability_provision.semantic_capability_support import (
+        _invocation_scope,
+    )
+
+    left_args = {f"field_{i:02d}": f"v{i}" for i in range(30)}
+    left_args["final_filter"] = "ativo"
+    right_args = dict(left_args)
+    right_args["final_filter"] = "inativo"
+    assert _invocation_scope(left_args) != _invocation_scope(right_args)
+
+
+def test_scope_deep_nested_filters_distinguish():
+    """AC-SCOPE-02 — deep filter differences (`params.periodo.fim`)
+    keep scopes distinct; equivalent objects with reordered keys
+    remain identical."""
+    from app.application.capability_provision.semantic_capability_support import (
+        _invocation_scope,
+    )
+
+    left = _invocation_scope(
+        {"params": {"periodo": {"inicio": "2024-01-01", "fim": "2024-06-30"}}}
+    )
+    right = _invocation_scope(
+        {"params": {"periodo": {"inicio": "2024-01-01", "fim": "2024-12-31"}}}
+    )
+    reordered = _invocation_scope(
+        {"params": {"periodo": {"fim": "2024-06-30", "inicio": "2024-01-01"}}}
+    )
+    assert left != right
+    assert left == reordered
+
+
+def test_scope_window_keys_unambiguous_only():
+    """AC-SCOPE-03/04 — `page`/`offset` are window selectors and never
+    change scope; `before`/`after`/`start` may be business filters and
+    MUST participate in scope (contract-unclassified → fail closed)."""
+    from app.application.capability_provision.semantic_capability_support import (
+        _invocation_scope,
+    )
+
+    p1 = _invocation_scope({"entity": "process", "params": {"page": 1}})
+    p2 = _invocation_scope({"entity": "process", "params": {"page": 2, "offset": 40}})
+    assert p1 == p2
+    b1 = _invocation_scope({"params": {"before": "2024-01-01"}})
+    b2 = _invocation_scope({"params": {"before": "2024-06-01"}})
+    assert b1 != b2
+    assert any("before" in pair for pair in b1)
+
+
+def test_scope_unknown_args_never_dropped():
+    """AC-SCOPE-05 — an unclassified argument is part of the scope:
+    removing it silently would fabricate equivalence."""
+    from app.application.capability_provision.semantic_capability_support import (
+        _invocation_scope,
+    )
+
+    left = _invocation_scope({"params": {"status": "ativo", "mystery": "x"}})
+    right = _invocation_scope({"params": {"status": "ativo", "mystery": "y"}})
+    assert left != right
+
+
+def test_scope_value_types_distinguish():
+    """`total=5` vs `total="5"` — type difference is material."""
+    from app.application.capability_provision.semantic_capability_support import (
+        _invocation_scope,
+    )
+
+    assert _invocation_scope({"a": 5}) != _invocation_scope({"a": "5"})
 
 
 def test_scope_pairs_opaque_values_stay_distinguishable():
@@ -502,6 +578,69 @@ def test_mp09_idless_identical_payloads_fail_closed():
     )
     coverage = _coverage(
         (obligation,), pages, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
+
+
+def test_scope11_valid_subset_with_unrelated_observation():
+    """AC-SCOPE-11/R3 — three proven same-scope pages cover the total;
+    an unrelated observation of a different scope neither joins nor
+    poisons the valid union."""
+    obligation = _ob("list of processes", source="process")
+    attempts = (
+        _scoped_page(start=0, count=40, total=109, scope=_SCOPE_ACTIVE),
+        _scoped_page(start=40, count=40, total=109, scope=_SCOPE_ACTIVE),
+        _scoped_page(start=80, count=29, total=109, scope=_SCOPE_ACTIVE),
+        _attempt(
+            entity="process",
+            vocabulary=("process", "search"),
+            items=[{"code": "OTHER-1"}, {"code": "OTHER-2"}],
+            total=10,
+            scope=_SCOPE_INACTIVE,
+        ),
+    )
+    coverage = _coverage(
+        (obligation,), attempts, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_SATISFIED
+
+
+def test_scope12_three_scopes_no_fabricated_union():
+    """AC-SCOPE-12 — pages scattered across three different scopes
+    cannot combine into any complete collection."""
+    obligation = _ob("list of processes", source="process")
+    scope_c = ("entity=process", "params.status=cancelado")
+    pages = (
+        _scoped_page(start=0, count=40, total=109, scope=_SCOPE_ACTIVE),
+        _scoped_page(start=40, count=40, total=109, scope=_SCOPE_INACTIVE),
+        _scoped_page(start=80, count=29, total=109, scope=scope_c),
+    )
+    coverage = _coverage(
+        (obligation,), pages, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
+
+
+def test_scope11_extra_observation_cannot_join_union():
+    """An unrelated observation's records must not count toward the
+    valid group's union — cross-scope items never inflate coverage."""
+    obligation = _ob("list of processes", source="process")
+    attempts = (
+        _scoped_page(start=0, count=40, total=109, scope=_SCOPE_ACTIVE),
+        _scoped_page(start=40, count=40, total=109, scope=_SCOPE_ACTIVE),
+        # 80 items belong to scope B — they cannot close scope A's gap.
+        _attempt(
+            entity="process",
+            vocabulary=("process", "search"),
+            items=[
+                {"code": f"PROC-{i:04d}"} for i in range(80, 109)
+            ],
+            total=109,
+            scope=_SCOPE_INACTIVE,
+        ),
+    )
+    coverage = _coverage(
+        (obligation,), attempts, delivery="enumeration"
     )
     assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
 

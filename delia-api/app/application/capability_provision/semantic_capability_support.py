@@ -2600,9 +2600,12 @@ def _invocation_identity(args: object) -> tuple[str, ...]:
 
 
 # Window selectors choose which slice of one logical query is
-# delivered — never which set is queried. Scope-defining filters keep
-# every other argument; pages of the same query differ ONLY in window
-# arguments.
+# delivered — never which set is queried. Only UNAMBIGUOUS slice
+# selectors are excluded from scope: a name like ``before``/``after``/
+# ``start``/``first``/``top`` is a temporal/business filter in real
+# owner contracts, so an unclassifiable argument is kept in scope —
+# its exclusion could fabricate equivalence between different
+# queries (fail-closed).
 _PAGINATION_ARG_KEYS = frozenset(
     {
         "page",
@@ -2616,13 +2619,7 @@ _PAGINATION_ARG_KEYS = frozenset(
         "continuation",
         "continuation_token",
         "skip",
-        "top",
-        "start",
-        "start_at",
-        "after",
-        "before",
         "max_results",
-        "first",
     }
 )
 
@@ -2630,10 +2627,12 @@ _PAGINATION_ARG_KEYS = frozenset(
 def _scope_value_token(value: object) -> str | None:
     """Bounded canonical token for one scope argument value.
 
-    Scalars render directly; scalar lists sort into one token so
-    ordering differences do not fabricate distinct scopes; anything
-    unrepresentable reduces to a content digest — different values
-    still produce different tokens (fail-closed), never conflated.
+    Scalars render directly; scalar lists preserve ORDER — no owner
+    contract authorizes order-insensitive normalization, and
+    reordering could conflate semantically different arguments.
+    Anything unrepresentable reduces to a content digest — different
+    values still produce different tokens (fail-closed), never
+    conflated.
     """
     if isinstance(value, bool):
         return "true" if value else "false"
@@ -2655,59 +2654,89 @@ def _scope_value_token(value: object) -> str | None:
         ]
         if len(parts) != len(value) or not parts:
             return None
-        joined = "|".join(sorted(p.casefold() for p in parts))
+        joined = "|".join(p.casefold() for p in parts)
         return joined[:128] if len(joined) <= 128 else None
     return None
 
 
-def _invocation_scope(args: object) -> tuple[str, ...]:
-    """Bounded canonical ``key=value`` pairs defining the query scope.
+def _strip_window_args(value: object) -> object:
+    """Remove window-selector keys at every Mapping level.
 
-    Every scalar argument — top-level or one Mapping level inside it
-    (e.g. ``params``/``arguments``) — except pagination-window keys
-    (``_PAGINATION_ARG_KEYS``): window selectors slice one logical
-    query; scope selectors define WHICH set is queried. Nested keys
-    are prefixed (``params.status=ativo``) so envelope and owner
-    namespaces cannot collide. Two invocations share a scope only
-    when every scope pair matches — different filters, different
-    scope, never unionable.
+    Leaf-name matching is uniform across depths: ``params.page`` and
+    a top-level ``page`` are the same slice selector. Non-Mapping
+    structure is preserved as-is for the canonical digest.
     """
-    if not isinstance(args, Mapping):
-        return ()
+    if isinstance(value, Mapping):
+        return {
+            key: _strip_window_args(item)
+            for key, item in value.items()
+            if str(key).strip().casefold() not in _PAGINATION_ARG_KEYS
+        }
+    if isinstance(value, (list, tuple)):
+        return [_strip_window_args(item) for item in value]
+    return value
+
+
+def _scope_pairs(value: object, prefix: str, depth: int) -> list[str]:
+    """Flatten scalar leaves into ``path=value`` pairs (bounded)."""
     pairs: list[str] = []
-    levels: list[tuple[Mapping, str]] = [(args, "")]
-    for key, value in args.items():
-        if isinstance(value, Mapping):
-            levels.append((value, f"{str(key).casefold()}."))
-    for level, prefix in levels:
-        for key, value in level.items():
-            name = str(key).strip().casefold()
-            if not name or len(name) > 64:
-                continue
-            if name in _PAGINATION_ARG_KEYS:
-                continue
-            if isinstance(value, Mapping):
-                continue
-            token = _scope_value_token(value)
-            if token is None:
-                # Unrepresentable value — digest marker keeps the
-                # scope distinguishable instead of silently dropping
-                # the difference (fail-closed).
+    if not isinstance(value, Mapping) or depth >= 3:
+        return pairs
+    for key, item in value.items():
+        name = str(key).strip().casefold()
+        if not name or len(name) > 64:
+            continue
+        if isinstance(item, Mapping):
+            pairs.extend(
+                _scope_pairs(item, f"{prefix}{name}.", depth + 1)
+            )
+            continue
+        token = _scope_value_token(item)
+        if token is None:
+            if item is None:
+                token = "<null>"
+            else:
                 try:
                     digest = hashlib.sha256(
                         json.dumps(
-                            value, sort_keys=True, default=str
+                            item, sort_keys=True, default=str
                         ).encode()
                     ).hexdigest()[:16]
                 except (TypeError, ValueError):
                     digest = hashlib.sha256(
-                        repr(value).encode()
+                        repr(item).encode()
                     ).hexdigest()[:16]
                 token = f"<opaque:{digest}>"
-            pair = f"{prefix}{name}={token}"
-            if len(pair) <= 192 and pair not in pairs:
-                pairs.append(pair)
-    return tuple(sorted(pairs)[:24])
+        pair = f"{prefix}{name}={token}"
+        if len(pair) <= 192 and pair not in pairs:
+            pairs.append(pair)
+    return pairs
+
+
+def _invocation_scope(args: object) -> tuple[str, ...]:
+    """Bounded canonical identity of the query scope.
+
+    Integrity rule: NO silent information loss. The trailing
+    ``__scope_digest__`` token derives from the canonical
+    serialization of the WHOLE scope argument set (window keys
+    stripped, keys sorted, list order preserved) — two invocations
+    differing in ANY scope argument produce different digests even
+    when the flattened pair list overflows its observability cap or
+    a value exceeds render bounds. The human-readable ``path=value``
+    pairs exist for diagnostics; the digest is the integrity proof.
+    """
+    if not isinstance(args, Mapping):
+        return ()
+    stripped = _strip_window_args(args)
+    try:
+        canonical = json.dumps(
+            stripped, sort_keys=True, default=str, separators=(",", ":")
+        )
+    except (TypeError, ValueError):
+        canonical = repr(sorted(stripped.items(), key=lambda kv: str(kv[0])))
+    digest = hashlib.sha256(canonical.encode()).hexdigest()[:16]
+    pairs = _scope_pairs(stripped, "", 0)
+    return tuple(sorted(pairs)[:24]) + (f"__scope_digest__={digest}",)
 
 
 # Owner structured keys whose emptiness/zeroness attests absence.
@@ -3313,7 +3342,9 @@ def _joint_collection_coverage(
     canonical ``key=value`` record of the scope-defining arguments
     (filters included, pagination-window keys excluded). Two pages of
     one query differ only in window arguments; different filters can
-    never union into a complete collection. Distinct records are
+    never union into a complete collection. Candidates are grouped by
+    proven query identity: an unrelated observation of another scope
+    neither joins nor poisons a valid group's union. Distinct records are
     deduplicated by record identity (``_record_token``); the union
     must equal the single declared total — a union larger than the
     declared total proves the pages were not one set (different
@@ -3321,11 +3352,13 @@ def _joint_collection_coverage(
     arithmetic (``40+40+29``) is never accepted.
     """
     source = obligation.evidence_source.casefold()
-    candidates: list[tuple[GovernedCapabilityAttempt, Mapping]] = []
-    owners: set[tuple] = set()
-    scopes: set[tuple] = set()
-    identities: set[tuple] = set()
-    totals: set[float] = set()
+    # Group candidates by proven query identity — same owner
+    # capability, same governed invocation scope, same queried
+    # identity. An unrelated observation of another scope neither
+    # joins nor poisons a valid group's union; only groups with a
+    # single declared total are candidates (contradictory totals for
+    # one scope disprove the set outright).
+    groups: dict[tuple, dict] = {}
     for attempt in business:
         if attempt.status is not GovernedCapabilityStatus.SUCCESS:
             continue
@@ -3350,39 +3383,37 @@ def _joint_collection_coverage(
         ]
         if not data_total:
             continue
-        candidates.append((attempt, data))
-        owners.add(
-            (
-                prov.specialist_id,
-                prov.provider_id,
-                prov.remote_capability,
-                prov.action_id,
-                prov.capability_group_id,
-            )
+        key = (
+            prov.specialist_id,
+            prov.provider_id,
+            prov.remote_capability,
+            prov.action_id,
+            prov.capability_group_id,
+            tuple(prov.invocation_scope or ()),
+            tuple(prov.invocation_identity or ()),
         )
-        scopes.add(tuple(prov.invocation_scope or ()))
-        identities.add(tuple(prov.invocation_identity or ()))
-        totals.add(max(data_total))
-    if (
-        len(candidates) < 2
-        or len(owners) > 1
-        or len(scopes) > 1
-        or len(identities) > 1
-        or len(totals) > 1
-    ):
-        return False
-    total = totals.pop()
-    seen: set[str] = set()
-    for _, data in candidates:
-        for key in _ABSENCE_COLLECTION_KEYS:
-            items = data.get(key)
-            if not isinstance(items, (list, tuple)):
-                continue
-            for item in items:
-                token = _record_token(item)
-                if token is not None:
-                    seen.add(token)
-    return bool(seen) and len(seen) == int(total)
+        group = groups.setdefault(key, {"candidates": [], "totals": set()})
+        group["candidates"].append(data)
+        group["totals"].add(max(data_total))
+    for group in groups.values():
+        candidates = group["candidates"]
+        totals = group["totals"]
+        if len(candidates) < 2 or len(totals) > 1:
+            continue
+        total = totals.pop()
+        seen: set[str] = set()
+        for data in candidates:
+            for key in _ABSENCE_COLLECTION_KEYS:
+                items = data.get(key)
+                if not isinstance(items, (list, tuple)):
+                    continue
+                for item in items:
+                    token = _record_token(item)
+                    if token is not None:
+                        seen.add(token)
+        if seen and len(seen) == int(total):
+            return True
+    return False
 
 
 def _evaluate_material_obligations(

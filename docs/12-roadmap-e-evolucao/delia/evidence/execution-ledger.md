@@ -6808,3 +6808,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **REAL EVAL `or-qwen14b-1f76a1a093d0` (12 cenários, prod intocada):** **A provou multipágina real** — 3×`teo.read` `{}/page2/page3`, escopo idêntico, total 109, união distinta=109 → SATISFIED legítimo; E→complete+SATISFIED; B→agg SATISFIED; C/G/E2/G2/F honestos; FALSE_SATISFIED=0, FALSE_COMPLETE=0.
 - **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — não aceite; `INT2_ACCEPTED=NO`; `PRODUCTION_DEPLOY/PHASE_ADVANCEMENT/INT3/T3=NOT_AUTHORIZED`. Doc 332.
 - **NEXT:** `COORDINATION_INT2_MULTIPAGE_AND_TRANSVERSAL_FINAL_REVIEW`.
+
+### INT-2 — scope fingerprint integrity & safe multipage grouping (Doc 333; 2026-11-14)
+
+- **TASK:** `DELIA-C3-T2-INT2-SCOPE-FINGERPRINT-LOSS-AND-SAFE-MULTIPAGE-GROUPING-REWORK-01`; BASE `6fb80fe9ea`. REWORK — `INT2_SCOPE_FINGERPRINT_LOSS`.
+- **R1 (perda silenciosa):** `_invocation_scope` truncava a 24 pares e confundia tipos (`5`≡`"5"`). Fix: `__scope_digest__` (sha256 do conjunto canônico inteiro de args pós-strip de window keys, ordem de listas preservada) — nenhuma diferença de escopo some por cap/profundidade/tipo.
+- **R2 (classificação window-vs-filtro):** `_PAGINATION_ARG_KEYS` reduzido a seletores inequívocos (page/page_size/offset/cursor/limit/...); `before/after/start/first/top` viram escopo (não-classificável → fail-closed); ordem de lista preservada; flatten de pares até profundidade 3.
+- **R3 (agrupamento):** `_joint_collection_coverage` particiona candidatos por (owner, scope, identity); grupo precisa ≥2 tentativas + total único + união record-id == total; observação estranha nem entra nem envenena o grupo válido.
+- **RED→GREEN:** 6 falhas reais na base (cap, tipos, before/after, ordem, aninhamento, subconjunto bloqueado) → 14 novos testes; suíte completa verde.
+- **REAL EVAL:** `or-qwen14b-fcfbab951da1` (12) — A2 SATISFIED c/ `declared_unmet_overridden`; maioria insufficient honesto (mcp_auth intermitente); `or-qwen14b-dce013ef2394` — A página única→INCONCLUSIVE (fail-closed real), B agg→SATISFIED; multipágina real já provada em `or-qwen14b-1f76a1a093d0`. FALSE_SATISFIED/COMPLETE/INCONCLUSIVE=0.
+- **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — não aceite; `INT2_ACCEPTED=NO`; `PRODUCTION_DEPLOY/PHASE_ADVANCEMENT/INT3/T3=NOT_AUTHORIZED`. Doc 333.
+- **NEXT:** `COORDINATION_INT2_SCOPE_INTEGRITY_AND_FINAL_ACCEPTANCE_REVIEW`.

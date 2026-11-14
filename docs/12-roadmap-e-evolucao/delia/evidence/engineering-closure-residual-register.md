@@ -1797,3 +1797,15 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT2-MODEL-DECLARATION-LOOPS | OPEN_LOW | cenários C/G declaram âncoras fabricadas — outcome sempre honesto (UNSATISFIED/insufficient) |
 
 **NEXT=`COORDINATION_INT2_MULTIPAGE_AND_TRANSVERSAL_FINAL_REVIEW`**
+
+### Scope fingerprint integrity — 2026-11-14 (Doc 333)
+
+| Residual | Status | Evidence / disposition |
+|---|---|---|
+| INT2-SCOPE-FINGERPRINT-LOSS | **REMEDIATED** | `__scope_digest__` cobre o conjunto inteiro de args; sem perda por cap/depth/tipo/ordem |
+| INT2-WINDOW-FILTER-CLASSIFICATION | **REMEDIATED** | window keys reduzidas a seletores inequívocos; não-classificável permanece em escopo (fail-closed) |
+| INT2-MULTIPAGE-GROUPING | **REMEDIATED** | grupos por (owner, scope, identity); observação estranha não envenena subconjunto válido |
+| INT2-ARGUMENT-SEMANTICS-METADATA | DOCUMENTED | nenhum owner declara semântica arg filter-vs-window; default conservador = escopo |
+| INT2-MODEL-DECLARATION-LOOPS | OPEN_LOW | honest outcomes only |
+
+**NEXT=`COORDINATION_INT2_SCOPE_INTEGRITY_AND_FINAL_ACCEPTANCE_REVIEW`**
