@@ -357,125 +357,80 @@ echo "[hml-kc] senha de $TEST_USER sincronizada."
 # consumption-audit.read (include.in.token.scope=true, sem mapper).
 # Mapper no cliente: audience-api-delpi → aud api-delpi.
 # O segredo de PROD não é lido nem copiado.
-export HML_KC_ADMIN_TOKEN="$ADMIN_TOKEN"
-export HML_KC_BASE="$INTERNAL_BASE"
-export HML_KC_REALM="$REALM"
-export HML_KC_ENV_FILE="$ENV_FILE"
-python3 - <<'PY'
-import json, os, secrets, urllib.error, urllib.request
+ensure_cf_scope() {
+  local name="$1"
+  local raw id
+  raw="$(admin_api GET "/realms/$REALM/client-scopes")"
+  id="$(printf '%s' "$raw" | python3 -c 'import json,sys; name=sys.argv[1]; data=json.load(sys.stdin); print(next((i.get("id","") for i in data if i.get("name")==name), ""))' "$name")"
+  if [ -z "$id" ]; then
+    admin_api POST "/realms/$REALM/client-scopes" \
+      "$(python3 -c 'import json,sys; print(json.dumps({"name":sys.argv[1],"protocol":"openid-connect","attributes":{"include.in.token.scope":"true"}}))' "$name")" >/dev/null
+    echo "[hml-kc] client-scope $name criado."
+  else
+    echo "[hml-kc] client-scope $name já existe."
+  fi
+}
 
-base = os.environ["HML_KC_BASE"].rstrip("/")
-realm = os.environ["HML_KC_REALM"]
-token = os.environ["HML_KC_ADMIN_TOKEN"]
-env_path = os.environ["HML_KC_ENV_FILE"]
-client_id = "controllership-finance-api"
-contract_scopes = ("stock-inventory.read", "settlements.read", "consumption-audit.read")
-builtin_defaults = ("acr", "audience-delpi", "email", "profile", "roles", "web-origins")
+for scope_name in stock-inventory.read settlements.read consumption-audit.read; do
+  ensure_cf_scope "$scope_name"
+done
 
-def call(method, path, body=None):
-    data = json.dumps(body).encode() if body is not None else None
-    req = urllib.request.Request(f"{base}/admin{path}", data=data, method=method)
-    req.add_header("Authorization", f"Bearer {token}")
-    req.add_header("User-Agent", "delpi-hml-bootstrap")
-    if data is not None:
-        req.add_header("Content-Type", "application/json")
-    try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            raw = resp.read()
-            return json.loads(raw) if raw.strip() else None
-    except urllib.error.HTTPError as exc:
-        if exc.code == 409:
-            return None
-        raise SystemExit(f"[ERRO] Keycloak HML {method} {path} -> {exc.code}")
+CF_CLIENT="controllership-finance-api"
+CF_LIST="$(admin_api GET "/realms/$REALM/clients?clientId=$CF_CLIENT")"
+CF_ID="$(printf '%s' "$CF_LIST" | python3 -c 'import json,sys; data=json.load(sys.stdin); print(data[0]["id"] if data else "")')"
+if [ -z "$CF_ID" ]; then
+  CF_NEW_SECRET="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')"
+  admin_api POST "/realms/$REALM/clients" \
+    "$(CF_NEW_SECRET="$CF_NEW_SECRET" python3 -c 'import json,os; print(json.dumps({"clientId":"controllership-finance-api","enabled":True,"protocol":"openid-connect","publicClient":False,"bearerOnly":False,"clientAuthenticatorType":"client-secret","secret":os.environ["CF_NEW_SECRET"],"serviceAccountsEnabled":True,"standardFlowEnabled":False,"directAccessGrantsEnabled":False,"implicitFlowEnabled":False,"fullScopeAllowed":True}))')" >/dev/null
+  echo "[hml-kc] client $CF_CLIENT criado (segredo novo de HML, não impresso)."
+  CF_LIST="$(admin_api GET "/realms/$REALM/clients?clientId=$CF_CLIENT")"
+  CF_ID="$(printf '%s' "$CF_LIST" | python3 -c 'import json,sys; data=json.load(sys.stdin); print(data[0]["id"])')"
+else
+  echo "[hml-kc] client $CF_CLIENT já existe — segredo preservado."
+fi
 
-scopes = call("GET", f"/realms/{realm}/client-scopes") or []
-by_name = {item.get("name"): item for item in scopes}
-for name in contract_scopes:
-    if name in by_name:
-        print(f"[hml-kc] client-scope {name} já existe.")
-        continue
-    call("POST", f"/realms/{realm}/client-scopes", {
-        "name": name,
-        "protocol": "openid-connect",
-        "attributes": {"include.in.token.scope": "true"},
-    })
-    print(f"[hml-kc] client-scope {name} criado.")
-scopes = call("GET", f"/realms/{realm}/client-scopes") or []
-by_name = {item.get("name"): item for item in scopes}
+CF_MAPPERS="$(admin_api GET "/realms/$REALM/clients/$CF_ID/protocol-mappers/models")"
+CF_HAS_AUD="$(printf '%s' "$CF_MAPPERS" | python3 -c 'import json,sys; data=json.load(sys.stdin); print("yes" if any(i.get("name")=="audience-api-delpi" for i in data) else "")')"
+if [ -z "$CF_HAS_AUD" ]; then
+  admin_api POST "/realms/$REALM/clients/$CF_ID/protocol-mappers/models" \
+    '{"name":"audience-api-delpi","protocol":"openid-connect","protocolMapper":"oidc-audience-mapper","config":{"included.custom.audience":"api-delpi","id.token.claim":"false","access.token.claim":"true","userinfo.token.claim":"false"}}' >/dev/null
+  echo "[hml-kc] audience mapper api-delpi criado."
+else
+  echo "[hml-kc] audience mapper api-delpi já existe."
+fi
 
-found = call("GET", f"/realms/{realm}/clients?clientId={client_id}") or []
-created = False
-if not found:
-    secret = secrets.token_urlsafe(48)
-    call("POST", f"/realms/{realm}/clients", {
-        "clientId": client_id,
-        "enabled": True,
-        "protocol": "openid-connect",
-        "publicClient": False,
-        "bearerOnly": False,
-        "clientAuthenticatorType": "client-secret",
-        "secret": secret,
-        "serviceAccountsEnabled": True,
-        "standardFlowEnabled": False,
-        "directAccessGrantsEnabled": False,
-        "implicitFlowEnabled": False,
-        "fullScopeAllowed": True,
-    })
-    created = True
-    print(f"[hml-kc] client {client_id} criado (segredo novo de HML, não impresso).")
-else:
-    print(f"[hml-kc] client {client_id} já existe — segredo preservado.")
-found = call("GET", f"/realms/{realm}/clients?clientId={client_id}") or []
-if not found:
-    raise SystemExit(f"[ERRO] client {client_id} ausente depois da criação")
-client = found[0]
-uuid = client["id"]
-hml_secret = client.get("secret") or ""
-if not hml_secret:
-    raise SystemExit(f"[ERRO] client {client_id} sem segredo no realm de HML")
+CF_ASSIGNED="$(admin_api GET "/realms/$REALM/clients/$CF_ID/default-client-scopes")"
+CF_SCOPES_RAW="$(admin_api GET "/realms/$REALM/client-scopes")"
 
-mappers = call("GET", f"/realms/{realm}/clients/{uuid}/protocol-mappers/models") or []
-has_aud = any(
-    item.get("name") == "audience-api-delpi"
-    and item.get("protocolMapper") == "oidc-audience-mapper"
-    for item in mappers
-)
-if not has_aud:
-    call("POST", f"/realms/{realm}/clients/{uuid}/protocol-mappers/models", {
-        "name": "audience-api-delpi",
-        "protocol": "openid-connect",
-        "protocolMapper": "oidc-audience-mapper",
-        "config": {
-            "included.custom.audience": "api-delpi",
-            "id.token.claim": "false",
-            "access.token.claim": "true",
-            "userinfo.token.claim": "false",
-        },
-    })
-    print("[hml-kc] audience mapper api-delpi criado.")
-else:
-    print("[hml-kc] audience mapper api-delpi já existe.")
+while read -r scope_name scope_id; do
+  [ -z "$scope_id" ] && continue
+  case " $(printf '%s' "$CF_ASSIGNED" | python3 -c 'import json,sys; print(" ".join(i["id"] for i in json.load(sys.stdin)))') " in
+    *" $scope_id "*) ;;
+    *)
+      admin_api PUT "/realms/$REALM/clients/$CF_ID/default-client-scopes/$scope_id" "{}" >/dev/null || true
+      echo "[hml-kc] default scope $scope_name atribuído."
+      ;;
+  esac
+done < <(printf '%s' "$CF_SCOPES_RAW" | python3 -c 'import json,sys
+wanted={"stock-inventory.read","settlements.read","consumption-audit.read","acr","audience-delpi","email","profile","roles","web-origins"}
+for item in json.load(sys.stdin):
+    if item.get("name") in wanted:
+        print(item["name"], item["id"])')
 
-assigned = call("GET", f"/realms/{realm}/clients/{uuid}/default-client-scopes") or []
-assigned_ids = {item.get("id") for item in assigned}
-for name in contract_scopes + builtin_defaults:
-    scope = by_name.get(name)
-    if scope is None:
-        print(f"[hml-kc] scope {name} ausente no realm — não atribuído.")
-        continue
-    if scope["id"] in assigned_ids:
-        continue
-    call("PUT", f"/realms/{realm}/clients/{uuid}/default-client-scopes/{scope['id']}")
-    print(f"[hml-kc] default scope {name} atribuído.")
-
-lines = []
-if os.path.isfile(env_path):
-    lines = open(env_path, encoding="utf-8").read().splitlines()
+CF_CLIENT_RAW="$(admin_api GET "/realms/$REALM/clients/$CF_ID")"
+printf '%s' "$CF_CLIENT_RAW" | HML_ENV_FILE="$ENV_FILE" python3 -c '
+import json, os, sys
+client = json.load(sys.stdin)
+secret = client.get("secret") or ""
+if not secret:
+    raise SystemExit("[ERRO] cliente de HML sem segredo")
+path = os.environ["HML_ENV_FILE"]
+lines = open(path, encoding="utf-8").read().splitlines() if os.path.isfile(path) else []
 
 def upsert(key, value, only_if_empty=False):
     for index, line in enumerate(lines):
-        if line.startswith(f"{key}="):
-            current = line.split("=", 1)[1].strip().strip('"').strip("'")
+        if line.startswith(key + "="):
+            current = line.split("=", 1)[1].strip().strip("\"").strip("'\''")
             if only_if_empty and current:
                 return False
             lines[index] = f"{key}={value}"
@@ -483,24 +438,16 @@ def upsert(key, value, only_if_empty=False):
     lines.append(f"{key}={value}")
     return True
 
-wrote_secret = upsert("CF_S2S_CLIENT_SECRET", hml_secret, only_if_empty=not created)
-upsert("CF_S2S_CLIENT_ID", client_id, only_if_empty=False)
-upsert(
-    "CF_S2S_TOKEN_URL",
-    f"http://keycloak:8080/auth/realms/{realm}/protocol/openid-connect/token",
-    only_if_empty=True,
-)
+wrote = upsert("CF_S2S_CLIENT_SECRET", secret, only_if_empty=True)
+upsert("CF_S2S_CLIENT_ID", "controllership-finance-api")
+upsert("CF_S2S_TOKEN_URL", "http://keycloak:8080/auth/realms/delpi/protocol/openid-connect/token", only_if_empty=True)
 upsert("CF_S2S_SCOPE", "", only_if_empty=True)
 text = "\n".join(lines)
 if not text.endswith("\n"):
     text += "\n"
-open(env_path, "w", encoding="utf-8").write(text)
-print(
-    "[hml-kc] CF_S2S_CLIENT_SECRET "
-    + ("gravado no .env.hml" if wrote_secret or created else "já estava no .env.hml")
-    + " (valor omitido)."
-)
-PY
+open(path, "w", encoding="utf-8").write(text)
+print("[hml-kc] CF_S2S_CLIENT_SECRET " + ("gravado no .env.hml" if wrote else "já estava no .env.hml") + " (valor omitido).")
+'
 unset HML_KC_ADMIN_TOKEN
 
 # --- discovery / issuer / jwks (interno; issuer público esperado no JSON) ---
