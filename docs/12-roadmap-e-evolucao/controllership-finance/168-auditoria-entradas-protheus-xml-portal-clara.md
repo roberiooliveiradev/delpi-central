@@ -268,6 +268,8 @@ Regra: componente novo nasce no `@delpi/plugin-ui`, genérico (sem «auditoria»
 
 ## 9. CLARA (só catálogo; sem tools novas)
 
+Organização completa do conhecimento (fichas AE-00 a AE-15), do catálogo e das diretivas de conduta: [168-clara-conhecimento-e-capacidades.md](./168-clara-conhecimento-e-capacidades.md). A tabela abaixo é o resumo.
+
 | Tool | Entrada | Uso |
 |---|---|---|
 | `read` | `entry_audit.analysis` | análises (histórico) e o status/andamento de uma análise |
@@ -321,6 +323,7 @@ Lançar ou corrigir notas no Protheus; alterar TES ou cadastro de fornecedor; su
 | Data | Evento |
 |---|---|
 | 2026-11-13 | Plano criado. D4 decidida pelo owner (tudo com `controllership-finance.access`). D1, D2, D3 e D5 com recomendação, aguardando confirmação. Skill anexada como referência para o porte. |
+| 2026-11-13 | Conhecimento e capacidades da CLARA organizados em [168-clara](./168-clara-conhecimento-e-capacidades.md): domínio `controllership`, 16 fichas, catálogo, diretivas e 7 perguntas ao owner. |
 | 2026-11-13 | Detalhamento das páginas em `168-paginas/` (00 a 04): dimensionamento, componentes do plugin-ui com props, dados e estados; especificação dos 3 primitivos novos e das 4 evoluções aditivas (inclui `ComparativeAreaChart` com clique no dia). Rota nova `GET /entry-audit/analyses/options`. |
 | 2026-11-13 | Dashboard: período livre (D8), plugin-ui com primitivos novos no kit (D9), D3 decidida. Rotas da BFF refeitas em torno da análise por período (§4A.4) e rotas do dashboard; persistência ajustada (§7); wireframes (§8 e anexo HTML); CLARA explica o dashboard e sugere direcionamentos. |
 | 2026-11-13 | Estrutura do back-end (§4A): rotas da api-delpi, da financial-api e da BFF; organização em camadas; worker; cache de XML; CLARA executando a auditoria num comando (D6). Visual da página fica para a próxima rodada. Planejamento em tabela à parte (`planejamento-auditoria-entradas.xlsx`). |
