@@ -132,3 +132,7 @@ histórica em `or-qwen14b-1f76a1a093d0` + prova determinística no SHA.
 
 BYPASSES_FOUND: 0 — `OBLIGATION_SATISFIED` só é produzido dentro de
 `_evaluate_material_obligations` (6 call sites internos aos finalize).
+
+### Adendo posterior de coordenação — 2026-11-14 (Doc 335)
+
+A implementação e evidência desta task pertencem à **responsabilidade cognitiva INT-2 (Compreensão)**, atualmente executada pelo **Agent Pydantic AI baseline existente**, e **não provam um segundo Agent independente**. O PO ratificou como TARGET de produto quatro Agents cognitivos colaboradores (Compreensão, Investigação, Suficiência e Síntese). A comparação baseline único/variante mínima e a decisão arquitetural para novos Agents/handoffs são gates posteriores (Doc 293). **INT-2 continua sem aceite final**; o próximo passo é revisão bounded dos critérios originais de compreensão, sem exigir automaticamente todo INT-3. A evidência real positiva de multipágina no SHA desta task permanece PENDING, sem declará-la PASS. Ver [Documento 335](./335-c3t2-four-cognitive-specialist-agents-po-product-direction-and-int2-resumption.md).
