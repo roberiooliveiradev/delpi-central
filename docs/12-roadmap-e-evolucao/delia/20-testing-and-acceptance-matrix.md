@@ -3004,3 +3004,19 @@ Positivos/negativos/holdouts separados; nenhuma resposta programada conta como g
 **Oráculo de resultado:** outcome empresarial do `_finalize_semantic_investigation` (complete/partial/insufficient honesto) + `FALSE_COMPLETE=0` + cobertura mid-flight avaliada; nunca o `declared_answer.status` do modelo.
 
 **Proposta de autorização experimental (WS-10):** `EXPERIMENT_READY_FOR_COORDINATION_AUTHORIZATION` — menor diff candidato: run de Compreensão sem tools de owner (`output_type` = proposta tipada nos mesmos campos de `declare_investigation_goal`); validação pelo `_accept_semantic_investigation_plan` existente (rejection → `ModelRetry` com o payload field-level vigente, bounded pelos retries da run); aceite → `deps.investigation_plan` semeado pela Application → run de Investigação existente com `declare_investigation_goal` ausente do toolset (prova de boundary); budgets somados sob o mesmo `TurnDeadline`; flag de experimento env-gated, rollback = flag off; zero novo planner/engine/authority/registry. Pré-condições: mesmo eval isolado, `PROD_CONTAINER_UNTOUCHED`, corpus C01–C18 congelado, métricas acima, revisão independente.
+
+### 2026-11-14 — Execução autorizada do experimento A/B de dois Agents (ainda sem evidência)
+
+**PO_AUTHORIZATION=YES**, task `DELIA-C3-T2-TWO-AGENT-ISOLATED-AB-IMPLEMENTATION-AND-REAL-EVALUATION-01`; a autorização cobre o **experimento isolado** e a implementação flag-gated mínima, não o runtime produtivo. `TESTS=TEST_NOT_RUN` nesta decisão. **Baseline A = Agent único existente**, **Variante B = Compreensão Agent separado→Application acceptance→Investigação Agent existente**. Corpus congelado C01–C18 permanece o oráculo; reexecutar A na mesma janela/config do B, não usar apenas trace histórico como controle comparável.
+
+| Gate | Prova necessária |
+|---|---|
+| Boundary B | Compreensão sem MCP owner READ; Investigação sem `declare_investigation_goal` exposto; plano aprovado/imutável vem apenas da Application |
+| R1 | Zero dependent READ com `plan=None`, feedback field-level válido, coverage mid-flight e nenhuma falsa completude |
+| Recuperação | C16 timeout/erro de Compreensão → zero calls ao owner; C17 declaração rejeitada→reparo limitado; C18 tentativa de mutação→bloqueio |
+| Comparabilidade | Mesmo corpus/modelos/config/owners/identidade/capacidades e budget global; SHA + effective instruction fingerprints por braço |
+| Resultado | Objetivo empresarial corretamente concluído, qualidade dos filtros/obrigações e pertinência, seleção dinâmica, custo total por objetivo concluído, LLM calls/tokens/latência |
+| Segurança | Negativas AuthZ legítimas vs catalog/auth flake; nenhum write; Core/Domain e gates intactos |
+| Generalização | Holdouts, renames, schema variation, cases partial/incomplete, test outcome real; `FunctionModel` não substitui avaliação real |
+
+**Decisão final:** `ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE` somente após revisão independente. Não promover B automaticamente se custo crescer, sucesso não melhorar ou a amostra for insuficiente. `R2=NOT_AUTHORIZED`, `PRODUCTION_DEPLOY=NOT_AUTHORIZED`. **NEXT=`COORDINATION_C3_T2_TWO_AGENT_AB_INDEPENDENT_ACCEPTANCE_REVIEW`**.
