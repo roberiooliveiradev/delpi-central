@@ -223,3 +223,10 @@ Este §11 atualiza o status histórico `ARCHITECTURE_DECISION_REQUIRED` de T01/T
 **Sem alargar a autorização:** T03–T08, bandeiras, frontend, mudanças de domínio/permissões, migrations destrutivas e deploy de produção continuam sujeitos a seus próprios contratos/gates. Exigir evidência de compatibilidade e rollback antes de aceitar migration/merge. TESTAR escrita exclusivamente DEV/HML; em PRD somente disponibilidade, saúde, métricas e GET comprovadamente não mutável.
 
 **Owner decision ≠ implementação ou runtime PASS.** Qualquer `EXECUTION_DRIFT` concreto retorna à Coordination, não gera ciclo de hipóteses sem evidência.
+
+
+## 13. PO — revision lineage exclusively on validated completion (14/11/2026)
+
+**Ratificação semântica:** PRC aberta pode identificar produto-alvo em UPDATE e usar `baseRevision` somente como referência para concorrência/comparação; não gera nem recebe revisão própria. `caseVersion` é versão de transação do atendimento. **Somente a conclusão com verificação e publicação válida associa `request_id` à revisão técnica produzida**; não-op em produto com revisão preserva Vn e audita a solicitação sem gerar Vn+1; primeira conclusão válida de produto sem histórico versionado produz V1 baseline R01, com provenance, mesmo sem diff. CREATE pendente/rejeitada não cria vínculo fictício. O código TOTVS oficial continua sob autoridade externa.
+
+**Estado:** `PO_RATIFIED / PROTOCOL_IMPLEMENTATION_TO_INVENTORY / ARCHITECTURE_DECISION_REQUIRED_FOR_SEMANTIC_OR_SCHEMA_CHANGE`. Compatível com R01–R03 e a natureza de `product_registration_revisions.request_id` no contrato; não autoriza remover `baseRevision` ou enfraquecer `stale_revision`. UI V3: retirar o chip Rn do hero e, se indispensável, explicar a revisão de referência somente em contexto técnico. Ver adendos PRC-REF-025 e seção 15 do contrato técnico. Tests/outcomes permanecem `TEST_NOT_RUN` para qualquer novo comportamento não executado.
