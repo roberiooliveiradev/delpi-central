@@ -176,6 +176,100 @@ def test_fichas_cover_engine_rules_and_open_questions():
         assert (REPO / spec.path).is_file()
 
 
+class _Proposals:
+    def __init__(self) -> None:
+        self.stored: dict[str, dict] = {}
+        self.creates = 0
+        self.pending = ""
+
+    def find_by_idempotency(self, *, capability, idempotency_key, **_kwargs):
+        return self.stored.get(f"{capability}:{idempotency_key}")
+
+    def create(self, *, capability, idempotency_key="", **_kwargs):
+        self.creates += 1
+        self.pending = f"{capability}:{idempotency_key}"
+        return {"proposal_id": "prop-1", "expires_at": None}
+
+    def claim(self, **_kwargs):
+        return None
+
+    def record_result(self, **kwargs):
+        self.stored[self.pending] = {"resource_key": "sealed", "result": kwargs["result"]}
+
+
+def test_direct_pipeline_seals_snapshot_and_replays(monkeypatch):
+    """O teste da T7 chamava o executor direto e nunca passava pelo snapshot."""
+    from controllership_finance_app.application.clara import entry_audit_capabilities as caps
+    from controllership_finance_app.application.clara import governed_writes as gw_mod
+
+    state = {"analysis": {"id": "analysis-1", "status": "done"}, "occurrence": "pending"}
+
+    class _Service:
+        def create(self, **_kwargs):
+            state["analysis"] = {"id": "analysis-1", "status": "queued", "created": True}
+            return dict(state["analysis"])
+
+        def get_analysis(self, analysis_id):
+            return {"id": analysis_id, "status": state["analysis"]["status"]}
+
+        def rerun(self, analysis_id, _branches, **_kwargs):
+            state["analysis"] = {"id": analysis_id, "status": "queued"}
+            return {"id": analysis_id, "status": "queued"}
+
+        def occurrence_state(self, key):
+            if key != "stable-1":
+                return None
+            return {"occurrence": {"status": state["occurrence"], "stable_key": key}}
+
+        def resolve(self, key, *, kind, user_id, user_name):
+            del user_id, user_name
+            state["occurrence"] = "resolved"
+            return {"stable_key": key, "kind": kind, "status": "resolved"}
+
+        def reopen(self, key, *, kind, user_id, user_name):
+            del user_id, user_name
+            state["occurrence"] = "pending"
+            return {"stable_key": key, "kind": kind, "status": "pending"}
+
+    monkeypatch.setattr(settings, "ENTRY_AUDIT_ENABLED", True)
+    monkeypatch.setattr(caps, "build_entry_audit_service", lambda: _Service())
+    monkeypatch.setattr(gw_mod, "_audit_mcp", lambda **_kwargs: None)
+    monkeypatch.setattr(gw_mod, "portal_consent_required", lambda: False)
+    proposals = _Proposals()
+    writes = ClaraGovernedWrites(
+        proposals=proposals,
+        identity_provider=lambda: {"has_cf_access": True},
+    )
+    params = {"date_from": "2026-11-12", "date_to": "2026-11-12", "document_types": ["nfe", "cte"], "branches": ["01"]}
+    prepared = writes.prepare(capability="entry_audit.run", params=params, actor_sub="sub-1")
+    assert prepared["expected_state"] == {"analysis": {"status": "absent"}}
+    first = writes.execute_direct(capability="entry_audit.run", params=params, actor_sub="sub-1")
+    second = writes.execute_direct(capability="entry_audit.run", params=params, actor_sub="sub-1")
+    assert first["executed"] is True
+    assert first["result"]["id"] == "analysis-1"
+    assert second["replayed"] is True
+    assert second["result"] == first["result"]
+    assert proposals.creates == 2
+    state["analysis"]["status"] = "done"
+    rerun = writes.execute_direct(capability="entry_audit.rerun", params={"ref": "analysis-1"}, actor_sub="sub-1")
+    assert rerun["result"]["status"] == "queued"
+    again = writes.execute_direct(capability="entry_audit.rerun", params={"ref": "analysis-1"}, actor_sub="sub-1")
+    assert again["replayed"] is True
+    assert again["result"]["status"] == "queued"
+    resolved = writes.execute_direct(
+        capability="entry_audit.resolve",
+        params={"key": "stable-1", "kind": "occurrence"},
+        actor_sub="sub-1",
+    )
+    assert resolved["result"]["status"] == "resolved"
+    reopened = writes.execute_direct(
+        capability="entry_audit.reopen",
+        params={"key": "stable-1", "kind": "occurrence"},
+        actor_sub="sub-1",
+    )
+    assert reopened["result"]["status"] == "pending"
+
+
 def test_branding_mentions_the_audit_directives():
     from controllership_finance_app.interface.mcp.branding import CLARA_MCP_INSTRUCTIONS
     assert "entry_audit.run" in CLARA_MCP_INSTRUCTIONS

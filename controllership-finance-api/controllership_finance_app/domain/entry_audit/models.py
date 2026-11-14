@@ -167,6 +167,18 @@ class UnmatchedDocument:
     reason: str
     access_key: str
     species: str = ""
+    series: str = ""
+    party_name: str = ""
+    party_tax_id: str = ""
+    party_state: str = ""
+    issue_date: str = ""
+    amount: float | None = None
+    icms_base: float | None = None
+    icms_amount: float | None = None
+    ipi_amount: float | None = None
+    cfop: str = ""
+    cst: str = ""
+    nature: str = ""
 
 
 @dataclass(frozen=True)

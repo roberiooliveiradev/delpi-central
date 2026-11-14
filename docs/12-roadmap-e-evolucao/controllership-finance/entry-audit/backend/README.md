@@ -602,7 +602,7 @@ Schema `controllership_finance`. Só cria tabela. Rollback de código não apaga
 
 `entry_audit_occurrence`: `id`, `run_id`, `analysis_id`, `stable_key`, `rule_id`, `severity`, `theme`, `title`, `document_number`, `series`, `supplier_name`, `item`, `field`, `protheus_value`, `xml_value`, `difference`, `tes`, `why`, `action`, `access_key`. Índice `(analysis_id, severity)`, `(stable_key)`.
 
-`entry_audit_unmatched`: `id`, `run_id`, `analysis_id`, `stable_key`, `side` (`xml`|`protheus`), `rule_id`, `severity`, `reason`, `situation`, `lnf_request_id`, `lnf_status`, `access_key`, `document_number`, `series`, `party_name`, `issue_date`, `amount`. Índice `(analysis_id)`.
+`entry_audit_unmatched`: `id`, `run_id`, `analysis_id`, `stable_key`, `side` (`xml`|`protheus`), `rule_id`, `severity`, `reason`, `situation`, `lnf_request_id`, `lnf_status`, `access_key`, `document_number`, `series`, `party_name`, `issue_date`, `amount`, e, desde a V025, `party_tax_id`, `party_state`, `nature`, `cfop`, `cst`, `icms_base`, `icms_amount`, `ipi_amount`. A junção com o documento usa a chave de acesso; sem chave, filial + fornecedor + loja + número + série. Índice `(analysis_id)`.
 
 `entry_audit_cte`: `id`, `run_id`, `access_key`, `comparison` JSONB.
 

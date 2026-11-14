@@ -168,14 +168,10 @@ class EntryAuditService:
             branch_row = next((row for row in self._protheus.branches() if row.get("code") == run["branch_code"]), {})
             self._store.mark_run(run_id, stage="reading_xml", documents_read=len(headers))
             payloads, downloaded, unavailable = self._xml_payloads(analysis, run["branch_code"], headers)
-            blocked_keys = {str(row.get("access_key") or "") for row in unavailable}
-            blocked_numbers = {
-                str(row.get("document_number") or "")
-                for row in headers
-                if str(row.get("access_key") or "") in blocked_keys
-            }
-            auditable_headers = [row for row in headers if str(row.get("access_key") or "") not in blocked_keys]
-            auditable_items = [row for row in items if str(row.get("document_number") or "") not in blocked_numbers]
+            blocked_keys = {str(row.get("access_key") or "") for row in unavailable if row.get("access_key")}
+            blocked_docs = {_composite(row) for row in headers if str(row.get("access_key") or "") in blocked_keys}
+            auditable_headers = [row for row in headers if _composite(row) not in blocked_docs]
+            auditable_items = [row for row in items if _composite(row) not in blocked_docs]
             invoices, ctes, _ignored = read_xml_payloads(payloads)
             self._store.mark_run(run_id, stage="auditing", xml_downloaded=downloaded)
             result = audit(
@@ -188,11 +184,12 @@ class EntryAuditService:
                 invoices=invoices,
                 ctes=ctes,
                 config=config,
-                fiscal_book=[_book(row) for row in book if str(row.get("document_number") or "") not in blocked_numbers],
+                fiscal_book=[_book(row) for row in book if _composite(row) not in blocked_docs],
             )
             lnf = self._lnf_matches(result, run["branch_code"], auditable_headers)
             output = _persistable(
                 analysis["id"], run_id, run["branch_code"], result, auditable_headers, auditable_items, tes_rows, lnf, unavailable,
+                xml_by_key={**invoices, **ctes},
             )
             self._store.mark_run(run_id, stage="saving")
             self._store.replace_output(run_id, **output)
@@ -224,12 +221,12 @@ class EntryAuditService:
 
     def summary(self, analysis_id: str, filters: dict) -> dict:
         analysis, ready = self._ready(analysis_id)
-        occurrences = self._filtered("occurrences", analysis_id, filters)
+        occurrences = _dedupe(self._filtered("occurrences", analysis_id, filters))
         documents = [row for row in self._filtered("documents", analysis_id, filters) if row.get("situation") != "xml_unavailable"]
         unavailable = [row for row in self._filtered("documents", analysis_id, filters) if row.get("situation") == "xml_unavailable"]
         unmatched = self._filtered("unmatched", analysis_id, filters)
-        divergent_keys = {row["access_key"] or row["document_number"] for row in occurrences}
-        clean = sum(1 for row in documents if (row["access_key"] or row["document_number"]) not in divergent_keys)
+        divergent_keys = {_document_identity(row) for row in occurrences}
+        clean = sum(1 for row in documents if _document_identity(row) not in divergent_keys)
         explained = sum(1 for row in unmatched if _explained(row))
         current = {
             "documents": len(documents),
@@ -326,6 +323,12 @@ class EntryAuditService:
         rows = self._filtered("tes", analysis_id, filters)
         return {"items": rows, "branches_unavailable": ready}
 
+    def occurrence_state(self, stable_key: str) -> dict | None:
+        if not self._store.has_stable_key(stable_key):
+            return None
+        current = self._store.status_of(stable_key) or {}
+        return {"occurrence": {"status": current.get("status") or "pending", "stable_key": stable_key}}
+
     def resolve(self, stable_key: str, *, kind: str, user_id: str, user_name: str) -> dict:
         return self._set_status(stable_key, kind=kind, status="resolved", user_id=user_id, user_name=user_name)
 
@@ -336,9 +339,9 @@ class EntryAuditService:
         analysis, ready = self._ready(analysis_id)
         return {
             "analysis": analysis,
-            "occurrences": self._store.rows("occurrences", analysis_id),
+            "occurrences": _dedupe(self._store.rows("occurrences", analysis_id)),
             "documents": self._store.rows("documents", analysis_id),
-            "unmatched": self._store.rows("unmatched", analysis_id),
+            "unmatched": _dedupe(self._store.rows("unmatched", analysis_id)),
             "ctes": self._store.rows("ctes", analysis_id),
             "tes": self._store.rows("tes", analysis_id),
             "branches_unavailable": ready,
@@ -371,7 +374,7 @@ class EntryAuditService:
         return analysis, unavailable
 
     def _filtered(self, kind: str, analysis_id: str, filters: dict) -> list[dict]:
-        rows = self._store.rows(kind, analysis_id)
+        rows = _dedupe(self._store.rows(kind, analysis_id))
         failed = {run["branch_code"] for run in self._store.runs_of(analysis_id) if run["status"] == "failed"}
         rows = [row for row in rows if row.get("branch") not in failed]
         for name in ("branch", "severity", "theme", "supplier", "tes", "document_type", "day", "status"):
@@ -460,17 +463,17 @@ class EntryAuditService:
         return payloads, downloaded, unavailable
 
     def _lnf_matches(self, result, branch: str, headers: list[dict]) -> dict:
-        suppliers = {str(row.get("document_number") or ""): row for row in headers}
+        by_key = {str(row.get("access_key") or ""): row for row in headers if row.get("access_key")}
         found_by_key = {}
         for row in result.unmatched:
             if row.side != "xml":
                 continue
-            header = suppliers.get(row.document_number, {})
+            header = by_key.get(row.access_key, {})
             found = self._posting.find_open(
                 branch=branch,
                 access_key=row.access_key,
                 document_number=row.document_number,
-                series=str(header.get("series") or ""),
+                series=str(getattr(row, "series", "") or header.get("series") or ""),
                 supplier_code=str(header.get("supplier_code") or ""),
             )
             if found:
@@ -623,12 +626,57 @@ def _num(value) -> float:
     return float(value)
 
 
-def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: list[dict], items: list[dict], tes_rows: list[dict], lnf: dict | None = None, unavailable: list[dict] | None = None) -> dict:
-    header_by_number = {str(row.get("document_number")): row for row in headers}
+def _composite(row: dict) -> tuple:
+    return (
+        str(row.get("branch") or row.get("branch_code") or ""),
+        str(row.get("supplier_code") or ""),
+        str(row.get("supplier_store") or ""),
+        str(row.get("document_number") or ""),
+        str(row.get("series") or ""),
+    )
+
+
+def _document_identity(row: dict) -> tuple:
+    key = str(row.get("access_key") or "")
+    if key:
+        return ("key", key)
+    return ("doc", *_composite(row))
+
+
+def _dedupe(rows: list[dict]) -> list[dict]:
+    seen: set[str] = set()
+    unique = []
+    for row in rows:
+        key = str(row.get("stable_key") or "")
+        if key:
+            if key in seen:
+                continue
+            seen.add(key)
+        unique.append(row)
+    return unique
+
+
+def _same_header(item: dict, header: dict) -> bool:
+    return _composite(item) == _composite(header)
+
+
+def _tes_codes(header: dict, items: list[dict], item_number: str) -> str:
+    related = [item for item in items if _same_header(item, header)]
+    if item_number:
+        exact = [item for item in related if str(item.get("item") or "") == item_number]
+        related = exact or related
+    return ", ".join(sorted({str(item.get("tes") or "") for item in related if item.get("tes")}))
+
+
+def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: list[dict], items: list[dict], tes_rows: list[dict], lnf: dict | None = None, unavailable: list[dict] | None = None, xml_by_key: dict | None = None) -> dict:
+    by_key = {str(row.get("access_key") or ""): row for row in headers if row.get("access_key")}
+    xml_docs = xml_by_key or {}
     occurrence_rows = []
     for row in result.occurrences:
-        header = header_by_number.get(row.document_number, {})
+        header = by_key.get(row.access_key, {})
+        xml = xml_docs.get(row.access_key)
         code = field_code(row.field)
+        supplier_name = str(header.get("supplier_name") or "") or (getattr(xml, "issuer_name", "") if xml is not None else "")
         occurrence_rows.append({
             "analysis_id": analysis_id,
             "run_id": run_id,
@@ -640,14 +688,16 @@ def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: li
             "title": row.title,
             "document_number": row.document_number,
             "series": str(header.get("series") or ""),
-            "supplier_name": str(header.get("supplier_name") or ""),
+            "supplier_name": supplier_name,
+            "supplier_code": str(header.get("supplier_code") or ""),
+            "supplier_store": str(header.get("supplier_store") or ""),
             "item": row.item,
             "field": code,
             "field_label": row.field,
             "protheus_value": row.protheus_value,
             "xml_value": row.xml_value,
             "difference": _difference(row.protheus_value, row.xml_value),
-            "tes": str(header.get("tes") or ""),
+            "tes": _tes_codes(header, items, row.item),
             "why": row.why,
             "action": row.action,
             "access_key": row.access_key,
@@ -655,21 +705,29 @@ def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: li
             "received_date": str(header.get("received_date") or ""),
             "issue_date": str(header.get("issue_date") or ""),
         })
+    occurrence_identities = {_document_identity({"access_key": row.access_key, "branch": branch, "document_number": row.document_number, "series": ""}) for row in result.occurrences}
     unmatched_rows = []
     notes = lnf or {}
     for row in result.unmatched:
-        header = header_by_number.get(row.document_number, {})
-        posted = notes.get(row.access_key or row.document_number)
+        header = by_key.get(row.access_key, {})
+        xml = xml_docs.get(row.access_key)
+        posted = notes.get(row.access_key) if row.access_key else None
         reason = row.reason
         severity = row.severity
         if posted:
             reason = f"{reason} Em lançamento (LNF): {posted.get('status') or 'aberta'}."
             severity = "Info"
+        party = str(getattr(row, "party_name", "") or header.get("supplier_name") or (getattr(xml, "issuer_name", "") if xml is not None else ""))
+        series = str(getattr(row, "series", "") or header.get("series") or (getattr(xml, "series", "") if xml is not None else ""))
+        issued = str(getattr(row, "issue_date", "") or header.get("issue_date") or "")
+        amount = getattr(row, "amount", None)
+        if amount is None and header:
+            amount = header.get("gross_amount")
         unmatched_rows.append({
             "analysis_id": analysis_id,
             "run_id": run_id,
             "branch": branch,
-            "stable_key": stable_occurrence_key(branch=branch, access_key=row.access_key, rule_id=f"unmatched.{row.side}_only", field="Chave", item="", number=row.document_number, series=str(header.get("series") or ""), supplier=str(header.get("supplier_code") or ""), store=str(header.get("supplier_store") or "")),
+            "stable_key": stable_occurrence_key(branch=branch, access_key=row.access_key, rule_id=f"unmatched.{row.side}_only", field="Chave", item="", number=row.document_number, series=series, supplier=str(header.get("supplier_code") or ""), store=str(header.get("supplier_store") or "")),
             "side": row.side,
             "rule_id": f"unmatched.{row.side}_only",
             "severity": severity,
@@ -680,34 +738,45 @@ def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: li
             "lnf_status": str((posted or {}).get("status") or ""),
             "access_key": row.access_key,
             "document_number": row.document_number,
-            "series": str(header.get("series") or ""),
-            "party_name": str(header.get("supplier_name") or ""),
-            "supplier_name": str(header.get("supplier_name") or ""),
-            "issue_date": str(header.get("issue_date") or ""),
-            "document_type": "cte" if str(header.get("species") or "").upper() == "CTE" else "nfe",
+            "series": series,
+            "party_name": party,
+            "supplier_name": party,
+            "party_tax_id": str(getattr(row, "party_tax_id", "") or header.get("supplier_tax_id") or (getattr(xml, "issuer_tax_id", "") if xml is not None else "")),
+            "party_state": str(getattr(row, "party_state", "") or header.get("supplier_state") or (getattr(xml, "issuer_state", "") if xml is not None else "")),
+            "issue_date": issued,
+            "amount": amount if amount is not None else (getattr(xml, "total_amount", None) if xml is not None else None),
+            "icms_base": getattr(row, "icms_base", None) if getattr(row, "icms_base", None) is not None else (getattr(xml, "icms_base", None) if xml is not None else header.get("icms_base")),
+            "icms_amount": getattr(row, "icms_amount", None) if getattr(row, "icms_amount", None) is not None else (getattr(xml, "icms_amount", None) if xml is not None else header.get("icms_amount")),
+            "ipi_amount": getattr(row, "ipi_amount", None) if getattr(row, "ipi_amount", None) is not None else (getattr(xml, "ipi_amount", None) if xml is not None else header.get("ipi_amount")),
+            "cfop": str(getattr(row, "cfop", "") or (getattr(xml, "cfop", "") if xml is not None else "")),
+            "cst": str(getattr(row, "cst", "") or (getattr(xml, "cst", "") if xml is not None else "")),
+            "nature": str(getattr(row, "nature", "") or ""),
+            "document_type": "cte" if str(getattr(row, "species", "") or header.get("species") or "").upper() == "CTE" else "nfe",
             "field": "key",
             "theme": "unmatched",
             "item": "",
             "tes": "",
         })
-    divergent = {row.document_number for row in result.occurrences}
     documents = []
     for header in headers:
-        number = str(header.get("document_number") or "")
+        identity = _document_identity(header)
+        count = sum(1 for row in result.occurrences if _document_identity({"access_key": row.access_key, "branch": branch, "document_number": row.document_number}) == identity)
+        xml = xml_docs.get(str(header.get("access_key") or ""))
+        supplier_name = str(header.get("supplier_name") or "") or (getattr(xml, "issuer_name", "") if xml is not None else "")
         documents.append({
             "analysis_id": analysis_id,
             "run_id": run_id,
             "branch": branch,
             "access_key": str(header.get("access_key") or ""),
-            "document_number": number,
+            "document_number": str(header.get("document_number") or ""),
             "series": str(header.get("series") or ""),
             "supplier_code": str(header.get("supplier_code") or ""),
             "supplier_store": str(header.get("supplier_store") or ""),
-            "supplier_name": str(header.get("supplier_name") or ""),
+            "supplier_name": supplier_name,
             "issue_date": str(header.get("issue_date") or ""),
             "received_date": str(header.get("received_date") or ""),
-            "situation": "divergent" if number in divergent else "clean",
-            "divergence_count": sum(1 for row in result.occurrences if row.document_number == number),
+            "situation": "divergent" if identity in occurrence_identities else "clean",
+            "divergence_count": count,
             "document_type": "cte" if str(header.get("species") or "").upper() == "CTE" else "nfe",
             "comparison": {
                 "species": header.get("species"),

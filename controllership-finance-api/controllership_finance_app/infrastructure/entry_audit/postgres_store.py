@@ -220,15 +220,19 @@ class PostgresEntryAuditStore:
                 INSERT INTO {SCHEMA}.entry_audit_unmatched (
                     run_id, analysis_id, stable_key, side, rule_id, severity, reason, situation,
                     lnf_request_id, lnf_status, access_key, document_number, series, party_name,
-                    issue_date, amount
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    issue_date, amount, party_tax_id, party_state, nature, cfop, cst,
+                    icms_base, icms_amount, ipi_amount
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     run_id, row["analysis_id"], row["stable_key"], row["side"], row["rule_id"],
                     row.get("severity") or "", row.get("reason") or "", row.get("situation") or "",
                     row.get("lnf_request_id") or "", row.get("lnf_status") or "", row.get("access_key") or "",
                     row.get("document_number") or "", row.get("series") or "", row.get("party_name") or "",
-                    _day(row.get("issue_date")), None,
+                    _day(row.get("issue_date")), row.get("amount"),
+                    row.get("party_tax_id") or "", row.get("party_state") or "", row.get("nature") or "",
+                    row.get("cfop") or "", row.get("cst") or "",
+                    row.get("icms_base"), row.get("icms_amount"), row.get("ipi_amount"),
                 ),
             )
         for row in ctes:
@@ -344,7 +348,17 @@ class PostgresEntryAuditStore:
                   FROM {SCHEMA}.entry_audit_occurrence o
                   JOIN {SCHEMA}.entry_audit_run r ON r.id = o.run_id
                   LEFT JOIN {SCHEMA}.entry_audit_document d
-                    ON d.run_id = o.run_id AND d.document_number = o.document_number
+                    ON d.run_id = o.run_id
+                   AND (
+                        (o.access_key <> '' AND d.access_key = o.access_key)
+                        OR (
+                            o.access_key = ''
+                            AND d.access_key = ''
+                            AND d.document_number = o.document_number
+                            AND d.series = o.series
+                            AND d.supplier_name = o.supplier_name
+                        )
+                   )
                  WHERE o.analysis_id = %s
                 """,
                 (analysis_id,),

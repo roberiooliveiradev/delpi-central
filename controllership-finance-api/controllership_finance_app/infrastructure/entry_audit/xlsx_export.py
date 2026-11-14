@@ -11,8 +11,8 @@ SHEETS = [
     ("TES usadas", ["TES", "Descrição (SF4)", "Tipo do TES", "Cod. Fiscal", "CFOPs de entrada", "Itens DANFE", "Calcula ICMS", "Credita ICMS", "Livro ICMS", "Material de consumo", "Calcula IPI", "Credita IPI", "Livro IPI"]),
     ("Divergências", ["Severidade", "Ocorrência", "NF", "Série", "Fornecedor (XML)", "Campo", "Valor Protheus", "Valor XML", "Diferença (Protheus − XML)", "TES (SD1)", "O que fazer", "Chave de Acesso"]),
     ("Comparativo", ["Situação", "NF", "Série", "Fornecedor (XML)", "ICMS Protheus", "IPI Protheus", "Total Protheus", "Ocorrências", "Chave de Acesso"]),
-    ("Só no XML", ["Situação", "NF", "Série", "Emitente", "Motivo / leitura", "Chave de Acesso"]),
-    ("Só no SF1", ["Situação", "NF", "Série", "Fornecedor", "Motivo / leitura", "Chave NF-e"]),
+    ("Só no XML", ["Situação", "NF", "Série", "Emitente", "CNPJ", "UF", "Natureza", "CFOP", "CST", "Emissão", "Valor", "Base", "ICMS", "IPI", "Motivo / leitura", "Chave de Acesso"]),
+    ("Só no SF1", ["Situação", "NF", "Série", "Fornecedor", "CNPJ", "UF", "Emissão", "Valor", "Base", "ICMS", "IPI", "Motivo / leitura", "Chave NF-e"]),
     ("CT-e Comparativo", ["Situação", "CT-e", "Chave de Acesso", "Valor Protheus", "ICMS Protheus"]),
     ("Itens Divergências", ["Severidade", "Ocorrência", "NF", "Item SD1", "Campo", "Valor Protheus", "Valor XML", "TES", "Chave de Acesso"]),
     ("Itens Excluídos", ["Tipo de documento", "Documento", "Série", "Fornecedor", "Loja", "Itens", "Valor"]),
@@ -52,9 +52,18 @@ def build_workbook(payload: dict) -> bytes:
     for row in payload["unmatched"]:
         sheet = "Só no XML" if row.get("side") == "xml" else "Só no SF1"
         if row.get("side") == "xml":
-            rows[sheet].append([row.get("severity"), row.get("document_number"), row.get("series"), row.get("party_name"), row.get("reason"), row.get("access_key")])
+            rows[sheet].append([
+                row.get("severity"), row.get("document_number"), row.get("series"), row.get("party_name"),
+                row.get("party_tax_id"), row.get("party_state"), row.get("nature"), row.get("cfop"), row.get("cst"),
+                row.get("issue_date"), row.get("amount"), row.get("icms_base"), row.get("icms_amount"), row.get("ipi_amount"),
+                row.get("reason"), row.get("access_key"),
+            ])
         else:
-            rows[sheet].append([row.get("severity"), row.get("document_number"), row.get("series"), row.get("party_name"), row.get("reason"), row.get("access_key")])
+            rows[sheet].append([
+                row.get("severity"), row.get("document_number"), row.get("series"), row.get("party_name"),
+                row.get("party_tax_id"), row.get("party_state"), row.get("issue_date"), row.get("amount"),
+                row.get("icms_base"), row.get("icms_amount"), row.get("ipi_amount"), row.get("reason"), row.get("access_key"),
+            ])
     for row in payload["ctes"]:
         comparison = row.get("comparison") or {}
         rows["CT-e Comparativo"].append(["", row.get("document_number"), row.get("access_key"), comparison.get("gross"), comparison.get("icms")])

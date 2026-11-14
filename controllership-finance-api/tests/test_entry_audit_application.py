@@ -16,7 +16,7 @@ from controllership_finance_app.domain.entry_audit.models import AuditConfig
 from controllership_finance_app.infrastructure.entry_audit.memory_store import MemoryEntryAuditStore
 from controllership_finance_app.infrastructure.entry_audit.xlsx_export import SHEETS, build_workbook
 from controllership_finance_app.interface.http.routes.entry_audit.router import router
-from tests.entry_audit_corpus import COMPANY, SUPPLIER, access_key
+from tests.entry_audit_corpus import COMPANY, OTHER, SUPPLIER, access_key
 
 WHEN = date(2026, 11, 12)
 NS = "http://www.portalfiscal.inf.br/nfe"
@@ -174,7 +174,16 @@ def test_xml_by_key_matches_and_lnf_explains_an_unmatched_xml():
     xml.listed = [listed_key]
     posting = Posting()
     posting.open[listed_key] = {"request_id": "req-1", "status": "pending"}
-    service = _service(xml=xml, posting=posting)
+    orphan_key = access_key("55", 400)
+
+    class _WithOrphan(Protheus):
+        def documents(self, *, branch, received_from, received_to, species):
+            rows = super().documents(branch=branch, received_from=received_from, received_to=received_to, species=species)
+            orphan = _header("400", orphan_key)
+            orphan["supplier_name"] = "Fornecedor C"
+            return [*rows, orphan]
+
+    service = _service(protheus=_WithOrphan(), xml=xml, posting=posting)
     created = service.create(date_from=WHEN, date_to=WHEN, document_types=["nfe"], branches=["01"], user_id="u", user_name="Ana", via="user")
     service.claim_and_execute()
     unmatched = service.unmatched_documents(created["id"], {}, page=1, page_size=20)
@@ -182,6 +191,78 @@ def test_xml_by_key_matches_and_lnf_explains_an_unmatched_xml():
     assert xml_only
     assert "Em lançamento (LNF)" in xml_only[0]["reason"]
     assert xml_only[0]["severity"] == "Info"
+    assert xml_only[0]["party_name"] == "Fornecedor"
+    assert xml_only[0]["series"] == "1"
+    assert str(xml_only[0]["issue_date"]).startswith("2026-11-12")
+    assert xml_only[0]["amount"] == 100
+    assert xml_only[0]["cfop"] == "5101"
+    booked = [row for row in unmatched["items"] if row["access_key"] == orphan_key]
+    assert booked[0]["side"] == "protheus"
+    assert booked[0]["party_name"] == "Fornecedor C"
+    assert booked[0]["series"] == "1"
+    assert booked[0]["amount"] == 100
+    exported = service.export_rows(created["id"])
+    with ZipFile(BytesIO(build_workbook(exported))) as archive:
+        sheets = "".join(
+            archive.read(name).decode()
+            for name in archive.namelist()
+            if name.startswith("xl/worksheets/")
+        )
+    assert "Fornecedor" in sheets
+    assert "5101" in sheets
+    assert "Fornecedor C" in sheets
+
+
+def test_same_document_number_does_not_share_occurrences():
+    key_a = access_key("55", 100, cnpj=SUPPLIER)
+    key_b = access_key("55", 100, cnpj=OTHER)
+
+    class _Books(Protheus):
+        def documents(self, *, branch, received_from, received_to, species):
+            note_a = _header("100", key_a)
+            note_a["supplier_code"] = "000001"
+            note_a["supplier_name"] = "Fornecedor A"
+            note_a["supplier_tax_id"] = SUPPLIER
+            note_b = _header("100", key_b)
+            note_b["supplier_code"] = "000002"
+            note_b["supplier_name"] = "Fornecedor B"
+            note_b["supplier_tax_id"] = OTHER
+            return [note_a, note_b]
+
+        def items(self, **_kwargs):
+            return [{
+                "branch": "01", "document_number": "100", "series": "1",
+                "supplier_code": "000001", "supplier_store": "01", "item": "0001",
+                "product_code": "P", "cfop": "1101", "tax_situation": "000", "tes": "001",
+                "total_amount": 100, "icms_base": 100, "icms_rate": 12, "icms_amount": 12,
+                "ipi_base": 0, "ipi_rate": 0, "ipi_amount": 0, "st_amount": 0,
+            }]
+
+    xml = Xml()
+    xml.by_key[key_a] = _nfe(100, key_a).replace(b"<vNF>100.00</vNF>", b"<vNF>80.00</vNF>")
+    xml.by_key[key_b] = _nfe(100, key_b).replace(SUPPLIER.encode(), OTHER.encode()).replace(b"Fornecedor", b"Fornecedor B")
+    service = _service(protheus=_Books(), xml=xml)
+    created = service.create(date_from=WHEN, date_to=WHEN, document_types=["nfe"], branches=["01"], user_id="u", user_name="Ana", via="user")
+    service.claim_and_execute()
+    occurrences = service.occurrences(created["id"], {}, page=1, page_size=50, sort="severity")
+    keys = [row["stable_key"] for row in occurrences["items"]]
+    assert len(keys) == len(set(keys))
+    assert all(row["access_key"] == key_a for row in occurrences["items"])
+    summary = service.summary(created["id"], {})
+    assert summary["kpis"]["occurrences"] == len(keys)
+    assert summary["kpis"]["high"] == 1
+    documents = service.documents(created["id"], {}, page=1, page_size=20)["items"]
+    by_key = {row["access_key"]: row for row in documents}
+    assert by_key[key_a]["situation"] == "divergent"
+    assert by_key[key_a]["divergence_count"] == len(keys)
+    assert by_key[key_b]["situation"] == "clean"
+    assert by_key[key_b]["divergence_count"] == 0
+    assert by_key[key_b]["supplier_name"] == "Fornecedor B"
+    suppliers = {row["name"]: row["count"] for row in service.breakdowns(created["id"], {})["suppliers"]}
+    assert suppliers["Fornecedor A"] == len(keys)
+    assert "Fornecedor B" not in suppliers
+    tes = {row["name"] for row in service.breakdowns(created["id"], {})["tes"]}
+    assert tes == {"001"}
 
 
 def test_export_uses_the_skill_sheets_and_the_tes_columns():

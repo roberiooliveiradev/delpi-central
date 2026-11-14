@@ -35,6 +35,7 @@ from controllership_finance_app.domain.closing_checklist.errors import (
 )
 from controllership_finance_app.application.clara.entry_audit_capabilities import (
     build_entry_audit_capability_table,
+    snapshot_for as entry_audit_snapshot_for,
 )
 from controllership_finance_app.application.clara.invoice_posting_capabilities import (
     build_lnf_capability_table,
@@ -290,6 +291,9 @@ class ClaraGovernedWrites:
         lnf_state = lnf_snapshot_for(capability, params)
         if lnf_state is not None:
             return lnf_state
+        audit_state = entry_audit_snapshot_for(capability, params)
+        if audit_state is not None:
+            return audit_state
         period = params.get("period")
         try:
             if capability in (

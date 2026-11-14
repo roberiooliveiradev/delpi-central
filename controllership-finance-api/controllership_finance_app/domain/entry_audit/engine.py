@@ -352,11 +352,11 @@ def _unmatched(result, rows, invoices_only, invoices, ctes, company_tax_id, sett
     for document in sorted(invoices.values(), key=lambda item: item.issued_at or datetime.min):
         if document.access_key in booked:
             continue
-        result.unmatched.append(UnmatchedDocument("xml", str(document.number), *_xml_situation(document, company_tax_id, recent), document.access_key, "SPED"))
+        result.unmatched.append(_xml_unmatched(document, *_xml_situation(document, company_tax_id, recent), "SPED"))
     for document in sorted(ctes.values(), key=lambda item: item.issued_at or datetime.min):
         if document.access_key in booked:
             continue
-        result.unmatched.append(UnmatchedDocument("xml", str(document.number), *_cte_situation(document, company_tax_id, root), document.access_key, "CTE"))
+        result.unmatched.append(_xml_unmatched(document, *_cte_situation(document, company_tax_id, root), "CTE"))
     earliest = min(issued) if issued else None
     latest_invoice = max(issued) if issued else None
     for row in sorted((row for row in invoices_only if row["access_key"] not in invoices), key=lambda item: item["issue_date"] or datetime.min.date()):
@@ -365,7 +365,7 @@ def _unmatched(result, rows, invoices_only, invoices, ctes, company_tax_id, sett
             severity = "Info"
         else:
             reason, severity = "Emitida dentro do período, mas o XML não veio no download. Baixar e conferir.", "Média"
-        result.unmatched.append(UnmatchedDocument("protheus", row["number"], severity, reason, row["access_key"], row["species"]))
+        result.unmatched.append(_book_unmatched(row, severity, reason))
     if ctes:
         cte_dates = [document.issued_at for document in ctes.values() if document.issued_at is not None]
         first = min(cte_dates) if cte_dates else None
@@ -375,7 +375,7 @@ def _unmatched(result, rows, invoices_only, invoices, ctes, company_tax_id, sett
                 severity = "Info"
             else:
                 reason, severity = "CT-e emitido dentro do período, mas o XML não veio no download. Baixar e conferir.", "Média"
-            result.unmatched.append(UnmatchedDocument("protheus", row["number"], severity, reason, row["access_key"], row["species"]))
+            result.unmatched.append(_book_unmatched(row, severity, reason))
 
 
 def _items_rules(result, item_rows, invoices, tes, book, company_state, presumed_tes, presumed_on, settings, hits, boosted) -> None:
@@ -834,6 +834,44 @@ def _freight_right(document: XmlDocument, company_tax_id: str, root: str, nature
     if third and not natures:
         return None, "A NF-e transportada não está na SD1 desta filial"
     return None, "CT-e sem NF-e vinculada"
+
+
+def _xml_unmatched(document: XmlDocument, severity: str, reason: str, species: str) -> UnmatchedDocument:
+    item = document.items[0] if document.items else None
+    cfop = document.cfop or (item.cfop if item is not None else "")
+    cst = document.cst or ((item.origin + item.cst) if item is not None and item.cst else "")
+    issued = document.issued_at.date().isoformat() if document.issued_at is not None else ""
+    return UnmatchedDocument(
+        "xml", str(document.number), severity, reason, document.access_key, species,
+        series=str(document.series or ""),
+        party_name=document.issuer_name,
+        party_tax_id=document.issuer_tax_id,
+        party_state=document.issuer_state,
+        issue_date=issued,
+        amount=document.total_amount,
+        icms_base=document.icms_base,
+        icms_amount=document.icms_amount,
+        ipi_amount=document.ipi_amount,
+        cfop=cfop,
+        cst=cst,
+        nature=_nature(cfop),
+    )
+
+
+def _book_unmatched(row: dict, severity: str, reason: str) -> UnmatchedDocument:
+    issued = row["issue_date"].isoformat() if row.get("issue_date") else ""
+    return UnmatchedDocument(
+        "protheus", row["number"], severity, reason, row["access_key"], row["species"],
+        series=str(row.get("series") or ""),
+        party_name=str(row.get("name") or ""),
+        party_tax_id=str(row.get("tax_id") or ""),
+        party_state=str(row.get("state") or ""),
+        issue_date=issued,
+        amount=row.get("gross"),
+        icms_base=row.get("icms_base"),
+        icms_amount=row.get("icms"),
+        ipi_amount=row.get("ipi"),
+    )
 
 
 def _xml_situation(document: XmlDocument, company_tax_id: str, recent: datetime) -> tuple[str, str]:
