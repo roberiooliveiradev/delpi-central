@@ -624,3 +624,27 @@ O Product Owner aprovou expressamente o wireframe V3 e formalizou como princípi
 **Gate:** Devin pode implementar na branch `main`, sem criar branch, testar e publicar **somente em HML** para aceite visual final. Não iniciar conclusão técnica de produto com TOTVS, publicação de revisão, mudança de fonte de verdade ou release PRD neste pacote. Se mudança de owner/contrato cross-BC for efetivamente necessária: `ARCHITECTURE_DECISION_REQUIRED`.
 
 **Ressalva histórica:** na descrição anterior do wireframe consta “implementação não autorizada” porque foi escrita no momento da proposta; **esta seção I posterior prevalece para V3**, sem reclassificar testes ou capacidades como PASS antes da execução.
+
+
+## PRC-REF-025 — Separação solicitação vs produto e proveniência de revisão (PO, 14/11/2026)
+
+**Status:** `PO_APPROVED_FUNCTIONAL_PRINCIPLE / UX_CORRECTION_TARGET / IMPLEMENTATION_PENDING / HML_NOT_RUN`. Supersede apenas a exposição ostensiva de `Revisão base Rn` no hero prevista no PRC-REF-024, não os fluxos REF-022, as regras R01–R18 ou proteções de concorrência existentes.
+
+**Decisão:** solicitação PRC é um caso de trabalho com `requestId`, status, histórico e versão técnica de concorrência (`caseVersion`); não tem “revisão de produto” própria. Em UPDATE, aponta ao **produto-alvo/código oficial** desde o intake, e pode capturar uma referência técnica da revisão vigente para `stale_revision`, mas não se apresenta como revisão publicada ou como produtora de uma revisão. Em CREATE, o produto oficial pode nem existir; não mostrar código ou revisão inventados. Somente ao concluir após validação oficial e regras de publicação pode nascer provenance `produto/revisão publicada → solicitação de origem`. No-op após existência de Vn conclui sem Vn+1; primeira conclusão validada de produto sem histórico versionado cria V1 baseline, conforme R01.
+
+**Wireframe corrigido do hero V3:**
+
+```text
+Solicitação #1a808947 [Em atendimento]
+Alteração de matéria-prima
+[avatar] Solicitante      [avatar] Responsável (apenas se atribuído)   [ⓘ Informações]
+✓ Enviada ─── ● Em atendimento ─── ○ Concluída
+[Concluir atendimento] [Devolver para correção] [Rejeitar]
+[Verificação divergente → Ver diagnóstico] (somente se efetivo)
+```
+
+**Não há chip `Revisão base R2` no hero.** Em `Informações`, manter `caseVersion` somente como “Versão interna do atendimento” se necessário à auditoria, nunca como revisão do produto. Se `baseRevision` for relevante para rebase/conflito, exibir apenas contexto técnico de “Revisão técnica de referência do produto (no início da análise)”, com ajuda de que **não é revisão gerada por esta solicitação**, e apenas em superfície avançada adequada; evitar mostrar quando não houver registro versionado. Melhor priorizar tal dado na ficha/diagnóstico técnico a partir de contrato verificado.
+
+**Após conclusão:** na área `Produtos acompanhados → Versões`, a ficha da revisão efetivamente publicada mostra fonte de verificação, data e `Solicitação de origem #...` com deep-link autorizado; na solicitação concluída, se realmente houve revisão, pode mostrar `Revisão técnica publicada Vn` com deep-link autorizado. Em no-op, mostrar `Concluída sem nova revisão técnica` quando esse resultado for comprovado; não atribuir à solicitação autoria de uma Vn pré-existente. Não permitir link de revisão futura em caso pendente/rejeitado.
+
+**Gates:** esta é diretriz de produto e apresentação aprovada. Alterar persistência de `baseRevision`, semântica de `record/revision.request_id`, protocolo ou emissão de revisions requer inventário de consumidores, contrato e autorização arquitetural da Coordination/owner competente (`ARCHITECTURE_DECISION_REQUIRED`). Não alterar fluxo oficial TOTVS, CAS, idempotência ou RBAC para acomodar UI. Implementar UX isolada somente depois de confirmar estado atual do frontend e de contratos, com testes DEV/HML, nunca PRD.
