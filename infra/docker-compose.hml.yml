@@ -597,8 +597,47 @@ services:
       delpi.environment: homologation
       delpi.project: delpi-hml
 
-  # BFF Controladoria & Finanças — ensaio F4b do corte LNF (dark por default).
-  # financial-api NÃO existe no stack HML: FINANCIAL_API_BASE_URL vazio → binários INCONCLUSIVE.
+  # Portal Financeiro — fonte Questor da auditoria de entradas. Segredos só no .env.hml.
+  financial-api:
+    extends:
+      file: docker-compose.yml
+      service: financial-api
+    profiles: [financial-api, baseline, platform]
+    image: delpi-hml/financial-api:local
+    container_name: delpi-hml-financial-api
+    ports: !override []
+    env_file: !override
+      - path: env.hml.example
+        required: true
+      - path: .env.hml
+        required: false
+    depends_on: !override {}
+    networks: !override
+      - delpi-hml
+    volumes: !override []
+    environment:
+      DELPI_API_URL: http://api-delpi:8000
+      DELPI_AUTH_CORE_API_URL: http://core-api:8000
+      PLUGINS_DB_HOST: postgres-plugins
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    mem_limit: 1g
+    cpus: 1.0
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  # BFF Controladoria & Finanças — ensaio F4b do corte LNF e auditoria de entradas.
   controllership-finance-api:
     extends:
       file: docker-compose.yml
@@ -672,9 +711,9 @@ services:
       TOTVS_POOL_MAX_SIZE: ${TOTVS_POOL_MAX_SIZE:-10}
       TOTVS_POOL_ACQUIRE_TIMEOUT: ${TOTVS_POOL_ACQUIRE_TIMEOUT:-60}
       TOTVS_POOL_MAX_WAITERS: ${TOTVS_POOL_MAX_WAITERS:-30}
-      # Sem financial-api no stack HML (1c): binários INCONCLUSIVE no ensaio.
-      FINANCIAL_API_BASE_URL: ${FINANCIAL_API_BASE_URL:-}
+      FINANCIAL_API_BASE_URL: ${FINANCIAL_API_BASE_URL:-http://financial-api:8000}
       FINANCIAL_API_TIMEOUT_SECONDS: ${FINANCIAL_API_TIMEOUT_SECONDS:-30}
+      ENTRY_AUDIT_ENABLED: ${ENTRY_AUDIT_ENABLED:-true}
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
       # LNF hosted — dark no boot; ensaio liga via .env.hml / override.
       LNF_HOSTED_ENABLED: ${LNF_HOSTED_ENABLED:-true}

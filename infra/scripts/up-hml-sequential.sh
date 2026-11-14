@@ -65,6 +65,7 @@ FASE_API=(
   production-control-api
   requests-api
   engineering-api
+  financial-api
   controllership-finance-api
   commercial-api
 )
@@ -136,6 +137,7 @@ compose_profiles_for() {
     engineering-api) echo engineering-api ;;
     engineering) echo engineering ;;
     lancamento-notas-fiscais) echo lancamento-notas-fiscais ;;
+    financial-api) echo financial-api ;;
     controllership-finance-api) echo controllership-finance-api ;;
     commercial-api) echo commercial-api ;;
     commercial) echo commercial ;;

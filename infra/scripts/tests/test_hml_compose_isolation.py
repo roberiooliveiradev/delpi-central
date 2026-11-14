@@ -51,6 +51,7 @@ BASELINE = {
     "my-requests",
     "engineering-api",
     "engineering",
+    "financial-api",
     "controllership-finance-api",
     "lancamento-notas-fiscais",
     "commercial-api",
