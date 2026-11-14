@@ -89,6 +89,9 @@ jobs:
       - name: G0-SEC-S2 draft policy and recovery review (must remain BLOCKED)
         working-directory: it-portal-api
         run: python -m it_portal_app.domain.remote_policy_review --repo-root ..
+      - name: G2-S4-S2b workstation bootstrap preflight (must remain BLOCKED)
+        working-directory: it-portal-api
+        run: python -m it_portal_app.domain.workstation_bootstrap_readiness --repo-root ..
       - name: Unit and HTTP tests
         working-directory: it-portal-api
         run: python -m pytest -q

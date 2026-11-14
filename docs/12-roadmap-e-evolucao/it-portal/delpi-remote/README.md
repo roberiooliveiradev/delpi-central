@@ -1,6 +1,6 @@
 # Delpi Remote | Fonte de verdade do projeto
 
-**Estado em 2026-11-13:** inicio autorizado pelo responsavel de TI. Gate 0 (arquitetura e planejamento) documentado; revisao de seguranca e validacao operacional **pendentes**. NENHUM acesso remoto foi ativado por esta entrega.
+**Estado em 2026-11-14:** inventario G1-OWNER validado conforme aceite relatado; G2-S4-S2a em revisao, G2-S4-S2b iniciado por preflight offline. Revisao de seguranca e homologacao Windows/Keycloak **pendentes**. NENHUM acesso remoto foi ativado.
 
 **Repositorio:** `roberiooliveiradev/delpi-central`. **Issue principal:** [#179](https://github.com/roberiooliveiradev/delpi-central/issues/179).
 
@@ -40,7 +40,8 @@ Acesso sem pedir senha Windows por sessao **nao** significa acesso anonimo: toda
 | G2-S4-S1 | Preparar Client Keycloak desabilitado pela ficha do Portal | **EM REVISAO** | CI API/UI/Postgres V012 aprovado; Keycloak HML, Windows real e feature off ate piloto |
 | G2-S4-S2 | Bootstrap de uso unico, ativacao S2S, binding dinamico e revogacao | **EM DESENVOLVIMENTO** | S2a com vinculo DB/revogacao em codigo; S2b precisa Keycloak/Windows HML |
 | G2-S4-S2a | Vinculo S2S dinamico por DB e revogacao individual Keycloak | **EM REVISAO** | V013 com grant OFF, testes CI e homologacao real pendentes |
-| G2-S4-S2b | Bootstrap Windows de uso unico, attestation, ativacao e rotacao | **NAO INICIADO** | Sem secret no navegador; so ativar depois do piloto seguro e aceite |
+| G2-S4-S2b | Bootstrap Windows de uso unico, attestation, ativacao e rotacao | **EM DESENVOLVIMENTO** | P0 offline em revisao; ativacao/credenciais ainda nao implementadas; piloto HML obrigatorio |
+| G2-S4-S2b-P0 | Preflight anti-ativacao precoce e especificacao do protocolo | **EM REVISAO** | CI gate BLOCKED e testes negativos; nao equivale a aprovacao do bootstrap |
 | G3-ENGINE | MeshCentral isolado e testado em laboratorio | **BLOQUEADO** | Somente apos G0-SEC com aceite formal, versao/licenca/SBOM, TLS, backup e piloto isolado |
 | G4-AUTH | Broker de sessoes, Keycloak/MFA e permissoes independentes | **NAO INICIADO** | Revogacao, tokens de uso unico, fail-closed, logs, kill switch |
 | G5-REMOTE | Tela, teclado e mouse no navegador para computador piloto | **NAO INICIADO** | Testes presenciais de concorrencia, UAC, lock-screen, desconexao e latency |
@@ -64,6 +65,8 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 **G2-S4-S2a (14/11/2026):** preparado binding por PostgreSQL (V013, `ingest_authorized=false` por default) e revogacao individual com bloqueio DB antes de desabilitar Client Keycloak, auditoria e revisao manual em falha. JWT S2S continua validado por assinatura/issuer/audiencia/scope; Client esperado deriva do UUID do ativo, sem lista manual no env. `IT_PORTAL_WORKSTATION_DB_BINDINGS_ENABLED=false` e `IT_PORTAL_WORKSTATION_REVOKE_ENABLED=false` por default; sem fallback da allowlist estatica quando DB mode ativo. Nenhuma ativacao ou bootstrap Windows foi implementada; segue no S2b. Ver [runbook](G2-S4-S2A-DYNAMIC-BINDINGS-REVOCATION.md).
 
 **Evidencia automatizada S2a (14/11/2026):** [API + PostgreSQL V013: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43611957705) no commit `a0086959214f`; [frontend lint/Vitest/build: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43611589167); [architecture-gate: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43611957703); [audit: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43611589188). Houve dois ajustes somente de teste (hostname e RETURNING); nenhuma mudanca de V013 apos CI. **G2-S4-S2a permanece EM REVISAO:** sem Keycloak real, sem Windows piloto, sem deploy produtivo. Flags OFF.
+
+**G2-S4-S2b-P0 (14/11/2026):** iniciado o proximo incremento seguro: preflight offline e testes negativos para garantir que credenciais, ingestao e rotas de ativacao nao sejam liberadas antes da homologacao. O resultado esperado e G2-S4-S2b BLOCKED; nao e autorizacao de acesso nem teste de dispositivo real. O bootstrap de uso unico, a prova de identidade e a ativacao continuam **NAO IMPLEMENTADOS**. Ver [runbook P0](G2-S4-S2B-PREFLIGHT.md).
 
 **G0-SEC-S0 (13/11/2026):** o preflight offline foi implementado com checklist de 12 verificacoes pendentes, auditoria de rotas/manifesto/Compose e testes que falham ao detectar acesso remoto prematuro. **CI verde** no commit `b3972d753599`: gate BLOCKED, pytest, integracao PostgreSQL, architecture-gate e audit. A avaliacao ADR-002 identificou alerta urgente dos mantenedores do MeshCentral 1.3.1 (23/10/2026) sobre exploracao ativa; versao apenas **candidata**, nao aprovada. **G3-ENGINE permanece BLOQUEADO** ate signoff formal e demonstracao de mitigacao.
 
@@ -105,5 +108,6 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 - [G2-S3: pacote de instalacao, tarefa desabilitada e rollback Windows](G2-S3-WINDOWS-AGENT-ROLL-OUT.md)
 - [G2-S4-S1: cadastro automatico de Client Keycloak DESABILITADO](G2-S4-S1-AUTOMATED-KEYCLOAK-PREPARATION.md)
 - [G2-S4-S2a: binding por banco e revogacao individual](G2-S4-S2A-DYNAMIC-BINDINGS-REVOCATION.md)
+- [G2-S4-S2b-P0: preflight de bootstrap sem ativacao](G2-S4-S2B-PREFLIGHT.md)
 - [Convencao de nomenclatura de computadores (proposta)](NAMING-CONVENTION.md)
 - [Diario de execucao e passagem de bastao](EXECUTION-LOG.md)

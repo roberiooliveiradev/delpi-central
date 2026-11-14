@@ -416,6 +416,24 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** G2-S4-S2b com bootstrap Windows de uso unico e prova do dispositivo, ativacao Keycloak/DB transacional com compensacao, revogacao/rotacao, testes de Keycloak/Windows HML presenciais antes de deploy com flags liberadas.
 
+## 2026-11-14 | G2-S4-S2b-P0 | preflight offline e contrato de bootstrap
+
+**Objetivo:** iniciar S2b com uma barreira de CI antes de qualquer fluxo de credencial, ativacao Keycloak ou grant de ingestao.
+
+**Arquivos alterados:** validador Python workstation_bootstrap_readiness.py; testes test_workstation_bootstrap_readiness.py; workflow it-portal-api.yml; runbook G2-S4-S2B-PREFLIGHT.md; roadmap README.md e este diario.
+
+**Commit/issue:** alteracao versionada nesta entrega, issue [#179](https://github.com/roberiooliveiradev/delpi-central/issues/179). Link de commit e resultado CI devem ser registrados apos push.
+
+**Testes executados e evidencias:** compilacao Python e 16 testes de unidade isolados PASS em ambiente local do assistente (incluindo 15 cenarios de regressao). Suite completa da API e PostgreSQL/CI do repositorio **AINDA NAO EXECUTADOS** no instante da entrega.
+
+**Estado de producao / implantacao:** nenhum acesso ao srv-api, deploy, migration, Keycloak, agente Windows ou browser executado por esta tarefa. Flags anteriores devem permanecer OFF; bootstrap e emissao de secrets NAO implementados. O gate e puramente offline, esperado BLOCKED.
+
+**Riscos e limitacoes:** auditoria estatica nao comprova token de uso unico, prova fisica do dispositivo, Keycloak real, concorrencia, MFA, DPAPI/TPM ou homologacao Windows. Nao equivale a liberacao de G2-S4-S2b nem G0-SEC.
+
+**Rollback:** reverter apenas codigo/CI/documentacao deste P0 em novo commit se houver regressao; nao editar migrations V009..V013 ou manipular identidades existentes.
+
+**Proximo passo unico:** consultar CI do commit, depois projetar implementacao transacional do ticket one-time e attestation por dispositivo com teste de laboratorio HML, sem emitir credencial via browser e sem ativar producao.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown
