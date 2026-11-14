@@ -648,3 +648,13 @@ Alteração de matéria-prima
 **Após conclusão:** na área `Produtos acompanhados → Versões`, a ficha da revisão efetivamente publicada mostra fonte de verificação, data e `Solicitação de origem #...` com deep-link autorizado; na solicitação concluída, se realmente houve revisão, pode mostrar `Revisão técnica publicada Vn` com deep-link autorizado. Em no-op, mostrar `Concluída sem nova revisão técnica` quando esse resultado for comprovado; não atribuir à solicitação autoria de uma Vn pré-existente. Não permitir link de revisão futura em caso pendente/rejeitado.
 
 **Gates:** esta é diretriz de produto e apresentação aprovada. Alterar persistência de `baseRevision`, semântica de `record/revision.request_id`, protocolo ou emissão de revisions requer inventário de consumidores, contrato e autorização arquitetural da Coordination/owner competente (`ARCHITECTURE_DECISION_REQUIRED`). Não alterar fluxo oficial TOTVS, CAS, idempotência ou RBAC para acomodar UI. Implementar UX isolada somente depois de confirmar estado atual do frontend e de contratos, com testes DEV/HML, nunca PRD.
+
+### J. Ratificação superveniente — revisão somente após conclusão (14/11/2026)
+
+**Decisão PO:** substituir a hipótese anterior de mostrar `baseRevision` como referência no detalhe. A solicitação **não terá revisão de produto vinculada enquanto pendente**, nem mesmo como “Revisão técnica de referência” em seu popover normal. Código do produto-alvo continua disponível na ficha de UPDATE. Versão interna do atendimento, se exposta, deve ser identificada como controle técnico e não como revisão.
+
+**Wireframe de detalhe antes do fechamento:** título, status, solicitante/responsável, tracker, `allowedActions`, aviso de verificação; nenhum chip Rn e nenhuma referência a revisão publicada.
+
+**Wireframe após fechamento:** se o caso gerou V1/Vn+1 validada, mostrar um bloco contextual `Revisão técnica gerada: Vn` com link autorizado à versão do produto e reciprocar `Solicitação de origem #...` no produto. Se fechou com no-op, apresentar `Concluída sem nova revisão técnica` (somente se o backend informar outcome); jamais mostrar a revisão preexistente como criada pelo caso. Histórico e Verificação TOTVS permanecem fontes de evidência e rastreabilidade.
+
+**Estado:** `PO_APPROVED / SEMANTIC_AND_UX_IMPLEMENTATION_AUTHORIZED_HML / PRD_NOT_AUTHORIZED`. Esta seção J prevalece sobre as alternativas `Revisão base Rn` do PRC-REF-024 e PRC-REF-025.
