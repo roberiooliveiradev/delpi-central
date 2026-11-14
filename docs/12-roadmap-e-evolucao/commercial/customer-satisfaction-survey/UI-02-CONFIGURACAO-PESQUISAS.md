@@ -2,7 +2,7 @@
 
 > **Estado:** ESPECIFICAÇÃO DE UI / WIREFRAME PROPOSTO — **NÃO IMPLEMENTADO**. Entrega 1. Ref observada: `main` / `c135a9823e054ce1234f73eee627548043737264` em 11/11/2026; confirmar HEAD/branch/working tree antes de implementar. Owner visual: `plugins/commercial` ou `plugins/public-hub` conforme indicado. Autoridade de regra e dados: `commercial-api`.
 >
-> **Fontes:** [índice mestre](./REQUIREMENTS-INDEX.md), [contrato da primeira entrega](./SURVEY-FIRST-RELEASE-CONTRACT.md), [plano de frontend](./FRONTEND-FIRST-RELEASE-PLAN.md) e plano Word integral; código existente: \`plugins/commercial/src/features/home/HomePage.tsx\`, \`features/administration/AdministrationHomePage.tsx\`, \`features/analytics/AnalyticsOtdPage.tsx\`.
+> **Fontes:** [índice mestre](./REQUIREMENTS-INDEX.md), [contrato da primeira entrega](./SURVEY-FIRST-RELEASE-CONTRACT.md), [plano de frontend](./FRONTEND-FIRST-RELEASE-PLAN.md) e plano Word integral; código existente: `plugins/commercial/src/features/home/HomePage.tsx`, `features/administration/AdministrationHomePage.tsx`, `features/analytics/AnalyticsOtdPage.tsx`.
 
 **Regra visual obrigatória:** reaproveitar exclusivamente componentes de `@delpi/plugin-ui/index` e wrappers/compostos já usados no Portal, sem implementar novo componente visual nativo da página. Layout semântico e ligação de dados React são permitidos; se uma necessidade realmente não estiver coberta, registrar lacuna e passar pelo Abstraction Gate antes de alterar o PluginUI. Não criar CSS/kit de design paralelo.
 
@@ -14,7 +14,7 @@ Criar campanhas e selecionar clientes existentes no TOTVS para que o usuário po
 
 ## Regra de composição visual — Hero da gestão (11/11/2026)
 
-**Os filtros globais e botões de ação da página de Configuração também ficam no `CommercialPageHero`**, com `density="compact"`, título/descrição e ações superiores. Na listagem: **Nova campanha**, **Ver resultados**, acesso autorizado a **Respostas por empresa** e filtros de ano/situação/busca/limpar. No detalhe: **Ver resultados**, eventual **Editar datas** permitido e filtros globais da lista de participantes. O `CommercialPagePath` continua acima do Hero. Ações de cada linha (`Copiar link`, `Copiar mensagem`, `Consultar respostas por empresa`) continuam na linha correspondente; botões `Cancelar`/`Criar` ficam no diálogo, por serem ações do formulário. Ações indisponíveis por estado/permissão não são renderizadas como controles ativos. **Não criar barra de filtros solta abaixo do Hero nem componente próprio de cabeçalho.** A validação visual final será feita na revisão desta página; decisão de princípio aprovada, implementação ainda pendente.
+**Os filtros globais e botões de ação da página de Configuração também ficam no `CommercialPageHero`**, com `density="compact"`, título/descrição e ações superiores. Na listagem: **Nova campanha**, **Ver resultados**, acesso autorizado a **Respostas por empresa** e filtros de ano/situação/busca/limpar. No detalhe: **Ver resultados**, eventual **Editar datas** permitido e filtros globais da lista de participantes. O `CommercialPagePath` continua acima do Hero. A cláusula sobre ações na linha (`Copiar link`, `Copiar mensagem`, `Consultar respostas por empresa`) foi **superseded pela decisão de 13/11/2026**: a lista de participantes tem exatamente **Empresa, Contato e Situação**, sem coluna Ação — a linha/card abre o detalhe (UI-02C), onde ficam as ações de cópia; **Respostas por empresa** é ação do Hero. Botões `Cancelar`/`Criar` ficam no diálogo, por serem ações do formulário. Ações indisponíveis por estado/permissão não são renderizadas como controles ativos. **Não criar barra de filtros solta abaixo do Hero nem componente próprio de cabeçalho.** A validação visual final será feita na revisão desta página; decisão de princípio aprovada, implementação ainda pendente.
 
 ### Fluxo consolidado — criar, configurar e ampliar uma campanha (11/11/2026)
 
@@ -70,15 +70,15 @@ Criar campanhas e selecionar clientes existentes no TOTVS para que o usuário po
 3. **Navegação de seções:** **Participantes**, **Mensagem padrão**, **Dados da campanha** via componente oficial de abas/underline navigation; padrão inicial Participantes. Alternar seção sem apagar pesquisas/seleções e sem gravar automaticamente.
 4. **Participantes, resumo:** três cards compactos Participantes cadastrados / Respondidas / Pendentes, todos com contagens retornadas pela API. Pendente significa ausência de resposta, não prova de falta de envio.
 5. **Participantes, adicionar:** busca de cliente TOTVS por nome, código/loja; múltiplas seleções e ação Adicionar selecionadas. A lista de participantes é **acumulativa**; o gestor pode voltar e adicionar durante a campanha **ABERTA**, sem alterar respostas, links existentes ou prazo. Configuração inicial agendada prevista; detalhes de edições posteriores em agendadas PENDING. Encerrada não recebe inclusão na proposta, validada pelo backend.
-6. **Resultado de inclusão:** apresentar **Incluídas**, **Já existentes**, **Com falha** e relatório por empresa (código/loja e motivo seguro). Válidas são incluídas mesmo com outras falhando; duplicadas preservam vínculo/token, erro global não pode ser rotulado sucesso parcial.
-7. **Lista acumulada:** pesquisa por nome/código/loja, filtro Pendente/Respondido, tabela/cards oficiais, ordenação e paginação; empresa, código/loja, contato opcional, status e ações. Linha/card abre **UI-02C**. Copiar link pode existir como ação rápida autorizada; copiar mensagem deve abrir prévia do participante, sem editor duplicado. Sem status Enviado/Entregue.
+6. **Resultado de inclusão:** o backend diferencia **incluídas, já existentes e falhas por empresa** (código/loja e motivo seguro). **Apresentação SUPERSEDED em 13/11/2026:** não exibir painel permanente de contadores Incluídas/Já existentes/Com falha — inclusões confirmadas atualizam a lista e falhas usam os avisos flutuantes oficiais no canto superior direito (ver seção 3, decisão do card Adicionar clientes). Válidas são incluídas mesmo com outras falhando; duplicadas preservam vínculo/token, erro global não pode ser rotulado sucesso parcial.
+7. **Lista acumulada:** pesquisa por nome/código/loja, filtro Pendente/Respondido, tabela/cards oficiais, ordenação e paginação; empresa, código/loja, contato opcional, status e ações. Linha/card abre **UI-02C**. **Decisão de 13/11/2026:** exatamente três campos — **Empresa, Contato, Situação** — **sem coluna Ação**; Copiar link e Copiar mensagem são ações do detalhe do participante, não da linha. Sem status Enviado/Entregue.
 8. **Mensagem padrão:** ver UI-02B.2. Mostrar situação Configurada/A configurar apenas conforme dado real, não como sucesso fictício.
 9. **Dados:** nome, janela, estado, versão de questionário fixo; edição de datas sob regras de backend, sem invalidar respostas. Sem criar editor de perguntas ou flag de ativação.
 
 ### UI-02B.1 — Inclusão múltipla: interação e estados
 
 - Busca autorizada commercial-api → api-delpi/TOTVS; exibir empresa e **par código+loja preservando zeros iniciais**. Seleção múltipla, contagem, confirmação do lote, manter seleção entre pesquisas/paginação conforme padrão existente.
-- Após resposta confirmada, diferenciar **incluídas, já existentes e falhas por empresa**; não repetir gravações bem-sucedidas ou regenerar tokens. Campos/contrato HTTP de lote e transação por item ainda PENDING do backend.
+- Após resposta confirmada, o backend diferencia **incluídas, já existentes e falhas por empresa**; a apresentação segue a decisão de 13/11/2026 (lista atualizada + avisos flutuantes oficiais, **sem** painel de contadores). Não repetir gravações bem-sucedidas ou regenerar tokens. Campos/contrato HTTP de lote e transação por item ainda PENDING do backend.
 - Estados: carregando, nenhuma empresa localizada, permissão insuficiente, indisponibilidade TOTVS, duplicidade, erro global, validação por item, retentativa segura. Nunca envia convite nem cria cliente no Portal.
 
 ### UI-02B.2 — Mensagem padrão da campanha
@@ -87,7 +87,7 @@ Criar campanhas e selecionar clientes existentes no TOTVS para que o usuário po
 2. **Editor único simples:** assunto para e-mail e corpo textual; o Marketing escreve como deseja. Somente dois campos dinâmicos definidos em código: **{nome_empresa}** e **{link_pesquisa}**. Pode digitar os tokens ou usar **Inserir campo** na posição do cursor. Reconhecimento/destaque no editor ou equivalente compatível com kit, sem editor rico complexo nem cadastro de tokens.
 3. **Validação e prévia:** mostrar como nome e link serão substituídos; dados fictícios identificados na configuração ou participante autorizado. Conteúdo final precisa nome e URL corretos; política exata para texto sem algum token (bloqueio ou composição segura) segue PENDING técnico/UX. Escapar conteúdo e proibir HTML/script arbitrário.
 4. **Rodapé:** Cancelar/Reverter, Salvar mensagem. Persistir **uma mensagem por campanha**, confirmada pela commercial-api; não salvar links/tokens de participantes dentro do modelo. Futuras cópias usam texto atualizado; convites encaminhados fora do Portal não são rastreados.
-5. **Formatos de saída:** e-mail com HTML formatado e alternativa texto; WhatsApp/Teams/outros como texto simples. A cópia HTML rica e compatibilidade com Outlook continuam PENDING de testes. Não há envio automático nem três editores independentes.
+5. **Formatos de saída:** e-mail com HTML formatado e alternativa texto; WhatsApp/Teams/outros como texto simples — **consolidados em dois modos de prévia (Correio eletrônico | Mensageiro) pela decisão de 13/11/2026**. A cópia HTML rica e compatibilidade com Outlook continuam PENDING de testes. Não há envio automático nem três editores independentes.
 
 ### Decisão visual — editor acima e prévia HTML abaixo (13/11/2026)
 
@@ -136,7 +136,7 @@ Criar campanhas e selecionar clientes existentes no TOTVS para que o usuário po
 1. **Topo/trilha:** voltar à campanha e à lista no mesmo contexto; nome oficial, código e loja TOTVS; situação Pendente/Respondida oriunda da API.
 2. **Contato do convite:** nome e e-mail auxiliares, opcionais; ação **Editar contato**, abrindo UI-02C.1. Não mudar cadastro TOTVS e não identificar pessoa física respondente.
 3. **Mensagem:** texto **salvo da campanha**, resolvido exclusivamente para esta empresa; chaves {nome_empresa} e {link_pesquisa} tornam-se nome TOTVS e URL estável retornada pela commercial-api. Se falta configuração, orientar a voltar à seção de mensagem, sem fingir que já foi salva.
-4. **Prévia/cópia:** seletor **E-mail / WhatsApp / Teams**, com Copiar mensagem no formato correspondente e Copiar link independente. E-mail: conteúdo rico text/html e alternativa text/plain quando suportado; os demais em texto. Não enviar, não marcar entregue, não abrir app externo automaticamente.
+4. **Prévia/cópia:** seletor de dois modos **Correio eletrônico | Mensageiro** (decisão de 13/11/2026, que supersede o seletor anterior E-mail/WhatsApp/Teams), com Copiar mensagem no formato correspondente e Copiar link independente. Correio eletrônico: conteúdo rico text/html via `RichTextEditor` em `mode="preview"` (somente leitura) e alternativa text/plain quando suportado; mensageiro: texto simples para WhatsApp, Teams e outros. Não enviar, não marcar entregue, não abrir app externo automaticamente.
 5. **Estados:** só confirmar cópia após clipboard realmente aceitar; quando negado, oferecer seleção/cópia manual. Nenhum token em logs, analytics ou conteúdo de terceiros. Não incorporar resposta privada completa no detalhe operacional; UI-06/UI-07 são áreas distintas.
 
 ### Confirmação de navegação e composição — UI-02C página dedicada (13/11/2026)
@@ -303,10 +303,10 @@ Os limiares acima são **faixas de teste propostas**, não equivalem automaticam
 ├───────────────────────────────────────────────────────────────────────────┤
 │ CAMPANHAS                                                                  │
 │                                                                           │
-│ Nome / período           Situação       Participantes  Respostas   Ação   │
-│ Satisfação 2026/2        Aberta         100            72          Abrir  │
-│ Satisfação 2026/1        Encerrada       90            70          Abrir  │
-│ Satisfação 2025/2        Encerrada       80            74          Abrir  │
+│ Nome / período        Situação    Participantes  Respostas  Taxa  Ações         │
+│ Satisfação 2026/2     Aberta      100            72         72%   Abrir·Result. │
+│ Satisfação 2026/1     Encerrada    90            70         78%   Abrir·Result. │
+│ Satisfação 2025/2     Encerrada    80            74         93%   Abrir·Result. │
 │                                               [Página 1 de N]             │
 └───────────────────────────────────────────────────────────────────────────┘
                                      │
@@ -434,16 +434,16 @@ Números das linhas **ilustrativos**; não codificar no frontend. Situação vem
 │ Satisfação 2026/2 · [Aberta]      [Editar datas]*  [Ver resultados]       │
 │ Janela: DD/MM/AAAA a DD/MM/AAAA                                          │
 ├───────────────────────────────────────────────────────────────────────────┤
-│ [Participantes]   [Respostas]                                             │
+│ [Participantes]   [Mensagem padrão]   [Dados]                             │
 ├───────────────────────────────────────────────────────────────────────────┤
 │ PARTICIPANTES         cadastrados: 100  respondidos: 72   pendentes: 28  │
-│ [Buscar cliente TOTVS (código, nome)]        [Adicionar à campanha]      │
+│ ▸ Adicionar clientes (card expansível na página, nunca modal)            │
 │ [Buscar na lista] [Pendente / Respondido ▼]                              │
 │                                                                           │
-│ Cliente (código+loja)       Contato/e-mail     Respondeu    Ações         │
-│ Empresa A — 001/01         contato opcional   Pendente    [Copiar link]  │
-│ Empresa B — 002/01         contato opcional   Respondido  [Copiar link]  │
-│                                                      [Copiar mensagem]  │
+│ Empresa                    Contato             Situação                   │
+│ Empresa A — 001/01         contato opcional    Pendente                   │
+│ Empresa B — 002/01         contato opcional    Respondido                 │
+│ (clique/toque na linha ou card abre o detalhe — sem coluna Ação)         │
 ├───────────────────────────────────────────────────────────────────────────┤
 │ [Consultar respostas por empresa] → UI-06 (com campanha selecionada)      │
 │ Consulta detalhada não se duplica aqui                                     │
@@ -492,7 +492,7 @@ Números das linhas **ilustrativos**; não codificar no frontend. Situação vem
 
 ### Decisão aprovada — inclusão parcial com resultado por empresa (11/11/2026)
 
-**APROVADO PELO SOLICITANTE — OPÇÃO A:** quando um lote tiver empresas válidas, empresas já incluídas e empresas inválidas, **incluir as válidas sem bloquear o lote inteiro**; **preservar sem alterações** as já participantes; e apresentar **relatório das falhas por empresa** com identificação código/loja, motivo e orientação de correção quando segura. Não exigir repetição de toda a seleção devido a uma falha isolada.
+**APROVADO PELO SOLICITANTE — OPÇÃO A:** quando um lote tiver empresas válidas, empresas já incluídas e empresas inválidas, **incluir as válidas sem bloquear o lote inteiro**; **preservar sem alterações** as já participantes; e informar **as falhas por empresa** com identificação código/loja, motivo e orientação de correção quando segura — **apresentação ajustada em 13/11/2026: avisos flutuantes oficiais no canto superior direito e lista atualizada, sem painel permanente de contadores**. Não exigir repetição de toda a seleção devido a uma falha isolada.
 
 - A `commercial-api` revalida autorização, campanha, identidade e elegibilidade para **cada item**. O resultado do lote diferencia, no mínimo, `incluída`, `já existente` e `falhou`; os nomes exatos e o formato do contrato HTTP são **PENDING técnico**, não existentes comprovados. Fornecer contagens e itens classificados, sem listar sucesso de gravação que não foi confirmada. Cada inclusão bem-sucedida é durável; uma falha em outro item não desfaz essas inclusões.
 - Empresas já existentes conservam exatamente o mesmo vínculo e link/token. Impedir duplicidade no banco e manter comportamento idempotente inclusive sob cliques repetidos/concorrência. Itens repetidos dentro do mesmo lote não viram convites duplicados.
@@ -522,13 +522,13 @@ Números das linhas **ilustrativos**; não codificar no frontend. Situação vem
 
 **APROVADO PELO SOLICITANTE:** oferecer **um editor único de convite personalizável**, com prévia e **cópia por canal**: e-mail como **HTML formatado** (mais alternativa de texto simples), WhatsApp como **texto** e Teams como **texto**. Nenhum canal é enviado automaticamente pelo Portal. Cada convite deve mencionar **automaticamente o nome real da empresa participante** — vindo do cadastro oficial TOTVS via consulta autorizada e/ou nome-snapshot validado pela `commercial-api` — em lugar da expressão genérica “sua empresa”. O vínculo inequívoco é `customer_code` + `customer_store`; não tentar identificar empresa pelo texto do nome.
 
-- **Experiência:** ao acionar **“Preparar convite”/“Copiar mensagem”** para um participante, exibir empresa e campanha, assunto de e-mail editável, **corpo de mensagem editável** e três prévias/cópias (E-mail, WhatsApp, Teams). Há **uma fonte textual compartilhada**, não três editores independentes. **“Copiar link”** isolado continua acessível. Empregar componentes oficiais do Portal/PluginUI, sem editor visual paralelo.
+- **Experiência:** ao acionar **“Preparar convite”/“Copiar mensagem”** para um participante, exibir empresa e campanha, assunto de e-mail editável, **corpo de mensagem editável** e prévia/cópia consolidada em **dois modos aprovados em 13/11/2026 — Correio eletrônico | Mensageiro** (supersede a proposta anterior de três prévias E-mail/WhatsApp/Teams). Há **uma fonte textual compartilhada**, não três editores independentes. **“Copiar link”** isolado continua acessível. Empregar componentes oficiais do Portal/PluginUI, sem editor visual paralelo.
 - **Campos dinâmicos obrigatórios:** usar placeholders internos **`{nome_empresa}`** e **`{link_pesquisa}`** (nomes de exibição propostos; representação técnica a definir) com resolução **para o participante atual** antes de cada prévia e cópia. A interface deve mostrar o nome efetivo no resultado e não permitir troca manual do nome oficial ou do link exclusivo dentro do editor. Se um usuário alterar/remover tokens no texto livre, o fluxo deve garantir por composição segura que **nome e URL corretos sempre estejam presentes no convite final**, sem duplicação. Se o nome oficial estiver ausente ou inconsistente, **não inventar nome nem copiar convite associado a outra empresa**: bloquear a cópia personalizada e orientar correção/consulta ao dado oficial.
 - **Link e segurança:** o URL exclusivo estável é fornecido pela `commercial-api` somente após validação de permissão `commercial.marketing` ou `commercial.manage` e vínculo campanha/participante; nunca criar link no frontend. Evitar cache compartilhado entre participantes, token em logs/analytics, exposição de URLs de outras empresas e conteúdo inseguro no HTML. Sanitizar/escapar texto do Marketing, nome oficial e URL.
 - **Saída E-mail:** montar HTML simples de comunicação visual aprovada (parágrafos, identidade e link/CTA) e `text/plain`; copiar **conteúdo formatado**, não markup bruto, via clipboard suportado pelo navegador, com fallback de texto e cópia manual quando necessário. Suporte real à colagem rica depende do editor de e-mail; testar com os clientes DELPI. Assunto é editável para cópia manual, mas não há envio.
 - **WhatsApp e Teams:** a mesma mensagem resolvida é convertida para texto simples com quebras de linha e URL visível; não assumir interpretação de HTML ou Markdown. A ação é copiar/colar externamente; nenhuma abertura/envio automático.
 - **Decisão posterior do solicitante (11/11/2026):** substituir a proposta de editor apenas temporário por **área padrão de configuração do texto do convite**. O usuário autorizado define o texto e o utiliza para preparar/copy convites a várias empresas. O modelo configurado deve ser recuperável para uso posterior; **escopo aprovado: uma mensagem padrão salva POR CAMPANHA, reutilizada para seus participantes**. Não presumir uma versão por participante nem guardar o token exclusivo no modelo. Armazenamento, endpoints e autoria/auditoria são **PENDING de desenho mínimo do owner `commercial-api`**, sem criar CRUD genérico de templates.
-- **Validação e testes:** verificar dois clientes com nomes diferentes e códigos/lojas distintos, mudanças de seleção, prevenção de link/nome cruzados, caracteres especiais/HTML malicioso, falta de nome oficial, equivalência entre as três prévias, clipboard negado, compatibilidade Outlook/WhatsApp/Teams, fluxo por teclado e **ausência completa de disparo**.
+- **Validação e testes:** verificar dois clientes com nomes diferentes e códigos/lojas distintos, mudanças de seleção, prevenção de link/nome cruzados, caracteres especiais/HTML malicioso, falta de nome oficial, equivalência entre os dois modos de prévia, clipboard negado, compatibilidade Outlook/WhatsApp/Teams, fluxo por teclado e **ausência completa de disparo**.
 - **Estado:** decisão funcional/UX **APROVADA e documentada**; implementação, representação de placeholders, compatibilidade HTML e aprovação do texto institucional por Marketing **PENDING**.
 
 ### Decisão complementar — configuração simples e inserção de campos dinâmicos (11/11/2026)
@@ -538,7 +538,7 @@ Números das linhas **ilustrativos**; não codificar no frontend. Situação vem
 - **Exatamente dois campos dinâmicos disponíveis nesta entrega**, definidos em código: **`{nome_empresa}`** (nome oficial do participante TOTVS) e **`{link_pesquisa}`** (link estável e exclusivo obtido da `commercial-api`). Não implementar campos extras sem requisito futuro. Inserir campo deve respeitar cursor/seleção; validar ocorrências e avisar se houver chave desconhecida ou sintaxe incorreta, sem interpretar conteúdo do usuário como código.
 - **Prévia por participante:** resolver as chaves exclusivamente no momento da prévia/cópia, com contexto da campanha e empresa selecionadas e validação de autorização no backend. Exibir valores reais na prévia; não guardar valores sensíveis resolvidos dentro do modelo configurado. Impedir misturar nome/link de empresas diferentes. Ao trocar participante, renderizar novamente a mesma mensagem e atualizar ambos os dados.
 - **Obrigatoriedade da composição:** o convite final precisa conter corretamente o nome oficial e o link exclusivo. Se o texto configurado não tiver uma das chaves, orientar a inserção ou compor a informação obrigatória com segurança, sem duplicação; critério exato de bloqueio versus composição automática **PENDING técnico/UX**. Não alterar manualmente os valores resolvidos de nome e URL.
-- **Formatos mantidos:** mesma fonte textual alimenta **cópia HTML formatada para e-mail** (com `text/plain` alternativo), **texto para WhatsApp** e **texto para Teams**; prévias específicas, mas **sem três editores** e sem envio automático. Evitar WYSIWYG avançado, editor HTML livre, novos componentes visuais ou ferramenta de gestão de tokens. Assunto de e-mail pode seguir o editor simples já previsto.
+- **Formatos mantidos:** mesma fonte textual alimenta **cópia HTML formatada para e-mail** (com `text/plain` alternativo), **texto para mensageiros** (WhatsApp, Teams e outros); dois modos de prévia (decisão de 13/11/2026), mas **sem três editores** e sem envio automático. Evitar WYSIWYG avançado, editor HTML livre, novos componentes visuais ou ferramenta de gestão de tokens. Assunto de e-mail pode seguir o editor simples já previsto.
 - **Responsabilidades:** frontend controla campo, destaque/validação de sintaxe e inserção na posição do cursor; backend é autoridade da configuração persistida (quando definido escopo), permissão, link e vínculo com cliente. Tratar conteúdo como dado: escape/sanitização do HTML final, sem scripts/HTML arbitrário e sem registrar tokens em logs.
 - **Testes:** inserção no meio do texto e substituição de seleção, digitação manual e destaque das duas chaves, chaves inválidas, texto simples/multilinha, nomes com caracteres especiais, troca de participantes, cópia HTML/texto, teclado e colagem em Outlook/WhatsApp/Teams.
 - **Status:** fluxo/editor, dois campos dinâmicos e escopo por campanha **APROVADOS**; contrato de persistência, suporte técnico do componente e testes **PENDING**. Não implementado.
@@ -547,7 +547,7 @@ Números das linhas **ilustrativos**; não codificar no frontend. Situação vem
 
 **APROVADO PELO SOLICITANTE:** o gestor configura e salva **uma mensagem padrão da pesquisa/campanha**, não um modelo geral comum a todas as campanhas. Volta à **lista pesquisável de empresas participantes**, abre o **detalhe da empresa selecionada**, visualiza a mensagem com nome e link próprios e **copia** no formato adequado para colar manualmente no e-mail, WhatsApp, Teams ou outro meio.
 
-- **Percurso:** detalhar campanha → **Configurar mensagem** (texto e dois campos dinâmicos em código) → salvar na autoridade `commercial-api` → voltar à lista de participantes → buscar empresa por nome ou código/loja → abrir detalhe do participante → escolher prévia/cópia de e-mail HTML (com texto simples alternativo) ou WhatsApp/Teams texto → copiar. A ação separada **Copiar link** permanece.
+- **Percurso:** detalhar campanha → **Configurar mensagem** (texto e dois campos dinâmicos em código) → salvar na autoridade `commercial-api` → voltar à lista de participantes → buscar empresa por nome ou código/loja → abrir detalhe do participante → escolher o modo de prévia/cópia **Correio eletrônico** (HTML seguro com texto simples alternativo) ou **Mensageiro** (texto simples para WhatsApp/Teams/outros) → copiar. A ação separada **Copiar link** permanece.
 - **Responsabilidades visuais:** o editor de configuração fica **na campanha**; no detalhe do participante fica **prévia e cópia**, não outro editor completo. O corpo configurado é reutilizado para os participantes daquela campanha; modificar a configuração altera apenas futuras cópias, não contatos já encaminhados fora do Portal.
 - **Resolução segura:** `{nome_empresa}` = nome oficial TOTVS do participante; `{link_pesquisa}` = URL estável exclusiva fornecida pela `commercial-api`. Os valores são resolvidos novamente para o participante selecionado; nunca salvar URL/token real no modelo nem misturar dados de empresas diferentes. Acesso e escrita de gestão exigem `commercial.marketing` OU `commercial.manage` no backend.
 - **Persistência:** texto configurado permanece disponível ao retornar à campanha. O contrato e armazenamento mínimo sob ownership da `commercial-api`, validações, auditoria e testes continuam **PENDING**; não afirmar que há endpoint/tabela pronto nem criar CRUD genérico de templates.
@@ -555,7 +555,7 @@ Números das linhas **ilustrativos**; não codificar no frontend. Situação vem
 - **Status:** fluxo e escopo **APROVADOS**, implementação **PENDING**.
 
 ### Copiar convite
-- **Copiar link** solicita ao backend o mesmo URL estável e copia; **Copiar mensagem** abre **editor único personalizado**, com **nome oficial da empresa e link específico inseridos automaticamente** e prévias/cópias E-mail HTML, WhatsApp texto e Teams texto. Não disparar nada.
+- **Copiar link** solicita ao backend o mesmo URL estável e copia; **Copiar mensagem** copia o **convite resolvido exibido na prévia de leitura do detalhe** (UI-02C), com **nome oficial da empresa e link específico inseridos automaticamente**, no formato do modo selecionado (**Correio eletrônico**: HTML com texto alternativo; **Mensageiro**: texto simples). A edição da mensagem ocorre somente na seção **Mensagem padrão** da campanha — o detalhe não tem editor. Não disparar nada.
 - Toast/estado de sucesso só após confirmação da cópia; falha de clipboard oferece seleção/cópia manual. Não incluir `Enviar e-mail`, `Reenviar`, `WhatsApp direto`, `Entregue`, `Enviado`, disparo em lote ou contador de tentativas.
 - Recópia não indica que houve contato com o cliente; mostrar **Pendente/Respondido** com base na submissão.
 
