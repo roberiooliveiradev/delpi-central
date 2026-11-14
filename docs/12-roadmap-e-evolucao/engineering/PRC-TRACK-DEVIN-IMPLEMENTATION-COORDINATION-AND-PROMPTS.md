@@ -995,3 +995,34 @@ E01 sete campos no card **PASS** (subchecks id/type/requester/officialCode/creat
 **Execução:** somente `main`, sem branch; reancorar HEAD/status, diff mínimo, testes no SHA, E2E visual HML, docs/ledger de entrega. `PRD_DEPLOY=NOT_AUTHORIZED`; `PRD_BUSINESS_TEST_WRITES=0`. PRD exige decisão explícita futura. Retorno do agente deve permitir aceite visual PO antes de liberar próxima etapa TOTVS/product tracking.
 
 **Estado:** `PO_APPROVED_TARGET / IMPLEMENTATION_PENDING / HML_DEPLOY_PENDING / PO_RUNTIME_ACCEPTANCE_PENDING`.
+
+## 53. Detalhe PRC — redesign V3 integral (hero direcional + popover Informações + ações com ícones) (14/11/2026)
+
+**TASK:** `EVA-PRC-DETAIL-UX-V3-FULL-REDESIGN-HML-01`. Frontend exclusivo; **PRD não autorizado.** Wireframe PRC-REF-024 §A–I; diretriz WIREFRAMES §17; autorização §52.
+
+**Matriz de redistribuição aplicada (PrcDetailPage.tsx):**
+
+| Antes (hero) | Depois V3 |
+|---|---|
+| Grade `EngineeringDetailFieldGrid` 9 campos | Removida — hero = identidade + estado + próxima ação |
+| Solicitante/Responsável texto | `PrcPersonCell` (avatar iniciais + nome); responsável **só quando atribuído** (sem bloco vazio; ausência acessível no popover) |
+| Código oficial TOTVS | Só na Ficha técnica (não duplicado) |
+| Abertura/atualização/origem/referência/verificação | Popover **«Informações»** via `EngineeringAnchoredPanel` (portal body, escopo `portal-engineering`, flip/clamp, Escape, clique externo) |
+| Origem "Canal corporativo (My Requests)" | **"Minhas Solicitações"** — ambas as chaves `my_requests`/`my-requests` (bug capturado no E2E: chave legada com hífen mantinha label antigo) |
+| Referência externa | "Identificador no canal de origem" + hint semântico (não é o número interno do caso) |
+| "versão N" ambígua no subtítulo | Removida — subtítulo = "Alteração/Criação de matéria-prima"; `caseVersion` no popover; Revisão base vira chip `R{n}` com title explicativo |
+| Verificação resumida no hero | Aba Verificação TOTVS; **alerta compacto acionável** no hero somente quando resultado bloqueante (variant danger: mismatched/not_found/forbidden/contract_error) → "Ver diagnóstico" seleciona a aba |
+
+**Ações:** `PrcActionSpec` ganhou `icon` (Lucide) + `help` (title/tooltip); botões ícone+rótulo; destrutiva `engineering-prc__action--danger` (token `--en-danger`). Hierarquia `primary → default → ghost-danger` preservada; `allowedActions` continua autoridade única; confirmações/motivos/CAS/idempotência intactos. `onRetryComplete` deixou `querySelector('.engineering-prc__hero-actions')` → `actionsRef` estável.
+
+**Testes:** engineering **411/411 PASS** (13 regressões V3 novas: sem grade, avatar, responsável condicional, chip R, popover/escopo, metadados, label Minhas Solicitações ×2 chaves, alerta, ref estável, ícones, help, danger); `tsc` clean; build ok. Commits `be1f743a3d` + `7d71cbcad6`.
+
+**HML:** imagem `sha256:32d0dd0656601b79a0143b0e4f1559baf4f61c688ed84725a53f0461d958c4ef` healthy; 21/21; rollback `sha256:ecce54e0c7ee…` retida.
+
+**E2E visual (Chromium real, HML) — 30/30 PASS:** hero sem grade (E01), avatar solicitante (E02), responsável presente (E04), sem código oficial no hero (E05), popover rect⊂viewport + metadados + Escape (E06), Canal=Minhas Solicitações (E07), tracker (E08), 3 ações ícone+rótulo (E09), confirmação Rejeitar (E10), alerta Divergente→Ver diagnóstico (E11), ficha+sinalizadores (E12–13), Histórico/Revisões (E14), terminal read-only 0 ações (E15), claro/escuro incl. popover `portal-engineering` bg escuro texto 0.94 (E17–18), mobile 390 sem overflow + zoom 200% (E19), deep-link ?tab=history + refresh (E20), fila (E21). Evidências `/tmp/v3-detail-light.png`, `/tmp/v3-detail-dark.png`, `/tmp/v3-info-pop.png`, `/tmp/v3-detail-mobile.png`, `/tmp/v3-terminal.png`.
+
+**Defeito encontrado e corrigido no ciclo:** `PRC_SOURCE_LABELS` tinha duas chaves (`my_requests` e legada `my-requests`) — o primeiro commit só corrigiu a underscore; E2E capturou o label antigo; `7d71cbcad6` alinhou ambas.
+
+**Riscos residuais:** E03 (responsável ausente→sem bloco) e E16 (negado no detalhe) não exercitados por falta de massa apropriada — caminho condicional coberto por teste estrutural e fail-closed já provado na fila. E16 detalhe = mesmo fetch 403 → banner existente (código inalterado).
+
+**Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
