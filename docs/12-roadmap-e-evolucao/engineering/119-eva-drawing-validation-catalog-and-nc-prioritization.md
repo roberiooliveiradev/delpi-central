@@ -4555,3 +4555,48 @@ Resultado (verificado ~90s pós-start):
 DEPLOYED_SHA pós-recovery: imagem `f4846e622043` ≈ pré-VAL-02
 (código baked). **VAL-02 NÃO implantada** — upgrade = autorização
 separada (Opção B: build no SHA alvo + recreate na mesma janela).
+
+### 94.9 Deploy VAL-02 + validação sequencial 302 (Fases E/F — 2026-11-14 ~19:45 -03)
+
+Owner autorizou deploy no **main atual** (`f5281f4424`) e
+validação sequencial somente de `90264302`.
+
+Build reproduzível: working tree continha WIP alheio dentro de
+`engineering-api/` (snapshot.py product_registration + testes) —
+build feito a partir de **worktree limpa** `/tmp/val02-clean` no
+SHA `f5281f4424` (`docker build --build-arg
+INSTALL_VISION_EXTRAS=true`, mesmo Dockerfile/args do compose).
+Rollback tag: `infra-engineering-api:rollback-pre-val02`
+(= imagem pré-VAL-02 `f4846e622043`).
+
+DEPLOYED: imagem `c21f1ef3b1b7`, `delpi-engineering-api`
+recreated (só ele — deps já reconciliadas), healthy, gateway 200.
+VAL-02 comprovado no runtime (`_match_admin_fields` etc. no /app
+implantado).
+
+**Validação 302 (sequencial, único PDF):**
+
+- SHA do PDF confirmado: `f33447b271a35186…` (= baseline §92).
+- Execução via pipeline real no próprio container do serviço
+  (mesmo `run_visual_benchmark`+`understanding`, isolamento
+  subprocess → semáforo=1 vigente).
+- Consumo: pico container ~2GB, disponível mínimo ~1,2GB,
+  duração 77,5s; **health 200 antes e depois**; zero fan-out.
+- Resultado no runtime implantado:
+  - `title_block.fields` = 4 `FIELD_IDENTIFIED` p1 c/ bbox:
+    `cod:`=**18702881**, `des:`=**10013396831**,
+    `cliente:`=**weg industria s.a - linhares**, `rev:`=**00**.
+  - `revision_history.entries` = 1: rev=00, data 26/10/26,
+    lmp=16726, ov≈"003086 criação de desenho" (typo OCR
+    "criaçäodedesenho"), executado=william, liberado=gabriella,
+    domain `ENGINEERING_DRAWING`.
+  - `document_identity`/`document`/`customer`/`revision`
+    populados consistentemente; `revision_domain` correto.
+  - Artefato: `/tmp/val02/tb_302_deployed_g6.json` (host);
+    transientes removidos do container.
+- `90264135` e demais: **não executados** (escopo aprovado = só
+  302; reuse de artefatos anteriores vigente).
+
+**G6-D permanece BLOCKED:** identidade de avaliação MCP não
+provisionada (Doc 121 §5). `MCP_AUTHENTICATED_E2E` e
+`CHATGPT_CONSUMPTION` sem evidência — não declarar.
