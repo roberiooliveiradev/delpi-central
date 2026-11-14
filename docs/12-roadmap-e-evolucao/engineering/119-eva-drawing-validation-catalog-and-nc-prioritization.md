@@ -3901,3 +3901,45 @@ Verificado no binário prod: catálogo v1.4 servido,
 refresh do schema do conector ChatGPT (etapa externa — o servidor
 publica o enum correto; `CLIENT_SCHEMA_REFRESH=PENDING`).
 Rollback: imagem `e3fc852e…` preservada localmente no host.
+
+## §88 — PIPELINE_E2E real em binário prod, documento oficial (2026-11-14)
+
+**TASK_ID:** `EVA-VAL01-G6-IMPLEMENTATION-AGENT-E2E-VALIDATION-AND-CLOSURE-01`
+
+Execução do pipeline real (`run_visual_benchmark` →
+`build_document_understanding` → SLANet/`apply_native_table_observations`
+→ `compare_bom_to_drawing`) dentro do container prod
+`delpi-engineering-api` (imagem `e17ea1dc1f`, SHA `e4d66bb219`),
+alimentado pelo PDF oficial `/mnt/fileserver/desenhos/90264135.pdf`
+SHA `af47dd4c…` — sem ctx/token delegado → `bom_occurrences=None` →
+comparador `INCONCLUSIVE` (honesto, sem fixture).
+
+**Resultado:** COMPLETED em 182.9s — 13/13 páginas OCR ok,
+2775 tokens, 279 ocorrências, 0 duplicatas, cobertura FULL.
+Estados: 211 IDENTIFIED / 68 UNKNOWN (fail-closed preservado).
+Artefato: `srv-api:/tmp/eva_pipeline_e2e_result.json` (2.4MB,
+digest `83783e014a86408fec86119e`).
+
+**Controles (PDF independente × EVA):**
+
+| Controle | EVA | Veredito |
+|---|---|---|
+| AE\|1\|10010028→50225702 | IDENTIFIED p12 | MATCH |
+| AE\|1\|10010028→50225740 | IDENTIFIED p12 | MATCH |
+| AH\|1\|10080897→50225740 | IDENTIFIED p12 | MATCH |
+| AG\|1\|10110676→50225740 | IDENTIFIED p12 | MATCH |
+| AF\|1\|10010005→50225741 | IDENTIFIED p12 (não promovido a 740) | MATCH |
+| AG\|16\|10110676 p12 | UNKNOWN (candidato 50225701 não promovido) | MATCH fail-closed |
+| AG\|16\|10110676 p2 | IDENTIFIED→90264135 (bloco PA) | MATCH |
+| AQ/AR/AS/AT→50225749 p13 | todos IDENTIFIED | MATCH |
+| AT\|4\|10110559 | IDENTIFIED — homologação individual segue da Engenharia | MATCH* |
+
+**BOM:** `bom_available=false` nesta execução (sem identidade
+delegada) → `INCONCLUSIVE` — comparador não inventa ausências.
+Comparação BOM×EVA aguarda execução com identidade aprovada (§85.6).
+
+**Observações:** `revision=None` (percepção não extraiu revisão —
+registrado como UNKNOWN, não inventado); descrições AR/AS vazias
+consistente com campos truncados do desenho (G1); AUTHENTICATED_
+MCP_E2E permanece bloqueado pela identidade de avaliação (§85.6) —
+PIPELINE_E2E e MCP_E2E relatados separadamente.
