@@ -322,6 +322,28 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** revisao formal de seguranca e verificacao de release/artefato em ambiente privado, seguida de definicao de laboratorio isolado. G2 presencial permanece independente.
 
+## 2026-11-13 | G0-SEC-S2 | minutas e preflight de privacidade/rede/rollback
+
+**Objetivo:** avancar sem instalar motor remoto ou computador piloto, preparando revisao formal para TI/Infra/Seguranca/RH/Juridico.
+
+**Arquivos:** `G0-SEC-S2-POLICY-PRIVACY.md`, `G0-SEC-S2-NETWORK-ISOLATION.md`, `G0-SEC-S2-RECOVERY-AND-REVOCATION.md`, `G0-SEC-S2-REVIEW-REGISTER.json`, `G0-SEC-S2-REVIEW-RUNBOOK.md`, `it_portal_app/domain/remote_policy_review.py`, `tests/test_remote_policy_review.py`, CI da API, este diario, README e SECURITY-GATES.
+
+**Politica:** proposta diferencia atendimento assistido do nao assistido, exige justificativa/Helpdesk, identidade MFA e allowlist, aviso ao colaborador e auditoria minima. Retencao, finalidade/base legal e responsabilidades demandam aprovacao juridica/RH; nenhuma gravacao de tela/clipboard/arquivo por padrao.
+
+**Rede:** propostas de isolamento LAB deny-by-default, sem entrada publica, separacao de credenciais G2 e motor remoto, sem acesso a producao, broker com token efemero, testes TLS/SSO e fail-closed. Nenhuma porta, IP ou firewall configurados.
+
+**Resposta a incidente:** niveis de kill switch por operador/dispositivo/global, preservacao de metadados, revogacao, teste de backup/restauracao e RPO/RTO a definir. Sem declarar restauracao executada.
+
+**Teste:** validacao Python offline e testes negativos adicionados ao CI; **aguardam execucao do commit**. Saida esperada `G0-SEC-S2 BLOCKED` com exit 0, nunca READY/APPROVED. Sem permitir alterar status de aprovacao via JSON publico.
+
+**Producao:** sem migration, manifesto RBAC, container, endpoint, cliente Keycloak, agente remoto, servico Windows ou alteracao de banco. O commit de codigo nao e deploy.
+
+**Risco:** checklist e documentos publicos nao substituem parecer, autorizacao em sistema privado e testes de isolamento/kill switch; MeshCentral continua sem mitigacao comprovada e Windows G2 sem piloto presencial.
+
+**Rollback:** somente codigo/documentos, corrigir em commit auditavel sem suprimir gates de seguranca.
+
+**Proximo passo unico:** validar CI e submeter pacote G0-SEC-S2 para revisao formal privada; nenhum GO de G3 ate existirem evidencias assinadas de Seguranca, rede e recuperacao.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

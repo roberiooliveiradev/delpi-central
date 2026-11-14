@@ -16,6 +16,12 @@ O [intake offline da release](G0-SEC-S1-ENGINE-INTAKE.md) agora valida release M
 
 CI verde com `G3-LAB BLOCKED` significa somente que o projeto nao tentou liberar MeshCentral por declaracao documental. O aceite de TI/Seguranca e o teste em laboratorio separado permanecem obrigatorios. Nao habilitar rede, escopo remoto, broker, agentes ou motor por este incremento.
 
+## G0-SEC-S2 (13/11/2026) | Governanca e recuperacao em minuta
+
+As propostas de [uso e privacidade](G0-SEC-S2-POLICY-PRIVACY.md), [rede isolada](G0-SEC-S2-NETWORK-ISOLATION.md) e [incidente/recuperacao/revogacao](G0-SEC-S2-RECOVERY-AND-REVOCATION.md) foram preparadas para **revisao privada**, nao como politica aprovada. O [registro publico](G0-SEC-S2-REVIEW-REGISTER.json) tem 10 checkpoints ainda pendentes, sem nomes, topologia, evidencias privadas, token, retencao, RPO ou RTO inventados. Ver [runbook](G0-SEC-S2-REVIEW-RUNBOOK.md).
+
+O validador `remote_policy_review.py` deve retornar `G0-SEC-S2 BLOCKED`; CI verde significa apenas que o pacote e uma MINUTA completa com proibições ativas de autorizacao. O aceite formal e os testes de rede, Keycloak, restore e kill switch ainda nao foram feitos. Acesso remoto e G3-ENGINE continuam **BLOQUEADOS**.
+
 ## Modelo de ameacas inicial
 
 | Ameaça | Controle obrigatorio | Teste/evidencia |

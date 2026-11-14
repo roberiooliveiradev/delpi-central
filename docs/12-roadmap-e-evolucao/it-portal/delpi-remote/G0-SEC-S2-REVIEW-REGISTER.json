@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "scope": "delpi-remote",
+  "phase": "G0-SEC-S2",
+  "status": "draft_requires_private_approval",
+  "remote_authorized": false,
+  "lab_install_authorized": false,
+  "unattended_enabled": false,
+  "screen_recording_enabled": false,
+  "retention_days": null,
+  "rpo_minutes": null,
+  "rto_minutes": null,
+  "documents": {
+    "policy": "docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G0-SEC-S2-POLICY-PRIVACY.md",
+    "network": "docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G0-SEC-S2-NETWORK-ISOLATION.md",
+    "recovery": "docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G0-SEC-S2-RECOVERY-AND-REVOCATION.md"
+  },
+  "checkpoints": [
+    {
+      "id": "human_security_approval",
+      "owner_role": "ti_security",
+      "review_state": "pending",
+      "private_evidence_recorded": false
+    },
+    {
+      "id": "employee_notice_and_lgpd",
+      "owner_role": "rh_legal",
+      "review_state": "pending",
+      "private_evidence_recorded": false
+    },
+    {
+      "id": "network_isolation_and_tls",
+      "owner_role": "infra_security",
+      "review_state": "pending",
+      "private_evidence_recorded": false
+    },
+    {
+      "id": "keycloak_mfa_fresh_rbac",
+      "owner_role": "ti_security",
+      "review_state": "pending",
+      "private_evidence_recorded": false
+    },
+    {
+      "id": "device_operator_allowlist",
+      "owner_role": "ti_support",
+      "review_state": "pending",
+      "private_evidence_recorded": false
+    },
+    {
+      "id": "one_time_session_and_revocation",
+      "owner_role": "ti_security",
+      "review_state": "pending",
+      "private_evidence_recorded": false
+    },
+    {
+      "id": "audit_and_retention",
+      "owner_role": "rh_legal",
+      "review_state": "pending",
+      "private_evidence_recorded": false
+    },
+    {
+      "id": "backup_restore_and_kill_switch",
+      "owner_role": "infra_security",
+      "review_state": "pending",
+      "private_evidence_recorded": false
+    },
+    {
+      "id": "safe_browser_embedding",
+      "owner_role": "ti_security",
+      "review_state": "pending",
+      "private_evidence_recorded": false
+    },
+    {
+      "id": "windows_lab_pilot_and_rollback",
+      "owner_role": "ti_support",
+      "review_state": "pending",
+      "private_evidence_recorded": false
+    }
+  ]
+}

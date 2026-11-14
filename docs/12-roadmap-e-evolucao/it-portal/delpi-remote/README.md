@@ -27,6 +27,7 @@ Acesso sem pedir senha Windows por sessao **nao** significa acesso anonimo: toda
 | G0-SEC | Threat model/revisao de seguranca, LGPD, licenciamento, analise de compatibilidade de MeshCentral, redes e backups | **EM REVISAO** | Preflight automatizado e risco da release avaliados; **aceite formal ainda ausente** |
 | G0-SEC-S0 | Auditoria estatica automatizada de bloqueio do controle remoto, matriz de 12 gates e ADR de risco | **EM REVISAO** | CI verde, revisao humana das evidencias e nenhum servico/rota remota habilitado |
 | G0-SEC-S1 | Admissao offline de candidato MeshCentral, revisao de riscos conhecidos e integridade de artefatos | **EM REVISAO** | Gate CI `G3-LAB BLOCKED`, artefato exato/SHA256, mitigacao do exploit e teste Windows pendentes |
+| G0-SEC-S2 | Minutas para TI/RH/Juridico: privacidade, rede isolada, revogacao e restore, com validacao offline | **EM REVISAO** | Revisao privada dos 10 checkpoints, definicao de retencao e RPO/RTO, topologia e testes negativos |
 | G1-DOM | Regras puras para cadastro de estacoes + testes | **EM REVISAO** | Normalizacao, limites, catalogos e rejeicao de segredos validados |
 | G1-API | Migration independente, CRUD de estacoes e RBAC separado de servidores | **EM REVISAO** | API e testes integracao verdes; nenhum agente remoto |
 | G1-UI | Area Computadores, busca/filtros/detalhe no plugin it-portal | **EM REVISAO** | Permissoes e testes de UI; sem botao remoto ativo |
@@ -57,7 +58,9 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 
 **G0-SEC-S1 CI (13/11/2026):** commit `b74c12e94bc4`, [API + gate G3-LAB BLOCKED: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43542553147/job/132286203346), [architecture-gate SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43542552950/job/132286202669), [audit SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43542552981/job/132286202676). O CI verde comprova apenas **ausencia de autorizacao prematura**, nao mitigacao de exploit, aceite de segurança ou acesso remoto.
 
-**Proximo passo executavel:** obter evidencias formais de Seguranca/TI sobre a vulnerabilidade, artefato, rede e Keycloak, com verificacao privada de decisao GO/NO-GO. Continuar G2-S1..S3 presencial quando o operador voltar ao escritorio. **G3-ENGINE BLOQUEADO** ate gate formal, sem instalar servidor remoto ou liberar endpoints.
+**G0-SEC-S2 (13/11/2026):** preparadas tres minutas (politica/privacidade, rede isolada e incidente/backup/revogacao) e registro publico de 10 checkpoints pendentes. Adicionado preflight offline que valida documentacao e reprova qualquer tentativa de marcar autorizacao/instalacao, dados de retencao ou SLA inventados. **G3-ENGINE permanece BLOQUEADO**. Ver [revisao G0-SEC-S2](G0-SEC-S2-REVIEW-RUNBOOK.md).
+
+**Proximo passo executavel:** confirmar CI do G0-SEC-S2 e obter revisao TI/Seguranca/Infra/RH/Juridico em processo **privado**, incluindo risco da release, topologia real, retencao, RPO/RTO, kill switch e teste de restore. Sem aceite, **NO-GO para motor remoto**. G2-S1..S3 continua reservado para validacao presencial.
 
 ## Regras permanentes de engenharia
 
@@ -78,6 +81,8 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 - [G0-SEC: checkpoint estruturado (sem aprovacao)](G0-SEC-CHECKPOINTS.json)
 - [G3-ADR-002: avaliacao inicial do MeshCentral e alerta de seguranca](G3-ADR-002-MESHCENTRAL-SECURITY.md)
 - [G0-SEC-S1: intake offline da versao candidata](G0-SEC-S1-ENGINE-INTAKE.md)
+- [G0-SEC-S2: pacote de revisao privada (minutas, rede e recuperacao)](G0-SEC-S2-REVIEW-RUNBOOK.md)
+- [G0-SEC-S2: registro publico de pendencias (sem aprovacao)](G0-SEC-S2-REVIEW-REGISTER.json)
 - [G3-LAB-CANDIDATE: manifesto de riscos e bloqueio](G3-LAB-CANDIDATE.json)
 - [Contrato inicial de inventario G1](INVENTORY-CONTRACT.md)
 - [G1-OWNER: vinculo do responsavel a usuario da plataforma](G1-OWNER.md)

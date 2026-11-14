@@ -162,3 +162,11 @@ A API NAO possui endpoint ou credencial MeshCentral. Novo verificador puro `it_p
 ## G0-SEC-S1 | Preflight offline de release MeshCentral
 
 Codigo puro sem rotas, migrations nem Docker em `it_portal_app/domain/remote_engine_lab_intake.py`; le `G3-LAB-CANDIDATE.json` publico e **reprova** tag/commit nao pinado, digest invalido, risco omitido, flag de producao, configuracao de rede publica e tentativa de marcar `approved`. `python -m it_portal_app.domain.remote_engine_lab_intake --repo-root ..` deve retornar `G3-LAB BLOCKED`, nunca `READY`. Tests em `tests/test_remote_engine_lab_intake.py`; detalhes `docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G0-SEC-S1-ENGINE-INTAKE.md`. Nenhum deploy necessario.
+
+## G0-SEC-S2 | Minutas e validacao offline (sem deploy)
+
+- `it_portal_app/domain/remote_policy_review.py` valida o registro publico `G0-SEC-S2-REVIEW-REGISTER.json` e a existencia de 3 minutas de privacidade, rede e recuperacao com status MINUTA/G0-SEC.
+- Reprova permissoes prematuras, status `approved`, dados privados, prazos de retencao ou RPO/RTO ainda nao definidos e documentos ausentes.
+- `python -m it_portal_app.domain.remote_policy_review --repo-root ..` deve indicar `G0-SEC-S2 BLOCKED` com exit 0. CI verde NAO autoriza motor remoto ou laboratorio.
+- Teste `python -m pytest -q tests/test_remote_policy_review.py`; [runbook](../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G0-SEC-S2-REVIEW-RUNBOOK.md).
+- Sem novas rotas, migrations, containers, Docker Compose, manifesto, secrets ou agentes.
