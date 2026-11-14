@@ -43,6 +43,8 @@ Limites do AS-IS: trabalho manual a cada mês; SF4 pode estar desatualizada; sem
 | D3 | Visual | conteúdo do Raio-X no **padrão visual do Portal** (`@delpi/plugin-ui`, claro/escuro), tons de verde nos gráficos; sem o fundo animado | recomendação — confirmar |
 | D4 | Permissões | **`controllership-finance.access`** para tudo desta funcionalidade: ver, executar/reexecutar e marcar resolvido. `manage` herda `access`. Nenhuma permission nova | **DECIDIDO** (owner, 2026-11-13) |
 | D5 | Navegação | página própria **«Auditoria de entradas»**, com atalho a partir do Fechamento mensal da competência | recomendação — confirmar |
+| D6 | CLARA executa a auditoria | a CLARA tem acesso a todas as funcionalidades e audita as notas **num comando do usuário**; `entry_audit.run`, `resolve` e `reopen` são diretos (sem prepare/confirmação) | **DECIDIDO** (owner, 2026-11-13); execução direta proposta — confirmar |
+| D7 | Execução | assíncrona, por um worker dentro da BFF (padrão do job de notificações no `lifespan`), uma execução por filial e competência | recomendação — confirmar |
 
 ## 4. Arquitetura (TARGET)
 
@@ -65,6 +67,89 @@ Regras de fronteira (instruções do projeto):
 - O MFE só fala com a BFF. A BFF fala com a api-delpi e a financial-api por HTTP; nunca acessa o banco do Protheus nem o banco vizinho.
 - O SQL do Protheus fica na api-delpi (owner canônico TOTVS). A busca de XML fica na financial-api (owner do Questor).
 - O motor de regras é domínio puro: recebe documentos normalizados (cabeçalho, itens, livro, TES, XML) e devolve ocorrências. Isso permite o teste de paridade com a skill sem rede.
+
+## 4A. Estrutura do back-end (TARGET — revisar na E1)
+
+### 4A.1 Fluxo de uma auditoria
+
+1. Alguém pede a auditoria: botão na página **ou** um comando à CLARA («audita as entradas de outubro»).
+2. A BFF cria uma **execução** por filial (`entry_audit_run`, status `queued`) e responde na hora com o identificador. Se já existe uma execução em andamento para a mesma filial e competência, devolve a mesma (idempotente).
+3. Um **worker dentro da BFF** pega a execução. É o mesmo padrão do job de notificações que já roda no `lifespan` da BFF (`startup/notification_dispatch_job`).
+4. O worker busca as fontes:
+   - Protheus pela api-delpi: SF1, SD1, SF4, SFT e fornecedores (SA2) da filial no período de recebimento;
+   - XML pela financial-api: NF-e e CT-e recebidos da filial no período, com eventos de cancelamento. XML já baixado antes é reaproveitado do cache por chave de acesso, porque XML não muda.
+5. O worker roda o **motor de regras** (domínio puro) e grava o resultado: notas casadas, ocorrências, notas sem par, CT-e, TES usadas.
+6. O status de «resolvido» das ocorrências que continuam existindo é mantido pela **chave estável**.
+7. A execução termina como `done` (ou `failed`, com o motivo). A página acompanha o andamento; a CLARA consulta o status e, ao terminar, apresenta o resultado.
+
+### 4A.2 api-delpi — leitura do Protheus (owner TOTVS)
+
+Prefixo no padrão dos relatórios financeiros: `/financeiro/entry-audit`. Só leitura, paginado, sem regra fiscal (a regra fica no motor da BFF).
+
+| Método e rota | Parâmetros | Retorna |
+|---|---|---|
+| `GET /financeiro/entry-audit/documents` | `branch`, `received_from`, `received_to`, `page`, `page_size` | cabeçalhos SF1 + CNPJ/UF do fornecedor (SA2) |
+| `GET /financeiro/entry-audit/items` | mesmos filtros | itens SD1 dos mesmos documentos |
+| `GET /financeiro/entry-audit/fiscal-book` | mesmos filtros | itens do livro fiscal (SFT) dos mesmos documentos |
+| `GET /financeiro/entry-audit/tes` | — | cadastro de TES (SF4) inteiro |
+| `GET /financeiro/entry-audit/branches` | — | filiais com CNPJ e UF |
+
+A E0 confirma se já existe SQL reaproveitável para algum destes (há consultas de SF1/SD1 em compras e estoque).
+
+### 4A.3 financial-api — XML do Questor (owner)
+
+| Método e rota | Parâmetros | Retorna |
+|---|---|---|
+| `GET /invoices/received/export` | `branch`, `type` (`nfe` \| `cte`), `issued_from`, `issued_to`, `page`, `page_size` | lista com chave, número, série, emitente, emissão, valor, situação e os ids do provedor para baixar o XML |
+| `GET /invoices/received/{id}/xml/original` | `branch`, `type` | XML original (já existe para CT-e e NFS-e; a NF-e usa `download_nfe_xml`) |
+
+**Lacuna:** a listagem atual do Questor (`/cliente/nfe/listagem`) não recebe data. Ela vem ordenada por emissão (`orderGroup=Emission`) e só com entradas (`Entry=True`). A E0 prova se aceita filtro de data; se não aceitar, a financial-api pagina pela emissão e para quando passar do início do período. A entrada automática continua viável nos dois casos.
+
+### 4A.4 controllership-finance-api — rotas da BFF
+
+Prefixo `/entry-audit`. Todas exigem `controllership-finance.access` (D4). `branch=all` vale nas leituras (consolidado) e, no POST, cria uma execução por filial.
+
+| Método e rota | Uso |
+|---|---|
+| `POST /entry-audit/runs` | body `{competence, branch}` → 202 com as execuções criadas (ou as que já estão em andamento) |
+| `GET /entry-audit/runs` | execuções por `competence`/`branch` (histórico) |
+| `GET /entry-audit/runs/{run_id}` | status, andamento (etapa, documentos lidos, XML baixados), contagens, erro |
+| `GET /entry-audit/summary` | KPIs da competência (última execução concluída), comparação com o mês anterior, ocorrências por severidade e por tema, top fornecedores, divergências por dia |
+| `GET /entry-audit/occurrences` | filtros `severity`, `theme`, `supplier`, `status` (`pending`\|`resolved`\|`all`), `q`, paginação |
+| `GET /entry-audit/documents` | notas casadas com situação e número de ocorrências |
+| `GET /entry-audit/unmatched` | notas só no XML / só no SF1, com motivo |
+| `GET /entry-audit/cte` | comparativo dos CT-e (direito ao crédito, CFOP esperado, base, alíquota, ICMS, CST) |
+| `GET /entry-audit/tes` | TES usadas na competência, com a configuração da SF4 e os alertas |
+| `POST /entry-audit/occurrences/{key}/resolve` · `/reopen` | status compartilhado; registra quem e quando |
+| `POST /entry-audit/unmatched/{key}/resolve` · `/reopen` | idem para notas sem par |
+| `GET /entry-audit/export` | planilha no layout atual da skill (para a contabilidade) |
+
+Envelope, erros e `meta` iguais aos das outras rotas da BFF.
+
+### 4A.5 Organização do código na BFF (Clean Architecture)
+
+| Camada | Pasta | Conteúdo |
+|---|---|---|
+| domain | `domain/entry_audit/` | modelos (documento, item, livro, TES, XML NF-e/CT-e, ocorrência, severidade, tema); casamento SF1×XML (inclusive troca de chave) e SD1×itens; regras separadas por grupo (cabeçalho, itens, coerência, Simples/presumido SC, CT-e, chave/espécie/fornecedor, livro fiscal, sem par, «não apontado»); motor que junta tudo |
+| application | `application/entry_audit/` | executar, consultar, resolver/reabrir, exportar; portas (`ProtheusEntriesPort`, `FiscalXmlPort`, `EntryAuditRepository`) |
+| infrastructure | `infrastructure/entry_audit/` | gateway api-delpi, gateway financial-api, leitura dos XML (porte de `leitura.py`), repositório Postgres, cache de XML, exportação xlsx (porte de `relatorio.py`) |
+| interface | `interface/http/routes/entry_audit/` · `interface/mcp/` | rotas HTTP; entradas da CLARA no catálogo semântico |
+| startup | `startup/entry_audit_worker.py` | worker no `lifespan`; ao subir, devolve para a fila as execuções que estavam rodando quando o processo parou |
+
+### 4A.6 Persistência
+
+Migration `V023` no schema `controllership_finance`, com as tabelas da seção 7 e mais `entry_audit_xml_cache` (chave de acesso, modelo, XML compactado, data da busca).
+
+### 4A.7 CLARA — «audita todas as notas» num comando
+
+| Pedido do usuário | O que a CLARA faz |
+|---|---|
+| «Audita as entradas de outubro» | `execute entry_audit.run {competence: 2026-10, branch: all}` → recebe as execuções; consulta `read entry_audit.run` até terminar; chama `analyze entry_audit_findings`; responde no formato da skill: o que pede ação, o que corrigir, o que não tem impacto |
+| «O que ainda está pendente na matriz?» | `read entry_audit.occurrences {branch: 01, status: pending}` |
+| «Por que essa CT-e deu alta?» | `read` da ocorrência + `knowledge` com a regra citada |
+| «Marca a NF 123 da WEG como resolvida» | `execute entry_audit.resolve` |
+
+A execução é **direta**, sem prepare/confirmação: não altera dado de negócio (só cria o resultado da auditoria), é idempotente por filial e competência e o owner quer que a CLARA faça o trabalho num comando só (D6). Resolver e reabrir também são diretos.
 
 ## 5. Ganhos em relação à skill
 
@@ -121,7 +206,8 @@ A chave estável é a mesma ideia do painel atual: uma reexecução substitui o 
 | `read` | `entry_audit.occurrences` | ocorrências com filtros (severidade, tema, fornecedor, status) |
 | `read` | `entry_audit.unmatched` | notas sem par |
 | `analyze` | `analysis_type=entry_audit_findings` | FACT/RECOMMENDATION agrupado por causa (TES, cadastro, fornecedor), no formato «o que pede ação / corrigir / sem impacto» da skill |
-| `execute` | `entry_audit.run` | executar/reexecutar (governado: prepare → confirmação → commit) |
+| `read` | `entry_audit.run` | status e andamento de uma execução |
+| `execute` | `entry_audit.run` | executar/reexecutar a auditoria de uma competência (uma filial ou todas), **direto** (D6) |
 | `execute` | `entry_audit.resolve` / `entry_audit.reopen` | marcar status (direto, baixo impacto) |
 | `knowledge` | domínio Controladoria | catálogo de regras (`references/regras.md`) como conhecimento citável |
 
@@ -167,3 +253,4 @@ Lançar ou corrigir notas no Protheus; alterar TES ou cadastro de fornecedor; su
 | Data | Evento |
 |---|---|
 | 2026-11-13 | Plano criado. D4 decidida pelo owner (tudo com `controllership-finance.access`). D1, D2, D3 e D5 com recomendação, aguardando confirmação. Skill anexada como referência para o porte. |
+| 2026-11-13 | Estrutura do back-end (§4A): rotas da api-delpi, da financial-api e da BFF; organização em camadas; worker; cache de XML; CLARA executando a auditoria num comando (D6). Visual da página fica para a próxima rodada. Planejamento em tabela à parte (`planejamento-auditoria-entradas.xlsx`). |
