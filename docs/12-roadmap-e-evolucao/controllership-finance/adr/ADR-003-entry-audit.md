@@ -38,6 +38,8 @@ Completam a decisão, pela evidência da T0:
 - a solicitação do LNF é achada pelo número e pelo fornecedor; a chave só existe quando há DANFE anexado;
 - a auditoria não escreve no Protheus, no Questor nem no LNF.
 
+Dívida registrada na revisão de T0–T3, sem mudança de código: a api-delpi aceita a BFF nas leituras `/financeiro/entry-audit/*` pelo escopo S2S `stock-inventory.read`, reaproveitado para não criar permissão nem escopo novo. O escopo descreve outro conjunto de dados. A troca por um escopo próprio da auditoria fica para quando o Keycloak puder ser provisionado sem 403.
+
 ## Alternativas rejeitadas
 
 - Motor na skill, com planilha no meio: a SF4 fica velha e o resolvido não é da equipe.
