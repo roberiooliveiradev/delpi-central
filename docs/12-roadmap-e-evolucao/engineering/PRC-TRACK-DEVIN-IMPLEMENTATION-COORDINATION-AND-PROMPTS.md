@@ -896,3 +896,26 @@ E01 sete campos no card **PASS** (subchecks id/type/requester/officialCode/creat
 **Limitações:** reordenação validada via persistência (drag headless instável); Kanban exibe itens da página corrente apenas (paginação server-side preservada — indicado no cabeçalho de coluna); fail inicial do script por overlay do menu Colunas foi resolvido como artefato de timing, não defeito.
 
 **Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
+
+## 48. Menu Colunas recortado pelo hero — correção via AnchoredPanelPortal no componente canônico (14/11/2026)
+
+**TASK:** `EVA-PRC-QUEUE-COLUMN-MENU-CLIPPING-HML-FIX-01`. Frontend exclusivo (plugin-ui); **PRD não autorizado.**
+
+**Causa raiz (evidência DOM/CSS):** o painel `.delpi-ui-table-columns__panel` era `position:absolute` dentro do wrapper `position:relative` `.delpi-ui-table-columns`. Com o botão na linha inferior do `EngineeringPageHero` — `.delpi-ui-page-hero { overflow: hidden }` (page-hero.css:7, necessário para clip do glow decorativo) — qualquer conteúdo absoluto além da caixa do hero era recortado. Não era problema de `z-index` (painel já z=30 dentro do mesmo stacking context; aumentar não resolveria o clip por overflow). Defeito latente em qualquer ancestral com `overflow:hidden|auto|clip` — afetava potencialmente todos os consumidores do `TableColumnVisibilityMenu` (engineering PRC/LMPs, helpdesk, supplies, commercial, dashboard-lmps).
+
+**Correção (commits `8bd0744be0` + `37afeb6d9d`, 3 arquivos):**
+- `TableColumnVisibilityMenu.tsx`: painel renderizado via **`AnchoredPanelPortal` (`variant="bare"`)** — mecanismo oficial de overlay ancorado do kit — com `preferredPlacement="bottom"`, `horizontalAlign="end"`, `gap=8`, flip/clamp na viewport via `useAnchoredPanelPosition` (position:fixed), `role="dialog"`, `aria-label`, Escape + clique externo via `onDismiss` (remove o `mousedown` manual), trigger com `ref` como âncora. Botão permanece na linha inferior do hero.
+- `table-column-visibility.css`: `.delpi-ui-table-columns__panel--portal` neutraliza `top/right` do layout inline (coordenadas vêm do hook); bloco de tokens `--delpi-ui-table-columns-*` redefinido em seletor compartilhado `.delpi-ui-table-columns, .delpi-ui-table-columns__panel` — **necessário porque o portal no `document.body` não herda custom properties do wrapper** (defeito detectado na 1ª validação visual: fundo transparente sobre a tabela); layout (`position/flex`) permanece só no wrapper.
+- Testes: +2 regressões — painel renderiza em `document.body` fora do container (não recortável por ancestral) com `role=dialog`; fecha com Escape. Ajuste de 1 teste legado (`container.querySelector` → `document` por causa do portal).
+
+**Comportamento preservado:** mostrar/ocultar/reordenar/restaurar colunas, `keepAtLeastOne`, drag handles, storage key `engineering:prc:requests:columns`, controle dos 3 modos, aria-expanded/controls, fail-closed AuthZ, contratos/backend intactos.
+
+**Testes:** plugin-ui vitest **396 arquivos / 2517 testes PASS**; engineering PRC **197 PASS**; `tsc` engineering clean (3 erros preexistentes não relacionados em charts/realtime do plugin-ui); build plugin-ui ok.
+
+**HML:** deploy `--fase remote --build plugin-ui` (checkout `37afeb6d9d`); imagem `sha256:59cc0cb57c1db690d264c2a3b088df8183d5e5606820c67646d86f54fe416a46` healthy; remoteEntry 200; 21/21 containers healthy. Rollback: `delpi-hml/plugin-ui` `f1d52dfd714c` retida.
+
+**E2E visual (Chromium real headless no host HML, Node playwright) — 72/73 PASS + 1 edge degenerado validado por probe:** menu integralmente visível e ancorado em Tabela/Cards/Kanban (`panel` fora do wrapper, dentro da viewport em todas as medidas); ocultar Responsável reflete nos 3 modos (baseline th=1 → 0); restaurar reexibe; persistência após refresh; Escape, clique externo, `role=dialog`, `aria-expanded`; tablet 834px e mobile 390px (flip para cima quando não há espaço); viewport baixo 700px (flip) e estreito 360px (clamp lateral `right=328 ≤ 360`); regressão hero/busca/chips/Sinalizados/dados; consumidor secundário `/apps/engineering/lmps` abre o painel. **Edge degenerado documentado:** com o gatilho fora da viewport (abaixo da dobra, LMPs 1440×900 sem scroll), o painel estica além da borda inferior — após `scrollIntoView` do gatilho abre integralmente visível (probe `{"bottom":725,"vh":900}` PASS); é limitação inerente de painel ancorado, não recorte por ancestral. Evidências: `/tmp/col-E01..E11*.png` (painel com fundo opaco, 7 colunas, handles, Restaurar).
+
+**Limitações:** reordenação por drag validada via handles+unit test (drag headless instável); menu usa flip quando o gatilho está próximo ao fundo — comportamento desejado, validado.
+
+**Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
