@@ -2793,8 +2793,121 @@ def _attempt_postcondition_demonstrated(
     return projection.status is WriteOutcomeStatus.VERIFIED
 
 
+def _plan_delivery_mode(plan) -> str | None:
+    """Typed plan delivery kind — ``None`` for legacy/fake plans
+    without the goal envelope (backward-compatible extension)."""
+    if plan is None:
+        return None
+    return getattr(getattr(plan, "goal", None), "output_mode", None)
+
+
+def _attempt_collection_partially_retrieved(
+    attempt: GovernedCapabilityAttempt,
+) -> bool:
+    """Owner declares the bound collection window is incomplete.
+
+    Three owner-declared signals only — never inferred from record
+    content: ``is_complete`` is false, ``truncated`` is true, or a
+    declared numeric total exceeds the delivered collection size
+    (e.g. ``total: 109`` with 20 items — page 1 of 6). A collection
+    without completeness markers proves neither completeness nor
+    incompleteness.
+    """
+    outcome = attempt.outcome
+    if outcome is None:
+        return False
+    structured = outcome.structured
+    if not isinstance(structured, Mapping):
+        return False
+    inner = structured.get("data")
+    nodes = [
+        node
+        for node in (structured, inner)
+        if isinstance(node, Mapping)
+    ]
+    for node in nodes:
+        if node.get("is_complete") is False:
+            return True
+        if node.get("truncated") is True:
+            return True
+    data = inner if isinstance(inner, Mapping) else structured
+    totals = [
+        data[key]
+        for key in _ABSENCE_TOTAL_KEYS
+        if isinstance(data.get(key), (int, float))
+        and not isinstance(data.get(key), bool)
+    ]
+    collections = [
+        data[key]
+        for key in _ABSENCE_COLLECTION_KEYS
+        if isinstance(data.get(key), (list, tuple))
+    ]
+    if totals and collections:
+        delivered = max(len(entry) for entry in collections)
+        if any(total > delivered for total in totals):
+            return True
+    return False
+
+
+def _attempt_declares_aggregate_metric(
+    attempt: GovernedCapabilityAttempt,
+) -> bool:
+    """Owner-declared aggregate deliverable for ``aggregation``.
+
+    SATISFIED-by-metric requires an authoritative numeric aggregate
+    field (``total``/``total_count``/``count``) in a non-truncated,
+    non-incomplete payload — a partial items window does not
+    invalidate the owner-declared count. A provably complete
+    collection also yields a mechanically derivable count. An
+    unverifiable or partial window cannot be turned into a total.
+    """
+    if _attempt_collection_partially_retrieved(attempt):
+        # The owner itself flagged incompleteness: only an explicit
+        # aggregate field remains authoritative (it is delivered
+        # independently of the item window).
+        outcome = attempt.outcome
+        structured = outcome.structured if outcome else None
+        if not isinstance(structured, Mapping):
+            return False
+        inner = structured.get("data")
+        data = inner if isinstance(inner, Mapping) else structured
+        return any(
+            isinstance(data.get(key), (int, float))
+            and not isinstance(data.get(key), bool)
+            for key in _ABSENCE_TOTAL_KEYS
+        )
+    outcome = attempt.outcome
+    structured = outcome.structured if outcome else None
+    if not isinstance(structured, Mapping):
+        return False
+    inner = structured.get("data")
+    data = inner if isinstance(inner, Mapping) else structured
+    if any(
+        isinstance(data.get(key), (int, float))
+        and not isinstance(data.get(key), bool)
+        for key in _ABSENCE_TOTAL_KEYS
+    ):
+        return True
+    collections = [
+        data[key]
+        for key in _ABSENCE_COLLECTION_KEYS
+        if isinstance(data.get(key), (list, tuple))
+    ]
+    if collections:
+        # No aggregate field: derivable only when the owner declares
+        # the collection complete — otherwise the count is invented.
+        return any(
+            node.get("is_complete") is True
+            for node in (structured, inner)
+            if isinstance(node, Mapping)
+        )
+    return False
+
+
 def _attempt_demonstrates_anchored(
-    attempt: GovernedCapabilityAttempt, obligation: MaterialObligation
+    attempt: GovernedCapabilityAttempt,
+    obligation: MaterialObligation,
+    delivery: str | None = None,
 ) -> bool:
     """Anchored obligation demonstration via mechanical echo matching.
 
@@ -2804,6 +2917,13 @@ def _attempt_demonstrates_anchored(
     evidence for ordinary obligations, authoritative absence for
     complete-empty owner answers, and an owner-attested postcondition
     for ``operation=act``. READ never demonstrates ACT.
+
+    ``delivery`` (the typed plan's ``goal.output_mode``) scopes
+    completeness: an ``enumeration`` obligation is not demonstrated by
+    a provably partial collection window (pertinent but incomplete
+    acquisition → bound/INCONCLUSIVE); an ``aggregation`` obligation
+    requires an authoritative metric or provably complete collection
+    — never a count invented from an unverifiable window.
     """
     if attempt.status is not GovernedCapabilityStatus.SUCCESS:
         return False
@@ -2845,6 +2965,14 @@ def _attempt_demonstrates_anchored(
             }
         )
     if _is_business_evidence_attempt(attempt):
+        if delivery == "enumeration" and (
+            _attempt_collection_partially_retrieved(attempt)
+        ):
+            return False
+        if delivery == "aggregation" and (
+            not _attempt_declares_aggregate_metric(attempt)
+        ):
+            return False
         return True
     return _attempt_declares_authoritative_absence(attempt)
 
@@ -2852,6 +2980,7 @@ def _attempt_demonstrates_anchored(
 def _attempt_satisfies_obligation(
     attempt: GovernedCapabilityAttempt,
     obligation: "MaterialObligation | str | Mapping",
+    delivery: str | None = None,
 ) -> bool:
     """Obligation DEMONSTRATED check via owner-authoritative evidence.
 
@@ -2871,7 +3000,9 @@ def _attempt_satisfies_obligation(
     if not needle:
         return False
     if item.evidence_source is not None:
-        return _attempt_demonstrates_anchored(attempt, item)
+        return _attempt_demonstrates_anchored(
+            attempt, item, delivery=delivery
+        )
     if item.operation is not None:
         # ``operation`` alone is a restriction, never a pertinence
         # proof (RC5-R2): a matching op-class cannot demonstrate the
@@ -2974,6 +3105,7 @@ def _evaluate_material_obligations(
     *,
     obligations: tuple[MaterialObligation, ...] | tuple[str, ...],
     business: tuple[GovernedCapabilityAttempt, ...],
+    delivery: str | None = None,
 ) -> tuple[tuple[str, str], ...]:
     """Return ``(obligation_description, state)`` per obligation.
 
@@ -2995,7 +3127,9 @@ def _evaluate_material_obligations(
         for index, attempt in enumerate(business):
             if index in used:
                 continue
-            if not _attempt_satisfies_obligation(attempt, obligation):
+            if not _attempt_satisfies_obligation(
+                attempt, obligation, delivery=delivery
+            ):
                 continue
             matched = attempt
             used.add(index)
@@ -3148,6 +3282,7 @@ def _apply_declared_answer(
             coverage = _evaluate_material_obligations(
                 obligations=plan.evidence_needed,
                 business=business,
+                delivery=_plan_delivery_mode(plan),
             )
             unmet_obligations = any(
                 state != OBLIGATION_SATISFIED for _, state in coverage
@@ -3215,6 +3350,7 @@ def _apply_declared_answer(
             coverage = _evaluate_material_obligations(
                 obligations=plan.evidence_needed,
                 business=business,
+                delivery=_plan_delivery_mode(plan),
             )
             declared_unmet_overridden = all(
                 state == OBLIGATION_SATISFIED
@@ -3259,6 +3395,7 @@ def _apply_declared_answer(
             coverage = _evaluate_material_obligations(
                 obligations=plan.evidence_needed,
                 business=business,
+                delivery=_plan_delivery_mode(plan),
             )
             if all(
                 state == OBLIGATION_SATISFIED for _, state in coverage
@@ -3286,6 +3423,7 @@ def _apply_declared_answer(
                 coverage = _evaluate_material_obligations(
                     obligations=plan.evidence_needed,
                     business=business,
+                    delivery=_plan_delivery_mode(plan),
                 )
                 if not all(
                     state == OBLIGATION_SATISFIED for _, state in coverage
@@ -3540,6 +3678,7 @@ def _finalize_agent_collected_attempts(
             coverage = _evaluate_material_obligations(
                 obligations=obligations,
                 business=business,
+                delivery=_plan_delivery_mode(plan),
             )
             if any(state != OBLIGATION_SATISFIED for _, state in coverage):
                 return GovernedCapabilityAttempt(
@@ -3603,6 +3742,7 @@ def _finalize_agent_collected_attempts(
         coverage = _evaluate_material_obligations(
             obligations=obligations or targets,
             business=business,
+            delivery=_plan_delivery_mode(plan),
         )
         for obligation_id, state in coverage:
             if state != OBLIGATION_SATISFIED:
@@ -3778,6 +3918,7 @@ def _finalize_agent_collected_attempts(
             coverage = _evaluate_material_obligations(
                 obligations=obligations,
                 business=business,
+                delivery=_plan_delivery_mode(plan),
             )
             if any(state != OBLIGATION_SATISFIED for _, state in coverage):
                 related = ("related_observations_insufficient",) if business else ()
@@ -3830,6 +3971,7 @@ def _finalize_agent_collected_attempts(
             coverage = _evaluate_material_obligations(
                 obligations=obligations,
                 business=business,
+                delivery=_plan_delivery_mode(plan),
             )
             if any(state != OBLIGATION_SATISFIED for _, state in coverage):
                 return GovernedCapabilityAttempt(

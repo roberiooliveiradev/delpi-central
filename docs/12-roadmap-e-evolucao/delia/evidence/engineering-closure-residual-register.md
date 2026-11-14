@@ -1764,3 +1764,15 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT2-RC5-AGGREGATION-REAL-COVERAGE | OPEN_LOW | SATISFIED de agregação PROVEN determinístico; modelo 14B não convergiu declaração em B nas 2 runs — aguarda run futura ou modelo distinto |
 
 **NEXT=`COORDINATION_RC5_INDEPENDENT_REVIEW_AFTER_REWORK`**
+
+### INT-2 final validation — 2026-11-13 (Doc 330)
+
+| Residual | Status | Evidence / disposition |
+|---|---|---|
+| INT2-ENUM-PARTIAL-SATISFIED | **REMEDIATED** | Janela parcial owner-declared (total>delivered, is_complete:false, truncated) → INCONCLUSIVE; gate por `goal.output_mode` |
+| INT2-AGG-REAL-CONVERGENCE | **REMEDIATED** | Agregação SATISFIED real em 3 formulações (B/G/G2) após fix de docstring delivery + observed_invocation_vocabulary |
+| INT2-RC5-AGGREGATION-REAL-COVERAGE | **CLOSED** | Doc 330 — agregação real comprovada (B, G, G2) |
+| INT2-MODEL-BUDGET-EXHAUSTION | OPEN_LOW | E2 esgotou tool_calls antes da declaração válida; outcome honesto (coverage_unknown), não defeito de contrato |
+| INT2-MODEL-FABRICATED-ANCHOR | OPEN_LOW | Modelo pode declarar token não-vivo (`processo_competencia_snapshot`) → UNSATISFIED honesto; mitigado por observed_invocation_vocabulary |
+
+**NEXT=`COORDINATION_C3_T2_INT2_FINAL_FUNCTIONAL_ACCEPTANCE_REVIEW`**

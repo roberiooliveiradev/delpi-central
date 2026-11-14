@@ -1724,7 +1724,11 @@ class PydanticAiInvestigationOrchestrator:
             finalize. ``goal_class`` is one of: read, analyze, compare,
             create_or_modify, clarify. ``expected_delivery`` is one of:
             enumeration, aggregation, explanation, record_detail,
-            comparison, unspecified. ``evidence_needed`` names the
+            comparison, unspecified — choose ``aggregation`` when the
+            user asks how many/how much/a total (the owner-declared
+            metric is the deliverable, even when records are paged);
+            choose ``enumeration`` only when the user asks to see the
+            records themselves. ``evidence_needed`` names the
             material obligations derived from the objective —
             collection coverage for enumeration, metric+scope for
             aggregation, pertinent facts for explanation. Each item is
@@ -1810,6 +1814,22 @@ class PydanticAiInvestigationOrchestrator:
                         "echoes or that you pass as an invocation "
                         "selector), never the dotted envelope tool "
                         "name — declare again with the owner token."
+                    )
+                # Live owner vocabulary the model already used as
+                # invocation selectors in this turn (recorded by the
+                # governed layer) — legitimate anchor candidates at
+                # correction time, never a catalog (RC5-R1/WS-4).
+                observed: list[str] = []
+                for att in ctx.deps.collected:
+                    prov = getattr(att, "provenance", None)
+                    for tok in (
+                        getattr(prov, "invocation_vocabulary", ()) or ()
+                    ):
+                        if tok not in observed:
+                            observed.append(tok)
+                if observed:
+                    rejected["observed_invocation_vocabulary"] = (
+                        observed[:8]
                     )
                 return _proj(rejected)
             ctx.deps.investigation_plan = plan

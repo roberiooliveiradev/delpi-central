@@ -6775,3 +6775,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **RESIDUAL:** `OPEN_LOW` — modelo 14B redeclara tokens dotted; converge na maioria (1–3 tentativas), outcome honesto quando não converge. Não é defeito do mecanismo.
 - **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — **não aceite**; `INT2_ACCEPTED=NO`, `PRODUCTION_DEPLOY/PHASE_ADVANCEMENT/INT3/T3=NOT_AUTHORIZED`. Doc 329.
 - **NEXT:** `COORDINATION_RC5_INDEPENDENT_REVIEW_AFTER_REWORK`.
+
+### INT-2 — final coverage, delivery completeness & aggregation gate (Doc 330; 2026-11-13)
+
+- **TASK:** `DELIA-C3-T2-INT2-FINAL-COVERAGE-DELIVERY-AND-AGGREGATION-GATE-01`; BASE `f333c1bde5` (=origin/main, contém Docs 328+329). Coordenação ACCEPT_WITH_RESIDUAL sobre RC5 rework — R1–R4 preservados.
+- **WS-1/WS-2 (cobertura vs entrega):** bug real — enumeração ancorada SATISFIED com `total:109, items:20` (janela parcial). Gate por `goal.output_mode`: enumeration exige aquisição não-parcial provada; aggregation exige métrica autoritativa (ou coleção provadamente completa); demais deliveries inalterados. `delivery` threaded em `_evaluate_material_obligations` (compat default None). Finalize já distinguia veredito de status (`declared_status_overridden`).
+- **WS-3 (agregação real):** causa-raiz composta — (a) modelo declarava `expected_delivery:"enumeration"` para perguntas de contagem (docstring não distinguia count-vs-list — corrigida); (b) feedback INVALID_GOAL não ecoava vocabulário vivo → `observed_invocation_vocabulary` (seletores já usados no turno, ≤8). Run final `or-qwen14b-e89fd907c1dc`: **B/G/G2 SATISFIED reais** (total 109 autoritativo; G2 com filtro `status:ativo` no invoke); E2 budget-limit honesto.
+- **WS-4 (convergência):** rejeição dotted correta; convergência 1–3 tentativas; token fabricado (`processo_competencia_snapshot`) → UNSATISFIED honesto.
+- **TESTES:** +12 `test_int2_delivery_completeness_contract.py` RED→GREEN; harness `_wrapped_eval` atualizado p/ `delivery` (run intermediária descartada como HARNESS_FAILURE); suíte completa verde.
+- **GATES:** FALSE_SATISFIED=0 e FALSE_COMPLETE=0 em todas as runs; agregação real demonstrada em 3 formulações independentes; enumeração parcial honestamente INCONCLUSIVE.
+- **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — **não aceite**; `INT2_ACCEPTED=NO`, `PRODUCTION_DEPLOY/PHASE_ADVANCEMENT/INT3/T3=NOT_AUTHORIZED`. Doc 330.
+- **NEXT:** `COORDINATION_C3_T2_INT2_FINAL_FUNCTIONAL_ACCEPTANCE_REVIEW`.
