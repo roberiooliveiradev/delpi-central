@@ -323,6 +323,20 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
   const forbidden = error?.status === 403;
   const notFound = error?.status === 404;
 
+  /** §45 — identificação resumida do filtro ativo na barra da tabela
+   * (Pendentes no preset, ou o status explícito; Tipo quando definido). */
+  const queueScopeLabel = [
+    statusFilter === "pending"
+      ? "Pendentes"
+      : applied.status
+        ? PRC_STATUS_LABELS[applied.status] || applied.status
+        : "",
+    applied.type ? PRC_TYPE_LABELS[applied.type] || applied.type : "",
+    applied.search ? `busca “${applied.search}”` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <main className="engineering-prc">
       <EngineeringPagePath
@@ -348,6 +362,11 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
         description={PRC_COPY.listDescription}
         actions={
           <>
+            {/* PRC-REF-021-REF-01 — entrada compacta das bandeiras na
+             * linha de ações do hero (painel expande como popover). */}
+            {!forbidden ? (
+              <PrcFlagsOpsPanel basePath={basePath} compact />
+            ) : null}
             <EngineeringActionButton
               variant="ghost"
               softDisabled={loading}
@@ -390,22 +409,6 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
                   <FilterX size={16} aria-hidden />
                 </EngineeringIconButton>
               ) : null}
-              {layout === "table" ? (
-                <TableColumnVisibilityMenu
-                  columns={orderedColumns}
-                  visibility={visibility}
-                  onToggleColumn={setColumnVisible}
-                  onReorderColumns={reorderColumns}
-                  onReset={resetColumns}
-                  labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
-                />
-              ) : null}
-              <EngineeringIconButton
-                aria-label={PRC_COPY.refresh}
-                onClick={refresh}
-              >
-                <RefreshCw size={16} aria-hidden />
-              </EngineeringIconButton>
             </div>
           </form>
           <div className="engineering-prc__queue-secondary">
@@ -418,26 +421,7 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
               label={PRC_COPY.filterTypeLabel}
               chips={typeChips}
             />
-            <div className="engineering-prc__queue-layout-toggle">
-              <EngineeringSegmentToggle
-                ariaLabel="Modo de apresentação da fila"
-                idPrefix="prc-layout"
-                size="sm"
-                widthMode="content"
-                value={layout}
-                onChange={setLayout}
-                options={[
-                  { value: "table", label: "Tabela" },
-                  { value: "cards", label: "Cards" },
-                  { value: "board", label: "Kanban" },
-                ]}
-              />
-            </div>
           </div>
-          {/* PRC-REF-021-REF-01 — bandeiras compactas no hero. */}
-          {!forbidden ? (
-            <PrcFlagsOpsPanel basePath={basePath} compact />
-          ) : null}
         </div>
       </EngineeringPageHero>
 
@@ -495,10 +479,49 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
         </EngineeringEmptyState>
       ) : null}
 
+      {/* §45 — barra de ferramentas da tabela: total do escopo filtrado
+       * à esquerda; Colunas (só Tabela) e modos de visualização à
+       * direita. Sem card externo — a tabela ocupa a área útil. */}
+      {!forbidden && !error && list ? (
+        <div className="engineering-prc__table-toolbar">
+          <span className="engineering-prc__table-meta">
+            {list.total}{" "}
+            {list.total === 1 ? "solicitação" : "solicitações"}
+            {queueScopeLabel ? ` · ${queueScopeLabel}` : ""}
+          </span>
+          <div className="engineering-prc__table-toolbar-actions">
+            {layout === "table" ? (
+              <TableColumnVisibilityMenu
+                columns={orderedColumns}
+                visibility={visibility}
+                onToggleColumn={setColumnVisible}
+                onReorderColumns={reorderColumns}
+                onReset={resetColumns}
+                labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
+              />
+            ) : null}
+            <EngineeringSegmentToggle
+              ariaLabel="Modo de apresentação da fila"
+              idPrefix="prc-layout"
+              size="sm"
+              widthMode="content"
+              value={layout}
+              onChange={setLayout}
+              options={[
+                { value: "table", label: "Tabela" },
+                { value: "cards", label: "Cards" },
+                { value: "board", label: "Kanban" },
+              ]}
+            />
+          </div>
+        </div>
+      ) : null}
+
       {!forbidden && !error && list && list.items.length > 0 ? (
         <div className="engineering-prc__queue-view">
           {layout === "table" ? (
             <DataTableSection
+              unframed
               title={PRC_COPY.listTitle}
               columns={visibleColumns}
               rows={list.items}

@@ -110,8 +110,11 @@ export function PrcFlagsOpsPanel({
     void load();
   }, [open, load]);
 
-  const toggleLabel =
-    badgeCount != null
+  const toggleLabel = compact
+    ? badgeCount != null
+      ? `Sinalizados (${badgeCount})`
+      : "Sinalizados"
+    : badgeCount != null
       ? `Campos sinalizados (${badgeCount})`
       : "Campos sinalizados";
 

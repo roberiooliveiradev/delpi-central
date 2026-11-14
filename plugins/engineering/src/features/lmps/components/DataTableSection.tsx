@@ -88,6 +88,10 @@ export type DataTableSectionProps<T> = {
    * (ex.: botão "Filtros" ancorado). Aditivo — sem efeito quando
    * omitido. */
   toolbarActions?: ReactNode;
+  /** Modo sem card: remove o contêiner visual externo e o cabeçalho
+   * (título/meta) — tabela renderiza direta abaixo do contexto.
+   * Opt-in: páginas existentes não mudam. */
+  unframed?: boolean;
 };
 
 export function DataTableSection<T>({
@@ -115,6 +119,7 @@ export function DataTableSection<T>({
   defaultColumnVisibility,
   onVisibleColumnKeysChange,
   toolbarActions,
+  unframed = false,
 }: DataTableSectionProps<T>) {
   const [search, setSearch] = useState("");
 
@@ -205,33 +210,36 @@ export function DataTableSection<T>({
   const showToolbar =
     !hideSearch || columnVisibilityEnabled || Boolean(toolbarActions);
 
+  const sectionClass = unframed
+    ? fillHeight
+      ? "engineering-table-section delpi-ui-table-section engineering-table-section--fill delpi-ui-table-section--fill"
+      : "engineering-table-section delpi-ui-table-section"
+    : fillHeight
+      ? `${LMPS_SECTION.section} engineering-table-section--fill delpi-ui-table-section--fill`
+      : LMPS_SECTION.section;
+
   return (
-    <section
-      className={
-        fillHeight
-          ? `${LMPS_SECTION.section} engineering-table-section--fill delpi-ui-table-section--fill`
-          : LMPS_SECTION.section
-      }
-      aria-busy={loading || refreshing}
-    >
-      <div className={LMPS_SECTION.header}>
-        <h2 className={LMPS_SECTION.title}>
-          {title}
-          {titleHint ? (
-            <HelpTooltip
-              content={titleHint}
-              ariaLabel={`Ajuda: ${title}`}
-              className={LMPS_SECTION.titleHelp}
-            />
-          ) : null}
-        </h2>
-        <div className={LMPS_SECTION.metaGroup}>
-          {hint ? <span className={LMPS_SECTION.meta}>{hint}</span> : null}
-          <span className={LMPS_SECTION.meta}>
-            {paginationTotal} registro(s)
-          </span>
+    <section className={sectionClass} aria-busy={loading || refreshing}>
+      {unframed ? null : (
+        <div className={LMPS_SECTION.header}>
+          <h2 className={LMPS_SECTION.title}>
+            {title}
+            {titleHint ? (
+              <HelpTooltip
+                content={titleHint}
+                ariaLabel={`Ajuda: ${title}`}
+                className={LMPS_SECTION.titleHelp}
+              />
+            ) : null}
+          </h2>
+          <div className={LMPS_SECTION.metaGroup}>
+            {hint ? <span className={LMPS_SECTION.meta}>{hint}</span> : null}
+            <span className={LMPS_SECTION.meta}>
+              {paginationTotal} registro(s)
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       {refreshing && rows.length > 0 ? (
         <LoadingActivityCard

@@ -1071,25 +1071,31 @@
   margin-bottom: 16px;
 }
 
-/* PRC-REF-021-REF-01 — controle compacto no body do hero. */
+/* PRC-REF-021-REF-01 / §45 — controle compacto inline nas ações do
+ * hero; o painel abre como popover flutuante ancorado ao botão. */
 .engineering-prc__flags-ops--hero {
-  margin: 8px 0 0;
-  gap: 8px;
-  max-width: 100%;
-  min-width: 0;
+  position: relative;
+  display: inline-flex;
+  margin: 0;
+  gap: 0;
 }
 
 .engineering-prc__flags-ops--hero .engineering-prc__flags-ops-body {
-  margin-top: 4px;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 60;
+  width: min(760px, calc(100vw - 40px));
+  max-height: min(70vh, 640px);
+  overflow: auto;
   padding: 10px 12px;
   border: 1px solid var(--en-border, #d0d5dd);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--en-surface, #fff) 94%, #f2f4f7);
+  background: var(--en-surface, #fff);
+  box-shadow: 0 12px 32px rgba(16, 24, 40, 0.16);
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-width: 100%;
-  min-width: 0;
 }
 
 .engineering-prc__flags-ops-filters {
@@ -1347,12 +1353,35 @@
   min-width: 0;
 }
 
-.engineering-prc__queue-layout-toggle {
+/* §45 — barra de ferramentas da tabela (sem card externo): total do
+ * escopo à esquerda; Colunas e modos de visualização à direita. */
+.engineering-prc__table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 14px;
+  min-width: 0;
+}
+
+.engineering-prc__table-meta {
+  font-size: 0.85rem;
+  color: var(--en-text-muted, #667085);
+  min-width: 0;
+}
+
+.engineering-prc__table-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-left: auto;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 640px) {
-  .engineering-prc__queue-layout-toggle {
+  .engineering-prc__table-toolbar-actions {
     margin-left: 0;
   }
 }
+
