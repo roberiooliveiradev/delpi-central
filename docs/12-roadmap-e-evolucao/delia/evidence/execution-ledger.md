@@ -6321,7 +6321,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **BASELINE:** `generalist-semantic-v2` / fp `7dbc94c5035b0f19` (default).
 - **CANDIDATE:** `generalist-semantic-v3-objective-progress` / fp `658d3da51783e23d` — **DO_NOT_PROMOTE**.
 - **REAL_EVAL:** OpenRouter qwen/qwen3-14b; known+holdout; prod untouched.
-- **Doc:** `295-int1-specialized-instructions-and-real-generalization-evolution.md`.
+- **Doc:** `295-int1-specialized-instructions-and-real-generalization-evolution.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 
 | DELIA-C3-T2-INT1-INSTRUCTION-ABLATION-AND-REGRESSION-FREE-EVOLUTION-01 | Ablation of ≤3 v3 instruction groups vs v2 on Qwen14B; OBJ/PROG/DISC → no sustained regression-free gains; FINAL_CANDIDATE=NONE; default v2; doc 296 | ABLATION=DONE; COMPOSE=SKIPPED; NEXT=COORDINATION_INT1_INCREMENTAL_EVOLUTION_INDEPENDENT_REVIEW |
@@ -6335,7 +6335,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **CLASSIFICATION:** OBJ/PROG = REGRESSION_ASSOCIATED; DISC = NO_DEMONSTRATED_BENEFIT (+P3 regress); G1 first-tool = PROMISING_BUT_INCONCLUSIVE; G-EFF = NOT_EVALUATED; SUPPORTED_IMPROVEMENT=none.
 - **FINAL_CANDIDATE:** NONE (no composite A/B). **PROMOTION:** DO_NOT_PROMOTE. **DEFAULT:** `generalist-semantic-v2`.
 - **FUNCTIONAL_AGENT_CODE_CHANGED=NO**. **PROD_UNTOUCHED=YES** (process-separated eval).
-- **Doc:** `296-int1-instruction-ablation-and-regression-free-evolution.md` (+ causal revision stamp on 295).
+- **Doc:** `296-int1-instruction-ablation-and-regression-free-evolution.md` (+ causal revision stamp on 295). *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_INCREMENTAL_EVOLUTION_INDEPENDENT_REVIEW`.
 
@@ -6348,7 +6348,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **RUNS:** planned 24 / executed 24 / env_invalid 17 / valid_env 7. **PROD_UNTOUCHED=YES**.
 - **VALID-ENV:** first tools suitable P1–P3/G1/H1–H3; P1 NOT_SATISFIED after davi→teo drift; P2/P3/G1/H3 PARTIAL; H1/H2 SATISFIED; H4 no valid sample.
 - **OWNERSHIP:** primary blocker = eval MCP token/catalog auth lifetime; INT-2/INT-3 implementation **not** justified by this battery; INT-1 recovery only after valid multi-rep re-run.
-- **Doc:** `297-int1-v2-stability-objective-satisfaction-and-responsibility-attribution.md`.
+- **Doc:** `297-int1-v2-stability-objective-satisfaction-and-responsibility-attribution.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_STABILITY_AND_OWNERSHIP_INDEPENDENT_REVIEW`.
 
@@ -6365,7 +6365,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **OBJECTIVES (scorer proposal):** SAT 6 · PARTIAL 12 · NOT_SAT 5 · INCONCLUSIVE 1; Gwo 2. Material: G1 TEO-first; P3 selection variance; P2 continuity PARTIAL×3; H4 analyze PARTIAL×3.
 - **FUNCTIONAL_AGENT_CODE_CHANGED=NO**; **INSTRUCTION_CHANGED=NO**; **PROD_UNTOUCHED=YES**.
 - **CREDENTIAL_SCOPE residual:** `NONE_PROVEN_SEPARATE_FROM_PROD`.
-- **Doc:** `298-int1-mcp-eval-auth-lifecycle-remediation-and-v2-stability-rerun.md`.
+- **Doc:** `298-int1-mcp-eval-auth-lifecycle-remediation-and-v2-stability-rerun.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_VALID_STABILITY_INDEPENDENT_REVIEW`.
 
@@ -6380,7 +6380,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **LIVE:** `ctx-rec-1bc5578991`; baseline fp `7dbc94c5035b0f19`; core 24/24 VALID_ENV + 5 generalization; P3 no teo.analyze first; N2 pages 1→7; G1 still TEO-first.
 - **OBJECTIVES (core scorer proposal):** SAT 6 · PARTIAL 13 · NOT_SAT 5 (vs doc298 SAT6/PART12/NOT5/INC1).
 - **FUNCTIONAL:** orchestrator projection/hint only; **INSTRUCTION_CHANGED=NO**; **NEW_AGENT=NO**; **PROD_UNTOUCHED=YES**.
-- **Doc:** `299-int1-investigation-context-model-visible-mcp-tool-surface-semantic-selection-and-recovery-audit.md`.
+- **Doc:** `299-int1-investigation-context-model-visible-mcp-tool-surface-semantic-selection-and-recovery-audit.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_CONTEXT_AND_RECOVERY_INDEPENDENT_REVIEW`.
 
@@ -6396,7 +6396,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **TESTS:** `test_int1_full_context_projection_remediation.py` + related PASS.
 - **LIVE:** `SECURE_EVAL_GATE=BLOCKED` → **TEST_NOT_RUN** (no egress flag / credential scope residual).
 - **INSTRUCTION_CHANGED=NO**; **NEW_AGENT=NO**; **PROD_UNTOUCHED=YES**.
-- **Doc:** `300-int1-full-context-delivery-mcp-contract-semantics-and-model-context-configuration-remediation.md`.
+- **Doc:** `300-int1-full-context-delivery-mcp-contract-semantics-and-model-context-configuration-remediation.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_FULL_CONTEXT_INDEPENDENT_REVIEW`.
 
@@ -6411,7 +6411,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **GOAL_DECLARATION_USAGE:** 0/30 ctx-rec + 0/25 stab-v2.
 - **FIXES:** uncovered/coverage inside `_attempt_projection`; echo `business_subject` on ACCEPTED goal.
 - **TESTS:** `test_int1_intent_goal_projection_signals.py` + adjacent PASS.
-- **Doc:** `301-int1-intent-understanding-objective-representation-and-semantic-tool-selection-causal-review.md`.
+- **Doc:** `301-int1-intent-understanding-objective-representation-and-semantic-tool-selection-causal-review.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_INTENT_SELECTION_INDEPENDENT_REVIEW`.
 
@@ -6426,7 +6426,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **LIVE:** not executed — **MODEL_REQUESTS=0**, **TOOL_CALLS=0**, **EXECUTED_SCENARIOS=0**.
 - **FUNCTIONAL_CODE_CHANGED=NO**; **INSTRUCTION_CHANGED=NO**.
 - **TARGETED_TESTS:** secure_decision_trace + intent_goal_projection + runtime profile selector PASS.
-- **Doc:** `302-int1-minimal-real-intent-understanding-vs-mcp-tool-selection-causal-evaluation.md`.
+- **Doc:** `302-int1-minimal-real-intent-understanding-vs-mcp-tool-selection-causal-evaluation.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_MINIMAL_REAL_INTENT_EVAL_REVIEW`.
 
@@ -6448,7 +6448,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **H2 goal declare:** unused 0/4; optional; does not gate MCP — GAP not proven causal.
 - **FIX (observability EXTEND):** sanitize description limit + catalog snapshot no hard [:500]; tests PASS.
 - **EXTERNAL_LLM_CALLS=0**; **AGENT/INSTRUCTION unchanged**; **PROD_DEPLOY=NOT_AUTHORIZED**.
-- **Doc:** `306-int1-g1-first-tool-semantic-selection-model-visible-context-and-objective-representation-causal-investigation.md`.
+- **Doc:** `306-int1-g1-first-tool-semantic-selection-model-visible-context-and-objective-representation-causal-investigation.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **NEXT:** `COORDINATION_INT1_G1_SELECTION_CAUSAL_REVIEW`.
 
 ### INT-1 TEO/DAVI integrated validation + production deploy — 2026-11-11
@@ -6460,7 +6460,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **DEPLOY:** `up-prod-sequential.sh --build` api-delpi → transformometro-api → delia-api; images rotated; health OK; rollback NOT_REQUIRED.
 - **PROD SETTINGS:** delia env=production; profile openrouter_qwen; model qwen/qwen3-14b; fp e4a5b706a3b3156b.
 - **AGENT/INSTRUCTION unchanged**; FULL_BATTERY=NOT_RUN.
-- **Doc:** `305-int1-teo-davi-integrated-validation-and-controlled-production-deployment.md`.
+- **Doc:** `305-int1-teo-davi-integrated-validation-and-controlled-production-deployment.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_PRODUCTION_VALIDATION_INDEPENDENT_REVIEW`.
 
@@ -6472,7 +6472,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **FIXES:** TEO `server.py` description; DAVI `ListProductStructureUseCase` omit nulls; `classify_source_pagination` null-as-absent.
 - **TESTS:** TEO mcp contract + metadata/surface adjacent PASS; DAVI pagination completeness + full-mode UC + bom tree PASS.
 - **EXTERNAL_LLM_CALLS=0**; **AGENT/INSTRUCTION unchanged**; **PROD_UNTOUCHED=YES**.
-- **Doc:** `304-int1-teo-semantic-contract-clarity-and-davi-product-structure-completeness-causal-remediation.md`.
+- **Doc:** `304-int1-teo-semantic-contract-clarity-and-davi-product-structure-completeness-causal-remediation.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_TEO_DAVI_INDEPENDENT_REVIEW`.
 
@@ -6492,7 +6492,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **CAUSAL (PROVEN_IN_SAMPLE):** first divergence = tool selection under TEO contract attractor; not missing tools; intent explicit not observed ≠ proven misunderstanding.
 - **FUNCTIONAL_AGENT_CODE_CHANGED=NO**; **INSTRUCTION_CHANGED=NO**; **OWNER_CONTRACT_CHANGED=NO**; **PROD_UNTOUCHED=YES**.
 - **TARGETED_TESTS:** `test_int1_openrouter_scenario_filter.py` + `test_int1_secure_decision_trace.py` PASS.
-- **Doc:** `303-int1-minimal-real-intent-understanding-vs-mcp-tool-selection-g1-p1-causal-evaluation.md`.
+- **Doc:** `303-int1-minimal-real-intent-understanding-vs-mcp-tool-selection-g1-p1-causal-evaluation.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_G1_P1_REAL_EVAL_REVIEW`.
 
@@ -6508,7 +6508,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **M1:** wording sensitivity unstable; recovery FAIL both rounds.
 - **CAUSAL:** H1 owner-delivery REJECTED; EnvelopeHint delivery REMEDIATED; H3 MODEL_SELECTION_ERROR PROVEN_IN_SAMPLE; H5 REJECTED; H6 M1 PROVEN_IN_SAMPLE.
 - **AGENT/INSTRUCTION unchanged**; no keyword router; **PROD_UNTOUCHED=YES**; FULL_BATTERY=NOT_RUN.
-- **Doc:** `307-int1-provider-request-integrity-and-real-qwen-semantic-tool-selection-causal-evaluation.md`.
+- **Doc:** `307-int1-provider-request-integrity-and-real-qwen-semantic-tool-selection-causal-evaluation.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_REAL_SEMANTIC_SELECTION_INDEPENDENT_REVIEW`.
 
@@ -6524,7 +6524,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **P1:** DAVI-first (control); NOT_SATISFIED (AUTHZ).
 - **M1:** TEO-first; notes YES; residual tour/args; NOT_SATISFIED.
 - **AGENT_COUNT=1**; **NEW_ROUTER=NO**; **NEW_PLANNER=NO**; **GOAL_DECLARATION_REQUIRED=NO**; **PROD_UNTOUCHED=YES**.
-- **Doc:** `308-int1-provider-neutral-semantic-selection-and-investigation-continuity-remediation-with-real-qwen-evaluation.md`.
+- **Doc:** `308-int1-provider-neutral-semantic-selection-and-investigation-continuity-remediation-with-real-qwen-evaluation.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_SEMANTIC_CONTINUITY_INDEPENDENT_REVIEW`.
 
@@ -6539,7 +6539,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **P1:** DAVI-first; GROUNDED; **SATISFIED**.
 - **M1:** DAVI-first; GROUNDED; **SATISFIED**.
 - **AGENT_CHANGED=NO**; **NEW_ROUTER=NO**; **PROD_UNTOUCHED=YES**; FULL_BATTERY=NOT_RUN.
-- **Doc:** `309-int1-evaluation-environment-restoration-authorized-owner-access-and-real-qwen-revalidation.md`.
+- **Doc:** `309-int1-evaluation-environment-restoration-authorized-owner-access-and-real-qwen-revalidation.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=BLOCKED**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_AUTHORIZED_REAL_EVAL_INDEPENDENT_REVIEW`.
 
@@ -6555,7 +6555,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **G1/P1/M1:** all DAVI-first (`davi.get_context`→`davi.read` for G1; direct `davi.read get_product_structure` P1/M1); GROUNDED; **SATISFIED** — no TÉO attractor hit in-sample.
 - **AUTH-DENY:** `davi.read get_product_structure` → owner `AUTHORIZATION_DENIED/Forbidden` → projection AUTHZ_DENIED → no retry/bypass → governed permission message; `AUTH_DENIAL_PRESERVED=YES`, `NO_PROTECTED_DATA_LEAK=YES`, `USER_FACING_EXPLANATION=PASS`.
 - **AGENT_COUNT=1**; **NEW_ROUTER=NO**; **NEW_PLANNER=NO**; **PERMISSIONS_CHANGED=NO**; **PROD_UNTOUCHED=YES**; FULL_BATTERY=NOT_RUN.
-- **Doc:** `310-int1-semantic-root-cause-and-governed-authorization-denial-communication.md`.
+- **Doc:** `310-int1-semantic-root-cause-and-governed-authorization-denial-communication.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=PENDING_COORDINATION_REVIEW**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_SEMANTIC_AND_AUTHZ_INDEPENDENT_REVIEW`.
 
@@ -6574,7 +6574,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **EVAL PARTIAL REAL:** `or-qwen14b-195dc9cf3bb6`; subject `e2e-delia`; composed process+product; MCP invokes=0; arguments_schema_rejected×7 → **INCONCLUSIVE**; no data leak / no authz bypass.
 - **GENERALIZATION_PROVEN_IN_SAMPLE** (first-tool suitability 4/4); no universal claim; second round NOT run (no proven functional defect beyond deterministic preserve).
 - **AGENT_COUNT=1**; **NEW_ROUTER=NO**; **NEW_PLANNER=NO**; **PERMISSIONS_CHANGED=NO**; **PROD_UNTOUCHED=YES**; FULL_BATTERY=NOT_RUN.
-- **Doc:** `311-int1-independent-semantic-generalization-and-partial-authorization-evaluation.md`.
+- **Doc:** `311-int1-independent-semantic-generalization-and-partial-authorization-evaluation.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=PENDING_COORDINATION_REVIEW**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_GENERALIZATION_AND_PARTIAL_AUTHZ_INDEPENDENT_REVIEW`.
 
@@ -6588,7 +6588,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **EVAL REAL:** `or-qwen14b-64d9e5b4d58b` IG2 GROUNDED/partial (truncation, coverage closed); `or-qwen14b-a06d048c2597` R2 GROUNDED/complete + R3 honest clarification; `or-qwen14b-84c04f1194d2` R4 `e2e-delia` 5 invokes — TÉO SUCCESS (codigo_processo echoed) + DAVI AUTHZ_DENIED → partial answer, `authorization_denied_partial`, no bypass/leak. Diagnostic reproductions `or-qwen14b-63f52d5f8dfc`/`0369b7bfbd39`/`d95ed7d02ba9`. TOTAL_INVESTIGATIONS≤8; TOKEN_USAGE/COST=UNAVAILABLE.
 - **GENERALIZATION_PROVEN_IN_SAMPLE**; no universal claim.
 - **AGENT_COUNT=1**; **NEW_ROUTER=NO**; **NEW_PLANNER=NO**; **NEW_RESOLVER_ENGINE=NO**; **PERMISSIONS_CHANGED=NO**; **PROD_UNTOUCHED=YES**; eval TÉO isolated container + ephemeral egress host; FULL_BATTERY=NOT_RUN.
-- **Doc:** `312-int1-business-identifier-resolution-mcp-schema-integrity-and-partial-authorization-real-qwen-remediation.md`.
+- **Doc:** `312-int1-business-identifier-resolution-mcp-schema-integrity-and-partial-authorization-real-qwen-remediation.md`. *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE — recuperável via git)*
 - **INT1_STAGE_ACCEPTANCE=PENDING_COORDINATION_REVIEW**; **INT1_CLOSED=NO**; **INT2/INT3/T3/PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
 - **NEXT:** `COORDINATION_INT1_IDENTIFIER_RESOLUTION_AND_PARTIAL_AUTHZ_INDEPENDENT_REVIEW`.
 
@@ -6849,3 +6849,13 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Retidos com justificativa:** 313–323 (cadeia de aceite INT-1, evidência de auditoria), 324–335 (INT-2 ativo + direção PO), auxiliares referenciados (`r01-native-structured-output-decision` ADR, `local-llm-testing-policy`, `production-observations`, planos R01/response-semantic, root-causes com consumer).
 - **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`; `INT2_ACCEPTED=NO`; `INT3/INT4_AGENTS=NOT_AUTHORIZED`; `PRODUCTION_DEPLOY/PHASE_ADVANCEMENT=NOT_AUTHORIZED`.
 - **NEXT:** `COORDINATION_C3_T2_INT2_BOUNDED_ACCEPTANCE_AND_FOUR_AGENT_TARGET_RECONCILIATION`.
+
+### 2026-11-14 — Aceite INT-2 persistido + saneamento residual + inventário INT-3 (task executor)
+
+- **TASK:** `DELIA-C3-T2-INT2-ACCEPTANCE-PERSISTENCE-AND-INT3-READINESS-01`; BASE `931725ff77` (==origin/main). `ACCEPTANCE_EVIDENCE=REUSED_VALID_BASELINE` — zero commits em `delia-api/` desde o SHA revisado `d6e0c8e766`.
+- **ACEITE PERSISTIDO:** veredito de coordenação `INT2_FUNCTIONAL_ACCEPTANCE=ACCEPT_WITH_RESIDUAL` / `INT2_FUNCTIONAL_CLOSED=YES` registrado em Doc 16, ledger, residual-register, Doc 24/25/20 crosswalks e addendum no Doc 335. `INT2_INDEPENDENT_AGENT_IMPLEMENTED=NO` preservado; distinção estágio-aceito × Agent-independente explícita.
+- **RESIDUAIS CLASSIFICADOS:** REQUIRED-ARGS-DECLARATION→risco aceito monitorado; REAL-MULTIPAGE-UNION-REPROOF→evidência complementar pendente (boundary de completude); ARGUMENT-SEMANTICS-METADATA→dependência contratual owner. Nenhum residual movido para INT-3 para facilitar aceite.
+- **REFERÊNCIAS RESIDUAIS SANEADAS:** 18 linhas do ledger + Doc16:2102 + Doc293:668 anotadas com `HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE` — identificadores preservados, recuperação via git, evidência canônica vigente (Docs 313–323). Zero links markdown para removidos.
+- **INT-3 INVENTARIADO (não autorizado):** equivalentes existentes mapeados no Doc 17 — avaliador determinístico de obrigações/completude/união + `InvestigationAnswer`/`_apply_declared_answer`/`_finalize_agent_collected_attempts` cobrem a verificação; recomendação cognitiva (`CONTINUE_INVESTIGATION`/`REQUEST_CLARIFICATION`/`REPORT_PARTIAL`/`PROPOSE_COMPLETION` candidatos) é PARTIAL via `unmet_obligations`/`clarification_question` do Agent existente. Fronteira cognitivo↔determinístico e campos candidatos de handoff registrados; experimento A/B (baseline único × variante mínima) proposto no Doc 20 sob gate Doc 293.
+- **RESULTADO:** `INT2_ACCEPTED=YES_WITH_RESIDUAL`; `INT3_REQUIREMENTS_INVENTORIED`; `INT3/INT4=NOT_AUTHORIZED`; `FOUR_AGENT_RUNTIME=NOT_IMPLEMENTED`; `NO_NEW_AGENT/PLANNER/ENGINE`; `PRODUCTION_DEPLOY/PHASE_ADVANCEMENT=NOT_AUTHORIZED`; `CODE_CHANGED=NONE`.
+- **NEXT:** `COORDINATION_C3_T2_INT3_BOUNDED_AUTHORIZATION_DECISION`.

@@ -70,3 +70,7 @@ EXECUTION_TESTS = TEST_NOT_RUN (DOC_ONLY)
 ```
 
 **Documentos a reconciliar:** 16, 24, 25, 17, 20, 49, 50, Doc 293, Doc 324, Doc 334, ledger e residual register; manter históricos como registros da decisão de sua data. Atualizações de documentação são crosswalks e não ratificam implementação ou avanço de fase.
+
+## Addendum 2026-11-14 — Veredito de coordenação persistido
+
+A tabela do §3 registra o estado à data do documento e permanece como histórico. **Atualização vigente:** a coordenação revisou o SHA `d6e0c8e7664bf9d22858bc4e522451b4d3951af8` e decidiu `INT2_FUNCTIONAL_ACCEPTANCE = ACCEPT_WITH_RESIDUAL` / `INT2_FUNCTIONAL_CLOSED = YES` — o **estágio** de Compreensão está funcionalmente fechado no baseline de um Agent, o que **não altera** `INT2_INDEPENDENT_AGENT_IMPLEMENTED = NO`. A distinção estágio-aceito × Agent-independente mantém-se. Residuais delimitados no residual-register; próximo passo: `COORDINATION_C3_T2_INT3_BOUNDED_AUTHORIZATION_DECISION` — o INT-3 (Suficiência) teve requisitos, equivalentes existentes e fronteira cognitivo↔determinístico inventariados no Doc 17/Doc 20, **sem implementação autorizada**.

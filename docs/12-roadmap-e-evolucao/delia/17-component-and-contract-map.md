@@ -1578,3 +1578,25 @@ DEFER_BY_PHASE:
 ### 2026-11-14 — Crosswalk de owners e contratos cognitivos (Doc 335)
 
 **Produto TARGET:** quatro especialistas cognitivos (Compreensão, Investigação, Suficiência, Síntese) colaboram por handoffs tipados; o Agent investigativo Pydantic AI existente é baseline, não prova dos outros três Agents. **Ownership preservado:** DÉLIA Application é dona do plano tipado, Evidence, Policy, Decision, Work e Outcome; Core de AuthZ; Domain APIs de dados/regras finais; MCP/A2A como integração; providers como adapters. Contratos especializados futuros precisam especificar owner/consumer, esquema/versionamento, contexto mínimo, evidência/provenance, identidade/AutZ, budgets, retries, failures, observabilidade, rollback/revoke e resultado. Nenhum port, serviço, handoff ou runtime novo se considera existente por esta anotação. Doc 293 mantém gate de experimento antes de implementar. [Decisão Doc 335](./corrections/mcp-contextual-intelligence-orchestration/335-c3t2-four-cognitive-specialist-agents-po-product-direction-and-int2-resumption.md).
+
+### 2026-11-14 — Inventário INT-3 (Suficiência): equivalentes existentes e fronteira cognitivo↔determinístico
+
+**Estado:** `INT-3 REQUIREMENTS_INVENTORIED / IMPLEMENTATION_NOT_AUTHORIZED`. Inventário para decisão de coordenação; nada aqui prova implementação nova.
+
+**Mecanismos de suficiência já existentes (baseline):**
+
+| Responsabilidade | Owner | Fonte canônica | Contrato | Existência | Evidência |
+|---|---|---|---|---|---|
+| Avaliar obrigação vs evidência | DÉLIA Application | `semantic_capability_support.py` | `_evaluate_material_obligations` → SATISFIED/INCONCLUSIVE/UNSATISFIED/UNAVAILABLE | IMPLEMENTED | test_int2_delivery_completeness_contract + RC5 |
+| Pertinência/âncora de evidência | DÉLIA Application | idem | `_attempt_satisfies_obligation` / `_attempt_binds_obligation` | IMPLEMENTED | idem |
+| Completude provada de coleção | DÉLIA Application | idem | `_attempt_collection_proven_complete` | IMPLEMENTED | idem |
+| União multipágina segura | DÉLIA Application | idem | `_joint_collection_coverage` (owner+scope+identity+total+union==total) | IMPLEMENTED | Docs 331–334 |
+| Vocabulário de desfecho | DÉLIA Application | `contracts.py` | `InvestigationAnswer`/`InvestigationAnswerStatus` (6 estados) | IMPLEMENTED | evals OpenRouter/Qwen |
+| Finalização governada | DÉLIA Application | idem | `_apply_declared_answer` / `_finalize_agent_collected_attempts` | IMPLEMENTED | funil único auditado |
+| Identificar lacunas semanticamente / recomendar próximo passo | — | — | proposta cognitiva (`CONTINUE_INVESTIGATION`/`REQUEST_CLARIFICATION`/`REPORT_PARTIAL`/`PROPOSE_COMPLETION` — **candidatos, não contrato**) | PARTIAL/NOT_IMPLEMENTED | `unmet_obligations`/`clarification_question` já são saídas tipadas do Agent existente |
+
+**EXISTING_EQUIVALENT=YES (avaliação determinística) / TO_INVENTORY (recomendação cognitiva). REUSE_DECISION=REUSE para verificadores; EXTEND apenas se a coordenação autorizar especialista.**
+
+**Fronteira:** especialista cognitivo de Suficiência = identificar lacunas/ambiguidades/necessidade de continuação (recomendação); Application/Evidence = pertinência, proveniência, completude demonstrável; Policy/Decision = gates; Outcome = estado empresarial comprovado. Nenhuma recomendação cognitiva promove a SATISFIED sem prova — invariante já garantido pelo aceitador determinístico de `InvestigationAnswer`.
+
+**Campos candidatos de handoff futuro (inventário, não autorização):** SOURCE/TARGET_SPECIALIST, OBJECTIVE_ID, CORRELATION_ID, PLAN_REFERENCE, MATERIAL_OBLIGATIONS, EVIDENCE_REFERENCES, COVERAGE_SUMMARY, OPEN_GAPS, LIMITATIONS, AUTHORIZED_CONTEXT, DATA_MINIMIZATION, TIMEOUT, BUDGET, ERROR_CONTRACT, CANCELLATION, AUTHZ_CONTEXT, PROVENANCE, AUDIT. Proibido trafegar tokens/secrets/credenciais/chain-of-thought/histórico integral. Reuso máximo de `SemanticInvestigationPlan`+`MaterialObligation`+`GovernedCapabilityAttempt`/`InvestigationAnswer` antes de qualquer schema novo. Experimento A/B e pré-condições: Doc 20 §2026-11-14 e Doc 293.

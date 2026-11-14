@@ -2099,7 +2099,7 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 
 ### 2026-11-11 — INT-1 causal report published (doc 294)
 
-**TASK:** `DELIA-C3-T2-INT1-OPENROUTER-CAUSAL-REPORT-PERSISTENCE-01`. Relatório sanitizado da eval `or-qwen14b-35aaf1a4174b` versionado em `294-int1-openrouter-qwen14b-instrumented-causal-evaluation.md`. Sem nova inferência. Artefatos `.battery` permanecem locais/gitignored. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_PUBLISHED_CAUSAL_REPORT_REVIEW`**.
+**TASK:** `DELIA-C3-T2-INT1-OPENROUTER-CAUSAL-REPORT-PERSISTENCE-01`. Relatório sanitizado da eval `or-qwen14b-35aaf1a4174b` versionado em `294-int1-openrouter-qwen14b-instrumented-causal-evaluation.md` *(HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE na consolidação 2026-11-14 — recuperável via git; evidência canônica vigente: Docs 313–323)*. Sem nova inferência. Artefatos `.battery` permanecem locais/gitignored. **INT1_STAGE_ACCEPTANCE=BLOCKED**. **NEXT=`COORDINATION_INT1_PUBLISHED_CAUSAL_REPORT_REVIEW`**.
 
 ### 2026-11-11 — INT-1 instruction isolation + bounded A/B (PO exception)
 
@@ -2246,3 +2246,7 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 ### 2026-11-14 — INT-2 fechamento funcional + consolidação documental (task executor)
 
 **TASK:** `DELIA-C3-T2-INT2-FUNCTIONAL-CLOSURE-AND-DOCUMENTATION-CONSOLIDATION-01`. Dupla entrega. **INT-2:** sem novo gap bounded provado além do Doc 334; reamostra real `or-qwen14b-474cb529dd73` → insufficient honesto (zero falso SATISFIED); prova multipágina positiva ao vivo permanece PENDING por convergência do modelo. **Consolidação:** 28 arquivos removidos (Docs 294–312 + 9 auxiliares zero-consumer); −3.464 linhas; 2 links quebrados pré-existentes reparados; zero links novos quebrados; aceite INT-1 permanece consolidado em Docs 313–323. `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`; `INT2_ACCEPTED=NO`; `INT3/INT4=NOT_AUTHORIZED`; `PRODUCTION_DEPLOY/PHASE_ADVANCEMENT=NOT_AUTHORIZED`. **NEXT=`COORDINATION_C3_T2_INT2_BOUNDED_ACCEPTANCE_AND_FOUR_AGENT_TARGET_RECONCILIATION`**.
+
+### 2026-11-14 — Aceite INT-2 persistido pela coordenação; INT-3 inventariado sem autorização
+
+**TASK:** `DELIA-C3-T2-INT2-ACCEPTANCE-PERSISTENCE-AND-INT3-READINESS-01`. **Veredito de coordenação persistido:** `INT2_FUNCTIONAL_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`, `INT2_FUNCTIONAL_CLOSED=YES` sobre SHA `d6e0c8e766` — baseline revalidado sem alteração funcional (`delia-api/` inalterada). O aceite cobre o estágio de Compreensão no baseline de um Agent; **não** representa Agent independente nem autoriza INT-3/INT-4/deploy. Residuais classificados com owner/consumer/evidência no residual-register. Referências a documentos removidos anotadas como `HISTORICAL_DOCUMENT_REMOVED_FROM_CURRENT_TREE`. **INT-3 (Suficiência):** requisitos e equivalentes existentes inventariados (Doc 17/Doc 20) — verificação já coberta pelo avaliador determinístico; recomendação cognitiva é candidata, não contrato; fronteira cognitivo↔determinístico e handoff fields inventariados; experimento A/B proposto sob gate Doc 293. `CODE_CHANGED=NONE`; `FOUR_AGENT_RUNTIME=NOT_IMPLEMENTED`. **NEXT=`COORDINATION_C3_T2_INT3_BOUNDED_AUTHORIZATION_DECISION`**.

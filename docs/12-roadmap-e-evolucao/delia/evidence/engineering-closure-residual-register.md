@@ -1844,3 +1844,15 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | DOC-INDEX-README-HISTORICAL | DOCUMENTED | README do track C3 é roadmap datado (2026-10-19); auto-rotulado histórico — estado vigente em Doc16+ledger |
 
 **NEXT=`COORDINATION_C3_T2_INT2_BOUNDED_ACCEPTANCE_AND_FOUR_AGENT_TARGET_RECONCILIATION`**
+
+### 2026-11-14 — Aceite INT-2 persistido (ACCEPT_WITH_RESIDUAL) + matriz de residuais classificada
+
+**Veredito de coordenação:** `ACCEPT_WITH_RESIDUAL` sobre SHA `d6e0c8e766`; `INT2_FUNCTIONAL_CLOSED=YES`; `INT2_INDEPENDENT_AGENT_IMPLEMENTED=NO`. Evidência revalidada — zero alteração em `delia-api/` desde o SHA revisado (`ACCEPTANCE_EVIDENCE=REUSED_VALID_BASELINE`).
+
+| Residual | Tratamento | Owner | Consumer | Evidência | Impacto |
+|---|---|---|---|---|---|
+| INT2-REQUIRED-ARGS-DECLARATION | CLOSED_AS_ACCEPTED_RISK — risco de compreensão/generalização a monitorar; defeito reproduzido retorna ao INT-2 | DÉLIA Application (contrato) + modelo (declaração) | avaliador de obrigações | Doc 334; `required_args` emitido em eval real | escopo só vincula quando declarado; semântica de âncoras preservada |
+| INT2-REAL-MULTIPAGE-UNION-REPROOF | OPEN_AS_COMPLEMENTARY_EVIDENCE — prova positiva ao vivo pertence à verificação de completude (INT-3 boundary), não reabre INT-2 | verificação de completude (Application) | `_joint_collection_coverage` | `or-qwen14b-1f76a1a093d0` (histórica) + determinística; reamostra `474cb529dd73` insufficient honesto | sem prova positiva no SHA; fail-closed garante zero falso SATISFIED |
+| INT2-ARGUMENT-SEMANTICS-METADATA | DOCUMENTED_ABSENT — dependência contratual externa; proibido catálogo paralelo | owners TÉO/VISTA (`tools/list`) | scope fingerprint/window strip | contratos owner verificados (Doc 334) | janela validada por evidência de contrato, não metadata |
+
+**NEXT=`COORDINATION_C3_T2_INT3_BOUNDED_AUTHORIZATION_DECISION`**
