@@ -554,3 +554,14 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Testes:** `tests/test_prc_home_sources.py` — 12 cenários (identidade, escopo mine×queue, analista com escopo próprio, denied→forbidden, empty, total pré-paginação, isolamento de falha, título, meta). Focados: **23/23 pass**. Suíte ampla: **1195 pass / 2 fails baseline documentados** (`test_d16...isolation_between_requests` — falha pré-existente; `test_lmp_domain` — path `/api-delpi/contracts` não montado no container descartável).
 
 **Pendente:** merge governado → deploy HML → homologação runtime (criar PRC → verificar seções Home, fila e My Requests com mesmo requestId; regressão NF/chamados; LMPs; AuthZ).
+
+
+## 33. Coordination — revisão pré-merge da implementação Home × PRC; PR #183 draft (13/11/2026)
+
+**Código revisado:** branch `eng-home-prc-native-integration` @ `2ff3cf2bd45f7e0872999dd545c7a05bd26b9d7f`; compare com main retornou 8 arquivos Engineering API (+373/-12), ahead 1/behind 2 no instante; atraso não é prova de conflito. **[PR #183](https://github.com/roberiooliveiradev/delpi-central/pull/183) criado como DRAFT** pela Coordination. `MERGE_PENDING_BLOCKING_REVIEW`, HML ainda sem novo deploy; relatórios de 23/23 testes e 1195 ampla são evidência do executor.
+
+**Blocker funcional #1 — requester-only não implementado:** `own_scope=True` apenas define `global_scope=False` no `ProductRegistrationService.list_requests`, porém os repositórios Postgres e InMemory usam `requester_subject=user OR assigned_to_subject=user` quando `global_scope=False`. Assim, `requests` da Home pode incluir casos de terceiros atribuídos ao analista — contraria o contrato ratificado `mine` apenas criados pelo usuário. Corrigir por parâmetro/consulta explícita `requester_only` preservando os consumers existentes e object AuthZ; testes para requester!=assignee nos dois adapters.
+
+**Blocker funcional #2 — tarefas acionáveis:** `PrcQueueHomeSource` chama `list_requests` global sem filtro de status/ação. Casos `completed`/`rejected` potencialmente aparecem em `tasks` e em totais como pendências. Verificar contrato da fila PRC; para Home aplicar recorte de casos realmente atendíveis e contagens pré-paginação. Não fazer filtro apenas após LIMIT/COUNT, nem supor status permitidos sem verificar regra oficial; se não houver contrato, devolver decisão pontual.
+
+**Próximo gate:** Devin corrige ambos no mesmo PR, acrescenta regressões, valida CI e reports SHA; Coordination revisa e só então decide integração. Deploy/testes exclusivamente HML depois do merge; **zero PRD deploy/escritas**. `ARCHITECTURE_DECISION_APPROVED` da Opção A permanece válida; **implementação não aceita ainda**.
