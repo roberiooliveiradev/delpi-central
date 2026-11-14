@@ -622,3 +622,9 @@ Edge cached current procedure/model
 Release complete for declared scope requires CP coverage through current authority (`CP-001…CP-332`), standalone independence, correct owners, tests/gates, safe data/model/tool/scheduler lifecycle, verified outcomes, privacy/security/safety, observability/rollback and no material unresolved drift.
 
 Estado real vive no execution ledger. Documentation alone does not prove runtime implementation or advance phase.
+
+### Direção de inteligência cognitiva — confirmação PO 2026-11-14 (Doc 335)
+
+A DÉLIA mantém **quatro especialistas cognitivos distintos como arquitetura-alvo de produto**, correspondentes às responsabilidades de **Compreensão, Investigação, Avaliação de Suficiência e Síntese**, colaborando mediante contratos tipados e contexto mínimo. O produto tem **uma coordenadora DÉLIA**, não quatro produtos ou autoridades. A passagem entre especialistas pode ser condicional ao objetivo; esta decisão **não impõe quatro chamadas LLM por pergunta**, nem novos serviços independentes. Evidence/Policy/Decision/Outcome e Core/Domain permanecem autoridade. O **INT-5 é aceite integrado**, não quinto Agent.
+
+**Distinguir:** estes quatro especialistas cognitivos internos não são automaticamente os perfis de domínio user-facing (TÉO/CAIO/DAVI etc.) já permitidos pelo CP-071, nem servidores MCP, nem agentes A2A externos. A execução de apenas um Agent Pydantic AI é o **baseline existente**, não uma limitação permanente do produto. Os novos Agents/handoffs ainda exigem evidência comparativa, contratos e decisão arquitetural conforme Documento 293; **TARGET != IMPLEMENTED != AUTHORIZED**. INT-1 fechado e INT-2 ainda pendente no Doc 334. Referência: [Documento 335](./corrections/mcp-contextual-intelligence-orchestration/335-c3t2-four-cognitive-specialist-agents-po-product-direction-and-int2-resumption.md).
