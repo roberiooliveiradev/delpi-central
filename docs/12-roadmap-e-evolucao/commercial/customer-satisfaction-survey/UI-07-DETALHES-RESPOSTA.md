@@ -19,7 +19,7 @@
 
 ## 1. Fluxo, papel e navegação aprovados
 
-**Ver resposta** na UI-06 abre **uma página completa**, não drawer, modal, aba ou seção expansível. A identidade é a **resposta definitiva da empresa (código + loja) naquela campanha**, com acesso **somente a `commercial.marketing` OU `commercial.manage`** aprovado no backend. `commercial.access` isolado jamais recebe dados individuais. Nenhuma gravação, edição, exclusão, reenvio ou exportação privada sem decisão e autorização próprias.
+O clique/toque na **linha ou card respondido** da UI-06 abre **uma página completa** — sem botão “Ver resposta” na lista, e não drawer, modal, aba ou seção expansível. A identidade é a **resposta definitiva da empresa (código + loja) naquela campanha**, com acesso **somente a `commercial.marketing` OU `commercial.manage`** aprovado no backend. `commercial.access` isolado jamais recebe dados individuais. Nenhuma gravação, edição, exclusão, reenvio ou exportação privada sem decisão e autorização próprias.
 
 **Não criar segunda topbar.** Usar `CommercialPagePath` e `CommercialPageHero` com `density="compact"`: `eyebrow` Portal Comercial/Marketing, `title` “Detalhes da resposta”, `description` contexto de campanha, e `actions` com **“Voltar às respostas”**, usando `CommercialActionButton`. **Identificação da empresa ocupa `children` do mesmo Hero**, com `CustomerAvatar`, `CommercialEntityLink`, `CommercialDetailFieldGrid` e, se necessário, `CommercialStatusBadge`, sem card de identificação duplicado. Sem filtros na página, sem ações de Configuração/Resultados repetidas. Retornar à UI-06 preservando campanha, filtros e posição de lista quando o contrato de navegação existente permitir. Avatar e nome levam separadamente à Conta do Cliente.
 
@@ -35,7 +35,7 @@ Padrão real do Comercial: roteamento manual em `plugins/commercial/src/app/plug
 | Identidade da resposta | **somente** `responseId` (UUID da resposta definitiva); campanha/empresa vêm do payload R13 | `commercial-api` |
 | Query UI-06 | `campaign_id`, `status`, `group` (valores oficiais da API), `q`, `page`, `sort`, `dir` | helper de sanitização do domínio |
 | Query UI-07 | `returnTo` (pathname+query completos da lista), `returnLabel` (ex.: “Respostas por empresa”) | `commercialNavigationReturn.ts` |
-| “Ver resposta” | Builder que monta detalhe + `buildHrefWithReturn` a partir da URL atual da lista | `pluginNavigation.ts` |
+| Abertura da resposta (linha/card respondido) | Builder que monta detalhe + `buildHrefWithReturn` a partir da URL atual da lista | `pluginNavigation.ts` |
 | Conta do Cliente | `buildCustomerDetailHref` / `navigateCustomerDetail` com `returnNav` contextual; **não** copiar filtros da pesquisa para a Conta | padrão Minha Carteira/OTD |
 | Acesso direto URL | Página chama R13; 404/403/loading conforme backend; sem inventar dados | UI + API |
 | Pendente na UI-06 | Sem ação “Ver resposta” | UI-06 |

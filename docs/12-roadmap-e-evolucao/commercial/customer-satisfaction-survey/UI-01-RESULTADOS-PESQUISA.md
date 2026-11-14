@@ -21,7 +21,7 @@ A entrada `Início > Marketing > Pesquisa de satisfação do cliente` abre diret
 │                                                                          │
 ├─ COMMERCIAL PAGE HERO ────────────────────────────────────────────────────┤
 │ PORTAL COMERCIAL                                                         │
-│ Pesquisa de Satisfação do Cliente                 [Atualizar] [Config.]* │
+│ Pesquisa de Satisfação do Cliente   [Atualizar] [Respostas] [Config.]* │
 │ Indicadores, evolução e percepção dos clientes.                          │
 │                                                                          │
 │ [Ano ▼] [Campanha / Ano completo ▼] [Grupo ▼]                            │
@@ -63,7 +63,7 @@ A entrada `Início > Marketing > Pesquisa de satisfação do cliente` abre diret
 ┌─ PagePath ────────────────┐
 │ Hero compacto             │
 │ Título + descrição        │
-│ [Atualizar] [Config.]*    │
+│ [Atualizar] [Respostas] [Config.]* │
 │ [Ano ▼]                   │
 │ [Campanha ▼]              │
 │ [Grupo ▼]                 │
@@ -89,7 +89,7 @@ A entrada `Início > Marketing > Pesquisa de satisfação do cliente` abre diret
 │ [5 cards comparativos]    │
 │ [10 extras após expandir] │
 ├───────────────────────────┤
-│ Respostas restritas*      │
+│ Respostas por empresa*   │
 └───────────────────────────┘
 ```
 
@@ -597,7 +597,7 @@ Os números servem **apenas de exemplo**, não podem ser copiados para dados de 
 
 **Entrada sem redundância de topbar:** manter a topbar principal intacta. No **`CommercialPageHero` de Resultados**: `Atualizar`, `Respostas por empresa`, `Configuração`, nessa ordem de intenção; dois últimos somente para Marketing/Manage autorizado. `CommercialPagePath` mostra a trilha; usar `pluginRoutes.ts` / navegação existente, sem URLs absolutas improvisadas. Na UI-06, o Hero oferece `Ver resultados`, `Configuração` e `Atualizar`. A UI-02 oferece caminho contextual para Respostas por Empresa e retorno a Resultados. **Rotas são propostas, não implementadas.**
 
-**Padrão de identidade aprovado:** dentro da lista e dos cards de Respostas por Empresa reutilizar **`CustomerAvatar` real** de `plugins/commercial/src/features/customers/components/CustomerAvatar.tsx` (que usa `createInitialsAvatar("cm")` do PluginUI). Avatar e nome levam à **Conta do Cliente** via helpers de navegação atuais; `Ver resposta` é ação independente que navega à **página própria UI-07** somente leitura, sem desviar para a conta. A identidade é **`customer_code + customer_store`**. A imagem só é consultada se `hasAvatar` oficial estiver disponível; caso contrário, iniciais do kit, **sem dados inventados nem armazenamento de avatar duplicado**.
+**Padrão de identidade aprovado:** dentro da lista e dos cards de Respostas por Empresa reutilizar **`CustomerAvatar` real** de `plugins/commercial/src/features/customers/components/CustomerAvatar.tsx` (que usa `createInitialsAvatar("cm")` do PluginUI). Avatar e nome levam à **Conta do Cliente** via helpers de navegação atuais; a **linha/card respondido** navega à **página própria UI-07** somente leitura (sem botão “Ver resposta”, decisão UI-06), sem desviar para a conta. A identidade é **`customer_code + customer_store`**. A imagem só é consultada se `hasAvatar` oficial estiver disponível; caso contrário, iniciais do kit, **sem dados inventados nem armazenamento de avatar duplicado**.
 
 A página independente lista **respondidas e pendentes**, sem criar participantes nem copiar convites; essas ações pertencem exclusivamente à Configuração. Consulta privada e drill-down exigem autorização definitiva no `commercial-api`; `commercial.access` isolado não autoriza acesso. As notas individuais são `overall_score` (1–5) e `recommendation_score` (0–10); **não rotular notas por empresa como IGS ou NPS agregados**.
 
