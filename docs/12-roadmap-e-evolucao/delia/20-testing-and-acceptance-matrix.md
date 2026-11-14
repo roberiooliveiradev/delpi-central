@@ -2900,3 +2900,31 @@ Owner surface changed (`9fd77c0bd1`: TÉO 23→21 tools, consolidated `record_re
 **INT-2 = ACCEPT_WITH_RESIDUAL** (veredito de coordenação sobre SHA `d6e0c8e766`; baseline revalidado — zero alteração funcional em `delia-api/` desde a revisão). Residuais: `INT2-REQUIRED-ARGS-DECLARATION` (OPEN_LOW, monitorar), `INT2-REAL-MULTIPAGE-UNION-REPROOF` (PENDING — evidência complementar de completude), `INT2-ARGUMENT-SEMANTICS-METADATA` (dependência contratual externa owner).
 
 **INT-3 proposta de critérios de aceite (NÃO autorizado; para decisão de coordenação):** a Avaliação de Suficiência já é parcialmente exercida pelo avaliador determinístico existente — `_evaluate_material_obligations` (SATISFIED/INCONCLUSIVE/UNSATISFIED/UNAVAILABLE), `_attempt_collection_proven_complete`, `_joint_collection_coverage`, `InvestigationAnswer` (COMPLETE/PARTIAL/INSUFFICIENT/EMPTY/NO_EVIDENCE/NEEDS_CLARIFICATION) com aceitação governada por `_apply_declared_answer`/`_finalize_agent_collected_attempts`. O especialista cognitivo proposto apenas **recomendaria** (`CONTINUE_INVESTIGATION`/`REQUEST_CLARIFICATION`/`REPORT_PARTIAL`/`PROPOSE_COMPLETION` como candidatos conceituais, não contrato aprovado); Application/Evidence/Policy/Decision/Outcome permanecem autoridade — recomendação jamais promove a SATISFIED sem prova. Critérios candidatos: (i) menos falsos SATISFIED/COMPLETE vs baseline; (ii) gaps identificados corretamente antes de investigação adicional; (iii) zero ampliação de autoridade/escopo; (iv) recuperação de loops investigação↔suficiência com bounded retries; (v) custo/latência dentro de budget; (vi) outcome empresarial igual ou superior no corpus congelado. **Experimento proposto (gate Doc 293):** Baseline A = Agent único atual; Variante B = especialista Compreensão separado de Investigação reutilizando os mesmos contratos governados — pré-condições: corpus congelado, métricas das 9 dimensões acima, contratos de handoff inventariados no Doc 17, autorização expressa da coordenação.
+
+### 2026-11-14 — INT-3 avaliação de suficiência: matriz de resultados (baseline um Agent)
+
+**Eval real:** `or-qwen14b-205331140f0e` (INT2×12) + `or-qwen14b-cdf49bc3f20d` (INT1×14); SHA `9cddfa5d`; `qwen/qwen3-14b`; fingerprint `e4a5b706a3b3156b`; produção intocada; zero writes.
+
+| Dimensão S | Amostra real | Resultado |
+|---|---|---|
+| S01 concluir com evidência suficiente | B,C,G1,M1 | PROVEN_IN_SAMPLE (complete legítimo) |
+| S02 primeira página incompleta | A (3 calls; truncado 40/50; unmet declarado) | PROVEN_IN_SAMPLE (partial honesto) |
+| S03 multipágina cobre total | — | PENDING (união positiva não reproduzida; residual) |
+| S04/S20 repetição sem progresso | A (`NO_PROGRESS`→`NEW_INFORMATION`→stop; bounds) | PROVEN_IN_SAMPLE (loop limitado) |
+| S05 filtro contraditório | — | TEST_NOT_RUN (sintético cobre) |
+| S06 evidência relacionada insuficiente | P1 RELATED_INSUFFICIENT→partial | PROVEN_IN_SAMPLE |
+| S07 agregação sem enumeração | B | PROVEN_IN_SAMPLE |
+| S08 ausência autoritativa | D env-blocked | TEST_NOT_RUN (prova histórica Doc 334) |
+| S09 owner indisponível | A call1 SOURCE_UNAVAILABLE; P1 | PROVEN_IN_SAMPLE (insufficient/partial honesto) |
+| S10 AuthZ negado | AUTH_DENY SUCCESS real (variância de credencial) | TEST_NOT_RUN — oracle quebrado por ambiente; não-bypass comprovado |
+| S11 ambiguidade→clarificar | R3 env-blocked | TEST_NOT_RUN (gate existe; sem amostra real) |
+| S12 recuperação de capability | P1 (get_context→read→read) | PROVEN_IN_SAMPLE |
+| S13 sem capability adequada | D2/IG env → insufficient | PROVEN_IN_SAMPLE (honesto) |
+| S14 evidências contraditórias | — | TEST_NOT_RUN (não no corpus) |
+| S15 evidência de outro escopo | A2 filtro | PARTIAL (honesto) |
+| S16 múltiplas obrigações | PAUTH unmet=2 | PROVEN_IN_SAMPLE (declarado honesto) |
+| S17 renomear capability | E/E2 env-blocked; M1 PASS | PARTIAL |
+| S18 schema compatível | — | TEST_NOT_RUN |
+| S19 sucesso técnico sem negócio | P1 get_context DISCOVERY_ONLY | PROVEN_IN_SAMPLE (não-evidência classificada) |
+
+**Métricas:** FALSE_COMPLETE=0 e FALSE_SATISFIED=0 na amostra executada; `MISSED_CONTINUATION` observável em call-before-declare; `NO_PROGRESS_LOOPS`=bounded; `GROUNDING`=presente nos completes; env failures classificadas como insuficiência honesta, não defeito. **Não generalizar para universal** — amostra finita com oráculo.

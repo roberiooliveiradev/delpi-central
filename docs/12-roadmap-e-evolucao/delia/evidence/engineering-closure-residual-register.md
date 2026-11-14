@@ -1856,3 +1856,15 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT2-ARGUMENT-SEMANTICS-METADATA | DOCUMENTED_ABSENT — dependência contratual externa; proibido catálogo paralelo | owners TÉO/VISTA (`tools/list`) | scope fingerprint/window strip | contratos owner verificados (Doc 334) | janela validada por evidência de contrato, não metadata |
 
 **NEXT=`COORDINATION_C3_T2_INT3_BOUNDED_AUTHORIZATION_DECISION`**
+
+### 2026-11-14 — INT-3 avaliação causal: gaps e riscos identificados
+
+| Residual | Estado | Nota |
+|---|---|---|
+| INT3-CALL-BEFORE-DECLARE | OPEN_MEDIUM | modelo invoca capabilities antes de `declare_investigation_goal` → coverage/sufficiency feedback indisponível mid-flight; primeira fronteira divergente observada; owner: instrução/contrato de ordem (Alternativa B candidata) |
+| INT3-MODEL-PAGINATION-CONVERGENCE | OPEN_LOW | repetição de mesma página sem avanço; bounds determinísticos impedem loop infinito; residual herdado do INT-2 |
+| INT3-AUTH-DENY-ORACLE-ENV | OPEN_LOW | credencial de eval tem acesso → controle negativo de AuthZ inválido na amostra real; cobertura sintética mantida; requer env com identidade sem acesso para revalidação |
+| INT3-MCP-AUTH-FLAKINESS | OPEN_ENV | `eligible_capabilities:[]` intermitente; classificação honesta preservada; ambiente, não produto |
+| INT3-COGNITIVE-SPECIALIST-NEED | NOT_PROVEN | gaps atuais explicáveis por ordem de declaração/convergência; sem evidência de necessidade de Agent independente; Alternativa B documentada como candidata mais barata |
+
+**NEXT=`COORDINATION_C3_T2_INT3_FUNCTIONAL_CAUSAL_EVALUATION_REVIEW`**
