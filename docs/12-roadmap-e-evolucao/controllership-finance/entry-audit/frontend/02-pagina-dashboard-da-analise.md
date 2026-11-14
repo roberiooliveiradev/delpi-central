@@ -91,7 +91,7 @@ ScopeChipBar ─ filtros ativos (removíveis) · Limpar tudo
 
 O dia e o status não estão na barra: o dia vem do clique no gráfico (4.6) e o status do `SegmentToggle` da tabela (4.12). Todos aparecem nos chips (4.4).
 
-### 4.4 `CfScopeChipBar` (← `ScopeChipBar`) — **evoluir** (doc 04 §4)
+### 4.4 `CfScopeChipBar` (← `ScopeChipBar`) — **evoluir** (doc 04 §3)
 
 | Prop | Valor |
 |---|---|
@@ -115,7 +115,7 @@ Dados: `GET …/summary`. Os quatro cards aceitam clique (`onSelect`) e teclado.
 
 `titleHint` de cada card explica a conta (ex.: «Soma das diferenças em R$ das ocorrências de severidade Alta, pendentes, no recorte atual.»). `fitValue` ligado. Erro ou indisponível vira «—» com `status={label:"Indisponível", tone:"neutral"}`, nunca zero.
 
-### 4.6 Divergências por dia — `CfChartCard` + `CfComparativeAreaChart` — existe, **evoluir** o gráfico (doc 04 §7)
+### 4.6 Divergências por dia — `CfChartCard` + `CfComparativeAreaChart` — existe, **evoluir** o gráfico (doc 04 §6)
 
 `CfChartCard`: `title="Notas com divergência por dia"`, `hint="Período selecionado × período anterior de mesmo tamanho, pela data de emissão. Clique num dia para filtrar."`, `titleLevel={2}`.
 
@@ -132,7 +132,7 @@ Dados: `GET …/summary`. Os quatro cards aceitam clique (`onSelect`) e teclado.
 | `onPointSelect` (novo) | `(point) => setFilter("day", point.name)` |
 | `selectedName` (novo) | o dia filtrado, destacado |
 
-### 4.7 Conformidade — `CfSemicircleProgressGauge` — existe, **evoluir** (doc 04 §5)
+### 4.7 Conformidade — `CfSemicircleProgressGauge` — existe, **evoluir** (doc 04 §4)
 
 | Prop | Valor |
 |---|---|
@@ -147,7 +147,7 @@ Dados: `GET …/summary`. Os quatro cards aceitam clique (`onSelect`) e teclado.
 
 Dentro de `CfChartCard title="Conformidade" hint="Notas casadas entre Protheus e XML"`.
 
-### 4.8 Top 8 fornecedores — `CfHorizontalValueBars` — existe, **evoluir** (doc 04 §6)
+### 4.8 Top 8 fornecedores — `CfHorizontalValueBars` — existe, **evoluir** (doc 04 §5)
 
 `CfChartCard`: `title="Top 8 fornecedores"`, `hint="Por número de ocorrências. A cor indica a parte das notas do fornecedor com divergência."`, `headerActions` = legenda curta («até 20% · 20–50% · acima de 50%»).
 
@@ -160,7 +160,7 @@ Dentro de `CfChartCard title="Conformidade" hint="Notas casadas entre Protheus e
 | `layout` | `"stacked"` |
 | `emptyMessage` | «Nenhuma ocorrência nesta seleção.» |
 
-### 4.9 Ocorrências por tema — **`CfDistributionDonut`** — novo (doc 04 §2)
+### 4.9 Ocorrências por tema — **`CfDistributionDonut`** — novo (doc 04 §1)
 
 `CfChartCard`: `title="Ocorrências por tema"`, `hint="Clique para filtrar."`.
 
@@ -196,7 +196,7 @@ Dentro de `CfChartCard title="Conformidade" hint="Notas casadas entre Protheus e
 | `cte` | CT-e | total |
 | `tes` | TES usadas | total |
 
-### 4.12 Tabela — `DataTableSection` (cfDataTableUi) + `CfSegmentToggle` + **`CfResolutionStatusCell`** — existe / novo (doc 04 §3)
+### 4.12 Tabela — `DataTableSection` (cfDataTableUi) + `CfSegmentToggle` + **`CfResolutionStatusCell`** — existe / novo (doc 04 §2)
 
 Comum às abas:
 

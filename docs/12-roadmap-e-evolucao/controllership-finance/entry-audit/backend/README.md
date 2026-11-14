@@ -19,10 +19,10 @@ D1 (motor na BFF), D2 (dados automáticos), D4 (tudo com `controllership-finance
 ### 3.1 Fluxo de uma auditoria
 
 1. Alguém pede a auditoria: botão na página **ou** um comando à CLARA («audita as entradas de outubro»).
-2. A BFF cria uma **análise** (`entry_audit_analysis`: período, data de referência, filiais, tipos de documento, parâmetros) com uma **execução por filial** (`entry_audit_run`, status `queued`) e responde na hora com o identificador. Se já existe uma análise em andamento com os mesmos filtros de execução, devolve a mesma (idempotente).
+2. A BFF cria uma **análise** (`entry_audit_analysis`: período De/Até, tipos de nota, filiais) com uma **execução por filial** (`entry_audit_run`, status `queued`) e responde na hora com o identificador. Se já existe uma análise em andamento com os mesmos filtros de execução, devolve a mesma (idempotente).
 3. Um **worker dentro da BFF** pega a execução. É o mesmo padrão do job de notificações que já roda no `lifespan` da BFF (`startup/notification_dispatch_job`).
 4. O worker busca as fontes:
-   - Protheus pela api-delpi: SF1, SD1, SF4, SFT e fornecedores (SA2) da filial no período (data de referência: recebimento, como a SF1 da skill);
+   - Protheus pela api-delpi: SF1, SD1, SF4, SFT e fornecedores (SA2) da filial no período informado (pela data de recebimento, como na exportação da SF1 hoje), só dos **tipos de nota** escolhidos;
    - XML pela financial-api: NF-e e CT-e da filial pela data de emissão, com folga antes do início do período para pegar notas emitidas antes e recebidas dentro dele, e os eventos de cancelamento. XML já baixado antes é reaproveitado do cache por chave de acesso, porque XML não muda.
 5. O worker roda o **motor de regras** (domínio puro) e grava o resultado: notas casadas, ocorrências, notas sem par, CT-e, TES usadas.
 6. O status de «resolvido» das ocorrências que continuam existindo é mantido pela **chave estável**.
@@ -34,7 +34,7 @@ Prefixo no padrão dos relatórios financeiros: `/financeiro/entry-audit`. Só l
 
 | Método e rota | Parâmetros | Retorna |
 |---|---|---|
-| `GET /financeiro/entry-audit/documents` | `branch`, `received_from`, `received_to`, `page`, `page_size` | cabeçalhos SF1 + CNPJ/UF do fornecedor (SA2) |
+| `GET /financeiro/entry-audit/documents` | `branch`, `received_from`, `received_to`, `note_types`, `page`, `page_size` | cabeçalhos SF1 + CNPJ/UF do fornecedor (SA2) |
 | `GET /financeiro/entry-audit/items` | mesmos filtros | itens SD1 dos mesmos documentos |
 | `GET /financeiro/entry-audit/fiscal-book` | mesmos filtros | itens do livro fiscal (SFT) dos mesmos documentos |
 | `GET /financeiro/entry-audit/tes` | — | cadastro de TES (SF4) inteiro |
@@ -59,8 +59,8 @@ Prefixo `/entry-audit`. Todas exigem `controllership-finance.access` (D4). A uni
 
 | Método e rota | Uso |
 |---|---|
-| `POST /entry-audit/analyses` | body `{date_from, date_to, date_basis: "received", branches: ["01","02"], document_types: ["nfe","cte"], params: {presumed_credit_tes: "004", freight_cfop_suffix: "352"}}` → 202 com a análise criada (ou a que já está em andamento com os mesmos filtros) |
-| `GET /entry-audit/analyses/options` | filiais permitidas (código, nome, UF) e padrões dos parâmetros avançados |
+| `POST /entry-audit/analyses` | body `{date_from, date_to, note_types: ["N", …], branches: ["01","02"]}` (período livre: nenhuma data fixada pela BFF) → 202 com a análise criada (ou a que já está em andamento com os mesmos filtros) |
+| `GET /entry-audit/analyses/options` | filiais permitidas (código, nome, UF) e tipos de nota do Protheus (código, descrição, marcado por padrão) |
 | `GET /entry-audit/analyses` | histórico: filtros `date_from`, `date_to`, `branch`, `status`; paginação |
 | `GET /entry-audit/analyses/{id}` | status, andamento por filial (etapa, documentos lidos, XML baixados), contagens, erro |
 | `POST /entry-audit/analyses/{id}/rerun` | reexecuta com os mesmos filtros (ou só a filial que falhou: `{branches: ["02"]}`) |
@@ -120,6 +120,14 @@ Migration `V023` no schema `controllership_finance`, com as tabelas da seção 7
 
 A execução é **direta**, sem prepare/confirmação: não altera dado de negócio (só cria o resultado da auditoria), é idempotente por período e filiais e o owner quer que a CLARA faça o trabalho num comando só (D6). Resolver e reabrir também são diretos. Catálogo completo da CLARA em [../mcp/README.md](../mcp/README.md).
 
+### 3.8 Filtros da execução e configuração
+
+Os filtros que o usuário informa são os **dois que ele usa hoje**: o **período** (De/Até, livre — a BFF não fixa nem sugere datas), aplicado na data de recebimento como na exportação da SF1, e os **tipos de nota**, que hoje ele filtra no Excel. A filial vem da escolha de filiais (a skill roda uma filial por vez).
+
+Os parâmetros que na skill eram argumentos fixos — TES do crédito presumido de SC (`004`) e final do CFOP de frete (`352`) — viram **configuração da BFF** (variáveis de ambiente com esses padrões), fora da tela e fora do pedido. Cada análise grava a versão da configuração usada.
+
+**TO_INVENTORY:** qual coluna é o «tipo de nota» filtrado hoje — `Tipo da Nota` (F1_TIPO: N, D, B, C, I, P) ou `Espec.Docum.` (F1_ESPECIE: SPED, CTE, NFS…) — e quais valores ficam marcados. Vem dos exemplos do Gustavo (mcp §7, P8). A api-delpi devolve os dois campos de qualquer forma; o filtro é aplicado na consulta.
+
 ## 4. Dados necessários (a confirmar na E0)
 
 | Fonte | Campos usados pelo motor (ver `scripts/regras.py`) | Owner |
@@ -139,7 +147,7 @@ A execução é **direta**, sem prepare/confirmação: não altera dado de negó
 
 | Tabela | Conteúdo |
 |---|---|
-| `entry_audit_analysis` | período (De/Até), data de referência, filiais, tipos de documento, parâmetros, status agregado, quem pediu (usuário ou CLARA em nome do usuário), datas |
+| `entry_audit_analysis` | período (De/Até), tipos de nota, filiais, versão da configuração usada, status agregado, quem pediu (usuário ou CLARA em nome do usuário), datas |
 | `entry_audit_run` | uma por filial da análise: status (`queued`/`running`/`done`/`failed`), etapa e andamento, contagens, versão do motor, hash das fontes, erro |
 | `entry_audit_document` | notas casadas (cabeçalho comparado), situação |
 | `entry_audit_occurrence` | ocorrência: chave estável, severidade, tema, ocorrência, NF, fornecedor, item, campo, valor Protheus, valor XML, diferença, TES, por quê, ação sugerida, regra |

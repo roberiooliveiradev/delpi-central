@@ -4,6 +4,7 @@
 |---|---|
 | Status | **DESIGN_DRAFT** |
 | Data | 2026-11-13 |
+| Nota | O filtro de período usa dois `DateField` (De/Até) que já existem: período livre, sem atalhos, como na skill (decisão do owner, 2026-11-13). Por isso não há componente novo de período. |
 | Usado por | páginas [01](./01-pagina-entrada-e-execucao.md), [02](./02-pagina-dashboard-da-analise.md), [03](./03-pagina-detalhe-da-ocorrencia.md) |
 | Baseline | `@delpi/plugin-ui` no HEAD `08825074` |
 
@@ -20,78 +21,16 @@
 
 | § | Componente | Tipo | Pasta | Onde é usado |
 |---|---|---|---|---|
-| 1 | `PeriodRangeFilter` | **novo** | `components/layout/` | P01 |
-| 2 | `DistributionDonut` | **novo** | `components/charts/` | P02 (temas) |
-| 3 | `ResolutionStatusCell` | **novo** | `components/data/` | P02 (tabelas), P03 (rodapé) |
-| 4 | `ScopeChipBar` | evoluir | `components/feedback/` | P02 (filtros ativos) |
-| 5 | `SemicircleProgressGauge` | evoluir | `components/charts/` | P02 (conformidade) |
-| 6 | `HorizontalValueBars` | evoluir | `components/charts/` | P02 (fornecedores, severidade, TES) |
-| 7 | `ComparativeAreaChart` | evoluir | `components/charts/` | P02 (por dia) |
-| 8 | `utils/periodPreset` + `QuickPeriodSelector` | evoluir | `utils/`, `components/layout/` | P01 (atalhos novos) |
+| 1 | `DistributionDonut` | **novo** | `components/charts/` | P02 (temas) |
+| 2 | `ResolutionStatusCell` | **novo** | `components/data/` | P02 (tabelas), P03 (rodapé) |
+| 3 | `ScopeChipBar` | evoluir | `components/feedback/` | P02 (filtros ativos) |
+| 4 | `SemicircleProgressGauge` | evoluir | `components/charts/` | P02 (conformidade) |
+| 5 | `HorizontalValueBars` | evoluir | `components/charts/` | P02 (fornecedores, severidade, TES) |
+| 6 | `ComparativeAreaChart` | evoluir | `components/charts/` | P02 (por dia) |
 
 ---
 
-## 1. `PeriodRangeFilter` — novo
-
-Filtro de período reutilizável: atalhos (Hoje, Ontem, Esta semana, Semana passada, Últimos 7 dias, Este mês, Mês anterior…) mais datas De/Até. Compõe o que já existe — `QuickPeriodSelector`, `DateField` e as funções de `utils/periodPreset.ts` (`resolvePeriodPreset`, `detectPeriodPreset`) — sem duplicar a lógica de datas. Fuso: `America/Sao_Paulo`, como o util.
-
-### Props
-
-```ts
-export type PeriodRangeValue = {
-  preset: PeriodPresetId;   // "custom" quando o usuário edita as datas
-  from: string;             // "YYYY-MM-DD"
-  to: string;               // "YYYY-MM-DD"
-};
-
-export type PeriodRangeValidation =
-  | { valid: true }
-  | { valid: false; reason: "empty" | "inverted" | "too_long" | "out_of_bounds" };
-
-export type PeriodRangeFilterLabels = {
-  preset: string;          // "Período"
-  from: string;            // "De"
-  to: string;              // "Até"
-  inverted: string;        // "A data inicial é depois da final."
-  tooLong: string;         // "O período passa de {max} dias."
-  outOfBounds: string;     // "Data fora do intervalo permitido."
-  empty: string;           // "Informe as duas datas."
-};
-
-export type PeriodRangeFilterProps = {
-  value: PeriodRangeValue;
-  onChange: (value: PeriodRangeValue, validation: PeriodRangeValidation) => void;
-  presets?: readonly PeriodPresetId[];       // padrão: todos de PERIOD_PRESET_IDS
-  referenceLabel?: string;                   // ex.: "Recebimento" → mostrado como "(pela data de recebimento)"
-  minDate?: string;
-  maxDate?: string;                          // padrão: hoje
-  maxRangeDays?: number;                     // sem limite quando ausente
-  required?: boolean;
-  disabled?: boolean;
-  density?: "default" | "compact";
-  layout?: "inline" | "stacked";             // inline no FilterBar; stacked em painel mobile
-  labels?: Partial<PeriodRangeFilterLabels>;
-  idPrefix?: string;
-  prefix?: string;
-  className?: string;
-  classNames?: Partial<PeriodRangeFilterClassNames>;
-};
-```
-
-### Comportamento
-
-- Escolher um atalho calcula `from`/`to` com `resolvePeriodPreset` e chama `onChange`.
-- Editar uma data muda `preset` para `"custom"`. Se as datas coincidirem com um atalho, `detectPeriodPreset` volta a marcá-lo.
-- Validação local; a mensagem aparece sob os campos (`aria-describedby`), e `onChange` sempre informa a validação, para o consumidor desabilitar a ação.
-- `layout="inline"`: atalho + De + Até na mesma linha, dentro do `FiltersRow` (sem moldura própria: regra de borda do padrão visual §14). `layout="stacked"`: um embaixo do outro.
-
-### Testes mínimos
-
-Atalho calcula datas certas (inclusive virada de mês e ano); edição manual vira `custom`; datas iguais a um atalho voltam ao atalho; cada validação; teclado; leitor de tela anuncia o erro.
-
----
-
-## 2. `DistributionDonut` — novo
+## 1. `DistributionDonut` — novo
 
 Rosca de distribuição com lista ao lado, em que cada fatia e cada item da lista filtram. Hoje a rosca existe só dentro do `ConfigurableSeriesChart` (`chartType="pie"`, `pieInnerRadiusRatio`), cuja `interaction` é de edição, não de seleção. O novo componente reaproveita o desenho de `ChartSeriesPie` (sem duplicar o cálculo dos arcos) e acrescenta seleção.
 
@@ -144,7 +83,7 @@ Arcos somam 360°; seleção e desmarcar; «Outros» com `maxItems`; teclado; va
 
 ---
 
-## 3. `ResolutionStatusCell` — novo
+## 2. `ResolutionStatusCell` — novo
 
 Controle de «tratado / não tratado» de um registro: botão **Resolver**; quando resolvido, «✓ 13/11» com quem e quando e o botão **Reabrir**. Serve para tabelas, cards e rodapé de detalhe.
 
@@ -193,7 +132,7 @@ Os três estados; Promise com sucesso e com erro (volta ao estado anterior); cli
 
 ---
 
-## 4. `ScopeChipBar` — evoluir
+## 3. `ScopeChipBar` — evoluir
 
 Hoje: `chips: ScopeChip[]` com `{id, label, active?, onSelect?}` (chips de escolha de escopo). Falta remover um chip e limpar todos, para servir de «filtros ativos».
 
@@ -221,7 +160,7 @@ Sem as props novas: render e comportamento idênticos aos de hoje (caracterizaç
 
 ---
 
-## 5. `SemicircleProgressGauge` — evoluir
+## 4. `SemicircleProgressGauge` — evoluir
 
 Hoje a legenda (`legend: {id,label,count,tone}[]`) é só leitura.
 
@@ -240,7 +179,7 @@ Sem `onLegendSelect`: legenda como hoje.
 
 ---
 
-## 6. `HorizontalValueBars` — evoluir
+## 5. `HorizontalValueBars` — evoluir
 
 Hoje: `items: {id,label,value,valueLabel?,meta?}[]`, `onItemClick`, cor única.
 
@@ -267,7 +206,7 @@ Com `onItemClick`, cada barra já é acionável; a evolução garante `aria-pres
 
 ---
 
-## 7. `ComparativeAreaChart` — evoluir
+## 6. `ComparativeAreaChart` — evoluir
 
 Hoje: `data`, `series`, `height`, `valueFormatter`, `smooth`… sem clique.
 
@@ -286,50 +225,10 @@ Com `onPointSelect`, os pontos do eixo X ficam navegáveis por teclado (setas es
 
 ---
 
-## 8. `utils/periodPreset` e `QuickPeriodSelector` — evoluir
-
-O usuário escolhe qualquer período: hoje, ontem, a semana, a semana passada, os últimos 7 dias, o mês. O util de períodos (`utils/periodPreset.ts`) hoje tem `today`, `this_week`, `this_month`, `last_month`, `this_quarter`, `this_year`, `last_12_months`, `custom`. Faltam três atalhos.
-
-### Mudança
-
-```ts
-export const PERIOD_PRESET_IDS = [
-  "today",
-  "yesterday",      // NOVO: dia anterior
-  "this_week",
-  "last_week",      // NOVO: segunda a domingo da semana anterior
-  "last_7_days",    // NOVO: hoje e os 6 dias anteriores
-  "this_month",
-  "last_month",
-  "this_quarter",
-  "this_year",
-  "last_12_months",
-  "custom",
-] as const;
-```
-
-- `resolvePeriodPreset` e `detectPeriodPreset` passam a tratar os três ids, no fuso `America/Sao_Paulo`, como os demais. Semana começa na segunda-feira (o mesmo critério do `this_week` atual — confirmar no código antes de mudar).
-- **Para não mudar quem já usa:** `PERIOD_PRESET_OPTIONS` (a lista que o `QuickPeriodSelector` mostra) **continua com os itens de hoje**. Os novos só aparecem para quem pedir.
-
-### `QuickPeriodSelector` — prop nova
-
-```ts
-export type QuickPeriodSelectorProps = {
-  // …props atuais sem mudança
-  presets?: readonly PeriodPresetId[];   // NOVO: quais atalhos mostrar e em que ordem; padrão = lista atual
-};
-```
-
-O `PeriodRangeFilter` (§1) repassa o seu `presets` para o `QuickPeriodSelector`.
-
-### Testes mínimos
-
-Cada atalho novo nas viradas de semana, mês e ano; `detectPeriodPreset` reconhece os novos; sem `presets`, o `QuickPeriodSelector` mostra exatamente as opções de hoje (caracterização).
-
 ## Ordem de execução sugerida (E5.2 e E5.3 do planejamento)
 
-1. Testes de caracterização dos componentes evoluídos (§4–§8) passando no código atual.
-2. Evoluções §4–§8, com os testes novos.
-3. Componentes novos §1–§3, com demos no catálogo.
+1. Testes de caracterização dos componentes evoluídos (§3–§6) passando no código atual.
+2. Evoluções §3–§6, com os testes novos.
+3. Componentes novos §1–§2, com demos no catálogo.
 4. Adapters `Cf*` no Portal (doc 00, regra 3).
 5. Regressão: suíte do plugin-ui + build/typecheck dos consumidores de cada componente evoluído.

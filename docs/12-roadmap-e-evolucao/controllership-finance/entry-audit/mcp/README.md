@@ -69,7 +69,7 @@ Mesmas seis tools; só entradas novas no catálogo, todas com gate `controllersh
 
 | Tool | `entity.action` | Modo | Parâmetros | Para quê |
 |---|---|---|---|---|
-| `read` | `entry_audit.options` | — | — | filiais permitidas e padrões dos parâmetros |
+| `read` | `entry_audit.options` | — | — | filiais permitidas e tipos de nota (com o padrão) |
 | `read` | `entry_audit.analysis` | — | `ref` (id) ou filtros `date_from`, `date_to`, `branch`, `status` | histórico; status e andamento de uma análise |
 | `read` | `entry_audit.summary` | — | `ref` + filtros da análise | os KPIs e a conformidade do dashboard |
 | `read` | `entry_audit.daily` | — | idem | divergências por dia × período anterior |
@@ -79,7 +79,7 @@ Mesmas seis tools; só entradas novas no catálogo, todas com gate `controllersh
 | `read` | `entry_audit.occurrence` | — | `ref` (análise) + `key` | detalhe com por quê, o que fazer, regra e histórico |
 | `read` | `entry_audit.documents` / `entry_audit.unmatched` / `entry_audit.cte` / `entry_audit.tes` | — | `ref` + filtros | as demais abas |
 | `analyze` | `analysis_type=entry_audit_findings` | — | `ref`, filtros, `compare_to` (outra análise, opcional) | achados FACT/RECOMMENDATION agrupados por causa (TES, cadastro, fornecedor), no formato da skill, com direcionamentos e comparação |
-| `execute` | `entry_audit.run` | **direto** (D6) | `date_from`, `date_to`, `branches` (padrão: todas permitidas), `document_types`, `params` | executa a auditoria; idempotente |
+| `execute` | `entry_audit.run` | **direto** (D6) | `date_from`, `date_to`, `note_types` (padrão: os da página), `branches` (padrão: todas permitidas) | executa a auditoria; idempotente |
 | `execute` | `entry_audit.rerun` | **direto** | `ref`, `branches` | reexecuta, inclusive só a filial que falhou |
 | `execute` | `entry_audit.resolve` / `entry_audit.reopen` | **direto** | `key`, `kind` (`occurrence`\|`unmatched`) | status compartilhado |
 | `knowledge` | domínio `controllership` | — | `query` | fichas AE-00 a AE-15 |
@@ -90,7 +90,7 @@ Cada entrada tem `description` curta no catálogo e contrato em `get_context(top
 
 Proposta de bloco a acrescentar às instruções do servidor (PT-BR na conversa; o texto técnico do bloco segue o idioma atual das instruções):
 
-1. **Pedido de auditoria** («audita as entradas», «confere as notas de outubro»): a auditoria é **sob demanda, em qualquer dia** (decisão do owner): chamar `execute entry_audit.run` com o período pedido e todas as filiais permitidas; **o período é sempre o que o usuário escolher**, de qualquer tamanho: converter o que ele disse em datas no fuso `America/Sao_Paulo` («hoje», «ontem», «esta semana», «semana passada», «últimos 7 dias», «este mês», «mês passado», «outubro», «de 05/11 a 12/11») e repetir as datas na resposta; se ele não disse o período, **perguntar** numa frase, oferecendo os atalhos (hoje, ontem, esta semana, este mês, mês anterior), em vez de supor. Dizer que a execução começou; acompanhar com `read entry_audit.analysis` até `done`/`failed`; não inventar resultado parcial.
+1. **Pedido de auditoria** («audita as entradas», «confere as notas de outubro»): a auditoria é **sob demanda, em qualquer dia** (decisão do owner): chamar `execute entry_audit.run` com o período pedido e todas as filiais permitidas; usar **o período (De/Até) e os tipos de nota que o usuário disser** — os mesmos dois filtros que ele aplica hoje na exportação e no Excel; converter expressões como «ontem» ou «outubro» em datas no fuso `America/Sao_Paulo` e repetir as datas na resposta; se faltar o período, **perguntar** («de que data até que data?») em vez de supor; sem tipos de nota ditos, usar o padrão da página e dizer quais foram. Dizer que a execução começou; acompanhar com `read entry_audit.analysis` até `done`/`failed`; não inventar resultado parcial.
 2. **Apresentar o resultado** (formato da skill): uma linha com o casamento (notas e CT-e casados, quantas sem divergência, filiais, período) → **o que pede ação** (Alta), agrupado **pela causa** (a TES ou o cadastro que gera o erro), com fornecedor, NF e valor → **corrigir/verificar** (Média) → **sem impacto** (Baixa) numa frase → notas sem par só as que não se explicam por período. O bloco «Não apontado» só se o usuário perguntar.
 3. **Explicar o dashboard**: usar `summary`, `daily` e `breakdowns` da mesma análise e filtros que o usuário está vendo; dizer o que cada número conta (ficha AE-13).
 4. **Direcionamentos**: sugerir a correção certa para cada causa (ex.: cadastrar o fornecedor no Configurador de Tributos; corrigir a TES X; pedir o XML que falta), citando a ficha da regra. Recomendação é RECOMMENDATION, nunca fato.
@@ -122,11 +122,12 @@ Proposta de bloco a acrescentar às instruções do servidor (PT-BR na conversa;
 | P5 | Quais são as TES de frete com e sem crédito usadas hoje (a skill deduz pela SF4, CFOP x352)? Confirmar a TES 036 (crédito com livro Outros). | AE-05 |
 | P6 | Exemplos reais recentes (de preferência a lista que a contabilidade mandou de outubro) para semear os casos | AE-15 |
 | P7 | Textos oficiais das normas (LC 123, RICMS/SC, COPAT) ou o link interno que a contabilidade usa | AE-11 |
+| P8 | Os exemplos do Gustavo: qual coluna ele filtra como «tipo de nota» no Excel (`Tipo da Nota` = F1_TIPO ou `Espec.Docum.` = F1_ESPECIE) e quais valores ficam marcados | filtro de execução (front-end 01, back-end §3.8), diretiva 1 |
 
 ## 8. Registro
 
 | Data | Evento |
 |---|---|
-| 2026-11-13 | Owner: o usuário escolhe qualquer período; a CLARA converte o que foi dito em datas e pergunta quando não for dito (P1 respondida). |
+| 2026-11-13 | Owner: período De/Até livre e tipos de nota, como hoje; a CLARA usa o que o usuário disser e pergunta o período quando faltar (P1 respondida). P8 aberta: tipos de nota. |
 | 2026-11-13 | Owner: auditoria sob demanda, qualquer dia (P3 respondida; P1 parcial). Movido para `entry-audit/mcp/`. |
 | 2026-11-13 | Organização inicial do conhecimento e das capacidades da CLARA para a auditoria de entradas. |

@@ -9,16 +9,16 @@
 
 ## 1. Objetivo
 
-É a porta de entrada. O usuário escolhe **o período** (principal), as filiais e os tipos de documento, executa a auditoria e acompanha o andamento. Abaixo, a lista de **análises anteriores** para abrir uma já feita. Quando a análise termina, a página leva ao dashboard (doc 02).
+É a porta de entrada. O usuário informa **o período (De/Até)** e **os tipos de nota** — os mesmos dois filtros que hoje são feitos na exportação do Protheus e no Excel — e as filiais, executa a auditoria e acompanha o andamento. Abaixo, a lista de **análises anteriores** para abrir uma já feita. Quando a análise termina, a página leva ao dashboard (doc 02).
 
 Entradas possíveis:
 - menu do Portal → «Auditoria de entradas»;
-- atalho do Fechamento mensal → abre com `preset=custom&from=<1º dia da competência>&to=<último dia>`;
+- atalho do Fechamento mensal → abre com `from=<1º dia da competência>&to=<último dia>`;
 - link de uma análise em andamento (`?analysis=<id>`), por exemplo enviado pela CLARA.
 
 ## 2. Estado na URL
 
-`preset`, `from`, `to`, `basis`, `branches`, `docs`, `analysis` (análise em andamento acompanhada). Ao abrir sem parâmetros, o formulário vem com `preset=this_month` (este mês até hoje) só como ponto de partida — o usuário escolhe o período que quiser, de um dia a um ano; `basis=received`, `branches=` todas as filiais permitidas, `docs=nfe,cte`.
+`from`, `to`, `types`, `branches`, `analysis` (análise em andamento acompanhada). O período é livre: nenhuma data vem fixada nem sugerida — o usuário informa De e Até (pode ser um dia, uma semana, um mês). `types` vem com os tipos de nota padrão (a definir com os exemplos do Gustavo, mcp §7 P8); `branches` com todas as filiais permitidas.
 
 ## 3. Estrutura e dimensionamento
 
@@ -28,8 +28,8 @@ Entradas possíveis:
 │ h1: Auditoria de entradas                                    [▶ Executar]    │
 │ descrição: Protheus × XML de NF-e e CT-e                                      │
 │ ┌ FilterBar ────────────────────────────────────────────────────────────────┐ │
-│ │ PeriodRangeFilter [preset ▾][De][Até]  Data de referência ▾  Filiais ▾     │ │
-│ │ Documentos ▾  ⚙ Parâmetros avançados                                      │ │
+│ │ De [__/__/____]  Até [__/__/____]  Tipos de nota ▾  Filiais ▾              │ │
+│ │                                                                           │ │
 │ └───────────────────────────────────────────────────────────────────────────┘ │
 └───────────────────────────────────────────────────────────────────────────────┘
 [ StateBanner: análise em andamento + ProgressTracker + barra ]   (só quando há)
@@ -74,24 +74,16 @@ Campos dentro da barra, nesta ordem:
 
 | Campo | Componente | Props principais |
 |---|---|---|
-| Período | **`PeriodRangeFilter`** — novo (doc 04 §1) | `value={{preset, from, to}}`, `onChange`, `presets={["today","yesterday","this_week","last_week","last_7_days","this_month","last_month","custom"]}`, `referenceLabel="Recebimento"`, `maxRangeDays={366}`, `required`. Atalhos: Hoje · Ontem · Esta semana · Semana passada · Últimos 7 dias · Este mês · Mês anterior · Personalizado |
-| Data de referência | `FilterSelectField` | `label="Data de referência"`, `options=[{value:"received",label:"Recebimento"}]`, `disabled` (só recebimento na 1ª versão; o campo fica visível para deixar claro o critério) |
-| Filiais | `CfMultiSelectField` (← `MultiSelectField`) | `label="Filiais"`, `options` da BFF (filiais permitidas, rótulo «Matriz (01)», «Filial (02)»), `selectedValues`, `showSelectedTags={false}`, `showBulkActions`, `emptyLabel="Todas"` |
-| Documentos | `CfMultiSelectField` | `label="Documentos"`, `options=[NF-e, CT-e]`, `selectedValues`, mínimo 1 |
-| Parâmetros avançados | `CfActionButton` (variante secundária) que abre `CfDialog` | ver 4.3 |
+| De | `CfDateField` (← `DateField`) | `label="De"`, `type="date"`, `value={from}`, `onChange`, `required` |
+| Até | `CfDateField` | `label="Até"`, `type="date"`, `value={to}`, `onChange`, `required`; `hint="Data de recebimento das notas (como na exportação da SF1)."` |
+| Tipos de nota | `CfMultiSelectField` (← `MultiSelectField`) | `label="Tipos de nota"`, `options` da BFF (`GET …/options` → tipos de nota do Protheus com código e descrição), `selectedValues={types}`, `showBulkActions`, `searchable`, mínimo 1 |
+| Filiais | `CfMultiSelectField` | `label="Filiais"`, `options` da BFF (filiais permitidas, rótulo «Matriz (01)», «Filial (02)»), `selectedValues`, `showSelectedTags={false}`, `showBulkActions`, `emptyLabel="Todas"` |
 
-### 4.3 Parâmetros avançados — `CfDialog` + `CfTextField` — existem
+Validação da página (sem componente novo): De e Até preenchidos e `De ≤ Até`; erro mostrado no `hint` do campo Até e «Executar» desabilitado.
 
-Dois campos, com o padrão já preenchido e a explicação em `hint`:
+**Tipos de nota — a confirmar (TO_INVENTORY).** Hoje o usuário filtra no Excel por tipo de nota depois de exportar a SF1. A skill lê as colunas `Tipo da Nota` (F1_TIPO: N normal, D devolução, B beneficiamento, C complemento de preço/frete, I complemento de ICMS, P complemento de IPI) e `Espec.Docum.` (F1_ESPECIE: SPED, CTE, NFS…). Falta saber qual das duas o Gustavo filtra e quais valores ficam marcados — vem dos exemplos dele (mcp §7, P8).
 
-| Campo | Props |
-|---|---|
-| TES do crédito presumido de SC | `label="TES do crédito presumido (SC)"`, `value="004"`, `hint="Compras de indústria do Simples de SC devem entrar nesta TES."`, 3 dígitos |
-| Final do CFOP de frete | `label="Final do CFOP de frete"`, `value="352"`, `hint="352 = estabelecimento industrial."`, 3 dígitos |
-
-Ações: «Restaurar padrão» e «Aplicar». Valores diferentes do padrão aparecem como chip no PageHero (`badge`): «Parâmetros alterados».
-
-### 4.4 Execução em andamento — `CfStateBanner` + `CfProgressTracker` + `CfInlineLoadingProgress` — existem
+### 4.3 Execução em andamento — `CfStateBanner` + `CfProgressTracker` + `CfInlineLoadingProgress` — existem
 
 Visível quando há `analysis` na URL ou uma análise do usuário com `status in (queued, running)`.
 
@@ -106,7 +98,7 @@ Falha: `CfStateBanner variant="error"` por filial que falhou, com o motivo devol
 
 Atualização: `GET /entry-audit/analyses/{id}` a cada 3s enquanto `running` (React Query `refetchInterval`), parando em `done`/`failed`. Ao concluir: anúncio «Auditoria concluída» e navegação para o dashboard (doc 02), com botão «Abrir resultado» caso o usuário tenha saído do foco.
 
-### 4.5 Vazio — `CfEmptyGuidance` (← `EmptyGuidance`) — existe
+### 4.4 Vazio — `CfEmptyGuidance` (← `EmptyGuidance`) — existe
 
 | Prop | Valor |
 |---|---|
@@ -116,7 +108,7 @@ Atualização: `GET /entry-audit/analyses/{id}` a cada 3s enquanto `running` (Re
 | `children` | `CfActionButton` «Executar auditoria» |
 | `role` | `"status"` |
 
-### 4.6 Análises anteriores — `CfSectionCard` + `DataTableSection` (cfDataTableUi) — existem
+### 4.5 Análises anteriores — `CfSectionCard` + `DataTableSection` (cfDataTableUi) — existem
 
 `CfSectionCard`: `title="Análises anteriores"`, `subtitle="Clique para abrir o resultado"`.
 
@@ -150,7 +142,7 @@ Mobile (≤ 768px): `DataTableSection` alterna para cards nativos; cada card usa
 
 | Bloco | Rota da BFF |
 |---|---|
-| Opções de filiais | `GET /entry-audit/analyses/options` → filiais permitidas (código, nome, UF) e padrões dos parâmetros avançados |
+| Opções | `GET /entry-audit/analyses/options` → filiais permitidas (código, nome, UF) e tipos de nota (código, descrição, padrão marcado) |
 | Executar | `POST /entry-audit/analyses` (corpo no plano §4A.4) → 202 `{analysis}` |
 | Andamento | `GET /entry-audit/analyses/{id}` |
 | Reexecutar filial | `POST /entry-audit/analyses/{id}/rerun` |
@@ -163,7 +155,7 @@ Mobile (≤ 768px): `DataTableSection` alterna para cards nativos; cada card usa
 | Estado | Comportamento |
 |---|---|
 | Carregando opções | `CfLoadingCard` no lugar da FilterBar (padrão de loading do Portal) |
-| Período inválido (`from > to`, acima de 366 dias, vazio) | erro no próprio `PeriodRangeFilter`; «Executar» desabilitado |
+| Período inválido (vazio ou `De > Até`) | erro no campo Até; «Executar» desabilitado |
 | Análise igual já em andamento | o POST devolve a existente; a página passa a acompanhá-la e mostra «Já existe uma auditoria em andamento para estes filtros.» |
 | Erro ao executar | `CfStateBanner variant="error"` com a mensagem da BFF; filtros preservados |
 | Histórico vazio | `emptyMessage` da tabela |

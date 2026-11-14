@@ -83,7 +83,7 @@ No topo do corpo: `CfStatusBadge` da severidade e `CfStatusBadge` do status (`wa
 
 `title="Histórico"`. `CfTimeline` com eventos: «Aberta pela execução de 13/11 22:10», «Resolvida por Michael em 14/11 09:02», «Reaberta por …», «Continua na execução de 20/11» (quando reaparece numa reexecução). Dados: `occurrence.history` da BFF.
 
-### 3.8 Rodapé — `CfResolutionStatusCell` (novo, doc 04 §3) + `CfActionButton` — existe/novo
+### 3.8 Rodapé — `CfResolutionStatusCell` (novo, doc 04 §2) + `CfActionButton` — existe/novo
 
 | Elemento | Props |
 |---|---|

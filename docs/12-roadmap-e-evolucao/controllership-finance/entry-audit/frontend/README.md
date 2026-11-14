@@ -17,7 +17,7 @@ Wireframes completos: [wireframes-auditoria-entradas.html](./wireframes-auditori
 TopBar do Portal
 PageHero compact ─ título, período, última execução, fontes   [Exportar] [Executar / Reexecutar]
 └─ FilterBar
-   ├─ Filtros da execução: Período (preset + De/Até), Data de referência, Filiais, Documentos, Parâmetros avançados
+   ├─ Filtros da execução: De, Até, Tipos de nota, Filiais (os dois filtros de hoje: período e tipo de nota)
    └─ Filtros da análise: Severidade, Tema, Fornecedor, TES, Status, Limpar   (na URL; não reexecutam)
 ScopeChipBar ─ filtros ativos removíveis
 KPIs ×4 ─ Valor conferido · Notas sem divergência · Ocorrências pendentes · Diferença nas altas (com Δ vs período anterior)
@@ -32,7 +32,7 @@ Detalhe da ocorrência ─ painel lateral: valores, por quê, o que fazer, regra
 
 Estados: primeiro acesso (sem análise, com «Análises anteriores»), execução em andamento (etapas e progresso por filial), falha parcial (uma filial falhou, a outra concluiu), vazio por filtro. Mobile: KPIs em 2 colunas, gráficos empilhados, filtros num painel, tabela em cards.
 
-Filtros vindos da skill e do painel: período (no lugar da competência fixa), filiais (matriz/filial, consolidado), severidade, tema, fornecedor, dia (clique no gráfico), status (pendente/resolvida), busca, mais tipo de documento e TES. Os parâmetros da skill (`--tes-presumido 004`, `--cfop-frete 352`) ficam em «Parâmetros avançados» com o padrão preenchido. `--cnpj`, `--uf` e `--filial` deixam de existir para o usuário: vêm do cadastro das filiais.
+Filtros da execução = os dois que o usuário aplica hoje: **período (De/Até, livre)** e **tipos de nota**, mais as filiais (a skill roda uma filial por vez). Filtros da análise = os do painel Raio-X: unidade, severidade, tema, fornecedor, dia (clique no gráfico), status e busca, mais documento (NF-e/CT-e) e TES. Os parâmetros fixos da skill (TES 004 do presumido, final 352 do CFOP de frete) viram configuração da BFF, fora da tela.
 
 ### Componentes do `@delpi/plugin-ui` (resumo; parâmetros no doc 04)
 
@@ -41,7 +41,8 @@ Regra: componente novo nasce no `@delpi/plugin-ui`, genérico (sem «auditoria»
 | Bloco | Componente | Situação | O que falta |
 |---|---|---|---|
 | Cabeçalho | `PageHero` (compact) | existe | — |
-| Período | **`PeriodRangeFilter`** = `QuickPeriodSelector` + `DateField` ×2 | **novo** | composto genérico: preset + De/Até + rótulo da data de referência |
+| Período | `DateField` ×2 (De/Até) | existe | — |
+| Tipos de nota, filiais | `MultiSelectField` | existe | — |
 | Filtros | `FilterBar`, `FiltersRow`, `FilterSelectField`, `MultiSelectField`, `ClearFiltersButton` | existe | — |
 | Filtros ativos | `ScopeChipBar` | evoluir | `onRemove` por chip e «Limpar tudo» |
 | KPIs | `MetricKpiCard` + `TrendDelta` | existe | — |
@@ -76,7 +77,7 @@ Cada documento de página traz: objetivo, rota e estado na URL, dimensionamento 
 
 1. Tudo vem do `@delpi/plugin-ui`. Nenhum componente visual é recriado no MFE.
 2. O MFE usa os **adapters `Cf*`** de `plugins/controllership-finance/src/app/controllershipFinanceUi.ts` quando existem (`CfPageHero`, `CfMetricKpiCard`, `CfSectionCard`, `CfStateBanner`, `CfStatusBadge`, `CfSegmentToggle`, `CfDateField`, `CfSelectField`, `CfPagePath`, `CfEmptyState`, `CfDialog`) e o kit de filtros de `cfFiltersUi.ts` e de tabela de `cfDataTableUi.tsx`.
-3. Os componentes do kit usados aqui que **ainda não têm adapter** no Portal ganham um, no mesmo arquivo, com prefixo `cf` e `CF_PORTAL_SCOPE`: `CfChartCard`, `CfComparativeAreaChart`, `CfSemicircleProgressGauge`, `CfHorizontalValueBars`, `CfBarSeriesChart`, `CfLineSeriesChart`, `CfScopeChipBar`, `CfUnderlineNav`, `CfTrendDelta`, `CfMultiSelectField`, `CfQuickPeriodSelector`, `CfProgressTracker`, `CfInlineLoadingProgress`, `CfProgressSummaryBar`, `CfDrawerShell`, `CfDetailCard`, `CfEmptyGuidance`, `CfHelpTooltip`, `CfTablePaginationNav`, e os novos do [doc 04](./04-componentes-plugin-ui-novos-e-evolucoes.md). O adapter só injeta `classNames`/`prefix`/`portalScopeClassName`; não muda comportamento.
+3. Os componentes do kit usados aqui que **ainda não têm adapter** no Portal ganham um, no mesmo arquivo, com prefixo `cf` e `CF_PORTAL_SCOPE`: `CfChartCard`, `CfComparativeAreaChart`, `CfSemicircleProgressGauge`, `CfHorizontalValueBars`, `CfBarSeriesChart`, `CfLineSeriesChart`, `CfScopeChipBar`, `CfUnderlineNav`, `CfTrendDelta`, `CfMultiSelectField`, `CfProgressTracker`, `CfInlineLoadingProgress`, `CfProgressSummaryBar`, `CfDrawerShell`, `CfDetailCard`, `CfEmptyGuidance`, `CfHelpTooltip`, `CfTablePaginationNav`, e os novos do [doc 04](./04-componentes-plugin-ui-novos-e-evolucoes.md). O adapter só injeta `classNames`/`prefix`/`portalScopeClassName`; não muda comportamento.
 4. Componente que não existe nasce no `@delpi/plugin-ui`, genérico (sem «auditoria», «NF» ou «Protheus» no nome nem na API), com testes e entrada no catálogo do kit. Evolução de componente existente é **aditiva**: props novas opcionais, padrão igual ao de hoje, testes de caracterização antes.
 5. O MFE não calcula regra fiscal nem agrega número: KPIs, gráficos e contagens chegam prontos da BFF ([back-end §3.4](../backend/README.md)).
 
@@ -107,10 +108,8 @@ Filtros que mudam o que se vê ficam na query string, para F5 e link compartilh�
 | Parâmetro | Exemplo | Página |
 |---|---|---|
 | `from`, `to` | `2026-10-01`, `2026-10-31` | 01 |
-| `preset` | `today` \| `yesterday` \| `this_week` \| `last_week` \| `last_7_days` \| `this_month` \| `last_month` \| `custom` | 01 |
-| `basis` | `received` | 01 |
 | `branches` | `01,02` | 01 |
-| `docs` | `nfe,cte` | 01 |
+| `types` | códigos dos tipos de nota, separados por vírgula | 01 |
 | `branch` | `01` \| `all` | 02 |
 | `severity` | `high` | 02 |
 | `theme` | `cte` | 02 |
