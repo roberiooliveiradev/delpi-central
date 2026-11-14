@@ -1119,3 +1119,14 @@ E01 sete campos no card **PASS** (subchecks id/type/requester/officialCode/creat
 **Homologação HML:** deploy governado `delpi-hml-engineering-api` (image `local`, 22/22 containers healthy, V024/V025 aplicadas, 4 produtos publicados, massa `30190123` V1×V2 real). Spec `prc-tracked-products.spec.ts` executada em Chromium real no host HML contra `https://192.168.1.237:18443` com `PLAYWRIGHT_INSECURE=1` (opt-in, TLS self-signed): **16/16 PASS** — desktop, mobile, tablet e mobile-320 × U1-area, U1-URL-state, U2-detalhe, U3-timeline+comparação. Zero chamadas diretas a `/apps/api-delpi/` e zero page errors não tratados em todas as execuções. Screenshots em `~/prc-e2e-run/e2e/artifacts/prc-products-*` (host) e cópias desktop/mobile-320 em `plugins/engineering/e2e/artifacts/` (gitignored).
 
 **Pendências honestas:** tema claro/escuro, zoom 200%, estado 403 real (sem usuário sem permissão provisionado) e teclado end-to-end = `TEST_NOT_RUN`. Escrita real no TOTVS segue `DEFERRED_BY_PO` (§58). `PRD_DEPLOY=NOT_EXECUTED`.
+
+
+## 60. PO/Coordination — rodada de refinamento UX Produtos Acompanhados pós-HML (14/11/2026)
+
+**Decisão:** PO solicitou **registrar** e preparar refinamentos pós-U1/U2/U3, preservando navegação existente e padrão de design limpo, moderno, contextual e Plugin UI-first. **Documento executor autoritativo do pacote de refinamento:** [PRC-TRACK-UX-REFINEMENT-POST-HML-2026-11-14.md](./PRC-TRACK-UX-REFINEMENT-POST-HML-2026-11-14.md), criado na `main` commit `613e800f98a08b9c57541b743f78a488a30ccff9`.
+
+**Observações HML do PO:** produto 30190125 aparece com descrição `#`; comparativo 30190123 V1×V2 apresenta `Antes —` em múltiplos campos; hero U1/U2 com densidade, card duplicado, timeline extensa, ficha com grandes espaços, select/dropdown/scroll possivelmente inconsistentes, IDs truncados; pendentes dark/zoom200/teclado/403 e prova de bundle MFE servido. **NÃO afirmar causa nem bug de domínio sem JSON/coverage e teste**.
+
+**Prioridade:** P0-01 descrição/provenance; P0-02 lacuna comparability versus diff real; P1 compactação hero/tabela/ficha/timeline/comparação, overlay/foco/scroll; P2 IDs originais; G0→G1→G2→G3 com matriz de evidência, owner/consumer, testes e rollout HML. Usar os componentes e tokens oficiais de `@delpi/plugin-ui` (Abstraction Gate para componente novo); preservar snapshot imutável, comparação autoritativa backend, flags, AuthZ, no-op/revisions e fila PRC. Sem import entre MFEs, sem inventar estado TOTVS, **zero writes TOTVS**, **PRD não autorizado**.
+
+**Estado:** `PO_REFINEMENT_SCOPE_APPROVED / SPEC_RECORDED / CODE_NOT_CHANGED_BY_COORDINATION / IMPLEMENTATION_PENDING / HML_QA_NOT_RUN`. Próxima ação: briefing do Devin usando o documento acima como fonte, reancorar HEAD/status antes de qualquer diff. Não alterar gate de publicação de produtos por proposta de UX.
