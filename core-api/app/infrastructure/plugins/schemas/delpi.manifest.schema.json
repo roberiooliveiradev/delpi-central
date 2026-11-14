@@ -123,9 +123,25 @@
           },
 
           "permission": {
-            "type": "string",
-            "minLength": 3,
-            "maxLength": 150
+            "description": "Single permission code, or non-empty unique list for ANY-OF alternative codes (e.g. marketing OR manage).",
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 150
+              },
+              {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 32,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 150
+                }
+              }
+            ]
           },
 
           "showInMenu": { "type": "boolean" },

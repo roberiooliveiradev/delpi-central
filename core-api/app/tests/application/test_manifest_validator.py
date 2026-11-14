@@ -60,3 +60,29 @@ def test_valid_manifest_passes():
 
     assert result.is_valid is True
     assert result.errors == []
+
+
+def test_valid_manifest_accepts_permission_any_of():
+    validator = ManifestValidator()
+    m = minimal_valid_manifest()
+    m["permissions"] = [
+        {"code": "crm.access", "name": "Access CRM", "module": "crm"},
+        {"code": "crm.manage", "name": "Manage CRM", "module": "crm"},
+    ]
+    m["routes"][0]["permission"] = ["crm.access", "crm.manage"]
+
+    result = validator.validate(m)
+
+    assert result.is_valid is True
+    assert result.errors == []
+
+
+def test_schema_rejects_empty_permission_any_of():
+    validator = ManifestValidator()
+    m = minimal_valid_manifest()
+    m["routes"][0]["permission"] = []
+
+    result = validator.validate(m)
+
+    assert not result.is_valid
+    assert any(e.code == "schema_validation_error" for e in result.errors)
