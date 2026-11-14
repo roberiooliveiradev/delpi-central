@@ -1868,3 +1868,12 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT3-COGNITIVE-SPECIALIST-NEED | NOT_PROVEN | gaps atuais explicáveis por ordem de declaração/convergência; sem evidência de necessidade de Agent independente; Alternativa B documentada como candidata mais barata |
 
 **NEXT=`COORDINATION_C3_T2_INT3_FUNCTIONAL_CAUSAL_EVALUATION_REVIEW`**
+
+### 2026-11-14 — INT-3 R1 `CALL_BEFORE_DECLARE`: A/B executado — atualização de estado
+
+| Residual | Estado | Nota |
+|---|---|---|
+| INT3-CALL-BEFORE-DECLARE | OPEN_MEDIUM (causa provada; remediação pendente de decisão) | A/B no corpus congelado (evals `or-qwen14b-205331140f0e` A / `or-qwen14b-b37c420b89c3` B, qwen3-14b): instrução estrita declare-FIRST (v2-6) **não** alterou a ordem da primeira READ dependente em nenhum cenário válido (`GOAL_BEFORE_READ=0/4` em ambos os braços) e degradou a correção da proposta (mais rejeições por anchor dotted-proxy). Causa estrutural confirmada: `_governed_invoke` executa a call governada sem pré-condição de plano. Remediação mínima provada = gate de pré-invocação `ModelRetry` dentro do boundary governado existente (Alternativa C) — **decisão de coordenação pendente**; invariante desejada registrada como `xfail(strict)` em `test_int3_r1_call_before_declare.py` |
+| INT3-MCP-AUTH-FLAKINESS | OPEN_ENV | reconfirmado no arm B: 8/12 cenários `eligible_capabilities:[]=0` → ENV_BLOCKED, não cognitivo |
+
+**NEXT=`COORDINATION_INT3_R1_CALL_BEFORE_DECLARE_INDEPENDENT_ACCEPTANCE_REVIEW`** (decisão Alternativa C com evidência A/B anexa; ver ledger)

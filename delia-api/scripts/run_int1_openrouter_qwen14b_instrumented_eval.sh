@@ -48,6 +48,12 @@ chmod 600 "${EVAL_ENV}"
   echo "DELIA_EVAL_EGRESS_AUTHORIZED=1"
   echo "DELIA_EVAL_ALLOWED_LLM_HOSTS=openrouter.ai"
   echo "DELIA_RUNTIME_PROFILE=openrouter_qwen"
+  # Optional A/B arm: forward an explicit investigation instruction
+  # version (e.g. DELIA_EVAL_INSTRUCTION_VERSION=generalist-semantic-v2-6-*)
+  # without mutating the shared environment or the resource default.
+  if [[ -n "${DELIA_EVAL_INSTRUCTION_VERSION:-}" ]]; then
+    echo "DELIA_INVESTIGATION_INSTRUCTION_VERSION=${DELIA_EVAL_INSTRUCTION_VERSION}"
+  fi
   echo "DELIA_LLM_BASE_URL=https://openrouter.ai/api/v1"
   echo "KEYCLOAK_URL=http://keycloak:8080/auth"
   echo "KEYCLOAK_REALM=delpi"
