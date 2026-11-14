@@ -245,6 +245,9 @@ class InMemoryProductRegistrationRepository:
             "assignedToDisplayName": req.get("assigned_to_display_name"),
             "officialCode": req.get("official_product_code"),
             "caseVersion": req["row_version"],
+            "description": (req.get("requested_payload") or {}).get(
+                "description"
+            ),
         }
 
     def list_events(

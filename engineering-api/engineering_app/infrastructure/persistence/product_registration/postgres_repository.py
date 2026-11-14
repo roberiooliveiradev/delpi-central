@@ -323,7 +323,8 @@ class PostgresProductRegistrationRepository:
                 f"SELECT id, request_type, status, source,"
                 " requester_subject, requester_display_name,"
                 " assigned_to_subject, assigned_to_display_name,"
-                " official_product_code, row_version, created_at"
+                " official_product_code, row_version, created_at,"
+                " requested_payload->>'description' AS description"
                 f" FROM {_T_REQ} WHERE {sql_where}"
                 f" ORDER BY {sort_col} {direction}, id DESC"
                 " LIMIT %s OFFSET %s",
@@ -347,6 +348,7 @@ class PostgresProductRegistrationRepository:
                     ),
                     "officialCode": r["official_product_code"],
                     "caseVersion": r["row_version"],
+                    "description": r.get("description"),
                 }
                 for r in rows
             ],
