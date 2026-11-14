@@ -728,6 +728,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_entry_audit_documents": RouteContract(
         "entry_audit_document", "paged_list"
     ),
+    "list_entry_audit_documents_by_access_key": RouteContract(
+        "entry_audit_document", "paged_list"
+    ),
     "list_entry_audit_items": RouteContract(
         "entry_audit_item", "paged_list"
     ),

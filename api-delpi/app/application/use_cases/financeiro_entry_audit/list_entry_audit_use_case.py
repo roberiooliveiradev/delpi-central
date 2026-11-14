@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from app.application.dto.financeiro_entry_audit.entry_audit_query import (
+    EntryAuditAccessKeyQuery,
     EntryAuditPeriodQuery,
     page_payload,
 )
@@ -25,6 +26,14 @@ class ListEntryAuditUseCase:
             page_size=query.page_size,
         )
         return page_payload(rows, page=query.page, page_size=query.page_size)
+
+    def documents_by_access_keys(self, query: EntryAuditAccessKeyQuery) -> dict:
+        rows = self._repository.fetch_documents_by_access_keys(
+            branch=query.branch,
+            access_keys=list(query.access_keys),
+        )
+        page_size = max(len(rows), 1)
+        return page_payload(rows, page=1, page_size=page_size)
 
     def items(self, query: EntryAuditPeriodQuery) -> dict:
         rows = self._repository.fetch_items(

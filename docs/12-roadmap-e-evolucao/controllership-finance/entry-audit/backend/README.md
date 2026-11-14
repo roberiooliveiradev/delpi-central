@@ -34,7 +34,8 @@ Prefixo no padrão dos relatórios financeiros: `/financeiro/entry-audit`. Só l
 
 | Método e rota | Parâmetros | Retorna |
 |---|---|---|
-| `GET /financeiro/entry-audit/documents` | `branch`, `received_from`, `received_to`, `species` (`SPED`, `CTE`), `page`, `page_size` | cabeçalhos SF1 + CNPJ/UF do fornecedor (SA2) |
+| `GET /financeiro/entry-audit/documents` | `branch`, `received_from`, `received_to`, `species` (`SPED`, `CTE`), `page`, `page_size`. Com `access_keys` (até 50), as datas não entram e a leitura é pela chave | cabeçalhos SF1 + CNPJ/UF do fornecedor (SA2) |
+| `POST /financeiro/entry-audit/documents/by-access-key` | body `{branch, access_keys}` até 500 chaves. Sem filtro de data. Nota com `D_E_L_E_T_` não volta: conta como não lançada | os mesmos campos, inclusive chave, número, série, fornecedor, recebimento e espécie |
 | `GET /financeiro/entry-audit/items` | mesmos filtros | itens SD1 dos mesmos documentos |
 | `GET /financeiro/entry-audit/fiscal-book` | mesmos filtros | itens do livro fiscal (SFT) dos mesmos documentos |
 | `GET /financeiro/entry-audit/tes` | — | cadastro de TES (SF4) inteiro |
@@ -146,10 +147,12 @@ A plataforma resolve isso sem mudar as regras:
 
 1. **XML pela chave.** Para cada nota da SF1 com chave, a BFF busca o XML **pela chave** no Questor (a financial-api já baixa por identificador; a listagem atual filtra por número, CNPJ e valor). «Só no SF1 por período» deixa de existir: só sobra o que de fato não tem XML.
 2. **Listagem por emissão só para achar o que não foi lançado.** A listagem do Questor no período (com folga antes do início) serve para encontrar XML sem lançamento.
-3. **Cruzamento com o Lançamento de Notas Fiscais.** O LNF está na mesma BFF. Uma nota «só no XML» que tem solicitação aberta no LNF (aguardando, em atendimento ou com pendência) recebe a situação **«Em lançamento (LNF)»**, com o status e o link da solicitação, em vez de «não escriturada». Sem solicitação e emitida há mais de N dias, continua Média.
-4. **CT-e pelo tomador.** O CT-e do download pode ter outro destinatário; a regra do tomador da skill (empresa tomadora → deve ser escriturado) continua valendo.
+3. **Cruzamento com o Lançamento de Notas Fiscais.** O LNF está na mesma BFF. Uma nota «só no XML» que tem solicitação aberta no LNF (aguardando, em atendimento ou com pendência) recebe a situação **«Em lançamento (LNF)»**, com o status e o link da solicitação, em vez de «não escriturada».
+4. **Conferir a SF1 pela chave.** A listagem com folga só existe para achar o que não foi lançado. Depois dela, a BFF pergunta à SF1, sem filtro de data, cada chave que sobrou. Encontrada: não é sem par e não vira ocorrência; `summary.conformity.posted_outside_period` traz a contagem e as datas de recebimento. Não encontrada: segue sem par. Formulário próprio só é Alta se a chave não estiver na SF1 em data nenhuma. A skill compara SF1 e XML do mesmo recorte; esta conferência é a D11, não uma regra nova da skill.
+5. **Em trânsito.** Com a D11 ligada, a referência é `date_to` da análise. Emissão em `date_to` menos `ENTRY_AUDIT_UNMATCHED_GRACE_DAYS`, ou depois, é Info «em trânsito». Um dia antes disso continua Média. A paridade com a skill, de propósito, mantém a regra da skill (últimos dias do download, severidade Média).
+6. **CT-e pelo tomador.** O CT-e do download pode ter outro destinatário; a regra do tomador da skill (empresa tomadora → deve ser escriturado) continua valendo.
 
-Essas três mudanças (1–3) alteram as contagens de «sem par» em relação à skill. No teste de paridade (E2), elas são comparadas à parte: o motor com os mesmos insumos da skill tem de dar o mesmo resultado; as melhorias são uma camada a mais, documentada.
+Essas mudanças alteram as contagens de «sem par» em relação à skill. No teste de paridade, o motor com os mesmos insumos da skill tem de dar o mesmo resultado; a D11 é uma camada a mais.
 
 ## 4. Dados necessários (inventário T0, 2026-11-14)
 
@@ -397,7 +400,7 @@ Todas exigem `controllership-finance.access`. `manage` herda. Com `ENTRY_AUDIT_E
 
 `GET /entry-audit/analyses` — filtros `date_from`, `date_to`, `branch`, `status`; paginação. Item: `id`, `date_from`, `date_to`, `document_types`, `branches`, `status`, `requested_via`, `created_at`, `finished_at`.
 
-`GET /entry-audit/analyses/{id}` — `status`, `runs[]` (`branch`, `status`, `stage`, `documents_read`, `xml_downloaded`, `error`), `counts`, `config`.
+`GET /entry-audit/analyses/{id}` — `status`, `runs[]` (`branch`, `status`, `stage`, `documents_read`, `xml_downloaded`, `counts`, `error`), `counts`, `config`. A CLARA lê o mesmo recurso com `read entry_audit.analysis` e `ref` ou `analysis_id`.
 
 `POST /entry-audit/analyses/{id}/rerun` — body opcional `{branches}`. 202. 409 `RUN_IN_PROGRESS` se a filial pedida está `queued` ou `running`.
 
@@ -407,7 +410,7 @@ Filtros dessas leituras, todos opcionais: `branch`, `severity`, `theme`, `suppli
 
 | Rota | `data` |
 |---|---|
-| `summary` | quatro KPIs, comparação com o período anterior do mesmo tamanho, conformidade (`clean`, `divergent`, `unmatched_open`, `unmatched_explained`) |
+| `summary` | quatro KPIs, comparação com o período anterior do mesmo tamanho, conformidade (`clean`, `divergent`, `unmatched_open`, `unmatched_explained`, `posted_outside_period` com `count` e `received_dates`) |
 | `daily` | série do período e do período anterior: dia → notas com divergência |
 | `breakdowns` | por severidade, por tema, top fornecedores, TES com mais ocorrências |
 | `facets` | fornecedores, temas, TES e severidades, com contagem |
@@ -584,7 +587,7 @@ O Resumo da skill conta, e o motor precisa devolver os mesmos números: document
 | `ENTRY_AUDIT_PRESUMED_CREDIT_TES` | `004` | TES do crédito presumido de SC |
 | `ENTRY_AUDIT_FREIGHT_CFOP_SUFFIX` | `352` | final do CFOP de frete |
 | `ENTRY_AUDIT_XML_LOOKBACK_DAYS` | `30` | folga da listagem por emissão |
-| `ENTRY_AUDIT_UNMATCHED_GRACE_DAYS` | `3` | «em trânsito» |
+| `ENTRY_AUDIT_UNMATCHED_GRACE_DAYS` | `3` | «em trânsito»: com a D11, Info a partir de `date_to` menos estes dias |
 | `ENTRY_AUDIT_TOLERANCE` | `0.05` | tolerância em reais |
 | `ENTRY_AUDIT_ENABLED` | `false` | rotas, worker e catálogo |
 

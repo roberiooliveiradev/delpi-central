@@ -70,7 +70,7 @@ Mesmas seis tools; só entradas novas no catálogo, todas com gate `controllersh
 | Tool | `entity.action` | Modo | Parâmetros | Para quê |
 |---|---|---|---|---|
 | `read` | `entry_audit.options` | — | — | filiais permitidas e tipos de documento (com o padrão) |
-| `read` | `entry_audit.analysis` | — | `ref` (id) ou filtros `date_from`, `date_to`, `branch`, `status` | histórico; status e andamento de uma análise |
+| `read` | `entry_audit.analysis` | — | `ref` ou `analysis_id`; sem id, filtros `date_from`, `date_to`, `branch`, `status` | uma análise (status, estágio, contagens da filial, erro) ou o histórico |
 | `read` | `entry_audit.summary` | — | `ref` + filtros da análise | os KPIs e a conformidade do dashboard |
 | `read` | `entry_audit.daily` | — | idem | divergências por dia × período anterior |
 | `read` | `entry_audit.breakdowns` | — | idem | severidade, tema, fornecedores, TES |

@@ -8,6 +8,9 @@ from datetime import date, datetime
 _BRANCHES = frozenset({"01", "02"})
 _SPECIES = frozenset({"SPED", "CTE"})
 _MAX_WINDOW_DAYS = 366
+_ACCESS_KEY_LENGTH = 44
+_MAX_ACCESS_KEYS_GET = 50
+_MAX_ACCESS_KEYS_POST = 500
 _DATE_FIELDS = (
     "issue_date",
     "received_date",
@@ -66,6 +69,48 @@ class EntryAuditPeriodQuery:
             page=page,
             page_size=page_size,
         )
+
+
+@dataclass(frozen=True)
+class EntryAuditAccessKeyQuery:
+    branch: str
+    access_keys: tuple[str, ...]
+
+    @classmethod
+    def from_values(
+        cls,
+        *,
+        branch: str | None,
+        access_keys: list[str] | None,
+        limit: int,
+    ) -> EntryAuditAccessKeyQuery:
+        normalized_branch = (branch or "").strip()
+        if normalized_branch not in _BRANCHES:
+            raise EntryAuditQueryError("branch must be 01 or 02.")
+        chosen: list[str] = []
+        for item in access_keys or []:
+            key = "".join(character for character in str(item or "") if character.isdigit())
+            if not key:
+                continue
+            if len(key) != _ACCESS_KEY_LENGTH:
+                raise EntryAuditQueryError("access_keys must contain 44-digit keys.")
+            if key not in chosen:
+                chosen.append(key)
+        if not chosen:
+            raise EntryAuditQueryError("access_keys is required.")
+        if len(chosen) > limit:
+            raise EntryAuditQueryError(
+                f"access_keys accepts at most {limit} keys on this route."
+            )
+        return cls(branch=normalized_branch, access_keys=tuple(chosen))
+
+
+def access_key_get_limit() -> int:
+    return _MAX_ACCESS_KEYS_GET
+
+
+def access_key_post_limit() -> int:
+    return _MAX_ACCESS_KEYS_POST
 
 
 def _parse_iso(value: str | None, name: str) -> date:

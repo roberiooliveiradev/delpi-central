@@ -18,6 +18,16 @@ class EntryAuditRepository(BaseRepository):
         with self:
             return self.execute_query(sql, params)
 
+    def fetch_documents_by_access_keys(
+        self, *, branch: str, access_keys: list[str]
+    ) -> list[dict[str, Any]]:
+        if not access_keys:
+            return []
+        sql, _names = entry_audit_sql.documents_by_access_keys_sql(len(access_keys))
+        params = (branch, *access_keys)
+        with self:
+            return self.execute_query(sql, params)
+
     def fetch_items(
         self, *, branch: str, received_from: str, received_to: str, species: list[str], offset: int, page_size: int
     ) -> list[dict[str, Any]]:

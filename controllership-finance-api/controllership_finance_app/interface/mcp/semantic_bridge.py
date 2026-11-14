@@ -464,7 +464,7 @@ READ_ACTIONS: dict[tuple[str, str], dict] = {
     ("entry_audit", "analysis"): _read_spec(
         ea_bridge.tool_entry_audit_analysis,
         ref_param="analysis_id",
-        allowed=("date_from", "date_to", "branch", "status", "page", "page_size"),
+        allowed=("analysis_id", "ref", "date_from", "date_to", "branch", "status", "page", "page_size"),
     ),
     ("entry_audit", "summary"): _read_spec(
         ea_bridge.tool_entry_audit_summary,
@@ -1042,8 +1042,15 @@ def tool_read(
     accepted = set(spec["required"]) | set(spec["allowed"])
     if period is not None and "period" in accepted:
         params["period"] = period
-    if ref is not None and spec["ref_param"]:
-        params[spec["ref_param"]] = ref
+    ref_name = spec.get("ref_param")
+    if ref_name and ref_name != "ref":
+        alias = params.pop("ref", None)
+        if ref is not None:
+            params[ref_name] = ref
+        elif alias is not None and not params.get(ref_name):
+            params[ref_name] = alias
+    elif ref is not None and ref_name:
+        params[ref_name] = ref
     if page is not None:
         params["page"] = page
     if page_size is not None:

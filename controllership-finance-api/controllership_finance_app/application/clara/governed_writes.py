@@ -143,6 +143,13 @@ def _require(params: dict, name: str) -> Any:
     return value
 
 
+def _uuid_text(value: Any) -> str | None:
+    try:
+        return str(uuid.UUID(str(value)))
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+
 def _audit_mcp(
     *,
     entity_type: str,
@@ -2682,10 +2689,23 @@ class ClaraGovernedWrites:
                 return replay
             raise
 
-        def _audit(event_type: str, detail: dict) -> None:
+        def _audit(event_type: str, detail: dict, result: dict | None = None) -> None:
+            entity_id = resource_key
+            extra: dict = {}
+            if capability.startswith("entry_audit."):
+                # closing_audit_event.entity_id é UUID. A stable_key não é:
+                # run/rerun usam o id da análise; resolve/reopen usam o id da linha de status.
+                if capability in {"entry_audit.run", "entry_audit.rerun"}:
+                    entity_id = _uuid_text((result or {}).get("id") or params.get("ref"))
+                else:
+                    entity_id = _uuid_text((result or {}).get("status_id"))
+                    if params.get("key"):
+                        extra["stable_key"] = params.get("key")
+                if entity_id is None:
+                    return
             _audit_mcp(
                 entity_type=spec["resource_type"],
-                entity_id=resource_key,
+                entity_id=entity_id,
                 competence_id=None,
                 event_type=event_type,
                 actor=actor_sub,
@@ -2695,11 +2715,14 @@ class ClaraGovernedWrites:
                     "proposal_id": str(proposal["proposal_id"]),
                     "idempotency_key": idempotency_key,
                     "correlation_id": correlation_id,
+                    "channel": MCP_CHANNEL,
+                    **extra,
                     **detail,
                 },
             )
 
-        _audit("CLARA_DIRECT_ATTEMPT", {})
+        if not capability.startswith("entry_audit.") or _uuid_text(params.get("ref")):
+            _audit("CLARA_DIRECT_ATTEMPT", {})
         # Claim atômico durável — mesmo núcleo do ACT governado.
         self._proposals.claim(handle=handle, actor_sub=actor_sub)
         try:
@@ -2730,7 +2753,9 @@ class ClaraGovernedWrites:
             handle=handle,
             result={"outcome": "executed", "result": result or {}},
         )
-        _audit("CLARA_DIRECT_ACT", {"outcome": "executed"})
+        if capability.startswith("entry_audit.") and not _uuid_text(params.get("ref")):
+            _audit("CLARA_DIRECT_ATTEMPT", {}, result or {})
+        _audit("CLARA_DIRECT_ACT", {"outcome": "executed"}, result or {})
         return {
             "executed": True,
             "capability": capability,

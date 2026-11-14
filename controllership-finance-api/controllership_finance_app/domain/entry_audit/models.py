@@ -142,6 +142,8 @@ class AuditConfig:
     unmatched_grace_days: int = 3
     # D11 fica desligado no teste de paridade com a skill.
     improvements_enabled: bool = False
+    # Com D11, «em trânsito» usa date_to da análise, não a maior emissão do download.
+    period_end: date | None = None
 
 
 @dataclass(frozen=True)

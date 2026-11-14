@@ -87,6 +87,7 @@ def test_router_declares_the_five_read_operations() -> None:
     operation_ids = {getattr(route, "operation_id", None) for route in router.routes}
     assert operation_ids >= {
         "list_entry_audit_documents",
+        "list_entry_audit_documents_by_access_key",
         "list_entry_audit_items",
         "list_entry_audit_fiscal_book",
         "list_entry_audit_tes",
@@ -105,6 +106,16 @@ def test_documents_sql_filters_receipt_date_and_species() -> None:
     assert names[:3] == ["branch", "received_from", "received_to"]
     assert names[3:5] == ["SPED", "CTE"]
     assert "DELETE" not in sql.upper() and "UPDATE" not in sql.upper() and "INSERT" not in sql.upper()
+
+
+def test_documents_by_access_key_ignore_the_receipt_window_and_deleted_rows() -> None:
+    sql, names = entry_audit_sql.documents_by_access_keys_sql(2)
+    where = sql.split("WHERE", 1)[1].split("ORDER BY", 1)[0]
+    assert "F1_CHVNFE" in sql
+    assert "F1_RECBMTO" not in where
+    assert "D_E_L_E_T_ = ' '" in sql
+    assert "DELETE" not in sql.upper() and "UPDATE" not in sql.upper() and "INSERT" not in sql.upper()
+    assert names == ["branch", "access_key", "access_key"]
 
 
 def test_items_and_fiscal_book_follow_the_same_document_filter() -> None:

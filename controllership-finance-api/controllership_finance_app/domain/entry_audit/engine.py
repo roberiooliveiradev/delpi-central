@@ -347,12 +347,17 @@ def _unmatched(result, rows, invoices_only, invoices, ctes, company_tax_id, sett
     booked = {row["access_key"] for row in rows}
     issued = [document.issued_at for document in invoices.values() if document.issued_at is not None]
     latest = max(issued) if issued else datetime.now()
-    recent = latest - timedelta(days=settings.unmatched_grace_days)
+    if settings.improvements_enabled and settings.period_end is not None:
+        recent = datetime.combine(settings.period_end, datetime.min.time()) - timedelta(days=settings.unmatched_grace_days)
+        transit_is_info = True
+    else:
+        recent = latest - timedelta(days=settings.unmatched_grace_days)
+        transit_is_info = False
     root = company_tax_id[:8]
     for document in sorted(invoices.values(), key=lambda item: item.issued_at or datetime.min):
         if document.access_key in booked:
             continue
-        result.unmatched.append(_xml_unmatched(document, *_xml_situation(document, company_tax_id, recent), "SPED"))
+        result.unmatched.append(_xml_unmatched(document, *_xml_situation(document, company_tax_id, recent, transit_is_info=transit_is_info), "SPED"))
     for document in sorted(ctes.values(), key=lambda item: item.issued_at or datetime.min):
         if document.access_key in booked:
             continue
@@ -874,7 +879,7 @@ def _book_unmatched(row: dict, severity: str, reason: str) -> UnmatchedDocument:
     )
 
 
-def _xml_situation(document: XmlDocument, company_tax_id: str, recent: datetime) -> tuple[str, str]:
+def _xml_situation(document: XmlDocument, company_tax_id: str, recent: datetime, *, transit_is_info: bool = False) -> tuple[str, str]:
     if document.cancelled or document.status_code in {"101", "135", "151", "155"}:
         return "Info", "Cancelada na SEFAZ: não deve ser escriturada."
     if document.issuer_tax_id == company_tax_id and document.direction == "Saída":
@@ -884,9 +889,15 @@ def _xml_situation(document: XmlDocument, company_tax_id: str, recent: datetime)
     if document.recipient_tax_id and document.recipient_tax_id != company_tax_id:
         return "Info", f"Destinatário é outro CNPJ ({document.recipient_tax_id}): não pertence a esta filial."
     reason = "Recebida de terceiro e ainda não escriturada na SF1."
-    if document.issued_at is not None and document.issued_at >= recent:
+    issued = document.issued_at
+    if transit_is_info:
+        cutoff = recent.date()
+        if issued is not None and issued.date() >= cutoff:
+            return "Info", f"{reason} Emissão recente: pode estar em trânsito."
+    elif issued is not None and issued >= recent:
         reason += " Emissão recente: pode estar em trânsito."
-    elif document.icms_amount > 0:
+        return "Média", reason
+    if document.icms_amount > 0:
         reason += " Tem ICMS destacado."
     return "Média", reason
 

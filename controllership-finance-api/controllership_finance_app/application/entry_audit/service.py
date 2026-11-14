@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from dataclasses import replace
 from datetime import date, datetime, timedelta
 from typing import Protocol
 
@@ -32,6 +33,8 @@ TYPE_LABELS = {"nfe": "NF-e", "cte": "CT-e"}
 
 class ProtheusEntriesPort(Protocol):
     def documents(self, *, branch: str, received_from: date, received_to: date, species: list[str]) -> list[dict]: ...
+
+    def documents_by_access_keys(self, *, branch: str, access_keys: list[str]) -> list[dict]: ...
     def items(self, *, branch: str, received_from: date, received_to: date, species: list[str]) -> list[dict]: ...
     def fiscal_book(self, *, branch: str, received_from: date, received_to: date, species: list[str]) -> list[dict]: ...
     def tes(self) -> list[dict]: ...
@@ -119,6 +122,7 @@ class EntryAuditService:
                     "stage": run["stage"],
                     "documents_read": run["documents_read"],
                     "xml_downloaded": run["xml_downloaded"],
+                    "counts": {key: value for key, value in (run.get("counts") or {}).items() if isinstance(value, int)},
                     "error": run["error_message"],
                 }
                 for run in runs
@@ -157,7 +161,7 @@ class EntryAuditService:
     def execute(self, run_id: str) -> None:
         run = self._store.get_run(run_id)
         analysis = self._require(run["analysis_id"])
-        config = _config_from(analysis["config_snapshot"])
+        config = replace(_config_from(analysis["config_snapshot"]), period_end=analysis["date_to"])
         species = [SPECIES[code] for code in analysis["document_types"]]
         try:
             self._store.mark_run(run_id, stage="reading_protheus")
@@ -186,16 +190,19 @@ class EntryAuditService:
                 config=config,
                 fiscal_book=[_book(row) for row in book if _composite(row) not in blocked_docs],
             )
+            posted_outside = self._posted_outside(run["branch_code"], result) if config.improvements_enabled else []
             lnf = self._lnf_matches(result, run["branch_code"], auditable_headers)
             output = _persistable(
                 analysis["id"], run_id, run["branch_code"], result, auditable_headers, auditable_items, tes_rows, lnf, unavailable,
                 xml_by_key={**invoices, **ctes},
+                posted_outside=posted_outside,
             )
             self._store.mark_run(run_id, stage="saving")
             self._store.replace_output(run_id, **output)
             digest = hashlib.sha256(",".join(sorted(row.get("access_key") or "" for row in headers)).encode()).hexdigest()
             counts = dict(result.summary)
             counts["unmatched"] = len(result.unmatched)
+            counts["posted_outside_period"] = len(posted_outside)
             counts["occurrences"] = len(result.occurrences)
             counts["excluded"] = len(result.excluded)
             for key, value in result.not_reported.items():
@@ -222,8 +229,10 @@ class EntryAuditService:
     def summary(self, analysis_id: str, filters: dict) -> dict:
         analysis, ready = self._ready(analysis_id)
         occurrences = _dedupe(self._filtered("occurrences", analysis_id, filters))
-        documents = [row for row in self._filtered("documents", analysis_id, filters) if row.get("situation") != "xml_unavailable"]
-        unavailable = [row for row in self._filtered("documents", analysis_id, filters) if row.get("situation") == "xml_unavailable"]
+        document_rows = self._filtered("documents", analysis_id, filters)
+        documents = [row for row in document_rows if row.get("situation") not in {"xml_unavailable", "posted_outside_period"}]
+        unavailable = [row for row in document_rows if row.get("situation") == "xml_unavailable"]
+        outside = [row for row in document_rows if row.get("situation") == "posted_outside_period"]
         unmatched = self._filtered("unmatched", analysis_id, filters)
         divergent_keys = {_document_identity(row) for row in occurrences}
         clean = sum(1 for row in documents if _document_identity(row) not in divergent_keys)
@@ -243,6 +252,10 @@ class EntryAuditService:
                 "divergent": len(documents) - clean,
                 "unmatched_open": len(unmatched) - explained,
                 "unmatched_explained": explained,
+                "posted_outside_period": {
+                    "count": len(outside),
+                    "received_dates": [str(row.get("received_date") or "") for row in outside if row.get("received_date")],
+                },
             },
             "branches_unavailable": ready,
         }
@@ -357,7 +370,7 @@ class EntryAuditService:
         if not self._store.has_stable_key(stable_key):
             raise EntryAuditError("Ocorrência não encontrada.", status_code=404, code="NOT_FOUND")
         current = self._store.upsert_status(stable_key, kind=kind, status=status, user_id=user_id, user_name=user_name)
-        return {"stable_key": stable_key, "kind": kind, "status": current["status"]}
+        return {"stable_key": stable_key, "kind": kind, "status": current["status"], "status_id": str(current.get("id") or "")}
 
     def _require(self, analysis_id: str) -> dict:
         analysis = self._store.get_analysis(analysis_id)
@@ -461,6 +474,30 @@ class EntryAuditService:
                     seen.add(key)
                     downloaded += 1
         return payloads, downloaded, unavailable
+
+    def _posted_outside(self, branch: str, result) -> list[dict]:
+        """D11: XML da folga que já está na SF1, em qualquer data, não é sem par."""
+        keys: list[str] = []
+        seen: set[str] = set()
+        for row in result.unmatched:
+            key = str(row.access_key or "")
+            if row.side == "xml" and len(key) == 44 and key not in seen:
+                seen.add(key)
+                keys.append(key)
+        if not keys:
+            return []
+        found = self._protheus.documents_by_access_keys(branch=branch, access_keys=keys)
+        by_key = {str(row.get("access_key") or ""): row for row in found if row.get("access_key")}
+        kept = []
+        outside = []
+        for row in result.unmatched:
+            hit = by_key.get(str(row.access_key or ""))
+            if hit is not None and row.side == "xml":
+                outside.append(hit)
+                continue
+            kept.append(row)
+        result.unmatched = kept
+        return outside
 
     def _lnf_matches(self, result, branch: str, headers: list[dict]) -> dict:
         by_key = {str(row.get("access_key") or ""): row for row in headers if row.get("access_key")}
@@ -668,7 +705,7 @@ def _tes_codes(header: dict, items: list[dict], item_number: str) -> str:
     return ", ".join(sorted({str(item.get("tes") or "") for item in related if item.get("tes")}))
 
 
-def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: list[dict], items: list[dict], tes_rows: list[dict], lnf: dict | None = None, unavailable: list[dict] | None = None, xml_by_key: dict | None = None) -> dict:
+def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: list[dict], items: list[dict], tes_rows: list[dict], lnf: dict | None = None, unavailable: list[dict] | None = None, xml_by_key: dict | None = None, posted_outside: list[dict] | None = None) -> dict:
     by_key = {str(row.get("access_key") or ""): row for row in headers if row.get("access_key")}
     xml_docs = xml_by_key or {}
     occurrence_rows = []
@@ -802,6 +839,24 @@ def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: li
             "divergence_count": 0,
             "document_type": "cte" if str(row.get("species") or "").upper() == "CTE" else "nfe",
             "comparison": {},
+        })
+    for row in posted_outside or []:
+        documents.append({
+            "analysis_id": analysis_id,
+            "run_id": run_id,
+            "branch": branch,
+            "access_key": str(row.get("access_key") or ""),
+            "document_number": str(row.get("document_number") or ""),
+            "series": str(row.get("series") or ""),
+            "supplier_code": str(row.get("supplier_code") or ""),
+            "supplier_store": str(row.get("supplier_store") or ""),
+            "supplier_name": str(row.get("supplier_name") or ""),
+            "issue_date": str(row.get("issue_date") or ""),
+            "received_date": str(row.get("received_date") or ""),
+            "situation": "posted_outside_period",
+            "divergence_count": 0,
+            "document_type": "cte" if str(row.get("species") or "").upper() == "CTE" else "nfe",
+            "comparison": {"species": row.get("species")},
         })
     ctes = [
         {

@@ -52,6 +52,10 @@ class Protheus:
             {"code": "02", "name": "Filial", "state": "ES", "tax_id": COMPANY},
         ]
 
+    def documents_by_access_keys(self, *, branch, access_keys):
+        del branch, access_keys
+        return []
+
 
 class Xml:
     def __init__(self) -> None:
@@ -85,11 +89,11 @@ def _header(number: str, key: str) -> dict:
     }
 
 
-def _nfe(number: int, key: str) -> bytes:
+def _nfe(number: int, key: str, *, issued: str = "2026-11-12T10:00:00-03:00", issuer: str = SUPPLIER, direction: str = "1") -> bytes:
     return (
         f'<?xml version="1.0" encoding="UTF-8"?><nfeProc xmlns="{NS}"><NFe><infNFe Id="NFe{key}" versao="4.00">'
-        f"<ide><mod>55</mod><serie>1</serie><nNF>{number}</nNF><dhEmi>2026-11-12T10:00:00-03:00</dhEmi><tpNF>1</tpNF></ide>"
-        f"<emit><CNPJ>{SUPPLIER}</CNPJ><xNome>Fornecedor</xNome><enderEmit><UF>SC</UF></enderEmit><CRT>3</CRT></emit>"
+        f"<ide><mod>55</mod><serie>1</serie><nNF>{number}</nNF><dhEmi>{issued}</dhEmi><tpNF>{direction}</tpNF></ide>"
+        f"<emit><CNPJ>{issuer}</CNPJ><xNome>Fornecedor</xNome><enderEmit><UF>SC</UF></enderEmit><CRT>3</CRT></emit>"
         f"<dest><CNPJ>{COMPANY}</CNPJ></dest>"
         f'<det nItem="1"><prod><cProd>P</cProd><xProd>Peca</xProd><NCM>84818099</NCM><CFOP>5101</CFOP><vProd>100.00</vProd></prod>'
         f"<imposto><ICMS><ICMS00><orig>0</orig><CST>00</CST><vBC>100.00</vBC><pICMS>12.00</pICMS><vICMS>12.00</vICMS></ICMS00></ICMS></imposto></det>"
@@ -211,6 +215,60 @@ def test_xml_by_key_matches_and_lnf_explains_an_unmatched_xml():
     assert "Fornecedor" in sheets
     assert "5101" in sheets
     assert "Fornecedor C" in sheets
+
+
+def test_xml_posted_outside_the_period_is_not_unmatched():
+    posted = access_key("55", 501)
+    missing = access_key("55", 502)
+    own_posted = access_key("55", 503)
+    own_open = access_key("55", 504)
+    issued = "2026-10-23T10:00:00-03:00"
+
+    class _Lookup(Protheus):
+        def documents(self, *, branch, received_from, received_to, species):
+            del branch, received_from, received_to, species
+            return []
+
+        def documents_by_access_keys(self, *, branch, access_keys):
+            del branch
+            rows = []
+            if posted in access_keys:
+                row = _header("501", posted)
+                row["received_date"] = "2026-11-02"
+                row["issue_date"] = "2026-10-23"
+                rows.append(row)
+            if own_posted in access_keys:
+                row = _header("503", own_posted)
+                row["received_date"] = "2026-11-01"
+                row["issue_date"] = "2026-10-23"
+                row["own_form"] = "S"
+                row["supplier_tax_id"] = COMPANY
+                rows.append(row)
+            return rows
+
+    xml = Xml()
+    xml.listed = [posted, missing, own_posted, own_open]
+    xml.by_key[posted] = _nfe(501, posted, issued=issued)
+    xml.by_key[missing] = _nfe(502, missing, issued=issued)
+    xml.by_key[own_posted] = _nfe(503, own_posted, issued=issued, issuer=COMPANY, direction="0")
+    xml.by_key[own_open] = _nfe(504, own_open, issued=issued, issuer=COMPANY, direction="0")
+    service = _service(protheus=_Lookup(), xml=xml)
+    created = service.create(date_from=WHEN, date_to=WHEN, document_types=["nfe"], branches=["01"], user_id="u", user_name="Ana", via="user")
+    service.claim_and_execute()
+    unmatched = service.unmatched_documents(created["id"], {}, page=1, page_size=20)["items"]
+    keys = {row["access_key"] for row in unmatched}
+    assert posted not in keys
+    assert own_posted not in keys
+    assert missing in keys
+    own = next(row for row in unmatched if row["access_key"] == own_open)
+    assert own["severity"] == "Alta"
+    assert "formulário próprio" in own["reason"]
+    summary = service.summary(created["id"], {})
+    outside = summary["conformity"]["posted_outside_period"]
+    assert outside["count"] == 2
+    assert "2026-11-02" in outside["received_dates"]
+    assert "2026-11-01" in outside["received_dates"]
+    assert summary["kpis"]["documents"] == 0
 
 
 def test_same_document_number_does_not_share_occurrences():

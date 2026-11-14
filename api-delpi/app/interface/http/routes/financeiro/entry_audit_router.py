@@ -12,10 +12,14 @@ the BFF. Fiscal rules stay out of this service.
 from __future__ import annotations
 
 from fastapi import APIRouter, Query
+from pydantic import BaseModel, Field
 
 from app.application.dto.financeiro_entry_audit.entry_audit_query import (
+    EntryAuditAccessKeyQuery,
     EntryAuditQueryError,
     EntryAuditPeriodQuery,
+    access_key_get_limit,
+    access_key_post_limit,
 )
 from app.composition.financeiro_entry_audit_composer import (
     build_list_entry_audit_use_case,
@@ -57,11 +61,11 @@ def _page_query():
 
 
 def _received_from_query():
-    return Query(..., description="Receipt date from, YYYY-MM-DD (F1_RECBMTO).")
+    return Query(None, description="Receipt date from, YYYY-MM-DD (F1_RECBMTO). Required unless access_keys is set.")
 
 
 def _received_to_query():
-    return Query(..., description="Receipt date to, YYYY-MM-DD (F1_RECBMTO).")
+    return Query(None, description="Receipt date to, YYYY-MM-DD (F1_RECBMTO). Required unless access_keys is set.")
 
 
 def _branch_query():
@@ -117,12 +121,33 @@ def _run(loader, operation_id: str, message: str):
 @_guard
 def list_entry_audit_documents_route(
     branch: str = _branch_query(),
-    received_from: str = _received_from_query(),
-    received_to: str = _received_to_query(),
+    received_from: str | None = _received_from_query(),
+    received_to: str | None = _received_to_query(),
     species: list[str] = _species_query(),
+    access_keys: list[str] = Query(default_factory=list, description="44-digit access keys. No receipt-date filter. At most 50; larger batches use POST /documents/by-access-key."),
     page: int = _page_query(),
     page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
+    if access_keys:
+        try:
+            lookup = EntryAuditAccessKeyQuery.from_values(
+                branch=branch,
+                access_keys=access_keys,
+                limit=access_key_get_limit(),
+            )
+        except EntryAuditQueryError as exc:
+            return error_response(str(exc), status_code=422, code="VALIDATION_ERROR")
+        return _run(
+            lambda use_case: use_case.documents_by_access_keys(lookup),
+            "list_entry_audit_documents",
+            "Entry audit documents loaded successfully.",
+        )
+    if not received_from or not received_to:
+        return error_response(
+            "received_from and received_to are required when access_keys is omitted.",
+            status_code=422,
+            code="VALIDATION_ERROR",
+        )
     query = _period(
         branch=branch,
         received_from=received_from,
@@ -136,6 +161,33 @@ def list_entry_audit_documents_route(
     return _run(
         lambda use_case: use_case.documents(query),
         "list_entry_audit_documents",
+        "Entry audit documents loaded successfully.",
+    )
+
+
+class EntryAuditAccessKeyBody(BaseModel):
+    branch: str
+    access_keys: list[str] = Field(default_factory=list)
+
+
+@router.post(
+    "/documents/by-access-key",
+    operation_id="list_entry_audit_documents_by_access_key",
+    **_meta("list_entry_audit_documents_by_access_key", "/financeiro/entry-audit/documents/by-access-key"),
+)
+@_guard
+def list_entry_audit_documents_by_access_key_route(body: EntryAuditAccessKeyBody):
+    try:
+        lookup = EntryAuditAccessKeyQuery.from_values(
+            branch=body.branch,
+            access_keys=body.access_keys,
+            limit=access_key_post_limit(),
+        )
+    except EntryAuditQueryError as exc:
+        return error_response(str(exc), status_code=422, code="VALIDATION_ERROR")
+    return _run(
+        lambda use_case: use_case.documents_by_access_keys(lookup),
+        "list_entry_audit_documents_by_access_key",
         "Entry audit documents loaded successfully.",
     )
 

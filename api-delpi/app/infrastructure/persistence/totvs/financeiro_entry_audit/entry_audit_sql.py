@@ -66,6 +66,51 @@ SELECT RTRIM(SF1.F1_FILIAL) AS branch,
     return sql, ["branch", "received_from", "received_to", *species, "offset", "page_size"]
 
 
+def documents_by_access_keys_sql(key_count: int) -> tuple[str, list[str]]:
+    """SF1 by access key, any receipt date. Deleted rows stay out."""
+    placeholders = ", ".join("?" for _ in range(key_count))
+    sql = f"""
+SELECT RTRIM(SF1.F1_FILIAL) AS branch,
+       RTRIM(SF1.F1_DOC) AS document_number,
+       RTRIM(SF1.F1_SERIE) AS series,
+       RTRIM(SF1.F1_FORNECE) AS supplier_code,
+       RTRIM(SF1.F1_LOJA) AS supplier_store,
+       RTRIM(SA2.A2_NOME) AS supplier_name,
+       RTRIM(SA2.A2_CGC) AS supplier_tax_id,
+       RTRIM(SA2.A2_EST) AS supplier_state,
+       RTRIM(SF1.F1_ESPECIE) AS species,
+       RTRIM(SF1.F1_TIPO) AS invoice_type,
+       RTRIM(SF1.F1_FORMUL) AS own_form,
+       RTRIM(SF1.F1_CHVNFE) AS access_key,
+       RTRIM(SF1.F1_EMISSAO) AS issue_date,
+       RTRIM(SF1.F1_RECBMTO) AS received_date,
+       SF1.F1_FRETE AS freight_amount,
+       SF1.F1_DESPESA AS expense_amount,
+       SF1.F1_BASEICM AS icms_base,
+       SF1.F1_VALICM AS icms_amount,
+       SF1.F1_BASEIPI AS ipi_base,
+       SF1.F1_VALIPI AS ipi_amount,
+       SF1.F1_VALMERC AS goods_amount,
+       SF1.F1_VALBRUT AS gross_amount,
+       SF1.F1_DESCONT AS discount_amount,
+       SF1.F1_BRICMS AS st_base,
+       SF1.F1_ICMSRET AS st_amount,
+       SF1.F1_SEGURO AS insurance_amount,
+       COUNT(*) OVER() AS total_count
+  FROM SF1010 SF1 WITH (NOLOCK)
+  LEFT JOIN SA2010 SA2 WITH (NOLOCK)
+    ON SA2.D_E_L_E_T_ = ' '
+   AND SA2.A2_FILIAL = ''
+   AND SA2.A2_COD = SF1.F1_FORNECE
+   AND SA2.A2_LOJA = SF1.F1_LOJA
+ WHERE SF1.D_E_L_E_T_ = ' '
+   AND SF1.F1_FILIAL = ?
+   AND RTRIM(SF1.F1_CHVNFE) IN ({placeholders})
+ ORDER BY SF1.F1_RECBMTO, SF1.F1_DOC, SF1.F1_SERIE, SF1.F1_FORNECE, SF1.F1_LOJA
+"""
+    return sql, ["branch", *["access_key"] * key_count]
+
+
 def items_sql(species: list[str]) -> tuple[str, list[str]]:
     species_sql, _ = _species_clause("SF1.F1_ESPECIE", species)
     sql = f"""

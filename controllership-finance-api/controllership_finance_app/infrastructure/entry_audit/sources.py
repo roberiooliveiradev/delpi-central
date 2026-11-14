@@ -31,6 +31,24 @@ class ProtheusEntriesGateway:
     def documents(self, *, branch, received_from, received_to, species):
         return self._collect("/financeiro/entry-audit/documents", branch, received_from, received_to, species)
 
+    def documents_by_access_keys(self, *, branch, access_keys):
+        keys = []
+        seen = set()
+        for key in access_keys:
+            text = str(key or "")
+            if len(text) == 44 and text not in seen:
+                seen.add(text)
+                keys.append(text)
+        rows = []
+        for start in range(0, len(keys), 400):
+            payload = self._post(
+                "/financeiro/entry-audit/documents/by-access-key",
+                {"branch": branch, "access_keys": keys[start : start + 400]},
+            )
+            data = payload.get("data") if isinstance(payload, dict) else {}
+            rows.extend(list((data or {}).get("items") or []))
+        return rows
+
     def items(self, *, branch, received_from, received_to, species):
         return self._collect("/financeiro/entry-audit/items", branch, received_from, received_to, species)
 
@@ -68,6 +86,9 @@ class ProtheusEntriesGateway:
 
     def _get(self, path, params):
         return self._gateway.get_as_service(path, params=params)
+
+    def _post(self, path, body):
+        return self._gateway.post_as_service(path, json=body)
 
 
 class FiscalXmlGateway:

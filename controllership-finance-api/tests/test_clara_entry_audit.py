@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import uuid
 from pathlib import Path
 
 import pytest
@@ -66,6 +67,41 @@ def test_catalog_hides_entry_audit_when_flag_is_off(monkeypatch):
     assert sb._schema_for("entry_audit", "summary") is None
     table = ClaraGovernedWrites()._capability_table()
     assert "entry_audit.run" not in table
+
+
+def test_analysis_read_accepts_ref_and_returns_the_run(monkeypatch):
+    monkeypatch.setattr(settings, "ENTRY_AUDIT_ENABLED", True)
+    seen: dict = {}
+
+    def _handler(**kwargs):
+        seen.update(kwargs)
+        from controllership_finance_app.interface.mcp.tool_bridge import _ok
+
+        return _ok({
+            "id": kwargs.get("analysis_id"),
+            "status": "running",
+            "runs": [{
+                "branch": "01",
+                "status": "running",
+                "stage": "reading_xml",
+                "counts": {"documents": 1},
+                "error": "",
+            }],
+        })
+
+    monkeypatch.setitem(sb.READ_ACTIONS[("entry_audit", "analysis")], "handler", _handler)
+    monkeypatch.setattr(sb, "_user_and_access", lambda: (None, {}))
+    monkeypatch.setattr(sb, "_identity_snapshot", lambda _user: {"has_cf_access": True})
+    schema = sb._schema_for("entry_audit", "analysis")
+    assert "analysis_id" in schema["optional_params"]
+    assert "ref" in schema["optional_params"]
+    analysis_id = "11111111-1111-1111-1111-111111111111"
+    result = sb.tool_read("entry_audit", "analysis", ref=analysis_id)
+    assert result.is_error is False
+    assert seen["analysis_id"] == analysis_id
+    by_filter = sb.tool_read("entry_audit", "analysis", filters={"analysis_id": analysis_id})
+    assert by_filter.is_error is False
+    assert seen["analysis_id"] == analysis_id
 
 
 def test_schema_is_callable_for_each_entry(monkeypatch):
@@ -268,6 +304,81 @@ def test_direct_pipeline_seals_snapshot_and_replays(monkeypatch):
         actor_sub="sub-1",
     )
     assert reopened["result"]["status"] == "pending"
+
+
+def test_direct_events_keep_actor_channel_and_idempotency(monkeypatch):
+    from controllership_finance_app.application.clara import entry_audit_capabilities as caps
+    from controllership_finance_app.application.clara import governed_writes as gw_mod
+
+    analysis_id = str(uuid.uuid4())
+    status_id = str(uuid.uuid4())
+    actor = str(uuid.uuid4())
+    state = {"occurrence": "pending"}
+    events: list[dict] = []
+
+    class _Service:
+        def create(self, **_kwargs):
+            return {"id": analysis_id, "status": "queued", "created": True}
+
+        def get_analysis(self, ref):
+            return {"id": ref, "status": "done"}
+
+        def rerun(self, ref, _branches, **_kwargs):
+            return {"id": ref, "status": "queued"}
+
+        def occurrence_state(self, key):
+            if key != "stable-1":
+                return None
+            return {"occurrence": {"status": state["occurrence"], "stable_key": key}}
+
+        def resolve(self, key, *, kind, user_id, user_name):
+            del user_id, user_name
+            state["occurrence"] = "resolved"
+            return {"stable_key": key, "kind": kind, "status": "resolved", "status_id": status_id}
+
+        def reopen(self, key, *, kind, user_id, user_name):
+            del user_id, user_name
+            state["occurrence"] = "pending"
+            return {"stable_key": key, "kind": kind, "status": "pending", "status_id": status_id}
+
+    monkeypatch.setattr(settings, "ENTRY_AUDIT_ENABLED", True)
+    monkeypatch.setattr(caps, "build_entry_audit_service", lambda: _Service())
+    monkeypatch.setattr(gw_mod, "_audit_mcp", lambda **kwargs: events.append(kwargs))
+    monkeypatch.setattr(gw_mod, "portal_consent_required", lambda: False)
+    writes = ClaraGovernedWrites(
+        proposals=_Proposals(),
+        identity_provider=lambda: {"has_cf_access": True},
+    )
+    writes.execute_direct(
+        capability="entry_audit.run",
+        params={"date_from": "2026-11-12", "date_to": "2026-11-12", "document_types": ["nfe"], "branches": ["01"]},
+        actor_sub=actor,
+    )
+    writes.execute_direct(capability="entry_audit.rerun", params={"ref": analysis_id}, actor_sub=actor)
+    writes.execute_direct(
+        capability="entry_audit.resolve",
+        params={"key": "stable-1", "kind": "occurrence"},
+        actor_sub=actor,
+    )
+    writes.execute_direct(
+        capability="entry_audit.reopen",
+        params={"key": "stable-1", "kind": "occurrence"},
+        actor_sub=actor,
+    )
+    acts = [event for event in events if event["event_type"] == "CLARA_DIRECT_ACT"]
+    assert [event["detail"]["capability"] for event in acts] == [
+        "entry_audit.run", "entry_audit.rerun", "entry_audit.resolve", "entry_audit.reopen",
+    ]
+    for event in acts:
+        assert event["actor"] == actor
+        assert event["detail"]["channel"] == "mcp/clara"
+        assert event["detail"]["idempotency_key"]
+        uuid.UUID(event["entity_id"])
+    assert acts[0]["entity_id"] == analysis_id
+    assert acts[1]["entity_id"] == analysis_id
+    assert acts[2]["entity_id"] == status_id
+    assert acts[2]["detail"]["stable_key"] == "stable-1"
+    assert acts[3]["detail"]["stable_key"] == "stable-1"
 
 
 def test_branding_mentions_the_audit_directives():

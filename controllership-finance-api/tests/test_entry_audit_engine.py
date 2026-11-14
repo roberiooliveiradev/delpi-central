@@ -175,3 +175,37 @@ def test_xml_only_and_protheus_only_are_unmatched_and_a_booked_note_is_not() -> 
         ("protheus", "1004", "Média"),
     ]
     assert "trânsito" in result.unmatched[0].reason
+
+
+def test_transit_uses_the_analysis_end_and_is_info() -> None:
+    inside = _key("55", 1101)
+    outside = _key("55", 1102)
+    border = datetime(2026, 11, 9, 8, 0, 0)
+    older = datetime(2026, 11, 8, 8, 0, 0)
+    result = audit(
+        branch="01", company_tax_id=COMPANY, company_state="SC", headers=[], items=[],
+        tes_records=TES,
+        invoices={
+            inside: XmlDocument(
+                access_key=inside, model="55", number=1101, series="1", issued_at=border,
+                issuer_tax_id=SUPPLIER, issuer_name="Fornecedor Sintetico", issuer_state="SC",
+                recipient_tax_id=COMPANY, direction="Saída", crt="3", goods_amount=10, freight_amount=0,
+                discount_amount=0, other_amount=0, icms_base=10, icms_amount=1, st_amount=0, ipi_amount=0,
+                total_amount=10, status_code="100", items=(_xml_item(1, 10, 1),),
+            ),
+            outside: XmlDocument(
+                access_key=outside, model="55", number=1102, series="1", issued_at=older,
+                issuer_tax_id=SUPPLIER, issuer_name="Fornecedor Sintetico", issuer_state="SC",
+                recipient_tax_id=COMPANY, direction="Saída", crt="3", goods_amount=10, freight_amount=0,
+                discount_amount=0, other_amount=0, icms_base=10, icms_amount=1, st_amount=0, ipi_amount=0,
+                total_amount=10, status_code="100", items=(_xml_item(1, 10, 1),),
+            ),
+        },
+        ctes={},
+        config=AuditConfig(improvements_enabled=True, period_end=DAY),
+    )
+    by_number = {row.document_number: row for row in result.unmatched}
+    assert by_number["1101"].severity == "Info"
+    assert "trânsito" in by_number["1101"].reason
+    assert by_number["1102"].severity == "Média"
+    assert "trânsito" not in by_number["1102"].reason

@@ -171,7 +171,8 @@ class MemoryEntryAuditStore:
         return deepcopy(found) if found else None
 
     def upsert_status(self, stable_key: str, *, kind: str, status: str, user_id: str, user_name: str) -> dict:
-        current = self.statuses.get(stable_key, {"stable_key": stable_key, "kind": kind, "status": "pending"})
+        current = self.statuses.get(stable_key, {"stable_key": stable_key, "kind": kind, "status": "pending", "id": str(uuid4())})
+        current.setdefault("id", str(uuid4()))
         now = _now()
         current["kind"] = kind
         current["status"] = status
