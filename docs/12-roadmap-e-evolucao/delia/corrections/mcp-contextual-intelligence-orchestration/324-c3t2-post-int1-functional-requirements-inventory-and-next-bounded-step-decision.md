@@ -86,3 +86,7 @@ PHASE_ADVANCEMENT=NO · CODE_CHANGED=NO · PRODUCTION_DEPLOY=NO
 INT2_IMPLEMENTATION_AUTHORIZED=NO · INT3/T3=NOT_AUTHORIZED
 NEXT=COORDINATION_INT2_BOUNDED_STEP_AUTHORIZATION_DECISION
 ```
+
+### Adendo de direção PO posterior — 2026-11-14 (Doc 335)
+
+A matriz INT-1..INT-5 desta decisão histórica permanece correta quanto às **responsabilidades cognitivas e aos critérios do estágio**. Posteriormente, o PO confirmou uma **arquitetura-alvo com quatro Agents cognitivos especialistas** (compreensão, investigação, suficiência, síntese) trocando contratos tipados. **Não** interpretar este adendo como implementação ou aprovação automática da separação; o único Agent Pydantic AI existente continua baseline, e o Doc 293 exige prova comparativa e gate arquitetural. INT-1 CLOSED (Doc323); INT-2 implementação avançada (Docs325–334), aceite final pendente; INT-3 e novos Agents não autorizados. Ver [Doc 335](./335-c3t2-four-cognitive-specialist-agents-po-product-direction-and-int2-resumption.md).
