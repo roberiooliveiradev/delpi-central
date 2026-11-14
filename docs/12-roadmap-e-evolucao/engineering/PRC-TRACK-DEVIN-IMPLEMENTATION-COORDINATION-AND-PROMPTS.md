@@ -538,3 +538,19 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Limite de autorização:** implementação mínima, PR governado e deploy/testes **somente DEV/HML**. Não liberar PRD, writes TOTVS, novo BC, alteração de owner, alteração de produto oficial, publicação de revisão ou migração de legados. Correções de bugs circunscritos ao contrato aprovado podem ser propostas; qualquer mudança material de contrato/authority volta à Coordination. Testar no SHA efetivo, registrar evidências de runtime sem tokens.
 
 **Próximo gate:** `DEVIN_IMPLEMENTATION_AND_HML_VALIDATION`; entregar PR, diff e testes. Não chamar decisão aprovada de implementação PASS.
+
+## 32. Opção A implementada — Home alimentada por casos PRC nativos (13/11/2026)
+
+**TASK_ID:** ENG-HOME-PRC-NATIVE-INTEGRATION-IMPLEMENTATION-01 — Coordination ratificou a Opção A (`ARCHITECTURE_DECISION_APPROVED`). Implementação entregue na branch `eng-home-prc-native-integration`, SHA `2ff3cf2bd45f7e0872999dd545c7a05bd26b9d7f` — **PR pendente de abertura/merge pela Coordination** (executor sem credencial GitHub).
+
+**Diff (8 arquivos, +373/−12):**
+- `infrastructure/gateways/prc_home_sources.py` (novo): `PrcQueueHomeSource` (tasks — fila global do analista) e `PrcMineHomeSource` (requests — `own_scope`, casos do próprio usuário). Adapters in-process sobre `ProductRegistrationService.list_requests` via `asyncio.to_thread`; `PrcActor` projetado do `HomeSourceContext`; `PrcForbiddenError`→`forbidden`; demais falhas → `unavailable` isolada; itens com `requestId` (UUID) como id, href `/apps/engineering/product-registration/{id}` (rota real do `resolvePrcPath`), `source="engineering-api"`, meta rico.
+- `composition/home_composer.py`: injeta as duas fontes PRC; remove construção do `requests_client` (requests-api deixa de alimentar a Home; registros corporativos intactos no My Requests).
+- `ports/home_sources.py`: `HomeSourceContext` ganha `permissions`/`is_superadmin` (fontes in-process decidem escopo por objeto).
+- `routes/home_routes.py`: popula os novos campos do contexto.
+- `service.py::list_requests`: novo `own_scope` — analista na seção `requests` vê apenas os próprios casos (`global_scope=actor.is_analyst and not own_scope`).
+- Repositórios PG + in-memory: item da lista expõe `description` (título legível no card).
+
+**Testes:** `tests/test_prc_home_sources.py` — 12 cenários (identidade, escopo mine×queue, analista com escopo próprio, denied→forbidden, empty, total pré-paginação, isolamento de falha, título, meta). Focados: **23/23 pass**. Suíte ampla: **1195 pass / 2 fails baseline documentados** (`test_d16...isolation_between_requests` — falha pré-existente; `test_lmp_domain` — path `/api-delpi/contracts` não montado no container descartável).
+
+**Pendente:** merge governado → deploy HML → homologação runtime (criar PRC → verificar seções Home, fila e My Requests com mesmo requestId; regressão NF/chamados; LMPs; AuthZ).
