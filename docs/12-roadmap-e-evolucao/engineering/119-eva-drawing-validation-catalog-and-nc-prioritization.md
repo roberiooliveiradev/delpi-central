@@ -4521,3 +4521,37 @@ Duas alternativas apresentadas ao owner via
 existente (sem VAL-02); (b) recovery+upgrade VAL-02 num único
 restart (build no SHA alvo). Nenhuma executada — **sem
 autorização de produção até aqui**.
+
+### 94.8 Recuperação executada (Fase C — 2026-11-14 19:17 -03)
+
+Autorização do owner recebida → **Opção A (mínima)**, imagem
+existente `f4846e622043`, sem upgrade VAL-02.
+
+Comando: `docker compose -f infra/docker-compose.yml up -d
+engineering-api` (dir `infra/`).
+
+**Divulgação obrigatória:** o compose reconciliou `depends_on`
+desatualizados e recriou também `delpi-postgres-core`,
+`delpi-keycloak-db`, `keycloak` e `delpi-core-api` — blast radius
+maior que o pretendido (lição: recuperação mínima cirúrgica seria
+`docker start`; compose up toca a cadeia de dependências).
+Todos retornaram saudáveis em ~20s; indisponibilidade breve das
+dependências ocorrida durante o recreate.
+
+Resultado (verificado ~90s pós-start):
+
+- `delpi-engineering-api` running + healthcheck `healthy`;
+  `/apps/engineering-api/health` via gateway → **200** (era 502).
+- Startup logs limpos: "Application startup complete", health a
+  ~1ms.
+- `core-api` → 200; keycloak well-known → 200 (auth OK).
+- Host: ~3,6GB disponível; swap em queda (2,8GB).
+- **Drift de nome:** keycloak recriado como `infra-keycloak-1`
+  (antes `delpi-keycloak`) — mesmo serviço/imagem; registro para
+  inventário de naming.
+- Órfão pré-existente: `delpi-invoice-issuance` exited há ~2
+  semanas — não relacionado.
+
+DEPLOYED_SHA pós-recovery: imagem `f4846e622043` ≈ pré-VAL-02
+(código baked). **VAL-02 NÃO implantada** — upgrade = autorização
+separada (Opção B: build no SHA alvo + recreate na mesma janela).
