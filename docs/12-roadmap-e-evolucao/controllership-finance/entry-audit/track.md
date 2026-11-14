@@ -55,7 +55,7 @@
 | T2 | api-delpi — leitura do Protheus | DONE | DEV (banco DELPI) | 85276cc429 | 2026-11-14 | 12 testes PASS; filial 01 em 12/11/2026 = 19 (12 SPED + 7 CTE), igual ao SQL direto |
 | T3 | financial-api — Questor por período, por chave e CT-e | DONE | leitura PROD (HML sem financial-api) | af72c82f2b | 2026-11-14 | 75 testes PASS; 12/11/2026 NF-e 10 e 20, CT-e 1 e 1; KeyCte devolve a mesma linha |
 | T4 | BFF — motor de regras + paridade com a skill | DONE | sintético + leitura DEV/PROD | d57aeae36a | 2026-11-14 | cobertura 100%; 77 PASS; paridade real 12/11 filial 01 sem diferença |
-| T5 | BFF — análise, worker, persistência, rotas, LNF, exportação | IN_PROGRESS | | | 2026-11-14 | V023 escrita; worker, D11 e rotas ainda não |
+| T5 | BFF — análise, worker, persistência, rotas, LNF, exportação | DONE | DEV | 13b580e5d5 | 2026-11-14 | análise idempotente; worker; D11; exportação; paridade real com tipo e código fiscal sem diferença |
 | T6 | Back-end em HML | TODO | | | | |
 | T7 | CLARA — catálogo, análise, conhecimento, diretivas | TODO | | | | |
 | T8 | CLARA em HML (testes MCP) | TODO | | | | |
@@ -250,6 +250,7 @@ A amostra do owner (SF1 exportada às 14h19 de 12/11) tinha 7 notas SPED+CTE na 
 | 2026-11-14 | T4 | 6fb80fe9ea | IN_PROGRESS | EXECUTION_DRIFT — motor parcial (8/60); rework. A T4 só fecha com todas as regras de regras.md e de regras.py portadas, com teste positivo, negativo e caso no corpus de paridade. |
 | 2026-11-14 | T4 | d57aeae36a | DONE | Motor completo em `domain/entry_audit`. Cobertura §6.8 preenchida: cada `rule_id` tem teste positivo, negativo e caso no corpus sintético. Pytest do motor, da paridade pequena e da cobertura: 77 PASS. Paridade real, filial 01, recebimento 12/11/2026, SPED+CTE, D11 desligado, mesma entrada (api-delpi no banco DELPI e XML do Questor em leitura): 12 NF-e e 7 CT-e casados, 5 ocorrências, 0 sem par, 7 itens excluídos, «não apontado» 24+3, 0 chaves corrigidas, zero diferenças. Dado real fora do repositório. Adapter traduz as letras da TES; `Tipo do TES` e `Cod. Fiscal` não vêm da API. ADR-003 sem mudança. |
 | 2026-11-14 | T5 | | IN_PROGRESS | `V023__entry_audit_analysis.sql` cria as nove tabelas do contrato. Worker, D11, rotas e exportação ainda não. Retomar em T5. |
+| 2026-11-14 | T5 | 13b580e5d5 | DONE | Análise idempotente, worker que retoma órfãs, execução por filial, reexecução preservando o status, D11 (XML pela chave, listagem com folga, «Em lançamento (LNF)»), D12 no snapshot, rotas atrás de `ENTRY_AUDIT_ENABLED` e de `controllership-finance.access` (manage herda), exportação xlsx no layout da skill. `/tes` passa a devolver `F4_TIPO` e `F4_CF`. Paridade real, filial 01, recebimento 12/11/2026, os dois campos preenchidos nos dois lados: 458 TES, 12 NF-e e 7 CT-e casados, 5 ocorrências, 0 sem par, zero diferenças. Pytest da aplicação 8 PASS; api-delpi 12 PASS; motor 83 PASS. Suíte da BFF: 1268 PASS, 39 FAIL pré-existentes (docs ausentes no container, contagem direta 15 contra 13, modo de migration do LNF), contract tests do LNF PASS. Bearer só em memória do processo. Flag permanece desligada. |
 
 ---
 
