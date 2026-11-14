@@ -538,3 +538,12 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Limite de autorização:** implementação mínima, PR governado e deploy/testes **somente DEV/HML**. Não liberar PRD, writes TOTVS, novo BC, alteração de owner, alteração de produto oficial, publicação de revisão ou migração de legados. Correções de bugs circunscritos ao contrato aprovado podem ser propostas; qualquer mudança material de contrato/authority volta à Coordination. Testar no SHA efetivo, registrar evidências de runtime sem tokens.
 
 **Próximo gate:** `DEVIN_IMPLEMENTATION_AND_HML_VALIDATION`; entregar PR, diff e testes. Não chamar decisão aprovada de implementação PASS.
+
+## 33. PR #183 — correções de revisão aplicadas (13/11/2026)
+
+**TASK_ID:** ENG-HOME-PRC-NATIVE-INTEGRATION-PR183-REVIEW-FIX-01 — novo HEAD `da9a64547d2b50f32fc0ae23bc1ae84a7380062c` na mesma branch (PR #183 atualizado).
+
+- **FIX-1 (requests requester-only):** `own_scope` agora propaga `requester_only=True` aos repos — a seção `requests` lista exclusivamente casos com `requester_subject=ator`; casos de terceiros apenas atribuídos ao usuário ficam fora. O consumer original (listagem do portal) preserva o escopo `requester OR assigned`.
+- **FIX-2 (tasks acionáveis):** `PrcQueueHomeSource` aplica `statuses = PRC_STATUSES − TERMINAL_STATUSES` ({submitted, in_progress, needs_information, needs_correction, under_review}) no WHERE, antes de COUNT/LIMIT — completed/rejected não entram como pendência nem no total.
+- **Repos:** PG usa `status = ANY(%s)` + cláusula `requester_subject=%s` exclusiva; InMemory paridade. Ambos antes de count/paginação.
+- **Testes:** +5 cenários (assigned-only excluído p/ solicitante e analista, terminais excluídos, total pré-paginação filtrado). 27/27 focados; subconjunto PRC 181 pass / 1 fail baseline pré-existente (d16 isolation — fora do diff).
