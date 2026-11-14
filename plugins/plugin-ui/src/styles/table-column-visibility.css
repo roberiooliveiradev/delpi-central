@@ -3,7 +3,11 @@
  * Prefixo BEM: delpi-ui-table-columns.
  */
 
-.delpi-ui-table-columns {
+/* Tokens compartilhados: definidos também no painel porque o portal
+ * (AnchoredPanelPortal) renderiza fora da árvore de .delpi-ui-table-columns
+ * e não herda custom properties do wrapper. */
+.delpi-ui-table-columns,
+.delpi-ui-table-columns__panel {
   --delpi-ui-table-columns-bg: var(--delpi-ui-surface, var(--surface, #ffffff));
   --delpi-ui-table-columns-text: var(--delpi-ui-text, var(--text, #111111));
   --delpi-ui-table-columns-muted: var(
@@ -13,7 +17,9 @@
   --delpi-ui-table-columns-border: var(--delpi-ui-border, var(--border, #e6e6e6));
   --delpi-ui-table-columns-accent: var(--delpi-ui-accent, var(--primary, #089bdb));
   --delpi-ui-table-columns-radius: 12px;
+}
 
+.delpi-ui-table-columns {
   position: relative;
   flex-shrink: 0;
   color: var(--delpi-ui-table-columns-text);
