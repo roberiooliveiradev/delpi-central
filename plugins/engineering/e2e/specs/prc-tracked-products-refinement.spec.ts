@@ -60,14 +60,15 @@ test("P0-01 — produto 30190125: código oficial é a identidade, '#' não vira
   await expect(
     page.getByRole("heading", { name: "30190125", exact: true }),
   ).toBeVisible({ timeout: 20_000 });
-  await shot("hero-official-code");
 
-  /* Chip de versão acompanhada + metadados contextuais. */
+  /* Chip de versão acompanhada + metadados contextuais — também
+   * espera o fade de entrada do page-hero antes da captura. */
   await expect(page.getByText("acompanhada")).toBeVisible();
   await expect(
     page.getByText("Última evolução técnica"),
   ).toBeVisible();
   await expect(page.getByText("Solicitação de origem")).toBeVisible();
+  await shot("hero-official-code");
 
   await expectNoFailures(pageErrors, forbidden);
 });
