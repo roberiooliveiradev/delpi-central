@@ -868,7 +868,12 @@ def build_official_cross_check(
     verifications.append(_attr(
         "product", "revision",
         product_revision,
-        rev_candidates[0].get("revision") if rev_candidates else None,
+        (
+            rev_candidates[0].get("value_text")
+            or rev_candidates[0].get("revision")
+        )
+        if rev_candidates
+        else None,
         "NOT_COMPARABLE" if (product_revision and rev_candidates)
         else "NOT_CHECKED",
         "domínios de revisão distintos (TOTVS≠desenho) — ENG-REV-001"

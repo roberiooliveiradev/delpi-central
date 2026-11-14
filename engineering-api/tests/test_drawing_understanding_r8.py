@@ -32,11 +32,11 @@ _TOKENS = [
     _tok("TUBO", 700, 420),
     _tok("50226113", 600, 440),   # tabela row2
     _tok("50226114", 600, 460),   # tabela row3
-    _tok("COD", 620, 700),        # carimbo — rótulo 1
-    _tok("DES", 740, 700),        # carimbo — rótulo 2
+    _tok("COD:", 620, 700),       # carimbo — rótulo 1
+    _tok("DES:", 740, 700),       # carimbo — rótulo 2
     _tok("90264302", 800, 700),   # carimbo valor
     _tok("18702881", 800, 720),
-    _tok("REV", 620, 720),
+    _tok("REV:", 620, 720),
     _tok("00", 700, 720),         # valor de REV (nunca cota)
     _tok("643±2", 200, 300),      # cota explícita na área de desenho
     _tok("663±2", 200, 350),
@@ -55,7 +55,7 @@ def test_schema_and_validation_draft():
 def test_region_classification_deterministic():
     out = build_understanding(_TOKENS, document_hash="x")
     by = {t["text"]: t for t in out["title_block_candidates"]}
-    assert "90264302" in by and "REV" in by
+    assert "90264302" in by and "REV:" in by
     # tabela não vaza para carimbo
     assert "10080106" not in by
 
@@ -146,7 +146,7 @@ def test_identifier_candidates_states():
 def test_revision_candidate_label_value():
     out = build_understanding(_TOKENS, document_hash="x")
     revs = out["revision_candidates"]
-    assert revs and revs[0]["label_text"].upper() == "REV"
+    assert revs and revs[0]["label_text"].upper() == "REV:"
     assert revs[0]["value_text"] == "00"
     assert revs[0]["state"] == "FIELD_IDENTIFIED"
 

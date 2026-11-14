@@ -97,6 +97,94 @@ _HEADER_TYPE_MAP = {
 }
 _REV_LABEL_RE = re.compile(r"^REV\.?:?$", re.IGNORECASE)
 _REV_VALUE_RE = re.compile(r"^(\d{2}|[A-Z]{1,2})$")
+
+# VAL-02 RQ-02-01 — rótulos do carimbo → tipo lógico de campo.
+# Rótulo decide o papel; valor nunca é inferido só por formato.
+_TB_FIELD_LABELS = {
+    "cod": "document_code", "código": "document_code",
+    "codigo": "document_code",
+    "des": "drawing_reference", "desenho": "drawing_reference",
+    "descrição": "description", "descricao": "description",
+    "cliente": "customer_name",
+    "rev": "revision_printed", "revisão": "revision_printed",
+    "revisao": "revision_printed",
+    "data": "date",
+    "folha": "sheet", "fl": "sheet",
+    "esc": "scale", "escala": "scale",
+    "unid": "unit", "unidade": "unit",
+    "mat": "material", "material": "material",
+    "peso": "weight",
+    "desenhado": "drawn_by", "elaborado": "drawn_by",
+    "conferido": "checked_by", "verific": "checked_by",
+    "verificado": "checked_by",
+    "aprov": "approved_by", "aprovado": "approved_by",
+    "liberado": "released_by",
+    "ref": "customer_reference",
+}
+# Rótulos admitidos como campo SEM pontuação terminal — apenas
+# substantivos "de ficha" que raramente aparecem como narrativa.
+# 'desenho','data','resumo','liberado','executado' etc. são palavras
+# comuns em texto/cabeçalho de histórico: sem ':'/'.' não disparam
+# pareamento (evita DATA-do-histórico→'00' e 'DESENHO' de
+# 'CRIAÇÃO DE DESENHO'→narrativa).
+_TB_BARE_FIELD_LABELS = frozenset(
+    {
+        "folha", "fl", "escala", "unidade", "mat", "material",
+        "peso", "aprovado", "conferido", "verificado", "desenhado",
+        "elaborado", "cliente", "ref", "unid",
+    }
+)
+# Padrão de valor por tipo — "semântica do rótulo": valor fora do
+# padrão NÃO é promovido (TEXT_ONLY + unpaired_value_text).
+_TB_VALUE_RE = {
+    "date": re.compile(r"^\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}$"),
+    "sheet": re.compile(r"^\d{1,3}(\s*[/de]+\s*\d{1,3})?$"),
+    "scale": re.compile(r"^\d+\s*[:/]\s*\d+$|^\d+([.,]\d+)?$"),
+}
+_TB_CODEISH_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.\-/]*$")
+_TB_CODE_FIELDS = frozenset(
+    {
+        "document_code", "drawing_reference", "customer_reference",
+    }
+)
+# VAL-02 RQ-02-03 — cabeçalho do histórico embutido no carimbo
+# (REV/DATA/LMP/OV/RESUMO/EXECUTADO/LIBERADO). Distinto de
+# _REVHIST_LABELS (detecção de região independente).
+_EMBEDDED_HIST_LABELS = frozenset(
+    {
+        "rev", "data", "lmp", "ov", "resumo", "das",
+        "modificações", "modificacoes", "alteração", "alteracao",
+        "motivo", "descrição", "descricao", "observação",
+        "observacao", "executado", "liberado",
+    }
+)
+_EMBEDDED_HIST_SUMMARY_LABELS = frozenset(
+    {
+        "resumo", "das", "modificações", "modificacoes",
+        "alteração", "alteracao", "motivo", "descrição",
+        "descricao", "observação", "observacao",
+    }
+)
+# OCR frequentemente funde o cabeçalho inteiro num token
+# ('resumodasmodificacöes'): match por substring normalizada,
+# nunca por identidade do token.
+_EMBEDDED_SUMMARY_RE = re.compile(
+    r"resumo|modifica|altera|motivo|descri|observa"
+)
+_EMBEDDED_HIST_ROLES = {
+    "rev": "revision_value",
+    "data": "date",
+    "lmp": "lmp",
+    "ov": "ov",
+    "executado": "executado",
+    "liberado": "liberado",
+}
+# RQ-02-07 — domínios de revisão ratificados pelo owner (14/11/2026):
+# current_revision/B1_REVATU = revisão do CLIENTE; REV do carimbo =
+# revisão técnica de ENGENHARIA. Nunca comparar entre domínios.
+REVISION_DOMAIN_CLIENT_TOTVS = "CLIENT_TOTVS"
+REVISION_DOMAIN_ENGINEERING_DRAWING = "ENGINEERING_DRAWING"
+REVISION_DOMAIN_DOCUMENT_LIBRARY = "DOCUMENT_LIBRARY"
 _NUM_RE = re.compile(r"^\d+([.,]\d+)?$")
 _CODE_FIND_RE = re.compile(r"\d{8,11}")
 # cota explícita: tolerância ±/±n ou unidade escrita — nunca só número
@@ -148,8 +236,23 @@ def _inside(center: tuple[float, float], box: list[float],
     )
 
 
+def _label_key(text: str) -> str:
+    return text.lower().rstrip(".:")
+
+
 def _is_label(text: str) -> bool:
-    return text.lower().rstrip(".:") in _TITLEBLOCK_LABELS
+    return _label_key(text) in _TITLEBLOCK_LABELS
+
+
+def _is_known_label(text: str) -> bool:
+    """Rótulo de carimbo ou de histórico — nunca consumido como valor."""
+    key = _label_key(text)
+    return (
+        key in _TITLEBLOCK_LABELS
+        or key in _EMBEDDED_HIST_LABELS
+        or key in _TABLE_HEADER_LABELS
+        or key in _REVHIST_LABELS
+    )
 
 
 def _is_header_label(text: str) -> bool:
@@ -959,49 +1062,480 @@ def _structure_table(
     return rows_out, ambiguous, col_types
 
 
-def _match_revisions(
-    tokens: list[dict], w: float, h: float
-) -> list[dict]:
-    """REV: → valor (mesma linha à direita ou abaixo na coluna). D3."""
-    revs = []
-    y_tol = h * 0.015
-    x_tol = w * 0.12
-    for t in tokens:
-        text = _text_of(t)
-        if not _REV_LABEL_RE.match(text):
+def _value_run_right(
+    label_tok: dict,
+    tokens: list[dict],
+    y_tol: float,
+    gap_tol: float,
+) -> tuple[list[dict], str]:
+    """Run de tokens não-rótulo à direita do rótulo na mesma linha.
+
+    O valor do carimbo pode ser multi-token (CLIENTE: WEG INDUSTRIA
+    S.A - LINHARES; DES. P66 TSP 04 - 220/380V). O run para no
+    próximo rótulo conhecido, em gap maior que `gap_tol` ou fora da
+    banda y — nunca cruza fronteira de rótulo."""
+    lc = _tok_center(label_tok)
+    if not lc:
+        return [], ""
+    lb = label_tok.get("bounding_box_px")
+    run: list[dict] = []
+    last_x = lb[2] if lb else lc[0]
+    for t in sorted(
+        (t for t in tokens if t is not label_tok and _tok_center(t)),
+        key=lambda t: _tok_center(t)[0],
+    ):
+        c = _tok_center(t)
+        if abs(c[1] - lc[1]) > y_tol or c[0] <= lc[0]:
             continue
-        val = _nearest_value_right(t, tokens, y_tol, x_tol)
-        rule = "label_right_same_row"
-        if val is None or not _REV_VALUE_RE.match(_text_of(val)):
-            val = _nearest_value_below(t, tokens, x_tol, y_tol * 3)
-            rule = "label_below_same_col"
-        if val and _REV_VALUE_RE.match(_text_of(val)):
-            revs.append(
-                {
-                    "field": "revision_candidate",
-                    "label_text": text,
-                    "value_text": _text_of(val),
-                    "region": "title_block",
-                    "bounding_box_px": t.get("bounding_box_px"),
-                    "value_bounding_box_px": val.get("bounding_box_px"),
-                    "state": "FIELD_IDENTIFIED",
-                    "association": f"label_value:{rule}",
-                    "association_confidence": "rule_based",
-                }
+        tb_box = t.get("bounding_box_px")
+        # gap por borda da caixa, não centro — rótulo e valor são
+        # adjacentes em células reais
+        left = tb_box[0] if tb_box else c[0]
+        if left - last_x > gap_tol:
+            break
+        # o run para em rótulo conhecido — inclusive quando OCR
+        # fundiu rótulo+valor num token só ('des:10013396831')
+        tok_text = _text_of(t)
+        if _is_known_label(tok_text) or _split_label_value(tok_text):
+            break
+        run.append(t)
+        last_x = tb_box[2] if tb_box else c[0]
+    return run, " ".join(_text_of(t) for t in run).strip()
+
+
+def _detect_embedded_revision_history(
+    tb_tokens: list[dict],
+    tokens: list[dict],
+    w: float,
+    h: float,
+) -> dict | None:
+    """RQ-02-03 — histórico de alterações embutido no carimbo.
+
+    Layout DELPI: linha de cabeçalho REV|DATA|LMP|[OV]|RESUMO DAS
+    MODIFICAÇÕES|EXECUTADO|LIBERADO dentro da mesma região geométrica
+    do carimbo, com uma linha por entrada. Cabeçalho = cluster y de
+    ≥3 rótulos de histórico nos tokens do carimbo; corpo = tokens de
+    TODA a página no span-x das colunas e numa faixa abaixo do
+    cabeçalho — o box do carimbo é derivado dos rótulos e pode
+    cortar linhas do histórico. Linha só vira entrada com
+    `revision_value` no formato \d{2} (ou letra + data) — narrativa
+    e callouts do desenho não são evidência de alteração. Nunca
+    promove a maior revisão a vigente; entradas preservadas em
+    ordem documental."""
+    # Pool de rótulos: tokens do carimbo + vizinhança à direita/
+    # abaixo — o box é derivado dos rótulos de ficha e pode cortar
+    # colunas do histórico (EXECUTADO/LIBERADO à direita de RESUMO).
+    tb_box = _box(tb_tokens)
+    vicinity = (
+        [
+            tb_box[0] - w * 0.02,
+            tb_box[1] - h * 0.02,
+            tb_box[2] + w * 0.15,
+            tb_box[3] + h * 0.12,
+        ]
+        if tb_box
+        else None
+    )
+    label_toks = [
+        t
+        for t in tokens
+        if _tok_center(t)
+        and _inside(_tok_center(t), vicinity)
+        and (
+            _label_key(_text_of(t)) in _EMBEDDED_HIST_LABELS
+            or _EMBEDDED_SUMMARY_RE.search(_label_key(_text_of(t)))
+        )
+    ]
+    if len(label_toks) < 3:
+        return None
+    header_row = max(
+        _cluster_y(label_toks, h * 0.02),
+        key=lambda row: len(
+            {_label_key(_text_of(t)) for t in row}
+        ),
+        default=[],
+    )
+    distinct = {_label_key(_text_of(t)) for t in header_row}
+    if len(distinct) < 3 or not any(
+        _EMBEDDED_SUMMARY_RE.search(k) for k in distinct
+    ):
+        return None
+    header_cy = sum(
+        _tok_center(t)[1] for t in header_row
+    ) / len(header_row)
+    # colunas: rótulos ordenados por x; mesmo papel adjacente funde
+    # (RESUMO + DAS + MODIFICAÇÕES = uma coluna de resumo)
+    columns: list[dict] = []
+    for t in sorted(header_row, key=lambda t: _tok_center(t)[0]):
+        key = _label_key(_text_of(t))
+        role = _EMBEDDED_HIST_ROLES.get(key) or (
+            "summary" if _EMBEDDED_SUMMARY_RE.search(key) else None
+        )
+        if role is None:
+            continue
+        c = _tok_center(t)
+        if columns and columns[-1]["role"] == role and (
+            c[0] - columns[-1]["x_max"] <= w * 0.08
+        ):
+            columns[-1]["tokens"].append(t)
+            columns[-1]["x_max"] = c[0]
+        else:
+            columns.append(
+                {"role": role, "tokens": [t], "x": c[0], "x_max": c[0]}
+            )
+    if not columns:
+        return None
+    anchors = [c["x"] for c in columns]
+    x_min, x_max = min(anchors), max(anchors)
+    bounds = [0.0] + [
+        (anchors[i] + anchors[i + 1]) / 2
+        for i in range(len(anchors) - 1)
+    ] + [float("inf")]
+    # Corpo: qualquer token da página sob o cabeçalho, no span-x das
+    # colunas — o box do carimbo corta linhas do histórico quando o
+    # rótulo mais abaixo é o próprio cabeçalho.
+    body = [
+        t
+        for t in tokens
+        if _tok_center(t)
+        and t not in header_row
+        and _tok_center(t)[1] > header_cy + h * 0.005
+        and _tok_center(t)[1] < header_cy + h * 0.35
+        and x_min - w * 0.02
+        <= _tok_center(t)[0]
+        <= x_max + w * 0.02
+    ]
+    entries: list[dict] = []
+    for row_i, row in enumerate(
+        _cluster_y(sorted(body, key=lambda t: _tok_center(t)[1]),
+                   h * 0.012)
+    ):
+        cells: dict[str, list[str]] = {}
+        for t in row:
+            c = _tok_center(t)
+            for ci, col in enumerate(columns):
+                if bounds[ci] <= c[0] < bounds[ci + 1]:
+                    cells.setdefault(col["role"], []).append(
+                        _text_of(t)
+                    )
+                    break
+        # Entrada de histórico de revisão exige uma revisão —
+        # linha sem revision_value é texto/narrativa sob o span
+        # das colunas, não evidência de alteração. Revisão fora do
+        # formato \d{2} só conta com contexto real (letra + data):
+        # rejeita callouts do desenho ('a7', 'ay', '(10)') colados
+        # à moldura do carimbo.
+        rev_val = " ".join(cells.get("revision_value") or [])
+        if not rev_val:
+            continue
+        if not re.match(r"^\d{2}$", rev_val) and (
+            not re.match(r"^[a-zA-Z]{1,2}$", rev_val)
+            or not cells.get("date")
+        ):
+            continue
+        entries.append(
+            {
+                "entry_index": len(entries),
+                "revision_value": " ".join(cells.get("revision_value") or []) or None,
+                "date": " ".join(cells.get("date") or []) or None,
+                "lmp": " ".join(cells.get("lmp") or []) or None,
+                "ov": " ".join(cells.get("ov") or []) or None,
+                "summary": " ".join(cells.get("summary") or []) or None,
+                "executado": " ".join(cells.get("executado") or []) or None,
+                "liberado": " ".join(cells.get("liberado") or []) or None,
+                "revision_domain": REVISION_DOMAIN_ENGINEERING_DRAWING,
+                "bounding_box_px": _box(row),
+                "evidence": {
+                    "row_tokens": [_text_of(t) for t in row],
+                    "header_labels": [
+                        _text_of(t)
+                        for col in columns
+                        for t in col["tokens"]
+                    ],
+                },
+            }
+        )
+    members = header_row + [
+        t
+        for e in entries
+        for t in body
+        if _tok_center(t)
+        and _inside(
+            _tok_center(t), e["bounding_box_px"], margin=h * 0.01
+        )
+    ]
+    return {
+        "box": _box(members) or _box(header_row),
+        "label_count": len(distinct),
+        "labels": [_text_of(t) for t in header_row],
+        "tokens": members,
+        "entries": entries,
+        "embedded_in": "title_block",
+    }
+
+
+_EMBEDDED_LABEL_VALUE_RE = re.compile(
+    r"^([a-zçáéíóúâêôãõ]{2,}\s*[:.])\s*(\S.*)$"
+)
+
+
+def _split_label_value(text: str) -> tuple[str, str, str] | None:
+    """OCR funde rótulo+valor num token ('des:10013396831').
+
+    Retorna (label_text, label_key, valor) apenas quando o prefixo
+    é um rótulo conhecido — nunca quebra token genérico."""
+    m = _EMBEDDED_LABEL_VALUE_RE.match((text or "").strip().lower())
+    if not m:
+        return None
+    key = _label_key(m.group(1))
+    if key not in _TB_FIELD_LABELS:
+        return None
+    return m.group(1).strip(), key, m.group(2).strip()
+
+
+def _match_admin_fields(
+    tokens: list[dict],
+    w: float,
+    h: float,
+    page: int,
+    *,
+    label_ids: set[int] | None = None,
+    excluded_ids: set[int] | None = None,
+) -> list[dict]:
+    """RQ-02-01 — matcher genérico rótulo→valor no carimbo.
+
+    Rótulos são os tokens em `label_ids` (membros do carimbo); o
+    valor pode ser QUALQUER token não-rótulo e não excluído — o box
+    geométrico do carimbo não corta o valor do rótulo mais à direita
+    (REV: → 00 fora do box detectado em layouts reais). Run para no
+    próximo rótulo conhecido — nunca cruza fronteira de rótulo.
+    `revision_printed` exige padrão de revisão — valor fora do
+    padrão permanece TEXT_ONLY com a evidência preservada em
+    `unpaired_value_text`."""
+    excluded_ids = excluded_ids or set()
+    candidates = [
+        t for t in tokens if id(t) not in excluded_ids
+    ]
+    y_tol = h * 0.02
+    gap_tol = w * 0.05
+    fields: list[dict] = []
+    for t in sorted(
+        (
+            t
+            for t in candidates
+            if _tok_center(t)
+            and (label_ids is None or id(t) in label_ids)
+        ),
+        key=lambda t: (_tok_center(t)[1], _tok_center(t)[0]),
+    ):
+        text = _text_of(t)
+        key = _label_key(text)
+        ftype = _TB_FIELD_LABELS.get(key)
+        embedded_value: str | None = None
+        if not ftype:
+            split = _split_label_value(text)
+            if split:
+                text, key, embedded_value = split
+                ftype = _TB_FIELD_LABELS[key]
+        if not ftype:
+            continue
+        if embedded_value is not None:
+            # valor embutido no token do rótulo — mesma evidência;
+            # prefere raw_text (preserva espaços) quando confirma o
+            # mesmo rótulo
+            raw = _norm(str(t.get("raw_text") or ""))
+            rm = _EMBEDDED_LABEL_VALUE_RE.match(raw.lower())
+            if rm and _label_key(rm.group(1)) == key:
+                embedded_value = rm.group(2).strip()
+            run, joined, rule = (
+                [t],
+                embedded_value,
+                "label_embedded_same_token",
             )
         else:
-            revs.append(
-                {
-                    "field": "revision_candidate",
-                    "label_text": text,
-                    "value_text": None,
-                    "region": "title_block",
-                    "bounding_box_px": t.get("bounding_box_px"),
-                    "state": "TEXT_ONLY",
-                    "association": None,
-                }
+            if not text.rstrip().endswith((":", ".")) and (
+                key not in _TB_BARE_FIELD_LABELS
+            ):
+                continue
+            run, _ = _value_run_right(t, candidates, y_tol, gap_tol)
+            joined = " ".join(_text_of(r) for r in run).strip()
+            rule = "label_right_same_row"
+        if not run:
+            v = _nearest_value_below(
+                t, candidates, w * 0.12, y_tol * 3
             )
-    return revs
+            if v and not _is_known_label(_text_of(v)):
+                run, joined, rule = [v], _text_of(v), "label_below_same_col"
+        # 'des.: p34' — colon residual do rótulo fundido não faz
+        # parte do valor
+        joined = (joined or "").lstrip(":：").strip()
+        value_re = (
+            _REV_VALUE_RE
+            if ftype == "revision_printed"
+            else _TB_VALUE_RE.get(ftype)
+        )
+        value_ok = bool(run) and (
+            (value_re.match(joined) if value_re else True)
+            and (
+                ftype not in _TB_CODE_FIELDS
+                or bool(_TB_CODEISH_RE.match(joined))
+            )
+        )
+        fields.append(
+            {
+                "field_type": ftype,
+                "label_text": text,
+                "raw_value": joined if (run and value_ok) else None,
+                "normalized_value": (
+                    _norm(joined) if (run and value_ok) else None
+                ),
+                "unpaired_value_text": (
+                    joined if (run and not value_ok) else None
+                ),
+                "page": page,
+                "bounding_box_px": t.get("bounding_box_px"),
+                "value_bounding_box_px": (
+                    run[0].get("bounding_box_px") if run else None
+                ),
+                "value_token_boxes": [
+                    r.get("bounding_box_px") for r in run
+                ],
+                "interpretation_state": (
+                    "FIELD_IDENTIFIED" if value_ok else "TEXT_ONLY"
+                ),
+                "association": (
+                    f"label_value:{rule}" if run and value_ok else None
+                ),
+                "association_confidence": "rule_based",
+                "revision_domain": (
+                    REVISION_DOMAIN_ENGINEERING_DRAWING
+                    if ftype == "revision_printed"
+                    else None
+                ),
+            }
+        )
+    return fields
+
+
+def _type_identifier_roles(
+    fields: list[dict],
+    admin_fields: list[dict],
+    product_code: str | None,
+) -> None:
+    """RQ-02-04 — papel do identificador por rótulo/evidência.
+
+    Nunca decide por formato/comprimento: valor pareado com COD: é
+    `document_code`; código do próprio produto é `product_code`;
+    código dentro do histórico é `history_mention`; sem evidência de
+    rótulo → `unknown_identifier` (nunca promovido a fato)."""
+    _LABEL_ROLE = {
+        "document_code": "document_code",
+        "drawing_reference": "drawing_code_candidate",
+        "customer_reference": "customer_reference",
+    }
+    paired_boxes: dict[tuple, str] = {}
+    for f in admin_fields:
+        role = _LABEL_ROLE.get(f["field_type"])
+        if role and f.get("interpretation_state") == "FIELD_IDENTIFIED":
+            for b in f.get("value_token_boxes") or []:
+                paired_boxes[tuple(b)] = role
+    for f in fields:
+        box = tuple(f.get("bounding_box_px") or [])
+        if f.get("region") == "revision_history":
+            role, basis = "history_mention", "inside_revision_history"
+        elif product_code and f.get("text") == product_code:
+            role, basis = "product_code", "equals_product_code"
+        elif box in paired_boxes:
+            role, basis = paired_boxes[box], "label_value_pairing"
+        elif f.get("region") == "component_table":
+            role, basis = "component_code", "inside_component_table"
+        elif f.get("region") == "title_block":
+            role, basis = (
+                "unknown_identifier",
+                "in_title_block_without_label",
+            )
+        else:
+            role, basis = "unknown_identifier", "no_structural_evidence"
+        f["role"] = role
+        f["role_basis"] = basis
+
+
+def _pick_identity_field(
+    fields: list[dict], ftype: str
+) -> dict | None:
+    """Primeiro valor identificado do tipo + conflitos entre folhas.
+
+    RQ-02-02: valores contraditórios entre páginas nunca são
+    sobrescritos silenciosamente — primeiros valores vencem,
+    divergências vão para `conflicts` com página."""
+    cands = [
+        f
+        for f in fields
+        if f["field_type"] == ftype and f.get("raw_value")
+    ]
+    if not cands:
+        return None
+    first = cands[0]
+    out = {
+        "value": first["raw_value"],
+        "page": first["page"],
+        "state": first["interpretation_state"],
+        "label_text": first["label_text"],
+    }
+    conflicts = [
+        {"value": c["raw_value"], "page": c["page"]}
+        for c in cands[1:]
+        if c["raw_value"] != first["raw_value"]
+    ]
+    if conflicts:
+        out["conflicts"] = conflicts
+    return out
+
+
+def _build_document_identity(
+    tb_fields: list[dict],
+    *,
+    product_code: str | None,
+    document_hash: str,
+    page_count: int,
+) -> dict[str, Any]:
+    """RQ-02-05 — identidade documental extraída do carimbo.
+
+    Apenas campos com evidência sustentam a identidade; ausência de
+    campo confiável → None, nunca valor inventado. Revisão impressa é
+    marcada com o domínio ENGINEERING_DRAWING (RQ-02-07)."""
+    printed_rev = _pick_identity_field(tb_fields, "revision_printed")
+    if printed_rev:
+        printed_rev["domain"] = REVISION_DOMAIN_ENGINEERING_DRAWING
+    identified = sum(
+        1
+        for f in tb_fields
+        if f["interpretation_state"] == "FIELD_IDENTIFIED"
+    )
+    return {
+        "product_code": product_code,
+        "document_sha256": document_hash,
+        "page_count": page_count,
+        "document_code": _pick_identity_field(
+            tb_fields, "document_code"
+        ),
+        "drawing_reference": _pick_identity_field(
+            tb_fields, "drawing_reference"
+        ),
+        "customer_name": _pick_identity_field(
+            tb_fields, "customer_name"
+        ),
+        "customer_reference": _pick_identity_field(
+            tb_fields, "customer_reference"
+        ),
+        "printed_revision": printed_rev,
+        "extraction_state": (
+            "IDENTIFIED" if identified else "NOT_EXTRACTED"
+        ),
+        "fields_identified": identified,
+        "source": "title_block.fields — interpretação candidata; "
+        "cadastro oficial permanece api-delpi/TOTVS",
+    }
 
 
 def _is_dimension_candidate(
@@ -1047,6 +1581,18 @@ def build_understanding(
     # são ocorrência vigente de componente.
     revh = _detect_revision_history(tokens, w, h, tb_ids)
     revh_ids = set(id(t) for t in (revh["tokens"] if revh else []))
+    # RQ-02-03: histórico embutido dentro do carimbo — tokens da
+    # região do carimbo que formam a tabela de alterações ganham
+    # região própria (revision_history), nunca carimbo nem tabela.
+    revh_emb = (
+        _detect_embedded_revision_history(tb["tokens"], tokens, w, h)
+        if tb
+        else None
+    )
+    if revh_emb:
+        emb_ids = set(id(t) for t in revh_emb["tokens"])
+        tb_ids -= emb_ids
+        revh_ids |= emb_ids
     table = _detect_component_table(
         tokens, w, h, tb["box"] if tb else None,
         excluded_ids=tb_ids | revh_ids,
@@ -1212,13 +1758,57 @@ def build_understanding(
                 if region.get("type") == "component_table":
                     region["box_px"] = column_crop
 
+    # ---------- campos administrativos do carimbo (RQ-02-01) ----------
+    emb_ids = (
+        set(id(t) for t in revh_emb["tokens"]) if revh_emb else set()
+    )
+    # Valores nunca vêm do histórico embutido nem da tabela de
+    # componentes; rótulos vêm apenas do carimbo quando detectado.
+    value_excluded = emb_ids | tbl_ids
+    if tb:
+        label_ids = {
+            id(t) for t in tb["tokens"] if id(t) not in emb_ids
+        }
+        admin_fields = _match_admin_fields(
+            tokens, w, h, page,
+            label_ids=label_ids, excluded_ids=value_excluded,
+        )
+    else:
+        # compat: sem carimbo detectado, só revisão varre a página
+        # inteira (comportamento pré-VAL-02 de _match_revisions).
+        admin_fields = [
+            f
+            for f in _match_admin_fields(
+                tokens, w, h, page, excluded_ids=value_excluded
+            )
+            if f["field_type"] == "revision_printed"
+        ]
+
     # ---------- revisão contextual ----------
-    revisions = _match_revisions(tokens, w, h)
+    revisions = [
+        {
+            "field": "revision_candidate",
+            "field_type": f["field_type"],
+            "label_text": f["label_text"],
+            "value_text": f["raw_value"],
+            "unpaired_value_text": f["unpaired_value_text"],
+            "region": "title_block",
+            "bounding_box_px": f["bounding_box_px"],
+            "value_bounding_box_px": f["value_bounding_box_px"],
+            "state": f["interpretation_state"],
+            "association": f["association"],
+            "association_confidence": f["association_confidence"],
+            "page": page,
+            "revision_domain": f["revision_domain"],
+        }
+        for f in admin_fields
+        if f["field_type"] == "revision_printed"
+    ]
     paired_values = set()
-    for r in revisions:
-        vb = r.get("value_bounding_box_px")
-        if vb:
-            paired_values.add(tuple(vb))
+    for f in admin_fields:
+        for vb in f.get("value_token_boxes") or []:
+            if vb:
+                paired_values.add(tuple(vb))
     # tokens cujo texto foi consumido como valor de rótulo
     label_value_texts = {
         _text_of(t)
@@ -1254,6 +1844,9 @@ def build_understanding(
                     "association_confidence": "rule_based",
                 }
             )
+    # RQ-02-04 — papel do identificador por evidência de rótulo/
+    # região; nunca promove menção de histórico ou número sem papel.
+    _type_identifier_roles(fields, admin_fields, product_code)
 
     # ---------- cotas (filtro contextual) ----------
     dimensions: list[dict] = []
@@ -1418,6 +2011,7 @@ def build_understanding(
             "candidate": tb is not None,
             "box_px": tb["box"] if tb else None,
             "labels": tb["labels"] if tb else [],
+            "fields": admin_fields,
             "detection": "label_cluster (≥2 rótulos conhecidos)",
         },
         "title_block_candidates": [
@@ -1458,13 +2052,56 @@ def build_understanding(
         "identifier_candidates": fields,
         "code_contexts": code_contexts,
         "revision_history": {
-            "candidate": revh is not None,
-            "box_px": revh["box"] if revh else None,
-            "labels": revh["labels"] if revh else [],
-            "detection": "revhist_label_cluster (≥2 rótulos fora do "
-            "carimbo)",
+            "candidate": revh is not None or revh_emb is not None,
+            "box_px": (
+                revh["box"]
+                if revh
+                else (revh_emb["box"] if revh_emb else None)
+            ),
+            "labels": (revh["labels"] if revh else [])
+            + (revh_emb["labels"] if revh_emb else []),
+            "embedded_in": (
+                revh_emb["embedded_in"] if revh_emb else None
+            ),
+            "entries": [
+                {**e, "page": page}
+                for e in (revh_emb["entries"] if revh_emb else [])
+            ],
+            "detection": (
+                "revhist_label_cluster (≥2 rótulos fora do carimbo)"
+                if revh
+                else (
+                    "embedded_in_title_block (cabeçalho ≥3 rótulos)"
+                    if revh_emb
+                    else "revhist_label_cluster (≥2 rótulos fora do "
+                    "carimbo)"
+                )
+            ),
         },
         "revision_candidates": revisions,
+        "document_identity": _build_document_identity(
+            admin_fields,
+            product_code=product_code,
+            document_hash=document_hash,
+            page_count=1,
+        ),
+        # RQ-02-05 — report.identification.document_id já previa o
+        # slot; populado somente quando o carimbo sustenta.
+        "document": (
+            _pick_identity_field(admin_fields, "document_code") or {}
+        ).get("value"),
+        "customer": (
+            _pick_identity_field(admin_fields, "customer_name") or {}
+        ).get("value"),
+        "revision": (
+            _pick_identity_field(admin_fields, "revision_printed") or {}
+        ).get("value"),
+        "revision_domain": (
+            REVISION_DOMAIN_ENGINEERING_DRAWING
+            if _pick_identity_field(admin_fields, "revision_printed")
+            else None
+        ),
+        "revisions": revisions,
         "dimension_candidates": dimensions,
         "dimension_excluded": excluded,
         "bom_comparison": bom_comparison,
@@ -1518,6 +2155,9 @@ def build_document_understanding(
     excluded_all: list[dict] = []
     revs_all: list[dict] = []
     ctx_all: list[dict] = []
+    tb_fields_all: list[dict] = []
+    revh_entries_all: list[dict] = []
+    revh_embedded_any = False
     rows_all: list[dict] = []
     tables_by_page: list[dict] = []
     page_results: list[dict] = []
@@ -1592,6 +2232,15 @@ def build_document_understanding(
                 set(revh_labels) | set(revh.get("labels") or [])
             )
             revh_box = revh_box or revh.get("box_px")
+            for e in revh.get("entries") or []:
+                e2 = dict(e)
+                e2["page"] = p
+                revh_entries_all.append(e2)
+            revh_embedded_any = revh_embedded_any or bool(
+                revh.get("embedded_in")
+            )
+        for f in (u.get("title_block") or {}).get("fields") or []:
+            tb_fields_all.append(dict(f))
         for htxt in ct.get("headers") or []:
             if htxt not in headers_all:
                 headers_all.append(htxt)
@@ -1648,19 +2297,49 @@ def build_document_understanding(
             "candidate": tb_box is not None,
             "box_px": tb_box,
             "labels": tb_labels,
+            "fields": tb_fields_all,
             "detection": "label_cluster (≥2 rótulos conhecidos)",
         },
         "component_table": merged_table,
         "identifier_candidates": fields_all,
         "code_contexts": ctx_all,
         "revision_history": {
-            "candidate": revh_box is not None,
+            "candidate": revh_box is not None
+            or bool(revh_entries_all),
             "box_px": revh_box,
             "labels": revh_labels,
+            "embedded_in": (
+                "title_block" if revh_embedded_any else None
+            ),
+            "entries": revh_entries_all,
             "detection": "revhist_label_cluster (≥2 rótulos fora do "
-            "carimbo)",
+            "carimbo) + embedded_in_title_block",
         },
         "revision_candidates": revs_all,
+        "document_identity": _build_document_identity(
+            tb_fields_all,
+            product_code=product_code,
+            document_hash=document_hash,
+            page_count=len(by_page),
+        ),
+        # RQ-02-05 — report.identification.document_id já previa o
+        # slot; populado somente quando o carimbo sustenta.
+        "document": (
+            _pick_identity_field(tb_fields_all, "document_code") or {}
+        ).get("value"),
+        "customer": (
+            _pick_identity_field(tb_fields_all, "customer_name") or {}
+        ).get("value"),
+        "revision": (
+            _pick_identity_field(tb_fields_all, "revision_printed")
+            or {}
+        ).get("value"),
+        "revision_domain": (
+            REVISION_DOMAIN_ENGINEERING_DRAWING
+            if _pick_identity_field(tb_fields_all, "revision_printed")
+            else None
+        ),
+        "revisions": revs_all,
         "dimension_candidates": dims_all,
         "dimension_excluded": excluded_all,
         "bom_comparison": None,

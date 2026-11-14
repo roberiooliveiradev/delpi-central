@@ -4127,6 +4127,129 @@ negativo: label ambíguo `DES:` não decide papel sem contexto.
 
 **GATES:** G1 inventário=PASS; G2 avaliação real=PASS (4 desenhos,
 evidência visual independente); G3 semântica=PARTIAL (domínios principais RATIFIED; capa/histórico e papéis de COD/DES ainda condicionais); G4 contrato=PREPARED; G5
-implementação=NOT_AUTHORIZED; G6 homologação=NOT_AUTHORIZED.
-`VAL01_COMPLETED=false` permanece (Issue #131 aberta); VAL-02 em
-fase de inventário.
+implementação=SUPERSEDED → ver §92 (implementada em 14/11); G6 homologação=NOT_AUTHORIZED.
+`VAL01_COMPLETED=false` permanece (Issue #131 aberta); VAL-02:
+inventário concluído aqui; implementação e validação real no §92.
+
+## §92 — VAL-02 implementada: leitura inteligente do carimbo (2026-11-14)
+
+`TASK_ID: EVA-E2-VAL02-TITLEBLOCK-ADDITIVE-EXTRACTION-IMPLEMENTATION-01`.
+Implementação bounded backend-first dos RQ-02-01…07 do §91.6, sem
+deploy. Decisão de domínios de revisão ratificada pelo owner em
+14/11/2026 (ENG-REV-001 confirmado): `B1_REVATU`=revisão do CLIENTE;
+`REV` impressa=revisão técnica da ENGENHARIA;
+`drawing_library_revision`=domínio próprio. Proibição absoluta de
+comparação numérica entre domínios — o pipeline nunca compara.
+
+### 92.1 O que foi implementado
+
+Em `engineering_app/application/drawing/understanding.py`:
+
+- **Matcher genérico rótulo→valor** (`_match_admin_fields`, substitui
+  `_match_revisions`): mapa de rótulos `_TB_FIELD_LABELS`
+  (cod/des/descrição/cliente/rev/data/folha/esc/unid/mat/peso/
+  desenhado/conferido/aprovado/liberado/ref); run multi-token à
+  direita na mesma linha com gap por borda de caixa; fallback
+  "valor abaixo na mesma coluna"; rótulo fundido no mesmo token OCR
+  (`des:10013396831`) via `_split_label_value`; o run para em
+  qualquer rótulo conhecido mesmo fundido.
+- **Gates semânticos**: rótulo sem pontuação terminal só dispara se
+  estiver em `_TB_BARE_FIELD_LABELS` (evita narrativa/cabeçalho de
+  histórico virar campo); padrão de valor por tipo (`_TB_VALUE_RE` —
+  data/folha/escala) e `_TB_CODEISH_RE` para campos identificadores;
+  valor fora do padrão vira `TEXT_ONLY` com `unpaired_value_text`
+  preservado — evidência, nunca promoção.
+- **Proveniência** (RQ-02-02): cada campo emite `field_type`,
+  `label_text`, `raw_value`, `normalized_value`,
+  `unpaired_value_text`, `page`, `bounding_box_px`,
+  `value_bounding_box_px`, `value_token_boxes`, `match_rule`,
+  `interpretation_state`, `revision_domain` quando aplicável.
+- **Histórico embutido** (RQ-02-03): `_detect_embedded_revision_history`
+  — cabeçalho = cluster y de ≥3 rótulos de histórico (inclui formas
+  fundidas como `resumodasmodificações`); corpo = tokens de toda a
+  página no span-x das colunas; entrada só existe com
+  `revision_value` em formato `\d{2}` ou letra+data (rejeita
+  callouts `a7`/`ay`/`(10)`); campos rev/data/lmp/ov/resumo/
+  executado/liberado + `page` + evidência. Tokens do histórico
+  ganham região `revision_history` e ficam fora do escopo do
+  matcher e das ocorrências de componentes.
+- **Tipagem de identificadores** (RQ-02-04): `role`+`role_basis` em
+  `identifier_candidates` — `product_code` (só quando igual ao
+  produto informado), `component_code` (dentro da tabela),
+  `history_mention` (dentro do histórico), papel por pareamento de
+  rótulo (`label_value_pairing`), `unknown_identifier` para o resto.
+- **Identidade documental** (RQ-02-05): `document_identity` com
+  product_code/sha256/page_count + `document_code`,
+  `drawing_reference`, `customer_name`, `customer_reference`,
+  `printed_revision` (com `domain`), `extraction_state`,
+  `fields_identified`. Conflitos entre folhas: primeiro valor
+  vence, divergências em `conflicts[]` com página — nunca
+  sobrescrito silenciosamente. `document`/`customer`/`revision`
+  top-level agora populam o slot já previsto por
+  `report.identification`.
+- **Domínios** (RQ-02-07): `revision_domain` =
+  `ENGINEERING_DRAWING` em candidatos e entradas de histórico;
+  constantes `CLIENT_TOTVS` / `ENGINEERING_DRAWING` /
+  `DOCUMENT_LIBRARY`.
+- **Consumer** (RQ-02-06): `drawing_investigation.py` lê
+  `value_text` com fallback para a chave legada `revision`; fixture
+  do teste M4 corrigida para o contrato real.
+- **Multipágina**: `build_document_understanding` agrega
+  `title_block.fields` e `revision_history.entries` por página sem
+  fundir ocorrências; `revision_candidates` ganham `page`.
+
+### 92.2 Testes
+
+Novo `tests/test_drawing_titleblock_fields.py` (13 casos):
+pareamento mesma linha, valor abaixo, token fundido, cabeçalho
+RESUMO fundido, histórico embutido 00+01, códigos históricos fora da
+BOM, papéis de identificador, valores pontuados/alfanuméricos,
+`REV: NA CAPA`→TEXT_ONLY, rótulo sem valor→TEXT_ONLY, identidade
+populada + slot `document`, conflito multipágina. Fixture R8
+ajustada para `REV:` (forma real) — `REV` nu é cabeçalho de
+histórico nos layouts oficiais.
+
+Suites: novo arquivo 13/13; r8+ocr_pipelines+investigation_r12+
+val01 (fused/g5/boundary)+mcp semantic/pdf+analysis r4/r51+jobs+
+profiles = 220 PASS; suite completa 1242 PASS / 2 FAIL pré-
+existentes fora do escopo (test_d16_attendance_flags — WIP alheio
+em product_registration; test_lmp_domain — path `/api-delpi` fora
+do mount, PASS com mount correto).
+
+### 92.3 Validação real (4 PDFs oficiais, pipeline prod em container)
+
+Execuções descartáveis `docker run -v` com modelos OCR montados —
+artefatos `/tmp/val02/tb2_<produto>_v6.json`. Números preenchidos
+após a rodada final.
+
+| Produto | Cobertura | Campos identificados | Histórico | Ocorrências |
+|---|---|---|---|---|
+| 90264135 | FULL 13p | cod/des/cliente/rev:00 | 00+01 ×4 folhas | 279 (0 diff vs baseline) |
+| 90264302 | FULL 1p | cod/des(11dig)/cliente/rev:00 | rev 00 + OV | 4 |
+| 90264161 | FULL 1p | NOT_EXTRACTED (layout) | rev 01 real | 6 |
+| 90263554 | PARTIAL 17p (capa>40Mpx) | cod:p34/des:p34/cliente; rev→TEXT_ONLY "na capa" | 00/01/02 reais | 331 |
+
+Verdadeiros negativos preservados: `REV: NA CAPA` não promovido;
+histórico codes ficam `history_mention`/`revision_history` fora de
+`structure_occurrences`; `document_id`/`customer`/`revision` do
+report agora populados a partir de `document_identity`.
+
+Limitações honestas: capa de 90263554 segue `image_pixels_limit`
+(residual — política global fora do escopo); colunas do histórico
+OCR-imperfeitas em bordas (`lmp`/`exec` às vezes absorvem token
+adjacente); layout de 90264161 sem rótulos OCR legíveis →
+`NOT_EXTRACTED` correto em vez de invenção.
+
+### 92.4 Contrato
+
+Evolução aditiva de `drawing_understanding.v1`: `title_block.fields`,
+`revision_history.entries` (com `page`/`revision_domain`),
+`document_identity`, `document`, `revision_domain`; nada removido
+nem ressignificado; `report_surface.py` compatível sem mudança
+(`document`/`revision`/`customer`/`title_block`/`revisions`
+inalterados). MCP/semantic bridge sem alteração.
+
+**GATES:** G1=PASS; G2=PASS; G3=PARTIAL (capa/histórico/papel
+COD×DES condicionais — registrado); G4=PASS (aditivo);
+G5=IMPLEMENTADO_LOCAL (sem deploy); G6=NOT_AUTHORIZED (aguarda
+aceite runtime/MCP e homologação Engenharia).

@@ -515,7 +515,7 @@ def test_m4_quantities_never_comparable():
 def test_m4_revision_domains_not_comparable():
     out = build_object_profiles(
         bom_occurrences=_BOM, visual_observations=[],
-        understanding=dict(_u(), revision_candidates=[{"revision": "02"}]),
+        understanding=dict(_u(), revision_candidates=[{"value_text": "02"}]),
         document_sha=_SHA, official_source_ref=_SRC,
         official_source_state="AVAILABLE", product_code="90264302",
         product_revision="003", include_investigations=True,
