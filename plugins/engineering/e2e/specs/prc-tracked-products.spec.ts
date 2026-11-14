@@ -241,11 +241,16 @@ test("U3 — timeline expansível + comparação V1×V2 server-side", async ({
   ).toBeVisible();
   const toggles = page.locator(".engineering-prc__vtimeline-toggle");
   expect(await toggles.count()).toBeGreaterThanOrEqual(2);
+  /* Recolhido por padrão — aria-expanded=false e detalhe oculto
+   * de verdade (regressão: display flex anulava [hidden]). */
+  const firstDetail = page.locator("#prc-vdetail-2");
+  await expect(firstDetail).toBeHidden();
   await toggles.first().click();
   await expect(toggles.first()).toHaveAttribute(
     "aria-expanded",
     "true",
   );
+  await expect(firstDetail).toBeVisible();
   await shot("timeline");
 
   /* Comparação V1×V2 — diff autoritativo do backend. */

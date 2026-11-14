@@ -1718,6 +1718,12 @@
   font-size: 0.9rem;
 }
 
+/* display:flex acima venceria o [hidden] do UA — sem esta guarda o
+ * detalhe nunca recolhia visualmente (só aria-expanded mudava). */
+.engineering-prc__vtimeline-detail[hidden] {
+  display: none;
+}
+
 .engineering-prc__vtimeline-detail p {
   margin: 0;
 }
