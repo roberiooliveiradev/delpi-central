@@ -553,6 +553,7 @@ declare module "@delpi/plugin-ui/index" {
     value: T;
     onChange: (value: T) => void;
     ariaLabel: string;
+    idPrefix?: string;
     disabled?: boolean;
     size?: "sm" | "md";
     widthMode?: "fill" | "content";
@@ -562,6 +563,24 @@ declare module "@delpi/plugin-ui/index" {
   export function createDashboardSegmentToggle(
     prefix: string,
   ): <T extends string>(props: DashboardSegmentToggleProps<T>) => ReactElement;
+
+  export type ScopeChip = {
+    id: string;
+    label: ReactNode;
+    active?: boolean;
+    onSelect?: () => void;
+  };
+
+  export type DashboardScopeChipBarProps = {
+    chips: ScopeChip[];
+    label?: ReactNode;
+    className?: string;
+    "aria-label"?: string;
+  };
+
+  export function createDashboardScopeChipBar(config: {
+    prefix: string;
+  }): (props: DashboardScopeChipBarProps) => ReactElement;
 
   export type DetailField = {
     label: string;

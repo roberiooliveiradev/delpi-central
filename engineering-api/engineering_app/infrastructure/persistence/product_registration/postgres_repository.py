@@ -41,6 +41,8 @@ _T_EVT = f"{_SCHEMA}.product_registration_events"
 _T_VER = f"{_SCHEMA}.product_registration_verifications"
 _T_IDEM = f"{_SCHEMA}.product_registration_idempotency"
 _T_FLAG = f"{_SCHEMA}.product_registration_flags"
+_T_RFLAG = f"{_SCHEMA}.product_registration_record_flags"
+_T_RFLAG_EVT = f"{_SCHEMA}.product_registration_record_flag_events"
 _T_INFO_ROUND = f"{_SCHEMA}.product_registration_info_rounds"
 _T_INFO_Q = f"{_SCHEMA}.product_registration_info_questions"
 _T_INFO_A = f"{_SCHEMA}.product_registration_info_answers"
@@ -636,33 +638,76 @@ class PostgresProductRegistrationRepository:
         return self.get_record(str(row["id"])) if row else None
 
     def list_records(
-        self, *, search: str | None, page: int, page_size: int
+        self,
+        *,
+        search: str | None,
+        page: int,
+        page_size: int,
+        sort: str | None = None,
+        flag_state: str | None = None,
     ) -> dict[str, Any]:
-        where = "current_revision_number >= 1"
+        where = "r.current_revision_number >= 1"
         params: list[Any] = []
         if search:
-            # paridade com o adapter in-memory: busca literal, %/_ da
-            # entrada não são curingas do ILIKE
+            # busca literal por código oficial OU descrição confirmada;
+            # %/_ da entrada não são curingas do ILIKE
             needle = (
                 search.strip()
                 .replace("\\", "\\\\")
                 .replace("%", "\\%")
                 .replace("_", "\\_")
             )
-            where += " AND official_product_code ILIKE %s ESCAPE '\\'"
-            params.append(f"%{needle}%")
+            where += (
+                " AND (r.official_product_code ILIKE %s ESCAPE '\\'"
+                " OR (rev.technical_snapshot #>> '{fields,description,value}')"
+                "   ILIKE %s ESCAPE '\\')"
+            )
+            params.extend([f"%{needle}%", f"%{needle}%"])
+        if flag_state == "open":
+            where += " AND COALESCE(fc.open_count,0) > 0"
+        elif flag_state == "none":
+            where += " AND COALESCE(fc.open_count,0) = 0"
+        order = {
+            "code": "r.official_product_code ASC, r.id ASC",
+            "description": (
+                "(rev.technical_snapshot #>> '{fields,description,value}') ASC NULLS LAST,"
+                " r.id ASC"
+            ),
+            "lastEvolution": (
+                "rev.approved_at DESC NULLS LAST, r.id DESC"
+            ),
+        }.get(sort or "lastEvolution")
+        if order is None:
+            order = "rev.approved_at DESC NULLS LAST, r.id DESC"
+        base = (
+            f"FROM {_T_REC} r"
+            f" LEFT JOIN {_T_REV} rev"
+            "   ON rev.record_id = r.id"
+            "  AND rev.revision_number = r.current_revision_number"
+            f" LEFT JOIN (SELECT record_id, count(*) AS open_count"
+            f"            FROM {_T_RFLAG} WHERE status='OPEN'"
+            "            GROUP BY record_id) fc"
+            "   ON fc.record_id = r.id"
+            f" WHERE {where}"
+        )
         with self._conn() as conn:
             total = conn.execute(
-                f"SELECT count(*) AS c FROM {_T_REC} WHERE {where}", params
+                f"SELECT count(*) AS c {base}", params
             ).fetchone()["c"]
             rows = conn.execute(
-                f"SELECT * FROM {_T_REC} WHERE {where}"
-                " ORDER BY updated_at DESC, id DESC LIMIT %s OFFSET %s",
+                f"SELECT r.*,"
+                " (rev.technical_snapshot #>> '{fields,description,value}') AS description,"
+                " rev.approved_at AS last_evolution_at,"
+                " COALESCE(fc.open_count,0) AS open_flag_count"
+                f" {base} ORDER BY {order} LIMIT %s OFFSET %s",
                 params + [page_size, (page - 1) * page_size],
             ).fetchall()
         for r in rows:
             r["id"] = str(r["id"])
-            for k in ("created_at", "updated_at", "last_official_verified_at"):
+            for k in (
+                "created_at", "updated_at",
+                "last_official_verified_at", "last_evolution_at",
+            ):
                 r[k] = _iso(r[k])
         return {
             "items": rows,
@@ -1487,6 +1532,254 @@ class PostgresProductRegistrationRepository:
                 f"SELECT * FROM {_T_FLAG} WHERE id=%s", (flag_id,)
             ).fetchone()
         return self._flag_row(updated)
+
+    # --- product flags (PRC-TRACK, record-scoped) ------------------------------
+
+    def _record_flag_row(self, row: dict) -> dict[str, Any]:
+        out = dict(row)
+        out["id"] = str(out["id"])
+        out["record_id"] = str(out["record_id"])
+        if out.get("origin_request_id"):
+            out["origin_request_id"] = str(out["origin_request_id"])
+        sk = out.get("supplier_key")
+        if isinstance(sk, str):
+            try:
+                out["supplier_key"] = json.loads(sk)
+            except (TypeError, ValueError):
+                out["supplier_key"] = None
+        for key in ("created_at", "updated_at", "closed_at"):
+            out[key] = _iso(out.get(key))
+        return out
+
+    def _record_flag_event_row(self, row: dict) -> dict[str, Any]:
+        out = dict(row)
+        for k in ("id", "flag_id", "record_id"):
+            out[k] = str(out[k])
+        out["occurred_at"] = _iso(out["occurred_at"])
+        return out
+
+    def _insert_record_flag_event(
+        self, conn: Any, event: dict[str, Any]
+    ) -> None:
+        conn.execute(
+            f"INSERT INTO {_T_RFLAG_EVT}"
+            " (id, flag_id, record_id, event_type, revision_number,"
+            "  actor_subject, actor_display_name, occurred_at, note)"
+            " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            (
+                _uuid(), event["flag_id"], event["record_id"],
+                event["event_type"], event["revision_number"],
+                event["actor_subject"],
+                event.get("actor_display_name"),
+                event.get("occurred_at") or _now(),
+                event.get("note"),
+            ),
+        )
+
+    def create_record_flag(
+        self, *, flag: dict[str, Any], event: dict[str, Any]
+    ) -> dict[str, Any]:
+        from psycopg.errors import UniqueViolation
+
+        with self._conn() as conn:
+            try:
+                conn.execute(
+                    f"INSERT INTO {_T_RFLAG}"
+                    " (id, record_id, title, description, status, subject,"
+                    "  target_path, target_attribute, supplier_key,"
+                    "  target_key, opened_revision_number,"
+                    "  origin_request_id, row_version,"
+                    "  created_by_subject, created_by_display_name,"
+                    "  created_at, updated_by_subject,"
+                    "  updated_by_display_name, updated_at)"
+                    " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,"
+                    "         %s,%s,%s,%s,%s,%s)",
+                    (
+                        flag["id"], flag["record_id"], flag["title"],
+                        flag["description"], flag["status"],
+                        flag["subject"], flag.get("target_path"),
+                        flag.get("target_attribute"),
+                        json.dumps(flag.get("supplier_key"))
+                        if flag.get("supplier_key") is not None else None,
+                        flag["target_key"],
+                        flag["opened_revision_number"],
+                        flag.get("origin_request_id"),
+                        flag["row_version"],
+                        flag["created_by_subject"],
+                        flag.get("created_by_display_name"),
+                        flag["created_at"],
+                        flag["updated_by_subject"],
+                        flag.get("updated_by_display_name"),
+                        flag["updated_at"],
+                    ),
+                )
+            except UniqueViolation as exc:
+                raise PrcStateConflictError("open_flag_exists") from exc
+            self._insert_record_flag_event(conn, event)
+            row = conn.execute(
+                f"SELECT * FROM {_T_RFLAG} WHERE id=%s", (flag["id"],)
+            ).fetchone()
+        return self._record_flag_row(row)
+
+    def get_record_flag(
+        self, *, record_id: str, flag_id: str
+    ) -> dict[str, Any] | None:
+        with self._conn() as conn:
+            row = conn.execute(
+                f"SELECT * FROM {_T_RFLAG}"
+                " WHERE id=%s AND record_id=%s",
+                (flag_id, record_id),
+            ).fetchone()
+        return self._record_flag_row(row) if row else None
+
+    def find_open_record_flag(
+        self, *, record_id: str, target_key: str
+    ) -> dict[str, Any] | None:
+        with self._conn() as conn:
+            row = conn.execute(
+                f"SELECT * FROM {_T_RFLAG}"
+                " WHERE record_id=%s AND target_key=%s"
+                " AND status='OPEN' LIMIT 1",
+                (record_id, target_key),
+            ).fetchone()
+        return self._record_flag_row(row) if row else None
+
+    def list_record_flags(
+        self, *, record_id: str
+    ) -> list[dict[str, Any]]:
+        with self._conn() as conn:
+            rows = conn.execute(
+                f"SELECT * FROM {_T_RFLAG}"
+                " WHERE record_id=%s"
+                " ORDER BY created_at DESC, id DESC",
+                (record_id,),
+            ).fetchall()
+        return [self._record_flag_row(r) for r in rows]
+
+    def update_record_flag(
+        self,
+        *,
+        record_id: str,
+        flag_id: str,
+        expected_version: int,
+        patch: dict[str, Any],
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        now = _now()
+        with self._conn() as conn:
+            row = conn.execute(
+                f"SELECT * FROM {_T_RFLAG}"
+                " WHERE id=%s AND record_id=%s FOR UPDATE",
+                (flag_id, record_id),
+            ).fetchone()
+            if row is None:
+                raise PrcNotFoundError("record flag", flag_id)
+            if int(row["row_version"]) != int(expected_version):
+                raise PrcConcurrencyError("stale_version")
+            conn.execute(
+                f"UPDATE {_T_RFLAG} SET title=%s, description=%s,"
+                " updated_by_subject=%s, updated_by_display_name=%s,"
+                " updated_at=%s, row_version=%s"
+                " WHERE id=%s",
+                (
+                    patch["title"], patch["description"],
+                    actor_subject, actor_display_name, now,
+                    int(row["row_version"]) + 1, flag_id,
+                ),
+            )
+            self._insert_record_flag_event(conn, event)
+            updated = conn.execute(
+                f"SELECT * FROM {_T_RFLAG} WHERE id=%s", (flag_id,)
+            ).fetchone()
+        return self._record_flag_row(updated)
+
+    def close_record_flag(
+        self,
+        *,
+        record_id: str,
+        flag_id: str,
+        expected_version: int,
+        closed_status: str,
+        closed_revision_number: int,
+        actor_subject: str,
+        actor_display_name: str | None,
+        note: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        now = _now()
+        with self._conn() as conn:
+            row = conn.execute(
+                f"SELECT * FROM {_T_RFLAG}"
+                " WHERE id=%s AND record_id=%s FOR UPDATE",
+                (flag_id, record_id),
+            ).fetchone()
+            if row is None:
+                raise PrcNotFoundError("record flag", flag_id)
+            if int(row["row_version"]) != int(expected_version):
+                raise PrcConcurrencyError("stale_version")
+            conn.execute(
+                f"UPDATE {_T_RFLAG} SET status=%s, closed_status=%s,"
+                " closed_revision_number=%s, closed_by_subject=%s,"
+                " closed_by_display_name=%s, closed_at=%s,"
+                " close_reason=%s, updated_by_subject=%s,"
+                " updated_by_display_name=%s, updated_at=%s,"
+                " row_version=%s WHERE id=%s",
+                (
+                    closed_status, closed_status,
+                    closed_revision_number, actor_subject,
+                    actor_display_name, now, note,
+                    actor_subject, actor_display_name, now,
+                    int(row["row_version"]) + 1, flag_id,
+                ),
+            )
+            self._insert_record_flag_event(conn, event)
+            updated = conn.execute(
+                f"SELECT * FROM {_T_RFLAG} WHERE id=%s", (flag_id,)
+            ).fetchone()
+        return self._record_flag_row(updated)
+
+    def list_record_flag_events(
+        self,
+        *,
+        record_id: str,
+        flag_id: str | None = None,
+        from_revision: int | None = None,
+        to_revision: int | None = None,
+    ) -> list[dict[str, Any]]:
+        where = "record_id=%s"
+        params: list[Any] = [record_id]
+        if flag_id:
+            where += " AND flag_id=%s"
+            params.append(flag_id)
+        if from_revision is not None:
+            where += " AND revision_number >= %s"
+            params.append(from_revision)
+        if to_revision is not None:
+            where += " AND revision_number <= %s"
+            params.append(to_revision)
+        with self._conn() as conn:
+            rows = conn.execute(
+                f"SELECT * FROM {_T_RFLAG_EVT} WHERE {where}"
+                " ORDER BY occurred_at, id",
+                params,
+            ).fetchall()
+        return [self._record_flag_event_row(r) for r in rows]
+
+    def record_open_flag_counts(
+        self, *, record_ids: list[str]
+    ) -> dict[str, int]:
+        if not record_ids:
+            return {}
+        with self._conn() as conn:
+            rows = conn.execute(
+                f"SELECT record_id, count(*) AS c FROM {_T_RFLAG}"
+                " WHERE status='OPEN' AND record_id = ANY(%s)"
+                " GROUP BY record_id",
+                (list(record_ids),),
+            ).fetchall()
+        return {str(r["record_id"]): int(r["c"]) for r in rows}
 
     # --- information rounds (PRC-REF-019) --------------------------------------
 

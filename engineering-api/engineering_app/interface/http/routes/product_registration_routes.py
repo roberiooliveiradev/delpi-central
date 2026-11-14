@@ -1224,6 +1224,8 @@ async def prc_list_verifications(request_id: str = Path(...)):
 @require_any_permission(_READ_PERMS)
 async def prc_list_records(
     search: str | None = Query(default=None, max_length=100),
+    sort: str | None = Query(default=None, max_length=32),
+    flagState: str | None = Query(default=None, max_length=16),
     page: int = Query(default=1, ge=1),
     pageSize: int = Query(default=25, ge=1, le=100),
 ):
@@ -1233,7 +1235,8 @@ async def prc_list_records(
         return denied
     try:
         data = build_prc_service().list_records(
-            actor=_actor(user), search=search, page=page, page_size=pageSize
+            actor=_actor(user), search=search, page=page,
+            page_size=pageSize, sort=sort, flag_state=flagState,
         )
     except Exception as exc:
         return _err(exc, op)
@@ -1305,6 +1308,250 @@ async def prc_get_revision(
     except Exception as exc:
         return _err(exc, op)
     return ok(data, message="Revisão carregada.", operation_id=op)
+
+
+@router.get(
+    "/v1/product-registration/technical-records/{record_id}/comparison",
+    operation_id="prc_compare_revisions",
+    summary="15b — Comparação técnica entre revisões",
+)
+@require_any_permission(_READ_PERMS)
+async def prc_compare_revisions(
+    record_id: str = Path(...),
+    from_: int = Query(..., alias="from", ge=1),
+    to: int = Query(..., ge=1),
+):
+    op = "prc_compare_revisions"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(record_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().compare_revisions(
+            rid, from_, to, actor=_actor(user)
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(
+        data, message="Comparação calculada.", operation_id=op,
+    )
+
+
+# --- PRC-TRACK — product flags (record-scoped) ------------------------------
+
+
+@router.get(
+    "/v1/product-registration/technical-records/{record_id}/flags",
+    operation_id="prc_record_flag_list",
+    summary="PRC-TRACK — Bandeiras do produto (revisão vigente)",
+)
+@require_any_permission(_READ_PERMS)
+async def prc_record_flag_list(record_id: str = Path(...)):
+    op = "prc_record_flag_list"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(record_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().list_record_flags(
+            rid, actor=_actor(user)
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(data, message="Bandeiras carregadas.", operation_id=op)
+
+
+@router.get(
+    "/v1/product-registration/technical-records/{record_id}/flags/{flag_id}/events",
+    operation_id="prc_record_flag_events",
+    summary="PRC-TRACK — Histórico de eventos da bandeira",
+)
+@require_any_permission(_READ_PERMS)
+async def prc_record_flag_events(
+    record_id: str = Path(...), flag_id: str = Path(...),
+):
+    op = "prc_record_flag_events"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(record_id, op)
+    if bad is not None:
+        return bad
+    fid, bad = _uuid_or_fail(flag_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().list_record_flag_events(
+            rid, fid, actor=_actor(user)
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(data, message="Eventos carregados.", operation_id=op)
+
+
+@router.post(
+    "/v1/product-registration/technical-records/{record_id}/flags",
+    operation_id="prc_record_flag_create",
+    summary="PRC-TRACK — Criar bandeira de produto",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_record_flag_create(
+    record_id: str = Path(...),
+    body: FlagCreateBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_record_flag_create"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(record_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().create_record_flag(
+            rid, actor=_actor(user),
+            title=body.title, description=body.description,
+            subject=body.subject, target_path=body.targetPath,
+            supplier_key=body.supplierKey,
+            target_attribute=body.targetAttribute,
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    if isinstance(data, dict) and data.get("replayed"):
+        return ok(
+            data["response"],
+            message="Bandeira já registrada (replay).",
+            status_code=200, operation_id=op,
+        )
+    return ok(
+        data, message="Bandeira criada.", status_code=201,
+        operation_id=op,
+    )
+
+
+@router.patch(
+    "/v1/product-registration/technical-records/{record_id}/flags/{flag_id}",
+    operation_id="prc_record_flag_update",
+    summary="PRC-TRACK — Editar bandeira de produto",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_record_flag_update(
+    record_id: str = Path(...),
+    flag_id: str = Path(...),
+    body: FlagUpdateBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_record_flag_update"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(record_id, op)
+    if bad is not None:
+        return bad
+    fid, bad = _uuid_or_fail(flag_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().update_record_flag(
+            rid, fid, actor=_actor(user),
+            expected_version=body.expectedVersion,
+            title=body.title, description=body.description,
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    if isinstance(data, dict) and data.get("replayed"):
+        return ok(
+            data["response"],
+            message="Bandeira já atualizada (replay).",
+            operation_id=op,
+        )
+    return ok(data, message="Bandeira atualizada.", operation_id=op)
+
+
+@router.post(
+    "/v1/product-registration/technical-records/{record_id}/flags/{flag_id}/actions/resolve",
+    operation_id="prc_record_flag_resolve",
+    summary="PRC-TRACK — Resolver bandeira de produto",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_record_flag_resolve(
+    record_id: str = Path(...),
+    flag_id: str = Path(...),
+    body: FlagActionBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_record_flag_resolve"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(record_id, op)
+    if bad is not None:
+        return bad
+    fid, bad = _uuid_or_fail(flag_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().close_record_flag(
+            rid, fid, actor=_actor(user),
+            expected_version=body.expectedVersion,
+            to_status="RESOLVED", note=body.reason,
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    if isinstance(data, dict) and data.get("replayed"):
+        return ok(
+            data["response"],
+            message="Bandeira já resolvida (replay).",
+            operation_id=op,
+        )
+    return ok(data, message="Bandeira resolvida.", operation_id=op)
+
+
+@router.post(
+    "/v1/product-registration/technical-records/{record_id}/flags/{flag_id}/actions/remove",
+    operation_id="prc_record_flag_remove",
+    summary="PRC-TRACK — Remover bandeira de produto",
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_record_flag_remove(
+    record_id: str = Path(...),
+    flag_id: str = Path(...),
+    body: FlagActionBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    op = "prc_record_flag_remove"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(record_id, op)
+    if bad is not None:
+        return bad
+    fid, bad = _uuid_or_fail(flag_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().close_record_flag(
+            rid, fid, actor=_actor(user),
+            expected_version=body.expectedVersion,
+            to_status="REMOVED", note=body.reason,
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    if isinstance(data, dict) and data.get("replayed"):
+        return ok(
+            data["response"],
+            message="Bandeira já removida (replay).",
+            operation_id=op,
+        )
+    return ok(data, message="Bandeira removida.", operation_id=op)
 
 
 # --- 16 reference-data -------------------------------------------------------------

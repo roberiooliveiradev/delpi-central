@@ -12,8 +12,12 @@ import {
 import { PRC_EVENT_LABELS } from "./prcCopy";
 import {
   buildPrcQueueUrl,
+  EMPTY_PRC_QUEUE_URL,
+  parsePrcProductRevision,
+  parsePrcProductTab,
   parsePrcQueueUrl,
   parsePrcTab,
+  prcProductHref,
   prcQueueStateForStatusFilter,
   prcQueueStatusFilterValue,
   resolvePrcPath,
@@ -60,6 +64,18 @@ describe("resolvePrcPath", () => {
       page: "queue",
     });
   });
+
+  it("resolves tracked product deep-link", () => {
+    expect(
+      resolvePrcPath(`product-registration/products/${REQUEST_ID}`),
+    ).toEqual({ page: "product", recordId: REQUEST_ID });
+  });
+
+  it("falls back to queue on malformed product id", () => {
+    expect(
+      resolvePrcPath("product-registration/products/abc"),
+    ).toEqual({ page: "queue" });
+  });
 });
 
 describe("prcNavigate url state", () => {
@@ -67,26 +83,18 @@ describe("prcNavigate url state", () => {
     expect(
       parsePrcQueueUrl("?status=submitted&type=create&search=abc&page=3"),
     ).toEqual({
-      view: "",
+      ...EMPTY_PRC_QUEUE_URL,
       status: "submitted",
       type: "create",
       search: "abc",
       page: 3,
-      sortBy: "",
-      sortDir: "desc",
     });
   });
 
   it("ignores invalid type and page", () => {
-    expect(parsePrcQueueUrl("?type=foo&page=-2")).toEqual({
-      view: "",
-      status: "",
-      type: "",
-      search: "",
-      page: 1,
-      sortBy: "",
-      sortDir: "desc",
-    });
+    expect(parsePrcQueueUrl("?type=foo&page=-2")).toEqual(
+      EMPTY_PRC_QUEUE_URL,
+    );
   });
 
   it("view=pending → preset serializado na URL", () => {
@@ -148,15 +156,62 @@ describe("prcNavigate url state", () => {
   it("builds queue url omitting defaults", () => {
     expect(
       buildPrcQueueUrl("/apps/engineering", {
-        view: "",
+        ...EMPTY_PRC_QUEUE_URL,
         status: "in_progress",
-        type: "",
-        search: "",
-        page: 1,
-        sortBy: "",
-        sortDir: "desc",
       }),
     ).toBe("/apps/engineering/product-registration?status=in_progress");
+  });
+
+  it("parses products area and flag filter from search", () => {
+    const state = parsePrcQueueUrl(
+      "?area=products&flagState=open&search=trafo&page=2",
+    );
+    expect(state.area).toBe("products");
+    expect(state.flagState).toBe("open");
+    expect(state.search).toBe("trafo");
+    expect(state.page).toBe(2);
+  });
+
+  it("serializes products area and flag filter in queue url", () => {
+    expect(
+      buildPrcQueueUrl("/apps/engineering", {
+        ...EMPTY_PRC_QUEUE_URL,
+        area: "products",
+        flagState: "none",
+        sortBy: "lastEvolution",
+        sortDir: "asc",
+      }),
+    ).toBe(
+      "/apps/engineering/product-registration?area=products&flagState=none&sortBy=lastEvolution&sortDir=asc",
+    );
+  });
+
+  it("parses product tab and revision with safe fallbacks", () => {
+    expect(parsePrcProductTab("?tab=versions")).toBe("versions");
+    expect(parsePrcProductTab("?tab=bogus")).toBe("sheet");
+    expect(parsePrcProductTab("")).toBe("sheet");
+    expect(parsePrcProductRevision("?rev=3")).toBe(3);
+    expect(parsePrcProductRevision("?rev=0")).toBeNull();
+    expect(parsePrcProductRevision("?rev=abc")).toBeNull();
+    expect(parsePrcProductRevision("")).toBeNull();
+  });
+
+  it("builds product href with tab and revision", () => {
+    expect(
+      prcProductHref("/apps/engineering", REQUEST_ID, {
+        tab: "versions",
+      }),
+    ).toBe(
+      `/apps/engineering/product-registration/products/${REQUEST_ID}?tab=versions`,
+    );
+    expect(
+      prcProductHref("/apps/engineering", REQUEST_ID, { rev: 2 }),
+    ).toBe(
+      `/apps/engineering/product-registration/products/${REQUEST_ID}?rev=2`,
+    );
+    expect(prcProductHref("/apps/engineering", REQUEST_ID, {})).toBe(
+      `/apps/engineering/product-registration/products/${REQUEST_ID}`,
+    );
   });
 
   it("parses detail tab with fallback to ficha técnica", () => {

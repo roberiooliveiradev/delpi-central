@@ -37,6 +37,12 @@ from engineering_app.domain.product_registration import (
 from engineering_app.domain.product_registration import (
     information_rounds as info_rounds,
 )
+from engineering_app.domain.product_registration import (
+    record_flags,
+)
+from engineering_app.domain.product_registration.snapshot import (
+    compute_technical_diff,
+)
 from engineering_app.domain.product_registration.errors import (
     PrcConcurrencyError,
     PrcDuplicateError,
@@ -1106,6 +1112,67 @@ class ProductRegistrationService:
         )
         return response
 
+    @staticmethod
+    def _snapshot_field_value(
+        snapshot: dict[str, Any] | None, path: str
+    ) -> Any:
+        entry = ((snapshot or {}).get("fields") or {}).get(path) or {}
+        return (
+            entry.get("value")
+            if entry.get("coverageState") == "present"
+            else None
+        )
+
+    def _record_flags_at(
+        self, record_id: str, revision_number: int
+    ) -> list[dict[str, Any]]:
+        """Bandeiras projetadas no corte da revisão (ADR-04)."""
+        rows = self._repo.list_record_flags(record_id=record_id)
+        out = []
+        for row in rows:
+            at = record_flags.visible_status_at_revision(
+                row, revision_number
+            )
+            if at is None:
+                continue
+            out.append(
+                record_flags.public_record_flag(row, at_status=at)
+            )
+        return out
+
+    def _record_flag_actions(
+        self, record: dict, at_current: bool
+    ) -> list[str]:
+        """Ações de bandeira só existem no corte da revisão vigente."""
+        if not at_current:
+            return []
+        return ["create", "update", "resolve", "remove"]
+
+    def _record_revision_payload(
+        self, record: dict, revision: dict, *, at_current: bool
+    ) -> dict[str, Any]:
+        flags = self._record_flags_at(
+            record["id"], int(revision["revision_number"])
+        )
+        return {
+            "revisionNumber": revision["revision_number"],
+            "requestId": revision["request_id"],
+            "approvedBy": {
+                "subject": revision["approved_by_subject"],
+            },
+            "approvedAt": revision["approved_at"],
+            "snapshot": revision["technical_snapshot"],
+            "changes": revision.get("changes") or [],
+            "flags": flags,
+            "currentRevisionNumber": record[
+                "current_revision_number"
+            ],
+            "isCurrentRevision": at_current,
+            "allowedFlagActions": self._record_flag_actions(
+                record, at_current
+            ),
+        }
+
     def get_record(self, record_id: str, *, actor: PrcActor) -> dict[str, Any]:
         _require_actor_read(actor)
         if not actor.is_analyst:
@@ -1115,7 +1182,44 @@ class ProductRegistrationService:
         record = self._repo.get_record(record_id)
         if record is None:
             raise PrcNotFoundError("record", record_id)
-        return record
+        current_n = int(record.get("current_revision_number") or 0)
+        revision = (
+            self._repo.get_revision(record_id, current_n)
+            if current_n >= 1
+            else None
+        )
+        flags = self._record_flags_at(record_id, current_n)
+        return {
+            "recordId": record["id"],
+            "officialSource": record["official_source"],
+            "officialCode": record["official_product_code"],
+            "productType": record["product_type"],
+            "currentRevisionNumber": record[
+                "current_revision_number"
+            ],
+            "lastOfficialVerifiedAt": record[
+                "last_official_verified_at"
+            ],
+            "createdAt": record["created_at"],
+            "updatedAt": record["updated_at"],
+            "description": self._snapshot_field_value(
+                (revision or {}).get("technical_snapshot"),
+                "description",
+            ),
+            "originRequestId": (revision or {}).get("request_id"),
+            "lastEvolutionAt": (revision or {}).get("approved_at"),
+            "snapshot": (revision or {}).get("technical_snapshot"),
+            "changes": (revision or {}).get("changes") or [],
+            "flags": flags,
+            "openFlagCount": sum(
+                1 for f in flags if f["atStatus"] == "OPEN"
+            ),
+            "allowedFlagActions": self._record_flag_actions(
+                record, True
+            ),
+        }
+
+    _RECORD_SORTS = ("lastEvolution", "code", "description")
 
     def list_records(
         self,
@@ -1124,14 +1228,25 @@ class ProductRegistrationService:
         search: str | None,
         page: int,
         page_size: int,
+        sort: str | None = None,
+        flag_state: str | None = None,
     ) -> dict[str, Any]:
         _require_actor_read(actor)
         if not actor.is_analyst:
             raise PrcForbiddenError(
                 "Produtos acompanhados restritos a analistas autorizados."
             )
+        if sort is not None and sort not in self._RECORD_SORTS:
+            raise PrcValidationError(
+                "sort inválido.", fields={"sort": "enum"}
+            )
+        if flag_state is not None and flag_state not in ("open", "none"):
+            raise PrcValidationError(
+                "flagState inválido.", fields={"flagState": "enum"}
+            )
         data = self._repo.list_records(
-            search=search, page=page, page_size=page_size
+            search=search, page=page, page_size=page_size,
+            sort=sort or "lastEvolution", flag_state=flag_state,
         )
         data["items"] = [
             {
@@ -1139,7 +1254,10 @@ class ProductRegistrationService:
                 "officialSource": r["official_source"],
                 "officialCode": r["official_product_code"],
                 "productType": r["product_type"],
+                "description": r.get("description"),
                 "currentRevisionNumber": r["current_revision_number"],
+                "lastEvolutionAt": r.get("last_evolution_at"),
+                "openFlagCount": int(r.get("open_flag_count") or 0),
                 "lastOfficialVerifiedAt": r["last_official_verified_at"],
                 "updatedAt": r["updated_at"],
             }
@@ -1173,10 +1291,102 @@ class ProductRegistrationService:
         _require_actor_read(actor)
         if not actor.is_analyst:
             raise PrcForbiddenError("Revisões restritas a analistas.")
+        record = self._repo.get_record(record_id)
+        if record is None:
+            raise PrcNotFoundError("record", record_id)
         revision = self._repo.get_revision(record_id, revision_number)
         if revision is None:
-            raise PrcNotFoundError("revision", f"{record_id}@{revision_number}")
-        return revision
+            raise PrcNotFoundError(
+                "revision", f"{record_id}@{revision_number}"
+            )
+        at_current = int(revision_number) == int(
+            record.get("current_revision_number") or 0
+        )
+        return self._record_revision_payload(
+            record, revision, at_current=at_current
+        )
+
+    def compare_revisions(
+        self,
+        record_id: str,
+        from_revision: int,
+        to_revision: int,
+        *,
+        actor: PrcActor,
+    ) -> dict[str, Any]:
+        """Diff técnico canônico Vx×Vy — autoridade do backend."""
+        _require_actor_read(actor)
+        if not actor.is_analyst:
+            raise PrcForbiddenError(
+                "Comparação restrita a analistas."
+            )
+        record = self._repo.get_record(record_id)
+        if record is None:
+            raise PrcNotFoundError("record", record_id)
+        if int(from_revision) == int(to_revision):
+            raise PrcValidationError(
+                "from e to devem ser revisões distintas.",
+                fields={"to": "same_revision"},
+            )
+        rev_from = self._repo.get_revision(record_id, int(from_revision))
+        rev_to = self._repo.get_revision(record_id, int(to_revision))
+        if rev_from is None:
+            raise PrcNotFoundError(
+                "revision", f"{record_id}@{from_revision}"
+            )
+        if rev_to is None:
+            raise PrcNotFoundError(
+                "revision", f"{record_id}@{to_revision}"
+            )
+        older, newer = (
+            (rev_from, rev_to)
+            if int(rev_from["revision_number"])
+            < int(rev_to["revision_number"])
+            else (rev_to, rev_from)
+        )
+        changes, comparable = compute_technical_diff(
+            older["technical_snapshot"], newer["technical_snapshot"]
+        )
+        if not comparable:
+            raise PrcValidationError(
+                "Revisões ilegíveis para comparação técnica.",
+                fields={"revisions": "incomparable"},
+            )
+        events = self._repo.list_record_flag_events(
+            record_id=record_id,
+            from_revision=int(older["revision_number"]),
+            to_revision=int(newer["revision_number"]),
+        )
+        return {
+            "recordId": record["id"],
+            "officialCode": record["official_product_code"],
+            "from": {
+                "revisionNumber": older["revision_number"],
+                "approvedAt": older["approved_at"],
+                "requestId": older["request_id"],
+            },
+            "to": {
+                "revisionNumber": newer["revision_number"],
+                "approvedAt": newer["approved_at"],
+                "requestId": newer["request_id"],
+            },
+            "comparable": True,
+            "changes": changes,
+            "fieldChanges": [
+                c for c in changes if not str(
+                    c.get("path") or ""
+                ).startswith("suppliers[")
+            ],
+            "supplierLinkChanges": [
+                c for c in changes if str(
+                    c.get("path") or ""
+                ).startswith("suppliers[")
+            ],
+            "flagEvents": [
+                record_flags.public_record_flag_event(e)
+                for e in events
+            ],
+        }
 
     # --- WORKFLOW ACTIONS ----------------------------------------------------------
 
@@ -3146,6 +3356,331 @@ class ProductRegistrationService:
             actor=actor, operation="flag_delete", key=idempotency_key,
             fingerprint=fp, request_id=request_id, status=200,
             payload=response,
+        )
+        return response
+
+    # --- PRODUCT FLAGS (PRC-TRACK, record-scoped) ------------------------------
+    #
+    # Bandeiras de produto acompanhado vivem no registro técnico —
+    # NÃO são as bandeiras D16 da solicitação e nunca são clonadas
+    # delas. Semântica ADR-04/CR-07:
+    # - OPEN propaga-se às revisões posteriores enquanto aberta;
+    # - RESOLVED fica visível só na revisão de encerramento;
+    # - REMOVED some já na revisão de remoção;
+    # - encerradas são terminais — reincidência = novo flagId;
+    # - eventos nunca criam revisão técnica.
+
+    def _require_record_scoped(
+        self, record_id: str, actor: PrcActor
+    ) -> dict[str, Any]:
+        _require_actor_read(actor)
+        if not actor.is_analyst:
+            raise PrcForbiddenError(
+                "Produto acompanhado restrito a analistas autorizados."
+            )
+        record = self._repo.get_record(record_id)
+        if record is None:
+            raise PrcNotFoundError("record", record_id)
+        return record
+
+    def _current_revision_number(self, record: dict) -> int:
+        return int(record.get("current_revision_number") or 0)
+
+    def _record_flag_event(
+        self,
+        *,
+        record: dict,
+        flag_id: str,
+        event_type: str,
+        actor: PrcActor,
+        note: str | None = None,
+    ) -> dict[str, Any]:
+        return {
+            "id": _uuid(),
+            "flag_id": flag_id,
+            "record_id": record["id"],
+            "event_type": event_type,
+            "revision_number": self._current_revision_number(record),
+            "actor_subject": actor.user_id,
+            "actor_display_name": actor.label,
+            "occurred_at": _now(),
+            "note": note,
+        }
+
+    def list_record_flags(
+        self, record_id: str, *, actor: PrcActor
+    ) -> dict[str, Any]:
+        record = self._require_record_scoped(record_id, actor)
+        current_n = self._current_revision_number(record)
+        flags = self._record_flags_at(record_id, current_n)
+        return {
+            "items": flags,
+            "total": len(flags),
+            "openCount": sum(
+                1 for f in flags if f["atStatus"] == "OPEN"
+            ),
+            "currentRevisionNumber": current_n,
+        }
+
+    def list_record_flag_events(
+        self,
+        record_id: str,
+        flag_id: str,
+        *,
+        actor: PrcActor,
+    ) -> dict[str, Any]:
+        self._require_record_scoped(record_id, actor)
+        flag = self._repo.get_record_flag(
+            record_id=record_id, flag_id=flag_id
+        )
+        if flag is None:
+            raise PrcNotFoundError("record flag", flag_id)
+        rows = self._repo.list_record_flag_events(
+            record_id=record_id, flag_id=flag_id
+        )
+        return {
+            "items": [
+                record_flags.public_record_flag_event(e) for e in rows
+            ],
+            "total": len(rows),
+        }
+
+    def create_record_flag(
+        self,
+        record_id: str,
+        *,
+        actor: PrcActor,
+        title: str,
+        description: str,
+        subject: str = "FIELD",
+        target_path: str | None = None,
+        supplier_key: dict | None = None,
+        target_attribute: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        self._flag_actor_gate(actor)
+        record = self._require_record_scoped(record_id, actor)
+        current_n = self._current_revision_number(record)
+        if current_n < 1:
+            raise PrcStateConflictError("no_current_revision")
+        flag_id = _uuid()
+        payload = attendance_flags.validate_flag_payload(
+            title=title,
+            description=description,
+            subject=subject,
+            target_path=target_path,
+            supplier_key=supplier_key,
+            target_attribute=target_attribute,
+            allow_general=False,
+            flag_id=flag_id,
+        )
+        revision = self._repo.get_revision(record_id, current_n)
+        record_flags.validate_target_exists_in_snapshot(
+            (revision or {}).get("technical_snapshot"),
+            subject=payload["subject"],
+            target_path=payload.get("targetPath"),
+            supplier_key=payload.get("supplierKey"),
+        )
+        fp = _fingerprint(
+            {
+                "record_id": record_id,
+                "op": "record_flag_create",
+                "payload": payload,
+            }
+        )
+        replay = self._idempotent_replay(
+            actor=actor, operation="record_flag_create",
+            key=idempotency_key, fingerprint=fp,
+        )
+        if replay is not None:
+            return replay
+        existing = self._repo.find_open_record_flag(
+            record_id=record_id, target_key=payload["targetKey"],
+        )
+        if existing is not None:
+            raise PrcStateConflictError("open_flag_exists")
+        now = _now()
+        row = {
+            "id": flag_id,
+            "record_id": record_id,
+            "title": payload["title"],
+            "description": payload["description"],
+            "status": "OPEN",
+            "subject": payload["subject"],
+            "target_path": payload.get("targetPath"),
+            "target_attribute": payload.get("targetAttribute"),
+            "supplier_key": payload.get("supplierKey"),
+            "target_key": payload["targetKey"],
+            "opened_revision_number": current_n,
+            "closed_status": None,
+            "closed_revision_number": None,
+            "closed_by_subject": None,
+            "closed_by_display_name": None,
+            "closed_at": None,
+            "close_reason": None,
+            "origin_request_id": None,
+            "row_version": 1,
+            "created_by_subject": actor.user_id,
+            "created_by_display_name": actor.label,
+            "created_at": now,
+            "updated_by_subject": actor.user_id,
+            "updated_by_display_name": actor.label,
+            "updated_at": now,
+        }
+        event = self._record_flag_event(
+            record=record, flag_id=flag_id,
+            event_type="flag.created", actor=actor,
+        )
+        created = self._repo.create_record_flag(flag=row, event=event)
+        response = record_flags.public_record_flag(
+            created, at_status="OPEN"
+        )
+        self._idempotent_store(
+            actor=actor, operation="record_flag_create",
+            key=idempotency_key, fingerprint=fp,
+            request_id=record_id, status=201, payload=response,
+        )
+        return response
+
+    def update_record_flag(
+        self,
+        record_id: str,
+        flag_id: str,
+        *,
+        actor: PrcActor,
+        expected_version: int,
+        title: str | None = None,
+        description: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Edita título/descrição. Alvo imutável; só OPEN é editável."""
+        self._flag_actor_gate(actor)
+        record = self._require_record_scoped(record_id, actor)
+        flag = self._repo.get_record_flag(
+            record_id=record_id, flag_id=flag_id
+        )
+        if flag is None:
+            raise PrcNotFoundError("record flag", flag_id)
+        if flag["status"] != "OPEN":
+            raise PrcStateConflictError("state_conflict")
+        payload = attendance_flags.validate_flag_payload(
+            title=title if title is not None else flag["title"],
+            description=(
+                description if description is not None
+                else flag["description"]
+            ),
+            subject=flag["subject"],
+            target_path=flag.get("target_path"),
+            supplier_key=flag.get("supplier_key"),
+            target_attribute=flag.get("target_attribute"),
+            allow_general=flag["subject"] == "GENERAL",
+            flag_id=flag_id,
+        )
+        patch = {
+            "title": payload["title"],
+            "description": payload["description"],
+        }
+        fp = _fingerprint(
+            {
+                "record_id": record_id,
+                "flag_id": flag_id,
+                "op": "record_flag_update",
+                "expected_version": expected_version,
+                "patch": patch,
+            }
+        )
+        replay = self._idempotent_replay(
+            actor=actor, operation="record_flag_update",
+            key=idempotency_key, fingerprint=fp,
+        )
+        if replay is not None:
+            return replay
+        event = self._record_flag_event(
+            record=record, flag_id=flag_id,
+            event_type="flag.updated", actor=actor,
+        )
+        updated = self._repo.update_record_flag(
+            record_id=record_id,
+            flag_id=flag_id,
+            expected_version=expected_version,
+            patch=patch,
+            actor_subject=actor.user_id,
+            actor_display_name=actor.label,
+            event=event,
+        )
+        response = record_flags.public_record_flag(
+            updated, at_status="OPEN"
+        )
+        self._idempotent_store(
+            actor=actor, operation="record_flag_update",
+            key=idempotency_key, fingerprint=fp,
+            request_id=record_id, status=200, payload=response,
+        )
+        return response
+
+    def close_record_flag(
+        self,
+        record_id: str,
+        flag_id: str,
+        *,
+        actor: PrcActor,
+        expected_version: int,
+        to_status: str,
+        note: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Encerra OPEN → RESOLVED|REMOVED. Encerradas são terminais."""
+        self._flag_actor_gate(actor)
+        record = self._require_record_scoped(record_id, actor)
+        flag = self._repo.get_record_flag(
+            record_id=record_id, flag_id=flag_id
+        )
+        if flag is None:
+            raise PrcNotFoundError("record flag", flag_id)
+        record_flags.validate_close_transition(
+            flag, to_status=to_status
+        )
+        current_n = self._current_revision_number(record)
+        fp = _fingerprint(
+            {
+                "record_id": record_id,
+                "flag_id": flag_id,
+                "op": f"record_flag_{to_status.lower()}",
+                "expected_version": expected_version,
+                "note": note,
+            }
+        )
+        replay = self._idempotent_replay(
+            actor=actor,
+            operation=f"record_flag_{to_status.lower()}",
+            key=idempotency_key, fingerprint=fp,
+        )
+        if replay is not None:
+            return replay
+        event = self._record_flag_event(
+            record=record, flag_id=flag_id,
+            event_type=f"flag.{to_status.lower()}", actor=actor,
+            note=note,
+        )
+        closed = self._repo.close_record_flag(
+            record_id=record_id,
+            flag_id=flag_id,
+            expected_version=expected_version,
+            closed_status=to_status,
+            closed_revision_number=current_n,
+            actor_subject=actor.user_id,
+            actor_display_name=actor.label,
+            note=note,
+            event=event,
+        )
+        response = record_flags.public_record_flag(
+            closed, at_status=to_status
+        )
+        self._idempotent_store(
+            actor=actor,
+            operation=f"record_flag_{to_status.lower()}",
+            key=idempotency_key, fingerprint=fp,
+            request_id=record_id, status=200, payload=response,
         )
         return response
 

@@ -123,7 +123,13 @@ class ProductRegistrationRepository(Protocol):
     ) -> dict[str, Any] | None: ...
 
     def list_records(
-        self, *, search: str | None, page: int, page_size: int
+        self,
+        *,
+        search: str | None,
+        page: int,
+        page_size: int,
+        sort: str | None = None,
+        flag_state: str | None = None,
     ) -> dict[str, Any]: ...
 
     def list_revisions(self, record_id: str) -> list[dict[str, Any]]: ...
@@ -131,6 +137,73 @@ class ProductRegistrationRepository(Protocol):
     def get_revision(
         self, record_id: str, revision_number: int
     ) -> dict[str, Any] | None: ...
+
+    # --- product flags (PRC-TRACK, record-scoped) ------------------------------
+
+    def create_record_flag(
+        self, *, flag: dict[str, Any], event: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Insere flag de produto + evento na mesma transação."""
+        ...
+
+    def get_record_flag(
+        self, *, record_id: str, flag_id: str
+    ) -> dict[str, Any] | None: ...
+
+    def find_open_record_flag(
+        self, *, record_id: str, target_key: str
+    ) -> dict[str, Any] | None: ...
+
+    def list_record_flags(
+        self, *, record_id: str
+    ) -> list[dict[str, Any]]:
+        """Todas as ocorrências do produto (projeção é do service)."""
+        ...
+
+    def update_record_flag(
+        self,
+        *,
+        record_id: str,
+        flag_id: str,
+        expected_version: int,
+        patch: dict[str, Any],
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        """CAS + evento flag.updated (somente OPEN)."""
+        ...
+
+    def close_record_flag(
+        self,
+        *,
+        record_id: str,
+        flag_id: str,
+        expected_version: int,
+        closed_status: str,
+        closed_revision_number: int,
+        actor_subject: str,
+        actor_display_name: str | None,
+        note: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        """OPEN→RESOLVED|REMOVED com CAS + evento; sem reopen (CR-07)."""
+        ...
+
+    def list_record_flag_events(
+        self,
+        *,
+        record_id: str,
+        flag_id: str | None = None,
+        from_revision: int | None = None,
+        to_revision: int | None = None,
+    ) -> list[dict[str, Any]]: ...
+
+    def record_open_flag_counts(
+        self, *, record_ids: list[str]
+    ) -> dict[str, int]:
+        """Contagem de flags OPEN por record_id (listagem U1)."""
+        ...
 
     def complete_request(
         self,

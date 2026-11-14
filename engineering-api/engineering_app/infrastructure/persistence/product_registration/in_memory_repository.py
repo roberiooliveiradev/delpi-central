@@ -43,6 +43,8 @@ class InMemoryProductRegistrationRepository:
         self._revisions: dict[str, list[dict]] = {}
         self._idempotency: dict[tuple[str, str, str], dict] = {}
         self._flags: dict[str, dict] = {}  # flag_id → row
+        self._record_flags: dict[str, dict] = {}  # record flag_id → row
+        self._record_flag_events: list[dict] = []
         # PRC-REF-019 — rodadas de esclarecimento.
         self._info_rounds: dict[str, dict] = {}  # round_id → row
         self._info_questions: dict[str, dict] = {}  # question_id → row
@@ -401,11 +403,37 @@ class InMemoryProductRegistrationRepository:
         rid = self._record_by_key.get((official_source, official_code))
         return self.get_record(rid) if rid else None
 
+    def _record_list_item(self, record: dict[str, Any]) -> dict[str, Any]:
+        out = dict(record)
+        rev = self.get_revision(
+            record["id"], int(record.get("current_revision_number") or 0)
+        )
+        snap = (rev or {}).get("technical_snapshot") or {}
+        entry = (snap.get("fields") or {}).get("description") or {}
+        out["description"] = (
+            entry.get("value")
+            if entry.get("coverageState") == "present"
+            else None
+        )
+        out["last_evolution_at"] = (rev or {}).get("approved_at")
+        out["open_flag_count"] = sum(
+            1
+            for f in self._record_flags.values()
+            if f["record_id"] == record["id"] and f["status"] == "OPEN"
+        )
+        return out
+
     def list_records(
-        self, *, search: str | None, page: int, page_size: int
+        self,
+        *,
+        search: str | None,
+        page: int,
+        page_size: int,
+        sort: str | None = None,
+        flag_state: str | None = None,
     ) -> dict[str, Any]:
         items = [
-            r
+            self._record_list_item(r)
             for r in self._records.values()
             if int(r.get("current_revision_number") or 0) >= 1
         ]
@@ -415,8 +443,30 @@ class InMemoryProductRegistrationRepository:
                 r
                 for r in items
                 if needle in (r.get("official_product_code") or "").lower()
+                or needle in str(r.get("description") or "").lower()
             ]
-        items.sort(key=lambda r: (r["updated_at"], r["id"]), reverse=True)
+        if flag_state == "open":
+            items = [r for r in items if r["open_flag_count"] > 0]
+        elif flag_state == "none":
+            items = [r for r in items if r["open_flag_count"] == 0]
+        if sort == "code":
+            items.sort(key=lambda r: (r["official_product_code"], r["id"]))
+        elif sort == "description":
+            items.sort(
+                key=lambda r: (
+                    r.get("description") is None,
+                    str(r.get("description") or "").lower(),
+                    r["id"],
+                )
+            )
+        else:  # lastEvolution (default)
+            items.sort(
+                key=lambda r: (
+                    r.get("last_evolution_at") or "",
+                    r["id"],
+                ),
+                reverse=True,
+            )
         total = len(items)
         start = (page - 1) * page_size
         return {
@@ -980,6 +1030,169 @@ class InMemoryProductRegistrationRepository:
         row["updated_at"] = row["deleted_at"]
         self._append_event(request_id, event)
         return copy.deepcopy(row)
+
+    # --- product flags (PRC-TRACK, record-scoped) ------------------------------
+
+    def _require_record(self, record_id: str) -> dict:
+        rec = self._records.get(record_id)
+        if rec is None:
+            raise PrcNotFoundError("record", record_id)
+        return rec
+
+    def _require_record_flag_cas(
+        self, record_id: str, flag_id: str, expected_version: int,
+    ) -> dict:
+        row = self._record_flags.get(flag_id)
+        if row is None or row["record_id"] != record_id:
+            raise PrcNotFoundError("record flag", flag_id)
+        if int(row["row_version"]) != int(expected_version):
+            raise PrcConcurrencyError("stale_version")
+        return row
+
+    def create_record_flag(
+        self, *, flag: dict[str, Any], event: dict[str, Any]
+    ) -> dict[str, Any]:
+        self._require_record(flag["record_id"])
+        if any(
+            f["record_id"] == flag["record_id"]
+            and f.get("target_key") == flag.get("target_key")
+            and f["status"] == "OPEN"
+            for f in self._record_flags.values()
+        ):
+            raise PrcStateConflictError("open_flag_exists")
+        row = dict(flag)
+        self._record_flags[row["id"]] = row
+        self._record_flag_events.append(dict(event))
+        return copy.deepcopy(row)
+
+    def get_record_flag(
+        self, *, record_id: str, flag_id: str
+    ) -> dict[str, Any] | None:
+        row = self._record_flags.get(flag_id)
+        if row is None or row["record_id"] != record_id:
+            return None
+        return copy.deepcopy(row)
+
+    def find_open_record_flag(
+        self, *, record_id: str, target_key: str
+    ) -> dict[str, Any] | None:
+        for f in self._record_flags.values():
+            if (
+                f["record_id"] == record_id
+                and f.get("target_key") == target_key
+                and f["status"] == "OPEN"
+            ):
+                return copy.deepcopy(f)
+        return None
+
+    def list_record_flags(
+        self, *, record_id: str
+    ) -> list[dict[str, Any]]:
+        rows = [
+            f for f in self._record_flags.values()
+            if f["record_id"] == record_id
+        ]
+        rows.sort(key=lambda r: (r["created_at"], r["id"]), reverse=True)
+        return copy.deepcopy(rows)
+
+    def update_record_flag(
+        self,
+        *,
+        record_id: str,
+        flag_id: str,
+        expected_version: int,
+        patch: dict[str, Any],
+        actor_subject: str,
+        actor_display_name: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        row = self._require_record_flag_cas(
+            record_id, flag_id, expected_version
+        )
+        if "title" in patch:
+            row["title"] = patch["title"]
+        if "description" in patch:
+            row["description"] = patch["description"]
+        row["row_version"] = int(row["row_version"]) + 1
+        row["updated_by_subject"] = actor_subject
+        row["updated_by_display_name"] = actor_display_name
+        row["updated_at"] = _now()
+        self._record_flag_events.append(dict(event))
+        return copy.deepcopy(row)
+
+    def close_record_flag(
+        self,
+        *,
+        record_id: str,
+        flag_id: str,
+        expected_version: int,
+        closed_status: str,
+        closed_revision_number: int,
+        actor_subject: str,
+        actor_display_name: str | None,
+        note: str | None,
+        event: dict[str, Any],
+    ) -> dict[str, Any]:
+        row = self._require_record_flag_cas(
+            record_id, flag_id, expected_version
+        )
+        if row["status"] != "OPEN":
+            raise PrcStateConflictError("state_conflict")
+        now = _now()
+        row["status"] = closed_status
+        row["closed_status"] = closed_status
+        row["closed_revision_number"] = closed_revision_number
+        row["closed_by_subject"] = actor_subject
+        row["closed_by_display_name"] = actor_display_name
+        row["closed_at"] = now
+        row["close_reason"] = note
+        row["row_version"] = int(row["row_version"]) + 1
+        row["updated_by_subject"] = actor_subject
+        row["updated_by_display_name"] = actor_display_name
+        row["updated_at"] = now
+        self._record_flag_events.append(dict(event))
+        return copy.deepcopy(row)
+
+    def list_record_flag_events(
+        self,
+        *,
+        record_id: str,
+        flag_id: str | None = None,
+        from_revision: int | None = None,
+        to_revision: int | None = None,
+    ) -> list[dict[str, Any]]:
+        items = [
+            e for e in self._record_flag_events
+            if e["record_id"] == record_id
+        ]
+        if flag_id:
+            items = [e for e in items if e["flag_id"] == flag_id]
+        if from_revision is not None:
+            items = [
+                e for e in items
+                if e.get("revision_number") is not None
+                and e["revision_number"] >= from_revision
+            ]
+        if to_revision is not None:
+            items = [
+                e for e in items
+                if e.get("revision_number") is not None
+                and e["revision_number"] <= to_revision
+            ]
+        items.sort(key=lambda e: (e.get("occurred_at") or "", e["id"]))
+        return copy.deepcopy(items)
+
+    def record_open_flag_counts(
+        self, *, record_ids: list[str]
+    ) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for rid in record_ids:
+            counts[rid] = sum(
+                1
+                for f in self._record_flags.values()
+                if f["record_id"] == rid and f["status"] == "OPEN"
+            )
+        return counts
 
     # --- information rounds (PRC-REF-019) --------------------------------------
 

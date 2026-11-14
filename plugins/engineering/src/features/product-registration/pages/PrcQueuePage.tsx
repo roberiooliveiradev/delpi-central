@@ -37,6 +37,7 @@ import {
 } from "../api/productRegistrationApi";
 import {
   buildPrcQueueUrl,
+  EMPTY_PRC_QUEUE_URL,
   navigatePrc,
   navigatePrcHref,
   parsePrcQueueUrl,
@@ -53,6 +54,8 @@ import {
   PRC_STATUS_LABELS,
   prcShortId,
 } from "../prcCopy";
+import { PrcProductsPage } from "./PrcProductsPage";
+import { PrcAreaToggle } from "../components/PrcAreaToggle";
 import {
   PRC_QUEUE_COLUMN_CATALOG,
   PRC_QUEUE_FIELD_LABELS,
@@ -184,10 +187,10 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
   const clearFilters = useCallback(() => {
     setSearchDraft("");
     commit(
-      { view: "", status: "", type: "", search: "", page: 1, sortBy: "", sortDir: "desc" },
+      { ...EMPTY_PRC_QUEUE_URL, area: applied.area },
       { replace: false },
     );
-  }, [commit]);
+  }, [commit, applied.area]);
 
   const openDetail = useCallback(
     (row: PrcRequestSummary) => {
@@ -338,6 +341,14 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
   const forbidden = error?.status === 403;
   const notFound = error?.status === 404;
 
+  /* U1 — seletor de área: `?area=products` renderiza a listagem de
+   * produtos acompanhados; Solicitações permanece o padrão. O
+   * desvio fica após todos os hooks — a ordem de hooks é estável
+   * entre as duas áreas. */
+  if (applied.area === "products") {
+    return <PrcProductsPage basePath={basePath} />;
+  }
+
   return (
     <main className="engineering-prc">
       <EngineeringPagePath
@@ -394,6 +405,17 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
         }
       >
         <div className="engineering-prc__queue-controls">
+          <PrcAreaToggle
+            value="requests"
+            onChange={(area) => {
+              if (area === "products") {
+                commit(
+                  { ...EMPTY_PRC_QUEUE_URL, area: "products" },
+                  { replace: false },
+                );
+              }
+            }}
+          />
           <form
             className="engineering-prc__queue-primary"
             aria-label="Busca e ações da lista"

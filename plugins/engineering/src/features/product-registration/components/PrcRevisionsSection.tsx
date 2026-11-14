@@ -21,6 +21,7 @@ import {
   type PrcRevisionSummary,
 } from "../api/productRegistrationApi";
 import { prcDetailTabHref } from "../prcNavigate";
+import { snapshotSupplierRows } from "../prcSnapshot";
 import {
   PRC_COPY,
   prcFieldLabel,
@@ -135,12 +136,21 @@ export function PrcRevisionsSection({
   ];
 
   const snapshotFields = snapshot
-    ? Object.entries(snapshot.technical_snapshot || {})
-        .filter(([path]) => path !== "suppliers")
-        .map(([path, value]) => ({
+    ? Object.entries(snapshot.snapshot?.fields || {})
+        .filter(
+          ([, entry]) =>
+            entry &&
+            (entry as { coverageState?: string }).coverageState ===
+              "present",
+        )
+        .map(([path, entry]) => ({
           label: prcFieldLabel(path),
-          value: fmt(value),
+          value: fmt((entry as { value?: unknown }).value),
         }))
+    : [];
+
+  const snapshotSuppliers = snapshot
+    ? snapshotSupplierRows(snapshot.snapshot)
     : [];
 
   return (
@@ -169,30 +179,23 @@ export function PrcRevisionsSection({
       {snapshot ? (
         <>
           <EngineeringDetailCard
-            title={`Revisão R${snapshot.revision_number} — snapshot imutável`}
-            hint={`Publicada em ${new Date(snapshot.approved_at).toLocaleString("pt-BR")} por ${prcPersonLabel(snapshot.approved_by_subject)}${snapshot.request_id ? ` · Solicitação de origem ${prcShortId(snapshot.request_id)}` : ""}`}
+            title={`Revisão R${snapshot.revisionNumber} — snapshot imutável`}
+            hint={`Publicada em ${new Date(snapshot.approvedAt).toLocaleString("pt-BR")} por ${prcPersonLabel(snapshot.approvedBy?.subject || "")}${snapshot.requestId ? ` · Solicitação de origem ${prcShortId(snapshot.requestId)}` : ""}`}
           >
             <EngineeringDetailFieldGrid fields={snapshotFields} />
-            {Array.isArray(snapshot.technical_snapshot?.suppliers) &&
-            snapshot.technical_snapshot.suppliers.length ? (
+            {snapshotSuppliers.length ? (
               <ul className="engineering-prc__supplier-diff">
-                {(
-                  snapshot.technical_snapshot.suppliers as Record<
-                    string,
-                    unknown
-                  >[]
-                ).map((s, i) => (
-                  <li key={i}>
+                {snapshotSuppliers.map((s) => (
+                  <li key={`${s.supplierCode}|${s.store}`}>
                     <strong>
-                      {String(s.supplierCode || "—")} · loja{" "}
-                      {String(s.store || "—")}
+                      {s.supplierCode || "—"} · loja {s.store || "—"}
                     </strong>{" "}
-                    {String(s.supplierName || "")}
+                    {s.supplierName || ""}
                     {s.partNumber
-                      ? ` · PN ${String(s.partNumber)}`
+                      ? ` · PN ${s.partNumber}`
                       : " · PN não informado"}
                     {s.catalogNumber
-                      ? ` · catálogo ${String(s.catalogNumber)}`
+                      ? ` · catálogo ${s.catalogNumber}`
                       : ""}
                   </li>
                 ))}

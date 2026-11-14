@@ -10,11 +10,15 @@ export const PRC_PATHS = {
   queue: PRC_BASE,
   create: `${PRC_BASE}/new`,
   detail: (requestId: string) => `${PRC_BASE}/${requestId}`,
+  /** Produto acompanhado — rota estável própria, sem colidir com o
+   * detalhe de solicitação `/product-registration/{requestId}`. */
+  product: (recordId: string) => `${PRC_BASE}/products/${recordId}`,
 } as const;
 
 export function resolvePrcPath(relativePath: string): {
-  page: "queue" | "detail" | "create";
+  page: "queue" | "detail" | "create" | "product";
   requestId?: string;
+  recordId?: string;
 } {
   const parts = relativePath
     .replace(/^product-registration\/?/, "")
@@ -22,6 +26,13 @@ export function resolvePrcPath(relativePath: string): {
     .filter(Boolean);
   if (parts[0] === "new") {
     return { page: "create" };
+  }
+  if (
+    parts[0] === "products" &&
+    parts.length >= 2 &&
+    /^[0-9a-fA-F-]{36}$/.test(parts[1])
+  ) {
+    return { page: "product", recordId: parts[1] };
   }
   if (parts.length >= 1 && /^[0-9a-fA-F-]{36}$/.test(parts[0])) {
     return { page: "detail", requestId: parts[0] };
@@ -77,6 +88,9 @@ export function useLocationSearch(): string {
 // --- Fila: estado orientado por URL --------------------------------------
 
 export type PrcQueueUrlState = {
+  /** Área da ferramenta — `""` = Solicitações (padrão); `products` =
+   * Produtos acompanhados (U1). */
+  area: "" | "products";
   /** Preset governado da fila — `pending` = casos acionáveis
    * (status não terminais), aplicado no backend antes de
    * COUNT/LIMIT. `status` explícito prevalece sobre o preset. */
@@ -87,9 +101,12 @@ export type PrcQueueUrlState = {
   page: number;
   sortBy: string;
   sortDir: "asc" | "desc";
+  /** Produtos acompanhados — filtro de bandeiras: ""|open|none. */
+  flagState: "" | "open" | "none";
 };
 
 export const EMPTY_PRC_QUEUE_URL: PrcQueueUrlState = {
+  area: "",
   view: "",
   status: "",
   type: "",
@@ -97,6 +114,7 @@ export const EMPTY_PRC_QUEUE_URL: PrcQueueUrlState = {
   page: 1,
   sortBy: "",
   sortDir: "desc",
+  flagState: "",
 };
 
 const SORT_KEYS = new Set([
@@ -104,20 +122,34 @@ const SORT_KEYS = new Set([
   "assignedTo", "id",
 ]);
 
+/** Sort da listagem de produtos (contrato backend — rota 12b). */
+const PRODUCT_SORT_KEYS = new Set([
+  "lastEvolution", "code", "description",
+]);
+
 export function parsePrcQueueUrl(search: string): PrcQueueUrlState {
   const p = new URLSearchParams(search);
   const page = Math.max(1, Number.parseInt(p.get("page") ?? "1", 10) || 1);
   const type = p.get("type") ?? "";
+  const area = p.get("area") === "products" ? "products" as const : "";
+  const flagState = p.get("flagState") ?? "";
   const sortBy = p.get("sortBy") ?? "";
   const sortDir = p.get("sortDir") === "asc" ? "asc" : "desc";
   return {
+    area,
     view: p.get("view") === "pending" ? "pending" : "",
     status: p.get("status") ?? "",
     type: type === "create" || type === "update" ? type : "",
     search: p.get("search") ?? "",
     page: Number.isFinite(page) ? page : 1,
-    sortBy: SORT_KEYS.has(sortBy) ? sortBy : "",
+    sortBy: area === "products"
+      ? (PRODUCT_SORT_KEYS.has(sortBy) ? sortBy : "")
+      : (SORT_KEYS.has(sortBy) ? sortBy : ""),
     sortDir,
+    flagState:
+      flagState === "open" || flagState === "none"
+        ? flagState
+        : "",
   };
 }
 
@@ -146,9 +178,11 @@ export function buildPrcQueueUrl(
   state: PrcQueueUrlState,
 ): string {
   const p = new URLSearchParams();
+  if (state.area === "products") p.set("area", "products");
   if (state.view === "pending") p.set("view", "pending");
   if (state.status) p.set("status", state.status);
   if (state.type) p.set("type", state.type);
+  if (state.flagState) p.set("flagState", state.flagState);
   if (state.search) p.set("search", state.search);
   if (state.page > 1) p.set("page", String(state.page));
   if (state.sortBy) {
@@ -190,4 +224,36 @@ export function prcDetailTabHref(
 ): string {
   const base = `${basePath}/${PRC_PATHS.detail(requestId)}`;
   return tab === "draft" ? base : `${base}?tab=${tab}`;
+}
+
+// --- Produto acompanhado: abas + seletor de versão por URL --------------
+
+export type PrcProductTabKey = "sheet" | "versions";
+
+/** `?tab=` ausente/inválido → Ficha técnica (aba inicial). */
+export function parsePrcProductTab(search: string): PrcProductTabKey {
+  return new URLSearchParams(search).get("tab") === "versions"
+    ? "versions"
+    : "sheet";
+}
+
+/** Revisão selecionada na ficha — `?rev=N`; ausente/inválido → null
+ * (o caller resolve para a revisão vigente). */
+export function parsePrcProductRevision(search: string): number | null {
+  const raw = new URLSearchParams(search).get("rev");
+  if (!raw) return null;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n >= 1 ? n : null;
+}
+
+export function prcProductHref(
+  basePath: string,
+  recordId: string,
+  state: { tab?: PrcProductTabKey; rev?: number | null },
+): string {
+  const p = new URLSearchParams();
+  if (state.tab === "versions") p.set("tab", "versions");
+  if (state.rev && state.rev >= 1) p.set("rev", String(state.rev));
+  const q = p.toString();
+  return `${basePath}/${PRC_PATHS.product(recordId)}${q ? `?${q}` : ""}`;
 }

@@ -780,7 +780,7 @@ class TestVerifyAndComplete:
             tok,
         )
         assert rev.status_code == 200
-        assert rev.json()["data"]["official_product_code"] == "001234"
+        assert rev.json()["data"]["officialCode"] == "001234"
 
     def test_create_completion_requires_official_code(
         self, client, jwks_env, core_rbac, prc_service_repo
@@ -1024,24 +1024,50 @@ class TestTechnicalRecordsList:
         self, client, jwks_env, core_rbac, prc_service_repo
     ):
         repo = prc_service_repo["repo"]
-        self._seed(repo, code="001", updated_at="2026-01-01T10:00:00+00:00")
-        self._seed(repo, code="002", updated_at="2026-01-02T10:00:00+00:00")
+        r1 = self._seed(
+            repo, code="001", updated_at="2026-01-01T10:00:00+00:00"
+        )
+        r2 = self._seed(
+            repo, code="002", updated_at="2026-01-02T10:00:00+00:00"
+        )
         # registro preparatório sem revisão publicada não aparece
         self._seed(
             repo, code="003", rev=0,
             updated_at="2026-01-03T10:00:00+00:00",
         )
+        # lastEvolution = approved_at da revisão vigente (sort default)
+        repo._revisions[r1] = [
+            {
+                "revision_number": 1,
+                "request_id": str(uuid.uuid4()),
+                "approved_by_subject": "analyst-1",
+                "approved_at": "2026-01-01T10:00:00+00:00",
+                "technical_snapshot": {"fields": {}, "supplierLinks": {}},
+                "changes": [],
+            }
+        ]
+        repo._revisions[r2] = [
+            {
+                "revision_number": 1,
+                "request_id": str(uuid.uuid4()),
+                "approved_by_subject": "analyst-1",
+                "approved_at": "2026-01-02T10:00:00+00:00",
+                "technical_snapshot": {"fields": {}, "supplierLinks": {}},
+                "changes": [],
+            }
+        ]
         core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
         data = _get(
             client, self.URL, _token(jwks_env, "analyst-1")
         ).json()["data"]
         assert data["total"] == 2
         codes = [i["officialCode"] for i in data["items"]]
-        assert codes == ["002", "001"]  # updatedAt DESC
+        assert codes == ["002", "001"]  # lastEvolution DESC
         item = data["items"][0]
         assert set(item) == {
             "recordId", "officialSource", "officialCode", "productType",
-            "currentRevisionNumber", "lastOfficialVerifiedAt", "updatedAt",
+            "description", "currentRevisionNumber", "lastEvolutionAt",
+            "openFlagCount", "lastOfficialVerifiedAt", "updatedAt",
         }
 
     def test_pagination_and_deterministic_tiebreak(

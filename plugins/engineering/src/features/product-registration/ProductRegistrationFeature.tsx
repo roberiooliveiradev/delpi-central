@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { PrcQueuePage } from "./pages/PrcQueuePage";
 import { PrcDetailPage } from "./pages/PrcDetailPage";
 import { PrcCreatePage } from "./pages/PrcCreatePage";
+import { PrcProductDetailPage } from "./pages/PrcProductDetailPage";
 import { resolvePrcPath } from "./prcNavigate";
 
 export function ProductRegistrationFeature({
@@ -19,6 +20,14 @@ export function ProductRegistrationFeature({
   const resolved = useMemo(() => resolvePrcPath(relativePath), [relativePath]);
   if (resolved.page === "create") {
     return <PrcCreatePage basePath={basePath} />;
+  }
+  if (resolved.page === "product" && resolved.recordId) {
+    return (
+      <PrcProductDetailPage
+        recordId={resolved.recordId}
+        basePath={basePath}
+      />
+    );
   }
   if (resolved.page === "detail" && resolved.requestId) {
     return <PrcDetailPage

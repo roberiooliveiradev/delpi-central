@@ -326,3 +326,67 @@ export function prcSourceLabel(source: string | null | undefined): string {
   if (!source) return "—";
   return PRC_SOURCE_LABELS[source] ?? "Canal integrado";
 }
+
+/** U1–U3 — área de Produtos acompanhados (PRC-TRACK). */
+export const PRC_PRODUCTS_COPY = {
+  areaLabel: "Área da ferramenta",
+  areaRequests: "Solicitações",
+  areaProducts: "Produtos acompanhados",
+  listTitle: "Produtos acompanhados",
+  listDescription:
+    "Produtos com versões técnicas confirmadas pela Engineering API — acompanhamento consolidado, não o catálogo geral TOTVS.",
+  searchPlaceholder: "Código oficial ou descrição",
+  filterFlagsLabel: "Bandeiras",
+  filterFlagsAriaLabel: "Filtrar produtos por bandeiras abertas",
+  flagAll: "Todas",
+  flagOpen: "Com bandeiras abertas",
+  flagNone: "Sem bandeiras abertas",
+  colCode: "Código oficial",
+  colDescription: "Descrição",
+  colVersion: "Versão atual",
+  colOpenFlags: "Bandeiras abertas",
+  colLastEvolution: "Última evolução",
+  emptyProducts:
+    "Nenhum produto acompanhado ainda — produtos entram nesta área quando uma solicitação publica uma versão técnica.",
+  emptyFiltered: "Nenhum resultado para os filtros aplicados.",
+  openProduct: "Abrir produto",
+  countSingle: "produto acompanhado",
+  countPlural: "produtos acompanhados",
+  detailBreadcrumb: "Produtos acompanhados",
+  tabSheet: "Ficha técnica",
+  tabVersions: "Versões",
+  heroVersion: "Versão acompanhada",
+  heroLastEvolution: "Última evolução técnica",
+  heroOrigin: "Solicitação de origem",
+  heroOriginNone: "—",
+  heroOpenFlags: "Bandeiras abertas",
+  versionSelectorLabel: "Versão exibida",
+  versionCurrent: "Atual acompanhada",
+  versionFirst: "Primeiro acompanhamento confirmado",
+  versionsTimelineTitle: "Histórico de versões",
+  versionsCompareTitle: "Comparar versões",
+  compareFrom: "Versão de origem",
+  compareTo: "Versão de destino",
+  compareCta: "Comparar versões",
+  compareEmpty:
+    "Somente V1 existe até o momento — a comparação ficará disponível quando uma nova versão for publicada.",
+  compareSameError: "Selecione duas versões distintas.",
+  compareNoDiff: "Sem diferença técnica entre as versões.",
+  compareIncomparable:
+    "Não foi possível comparar — um dos snapshots não está legível no formato técnico canônico. Nada foi inferido.",
+  compareFlagEventsTitle: "Eventos de bandeiras no período",
+  compareBefore: "Antes",
+  compareAfter: "Depois",
+  supplierLinkAdded: "Vínculo adicionado",
+  supplierLinkRemoved: "Vínculo removido",
+  viewSheetOfVersion: "Ver ficha desta versão",
+  openOriginRequest: "Abrir solicitação de origem",
+  flagsTitle: "Acompanhamento técnico",
+  flagAdd: "Sinalizar",
+  flagHistoryOnly:
+    "Versão histórica — bandeiras exibidas no corte desta revisão; mutações só na versão vigente.",
+  flagGoToCurrent: "Ir para a versão vigente",
+  flagOpenTag: "Aberta",
+  flagResolvedTag: "Resolvida",
+  flagRemovedTag: "Removida",
+};

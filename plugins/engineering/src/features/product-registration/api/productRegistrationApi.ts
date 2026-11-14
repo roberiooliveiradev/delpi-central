@@ -227,12 +227,102 @@ export type PrcDivergenceRouteResult = {
   } | null;
 };
 
-export type PrcRecord = {
+/** Produto acompanhado — item da listagem (rota 12b). */
+export type PrcProductSummary = {
+  recordId: string;
+  officialSource: string;
+  officialCode: string;
+  productType: string;
+  description?: string | null;
+  currentRevisionNumber: number;
+  lastEvolutionAt?: string | null;
+  openFlagCount: number;
+  lastOfficialVerifiedAt?: string | null;
+  updatedAt?: string;
+};
+
+export type PrcProductListResult = {
+  items: PrcProductSummary[];
+  page: number;
+  pageSize: number;
+  total: number;
+};
+
+/** Entrada de campo do snapshot consolidado (schemaVersion=2). */
+export type PrcSnapshotFieldEntry = {
+  value?: unknown;
+  coverageState?: string;
+  valueOrigin?: string;
+  evidenceRef?: string;
+};
+
+/** Vínculo de fornecedor do snapshot consolidado. */
+export type PrcSnapshotSupplierLink = {
+  linkState?: string;
+  valueOrigin?: string;
+  attributes?: Record<string, { value?: unknown }>;
+};
+
+export type PrcTechnicalSnapshot = {
+  schemaVersion?: number;
+  fields?: Record<string, PrcSnapshotFieldEntry>;
+  supplierLinks?: Record<string, PrcSnapshotSupplierLink>;
+};
+
+/** Bandeira de produto acompanhado (record-scoped, PRC-TRACK). */
+export type PrcRecordFlag = {
   id: string;
-  official_product_code: string;
-  current_revision_number: number;
-  last_official_verified_at: string;
-  official_source: string;
+  recordId: string;
+  title: string;
+  description: string;
+  status: "OPEN" | "RESOLVED" | "REMOVED";
+  /** Estado efetivo no corte da revisão consultada (ADR-04). */
+  atStatus: "OPEN" | "RESOLVED" | "REMOVED";
+  subject: "GENERAL" | "FIELD" | "SUPPLIER_LINK";
+  targetPath?: string | null;
+  targetAttribute?: PrcFlagTargetAttribute | null;
+  supplierKey?: { supplierCode: string; store: string } | null;
+  targetKey?: string | null;
+  version: number;
+  openedRevisionNumber: number;
+  closedRevisionNumber?: number | null;
+  originRequestId?: string | null;
+  createdAt: string;
+  createdBy: { subject: string; displayName?: string | null };
+  updatedAt: string;
+  closedAt?: string | null;
+  closedBy?: { subject?: string | null; displayName?: string | null };
+};
+
+export type PrcRecordFlagEvent = {
+  id: string;
+  flagId: string;
+  recordId: string;
+  eventType: string;
+  revisionNumber: number;
+  occurredAt: string;
+  actor: { subject: string; displayName?: string | null };
+  note?: string | null;
+};
+
+/** Ficha técnica vigente do produto acompanhado (rota 13). */
+export type PrcProductDetail = {
+  recordId: string;
+  officialSource: string;
+  officialCode: string;
+  productType: string;
+  description?: string | null;
+  currentRevisionNumber: number;
+  lastOfficialVerifiedAt?: string | null;
+  lastEvolutionAt?: string | null;
+  originRequestId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  snapshot?: PrcTechnicalSnapshot | null;
+  changes?: PrcRevisionChange[];
+  flags: PrcRecordFlag[];
+  openFlagCount: number;
+  allowedFlagActions: string[];
 };
 
 /** Índice de revisões (rota 14) — sem snapshot. */
@@ -244,24 +334,47 @@ export type PrcRevisionSummary = {
   changedPaths: string[];
 };
 
-/** Snapshot imutável (rota 15) — read-only. */
+export type PrcRevisionChange = {
+  path: string;
+  before?: unknown;
+  after?: unknown;
+  reason?: string;
+  linkState?: string;
+};
+
+/** Snapshot imutável de uma revisão (rota 15) — read-only, com
+ * projeção temporal das bandeiras no corte consultado (ADR-04). */
 export type PrcRevisionDetail = {
-  id: string;
-  record_id: string;
-  revision_number: number;
-  request_id: string;
-  schema_version: number;
-  technical_snapshot: Record<string, unknown>;
-  changes: Array<{
-    path: string;
-    before: unknown;
-    after: unknown;
-    reason: string;
-  }>;
-  official_evidence_id?: string;
-  approved_by_subject: string;
-  approved_at: string;
-  created_at?: string;
+  revisionNumber: number;
+  requestId: string;
+  approvedBy?: { subject: string } | null;
+  approvedAt: string;
+  snapshot?: PrcTechnicalSnapshot | null;
+  changes: PrcRevisionChange[];
+  flags: PrcRecordFlag[];
+  currentRevisionNumber: number;
+  isCurrentRevision: boolean;
+  /** Mutações só existem no corte da revisão vigente. */
+  allowedFlagActions: string[];
+};
+
+export type PrcComparisonEnd = {
+  revisionNumber: number;
+  approvedAt: string;
+  requestId: string;
+};
+
+/** Diff técnico canônico Vx×Vy — calculado pela Engineering API. */
+export type PrcComparisonResult = {
+  recordId: string;
+  officialCode: string;
+  from: PrcComparisonEnd;
+  to: PrcComparisonEnd;
+  comparable: boolean;
+  changes: PrcRevisionChange[];
+  fieldChanges: PrcRevisionChange[];
+  supplierLinkChanges: PrcRevisionChange[];
+  flagEvents: PrcRecordFlagEvent[];
 };
 
 export type PrcFieldSpec = {
@@ -434,11 +547,34 @@ export async function routeDivergence(
   );
 }
 
+/** U1 — Produtos acompanhados (rota 12b). `sort`: lastEvolution
+ * (default), code ou description; `flagState`: open|none. */
+export async function fetchPrcProducts(
+  filters: Record<string, unknown>,
+  signal?: AbortSignal,
+): Promise<Envelope<PrcProductListResult>> {
+  return getJson(`${BASE}/technical-records${qs(filters)}`, signal);
+}
+
 export async function fetchPrcRecord(
   recordId: string,
   signal?: AbortSignal,
-): Promise<Envelope<PrcRecord>> {
+): Promise<Envelope<PrcProductDetail>> {
   return getJson(`${BASE}/technical-records/${recordId}`, signal);
+}
+
+/** U3 — comparação técnica Vx×Vy calculada no backend (rota 15b). */
+export async function fetchPrcComparison(
+  recordId: string,
+  fromRevision: number,
+  toRevision: number,
+  signal?: AbortSignal,
+): Promise<Envelope<PrcComparisonResult>> {
+  return getJson(
+    `${BASE}/technical-records/${recordId}/comparison` +
+      qs({ from: fromRevision, to: toRevision }),
+    signal,
+  );
 }
 
 export async function fetchPrcRevisions(
@@ -1090,5 +1226,78 @@ export async function downloadPrcAttachment(
   return getBlob(
     `${BASE}/requests/${requestId}/attachments/${attachmentId}/download`,
     signal,
+  );
+}
+
+/* --- PRC-TRACK — product flags (record-scoped) ------------------------------
+ * Bandeiras do produto acompanhado: escopo do registro técnico, não da
+ * solicitação (D16). Encerradas são terminais — não há reopen; uma
+ * reincidência cria novo flagId no mesmo alvo. */
+
+const RECORD_FLAGS = (recordId: string) =>
+  `${BASE}/technical-records/${recordId}/flags`;
+
+export type PrcRecordFlagListResult = {
+  items: PrcRecordFlag[];
+  total: number;
+  openCount: number;
+  currentRevisionNumber: number;
+};
+
+export async function fetchPrcRecordFlags(
+  recordId: string,
+  signal?: AbortSignal,
+): Promise<Envelope<PrcRecordFlagListResult>> {
+  return getJson(RECORD_FLAGS(recordId), signal);
+}
+
+export async function fetchPrcRecordFlagEvents(
+  recordId: string,
+  flagId: string,
+  signal?: AbortSignal,
+): Promise<Envelope<{ items: PrcRecordFlagEvent[]; total: number }>> {
+  return getJson(`${RECORD_FLAGS(recordId)}/${flagId}/events`, signal);
+}
+
+export async function createPrcRecordFlag(
+  recordId: string,
+  body: PrcFlagCreateBody,
+  idempotencyKey?: string,
+): Promise<Envelope<PrcRecordFlag>> {
+  return postJson(RECORD_FLAGS(recordId), body, undefined, {
+    headers: { "Idempotency-Key": idempotencyKey ?? "" },
+  });
+}
+
+export async function updatePrcRecordFlag(
+  recordId: string,
+  flagId: string,
+  body: { expectedVersion: number; title?: string; description?: string },
+  idempotencyKey?: string,
+): Promise<Envelope<PrcRecordFlag>> {
+  return patchJson(
+    `${RECORD_FLAGS(recordId)}/${flagId}`,
+    body,
+    undefined,
+    idempotencyKey
+      ? { headers: { "Idempotency-Key": idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function closePrcRecordFlag(
+  recordId: string,
+  flagId: string,
+  action: "resolve" | "remove",
+  body: { expectedVersion: number; reason?: string },
+  idempotencyKey?: string,
+): Promise<Envelope<PrcRecordFlag>> {
+  return postJson(
+    `${RECORD_FLAGS(recordId)}/${flagId}/actions/${action}`,
+    body,
+    undefined,
+    idempotencyKey
+      ? { headers: { "Idempotency-Key": idempotencyKey } }
+      : undefined,
   );
 }
