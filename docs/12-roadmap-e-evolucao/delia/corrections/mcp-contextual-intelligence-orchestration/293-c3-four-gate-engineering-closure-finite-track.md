@@ -714,3 +714,7 @@ Delivered: `delia-api/scripts/int1_secure_decision_trace.py`, `tests/test_int1_s
 ### 2026-11-12 — INT-1 G1 first-tool semantic selection causal investigation
 
 **TASK:** `DELIA-C3-T2-INT1-G1-FIRST-TOOL-SEMANTIC-SELECTION-ROOT-CAUSE-INVESTIGATION-01`. See sibling **306**. Causal offline: information delivery OK post-304; no deterministic router; first-tool G1 = model selection PROVEN_IN_SAMPLE; observability capture EXTEND. `INT1_STAGE_ACCEPTANCE=BLOCKED`. `NEXT=COORDINATION_INT1_G1_SELECTION_CAUSAL_REVIEW`.
+
+### Anotação prospectiva — 2026-11-14 — decisão PO posterior (Doc 335)
+
+O registro histórico acima (baseline de **um único Agent Pydantic AI** e necessidade de prova comparativa antes de novos Agents) permanece válido como **decisão vigente de execução**, não deve ser apagado. O PO confirmou uma nova **arquitetura-alvo de produto** com quatro especialistas cognitivos distintos: compreensão, investigação, suficiência e síntese. **TARGET não equivale à aprovação de runtime**. Os handoffs serão tipados e governados; não são quatro autoridades, produtos ou chamadas obrigatórias por turno. Exigir inventário, baseline-vs-variant, generalização/safety/outcome/custo, contratos e decisão arquitetural antes de executar. **INT-1 CLOSED, INT-2 ACCEPTANCE PENDING; não atribuir existência de Agent independente ao INT-2.** Próximo passo da coordenação e fonte de direção: [Documento 335](./335-c3t2-four-cognitive-specialist-agents-po-product-direction-and-int2-resumption.md).
