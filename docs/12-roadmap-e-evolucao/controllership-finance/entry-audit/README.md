@@ -25,6 +25,7 @@ O usuário — ou a CLARA, num comando — escolhe o período e as filiais e exe
 
 ## Próximos passos
 
-1. Cursor: executar a [trilha](./track.md) de T0 a T9 (back-end, CLARA, HML e PROD) — prompt em [prompts/T0-T9-backend-clara.md](./prompts/T0-T9-backend-clara.md).
-2. Owner + Claude: verificação pela CLARA em PROD (trilha, Parte 7).
-3. Cursor: T10–T13 (front-end).
+1. ~~Cursor: T0 a T9~~ — feito (T9, T9R, T9R2 em PROD, 14/11/2026).
+2. ~~Owner + Claude: verificação pela CLARA~~ — feita; os residuais estão em [residuals.md](./residuals.md).
+3. Cursor: zerar os residuais do back-end — prompt em [prompts/T9R3-residuais-backend.md](./prompts/T9R3-residuais-backend.md).
+4. Cursor: T10–T13 (front-end), **só depois do passo 3** — prompt em [prompts/T10-T13-frontend.md](./prompts/T10-T13-frontend.md).
