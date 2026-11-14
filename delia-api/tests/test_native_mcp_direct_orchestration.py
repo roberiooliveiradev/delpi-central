@@ -124,6 +124,20 @@ def test_native_tool_call_flows_through_process_tool_call_governance():
     def _fn(messages, _info):
         steps["n"] += 1
         if steps["n"] == 1:
+            # R1 gate: typed objective before the dependent READ.
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "enumeration",
+                            "evidence_needed": ["registry coverage"],
+                        },
+                    )
+                ]
+            )
+        if steps["n"] == 2:
             return ModelResponse(
                 parts=[
                     ToolCallPart(

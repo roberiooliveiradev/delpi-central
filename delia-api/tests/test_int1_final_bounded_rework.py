@@ -116,6 +116,21 @@ def test_f1_identical_rejection_short_circuits_but_new_args_invoke():
         # Count model responses already present.
         prior = sum(1 for m in messages if isinstance(m, ModelResponse))
         if prior == 0:
+            # R1 gate: typed objective before dependent owner calls.
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "record_detail",
+                            "target_identities": ["90260921"],
+                            "evidence_needed": ["90260921"],
+                        },
+                    )
+                ]
+            )
+        if prior == 1:
             return ModelResponse(
                 parts=[
                     ToolCallPart(
@@ -124,7 +139,7 @@ def test_f1_identical_rejection_short_circuits_but_new_args_invoke():
                     )
                 ]
             )
-        if prior == 1:
+        if prior == 2:
             # After ModelRetry / observation, resubmit identical bad args
             # once — fingerprint short-circuit must not loop forever.
             return ModelResponse(
@@ -135,7 +150,7 @@ def test_f1_identical_rejection_short_circuits_but_new_args_invoke():
                     )
                 ]
             )
-        if prior == 2:
+        if prior == 3:
             return ModelResponse(
                 parts=[
                     ToolCallPart(

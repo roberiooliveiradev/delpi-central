@@ -222,7 +222,22 @@ def test_typed_invoke_arguments_dict_path():
     calls: list[dict] = []
 
     def _fn(messages, _info):
-        if not any(isinstance(m, ModelResponse) for m in messages):
+        prior = sum(1 for m in messages if isinstance(m, ModelResponse))
+        if prior == 0:
+            # R1 gate: typed objective before the dependent READ.
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "enumeration",
+                            "evidence_needed": ["registry coverage"],
+                        },
+                    )
+                ]
+            )
+        if prior == 1:
             return ModelResponse(
                 parts=[
                     ToolCallPart(read["capability_id"], {"query": "terminal"})

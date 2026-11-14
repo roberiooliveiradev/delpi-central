@@ -279,7 +279,22 @@ def test_dynamic_owner_tool_invokes_governed_path():
     gates._governed_semantic_tool_invoke = _spy  # type: ignore[method-assign]
 
     def _fn(messages, _info):
-        if not any(isinstance(m, ModelResponse) for m in messages):
+        prior = sum(1 for m in messages if isinstance(m, ModelResponse))
+        if prior == 0:
+            # R1 gate: typed objective before the dependent READ.
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "enumeration",
+                            "evidence_needed": ["registry coverage"],
+                        },
+                    )
+                ]
+            )
+        if prior == 1:
             return ModelResponse(
                 parts=[
                     ToolCallPart(tool_name, {"arguments": {}})
@@ -319,12 +334,28 @@ def test_usage_limit_finalizes_collected_evidence():
 
     def _fn(messages, _info):
         steps["n"] += 1
+        if steps["n"] == 1:
+            # R1 gate: typed objective consumes one tool call before
+            # the dependent READ may execute.
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "record_detail",
+                            "target_identities": ["90260147"],
+                            "evidence_needed": ["90260147"],
+                        },
+                    )
+                ]
+            )
         return ModelResponse(
             parts=[ToolCallPart(tool_name, {"arguments": {}})]
         )
 
     engine = PydanticAiInvestigationOrchestrator(
-        gates, model=FunctionModel(_fn), tool_calls_limit=1
+        gates, model=FunctionModel(_fn), tool_calls_limit=2
     )
     with native_toolset_stub(alpha_beta_servers()):
         attempt = engine.attempt("estrutura 90260147")
@@ -404,10 +435,26 @@ def test_premature_clarification_is_rejected_when_identifiers_remain():
     def _fn(messages, _info):
         steps["n"] += 1
         if steps["n"] == 1:
+            # R1 gate: typed objective before dependent owner calls.
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "comparison_requested": True,
+                            "expected_delivery": "comparison",
+                            "target_identities": ["90260147", "90260148"],
+                            "evidence_needed": ["90260147", "90260148"],
+                        },
+                    )
+                ]
+            )
+        if steps["n"] == 2:
             return ModelResponse(
                 parts=[ToolCallPart(tool_name, {"arguments": {}})]
             )
-        if steps["n"] == 2:
+        if steps["n"] == 3:
             return ModelResponse(
                 parts=[
                     ToolCallPart(
@@ -419,14 +466,14 @@ def test_premature_clarification_is_rejected_when_identifiers_remain():
                     )
                 ]
             )
-        if steps["n"] == 3:
+        if steps["n"] == 4:
             return ModelResponse(
                 parts=[ToolCallPart(tool_name, {"arguments": {}})]
             )
         return _final_answer("done")
 
     engine = PydanticAiInvestigationOrchestrator(
-        gates, model=FunctionModel(_fn), tool_calls_limit=6
+        gates, model=FunctionModel(_fn), tool_calls_limit=8
     )
     with native_toolset_stub(alpha_beta_servers()):
         attempt = engine.attempt("Compare 90260147 e 90260148")
@@ -747,7 +794,22 @@ def test_repeated_equivalent_failure_does_not_reinvoke_owner():
 
     def _fn(messages, _info):
         steps["n"] += 1
-        if steps["n"] < 3:
+        if steps["n"] == 1:
+            # R1 gate: typed objective before dependent owner calls.
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "record_detail",
+                            "target_identities": ["90260147"],
+                            "evidence_needed": ["90260147"],
+                        },
+                    )
+                ]
+            )
+        if steps["n"] < 4:
             return ModelResponse(
                 parts=[ToolCallPart(tool_name, {"arguments": {"query": "x"}})]
             )
@@ -777,10 +839,25 @@ def test_clarification_does_not_replace_collected_evidence():
     def _fn(messages, _info):
         steps["n"] += 1
         if steps["n"] == 1:
+            # R1 gate: typed objective before the dependent READ.
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "record_detail",
+                            "target_identities": ["90260147"],
+                            "evidence_needed": ["90260147"],
+                        },
+                    )
+                ]
+            )
+        if steps["n"] == 2:
             return ModelResponse(
                 parts=[ToolCallPart(tool_name, {"arguments": {}})]
             )
-        if steps["n"] == 2:
+        if steps["n"] == 3:
             return ModelResponse(
                 parts=[
                     ToolCallPart(
@@ -792,7 +869,7 @@ def test_clarification_does_not_replace_collected_evidence():
         return _final_answer("done")
 
     engine = PydanticAiInvestigationOrchestrator(
-        gates, model=FunctionModel(_fn), tool_calls_limit=4
+        gates, model=FunctionModel(_fn), tool_calls_limit=6
     )
     attempt = engine.attempt("estrutura 90260147")
     assert attempt.status is not GovernedCapabilityStatus.CLARIFICATION_REQUIRED
@@ -850,7 +927,23 @@ def test_unbound_evidence_ref_triggers_one_shot_native_retry():
                 isinstance(p, RetryPromptPart) for p in m.parts
             )
         ]
-        if len(tool_returns) < 2:
+        prior = sum(1 for m in messages if isinstance(m, ModelResponse))
+        if prior == 0:
+            # R1 gate: typed objective before dependent owner calls.
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "record_detail",
+                            "target_identities": ["90260147"],
+                            "evidence_needed": ["90260147"],
+                        },
+                    )
+                ]
+            )
+        if len(tool_returns) < 3:
             # Distinct args per call — identical invocations dedupe
             # as non-progress and never reach ``collected``.
             return ModelResponse(
@@ -872,12 +965,12 @@ def test_unbound_evidence_ref_triggers_one_shot_native_retry():
         )
 
     engine = PydanticAiInvestigationOrchestrator(
-        gates, model=FunctionModel(_fn), tool_calls_limit=4
+        gates, model=FunctionModel(_fn), tool_calls_limit=5
     )
     with native_toolset_stub(alpha_beta_servers()):
         attempt = engine.attempt("estrutura 90260147")
-    # INT-2: the undeclared-goal bounded retry adds exactly one pass —
-    # evidence_ref retry + goal-declaration retry, each one-shot.
+    # goal declaration + 2 owner reads + unbound-ref retry + corrected
+    # final — each bounded one-shot, exactly 5 model passes.
     assert calls["n"] == 5
     assert not any(
         lim.startswith("evidence_ref_unbound")
@@ -926,16 +1019,31 @@ def test_string_params_never_reach_owner_native_retry():
                 isinstance(p, ToolReturnPart) for p in m.parts
             )
         ]
-        if not tool_returns:
-            if not retries:
-                return ModelResponse(
-                    parts=[
-                        ToolCallPart(
-                            cap.capability_id,
-                            {"params": "{'a': 1}"},
-                        )
-                    ]
-                )
+        prior = sum(1 for m in messages if isinstance(m, ModelResponse))
+        if prior == 0:
+            # R1 gate: typed objective before the dependent READ.
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "enumeration",
+                            "evidence_needed": ["registry coverage"],
+                        },
+                    )
+                ]
+            )
+        if prior == 1:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        cap.capability_id,
+                        {"params": "{'a': 1}"},
+                    )
+                ]
+            )
+        if prior == 2:
             return ModelResponse(
                 parts=[
                     ToolCallPart(
@@ -946,7 +1054,7 @@ def test_string_params_never_reach_owner_native_retry():
         return _final_answer("done", status="complete", refs=[0])
 
     engine = PydanticAiInvestigationOrchestrator(
-        gates, model=FunctionModel(_fn), tool_calls_limit=4
+        gates, model=FunctionModel(_fn), tool_calls_limit=5
     )
     with native_toolset_stub(alpha_beta_servers()):
         engine.attempt("read something")

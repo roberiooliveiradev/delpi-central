@@ -846,7 +846,23 @@ def test_engine_tool_invocation_is_governed_not_multiplied():
     gates._governed_semantic_tool_invoke = _spy
 
     def _fn(messages, _info):
-        if not any(isinstance(m, ModelResponse) for m in messages):
+        prior = sum(1 for m in messages if isinstance(m, ModelResponse))
+        if prior == 0:
+            # R1 gate: declare the typed objective before the
+            # dependent READ so the governed invoke may execute.
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "enumeration",
+                            "evidence_needed": ["registry coverage"],
+                        },
+                    )
+                ]
+            )
+        if prior == 1:
             return ModelResponse(
                 parts=[
                     ToolCallPart(read["capability_id"], {"query": "x"})
@@ -1529,7 +1545,25 @@ def test_governed_tool_invocation_real_and_request_counted():
 
     def _fn(messages, _info):
         request_messages.append(list(messages))
-        if not any(isinstance(m, ModelResponse) for m in messages):
+        prior = sum(1 for m in messages if isinstance(m, ModelResponse))
+        if prior == 0:
+            # R1 gate: declare the typed objective first — a READ-class
+            # call without an accepted plan is retried, never invoked.
+            # No material obligations are declared — this test proves
+            # the governed call chain and the typed outcome, not the
+            # coverage matrix (stub outcomes carry no owner anchors).
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "unspecified",
+                        },
+                    )
+                ]
+            )
+        if prior == 1:
             return ModelResponse(
                 parts=[
                     ToolCallPart(read["capability_id"], {"query": "terminal"}, tool_call_id="call-e2e-1",)
@@ -1543,12 +1577,13 @@ def test_governed_tool_invocation_real_and_request_counted():
     attempt = engine.attempt("consulte terminal")
     # exactly one governed owner invocation through the real boundary
     assert invocations == [read["capability_id"]]
-    # prompt + answer + ONE bounded insufficiency retry (the validator
-    # buys a single extra pass when insufficient is declared with tool
-    # budget remaining — the re-declared answer then settles)
-    assert len(request_messages) == 3
-    # second request carries the matching call+return causal pair
-    second = request_messages[1]
+    # prompt + goal declaration + read call + answer + ONE bounded
+    # insufficiency retry (the validator buys a single extra pass when
+    # insufficient is declared with tool budget remaining — the
+    # re-declared answer then settles)
+    assert len(request_messages) == 4
+    # request carrying the read causal pair is the third one
+    second = request_messages[2]
     calls = [
         p for m in second if isinstance(m, ModelResponse)
         for p in m.parts if isinstance(p, ToolCallPart)

@@ -1877,3 +1877,13 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT3-MCP-AUTH-FLAKINESS | OPEN_ENV | reconfirmado no arm B: 8/12 cenários `eligible_capabilities:[]=0` → ENV_BLOCKED, não cognitivo |
 
 **NEXT=`COORDINATION_INT3_R1_CALL_BEFORE_DECLARE_INDEPENDENT_ACCEPTANCE_REVIEW`** (decisão Alternativa C com evidência A/B anexa; ver ledger)
+
+### 2026-11-14 — INT-3 R1: gate de pré-invocação implementado — atualização de estado
+
+| Residual | Estado | Nota |
+|---|---|---|
+| INT3-CALL-BEFORE-DECLARE | REMEDIATED_PENDING_INDEPENDENT_REVIEW | gate `ModelRetry` em `_governed_invoke` (op_class != DISCOVERY + plan=None → retry→declare→reissue). Trace real `or-qwen14b-fe85fee80a30`: zero dependent reads pré-plano; `teo.read` pós-declaração com coverage avaliada; DISCOVERY pré-plano preservada. Suíte completa verde. |
+| INT3-GOAL-DECLARATION-RELIABILITY | OPEN_MEDIUM (novo) | qwen14b propõe anchors dotted-proxy repetidamente; rejeição→correção consome budget (`tool_calls_limit_reached`/`turn_budget_limited` em A/A2/B); recovery funciona (B aceitou na 4ª) mas outcome do sample degradou honestamente. Candidatos posteriores: feedback de correção mais rico / priming de vocabulário — fora do escopo R1 |
+| INT3-MCP-AUTH-FLAKINESS | OPEN_ENV | 8/12 ENV_BLOCKED novamente — pré-condição R3 para leitura de outcome |
+
+**NEXT=`COORDINATION_INT3_R1_PREINVOKE_GATE_INDEPENDENT_ACCEPTANCE_REVIEW`**

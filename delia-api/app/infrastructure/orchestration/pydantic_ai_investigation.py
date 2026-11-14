@@ -1480,6 +1480,37 @@ class PydanticAiInvestigationOrchestrator:
                 ),
                 None,
             )
+            op_class = None
+            if isinstance(catalog_entry, Mapping):
+                raw_op = catalog_entry.get("operation_class")
+                if isinstance(raw_op, str) and raw_op.strip():
+                    op_class = raw_op.strip()
+            if (
+                ctx.deps.investigation_plan is None
+                and op_class != "DISCOVERY"
+            ):
+                # INT-3 R1 governed pre-invocation boundary: an owner
+                # call whose operation class produces business evidence
+                # (READ/ANALYSIS/unknown — anything other than the
+                # owner-published DISCOVERY class) must not execute
+                # while no typed objective is accepted; the projection
+                # would carry no evaluable coverage. ModelRetry is the
+                # same bounded, native recovery the arg-type gate uses:
+                # the model declares via declare_investigation_goal and
+                # reissues this call through the identical governed
+                # path — never a fabricated plan, never a cached
+                # invocation. Discovery-class calls stay exempt so the
+                # model can identify capabilities before declaring.
+                # The classification grants no permission — AuthZ,
+                # Policy and Domain checks still run on every call.
+                raise ModelRetry(
+                    "This business query depends on a typed "
+                    "investigation objective that has not been "
+                    "declared yet. Declare the objective, expected "
+                    "delivery and material evidence obligations once "
+                    "via declare_investigation_goal, then reissue "
+                    "this query."
+                )
             _schema_props = (
                 (catalog_entry.get("input_schema") or {}).get(
                     "properties"
@@ -1548,11 +1579,6 @@ class PydanticAiInvestigationOrchestrator:
             uncovered = uncovered_user_identifiers(
                 ctx.deps.input_text, ctx.deps.collected
             )
-            op_class = None
-            if isinstance(catalog_entry, Mapping):
-                raw_op = catalog_entry.get("operation_class")
-                if isinstance(raw_op, str) and raw_op.strip():
-                    op_class = raw_op.strip()
             projection = _attempt_projection(
                 attempt,
                 observation_index=index,
