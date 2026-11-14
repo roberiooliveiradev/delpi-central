@@ -1039,3 +1039,20 @@ E01 sete campos no card **PASS** (subchecks id/type/requester/officialCode/creat
 **Casos de aceite futuros:** UPDATE pendente sobre produto-alvo existente → nenhuma revisão publicada pela solicitação; UPDATE com alteração real e match oficial → revisão publicada com `request_id` e evidência; UPDATE matched no-op → conclusão auditada, nenhuma Vn+1; primeiro UPDATE matched sem histórico → V1 baseline e provenance; conflito de base concorrente → fail-closed `stale_revision`/rebase governado, sem inventar publicação; CREATE antes do cadastro oficial → nenhum vínculo com revisão. Todos com isolamento/AuthZ/idempotência.
 
 **Gate arquitetural:** o princípio funcional está ratificado pelo PO. A **alteração de semântica persistida/contratos `baseRevision`, proveniência ou publicação** exige `ARCHITECTURE_DECISION_REQUIRED` até inventário de source/consumers/guardas e ratificação da Coordination/owner Engenharia. Nenhum código nem deploy autorizados por este registro; seguir R01–R18 e owner TOTVS para cadastro oficial.
+
+
+## 55. Coordination — documentação sincronizada e execução delimitada da separação PRC × revisão (14/11/2026)
+
+**Motivação:** PO confirmou que solicitação não deve ser tratada como portadora de revisão própria ou como origem de uma revisão antes de concluir/validar. A solicitação identifica produto-alvo (UPDATE) e pode guardar baseline técnico para concorrência, mas a **provenance de revisão publicada** somente nasce na conclusão elegível; no-op posterior não cria Vn+1; baseline inaugural R01 publica V1.
+
+**Documentação atualizada diretamente na main:**
+- `MFE-PRODUCT-REGISTRATION-UX-WIREFRAMES.md` PRC-REF-025: remove chip Rn do hero e reposiciona metadados técnicos; commit `c20ce09242c15fde790141e943fd24d887cbeede`.
+- `PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md` §15: contrato-alvo diferencia targetProduct, concurrencyBaseline, caseVersion e publishedRevision, com compatibilidade; commit `d87e6496358d428d075def0e735bc5d185265737`.
+- `PRC-TRACK-CANONICAL-PRODUCT-RULES-AND-EXECUTION-PLAN.md` §13: reforça R01–R03 e provenance somente na conclusão; commit `e393c7e1496096d2b2e265db3d41b8ada88c94eb`.
+- §54 deste ledger: fundamento anterior da decisão semântica.
+
+**Observação da implementação atual:** `product_registration_requests.base_revision_number` tem função de referência técnica/guard `stale_revision`; `row_version` origina `caseVersion`. `product_registration_revisions.request_id` é o vínculo de proveniência pós-publicação esperado. Proibido remover `baseRevision` de DTO/DB sem inventariar consumidores e substituto equivalente de concorrência.
+
+**Pacote de execução delimitado — `EVA-PRC-REQUEST-REVISION-SEMANTICS-AND-UX-CORRECTION-HML-01`:** Devin na `main` deve (G0) inventariar source→contract→consumer→tests no SHA atual (frontend, My Requests, Home, core service, memory/PG, requests, versions, APIs), (G1) implementar **somente** ajustes de rótulo/apresentação que não mudem contratos, removendo revisão base do hero e esclarecendo concorrência em contexto técnico, (G2) apresentar proposta de alteração de protocolo/DB/DTO/response se necessária com `ARCHITECTURE_DECISION_REQUIRED`; **não implementar G2 antes da ratificação explícita da Coordination e owner competente**. Confrontar V1 initial matched/no-op, Vn+1 diff, no-op sem Vn+, not_found/mismatch, AuthZ, concorrência e provenance antes de alterar complete. Testar G1 em DEV/HML com E2E visual. Sem deploy PRD.
+
+**Estado:** `PO_RATIFIED_SEMANTICS / DOCS_UPDATED / UX_FIX_AUTHORIZED_HML / PROTOCOL_IMPLEMENTATION_GATED_ARCHITECTURE_DECISION_REQUIRED / EXECUTION_TEST_NOT_RUN`. Qualquer mudança de authority/owner/source-of-truth retorna a Coordination.
