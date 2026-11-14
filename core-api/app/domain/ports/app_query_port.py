@@ -14,6 +14,9 @@ class RouteDTO:
     order: int | None
     entry: str | None
     open_in_new_tab: bool = False
+    # Quando preenchido (len>=2), autorização da rota é ANY-OF esses códigos.
+    # ``permission_code`` permanece o código primário (exibição/compat).
+    any_of_permission_codes: tuple[str, ...] | None = None
 
 @dataclass
 class AppDTO:

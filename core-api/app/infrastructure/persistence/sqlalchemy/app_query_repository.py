@@ -3,6 +3,7 @@
 from typing import List
 from sqlalchemy.orm import Session
 
+from app.domain.plugins.route_permission import normalize_route_permission_codes
 from app.domain.ports.app_query_port import AppQueryPort, AppDTO, RouteDTO
 from app.infrastructure.db.models import App, AppRoute
 from app.infrastructure.db.models.app_manifest import AppManifest
@@ -34,6 +35,7 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
             render_mode = "embedded"
             route_entries: dict[str, str | None] = {}
             route_open_in_new_tab: dict[str, bool] = {}
+            route_any_of: dict[str, tuple[str, ...]] = {}
 
             if manifest_row and manifest_row.manifest:
                 manifest = manifest_row.manifest
@@ -58,6 +60,9 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
                     if path:
                         route_entries[path] = entry
                         route_open_in_new_tab[path] = bool(route.get("openInNewTab"))
+                        codes = normalize_route_permission_codes(route.get("permission"))
+                        if len(codes) >= 2:
+                            route_any_of[path] = codes
 
             if app.type == "backend-only":
                 entry_url = None
@@ -74,6 +79,10 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
 
             for r in routes:
                 permission_code = r.permission.code if r.permission else None
+                any_of = route_any_of.get(r.path)
+                if any_of and permission_code and permission_code not in any_of:
+                    # FK primária divergente do manifesto: fail-closed no any-of.
+                    any_of = None
 
                 route_dtos.append(
                     RouteDTO(
@@ -85,6 +94,7 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
                         order=r.order,
                         entry=route_entries.get(r.path),
                         open_in_new_tab=route_open_in_new_tab.get(r.path, False),
+                        any_of_permission_codes=any_of,
                     )
                 )
 

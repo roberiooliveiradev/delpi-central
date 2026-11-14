@@ -12,7 +12,8 @@ export type ManifestPermission = {
 export type ManifestRoute = {
   path: string;
   label?: string | null;
-  permission?: string | null;
+  /** Código único ou lista any-of (Marketing OU Manage, etc.). */
+  permission?: string | string[] | null;
   icon?: string | null;
   entry?: string | null;
   order?: number | null;

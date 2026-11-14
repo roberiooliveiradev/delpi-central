@@ -42,7 +42,13 @@ export interface RouteItem {
   app_icon?: string;
 
   path: string;
+  /** Código primário da rota (exibição / compat). */
   permission?: string;
+  /**
+   * Quando presente (len≥2), o host autoriza ANY-OF estes códigos.
+   * Produzido pelo Core a partir de `routes[].permission: string[]`.
+   */
+  anyOfPermissions?: string[];
 
   icon?: string;
   label?: string;

@@ -2,6 +2,7 @@
 
 from typing import List
 from app.domain.ports.app_query_port import AppDTO, RouteDTO
+from app.domain.plugins.route_permission import route_allows_any
 
 
 class AppAuthorizationService:
@@ -12,6 +13,8 @@ class AppAuthorizationService:
     Não acessa banco.
     Não resolve permissões.
     Apenas filtra com base nas permissões já resolvidas.
+
+    Rotas com ``any_of_permission_codes`` exigem ANY-OF (não ALL).
     """
 
     def filter_apps(
@@ -30,11 +33,11 @@ class AppAuthorizationService:
             filtered_routes: List[RouteDTO] = []
 
             for route in app.routes:
-                if route.permission_code is None:
-                    filtered_routes.append(route)
-                    continue
-
-                if route.permission_code in permissions:
+                if route_allows_any(
+                    permission_code=route.permission_code,
+                    any_of_permission_codes=route.any_of_permission_codes,
+                    user_permissions=permissions,
+                ):
                     filtered_routes.append(route)
 
             if filtered_routes:

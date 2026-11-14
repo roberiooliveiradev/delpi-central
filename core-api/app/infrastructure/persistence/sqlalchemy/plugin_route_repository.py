@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Dict, Any, List
 from sqlalchemy.orm import Session
 
+from app.domain.plugins.route_permission import primary_route_permission
 from app.domain.ports.plugin_route_repository_port import PluginRouteRepositoryPort
 from app.infrastructure.db.models import AppRoute, Permission
 
@@ -21,16 +22,20 @@ class SqlAlchemyPluginRouteRepository(PluginRouteRepositoryPort):
             "path": str,
             "label": str | None,
             "icon": str | None,
-            "permission": str | None,   # permission code
+            "permission": str | list[str] | None,  # código ou any-of
             "order": int,
             "show_in_menu": bool
           }
+
+        Persistência: ``permission_id`` = código primário (primeiro do any-of).
+        A lista completa any-of permanece no manifesto salvo e é lida em
+        ``AppQueryRepository``.
         """
         objs: List[AppRoute] = []
 
         for r in routes:
             perm_id = None
-            perm_code = r.get("permission")
+            perm_code = primary_route_permission(r.get("permission"))
             if perm_code:
                 perm = self.session.query(Permission).filter_by(code=perm_code).first()
                 perm_id = perm.id if perm else None

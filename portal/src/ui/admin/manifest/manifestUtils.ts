@@ -266,8 +266,19 @@ export function validateManifestLocal(m: ManifestSchema): LocalError[] {
       if (!r.icon) {
         errors.push({ path: `routes[${idx}].icon`, message: "ícone é obrigatório" });
       }
-      const perm = String(r.permission || "").trim();
-      if (perm) {
+      const rawPerm = r.permission;
+      const permCodes = Array.isArray(rawPerm)
+        ? rawPerm.map((p) => String(p || "").trim()).filter(Boolean)
+        : String(rawPerm || "").trim()
+          ? [String(rawPerm).trim()]
+          : [];
+      if (Array.isArray(rawPerm) && permCodes.length === 0) {
+        errors.push({
+          path: `routes[${idx}].permission`,
+          message: "permission[] any-of não pode ser vazia",
+        });
+      }
+      for (const perm of permCodes) {
         const exists = m.permissions.some((p) => p.code.trim() === perm);
         if (!exists) {
           errors.push({

@@ -1,4 +1,5 @@
 import type { RouteItem } from "../data/coreApi";
+import { normalizeRequiredPermissions } from "./routePermission";
 
 function normalizePath(path: string): string {
   const trimmed = path.trim();
@@ -6,27 +7,66 @@ function normalizePath(path: string): string {
   return trimmed.replace(/\/+$/, "") || "/";
 }
 
+export type ResolvedRoutePermission = {
+  /** Códigos exigidos (ANY-OF). Vazio = rota sem gate de permission. */
+  required: string[];
+  /** Código primário (compat / deep-link state). */
+  permission?: string;
+  anyOfPermissions?: string[];
+};
+
 /**
- * Resolve a permissão RBAC do manifesto para o pathname atual.
+ * Resolve a(s) permissão(ões) RBAC do manifesto para o pathname atual.
  * Rotas mais específicas (path mais longo) têm precedência.
+ * Com `anyOfPermissions`, a exigência é ANY-OF.
  */
 export function resolveManifestRoutePermission(
   routes: RouteItem[] | undefined,
   pathname: string,
   fallbackPermission?: string | null,
 ): string | undefined {
+  return resolveManifestRouteAccess(routes, pathname, fallbackPermission).permission;
+}
+
+export function resolveManifestRouteAccess(
+  routes: RouteItem[] | undefined,
+  pathname: string,
+  fallbackPermission?: string | null,
+): ResolvedRoutePermission {
   const current = normalizePath(pathname);
 
   const candidates = (routes ?? [])
-    .filter((route) => route.permission && route.path)
+    .filter((route) => route.path)
     .map((route) => ({
-      permission: route.permission!,
+      route,
       path: normalizePath(route.path),
+      required: normalizeRequiredPermissions(
+        route.permission,
+        route.anyOfPermissions,
+      ),
     }))
-    .filter(({ path }) => current === path || current.startsWith(`${path}/`))
+    .filter(
+      ({ path, required }) =>
+        required.length > 0 &&
+        (current === path || current.startsWith(`${path}/`)),
+    )
     .sort((a, b) => b.path.length - a.path.length);
 
-  return candidates[0]?.permission ?? fallbackPermission ?? undefined;
+  const best = candidates[0];
+  if (best) {
+    return {
+      required: best.required,
+      permission: best.required[0],
+      anyOfPermissions:
+        best.required.length >= 2 ? [...best.required] : undefined,
+    };
+  }
+
+  const fallback = String(fallbackPermission || "").trim();
+  if (fallback) {
+    return { required: [fallback], permission: fallback };
+  }
+  return { required: [] };
 }
 
 /**

@@ -4,7 +4,7 @@
   "name": "Portal Comercial",
   "description": "Portal comercial nativo: início, visão geral, minhas tarefas, pedidos, carteira e administração de carteiras.",
   "icon": "briefcase-business",
-    "version": "0.4.1",
+    "version": "0.4.2",
   "type": "microfrontend",
   "basePath": "/apps/commercial",
   "entry": "/apps/commercial/assets/remoteEntry.js",
@@ -190,7 +190,7 @@
     {
       "path": "/apps/commercial/satisfaction-surveys",
       "label": "Pesquisa de Satisfação",
-      "permission": "commercial.marketing",
+      "permission": ["commercial.marketing", "commercial.manage"],
       "icon": "megaphone",
       "order": 29,
       "showInMenu": false

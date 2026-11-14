@@ -22,9 +22,65 @@ def _route(**kwargs):
         "order": 1,
         "entry": None,
         "open_in_new_tab": False,
+        "any_of_permission_codes": None,
     }
     defaults.update(kwargs)
     return SimpleNamespace(**defaults)
+
+
+def test_list_user_apps_any_of_allows_manage_only():
+    route = _route(
+        permission_code="commercial.marketing",
+        any_of_permission_codes=("commercial.marketing", "commercial.manage"),
+        path="/apps/commercial/satisfaction-surveys",
+        show_in_menu=False,
+    )
+    app = SimpleNamespace(
+        id="commercial",
+        name="Portal Comercial",
+        base_path="/apps/commercial",
+        icon="icon",
+        type="microfrontend",
+        entry_url=None,
+        render_mode="federated",
+        routes=[route],
+    )
+
+    result = ListUserAppsUseCase(FakeAppQuery([app])).execute(
+        permissions=["commercial.access", "commercial.manage"],
+        is_superadmin=False,
+    )
+
+    assert len(result) == 1
+    assert result[0]["routes"][0]["path"] == "/apps/commercial/satisfaction-surveys"
+    assert result[0]["routes"][0]["anyOfPermissions"] == [
+        "commercial.marketing",
+        "commercial.manage",
+    ]
+
+
+def test_list_user_apps_any_of_denies_access_only():
+    route = _route(
+        permission_code="commercial.marketing",
+        any_of_permission_codes=("commercial.marketing", "commercial.manage"),
+        path="/apps/commercial/satisfaction-surveys",
+    )
+    app = SimpleNamespace(
+        id="commercial",
+        name="Portal Comercial",
+        base_path="/apps/commercial",
+        icon="icon",
+        type="microfrontend",
+        entry_url=None,
+        render_mode="federated",
+        routes=[route],
+    )
+
+    result = ListUserAppsUseCase(FakeAppQuery([app])).execute(
+        permissions=["commercial.access"],
+        is_superadmin=False,
+    )
+    assert result == []
 
 
 def test_list_user_apps_filters_routes_by_permission():

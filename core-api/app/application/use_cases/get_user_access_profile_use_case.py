@@ -136,6 +136,16 @@ class GetUserAccessProfileUseCase:
                             "path": route.path,
                             "label": route.label,
                             "permission": route.permission_code,
+                            **(
+                                {
+                                    "anyOfPermissions": list(
+                                        route.any_of_permission_codes
+                                    )
+                                }
+                                if getattr(route, "any_of_permission_codes", None)
+                                and len(route.any_of_permission_codes) >= 2
+                                else {}
+                            ),
                             "showInMenu": route.show_in_menu,
                         }
                         for route in app.routes

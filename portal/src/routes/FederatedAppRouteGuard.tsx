@@ -5,8 +5,9 @@ import type { AppItem } from "../data/coreApi";
 import { AuthContext } from "../state/AuthContext";
 import {
   hasAuthorizedAppEntry,
-  resolveManifestRoutePermission,
+  resolveManifestRouteAccess,
 } from "../utils/manifestRoutePermission";
+import { userHasAnyPermission } from "../utils/routePermission";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 type FederatedAppRouteGuardProps = {
@@ -22,7 +23,7 @@ export function FederatedAppRouteGuard({
 }: FederatedAppRouteGuardProps) {
   const location = useLocation();
   const { user, coreLoaded } = useContext(AuthContext);
-  const permission = resolveManifestRoutePermission(
+  const access = resolveManifestRouteAccess(
     app.authorizationRoutes ?? app.routes,
     location.pathname,
     fallbackPermission,
@@ -39,12 +40,19 @@ export function FederatedAppRouteGuard({
     coreLoaded &&
     user &&
     !user.is_superadmin &&
-    permission &&
-    !user.permissions.includes(permission) &&
+    access.required.length > 0 &&
+    !userHasAnyPermission(user.permissions, access.required) &&
     hasAuthorizedAppEntry(app.routes, location.pathname, app.basePath)
   ) {
     return <>{children}</>;
   }
 
-  return <ProtectedRoute permission={permission}>{children}</ProtectedRoute>;
+  return (
+    <ProtectedRoute
+      permission={access.permission}
+      anyOfPermissions={access.anyOfPermissions}
+    >
+      {children}
+    </ProtectedRoute>
+  );
 }

@@ -74,6 +74,29 @@ def test_route_permission_not_declared():
     assert any(e.code == "route_permission_not_declared" for e in errors)
 
 
+def test_route_permission_any_of_accepted():
+    m = base_manifest()
+    m["permissions"].append(
+        {"code": "crm.leads.write", "module": "crm", "name": "Write leads"}
+    )
+    m["routes"][0]["permission"] = ["crm.leads.read", "crm.leads.write"]
+    assert validate_manifest_rules(m) == []
+
+
+def test_route_permission_any_of_undeclared_code():
+    m = base_manifest()
+    m["routes"][0]["permission"] = ["crm.leads.read", "crm.unknown"]
+    errors = validate_manifest_rules(m)
+    assert any(e.code == "route_permission_not_declared" for e in errors)
+
+
+def test_route_permission_any_of_empty_rejected():
+    m = base_manifest()
+    m["routes"][0]["permission"] = []
+    errors = validate_manifest_rules(m)
+    assert any(e.code == "empty_route_permission_any_of" for e in errors)
+
+
 def test_backend_required_missing_fields():
     m = base_manifest()
     m["type"] = "backend-only"

@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import {
   hasAuthorizedAppEntry,
+  resolveManifestRouteAccess,
   resolveManifestRoutePermission,
 } from "./manifestRoutePermission.ts";
 
@@ -39,6 +40,29 @@ describe("resolveManifestRoutePermission", () => {
       ),
       "controllership-finance.manage",
     );
+  });
+});
+
+describe("resolveManifestRouteAccess any-of", () => {
+  it("expõe ANY-OF da rota de Pesquisa de Satisfação", () => {
+    const routes = [
+      {
+        app: "commercial",
+        path: "/apps/commercial/satisfaction-surveys",
+        permission: "commercial.marketing",
+        anyOfPermissions: ["commercial.marketing", "commercial.manage"],
+        showInMenu: false,
+      },
+    ];
+    const access = resolveManifestRouteAccess(
+      routes as never,
+      "/apps/commercial/satisfaction-surveys/camp-1",
+    );
+    assert.deepEqual(access.required, [
+      "commercial.marketing",
+      "commercial.manage",
+    ]);
+    assert.equal(access.permission, "commercial.marketing");
   });
 });
 

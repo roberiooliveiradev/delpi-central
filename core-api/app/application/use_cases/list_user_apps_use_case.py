@@ -9,8 +9,9 @@ from app.application.services.app_authorization_service import (
 
 
 def _serialize_routes(app) -> list[dict[str, Any]]:
-    return [
-        {
+    serialized: list[dict[str, Any]] = []
+    for route in app.routes:
+        item: dict[str, Any] = {
             "app": app.id,
             "app_name": app.name,
             "app_icon": app.icon,
@@ -23,8 +24,11 @@ def _serialize_routes(app) -> list[dict[str, Any]]:
             "entry": route.entry,
             "openInNewTab": route.open_in_new_tab,
         }
-        for route in app.routes
-    ]
+        any_of = getattr(route, "any_of_permission_codes", None) or ()
+        if len(any_of) >= 2:
+            item["anyOfPermissions"] = list(any_of)
+        serialized.append(item)
+    return serialized
 
 
 class ListUserAppsUseCase:

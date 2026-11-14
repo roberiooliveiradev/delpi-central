@@ -4,6 +4,8 @@ import re
 from dataclasses import dataclass
 from typing import Any, Dict, List, Set
 
+from app.domain.plugins.route_permission import normalize_route_permission_codes
+
 
 # ============================================================
 # Regex & Constants
@@ -168,7 +170,31 @@ def validate_manifest_rules(manifest: Dict[str, Any]) -> List[ManifestError]:
         for i, route in enumerate(routes):
             route = route or {}
             path = str(route.get("path") or "").strip()
-            permission = str(route.get("permission") or "").strip()
+            raw_permission = route.get("permission")
+            permission_codes = normalize_route_permission_codes(raw_permission)
+
+            if raw_permission is not None and not isinstance(
+                raw_permission, (str, list, tuple)
+            ):
+                errors.append(
+                    ManifestError(
+                        code="invalid_route_permission_type",
+                        message=(
+                            "Route permission deve ser string ou lista de strings "
+                            "(any-of)."
+                        ),
+                        path=f"$.routes[{i}].permission",
+                    )
+                )
+
+            if isinstance(raw_permission, (list, tuple)) and not permission_codes:
+                errors.append(
+                    ManifestError(
+                        code="empty_route_permission_any_of",
+                        message="Route permission[] any-of não pode ser vazia.",
+                        path=f"$.routes[{i}].permission",
+                    )
+                )
 
             if not PATH_RE.match(path):
                 errors.append(
@@ -199,14 +225,26 @@ def validate_manifest_rules(manifest: Dict[str, Any]) -> List[ManifestError]:
             if path:
                 seen_routes.add(path)
 
-            if permission and permission not in perm_lookup:
-                errors.append(
-                    ManifestError(
-                        code="route_permission_not_declared",
-                        message=f"Route permission '{permission}' não existe em permissions[].code.",
-                        path=f"$.routes[{i}].permission",
+            for permission in permission_codes:
+                if permission not in perm_lookup:
+                    errors.append(
+                        ManifestError(
+                            code="route_permission_not_declared",
+                            message=(
+                                f"Route permission '{permission}' não existe em "
+                                "permissions[].code."
+                            ),
+                            path=f"$.routes[{i}].permission",
+                        )
                     )
-                )
+                elif not PERMISSION_CODE_RE.match(permission):
+                    errors.append(
+                        ManifestError(
+                            code="invalid_permission_code",
+                            message=f"Permission code inválido: '{permission}'.",
+                            path=f"$.routes[{i}].permission",
+                        )
+                    )
 
     # --------------------------------------------------------
     # BACKEND-ONLY

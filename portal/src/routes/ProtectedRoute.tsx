@@ -4,13 +4,24 @@ import { useContext } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { Loader } from "../ui/Loader";
+import {
+  normalizeRequiredPermissions,
+  userHasAnyPermission,
+} from "../utils/routePermission";
 
 interface Props {
-  permission?: string;
+  /** Permissão única, lista any-of, ou omitida (pública). */
+  permission?: string | string[] | null;
+  /** ANY-OF explícito do Core (`anyOfPermissions`). */
+  anyOfPermissions?: string[] | null;
   children: React.ReactNode;
 }
 
-export const ProtectedRoute = ({ permission, children }: Props) => {
+export const ProtectedRoute = ({
+  permission,
+  anyOfPermissions,
+  children,
+}: Props) => {
   const { user, coreLoaded } = useContext(AuthContext);
   const location = useLocation();
 
@@ -26,18 +37,18 @@ export const ProtectedRoute = ({ permission, children }: Props) => {
     return <>{children}</>;
   }
 
-  if (!permission) {
+  const required = normalizeRequiredPermissions(permission, anyOfPermissions);
+
+  if (required.length === 0) {
     return <>{children}</>;
   }
 
-  const hasPermission = user.permissions.includes(permission);
-
-  if (!hasPermission) {
+  if (!userHasAnyPermission(user.permissions, required)) {
     return (
       <Navigate
         to="/unauthorized"
         replace
-        state={{ from: location.pathname, permission }}
+        state={{ from: location.pathname, permission: required[0], anyOfPermissions: required }}
       />
     );
   }
