@@ -871,3 +871,28 @@ E01 sete campos no card **PASS** (subchecks id/type/requester/officialCode/creat
 **Limitações:** Kanban continua limitado aos itens da página atual (honestidade de paginação); sem DnD; preferências inválidas caem no sanitize do hook canônico.
 
 **Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
+
+## 47. Card único PrcRequestCard — paridade de campos Tabela ≡ Cards ≡ Kanban; menu Colunas nos três modos (14/11/2026)
+
+**TASK:** `EVA-PRC-QUEUE-CARDS-KANBAN-FIELD-PARITY-HML-01`. Frontend exclusivo; **PRD não autorizado.**
+
+**Diagnóstico:** `InteractiveDataCard` do kit renderiza `children ?? fields` — o modo Cards passava `children=<strong>Nº</strong>`, portanto **exibia só o identificador**; o Kanban usava um segundo card de 3 campos hardcoded. Menu Colunas estava restrito a `layout==="table"`.
+
+**Implementação (commit `c38f44182c`, 6 arquivos — trabalho compartilhado com executor concorrente no mesmo worktree, consolidado e verificado):**
+- **`prcQueueFieldCatalog.ts` (novo):** catálogo canônico — `PRC_QUEUE_FIELD_KEYS/LABELS/SLOTS` (7 campos da tabela), `resolvePrcQueueFieldOrder` (preferência ∩ catálogo, fallback seguro para prefs antigas/inválidas), `resolveVisiblePrcQueueFields` (omitStatus para Kanban, forceIdentity para Nº), formatters pt-BR (`formatPrcQueueCreatedAt`, `prcQueueOfficialCodeText`, `prcQueueTypeText`) e `formatPrcKanbanColumnCountMeta` → **"N no total · M nesta página"** (total do universo via `statusCounts` × itens da página — honestidade de paginação, sem inventar nem carregar todas as páginas).
+- **`PrcRequestCard.tsx` (novo):** card único sobre `EngineeringInteractiveDataCard` — `buildPrcCardColumns(all, visible, {omitKeys})`; identidade (`id`) sempre à frente mesmo se oculta; `valueTone` por slot; `openHint="Abrir solicitação"`; `onActivate → openDetail` interno (`/apps/engineering/product-registration/{id}`); Enter/espaço via handler do kit.
+- **`PrcQueuePage`:** colunas passam a usar `PRC_QUEUE_FIELD_LABELS` + helpers do catálogo; `cardColumns` (com Status) e `kanbanCardColumns` (`omitKeys:["status"]` — coluna já agrupa); Cards e Kanban renderizam o mesmo `PrcRequestCard`; **menu Colunas sem gate de modo** (mesma storage key `engineering:prc:requests:columns` — único gerenciador).
+- **`prc.css`:** `.engineering-prc__request-cards-grid` — auto-fill minmax(300px) (2–3 colunas desktop, 1 em mobile), `overflow-wrap` nos valores.
+- **Testes novos:** `prcQueueFieldCatalog.test.ts` (ordem/visibilidade/slots/contagem kanban) + `PrcRequestCard.test.tsx` (catálogo, identidade forçada, contrato estrutural, uso único nos dois modos).
+
+**Contratos preservados:** `PrcRequestSummary`, `statusCounts`, filtros/URL, paginação server-side, AuthZ, workflow — sem drag-and-drop de status (proibido), sem endpoints novos, backend não reconstruído.
+
+**Testes:** vitest **38/394 PASS**; tsc ok; build ok (`App-Dx74sSu1.js`).
+
+**HML:** deploy `--fase mfe --build engineering` (checkout `c38f44182c`); imagem `sha256:211d2e0198a07e82595358a334ed9c5b381ce46c3fe9a7b175687d8ebefd3189` healthy; bundle servido = build local. Incidente operacional: recreate colidiu com remoção concorrente → container ficou com nome temporário `0f554615eafc_…`; corrigido com `docker rename` → remoteEntry 200. Rollback: `sha256:050a598e7f3f…` retida. Manifest comercial local do host (só indentação) preservado via stash.
+
+**E2E visual (Chromium real, py-playwright) — 29/30 PASS + 1 validado por probe determinístico:** Cards com **todos os 7 campos** (Nº/Tipo/Solicitante/Código oficial/Abertura/Status/Responsável), pt-BR, "Aguardando cadastro", avatares | Kanban: mesmo card, Status omitido do card, "2 no total · 2 nesta página" | Colunas presente nos 3 modos | ocultar Responsável reflete em Tabela+Cards+Kanban (confirmado via storage+reload: 5 cards sem Responsável) | restaurar/reordenar/persistir ok | clique card → detalhe interno (Cards e Kanban) | Enter abre detalhe | filtros/`view=pending` preservados na alternância | mobile 390px overflow=0 nos dois modos | negado fail-closed | tabela/LMP/MyRequests sem regressão. Evidências: `/tmp/ux4-*.png`.
+
+**Limitações:** reordenação validada via persistência (drag headless instável); Kanban exibe itens da página corrente apenas (paginação server-side preservada — indicado no cabeçalho de coluna); fail inicial do script por overlay do menu Colunas foi resolvido como artefato de timing, não defeito.
+
+**Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
