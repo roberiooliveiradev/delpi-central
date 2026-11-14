@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Status | **READY** — contrato fecha na T1 da [trilha](../track.md) |
+| Status | **ACCEPTED** — contrato da T1 (2026-11-14). ADR-003. |
 | Plano | [../plan.md](../plan.md) |
 | Serviços | `api-delpi` (Protheus, leitura) · `financial-api` (XML do Questor) · `controllership-finance-api` (BFF: motor, execução, persistência, rotas, MCP) |
 
@@ -346,3 +346,187 @@ Livro em novembro (`FT_TIPOMOV = 'E'`, `FT_ENTRADA`): 480 linhas na filial 01 e 
 | `entry_audit_xml_cache` | XML por chave de acesso (compactado), data da busca |
 
 Uma reexecução substitui o resultado da filial, e o status de resolvido continua valendo pela chave estável.
+
+## 6. Contrato ACCEPTED (T1)
+
+Envelope, erros e paginação seguem o dono de cada serviço. Nada de DTO paralelo.
+
+| Serviço | Sucesso | Erro | Paginação |
+|---|---|---|---|
+| api-delpi | `api_delpi_success` — `success`, `message`, `data`, `meta.operationId`, `meta.entity`, `meta.shape` | `error_response` com `error.code` | `page` + `page_size` no tier `page_50_200`; `data.items` + totais do envelope paginado |
+| financial-api | `ok` — `success`, `message`, `data` | `fail` — `success: false` | `page`, `page_size` (1–200, padrão 50); a contagem é o número de linhas lidas, não o `iTotal*` do Questor |
+| BFF | `core.responses.ok` / `fail`, com `meta.operationId` | mesmos campos; `data` nulo no 403 de permissão | `page`, `page_size` (1–200, padrão 50) em `data` |
+
+Datas de filtro e de resposta: `YYYY-MM-DD`. A api-delpi converte `F1_RECBMTO` / `F1_EMISSAO` / `FT_ENTRADA` de `YYYYMMDD`. Valores monetários: número com 2 casas. Flags da SF4: o caractere do Protheus (`S` / `N` / vazio); a BFF traduz para o vocabulário da skill.
+
+### 6.1 api-delpi — `GET /financeiro/entry-audit/*`
+
+Só leitura. Autorização igual às rotas `/financeiro/*` da BFF: Bearer do usuário + `X-Delpi-Service-Authorization`. Sem flag. Sem regra fiscal.
+
+Filtros comuns de `documents`, `items` e `fiscal-book`: `branch` (`01`|`02`), `received_from`, `received_to`, `species` (repetível, só `SPED` e `CTE`), `page`, `page_size`. `received_from` ≤ `received_to`, janela máxima de 366 dias. Fora disso, 422 `VALIDATION_ERROR`.
+
+| Rota | `operationId` | `data.items[]` |
+|---|---|---|
+| `/documents` | `list_entry_audit_documents` | `branch`, `document_number`, `series`, `supplier_code`, `supplier_store`, `supplier_name`, `supplier_tax_id`, `supplier_state`, `species`, `invoice_type`, `own_form`, `access_key`, `issue_date`, `received_date`, `freight_amount`, `expense_amount`, `icms_base`, `icms_amount`, `ipi_base`, `ipi_amount`, `goods_amount`, `gross_amount`, `discount_amount`, `st_base`, `st_amount`, `insurance_amount` |
+| `/items` | `list_entry_audit_items` | `branch`, `document_number`, `series`, `supplier_code`, `supplier_store`, `item`, `product_code`, `cfop`, `tax_situation`, `tes`, `quantity`, `unit_price`, `total_amount`, `icms_base`, `icms_rate`, `icms_amount`, `ipi_base`, `ipi_rate`, `ipi_amount`, `st_amount`, `discount_amount` |
+| `/fiscal-book` | `list_entry_audit_fiscal_book` | `branch`, `document_number`, `series`, `supplier_code`, `supplier_store`, `item`, `access_key`, `movement_type`, `icms_amount`, `icms_exempt_amount`, `icms_other_amount`, `ipi_amount`, `cancelled_on`, `entered_on` |
+| `/tes` | `list_entry_audit_tes` | `code`, `description`, `calculates_icms`, `credits_icms`, `icms_book`, `calculates_ipi`, `credits_ipi`, `ipi_book`, `consumption_material` — cadastro inteiro, sem filtro de período |
+| `/branches` | `list_entry_audit_branches` | `code`, `company_code` (`01`), `name`, `state`, `tax_id` — só `SYS_COMPANY` com `M0_CODIGO = '01'` |
+
+`items` e `fiscal-book` trazem as linhas dos documentos que passam no mesmo filtro de recebimento e espécie, não um filtro próprio de data do item. Livro: `FT_TIPOMOV = 'E'` e `FT_DTCANC` vazio. 403 quando o escopo financeiro da api-delpi recusa a filial.
+
+### 6.2 financial-api
+
+| Rota | Query | `data` |
+|---|---|---|
+| `GET /invoices/received/export` | `branch`, `type` (`nfe`\|`cte`), `issued_from`, `issued_to`, `page`, `page_size` | `items[]`: `access_key`, `invoice_number`, `series`, `issuer_name`, `issuer_tax_id`, `emission_at`, `amount`, `cancelled`, `provider_file_id`, `provider_document_id`, `branch`. `page`, `page_size`, `complete` (página curta = fim) |
+| `GET /invoices/received/by-key/{access_key}/xml` | `branch`, `type` | corpo `application/xml` do XML original. 404 se a chave não está na empresa. |
+| `GET /invoices/received/{id}/xml/original` | `branch`, `type` | já existe; a BFF da auditoria usa a rota por chave |
+
+A NF-e manda `EmissionStart`/`EmissionEnd` em `dd/MM/yyyy`. O CT-e aceita o mesmo par. A busca por chave extrai número (posições 26–34) e CNPJ do emitente (7–20) e localiza a linha; no CT-e preenche `KeyCte`. Sem data no Questor a página não representa o período: a rota exige `issued_from` e `issued_to`.
+
+### 6.3 BFF — `/entry-audit/*`
+
+Todas exigem `controllership-finance.access`. `manage` herda. Com `ENTRY_AUDIT_ENABLED` falso as rotas não são montadas (404 do FastAPI), o worker não sobe e o catálogo da CLARA não lista as entradas.
+
+`POST /entry-audit/analyses` — body `{date_from, date_to, document_types, branches}`. `document_types` é subconjunto de `nfe` e `cte` (padrão, se omitido: os dois). `branches` é subconjunto de `01` e `02` (padrão: as duas). 202 com `{id, status, created}`. `created: false` quando já existe análise `queued` ou `running` com o mesmo período, os mesmos tipos e as mesmas filiais. Análise `done` ou `failed` não é reaproveitada: nasce outra. Janela inválida: 422.
+
+`GET /entry-audit/analyses/options` — `{branches: [{code, name, state, tax_id}], document_types: [{code, label, species, default}]}`. `nfe` → espécie `SPED`; `cte` → `CTE`.
+
+`GET /entry-audit/analyses` — filtros `date_from`, `date_to`, `branch`, `status`; paginação. Item: `id`, `date_from`, `date_to`, `document_types`, `branches`, `status`, `requested_via`, `created_at`, `finished_at`.
+
+`GET /entry-audit/analyses/{id}` — `status`, `runs[]` (`branch`, `status`, `stage`, `documents_read`, `xml_downloaded`, `error`), `counts`, `config`.
+
+`POST /entry-audit/analyses/{id}/rerun` — body opcional `{branches}`. 202. 409 `RUN_IN_PROGRESS` se a filial pedida está `queued` ou `running`.
+
+Leituras de resultado (`summary`, `daily`, `breakdowns`, `facets`, `occurrences`, `documents`, `unmatched`, `cte`, `tes`, `export`): 409 `ANALYSIS_NOT_READY` enquanto nenhuma filial está `done`. Com ao menos uma filial `done`, 200 e `meta.branches_unavailable` lista as que falharam. Filial que falhou não entra como zero.
+
+Filtros dessas leituras, todos opcionais: `branch`, `severity`, `theme`, `supplier`, `tes`, `document_type`, `day`, `status` (`pending`|`resolved`), `q`. O servidor aplica; o cliente não recalcula regra.
+
+| Rota | `data` |
+|---|---|
+| `summary` | quatro KPIs, comparação com o período anterior do mesmo tamanho, conformidade (`clean`, `divergent`, `unmatched_open`, `unmatched_explained`) |
+| `daily` | série do período e do período anterior: dia → notas com divergência |
+| `breakdowns` | por severidade, por tema, top fornecedores, TES com mais ocorrências |
+| `facets` | fornecedores, temas, TES e severidades, com contagem |
+| `GET /entry-audit/trend` | `branch`, `date_from`, `date_to`: pendentes e altas por mês, entre análises |
+| `occurrences` | página de ocorrências; ordenação `sort` (`severity`, `supplier`, `document`, `day`) |
+| `occurrences/{key}` | valores, `why`, `action`, `rule_id`, `rule_name`, chave, links de DANFE/DACTE/XML já expostos pelo LNF, histórico de status |
+| `documents`, `unmatched`, `cte`, `tes` | a aba correspondente |
+| `POST /occurrences/{key}/resolve` e `/reopen` | status compartilhado. Idempotente. `kind` não vai na URL: a chave diz se é ocorrência ou nota sem par. As rotas `/unmatched/{key}/resolve` e `/reopen` são o mesmo efeito, para o cliente que já está na aba. |
+| `GET .../export` | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, layout da skill |
+
+### 6.4 Chave estável
+
+```text
+{branch}|{access_key}|{rule_id}|{field}|{item}
+```
+
+`access_key` com 44 dígitos. Sem chave: `{branch}|doc:{number}|{series}|{supplier}|{store}|{rule_id}|{field}|{item}`. `item` vazio no cabeçalho. `field` é o código do campo comparado (`icms`, `ipi`, `total`, `cfop`, `cst`, `origin`, `series`, `issue_date`, `base`, `key`, `species`, `supplier`, `st`). O nome em português da ocorrência não entra na chave. Nota sem par usa `rule_id` `unmatched.xml_only` ou `unmatched.protheus_only`.
+
+### 6.5 Identificador estável de regra
+
+Uma linha de `references/regras.md`. O nome gravado na ocorrência continua o da skill, para a CLARA casar com a ficha.
+
+| `rule_id` | Ocorrência na skill |
+|---|---|
+| `header.icms_above_xml` | ICMS calculado sem destaque / acima do XML |
+| `header.icms_not_credited` | ICMS do XML não creditado |
+| `header.icms_credit_short` | Crédito de ICMS a menor |
+| `header.icms_base_mismatch` | Base de ICMS divergente |
+| `header.ipi_not_booked` | IPI não escriturado / sem destaque |
+| `header.series_mismatch` | Série divergente do XML |
+| `header.total_mismatch` | Valor total / mercadorias / ST — o campo distingue total, mercadorias e ST |
+| `header.accessory_field` | Acessório em campo diferente |
+| `header.issue_date_mismatch` | Data de emissão divergente |
+| `item.amount_mismatch` | Valor do item diverge |
+| `item.cfop_direction_swapped` | CFOP com origem trocada |
+| `item.inbound_booked_as_purchase` | NF de entrada do fornecedor lançada como compra |
+| `item.cfop_differs_from_issued` | CFOP diferente do documento emitido |
+| `item.cfop_nature_mismatch` | Natureza do CFOP incompatível |
+| `item.st_on_non_st_cfop` | Item com ST no XML em CFOP sem ST |
+| `item.st_cfop_without_st` | CFOP de ST sem ST no XML |
+| `item.origin_mismatch` | Origem divergente |
+| `item.cst_mismatch` | CST diverge do documento |
+| `item.cst_suppressed` | CST 090 / 060 no lugar do CST do documento (não apontado) |
+| `item.icms_above_xml` | ICMS calculado sem destaque / acima do XML, no item |
+| `item.simples_credit_not_taken` | Crédito do Simples não aproveitado |
+| `item.highlighted_icms_not_credited` | ICMS destacado não creditado em insumo/revenda |
+| `item.ipi_without_tes_decision` | IPI do XML não escriturado / escriturado sem destaque |
+| `item.ipi_credit_mismatch` | Crédito de IPI abaixo / acima do XML |
+| `item.ipi_base_mismatch` | Base de IPI divergente |
+| `item.st_mismatch` | ICMS ST divergente |
+| `item.rate_or_base_mismatch` | Alíquota/base de ICMS divergente com ICMS conferindo |
+| `item.unusual_cfop_nature` | Produto lançado com natureza de CFOP diferente do usual |
+| `coherence.cfop_vs_state` | CFOP × UF do fornecedor |
+| `coherence.ipi_on_consumption` | Crédito de IPI em material de uso e consumo |
+| `coherence.icms_on_consumption_cfop` | ICMS calculado em CFOP de uso e consumo |
+| `coherence.icms_on_untaxed_cst` | ICMS calculado com CST sem tributação |
+| `simples.rate_above_cap` | Alíquota de crédito SN acima do teto do Simples |
+| `simples.near_sublimite` | Fornecedor do Simples perto do sublimite |
+| `simples.csosn_without_rate` | CSOSN com permissão de crédito sem alíquota informada |
+| `simples.presumed_wrong_tes` | Indústria do Simples (SC) fora da TES de crédito presumido |
+| `simples.presumed_above_sublimite` | Crédito presumido com fornecedor acima do sublimite |
+| `simples.presumed_rate_mismatch` | Valor no item diferente do crédito presumido de 7% |
+| `simples.presumed_without_right` | TES de crédito presumido em nota sem direito |
+| `unmatched.xml_only` | Só no XML |
+| `unmatched.protheus_only` | Só no SF1 |
+| `fiscal_book.item_missing` | Item sem registro no livro fiscal (SFT) |
+| `fiscal_book.credit_against_tes` | Crédito no livro fiscal em TES que não credita |
+| `fiscal_book.credit_missing` | Crédito previsto na TES fora do livro fiscal |
+| `fiscal_book.amount_mismatch` | ICMS do livro fiscal diferente do item |
+| `cte.service_amount_mismatch` | CT-e: valor da prestação diverge |
+| `cte.cfop_mismatch` | CT-e: CFOP divergente |
+| `cte.credit_without_right` | CT-e: crédito de ICMS em frete sem direito |
+| `cte.icms_not_credited` | CT-e: ICMS do frete não creditado |
+| `cte.credit_mismatch` | CT-e: crédito de ICMS acima / abaixo do XML |
+| `cte.rate_or_base_mismatch` | CT-e: alíquota / base de ICMS divergente |
+| `cte.cst_mismatch` | CT-e: CST divergente |
+| `cte.icms_inconclusive` | CT-e: ICMS calculado em frete sem direito / diferente do XML |
+| `cte.booked_not_taker` | CT-e escriturado sem a empresa ser a tomadora |
+| `key.diverges_from_xml` | Chave de acesso divergente do XML |
+| `key.missing` | Documento eletrônico sem chave de acesso |
+| `key.invalid` | Chave de acesso inválida |
+| `key.number_mismatch` | Chave de acesso não confere com o número do documento |
+| `key.series_mismatch` | Série divergente da chave de acesso |
+| `key.species_mismatch` | Espécie do documento incompatível com a chave |
+| `key.supplier_mismatch` | Fornecedor do lançamento com CNPJ diferente do emitente |
+
+Contadores «não apontado» não geram linha de ocorrência. O resumo soma por estes ids: `suppressed.icms_without_credit`, `suppressed.base_or_rate_without_credit`, `suppressed.ipi_without_credit`, `suppressed.cst_090`, `suppressed.cst_060`, `suppressed.header_icms_not_credited`.
+
+### 6.6 Configuração (D12) e flag (D13)
+
+| Variável | Padrão | Papel |
+|---|---|---|
+| `ENTRY_AUDIT_PRESUMED_CREDIT_TES` | `004` | TES do crédito presumido de SC |
+| `ENTRY_AUDIT_FREIGHT_CFOP_SUFFIX` | `352` | final do CFOP de frete |
+| `ENTRY_AUDIT_XML_LOOKBACK_DAYS` | `30` | folga da listagem por emissão |
+| `ENTRY_AUDIT_UNMATCHED_GRACE_DAYS` | `3` | «em trânsito» |
+| `ENTRY_AUDIT_TOLERANCE` | `0.05` | tolerância em reais |
+| `ENTRY_AUDIT_ENABLED` | `false` | rotas, worker e catálogo |
+
+Cada análise grava esse mapa em `config_snapshot`. Mudar a variável não altera análise já gravada.
+
+### 6.7 `V023` — colunas e índices
+
+Schema `controllership_finance`. Só cria tabela. Rollback de código não apaga.
+
+`entry_audit_analysis`: `id` UUID PK, `date_from`, `date_to`, `document_types` `TEXT[]`, `branches` `TEXT[]`, `config_snapshot` JSONB, `status`, `requested_by_user_id`, `requested_by_name`, `requested_via` (`user`|`clara`), `created_at`, `updated_at`, `finished_at`. Índice único parcial `(date_from, date_to, document_types, branches) WHERE status IN ('queued','running')`. Índice `(status, created_at DESC)`.
+
+`entry_audit_run`: `id`, `analysis_id` FK, `branch_code`, `status`, `stage`, `documents_read`, `xml_downloaded`, `counts` JSONB, `engine_version`, `sources_hash`, `error_message`, `started_at`, `finished_at`. Único `(analysis_id, branch_code)`. Índice parcial `status WHERE status = 'queued'`.
+
+`entry_audit_document`: `id`, `run_id`, `access_key`, `branch_code`, `document_number`, `series`, `supplier_code`, `supplier_store`, `supplier_name`, `issue_date`, `received_date`, `situation`, `divergence_count`, `comparison` JSONB.
+
+`entry_audit_occurrence`: `id`, `run_id`, `analysis_id`, `stable_key`, `rule_id`, `severity`, `theme`, `title`, `document_number`, `series`, `supplier_name`, `item`, `field`, `protheus_value`, `xml_value`, `difference`, `tes`, `why`, `action`, `access_key`. Índice `(analysis_id, severity)`, `(stable_key)`.
+
+`entry_audit_unmatched`: `id`, `run_id`, `analysis_id`, `stable_key`, `side` (`xml`|`protheus`), `rule_id`, `severity`, `reason`, `situation`, `lnf_request_id`, `lnf_status`, `access_key`, `document_number`, `series`, `party_name`, `issue_date`, `amount`. Índice `(analysis_id)`.
+
+`entry_audit_cte`: `id`, `run_id`, `access_key`, `comparison` JSONB.
+
+`entry_audit_tes_used`: `id`, `run_id`, `tes_code`, `sf4` JSONB. Único `(run_id, tes_code)`.
+
+`entry_audit_status`: `stable_key` PK, `kind` (`occurrence`|`unmatched`), `status` (`pending`|`resolved`), `resolved_by_user_id`, `resolved_by_name`, `resolved_at`, `reopened_at`, `updated_at`.
+
+`entry_audit_xml_cache`: `access_key` PK, `model`, `xml_gzip` BYTEA, `fetched_at`.
+
+Reexecução da filial apaga documento, ocorrência, sem par, CT-e e TES daquele `run` e grava de novo. `entry_audit_status` fica.

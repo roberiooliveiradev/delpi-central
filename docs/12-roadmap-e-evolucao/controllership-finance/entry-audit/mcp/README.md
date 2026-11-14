@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Status | **READY** — executado na T7 da [trilha](../track.md) |
+| Status | **ACCEPTED** — catálogo da T1 (2026-11-14); implementação na T7 |
 | Data | 2026-11-13 |
 | Plano | [../plan.md](../plan.md) · back-end [../backend/README.md](../backend/README.md) · front-end [../frontend/README.md](../frontend/README.md) |
 | Origem do conhecimento | skill `auditoria-entradas-nfe-protheus` ([reference](../reference/skill-auditoria-entradas-nfe-protheus/)) + regras ditas pelo owner + este plano |
@@ -84,7 +84,7 @@ Mesmas seis tools; só entradas novas no catálogo, todas com gate `controllersh
 | `execute` | `entry_audit.resolve` / `entry_audit.reopen` | **direto** | `key`, `kind` (`occurrence`\|`unmatched`) | status compartilhado |
 | `knowledge` | domínio `controllership` | — | `query` | fichas AE-00 a AE-15 |
 
-Cada entrada tem `description` curta no catálogo e contrato em `get_context(topic='schema')`, como as do LNF.
+Cada entrada tem `description` curta no catálogo e contrato em `get_context(topic='schema')`, como as do LNF. Este catálogo está aceito na T1. A ocorrência lida traz `rule_id` (backend §6.5) além do nome da skill. Com `ENTRY_AUDIT_ENABLED` falso as entradas não aparecem no catálogo. As seis tools e as assinaturas não mudam.
 
 ## 5. Diretivas de conduta (texto para `branding.py`)
 

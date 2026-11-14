@@ -123,6 +123,7 @@ Lançar ou corrigir notas no Protheus; alterar TES ou cadastro de fornecedor; su
 
 | Data | Evento |
 |---|---|
+| 2026-11-14 | T0 e T1. Inventário no backend §4. Contrato ACCEPTED no backend §6 e [ADR-003](../adr/ADR-003-entry-audit.md). |
 | 2026-11-13 | Trilha de execução criada ([track.md](./track.md)); D1, D2, D5, D6, D7 decididas; novas decisões D11–D14 (melhorias sobre a skill, configuração, flag, domínio do conhecimento). |
 | 2026-11-13 | Amostra real de 12/11/2026 (SF1, SD1 e XML do Questor) analisada e rodada na skill: recorte de um dia; filtro de tipo confirmado pelo owner: Espécie SPED/CTE na SF1 e NF-e/CT-e no Questor; 14 «só no XML» e 5 «só no SF1» por diferença de datas. Melhorias registradas no back-end §3.9: XML pela chave, cruzamento com o LNF. |
 | 2026-11-13 | Owner: como na skill e no painel, nada de período fixado — o período é De/Até livre; o segundo filtro de execução é o **tipo de documento**. Removidos os atalhos de período (`PeriodRangeFilter` e a evolução do util de períodos saíram do plano: usa-se `DateField` ×2) e os «parâmetros avançados» da tela (viram configuração da BFF). Tipos de documento a confirmar com os exemplos do Gustavo. |

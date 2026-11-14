@@ -47,8 +47,8 @@
 
 | Etapa | Nome | Status | Ambiente | SHA(s) | Data | Evidência |
 |---|---|---|---|---|---|---|
-| T0 | Rebaseline e inventário (somente leitura) | DONE | leitura PROD (Questor) e banco DELPI | 2520193653 | 2026-11-14 | inventário em backend §4; Questor por data PROVEN; HML financial-api ausente |
-| T1 | Contrato completo + ADR-003 | TODO | | | | |
+| T0 | Rebaseline e inventário (somente leitura) | DONE | leitura PROD (Questor) e banco DELPI | 19b026cef6 | 2026-11-14 | inventário em backend §4; Questor por data PROVEN; HML financial-api ausente |
+| T1 | Contrato completo + ADR-003 | DONE | docs | 19b026cef6 | 2026-11-14 | backend §6 ACCEPTED; ADR-003; catálogo MCP aceito |
 | T2 | api-delpi — leitura do Protheus | TODO | | | | |
 | T3 | financial-api — Questor por período, por chave e CT-e | TODO | | | | |
 | T4 | BFF — motor de regras + paridade com a skill | TODO | | | | |
@@ -236,7 +236,8 @@ Referência (saída da skill sobre a mesma amostra, fora do repositório): 2 NF-
 | Data | Etapa | SHA | Resultado | Evidência / observações |
 |---|---|---|---|---|
 | 2026-11-13 | — | — | Trilha criada | plano, back-end, front-end e MCP consolidados; decisões D1–D14 |
-| 2026-11-14 | T0 | 2520193653 | DONE | Mapa SX3×skill em backend §4. Questor: NF-e filtra emissão em dd/MM/yyyy (ISO → HTTP 500); CT-e filtra nos dois formatos; `iTotal` da NF-e não é contagem; sessão 02 PROVEN em PROD. HML sem container financial-api. LNF aberto por número+fornecedor; chave só no DANFE. Próxima migration `V023`. Volume de um mês é pequeno. Sem upload. |
+| 2026-11-14 | T0 | 19b026cef6 | DONE | Mapa SX3×skill em backend §4. Questor: NF-e filtra emissão em dd/MM/yyyy (ISO → HTTP 500); CT-e filtra nos dois formatos; `iTotal` da NF-e não é contagem; sessão 02 PROVEN em PROD. HML sem container financial-api. LNF aberto por número+fornecedor; chave só no DANFE. Próxima migration `V023`. Volume de um mês é pequeno. Sem upload. |
+| 2026-11-14 | T1 | 19b026cef6 | DONE | Contrato em backend §6 (payloads, erros, paginação, `V023`, chave estável, ids de regra, D12, D13). Catálogo da CLARA aceito no mcp. ADR-003 ACCEPTED. |
 
 ---
 
