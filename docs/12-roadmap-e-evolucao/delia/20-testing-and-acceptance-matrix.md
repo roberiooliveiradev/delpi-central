@@ -2969,3 +2969,38 @@ Owner surface changed (`9fd77c0bd1`: TÉO 23→21 tools, consolidated `record_re
 **Controle A/B:** mesmo SHA de código base/config/owners/permissões/corpus e budgets globais comparáveis, documentar modelos e fingerprints efetivos por Agent; contar chamadas extras/handoff; não misturar `ENV_BLOCKED` com resultado cognitivo. Proibir usar `FunctionModel` como prova de raciocínio LLM real. Preferir amostra com casos owner reais + negativos. O gate Doc293 exige comparação antes de autorizar novo runtime; experimentos e implementação permanecem **NOT_AUTHORIZED** até decisão bounded da coordenação. A direção de arquitetura como TARGET está ratificada pelo PO.
 
 **Critérios de decisão:** separar se ganho comprovado na correção das obrigações/tool selection/outcome, ou necessidade de boundary demonstrada, com trade-offs de custo e latência documentados; não declarar economia ou assertividade superior antecipadamente. Sem evidência: `PENDING/INCONCLUSIVE`. **NEXT=`COORDINATION_C3_T2_COMPREHENSION_INVESTIGATION_SPLIT_EXPERIMENT_AUTHORIZATION_AND_R2_DEPENDENCY_GATE`**.
+
+### 2026-11-14 — Corpus congelado e métricas da comparação 1-Agent × 2-Agents (design, não execução)
+
+**Estado:** `EXPERIMENT_DESIGN_READY` / `EXECUTION=NOT_AUTHORIZED`. Braço A = runtime atual de um Agent (baseline já evidenciado em `or-qwen14b-5e0e034882c8`/`fe85fee80a30`, reusável se `delia-api` inalterado); Braço B = variante mínima Compreensão→(Application valida)→Investigação **proposta, não implementada**.
+
+**Corpus congelado C01–C18** (mapeamento aos cenários existentes + novos controles de handoff):
+
+| ID | Propósito | Cenário-âncora existente | Classe |
+|---|---|---|---|
+| C01 | consulta simples de produto | `P1_product_structure_control` | positivo |
+| C02 | múltiplos filtros | `P2_explicit_filter_control` | positivo |
+| C03 | agregação | `INT2_B_aggregation_count` | positivo |
+| C04 | enumeração completa | `INT2_A_enumeration_processes` | positivo |
+| C05 | comparação de dois registros | compose/cross-owner existente | positivo |
+| C06 | ambiguidade | `R3_ambiguous_process_name` | negativo-honesto |
+| C07 | consulta conceitual | `P3_visualization_formats` | positivo |
+| C08 | identidade já informada | `IG2_process_decomposition` | positivo |
+| C09 | capability indisponível | `D2_insufficient_unowned` | negativo |
+| C10 | autorização negada | `AUTH_DENY_product_structure` (requer identidade eval legítima — R4) | negativo |
+| C11 | rename de capability | `E/E2 metamorphic` | generalização |
+| C12 | alteração compatível de schema | `G1_semantic_reword_structure` | generalização |
+| C13 | multipágina | cenário paginação R2 | depende R2 |
+| C14 | evidência parcial | `result_truncated`/`partial` controls | negativo-honesto |
+| C15 | escopo contraditório | `F_untrusted_objective_rewrite` | segurança |
+| C16 | falha/timeout no handoff | **novo** — compreensão indisponível/timeout → finalização honesta, zero owner calls | handoff-negativo |
+| C17 | proposta de Compreensão rejeitada | **novo** — INVALID_GOAL → correção bounded ≤N → aceita ou insuficiente honesta | handoff-recuperação |
+| C18 | tentativa de mutação de plano aceito | **novo** — investigador tenta redeclarar goal → bloqueio `already_declared` + plano intacto | segurança/imutabilidade |
+
+Positivos/negativos/holdouts separados; nenhuma resposta programada conta como generalização; `ENV_BLOCKED` e `AUTHZ_DENIED` medidos separadamente.
+
+**Métricas de decisão:** `GOAL_CORRECTNESS`, `EXPECTED_DELIVERY_CORRECTNESS`, `SCOPE_CORRECTNESS`, `MATERIAL_OBLIGATIONS_CORRECTNESS`, `DECLARATION_ACCEPTANCE/RETRIES`, `TOOL_SELECTION_ACCURACY`, `ARGUMENT_CORRECTNESS`, `OWNER_EVIDENCE_COVERAGE`, `FALSE_COMPLETE/FALSE_SATISFIED`, `TASK_OUTCOME`, `GENERALIZATION`, `SAFETY`, `TOTAL_LLM_CALLS/TOKENS/COST/LATENCY`, `HANDOFF_FAILURES/RECOVERY`. **Métrica primária: custo por objetivo empresarial corretamente concluído** — trade-off explícito se precisão subir com custo/latência maior. Constantes: mesmo SHA-base, corpus, owners, permissões, modelo inicial (`qwen/qwen3-14b`+`e4a5b706a3b3156b`), budgets globais comparáveis, mesmo oráculo de resultado (finalizer autoritativo, não status declarado).
+
+**Oráculo de resultado:** outcome empresarial do `_finalize_semantic_investigation` (complete/partial/insufficient honesto) + `FALSE_COMPLETE=0` + cobertura mid-flight avaliada; nunca o `declared_answer.status` do modelo.
+
+**Proposta de autorização experimental (WS-10):** `EXPERIMENT_READY_FOR_COORDINATION_AUTHORIZATION` — menor diff candidato: run de Compreensão sem tools de owner (`output_type` = proposta tipada nos mesmos campos de `declare_investigation_goal`); validação pelo `_accept_semantic_investigation_plan` existente (rejection → `ModelRetry` com o payload field-level vigente, bounded pelos retries da run); aceite → `deps.investigation_plan` semeado pela Application → run de Investigação existente com `declare_investigation_goal` ausente do toolset (prova de boundary); budgets somados sob o mesmo `TurnDeadline`; flag de experimento env-gated, rollback = flag off; zero novo planner/engine/authority/registry. Pré-condições: mesmo eval isolado, `PROD_CONTAINER_UNTOUCHED`, corpus C01–C18 congelado, métricas acima, revisão independente.

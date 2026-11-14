@@ -1903,3 +1903,15 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | `INT3-MODEL-PAGINATION-CONVERGENCE` | `OPEN_LOW` | R2: continuidade, no-progress e paginação; não implementado/aceito nesta revisão |
 
 **VERDICT:** `R1_FUNCTIONAL_CLOSED=YES_WITH_RESIDUAL`; `INT3_STAGE_ACCEPTED=NO`; `FOUR_AGENT_RUNTIME=NOT_IMPLEMENTED`, 1 Agent Pydantic AI baseline. **NEXT=`COORDINATION_INT3_POST_R1_OUTCOME_AND_R2_READINESS_GATE`.** Residuais históricos acima permanecem como registros datados; esta seção define o estado vigente.
+
+### 2026-11-14 — Split Compreensão×Investigação: inventário pronto, experimento pendente de autorização
+
+| Item | Estado | Nota |
+|---|---|---|
+| `T2-AGENT2-COMPREHENSION-RUNTIME` | `EXPERIMENT_DESIGN_READY / NOT_AUTHORIZED` | handoff = `SemanticInvestigationPlan` reutilizado (sem schema novo); handoff programático governado pela Application; corpus C01–C18 + métricas congelados (Doc 20); `AgentToolset` descartado como mecanismo (inverte autoridade); rollback por flag |
+| `R2-CONTINUITY-PAGINATION` | `OPEN / NOT_STARTED` | próximo rework funcional; Investigação+Suficiência; não confundir com split |
+| `R3-MCP-AUTH-FLAKINESS` | `OPEN_ENV` | pré-condição para amostra válida do A/B |
+| `R4-AUTH-DENY-ORACLE` | `OPEN_LOW` | identidade eval sem permissão legitimamente configurada necessária para C10 |
+| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` | vigente — anchor candidato ≠ pertinência demonstrada; regressar no A/B |
+
+**NEXT=`COORDINATION_C3_T2_TWO_AGENT_EXPERIMENT_AUTHORIZATION_REVIEW`** — design pronto; implementação/experimento aguardam decisão de coordenação; R2 não iniciado.

@@ -1619,3 +1619,33 @@ DEFER_BY_PHASE:
 **Handoff candidato a inventariar antes de criar contrato novo:** `goal_proposal` tipada → `Application._accept_semantic_investigation_plan`/equivalente verificado → `accepted_plan` imutável + `correlation`/`evidence_refs`/authorized context/budget/errors → Agent de Investigação. Verificar no HEAD os nomes/consumers reais e a semântica do gate atual `declare_investigation_goal`, preservando bloqueio pré-invocação `plan=None` para owner READ dependente. Não criar autorização implícita por handoff, catálogo ou tokens delegados. **`EXISTING_EQUIVALENT=TO_INVENTORY` (handoff); `REUSE_DECISION=REUSE/EXTEND` contratos existentes, novos artefatos só com gate Doc293.** `MODEL_OUTPUT!=FACT`; `DISCOVERY!=APPROVAL`.
 
 **Estado:** apenas contract mapping/plano; nenhum Agent novo, runtime/composition/handoff ou avaliação criada. Ver Doc 16 (nova direção R1–R6), Doc 20 (corpus comparativo) e Doc 335.
+
+### 2026-11-14 — Inventário verificado no HEAD: superfície cognitiva única e contrato de handoff candidato
+
+**Escopo:** inventário factual para o gate de experimento (task `DELIA-C3-T2-COMPREHENSION-INVESTIGATION-SPLIT-EXPERIMENT-AUTHORIZATION-AND-R2-DEPENDENCY-GATE-01`, HEAD `167eb1192a`). `CODE_CHANGED=NONE`; `SECOND_AGENT_IMPLEMENTED=NO`.
+
+**WS-1 — Mapa de responsabilidades no runtime atual (`pydantic_ai_investigation.py`, 1 `Agent`):**
+
+| Responsabilidade | Hoje executada por | Fonte verificada | Classe |
+|---|---|---|---|
+| Interpretar pedido + contexto, propor `goal_class`/`expected_delivery`/`business_subject`/`target_identities` | modelo, via tool `declare_investigation_goal` | `pydantic_ai_investigation.py` ~L1738 | Compreensão (no Agent único) |
+| Propor obrigações materiais (`description`/`evidence_source`/`operation`/`required_args`) | modelo, `ObligationProposal` TypedDict | idem ~L210 | Compreensão |
+| Validar/aceitar plano tipado (vocabularies, anchors, scope) | Application | `gates._accept_semantic_investigation_plan` → `_normalize_obligation_tuple` | Application (permanece) |
+| Feedback de rejeição por campo (`anchor_candidates`, `invalid_operations`, `invalid_required_args`, vocabularies) | Application → tool return | idem ~L1839–1935 | Application |
+| Discovery de capabilities, seleção de tool, construção de args, invocação READ, continuação/paginação, refs de evidência | modelo via toolsets MCP | `MCPToolset`/`RenamedToolset`/`CombinedToolset` ~L1914+ | Investigação |
+| Gate pré-invocação plano tipado | Application | `_governed_invoke` ~L1488 (plan=None + op_class≠DISCOVERY → ModelRetry) | Application (invariante R1) |
+| Arg-type gate, fingerprint/no-progress, AuthZ/provenance | Application | `_governed_invoke`, `_governed_semantic_tool_invoke` | Application |
+| Propor clarificação | modelo, `request_user_clarification` | FunctionToolset | Compreensão (ambiguidade) / interação governada |
+| Declarar status/limitações/unmet no `InvestigationAnswer` | modelo, output_type tipado | `contracts.py` L137–176 | Suficiência-proposta/Síntese-proposta |
+| Veredito de cobertura/satisfação, finalização, override de status | Application | `_evaluate_material_obligations`, `classify_investigation_progress`, `_finalize_semantic_investigation`, `output_validator` | Application (permanece) |
+| Budgets (deadline, tool_calls, usage_limits, retries) | Application | `TurnDeadline`, `UsageLimits` ~L2497 | Application |
+
+**Consumidor único:** `handle_interactive_turn` → `_capability_orchestration.attempt(...)`; composição via `root_composer`. Resposta à pergunta WS-1: as responsabilidades de Compreensão hoje dentro do Agent são **somente proposição** (goal/delivery/subject/targets/obrigações/clarificação); **toda validação, verificação de âncora, escopo e aceite permanecem Application** — nenhuma migração de verificador determinístico é necessária ou proposta.
+
+**WS-3 — Contrato de handoff candidato (reuso integral, sem schema novo):** `SemanticInvestigationPlan` **já é** o contrato producer→consumer: `goal{_TurnGoal: goal_class, comparison_requested, output_mode=expected_delivery, business_subject}` + `target_identities` + `evidence_needed: tuple[MaterialObligation{description, evidence_source, operation, required_scope}]`. O contexto autorizado (correlation/actor/session/workspace/deadline/budget) já viaja em `InvestigationDeps`; a referência do plano aceito é `deps.investigation_plan`. Contrato de erro existente: payload `INVALID_GOAL` com vocabularies válidos + `rejected_anchors`/`anchor_guidance`/`anchor_candidates`/`invalid_operations`/`invalid_required_args`. **Nenhum campo adicional necessário para a variante mínima**; proibido secrets/CoT/histórico integral — satisfeito por construção.
+
+**WS-4 — Mecanismos nativos Pydantic AI 2.50.0 (verificado no runtime):** múltiplos `Agent` com `deps_type`/`output_type`/`instructions`/`retries` independentes; `run_sync(prompt, deps, message_history, model_settings, usage_limits=UsageLimits(request_limit, tool_calls_limit))`; `ModelRetry` para correção bounded dentro da run de Compreensão (o feedback field-level existente vira mensagem de retry); `Agent.iter` disponível; `AgentToolset` (agent-as-tool) existe mas **não recomendado** — permitiria ao Investigador invocar Compreensão livremente, invertendo a autoridade da Application sobre o handoff. **Preferência confirmada: handoff programático governado pela Application** — orquestrador executa run de Compreensão (output tipado de proposta, sem tools de owner), valida por `_accept_semantic_investigation_plan`, semeia `deps.investigation_plan` e executa run de Investigação no mesmo `TurnDeadline`. Sem LangGraph, sem planner, sem engine de handoff.
+
+**R1 preservado por construção:** o gate pré-invocação chaveia em `deps.investigation_plan is None` — com o plano semeado pela Application após aceite, a invariante "nenhuma READ dependente sem plano aceito" permanece; `declare_investigation_goal` deixa de ser necessária dentro da run de Investigação na variante B (tool ausente do toolset — prova de boundary); imutabilidade pós-aceite já garantida por `investigation_goal_already_declared`/plano único por turno.
+
+**ESTADO:** `HANDOFF_CONTRACT=REUSE_EXISTING (SemanticInvestigationPlan)`; `NEW_SCHEMA=NONE_REQUIRED`; `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=REUSE/EXTEND`; `NEW_AUTHORITY=NO`; `NEW_AGENT_RUNTIME=PENDING_EXPERIMENTAL_AUTHORIZATION`. Experimento/implementação permanecem NOT_AUTHORIZED até decisão de coordenação.
