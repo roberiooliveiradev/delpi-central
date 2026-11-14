@@ -611,3 +611,16 @@ Não criar toolbar sticky sem provar ausência de sobreposição do Portal/topba
 8. Regresso de intake My Requests, detalhe PRC, TOTVS verification, correction workflow, anexos, revisões e navegação.
 9. Testes completos no SHA e E2E visual em HML antes de aceite PO; sem execução de writes de teste em PRD.
 10. **Nenhuma implementação ou deploy autorizados por este adendo.** Decidir refinamentos visuais com PO antes de emitir pacote Devin; quando autorizado, trabalhar \`main\`, sem novas branches.
+
+
+### I. Ratificação do Product Owner — V3 aprovada para execução (14/11/2026)
+
+**Estado atualizado:** `PO_APPROVED_UX_V3 / IMPLEMENTATION_AUTHORIZED_IN_HML / PRD_RELEASE_NOT_AUTHORIZED`.
+
+O Product Owner aprovou expressamente o wireframe V3 e formalizou como princípio futuro do Portal Engenharia o **design limpo, direcional, contextual e sem informação redundante**; diretriz transversal registrada em `WIREFRAMES.md` §17.
+
+**Escopo de execução ratificado:** remodelar o detalhe PRC inteiro, usando o wireframe V3 das seções A–H e sem alteração funcional do workflow: hero com identidade/status/solicitante avatar/responsável somente quando presente/tracker/ações, ícones+rótulos+ajuda; mover metadados redundantes para contextos próprios; tornar origem “Minhas Solicitações”; referência externa interpretável e acessível; diagnóstico oficial na aba com alerta compacto se bloquear conclusão; preservar ficha, documentos, sinalizadores, histórico/interações, revisões, estados e avisos. Somente o texto de apresentação muda, não o contrato de origem. Os botões devem ser dirigidos por `allowedActions` e os mesmos mecanismos de CAS, idempotência, confirmação e motivos.
+
+**Gate:** Devin pode implementar na branch `main`, sem criar branch, testar e publicar **somente em HML** para aceite visual final. Não iniciar conclusão técnica de produto com TOTVS, publicação de revisão, mudança de fonte de verdade ou release PRD neste pacote. Se mudança de owner/contrato cross-BC for efetivamente necessária: `ARCHITECTURE_DECISION_REQUIRED`.
+
+**Ressalva histórica:** na descrição anterior do wireframe consta “implementação não autorizada” porque foi escrita no momento da proposta; **esta seção I posterior prevalece para V3**, sem reclassificar testes ou capacidades como PASS antes da execução.
