@@ -1067,3 +1067,27 @@ E01 sete campos no card **PASS** (subchecks id/type/requester/officialCode/creat
 **Pacote autorizado para Devin em `main`:** `EVA-PRC-REVISION-LINK-ON-COMPLETION-SEMANTIC-CONTRACT-HML-01`. G0 inventariar código atual e consumidores `baseRevision`, `base_revision_number`, `caseVersion`, `completed_record_id`, `product_registration_revisions.request_id`, `verify-and-complete`; distinguir baseline transitório de conflito vs vínculo causal. G1 corrigir intake/DTO/backend conforme contrato compatível, retirar chip e menção de revisão de solicitações abertas, manter guardas de concorrência no momento da conclusão com revalidação/rebase explícito ou erro fail-closed. G2 vincular revisão realmente publicada com `request_id` apenas na conclusão transacional, e expor read model do outcome apenas após conclusão, sem revisões fictícias em no-op. Testar R01/R02/R03/R18, duas solicitações concorrentes, ordem invertida, change conflicts, replay, AuthZ, erro oficial; memory/Postgres, frontend My Requests e Engineering, HML E2E. Não inventar publicação em HML se fonte TOTVS não permitir; classificar TEST_NOT_RUN. Migrations apenas aditivas/versionadas e rollback; nada PRD.
 
 **Estado:** `PO_SEMANTIC_CHANGE_APPROVED / ENGINEERING_IMPLEMENTATION_AUTHORIZED_DEV_HML / NOT_IMPLEMENTED / TEST_NOT_RUN / PRD_NOT_AUTHORIZED`. Não declarar gate de protocolo fechado até evidências do executor.
+
+
+## 57. Execução — vínculo de revisão somente na conclusão implementado e provado em HML (14/11/2026)
+
+**TASK_ID:** `EVA-PRC-REVISION-LINK-ON-COMPLETION-SEMANTIC-CONTRACT-HML-01` — pacote autorizado em §56, executado diretamente na `main`.
+
+**Inventário (G0):** `baseRevision` era emitido pelo read model `_request_detail`/`_detail` (`engineering_app/application/use_cases/product_registration/service.py`) e exibido no detalhe como «Revisão base Rn»; persistência `base_revision_number` atua como baseline de concorrência resolvida server-side; `product_registration_revisions.request_id` já é proveniência transacional da conclusão; guarda de produto no fechamento já existia (`current_revision_number` do record vs baseline → 409 `stale_revision`); `caseVersion`/`row_version` inalterados como CAS do caso. Consumidores do campo no detalhe: `PrcDetailPage` (chip + linha do popover) e tipo `PrcRequestDetail` do MFE engineering. My Requests não consome `baseRevision`.
+
+**Implementação (G1+G2, `4788a1efa6`):**
+- Backend: read model deixa de emitir `baseRevision` e passa a emitir `publishedRevision:{recordId,revisionNumber}|null`, resolvido via `product_registration_revisions.request_id` ↔ `completed_record_id` — vínculo estritamente causal (só existe se a conclusão daquele caso publicou a revisão). Intake UPDATE segue tolerando `baseRevision` como entrada legada: valor validado, reanalisado contra a baseline vigente no servidor; nunca confiado como estado do navegador nem exposto como revisão do caso.
+- Frontend: chip «Revisão base Rn» removido do hero; linha «Revisão base» removida do popover Informações; «Versão da solicitação» renomeada para «Versão interna do atendimento» (controle técnico). Caso concluído exibe chip «Revisão técnica gerada: Vn» (link → aba Revisões) ou «Concluída sem nova revisão técnica», ambos dirigidos pelo backend (`publishedRevision`). Aba Revisões: nova coluna «Solicitação de origem» com deep-link autorizado ao caso que publicou cada revisão, e origem no hint do snapshot.
+- Sem migration/DDL: nenhuma mudança de schema — `base_revision_number` permanece persistida como baseline de concorrência; nenhum DROP; rollback = imagem anterior (`engineering-api` e `engineering`).
+
+**Testes:**
+- Backend na imagem HML: `test_prc_snapshot_versioning.py` 14/14 PASS (nova classe cobre read model sem `baseRevision`, `publishedRevision` causal nulo/correto, concorrência A→B→A com `stale_revision` fail-closed); `test_product_registration.py` 67/67 PASS.
+- Frontend: 215/215 testes do feature product-registration PASS; tsc clean; vite build OK; regressões V3 atualizadas.
+- Contrato vivo HML (resposta real do detalhe interceptada): `publishedRevision` presente, `baseRevision` ausente, `caseVersion` preservado.
+- E2E visual Chromium em HML — 11/11 PASS: S1 sem «Revisão base»/Rn no hero; S2 popover sem referência a revisão + «Versão interna do atendimento»; S3 aba Revisões honesta (sem revisões publicadas no caso); S4 caso concluído com chip «Concluída sem nova revisão técnica» e zero ações (read-only); S5 rejeitada sem alegação de revisão; S6 usuário negado não visualiza o detalhe.
+- `TEST_NOT_RUN`: conclusão real com match oficial TOTVS HML e caso com `publishedRevision` populado (sem massa concluída-com-revisão em HML) — caminho coberto por testes de serviço memory/PG, não por E2E de negócio.
+- Suíte backend completa em container DEV: 1186 pass/5 fail — os 5 fails reproduzem com o service.py original (preexistentes/concorrentes, fora do escopo).
+
+**Deploy HML:** `delpi-hml-engineering-api` imagem `sha256:c47ec4f9bac024e72c501206ad051aee45ab68effabdfcc6e2ca3dbb5208c514`; `delpi-hml-engineering` imagem `sha256:f48399b4ab43dedf5a16a14d073f18b7a7ff1a88c32e692ea05523c600f75f9f`; 22/22 containers healthy. Docs atualizados: contrato §16 e contrato de leitura, regras canônicas §§13–14, wireframe PRC-REF-025 §J.
+
+**Estado:** `IMPLEMENTED / PROVEN_HML / TECHNICAL_VALIDATION_PASS / PO_VISUAL_ACCEPTANCE_PENDING / PRD_NOT_AUTHORIZED`.

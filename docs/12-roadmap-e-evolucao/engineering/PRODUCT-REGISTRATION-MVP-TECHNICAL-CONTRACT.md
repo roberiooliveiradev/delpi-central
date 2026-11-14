@@ -82,7 +82,7 @@ No domain/application imports de FastAPI, SQLAlchemy, DB, JWT SDK, LLM SDK, MCP 
 Contratos por rota:
 - \`POST intake\` → \`201\` \`{requestId,caseStatus:"submitted",createdAt,source,requestType,links}\`; replay idempotente com mesma key/fingerprint retorna mesma operação sem duplicar; mesma key com payload distinto = 409.
 - \`GET requests\` → \`{items:[{id,type,status,requester,source,createdAt,assignedTo,officialCode,version}],page,pageSize,total}\`; resumo escopado.
-- \`GET detail\` → \`{id,requestType,source,requester,requestedChanges,technicalDraft,baseRevision,caseVersion,status,allowedActions,verificationSummary}\`; \`allowedActions\` vem do backend.
+- \`GET detail\` → \`{id,requestType,source,requester,requestedChanges,technicalDraft,caseVersion,status,allowedActions,verificationSummary,publishedRevision}\`; \`allowedActions\` vem do backend. §16 (implementado 14/11/2026): \`baseRevision\` **não** é mais emitido no detalhe; \`publishedRevision:{recordId,revisionNumber}|null\` reflete somente a revisão efetivamente publicada pela conclusão daquela solicitação.
 - \`PATCH draft\` → \`{changes:[{path,proposedValue,reason}],expectedVersion}\`; **JSON Patch genérico não é aceito**; paths do catálogo, tipos e autorização validados.
 - \`POST actions\` → \`{expectedVersion,reason?,...}\` + \`Idempotency-Key\`; retorna caso atualizado ou 409.
 - \`POST verify-and-complete\` → \`{expectedVersion,officialCode,reason?}\`; sucesso \`{status:"completed",recordId,revisionNumber,verifiedAt,verificationId}\`; falha de correspondência **409 \`erp_mismatch\`** com lista de caminhos/valores redigidos e caso **não concluído**. 503/504 ou campo sem leitura oficial = não conclui.
@@ -122,6 +122,7 @@ Update:
   "productType": "raw_material",
   "officialProductCode": "001234",
   "baseRevision": 3,
+  "_note": "baseRevision: intake legado tolerado (§16); baseline/concorrência é resolvida server-side — o servidor nunca confia no valor do navegador e não o expõe como revisão do caso",
   "schemaVersion": 1,
   "changes": [
     {"path":"description","proposedValue":"DESCRICAO CORRIGIDA","reason":"Ajuste tecnico"}
@@ -171,7 +172,7 @@ A comparação de fornecedores é **por chave composta** \`(supplierCode,store,p
 | \`requester_subject\` | VARCHAR(200) | NOT NULL; vínculo identidade governado |
 | \`requester_display_name\` | VARCHAR(255) | NULL; snapshot informativo, não AuthZ |
 | \`official_product_code\` | VARCHAR(100) | NULL em create; required update e após cadastro oficial |
-| \`base_revision_number\` | INTEGER | NULL para create, required update se technical record já gerenciado |
+| \`base_revision_number\` | INTEGER | NULL para create; em update, baseline técnica de concorrência resolvida no servidor (§16) — **não** é revisão vinculada ao caso nem é apresentada como tal |
 | \`requested_payload\` | JSONB | NOT NULL; create attributes ou update changes validados |
 | \`payload_schema_version\` | INTEGER | NOT NULL CHECK >=1 |
 | \`status\` | VARCHAR(32) | NOT NULL, estado governado |
@@ -627,4 +628,4 @@ Decisão PO 2026-11-09: [adendo normativo D16-REF-01](./PRODUCT-REGISTRATION-D16
 
 **Transição/compatibilidade:** inventariar consumidores de `baseRevision` em HTTP/DTOs, My Requests, engineering MFE, reports, banco, repositórios memory/Postgres, guards, documentação, testes e dados legados. Especificar transição aditiva e tolerância a consumidores antigos; **não** executar DROP destrutivo nem reescrever histórico sem inventário, migração autorizada e rollback. Uma referência histórica existente em caso aberto deve ser tratada como metadado legado/concorrência, sem ser apresentada como revisão gerada; preservar provenance efetivamente publicada em casos concluídos. Se uma decisão de owner de contrato externo ou nova authority for necessária, retornar `ARCHITECTURE_DECISION_REQUIRED`; a alteração semântica do domínio PRC está ratificada.
 
-**Estado:** `PO_SEMANTIC_CHANGE_APPROVED / IMPLEMENTATION_AUTHORIZED_DEV_HML / TEST_NOT_RUN / PRD_NOT_AUTHORIZED`. As descrições antigas de `baseRevision` como obrigatório no UPDATE são **legado a reconciliar**, não um novo requisito de UX; novo intake não deve depender de vínculo de revisão. Preservar regras R01–R18, incertezas, evidência e fonte oficial TOTVS.
+**Estado:** `PO_SEMANTIC_CHANGE_APPROVED / IMPLEMENTED / PROVEN_HML / PRD_NOT_AUTHORIZED` — implementação `4788a1efa6` (14/11/2026): read model do detalhe passou a emitir `publishedRevision` (resolvido por `product_registration_revisions.request_id` ↔ `completed_record_id`) e deixou de emitir `baseRevision`; intake UPDATE continua tolerando `baseRevision` como entrada legada, mas o valor é validado e substituído pela baseline vigente no servidor (não há confiança no dado do navegador); UI V3 removeu o chip «Revisão base» e a linha do popover, exibindo «Revisão técnica gerada: Vn» ou «Concluída sem nova revisão técnica» somente em caso concluído; aba Revisões ganhou coluna/link «Solicitação de origem». Guarda de produto no fechamento já existia (`stale_revision` via `current_revision_number` vs baseline persistida, 409 fail-closed) — confirmada por teste de concorrência A/B. As descrições antigas de `baseRevision` como obrigatório no UPDATE são **legado a reconciliar**, não um novo requisito de UX; novo intake não deve depender de vínculo de revisão. Preservar regras R01–R18, incertezas, evidência e fonte oficial TOTVS.
