@@ -182,6 +182,7 @@ class QuestorReceivedInvoiceGateway:
         if cnpj:
             params["IssuerFederalRegistration"] = cnpj
         params.update(_exact_amount_query(query.amount))
+        params.update(_emission_window(query))
         return params
 
     def _map_item(self, row: dict[str, Any]) -> ReceivedInvoice:
@@ -202,6 +203,7 @@ class QuestorReceivedInvoiceGateway:
             danfe_available=_flag(row.get("XmlDanfe")),
             branch_code=self._session.branch_code,
             provider_entity_id=_text(row.get("Id")),
+            cancelled=_is_cancelled(row),
         )
 
     def _map_export_row(self, row: dict[str, Any]) -> QuestorNfeListing:
@@ -215,6 +217,25 @@ class QuestorReceivedInvoiceGateway:
             emission_at=_text(row.get("Emission")) or None,
             branch_code=self._session.branch_code,
         )
+
+
+def _emission_window(query: ReceivedInvoiceQuery) -> dict[str, str]:
+    """NF-e só filtra emissão em dd/MM/yyyy. ISO devolve HTTP 500 HTML."""
+
+    if query.issued_from is None or query.issued_to is None:
+        return {}
+    return {
+        "EmissionStart": query.issued_from.strftime("%d/%m/%Y"),
+        "EmissionEnd": query.issued_to.strftime("%d/%m/%Y"),
+    }
+
+
+def _is_cancelled(row: dict[str, Any]) -> bool:
+    for key in ("Cancelled", "Canceled", "Cancelado", "IsCanceled"):
+        if row.get(key) in (True, "true", "True", "S", "1", 1):
+            return True
+    situation = _text(row.get("Situacao") or row.get("Status")).lower()
+    return "cancel" in situation
 
 
 def _exact_amount_query(amount: Decimal | None) -> dict[str, str]:

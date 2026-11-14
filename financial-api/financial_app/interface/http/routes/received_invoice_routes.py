@@ -39,6 +39,60 @@ def list_received_invoices(
     return ok(data, message="Notas fiscais de entrada carregadas.")
 
 
+@router.get("/received/export")
+def export_received_invoices(
+    request: Request,
+    branch: str = Query(""),
+    type: str = Query(""),
+    issued_from: str = Query(""),
+    issued_to: str = Query(""),
+    page: int = Query(1),
+    page_size: int = Query(50),
+):
+    try:
+        data = build_received_invoices_service().export_received(
+            resolve_user(request),
+            branch_code=branch,
+            document_type=type,
+            issued_from=issued_from,
+            issued_to=issued_to,
+            page=page,
+            page_size=page_size,
+        )
+    except Exception as exc:
+        mapped = domain_error_response(exc)
+        if mapped is not None:
+            return mapped
+        raise
+    return ok(data, message="Documentos fiscais do período carregados.")
+
+
+@router.get("/received/by-key/{access_key}/xml")
+def download_received_xml_by_key(
+    request: Request,
+    access_key: str,
+    branch: str = Query(""),
+    type: str = Query(""),
+):
+    try:
+        payload, filename = build_received_invoices_service().download_xml_by_key(
+            resolve_user(request),
+            access_key=access_key,
+            branch_code=branch,
+            document_type=type,
+        )
+    except Exception as exc:
+        mapped = domain_error_response(exc)
+        if mapped is not None:
+            return mapped
+        raise
+    return Response(
+        content=payload,
+        media_type="application/xml",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 @router.get("/received/{document_id}/danfe")
 def download_received_invoice_danfe(
     request: Request,
@@ -73,6 +127,7 @@ def download_received_fiscal_xml(
     branch: str = Query(""),
     documentType: str = Query("nfse"),
     fileId: str = Query(""),
+    providerEntityId: str = Query(""),
 ):
     kind = (documentType or "").strip().lower()
     try:
@@ -96,11 +151,24 @@ def download_received_fiscal_xml(
                 file_id=fileId,
                 branch_code=branch,
             )
+        elif kind == "nfe":
+            if (variant or "").strip().lower().replace("-", "_") not in {"original", "xml_original"}:
+                from financial_app.domain.errors import InvalidReceivedInvoiceQuery
+
+                return domain_error_response(
+                    InvalidReceivedInvoiceQuery("A NF-e só entrega o XML original.")
+                )
+            payload, filename = build_received_invoices_service().download_nfe_xml(
+                resolve_user(request),
+                document_id=fileId or document_id,
+                provider_entity_id=providerEntityId,
+                branch_code=branch,
+            )
         else:
             from financial_app.domain.errors import InvalidReceivedInvoiceQuery
 
             return domain_error_response(
-                InvalidReceivedInvoiceQuery("O download de XML está disponível para NFS-e e CT-e.")
+                InvalidReceivedInvoiceQuery("O download de XML está disponível para NFS-e, NF-e e CT-e.")
             )
     except Exception as exc:
         mapped = domain_error_response(exc)

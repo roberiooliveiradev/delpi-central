@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal
 
 
@@ -23,6 +24,7 @@ class ReceivedInvoice:
     danfe_available: bool
     branch_code: str
     provider_entity_id: str = ""
+    cancelled: bool = False
 
 
 @dataclass(frozen=True)
@@ -33,6 +35,9 @@ class ReceivedInvoiceQuery:
     amount_text: str | None
     page: int
     page_size: int
+    issued_from: date | None = None
+    issued_to: date | None = None
+    access_key: str | None = None
 
 
 @dataclass(frozen=True)

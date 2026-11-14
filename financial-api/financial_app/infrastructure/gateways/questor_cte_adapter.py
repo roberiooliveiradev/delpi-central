@@ -112,6 +112,11 @@ class QuestorCteAdapter:
             rendered = _br_decimal(query.amount)
             params["ValueOf"] = rendered
             params["ToValue"] = rendered
+        if query.issued_from is not None and query.issued_to is not None:
+            params["EmissionStart"] = query.issued_from.strftime("%d/%m/%Y")
+            params["EmissionEnd"] = query.issued_to.strftime("%d/%m/%Y")
+        if query.access_key:
+            params["KeyCte"] = query.access_key
         return params
 
     def _map_item(self, row: dict[str, Any]) -> ReceivedFiscalDocument | None:
@@ -151,9 +156,18 @@ class QuestorCteAdapter:
             xml_standard_available=False,
             access_key=access_key,
             manifestation_code=_text(row.get("Manifestation")),
+            provider_status="cancelled" if _cte_cancelled(row) else "",
             manifestation_description=_text(row.get("ManifestationDescription")),
             provider_file_id=file_id or None,
         )
+
+
+def _cte_cancelled(row: dict[str, Any]) -> bool:
+    for key in ("Cancelled", "Canceled", "Cancelado", "IsCanceled"):
+        if row.get(key) in (True, "true", "True", "S", "1", 1):
+            return True
+    situation = _text(row.get("Situacao") or row.get("Status")).lower()
+    return "cancel" in situation
 
 
 def _hex24(value: str, message: str) -> str:

@@ -9,7 +9,7 @@ from __future__ import annotations
 import math
 import re
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any, Mapping
 
@@ -17,6 +17,7 @@ from financial_app.core.security import FIN_INVOICES_VIEW
 from financial_app.domain.errors import (
     InvalidReceivedInvoiceQuery,
     QuestorAuthenticationError,
+    QuestorDocumentNotFound,
     QuestorInvalidResponse,
     QuestorNotConfigured,
     QuestorUnavailable,
@@ -25,7 +26,12 @@ from financial_app.domain.ports.received_invoice_gateway import ReceivedInvoiceG
 from financial_app.domain.received_fiscal_document import ReceivedFiscalDocument, ReceivedFiscalPage
 from financial_app.domain.received_invoice import ReceivedInvoice, ReceivedInvoiceQuery
 from financial_app.domain.services.branch_access_service import BranchAccessService
-from financial_app.domain.fiscal_access_key import access_key_check_digit_ok, access_key_model
+from financial_app.domain.fiscal_access_key import (
+    access_key_check_digit_ok,
+    access_key_cnpj,
+    access_key_model,
+    access_key_number,
+)
 from financial_app.infrastructure.xml.cte_xml import parse_cte_xml
 from financial_app.infrastructure.xml.nfe_xml import parse_nfe_xml
 from financial_app.infrastructure.xml.nfse_standard_xml import parse_nfse_standard_xml
@@ -37,6 +43,9 @@ _CENTS = Decimal("0.01")
 _DEFAULT_PAGE = 1
 _DEFAULT_PAGE_SIZE = 25
 _MAX_PAGE_SIZE = 100
+_EXPORT_MAX_PAGE_SIZE = 200
+_EXPORT_DEFAULT_PAGE_SIZE = 50
+_EXPORT_MAX_WINDOW_DAYS = 366
 _SCAN_PAGE_SIZE = 100
 _SCAN_MAX_PAGES = 100
 _BRANCHES = ("01", "02")
@@ -89,6 +98,114 @@ class ReceivedInvoicesService:
             "pagination": _pagination(query.page, query.page_size, merged.total_items),
             "items": [_item(item) for item in merged.items],
         }
+
+    def export_received(
+        self,
+        user: object | None,
+        *,
+        branch_code: str | None,
+        document_type: str | None,
+        issued_from: str | None,
+        issued_to: str | None,
+        page: int | None,
+        page_size: int | None,
+    ) -> dict[str, Any]:
+        self._authorize(user)
+        branch = _origin_branch(branch_code)
+        kind = _export_type(document_type)
+        start, end = _export_window(issued_from, issued_to)
+        query = ReceivedInvoiceQuery(
+            invoice_number=None,
+            supplier_cnpj=None,
+            amount=None,
+            amount_text=None,
+            page=_page(page),
+            page_size=_export_page_size(page_size),
+            issued_from=start,
+            issued_to=end,
+        )
+        gateway = self._companies[branch]
+        if kind == "nfe":
+            listed = gateway.list_received_invoices(query)
+            items = [_export_nfe(item, branch) for item in listed.items]
+        else:
+            listed = gateway.list_received_cte(query)
+            items = [_export_cte(item, branch) for item in listed.items]
+        return {
+            "items": items,
+            "page": query.page,
+            "page_size": query.page_size,
+            "complete": len(items) < query.page_size,
+        }
+
+    def download_xml_by_key(
+        self,
+        user: object | None,
+        *,
+        access_key: str,
+        branch_code: str | None,
+        document_type: str | None,
+    ) -> tuple[bytes, str]:
+        self._authorize(user)
+        branch = _origin_branch(branch_code)
+        kind = _export_type(document_type)
+        key = _nfe_access_key(access_key) if kind == "nfe" else _cte_access_key(access_key)
+        number = access_key_number(key).lstrip("0") or "0"
+        gateway = self._companies[branch]
+        lookup = ReceivedInvoiceQuery(
+            invoice_number=number,
+            supplier_cnpj=access_key_cnpj(key) if kind == "nfe" else None,
+            amount=None,
+            amount_text=None,
+            page=1,
+            page_size=20,
+            access_key=key if kind == "cte" else None,
+        )
+        if kind == "nfe":
+            match = next(
+                (item for item in gateway.list_received_invoices(lookup).items if _key_digits(item.access_key) == key),
+                None,
+            )
+            if match is None or not _DOCUMENT_ID.fullmatch(match.document_id) or not _DOCUMENT_ID.fullmatch(match.provider_entity_id):
+                raise QuestorDocumentNotFound("XML da NF-e não encontrado.")
+            payload = gateway.download_nfe_xml(
+                provider_file_id=match.document_id,
+                provider_document_id=match.provider_entity_id,
+            )
+            return payload, f"NFe-{key}.xml"
+        match_cte = next(
+            (
+                item
+                for item in gateway.list_received_cte(lookup).items
+                if _key_digits(item.access_key) == key and item.provider_file_id
+            ),
+            None,
+        )
+        if match_cte is None:
+            raise QuestorDocumentNotFound("XML do CT-e não encontrado.")
+        payload = gateway.download_cte_xml(
+            provider_file_id=match_cte.provider_file_id or "",
+            provider_document_id=match_cte.provider_document_id,
+        )
+        return payload, f"CTe-{key}.xml"
+
+    def download_nfe_xml(
+        self,
+        user: object | None,
+        *,
+        document_id: str,
+        provider_entity_id: str,
+        branch_code: str | None,
+    ) -> tuple[bytes, str]:
+        self._authorize(user)
+        branch = _origin_branch(branch_code)
+        file_id = _document_id(document_id)
+        entity_id = _provider_entity_id(provider_entity_id)
+        payload = self._companies[branch].download_nfe_xml(
+            provider_file_id=file_id,
+            provider_document_id=entity_id,
+        )
+        return payload, f"NFe-{file_id}.xml"
 
     def download_danfe(
         self,
@@ -297,6 +414,87 @@ class ReceivedInvoicesService:
             page=_page(page),
             page_size=_page_size(page_size),
         )
+
+
+def _export_nfe(invoice: ReceivedInvoice, branch: str) -> dict[str, Any]:
+    return {
+        "access_key": _key_digits(invoice.access_key),
+        "invoice_number": invoice.invoice_number,
+        "series": invoice.series,
+        "issuer_name": invoice.issuer_name,
+        "issuer_tax_id": invoice.issuer_cnpj,
+        "emission_at": invoice.emission_at,
+        "amount": _amount_number(invoice.amount),
+        "cancelled": invoice.cancelled,
+        "provider_file_id": invoice.document_id,
+        "provider_document_id": invoice.provider_entity_id,
+        "branch": branch,
+    }
+
+
+def _export_cte(document: ReceivedFiscalDocument, branch: str) -> dict[str, Any]:
+    return {
+        "access_key": _key_digits(document.access_key),
+        "invoice_number": document.document_number,
+        "series": document.series,
+        "issuer_name": document.issuer_name,
+        "issuer_tax_id": document.issuer_cnpj,
+        "emission_at": document.emission_at,
+        "amount": _amount_number(document.amount),
+        "cancelled": document.provider_status == "cancelled",
+        "provider_file_id": document.provider_file_id,
+        "provider_document_id": document.provider_document_id,
+        "branch": branch,
+    }
+
+
+def _amount_number(value: str) -> float | None:
+    text = (value or "").strip().replace(" ", "")
+    if not text:
+        return None
+    if "," in text and "." in text:
+        text = text.replace(".", "").replace(",", ".")
+    elif "," in text:
+        text = text.replace(",", ".")
+    try:
+        return float(Decimal(text))
+    except InvalidOperation:
+        return None
+
+
+def _key_digits(value: str) -> str:
+    return "".join(ch for ch in str(value or "") if ch.isdigit())
+
+
+def _export_type(value: str | None) -> str:
+    kind = (value or "").strip().lower()
+    if kind not in {"nfe", "cte"}:
+        raise InvalidReceivedInvoiceQuery("Tipo de documento fiscal inválido.")
+    return kind
+
+
+def _export_window(issued_from: str | None, issued_to: str | None) -> tuple[date, date]:
+    start = _iso_day(issued_from, "Data inicial inválida.")
+    end = _iso_day(issued_to, "Data final inválida.")
+    if start > end or (end - start).days > _EXPORT_MAX_WINDOW_DAYS:
+        raise InvalidReceivedInvoiceQuery("Período de emissão inválido.")
+    return start, end
+
+
+def _iso_day(value: str | None, message: str) -> date:
+    text = (value or "").strip()
+    try:
+        return date.fromisoformat(text)
+    except ValueError as exc:
+        raise InvalidReceivedInvoiceQuery(message) from exc
+
+
+def _export_page_size(value: int | None) -> int:
+    if value is None:
+        return _EXPORT_DEFAULT_PAGE_SIZE
+    if value < 1 or value > _EXPORT_MAX_PAGE_SIZE:
+        raise InvalidReceivedInvoiceQuery("Tamanho de página inválido.")
+    return value
 
 
 def _pagination(page: int, page_size: int, total_items: int) -> dict[str, Any]:

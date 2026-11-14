@@ -385,7 +385,7 @@ Letras observadas em `F4_LFICM` e `F4_LFIPI` (filial vazia ou `01`): `T`, `I`, `
 | `GET /invoices/received/by-key/{access_key}/xml` | `branch`, `type` | corpo `application/xml` do XML original. 404 se a chave não está na empresa. |
 | `GET /invoices/received/{id}/xml/original` | `branch`, `type` | já existe; a BFF da auditoria usa a rota por chave |
 
-A NF-e manda `EmissionStart`/`EmissionEnd` em `dd/MM/yyyy`. O CT-e aceita o mesmo par. A busca por chave extrai número (posições 26–34) e CNPJ do emitente (7–20) e localiza a linha; no CT-e preenche `KeyCte`. Sem data no Questor a página não representa o período: a rota exige `issued_from` e `issued_to`.
+A NF-e manda `EmissionStart`/`EmissionEnd` em `dd/MM/yyyy`. O CT-e aceita o mesmo par. A busca por chave extrai número (posições 26–34) e CNPJ do emitente (7–20) e localiza a linha; no CT-e preenche `KeyCte`. Sem data no Questor a página não representa o período: a rota exige `issued_from` e `issued_to`. `complete` é página curta; o `iTotal*` do portal não entra na contagem. `cancelled` lê um indicador da linha quando o portal manda; o evento de cancelamento do XML continua sendo a fonte do motor. A rota antiga `GET /invoices/received/{id}/xml/original` também entrega NF-e quando `documentType=nfe` e `providerEntityId` vêm juntos.
 
 ### 6.3 BFF — `/entry-audit/*`
 

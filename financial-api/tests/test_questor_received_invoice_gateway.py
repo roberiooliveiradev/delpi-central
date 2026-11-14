@@ -187,6 +187,30 @@ def test_pagination_filters_and_exact_amount_stay_inside_the_gateway() -> None:
     assert _exact_amount_query(Decimal("10.50")) == {"ValueOf": "10,50", "ToValue": "10,50"}
     assert _exact_amount_query(Decimal("108")) == {"ValueOf": "108,00", "ToValue": "108,00"}
     assert _exact_amount_query(None) == {}
+    assert "EmissionStart" not in captured
+
+
+def test_nfe_emission_filter_uses_brazilian_dates() -> None:
+    from datetime import date
+
+    captured: dict[str, str] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/cliente/nfe/listagem":
+            captured.update(dict(request.url.params))
+            return httpx.Response(200, json=list_payload(total=1))
+        return _auth_response(request, [])
+
+    gateway, client = build_gateway(handler)
+    try:
+        gateway.list_received_invoices(
+            query(issued_from=date(2026, 11, 12), issued_to=date(2026, 11, 12))
+        )
+    finally:
+        gateway.close()
+        client.close()
+    assert captured["EmissionStart"] == "12/11/2026"
+    assert captured["EmissionEnd"] == "12/11/2026"
 
 
 def test_document_id_comes_from_xml_filename_never_from_internal_id() -> None:
