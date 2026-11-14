@@ -48,8 +48,8 @@
 | Etapa | Nome | Status | Ambiente | SHA(s) | Data | Evidência |
 |---|---|---|---|---|---|---|
 | T0 | Rebaseline e inventário (somente leitura) | DONE | leitura PROD (Questor) e banco DELPI | 19b026cef6 | 2026-11-14 | inventário em backend §4; Questor por data PROVEN; HML financial-api ausente |
-| T1 | Contrato completo + ADR-003 | DONE | docs | 19b026cef6 | 2026-11-14 | backend §6 ACCEPTED; ADR-003; catálogo MCP aceito |
-| T2 | api-delpi — leitura do Protheus | TODO | | | | |
+| T1 | Contrato completo + ADR-003 | DONE | docs | 14da947e67 | 2026-11-14 | backend §6 ACCEPTED; ADR-003; catálogo MCP aceito |
+| T2 | api-delpi — leitura do Protheus | DONE | DEV (banco DELPI) | (este commit) | 2026-11-14 | 12 testes PASS; filial 01 em 12/11/2026 = 19 (12 SPED + 7 CTE), igual ao SQL direto |
 | T3 | financial-api — Questor por período, por chave e CT-e | TODO | | | | |
 | T4 | BFF — motor de regras + paridade com a skill | TODO | | | | |
 | T5 | BFF — análise, worker, persistência, rotas, LNF, exportação | TODO | | | | |
@@ -237,7 +237,8 @@ Referência (saída da skill sobre a mesma amostra, fora do repositório): 2 NF-
 |---|---|---|---|---|
 | 2026-11-13 | — | — | Trilha criada | plano, back-end, front-end e MCP consolidados; decisões D1–D14 |
 | 2026-11-14 | T0 | 19b026cef6 | DONE | Mapa SX3×skill em backend §4. Questor: NF-e filtra emissão em dd/MM/yyyy (ISO → HTTP 500); CT-e filtra nos dois formatos; `iTotal` da NF-e não é contagem; sessão 02 PROVEN em PROD. HML sem container financial-api. LNF aberto por número+fornecedor; chave só no DANFE. Próxima migration `V023`. Volume de um mês é pequeno. Sem upload. |
-| 2026-11-14 | T1 | 19b026cef6 | DONE | Contrato em backend §6 (payloads, erros, paginação, `V023`, chave estável, ids de regra, D12, D13). Catálogo da CLARA aceito no mcp. ADR-003 ACCEPTED. |
+| 2026-11-14 | T1 | 14da947e67 | DONE | Contrato em backend §6 (payloads, erros, paginação, `V023`, chave estável, ids de regra, D12, D13). Catálogo da CLARA aceito no mcp. ADR-003 ACCEPTED. O quadro anterior citava o pai `19b026cef6`; o commit da T1 é `14da947e67`. |
+| 2026-11-14 | T2 | (este commit) | DONE | Cinco leituras em `/financeiro/entry-audit`. S2S reutiliza `stock-inventory.read` do client `controllership-finance-api`; sem escopo novo e sem flag. Contagem ao vivo, filial 01, recebimento 12/11/2026, SPED+CTE: 19, igual ao `COUNT` direto (12+7). Mês 01–14/11: 177. Filial 02 no mesmo dia: 19. Itens e livro do dia: 40 linhas cada. TES: 458. Filiais: empresa 01, UF SC e ES, CNPJ com 14 dígitos. Pytest `tests/test_financeiro_entry_audit.py`: 12 PASS. |
 
 ---
 

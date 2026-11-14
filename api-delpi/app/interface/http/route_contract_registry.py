@@ -725,6 +725,21 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_financeiro_billing_mod_breakdown": RouteContract(
         "financeiro_billing_mod_breakdown", "playbook_report"
     ),
+    "list_entry_audit_documents": RouteContract(
+        "entry_audit_document", "paged_list"
+    ),
+    "list_entry_audit_items": RouteContract(
+        "entry_audit_item", "paged_list"
+    ),
+    "list_entry_audit_fiscal_book": RouteContract(
+        "entry_audit_fiscal_book_line", "paged_list"
+    ),
+    "list_entry_audit_tes": RouteContract(
+        "entry_audit_tes", "paged_list"
+    ),
+    "list_entry_audit_branches": RouteContract(
+        "entry_audit_branch", "list"
+    ),
     "get_financeiro_closing_state": RouteContract(
         "financeiro_closing_state", "scalar"
     ),

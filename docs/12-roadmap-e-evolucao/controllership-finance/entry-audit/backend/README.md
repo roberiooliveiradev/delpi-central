@@ -361,7 +361,7 @@ Datas de filtro e de resposta: `YYYY-MM-DD`. A api-delpi converte `F1_RECBMTO` /
 
 ### 6.1 api-delpi — `GET /financeiro/entry-audit/*`
 
-Só leitura. Autorização igual às rotas `/financeiro/*` da BFF: Bearer do usuário + `X-Delpi-Service-Authorization`. Sem flag. Sem regra fiscal.
+Só leitura. Sem flag. Sem regra fiscal. Autorização: Bearer de usuário delegado + `X-Delpi-Service-Authorization` do client `controllership-finance-api` com o escopo já provisionado `stock-inventory.read` (o mesmo das leituras financeiras que a BFF já consome). Não há escopo novo nem flag de dataset: um escopo novo ficaria 403 até o Keycloak ser provisionado, e a flag D13 só existe na BFF. 403 `DELEGATED_USER_REQUIRED` se o principal não for usuário. 401 sem o header de serviço. 403 se o client ou o escopo não conferem.
 
 Filtros comuns de `documents`, `items` e `fiscal-book`: `branch` (`01`|`02`), `received_from`, `received_to`, `species` (repetível, só `SPED` e `CTE`), `page`, `page_size`. `received_from` ≤ `received_to`, janela máxima de 366 dias. Fora disso, 422 `VALIDATION_ERROR`.
 
@@ -373,7 +373,9 @@ Filtros comuns de `documents`, `items` e `fiscal-book`: `branch` (`01`|`02`), `r
 | `/tes` | `list_entry_audit_tes` | `code`, `description`, `calculates_icms`, `credits_icms`, `icms_book`, `calculates_ipi`, `credits_ipi`, `ipi_book`, `consumption_material` — cadastro inteiro, sem filtro de período |
 | `/branches` | `list_entry_audit_branches` | `code`, `company_code` (`01`), `name`, `state`, `tax_id` — só `SYS_COMPANY` com `M0_CODIGO = '01'` |
 
-`items` e `fiscal-book` trazem as linhas dos documentos que passam no mesmo filtro de recebimento e espécie, não um filtro próprio de data do item. Livro: `FT_TIPOMOV = 'E'` e `FT_DTCANC` vazio. 403 quando o escopo financeiro da api-delpi recusa a filial.
+`items` e `fiscal-book` trazem as linhas dos documentos que passam no mesmo filtro de recebimento e espécie, não um filtro próprio de data do item. Livro: `FT_TIPOMOV = 'E'` e `FT_DTCANC` vazio. `branches` filtra `M0_CODIGO = '01'` e `M0_CODFIL IN ('01','02')`. `tes` deduplica por código e prefere a filial `01` quando o mesmo código existe em branco e em `01`.
+
+Letras observadas em `F4_LFICM` e `F4_LFIPI` (filial vazia ou `01`): `T`, `I`, `O`, `N`. A API devolve a letra. A skill compara as palavras Tributado, Isento e Outros; a tradução fica no motor (T4). `N` não tem palavra na skill.
 
 ### 6.2 financial-api
 

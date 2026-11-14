@@ -64,6 +64,11 @@ _ENTITY_LABELS: dict[str, str] = {
     "financeiro_billing_mod_breakdown": (
         "faturamento × MOD por âncora PA (R09/DLP204, visão operacional)"
     ),
+    "entry_audit_document": "cabeçalhos de entrada (SF1) para a auditoria",
+    "entry_audit_item": "itens de entrada (SD1) para a auditoria",
+    "entry_audit_fiscal_book_line": "linhas do livro fiscal (SFT) para a auditoria",
+    "entry_audit_tes": "cadastro de TES (SF4) para a auditoria",
+    "entry_audit_branch": "filiais da empresa para a auditoria de entradas",
     "financial_purchase_freight_link": (
         "vínculos de NF de compra com CT-e para análise de percentual de frete"
     ),

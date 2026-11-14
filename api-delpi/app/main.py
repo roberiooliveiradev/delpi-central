@@ -42,6 +42,7 @@ from app.interface.http.routes import sale_routes
 from app.interface.http.routes.financial import financial_routes
 from app.interface.http.routes.financeiro import billing_exclusion_roster_router
 from app.interface.http.routes.financeiro import billing_mod_breakdown_router
+from app.interface.http.routes.financeiro import entry_audit_router
 from app.interface.http.routes.financeiro import cost_center_expenses_router
 from app.interface.http.routes.financeiro import despesas_centro_custo_router
 from app.interface.http.routes.financeiro import inadimplencia_router
@@ -298,6 +299,7 @@ app.include_router(financial_routes.router, prefix="/financial", tags=["Financei
 app.include_router(cost_center_expenses_router.router)
 app.include_router(billing_exclusion_roster_router.router)
 app.include_router(billing_mod_breakdown_router.router)
+app.include_router(entry_audit_router.router)
 app.include_router(despesas_centro_custo_router.router)
 app.include_router(inadimplencia_router.router)
 app.include_router(settlements_router.router)
