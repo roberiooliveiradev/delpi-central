@@ -1100,18 +1100,15 @@
 }
 
 /* PRC-REF-021-REF-01 / §45 — controle compacto inline nas ações do
- * hero; o painel abre como popover flutuante ancorado ao botão. */
+ * hero; §48+ — painel via AnchoredPanelPortal (document.body): posição
+ * fixed calculada pelo hook, sem recorte pelo overflow do hero/tabela. */
 .engineering-prc__flags-ops--hero {
-  position: relative;
   display: inline-flex;
   margin: 0;
   gap: 0;
 }
 
-.engineering-prc__flags-ops--hero .engineering-prc__flags-ops-body {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
+.engineering-prc__flags-ops-body--portal {
   z-index: 60;
   width: min(760px, calc(100vw - 40px));
   max-height: min(70vh, 640px);
@@ -1121,6 +1118,9 @@
   border-radius: 8px;
   background: var(--en-surface, #fff);
   box-shadow: 0 12px 32px rgba(16, 24, 40, 0.16);
+}
+
+.engineering-prc__flags-ops-content {
   display: flex;
   flex-direction: column;
   gap: 10px;

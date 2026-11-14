@@ -1,12 +1,13 @@
 /** Visão operacional transversal de bandeiras (AuthZ no backend).
  * PRC-REF-021-REF-01 — modo compacto no hero da fila (sem faixa externa). */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Flag } from "lucide-react";
 
 import { HomeApiError } from "../../../api/httpClient";
 import {
   EngineeringActionButton,
+  EngineeringAnchoredPanel,
   EngineeringFilterInput,
   EngineeringFilterSelect,
   EngineeringFiltersRow,
@@ -29,6 +30,9 @@ export function PrcFlagsOpsPanel({
   compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const anchorRef = useRef<HTMLElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const panelId = useId();
   const [status, setStatus] = useState("OPEN");
   const [targetPath, setTargetPath] = useState("");
   const [targetAttribute, setTargetAttribute] = useState("");
@@ -118,25 +122,15 @@ export function PrcFlagsOpsPanel({
       ? `Campos sinalizados (${badgeCount})`
       : "Campos sinalizados";
 
-  return (
-    <section
-      className={
-        compact
-          ? "engineering-prc__flags-ops engineering-prc__flags-ops--hero"
-          : "engineering-prc__flags-ops"
-      }
-      aria-label="Bandeiras"
-    >
-      <EngineeringActionButton
-        variant="ghost"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <Flag size={14} aria-hidden />{" "}
-        {open ? "Ocultar campos sinalizados" : toggleLabel}
-      </EngineeringActionButton>
-      {open ? (
-        <div className="engineering-prc__flags-ops-body">
+  /* EVA-ENGINEERING-POPOVER-ANCHOR-STANDARDIZATION-HML-01 — modo
+   * compacto renderiza o corpo via AnchoredPanelPortal (portal no
+   * document.body): não é recortado pelo overflow:hidden do hero nem
+   * encoberto pela tabela; flip/clamp na viewport, Escape e clique
+   * externo fecham, exclusividade evita overlays órfãos. Selects
+   * internos (SelectControl) continuam aninhados — a política de
+   * exclusividade do kit ignora âncoras dentro do painel exclusivo. */
+  const body = (
+    <div id={panelId} className="engineering-prc__flags-ops-content">
           <EngineeringFiltersRow>
             <div className="engineering-prc__flags-ops-filters">
               <EngineeringFilterSelect
@@ -282,7 +276,48 @@ export function PrcFlagsOpsPanel({
               </EngineeringActionButton>
             </div>
           ) : null}
-        </div>
+    </div>
+  );
+
+  return (
+    <section
+      ref={anchorRef}
+      className={
+        compact
+          ? "engineering-prc__flags-ops engineering-prc__flags-ops--hero"
+          : "engineering-prc__flags-ops"
+      }
+      aria-label="Bandeiras"
+    >
+      <EngineeringActionButton
+        variant="ghost"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Flag size={14} aria-hidden />{" "}
+        {open ? "Ocultar campos sinalizados" : toggleLabel}
+      </EngineeringActionButton>
+      {open ? (
+        compact ? (
+          <EngineeringAnchoredPanel
+            open={open}
+            anchorRef={anchorRef}
+            panelRef={panelRef}
+            variant="bare"
+            className="engineering-prc__flags-ops-body engineering-prc__flags-ops-body--portal"
+            role="dialog"
+            aria-label="Campos sinalizados"
+            preferredPlacement="bottom"
+            horizontalAlign="end"
+            gap={6}
+            onDismiss={() => setOpen(false)}
+          >
+            {body}
+          </EngineeringAnchoredPanel>
+        ) : (
+          <div className="engineering-prc__flags-ops-body">{body}</div>
+        )
       ) : null}
     </section>
   );
