@@ -260,6 +260,16 @@ class PostgresEntryAuditStore:
             (analysis_id, branches),
         )
 
+    def note_requester(self, analysis_id: str, *, user_id: str, user_name: str, via: str) -> None:
+        self._execute(
+            f"""
+            UPDATE {SCHEMA}.entry_audit_analysis
+               SET requested_by_user_id = %s, requested_by_name = %s, requested_via = %s, updated_at = now()
+             WHERE id = %s
+            """,
+            (user_id, user_name, via, analysis_id),
+        )
+
     def queue_run(self, run_id: str) -> None:
         updated = self._one(
             f"""
@@ -272,6 +282,18 @@ class PostgresEntryAuditStore:
         )
         if updated:
             self._refresh(updated["analysis_id"])
+
+    def has_stable_key(self, stable_key: str) -> bool:
+        found = self._one(
+            f"""
+            SELECT stable_key FROM {SCHEMA}.entry_audit_occurrence WHERE stable_key = %s
+            UNION ALL
+            SELECT stable_key FROM {SCHEMA}.entry_audit_unmatched WHERE stable_key = %s
+            LIMIT 1
+            """,
+            (stable_key, stable_key),
+        )
+        return found is not None
 
     def status_of(self, stable_key: str) -> dict | None:
         return self._one(f"SELECT * FROM {SCHEMA}.entry_audit_status WHERE stable_key = %s", (stable_key,))
@@ -387,6 +409,8 @@ class PostgresEntryAuditStore:
             status, finished = "queued", None
         elif statuses == {"failed"}:
             status, finished = "failed", "now"
+        elif "partial" in statuses:
+            status, finished = "partial", "now"
         elif "done" in statuses:
             status, finished = "done", "now"
         else:

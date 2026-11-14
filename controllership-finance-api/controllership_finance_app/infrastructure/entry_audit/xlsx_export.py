@@ -29,6 +29,8 @@ def build_workbook(payload: dict) -> bytes:
     rows["Resumo"].append(["Ocorrências", str(len(occurrences)), "Motor da auditoria de entradas"])
     rows["Resumo"].append(["Notas", str(len(payload["documents"])), f"{summary['date_from']} a {summary['date_to']}"])
     rows["Resumo"].append(["Sem par", str(len(payload["unmatched"])), "XML sem lançamento ou lançamento sem XML"])
+    unavailable = sum(1 for row in payload["documents"] if row.get("situation") == "xml_unavailable")
+    rows["Resumo"].append(["XML indisponível", str(unavailable), "A fonte não respondeu; não é nota sem par"])
     for row in payload["tes"]:
         sf4 = row.get("sf4") or {}
         rows["TES usadas"].append([
@@ -45,7 +47,8 @@ def build_workbook(payload: dict) -> bytes:
             rows[target].append([row.get("severity"), row.get("title"), row.get("document_number"), row.get("series"), row.get("supplier_name"), row.get("field_label"), row.get("protheus_value"), row.get("xml_value"), row.get("difference"), row.get("tes"), row.get("action"), row.get("access_key")])
     for row in payload["documents"]:
         comparison = row.get("comparison") or {}
-        rows["Comparativo"].append([row.get("situation"), row.get("document_number"), row.get("series"), row.get("supplier_name"), comparison.get("icms"), comparison.get("ipi"), comparison.get("gross"), row.get("divergence_count"), row.get("access_key")])
+        situation = "XML indisponível" if row.get("situation") == "xml_unavailable" else row.get("situation")
+        rows["Comparativo"].append([situation, row.get("document_number"), row.get("series"), row.get("supplier_name"), comparison.get("icms"), comparison.get("ipi"), comparison.get("gross"), row.get("divergence_count"), row.get("access_key")])
     for row in payload["unmatched"]:
         sheet = "Só no XML" if row.get("side") == "xml" else "Só no SF1"
         if row.get("side") == "xml":

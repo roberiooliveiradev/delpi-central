@@ -155,6 +155,55 @@ class ApiDelpiSettlementsGateway:
         except ValueError as exc:
             raise DelpiApiGatewayError("api-delpi invalid JSON") from exc
 
+    def get_as_service(
+        self,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+        timeout_seconds: float | None = None,
+    ) -> Any:
+        """Read with this BFF's client credential. No end-user bearer."""
+        url = urljoin(self.base_url, path.lstrip("/"))
+        headers = {
+            "Accept": "application/json",
+            "X-Delpi-Caller-App": self.caller_app,
+            SERVICE_AUTHORIZATION_HEADER: build_service_authorization(self._service_token()),
+        }
+        try:
+            response = requests.get(
+                url,
+                headers=headers,
+                params=params,
+                timeout=(
+                    timeout_seconds
+                    if timeout_seconds is not None
+                    else self.timeout
+                ),
+            )
+        except requests.Timeout as exc:
+            logger.warning("delpi_api_timeout path=%s", path)
+            raise DelpiApiGatewayError("api-delpi timeout") from exc
+        except requests.RequestException as exc:
+            logger.exception("delpi_api_request_failed path=%s", path)
+            raise DelpiApiGatewayError("api-delpi request failed") from exc
+        error_code = _extract_error_code(response)
+        if response.status_code >= 500:
+            raise DelpiApiGatewayError(
+                "api-delpi server error",
+                status_code=response.status_code,
+                error_code=error_code,
+            )
+        if response.status_code >= 400:
+            raise DelpiApiGatewayError(
+                "api-delpi client error",
+                status_code=response.status_code,
+                error_code=error_code,
+            )
+        try:
+            return response.json()
+        except ValueError as exc:
+            raise DelpiApiGatewayError("api-delpi invalid JSON") from exc
+
     def get_bytes(
         self,
         path: str,

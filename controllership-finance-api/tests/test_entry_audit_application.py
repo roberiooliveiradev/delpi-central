@@ -266,3 +266,216 @@ def test_flag_off_does_not_mount_the_routes():
     paths = [getattr(route, "path", "") for route in app.routes]
     mounted = any(str(path).startswith("/entry-audit") for path in paths)
     assert mounted is settings.ENTRY_AUDIT_ENABLED
+
+
+def test_a_short_lived_service_token_is_renewed_and_the_run_finishes():
+    from delpi_auth.service_token_provider import ClientCredentialsTokenProvider, ServiceTokenProviderConfig
+
+    clock = {"now": 1_000.0}
+    issued = {"n": 0}
+
+    def http_post(url, data=None, timeout=None):
+        issued["n"] += 1
+        return SimpleNamespace(
+            status_code=200,
+            json=lambda n=issued["n"]: {"access_token": f"service-{n}", "expires_in": 10},
+        )
+
+    provider = ClientCredentialsTokenProvider(
+        ServiceTokenProviderConfig(
+            token_url="https://issuer.example/token",
+            client_id="controllership-finance-api",
+            client_secret="secret",
+            scopes=("stock-inventory.read",),
+            timeout_seconds=5,
+        ),
+        http_post=http_post,
+        clock=lambda: clock["now"],
+        refresh_margin_seconds=0,
+    )
+    seen: list[str] = []
+
+    class Reading(Protheus):
+        def _touch(self):
+            seen.append(provider.get_token())
+            clock["now"] += 11
+
+        def documents(self, **kwargs):
+            self._touch()
+            return super().documents(**kwargs)
+
+        def items(self, **kwargs):
+            self._touch()
+            return super().items(**kwargs)
+
+        def fiscal_book(self, **kwargs):
+            self._touch()
+            return super().fiscal_book(**kwargs)
+
+        def tes(self):
+            self._touch()
+            return super().tes()
+
+        def branches(self):
+            self._touch()
+            return super().branches()
+
+    service = _service(Reading())
+    created = service.create(date_from=WHEN, date_to=WHEN, document_types=["nfe"], branches=["01"], user_id="u", user_name="Ana", via="user")
+    assert service.claim_and_execute() is True
+    assert {run["status"] for run in service.get_analysis(created["id"])["runs"]} == {"done"}
+    assert len(set(seen)) > 1
+
+
+def test_orphan_recovery_after_restart_does_not_need_a_user_bearer():
+    store = MemoryEntryAuditStore()
+    first = EntryAuditService(store, Protheus(), Xml(), Posting(), AuditConfig(), lookback_days=30)
+    created = first.create(date_from=WHEN, date_to=WHEN, document_types=["nfe"], branches=["01"], user_id="u", user_name="Ana", via="user")
+    assert first._store.claim_next_queued() is not None
+    restarted = EntryAuditService(store, Protheus(), Xml(), Posting(), AuditConfig(), lookback_days=30)
+    assert restarted.recover_orphans() == 1
+    assert restarted.claim_and_execute() is True
+    assert restarted.get_analysis(created["id"])["runs"][0]["status"] == "done"
+
+
+def test_clara_request_records_the_requester_on_her_behalf():
+    service = _service()
+    created = service.create(date_from=WHEN, date_to=WHEN, document_types=["nfe"], branches=["01"], user_id="u", user_name="Ana", via="clara")
+    stored = service._store.get_analysis(created["id"])
+    assert stored["requested_by_name"] == "CLARA em nome de Ana"
+    assert stored["requested_via"] == "clara"
+
+
+def test_a_failed_xml_download_is_unavailable_and_not_an_unmatched_note():
+    from controllership_finance_app.application.entry_audit.errors import XmlSourceUnavailable
+
+    class Failing(Xml):
+        def download_by_key(self, *, branch, access_key, document_type):
+            raise XmlSourceUnavailable("document")
+
+    service = _service(xml=Failing())
+    created = service.create(date_from=WHEN, date_to=WHEN, document_types=["nfe"], branches=["01"], user_id="u", user_name="Ana", via="user")
+    service.claim_and_execute()
+    run = service.get_analysis(created["id"])["runs"][0]
+    assert run["status"] == "partial"
+    assert run["error"] == "XML_UNAVAILABLE"
+    summary = service.summary(created["id"], {})
+    assert summary["kpis"]["xml_unavailable"] == 1
+    unmatched = service.unmatched_documents(created["id"], {}, page=1, page_size=20)
+    assert access_key("55", 100) not in {row.get("access_key") for row in unmatched["items"]}
+
+
+def test_a_failed_listing_fails_the_branch_instead_of_reporting_zero():
+    from controllership_finance_app.application.entry_audit.errors import XmlSourceUnavailable
+
+    class ListingDown(Xml):
+        def list_issued(self, **_kwargs):
+            raise XmlSourceUnavailable("listing")
+
+    service = _service(xml=ListingDown())
+    created = service.create(date_from=WHEN, date_to=WHEN, document_types=["nfe"], branches=["01"], user_id="u", user_name="Ana", via="user")
+    service.claim_and_execute()
+    run = service.get_analysis(created["id"])["runs"][0]
+    assert run["status"] == "failed"
+    assert run["error"] == "XML_LISTING_UNAVAILABLE"
+    with pytest.raises(Exception) as caught:
+        service.summary(created["id"], {})
+    assert caught.value.code == "ANALYSIS_NOT_READY"
+
+
+def test_xml_retry_recovers_and_a_persistent_failure_stays_unavailable():
+    from controllership_finance_app.application.entry_audit.errors import XmlSourceUnavailable
+    from controllership_finance_app.infrastructure.entry_audit.sources import FiscalXmlGateway
+    from controllership_finance_app.infrastructure.invoice_posting.financial_received_invoice_gateway import (
+        FinancialReceivedInvoiceGatewayError,
+    )
+
+    class Recovers:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def download_xml_by_key_as_service(self, **_kwargs):
+            self.calls += 1
+            if self.calls < 3:
+                raise FinancialReceivedInvoiceGatewayError("indisponível", 503)
+            return b"<nfeProc></nfeProc>"
+
+        def export_received_documents_as_service(self, **_kwargs):
+            raise FinancialReceivedInvoiceGatewayError("listagem", 503)
+
+    source = Recovers()
+    gateway = FiscalXmlGateway(source, attempts=3, sleep=lambda _delay: None)
+    assert gateway.download_by_key(branch="01", access_key="1" * 44, document_type="nfe") == b"<nfeProc></nfeProc>"
+    assert source.calls == 3
+    with pytest.raises(XmlSourceUnavailable) as caught:
+        gateway.list_issued(branch="01", document_type="nfe", issued_from=WHEN, issued_to=WHEN)
+    assert caught.value.scope == "listing"
+
+
+def test_every_contract_route_covers_success_denial_and_missing_records():
+    xml = Xml()
+    extra = access_key("55", 300)
+    xml.listed = [extra]
+    xml.by_key[extra] = _nfe(300, extra)
+    service = _service(xml=xml)
+    created = service.create(date_from=WHEN, date_to=WHEN, document_types=["nfe"], branches=["01"], user_id="u", user_name="Ana", via="user")
+    service.claim_and_execute()
+    analysis_id = created["id"]
+    stable_key = service.occurrences(analysis_id, {}, page=1, page_size=20, sort="severity")["items"][0]["stable_key"]
+    unmatched_key = service.unmatched_documents(analysis_id, {}, page=1, page_size=20)["items"][0]["stable_key"]
+    client = TestClient(_app(service))
+    missing_id = "00000000-0000-0000-0000-000000000000"
+    reads = [
+        f"/entry-audit/analyses/options",
+        "/entry-audit/analyses",
+        f"/entry-audit/analyses/{analysis_id}",
+        f"/entry-audit/analyses/{analysis_id}/summary",
+        f"/entry-audit/analyses/{analysis_id}/daily",
+        f"/entry-audit/analyses/{analysis_id}/breakdowns",
+        f"/entry-audit/analyses/{analysis_id}/facets",
+        "/entry-audit/trend",
+        f"/entry-audit/analyses/{analysis_id}/occurrences",
+        f"/entry-audit/analyses/{analysis_id}/occurrences/{stable_key}",
+        f"/entry-audit/analyses/{analysis_id}/documents",
+        f"/entry-audit/analyses/{analysis_id}/unmatched",
+        f"/entry-audit/analyses/{analysis_id}/cte",
+        f"/entry-audit/analyses/{analysis_id}/tes",
+        f"/entry-audit/analyses/{analysis_id}/export",
+    ]
+    for path in reads:
+        assert client.get(path).status_code == 200, path
+        assert client.get(path, headers={"x-test-auth": "lnf"}).status_code == 403, path
+    denied_posts = [
+        ("/entry-audit/analyses", {"date_from": "2026-11-12", "date_to": "2026-11-12"}),
+        (f"/entry-audit/analyses/{analysis_id}/rerun", {}),
+        (f"/entry-audit/occurrences/{stable_key}/resolve", None),
+        (f"/entry-audit/occurrences/{stable_key}/reopen", None),
+        (f"/entry-audit/unmatched/{stable_key}/resolve", None),
+        (f"/entry-audit/unmatched/{stable_key}/reopen", None),
+    ]
+    for path, body in denied_posts:
+        response = client.post(path, json=body, headers={"x-test-auth": "lnf"})
+        assert response.status_code == 403, path
+    managed = client.post(
+        "/entry-audit/analyses",
+        json={"date_from": "2026-11-12", "date_to": "2026-11-12", "branches": ["02"]},
+        headers={"x-test-auth": "manage"},
+    )
+    assert managed.status_code == 202
+    invalid = client.post("/entry-audit/analyses", json={"date_from": "2026-11-13", "date_to": "2026-11-12"})
+    assert invalid.status_code == 422
+    assert client.get(f"/entry-audit/analyses/{missing_id}").status_code == 404
+    assert client.get(f"/entry-audit/analyses/{missing_id}/summary").status_code == 404
+    assert client.get(f"/entry-audit/analyses/{analysis_id}/occurrences/missing-key").status_code == 404
+    assert client.post("/entry-audit/occurrences/missing-key/resolve").status_code == 404
+    assert client.post("/entry-audit/unmatched/missing-key/reopen").status_code == 404
+    resolved = client.post(f"/entry-audit/occurrences/{stable_key}/resolve")
+    assert resolved.status_code == 200
+    reopened = client.post(f"/entry-audit/occurrences/{stable_key}/reopen")
+    assert reopened.status_code == 200
+    unmatched_resolved = client.post(f"/entry-audit/unmatched/{unmatched_key}/resolve")
+    assert unmatched_resolved.status_code == 200
+    unmatched_reopened = client.post(f"/entry-audit/unmatched/{unmatched_key}/reopen")
+    assert unmatched_reopened.status_code == 200
+    rerun = client.post(f"/entry-audit/analyses/{analysis_id}/rerun", json={})
+    assert rerun.status_code == 202

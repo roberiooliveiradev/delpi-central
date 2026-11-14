@@ -1,12 +1,14 @@
-"""Leituras da api-delpi, da financial-api e do LNF. O worker usa o bearer do pedido."""
+"""Leituras da api-delpi, da financial-api e do LNF. O worker usa a credencial de serviço da BFF."""
 
 from __future__ import annotations
 
 import logging
+import time
+from collections.abc import Callable
 
 from psycopg.rows import dict_row
 
-from controllership_finance_app.application.entry_audit.request_bearer import current_bearer
+from controllership_finance_app.application.entry_audit.errors import XmlSourceUnavailable
 from controllership_finance_app.infrastructure.api_delpi_gateway import ApiDelpiSettlementsGateway
 from controllership_finance_app.infrastructure.invoice_posting.financial_received_invoice_gateway import (
     FinancialReceivedInvoiceGateway,
@@ -19,9 +21,7 @@ from controllership_finance_app.infrastructure.persistence.plugins_db import (
 
 logger = logging.getLogger("controllership_finance.entry_audit.sources")
 
-
-class DelegatedSessionExpired(RuntimeError):
-    """O processo reiniciou e o bearer do pedido não está mais em memória."""
+_XML_ATTEMPTS = 3
 
 
 class ProtheusEntriesGateway:
@@ -67,37 +67,37 @@ class ProtheusEntriesGateway:
         return rows
 
     def _get(self, path, params):
-        token = current_bearer.get()
-        if not token:
-            raise DelegatedSessionExpired()
-        return self._gateway.get(path, access_token=token, params=params)
+        return self._gateway.get_as_service(path, params=params)
 
 
 class FiscalXmlGateway:
-    def __init__(self, gateway: FinancialReceivedInvoiceGateway | None = None) -> None:
+    def __init__(
+        self,
+        gateway: FinancialReceivedInvoiceGateway | None = None,
+        *,
+        attempts: int = _XML_ATTEMPTS,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> None:
         self._gateway = gateway or FinancialReceivedInvoiceGateway()
+        self._attempts = attempts
+        self._sleep = sleep
 
     def download_by_key(self, *, branch, access_key, document_type):
-        try:
-            return self._gateway.download_xml_by_key(
-                authorization=self._authorization(),
+        def _once():
+            return self._gateway.download_xml_by_key_as_service(
                 access_key=access_key,
                 branch=branch,
                 document_type=document_type,
             )
-        except (DelegatedSessionExpired, FinancialReceivedInvoiceGatewayError):
-            logger.warning("entry_audit_xml_download_failed")
-            if not current_bearer.get():
-                raise DelegatedSessionExpired()
-            return None
+
+        return self._retry(_once, "document")
 
     def list_issued(self, *, branch, document_type, issued_from, issued_to):
         keys = []
         page = 1
         while page < 50:
-            try:
-                data = self._gateway.export_received_documents(
-                    authorization=self._authorization(),
+            def _once(page=page):
+                return self._gateway.export_received_documents_as_service(
                     branch=branch,
                     document_type=document_type,
                     issued_from=issued_from.isoformat(),
@@ -105,11 +105,8 @@ class FiscalXmlGateway:
                     page=page,
                     page_size=200,
                 )
-            except (DelegatedSessionExpired, FinancialReceivedInvoiceGatewayError):
-                logger.warning("entry_audit_xml_list_failed")
-                if not current_bearer.get():
-                    raise DelegatedSessionExpired()
-                break
+
+            data = self._retry(_once, "listing")
             items = data.get("items") or []
             keys.extend(str(item.get("access_key") or "") for item in items if item.get("access_key"))
             if data.get("complete", True) or not items:
@@ -117,11 +114,18 @@ class FiscalXmlGateway:
             page += 1
         return keys
 
-    def _authorization(self) -> str:
-        token = current_bearer.get()
-        if not token:
-            raise DelegatedSessionExpired()
-        return f"Bearer {token}"
+    def _retry(self, action, scope: str):
+        last: FinancialReceivedInvoiceGatewayError | None = None
+        for attempt in range(1, self._attempts + 1):
+            try:
+                return action()
+            except FinancialReceivedInvoiceGatewayError as exc:
+                last = exc
+                logger.warning("entry_audit_xml_source_failed scope=%s attempt=%s", scope, attempt)
+                if attempt == self._attempts:
+                    break
+                self._sleep(min(0.05 * (2 ** (attempt - 1)), 0.2))
+        raise XmlSourceUnavailable(scope) from last
 
 
 class InvoicePostingLookup:

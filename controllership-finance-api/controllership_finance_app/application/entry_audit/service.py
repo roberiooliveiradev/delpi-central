@@ -6,8 +6,7 @@ import hashlib
 from datetime import date, datetime, timedelta
 from typing import Protocol
 
-from controllership_finance_app.application.entry_audit.errors import EntryAuditError
-from controllership_finance_app.application.entry_audit.request_bearer import bearer_for, current_bearer
+from controllership_finance_app.application.entry_audit.errors import EntryAuditError, XmlSourceUnavailable
 from controllership_finance_app.application.entry_audit.vocabulary import (
     book_word,
     field_code,
@@ -59,6 +58,8 @@ class EntryAuditService:
 
     def create(self, *, date_from: date, date_to: date, document_types: list[str] | None, branches: list[str] | None, user_id: str, user_name: str, via: str) -> dict:
         types, branch_codes = _filters(document_types, branches)
+        if via not in {"user", "clara"}:
+            raise EntryAuditError("Origem do pedido inválida.", status_code=422, code="INVALID_VIA")
         if date_from > date_to:
             raise EntryAuditError("Período inválido.", status_code=422, code="INVALID_PERIOD")
         existing = self._store.find_open(date_from, date_to, types, branch_codes)
@@ -72,7 +73,7 @@ class EntryAuditService:
             "config_snapshot": _snapshot(self._config, self._lookback_days),
             "status": "queued",
             "requested_by_user_id": user_id,
-            "requested_by_name": user_name,
+            "requested_by_name": _requested_name(user_name, via),
             "requested_via": via,
         })
         self._store.insert_runs(analysis["id"], branch_codes)
@@ -100,7 +101,7 @@ class EntryAuditService:
         runs = self._store.runs_of(analysis_id)
         counts = {}
         for run in runs:
-            if run["status"] == "done":
+            if run["status"] in {"done", "partial"}:
                 for key, value in (run.get("counts") or {}).items():
                     if isinstance(value, int):
                         counts[key] = counts.get(key, 0) + value
@@ -126,15 +127,18 @@ class EntryAuditService:
             "config": analysis["config_snapshot"],
         }
 
-    def rerun(self, analysis_id: str, branches: list[str] | None) -> dict:
+    def rerun(self, analysis_id: str, branches: list[str] | None, *, user_id: str = "", user_name: str = "", via: str = "user") -> dict:
         analysis = self._require(analysis_id)
         selected = branches or list(analysis["branches"])
         unknown = [code for code in selected if code not in analysis["branches"]]
         if unknown or not selected:
             raise EntryAuditError("Filial fora da análise.", status_code=422, code="INVALID_BRANCH")
+        if via not in {"user", "clara"}:
+            raise EntryAuditError("Origem do pedido inválida.", status_code=422, code="INVALID_VIA")
         runs = self._store.runs_for_branches(analysis_id, selected)
         if any(run["status"] in {"queued", "running"} for run in runs):
             raise EntryAuditError("A filial pedida já está na fila.", status_code=409, code="RUN_IN_PROGRESS")
+        self._store.note_requester(analysis_id, user_id=user_id, user_name=_requested_name(user_name, via), via=via)
         for run in runs:
             self._store.clear_output(run["id"])
             self._store.queue_run(run["id"])
@@ -153,7 +157,6 @@ class EntryAuditService:
     def execute(self, run_id: str) -> None:
         run = self._store.get_run(run_id)
         analysis = self._require(run["analysis_id"])
-        current_bearer.set(bearer_for(analysis["id"]))
         config = _config_from(analysis["config_snapshot"])
         species = [SPECIES[code] for code in analysis["document_types"]]
         try:
@@ -164,23 +167,33 @@ class EntryAuditService:
             tes_rows = self._protheus.tes()
             branch_row = next((row for row in self._protheus.branches() if row.get("code") == run["branch_code"]), {})
             self._store.mark_run(run_id, stage="reading_xml", documents_read=len(headers))
-            payloads, downloaded = self._xml_payloads(analysis, run["branch_code"], headers)
+            payloads, downloaded, unavailable = self._xml_payloads(analysis, run["branch_code"], headers)
+            blocked_keys = {str(row.get("access_key") or "") for row in unavailable}
+            blocked_numbers = {
+                str(row.get("document_number") or "")
+                for row in headers
+                if str(row.get("access_key") or "") in blocked_keys
+            }
+            auditable_headers = [row for row in headers if str(row.get("access_key") or "") not in blocked_keys]
+            auditable_items = [row for row in items if str(row.get("document_number") or "") not in blocked_numbers]
             invoices, ctes, _ignored = read_xml_payloads(payloads)
             self._store.mark_run(run_id, stage="auditing", xml_downloaded=downloaded)
             result = audit(
                 branch=run["branch_code"],
                 company_tax_id=str(branch_row.get("tax_id") or ""),
                 company_state=str(branch_row.get("state") or ""),
-                headers=[_header(row) for row in headers],
-                items=[_item(row) for row in items],
+                headers=[_header(row) for row in auditable_headers],
+                items=[_item(row) for row in auditable_items],
                 tes_records=[_tes(row) for row in tes_rows],
                 invoices=invoices,
                 ctes=ctes,
                 config=config,
-                fiscal_book=[_book(row) for row in book],
+                fiscal_book=[_book(row) for row in book if str(row.get("document_number") or "") not in blocked_numbers],
             )
-            lnf = self._lnf_matches(result, run["branch_code"], headers)
-            output = _persistable(analysis["id"], run_id, run["branch_code"], result, headers, items, tes_rows, lnf)
+            lnf = self._lnf_matches(result, run["branch_code"], auditable_headers)
+            output = _persistable(
+                analysis["id"], run_id, run["branch_code"], result, auditable_headers, auditable_items, tes_rows, lnf, unavailable,
+            )
             self._store.mark_run(run_id, stage="saving")
             self._store.replace_output(run_id, **output)
             digest = hashlib.sha256(",".join(sorted(row.get("access_key") or "" for row in headers)).encode()).hexdigest()
@@ -190,7 +203,20 @@ class EntryAuditService:
             counts["excluded"] = len(result.excluded)
             for key, value in result.not_reported.items():
                 counts[f"not_reported:{key}"] = value
-            self._store.mark_run(run_id, status="done", stage="done", counts=counts, engine_version=ENGINE_VERSION, sources_hash=digest, error_message="")
+            counts["xml_unavailable_count"] = len(unavailable)
+            status = "partial" if unavailable else "done"
+            self._store.mark_run(
+                run_id,
+                status=status,
+                stage=status,
+                counts=counts,
+                engine_version=ENGINE_VERSION,
+                sources_hash=digest,
+                error_message="XML_UNAVAILABLE" if unavailable else "",
+            )
+        except XmlSourceUnavailable as exc:
+            code = "XML_LISTING_UNAVAILABLE" if exc.scope == "listing" else "XML_UNAVAILABLE"
+            self._store.mark_run(run_id, status="failed", stage="failed", error_message=code)
         except EntryAuditError:
             raise
         except Exception as exc:
@@ -199,7 +225,8 @@ class EntryAuditService:
     def summary(self, analysis_id: str, filters: dict) -> dict:
         analysis, ready = self._ready(analysis_id)
         occurrences = self._filtered("occurrences", analysis_id, filters)
-        documents = self._filtered("documents", analysis_id, filters)
+        documents = [row for row in self._filtered("documents", analysis_id, filters) if row.get("situation") != "xml_unavailable"]
+        unavailable = [row for row in self._filtered("documents", analysis_id, filters) if row.get("situation") == "xml_unavailable"]
         unmatched = self._filtered("unmatched", analysis_id, filters)
         divergent_keys = {row["access_key"] or row["document_number"] for row in occurrences}
         clean = sum(1 for row in documents if (row["access_key"] or row["document_number"]) not in divergent_keys)
@@ -209,6 +236,7 @@ class EntryAuditService:
             "occurrences": len(occurrences),
             "high": sum(1 for row in occurrences if row["severity"] == "Alta"),
             "pending": sum(1 for row in occurrences if _status(self._store, row) == "pending"),
+            "xml_unavailable": len(unavailable),
         }
         return {
             "kpis": current,
@@ -323,6 +351,8 @@ class EntryAuditService:
         return {"items": rows[start : start + page_size], "page": page, "page_size": page_size, "total": len(rows), "branches_unavailable": ready}
 
     def _set_status(self, stable_key: str, *, kind: str, status: str, user_id: str, user_name: str) -> dict:
+        if not self._store.has_stable_key(stable_key):
+            raise EntryAuditError("Ocorrência não encontrada.", status_code=404, code="NOT_FOUND")
         current = self._store.upsert_status(stable_key, kind=kind, status=status, user_id=user_id, user_name=user_name)
         return {"stable_key": stable_key, "kind": kind, "status": current["status"]}
 
@@ -335,7 +365,7 @@ class EntryAuditService:
     def _ready(self, analysis_id: str) -> tuple[dict, list[str]]:
         analysis = self._require(analysis_id)
         runs = self._store.runs_of(analysis_id)
-        if not any(run["status"] == "done" for run in runs):
+        if not any(run["status"] in {"done", "partial"} for run in runs):
             raise EntryAuditError("A análise ainda não tem filial concluída.", status_code=409, code="ANALYSIS_NOT_READY")
         unavailable = [run["branch_code"] for run in runs if run["status"] == "failed"]
         return analysis, unavailable
@@ -381,16 +411,24 @@ class EntryAuditService:
             "pending": sum(1 for row in occurrences if _status(self._store, row) == "pending"),
         }
 
-    def _xml_payloads(self, analysis: dict, branch: str, headers: list[dict]) -> tuple[list[bytes], int]:
+    def _xml_payloads(self, analysis: dict, branch: str, headers: list[dict]) -> tuple[list[bytes], int, list[dict]]:
         payloads: list[bytes] = []
         seen: set[str] = set()
+        unavailable: list[dict] = []
         downloaded = 0
         for header in headers:
             key = str(header.get("access_key") or "").strip()
             if len(key) != 44:
                 continue
             kind = "cte" if str(header.get("species") or "").upper() == "CTE" else "nfe"
-            payload = self._fiscal_xml.download_by_key(branch=branch, access_key=key, document_type=kind)
+            try:
+                payload = self._fiscal_xml.download_by_key(branch=branch, access_key=key, document_type=kind)
+            except XmlSourceUnavailable as exc:
+                if exc.scope == "listing":
+                    raise
+                unavailable.append(header)
+                seen.add(key)
+                continue
             if payload:
                 payloads.append(payload)
                 seen.add(key)
@@ -400,12 +438,26 @@ class EntryAuditService:
             for key in self._fiscal_xml.list_issued(branch=branch, document_type=document_type, issued_from=issued_from, issued_to=analysis["date_to"]):
                 if key in seen:
                     continue
-                payload = self._fiscal_xml.download_by_key(branch=branch, access_key=key, document_type=document_type)
+                try:
+                    payload = self._fiscal_xml.download_by_key(branch=branch, access_key=key, document_type=document_type)
+                except XmlSourceUnavailable as exc:
+                    if exc.scope == "listing":
+                        raise
+                    unavailable.append({
+                        "branch": branch,
+                        "access_key": key,
+                        "document_number": "",
+                        "series": "",
+                        "supplier_name": "",
+                        "species": "CTE" if document_type == "cte" else "SPED",
+                    })
+                    seen.add(key)
+                    continue
                 if payload:
                     payloads.append(payload)
                     seen.add(key)
                     downloaded += 1
-        return payloads, downloaded
+        return payloads, downloaded, unavailable
 
     def _lnf_matches(self, result, branch: str, headers: list[dict]) -> dict:
         suppliers = {str(row.get("document_number") or ""): row for row in headers}
@@ -424,6 +476,12 @@ class EntryAuditService:
             if found:
                 found_by_key[row.access_key or row.document_number] = found
         return found_by_key
+
+
+def _requested_name(user_name: str, via: str) -> str:
+    if via == "clara":
+        return f"CLARA em nome de {user_name}"
+    return user_name
 
 
 def _filters(document_types: list[str] | None, branches: list[str] | None) -> tuple[list[str], list[str]]:
@@ -565,7 +623,7 @@ def _num(value) -> float:
     return float(value)
 
 
-def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: list[dict], items: list[dict], tes_rows: list[dict], lnf: dict | None = None) -> dict:
+def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: list[dict], items: list[dict], tes_rows: list[dict], lnf: dict | None = None, unavailable: list[dict] | None = None) -> dict:
     header_by_number = {str(row.get("document_number")): row for row in headers}
     occurrence_rows = []
     for row in result.occurrences:
@@ -657,6 +715,24 @@ def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: li
                 "icms": header.get("icms_amount"),
                 "ipi": header.get("ipi_amount"),
             },
+        })
+    for row in unavailable or []:
+        documents.append({
+            "analysis_id": analysis_id,
+            "run_id": run_id,
+            "branch": branch,
+            "access_key": str(row.get("access_key") or ""),
+            "document_number": str(row.get("document_number") or ""),
+            "series": str(row.get("series") or ""),
+            "supplier_code": str(row.get("supplier_code") or ""),
+            "supplier_store": str(row.get("supplier_store") or ""),
+            "supplier_name": str(row.get("supplier_name") or ""),
+            "issue_date": str(row.get("issue_date") or ""),
+            "received_date": str(row.get("received_date") or ""),
+            "situation": "xml_unavailable",
+            "divergence_count": 0,
+            "document_type": "cte" if str(row.get("species") or "").upper() == "CTE" else "nfe",
+            "comparison": {},
         })
     ctes = [
         {

@@ -13,7 +13,10 @@ from fastapi.responses import JSONResponse
 
 from delpi_auth.middleware.fastapi_auth import jwt_middleware as _base_jwt_middleware
 from delpi_auth.middleware.fastapi_auth import normalize_path
+from delpi_auth.service_contract import extract_service_authorization
+from delpi_auth.service_errors import ServiceAuthError
 from delpi_auth.service_token import request_has_valid_internal_service_token
+from delpi_auth.service_token_validator import ServiceTokenValidator
 
 __all__ = ["jwt_middleware"]
 
@@ -53,8 +56,36 @@ def _internal_invoice_reader() -> SimpleNamespace:
     )
 
 
+_BFF_S2S_CLIENTS = ("controllership-finance-api",)
+_BFF_S2S_SCOPES = ("stock-inventory.read",)
+
+
+def bff_service_can_read_received_invoices(request: Request) -> bool:
+    """The controllership BFF client credential, same scope already granted for Protheus reads."""
+    if not _is_received_invoice_path(request.url.path):
+        return False
+    try:
+        token = extract_service_authorization(request.headers)
+    except ValueError:
+        return False
+    if not token:
+        return False
+    try:
+        ServiceTokenValidator.from_env().validate(
+            token,
+            required_scopes=_BFF_S2S_SCOPES,
+            allowed_clients=_BFF_S2S_CLIENTS,
+        )
+    except ServiceAuthError:
+        return False
+    return True
+
+
 async def jwt_middleware(request: Request, call_next):
     if _is_public_health(request.url.path):
+        return await call_next(request)
+    if bff_service_can_read_received_invoices(request):
+        request.state.user = _internal_invoice_reader()
         return await call_next(request)
     if request_has_valid_internal_service_token(request):
         if not _is_received_invoice_path(request.url.path):

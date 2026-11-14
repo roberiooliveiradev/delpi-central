@@ -167,3 +167,43 @@ def test_cte_lookup_sends_the_access_key(client: TestClient) -> None:
     lookup = client.gateway.cte_queries[-1]  # type: ignore[attr-defined]
     assert lookup.access_key == CTE_KEY
     assert lookup.invoice_number == "24568"
+
+
+def test_received_invoice_reads_accept_the_controllership_service_client(monkeypatch) -> None:
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock
+
+    from delpi_auth.service_identity import ServiceIdentity
+
+    from financial_app.middleware.auth_middleware import bff_service_can_read_received_invoices
+
+    validator = MagicMock()
+    validator.validate.return_value = ServiceIdentity(
+        client_id="controllership-finance-api",
+        subject="service-account-cf",
+        scopes=frozenset({"stock-inventory.read"}),
+        audience=("financial-api",),
+        issuer="https://portal.example/auth/realms/delpi",
+    )
+    monkeypatch.setattr(
+        "financial_app.middleware.auth_middleware.ServiceTokenValidator.from_env",
+        classmethod(lambda cls: validator),
+    )
+
+    class Headers(dict):
+        def get(self, key, default=None):
+            for name, value in self.items():
+                if str(name).lower() == str(key).lower():
+                    return value
+            return default
+
+    request = SimpleNamespace(
+        url=SimpleNamespace(path="/invoices/received/export"),
+        headers=Headers({"X-Delpi-Service-Authorization": "Bearer service-jwt"}),
+    )
+    other = SimpleNamespace(
+        url=SimpleNamespace(path="/overview"),
+        headers=Headers({"X-Delpi-Service-Authorization": "Bearer service-jwt"}),
+    )
+    assert bff_service_can_read_received_invoices(request) is True
+    assert bff_service_can_read_received_invoices(other) is False

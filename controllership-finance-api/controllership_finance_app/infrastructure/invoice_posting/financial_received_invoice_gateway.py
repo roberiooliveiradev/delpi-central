@@ -367,6 +367,109 @@ class FinancialReceivedInvoiceGateway:
             raise FinancialReceivedInvoiceGatewayError("O XML retornado é inválido.", 502)
         return content
 
+    def export_received_documents_as_service(
+        self,
+        *,
+        branch: str,
+        document_type: str,
+        issued_from: str,
+        issued_to: str,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        response = self._get_as_service(
+            "/invoices/received/export",
+            params={
+                "branch": branch,
+                "type": document_type,
+                "issued_from": issued_from,
+                "issued_to": issued_to,
+                "page": str(page),
+                "page_size": str(page_size),
+            },
+        )
+        payload = _json_payload(response)
+        if response.status_code >= 400 or payload.get("success") is False:
+            raise FinancialReceivedInvoiceGatewayError(
+                _safe_message(payload, "Não foi possível listar os documentos fiscais do período."),
+                _mapped_status(response.status_code),
+            )
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            raise FinancialReceivedInvoiceGatewayError(
+                "A listagem fiscal retornou um formato inválido.",
+                502,
+            )
+        return data
+
+    def download_xml_by_key_as_service(
+        self,
+        *,
+        access_key: str,
+        branch: str,
+        document_type: str,
+    ) -> bytes | None:
+        response = self._get_as_service(
+            f"/invoices/received/by-key/{quote(access_key, safe='')}/xml",
+            params={"branch": branch, "type": document_type},
+        )
+        if response.status_code == 404:
+            return None
+        if response.status_code >= 400:
+            raise FinancialReceivedInvoiceGatewayError(
+                "Não foi possível obter o XML pela chave.",
+                _mapped_status(response.status_code),
+            )
+        content = response.content or b""
+        if not _looks_like_xml(content):
+            raise FinancialReceivedInvoiceGatewayError("O XML retornado é inválido.", 502)
+        return content
+
+    def _get_as_service(self, path: str, *, params: dict[str, str]) -> httpx.Response:
+        from delpi_auth.service_contract import SERVICE_AUTHORIZATION_HEADER, build_service_authorization
+        from delpi_auth.service_errors import ServiceAuthError
+
+        from controllership_finance_app.infrastructure.api_delpi_gateway import get_s2s_token_provider
+
+        try:
+            token = get_s2s_token_provider().get_token()
+        except ServiceAuthError as exc:
+            raise FinancialReceivedInvoiceGatewayError(
+                "A consulta de notas fiscais está indisponível.",
+                503,
+            ) from exc
+        headers = {
+            "Accept": "application/json, application/pdf, text/xml",
+            SERVICE_AUTHORIZATION_HEADER: build_service_authorization(token),
+            "X-Delpi-Caller-App": "controllership-finance-api",
+        }
+        last_error: FinancialReceivedInvoiceGatewayError | None = None
+        for attempt in range(1, _MAX_ATTEMPTS + 1):
+            try:
+                response = self._send(path, headers=headers, params=params)
+            except httpx.TimeoutException:
+                last_error = FinancialReceivedInvoiceGatewayError(
+                    "A consulta de notas fiscais demorou além do limite.",
+                    503,
+                )
+            except httpx.HTTPError:
+                last_error = FinancialReceivedInvoiceGatewayError(
+                    "A consulta de notas fiscais está indisponível.",
+                    503,
+                )
+            else:
+                if response.status_code not in _TRANSIENT_STATUS or attempt == _MAX_ATTEMPTS:
+                    return response
+                self._sleep(_retry_delay(attempt, response))
+                continue
+            if attempt == _MAX_ATTEMPTS and last_error is not None:
+                raise last_error
+            self._sleep(_retry_delay(attempt, None))
+        raise FinancialReceivedInvoiceGatewayError(
+            "A consulta de notas fiscais está indisponível.",
+            503,
+        )
+
     def _get(
         self,
         path: str,

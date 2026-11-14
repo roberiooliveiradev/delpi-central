@@ -8,3 +8,11 @@ class EntryAuditError(Exception):
         super().__init__(message)
         self.status_code = status_code
         self.code = code
+
+
+class XmlSourceUnavailable(Exception):
+    """A fonte fiscal falhou. Isso não é ausência de XML."""
+
+    def __init__(self, scope: str) -> None:
+        super().__init__(scope)
+        self.scope = scope

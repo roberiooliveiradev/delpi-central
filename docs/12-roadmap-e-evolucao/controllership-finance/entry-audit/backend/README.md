@@ -336,7 +336,7 @@ Livro em novembro (`FT_TIPOMOV = 'E'`, `FT_ENTRADA`): 480 linhas na filial 01 e 
 | Tabela | Conteúdo |
 |---|---|
 | `entry_audit_analysis` | período (De/Até), tipos de documento, filiais, versão da configuração usada, status agregado, quem pediu (usuário ou CLARA em nome do usuário), datas |
-| `entry_audit_run` | uma por filial da análise: status (`queued`/`running`/`done`/`failed`), etapa e andamento, contagens, versão do motor, hash das fontes, erro |
+| `entry_audit_run` | uma por filial da análise: status (`queued`/`running`/`done`/`partial`/`failed`), etapa e andamento, contagens, versão do motor, hash das fontes, erro |
 | `entry_audit_document` | notas casadas (cabeçalho comparado), situação |
 | `entry_audit_occurrence` | ocorrência: chave estável, severidade, tema, ocorrência, NF, fornecedor, item, campo, valor Protheus, valor XML, diferença, TES, por quê, ação sugerida, regra |
 | `entry_audit_unmatched` | notas só no XML / só no SF1, com motivo e situação |
@@ -391,7 +391,7 @@ A NF-e manda `EmissionStart`/`EmissionEnd` em `dd/MM/yyyy`. O CT-e aceita o mesm
 
 Todas exigem `controllership-finance.access`. `manage` herda. Com `ENTRY_AUDIT_ENABLED` falso as rotas não são montadas (404 do FastAPI), o worker não sobe e o catálogo da CLARA não lista as entradas.
 
-`POST /entry-audit/analyses` — body `{date_from, date_to, document_types, branches}`. `document_types` é subconjunto de `nfe` e `cte` (padrão, se omitido: os dois). `branches` é subconjunto de `01` e `02` (padrão: as duas). 202 com `{id, status, created}`. `created: false` quando já existe análise `queued` ou `running` com o mesmo período, os mesmos tipos e as mesmas filiais. Análise `done` ou `failed` não é reaproveitada: nasce outra. Janela inválida: 422.
+`POST /entry-audit/analyses` — body `{date_from, date_to, document_types, branches, via}`. `document_types` é subconjunto de `nfe` e `cte` (padrão, se omitido: os dois). `branches` é subconjunto de `01` e `02` (padrão: as duas). `via` é `user` ou `clara` (padrão `user`). O pedido exige `controllership-finance.access` e grava quem pediu: o usuário, ou «CLARA em nome de» quando `via=clara`. 202 com `{id, status, created}`. `created: false` quando já existe análise `queued` ou `running` com o mesmo período, os mesmos tipos e as mesmas filiais. Análise `done`, `partial` ou `failed` não é reaproveitada: nasce outra. Janela inválida: 422. O worker não guarda o bearer do usuário. A leitura do Protheus e do XML usa a credencial de serviço da BFF (`ClientCredentialsTokenProvider`, cliente `controllership-finance-api`, escopo já existente `stock-inventory.read`).
 
 `GET /entry-audit/analyses/options` — `{branches: [{code, name, state, tax_id}], document_types: [{code, label, species, default}]}`. `nfe` → espécie `SPED`; `cte` → `CTE`.
 
@@ -401,7 +401,7 @@ Todas exigem `controllership-finance.access`. `manage` herda. Com `ENTRY_AUDIT_E
 
 `POST /entry-audit/analyses/{id}/rerun` — body opcional `{branches}`. 202. 409 `RUN_IN_PROGRESS` se a filial pedida está `queued` ou `running`.
 
-Leituras de resultado (`summary`, `daily`, `breakdowns`, `facets`, `occurrences`, `documents`, `unmatched`, `cte`, `tes`, `export`): 409 `ANALYSIS_NOT_READY` enquanto nenhuma filial está `done`. Com ao menos uma filial `done`, 200 e `meta.branches_unavailable` lista as que falharam. Filial que falhou não entra como zero.
+Leituras de resultado (`summary`, `daily`, `breakdowns`, `facets`, `occurrences`, `documents`, `unmatched`, `cte`, `tes`, `export`): 409 `ANALYSIS_NOT_READY` enquanto nenhuma filial está `done` ou `partial`. Com ao menos uma filial concluída, 200 e `meta.branches_unavailable` lista as que falharam. Filial que falhou não entra como zero. Falha de download de uma nota marca a execução `partial`, conta `xml_unavailable` e grava a nota como «XML indisponível»: ela não vira sem par nem ocorrência. Falha da listagem inteira marca a execução `failed` com `XML_LISTING_UNAVAILABLE`. O resumo e a exportação mostram «XML indisponível».
 
 Filtros dessas leituras, todos opcionais: `branch`, `severity`, `theme`, `supplier`, `tes`, `document_type`, `day`, `status` (`pending`|`resolved`), `q`. O servidor aplica; o cliente não recalcula regra.
 
@@ -594,9 +594,9 @@ Cada análise grava esse mapa em `config_snapshot`. Mudar a variável não alter
 
 Schema `controllership_finance`. Só cria tabela. Rollback de código não apaga.
 
-`entry_audit_analysis`: `id` UUID PK, `date_from`, `date_to`, `document_types` `TEXT[]`, `branches` `TEXT[]`, `config_snapshot` JSONB, `status`, `requested_by_user_id`, `requested_by_name`, `requested_via` (`user`|`clara`), `created_at`, `updated_at`, `finished_at`. Índice único parcial `(date_from, date_to, document_types, branches) WHERE status IN ('queued','running')`. Índice `(status, created_at DESC)`.
+`entry_audit_analysis`: `id` UUID PK, `date_from`, `date_to`, `document_types` `TEXT[]`, `branches` `TEXT[]`, `config_snapshot` JSONB, `status` (`queued`/`running`/`done`/`partial`/`failed`), `requested_by_user_id`, `requested_by_name`, `requested_via` (`user`|`clara`), `created_at`, `updated_at`, `finished_at`. Índice único parcial `(date_from, date_to, document_types, branches) WHERE status IN ('queued','running')`. Índice `(status, created_at DESC)`. `partial` entrou na V024; a V023 não foi reescrita.
 
-`entry_audit_run`: `id`, `analysis_id` FK, `branch_code`, `status`, `stage`, `documents_read`, `xml_downloaded`, `counts` JSONB, `engine_version`, `sources_hash`, `error_message`, `started_at`, `finished_at`. Único `(analysis_id, branch_code)`. Índice parcial `status WHERE status = 'queued'`.
+`entry_audit_run`: `id`, `analysis_id` FK, `branch_code`, `status` (`queued`/`running`/`done`/`partial`/`failed`), `stage`, `documents_read`, `xml_downloaded`, `counts` JSONB (inclui `xml_unavailable_count`), `engine_version`, `sources_hash`, `error_message`, `started_at`, `finished_at`. Único `(analysis_id, branch_code)`. Índice parcial `status WHERE status = 'queued'`.
 
 `entry_audit_document`: `id`, `run_id`, `access_key`, `branch_code`, `document_number`, `series`, `supplier_code`, `supplier_store`, `supplier_name`, `issue_date`, `received_date`, `situation`, `divergence_count`, `comparison` JSONB.
 

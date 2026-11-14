@@ -2,9 +2,11 @@
 
 Guard: the same individual S2S contract as the other financeiro routes
 the controllership BFF calls (``stock-inventory.read`` on the client
-``controllership-finance-api``, plus the delegated user Bearer). No new
-permission and no dataset flag — ``ENTRY_AUDIT_ENABLED`` lives on the BFF.
-Fiscal rules stay out of this service.
+``controllership-finance-api``). The worker calls with that service
+credential alone. A delegated user Bearer is not required: the BFF already
+checked ``controllership-finance.access`` when the analysis was requested.
+No new permission and no dataset flag — ``ENTRY_AUDIT_ENABLED`` lives on
+the BFF. Fiscal rules stay out of this service.
 """
 
 from __future__ import annotations
@@ -24,9 +26,6 @@ from app.interface.http.openapi_agent_metadata_builder import (
 )
 from app.interface.http.pagination_query import PAGE_SIZE_QUERY
 from app.interface.http.route_response_helpers import api_delpi_success
-from app.interface.http.routes.financeiro.stock_inventory_route_helpers import (
-    delegated_user_subject,
-)
 from app.interface.http.s2s_service_access import require_s2s_service
 from app.utils.logger import log_error
 
@@ -76,17 +75,6 @@ def _species_query():
     )
 
 
-def _require_user():
-    if delegated_user_subject() is None:
-        return error_response(
-            "Delegated user bearer is required.",
-            status_code=403,
-            code="DELEGATED_USER_REQUIRED",
-            recoverable=False,
-        )
-    return None
-
-
 def _period(
     *,
     branch: str,
@@ -110,9 +98,6 @@ def _period(
 
 
 def _run(loader, operation_id: str, message: str):
-    denied = _require_user()
-    if denied is not None:
-        return denied
     try:
         data = loader(build_list_entry_audit_use_case())
     except Exception as exc:

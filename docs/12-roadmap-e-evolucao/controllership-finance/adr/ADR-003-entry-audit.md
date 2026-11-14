@@ -38,7 +38,9 @@ Completam a decisão, pela evidência da T0:
 - a solicitação do LNF é achada pelo número e pelo fornecedor; a chave só existe quando há DANFE anexado;
 - a auditoria não escreve no Protheus, no Questor nem no LNF.
 
-Dívida registrada na revisão de T0–T3, sem mudança de código: a api-delpi aceita a BFF nas leituras `/financeiro/entry-audit/*` pelo escopo S2S `stock-inventory.read`, reaproveitado para não criar permissão nem escopo novo. O escopo descreve outro conjunto de dados. A troca por um escopo próprio da auditoria fica para quando o Keycloak puder ser provisionado sem 403.
+Dívida registrada na revisão de T0–T3: a api-delpi aceita a BFF nas leituras `/financeiro/entry-audit/*` pelo escopo S2S `stock-inventory.read`, reaproveitado para não criar permissão nem escopo novo. O escopo descreve outro conjunto de dados. A troca por um escopo próprio da auditoria fica para quando o Keycloak puder ser provisionado sem 403.
+
+O rework da T5 tira o bearer do usuário do worker. Quem pede a análise continua sendo um usuário com `controllership-finance.access` (ou a CLARA em nome dele). A execução, inclusive a retomada depois de um reinício, lê o Protheus e o XML com a credencial de serviço da BFF (`ClientCredentialsTokenProvider`, cliente `controllership-finance-api`). A api-delpi aceita essa credencial sozinha nas rotas `/financeiro/entry-audit/*`, no mesmo guard S2S das outras leituras financeiras e sem bearer delegado. A financial-api aceita o mesmo cliente e o mesmo escopo nas rotas de leitura de notas recebidas, além do token interno que já existia. Não há permission nova de usuário.
 
 ## Alternativas rejeitadas
 

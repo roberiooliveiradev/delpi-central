@@ -199,12 +199,49 @@ def test_wrong_client_and_scope_are_403(client: TestClient, monkeypatch) -> None
     assert client.get(f"{DOCS}?{PERIOD}", headers=S2S_HEADERS).status_code == 403
 
 
-def test_service_principal_cannot_read(client: TestClient, monkeypatch) -> None:
+def test_service_credential_reads_without_a_delegated_user(client: TestClient, monkeypatch) -> None:
     _patch_s2s(monkeypatch, _headers(S2S_HEADERS), _validator())
     _patch_user(monkeypatch, principal_type="service")
+    use_case = MagicMock()
+    use_case.documents.return_value = {"items": [], "page": 1, "page_size": 50, "total": 0, "total_pages": 0}
+    import app.interface.http.routes.financeiro.entry_audit_router as mod
+
+    monkeypatch.setattr(mod, "build_list_entry_audit_use_case", lambda: use_case)
     response = client.get(f"{DOCS}?{PERIOD}", headers=S2S_HEADERS)
-    assert response.status_code == 403
-    assert response.json()["error"]["code"] == "DELEGATED_USER_REQUIRED"
+    assert response.status_code == 200
+    assert response.json()["meta"]["operationId"] == "list_entry_audit_documents"
+
+
+def test_entry_audit_gate_allows_the_bff_credential_without_a_user_bearer(monkeypatch) -> None:
+    from app.middleware.auth_middleware import entry_audit_service_gate
+
+    validator = MagicMock()
+    validator.validate.return_value = VALID_IDENTITY
+    monkeypatch.setattr(
+        "app.middleware.auth_middleware.ServiceTokenValidator.from_env",
+        classmethod(lambda cls: validator),
+    )
+
+    class Headers(dict):
+        def get(self, key, default=None):
+            for name, value in self.items():
+                if str(name).lower() == str(key).lower():
+                    return value
+            return default
+
+    service_only = SimpleNamespace(
+        url=SimpleNamespace(path="/financeiro/entry-audit/documents"),
+        headers=Headers({"X-Delpi-Service-Authorization": "Bearer service-jwt"}),
+    )
+    with_user = SimpleNamespace(
+        url=SimpleNamespace(path="/financeiro/entry-audit/documents"),
+        headers=Headers({
+            "Authorization": "Bearer user-jwt",
+            "X-Delpi-Service-Authorization": "Bearer service-jwt",
+        }),
+    )
+    assert entry_audit_service_gate(service_only) == "allow"
+    assert entry_audit_service_gate(with_user) == "skip"
 
 
 def test_invalid_species_is_422(client: TestClient, monkeypatch) -> None:

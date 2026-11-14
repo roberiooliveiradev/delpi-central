@@ -147,6 +147,13 @@ class MemoryEntryAuditStore:
             if run["analysis_id"] == analysis_id and run["branch_code"] in branches
         ]
 
+    def note_requester(self, analysis_id: str, *, user_id: str, user_name: str, via: str) -> None:
+        analysis = self.analyses[analysis_id]
+        analysis["requested_by_user_id"] = user_id
+        analysis["requested_by_name"] = user_name
+        analysis["requested_via"] = via
+        analysis["updated_at"] = _now()
+
     def queue_run(self, run_id: str) -> None:
         run = self.runs[run_id]
         run["status"] = "queued"
@@ -155,6 +162,9 @@ class MemoryEntryAuditStore:
         run["started_at"] = None
         run["finished_at"] = None
         self._refresh(run["analysis_id"])
+
+    def has_stable_key(self, stable_key: str) -> bool:
+        return any(row["stable_key"] == stable_key for row in (*self.occurrences, *self.unmatched))
 
     def status_of(self, stable_key: str) -> dict | None:
         found = self.statuses.get(stable_key)
@@ -197,6 +207,9 @@ class MemoryEntryAuditStore:
             analysis["finished_at"] = None
         elif statuses == {"failed"}:
             analysis["status"] = "failed"
+            analysis["finished_at"] = _now()
+        elif "partial" in statuses:
+            analysis["status"] = "partial"
             analysis["finished_at"] = _now()
         elif "done" in statuses:
             analysis["status"] = "done"

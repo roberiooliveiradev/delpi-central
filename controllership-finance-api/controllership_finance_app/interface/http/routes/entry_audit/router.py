@@ -9,7 +9,6 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 
 from controllership_finance_app.application.entry_audit.errors import EntryAuditError
-from controllership_finance_app.application.entry_audit.request_bearer import remember_bearer
 from controllership_finance_app.core.responses import fail, ok
 from controllership_finance_app.infrastructure.entry_audit.xlsx_export import build_workbook
 from controllership_finance_app.interface.http.authz import (
@@ -27,10 +26,12 @@ class AnalysisBody(BaseModel):
     date_to: date
     document_types: list[str] | None = None
     branches: list[str] | None = None
+    via: str | None = None
 
 
 class RerunBody(BaseModel):
     branches: list[str] | None = None
+    via: str | None = None
 
 
 def get_entry_audit_service():
@@ -79,10 +80,7 @@ def _filters(request: Request) -> dict:
     }
 
 
-def _created(request: Request, payload: dict, operation_id: str = "create_entry_audit_analysis"):
-    header = request.headers.get("authorization") or ""
-    token = header[7:].strip() if header.lower().startswith("bearer ") else ""
-    remember_bearer(str(payload.get("id") or ""), token)
+def _created(payload: dict, operation_id: str = "create_entry_audit_analysis"):
     return ok(payload, status_code=202, operation_id=operation_id)
 
 
@@ -96,14 +94,14 @@ def create_analysis(body: AnalysisBody, request: Request):
     user = _actor(request)
     if not hasattr(user, "principal_type"):
         return user
-    return _call(lambda: _created(request, _service(request).create(
+    return _call(lambda: _created(_service(request).create(
             date_from=body.date_from,
             date_to=body.date_to,
             document_types=body.document_types,
             branches=body.branches,
             user_id=str(getattr(user, "id", "") or ""),
             user_name=str(getattr(user, "name", "") or ""),
-            via="user",
+            via=body.via or "user",
         )))
 
 
@@ -148,7 +146,14 @@ def rerun_analysis(analysis_id: str, request: Request, body: RerunBody | None = 
     if not hasattr(user, "principal_type"):
         return user
     branches = body.branches if body else None
-    return _call(lambda: _created(request, _service(request).rerun(analysis_id, branches), operation_id="rerun_entry_audit_analysis"))
+    via = body.via if body and body.via else "user"
+    return _call(lambda: _created(_service(request).rerun(
+        analysis_id,
+        branches,
+        user_id=str(getattr(user, "id", "") or ""),
+        user_name=str(getattr(user, "name", "") or ""),
+        via=via,
+    ), operation_id="rerun_entry_audit_analysis"))
 
 
 @router.get("/analyses/{analysis_id}/summary", operation_id="get_entry_audit_summary")

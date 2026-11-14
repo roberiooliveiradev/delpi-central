@@ -1,10 +1,16 @@
 # app/middleware/auth_middleware.py
 
+from types import SimpleNamespace
+
 from fastapi import Request
+from fastapi.responses import JSONResponse
 
 from delpi_auth.jwt_validator import validate_token
 from delpi_auth.middleware.fastapi_auth import jwt_middleware as _base_jwt_middleware
+from delpi_auth.service_contract import extract_service_authorization
+from delpi_auth.service_errors import ServiceAuthConfigError, ServiceAuthError, ServiceValidatorUnavailableError
 from delpi_auth.service_token import request_has_valid_internal_service_token
+from delpi_auth.service_token_validator import ServiceTokenValidator
 from delpi_mcp.auth import (
     McpTransportAuthPolicy,
     is_mcp_data_path,
@@ -75,9 +81,73 @@ _MCP_TRANSPORT_POLICY = McpTransportAuthPolicy(
 )
 
 
+_ENTRY_AUDIT_PREFIX = "/financeiro/entry-audit"
+_ENTRY_AUDIT_SCOPES = ("stock-inventory.read",)
+_ENTRY_AUDIT_CLIENTS = ("controllership-finance-api",)
+
+
+def _is_entry_audit_path(path: str) -> bool:
+    normalized = _strip_root(path.split("?", 1)[0])
+    return normalized == _ENTRY_AUDIT_PREFIX or normalized.startswith(f"{_ENTRY_AUDIT_PREFIX}/")
+
+
+def entry_audit_service_gate(request: Request) -> str:
+    """Allow the BFF service credential on entry-audit reads without a user bearer.
+
+    ``skip`` keeps the normal user JWT path. ``allow`` is a validated service
+    call. ``deny`` is a malformed or rejected service credential.
+    """
+    if not _is_entry_audit_path(request.url.path):
+        return "skip"
+    authorization = request.headers.get("Authorization") or ""
+    if authorization.lower().startswith("bearer "):
+        return "skip"
+    try:
+        token = extract_service_authorization(request.headers)
+    except ValueError:
+        return "deny"
+    if not token:
+        return "skip"
+    try:
+        ServiceTokenValidator.from_env().validate(
+            token,
+            required_scopes=_ENTRY_AUDIT_SCOPES,
+            allowed_clients=_ENTRY_AUDIT_CLIENTS,
+        )
+    except (ServiceAuthConfigError, ServiceValidatorUnavailableError):
+        return "unavailable"
+    except ServiceAuthError:
+        return "deny"
+    return "allow"
+
+
+def _entry_audit_service_principal() -> SimpleNamespace:
+    return SimpleNamespace(
+        id="controllership-finance-api",
+        email="controllership-finance-api@delpi.internal",
+        name="Controladoria",
+        roles=[],
+        groups=[],
+        permissions=[],
+        is_superadmin=False,
+        rbac_unavailable=False,
+        access_token=None,
+        principal_type="service",
+    )
+
+
 async def jwt_middleware(request: Request, call_next):
     if _is_public_delpi_path(request.url.path):
         return await call_next(request)
+
+    gate = entry_audit_service_gate(request)
+    if gate == "allow":
+        request.state.user = _entry_audit_service_principal()
+        return await call_next(request)
+    if gate == "deny":
+        return JSONResponse(status_code=401, content={"detail": "Invalid service authorization"})
+    if gate == "unavailable":
+        return JSONResponse(status_code=503, content={"detail": "Service authentication unavailable"})
 
     normalized = _strip_root(request.url.path.split("?", 1)[0])
     if _is_mcp_data_path(normalized):
