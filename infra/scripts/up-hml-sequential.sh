@@ -58,12 +58,15 @@ FASE_MFE=(
   my-requests
   engineering
   lancamento-notas-fiscais
+  commercial
+  public-hub
 )
 FASE_API=(
   production-control-api
   requests-api
   engineering-api
   controllership-finance-api
+  commercial-api
 )
 
 # União ordenada (core → remote → mfe → api) — fonte única para --list / validação.
@@ -134,6 +137,9 @@ compose_profiles_for() {
     engineering) echo engineering ;;
     lancamento-notas-fiscais) echo lancamento-notas-fiscais ;;
     controllership-finance-api) echo controllership-finance-api ;;
+    commercial-api) echo commercial-api ;;
+    commercial) echo commercial ;;
+    public-hub) echo public-hub ;;
     gateway) echo gateway ;;
     *)
       echo "Serviço HML sem profile mapeado: $svc" >&2

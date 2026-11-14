@@ -95,6 +95,15 @@ ENGINEERING_UI_SERVICES=(
 CF_API_SERVICES=(
   controllership-finance-api
 )
+COMMERCIAL_API_SERVICES=(
+  commercial-api
+)
+COMMERCIAL_UI_SERVICES=(
+  commercial
+)
+PUBLIC_HUB_SERVICES=(
+  public-hub
+)
 PLATFORM_SERVICES=(
   postgres-core
   keycloak-db
@@ -128,6 +137,9 @@ START_ORDER=(
   engineering-api
   engineering
   controllership-finance-api
+  commercial-api
+  commercial
+  public-hub
   gateway
 )
 AUTHORIZED_UP_SCENARIOS=(
@@ -147,6 +159,9 @@ AUTHORIZED_UP_SCENARIOS=(
   engineering-api
   engineering
   controllership-finance-api
+  commercial-api
+  commercial
+  public-hub
 )
 ALLOWED_HML_CONTAINERS_AFTER_GATEWAY=(
   delpi-hml-postgres-core
@@ -235,8 +250,11 @@ scenario_services() {
     engineering-api) printf '%s\n' "${ENGINEERING_API_SERVICES[@]}" ;;
     engineering) printf '%s\n' "${ENGINEERING_UI_SERVICES[@]}" ;;
     controllership-finance-api) printf '%s\n' "${CF_API_SERVICES[@]}" ;;
-    baseline) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" "${REQUESTS_API_SERVICES[@]}" "${MY_REQUESTS_SERVICES[@]}" "${ENGINEERING_API_SERVICES[@]}" "${ENGINEERING_UI_SERVICES[@]}" "${CF_API_SERVICES[@]}" ;;
-    platform) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${REQUESTS_API_SERVICES[@]}" "${MY_REQUESTS_SERVICES[@]}" "${ENGINEERING_API_SERVICES[@]}" "${ENGINEERING_UI_SERVICES[@]}" "${CF_API_SERVICES[@]}" ;;
+    commercial-api) printf '%s\n' "${COMMERCIAL_API_SERVICES[@]}" ;;
+    commercial) printf '%s\n' "${COMMERCIAL_UI_SERVICES[@]}" ;;
+    public-hub) printf '%s\n' "${PUBLIC_HUB_SERVICES[@]}" ;;
+    baseline) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" "${REQUESTS_API_SERVICES[@]}" "${MY_REQUESTS_SERVICES[@]}" "${ENGINEERING_API_SERVICES[@]}" "${ENGINEERING_UI_SERVICES[@]}" "${CF_API_SERVICES[@]}" "${COMMERCIAL_API_SERVICES[@]}" "${COMMERCIAL_UI_SERVICES[@]}" "${PUBLIC_HUB_SERVICES[@]}" ;;
+    platform) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${REQUESTS_API_SERVICES[@]}" "${MY_REQUESTS_SERVICES[@]}" "${ENGINEERING_API_SERVICES[@]}" "${ENGINEERING_UI_SERVICES[@]}" "${CF_API_SERVICES[@]}" "${COMMERCIAL_API_SERVICES[@]}" "${COMMERCIAL_UI_SERVICES[@]}" "${PUBLIC_HUB_SERVICES[@]}" ;;
     production-control) printf '%s\n' "${PLATFORM_SERVICES[@]}" "${PC_SERVICES[@]}" ;;
     *)
       echo "Cenário desconhecido: $scenario" >&2

@@ -51,6 +51,11 @@ BASELINE = {
     "my-requests",
     "engineering-api",
     "engineering",
+    "controllership-finance-api",
+    "lancamento-notas-fiscais",
+    "commercial-api",
+    "commercial",
+    "public-hub",
     "gateway",
 }
 PLATFORM = BASELINE - {"production-control", "production-control-api"}

@@ -700,6 +700,103 @@ services:
       delpi.environment: homologation
       delpi.project: delpi-hml
 
+  commercial-api:
+    extends:
+      file: docker-compose.yml
+      service: commercial-api
+    profiles: [commercial-api, baseline, platform]
+    image: delpi-hml/commercial-api:local
+    container_name: delpi-hml-commercial-api
+    ports: !override []
+    env_file: !override
+      - path: env.hml.example
+        required: true
+      - path: .env.hml
+        required: false
+    depends_on: !override {}
+    networks: !override
+      - delpi-hml
+    volumes: !override
+      - ${DELPI_HML_DATA_HOST_DIR:-./hml-data}/commercial-avatars:/app/data/commercial-avatars
+      - ${DELPI_HML_DATA_HOST_DIR:-./hml-data}/commercial-attachments:/app/data/commercial-attachments
+      - ${DELPI_HML_DATA_HOST_DIR:-./hml-data}/commercial-user-avatars:/app/data/commercial-user-avatars
+    environment:
+      APP_ENV: homologation
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      DELPI_AUTH_CORE_API_URL: http://core-api:8000
+      DELPI_API_URL: http://api-delpi:8000
+      CORE_API_BASE_URL: http://core-api:8000
+      COMMERCIAL_RUN_MIGRATIONS_ON_STARTUP: "true"
+      COMMERCIAL_SATISFACTION_SURVEY_ENABLED: ${COMMERCIAL_SATISFACTION_SURVEY_ENABLED:-true}
+      COMMERCIAL_SATISFACTION_TOKEN_KEY: ${COMMERCIAL_SATISFACTION_TOKEN_KEY:-}
+      COMMERCIAL_INTEGRATION_JOBS_SCHEDULER_ENABLED: "false"
+      MCP_RESOURCE_URL: ${PUBLIC_BASE_URL}/apps/commercial-api/mcp
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    mem_limit: 1g
+    cpus: 1.0
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  commercial:
+    extends:
+      file: docker-compose.yml
+      service: commercial
+    profiles: [commercial, baseline, platform]
+    image: delpi-hml/commercial:local
+    container_name: delpi-hml-commercial
+    ports: !override []
+    depends_on: !override {}
+    networks: !override
+      - delpi-hml
+    volumes: !override []
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null -T 3 http://127.0.0.1/assets/remoteEntry.js || wget -q -O /dev/null -T 3 http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    mem_limit: 512m
+    cpus: 0.5
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  public-hub:
+    extends:
+      file: docker-compose.yml
+      service: public-hub
+    profiles: [public-hub, baseline, platform]
+    image: delpi-hml/public-hub:local
+    container_name: delpi-hml-public-hub
+    ports: !override []
+    depends_on: !override {}
+    networks: !override
+      - delpi-hml
+    volumes: !override []
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null -T 3 http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    mem_limit: 512m
+    cpus: 0.5
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
   gateway:
     extends:
       file: docker-compose.yml
