@@ -919,3 +919,35 @@ E01 sete campos no card **PASS** (subchecks id/type/requester/officialCode/creat
 **Limitações:** reordenação por drag validada via handles+unit test (drag headless instável); menu usa flip quando o gatilho está próximo ao fundo — comportamento desejado, validado.
 
 **Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
+
+## 49. Painel Sinalizados recortado — migração para AnchoredPanelPortal (14/11/2026)
+
+**TASK:** `EVA-ENGINEERING-POPOVER-ANCHOR-STANDARDIZATION-HML-01`. Frontend exclusivo (engineering MFE); **PRD não autorizado.**
+
+**Causa raiz:** mesmo mecanismo do §48 — `.engineering-prc__flags-ops--hero .engineering-prc__flags-ops-body` era `position:absolute` sob `.delpi-ui-page-hero { overflow: hidden }`: a área inferior do painel era recortada pelo hero e encoberta pela tabela (evidência PO). Não era questão de z-index.
+
+**Correção (commit `1920f7b450`, 3 arquivos):**
+- `PrcFlagsOpsPanel.tsx`: modo `compact` renderiza o corpo via **`EngineeringAnchoredPanel`** (`AnchoredPanelPortal variant="bare"`, `role="dialog"`, `aria-label="Campos sinalizados"`, `preferredPlacement="bottom"`, `horizontalAlign="end"`, `gap=6`, `onDismiss` → Escape + clique externo). Âncora = `<section>` (ActionButton não encaminha ref). Conteúdo compartilhado extraído em `body` com `id` para `aria-controls`. Modo não-compacto mantém renderização inline.
+- `prc.css`: chrome do popover movido para `.engineering-prc__flags-ops-body--portal` (width min(760px,100vw-40px), max-height 70vh, overflow:auto, fundo/borda/sombra); `.engineering-prc__flags-ops-content` carrega flex/gap nos dois modos; regra morta de posicionamento inline sob o hero removida.
+- `PrcFlagsOpsPanel.test.tsx` (novo): 3 testes estruturais — uso do EngineeringAnchoredPanel, variante portal + role=dialog + onDismiss, renderização inline preservada no modo não-compacto.
+
+**Overlays aninhados:** filtros internos usam `SelectControl` (popover próprio) — a política `isAnchorNestedInExclusiveAnchoredPanel` do kit mantém o painel pai aberto ao abrir selects internos; validado no E2E (troca de filtro dentro do painel aberto). Exclusividade entre Sinalizados × Colunas funciona nos dois sentidos sem overlays órfãos.
+
+**Preservado:** botão `Sinalizados (N)` nas ações do hero com contador real (consulta leve fail-closed), filtros internos, lista de bandeiras, "Abrir solicitação" → detalhe interno, paginação condicional (>25), permissões/AuthZ, estados loading/erro, lifecycle das bandeiras, tema claro/escuro via escopo do portal.
+
+**Inventário preventivo de popovers do MFE:**
+- `TableColumnVisibilityMenu` — **PASS** (AnchoredPanelPortal desde §48).
+- Dropdown de fornecedores (`engineering-prc__lookup-panel`) — **PASS** (AnchoredPanelPortal, correção anterior D8).
+- `.engineering-prc__flag-menu-panel` — **sem consumidor** (CSS morto, sem `flag-menu` em TSX) — não corrigir (backlog de higiene).
+- `.engineering-prc__sr-only` — a11y, não é popover — **PASS**.
+- `EngineeringConfirmDialog`/modais — `ModalShell` host-contained, mecanismo distinto e adequado — **PASS**.
+
+**Testes:** engineering vitest **200/200 PASS** (19 arquivos + 3 testes novos); `tsc` clean; build ok.
+
+**HML:** deploy `--fase mfe --build engineering` (checkout `1920f7b450`); imagem `sha256:12845f713fba6aac40525ebfd9b02d5359dba737c7ead041a24ddfb7a2f49a13` healthy; 21/21 containers healthy. Rollback: `sha256:211d2e0198a0…` retida.
+
+**E2E visual (Chromium real headless no host HML, Node playwright) — 51/51 PASS:** painel integralmente visível (l=8 t=276 r=768 b=616 ⊂ 1440×900, fundo opaco rgb(255,255,255), z=10500, fora do wrapper); 9 selects de filtro + totais do servidor + card de bandeira; troca de filtro interno sem fechar; "Abrir solicitação" → `/product-registration/{uuid}`; Escape, clique externo, reabrir; exclusividade Colunas↔Sinalizados nos dois sentidos sem órfãos; mobile 390px (clamp `right=382≤390`, flip acima); viewport baixo 700px e estreito 360px (flip/clamp); regressão hero/tabela/cards/kanban; negado fail-closed rows=0. Evidências: `/tmp/flag-E01.png`, `flag-E08-mobile.png`, `flag-E09-baixo.png`.
+
+**Limitações:** paginação do painel não exercitada (total=1 < 25 — caminho condicional); eixo `left` usa clamp (left=8) em vez de `end` perfeito quando 760px não cabem à direita do gatilho — comportamento correto do hook.
+
+**Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
