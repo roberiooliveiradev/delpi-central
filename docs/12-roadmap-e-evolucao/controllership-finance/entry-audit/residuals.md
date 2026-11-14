@@ -148,3 +148,17 @@ E5 (`previous` com os campos de `kpis`). B9: aceito pelo report (11 abas; itens 
 | F4 | Baixa | cobertura da `analyze` com filtro diz «0 notas» | `entry_audit_findings` com `theme=simples` em 13/11: «0 notas, 1 ocorrências» | com filtro, o FACT de cobertura diz o filtro aplicado e não zera as notas da análise (ou é omitido) |
 | F5 | — | D2 sem prova de suíte inteira | report: «321 PASS»; a suíte inteira da BFF tinha ~1.300 testes | report com o comando e o total da suíte inteira (PASS/FAIL/skip) contra o commit pai |
 
+## Verificação T9R5 (2026-11-14) — FIXED
+
+Código `18cc94e0c9` + V029 `e9481483b5`. Tag `rollback-entry-audit-t9r5-controllership-finance-api` em `fb7defce8d`. HML BFF `29e74bef9d07`. PROD BFF `c533f3146afc`. Causa da T9R4 sem gravar: `difference` NOT NULL na V023 — write com null caía em `NotNullViolation`; V029 torna a coluna nullable. A1, D1, D3 e a janela de 30 dias não reabertos. T10 não começou.
+
+| # | Estado | Causa (arquivo) | Serviço | MCP | PROD |
+|---|---|---|---|---|---|
+| F1 | FIXED | `_public_occurrence` devolvia `difference` gravada — `service._public_occurrence` + `difference_allowed` | PASS | PASS | 12/11 01: 3 origens com `difference` null; contadores `cache 341` / `dl 0` (não mais 325/16) |
+| F2 | FIXED | SA2 sem loja → nome vazio — `_posted_outside` + fallback XML/`party_name` | PASS | PASS | 12/11 01 outside 250, `000001/13` com nome; 0 vazios na página |
+| F3 | FIXED | JSON antigo com `fiscal_code: ""` — strip em `service.ctes` | PASS | PASS (`read cte`) | 12/11 01: 7 CT-e sem `fiscal_code`; 13/11 01: 1 CT-e sem |
+| F4 | FIXED | `theme` zerava documentos no summary — `_FILTERS_BY_KIND` + cobertura declara filtro | PASS | PASS | 13/11: «20 notas (filtro: theme=simples), 1 ocorrências» |
+| F5 | FIXED | suíte focada ≠ suíte inteira | HEAD: `docker … pytest tests` → **1354 PASS, 1 FAIL, 280 skip**; pai `fb7defce8d`: **1349 PASS, 1 FAIL, 280 skip**. A FAIL (`test_avatar_read_returns_image_content_block`) é pré-existente nos dois | — | — |
+
+Reexecução PROD via `execute entry_audit.rerun`: `b75deca4…` (12/11 01), `942763cb…` (12/11 02), `76d55935…` (13/11 01) — todas `done`.
+
