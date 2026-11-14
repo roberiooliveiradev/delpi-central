@@ -528,37 +528,47 @@ class SelectedInvestigationInstructions:
     resource_content_hash: str
 
 
-def load_investigation_instructions(
+def _load_instruction_bundle(
     path: str | Path,
+    *,
+    resource_id: str,
+    kind: str,
+    versions: frozenset,
+    expected_keys: frozenset,
+    max_entries: int,
+    max_bytes: int,
 ) -> InvestigationInstructions:
-    """Load and validate the governed INT-1 investigation instruction set.
+    """Shared fail-closed bundle loader for instruction resources.
 
-    Fail-closed: wrong identity/kind/version, missing default, empty or
-    oversized entries raise ``CriInstructionResourceError``.
+    Same contract for every consumer (investigation, comprehension):
+    wrong identity/kind/version, missing default, empty or oversized
+    entries raise ``CriInstructionResourceError``. The consumer-specific
+    constants keep each resource a distinct governed artifact — never a
+    second registry.
     """
 
     data = _load_resource_object(path)
-    extra = set(data) - _INVESTIGATION_KEYS
+    extra = set(data) - expected_keys
     if extra:
         raise CriInstructionResourceError(
             "cri_instruction_resource_invalid",
             f"unsupported fields: {sorted(extra)}",
         )
-    missing = {k for k in _INVESTIGATION_KEYS if not data.get(k)}
+    missing = {k for k in expected_keys if not data.get(k)}
     if missing:
         raise CriInstructionResourceError(
             "cri_instruction_resource_invalid",
             f"missing fields: {sorted(missing)}",
         )
-    if str(data.get("resource_id")) != _INVESTIGATION_RESOURCE_ID:
+    if str(data.get("resource_id")) != resource_id:
         raise CriInstructionResourceError(
             "cri_instruction_resource_invalid",
             f"unexpected resource_id: {data.get('resource_id')!r}",
         )
     resource_version = _validate_identity(
         data,
-        kind=_INVESTIGATION_KIND,
-        versions=_INVESTIGATION_RESOURCE_VERSIONS,
+        kind=kind,
+        versions=versions,
     )
     default_version = str(data.get("default_instruction_version") or "")
     instructions = data["instructions"]
@@ -567,7 +577,7 @@ def load_investigation_instructions(
             "cri_instruction_resource_invalid",
             "instructions not a non-empty object",
         )
-    if len(instructions) > _MAX_INVESTIGATION_INSTRUCTION_ENTRIES:
+    if len(instructions) > max_entries:
         raise CriInstructionResourceError(
             "cri_instruction_resource_invalid",
             "instructions oversized",
@@ -579,8 +589,7 @@ def load_investigation_instructions(
             or not name.strip()
             or not isinstance(text, str)
             or not text.strip()
-            or len(text.encode("utf-8"))
-            > _MAX_INVESTIGATION_INSTRUCTION_BYTES
+            or len(text.encode("utf-8")) > max_bytes
         ):
             raise CriInstructionResourceError(
                 "cri_instruction_resource_invalid",
@@ -595,13 +604,32 @@ def load_investigation_instructions(
         )
     canonical = json.dumps(out, sort_keys=True, ensure_ascii=False)
     return InvestigationInstructions(
-        resource_id=_INVESTIGATION_RESOURCE_ID,
+        resource_id=resource_id,
         resource_version=resource_version,
         default_instruction_version=default_version,
         instructions=out,
         content_hash=hashlib.sha256(
             canonical.encode("utf-8")
         ).hexdigest(),
+    )
+
+
+def load_investigation_instructions(
+    path: str | Path,
+) -> InvestigationInstructions:
+    """Load and validate the governed INT-1 investigation instruction set.
+
+    Fail-closed: wrong identity/kind/version, missing default, empty or
+    oversized entries raise ``CriInstructionResourceError``.
+    """
+    return _load_instruction_bundle(
+        path,
+        resource_id=_INVESTIGATION_RESOURCE_ID,
+        kind=_INVESTIGATION_KIND,
+        versions=_INVESTIGATION_RESOURCE_VERSIONS,
+        expected_keys=_INVESTIGATION_KEYS,
+        max_entries=_MAX_INVESTIGATION_INSTRUCTION_ENTRIES,
+        max_bytes=_MAX_INVESTIGATION_INSTRUCTION_BYTES,
     )
 
 
@@ -627,4 +655,60 @@ def default_investigation_instructions_path() -> Path:
         Path(__file__).resolve().parents[3]
         / "config"
         / "investigation_instructions.delpi.json"
+    )
+
+
+# INT-2 experimental comprehension Agent instructions (two-Agent
+# variant B, DELIA_TWO_AGENT_EXPERIMENT): same governed resource
+# pattern, different consumer/kind — the comprehension specialist
+# proposes the typed objective only; it owns no investigation text.
+_COMPREHENSION_RESOURCE_ID = "delia.comprehension.instructions"
+_COMPREHENSION_KIND = "comprehension_instructions"
+_COMPREHENSION_RESOURCE_VERSIONS = frozenset({"1"})
+_COMPREHENSION_KEYS = _INVESTIGATION_KEYS
+_COMPREHENSION_VERSION_ENV = "DELIA_COMPREHENSION_INSTRUCTION_VERSION"
+
+
+def load_comprehension_instructions(
+    path: str | Path,
+) -> InvestigationInstructions:
+    """Load and validate the governed INT-2 comprehension instruction set.
+
+    Fail-closed, identical contract to the investigation bundle — wrong
+    identity/kind/version, missing default, empty or oversized entries
+    raise ``CriInstructionResourceError``.
+    """
+    return _load_instruction_bundle(
+        path,
+        resource_id=_COMPREHENSION_RESOURCE_ID,
+        kind=_COMPREHENSION_KIND,
+        versions=_COMPREHENSION_RESOURCE_VERSIONS,
+        expected_keys=_COMPREHENSION_KEYS,
+        max_entries=_MAX_INVESTIGATION_INSTRUCTION_ENTRIES,
+        max_bytes=_MAX_INVESTIGATION_INSTRUCTION_BYTES,
+    )
+
+
+def resolve_comprehension_instruction_version(
+    explicit: str | None = None,
+) -> str | None:
+    """Resolve active INT-2 comprehension instruction version.
+
+    Precedence: explicit argument → ``DELIA_COMPREHENSION_INSTRUCTION_VERSION``
+    → resource default (``None`` signals default).
+    """
+    if explicit is not None and str(explicit).strip():
+        return str(explicit).strip()
+    import os
+
+    env = (os.environ.get(_COMPREHENSION_VERSION_ENV) or "").strip()
+    return env or None
+
+
+def default_comprehension_instructions_path() -> Path:
+    """Repo-fixed path next to other governed config resources."""
+    return (
+        Path(__file__).resolve().parents[3]
+        / "config"
+        / "comprehension_instructions.delpi.json"
     )

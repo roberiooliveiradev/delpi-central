@@ -658,18 +658,22 @@ def test_clarification_ignored_only_when_obligations_fully_met():
 
 
 def test_agent_run_sync_is_single_invocation_per_attempt():
-    """The investigation attempt calls ``agent.run_sync`` exactly once —
+    """Each Agent in an attempt calls ``agent.run_sync`` exactly once —
     governed_retries never wraps the Agent path, so retries can never
-    multiply (doc 261 M1). Agent-internal native retries (tool calls +
-    ModelRetry output) remain bounded by UsageLimits."""
+    multiply (doc 261 M1). Baseline A: one call site (investigation).
+    The flag-gated experimental variant B adds ONE comprehension call
+    site — still a single invocation per agent per attempt, bounded by
+    UsageLimits and the shared turn budget; Agent-internal native
+    retries (tool calls + ModelRetry output) remain bounded."""
     import inspect
     from app.infrastructure.orchestration import (
         pydantic_ai_investigation as inv,
     )
 
     src = inspect.getsource(inv)
-    # exactly one run_sync call site in the whole module
-    assert src.count(".run_sync(") == 1
+    # exactly two single-invocation call sites: investigation run +
+    # the flag-gated experimental comprehension pass
+    assert src.count(".run_sync(") == 2
     # no governed-retries loop wraps the Agent path
     assert "call_retry_eligible" not in src
 

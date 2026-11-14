@@ -6,6 +6,7 @@
 | Família visual | lista / bancada de dados (padrão visual §9.1) |
 | Permissão | `controllership-finance.access` |
 | Wireframe | seção 2 do [HTML](./wireframes-auditoria-entradas.html) |
+| Contrato | reconciliado com a BFF publicada (T10.0, 2026-11-14) — [README](./README.md#reconciliação-t100) |
 
 ## 1. Objetivo
 
@@ -35,7 +36,7 @@ Entradas possíveis:
 [ StateBanner: análise em andamento + ProgressTracker + barra ]   (só quando há)
 [ EmptyGuidance: nenhuma auditoria para este período ]           (só quando não há)
 ┌ SectionCard «Análises anteriores» ────────────────────────────────────────────┐
-│ DataTableSection: Período · Filiais · Executada em · Por · Status · Pendentes │
+│ DataTableSection: Período · Filiais · Documentos · Executada em · Origem · Status │
 └───────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -44,7 +45,7 @@ Entradas possíveis:
 | PageHero | título e ação na mesma linha | igual | ação abaixo do título, largura total | igual |
 | FilterBar | uma linha (quebra natural do `FiltersRow`, `variant="extended"`) | duas linhas | botão «Filtros (n)» abre `DrawerShell` com os campos empilhados | igual |
 | Banner de execução | largura total; etapas numa linha | etapas quebram | etapas em lista vertical | igual |
-| Análises anteriores | tabela, 7 colunas | tabela, oculta «Por» | cards (`DataRecordCard`) | igual |
+| Análises anteriores | tabela, 6 colunas | tabela, oculta «Origem» | cards (`DataRecordCard`) | igual |
 
 Alturas: PageHero compacto pelo kit; banner de execução ~120px; tabela com `pageSize` 10.
 
@@ -76,8 +77,8 @@ Campos dentro da barra, nesta ordem:
 |---|---|---|
 | De | `CfDateField` (← `DateField`) | `label="De"`, `type="date"`, `value={from}`, `onChange`, `required` |
 | Até | `CfDateField` | `label="Até"`, `type="date"`, `value={to}`, `onChange`, `required`; `hint="Data de recebimento das notas (como na exportação da SF1)."` |
-| Tipos de documento | `CfMultiSelectField` (← `MultiSelectField`) | `label="Tipos de documento"`, `options=[{value:"nfe",label:"NF-e"},{value:"cte",label:"CT-e"}]` (vindas de `GET …/options`), `selectedValues={docs}` (padrão: as duas), `showBulkActions`, mínimo 1 |
-| Filiais | `CfMultiSelectField` | `label="Filiais"`, `options` da BFF (filiais permitidas, rótulo «Matriz (01)», «Filial (02)»), `selectedValues`, `showSelectedTags={false}`, `showBulkActions`, `emptyLabel="Todas"` |
+| Tipos de documento | `CfMultiSelectField` (← `MultiSelectField`) | `label="Tipos de documento"`, `options` de `GET …/analyses/options` → `document_types[]` mapeado `{value: code, label: label}` (`nfe` «NF-e», `cte` «CT-e»; o campo de texto é `label`, não `description`), `selectedValues={docs}` (padrão: os de `default: true`), `showBulkActions`, mínimo 1 |
+| Filiais | `CfMultiSelectField` | `label="Filiais"`, `options` de `branches[]` (`code`, `name`, `state`, `tax_id`) mapeado `{value: code, label: "<name> (<code>)"}`, `selectedValues`, `showSelectedTags={false}`, `showBulkActions`, `emptyLabel="Todas"`. `tax_id` não é exibido |
 
 Validação da página (sem componente novo): De e Até preenchidos e `De ≤ Até`; erro mostrado no `hint` do campo Até e «Executar» desabilitado.
 
@@ -85,18 +86,20 @@ Validação da página (sem componente novo): De e Até preenchidos e `De ≤ At
 
 ### 4.3 Execução em andamento — `CfStateBanner` + `CfProgressTracker` + `CfInlineLoadingProgress` — existem
 
-Visível quando há `analysis` na URL ou uma análise do usuário com `status in (queued, running)`.
+Visível quando há `analysis` na URL ou uma análise com `status in (queued, running)` (`GET …/analyses?status=running|queued`).
 
 | Componente | Props |
 |---|---|
 | `CfStateBanner` | `variant="default"`; texto: «Auditoria em andamento — Matriz e Filial, 01/10 a 31/10/2026»; `role="status"` no wrapper |
-| `CfInlineLoadingProgress` | `percent` = `progress.percent` da BFF, `label="Andamento"`, `showPercent` |
-| `CfProgressTracker` (uma linha por filial quando houver mais de uma) | `steps=[protheus, tes_book, xml, rules, result]` com `label` «Notas do Protheus», «TES e livro fiscal», «XML do Questor», «Regras», «Resultado»; `state` vindo da BFF (`complete`/`current`/`available`/`error`); `statusLabel` com contagem («612», «418/680»); `currentStepId`; `interactive={false}`; `density="compact"`; `ariaLabel="Andamento da Matriz"` |
+| `CfInlineLoadingProgress` | **sem percentual** (a BFF não devolve `progress.percent` e a UI não o calcula). Sempre modo indeterminado, `showPercent={false}`; na etapa `reading_xml` o `label` mostra o contador do contrato: «XML lidos: 418 de 680» (`counts.xml_read` de `counts.xml_expected`) |
+| `CfProgressTracker` (uma linha por filial = um item de `runs[]`) | `steps=[reading_protheus, reading_xml, auditing, saving, done]` com `label` «Notas do Protheus», «XML do Questor», «Regras», «Gravando», «Resultado»; o `state` de cada passo é **derivado de `runs[].stage`** (passos anteriores `complete`, o do estágio `current`, os seguintes `available`; `runs[].status = failed` → `error` no passo em que parou; `stage = failed` não é passo); `statusLabel` só no passo `reading_xml`: «418/680» de `counts.xml_read`/`counts.xml_expected` (e `documents_read` como contagem de notas do Protheus no 1º passo); `currentStepId`; `interactive={false}`; `density="compact"`; `ariaLabel="Andamento da Matriz"` |
 | Texto auxiliar | «Pode sair desta página: a execução continua.» |
 
-Falha: `CfStateBanner variant="error"` por filial que falhou, com o motivo devolvido pela BFF e `CfActionButton` «Tentar de novo a Filial» → `POST /entry-audit/analyses/{id}/rerun {branches:["02"]}`.
+Estágios: `runs[].stage` ∈ `reading_protheus` · `reading_xml` · `auditing` · `saving` · `done` (concluída) · `partial` (concluída, mas com XML indisponível) · `failed`; vazio na fila. Estágio fora da lista = «Preparando». `runs[].status` ∈ `queued` · `running` · `done` · `partial` · `failed`.
 
-Atualização: `GET /entry-audit/analyses/{id}` a cada 3s enquanto `running` (React Query `refetchInterval`), parando em `done`/`failed`. Ao concluir: anúncio «Auditoria concluída» e navegação para o dashboard (doc 02), com botão «Abrir resultado» caso o usuário tenha saído do foco.
+Falha: `CfStateBanner variant="error"` por filial com `runs[].status = failed`, com o motivo de `runs[].error` (código, ex.: `XML_LISTING_UNAVAILABLE`, traduzido em texto do MFE) e `CfActionButton` «Tentar de novo a Filial» → `POST /entry-audit/analyses/{id}/rerun {branches:["02"]}` (202; 409 `RUN_IN_PROGRESS` se a filial já está na fila → mensagem «Esta filial já está sendo auditada»). Filial `partial`: aviso informativo «N notas sem XML» (`runs[].counts.xml_unavailable_count`), sem tratar como falha.
+
+Atualização: `GET /entry-audit/analyses/{id}` a cada 3s enquanto `queued`/`running` (React Query `refetchInterval`), parando em `done`/`partial`/`failed`. Ao concluir: anúncio «Auditoria concluída» e navegação para o dashboard (doc 02), com botão «Abrir resultado» caso o usuário tenha saído do foco. As leituras de resultado respondem 409 `ANALYSIS_NOT_READY` até existir ao menos uma filial concluída.
 
 ### 4.4 Vazio — `CfEmptyGuidance` (← `EmptyGuidance`) — existe
 
@@ -117,7 +120,7 @@ Atualização: `GET /entry-audit/analyses/{id}` a cada 3s enquanto `running` (Re
 | Prop | Valor |
 |---|---|
 | `title` | `"Análises anteriores"` (oculto visualmente: o título já está no card) |
-| `rows` | `GET /entry-audit/analyses?date_from&date_to&page` |
+| `rows` | `GET /entry-audit/analyses?date_from&date_to&page&page_size=10` → `data.items[]` |
 | `rowKey` | `row => row.id` |
 | `serverPagination` | `{page, pageSize: 10, total, onPageChange}` |
 | `hideSearch` | `true` |
@@ -126,29 +129,30 @@ Atualização: `GET /entry-audit/analyses/{id}` a cada 3s enquanto `running` (Re
 
 Colunas (`DataTableColumn`):
 
-| `key` | `header` | `render` | `align` |
-|---|---|---|---|
-| `period` | Período | «01/10–31/10/2026» | left |
-| `branches` | Filiais | «Matriz, Filial» | left |
-| `executedAt` | Executada em | data e hora | left |
-| `requestedBy` | Por | nome; «CLARA para Michael» quando pedida pela CLARA | left |
-| `status` | Status | `CfStatusBadge` (`success` Concluída · `info` Em andamento · `danger` Falhou · `warning` Parcial) | left |
-| `pending` | Pendentes | número | right |
-| `high` | Altas | número | right |
+Colunas **somente com campos de `_public_analysis`** (`id`, `date_from`, `date_to`, `document_types`, `branches`, `status`, `requested_via`, `created_at`, `finished_at`). A lista não traz quem pediu (nome), pendentes nem altas: esses números só existem em `summary` da análise aberta e **não** entram na tabela (nada de N chamadas de `summary` por linha).
 
-Mobile (≤ 768px): `DataTableSection` alterna para cards nativos; cada card usa `CfDataRecordCard` com `title`=período, `subtitle`=filiais, `status`=badge, `fields`=[Pendentes, Altas, Executada em].
+| `key` | `header` | Campo | `render` | `align` |
+|---|---|---|---|---|
+| `period` | Período | `date_from`, `date_to` | «01/10–31/10/2026» | left |
+| `branches` | Filiais | `branches` (`01`, `02`) | «Matriz, Filial» (nome vem de `options`) | left |
+| `documents` | Documentos | `document_types` | «NF-e, CT-e» (`label` de `options`) | left |
+| `executedAt` | Executada em | `created_at` (e `finished_at` no `title`) | data e hora | left |
+| `origin` | Origem | `requested_via` | `user` → «Manual»; `clara` → «CLARA» | left |
+| `status` | Status | `status` | `CfStatusBadge` (`success` Concluída `done` · `info` Em andamento `queued`/`running` · `danger` Falhou `failed` · `warning` Parcial `partial` — XML indisponível em alguma nota) | left |
+
+Mobile (≤ 768px): `DataTableSection` alterna para cards nativos; cada card usa `CfDataRecordCard` com `title`=período, `subtitle`=filiais, `status`=badge, `fields`=[Documentos, Executada em, Origem].
 
 ## 5. Dados
 
 | Bloco | Rota da BFF |
 |---|---|
-| Opções | `GET /entry-audit/analyses/options` → filiais permitidas (código, nome, UF) e tipos de documento (código, descrição, padrão marcado) |
-| Executar | `POST /entry-audit/analyses` (corpo no plano §4A.4) → 202 `{analysis}` |
-| Andamento | `GET /entry-audit/analyses/{id}` |
-| Reexecutar filial | `POST /entry-audit/analyses/{id}/rerun` |
-| Histórico | `GET /entry-audit/analyses` |
+| Opções | `GET /entry-audit/analyses/options` → `{branches:[{code,name,state,tax_id}], document_types:[{code,label,species,default}]}` |
+| Executar | `POST /entry-audit/analyses` com `{date_from, date_to, document_types, branches, via}` → 202 `{id, status, created}` (`via` omitido = `user`; o MFE nunca envia `clara`) |
+| Andamento | `GET /entry-audit/analyses/{id}` → `{id, status, date_from, date_to, document_types, branches, runs[{branch,status,stage,documents_read,xml_downloaded,counts,error}], counts, config}` |
+| Reexecutar filial | `POST /entry-audit/analyses/{id}/rerun` `{branches}` → 202 |
+| Histórico | `GET /entry-audit/analyses?date_from&date_to&branch&status&page&page_size` → `{items, page, page_size, total}` |
 
-> A rota `GET /entry-audit/analyses/options` é **nova** em relação ao plano (§4A.4) e entra no contrato da E1.
+`POST` com `created: false` = já existia análise `queued`/`running` com o mesmo período, tipos e filiais: o MFE passa a acompanhar o `id` devolvido. Análise `done`, `partial` ou `failed` não é reaproveitada (nasce outra). Erros 422 (`INVALID_PERIOD`, `INVALID_BRANCH`, `INVALID_DOCUMENT_TYPE`) viram mensagem no formulário. `config` (`presumed_credit_tes`, `freight_cfop_suffix`, `xml_lookback_days`, `unmatched_grace_days`, `tolerance`) é só leitura e não é exibido nesta página.
 
 ## 6. Estados
 
@@ -156,10 +160,10 @@ Mobile (≤ 768px): `DataTableSection` alterna para cards nativos; cada card usa
 |---|---|
 | Carregando opções | `CfLoadingCard` no lugar da FilterBar (padrão de loading do Portal) |
 | Período inválido (vazio ou `De > Até`) | erro no campo Até; «Executar» desabilitado |
-| Análise igual já em andamento | o POST devolve a existente; a página passa a acompanhá-la e mostra «Já existe uma auditoria em andamento para estes filtros.» |
+| Análise igual já em andamento | o POST devolve a existente (`created: false`); a página passa a acompanhá-la e mostra «Já existe uma auditoria em andamento para estes filtros.» |
 | Erro ao executar | `CfStateBanner variant="error"` com a mensagem da BFF; filtros preservados |
 | Histórico vazio | `emptyMessage` da tabela |
 
 ## 7. Acessibilidade
 
-`h1` no PageHero; `h2` «Análises anteriores». O banner de andamento é `aria-live="polite"` e anuncia só mudança de etapa e conclusão (não cada percentual). O botão Executar tem `aria-describedby` para o resumo dos filtros. No mobile, o painel de filtros é um diálogo com foco preso e retorno ao botão que o abriu.
+`h1` no PageHero; `h2` «Análises anteriores». O banner de andamento é `aria-live="polite"` e anuncia só mudança de etapa e conclusão (não cada contador de XML). O botão Executar tem `aria-describedby` para o resumo dos filtros. No mobile, o painel de filtros é um diálogo com foco preso e retorno ao botão que o abriu.

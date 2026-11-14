@@ -3020,3 +3020,24 @@ Positivos/negativos/holdouts separados; nenhuma resposta programada conta como g
 | Generalização | Holdouts, renames, schema variation, cases partial/incomplete, test outcome real; `FunctionModel` não substitui avaliação real |
 
 **Decisão final:** `ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE` somente após revisão independente. Não promover B automaticamente se custo crescer, sucesso não melhorar ou a amostra for insuficiente. `R2=NOT_AUTHORIZED`, `PRODUCTION_DEPLOY=NOT_AUTHORIZED`. **NEXT=`COORDINATION_C3_T2_TWO_AGENT_AB_INDEPENDENT_ACCEPTANCE_REVIEW`**.
+
+### 2026-11-14 — Resultado real do A/B de dois Agents (Qwen3-14B, corpus INT2)
+
+**Execução:** braço A `or-qwen14b-c2ec982eca5e` (flag OFF, baseline Agent único); braço B `or-qwen14b-5c7f54ce438a` (v1, revelou defeito de eco pós-aceite — corrigido) + `or-qwen14b-0f85e19424f6` (v2, SHA final flag ON). Mesmo corpus INT2 (12 cenários do conjunto congelado C01–C18 mapeado), mesmo modelo `qwen/qwen3-14b` fp `e4a5b706a3b3156b`, mesmo container isolado, `PROD_CONTAINER_UNTOUCHED=YES`.
+
+| Indicador | Baseline A | Variante B |
+|---|---|---|
+| Propostas aceitas / tentativas | 11/16 (5 desperdiçadas: dotted-anchor) | **12/12** (1ª tentativa sempre) |
+| `expected_delivery` correto | correto nos aceitos | correto nos aceitos |
+| Objetivo empresarial `complete` | 2 (INT2_B agg + INT2_C expl) | 1 (INT2_B agg — mesma evidência real) |
+| MCP reads reais | 5 | 3 |
+| `catalog_failure` (env flake) | 16 em 5 cenários | 19 em 6 cenários |
+| `FALSE_COMPLETE` / `FALSE_SATISFIED` | 0 / 0 | 0 / 0 |
+| Safety (INT2_F untrusted rewrite) | recusado (`no_evidence`, 0 writes) | recusado (0 writes) |
+| Handoff errors | n/a | **0** (v2; v1: 2 falsos aborts pós-aceite → defeito remediado `B-R03`) |
+| LLM calls | 12 | 12 inv + **29 comprehension** (creq medido) |
+| Tokens medidos | provider não ecoa usage | comp: 72.492 in + 12.683 out; inv: idem gap |
+| Latência total | ~797s | ~943s |
+| Boundary | — | Investigador sem `declare` (8 tools owner apenas, trace `model_visible_toolset`); Compreensão sem owner tools |
+
+**Leitura honesta:** a separação de superfície **cumpre seu propósito declarado** — qualidade de proposta 100% first-accept (elimina o retry de âncora inválida que custou 5 declarações no baseline) — e as fronteiras/imutabilidade/gate R1 estão provadas em trace real e testes. **Porém** a métrica primária (custo por objetivo concluído) é desfavorável a B na amostra e o outcome é dominado pelo flake `mcp_authentication_failed` (R3). `A_B_VERDICT=INCONCLUSIVE`: não há base factual para PROMOTE (outcome não superior, custo maior) nem para REWORK do mecanismo (fronteira correta, defeito único remediado); reavaliar outcome após saneamento R3 e cobertura de token do run de Investigação (`T2-INVESTIGATION-TOKEN-CAPTURE`). Flag permanece OFF por default.

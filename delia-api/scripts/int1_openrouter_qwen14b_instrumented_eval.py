@@ -565,6 +565,46 @@ def _refuse_insecure() -> None:
         )
 
 
+def _install_comprehension_capture(
+    evaluation_id: str,
+    scenario_holder: dict,
+) -> None:
+    """Variant-B observability: wrap the Application-owned comprehension
+    pass so each scenario records its bounded usage and handoff outcome —
+    eval introspection only; the wrapped call is untouched."""
+    from app.infrastructure.orchestration import (
+        pydantic_ai_investigation as pai,
+    )
+
+    original = (
+        pai.PydanticAiInvestigationOrchestrator.__dict__[
+            "_run_comprehension_pass"
+        ]
+    )
+
+    def _wrapped(self, **kwargs):
+        usage, error = original(self, **kwargs)
+        _CAPTURE["comprehension"] = {
+            "usage": usage,
+            "handoff_error": error,
+        }
+        append_event(
+            evaluation_id,
+            "comprehension_pass",
+            {
+                "usage": usage,
+                "handoff_error": error,
+            },
+            scenario_id=scenario_holder.get("id"),
+            correlation_id=scenario_holder.get("correlation"),
+        )
+        return usage, error
+
+    pai.PydanticAiInvestigationOrchestrator._run_comprehension_pass = (
+        _wrapped  # type: ignore[method-assign]
+    )
+
+
 def _install_catalog_and_progress_capture(
     *,
     evaluation_id: str,
@@ -811,6 +851,7 @@ def run_scenario(
     _CAPTURE["investigation_plan"] = None
     _CAPTURE["obligation_coverage"] = []
     _CAPTURE["goal_declarations"] = []
+    _CAPTURE["comprehension"] = None
 
     append_event(
         evaluation_id,
@@ -876,6 +917,7 @@ def run_scenario(
             "investigation_plan": _CAPTURE.get("investigation_plan"),
             "obligation_coverage": _CAPTURE.get("obligation_coverage"),
             "goal_declarations": _CAPTURE.get("goal_declarations"),
+            "comprehension": _CAPTURE.get("comprehension"),
             "grounding": result.get("grounding"),
             "epistemic_class": result.get("epistemic_class"),
             "limitations": result.get("limitations"),
@@ -931,6 +973,9 @@ def main() -> int:
             "environment": settings.environment,
             "secure_eval_gate": gate.get("SECURE_EVAL_GATE"),
             "pydantic_ai": __import__("pydantic_ai").__version__,
+            "two_agent_experiment": bool(
+                getattr(settings, "two_agent_experiment", False)
+            ),
             "b3_capture_mechanism": CAPTURE_MECHANISM,
             "http_wire_bytes": HTTP_WIRE_BYTES,
             "scenarios": [s["id"] for s in scenarios],
@@ -948,6 +993,7 @@ def main() -> int:
     b3_box: dict = {}
     _install_finalize_capture()
     _install_plan_obligation_capture()
+    _install_comprehension_capture(evaluation_id, scenario_holder)
     _install_usage_meter()
     _install_catalog_and_progress_capture(
         evaluation_id=evaluation_id, scenario_holder=scenario_holder
@@ -1013,6 +1059,7 @@ def main() -> int:
             "investigation_plan": _CAPTURE.get("investigation_plan"),
             "obligation_coverage": _CAPTURE.get("obligation_coverage"),
             "goal_declarations": _CAPTURE.get("goal_declarations"),
+            "comprehension": _CAPTURE.get("comprehension"),
             "limitations": res.get("limitations"),
             "content_head": (res.get("content") or "")[:160],
             "llm_runs": res.get("llm_runs"),

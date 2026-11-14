@@ -1649,3 +1649,18 @@ DEFER_BY_PHASE:
 **R1 preservado por construção:** o gate pré-invocação chaveia em `deps.investigation_plan is None` — com o plano semeado pela Application após aceite, a invariante "nenhuma READ dependente sem plano aceito" permanece; `declare_investigation_goal` deixa de ser necessária dentro da run de Investigação na variante B (tool ausente do toolset — prova de boundary); imutabilidade pós-aceite já garantida por `investigation_goal_already_declared`/plano único por turno.
 
 **ESTADO:** `HANDOFF_CONTRACT=REUSE_EXISTING (SemanticInvestigationPlan)`; `NEW_SCHEMA=NONE_REQUIRED`; `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=REUSE/EXTEND`; `NEW_AUTHORITY=NO`; `NEW_AGENT_RUNTIME=PENDING_EXPERIMENTAL_AUTHORIZATION`. Experimento/implementação permanecem NOT_AUTHORIZED até decisão de coordenação.
+
+### 2026-11-14 — Handoff Compreensão→Investigação: implementado (experimental, flag-gated)
+
+**Implementado sob `DELIA_TWO_AGENT_EXPERIMENT`** (default OFF, fail-closed em `production`):
+
+| Elemento | Owner | Contrato | Estado |
+|---|---|---|---|
+| Compreensão (Agent físico 2) | DÉLIA cognição; Application coordena | pedido+contexto mínimo → proposta tipada (`declare_investigation_goal` no toolset próprio + `request_user_clarification`; `output_type=ComprehensionTurnOutcome` observability-only) | IMPLEMENTED_EXPERIMENTAL — zero owner tools provado em teste e trace |
+| Validação do plano | Application | `_accept_semantic_investigation_plan` (único aceitador; feedback field-level vira correção bounded da run) | REUSED — nenhum segundo validador |
+| Handoff | Application | `deps.investigation_plan = accepted_plan` + eco Application-authored no prompt do Investigador | IMPLEMENTED — programático, `AgentToolset` não usado |
+| Investigação (Agent 1) | DÉLIA cognição + Application governa | plano aceito + autorização/contexto/budget restante; toolset **sem** `declare_investigation_goal` na variante | IMPLEMENTED_EXPERIMENTAL — boundary provada (8 tools owner visíveis, declare ausente) |
+| Orçamento | Application | `UsageLimits(request_limit//3, retries+2)` Compreensão; restante ao Investigador + `deps.tool_calls` compartilhado; mesmo `TurnDeadline` | IMPLEMENTED — medido em `test_variant_b_shared_budget_composition` |
+| Defeito pós-aceite | — | exceção não-terminal após artefato autoritativo → `artifact_kept` (não aborta handoff) | REMEDIATED — `B-R03`, encontrado pelo real eval |
+
+**Estado:** `CURRENT_AGENT_COUNT=1 (default) / 2 (flag)`; instruções de Compreensão versionadas `config/comprehension_instructions.delpi.json` (loader fail-closed próprio); veredito comparativo `INCONCLUSIVE` — ver Doc 20/ledger. Nenhum planner/engine/authority/registry novo; promoção pendente de revisão independente.

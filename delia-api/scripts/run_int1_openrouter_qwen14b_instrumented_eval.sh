@@ -54,6 +54,15 @@ chmod 600 "${EVAL_ENV}"
   if [[ -n "${DELIA_EVAL_INSTRUCTION_VERSION:-}" ]]; then
     echo "DELIA_INVESTIGATION_INSTRUCTION_VERSION=${DELIA_EVAL_INSTRUCTION_VERSION}"
   fi
+  # Optional arm B (DELIA-C3-T2 two-agent A/B): forward the isolated
+  # experiment flag into the ephemeral eval env only — the shared
+  # environment and prod default stay OFF.
+  if [[ -n "${DELIA_EVAL_TWO_AGENT:-}" ]]; then
+    echo "DELIA_TWO_AGENT_EXPERIMENT=${DELIA_EVAL_TWO_AGENT}"
+  fi
+  if [[ -n "${DELIA_EVAL_COMPREHENSION_INSTRUCTION_VERSION:-}" ]]; then
+    echo "DELIA_COMPREHENSION_INSTRUCTION_VERSION=${DELIA_EVAL_COMPREHENSION_INSTRUCTION_VERSION}"
+  fi
   echo "DELIA_LLM_BASE_URL=https://openrouter.ai/api/v1"
   echo "KEYCLOAK_URL=http://keycloak:8080/auth"
   echo "KEYCLOAK_REALM=delpi"

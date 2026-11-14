@@ -1915,3 +1915,17 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` | vigente — anchor candidato ≠ pertinência demonstrada; regressar no A/B |
 
 **NEXT=`COORDINATION_C3_T2_TWO_AGENT_EXPERIMENT_AUTHORIZATION_REVIEW`** — design pronto; implementação/experimento aguardam decisão de coordenação; R2 não iniciado.
+
+### 2026-11-14 — Experimento A/B de dois Agents executado: atualização de estado
+
+| Residual | Estado | Nota |
+|---|---|---|
+| `T2-AGENT2-COMPREHENSION-RUNTIME` | `IMPLEMENTED_FLAG_GATED / PENDING_INDEPENDENT_REVIEW` | Agent 2 Compreensão implementado (run `_run_comprehension_pass`, toolset declare+clarify, zero owner tools, instruções próprias versionadas); handoff programático Application via `_accept_semantic_investigation_plan`→`deps.investigation_plan`; flag `DELIA_TWO_AGENT_EXPERIMENT`, default OFF, fail-closed em production; rollback provado |
+| `T2-COMPREHENSION-POST-ACCEPTANCE-ECHO-BUDGET` | `REMEDIATED` | defeito real encontrado no braço B `or-qwen14b-5c7f54ce438a`: exceção não-terminal após plano aceito descartava artefato autoritativo → `artifact_kept` + teste `B-R03`; re-run `or-qwen14b-0f85e19424f6` prova preservação |
+| `INT3-GOAL-DECLARATION-RELIABILITY` | `CLOSED_WITH_RESIDUAL (superado no braço B)` | braço B: 12/12 propostas aceitas na 1ª tentativa, zero âncoras dotted inválidas — a especialização da superfície eliminou o modo de falha observado no baseline A (5 tentativas desperdiçadas) |
+| `R3-MCP-AUTH-FLAKINESS` | `OPEN_ENV` | vigente e **dominante** no A/B: 16 catfails (A) / 19 catfails (B) `mcp_authentication_failed`; impede leitura válida de outcome — bloqueia veredito PROMOTE/KEEP |
+| `R4-AUTH-DENY-ORACLE` | `OPEN_LOW` | não exercido; C10/AUTH_DENY fora do corpus INT2 deste A/B |
+| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` | vigente — braço B mostrou anchors aceitas não-demonstradas (`ref05_target_unbound`, UNSATISFIED honestos); sem falso SATISFIED |
+| `T2-INVESTIGATION-TOKEN-CAPTURE` | `OPEN_LOW (novo)` | `external_usage` input/output=0 para o run de Investigação (provider não ecoa usage via wrapper); tokens só medidos no run de Compreensão — custo total exato UNAVAILABLE; `model_calls`/`elapsed_ms` capturados |
+
+**NEXT=`COORDINATION_C3_T2_TWO_AGENT_AB_INDEPENDENT_ACCEPTANCE_REVIEW`** — variante implementada, testada e comparada; veredito comparativo `INCONCLUSIVE` (proposta melhor, outcome env-dominado); flag permanece OFF; R2 não iniciado.

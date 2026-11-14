@@ -2,8 +2,8 @@
 
 | Campo | Valor |
 |---|---|
-| Status | **DESIGN_DRAFT** |
-| Data | 2026-11-13 |
+| Status | **READY** |
+| Data | 2026-11-14 |
 | Nota | O filtro de período usa dois `DateField` (De/Até) que já existem: período livre, sem atalhos, como na skill (decisão do owner, 2026-11-13). Por isso não há componente novo de período. |
 | Usado por | páginas [01](./01-pagina-entrada-e-execucao.md), [02](./02-pagina-dashboard-da-analise.md), [03](./03-pagina-detalhe-da-ocorrencia.md) |
 | Baseline | `@delpi/plugin-ui` no HEAD `08825074` |

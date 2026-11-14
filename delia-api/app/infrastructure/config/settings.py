@@ -243,6 +243,19 @@ class Settings:
             _profile.tool_results.max_projection_chars
         )
         self.prior_turns_limit = _profile.context.prior_turns_limit
+        # Two-Agent experimental variant (DELIA-C3-T2 split Comprehension
+        # × Investigação): off by default — baseline A is always the
+        # productive path. A production boot with the flag set fails
+        # closed: the experiment must never activate by default or by
+        # accident in the productive runtime.
+        self.two_agent_experiment = _env_flag(
+            "DELIA_TWO_AGENT_EXPERIMENT", default=False
+        )
+        if self.two_agent_experiment and self.environment == "production":
+            raise ValueError(
+                "DELIA_TWO_AGENT_EXPERIMENT is an isolated-eval flag — "
+                "it must never be enabled in production"
+            )
         self.observability_record_model_id = (
             _profile.observability.record_model_id
         )

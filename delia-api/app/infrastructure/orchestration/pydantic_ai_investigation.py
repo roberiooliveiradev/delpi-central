@@ -94,8 +94,11 @@ from app.application.model_invocation.contracts import (
 from app.infrastructure.config.cri_instruction_resource import (
     CriInstructionResourceError,
     SelectedInvestigationInstructions,
+    default_comprehension_instructions_path,
     default_investigation_instructions_path,
+    load_comprehension_instructions,
     load_investigation_instructions,
+    resolve_comprehension_instruction_version,
     resolve_investigation_instruction_version,
 )
 from app.application.specialist_interop.errors import (
@@ -193,6 +196,46 @@ _INVESTIGATION_INSTRUCTION_VERSION = (
 _INVESTIGATION_INSTRUCTIONS = (
     _DEFAULT_SELECTED.text if _DEFAULT_SELECTED is not None else ""
 )
+
+
+def load_selected_comprehension_instructions(
+    *,
+    instruction_version: str | None = None,
+    path: Path | str | None = None,
+) -> SelectedInvestigationInstructions:
+    """Load INT-2 comprehension instructions; fail closed when invalid.
+
+    Governed resource ``config/comprehension_instructions.delpi.json`` —
+    the comprehension specialist's own versioned text, never a copy of
+    the investigation instructions.
+    """
+    resource_path = path or default_comprehension_instructions_path()
+    try:
+        bundle = load_comprehension_instructions(resource_path)
+    except CriInstructionResourceError:
+        raise
+    except Exception as exc:  # noqa: BLE001 — fail closed at boundary
+        raise CriInstructionResourceError(
+            "comprehension_instruction_resource_unreadable",
+            str(exc),
+        ) from exc
+    selected = resolve_comprehension_instruction_version(
+        instruction_version
+    )
+    return bundle.select(selected)
+
+
+@dataclass(frozen=True)
+class ComprehensionTurnOutcome:
+    """Bounded end-of-run signal from the comprehension specialist.
+
+    Observability only — the authoritative comprehension artifacts are
+    the Application-accepted plan (``deps.investigation_plan``) and the
+    recorded clarification question, never this declared status.
+    """
+
+    status: str
+    note: str = ""
 
 
 def _build_native_mcp_toolset(config, *, process_tool_call):
@@ -1192,6 +1235,7 @@ class PydanticAiInvestigationOrchestrator:
         prior_turns_limit: int = _DEFAULT_PRIOR_TURNS_LIMIT,
         context_window_tokens: int | None = None,
         max_output_tokens: int | None = None,
+        two_agent_experiment: bool = False,
     ) -> None:
         if model is None and model_factory is None:
             raise ValueError("investigation model is required")
@@ -1215,6 +1259,12 @@ class PydanticAiInvestigationOrchestrator:
             if max_output_tokens
             else None
         )
+        # Experimental split Comprehension × Investigação
+        # (DELIA_TWO_AGENT_EXPERIMENT, doc 293/335 gate): OFF is the
+        # productive baseline A; ON runs a dedicated comprehension
+        # Agent whose only tool surface is the typed goal declaration
+        # + clarification, validated by the SAME Application acceptor.
+        self._two_agent_experiment = bool(two_agent_experiment)
         self.last_node_trace: list[str] = []
 
     def attempt(
@@ -1381,6 +1431,19 @@ class PydanticAiInvestigationOrchestrator:
             tool_projection_limit=self._tool_projection_limit,
         )
         toolset = FunctionToolset()
+        # Variant B (DELIA_TWO_AGENT_EXPERIMENT): the typed goal
+        # declaration lives on a dedicated comprehension toolset —
+        # the investigation Agent never sees declare_investigation_goal,
+        # so the objective can only come from the accepted handoff.
+        # Baseline A keeps the same single toolset as before.
+        comprehension_toolset = (
+            FunctionToolset() if self._two_agent_experiment else None
+        )
+        declare_toolset = (
+            comprehension_toolset
+            if comprehension_toolset is not None
+            else toolset
+        )
 
         def _proj(payload):
             """Tool-result projection bounded by the runtime-config
@@ -1735,7 +1798,7 @@ class PydanticAiInvestigationOrchestrator:
             correlation,
         )
 
-        @toolset.tool
+        @declare_toolset.tool
         def declare_investigation_goal(
             ctx,
             goal_class: str,
@@ -2213,6 +2276,12 @@ class PydanticAiInvestigationOrchestrator:
                 }
             )
 
+        if comprehension_toolset is not None:
+            # Variant B: initial-ambiguity clarification belongs to the
+            # comprehension specialist (R6 split); mid-flight gaps stay
+            # available to the investigation Agent on its own toolset.
+            comprehension_toolset.tool(request_user_clarification)
+
         # A fresh provider/client per turn avoids httpx/asyncio locks
         # bound to a previous event loop (RuntimeError on the next turn).
         model = (
@@ -2426,6 +2495,86 @@ class PydanticAiInvestigationOrchestrator:
         message_history = _prior_message_history(
             prior_turns, turns_limit=self._prior_turns_limit
         )
+        # Variant B — governed programmatic handoff, Application-owned
+        # sequencing (never AgentToolset delegation): the comprehension
+        # specialist runs first on a reduced surface — the SAME typed
+        # goal declaration validated by the SAME Application acceptor
+        # plus the clarification signal, no owner tools. Its output is a
+        # proposal; the investigation run starts only when the
+        # Application-accepted plan exists on deps (R1 gate unchanged).
+        comp_usage: dict[str, int] | None = None
+        handoff_error: str | None = None
+        investigation_request_limit = self._request_limit
+        investigation_tool_limit = self._tool_calls_limit
+        if self._two_agent_experiment:
+            comp_usage, handoff_error = self._run_comprehension_pass(
+                deps=deps,
+                model=model,
+                toolset=comprehension_toolset,
+                prompt=prompt,
+                message_history=message_history,
+                agent_capabilities=agent_capabilities,
+                deadline=deadline,
+                correlation=correlation,
+            )
+            if (
+                handoff_error is None
+                and deps.investigation_plan is None
+                and deps.clarification_question is None
+            ):
+                # Run completed but produced neither an accepted plan
+                # nor a clarification — conservative insufficient, zero
+                # owner calls.
+                handoff_error = "comprehension_no_accepted_plan"
+            investigation_request_limit = max(
+                1,
+                self._request_limit
+                - (comp_usage["requests"] if comp_usage else 0),
+            )
+            investigation_tool_limit = max(
+                1, self._tool_calls_limit - deps.tool_calls
+            )
+            if handoff_error is None and (
+                deps.investigation_plan is not None
+            ):
+                # Accepted-plan echo: the Application-validated contract
+                # the investigator consumes — bounded structured
+                # projection, never model-authored text.
+                accepted_plan = deps.investigation_plan
+                prompt += (
+                    "\n\nAccepted investigation objective (validated "
+                    "by the coordination layer — investigate it "
+                    "directly; the objective is already declared and "
+                    "cannot be changed):\n"
+                    + _bounded_json(
+                        {
+                            "goal_class": (
+                                accepted_plan.goal.goal_class
+                            ),
+                            "expected_delivery": (
+                                accepted_plan.goal.output_mode
+                            ),
+                            "comparison_requested": (
+                                accepted_plan.goal.comparison_requested
+                            ),
+                            "business_subject": getattr(
+                                accepted_plan.goal,
+                                "business_subject",
+                                None,
+                            ),
+                            "target_identities": list(
+                                accepted_plan.target_identities
+                            )[:8],
+                            "evidence_needed": [
+                                item.to_projection()
+                                for item in (
+                                    accepted_plan.evidence_needed
+                                )
+                            ][:8],
+                        },
+                        limit=1600,
+                    )
+                )
         if self._context_window_tokens:
             from app.application.model_invocation.context_budget import (
                 ADAPTER_OVERHEAD_TOKENS,
@@ -2485,20 +2634,31 @@ class PydanticAiInvestigationOrchestrator:
                 )
         result = None
         usage_limited = False
+        # Variant B handoff boundary: the investigation run starts ONLY
+        # with an Application-accepted plan — a rejected/absent proposal
+        # or a comprehension failure means zero owner calls.
+        run_investigation = (
+            not self._two_agent_experiment
+            or (
+                handoff_error is None
+                and deps.investigation_plan is not None
+            )
+        )
         try:
             try:
-                result = agent.run_sync(
-                    prompt,
-                    message_history=message_history or None,
-                    deps=deps,
-                    model_settings=_investigation_model_settings(
-                        self._max_output_tokens
-                    ),
-                    usage_limits=UsageLimits(
-                        request_limit=self._request_limit,
-                        tool_calls_limit=self._tool_calls_limit,
-                    ),
-                )
+                if run_investigation:
+                    result = agent.run_sync(
+                        prompt,
+                        message_history=message_history or None,
+                        deps=deps,
+                        model_settings=_investigation_model_settings(
+                            self._max_output_tokens
+                        ),
+                        usage_limits=UsageLimits(
+                            request_limit=investigation_request_limit,
+                            tool_calls_limit=investigation_tool_limit,
+                        ),
+                    )
             except (
                 _InvestigationContextOverflow,
                 _InvestigationHistoryIntegrityError,
@@ -2682,6 +2842,16 @@ class PydanticAiInvestigationOrchestrator:
             extra_limitations: list[str] = []
             if usage_limited:
                 extra_limitations.append("tool_calls_limit_reached")
+            if self._two_agent_experiment:
+                extra_limitations.append("experiment_variant=split")
+                extra_limitations.append(
+                    "comprehension_llm_requests="
+                    + str(comp_usage["requests"] if comp_usage else 0)
+                )
+                if handoff_error is not None:
+                    extra_limitations.append(
+                        f"comprehension_handoff={handoff_error}"
+                    )
             if (
                 catalog_failures
                 and not any(
@@ -2722,3 +2892,152 @@ class PydanticAiInvestigationOrchestrator:
         finally:
             if self._model_factory is not None:
                 _close_investigation_client(model)
+
+    def _run_comprehension_pass(
+        self,
+        *,
+        deps: InvestigationDeps,
+        model: Any,
+        toolset: Any,
+        prompt: str,
+        message_history: Any,
+        agent_capabilities: Sequence[Any],
+        deadline: TurnDeadline,
+        correlation: str,
+    ) -> tuple[dict[str, int] | None, str | None]:
+        """Experimental INT-2 comprehension run (variant B only).
+
+        The specialist owns a reduced surface — the SAME typed goal
+        declaration validated by the SAME Application acceptor plus the
+        clarification signal — and never an owner tool. Returns
+        ``(usage, error_class)``; a non-None error_class marks a typed
+        handoff failure and the investigation run must not start.
+        Deadline/cancel exceptions propagate like the investigation run
+        — they are never swallowed into an honest-attempt path.
+        """
+        from pydantic_ai import Agent, UsageLimits
+
+        selected = load_selected_comprehension_instructions()
+        instructions = selected.text
+        instruction_fingerprint = __import__("hashlib").sha256(
+            instructions.encode("utf-8")
+        ).hexdigest()[:16]
+        _logger.info(
+            "orchestration engine=pydantic_ai stage=comprehension "
+            "decision=run instruction_version=%s "
+            "instruction_fingerprint=%s correlation_id=%s",
+            selected.instruction_version,
+            instruction_fingerprint,
+            correlation,
+        )
+        agent = Agent(
+            model,
+            deps_type=InvestigationDeps,
+            toolsets=[toolset],
+            instructions=instructions,
+            retries=self._agent_retries,
+            output_type=ComprehensionTurnOutcome,
+            capabilities=list(agent_capabilities),
+        )
+        # Bounded share of the SAME turn budget — the baseline limits
+        # are never granted in full to each agent. Comprehension needs
+        # a declaration plus bounded corrections; the remaining request
+        # budget goes to investigation, which also inherits the shared
+        # ``deps.tool_calls`` counter for its own cap.
+        request_limit = max(1, self._request_limit // 3)
+        tool_calls_limit = max(
+            1, min(self._agent_retries + 2, self._tool_calls_limit)
+        )
+        try:
+            result = agent.run_sync(
+                prompt,
+                message_history=message_history or None,
+                deps=deps,
+                model_settings=_investigation_model_settings(
+                    self._max_output_tokens
+                ),
+                usage_limits=UsageLimits(
+                    request_limit=request_limit,
+                    tool_calls_limit=tool_calls_limit,
+                ),
+            )
+        except Exception as exc:
+            from app.application.capability_provision.semantic_capability_support import (
+                _StageDeadlineExceeded,
+                _TurnCancelled,
+            )
+            from app.application.interaction.turn_budget import (
+                TurnBudgetExhausted,
+            )
+
+            _terminal = (
+                _StageDeadlineExceeded,
+                TurnBudgetExhausted,
+                _TurnCancelled,
+            )
+            if isinstance(exc, _terminal):
+                raise
+            cause = getattr(exc, "__cause__", None)
+            if isinstance(cause, _terminal):
+                raise cause from exc
+            if (
+                deps.investigation_plan is not None
+                or deps.clarification_question is not None
+            ):
+                # The authoritative artifact already exists — the plan
+                # was validated by the Application acceptor (or the
+                # specialist emitted the clarification signal) before
+                # the run failed on its observability-only output.
+                _logger.info(
+                    "orchestration engine=pydantic_ai "
+                    "stage=comprehension decision=artifact_kept "
+                    "error_type=%s correlation_id=%s",
+                    type(exc).__name__,
+                    correlation,
+                )
+                return None, None
+            if type(exc).__name__ == "UsageLimitExceeded":
+                _logger.info(
+                    "orchestration engine=pydantic_ai "
+                    "stage=comprehension decision=usage_limit "
+                    "tool_calls=%d correlation_id=%s",
+                    deps.tool_calls,
+                    correlation,
+                )
+                return None, "comprehension_budget_exhausted"
+            exc_name = type(exc).__name__
+            error_class = (
+                "comprehension_output_retries_exhausted"
+                if exc_name == "UnexpectedModelBehavior"
+                else "comprehension_agent_error"
+            )
+            _logger.info(
+                "orchestration engine=pydantic_ai "
+                "stage=comprehension decision=agent_error "
+                "error_type=%s correlation_id=%s",
+                exc_name,
+                correlation,
+            )
+            return None, error_class
+        usage = result.usage
+        snapshot = {
+            "requests": int(getattr(usage, "requests", 0) or 0),
+            "tool_calls": int(getattr(usage, "tool_calls", 0) or 0),
+            "input_tokens": int(
+                getattr(usage, "input_tokens", None) or 0
+            ),
+            "output_tokens": int(
+                getattr(usage, "output_tokens", None) or 0
+            ),
+        }
+        _logger.info(
+            "orchestration engine=pydantic_ai stage=comprehension "
+            "decision=completed requests=%d tool_calls=%d plan=%s "
+            "clarification=%s correlation_id=%s",
+            snapshot["requests"],
+            snapshot["tool_calls"],
+            deps.investigation_plan is not None,
+            deps.clarification_question is not None,
+            correlation,
+        )
+        return snapshot, None

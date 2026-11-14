@@ -121,4 +121,7 @@ class TestUntrustedSurfaces:
             "prior_turns_limit",
             "context_window_tokens",
             "max_output_tokens",
+            # Composition-time experiment gate (DELIA_TWO_AGENT_EXPERIMENT)
+            # — a validated Settings flag, never request-path input.
+            "two_agent_experiment",
         ]
