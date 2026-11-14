@@ -552,13 +552,27 @@ export function PrcDetailPage({
             ) : null}
           </div>
           <div className="engineering-prc__hero-meta-controls">
-            {detail.baseRevision != null ? (
-              <span
-                className="engineering-prc__hero-chip"
-                title="Revisão técnica base do produto — diferente da versão da solicitação"
-              >
-                Revisão base R{detail.baseRevision}
-              </span>
+            {/* §56 — revisão só é exibida quando a conclusão desta
+                solicitação efetivamente a publicou; nunca Vn alheia. */}
+            {detail.status === "completed" ? (
+              detail.publishedRevision ? (
+                <button
+                  type="button"
+                  className="engineering-prc__hero-chip engineering-prc__hero-chip--link"
+                  title="Revisão técnica publicada por esta solicitação"
+                  onClick={() => selectTab("revisions")}
+                >
+                  Revisão técnica gerada: V
+                  {detail.publishedRevision.revisionNumber}
+                </button>
+              ) : (
+                <span
+                  className="engineering-prc__hero-chip"
+                  title="Conclusão sem diferença técnica — nenhuma revisão nova publicada"
+                >
+                  Concluída sem nova revisão técnica
+                </span>
+              )
             ) : null}
             <span
               ref={infoAnchorRef}
@@ -623,16 +637,8 @@ export function PrcDetailPage({
                 <dd>{detail.externalRequestId || "—"}</dd>
               </div>
               <div className="engineering-prc__info-row">
-                <dt>Versão da solicitação</dt>
+                <dt>Versão interna do atendimento</dt>
                 <dd>{detail.caseVersion}</dd>
-              </div>
-              <div className="engineering-prc__info-row">
-                <dt>Revisão base</dt>
-                <dd>
-                  {detail.baseRevision != null
-                    ? `R${detail.baseRevision}`
-                    : "—"}
-                </dd>
               </div>
             </dl>
             {detail.externalRequestId ? (
@@ -834,6 +840,7 @@ export function PrcDetailPage({
           <PrcRevisionsSection
             recordId={detail.completedRecordId}
             revisions={revisions}
+            basePath={basePath}
           />
         ) : null}
       </div>

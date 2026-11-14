@@ -51,7 +51,12 @@ export type PrcRequestDetail = {
   assignedTo?: string | null;
   assignedToDisplayName?: string | null;
   officialCode?: string | null;
-  baseRevision?: number | null;
+  /** §56 — vínculo causal só após conclusão que publicou revisão;
+   * null = solicitação sem revisão gerada (aberta ou no-op). */
+  publishedRevision?: {
+    recordId: string;
+    revisionNumber: number;
+  } | null;
   requestedChanges: Record<string, unknown>;
   technicalDraft?: Record<string, unknown> | null;
   changedPaths: Array<{ path: string; reason: string }>;

@@ -172,7 +172,6 @@ def _request_detail(request: dict, actor: PrcActor) -> dict[str, Any]:
         "assignedTo": request.get("assigned_to_subject"),
         "assignedToDisplayName": request.get("assigned_to_display_name"),
         "officialCode": request.get("official_product_code"),
-        "baseRevision": request.get("base_revision_number"),
         "requestedChanges": request["requested_payload"],
         "technicalDraft": draft.get("technical_data"),
         "changedPaths": draft.get("changed_paths", []),
@@ -392,6 +391,9 @@ class ProductRegistrationService:
         request_id: str | None = None,
     ) -> dict[str, Any]:
         detail = _request_detail(request, actor)
+        # §56 — vínculo causal só quando uma revisão publicada registra
+        # este request_id; no-op conclui sem autoria de revisão anterior.
+        detail["publishedRevision"] = self._published_revision(request)
         rid = request_id or str(request.get("id") or "")
         if not rid:
             return detail
@@ -401,6 +403,27 @@ class ProductRegistrationService:
         return self._attach_correction_exchange(
             detail, rid, actor=actor, request=request
         )
+
+    def _published_revision(
+        self, request: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        """Revisão efetivamente gerada por esta solicitação (se houver).
+
+        A solicitação aberta nunca tem revisão vinculada; após a conclusão,
+        somente a revisão cujo ``request_id`` é este caso é devolvida.
+        ``completed_record_id`` sozinho não prova publicação — no-op
+        conclui com record mas sem revisão nova.
+        """
+        record_id = request.get("completed_record_id")
+        if not record_id:
+            return None
+        for rev in self._repo.list_revisions(record_id):
+            if rev.get("request_id") == request.get("id"):
+                return {
+                    "recordId": str(record_id),
+                    "revisionNumber": rev.get("revision_number"),
+                }
+        return None
 
     # --- helpers de idempotência -------------------------------------------------
 

@@ -36,9 +36,15 @@ describe("PrcDetailPage — hero UX V3", () => {
     expect(SRC).not.toMatch(/Responsável não identificado/);
   });
 
-  it("revisão base aparece como chip discreto no hero", () => {
-    expect(SRC).toMatch(/hero-chip[\s\S]*Revisão base R\{detail\.baseRevision\}/);
-    expect(SRC).toMatch(/diferente da versão da solicitação/);
+  it("§56 — nenhum chip de revisão base em solicitação aberta", () => {
+    expect(SRC).not.toMatch(/Revisão base/);
+    expect(SRC).not.toMatch(/baseRevision/);
+  });
+
+  it("§56 — concluída mostra revisão gerada ou no-op honesto", () => {
+    expect(SRC).toMatch(/Revisão técnica gerada: V/);
+    expect(SRC).toMatch(/publishedRevision\.revisionNumber/);
+    expect(SRC).toMatch(/Concluída sem nova revisão técnica/);
   });
 
   it("popover «Informações» usa o portal ancorado oficial com escopo do MFE", () => {
@@ -51,7 +57,7 @@ describe("PrcDetailPage — hero UX V3", () => {
   it("metadados de auditoria ficam no popover, não no hero", () => {
     expect(SRC).toMatch(/Identificador no canal de origem/);
     expect(SRC).toMatch(/Última atualização/);
-    expect(SRC).toMatch(/Versão da solicitação/);
+    expect(SRC).toMatch(/Versão interna do atendimento/);
     expect(SRC).toMatch(/não corresponde necessariamente ao número interno/);
   });
 

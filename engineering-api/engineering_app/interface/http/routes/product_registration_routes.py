@@ -214,6 +214,10 @@ class IntakeBody(BaseModel):
     schemaVersion: int = Field(default=1, ge=1)
     requestedData: dict | None = None
     officialProductCode: str | None = Field(default=None, max_length=100)
+    # §56 — legado tolerado: nunca é autoridade; o backend resolve a
+    # revisão-base do record e a usa apenas como guarda de concorrência
+    # (divergente → 409 stale_revision). Novos consumidores não devem
+    # enviar; a solicitação não possui revisão vinculada.
     baseRevision: int | None = Field(default=None, ge=1)
     changes: list[dict] | None = None
     supplierLinkChanges: list[dict] | None = None

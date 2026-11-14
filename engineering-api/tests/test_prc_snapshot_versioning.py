@@ -483,3 +483,151 @@ class TestFailClosed:
         assert again.status_code == 409
         _, revs = _record_and_revisions(prc_service_repo["repo"])
         assert len(revs) == 1
+
+
+class TestPublishedRevisionReadModel:
+    """§56 — solicitação não possui revisão até conclusão publicada.
+
+    O read model do detalhe expõe ``publishedRevision`` somente quando a
+    revisão efetivamente publicada registra este ``request_id``; nunca
+    expõe ``baseRevision`` (dado interno de concorrência)."""
+
+    def test_open_request_has_no_revision_fields(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        _attach_reader(prc_service_repo)
+        core_rbac["behavior"] = (
+            "data", rbac_payload(ANALYST, id="analyst-1")
+        )
+        resp = _post(
+            client, f"{_BASE}/intake/requests", _token(jwks_env),
+            json=_update_body(
+                [{"path": "unit", "proposedValue": "UN", "reason": "r"}]
+            ),
+            headers={"Idempotency-Key": "open-1"},
+        )
+        assert resp.status_code == 201, resp.text
+        rid = resp.json()["data"]["requestId"]
+        detail = _get(
+            client, f"{_BASE}/requests/{rid}", _token(jwks_env)
+        )
+        assert detail.status_code == 200, detail.text
+        data = detail.json()["data"]
+        assert "baseRevision" not in data
+        assert data["publishedRevision"] is None
+        # CAS interno preservado — não é revisão de produto.
+        assert isinstance(data["caseVersion"], int)
+
+    def test_completed_with_publish_links_revision(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        done, rid = _complete_update(
+            client, jwks_env, core_rbac, prc_service_repo,
+            changes=[{"path": "unit", "proposedValue": "UN",
+                      "reason": "r"}],
+            idem="pub-1",
+        )
+        assert done.status_code == 200, done.text
+        detail = _get(
+            client, f"{_BASE}/requests/{rid}", _token(jwks_env)
+        )
+        data = detail.json()["data"]
+        pub = data["publishedRevision"]
+        assert pub is not None
+        assert pub["revisionNumber"] == 1
+        assert pub["recordId"] == done.json()["data"]["recordId"]
+
+    def test_completed_noop_has_no_published_revision(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        _complete_update(
+            client, jwks_env, core_rbac, prc_service_repo,
+            changes=[{"path": "unit", "proposedValue": "UN",
+                      "reason": "r1"}],
+            idem="pub-noop-1",
+        )
+        done, rid2 = _complete_update(
+            client, jwks_env, core_rbac, prc_service_repo,
+            changes=[{"path": "unit", "proposedValue": "UN",
+                      "reason": "r2"}],
+            idem="pub-noop-2",
+        )
+        assert done.status_code == 200, done.text
+        assert done.json()["data"]["changeKind"] == "no_technical_change"
+        detail = _get(
+            client, f"{_BASE}/requests/{rid2}", _token(jwks_env)
+        )
+        data = detail.json()["data"]
+        # concluída auditada sem autoria falsa da V1 preexistente
+        assert data["status"] == "completed"
+        assert data["publishedRevision"] is None
+
+    def test_concurrent_requests_stale_revision_fail_closed(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        """A e B sobre o mesmo produto; B conclui primeiro; A falha fechado
+        (stale_revision) em vez de publicar sobre baseline obsoleto."""
+        # produto passa a ter V1 acompanhado
+        _complete_update(
+            client, jwks_env, core_rbac, prc_service_repo,
+            changes=[{"path": "unit", "proposedValue": "UN",
+                      "reason": "v1"}],
+            idem="conc-v1",
+        )
+        _attach_reader(prc_service_repo)
+        core_rbac["behavior"] = (
+            "data", rbac_payload(ANALYST, id="analyst-1")
+        )
+        # A e B abrem contra a revisão vigente (V1); ambos propõem a
+        # mesma mudança para que a verificação oficial seja matched.
+        rid_a = None
+        rid_b = None
+        for i, key in enumerate(("conc-a", "conc-b")):
+            resp = _post(
+                client, f"{_BASE}/intake/requests", _token(jwks_env),
+                json=_update_body(
+                    [{"path": "unit",
+                      "proposedValue": "CX",
+                      "reason": "r"}]
+                ),
+                headers={"Idempotency-Key": key},
+            )
+            assert resp.status_code == 201, resp.text
+            if i == 0:
+                rid_a = resp.json()["data"]["requestId"]
+            else:
+                rid_b = resp.json()["data"]["requestId"]
+        # B conclui primeiro — verificação matched (oficial=CX) → V2
+        prc_service_repo["reader"] = FakeReader(_product(unit="CX"))
+        v_b = _advance_to_attendance(
+            client, jwks_env, core_rbac, rid_b
+        )
+        done_b = _post(
+            client, f"{_BASE}/requests/{rid_b}/actions/complete",
+            _token(jwks_env),
+            json={"expectedVersion": v_b, "officialCode": "001234"},
+        )
+        assert done_b.status_code == 200, done_b.text
+        assert done_b.json()["data"]["publishedRevisionNumber"] == 2
+        # A conclui depois — matched, mas baseline obsoleto → fail closed
+        prc_service_repo["reader"] = FakeReader(_product(unit="CX"))
+        v_a = _advance_to_attendance(
+            client, jwks_env, core_rbac, rid_a
+        )
+        done_a = _post(
+            client, f"{_BASE}/requests/{rid_a}/actions/complete",
+            _token(jwks_env),
+            json={"expectedVersion": v_a, "officialCode": "001234"},
+        )
+        assert done_a.status_code == 409, done_a.text
+        rec, revs = _record_and_revisions(prc_service_repo["repo"])
+        # nenhuma revisão duplicada nem publicação sobre baseline velho
+        assert rec["current_revision_number"] == 2
+        assert len(revs) == 2
+        # A permanece em atendimento e sem vínculo de revisão
+        detail_a = _get(
+            client, f"{_BASE}/requests/{rid_a}", _token(jwks_env)
+        )
+        data_a = detail_a.json()["data"]
+        assert data_a["status"] == "in_progress"
+        assert data_a["publishedRevision"] is None

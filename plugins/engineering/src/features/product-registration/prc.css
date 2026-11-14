@@ -426,6 +426,24 @@
   font-weight: 600;
 }
 
+.engineering-prc__hero-chip--link {
+  cursor: pointer;
+  color: var(--en-accent, #1570ef);
+  border-color: color-mix(
+    in srgb,
+    var(--en-accent, #1570ef) 45%,
+    transparent
+  );
+}
+
+.engineering-prc__hero-chip--link:hover {
+  background: color-mix(
+    in srgb,
+    var(--en-accent, #1570ef) 10%,
+    transparent
+  );
+}
+
 .engineering-prc__info-anchor {
   display: inline-flex;
 }

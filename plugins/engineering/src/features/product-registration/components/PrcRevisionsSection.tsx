@@ -20,7 +20,13 @@ import {
   type PrcRevisionDetail,
   type PrcRevisionSummary,
 } from "../api/productRegistrationApi";
-import { PRC_COPY, prcFieldLabel, prcPersonLabel } from "../prcCopy";
+import { prcDetailTabHref } from "../prcNavigate";
+import {
+  PRC_COPY,
+  prcFieldLabel,
+  prcPersonLabel,
+  prcShortId,
+} from "../prcCopy";
 
 function fmt(value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";
@@ -32,9 +38,12 @@ function fmt(value: unknown): string {
 export function PrcRevisionsSection({
   recordId,
   revisions,
+  basePath,
 }: {
   recordId: string | null | undefined;
   revisions: PrcRevisionSummary[];
+  /** Base do MFE — link «Solicitação de origem» (proveniência §56). */
+  basePath?: string;
 }) {
   const [snapshot, setSnapshot] = useState<PrcRevisionDetail | null>(null);
   const [loading, setLoading] = useState(false);
@@ -94,6 +103,22 @@ export function PrcRevisionsSection({
           : "—",
     },
     {
+      key: "requestId",
+      header: "Solicitação de origem",
+      render: (r) =>
+        basePath && r.requestId ? (
+          <EngineeringActionButton
+            variant="link"
+            href={prcDetailTabHref(basePath, r.requestId, "draft")}
+            title={`Abrir a solicitação ${prcShortId(r.requestId)} que gerou esta revisão`}
+          >
+            {prcShortId(r.requestId)}
+          </EngineeringActionButton>
+        ) : (
+          prcShortId(r.requestId || "")
+        ),
+    },
+    {
       key: "view",
       header: "",
       interactive: true,
@@ -145,7 +170,7 @@ export function PrcRevisionsSection({
         <>
           <EngineeringDetailCard
             title={`Revisão R${snapshot.revision_number} — snapshot imutável`}
-            hint={`Publicada em ${new Date(snapshot.approved_at).toLocaleString("pt-BR")} por ${prcPersonLabel(snapshot.approved_by_subject)}`}
+            hint={`Publicada em ${new Date(snapshot.approved_at).toLocaleString("pt-BR")} por ${prcPersonLabel(snapshot.approved_by_subject)}${snapshot.request_id ? ` · Solicitação de origem ${prcShortId(snapshot.request_id)}` : ""}`}
           >
             <EngineeringDetailFieldGrid fields={snapshotFields} />
             {Array.isArray(snapshot.technical_snapshot?.suppliers) &&
