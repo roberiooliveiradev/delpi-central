@@ -70,6 +70,13 @@
   box-shadow: 0 12px 32px color-mix(in srgb, var(--delpi-ui-table-columns-text) 12%, transparent);
 }
 
+/* Variante em portal (AnchoredPanelPortal): posição fixed calculada
+ * pelo hook — neutraliza o offset relativo ao wrapper. */
+.delpi-ui-table-columns__panel--portal {
+  top: auto;
+  right: auto;
+}
+
 .delpi-ui-table-columns__header {
   display: flex;
   align-items: center;

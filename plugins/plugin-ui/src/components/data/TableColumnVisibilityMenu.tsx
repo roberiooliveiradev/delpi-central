@@ -1,7 +1,8 @@
 import { Columns3, GripVertical, RotateCcw } from "lucide-react";
-import { useEffect, useId, useRef, useState, type DragEvent } from "react";
+import { useId, useRef, useState, type DragEvent } from "react";
 
 import { NativeCheckboxControl } from "../forms/NativeCheckboxControl";
+import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
 
 export type TableColumnVisibilityItem = {
   key: string;
@@ -52,19 +53,10 @@ export function TableColumnVisibilityMenu({
 }: TableColumnVisibilityMenuProps) {
   const [open, setOpen] = useState(false);
   const [dragKey, setDragKey] = useState<string | null>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
   const canReorder = Boolean(onReorderColumns) && enableReorder !== false;
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current?.contains(event.target as Node)) return;
-      setOpen(false);
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const visibleCount = columns.filter((column) => visibility[column.key]).length;
   const rootClass = ["delpi-ui-table-columns", className].filter(Boolean).join(" ");
@@ -92,8 +84,9 @@ export function TableColumnVisibilityMenu({
   };
 
   return (
-    <div className={rootClass} ref={wrapperRef}>
+    <div className={rootClass}>
       <button
+        ref={triggerRef}
         type="button"
         className="delpi-ui-table-toolbar-action delpi-ui-table-columns__trigger"
         aria-expanded={open}
@@ -104,13 +97,25 @@ export function TableColumnVisibilityMenu({
         {labels.trigger}
       </button>
 
+      {/* Painel em portal via AnchoredPanelPortal — posição fixed com
+       * flip/clamp na viewport; não é recortado por ancestrais com
+       * overflow:hidden (ex.: .delpi-ui-page-hero). Escape e clique
+       * externo fecham via onDismiss oficial. */}
       {open ? (
-        <div
-          id={panelId}
-          className="delpi-ui-table-columns__panel"
+        <AnchoredPanelPortal
+          open={open}
+          anchorRef={triggerRef}
+          panelRef={panelRef}
+          variant="bare"
+          className="delpi-ui-table-columns__panel delpi-ui-table-columns__panel--portal"
           role="dialog"
           aria-label={labels.panelAriaLabel ?? labels.trigger}
+          preferredPlacement="bottom"
+          horizontalAlign="end"
+          gap={8}
+          onDismiss={() => setOpen(false)}
         >
+          <div id={panelId}>
           <div className="delpi-ui-table-columns__header">
             <strong className="delpi-ui-table-columns__title">{labels.panelTitle}</strong>
             <button
@@ -169,8 +174,9 @@ export function TableColumnVisibilityMenu({
             })}
           </ul>
 
-          <p className="delpi-ui-table-columns__hint">{labels.hint}</p>
-        </div>
+            <p className="delpi-ui-table-columns__hint">{labels.hint}</p>
+          </div>
+        </AnchoredPanelPortal>
       ) : null}
     </div>
   );

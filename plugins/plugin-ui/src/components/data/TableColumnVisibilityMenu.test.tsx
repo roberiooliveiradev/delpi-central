@@ -91,6 +91,21 @@ describe("TableColumnVisibilityMenu", () => {
   });
 
   it("renderiza label na classe canônica do checkbox", () => {
+    render(
+      <TableColumnVisibilityMenu
+        columns={[{ key: "loja", label: "Loja" }]}
+        visibility={{ loja: true }}
+        onToggleColumn={() => undefined}
+        onReset={() => undefined}
+        labels={LABELS}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Colunas" }));
+    // Painel via AnchoredPanelPortal (document.body) — não usar container.
+    expect(document.querySelector(".delpi-ui-native-checkbox__label")?.textContent).toBe("Loja");
+  });
+
+  it("renderiza o painel em portal no document.body (não recortado por ancestral com overflow)", () => {
     const { container } = render(
       <TableColumnVisibilityMenu
         columns={[{ key: "loja", label: "Loja" }]}
@@ -101,6 +116,26 @@ describe("TableColumnVisibilityMenu", () => {
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Colunas" }));
-    expect(container.querySelector(".delpi-ui-native-checkbox__label")?.textContent).toBe("Loja");
+    const panel = document.querySelector(".delpi-ui-table-columns__panel--portal");
+    expect(panel).toBeTruthy();
+    expect(container.contains(panel)).toBe(false);
+    expect(document.body.contains(panel)).toBe(true);
+    expect(panel?.getAttribute("role")).toBe("dialog");
+  });
+
+  it("fecha o painel com Escape", () => {
+    render(
+      <TableColumnVisibilityMenu
+        columns={[{ key: "loja", label: "Loja" }]}
+        visibility={{ loja: true }}
+        onToggleColumn={() => undefined}
+        onReset={() => undefined}
+        labels={LABELS}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Colunas" }));
+    expect(document.querySelector(".delpi-ui-table-columns__panel--portal")).toBeTruthy();
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(document.querySelector(".delpi-ui-table-columns__panel--portal")).toBeFalsy();
   });
 });
