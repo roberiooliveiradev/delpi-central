@@ -3789,3 +3789,58 @@ execução (não prescrevem) — nenhuma correção adicional necessária.
 `IAM_SECURITY_REVIEW=COMPLETE` · `AUTHZ_BOUNDARY=PRESERVED` ·
 `KEYCLOAK_CHANGES=NONE` · `PRODUCTION_CHANGED=NO` ·
 `VAL01_COMPLETED=false`.
+
+## §86 — G6: conhecimento desenho×BOM consolidado no mecanismo canônico (2026-11-13)
+
+**TASK_ID:** `EVA-G6-DRAWING-BOM-COMPARISON-AND-ENGINEERING-KNOWLEDGE-01`
+Fatia executada sem novos gates de owner/arquitetura.
+
+**Inventário (estado real):**
+
+- Comparador oficial `bom_structure_comparator.py` (2136 linhas)
+  **já existe e já está integrado** ao `analyze`: tipos
+  `MATCH / DRAWING_ONLY / BOM_ONLY / PARENT_RELATION_MISMATCH /
+  INCONCLUSIVE`, gate de cobertura DEC-VAL-033 (BOM_ONLY só com
+  cobertura suficiente) e supressão de par espelho OCR
+  (DRAWING_ONLY+BOM_ONLY por dígitos próximos). Segundo comparador
+  **não criado**.
+- Integração BOM real comprovada em prod: job `aj-fc70e1324afd47b6`
+  → `bom_available: true`, status `INCONCLUSIVE` por cobertura
+  declarada (abstenção correta — `unverified_parent_occurrences`).
+- Contrato BOM oficial: `GET /products/{code}/structure`
+  (api-delpi, owner confirmado, leitura autenticada §77).
+- Mecanismo de conhecimento canônico:
+  `engineering_app/content/eva_engineering_knowledge.json`
+  (owner engineering-api, servido pela tool MCP `knowledge`).
+
+**Legado recuperado (Minha DELPI AI API):**
+
+| Fonte | Classe | Uso |
+|---|---|---|
+| `onda-14 OCR hierárquico` (carimbo base-direita, `50xx` intermediários, regiões BOM/carimbo separadas, conflicts+clarificação) | `ADAPT` | incorporado ao tópico novo + já coberto pelo Understanding vigente |
+| `drawing_analyser_instructions_full` + smokes `drawing_*` | `REFERENCE_ONLY` | exemplos históricos, sem autoridade |
+| `eva_engineering_knowledge.json` `product.drawing_criteria` | `REUSE_AS_IS` | vocabulario PA/PI/MP reaproveitado |
+
+`LEGACY_RUNTIME_DEPENDENCY=NONE` — nenhum import do legado.
+
+**Implementado:** tópico `product.drawing_bom_comparison` v1.0 no
+catálogo (v1.4): vocabulário PA/PI/MP/conjunto/ocorrência + 9 regras
+`CMP-*` (MATCH, DRAWING_ONLY, BOM_ONLY, PARENT_MISMATCH,
+INCONCLUSIVE, OCR_AMBIGUITY, SAME_CODE_DIFFERENT_PARENT,
+NO_BOM_INVENT, EXPLAIN_STRUCTURE — contrato de explicação
+OBSERVATION/EVIDENCE/INTERPRETATION/CAUSES/UNCERTAINTIES/
+VERIFICATION). Servido pela tool `knowledge` sem código novo.
+Testes: 118 PASS (`test_eva_mcp` + comparadores).
+
+**Pendente para Coordination (decisões de owner/arquitetura):**
+
+- Exposição dedicada de explicação por divergência no MCP
+  (novo envelope/tool ou campo governado no `analyze` — contrato).
+- Persistência de análises além do job store processo-local
+  (decisão de storage — já registrada §77).
+- Homologação G6 multi-produto com BOM real (corpus reduzido do
+  Doc 120 — requer identidade de avaliação aprovada, §85.6).
+
+`G6_GATE=PARTIAL(knowledge+comparator verified)` ·
+`ENGINEERING_KNOWLEDGE_GATE=PASS(topic served)` ·
+`MCP_EXPLANATION_GATE=PENDING_CONTRACT` · `VAL01_COMPLETED=false`.
