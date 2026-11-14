@@ -134,3 +134,17 @@ Código `adaeafe2ea` (+ follow-up null em `difference`). Tags `rollback-entry-au
 | E6 | FIXED | `fiscal_code: ""` no CT-e — removido de `_cte_comparison`; README §6 | PASS | — | CT-e sem `fiscal_code` |
 | B9 | FIXED | abas faltantes sem persistência — V028 + xlsx 11 abas | PASS | — | 12/11 fil01: 11 abas; Comparativo itens 13; Agrupados 2; Excluídos 7 |
 | D2 | FIXED | identidade MCP sem `has_cf_access`; DESTRUCTIVE_CAPS sem cancel | 321 PASS focado | — | — |
+
+## Verificação da T9R4 pela CLARA (2026-11-14, PROD) — REWORK pequeno
+
+PASS pelo MCP: E1 (padrão 19; `divergent` 2; `posted_outside_period` filtra), E3 (`simples.near_sublimite` → fornecedor),
+E5 (`previous` com os campos de `kpis`). B9: aceito pelo report (11 abas; itens 13, agrupadas 2, excluídos 7) — a CLARA não lê o xlsx.
+
+| # | Sev. | Residual | Evidência (CLARA, PROD) | Correção |
+|---|---|---|---|---|
+| F1 | Média | E2 não aparece nas análises existentes | 12/11 filial 01: origem `090`/`200` ainda com `difference: "-110.00"`. A análise mostra `xml_cache_hits 325` / `xml_downloaded 16`, os números da T9R3: a reexecução da T9R4 não ficou gravada (ou o valor gravado não é recalculado na leitura) | aplicar a regra de E2 também na leitura (vale para análise antiga); reexecutar e gravar 12/11 (01 e 02) e 13/11 (01) |
+| F2 | Baixa | E4 idem | 12/11 filial 01, nota lançada fora do período de fornecedor `000001` loja `13`: `supplier_name: ""` | reexecução gravada; se o SA2 não tiver a loja, nome do XML |
+| F3 | Baixa | E6 idem | `read cte` de 12/11 e de 13/11 ainda com `fiscal_code: ""` | remover na leitura e no gravado; reexecução gravada |
+| F4 | Baixa | cobertura da `analyze` com filtro diz «0 notas» | `entry_audit_findings` com `theme=simples` em 13/11: «0 notas, 1 ocorrências» | com filtro, o FACT de cobertura diz o filtro aplicado e não zera as notas da análise (ou é omitido) |
+| F5 | — | D2 sem prova de suíte inteira | report: «321 PASS»; a suíte inteira da BFF tinha ~1.300 testes | report com o comando e o total da suíte inteira (PASS/FAIL/skip) contra o commit pai |
+
