@@ -115,7 +115,28 @@ export function isGovernedAppsHref(
   return typeof href === "string" && /^\/apps\/[a-z0-9-]+/i.test(href.trim());
 }
 
-export function navigateGovernedHref(href: string | null | undefined): void {
+export function navigateGovernedHref(
+  href: string | null | undefined,
+  options?: { basePath?: string; replace?: boolean },
+): void {
   if (!isGovernedAppsHref(href)) return;
-  window.location.assign(href);
+  if (typeof window === "undefined") return;
+  const target = href.trim();
+  const base = normalizeEngineeringBasePath(options?.basePath);
+  const path = normalizePathname(target);
+  if (path === base || path.startsWith(`${base}/`)) {
+    // Destino interno ao MFE — roteamento pelo mecanismo oficial do host
+    // (mesmo de navigateEngineeringView/navigatePrcHref), sem reload
+    // completo nem saída do contexto do Portal Engenharia.
+    if (options?.replace) {
+      window.history.replaceState(window.history.state, "", target);
+    } else {
+      window.history.pushState(window.history.state, "", target);
+    }
+    window.dispatchEvent(
+      new PopStateEvent("popstate", { state: window.history.state }),
+    );
+    return;
+  }
+  window.location.assign(target);
 }

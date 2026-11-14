@@ -78,8 +78,8 @@ const ROUTE_ICONS: Record<string, ReactNode> = {
 
 };
 
-function openItem(item: HomeItem): void {
-  navigateGovernedHref(item.href);
+function openItem(item: HomeItem, basePath: string): void {
+  navigateGovernedHref(item.href, { basePath });
 }
 
 type HomePageProps = {
@@ -158,9 +158,11 @@ export function HomePage({
   const eventItems = useMemo(
     () =>
       home
-        ? buildEventItems(home.sections, copy.events.openLabel, openItem)
+        ? buildEventItems(home.sections, copy.events.openLabel, (item) =>
+            openItem(item, basePath),
+          )
         : [],
-    [home, copy.events.openLabel],
+    [home, copy.events.openLabel, basePath],
   );
   const degraded = home ? eventsSourcesDegraded(home.sections) : false;
 
