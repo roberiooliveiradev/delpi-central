@@ -463,6 +463,24 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 **Rollback:** reverter commit de teste/documentacao sem alterar migrations.
 **Proximo passo unico:** confirmar integracao V014 no workflow; entao iniciar P2 de verificacao criptografica offline do dispositivo.
 
+## 2026-11-14 | G2-S4-S2b-P2 | prova offline de posse de chave preconfiavel
+
+**Objetivo:** preparar verificacao criptografica de resposta a desafio sem confundir posse de chave com autenticacao do hardware Windows.
+
+**Arquivos alterados:** `domain/workstation_device_proof.py`, `tests/test_workstation_device_proof.py`, README, runbook P2, diario e issue #179. Sem migration ou route.
+
+**Commit/issue:** commit desta entrega na main, issue #179. Registrar CI apos conclusao.
+
+**Testes executados e evidencias:** ambiente local isolado Python, pytest dos 18 cenarios PASS. Tests incluem chave errada, troca de computador/ticket/nonce, audiencia errada, assinatura corrompida, limite de validade e TTL. Pipeline completo ainda pendente de confirmacao. CI anterior da V014 falhou em fixtures; fix publicado em f5514348f36d. Nao afirmar CI verde antes de verificar.
+
+**Estado de producao / implantacao:** nenhum deploy, Windows, Keycloak, S2S, servidor remoto, migration ou automacao ativados. O verificador nao e ligado a API HTTP e nao recebe/chama chave privada.
+
+**Riscos e limitacoes:** somente prova de posse de chave publica previamente confiada. A primeira vinculacao dessa chave exige cadeia segura de confianca e HML (TPM/mTLS conforme viabilidade), assinatura/instalacao corporativa, protecao contra clonagem, associacao transacional a ticket e verificacao em janela concorrente. O teste offline nao fornece nenhuma dessas garantias por si so.
+
+**Rollback:** como nao ha runtime, reverter apenas codigo/doc desta entrega em novo commit; preservar V014 e gates.
+
+**Proximo passo unico:** apurar CI V014/P2, especificar registro seguro da chave em HML e integrar desafio + consumo unico somente apos aceite de seguranca.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

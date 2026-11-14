@@ -38,3 +38,7 @@ Critérios: 19 testes unitarios PASS; testes Postgres reais com V014, expiracao,
 ## Correcao de fixtures de CI (14/11/2026)
 
 O primeiro CI V014 [43646928157](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43646928157) apresentou quatro erros de **setup de pytest**: `migrated` nao estava disponivel no modulo `test_postgres_bootstrap_tickets.py`. Foram importadas explicitamente as fixtures `database` e `migrated` juntamente com `pg_client`. Testes de banco continuam pendentes de novo workflow apos o fix; nao declarar V014 validada pelo CI anterior.
+
+## Progresso seguinte: P2 (14/11/2026)
+
+A biblioteca offline [G2-S4-S2b-P2](G2-S4-S2B-P2-DEVICE-PROOF.md) valida assinatura Ed25519 vinculada a ticket e workstation, mas continua **sem registro de chave, attestation Windows, endpoint ou ativacao**. O resultado do CI V014 apos o fix das fixtures deve ser conferido antes da homologacao.
