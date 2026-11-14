@@ -837,3 +837,37 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Limitações:** pill mostra o total do escopo (rótulo do filtro ativo permanece nos chips — decisão minimalista, sem duplicar texto); meta textual "· Enviada · Criação" da §45 removida.
 
 **Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
+
+## 47. Paridade de campos Cards ≡ Kanban ≡ Tabela — `PrcRequestCard` único (14/11/2026)
+
+**TASK:** `EVA-PRC-QUEUE-CARDS-KANBAN-FIELD-PARITY-HML-01`. Frontend exclusivo; **PRD não autorizado.**
+
+**Decisão funcional (PO nesta conversa):** unificar apresentação das solicitações PRC nos modos Cards e Kanban com paridade informacional à Tabela; um único componente de card; menu Colunas compartilhado nos três modos; sem drag-and-drop de workflow; paginação server-side e `statusCounts` honestos.
+
+**Diagnóstico:** Cards/Kanban usavam `EngineeringInteractiveDataCard` com `children` (só o Nº) — o kit ignora `fields` quando há `children`, resultando em perda dos demais campos. Menu Colunas ficava oculto fora do modo Tabela (`layout === "table"`). Kanban listava subset menor de campos e podia confundir `statusCounts` (universo filtrado) com itens da página.
+
+**Arquitetura de apresentação:**
+- Catálogo puro `prcQueueFieldCatalog.ts` — chaves, rótulos pt-BR, textos canônicos, ordem, visibilidade, meta de contagem Kanban.
+- `PrcRequestCard` + `buildPrcCardColumns` — reutiliza os mesmos `DataTableColumn.render` da Tabela; identidade (`id`) sempre à frente; Kanban omite Status no card (`omitKeys: ["status"]`) para evitar duplicar o título da coluna.
+- Storage key preservada: `engineering:prc:requests:columns` via `useTableColumnVisibility` + `TableColumnVisibilityMenu` nos três modos.
+- Navegação: `navigatePrc(PRC_PATHS.detail(id))` — interno; sem My Requests; sem ações de workflow no clique.
+
+**Campos canônicos (sete):** Nº, Tipo, Solicitante, Código oficial, Abertura, Status, Responsável.
+
+**Kanban / paginação:** meta por coluna `N no total · M nesta página` (`formatPrcKanbanColumnCountMeta`); sem carregar todas as páginas; sem alterar contrato backend.
+
+**Testes:** vitest engineering **394/394** (incl. `prcQueueFieldCatalog.test.ts` + `PrcRequestCard.test.tsx`); build ok (`App-Dx74sSu1.js`). Typecheck: erros pré-existentes em `engineeringUi.ts` / `idPrefix` (fora do escopo).
+
+**SHA:** implementação `c38f44182ca4a67cf8c917aa553805233fa9f0a8` (base `effebddfd3`); já em `origin/main`.
+
+**HML (`up-hml-sequential.sh --fase mfe --build engineering`, checkout `c38f44182c`):**
+- imagem anterior (rollback): `sha256:050a598e7f3fff70e9f4ddfbfa8974e7159fda49ca12e59dadb6642b3841ee52`
+- imagem nova: `sha256:211d2e0198a07e82595358a334ed9c5b381ce46c3fe9a7b175687d8ebefd3189` — container healthy
+- bundle servido: `App-Dx74sSu1.js` (paridade com build local; contém `engineering-prc__request-card` / `no total`)
+
+**E2E visual (Chromium real no host HML, `HML_TEST_*` + `HML_DENIED_*`) — evidências `/tmp/prc-card-parity/`:**
+E01 sete campos no card **PASS** (subchecks id/type/requester/officialCode/createdAt/status/assignedTo) | E02 Kanban mesmo card **PASS** | E03 tipos pt-BR **PASS** | E04 código ausente **PASS** | E05 nomes/avatares **PASS** via E01_requester+assignedTo | E06/E07 menu Colunas em Cards/Kanban **PASS** | E08 ocultar Abertura nos 3 modos **PASS** | E09 restaurar **PASS** | E11 persistência refresh **PASS** | E12/E13 clique → detalhe interno UUID **PASS** | E14 alternância preserva `view=pending` **PASS** | E15 contagens `N no total · M nesta página` **PASS** | E16 pending **PASS** | E17 mobile overflow=0 **PASS** | E18 teclado Enter no card **PASS** | E19 negado **PASS** | E20 home Engenharia **PASS**. Artefatos: `e01-cards-desktop.png`, `e02-kanban-desktop.png`, `e17-cards-mobile.png`, `e19-denied.png`, `results.json`.
+
+**Limitações:** Kanban continua limitado aos itens da página atual (honestidade de paginação); sem DnD; preferências inválidas caem no sanitize do hook canônico.
+
+**Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
