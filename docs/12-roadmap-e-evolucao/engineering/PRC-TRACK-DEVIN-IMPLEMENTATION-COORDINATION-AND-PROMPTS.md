@@ -785,3 +785,31 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Limitações honestas:** reordenação de colunas validada via persistência localStorage+reload (drag HTML5 headless não confiável); menu Colunas é drag-based (sem alternativa de teclado própria — limitação herdada do componente canônico); consentimento LGPD do usuário negado exigiu scroll+aceite no fluxo de teste.
 
 **Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS(E01–E18) / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
+
+## 45. Fila PRC em duas áreas — hero compacto com Sinalizados e tabela sem card externo — implementação, HML e E2E (14/11/2026)
+
+**TASK:** `EVA-PRC-QUEUE-HERO-TABLE-LAYOUT-REFINEMENT-HML-01`. Frontend exclusivo (MFE engineering); **PRD não autorizado.**
+
+**Causa da duplicação:** `DataTableSection` renderizava o card canônico (`-card`/header com título "Solicitações de produtos" + meta "N registro(s)") abaixo de um hero com o mesmo título — título duplicado, borda/padding duplos e menos área útil para a grade. Bandeiras ocupavam faixa própria no corpo do hero; Atualizar existia 2×; Colunas e o seletor de modos ficavam longe da tabela.
+
+**Implementação (commit `d108c84714`, 4 arquivos):**
+- **`DataTableSection` + prop opt-in `unframed`**: omite o header de seção e usa classes sem `-card` (`engineering-table-section delpi-ui-table-section`) — tabela renderiza direta, sem contêiner externo; demais páginas inalteradas.
+- **Hero:** ações passam a ser `[⚑ Sinalizados (N)] [Atualizar] [Nova solicitação]` — `PrcFlagsOpsPanel compact` movido para a linha de ações; label compacto "Sinalizados (N)" (contador real OPEN, fail-closed); corpo do painel abre como **popover ancorado** (position absolute, max-height, scroll) — lifecycle/permissões/endpoints intactos. Atualizar passa a existir **1×** (IconButton redundante removido da barra primária).
+- **Filtros no hero:** busca dominante (debounce+Enter+URL) + chips Status (Pendentes/Todos/7 oficiais) + chips Tipo — semântica §41/§43 inalterada; `view=pending` → Pendentes `aria-pressed`.
+- **Barra de ferramentas da tabela** (`.engineering-prc__table-toolbar`): esquerda = total real do escopo `"N solicitação(ões) · <Status|Tipo|busca>"` (COUNT pré-paginação do backend); direita = menu **Colunas** (somente modo Tabela; mesma storage key `engineering:prc:requests:columns`, único gerenciador) + `SegmentToggle` Tabela/Cards/Kanban. Menu Colunas removido do hero — não há segundo botão.
+- **Paginação** permanece dentro da seção, abaixo da grade, server-side ("Página 1 de N · X registro(s)").
+
+**Contratos preservados:** backend não tocado nem reconstruído; `view=pending`, status explícito, page=1 por troca, AuthZ/objeto, workflow, TOTVS, LMPs, My Requests.
+
+**Testes:** vitest **37/371 PASS**; `tsc --noEmit` ok; `vite build` ok (`App-T70hQVQx.js`).
+
+**HML (`up-hml-sequential.sh --fase mfe --build engineering`, checkout `d108c84714`):** imagem `sha256:b293a536fa9ea3c7ed73fa138529c344db0699474bd4cef90abecc56fef0f119` — healthy; bundle servido = `App-T70hQVQx.js` (hash = build local). Rollback: `sha256:692056367ec7…` retida. 21/21 containers healthy; logs nginx limpos.
+
+**E2E visual (Chromium real, Playwright 1.65 via venv do host) — E01–E15 PASS:**
+- E01 título "Solicitações de produtos" único (1 h1/h2) | E02 ações juntas + Atualizar único (n=1) | E03 `Sinalizados (1)` compacto → painel abre como popover absolute | E04 filtros: Pendentes ativo, Enviadas→`status=submitted`, Criação→`type=create` | E05 tabela **sem** `.engineering-card/.delpi-ui-card` ancestral e sem título de seção | E06 largura útil (wrap=main=922px) | E07 toolbar `"0 solicitações · Enviada · Criação"` (meta reflete escopo real, inclusive vazio) + Colunas/modos à direita; Colunas fora do hero | E08 ocultar/reordenar(persistido)/restaurar colunas | E09 Cards/Kanban/Tabela + Colunas oculta fora de Tabela | E10 paginação "Página 1 de 1 · 5 registro(s)" | E11 deep-link `?view=pending` → Pendentes ativo | E12 mobile 390px overflow=0 | E13 teclado Enter→`status=rejected` | E14 negado → "Aplicação indisponível", rows=0 | E15 LMP + My Requests ok.
+- Evidências no host HML `/tmp/`: `ux2-flags.png`, `ux2-table.png`, `ux2-mobile.png`, `ux2-desktop.png`, `ux2-denied.png`.
+- Nota de honestidade de teste: E08 validou reordenação via persistência+reload (drag HTML5 instável em headless); headers exibem indicador `↕` — strings comparadas com o sufixo.
+
+**Limitações:** menu Colunas segue drag-based (sem alternativa de teclado — limitação do componente canônico); reordenação E2E via storage; usuário negado é barrado no manifest do plugin (evidência de negação mais ampla que 403 interno).
+
+**Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS(E01–E15) / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
