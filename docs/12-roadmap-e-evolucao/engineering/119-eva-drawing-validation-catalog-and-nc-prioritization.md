@@ -4008,3 +4008,144 @@ O pipeline real `run_visual_benchmark → build_document_understanding → SLANe
 **DOCUMENTATION_MAINTENANCE_RULE (owner direction, 2026-11-14):** preservar os documentos canônicos existentes como referência atual. Antes de qualquer novo documento/seção ou handoff, localizar e ler as authorities e o material relacionado; reconciliar instruções, `NEXT_BOUNDED_STEP`, status e critérios que perderam validade **no próprio local original**; remover ou marcar expressamente como superadas orientações antigas; atualizar índice/links afetados e o tracker, evitando múltiplas fontes contraditórias. Não criar documento para cada task, teste, reunião ou mudança de direção; usar seção existente, issue/ledger ou registro de evidência quando suficiente. Novo artefato só mediante necessidade real, owner, consumer, boundary, motivo de não caber no canônico e Abstraction Gate. Histórico de execução pode permanecer, mas deve distinguir claramente `HISTORICAL` de `CURRENT`; o leitor não deve precisar percorrer apêndices para descobrir a orientação vigente. Se o documento tornou-se excessivamente extenso, propor consolidação/refatoração documental governada (sem perder evidência, commits ou rastreabilidade) em vez de crescimento indefinido. Toda alteração verifica consistência com Docs 116/119/120/121, Issue #131 e demais authorities realmente aplicáveis; não presumir mudança de authority sem decisão.
 
 **Separações obrigatórias:** `DRAWING_STRUCTURE_UNDERSTANDING=ACCEPT_WITH_RESIDUAL` para o caso testado; `MCP_COMPLETE_STRUCTURE_CONSUMPTION=TO_INVENTORY`; `OFFICIAL_BOM_THREE_WAY=INCONCLUSIVE` por identidade delegada; `OWNER_HOMOLOGATION=PENDING`; `VAL01_COMPLETED=false`. Planejamento da UI adiado, sem decisão de owner/authority nem release. A capacidade gerada permanece **DRAFT/CANDIDATE**.
+
+
+## §91 — VAL-02/VAL-05: inventário de carimbo em desenhos reais (2026-11-14)
+
+**TASK_ID:** `EVA-E2-VAL02-TITLEBLOCK-INVENTORY-SEMANTICS-AND-CONTRACT-01`
+**MODO:** READ_ONLY — sem implementação, sem nova tool, sem storage.
+**EVIDÊNCIAS:** execução read-only do pipeline real no container prod
+(imagem `e17ea1dc1f`) sobre 4 PDFs oficiais do fileserver:
+`90264135` (13p, SHA `af47dd4c…`, reuso do artefato §88),
+`90263554` (18p, SHA `89f9b4d5…`), `90264161` (1p, SHA `8d9fe28a…`
+— confere com §16), `90264302` (1p, SHA `f33447b2…`). Artefatos:
+`srv-api:/tmp/tb_{code}.json` + cópias locais; crops de ground truth
+visual `/tmp/tb_crops/`.
+
+### 91.1 Capacidades vigentes (matriz CAPABILITY/STATUS)
+
+| Capacidade | Status | Evidência |
+|---|---|---|
+| Detecção de região `title_block` (cluster ≥2 rótulos, posição-livre) | PROVEN | 4/4 desenhos; todas as folhas com carimbo detectadas (p1/3/9/11 em 135; p2/4/6/8/10/12/14/16/18 em 554; p1 em 161 e 302) |
+| Separação carimbo × tabela × `code_contexts` | PROVEN | códigos do carimbo/histórico (27700128, 10080972→10080192, 10013396831, 10090015) marcados `title_block`, nunca componente |
+| Pareamento label→valor REV | PARTIAL | `REV:→00` FIELD_IDENTIFIED em 135 e 302; `REV: M` (161) e `REV: NA CAPA` (554) → `TEXT_ONLY` honesto |
+| Extração genérica de campos (COD/DES/CLIENTE/DATA/FOLHA/ESC…) | NOT_IMPLEMENTED | só `REV` tem matcher (`_match_revisions`); demais campos visíveis no GT não viram pares label→valor |
+| Tipagem de papel de identificadores no carimbo | NOT_IMPLEMENTED | `identifier_candidates` em `title_block` sem `field` (18702881=COD, 003086=OV, 10090015=menção narrativa — indistinguíveis) |
+| Região `revision_history` independente | PARTIAL→FN | `candidate=false` nos 4 desenhos: histórico embutido dentro do bbox do carimbo → requisito "≥2 rótulos fora do carimbo" nunca atinge (residual já previsto no Doc 96 §7.1, confirmado como classe) |
+| Agregação multipágina | PARTIAL | `title_block` top-level = bbox da 1ª página + labels mesclados; `revision_candidates` sem `page` (`page:null`) — proveniência perdida |
+| Identidade documental (`revision`/`customer`/`document`) | NOT_IMPLEMENTED | `report.identification` lê chaves que `build_document_understanding` nunca popula → sempre `None` |
+| Falha tipada de percepção | PROVEN | `90263554` p1 (capa): `image_pixels_limit:46147844>40000000` → `PARTIAL` declarado honestamente |
+
+### 91.2 Ground truth × extração (por desenho)
+
+- **90264135**: `COD: 27700128`, `DES. P66 TSP 04 - 220/380V`,
+  `REV: 00`, `CLIENTE: THERMOSTAR`, título `CHICOTE DE LIGAÇÃO /
+  003252`, `90264135` grande. Histórico REV00+CRIAÇÃO e
+  REV01+`ALTERAÇÃO TERM. 10080972 P/ 10080192` dentro do carimbo.
+  Extraído: apenas REV→00 (×4 folhas). Cabeçalho REV00 × histórico
+  REV01 = observação candidata (domínio da revisão do documento —
+  VAL-05).
+- **90264302**: `COD: 18702881`, `DES: 10013396831` (desenho do
+  cliente, 11 dígitos), `REV: 00`, `CLIENTE: WEG INDUSTRIA S.A -
+  LINHARES`, histórico com `OV 003086`. Extraído: REV→00;
+  18702881/003086 como identificadores não tipados; 10013396831 em
+  `code_contexts`.
+- **90264161**: formato pontuado `COD: 5101.5561`, `DES.: 2200.3396`
+  (fora do regex `\d{8,11}` — invisíveis a `code_contexts`),
+  `REV: M` (não pareou — TEXT_ONLY), `CLIENTE: FAMAC`, histórico
+  REV01. Cabeçalho REV M × histórico 01 = segunda forma da
+  divergência de domínio.
+- **90263554**: `COD: P34` / `DES.: P34` (alfanumérico layout),
+  `REV: NA CAPA` (diretiva — revisão real está na capa p1, que falhou
+  no limite de pixels → UNKNOWN honesto, não fabricado), `CLIENTE:
+  THERMOSTAR`, histórico REV00/REV01 com menções `10090015`/
+  `10081364` capturadas como identificadores não tipados. 18p —
+  folhas pares com carimbo, ímpares só tabela de componentes
+  (detecção corretamente ausente onde não há carimbo).
+
+### 91.3 Conflito semântico de revisão (RQ-05) — OWNER_DECISION_REQUIRED
+
+As fontes concordam que os domínios são independentes, mas divergem
+na atribuição dos papéis:
+
+- **Conhecimento EVA `ENG-REV-001`**: `current_revision` TOTVS =
+  controle de revisões do **CLIENTE**; `REV` do desenho = controle
+  técnico de **ENGENHARIA**.
+- **api-delpi `02-produtos.md` (canônica)**: `B1_REVATU` = revisão
+  cadastral **DELPI** (só existe no TOTVS); `REV` do PDF = revisão
+  do desenho do **CLIENTE**.
+
+Evidência nos desenhos: `REV: 00`+histórico 01 (135), `REV: M`+
+histórico 01 (161), `REV: NA CAPA` (554) — o campo impresso REV
+convive com histórico LMP/OV próprio; `source_revision=
+drawing_library_revision` já existe no pipeline (gestão documental).
+Pergunta ao owner Engenharia/api-delpi: **qual é o domínio de
+B1_REVATU (cliente×Delpi) e a qual pertence o REV impresso — e a
+revisão de capa/LMP/OV se relaciona a qual dos três?** Proibido
+escolher arbitrariamente; `ENG-REV-001` permanece semântica
+independente até ratificação. Bug relacionado (não corrigido —
+escopo read-only): `drawing_investigation` lê
+`rev_candidates[0]["revision"]` mas o contrato emite `value_text` →
+verificação de revisão sempre `NOT_CHECKED`; o teste M4 usa fixture
+com a chave errada, mascarando o defeito.
+
+### 91.4 Equivalências oficiais (fonte: `02-produtos.md` + carimbos)
+
+| Campo carimbo | Campo oficial | Comparabilidade |
+|---|---|---|
+| título (`CHICOTE DE LIGAÇÃO…`) | `description` (B1_DESC) | SEMANTIC_COMPARABLE (nunca exata — "CHICOTE - P66"×"CHICOTE DE LIGAÇÃO / 003252") |
+| `COD:` (27700128/18702881/P34) | sem equivalente direto conhecido — código interno do desenho? | OWNER_DECISION_REQUIRED (semântica muda por layout: numérico×alfanumérico) |
+| `DES:`/`DES.:` | `drawing_code` (B1_CODDES) | CONDITIONALLY_COMPARABLE — em 302 carrega 11 dígitos (plausível desenho cliente); em 135/554 carrega spec/posição — label ambíguo por família |
+| `REV:` (campo) | nenhum (domínio independente) | NOT_COMPARABLE por ENG-REV-001 |
+| `CLIENTE:` (nome) | sem campo — `customer_reference` é código | NOT_COMPARABLE (nome×código); `REF:`/`COD. CLIENTE` ausente nos 4 layouts |
+| histórico REV/DATA/LMP/OV | gestão documental (VAL-05) | SOURCE_UNAVAILABLE — sem fonte oficial mapeada |
+| `DATA`, `LMP`, `OV`, `EXECUTADO`, `LIBERADO`, `FOLHA`, `ESC` | — | SOURCE_UNAVAILABLE no contrato `/products/{code}` |
+
+### 91.5 Contrato candidato (proposta — G4, não implementado)
+
+Evolução aditiva de `drawing_understanding.v1` — sem nova tool MCP:
+
+- `title_block.fields[]`: `field_type` (vocabulário `document_code`,
+  `drawing_code_customer`, `description`, `customer_name`,
+  `revision_printed`, `sheet`, `scale`, `drawn_by`…), `label_text`,
+  `raw_value`, `normalized_value`, `page`, `bounding_box_px`,
+  `confidence`, `evidence`, `interpretation_state`
+  (`FIELD_IDENTIFIED`/`TEXT_ONLY`/`AMBIGUOUS_LABEL`/`NOT_PRESENT`).
+- `revision_history.entries[]`: `revision`, `date`, `lmp`, `ov`,
+  `summary`, `executado`, `liberado`, `page`, `evidence`,
+  `revision_domain` (enum pendente de ratificação owner).
+- `document_identity`: promover `revision`/`customer`/`document`
+  existentes no `report.identification` (contrato já exposto, hoje
+  sempre `None`).
+- `official_comparisons[]`: reusar o padrão do comparador
+  (`comparability` enum + `result` + `source` + `limitations`) —
+  sem reimplementação.
+- Mínimo diff provável: matcher genérico label→valor por mapa de
+  rótulos (estende `_match_revisions`); `page` em
+  `revision_candidates`; leitura correta de `value_text` em
+  `drawing_investigation`; agregação por página em `title_block`;
+  reuso do TableStructureEngine sobre a região `title_block`
+  (SLANet já executa ali — p1/p3/p9/p11).
+
+### 91.6 RQ/AC propostos e testes necessários
+
+RQ-02-01 matcher genérico de campos com vocabulário de papéis;
+RQ-02-02 `page`/proveniência em todos os candidatos; RQ-02-03
+detecção de histórico embutido (linha-a-linha dentro do carimbo —
+Doc 96 §7.1); RQ-02-04 tipagem de identificadores por rótulo; RQ-02-05
+`document_identity` populada com `interpretation_state`; RQ-02-06
+correção da leitura `value_text`; RQ-02-07 enum de domínios de
+revisão pós-ratificação owner.
+
+AC: fixtures carimbo convencional/deslocado/rotacionado; `REV: M`,
+`REV: NA CAPA`, `COD: P34`, códigos pontuados; histórico embutido
+(00+01); campo ausente; campo ilegível; contradição entre folhas;
+não-promoção de código de histórico a componente (já coberto);
+negativo: label ambíguo `DES:` não decide papel sem contexto.
+
+**GATES:** G1 inventário=PASS; G2 avaliação real=PASS (4 desenhos,
+evidência visual independente); G3 semântica=PARTIAL (conflito de
+revisão encaminhado — owner); G4 contrato=PREPARED; G5
+implementação=NOT_AUTHORIZED; G6 homologação=NOT_AUTHORIZED.
+`VAL01_COMPLETED=false` permanece (Issue #131 aberta); VAL-02 em
+fase de inventário.
