@@ -374,8 +374,15 @@ def test_avatar_read_returns_image_content_block() -> None:
     from controllership_finance_app.interface.mcp import semantic_bridge
     from controllership_finance_app.interface.mcp import tool_bridge
 
+    # Patch where the names are used: semantic_bridge imports _user_and_access
+    # by name and gates every read through _identity_snapshot; the avatar
+    # handler in tool_bridge checks the user again.
     with patch.object(
+        semantic_bridge, "_user_and_access", return_value=(object(), object())
+    ), patch.object(
         tool_bridge, "_user_and_access", return_value=(object(), object())
+    ), patch.object(
+        semantic_bridge, "_identity_snapshot", lambda _u: {"has_cf_access": True}
     ):
         result = semantic_bridge.tool_read(entity="avatar", action="get")
     assert result.is_error is False
