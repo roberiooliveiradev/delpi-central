@@ -813,3 +813,27 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Limitações:** menu Colunas segue drag-based (sem alternativa de teclado — limitação do componente canônico); reordenação E2E via storage; usuário negado é barrado no manifest do plugin (evidência de negação mais ampla que 403 interno).
 
 **Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS(E01–E15) / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
+
+## 46. Consolidação dos controles no hero — pill de contagem, Colunas e modos na linha inferior; fim da faixa solta (14/11/2026)
+
+**TASK:** `EVA-PRC-QUEUE-HERO-CONTROLS-CONSOLIDATION-HML-01`. Frontend exclusivo; **PRD não autorizado.**
+
+**Problema:** faixa intermediária entre hero e tabela (`.engineering-prc__table-toolbar` com "N solicitações" solta + Colunas + modos) fragmentava a composição e desperdiçava espaço vertical (~38px+ de respiro morto).
+
+**Implementação (commit `91e85c8d99`, 2 arquivos — `PrcQueuePage.tsx`, `prc.css`):**
+- **Pill de contagem** `Solicitações ⟨N⟩` nas ações do hero, antes de `Sinalizados` — `list.total` real (COUNT pré-paginação do backend), `aria-live="polite"`, fail-closed (oculta sem lista/403).
+- **Linha inferior do hero** (`.engineering-prc__queue-bottom`): menu **Colunas** (só modo Tabela) + `SegmentToggle` Tabela/Cards/Kanban — os mesmos componentes, agora acoplados ao hero; menu Colunas continua único (mesma storage key).
+- **Removida** a barra `.engineering-prc__table-toolbar` intermediária (meta textual do escopo removida com ela — o filtro ativo já é legível nos chips ativos); `.engineering-prc__queue-view { margin-top: -12px }` compensa o `--en-section-gap` (24px) → respiro efetivo **12px** hero→grade.
+- Tabela segue **sem card externo** (`unframed`), largura útil preservada.
+
+**Contratos/filtros/AuthZ/workflow:** inalterados — zero backend.
+
+**Testes:** vitest 371/371; tsc ok; build ok (`App-yc3C4MKj.js`).
+
+**HML (`--fase mfe --build engineering`, checkout `91e85c8d99`):** imagem `sha256:050a598e7f3fff70e9f4ddfbfa8974e7159fda49ca12e59dadb6642b3841ee52` healthy; bundle servido = hash do build local. Rollback: `sha256:b293a536fa9e…`.
+
+**E2E visual (Chromium real, Playwright/py no host) — 19/19 PASS:** pill no hero junto às ações e com número real (pill=5=linhas) | Colunas+modos dentro do hero | **gap hero→tabela=12px**, sem toolbar solta | tabela sem card | `?view=pending`→Pendentes ativo | modos alternam (Colunas some fora de Tabela) | menu Colunas abre | busca→`?search=teste` | Sinalizados popover | mobile 390px overflow=0 | negado fail-closed rows=0. Evidências: `/tmp/ux3-desktop.png`, `/tmp/ux3-mobile.png` (host HML).
+
+**Limitações:** pill mostra o total do escopo (rótulo do filtro ativo permanece nos chips — decisão minimalista, sem duplicar texto); meta textual "· Enviada · Criação" da §45 removida.
+
+**Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
