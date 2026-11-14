@@ -57,6 +57,8 @@ describe("PrcDetailPage — hero UX V3", () => {
 
   it("canal corporativo é apresentado como Minhas Solicitações", () => {
     expect(COPY).toMatch(/my_requests: "Minhas Solicitações"/);
+    expect(COPY).toMatch(/"my-requests": "Minhas Solicitações"/);
+    expect(COPY).not.toMatch(/Canal corporativo \(My Requests\)/);
   });
 
   it("alerta de verificação bloqueante direciona à aba Verificação TOTVS", () => {
