@@ -126,10 +126,10 @@ O chat de análise de desenhos cruza a REF. lida no PDF com `customer_reference`
 
 | Campo API | Origem Protheus | Significado |
 |-----------|-----------------|-------------|
-| `current_revision` | `SB1.B1_REVATU` | Revisão **Delpi** do cadastro — existe **somente no TOTVS**, não impressa no PDF do desenho |
-| `last_revision_date` | `SB1.B1_UREV` | Data da última revisão cadastral Delpi |
+| `current_revision` | `SB1.B1_REVATU` | **Controle de revisão do CLIENTE no TOTVS** — domínio distinto da revisão técnica do desenho |
+| `last_revision_date` | `SB1.B1_UREV` | Data vinculada à revisão cadastral no TOTVS; verificar semântica temporal exata com owner antes de relacioná-la ao histórico do desenho |
 
-A **REV. no carimbo/título do PDF** é a revisão do **desenho do cliente**. O chat de análise **não** cruza REV. do PDF com `current_revision` (nem como crítico nem como pendente).
+**Decisão do responsável pelo projeto/Engenharia (2026-11-14; EVA `ENG-REV-001`):** a **REV. impressa no carimbo do PDF é a revisão técnica de ENGENHARIA**; `B1_REVATU` controla a revisão do **CLIENTE no TOTVS**. Os domínios são independentes: jamais comparar os números diretamente nem declarar divergência ou conformidade por diferença/igualdade. A revisão do arquivo na biblioteca (`drawing_library_revision`), revisões de capa e entradas de histórico LMP/OV também exigem identificação do respectivo domínio antes de comparação. Esta orientação substitui a atribuição invertida anteriormente escrita nesta seção; não muda a origem física dos campos nem autoriza escrita no ERP.
 
 **Uso no chat:** perguntas de descrição, “o que é o produto X”, dados cadastrais — preferir esta rota antes do `/analyser` quando não precisar de todas as dimensões.
 
