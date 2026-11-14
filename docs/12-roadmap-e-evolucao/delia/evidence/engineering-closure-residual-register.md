@@ -1888,3 +1888,18 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT3-OBLIGATION-DEMONSTRATION-DEPTH | OPEN_LOW (novo, observado) | anchors corretas podem ficar INCONCLUSIVE quando o owner não ecoa o token nem o seletor invocado coincide (G1/P3 `get_product_structure`/`display_format` bound-not-demonstrated → partial honesto, não falso SATISFIED) — melhora de demonstração é tarefa posterior |
 
 **NEXT=`COORDINATION_INT3_R1_GOAL_DECLARATION_RELIABILITY_INDEPENDENT_ACCEPTANCE_REVIEW`**
+
+
+### 2026-11-14 — Veredito independente R1 e residuais de resultado (coordenação)
+
+| Residual | Estado vigente | Owner / condição de encerramento |
+|---|---|---|
+| `INT3-CALL-BEFORE-DECLARE` | `CLOSED_WITH_RESIDUAL` | Gate estrutural `ACCEPT`, nenhuma READ dependente sem plano no owner na amostra; regressões devem preservar |
+| `INT3-GOAL-DECLARATION-RELIABILITY` | `CLOSED_WITH_RESIDUAL` | Correção cognitiva aceita na amostra (14/15 propostas), monitorar generalização e false anchors |
+| `INT3-MCP-AUTH-FLAKINESS` | `OPEN_ENV` | Owner legítimo de auth/catálogo/Keycloak; classificar falha de ambiente vs redução de superfície por AuthZ antes de atribuir falha ao Agent |
+| `INT3-AUTH-DENY-ORACLE-ENV` | `OPEN_LOW` | Reexecutar controle com identidade de avaliação legitimamente sem permissão; não usar identidade de usuário real |
+| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` | Application/owner contract; âncora válida não equivale a pertinência demonstrada; INCONCLUSIVE honesto preservado |
+| `INT3-REAL-GENERALIZATION-AND-OUTCOME` | `PENDING` | Amostra expandida e válida; resultado empresarial no SHA/config; false COMPLETE e segurança |
+| `INT3-MODEL-PAGINATION-CONVERGENCE` | `OPEN_LOW` | R2: continuidade, no-progress e paginação; não implementado/aceito nesta revisão |
+
+**VERDICT:** `R1_FUNCTIONAL_CLOSED=YES_WITH_RESIDUAL`; `INT3_STAGE_ACCEPTED=NO`; `FOUR_AGENT_RUNTIME=NOT_IMPLEMENTED`, 1 Agent Pydantic AI baseline. **NEXT=`COORDINATION_INT3_POST_R1_OUTCOME_AND_R2_READINESS_GATE`.** Residuais históricos acima permanecem como registros datados; esta seção define o estado vigente.
