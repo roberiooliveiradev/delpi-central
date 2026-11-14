@@ -528,6 +528,17 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** conferir CI completo do P3 com V015 em DB descartavel; corrigir falhas verificadas antes de homologacao HML.
 
+## 2026-11-14 | G2-S4-S2b-P3 | evidencia consolidada CI verde
+
+**Objetivo:** fechar rastreabilidade dos testes automatizados apos correcao de selecao dos testes PostgreSQL.
+**Arquivos alterados:** README, diario e runbook P3; sem alteracoes produtivas.
+**Commit/issue:** [P3 81c9dd08f7c5](https://github.com/roberiooliveiradev/delpi-central/commit/81c9dd08f7c597fd8308f47a0e7c52f370dea69a), [fix P3 251dc18283e4](https://github.com/roberiooliveiradev/delpi-central/commit/251dc18283e4ec8e1802f883f22dcf2e20ae9156), issue #179.
+**Testes executados e evidencias:** [Portal de TI - API + PostgreSQL 16 descartavel: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43649344462), incluindo migrations V001..V015, testes unitarios e integrados; [Architecture Enforcement SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43649344458); [Cursor Rules Governance SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43649344455).
+**Estado de producao / implantacao:** nenhum deploy de V015, mudanca no Keycloak, agente Windows instalado, ingestao habilitada ou acesso remoto liberado.
+**Riscos e limitacoes:** testes CI nao certificam attestation do equipamento, seguranca da distribuicao inicial da chave, MFA ou Windows/Keycloak reais. G0-SEC continua bloqueando o motor remoto.
+**Rollback:** nenhum runtime alterado; caso regressao futura, reverter codigo em commit, preservar migrations historicas.
+**Proximo passo unico:** P4: desenhar e validar registro de chave confiavel/attestation Windows em HML e canal seguro do convite, sem rotas operacionais ate revisao privada.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

@@ -34,3 +34,10 @@ Resultados de CI devem ser verificados no commit final; conclusao do pipeline e 
 **Sem deploy:** nao executar migrations de V012-V015 em producao nesta entrega. Se houver rollout futuro, seguir runbooks de backup, restauracao e flags false antes da janela de mudanca.
 
 [Roadmap](README.md) | [P2](G2-S4-S2B-P2-DEVICE-PROOF.md) | [Issue #179](https://github.com/roberiooliveiradev/delpi-central/issues/179).
+
+## Evidencias automatizadas finais (14/11/2026)
+
+- [CI da API, PostgreSQL V015 e regressao G0: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43649344462)
+- [Architecture Enforcement: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43649344458)
+- [Governance: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43649344455)
+- Commit P3: `81c9dd08f7c5`, correção de fixtures: `251dc18283e4`. Aprovacao de CI valida testes automatizados e banco descartavel; **nao** e aceite de hardware, Keycloak ou operacao remota.
