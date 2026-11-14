@@ -599,3 +599,45 @@ def build_scan_task_due_notifications_use_case():
         detect=build_detect_task_due_notifications_use_case(),
         publish=build_publish_integration_outbox_use_case(),
     )
+
+
+_satisfaction_survey_repository = None
+_satisfaction_survey_use_case = None
+_satisfaction_token_cipher = None
+
+
+def build_satisfaction_survey_repository():
+    global _satisfaction_survey_repository
+    if _satisfaction_survey_repository is None:
+        from commercial_app.infrastructure.persistence.repositories.postgres_satisfaction_survey_repository import (
+            PostgresSatisfactionSurveyRepository,
+        )
+
+        _satisfaction_survey_repository = PostgresSatisfactionSurveyRepository()
+    return _satisfaction_survey_repository
+
+
+def build_satisfaction_token_cipher():
+    global _satisfaction_token_cipher
+    if _satisfaction_token_cipher is None:
+        from commercial_app.infrastructure.crypto.token_cipher import TokenCipher
+
+        _satisfaction_token_cipher = TokenCipher(
+            settings.COMMERCIAL_SATISFACTION_TOKEN_KEY
+        )
+    return _satisfaction_token_cipher
+
+
+def build_manage_satisfaction_surveys_use_case():
+    global _satisfaction_survey_use_case
+    if _satisfaction_survey_use_case is None:
+        from commercial_app.application.use_cases.manage_satisfaction_surveys import (
+            ManageSatisfactionSurveysUseCase,
+        )
+
+        _satisfaction_survey_use_case = ManageSatisfactionSurveysUseCase(
+            repository=build_satisfaction_survey_repository(),
+            token_cipher=build_satisfaction_token_cipher(),
+            public_base_url=settings.PUBLIC_BASE_URL,
+        )
+    return _satisfaction_survey_use_case

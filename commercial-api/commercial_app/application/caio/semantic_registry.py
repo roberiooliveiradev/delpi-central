@@ -49,6 +49,7 @@ REQ_ACCESS = "commercial.access"
 REQ_AUDIT = "commercial.audit"
 REQ_PROPOSALS = "commercial.proposals.view"
 REQ_BILLING_SHARE = "commercial.portfolio_billing_share"
+REQ_MARKETING = "commercial.marketing"
 
 
 @dataclass(frozen=True)
@@ -1284,6 +1285,98 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_description="Target user_id.",
         phases=_DELETE_PHASES,
         requires=(REQ_ACCESS,),
+    ),
+    # --- satisfaction survey (stages A/B; no public submit via CAIO) ----------
+    _a(
+        "satisfaction_campaign", "questionnaire", "read",
+        "Official immutable satisfaction questionnaire catalog.",
+        "read",
+        requires=(REQ_MARKETING, REQ_MANAGE),
+    ),
+    _a(
+        "satisfaction_campaign", "list", "read",
+        "List satisfaction survey campaigns and window status.",
+        "read",
+        requires=(REQ_MARKETING, REQ_MANAGE),
+    ),
+    _a(
+        "satisfaction_campaign", "get", "read",
+        "Get one satisfaction survey campaign.",
+        "read",
+        ref_arg="campaign_id",
+        ref_description="Campaign UUID.",
+        requires=(REQ_MARKETING, REQ_MANAGE),
+    ),
+    _a(
+        "satisfaction_recipient", "list", "read",
+        "List campaign participants and response status.",
+        "read",
+        ref_arg="campaign_id",
+        ref_description="Campaign UUID.",
+        requires=(REQ_MARKETING, REQ_MANAGE),
+    ),
+    _a(
+        "satisfaction_recipient", "get", "read",
+        "Get one participant (without exposing raw invite token).",
+        "read",
+        fields=("campaign_id", "recipient_id"),
+        required_fields=("campaign_id", "recipient_id"),
+        requires=(REQ_MARKETING, REQ_MANAGE),
+    ),
+    _a(
+        "satisfaction_recipient", "link", "read",
+        "Recover the stable exclusive invite URL for one participant.",
+        "read",
+        fields=("campaign_id", "recipient_id"),
+        required_fields=("campaign_id", "recipient_id"),
+        requires=(REQ_MARKETING, REQ_MANAGE),
+        notes=("Sensitive; never log the URL or token.",),
+    ),
+    _a(
+        "satisfaction_campaign", "create", "execute",
+        "Create a satisfaction survey campaign.",
+        "moderate",
+        fields=("name", "starts_at", "ends_at", "invite_subject", "invite_body"),
+        required_fields=("name", "starts_at", "ends_at"),
+        requires=(REQ_MARKETING, REQ_MANAGE),
+    ),
+    _a(
+        "satisfaction_campaign", "update", "execute",
+        "Update allowed campaign fields (optimistic version).",
+        "moderate",
+        fields=(
+            "campaign_id",
+            "version",
+            "name",
+            "starts_at",
+            "ends_at",
+            "invite_subject",
+            "invite_body",
+        ),
+        required_fields=("campaign_id", "version"),
+        requires=(REQ_MARKETING, REQ_MANAGE),
+    ),
+    _a(
+        "satisfaction_recipient", "add", "execute",
+        "Add one or more TOTVS customers to a campaign (partial success).",
+        "moderate",
+        fields=("campaign_id", "items"),
+        required_fields=("campaign_id", "items"),
+        requires=(REQ_MARKETING, REQ_MANAGE),
+    ),
+    _a(
+        "satisfaction_recipient", "update_contact", "execute",
+        "Update invite contact fields without changing TOTVS master data.",
+        "moderate",
+        fields=(
+            "campaign_id",
+            "recipient_id",
+            "version",
+            "contact_name",
+            "contact_email",
+        ),
+        required_fields=("campaign_id", "recipient_id", "version"),
+        requires=(REQ_MARKETING, REQ_MANAGE),
     ),
 )
 

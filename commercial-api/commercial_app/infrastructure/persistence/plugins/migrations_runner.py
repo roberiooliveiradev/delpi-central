@@ -13,6 +13,12 @@ from psycopg.rows import dict_row
 COMMERCIAL_SCHEMA_NAME = "commercial"
 MIGRATIONS_DIR = Path(__file__).resolve().parents[4] / "migrations"
 
+# Fail-closed product gates: pending versions apply only when the env flag is on.
+# Already-applied versions keep checksum validation regardless of the flag.
+GATED_MIGRATION_ENV: dict[str, str] = {
+    "V024": "COMMERCIAL_SATISFACTION_SURVEY_ENABLED",
+}
+
 
 class MigrationError(RuntimeError):
     """Erro de execução de migrations da Commercial API."""
@@ -117,6 +123,24 @@ def calculate_checksum(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _env_flag_enabled(name: str) -> bool:
+    return str(os.getenv(name, "false") or "false").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def is_migration_apply_allowed(path: Path) -> bool:
+    """Return False when a gated pending migration must stay off (e.g. PROD)."""
+    version, _ = parse_version_and_name(path)
+    gate = GATED_MIGRATION_ENV.get(version)
+    if not gate:
+        return True
+    return _env_flag_enabled(gate)
+
+
 def get_applied_migrations(conn: Any) -> dict[str, dict[str, Any]]:
     with conn.cursor() as cur:
         cur.execute(
@@ -183,7 +207,23 @@ def run_migrations() -> None:
             path
             for path in files
             if parse_version_and_name(path)[0] not in applied
+            and is_migration_apply_allowed(path)
         ]
+        skipped = [
+            path
+            for path in files
+            if parse_version_and_name(path)[0] not in applied
+            and not is_migration_apply_allowed(path)
+        ]
+
+        if skipped:
+            for path in skipped:
+                version, name = parse_version_and_name(path)
+                gate = GATED_MIGRATION_ENV.get(version, "")
+                print(
+                    f"[commercial] Migration gated/skipped: {version} | {name} "
+                    f"(requires {gate}=true)"
+                )
 
         if not pending:
             print("[commercial] Nenhuma migration pendente.")
@@ -208,7 +248,12 @@ def show_status() -> None:
         print("Status das migrations da Commercial API:")
         for path in files:
             version, name = parse_version_and_name(path)
-            status = "APLICADA" if version in applied else "PENDENTE"
+            if version in applied:
+                status = "APLICADA"
+            elif not is_migration_apply_allowed(path):
+                status = "GATED"
+            else:
+                status = "PENDENTE"
             print(f"- {version} | {name} | {status}")
 
 

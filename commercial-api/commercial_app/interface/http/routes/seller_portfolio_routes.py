@@ -15,6 +15,8 @@ from commercial_app.application.security.commercial_permissions import (
     has_access,
     has_billing_notify,
     has_manage,
+    has_marketing,
+    has_satisfaction_manage,
 )
 from commercial_app.application.use_cases.manage_seller_portfolio import (
     CreatePortfolioRequest,
@@ -126,6 +128,8 @@ def get_my_seller_portfolio(request: Request):
                 "capabilities": {
                     "access": has_access(user),
                     "manage": has_manage(user),
+                    "marketing": has_marketing(user),
+                    "satisfaction_manage": has_satisfaction_manage(user),
                     "billing_notify": has_billing_notify(user),
                 },
             },

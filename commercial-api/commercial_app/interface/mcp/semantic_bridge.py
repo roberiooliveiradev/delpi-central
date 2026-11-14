@@ -263,6 +263,14 @@ def tool_get_context(
                     getattr(user, "is_superadmin", False)
                     or bridge.has_manage(user)
                 ),
+                "marketing": bool(
+                    getattr(user, "is_superadmin", False)
+                    or bridge.has_marketing(user)
+                ),
+                "satisfaction_manage": bool(
+                    getattr(user, "is_superadmin", False)
+                    or bridge.has_satisfaction_manage(user)
+                ),
                 "billing_notify": bool(
                     getattr(user, "is_superadmin", False)
                     or bridge.has_billing_notify(user)
@@ -417,6 +425,24 @@ _READ_DISPATCH = {
     ("activity", "list"): lambda a: parity.tool_activity_list(**a),
     ("group", "list"): lambda a: parity.tool_group_list(**a),
     ("group", "get"): lambda a: parity.tool_group_get(**a),
+    ("satisfaction_campaign", "questionnaire"): (
+        lambda a: parity.tool_satisfaction_campaign_questionnaire()
+    ),
+    ("satisfaction_campaign", "list"): (
+        lambda a: parity.tool_satisfaction_campaign_list()
+    ),
+    ("satisfaction_campaign", "get"): (
+        lambda a: parity.tool_satisfaction_campaign_get(**a)
+    ),
+    ("satisfaction_recipient", "list"): (
+        lambda a: parity.tool_satisfaction_recipient_list(**a)
+    ),
+    ("satisfaction_recipient", "get"): (
+        lambda a: parity.tool_satisfaction_recipient_get(**a)
+    ),
+    ("satisfaction_recipient", "link"): (
+        lambda a: parity.tool_satisfaction_recipient_link(**a)
+    ),
     ("sla_policy", "list"): lambda a: parity.tool_sla_policy_list(**a),
     ("home_favorite", "list"): lambda a: parity.tool_home_favorite_list(),
     ("team", "roster"): lambda a: parity.tool_team_roster(),
@@ -696,6 +722,12 @@ _EXECUTE_DISPATCH = {
     ("task", "from_message"): parity.execute_task_from_message,
     ("activity", "create"): parity.execute_activity_create,
     ("group", "create"): parity.execute_group_create,
+    ("satisfaction_campaign", "create"): parity.execute_satisfaction_campaign_create,
+    ("satisfaction_campaign", "update"): parity.execute_satisfaction_campaign_update,
+    ("satisfaction_recipient", "add"): parity.execute_satisfaction_recipient_add,
+    ("satisfaction_recipient", "update_contact"): (
+        parity.execute_satisfaction_recipient_update_contact
+    ),
     ("group", "rename"): parity.execute_group_rename,
     ("group", "members_replace"): parity.execute_group_members_replace,
     ("group", "member_add"): parity.execute_group_member_add,

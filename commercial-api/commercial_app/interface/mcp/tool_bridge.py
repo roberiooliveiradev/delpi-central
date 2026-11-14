@@ -36,6 +36,8 @@ from commercial_app.application.security.commercial_permissions import (
     has_access,
     has_billing_notify,
     has_manage,
+    has_marketing,
+    has_satisfaction_manage,
 )
 from commercial_app.application.services.enrich_open_orders_kanban_service import (
     EnrichOpenOrdersKanbanService,
@@ -283,6 +285,8 @@ def tool_portfolio_me() -> CallToolResult:
                 "capabilities": {
                     "access": has_access(user),
                     "manage": has_manage(user),
+                    "marketing": has_marketing(user),
+                    "satisfaction_manage": has_satisfaction_manage(user),
                     "billing_notify": has_billing_notify(user),
                 },
             },

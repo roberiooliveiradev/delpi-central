@@ -25,6 +25,20 @@ class Settings:
         str(_get_env("COMMERCIAL_RUN_MIGRATIONS_ON_STARTUP", default="false") or "false").lower()
         in {"1", "true", "yes", "on"}
     )
+    # Fail-closed: off in production until PO authorizes go-live.
+    COMMERCIAL_SATISFACTION_SURVEY_ENABLED: bool = (
+        str(
+            _get_env(
+                "COMMERCIAL_SATISFACTION_SURVEY_ENABLED", default="false"
+            )
+            or "false"
+        ).lower()
+        in {"1", "true", "yes", "on"}
+    )
+    # Fernet key for recoverable invite tokens (never log plaintext).
+    COMMERCIAL_SATISFACTION_TOKEN_KEY: str = (
+        str(_get_env("COMMERCIAL_SATISFACTION_TOKEN_KEY", default="") or "").strip()
+    )
     COMMERCIAL_PORTFOLIO_SOURCE: str = (
         str(_get_env("COMMERCIAL_PORTFOLIO_SOURCE", default="legacy") or "legacy").lower()
     )

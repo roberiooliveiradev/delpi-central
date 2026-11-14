@@ -2727,6 +2727,9 @@ services:
       COMMERCIAL_AVATAR_UPLOAD_DIR: /app/data/commercial-avatars
       COMMERCIAL_ATTACHMENT_UPLOAD_DIR: /app/data/commercial-attachments
       COMMERCIAL_USER_AVATAR_UPLOAD_DIR: /app/data/commercial-user-avatars
+      # Fail-closed: production must keep false until PO go-live (AGENTS.md).
+      COMMERCIAL_SATISFACTION_SURVEY_ENABLED: ${COMMERCIAL_SATISFACTION_SURVEY_ENABLED:-false}
+      COMMERCIAL_SATISFACTION_TOKEN_KEY: ${COMMERCIAL_SATISFACTION_TOKEN_KEY:-}
 
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
       DELPI_AUTH_CORE_API_URL: http://core-api:8000

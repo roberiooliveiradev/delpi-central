@@ -11,6 +11,7 @@ from delpi_mcp.auth import (
     mcp_transport_auth,
 )
 
+from commercial_app.config import settings
 from commercial_app.interface.mcp.constants import MCP_GATEWAY_ROOT
 from commercial_app.interface.mcp.oauth_contract import (
     MCP_OAUTH_SCOPES,
@@ -56,6 +57,31 @@ _PUBLIC_CHARACTER_AVATAR_PATHS = frozenset(
 )
 
 
+def _is_satisfaction_public_path(normalized: str) -> bool:
+    """Exact public survey paths only — fail-closed when feature flag is off."""
+    if not settings.COMMERCIAL_SATISFACTION_SURVEY_ENABLED:
+        return False
+    prefixes = (
+        "/public/satisfaction-surveys/",
+        "/apps/commercial-api/public/satisfaction-surveys/",
+    )
+    matched = False
+    for prefix in prefixes:
+        if normalized.startswith(prefix):
+            matched = True
+            remainder = normalized[len(prefix) :]
+            break
+    if not matched:
+        return False
+    # Accept /{token} or /{token}/response only (no trailing extras).
+    parts = [part for part in remainder.split("/") if part]
+    if len(parts) == 1:
+        return True
+    if len(parts) == 2 and parts[1] == "response":
+        return True
+    return False
+
+
 def _is_commercial_public_path(path: str) -> bool:
     normalized = normalize_path(path)
     if is_public_path(path):
@@ -65,6 +91,8 @@ def _is_commercial_public_path(path: str) -> bool:
     if normalized in _PUBLIC_OAUTH_METADATA_PATHS:
         return True
     if normalized in _PUBLIC_CHARACTER_AVATAR_PATHS:
+        return True
+    if _is_satisfaction_public_path(normalized):
         return True
     # Token vai na query; o handler valida JWT + RBAC (como o Transformômetro).
     if normalized.endswith("/commercial/realtime/ws"):

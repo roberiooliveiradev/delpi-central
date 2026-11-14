@@ -1,4 +1,4 @@
-"""Catálogo condensado commercial.access / manage / billing.notify."""
+"""Catálogo condensado commercial.access / manage / marketing / billing.notify."""
 
 from types import SimpleNamespace
 
@@ -12,6 +12,7 @@ def _user(*codes: str) -> SimpleNamespace:
 def test_canonical_codes() -> None:
     assert perms.COMMERCIAL_ACCESS == "commercial.access"
     assert perms.COMMERCIAL_MANAGE == "commercial.manage"
+    assert perms.COMMERCIAL_MARKETING == "commercial.marketing"
     assert perms.COMMERCIAL_BILLING_NOTIFY == "commercial.billing.notify"
 
 

@@ -1,4 +1,4 @@
-"""Códigos RBAC do módulo Comercial — catálogo condensado (3 codes)."""
+"""Códigos RBAC do módulo Comercial — catálogo condensado (4 codes)."""
 
 from __future__ import annotations
 
@@ -6,11 +6,18 @@ from typing import Any, Iterable
 
 COMMERCIAL_ACCESS = "commercial.access"
 COMMERCIAL_MANAGE = "commercial.manage"
+COMMERCIAL_MARKETING = "commercial.marketing"
 COMMERCIAL_BILLING_NOTIFY = "commercial.billing.notify"
 
 COMMERCIAL_ACCESS_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_ACCESS,)
 COMMERCIAL_MANAGE_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_MANAGE,)
+COMMERCIAL_MARKETING_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_MARKETING,)
 COMMERCIAL_BILLING_NOTIFY_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_BILLING_NOTIFY,)
+# Satisfaction survey management: marketing OR manage (backend authority).
+COMMERCIAL_SATISFACTION_MANAGE_PERMISSIONS: tuple[str, ...] = (
+    COMMERCIAL_MARKETING,
+    COMMERCIAL_MANAGE,
+)
 
 # Aliases de decorator (mesmo conteúdo — sem codes legados).
 COMMERCIAL_READ_PERMISSIONS = COMMERCIAL_ACCESS_PERMISSIONS
@@ -65,6 +72,16 @@ def has_access(user: Any | None) -> bool:
 def has_manage(user: Any | None) -> bool:
     """Administração + escopo irrestrito (todas as carteiras)."""
     return has_any_permission(user, COMMERCIAL_MANAGE_PERMISSIONS)
+
+
+def has_marketing(user: Any | None) -> bool:
+    """Gestão de marketing (pesquisa de satisfação e superfícies afins)."""
+    return has_any_permission(user, COMMERCIAL_MARKETING_PERMISSIONS)
+
+
+def has_satisfaction_manage(user: Any | None) -> bool:
+    """Gestão privada da pesquisa: commercial.marketing OU commercial.manage."""
+    return has_any_permission(user, COMMERCIAL_SATISFACTION_MANAGE_PERMISSIONS)
 
 
 def has_billing_notify(user: Any | None) -> bool:

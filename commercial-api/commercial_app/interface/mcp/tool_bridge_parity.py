@@ -25,6 +25,7 @@ from commercial_app.application.security.commercial_permissions import (
     can_view_portfolio_billing_share,
     can_view_worklist_team,
     has_manage,
+    has_satisfaction_manage,
 )
 from commercial_app.application.use_cases.create_task_from_interaction_message import (
     CreateTaskFromInteractionMessageInput,
@@ -78,6 +79,7 @@ from commercial_app.composition.commercial_composer import (
     build_manage_account_contacts_use_case,
     build_manage_attachments_use_case,
     build_manage_commercial_groups_use_case,
+    build_manage_satisfaction_surveys_use_case,
     build_manage_interaction_messages_use_case,
     build_manage_interaction_rooms_use_case,
     build_manage_seller_portfolio_use_case,
@@ -2837,3 +2839,243 @@ ANALYZE_PROXY_MAP: dict[
         (),
     ),
 }
+
+
+# --- satisfaction survey (CAIO parity; no public submit) ----------------------
+
+
+def _require_satisfaction_manage(user: Any) -> None:
+    from commercial_app.config import settings
+
+    if not settings.COMMERCIAL_SATISFACTION_SURVEY_ENABLED:
+        raise LookupError("Pesquisa de satisfação não habilitada neste ambiente.")
+    if not has_satisfaction_manage(user):
+        raise PermissionError("Forbidden")
+
+
+def tool_satisfaction_campaign_questionnaire() -> CallToolResult:
+    try:
+        _require_commercial_human()
+        request = build_mcp_request()
+        user, _ = _actor(request)
+        _require_satisfaction_manage(user)
+        use_case = build_manage_satisfaction_surveys_use_case()
+        return _ok(use_case.get_questionnaire(), "Questionário oficial carregado.")
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_satisfaction_campaign_list() -> CallToolResult:
+    try:
+        _require_commercial_human()
+        request = build_mcp_request()
+        user, _ = _actor(request)
+        _require_satisfaction_manage(user)
+        use_case = build_manage_satisfaction_surveys_use_case()
+        return _ok({"items": use_case.list_campaigns()}, "Campanhas carregadas.")
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_satisfaction_campaign_get(*, campaign_id: str) -> CallToolResult:
+    try:
+        _require_commercial_human()
+        request = build_mcp_request()
+        user, _ = _actor(request)
+        _require_satisfaction_manage(user)
+        use_case = build_manage_satisfaction_surveys_use_case()
+        return _ok(use_case.get_campaign(campaign_id), "Campanha carregada.")
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_satisfaction_recipient_list(*, campaign_id: str) -> CallToolResult:
+    try:
+        _require_commercial_human()
+        request = build_mcp_request()
+        user, _ = _actor(request)
+        _require_satisfaction_manage(user)
+        use_case = build_manage_satisfaction_surveys_use_case()
+        return _ok(use_case.list_recipients(campaign_id), "Participantes carregados.")
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_satisfaction_recipient_get(
+    *, campaign_id: str, recipient_id: str
+) -> CallToolResult:
+    try:
+        _require_commercial_human()
+        request = build_mcp_request()
+        user, _ = _actor(request)
+        _require_satisfaction_manage(user)
+        use_case = build_manage_satisfaction_surveys_use_case()
+        return _ok(
+            use_case.get_recipient(
+                campaign_id=campaign_id, recipient_id=recipient_id
+            ),
+            "Participante carregado.",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_satisfaction_recipient_link(
+    *, campaign_id: str, recipient_id: str
+) -> CallToolResult:
+    try:
+        _require_commercial_human()
+        request = build_mcp_request()
+        user, _ = _actor(request)
+        _require_satisfaction_manage(user)
+        use_case = build_manage_satisfaction_surveys_use_case()
+        return _ok(
+            use_case.get_recipient_link(
+                campaign_id=campaign_id, recipient_id=recipient_id
+            ),
+            "Link exclusivo recuperado.",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def execute_satisfaction_campaign_create(
+    *,
+    name: str,
+    starts_at: Any,
+    ends_at: Any,
+    invite_subject: str | None = None,
+    invite_body: str | None = None,
+) -> dict:
+    from commercial_app.application.use_cases.manage_satisfaction_surveys import (
+        CreateCampaignCommand,
+        SatisfactionSurveyError,
+    )
+
+    request = build_mcp_request()
+    user, actor = _actor(request)
+    _require_satisfaction_manage(user)
+    use_case = build_manage_satisfaction_surveys_use_case()
+    try:
+        return use_case.create_campaign(
+            CreateCampaignCommand(
+                name=name,
+                starts_at=starts_at if isinstance(starts_at, datetime) else datetime.fromisoformat(str(starts_at).replace("Z", "+00:00")),
+                ends_at=ends_at if isinstance(ends_at, datetime) else datetime.fromisoformat(str(ends_at).replace("Z", "+00:00")),
+                invite_subject=invite_subject,
+                invite_body=invite_body,
+                created_by_user_id=actor or "",
+            )
+        )
+    except SatisfactionSurveyError as exc:
+        raise ValueError(exc.message) from exc
+
+
+def execute_satisfaction_campaign_update(
+    *,
+    campaign_id: str,
+    version: int,
+    name: str | None = None,
+    starts_at: Any = None,
+    ends_at: Any = None,
+    invite_subject: str | None = None,
+    invite_body: str | None = None,
+) -> dict:
+    from commercial_app.application.use_cases.manage_satisfaction_surveys import (
+        SatisfactionSurveyError,
+        UpdateCampaignCommand,
+    )
+
+    request = build_mcp_request()
+    user, _ = _actor(request)
+    _require_satisfaction_manage(user)
+    use_case = build_manage_satisfaction_surveys_use_case()
+
+    def _parse(value: Any):
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+
+    try:
+        return use_case.update_campaign(
+            UpdateCampaignCommand(
+                campaign_id=campaign_id,
+                expected_version=int(version),
+                name=name,
+                starts_at=_parse(starts_at),
+                ends_at=_parse(ends_at),
+                invite_subject=invite_subject,
+                invite_body=invite_body,
+            )
+        )
+    except SatisfactionSurveyError as exc:
+        raise ValueError(exc.message) from exc
+
+
+def execute_satisfaction_recipient_add(*, campaign_id: str, items: Any) -> dict:
+    from commercial_app.application.use_cases.manage_satisfaction_surveys import (
+        SatisfactionSurveyError,
+    )
+    from commercial_app.domain.entities.satisfaction_survey import RecipientAddItem
+
+    request = build_mcp_request()
+    user, actor = _actor(request)
+    _require_satisfaction_manage(user)
+    if not isinstance(items, list) or not items:
+        raise ValueError("items deve ser uma lista não vazia.")
+    parsed = []
+    for raw in items:
+        if not isinstance(raw, dict):
+            raise ValueError("Cada item deve ser um objeto.")
+        parsed.append(
+            RecipientAddItem(
+                customer_code=str(raw.get("customer_code") or ""),
+                customer_store=str(raw.get("customer_store") or ""),
+                customer_name=raw.get("customer_name"),
+                contact_name=raw.get("contact_name"),
+                contact_email=raw.get("contact_email"),
+            )
+        )
+    use_case = build_manage_satisfaction_surveys_use_case()
+    try:
+        return use_case.add_recipients(
+            campaign_id=campaign_id,
+            items=parsed,
+            created_by_user_id=actor or "",
+        )
+    except SatisfactionSurveyError as exc:
+        raise ValueError(exc.message) from exc
+
+
+def execute_satisfaction_recipient_update_contact(
+    *,
+    campaign_id: str,
+    recipient_id: str,
+    version: int,
+    contact_name: str | None = None,
+    contact_email: str | None = None,
+) -> dict:
+    from commercial_app.application.use_cases.manage_satisfaction_surveys import (
+        SatisfactionSurveyError,
+        UpdateRecipientContactCommand,
+    )
+
+    request = build_mcp_request()
+    user, _ = _actor(request)
+    _require_satisfaction_manage(user)
+    use_case = build_manage_satisfaction_surveys_use_case()
+    try:
+        return use_case.update_recipient_contact(
+            UpdateRecipientContactCommand(
+                campaign_id=campaign_id,
+                recipient_id=recipient_id,
+                expected_version=int(version),
+                contact_name=contact_name,
+                contact_email=contact_email,
+            )
+        )
+    except SatisfactionSurveyError as exc:
+        raise ValueError(exc.message) from exc
+

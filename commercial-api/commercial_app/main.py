@@ -19,6 +19,12 @@ from commercial_app.interface.http.routes.realtime_routes import router as realt
 from commercial_app.interface.http.routes.characters_routes import (
     router as characters_router,
 )
+from commercial_app.interface.http.routes.satisfaction_survey_routes import (
+    router as satisfaction_survey_router,
+)
+from commercial_app.interface.http.routes.satisfaction_survey_public_routes import (
+    router as satisfaction_survey_public_router,
+)
 from commercial_app.interface.http.routes.attachment_routes import router as attachment_router
 from commercial_app.interface.http.routes.analytics_routes import router as analytics_router
 from commercial_app.interface.http.routes.customer_routes import router as customer_router
@@ -212,6 +218,9 @@ app.include_router(integration_jobs_router)
 app.include_router(interaction_room_router)
 app.include_router(realtime_router)
 app.include_router(characters_router)
+if settings.COMMERCIAL_SATISFACTION_SURVEY_ENABLED:
+    app.include_router(satisfaction_survey_router)
+    app.include_router(satisfaction_survey_public_router)
 app.include_router(mcp_metadata_router)
 
 
