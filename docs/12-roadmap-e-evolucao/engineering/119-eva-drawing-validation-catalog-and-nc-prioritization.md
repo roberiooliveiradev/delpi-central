@@ -3943,3 +3943,47 @@ registrado como UNKNOWN, não inventado); descrições AR/AS vazias
 consistente com campos truncados do desenho (G1); AUTHENTICATED_
 MCP_E2E permanece bloqueado pela identidade de avaliação (§85.6) —
 PIPELINE_E2E e MCP_E2E relatados separadamente.
+
+
+## §89 — Coordination: aceite funcional delimitado de interpretação estrutural e continuidade do roadmap (2026-11-14)
+
+**TASK_ID:** `EVA-VAL01-G6-DRAWING-STRUCTURE-FUNCTIONAL-ACCEPTANCE-AND-NEXT-STEP-01`  
+**OWNER DA DECISÃO:** EVA — Architecture / Coordination (aceite técnico final: owners Engenharia)  
+**EVIDÊNCIAS:** §88 (`PIPELINE_E2E` em binário de PROD, product `90264135`), inspeção independente do PDF descrita nas decisões da Issue #131.  
+**BASE_MAIN_VERIFICADA:** `538155f8994031742411cdde0655ca715a896321` (antes desta atualização).
+
+### 89.1 Decisão e escopo do aceite
+
+A expectativa funcional explicitada para esta fatia é **ler o desenho técnico e reconstruir a estrutura candidata de componentes e suas relações pai→filho com evidência visual**, preservando quantidade, posição e incerteza quando disponíveis. Essa capacidade é distinta de comprovar equivalência integral com a BOM vigente do TOTVS.
+
+**DECISION = ACCEPT_WITH_RESIDUAL para a capacidade `drawing_structure_understanding` no caso e controles verificados.** O aceite de Coordenação é **funcional e delimitado**; não representa homologação irrestrita de todos os códigos, nem publicação de BOM/desenho oficial, nem aprovação final pelo owner técnico.
+
+O pipeline real `run_visual_benchmark → build_document_understanding → SLANet/apply_native_table_observations → compare_bom_to_drawing`, executado no container de PROD sobre PDF oficial SHA-256 `af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3`, reportou `COMPLETED` em 182.9s, 13/13 páginas OCR, 279 ocorrências, 211 `IDENTIFIED`, 68 `UNKNOWN` e zero duplicatas. A Coordination verificou a presença desse relato em §88 e seu commit; a integridade do artefato temporário de 2.4 MB foi reportada pelo executor, não revalidada diretamente pela Coordination.
+
+**Controles visualmente confrontados com o PDF:** p12 `AE|1|10010028→50225702`, `AE|1|10010028→50225740`, `AH|1|10080897→50225740`, `AG|1|10110676→50225740`, `AF|1|10010005→50225741` (não `50225740`); ocorrência separada `AG|16|10110676` permanece `UNKNOWN` na tabela ambígua (não promover por proximidade); p13 `AQ/AR/AS/AT→50225749`, inclusive `AT|4|10110559` reconhecido visualmente, com aceite técnico individual ainda pendente.
+
+### 89.2 Limites e evidência negativa
+
+- `68 UNKNOWN` **não** significam automaticamente 68 erros nem comprovam cobertura completa de relações; não derivar taxa global de acurácia apenas de 211/279.
+- `revision=None` e cabeçalho `REV 00` versus linha `REV 01` do histórico: observação candidata; revisão oficial não homologada.
+- Descrições AR/AS vazias/truncadas: limites de extração; não inferir equivalência descritiva.
+- `BOM_OFFICIAL_E2E=INCONCLUSIVE`: pipeline executado sem identidade delegada, `bom_occurrences=None`; o comparador absteve-se corretamente (`structure_not_provided`).
+- `AUTHENTICATED_MCP_E2E=BLOCKED` pelo fluxo/principal autorizado de avaliação (§85.6). Não realizar impersonation, ROPC improvisado, compartilhamento de token nem fixture apresentada como dado oficial.
+- Regressão reportada `359/360 PASS`; `test_pi_with_children_flattened_as_parent_block` permanece residual a reconciliar (não afirmar regressão 100% verde).
+- A estrutura inferida é **CANDIDATE/DRAFT**, não source of truth. Somente Engenharia e APIs/sistemas oficiais aprovam/publicam BOM, revisão e demais dados técnicos.
+
+### 89.3 Gate dividido, com continuidade limitada
+
+| Gate | Estado em 2026-11-14 | Consequência |
+|---|---|---|
+| `DRAWING_STRUCTURE_UNDERSTANDING` | `ACCEPT_WITH_RESIDUAL` — controles do produto 90264135 | Encerrar investigação repetitiva de OCR/SLANet deste caso, salvo novo defeito demonstrado |
+| `DRAWING_BOM_THREE_WAY` | `INCONCLUSIVE` — sem BOM oficial nessa execução | Residual de integração/authz, não reprovar retrospectivamente leitura visual |
+| `AUTHENTICATED_MCP_E2E` | `BLOCKED` — §85.6 | Requer identidade delegada aprovada por IAM/Core e um teste autorizado |
+| `ENGINEERING_OWNER_HOMOLOGATION` | `PENDING` | Aceite final técnico permanece com Engenharia |
+| `VAL01_COMPLETED` | `false` | Issue #131 permanece aberta; não proclamar homologação integral |
+
+**Continuidade autorizada:** planejamento e levantamento do próximo bounded step do Portal Engenharia podem prosseguir usando a capacidade visual candidata já demonstrada, sem bloquear o aprendizado por novas tentativas de polling no ChatGPT. **Não** autoriza por consequência o fechamento integral da VAL-01, deploy adicional, escrita de BOM, novo owner/source of truth, expansão automática E2–E7 ou publicação técnica. Se a próxima implementação exigir mudança de owner/authority/escopo congelado, usar `ARCHITECTURE_DECISION_REQUIRED` e retornar à Coordination.
+
+**NEXT_BOUNDED_STEP:** `EVA-E1-POST-G6-DRAFT-STRUCTURE-REVIEW-WORKFLOW-INVENTORY-01` — inventariar um fluxo de **visualização/revisão humana da estrutura candidata** (hierarquia pai→filho, quantidade, posição, evidência por página/caixa, `IDENTIFIED/UNKNOWN`, revisão desconhecida), priorizando reutilização dos contratos e UI existentes. **Modo:** contrato/inventário, sem implementação automática nem gravação em produto/BOM. Executar Abstraction Gate e entregar RQ/AC e proposta mínima. Em paralelo, manter o residual `EVA-VAL01-G6-IAM-OWNER-BOUND-BOM-ACCEPTANCE-01` no backlog governado, sem repetir OCR sem necessidade.
+
+**IMPLEMENTATION_GATE:** `PENDING_COORDINATION_DECISION` após inventário; **RELEASE_GATE:** `NOT_AUTHORIZED`.
