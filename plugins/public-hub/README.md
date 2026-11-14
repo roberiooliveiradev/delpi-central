@@ -194,6 +194,14 @@ O formulário público (jul/2026) inclui modo wizard (`oneQuestionPerPage`), pá
 
 Ver `src/apps/customer-experience/` (`api.ts`, `ThanksPage.tsx`, `FormPage.tsx`, `pages.tsx`).
 
+### Pesquisa de Satisfação de Clientes (`commercial`)
+
+| Página | URL | Endpoint |
+|---|---|---|
+| Formulário | `/p/commercial/form/{token}` | `GET/POST /apps/commercial-api/public/satisfaction-surveys/{token}[/response]` |
+
+`src/apps/commercial/` (`api.ts`, `surveyForm.ts`, `FormPage.tsx`, `SurveyStateView.tsx`, `pages.tsx`). Questionário oficial vindo da API (15 perguntas, 3 etapas × 5, revisão e confirmação); respostas só em memória (sem storage/cookie/URL), `beforeunload` apenas com respostas não enviadas, POST somente em «Confirmar e enviar». Fetch sem bearer/cookies/referrer; token nunca logado. Testes: `surveyForm.test.ts`/`api.test.ts` (node:test) e `FormPage.test.tsx` (vitest).
+
 ### Código de Ética (`codigo-etica`)
 
 Leitura do PDF institucional (token estático `aberto`) para quem **não tem conta** no Minha DELPI:

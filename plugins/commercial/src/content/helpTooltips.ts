@@ -822,6 +822,46 @@ export const CM_HELP = {
     teamColGroups: "Grupos operacionais dos quais a pessoa é membro.",
     teamColPortfolios: "Carteiras às quais a pessoa tem acesso.",
   },
+  satisfactionSurveys: {
+    listPage:
+      "Campanhas da Pesquisa de Satisfação de Clientes: crie campanhas, inclua empresas e copie convites para enviar por conta própria. O Portal não envia e-mail nem mensagens.",
+    filterYear: "Mostra só campanhas cujo início ocorre no ano escolhido.",
+    filterStatus:
+      "Situação da campanha calculada pelo servidor pelo período: Agendada, Aberta ou Encerrada.",
+    filterSearch: "Filtra campanhas pelo nome.",
+    colCampaign: "Nome da campanha e janela de resposta (início → término, horário de Brasília).",
+    colStatus: "Agendada = ainda não abriu; Aberta = recebendo respostas; Encerrada = prazo finalizado.",
+    colParticipants: "Empresas cadastradas como participantes desta campanha.",
+    colResponded: "Participantes que já enviaram a resposta definitiva.",
+    createName: "Nome interno da campanha, por exemplo «Pesquisa de satisfação 2026».",
+    createStartsAt: "Quando o formulário passa a aceitar respostas (horário de Brasília).",
+    createEndsAt: "Quando o formulário deixa de aceitar respostas (horário de Brasília).",
+    detailTabs: "Participantes, Mensagem padrão do convite e Dados da campanha.",
+    metricParticipants: "Total de empresas incluídas na campanha.",
+    metricResponded: "Empresas que enviaram a resposta definitiva.",
+    metricPending:
+      "Empresas sem resposta registrada. Pendente não significa que o convite não foi enviado — o Portal não controla o envio.",
+    addCustomers:
+      "Busque empresas do cadastro oficial por nome ou código/loja e adicione várias de uma vez. Empresas já incluídas são preservadas e mantêm o mesmo link.",
+    recipientsFilterStatus: "Mostra só participantes pendentes ou que já responderam.",
+    recipientsSearch: "Filtra participantes por nome da empresa, código/loja ou contato.",
+    colCompany: "Empresa oficial (nome, código e loja). Clique na linha para abrir o participante.",
+    colContact: "Contato opcional do convite. Não altera o cadastro da empresa.",
+    colRecipientStatus: "Pendente = sem resposta; Respondida = resposta definitiva registrada.",
+    messageSubject:
+      "Assunto sugerido para o e-mail. Aceita {nome_empresa} e {link_pesquisa}; ambos são trocados no convite de cada empresa.",
+    messageBody:
+      "Texto base do convite, único por campanha. Use {nome_empresa} e {link_pesquisa}. Texto livre: HTML digitado não é interpretado.",
+    messagePreview:
+      "Prévia com empresa e link fictícios. Alternar entre Correio eletrônico e Mensageiro não altera nem salva o texto.",
+    dataName: "Nome da campanha.",
+    editDates:
+      "Datas só podem mudar enquanto não houver respostas definitivas; o servidor valida.",
+    recipientContactName: "Nome do contato que receberá o convite. Opcional; não é o respondente.",
+    recipientContactEmail: "E-mail do contato do convite. Opcional; só é gravado nesta campanha.",
+    recipientInvite:
+      "Convite já resolvido para esta empresa, com nome e link exclusivos. Copie e envie por e-mail, WhatsApp, Teams ou outro canal.",
+  },
   proposals: {
     page: "Propostas-documento: lista e emissão de PDF. Não confundir com OVs em Oportunidades.",
     list: "Catálogo de propostas-documento. Clique na linha ou na proposta interna para abrir o detalhe.",

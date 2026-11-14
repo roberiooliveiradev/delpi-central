@@ -62,6 +62,7 @@ describe("homeRecentViews", () => {
         worklist: false,
         proposals: false,
         customers: false,
+        satisfaction: false,
         admin: false,
       },
     );

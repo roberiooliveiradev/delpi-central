@@ -22,6 +22,12 @@
       "module": "commercial"
     },
     {
+      "code": "commercial.marketing",
+      "name": "Marketing — Pesquisa de Satisfação",
+      "description": "Gestão da Pesquisa de Satisfação de Clientes: campanhas, participantes e convites. A API também aceita commercial.manage.",
+      "module": "commercial"
+    },
+    {
       "code": "commercial.billing.notify",
       "name": "Receber notificação de faturamento",
       "description": "Receber notificação quando pedido entra em Pronto para faturar. Não libera telas admin nem escopo de carteiras.",
@@ -179,6 +185,30 @@
       "permission": "commercial.manage",
       "icon": "settings",
       "order": 28,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/satisfaction-surveys",
+      "label": "Pesquisa de Satisfação",
+      "permission": "commercial.marketing",
+      "icon": "megaphone",
+      "order": 29,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/satisfaction-surveys/:campaignId",
+      "label": "Campanha de pesquisa",
+      "permission": "commercial.marketing",
+      "icon": "megaphone",
+      "order": 30,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/satisfaction-surveys/:campaignId/recipients/:recipientId",
+      "label": "Participante da pesquisa",
+      "permission": "commercial.marketing",
+      "icon": "megaphone",
+      "order": 31,
       "showInMenu": false
     }
   ],

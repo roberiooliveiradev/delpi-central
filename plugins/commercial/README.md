@@ -277,6 +277,18 @@ Detalhe: `/administration/seller-portfolios/:id` (query da lista preservada). Le
 linha, desvincula clientes (`ON DELETE CASCADE`) e libera o `user_id`. Contrato
 em [`src/utils/sellerPortfoliosDeepLink.ts`](./src/utils/sellerPortfoliosDeepLink.ts).
 
+## Pesquisa de Satisfação de Clientes — configuração (etapas A/B, escopo parcial)
+
+Acesso: **Início → Marketing → Configurar Pesquisas de Satisfação** (visível com `commercial.marketing`, `commercial.manage` ou capability `satisfaction_manage`; a `commercial-api` é a autoridade — a UI só esconde/mostra). Resultados e visão geral (UI-01/05/06/07) **não** fazem parte desta fatia.
+
+| Rota | Tela |
+|---|---|
+| `/apps/commercial/satisfaction-surveys` | UI-02A — lista de campanhas + «Nova campanha» |
+| `/apps/commercial/satisfaction-surveys/:campaignId` | UI-02B — Participantes · Mensagem padrão · Dados |
+| `/apps/commercial/satisfaction-surveys/:campaignId/recipients/:recipientId` | UI-02C — contato e convite para copiar |
+
+Código em `src/features/satisfaction-surveys/`, cliente em `src/api/satisfactionSurveysApi.ts` (só `commercial-api`) e textos em `src/content/satisfactionSurveysContent.ts`. A prévia de e-mail usa apenas HTML escapado por `buildInviteHtml` (o `RichTextEditor` em modo preview não sanitiza). Datas: ISO UTC na API; exibição/edição em America/Sao_Paulo (UTC-03). Formulário público: `plugins/public-hub` (`/p/commercial/form/{token}`).
+
 ## APIs
 
 | Base / path | Uso |

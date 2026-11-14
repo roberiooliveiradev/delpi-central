@@ -30,6 +30,9 @@ export type PluginView =
   | "user_profile"
   | "interaction_rooms"
   | "interaction_room_detail"
+  | "satisfaction_surveys"
+  | "satisfaction_campaign_detail"
+  | "satisfaction_recipient_detail"
   | "help"
   | "not_found";
 
@@ -62,6 +65,8 @@ export type ResolvedPluginRoute = {
   portfolioId?: string;
   userId?: string;
   roomId?: string;
+  campaignId?: string;
+  recipientId?: string;
 };
 
 export function normalizePathname(pathname: string): string {
@@ -80,6 +85,12 @@ export function normalizeBasePath(basePath?: string): string {
 /** Path regex EN — inbox e detalhe da sala de interação. */
 export const INTERACTION_ROOMS_PATH_RE = /^interaction-rooms$/;
 export const INTERACTION_ROOM_DETAIL_PATH_RE = /^interaction-rooms\/([^/]+)$/;
+
+/** Pesquisa de Satisfação (estágios A/B) — configuração de campanhas. */
+export const SATISFACTION_SURVEYS_RELATIVE_PATH = "satisfaction-surveys";
+export const SATISFACTION_CAMPAIGN_DETAIL_PATH_RE = /^satisfaction-surveys\/([^/]+)$/;
+export const SATISFACTION_RECIPIENT_DETAIL_PATH_RE =
+  /^satisfaction-surveys\/([^/]+)\/recipients\/([^/]+)$/;
 
 function safeDecodeSegment(segment: string): string | null {
   try {
@@ -147,6 +158,40 @@ export function resolvePluginRoute(
       pathname: path,
       relativePath,
       roomId: roomId.trim(),
+    };
+  }
+
+  if (relativePath === SATISFACTION_SURVEYS_RELATIVE_PATH) {
+    return { view: "satisfaction_surveys", pathname: path, relativePath };
+  }
+
+  const satisfactionRecipientDetail = SATISFACTION_RECIPIENT_DETAIL_PATH_RE.exec(relativePath);
+  if (satisfactionRecipientDetail) {
+    const campaignId = safeDecodeSegment(satisfactionRecipientDetail[1] ?? "");
+    const recipientId = safeDecodeSegment(satisfactionRecipientDetail[2] ?? "");
+    if (!campaignId?.trim() || !recipientId?.trim()) {
+      return { view: "not_found", pathname: path, relativePath };
+    }
+    return {
+      view: "satisfaction_recipient_detail",
+      pathname: path,
+      relativePath,
+      campaignId: campaignId.trim(),
+      recipientId: recipientId.trim(),
+    };
+  }
+
+  const satisfactionCampaignDetail = SATISFACTION_CAMPAIGN_DETAIL_PATH_RE.exec(relativePath);
+  if (satisfactionCampaignDetail) {
+    const campaignId = safeDecodeSegment(satisfactionCampaignDetail[1] ?? "");
+    if (!campaignId?.trim()) {
+      return { view: "not_found", pathname: path, relativePath };
+    }
+    return {
+      view: "satisfaction_campaign_detail",
+      pathname: path,
+      relativePath,
+      campaignId: campaignId.trim(),
     };
   }
 
@@ -501,6 +546,8 @@ export type BuildablePluginView = Exclude<
   | "seller_portfolio_detail"
   | "user_profile"
   | "interaction_room_detail"
+  | "satisfaction_campaign_detail"
+  | "satisfaction_recipient_detail"
   | "not_found"
 >;
 
@@ -529,6 +576,7 @@ const PLUGIN_VIEW_RELATIVE_PATHS: Record<BuildablePluginView, string> = {
   /** Alias legado — resolve para a aba Carteiras do hub. */
   seller_portfolios: "administration/seller-portfolios",
   interaction_rooms: "interaction-rooms",
+  satisfaction_surveys: SATISFACTION_SURVEYS_RELATIVE_PATH,
   help: "help",
 };
 
@@ -618,6 +666,30 @@ export function buildUserProfilePath(
   const id = userId.trim();
   if (!id) return null;
   return `${normalizeBasePath(basePath)}/users/${encodeURIComponent(id)}`;
+}
+
+export function buildSatisfactionCampaignDetailPath(
+  basePath: string | undefined,
+  campaignId: string,
+  search?: string,
+): string | null {
+  const id = campaignId.trim();
+  if (!id) return null;
+  const path = `${normalizeBasePath(basePath)}/${SATISFACTION_SURVEYS_RELATIVE_PATH}/${encodeURIComponent(id)}`;
+  if (!search) return path;
+  const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
+  return normalizedSearch === "?" ? path : `${path}${normalizedSearch}`;
+}
+
+export function buildSatisfactionRecipientDetailPath(
+  basePath: string | undefined,
+  campaignId: string,
+  recipientId: string,
+): string | null {
+  const campaign = campaignId.trim();
+  const recipient = recipientId.trim();
+  if (!campaign || !recipient) return null;
+  return `${normalizeBasePath(basePath)}/${SATISFACTION_SURVEYS_RELATIVE_PATH}/${encodeURIComponent(campaign)}/recipients/${encodeURIComponent(recipient)}`;
 }
 
 export function buildInteractionRoomsPath(basePath?: string): string {
@@ -749,6 +821,13 @@ export function resolveActiveNavId(
   if (view === "proposals" || view === "proposal_detail") return null;
   if (view === "help") return "help";
   if (view === "user_profile") return null;
+  if (
+    view === "satisfaction_surveys" ||
+    view === "satisfaction_campaign_detail" ||
+    view === "satisfaction_recipient_detail"
+  ) {
+    return null;
+  }
   if (view === "interaction_rooms" || view === "interaction_room_detail") {
     return "interaction_rooms";
   }

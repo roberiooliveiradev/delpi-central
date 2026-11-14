@@ -1,0 +1,61 @@
+/* Pesquisa de Satisfação — somente layout de página; zero CSS de componente do kit. */
+.dashboard-commercial .cm-satisfaction-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--cm-gap, 16px);
+}
+
+.dashboard-commercial .cm-satisfaction-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.dashboard-commercial .cm-satisfaction-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cm-gap, 16px);
+}
+
+.dashboard-commercial .cm-satisfaction-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.dashboard-commercial .cm-satisfaction-manual-copy {
+  width: 100%;
+  min-height: 120px;
+}
+
+/* Grade de leitura (rótulo/valor) — layout de página, sem estilizar o kit. */
+.dashboard-commercial .cm-satisfaction-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+
+.dashboard-commercial .cm-satisfaction-fields__item dt {
+  font-weight: 600;
+}
+
+.dashboard-commercial .cm-satisfaction-fields__item dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+  .dashboard-commercial .cm-satisfaction-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-commercial .cm-satisfaction-messenger-preview {
+  margin: 0;
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

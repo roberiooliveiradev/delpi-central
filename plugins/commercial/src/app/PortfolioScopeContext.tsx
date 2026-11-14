@@ -10,6 +10,7 @@ import {
 
 import { getMySellerPortfolio, listSellerPortfolios } from "../api/commercialPortfolioApi";
 import type { CommercialCapabilities, SellerPortfolio } from "../types/portfolio";
+import { resolveCanManageSatisfaction } from "../features/satisfaction-surveys/satisfactionAccess";
 
 type PortfolioScopeValue = {
   loading: boolean;
@@ -29,6 +30,11 @@ type PortfolioScopeValue = {
   /** Minha Carteira: membership ou manage. */
   canAccessMyPortfolio: boolean;
   canBillingNotify: boolean;
+  /**
+   * Gestão da Pesquisa de Satisfação (UI): satisfaction_manage || marketing || manage.
+   * Apenas apresentação — o backend decide a autorização efetiva.
+   */
+  canManageSatisfaction: boolean;
   /** Id do usuário autenticado (JWT), mesmo sem carteira própria. */
   currentUserId: string | null;
   /** Compat single-portfolio: primeira carteira de `myPortfolios`. */
@@ -55,6 +61,8 @@ const EMPTY_CAPABILITIES: CommercialCapabilities = {
   access: false,
   manage: false,
   billing_notify: false,
+  marketing: false,
+  satisfaction_manage: false,
 };
 
 function resolveCapabilities(
@@ -64,6 +72,8 @@ function resolveCapabilities(
     access: Boolean(raw?.access),
     manage: Boolean(raw?.manage),
     billing_notify: Boolean(raw?.billing_notify),
+    marketing: Boolean(raw?.marketing),
+    satisfaction_manage: Boolean(raw?.satisfaction_manage),
   };
 }
 
@@ -170,6 +180,7 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
       canViewWorklistTeam: canManagePortfolios,
       canAccessMyPortfolio,
       canBillingNotify: Boolean(capabilities.billing_notify),
+      canManageSatisfaction: resolveCanManageSatisfaction(capabilities),
       currentUserId,
       myPortfolio: myPortfolios[0] ?? null,
       myPortfolios,

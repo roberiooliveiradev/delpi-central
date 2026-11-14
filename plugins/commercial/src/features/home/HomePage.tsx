@@ -7,6 +7,7 @@ import {
   ClipboardList,
   Clock,
   FileText,
+  Megaphone,
   Settings,
   Sun,
   TriangleAlert,
@@ -72,6 +73,7 @@ type HomePageProps = {
   showProposals?: boolean;
   showAnalytics?: boolean;
   showCustomers?: boolean;
+  showSatisfaction?: boolean;
 };
 
 type HomeOrdersSummary = {
@@ -88,6 +90,7 @@ const SECTION_ICONS: Record<HubSectionId, ReactNode> = {
   operations: <ClipboardList size={20} strokeWidth={1.75} aria-hidden="true" />,
   management: <BarChart3 size={20} strokeWidth={1.75} aria-hidden="true" />,
   documents: <FileText size={20} strokeWidth={1.75} aria-hidden="true" />,
+  marketing: <Megaphone size={20} strokeWidth={1.75} aria-hidden="true" />,
   help: <BookOpen size={20} strokeWidth={1.75} aria-hidden="true" />,
   administration: <Settings size={20} strokeWidth={1.75} aria-hidden="true" />,
 };
@@ -115,6 +118,7 @@ export function HomePage({
   showProposals = false,
   showAnalytics = false,
   showCustomers = false,
+  showSatisfaction = false,
 }: HomePageProps) {
   const { sellerIdFilter } = usePortfolioScope();
   const { setMetrics, resetMetrics } = useHomeHeroMetrics();
@@ -137,9 +141,10 @@ export function HomePage({
       worklist: showWorklist,
       proposals: showProposals,
       customers: showCustomers,
+      satisfaction: showSatisfaction,
       admin: showAdmin,
     }),
-    [showAdmin, showAnalytics, showCustomers, showProposals, showWorklist],
+    [showAdmin, showAnalytics, showCustomers, showProposals, showSatisfaction, showWorklist],
   );
 
   const sections = useMemo(() => resolveHubSections(capabilities), [capabilities]);

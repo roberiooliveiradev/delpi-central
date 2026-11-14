@@ -39,6 +39,10 @@ export type CommercialCapabilities = {
   access: boolean;
   manage: boolean;
   billing_notify: boolean;
+  /** `commercial.marketing` (GET /seller-portfolios/me). */
+  marketing?: boolean;
+  /** Gestão da Pesquisa de Satisfação: marketing OU manage (decidido no backend). */
+  satisfaction_manage?: boolean;
 };
 
 export type SellerPortfolioMeResponse = {

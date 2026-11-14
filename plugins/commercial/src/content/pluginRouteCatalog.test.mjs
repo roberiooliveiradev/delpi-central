@@ -16,6 +16,7 @@ const allCaps = {
   worklist: true,
   proposals: true,
   customers: true,
+  satisfaction: true,
   admin: true,
 };
 
@@ -26,6 +27,7 @@ describe("pluginRouteCatalog", () => {
       worklist: true,
       proposals: false,
       customers: false,
+      satisfaction: false,
       admin: false,
     });
     assert.ok(sections.some((s) => s.id === "operations"));
@@ -59,7 +61,7 @@ describe("pluginRouteCatalog", () => {
   it("HUB_SECTIONS cobre as seções canônicas", () => {
     assert.deepEqual(
       HUB_SECTIONS.map((s) => s.id),
-      ["operations", "management", "documents", "help", "administration"],
+      ["operations", "management", "documents", "marketing", "help", "administration"],
     );
   });
 

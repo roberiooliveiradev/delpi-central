@@ -1,4 +1,5 @@
 import type { PublicRegistry } from "./types";
+import { commercialPages } from "../apps/commercial/pages";
 import { customerExperiencePages } from "../apps/customer-experience/pages";
 import { qualityLabelsPages } from "../apps/quality-labels/pages";
 import { tvDashboardPages } from "../apps/tv-dashboard/pages";
@@ -17,6 +18,7 @@ import { delpiNewsPages } from "../apps/delpi-news/pages";
  * crie src/apps/<app>/pages.tsx exportando um AppPublicPages e registre aqui.
  */
 export const publicRegistry: PublicRegistry = {
+  commercial: commercialPages,
   "customer-experience": customerExperiencePages,
   "quality-labels": qualityLabelsPages,
   "tv-dashboard": tvDashboardPages,

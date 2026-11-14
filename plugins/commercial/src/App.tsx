@@ -45,6 +45,9 @@ import { INTERACTION_ROOMS_CONTENT } from "./content/interactionRoomsContent";
 import { PluginErrorBoundary } from "@delpi/plugin-ui/index";
 import { UserManualPage } from "./features/help/UserManualPage";
 import { SellerPortfolioDetailPage } from "./features/seller-portfolios/SellerPortfolioDetailPage";
+import { SatisfactionCampaignDetailPage } from "./features/satisfaction-surveys/SatisfactionCampaignDetailPage";
+import { SatisfactionRecipientDetailPage } from "./features/satisfaction-surveys/SatisfactionRecipientDetailPage";
+import { SatisfactionSurveysPage } from "./features/satisfaction-surveys/SatisfactionSurveysPage";
 import { SellerPortfoliosPage } from "./features/seller-portfolios/SellerPortfoliosPage";
 
 export type AppProps = {
@@ -74,6 +77,7 @@ function AppRoutes({
     canViewAnalytics,
     canViewProposals,
     canAccessMyPortfolio,
+    canManageSatisfaction,
     loading: scopeLoading,
     myPortfolios,
   } = usePortfolioScope();
@@ -112,6 +116,7 @@ function AppRoutes({
       showAnalytics={canViewAnalytics}
       showCustomers={showCustomers}
       showProposals={canViewProposals}
+      showSatisfaction={canManageSatisfaction}
       scopeLabel={scopeLabel}
       ephemeralClientNav={ephemeralClientNav}
     >
@@ -123,6 +128,7 @@ function AppRoutes({
           showProposals={canViewProposals}
           showAnalytics={canViewAnalytics}
           showCustomers={canAccessMyPortfolio}
+          showSatisfaction={canManageSatisfaction}
         />
       ) : null}
       {view === "overview" ? (
@@ -335,6 +341,31 @@ function AppRoutes({
             search={search}
           />
         </PluginErrorBoundary>
+      ) : null}
+      {view === "satisfaction_surveys" ? (
+        canManageSatisfaction ? (
+          <SatisfactionSurveysPage basePath={basePath} />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
+      {view === "satisfaction_campaign_detail" && route.campaignId ? (
+        canManageSatisfaction ? (
+          <SatisfactionCampaignDetailPage basePath={basePath} campaignId={route.campaignId} />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
+      {view === "satisfaction_recipient_detail" && route.campaignId && route.recipientId ? (
+        canManageSatisfaction ? (
+          <SatisfactionRecipientDetailPage
+            basePath={basePath}
+            campaignId={route.campaignId}
+            recipientId={route.recipientId}
+          />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
       ) : null}
       {view === "help" ? <UserManualPage basePath={basePath} /> : null}
       {view === "not_found" ? <NotFoundPage basePath={basePath} /> : null}

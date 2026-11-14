@@ -61,6 +61,7 @@ type PluginShellProps = {
   showAnalytics?: boolean;
   showCustomers?: boolean;
   showProposals?: boolean;
+  showSatisfaction?: boolean;
   scopeLabel?: string;
   /** Conta fora da carteira: item efêmero «Cliente» ativo. */
   ephemeralClientNav?: { codigo: string; loja: string } | null;
@@ -106,6 +107,7 @@ export function PluginShell({
   showAnalytics = false,
   showCustomers = false,
   showProposals = false,
+  showSatisfaction = false,
   scopeLabel,
   ephemeralClientNav = null,
   children,
@@ -315,9 +317,10 @@ export function PluginShell({
       worklist: showWorklist,
       proposals: showProposals,
       customers: showCustomers,
+      satisfaction: showSatisfaction,
       admin: showAdmin,
     }),
-    [showAdmin, showAnalytics, showCustomers, showProposals, showWorklist],
+    [showAdmin, showAnalytics, showCustomers, showProposals, showSatisfaction, showWorklist],
   );
 
   const paletteSections = useMemo(

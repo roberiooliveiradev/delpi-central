@@ -9,6 +9,7 @@ export type HubCapability =
   | "worklist"
   | "proposals"
   | "customers"
+  | "satisfaction"
   | "admin"
   | "always";
 
@@ -30,6 +31,7 @@ export type HubSectionId =
   | "operations"
   | "management"
   | "documents"
+  | "marketing"
   | "help"
   | "administration";
 
@@ -216,6 +218,30 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         viewId: "proposals",
         requiredCap: "proposals",
         keywords: ["propostas", "proposta", "ady", "pdf", "documento"],
+      },
+    ],
+  },
+  {
+    id: "marketing",
+    title: "Marketing",
+    description: "Pesquisa de Satisfação de Clientes (escopo parcial: configuração).",
+    iconKey: "marketing",
+    routes: [
+      {
+        id: "satisfaction_surveys",
+        label: "Configurar Pesquisas de Satisfação",
+        viewId: "satisfaction_surveys",
+        requiredCap: "satisfaction",
+        keywords: [
+          "pesquisa",
+          "satisfação",
+          "satisfacao",
+          "campanha",
+          "marketing",
+          "nps",
+          "convite",
+          "participantes",
+        ],
       },
     ],
   },
