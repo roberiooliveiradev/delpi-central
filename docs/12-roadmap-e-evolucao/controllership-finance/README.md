@@ -1,5 +1,7 @@
 # Portal Controladoria & Finanças — Fonte de navegação e estado
 
+> **13/11/2026 — Auditoria de entradas no Portal e na CLARA:** [Doc 168](./168-auditoria-entradas-protheus-xml-portal-clara.md) `PLAN_DRAFT`. Porta a skill `auditoria-entradas-nfe-protheus` e o painel Raio-X para uma página do Portal e para o catálogo da CLARA. D4 decidida: tudo com `controllership-finance.access`.
+
 > **13/11/2026 — Regra de trabalho:** produção acompanha a main. Funcionalidade nova entra desligada por flag e é ligada depois do ensaio HML PASS.
 
 > **13/11/2026 — Tempo real do LNF (W1):** [Doc 167](./167-lnf-tempo-real-websocket.md) `CONTRACT_DRAFT` · [ADR-002](./adr/ADR-002-tempo-real-lnf-websocket-bff.md) `ACCEPTED`. WebSocket na BFF, aviso + refetch. D-W4 revista: a W6 entra quando a W5 estiver DONE.
