@@ -402,6 +402,20 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** obter CI verde e revisar seguranca do modelo DB em HML. Projetar e testar G2-S4-S2b bootstrap Windows de uso unico com prova de identidade fisica e sem secret no frontend, apos homologacao real.
 
+## 2026-11-14 | G2-S4-S2a | CI verde com binding dinamico desabilitado por padrao
+
+**Commit de codigo:** [9b1a5902179c](https://github.com/roberiooliveiradev/delpi-central/commit/9b1a5902179cbc948f194c78b05c62ee45ff62fc) (25 arquivos). Corrigidos apenas testes descartaveis: [cba23209d9e2](https://github.com/roberiooliveiradev/delpi-central/commit/cba23209d9e2ba92f490c5e59c11b44ac1311feb) hostname unico e [a0086959214f](https://github.com/roberiooliveiradev/delpi-central/commit/a0086959214fead0f72dc58bfd3ec87247490cfe) UPDATE com RETURNING no helper SQL.
+
+**Evidencias do CI:** [test-it-portal-api SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43611957705), inclui validacao HTTP/JWT, Keycloak mock, PostgreSQL 16 descartavel com V001..V013 e grant/revogacao; [validate-it-portal SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43611589167), com lint, Vitest e build; [architecture-gate SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43611957703) e [audit SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43611589188).
+
+**Seguranca:** flags `IT_PORTAL_WORKSTATION_INGEST_ENABLED=false`, `IT_PORTAL_WORKSTATION_DB_BINDINGS_ENABLED=false` e `IT_PORTAL_WORKSTATION_REVOKE_ENABLED=false` continuam OFF por default. Nao ha metodo produtivo para conceder `ingest_authorized=true` nesta etapa, so simulacao na base descartavel do CI. Clientes preparados no Keycloak continuam disabled; nenhum segredo nem token foi emitido.
+
+**Producao:** nenhuma migration V013, endpoint ou frontend foi implantado pelo assistente, nenhum cliente Keycloak real habilitado e nenhum agente Windows instalado. Este e CI verde, nao homologacao nem aceite operacional. G0-SEC continua proibindo controle remoto.
+
+**Rollback:** no futuro, reverter flags para false e manter V013 como migration aditiva; nao apagar tabelas ou registros. Falhas de revogacao deixam grant local negado e exigem conciliacao manual.
+
+**Proximo passo unico:** G2-S4-S2b com bootstrap Windows de uso unico e prova do dispositivo, ativacao Keycloak/DB transacional com compensacao, revogacao/rotacao, testes de Keycloak/Windows HML presenciais antes de deploy com flags liberadas.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

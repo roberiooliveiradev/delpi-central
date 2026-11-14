@@ -49,3 +49,9 @@ IT_PORTAL_WORKSTATION_REVOKE_ENABLED=false
 Implementar **bootstrap de uso unico para Windows piloto**, com validade curta, prova de posse do equipamento e aprovacao do operador, sem entregar client secret pelo browser. O servidor precisara verificar a identidade local de maneira forte antes de ativar o Client e emitir credencial protegida com DPAPI (ou certificado TPM/mTLS), criar `ingest_authorized=true` somente apos confirmacao de Keycloak e homologacao, e prever expiracao/rotacao/recuperacao. O desenho final depende de teste real Keycloak e Windows para evitar confiar apenas em hostname/IP.
 
 **Status ao finalizar S2a:** integracao e revogacao preparadas, **ativacao ainda sem implementacao**. G0-SEC segue bloqueando acesso remoto independente deste inventario.
+
+## Evidencias de CI (14/11/2026)
+
+- [API + Postgres V013 + testes de revogacao/JWT: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43611957705), commit `a0086959214fead0f72dc58bfd3ec87247490cfe`.
+- [Frontend lint/Vitest/build: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43611589167); [architecture-gate SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43611957703); [auditoria SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43611589188).
+- **Status:** pronto em codigo/testes, nao homologado em Keycloak/Windows reais e nao implantado; `ingest_authorized=false` e flags OFF. G2-S4-S2b ainda nao iniciado.
