@@ -308,6 +308,20 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** validar CI, recolher assinatura formal em canal privado e demonstrar artefato verificavel + isolamento da rede antes de autorizar qualquer motor em laboratorio. Retomar G2-S1..S3 somente presencial.
 
+## 2026-11-13 | G0-SEC-S1 | CI verde, lab permanece BLOQUEADO
+
+**Commit validado:** [b74c12e94bc4](https://github.com/roberiooliveiradev/delpi-central/commit/b74c12e94bc4ee3e8f93f45885f956b5efd87cf7).
+
+**Evidencias CI:** [test-it-portal-api SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43542553147/job/132286203346), incluindo `G0-SEC-S1 MeshCentral offline candidate admission (must remain BLOCKED)` SUCCESS, etapa anterior G0-SEC-S0 SUCCESS, testes unit/HTTP SUCCESS e PostgreSQL descartavel SCM / V001..V011 SUCCESS. [architecture-gate SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43542552950/job/132286202669). [audit SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43542552981/job/132286202676).
+
+**Interpretacao:** `G3-LAB BLOCKED` e esperado; a suite verifica que o manifesto de risco nao libera sistema remoto. Nao demonstrou mitigacao do exploit, compatibilidade do agente Windows 1.3.1, assinatura/digest de artefato, isolamento nem aprovacao formal G0-SEC.
+
+**Producao:** nenhuma migracao, alteracao de Compose, broker, API, segredo, agente MeshCentral ou acesso remoto instalado; commit foi somente de codigo de preflight, testes, CI e documentos.
+
+**Rollback:** sem estado no runtime; qualquer ajuste sera novo commit auditavel sem desativar os gates.
+
+**Proximo passo unico:** revisao formal de seguranca e verificacao de release/artefato em ambiente privado, seguida de definicao de laboratorio isolado. G2 presencial permanece independente.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

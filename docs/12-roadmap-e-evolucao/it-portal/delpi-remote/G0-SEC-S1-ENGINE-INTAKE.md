@@ -54,3 +54,9 @@ Saida esperada do CLI: `G3-LAB BLOCKED`, informando pendencias, e exit 0 para qu
 **G0-SEC-S2:** preparar minutas de politica para TI/RH/LGPD, plano de rede privada e roteiro de backup/restauracao e revogacao, com aprovacao humana pendente. Quando houver liberacao **formal e ambiente isolado**, planejar teste G3 em laboratorio sem acesso a maquinas reais; teste G2-S1..S3 no Windows continua presencial.
 
 **Rollback:** esta entrega so cria arquivos Python, testes, CI e documentos; nenhuma migration, deploy da API, manifesto, container, credencial ou maquina alterada. Corrigir em novo commit auditavel, sem remover preflight de seguranca existente.
+
+## Evidencia de CI (13/11/2026)
+
+- [API: test-it-portal-api SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43542553147/job/132286203346), commit `b74c12e94bc4`. Passou gate esperado `G3-LAB BLOCKED`, preflight G0-SEC-S0, pytest, integracao PostgreSQL V001..V011.
+- [Architecture gate SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43542552950/job/132286202669) e [Auditoria SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43542552981/job/132286202676).
+- Testes automatizados nao autorizam release, rede, agente, controle remoto ou qualquer acesso em producao.

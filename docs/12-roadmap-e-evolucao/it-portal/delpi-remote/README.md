@@ -55,7 +55,9 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 
 **G0-SEC-S1 (13/11/2026):** atualizado intake offline da release MeshCentral 1.3.1 com tag vinculada ao commit upstream `f436143527458d56da0336ea3047c006703fb4e4` e risco aberto de regressao dos agentes Windows ([issue #8269](https://github.com/Ylianst/MeshCentral/issues/8269)). O digest do artefato e a mitigacao do aviso emergencial continuam **pendentes**; configuracao publica exige ambiente de laboratorio isolado, sem rede/credenciais/estacoes produtivas. Nenhuma instalacao ou sessao remota autorizada. Ver [G0-SEC-S1](G0-SEC-S1-ENGINE-INTAKE.md).
 
-**Proximo passo executavel:** validar CI de G0-SEC-S1, obter evidencias formais de Seguranca/TI sobre a vulnerabilidade, artefato, rede e Keycloak. Continuar G2-S1..S3 presencial quando o operador voltar ao escritorio. **G3-ENGINE BLOQUEADO** ate gate formal, sem instalar servidor remoto ou liberar endpoints.
+**G0-SEC-S1 CI (13/11/2026):** commit `b74c12e94bc4`, [API + gate G3-LAB BLOCKED: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43542553147/job/132286203346), [architecture-gate SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43542552950/job/132286202669), [audit SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43542552981/job/132286202676). O CI verde comprova apenas **ausencia de autorizacao prematura**, nao mitigacao de exploit, aceite de segurança ou acesso remoto.
+
+**Proximo passo executavel:** obter evidencias formais de Seguranca/TI sobre a vulnerabilidade, artefato, rede e Keycloak, com verificacao privada de decisao GO/NO-GO. Continuar G2-S1..S3 presencial quando o operador voltar ao escritorio. **G3-ENGINE BLOQUEADO** ate gate formal, sem instalar servidor remoto ou liberar endpoints.
 
 ## Regras permanentes de engenharia
 
