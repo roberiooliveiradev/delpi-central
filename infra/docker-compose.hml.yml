@@ -258,6 +258,8 @@ services:
       GRAPH_REPORTS_CLIENT_ID: ""
       GRAPH_REPORTS_CLIENT_SECRET: ""
       MCP_RESOURCE_URL: ${PUBLIC_BASE_URL}/apps/api-delpi/mcp
+      S2S_AUDIENCE: ${S2S_AUDIENCE:-api-delpi}
+      S2S_ALLOWED_CLIENTS: ${S2S_ALLOWED_CLIENTS:-supplies-api,engineering-api,controllership-finance-api}
       TRANSFORMOMETRO_API_BASE_URL: ""
       REDIS_URL: redis://:${DELPI_REDIS_PASSWORD}@delpi-redis:6379/0
       # Schema plugins HML: migrations canônicas no primeiro up do cenário.
@@ -619,6 +621,8 @@ services:
       DELPI_API_URL: http://api-delpi:8000
       DELPI_AUTH_CORE_API_URL: http://core-api:8000
       PLUGINS_DB_HOST: postgres-plugins
+      S2S_AUDIENCE: ${S2S_AUDIENCE:-api-delpi}
+      S2S_ALLOWED_CLIENTS: ${S2S_ALLOWED_CLIENTS:-supplies-api,engineering-api,controllership-finance-api}
     healthcheck:
       test:
         [

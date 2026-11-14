@@ -329,6 +329,10 @@ def assert_source_files() -> None:
             fail("bootstrap HML não declara política de direct grants")
     if "oidc-audience-mapper" not in boot or "audience-delpi" not in boot:
         fail("bootstrap HML sem provisionamento de audience delpi-central")
+    if "controllership-finance-api" not in boot or "stock-inventory.read" not in boot:
+        fail("bootstrap HML não cria o cliente S2S da controladoria")
+    if "secrets.token_urlsafe" not in boot:
+        fail("bootstrap HML não gera segredo novo para o cliente da controladoria")
     if "loginTheme" not in boot or "delpi-energy" not in boot:
         fail("bootstrap HML sem loginTheme delpi-energy no realm")
     if "chmod -R a+rX" not in boot or "keycloak/themes" not in boot:
