@@ -14,6 +14,9 @@ export default defineConfig({
   outputDir: "./artifacts/test-results",
   use: {
     baseURL: process.env.ENGINEERING_E2E_BASE_URL ?? "http://localhost",
+    /* TLS self-signed do ambiente HML — opt-in explícito, nunca
+     * para apontar a PRD sem certificado válido. */
+    ignoreHTTPSErrors: process.env.PLAYWRIGHT_INSECURE === "1",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "off",
@@ -27,5 +30,9 @@ export default defineConfig({
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
     { name: "mobile", use: { ...devices["Pixel 7"] } },
     { name: "tablet", use: { ...devices["Galaxy Tab S4"] } },
+    {
+      name: "mobile-320",
+      use: { ...devices["Pixel 7"], viewport: { width: 320, height: 720 } },
+    },
   ],
 });
