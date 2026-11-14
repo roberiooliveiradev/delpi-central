@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gzip
 from copy import deepcopy
 from datetime import date, datetime, timezone
 from uuid import uuid4
@@ -21,6 +22,8 @@ class MemoryEntryAuditStore:
         self.ctes: list[dict] = []
         self.tes_used: list[dict] = []
         self.statuses: dict[str, dict] = {}
+        self.xml_cache: dict[str, dict] = {}
+        self.audit: list[dict] = []
 
     def find_open(self, date_from: date, date_to: date, document_types: list[str], branches: list[str]) -> dict | None:
         for analysis in self.analyses.values():
@@ -195,6 +198,37 @@ class MemoryEntryAuditStore:
             "tes": self.tes_used,
         }[kind]
         return [deepcopy(row) for row in table if row["analysis_id"] == analysis_id]
+
+    def cached_xml(self, access_key: str) -> dict | None:
+        row = self.xml_cache.get(access_key)
+        if row is None:
+            return None
+        row["last_used_at"] = _now()
+        if row.get("cancelled"):
+            return {"cancelled": True, "xml": None}
+        try:
+            xml = gzip.decompress(row["xml_gzip"])
+        except (OSError, EOFError):
+            xml = row["xml_gzip"]
+        return {"cancelled": False, "xml": xml}
+
+    def store_xml(self, access_key: str, payload: bytes, *, model: str, cancelled: bool) -> None:
+        self.xml_cache[access_key] = {
+            "model": model,
+            "xml_gzip": payload,
+            "cancelled": cancelled,
+            "last_used_at": _now(),
+        }
+
+    def purge_xml_cache(self, days: int) -> int:
+        cutoff = _now().timestamp() - max(int(days), 1) * 86400
+        stale = [key for key, row in self.xml_cache.items() if row["last_used_at"].timestamp() < cutoff]
+        for key in stale:
+            del self.xml_cache[key]
+        return len(stale)
+
+    def audit_events(self, stable_key: str) -> list[dict]:
+        return [deepcopy(row) for row in self.audit if row.get("stable_key") == stable_key]
 
     def _refresh(self, analysis_id: str) -> None:
         runs = [run for run in self.runs.values() if run["analysis_id"] == analysis_id]

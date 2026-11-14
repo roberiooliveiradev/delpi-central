@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+import gzip
+from datetime import date, datetime, timedelta, timezone
 from uuid import UUID
 
 from psycopg.rows import dict_row
@@ -413,6 +414,71 @@ class PostgresEntryAuditStore:
         for row in found:
             row["document_type"] = (row.get("sf4") or {}).get("document_type") or "nfe"
         return found
+
+    def cached_xml(self, access_key: str) -> dict | None:
+        row = self._one(
+            f"SELECT xml_gzip, cancelled FROM {SCHEMA}.entry_audit_xml_cache WHERE access_key = %s",
+            (access_key,),
+        )
+        if row is None:
+            return None
+        self._execute(
+            f"UPDATE {SCHEMA}.entry_audit_xml_cache SET last_used_at = now() WHERE access_key = %s",
+            (access_key,),
+        )
+        if row.get("cancelled"):
+            return {"cancelled": True, "xml": None}
+        body = row.get("xml_gzip") or b""
+        try:
+            xml = gzip.decompress(body)
+        except (OSError, EOFError):
+            xml = body
+        return {"cancelled": False, "xml": xml}
+
+    def store_xml(self, access_key: str, payload: bytes, *, model: str, cancelled: bool) -> None:
+        self._execute(
+            f"""
+            INSERT INTO {SCHEMA}.entry_audit_xml_cache (access_key, model, xml_gzip, fetched_at, last_used_at, cancelled)
+            VALUES (%s, %s, %s, now(), now(), %s)
+            ON CONFLICT (access_key) DO UPDATE
+               SET model = EXCLUDED.model,
+                   xml_gzip = EXCLUDED.xml_gzip,
+                   fetched_at = now(),
+                   last_used_at = now(),
+                   cancelled = EXCLUDED.cancelled
+            """,
+            (access_key, model, payload, cancelled),
+        )
+
+    def purge_xml_cache(self, days: int) -> int:
+        cutoff = datetime.now(timezone.utc) - timedelta(days=max(int(days), 1))
+        self._execute(
+            f"DELETE FROM {SCHEMA}.entry_audit_xml_cache WHERE last_used_at < %s",
+            (cutoff,),
+        )
+        return 0
+
+    def audit_events(self, stable_key: str) -> list[dict]:
+        rows = self._all(
+            f"""
+            SELECT event_type, actor_subject::text AS actor, created_at,
+                   detail->>'capability' AS capability, detail->>'channel' AS channel
+              FROM {SCHEMA}.closing_audit_event
+             WHERE detail->>'stable_key' = %s
+               AND event_type = 'CLARA_DIRECT_ACT'
+             ORDER BY created_at
+            """,
+            (stable_key,),
+        )
+        return [
+            {
+                "event": str(row.get("capability") or row.get("event_type") or ""),
+                "at": row["created_at"].isoformat() if row.get("created_at") else None,
+                "actor": str(row.get("actor") or ""),
+                "channel": str(row.get("channel") or ""),
+            }
+            for row in rows
+        ]
 
     def _refresh(self, analysis_id: str) -> None:
         runs = self.runs_of(str(analysis_id))

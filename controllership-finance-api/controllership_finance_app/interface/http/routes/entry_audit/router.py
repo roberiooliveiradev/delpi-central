@@ -76,6 +76,7 @@ def _filters(request: Request) -> dict:
         "document_type": request.query_params.get("document_type"),
         "day": request.query_params.get("day"),
         "status": request.query_params.get("status"),
+        "situation": request.query_params.get("situation"),
         "q": request.query_params.get("q"),
     }
 
@@ -189,11 +190,11 @@ def get_facets(analysis_id: str, request: Request):
 
 
 @router.get("/trend", operation_id="get_entry_audit_trend")
-def get_trend(request: Request, branch: str | None = None, date_from: date | None = None, date_to: date | None = None):
+def get_trend(request: Request, branch: str | None = None, date_from: date | None = None, date_to: date | None = None, group: str | None = None):
     user = _actor(request)
     if not hasattr(user, "principal_type"):
         return user
-    return _call(lambda: ok(_service(request).trend(branch=branch, date_from=date_from, date_to=date_to), operation_id="get_entry_audit_trend"))
+    return _call(lambda: ok(_service(request).trend(branch=branch, date_from=date_from, date_to=date_to, group=group), operation_id="get_entry_audit_trend"))
 
 
 @router.get("/analyses/{analysis_id}/occurrences", operation_id="list_entry_audit_occurrences")
@@ -278,5 +279,18 @@ def export_analysis(analysis_id: str, request: Request):
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={"Content-Disposition": f'attachment; filename="entry-audit-{analysis_id}.xlsx"'},
         )
+
+    return _call(_build)
+
+
+@router.get("/xml/{access_key}", operation_id="download_entry_audit_xml")
+def download_xml(access_key: str, request: Request, branch: str = Query(...), document_type: str = Query("nfe")):
+    user = _actor(request)
+    if not hasattr(user, "principal_type"):
+        return user
+
+    def _build():
+        payload, filename = _service(request).xml_bytes(access_key=access_key, branch=branch, document_type=document_type)
+        return Response(content=payload, media_type="application/xml", headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
     return _call(_build)

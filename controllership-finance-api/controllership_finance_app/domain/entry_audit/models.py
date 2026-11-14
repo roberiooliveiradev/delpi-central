@@ -132,6 +132,7 @@ class XmlDocument:
     substituted: bool = False
     linked_keys: tuple[str, ...] = ()
     taker_role: str = ""
+    operation_nature: str = ""
 
 
 @dataclass(frozen=True)

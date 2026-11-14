@@ -859,7 +859,7 @@ def _xml_unmatched(document: XmlDocument, severity: str, reason: str, species: s
         ipi_amount=document.ipi_amount,
         cfop=cfop,
         cst=cst,
-        nature=_nature(cfop),
+        nature=document.operation_nature or _nature(cfop),
     )
 
 

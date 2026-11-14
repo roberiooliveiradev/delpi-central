@@ -56,7 +56,7 @@ Cada ocorrência vira uma seção própria, com o **nome exatamente igual ao que
 - Quando aparece: a TES (ou o livro fiscal) credita ICMS e o frete não dá direito (NF transportadas só de uso e consumo/ativo, transportadora do Simples ou CT-e sem ICMS).
 - Por quê importa: o crédito vai para a apuração (SPED) sem direito; é crédito indevido a estornar.
 - O que fazer: lançar o CT-e na TES de frete sem crédito, com CST 090.
-- Quem corrige: Fiscal (lançamento) — confirmar com o owner (§7).
+- Quem corrige: Equipe fiscal/contábil (aciona as outras áreas).
 - Como a CLARA explica: citar as NF transportadas e o CFOP delas; dizer se foi decidido pela TES ou pelo livro.
 - Evidência: OWNER_REPORTED_VIA_PO (skill) · após a paridade E2/E7: CURRENT_IMPLEMENTATION.
 ```
@@ -74,11 +74,11 @@ Mesmas seis tools; só entradas novas no catálogo, todas com gate `controllersh
 | `read` | `entry_audit.summary` | — | `ref` + filtros da análise | os KPIs e a conformidade do dashboard |
 | `read` | `entry_audit.daily` | — | idem | divergências por dia × período anterior |
 | `read` | `entry_audit.breakdowns` | — | idem | severidade, tema, fornecedores, TES |
-| `read` | `entry_audit.trend` | — | `branch`, `date_from`, `date_to` | evolução entre análises |
+| `read` | `entry_audit.trend` | — | `branch`, `date_from`, `date_to`, `group` (`month`) | um ponto por análise; `group=month` agrega |
 | `read` | `entry_audit.occurrences` | — | `ref` + filtros + `page` | lista de ocorrências |
 | `read` | `entry_audit.occurrence` | — | `ref` (análise) + `key` | detalhe com por quê, o que fazer, regra e histórico |
 | `read` | `entry_audit.documents` / `entry_audit.unmatched` / `entry_audit.cte` / `entry_audit.tes` | — | `ref` + filtros | as demais abas |
-| `analyze` | `analysis_type=entry_audit_findings` | — | `ref`, filtros, `compare_to` (outra análise, opcional) | achados FACT/RECOMMENDATION agrupados por causa (TES, cadastro, fornecedor), no formato da skill, com direcionamentos e comparação |
+| `analyze` | `analysis_type=entry_audit_findings` | — | `refs[0]` ou `parameters.ref`, filtros, `compare_to` (outra análise, opcional) | achados agrupados pela causa da regra (TES, cadastro, fornecedor, lançamento). A TES entra na frase só quando a ocorrência tem TES |
 | `execute` | `entry_audit.run` | **direto** (D6) | `date_from`, `date_to`, `document_types` (padrão: os da página), `branches` (padrão: todas permitidas) | executa a auditoria; idempotente |
 | `execute` | `entry_audit.rerun` | **direto** | `ref`, `branches` | reexecuta, inclusive só a filial que falhou |
 | `execute` | `entry_audit.resolve` / `entry_audit.reopen` | **direto** | `key`, `kind` (`occurrence`\|`unmatched`) | status compartilhado |

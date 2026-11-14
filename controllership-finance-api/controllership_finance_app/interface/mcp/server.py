@@ -217,7 +217,12 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def analyze(
-        analysis_type: str,
+        analysis_type: Literal[
+            "closing_blockers",
+            "report_comparison",
+            "invoice_posting_backlog",
+            "entry_audit_findings",
+        ],
         period: str | None = None,
         refs: list[str] | None = None,
         filters: dict[str, Any] | None = None,

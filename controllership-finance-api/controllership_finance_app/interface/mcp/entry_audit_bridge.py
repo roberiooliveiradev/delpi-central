@@ -113,12 +113,13 @@ def tool_entry_audit_trend(
     date_from: str,
     date_to: str,
     branch: str | None = None,
+    group: str | None = None,
     page: int | None = None,
     page_size: int | None = None,
 ) -> CallToolResult:
-    """Evolução entre análises do período."""
+    """Evolução entre análises do período. group=month agrega os pontos."""
     del page, page_size
-    return _call(lambda: _service().trend(branch=branch, date_from=_day(date_from), date_to=_day(date_to)))
+    return _call(lambda: _service().trend(branch=branch, date_from=_day(date_from), date_to=_day(date_to), group=group))
 
 
 def tool_entry_audit_occurrences(analysis_id: str, page: int | None = None, page_size: int | None = None, **filters: Any) -> CallToolResult:
@@ -157,11 +158,15 @@ def tool_entry_audit_tes(analysis_id: str, page: int | None = None, page_size: i
 
 
 def _cause(rule_id: str) -> str:
-    if rule_id.startswith("key.supplier") or rule_id == "simples.presumed_wrong_tes":
+    if rule_id.startswith("key.supplier"):
+        return "fornecedor"
+    if rule_id in {"item.origin_mismatch", "item.unusual_cfop_nature"} or rule_id.startswith("simples.presumed"):
         return "cadastro"
-    if rule_id.startswith("key.") or rule_id.startswith("item.cfop") or rule_id.startswith("coherence."):
-        return "cadastro"
-    return "tes"
+    if rule_id.startswith("cte.") or rule_id.startswith("item.cfop") or "credit" in rule_id or rule_id.startswith("coherence."):
+        return "tes"
+    if rule_id.startswith("header.") or rule_id.startswith("key.") or rule_id.startswith("item."):
+        return "lançamento"
+    return "lançamento"
 
 
 def _public_row(row: dict) -> dict:
@@ -212,12 +217,14 @@ def tool_analyze_entry_audit_findings(
         })
         for (rule_id, title, severity, tes), items in sorted(groups.items(), key=lambda item: (-len(item[1]), item[0][0])):
             action = str(items[0].get("action") or items[0].get("what_to_do") or "")
+            cause = _cause(rule_id)
+            tes_text = f" TES {tes}." if tes else ""
             findings.append({
                 "kind": "FACT",
                 "code": rule_id or "entry_audit.occurrence",
-                "cause": _cause(rule_id),
-                "message": f"{len(items)} × {title or rule_id} ({severity}). TES {tes or '—'}.",
-                "value": {"count": len(items), "severity": severity, "rule_id": rule_id, "tes": tes, "sample": [_public_row(row) for row in items[:3]]},
+                "cause": cause,
+                "message": f"{len(items)} × {title or rule_id} ({severity}). Causa {cause}.{tes_text}",
+                "value": {"count": len(items), "severity": severity, "rule_id": rule_id, "tes": tes, "cause": cause, "sample": [_public_row(row) for row in items[:3]]},
             })
             if action:
                 findings.append({

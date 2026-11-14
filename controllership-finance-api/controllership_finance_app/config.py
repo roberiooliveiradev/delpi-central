@@ -166,6 +166,7 @@ class Settings:
         "ENTRY_AUDIT_UNMATCHED_GRACE_DAYS", default="3"
     )
     ENTRY_AUDIT_TOLERANCE: str = _get_env("ENTRY_AUDIT_TOLERANCE", default="0.05")
+    ENTRY_AUDIT_XML_CACHE_DAYS: str = _get_env("ENTRY_AUDIT_XML_CACHE_DAYS", default="90")
 
 
 settings = Settings()

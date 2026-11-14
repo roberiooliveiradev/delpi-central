@@ -487,7 +487,7 @@ READ_ACTIONS: dict[tuple[str, str], dict] = {
     ("entry_audit", "trend"): _read_spec(
         ea_bridge.tool_entry_audit_trend,
         required=("date_from", "date_to"),
-        allowed=("branch", "page", "page_size"),
+        allowed=("branch", "group", "page", "page_size"),
     ),
     ("entry_audit", "occurrences"): _read_spec(
         ea_bridge.tool_entry_audit_occurrences,
@@ -504,7 +504,7 @@ READ_ACTIONS: dict[tuple[str, str], dict] = {
         ea_bridge.tool_entry_audit_documents,
         ref_param="analysis_id",
         required=("analysis_id",),
-        allowed=("branch", "severity", "theme", "supplier", "tes", "document_type", "day", "status", "q", "page", "page_size"),
+        allowed=("branch", "severity", "theme", "supplier", "tes", "document_type", "day", "status", "situation", "q", "page", "page_size"),
     ),
     ("entry_audit", "unmatched"): _read_spec(
         ea_bridge.tool_entry_audit_unmatched,
@@ -1097,6 +1097,8 @@ def tool_analyze(
     if not _gate_allowed(identity, spec.get("gate", "access")):
         return _deny_catalog(entity, action, identity=identity)
     params = dict(parameters or {}) | dict(filters or {})
+    if refs and not params.get("ref") and not params.get("analysis_id"):
+        params["ref"] = refs[0]
     if period is not None:
         params["period"] = period
     bad = _validate_params(spec, _clean(params), where=atype)

@@ -13,7 +13,7 @@ SHEETS = [
     ("Comparativo", ["Situação", "NF", "Série", "Fornecedor (XML)", "ICMS Protheus", "IPI Protheus", "Total Protheus", "Ocorrências", "Chave de Acesso"]),
     ("Só no XML", ["Situação", "NF", "Série", "Emitente", "CNPJ", "UF", "Natureza", "CFOP", "CST", "Emissão", "Valor", "Base", "ICMS", "IPI", "Motivo / leitura", "Chave de Acesso"]),
     ("Só no SF1", ["Situação", "NF", "Série", "Fornecedor", "CNPJ", "UF", "Emissão", "Valor", "Base", "ICMS", "IPI", "Motivo / leitura", "Chave NF-e"]),
-    ("CT-e Comparativo", ["Situação", "CT-e", "Chave de Acesso", "Valor Protheus", "ICMS Protheus"]),
+    ("CT-e Comparativo", ["Situação", "CT-e", "Série", "Transportadora", "UF", "Tomador", "CFOP CT-e", "TES", "CST XML", "Base XML", "ICMS XML", "Valor Protheus", "Chave de Acesso", "Notas vinculadas"]),
     ("Itens Divergências", ["Severidade", "Ocorrência", "NF", "Item SD1", "Campo", "Valor Protheus", "Valor XML", "TES", "Chave de Acesso"]),
     ("Itens Excluídos", ["Tipo de documento", "Documento", "Série", "Fornecedor", "Loja", "Itens", "Valor"]),
 ]
@@ -66,7 +66,12 @@ def build_workbook(payload: dict) -> bytes:
             ])
     for row in payload["ctes"]:
         comparison = row.get("comparison") or {}
-        rows["CT-e Comparativo"].append(["", row.get("document_number"), row.get("access_key"), comparison.get("gross"), comparison.get("icms")])
+        rows["CT-e Comparativo"].append([
+            "", row.get("document_number"), "", comparison.get("issuer_name"), comparison.get("issuer_state"),
+            comparison.get("taker_role"), comparison.get("cfop"), comparison.get("tes"), comparison.get("cst"),
+            comparison.get("icms_base"), comparison.get("icms"), comparison.get("gross"), row.get("access_key"),
+            comparison.get("linked_documents"),
+        ])
     return _package(rows)
 
 

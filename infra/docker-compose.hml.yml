@@ -232,6 +232,13 @@ services:
       DB_USER: hml_disabled
       DB_PASSWORD: hml_disabled
       DB_DATABASE: DISABLED
+      # Leitura da auditoria de entradas. Não altera DB_HOST: as rotas de
+      # escrita continuam no host desabilitado. Vazio = sem prova HML.
+      ENTRY_AUDIT_DB_HOST: ${TOTVS_DB_HOST:-}
+      ENTRY_AUDIT_DB_PORT: ${TOTVS_DB_PORT:-1433}
+      ENTRY_AUDIT_DB_DATABASE: ${TOTVS_DB_DATABASE:-}
+      ENTRY_AUDIT_DB_USER: ${TOTVS_DB_USER:-}
+      ENTRY_AUDIT_DB_PASSWORD: ${TOTVS_DB_PASSWORD:-}
       PORTAL_RH_API_URL: ""
       PORTAL_RH_API_SERVICE_TOKEN: ""
       PORTAL_RH_DB_HOST: ""

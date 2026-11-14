@@ -779,7 +779,9 @@ def test_registry_marks_draft_caps_direct():
         assert not table[cap].get("direct"), cap
 
 
-def test_registry_direct_count_is_thirteen():
+def test_registry_direct_count_matches_the_catalog():
     table = ClaraGovernedWrites()._capability_table()
-    direct = [c for c, s in table.items() if s.get("direct")]
-    assert len(direct) == 13
+    direct = sorted(c for c, s in table.items() if s.get("direct"))
+    assert "checklist.draft_create" in direct
+    assert "checklist.draft_update" in direct
+    assert len(direct) == 15

@@ -104,6 +104,49 @@ def test_analysis_read_accepts_ref_and_returns_the_run(monkeypatch):
     assert seen["analysis_id"] == analysis_id
 
 
+def test_analyze_accepts_refs_and_parameters_ref(monkeypatch):
+    monkeypatch.setattr(settings, "ENTRY_AUDIT_ENABLED", True)
+    seen: dict = {}
+
+    def _handler(**kwargs):
+        seen.update(kwargs)
+        from controllership_finance_app.interface.mcp.tool_bridge import _ok
+        return _ok({"analysis_id": kwargs.get("ref"), "findings": []})
+
+    monkeypatch.setitem(sb.ANALYZE_ACTIONS, "entry_audit_findings", {**sb.ANALYZE_ACTIONS["entry_audit_findings"], "handler": _handler})
+    monkeypatch.setattr(sb, "_user_and_access", lambda: (None, {}))
+    monkeypatch.setattr(sb, "_identity_snapshot", lambda _user: {"has_cf_access": True})
+    schema = sb._schema_for("entry_audit", "entry_audit_findings")
+    assert "compare_to" in schema["optional_params"]
+    assert "entry_audit_findings" in sb.analysis_types()
+    analysis_id = "11111111-1111-4111-8111-111111111111"
+    by_refs = sb.tool_analyze("entry_audit_findings", refs=[analysis_id])
+    assert by_refs.is_error is False
+    assert seen["ref"] == analysis_id
+    by_parameters = sb.tool_analyze("entry_audit_findings", parameters={"ref": analysis_id, "compare_to": analysis_id})
+    assert by_parameters.is_error is False
+    assert seen["compare_to"] == analysis_id
+    documents = sb._schema_for("entry_audit", "documents")
+    assert "situation" in documents["optional_params"]
+
+
+def test_published_analyze_schema_lists_entry_audit_findings():
+    import asyncio
+
+    from controllership_finance_app.interface.mcp.server import create_mcp_server
+
+    mcp = create_mcp_server()
+    tools = asyncio.new_event_loop().run_until_complete(mcp.list_tools())
+    analyze = next(tool for tool in tools if tool.name == "analyze")
+    dumped = analyze.model_dump(by_alias=True)
+    schema = dumped.get("inputSchema") or dumped.get("input_schema")
+    enum = schema["properties"]["analysis_type"].get("enum")
+    assert "entry_audit_findings" in enum
+    assert set(enum) == set(sb.analysis_types())
+    assert "compare_to" in (analyze.description or "")
+    assert "refs" in schema["properties"]
+
+
 def test_schema_is_callable_for_each_entry(monkeypatch):
     monkeypatch.setattr(settings, "ENTRY_AUDIT_ENABLED", True)
     for action in READS:
@@ -199,7 +242,9 @@ def test_fichas_cover_engine_rules_and_open_questions():
     rule_ids = set(re.findall(r'"(?:header|item|cte|key|simples|coherence|fiscal_book)\.[a-z0-9_]+"', ENGINE.read_text()))
     missing = {rule_id.strip('"') for rule_id in rule_ids if rule_id.strip('"') not in text}
     assert not missing, missing
-    for marker in ("TO_INVENTORY (P2)", "TO_INVENTORY (P4)", "TO_INVENTORY (P5)", "TO_INVENTORY (P7)"):
+    assert "Equipe fiscal/contábil (aciona as outras áreas)" in text
+    assert "TO_INVENTORY (P2)" not in text
+    for marker in ("TO_INVENTORY (P4)", "TO_INVENTORY (P5)", "TO_INVENTORY (P7)"):
         assert marker in text
     assert not (FICHAS / "AE-15.md").exists()
     from controllership_finance_app.application.clara.corpus_manifest import AUTHORIZED_SOURCES

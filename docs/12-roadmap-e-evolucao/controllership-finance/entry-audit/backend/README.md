@@ -70,21 +70,22 @@ Prefixo `/entry-audit`. Todas exigem `controllership-finance.access` (D4). A uni
 
 | Método e rota | Alimenta |
 |---|---|
-| `GET /entry-audit/analyses/{id}/summary` | os 4 KPIs, comparação com o período anterior de mesmo tamanho, conformidade (sem divergência, com divergência, sem par a resolver, sem par explicadas) |
-| `GET /entry-audit/analyses/{id}/daily` | notas com divergência por dia, do período e do período anterior |
+| `GET /entry-audit/analyses/{id}/summary` | KPIs (notas, ocorrências, altas, resolvidas, `gross_checked`, `high_difference`), comparação com o período anterior de mesmo tamanho, conformidade. `posted_outside_period` traz `count` e `by_date` (`[{date, count}]`) |
+| `GET /entry-audit/analyses/{id}/daily` | notas com divergência por dia, do período e do período anterior (`previous` usa a análise anterior do mesmo tamanho) |
 | `GET /entry-audit/analyses/{id}/breakdowns` | por severidade, por tema, top fornecedores (com % das notas com divergência) e TES com mais ocorrências |
 | `GET /entry-audit/analyses/{id}/facets` | listas para os selects de filtro (fornecedores, temas, TES, severidades) com contagem |
-| `GET /entry-audit/trend` | evolução entre análises: pendentes e altas por mês, filtros `branch`, `date_from`, `date_to` |
+| `GET /entry-audit/trend` | um ponto por análise (`date_from`, `date_to`, `branches`, `documents`, `occurrences`, `high`, `pending`, `resolved`). `group=month` agrega |
 
 **Tabelas, detalhe e ações**
 
 | Método e rota | Uso |
 |---|---|
 | `GET /entry-audit/analyses/{id}/occurrences` | aba Ocorrências; paginação e ordenação |
-| `GET /entry-audit/analyses/{id}/occurrences/{key}` | detalhe: valores, por quê, o que fazer, regra citada, chave e links de DANFE/DACTE/XML, histórico de status |
-| `GET /entry-audit/analyses/{id}/documents` | aba Notas casadas |
-| `GET /entry-audit/analyses/{id}/unmatched` | aba Notas sem par |
-| `GET /entry-audit/analyses/{id}/cte` | aba CT-e |
+| `GET /entry-audit/analyses/{id}/occurrences/{key}` | detalhe: `field`/`field_label` (origem = `origin` / «CST (origem)», sem mudar a chave estável), `supplier_name`, `series`, `tes`, `difference`, por quê diferente da ação, regra citada, links e histórico (eventos de resolver/reabrir) |
+| `GET /entry-audit/analyses/{id}/documents` | aba Notas casadas; filtro `situation` (`clean`, `divergent` ou o valor gravado) |
+| `GET /entry-audit/analyses/{id}/unmatched` | aba Notas sem par; `nature` vem do `natOp` do XML |
+| `GET /entry-audit/xml/{access_key}` | XML pela chave, credencial de serviço; query `branch` e `document_type`. DANFE/DACTE só quando a nota tem pedido no LNF |
+| `GET /entry-audit/analyses/{id}/cte` | aba CT-e: emitente, tomador, notas vinculadas, CFOP, CST, base, ICMS e TES |
 | `GET /entry-audit/analyses/{id}/tes` | aba TES usadas |
 | `POST /entry-audit/occurrences/{key}/resolve` · `/reopen` | status compartilhado (quem e quando) |
 | `POST /entry-audit/unmatched/{key}/resolve` · `/reopen` | idem para notas sem par |

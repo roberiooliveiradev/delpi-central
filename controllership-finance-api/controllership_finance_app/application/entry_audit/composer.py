@@ -38,4 +38,5 @@ def build_entry_audit_service() -> EntryAuditService:
         InvoicePostingLookup(),
         audit_config(),
         lookback_days=int(settings.ENTRY_AUDIT_XML_LOOKBACK_DAYS),
+        cache_days=int(settings.ENTRY_AUDIT_XML_CACHE_DAYS),
     )

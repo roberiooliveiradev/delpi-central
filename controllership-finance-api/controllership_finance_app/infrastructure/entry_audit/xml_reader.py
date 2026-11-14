@@ -201,6 +201,7 @@ def _nfe(root: ET.Element) -> XmlDocument | None:
         total_amount=_num(root, _NFE, ".//ICMSTot/vNF"),
         status_code=_text(root, _NFE, ".//protNFe/infProt/cStat"),
         items=tuple(items),
+        operation_nature=_text(root, _NFE, ".//ide/natOp"),
     )
 
 
@@ -278,6 +279,7 @@ def _cte(root: ET.Element) -> XmlDocument | None:
         substituted=group == "ICMS60",
         linked_keys=linked,
         taker_role=role or ("outros" if taker_tax_id else ""),
+        operation_nature=_text(root, _CTE, ".//ide/natOp"),
     )
 
 

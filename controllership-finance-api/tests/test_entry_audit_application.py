@@ -266,8 +266,9 @@ def test_xml_posted_outside_the_period_is_not_unmatched():
     summary = service.summary(created["id"], {})
     outside = summary["conformity"]["posted_outside_period"]
     assert outside["count"] == 2
-    assert "2026-11-02" in outside["received_dates"]
-    assert "2026-11-01" in outside["received_dates"]
+    by_date = {row["date"]: row["count"] for row in outside["by_date"]}
+    assert by_date["2026-11-02"] == 1
+    assert by_date["2026-11-01"] == 1
     assert summary["kpis"]["documents"] == 0
 
 
@@ -618,3 +619,48 @@ def test_every_contract_route_covers_success_denial_and_missing_records():
     assert unmatched_reopened.status_code == 200
     rerun = client.post(f"/entry-audit/analyses/{analysis_id}/rerun", json={})
     assert rerun.status_code == 202
+
+
+def test_origin_field_keeps_the_stable_key_and_the_reading_differs_from_the_action():
+    from controllership_finance_app.application.entry_audit.vocabulary import field_label, stable_occurrence_key, stored_field
+    from controllership_finance_app.domain.entry_audit.engine import _occurrence
+
+    assert stored_field("CST (origem)") == "origin"
+    key = stable_occurrence_key(branch="01", access_key="1" * 44, rule_id="item.origin_mismatch", field="CST (origem)", item="1")
+    assert "CST (origem)" in key
+    assert field_label("field", key) == "CST (origem)"
+    discount = _occurrence({
+        "rule_id": "header.accessory_field", "title": "Desconto classificado diferente", "severity": "Baixa",
+        "number": "1", "item": "", "field": "Desconto", "protheus_value": "0", "xml_value": "1",
+        "access_key": "", "action": "Total confere.",
+    })
+    total = _occurrence({
+        "rule_id": "header.total_mismatch", "title": "Valor total da nota diverge", "severity": "Alta",
+        "number": "1", "item": "", "field": "Vlr Total", "protheus_value": "1", "xml_value": "2",
+        "access_key": "", "action": "Total escriturado diferente do vNF: afeta contas a pagar e SPED.",
+    })
+    assert discount.why != discount.action
+    assert total.why != total.action
+
+
+def test_authorized_xml_is_reused_and_a_cancellation_is_not():
+    xml = Xml()
+    key = access_key("55", 100)
+    xml.by_key[key] = _nfe(100, key, issued="2026-10-23T10:00:00-03:00")
+    calls = {"n": 0}
+    original = xml.download_by_key
+
+    def _count(**kwargs):
+        calls["n"] += 1
+        return original(**kwargs)
+
+    xml.download_by_key = _count
+    service = _service(xml=xml)
+    created = service.create(date_from=WHEN, date_to=WHEN, document_types=["nfe"], branches=["01"], user_id="u", user_name="Ana", via="user")
+    service.claim_and_execute()
+    service.rerun(created["id"], ["01"], user_id="u", user_name="Ana")
+    service.claim_and_execute()
+    assert calls["n"] == 1
+    cancelled = b'<evento><infEvento><tpEvento>110111</tpEvento><chNFe>' + key.encode() + b'</chNFe></infEvento></evento>'
+    service._remember_xml(key, cancelled, "nfe")
+    assert service._cached_xml(key) is None
