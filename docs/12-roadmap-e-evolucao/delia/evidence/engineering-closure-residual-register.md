@@ -1776,3 +1776,14 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT2-MODEL-FABRICATED-ANCHOR | OPEN_LOW | Modelo pode declarar token não-vivo (`processo_competencia_snapshot`) → UNSATISFIED honesto; mitigado por observed_invocation_vocabulary |
 
 **NEXT=`COORDINATION_C3_T2_INT2_FINAL_FUNCTIONAL_ACCEPTANCE_REVIEW`**
+
+### Transversal completeness — 2026-11-13 (Doc 331)
+
+| Residual | Status | Evidence / disposition |
+|---|---|---|
+| INT2-UNKNOWN-COMPLETENESS | **REMEDIATED** | prova positiva exigida: total≤delivered, is_complete:true, ou união multipágina verificada |
+| INT2-MULTIPAGE-COVERAGE | **REMEDIATED** | `_joint_collection_coverage` — identidade+total+continuidade; gap/dup/divergent → INCONCLUSIVE |
+| INT2-MODEL-DECLARATION-LOOPS | OPEN_LOW | modelo 14B redeclara dotted em alguns cenários (A/G) — outcome sempre honesto |
+| INT2-ENUM-NONCOLLECTION | DOCUMENTED | evidência sem coleção não demonstra enumeração (por contrato) |
+
+**NEXT=`COORDINATION_INT2_TRANSVERSAL_COMPLETENESS_INDEPENDENT_REVIEW`**

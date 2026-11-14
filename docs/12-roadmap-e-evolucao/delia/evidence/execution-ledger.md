@@ -6786,3 +6786,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **GATES:** FALSE_SATISFIED=0 e FALSE_COMPLETE=0 em todas as runs; agregação real demonstrada em 3 formulações independentes; enumeração parcial honestamente INCONCLUSIVE.
 - **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — **não aceite**; `INT2_ACCEPTED=NO`, `PRODUCTION_DEPLOY/PHASE_ADVANCEMENT/INT3/T3=NOT_AUTHORIZED`. Doc 330.
 - **NEXT:** `COORDINATION_C3_T2_INT2_FINAL_FUNCTIONAL_ACCEPTANCE_REVIEW`.
+
+### INT-2 — transversal completeness & finalization path closure (Doc 331; 2026-11-13)
+
+- **TASK:** `DELIA-C3-T2-TRANSVERSAL-COMPLETENESS-AND-FINALIZATION-PATH-CLOSURE-01`; BASE `2520193653`. REWORK — completude desconhecida + auditoria transversal.
+- **WS-3 fix:** `UNKNOWN_COMPLETENESS→INCONCLUSIVE` — `_attempt_collection_proven_complete` prova positiva (flags>totals>is_complete marker); coleção sem marcadores e evidência sem coleção não demonstram enumeração.
+- **WS-4 multipágina:** `_joint_collection_coverage` — união de páginas ancoradas (mesmo âncora+identidade+total) deduplicada por fingerprint; união==total demonstra; gap/dup/divergent-total → INCONCLUSIVE; aritmética bruta rejeitada.
+- **WS-1/2 audit:** inventário completo — funil único `_evaluate_material_obligations` para obrigações (P1/P3/P4/P5); `handle_interactive_turn` (P2) sem obrigações tipadas usa gates equivalentes canônicos (`investigation_partial_coverage`); HTTP/streaming só renderiza. `ARE_ALL_RELEVANT_COMPLETENESS_PATHS_GOVERNED=YES`.
+- **TESTES:** f03 reescrito +8 TC (marker, non-collection, multipage×4); suíte completa verde; 1 regressão transitória interna (precedência flags>totals) corrigida na iteração.
+- **REAL EVAL:** `or-qwen14b-e388ea7043fa` 12 cenários — B/E2 agregação SATISFIED por âncoras distintas (`search`,`processes`); A2 enum completa 2×SATISFIED; C2/D SATISFIED; D2/F/E honestos; FALSE_SATISFIED=0, FALSE_COMPLETE=0.
+- **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — não aceite; `INT2_ACCEPTED=NO`; `PRODUCTION_DEPLOY/PHASE_ADVANCEMENT/INT3/T3=NOT_AUTHORIZED`. Doc 331.
+- **NEXT:** `COORDINATION_INT2_TRANSVERSAL_COMPLETENESS_INDEPENDENT_REVIEW`.

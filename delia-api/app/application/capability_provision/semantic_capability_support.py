@@ -2849,6 +2849,57 @@ def _attempt_collection_partially_retrieved(
     return False
 
 
+def _attempt_collection_proven_complete(
+    attempt: GovernedCapabilityAttempt,
+) -> bool:
+    """Positive proof the bound collection covers its declared scope.
+
+    UNKNOWN_COMPLETENESS != PROVEN_COMPLETE: a collection is
+    demonstrably complete only when the owner declares it — a
+    numeric ``total``/``total_count``/``count`` at or below the
+    delivered size, or an explicit ``is_complete`` marker with no
+    truncation flag. The absence of incompleteness indicators is not
+    evidence of completeness: an unmarked collection stays
+    unverifiable (INCONCLUSIVE), and non-collection evidence cannot
+    demonstrate an enumeration at all.
+    """
+    outcome = attempt.outcome
+    if outcome is None:
+        return False
+    structured = outcome.structured
+    if not isinstance(structured, Mapping):
+        return False
+    inner = structured.get("data")
+    nodes = [
+        node
+        for node in (structured, inner)
+        if isinstance(node, Mapping)
+    ]
+    data = inner if isinstance(inner, Mapping) else structured
+    collections = [
+        data[key]
+        for key in _ABSENCE_COLLECTION_KEYS
+        if isinstance(data.get(key), (list, tuple))
+    ]
+    if not collections:
+        return False
+    for node in nodes:
+        if node.get("is_complete") is False:
+            return False
+        if node.get("truncated") is True:
+            return False
+    delivered = max(len(entry) for entry in collections)
+    totals = [
+        data[key]
+        for key in _ABSENCE_TOTAL_KEYS
+        if isinstance(data.get(key), (int, float))
+        and not isinstance(data.get(key), bool)
+    ]
+    if totals:
+        return delivered >= max(totals)
+    return any(node.get("is_complete") is True for node in nodes)
+
+
 def _attempt_declares_aggregate_metric(
     attempt: GovernedCapabilityAttempt,
 ) -> bool:
@@ -2966,8 +3017,11 @@ def _attempt_demonstrates_anchored(
         )
     if _is_business_evidence_attempt(attempt):
         if delivery == "enumeration" and (
-            _attempt_collection_partially_retrieved(attempt)
+            not _attempt_collection_proven_complete(attempt)
         ):
+            # Pertinent but unproven coverage — partial windows and
+            # unknown-completeness collections alike stay bound, never
+            # demonstrated (UNKNOWN_COMPLETENESS != PROVEN_COMPLETE).
             return False
         if delivery == "aggregation" and (
             not _attempt_declares_aggregate_metric(attempt)
@@ -3101,6 +3155,76 @@ def _attempt_binds_obligation(
     return False
 
 
+def _joint_collection_coverage(
+    obligation: MaterialObligation,
+    business: tuple[GovernedCapabilityAttempt, ...],
+) -> bool:
+    """Anchored pages of the same scope jointly covering the owner
+    total — bounded multipage completeness (WS-4).
+
+    All contributing attempts must (a) succeed with complete
+    provenance and outcome, (b) echo the declared anchor, (c) share
+    the identical queried-identity scope, and (d) declare the SAME
+    numeric total. Distinct delivered items are fingerprinted by
+    canonical content; the union must equal or exceed that total —
+    a union larger than the declared total proves the pages were not
+    one set (different scope/dupes masked) and demonstrates nothing.
+    Raw page-count arithmetic (``40+40+29``) is never accepted.
+    """
+    import json as _json
+
+    source = obligation.evidence_source.casefold()
+    candidates: list[GovernedCapabilityAttempt] = []
+    identities: set[tuple] = set()
+    totals: set[float] = set()
+    for attempt in business:
+        if attempt.status is not GovernedCapabilityStatus.SUCCESS:
+            continue
+        prov = attempt.provenance
+        if prov is None or not prov.is_complete:
+            continue
+        outcome = attempt.outcome
+        if outcome is None or not outcome.is_complete:
+            continue
+        if source not in _attempt_anchor_tokens(attempt):
+            continue
+        structured = outcome.structured
+        if not isinstance(structured, Mapping):
+            continue
+        inner = structured.get("data")
+        data = inner if isinstance(inner, Mapping) else structured
+        data_total = [
+            data[key]
+            for key in _ABSENCE_TOTAL_KEYS
+            if isinstance(data.get(key), (int, float))
+            and not isinstance(data.get(key), bool)
+        ]
+        if not data_total:
+            continue
+        candidates.append((attempt, data))
+        identities.add(tuple(prov.invocation_identity or ()))
+        totals.add(max(data_total))
+    if len(candidates) < 2 or len(identities) > 1 or len(totals) > 1:
+        return False
+    total = totals.pop()
+    seen: set[str] = set()
+    for _, data in candidates:
+        for key in _ABSENCE_COLLECTION_KEYS:
+            items = data.get(key)
+            if not isinstance(items, (list, tuple)):
+                continue
+            for item in items:
+                try:
+                    seen.add(
+                        _json.dumps(
+                            item, sort_keys=True, default=str
+                        )
+                    )
+                except (TypeError, ValueError):
+                    continue
+    return bool(seen) and len(seen) == int(total)
+
+
 def _evaluate_material_obligations(
     *,
     obligations: tuple[MaterialObligation, ...] | tuple[str, ...],
@@ -3135,6 +3259,20 @@ def _evaluate_material_obligations(
             used.add(index)
             break
         if matched is not None:
+            results.append(
+                (obligation.description, OBLIGATION_SATISFIED)
+            )
+            continue
+        if (
+            delivery == "enumeration"
+            and obligation.evidence_source is not None
+            and _joint_collection_coverage(
+                obligation, business
+            )
+        ):
+            # Multi-page acquisition: no single window proved complete,
+            # but anchored pages of the same scope jointly cover the
+            # owner-declared total — continuity + set identity proven.
             results.append(
                 (obligation.description, OBLIGATION_SATISFIED)
             )

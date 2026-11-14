@@ -105,10 +105,10 @@ def test_f02_enumeration_owner_declared_truncated():
     assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
 
 
-def test_f03_enumeration_unmarked_collection_stays_verified():
-    """No declared total/incompleteness markers → nothing disproves
-    completeness; the anchored evidence remains demonstrable (only
-    PROVEN partial retrieval demotes)."""
+def test_f03_enumeration_unknown_completeness_not_demonstrated():
+    """UNKNOWN_COMPLETENESS != PROVEN_COMPLETE — an unmarked collection
+    (no total, no is_complete, no truncation flag) cannot demonstrate
+    an enumeration: pertinent but unverifiable coverage → INCONCLUSIVE."""
     obligation = _ob("list of processes", source="process")
     attempt = _attempt(
         entity="process",
@@ -122,7 +122,120 @@ def test_f03_enumeration_unmarked_collection_stays_verified():
     coverage = _coverage(
         (obligation,), (attempt,), delivery="enumeration"
     )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
+
+
+def test_tc04_enumeration_explicit_complete_marker_demonstrates():
+    """AC-TC-04 — the owner's explicit ``is_complete`` marker is a
+    legitimate completeness proof without a numeric total."""
+    obligation = _ob("list of processes", source="process")
+    attempt = _attempt(
+        entity="process",
+        vocabulary=("process", "search"),
+        structured={
+            "entity": "process",
+            "shape": "paged_list",
+            "data": {
+                "items": [{"code": "PROC-0001"}, {"code": "PROC-0002"}],
+                "is_complete": True,
+                "truncated": False,
+            },
+        },
+    )
+    coverage = _coverage(
+        (obligation,), (attempt,), delivery="enumeration"
+    )
     assert coverage[obligation.description] == OBLIGATION_SATISFIED
+
+
+def test_tc_enumeration_non_collection_evidence_not_demonstrated():
+    """A bare record carries no collection — nothing enumerable can be
+    proven complete from it."""
+    obligation = _ob("list of processes", source="process")
+    attempt = _attempt(
+        entity="process",
+        vocabulary=("process", "detail"),
+        structured={
+            "entity": "process",
+            "shape": "record",
+            "data": {"code": "PROC-0001", "name": "Avaliações"},
+        },
+    )
+    coverage = _coverage(
+        (obligation,), (attempt,), delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
+
+
+# -------------------------------------------------------------------
+# AC-TC-05/06/07 — multipage coverage
+# -------------------------------------------------------------------
+
+
+def _page(*, start: int, count: int, total: int):
+    return _attempt(
+        entity="process",
+        vocabulary=("process", "search"),
+        items=[
+            {"code": f"PROC-{i:04d}"} for i in range(start, start + count)
+        ],
+        total=total,
+    )
+
+
+def test_tc05_multipage_union_covers_total():
+    """40+40+29 distinct pages of the same scope covering the declared
+    total — set continuity + identity proven → SATISFIED."""
+    obligation = _ob("list of processes", source="process")
+    pages = (
+        _page(start=0, count=40, total=109),
+        _page(start=40, count=40, total=109),
+        _page(start=80, count=29, total=109),
+    )
+    coverage = _coverage(
+        (obligation,), pages, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_SATISFIED
+
+
+def test_tc06_multipage_gap_not_demonstrated():
+    """A missing page (60 distinct of 109) cannot fabricate coverage."""
+    obligation = _ob("list of processes", source="process")
+    pages = (
+        _page(start=0, count=40, total=109),
+        _page(start=80, count=20, total=109),
+    )
+    coverage = _coverage(
+        (obligation,), pages, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
+
+
+def test_tc07_multipage_duplicates_not_demonstrated():
+    """40+40+29 with overlapping records — raw arithmetic != coverage."""
+    obligation = _ob("list of processes", source="process")
+    pages = (
+        _page(start=0, count=40, total=109),
+        _page(start=0, count=40, total=109),  # same records again
+        _page(start=80, count=29, total=109),
+    )
+    coverage = _coverage(
+        (obligation,), pages, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
+
+
+def test_tc08_multipage_divergent_totals_not_demonstrated():
+    """Pages declaring different totals are not provably one set."""
+    obligation = _ob("list of processes", source="process")
+    pages = (
+        _page(start=0, count=60, total=109),
+        _page(start=60, count=49, total=200),
+    )
+    coverage = _coverage(
+        (obligation,), pages, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
 
 
 # -------------------------------------------------------------------
