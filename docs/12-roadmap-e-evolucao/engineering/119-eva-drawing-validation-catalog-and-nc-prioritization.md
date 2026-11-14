@@ -3891,3 +3891,13 @@ preexistente/ambient `test_pi_with_children_flattened_as_parent_block`
 (exige `10110676` IDENTIFIED, mas `AG|16` é o controle negativo
 fail-closed UNKNOWN por contrato — não relacionada ao diff).
 WIP alheio (delia-api/contracts.py) preservado.
+
+**§87 deploy (2026-11-13):** imagem anterior `e3fc852e…` → nova
+`e17ea1dc1f…` (SHA `e4d66bb219`), só `engineering-api`.
+Health: container `healthy`, interno `/health` 200, gateway 200.
+Verificado no binário prod: catálogo v1.4 servido,
+`knowledge_topics()` inclui `product.drawing_bom_comparison`,
+`10090316/17` e `10090926` → PASS. Pendente do lado do cliente:
+refresh do schema do conector ChatGPT (etapa externa — o servidor
+publica o enum correto; `CLIENT_SCHEMA_REFRESH=PENDING`).
+Rollback: imagem `e3fc852e…` preservada localmente no host.
