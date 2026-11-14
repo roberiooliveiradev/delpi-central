@@ -523,3 +523,18 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 - **Testes de aceite:** matriz §9 da missão + AuthZ por objeto + isolamento de falha da fonte PRC + regressão LMP.
 
 **Decisão solicitada à Coordination:** ratificar Opção A (substituir as duas fontes Requests API por fontes PRC in-process) ou escolher alternativa documentada. Após ratificação, implementação, testes, PR governado e homologação HML seguem o pacote §5–§11 da missão.
+
+
+## 32. Coordination — ratificação da Opção A Home × PRC nativo (13/11/2026)
+
+**TASK_ID:** `ENG-HOME-PRC-NATIVE-INTEGRATION-IMPLEMENTATION-01`. Após revisão do pacote §31 (commit `40944e59e4964eb574c1c5245b7b0e2eea0a4a2a`), a Coordination **RATIFICA a Opção A**, com as restrições e critérios abaixo. Estado de decisão: `ARCHITECTURE_DECISION_APPROVED`; código e HML ainda **PENDING** até execução e testes.
+
+**Contrato aprovado:** `tasks` da Home usam os casos PRC da fila de atendimento do analista, por `ProductRegistrationService.list_requests` com `global_scope` autorizado pelo serviço (sem converter usuário comum em analista); `requests` usam casos PRC do próprio solicitante, no escopo `mine` imposto server-side. Adapter `HomeSectionSource` in-process; sem HTTP self-call nem consulta SQL direta pelo composer. O serviço PRC e as políticas Core/Keycloak continuam donos da autorização, inclusive object AuthZ. `HomeItem.id` usa `requestId` real, com `SourceRef.system=engineering-api`, totais pré-paginação, navegação pela rota oficial comprovada de detalhe PRC; LMPs e fail-isolation preservados.
+
+**Decisão explícita sobre legado:** fontes Requests API (`/mine`, `/work-queue` com `type_code=raw-material-creation`) **deixam de alimentar `tasks`/`requests` da Home**. Seus registros legítimos continuam sob domínio Requests API e visíveis nas superfícies corporativas do My Requests autorizadas. Nenhuma migração, delete, espelho, correspondência inferida ou nova source of truth. Garantir que o frontend de My Requests mantém a listagem PRC nativa existente; não confundir com a Home.
+
+**Critérios vinculantes:** provar semântica de `global_scope` e `mine` com perfis distintos; se um usuário é ao mesmo tempo solicitante/analista, repetir `requestId` em seções distintas pode ser legítimo e **não** caracteriza caso duplicado persistido. Verificar recorte de tasks por direito de atendimento, se o serviço retornar mais que fila acionável; não expandir direitos de leitura/atuação. Provar total antes da paginação, ordenação, estado/ações, links oficiais e isolamento de falhas; 401/403 e object AuthZ; regressão LMP e não-regressão My Requests. Se o contrato de fila atual não cumprir isso, registrar divergência e pedir decisão antes de contornar autorização.
+
+**Limite de autorização:** implementação mínima, PR governado e deploy/testes **somente DEV/HML**. Não liberar PRD, writes TOTVS, novo BC, alteração de owner, alteração de produto oficial, publicação de revisão ou migração de legados. Correções de bugs circunscritos ao contrato aprovado podem ser propostas; qualquer mudança material de contrato/authority volta à Coordination. Testar no SHA efetivo, registrar evidências de runtime sem tokens.
+
+**Próximo gate:** `DEVIN_IMPLEMENTATION_AND_HML_VALIDATION`; entregar PR, diff e testes. Não chamar decisão aprovada de implementação PASS.
