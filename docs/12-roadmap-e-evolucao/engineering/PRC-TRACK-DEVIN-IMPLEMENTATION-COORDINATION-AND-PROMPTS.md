@@ -720,3 +720,30 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Sinalizadores:** PO também sinalizou que o bloco `Campos sinalizados (1)` poderia ser melhor representado, mas explicitou **prioridade nesta iteração: filtros Status/Tipo em botões e input de busca**. Não reimplementar lifecycle das bandeiras nem ampliar escopo; apenas preservar o painel `PrcFlagsOpsPanel compact` e registrar a melhoria visual como backlog separado `FLAGS_HERO_UX_FOLLOW_UP`.
 
 **Critérios HML:** ao entrar pela Home em `?view=pending`, botão `Pendentes` selecionado e `Todos` não selecionado; 5 itens se dataset HML continuar igual (número deve ser dinâmico), seletor Status individual exibe apenas aquele estado, `Todos` repõe universo autorizado, Tipo filtra junto, busca tem debounce/URL, `Limpar filtros` remove filtros ativos, contagens coerentes antes da paginação, browser back/forward, refresh, mobile e acessibilidade. Frontend visual testado em navegador; HML deploy somente após testes; PO dá aceite visual depois. **Branch `main`, não criar branch. PRD NÃO autorizado.**
+
+## 42. Hero da fila PRC — filtros por botões de seleção (§41 PO) — implementação, HML e E2E (14/11/2026)
+
+**TASK:** `EVA-PRC-QUEUE-HERO-FILTER-BUTTONS-HML-01`. Frontend exclusivo; **PRD não autorizado.**
+
+**Causa raiz (CONFIRMADO_NO_CODIGO):** o hero usava `EngineeringFilterSelect` com `value={applied.status}` — quando a URL trazia `view=pending`, `status=""` exibia "Todos os status" enquanto o backend filtrava pendências. Estado simultâneo enganoso reportado pelo PO em §41.
+
+**Implementação (menor diff, design system):**
+- `PrcQueuePage.tsx`: selects de Status/Tipo substituídos por `EngineeringSegmentToggle` (componente canônico `role="group"` + `aria-pressed`, já usado na página) dentro de `engineering-filter-box delpi-ui-filter-box` com `engineering-field__label` visível — mesma anatomia do kit de filtros. Status = 9 opções (`Pendentes`, `Todos`, 7 status oficiais) com `--wide`; Tipo = `Todos`/`Criação`/`Alteração` compacto (`widthMode="content"`, `size="sm"`). Campo de busca preservado (debounce 400 ms → URL). Banner "Pendências de atendimento"/"Ver todas" removido — o botão `Pendentes` ativo + `Todos` assumem a semântica sem controle duplicado (§41).
+- `prcNavigate.ts`: `prcQueueStatusFilterValue(state)` (status explícito > preset > "") e `prcQueueStateForStatusFilter(state, value)` (`pending`→`view=pending`+status limpo; específico→`view=""`+status; `""`→limpa ambos; sempre `page=1`).
+- `prcCopy.ts`: `PRC_QUEUE_STATUS_OPTIONS`/`PRC_QUEUE_TYPE_OPTIONS` ordenadas + rótulos pt-BR de grupos/placeholder (`Número, código oficial ou descrição`).
+- **Fix de histórico (commit `79558d0368`):** cliques discretos nos botões e "Limpar filtros" passaram a **push** de histórico (`replace:false`) — back/forward restaura a seleção anterior; debounce de busca e paginação/ordenação mantêm `replace`.
+- Backend: **zero alteração** — contrato `view=pending`/`status` explícito/`PRC_ACTIONABLE_STATUSES`/COUNT pré-paginação/AuthZ preservados (§40).
+- `PrcFlagsOpsPanel compact` preservado; `FLAGS_HERO_UX_FOLLOW_UP` registrado como backlog (§41).
+
+**Diff:** `d61015a0d0` (4 arquivos) + `79558d0368` (histórico). `main` direto, sem branch.
+
+**Testes:** vitest **37 arquivos/371 testes PASS** (+3 casos §41: seleção exibida com preset, transições Pendentes/Todos/status específico, serialização ida-e-volta); `tsc --noEmit` ok; `vite build` ok (`App-Dg2KDL_4.js`).
+
+**HML (`up-hml-sequential.sh --fase mfe --build engineering`, checkout `79558d0368`):**
+- `delpi-hml-engineering`: imagem `delpi-hml/engineering:local` id `sha256:42c9b1128033762708c1655a369563c364ed2d7162d40d164e356759ec8893e7` — healthy; bundle servido `App-Dg2KDL_4.js` (hash idêntico ao build local).
+- Rollback: imagem anterior `sha256:311e9ef33accf7f81fee9c117e0b2a3f0d5eae264644c49b89801c07b5e1a6bd` retida.
+- Backend `delpi-hml-engineering-api` **não reconstruído** (sem alteração).
+
+**E2E visual (Playwright/Chromium real, `HML_TEST_*`) — 19/19 PASS:** E01 Home→"Ver solicitações"→`?view=pending` com **Pendentes `aria-pressed=true`** e Todos inativo; E02 total=5 pendências (Home=5 ↔ fila=5); E03 Concluídas→`status=completed` sem `view`; E04 Todos→URL limpa; E05/E06 Criação/Alteração→`type=create|update`; E07 `status=submitted&type=update&search=30190` combinados; E08 Limpar→URL vazia; E09 back→`view=pending` / forward→`status=rejected` / refresh preserva; E10 detalhe interno Engenharia; E11 mobile 390 px overflow=0 e Pendentes ativo; E12 `Campos sinalizados` funcional; E13 LMP/My Requests íntegros. Evidências: `/tmp/ux-filters-desktop.png`, `/tmp/ux-filters-mobile.png` (host HML).
+
+**Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS(E01–E13) / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
