@@ -55,7 +55,7 @@ def create_challenge(ticket_id: str, workstation_id: str, *,
     moment = now if now is not None else datetime.now(timezone.utc)
     if not isinstance(moment, datetime) or moment.tzinfo is None or moment.utcoffset() is None:
         raise ValueError("relogio UTC obrigatorio")
-    moment = moment.astimezone(timezone.utc)
+    moment = moment.astimezone(timezone.utc).replace(microsecond=0)
     return DeviceProofChallenge(ticket, workstation, secrets.token_urlsafe(32), moment,
                                 moment + timedelta(seconds=ttl_seconds))
 

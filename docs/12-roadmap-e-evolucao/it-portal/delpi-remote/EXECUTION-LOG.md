@@ -492,6 +492,24 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 **Rollback:** reverter apenas ajuste de teste/doc; migracao V014 imutavel.
 **Proximo passo unico:** confirmar o pipeline de P1/P2, depois discutir registro seguro da chave em HML.
 
+## 2026-11-14 | G2-S4-S2b-P3 | consumo vinculado a prova de chave preconfiavel
+
+**Objetivo:** ligar validacao Ed25519 offline do P2 ao ledger de ticket de uso unico P1, impedindo bypass pelo consumo apenas de token.
+
+**Arquivos alterados:** migracao aditiva V015 (chaves publicas com estado inicial pending e desafio vinculado), novo repositorio interno `postgres_workstation_signed_bootstrap.py`, bloqueio de ticket vinculado no consumo legado, normalizacao de timestamp do desafio P2, suite PostgreSQL descartavel e docs.
+
+**Commit/issue:** associada a [#179](https://github.com/roberiooliveiradev/delpi-central/issues/179). Evidencia commit/CI posterior deve ser acompanhada.
+
+**Testes executados e evidencias:** P1/P2 consolidados [CI API + PostgreSQL V014: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43648748216); G0/arquitetura e governanca aprovados no mesmo commit. P3 adiciona testes de assinaturas, vinculo por UUID, chave revogada, token legado recusado, concorrencia/replay e cancelamento. Resultado de CI P3 deve ser checado apos push e nao e automaticamente sucesso.
+
+**Estado de producao / implantacao:** nenhuma integracao HTTP, nenhum Keycloak habilitado, nenhuma credencial provisionada, nenhum agente Windows instalado e nenhum controle remoto ativado. V015 nao aplicada em producao pelo assistente. Chaves sao `pending` por default e somente fixtures de testes descartaveis inserem aprovacao direta; nao ha fluxo de aprovacao real.
+
+**Riscos e limitacoes:** prova de posse de chave preconfiavel nao e garantia de attestation de hardware; precisa estabelecer a ancora de confianca em Windows HML/TPM ou outro mecanismo aprovado. O caminho de aprovacao, controle de rate limit, geracao de chaves e transferencia do ticket nao existem no runtime. Integracao e conceder grants Keycloak dependem de aceites humanos. G0-SEC continua bloqueado.
+
+**Rollback:** reverter apenas codigo/CI/docs caso necessidade; nao modificar migration historica V014 nem apagar V015 se aplicada. Flags de ativacao continuam OFF.
+
+**Proximo passo unico:** confirmar CI de V015 e executar desenho do piloto Windows com certificado/chave confiavel, chave revogavel e entrega segura do ticket em HML, mantendo acesso remoto bloqueado.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

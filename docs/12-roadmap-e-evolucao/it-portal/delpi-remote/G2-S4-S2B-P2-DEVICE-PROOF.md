@@ -34,3 +34,7 @@ python -m it_portal_app.domain.workstation_bootstrap_readiness --repo-root ..
 **Proximo passo:** validar CI V014 e deste modulo; preparar matrizes de seguranca para registro de chaves, sem publicar dispositivo, IP, segredos ou topologia no GitHub publico.
 
 [Roadmap](README.md) | [P1](G2-S4-S2B-P1-TICKET-LEDGER.md) | [Issue #179](https://github.com/roberiooliveiradev/delpi-central/issues/179).
+
+## Continuidade P3 (14/11/2026)
+
+V015 e o repositorio interno `PostgresSignedBootstrapStore` passam a exigir que o ticket vinculado ao desafio P2 tenha uma chave preconfiavel ativa, permitindo consumo uma unica vez. **Nao** equivale a device attestation, aprovacao de chave Windows, ativacao de agente ou acesso remoto. [Runbook P3](G2-S4-S2B-P3-SIGNED-CONSUMPTION.md).

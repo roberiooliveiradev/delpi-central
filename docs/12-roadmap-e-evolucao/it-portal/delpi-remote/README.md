@@ -43,7 +43,8 @@ Acesso sem pedir senha Windows por sessao **nao** significa acesso anonimo: toda
 | G2-S4-S2b | Bootstrap Windows de uso unico, attestation, ativacao e rotacao | **EM DESENVOLVIMENTO** | P0 offline em revisao; ativacao/credenciais ainda nao implementadas; piloto HML obrigatorio |
 | G2-S4-S2b-P0 | Preflight anti-ativacao precoce e especificacao do protocolo | **EM REVISAO** | CI gate BLOCKED aprovado; sem ativacao |
 | G2-S4-S2b-P1 | Geracao de ticket opaco e ledger PostgreSQL de uso unico sem rotas | **EM REVISAO** | Modulo interno e V014; CI de banco ainda em verificacao; nenhuma attestation/ativacao |
-| G2-S4-S2b-P2 | Prova criptografica offline de posse de chave preconfiavel | **EM REVISAO** | Ed25519 e desafio ligado ao ticket/equipamento; testes e HML pendentes; sem rotas |
+| G2-S4-S2b-P2 | Prova criptografica offline de posse de chave preconfiavel | **EM REVISAO** | Ed25519 e desafio ligado ao ticket/equipamento; CI aprovado no consolidado e HML pendente; sem rotas |
+| G2-S4-S2b-P3 | Vinculo persistente de desafio e chave preconfiavel, consumo atomico e revogacao | **EM REVISAO** | V015 e testes Postgres de concorrencia, chave revogada e replay; nenhuma rota, ativacao ou trust automatico |
 | G3-ENGINE | MeshCentral isolado e testado em laboratorio | **BLOQUEADO** | Somente apos G0-SEC com aceite formal, versao/licenca/SBOM, TLS, backup e piloto isolado |
 | G4-AUTH | Broker de sessoes, Keycloak/MFA e permissoes independentes | **NAO INICIADO** | Revogacao, tokens de uso unico, fail-closed, logs, kill switch |
 | G5-REMOTE | Tela, teclado e mouse no navegador para computador piloto | **NAO INICIADO** | Testes presenciais de concorrencia, UAC, lock-screen, desconexao e latency |
@@ -78,6 +79,10 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 **G2-S4-S2b-P2 (14/11/2026):** validador Ed25519 offline para assinatura de desafio com nonce de 256 bits e prazo curto, vinculando ticket e UUID do equipamento. Usa exclusivamente chave publica confiavel fornecida por uma fonte externa aprovada. **Nao** vincula ou cadastra chaves, nao comprova hardware/TPM, nao consome ticket, nao cria endpoint, nao concede Keycloak/S2S e nao libera acesso remoto. Testes locais executados (18 PASS); CI da entrega ainda a verificar. Ver [runbook P2](G2-S4-S2B-P2-DEVICE-PROOF.md).
 
 **CI P1-FIX (14/11/2026):** [workflow 43648540440](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43648540440) passou nos testes unitarios, de seguranca e integracao PostgreSQL anterior, mas encontrou **1 falha restante** em `test_v014_ticket_expiration_and_cancel`: a fixture `_sql` sempre executa `fetchall()` e o UPDATE do teste nao tinha `RETURNING`. Ajustado exclusivamente o teste de expiracao com `RETURNING id`. Novo CI deve confirmar V014. Nenhuma alteracao na migration ou na API de producao.
+
+**CI P1/P2 consolidado:** [Portal de TI - API 43648748216: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43648748216), [Architecture Enforcement: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43648748183), [Governance: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43648748136). Incluiu migrations V001..V014 e teste real de PostgreSQL descartavel. Nao equivale a homologacao em Windows/Keycloak.
+
+**G2-S4-S2b-P3 (14/11/2026):** V015 registra chaves publicas preconfiaveis, originalmente **pendentes**, e permite vincular desafio de assinatura Ed25519 ao ticket de uso unico, com verificacao e consumo transacional. O fluxo antigo de consumo por token recusa tickets vinculados a chave. **Nao ha endpoint de aprovacao ou registro de chave**, nenhum cliente Keycloak ou recurso de inventario ativado. Ver [runbook P3](G2-S4-S2B-P3-SIGNED-CONSUMPTION.md). Testes da nova etapa requerem CI.
 
 **G0-SEC-S0 (13/11/2026):** o preflight offline foi implementado com checklist de 12 verificacoes pendentes, auditoria de rotas/manifesto/Compose e testes que falham ao detectar acesso remoto prematuro. **CI verde** no commit `b3972d753599`: gate BLOCKED, pytest, integracao PostgreSQL, architecture-gate e audit. A avaliacao ADR-002 identificou alerta urgente dos mantenedores do MeshCentral 1.3.1 (23/10/2026) sobre exploracao ativa; versao apenas **candidata**, nao aprovada. **G3-ENGINE permanece BLOQUEADO** ate signoff formal e demonstracao de mitigacao.
 
@@ -122,5 +127,6 @@ Status permitidos: NAO INICIADO, EM DESENVOLVIMENTO, DOCUMENTADO, EM REVISAO, VA
 - [G2-S4-S2b-P0: preflight de bootstrap sem ativacao](G2-S4-S2B-PREFLIGHT.md)
 - [G2-S4-S2b-P1: ticket efemero e ledger atomico de uso unico](G2-S4-S2B-P1-TICKET-LEDGER.md)
 - [G2-S4-S2b-P2: desafio assinado Ed25519 offline](G2-S4-S2B-P2-DEVICE-PROOF.md)
+- [G2-S4-S2b-P3: consumo atomico vinculado a chave preconfiavel](G2-S4-S2B-P3-SIGNED-CONSUMPTION.md)
 - [Convencao de nomenclatura de computadores (proposta)](NAMING-CONVENTION.md)
 - [Diario de execucao e passagem de bastao](EXECUTION-LOG.md)

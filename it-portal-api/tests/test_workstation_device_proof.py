@@ -84,3 +84,19 @@ def test_no_private_key_in_production_module():
     assert "Ed25519PrivateKey" not in code
     assert "@router" not in code
     assert "ingest_authorized" not in code
+
+
+def test_challenge_factory_normalizes_microseconds_for_real_runtime():
+    instant = NOW.replace(microsecond=567890)
+    ticket, machine = str(uuid.uuid4()), str(uuid.uuid4())
+    challenge = create_challenge(ticket, machine, now=instant, ttl_seconds=180)
+    assert challenge.issued_at.microsecond == 0
+    assert challenge.expires_at.microsecond == 0
+    canonical_challenge(challenge)
+    private = Ed25519PrivateKey.generate()
+    pub = private.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
+    signed = base64.urlsafe_b64encode(private.sign(canonical_challenge(challenge))).rstrip(b"=").decode()
+    assert verify_pretrusted_device_proof(
+        challenge, signed, pub, ticket_id=ticket, workstation_id=machine,
+        now=instant + timedelta(seconds=1)
+    )

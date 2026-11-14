@@ -88,6 +88,7 @@ class PostgresWorkstationBootstrapTicketStore(PostgresRepositoryBase):
                 "it_portal.workstation_agent_identities AS identity "
                 "WHERE ticket.id = %s AND ticket.workstation_id = %s "
                 "AND ticket.token_digest = %s AND ticket.state = 'pending' "
+                "AND ticket.trusted_key_id IS NULL "
                 "AND ticket.expires_at > now() "
                 "AND station.id = ticket.workstation_id AND station.archived_at IS NULL "
                 "AND station.administrative_status = 'in_operation' "
