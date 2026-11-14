@@ -67,6 +67,7 @@ from app.application.capability_provision.semantic_capability_support import (
     INVESTIGATION_PROGRESS_NONE,
     INVESTIGATION_PROGRESS_RELATED,
     _IDENTIFIER_LITERAL_RE,
+    _INVOCATION_VOCABULARY_KEYS,
     _LAST_CATALOG_FAILURES,
     _OBLIGATION_OPERATIONS,
     _attempt_identifier_roots,
@@ -1781,9 +1782,17 @@ class PydanticAiInvestigationOrchestrator:
             or adding an extra business argument inside the declared
             container cannot demonstrate the obligation. Declare only
             the filters the user's request actually requires.
-            ``evidence_source`` must be the owner
-            token, never the dotted envelope tool name — a surface
-            identifier is rejected with correction guidance. Anchored
+            ``evidence_source`` is the owner-vocabulary VALUE you pass
+            as the invocation selector in that same call's args — the
+            ``entity``/``capability``/``action`` token such as
+            ``process`` or ``get_product_structure`` — never the
+            governed tool name: a dotted surface identifier
+            (``{specialist}.{remote}``) is rejected with correction
+            guidance naming the selector values you already declared.
+            ``operation`` takes only an operation CLASS (read,
+            analysis, prepare, act, discovery) — entity actions like
+            ``search``/``get`` belong to the invocation args; when no
+            class restriction is needed, omit ``operation``. Anchored
             obligations are verified mechanically against
             owner-declared evidence metadata; unanchored text binds
             evidence but never proves pertinence. A declaration is a
@@ -1850,10 +1859,73 @@ class PydanticAiInvestigationOrchestrator:
                     rejected["rejected_anchors"] = surface_anchors[:8]
                     rejected["anchor_guidance"] = (
                         "evidence_source must be a live owner "
-                        "vocabulary token (an entity/action the owner "
-                        "echoes or that you pass as an invocation "
-                        "selector), never the dotted envelope tool "
-                        "name — declare again with the owner token."
+                        "vocabulary token — the entity/action/"
+                        "capability VALUE you pass as an invocation "
+                        "selector in the owner call args (e.g. the "
+                        "`entity` value), never the dotted envelope "
+                        "tool name ({specialist}.{remote})."
+                    )
+                # Field-level diagnosis (INT-3 R1 declaration
+                # reliability): a rejected plan echoes WHICH declared
+                # fields are invalid so a correction fixes the actual
+                # divergence instead of mutating a correct field —
+                # real-eval qwen14b corrected the anchor while breaking
+                # `operation` with an action token ("search"), burning
+                # the bounded retry budget.
+                invalid_ops = sorted(
+                    {
+                        str(item.get("operation"))
+                        for item in needed
+                        if isinstance(item, dict)
+                        and isinstance(item.get("operation"), str)
+                        and item["operation"].strip()
+                        and item["operation"].strip().casefold()
+                        not in _OBLIGATION_OPERATIONS
+                    }
+                )
+                if invalid_ops:
+                    rejected["invalid_operations"] = invalid_ops[:8]
+                    rejected["operation_guidance"] = (
+                        "operation must be an operation CLASS "
+                        "(read, analysis, prepare, act, discovery) — "
+                        "entity actions like 'search'/'get' belong to "
+                        "the invocation args, not this field; omit "
+                        "operation when no class restriction is needed."
+                    )
+                if any(
+                    isinstance(item, dict)
+                    and "required_args" in item
+                    and not isinstance(item.get("required_args"), dict)
+                    for item in needed
+                ):
+                    rejected["invalid_required_args"] = True
+                # Legitimate anchor candidates already in the model's
+                # own proposal: the selector values it declared in
+                # ``required_args`` are exactly the owner-vocabulary
+                # tokens the governed layer records as invocation
+                # vocabulary. Echoing them is bounded correction
+                # feedback, never an anchor catalog and never proof —
+                # the accepted anchor is still verified mechanically
+                # against the invoked/echoed owner vocabulary.
+                selector_candidates: list[str] = []
+                for item in needed:
+                    if not isinstance(item, dict):
+                        continue
+                    req = item.get("required_args")
+                    if not isinstance(req, dict):
+                        continue
+                    for key, value in req.items():
+                        if (
+                            str(key) in _INVOCATION_VOCABULARY_KEYS
+                            and isinstance(value, str)
+                            and value.strip()
+                            and "." not in value
+                            and value.strip() not in selector_candidates
+                        ):
+                            selector_candidates.append(value.strip())
+                if selector_candidates:
+                    rejected["anchor_candidates"] = (
+                        selector_candidates[:8]
                     )
                 # Live owner vocabulary the model already used as
                 # invocation selectors in this turn (recorded by the

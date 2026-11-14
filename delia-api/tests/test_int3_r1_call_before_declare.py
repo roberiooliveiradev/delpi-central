@@ -23,6 +23,8 @@ invocation, no new authority.
 
 from __future__ import annotations
 
+import json
+
 from app.application.capability_provision.governed_capability_orchestrator import (
     OperationalCapabilityOrchestrator,
 )
@@ -452,3 +454,220 @@ def test_clarification_tool_remains_reachable_without_plan():
     with native_toolset_stub(alpha_beta_servers()):
         engine.attempt("preciso da estrutura")
     assert owner_calls == []
+
+
+# -------------------------------------------------------------------
+# Goal-declaration reliability (INT3-GOAL-DECLARATION-RELIABILITY)
+#
+# Real-eval or-qwen14b-fe85fee80a30: the model already held the owner
+# vocabulary (required_args entity=process/action=search) but anchored
+# obligations to the visible surface name ("teo.read") or broke
+# `operation` with an action token while fixing the anchor — the
+# rejection named the vocab SETS, never the offending field/value or
+# the legitimate tokens the model itself had declared.
+# -------------------------------------------------------------------
+
+
+def _declare_call(**overrides) -> ToolCallPart:
+    payload: dict = {
+        "goal_class": "read",
+        "expected_delivery": "enumeration",
+        "evidence_needed": [
+            {
+                "description": "listagem de processos",
+                "evidence_source": "alpha.search_items",
+                "operation": "read",
+                "required_args": {
+                    "entity": "process",
+                    "action": "search",
+                },
+            }
+        ],
+    }
+    payload.update(overrides)
+    return ToolCallPart("declare_investigation_goal", payload)
+
+
+def _declare_returns(messages) -> list[dict]:
+    out = []
+    for m in messages:
+        if not isinstance(m, ModelRequest):
+            continue
+        for part in m.parts:
+            if (
+                isinstance(part, ToolReturnPart)
+                and part.tool_name == "declare_investigation_goal"
+                and isinstance(part.content, str)
+            ):
+                out.append(json.loads(part.content))
+    return out
+
+
+def _collect_declare_returns(messages, store: list[dict]) -> None:
+    """Append only declare returns not yet recorded — the same
+    ToolReturnPart is visible in every subsequent message history."""
+    fresh = _declare_returns(messages)
+    store.extend(fresh[len(store) :])
+
+
+def test_rejection_echoes_field_diagnosis_and_anchor_candidates():
+    """G01/G04: a dotted-anchor rejection names the rejected surface
+    token AND echoes the owner-vocabulary selector values the model
+    itself declared in required_args — bounded correction feedback,
+    never an anchor catalog. The corrected declaration is accepted and
+    the reissued READ reaches the governed path exactly once."""
+    gates = _gates()
+    owner_calls: list[str] = []
+    original = gates._governed_semantic_tool_invoke
+
+    def _spy(**kwargs):
+        owner_calls.append(str(kwargs.get("capability_id") or ""))
+        return original(**kwargs)
+
+    gates._governed_semantic_tool_invoke = _spy  # type: ignore[method-assign]
+    returns: list[dict] = []
+
+    def _fn(messages, _info):
+        _collect_declare_returns(messages, returns)
+        prior = sum(1 for m in messages if isinstance(m, ModelResponse))
+        if prior == 0:
+            return ModelResponse(parts=[_declare_call()])
+        if prior == 1:
+            return ModelResponse(
+                parts=[
+                    _declare_call(
+                        evidence_needed=[
+                            {
+                                "description": "listagem de processos",
+                                "evidence_source": "process",
+                                "operation": "read",
+                                "required_args": {
+                                    "entity": "process",
+                                    "action": "search",
+                                },
+                            }
+                        ]
+                    )
+                ]
+            )
+        if prior == 2:
+            return ModelResponse(parts=[_read_call()])
+        return _final_answer()
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=8
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        engine.attempt("quais processos existem")
+    rejections = [r for r in returns if r.get("status") == "INVALID_GOAL"]
+    assert len(rejections) == 1
+    first = rejections[0]
+    assert "alpha.search_items" in (first.get("rejected_anchors") or [])
+    assert "process" in (first.get("anchor_candidates") or [])
+    assert "search" in (first.get("anchor_candidates") or [])
+    # The corrected declaration was accepted and the dependent READ
+    # ran once through the governed path.
+    assert owner_calls == ["alpha.search_items"]
+
+
+def test_rejection_names_invalid_operation_class():
+    """Trace-reproduced failure (scenario A, decl1): the model fixed
+    the anchor to a correct owner token but set `operation` to the
+    action token "search" — rejected as an invalid operation class.
+    The feedback must name the offending value so the next proposal
+    fixes the actual divergence."""
+    gates = _gates()
+    returns: list[dict] = []
+
+    def _fn(messages, _info):
+        _collect_declare_returns(messages, returns)
+        prior = sum(1 for m in messages if isinstance(m, ModelResponse))
+        if prior == 0:
+            return ModelResponse(
+                parts=[
+                    _declare_call(
+                        evidence_needed=[
+                            {
+                                "description": "listagem",
+                                "evidence_source": "process",
+                                "operation": "search",
+                                "required_args": {
+                                    "entity": "process",
+                                    "action": "search",
+                                },
+                            }
+                        ]
+                    )
+                ]
+            )
+        if prior == 1:
+            return ModelResponse(
+                parts=[
+                    _declare_call(
+                        evidence_needed=[
+                            {
+                                "description": "listagem",
+                                "evidence_source": "process",
+                                "required_args": {"entity": "process"},
+                            }
+                        ]
+                    )
+                ]
+            )
+        return _final_answer()
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=6
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        engine.attempt("quais processos existem")
+    rejections = [r for r in returns if r.get("status") == "INVALID_GOAL"]
+    assert len(rejections) == 1
+    assert rejections[0].get("invalid_operations") == ["search"]
+    assert "operation" in (rejections[0].get("operation_guidance") or "")
+    assert "process" in (rejections[0].get("anchor_candidates") or [])
+
+
+def test_anchor_candidates_never_fabricate_vocabulary():
+    """Guard: candidates come ONLY from selector values the model
+    itself declared — non-selector args and dotted values are never
+    echoed; a rejection without declared selectors carries no
+    fabricated vocabulary."""
+    gates = _gates()
+    returns: list[dict] = []
+
+    def _fn(messages, _info):
+        _collect_declare_returns(messages, returns)
+        prior = sum(1 for m in messages if isinstance(m, ModelResponse))
+        if prior == 0:
+            return ModelResponse(
+                parts=[
+                    _declare_call(
+                        evidence_needed=[
+                            {
+                                "description": "listagem",
+                                "evidence_source": "alpha.search_items",
+                                "operation": "read",
+                                "required_args": {
+                                    "entity": "teo.read",
+                                    "params": {"q": "process"},
+                                },
+                            }
+                        ]
+                    )
+                ]
+            )
+        return _final_answer()
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=4
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        engine.attempt("quais processos existem")
+    rejections = [r for r in returns if r.get("status") == "INVALID_GOAL"]
+    assert len(rejections) == 1
+    first = rejections[0]
+    # "teo.read" is dotted → excluded; "q"/"params" are not selector
+    # keys → nothing fabricated.
+    assert not first.get("anchor_candidates")
+    assert "alpha.search_items" in (first.get("rejected_anchors") or [])

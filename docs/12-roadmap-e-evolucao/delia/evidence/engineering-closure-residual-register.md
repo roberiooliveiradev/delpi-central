@@ -1883,7 +1883,8 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | Residual | Estado | Nota |
 |---|---|---|
 | INT3-CALL-BEFORE-DECLARE | REMEDIATED_PENDING_INDEPENDENT_REVIEW | gate `ModelRetry` em `_governed_invoke` (op_class != DISCOVERY + plan=None → retry→declare→reissue). Trace real `or-qwen14b-fe85fee80a30`: zero dependent reads pré-plano; `teo.read` pós-declaração com coverage avaliada; DISCOVERY pré-plano preservada. Suíte completa verde. |
-| INT3-GOAL-DECLARATION-RELIABILITY | OPEN_MEDIUM (novo) | qwen14b propõe anchors dotted-proxy repetidamente; rejeição→correção consome budget (`tool_calls_limit_reached`/`turn_budget_limited` em A/A2/B); recovery funciona (B aceitou na 4ª) mas outcome do sample degradou honestamente. Candidatos posteriores: feedback de correção mais rico / priming de vocabulário — fora do escopo R1 |
-| INT3-MCP-AUTH-FLAKINESS | OPEN_ENV | 8/12 ENV_BLOCKED novamente — pré-condição R3 para leitura de outcome |
+| INT3-GOAL-DECLARATION-RELIABILITY | REMEDIATED_PENDING_INDEPENDENT_REVIEW | causa = mapeamento evidence_source↔valor seletor + feedback sem diagnóstico por campo (não ausência de vocabulário). Remediado no path de rejeição: `anchor_candidates` dos seletores declarados, `invalid_operations`, docstring preciso — validação intacta. Eval `or-qwen14b-5e0e034882c8`: 14/15 aceitas (93% vs 33%), correção em 1 tentativa, SATISFIED mid-flight, outcome 3×complete/2×partial nos válidos, FALSE_COMPLETE=0 |
+| INT3-MCP-AUTH-FLAKINESS | OPEN_ENV | 9/14 ENV_BLOCKED no último eval — pré-condição R3 para leitura de outcome |
+| INT3-OBLIGATION-DEMONSTRATION-DEPTH | OPEN_LOW (novo, observado) | anchors corretas podem ficar INCONCLUSIVE quando o owner não ecoa o token nem o seletor invocado coincide (G1/P3 `get_product_structure`/`display_format` bound-not-demonstrated → partial honesto, não falso SATISFIED) — melhora de demonstração é tarefa posterior |
 
-**NEXT=`COORDINATION_INT3_R1_PREINVOKE_GATE_INDEPENDENT_ACCEPTANCE_REVIEW`**
+**NEXT=`COORDINATION_INT3_R1_GOAL_DECLARATION_RELIABILITY_INDEPENDENT_ACCEPTANCE_REVIEW`**
