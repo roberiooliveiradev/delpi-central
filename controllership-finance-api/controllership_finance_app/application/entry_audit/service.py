@@ -369,7 +369,15 @@ class EntryAuditService:
         return page_payload
 
     def ctes(self, analysis_id: str, filters: dict, *, page: int, page_size: int) -> dict:
-        return self._page("ctes", analysis_id, filters, page, page_size)
+        page_payload = self._page("ctes", analysis_id, filters, page, page_size)
+        # F3/E6: análises antigas podem ter fiscal_code "" no JSON; leitura nunca devolve.
+        items = []
+        for row in page_payload.get("items") or []:
+            comparison = dict(row.get("comparison") or {})
+            comparison.pop("fiscal_code", None)
+            items.append({**row, "comparison": comparison})
+        page_payload["items"] = items
+        return page_payload
 
     def tes_used(self, analysis_id: str, filters: dict) -> dict:
         _analysis, ready = self._ready(analysis_id)
@@ -433,9 +441,10 @@ class EntryAuditService:
         rows = _dedupe(self._store.rows(kind, analysis_id))
         failed = {run["branch_code"] for run in self._store.runs_of(analysis_id) if run["status"] == "failed"}
         rows = [row for row in rows if row.get("branch") not in failed]
+        allowed = _FILTERS_BY_KIND.get(kind, _FILTERS_BY_KIND["occurrences"])
         for name in ("branch", "severity", "theme", "supplier", "tes", "document_type", "day", "status", "situation"):
             value = filters.get(name)
-            if not value:
+            if not value or name not in allowed:
                 continue
             if name == "supplier":
                 rows = [row for row in rows if value.lower() in str(row.get("supplier_name") or "").lower()]
@@ -451,7 +460,7 @@ class EntryAuditService:
                 column = {"branch": "branch", "severity": "severity", "theme": "theme", "tes": "tes"}[name]
                 rows = [row for row in rows if str(row.get(column) or "") == value]
         query = (filters.get("q") or "").lower()
-        if query:
+        if query and "q" in allowed:
             rows = [row for row in rows if query in " ".join(str(row.get(key) or "") for key in ("title", "document_number", "supplier_name", "reason")).lower()]
         return rows
 
@@ -600,7 +609,9 @@ class EntryAuditService:
         for row in result.unmatched:
             hit = by_key.get(str(row.access_key or ""))
             if hit is not None and row.side == "xml":
-                outside.append(hit)
+                # F2/E4: SA2 código+loja; se a loja não existir no SA2, nome do XML (party).
+                name = str(hit.get("supplier_name") or "").strip() or str(getattr(row, "party_name", "") or "").strip()
+                outside.append({**hit, "supplier_name": name})
                 continue
             kept.append(row)
         result.unmatched = kept
@@ -1151,6 +1162,13 @@ def _public_analysis(row: dict) -> dict:
 
 
 def _public_occurrence(row: dict, status: dict | None) -> dict:
+    field = "origin" if "CST (origem)" in str(row.get("stable_key") or "") else row.get("field")
+    raw_difference = row.get("difference")
+    # F1/E2: análises antigas podem ter difference numérica em campo de código; leitura força null.
+    if not difference_allowed(str(field or "")) or raw_difference in {"", None}:
+        difference = None
+    else:
+        difference = raw_difference
     return {
         "stable_key": row["stable_key"],
         "rule_id": row.get("rule_id"),
@@ -1160,11 +1178,11 @@ def _public_occurrence(row: dict, status: dict | None) -> dict:
         "title": row.get("title") or row.get("reason"),
         "document_number": row.get("document_number"),
         "item": row.get("item") or "",
-        "field": "origin" if "CST (origem)" in str(row.get("stable_key") or "") else row.get("field"),
+        "field": field,
         "field_label": field_label(str(row.get("field") or ""), str(row.get("stable_key") or "")),
         "protheus_value": row.get("protheus_value"),
         "xml_value": row.get("xml_value"),
-        "difference": row.get("difference") if row.get("difference") not in {"", None} else None,
+        "difference": difference,
         "series": row.get("series") or "",
         "supplier_name": row.get("supplier_name") or "",
         "tes": row.get("tes") or "",
@@ -1262,6 +1280,16 @@ def _months(points: list[dict]) -> list[dict]:
             current[name] += int(point.get(name) or 0)
         current["analyses"] += 1
     return [grouped[key] for key in sorted(grouped)]
+
+
+# Filtros por coleção: theme/severity/tes/status não se aplicam a documentos/CT-e (F4).
+_FILTERS_BY_KIND = {
+    "occurrences": frozenset({"branch", "severity", "theme", "supplier", "tes", "document_type", "day", "status", "situation", "q"}),
+    "documents": frozenset({"branch", "supplier", "document_type", "day", "situation", "q"}),
+    "unmatched": frozenset({"branch", "severity", "theme", "supplier", "document_type", "day", "status", "situation", "q"}),
+    "ctes": frozenset({"branch", "document_type", "q"}),
+    "tes": frozenset({"branch", "tes", "document_type"}),
+}
 
 
 def _situation_matches(row: dict, value: str) -> bool:

@@ -193,7 +193,8 @@ def tool_analyze_entry_audit_findings(
             if total is None or len(rows) >= int(total):
                 break
             page_n += 1
-        summary = service.summary(target, _filters(filters))
+        applied = _filters(filters)
+        summary = service.summary(target, applied)
         groups: dict[tuple, list[dict]] = {}
         for row in rows:
             key = (str(row.get("rule_id") or ""), str(row.get("title") or ""), str(row.get("severity") or ""), str(row.get("tes") or ""))
@@ -201,15 +202,18 @@ def tool_analyze_entry_audit_findings(
         findings = []
         kpis = (summary.get("kpis") or {}) if isinstance(summary, dict) else {}
         conformity = (summary.get("conformity") or {}) if isinstance(summary, dict) else {}
+        # F4: com filtro de ocorrência (ex. theme), declarar o filtro; notas da análise não zeram.
+        filter_text = ", ".join(f"{name}={applied[name]}" for name in sorted(applied) if name != "group")
+        filter_clause = f" (filtro: {filter_text})" if filter_text else ""
         findings.append({
             "kind": "FACT",
             "code": "entry_audit.coverage",
             "message": (
-                f"{kpis.get('documents', 0)} notas, {kpis.get('occurrences', 0)} ocorrências, "
+                f"{kpis.get('documents', 0)} notas{filter_clause}, {kpis.get('occurrences', 0)} ocorrências, "
                 f"{conformity.get('unmatched_explained', 0)} sem par explicadas, "
                 f"{kpis.get('xml_unavailable', 0)} XML indisponível."
             ),
-            "value": {"kpis": kpis, "conformity": conformity},
+            "value": {"kpis": kpis, "conformity": conformity, "filters": applied},
         })
         for (rule_id, title, severity, tes), items in sorted(groups.items(), key=lambda item: (-len(item[1]), item[0][0])):
             action = str(items[0].get("action") or items[0].get("what_to_do") or "")
