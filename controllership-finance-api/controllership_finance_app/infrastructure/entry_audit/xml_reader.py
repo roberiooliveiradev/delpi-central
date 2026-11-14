@@ -16,12 +16,20 @@ _NFE = "http://www.portalfiscal.inf.br/nfe"
 _CTE = "http://www.portalfiscal.inf.br/cte"
 
 
+def read_xml_payloads(payloads: list[bytes]) -> tuple[dict[str, XmlDocument], dict[str, XmlDocument], int]:
+    return _read([(str(index), payload) for index, payload in enumerate(payloads)])
+
+
 def read_xml_paths(paths: list[Path]) -> tuple[dict[str, XmlDocument], dict[str, XmlDocument], int]:
+    return _read(list(_iter_bytes(paths)))
+
+
+def _read(named_payloads) -> tuple[dict[str, XmlDocument], dict[str, XmlDocument], int]:
     invoices: dict[str, XmlDocument] = {}
     ctes: dict[str, XmlDocument] = {}
     cancelled: set[str] = set()
     ignored = 0
-    for name, payload in _iter_bytes(paths):
+    for name, payload in named_payloads:
         try:
             root = ET.fromstring(payload)
         except ET.ParseError:

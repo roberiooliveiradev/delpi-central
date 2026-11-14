@@ -121,6 +121,8 @@ def test_tes_and_branches_do_not_take_a_period() -> None:
     tes = entry_audit_sql.tes_sql()
     branches = entry_audit_sql.branches_sql()
     assert "SF4010" in tes and "F4_CREDICM" in tes and "F1_RECBMTO" not in tes
+    assert "F4_TIPO" in tes and "F4_CF" in tes
+    assert "tes_type" in tes and "fiscal_code" in tes
     assert "SYS_COMPANY" in branches and "M0_CODIGO" in branches
     assert "01" in branches and "02" in branches
 

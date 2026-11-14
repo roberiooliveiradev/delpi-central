@@ -150,6 +150,17 @@ async def lifespan(_app: FastAPI):
                 run_closing_notification_dispatch_loop()
             )
         )
+    if settings.ENTRY_AUDIT_ENABLED:
+        from controllership_finance_app.application.entry_audit.composer import (
+            build_entry_audit_service,
+        )
+        from controllership_finance_app.startup.entry_audit_worker import (
+            run_entry_audit_loop,
+        )
+
+        pollers.append(
+            asyncio.create_task(run_entry_audit_loop(build_entry_audit_service))
+        )
     try:
         yield
     finally:
@@ -261,6 +272,13 @@ app.include_router(me_router)
 app.include_router(admin_checklist_router)
 app.include_router(admin_catalogs_router)
 app.include_router(clara_consent_router)
+
+if settings.ENTRY_AUDIT_ENABLED:
+    from controllership_finance_app.interface.http.routes.entry_audit.router import (
+        router as entry_audit_router,
+    )
+
+    app.include_router(entry_audit_router)
 
 # LNF (invoice_posting) — dark by default; mount only when flagged.
 if settings.LNF_HOSTED_ENABLED:

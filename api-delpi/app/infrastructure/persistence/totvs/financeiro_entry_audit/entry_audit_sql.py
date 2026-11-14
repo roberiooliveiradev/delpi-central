@@ -161,6 +161,8 @@ WITH ranked AS (
            RTRIM(SF4.F4_CREDIPI) AS credits_ipi,
            RTRIM(SF4.F4_LFIPI) AS ipi_book,
            RTRIM(SF4.F4_CONSUMO) AS consumption_material,
+           RTRIM(SF4.F4_TIPO) AS tes_type,
+           RTRIM(SF4.F4_CF) AS fiscal_code,
            ROW_NUMBER() OVER (
                PARTITION BY RTRIM(SF4.F4_CODIGO)
                ORDER BY CASE WHEN RTRIM(SF4.F4_FILIAL) = '01' THEN 0 ELSE 1 END,
@@ -172,6 +174,7 @@ WITH ranked AS (
 )
 SELECT code, description, calculates_icms, credits_icms, icms_book,
        calculates_ipi, credits_ipi, ipi_book, consumption_material,
+       tes_type, fiscal_code,
        COUNT(*) OVER() AS total_count
   FROM ranked
  WHERE rn = 1

@@ -150,6 +150,23 @@ class Settings:
     DB_USER: str = _get_env("DB_USER", default="")
     DB_PASSWORD: str = _get_env("DB_PASSWORD", default="")
 
+    ENTRY_AUDIT_ENABLED: bool = str(
+        _get_env("ENTRY_AUDIT_ENABLED", default="false")
+    ).lower() in {"1", "true", "yes"}
+    ENTRY_AUDIT_PRESUMED_CREDIT_TES: str = _get_env(
+        "ENTRY_AUDIT_PRESUMED_CREDIT_TES", default="004"
+    )
+    ENTRY_AUDIT_FREIGHT_CFOP_SUFFIX: str = _get_env(
+        "ENTRY_AUDIT_FREIGHT_CFOP_SUFFIX", default="352"
+    )
+    ENTRY_AUDIT_XML_LOOKBACK_DAYS: str = _get_env(
+        "ENTRY_AUDIT_XML_LOOKBACK_DAYS", default="30"
+    )
+    ENTRY_AUDIT_UNMATCHED_GRACE_DAYS: str = _get_env(
+        "ENTRY_AUDIT_UNMATCHED_GRACE_DAYS", default="3"
+    )
+    ENTRY_AUDIT_TOLERANCE: str = _get_env("ENTRY_AUDIT_TOLERANCE", default="0.05")
+
 
 settings = Settings()
 

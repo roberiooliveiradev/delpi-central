@@ -305,6 +305,68 @@ class FinancialReceivedInvoiceGateway:
             )
         return data
 
+    def export_received_documents(
+        self,
+        *,
+        authorization: str,
+        branch: str,
+        document_type: str,
+        issued_from: str,
+        issued_to: str,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        response = self._get(
+            "/invoices/received/export",
+            authorization=authorization,
+            params={
+                "branch": branch,
+                "type": document_type,
+                "issued_from": issued_from,
+                "issued_to": issued_to,
+                "page": str(page),
+                "page_size": str(page_size),
+            },
+        )
+        payload = _json_payload(response)
+        if response.status_code >= 400 or payload.get("success") is False:
+            raise FinancialReceivedInvoiceGatewayError(
+                _safe_message(payload, "Não foi possível listar os documentos fiscais do período."),
+                _mapped_status(response.status_code),
+            )
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            raise FinancialReceivedInvoiceGatewayError(
+                "A listagem fiscal retornou um formato inválido.",
+                502,
+            )
+        return data
+
+    def download_xml_by_key(
+        self,
+        *,
+        authorization: str,
+        access_key: str,
+        branch: str,
+        document_type: str,
+    ) -> bytes | None:
+        response = self._get(
+            f"/invoices/received/by-key/{quote(access_key, safe='')}/xml",
+            authorization=authorization,
+            params={"branch": branch, "type": document_type},
+        )
+        if response.status_code == 404:
+            return None
+        if response.status_code >= 400:
+            raise FinancialReceivedInvoiceGatewayError(
+                "Não foi possível obter o XML pela chave.",
+                _mapped_status(response.status_code),
+            )
+        content = response.content or b""
+        if not _looks_like_xml(content):
+            raise FinancialReceivedInvoiceGatewayError("O XML retornado é inválido.", 502)
+        return content
+
     def _get(
         self,
         path: str,
