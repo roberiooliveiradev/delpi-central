@@ -116,18 +116,19 @@ Proposta de bloco a acrescentar às instruções do servidor (PT-BR na conversa;
 | # | Pergunta | Onde entra |
 |---|---|---|
 | P1 | ~~Período padrão~~ — **respondido** (2026-11-13): sob demanda, em qualquer dia, e o usuário escolhe o período (hoje, ontem, semana, mês ou datas livres). Sem período dito, a CLARA pergunta. | diretiva 1 |
-| P2 | Quem corrige cada tipo de erro na Delpi (lançamento fiscal, cadastro de fornecedor, cadastro de TES, compras)? | campo «Quem corrige» das regras |
+| P2 | ~~Quem corrige~~ — **respondido** (2026-11-14): a equipe fiscal/contábil corrige tudo e aciona as outras áreas. | campo «Quem corrige» das regras |
 | P3 | ~~Prazo fixo no mês~~ — **respondido**: não há rotina fixa; a auditoria roda quando o usuário precisar. | AE-00 |
-| P4 | Há outras regras da empresa que a skill ainda não tem (casos que a contabilidade aponta e que não são erro, ou o contrário)? | AE-09 |
-| P5 | Quais são as TES de frete com e sem crédito usadas hoje (a skill deduz pela SF4, CFOP x352)? Confirmar a TES 036 (crédito com livro Outros). | AE-05 |
-| P6 | Exemplos reais recentes (de preferência a lista que a contabilidade mandou de outubro) para semear os casos | AE-15 |
-| P7 | Textos oficiais das normas (LC 123, RICMS/SC, COPAT) ou o link interno que a contabilidade usa | AE-11 |
+| P4 | ~~Outras regras da empresa~~ — **respondido** (2026-11-14): não há outras. | AE-09 |
+| P5 | ~~TES de frete / TES 036~~ — **respondido** (2026-11-14): seguir as regras da skill (CFOP final 352; crédito pelo cadastro da TES). | AE-05 |
+| P6 | Casos reais — **adiado** (2026-11-14): AE-15 fica para depois. | AE-15 |
+| P7 | Textos das normas — **TO_INVENTORY** (2026-11-14): a CLARA cita a norma pelo nome e diz que o texto vigente não está anexado. | AE-11 |
 | P8 | ~~Tipo~~ — **respondido** (2026-11-13): SF1 filtrada por Espécie do documento = SPED e CTE; Questor exportado em NF-e e CT-e; na Delpi SPED = NF-e e CTE = CT-e. | filtro de execução |
 
 ## 8. Registro
 
 | Data | Evento |
 |---|---|
+| 2026-11-14 | Owner: P2 fiscal/contábil corrige; P4 não há outras regras; P5 seguir a skill; P6 adiada; P7 TO_INVENTORY. |
 | 2026-11-14 | T7. Catálogo sem tool nova: leituras `entry_audit.*`, `entry_audit_findings` e execução direta `entry_audit.run|rerun|resolve|reopen`, atrás de `controllership-finance.access` e de `ENTRY_AUDIT_ENABLED`. Fichas AE-00 a AE-14 no corpus `controllership`. AE-15 e P2, P4, P5, P6, P7 seguem TO_INVENTORY. |
 | 2026-11-13 | Owner: tipo de documento = SPED/NF-e e CTE/CT-e (P8 respondida). |
 | 2026-11-13 | Owner: período De/Até livre e tipos de documento, como hoje; a CLARA usa o que o usuário disser e pergunta o período quando faltar (P1 respondida). P8 aberta: tipos de documento. |

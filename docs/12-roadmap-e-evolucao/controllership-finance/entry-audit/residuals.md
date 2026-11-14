@@ -13,7 +13,7 @@ Dado real fica fora deste arquivo (repositório público). As evidências citam 
 
 | # | Sev. | Residual | Evidência | Correção |
 |---|---|---|---|---|
-| A1 | Alta | «Valor das mercadorias diverge» (Alta) quando a diferença é só o desconto e o total confere | 12/11 e 13/11, filial 01: Protheus = vProd − vDesc, total confere; sai Alta + Baixa «Desconto classificado diferente». Regra da skill (`regras.py` 327/329) | **DECISÃO DO OWNER** (D-R1): não gerar a Alta quando \|F1_VALMERC − (vProd − vDesc)\| ≤ tolerância e o total confere; fica só a Baixa |
+| A1 | — | «Valor das mercadorias diverge» (Alta) junto da Baixa «Desconto classificado diferente» quando o total confere | 12/11 e 13/11, filial 01. Regra da skill (`regras.py` 327/329) | **DECIDIDO (owner, 2026-11-14): manter como a skill.** Não é residual; a CLARA explica com a ficha que o total confere |
 | A2 | Média | `field` e `field_label` = «field» nas ocorrências de origem | `read occurrences`: `item.origin_mismatch` com `field:"field"`, `field_label:"field"`; a `stable_key` traz «CST (origem)» | mapear o código do campo (ex.: `origin`) e o rótulo «CST (origem)» sem mudar a `stable_key` (ou migrar o status junto) |
 | A3 | Média | leitura descarta campos que a análise grava | `_persistable` grava `supplier_name`, `series`, `tes`, `difference` na ocorrência; `read occurrences`/`occurrence` não devolvem | projeção de leitura com todos os campos persistidos |
 | A4 | Média | «Por quê» igual a «O que fazer» | `header.total_mismatch` e `header.accessory_field`: `why == action`. A skill tem o texto de leitura por ocorrência (`relatorio.py`, dicionário de 31 em diante) | portar o dicionário de leitura; `why` = leitura, `action` = o que fazer |
@@ -40,29 +40,32 @@ Dado real fica fora deste arquivo (repositório público). As evidências citam 
 | # | Sev. | Residual | Evidência | Correção |
 |---|---|---|---|---|
 | C1 | Média | `analyze entry_audit_findings` inacessível pelo contrato da tool | o schema da tool `analyze` não lista `entry_audit_findings` no enum nem na descrição; `refs:[id]` → 422 `MISSING_REF`; só funciona com `parameters.ref` (não documentado) | aceitar `refs[0]` e `parameters.ref`; enum e descrição atualizados; `compare_to` documentado; teste pelo schema publicado |
-| C2 | Baixa | AE-15 fora do corpus; «Quem corrige» `TO_INVENTORY` | R3 da T9R; fichas AE-xx com P2 aberta | depende do owner (P2, P6) |
+| C2 | Baixa | «Quem corrige» `TO_INVENTORY` nas fichas; AE-15 fora do corpus; AE-11 sem texto das normas | fichas AE-xx com P2 aberta; R3 da T9R | P2 decidida: **equipe fiscal/contábil** corrige tudo e aciona as outras áreas → atualizar o campo em todas as fichas e republicar o corpus. AE-15 e textos das normas: ACCEPTED_RESIDUAL (P6, P7) |
 
 ## D — Governança, testes e operação
 
 | # | Sev. | Residual | Evidência | Correção |
 |---|---|---|---|---|
-| D1 | Média | escopo S2S emprestado | ADR-003: a api-delpi aceita a BFF em `/financeiro/entry-audit/*` pelo escopo `stock-inventory.read` | escopo próprio (ex.: `entry-audit.read`) no Keycloak de HML e PROD, sem permission de usuário nova |
+| D1 | — | escopo S2S emprestado | ADR-003: a api-delpi aceita a BFF em `/financeiro/entry-audit/*` pelo escopo `stock-inventory.read` | **DECIDIDO (owner, 2026-11-14): manter o emprestado** — ACCEPTED_RESIDUAL; a dívida segue registrada no ADR-003 |
 | D2 | Média | 39 falhas pré-existentes na suíte da BFF | registro T5: docs ausentes no container, `test_registry_direct_count_is_thirteen` (15 × 13), `LNF_MIGRATIONS_MODE` | corrigir ou marcar com motivo; suíte verde para o gate valer |
 | D3 | Média | HML não prova o fluxo real | api-delpi de HML não alcança o Protheus; grant de senha desligado; provas de PROD foram in-process com ator técnico | HML com Protheus de leitura (mesmo banco já usado) e usuário de teste no Keycloak de HML (D15) para teste MCP ponta a ponta |
 | D4 | Baixa | evento de auditoria do `run` provado só em teste | registro T9R2 | conferir em PROD o ACT do `run` desta verificação (filial 01 13/11 e filial 02 12/11, canal `mcp/clara`) |
-| D5 | Média | toda análise baixa todos os XML da janela | 12/11: 341 XML para 19 notas; filial 02: 321; um mês baixa ~30 dias + o mês, a cada execução | cache do XML por chave (o XML autorizado não muda) com TTL/limpeza; medir mês real em PROD |
+| D5 | Média | toda análise baixa todos os XML da janela | 12/11: 341 XML para 19 notas; filial 02: 321; um mês baixa ~30 dias + o mês, a cada execução | **DECIDIDO (owner, 2026-11-14): guardar o XML autorizado por chave** em tabela do schema `controllership_finance`, reaproveitado entre auditorias; limpeza do XML sem uso há **90 dias**; medir um mês real em PROD antes/depois |
 | D6 | Baixa | tags de rollback acumuladas | `rollback-f6-*` (remover em 20/11), `rollback-entry-audit-*`, `-t9r-*`, `-t9r2-*` | calendário de remoção após janela sem incidente |
 
-## E — Do owner
+## E — Decisões do owner (2026-11-14)
 
-| # | Pergunta |
-|---|---|
-| D-R1 | Regra de mercadorias com desconto (A1) |
-| P2 | Quem corrige cada tipo de erro (fiscal, cadastro de fornecedor, TES, compras) |
-| P4 | Regras da empresa que a skill não tem |
-| P5 | TES de frete com e sem crédito; confirmar TES 036 |
-| P6 | Casos reais para a AE-15 |
-| P7 | Textos oficiais das normas (LC 123, RICMS/SC, COPAT) |
+| # | Pergunta | Decisão |
+|---|---|---|
+| D-R1 | Regra de mercadorias com desconto (A1) | manter como a skill (Alta + Baixa) |
+| P2 | Quem corrige cada tipo de erro | a equipe fiscal/contábil corrige tudo e aciona as outras áreas |
+| P4 | Regras da empresa que a skill não tem | não há outras |
+| P5 | TES de frete; TES 036 | seguir as regras da skill: frete pelo CFOP final 352, crédito pelo cadastro da TES (SF4) |
+| P6 | Casos reais para a AE-15 | deixar para depois (ACCEPTED_RESIDUAL) |
+| P7 | Textos oficiais das normas | ficar `TO_INVENTORY`: a CLARA cita a norma pelo nome e diz que o texto vigente não está anexado |
+| Janela | busca de XML no Questor | manter 30 dias |
+| D5 | cache do XML | guardar por chave, limpeza após 90 dias sem uso |
+| D1 | escopo S2S próprio | manter o emprestado (`stock-inventory.read`) |
 
 ## Verificação desta lista
 

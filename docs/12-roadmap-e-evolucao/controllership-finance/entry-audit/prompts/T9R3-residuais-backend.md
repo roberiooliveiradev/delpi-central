@@ -15,8 +15,9 @@ backend/README.md §6 (contrato) · mcp/README.md · reference/ (skill). Autorid
 do arquiteto e .cursor > ADR-003 > track.md > residuals.md > demais docs.
 
 MISSÃO
-Corrigir, nesta ordem, sem parar entre itens: A2 → A7, B1 → B9, C1, D2, D3, D4, D5, D6, D1.
-A1 só entra se residuals.md tiver a decisão D-R1 registrada pelo owner; sem ela, não tocar.
+Corrigir, nesta ordem, sem parar entre itens: A2 → A7, B1 → B9, C1, C2, D2, D3, D4, D5, D6.
+Decisões do owner já registradas em residuals.md §E (não reabrir): A1 mantém a regra da skill (não
+tocar); D1 mantém o escopo emprestado (não tocar); janela de 30 dias mantida.
 Parar SOMENTE numa regra X1–X8, num DECISION_REQUIRED real (escolha de produto) ou ao concluir.
 
 POR ITEM (detalhe em residuals.md)
@@ -39,6 +40,10 @@ B7 rota da BFF para o XML pela chave (financial-api, credencial de serviço) e D
 B8 aba CT-e com os campos da aba CT-e da skill.
 B9 teste do export contra o layout da skill (abas, colunas, ordem) e conferência em PROD do arquivo
    da análise de 12/11 filial 01.
+C2 «Quem corrige» = «Equipe fiscal/contábil (aciona as outras áreas)» em todas as fichas AE-xx;
+   AE-05 diz que o frete segue a skill (CFOP final 352, crédito pelo cadastro da TES); AE-11 diz que
+   o texto vigente das normas não está anexado (TO_INVENTORY); AE-15 fica fora. Republicar o corpus
+   (governado) em HML e PROD e provar com knowledge(search).
 C1 analyze: aceitar refs[0] e parameters.ref; entry_audit_findings e compare_to no enum e na
    descrição publicados da tool; teste pelo schema publicado (sem tool nova).
 D2 39 falhas pré-existentes da suíte da BFF: corrigir; o que não for corrigível nesta trilha, marcar
@@ -48,11 +53,12 @@ D3 HML com o caminho real: api-delpi de HML lendo o banco de leitura já usado; 
    reopen contra o endpoint MCP de HML. Nunca em PROD.
 D4 conferir em PROD o ACT do run feito pela CLARA em 14/11 (filial 01 13/11 e filial 02 12/11,
    canal mcp/clara).
-D5 cache do XML autorizado por chave (não muda), com limpeza; medir um mês real em PROD antes/depois.
+D5 cache do XML autorizado por chave em tabela do schema controllership_finance (migration nova),
+   reaproveitado entre auditorias; limpeza do XML sem uso há 90 dias (configurável na BFF);
+   XML com evento de cancelamento não é servido do cache como autorizado; medir um mês real em PROD
+   antes/depois (tempo e downloads).
 D6 calendário de remoção das tags de rollback no track.md (rollback-f6-* em 20/11; demais após janela
    sem incidente). Não remover nada agora.
-D1 escopo S2S próprio da auditoria (ex.: entry-audit.read): criar e usar em HML (D15). Em PROD a
-   mudança no Keycloak não está autorizada: entregar o runbook pronto e parar em X8 só neste item.
 
 REGRAS
 As do prompt T0–T9 (main sem branch; commits só da etapa; protocolo P1–P9; até 3 ciclos; somente
@@ -60,7 +66,7 @@ leitura no Protheus, no Questor e no LNF; sem tool nova na CLARA; sem permission
 sem dado real no repo; suíte comparada ao commit pai). Mudança de contrato aditiva, com backend §6 e
 mcp/README atualizados no mesmo commit. HML primeiro; PROD com tag rollback-entry-audit-t9r3-<serviço>,
 um serviço por vez, api-delpi → financial-api → BFF (OK do owner dado). Falha → rollback e BLOCKED X7.
-A janela de 30 dias não muda.
+A janela de 30 dias, a regra A1 e o escopo S2S (D1) não mudam.
 
 FECHAMENTO
 Atualizar residuals.md: cada item com status (FIXED com SHA | ACCEPTED_RESIDUAL com motivo |
