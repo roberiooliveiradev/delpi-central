@@ -585,3 +585,24 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Evidência de testes:** Devin reportou 27/27 focados PASS pós-resolução, subconjunto 181 PASS e um baseline FAIL alheio. Consulta Coordination encontrou **nenhuma** review ou status/Actions associados ao HEAD na API GitHub; não imputar CI PASS nem aceite de runtime. Merge oficial foi aceito; HML ainda **PENDING**.
 
 **Próximo gate:** Devin autorizado a executar deploy da **Engineering API exclusivamente em HML**, verificar SHA/digest do runtime, casos PRC na Home (`tasks`/`requests` conforme ator), identidade, links, status, contagens, AuthZ incluindo requester-only para assigned-only, terminais fora das tarefas, regressões My Requests/LMP, negativo NF/chamados e degradação isolada. Reusar dados HML quando cabível; evitar novas escritas desnecessárias. `PRD_DEPLOY=NOT_AUTHORIZED`; `PRD_BUSINESS_TEST_WRITES=0`. Retornar evidência para decisão sobre próxima onda PRC-TRACK.
+
+## 35. PR #183 integrado — deploy HML e aceite runtime da integração Home × PRC (14/11/2026)
+
+**TASK_ID:** ENG-HOME-PRC-NATIVE-INTEGRATION-HML-ACCEPTANCE-01 — PR #183 merged (`96a641ad535462969f7a03e83129baa3206d709b`); checkout HML `c360325472`; rebuild via `up-hml-sequential.sh engineering-api --build`; imagem anterior `sha256:96b1d522acff` preservada p/ rollback; **nova imagem `sha256:97dd7b343ee623f90d62c4f658eb53d73d8ed7c5b18a1e0ef2ce66d7f77cead3`** — container healthy, código PRC confirmado em `/app`.
+
+**Matriz runtime HML (usuário hml-tester — analyst+requester; hml-denied — negativo):**
+
+| Teste | Resultado |
+|---|---|
+| H01 caso PRC na Home | PASS — casos `1a808947`, `48161981`, `73550302`… nas seções corretas, `source="engineering-api"` |
+| H02 tasks acionáveis | PASS — total=5; somente `submitted`(3)+`in_progress`(2). Prova direta: caso `0a9d90b7` **rejected** aparece em `requests` mas **não** em `tasks`; 10 completed também excluídos (DB: 16 casos = 5 acionáveis + 11 terminais) |
+| H03 requester-only | PASS — requests total=14 = exatamente os casos com `requester_subject=tester`; caso de terceiro `0ae97462` ausente; caso `0f963892` (tester é requester, atribuído a outro) presente. Negativo "tester apenas atribuído" não existe no dataset — coberto por teste unitário + cláusula SQL exclusiva |
+| H04 identidade | PASS — requestId UUID idêntico Home↔detalhe↔fila (`48161981` detail: in_progress/create) |
+| H05 navegação | PASS — href=`/apps/engineering/product-registration/{uuid}` (rota oficial resolvePrcPath) |
+| H07 totais/paginação | PASS — requests total=14 com 10 itens (limite da seção) → COUNT pré-paginação correto |
+| H08 segurança | PASS — anônimo 401; denied 403; AuthZ por objeto reutilizada |
+| H09 outros setores | PASS — zero registros `REQ-2026-*` da requests-api nas seções; só UUIDs PRC |
+| H10 regressões | PASS — LMPs available total=255; zero erros 5xx nos logs pós-deploy; My Requests intocado |
+| H06/H11 | HERDADO — workflow e isolamento de falha já provados (§30, testes unitários); sem repetição sem motivo |
+
+**Conclusão:** `HML_E2E_PASS` — integração Home × PRC nativo operacional em homologação, sem duplicidade, sem vazamento, sem regressões. Pendente apenas decisão sobre próximos itens PRC-TRACK (conclusão com match TOTVS, frontend E2E visual).
