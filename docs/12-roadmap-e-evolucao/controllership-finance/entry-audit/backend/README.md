@@ -40,7 +40,7 @@ Prefixo no padrão dos relatórios financeiros: `/financeiro/entry-audit`. Só l
 | `GET /financeiro/entry-audit/tes` | — | cadastro de TES (SF4) inteiro |
 | `GET /financeiro/entry-audit/branches` | — | filiais com CNPJ e UF |
 
-A E0 confirma se já existe SQL reaproveitável para algum destes (há consultas de SF1/SD1 em compras e estoque).
+O inventário T0 (§4.2) mostra o que já existe e o que a T2 cria. Não há SQL pronto para este recorte.
 
 ### 3.3 financial-api — XML do Questor (owner)
 
@@ -49,7 +49,7 @@ A E0 confirma se já existe SQL reaproveitável para algum destes (há consultas
 | `GET /invoices/received/export` | `branch`, `type` (`nfe` \| `cte`), `issued_from`, `issued_to`, `page`, `page_size` | lista com chave, número, série, emitente, emissão, valor, situação e os ids do provedor para baixar o XML |
 | `GET /invoices/received/{id}/xml/original` | `branch`, `type` | XML original (já existe para CT-e e NFS-e; a NF-e usa `download_nfe_xml`) |
 
-**Lacuna:** a listagem atual do Questor (`/cliente/nfe/listagem`) não recebe data. Ela vem ordenada por emissão (`orderGroup=Emission`) e só com entradas (`Entry=True`). A E0 prova se aceita filtro de data; se não aceitar, a financial-api pagina pela emissão e para quando passar do início do período. A entrada automática continua viável nos dois casos.
+**Listagem por data (T0, 2026-11-14).** A NF-e (`/cliente/nfe/listagem`) aceita `EmissionStart`/`EmissionEnd` em `dd/MM/yyyy` e devolve só dias dentro da janela. O mesmo par em ISO (`yyyy-MM-dd`) responde HTTP 500 HTML. O CT-e (`/cliente/cte/listagem`) aceita o par nos dois formatos e o total cai (sem filtro, milhares; com 01/11–12/11, 34 na filial 01). `iTotalDisplayRecords` da NF-e não é a cardinalidade: ecoa a janela de página (`start + página + 1`, ou o `iDisplayLength`). A financial-api conta percorrendo páginas até uma página curta. Não há fallback de upload. Detalhe no §4.
 
 ### 3.4 controllership-finance-api — rotas da BFF
 
@@ -151,19 +151,184 @@ A plataforma resolve isso sem mudar as regras:
 
 Essas três mudanças (1–3) alteram as contagens de «sem par» em relação à skill. No teste de paridade (E2), elas são comparadas à parte: o motor com os mesmos insumos da skill tem de dar o mesmo resultado; as melhorias são uma camada a mais, documentada.
 
-## 4. Dados necessários (a confirmar na E0)
+## 4. Dados necessários (inventário T0, 2026-11-14)
 
-| Fonte | Campos usados pelo motor (ver `scripts/regras.py`) | Owner |
+Leitura somente. Protheus: `SX3010` e `SF1010`/`SFT010`/`SF4010`/`SYS_COMPANY` no banco `DELPI`, o mesmo que a api-delpi de HML e a local usam. Questor: container `delpi-financial-api` de PROD (token configurado, filiais 01 e 02). A financial-api de HML não está no ar; a chamada real foi em PROD, sem token, CNPJ, chave ou valor no log. Classificação: `PROVEN` salvo onde está `TO_INVENTORY`.
+
+### 4.1 Coluna da skill × campo × tabela
+
+Títulos conferidos em `SX3010` (`D_E_L_E_T_ = ' '`). `leitura.py` não lê nome físico: lê o cabeçalho da planilha e o XML. O motor da BFF consome os campos físicos abaixo, não o apelido da planilha.
+
+**SF1 → `SF1010`**
+
+| Coluna da skill | Campo | Título SX3 |
 |---|---|---|
-| SF1 | filial, documento, série, fornecedor/loja, espécie, chave, emissão, recebimento, valores (bruto, mercadorias, ICMS, base, IPI, ST, frete, despesa, desconto) | api-delpi |
-| SD1 | item, produto, CFOP, CST/`D1_CLASFIS`, TES, quantidade, total, ICMS/base/alíquota, IPI/base, ICMS ST, desconto | api-delpi |
-| SF4 | código, crédito ICMS, livro ICMS, crédito IPI, livro IPI, material de consumo, cálculo de ICMS/IPI | api-delpi |
-| SFT | documento, série, fornecedor/loja, item, valor ICMS/IPI creditado | api-delpi |
-| SA2 | CNPJ e UF do fornecedor por código/loja | api-delpi |
-| XML NF-e e CT-e | todos os documentos do período por CNPJ destinatário/tomador, com eventos de cancelamento | financial-api |
-| Empresa | CNPJ e UF de cada filial (01, 02) | a inventariar |
+| Filial | `F1_FILIAL` | Filial |
+| Numero | `F1_DOC` | Numero |
+| Serie | `F1_SERIE` | Serie |
+| Fornecedor | `F1_FORNECE` | Fornecedor |
+| Loja | `F1_LOJA` | Loja |
+| Nome Forn. | `A2_NOME` | Razao Social |
+| Estado | `A2_EST` | Estado |
+| CNPJ (coluna opcional) | `A2_CGC` | CNPJ/CPF |
+| Chave NFe | `F1_CHVNFE` | Chave NFe |
+| DT Emissao | `F1_EMISSAO` | DT Emissao |
+| Dt. Receb. | `F1_RECBMTO` | Dt. Receb. |
+| Espec.Docum. | `F1_ESPECIE` | Espec.Docum. |
+| Tipo da Nota | `F1_TIPO` | Tipo da Nota |
+| Form. Prop. | `F1_FORMUL` | Form. Prop. |
+| Vlr.Frete | `F1_FRETE` | Vlr.Frete |
+| Vlr.Despesas | `F1_DESPESA` | Vlr.Despesas |
+| Base p/ICMS | `F1_BASEICM` | Base p/ICMS |
+| Vlr.ICMS | `F1_VALICM` | Vlr.ICMS |
+| Base p/IPI | `F1_BASEIPI` | Base p/IPI |
+| Vlr.IPI | `F1_VALIPI` | Vlr.IPI |
+| Vlr.Mercad | `F1_VALMERC` | Vlr.Mercad |
+| Vlr.Bruto | `F1_VALBRUT` | Vlr.Bruto |
+| Descontos | `F1_DESCONT` | Descontos |
+| Base ICM Sol | `F1_BRICMS` | Base ICM Sol |
+| ICMS Solid. | `F1_ICMSRET` | ICMS Solid. |
+| Vlr.Seguro | `F1_SEGURO` | Vlr.Seguro |
 
-**Lacuna conhecida:** a listagem atual de notas recebidas da financial-api (`ReceivedInvoiceQuery`) filtra por número, CNPJ do fornecedor e valor, **não por período**. A E0 precisa provar se o Questor permite listar por data de emissão/recebimento e CNPJ do destinatário. Se não permitir, D2 cai para upload do ZIP.
+`Nome Forn.` não existe no SX3. A skill espera esse cabeçalho; a fonte é `SA2010.A2_NOME`.
+
+**SD1 → `SD1010`**
+
+| Coluna da skill | Campo | Título SX3 |
+|---|---|---|
+| Filial | `D1_FILIAL` | Filial |
+| Documento | `D1_DOC` | Documento |
+| Serie | `D1_SERIE` | Serie |
+| Forn/Cliente | `D1_FORNECE` | Forn/Cliente |
+| Loja | `D1_LOJA` | Loja |
+| Item NF | `D1_ITEM` | Item NF |
+| Produto | `D1_COD` | Produto |
+| Cod. Fiscal | `D1_CF` | Cod. Fiscal |
+| Sit.Tribut. | `D1_CLASFIS` | Sit.Tribut. |
+| Tipo Entrada | `D1_TES` | Tipo Entrada |
+| Quantidade | `D1_QUANT` | Quantidade |
+| Vlr.Unitario | `D1_VUNIT` | Vlr.Unitario |
+| Vlr.Total | `D1_TOTAL` | Vlr.Total |
+| Base Icms | `D1_BASEICM` | Base Icms |
+| Aliq. ICMS | `D1_PICM` | Aliq. ICMS |
+| Vlr.ICMS | `D1_VALICM` | Vlr.ICMS |
+| Vlr.Base IPI | `D1_BASEIPI` | Vlr.Base IPI |
+| Aliq. IPI | `D1_IPI` | Aliq. IPI |
+| Vlr.IPI | `D1_VALIPI` | Vlr.IPI |
+| ICMS Solid. | `D1_ICMSRET` | ICMS Solid. |
+| Desconto | `D1_VALDESC` | Desconto |
+
+`D1_DESC` (título `Desc.Item`) é percentual. O número «Desconto» da skill é `D1_VALDESC`.
+
+**SF4 → `SF4010`**
+
+| Coluna da skill | Campo | Título SX3 |
+|---|---|---|
+| Cod. do Tipo | `F4_CODIGO` | Cod. do Tipo |
+| Txt Padrao | `F4_TEXTO` | Txt Padrao |
+| Calcula ICMS | `F4_ICM` | Calcula ICMS |
+| Cred. ICMS ? | `F4_CREDICM` | Cred. ICMS ? |
+| L.Fisc. ICMS | `F4_LFICM` | L.Fisc. ICMS |
+| Calcula IPI? | `F4_IPI` | Calcula IPI? |
+| Credita IPI? | `F4_CREDIPI` | Credita IPI? |
+| L.Fiscal IPI | `F4_LFIPI` | L.Fiscal IPI |
+| Mat.Consumo | `F4_CONSUMO` | Mat.Consumo |
+
+**SFT → `SFT010`.** A skill casa apelidos de planilha (`SFT_COLS` em `regras.py`). Vários títulos reais do SX3 não estão nessa lista (`Cli/Forn.`, `Codigo loja`, `Código Item`, `Vlr Isen ICM`, `Vlr Out ICMS`, `Data Cancel`). A api-delpi lê a coluna física. Período do livro: `FT_ENTRADA` (Data Entrada), que a skill não lista.
+
+| Papel | Campo | Título SX3 |
+|---|---|---|
+| Filial | `FT_FILIAL` | Filial |
+| Tipo de movimento | `FT_TIPOMOV` | Tipo Mov. |
+| Documento | `FT_NFISCAL` | Doc. Fiscal |
+| Série | `FT_SERIE` | Série NF |
+| Fornecedor | `FT_CLIEFOR` | Cli/Forn. |
+| Loja | `FT_LOJA` | Codigo loja |
+| Item | `FT_ITEM` | Código Item |
+| Chave | `FT_CHVNFE` | Chave Nfe |
+| ICMS creditado | `FT_VALICM` | Valor ICMS |
+| ICMS outras | `FT_OUTRICM` | Vlr Out ICMS |
+| ICMS isentas | `FT_ISENICM` | Vlr Isen ICM |
+| IPI creditado | `FT_VALIPI` | Valor IPI |
+| Cancelamento | `FT_DTCANC` | Data Cancel |
+| Data de entrada | `FT_ENTRADA` | Data Entrada |
+
+**Empresa → `SYS_COMPANY`** (não está no SX3). `M0_CODFIL` 01 UF `SC`; 02 UF `ES`; CNPJ com 14 dígitos. Há várias empresas no mesmo código de filial (`M0_CODIGO` 01, 03, 04, 05 na filial 01; 01 e 04 na filial 02), todas com a marca no nome. As tabelas `*010` são a empresa `01`. A rota `branches` filtra `M0_CODIGO = '01'`.
+
+### 4.2 SQL já existente na api-delpi
+
+Não há consulta que devolva o recorte da auditoria. Reaproveita-se o padrão (`WITH (NOLOCK)`, `D_E_L_E_T_ = ' '`, filial, join SF1 por filial+documento+série+fornecedor+loja):
+
+| Tabela | O que já existe | O que a T2 cria |
+|---|---|---|
+| SF1 | `purchase_freight_sql.py` lê chave, espécie, bruto, mercadorias e emissão de um documento já conhecido | listagem por `F1_RECBMTO` + `F1_ESPECIE` |
+| SD1 | recebimento de compra, kardex, preço — sem CST/CFOP/TES fiscais da auditoria | itens dos mesmos documentos |
+| SF4 | `F4_CODIGO` / `F4_DUPLIC` em faturamento e CPV | cadastro inteiro com crédito e livro |
+| SFT | nenhuma ocorrência de `SFT010` no código | livro por documento/item |
+| SA2 | `totvs_supplier_repository.py` (`A2_COD`, `A2_LOJA`, `A2_CGC`, `A2_EST`, `A2_NOME`) | join no documento, não uma busca solta |
+| Filiais | `SYS_COMPANY` em propostas comerciais (`M0_CODFIL`, `M0_CGC`) | `branches` da empresa `01` |
+
+Autorização das rotas `/financeiro/*` que a BFF consome: JWT do usuário em `Authorization` mais `X-Delpi-Service-Authorization` (client-credentials da BFF). Gateway: `controllership-finance-api/.../infrastructure/api_delpi_gateway.py`.
+
+### 4.3 Questor / financial-api
+
+| Pergunta | Evidência |
+|---|---|
+| A listagem de NF-e filtra data? | Sim, `EmissionStart`/`EmissionEnd` em `dd/MM/yyyy`. Em 12/11/2026 a página só teve esse dia (filial 01: 10 linhas; filial 02: 20). ISO nesse par devolve HTTP 500. Sem data, a primeira página traz vários dias e `iTotalDisplayRecords` não é a contagem real. |
+| Filtra destinatário? | Não há parâmetro de destinatário. A sessão é da empresa (`QuestorCompanyRegistry`, filiais `01` e `02`). Os dois dias acima diferem, então as sessões não se misturam. |
+| Como listar CT-e recebido? | `GET /cliente/cte/listagem` com `Entry=0`, ordenado por `DhEmi`. O adapter já envia `EmissionStart`/`EmissionEnd` vazios (`questor_cte_adapter.py`). Preenchidos, o total da filial 01 cai de 3760 para 34 no intervalo 01/11–12/11, em BR e em ISO. |
+| Como achar o XML pela chave? | A chave tem CNPJ do emitente nas posições 7–20, modelo 21–22, série 23–25 e número 26–34 (`fiscal_access_key.py`). NF-e: `NfeNumber` (+ `IssuerFederalRegistration`) devolve a linha cuja chave é a pedida; o XML sai por `XmlFilename` + `Id` em `/cliente/transferenciaArquivo/download`. Não há filtro de chave na listagem de NF-e. CT-e: o parâmetro `KeyCte` existe no adapter e vai vazio; a T3 prova o preenchimento. |
+| Sessão da filial 02? | `PROVEN` em PROD: company id configurado e a listagem de 12/11 devolve conjunto diferente da filial 01. Em HML o container `delpi-hml-financial-api` não existe. |
+
+O `ReceivedInvoiceQuery` vigente ainda não tem período. A T3 acrescenta `issued_from`/`issued_to` e a busca por chave. D2 permanece automática.
+
+### 4.4 LNF — solicitação aberta
+
+A solicitação (`invoice_posting_requests`) não guarda a chave. A chave está só no DANFE anexado (`invoice_posting_danfe_attachments.access_key`, `V008`). A chave fiscal da solicitação é filial + fornecedor + loja + número (`document_match_key`) + série (`uq_lnf_requests_active_fiscal_key`).
+
+Aberta = `pending`, `in_progress` ou `blocked` (`NON_TERMINAL_STATUSES` em `fiscal_normalization.py`). `list_requests` já filtra número, fornecedor e status; não filtra chave. Para a D11 a BFF consulta, na ordem: chave no anexo do DANFE; senão número + fornecedor (+ série, se houver). Sem anexo, a chave sozinha não acha a solicitação. Somente leitura.
+
+### 4.5 Padrões da BFF que a trilha reutiliza
+
+| Peça | Onde | Próximo uso |
+|---|---|---|
+| Job no `lifespan` | `main.py` cria a task de `run_closing_notification_dispatch_loop` e cancela no shutdown | `startup/entry_audit_worker.py` no mesmo ponto, atrás de `ENTRY_AUDIT_ENABLED` |
+| Migrations | `migrations_runner.py` aplica `migrations/V###__*.sql` com checksum. Última: `V022`. | `V023` |
+| Catálogo semântico | `interface/mcp/server.py`: seis tools; capacidade nova é `(entity, action)` em `semantic_bridge.py` | entradas `entry_audit.*` na T7, sem tool nova |
+| Corpus | `corpus_manifest.py`, `access_scope=PORTAL_ACCESS` | fichas AE no domínio `controllership` |
+| Instruções | `interface/mcp/branding.py` | bloco da auditoria na T7 |
+| Testes MCP | `tests/test_clara_catalog_schema_callable.py`, `test_clara_direct_execution.py`, `test_clara_corpus_parity.py` | mesmos padrões na T7 |
+
+### 4.6 Volume (banco `DELPI`, recebimento em `F1_RECBMTO`, 2026)
+
+Notas por mês e filial, espécies da auditoria. Novembro vai até 14/11.
+
+| Mês | 01 SPED | 01 CTE | 02 SPED | 02 CTE |
+|---|---:|---:|---:|---:|
+| 01 | 154 | 40 | 128 | 44 |
+| 02 | 177 | 44 | 154 | 48 |
+| 03 | 196 | 54 | 224 | 118 |
+| 04 | 175 | 58 | 185 | 59 |
+| 05 | 192 | 60 | 155 | 53 |
+| 06 | 167 | 57 | 192 | 63 |
+| 07 | 160 | 55 | 202 | 66 |
+| 08 | 216 | 73 | 204 | 67 |
+| 09 | 218 | 50 | 176 | 39 |
+| 10 | 227 | 59 | 224 | 97 |
+| 11 (até 14) | 132 | 45 | 93 | 45 |
+
+Um dia, 12/11/2026: filial 01 = 12 SPED + 7 CTE (+ 2 NFS + 1 CF, fora da auditoria); filial 02 = 19 SPED + 0 CTE (+ 4 NFS + 2 CF). A amostra do owner (10 notas na matriz) é um recorte manual, menor que a `SF1010` do dia. A paridade compara o mesmo conjunto de entrada, não essa contagem bruta.
+
+Livro em novembro (`FT_TIPOMOV = 'E'`, `FT_ENTRADA`): 480 linhas na filial 01 e 532 na 02. SF4 com filial vazia ou `01`: 458 cadastros. Volume de um mês cabe numa execução assíncrona.
+
+### 4.7 Adaptações em relação ao texto anterior
+
+| Premissa antiga | Evidência | Adaptação |
+|---|---|---|
+| Listagem do Questor não recebe data; senão, upload | Data em `dd/MM/yyyy` funciona na NF-e e no CT-e | D2 segue automática. Sem upload. |
+| `iTotal*` da listagem é a contagem | Na NF-e o total ecoa a página | T3 conta as linhas, página a página |
+| Apelidos da SFT na skill cobrem a Delpi | Títulos SX3 divergem | Contrato usa a coluna física |
+| Uma linha de `SYS_COMPANY` por filial | Várias empresas por `M0_CODFIL` | `branches` usa `M0_CODIGO = '01'` |
 
 
 ## 5. Persistência (TARGET, schema `controllership_finance`)
