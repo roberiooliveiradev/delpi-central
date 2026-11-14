@@ -92,6 +92,8 @@ class XmlItem:
     st_amount: float
     simple_credit: float = 0.0
     simple_rate: float = 0.0
+    discount: float = 0.0
+    other_amount: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -129,6 +131,7 @@ class XmlDocument:
     simples_national: bool = False
     substituted: bool = False
     linked_keys: tuple[str, ...] = ()
+    taker_role: str = ""
 
 
 @dataclass(frozen=True)
@@ -152,6 +155,8 @@ class Occurrence:
     protheus_value: str
     xml_value: str
     access_key: str
+    why: str = ""
+    action: str = ""
 
 
 @dataclass(frozen=True)
@@ -164,11 +169,43 @@ class UnmatchedDocument:
     species: str = ""
 
 
+@dataclass(frozen=True)
+class FiscalBookLine:
+    number: str
+    series: str
+    supplier_code: str
+    supplier_store: str
+    item: str
+    icms_amount: float = 0.0
+    other_icms: float = 0.0
+    exempt_icms: float = 0.0
+    ipi_amount: float = 0.0
+    branch: str = ""
+    movement: str = "E"
+    cancelled: bool = False
+
+
+@dataclass(frozen=True)
+class ExcludedItem:
+    kind: str
+    document_number: str
+    series: str
+    supplier_code: str
+    supplier_store: str
+    item_count: int
+    amount: float
+
+
 @dataclass
 class AuditResult:
     occurrences: list[Occurrence] = field(default_factory=list)
     unmatched: list[UnmatchedDocument] = field(default_factory=list)
     suppressed: dict[str, int] = field(default_factory=dict)
+    not_reported: dict[str, int] = field(default_factory=dict)
+    excluded: list[ExcludedItem] = field(default_factory=list)
+    summary: dict[str, int] = field(default_factory=dict)
 
-    def suppress(self, rule_id: str) -> None:
+    def suppress(self, rule_id: str, label: str = "") -> None:
         self.suppressed[rule_id] = self.suppressed.get(rule_id, 0) + 1
+        if label:
+            self.not_reported[label] = self.not_reported.get(label, 0) + 1

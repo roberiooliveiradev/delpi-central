@@ -144,7 +144,8 @@ def test_tes_without_credit_flags_highlighted_icms_and_suppresses_cst_090() -> N
     assert [(row.rule_id, row.severity) for row in result.occurrences] == [
         ("item.highlighted_icms_not_credited", "Média"),
     ]
-    assert result.suppressed == {"suppressed.cst_090": 1}
+    assert result.suppressed["suppressed.cst_090"] == 1
+    assert result.suppressed["suppressed.header_icms_not_credited"] == 1
 
 
 def test_same_cst_difference_is_an_occurrence_when_the_tes_credits() -> None:

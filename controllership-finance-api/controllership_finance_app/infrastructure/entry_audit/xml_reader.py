@@ -165,6 +165,8 @@ def _nfe(root: ET.Element) -> XmlDocument | None:
                 st_amount=_child_num(icms, "", "vICMSST") if icms is not None else 0.0,
                 simple_credit=_child_num(icms, "", "vCredICMSSN") if icms is not None else 0.0,
                 simple_rate=_child_num(icms, "", "pCredSN") if icms is not None else 0.0,
+                discount=_child_num(detail, "prod", "vDesc"),
+                other_amount=_child_num(detail, "prod", "vOutro"),
             )
         )
     direction = "Entrada" if _text(root, _NFE, ".//ide/tpNF") == "0" else "Saída"
@@ -267,6 +269,7 @@ def _cte(root: ET.Element) -> XmlDocument | None:
         simples_national=group == "ICMSSN",
         substituted=group == "ICMS60",
         linked_keys=linked,
+        taker_role=role or ("outros" if taker_tax_id else ""),
     )
 
 
