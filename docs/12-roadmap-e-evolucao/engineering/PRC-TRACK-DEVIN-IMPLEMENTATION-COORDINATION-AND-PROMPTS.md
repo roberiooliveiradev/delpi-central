@@ -669,3 +669,41 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 - Limitação honesta: smoke autenticado de clique em card não executado em PRD (sem credencial de usuário real autorizada para headless); evidência substituta = mesmo hash de bundle do artefato HML-aceito + contrato de href backend já verificado.
 
 **Estado:** `NAVIGATION_FIX_MERGED / HML_VISUAL_E2E_PASS / PRD_DEPLOYED_READONLY_SMOKE_PASS / ROLLBACK_IMAGE_RETAINED / PRD_BUSINESS_TEST_WRITES=0`.
+
+## 40. UX Home × fila PRC × ações pt-BR — implementação, HML deploy e E2E visual (14/11/2026)
+
+**TASK:** `EVA-ENG-UX-HOME-PRC-QUEUE-ACTIONS-PTBR-HML-01`. Implementação em `main` conforme decisão do Product Owner em §38. **PRD não autorizado nesta missão.**
+
+**Escopo executado (CONFIRMADO_NO_CODIGO):**
+- **Backend (`engineering-api`):** `PRC_ACTIONABLE_STATUSES` derivado de `PRC_STATUSES − TERMINAL_STATUSES` em `domain/product_registration/models.py` (dono canônico — sem lista duplicada no frontend). Endpoint `GET /v1/product-registration/requests` aceita `view=pending`, traduzido para o conjunto `statuses` na rota; `status` explícito prevalece sobre o preset; `view` inválido → `422`. Filtro aplicado no service/repositório **antes** de `COUNT` e `LIMIT/OFFSET`; autorização por objeto preservada; zero escrita TOTVS.
+- **Home (`HomePage.tsx`/`homeViewModel.ts`):** lista extensa `EngineeringEventsSection` removida; card compacto "Solicitações pendentes de atendimento" alimentado por `sections.tasks.total` (fonte oficial; nunca zero com fonte indisponível/forbidden — card oculto nesses estados); `tasks` removido do hero para não duplicar o indicador; CTA "Ver solicitações" → `navigatePrcHref('/apps/engineering/product-registration?view=pending')` (interno, sem reload); indicadores `requests` (solicitante) e LMPs preservados separados.
+- **Fila (`PrcQueuePage.tsx`/`prcNavigate.ts`):** `view=pending` parseado da URL com banner de preset ativo e ação "Ver todas"; estado de URL preserva `view,status,type,search,page,sortBy,sortDir`; total pré-paginação consistente com o universo filtrado.
+- **pt-BR:** status via `PRC_STATUS_LABELS`, tipos via `PRC_TYPE_LABELS`, origem (`my-requests` → "Canal corporativo (My Requests)"), datas `toLocaleString('pt-BR')` sem ISO cru, labels de eventos/auditoria/TOTVS/ações centralizados em `prcCopy.ts`; códigos técnicos preservados apenas em payloads/logs/URL.
+- **ActionBar:** `PrcActionBar`/`PRC_ACTION_SPECS` reutilizados (sem segunda implementação); hierarquia visível primária/secundária/destrutiva; `detail.allowedActions`, CAS `expectedVersion`, idempotência e modais de confirmação/motivo preservados; casos terminais exibem estado final + somente ações de leitura permitidas.
+
+**Diff:** commit `4f5c49ae1f41f61d96bfa3089060bf39c5a142db` — 15 arquivos (4 backend+teste, 11 frontend). Workflow, permissões, owner e identidade do caso inalterados. Sem integração duplicada Home × PRC (§35 preservada).
+
+**Testes automatizados:** vitest frontend **37 arquivos/369 testes PASS** (incl. `homeViewModel` indicador+estados, `productRegistration` preset view=pending, `engineeringRoutes` navegação); backend regressão ampla **290 PASS/11 skip/928 deselect** + foco PRC **16 PASS**; `tsc --noEmit` ok; `vite build` ok (`App-CdfNRCmc.js`, warning único de chunk >500 kB).
+
+**HML (deploy oficial sequencial — `engineering` + `engineering-api`):**
+- `delpi-hml-engineering`: imagem `delpi-hml/engineering:local` id `sha256:8843314efc8d78fad5a63020c052c113cf1d40d895a37865cf96026263db939c` — healthy.
+- `delpi-hml-engineering-api`: imagem `delpi-hml/engineering-api:local` id `sha256:c412d10353d17a2e86695fa869991d9d44086ce841fc9484d965a5904423bf72` — healthy.
+- API runtime: `view=pending` → `total=5`, itens `[in_progress, submitted]` sem terminais; `status=completed` explícito → `total=10` sobrescreve preset; `view` inválido → `422`.
+
+**E2E visual em navegador real** (Playwright/Chromium headless no host HML, `HML_TEST_*` autorizado e `HML_DENIED_*` negado):
+- E01 Home compacta sem lista de eventos: **PASS**. E02 contador=5 coerente: **PASS**.
+- E03 clique → `/apps/engineering/product-registration?view=pending` SPA sem reload, zero `/apps/my-requests`: **PASS**.
+- E04 preset ativo+banner+"Ver todas"+filtro correto sem códigos brutos: **PASS**.
+- E05 total Home=fila filtrada (5) para mesmo ator: **PASS**.
+- E06 detalhe pt-BR (status "Em atendimento", "Canal corporativo (My Requests)", datas `dd/mm/aaaa hh:mm`): **PASS**; zero ISO cru.
+- E07 hierarquia de ações (1 primária + secundárias + destrutiva ghost): **PASS**.
+- E08 fluxo real em caso de teste `73550302`: "Iniciar atendimento" → "Em atendimento" com novas ações; modal "Devolver para correção" exige motivo (cancelado sem write adicional): **PASS**.
+- E09 usuário negado: indicador e CTA ocultos na Home; acesso direto à fila negado: **PASS**.
+- E10 back/forward/deep-link/refresh preservando preset: **PASS**.
+- E11 regressões: card "Minhas solicitações" e card "LMPs" na Home; LMP abre view interna `/apps/engineering/lmps`; `/apps/my-requests` corporativo abre normal: **PASS**. *Observação:* checagem de API Home via `fetch` sem Bearer retornou `401` — fronteira de autenticação esperada (falso negativo de script), não defeito.
+- E12 viewport 390×844: `overflow=0` em Home, fila e detalhe: **PASS**.
+- Evidências (host HML `/tmp`): `ux-home.png`, `ux-queue.png`, `ux-detail.png`, `ux-denied.png`, `ux-home-mobile.png`, `ux-queue-mobile.png`, `ux-detail-mobile.png`, `ux-lmp.png`.
+
+**Limitações honestas:** writes de workflow executados apenas em caso de teste HML autorizado (E08); smoke visual depende de aceite do PO; verificação de digests é por image-id local (build `:local`, sem RepoDigest de registry).
+
+**Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS(E01–E12) / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`. Produção somente após aceite visual do Product Owner.
