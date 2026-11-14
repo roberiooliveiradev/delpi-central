@@ -1307,3 +1307,52 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* §43 — composição do hero da fila no padrão Meus Chamados de TI:
+ * busca dominante + controles compactos; chips de status/tipo e
+ * seletor de modo na faixa secundária. */
+.engineering-prc__queue-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.engineering-prc__queue-primary {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.engineering-prc__queue-primary .engineering-filter-box,
+.engineering-prc__queue-primary .delpi-ui-filter-box {
+  flex: 1 1 320px;
+  min-width: 220px;
+}
+
+.engineering-prc__queue-primary-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  min-height: 36px;
+}
+
+.engineering-prc__queue-secondary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-width: 0;
+}
+
+.engineering-prc__queue-layout-toggle {
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .engineering-prc__queue-layout-toggle {
+    margin-left: 0;
+  }
+}

@@ -4,7 +4,13 @@
  * fornecesse totais por status (ela não fornece → omitidos). */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FilterX, RefreshCw } from "lucide-react";
 
+import {
+  DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
+  TableColumnVisibilityMenu,
+  useTableColumnVisibility,
+} from "@delpi/plugin-ui/index";
 import { HomeApiError } from "../../../api/httpClient";
 import { usePrcQueueSync } from "../../../app/EngineeringRealtimeProvider";
 import { navigateEngineeringView } from "../../../app/engineeringRoutes";
@@ -13,12 +19,13 @@ import {
   EngineeringDataCardsGrid,
   EngineeringEmptyState,
   EngineeringFilterInput,
-  EngineeringFiltersRow,
+  EngineeringIconButton,
   EngineeringInteractiveDataCard,
   EngineeringKanbanBoard,
   EngineeringLoadingActivityCard,
   EngineeringPageHero,
   EngineeringPagePath,
+  EngineeringScopeChipBar,
   EngineeringSegmentToggle,
   EngineeringStateBanner,
   usePersistedViewLayout,
@@ -54,6 +61,7 @@ import { PrcFlagsOpsPanel } from "../components/PrcFlagsOpsPanel";
 
 const PAGE_SIZE = 25;
 const SEARCH_DEBOUNCE_MS = 400;
+const COLUMN_PREFERENCES_KEY = "engineering:prc:requests:columns";
 
 export function PrcQueuePage({ basePath }: { basePath: string }) {
   const search = useLocationSearch();
@@ -251,6 +259,67 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
     [openDetail],
   );
 
+  /** §43 — preferências de coluna elevadas ao hero (mesma storage key):
+   * o menu Colunas fica na barra primária como em Meus Chamados de TI,
+   * sem duplicar o estado interno da DataTableSection. */
+  const columnCatalog = useMemo(
+    () => columns.map((column) => ({ key: column.key, label: column.header })),
+    [columns],
+  );
+  const {
+    visibility,
+    orderedColumns,
+    reorderColumns,
+    setColumnVisible,
+    reset: resetColumns,
+    filterColumns,
+  } = useTableColumnVisibility({
+    storageKey: COLUMN_PREFERENCES_KEY,
+    columns: columnCatalog,
+  });
+  const visibleColumns = useMemo(
+    () => filterColumns(columns),
+    [filterColumns, columns],
+  );
+
+  const refresh = useCallback(() => {
+    const controller = new AbortController();
+    void load(applied, controller.signal);
+  }, [applied, load]);
+
+  const statusFilter = prcQueueStatusFilterValue(applied);
+  const statusChips = useMemo(
+    () =>
+      PRC_QUEUE_STATUS_OPTIONS.map((option) => ({
+        id: option.value || "all",
+        label: option.label,
+        active: statusFilter === option.value,
+        onSelect: () =>
+          commit(prcQueueStateForStatusFilter(applied, option.value), {
+            replace: false,
+          }),
+      })),
+    [applied, commit, statusFilter],
+  );
+  const typeChips = useMemo(
+    () =>
+      PRC_QUEUE_TYPE_OPTIONS.map((option) => ({
+        id: option.value || "all",
+        label: option.label,
+        active: applied.type === option.value,
+        onSelect: () =>
+          commit({ ...applied, type: option.value, page: 1 }, {
+            replace: false,
+          }),
+      })),
+    [applied, commit],
+  );
+
+  const submitSearch = useCallback(() => {
+    if (searchDraft.trim() === applied.search) return;
+    commit({ ...applied, search: searchDraft.trim(), page: 1 });
+  }, [applied, commit, searchDraft]);
+
   const forbidden = error?.status === 403;
   const notFound = error?.status === 404;
 
@@ -269,20 +338,23 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
         current={PRC_COPY.breadcrumbRoot}
       />
 
+      {/* §43 — hero em padrão Meus Chamados de TI: linha 1 título+ações,
+       * linha 2 busca dominante + controles compactos (limpar, colunas,
+       * atualizar), linha 3 chips rápidos de status + tipo + modo de
+       * visualização. Semântica dos filtros e preset inalterada (§41). */}
       <EngineeringPageHero
         eyebrow="Portal Engenharia"
         title={PRC_COPY.listTitle}
         description={PRC_COPY.listDescription}
         actions={
           <>
-            {hasActiveFilters ? (
-              <EngineeringActionButton
-                variant="ghost"
-                onClick={clearFilters}
-              >
-                {PRC_COPY.clearFilters}
-              </EngineeringActionButton>
-            ) : null}
+            <EngineeringActionButton
+              variant="ghost"
+              softDisabled={loading}
+              onClick={refresh}
+            >
+              <RefreshCw size={16} aria-hidden /> {PRC_COPY.refresh}
+            </EngineeringActionButton>
             <EngineeringActionButton
               variant="primary"
               title="Abrir uma nova solicitação de cadastro ou alteração"
@@ -293,59 +365,80 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
           </>
         }
       >
-        <EngineeringFiltersRow ariaLabel="Filtros da fila de solicitações">
-          <EngineeringFilterInput
-            label={PRC_COPY.searchLabel}
-            type="search"
-            value={searchDraft}
-            onChange={setSearchDraft}
-            placeholder={PRC_COPY.searchPlaceholder}
-          />
-          {/* §41 — Status/Tipo como grupos de seleção exclusiva
-           * (SegmentToggle canônico, aria-pressed): o preset
-           * `view=pending` aparece como "Pendentes" ativo no próprio
-           * grupo, sem aviso desconectado de "Todos os status". */}
-          <div className="engineering-filter-box engineering-field delpi-ui-filter-box engineering-filter-box--wide delpi-ui-filter-box--wide">
-            <span className="engineering-field__label">
-              {PRC_COPY.filterStatusLabel}
-            </span>
-            <EngineeringSegmentToggle
-              ariaLabel={PRC_COPY.filterStatusAriaLabel}
-              idPrefix="prc-status-filter"
-              size="sm"
-              widthMode="content"
-              options={PRC_QUEUE_STATUS_OPTIONS}
-              value={prcQueueStatusFilterValue(applied)}
-              onChange={(value) =>
-                commit(prcQueueStateForStatusFilter(applied, value), {
-                  replace: false,
-                })
-              }
+        <div className="engineering-prc__queue-controls">
+          <form
+            className="engineering-prc__queue-primary"
+            aria-label="Busca e ações da lista"
+            onSubmit={(event) => {
+              event.preventDefault();
+              submitSearch();
+            }}
+          >
+            <EngineeringFilterInput
+              label={PRC_COPY.searchLabel}
+              type="search"
+              value={searchDraft}
+              onChange={setSearchDraft}
+              placeholder={PRC_COPY.searchPlaceholder}
             />
-          </div>
-          <div className="engineering-filter-box engineering-field delpi-ui-filter-box">
-            <span className="engineering-field__label">
-              {PRC_COPY.filterTypeLabel}
-            </span>
-            <EngineeringSegmentToggle
-              ariaLabel={PRC_COPY.filterTypeAriaLabel}
-              idPrefix="prc-type-filter"
-              size="sm"
-              widthMode="content"
-              options={PRC_QUEUE_TYPE_OPTIONS}
-              value={applied.type}
-              onChange={(value) =>
-                commit({ ...applied, type: value, page: 1 }, {
-                  replace: false,
-                })
-              }
+            <div className="engineering-prc__queue-primary-actions">
+              {hasActiveFilters ? (
+                <EngineeringIconButton
+                  aria-label={PRC_COPY.clearFilters}
+                  onClick={clearFilters}
+                >
+                  <FilterX size={16} aria-hidden />
+                </EngineeringIconButton>
+              ) : null}
+              {layout === "table" ? (
+                <TableColumnVisibilityMenu
+                  columns={orderedColumns}
+                  visibility={visibility}
+                  onToggleColumn={setColumnVisible}
+                  onReorderColumns={reorderColumns}
+                  onReset={resetColumns}
+                  labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
+                />
+              ) : null}
+              <EngineeringIconButton
+                aria-label={PRC_COPY.refresh}
+                onClick={refresh}
+              >
+                <RefreshCw size={16} aria-hidden />
+              </EngineeringIconButton>
+            </div>
+          </form>
+          <div className="engineering-prc__queue-secondary">
+            <EngineeringScopeChipBar
+              aria-label={PRC_COPY.filterStatusAriaLabel}
+              chips={statusChips}
             />
+            <EngineeringScopeChipBar
+              aria-label={PRC_COPY.filterTypeAriaLabel}
+              label={PRC_COPY.filterTypeLabel}
+              chips={typeChips}
+            />
+            <div className="engineering-prc__queue-layout-toggle">
+              <EngineeringSegmentToggle
+                ariaLabel="Modo de apresentação da fila"
+                idPrefix="prc-layout"
+                size="sm"
+                widthMode="content"
+                value={layout}
+                onChange={setLayout}
+                options={[
+                  { value: "table", label: "Tabela" },
+                  { value: "cards", label: "Cards" },
+                  { value: "board", label: "Kanban" },
+                ]}
+              />
+            </div>
           </div>
-        </EngineeringFiltersRow>
-        {/* PRC-REF-021-REF-01 — bandeiras compactas no hero (sem faixa externa). */}
-        {!forbidden ? (
-          <PrcFlagsOpsPanel basePath={basePath} compact />
-        ) : null}
+          {/* PRC-REF-021-REF-01 — bandeiras compactas no hero. */}
+          {!forbidden ? (
+            <PrcFlagsOpsPanel basePath={basePath} compact />
+          ) : null}
+        </div>
       </EngineeringPageHero>
 
       {forbidden ? (
@@ -404,39 +497,15 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
 
       {!forbidden && !error && list && list.items.length > 0 ? (
         <div className="engineering-prc__queue-view">
-          <div className="engineering-prc__view-toolbar">
-            <EngineeringSegmentToggle
-              ariaLabel="Modo de apresentação da fila"
-              value={layout}
-              onChange={setLayout}
-              options={[
-                { value: "table", label: "Tabela" },
-                { value: "cards", label: "Cards" },
-                { value: "board", label: "Kanban" },
-              ]}
-            />
-            <EngineeringActionButton
-              variant="ghost"
-              softDisabled={loading}
-              onClick={() => {
-                const controller = new AbortController();
-                void load(applied, controller.signal);
-              }}
-            >
-              {PRC_COPY.refresh}
-            </EngineeringActionButton>
-          </div>
-
           {layout === "table" ? (
             <DataTableSection
               title={PRC_COPY.listTitle}
-              columns={columns}
+              columns={visibleColumns}
               rows={list.items}
               rowKey={(row) => row.id}
               loading={loading}
               hideSearch
               emptyMessage={PRC_COPY.emptyFiltered}
-              columnPreferencesKey="engineering:prc:requests:columns"
               serverPagination={{
                 page: applied.page,
                 pageSize: PAGE_SIZE,

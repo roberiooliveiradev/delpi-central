@@ -31,6 +31,7 @@ import {
   createDashboardDateField,
   createDashboardNativeFormFields,
   createDashboardProgressTracker,
+  createDashboardScopeChipBar,
   createDashboardSegmentToggle,
   createDashboardUnderlineNav,
   createHostContainedModalShell,
@@ -332,6 +333,9 @@ export const EngineeringProgressTracker = createDashboardProgressTracker({
 /** Toggle segmentado (ex.: escolha Criação × Alteração no intake). */
 export const EngineeringSegmentToggle =
   createDashboardSegmentToggle(ENG_UI_PREFIX);
+export const EngineeringScopeChipBar = createDashboardScopeChipBar({
+  prefix: ENG_UI_PREFIX,
+});
 
 /** Campos de formulário nativos do kit — label+hint+shell canônicos. */
 const engineeringNativeFormFields = createDashboardNativeFormFields({
