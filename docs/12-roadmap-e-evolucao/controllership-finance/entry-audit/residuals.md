@@ -102,3 +102,20 @@ A1, D1 e a janela de 30 dias não mudaram. A verificação de PROD foi in-proces
 
 - Filial 02, 12/11/2026, executada pela CLARA: `done`, 19 NF-e casadas, 10 ocorrências (8 Média, 2 Baixa), 85 sem par, 217 lançadas fora do período, 0 XML indisponível. Sem defeito novo além de B6.
 - Filial 01, 13/11/2026, executada pela CLARA: `done`, 20 notas, 10 ocorrências, 1 Alta (é o caso A1).
+
+## Verificação da T9R3 pela CLARA (2026-11-14, PROD) — REWORK
+
+Conferido pelo conector MCP de PROD nas análises de 12/11 (filiais 01 e 02) e 13/11 (filial 01).
+PASS: A2, A3, A4, A6, A7 (estrutura), B1, B2, B3, B4, B6 (relatado), B7 (links), B8, C1, C2.
+
+| # | Sev. | Residual | Evidência (CLARA, PROD) | Correção |
+|---|---|---|---|---|
+| E1 | Alta | `read documents` mistura as «lançadas fora do período» com as notas da análise e ignora `situation` | análise de 12/11 filial 01: `documents` devolve `total: 269` (19 da análise + 250 fora do período); com `situation=divergent` devolve as mesmas 269, com `clean` e `posted_outside_period` misturadas. O in-process do report filtrou; pelo MCP o filtro é aceito e não chega ao serviço | padrão = só as notas recebidas no período (19); `situation` aceito na ponte semântica e aplicado (`clean`, `divergent`, `posted_outside_period`); contagens do summary inalteradas; teste pelo caminho MCP |
+| E2 | Média | `difference` calculada em campo de código | ocorrências de origem com `protheus_value 090`, `xml_value 200`, `difference -110.00` (e `-1012.00`, `-2012.00`, `100.00` em 13/11) | `difference` só para campo monetário/quantidade/percentual; `null` para CST, origem, CFOP, NCM, chave, série, espécie, CNPJ, UF; teste por tipo de campo |
+| E3 | Média | causa da `analyze` errada em parte das regras (A5 incompleto) | `simples.near_sublimite` sai com causa `lançamento` (é do fornecedor) | tabela regra → causa para TODAS as regras do catálogo (cadastro, lançamento, fornecedor, TES), com teste que percorre o catálogo inteiro |
+| E4 | Baixa | nome do fornecedor vazio em nota lançada fora do período | `documents`: fornecedor de código `000001`, loja `13`, `supplier_name: ""` | mesma leitura do SA2 das notas casadas; se o SA2 não tiver a loja, cair para o nome do XML |
+| E5 | Baixa | `summary.previous` sem os campos novos | `previous` tem `documents`, `occurrences`, `high`, `pending`; faltam `resolved`, `gross_checked`, `high_difference` | mesmos campos de `kpis` |
+| E6 | Baixa | `fiscal_code` vazio no CT-e ao lado de `cfop` preenchido | `read cte`: `cfop: 6353`, `fiscal_code: ""` | preencher ou remover o campo duplicado (contrato) |
+| B9 | Média | planilha com 9 das 11 abas | report T9R3 | **DECIDIDO (owner, 2026-11-14): completar as 11 abas.** Guardar na análise o comparativo item a item e as notas agrupadas (o motor já calcula: `grouped_notes: 2` em 12/11); export com «Itens Comparativo» e «Itens Agrupados» no layout da skill |
+| D2 | Média | 18 falhas anteriores na suíte da BFF | report T9R3 | **DECIDIDO (owner, 2026-11-14): entram.** Corrigir sem afrouxar asserção; suíte verde |
+| D3 | — | MCP ponta a ponta em HML | report T9R3 | **DECIDIDO (owner, 2026-11-14): aceitar sem o teste** — ACCEPTED_RESIDUAL; provas in-process e pela CLARA em PROD |
