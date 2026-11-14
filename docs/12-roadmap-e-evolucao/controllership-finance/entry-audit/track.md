@@ -54,7 +54,7 @@
 | T1 | Contrato completo + ADR-003 | DONE | docs | 14da947e67 | 2026-11-14 | backend §6 ACCEPTED; ADR-003; catálogo MCP aceito |
 | T2 | api-delpi — leitura do Protheus | DONE | DEV (banco DELPI) | 85276cc429 | 2026-11-14 | 12 testes PASS; filial 01 em 12/11/2026 = 19 (12 SPED + 7 CTE), igual ao SQL direto |
 | T3 | financial-api — Questor por período, por chave e CT-e | DONE | leitura PROD (HML sem financial-api) | af72c82f2b | 2026-11-14 | 75 testes PASS; 12/11/2026 NF-e 10 e 20, CT-e 1 e 1; KeyCte devolve a mesma linha |
-| T4 | BFF — motor de regras + paridade com a skill | DONE | teste sintético | (este commit) | 2026-11-14 | paridade com a skill PASS; D11 desligado; 8 testes PASS |
+| T4 | BFF — motor de regras + paridade com a skill | DONE | teste sintético | 36ac362300 | 2026-11-14 | paridade com a skill PASS; D11 desligado; 8 testes PASS |
 | T5 | BFF — análise, worker, persistência, rotas, LNF, exportação | TODO | | | | |
 | T6 | Back-end em HML | TODO | | | | |
 | T7 | CLARA — catálogo, análise, conhecimento, diretivas | TODO | | | | |
@@ -246,7 +246,7 @@ A amostra do owner (SF1 exportada às 14h19 de 12/11) tinha 7 notas SPED+CTE na 
 | 2026-11-14 | T1 | 14da947e67 | DONE | Contrato em backend §6 (payloads, erros, paginação, `V023`, chave estável, ids de regra, D12, D13). Catálogo da CLARA aceito no mcp. ADR-003 ACCEPTED. O quadro anterior citava o pai `19b026cef6`; o commit da T1 é `14da947e67`. |
 | 2026-11-14 | T2 | 85276cc429 | DONE | Cinco leituras em `/financeiro/entry-audit`. S2S reutiliza `stock-inventory.read` do client `controllership-finance-api`; sem escopo novo e sem flag. Contagem ao vivo, filial 01, recebimento 12/11/2026, SPED+CTE: 19, igual ao `COUNT` direto (12+7). Mês 01–14/11: 177. Filial 02 no mesmo dia: 19. Itens e livro do dia: 40 linhas cada. TES: 458. Filiais: empresa 01, UF SC e ES, CNPJ com 14 dígitos. Pytest `tests/test_financeiro_entry_audit.py`: 12 PASS. |
 | 2026-11-14 | T3 | af72c82f2b | DONE | `GET /invoices/received/export` e `GET /invoices/received/by-key/{access_key}/xml`. NF-e em `dd/MM/yyyy`; CT-e com `KeyCte`. Página curta = fim. XML de NF-e também em `/xml/original` com `documentType=nfe`. Pytest da financial-api: 75 PASS. Leitura PROD (HML sem container): 12/11/2026 filial 01 NF-e 10 e CT-e 1; filial 02 NF-e 20 e CT-e 1. `KeyCte` da única linha da filial 01 devolve 1 linha da mesma chave. |
-| 2026-11-14 | T4 | (este commit) | DONE | Motor em `domain/entry_audit` e leitor em `infrastructure/entry_audit/xml_reader.py`. D11 desligado. Paridade por construção com `scripts/auditoria.py` no mesmo CSV+XML sintético: mesmas ocorrências (total, 3 origens, ICMS não creditado), o mesmo «não apontado» de CST 090, e as mesmas notas sem par. Nota limpa e CT-e conferido não geram ocorrência. 8 PASS. Famílias sem caso nesse corpus (livro fiscal, Simples presumido, chave inválida, CFOP trocado) continuam no motor na T5, antes do ensaio com dado real. |
+| 2026-11-14 | T4 | 36ac362300 | DONE | Motor em `domain/entry_audit` e leitor em `infrastructure/entry_audit/xml_reader.py`. D11 desligado. Paridade por construção com `scripts/auditoria.py` no mesmo CSV+XML sintético: mesmas ocorrências (total, 3 origens, ICMS não creditado), o mesmo «não apontado» de CST 090, e as mesmas notas sem par. Nota limpa e CT-e conferido não geram ocorrência. 8 PASS. Famílias sem caso nesse corpus (livro fiscal, Simples presumido, chave inválida, CFOP trocado) continuam no motor na T5, antes do ensaio com dado real. |
 
 ---
 
