@@ -278,6 +278,18 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** confirmar CI e submeter ADR-002 a TI/Seguranca; coletar provas de mitigacao/isolamento antes de G3-ENGINE. Piloto G2-S1 a G2-S3 continua presencial.
 
+## 2026-11-13 | G0-SEC-S0 | CI verde, motor remoto continua bloqueado
+
+**Commit validado:** [b3972d753599](https://github.com/roberiooliveiradev/delpi-central/commit/b3972d753599afa0a46759639fe532a71dba256f).
+
+**Evidencias:** [test-it-portal-api SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43541504106/job/132282867143), incluindo `G0-SEC Delpi Remote offline gate (must remain BLOCKED)` SUCCESS, pytest unitario/HTTP SUCCESS, PostgreSQL SCM e migrations V001..V011 SUCCESS; [architecture-gate SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43541504142/job/132282868334); [audit SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43541504176/job/132282867307).
+
+**Interpretacao:** a verificacao mostrou que o Portal continua sem endpoint/servico/permissao de controle remoto e que o contrato de evidencias passa nos testes. **Nao** significa aceite humano, pentest, compliance, seguranca do MeshCentral 1.3.1 ou aprovacao de implantacao. G0-SEC segue EM REVISAO; G3-ENGINE BLOQUEADO.
+
+**Producao:** nenhuma acao executada pelo assistente no host, Docker, banco, agentes, Keycloak ou rede; apenas codigo/CI/documentos na main.
+
+**Proximo passo unico:** revisao formal de risco de seguranca e evidencia de isolamento/mitigacao antes de propor G3 em lab; piloto Windows G2-S1..G2-S3 permanece presencial.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

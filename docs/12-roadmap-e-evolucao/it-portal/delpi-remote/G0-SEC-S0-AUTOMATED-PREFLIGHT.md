@@ -54,3 +54,9 @@ Esperado: `G0-SEC BLOCKED` + testes aprovados. Se aparecer `INVALID`, corrigir a
 Todos os 12 checkpoints tecnicos permanecem sem **aceite formal**. O motor e o broker ficam bloqueados ate aprovacao registrada fora do repositorio.
 
 **Proximo passo:** revisar `G3-ADR-002-MESHCENTRAL-SECURITY.md` e submeter decisao de seguranca; prosseguir em paralelo com homologacao presencial do agente G2 quando disponivel. Nenhuma migration, API de comando, container, segredo, permissao ou frontend e implantado por este incremento.
+
+## Evidencias CI em 13/11/2026
+
+- [Pipeline API + G0-SEC preflight: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43541504106/job/132282867143), commit `b3972d753599`. Etapa obrigatoria `G0-SEC Delpi Remote offline gate (must remain BLOCKED)` SUCCESS, pytest, PostgreSQL SCM e V001..V011 SUCCESS.
+- [Architecture gate: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43541504142/job/132282868334) e [Audit: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43541504176/job/132282867307).
+- **Status continua BLOQUEADO para uso remoto:** resultados CI significam apenas que nao foi introduzida superficie remota prematura; nao sao autorizacao de rede, install MeshCentral nem comprovacao de mitigacao de exploit.
