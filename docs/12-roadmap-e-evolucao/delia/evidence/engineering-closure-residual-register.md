@@ -1822,3 +1822,11 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT2-MODEL-DECLARATION-LOOPS | OPEN_LOW | honest outcomes only |
 
 **NEXT=`COORDINATION_C3_T2_INT2_FINAL_ACCEPTANCE_DECISION`**
+
+### 2026-11-14 — Residual de arquitetura cognitiva e aceite do INT-2 (Doc 335)
+
+- **PRODUCT_TARGET_CONFIRMED:** quatro Agents especialistas cognitivos (Compreensão, Investigação, Suficiência, Síntese) como direção PO; colaboração por handoff tipado. **Fato de runtime:** Agent Pydantic AI único é baseline histórico, nenhum Agent adicional comprovado. Diferença `TARGET != IMPLEMENTED` explícita.
+- **ARCHITECTURE_DECISION_REQUIRED:** avaliação de divisão física (baseline único versus variante mínima), critérios de outcome/generalização/safety/custo/latência, interfaces/owners, confidencialidade e requisitos de Abstraction Gate do Doc 293. Não abrir implementação automaticamente.
+- **INT2_FINAL_ACCEPTANCE:** PENDING/INCONCLUSIVE (Doc334); falta uma decisão bounded com critérios específicos de compreensão. `required_args` model-declared é verificado contra a invocação, mas declaração integral do escopo pedido não é garantida universalmente; distinguir risco cognitivo de gate de suficiência INT-3. Reprovação material e necessidade de implementação devem ser demonstradas antes de rework.
+- **MULTIPAGE_POSITIVE_EVAL_CURRENT_SHA:** PENDING; validações determinísticas e trace positivo histórico não equivalem a reexecução positiva no SHA atual; falha intermitente de autenticação pertence ao ambiente, não é prova de defeito cognitivo.
+- **NEXT:** `COORDINATION_C3_T2_INT2_BOUNDED_ACCEPTANCE_AND_FOUR_AGENT_TARGET_RECONCILIATION`; `PHASE_ADVANCEMENT=NO`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`. Fonte: [Documento 335](../corrections/mcp-contextual-intelligence-orchestration/335-c3t2-four-cognitive-specialist-agents-po-product-direction-and-int2-resumption.md).
