@@ -27,12 +27,13 @@
 | 5 | `SemicircleProgressGauge` | evoluir | `components/charts/` | P02 (conformidade) |
 | 6 | `HorizontalValueBars` | evoluir | `components/charts/` | P02 (fornecedores, severidade, TES) |
 | 7 | `ComparativeAreaChart` | evoluir | `components/charts/` | P02 (por dia) |
+| 8 | `utils/periodPreset` + `QuickPeriodSelector` | evoluir | `utils/`, `components/layout/` | P01 (atalhos novos) |
 
 ---
 
 ## 1. `PeriodRangeFilter` — novo
 
-Filtro de período reutilizável: atalhos (Este mês, Mês anterior…) mais datas De/Até. Compõe o que já existe — `QuickPeriodSelector`, `DateField` e as funções de `utils/periodPreset.ts` (`resolvePeriodPreset`, `detectPeriodPreset`) — sem duplicar a lógica de datas. Fuso: `America/Sao_Paulo`, como o util.
+Filtro de período reutilizável: atalhos (Hoje, Ontem, Esta semana, Semana passada, Últimos 7 dias, Este mês, Mês anterior…) mais datas De/Até. Compõe o que já existe — `QuickPeriodSelector`, `DateField` e as funções de `utils/periodPreset.ts` (`resolvePeriodPreset`, `detectPeriodPreset`) — sem duplicar a lógica de datas. Fuso: `America/Sao_Paulo`, como o util.
 
 ### Props
 
@@ -285,10 +286,50 @@ Com `onPointSelect`, os pontos do eixo X ficam navegáveis por teclado (setas es
 
 ---
 
+## 8. `utils/periodPreset` e `QuickPeriodSelector` — evoluir
+
+O usuário escolhe qualquer período: hoje, ontem, a semana, a semana passada, os últimos 7 dias, o mês. O util de períodos (`utils/periodPreset.ts`) hoje tem `today`, `this_week`, `this_month`, `last_month`, `this_quarter`, `this_year`, `last_12_months`, `custom`. Faltam três atalhos.
+
+### Mudança
+
+```ts
+export const PERIOD_PRESET_IDS = [
+  "today",
+  "yesterday",      // NOVO: dia anterior
+  "this_week",
+  "last_week",      // NOVO: segunda a domingo da semana anterior
+  "last_7_days",    // NOVO: hoje e os 6 dias anteriores
+  "this_month",
+  "last_month",
+  "this_quarter",
+  "this_year",
+  "last_12_months",
+  "custom",
+] as const;
+```
+
+- `resolvePeriodPreset` e `detectPeriodPreset` passam a tratar os três ids, no fuso `America/Sao_Paulo`, como os demais. Semana começa na segunda-feira (o mesmo critério do `this_week` atual — confirmar no código antes de mudar).
+- **Para não mudar quem já usa:** `PERIOD_PRESET_OPTIONS` (a lista que o `QuickPeriodSelector` mostra) **continua com os itens de hoje**. Os novos só aparecem para quem pedir.
+
+### `QuickPeriodSelector` — prop nova
+
+```ts
+export type QuickPeriodSelectorProps = {
+  // …props atuais sem mudança
+  presets?: readonly PeriodPresetId[];   // NOVO: quais atalhos mostrar e em que ordem; padrão = lista atual
+};
+```
+
+O `PeriodRangeFilter` (§1) repassa o seu `presets` para o `QuickPeriodSelector`.
+
+### Testes mínimos
+
+Cada atalho novo nas viradas de semana, mês e ano; `detectPeriodPreset` reconhece os novos; sem `presets`, o `QuickPeriodSelector` mostra exatamente as opções de hoje (caracterização).
+
 ## Ordem de execução sugerida (E5.2 e E5.3 do planejamento)
 
-1. Testes de caracterização dos quatro componentes evoluídos (§4–§7) passando no código atual.
-2. Evoluções §4–§7, com os testes novos.
+1. Testes de caracterização dos componentes evoluídos (§4–§8) passando no código atual.
+2. Evoluções §4–§8, com os testes novos.
 3. Componentes novos §1–§3, com demos no catálogo.
 4. Adapters `Cf*` no Portal (doc 00, regra 3).
 5. Regressão: suíte do plugin-ui + build/typecheck dos consumidores de cada componente evoluído.

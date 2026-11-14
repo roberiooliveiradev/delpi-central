@@ -45,7 +45,7 @@ Limites do AS-IS: trabalho manual a cada execução; SF4 pode estar desatualizad
 | D5 | Navegação | página própria **«Auditoria de entradas»**, com atalho a partir do Fechamento mensal (abre já com o mês da competência) | recomendação — confirmar |
 | D6 | CLARA executa a auditoria | a CLARA tem acesso a todas as funcionalidades e audita as notas **num comando do usuário**; `entry_audit.run`, `resolve` e `reopen` são diretos (sem prepare/confirmação) | **DECIDIDO** (owner, 2026-11-13); execução direta proposta — confirmar |
 | D10 | Frequência | auditoria **sob demanda, em qualquer dia**; sem rotina mensal fixa nem agendamento | **DECIDIDO** (owner, 2026-11-13) |
-| D8 | Recorte da análise | **período livre (De/Até)** escolhido pelo usuário, no lugar da competência fixa; filiais e tipos de documento como filtros da execução; os demais como filtros da análise | **DECIDIDO** (owner, 2026-11-13) |
+| D8 | Recorte da análise | **período livre escolhido pelo usuário**, de qualquer tamanho: hoje, ontem, esta semana, a semana passada, os últimos 7 dias, o mês, o mês anterior ou De/Até livre — no lugar da competência fixa. Não há período padrão imposto: quem pede escolhe; filiais e tipos de documento como filtros da execução; os demais como filtros da análise | **DECIDIDO** (owner, 2026-11-13) |
 | D9 | Componentes | dashboard com `@delpi/plugin-ui`; primitivos novos criados no plugin-ui e importados pelo Portal; o HTML do Raio-X não é copiado | **DECIDIDO** (owner, 2026-11-13) |
 | D7 | Execução | assíncrona, por um worker dentro da BFF (padrão do job de notificações no `lifespan`), uma análise por período com uma execução por filial | recomendação — confirmar |
 
@@ -130,6 +130,7 @@ Lançar ou corrigir notas no Protheus; alterar TES ou cadastro de fornecedor; su
 
 | Data | Evento |
 |---|---|
+| 2026-11-13 | Owner: o usuário escolhe qualquer período (hoje, ontem, semana, mês ou datas livres). Atalhos novos no `PeriodRangeFilter` e no util de períodos do plugin-ui; a CLARA converte o período dito em datas e pergunta quando ele não for dito. |
 | 2026-11-13 | Plano reorganizado na pasta `entry-audit/` (plan, backend, frontend, mcp, reference, planning). |
 | 2026-11-13 | Plano criado. D4 decidida pelo owner (tudo com `controllership-finance.access`). D1, D2, D3 e D5 com recomendação, aguardando confirmação. Skill anexada como referência para o porte. |
 | 2026-11-13 | Conhecimento e capacidades da CLARA organizados em [mcp/README.md](./mcp/README.md): domínio `controllership`, 16 fichas, catálogo, diretivas e 7 perguntas ao owner. |

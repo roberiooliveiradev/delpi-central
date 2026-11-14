@@ -18,7 +18,7 @@ Entradas possíveis:
 
 ## 2. Estado na URL
 
-`preset`, `from`, `to`, `basis`, `branches`, `docs`, `analysis` (análise em andamento acompanhada). Padrão ao abrir sem parâmetros: `preset=last_month`, `basis=received`, `branches=` todas as filiais permitidas, `docs=nfe,cte`.
+`preset`, `from`, `to`, `basis`, `branches`, `docs`, `analysis` (análise em andamento acompanhada). Ao abrir sem parâmetros, o formulário vem com `preset=this_month` (este mês até hoje) só como ponto de partida — o usuário escolhe o período que quiser, de um dia a um ano; `basis=received`, `branches=` todas as filiais permitidas, `docs=nfe,cte`.
 
 ## 3. Estrutura e dimensionamento
 
@@ -74,7 +74,7 @@ Campos dentro da barra, nesta ordem:
 
 | Campo | Componente | Props principais |
 |---|---|---|
-| Período | **`PeriodRangeFilter`** — novo (doc 04 §1) | `value={{preset, from, to}}`, `onChange`, `presets={["this_month","last_month","this_quarter","custom"]}`, `referenceLabel="Recebimento"`, `maxRangeDays={366}`, `required` |
+| Período | **`PeriodRangeFilter`** — novo (doc 04 §1) | `value={{preset, from, to}}`, `onChange`, `presets={["today","yesterday","this_week","last_week","last_7_days","this_month","last_month","custom"]}`, `referenceLabel="Recebimento"`, `maxRangeDays={366}`, `required`. Atalhos: Hoje · Ontem · Esta semana · Semana passada · Últimos 7 dias · Este mês · Mês anterior · Personalizado |
 | Data de referência | `FilterSelectField` | `label="Data de referência"`, `options=[{value:"received",label:"Recebimento"}]`, `disabled` (só recebimento na 1ª versão; o campo fica visível para deixar claro o critério) |
 | Filiais | `CfMultiSelectField` (← `MultiSelectField`) | `label="Filiais"`, `options` da BFF (filiais permitidas, rótulo «Matriz (01)», «Filial (02)»), `selectedValues`, `showSelectedTags={false}`, `showBulkActions`, `emptyLabel="Todas"` |
 | Documentos | `CfMultiSelectField` | `label="Documentos"`, `options=[NF-e, CT-e]`, `selectedValues`, mínimo 1 |

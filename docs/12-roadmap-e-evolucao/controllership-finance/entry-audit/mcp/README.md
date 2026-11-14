@@ -90,7 +90,7 @@ Cada entrada tem `description` curta no catálogo e contrato em `get_context(top
 
 Proposta de bloco a acrescentar às instruções do servidor (PT-BR na conversa; o texto técnico do bloco segue o idioma atual das instruções):
 
-1. **Pedido de auditoria** («audita as entradas», «confere as notas de outubro»): a auditoria é **sob demanda, em qualquer dia** (decisão do owner): chamar `execute entry_audit.run` com o período pedido e todas as filiais permitidas; se o período não foi dito, usar o padrão definido pelo owner (§7, P1) e dizer qual usou. Dizer que a execução começou; acompanhar com `read entry_audit.analysis` até `done`/`failed`; não inventar resultado parcial.
+1. **Pedido de auditoria** («audita as entradas», «confere as notas de outubro»): a auditoria é **sob demanda, em qualquer dia** (decisão do owner): chamar `execute entry_audit.run` com o período pedido e todas as filiais permitidas; **o período é sempre o que o usuário escolher**, de qualquer tamanho: converter o que ele disse em datas no fuso `America/Sao_Paulo` («hoje», «ontem», «esta semana», «semana passada», «últimos 7 dias», «este mês», «mês passado», «outubro», «de 05/11 a 12/11») e repetir as datas na resposta; se ele não disse o período, **perguntar** numa frase, oferecendo os atalhos (hoje, ontem, esta semana, este mês, mês anterior), em vez de supor. Dizer que a execução começou; acompanhar com `read entry_audit.analysis` até `done`/`failed`; não inventar resultado parcial.
 2. **Apresentar o resultado** (formato da skill): uma linha com o casamento (notas e CT-e casados, quantas sem divergência, filiais, período) → **o que pede ação** (Alta), agrupado **pela causa** (a TES ou o cadastro que gera o erro), com fornecedor, NF e valor → **corrigir/verificar** (Média) → **sem impacto** (Baixa) numa frase → notas sem par só as que não se explicam por período. O bloco «Não apontado» só se o usuário perguntar.
 3. **Explicar o dashboard**: usar `summary`, `daily` e `breakdowns` da mesma análise e filtros que o usuário está vendo; dizer o que cada número conta (ficha AE-13).
 4. **Direcionamentos**: sugerir a correção certa para cada causa (ex.: cadastrar o fornecedor no Configurador de Tributos; corrigir a TES X; pedir o XML que falta), citando a ficha da regra. Recomendação é RECOMMENDATION, nunca fato.
@@ -115,7 +115,7 @@ Proposta de bloco a acrescentar às instruções do servidor (PT-BR na conversa;
 
 | # | Pergunta | Onde entra |
 |---|---|---|
-| P1 | A auditoria é sob demanda, em qualquer dia (**respondido**, 2026-11-13). Falta: quando o usuário não diz o período, o padrão é **mês corrente até hoje** ou **mês anterior**? | diretiva 1 |
+| P1 | ~~Período padrão~~ — **respondido** (2026-11-13): sob demanda, em qualquer dia, e o usuário escolhe o período (hoje, ontem, semana, mês ou datas livres). Sem período dito, a CLARA pergunta. | diretiva 1 |
 | P2 | Quem corrige cada tipo de erro na Delpi (lançamento fiscal, cadastro de fornecedor, cadastro de TES, compras)? | campo «Quem corrige» das regras |
 | P3 | ~~Prazo fixo no mês~~ — **respondido**: não há rotina fixa; a auditoria roda quando o usuário precisar. | AE-00 |
 | P4 | Há outras regras da empresa que a skill ainda não tem (casos que a contabilidade aponta e que não são erro, ou o contrário)? | AE-09 |
@@ -127,5 +127,6 @@ Proposta de bloco a acrescentar às instruções do servidor (PT-BR na conversa;
 
 | Data | Evento |
 |---|---|
+| 2026-11-13 | Owner: o usuário escolhe qualquer período; a CLARA converte o que foi dito em datas e pergunta quando não for dito (P1 respondida). |
 | 2026-11-13 | Owner: auditoria sob demanda, qualquer dia (P3 respondida; P1 parcial). Movido para `entry-audit/mcp/`. |
 | 2026-11-13 | Organização inicial do conhecimento e das capacidades da CLARA para a auditoria de entradas. |

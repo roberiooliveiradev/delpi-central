@@ -107,7 +107,7 @@ Filtros que mudam o que se vê ficam na query string, para F5 e link compartilh�
 | Parâmetro | Exemplo | Página |
 |---|---|---|
 | `from`, `to` | `2026-10-01`, `2026-10-31` | 01 |
-| `preset` | `last_month` | 01 |
+| `preset` | `today` \| `yesterday` \| `this_week` \| `last_week` \| `last_7_days` \| `this_month` \| `last_month` \| `custom` | 01 |
 | `basis` | `received` | 01 |
 | `branches` | `01,02` | 01 |
 | `docs` | `nfe,cte` | 01 |
