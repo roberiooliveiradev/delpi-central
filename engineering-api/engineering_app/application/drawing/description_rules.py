@@ -17,7 +17,8 @@ from dataclasses import dataclass
 _MP_GROUPS: dict[str, str] = {
     "1001": "CABO", "1002": "CABO", "1003": "CABO", "1004": "CABO",
     "1005": "CABO", "1006": "CABO", "1007": "CABO", "1008": "TERM",
-    "1009": "ISOLADOR", "1011": "ETIQUETA|ANILHA", "1012": "TUBO",
+    "1009": "ISOLADOR|INSERTO|CONECTOR",
+    "1011": "ETIQUETA|ANILHA|CARTÃO|CARTAO", "1012": "TUBO",
     "1013": "TERMOENCOLHIVEL", "1015": "PRENSA", "1016": "RESISTOR",
     "1025": "TERMISTOR", "1050": "TERMOENCOLHIVEL",
 }

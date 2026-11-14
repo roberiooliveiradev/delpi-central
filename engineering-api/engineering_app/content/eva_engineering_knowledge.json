@@ -286,7 +286,7 @@
      "limitations": "-"
     },
     {
-     "rule_id": "CMP-NO-BOM-INVENT",
+     "rule_id": "CMP-NO-BOM_INVENT",
      "owner": "engineering-api",
      "source": "contrato EVA",
      "version": "vigente",

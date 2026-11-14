@@ -241,3 +241,25 @@ def test_registry_exposes_drawing_analysis_analyze():
     assert len(entries) == 1
     assert entries[0].tool == "analyze"
     assert "product_code" in entries[0].fields
+
+
+def test_mp_1009_heterogeneous_subgroups():
+    """Norma: grupo 1009 tem subgrupos Isoladores/Inserto/Conectores."""
+    for desc in (
+        "CONECTOR RECEPTACULO 2 VIAS PT SUPERSEAL 1,5MM2",
+        "CONECTOR RECEPTACULO 3 VIAS VM AR PT SUPERSEAL",
+        "INSERTO FEMEA 10 POLOS HAN D 0,14-2,50MM2 CRIMP UL",
+        "ISOLADOR NYLON RETO 6,3 PT UL94 V2",
+    ):
+        chk = validate_mp_description("10090316", desc)
+        assert chk.status == "PASS", (desc, chk.summary)
+
+
+def test_mp_1009_still_warns_wrong_family():
+    chk = validate_mp_description("10090316", "RESISTOR FIXO 10K")
+    assert chk.status == "WARNING"
+
+
+def test_mp_1011_accepts_cartao():
+    chk = validate_mp_description("10119999", "CARTAO PVC BR 10X20MM")
+    assert chk.status == "PASS"

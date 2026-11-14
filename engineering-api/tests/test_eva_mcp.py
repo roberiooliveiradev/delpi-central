@@ -1206,3 +1206,30 @@ def test_act_destructive_classes_need_tier_flags(monkeypatch) -> None:
         )
     )
     assert not result.is_error
+
+
+
+def test_knowledge_g6_topic_in_catalog_and_enum():
+    from engineering_app.interface.mcp import semantic_bridge
+    doc = semantic_bridge._knowledge_document()
+    topics = doc.get("topics", {})
+    assert "product.drawing_bom_comparison" in topics
+    assert "product.drawing_bom_comparison" in semantic_bridge.knowledge_topics()
+    entry = topics["product.drawing_bom_comparison"]
+    rule_ids = {r["rule_id"] for r in entry["rules"]}
+    for required in (
+        "CMP-MATCH", "CMP-DRAWING-ONLY", "CMP-BOM-ONLY",
+        "CMP-PARENT-MISMATCH", "CMP-INCONCLUSIVE",
+        "CMP-OCR-AMBIGUITY", "CMP-NO-BOM_INVENT",
+        "CMP-EXPLAIN-STRUCTURE",
+    ):
+        assert required in rule_ids
+    explain = next(r for r in entry["rules"] if r["rule_id"] == "CMP-EXPLAIN-STRUCTURE")
+    for field in ("OBSERVATION", "EVIDENCE", "INTERPRETATION", "CAUSES", "VERIFICATION"):
+        assert field in explain["criterion"]
+
+
+def test_knowledge_enum_matches_catalog():
+    from engineering_app.interface.mcp import semantic_bridge
+    doc = semantic_bridge._knowledge_document()
+    assert set(semantic_bridge.knowledge_topics()) == set(doc["topics"].keys())

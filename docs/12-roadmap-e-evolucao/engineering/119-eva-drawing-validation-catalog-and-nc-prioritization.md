@@ -3844,3 +3844,50 @@ Testes: 118 PASS (`test_eva_mcp` + comparadores).
 `G6_GATE=PARTIAL(knowledge+comparator verified)` ·
 `ENGINEERING_KNOWLEDGE_GATE=PASS(topic served)` ·
 `MCP_EXPLANATION_GATE=PENDING_CONTRACT` · `VAL01_COMPLETED=false`.
+
+## §87 — G6 rework: exposição MCP + regra 1009/1011 normativa (2026-11-13)
+
+**TASK_ID:** `EVA-G6-MCP-KNOWLEDGE-EXPLANATION-REWORK-FULL-VALIDATION-PROD-01`
+Defeitos reportados em teste real via ChatGPT connector (produto 90264135).
+
+**DEFECT-01 — tópico `product.drawing_bom_comparison` rejeitado.**
+First loss: **imagem prod `e3fc852e` construída em `0601e0002c`,
+anterior ao catálogo v1.4** — container servia JSON v1.3 e o enum
+publicado não continha o tópico. Backend já é correto em HEAD:
+`knowledge_topics()` deriva o enum direto do catálogo
+(`server.py::_param_enum`), sem enum estático. Não era falha de
+schema do cliente nem patch artificial necessário — remediação =
+deploy da imagem corrente + refresh do schema no conector ChatGPT
+(etapa do cliente, documentada). Guard adicionado:
+`test_knowledge_enum_matches_catalog` (enum ≡ catálogo sempre).
+
+**DEFECT-02 — falsos positivos de descrição no grupo 1009.**
+First loss: `_MP_GROUPS["1009"]="ISOLADOR"` ignorava a norma real.
+`Normas_Tecnicas_DELPI.md` (company-knowledge) define **3 subgrupos
+no grupo 1009** — Isoladores (`ISOLADOR`), Inserto (`INSERTO`) e
+Conectores (`CONECTOR`) — e 1011 aceita `ANILHA|ETIQUETA|CARTÃO`.
+Fix: mapa atualizado para a união normativa de prefixos por grupo
+(não por código individual; `CARTAO` sem acento também aceito —
+descrições TOTVS são não-acentuadas). Os três códigos observados
+(`10090316/17`, `10090926` = `CONECTOR RECEPTACULO … SUPERSEAL`)
+passam a `PASS`; `RESISTOR` em 1009 continua `WARNING`.
+RED→GREEN: `test_mp_1009_heterogeneous_subgroups`,
+`test_mp_1009_still_warns_wrong_family`, `test_mp_1011_accepts_cartao`.
+
+**DEFECT-03 — explicação.** Contrato já vigente: findings estruturados
+do `analyze` (observation/evidence/severity/recommended_correction) +
+tópico `product.drawing_bom_comparison` servido pela tool `knowledge`
+(regras CMP-* + `CMP-EXPLAIN-STRUCTURE`). Gate §9 do mandato: findings
++ knowledge atendem sem nova superfície MCP — extensão dedicada segue
+`PENDING_CONTRACT` (sem necessidade demonstrada ainda).
+
+**DEFECT-04 — texto≠visual.** Já tratado: `drawing_analysis_service`
+R5.1 rotula ausência textual como `text_coverage_limitation`
+(`severity=info`, `confidence=low`, "indício, não divergência").
+Nenhuma alteração necessária; evidência confirmada no código.
+
+**Regressão do escopo:** 360 testes — 359 PASS, 1 falha
+preexistente/ambient `test_pi_with_children_flattened_as_parent_block`
+(exige `10110676` IDENTIFIED, mas `AG|16` é o controle negativo
+fail-closed UNKNOWN por contrato — não relacionada ao diff).
+WIP alheio (delia-api/contracts.py) preservado.
