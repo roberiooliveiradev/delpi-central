@@ -1091,3 +1091,15 @@ E01 sete campos no card **PASS** (subchecks id/type/requester/officialCode/creat
 **Deploy HML:** `delpi-hml-engineering-api` imagem `sha256:c47ec4f9bac024e72c501206ad051aee45ab68effabdfcc6e2ca3dbb5208c514`; `delpi-hml-engineering` imagem `sha256:f48399b4ab43dedf5a16a14d073f18b7a7ff1a88c32e692ea05523c600f75f9f`; 22/22 containers healthy. Docs atualizados: contrato §16 e contrato de leitura, regras canônicas §§13–14, wireframe PRC-REF-025 §J.
 
 **Estado:** `IMPLEMENTED / PROVEN_HML / TECHNICAL_VALIDATION_PASS / PO_VISUAL_ACCEPTANCE_PENDING / PRD_NOT_AUTHORIZED`.
+
+## 58. Coordination — validação Engineering API READ/COMPARE sem alteração TOTVS (14/11/2026)
+
+**Decisão expressa do PO:** nenhuma modificação de cadastro oficial no TOTVS para testar esta etapa — não criar massa por escrita em HML ou PRD. Alteração de produto no ERP somente pelo usuário competente, após conclusão de toda implementação e autorização de produção; a homologação operacional real da correspondência será feita nessa etapa futura pelo usuário. Nenhum agente tem autorização de executar alteração no TOTVS ou transação de conclusão produtiva para teste.
+
+**Gate que deve ser provado agora:** Engineering API invoca o adapter oficial de leitura (`_reader.read_product`) e compara valores esperados da solicitação (campos técnicos + fornecedores) com resposta autorizada; `matched` integral permite avançar às validações de conclusão/transação conforme CAS/AuthZ/freshness, enquanto `mismatched`, `unverifiable`, fonte indisponível, not_found, forbidden, timeout, contract_error impedem concluir e publicar. Capturar matriz por campo e testes positivos/negativos em serviço/HTTP, com doubles/fixtures para cenários que não existem na base real; usar somente GET/read real quando permitido para provar conectividade e mapeamento. Não afirmar que fixture equivale a fluxo real TOTVS.
+
+**Inspeção de código verificada pela Coordination:** `engineering-api/engineering_app/application/use_cases/product_registration/service.py::_complete_with_official_verification` chama `self._reader.read_product`, rejeita `status != available`, compara via `self._compare`, persiste evidência de divergência e só monta `result=matched` quando `all_ok`; a operação de publicação ocorre depois desse gate. Estrutura comprovada no código, não cobertura de todos os campos nem E2E de alteração em TOTVS.
+
+**Semântica:** matched não prova mudança nova no ERP; R01 V1 baseline, R02 no-op, R03 Vn+1 por diff real continuam. O teste de publicação com edição do ERP por usuário será na etapa final em PRD **após autorização separada de release/ensaio**, sem writes de agente. `TOTVS_REAL_WRITE_E2E=DEFERRED_BY_PO`, não `FAIL`.
+
+**Próximo pacote recomendado:** auditoria fechada da matriz de campos, contrato de adapter/normalização, guards fail-closed, provas de leitura não mutável real quando disponível, testes memory/Postgres/API mockada de match/mismatch/unverifiable/erro/replay, relatório de lacunas e docs. Não gerar implementação de alteração no TOTVS. `PRD_DEPLOY=NOT_AUTHORIZED`.
