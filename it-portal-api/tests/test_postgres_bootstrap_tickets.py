@@ -7,7 +7,9 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from tests.test_postgres_integration import pg_client, _sql
+# Fixture definitions live in the integration module; dependencies must be imported
+# explicitly so pytest resolves the whole database -> migrated -> pg_client chain.
+from tests.test_postgres_integration import database, migrated, pg_client, _sql
 from it_portal_app.application.ports import Actor
 from it_portal_app.application.workstation_identity_service import device_client_id
 from it_portal_app.domain.errors import ConflictError

@@ -452,6 +452,17 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** confirmar CI de P1 e projetar attestation no Windows piloto com desenho de transferencia de ticket seguro em ambiente HML; so depois considerar endpoints, sempre protegidos por gates.
 
+## 2026-11-14 | G2-S4-S2b-P1-FIX | fixtures de integracao PostgreSQL
+
+**Objetivo:** corrigir falha real do CI anterior antes de avancar no G2-S4-S2b-P2.
+**Arquivos alterados:** `tests/test_postgres_bootstrap_tickets.py`, roadmap, runbook P1 e diario.
+**Commit/issue:** issue #179; commit desta entrega no historico da main.
+**Testes executados e evidencias:** CI anterior [run 43646928157](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43646928157) mostrou 4 erros de setup (`fixture 'migrated' not found`) por importar `pg_client` de outro modulo sem suas dependencias `migrated` e `database`. Corrigidos os imports explicitos; aguarda novo CI, sem alegar PostgreSQL verde antes do resultado.
+**Estado de producao / implantacao:** apenas testes/documentacao, sem deploy, Keycloak, Windows ou mudanca de DB.
+**Riscos e limitacoes:** somente CI real pode mostrar a proxima falha eventual. Nao inferir homologacao.
+**Rollback:** reverter commit de teste/documentacao sem alterar migrations.
+**Proximo passo unico:** confirmar integracao V014 no workflow; entao iniciar P2 de verificacao criptografica offline do dispositivo.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

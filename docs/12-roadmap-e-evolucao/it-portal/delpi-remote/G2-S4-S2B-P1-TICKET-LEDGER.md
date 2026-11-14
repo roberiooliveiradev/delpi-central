@@ -34,3 +34,7 @@ Critérios: 19 testes unitarios PASS; testes Postgres reais com V014, expiracao,
 **Proximo passo:** validar CI, depois desenhar protocolo de attestation em HML com TPM/mTLS ou alternativa equivalente aprovada pela Seguranca antes da ativacao real.
 
 [Roadmap](README.md) | [Preflight P0](G2-S4-S2B-PREFLIGHT.md) | [Issue #179](https://github.com/roberiooliveiradev/delpi-central/issues/179)
+
+## Correcao de fixtures de CI (14/11/2026)
+
+O primeiro CI V014 [43646928157](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43646928157) apresentou quatro erros de **setup de pytest**: `migrated` nao estava disponivel no modulo `test_postgres_bootstrap_tickets.py`. Foram importadas explicitamente as fixtures `database` e `migrated` juntamente com `pg_client`. Testes de banco continuam pendentes de novo workflow apos o fix; nao declarar V014 validada pelo CI anterior.
