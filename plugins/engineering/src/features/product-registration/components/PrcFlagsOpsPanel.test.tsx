@@ -26,6 +26,12 @@ describe("PrcFlagsOpsPanel — painel ancorado via portal oficial", () => {
     expect(SRC).toContain("horizontalAlign");
   });
 
+  it("propaga o escopo de tokens do MFE ao portal (tema claro/escuro)", () => {
+    // Sem portalScopeClassName os --en-* definidos em .portal-engineering
+    // não alcançam o painel no document.body — regressão de tema.
+    expect(SRC).toContain("portalScopeClassName={ENGINEERING_PORTAL_SCOPE}");
+  });
+
   it("modo não-compacto mantém renderização inline", () => {
     expect(SRC).toMatch(
       /compact \? \([\s\S]*EngineeringAnchoredPanel[\s\S]*\) : \([\s\S]*engineering-prc__flags-ops-body/,

@@ -6,6 +6,7 @@ import { Flag } from "lucide-react";
 
 import { HomeApiError } from "../../../api/httpClient";
 import {
+  ENGINEERING_PORTAL_SCOPE,
   EngineeringActionButton,
   EngineeringAnchoredPanel,
   EngineeringFilterInput,
@@ -308,6 +309,7 @@ export function PrcFlagsOpsPanel({
             className="engineering-prc__flags-ops-body engineering-prc__flags-ops-body--portal"
             role="dialog"
             aria-label="Campos sinalizados"
+            portalScopeClassName={ENGINEERING_PORTAL_SCOPE}
             preferredPlacement="bottom"
             horizontalAlign="end"
             gap={6}
