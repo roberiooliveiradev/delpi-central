@@ -1,11 +1,11 @@
-# 168 · Página 01 — Entrada e execução
+# Entry audit · Front-end · Página 01 — Entrada e execução
 
 | Campo | Valor |
 |---|---|
 | Rota | `/apps/controllership-finance/entry-audit` |
 | Família visual | lista / bancada de dados (padrão visual §9.1) |
 | Permissão | `controllership-finance.access` |
-| Wireframe | seção 2 do [HTML](../168-anexos/wireframes-auditoria-entradas.html) |
+| Wireframe | seção 2 do [HTML](./wireframes-auditoria-entradas.html) |
 
 ## 1. Objetivo
 

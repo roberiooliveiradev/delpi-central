@@ -1,4 +1,4 @@
-# 168 · Doc 04 — Componentes novos e evoluções no `@delpi/plugin-ui`
+# Entry audit · Front-end 04 — Componentes novos e evoluções no `@delpi/plugin-ui`
 
 | Campo | Valor |
 |---|---|
@@ -13,7 +13,7 @@
 - **Genéricos:** nada de «auditoria», «NF», «Protheus», «fornecedor» no nome, nas props ou nos textos padrão. Textos padrão em PT-BR, todos substituíveis por `labels`.
 - Seguem o padrão do kit: `prefix` (BEM, padrão `ds`/`delpi-ui`), `classNames` parcial com `…BemClasses(prefix)`, `className`, tokens de tema (claro/escuro na mesma árvore), sem cor fixa.
 - **Evolução é aditiva:** props novas opcionais; sem elas, o componente se comporta e renderiza exatamente como hoje. Antes de mudar, testes de caracterização do comportamento atual (mesmo padrão usado na evolução do `RealtimeSocketClient`, W2b da frente 167).
-- Cada componente: testes de unidade e de render (teclado, ARIA, claro/escuro), demo no catálogo (`catalog/demos/*.tsx`), export no índice da pasta e no `index.ts` do pacote, tipos exportados, linha no [mapa de reuso 30](../30-plugin-ui-reuse-map.md) (PLANNED → PROVEN).
+- Cada componente: testes de unidade e de render (teclado, ARIA, claro/escuro), demo no catálogo (`catalog/demos/*.tsx`), export no índice da pasta e no `index.ts` do pacote, tipos exportados, linha no [mapa de reuso 30](../../30-plugin-ui-reuse-map.md) (PLANNED → PROVEN).
 - Regressão: suíte do plugin-ui e build/typecheck de todos os consumidores que importam o componente evoluído.
 
 ## Resumo

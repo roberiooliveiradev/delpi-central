@@ -1,11 +1,11 @@
-# 168 · Página 03 — Detalhe da ocorrência
+# Entry audit · Front-end · Página 03 — Detalhe da ocorrência
 
 | Campo | Valor |
 |---|---|
 | Rota | `/apps/controllership-finance/entry-audit/analyses/:analysisId/occurrences/:occurrenceKey` (e `…/unmatched/:unmatchedKey` para nota sem par) |
 | Forma | painel lateral sobre o dashboard (desktop); página inteira (≤ 768px) |
 | Permissão | `controllership-finance.access` |
-| Wireframe | seção 3 do [HTML](../168-anexos/wireframes-auditoria-entradas.html) |
+| Wireframe | seção 3 do [HTML](./wireframes-auditoria-entradas.html) |
 
 ## 1. Objetivo
 

@@ -1,6 +1,6 @@
 # Portal Controladoria & Finanças — Fonte de navegação e estado
 
-> **13/11/2026 — Auditoria de entradas no Portal e na CLARA:** [Doc 168](./168-auditoria-entradas-protheus-xml-portal-clara.md) `PLAN_DRAFT`. Porta a skill `auditoria-entradas-nfe-protheus` e o painel Raio-X para uma página do Portal e para o catálogo da CLARA. D4 decidida: tudo com `controllership-finance.access`.
+> **13/11/2026 — Auditoria de entradas no Portal e na CLARA:** [`entry-audit/`](./entry-audit/README.md) (doc 168) `PLAN_DRAFT` — plano, back-end, front-end, MCP, referência e planejamento. Porta a skill `auditoria-entradas-nfe-protheus` e o painel Raio-X para uma página do Portal e para o catálogo da CLARA. D4 decidida: tudo com `controllership-finance.access`.
 
 > **13/11/2026 — Regra de trabalho:** produção acompanha a main. Funcionalidade nova entra desligada por flag e é ligada depois do ensaio HML PASS.
 

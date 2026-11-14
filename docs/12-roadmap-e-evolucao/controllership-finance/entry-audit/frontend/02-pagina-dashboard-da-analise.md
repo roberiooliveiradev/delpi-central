@@ -1,11 +1,11 @@
-# 168 · Página 02 — Dashboard da análise
+# Entry audit · Front-end · Página 02 — Dashboard da análise
 
 | Campo | Valor |
 |---|---|
 | Rota | `/apps/controllership-finance/entry-audit/analyses/:analysisId` |
 | Família visual | analítica / indicadores (padrão visual §9.3) |
 | Permissão | `controllership-finance.access` (resolver e reabrir inclusos) |
-| Wireframe | seção 1 do [HTML](../168-anexos/wireframes-auditoria-entradas.html) |
+| Wireframe | seção 1 do [HTML](./wireframes-auditoria-entradas.html) |
 
 ## 1. Objetivo
 

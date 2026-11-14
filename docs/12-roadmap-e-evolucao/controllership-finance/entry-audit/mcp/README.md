@@ -1,11 +1,11 @@
-# 168 · CLARA — conhecimento e capacidades da Auditoria de entradas
+# Entry audit · MCP (CLARA) — conhecimento e capacidades
 
 | Campo | Valor |
 |---|---|
 | Status | **PLAN_DRAFT** |
 | Data | 2026-11-13 |
-| Plano | [168](./168-auditoria-entradas-protheus-xml-portal-clara.md) · páginas em [168-paginas/](./168-paginas/00-indice-e-convencoes.md) |
-| Origem do conhecimento | skill `auditoria-entradas-nfe-protheus` ([anexo](./168-anexos/skill-auditoria-entradas-nfe-protheus/)) + regras ditas pelo owner + este plano |
+| Plano | [../plan.md](../plan.md) · back-end [../backend/README.md](../backend/README.md) · front-end [../frontend/README.md](../frontend/README.md) |
+| Origem do conhecimento | skill `auditoria-entradas-nfe-protheus` ([reference](../reference/skill-auditoria-entradas-nfe-protheus/)) + regras ditas pelo owner + este plano |
 | Baseline | HEAD `08825074` |
 
 Este documento organiza **o que a CLARA precisa saber e poder fazer** para auditar as entradas num comando, explicar o dashboard e sugerir direcionamentos. Ele separa três coisas que vivem em lugares diferentes no código:
@@ -41,7 +41,7 @@ Formato: **fichas** em markdown, no mesmo padrão das fichas R01–R15 (`fichas/
 | **AE-10** | Crédito: TES × livro fiscal | `D1_VALICM` não é crédito; ordem de decisão (SFT → TES coerente → «Depende da TES»); SPED lê o livro (C190/E110); nunca afirmar crédito indevido sem SF4/SFT | SKILL.md | `APPROVED_RULE` |
 | **AE-11** | Base legal citada | LC 123 (teto do pCredSN: Anexo II 3,944%, Anexo I 3,978% — cálculo); RICMS/SC Anexo 2 art. 15 XXVI (presumido 7%) e § 25; COPAT 84/2025 e 75/2022 | SKILL.md | **`TO_INVENTORY`** até anexar o texto oficial vigente de cada norma como fonte |
 | **AE-12** | Glossário fiscal e do Protheus | SF1, SD1, SF4 (campos que importam), SFT, SA2; TES; grupos de CFOP (insumo/revenda, consumo, ativo, frete, ST); CST, CSOSN, CRT, origem; estrutura da chave (modelo 21–22, série 23–25, número 26–34, DV módulo 11); espécies; tomador do CT-e; eventos de cancelamento | regras.md + SKILL.md | `APPROVED_RULE` |
-| **AE-13** | Como ler o dashboard | os 4 KPIs e a conta de cada um; conformidade (4 grupos); temas e severidades; comparação com o período anterior; filtros da execução × da análise; resolvido por chave estável; reexecução | docs 168-paginas 00–03 | `TARGET` → `CURRENT_IMPLEMENTATION` após E5/E7 |
+| **AE-13** | Como ler o dashboard | os 4 KPIs e a conta de cada um; conformidade (4 grupos); temas e severidades; comparação com o período anterior; filtros da execução × da análise; resolvido por chave estável; reexecução | front-end README e páginas 01–03 | `TARGET` → `CURRENT_IMPLEMENTATION` após E5/E7 |
 | **AE-14** | Como a CLARA conduz a auditoria | roteiro do §5, em forma citável (o mesmo texto, resumido, vai para as diretivas) | SKILL.md «Como apresentar» + plano | `APPROVED_RULE` |
 | **AE-15** | Casos reais | exemplos de ocorrências típicas da Delpi com a correção feita (fornecedor, NF, o que estava errado, como foi corrigido) | **owner + primeira execução real** | `TO_INVENTORY` |
 
@@ -90,7 +90,7 @@ Cada entrada tem `description` curta no catálogo e contrato em `get_context(top
 
 Proposta de bloco a acrescentar às instruções do servidor (PT-BR na conversa; o texto técnico do bloco segue o idioma atual das instruções):
 
-1. **Pedido de auditoria** («audita as entradas», «confere as notas de outubro»): chamar `execute entry_audit.run` com o período pedido e todas as filiais permitidas; se o período não foi dito, usar o padrão definido pelo owner (§7, P1) e dizer qual usou. Dizer que a execução começou; acompanhar com `read entry_audit.analysis` até `done`/`failed`; não inventar resultado parcial.
+1. **Pedido de auditoria** («audita as entradas», «confere as notas de outubro»): a auditoria é **sob demanda, em qualquer dia** (decisão do owner): chamar `execute entry_audit.run` com o período pedido e todas as filiais permitidas; se o período não foi dito, usar o padrão definido pelo owner (§7, P1) e dizer qual usou. Dizer que a execução começou; acompanhar com `read entry_audit.analysis` até `done`/`failed`; não inventar resultado parcial.
 2. **Apresentar o resultado** (formato da skill): uma linha com o casamento (notas e CT-e casados, quantas sem divergência, filiais, período) → **o que pede ação** (Alta), agrupado **pela causa** (a TES ou o cadastro que gera o erro), com fornecedor, NF e valor → **corrigir/verificar** (Média) → **sem impacto** (Baixa) numa frase → notas sem par só as que não se explicam por período. O bloco «Não apontado» só se o usuário perguntar.
 3. **Explicar o dashboard**: usar `summary`, `daily` e `breakdowns` da mesma análise e filtros que o usuário está vendo; dizer o que cada número conta (ficha AE-13).
 4. **Direcionamentos**: sugerir a correção certa para cada causa (ex.: cadastrar o fornecedor no Configurador de Tributos; corrigir a TES X; pedir o XML que falta), citando a ficha da regra. Recomendação é RECOMMENDATION, nunca fato.
@@ -115,9 +115,9 @@ Proposta de bloco a acrescentar às instruções do servidor (PT-BR na conversa;
 
 | # | Pergunta | Onde entra |
 |---|---|---|
-| P1 | Quando o usuário pede «audita as notas» sem dizer o período, qual é o padrão: **mês anterior** ou **mês corrente até hoje**? | diretiva 1 |
+| P1 | A auditoria é sob demanda, em qualquer dia (**respondido**, 2026-11-13). Falta: quando o usuário não diz o período, o padrão é **mês corrente até hoje** ou **mês anterior**? | diretiva 1 |
 | P2 | Quem corrige cada tipo de erro na Delpi (lançamento fiscal, cadastro de fornecedor, cadastro de TES, compras)? | campo «Quem corrige» das regras |
-| P3 | Até quando, no mês, as correções precisam estar feitas para não voltarem da contabilidade? | AE-00 e direcionamentos |
+| P3 | ~~Prazo fixo no mês~~ — **respondido**: não há rotina fixa; a auditoria roda quando o usuário precisar. | AE-00 |
 | P4 | Há outras regras da empresa que a skill ainda não tem (casos que a contabilidade aponta e que não são erro, ou o contrário)? | AE-09 |
 | P5 | Quais são as TES de frete com e sem crédito usadas hoje (a skill deduz pela SF4, CFOP x352)? Confirmar a TES 036 (crédito com livro Outros). | AE-05 |
 | P6 | Exemplos reais recentes (de preferência a lista que a contabilidade mandou de outubro) para semear os casos | AE-15 |
@@ -127,4 +127,5 @@ Proposta de bloco a acrescentar às instruções do servidor (PT-BR na conversa;
 
 | Data | Evento |
 |---|---|
+| 2026-11-13 | Owner: auditoria sob demanda, qualquer dia (P3 respondida; P1 parcial). Movido para `entry-audit/mcp/`. |
 | 2026-11-13 | Organização inicial do conhecimento e das capacidades da CLARA para a auditoria de entradas. |

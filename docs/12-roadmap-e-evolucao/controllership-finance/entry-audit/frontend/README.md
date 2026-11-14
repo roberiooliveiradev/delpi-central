@@ -1,13 +1,63 @@
-# 168 · Páginas da Auditoria de entradas — índice e convenções
+# Entry audit · Front-end — índice e convenções
 
 | Campo | Valor |
 |---|---|
 | Status | **DESIGN_DRAFT** (aguarda aprovação do owner) |
 | Data | 2026-11-13 |
-| Plano | [168 — Auditoria de entradas](../168-auditoria-entradas-protheus-xml-portal-clara.md) |
-| Wireframes | [168-anexos/wireframes-auditoria-entradas.html](../168-anexos/wireframes-auditoria-entradas.html) |
+| Plano | [../plan.md](../plan.md) · back-end [../backend/README.md](../backend/README.md) · MCP [../mcp/README.md](../mcp/README.md) |
+| Wireframes | [wireframes-auditoria-entradas.html](./wireframes-auditoria-entradas.html) |
 | Baseline do kit | `@delpi/plugin-ui` no HEAD `08825074` (props lidas do código) |
-| Padrões | [padrão visual dos Portais](../../../11-padroes-de-desenvolvimento/padrao-visual-portais-minha-delpi.md) · [30 — mapa de reuso do plugin-ui](../30-plugin-ui-reuse-map.md) |
+| Padrões | [padrão visual dos Portais](../../../../11-padroes-de-desenvolvimento/padrao-visual-portais-minha-delpi.md) · [30 — mapa de reuso do plugin-ui](../../30-plugin-ui-reuse-map.md) |
+
+## Visão geral do dashboard
+
+Wireframes completos: [wireframes-auditoria-entradas.html](./wireframes-auditoria-entradas.html).
+
+```text
+TopBar do Portal
+PageHero compact ─ título, período, última execução, fontes   [Exportar] [Executar / Reexecutar]
+└─ FilterBar
+   ├─ Filtros da execução: Período (preset + De/Até), Data de referência, Filiais, Documentos, Parâmetros avançados
+   └─ Filtros da análise: Severidade, Tema, Fornecedor, TES, Status, Limpar   (na URL; não reexecutam)
+ScopeChipBar ─ filtros ativos removíveis
+KPIs ×4 ─ Valor conferido · Notas sem divergência · Ocorrências pendentes · Diferença nas altas (com Δ vs período anterior)
+Linha: Notas com divergência por dia (período × anterior)   |   Conformidade (medidor + legenda clicável)
+Linha: Top 8 fornecedores                                    |   Ocorrências por tema (rosca + lista)
+Linha: Por severidade | TES com mais ocorrências | Evolução entre análises
+SectionCard ─ abas: Ocorrências | Notas casadas | Notas sem par | CT-e | TES usadas
+   └─ Pendentes / Resolvidas / Todas · busca · colunas · tabela com Resolver/Reabrir · progresso · paginação
+Pergunte à CLARA ─ sugestões prontas
+Detalhe da ocorrência ─ painel lateral: valores, por quê, o que fazer, regra, documentos, Resolver
+```
+
+Estados: primeiro acesso (sem análise, com «Análises anteriores»), execução em andamento (etapas e progresso por filial), falha parcial (uma filial falhou, a outra concluiu), vazio por filtro. Mobile: KPIs em 2 colunas, gráficos empilhados, filtros num painel, tabela em cards.
+
+Filtros vindos da skill e do painel: período (no lugar da competência fixa), filiais (matriz/filial, consolidado), severidade, tema, fornecedor, dia (clique no gráfico), status (pendente/resolvida), busca, mais tipo de documento e TES. Os parâmetros da skill (`--tes-presumido 004`, `--cfop-frete 352`) ficam em «Parâmetros avançados» com o padrão preenchido. `--cnpj`, `--uf` e `--filial` deixam de existir para o usuário: vêm do cadastro das filiais.
+
+### Componentes do `@delpi/plugin-ui` (resumo; parâmetros no doc 04)
+
+Regra: componente novo nasce no `@delpi/plugin-ui`, genérico (sem «auditoria» no nome nem na API), e é importado pelo MFE. Evoluções são aditivas, com os padrões atuais preservados e testes de caracterização antes da mudança.
+
+| Bloco | Componente | Situação | O que falta |
+|---|---|---|---|
+| Cabeçalho | `PageHero` (compact) | existe | — |
+| Período | **`PeriodRangeFilter`** = `QuickPeriodSelector` + `DateField` ×2 | **novo** | composto genérico: preset + De/Até + rótulo da data de referência |
+| Filtros | `FilterBar`, `FiltersRow`, `FilterSelectField`, `MultiSelectField`, `ClearFiltersButton` | existe | — |
+| Filtros ativos | `ScopeChipBar` | evoluir | `onRemove` por chip e «Limpar tudo» |
+| KPIs | `MetricKpiCard` + `TrendDelta` | existe | — |
+| Por dia | `ChartCard` + `ComparativeAreaChart` | evoluir | `onPointSelect` e `selectedName` (clique no dia) |
+| Conformidade | `SemicircleProgressGauge` | evoluir | legenda clicável |
+| Top fornecedores / TES | `HorizontalValueBars` | evoluir | `tone` por item e item selecionado |
+| Por tema | **`DistributionDonut`** (sobre `ChartSeriesPie`) | **novo** | rosca + lista com contagem/% e seleção |
+| Severidade | `HorizontalValueBars` | evoluir | mesma evolução (tom e seleção), para filtrar por clique |
+| Evolução | `LineSeriesChart` | existe | — |
+| Abas e status | `UnderlineNav`, `SegmentToggle` | existe | — |
+| Tabelas | `DataTableSection`, `StatusBadge`, `TablePaginationNav`, `DataRecordCard` (mobile) | existe | — |
+| Resolver na linha | **`ResolutionStatusCell`** | **novo** | Resolver / «✓ data» / Reabrir, acessível, com estado de envio |
+| Progresso resolvido | `ProgressSummaryBar` | existe | — |
+| Execução | `StateBanner`, `ProgressTracker`, `InlineLoadingProgress` | existe | — |
+| Detalhe | `DrawerShell`, `DetailCard`, `HelpTooltip` | existe | — |
+| Vazio | `EmptyGuidance` | existe | — |
 
 ## Documentos
 
@@ -28,7 +78,7 @@ Cada documento de página traz: objetivo, rota e estado na URL, dimensionamento 
 2. O MFE usa os **adapters `Cf*`** de `plugins/controllership-finance/src/app/controllershipFinanceUi.ts` quando existem (`CfPageHero`, `CfMetricKpiCard`, `CfSectionCard`, `CfStateBanner`, `CfStatusBadge`, `CfSegmentToggle`, `CfDateField`, `CfSelectField`, `CfPagePath`, `CfEmptyState`, `CfDialog`) e o kit de filtros de `cfFiltersUi.ts` e de tabela de `cfDataTableUi.tsx`.
 3. Os componentes do kit usados aqui que **ainda não têm adapter** no Portal ganham um, no mesmo arquivo, com prefixo `cf` e `CF_PORTAL_SCOPE`: `CfChartCard`, `CfComparativeAreaChart`, `CfSemicircleProgressGauge`, `CfHorizontalValueBars`, `CfBarSeriesChart`, `CfLineSeriesChart`, `CfScopeChipBar`, `CfUnderlineNav`, `CfTrendDelta`, `CfMultiSelectField`, `CfQuickPeriodSelector`, `CfProgressTracker`, `CfInlineLoadingProgress`, `CfProgressSummaryBar`, `CfDrawerShell`, `CfDetailCard`, `CfEmptyGuidance`, `CfHelpTooltip`, `CfTablePaginationNav`, e os novos do [doc 04](./04-componentes-plugin-ui-novos-e-evolucoes.md). O adapter só injeta `classNames`/`prefix`/`portalScopeClassName`; não muda comportamento.
 4. Componente que não existe nasce no `@delpi/plugin-ui`, genérico (sem «auditoria», «NF» ou «Protheus» no nome nem na API), com testes e entrada no catálogo do kit. Evolução de componente existente é **aditiva**: props novas opcionais, padrão igual ao de hoje, testes de caracterização antes.
-5. O MFE não calcula regra fiscal nem agrega número: KPIs, gráficos e contagens chegam prontos da BFF ([§4A.4 do plano](../168-auditoria-entradas-protheus-xml-portal-clara.md)).
+5. O MFE não calcula regra fiscal nem agrega número: KPIs, gráficos e contagens chegam prontos da BFF ([back-end §3.4](../backend/README.md)).
 
 ### Dimensionamento
 
