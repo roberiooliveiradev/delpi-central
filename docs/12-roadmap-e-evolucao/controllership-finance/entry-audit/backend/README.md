@@ -496,6 +496,86 @@ Uma linha de `references/regras.md`. O nome gravado na ocorrência continua o da
 
 Contadores «não apontado» não geram linha de ocorrência. O resumo soma por estes ids: `suppressed.icms_without_credit`, `suppressed.base_or_rate_without_credit`, `suppressed.ipi_without_credit`, `suppressed.cst_090`, `suppressed.cst_060`, `suppressed.header_icms_not_credited`.
 
+### 6.8 Cobertura do motor
+
+Fonte: cada linha de `references/regras.md` e cada texto que `scripts/regras.py` emite. A skill é a autoridade do comportamento; onde `regras.md` diz «Baixa» e o código só incrementa o contador, vale o código. Duas emissões não estão como linha própria em `regras.md` e entram aqui: «Desconto classificado diferente» (fica em `header.accessory_field`) e «Combustível fora do CFOP x653» (`item.fuel_cfop`).
+
+Estado deste inventário: o motor em `36ac362300` cobre 8 famílias. O rework preenche a coluna do motor, o teste positivo, o negativo e o corpus. A T4 só volta a DONE com as quatro colunas preenchidas para todas as linhas.
+
+| `rule_id` | Ocorrência na skill | `regras.py` | Motor | Teste + | Teste − | Corpus |
+|---|---|---|---|---|---|---|
+| `header.icms_above_xml` | ICMS calculado sem destaque / acima do XML | `analisar` 298–303 | a portar | pendente | pendente | pendente |
+| `header.icms_not_credited` | ICMS do XML não creditado | `analisar` 305–306 | a portar | pendente | pendente | pendente |
+| `header.icms_credit_short` | Crédito de ICMS a menor | `analisar` 310 | a portar | pendente | pendente | pendente |
+| `header.icms_base_mismatch` | Base de ICMS divergente (com ou sem ICMS conferindo) | `analisar` 312–319 | a portar | pendente | pendente | pendente |
+| `header.ipi_not_booked` | IPI destacado não escriturado / escriturado sem destaque | `analisar` 322–325 | a portar | pendente | pendente | pendente |
+| `header.series_mismatch` | Série divergente do XML | `analisar` 336–337 e 383–384 | a portar | pendente | pendente | pendente |
+| `header.total_mismatch` | Valor total / mercadorias / ICMS ST | `analisar` 326–328 | parcial | `test_total_mismatch_does_not_invent_a_goods_mismatch` | pendente | parcial |
+| `header.accessory_field` | Acessório em campo diferente; também «Desconto classificado diferente» (329), ausente como linha em `regras.md` | `analisar` 329–335 | a portar | pendente | pendente | pendente |
+| `header.issue_date_mismatch` | Data de emissão divergente | `analisar` 338–339 e 385–386 | a portar | pendente | pendente | pendente |
+| `item.amount_mismatch` | Valor do item diverge | `analisar` 572 | a portar | pendente | pendente | pendente |
+| `item.cfop_direction_swapped` | CFOP com origem trocada | `analisar` 579–580 | a portar | pendente | pendente | pendente |
+| `item.inbound_booked_as_purchase` | NF de entrada do fornecedor lançada como compra | `analisar` 576–577 | a portar | pendente | pendente | pendente |
+| `item.cfop_differs_from_issued` | CFOP diferente do documento emitido | `analisar` 574–575 | a portar | pendente | pendente | pendente |
+| `item.cfop_nature_mismatch` | Natureza do CFOP incompatível | `analisar` 581–583 | a portar | pendente | pendente | pendente |
+| `item.fuel_cfop` | Combustível fora do CFOP x653 | `analisar` 584–585 | a portar | pendente | pendente | pendente |
+| `item.st_on_non_st_cfop` | Item com ST no XML em CFOP sem ST | `analisar` 586–589 | a portar | pendente | pendente | pendente |
+| `item.st_cfop_without_st` | CFOP de ST sem ST no XML | `analisar` 590–591 | a portar | pendente | pendente | pendente |
+| `item.origin_mismatch` | Origem divergente | `analisar` 593–595 | parcial | `test_origin_mismatch_on_three_items_and_not_on_a_matching_sibling` | o mesmo teste, CST 100 | parcial |
+| `item.cst_mismatch` | CST diverge do documento | `analisar` 597–603 | parcial | `test_same_cst_difference_is_an_occurrence_when_the_tes_credits` | pendente | pendente |
+| `item.cst_suppressed` | CST 090 / 060 não apontado | `analisar` 598–601 | parcial (só 090) | `test_tes_without_credit_flags_highlighted_icms_and_suppresses_cst_090` | pendente | parcial |
+| `item.icms_above_xml` | ICMS do item sem destaque / acima do XML | `analisar` 626–629 | parcial | pendente | pendente | pendente |
+| `item.simples_credit_not_taken` | Crédito do Simples não aproveitado | `analisar` 635 | a portar | pendente | pendente | pendente |
+| `item.highlighted_icms_not_credited` | ICMS destacado não creditado; também «ICMS do XML não creditado em insumo/revenda» sem SF4 (631) | `analisar` 631 e 634–636 | parcial | `test_tes_without_credit_flags_highlighted_icms_and_suppresses_cst_090` | pendente | parcial |
+| `item.ipi_without_tes_decision` | IPI do XML não escriturado / sem destaque, sem decisão de TES | `analisar` 647–652 | a portar | pendente | pendente | pendente |
+| `item.ipi_credit_mismatch` | Crédito de IPI abaixo / acima do XML | `analisar` 648 e 651 | a portar | pendente | pendente | pendente |
+| `item.ipi_base_mismatch` | Base de IPI divergente | `analisar` 653–654 | a portar | pendente | pendente | pendente |
+| `item.st_mismatch` | ICMS ST divergente no item | `analisar` 655 | a portar | pendente | pendente | pendente |
+| `item.rate_or_base_mismatch` | Alíquota ou base de ICMS divergente com valor conferindo | `analisar` 637–642 | a portar | pendente | pendente | pendente |
+| `item.unusual_cfop_nature` | Produto com natureza de CFOP diferente do usual | `analisar` 665–673 | a portar | pendente | pendente | pendente |
+| `coherence.cfop_vs_state` | CFOP × UF do fornecedor | `internal` 542–543 | a portar | pendente | pendente | pendente |
+| `coherence.ipi_on_consumption` | Crédito de IPI em material de uso e consumo | `internal` 545–551 | a portar | pendente | pendente | pendente |
+| `coherence.icms_on_consumption_cfop` | ICMS calculado em CFOP de uso e consumo | `internal` 552–553 | a portar | pendente | pendente | pendente |
+| `coherence.icms_on_untaxed_cst` | ICMS calculado com CST sem tributação | `internal` 554–555 | a portar | pendente | pendente | pendente |
+| `simples.rate_above_cap` | Alíquota de crédito SN acima do teto | `analisar` 286–288 | a portar | pendente | pendente | pendente |
+| `simples.near_sublimite` | Fornecedor do Simples perto do sublimite | `analisar` 289–291 | a portar | pendente | pendente | pendente |
+| `simples.csosn_without_rate` | CSOSN 101/201 sem alíquota | `analisar` 292–294 | a portar | pendente | pendente | pendente |
+| `simples.presumed_wrong_tes` | Indústria do Simples (SC) fora da TES de crédito presumido | `analisar` 605–613 | a portar | pendente | pendente | pendente |
+| `simples.presumed_above_sublimite` | Crédito presumido acima do sublimite | `analisar` 614–616 | a portar | pendente | pendente | pendente |
+| `simples.presumed_rate_mismatch` | Valor diferente do crédito presumido de 7% | `analisar` 617–619 | a portar | pendente | pendente | pendente |
+| `simples.presumed_without_right` | TES de crédito presumido sem direito | `analisar` 620–625 | a portar | pendente | pendente | pendente |
+| `unmatched.xml_only` | Só no XML, com a situação da skill (cancelada, saída própria, formulário próprio, outro destinatário, em trânsito, CT-e e tomador) | `analisar` 472–496 | parcial | `test_xml_only_and_protheus_only_are_unmatched_and_a_booked_note_is_not` | o mesmo teste, nota casada | parcial |
+| `unmatched.protheus_only` | Só no SF1 (antes do período ou dentro do período; CT-e à parte) | `analisar` 497–513 | parcial | o mesmo teste | o mesmo teste, nota casada | parcial |
+| `fiscal_book.item_missing` | Item sem registro no livro fiscal | `analisar` 689–691 | a portar | pendente | pendente | pendente |
+| `fiscal_book.credit_against_tes` | Crédito no livro em TES que não credita | `analisar` 694–696 | a portar | pendente | pendente | pendente |
+| `fiscal_book.credit_missing` | Crédito previsto na TES fora do livro | `analisar` 697–699 | a portar | pendente | pendente | pendente |
+| `fiscal_book.amount_mismatch` | ICMS do livro diferente do item | `analisar` 700–702 | a portar | pendente | pendente | pendente |
+| `cte.service_amount_mismatch` | CT-e: valor da prestação diverge | `analisar` 381–382 | parcial | pendente | `test_matching_note_and_matching_cte_stay_clean` | pendente |
+| `cte.cfop_mismatch` | CT-e: CFOP divergente | `analisar` 390–393 | parcial | pendente | o teste limpo | pendente |
+| `cte.credit_without_right` | CT-e: crédito em frete sem direito | `analisar` 395–397 | parcial | pendente | o teste limpo | pendente |
+| `cte.icms_not_credited` | CT-e: ICMS do frete não creditado | `analisar` 398–400 | a portar | pendente | pendente | pendente |
+| `cte.credit_mismatch` | CT-e: crédito acima / abaixo do XML | `analisar` 402–404 | a portar | pendente | pendente | pendente |
+| `cte.rate_or_base_mismatch` | CT-e: alíquota / base divergente | `analisar` 405–408 | a portar | pendente | pendente | pendente |
+| `cte.cst_mismatch` | CT-e: CST divergente | `analisar` 409–416 | a portar | pendente | pendente | pendente |
+| `cte.icms_inconclusive` | CT-e: ICMS calculado sem direito / diferente do XML | `analisar` 411–414 | a portar | pendente | pendente | pendente |
+| `cte.booked_not_taker` | CT-e escriturado sem a empresa ser a tomadora | `analisar` 387–389 | a portar | pendente | pendente | pendente |
+| `key.diverges_from_xml` | Chave trocada pelo XML de mesmo número e valor | `analisar` 216–228 e 423–427 | a portar | pendente | pendente | pendente |
+| `key.missing` | Documento eletrônico sem chave | `analisar` 429–431 | a portar | pendente | pendente | pendente |
+| `key.invalid` | Chave inválida (tamanho ou DV) | `analisar` 433–435 | a portar | pendente | pendente | pendente |
+| `key.number_mismatch` | Número da chave ≠ número do documento | `analisar` 440–445 | a portar | pendente | pendente | pendente |
+| `key.series_mismatch` | Série da chave ≠ série do lançamento | `analisar` 446–447 | a portar | pendente | pendente | pendente |
+| `key.species_mismatch` | Espécie incompatível com o modelo da chave | `analisar` 436–439 | a portar | pendente | pendente | pendente |
+| `key.supplier_mismatch` | CNPJ do lançamento ≠ emitente | `analisar` 448–466 | a portar | pendente | pendente | pendente |
+| `suppressed.icms_without_credit` | ICMS calculado em TES sem crédito | `add`/`addh` 272 e 530 | a portar | pendente | pendente | pendente |
+| `suppressed.base_or_rate_without_credit` | Base ou alíquota sem crédito; base do cabeçalho sem crédito | `analisar` 317 e 638–641 | a portar | pendente | pendente | pendente |
+| `suppressed.ipi_without_credit` | IPI sem crédito de IPI, ou IPI em outro campo com total conferindo | `analisar` 323 e 645–646 | a portar | pendente | pendente | pendente |
+| `suppressed.cst_090` | CST 090 em TES sem crédito | `analisar` 598–599 | parcial | o teste do CST 090 | pendente | parcial |
+| `suppressed.cst_060` | CST 060 em combustível ou item com ST | `analisar` 600–601 | a portar | pendente | pendente | pendente |
+| `suppressed.header_icms_not_credited` | «ICMS do XML não creditado» do cabeçalho não sai quando há SD1 | `analisar` 304–306 | a portar | pendente | pendente | pendente |
+| `excluded.items` | Itens Excluídos (espécie ou CFOP sem DANFE) | `analisar` 676–685 | a portar | pendente | pendente | pendente |
+
+O Resumo da skill conta, e o motor precisa devolver os mesmos números: documentos da SF1, DANFE, XML de NF-e, casados, CT-e da SF1, XML de CT-e, CT-e casados, chaves corrigidas, só XML, só SF1, itens excluídos e cada contador de «não apontado».
+
 ### 6.6 Configuração (D12) e flag (D13)
 
 | Variável | Padrão | Papel |
