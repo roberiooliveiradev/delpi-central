@@ -16,6 +16,25 @@
   --build <serviços afetados>` — sem aguardar nova autorização por
   fatia. Feature gates produtivos (ex.: escrita Protheus) seguem
   desligados salvo autorização explícita do PO (diretriz do usuário).
+- **Exceção explícita — Pesquisa de Satisfação de Clientes (Portal Comercial):**
+  desenvolvimento e integração **somente DEV**; testes funcionais,
+  de integração, segurança, permissões e validação com múltiplos
+  usuários/cenários em **HML (homologação)**. **É proibido executar
+  deploy da funcionalidade, suas migrações, rotas ou habilitar suas
+  capacidades em PROD por commit/push, por incremento ou como efeito
+  incidental de deploy de outros serviços.** A regra de deploy
+  automático pós-push acima **não se aplica à Pesquisa de Satisfação**.
+  A publicação em PROD exige: solução completa em HML, critérios de
+  aceite e regressão demonstrados, autorização explícita do
+  solicitante/PO e plano de implantação/rollback aprovado. Até então,
+  proteger integração compartilhada por controle real de exposição
+  (feature gates desabilitados e isolamento de migrações/rotas conforme
+  verificação do owner); não presumir que branch `main` ou gate de
+  frontend, isoladamente, impeça efeitos produtivos. **Se não for
+  possível garantir que deploy de outro serviço não exponha a pesquisa,
+  interromper a publicação e reportar o risco ao owner.** Escopo
+  desta exceção: Pesquisa de Satisfação; outras aplicações mantêm
+  sua política própria até decisão específica.
 - Regras canônicas de engenharia: `.cursor/rules/` (ver
   `development-standards-index.mdc` e `delia-execution-protocol.mdc`
   para tasks DÉLIA).
