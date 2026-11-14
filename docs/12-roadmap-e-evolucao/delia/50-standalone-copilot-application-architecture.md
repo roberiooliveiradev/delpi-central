@@ -666,3 +666,7 @@ NEXT = C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION
 ```
 
 Qualquer claim de runtime deve vir do ledger/evidence para o SHA/config avaliados.
+
+### 2026-11-14 — Arquitetura-alvo de especialistas cognitivos (Doc 335)
+
+O PO ratificou a **direção TARGET de quatro Agents especialistas cognitivos** de Compreensão, Investigação, Suficiência e Síntese, coordenados pela DÉLIA com handoffs tipados e contexto mínimo. Isso **não autoriza quatro runtimes, serviços ou planners**, não transplanta o runtime do Minha DELPI Chat e não altera a autoridade Core/Domain/Policy/Decision/Evidence/Outcome. A arquitetura executada atualmente com um Agent Pydantic AI permanece baseline e a divisão física/handoff deve passar por inventário, decisão de boundary, Abstraction Gate e comparação de outcome, segurança, custo e latência conforme Doc 293. Agentes internos cognitivos não são MCPs, perfis especializados user-facing ou A2A externos. INT-1 fechado; INT-2 pendente de aceite; nenhum novo Agent comprovado por esta decisão. [Doc 335](./corrections/mcp-contextual-intelligence-orchestration/335-c3t2-four-cognitive-specialist-agents-po-product-direction-and-int2-resumption.md).
