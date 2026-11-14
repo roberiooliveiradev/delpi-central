@@ -488,3 +488,126 @@ Engenharia: atendimento/edição governados no Portal Engenharia
 \`\`\`
 
 Para cada tela validar desktop/tablet/mobile, zoom200, foco e teclado. Não expor ações não autorizadas; não copiar JSX de MFEs para criar uma segunda implementação. \`F02\` é consolidação e QA das superfícies documentais existentes; \`F03/F04\` exigem contratos Core/Coordination antes do cutover.
+
+
+## PRC-REF-024 — Wireframe V3: detalhe PRC com hero orientado à decisão, conteúdo contextual e ações claras (PO 2026-11-14)
+
+> **Estado: PO_DIRECTION_CAPTURED / UX_TARGET_FOR_REVIEW / IMPLEMENTATION_NOT_AUTHORIZED / VISUAL_E2E_NOT_RUN.** Este adendo refina a composição da página de detalhe, sem revogar PRC-REF-022 (ficha compartilhada e devolução por campo) nem as regras oficiais PRC-TRACK. Origem: captura real de HML do caso de alteração #1a808947 (em atendimento) e comentários do PO. Não é prova de mudança de backend.
+
+### A. Diagnóstico auditado no código
+
+- \`PrcDetailPage.tsx\` constrói \`identification\` com nove campos no \`EngineeringDetailFieldGrid\` dentro do hero: solicitante, responsável, código TOTVS, revisão base, abertura, última atualização, origem, referência externa e verificação oficial. Também exibe título/status/tipo/versão, \`PrcWorkflowProgress\`, ação primária e \`PrcActionBar\`. Embaixo vêm banners contextuais e abas \`Ficha técnica\`, \`Verificação TOTVS\`, \`Histórico\`, \`Revisões\`.
+- Na captura, código oficial reaparece na Ficha técnica. Responsável ausente ocupa espaço com “Responsável não identificado”; origem exibe “Canal corporativo (My Requests)”; referência externa não explica utilidade; verificação resumida do tipo “Divergente em data” compete com aba dedicada.
+- Há \`PrcPersonCell\` usado na fila (avatar + nome). Inventariar se seus contratos de \`requester\`/\`assignedTo\` são compatíveis com o detalhe antes de reutilizar.
+- Corrigir **composição da apresentação**, não apagar proveniência/auditoria nem mascarar bloqueio de verificação.
+
+### B. Princípios da página V3
+
+1. **Hero = identidade + estado + próximo passo.** Não transformar o hero em ficha de metadados. Priorizar “o que é, em que etapa está, quem abriu e o que posso fazer agora?”.
+2. **Informação em um lugar predominante:** código oficial na Ficha técnica; verificação e motivos na aba Verificação TOTVS; eventos/datas/origem/referência em Histórico/Informações da solicitação; revisão técnica em Revisões. Revisão base pode aparecer compacta no hero **se útil e comprovada**; não confundí-la com \`caseVersion\` (versão da solicitação).
+3. **Progressão do workflow continua visível.** Usar \`PrcWorkflowProgress\` existente; eventos devolvida/rejeitada/aguardando informações não podem ser representados como conclusão normal.
+4. **Ações legíveis:** botões com ícone+texto curto e tooltip explicativo, uma ação primária, secundárias e destrutiva diferenciadas; ícone sozinho não substitui rótulo nem \`allowedActions\`. Não inferir permissões por status.
+5. **Dados técnicos oficiais e revisão não mudam de owner:** snapshot, TOTVS, diff, provenance, attachment, flags, CAS, confirmação e publicação permanecem governados.
+
+### C. Matriz de redistribuição dos metadados
+
+| Campo atual | Destino V3 | Regra |
+|---|---|---|
+| Número e status | Hero, título + badge | UUID preservado na URL; número curto legível |
+| Tipo de solicitação | Subtítulo hero, “Alteração de matéria-prima”/“Criação de matéria-prima” | Sem redundância “versão X” ambígua |
+| Solicitante | Hero, avatar + nome | Identidade autorizada; fallback neutro se dados ausentes |
+| Responsável | Hero **somente quando atribuído** | Avatar + nome; não reservar bloco vazio para ausente |
+| Código oficial TOTVS | Ficha técnica → Identificação do produto | Hero sem repetição; códigos de erro permanecem na aba técnica |
+| Revisão base | Chip discreto no hero ou seção “Informações da solicitação”, conforme viewport | Exibir R2 se real; não confundir com versão do caso |
+| Abertura | Metadados compactos sob menu “Informações da solicitação” + evento inicial do Histórico | Data pt-BR; pode haver data contextual discreta se essencial |
+| Última atualização | Informações da solicitação / Histórico | Não duplicar no hero |
+| Origem | Informações da solicitação / Histórico: “Canal: Minhas Solicitações” | Nome comercial pt-BR; código fonte intacto no backend |
+| Referência externa | Informações da solicitação (opção avançada) | Rotular “Identificador no canal de origem” com ajuda “Código usado para rastrear a solicitação no sistema de origem”; se não possuir utilidade/contrato confirmado, não dar destaque no hero |
+| Verificação oficial | Aba “Verificação TOTVS” (status, data, diagnóstico, evidência) | Se mismatch bloquear conclusão, mostrar **alerta compacto acionável** perto das ações com link para aba; não ocultar falha relevante |
+
+### D. Wireframe textual — desktop (proposta V3)
+
+\`\`\`text
+← Solicitações / #1a808947
+
+┌ HERO — Solicitação #1a808947  [Em atendimento] ────────────────────────────────┐
+│ Alteração de matéria-prima                 [Revisão base R2] [ⓘ Informações]   │
+│ [Avatar HT] Hml Tester    [Avatar do responsável + nome, se houver]           │
+│                                                                               │
+│  ✓ Enviada ───── ● Em atendimento ───── ○ Concluída                           │
+│  (devolução/correção/rejeição são estados contextuais, não progresso fictício)│
+│                                                                               │
+│  [✓ Concluir atendimento] [↩ Devolver para correção] [⋯ Mais ações]            │
+│  [⚠ Verificação oficial divergente → Ver diagnóstico]  (só se bloqueador)    │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+[ Ficha técnica ] [ Verificação TOTVS ] [ Histórico ] [ Revisões ]
+
+Aba Ficha técnica:
+  [Acompanhamento técnico: 1 aberta]   [Legenda]        (discreto, contextual)
+  [Identificação do produto] Código oficial 30190123
+  [Alterações solicitadas] Campos técnicos, antes/depois quando aplicável
+  [Demais grupos da ficha] Atributos, estoque/contabilidade, fornecedores...
+  [Documentos de apoio] Anexos permitidos, preview/download autorizados
+
+Aba Verificação TOTVS:
+  [Divergência oficial] data/hora, diagnóstico e campos divergentes
+  [Abrir campo correspondente da ficha] [Reexecutar conclusão, se permitido]
+
+Aba Histórico:
+  [Interações e solicitações de informação] [Timeline/auditoria]
+  [Informações da solicitação ▾]
+    Abertura | Última atualização | Canal: Minhas Solicitações
+    Identificador no canal de origem: EVA-PRC-E2E-UPD (ajuda semântica)
+
+Aba Revisões:
+  [Revisão técnica oficial / snapshots e provenance, somente se existentes]
+\`\`\`
+
+**Nota de interação:** \`Informações\` no hero abre popover/drawer/resumo acessível de metadados de auditoria, sem esconder sua rastreabilidade no Histórico. Preferir um único conteúdo reutilizado ou acesso consistente em vez de duplicar painéis de nove campos. Se remover o menu \`Informações\`, manter todos os dados necessários claramente acessíveis no Histórico.
+
+### E. Variante compacta para tablet/mobile e zoom 200%
+
+\`\`\`text
+← Solicitações
+Solicitação #1a808947  [Em atendimento]
+Alteração de matéria-prima · R2 (se couber)
+[HT] Hml Tester           [ⓘ Informações]
+✓ Enviada → ● Em atendimento → ○ Concluída (sem truncar)
+[✓ Concluir atendimento]  [⋯ Ações]  (wrap, rótulos acessíveis)
+[⚠ Ver diagnóstico] (somente se bloqueador)
+
+[Ficha] [Verificação] [Histórico] [Revisões] (tablist acessível)
+[Conteúdo da aba em uma coluna]
+\`\`\`
+
+Não criar toolbar sticky sem provar ausência de sobreposição do Portal/topbar e sem testes mobile. Ações destrutivas não podem ser acionadas acidentalmente.
+
+### F. Estados a cobrir antes de implementar
+
+- \`submitted\`: “Iniciar atendimento” se permitido; solicitante vê acompanhamento, sem controle de analista.
+- \`in_progress\`: ação principal contextual, devolver/rejeitar conforme \`allowedActions\`; diagnóstico oficial bloqueador visível.
+- \`needs_correction\`: solicitante vê alvos devolvidos na mesma ficha, correção e reenvio permitidos; Engenharia vê estado de espera e histórico sem edição concorrente.
+- \`needs_information\`/\`under_review\` legados: mensagem fiel e ação permitida; nunca fingir que são etapa normal do tracker.
+- \`completed\`/\`rejected\`: hero compacto somente leitura, estado terminal evidente, histórico e verificações consultáveis, sem CTA mutável.
+- \`assignedTo = null\`: ocultar o slot de responsável no hero; manter fato de não atribuição acessível em Informações da solicitação se relevante ao atendimento.
+- \`verificationSummary = null\`: sem alerta de erro; aba mostra “Ainda não verificada” conforme contrato.
+- \`verificationSummary.result = mismatch\`: alerta compacto com link à aba; não simular sucesso.
+- Erros/403/falhas parciais: alertas existentes governados continuam, sem ocultar bloqueio de backend.
+
+### G. Componentes/contratos e pontos de inventário
+
+\`PrcDetailPage.tsx\`, \`PrcWorkflowProgress.tsx\`, \`PrcActionBar.tsx\`, \`PrcPersonCell.tsx\`, \`PrcTechnicalSheet\`, \`PrcInformationExchangePanel\`, \`PrcVerificationPanel\`, \`PrcTimelineSection\`, \`PrcRevisionsSection\`, \`PrcFlagsOpsPanel\`, \`engineeringUi.ts\`, \`prc.css\`. Inspecionar componentes do \`plugin-ui\` para avatar, tooltip, menus e ícones; não copiar internals do Helpdesk ou outro MFE. Botões de conclusão/devolução/rejeição preservam confirmação, motivos, CAS e \`allowedActions\`. Reavaliar \`PrcVerificationPanel.onRetryComplete\`, que atualmente procura \`.engineering-prc__hero-actions\` por querySelector: após refatoração usar alvo estável/contrato legítimo sem seletor quebradiço.
+
+### H. Gates e critérios de aceite da futura implementação
+
+1. Somente informações prioritárias no hero, sem duplicação do código oficial.
+2. Avatar solicitante, responsável condicional; nomes não devem virar UUID bruto.
+3. Tracker visível, responsivo e sem falsa progressão.
+4. Ícone + texto + tooltip nas ações, com hierarquia e confirm dialogs, sem novas ações/back-end.
+5. Verificação oficial e referência externa rastreáveis em seus contextos; mismatch permanece acionável.
+6. Abas e conteúdo técnico existentes preservados; flags contextuais sem faixa onerosa.
+7. Keyboard, screen reader, 200% zoom, desktop/tablet/mobile, temas claro/escuro, status e permissões.
+8. Regresso de intake My Requests, detalhe PRC, TOTVS verification, correction workflow, anexos, revisões e navegação.
+9. Testes completos no SHA e E2E visual em HML antes de aceite PO; sem execução de writes de teste em PRD.
+10. **Nenhuma implementação ou deploy autorizados por este adendo.** Decidir refinamentos visuais com PO antes de emitir pacote Devin; quando autorizado, trabalhar \`main\`, sem novas branches.
