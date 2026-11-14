@@ -2951,3 +2951,21 @@ Owner surface changed (`9fd77c0bd1`: TÉO 23→21 tools, consolidated `record_re
 **SHA revisado:** `821add39a85c69cf9bf9c9eb64cf8b0b2f0ae89d`; eval `or-qwen14b-5e0e034882c8`; modelo `qwen/qwen3-14b`; config fp `e4a5b706a3b3156b`; instruções default v2-5. **`R1=ACCEPT_WITH_RESIDUAL`** para a proteção estrutural e a recuperação cognitiva na amostra. `PREINVOKE_GATE=ACCEPT` (testes de boundary + trace real com zero dependent READ antes do plano); `DECLARATION_RECOVERY=ACCEPT_WITH_RESIDUAL` (14/15 propostas aceitas vs 4/12 anteriormente, 1 rejeição corrigida; ausência de validação relaxada); `COVERAGE_MID_FLIGHT=PROVEN_IN_VALID_SAMPLE` (5 cenários válidos); `FALSE_COMPLETE=0_IN_VALID_SAMPLE`; `TASK_OUTCOME=IMPROVED_IN_VALID_SAMPLE` (3 COMPLETE fundamentados + 2 PARTIAL honestos, conforme relato executor). **Não calcular aprovação global com 9/14 cenários indisponíveis/denegados; avaliar ENV_BLOCKED e AUTHZ_DENIED separadamente.** `GENERALIZATION_BROAD=PENDING`, `INT3_END_TO_END_ACCEPTANCE=NO`, `R2_IMPLEMENTATION=NOT_AUTHORIZED`. Suíte completa verde **relatada**, não reexecutada por coordenação.
 
 **Para encerrar resultado INT-3 integrado:** repetir corpus congelado + holdouts após saneamento de `MCP_AUTH` e oráculo `AUTH_DENY`, medir objective satisfaction/false COMPLETE/partial correto/continuidade/paginação/custo/latência e outcome autoritativo por cenário no mesmo SHA/model/config; corrigir `OBLIGATION_DEMONSTRATION_DEPTH` somente com evidência do owner/contrato, nunca aceitando mero anchor candidato. **NEXT=`COORDINATION_INT3_POST_R1_OUTCOME_AND_R2_READINESS_GATE`.**
+
+### 2026-11-14 — Gate comparativo da separação Compreensão→Investigação e regressão R1–R6
+
+**PLAN_ONLY / TEST_NOT_RUN** nesta decisão. Variante de dois Agents proposta pelo PO, condicionada ao Doc 293/335. Baseline = um único Agent Pydantic AI (INT-1/INT-2 concentrados). Variante = Compreensão/INT-2 em Agent distinto produz plano *candidato*, Application valida; Investigação/INT-1 existente recebe plano aceito e executa ferramentas governadas. **Não confundir dois Agents com duas autoridades.**
+
+| Família de prova | Comparação obrigatória |
+|---|---|
+| R1 proteção estrutural | `READ_WITHOUT_ACCEPTED_PLAN=0` também após handoff; plano correto e intocado; retries bounded; cobertura disponível após READ |
+| Compreensão INT-2 | intention, business subject, expected delivery, target identities, required_args, material obligations, ambiguidade e false-clarification; casos negativos |
+| Investigação INT-1 | tool selection dinâmica com descrições alteradas, arguments, authorized scope, no-provider-branch, recuperação e evidências reais |
+| INT-3 R2 | NO_PROGRESS→continuação produtiva, paginação real, não repetir mesma página, parar quando budget/falta owner, reportar parcial honesto |
+| R3/R4 ambiente | AuthN/catalog/gates com credencial isolada; `ENV_BLOCKED != AUTHZ_DENIED`; controle deny com identidade sem permissão legitimamente configurada |
+| R5/R6 | coleção completa com união legítima vs cross-owner/scope/duplicate; clarificação real sem repetir dados conhecidos |
+| Generalização e outcome | holdouts/metamórficos, false COMPLETE/SATISFIED, coverage/provenance, **task objective satisfaction**, custo/tokens/latência **por objetivo concluído**, falha/timeout de handoff e recuperação |
+
+**Controle A/B:** mesmo SHA de código base/config/owners/permissões/corpus e budgets globais comparáveis, documentar modelos e fingerprints efetivos por Agent; contar chamadas extras/handoff; não misturar `ENV_BLOCKED` com resultado cognitivo. Proibir usar `FunctionModel` como prova de raciocínio LLM real. Preferir amostra com casos owner reais + negativos. O gate Doc293 exige comparação antes de autorizar novo runtime; experimentos e implementação permanecem **NOT_AUTHORIZED** até decisão bounded da coordenação. A direção de arquitetura como TARGET está ratificada pelo PO.
+
+**Critérios de decisão:** separar se ganho comprovado na correção das obrigações/tool selection/outcome, ou necessidade de boundary demonstrada, com trade-offs de custo e latência documentados; não declarar economia ou assertividade superior antecipadamente. Sem evidência: `PENDING/INCONCLUSIVE`. **NEXT=`COORDINATION_C3_T2_COMPREHENSION_INVESTIGATION_SPLIT_EXPERIMENT_AUTHORIZATION_AND_R2_DEPENDENCY_GATE`**.
