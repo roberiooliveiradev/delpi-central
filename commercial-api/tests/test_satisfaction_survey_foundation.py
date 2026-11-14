@@ -232,6 +232,31 @@ def test_list_campaigns_200_for_marketing(monkeypatch: pytest.MonkeyPatch):
     assert response.status_code == 200
 
 
+def test_create_campaign_resolves_actor_from_delpi_auth_id(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """delpi_auth popula ``user.id`` (não ``sub``); create não pode 401."""
+    request = _request()
+    request.state.user = SimpleNamespace(
+        id="principal-uuid-hml",
+        permissions=["commercial.marketing"],
+        email="hml@test.local",
+        name="HML Tester",
+    )
+    fake = MagicMock()
+    fake.create_campaign.return_value = {"id": "c-new", "name": "HML"}
+    monkeypatch.setattr(routes, "_use_case", lambda: fake)
+    body = routes.CreateCampaignBody(
+        name="HML — Pesquisa",
+        starts_at=datetime(2026, 11, 1, tzinfo=timezone.utc),
+        ends_at=datetime(2026, 12, 31, tzinfo=timezone.utc),
+    )
+    response = routes.create_satisfaction_campaign(request, body)
+    assert response.status_code == 201
+    cmd = fake.create_campaign.call_args.args[0]
+    assert cmd.created_by_user_id == "principal-uuid-hml"
+
+
 def _build_use_case(repo: MagicMock, *, now: datetime | None = None):
     key = Fernet.generate_key().decode()
     cipher = TokenCipher(key)

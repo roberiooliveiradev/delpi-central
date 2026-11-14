@@ -18,7 +18,7 @@ from commercial_app.application.use_cases.manage_satisfaction_surveys import (
 from commercial_app.composition.commercial_composer import (
     build_manage_satisfaction_surveys_use_case,
 )
-from commercial_app.core.auth_actor import current_user_from_request
+from commercial_app.core.auth_actor import actor_sub_from_request
 from commercial_app.core.responses import fail, ok
 from commercial_app.domain.entities.satisfaction_survey import RecipientAddItem
 from commercial_app.interface.http.schemas.satisfaction_survey_schemas import (
@@ -38,10 +38,8 @@ def _use_case() -> ManageSatisfactionSurveysUseCase:
 
 
 def _actor_id(request: Request) -> str | None:
-    user = current_user_from_request(request)
-    if user is None:
-        return None
-    return getattr(user, "sub", None) or getattr(user, "user_id", None)
+    """Principal canônico do delpi_auth: `id` (JWT sub / Core), com fallbacks."""
+    return actor_sub_from_request(request)
 
 
 def _map_error(exc: SatisfactionSurveyError, *, operation_id: str):
