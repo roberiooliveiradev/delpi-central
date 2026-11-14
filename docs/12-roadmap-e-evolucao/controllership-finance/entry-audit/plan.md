@@ -138,6 +138,7 @@ Lançar ou corrigir notas no Protheus; alterar TES ou cadastro de fornecedor; su
 | 2026-11-14 | T6 fechada no SHA b9f9f11445. Cliente S2S no Keycloak de HML, ensaio do dia 12/11 e de outubro nas duas filiais, manifesto financial no Core HML. |
 | 2026-11-14 | T7 no SHA 09ae557d2e. Catálogo da CLARA, fichas AE-00 a AE-14 e execução direta, sem tool nova. |
 | 2026-11-14 | T8. BFF de HML no SHA 8a8c3d4760. Corpus publicado e busca com citação das fichas AE. |
+| 2026-11-14 | T9. PROD no SHA 12c190a286. Três serviços publicados com tags de rollback; flag ligada depois do health. Um dia da filial 01 concluído. |
 | 2026-11-13 | Trilha de execução criada ([track.md](./track.md)); D1, D2, D5, D6, D7 decididas; novas decisões D11–D14 (melhorias sobre a skill, configuração, flag, domínio do conhecimento). |
 | 2026-11-13 | Amostra real de 12/11/2026 (SF1, SD1 e XML do Questor) analisada e rodada na skill: recorte de um dia; filtro de tipo confirmado pelo owner: Espécie SPED/CTE na SF1 e NF-e/CT-e no Questor; 14 «só no XML» e 5 «só no SF1» por diferença de datas. Melhorias registradas no back-end §3.9: XML pela chave, cruzamento com o LNF. |
 | 2026-11-13 | Owner: como na skill e no painel, nada de período fixado — o período é De/Até livre; o segundo filtro de execução é o **tipo de documento**. Removidos os atalhos de período (`PeriodRangeFilter` e a evolução do util de períodos saíram do plano: usa-se `DateField` ×2) e os «parâmetros avançados» da tela (viram configuração da BFF). Tipos de documento a confirmar com os exemplos do Gustavo. |
