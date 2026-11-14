@@ -80,7 +80,7 @@ describe("G2-S4: identidade exclusiva no Keycloak", () => {
     const confirmationButtons = screen.getAllByRole("button", { name: /Preparar identidade/ });
     fireEvent.click(confirmationButtons[confirmationButtons.length - 1]);
     expect(await screen.findByText(/Identidade criada desabilitada no Keycloak/)).toBeTruthy();
-    expect(requestedPaths(fetchMock).some((path) => path.endsWith("/agent-identity/prepare"))).toBe(true);
+    expect(requestedPaths(fetchMock, "POST").some((path) => path.endsWith("/agent-identity/prepare"))).toBe(true);
   });
 
   it("never exposes the provisioning action to a read-only operator", async () => {

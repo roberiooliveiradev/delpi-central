@@ -74,6 +74,7 @@ def migrated(database):
         "V009__workstations_inventory.sql",
         "V010__workstation_responsible_user.sql",
         "V011__workstation_snapshots.sql",
+        "V012__workstation_agent_identities.sql",
     ]
     return database
 
@@ -110,6 +111,7 @@ def test_migrations_are_idempotent(migrated):
         (9, "V009__workstations_inventory.sql"),
         (10, "V010__workstation_responsible_user.sql"),
         (11, "V011__workstation_snapshots.sql"),
+        (12, "V012__workstation_agent_identities.sql"),
     ]
 
 
