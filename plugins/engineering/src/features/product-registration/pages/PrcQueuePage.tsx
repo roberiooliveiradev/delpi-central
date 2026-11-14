@@ -1,7 +1,7 @@
 /** Central de solicitações PRC — hero canônico, filtros oficiais,
  * DataTableSection com paginação do servidor e estados honestos.
- * Nenhum dado é inventado: agregados/KPIs só existiriam se a API
- * fornecesse totais por status (ela não fornece → omitidos). */
+ * §47 — Tabela, Cards e Kanban compartilham catálogo de campos e
+ * PrcRequestCard; menu Colunas controla os três modos. */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FilterX, RefreshCw } from "lucide-react";
@@ -20,7 +20,6 @@ import {
   EngineeringEmptyState,
   EngineeringFilterInput,
   EngineeringIconButton,
-  EngineeringInteractiveDataCard,
   EngineeringKanbanBoard,
   EngineeringLoadingActivityCard,
   EngineeringPageHero,
@@ -52,12 +51,23 @@ import {
   PRC_QUEUE_STATUS_OPTIONS,
   PRC_QUEUE_TYPE_OPTIONS,
   PRC_STATUS_LABELS,
-  PRC_TYPE_LABELS,
   prcShortId,
 } from "../prcCopy";
+import {
+  PRC_QUEUE_COLUMN_CATALOG,
+  PRC_QUEUE_FIELD_LABELS,
+  formatPrcKanbanColumnCountMeta,
+  formatPrcQueueCreatedAt,
+  prcQueueOfficialCodeText,
+  prcQueueTypeText,
+} from "../prcQueueFieldCatalog";
 import { PrcStatusBadge } from "../components/PrcStatusBadge";
 import { PrcPersonCell } from "../components/PrcPersonCell";
 import { PrcFlagsOpsPanel } from "../components/PrcFlagsOpsPanel";
+import {
+  PrcRequestCard,
+  buildPrcCardColumns,
+} from "../components/PrcRequestCard";
 
 const PAGE_SIZE = 25;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -191,11 +201,12 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
     defaultMode: "table",
   });
 
+  /** Catálogo único — mesmas chaves/rótulos/renders para os 3 modos. */
   const columns = useMemo<DataTableColumn<PrcRequestSummary>[]>(
     () => [
       {
         key: "id",
-        header: "Nº",
+        header: PRC_QUEUE_FIELD_LABELS.id,
         sortable: true,
         render: (row) => (
           <span title={`ID completo: ${row.id}`}>{prcShortId(row.id)}</span>
@@ -203,13 +214,13 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
       },
       {
         key: "type",
-        header: "Tipo",
+        header: PRC_QUEUE_FIELD_LABELS.type,
         sortable: true,
-        render: (row) => PRC_TYPE_LABELS[row.requestType] || row.requestType,
+        render: (row) => prcQueueTypeText(row),
       },
       {
         key: "requester",
-        header: "Solicitante",
+        header: PRC_QUEUE_FIELD_LABELS.requester,
         sortable: true,
         render: (row) => (
           <PrcPersonCell
@@ -220,32 +231,32 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
       },
       {
         key: "officialCode",
-        header: "Código oficial",
+        header: PRC_QUEUE_FIELD_LABELS.officialCode,
         sortable: true,
         render: (row) =>
           row.officialCode ? (
             row.officialCode
           ) : (
             <span className="engineering-prc__muted">
-              {PRC_COPY.awaitingCode}
+              {prcQueueOfficialCodeText(row)}
             </span>
           ),
       },
       {
         key: "createdAt",
-        header: "Abertura",
+        header: PRC_QUEUE_FIELD_LABELS.createdAt,
         sortable: true,
-        render: (row) => new Date(row.createdAt).toLocaleString("pt-BR"),
+        render: (row) => formatPrcQueueCreatedAt(row.createdAt),
       },
       {
         key: "status",
-        header: "Status",
+        header: PRC_QUEUE_FIELD_LABELS.status,
         sortable: true,
         render: (row) => <PrcStatusBadge status={row.status} />,
       },
       {
         key: "assignedTo",
-        header: "Responsável",
+        header: PRC_QUEUE_FIELD_LABELS.assignedTo,
         sortable: true,
         render: (row) => (
           <PrcPersonCell
@@ -256,16 +267,10 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
         ),
       },
     ],
-    [openDetail],
+    [],
   );
 
-  /** §43 — preferências de coluna elevadas ao hero (mesma storage key):
-   * o menu Colunas fica na barra primária como em Meus Chamados de TI,
-   * sem duplicar o estado interno da DataTableSection. */
-  const columnCatalog = useMemo(
-    () => columns.map((column) => ({ key: column.key, label: column.header })),
-    [columns],
-  );
+  /** Preferências compartilhadas — menu Colunas nos 3 modos. */
   const {
     visibility,
     orderedColumns,
@@ -275,11 +280,21 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
     filterColumns,
   } = useTableColumnVisibility({
     storageKey: COLUMN_PREFERENCES_KEY,
-    columns: columnCatalog,
+    columns: PRC_QUEUE_COLUMN_CATALOG,
   });
   const visibleColumns = useMemo(
     () => filterColumns(columns),
     [filterColumns, columns],
+  );
+
+  const cardColumns = useMemo(
+    () => buildPrcCardColumns(columns, visibleColumns),
+    [columns, visibleColumns],
+  );
+  const kanbanCardColumns = useMemo(
+    () =>
+      buildPrcCardColumns(columns, visibleColumns, { omitKeys: ["status"] }),
+    [columns, visibleColumns],
   );
 
   const refresh = useCallback(() => {
@@ -338,18 +353,12 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
         current={PRC_COPY.breadcrumbRoot}
       />
 
-      {/* §43 — hero em padrão Meus Chamados de TI: linha 1 título+ações,
-       * linha 2 busca dominante + controles compactos (limpar, colunas,
-       * atualizar), linha 3 chips rápidos de status + tipo + modo de
-       * visualização. Semântica dos filtros e preset inalterada (§41). */}
       <EngineeringPageHero
         eyebrow="Portal Engenharia"
         title={PRC_COPY.listTitle}
         description={PRC_COPY.listDescription}
         actions={
           <>
-            {/* §46 — contador do universo filtrado como pill compacta
-             * (COUNT real pré-paginação; fail-closed sem lista). */}
             {!forbidden && list ? (
               <span
                 className="engineering-prc__count-pill"
@@ -364,8 +373,6 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
                 </strong>
               </span>
             ) : null}
-            {/* PRC-REF-021-REF-01 — entrada compacta das bandeiras na
-             * linha de ações do hero (painel expande como popover). */}
             {!forbidden ? (
               <PrcFlagsOpsPanel basePath={basePath} compact />
             ) : null}
@@ -424,19 +431,16 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
               chips={typeChips}
             />
           </div>
-          {/* §46 — linha inferior do hero: controles de apresentação da
-           * grade acoplados ao hero (Colunas só faz sentido em Tabela). */}
+          {/* §47 — Colunas + modos: menu controla Tabela, Cards e Kanban. */}
           <div className="engineering-prc__queue-bottom">
-            {layout === "table" ? (
-              <TableColumnVisibilityMenu
-                columns={orderedColumns}
-                visibility={visibility}
-                onToggleColumn={setColumnVisible}
-                onReorderColumns={reorderColumns}
-                onReset={resetColumns}
-                labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
-              />
-            ) : null}
+            <TableColumnVisibilityMenu
+              columns={orderedColumns}
+              visibility={visibility}
+              onToggleColumn={setColumnVisible}
+              onReorderColumns={reorderColumns}
+              onReset={resetColumns}
+              labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
+            />
             <EngineeringSegmentToggle
               ariaLabel="Modo de apresentação da fila"
               idPrefix="prc-layout"
@@ -547,51 +551,17 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
 
           {layout === "cards" ? (
             <>
-              <EngineeringDataCardsGrid ariaLabel="Solicitações em cards">
+              <EngineeringDataCardsGrid
+                ariaLabel="Solicitações em cards"
+                className="engineering-prc__request-cards-grid"
+              >
                 {list.items.map((row) => (
-                  <EngineeringInteractiveDataCard
+                  <PrcRequestCard
                     key={row.id}
-                    interactive
-                    onActivate={() => openDetail(row)}
-                    ariaLabel={`Solicitação ${prcShortId(row.id)}`}
-                    fields={[
-                      {
-                        label: "Tipo",
-                        value:
-                          PRC_TYPE_LABELS[row.requestType] || row.requestType,
-                      },
-                      { label: "Status", value: <PrcStatusBadge status={row.status} /> },
-                      {
-                        label: "Código oficial",
-                        value: row.officialCode || PRC_COPY.awaitingCode,
-                      },
-                      {
-                        label: "Solicitante",
-                        value: (
-                          <PrcPersonCell
-                            subject={row.requester.subject}
-                            displayName={row.requester.displayName}
-                          />
-                        ),
-                      },
-                      {
-                        label: "Responsável",
-                        value: (
-                          <PrcPersonCell
-                            subject={row.assignedTo}
-                            displayName={row.assignedToDisplayName}
-                            emptyLabel={PRC_COPY.unassigned}
-                          />
-                        ),
-                      },
-                      {
-                        label: "Abertura",
-                        value: new Date(row.createdAt).toLocaleString("pt-BR"),
-                      },
-                    ]}
-                  >
-                    <strong>{prcShortId(row.id)}</strong>
-                  </EngineeringInteractiveDataCard>
+                    row={row}
+                    columns={cardColumns}
+                    onOpen={openDetail}
+                  />
                 ))}
               </EngineeringDataCardsGrid>
               <p className="engineering-prc__muted">
@@ -606,51 +576,38 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
               <EngineeringKanbanBoard
                 ariaLabel="Kanban das solicitações por status"
                 columns={Object.entries(PRC_STATUS_LABELS).map(
-                  ([status, label]) => ({
-                    id: status,
-                    title: label,
-                    count: list.statusCounts[status] ?? 0,
-                    empty: <span className="engineering-prc__muted">—</span>,
-                    children: list.items
-                      .filter((r) => r.status === status)
-                      .map((row) => (
-                        <EngineeringInteractiveDataCard
+                  ([status, label]) => {
+                    const pageItems = list.items.filter(
+                      (r) => r.status === status,
+                    );
+                    const totalInScope = list.statusCounts[status] ?? 0;
+                    return {
+                      id: status,
+                      title: label,
+                      count: formatPrcKanbanColumnCountMeta({
+                        status,
+                        totalInScope,
+                        displayedOnPage: pageItems.length,
+                      }),
+                      empty: (
+                        <span className="engineering-prc__muted">—</span>
+                      ),
+                      children: pageItems.map((row) => (
+                        <PrcRequestCard
                           key={row.id}
-                          interactive
-                          onActivate={() => openDetail(row)}
-                          ariaLabel={`Solicitação ${prcShortId(row.id)}`}
-                          fields={[
-                            {
-                              label: "Tipo",
-                              value:
-                                PRC_TYPE_LABELS[row.requestType] ||
-                                row.requestType,
-                            },
-                            {
-                              label: "Código",
-                              value: row.officialCode || PRC_COPY.awaitingCode,
-                            },
-                            {
-                              label: "Solicitante",
-                              value: (
-                                <PrcPersonCell
-                                  subject={row.requester.subject}
-                                  displayName={row.requester.displayName}
-                                />
-                              ),
-                            },
-                          ]}
-                        >
-                          <strong>{prcShortId(row.id)}</strong>
-                        </EngineeringInteractiveDataCard>
+                          row={row}
+                          columns={kanbanCardColumns}
+                          onOpen={openDetail}
+                        />
                       )),
-                  }),
+                    };
+                  },
                 )}
               />
               <p className="engineering-prc__muted">
                 Contagens por status calculadas pela Engineering API sobre o
                 escopo filtrado; os cards exibidos são os itens carregados
-                desta página.
+                desta página (paginação server-side preservada).
               </p>
             </>
           ) : null}

@@ -350,6 +350,31 @@
   margin-top: -12px;
 }
 
+/* §47 — grade de cards PRC com largura útil para os 7 campos;
+ * 2–3 colunas no desktop, 1 no mobile (auto-fill). */
+.engineering-prc__request-cards-grid.delpi-ui-data-cards-grid,
+.engineering-prc__request-cards-grid {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--en-grid-gap, 16px);
+}
+
+.engineering-prc__request-card {
+  min-width: 0;
+}
+
+.engineering-prc__request-card .delpi-ui-interactive-data-card__title,
+.engineering-prc__request-card .engineering-interactive-data-card__title {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 640px) {
+  .engineering-prc__request-cards-grid.delpi-ui-data-cards-grid,
+  .engineering-prc__request-cards-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .engineering-prc__hero-meta {
   margin-top: 4px;
 }
