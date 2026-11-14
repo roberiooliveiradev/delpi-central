@@ -81,6 +81,10 @@ export type PrcTechnicalSheetViewProps = {
     row: SupplierRow,
     attribute: "partNumber" | "catalogNumber",
   ) => ReactNode;
+  /** `compact` — leitura consolidada densa (ex.: ficha do produto
+   * acompanhado): reduz gaps/paddings via tokens e modificador
+   * `delpi-prc__sheet--compact`. Default `comfortable`. */
+  density?: "comfortable" | "compact";
 };
 
 const UNAVAILABLE_TEXT = "Não disponível";
@@ -389,6 +393,7 @@ function CreateSheet({
   suppliersHeaderActions,
   fieldAdornment,
   supplierAdornment,
+  density = "comfortable",
 }: Props) {
   const data = draft || {};
   const changed = new Set(changedPaths.map((c) => c.path));
@@ -408,7 +413,13 @@ function CreateSheet({
   };
 
   return (
-    <>
+    <div
+      className={
+        density === "compact"
+          ? "delpi-prc__sheet delpi-prc__sheet--compact"
+          : "delpi-prc__sheet"
+      }
+    >
       {FIELD_GROUPS.map((group) => {
         const paths = group.paths.filter(
           (p) => p in data || p === "officialProductCode",
@@ -525,6 +536,6 @@ function CreateSheet({
           </p>
         ) : null}
       </PrcSheetCard>
-    </>
+    </div>
   );
 }

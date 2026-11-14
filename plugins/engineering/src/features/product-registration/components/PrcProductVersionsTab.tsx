@@ -22,6 +22,10 @@ import {
   type PrcRevisionSummary,
 } from "../api/productRegistrationApi";
 import {
+  PRC_FIELD_GROUP_BY_PATH,
+  PRC_FIELD_GROUPS,
+} from "@delpi/plugin-ui/index";
+import {
   navigatePrc,
   prcProductHref,
   navigatePrcHref,
@@ -34,18 +38,16 @@ import {
   prcFieldLabel,
   prcShortId,
 } from "../prcCopy";
+import {
+  diffCellState,
+  summarizeChangedPaths,
+  supplierLinkIdentity,
+} from "../prcSnapshot";
 
 function scalarText(value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";
   if (typeof value === "object") return "Não disponível";
   return String(value);
-}
-
-function changeValueText(path: string, value: unknown): string {
-  const raw = scalarText(value);
-  if (raw === "—") return raw;
-  const head = path.split(".")[0];
-  return PRC_ENUM_OPTION_LABELS[head]?.[raw] ?? raw;
 }
 
 function formatWhen(iso: string | null | undefined): string {
@@ -75,18 +77,72 @@ function linkText(value: unknown): string {
 }
 
 function supplierChangeText(c: PrcRevisionChange): string {
-  const key = c.path.replace(/^suppliers\[|\].*$/g, "");
-  const [code, store] = key.split("|");
-  const who = code ? `${code} / ${store || "?"}` : key;
+  const id = supplierLinkIdentity(c.path);
+  const who = id
+    ? `Fornecedor ${id.supplierCode} / Loja ${id.store || "?"}`
+    : c.path;
   if (c.linkState === "added") {
     return `${PRC_PRODUCTS_COPY.supplierLinkAdded} — ${who}`;
   }
   if (c.linkState === "removed") {
     return `${PRC_PRODUCTS_COPY.supplierLinkRemoved} — ${who}`;
   }
-  const attr = c.path.split(".").slice(1).join(".");
-  const attrLabel = PRC_SUPPLIER_LABELS[attr] || attr;
-  return `${who} — ${attrLabel}: ${scalarText(c.before)} → ${scalarText(c.after)}`;
+  const attrLabel = PRC_SUPPLIER_LABELS[id?.attribute || ""] ||
+    id?.attribute || "";
+  return `${who} — ${attrLabel}`;
+}
+
+/** Célula Antes/Depois honesta — «não observado» ≠ nulo/vazio
+ * registrado (UX-P0-02, presença vem do diff server-side). */
+function DiffCell({
+  change,
+  side,
+  rev,
+}: {
+  change: PrcRevisionChange;
+  side: "before" | "after";
+  rev: number;
+}) {
+  const state = diffCellState(change, side);
+  if (state.kind === "not_observed") {
+    return (
+      <span className="engineering-prc__muted" title={
+        PRC_PRODUCTS_COPY.compareNotObservedHint
+      }>
+        {PRC_PRODUCTS_COPY.compareNotObserved} (V{rev})
+      </span>
+    );
+  }
+  if (state.kind === "empty") {
+    return <span className="engineering-prc__muted">—</span>;
+  }
+  const head = change.path.split(".")[0];
+  return (
+    <>{PRC_ENUM_OPTION_LABELS[head]?.[state.text] ?? state.text}</>
+  );
+}
+
+/** `suppliers[k]` inteiro (link added/removed) → render compacto;
+ * attr-level `suppliers[k].attr` → célula presença-ciente. */
+function SupplierDiffCell({
+  change,
+  side,
+  rev,
+}: {
+  change: PrcRevisionChange;
+  side: "before" | "after";
+  rev: number;
+}) {
+  if (change.linkState === "added" || change.linkState === "removed") {
+    const value = side === "before" ? change.before : change.after;
+    const flag =
+      side === "before" ? change.beforePresent : change.afterPresent;
+    if (flag === false || value == null) {
+      return <span className="engineering-prc__muted">—</span>;
+    }
+    return <>{linkText(value)}</>;
+  }
+  return <DiffCell change={change} side={side} rev={rev} />;
 }
 
 export function PrcProductVersionsTab({
@@ -215,113 +271,17 @@ export function PrcProductVersionsTab({
           className="engineering-prc__vtimeline"
           aria-label="Histórico de versões do produto"
         >
-          {ordered.map((rev) => {
-            const isCurrent =
-              rev.revisionNumber === currentRevisionNumber;
-            const isV1 = rev.revisionNumber === 1;
-            const open = expanded.has(rev.revisionNumber);
-            const changed = rev.changedPaths || [];
-            return (
-              <li
-                key={rev.revisionNumber}
-                className="engineering-prc__vtimeline-item"
-              >
-                <div className="engineering-prc__vtimeline-marker">
-                  <span className="engineering-prc__vtimeline-badge">
-                    V{rev.revisionNumber}
-                  </span>
-                </div>
-                <div className="engineering-prc__vtimeline-body">
-                  <button
-                    type="button"
-                    className="engineering-prc__vtimeline-toggle"
-                    aria-expanded={open}
-                    aria-controls={`prc-vdetail-${rev.revisionNumber}`}
-                    onClick={() => toggle(rev.revisionNumber)}
-                  >
-                    <span className="engineering-prc__vtimeline-title">
-                      {isCurrent
-                        ? PRC_PRODUCTS_COPY.versionCurrent
-                        : isV1
-                          ? PRC_PRODUCTS_COPY.versionFirst
-                          : `Versão ${rev.revisionNumber}`}
-                    </span>
-                    <span className="engineering-prc__muted">
-                      {formatWhen(rev.approvedAt)}
-                    </span>
-                    <ChevronDown
-                      size={14}
-                      aria-hidden
-                      className={
-                        open
-                          ? "engineering-prc__vtimeline-chevron engineering-prc__vtimeline-chevron--open"
-                          : "engineering-prc__vtimeline-chevron"
-                      }
-                    />
-                  </button>
-                  <div
-                    id={`prc-vdetail-${rev.revisionNumber}`}
-                    hidden={!open}
-                    className="engineering-prc__vtimeline-detail"
-                  >
-                    <p>
-                      <strong>Resumo:</strong>{" "}
-                      {changed.length
-                        ? `${changed.length} campo(s)/vínculo(s) alterado(s)`
-                        : "Sem resumo de alterações"}
-                    </p>
-                    {changed.length ? (
-                      <ul>
-                        {changed.map((path) => (
-                          <li key={path}>{prcFieldLabel(path)}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-                    <p>
-                      <strong>Solicitação de origem:</strong>{" "}
-                      {rev.requestId ? (
-                        <EngineeringActionButton
-                          variant="ghost"
-                          title={PRC_PRODUCTS_COPY.openOriginRequest}
-                          onClick={() =>
-                            navigatePrc(
-                              PRC_PATHS.detail(rev.requestId),
-                              basePath,
-                            )
-                          }
-                        >
-                          <ExternalLink size={13} aria-hidden />{" "}
-                          {prcShortId(rev.requestId)}
-                        </EngineeringActionButton>
-                      ) : (
-                        "—"
-                      )}
-                    </p>
-                    <p>
-                      <EngineeringActionButton
-                        variant="ghost"
-                        onClick={() =>
-                          navigatePrcHref(
-                            prcProductHref(basePath, recordId, {
-                              rev:
-                                rev.revisionNumber ===
-                                currentRevisionNumber
-                                  ? null
-                                  : rev.revisionNumber,
-                            }),
-                            { replace: false },
-                          )
-                        }
-                      >
-                        <FileText size={13} aria-hidden />{" "}
-                        {PRC_PRODUCTS_COPY.viewSheetOfVersion}
-                      </EngineeringActionButton>
-                    </p>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
+          {ordered.map((rev) => (
+            <VersionEntry
+              key={rev.revisionNumber}
+              rev={rev}
+              recordId={recordId}
+              basePath={basePath}
+              currentRevisionNumber={currentRevisionNumber}
+              open={expanded.has(rev.revisionNumber)}
+              onToggle={() => toggle(rev.revisionNumber)}
+            />
+          ))}
         </ol>
       </EngineeringDetailCard>
 
@@ -392,9 +352,228 @@ export function PrcProductVersionsTab({
   );
 }
 
+/** Entrada da timeline — identidade, data e resumo conciso sempre
+ * visíveis; detalhe agrupado por seção só no expandir (UX-P1-05). */
+function VersionEntry({
+  rev,
+  recordId,
+  basePath,
+  currentRevisionNumber,
+  open,
+  onToggle,
+}: {
+  rev: PrcRevisionSummary;
+  recordId: string;
+  basePath: string;
+  currentRevisionNumber: number;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const isCurrent = rev.revisionNumber === currentRevisionNumber;
+  const isV1 = rev.revisionNumber === 1;
+  const { fieldPaths, supplierPaths } = summarizeChangedPaths(
+    rev.changedPaths,
+  );
+  const total = fieldPaths.length + supplierPaths.length;
+  const previewNames = [
+    ...fieldPaths.map((p) => prcFieldLabel(p)),
+    ...supplierPaths.map((p) => {
+      const id = supplierLinkIdentity(p);
+      return id
+        ? `Fornecedor ${id.supplierCode} / Loja ${id.store || "?"}`
+        : p;
+    }),
+  ];
+  const preview = previewNames.slice(0, 3);
+  const extra = previewNames.length - preview.length;
+
+  /* Campos agrupados na ordem canônica da ficha; sem grupo →
+   * «Outros campos». O(≤ ~20 paths), sem memoização. */
+  const byTitle = new Map<string, string[]>();
+  for (const g of PRC_FIELD_GROUPS) byTitle.set(g.title, []);
+  const otherTitle = PRC_PRODUCTS_COPY.compareFieldsGroupFallback;
+  for (const p of fieldPaths) {
+    const title = PRC_FIELD_GROUP_BY_PATH[p] || otherTitle;
+    let bucket = byTitle.get(title);
+    if (!bucket) {
+      bucket = [];
+      byTitle.set(title, bucket);
+    }
+    bucket.push(p);
+  }
+  const groupedFields = [...byTitle.entries()]
+    .filter(([, paths]) => paths.length)
+    .map(([title, paths]) => ({ title, paths }));
+
+  return (
+    <li className="engineering-prc__vtimeline-item">
+      <div className="engineering-prc__vtimeline-marker">
+        <span className="engineering-prc__vtimeline-badge">
+          V{rev.revisionNumber}
+        </span>
+      </div>
+      <div className="engineering-prc__vtimeline-body">
+        <button
+          type="button"
+          className="engineering-prc__vtimeline-toggle"
+          aria-expanded={open}
+          aria-controls={`prc-vdetail-${rev.revisionNumber}`}
+          onClick={onToggle}
+        >
+          <span className="engineering-prc__vtimeline-headline">
+            <span className="engineering-prc__vtimeline-title">
+              {isCurrent
+                ? `V${rev.revisionNumber} · ${PRC_PRODUCTS_COPY.versionCurrent}`
+                : isV1
+                  ? `V${rev.revisionNumber} · ${PRC_PRODUCTS_COPY.versionFirst}`
+                  : `V${rev.revisionNumber}`}
+            </span>
+            <span className="engineering-prc__muted">
+              {formatWhen(rev.approvedAt)}
+            </span>
+            <ChevronDown
+              size={14}
+              aria-hidden
+              className={
+                open
+                  ? "engineering-prc__vtimeline-chevron engineering-prc__vtimeline-chevron--open"
+                  : "engineering-prc__vtimeline-chevron"
+              }
+            />
+          </span>
+          <span className="engineering-prc__vtimeline-summary">
+            {total
+              ? `${total} ${PRC_PRODUCTS_COPY.changesReported}`
+              : PRC_PRODUCTS_COPY.changesNone}
+          </span>
+          {preview.length ? (
+            <span className="engineering-prc__vtimeline-preview">
+              {preview.join(", ")}
+              {extra > 0
+                ? ` ${PRC_PRODUCTS_COPY.andMore} ${extra}`
+                : ""}
+            </span>
+          ) : null}
+        </button>
+        <div
+          id={`prc-vdetail-${rev.revisionNumber}`}
+          hidden={!open}
+          className="engineering-prc__vtimeline-detail"
+        >
+          {groupedFields.map((group) => (
+            <div key={group.title}>
+              <p className="engineering-prc__vtimeline-group">
+                {group.title}
+              </p>
+              <ul>
+                {group.paths.map((path) => (
+                  <li key={path}>{prcFieldLabel(path)}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+          {supplierPaths.length ? (
+            <div>
+              <p className="engineering-prc__vtimeline-group">
+                {PRC_PRODUCTS_COPY.compareSuppliersGroup}
+              </p>
+              <ul>
+                {supplierPaths.map((path) => {
+                  const id = supplierLinkIdentity(path);
+                  return (
+                    <li key={path}>
+                      {id
+                        ? `Fornecedor ${id.supplierCode} / Loja ${id.store || "?"}${id.attribute ? ` — ${PRC_SUPPLIER_LABELS[id.attribute] || id.attribute}` : ""}`
+                        : path}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : null}
+          <p>
+            <strong>Solicitação de origem:</strong>{" "}
+            {rev.requestId ? (
+              <EngineeringActionButton
+                variant="ghost"
+                title={`${PRC_PRODUCTS_COPY.openOriginRequest} — ${rev.requestId}`}
+                onClick={() =>
+                  navigatePrc(
+                    PRC_PATHS.detail(rev.requestId),
+                    basePath,
+                  )
+                }
+              >
+                <ExternalLink size={13} aria-hidden />{" "}
+                {prcShortId(rev.requestId)}
+              </EngineeringActionButton>
+            ) : (
+              "—"
+            )}
+          </p>
+          <p>
+            <EngineeringActionButton
+              variant="ghost"
+              onClick={() =>
+                navigatePrcHref(
+                  prcProductHref(basePath, recordId, {
+                    rev:
+                      rev.revisionNumber === currentRevisionNumber
+                        ? null
+                        : rev.revisionNumber,
+                  }),
+                  { replace: false },
+                )
+              }
+            >
+              <FileText size={13} aria-hidden />{" "}
+              {PRC_PRODUCTS_COPY.viewSheetOfVersion}
+            </EngineeringActionButton>
+          </p>
+        </div>
+      </div>
+    </li>
+  );
+}
+
 function ComparisonResult({ result }: { result: PrcComparisonResult }) {
   const hasField = result.fieldChanges.length > 0;
   const hasLinks = result.supplierLinkChanges.length > 0;
+
+  /* Campos agrupados na ordem canônica da ficha — «Outros campos»
+   * para paths fora do catálogo (UX-P1-06). */
+  const byTitle = new Map<string, PrcRevisionChange[]>();
+  for (const g of PRC_FIELD_GROUPS) byTitle.set(g.title, []);
+  const otherTitle = PRC_PRODUCTS_COPY.compareFieldsGroupFallback;
+  for (const c of result.fieldChanges) {
+    const title = PRC_FIELD_GROUP_BY_PATH[c.path] || otherTitle;
+    let bucket = byTitle.get(title);
+    if (!bucket) {
+      bucket = [];
+      byTitle.set(title, bucket);
+    }
+    bucket.push(c);
+  }
+  const fieldGroups = [...byTitle.entries()].filter(
+    ([, items]) => items.length,
+  );
+
+  const hasNotObserved = result.changes.some(
+    (c) => c.beforePresent === false || c.afterPresent === false,
+  );
+
+  const header = (
+    <>
+      <th scope="col">Campo</th>
+      <th scope="col">
+        {PRC_PRODUCTS_COPY.compareBefore} (V{result.from.revisionNumber})
+      </th>
+      <th scope="col">
+        {PRC_PRODUCTS_COPY.compareAfter} (V{result.to.revisionNumber})
+      </th>
+    </>
+  );
+
   return (
     <div
       className="engineering-prc__compare-result"
@@ -416,37 +595,82 @@ function ComparisonResult({ result }: { result: PrcComparisonResult }) {
           {PRC_PRODUCTS_COPY.compareNoDiff}
         </p>
       ) : (
-        <table className="engineering-prc__compare-table">
-          <thead>
-            <tr>
-              <th scope="col">Campo</th>
-              <th scope="col">
-                {PRC_PRODUCTS_COPY.compareBefore} (V
-                {result.from.revisionNumber})
-              </th>
-              <th scope="col">
-                {PRC_PRODUCTS_COPY.compareAfter} (V
-                {result.to.revisionNumber})
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {result.fieldChanges.map((c) => (
-              <tr key={c.path}>
-                <th scope="row">{prcFieldLabel(c.path)}</th>
-                <td>{changeValueText(c.path, c.before)}</td>
-                <td>{changeValueText(c.path, c.after)}</td>
-              </tr>
-            ))}
-            {result.supplierLinkChanges.map((c) => (
-              <tr key={c.path}>
-                <th scope="row">{supplierChangeText(c)}</th>
-                <td>{linkText(c.before)}</td>
-                <td>{linkText(c.after)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <>
+          {hasNotObserved ? (
+            <p className="engineering-prc__compare-legend">
+              {PRC_PRODUCTS_COPY.compareNotObservedHint}
+            </p>
+          ) : null}
+          {fieldGroups.map(([title, items]) => (
+            <section
+              key={title}
+              className="engineering-prc__compare-group"
+              aria-label={title}
+            >
+              <h4>{title}</h4>
+              <table className="engineering-prc__compare-table">
+                <thead>
+                  <tr>{header}</tr>
+                </thead>
+                <tbody>
+                  {items.map((c) => (
+                    <tr key={c.path}>
+                      <th scope="row">{prcFieldLabel(c.path)}</th>
+                      <td>
+                        <DiffCell
+                          change={c}
+                          side="before"
+                          rev={result.from.revisionNumber}
+                        />
+                      </td>
+                      <td>
+                        <DiffCell
+                          change={c}
+                          side="after"
+                          rev={result.to.revisionNumber}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          ))}
+          {hasLinks ? (
+            <section
+              className="engineering-prc__compare-group"
+              aria-label={PRC_PRODUCTS_COPY.compareSuppliersGroup}
+            >
+              <h4>{PRC_PRODUCTS_COPY.compareSuppliersGroup}</h4>
+              <table className="engineering-prc__compare-table">
+                <thead>
+                  <tr>{header}</tr>
+                </thead>
+                <tbody>
+                  {result.supplierLinkChanges.map((c) => (
+                    <tr key={c.path}>
+                      <th scope="row">{supplierChangeText(c)}</th>
+                      <td>
+                        <SupplierDiffCell
+                          change={c}
+                          side="before"
+                          rev={result.from.revisionNumber}
+                        />
+                      </td>
+                      <td>
+                        <SupplierDiffCell
+                          change={c}
+                          side="after"
+                          rev={result.to.revisionNumber}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          ) : null}
+        </>
       )}
 
       {result.flagEvents.length ? (

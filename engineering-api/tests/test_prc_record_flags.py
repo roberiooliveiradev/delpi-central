@@ -446,6 +446,8 @@ class TestRevisionComparison:
         )
         assert unit["before"] == "UN"
         assert unit["after"] == "KG"
+        assert unit["beforePresent"] is True
+        assert unit["afterPresent"] is True
         assert data["from"]["revisionNumber"] == 1
         assert data["to"]["revisionNumber"] == 2
 

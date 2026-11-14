@@ -1778,3 +1778,60 @@
   flex-direction: column;
   gap: 4px;
 }
+
+/* UX-P1-02 — a «superfície única» da tabela é resolvida no kit
+ * (data-table.css: composição table-section + wrap--section);
+ * nada local aqui para não duplicar/override de classes delpi-ui. */
+
+/* --- UX-P1-05 — timeline: cabeçalho + resumo conciso ------------ */
+
+.engineering-prc__vtimeline-headline {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+}
+
+.engineering-prc__vtimeline-summary {
+  font-size: 0.85rem;
+  color: var(--en-text, #101828);
+}
+
+.engineering-prc__vtimeline-preview {
+  font-size: 0.8rem;
+  color: var(--en-text-muted, #667085);
+}
+
+.engineering-prc__vtimeline-toggle {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.engineering-prc__vtimeline-group {
+  margin: 0 0 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--en-text-muted, #667085);
+}
+
+/* --- UX-P1-06 — comparação agrupada ------------------------------ */
+
+.engineering-prc__compare-group h4 {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--en-text-muted, #667085);
+}
+
+.engineering-prc__compare-legend {
+  margin: 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--en-border, #d0d5dd);
+  font-size: 0.82rem;
+  color: var(--en-text-muted, #667085);
+}

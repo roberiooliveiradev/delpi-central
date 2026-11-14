@@ -1098,6 +1098,14 @@ table.delpi-ui-table td.delpi-ui-table__detail-cell {
   margin-top: 4px;
 }
 
+/* Composição table-section + wrap--section: a seção já é o card
+ * (card-shell.css); o wrap interno não duplica borda/radius —
+ * a tabela lê como superfície única de consulta (UX-P1-02). */
+.delpi-ui-table-section > .delpi-ui-table-wrap--section {
+  border: none;
+  border-radius: 0;
+}
+
 .delpi-ui-detail-card table.delpi-ui-table th {
   white-space: nowrap;
 }

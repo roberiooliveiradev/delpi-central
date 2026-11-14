@@ -5,6 +5,7 @@
 
 import type {
   PrcRecordFlag,
+  PrcRevisionChange,
   PrcTechnicalSnapshot,
 } from "./api/productRegistrationApi";
 
@@ -156,4 +157,60 @@ export function resolvedRecordFlagsForSupplier(
       f.supplierKey?.supplierCode === supplierCode &&
       f.supplierKey?.store === store,
   );
+}
+
+/* --- Diff server-side (Ux × Vy) ---------------------------------- */
+
+export type DiffSide = "before" | "after";
+
+export type DiffCellState =
+  | { kind: "value"; text: string }
+  | { kind: "not_observed" }
+  | { kind: "empty" };
+
+const SUPPLIER_PATH_RE = /^suppliers\[/;
+
+/** `changedPaths` da revisão → campos técnicos × vínculos de
+ * fornecedor — única categorização derivável do payload (UX-P1-05). */
+export function summarizeChangedPaths(paths: string[] | null | undefined): {
+  fieldPaths: string[];
+  supplierPaths: string[];
+} {
+  const fieldPaths: string[] = [];
+  const supplierPaths: string[] = [];
+  for (const path of paths || []) {
+    if (SUPPLIER_PATH_RE.test(path)) supplierPaths.push(path);
+    else fieldPaths.push(path);
+  }
+  return { fieldPaths, supplierPaths };
+}
+
+/** Lado de uma linha de diff — `*Present === false` separa «não
+ * observado naquela versão» (lacuna de cobertura do snapshot) de
+ * «nulo/vazio registrado». Nunca trata ausência como remoção. */
+export function diffCellState(
+  change: PrcRevisionChange,
+  side: DiffSide,
+): DiffCellState {
+  const flag =
+    side === "before" ? change.beforePresent : change.afterPresent;
+  const value = side === "before" ? change.before : change.after;
+  if (flag === false) return { kind: "not_observed" };
+  if (value === null || value === undefined || value === "") {
+    return { kind: "empty" };
+  }
+  return { kind: "value", text: String(value) };
+}
+
+/** Identidade legível do vínculo `suppliers[code|store]` ou
+ * `suppliers[code|store].attr` — nunca o path técnico cru. */
+export function supplierLinkIdentity(path: string): {
+  supplierCode: string;
+  store: string;
+  attribute: string | null;
+} | null {
+  const match = /^suppliers\[([^\]]+)\](?:\.(.+))?$/.exec(path);
+  if (!match) return null;
+  const [supplierCode = "", store = ""] = match[1].split("|");
+  return { supplierCode, store, attribute: match[2] ?? null };
 }

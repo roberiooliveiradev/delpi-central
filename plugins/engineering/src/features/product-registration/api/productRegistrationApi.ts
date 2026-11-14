@@ -340,6 +340,12 @@ export type PrcRevisionChange = {
   after?: unknown;
   reason?: string;
   linkState?: string;
+  /** Presença observada no lado de origem — `false` separa «campo
+   * não observado naquela versão» de «valor nulo registrado»
+   * (UX-P0-02). Contratos antigos sem o flag → `undefined` e o
+   * consumidor cai no fallback `—`. */
+  beforePresent?: boolean;
+  afterPresent?: boolean;
 };
 
 /** Snapshot imutável de uma revisão (rota 15) — read-only, com

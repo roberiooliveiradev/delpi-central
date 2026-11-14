@@ -163,10 +163,10 @@ test("U2 — detalhe: hero, abas duplas, ficha por versão e somente leitura", a
   await ensureAuthenticated(page);
   await shot("detail");
 
-  /* Hero: código oficial, versão acompanhada, última evolução e
-   * solicitação de origem. */
+  /* Hero: código oficial como identidade principal (UX-P0-01),
+   * versão acompanhada, última evolução e solicitação de origem. */
   await expect(
-    page.getByText(new RegExp(`Código oficial ${code}`)),
+    page.getByRole("heading", { name: code, exact: true }),
   ).toBeVisible({ timeout: 20_000 });
   await expect(
     page.getByText("Última evolução técnica"),

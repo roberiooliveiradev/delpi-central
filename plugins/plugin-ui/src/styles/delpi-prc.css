@@ -866,3 +866,33 @@
   gap: 10px;
   margin-top: 10px;
 }
+
+/* Ficha técnica em leitura consolidada — wrapper introduzido com o
+ * modo `density="compact"` (UX-P1-04, produtos acompanhados). O gap
+ * entre cards mora aqui para os dois consumers (fragmento antes). */
+.delpi-prc__sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--delpi-ui-section-gap, 16px);
+}
+
+/* Densidade compacta — leitura densa via tokens, sem redefinir
+ * componentes: padding do card e gap da grade enxugam juntos. */
+.delpi-prc__sheet--compact {
+  --delpi-ui-card-padding: 14px 16px;
+  --delpi-ui-card-padding-mobile: 10px 12px;
+  gap: 12px;
+}
+
+.delpi-prc__sheet--compact .delpi-prc__sheet-grid {
+  gap: 8px 20px;
+}
+
+.delpi-prc__sheet--compact .delpi-prc__sheet-field-value {
+  margin-top: 2px;
+}
+
+.delpi-prc__sheet--compact .delpi-prc__sheet-table th,
+.delpi-prc__sheet--compact .delpi-prc__sheet-table td {
+  padding: 4px 8px;
+}

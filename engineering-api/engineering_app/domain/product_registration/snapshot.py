@@ -417,11 +417,23 @@ def compute_technical_diff(
         return [], False
     changes: list[dict[str, Any]] = []
     for path in sorted(set(old_fields) | set(new_fields)):
+        before_present = path in old_fields
+        after_present = path in new_fields
         before = old_fields.get(path)
         after = new_fields.get(path)
-        if before != after or (path in old_fields) != (path in new_fields):
+        if before != after or before_present != after_present:
             changes.append(
-                {"path": path, "before": before, "after": after}
+                {
+                    "path": path,
+                    "before": before,
+                    "after": after,
+                    # Presença observada por lado — «não observado»
+                    # (snapshot sem o path/coverage) não é valor nulo
+                    # nem remoção comprovada; o consumidor honesto
+                    # precisa distinguir os dois casos.
+                    "beforePresent": before_present,
+                    "afterPresent": after_present,
+                }
             )
     for key in sorted(set(old_links) | set(new_links)):
         if key not in old_links:
@@ -431,6 +443,8 @@ def compute_technical_diff(
                     "before": None,
                     "after": new_links[key],
                     "linkState": "added",
+                    "beforePresent": False,
+                    "afterPresent": True,
                 }
             )
             continue
@@ -441,21 +455,25 @@ def compute_technical_diff(
                     "before": old_links[key],
                     "after": None,
                     "linkState": "removed",
+                    "beforePresent": True,
+                    "afterPresent": False,
                 }
             )
             continue
         attrs = set(old_links[key]) | set(new_links[key])
         for attr in sorted(attrs):
+            before_present = attr in old_links[key]
+            after_present = attr in new_links[key]
             before = old_links[key].get(attr)
             after = new_links[key].get(attr)
-            if before != after or (attr in old_links[key]) != (
-                attr in new_links[key]
-            ):
+            if before != after or before_present != after_present:
                 changes.append(
                     {
                         "path": f"suppliers[{key}].{attr}",
                         "before": before,
                         "after": after,
+                        "beforePresent": before_present,
+                        "afterPresent": after_present,
                     }
                 )
     return changes, True

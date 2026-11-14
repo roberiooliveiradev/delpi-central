@@ -229,6 +229,8 @@ export function PrcProductsPage({ basePath }: { basePath: string }) {
         header: PRC_PRODUCTS_COPY.colOpenFlags,
         sortable: false,
         render: (row) =>
+          /* Contagem contratada pelo backend — zero real é "0",
+           * nunca «—» (indisponível seria outro estado). */
           row.openFlagCount > 0 ? (
             <span className="engineering-prc__flag-count" aria-label={
               `${row.openFlagCount} bandeira(s) aberta(s)`
@@ -236,7 +238,7 @@ export function PrcProductsPage({ basePath }: { basePath: string }) {
               {row.openFlagCount}
             </span>
           ) : (
-            <span className="engineering-prc__muted">—</span>
+            <span className="engineering-prc__muted">0</span>
           ),
       },
       {
@@ -272,7 +274,7 @@ export function PrcProductsPage({ basePath }: { basePath: string }) {
 
       <EngineeringPageHero
         eyebrow="Portal Engenharia"
-        title={PRC_PRODUCTS_COPY.listTitle}
+        title={PRC_COPY.breadcrumbRoot}
         description={PRC_PRODUCTS_COPY.listDescription}
         actions={
           <>

@@ -232,8 +232,10 @@ export function PrcProductDetailPage({
         <>
           <EngineeringPageHero
             eyebrow="Produto acompanhado"
-            title={detail.description || detail.officialCode}
-            description={`Código oficial ${detail.officialCode} — ficha consolidada das versões confirmadas.`}
+            title={detail.officialCode}
+            description={
+              detail.description || PRC_PRODUCTS_COPY.descUnavailable
+            }
             actions={
               <>
                 <span
@@ -243,6 +245,8 @@ export function PrcProductDetailPage({
                   V<strong className="engineering-prc__count-pill-value">
                     {detail.currentRevisionNumber}
                   </strong>
+                  {" · "}
+                  {PRC_PRODUCTS_COPY.heroVersionChip}
                 </span>
                 {detail.openFlagCount > 0 ? (
                   <span
@@ -276,7 +280,7 @@ export function PrcProductDetailPage({
                   {detail.originRequestId ? (
                     <EngineeringActionButton
                       variant="ghost"
-                      title={PRC_PRODUCTS_COPY.openOriginRequest}
+                      title={`${PRC_PRODUCTS_COPY.openOriginRequest} — ${detail.originRequestId}`}
                       onClick={() =>
                         navigatePrc(
                           PRC_PATHS.detail(
@@ -587,6 +591,7 @@ function ProductSheetContent({
         specNotes={specNotes}
         fieldAdornment={fieldAdornment}
         supplierAdornment={supplierAdornment}
+        density="compact"
       />
     </div>
   );

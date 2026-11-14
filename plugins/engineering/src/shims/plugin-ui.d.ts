@@ -3089,6 +3089,7 @@ declare module "@delpi/plugin-ui/index" {
       row: SupplierRow,
       attribute: "partNumber" | "catalogNumber",
     ) => React.ReactNode;
+    density?: "comfortable" | "compact";
   };
   export function PrcTechnicalSheetView(
     props: PrcTechnicalSheetViewProps,

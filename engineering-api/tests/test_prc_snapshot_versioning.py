@@ -225,7 +225,13 @@ class TestV2TechnicalChange:
         changes = revs[1]["changes"]
         unit_diff = [c for c in changes if c["path"] == "unit"]
         assert unit_diff == [
-            {"path": "unit", "before": "UN", "after": "BX"}
+            {
+                "path": "unit",
+                "before": "UN",
+                "after": "BX",
+                "beforePresent": True,
+                "afterPresent": True,
+            }
         ]
 
     def test_partial_update_preserves_omitted_and_provenance(
@@ -631,3 +637,127 @@ class TestPublishedRevisionReadModel:
         data_a = detail_a.json()["data"]
         assert data_a["status"] == "in_progress"
         assert data_a["publishedRevision"] is None
+
+
+class TestDiffPresenceSemantics:
+    """UX-P0-02 — «Antes —» ambíguo: ausência de cobertura na revisão
+    de origem (campo não observado naquele snapshot) não é valor nulo
+    nem remoção provada. ``beforePresent``/``afterPresent`` separam os
+    casos para o consumidor apresentar honestidade técnica."""
+
+    def test_legacy_v1_vs_v2_presence_flags(self):
+        from engineering_app.domain.product_registration.snapshot import (
+            compute_technical_diff,
+        )
+
+        # V1 legado plano (massa HML 30190123: só unit + identidade)
+        legacy_v1 = {
+            "unit": "PC",
+            "officialProductCode": "30190123",
+        }
+        v2 = {
+            "schemaVersion": 2,
+            "fields": {
+                "unit": {"value": "PC", "coverageState": "present"},
+                "description": {
+                    "value": "#",
+                    "coverageState": "present",
+                },
+                "group": {"value": None, "coverageState": "unknown"},
+            },
+            "supplierLinks": {
+                "000113|01": {
+                    "linkState": "present",
+                    "attributes": {
+                        "partNumber": {"value": "PN-1"},
+                    },
+                },
+            },
+        }
+        changes, comparable = compute_technical_diff(legacy_v1, v2)
+        assert comparable is True
+        by_path = {c["path"]: c for c in changes}
+        # campo não observado em V1 → «sem dado», não «nulo»
+        assert by_path["description"]["before"] is None
+        assert by_path["description"]["beforePresent"] is False
+        assert by_path["description"]["afterPresent"] is True
+        # coverageState=unknown não entra como valor nem diff
+        assert "group" not in by_path
+        # vínculo novo → added + presença explícita
+        link = by_path["suppliers[000113|01]"]
+        assert link["linkState"] == "added"
+        assert link["beforePresent"] is False
+        assert link["afterPresent"] is True
+
+    def test_recorded_null_vs_unobserved(self):
+        from engineering_app.domain.product_registration.snapshot import (
+            compute_technical_diff,
+        )
+
+        # campo presente com valor nulo registrado → beforePresent True
+        old = {
+            "schemaVersion": 2,
+            "fields": {
+                "customerReference": {
+                    "value": None,
+                    "coverageState": "present",
+                },
+            },
+            "supplierLinks": {},
+        }
+        new = {
+            "schemaVersion": 2,
+            "fields": {
+                "customerReference": {
+                    "value": "REF-9",
+                    "coverageState": "present",
+                },
+            },
+            "supplierLinks": {},
+        }
+        changes, comparable = compute_technical_diff(old, new)
+        assert comparable is True
+        (c,) = changes
+        assert c["before"] is None
+        assert c["beforePresent"] is True
+        assert c["afterPresent"] is True
+
+    def test_supplier_attr_presence_flags(self):
+        from engineering_app.domain.product_registration.snapshot import (
+            compute_technical_diff,
+        )
+
+        old = {
+            "schemaVersion": 2,
+            "fields": {},
+            "supplierLinks": {
+                "0001|01": {
+                    "linkState": "present",
+                    "attributes": {
+                        "partNumber": {"value": "PN-OLD"},
+                    },
+                },
+            },
+        }
+        new = {
+            "schemaVersion": 2,
+            "fields": {},
+            "supplierLinks": {
+                "0001|01": {
+                    "linkState": "present",
+                    "attributes": {
+                        "partNumber": {"value": "PN-NEW"},
+                        "catalogNumber": {"value": "CAT-7"},
+                    },
+                },
+            },
+        }
+        changes, comparable = compute_technical_diff(old, new)
+        assert comparable is True
+        by_path = {c["path"]: c for c in changes}
+        pn = by_path["suppliers[0001|01].partNumber"]
+        assert pn["beforePresent"] is True
+        assert pn["afterPresent"] is True
+        cat = by_path["suppliers[0001|01].catalogNumber"]
+        assert cat["beforePresent"] is False
+        assert cat["afterPresent"] is True

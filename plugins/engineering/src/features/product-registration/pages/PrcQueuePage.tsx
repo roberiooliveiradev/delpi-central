@@ -366,7 +366,7 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
 
       <EngineeringPageHero
         eyebrow="Portal Engenharia"
-        title={PRC_COPY.listTitle}
+        title={PRC_COPY.breadcrumbRoot}
         description={PRC_COPY.listDescription}
         actions={
           <>
