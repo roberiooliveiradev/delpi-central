@@ -4200,7 +4200,7 @@ Em `engineering_app/application/drawing/understanding.py`:
 
 ### 92.2 Testes
 
-Novo `tests/test_drawing_titleblock_fields.py` (13 casos):
+Novo `tests/test_drawing_titleblock_fields.py` (12 casos):
 pareamento mesma linha, valor abaixo, token fundido, cabeçalho
 RESUMO fundido, histórico embutido 00+01, códigos históricos fora da
 BOM, papéis de identificador, valores pontuados/alfanuméricos,
@@ -4209,12 +4209,27 @@ populada + slot `document`, conflito multipágina. Fixture R8
 ajustada para `REV:` (forma real) — `REV` nu é cabeçalho de
 histórico nos layouts oficiais.
 
-Suites: novo arquivo 13/13; r8+ocr_pipelines+investigation_r12+
+Suites: novo arquivo 12/12; r8+ocr_pipelines+investigation_r12+
 val01 (fused/g5/boundary)+mcp semantic/pdf+analysis r4/r51+jobs+
-profiles = 220 PASS; suite completa 1242 PASS / 2 FAIL pré-
-existentes fora do escopo (test_d16_attendance_flags — WIP alheio
-em product_registration; test_lmp_domain — path `/api-delpi` fora
-do mount, PASS com mount correto).
+profiles = 220 PASS; suite completa — reconciliação de execuções
+(Gate C da revisão independente):
+
+| Run | SHA/conteúdo | Coletados | PASS | FAIL | SKIP | Nota |
+|---|---|---|---|---|---|---|
+| A (impl) | 6370b83b24 + WIP prc-track não-commitado, sem mount `/api-delpi` | 1265 | 1242 | 2 | 21 | d16 (UNRELATED_WIP) + lmp_domain (ENVIRONMENTAL — path não montado) |
+| B (revisão) | tree pós-2b732cdbaf, mount `/api-delpi`, `--deselect test_d16` | 1265 | 1221 | 1 | 21 (+22 deselected) | product_registration ordering — transiente do WIP então commitado |
+| C (revisão) | be614649b7, foco nos 2 arquivos | 89 | 88 | 1 | 0 | só d16 persiste — ver abaixo |
+
+Reconciliação: 1242+2+21 = 1265 = 1221+1+21+22 — mesma coleção,
+seleções diferentes. Falhas classificadas: `test_lmp_domain`
+ENVIRONMENTAL_PROVEN (PASS com mount `/api-delpi` — verificado);
+`test_product_registration::test_lists_only_published_records`
+UNRELATED_WIP (passa em be614649b7 — o commit `2b732cdbaf` corrigiu
+a ordenação que o WIP quebrava); `test_d16_attendance_flags::
+test_isolation_between_requests` UNRELATED_WIP agora COMMITADO —
+falha real em `main` (`be614649b7`), introduzida pelo prc-track
+(2b732cdbaf), NÃO por VAL-02 (diff só toca drawing/*) — **defeito
+de outro owner, escalado à Coordination** (intake 422 no 2º POST).
 
 ### 92.3 Validação real (4 PDFs oficiais, pipeline prod em container)
 
@@ -4253,3 +4268,105 @@ inalterados). MCP/semantic bridge sem alteração.
 COD×DES condicionais — registrado); G4=PASS (aditivo);
 G5=IMPLEMENTADO_LOCAL (sem deploy); G6=NOT_AUTHORIZED (aguarda
 aceite runtime/MCP e homologação Engenharia).
+
+## §93 — Revisão independente VAL-02: código, contrato e prontidão de release (2026-11-14)
+
+`TASK_ID: EVA-E2-VAL02-G5-INDEPENDENT-CODE-CONTRACT-AND-RELEASE-READINESS-REVIEW-01`.
+Revisão adversarial do commit `6370b83b24` — inspeção própria, não
+confiança no relatório do implementador.
+
+### 93.1 Gate A — código
+
+`_match_admin_fields`: correto e conservador — rótulos restritos a
+membros do carimbo (`label_ids` menos tokens do histórico embutido);
+valores de qualquer token não-excluído (o box do carimbo corta
+valores reais em layouts oficiais — evidência v3); run para em
+rótulo conhecido MESMO fundido (`_split_label_value` na fronteira);
+padrão por tipo + codeish para identificadores; fora do padrão →
+`TEXT_ONLY`+`unpaired_value_text` (evidência, nunca promoção).
+Determinístico (iterações ordenadas; sets só para membership).
+Sem dependência de framework — camada application pura.
+
+`_detect_embedded_revision_history`: cabeçalho por cluster ≥3
+rótulos (pool = carimbo + vizinhança — box derivado pode cortar
+colunas reais); corpo = página inteira no span-x + faixa y;
+entrada exige `revision_value` em formato de revisão — callouts e
+notas do desenho rejeitados; colunas por bounds de cabeçalho
+ordenadas (rótulos-adjacentes do mesmo papel fundem). Ownership:
+`emb_ids` sai de `tb_ids` e entra em `revh_ids` → região
+`revision_history` (verificado nos artefatos: `regions_summary`
+135 → 67 tokens revision_history; code_contexts corretos).
+
+Complexidade (+727 linhas): 7 helpers novos mapeiam 1:1 os RQs;
+reuso de `_norm/_label_key/_tok_center/_box/_inside/_cluster_y/
+_nearest_value_below` — sem duplicação. Arquivo ~4970 linhas —
+grande mas é o motor canônico único; split de módulo é decisão de
+Coordination, não desta revisão. **ABSTRACTION_GATE: PASS** (nada
+novo de plataforma).
+
+### 93.2 Gate B — contratos
+
+`title_block` preserva a forma anterior (`candidate/box_px/labels/
+detection`) + `fields[]` aditivo. `revision_candidates` preserva o
+shape anterior integral + chaves aditivas (`field_type`,
+`unpaired_value_text`, `page`, `revision_domain`). `document` era
+slot já previsto por `report.identification.document_id` — agora
+populado (null→valor quando sustentado). `report_surface.py` e
+`semantic_bridge.py` consomem sem mudança (passthrough opaco).
+`document_identity.extraction_state` usa enum próprio
+(IDENTIFIED/NOT_EXTRACTED) — simplificação aceitável dos estados
+candidatos (NOT_PRESENT = ausência; AMBIGUOUS = TEXT_ONLY).
+
+Revisões: `revision_domain=ENGINEERING_DRAWING` em candidatos e
+entradas; zero comparação numérica com `B1_REVATU` (consumer emite
+NOT_COMPARABLE); `REV: NA CAPA`→TEXT_ONLY; histórico nunca promove
+revisão vigente; consumer `value_text`-first + fallback legado.
+
+### 93.3 Gate C — reconciliação de testes
+
+Três execuções reconciliadas em §92.2 (tabela): 1265 coletados em
+ambas as rodadas completas; falhas classificadas —
+`test_lmp_domain` ENVIRONMENTAL_PROVEN (PASS com mount
+`/api-delpi`); `test_product_registration::test_lists_only_
+published_records` UNRELATED_WIP (transiente — passa em
+be614649b7 após 2b732cdbaf); `test_d16_attendance_flags::
+test_isolation_between_requests` UNRELATED_WIP commitado —
+**falha real em main** (intake 422 no 2º POST, owner prc-track,
+escalado). Nenhuma falha `INTRODUCED_BY_VAL02`.
+
+### 93.4 Gate D — PDFs reais (artefatos v6/v7 no SHA avaliado)
+
+| Produto | Veredito | Evidência |
+|---|---|---|
+| 90264135 | PASS | 4 campos p1, revh 00+01 ×4 folhas, 279 occ — 2 diffs = jitter 1px OCR (bbox y 697→696), AG|16 mantém INCONCLUSIVE+association_conflict |
+| 90264302 | PASS | 4/4 campos, document=18702881, revh rev 00 + OV 003086 |
+| 90264161 | PASS-negativo | NOT_EXTRACTED correto (rótulos eram header de histórico → claimados por revh_emb → rev=01 real extraída) |
+| 90263554 | PASS-residual | 27 identificados/8 TEXT_ONLY; REV:NA CAPA não promovido; histórico 00/01/02 |
+
+Inconsistência NON_BLOCKING: códigos dentro de tokens de narrativa
+fundidos (`alteraçaoterm.10080972p/10080192`) entram em
+`code_contexts` (find) mas não em `identifier_candidates`
+(token-match) — semântica correta (nunca component_code), cobertura
+de IC assimétrica entre formatos.
+
+### 93.5 Gate E — segurança/limites
+
+Sem mudança de AuthN/AuthZ; read-only; payload +~10KB por doc
+(desprezível vs ~2.4MB). **JOB_LIFECYCLE_RISK (pré-existente)**:
+registry de jobs é in-memory (`analysis_jobs.py` `self._jobs`) —
+restart perde resultados concluídos (~5-15min de recompute por
+PDF grande); VAL-02 aumenta marginalmente o custo de recompute.
+Não introduzido por este diff — registrado para o gate de release.
+
+**E.1 pixel-limit**: `_MAX_PIXELS=40M` em `paddleocr_adapter.py` e
+`opencv_adapter.py`, aplicado PÓS-decode (pico de memória do decode
+já ocorre — ~140MB para 46Mpx). Recomendação (não implementada):
+downscale no decode para caber (`cv2.resize` por fator
+`sqrt(MAX/px)`) preserva bound downstream e habilita a capa —
+decisão de política para Coordination; alternativa melhor = reduzir
+escala de render upstream (pdfium) para páginas grandes.
+
+**Veredito: ACCEPT_WITH_RESIDUAL** — implementação validada;
+residuais não-bloqueantes: layout 161 NOT_EXTRACTED, capa 554,
+absorção de token adjacente em bordas de coluna do histórico,
+falha d16 em main de outro owner.
