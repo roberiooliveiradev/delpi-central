@@ -2890,3 +2890,7 @@ Owner surface changed (`9fd77c0bd1`: TÉO 23→21 tools, consolidated `record_re
 | `MATERIAL_ACT_CALLS` / `MATERIAL_PREPARE_SIDE_EFFECTS` | 0 / 0 |
 | Full delia-api suite | **958/958 PASS at `ff7bdbddff`** |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+### 2026-11-14 — Critérios de avaliação da arquitetura-alvo cognitiva (Doc 335)
+
+**Nova direção PO TARGET, não prova de implementação:** quatro especialistas cognitivos colaborando (Compreensão, Investigação, Suficiência e Síntese). Antes de autorizar Agents/handoffs, estabelecer corpus congelado e comparar **baseline de um Agent Pydantic AI** com **variante mínima** (Compreensão ↔ Investigação) em: acerto de objetivo e escopo, tool selection, obrigações, evidence coverage, false SATISFIED/COMPLETE, grounding, real business outcome, generalização metamórfica, safety/AuthZ/privacy, custo/latência/tokens, falhas de handoff e recuperação. Implementações inexistentes não recebem PASS. Gate INT-2 permanece **aceite delimitado de compreensão**, sem obrigar a comprovação universal de suficiência (INT-3). INT-5 é aceite integrado e **não Agent**. Source: [Doc 335](./corrections/mcp-contextual-intelligence-orchestration/335-c3t2-four-cognitive-specialist-agents-po-product-direction-and-int2-resumption.md).
