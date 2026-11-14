@@ -65,8 +65,9 @@
 | T9R3 | Residuais do back-end | DONE | HML e PROD | 1fa58c3dfc | 2026-11-14 | A2–A7, B1–B8, C1, C2, D4 e D5 corrigidos. B9 e D2 aceitos com ressalva. D3 bloqueado no usuário de teste de HML. A1, D1 e a janela de 30 dias iguais |
 | T9R4 | Residuais da verificação CLARA | DONE | HML e PROD | adaeafe2ea | 2026-11-14 | E1–E6, B9 e D2 FIXED. A1, D1, D3 e janela de 30 dias iguais. T10 continua parada |
 | T9R5 | Gravado e leitura (F1–F5) | DONE | HML e PROD | 18cc94e0c9, e9481483b5 | 2026-11-14 | F1–F5 FIXED; V029 difference nullable; rerun PROD 12/11 01+02 e 13/11 01; T10 continua parada |
-| — | **PARADA: verificação do owner pela CLARA** | — | PROD | | | T9R5 publicado; T10 continua parada |
-| T10 | plugin-ui — caracterização, evoluções, primitivos | TODO | | | | |
+| — | **PARADA: verificação do owner pela CLARA** | — | PROD | | | T9R5 publicado; front liberado |
+| T10.0 | Reconciliação docs × contrato BFF | DONE | docs | 1cbe0945b2 | 2026-11-14 | DECISION_REQUIRED vazio; frontend READY |
+| T10 | plugin-ui — caracterização, evoluções, primitivos | IN_PROGRESS | DEV | | 2026-11-14 | DistributionDonut + ResolutionStatusCell; evoluções aditivas §§3–6 |
 | T11 | MFE — páginas 01, 02, 03 + Ajuda | TODO | | | | |
 | T12 | Front-end em HML | TODO | | | | |
 | T13 | PROD — front-end | TODO | | | | |

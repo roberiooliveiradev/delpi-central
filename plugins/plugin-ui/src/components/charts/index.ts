@@ -87,9 +87,23 @@ export {
   HorizontalValueBars,
   horizontalValueBarsBemClasses,
   type HorizontalValueBarItem,
+  type HorizontalValueBarTone,
   type HorizontalValueBarsClassNames,
   type HorizontalValueBarsProps,
 } from "./HorizontalValueBars";
+export {
+  DEFAULT_DISTRIBUTION_DONUT_LABELS,
+  DISTRIBUTION_DONUT_CHART_TONES,
+  DistributionDonut,
+  createDashboardDistributionDonut,
+  distributionDonutBemClasses,
+  type DashboardDistributionDonutProps,
+  type DistributionDonutClassNames,
+  type DistributionDonutItem,
+  type DistributionDonutLabels,
+  type DistributionDonutProps,
+  type DistributionDonutTone,
+} from "./DistributionDonut";
 export {
   ChartSeriesViewport,
   chartSeriesViewportBemClasses,

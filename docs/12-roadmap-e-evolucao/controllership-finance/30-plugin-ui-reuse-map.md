@@ -1118,3 +1118,16 @@ A W2b criou estas peças no `@delpi/plugin-ui`. O código do pacote não cita LN
 | Hook de salas + refetch (`useRealtimeRooms`) | PROVEN | `plugins/plugin-ui/src/realtime/useRealtimeRooms.ts` |
 | Indicador de conexão (`RealtimeStatusIndicator`) | PROVEN | `plugins/plugin-ui/src/realtime/RealtimeStatusIndicator.tsx` |
 | Aviso de alteração concorrente (`ConcurrentChangeNotice`) | PROVEN | `plugins/plugin-ui/src/realtime/ConcurrentChangeNotice.tsx` |
+
+## Entry audit — componentes do plugin-ui (PROVEN no kit, T10, 2026-11-14)
+
+Spec: [entry-audit/frontend/04](entry-audit/frontend/04-componentes-plugin-ui-novos-e-evolucoes.md). O código do pacote não cita o domínio; a evolução é aditiva (sem as props novas o render é idêntico, protegido por testes de caracterização). **Pendente (não é este estado):** adapters `Cf*` e páginas do MFE (docs 00–03 do entry-audit).
+
+| Peça | Estado | Caminho |
+|---|---|---|
+| `DistributionDonut` (novo; reusa `buildPieSlicePath`) | PROVEN (kit) | `plugins/plugin-ui/src/components/charts/DistributionDonut.tsx` |
+| `ResolutionStatusCell` (novo) | PROVEN (kit) | `plugins/plugin-ui/src/components/data/ResolutionStatusCell.tsx` |
+| `ScopeChipBar` + `onRemove` / `onClearAll` / `emptyHint` | PROVEN (kit) | `plugins/plugin-ui/src/components/feedback/ScopeChipBar.tsx` |
+| `SemicircleProgressGauge` + `onLegendSelect` / `selectedLegendId` / `legendItemAriaLabel` | PROVEN (kit) | `plugins/plugin-ui/src/components/charts/SemicircleProgressGauge.tsx` |
+| `HorizontalValueBars` + `tone` / `selectedId` / `itemAriaLabel` | PROVEN (kit) | `plugins/plugin-ui/src/components/charts/HorizontalValueBars.tsx` |
+| `ComparativeAreaChart` + `onPointSelect` / `selectedName` / `pointAriaLabel` | PROVEN (kit) | `plugins/plugin-ui/src/components/charts/ComparativeAreaChart.tsx` |

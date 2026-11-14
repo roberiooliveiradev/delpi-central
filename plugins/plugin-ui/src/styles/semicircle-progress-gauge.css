@@ -81,3 +81,35 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+
+/* Interactive legend (onLegendSelect): items become toggle buttons. */
+.delpi-ui-semicircle-gauge__legend-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 3px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.delpi-ui-semicircle-gauge__legend-button:hover {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 8%, transparent);
+}
+
+.delpi-ui-semicircle-gauge__legend-button:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, #089bdb);
+  outline-offset: 2px;
+}
+
+.delpi-ui-semicircle-gauge__legend-button--selected {
+  border-color: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 55%, var(--delpi-ui-border, #e2e8f0));
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 12%, transparent);
+  font-weight: 600;
+}

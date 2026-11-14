@@ -1,0 +1,99 @@
+/**
+ * ResolutionStatusCell — "Resolver" / "✓ dd/MM" + "Reabrir" (cell | compact | full).
+ * Dual-class: `{prefix}-resolution-status-cell*` + `.delpi-ui-resolution-status-cell*`.
+ * Buttons are the kit `ActionButton`; only density/layout live here.
+ */
+
+.delpi-ui-resolution-status-cell {
+  position: relative;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-width: 0;
+  font-size: 0.8125rem;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-resolution-status-cell__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--delpi-ui-success, var(--success, #16a34a));
+}
+
+.delpi-ui-resolution-status-cell__status-icon {
+  font-weight: 800;
+}
+
+.delpi-ui-resolution-status-cell__status-text {
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font-weight: 600;
+}
+
+.delpi-ui-resolution-status-cell[data-status="not_applicable"] .delpi-ui-resolution-status-cell__status-text {
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.68)));
+  font-weight: 500;
+}
+
+.delpi-ui-resolution-status-cell__actions {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Cell / compact: dense controls that fit a table row. */
+.delpi-ui-resolution-status-cell--cell .delpi-ui-resolution-status-cell__button,
+.delpi-ui-resolution-status-cell--compact .delpi-ui-resolution-status-cell__button {
+  min-height: 28px;
+  padding-block: 2px;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.delpi-ui-resolution-status-cell--compact {
+  gap: 2px 8px;
+}
+
+/* Full: detail footer — wide primary/secondary action + written trail. */
+.delpi-ui-resolution-status-cell--full {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.delpi-ui-resolution-status-cell--full .delpi-ui-resolution-status-cell__actions {
+  display: flex;
+}
+
+.delpi-ui-resolution-status-cell--full .delpi-ui-resolution-status-cell__button {
+  width: 100%;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.delpi-ui-resolution-status-cell__detail {
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.68)));
+}
+
+.delpi-ui-resolution-status-cell__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 768px) {
+  .delpi-ui-resolution-status-cell--cell .delpi-ui-resolution-status-cell__button {
+    min-height: 44px;
+  }
+}

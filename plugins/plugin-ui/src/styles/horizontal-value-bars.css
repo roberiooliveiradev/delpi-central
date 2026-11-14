@@ -145,6 +145,47 @@
   align-self: start;
 }
 
+/* Tone variants (HorizontalValueBarItem.tone). `default` keeps the accent gradient. */
+.delpi-ui-horizontal-value-bars__fill--tone-success {
+  background: var(--delpi-ui-success, var(--success, #16a34a));
+}
+
+.delpi-ui-horizontal-value-bars__fill--tone-warning {
+  background: var(--delpi-ui-warning, var(--warning, #d97706));
+}
+
+.delpi-ui-horizontal-value-bars__fill--tone-danger {
+  background: var(--delpi-ui-danger, var(--danger, #dc2626));
+}
+
+.delpi-ui-horizontal-value-bars__fill--tone-info {
+  background: var(--delpi-ui-info, #089bdb);
+}
+
+.delpi-ui-horizontal-value-bars__fill--tone-neutral {
+  background: var(--delpi-ui-muted, var(--text-muted, #64748b));
+}
+
+/* Selection (selectedId): highlight the chosen row and dim the others. */
+.delpi-ui-horizontal-value-bars__row--dimmed {
+  opacity: 0.45;
+}
+
+.delpi-ui-horizontal-value-bars__row--selected .delpi-ui-horizontal-value-bars__row-button,
+.delpi-ui-horizontal-value-bars__row--selected {
+  font-weight: 700;
+}
+
+.delpi-ui-horizontal-value-bars__row--selected .delpi-ui-horizontal-value-bars__row-button {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 45%, transparent);
+}
+
+.delpi-ui-horizontal-value-bars__row--dimmed:hover,
+.delpi-ui-horizontal-value-bars__row--dimmed:focus-within {
+  opacity: 0.8;
+}
+
 /* Ênfase sutil do líder do ranking (ordem real dos dados — sem critério inventado). */
 .delpi-ui-horizontal-value-bars__row[data-rank="1"] .delpi-ui-horizontal-value-bars__value {
   color: var(--delpi-ui-accent, #089bdb);

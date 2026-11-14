@@ -12,6 +12,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- `DistributionDonut` (rosca de distribuição com lista; fatias e itens selecionáveis) e `ResolutionStatusCell` (controle Resolver / ✓ data + Reabrir / Explicada) — genéricos, PT-BR padrão substituível por `labels`.
+- Evoluções aditivas (sem as props novas o render é idêntico): `ScopeChipBar` (`onRemove`, `onClearAll`, `emptyHint`), `SemicircleProgressGauge` (`onLegendSelect`, `selectedLegendId`, `legendItemAriaLabel`), `HorizontalValueBars` (`tone`, `selectedId`, `itemAriaLabel`), `ComparativeAreaChart` (`onPointSelect`, `selectedName`, `pointAriaLabel`).
 - `TableColumnVisibilityMenu` — menu “Colunas” / “Exibir colunas” canônico (tokens `--delpi-ui-*`, claro/escuro).
 - `FilterSelectField` em `createDashboardFiltersKit` (filtros com `<select>`).
 - `createKaizenKpiCard`, `simpleKpiKaizenBemClasses` e `simpleKpiKaizenToneClass` (`SimpleKpiCard` estilo kaizen).

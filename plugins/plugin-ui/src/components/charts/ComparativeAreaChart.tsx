@@ -1,14 +1,15 @@
-import { useId, useMemo } from "react";
+import { useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import {
   Area,
   AreaChart,
   CartesianGrid,
+  ReferenceLine,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 
-import { delpiUiClass } from "../../utils/delpiUiClass";
+import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
 import { useDelpiDarkMode } from "../bpmn/hooks/useDelpiDarkMode";
 import { StableResponsiveContainer } from "./StableResponsiveContainer";
 
@@ -37,6 +38,15 @@ export type ComparativeAreaChartProps = {
   yAxisWidth?: number;
   /** Gradiente suave (monotone). Default true. */
   smooth?: boolean;
+  /**
+   * Click / Enter on an X-axis point. Also makes the points keyboard
+   * navigable (ArrowLeft/ArrowRight/Home/End, Enter or Space selects).
+   */
+  onPointSelect?: (point: ComparativeAreaChartPoint, index: number) => void;
+  /** `name` of the selected point: draws a vertical highlight band on it. */
+  selectedName?: string | null;
+  /** Accessible name of a point target. Default lists each series value. */
+  pointAriaLabel?: (point: ComparativeAreaChartPoint) => string;
 };
 
 const DEFAULT_HEIGHT = 240;
@@ -55,6 +65,16 @@ export function comparativeAreaChartBemClasses(prefix: string) {
     tooltipRow: delpiUiClass(
       `${prefix}-comparative-area-chart__tooltip-row`,
       `${ui}__tooltip-row`,
+    ),
+    points: delpiUiClass(`${prefix}-comparative-area-chart__points`, `${ui}__points`),
+    point: delpiUiClass(`${prefix}-comparative-area-chart__point`, `${ui}__point`),
+    selectionBand: delpiUiClass(
+      `${prefix}-comparative-area-chart__selection-band`,
+      `${ui}__selection-band`,
+    ),
+    focusBand: delpiUiClass(
+      `${prefix}-comparative-area-chart__focus-band`,
+      `${ui}__focus-band`,
     ),
   };
 }
@@ -125,6 +145,9 @@ export function ComparativeAreaChart({
   prefix = "ds",
   yAxisWidth = 72,
   smooth = true,
+  onPointSelect,
+  selectedName,
+  pointAriaLabel,
 }: ComparativeAreaChartProps) {
   const isDark = useDelpiDarkMode();
   const gradientId = useId().replace(/:/g, "");
@@ -147,15 +170,87 @@ export function ComparativeAreaChart({
     [series, gradientId],
   );
 
+  const pointRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+
   if (!data.length) {
     return emptyMessage ? <p className={cn.empty}>{emptyMessage}</p> : null;
   }
 
+  const interactive = typeof onPointSelect === "function";
+  const selectedIndex =
+    selectedName != null ? data.findIndex((point) => point.name === selectedName) : -1;
+  const focusName =
+    focusedIndex != null && focusedIndex !== selectedIndex ? data[focusedIndex]?.name : undefined;
+  const rovingIndex = focusedIndex ?? (selectedIndex >= 0 ? selectedIndex : 0);
+
+  const describePoint = (point: ComparativeAreaChartPoint): string => {
+    if (pointAriaLabel) return pointAriaLabel(point);
+    const values = series
+      .map((item) => {
+        const raw = point[item.dataKey];
+        return typeof raw === "number" ? `${item.name}: ${valueFormatter(raw)}` : null;
+      })
+      .filter(Boolean)
+      .join("; ");
+    return values ? `${point.name}: ${values}` : String(point.name);
+  };
+
+  const moveFocus = (next: number) => {
+    const bounded = Math.min(data.length - 1, Math.max(0, next));
+    pointRefs.current[bounded]?.focus();
+  };
+
+  const handlePointKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    switch (event.key) {
+      case "ArrowRight":
+      case "ArrowDown":
+        event.preventDefault();
+        moveFocus(index + 1);
+        break;
+      case "ArrowLeft":
+      case "ArrowUp":
+        event.preventDefault();
+        moveFocus(index - 1);
+        break;
+      case "Home":
+        event.preventDefault();
+        moveFocus(0);
+        break;
+      case "End":
+        event.preventDefault();
+        moveFocus(data.length - 1);
+        break;
+      case "Enter":
+        // Handled here (and prevented) so the native Enter→click does not fire twice.
+        event.preventDefault();
+        onPointSelect?.(data[index]!, index);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const canvasClass = interactive ? withBemModifier(cn.canvas, "interactive") : cn.canvas;
+
   return (
     <div className={rootClass} data-theme={isDark ? "dark" : "light"}>
-      <div className={cn.canvas} style={{ height }}>
+      <div className={canvasClass} style={{ height }}>
         <StableResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <AreaChart
+            data={data}
+            margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+            onClick={
+              interactive
+                ? (state) => {
+                    const raw = state?.activeTooltipIndex;
+                    const index = raw == null ? -1 : Number(raw);
+                    const point = Number.isInteger(index) ? data[index] : undefined;
+                    if (point) onPointSelect?.(point, index);
+                  }
+                : undefined
+            }
+          >
             <defs>
               {gradients.map((g) => (
                 <linearGradient key={g.id} id={g.id} x1="0" y1="0" x2="0" y2="1">
@@ -186,6 +281,12 @@ export function ComparativeAreaChart({
                 <ComparativeTooltip formatter={valueFormatter} classNames={cn} />
               }
             />
+            {focusName != null ? (
+              <ReferenceLine x={focusName} className={cn.focusBand} stroke="currentColor" />
+            ) : null}
+            {selectedIndex >= 0 ? (
+              <ReferenceLine x={selectedName!} className={cn.selectionBand} stroke="currentColor" />
+            ) : null}
             {series.map((item, index) => (
               <Area
                 key={item.dataKey}
@@ -202,6 +303,29 @@ export function ComparativeAreaChart({
           </AreaChart>
         </StableResponsiveContainer>
       </div>
+      {interactive ? (
+        <div className={cn.points} role="group">
+          {data.map((point, index) => (
+            <button
+              key={`${point.name}-${index}`}
+              ref={(node) => {
+                pointRefs.current[index] = node;
+              }}
+              type="button"
+              className={cn.point}
+              tabIndex={index === rovingIndex ? 0 : -1}
+              aria-pressed={selectedName != null ? index === selectedIndex : undefined}
+              aria-label={describePoint(point)}
+              onFocus={() => setFocusedIndex(index)}
+              onBlur={() => setFocusedIndex((current) => (current === index ? null : current))}
+              onKeyDown={(event) => handlePointKeyDown(event, index)}
+              onClick={() => onPointSelect?.(point, index)}
+            >
+              {String(point.name)}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

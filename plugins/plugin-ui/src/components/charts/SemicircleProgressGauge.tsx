@@ -29,6 +29,8 @@ export type SemicircleProgressGaugeClassNames = {
   legendItem: string;
   legendDot: string;
   legendCount: string;
+  /** Legend item control, rendered only when `onLegendSelect` is provided. */
+  legendButton: string;
 };
 
 export type SemicircleProgressGaugeProps = {
@@ -49,6 +51,12 @@ export type SemicircleProgressGaugeProps = {
   /** BEM dual-class prefix. Default `ds`. */
   prefix?: string;
   "aria-label"?: string;
+  /** Turns legend items into toggle buttons. Without it the legend is read-only. */
+  onLegendSelect?: (item: SemicircleProgressGaugeLegendItem) => void;
+  /** Legend item shown as pressed (`aria-pressed` + highlight). */
+  selectedLegendId?: string | null;
+  /** Accessible name of a legend button. Default: its visible text. */
+  legendItemAriaLabel?: (item: SemicircleProgressGaugeLegendItem) => string;
 };
 
 export const SEMICIRCLE_GAUGE_TONE_COLORS: Record<SemicircleProgressGaugeTone, string> = {
@@ -84,6 +92,7 @@ export function semicircleProgressGaugeBemClasses(
     legendItem: pair(`${base}__legend-item`, `${ui}__legend-item`),
     legendDot: pair(`${base}__legend-dot`, `${ui}__legend-dot`),
     legendCount: pair(`${base}__legend-count`, `${ui}__legend-count`),
+    legendButton: pair(`${base}__legend-button`, `${ui}__legend-button`),
   };
 }
 
@@ -125,6 +134,9 @@ export function SemicircleProgressGauge({
   classNames: classNamesOverride,
   prefix = "ds",
   "aria-label": ariaLabel,
+  onLegendSelect,
+  selectedLegendId,
+  legendItemAriaLabel,
 }: SemicircleProgressGaugeProps) {
   const base = useMemo(() => semicircleProgressGaugeBemClasses(prefix), [prefix]);
   const classNames = { ...base, ...classNamesOverride };
@@ -133,69 +145,108 @@ export function SemicircleProgressGauge({
   const ratio = numeric == null ? 0 : clamp((numeric - min) / span, 0, 1);
   const display = numeric == null ? "—" : formatValue(numeric);
   const fillPath = ratio <= 0 ? "" : describeArc(Math.PI, Math.PI - ratio * Math.PI);
+  const legendItems = legend ?? [];
+  const legendInteractive = Boolean(onLegendSelect) && legendItems.length > 0;
+  const centerSummary = [centerLabel, numeric == null ? undefined : `${display}${unit}`]
+    .filter(Boolean)
+    .join(" · ");
+  // Read-only legend: counts are part of the image name (unchanged behavior).
+  // Interactive legend: buttons must stay reachable, so the image role moves
+  // to the chart and the legend gets its own accessible names.
   const accessible =
     ariaLabel ??
     [
-      centerLabel,
-      numeric == null ? undefined : `${display}${unit}`,
-      ...(legend ?? []).map((item) => `${item.label}: ${item.count}`),
+      centerSummary,
+      ...(legendInteractive ? [] : legendItems.map((item) => `${item.label}: ${item.count}`)),
     ]
       .filter(Boolean)
       .join(" · ");
+  const imageLabel = accessible || "Progresso";
+
+  const chartBlock = (
+    <div
+      className={classNames.chart}
+      style={{ width: size, maxWidth: "100%" }}
+      {...(legendInteractive ? { role: "img", "aria-label": imageLabel } : {})}
+    >
+      <svg
+        className={classNames.svg}
+        viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+        width="100%"
+        aria-hidden="true"
+      >
+        <path
+          className={classNames.track}
+          d={describeArc(Math.PI, 0)}
+          fill="none"
+          strokeWidth={20}
+          strokeLinecap="round"
+        />
+        {fillPath ? (
+          <path
+            className={classNames.fill}
+            d={fillPath}
+            fill="none"
+            stroke={SEMICIRCLE_GAUGE_TONE_COLORS[tone]}
+            strokeWidth={20}
+            strokeLinecap="round"
+          />
+        ) : null}
+      </svg>
+      <div className={classNames.center}>
+        <strong className={classNames.value}>
+          {display}
+          {numeric != null && unit ? <span>{unit}</span> : null}
+        </strong>
+        {centerLabel ? <span className={classNames.centerLabel}>{centerLabel}</span> : null}
+      </div>
+    </div>
+  );
 
   return (
     <div
       className={[withBemModifier(classNames.root, tone), className].filter(Boolean).join(" ")}
-      role="img"
-      aria-label={accessible || "Progresso"}
+      {...(legendInteractive ? { role: "group" } : { role: "img", "aria-label": imageLabel })}
       data-tone={tone}
       data-ratio={ratio.toFixed(4)}
     >
-      <div className={classNames.chart} style={{ width: size, maxWidth: "100%" }}>
-        <svg
-          className={classNames.svg}
-          viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-          width="100%"
-          aria-hidden="true"
-        >
-          <path
-            className={classNames.track}
-            d={describeArc(Math.PI, 0)}
-            fill="none"
-            strokeWidth={20}
-            strokeLinecap="round"
-          />
-          {fillPath ? (
-            <path
-              className={classNames.fill}
-              d={fillPath}
-              fill="none"
-              stroke={SEMICIRCLE_GAUGE_TONE_COLORS[tone]}
-              strokeWidth={20}
-              strokeLinecap="round"
-            />
-          ) : null}
-        </svg>
-        <div className={classNames.center}>
-          <strong className={classNames.value}>
-            {display}
-            {numeric != null && unit ? <span>{unit}</span> : null}
-          </strong>
-          {centerLabel ? <span className={classNames.centerLabel}>{centerLabel}</span> : null}
-        </div>
-      </div>
-      {legend?.length ? (
+      {chartBlock}
+      {legendItems.length ? (
         <ul className={classNames.legend}>
-          {legend.map((item) => {
+          {legendItems.map((item) => {
             const itemTone = item.tone ?? "neutral";
             const dotStyle: CSSProperties = {
               background: SEMICIRCLE_GAUGE_TONE_COLORS[itemTone],
             };
-            return (
-              <li key={item.id} className={classNames.legendItem} data-tone={itemTone}>
+            const content = (
+              <>
                 <span className={classNames.legendDot} style={dotStyle} aria-hidden="true" />
                 <span className={classNames.legendCount}>{item.count}</span>
                 <span>{item.label}</span>
+              </>
+            );
+            if (!onLegendSelect) {
+              return (
+                <li key={item.id} className={classNames.legendItem} data-tone={itemTone}>
+                  {content}
+                </li>
+              );
+            }
+            const selected = selectedLegendId != null && selectedLegendId === item.id;
+            const buttonClass = selected
+              ? withBemModifier(classNames.legendButton, "selected")
+              : classNames.legendButton;
+            return (
+              <li key={item.id} className={classNames.legendItem} data-tone={itemTone}>
+                <button
+                  type="button"
+                  className={buttonClass}
+                  aria-pressed={selected}
+                  aria-label={legendItemAriaLabel?.(item)}
+                  onClick={() => onLegendSelect(item)}
+                >
+                  {content}
+                </button>
               </li>
             );
           })}

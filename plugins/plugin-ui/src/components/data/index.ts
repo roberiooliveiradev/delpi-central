@@ -412,6 +412,18 @@ export {
   type SeriesSparklineTone,
 } from "./SeriesSparkline";
 export {
+  ResolutionStatusCell,
+  DEFAULT_RESOLUTION_STATUS_CELL_LABELS,
+  createDashboardResolutionStatusCell,
+  formatResolutionDate,
+  resolutionStatusCellBemClasses,
+  type DashboardResolutionStatusCellProps,
+  type ResolutionStatus,
+  type ResolutionStatusCellClassNames,
+  type ResolutionStatusCellLabels,
+  type ResolutionStatusCellProps,
+} from "./ResolutionStatusCell";
+export {
   TrendDelta,
   createDashboardTrendDelta,
   formatTrendDeltaPct,

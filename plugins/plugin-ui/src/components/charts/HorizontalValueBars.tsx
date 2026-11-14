@@ -1,6 +1,14 @@
 import { useMemo, type ReactNode } from "react";
 
-import { delpiUiClass } from "../../utils/delpiUiClass";
+import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
+
+export type HorizontalValueBarTone =
+  | "default"
+  | "success"
+  | "warning"
+  | "danger"
+  | "info"
+  | "neutral";
 
 export type HorizontalValueBarItem = {
   id: string;
@@ -9,6 +17,8 @@ export type HorizontalValueBarItem = {
   /** Texto à direita (default: valor formatado). */
   valueLabel?: string;
   meta?: string;
+  /** Fill color family. Default `"default"` keeps the current accent gradient. */
+  tone?: HorizontalValueBarTone;
 };
 
 export type HorizontalValueBarsClassNames = {
@@ -42,6 +52,13 @@ export type HorizontalValueBarsProps = {
    * indicado para rótulos longos em rankings gerenciais.
    */
   layout?: "columns" | "stacked";
+  /**
+   * Highlights one item (and dims the others). When provided (even as `null`)
+   * clickable rows expose `aria-pressed`.
+   */
+  selectedId?: string | null;
+  /** Accessible name of a row (button when clickable, list item otherwise). */
+  itemAriaLabel?: (item: HorizontalValueBarItem) => string;
 };
 
 export function horizontalValueBarsBemClasses(prefix: string): HorizontalValueBarsClassNames {
@@ -76,11 +93,14 @@ export function HorizontalValueBars({
   prefix = "ds",
   "aria-label": ariaLabel,
   layout = "columns",
+  selectedId,
+  itemAriaLabel,
 }: HorizontalValueBarsProps) {
   const base = useMemo(() => horizontalValueBarsBemClasses(prefix), [prefix]);
   const classNames = { ...base, ...classNamesOverride };
   const peak = max ?? Math.max(0, ...items.map((item) => item.value));
   const denom = peak > 0 ? peak : 1;
+  const selectionActive = selectedId !== undefined;
 
   if (items.length === 0) {
     return (
@@ -106,6 +126,23 @@ export function HorizontalValueBars({
       <ul className={classNames.list}>
         {items.map((item, index) => {
           const widthPct = Math.min(100, Math.max(0, (item.value / denom) * 100));
+          const tone = item.tone && item.tone !== "default" ? item.tone : null;
+          const isSelected = selectedId != null && selectedId === item.id;
+          const isDimmed = selectedId != null && selectedId !== item.id;
+          const fillClass = tone
+            ? withBemModifier(classNames.fill, `tone-${tone}`)
+            : classNames.fill;
+          const rowBase = classNames.row;
+          const rowClass = isSelected
+            ? withBemModifier(rowBase, "selected")
+            : isDimmed
+              ? withBemModifier(rowBase, "dimmed")
+              : rowBase;
+          const rowState = {
+            "data-selected": isSelected ? "true" : undefined,
+            "data-dimmed": isDimmed ? "true" : undefined,
+          };
+          const ariaLabelForItem = itemAriaLabel?.(item);
           const body = (
             <>
               <div className={classNames.label}>
@@ -113,7 +150,7 @@ export function HorizontalValueBars({
                 {item.meta ? <span className={classNames.meta}>{item.meta}</span> : null}
               </div>
               <div className={classNames.track} aria-hidden="true">
-                <span className={classNames.fill} style={{ width: `${widthPct}%` }} />
+                <span className={fillClass} style={{ width: `${widthPct}%` }} />
               </div>
               <span className={classNames.value}>
                 {item.valueLabel ?? formatValue(item.value)}
@@ -124,13 +161,16 @@ export function HorizontalValueBars({
             return (
               <li
                 key={item.id}
-                className={classNames.row}
+                className={rowClass}
                 role="listitem"
                 data-rank={index + 1}
+                {...rowState}
               >
                 <button
                   type="button"
                   className={classNames.rowButton}
+                  aria-pressed={selectionActive ? isSelected : undefined}
+                  aria-label={ariaLabelForItem}
                   onClick={() => onItemClick(item)}
                 >
                   {body}
@@ -141,9 +181,11 @@ export function HorizontalValueBars({
           return (
             <li
               key={item.id}
-              className={classNames.row}
+              className={rowClass}
               role="listitem"
               data-rank={index + 1}
+              aria-label={ariaLabelForItem}
+              {...rowState}
             >
               {body}
             </li>

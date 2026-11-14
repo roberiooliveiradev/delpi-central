@@ -58,6 +58,15 @@ export * from "./components/charts";
 /** Named re-export — `export *` é podado pelo federation pruning para
  * símbolos sem uso interno no remote (host it-portal consome). */
 export { createSemicircleProgressGauge } from "./components/charts/SemicircleProgressGauge";
+/** Named re-exports — same MF tree-shake reason as above (hosts consume without internal use). */
+export {
+  DistributionDonut,
+  createDashboardDistributionDonut,
+} from "./components/charts/DistributionDonut";
+export {
+  ResolutionStatusCell,
+  createDashboardResolutionStatusCell,
+} from "./components/data/ResolutionStatusCell";
 export * from "./components/bpmn";
 export * from "./components/org";
 export * from "./components/shape";

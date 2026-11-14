@@ -111,6 +111,10 @@ const REQUIRED_HOST_EXPORTS = [
   "PinnedConversations",
   "ConversationSidebarSearch",
   "ConversationContextPanel",
+  "DistributionDonut",
+  "createDashboardDistributionDonut",
+  "ResolutionStatusCell",
+  "createDashboardResolutionStatusCell",
 ];
 
 function findIndexExpose(dir) {

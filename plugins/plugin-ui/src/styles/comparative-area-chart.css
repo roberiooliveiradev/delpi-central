@@ -9,6 +9,7 @@
   gap: 8px;
   min-width: 0;
   width: 100%;
+  position: relative;
 }
 
 .delpi-ui-comparative-area-chart__canvas {
@@ -28,6 +29,48 @@
   margin: 0;
   font-size: 0.875rem;
   color: var(--delpi-ui-muted, var(--text-muted, #64748b));
+}
+
+/* Point selection (onPointSelect / selectedName). */
+.delpi-ui-comparative-area-chart__canvas--interactive {
+  cursor: pointer;
+}
+
+.delpi-ui-comparative-area-chart__selection-band,
+.delpi-ui-comparative-area-chart__focus-band {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  pointer-events: none;
+}
+
+.delpi-ui-comparative-area-chart__selection-band line {
+  stroke-width: 18px;
+  stroke-opacity: 0.16;
+}
+
+.delpi-ui-comparative-area-chart__focus-band line {
+  stroke-width: 2px;
+  stroke-opacity: 0.7;
+  stroke-dasharray: 4 3;
+}
+
+/* Keyboard targets: visually hidden, but focusable (focus is shown by the band). */
+.delpi-ui-comparative-area-chart__points {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.delpi-ui-comparative-area-chart__point {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
 }
 
 .delpi-ui-comparative-area-chart__tooltip {

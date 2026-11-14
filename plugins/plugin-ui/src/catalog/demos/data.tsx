@@ -30,6 +30,7 @@ import {
   TablePageSizeSelect,
   TablePaginationNav,
   tablePaginationNavBemClasses,
+  ResolutionStatusCell,
   TreeGuideRails,
   HorizontalTimeline,
   horizontalTimelineBemClasses,
@@ -538,7 +539,51 @@ export const dataCatalogEntries: CatalogEntryDraft[] = [
       },
     ],
   },
+  {
+    id: "data.ResolutionStatusCell",
+    family: "data",
+    exportName: "ResolutionStatusCell",
+    title: "ResolutionStatusCell",
+    description:
+      "Controle «tratado / não tratado»: Resolver → ✓ data + Reabrir; Explicada (sem ação). Promise mostra «Salvando…».",
+    propsSummary: ["status", "onResolve", "onReopen", "pending", "variant", "contextLabel", "labels"],
+    demos: [
+      { id: "cell", label: "Célula de tabela", render: () => <ResolutionStatusCellDemo variant="cell" /> },
+      { id: "compact", label: "Card compacto", render: () => <ResolutionStatusCellDemo variant="compact" /> },
+      { id: "full", label: "Rodapé de detalhe", render: () => <ResolutionStatusCellDemo variant="full" /> },
+      {
+        id: "not-applicable",
+        label: "Explicada",
+        render: () => <ResolutionStatusCell prefix={PUC_PREFIX} status="not_applicable" />,
+      },
+    ],
+  },
 ];
+
+function ResolutionStatusCellDemo({ variant }: { variant: "cell" | "compact" | "full" }) {
+  const [status, setStatus] = useState<"open" | "resolved">("open");
+  const [resolvedAt, setResolvedAt] = useState<string | null>(null);
+  const simulate = (next: "open" | "resolved") =>
+    new Promise<void>((resolve) => {
+      window.setTimeout(() => {
+        setStatus(next);
+        setResolvedAt(next === "resolved" ? new Date().toISOString() : null);
+        resolve();
+      }, 600);
+    });
+  return (
+    <ResolutionStatusCell
+      prefix={PUC_PREFIX}
+      variant={variant}
+      status={status}
+      resolvedAt={resolvedAt}
+      resolvedBy="Maria Souza"
+      contextLabel="registro 1042"
+      onResolve={() => simulate("resolved")}
+      onReopen={() => simulate("open")}
+    />
+  );
+}
 
 function HorizontalTimelineDemo() {
   const classNames = horizontalTimelineBemClasses(PUC_PREFIX);

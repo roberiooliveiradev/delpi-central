@@ -1325,9 +1325,29 @@ O consumidor calcula valor e legenda; o kit só desenha (arco, valor central e d
 CSS em `styles/semicircle-progress-gauge.css`. Consumidor piloto: `it-portal` (Saúde do inventário).
 Use `SpeedometerGauge` quando houver meta/faixas; este quando houver composição por contagens.
 
+Opt-in (nov/2026): `onLegendSelect`, `selectedLegendId`, `legendItemAriaLabel` transformam os itens da legenda em botões (`aria-pressed`). Nesse modo o `role="img"` passa para o gráfico (o root vira `group`) para os botões continuarem acessíveis. Sem `onLegendSelect` a legenda é somente leitura, como antes.
+
 ### `HorizontalValueBars`
 
 Barras horizontais leves para rankings / top N. Preferir `ConfigurableSeriesChart` / `horizontal_bar` com `colorScale` quando o caso for dashboard.
+
+Opt-in (nov/2026): `items[].tone` (`default|success|warning|danger|info|neutral`; `default` mantém o degradê atual), `selectedId` (destaque + demais com opacidade reduzida; com `onItemClick` expõe `aria-pressed`) e `itemAriaLabel`.
+
+### `ComparativeAreaChart`
+
+Área comparativa (Recharts) com tema claro/escuro. Opt-in (nov/2026): `onPointSelect(point, index)` torna os pontos do eixo X navegáveis por teclado (setas, Home/End, Enter/Espaço) e clicáveis; `selectedName` desenha a faixa vertical de destaque; `pointAriaLabel` nomeia cada ponto. Sem essas props o gráfico é o de antes.
+
+### `DistributionDonut`
+
+Rosca de distribuição com lista ao lado, em que fatias e itens filtram. Reusa `buildPieSlicePath` (mesma geometria de `ChartSeriesPie`). Props: `items {id,label,value,tone?,description?}[]`, `selectedId`, `onSelect(item|null)`, `centerValue`, `centerLabel`, `size`, `thickness`, `legendPlacement` (`side|below|none`; `side` vira coluna abaixo de 480px de largura do container), `showPercent`, `valueFormatter`, `maxItems` («Outros» não selecionável), `emptyMessage`, `ariaLabel`, `labels {others,total,clearSelection}`. Sem `onSelect` é somente leitura. Cores por tokens `--chart-1..8` e `--delpi-ui-success|warning|danger|info`. CSS em `styles/distribution-donut.css`.
+
+### `ResolutionStatusCell` (família `data`)
+
+Controle «tratado / não tratado» de um registro: **Resolver** → «✓ dd/MM» + **Reabrir**; `not_applicable` mostra «Explicada» sem botão. Variantes `cell` (tabela), `compact` (card mobile) e `full` (rodapé de detalhe). Props: `status`, `resolvedAt`, `resolvedBy`, `onResolve`, `onReopen`, `pending`, `disabled`, `variant`, `contextLabel`, `dateFormatter`, `labels`. Promise em `onResolve`/`onReopen` mostra «Salvando…»; rejeição só restaura o estado (o consumidor mostra o erro). Em `DataTable` use a coluna com `interactive: true`. CSS em `styles/resolution-status-cell.css`.
+
+### `ScopeChipBar` (família `feedback`)
+
+Opt-in (nov/2026): `chips[].onRemove` (+ `removeAriaLabel`) mostra o «×»; `onClearAll` / `clearAllLabel` adiciona «Limpar tudo» ao fim; `emptyHint` aparece com `chips=[]`. Sem essas props o render é o de antes.
 
 ### `ConfigurableSeriesChart` (`horizontal_bar`)
 

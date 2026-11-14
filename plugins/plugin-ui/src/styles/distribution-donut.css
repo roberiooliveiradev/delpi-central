@@ -1,0 +1,262 @@
+/**
+ * DistributionDonut — rosca de distribuição + lista (fatias e itens selecionáveis).
+ * Dual-class: `{prefix}-distribution-donut*` + `.delpi-ui-distribution-donut*`.
+ * Cores só por tokens `--chart-n` / `--delpi-ui-*` (claro/escuro na mesma árvore).
+ */
+
+.delpi-ui-distribution-donut {
+  /* Largura do container decide side → below (< 480px), sem JS. */
+  container-type: inline-size;
+  container-name: delpi-ui-distribution-donut;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 18px 24px;
+  min-width: 0;
+  width: 100%;
+}
+
+.delpi-ui-distribution-donut--legend-below {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.delpi-ui-distribution-donut--legend-none {
+  justify-content: center;
+}
+
+@container delpi-ui-distribution-donut (max-width: 480px) {
+  .delpi-ui-distribution-donut--legend-side {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .delpi-ui-distribution-donut--legend-side .delpi-ui-distribution-donut__chart {
+    align-self: center;
+  }
+}
+
+.delpi-ui-distribution-donut--legend-below .delpi-ui-distribution-donut__chart {
+  align-self: center;
+}
+
+.delpi-ui-distribution-donut__chart {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.delpi-ui-distribution-donut__svg {
+  display: block;
+}
+
+/* --- tones: one custom property per tone, reused by slice and dot --- */
+.delpi-ui-distribution-donut__slice--tone-chart-1,
+.delpi-ui-distribution-donut__legend-dot--tone-chart-1 { --delpi-ui-donut-color: var(--chart-1, #089bdb); }
+.delpi-ui-distribution-donut__slice--tone-chart-2,
+.delpi-ui-distribution-donut__legend-dot--tone-chart-2 { --delpi-ui-donut-color: var(--chart-2, #003866); }
+.delpi-ui-distribution-donut__slice--tone-chart-3,
+.delpi-ui-distribution-donut__legend-dot--tone-chart-3 { --delpi-ui-donut-color: var(--chart-3, #47bfff); }
+.delpi-ui-distribution-donut__slice--tone-chart-4,
+.delpi-ui-distribution-donut__legend-dot--tone-chart-4 { --delpi-ui-donut-color: var(--chart-4, #7e14ff); }
+.delpi-ui-distribution-donut__slice--tone-chart-5,
+.delpi-ui-distribution-donut__legend-dot--tone-chart-5 { --delpi-ui-donut-color: var(--chart-5, #2e7d32); }
+.delpi-ui-distribution-donut__slice--tone-chart-6,
+.delpi-ui-distribution-donut__legend-dot--tone-chart-6 { --delpi-ui-donut-color: var(--chart-6, #f2a100); }
+.delpi-ui-distribution-donut__slice--tone-chart-7,
+.delpi-ui-distribution-donut__legend-dot--tone-chart-7 { --delpi-ui-donut-color: var(--chart-7, #0f9d8a); }
+.delpi-ui-distribution-donut__slice--tone-chart-8,
+.delpi-ui-distribution-donut__legend-dot--tone-chart-8 { --delpi-ui-donut-color: var(--chart-8, #d6336c); }
+.delpi-ui-distribution-donut__slice--tone-success,
+.delpi-ui-distribution-donut__legend-dot--tone-success { --delpi-ui-donut-color: var(--delpi-ui-success, var(--success, #16a34a)); }
+.delpi-ui-distribution-donut__slice--tone-warning,
+.delpi-ui-distribution-donut__legend-dot--tone-warning { --delpi-ui-donut-color: var(--delpi-ui-warning, var(--warning, #d97706)); }
+.delpi-ui-distribution-donut__slice--tone-danger,
+.delpi-ui-distribution-donut__legend-dot--tone-danger { --delpi-ui-donut-color: var(--delpi-ui-danger, var(--danger, #dc2626)); }
+.delpi-ui-distribution-donut__slice--tone-info,
+.delpi-ui-distribution-donut__legend-dot--tone-info { --delpi-ui-donut-color: var(--delpi-ui-info, #089bdb); }
+.delpi-ui-distribution-donut__slice--tone-neutral,
+.delpi-ui-distribution-donut__legend-dot--tone-neutral { --delpi-ui-donut-color: var(--delpi-ui-muted, var(--text-muted, #64748b)); }
+
+.delpi-ui-distribution-donut__slice {
+  fill: var(--delpi-ui-donut-color, var(--chart-1, #089bdb));
+  stroke: var(--delpi-ui-surface, var(--surface, #ffffff));
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+  transition: opacity 120ms ease;
+}
+
+.delpi-ui-distribution-donut__slice[role="button"] {
+  cursor: pointer;
+}
+
+.delpi-ui-distribution-donut__slice[role="button"]:hover {
+  filter: brightness(1.08);
+}
+
+.delpi-ui-distribution-donut__slice:focus {
+  outline: none;
+}
+
+.delpi-ui-distribution-donut__slice:focus-visible {
+  stroke: var(--delpi-ui-accent, #089bdb);
+  stroke-width: 3px;
+}
+
+.delpi-ui-distribution-donut__slice--dimmed {
+  opacity: 0.35;
+}
+
+.delpi-ui-distribution-donut__slice--selected {
+  stroke: var(--delpi-ui-title, var(--delpi-ui-text, #111111));
+  stroke-width: 2px;
+}
+
+/* --- center --- */
+.delpi-ui-distribution-donut__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 24%;
+  text-align: center;
+  pointer-events: none;
+}
+
+.delpi-ui-distribution-donut__center-value {
+  font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+  font-weight: 800;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: var(--delpi-ui-title, var(--delpi-ui-text, var(--text, #111111)));
+}
+
+.delpi-ui-distribution-donut__center-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.68)));
+}
+
+/* --- legend list --- */
+.delpi-ui-distribution-donut__legend {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.delpi-ui-distribution-donut__legend-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  font-size: 0.8125rem;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-distribution-donut__legend-item {
+  display: flex;
+  min-width: 0;
+  transition: opacity 120ms ease;
+}
+
+.delpi-ui-distribution-donut__legend-item--dimmed {
+  opacity: 0.5;
+}
+
+.delpi-ui-distribution-donut__legend-item > button {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.delpi-ui-distribution-donut__legend-item:not(:has(> button)) {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+}
+
+.delpi-ui-distribution-donut__legend-button {
+  cursor: pointer;
+}
+
+.delpi-ui-distribution-donut__legend-button:hover {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 8%, transparent);
+}
+
+.delpi-ui-distribution-donut__legend-button:focus-visible,
+.delpi-ui-distribution-donut__clear-selection:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, #089bdb);
+  outline-offset: 2px;
+}
+
+.delpi-ui-distribution-donut__legend-item--selected .delpi-ui-distribution-donut__legend-button {
+  border-color: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 55%, var(--delpi-ui-border, #e2e8f0));
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 12%, transparent);
+  font-weight: 600;
+}
+
+.delpi-ui-distribution-donut__legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--delpi-ui-donut-color, var(--chart-1, #089bdb));
+}
+
+.delpi-ui-distribution-donut__legend-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-distribution-donut__legend-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.delpi-ui-distribution-donut__legend-percent {
+  min-width: 3.5em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.68)));
+}
+
+.delpi-ui-distribution-donut__clear-selection {
+  padding: 2px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--delpi-ui-accent, #089bdb);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.delpi-ui-distribution-donut__empty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--delpi-ui-muted, var(--text-muted, #94a3b8));
+}

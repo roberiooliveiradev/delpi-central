@@ -257,6 +257,12 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("feedback", "StateBoxPanel"),
   vc("feedback", "InfoStatePanel"),
   vc("feedback", "StatusBadge"),
+  vc("feedback", "ScopeChipBar", {
+    addedAt: "2026-08-06",
+    updatedAt: "2026-11-14",
+    changeNote: "Chips removíveis (onRemove), «Limpar tudo» (onClearAll) e emptyHint",
+    description: "Barra de chips de escopo/filtros ativos; seleção, remoção e limpeza opcionais.",
+  }),
   vc("feedback", "TaskEditorFrame", {
     addedAt: "2026-09-21",
     description:
@@ -355,6 +361,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: "2026-08-07",
     changeNote: "Barra de proporção compacta para células e cards",
   }),
+  vc("data", "ResolutionStatusCell", {
+    addedAt: "2026-11-14",
+    description:
+      "Controle «tratado / não tratado» de um registro: Resolver, ✓ data + Reabrir, Explicada; variantes cell/compact/full.",
+  }),
   vc("data", "HorizontalTimeline", {
     addedAt: "2026-08-07",
     changeNote:
@@ -447,8 +458,27 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("charts", "ImpactEffortMatrixLegend"),
   vc("charts", "SemicircleProgressGauge", {
     addedAt: "2026-11-11",
+    updatedAt: "2026-11-14",
+    changeNote: "Legenda selecionável (onLegendSelect / selectedLegendId / legendItemAriaLabel)",
     description:
       "Donut semicircular com valor central e legenda de contagens por tom; sem agulha/meta.",
+  }),
+  vc("charts", "HorizontalValueBars", {
+    addedAt: "2026-08-13",
+    updatedAt: "2026-11-14",
+    changeNote: "tone por item, selectedId (aria-pressed + destaque) e itemAriaLabel",
+    description: "Barras horizontais de ranking/top N; clique opcional, tom e seleção.",
+  }),
+  vc("charts", "ComparativeAreaChart", {
+    addedAt: "2026-07-29",
+    updatedAt: "2026-11-14",
+    changeNote: "Seleção de ponto do eixo X (onPointSelect / selectedName / pointAriaLabel)",
+    description: "Área comparativa (Recharts) com tema claro/escuro; ponto do eixo X selecionável.",
+  }),
+  vc("charts", "DistributionDonut", {
+    addedAt: "2026-11-14",
+    description:
+      "Rosca de distribuição com lista ao lado; fatias e itens selecionáveis (aria-pressed), «Outros» por maxItems.",
   }),
   vc("charts", "ChartTypeCatalogPanel"),
   vc("charts", "TableInsertCatalogPanel"),

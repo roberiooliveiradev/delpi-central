@@ -21,6 +21,8 @@ import {
   journeyProgressBarBemClasses,
   LoadingState,
   loadingStatePanelBemClasses,
+  ScopeChipBar,
+  scopeChipBarBemClasses,
   ScreenLoading,
   screenLoadingBemClasses,
   ModalShell,
@@ -49,8 +51,55 @@ const journeyProgressCn = journeyProgressBarBemClasses(PUC_PREFIX);
 const screenLoadingCn = screenLoadingBemClasses(PUC_PREFIX);
 const stateBoxCn = stateBoxBemClasses(PUC_PREFIX);
 const infoStateCn = infoStateBemClasses(PUC_PREFIX);
+const scopeChipBarCn = scopeChipBarBemClasses(PUC_PREFIX);
+
+function ScopeChoiceDemo() {
+  const [active, setActive] = useState("mine");
+  return (
+    <ScopeChipBar
+      classNames={scopeChipBarCn}
+      label="Escopo"
+      chips={[
+        { id: "mine", label: "Minha carteira", active: active === "mine", onSelect: () => setActive("mine") },
+        { id: "team", label: "Equipe", active: active === "team", onSelect: () => setActive("team") },
+      ]}
+    />
+  );
+}
+
+function ActiveFiltersDemo() {
+  const [filters, setFilters] = useState([
+    { id: "sev", label: "Severidade: Alta" },
+    { id: "period", label: "Período: 01/11 a 14/11" },
+    { id: "status", label: "Situação: Aberta" },
+  ]);
+  return (
+    <ScopeChipBar
+      classNames={scopeChipBarCn}
+      label="Filtros ativos"
+      emptyHint="Nenhum filtro ativo"
+      chips={filters.map((filter) => ({
+        ...filter,
+        onRemove: () => setFilters((current) => current.filter((item) => item.id !== filter.id)),
+      }))}
+      onClearAll={() => setFilters([])}
+    />
+  );
+}
 
 export const feedbackCatalogEntries: CatalogEntryDraft[] = [
+  {
+    id: "feedback.ScopeChipBar",
+    family: "feedback",
+    exportName: "ScopeChipBar",
+    title: "ScopeChipBar",
+    description: "Chips de escopo ou de filtros ativos; remoção por chip e «Limpar tudo» opcionais.",
+    propsSummary: ["chips", "onClearAll", "clearAllLabel", "emptyHint"],
+    demos: [
+      { id: "scope", label: "Escolha de escopo", render: () => <ScopeChoiceDemo /> },
+      { id: "active-filters", label: "Filtros ativos (× e Limpar tudo)", render: () => <ActiveFiltersDemo /> },
+    ],
+  },
   {
     id: "feedback.EmptyState",
     family: "feedback",
