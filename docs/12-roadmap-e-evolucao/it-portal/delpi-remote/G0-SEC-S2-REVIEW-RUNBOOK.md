@@ -42,3 +42,9 @@ Saida esperada: `G0-SEC-S2 BLOCKED`, exit 0. Isso significa que a estrutura das 
 ## Proximo ponto verificavel
 
 Avaliacao **privada** das minutas e plano de testes G3/LAB apos aprovacao; piloto G2-S1..S3 permanece presencial, independente do G0-SEC. A issue principal e [#179](https://github.com/roberiooliveiradev/delpi-central/issues/179).
+
+## Evidencias automatizadas (13/11/2026)
+
+- [Pipeline API/G0-SEC-S2 SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43548759355/job/132306083197), commit `f778d309210d3120d47b3ae0c63090730a8cd826`; preflight `G0-SEC-S2 BLOCKED`, pytest HTTP e PostgreSQL V001..V011 aprovados.
+- [Architecture gate SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43548759317/job/132306083086) e [Audit SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43548759359/job/132306083450).
+- **Interpretacao:** CI verde significa apenas minutas completas e bloqueio mantido. Aprovacao RH/Juridico/TI, laboratorio MeshCentral e revogacao/restore em host real ainda pendentes.
