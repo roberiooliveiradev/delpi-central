@@ -1574,3 +1574,7 @@ DEFER_BY_PHASE:
   Meeting/Frontline; Process Mining runtime; Twin optimization; Edge autonomy;
   physical OT actuation; L5 autonomous workflows
 ```
+
+### 2026-11-14 — Crosswalk de owners e contratos cognitivos (Doc 335)
+
+**Produto TARGET:** quatro especialistas cognitivos (Compreensão, Investigação, Suficiência, Síntese) colaboram por handoffs tipados; o Agent investigativo Pydantic AI existente é baseline, não prova dos outros três Agents. **Ownership preservado:** DÉLIA Application é dona do plano tipado, Evidence, Policy, Decision, Work e Outcome; Core de AuthZ; Domain APIs de dados/regras finais; MCP/A2A como integração; providers como adapters. Contratos especializados futuros precisam especificar owner/consumer, esquema/versionamento, contexto mínimo, evidência/provenance, identidade/AutZ, budgets, retries, failures, observabilidade, rollback/revoke e resultado. Nenhum port, serviço, handoff ou runtime novo se considera existente por esta anotação. Doc 293 mantém gate de experimento antes de implementar. [Decisão Doc 335](./corrections/mcp-contextual-intelligence-orchestration/335-c3t2-four-cognitive-specialist-agents-po-product-direction-and-int2-resumption.md).
