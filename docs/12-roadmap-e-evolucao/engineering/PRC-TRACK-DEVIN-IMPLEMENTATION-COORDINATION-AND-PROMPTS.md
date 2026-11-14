@@ -1103,3 +1103,19 @@ E01 sete campos no card **PASS** (subchecks id/type/requester/officialCode/creat
 **Semântica:** matched não prova mudança nova no ERP; R01 V1 baseline, R02 no-op, R03 Vn+1 por diff real continuam. O teste de publicação com edição do ERP por usuário será na etapa final em PRD **após autorização separada de release/ensaio**, sem writes de agente. `TOTVS_REAL_WRITE_E2E=DEFERRED_BY_PO`, não `FAIL`.
 
 **Próximo pacote recomendado:** auditoria fechada da matriz de campos, contrato de adapter/normalização, guards fail-closed, provas de leitura não mutável real quando disponível, testes memory/Postgres/API mockada de match/mismatch/unverifiable/erro/replay, relatório de lacunas e docs. Não gerar implementação de alteração no TOTVS. `PRD_DEPLOY=NOT_AUTHORIZED`.
+
+## 59. Execução — Produtos Acompanhados U1/U2/U3 implementados e homologados em HML (15/11/2026)
+
+**TASK_ID:** `EVA-PRC-TRACK-PRODUCTS-FRONTEND-U1-U2-U3-HML-01`. Implementação commitada na `main` (`2b732cdbaf`), spec E2E em `f5b17be139`.
+
+**Gate B (backend):** contratos de listagem paginada (search/sort/flagState), detalhe por revisão com projeção temporal de flags, comparação server-side (`compute_technical_diff` do domínio) e CRUD de record-scoped flags (FIELD/SUPPLIER_LINK/GENERAL, `expectedVersion`, idempotência, uma OPEN por produto+alvo, RESOLVED/REMOVED terminais) implementados em `engineering-api` + migrations V024/V025. Backend 128/129 (a falha é o 422 de intake D16 preexistente, reproduzido sem o diff).
+
+**U1:** seletor `Solicitações | Produtos acompanhados` (`EngineeringSegmentToggle`, `?area=`), listagem das 5 colunas aprovadas sobre `GET /technical-records` (search, flagState, sort mapeado UI↔backend, paginação server-side, estados loading/empty/forbidden/error).
+
+**U2:** rota estável `product-registration/products/{recordId}` — hero compacto, duas abas (Ficha técnica | Versões), seletor de versão `?rev=`, ficha consolidada read-only via adapter snapshot v2→`PrcTechnicalSheetView`, fornecedores por identidade `code|store`, flags record-scoped com mutação só na revisão vigente e projeção histórica read-only.
+
+**U3:** timeline Vn→V1 expansível (`aria-expanded`, teclado/touch) com proveniência e «Ver ficha desta versão»; comparação Vx×Vy autoritativa do backend com `comparable=false` tratado, sem diff local de JSON.
+
+**Homologação HML:** deploy governado `delpi-hml-engineering-api` (image `local`, 22/22 containers healthy, V024/V025 aplicadas, 4 produtos publicados, massa `30190123` V1×V2 real). Spec `prc-tracked-products.spec.ts` executada em Chromium real no host HML contra `https://192.168.1.237:18443` com `PLAYWRIGHT_INSECURE=1` (opt-in, TLS self-signed): **16/16 PASS** — desktop, mobile, tablet e mobile-320 × U1-area, U1-URL-state, U2-detalhe, U3-timeline+comparação. Zero chamadas diretas a `/apps/api-delpi/` e zero page errors não tratados em todas as execuções. Screenshots em `~/prc-e2e-run/e2e/artifacts/prc-products-*` (host) e cópias desktop/mobile-320 em `plugins/engineering/e2e/artifacts/` (gitignored).
+
+**Pendências honestas:** tema claro/escuro, zoom 200%, estado 403 real (sem usuário sem permissão provisionado) e teclado end-to-end = `TEST_NOT_RUN`. Escrita real no TOTVS segue `DEFERRED_BY_PO` (§58). `PRD_DEPLOY=NOT_EXECUTED`.
