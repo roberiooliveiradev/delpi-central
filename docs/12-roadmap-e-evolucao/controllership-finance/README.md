@@ -4,7 +4,7 @@
 
 > **13/11/2026 — Tempo real do LNF (W1):** [Doc 167](./167-lnf-tempo-real-websocket.md) `CONTRACT_DRAFT` · [ADR-002](./adr/ADR-002-tempo-real-lnf-websocket-bff.md) `ACCEPTED`. WebSocket na BFF, aviso + refetch. D-W4 revista: a W6 entra quando a W5 estiver DONE.
 
-> **13/11/2026 — F6 PROD DONE: migração do LNF concluída.** BFF dona do schema (`apply` noop V001–V014); MFE só BFF; api-delpi sem módulo/rotas LNF (auth→404). F5c encerrado por decisão do owner. F7.4 = verificação pela CLARA pós-deploy (conector). Tags `rollback-f6-*` até 2026-11-20. Trilha [165](./165-trilha-execucao-migracao-lnf-ate-clara.md) · [163](./163-plano-migracao-lancamento-notas-fiscais.md) · [164](./164-runbook-corte-lancamento-notas-fiscais.md) · [ADR-001](./adr/ADR-001-hospedagem-lancamento-notas-fiscais.md).
+> **13/11/2026 — Migração do LNF concluída em 2026-11-13.** Trilha [165](./165-trilha-execucao-migracao-lnf-ate-clara.md) toda DONE (incl. F7.4 CLARA PROD: catálogo OK; 01=11 / 02=3 abertas; backlog 11/0). BFF dona do schema; MFE só BFF; api-delpi sem LNF. Pendência: tags `rollback-f6-*` em **2026-11-20**. [163](./163-plano-migracao-lancamento-notas-fiscais.md) · [164](./164-runbook-corte-lancamento-notas-fiscais.md) · [ADR-001](./adr/ADR-001-hospedagem-lancamento-notas-fiscais.md).
 
 > **13/11/2026 — F5b virada técnica PROD DONE (histórico).** Flags no corte: BFF hosted=true, api-delpi module=false, MFE→BFF. Superado pela F6 acima.
 

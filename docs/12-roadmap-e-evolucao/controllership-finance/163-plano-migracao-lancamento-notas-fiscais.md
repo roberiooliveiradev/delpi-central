@@ -110,7 +110,7 @@ Até F6: redeploy da versão anterior (api-delpi com módulo + MFE com base anti
 
 ### Status F5a — 2026-11-12
 
-**Migração LNF concluída em PROD (2026-11-13).** F5a/F5b/F5c DONE; F6 DONE — a `api-delpi` não serve mais o LNF; BFF é dona do schema (`LNF_MIGRATIONS_MODE=apply`, noop V001–V014); MFE aponta só para a BFF. F7.4 permanece verificação pela CLARA pós-deploy (conector). Ver trilha [165](./165-trilha-execucao-migracao-lnf-ate-clara.md).
+**Migração do LNF concluída em 2026-11-13.** Trilha [165](./165-trilha-execucao-migracao-lnf-ate-clara.md) — todas as fases DONE (F5a–F5c, F7.0–F7.4, F6). A `api-delpi` não serve mais o LNF; BFF é dona do schema (`LNF_MIGRATIONS_MODE=apply`, noop V001–V014); MFE aponta só para a BFF. F7.4: CLARA PROD pós-F6 (só leituras) PASS. Pendência: remover tags `rollback-f6-*` em **2026-11-20** se não houver incidente.
 
 | Item | Achado F1 (PROVEN) | Decisão / regra |
 |---|---|---|

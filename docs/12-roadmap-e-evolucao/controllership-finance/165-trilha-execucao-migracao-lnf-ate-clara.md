@@ -86,7 +86,7 @@ Transferir o módulo **Lançamento de Notas Fiscais (LNF)** da `api-delpi` para 
 | F7.1 | CLARA — leituras | DONE | HML/PROD | `1328cd0d85` | 2026-11-13 | 8 reads; HML JSON-RPC PASS; PROD health+import |
 | F7.2 | CLARA — análise | DONE (F7-R3) | HML/PROD | `d9393bcde5` | 2026-11-13 | enum LNF; `review_aged_pending.value`=contagem ≥5d |
 | F7.3 | CLARA — ações governadas | DONE (F7-R3) | HML/PROD | `d9393bcde5` | 2026-11-13 | copy conversacional sem Portal; displayable=true |
-| F7.4 | CLARA — produção + teste automatizado | **verificação pela CLARA pós-deploy** | PROD | `bd4e26e98b` + `7f332cb39b` | 2026-11-13 | conector; pós F6 PROD |
+| F7.4 | CLARA — produção + teste automatizado | **DONE** | PROD | `bd4e26e98b` + `7f332cb39b` | 2026-11-13 | CLARA PROD pós-F6 (só leituras): catálogo OK; fila 01=11 abertas; fila 02=3 abertas; detalhe PC/CT-e/histórico/DANFE; backlog 11 pendentes / 0 bloqueadas (= F6) |
 | F6 | Limpeza final (encerra o rollback) | **DONE** | PROD | `18e7fb00c1` + deploys 2026-11-13 | 2026-11-13 | MFE/BFF/api-delpi publicados; gateway intacto; contagens 1446=1446; ledger V001–V014; 0×5xx/traceback; tags `rollback-f6-*` até 2026-11-20 |
 
 Status possíveis: TODO · IN_PROGRESS · BLOCKED (regra de parada) · DONE.
@@ -419,11 +419,19 @@ PRÓXIMO PASSO DA TRILHA:
 | 2026-11-13 20:32 -03 | F6 | PROD | Deploy api-delpi | PASS | `18e7fb00c1` | digest `a2ee7e9a…`; LNF auth→404; MODULE removido |
 | 2026-11-13 20:33 -03 | F6 | PROD | Verificação final | PASS | `18e7fb00c1` | 1446=1446; 0×5xx/traceback; DANFE+refresh OK; gateway skip |
 | 2026-11-13 20:33 -03 | F5c | docs | Encerrado por decisão do owner | DONE | — | janela 19/11 superada |
-| 2026-11-13 20:33 -03 | F6 | docs | Migração LNF concluída em PROD | DONE | (este commit) | api-delpi não serve mais o LNF |
+| 2026-11-13 20:33 -03 | F6 | docs | Migração LNF concluída em PROD | DONE | `63de78fb26` | api-delpi não serve mais o LNF |
+| 2026-11-13 ~21:20 -03 | F7.4 | PROD | Verificação CLARA pós-F6 (só leituras) | PASS → DONE | — | catálogo OK; 01=11 abertas; 02=3 abertas; detalhe PC/CT-e/histórico/DANFE; backlog 11 pendentes / 0 bloqueadas; bate F6 |
+| 2026-11-13 ~21:20 -03 | 165 | docs | Fechamento da trilha — todas as fases DONE | DONE | (este commit) | pendência: tags `rollback-f6-*` em 2026-11-20 |
 
-### F7.4 — verificação pela CLARA pós-deploy
+### F7.4 — DONE (verificação pela CLARA pós-deploy)
 
-Status: **verificação pela CLARA pós-deploy**. O Cursor não executa o roteiro funcional da CLARA; o conector externo é o dono da evidência. Health do serviço da CLARA em PROD: OK (MFE `controllership-finance` Up; BFF `/ready` 200). Marcar F7.4 DONE somente com PASS do conector.
+Status: **DONE**. Evidência do conector em PROD após a F6, somente leituras:
+
+- catálogo OK;
+- lista filial 01: **11** abertas (pending 11 — bate report F6);
+- lista filial 02: **3** abertas (pending 2 + in_progress 1 — bate report F6);
+- detalhe com PC, CT-e, histórico e DANFE;
+- análise de backlog: **11** pendentes, **0** bloqueadas.
 
 ### F5b — decisão do owner (2026-11-13)
 
@@ -435,7 +443,7 @@ Janela original previa término em **2026-11-19**. Owner encerrou o F5c antecipa
 
 ### F6 — deploy PROD (2026-11-13, decisão do owner) — DONE
 
-Owner: publicar agora (fora do horário comercial); F5c encerrado; F7.4 segue pós-deploy pelo conector. **Sem rollback**; **sem ciclo de correção**.
+Owner: publicar agora (fora do horário comercial); F5c encerrado. F7.4 DONE após verificação CLARA pós-deploy. **Sem rollback**; **sem ciclo de correção**.
 
 #### Linha de base PROD (pré-deploy)
 
