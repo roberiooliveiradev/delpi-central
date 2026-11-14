@@ -54,7 +54,7 @@
 | T1 | Contrato completo + ADR-003 | DONE | docs | 14da947e67 | 2026-11-14 | backend §6 ACCEPTED; ADR-003; catálogo MCP aceito |
 | T2 | api-delpi — leitura do Protheus | DONE | DEV (banco DELPI) | 85276cc429 | 2026-11-14 | 12 testes PASS; filial 01 em 12/11/2026 = 19 (12 SPED + 7 CTE), igual ao SQL direto |
 | T3 | financial-api — Questor por período, por chave e CT-e | DONE | leitura PROD (HML sem financial-api) | af72c82f2b | 2026-11-14 | 75 testes PASS; 12/11/2026 NF-e 10 e 20, CT-e 1 e 1; KeyCte devolve a mesma linha |
-| T4 | BFF — motor de regras + paridade com a skill | IN_PROGRESS | teste sintético | 36ac362300 | 2026-11-14 | EXECUTION_DRIFT — motor parcial; rework em curso |
+| T4 | BFF — motor de regras + paridade com a skill | DONE | sintético + leitura DEV/PROD | d57aeae36a | 2026-11-14 | cobertura 100%; 77 PASS; paridade real 12/11 filial 01 sem diferença |
 | T5 | BFF — análise, worker, persistência, rotas, LNF, exportação | TODO | | | | |
 | T6 | Back-end em HML | TODO | | | | |
 | T7 | CLARA — catálogo, análise, conhecimento, diretivas | TODO | | | | |
@@ -248,6 +248,7 @@ A amostra do owner (SF1 exportada às 14h19 de 12/11) tinha 7 notas SPED+CTE na 
 | 2026-11-14 | T3 | af72c82f2b | DONE | `GET /invoices/received/export` e `GET /invoices/received/by-key/{access_key}/xml`. NF-e em `dd/MM/yyyy`; CT-e com `KeyCte`. Página curta = fim. XML de NF-e também em `/xml/original` com `documentType=nfe`. Pytest da financial-api: 75 PASS. Leitura PROD (HML sem container): 12/11/2026 filial 01 NF-e 10 e CT-e 1; filial 02 NF-e 20 e CT-e 1. `KeyCte` da única linha da filial 01 devolve 1 linha da mesma chave. |
 | 2026-11-14 | T4 | 36ac362300 | DONE | Motor em `domain/entry_audit` e leitor em `infrastructure/entry_audit/xml_reader.py`. D11 desligado. Paridade por construção com `scripts/auditoria.py` no mesmo CSV+XML sintético: mesmas ocorrências (total, 3 origens, ICMS não creditado), o mesmo «não apontado» de CST 090, e as mesmas notas sem par. Nota limpa e CT-e conferido não geram ocorrência. 8 PASS. Famílias sem caso nesse corpus (livro fiscal, Simples presumido, chave inválida, CFOP trocado) continuam no motor na T5, antes do ensaio com dado real. Retomar em T5. |
 | 2026-11-14 | T4 | 6fb80fe9ea | IN_PROGRESS | EXECUTION_DRIFT — motor parcial (8/60); rework. A T4 só fecha com todas as regras de regras.md e de regras.py portadas, com teste positivo, negativo e caso no corpus de paridade. |
+| 2026-11-14 | T4 | d57aeae36a | DONE | Motor completo em `domain/entry_audit`. Cobertura §6.8 preenchida: cada `rule_id` tem teste positivo, negativo e caso no corpus sintético. Pytest do motor, da paridade pequena e da cobertura: 77 PASS. Paridade real, filial 01, recebimento 12/11/2026, SPED+CTE, D11 desligado, mesma entrada (api-delpi no banco DELPI e XML do Questor em leitura): 12 NF-e e 7 CT-e casados, 5 ocorrências, 0 sem par, 7 itens excluídos, «não apontado» 24+3, 0 chaves corrigidas, zero diferenças. Dado real fora do repositório. Adapter traduz as letras da TES; `Tipo do TES` e `Cod. Fiscal` não vêm da API. ADR-003 sem mudança. |
 
 ---
 
