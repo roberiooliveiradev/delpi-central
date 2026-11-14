@@ -160,6 +160,12 @@ class GovernedCapabilityBinding:
     operation_class: str | None = None
     invocation_vocabulary: tuple[str, ...] = ()
     invocation_identity: tuple[str, ...] = ()
+    # Bounded canonical ``key=value`` scope pairs of the invocation —
+    # scope-defining arguments (filters included), pagination-window
+    # keys excluded. The governed record of WHICH logical query was
+    # issued; required to prove two observations belong to the same
+    # query before multipage union (INT-2 multipage scope).
+    invocation_scope: tuple[str, ...] = ()
 
 
 class _SupportsRenderedOutcome(Protocol):
@@ -211,6 +217,7 @@ def _success_attempt(
             operation_class=binding.operation_class,
             invocation_vocabulary=binding.invocation_vocabulary,
             invocation_identity=binding.invocation_identity,
+            invocation_scope=binding.invocation_scope,
         ),
         content=rendered.content,
         limitations=rendered.limitations,

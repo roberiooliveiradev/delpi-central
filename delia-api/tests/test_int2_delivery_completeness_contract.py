@@ -239,6 +239,291 @@ def test_tc08_multipage_divergent_totals_not_demonstrated():
 
 
 # -------------------------------------------------------------------
+# AC-MP — query-scope identity for multipage union
+# -------------------------------------------------------------------
+
+
+def test_scope_pairs_exclude_window_keys():
+    """Pages of one query differ ONLY in window args — pagination
+    selectors never enter the scope fingerprint."""
+    from app.application.capability_provision.semantic_capability_support import (
+        _invocation_scope,
+    )
+
+    page1 = _invocation_scope(
+        {"entity": "process", "action": "search",
+         "params": {"status": "ativo"}, "page": 1, "limit": 40}
+    )
+    page2 = _invocation_scope(
+        {"entity": "process", "action": "search",
+         "params": {"status": "ativo"}, "page": 2, "offset": 40}
+    )
+    assert page1 == page2
+    assert "params.status=ativo" in page1
+
+
+def test_scope_pairs_distinguish_filters():
+    """Different filters → different scope → never unionable."""
+    from app.application.capability_provision.semantic_capability_support import (
+        _invocation_scope,
+    )
+
+    active = _invocation_scope({"params": {"status": "ativo"}})
+    inactive = _invocation_scope({"params": {"status": "inativo"}})
+    assert active != inactive
+
+
+def test_scope_pairs_scalar_list_order_insensitive():
+    """`{status:[a,b]}` vs `{status:[b,a]}` — same logical scope."""
+    from app.application.capability_provision.semantic_capability_support import (
+        _invocation_scope,
+    )
+
+    assert _invocation_scope(
+        {"params": {"status": ["ativo", "inativo"]}}
+    ) == _invocation_scope(
+        {"params": {"status": ["inativo", "ativo"]}}
+    )
+
+
+def test_scope_pairs_opaque_values_stay_distinguishable():
+    """Unrepresentable values digest — different payloads never
+    collapse into one empty scope."""
+    from app.application.capability_provision.semantic_capability_support import (
+        _invocation_scope,
+    )
+
+    left = _invocation_scope({"params": {"filter": {"x"}}})
+    right = _invocation_scope({"params": {"filter": {"y"}}})
+    assert left != right
+    assert left and right
+
+_SCOPE_ACTIVE = ("entity=process", "params.status=ativo")
+_SCOPE_INACTIVE = ("entity=process", "params.status=inativo")
+
+
+def _scoped_page(
+    *, start: int, count: int, total: int, scope: tuple, **kwargs
+):
+    return _attempt(
+        entity="process",
+        vocabulary=("process", "search"),
+        items=[
+            {"code": f"PROC-{i:04d}"} for i in range(start, start + count)
+        ],
+        total=total,
+        scope=scope,
+        **kwargs,
+    )
+
+
+def test_mp01_cross_scope_filters_not_unionable():
+    """AC-MP-01/02 — `status=ativo` page + `status=inativo` page with
+    the same declared total: distinct records do not prove one query
+    (SAME_TOTAL + DISTINCT != PROVEN_SAME_QUERY_COMPLETENESS)."""
+    obligation = _ob("list of processes", source="process")
+    pages = (
+        _scoped_page(start=0, count=60, total=109, scope=_SCOPE_ACTIVE),
+        _scoped_page(start=60, count=49, total=109, scope=_SCOPE_INACTIVE),
+    )
+    coverage = _coverage(
+        (obligation,), pages, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
+
+
+def test_mp02_partial_scope_presence_not_unionable():
+    """A scoped page plus a scope-empty page: the absent scope cannot
+    be assumed equal to the declared one — fail closed."""
+    obligation = _ob("list of processes", source="process")
+    pages = (
+        _scoped_page(start=0, count=60, total=109, scope=_SCOPE_ACTIVE),
+        _scoped_page(start=60, count=49, total=109, scope=()),
+    )
+    coverage = _coverage(
+        (obligation,), pages, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
+
+
+def test_mp03_different_owner_not_unionable():
+    """AC-MP-03 — same anchor echo + same total across different
+    specialists is coincidence, not one query."""
+    obligation = _ob("list of processes", source="process")
+    pages = (
+        _scoped_page(
+            start=0, count=60, total=109,
+            scope=_SCOPE_ACTIVE, specialist="teo",
+        ),
+        _scoped_page(
+            start=60, count=49, total=109,
+            scope=_SCOPE_ACTIVE, specialist="davi",
+        ),
+    )
+    coverage = _coverage(
+        (obligation,), pages, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
+
+
+def test_mp04_different_capability_not_unionable():
+    """AC-MP-04 — different remote capabilities echoing the same
+    anchor cannot fabricate one collection."""
+    obligation = _ob("list of processes", source="process")
+    pages = (
+        _scoped_page(
+            start=0, count=60, total=109,
+            scope=_SCOPE_ACTIVE, remote="search",
+        ),
+        _scoped_page(
+            start=60, count=49, total=109,
+            scope=_SCOPE_ACTIVE, remote="export",
+        ),
+    )
+    coverage = _coverage(
+        (obligation,), pages, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
+
+
+def test_mp05_same_scope_pages_unionable():
+    """AC-MP-05 — pages of the SAME declared scope (identical filter
+    pairs) covering the single declared total demonstrate the
+    enumeration."""
+    obligation = _ob("list of processes", source="process")
+    pages = (
+        _scoped_page(start=0, count=40, total=109, scope=_SCOPE_ACTIVE),
+        _scoped_page(start=40, count=40, total=109, scope=_SCOPE_ACTIVE),
+        _scoped_page(start=80, count=29, total=109, scope=_SCOPE_ACTIVE),
+    )
+    coverage = _coverage(
+        (obligation,), pages, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_SATISFIED
+
+
+def test_mp07_scoped_overlap_not_demonstrated():
+    """AC-MP-07 — overlapping pages of one scope cannot inflate the
+    union toward the total."""
+    obligation = _ob("list of processes", source="process")
+    pages = (
+        _scoped_page(start=0, count=60, total=109, scope=_SCOPE_ACTIVE),
+        _scoped_page(start=0, count=60, total=109, scope=_SCOPE_ACTIVE),
+    )
+    coverage = _coverage(
+        (obligation,), pages, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
+
+
+def test_mp08_record_identity_presentation_variance():
+    """AC-MP-08 — the same record re-rendered with different payload
+    fields counts once: owner record identity, not full-content
+    fingerprint, deduplicates."""
+    obligation = _ob("list of processes", source="process")
+    pages = (
+        _attempt(
+            entity="process",
+            vocabulary=("process", "search"),
+            items=[
+                {"code": "PROC-A", "name": "Avaliacao"},
+                {"code": "PROC-B"},
+            ],
+            total=3,
+            scope=_SCOPE_ACTIVE,
+        ),
+        _attempt(
+            entity="process",
+            vocabulary=("process", "search"),
+            items=[
+                {"code": "PROC-A", "name": "Avaliacao (revisada)"},
+                {"code": "PROC-C"},
+            ],
+            total=3,
+            scope=_SCOPE_ACTIVE,
+        ),
+    )
+    coverage = _coverage(
+        (obligation,), pages, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_SATISFIED
+
+
+def test_mp09_distinct_records_same_rendering_not_merged():
+    """AC-MP-09 — records with distinct owner ids and identical
+    rendered payloads stay distinct; id-less identical payloads
+    collapse conservatively (undercount only fails closed)."""
+    obligation = _ob("list of processes", source="process")
+    pages = (
+        _attempt(
+            entity="process",
+            vocabulary=("process", "search"),
+            items=[
+                {"id": "1", "label": "same"},
+                {"id": "2", "label": "same"},
+            ],
+            total=4,
+            scope=_SCOPE_ACTIVE,
+        ),
+        _attempt(
+            entity="process",
+            vocabulary=("process", "search"),
+            items=[
+                {"id": "3", "label": "same"},
+                {"id": "4", "label": "same"},
+            ],
+            total=4,
+            scope=_SCOPE_ACTIVE,
+        ),
+    )
+    coverage = _coverage(
+        (obligation,), pages, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_SATISFIED
+
+
+def test_mp09_idless_identical_payloads_fail_closed():
+    obligation = _ob("list of processes", source="process")
+    pages = (
+        _attempt(
+            entity="process",
+            vocabulary=("process", "search"),
+            items=[{"label": "same"}, {"label": "same"}],
+            total=4,
+            scope=_SCOPE_ACTIVE,
+        ),
+        _attempt(
+            entity="process",
+            vocabulary=("process", "search"),
+            items=[{"label": "same"}, {"label": "same"}],
+            total=4,
+            scope=_SCOPE_ACTIVE,
+        ),
+    )
+    coverage = _coverage(
+        (obligation,), pages, delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
+
+
+def test_mp13_owner_incomplete_flag_beats_numeric_coverage():
+    """AC-MP-13 — `is_complete:false` inside one result is an owner
+    declaration of incompleteness; delivered==total cannot annul it."""
+    obligation = _ob("list of processes", source="process")
+    attempt = _attempt(
+        entity="process",
+        vocabulary=("process", "search"),
+        items=[{"code": f"PROC-{i:04d}"} for i in range(20)],
+        total=20,
+        data_complete=False,
+    )
+    coverage = _coverage(
+        (obligation,), (attempt,), delivery="enumeration"
+    )
+    assert coverage[obligation.description] == OBLIGATION_INCONCLUSIVE
+
+
+# -------------------------------------------------------------------
 # AC-INT2-F04/F05 — aggregation: authoritative metric is the deliverable
 # -------------------------------------------------------------------
 

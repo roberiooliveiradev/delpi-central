@@ -268,6 +268,7 @@ from app.application.capability_provision.semantic_capability_support import (
     _evaluate_material_obligations,
     _evidence_rows_by_code,
     _invocation_identity,
+    _invocation_scope,
     _invocation_vocabulary,
     _finalize_agent_collected_attempts,
     _find_act_capability,
@@ -2581,6 +2582,7 @@ class OperationalCapabilityOrchestrator:
             operation_class=descriptor.operation_class.value,
             invocation_vocabulary=_invocation_vocabulary(args),
             invocation_identity=_invocation_identity(args),
+            invocation_scope=_invocation_scope(args),
         )
 
         def _render(out: SpecialistOutcome) -> RenderedSpecialistOutcome:

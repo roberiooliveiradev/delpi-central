@@ -157,6 +157,12 @@ class GovernedCapabilityProvenance:
     # the owner was asked about — required to bind authoritative
     # absence to the queried scope (RC5-R3). Never arbitrary payload.
     invocation_identity: tuple[str, ...] = ()
+    # Bounded canonical ``key=value`` scope pairs of the invocation
+    # (scope-defining arguments; pagination-window keys excluded) —
+    # the governed record of WHICH logical query was issued. Two
+    # observations may union for multipage completeness only when
+    # this scope is identical (INT-2 multipage scope).
+    invocation_scope: tuple[str, ...] = ()
 
     def to_projection(self) -> dict:
         """Bounded HTTP-safe projection — no tokens, URLs, wire internals.
@@ -193,6 +199,7 @@ class GovernedCapabilityProvenance:
             "operation_class": self.operation_class,
             "invocation_vocabulary": list(self.invocation_vocabulary),
             "invocation_identity": list(self.invocation_identity),
+            "invocation_scope": list(self.invocation_scope),
             "observed_at": self.observed_at,
             "correlation_id": self.correlation_id,
             "is_complete": self.is_complete,

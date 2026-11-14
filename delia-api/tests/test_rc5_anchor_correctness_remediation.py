@@ -58,6 +58,7 @@ def _attempt(
     capability: str | None = None,
     vocabulary: tuple[str, ...] = (),
     identity: tuple[str, ...] = (),
+    scope: tuple[str, ...] = (),
     operation_class: str = "READ",
     specialist: str = "owner",
     remote: str = "read",
@@ -122,6 +123,7 @@ def _attempt(
             operation_class=operation_class,
             invocation_vocabulary=vocabulary,
             invocation_identity=identity,
+            invocation_scope=scope,
         ),
         outcome=outcome,
     )

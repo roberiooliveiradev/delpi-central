@@ -1787,3 +1787,13 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | INT2-ENUM-NONCOLLECTION | DOCUMENTED | evidência sem coleção não demonstra enumeração (por contrato) |
 
 **NEXT=`COORDINATION_INT2_TRANSVERSAL_COMPLETENESS_INDEPENDENT_REVIEW`**
+
+### Multipage scope & continuity — 2026-11-14 (Doc 332)
+
+| Residual | Status | Evidence / disposition |
+|---|---|---|
+| INT2-MULTIPAGE-SCOPE-CONTINUITY | **REMEDIATED** | `invocation_scope` + owner tuple + identity + total único + record-id union == total; RED cross-scope/diff-owner/diff-cap reproduzido e corrigido; multipágina real provada no eval (A: 40+40+29=109 distintos) |
+| INT2-SNAPSHOT-IDENTITY | DOCUMENTED_ABSENT | nenhum owner expõe snapshot/collection id; scope-equality + total único + owner é a garantia disponível; futuro owner-declared snapshot entra na owner tuple sem redesign |
+| INT2-MODEL-DECLARATION-LOOPS | OPEN_LOW | cenários C/G declaram âncoras fabricadas — outcome sempre honesto (UNSATISFIED/insufficient) |
+
+**NEXT=`COORDINATION_INT2_MULTIPAGE_AND_TRANSVERSAL_FINAL_REVIEW`**

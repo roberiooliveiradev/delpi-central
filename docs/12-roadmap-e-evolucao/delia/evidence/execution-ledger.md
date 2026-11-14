@@ -6797,3 +6797,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **REAL EVAL:** `or-qwen14b-e388ea7043fa` 12 cenários — B/E2 agregação SATISFIED por âncoras distintas (`search`,`processes`); A2 enum completa 2×SATISFIED; C2/D SATISFIED; D2/F/E honestos; FALSE_SATISFIED=0, FALSE_COMPLETE=0.
 - **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — não aceite; `INT2_ACCEPTED=NO`; `PRODUCTION_DEPLOY/PHASE_ADVANCEMENT/INT3/T3=NOT_AUTHORIZED`. Doc 331.
 - **NEXT:** `COORDINATION_INT2_TRANSVERSAL_COMPLETENESS_INDEPENDENT_REVIEW`.
+
+### INT-2 — multipage scope identity & finalization proof (Doc 332; 2026-11-14)
+
+- **TASK:** `DELIA-C3-T2-INT2-MULTIPAGE-SCOPE-AND-FINALIZATION-PROOF-REWORK-01`; BASE `91e85c8d99` (reanchor — main avançou além de `b5847054e1`). REWORK — `INT2-MULTIPAGE-SCOPE-CONTINUITY`.
+- **Causa-raiz:** `_joint_collection_coverage` unia por âncora+identidade+total; filtros (`params.status`) e owner/capability não chegavam ao avaliador — queries distintas com mesmo total podiam fabricar coleção completa.
+- **Fix (alternativa B):** novo campo bounded `invocation_scope` em `GovernedCapabilityBinding`/`Provenance` (pares `key=value` de args de escopo, chaves de janela excluídas, 1 nível nested, digest opaco p/ não-escalares); união exige owner tuple + scope + identity + total único + união de registros por record-id (`_record_token`) == total.
+- **RED provado:** replay do predicado base → cross-scope/diff-owner/diff-capability `OLD_union=True` (falso SATISFIED); presentation-variance `False` (falso negativo) — correção bidirecional.
+- **TESTES:** +14 MP/scope; suíte completa verde.
+- **REAL EVAL `or-qwen14b-1f76a1a093d0` (12 cenários, prod intocada):** **A provou multipágina real** — 3×`teo.read` `{}/page2/page3`, escopo idêntico, total 109, união distinta=109 → SATISFIED legítimo; E→complete+SATISFIED; B→agg SATISFIED; C/G/E2/G2/F honestos; FALSE_SATISFIED=0, FALSE_COMPLETE=0.
+- **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — não aceite; `INT2_ACCEPTED=NO`; `PRODUCTION_DEPLOY/PHASE_ADVANCEMENT/INT3/T3=NOT_AUTHORIZED`. Doc 332.
+- **NEXT:** `COORDINATION_INT2_MULTIPAGE_AND_TRANSVERSAL_FINAL_REVIEW`.

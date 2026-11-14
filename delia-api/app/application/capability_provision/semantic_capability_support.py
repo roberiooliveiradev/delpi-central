@@ -2599,6 +2599,117 @@ def _invocation_identity(args: object) -> tuple[str, ...]:
     return tuple(tokens[:8])
 
 
+# Window selectors choose which slice of one logical query is
+# delivered — never which set is queried. Scope-defining filters keep
+# every other argument; pages of the same query differ ONLY in window
+# arguments.
+_PAGINATION_ARG_KEYS = frozenset(
+    {
+        "page",
+        "pages",
+        "page_size",
+        "per_page",
+        "limit",
+        "offset",
+        "cursor",
+        "next_cursor",
+        "continuation",
+        "continuation_token",
+        "skip",
+        "top",
+        "start",
+        "start_at",
+        "after",
+        "before",
+        "max_results",
+        "first",
+    }
+)
+
+
+def _scope_value_token(value: object) -> str | None:
+    """Bounded canonical token for one scope argument value.
+
+    Scalars render directly; scalar lists sort into one token so
+    ordering differences do not fabricate distinct scopes; anything
+    unrepresentable reduces to a content digest — different values
+    still produce different tokens (fail-closed), never conflated.
+    """
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return repr(value)
+    if isinstance(value, str):
+        token = value.strip()
+        if not token:
+            return None
+        if len(token) <= 64:
+            return token
+        digest = hashlib.sha256(token.encode()).hexdigest()[:16]
+        return f"<opaque:{digest}>"
+    if isinstance(value, (list, tuple)):
+        parts = [
+            item
+            for item in (_scope_value_token(v) for v in value)
+            if item is not None
+        ]
+        if len(parts) != len(value) or not parts:
+            return None
+        joined = "|".join(sorted(p.casefold() for p in parts))
+        return joined[:128] if len(joined) <= 128 else None
+    return None
+
+
+def _invocation_scope(args: object) -> tuple[str, ...]:
+    """Bounded canonical ``key=value`` pairs defining the query scope.
+
+    Every scalar argument — top-level or one Mapping level inside it
+    (e.g. ``params``/``arguments``) — except pagination-window keys
+    (``_PAGINATION_ARG_KEYS``): window selectors slice one logical
+    query; scope selectors define WHICH set is queried. Nested keys
+    are prefixed (``params.status=ativo``) so envelope and owner
+    namespaces cannot collide. Two invocations share a scope only
+    when every scope pair matches — different filters, different
+    scope, never unionable.
+    """
+    if not isinstance(args, Mapping):
+        return ()
+    pairs: list[str] = []
+    levels: list[tuple[Mapping, str]] = [(args, "")]
+    for key, value in args.items():
+        if isinstance(value, Mapping):
+            levels.append((value, f"{str(key).casefold()}."))
+    for level, prefix in levels:
+        for key, value in level.items():
+            name = str(key).strip().casefold()
+            if not name or len(name) > 64:
+                continue
+            if name in _PAGINATION_ARG_KEYS:
+                continue
+            if isinstance(value, Mapping):
+                continue
+            token = _scope_value_token(value)
+            if token is None:
+                # Unrepresentable value — digest marker keeps the
+                # scope distinguishable instead of silently dropping
+                # the difference (fail-closed).
+                try:
+                    digest = hashlib.sha256(
+                        json.dumps(
+                            value, sort_keys=True, default=str
+                        ).encode()
+                    ).hexdigest()[:16]
+                except (TypeError, ValueError):
+                    digest = hashlib.sha256(
+                        repr(value).encode()
+                    ).hexdigest()[:16]
+                token = f"<opaque:{digest}>"
+            pair = f"{prefix}{name}={token}"
+            if len(pair) <= 192 and pair not in pairs:
+                pairs.append(pair)
+    return tuple(sorted(pairs)[:24])
+
+
 # Owner structured keys whose emptiness/zeroness attests absence.
 _ABSENCE_COLLECTION_KEYS = frozenset(
     {"items", "results", "rows", "records", "entries", "children"}
@@ -3155,26 +3266,64 @@ def _attempt_binds_obligation(
     return False
 
 
+_RECORD_ID_KEY_RE = re.compile(
+    r"^(id|code|sku|uuid|key|ref|recno|registro|codigo)$", re.IGNORECASE
+)
+
+
+def _record_token(item: object) -> str | None:
+    """Bounded deduplication token for one delivered record.
+
+    An owner record-identity field (``id``/``code``/…) wins over the
+    full-content fingerprint: the SAME record rendered differently
+    across pages must count once, and DIFFERENT records must never
+    collapse into one. Without an identity field the canonical
+    content fingerprint applies — identical rendered payloads count
+    once (conservative: undercounting only ever fails closed).
+    """
+    if isinstance(item, Mapping):
+        for key, value in sorted(
+            item.items(), key=lambda pair: str(pair[0]).casefold()
+        ):
+            if not _RECORD_ID_KEY_RE.fullmatch(str(key)):
+                continue
+            if isinstance(value, bool):
+                continue
+            if isinstance(value, (str, int, float)):
+                literal = str(value).strip().casefold()
+                if literal and len(literal) <= 128:
+                    return f"rid:{str(key).casefold()}={literal}"
+    try:
+        return "json:" + json.dumps(item, sort_keys=True, default=str)
+    except (TypeError, ValueError):
+        return None
+
+
 def _joint_collection_coverage(
     obligation: MaterialObligation,
     business: tuple[GovernedCapabilityAttempt, ...],
 ) -> bool:
-    """Anchored pages of the same scope jointly covering the owner
-    total — bounded multipage completeness (WS-4).
+    """Anchored pages of the same query jointly covering the owner
+    total — bounded multipage completeness.
 
-    All contributing attempts must (a) succeed with complete
-    provenance and outcome, (b) echo the declared anchor, (c) share
-    the identical queried-identity scope, and (d) declare the SAME
-    numeric total. Distinct delivered items are fingerprinted by
-    canonical content; the union must equal or exceed that total —
-    a union larger than the declared total proves the pages were not
-    one set (different scope/dupes masked) and demonstrates nothing.
-    Raw page-count arithmetic (``40+40+29``) is never accepted.
+    SAME_ANCHOR + SAME_TOTAL + DISTINCT_RECORDS is NOT proof of one
+    query: every contributing attempt must also come from the same
+    owner/capability (specialist, provider, remote capability, action)
+    and declare the identical governed invocation scope — the
+    canonical ``key=value`` record of the scope-defining arguments
+    (filters included, pagination-window keys excluded). Two pages of
+    one query differ only in window arguments; different filters can
+    never union into a complete collection. Distinct records are
+    deduplicated by record identity (``_record_token``); the union
+    must equal the single declared total — a union larger than the
+    declared total proves the pages were not one set (different
+    scope/dupes masked) and demonstrates nothing. Raw page-count
+    arithmetic (``40+40+29``) is never accepted.
     """
-    import json as _json
-
     source = obligation.evidence_source.casefold()
-    candidates: list[GovernedCapabilityAttempt] = []
+    candidates: list[tuple[GovernedCapabilityAttempt, Mapping]] = []
+    owners: set[tuple] = set()
+    scopes: set[tuple] = set()
     identities: set[tuple] = set()
     totals: set[float] = set()
     for attempt in business:
@@ -3202,9 +3351,25 @@ def _joint_collection_coverage(
         if not data_total:
             continue
         candidates.append((attempt, data))
+        owners.add(
+            (
+                prov.specialist_id,
+                prov.provider_id,
+                prov.remote_capability,
+                prov.action_id,
+                prov.capability_group_id,
+            )
+        )
+        scopes.add(tuple(prov.invocation_scope or ()))
         identities.add(tuple(prov.invocation_identity or ()))
         totals.add(max(data_total))
-    if len(candidates) < 2 or len(identities) > 1 or len(totals) > 1:
+    if (
+        len(candidates) < 2
+        or len(owners) > 1
+        or len(scopes) > 1
+        or len(identities) > 1
+        or len(totals) > 1
+    ):
         return False
     total = totals.pop()
     seen: set[str] = set()
@@ -3214,14 +3379,9 @@ def _joint_collection_coverage(
             if not isinstance(items, (list, tuple)):
                 continue
             for item in items:
-                try:
-                    seen.add(
-                        _json.dumps(
-                            item, sort_keys=True, default=str
-                        )
-                    )
-                except (TypeError, ValueError):
-                    continue
+                token = _record_token(item)
+                if token is not None:
+                    seen.add(token)
     return bool(seen) and len(seen) == int(total)
 
 
