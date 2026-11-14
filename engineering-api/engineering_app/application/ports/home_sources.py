@@ -26,6 +26,11 @@ class HomeSourceContext:
     user_id: str
     access_token: str
     request_id: str | None = None
+    # Permissões efetivas do principal (Core) — necessárias às fontes
+    # in-process do próprio domínio (ex.: fila PRC), que decidem escopo
+    # por objeto via PrcActor. Fontes downstream HTTP não usam este campo.
+    permissions: frozenset[str] = frozenset()
+    is_superadmin: bool = False
 
 
 @dataclass(frozen=True)

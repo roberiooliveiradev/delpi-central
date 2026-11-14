@@ -272,19 +272,27 @@ class PostgresProductRegistrationRepository:
     def list_requests(
         self,
         *,
-        status=None, request_type=None, assignee=None, source=None,
-        search=None, date_from=None, date_to=None,
+        status=None, statuses=None, request_type=None, assignee=None,
+        source=None, search=None, date_from=None, date_to=None,
         requester_subject=None, global_scope=False,
+        requester_only=False,
         page=1, page_size=25,
         sort_by=None, sort_dir=None,
     ) -> dict[str, Any]:
         where = ["1=1"]
         params: list[Any] = []
         if not global_scope:
-            where.append(
-                "(requester_subject=%s OR assigned_to_subject=%s)"
-            )
-            params += [requester_subject, requester_subject]
+            if requester_only:
+                where.append("requester_subject=%s")
+                params.append(requester_subject)
+            else:
+                where.append(
+                    "(requester_subject=%s OR assigned_to_subject=%s)"
+                )
+                params += [requester_subject, requester_subject]
+        if statuses:
+            where.append("status = ANY(%s)")
+            params.append(list(statuses))
         for clause, value in (
             ("status=%s", status),
             ("request_type=%s", request_type),
@@ -323,7 +331,8 @@ class PostgresProductRegistrationRepository:
                 f"SELECT id, request_type, status, source,"
                 " requester_subject, requester_display_name,"
                 " assigned_to_subject, assigned_to_display_name,"
-                " official_product_code, row_version, created_at"
+                " official_product_code, row_version, created_at,"
+                " requested_payload->>'description' AS description"
                 f" FROM {_T_REQ} WHERE {sql_where}"
                 f" ORDER BY {sort_col} {direction}, id DESC"
                 " LIMIT %s OFFSET %s",
@@ -347,6 +356,7 @@ class PostgresProductRegistrationRepository:
                     ),
                     "officialCode": r["official_product_code"],
                     "caseVersion": r["row_version"],
+                    "description": r.get("description"),
                 }
                 for r in rows
             ],

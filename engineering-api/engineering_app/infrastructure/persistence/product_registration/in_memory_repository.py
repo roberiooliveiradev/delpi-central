@@ -156,6 +156,7 @@ class InMemoryProductRegistrationRepository:
         self,
         *,
         status: str | None = None,
+        statuses: list[str] | None = None,
         request_type: str | None = None,
         assignee: str | None = None,
         source: str | None = None,
@@ -164,6 +165,7 @@ class InMemoryProductRegistrationRepository:
         date_to: str | None = None,
         requester_subject: str | None = None,
         global_scope: bool = False,
+        requester_only: bool = False,
         page: int = 1,
         page_size: int = 25,
         sort_by: str | None = None,
@@ -171,12 +173,21 @@ class InMemoryProductRegistrationRepository:
     ) -> dict[str, Any]:
         items = list(self._requests.values())
         if not global_scope:
-            items = [
-                r
-                for r in items
-                if r["requester_subject"] == requester_subject
-                or r.get("assigned_to_subject") == requester_subject
-            ]
+            if requester_only:
+                items = [
+                    r
+                    for r in items
+                    if r["requester_subject"] == requester_subject
+                ]
+            else:
+                items = [
+                    r
+                    for r in items
+                    if r["requester_subject"] == requester_subject
+                    or r.get("assigned_to_subject") == requester_subject
+                ]
+        if statuses:
+            items = [r for r in items if r["status"] in statuses]
         if status:
             items = [r for r in items if r["status"] == status]
         if request_type:
@@ -245,6 +256,9 @@ class InMemoryProductRegistrationRepository:
             "assignedToDisplayName": req.get("assigned_to_display_name"),
             "officialCode": req.get("official_product_code"),
             "caseVersion": req["row_version"],
+            "description": (req.get("requested_payload") or {}).get(
+                "description"
+            ),
         }
 
     def list_events(

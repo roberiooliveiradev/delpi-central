@@ -50,6 +50,10 @@ async def get_engineering_home():
         user_id=str(getattr(user, "id", "") or ""),
         access_token=str(getattr(user, "access_token", "") or ""),
         request_id=get_request_id(),
+        permissions=frozenset(
+            str(p) for p in (getattr(user, "permissions", None) or [])
+        ),
+        is_superadmin=bool(getattr(user, "is_superadmin", False)),
     )
     home = await build_get_engineering_home_use_case().execute(ctx)
     return ok(

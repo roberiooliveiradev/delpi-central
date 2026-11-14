@@ -565,3 +565,12 @@ HML_IMAGE_DIGEST:      sha256:097a513d3e1bc66d92c6795c68bc4cad1f0b7b6f8561bc4ba6
 **Blocker funcional #2 — tarefas acionáveis:** `PrcQueueHomeSource` chama `list_requests` global sem filtro de status/ação. Casos `completed`/`rejected` potencialmente aparecem em `tasks` e em totais como pendências. Verificar contrato da fila PRC; para Home aplicar recorte de casos realmente atendíveis e contagens pré-paginação. Não fazer filtro apenas após LIMIT/COUNT, nem supor status permitidos sem verificar regra oficial; se não houver contrato, devolver decisão pontual.
 
 **Próximo gate:** Devin corrige ambos no mesmo PR, acrescenta regressões, valida CI e reports SHA; Coordination revisa e só então decide integração. Deploy/testes exclusivamente HML depois do merge; **zero PRD deploy/escritas**. `ARCHITECTURE_DECISION_APPROVED` da Opção A permanece válida; **implementação não aceita ainda**.
+
+## 34. PR #183 — correções de revisão aplicadas (13/11/2026)
+
+**TASK_ID:** ENG-HOME-PRC-NATIVE-INTEGRATION-PR183-REVIEW-FIX-01 — novo HEAD `da9a64547d2b50f32fc0ae23bc1ae84a7380062c` na mesma branch (PR #183 atualizado).
+
+- **FIX-1 (requests requester-only):** `own_scope` agora propaga `requester_only=True` aos repos — a seção `requests` lista exclusivamente casos com `requester_subject=ator`; casos de terceiros apenas atribuídos ao usuário ficam fora. O consumer original (listagem do portal) preserva o escopo `requester OR assigned`.
+- **FIX-2 (tasks acionáveis):** `PrcQueueHomeSource` aplica `statuses = PRC_STATUSES − TERMINAL_STATUSES` ({submitted, in_progress, needs_information, needs_correction, under_review}) no WHERE, antes de COUNT/LIMIT — completed/rejected não entram como pendência nem no total.
+- **Repos:** PG usa `status = ANY(%s)` + cláusula `requester_subject=%s` exclusiva; InMemory paridade. Ambos antes de count/paginação.
+- **Testes:** +5 cenários (assigned-only excluído p/ solicitante e analista, terminais excluídos, total pré-paginação filtrado). 27/27 focados; subconjunto PRC 181 pass / 1 fail baseline pré-existente (d16 isolation — fora do diff).
