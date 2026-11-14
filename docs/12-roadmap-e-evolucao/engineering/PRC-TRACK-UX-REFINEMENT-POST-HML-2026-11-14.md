@@ -1,0 +1,56 @@
+# PRC-TRACK — Refinamento pós-HML U1/U2/U3: integridade, UX clean e Plugin UI
+
+> **Decisão PO / Coordination — 14/11/2026.** `TARGET_REFINEMENT / CODE_CHANGE_NOT_STARTED / TEST_NOT_RUN`. Documento de execução para Devin. Complementa [especificação visual](./PRC-PRODUCT-TRACKING-FRONTEND-VISUAL-SPEC.md), [wireframes responsivos](./PRC-TRACKED-PRODUCTS-UI-COMPONENT-INVENTORY-RESPONSIVE-WIREFRAMES.md), [regras canônicas R01–R18](./PRC-TRACK-CANONICAL-PRODUCT-RULES-AND-EXECUTION-PLAN.md), [diretriz UX §17](./WIREFRAMES.md) e [ledger §59](./PRC-TRACK-DEVIN-IMPLEMENTATION-COORDINATION-AND-PROMPTS.md). Em divergência de negócio, regras canônicas e autoridades prevalecem.
+
+**Base de observação:** oito capturas HML fornecidas pelo PO: listagem Produtos Acompanhados com quatro registros, detalhe/ficha do produto 30190125 V1, timeline V1 e V1/V2 e comparação V1×V2 do produto 30190123. **Captura não prova payload, cobertura nem conteúdo oficial TOTVS**. Inspeção de código no GitHub confirmou componentes `PrcProductsPage.tsx`, `PrcProductDetailPage.tsx`, `PrcProductVersionsTab.tsx`, `prcSnapshot.ts`; estado runtime completo permanece sujeito à investigação.
+
+## 1. Resultado de produto e princípios visuais
+
+Manter a arquitetura U1 (Solicitações | Produtos acompanhados), U2 (ficha somente leitura) e U3 (Versões + comparar). Não reconstruir workflow PRC. Levar a UX ao padrão aprovado das Solicitações: **design limpo, moderno, direcional e contextual**, hero curto, poucos contêineres, dados no lugar certo, linguagem humana pt-BR, rótulos legíveis, contraste, design tokens, feedback e foco. **Plugin UI é o owner da apresentação reutilizável; Engenharia compõe/adapta dados; backend é autoridade de comparação/flags/proveniência.**
+
+## 2. Inventário priorizado de refinamentos
+
+| ID | Pri | Evidência nas capturas / código | Diagnóstico obrigatório | Aceite objetivo |
+|---|---|---|---|---|
+| UX-P0-01 | P0 | Descrição de 30190125 aparece como `#` na lista, hero e ficha. UI usa `row.description || "—"` e `detail.description || detail.officialCode`, logo `#` passa como string não vazia | Consultar JSON de lista/detalhe/snapshot autorizado + origem e coverage. Identificar se `#` é valor literal persistido, máscara/placeholder indevido ou bug de mapping. Não especular que TOTVS tem valor diferente | Código oficial é identidade principal do hero; descrição só como valor com origem/qualidade explícita; nunca substituir snapshot histórico por leitura TOTVS ao vivo, não “corrigir” dados históricos por CSS. Cobrir `#`, vazio, null, válido e legado |
+| UX-P0-02 | P0 | Comparação V1×V2 mostra `Antes —` e `Depois valor` em vários campos. `PrcProductVersionsTab` usa `scalarText(null) => "—"`, mas só banneriza `result.comparable=false` global | Auditar `compute_technical_diff`, campo a campo `coverage/valueOrigin`, snapshots V1/V2, `fieldChanges`, `supplierLinkChanges`, `comparable`, flags. Distinguir **adição real** de lacuna/incomparabilidade | Campos não conhecidos não são “diferença técnica comprovada”; exibir Incomparável/Não disponível na versão de origem conforme DTO, sem diff inventado. Corrigir backend se defeito comprovado, consumidor se mapping incorreto, com teste memory/PG/API |
+| UX-P1-01 | P1 | Hero da listagem muito alto, texto técnico longo, divisórias/áreas vazias | Inspecionar `EngineeringPageHero` e tokens | Título + seletor Solicitações/Produtos de fácil reconhecimento, frase curta, ajuda contextual “não é catálogo inteiro TOTVS”, busca/filtros organizados sem altura excessiva; preservar `?area=products` e `?view=pending` |
+| UX-P1-02 | P1 | Tabela interna dentro de cartão externo, borda/padding em duplicidade | Ver wrappers e `EngineeringDataTableSection` do Plugin UI | Um único plano de listagem, cinco colunas, sort/paginação/busca server-side, estado vazio, loading, 403, foco/click de linha, sem CSS global override |
+| UX-P1-03 | P1 | Hero do produto tem título `#`, código oficial subordinado | Ver `PrcProductDetailPage.tsx` e produto/snapshot atual | **Código oficial em destaque**; descrição legível e com qualidade, Vn “Atual acompanhada”, origem/data secundários, refresh discreto; não dar a entender versão TOTVS live |
+| UX-P1-04 | P1 | Ficha técnica com cards grandes e bastante vazio | Inspecionar adapter `prcSnapshot.ts`, `PrcTechnicalSheetView` e CSS/tokens Plugin UI | Leitura densa e consistente com duas colunas quando couber e uma em 320/390px; grupos/fornecedores/flags preservados; read-only; ausente ≠ zero; evitar duplicação de campo/metadado |
+| UX-P1-05 | P1 | Timeline expandida enumera 8–9 nomes de campos, muita altura | `PrcProductVersionsTab` usa `changedPaths` integral em lista | Cada versão exibe Vn, data, origem e resumo conciso: contagem por categoria **só quando derivável do payload**; detalhe expandido agrupado por seções/fornecedores; reduzir densidade e preservar `aria-expanded`, teclado/touch, link de origem e Ver ficha; V1 não significa cadastro criado no ERP |
+| UX-P1-06 | P1 | Comparação em tabela bruta, `—` ambíguos, supplier path pode ser técnico | Inspecionar DTO, labels compartilhados, `EngineeringSelectField` e `compute_technical_diff` | Grupos iguais à ficha, Antes Vx/Depois Vy, legenda clara de origem/indisponibilidade, fornecedores `supplierCode+store`, flags em seção separada, same-version desabilitado; **diff somente backend** |
+| UX-P1-07 | P1 | Dropdown de versão parece cobrir título; screenshots rolados cortam parte superior de hero | Reproduzir com Chrome/Zoom/teclado; inspecionar select portal, sticky shell e scroll restoration | Se comprovado, ajustar via componente do kit (overlay/focus/flip/clamp) e não hack CSS. Sem topbar cobrindo âncora/foco. F5/back e seleção por URL previsíveis |
+| UX-P2-01 | P2 | Origem como UUID abreviado `#41413651` etc., pouca explicação | `prcShortId`, link, tooltip e permissão | ID curto consistente + tooltip/nome acessível ID completo, deep-link autorizado; não inventar número sequencial |
+| UX-QA-01 | Gate | §59: dark, zoom200, teclado E2E e 403 não foram testados; bundle MFE relatado como anterior | Inspecionar SHA/digest realmente servido, remoteEntry, tema e usuário de teste negado disponível | E2E 1440/768/390/320, claro/escuro, 200%, teclado, 403 se massa autorizada; registrar `TEST_NOT_RUN` para indisponível, nunca PASS sem execução |
+
+## 3. Sequência de execução — não começar por CSS
+
+### G0 — Prova de dados e inventário
+1. Reancorar `origin/main`, HEAD, status e contratos. Preservar WIP concorrente, sem branch.
+2. Capturar amostra autorizada de `technical-records`, detalhe, revisão e `comparison` para 30190125 e 30190123, **apenas GET**, em HML; documentar resultado sem vazar token ou conteúdo sensível.
+3. Tabela `campo → snapshot V1 → coverage/origem V1 → snapshot V2 → coverage/origem V2 → comparável? → diff real? → apresentação`.
+4. Classificar P0 como `PROVEN_DEFECT`, `LEGITIMATE_DATA_WITH_UX_GAP` ou `INCONCLUSIVE`, com evidência. Não corrigir fato sem prova.
+
+### G1 — Semântica e contrato
+1. Revisar `compute_technical_diff` e interpretação de `comparable`; campos sem cobertura não podem ser classificados como mudança por `None→valor` sem regra e evidência.
+2. Preservar R01 V1 baseline, R02 no-op, R03 diff técnico real, snapshots imutáveis, proveniência `request_id`, flags por intervalo e estado OPEN/RESOLVED/REMOVED.
+3. Corrigir menor contrato/backend ou adapter se necessário, com testes de snapshots legacy/partial, supplier code+store, nulos, `#` literal, comparação normal/incomparable, autorização e regressão.
+4. Backend/Engineering API continua autoridade, sem enrich de snapshot por TOTVS live, sem novo source of truth ou escrita ERP.
+
+### G2 — UX Plugin UI-first
+1. Inventariar exports e tokens reais: PageHero, SegmentToggle, ScopeChipBar, DataTableSection, DetailCard, Tabs, SelectField, PrcTechnicalSheetView e FlagFieldAction/Summary/Legend/Dialog; preferir composição do kit.
+2. Implementar hero e tabela leves, identidade correta do produto, ficha mais compacta, timeline orientada à diferença, comparação sem valores ambíguos, origin links legíveis, select/scroll somente se defeito comprovado.
+3. Antes de novo componente compartilhado aplicar **Abstraction Gate**: owner, consumers, duplicação real, contrato, boundary, menor solução. Não importar internals de outros MFEs. Não modificar CSS global, `.delpi-ui-*` ou estilos do host.
+4. Linguagem humana pt-BR, progresso/detalhes contextuais, sem informação visual repetida ou ação sem autoridade.
+
+### G3 — E2E e aceite
+- HML Chromium com screenshot antes/depois e SHA de backend/MFE efetivamente servido; CSS light/dark, zoom 200%, desktop/tablet/mobile 390/320 e legibilidade. Verificar overlay, focus order, Escape/Enter, labels/ARIA, contrast, touch targets (~44px), overflow horizontal e cabeçalho fixo.
+- Casos: U1 Solicitações preservado (inclusive filtros, Cards/Kanban, `?view=pending`), U1 Produtos com list/search/filter/sort/page, U2 versão atual e histórica, fornecedores, flags, U3 timeline, V1-only, V1×V2 comparável/incomparável, F5/back, 403 real se credencial apropriada, loading/empty/error.
+- Testes unitários frontend, backend memory/Postgres se código backend mudar, typecheck e build. **Nenhum write TOTVS; nenhum deploy PRD.** Se dados não existirem, fixtures no teste isolado com evidência `SIMULATED`, sem alegar E2E real.
+
+## 4. Done/relatório obrigatório
+
+Entregar matriz `ID → diagnóstico → causa → fix → teste → resultado`. Priorizar P0 antes de mexer na aparência; P1/P2 depois. `PASS/FAIL/PENDING/INCONCLUSIVE/TEST_NOT_RUN` por caso, mencionar gap residual e drift sem mascarar. Manter traceability dos usuários/solicitações/revisões oficiais e controles de acesso; preservar rollback. Implementação e deploy só DEV/HML pelo Devin; **PRD_NOT_AUTHORIZED**.
+
+**Gate final:** `DATA_SEMANTICS_PROVEN + UX_DESIGN_REFINED + HML_VISUAL_QA_PASS` (cada parte comprovada). Até então: `PO_REFINEMENT_APPROVED / IMPLEMENTATION_PENDING / TEST_NOT_RUN`.
