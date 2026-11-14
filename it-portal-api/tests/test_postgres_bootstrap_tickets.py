@@ -70,7 +70,7 @@ def test_v014_ticket_expiration_and_cancel(pg_client):
     _sql(
         "UPDATE it_portal.workstation_bootstrap_tickets "
         "SET issued_at = issued_at - INTERVAL '5 minutes', "
-        "expires_at = expires_at - INTERVAL '5 minutes' WHERE id = %s",
+        "expires_at = expires_at - INTERVAL '5 minutes' WHERE id = %s RETURNING id",
         (previous.ticket_id,),
     )
     assert not store.spend(ticket_id=previous.ticket_id, workstation_id=wid, opaque_token=old_secret)

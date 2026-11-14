@@ -42,3 +42,7 @@ O primeiro CI V014 [43646928157](https://github.com/roberiooliveiradev/delpi-cen
 ## Progresso seguinte: P2 (14/11/2026)
 
 A biblioteca offline [G2-S4-S2b-P2](G2-S4-S2B-P2-DEVICE-PROOF.md) valida assinatura Ed25519 vinculada a ticket e workstation, mas continua **sem registro de chave, attestation Windows, endpoint ou ativacao**. O resultado do CI V014 apos o fix das fixtures deve ser conferido antes da homologacao.
+
+## Ajuste da segunda execucao CI (14/11)
+
+CI [43648540440](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43648540440): 1 falha em teste da V014 por `_sql` usar `fetchall()` apos UPDATE sem retorno. Adicionado `RETURNING id` ao UPDATE de ajuste de expiracao, sem alterar codigo de producao nem migration. Aguardar pipeline posterior para marcar integracao aprovada.

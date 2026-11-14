@@ -481,6 +481,17 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** apurar CI V014/P2, especificar registro seguro da chave em HML e integrar desafio + consumo unico somente apos aceite de seguranca.
 
+## 2026-11-14 | G2-S4-S2b-P1-FIX2 | SQL RETURNING no teste V014
+
+**Objetivo:** encerrar erro de teste identificado pelo CI apos correcao das fixtures.
+**Arquivos alterados:** somente teste `test_postgres_bootstrap_tickets.py`, README, runbook P1 e diario.
+**Commit/issue:** issue #179, commit de correção na main.
+**Testes executados e evidencias:** [workflow 43648540440](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43648540440) confirmou 17/18 testes de integracao (14 testes anteriores + 3 testes P1), com **1 falha** de leitura `fetchall` apos UPDATE sem `RETURNING`. Adicionado `RETURNING id` no UPDATE de simulacao de expiracao. Suite completa precisa passar no novo CI.
+**Estado de producao / implantacao:** nenhuma alteracao operacional: codigo produtivo, Keycloak, migrations, agentes, Docker e acesso remoto intocados.
+**Riscos e limitacoes:** nenhum aceite ate CI verde; nenhum teste Windows real.
+**Rollback:** reverter apenas ajuste de teste/doc; migracao V014 imutavel.
+**Proximo passo unico:** confirmar o pipeline de P1/P2, depois discutir registro seguro da chave em HML.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown
