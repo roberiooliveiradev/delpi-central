@@ -826,3 +826,7 @@ responsibility/owner/source first
 ```
 
 O objetivo é adicionar novos domínios, providers, tools, agents, models, executors e Edge targets sem reescrever planner, policy, core domain semantics ou UX foundation — e sem criar abstrações especulativas ou autoridades paralelas.
+
+### 2026-11-14 — Gate para futura especialização cognitiva (Doc 335)
+
+Direção de produto TARGET: **quatro agentes especialistas cognitivos**, um por responsabilidade de Compreensão, Investigação, Suficiência e Síntese. Isto **não dispensa** a sequência responsibility → owner → canon → consumers → contract → existing equivalent → Abstraction Gate; tampouco autoriza um planner, service, registry, engine ou runtime paralelo. Reutilizar Agent Pydantic AI, plan/obligations, Evidence/Outcome, adapters e gates governados; comparar baseline único com variante mínima antes de qualquer novo Agent/handoff. Suficiência proposta por LLM não substitui decisão autoritativa da Application. DOC_ONLY, nenhum código/contrato implementado. [Documento 335](./corrections/mcp-contextual-intelligence-orchestration/335-c3t2-four-cognitive-specialist-agents-po-product-direction-and-int2-resumption.md).
