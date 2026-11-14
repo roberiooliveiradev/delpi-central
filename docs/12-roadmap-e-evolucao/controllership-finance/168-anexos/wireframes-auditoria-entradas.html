@@ -63,7 +63,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute
 <body>
 <div class="wrap">
 <h1>Auditoria de entradas — wireframes do dashboard</h1>
-<p class="lead">Portal Controladoria &amp; Finanças · rota proposta <code>/apps/controllership-finance/entry-audit</code> · família visual <b>analítica</b> do padrão dos Portais (PageHero → filtros → KPIs → gráficos → tabelas). Baseado no conteúdo do painel Raio-X das Entradas, sem copiar o HTML: tudo montado com <code>@delpi/plugin-ui</code>. Wireframe de estrutura, sem cores finais.</p>
+<p class="lead">Detalhamento por página e parâmetros dos componentes: <code>168-paginas/</code> (docs 00 a 04). Portal Controladoria &amp; Finanças · rota proposta <code>/apps/controllership-finance/entry-audit</code> · família visual <b>analítica</b> do padrão dos Portais (PageHero → filtros → KPIs → gráficos → tabelas). Baseado no conteúdo do painel Raio-X das Entradas, sem copiar o HTML: tudo montado com <code>@delpi/plugin-ui</code>. Wireframe de estrutura, sem cores finais.</p>
 <div class="legend">
   <span class="tag t-ok">● EXISTE no plugin-ui</span>
   <span class="tag t-warn">● EVOLUIR no plugin-ui (aditivo)</span>
@@ -124,7 +124,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute
   </div>
 
   <div class="row r2">
-    <div class="box"><div class="tags"><span class="tag t-ok">ChartCard + ComparativeAreaChart</span></div>
+    <div class="box"><div class="tags"><span class="tag t-warn">ChartCard + ComparativeAreaChart (clique no dia)</span></div>
       <h3>Notas com divergência por dia</h3><div class="sm">período selecionado × período anterior de mesmo tamanho, por data de emissão · clique num dia para filtrar</div>
       <div class="chart tall">linha do período atual + linha tracejada do período anterior · eixo X = dias</div></div>
     <div class="box"><div class="tags"><span class="tag t-warn">SemicircleProgressGauge (legenda clicável)</span></div>
@@ -146,7 +146,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute
   </div>
 
   <div class="row r3">
-    <div class="box"><div class="tags"><span class="tag t-ok">ChartCard + BarSeriesChart</span></div><h3>Por severidade</h3><div class="chart">Alta · Depende da TES · Média · Baixa</div></div>
+    <div class="box"><div class="tags"><span class="tag t-warn">ChartCard + HorizontalValueBars</span></div><h3>Por severidade</h3><div class="chart">Alta · Depende da TES · Média · Baixa</div></div>
     <div class="box"><div class="tags"><span class="tag t-ok">ChartCard + HorizontalValueBars</span></div><h3>TES com mais ocorrências</h3><div class="chart">TES 004 · 036 · 102 … com alerta «crédito × livro»</div></div>
     <div class="box"><div class="tags"><span class="tag t-ok">ChartCard + LineSeriesChart</span></div><h3>Evolução entre análises</h3><div class="chart">pendentes e altas por mês (análises anteriores do mesmo recorte)</div></div>
   </div>
@@ -263,11 +263,12 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute
 <tr><td>Filtros</td><td>FilterBar, FiltersRow, FilterSelectField, MultiSelectField, ClearFiltersButton</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
 <tr><td>Filtros ativos</td><td>ScopeChipBar</td><td><span class="tag t-warn">evoluir</span></td><td><code>onRemove</code> por chip e ação «Limpar tudo»</td></tr>
 <tr><td>KPIs</td><td>MetricKpiCard + TrendDelta</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
-<tr><td>Por dia</td><td>ChartCard + ComparativeAreaChart</td><td><span class="tag t-ok">existe</span></td><td>conferir clique no ponto (dia) para filtrar</td></tr>
+<tr><td>Por dia</td><td>ChartCard + ComparativeAreaChart</td><td><span class="tag t-warn">evoluir</span></td><td><code>onPointSelect</code> e <code>selectedName</code> para filtrar o dia</td></tr>
 <tr><td>Conformidade</td><td>SemicircleProgressGauge</td><td><span class="tag t-warn">evoluir</span></td><td>legenda clicável (<code>onLegendSelect</code>)</td></tr>
 <tr><td>Top fornecedores / TES</td><td>HorizontalValueBars</td><td><span class="tag t-warn">evoluir</span></td><td><code>tone</code> por item (ok/aviso/crítico) e item selecionado</td></tr>
 <tr><td>Por tema</td><td><b>DistributionDonut</b> (sobre ChartSeriesPie)</td><td><span class="tag t-new">novo</span></td><td>rosca + lista com contagem/% e seleção; hoje a rosca só existe dentro do ConfigurableSeriesChart</td></tr>
-<tr><td>Severidade / evolução</td><td>BarSeriesChart, LineSeriesChart</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
+<tr><td>Severidade</td><td>HorizontalValueBars (precisa de clique para filtrar)</td><td><span class="tag t-warn">evoluir</span></td><td>mesma evolução de tom e seleção</td></tr>
+<tr><td>Evolução</td><td>LineSeriesChart</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
 <tr><td>Abas e status</td><td>UnderlineNav, SegmentToggle</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
 <tr><td>Tabelas</td><td>DataTableSection, StatusBadge, TablePaginationNav</td><td><span class="tag t-ok">existe</span></td><td>—</td></tr>
 <tr><td>Resolver na linha</td><td><b>ResolutionStatusCell</b></td><td><span class="tag t-new">novo</span></td><td>botão Resolver / «✓ data» / Reabrir, acessível, com estado de envio</td></tr>

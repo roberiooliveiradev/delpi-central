@@ -116,6 +116,7 @@ Prefixo `/entry-audit`. Todas exigem `controllership-finance.access` (D4). A uni
 | Método e rota | Uso |
 |---|---|
 | `POST /entry-audit/analyses` | body `{date_from, date_to, date_basis: "received", branches: ["01","02"], document_types: ["nfe","cte"], params: {presumed_credit_tes: "004", freight_cfop_suffix: "352"}}` → 202 com a análise criada (ou a que já está em andamento com os mesmos filtros) |
+| `GET /entry-audit/analyses/options` | filiais permitidas (código, nome, UF) e padrões dos parâmetros avançados |
 | `GET /entry-audit/analyses` | histórico: filtros `date_from`, `date_to`, `branch`, `status`; paginação |
 | `GET /entry-audit/analyses/{id}` | status, andamento por filial (etapa, documentos lidos, XML baixados), contagens, erro |
 | `POST /entry-audit/analyses/{id}/rerun` | reexecuta com os mesmos filtros (ou só a filial que falhou: `{branches: ["02"]}`) |
@@ -217,7 +218,7 @@ Uma reexecução substitui o resultado da filial, e o status de resolvido contin
 
 ## 8. Dashboard «Auditoria de entradas» (wireframes)
 
-Wireframes completos: [168-anexos/wireframes-auditoria-entradas.html](./168-anexos/wireframes-auditoria-entradas.html). Família visual **analítica** do padrão dos Portais: PageHero → filtros → KPIs → gráficos → tabelas. O conteúdo vem do painel Raio-X; o HTML dele não é copiado.
+Wireframes completos: [168-anexos/wireframes-auditoria-entradas.html](./168-anexos/wireframes-auditoria-entradas.html). Detalhamento por página (dimensionamento, componentes e props, dados, estados): [168-paginas/](./168-paginas/00-indice-e-convencoes.md) — [01 Entrada e execução](./168-paginas/01-pagina-entrada-e-execucao.md), [02 Dashboard da análise](./168-paginas/02-pagina-dashboard-da-analise.md), [03 Detalhe da ocorrência](./168-paginas/03-pagina-detalhe-da-ocorrencia.md), [04 Componentes novos e evoluções do plugin-ui](./168-paginas/04-componentes-plugin-ui-novos-e-evolucoes.md). Família visual **analítica** do padrão dos Portais: PageHero → filtros → KPIs → gráficos → tabelas. O conteúdo vem do painel Raio-X; o HTML dele não é copiado.
 
 ```text
 TopBar do Portal
@@ -251,11 +252,12 @@ Regra: componente novo nasce no `@delpi/plugin-ui`, genérico (sem «auditoria»
 | Filtros | `FilterBar`, `FiltersRow`, `FilterSelectField`, `MultiSelectField`, `ClearFiltersButton` | existe | — |
 | Filtros ativos | `ScopeChipBar` | evoluir | `onRemove` por chip e «Limpar tudo» |
 | KPIs | `MetricKpiCard` + `TrendDelta` | existe | — |
-| Por dia | `ChartCard` + `ComparativeAreaChart` | existe | conferir clique no ponto para filtrar o dia |
+| Por dia | `ChartCard` + `ComparativeAreaChart` | evoluir | `onPointSelect` e `selectedName` (clique no dia) |
 | Conformidade | `SemicircleProgressGauge` | evoluir | legenda clicável |
 | Top fornecedores / TES | `HorizontalValueBars` | evoluir | `tone` por item e item selecionado |
 | Por tema | **`DistributionDonut`** (sobre `ChartSeriesPie`) | **novo** | rosca + lista com contagem/% e seleção |
-| Severidade / evolução | `BarSeriesChart`, `LineSeriesChart` | existe | — |
+| Severidade | `HorizontalValueBars` | evoluir | mesma evolução (tom e seleção), para filtrar por clique |
+| Evolução | `LineSeriesChart` | existe | — |
 | Abas e status | `UnderlineNav`, `SegmentToggle` | existe | — |
 | Tabelas | `DataTableSection`, `StatusBadge`, `TablePaginationNav`, `DataRecordCard` (mobile) | existe | — |
 | Resolver na linha | **`ResolutionStatusCell`** | **novo** | Resolver / «✓ data» / Reabrir, acessível, com estado de envio |
@@ -319,5 +321,6 @@ Lançar ou corrigir notas no Protheus; alterar TES ou cadastro de fornecedor; su
 | Data | Evento |
 |---|---|
 | 2026-11-13 | Plano criado. D4 decidida pelo owner (tudo com `controllership-finance.access`). D1, D2, D3 e D5 com recomendação, aguardando confirmação. Skill anexada como referência para o porte. |
+| 2026-11-13 | Detalhamento das páginas em `168-paginas/` (00 a 04): dimensionamento, componentes do plugin-ui com props, dados e estados; especificação dos 3 primitivos novos e das 4 evoluções aditivas (inclui `ComparativeAreaChart` com clique no dia). Rota nova `GET /entry-audit/analyses/options`. |
 | 2026-11-13 | Dashboard: período livre (D8), plugin-ui com primitivos novos no kit (D9), D3 decidida. Rotas da BFF refeitas em torno da análise por período (§4A.4) e rotas do dashboard; persistência ajustada (§7); wireframes (§8 e anexo HTML); CLARA explica o dashboard e sugere direcionamentos. |
 | 2026-11-13 | Estrutura do back-end (§4A): rotas da api-delpi, da financial-api e da BFF; organização em camadas; worker; cache de XML; CLARA executando a auditoria num comando (D6). Visual da página fica para a próxima rodada. Planejamento em tabela à parte (`planejamento-auditoria-entradas.xlsx`). |
