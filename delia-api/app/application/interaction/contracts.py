@@ -140,6 +140,17 @@ class GovernedCapabilityProvenance:
     # compatibility with earlier projections.
     provider_id: str | None = None
     capability_group_id: str | None = None
+    # Owner-typed operation class of the invoked capability
+    # (SpecialistOperationClass value) — recorded at the governed
+    # boundary so obligation evaluation can distinguish READ from ACT
+    # without re-querying the catalog (RC5). Optional for backward
+    # compatibility with earlier projections.
+    operation_class: str | None = None
+    # Bounded owner-vocabulary tokens declared as invocation selectors
+    # (e.g. envelope ``entity``/``action``/``capability`` arguments) —
+    # the governed record of what kind of owner evidence was invoked.
+    # Never user data, never authorization (RC5).
+    invocation_vocabulary: tuple[str, ...] = ()
 
     def to_projection(self) -> dict:
         """Bounded HTTP-safe projection — no tokens, URLs, wire internals.
@@ -173,6 +184,8 @@ class GovernedCapabilityProvenance:
             "protocol": self.protocol,
             "remote_capability": self.remote_capability,
             "action_id": self.action_id,
+            "operation_class": self.operation_class,
+            "invocation_vocabulary": list(self.invocation_vocabulary),
             "observed_at": self.observed_at,
             "correlation_id": self.correlation_id,
             "is_complete": self.is_complete,

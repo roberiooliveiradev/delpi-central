@@ -154,6 +154,11 @@ class GovernedCapabilityBinding:
     source: SourceRef
     provider_id: str | None = None
     capability_group_id: str | None = None
+    # Owner-typed operation class of the invoked capability and the
+    # bounded owner-vocabulary selector tokens declared as invocation
+    # arguments (RC5 obligation anchors) — invocation context only.
+    operation_class: str | None = None
+    invocation_vocabulary: tuple[str, ...] = ()
 
 
 class _SupportsRenderedOutcome(Protocol):
@@ -202,6 +207,8 @@ def _success_attempt(
             is_complete=outcome.is_complete,
             provider_id=binding.provider_id,
             capability_group_id=binding.capability_group_id,
+            operation_class=binding.operation_class,
+            invocation_vocabulary=binding.invocation_vocabulary,
         ),
         content=rendered.content,
         limitations=rendered.limitations,

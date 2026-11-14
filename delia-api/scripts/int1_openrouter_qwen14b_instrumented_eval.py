@@ -419,9 +419,16 @@ def _install_plan_obligation_capture() -> None:
                 "target_identities": list(
                     getattr(plan, "target_identities", ()) or ()
                 ),
-                "evidence_needed": list(
-                    getattr(plan, "evidence_needed", ()) or ()
-                ),
+                "evidence_needed": [
+                    (
+                        item.to_projection()
+                        if hasattr(item, "to_projection")
+                        else item
+                    )
+                    for item in (
+                        getattr(plan, "evidence_needed", ()) or ()
+                    )
+                ],
             }
         return original_finalize(self, **kwargs)
 
@@ -437,7 +444,14 @@ def _install_plan_obligation_capture() -> None:
         )
         _CAPTURE.setdefault("obligation_coverage", []).append(
             {
-                "obligations": list(obligations),
+                "obligations": [
+                    (
+                        item.to_projection()
+                        if hasattr(item, "to_projection")
+                        else item
+                    )
+                    for item in obligations
+                ],
                 "states": {oid: state for oid, state in results},
             }
         )
@@ -459,7 +473,16 @@ def _install_plan_obligation_capture() -> None:
                 "goal_class": kwargs.get("goal_class"),
                 "expected_delivery": kwargs.get("expected_delivery"),
                 "target_identities": kwargs.get("target_identities"),
-                "evidence_needed": kwargs.get("evidence_needed"),
+                "evidence_needed": [
+                    (
+                        item.to_projection()
+                        if hasattr(item, "to_projection")
+                        else item
+                    )
+                    for item in (
+                        kwargs.get("evidence_needed") or ()
+                    )
+                ],
                 "business_subject": kwargs.get("business_subject"),
                 "accepted": plan is not None,
             }
