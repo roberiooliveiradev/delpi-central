@@ -6830,3 +6830,11 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **RED×7→GREEN**; +12 testes (AC-FINAL/AC-OWNER); suíte 51 testes; regressão completa verde.
 - **RESULTADO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`; `INT2_ACCEPTED=NO`; `PRODUCTION_DEPLOY/INT3=NOT_AUTHORIZED`. Doc 334.
 - **NEXT:** `COORDINATION_C3_T2_INT2_FINAL_ACCEPTANCE_DECISION`.
+
+### 2026-11-14 — Direção PO: quatro especialistas cognitivos, sem avanço de fase (Doc 335)
+
+- **TASK:** `DELIA-C3-T2-FOUR-COGNITIVE-SPECIALISTS-PO-DIRECTION-AND-INT2-RESUMPTION-DOC-01`; **NATUREZA:** documentação/coordenação, sem alterações de runtime, tests ou deploy; artefato canônico [Documento 335](../corrections/mcp-contextual-intelligence-orchestration/335-c3t2-four-cognitive-specialist-agents-po-product-direction-and-int2-resumption.md).
+- **DIREÇÃO PO CONFIRMADA (TARGET):** quatro especialistas cognitivos colaborativos — Compreensão (INT-2), Investigação (INT-1), Suficiência (INT-3) e Síntese (INT-4) — mediante handoffs tipados, DÉLIA como única coordenadora, Application como autoridade Evidence/Policy/Decision/Outcome. INT-5 é aceite integrado, não quinto Agent. Não confundir com especialistas MCP/A2A ou perfis de domínio CP-071.
+- **RECONCILIAÇÃO:** Docs 16/293/313 estabeleceram baseline **um único Agent Pydantic AI** e gates experimentais antes de divisão física. A direção PO amplia a arquitetura-alvo, **não revoga automaticamente os gates históricos**, não autoriza implementar três novos Agents e não cria segundo planner. `ARCHITECTURE_DECISION_REQUIRED` antes de autorizar runtime/handoffs multiagente.
+- **ESTADO:** INT-1 `CLOSED/ACCEPT` (Doc323); INT-2 `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW / FINAL_ACCEPTANCE_PENDING` (Doc334); INT-3/INT-4 novos Agents `NOT_IMPLEMENTED/NOT_AUTHORIZED`; `INT2_ACCEPTED=NO`; `PHASE_FROM_16=C3/T2`; `PHASE_ADVANCEMENT=NO`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`.
+- **NEXT (coordenação recomendada, não fase promovida):** `COORDINATION_C3_T2_INT2_BOUNDED_ACCEPTANCE_AND_FOUR_AGENT_TARGET_RECONCILIATION`. Dois gates distintos: (A) aceite delimitado INT-2 existente; (B) inventário/experimento comparativo de especialização para decisão posterior. `EVALUATION=TEST_NOT_RUN` (DOC_ONLY).
