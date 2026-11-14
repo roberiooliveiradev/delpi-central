@@ -1604,3 +1604,18 @@ DEFER_BY_PHASE:
 ### 2026-11-14 — INT-3 avaliação causal: fronteira divergente e decisão de especialização
 
 **Avaliação real (26 cenários, Doc 20):** os verificadores determinísticos existentes foram exercidos ao vivo e falharam fechado onde o ambiente bloqueou — `FALSE_COMPLETE=0`. **Primeiras divergências identificadas:** (1) `CALL_BEFORE_DECLARE` — quando o modelo invoca antes de `declare_investigation_goal`, coverage e feedback de suficiência ficam indisponíveis mid-flight; causa na ordem escolhida pelo modelo (instrução/contrato), não no avaliador. (2) variância de credencial invalidou o controle negativo AUTH_DENY (ambiente). (3) convergência de paginação persiste como residual. **Especialização:** `COGNITIVE_SPECIALIST_NEED=NOT_PROVEN` — gaps são de ordem de declaração e convergência, endereçáveis pela Alternativa B (contexto/instrução especializada de suficiência dentro do Agent existente) sem novo Agent; Alternativa C (Agent independente) permanece condicionada à prova comparativa do Doc 293. Registro apenas — nenhuma implementação autorizada.
+
+### 2026-11-14 — Superfícies cognitivas: Compreensão separada de Investigação (decisão PO, não runtime)
+
+**Produto TARGET:** Agent físico existente = Investigação/INT-1; segundo Agent físico pretendido = Compreensão/INT-2. A indexação *Agent 1/Agent 2* não muda os IDs de estágios *INT-1/INT-2*. `CURRENT_AGENT_COUNT=1`; `SECOND_AGENT=PLANNED_NOT_IMPLEMENTED`. Não confundir com MCP especialistas de domínio ou agents/providers externos.
+
+| Responsabilidade | Owner legítimo | Input/output pretendido | Não pode fazer |
+|---|---|---|---|
+| Compreensão (novo Agent) | DÉLIA cognição; Application aceita proposta | Pedido+contexto mínimo+contratos disponíveis → `SemanticInvestigationPlan`/`MaterialObligation` candidatos | Chamar owner READ por conta própria, autorizar, declarar cobertura como FACT, escolher execução material |
+| Investigação (Agent existente) | DÉLIA cognição + Application governa ações | Plano aceito+identidades/scope/budget/capabilities elegíveis → `GovernedCapabilityAttempt`/evidence | Reescrever escopo e obrigações sem gate; bypass Core/Domain; assumir sufficiency authority |
+| Suficiência (estado atual) | Application/Evidence/Outcome; cognição parcial no mesmo Agent | Obligações, evidence/provenance → coverage/governed finalization | LLM declarar `SATISFIED` sem demonstração |
+| Síntese (futuro) | Cognição com finalizador Application | Evidence validada+limitations → resposta estruturada | Inventar fatos/autorizações |
+
+**Handoff candidato a inventariar antes de criar contrato novo:** `goal_proposal` tipada → `Application._accept_semantic_investigation_plan`/equivalente verificado → `accepted_plan` imutável + `correlation`/`evidence_refs`/authorized context/budget/errors → Agent de Investigação. Verificar no HEAD os nomes/consumers reais e a semântica do gate atual `declare_investigation_goal`, preservando bloqueio pré-invocação `plan=None` para owner READ dependente. Não criar autorização implícita por handoff, catálogo ou tokens delegados. **`EXISTING_EQUIVALENT=TO_INVENTORY` (handoff); `REUSE_DECISION=REUSE/EXTEND` contratos existentes, novos artefatos só com gate Doc293.** `MODEL_OUTPUT!=FACT`; `DISCOVERY!=APPROVAL`.
+
+**Estado:** apenas contract mapping/plano; nenhum Agent novo, runtime/composition/handoff ou avaliação criada. Ver Doc 16 (nova direção R1–R6), Doc 20 (corpus comparativo) e Doc 335.
