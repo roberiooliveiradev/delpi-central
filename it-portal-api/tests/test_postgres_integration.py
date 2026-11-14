@@ -76,6 +76,7 @@ def migrated(database):
         "V011__workstation_snapshots.sql",
         "V012__workstation_agent_identities.sql",
         "V013__workstation_dynamic_binding_revocation.sql",
+        "V014__workstation_bootstrap_tickets.sql",
     ]
     return database
 
@@ -114,6 +115,7 @@ def test_migrations_are_idempotent(migrated):
         (11, "V011__workstation_snapshots.sql"),
         (12, "V012__workstation_agent_identities.sql"),
         (13, "V013__workstation_dynamic_binding_revocation.sql"),
+        (14, "V014__workstation_bootstrap_tickets.sql"),
     ]
 
 

@@ -434,6 +434,24 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** consultar CI do commit, depois projetar implementacao transacional do ticket one-time e attestation por dispositivo com teste de laboratorio HML, sem emitir credencial via browser e sem ativar producao.
 
+## 2026-11-14 | G2-S4-S2b-P1 | ledger inerte de tickets de uso unico
+
+**Objetivo:** preparar a persistencia atomica do futuro ticket de enrolment, sem criar rotas de ativacao ou emitir credenciais Keycloak.
+
+**Arquivos alterados:** `domain/workstation_bootstrap_tickets.py`; `persistence/postgres_workstation_bootstrap_tickets.py`; migration aditiva `V014__workstation_bootstrap_tickets.sql`; testes unitarios e integracao PostgreSQL; expectativa V014 no teste de migrations; runbook P1; README e diario.
+
+**Commit/issue:** entrega G2-S4-S2b-P1 associada a [issue #179](https://github.com/roberiooliveiradev/delpi-central/issues/179); evidencias de commit e CI no GitHub Actions apos publicacao.
+
+**Testes executados e evidencias:** 19 testes puros locais PASS antes da publicacao e compileall sem erros. Testes reais PostgreSQL V014 (uso unico/concorrencia/TTL/cancelamento) preparados para CI; o resultado so pode ser declarado depois de execucao do pipeline.
+
+**Estado de producao / implantacao:** implementacao inerte sem endpoint, sem Keycloak, sem agente Windows, sem segredo no frontend e sem ativacao de ingestao/remoto. Nenhum deploy ou migracao aplicada pelo assistente. V014 requer backup e planejamento de release; controles de seguranca permanecem OFF.
+
+**Riscos e limitacoes:** possuir o token nao comprova identidade do dispositivo Windows. O token transient so pode ser transferido no futuro por canal autentico e protegido apos processo privado de enrollment; o uso unico nao autoriza o client Keycloak nem o grant do banco. Ainda exigem HML e revisao: prova de dispositivo, rate limit, MFA, escopo do cliente, revogacao com token antigo, limpeza de tickets, concorrencia de revogacao e assinaturas do agente.
+
+**Rollback:** nenhum runtime foi tocado nesta entrega. Em rollout futuro, desabilitar as flags e preservar a migration V014, sem apagar dados nem editar migrations historicas.
+
+**Proximo passo unico:** confirmar CI de P1 e projetar attestation no Windows piloto com desenho de transferencia de ticket seguro em ambiente HML; so depois considerar endpoints, sempre protegidos por gates.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown
