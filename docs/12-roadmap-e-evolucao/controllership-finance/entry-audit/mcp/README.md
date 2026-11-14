@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Status | **PLAN_DRAFT** |
+| Status | **READY** — executado na T7 da [trilha](../track.md) |
 | Data | 2026-11-13 |
 | Plano | [../plan.md](../plan.md) · back-end [../backend/README.md](../backend/README.md) · front-end [../frontend/README.md](../frontend/README.md) |
 | Origem do conhecimento | skill `auditoria-entradas-nfe-protheus` ([reference](../reference/skill-auditoria-entradas-nfe-protheus/)) + regras ditas pelo owner + este plano |

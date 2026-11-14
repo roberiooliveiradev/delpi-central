@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Status | **PLAN_DRAFT** (contrato fecha na E1) |
+| Status | **READY** — contrato fecha na T1 da [trilha](../track.md) |
 | Plano | [../plan.md](../plan.md) |
 | Serviços | `api-delpi` (Protheus, leitura) · `financial-api` (XML do Questor) · `controllership-finance-api` (BFF: motor, execução, persistência, rotas, MCP) |
 

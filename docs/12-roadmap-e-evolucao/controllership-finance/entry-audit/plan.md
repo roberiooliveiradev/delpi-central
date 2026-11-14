@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Status | **PLAN_DRAFT** |
+| Status | **READY** — execução pela [trilha](./track.md) |
 | Data | 2026-11-13 |
 | Decisor | owner do produto |
 | Baseline | HEAD `08825074` (somente leitura) |
@@ -38,16 +38,20 @@ Limites do AS-IS: trabalho manual a cada execução; SF4 pode estar desatualizad
 
 | ID | Tema | Decisão | Status |
 |---|---|---|---|
-| D1 | Onde fica o motor de regras | **controllership-finance-api (BFF)**, em Clean Architecture: regras puras no domain, fontes por adapters HTTP (api-delpi e financial-api) | recomendação — confirmar |
-| D2 | Entrada dos dados | **Automática**: período + tipos de documento + filiais → a BFF busca Protheus (api-delpi) e XML (financial-api/Questor). Upload de arquivos só como alternativa se a listagem do Questor por período não for viável (ver E0) | recomendação — confirmar |
+| D1 | Onde fica o motor de regras | **controllership-finance-api (BFF)**, em Clean Architecture: regras puras no domain, fontes por adapters HTTP (api-delpi e financial-api) | **DECIDIDO** (owner aprovou a trilha, 2026-11-13) |
+| D2 | Entrada dos dados | **Automática**: período + tipos de documento + filiais → a BFF busca Protheus (api-delpi) e XML (financial-api/Questor). Upload de arquivos só como alternativa se a listagem do Questor por período não for viável (ver E0) | **DECIDIDO** (owner aprovou a trilha, 2026-11-13) |
 | D3 | Visual | conteúdo do Raio-X no **padrão visual do Portal** (`@delpi/plugin-ui`, claro/escuro); sem copiar o HTML | **DECIDIDO** (owner, 2026-11-13) |
 | D4 | Permissões | **`controllership-finance.access`** para tudo desta funcionalidade: ver, executar/reexecutar e marcar resolvido. `manage` herda `access`. Nenhuma permission nova | **DECIDIDO** (owner, 2026-11-13) |
-| D5 | Navegação | página própria **«Auditoria de entradas»**, com atalho a partir do Fechamento mensal (abre já com o mês da competência) | recomendação — confirmar |
-| D6 | CLARA executa a auditoria | a CLARA tem acesso a todas as funcionalidades e audita as notas **num comando do usuário**; `entry_audit.run`, `resolve` e `reopen` são diretos (sem prepare/confirmação) | **DECIDIDO** (owner, 2026-11-13); execução direta proposta — confirmar |
+| D5 | Navegação | página própria **«Auditoria de entradas»**, com atalho a partir do Fechamento mensal (abre já com o mês da competência) | **DECIDIDO** (owner aprovou a trilha, 2026-11-13) |
+| D6 | CLARA executa a auditoria | a CLARA tem acesso a todas as funcionalidades e audita as notas **num comando do usuário**; `entry_audit.run`, `resolve` e `reopen` são diretos (sem prepare/confirmação) | **DECIDIDO** (owner, 2026-11-13) |
 | D10 | Frequência | auditoria **sob demanda, em qualquer dia**; sem rotina mensal fixa nem agendamento | **DECIDIDO** (owner, 2026-11-13) |
 | D8 | Filtros da execução | os **mesmos dois filtros de hoje**: **período De/Até livre** (nenhuma data fixada nem sugerida; pela data de recebimento, como na exportação da SF1) e **tipos de documento**: NF-e e CT-e — na SF1, a Espécie do documento SPED e CTE; no Questor, NF-e e CT-e (na Delpi, SPED = NF-e e CTE = CT-e) —, mais as filiais. Os demais (severidade, tema, fornecedor…) são filtros da análise, sobre o resultado | **DECIDIDO** (owner, 2026-11-13) |
 | D9 | Componentes | dashboard com `@delpi/plugin-ui`; primitivos novos criados no plugin-ui e importados pelo Portal; o HTML do Raio-X não é copiado | **DECIDIDO** (owner, 2026-11-13) |
-| D7 | Execução | assíncrona, por um worker dentro da BFF (padrão do job de notificações no `lifespan`), uma análise por período com uma execução por filial | recomendação — confirmar |
+| D7 | Execução | assíncrona, por um worker dentro da BFF (padrão do job de notificações no `lifespan`), uma análise por período com uma execução por filial | **DECIDIDO** (owner aprovou a trilha, 2026-11-13) |
+| D11 | Melhorias sobre a skill | XML pela chave para toda nota da SF1; listagem do Questor por emissão (com folga) só para achar o que não foi lançado; «só no XML» com solicitação aberta no LNF = «Em lançamento (LNF)» (evidência da amostra de 12/11) | **DECIDIDO** (owner aprovou a trilha, 2026-11-13) |
+| D12 | Configuração | TES do presumido (004), final do CFOP de frete (352), folga de busca de XML (30 dias), prazo de «em trânsito» (3 dias) e tolerância (R$ 0,05) em variáveis da BFF; cada análise grava a configuração | **DECIDIDO** (owner aprovou a trilha, 2026-11-13) |
+| D13 | Flag | `ENTRY_AUDIT_ENABLED` na BFF (padrão `false`) controla rotas, worker e entradas da CLARA | **DECIDIDO** (owner aprovou a trilha, 2026-11-13) |
+| D14 | Conhecimento | fichas AE-00 a AE-15 no domínio `controllership` do corpus | **DECIDIDO** (owner aprovou a trilha, 2026-11-13) |
 
 ## 4. Arquitetura (TARGET)
 
@@ -93,18 +97,7 @@ Regras de fronteira (instruções do projeto):
 
 ## 6. Fases
 
-Regra de trabalho: teste de comportamento em HML; passou tudo, vai para PROD. Funcionalidade entra desligada por flag e é ligada depois do ensaio HML.
-
-| Fase | Entrega | Saída |
-|---|---|---|
-| E0 | Inventário somente leitura: SQL existente na api-delpi para SF1/SD1/SF4/SFT/SA2; capacidade do Questor de listar por período e destinatário; CNPJ/UF das filiais; volume mensal por filial | lacuna do Questor resolvida ou D2 revista |
-| E1 | Contrato: endpoints novos (api-delpi, financial-api, BFF), schema, catálogo CLARA, rotas do MFE | doc 168 com contrato `ACCEPTED` |
-| E2 | Motor de regras no domain da BFF + **teste de paridade** com a skill sobre arquivos reais de um mês | paridade PASS |
-| E3 | Fontes: endpoints de leitura na api-delpi; listagem por período na financial-api | testes de contrato PASS |
-| E4 | Execução, persistência, reexecução com status preservado, exportação xlsx | testes PASS |
-| E5 | Página no MFE + Ajuda | testes e build PASS |
-| E6 | CLARA: catálogo, analyze, conhecimento | testes PASS |
-| E7 | Ensaio HML com período real (outubro/2026, filiais 01 e 02) → PROD | paridade em HML + publicação |
+A execução está na **[trilha](./track.md)** (etapas T0–T13 com quadro de status, protocolo, paradas, rollback e roteiro de verificação). Ordem: back-end (T0–T6) → CLARA (T7–T8) → PROD back-end + CLARA (T9) → **verificação do owner pela CLARA** → front-end (T10–T13). Regra: teste em HML; passou, vai para PROD; funcionalidade nova entra desligada por flag.
 
 ## 7. Critério central de aceite: paridade
 
@@ -130,6 +123,7 @@ Lançar ou corrigir notas no Protheus; alterar TES ou cadastro de fornecedor; su
 
 | Data | Evento |
 |---|---|
+| 2026-11-13 | Trilha de execução criada ([track.md](./track.md)); D1, D2, D5, D6, D7 decididas; novas decisões D11–D14 (melhorias sobre a skill, configuração, flag, domínio do conhecimento). |
 | 2026-11-13 | Amostra real de 12/11/2026 (SF1, SD1 e XML do Questor) analisada e rodada na skill: recorte de um dia; filtro de tipo confirmado pelo owner: Espécie SPED/CTE na SF1 e NF-e/CT-e no Questor; 14 «só no XML» e 5 «só no SF1» por diferença de datas. Melhorias registradas no back-end §3.9: XML pela chave, cruzamento com o LNF. |
 | 2026-11-13 | Owner: como na skill e no painel, nada de período fixado — o período é De/Até livre; o segundo filtro de execução é o **tipo de documento**. Removidos os atalhos de período (`PeriodRangeFilter` e a evolução do util de períodos saíram do plano: usa-se `DateField` ×2) e os «parâmetros avançados» da tela (viram configuração da BFF). Tipos de documento a confirmar com os exemplos do Gustavo. |
 | 2026-11-13 | Plano reorganizado na pasta `entry-audit/` (plan, backend, frontend, mcp, reference, planning). |
