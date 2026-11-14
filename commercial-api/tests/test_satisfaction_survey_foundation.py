@@ -25,7 +25,9 @@ from commercial_app.domain.entities.satisfaction_survey import (
 from commercial_app.domain.services.satisfaction_questionnaire import (
     DIMENSION_KEYS,
     QUESTIONNAIRE_VERSION,
+    assert_invite_placeholders_allowed,
     get_questionnaire_catalog,
+    unknown_invite_placeholders,
     validate_dimensions_payload,
 )
 from commercial_app.infrastructure.crypto.token_cipher import TokenCipher
@@ -48,6 +50,93 @@ def test_dimensions_require_explicit_na_or_score():
     assert normalized["technical_support"] is None
     with pytest.raises(ValueError):
         validate_dimensions_payload({key: 4 for key in DIMENSION_KEYS if key != "quality"})
+
+
+def test_invite_placeholders_reject_unknown():
+    assert unknown_invite_placeholders("Olá {nome_empresa}") == []
+    assert unknown_invite_placeholders("x {foo} y {bar}") == ["{bar}", "{foo}"]
+    with pytest.raises(ValueError, match="não permitidos"):
+        assert_invite_placeholders_allowed("Assunto {cliente}", "Corpo {link_pesquisa}")
+
+
+def test_get_recipient_omits_invite_by_default():
+    now = datetime(2026, 11, 13, 12, 0, tzinfo=timezone.utc)
+    repo = MagicMock()
+    campaign = SatisfactionCampaign(
+        id="c1",
+        name="Pesquisa 2026",
+        starts_at=now - timedelta(days=1),
+        ends_at=now + timedelta(days=10),
+        questionnaire_version=QUESTIONNAIRE_VERSION,
+        invite_subject="s",
+        invite_body="b {link_pesquisa}",
+        created_by_user_id="u1",
+        created_at=now,
+        updated_at=now,
+        version=1,
+    )
+    recipient = SatisfactionRecipient(
+        id="r1",
+        campaign_id="c1",
+        customer_code="001",
+        customer_store="01",
+        customer_name_snapshot="Alpha",
+        contact_name=None,
+        contact_email=None,
+        token_hash="hash",
+        token_ciphertext="cipher",
+        created_by_user_id="u1",
+        created_at=now,
+        updated_at=now,
+        version=1,
+    )
+    repo.get_campaign.return_value = campaign
+    repo.get_recipient.return_value = recipient
+    uc = _build_use_case(repo, now=now)
+    payload = uc.get_recipient(campaign_id="c1", recipient_id="r1")
+    assert "invite" not in payload
+    with_invite = uc.get_recipient(
+        campaign_id="c1", recipient_id="r1", include_resolved_invite=True
+    )
+    assert "invite" in with_invite
+
+
+def test_serialize_campaign_response_rate():
+    now = datetime(2026, 11, 13, 12, 0, tzinfo=timezone.utc)
+    repo = MagicMock()
+    uc = _build_use_case(repo, now=now)
+    empty = SatisfactionCampaign(
+        id="c0",
+        name="Vazia",
+        starts_at=now,
+        ends_at=now + timedelta(days=1),
+        questionnaire_version=QUESTIONNAIRE_VERSION,
+        invite_subject="s",
+        invite_body="b",
+        created_by_user_id="u1",
+        created_at=now,
+        updated_at=now,
+        version=1,
+        recipient_count=0,
+        response_count=0,
+    )
+    assert uc.serialize_campaign(empty, now=now)["response_rate"] is None
+    filled = SatisfactionCampaign(
+        id="c1",
+        name="Com taxa",
+        starts_at=now,
+        ends_at=now + timedelta(days=1),
+        questionnaire_version=QUESTIONNAIRE_VERSION,
+        invite_subject="s",
+        invite_body="b",
+        created_by_user_id="u1",
+        created_at=now,
+        updated_at=now,
+        version=1,
+        recipient_count=4,
+        response_count=1,
+    )
+    assert uc.serialize_campaign(filled, now=now)["response_rate"] == 25.0
 
 
 def test_marketing_and_satisfaction_manage_permissions():
@@ -214,7 +303,24 @@ def test_create_campaign_and_add_recipients_idempotent():
     repo.find_recipient_by_customer.side_effect = find_by_customer
     repo.create_recipient.return_value = created
 
-    uc = _build_use_case(repo, now=now)
+    class _Elig:
+        def lookup(self, customers):
+            from commercial_app.domain.ports.customer_eligibility_port import (
+                CustomerEligibility,
+            )
+
+            return {
+                (code, store): CustomerEligibility(exists=True, active=True)
+                for code, store in customers
+            }
+
+    uc = ManageSatisfactionSurveysUseCase(
+        repo,
+        token_cipher=TokenCipher(Fernet.generate_key().decode()),
+        public_base_url="https://example.test",
+        clock=lambda: now,
+        customer_eligibility=_Elig(),
+    )
     created_campaign = uc.create_campaign(
         CreateCampaignCommand(
             name="Pesquisa 2026",
@@ -236,6 +342,48 @@ def test_create_campaign_and_add_recipients_idempotent():
     assert batch["counts"]["already_existing"] == 1
     assert batch["counts"]["included"] == 1
     assert batch["counts"]["failed"] == 0
+
+
+def test_add_recipients_rejects_unknown_totvs_customer():
+    now = datetime(2026, 11, 13, 12, 0, tzinfo=timezone.utc)
+    repo = MagicMock()
+    campaign = SatisfactionCampaign(
+        id="c1",
+        name="Pesquisa 2026",
+        starts_at=now - timedelta(days=1),
+        ends_at=now + timedelta(days=10),
+        questionnaire_version=QUESTIONNAIRE_VERSION,
+        invite_subject="s",
+        invite_body="b",
+        created_by_user_id="u1",
+        created_at=now,
+        updated_at=now,
+        version=1,
+    )
+    repo.get_campaign.return_value = campaign
+    repo.find_recipient_by_customer.return_value = None
+
+    class _EligMissing:
+        def lookup(self, customers):
+            return {}
+
+    uc = ManageSatisfactionSurveysUseCase(
+        repo,
+        token_cipher=TokenCipher(Fernet.generate_key().decode()),
+        public_base_url="https://example.test",
+        clock=lambda: now,
+        customer_eligibility=_EligMissing(),
+    )
+    batch = uc.add_recipients(
+        campaign_id="c1",
+        items=[
+            RecipientAddItem(customer_code="999", customer_store="01", customer_name="Ghost"),
+        ],
+        created_by_user_id="u1",
+    )
+    assert batch["counts"]["failed"] == 1
+    assert batch["failed"][0]["reason"] == "customer_not_found"
+    repo.create_recipient.assert_not_called()
 
 
 def test_public_submit_rejects_duplicate_and_validates_dimensions():

@@ -833,6 +833,8 @@ export const CM_HELP = {
     colStatus: "Agendada = ainda não abriu; Aberta = recebendo respostas; Encerrada = prazo finalizado.",
     colParticipants: "Empresas cadastradas como participantes desta campanha.",
     colResponded: "Participantes que já enviaram a resposta definitiva.",
+    colResponseRate:
+      "Percentual oficial respondidas/participantes, calculado pela API. Sem participantes, exibe —.",
     createName: "Nome interno da campanha, por exemplo «Pesquisa de satisfação 2026».",
     createStartsAt: "Quando o formulário passa a aceitar respostas (horário de Brasília).",
     createEndsAt: "Quando o formulário deixa de aceitar respostas (horário de Brasília).",

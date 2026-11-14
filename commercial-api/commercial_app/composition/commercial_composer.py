@@ -639,5 +639,6 @@ def build_manage_satisfaction_surveys_use_case():
             repository=build_satisfaction_survey_repository(),
             token_cipher=build_satisfaction_token_cipher(),
             public_base_url=settings.PUBLIC_BASE_URL,
+            customer_eligibility=DelpiCustomerEligibilityAdapter(),
         )
     return _satisfaction_survey_use_case

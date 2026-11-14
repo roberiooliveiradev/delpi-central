@@ -23,6 +23,7 @@ import {
   INVITE_LINK_TOKEN,
   missingInvitePlaceholders,
   replaceInvitePlaceholders,
+  unknownInvitePlaceholders,
 } from "./inviteMessage";
 import { absolutizeInvite } from "./inviteLink";
 import {
@@ -56,6 +57,7 @@ function campaign(overrides: Partial<SatisfactionCampaign>): SatisfactionCampaig
     updated_at: "2026-01-01T00:00:00Z",
     version: 1,
     counts: { participants: 0, responded: 0, pending: 0 },
+    response_rate: null,
     ...overrides,
   };
 }
@@ -200,6 +202,8 @@ describe("mensagem do convite", () => {
     );
     expect(missingInvitePlaceholders("sem campos")).toEqual([INVITE_COMPANY_TOKEN, INVITE_LINK_TOKEN]);
     expect(missingInvitePlaceholders(template)).toEqual([]);
+    expect(unknownInvitePlaceholders("Olá {nome_empresa} e {foo}")).toEqual(["{foo}"]);
+    expect(unknownInvitePlaceholders(template)).toEqual([]);
     const inserted = insertTokenAtSelection("abcd", "{x}", 1, 3);
     expect(inserted).toEqual({ text: "a{x}d", cursor: 4 });
     expect(insertTokenAtSelection("ab", "{x}", null, null).text).toBe("ab{x}");

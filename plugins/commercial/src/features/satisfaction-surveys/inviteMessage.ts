@@ -29,6 +29,20 @@ export function missingInvitePlaceholders(body: string): string[] {
   return INVITE_PLACEHOLDERS.filter((token) => !body.includes(token));
 }
 
+const UNKNOWN_PLACEHOLDER_RE = /\{[^{}\s]+\}/g;
+
+/** Placeholders `{...}` fora do conjunto canônico (UI-02 / API). */
+export function unknownInvitePlaceholders(text: string): string[] {
+  const found = new Set<string>();
+  for (const match of text.matchAll(UNKNOWN_PLACEHOLDER_RE)) {
+    const token = match[0];
+    if (!(INVITE_PLACEHOLDERS as readonly string[]).includes(token)) {
+      found.add(token);
+    }
+  }
+  return [...found].sort();
+}
+
 export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")

@@ -12,15 +12,19 @@ import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeP
 import { CM_HELP } from "../../content/helpTooltips";
 import { SATISFACTION_CONTENT } from "../../content/satisfactionSurveysContent";
 import type { SatisfactionCampaign } from "../../types/satisfactionSurvey";
+import { copyToClipboard } from "./clipboard";
 import { InvitePreview, type InvitePreviewMode } from "./InvitePreview";
 import {
   INVITE_COMPANY_TOKEN,
   INVITE_LINK_TOKEN,
   INVITE_SAMPLE_COMPANY,
   INVITE_SAMPLE_LINK,
+  buildInviteHtml,
+  buildMessengerText,
   insertTokenAtSelection,
   missingInvitePlaceholders,
   replaceInvitePlaceholders,
+  unknownInvitePlaceholders,
 } from "./inviteMessage";
 
 const BODY_FIELD_ID = "satisfaction-campaign-invite-body";
@@ -55,6 +59,13 @@ export function CampaignMessageTab({
 
   const dirty = subject !== campaign.invite_subject || body !== campaign.invite_body;
   const missing = useMemo(() => missingInvitePlaceholders(body), [body]);
+  const unknown = useMemo(
+    () => [
+      ...unknownInvitePlaceholders(subject),
+      ...unknownInvitePlaceholders(body),
+    ].filter((token, index, all) => all.indexOf(token) === index),
+    [subject, body],
+  );
   const sampleSubject = useMemo(
     () => replaceInvitePlaceholders(subject, { company: INVITE_SAMPLE_COMPANY, link: INVITE_SAMPLE_LINK }),
     [subject],
@@ -91,6 +102,10 @@ export function CampaignMessageTab({
       setSaveError(copy.bodyRequired);
       return;
     }
+    if (unknown.length > 0) {
+      setSaveError(copy.unknownTokens(unknown));
+      return;
+    }
     setSaving(true);
     setSaveError(null);
     try {
@@ -106,6 +121,18 @@ export function CampaignMessageTab({
     } finally {
       setSaving(false);
     }
+  };
+
+  const copyPreview = async () => {
+    const payload =
+      previewMode === "messenger"
+        ? { text: buildMessengerText(sampleBody) }
+        : {
+            text: buildMessengerText(sampleBody),
+            html: buildInviteHtml(sampleBody, { linkify: false }),
+          };
+    const ok = await copyToClipboard(payload);
+    if (ok) notifySuccess(copy.copiedPreview);
   };
 
   return (
@@ -148,40 +175,16 @@ export function CampaignMessageTab({
               {copy.insertLink}
             </CommercialActionButton>
           </div>
+          {unknown.length > 0 ? (
+            <CommercialStateBanner variant="error">
+              {copy.unknownTokens(unknown)}
+            </CommercialStateBanner>
+          ) : null}
           {missing.length > 0 ? (
             <CommercialStateBanner variant="default">
               {copy.missingTokens(missing)}
             </CommercialStateBanner>
           ) : null}
-          {saveError ? (
-            <CommercialStateBanner variant="error">
-              {saveError}{" "}
-              <CommercialActionButton variant="ghost" onClick={onReloadRequested}>
-                {copy.reload}
-              </CommercialActionButton>
-            </CommercialStateBanner>
-          ) : null}
-          <div className="cm-satisfaction-actions">
-            {dirty ? <span>{copy.dirty}</span> : null}
-            <CommercialActionButton
-              variant="ghost"
-              disabled={!dirty || saving}
-              onClick={() => {
-                setSubject(campaign.invite_subject);
-                setBody(campaign.invite_body);
-                setSaveError(null);
-              }}
-            >
-              {copy.revert}
-            </CommercialActionButton>
-            <CommercialActionButton
-              variant="primary"
-              disabled={!dirty || saving}
-              onClick={() => void save()}
-            >
-              {saving ? copy.saving : copy.save}
-            </CommercialActionButton>
-          </div>
         </div>
       </CommercialSectionCard>
 
@@ -196,8 +199,43 @@ export function CampaignMessageTab({
             body={sampleBody}
             linkify={false}
           />
+          <div className="cm-satisfaction-actions">
+            <CommercialActionButton variant="default" onClick={() => void copyPreview()}>
+              {copy.copyPreview}
+            </CommercialActionButton>
+          </div>
         </div>
       </CommercialSectionCard>
+
+      <div className="cm-satisfaction-actions">
+        {dirty ? <span>{copy.dirty}</span> : null}
+        {saveError ? (
+          <CommercialStateBanner variant="error">
+            {saveError}{" "}
+            <CommercialActionButton variant="ghost" onClick={onReloadRequested}>
+              {copy.reload}
+            </CommercialActionButton>
+          </CommercialStateBanner>
+        ) : null}
+        <CommercialActionButton
+          variant="ghost"
+          disabled={!dirty || saving}
+          onClick={() => {
+            setSubject(campaign.invite_subject);
+            setBody(campaign.invite_body);
+            setSaveError(null);
+          }}
+        >
+          {copy.revert}
+        </CommercialActionButton>
+        <CommercialActionButton
+          variant="primary"
+          disabled={!dirty || saving || unknown.length > 0}
+          onClick={() => void save()}
+        >
+          {saving ? copy.saving : copy.save}
+        </CommercialActionButton>
+      </div>
     </div>
   );
 }

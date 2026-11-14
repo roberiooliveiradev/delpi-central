@@ -91,6 +91,11 @@ ALLOWED_ORIGINS = build_allowed_origins(
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     check_credentials()
+    if settings.COMMERCIAL_SATISFACTION_SURVEY_ENABLED:
+        # Fail-fast: feature ligado sem chave Fernet quebraria o 1º convite.
+        from commercial_app.infrastructure.crypto.token_cipher import TokenCipher
+
+        TokenCipher(settings.COMMERCIAL_SATISFACTION_TOKEN_KEY)
     run_migrations_on_startup()
     loop = asyncio.get_running_loop()
     commercial_realtime_hub.bind_loop(loop)

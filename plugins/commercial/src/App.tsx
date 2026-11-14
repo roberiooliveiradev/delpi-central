@@ -78,10 +78,14 @@ function AppRoutes({
     canViewProposals,
     canAccessMyPortfolio,
     canManageSatisfaction,
+    satisfactionSurveyEnabled,
     loading: scopeLoading,
     myPortfolios,
   } = usePortfolioScope();
   const showCustomers = scopeLoading || canAccessMyPortfolio;
+  const showSatisfaction =
+    scopeLoading || (canManageSatisfaction && satisfactionSurveyEnabled);
+  const canOpenSatisfaction = canManageSatisfaction && satisfactionSurveyEnabled;
   const ephemeralClientNav =
     (view === "customer_detail" || view === "customer_order_detail") &&
     route.codigo &&
@@ -116,7 +120,7 @@ function AppRoutes({
       showAnalytics={canViewAnalytics}
       showCustomers={showCustomers}
       showProposals={canViewProposals}
-      showSatisfaction={canManageSatisfaction}
+      showSatisfaction={showSatisfaction}
       scopeLabel={scopeLabel}
       ephemeralClientNav={ephemeralClientNav}
     >
@@ -128,7 +132,7 @@ function AppRoutes({
           showProposals={canViewProposals}
           showAnalytics={canViewAnalytics}
           showCustomers={canAccessMyPortfolio}
-          showSatisfaction={canManageSatisfaction}
+          showSatisfaction={showSatisfaction}
         />
       ) : null}
       {view === "overview" ? (
@@ -343,21 +347,21 @@ function AppRoutes({
         </PluginErrorBoundary>
       ) : null}
       {view === "satisfaction_surveys" ? (
-        canManageSatisfaction ? (
+        canOpenSatisfaction ? (
           <SatisfactionSurveysPage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
       {view === "satisfaction_campaign_detail" && route.campaignId ? (
-        canManageSatisfaction ? (
+        canOpenSatisfaction ? (
           <SatisfactionCampaignDetailPage basePath={basePath} campaignId={route.campaignId} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
       {view === "satisfaction_recipient_detail" && route.campaignId && route.recipientId ? (
-        canManageSatisfaction ? (
+        canOpenSatisfaction ? (
           <SatisfactionRecipientDetailPage
             basePath={basePath}
             campaignId={route.campaignId}

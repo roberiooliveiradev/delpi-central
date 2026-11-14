@@ -23,6 +23,8 @@ export const SATISFACTION_CONTENT = {
     colStatus: "Situação",
     colParticipants: "Participantes",
     colResponded: "Respostas",
+    colResponseRate: "Taxa de resposta",
+    responseRateUnavailable: "—",
     loading: "Carregando campanhas…",
     loadError: "Não foi possível carregar as campanhas.",
     emptyTitle: "Nenhuma campanha",
@@ -72,10 +74,14 @@ export const SATISFACTION_CONTENT = {
   },
   participants: {
     addTitle: "Adicionar clientes",
+    addCollapsedHint: "Buscar no cadastro TOTVS e incluir empresas nesta campanha.",
+    addExpand: "Adicionar clientes",
+    addCollapse: "Recolher",
+    addCancel: "Cancelar",
     addIntro: "Busque empresas e adicione várias de uma vez. A lista é acumulativa.",
     addPickerTitle: "Buscar no cadastro",
     addPickerPlaceholder: "Código ou nome do cliente",
-    addAction: "Adicionar selecionadas",
+    addAction: "Adicionar à pesquisa",
     adding: "Adicionando…",
     addClosed: "Campanha encerrada não recebe novos participantes.",
     addIncluded: (count: number) =>
@@ -131,7 +137,11 @@ export const SATISFACTION_CONTENT = {
     bodyRequired: "Informe o texto da mensagem.",
     missingTokens: (tokens: string[]) =>
       `A mensagem não contém ${tokens.join(" e ")}. Sem esses campos o convite não terá o nome da empresa e/ou o link exclusivo.`,
+    unknownTokens: (tokens: string[]) =>
+      `Placeholders não permitidos: ${tokens.join(", ")}. Use apenas {nome_empresa} e {link_pesquisa}.`,
     saveSuccess: "Mensagem padrão salva.",
+    copyPreview: "Copiar prévia",
+    copiedPreview: "Prévia copiada.",
     conflict: "A campanha foi alterada por outra pessoa. Recarregue para continuar.",
     reload: "Recarregar campanha",
   },

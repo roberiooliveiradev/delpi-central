@@ -32,6 +32,7 @@ from commercial_app.composition.commercial_composer import (
     build_delpi_commercial_gateway,
     build_manage_seller_portfolio_use_case,
 )
+from commercial_app.config import settings
 from commercial_app.domain.services.customer_center_assignment_validation import (
     validate_customer_center_assignment,
 )
@@ -130,6 +131,9 @@ def get_my_seller_portfolio(request: Request):
                     "manage": has_manage(user),
                     "marketing": has_marketing(user),
                     "satisfaction_manage": has_satisfaction_manage(user),
+                    "satisfaction_survey_enabled": bool(
+                        settings.COMMERCIAL_SATISFACTION_SURVEY_ENABLED
+                    ),
                     "billing_notify": has_billing_notify(user),
                 },
             },

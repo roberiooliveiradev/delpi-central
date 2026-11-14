@@ -35,6 +35,8 @@ type PortfolioScopeValue = {
    * Apenas apresentação — o backend decide a autorização efetiva.
    */
   canManageSatisfaction: boolean;
+  /** Feature gate da Pesquisa (API); UI não monta a superfície se false. */
+  satisfactionSurveyEnabled: boolean;
   /** Id do usuário autenticado (JWT), mesmo sem carteira própria. */
   currentUserId: string | null;
   /** Compat single-portfolio: primeira carteira de `myPortfolios`. */
@@ -63,6 +65,7 @@ const EMPTY_CAPABILITIES: CommercialCapabilities = {
   billing_notify: false,
   marketing: false,
   satisfaction_manage: false,
+  satisfaction_survey_enabled: false,
 };
 
 function resolveCapabilities(
@@ -74,6 +77,7 @@ function resolveCapabilities(
     billing_notify: Boolean(raw?.billing_notify),
     marketing: Boolean(raw?.marketing),
     satisfaction_manage: Boolean(raw?.satisfaction_manage),
+    satisfaction_survey_enabled: Boolean(raw?.satisfaction_survey_enabled),
   };
 }
 
@@ -181,6 +185,7 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
       canAccessMyPortfolio,
       canBillingNotify: Boolean(capabilities.billing_notify),
       canManageSatisfaction: resolveCanManageSatisfaction(capabilities),
+      satisfactionSurveyEnabled: Boolean(capabilities.satisfaction_survey_enabled),
       currentUserId,
       myPortfolio: myPortfolios[0] ?? null,
       myPortfolios,

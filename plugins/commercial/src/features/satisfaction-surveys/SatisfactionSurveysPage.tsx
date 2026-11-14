@@ -152,6 +152,16 @@ export function SatisfactionSurveysPage({ basePath }: SatisfactionSurveysPagePro
       align: "right",
       render: (row) => row.counts.responded.toLocaleString("pt-BR"),
     },
+    {
+      key: "response_rate",
+      header: copy.colResponseRate,
+      headerHint: CM_HELP.satisfactionSurveys.colResponseRate,
+      align: "right",
+      render: (row) =>
+        row.response_rate == null
+          ? copy.responseRateUnavailable
+          : `${row.response_rate.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`,
+    },
   ];
 
   if (!scopeLoading && !canManageSatisfaction) {
@@ -291,6 +301,17 @@ export function SatisfactionSurveysPage({ basePath }: SatisfactionSurveysPagePro
                   label: copy.colResponded,
                   valueTone: "value",
                   value: campaign.counts.responded.toLocaleString("pt-BR"),
+                },
+                {
+                  id: "response_rate",
+                  label: copy.colResponseRate,
+                  valueTone: "value",
+                  value:
+                    campaign.response_rate == null
+                      ? copy.responseRateUnavailable
+                      : `${campaign.response_rate.toLocaleString("pt-BR", {
+                          maximumFractionDigits: 1,
+                        })}%`,
                 },
               ]}
             />

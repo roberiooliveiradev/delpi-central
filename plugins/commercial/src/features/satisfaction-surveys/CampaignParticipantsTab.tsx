@@ -88,6 +88,7 @@ export function CampaignParticipantsTab({
   const [filters, setFilters] = useState<RecipientFilters>(EMPTY_RECIPIENT_FILTERS);
   const [picked, setPicked] = useState<CustomerSearchSelection[]>([]);
   const [adding, setAdding] = useState(false);
+  const [addExpanded, setAddExpanded] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -150,11 +151,20 @@ export function CampaignParticipantsTab({
       );
       setReloadKey((value) => value + 1);
       onParticipantsChanged();
+      if ((result.included?.length ?? 0) > 0 && (result.failed?.length ?? 0) === 0) {
+        setAddExpanded(false);
+        setPicked([]);
+      }
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : copy.addNothing);
     } finally {
       setAdding(false);
     }
+  };
+
+  const collapseAdd = () => {
+    setAddExpanded(false);
+    setPicked([]);
   };
 
   const columns: DataTableColumn<SatisfactionRecipient>[] = [
@@ -216,13 +226,35 @@ export function CampaignParticipantsTab({
       <CommercialSectionCard
         title={copy.addTitle}
         hint={CM_HELP.satisfactionSurveys.addCustomers}
+        actions={
+          campaignClosed ? undefined : addExpanded ? (
+            <CommercialActionButton
+              variant="ghost"
+              disabled={adding}
+              onClick={collapseAdd}
+              aria-expanded={true}
+            >
+              {copy.addCollapse}
+            </CommercialActionButton>
+          ) : (
+            <CommercialActionButton
+              variant="primary"
+              onClick={() => setAddExpanded(true)}
+              aria-expanded={false}
+            >
+              {copy.addExpand}
+            </CommercialActionButton>
+          )
+        }
       >
         <div className="cm-satisfaction-stack">
-          <p>{copy.addIntro}</p>
           {campaignClosed ? (
             <CommercialStateBanner>{copy.addClosed}</CommercialStateBanner>
+          ) : !addExpanded ? (
+            <p>{copy.addCollapsedHint}</p>
           ) : (
             <>
+              <p>{copy.addIntro}</p>
               <CustomerSearchPicker
                 value={picked}
                 onChange={setPicked}
@@ -246,6 +278,13 @@ export function CampaignParticipantsTab({
                 )}
               />
               <div className="cm-satisfaction-actions">
+                <CommercialActionButton
+                  variant="ghost"
+                  disabled={adding}
+                  onClick={collapseAdd}
+                >
+                  {copy.addCancel}
+                </CommercialActionButton>
                 <CommercialActionButton
                   variant="primary"
                   disabled={picked.length === 0 || adding}

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 QUESTIONNAIRE_VERSION = (
@@ -241,6 +242,24 @@ DEFAULT_INVITE_BODY = (
 )
 
 INVITE_PLACEHOLDERS: tuple[str, ...] = ("{nome_empresa}", "{link_pesquisa}")
+_INVITE_PLACEHOLDER_RE = re.compile(r"\{[^{}\s]+\}")
+
+
+def unknown_invite_placeholders(text: str) -> list[str]:
+    """Placeholders `{...}` presentes no texto e fora do conjunto canônico."""
+    found = set(_INVITE_PLACEHOLDER_RE.findall(text or ""))
+    return sorted(found - set(INVITE_PLACEHOLDERS))
+
+
+def assert_invite_placeholders_allowed(subject: str, body: str) -> None:
+    """Rejeita qualquer placeholder além de {nome_empresa} e {link_pesquisa}."""
+    unknown = unknown_invite_placeholders(subject) + unknown_invite_placeholders(body)
+    if unknown:
+        raise ValueError(
+            "Placeholders não permitidos: "
+            + ", ".join(dict.fromkeys(unknown))
+            + ". Use apenas {nome_empresa} e {link_pesquisa}."
+        )
 
 
 def get_questionnaire_catalog() -> dict[str, Any]:

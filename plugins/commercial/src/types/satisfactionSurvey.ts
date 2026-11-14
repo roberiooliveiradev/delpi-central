@@ -28,6 +28,8 @@ export type SatisfactionCampaign = {
   /** Concorrência otimista — enviar de volta em PATCH. */
   version: number;
   counts: SatisfactionCounts;
+  /** Percentual oficial da API; null quando não há participantes. */
+  response_rate: number | null;
 };
 
 export type SatisfactionCampaignList = {

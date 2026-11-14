@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse
 from commercial_app.application.security.auth_dependencies import require_any_permission
 from commercial_app.application.security.commercial_permissions import (
     COMMERCIAL_MANAGE_PERMISSIONS,
+    COMMERCIAL_MARKETING_PERMISSIONS,
     COMMERCIAL_READ_PERMISSIONS,
     can_manage_portfolios,
     can_use_team_scope,
@@ -98,7 +99,11 @@ def _pairs_for_account_or_portfolio_list(
 
 
 @router.get("/search", operation_id="search_active_customers_for_portfolio")
-@require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
+@require_any_permission(
+    *COMMERCIAL_READ_PERMISSIONS,
+    *COMMERCIAL_MANAGE_PERMISSIONS,
+    *COMMERCIAL_MARKETING_PERMISSIONS,
+)
 def search_active_customers(
     _request: Request,
     q: str | None = Query(default=None),

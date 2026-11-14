@@ -20,10 +20,14 @@ from commercial_app.domain.entities.satisfaction_survey import (
 from commercial_app.domain.ports.satisfaction_survey_repository_port import (
     SatisfactionSurveyRepositoryPort,
 )
+from commercial_app.domain.ports.customer_eligibility_port import (
+    CustomerEligibilityPort,
+)
 from commercial_app.domain.services.satisfaction_questionnaire import (
     DEFAULT_INVITE_BODY,
     DEFAULT_INVITE_SUBJECT,
     QUESTIONNAIRE_VERSION,
+    assert_invite_placeholders_allowed,
     get_questionnaire_catalog,
     validate_dimensions_payload,
 )
@@ -94,6 +98,7 @@ class ManageSatisfactionSurveysUseCase:
         token_cipher: TokenCipher,
         public_base_url: str | None = None,
         clock: Any | None = None,
+        customer_eligibility: CustomerEligibilityPort | None = None,
     ) -> None:
         self._repository = repository
         self._cipher = token_cipher
@@ -101,6 +106,7 @@ class ManageSatisfactionSurveysUseCase:
             "/"
         )
         self._clock = clock or (lambda: datetime.now(timezone.utc))
+        self._customer_eligibility = customer_eligibility
 
     def get_questionnaire(self) -> dict[str, Any]:
         return get_questionnaire_catalog()
@@ -128,6 +134,10 @@ class ManageSatisfactionSurveysUseCase:
         body = (command.invite_body or DEFAULT_INVITE_BODY).strip()
         if not subject or not body:
             raise SatisfactionSurveyError("Assunto e corpo da mensagem padrão são obrigatórios.")
+        try:
+            assert_invite_placeholders_allowed(subject, body)
+        except ValueError as exc:
+            raise SatisfactionSurveyError(str(exc)) from exc
         campaign = self._repository.create_campaign(
             name=name,
             starts_at=starts_at,
@@ -186,6 +196,14 @@ class ManageSatisfactionSurveysUseCase:
         if command.invite_body is not None and not next_body:
             raise SatisfactionSurveyError("Corpo da mensagem padrão é obrigatório.")
 
+        check_subject = next_subject if next_subject is not None else campaign.invite_subject
+        check_body = next_body if next_body is not None else campaign.invite_body
+        if command.invite_subject is not None or command.invite_body is not None:
+            try:
+                assert_invite_placeholders_allowed(check_subject, check_body)
+            except ValueError as exc:
+                raise SatisfactionSurveyError(str(exc)) from exc
+
         try:
             updated = self._repository.update_campaign(
                 campaign_id=command.campaign_id,
@@ -223,14 +241,22 @@ class ManageSatisfactionSurveysUseCase:
             "items": [self.serialize_recipient(item) for item in recipients],
         }
 
-    def get_recipient(self, *, campaign_id: str, recipient_id: str) -> dict[str, Any]:
+    def get_recipient(
+        self,
+        *,
+        campaign_id: str,
+        recipient_id: str,
+        include_resolved_invite: bool = False,
+    ) -> dict[str, Any]:
         self._require_campaign(campaign_id)
         recipient = self._repository.get_recipient(
             campaign_id=campaign_id, recipient_id=recipient_id
         )
         if recipient is None:
             raise SatisfactionSurveyError("Participante não encontrado.", status_code=404)
-        return self.serialize_recipient(recipient, include_resolved_invite=True)
+        return self.serialize_recipient(
+            recipient, include_resolved_invite=include_resolved_invite
+        )
 
     def add_recipients(
         self,
@@ -249,6 +275,26 @@ class ManageSatisfactionSurveysUseCase:
             )
         if not items:
             raise SatisfactionSurveyError("Informe ao menos um participante.")
+
+        eligibility_map: dict[tuple[str, str], Any] | None = None
+        if self._customer_eligibility is not None:
+            pairs = [
+                ((raw.customer_code or "").strip(), (raw.customer_store or "").strip())
+                for raw in items
+            ]
+            pairs = [(code, store) for code, store in pairs if code and store]
+            try:
+                eligibility_map = dict(self._customer_eligibility.lookup(pairs))
+            except Exception:
+                logger.exception(
+                    "satisfaction_recipient_eligibility_lookup_failed",
+                    extra={"campaign_id": campaign_id},
+                )
+                raise SatisfactionSurveyError(
+                    "Não foi possível validar os clientes no cadastro TOTVS.",
+                    status_code=502,
+                    code="totvs_unavailable",
+                )
 
         result = RecipientAddResult()
         seen: set[tuple[str, str]] = set()
@@ -286,6 +332,29 @@ class ManageSatisfactionSurveysUseCase:
             if existing is not None:
                 result.already_existing.append(existing)
                 continue
+
+            if eligibility_map is not None:
+                info = eligibility_map.get(key)
+                if info is None or not getattr(info, "exists", False):
+                    result.failed.append(
+                        {
+                            "customer_code": code,
+                            "customer_store": store,
+                            "reason": "customer_not_found",
+                            "message": "Cliente não encontrado no cadastro TOTVS.",
+                        }
+                    )
+                    continue
+                if not getattr(info, "active", False):
+                    result.failed.append(
+                        {
+                            "customer_code": code,
+                            "customer_store": store,
+                            "reason": "customer_inactive",
+                            "message": "Cliente bloqueado ou inativo no cadastro TOTVS.",
+                        }
+                    )
+                    continue
 
             token = secrets.token_urlsafe(32)
             token_hash = self._hash_token(token)
@@ -553,6 +622,15 @@ class ManageSatisfactionSurveysUseCase:
                 "responded": campaign.response_count,
                 "pending": max(campaign.recipient_count - campaign.response_count, 0),
             },
+            # Taxa oficial (backend): None quando não há participantes — FE exibe "—".
+            "response_rate": (
+                round(
+                    100.0 * campaign.response_count / campaign.recipient_count,
+                    1,
+                )
+                if campaign.recipient_count > 0
+                else None
+            ),
         }
 
     def serialize_recipient(

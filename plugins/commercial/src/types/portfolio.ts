@@ -43,6 +43,8 @@ export type CommercialCapabilities = {
   marketing?: boolean;
   /** Gestão da Pesquisa de Satisfação: marketing OU manage (decidido no backend). */
   satisfaction_manage?: boolean;
+  /** Feature gate fail-closed espelhado de COMMERCIAL_SATISFACTION_SURVEY_ENABLED. */
+  satisfaction_survey_enabled?: boolean;
 };
 
 export type SellerPortfolioMeResponse = {

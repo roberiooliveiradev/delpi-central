@@ -266,7 +266,9 @@ def get_satisfaction_recipient(
     try:
         return ok(
             _use_case().get_recipient(
-                campaign_id=campaign_id, recipient_id=recipient_id
+                campaign_id=campaign_id,
+                recipient_id=recipient_id,
+                include_resolved_invite=True,
             ),
             message="Participante carregado.",
             operation_id="get_satisfaction_recipient",

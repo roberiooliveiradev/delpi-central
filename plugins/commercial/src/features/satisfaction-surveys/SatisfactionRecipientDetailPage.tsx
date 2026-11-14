@@ -102,10 +102,12 @@ export function SatisfactionRecipientDetailPage({
         ? { text: invite.subject }
         : kind === "link"
           ? { text: invite.link_url }
-          : {
-              text: buildMessengerText(invite.body),
-              html: buildInviteHtml(invite.body, { linkify: true }),
-            };
+          : previewMode === "messenger"
+            ? { text: buildMessengerText(invite.body) }
+            : {
+                text: buildMessengerText(invite.body),
+                html: buildInviteHtml(invite.body, { linkify: true }),
+              };
     const ok = await copyToClipboard(payload);
     if (ok) {
       setManualCopy(null);
