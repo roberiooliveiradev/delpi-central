@@ -972,3 +972,12 @@ E01 sete campos no card **PASS** (subchecks id/type/requester/officialCode/creat
 - Evidências: `/tmp/theme-light.png`, `/tmp/theme-dark.png`, `/tmp/theme-dark-mobile.png`.
 
 **Estado:** `HML_DEPLOYED / VISUAL_E2E_PASS / PRD_DEPLOY=NOT_EXECUTED / PRD_BUSINESS_TEST_WRITES=0 / AWAITING_PO_VISUAL_ACCEPTANCE`.
+
+
+## 51. UX detalhamento PRC — wireframe V3 em planejamento, sem autorização de implementação (14/11/2026)
+
+**Origem:** Product Owner revisou a captura real do detalhe PRC `#1a808947` e solicitou revisão de toda a página (não só hero) antes do fluxo de conclusão de produto. **Decisão:** reduzir a densidade do hero, utilizar avatar para solicitante, mostrar responsável só quando atribuído, remover código oficial duplicado (já na ficha), manter revisão base se útil, tratar abertura/atualização/origem/referência como informações de auditoria contextual, chamar canal `Minhas Solicitações` na UI, deslocar diagnóstico oficial para aba Verificação TOTVS mantendo alerta bloqueador compacto, preservar tracker visível, reorganizar ações com ícones+rótulos+ajuda sem criar novas capacidades. Revisar o corpo: acompanhamento técnico/bandeiras, ficha, verificação, histórico/interações, revisões e anexos.
+
+**Documento autoritativo de wireframe atualizado:** `MFE-PRODUCT-REGISTRATION-UX-WIREFRAMES.md`, adendo **PRC-REF-024 — Wireframe V3**; commit `4bacf36cf775c8284a62959ed308a885776defdb`. Contém matriz campo→destino, wireframe desktop/mobile, estados, contratos e gates. Não substitui regras PRC-REF-022 nem PRC-TRACK. Conferida a implementação `PrcDetailPage.tsx`: identificação de nove campos no hero, `PrcWorkflowProgress`, `PrcActionBar` e abas Ficha/Verificação/Histórico/Revisões.
+
+**Estado:** `PO_DIRECTION_CAPTURED / UX_WIREFRAME_V3_FOR_REVIEW / IMPLEMENTATION_NOT_AUTHORIZED / HML_TEST_NOT_RUN / PRD_NOT_AUTHORIZED`. Próximo passo é revisar com o PO o desenho proposto e só então liberar pacote de implementação Devin em `main` sem criar branches; mudanças de owner/authority fora do escopo.
