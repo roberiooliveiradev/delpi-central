@@ -174,10 +174,13 @@ class PostgresEntryAuditStore:
             "entry_audit_unmatched",
             "entry_audit_cte",
             "entry_audit_tes_used",
+            "entry_audit_item_comparison",
+            "entry_audit_grouped_note",
+            "entry_audit_excluded_item",
         ):
             self._execute(f"DELETE FROM {SCHEMA}.{table} WHERE run_id = %s", (run_id,))
 
-    def replace_output(self, run_id: str, *, documents, occurrences, unmatched, ctes, tes_used) -> None:
+    def replace_output(self, run_id: str, *, documents, occurrences, unmatched, ctes, tes_used, item_comparisons=(), grouped_notes=(), excluded=()) -> None:
         self.clear_output(run_id)
         for row in documents:
             comparison = dict(row.get("comparison") or {})
@@ -254,6 +257,21 @@ class PostgresEntryAuditStore:
                 ON CONFLICT (run_id, tes_code) DO UPDATE SET sf4 = EXCLUDED.sf4
                 """,
                 (run_id, row.get("tes_code") or "", Json(sf4)),
+            )
+        for row in item_comparisons:
+            self._execute(
+                f"INSERT INTO {SCHEMA}.entry_audit_item_comparison (run_id, payload) VALUES (%s, %s)",
+                (run_id, Json(row)),
+            )
+        for row in grouped_notes:
+            self._execute(
+                f"INSERT INTO {SCHEMA}.entry_audit_grouped_note (run_id, payload) VALUES (%s, %s)",
+                (run_id, Json(row)),
+            )
+        for row in excluded:
+            self._execute(
+                f"INSERT INTO {SCHEMA}.entry_audit_excluded_item (run_id, payload) VALUES (%s, %s)",
+                (run_id, Json(row)),
             )
 
     def get_run(self, run_id: str) -> dict | None:
@@ -402,6 +420,39 @@ class PostgresEntryAuditStore:
                 row["document_type"] = "cte"
                 row["document_number"] = comparison.get("document_number") or ""
             return found
+        if kind == "item_comparisons":
+            found = self._all(
+                f"""
+                SELECT i.payload, r.analysis_id
+                  FROM {SCHEMA}.entry_audit_item_comparison i
+                  JOIN {SCHEMA}.entry_audit_run r ON r.id = i.run_id
+                 WHERE r.analysis_id = %s
+                """,
+                (analysis_id,),
+            )
+            return [dict(row.get("payload") or {}) for row in found]
+        if kind == "grouped_notes":
+            found = self._all(
+                f"""
+                SELECT g.payload, r.analysis_id
+                  FROM {SCHEMA}.entry_audit_grouped_note g
+                  JOIN {SCHEMA}.entry_audit_run r ON r.id = g.run_id
+                 WHERE r.analysis_id = %s
+                """,
+                (analysis_id,),
+            )
+            return [dict(row.get("payload") or {}) for row in found]
+        if kind == "excluded":
+            found = self._all(
+                f"""
+                SELECT e.payload, r.analysis_id
+                  FROM {SCHEMA}.entry_audit_excluded_item e
+                  JOIN {SCHEMA}.entry_audit_run r ON r.id = e.run_id
+                 WHERE r.analysis_id = %s
+                """,
+                (analysis_id,),
+            )
+            return [dict(row.get("payload") or {}) for row in found]
         found = self._all(
             f"""
             SELECT t.*, r.branch_code AS branch, r.analysis_id

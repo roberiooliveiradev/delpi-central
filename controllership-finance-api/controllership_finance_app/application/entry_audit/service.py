@@ -13,6 +13,7 @@ from xml.etree import ElementTree as ET
 from controllership_finance_app.application.entry_audit.errors import EntryAuditError, XmlSourceUnavailable
 from controllership_finance_app.application.entry_audit.vocabulary import (
     book_word,
+    difference_allowed,
     field_code,
     field_label,
     stable_occurrence_key,
@@ -355,7 +356,12 @@ class EntryAuditService:
         return detail
 
     def documents(self, analysis_id: str, filters: dict, *, page: int, page_size: int) -> dict:
-        return self._page("documents", analysis_id, filters, page, page_size)
+        # Padrão da aba «Notas casadas»: só as recebidas no período.
+        # Fora do período e XML indisponível entram só com situation explícita.
+        scoped = dict(filters)
+        if not scoped.get("situation"):
+            scoped["situation"] = "period"
+        return self._page("documents", analysis_id, scoped, page, page_size)
 
     def unmatched_documents(self, analysis_id: str, filters: dict, *, page: int, page_size: int) -> dict:
         page_payload = self._page("unmatched", analysis_id, filters, page, page_size)
@@ -391,6 +397,9 @@ class EntryAuditService:
             "unmatched": _dedupe(self._store.rows("unmatched", analysis_id)),
             "ctes": self._store.rows("ctes", analysis_id),
             "tes": self._store.rows("tes", analysis_id),
+            "item_comparisons": self._store.rows("item_comparisons", analysis_id),
+            "grouped_notes": self._store.rows("grouped_notes", analysis_id),
+            "excluded": self._store.rows("excluded", analysis_id),
             "branches_unavailable": ready,
         }
 
@@ -454,16 +463,27 @@ class EntryAuditService:
         return rows[0] if rows else None
 
     def _previous_kpis(self, analysis: dict, filters: dict) -> dict:
+        empty = {
+            "documents": 0, "occurrences": 0, "high": 0, "pending": 0,
+            "resolved": 0, "xml_unavailable": 0, "gross_checked": 0.0, "high_difference": 0.0,
+        }
         previous = self._previous_analysis(analysis)
         if previous is None:
-            return {"documents": 0, "occurrences": 0, "high": 0, "pending": 0}
+            return empty
         occurrences = self._filtered("occurrences", previous["id"], filters)
-        documents = self._filtered("documents", previous["id"], filters)
+        document_rows = self._filtered("documents", previous["id"], filters)
+        documents = [row for row in document_rows if row.get("situation") not in {"xml_unavailable", "posted_outside_period"}]
+        unavailable = [row for row in document_rows if row.get("situation") == "xml_unavailable"]
+        high_rows = [row for row in occurrences if row["severity"] == "Alta"]
         return {
             "documents": len(documents),
             "occurrences": len(occurrences),
-            "high": sum(1 for row in occurrences if row["severity"] == "Alta"),
+            "high": len(high_rows),
             "pending": sum(1 for row in occurrences if _status(self._store, row) == "pending"),
+            "resolved": sum(1 for row in occurrences if _status(self._store, row) == "resolved"),
+            "xml_unavailable": len(unavailable),
+            "gross_checked": round(sum(_amount(row) for row in documents), 2),
+            "high_difference": round(sum(abs(_amount_text(row.get("difference"))) for row in high_rows), 2),
         }
 
     def _xml_payloads(self, analysis: dict, branch: str, headers: list[dict], run_id: str) -> tuple[list[bytes], int, list[dict], int]:
@@ -820,7 +840,7 @@ def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: li
             "field_label": field_label(code, ""),
             "protheus_value": row.protheus_value,
             "xml_value": row.xml_value,
-            "difference": _difference(row.protheus_value, row.xml_value),
+            "difference": _difference(row.protheus_value, row.xml_value, row.field),
             "tes": _tes_codes(header, items, row.item),
             "why": row.why,
             "action": row.action,
@@ -928,16 +948,21 @@ def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: li
             "comparison": {},
         })
     for row in posted_outside or []:
+        key = str(row.get("access_key") or "")
+        xml = xml_docs.get(key)
+        supplier_name = str(row.get("supplier_name") or "").strip() or (
+            getattr(xml, "issuer_name", "") if xml is not None else ""
+        )
         documents.append({
             "analysis_id": analysis_id,
             "run_id": run_id,
             "branch": branch,
-            "access_key": str(row.get("access_key") or ""),
+            "access_key": key,
             "document_number": str(row.get("document_number") or ""),
             "series": str(row.get("series") or ""),
             "supplier_code": str(row.get("supplier_code") or ""),
             "supplier_store": str(row.get("supplier_store") or ""),
-            "supplier_name": str(row.get("supplier_name") or ""),
+            "supplier_name": supplier_name,
             "issue_date": str(row.get("issue_date") or ""),
             "received_date": str(row.get("received_date") or ""),
             "situation": "posted_outside_period",
@@ -984,14 +1009,131 @@ def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: li
                 "items": sum(1 for row in items if str(row.get("tes") or "") == code),
             },
         })
-    return {"documents": documents, "occurrences": occurrence_rows, "unmatched": unmatched_rows, "ctes": ctes, "tes_used": tes_used}
+    item_comparisons, grouped_notes = _item_export_rows(
+        analysis_id=analysis_id,
+        run_id=run_id,
+        branch=branch,
+        headers=headers,
+        items=items,
+        xml_by_key=xml_docs,
+        occurrence_identities=occurrence_identities,
+    )
+    excluded = [
+        {
+            "analysis_id": analysis_id,
+            "run_id": run_id,
+            "branch": branch,
+            "kind": row.kind,
+            "document_number": row.document_number,
+            "series": row.series,
+            "supplier_code": row.supplier_code,
+            "supplier_store": row.supplier_store,
+            "item_count": row.item_count,
+            "amount": row.amount,
+        }
+        for row in result.excluded
+    ]
+    return {
+        "documents": documents,
+        "occurrences": occurrence_rows,
+        "unmatched": unmatched_rows,
+        "ctes": ctes,
+        "tes_used": tes_used,
+        "item_comparisons": item_comparisons,
+        "grouped_notes": grouped_notes,
+        "excluded": excluded,
+    }
 
 
-def _difference(left: str, right: str) -> str:
+def _item_export_rows(*, analysis_id: str, run_id: str, branch: str, headers: list[dict], items: list[dict], xml_by_key: dict, occurrence_identities: set) -> tuple[list[dict], list[dict]]:
+    by_key = {str(row.get("access_key") or ""): row for row in headers if row.get("access_key")}
+    comparisons: list[dict] = []
+    grouped: list[dict] = []
+    for key, header in by_key.items():
+        if str(header.get("species") or "").upper() == "CTE":
+            continue
+        xml = xml_by_key.get(key)
+        if xml is None:
+            continue
+        sd1 = sorted(
+            [row for row in items if _same_header(row, header)],
+            key=lambda row: str(row.get("item") or ""),
+        )
+        xml_items = list(getattr(xml, "items", ()) or ())
+        identity = _document_identity(header)
+        if len(sd1) != len(xml_items):
+            cfops_p = sorted({str(row.get("cfop") or "") for row in sd1 if row.get("cfop")})
+            cfops_x = sorted({str(item.cfop or "") for item in xml_items if item.cfop})
+            csts_p = sorted({str(row.get("tax_situation") or "") for row in sd1 if row.get("tax_situation")})
+            csts_x = sorted({f"{item.origin}{item.cst or item.csosn}" for item in xml_items})
+            total_sd1 = sum(float(row.get("total_amount") or 0) for row in sd1)
+            total_xml = sum(float(item.amount or 0) for item in xml_items)
+            grouped.append({
+                "analysis_id": analysis_id,
+                "run_id": run_id,
+                "branch": branch,
+                "document_number": header.get("document_number"),
+                "supplier_name": header.get("supplier_name") or getattr(xml, "issuer_name", ""),
+                "supplier_state": header.get("supplier_state") or getattr(xml, "issuer_state", ""),
+                "items_sd1": len(sd1),
+                "items_xml": len(xml_items),
+                "amount_sd1": total_sd1,
+                "amount_xml": total_xml,
+                "icms_sd1": sum(float(row.get("icms_amount") or 0) for row in sd1),
+                "icms_xml": sum(float(item.icms_amount or 0) for item in xml_items),
+                "ipi_sd1": sum(float(row.get("ipi_amount") or 0) for row in sd1),
+                "ipi_xml": sum(float(item.ipi_amount or 0) for item in xml_items),
+                "cfop_protheus": ", ".join(cfops_p),
+                "cfop_xml": ", ".join(cfops_x),
+                "cst_protheus": ", ".join(csts_p),
+                "cst_xml": ", ".join(csts_x),
+                "reading": (
+                    "Itens agrupados ou desmembrados no lançamento; conferência só por nota. "
+                    + ("Total confere." if abs(total_sd1 - total_xml) <= 0.05 else "Total DIVERGE: conferir.")
+                ),
+                "access_key": key,
+            })
+            continue
+        for row, xml_item in zip(sd1, xml_items, strict=True):
+            comparisons.append({
+                "analysis_id": analysis_id,
+                "run_id": run_id,
+                "branch": branch,
+                "situation": "divergent" if identity in occurrence_identities else "clean",
+                "document_number": header.get("document_number"),
+                "series": header.get("series"),
+                "supplier_name": header.get("supplier_name") or getattr(xml, "issuer_name", ""),
+                "supplier_state": header.get("supplier_state") or getattr(xml, "issuer_state", ""),
+                "item_sd1": row.get("item"),
+                "item_xml": xml_item.number,
+                "product_code": row.get("product_code") or xml_item.product_code,
+                "description": xml_item.description,
+                "ncm": xml_item.ncm,
+                "cfop_xml": xml_item.cfop,
+                "cfop_protheus": row.get("cfop"),
+                "tes": row.get("tes"),
+                "cst_xml": f"{xml_item.origin}{xml_item.cst or xml_item.csosn}",
+                "cst_protheus": row.get("tax_situation"),
+                "amount_protheus": row.get("total_amount"),
+                "amount_xml": xml_item.amount,
+                "icms_base_protheus": row.get("icms_base"),
+                "icms_base_xml": xml_item.icms_base,
+                "icms_protheus": row.get("icms_amount"),
+                "icms_xml": xml_item.icms_amount,
+                "ipi_protheus": row.get("ipi_amount"),
+                "ipi_xml": xml_item.ipi_amount,
+                "access_key": key,
+            })
+    return comparisons, grouped
+
+
+def _difference(left: str, right: str, field: str = "") -> str | None:
+    if field and not difference_allowed(field):
+        return None
     try:
         return f"{float(left) - float(right):.2f}"
     except (TypeError, ValueError):
-        return ""
+        return None
 
 
 def _public_analysis(row: dict) -> dict:
@@ -1022,7 +1164,7 @@ def _public_occurrence(row: dict, status: dict | None) -> dict:
         "field_label": field_label(str(row.get("field") or ""), str(row.get("stable_key") or "")),
         "protheus_value": row.get("protheus_value"),
         "xml_value": row.get("xml_value"),
-        "difference": row.get("difference") or "",
+        "difference": row.get("difference"),
         "series": row.get("series") or "",
         "supplier_name": row.get("supplier_name") or "",
         "tes": row.get("tes") or "",
@@ -1124,6 +1266,8 @@ def _months(points: list[dict]) -> list[dict]:
 
 def _situation_matches(row: dict, value: str) -> bool:
     situation = str(row.get("situation") or "")
+    if value == "period":
+        return situation not in {"posted_outside_period", "xml_unavailable"}
     if value == "clean":
         return situation == "clean"
     if value == "divergent":
@@ -1146,7 +1290,6 @@ def _cte_comparison(header: dict, xml, items: list[dict]) -> dict:
         "linked_documents": len(getattr(xml, "linked_keys", ()) or ()) if xml is not None else 0,
         "operation_nature": getattr(xml, "operation_nature", "") if xml is not None else "",
         "tes": tes,
-        "fiscal_code": "",
     }
 
 

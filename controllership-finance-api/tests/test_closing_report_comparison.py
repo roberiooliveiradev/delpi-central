@@ -1132,6 +1132,12 @@ def test_clara_semantic_tool_analyze_dispatch(monkeypatch):
         "handler",
         fake_handler,
     )
+    monkeypatch.setattr(
+        sb, "_user_and_access", lambda: (MagicMock(), SimpleNamespace(id="u-1"))
+    )
+    monkeypatch.setattr(
+        sb, "_identity_snapshot", lambda _u: {"has_cf_access": True}
+    )
     res = sb.tool_analyze(
         "report_comparison",
         parameters={
@@ -1149,11 +1155,17 @@ def test_clara_semantic_tool_analyze_dispatch(monkeypatch):
     assert payload["action"] == "report_comparison"
 
 
-def test_clara_semantic_dispatch_rejects_unknown_param():
+def test_clara_semantic_dispatch_rejects_unknown_param(monkeypatch):
     from controllership_finance_app.interface.mcp import (
         semantic_bridge as sb,
     )
 
+    monkeypatch.setattr(
+        sb, "_user_and_access", lambda: (MagicMock(), SimpleNamespace(id="u-1"))
+    )
+    monkeypatch.setattr(
+        sb, "_identity_snapshot", lambda _u: {"has_cf_access": True}
+    )
     res = sb.tool_analyze(
         "report_comparison",
         parameters={

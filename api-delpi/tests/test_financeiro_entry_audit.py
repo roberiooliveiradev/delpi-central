@@ -114,6 +114,7 @@ def test_documents_by_access_key_ignore_the_receipt_window_and_deleted_rows() ->
     assert "F1_CHVNFE" in sql
     assert "F1_RECBMTO" not in where
     assert "D_E_L_E_T_ = ' '" in sql
+    assert "A2_LOJA = SF1.F1_LOJA" in sql
     assert "DELETE" not in sql.upper() and "UPDATE" not in sql.upper() and "INSERT" not in sql.upper()
     assert names == ["branch", "access_key", "access_key"]
 

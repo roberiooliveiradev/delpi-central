@@ -82,14 +82,14 @@ Prefixo `/entry-audit`. Todas exigem `controllership-finance.access` (D4). A uni
 |---|---|
 | `GET /entry-audit/analyses/{id}/occurrences` | aba Ocorrências; paginação e ordenação |
 | `GET /entry-audit/analyses/{id}/occurrences/{key}` | detalhe: `field`/`field_label` (origem = `origin` / «CST (origem)», sem mudar a chave estável), `supplier_name`, `series`, `tes`, `difference`, por quê diferente da ação, regra citada, links e histórico (eventos de resolver/reabrir) |
-| `GET /entry-audit/analyses/{id}/documents` | aba Notas casadas; filtro `situation` (`clean`, `divergent` ou o valor gravado) |
+| `GET /entry-audit/analyses/{id}/documents` | aba Notas casadas; padrão = notas do período (`situation=period`); filtro explícito `clean` \| `divergent` \| `posted_outside_period` \| `xml_unavailable` |
 | `GET /entry-audit/analyses/{id}/unmatched` | aba Notas sem par; `nature` vem do `natOp` do XML |
 | `GET /entry-audit/xml/{access_key}` | XML pela chave, credencial de serviço; query `branch` e `document_type`. DANFE/DACTE só quando a nota tem pedido no LNF |
-| `GET /entry-audit/analyses/{id}/cte` | aba CT-e: emitente, tomador, notas vinculadas, CFOP, CST, base, ICMS e TES |
+| `GET /entry-audit/analyses/{id}/cte` | aba CT-e: emitente, tomador, notas vinculadas, CFOP, CST, base, ICMS e TES (sem `fiscal_code` duplicado — o CFOP do XML fica em `cfop`) |
 | `GET /entry-audit/analyses/{id}/tes` | aba TES usadas |
 | `POST /entry-audit/occurrences/{key}/resolve` · `/reopen` | status compartilhado (quem e quando) |
 | `POST /entry-audit/unmatched/{key}/resolve` · `/reopen` | idem para notas sem par |
-| `GET /entry-audit/analyses/{id}/export` | planilha no layout atual da skill |
+| `GET /entry-audit/analyses/{id}/export` | planilha com as 11 abas da skill (Resumo, TES usadas, Divergências, Comparativo, Só no XML, Só no SF1, CT-e Comparativo, Itens Divergências, Itens Comparativo, Itens Agrupados, Itens Excluídos) |
 
 A **chave estável** de uma ocorrência não depende do período: filial + chave de acesso do documento + ocorrência + campo + item. Assim, a mesma ocorrência que aparece em duas análises com períodos sobrepostos mostra o mesmo status de resolvida.
 
@@ -346,6 +346,9 @@ Livro em novembro (`FT_TIPOMOV = 'E'`, `FT_ENTRADA`): 480 linhas na filial 01 e 
 | `entry_audit_unmatched` | notas só no XML / só no SF1, com motivo e situação |
 | `entry_audit_cte` | comparativo dos CT-e |
 | `entry_audit_tes_used` | TES usadas na análise, com a configuração da SF4 |
+| `entry_audit_item_comparison` | comparativo item a item (aba Itens Comparativo) |
+| `entry_audit_grouped_note` | notas com itens agrupados/desmembrados (aba Itens Agrupados) |
+| `entry_audit_excluded_item` | itens excluídos da conferência DANFE (aba Itens Excluídos) |
 | `entry_audit_status` | resolvido/reaberto por **chave estável** (independente do período), quem e quando |
 | `entry_audit_xml_cache` | XML por chave de acesso (compactado), data da busca |
 

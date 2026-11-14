@@ -29,6 +29,8 @@ _LIST_FILTERS = (
     "document_type",
     "day",
     "status",
+    "situation",
+    "group",
     "q",
 )
 
@@ -158,15 +160,9 @@ def tool_entry_audit_tes(analysis_id: str, page: int | None = None, page_size: i
 
 
 def _cause(rule_id: str) -> str:
-    if rule_id.startswith("key.supplier"):
-        return "fornecedor"
-    if rule_id in {"item.origin_mismatch", "item.unusual_cfop_nature"} or rule_id.startswith("simples.presumed"):
-        return "cadastro"
-    if rule_id.startswith("cte.") or rule_id.startswith("item.cfop") or "credit" in rule_id or rule_id.startswith("coherence."):
-        return "tes"
-    if rule_id.startswith("header.") or rule_id.startswith("key.") or rule_id.startswith("item."):
-        return "lançamento"
-    return "lançamento"
+    from controllership_finance_app.domain.entry_audit.causes import cause_for
+
+    return cause_for(rule_id)
 
 
 def _public_row(row: dict) -> dict:

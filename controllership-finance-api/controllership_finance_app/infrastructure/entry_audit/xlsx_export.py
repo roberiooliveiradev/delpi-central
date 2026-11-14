@@ -6,6 +6,9 @@ import zipfile
 from io import BytesIO
 from xml.sax.saxutils import escape
 
+# Ordem final da skill (relatorio.gerar): Resumo, TES, Divergências,
+# Comparativo, Só no XML, Só no SF1, CT-e, Itens Divergências,
+# Itens Comparativo, Itens Agrupados, Itens Excluídos.
 SHEETS = [
     ("Resumo", ["Indicador", "Quantidade", "Leitura"]),
     ("TES usadas", ["TES", "Descrição (SF4)", "Tipo do TES", "Cod. Fiscal", "CFOPs de entrada", "Itens DANFE", "Calcula ICMS", "Credita ICMS", "Livro ICMS", "Material de consumo", "Calcula IPI", "Credita IPI", "Livro IPI"]),
@@ -15,6 +18,18 @@ SHEETS = [
     ("Só no SF1", ["Situação", "NF", "Série", "Fornecedor", "CNPJ", "UF", "Emissão", "Valor", "Base", "ICMS", "IPI", "Motivo / leitura", "Chave NF-e"]),
     ("CT-e Comparativo", ["Situação", "CT-e", "Série", "Transportadora", "UF", "Tomador", "CFOP CT-e", "TES", "CST XML", "Base XML", "ICMS XML", "Valor Protheus", "Chave de Acesso", "Notas vinculadas"]),
     ("Itens Divergências", ["Severidade", "Ocorrência", "NF", "Item SD1", "Campo", "Valor Protheus", "Valor XML", "TES", "Chave de Acesso"]),
+    ("Itens Comparativo", [
+        "Situação", "NF", "Série", "Fornecedor", "UF", "Item SD1", "Item XML", "Produto", "Descrição (XML)", "NCM",
+        "Regime emitente", "CFOP XML", "CFOP Protheus", "TES", "CST XML", "CST Protheus",
+        "Vlr Item Protheus", "Vlr Item XML", "Base ICMS Protheus", "Base ICMS XML",
+        "Alíq. Protheus", "Alíq. XML (ou SN)", "ICMS Protheus", "ICMS XML (ou crédito SN)", "Dif. ICMS",
+        "IPI Protheus", "IPI XML", "Ocorrências", "Chave de Acesso",
+    ]),
+    ("Itens Agrupados", [
+        "NF", "Fornecedor", "UF", "Itens SD1", "Itens XML", "Valor SD1", "Valor XML",
+        "ICMS SD1", "ICMS XML", "IPI SD1", "IPI XML", "CFOP Protheus", "CFOP XML",
+        "CST Protheus", "CST XML", "Leitura", "Chave de Acesso",
+    ]),
     ("Itens Excluídos", ["Tipo de documento", "Documento", "Série", "Fornecedor", "Loja", "Itens", "Valor"]),
 ]
 
@@ -22,9 +37,6 @@ SHEETS = [
 def build_workbook(payload: dict) -> bytes:
     rows = {name: [header] for name, header in SHEETS}
     summary = payload["analysis"]
-    counts = {}
-    for run in payload.get("runs") or []:
-        pass
     occurrences = payload["occurrences"]
     rows["Resumo"].append(["Ocorrências", str(len(occurrences)), "Motor da auditoria de entradas"])
     rows["Resumo"].append(["Notas", str(len(payload["documents"])), f"{summary['date_from']} a {summary['date_to']}"])
@@ -71,6 +83,29 @@ def build_workbook(payload: dict) -> bytes:
             comparison.get("taker_role"), comparison.get("cfop"), comparison.get("tes"), comparison.get("cst"),
             comparison.get("icms_base"), comparison.get("icms"), comparison.get("gross"), row.get("access_key"),
             comparison.get("linked_documents"),
+        ])
+    for row in payload.get("item_comparisons") or []:
+        rows["Itens Comparativo"].append([
+            row.get("situation"), row.get("document_number"), row.get("series"), row.get("supplier_name"),
+            row.get("supplier_state"), row.get("item_sd1"), row.get("item_xml"), row.get("product_code"),
+            row.get("description"), row.get("ncm"), "", row.get("cfop_xml"), row.get("cfop_protheus"),
+            row.get("tes"), row.get("cst_xml"), row.get("cst_protheus"), row.get("amount_protheus"),
+            row.get("amount_xml"), row.get("icms_base_protheus"), row.get("icms_base_xml"), "", "",
+            row.get("icms_protheus"), row.get("icms_xml"), "", row.get("ipi_protheus"), row.get("ipi_xml"),
+            "", row.get("access_key"),
+        ])
+    for row in payload.get("grouped_notes") or []:
+        rows["Itens Agrupados"].append([
+            row.get("document_number"), row.get("supplier_name"), row.get("supplier_state"),
+            row.get("items_sd1"), row.get("items_xml"), row.get("amount_sd1"), row.get("amount_xml"),
+            row.get("icms_sd1"), row.get("icms_xml"), row.get("ipi_sd1"), row.get("ipi_xml"),
+            row.get("cfop_protheus"), row.get("cfop_xml"), row.get("cst_protheus"), row.get("cst_xml"),
+            row.get("reading"), row.get("access_key"),
+        ])
+    for row in payload.get("excluded") or []:
+        rows["Itens Excluídos"].append([
+            row.get("kind"), row.get("document_number"), row.get("series"),
+            row.get("supplier_code"), row.get("supplier_store"), row.get("item_count"), row.get("amount"),
         ])
     return _package(rows)
 

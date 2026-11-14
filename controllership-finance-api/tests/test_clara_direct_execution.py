@@ -92,6 +92,7 @@ def _writes(table: dict) -> ClaraGovernedWrites:
         identity_provider=lambda: {
             "is_manage": False,
             "is_dre": False,
+            "has_cf_access": True,
         },
     )
     gw._capability_table = lambda: table  # type: ignore[method-assign]
@@ -721,7 +722,11 @@ def test_catalog_exposes_direct_flag_and_phase_policy(
     monkeypatch.setattr(
         sb, "_is_manage", lambda _u: False
     ) if hasattr(sb, "_is_manage") else None
-    catalog = sb._semantic_catalog({"is_manage": False, "is_dre": False})
+    catalog = sb._semantic_catalog({
+        "is_manage": False,
+        "is_dre": False,
+        "has_cf_access": True,
+    })
     by_cap = {
         e["capability"]: e for e in catalog["actions"]["governed"]
     }

@@ -34,6 +34,26 @@ FIELD_CODES = {
 
 FIELD_LABELS = {code: label for label, code in FIELD_CODES.items() if label != "CST (origem)"}
 
+# Campos em que a diferença numérica faz sentido. Código/identificação fica null.
+NUMERIC_FIELD_CODES = {
+    "total", "goods", "st", "discount", "icms", "base", "ipi", "simple_rate",
+    "amount", "rate", "freight", "expense", "insurance", "book_icms",
+}
+CODE_FIELD_CODES = {
+    "series", "cfop", "taker", "cst", "key", "species", "number", "supplier", "origin",
+}
+
+
+def difference_allowed(field: str) -> bool:
+    """True só para valor monetário, quantidade ou percentual."""
+    code = field_code(field) if field in FIELD_CODES else field
+    if code in CODE_FIELD_CODES or field in {"CST", "CST (origem)", "Origem", "CFOP", "NCM", "Chave", "Série", "Espécie", "CNPJ", "UF", "Tomador", "Número"}:
+        return False
+    if code in NUMERIC_FIELD_CODES:
+        return True
+    # Campo desconhecido: não inventar diferença numérica.
+    return False
+
 
 def yes_no(value: str) -> str:
     text = str(value or "").strip()

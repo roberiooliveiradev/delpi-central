@@ -256,7 +256,9 @@ class ClaraGovernedWrites:
                 raise OperationForbidden(
                     f"Você não tem permissão para {capability}."
                 )
-            return identity
+            # Access is already enforced at MCP entry; do not leak
+            # manage/dre flags into the gate result.
+            return {}
         flag = {
             "manage": bool(identity.get("is_manage")),
             "dre": bool(identity.get("is_dre")),

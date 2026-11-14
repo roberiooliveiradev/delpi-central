@@ -333,6 +333,9 @@ def test_clara_semantic_dispatch_forwards_allowed_params(monkeypatch):
     monkeypatch.setattr(
         sb, "_user_and_access", lambda: (MagicMock(), user)
     )
+    monkeypatch.setattr(
+        sb, "_identity_snapshot", lambda _u: {"has_cf_access": True}
+    )
     monkeypatch.setattr(sb, "actor_subject", lambda _u: "sub-1")
     monkeypatch.setitem(
         sb.READ_ACTIONS,
@@ -355,11 +358,17 @@ def test_clara_semantic_dispatch_forwards_allowed_params(monkeypatch):
     assert seen["cost_center"] == "0401"
 
 
-def test_clara_semantic_dispatch_rejects_unknown_param():
+def test_clara_semantic_dispatch_rejects_unknown_param(monkeypatch):
     from controllership_finance_app.interface.mcp import (
         semantic_bridge as sb,
     )
 
+    monkeypatch.setattr(
+        sb, "_user_and_access", lambda: (MagicMock(), SimpleNamespace(id="u-1"))
+    )
+    monkeypatch.setattr(
+        sb, "_identity_snapshot", lambda _u: {"has_cf_access": True}
+    )
     res = sb.tool_read(
         entity="report",
         action="cost_center_expenses",

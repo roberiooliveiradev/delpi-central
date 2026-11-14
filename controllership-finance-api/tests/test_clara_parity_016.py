@@ -297,6 +297,7 @@ DESTRUCTIVE_CAPS = {
     "catalog.entry_deactivate",
     "checklist.version_discard",
     "checklist.version_inactivate",
+    "invoice_posting.cancel",
 }
 
 
@@ -306,6 +307,7 @@ def _writers() -> gw.ClaraGovernedWrites:
         "name": "Op",
         "is_manage": True,
         "is_dre": False,
+        "has_cf_access": True,
     })
 
 
@@ -390,6 +392,7 @@ def _writers_with(**identity):
         "name": "Op",
         "is_manage": False,
         "is_dre": False,
+        "has_cf_access": True,
     }
     ident.update(identity)
     return gw.ClaraGovernedWrites(identity_provider=lambda: ident)

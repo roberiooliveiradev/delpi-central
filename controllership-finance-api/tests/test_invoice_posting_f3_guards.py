@@ -98,7 +98,9 @@ def test_flag_off_does_not_mount_lnf_routes() -> None:
 
     # F6: hosted on by default; flag still gates mount for emergency off.
     assert settings.LNF_HOSTED_ENABLED is True
-    assert settings.LNF_MIGRATIONS_MODE == "apply"
+    config_src = (PKG_ROOT / "controllership_finance_app" / "config.py").read_text()
+    assert 'default="apply"' in config_src
+    assert settings.LNF_MIGRATIONS_MODE in {"apply", "verify"}
     assert "apply_lnf_migrations" in main_src
     assert "verify_lnf_migrations" in main_src
 

@@ -24,6 +24,9 @@ class MemoryEntryAuditStore:
         self.statuses: dict[str, dict] = {}
         self.xml_cache: dict[str, dict] = {}
         self.audit: list[dict] = []
+        self.item_comparisons: list[dict] = []
+        self.grouped_notes: list[dict] = []
+        self.excluded: list[dict] = []
 
     def find_open(self, date_from: date, date_to: date, document_types: list[str], branches: list[str]) -> dict | None:
         for analysis in self.analyses.values():
@@ -130,14 +133,20 @@ class MemoryEntryAuditStore:
         self.unmatched = [row for row in self.unmatched if row["run_id"] != run_id]
         self.ctes = [row for row in self.ctes if row["run_id"] != run_id]
         self.tes_used = [row for row in self.tes_used if row["run_id"] != run_id]
+        self.item_comparisons = [row for row in self.item_comparisons if row.get("run_id") != run_id]
+        self.grouped_notes = [row for row in self.grouped_notes if row.get("run_id") != run_id]
+        self.excluded = [row for row in self.excluded if row.get("run_id") != run_id]
 
-    def replace_output(self, run_id: str, *, documents, occurrences, unmatched, ctes, tes_used) -> None:
+    def replace_output(self, run_id: str, *, documents, occurrences, unmatched, ctes, tes_used, item_comparisons=(), grouped_notes=(), excluded=()) -> None:
         self.clear_output(run_id)
         self.documents.extend(documents)
         self.occurrences.extend(occurrences)
         self.unmatched.extend(unmatched)
         self.ctes.extend(ctes)
         self.tes_used.extend(tes_used)
+        self.item_comparisons.extend([{**row, "run_id": run_id, "analysis_id": row.get("analysis_id")} for row in item_comparisons])
+        self.grouped_notes.extend([{**row, "run_id": run_id, "analysis_id": row.get("analysis_id")} for row in grouped_notes])
+        self.excluded.extend([{**row, "run_id": run_id, "analysis_id": row.get("analysis_id")} for row in excluded])
 
     def get_run(self, run_id: str) -> dict | None:
         found = self.runs.get(run_id)
@@ -196,8 +205,11 @@ class MemoryEntryAuditStore:
             "unmatched": self.unmatched,
             "ctes": self.ctes,
             "tes": self.tes_used,
+            "item_comparisons": self.item_comparisons,
+            "grouped_notes": self.grouped_notes,
+            "excluded": self.excluded,
         }[kind]
-        return [deepcopy(row) for row in table if row["analysis_id"] == analysis_id]
+        return [deepcopy(row) for row in table if row.get("analysis_id") == analysis_id]
 
     def cached_xml(self, access_key: str) -> dict | None:
         row = self.xml_cache.get(access_key)
