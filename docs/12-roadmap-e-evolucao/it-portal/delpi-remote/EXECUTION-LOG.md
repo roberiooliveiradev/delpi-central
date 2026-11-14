@@ -510,6 +510,24 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** confirmar CI de V015 e executar desenho do piloto Windows com certificado/chave confiavel, chave revogavel e entrega segura do ticket em HML, mantendo acesso remoto bloqueado.
 
+## 2026-11-14 | G2-S4-S2b-P3-FIX | pytest com Postgres apenas na etapa integrada
+
+**Objetivo:** corrigir CI P3 que executou fixtures de banco durante testes unitarios sem DSN.
+
+**Arquivos alterados:** somente teste `test_postgres_signed_bootstrap.py`, este diario e comentario issue #179.
+
+**Commit/issue:** issue #179. [Primeiro CI P3](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43649228940) falhou na etapa unit/HTTP porque cinco testes P3 usavam a fixture de Postgres sem `IT_PORTAL_TEST_DSN`.
+
+**Testes executados e evidencias:** verificado log completo da falha. Aplicado `pytest.mark.skipif` no modulo de integracao, coerente com `test_postgres_bootstrap_tickets.py`; so executar estes testes na etapa PostgreSQL 16 descartavel. Aguardar CI apos commit para validar banco real.
+
+**Estado de producao / implantacao:** sem deploy; nao houve alteracao em codigo produtivo, migration V015, Keycloak, Windows ou S2S.
+
+**Riscos e limitacoes:** este fix corrige selecao de testes, nao atesta hardware ou libera acesso remoto. Nao declarar CI verde antes de nova execucao.
+
+**Rollback:** reverter somente teste e docs se necessario. Manter V015 imutavel.
+
+**Proximo passo unico:** conferir CI completo do P3 com V015 em DB descartavel; corrigir falhas verificadas antes de homologacao HML.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

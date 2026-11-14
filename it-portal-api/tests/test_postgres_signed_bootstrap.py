@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import base64
+import os
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -16,6 +17,12 @@ from it_portal_app.domain.workstation_device_proof import canonical_challenge, c
 from it_portal_app.domain.workstation_bootstrap_tickets import new_unrouted_ticket
 from it_portal_app.infrastructure.persistence.postgres_workstation_bootstrap_tickets import PostgresWorkstationBootstrapTicketStore
 from it_portal_app.infrastructure.persistence.postgres_workstation_signed_bootstrap import PostgresSignedBootstrapStore
+
+
+pytestmark = pytest.mark.skipif(
+    not os.getenv("IT_PORTAL_TEST_DSN"),
+    reason="PostgreSQL disposable integration requires IT_PORTAL_TEST_DSN",
+)
 
 
 def pretrusted_key(wid: str):
