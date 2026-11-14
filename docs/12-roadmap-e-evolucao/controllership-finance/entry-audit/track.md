@@ -19,6 +19,7 @@
 6. Evidência: `PROVEN | TO_INVENTORY | INCONCLUSIVE` com arquivo:linha; teste `PASS | FAIL | TEST_NOT_RUN`. Smoke não executado é INCONCLUSIVE, nunca PASS.
 7. Nunca imprimir token, senha, secret, CNPJ completo de fornecedor ou valores de notas reais em commit, log ou documento do repositório (ele é **público**). Evidência com dado real vai para o report no chat, de forma resumida.
 8. Regra de publicação do owner: teste de comportamento em HML; passou tudo, publica em PROD. Funcionalidade nova entra **desligada por flag** e é ligada após o ensaio HML PASS.
+9. **Autorização permanente para HML (owner, 2026-11-14):** quando faltar em HML um container de que a trilha precisa (ex.: financial-api), o Cursor **sobe o container** pelo procedimento vigente (`projetos-teste/delpi-central`, usuário operador, `up-hml-sequential.sh`), **registra o manifesto da aplicação no Core HML** quando faltar, cria ou usa usuários de teste de HML com as permissões necessárias e **segue com os testes**, sem parar para pedir. Limites: só HML; nunca PROD; nenhum token, senha ou secret em log, commit ou report; registrar no Registro (Parte 8) o que foi subido, registrado e criado. Para registrar manifesto, usar um usuário de teste de HML com `apps.manage` (criar pelo bootstrap do Keycloak/Core de HML se não houver).
 
 ---
 
@@ -40,6 +41,8 @@
 | D12 | Parâmetros fixos da skill viram **configuração da BFF**: `ENTRY_AUDIT_PRESUMED_CREDIT_TES=004`, `ENTRY_AUDIT_FREIGHT_CFOP_SUFFIX=352`, `ENTRY_AUDIT_XML_LOOKBACK_DAYS=30`, `ENTRY_AUDIT_UNMATCHED_GRACE_DAYS=3`, `ENTRY_AUDIT_TOLERANCE=0.05`. Cada análise grava a configuração usada. |
 | D13 | Flag `ENTRY_AUDIT_ENABLED` (BFF; padrão `false`) controla rotas `/entry-audit/*`, worker e entradas da CLARA. Rotas novas de leitura da api-delpi e da financial-api não precisam de flag (só leitura, sem consumidor até a flag ligar). |
 | D14 | O conhecimento da auditoria entra no domínio **`controllership`** do corpus da CLARA (fichas AE-00 a AE-15). |
+| D15 | HML: o Cursor pode subir containers que faltarem, registrar manifestos no Core HML e criar usuários de teste para continuar os testes (Parte 0, regra 9). |
+| D16 | Futuro, **fora desta trilha**: o Portal Financeiro será fundido ao Portal Controladoria & Finanças, permanecendo as permissões `controllership-finance.access`/`.manage`. Esta trilha não antecipa a fusão: usa a financial-api como fonte do Questor e não muda o Portal Financeiro. |
 
 ---
 
@@ -235,6 +238,7 @@ Referência (saída da skill sobre a mesma amostra, fora do repositório): 2 NF-
 
 | Data | Etapa | SHA | Resultado | Evidência / observações |
 |---|---|---|---|---|
+| 2026-11-14 | — | — | Owner | Autorização permanente para HML (regra 9, D15) e fusão futura Financeiro → Controladoria & Finanças registrada como fora da trilha (D16). |
 | 2026-11-13 | — | — | Trilha criada | plano, back-end, front-end e MCP consolidados; decisões D1–D14 |
 | 2026-11-14 | T0 | 19b026cef6 | DONE | Mapa SX3×skill em backend §4. Questor: NF-e filtra emissão em dd/MM/yyyy (ISO → HTTP 500); CT-e filtra nos dois formatos; `iTotal` da NF-e não é contagem; sessão 02 PROVEN em PROD. HML sem container financial-api. LNF aberto por número+fornecedor; chave só no DANFE. Próxima migration `V023`. Volume de um mês é pequeno. Sem upload. |
 | 2026-11-14 | T1 | 14da947e67 | DONE | Contrato em backend §6 (payloads, erros, paginação, `V023`, chave estável, ids de regra, D12, D13). Catálogo da CLARA aceito no mcp. ADR-003 ACCEPTED. O quadro anterior citava o pai `19b026cef6`; o commit da T1 é `14da947e67`. |

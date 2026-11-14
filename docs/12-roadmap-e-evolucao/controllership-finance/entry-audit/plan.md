@@ -51,6 +51,8 @@ Limites do AS-IS: trabalho manual a cada execução; SF4 pode estar desatualizad
 | D11 | Melhorias sobre a skill | XML pela chave para toda nota da SF1; listagem do Questor por emissão (com folga) só para achar o que não foi lançado; «só no XML» com solicitação aberta no LNF = «Em lançamento (LNF)» (evidência da amostra de 12/11) | **DECIDIDO** (owner aprovou a trilha, 2026-11-13) |
 | D12 | Configuração | TES do presumido (004), final do CFOP de frete (352), folga de busca de XML (30 dias), prazo de «em trânsito» (3 dias) e tolerância (R$ 0,05) em variáveis da BFF; cada análise grava a configuração | **DECIDIDO** (owner aprovou a trilha, 2026-11-13) |
 | D13 | Flag | `ENTRY_AUDIT_ENABLED` na BFF (padrão `false`) controla rotas, worker e entradas da CLARA | **DECIDIDO** (owner aprovou a trilha, 2026-11-13) |
+| D15 | HML | o Cursor sobe containers que faltarem, registra manifestos no Core HML e cria usuários de teste para não travar os testes; nunca em PROD | **DECIDIDO** (owner, 2026-11-14) |
+| D16 | Portal Financeiro | será fundido ao Controladoria & Finanças, mantendo `controllership-finance.access`; é um fluxo futuro, fora desta trilha | **DECIDIDO** (owner, 2026-11-14) |
 | D14 | Conhecimento | fichas AE-00 a AE-15 no domínio `controllership` do corpus | **DECIDIDO** (owner aprovou a trilha, 2026-11-13) |
 
 ## 4. Arquitetura (TARGET)
@@ -116,6 +118,8 @@ Diferenças só são aceitas quando explicadas pela fonte ao vivo e documentadas
 | Repositório público | o anexo traz só regras e scripts; a cópia da SF4 (cadastro de TES) não foi versionada |
 
 ## 9. Fora do escopo
+
+A fusão do Portal Financeiro com o Controladoria & Finanças (D16) é um fluxo futuro e próprio; esta frente só consome a financial-api como fonte dos XML do Questor.
 
 Lançar ou corrigir notas no Protheus; alterar TES ou cadastro de fornecedor; substituir a contabilidade. A auditoria aponta e explica; a correção continua no ERP.
 
