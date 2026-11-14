@@ -165,7 +165,10 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
 
   const clearFilters = useCallback(() => {
     setSearchDraft("");
-    commit({ view: "", status: "", type: "", search: "", page: 1, sortBy: "", sortDir: "desc" });
+    commit(
+      { view: "", status: "", type: "", search: "", page: 1, sortBy: "", sortDir: "desc" },
+      { replace: false },
+    );
   }, [commit]);
 
   const openDetail = useCallback(
@@ -314,7 +317,9 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
               options={PRC_QUEUE_STATUS_OPTIONS}
               value={prcQueueStatusFilterValue(applied)}
               onChange={(value) =>
-                commit(prcQueueStateForStatusFilter(applied, value))
+                commit(prcQueueStateForStatusFilter(applied, value), {
+                  replace: false,
+                })
               }
             />
           </div>
@@ -330,7 +335,9 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
               options={PRC_QUEUE_TYPE_OPTIONS}
               value={applied.type}
               onChange={(value) =>
-                commit({ ...applied, type: value, page: 1 })
+                commit({ ...applied, type: value, page: 1 }, {
+                  replace: false,
+                })
               }
             />
           </div>
