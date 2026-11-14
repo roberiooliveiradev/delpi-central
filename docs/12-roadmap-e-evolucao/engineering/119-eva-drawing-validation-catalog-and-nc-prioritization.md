@@ -4370,3 +4370,75 @@ escala de render upstream (pdfium) para páginas grandes.
 residuais não-bloqueantes: layout 161 NOT_EXTRACTED, capa 554,
 absorção de token adjacente em bordas de coluna do histórico,
 falha d16 em main de outro owner.
+
+## §94 — G6-A: inventário de runtime e preparação de release (2026-11-14)
+
+`TASK_ID: EVA-E2-VAL02-G6-CANONICAL-RELEASE-PREPARE-AND-AUTHORIZED-MCP-E2E-01`.
+Inventário operacional real; sem deploy.
+
+### 94.1 Identidade do serviço (RQ-G6-01)
+
+- Serviço: `delpi-engineering-api` (compose project `infra`,
+  service `engineering-api`, file `infra/docker-compose.yml` —
+  produção neste host).
+- Imagem: `infra-engineering-api:latest`
+  (sha256:f4846e622043…, build 2026-11-13T20:22) — código **baked**
+  (sem mount `/app` em prod; Dockerfile copia `engineering-api/` +
+  `shared/`).
+- DEPLOYED_SHA ≈ pré-VAL-02 (`_match_admin_fields` ausente na
+  imagem). **DEPLOY_REQUIRED=YES** — exige rebuild+restart.
+- Runtime atual: **DOWN** — `Exited (137) 2026-11-14T18:15:38Z`,
+  `OOMKilled=false` (kill a nível de host; consistente com pico de
+  memória dos probes OCR paralelos desta sessão — **divulgado como
+  provável causa**). Gateway responde 502 para
+  `/apps/engineering-api/health`. Todos os demais serviços delpi-*
+  seguem up.
+- DRIFT entre `main` e release candidata: `main` (=dd43e9617f)
+  inclui 18 commits posteriores a 6370b83b24 de outros domínios;
+  o diff VAL-02 está intacto e é ancestro de main. Opção de
+  release: build em 5e8f1d60a1 (docs-only sobre 6370b83b24 =
+  mesmo código) ou em main corrente — **decisão da Coordination**
+  (main carrega features de outros owners: delia/prc-track/
+  entry-audit).
+- OCR prod envs disponíveis: `ENG_DRAWING_OCR_MODEL_DIR`,
+  `ISOLATION=subprocess`, `MAX_RSS_MB`, `MAX_CONCURRENCY`,
+  `CPU_SECONDS` — limites preservados.
+
+### 94.2 Jobs (RQ-G6-02)
+
+Registry `analysis_jobs.py` é processo-local (TTL 1h resultado,
+cap 2700s running). Consulta só via MCP `job_id` fingerprinted —
+**não há endpoint de enumeração** → não é possível provar "zero
+jobs ativos" antes de restart; e o serviço está DOWN → o registry
+já foi perdido no kill (~4h). Risco de perda: já realizado;
+restart não perde nada adicional. Para janelas futuras com
+serviço up: procedimento de drain = período de espera
+(JOB_RUNNING_CAP_S) — não há enumeração disponível.
+
+### 94.3 Runbook canônico verificado (RQ-G6-03)
+
+Script oficial: `infra/scripts/up-prod-sequential.sh`
+(`--pull`, `--build`, `--fase api`, filtro `engineering-api`).
+Como o código é baked, release = build a partir da tree no SHA
+alvo + `compose up -d engineering-api` (restart recria com a nova
+imagem). Rollback: tagar a imagem atual antes do build
+(`docker tag infra-engineering-api:latest
+infra-engineering-api:rollback-pre-val02`) + rebuild no commit
+anterior se necessário; jobs in-memory não voltam.
+WIP alheio na tree não contamina o build (contexto copia apenas
+`engineering-api/` + `shared/`).
+
+### 94.4 G6-D antecipado (RQ-G6-04)
+
+Doc 121 §5 mantém `RUNBOOK_STATUS=PENDING_IAM_SECURITY_APPROVAL` —
+identidade de avaliação (`deploy01.smoke` / client dedicado) ainda
+não provisionada. `AUTHENTICATED_MCP_E2E=BLOCKED` permanece; a
+primeira fronteira demonstrada seria o health/contrato no gateway
+após restart autorizado.
+
+**GATES:** G6-A=PASS (inventário completo); G6-B=PENDING —
+`RELEASE_AUTHORIZATION_REQUEST` emitida à Coordination (serviço
+está DOWN — a autorização cobre também a recuperação); G6-C=
+NOT_STARTED; G6-D=BLOCKED (serviço down + identidade eval
+não provisionada). Falha externa `test_d16` segue em main —
+owner prc-track.
