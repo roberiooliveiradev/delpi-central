@@ -4,8 +4,8 @@
 PROMPT CURSOR — ENTRY AUDIT · Trilha T10 → T13 (plugin-ui, MFE, HML e PROD), execução contínua
 
 CONTEXTO
-Back-end e CLARA da auditoria de entradas estão em PROD e verificados pela CLARA (T9, T9R, T9R2 —
-14/11/2026). Agora o dashboard no Portal Controladoria & Finanças: página de entrada e execução,
+Back-end e CLARA da auditoria de entradas estão em PROD e verificados pela CLARA (T9 a T9R5 —
+14/11/2026); residuais do back-end fechados ou aceitos pelo owner (entry-audit/residuals.md). Agora o dashboard no Portal Controladoria & Finanças: página de entrada e execução,
 dashboard da análise e detalhe da ocorrência, com os componentes do @delpi/plugin-ui.
 
 FONTE DE VERDADE
@@ -23,24 +23,27 @@ mesmo commit, publicando em HML e testando, e por fim publicando em PROD. Parar 
 X1–X8, num DECISION_REQUIRED de T10.0, ou ao concluir a T13.
 
 T10.0 · Reconciliação dos docs do front com o contrato publicado (antes de qualquer código)
-  Os docs 01–03 são de 13/11; o back-end mudou depois (T9R/T9R2). Conferir, campo a campo, cada dado
-  que as páginas usam contra as respostas reais das rotas /entry-audit/* (HML ou fixtures geradas do
-  contrato) e atualizar os docs. Pontos já conhecidos:
-  a) summary.conformity ganhou posted_outside_period {count, received_dates}. Na Conformidade e na aba
-     «Notas sem par», tratar «Lançadas fora do período» como informação (tom neutral), fora de «a
-     resolver». received_dates vem como lista crua (uma data por nota): a BFF passa a devolver também
-     agrupado [{date, count}] (ajuste aditivo e mínimo no contrato, com teste) — a UI não agrega 250 linhas.
-  b) Situações do sem par como estão no motor: «Em lançamento (LNF)» (Info, com id da solicitação →
-     link para o app LNF), «em trânsito» (Info), «saída da própria filial» (Info), formulário próprio
-     sem SF1 (Alta), XML indisponível. «Explicada» = Info; as demais = «a resolver».
-  c) Andamento da execução (doc 01 §4.3): o doc espera etapas protheus/tes_book/xml/rules/result e
-     percent. A BFF expõe stage (reading_protheus, reading_xml, auditing, saving, done), contagens e,
-     por id, read de uma análise. Mapear as etapas para o que existe; se faltar percent, usar o
-     ProgressTracker por etapa sem barra percentual, ou acrescentar percent na BFF se for derivável
-     sem estimativa falsa. Não inventar progresso.
-  d) Campos que o doc usa e o contrato não tem → acrescentar na BFF só se for leitura do que já é
-     persistido; caso contrário, ajustar o doc. Escolha de produto (o que mostrar, nova métrica) →
-     DECISION_REQUIRED, parar e listar opções.
+  Os docs 01–03 são de 13/11; o back-end mudou depois (T9R a T9R5, ver residuals.md). Conferir, campo
+  a campo, cada dado que as páginas usam contra as respostas reais das rotas /entry-audit/* (PROD lido
+  pela BFF, ou fixtures geradas do contrato) e atualizar os docs. O que já existe e a UI deve usar:
+  a) summary: kpis com gross_checked e high_difference (os 4 KPIs do doc 02); previous com os mesmos
+     campos; conformity com clean, divergent, unmatched_open, unmatched_explained e
+     posted_outside_period {count, by_date[{date,count}]}. «Lançadas fora do período» = informação
+     (tom neutral), fora de «a resolver».
+  b) documents: padrão = notas recebidas no período; situation = clean | divergent | posted_outside_period
+     (toggle da aba «Notas casadas»; a lista de fora do período é uma visão à parte).
+  c) Sem par: situações do motor — «Em lançamento (LNF)» (Info, id da solicitação → link do app LNF),
+     «em trânsito» (Info), «saída da própria filial» (Info), formulário próprio sem SF1 (Alta), XML
+     indisponível; campos emitente, CNPJ, UF, emissão, valor, natureza, CFOP, CST, base, ICMS, IPI; links.xml.
+  d) Ocorrência: field (código) e field_label (rótulo); difference null em campo de código (mostrar «—»);
+     why (leitura) ≠ action (o que fazer); supplier_name, series, tes; history = lista de eventos
+     {event, at, actor}; links.xml → GET /entry-audit/xml/{chave}; DANFE/DACTE só quando há pedido no LNF.
+  e) Andamento: read entry_audit.analysis por id — stage (reading_protheus, reading_xml, auditing,
+     saving, done) e contadores incrementais (XML lidos / a ler). Sem percentual inventado.
+  f) daily com previous; trend com um ponto por análise (date_from, date_to, branches, contagens) e
+     group=month; CT-e com emitente, tomador, CFOP, CST, base, alíquota, ICMS, TES, notas vinculadas.
+  g) Campo que o doc usa e o contrato não tem → ajustar o doc (o back-end está fechado). Se faltar algo
+     indispensável, DECISION_REQUIRED: parar e listar opções; não mexer na BFF sem decisão.
   Atualizar frontend/README.md (status READY) e os docs 01–03 no mesmo commit.
 
 T10 · plugin-ui (doc 04)
@@ -82,7 +85,7 @@ REGRAS INEGOCIÁVEIS
 4. @delpi/plugin-ui first: não duplicar componente nem chrome existente; componente novo nasce no
    plugin-ui, genérico. Evolução só aditiva, padrões atuais preservados.
 5. Permissão única controllership-finance.access (manage herda). Nenhuma permission nova.
-6. Sem mudança nas seis tools da CLARA. Mudança de back-end só a mínima de T10.0, com teste.
+6. Sem mudança nas seis tools da CLARA nem no back-end (fechado); exceção só com decisão do owner.
 7. Repositório público: nenhum dado real (CNPJ, fornecedor, valores, chaves) em código, fixture,
    snapshot de teste, screenshot commitado ou doc.
 8. Suíte de cada pacote tocado comparada ao commit pai; só falhas pré-existentes aceitas (X2).

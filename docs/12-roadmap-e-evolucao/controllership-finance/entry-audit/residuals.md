@@ -162,3 +162,18 @@ Código `18cc94e0c9` + V029 `e9481483b5`. Tag `rollback-entry-audit-t9r5-control
 
 Reexecução PROD via `execute entry_audit.rerun`: `b75deca4…` (12/11 01), `942763cb…` (12/11 02), `76d55935…` (13/11 01) — todas `done`.
 
+## Verificação da T9R5 pela CLARA (2026-11-14, PROD) — ACCEPT_WITH_RESIDUAL
+
+PASS pelo MCP: F1 (origem com `difference: null`, inclusive na análise antiga, pela leitura), F2 (na reexecução
+`b75deca4…`, fornecedor `000001/13` com nome; contadores 341 do cache / 0 baixados), F3 (CT-e sem `fiscal_code`),
+F4 (cobertura com «filtro: theme=simples» e as 20 notas da análise), F5 (suíte inteira 1354 PASS / 1 FAIL / 280 skip,
+igual ao pai). Causa da T9R4: `difference NOT NULL` desde a V023 → V029.
+
+Resíduos aceitos (não bloqueiam o front-end):
+- Análise antiga guarda o que foi gravado na hora (ex.: `6467059e…` com o nome vazio de F2); a reexecução gera a versão nova. Uma análise é um retrato do momento.
+- Uma análise concluída não é reaproveitada: pedir de novo o mesmo período cria outra (idempotência só enquanto está em andamento, backend §1). Há duas de 12/11 filial 01 e duas de 13/11; a tendência mostra as duas.
+- 1 FAIL pré-existente na suíte da BFF (avatar da CLARA), fora da auditoria; 280 skip (dependem de banco/serviço externo).
+- A1 (regra da skill), D1 (escopo emprestado), D3 (sem MCP ponta a ponta em HML), AE-15 (P6), normas (P7): decisões do owner.
+
+**Back-end e CLARA da auditoria de entradas: fechados para o front-end (T10).**
+

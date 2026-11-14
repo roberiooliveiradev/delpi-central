@@ -27,5 +27,5 @@ O usuário — ou a CLARA, num comando — escolhe o período e as filiais e exe
 
 1. ~~Cursor: T0 a T9~~ — feito (T9, T9R, T9R2 em PROD, 14/11/2026).
 2. ~~Owner + Claude: verificação pela CLARA~~ — feita; os residuais estão em [residuals.md](./residuals.md).
-3. Cursor: zerar os residuais do back-end — prompt em [prompts/T9R3-residuais-backend.md](./prompts/T9R3-residuais-backend.md).
+3. ~~Cursor: zerar os residuais do back-end~~ — feito (T9R3, T9R4, T9R5; [residuals.md](./residuals.md)).
 4. Cursor: T10–T13 (front-end), **só depois do passo 3** — prompt em [prompts/T10-T13-frontend.md](./prompts/T10-T13-frontend.md).
