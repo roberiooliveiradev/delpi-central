@@ -345,6 +345,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--en-grid-gap);
+  /* §46 — aproxima a grade do hero: os controles agora vivem na linha
+   * inferior do hero, sem faixa intermediária. */
+  margin-top: -12px;
 }
 
 .engineering-prc__hero-meta {
@@ -1353,35 +1356,35 @@
   min-width: 0;
 }
 
-/* §45 — barra de ferramentas da tabela (sem card externo): total do
- * escopo à esquerda; Colunas e modos de visualização à direita. */
-.engineering-prc__table-toolbar {
+/* §46 — linha inferior do hero: controles de apresentação da grade
+ * (Colunas + Tabela/Cards/Kanban) acoplados ao hero, sem faixa solta. */
+.engineering-prc__queue-bottom {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 8px 12px;
-  margin-top: 14px;
+  gap: 8px 10px;
+  padding-top: 2px;
   min-width: 0;
 }
 
-.engineering-prc__table-meta {
-  font-size: 0.85rem;
+/* §46 — pill compacta do universo filtrado (nas ações do hero). */
+.engineering-prc__count-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--en-border, #d0d5dd);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  line-height: 1.2;
   color: var(--en-text-muted, #667085);
-  min-width: 0;
+  background: color-mix(in srgb, var(--en-surface, #fff) 92%, #f2f4f7);
+  white-space: nowrap;
 }
 
-.engineering-prc__table-toolbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: auto;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 640px) {
-  .engineering-prc__table-toolbar-actions {
-    margin-left: 0;
-  }
+.engineering-prc__count-pill-value {
+  color: var(--en-text, #101828);
+  font-weight: 600;
 }
 
