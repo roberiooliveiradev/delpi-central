@@ -389,3 +389,20 @@ Cada página user-facing deve validar:
 - tema escuro;
 - teclado/foco em ações críticas;
 - ajuda contextual sincronizada.
+
+
+## 17. Diretriz aprovada pelo PO — design limpo, direcional e contextual (14/11/2026)
+
+**Decisão de produto transversal ao Portal Engenharia:** evoluir as telas sob a filosofia **menos ruído, mais direção para a próxima ação**, observando contexto, identidade, estado e segurança. Aplica-se aos próximos refinamentos de Home, filas, solicitações, produtos acompanhados, desenhos e outras experiências da Engenharia, sem sobrescrever contratos ou UX específicas ratificadas.
+
+1. **Hierarquia de informação:** mostrar primeiro o que é, em que estado está e o que o usuário pode fazer agora. Respeitar o contexto do papel e do estado, sem dashboards ou metadados técnicos excessivos.
+2. **Hero curto, com propósito:** identidade, status, ator com avatar quando autorizado, andamento e ação principal; dados secundários em informações contextuais, abas, histórico ou ficheiros próprios. Evitar campos repetidos em hero e ficha.
+3. **Ações direcionais:** uma ação primária, secundárias discretas, destrutivas visualmente distintas, ícones Lucide acompanhados de rótulos e ajuda/tooltip quando necessário. Nunca esconder requisitos de motivo, confirmação ou AuthZ.
+4. **Linguagem humana pt-BR:** nome comercial dos canais, status, data/hora e fallback legíveis; preservar códigos canônicos apenas nos contratos, logs técnicos e URLs.
+5. **Densidade equilibrada:** reduzir faixas vazias, duplicidade de títulos e contêineres; alinhar filtros à consulta, estados e ações à decisão; não esconder erros bloqueadores importantes.
+6. **Dados progressivos:** itens de auditoria/proveniência e diagnósticos continuam acessíveis, em seção coerente, sem mascarar fonte, incerteza ou causa de bloqueio.
+7. **Consistência:** reutilizar design system e componentes `@delpi/plugin-ui`, avatars, popovers governados, tabs, tabela e cards; zero segunda implementação de workflow. Light/dark, teclado, zoom 200%, viewport mobile, contraste, estados de erro/forbidden e deep-link são critérios básicos.
+8. **Autoridade preservada:** UI não autoriza atos; `allowedActions`, backend AuthZ, revisão, verificação oficial e owner de publicação continuam vinculantes. Não deslocar dados técnicos de sua fonte oficial.
+9. **Gates:** wireframe e decisão do PO → implementação na `main` pelo executor governado → testes e E2E HML → aceite visual PO → decisão separada de release PRD. O planejamento não constitui autorização de deploy.
+
+**Exemplo aprovado como referência de linguagem visual:** `MFE-PRODUCT-REGISTRATION-UX-WIREFRAMES.md`, seção `PRC-REF-024` (detalhe PRC V3). Esta diretriz de design não transforma automaticamente todos os wireframes históricos em implementações.
