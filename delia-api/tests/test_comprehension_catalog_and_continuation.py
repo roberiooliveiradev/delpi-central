@@ -27,7 +27,9 @@ from app.application.model_invocation.invoke_model import (
 )
 from app.infrastructure.orchestration.pydantic_ai_investigation import (
     PydanticAiInvestigationOrchestrator,
+    _attempt_projection,
     _comprehension_catalog_block,
+    _schema_pagination_arg_names,
 )
 from pydantic_ai.messages import (
     ModelRequest,
@@ -228,3 +230,218 @@ def test_two_agent_comprehension_receives_catalog_vocabulary():
     assert "alpha.search_items" in first
 
 
+# -------------------------------------------------------------------
+# Front B — pagination continuation projection
+# -------------------------------------------------------------------
+
+
+def test_schema_pagination_arg_names():
+    """FRONT-B-P1: pagination-capable arguments come from the
+    capability's own contract — a proven window-selector name or an
+    owner-published description declaring pagination semantics."""
+    schema = {
+        "type": "object",
+        "properties": {
+            "entity": {"type": "string"},
+            "params": {
+                "type": "object",
+                "description": "filters/pagination for search",
+            },
+            "page": {"type": "integer"},
+        },
+    }
+    names = _schema_pagination_arg_names(schema)
+    assert "params" in names
+    assert "page" in names
+    assert "entity" not in names
+    assert _schema_pagination_arg_names({}) == ()
+    assert _schema_pagination_arg_names(None) == ()
+
+
+def _attempt_with_pagination(structured, *, limitations=()):
+    """Real governed attempt carrying a paginated owner payload."""
+    from app.application.interaction.capability_attempt import (
+        GovernedCapabilityAttempt,
+        GovernedCapabilityStatus,
+    )
+
+    return GovernedCapabilityAttempt(
+        status=GovernedCapabilityStatus.SUCCESS,
+        correlation_id="corr-test",
+        outcome=_outcome("ok", structured=structured),
+        limitations=limitations,
+    )
+
+
+def test_projection_declares_next_page_contract_derived():
+    """FRONT-B-P2: owner-declared page + has_more → next_page is the
+    declared page + 1, and schema-declared pagination args are named."""
+    attempt = _attempt_with_pagination(
+        {
+            "items": [{"id": "a"}, {"id": "b"}],
+            "total": 5,
+            "pagination": {
+                "page": 1,
+                "page_size": 2,
+                "has_more": True,
+            },
+        }
+    )
+    projection = _attempt_projection(
+        attempt,
+        observation_index=0,
+        pagination_args=("params",),
+    )
+    page = projection["pagination"]
+    assert page["has_more"] is True
+    assert page["page"] == 1
+    assert page["next_page"] == 2
+    assert page["pagination_args"] == ["params"]
+    assert "continuation_note" in projection
+
+
+def test_projection_no_invented_next_page():
+    """FRONT-B-N2: has_more without owner page numbering never gets a
+    fabricated next_page; a last page never continues."""
+    truncated_only = _attempt_with_pagination(
+        {
+            "items": [{"id": "a"}],
+            "total": 9,
+            "truncated": True,
+        }
+    )
+    projection = _attempt_projection(
+        truncated_only, observation_index=0
+    )
+    assert projection["pagination"]["has_more"] is True
+    assert "next_page" not in projection["pagination"]
+    last = _attempt_with_pagination(
+        {
+            "items": [{"id": "a"}],
+            "total": 1,
+            "pagination": {"page": 1, "page_size": 1, "has_more": False},
+        }
+    )
+    last_projection = _attempt_projection(last, observation_index=0)
+    assert last_projection["pagination"]["has_more"] is False
+    assert "next_page" not in last_projection["pagination"]
+    assert "continuation_note" not in last_projection
+
+
+def _paged_servers_and_providers():
+    """Two-page owner surface: page 1 declares has_more, page 2 ends."""
+    schema = {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string"},
+            "page": {"type": "integer"},
+        },
+    }
+    cap = _cap("alpha", "pa", "search_items", schema=schema)
+    page1 = _outcome(
+        "ok",
+        structured={
+            "items": [{"id": "p1a"}, {"id": "p1b"}],
+            "total": 4,
+            "pagination": {
+                "page": 1,
+                "page_size": 2,
+                "has_more": True,
+            },
+        },
+    )
+    page2 = _outcome(
+        "ok",
+        structured={
+            "items": [{"id": "p2a"}, {"id": "p2b"}],
+            "total": 4,
+            "pagination": {
+                "page": 2,
+                "page_size": 2,
+                "has_more": False,
+            },
+        },
+    )
+    pa = FakeProvider(
+        "pa",
+        [_group("pa", "alpha", [cap])],
+        outcomes={("alpha", "search_items"): [page1, page2]},
+    )
+    pb = FakeProvider(
+        "pb",
+        [_group("pb", "beta", [_cap("beta", "pb", "read_guidance")])],
+        outcomes={
+            ("beta", "read_guidance"): _outcome(
+                "ok", structured={"items": []}
+            )
+        },
+    )
+    return [pa, pb]
+
+
+def test_two_page_walk_accumulates_evidence():
+    """FRONT-B-I1: a second call on the SAME capability with different
+    page args is not equivalent (raw-args fingerprint), both invokes
+    reach the owner, and page 1's projection carries the declared
+    ``next_page`` signal the model can act on."""
+    providers = _paged_servers_and_providers()
+    gates = _gates(providers)
+    owner_calls: list[dict] = []
+    original = gates._governed_semantic_tool_invoke
+
+    def _spy(**kwargs):
+        owner_calls.append(dict(kwargs.get("arguments") or {}))
+        return original(**kwargs)
+
+    gates._governed_semantic_tool_invoke = _spy  # type: ignore[method-assign]
+    seen_returns: list[str] = []
+
+    def _inv_fn(messages, _info):
+        declared = False
+        for m in messages:
+            if not isinstance(m, ModelRequest):
+                continue
+            for p in m.parts:
+                if getattr(p, "tool_name", "") == (
+                    "declare_investigation_goal"
+                ):
+                    declared = True
+                if getattr(p, "tool_name", "") == "alpha.search_items":
+                    seen_returns.append(str(p.content))
+        if not declared:
+            return ModelResponse(parts=[_valid_goal_call()])
+        if len(seen_returns) == 0:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "alpha.search_items",
+                        {"query": "proc", "page": 1},
+                    )
+                ]
+            )
+        if len(seen_returns) == 1:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "alpha.search_items",
+                        {"query": "proc", "page": 2},
+                    )
+                ]
+            )
+        return _final_answer()
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates,
+        model=FunctionModel(_inv_fn),
+        tool_calls_limit=8,
+        two_agent_experiment=False,
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        engine.attempt("liste os processos")
+
+    pages = [
+        a.get("page") or (a.get("arguments") or {}).get("page")
+        for a in owner_calls
+    ]
+    assert pages == [1, 2]
+    assert "next_page" in seen_returns[0]

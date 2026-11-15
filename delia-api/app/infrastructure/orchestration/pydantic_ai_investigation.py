@@ -69,6 +69,7 @@ from app.application.capability_provision.semantic_capability_support import (
     INVESTIGATION_PROGRESS_RELATED,
     _IDENTIFIER_LITERAL_RE,
     _INVOCATION_VOCABULARY_KEYS,
+    _PAGINATION_ARG_KEYS,
     _LAST_CATALOG_FAILURES,
     _OBLIGATION_OPERATIONS,
     _attempt_identifier_roots,
@@ -777,6 +778,31 @@ def _comprehension_catalog_block(live_catalog: object) -> str | None:
     return rendered
 
 
+def _schema_pagination_arg_names(input_schema: object) -> tuple[str, ...]:
+    """Schema-declared pagination-capable argument names.
+
+    A property qualifies when its name is a proven slice selector or
+    its owner-published description declares pagination semantics.
+    Derived from the capability's own contract — never invented.
+    """
+    if not isinstance(input_schema, Mapping):
+        return ()
+    props = input_schema.get("properties")
+    if not isinstance(props, Mapping):
+        return ()
+    names: list[str] = []
+    for name, spec in props.items():
+        token = str(name)
+        if token in _PAGINATION_ARG_KEYS:
+            names.append(token)
+            continue
+        if isinstance(spec, Mapping):
+            desc = spec.get("description")
+            if isinstance(desc, str) and "paginat" in desc.casefold():
+                names.append(token)
+    return tuple(names[:8])
+
+
 def _attempt_projection(
     attempt: GovernedCapabilityAttempt,
     *,
@@ -786,6 +812,7 @@ def _attempt_projection(
     operation_class: str | None = None,
     prior_content_fingerprints: frozenset[str] | set[str] = frozenset(),
     capability_id: str | None = None,
+    pagination_args: Sequence[str] | tuple[str, ...] = (),
 ) -> dict[str, Any]:
     structured = (
         attempt.outcome.structured
@@ -1029,6 +1056,15 @@ def _attempt_projection(
             "total_count": envelope.total_count,
             "items_in_page": len(envelope.items),
         }
+        # next_page is contract-derived (page + 1) only when the owner
+        # declared page semantics and more pages exist — never invented
+        # when the owner provides no page numbering.
+        if envelope.has_more is True and isinstance(envelope.page, int):
+            projection["pagination"]["next_page"] = envelope.page + 1
+        if pagination_args:
+            projection["pagination"]["pagination_args"] = list(
+                pagination_args
+            )
     truncated = LIMITATION_RESULT_TRUNCATED in (
         attempt.limitations or ()
     )
@@ -1036,11 +1072,25 @@ def _attempt_projection(
         envelope is not None and envelope.has_more is True
     )
     if needs_continuation:
+        hint = ""
+        if pagination_args:
+            hint = (
+                " This capability declares pagination-capable argument"
+                " %s — pass the next page through it (for example as"
+                " its page/page_size selector), preserving the same"
+                " filters and scope across pages." % (
+                    "s " + ", ".join(
+                        str(a) for a in pagination_args[:4]
+                    )
+                    if len(pagination_args) > 1
+                    else " `" + str(pagination_args[0]) + "`"
+                )
+            )
         projection["continuation_note"] = (
             "Owner result is truncated or an incomplete page. If the "
             "tool schema exposes page/page_size (or equivalent), call "
             "again with the next page parameters to continue — do not "
-            "treat a single page as the full population."
+            "treat a single page as the full population." + hint
         )
     return projection
 
@@ -1788,6 +1838,13 @@ class PydanticAiInvestigationOrchestrator:
             uncovered = uncovered_user_identifiers(
                 ctx.deps.input_text, ctx.deps.collected
             )
+            pagination_args = (
+                _schema_pagination_arg_names(
+                    catalog_entry.get("input_schema")
+                )
+                if isinstance(catalog_entry, Mapping)
+                else ()
+            )
             projection = _attempt_projection(
                 attempt,
                 observation_index=index,
@@ -1798,6 +1855,7 @@ class PydanticAiInvestigationOrchestrator:
                     ctx.deps.observed_content_fingerprints
                 ),
                 capability_id=cap_key,
+                pagination_args=pagination_args,
             )
             content_fp = observation_content_fingerprint(attempt)
             if content_fp is not None:

@@ -374,8 +374,9 @@ def test_v2_4_is_registered_and_selectable():
 
 
 def test_v2_5_is_registered_and_default():
-    """RC5 anchor instruction is the active default; v2-4 remains
-    selectable for rollback (instruction-version rollback path)."""
+    """v2-7 page-continuation is the active default; v2-5 (and v2-4)
+    remain selectable for rollback (instruction-version rollback
+    path)."""
     selected = pai.load_selected_investigation_instructions(
         instruction_version="generalist-semantic-v2-5-obligation-anchors"
     )
@@ -389,7 +390,7 @@ def test_v2_5_is_registered_and_default():
     default = pai.load_selected_investigation_instructions()
     assert (
         default.instruction_version
-        == "generalist-semantic-v2-5-obligation-anchors"
+        == "generalist-semantic-v2-7-page-continuation"
     )
 
 
