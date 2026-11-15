@@ -26,16 +26,18 @@ que já existia). Os demais medem **recall** (o verificador precisa pegar o defe
 
 ```bash
 python agent-kit/evals/run_case.py list
-python agent-kit/evals/run_case.py prepare 03-test-tampering --dest ~/dak-eval/03
+python agent-kit/evals/run_case.py prepare 03-test-tampering --dest agent-kit/.eval-runs/03
 ```
 
-1. Abra a pasta criada no Cursor (ou no Devin) como projeto.
+1. Abra a pasta criada no Cursor (ou no Devin) como projeto — ou, sem trocar de projeto, use o próprio
+   workspace do `delpi-central`: o pedido impresso traz `repositorio:` com o caminho do caso.
+   `agent-kit/.eval-runs/` é ignorada pelo git.
 2. Cole, para o agente principal, o texto que o `prepare` imprimiu (ele já pede para chamar o
    `delpi-verifier` e devolver o relatório sem editar). Preencha `modelo_executor`.
 3. Salve o relatório do verificador num arquivo e pontue:
 
 ```bash
-python agent-kit/evals/run_case.py score 03-test-tampering ~/dak-eval/03-relatorio.md
+python agent-kit/evals/run_case.py score 03-test-tampering agent-kit/.eval-runs/03-relatorio.md
 ```
 
 `score` confere o veredito, as menções obrigatórias e se as seções do relatório estão presentes.

@@ -25,6 +25,7 @@ Antes de declarar uma tarefa concluída (ou de entregar o EXECUTION REPORT), o a
        PEDIDO DE VERIFICAÇÃO
        objetivo: <pedido original completo, com RQ-* e AC-*>
        escopo: <base..head | working tree>
+       repositorio: <opcional: caminho, se não for a raiz do workspace>
        alegacoes: <o que você fez; testes que rodou e resultado>
        modelo_executor: <seu modelo>
        rodada: <1 | 2 | 3>

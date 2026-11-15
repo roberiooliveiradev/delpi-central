@@ -1,5 +1,11 @@
 # Changelog — agent-kit
 
+## 0.1.1 — 2026-11-15
+
+- Pedido de verificação aceita `repositorio:` (subprojeto ou repositório de avaliação fora da raiz do
+  workspace); `run_case.py prepare` já imprime o campo.
+- Evals podem rodar dentro do próprio workspace, em `agent-kit/.eval-runs/` (ignorada pelo git).
+
 ## 0.1.0 — 2026-11-15
 
 Primeira versão do `delpi-verifier`.

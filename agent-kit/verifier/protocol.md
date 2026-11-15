@@ -62,6 +62,7 @@ O executor abre a verificação com um **pedido de verificação**. Confira se e
 |---|---|
 | `objetivo` | O pedido original do usuário, com os requisitos (`RQ-*`) e critérios de aceite (`AC-*`) |
 | `escopo` | Faixa de commits (`base..head`) ou "working tree" (alterações não commitadas) |
+| `repositorio` | Opcional. Caminho do repositório verificado quando não é a raiz do workspace (subprojeto, repositório de avaliação). Rode todos os comandos nesse caminho (`cd` ou `git -C`) |
 | `alegacoes` | O que o executor diz que fez, quais testes diz ter rodado e com qual resultado |
 | `modelo_executor` | Modelo/família usado pelo executor |
 | `rodada` | Número da rodada (1, 2 ou 3) |
@@ -226,7 +227,7 @@ decisão vai para o humano.
 {{RECORD_CMD}} --verdict <VEREDITO> --round <N> --summary "<uma linha>"
 ```
 
-Rode o comando a partir da raiz do repositório verificado, como comando único (sem `&&`, `;` ou
+Rode o comando a partir da raiz do repositório verificado (ou acrescente `--repo <caminho>`), como comando único (sem `&&`, `;` ou
 `|`), e escreva o resumo sem `$`, crases ou aspas internas. Se o registro falhar, diga isso no relatório
 e siga — não tente gravar de outro jeito.
 
