@@ -5052,3 +5052,91 @@ Reexecutados no container: `test_eva_mcp.py` +
 testes G11); `test_drawing_titleblock_fields.py` = 14 passed
 (inclui os 2 testes G10). Nenhum código alterado → demais
 suites não reexecutadas nesta rodada.
+
+### 94.16 G13+G14 — Linhagem reversa implementada e conhecimento G11 ativado em produção
+
+`TASK_ID: EVA-G13-G14-REVERSE-PRODUCT-LINEAGE-AND-KNOWLEDGE-PRODUCTION-ACTIVATION-01`
+(2026-11-15 — Devin, AUTHORIZED_BOUNDED_EXECUTION; autorização:
+Issue #131 comentário `6900869325`)
+
+#### G14 — Implantação do conhecimento (EXECUTADA)
+
+| Gate | Resultado |
+|---|---|
+| Autorização Coordination | RECEBIDA (comment 6900869325, 15/11) |
+| CANDIDATE_SHA_VERIFIED | `3fcad0ad00` — delta engineering-api vs imagem deployada = **somente G11** (knowledge JSON + testes); zero mudança em Dockerfile/requirements/infra |
+| ROLLBACK_READY | `infra-engineering-api:rollback-pre-g14` = `ba239a36c4d3` (imagem anterior v1.4+G10) |
+| PREFLIGHT | PASS — srv-api FF-safe, 134 testes passando na imagem candidata |
+| Deploy | `git pull --ff-only` + `up-prod-sequential.sh --build engineering-api` — somente engineering-api |
+
+**Smoke pós-deploy (srv-api, sem OCR):**
+
+- container `delpi-engineering-api` **healthy**, imagem nova;
+- `knowledge.version=1.5`; 6 tópicos (5 anteriores preservados +
+  `product.lifecycle_traceability`, 12 regras LIF);
+- enum runtime `knowledge_topics()` inclui o tópico
+  (`server.py` deriva no startup → schema MCP publicado);
+- G10 preservado (`x_left`/`x_right` em `understanding.py`);
+- zero workers OCR (`/proc`: 1 python server);
+- `tool_read`/`tool_knowledge` sem auth → **401 fail-closed**
+  (AuthZ intacta em todos os caminhos).
+
+**Pendente (handoff Coordination):** refresh de discovery do
+conector EVA no ChatGPT + query real
+`knowledge(topic=product.lifecycle_traceability)` na sessão —
+o enum é publicado pelo server no startup; o conector cacheia
+`tools/list` e precisa reconectar.
+
+#### G13 — Ratificação do owner localizada + implementação
+
+**Evidência de ratificação (localizada, não assumida):**
+
+1. Matriz de 32 campos owner-aprovada
+   (`api-delpi/docs/integrations/evidence/davi-product-detail-similarity-001.md`
+   §9.3): `previous_code → código anterior/legado → APPROVED`
+   para reconciliação. *Discrepância registrada: a matriz cita
+   `B1_CODITE`; o código de produção usa `B1_CODANT` — o campo
+   que produz o vínculo comprovado `90264302→80015472`.
+   Provável typo documental; flag para owner.*
+2. Código produtivo do próprio owner
+   (`lmp_query_repository.py:687`): *"B1_CODANT aponta para o
+   código ainda ligado no ADJ010 (800…)"* — resolver LMP já usa
+   `B1_CODANT = ADJ_PROD AND B1_COD LIKE '9026%'` para
+   resolução cotação→produtivo. Cardinalidade 1:N confirmada
+   (TOP 1 + ORDER BY escolhe preferido entre múltiplos).
+3. `product.detail` já projeta `B1_CODANT AS previous_code`
+   sob a mesma AuthZ.
+
+**Live permission check:** `GET /apps/api-delpi/products/search`
+sem auth → **401** (fail-closed); AuthZ inalterada.
+
+**Implementação (menor diff, 9 arquivos):**
+
+- api-delpi: query param `previous_code` em
+  `GET /products/search` → `ListProductsRequest` → use case →
+  port → repository: `LTRIM(RTRIM(SB1.B1_CODANT)) = ?` (exato,
+  parametrizado, trim externo, zeros à esquerda preservados,
+  multi-sucessores, paginação/ordenação vigentes, resposta já
+  projeta `previous_code`);
+- engineering-api: `previous_code` na allowlist
+  `read(product.search)` (semantic_registry `fields`) +
+  `tool_search_products` + `fetch_product_search` + rota HTTP
+  delegada — mesmo contrato, sem ferramenta nova.
+
+**Deploy G13: NÃO autorizado** ("Produção G13 não autorizada
+automaticamente: gate isolado depois dos testes") — api-delpi
+e engineering-api com o filtro permanecem em código até gate
+próprio. *Risco residual se deployasse só engineering-api:
+`?previous_code=` seria ignorado pela api-delpi antiga →
+resultado não filtrado silencioso — por isso ambos ficam
+retidos.*
+
+#### Testes
+
+- api-delpi: `test_product_search_previous_code.py` (6 casos —
+  exato, zeros à esquerda, trim, cláusula ausente, filtros
+  combinados, injection parametrizado) + siblings =
+  **18 passed** na imagem `infra-api-delpi:latest`;
+- engineering-api: `test_eva_mcp_semantic.py` +2 casos
+  (filtro aceito e propagado; filtro desconhecido rejeitado)
+  = **122 passed** na imagem `infra-engineering-api:latest`.
