@@ -16,6 +16,7 @@ SERVER_ID = str(uuid4())
 def observation():
     return {
         "source": "linux_host_collector",
+        "server_id": SERVER_ID,
         "schema_version": "1",
         "presentation_status": "available",
         "observed_at": "2026-11-14T23:00:00Z",
@@ -132,5 +133,18 @@ def test_upstream_data_contract_rejected():
                 200, json={"data": {"source": "malicious_source"}})),
         )
         with pytest.raises(ReadError, match="unexpected_observation_source"):
+            await reader.latest("Bearer test-user-token")
+    asyncio.run(scenario())
+
+
+def test_reader_rejects_other_server_observation():
+    async def scenario():
+        other = observation()
+        other["server_id"] = str(uuid4())
+        reader = ItPortalReader(
+            Settings("http://it-portal-api:8000", SERVER_ID),
+            transport=httpx.MockTransport(lambda _: httpx.Response(200, json={"data": other})),
+        )
+        with pytest.raises(ReadError, match="unexpected_observation_server"):
             await reader.latest("Bearer test-user-token")
     asyncio.run(scenario())
