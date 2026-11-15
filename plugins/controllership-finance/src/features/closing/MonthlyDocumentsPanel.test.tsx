@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -145,8 +146,14 @@ describe("MonthlyDocumentsPanel — cartões V0.2", () => {
       expect(screen.getByText("Balancete mensal")).toBeTruthy(),
     );
     expect(screen.getByText("Planilha extra")).toBeTruthy();
-    expect(screen.getByText(/Exigido/)).toBeTruthy();
-    expect(screen.getByText(/Adicional/)).toBeTruthy();
+    const requiredCard = screen
+      .getByText("Balancete mensal")
+      .closest("li") as HTMLElement;
+    const additionalCard = screen
+      .getByText("Planilha extra")
+      .closest("li") as HTMLElement;
+    expect(within(requiredCard).getByText(/^Exigido/)).toBeTruthy();
+    expect(within(additionalCard).getByText(/^Adicional/)).toBeTruthy();
     expect(screen.getAllByText("Ver documento").length).toBe(2);
     expect(screen.getAllByText(/v2/).length).toBeGreaterThan(0);
   });

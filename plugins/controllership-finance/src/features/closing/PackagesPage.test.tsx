@@ -298,7 +298,7 @@ describe("PackagesPage", () => {
       }),
     ).toBeNull();
     expect(
-      screen.getByText(/congelada/),
+      screen.getByText(/Revisão de pacotes congelada/),
     ).toBeTruthy();
     expect(
       screen.getByRole("button", {

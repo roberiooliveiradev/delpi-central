@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -82,7 +83,10 @@ describe("P3CutoffPanel", () => {
     expect(
       screen.getByText(/Nenhum cutoff confirmado/),
     ).toBeTruthy();
-    expect(screen.getAllByText(/Fonte indisponível/)).toHaveLength(3);
+    const blockers = screen.getByRole("list", {
+      name: "Bloqueios de prontidão",
+    });
+    expect(within(blockers).getAllByText(/Fonte indisponível/)).toHaveLength(3);
   });
 
   it("ator sem manage não vê ações governadas", async () => {

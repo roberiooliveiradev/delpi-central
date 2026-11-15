@@ -294,7 +294,7 @@ Prompt: [prompts/U13-residuais.md](./prompts/U13-residuais.md). Report: [reports
 | Item | SHA | Status | Nota |
 |---|---|---|---|
 | X1 axe + Exportar primary + residuais U10 | (este commit) | DONE | filtro closest kit/host; Comercial primary |
-| X2 suíte MFE verde | — | PENDING | — |
+| X2 suíte MFE verde | (este commit) | DONE | 518 vitest + 26 mjs; TESTE DESATUALIZADO |
 | X3 filtro detalhamento SWR | — | PENDING | — |
 | HML Playwright | — | PENDING | — |
 | PROD tag/deploy MFE | — | PENDING | — |

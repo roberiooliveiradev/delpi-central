@@ -478,7 +478,9 @@ describe("isolamento", () => {
     expect(
       await screen.findByText(/Você não tem autorização para esta consulta/),
     ).toBeTruthy();
-    expect(screen.queryByText(/Sessão expirada/)).toBeNull();
+    expect(
+      screen.queryByText(/Sessão expirada — autentique-se novamente/),
+    ).toBeNull();
     expect(screen.queryAllByText("Posição histórica indisponível")).toHaveLength(0);
   });
 

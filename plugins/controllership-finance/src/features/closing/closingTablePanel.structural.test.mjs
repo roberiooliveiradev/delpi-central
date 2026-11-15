@@ -50,11 +50,14 @@ describe("painel de tabela — uso do kit nas páginas", () => {
       assert.match(code, /serverPagination=/);
       assert.match(code, /resizableColumns/);
       assert.match(code, /hideSearch/);
+      // U12 W2 — cards + layout prefs fazem parte do padrão DataTable canônico
+      assert.match(code, /renderCard=/);
+      assert.match(code, /viewLayoutPreferencesKey=/);
       // sem fork do kit nem toolbar paralela
       assert.doesNotMatch(code, /from\s+"@delpi\/plugin-ui\/index"[^;]*\bDataTable\b/);
       assert.doesNotMatch(code, /toolbarLeading=|toolbarExtra=/);
-      // sem controles visuais inertes (Excel/Cards/Board fora de contrato)
-      assert.doesNotMatch(code, /excelExport=|renderCard=|viewLayoutPreferencesKey=/);
+      // Excel/Board fora de contrato (cards/layout prefs acima são oficiais)
+      assert.doesNotMatch(code, /excelExport=/);
     });
 
     it(`${name}: colunas usam classes de proporção do kit`, () => {

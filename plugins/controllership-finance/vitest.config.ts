@@ -31,6 +31,14 @@ export default defineConfig({
         find: "lucide-react",
         replacement: path.resolve(pluginDir, "node_modules/lucide-react"),
       },
+      /* Barrel real do kit puxa recharts; CF não declara a dep diretamente. */
+      {
+        find: "recharts",
+        replacement: path.resolve(
+          pluginsRoot,
+          "plugin-ui/node_modules/recharts",
+        ),
+      },
     ],
   },
 });

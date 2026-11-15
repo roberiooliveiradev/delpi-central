@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import {
   afterEach,
@@ -597,8 +598,14 @@ describe("DocumentDetailPanel — prévia e ciclo de vida", () => {
       expect(screen.getByText("Arquivo anexado")).toBeTruthy(),
     );
     expect(screen.queryByText("Download", { exact: true })).toBeNull();
+    const historySection = screen
+      .getByRole("heading", { name: "Histórico" })
+      .closest("section");
+    expect(historySection).toBeTruthy();
     expect(
-      screen.getByText(/trilha de auditoria/),
+      within(historySection as HTMLElement).getByText(
+        /trilha de auditoria completa permanece registrada/,
+      ),
     ).toBeTruthy();
   });
 });
