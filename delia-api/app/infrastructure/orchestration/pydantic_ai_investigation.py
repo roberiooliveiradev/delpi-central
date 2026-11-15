@@ -706,7 +706,12 @@ _COMPREHENSION_CATALOG_DESC_LIMIT = 1400
 _COMPREHENSION_CATALOG_BLOCK_LIMIT = 12000
 
 
-def _comprehension_catalog_block(live_catalog: object) -> str | None:
+def _comprehension_catalog_block(
+    live_catalog: object,
+    *,
+    goal_classes: object = (),
+    delivery_modes: object = (),
+) -> str | None:
     """Bounded advisory projection of the Application-owned catalog.
 
     The comprehension specialist needs the live anchor vocabulary to
@@ -790,9 +795,17 @@ def _comprehension_catalog_block(live_catalog: object) -> str | None:
             "search/get belong in required_args, never in "
             "operation). required_args mirrors the real invocation "
             "arguments the obligation needs, using the field "
-            "vocabulary the owner publishes."
+            "vocabulary the owner publishes. goal_class and "
+            "expected_delivery take ONLY values from the "
+            "goal_classes and expected_delivery lists."
         ),
         "operation_classes": sorted(_OBLIGATION_OPERATIONS),
+        "goal_classes": sorted(
+            str(item) for item in goal_classes if str(item)
+        ),
+        "expected_delivery": sorted(
+            str(item) for item in delivery_modes if str(item)
+        ),
         "capabilities": entries,
     }
     rendered = _bounded_json(block, limit=_COMPREHENSION_CATALOG_BLOCK_LIMIT)
@@ -3185,7 +3198,11 @@ class PydanticAiInvestigationOrchestrator:
         # projected for this turn — anchor vocabulary for the typed
         # goal declaration, never authorization and never a second
         # discovery. Untrusted owner metadata stays JSON-embedded data.
-        catalog_block = _comprehension_catalog_block(live_catalog)
+        catalog_block = _comprehension_catalog_block(
+            live_catalog,
+            goal_classes=self._gates._GOAL_CLASSES,
+            delivery_modes=self._gates._DELIVERY_MODES,
+        )
         if catalog_block:
             instructions += (
                 "\n\nLive capability catalog for this turn (bounded "

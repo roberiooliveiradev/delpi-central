@@ -180,7 +180,11 @@ def test_comprehension_catalog_block_typed_vocabularies():
     the capability's own schema) and operation classes (top-level
     enum). Non-vocabulary args like ``query``/``page`` are never
     offered as anchor names."""
-    block = _comprehension_catalog_block([_catalog_entry()])
+    block = _comprehension_catalog_block(
+        [_catalog_entry()],
+        goal_classes={"read", "analyze"},
+        delivery_modes={"enumeration"},
+    )
     payload = json.loads(block.splitlines()[0])
     # Top-level contract vocabularies, declared once.
     assert payload["operation_classes"] == [
@@ -190,6 +194,11 @@ def test_comprehension_catalog_block_typed_vocabularies():
         "prepare",
         "read",
     ]
+    # The same typed enums the acceptor enforces for the goal-level
+    # fields — surfaced so invented goal classes (real-eval flake:
+    # ``explain``/``aggregation``) are never proposed.
+    assert payload["goal_classes"] == ["analyze", "read"]
+    assert payload["expected_delivery"] == ["enumeration"]
     assert "anchor_contract" in payload
     cap = payload["capabilities"][0]
     # Schema props are query/page/view — only ``view`` is an
