@@ -1,5 +1,7 @@
 # Portal Controladoria & Finanças — Fonte de navegação e estado
 
+> **14/11/2026 — Nome do macroprocesso na CLARA e no Portal:** [`monthly-closing-naming/`](./monthly-closing-naming/README.md) (doc 169) `READY` — troca o código `PROC-0072` (código do TÉO) por **Fechamento mensal da Controladoria** em tudo o que o usuário vê: instruções do conector, inteligência da CLARA, base de conhecimento e citações. Documentos continuam na base; identificadores técnicos e migrations ficam.
+>
 > **13/11/2026 — Auditoria de entradas no Portal e na CLARA:** [`entry-audit/`](./entry-audit/README.md) (doc 168) `PLAN_DRAFT` — plano, back-end, front-end, MCP, referência e planejamento. Porta a skill `auditoria-entradas-nfe-protheus` e o painel Raio-X para uma página do Portal e para o catálogo da CLARA. D4 decidida: tudo com `controllership-finance.access`.
 
 > **13/11/2026 — Regra de trabalho:** produção acompanha a main. Funcionalidade nova entra desligada por flag e é ligada depois do ensaio HML PASS.
