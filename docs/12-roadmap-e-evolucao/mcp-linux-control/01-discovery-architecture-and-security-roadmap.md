@@ -453,3 +453,25 @@ Fonte oficial verificada: https://developers.openai.com/api/docs/guides/secure-m
 - Nao atribuir esta tela ao Keycloak nem alterar os scopes OAuth ate que a rota publica retorne **JSON** PRMD HTTP 200 em lugar de HTML. A URL do navegador incluiu parametro `utm_source=chatgpt.com`; esse parametro nao altera a necessidade de roteamento por path.
 - Sequencia a seguir: inspecionar Nginx runtime e checkout; preparar backup/tag da imagem gateway em execucao; construir somente gateway no codigo atualizado, `nginx -t` antes de publicar; depois, em janela autorizada, substituir somente gateway com `up -d --no-deps --no-build gateway`; testar landing/Keycloak/rotas e PRMD publico, e manter rollback por imagem anterior. Nao executar `up -d` global nem sobrepor alteracoes locais no checkout.
 - **Estado:** `PUBLIC_PRMD_FAIL_HTML_FALLBACK`, `LOCAL_MCP_HEALTHY`, `KEYCLOAK_DEDICATED_CLIENT_PENDING`, `PUBLIC_GATEWAY_DEPLOY_NOT_PROVEN`.
+
+ 
+## 25. Evidencia: gateway publico ainda devolve o portal (2026-11-15)
+
+**Origem:** saida de 3 comandos `curl` enviada pelo operador, apos instrucao de build/recreate isolado do gateway. **Nao ha log dos comandos build/deploy nesta evidencia; nao presumir que o gateway foi realmente substituido.**
+
+| Caminho HTTPS publico | Recebido | Esperado apos rota MCP |
+|---|---|---|
+| GET `/apps/linux-ops-mcp/.well-known/oauth-protected-resource` | HTTP 200, `text/html` com SPA `<title>Minha DELPI</title>` | HTTP 200, JSON PRMD com `resource` |
+| POST `/apps/linux-ops-mcp/mcp` sem Bearer | HTTP 405 | HTTP 401, `WWW-Authenticate: Bearer` |
+| GET `/apps/linux-ops-mcp/healthz` | HTTP 200 (fallback da SPA) | HTTP 404 |
+
+**Diagnostico:** o caminho HTTPS publico nao esta chegando ao backend MCP pela regra restrita esperada; ainda cai no fallback Portal ou em outro origin/politica antes do Nginx. Isso **nao prova** defeito do MCP, pois o container `delpi-linux-ops-mcp` havia passado `healthy`, PRMD local 200/JSON e 401 sem Bearer.
+
+**Proximo gate 100% somente leitura, sem nenhum build/deploy/restart:**
+
+1. `docker exec delpi-gateway test -f /etc/nginx/snippets/linux-ops-mcp-locations.conf` e procurar include no `/etc/nginx/nginx.conf` efetivamente carregado. Se ausente, inspecionar estado do build/recreate isolado.
+2. `curl` ao gateway **local** `http://127.0.0.1` com `Host: minhadelpi.com.br` e mesmos paths, capturando somente status + content_type, inclusive POST sem Bearer.
+3. Comparar com `curl` externo HTTPS (status + content_type). Se gateway local passar 200 JSON/401/404 mas externo retornar 200 HTML/405/200, investigar roteamento Cloudflare Tunnel/ingress/cache/origin, sem mudar IAM ou reiniciar servicos.
+4. Nao executar mais deploy nem tentar cadastro ChatGPT ate o PRMD publico ser realmente JSON e o MCP recusar chamadas sem Bearer.
+
+**Status:** `PUBLIC_ROUTE_NOT_PROVEN`, `LOCAL_MCP_PREVIOUSLY_HEALTHY`, `KEYCLOAK_CLIENT_PENDING`. O `PR #189` trata somente do cliente OAuth Keycloak e nao conserta rota HTTP.
