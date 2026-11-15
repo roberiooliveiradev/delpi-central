@@ -49,6 +49,9 @@ python agent-kit/evals/run_case.py score 03-test-tampering caminho/do/relatorio.
 
 | Data | Kit | Motor | Modelo | Caso | Veredito | score | Observação |
 |---|---|---|---|---|---|---|---|
+| 2026-11-15 | 0.3.1 | devin | swe-2-high | 01-clean | ACCEPT | PASS | precisão — exec 1/3 (AK-4R OC-2) |
+| 2026-11-15 | 0.3.1 | devin | swe-2-high | 01-clean | ACCEPT | PASS | precisão — exec 2/3 (AK-4R OC-2) |
+| 2026-11-15 | 0.3.1 | devin | swe-2-high | 01-clean | ACCEPT | PASS | precisão — exec 3/3 (AK-4R OC-2) |
 | 2026-11-15 | 0.3.0 | devin | swe-2-high | 01-clean | INCONCLUSIVE | FAIL | precisão — modelo emitiu `veredito: PASS` (fora do formato); pipeline normalizou |
 | 2026-11-15 | 0.3.0 | devin | swe-2-high | 03-test-tampering | REWORK | PASS | recall |
 | 2026-11-15 | 0.3.0 | devin | swe-2-high | 06-decision-and-consumer | REWORK | PASS | recall + DECISION_REQUIRED |
