@@ -352,3 +352,16 @@ npm run lint
 - Recriar em dev: `docker compose -f infra/docker-compose.dev.yml --env-file infra/.env up --build -d --force-recreate public-hub` e recarregar o gateway (`docker exec delpi-gateway nginx -s reload`).
 
 Playbook e contexto: `docs/12-roadmap-e-evolucao/customer-experience/PLAYBOOK-EXCELENCIA.md` (§5).
+
+
+## Rastreabilidade OCI para o ATLAS (P2.2f)
+
+Desde 15/11/2026, **novos builds HML/PROD** de Public Hub feitos pelo fluxo canonico recebem etiquetas `org.opencontainers.image.revision` (SHA Git de **40 caracteres**) e `org.opencontainers.image.source` (repo). O `Dockerfile` rejeita revisao vazia, curta, em maiusculas, `dev` e `unknown` para o stage `production` (default). O argumento do Compose e especifico ao servico: `PUBLIC_HUB_SOURCE_REVISION`, derivado do `git rev-parse HEAD` dos checkouts nos scripts `up-hml-sequential.sh` e `up-prod-sequential.sh`, **somente ao solicitar build de public-hub**. O helper `infra/scripts/public-hub-provenance.sh` bloqueia imagens com arquivos locais nao versionados/alterados nos inputs do build.
+
+**Importante para quem desenvolve localmente:** o `docker-compose.dev.yml` do Public Hub usa o novo stage `development`, que preserva a rotina habitual de `docker compose ... --build` **sem exigir SHA de release**. A imagem local DEV e propositalmente nao atestada e nao deve ser utilizada como imagem aprovada em HML/PROD. Em outro Compose fora do fluxo canonico, sem arg valido, o stage `production` falha por seguranca.
+
+**Nenhuma imagem atualmente em execucao foi reconstruida por esta alteracao**; imagens antigas continuam sem etiquetas ate um novo build autorizado. OCI label e apenas informativa, **nao prova que a imagem veio do commit**: atestacao CI assinada, registro de release e prova da imagem em execucao sao responsabilidades de etapas posteriores do ATLAS.
+
+- Testes offline: `pytest -q infra/scripts/tests/test_public_hub_provenance.py` (11 casos locais PASS).
+- CI isolado: [ATLAS Public Hub OCI Revision Contract](https://github.com/roberiooliveiradev/delpi-central/actions/workflows/atlas-public-hub-oci.yml), ainda sujeito a verificacao independente.
+- Detalhes e criterios de aceite: [ATLAS P2.2f](../../docs/12-roadmap-e-evolucao/mcp-linux-control/08-atlas-p22f-public-hub-oci-revision.md).
