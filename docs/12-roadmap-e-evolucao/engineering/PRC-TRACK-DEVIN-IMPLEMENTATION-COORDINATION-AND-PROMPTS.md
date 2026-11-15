@@ -1149,3 +1149,22 @@ E01 sete campos no card **PASS** (subchecks id/type/requester/officialCode/creat
 **TEST_NOT_RUN honestos:** 403 real (sem identidade sem-permissão autorizada em HML — não fabricado); estados error/forbidden de tela só cobertos por estados existentes (forbidden na listagem via backend já exercido na suíte). Falha preexistente `intake D16 422` na suíte backend ampla fora do escopo. `TOTVS_WRITES: 0`. `PRD_DEPLOY: NOT_EXECUTED`.
 
 **Rollback:** imagens anteriores + `git revert` dos dois commits; nenhuma migration nesta rodada.
+
+
+## 62. Execução — Refinamento final: semântica da timeline, densidade da ficha e comparação homologados em HML (14/11/2026)
+
+**Escopo:** `EVA-PRC-TRACK-FINAL-UX-TIMELINE-TECHNICAL-SHEET-HML-01` — último pacote pontual pós-§61 na `main` (sem branch, DEV/HML apenas). Commit `0d489aaa98` (10 arquivos: backend 2, MFE 6, kit 1, specs 1 — docs neste commit).
+
+**G1 — semântica da timeline (contrato aditivo):** `list_revisions` passa a emitir `diffSummary` por revisão — `comparable`, `total`, `fields{modified,newlyObserved,noLongerObserved}`, `suppliers{added,removed,modified,newlyObserved,noLongerObserved}` — classificado pelo mesmo `compute_technical_diff` entre snapshots consecutivos (recomputo read-side; snapshots imutáveis intocados; `null` na baseline). Timeline do `30190123` deixa de dizer «8 mudanças técnicas» e passa a dizer «8 diferenças registradas · 7 campo(s) sem informação comparável na versão anterior · 1 fornecedor(es) vinculado(s)»; V1 = «Primeiro acompanhamento confirmado · 1 campo(s) registrado(s)». Payload antigo sem `diffSummary` → resumo neutro. `comparable=false` → ressalva explícita.
+
+**G2 — densidade:** grade da ficha no modo `density="compact"` passa a `repeat(auto-fit, minmax(190px,1fr))` — 3–4 colunas em cards largos, 1 coluna ≤640px. Escopo exclusivo do modo compact — formulários editáveis de Solicitações (mesmo componente, densidade padrão) seguem 2 colunas, verificado por asserção E2E de largura das colunas.
+
+**G3 — comparação:** tabela única por comparação — um `<thead>` + um `<tbody>` por grupo canônico com `<th scope="rowgroup" colspan="3">` (acessível); «Sem dado nesta versão» com ênfase própria (`diff-missing`, itálico + `title` explicativo); fornecedores e legenda preservados.
+
+**G4 — auditoria Plugin UI:** nenhum primitivo novo; nenhum componente visual duplicado no MFE; nenhuma chamada direta a `api-delpi`; CSS aditivo só em `engineering-prc__*` do próprio MFE — kit recebeu apenas a regra da grade compacta (token-grade, §17.1 respeitado).
+
+**Validação:** backend PRC 256/256 (+`TestRevisionDiffSummary` ×6); MFE 435/435 (+5 `revisionDiffBuckets`); plugin-ui 2630/2630 (erro de teardown `window is not defined` no `RibbonColorPicker` é preexistente de ambiente); typecheck PASS; builds kit+MFE PASS. Deploy `up-hml-sequential.sh --build`: api 46d81200aacf, MFE cb96b92f4912, kit b4caa957d5f2 — 23/23 healthy; `diffSummary` confirmado na API viva e `auto-fit` no CSS servido. E2E Chromium real com credencial HML dedicada (`hml-tester`, `HML_TEST_*` do `.env.hml`): **36/36 PASS** (4 viewports × 9 testes: 2 novos G1/G2 + 5 refinamento + U1/U2/U3). Screenshots `prc-final-*` inspecionadas — linguagem semântica correta, grade 3 col. desktop / 1 col. mobile, dark/zoom/teclado preservados.
+
+**TEST_NOT_RUN honestos:** 403 real (sem identidade negada autorizada). **Incidente de ambiente resolvido:** a 1ª tentativa de E2E usou credenciais DEV locais contra o Keycloak HML (`ti_delpi` não existe no realm) — falha de autenticação, não de produto; corrigido com `hml-tester` do `.env.hml`. **Residuais:** `diffSummary` recomputa a cada leitura (custo desprezível); «fornecedor vinculado» descreve diferença registrada, não intenção. `TOTVS_WRITES: 0`, `PRD_DEPLOY: NOT_EXECUTED`. **Rollback:** imagens anteriores + `git revert 0d489aaa98`.
+
+**Nota de concorrência:** durante esta execução outro executor mutava `main` no mesmo worktree (commits T10–T12, resets e stash-push transitórios observados no reflog). O escopo PRC foi revalidado na árvore antes do push atômico; nenhuma alteração alheia foi incluída nem perdida. Detalhe e matriz completa: `PRC-TRACK-UX-REFINEMENT-POST-HML-2026-11-14.md` §7.

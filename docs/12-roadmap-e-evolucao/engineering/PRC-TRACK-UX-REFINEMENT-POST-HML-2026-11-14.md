@@ -82,3 +82,37 @@ Implementação: `2310b0ed52` (P0–P2) + `a472c1e33d` (regressão de recolhimen
 Ao executar ajuste pontual subsequente, fazer inventário de exports no HEAD, identificar elementos locais equivalentes, substituir apenas quando a compatibilidade e regressão forem demonstráveis, e fazer Abstraction Gate para uma eventual extensão genérica **no owner Plugin UI**. DOM/estilo interno do kit não deve ser copiado para uma implementação paralela; não confundir classes CSS utilitárias de layout com novo primitivo. Regra transversal em `WIREFRAMES.md` §17.1.
 
 **Status:** `PO_DESIGN_PRIMITIVES_RULE_APPROVED / DOCUMENTED / NO_NEW_CODE_CHANGE / HML_TEST_NOT_RUN_FOR_THIS_RULE`. O aceite anterior de U1/U2/U3 não é automaticamente revogado; inspeção e ajustes futuros devem respeitar esta regra.
+
+## 7. Refinamento final — Semântica da timeline e densidade da ficha técnica (14/11/2026 — implementado, testado e homologado em HML)
+
+**TASK_ID:** `EVA-PRC-TRACK-FINAL-UX-TIMELINE-TECHNICAL-SHEET-HML-01` — implementação `0d489aaa98` em `main`. Deploy HML: `engineering-api` 46d81200aacf, `engineering` (MFE) cb96b92f4912, `plugin-ui` b4caa957d5f2 — 23/23 containers healthy. E2E Chromium real no host HML (`hml-tester`): **36/36 PASS** (4 viewports × 9 testes). Sem writes TOTVS; sem deploy PRD.
+
+### Diagnóstico
+
+- `list_revisions` expunha só `changedPaths` — a timeline rotulava «N mudanças técnicas» incluindo campos nunca observados na revisão anterior (V1 legada esparsa × V2 schema-2). Diferença de cobertura era apresentada como alteração.
+- Ficha compacta ainda fixa em 2 colunas: campos curtos deixavam a metade direita do card vazia.
+- Comparação repetia `<thead>` idêntico por grupo e «Sem dado» era visualmente igual a texto comum.
+
+### Mudanças
+
+| Item | Mudança | Owner |
+|---|---|---|
+| G1 contrato | `list_revisions` emite `diffSummary` aditivo por revisão (`comparable`, `total`, `fields{Modified,NewlyObserved,NoLongerObserved}`, `suppliers{Added,Removed,Modified,NewlyObserved,NoLongerObserved}`), classificado pelo mesmo `compute_technical_diff` entre snapshots consecutivos — recomputo read-side, snapshots imutáveis intocados; `null` na baseline | Engineering API |
+| G1 timeline | Vn>1: «N diferenças registradas» + qualificadores («M alteração(ões) técnica(s) confirmada(s)», «K campo(s) sem informação comparável na versão anterior», «S fornecedor(es) vinculado(s)/desvinculado(s)», «J campo(s) deixaram de ser observados»); `comparable=false` → ressalva explícita; payload antigo sem `diffSummary` → resumo neutro por `changedPaths`; V1: «Primeiro acompanhamento confirmado» + «N campo(s) registrado(s) / M vínculo(s)» — sem afirmar criação no TOTVS | MFE (copy `prcCopy`, helper `revisionDiffBuckets` em `prcSnapshot.ts`) |
+| G2 densidade | `.delpi-prc__sheet--compact .delpi-prc__sheet-grid` → `repeat(auto-fit, minmax(190px,1fr))` (3–4 col. em cards largos, 1 col. ≤640px). Escopo exclusivo `density="compact"` — formulários editáveis seguem 2 colunas | plugin-ui (token-grade, sem classe nova no MFE) |
+| G3 comparação | Tabela única: um `<thead>` + um `<tbody>` por grupo canônico com `<th scope="rowgroup" colspan=3>`; «Sem dado nesta versão» com `engineering-prc__diff-missing` (itálico + sublinhado pontilhado + `title`) | MFE |
+
+### Componentes e primitivos
+
+Reutilizados, sem novo primitivo: `EngineeringPageHero`, `SegmentToggle`, `ScopeChipBar`, `DataTableSection(unframed)`, `DetailCard`, `Tabs`, `SelectField`, `PrcTechnicalSheetView(density="compact")`, `StateBanner`, `ActionButton`. HTML semântico: `<ol>` timeline, `<table>` comparação — não são primitivos duplicados (§17.1/§6). Abstraction Gate: nada a promover — `density` e a grade auto-fit são evolução interna do componente canônico.
+
+### Testes e evidências
+
+- Backend: `TestRevisionDiffSummary` ×6 (baseline null, motivador legado×schema-2 `fieldsModified=0`, mudança real `fieldsModified=1`, nulo registrado × não observado, atributos de vínculo, `comparable:false`, índice HTTP end-to-end) — suíte PRC 256/256.
+- MFE: `revisionDiffBuckets` ×5 — 435/435 total; typecheck PASS; build kit+MFE PASS; plugin-ui 2630/2630.
+- E2E novo: `G1` (textos «diferenças registradas», «sem informação comparável», ausência de «mudança(s) técnica(s)», baseline «registrado(s)»), `G2` (≥3 col. ≥1024px, 1 col. ≤640px, sem overflow); `P0-02` atualizado p/ `rowheader` dos grupos na tabela única.
+- Screenshots inspecionados: timeline (semântica nova), ficha compacta (3 col. desktop/1 col. mobile), comparação, tema escuro.
+
+### Resultado e limitações
+
+`PASS` — linguagem da timeline passa a distinguir alteração confirmada de expansão de cobertura em todos os estados (legado×schema-2, comparáveis normais, baseline, incomparável). Limitações: `diffSummary` é recomputado na leitura (custo desprezível por registro); fornecedor «vinculado» descreve diferença registrada, não intenção do usuário; 403 permanece `TEST_NOT_RUN` (sem identidade negada autorizada em HML); E2E usou credencial `hml-tester` (`HML_TEST_*` do `.env.hml`) — a credencial `ti_delpi` não existe no realm HML.
