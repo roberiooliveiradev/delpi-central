@@ -484,3 +484,14 @@ Fonte oficial verificada: https://developers.openai.com/api/docs/guides/secure-m
 **Causa operacional confirmada:** imagem/configuracao de gateway em execucao nao contem as alteracoes do PR #188. Cloudflare nao e necessario para explicar as falhas locais. Nao houve evidencia de falha do ATLAS backend; sua validacao local anterior retornou healthy/PRMD JSON/401.
 
 **Procedimento correto, ainda nao executado:** primeiro verificar snippet no checkout atualizado e criar tag de backup da **imagem atualmente em execucao**, registrar identificador da imagem; `docker compose build gateway` isolado; executar `docker compose run --rm --no-deps --entrypoint nginx gateway -t` e validar include no container de teste; apenas em janela de mudanca aprovada, `docker compose up -d --no-deps --no-build --force-recreate gateway`; validar include/health/PRMD 200 JSON/401/404 e serviços existentes. Se falhar, restaurar a tag de imagem anterior para o ref usado no serviço e forçar recriacao de apenas gateway. Manter Keycloak/ATLAS/Cloudflare intactos. **Sem deploy pelo assistente, aguardando execução e read-back do operador.**
+
+
+## 27. Raiz de sincronizacao: checkout a912fa2c69 atras da main GitHub (2026-11-15)
+
+**Diagnostico confirmado por fonte GitHub:** na comparacao `a912fa2c69..main` do repositorio `roberiooliveiradev/delpi-central`, o remoto autorizado apresentou `ahead_by=27`, `behind_by=0`. Os commits pendentes incluem `gateway/nginx.conf` modificado e `gateway/snippets/linux-ops-mcp-locations.conf` criado, alem de novos testes e automacao OAuth. O arquivo `gateway/snippets/linux-ops-mcp-locations.conf` foi verificado na `main` atual pelo GitHub.
+
+**Evidencia do operador no srv-api:** `ARQUIVO_SOURCE=AUSENTE` e `INCLUDE` ausente no `gateway/nginx.conf` local, apesar de `HEAD=origin/main=a912fa2c69` no ultimo diagnóstico anterior. Isto e consistente com *tracking ref* `origin/main` **desatualizado localmente**, sem `git fetch` recente. A imagem Docker foi corretamente construida a partir da fonte antiga, e forcar recriacao nao pode acrescentar arquivos ausentes no build context.
+
+**Proxima acao somente Git, sem alterar container:** `git fetch origin main`, verificar `git rev-list --left-right --count HEAD...origin/main`, `git ls-tree -r --name-only origin/main -- gateway/snippets/linux-ops-mcp-locations.conf` e `git diff --name-only HEAD..origin/main`. Caso remote correto e diff revisado, fazer `git merge --ff-only origin/main` mantendo `shared/delpi_auth.egg-info/SOURCES.txt` (sem reset/restore/descarte), construir/testar imagem de gateway novamente e so depois recriar o container isoladamente com rollback disponivel.
+
+**Nenhuma aplicacao de mudanca no srv-api realizada pelo agente.** `PUBLIC_MCP_ROUTE_NOT_VERIFIED`; Keycloak OAuth dedicado segue pendente.
