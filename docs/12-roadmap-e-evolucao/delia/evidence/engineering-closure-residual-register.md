@@ -2031,3 +2031,17 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | `R3-INTRA-SCENARIO-TOKEN-VALIDITY` | `OPEN_LOW` | sem mudança |
 
 **VERDICT EXECUTOR=`IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`; `PARALLEL_DISCOVERY_IMPL=NOT_AUTHORIZED`.** **NEXT=`COORDINATION_C3_T2_VOCABULARY_RELIABILITY_AND_PARALLEL_GATE_INDEPENDENT_REVIEW`.**
+
+
+### 2026-11-15 — COORDINATION_VOCABULARY_PARALLEL_REVIEW
+
+| ID | Independent decision | Gate / evidence |
+|---|---|---|
+| `T2-COMPREHENSION-DOTTED-ID-ANCHOR-FLAKE` | `OPEN_LOW / ACCEPT_WITH_RESIDUAL` | Two executor real evals 10/12 initial accept, one residual dotted anchor; independent tests `TEST_NOT_RUN`; no reliability closure |
+| `R5-REAL-MULTIPAGE-UNION-REPROOF` | `OPEN` | Native page walk previously proven, material union/sufficiency not closed |
+| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` | Evidence coverage not equivalent to accepted anchor |
+| `T2-SEQUENTIAL-CATALOG-LIST` | `AUTHORIZED_FOR_BOUNDED_ISOLATED_EXPERIMENT_ONLY` | Must reconcile obsolete asyncio/provider-level proposal, prove ContextVar bearer bind/unbind, total transport lifetime, late-result isolation, cancellation, deterministic failure order, serial regression and negative auth tests; default sequential/flag OFF |
+| `T2-PARALLEL-MCP-WORKER-LIFETIME` | `TO_PROVE_BEFORE_IMPLEMENTATION` | Per-recv timeout and `shutdown(wait=False)` are insufficient proof of total deadline or worker shutdown; STOP if unbounded |
+| `T2-CATALOG-SECURITY-ASSERTION` | `OPEN_LOW` | Replace test containing `or True` with effective forbidden-field assertions |
+
+**Coordination review:** `evidence/c3-t2-parallel-mcp-discovery-decision/coordination-independent-review-2026-11-15.md`. **NEXT:** `DELIA-C3-T2-PARALLEL-MCP-DISCOVERY-GUARDED-EXPERIMENT-01`. No production/phase promotion.
