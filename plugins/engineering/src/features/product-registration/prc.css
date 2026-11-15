@@ -1803,13 +1803,6 @@
   color: var(--en-text, #101828);
 }
 
-/* Qualificador semântico — ex.: «3 campos sem informação comparável
- * na versão anterior»; mantém o resumo honesto sem poluir. */
-.engineering-prc__vtimeline-caveat {
-  font-size: 0.8rem;
-  color: var(--en-text-muted, #667085);
-}
-
 .engineering-prc__vtimeline-preview {
   font-size: 0.8rem;
   color: var(--en-text-muted, #667085);
@@ -1830,24 +1823,15 @@
   color: var(--en-text-muted, #667085);
 }
 
-/* --- UX-P1-06 — comparação agrupada (tabela única, tbody por
- * grupo; `scope="rowgroup"` mantém a semântica sem repetir thead) -- */
+/* --- UX-P1-06 — comparação agrupada ------------------------------ */
 
-.engineering-prc__compare-group-row th {
+.engineering-prc__compare-group h4 {
+  margin: 0 0 6px;
   font-size: 0.78rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  text-align: left;
   color: var(--en-text-muted, #667085);
-  background: color-mix(in srgb, var(--en-surface, #fff) 88%, #eef2f6);
-}
-
-/* «Sem dado nesta versão» — itálico + sublinhado pontilhado separa
- * lacuna de cobertura de valor/nulo registrado (hint via title). */
-.engineering-prc__diff-missing {
-  font-style: italic;
-  border-bottom: 1px dotted var(--en-text-muted, #667085);
 }
 
 .engineering-prc__compare-legend {

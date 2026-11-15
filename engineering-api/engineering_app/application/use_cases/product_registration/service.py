@@ -214,62 +214,6 @@ def _active_info_round(
     return None
 
 
-def _revision_diff_summary(
-    prior_snapshot: dict[str, Any] | None,
-    snapshot: dict[str, Any] | None,
-) -> dict[str, Any] | None:
-    """Resumo semântico do diff técnico vs. a revisão anterior.
-
-    Retorna ``None`` para a baseline (sem revisão anterior) e
-    ``{"comparable": False}`` quando algum snapshot é ilegível.
-    Reutiliza ``compute_technical_diff`` — a mesma autoridade do
-    endpoint de comparação — para que expansão de cobertura não
-    seja contada como alteração técnica na timeline do produto.
-    """
-    if prior_snapshot is None:
-        return None
-    changes, comparable = compute_technical_diff(
-        prior_snapshot, snapshot or {}
-    )
-    if not comparable:
-        return {"comparable": False}
-    summary = {
-        "comparable": True,
-        "total": len(changes),
-        "fieldsModified": 0,
-        "fieldsNewlyObserved": 0,
-        "fieldsNoLongerObserved": 0,
-        "suppliersAdded": 0,
-        "suppliersRemoved": 0,
-        "suppliersModified": 0,
-        "suppliersNewlyObserved": 0,
-        "suppliersNoLongerObserved": 0,
-    }
-    for c in changes:
-        path = str(c.get("path") or "")
-        before_present = bool(c.get("beforePresent"))
-        after_present = bool(c.get("afterPresent"))
-        if path.startswith("suppliers["):
-            link_state = c.get("linkState")
-            if link_state == "added":
-                summary["suppliersAdded"] += 1
-            elif link_state == "removed":
-                summary["suppliersRemoved"] += 1
-            elif before_present and after_present:
-                summary["suppliersModified"] += 1
-            elif after_present:
-                summary["suppliersNewlyObserved"] += 1
-            else:
-                summary["suppliersNoLongerObserved"] += 1
-        elif before_present and after_present:
-            summary["fieldsModified"] += 1
-        elif after_present:
-            summary["fieldsNewlyObserved"] += 1
-        else:
-            summary["fieldsNoLongerObserved"] += 1
-    return summary
-
-
 class ProductRegistrationService:
     """Casos de uso do módulo — mesma implementação REST/EVA."""
 
@@ -1329,24 +1273,16 @@ class ProductRegistrationService:
             raise PrcForbiddenError("Revisões restritas a analistas.")
         self.get_record(record_id, actor=actor)
         items = self._repo.list_revisions(record_id)
-        index = []
-        previous_snapshot: dict[str, Any] | None = None
-        for r in items:
-            index.append(
-                {
-                    "revisionNumber": r["revision_number"],
-                    "requestId": r["request_id"],
-                    "approvedBy": r["approved_by_subject"],
-                    "approvedAt": r["approved_at"],
-                    "changedPaths": [
-                        c.get("path") for c in r.get("changes", [])
-                    ],
-                    "diffSummary": _revision_diff_summary(
-                        previous_snapshot, r.get("technical_snapshot")
-                    ),
-                }
-            )
-            previous_snapshot = r.get("technical_snapshot")
+        index = [
+            {
+                "revisionNumber": r["revision_number"],
+                "requestId": r["request_id"],
+                "approvedBy": r["approved_by_subject"],
+                "approvedAt": r["approved_at"],
+                "changedPaths": [c.get("path") for c in r.get("changes", [])],
+            }
+            for r in items
+        ]
         return {"items": index, "total": len(index)}
 
     def get_revision(

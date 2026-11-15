@@ -6,7 +6,6 @@
 import type {
   PrcRecordFlag,
   PrcRevisionChange,
-  PrcRevisionDiffSummary,
   PrcTechnicalSnapshot,
 } from "./api/productRegistrationApi";
 
@@ -214,58 +213,4 @@ export function supplierLinkIdentity(path: string): {
   if (!match) return null;
   const [supplierCode = "", store = ""] = match[1].split("|");
   return { supplierCode, store, attribute: match[2] ?? null };
-}
-
-export type RevisionDiffBuckets = {
-  total: number;
-  /** Campos/atributos com valor observado nos dois lados e
-   * alterados — única classe que pode ser chamada de «alteração
-   * técnica confirmada». */
-  confirmed: number;
-  /** Observados pela primeira vez nesta revisão — lacuna de
-   * cobertura do snapshot anterior, NÃO alteração confirmada. */
-  firstObserved: number;
-  /** Vínculos de fornecedor novos/removidos (mudança registrada,
-   * mas semântica própria — não «campo»). */
-  suppliersLinked: number;
-  suppliersUnlinked: number;
-  /** Observados antes e ausentes agora — pode ser remoção ou
-   * redução de cobertura; reportar como «deixou de ser observado». */
-  noLongerObserved: number;
-};
-
-/** Decompõe o `diffSummary` da Engineering API em classes de
- * apresentação honestas. `null` → payload antigo/sem classificação
- * (consumidor cai no resumo neutro por `changedPaths`). */
-export function revisionDiffBuckets(
-  summary: PrcRevisionDiffSummary | null | undefined,
-): RevisionDiffBuckets | null {
-  if (!summary || summary.comparable !== true) return null;
-  const num = (v: number | undefined) =>
-    typeof v === "number" && Number.isFinite(v) ? v : 0;
-  const firstObserved =
-    num(summary.fieldsNewlyObserved) +
-    num(summary.suppliersNewlyObserved);
-  const noLongerObserved =
-    num(summary.fieldsNoLongerObserved) +
-    num(summary.suppliersNoLongerObserved);
-  const confirmed =
-    num(summary.fieldsModified) + num(summary.suppliersModified);
-  const suppliersLinked = num(summary.suppliersAdded);
-  const suppliersUnlinked = num(summary.suppliersRemoved);
-  const total =
-    num(summary.total) ||
-    confirmed +
-      firstObserved +
-      suppliersLinked +
-      suppliersUnlinked +
-      noLongerObserved;
-  return {
-    total,
-    confirmed,
-    firstObserved,
-    suppliersLinked,
-    suppliersUnlinked,
-    noLongerObserved,
-  };
 }
