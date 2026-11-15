@@ -173,4 +173,4 @@ SHA BFF: `aefd74682d`. Report: [reports/U10-desempenho-e-perfis.md](./reports/U1
 
 | Data | Etapa | SHA | Status | Nota |
 |---|---|---|---|---|
-| 2026-11-15 | U10 | `aefd74682d` (+e2e/docs) | DONE | G9 BFF; perfis HML; inventário axe; PROD BFF |
+| 2026-11-15 | U10 | `aefd74682d` / `f71d6006f9` | DONE | G9 BFF; e2e LGPD+perfis+axe; PROD BFF publicada |
