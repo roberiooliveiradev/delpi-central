@@ -39,7 +39,7 @@ Fonte: [review.md](./review.md). Autoridade: instruções oficiais do arquiteto 
 | U9 Rework (G9, perfis, axe, página do usuário) | DONE | `1a1b8749bb` |
 | U10 Desempenho BFF e perfis | DONE | `aefd74682d` |
 | U11 Sem análise anterior | INCLUÍDA NA U12 | — |
-| U14 Acabamento visual da Auditoria + sai «Pergunte à CLARA» (Y1–Y5) | READY | [prompt](./prompts/U14-acabamento-visual.md) |
+| U14 Refinamento visual + defeitos da seleção + CLARA fora do Portal (F0–F5, com verificador) | READY | [prompt](./prompts/U14-acabamento-visual.md) |
 | U13 Residuais da U12 (X1 axe, X2 testes antigos, X3 filtro) | DONE | [prompt](./prompts/U13-residuais.md) |
 | U12 Revisão 2 do owner (W0–W8) | DONE (W2–W8) | `ba53e55a2a` + tags rollback-ui-review-u12-* |
 | U13 Residuais da U12 (X1–X3) | DONE | `f546acd388` + tag `rollback-ui-review-u13-controllership-finance` |
@@ -317,3 +317,20 @@ Observações (sem bloqueio):
 ### U14 — acabamento visual (15/11)
 
 Inspeção do Claude em PROD (entrada e análise 07–13/11, 1440×900 e ≈800 px, medição no DOM), aprovada pelo owner. **Decisão do owner:** a CLARA é um MCP usado no ChatGPT/Claude, não um assistente dentro do Portal — sai o card «Pergunte à CLARA», o botão «Copiar pergunta para a CLARA» e o bloco «Sugestão da CLARA» (campo que a BFF não produz). A página de consentimento e o MCP seguem. Prompt: [prompts/U14-acabamento-visual.md](./prompts/U14-acabamento-visual.md).
+
+## 11. U14 — refinamento visual e defeitos da seleção (com verificação independente)
+
+Requisitos e critérios: [review-3.md](./review-3.md) (RQ-U14-SEL, -BFF, -ENT, -KPI, -GRA, -TAB, -CLARA, -DOD). Prompt: [prompts/U14-acabamento-visual.md](./prompts/U14-acabamento-visual.md) (versão 2).
+
+| Fase | Escopo | Gate | Deploy |
+|---|---|---|---|
+| F0 | Rebaseline, reprodução do defeito em HML, screenshots «antes» | — | — |
+| F1 | RQ-U14-SEL no MFE: «Limpar seleção», segundo clique limpa, «Limpar filtros» | verificador | HML → **PROD** (correção isolada, alto impacto) |
+| F2 | RQ-U14-BFF + AC-SEL-3 (gráfico de seleção sem o próprio filtro) | verificador | HML |
+| F3 | RQ-U14-ENT + RQ-U14-KPI | verificador | HML |
+| F4 | RQ-U14-GRA + RQ-U14-TAB | verificador | HML |
+| F5 | RQ-U14-CLARA + README realKit | verificador | HML → PROD de F2–F5 (BFF, depois MFE) |
+
+**Verificação por fase** (AGENTS.md § Verificação; `agent-kit/verifier/project-contract.md`): pedido com os AC da fase em `<git-dir>/delpi-verifier/requests/`, `verify.py`, até 3 rodadas, veredito sem edição no report. `DECISION_REQUIRED`/`EXECUTION_DRIFT` param a trilha. Verificador indisponível → parar (sem seguir sem verificação).
+
+**Revisão do Claude** depois do report: confere código, testes e PROD pela CLARA (summary/breakdowns com e sem filtro) e decide ACCEPT / REWORK por AC.
