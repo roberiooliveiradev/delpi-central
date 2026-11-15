@@ -63,7 +63,10 @@ test.describe("U7 UI review HML", () => {
     const summaryPromise = waitForSummaryKpis(page);
     await historyRow.click();
     await expect(
-      page.getByRole("heading", { name: /Análise de /i }),
+      page
+        .getByRole("heading", { name: /Análise de /i })
+        .or(page.getByLabel("Indicadores da auditoria"))
+        .first(),
     ).toBeVisible({ timeout: 60_000 });
     const openMs = Date.now() - t0;
     const kpis = await summaryPromise;

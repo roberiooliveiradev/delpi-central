@@ -378,6 +378,32 @@ export function EntryAuditAnalysisPage({
     }
   };
 
+  const dailyPoints = useMemo(() => {
+    if (!daily?.series?.length) return [];
+    const byName = new Map<
+      string,
+      { name: string; current: number; previous: number }
+    >();
+    daily.series.forEach((item) => {
+      byName.set(item.name, {
+        name: item.name,
+        current: item.count,
+        previous: 0,
+      });
+    });
+    daily.previous.forEach((item) => {
+      const existing = byName.get(item.name);
+      if (existing) existing.previous = item.count;
+      else
+        byName.set(item.name, {
+          name: item.name,
+          current: 0,
+          previous: item.count,
+        });
+    });
+    return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [daily]);
+
   if (error && !data) {
     return (
       <section className="cf-page-stack">
@@ -509,29 +535,6 @@ export function EntryAuditAnalysisPage({
       onSelect: () => navigateWith({ tab: item.value }),
     };
   });
-
-  const dailyPoints = useMemo(() => {
-    if (!daily?.series?.length) return [];
-    const byName = new Map<string, { name: string; current: number; previous: number }>();
-    daily.series.forEach((item) => {
-      byName.set(item.name, {
-        name: item.name,
-        current: item.count,
-        previous: 0,
-      });
-    });
-    daily.previous.forEach((item) => {
-      const existing = byName.get(item.name);
-      if (existing) existing.previous = item.count;
-      else
-        byName.set(item.name, {
-          name: item.name,
-          current: 0,
-          previous: item.count,
-        });
-    });
-    return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
-  }, [daily]);
 
   const copySuggestion = async (text: string) => {
     try {
