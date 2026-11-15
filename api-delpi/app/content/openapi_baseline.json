@@ -74076,6 +74076,13 @@
           "type": "string"
         },
         {
+          "name": "previous_code",
+          "in": "query",
+          "required": false,
+          "description": "Filtro opcional por código anterior (SB1.B1_CODANT, exato) — linhagem cadastral: retorna produtos cujo código anterior é o informado (ex.: cotação 8000/8001 → produtivo).",
+          "type": "string"
+        },
+        {
           "name": "view",
           "in": "query",
           "required": false,
