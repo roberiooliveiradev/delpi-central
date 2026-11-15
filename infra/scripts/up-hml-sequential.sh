@@ -57,6 +57,7 @@ FASE_MFE=(
   production-control
   my-requests
   engineering
+  controllership-finance
   lancamento-notas-fiscais
   commercial
   public-hub
@@ -136,6 +137,7 @@ compose_profiles_for() {
     my-requests) echo my-requests ;;
     engineering-api) echo engineering-api ;;
     engineering) echo engineering ;;
+    controllership-finance) echo controllership-finance ;;
     lancamento-notas-fiscais) echo lancamento-notas-fiscais ;;
     financial-api) echo financial-api ;;
     controllership-finance-api) echo controllership-finance-api ;;

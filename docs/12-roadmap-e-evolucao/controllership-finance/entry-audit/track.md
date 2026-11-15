@@ -68,8 +68,8 @@
 | — | **PARADA: verificação do owner pela CLARA** | — | PROD | | | T9R5 publicado; front liberado |
 | T10.0 | Reconciliação docs × contrato BFF | DONE | docs | 1cbe0945b2 | 2026-11-14 | DECISION_REQUIRED vazio; frontend READY |
 | T10 | plugin-ui — caracterização, evoluções, primitivos | DONE | DEV | d7ffdd6e46 | 2026-11-14 | DistributionDonut + ResolutionStatusCell; evoluções aditivas §§3–6; 120 testes focados PASS |
-| T11 | MFE — páginas 01, 02, 03 + Ajuda | DONE | DEV | (este commit) | 2026-11-14 | rotas entry-audit; Home/Analysis/Occurrence; Cf*; Ajuda; atalho fechamento; 46 PASS + tsc |
-| T12 | Front-end em HML | TODO | | | | |
+| T11 | MFE — páginas 01, 02, 03 + Ajuda | DONE | DEV | 348930aa55 | 2026-11-14 | rotas entry-audit; Home/Analysis/Occurrence; Cf*; Ajuda; atalho fechamento; 46 PASS + tsc |
+| T12 | Front-end em HML | IN_PROGRESS | HML | | 2026-11-14 | MFE no compose HML; ensaio Playwright |
 | T13 | PROD — front-end | TODO | | | | |
 
 Status: TODO · IN_PROGRESS · BLOCKED · DONE.

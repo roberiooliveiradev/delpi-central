@@ -606,6 +606,31 @@ services:
       delpi.environment: homologation
       delpi.project: delpi-hml
 
+  # MFE Controladoria & Finanças — Auditoria de Entradas e fechamento.
+  controllership-finance:
+    extends:
+      file: docker-compose.yml
+      service: controllership-finance
+    profiles: [controllership-finance, baseline, platform]
+    image: delpi-hml/controllership-finance:local
+    container_name: delpi-hml-controllership-finance
+    ports: !override []
+    depends_on: !override {}
+    networks: !override
+      - delpi-hml
+    volumes: !override []
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null -T 3 http://127.0.0.1/assets/remoteEntry.js || wget -q -O /dev/null -T 3 http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    mem_limit: 512m
+    cpus: 0.5
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
   # Portal Financeiro — fonte Questor da auditoria de entradas. Segredos só no .env.hml.
   financial-api:
     extends:

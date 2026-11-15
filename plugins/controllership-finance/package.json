@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "test": "bash -O globstar -c 'vitest run --config vitest.config.ts && tsx --test src/**/*.test.mjs'",
+    "test:e2e": "playwright test -c e2e/playwright.config.ts",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.62.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^24.10.1",
