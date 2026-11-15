@@ -520,3 +520,16 @@ Fonte oficial verificada: https://developers.openai.com/api/docs/guides/secure-m
 - **Configuracao exigida:** trocar metodo de registro de `DCR` para cliente previamente registrado (`provided`, rotulo pode variar), definir `clientId=mcp-linux-ops`, token endpoint client authentication `client_secret_post`; client secret somente no formulario de conexao do ChatGPT, nunca em chat/Git. Nao habilitar DCR para contornar Keycloak nem inventar callback URI.
 - **Dependencia sequencial:** ChatGPT mostra redirect URI exata nas configuracoes de gerenciamento do servidor ou conexao. Copiar essa URI literal para o cliente Keycloak no momento de provisioning. Sem URL real, **nao executar `--apply`**; `--check` permite diagnostico somente leitura. Antes de `--apply`, verificar PR de endurecimento #190 integrado, backup de Keycloak, grants Core e prescricao do runbook.
 - Publicacao HTTPS ja validada por operador em 200 JSON (PRMD), 401 MCP nao autorizado, 404 health externo. Ainda nao comprovados callback, cliente Keycloak criado, login humano ou `tools/list` e `tools/call`.
+
+
+## 30. ChatGPT rejeita criacao do plugin com cliente OAuth ainda nao provisionado (2026-11-15)
+
+**Evidencia da UI enviada pelo operador:**
+- Criacao de servidor MCP personalizado em `https://minhadelpi.com.br/apps/linux-ops-mcp/mcp`, OAuth avancado `Cliente OAuth definido pelo usuario`, client ID `mcp-linux-ops`.
+- URL de callback gerada e exibida no campo da UI; valor visivel apenas parcialmente na captura. **Copiar diretamente pelo icone da interface, sem derivar do texto cortado.**
+- Campo `Segredo do cliente OAuth (opcional)` em branco; o cliente planejado no Keycloak e **confidential**, portanto exige secret ao usar metodo `client_secret_post`.
+- Aviso `O CIMD esta indisponivel porque o servidor nao declarou suporte ao CIMD` e **informativo**, nao a causa demonstrada do erro. Metodo escolhido e cliente fornecido, nao CIMD.
+- Ao clicar `Criar como plugin`, UI nao persistiu e mostrou `Algumas configuracoes do aplicativo foram rejeitadas. Verifique a URL do servidor ou o ID do tunel, o icone e as configuracoes de autenticacao e tente novamente.`
+- OAuth PRMD publico 200 JSON, MCP sem token 401 e health externo 404 ja validados; **nao concluir** que erro no gateway. Causa exata do erro generico na UI nao e demonstravel apenas pelo print. Hipotese forte: client ainda nao provisionado e/ou secret ausente, ou metodo de autenticao no token incorreto; exigem verificacao.
+
+**Proxima acao:** `python3 infra/scripts/keycloak_linux_ops_client.py --check` em srv-api, sem prints de credenciais. Confirmar backup atual do Keycloak, copiar callback exata diretamente do ChatGPT para `LINUX_OPS_OAUTH_REDIRECT_URI` local e somente com autorizacao fazer `--apply`; depois conferir `--check` NO_DRIFT, obter secret em Keycloak > Clients > mcp-linux-ops > Credentials, preencher somente no editor do ChatGPT e selecionar `client_secret_post`. Nao aplicar modificacoes globais em Keycloak e nao reiniciar gateway. Se falhar apos isso, inspecionar motivo tecnicamente antes de diagnosticar.
