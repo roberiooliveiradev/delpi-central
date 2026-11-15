@@ -44,6 +44,8 @@ from pg_test_isolation import (
     drop_owned_test_database,
     require_test_environment,
 )
+from migration_head import latest_product_migration, product_migration_names  # noqa: E402
+
 
 PG_ENV = (
     "CF_TEST_PG_HOST",
@@ -111,7 +113,7 @@ def _configure_db():
 @pytest.fixture(scope="module")
 def migrated(_configure_db):
     applied = mr.run_migrations()
-    assert applied[-1] == "V021__closing_audit_competence_set_null.sql"
+    assert applied[-1] == latest_product_migration()
     return True
 
 

@@ -62,6 +62,8 @@ from pg_test_isolation import (  # noqa: E402
     drop_owned_test_database,
     require_test_environment,
 )
+from migration_head import latest_product_migration, product_migration_names  # noqa: E402
+
 
 
 def _test_connect(dbname: str) -> psycopg.Connection:
@@ -118,23 +120,8 @@ def _configure_db():
 @pytest.fixture(scope="module")
 def setup(_configure_db):
     applied = mr.run_migrations()
-    assert applied[-13:] == [
-        "V007__p3_cutoff_reconciliation.sql",
-        "V008__p5_packages_review.sql",
-        "V009__p3_official_provenance.sql",
-        "V010__p6_catalogs_review_lifecycle_notifications.sql",
-        "V011__clara_knowledge_and_proposals.sql",
-        "V012__clara_batch_orchestration.sql",
-        "V013__clara_step_up_consent.sql",
-        "V014__clara_consent_challenge.sql",
-        "V015__monthly_competence_optional_template.sql",
-        "V016__document_messages.sql",
-        "V017__document_requirement_operations.sql",
-        "V018__recipient_document_delivery.sql",
-        "V019__clara_direct_execution_idempotency.sql",
-        "V020__clara_batch_mcp_confirmation_mode.sql",
-        "V021__closing_audit_competence_set_null.sql",
-    ]
+    assert applied == product_migration_names()
+    assert "V021__closing_audit_competence_set_null.sql" in applied
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])
     checklist.submit_version_for_review(

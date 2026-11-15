@@ -253,9 +253,9 @@ def test_fichas_cover_engine_rules_and_open_questions():
     missing = {rule_id.strip('"') for rule_id in rule_ids if rule_id.strip('"') not in text}
     assert not missing, missing
     assert "Equipe fiscal/contábil (aciona as outras áreas)" in text
-    assert "TO_INVENTORY (P2)" not in text
-    for marker in ("TO_INVENTORY (P4)", "TO_INVENTORY (P5)", "TO_INVENTORY (P7)"):
-        assert marker in text
+    for closed in ("TO_INVENTORY (P2)", "TO_INVENTORY (P4)", "TO_INVENTORY (P5)"):
+        assert closed not in text
+    assert "TO_INVENTORY (P7)" in text
     assert not (fichas_root / "AE-15.md").exists()
     from controllership_finance_app.application.clara.corpus_manifest import AUTHORIZED_SOURCES
     registered = {spec.source_id: spec for spec in AUTHORIZED_SOURCES}

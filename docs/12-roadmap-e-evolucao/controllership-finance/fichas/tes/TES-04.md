@@ -1,6 +1,6 @@
 # TES-04 — Catálogo das TES de saída
 
-Versão da ficha: 1.0 · 14/11/2026 · gerada de `fonte/sf4-2026-11-09.csv` por `fonte/gerar_catalogo_tes.py`.
+Versão da ficha: 1.0 · gerada da extração da SF4 de 09/11/2026.
 
 ## Identificação
 
@@ -34,22 +34,22 @@ Saídas para o exterior (CFOP 7xxx).
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 659 | EXP . DRAWBACK | 7127 | S | S | S/N/O | N/N/O | — | — | N | — |
-| 662 | VENDA EXPORTACAO | 7101 | S | S | S/N/O | N/N/O | — | — | N | — |
-| 667 | VENDA EXPORTACAO | 7101 | S | S | S/N/O | N/N/O | Deb | — | N | — |
-| 719 | EXPORTAÇÃO MERCADORI | 7102 | S | S | S/N/O | N/N/O | Deb | — | N | — |
-| 720 | AMOSTRA EXP | 7949 | S | N | S/N/O | N/N/O | — | — | N | — |
-| 721 | IMPORT.OUTRAS ENTRAD | 7949 | S | N | S/N/O | N/N/O | — | — | N | 309 |
-| 723 | AMOSTRA EXP | 7949 | S | N | S/N/O | N/N/O | — | — | N | — |
-| 724 | IMPORT.OUTRAS ENTRAD | 7949 | N | N | S/N/O | N/N/O | — | — | N | 309 |
-| 763 | ENT.IMPORTACAO DIRET (7949 - IMPORTACAO P/INDUSTRIALIZACAO C/ICMS DIFERIDO E C/IPI E  C/CRED PIS/COFINS) | 7201 | N | N | S/N/O | S/S/T | Deb | — | N | 308 |
-| 764 | ENT.IMPORTACAO DIRET (7949 - IMPORTACAO P/INDUSTRIALIZACAO C/ICMS DIFERIDO E C/IPI E  C/CRED PIS/COFINS) | 7201 | S | N | N/N/O | S/S/T | Deb | — | N | 308 |
+| TES 659 | EXP . DRAWBACK | 7127 | S | S | S/N/O | N/N/O | — | — | N | — |
+| TES 662 | VENDA EXPORTACAO | 7101 | S | S | S/N/O | N/N/O | — | — | N | — |
+| TES 667 | VENDA EXPORTACAO | 7101 | S | S | S/N/O | N/N/O | Deb | — | N | — |
+| TES 719 | EXPORTAÇÃO MERCADORI | 7102 | S | S | S/N/O | N/N/O | Deb | — | N | — |
+| TES 720 | AMOSTRA EXP | 7949 | S | N | S/N/O | N/N/O | — | — | N | — |
+| TES 721 | IMPORT.OUTRAS ENTRAD | 7949 | S | N | S/N/O | N/N/O | — | — | N | 309 |
+| TES 723 | AMOSTRA EXP | 7949 | S | N | S/N/O | N/N/O | — | — | N | — |
+| TES 724 | IMPORT.OUTRAS ENTRAD | 7949 | N | N | S/N/O | N/N/O | — | — | N | 309 |
+| TES 763 | ENT.IMPORTACAO DIRET (7949 - IMPORTACAO P/INDUSTRIALIZACAO C/ICMS DIFERIDO E C/IPI E  C/CRED PIS/COFINS) | 7201 | N | N | S/N/O | S/S/T | Deb | — | N | 308 |
+| TES 764 | ENT.IMPORTACAO DIRET (7949 - IMPORTACAO P/INDUSTRIALIZACAO C/ICMS DIFERIDO E C/IPI E  C/CRED PIS/COFINS) | 7201 | S | N | N/N/O | S/S/T | Deb | — | N | 308 |
 
 ### Exportação — TES de saída bloqueadas
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 750 | AMOSTRA GRATIS | 7949 | S | N | N/N/I | N/N/I | — | — | N | — |
+| TES 750 | AMOSTRA GRATIS | 7949 | S | N | N/N/I | N/N/I | — | — | N | — |
 
 ## Vendas (saída)
 
@@ -63,56 +63,56 @@ Venda de produção própria e de mercadoria de revenda (CFOP x101, x102, x401, 
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 501 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 5101 | S | S | S/S/T | S/S/T | Deb | — | N | 120 |
-| 505 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 5101 | N | S | S/S/T | S/S/T | Deb | — | N | — |
-| 506 | VENDA DE MERC. ADQ. OU RECEBIDA DE TERC. | 5102 | S | S | S/S/T | S/S/T | Deb | — | N | — |
-| 515 | VENDA MERC. ADQ. RECEBIDA TERC. S/ IPI | 5102 | S | S | S/S/T | N/N/O | Deb | — | N | — |
-| 538 | VENDA MERC. ADQ. RECEBIDA TERC. | 5102 | S | S | S/S/T | N/N/O | Deb | — | N | — |
-| 594 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 5101 | N | S | S/S/T | S/S/T | Deb | — | N | 127 |
-| 606 | VENDA DE PRODUCAO DO ESTAB. ZFM | 6109 | S | S | S/N/I | N/N/O | — | — | N | 181 |
-| 609 | VENDA DE PRODUCAO DO ESTAB. CONSUMO | 5101 | S | S | S/S/T | S/S/T | Deb | — | N | — |
-| 614 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 5101 | S | S | S/S/T | S/S/T | Deb | — | N | 120 |
-| 619 | VENDA DE PRODUCAO DO ESTAB. SUCATAS | 5101 | N | S | S/N/O | N/N/O | Deb | — | N | — |
-| 663 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 5101 | S | S | S/S/T | N/N/O | Deb | — | N | 011 |
-| 666 | VENDA MERC. ADQ. RECEBIDA TERC. | 5102 | S | S | S/S/T | S/S/T | Deb | — | N | — |
-| 706 | VENDA DE PRODUCAO DO ESTABELECIMENTO (VENDA) | 5101 | S | S | S/S/T | S/S/T | Deb | — | N | 120 |
-| 707 | VENDA DE PRODUCAO DO ESTAB. CONSUMO RED (VENDA) | 5101 | S | S | S/S/T | S/S/T | Deb | — | N | 120 |
-| 708 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 5101 | S | S | S/N/O | S/S/T | Deb | — | N | 120 |
-| 716 | VENDA DE PRODUCAO DO ESTABELECIMENTO (VENDA) | 5101 | N | S | S/S/T | S/S/T | Deb | — | N | 009 |
+| TES 501 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 5101 | S | S | S/S/T | S/S/T | Deb | — | N | 120 |
+| TES 505 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 5101 | N | S | S/S/T | S/S/T | Deb | — | N | — |
+| TES 506 | VENDA DE MERC. ADQ. OU RECEBIDA DE TERC. | 5102 | S | S | S/S/T | S/S/T | Deb | — | N | — |
+| TES 515 | VENDA MERC. ADQ. RECEBIDA TERC. S/ IPI | 5102 | S | S | S/S/T | N/N/O | Deb | — | N | — |
+| TES 538 | VENDA MERC. ADQ. RECEBIDA TERC. | 5102 | S | S | S/S/T | N/N/O | Deb | — | N | — |
+| TES 594 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 5101 | N | S | S/S/T | S/S/T | Deb | — | N | 127 |
+| TES 606 | VENDA DE PRODUCAO DO ESTAB. ZFM | 6109 | S | S | S/N/I | N/N/O | — | — | N | 181 |
+| TES 609 | VENDA DE PRODUCAO DO ESTAB. CONSUMO | 5101 | S | S | S/S/T | S/S/T | Deb | — | N | — |
+| TES 614 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 5101 | S | S | S/S/T | S/S/T | Deb | — | N | 120 |
+| TES 619 | VENDA DE PRODUCAO DO ESTAB. SUCATAS | 5101 | N | S | S/N/O | N/N/O | Deb | — | N | — |
+| TES 663 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 5101 | S | S | S/S/T | N/N/O | Deb | — | N | 011 |
+| TES 666 | VENDA MERC. ADQ. RECEBIDA TERC. | 5102 | S | S | S/S/T | S/S/T | Deb | — | N | — |
+| TES 706 | VENDA DE PRODUCAO DO ESTABELECIMENTO (VENDA) | 5101 | S | S | S/S/T | S/S/T | Deb | — | N | 120 |
+| TES 707 | VENDA DE PRODUCAO DO ESTAB. CONSUMO RED (VENDA) | 5101 | S | S | S/S/T | S/S/T | Deb | — | N | 120 |
+| TES 708 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 5101 | S | S | S/N/O | S/S/T | Deb | — | N | 120 |
+| TES 716 | VENDA DE PRODUCAO DO ESTABELECIMENTO (VENDA) | 5101 | N | S | S/S/T | S/S/T | Deb | — | N | 009 |
 
 ### Vendas — TES de saída bloqueadas
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 502 | VENDA DE MERCADORIAS | 5102 | N | S | N/S/T | S/S/T | Deb | — | N | — |
-| 503 | VENDA S ICMS | 5101 | N | S | N/N/T | S/S/T | Deb | — | N | 010 |
-| 504 | VENDAS | 5101 | S | S | S/S/T | S/S/T | Deb | — | N | — |
-| 507 | VENDAS | 5101 | N | S | S/N/T | S/S/T | Deb | — | N | 120 |
-| 508 | VENDAS | 5101 | S | S | N/N/O | S/S/T | Deb | — | N | 009 |
-| 509 | VENDA REM.ANT.CONSIG | 6111 | N | S | N/N/N | N/N/N | — | — | N | — |
-| 513 | VENDA MERC. S/ ESTOQ | 5102 | N | S | S/S/T | S/S/T | Deb | — | N | — |
-| 516 | COMPLEM. ICMS | 5101 | N | N | S/S/T | N/N/N | — | — | N | — |
-| 517 | VENDA SUBS. TRIB | 5401 | S | S | S/S/T | S/S/T | Deb | — | N | — |
-| 523 | VENDA | 5101 | S | S | S/S/O | N/N/O | Deb | — | N | — |
-| 545 | VENDA REMETIDA P IND | 5122 | S | S | S/S/T | S/S/T | — | — | N | — |
-| 556 | VENDA MERC. A ORDEM | 5123 | S | S | S/S/T | S/S/T | Deb | — | N | — |
-| 565 | VENDA PROD. PROPRIA | 5401 | S | S | N/N/O | S/S/T | Deb | — | N | — |
-| 566 | VENDA PRODUÇÃO | 5101 | N | S | N/N/O | S/S/T | Deb | — | N | — |
-| 573 | VENDA MERC. ADQ. RECEBIDA TERC. | 5102 | S | S | S/N/I | N/N/O | Deb | — | N | 201 |
-| 611 | VENDA MERCADORIA | 5102 | S | S | S/N/O | S/S/T | Deb | — | N | — |
-| 612 | VENDA PROD. PROPRIA | 5101 | S | S | S/N/T | S/N/T | Deb | — | N | — |
-| 621 | VENDA PRODUÇÃO | 5101 | N | S | S/S/T | S/S/T | Deb | — | N | 120 |
-| 625 | VENDA COM ST | 5405 | N | S | N/N/O | N/N/O | — | — | N | — |
-| 629 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 5101 | N | S | S/S/T | S/S/T | Deb | — | N | — |
-| 635 | COMPLEM. ICMS | 5101 | N | N | S/S/T | N/N/N | Deb | — | N | — |
-| 636 | VENDA MERC. ADQ. RECEBIDA TERC. | 5102 | S | S | S/S/T | S/S/T | Deb | — | N | — |
-| 639 | VENDA SUCATA | 5101 | S | S | S/N/O | N/N/O | Deb | — | N | — |
-| 665 | VENDA SUCATA | 5101 | N | S | S/N/T | N/N/O | Deb | — | N | — |
-| 670 | VENDA PROD. | 5101 | N | S | S/S/T | S/S/T | Deb | — | N | 120 |
-| 700 | VENDAS (VENDAS  - FILIAL 02) | 5101 | S | S | S/S/T | S/S/T | Deb | — | N | 400 |
-| 703 | VENDA SUCATA ES (VENDA SUCATA) | 5101 | N | S | N/N/O | N/N/O | Deb | — | N | 191 |
-| 715 | VENDA PRODUÇÃO PROPI | 5101 | S | S | S/N/T | S/N/T | Deb | — | N | — |
-| 758 | VENDA PRODUÇÃO (VENDA) | 5101 | N | S | S/S/T | S/S/T | Deb | — | N | 120 |
+| TES 502 | VENDA DE MERCADORIAS | 5102 | N | S | N/S/T | S/S/T | Deb | — | N | — |
+| TES 503 | VENDA S ICMS | 5101 | N | S | N/N/T | S/S/T | Deb | — | N | 010 |
+| TES 504 | VENDAS | 5101 | S | S | S/S/T | S/S/T | Deb | — | N | — |
+| TES 507 | VENDAS | 5101 | N | S | S/N/T | S/S/T | Deb | — | N | 120 |
+| TES 508 | VENDAS | 5101 | S | S | N/N/O | S/S/T | Deb | — | N | 009 |
+| TES 509 | VENDA REM.ANT.CONSIG | 6111 | N | S | N/N/N | N/N/N | — | — | N | — |
+| TES 513 | VENDA MERC. S/ ESTOQ | 5102 | N | S | S/S/T | S/S/T | Deb | — | N | — |
+| TES 516 | COMPLEM. ICMS | 5101 | N | N | S/S/T | N/N/N | — | — | N | — |
+| TES 517 | VENDA SUBS. TRIB | 5401 | S | S | S/S/T | S/S/T | Deb | — | N | — |
+| TES 523 | VENDA | 5101 | S | S | S/S/O | N/N/O | Deb | — | N | — |
+| TES 545 | VENDA REMETIDA P IND | 5122 | S | S | S/S/T | S/S/T | — | — | N | — |
+| TES 556 | VENDA MERC. A ORDEM | 5123 | S | S | S/S/T | S/S/T | Deb | — | N | — |
+| TES 565 | VENDA PROD. PROPRIA | 5401 | S | S | N/N/O | S/S/T | Deb | — | N | — |
+| TES 566 | VENDA PRODUÇÃO | 5101 | N | S | N/N/O | S/S/T | Deb | — | N | — |
+| TES 573 | VENDA MERC. ADQ. RECEBIDA TERC. | 5102 | S | S | S/N/I | N/N/O | Deb | — | N | 201 |
+| TES 611 | VENDA MERCADORIA | 5102 | S | S | S/N/O | S/S/T | Deb | — | N | — |
+| TES 612 | VENDA PROD. PROPRIA | 5101 | S | S | S/N/T | S/N/T | Deb | — | N | — |
+| TES 621 | VENDA PRODUÇÃO | 5101 | N | S | S/S/T | S/S/T | Deb | — | N | 120 |
+| TES 625 | VENDA COM ST | 5405 | N | S | N/N/O | N/N/O | — | — | N | — |
+| TES 629 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 5101 | N | S | S/S/T | S/S/T | Deb | — | N | — |
+| TES 635 | COMPLEM. ICMS | 5101 | N | N | S/S/T | N/N/N | Deb | — | N | — |
+| TES 636 | VENDA MERC. ADQ. RECEBIDA TERC. | 5102 | S | S | S/S/T | S/S/T | Deb | — | N | — |
+| TES 639 | VENDA SUCATA | 5101 | S | S | S/N/O | N/N/O | Deb | — | N | — |
+| TES 665 | VENDA SUCATA | 5101 | N | S | S/N/T | N/N/O | Deb | — | N | — |
+| TES 670 | VENDA PROD. | 5101 | N | S | S/S/T | S/S/T | Deb | — | N | 120 |
+| TES 700 | VENDAS (VENDAS  - FILIAL 02) | 5101 | S | S | S/S/T | S/S/T | Deb | — | N | 400 |
+| TES 703 | VENDA SUCATA ES (VENDA SUCATA) | 5101 | N | S | N/N/O | N/N/O | Deb | — | N | 191 |
+| TES 715 | VENDA PRODUÇÃO PROPI | 5101 | S | S | S/N/T | S/N/T | Deb | — | N | — |
+| TES 758 | VENDA PRODUÇÃO (VENDA) | 5101 | N | S | S/S/T | S/S/T | Deb | — | N | 120 |
 
 ## Industrialização por encomenda (x124/x125) (saída)
 
@@ -126,24 +126,24 @@ Na entrada: industrialização feita por outra empresa para a Delpi. Na saída: 
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 510 | INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA | 5124 | S | S | S/N/O | N/N/O | Deb | — | N | — |
-| 511 | INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA | 5124 | N | S | S/N/O | N/N/O | Deb | — | N | 312 |
-| 622 | INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA | 5124 | S | S | S/N/O | N/N/O | Deb | — | N | 168 |
-| 661 | INDUSTRIALIZACAO EFET. INSUMOS | 5124 | S | S | S/S/T | N/N/O | Deb | — | N | — |
-| 671 | INDUSTRIALIZACAO EFET. INSUMOS | 5124 | N | S | S/S/T | N/N/O | Deb | — | N | — |
-| 673 | INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA | 5124 | S | S | S/S/T | N/N/O | Deb | — | N | — |
-| 756 | INDUSTRIALIZACAO EFET. INSUMOS | 5124 | N | S | S/S/T | S/S/T | Deb | — | N | — |
-| 757 | INDUSTRIALIZACAO EFET. INSUMOS | 5124 | S | S | S/S/T | S/S/T | Deb | — | N | — |
+| TES 510 | INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA | 5124 | S | S | S/N/O | N/N/O | Deb | — | N | — |
+| TES 511 | INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA | 5124 | N | S | S/N/O | N/N/O | Deb | — | N | 312 |
+| TES 622 | INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA | 5124 | S | S | S/N/O | N/N/O | Deb | — | N | 168 |
+| TES 661 | INDUSTRIALIZACAO EFET. INSUMOS | 5124 | S | S | S/S/T | N/N/O | Deb | — | N | — |
+| TES 671 | INDUSTRIALIZACAO EFET. INSUMOS | 5124 | N | S | S/S/T | N/N/O | Deb | — | N | — |
+| TES 673 | INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA | 5124 | S | S | S/S/T | N/N/O | Deb | — | N | — |
+| TES 756 | INDUSTRIALIZACAO EFET. INSUMOS | 5124 | N | S | S/S/T | S/S/T | Deb | — | N | — |
+| TES 757 | INDUSTRIALIZACAO EFET. INSUMOS | 5124 | S | S | S/S/T | S/S/T | Deb | — | N | — |
 
 ### Industrialização por encomenda (x124/x125) — TES de saída bloqueadas
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 512 | INDUST. P/OUTRA EMPR | 6124 | N | S | S/S/T | N/N/O | Deb | — | N | 164 |
-| 610 | INDUSTRIALIZACAO EFET. INSUMOS | 5124 | N | S | S/S/T | N/N/O | Deb | — | N | — |
-| 656 | INDUSTRIALIZACAO EFET. INSUMOS | 5124 | S | S | S/S/T | N/S/T | Deb | — | N | — |
-| 669 | IND.EFET.P/OUTRA EMP | 5124 | S | S | S/N/O | N/N/O | Deb | — | N | — |
-| 712 | INDUST.TERCEIRO ES | 5124 | N | S | S/N/T | N/N/O | Deb | — | N | — |
+| TES 512 | INDUST. P/OUTRA EMPR | 6124 | N | S | S/S/T | N/N/O | Deb | — | N | 164 |
+| TES 610 | INDUSTRIALIZACAO EFET. INSUMOS | 5124 | N | S | S/S/T | N/N/O | Deb | — | N | — |
+| TES 656 | INDUSTRIALIZACAO EFET. INSUMOS | 5124 | S | S | S/S/T | N/S/T | Deb | — | N | — |
+| TES 669 | IND.EFET.P/OUTRA EMP | 5124 | S | S | S/N/O | N/N/O | Deb | — | N | — |
+| TES 712 | INDUST.TERCEIRO ES | 5124 | N | S | S/N/T | N/N/O | Deb | — | N | — |
 
 ## Remessa e retorno para industrialização (saída)
 
@@ -157,28 +157,28 @@ Material que vai ou volta de industrialização (CFOP x901, x902, x903). Em regr
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 519 | REMESSSA P/ INDUSTRIALIZACAO POR ENCOM. | 5901 | S | N | S/N/O | N/N/O | — | R | N | 122 |
-| 522 | RETORNO DE MERC. UTILIZADA NA IND. | 5902 | S | N | S/N/O | N/N/O | — | D | N | — |
-| 524 | RETORNO MERC. RECEB. P/ IND. NAO APLICAD | 5903 | S | N | S/N/O | N/N/O | — | D | N | 085 |
-| 525 | RETORNO DE MERC. UTILIZADA NA IND. | 5902 | N | N | S/N/O | N/N/O | — | D | N | 085 |
-| 528 | RETORNO MERC. RECEB. P/ IND. NAO APLICAD | 5903 | N | N | S/N/O | N/N/O | — | — | N | — |
-| 534 | RETORNO MERC. RECEB. P/ IND. NAO APLICAD | 5903 | N | N | S/N/O | N/N/O | — | D | N | 085 |
-| 539 | RETORNO DE MERC. UTILIZADA NA IND. | 5902 | N | N | S/N/O | N/N/O | — | — | N | — |
-| 613 | REMESSA INDUSTRIALIZ | 5901 | N | N | S/N/O | N/N/O | — | R | N | 081 |
+| TES 519 | REMESSSA P/ INDUSTRIALIZACAO POR ENCOM. | 5901 | S | N | S/N/O | N/N/O | — | R | N | 122 |
+| TES 522 | RETORNO DE MERC. UTILIZADA NA IND. | 5902 | S | N | S/N/O | N/N/O | — | D | N | — |
+| TES 524 | RETORNO MERC. RECEB. P/ IND. NAO APLICAD | 5903 | S | N | S/N/O | N/N/O | — | D | N | 085 |
+| TES 525 | RETORNO DE MERC. UTILIZADA NA IND. | 5902 | N | N | S/N/O | N/N/O | — | D | N | 085 |
+| TES 528 | RETORNO MERC. RECEB. P/ IND. NAO APLICAD | 5903 | N | N | S/N/O | N/N/O | — | — | N | — |
+| TES 534 | RETORNO MERC. RECEB. P/ IND. NAO APLICAD | 5903 | N | N | S/N/O | N/N/O | — | D | N | 085 |
+| TES 539 | RETORNO DE MERC. UTILIZADA NA IND. | 5902 | N | N | S/N/O | N/N/O | — | — | N | — |
+| TES 613 | REMESSA INDUSTRIALIZ | 5901 | N | N | S/N/O | N/N/O | — | R | N | 081 |
 
 ### Remessa e retorno para industrialização — TES de saída bloqueadas
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 520 | RET.MERC.INDUSTRIAL. | 5902 | S | N | N/N/O | S/S/O | — | — | N | — |
-| 521 | RET.MERC.INDUS. | 5902 | S | N | N/N/O | N/N/O | — | R | N | — |
-| 531 | RETORNO SEM IND. | 5903 | S | N | N/N/O | N/N/O | — | D | N | — |
-| 546 | REM.P/ CONTA ORDEM | 5924 | N | N | N/N/O | N/N/O | — | — | N | — |
-| 570 | RET.MERC.INDUS. | 5902 | S | N | N/N/O | N/N/O | — | D | N | — |
-| 605 | RET.MERC.IND. | 5902 | S | N | N/N/O | N/N/O | — | D | N | — |
-| 631 | RETORNO MERC.INDUSTR (RETORNO MERCADORIA INDUSTRIALIZACAO) | 5902 | N | N | N/N/O | N/N/O | — | — | N | 085 |
-| 642 | REMESSA INDUSTRIALIZ | 5901 | N | N | N/N/O | N/N/O | — | — | N | 159 |
-| 646 | REMESSSA P/ INDUSTRI | 5901 | S | N | N/N/O | N/N/O | — | — | N | — |
+| TES 520 | RET.MERC.INDUSTRIAL. | 5902 | S | N | N/N/O | S/S/O | — | — | N | — |
+| TES 521 | RET.MERC.INDUS. | 5902 | S | N | N/N/O | N/N/O | — | R | N | — |
+| TES 531 | RETORNO SEM IND. | 5903 | S | N | N/N/O | N/N/O | — | D | N | — |
+| TES 546 | REM.P/ CONTA ORDEM | 5924 | N | N | N/N/O | N/N/O | — | — | N | — |
+| TES 570 | RET.MERC.INDUS. | 5902 | S | N | N/N/O | N/N/O | — | D | N | — |
+| TES 605 | RET.MERC.IND. | 5902 | S | N | N/N/O | N/N/O | — | D | N | — |
+| TES 631 | RETORNO MERC.INDUSTR (RETORNO MERCADORIA INDUSTRIALIZACAO) | 5902 | N | N | N/N/O | N/N/O | — | — | N | 085 |
+| TES 642 | REMESSA INDUSTRIALIZ | 5901 | N | N | N/N/O | N/N/O | — | — | N | 159 |
+| TES 646 | REMESSSA P/ INDUSTRI | 5901 | S | N | N/N/O | N/N/O | — | — | N | — |
 
 ## Devolução de compra (saída)
 
@@ -192,39 +192,39 @@ Saída da mercadoria comprada que a Delpi devolve ao fornecedor (CFOP x201, x202
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 529 | DEVOL. DE COMPRA DE USO OU CONSUMO SN | 5556 | S | S | S/N/O | N/N/O | — | — | N | — |
-| 530 | DEVOL. DE COMPRA PARA INDUSTRIALIZACAO | 5201 | S | S | S/S/T | S/S/T | Deb | — | N | 404 |
-| 547 | DEVOLUCAO DE ATIVO IMOBILIZADO SN | 6553 | N | S | S/N/O | N/N/O | — | — | N | 153 |
-| 554 | DEVOL. DE COMPRA PARA IND. SN | 5201 | S | S | S/N/O | N/N/O | Deb | — | N | 004 |
-| 561 | DEVOL. DE COMPRA PARA INDUSTRIALIZACAO | 6201 | S | S | S/S/T | N/N/O | Deb | — | N | 003 |
-| 580 | DEVOL. DE COMPRA PARA INDUSTRIALIZACAO | 6201 | N | S | S/S/T | N/N/O | Deb | — | N | — |
-| 588 | DEVOLUCAO DE ATIVO IMOBILIZADO | 6553 | N | S | S/S/T | N/N/O | — | — | N | 182 |
-| 617 | DEVOL. DE COMPRA DE USO OU CONSUMO (DEV. CONSUMO IPI NA BASE) | 6556 | S | S | S/S/T | N/N/O | Cred | — | N | — |
-| 649 | DEVOL. DE COMPRA DE USO OU CONSUMO (5556 DEVOLUCAO USO/CONSUMO C/ICMS REDUCAO) | 5556 | N | S | S/N/T | N/N/O | — | — | N | 166 |
-| 650 | DEVOL. DE COMPRA DE USO OU CONSUMO SN (5556 DEVOLUCAO USO/CONSUMO C/ICMS) | 5556 | N | S | S/N/O | N/N/O | — | — | N | — |
+| TES 529 | DEVOL. DE COMPRA DE USO OU CONSUMO SN | 5556 | S | S | S/N/O | N/N/O | — | — | N | — |
+| TES 530 | DEVOL. DE COMPRA PARA INDUSTRIALIZACAO | 5201 | S | S | S/S/T | S/S/T | Deb | — | N | 404 |
+| TES 547 | DEVOLUCAO DE ATIVO IMOBILIZADO SN | 6553 | N | S | S/N/O | N/N/O | — | — | N | 153 |
+| TES 554 | DEVOL. DE COMPRA PARA IND. SN | 5201 | S | S | S/N/O | N/N/O | Deb | — | N | 004 |
+| TES 561 | DEVOL. DE COMPRA PARA INDUSTRIALIZACAO | 6201 | S | S | S/S/T | N/N/O | Deb | — | N | 003 |
+| TES 580 | DEVOL. DE COMPRA PARA INDUSTRIALIZACAO | 6201 | N | S | S/S/T | N/N/O | Deb | — | N | — |
+| TES 588 | DEVOLUCAO DE ATIVO IMOBILIZADO | 6553 | N | S | S/S/T | N/N/O | — | — | N | 182 |
+| TES 617 | DEVOL. DE COMPRA DE USO OU CONSUMO (DEV. CONSUMO IPI NA BASE) | 6556 | S | S | S/S/T | N/N/O | Cred | — | N | — |
+| TES 649 | DEVOL. DE COMPRA DE USO OU CONSUMO (5556 DEVOLUCAO USO/CONSUMO C/ICMS REDUCAO) | 5556 | N | S | S/N/T | N/N/O | — | — | N | 166 |
+| TES 650 | DEVOL. DE COMPRA DE USO OU CONSUMO SN (5556 DEVOLUCAO USO/CONSUMO C/ICMS) | 5556 | N | S | S/N/O | N/N/O | — | — | N | — |
 
 ### Devolução de compra — TES de saída bloqueadas
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 514 | DEVOLU. S/IPI | 5201 | S | N | S/S/T | N/N/O | Cred | — | N | — |
-| 544 | DEVOLUÇÃO | 5201 | N | N | S/S/T | N/N/O | Cred | — | N | — |
-| 559 | DEV.CONS. C/IPI C/ST (DEV.COMPRA MAT.CONSUMO C/ST E C/IPI) | 5413 | S | S | N/N/N | S/N/O | — | — | N | — |
-| 560 | DEV. DE COMPRA | 6201 | S | S | S/S/T | S/S/T | Cred | — | N | — |
-| 562 | DEVOLUÇÃO COMPRAS | 5201 | N | N | S/S/T | S/S/T | Cred | — | N | — |
-| 563 | DEVOL. VENDAS | 5201 | N | S | S/S/T | S/S/T | Deb | — | N | — |
-| 569 | DEV. COMPRA MP | 6201 | S | N | S/N/T | N/N/O | Cred | — | N | — |
-| 574 | DEV.CONS. S/IPI C/ST | 5413 | S | S | N/N/O | N/N/N | — | — | N | — |
-| 593 | DEVOL. DE COMPRAS | 5201 | N | S | S/N/T | S/N/T | Deb | — | N | — |
-| 608 | DEVOLUÇÃO CONSUMO | 5556 | S | N | S/S/T | S/S/T | — | — | N | 052 |
-| 620 | DEV. CONSUMO ST | 5413 | S | S | N/N/O | N/N/O | — | — | N | 142 |
-| 623 | COMPLE. ICMS CONSUMO | 5556 | N | N | S/S/T | N/N/N | — | — | N | — |
-| 630 | DEV. MAT PRIMA ST | 5410 | S | S | N/N/O | N/N/O | — | — | N | — |
-| 652 | DEVOL CONSUMO ST | 5413 | N | S | N/N/O | N/N/O | — | — | N | — |
-| 653 | DEVOLUÇÃO DE COMPRA | 6201 | N | N | S/N/T | S/N/O | Cred | — | N | — |
-| 654 | DEV. COMPRAS COFINS | 6201 | S | N | S/N/T | S/N/T | Cred | — | N | — |
-| 711 | DEVOLUÇÃO CONSUMO | 5556 | S | S | S/N/O | N/N/O | — | — | N | — |
-| 753 | DEVOL. DE COMPRA PARA INDUSTRIALIZACAO | 5201 | S | S | S/N/O | N/N/O | Deb | — | N | 004 |
+| TES 514 | DEVOLU. S/IPI | 5201 | S | N | S/S/T | N/N/O | Cred | — | N | — |
+| TES 544 | DEVOLUÇÃO | 5201 | N | N | S/S/T | N/N/O | Cred | — | N | — |
+| TES 559 | DEV.CONS. C/IPI C/ST (DEV.COMPRA MAT.CONSUMO C/ST E C/IPI) | 5413 | S | S | N/N/N | S/N/O | — | — | N | — |
+| TES 560 | DEV. DE COMPRA | 6201 | S | S | S/S/T | S/S/T | Cred | — | N | — |
+| TES 562 | DEVOLUÇÃO COMPRAS | 5201 | N | N | S/S/T | S/S/T | Cred | — | N | — |
+| TES 563 | DEVOL. VENDAS | 5201 | N | S | S/S/T | S/S/T | Deb | — | N | — |
+| TES 569 | DEV. COMPRA MP | 6201 | S | N | S/N/T | N/N/O | Cred | — | N | — |
+| TES 574 | DEV.CONS. S/IPI C/ST | 5413 | S | S | N/N/O | N/N/N | — | — | N | — |
+| TES 593 | DEVOL. DE COMPRAS | 5201 | N | S | S/N/T | S/N/T | Deb | — | N | — |
+| TES 608 | DEVOLUÇÃO CONSUMO | 5556 | S | N | S/S/T | S/S/T | — | — | N | 052 |
+| TES 620 | DEV. CONSUMO ST | 5413 | S | S | N/N/O | N/N/O | — | — | N | 142 |
+| TES 623 | COMPLE. ICMS CONSUMO | 5556 | N | N | S/S/T | N/N/N | — | — | N | — |
+| TES 630 | DEV. MAT PRIMA ST | 5410 | S | S | N/N/O | N/N/O | — | — | N | — |
+| TES 652 | DEVOL CONSUMO ST | 5413 | N | S | N/N/O | N/N/O | — | — | N | — |
+| TES 653 | DEVOLUÇÃO DE COMPRA | 6201 | N | N | S/N/T | S/N/O | Cred | — | N | — |
+| TES 654 | DEV. COMPRAS COFINS | 6201 | S | N | S/N/T | S/N/T | Cred | — | N | — |
+| TES 711 | DEVOLUÇÃO CONSUMO | 5556 | S | S | S/N/O | N/N/O | — | — | N | — |
+| TES 753 | DEVOL. DE COMPRA PARA INDUSTRIALIZACAO | 5201 | S | S | S/N/O | N/N/O | Deb | — | N | 004 |
 
 ## Transferências entre filiais (saída)
 
@@ -238,17 +238,17 @@ Transferência de produção, mercadoria ou insumo entre estabelecimentos da Del
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 590 | TRANSFERENCIA DE PRODUCAO DO ESTAB. | 6151 | S | N | S/N/T | N/N/O | — | — | N | — |
-| 627 | TRANSFERENCIA DE PRODUCAO DO ESTAB. | 6151 | S | N | S/S/T | N/N/O | — | — | N | — |
-| 704 | TRANSFERENCIA DE PRODUCAO DO ESTAB. (TRANSFERENCIA MP) | 6151 | N | N | S/S/T | N/N/O | — | — | N | — |
+| TES 590 | TRANSFERENCIA DE PRODUCAO DO ESTAB. | 6151 | S | N | S/N/T | N/N/O | — | — | N | — |
+| TES 627 | TRANSFERENCIA DE PRODUCAO DO ESTAB. | 6151 | S | N | S/S/T | N/N/O | — | — | N | — |
+| TES 704 | TRANSFERENCIA DE PRODUCAO DO ESTAB. (TRANSFERENCIA MP) | 6151 | N | N | S/S/T | N/N/O | — | — | N | — |
 
 ### Transferências entre filiais — TES de saída bloqueadas
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 584 | TRANSF MERC ADQ | 5152 | N | N | S/N/O | N/N/O | — | — | N | — |
-| 638 | TRANSF. MP FILIAIS | 6151 | S | N | S/S/T | S/S/T | — | — | N | — |
-| 713 | TRANSF. MP | 6151 | N | N | S/S/T | S/S/T | — | — | N | — |
+| TES 584 | TRANSF MERC ADQ | 5152 | N | N | S/N/O | N/N/O | — | — | N | — |
+| TES 638 | TRANSF. MP FILIAIS | 6151 | S | N | S/S/T | S/S/T | — | — | N | — |
+| TES 713 | TRANSF. MP | 6151 | N | N | S/S/T | S/S/T | — | — | N | — |
 
 ## Uso e consumo (saída)
 
@@ -262,10 +262,10 @@ Material de uso e consumo (CFOP x556, x557, x407). Na regra geral não dão cré
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 589 | TRANSFERENCIA DE USO OU CONSUMO | 6557 | S | N | S/N/O | N/N/O | — | — | N | — |
-| 597 | TRANSFERENCIA DE USO OU CONSUMO | 6557 | N | N | S/N/T | N/N/O | — | — | N | — |
-| 628 | TRANSFERENCIA DE USO OU CONSUMO | 6557 | S | N | S/N/T | N/N/O | — | — | N | — |
-| 657 | TRANSF INSUMOS CONSUMO | 5557 | N | N | S/N/T | N/N/O | — | — | N | — |
+| TES 589 | TRANSFERENCIA DE USO OU CONSUMO | 6557 | S | N | S/N/O | N/N/O | — | — | N | — |
+| TES 597 | TRANSFERENCIA DE USO OU CONSUMO | 6557 | N | N | S/N/T | N/N/O | — | — | N | — |
+| TES 628 | TRANSFERENCIA DE USO OU CONSUMO | 6557 | S | N | S/N/T | N/N/O | — | — | N | — |
+| TES 657 | TRANSF INSUMOS CONSUMO | 5557 | N | N | S/N/T | N/N/O | — | — | N | — |
 
 ## Ativo imobilizado (saída)
 
@@ -279,18 +279,18 @@ Compra, remessa, retorno, venda e transferência de bens do ativo, e lançamento
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 555 | VENDA DE ATIVO IMOBILIZADO | 5551 | N | N | S/N/I | N/N/O | — | — | N | — |
-| 626 | TRANSFERENCIA DE ATIVO IMOBILIZADO | 6552 | N | N | S/N/O | N/N/O | — | — | N | — |
-| 701 | TRANSFERENCIA BEM AT (TRANSFERENCIA ATIVO IMOBILIZADO) | 6552 | N | N | S/N/O | N/N/O | — | — | N | — |
+| TES 555 | VENDA DE ATIVO IMOBILIZADO | 5551 | N | N | S/N/I | N/N/O | — | — | N | — |
+| TES 626 | TRANSFERENCIA DE ATIVO IMOBILIZADO | 6552 | N | N | S/N/O | N/N/O | — | — | N | — |
+| TES 701 | TRANSFERENCIA BEM AT (TRANSFERENCIA ATIVO IMOBILIZADO) | 6552 | N | N | S/N/O | N/N/O | — | — | N | — |
 
 ### Ativo imobilizado — TES de saída bloqueadas
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 526 | REM  BEM ATIVO IMOBI | 5554 | N | N | S/N/I | N/N/I | — | — | N | — |
-| 527 | RET. ATIVO IMOBILIZA | 5555 | N | N | S/N/I | N/N/O | — | D | N | — |
-| 607 | VENDA ATIVO IMOBILIZ | 5551 | N | S | S/N/I | N/N/I | — | — | N | 182 |
-| 751 | TRANSFERENCIA FILIAL | 6551 | S | N | S/N/T | S/N/T | — | — | N | — |
+| TES 526 | REM  BEM ATIVO IMOBI | 5554 | N | N | S/N/I | N/N/I | — | — | N | — |
+| TES 527 | RET. ATIVO IMOBILIZA | 5555 | N | N | S/N/I | N/N/O | — | D | N | — |
+| TES 607 | VENDA ATIVO IMOBILIZ | 5551 | N | S | S/N/I | N/N/I | — | — | N | 182 |
+| TES 751 | TRANSFERENCIA FILIAL | 6551 | S | N | S/N/T | S/N/T | — | — | N | — |
 
 ## Frete e transporte (saída)
 
@@ -304,7 +304,7 @@ Conhecimentos de transporte (CT-e) e anulação de frete (CFOP x352, x353, x206,
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 651 | ESTORNO FRETE | 5206 | N | N | S/S/T | N/N/O | — | — | N | — |
+| TES 651 | ESTORNO FRETE | 5206 | N | N | S/S/T | N/N/O | — | — | N | — |
 
 ## Conserto e reparo (saída)
 
@@ -318,23 +318,23 @@ Remessa e retorno de bens para conserto (CFOP x915/x916). Não geram duplicata.
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 540 | REMES. MERC. BEM P/ CONSERTO | 5915 | N | N | S/N/O | N/N/O | — | R | N | 094 |
-| 541 | RETORNO DE MERCADORIA PARA CONSERTO | 5916 | S | N | S/N/O | N/N/O | — | D | N | — |
-| 577 | RETORNO DE MERCADORIA PARA CONSERTO | 5916 | N | N | S/N/O | N/N/O | — | D | N | — |
-| 755 | REMESSA PARA CONSERTO | 6915 | S | S | S/N/O | S/N/O | — | — | N | 262 |
+| TES 540 | REMES. MERC. BEM P/ CONSERTO | 5915 | N | N | S/N/O | N/N/O | — | R | N | 094 |
+| TES 541 | RETORNO DE MERCADORIA PARA CONSERTO | 5916 | S | N | S/N/O | N/N/O | — | D | N | — |
+| TES 577 | RETORNO DE MERCADORIA PARA CONSERTO | 5916 | N | N | S/N/O | N/N/O | — | D | N | — |
+| TES 755 | REMESSA PARA CONSERTO | 6915 | S | S | S/N/O | S/N/O | — | — | N | 262 |
 
 ### Conserto e reparo — TES de saída bloqueadas
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 518 | RETORNO DE MERCADORIA PARA CONSERTO | 5916 | N | N | S/N/O | N/N/O | — | — | N | 074 |
-| 542 | REMESS P/CONSERTO | 5915 | S | N | S/N/O | N/N/O | — | R | N | 100 |
-| 548 | RETORNO 3º | 5916 | N | N | S/N/O | N/N/O | — | D | N | — |
-| 549 | RET. REM. P/ CONSERT | 5916 | S | N | S/N/O | N/N/O | — | D | N | 097 |
-| 604 | REMESSA P/ CONSERTO | 6915 | N | N | S/N/O | N/N/O | — | R | N | 094 |
-| 645 | REMESSA P/ CONSERTO | 6915 | N | N | N/N/O | N/N/O | — | — | N | — |
-| 647 | REMESS P/CONSERTO | 5915 | S | N | N/N/I | N/N/I | — | — | N | — |
-| 754 | SUBS EM GARANTIA | 6915 | S | S | S/S/T | S/S/T | — | — | N | — |
+| TES 518 | RETORNO DE MERCADORIA PARA CONSERTO | 5916 | N | N | S/N/O | N/N/O | — | — | N | 074 |
+| TES 542 | REMESS P/CONSERTO | 5915 | S | N | S/N/O | N/N/O | — | R | N | 100 |
+| TES 548 | RETORNO 3º | 5916 | N | N | S/N/O | N/N/O | — | D | N | — |
+| TES 549 | RET. REM. P/ CONSERT | 5916 | S | N | S/N/O | N/N/O | — | D | N | 097 |
+| TES 604 | REMESSA P/ CONSERTO | 6915 | N | N | S/N/O | N/N/O | — | R | N | 094 |
+| TES 645 | REMESSA P/ CONSERTO | 6915 | N | N | N/N/O | N/N/O | — | — | N | — |
+| TES 647 | REMESS P/CONSERTO | 5915 | S | N | N/N/I | N/N/I | — | — | N | — |
+| TES 754 | SUBS EM GARANTIA | 6915 | S | S | S/S/T | S/S/T | — | — | N | — |
 
 ## Vasilhame e embalagem retornável (saída)
 
@@ -348,17 +348,17 @@ Vasilhame e embalagem retornável (CFOP x920/x921) — na Delpi, os carretéis d
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 550 | DEVOL. VASILHAME OU SACARIA | 5921 | N | N | S/N/I | N/N/O | — | D | N | 083 |
-| 624 | REMESSA DE VASILHAME | 5920 | N | N | N/N/O | N/N/O | — | R | N | — |
+| TES 550 | DEVOL. VASILHAME OU SACARIA | 5921 | N | N | S/N/I | N/N/O | — | D | N | 083 |
+| TES 624 | REMESSA DE VASILHAME | 5920 | N | N | N/N/O | N/N/O | — | R | N | — |
 
 ### Vasilhame e embalagem retornável — TES de saída bloqueadas
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 533 | DEVOLUCAO DE VASILHA | 5921 | N | N | S/N/I | N/N/O | — | — | N | — |
-| 648 | REMESSA VASILHAME | 5920 | N | N | N/N/O | N/N/O | — | — | N | — |
-| 668 | REMESSA VASILHAME | 5920 | S | N | N/N/I | N/N/N | — | R | N | — |
-| 752 | DEVOLUÇÃO VASILHAME | 5921 | N | N | N/N/O | N/N/O | — | D | N | — |
+| TES 533 | DEVOLUCAO DE VASILHA | 5921 | N | N | S/N/I | N/N/O | — | — | N | — |
+| TES 648 | REMESSA VASILHAME | 5920 | N | N | N/N/O | N/N/O | — | — | N | — |
+| TES 668 | REMESSA VASILHAME | 5920 | S | N | N/N/I | N/N/N | — | R | N | — |
+| TES 752 | DEVOLUÇÃO VASILHAME | 5921 | N | N | N/N/O | N/N/O | — | D | N | — |
 
 ## Bonificação, amostra, demonstração, consignação e comodato (saída)
 
@@ -372,41 +372,41 @@ Bonificação (x910), amostra grátis (x911), demonstração (x912/x913), consig
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 535 | RETORNO DE MERC. REC. DEMONSTRACAO | 6913 | N | N | S/N/O | S/S/O | — | D | N | 095 |
-| 536 | RETORNO DE MERC. REC. DEMONSTRACAO | 5913 | S | N | S/N/O | S/S/O | — | D | N | — |
-| 551 | AMOSTRA GRATIS | 5911 | S | N | S/N/I | N/N/O | — | — | N | — |
-| 558 | RETORNO DE MERC. REC. DEMONSTRACAO | 5913 | N | N | S/N/O | N/N/O | — | D | N | — |
-| 567 | BONIFICAÇÃO | 6910 | S | N | S/S/T | S/S/T | — | — | N | 035 |
-| 572 | REMESSA AMOSTRA ZF | 5911 | N | N | S/N/I | N/N/O | — | — | N | — |
-| 576 | REMESSA PARA DEMONSTRAÇÃO | 5912 | N | N | S/N/O | S/S/T | — | — | N | 188 |
-| 579 | RETORNO DE MERC. REC. DEMONSTRACAO | 5913 | S | N | S/N/O | N/N/O | — | — | N | — |
-| 581 | REMESSA PARA DEMONSTRAÇÃO | 5912 | N | N | S/N/O | N/N/O | — | — | N | 200 |
-| 583 | REMESSA PARA DEMONSTRAÇÃO | 5912 | S | N | S/N/O | N/N/O | — | — | N | 188 |
-| 585 | RET DEMONSTRACAO | 5913 | S | N | S/N/O | S/S/T | — | — | N | 194 |
-| 592 | AMOSTRA GRATIS | 5911 | N | N | S/N/I | N/N/O | — | — | N | — |
-| 658 | REMESSA EM COMODATO | 5908 | N | N | S/N/O | N/N/O | — | R | N | — |
+| TES 535 | RETORNO DE MERC. REC. DEMONSTRACAO | 6913 | N | N | S/N/O | S/S/O | — | D | N | 095 |
+| TES 536 | RETORNO DE MERC. REC. DEMONSTRACAO | 5913 | S | N | S/N/O | S/S/O | — | D | N | — |
+| TES 551 | AMOSTRA GRATIS | 5911 | S | N | S/N/I | N/N/O | — | — | N | — |
+| TES 558 | RETORNO DE MERC. REC. DEMONSTRACAO | 5913 | N | N | S/N/O | N/N/O | — | D | N | — |
+| TES 567 | BONIFICAÇÃO | 6910 | S | N | S/S/T | S/S/T | — | — | N | 035 |
+| TES 572 | REMESSA AMOSTRA ZF | 5911 | N | N | S/N/I | N/N/O | — | — | N | — |
+| TES 576 | REMESSA PARA DEMONSTRAÇÃO | 5912 | N | N | S/N/O | S/S/T | — | — | N | 188 |
+| TES 579 | RETORNO DE MERC. REC. DEMONSTRACAO | 5913 | S | N | S/N/O | N/N/O | — | — | N | — |
+| TES 581 | REMESSA PARA DEMONSTRAÇÃO | 5912 | N | N | S/N/O | N/N/O | — | — | N | 200 |
+| TES 583 | REMESSA PARA DEMONSTRAÇÃO | 5912 | S | N | S/N/O | N/N/O | — | — | N | 188 |
+| TES 585 | RET DEMONSTRACAO | 5913 | S | N | S/N/O | S/S/T | — | — | N | 194 |
+| TES 592 | AMOSTRA GRATIS | 5911 | N | N | S/N/I | N/N/O | — | — | N | — |
+| TES 658 | REMESSA EM COMODATO | 5908 | N | N | S/N/O | N/N/O | — | R | N | — |
 
 ### Bonificação, amostra, demonstração, consignação e comodato — TES de saída bloqueadas
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 537 | DEV. DEMONST. | 6913 | N | N | S/S/T | N/N/O | — | — | N | — |
-| 543 | DEV. DEMONST | 5913 | N | N | S/N/O | N/N/O | — | — | N | 068 |
-| 552 | AMOSTRA | 5911 | N | N | S/S/T | S/S/T | — | — | N | 089 |
-| 553 | AMOSTRA GRATIS | 5911 | S | N | S/S/T | N/N/O | — | — | N | — |
-| 557 | REMESSA AMOSTRA | 5911 | N | N | S/S/T | N/N/O | — | — | N | — |
-| 578 | RET DEMONSTRACAO | 5913 | N | N | N/N/O | S/S/O | — | — | N | 173 |
-| 586 | RETORNO DE DEMONSTRA | 5913 | S | N | S/N/O | S/S/T | — | — | N | 578 |
-| 587 | BONIFICAÇÃO PROD | 1910 | S | N | S/S/T | S/S/T | — | — | N | — |
-| 603 | REM MERC CONSIGNACAO | 5917 | S | N | S/S/T | S/S/T | — | — | N | — |
-| 632 | DEVOL. DEMOSNTRAÇÃO (DEVOL DEMONSTRAÇÃO  RED BASE ICMS 78,58%) | 6913 | N | N | S/N/O | N/N/O | — | — | N | — |
-| 637 | RET REM DEMONSTRAÇÃO | 5913 | N | N | S/S/T | N/N/O | — | R | N | — |
-| 640 | RETORNO DEMONSTRAÇÃO | 5913 | S | N | S/N/T | N/N/O | — | — | N | — |
-| 641 | RETORNO REM COMODATO | 5909 | N | N | N/N/O | N/N/O | — | D | N | 178 |
-| 643 | DEV. DEMONST. | 5913 | S | N | S/S/T | N/N/O | — | D | N | — |
-| 644 | DEV. DEMONST. | 6913 | N | N | S/S/T | N/N/O | — | D | N | — |
-| 655 | DEVOLUÇÃO DEMONSTRAÇ | 5913 | S | N | N/N/I | S/N/T | — | D | N | 087 |
-| 664 | DEVOLUÇÃO DEMONSTRAÇ | 5913 | N | N | S/N/O | S/S/O | — | — | N | — |
+| TES 537 | DEV. DEMONST. | 6913 | N | N | S/S/T | N/N/O | — | — | N | — |
+| TES 543 | DEV. DEMONST | 5913 | N | N | S/N/O | N/N/O | — | — | N | 068 |
+| TES 552 | AMOSTRA | 5911 | N | N | S/S/T | S/S/T | — | — | N | 089 |
+| TES 553 | AMOSTRA GRATIS | 5911 | S | N | S/S/T | N/N/O | — | — | N | — |
+| TES 557 | REMESSA AMOSTRA | 5911 | N | N | S/S/T | N/N/O | — | — | N | — |
+| TES 578 | RET DEMONSTRACAO | 5913 | N | N | N/N/O | S/S/O | — | — | N | 173 |
+| TES 586 | RETORNO DE DEMONSTRA | 5913 | S | N | S/N/O | S/S/T | — | — | N | 578 |
+| TES 587 | BONIFICAÇÃO PROD | 1910 | S | N | S/S/T | S/S/T | — | — | N | — |
+| TES 603 | REM MERC CONSIGNACAO | 5917 | S | N | S/S/T | S/S/T | — | — | N | — |
+| TES 632 | DEVOL. DEMOSNTRAÇÃO (DEVOL DEMONSTRAÇÃO  RED BASE ICMS 78,58%) | 6913 | N | N | S/N/O | N/N/O | — | — | N | — |
+| TES 637 | RET REM DEMONSTRAÇÃO | 5913 | N | N | S/S/T | N/N/O | — | R | N | — |
+| TES 640 | RETORNO DEMONSTRAÇÃO | 5913 | S | N | S/N/T | N/N/O | — | — | N | — |
+| TES 641 | RETORNO REM COMODATO | 5909 | N | N | N/N/O | N/N/O | — | D | N | 178 |
+| TES 643 | DEV. DEMONST. | 5913 | S | N | S/S/T | N/N/O | — | D | N | — |
+| TES 644 | DEV. DEMONST. | 6913 | N | N | S/S/T | N/N/O | — | D | N | — |
+| TES 655 | DEVOLUÇÃO DEMONSTRAÇ | 5913 | S | N | N/N/I | S/N/T | — | D | N | 087 |
+| TES 664 | DEVOLUÇÃO DEMONSTRAÇ | 5913 | N | N | S/N/O | S/S/O | — | — | N | — |
 
 ## Baixa de estoque e perdas (saída)
 
@@ -420,14 +420,14 @@ Baixa de estoque por perda, roubo ou deterioração (CFOP x927). Tiram do estoqu
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 714 | BAIXA ESTOQUE PERDA (BAIXA ESTOQUE) | 5927 | S | N | S/N/O | N/N/O | — | — | N | — |
+| TES 714 | BAIXA ESTOQUE PERDA (BAIXA ESTOQUE) | 5927 | S | N | S/N/O | N/N/O | — | — | N | — |
 
 ### Baixa de estoque e perdas — TES de saída bloqueadas
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 710 | BAIXA ESTOQUE PERDA (BAIXA DE ESTOQUE) | 5927 | S | N | S/N/T | N/N/O | — | — | N | — |
-| 717 | BAIXA ESTOQUE PERDA (BAIXA ESTOQUE) | 5927 | S | N | N/N/N | S/S/O | — | — | N | — |
+| TES 710 | BAIXA ESTOQUE PERDA (BAIXA DE ESTOQUE) | 5927 | S | N | S/N/T | N/N/O | — | — | N | — |
+| TES 717 | BAIXA ESTOQUE PERDA (BAIXA ESTOQUE) | 5927 | S | N | N/N/N | S/S/O | — | — | N | — |
 
 ## Outras operações e estornos (saída)
 
@@ -441,38 +441,38 @@ Outras entradas e saídas não especificadas (CFOP x949), estornos e ajustes. De
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 564 | OUTRAS SAIDAS | 6949 | S | N | S/S/T | S/S/T | — | — | N | — |
-| 568 | OUTRAS SAIDAS | 5949 | N | N | N/N/O | S/S/O | — | D | N | — |
-| 571 | OUTRAS SAIDAS | 5949 | N | N | S/S/T | N/N/O | — | — | N | 164 |
-| 595 | OUTRA SAIDAS RED BASE CALC | 5949 | N | S | S/S/O | N/N/O | Deb | — | N | — |
-| 600 | OUTRAS SAIDAS | 5949 | S | N | S/S/T | S/S/T | — | — | N | 110 |
-| 601 | OUTRAS SAIDAS | 5949 | N | N | S/S/T | S/S/T | — | — | N | 110 |
-| 602 | OUTRAS SAIDAS | 6949 | S | N | S/S/T | S/S/T | — | — | N | 113 |
-| 616 | OUTRAS SAIDAS ENVIO PARA TESTE | 5949 | S | N | S/S/T | N/N/N | — | — | N | 172 |
-| 633 | OUTRAS SAIDAS | 5949 | S | N | S/S/T | S/S/T | — | — | N | — |
-| 634 | OUTRAS SAIDAS | 5949 | N | N | S/S/T | S/S/T | — | — | N | — |
-| 672 | OUTRAS SAIDAS ZFM | 6949 | S | S | S/N/I | N/N/O | — | — | N | 181 |
+| TES 564 | OUTRAS SAIDAS | 6949 | S | N | S/S/T | S/S/T | — | — | N | — |
+| TES 568 | OUTRAS SAIDAS | 5949 | N | N | N/N/O | S/S/O | — | D | N | — |
+| TES 571 | OUTRAS SAIDAS | 5949 | N | N | S/S/T | N/N/O | — | — | N | 164 |
+| TES 595 | OUTRA SAIDAS RED BASE CALC | 5949 | N | S | S/S/O | N/N/O | Deb | — | N | — |
+| TES 600 | OUTRAS SAIDAS | 5949 | S | N | S/S/T | S/S/T | — | — | N | 110 |
+| TES 601 | OUTRAS SAIDAS | 5949 | N | N | S/S/T | S/S/T | — | — | N | 110 |
+| TES 602 | OUTRAS SAIDAS | 6949 | S | N | S/S/T | S/S/T | — | — | N | 113 |
+| TES 616 | OUTRAS SAIDAS ENVIO PARA TESTE | 5949 | S | N | S/S/T | N/N/N | — | — | N | 172 |
+| TES 633 | OUTRAS SAIDAS | 5949 | S | N | S/S/T | S/S/T | — | — | N | — |
+| TES 634 | OUTRAS SAIDAS | 5949 | N | N | S/S/T | S/S/T | — | — | N | — |
+| TES 672 | OUTRAS SAIDAS ZFM | 6949 | S | S | S/N/I | N/N/O | — | — | N | 181 |
 
 ### Outras operações e estornos — TES de saída bloqueadas
 
 | TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/livro | IPI calc/créd/livro | PIS/COFINS | Poder 3º | Consumo | TES devol. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 532 | OUTRAS SAIDAS | 5949 | N | N | N/N/O | N/N/O | — | D | N | — |
-| 575 | OUTRAS SAIDAS | 5949 | N | N | S/N/O | S/N/O | — | — | N | 110 |
-| 582 | DEV. CARRETEL | 5949 | N | N | S/N/O | N/N/O | — | D | N | — |
-| 596 | OUTRAS SAIDAS | 5949 | N | S | S/S/T | S/S/T | Deb | — | N | — |
-| 615 | OUTRAS SAIDAS | 5949 | N | N | N/N/O | N/N/O | — | — | N | 139 |
-| 618 | OUTRA SAIDA | 6949 | N | N | S/N/I | N/N/O | — | — | N | 112 |
-| 660 | OUTRAS ENT. N ESPECI | 2949 | N | S | N/N/O | N/N/O | — | — | N | — |
-| 702 | REMESSA RESÍDUO | 5949 | N | N | S/N/O | N/N/O | — | — | N | — |
-| 759 | OUTRAS SAIDAS | 5949 | N | N | S/S/O | N/N/O | — | R | N | 100 |
-| 760 | OUTRAS SAIDAS | 5949 | N | N | S/N/O | N/N/O | — | R | N | 100 |
-| 761 | OUTRAS SAIDAS | 5949 | N | N | S/N/O | N/N/O | — | R | N | — |
-| 762 | OUTRAS SAIDAS | 5949 | N | N | S/N/O | N/N/O | — | R | N | — |
+| TES 532 | OUTRAS SAIDAS | 5949 | N | N | N/N/O | N/N/O | — | D | N | — |
+| TES 575 | OUTRAS SAIDAS | 5949 | N | N | S/N/O | S/N/O | — | — | N | 110 |
+| TES 582 | DEV. CARRETEL | 5949 | N | N | S/N/O | N/N/O | — | D | N | — |
+| TES 596 | OUTRAS SAIDAS | 5949 | N | S | S/S/T | S/S/T | Deb | — | N | — |
+| TES 615 | OUTRAS SAIDAS | 5949 | N | N | N/N/O | N/N/O | — | — | N | 139 |
+| TES 618 | OUTRA SAIDA | 6949 | N | N | S/N/I | N/N/O | — | — | N | 112 |
+| TES 660 | OUTRAS ENT. N ESPECI | 2949 | N | S | N/N/O | N/N/O | — | — | N | — |
+| TES 702 | REMESSA RESÍDUO | 5949 | N | N | S/N/O | N/N/O | — | — | N | — |
+| TES 759 | OUTRAS SAIDAS | 5949 | N | N | S/S/O | N/N/O | — | R | N | 100 |
+| TES 760 | OUTRAS SAIDAS | 5949 | N | N | S/N/O | N/N/O | — | R | N | 100 |
+| TES 761 | OUTRAS SAIDAS | 5949 | N | N | S/N/O | N/N/O | — | R | N | — |
+| TES 762 | OUTRAS SAIDAS | 5949 | N | N | S/N/O | N/N/O | — | R | N | — |
 
 ## Governança
 
 - Owner do cadastro: Controladoria e equipe fiscal. A CLARA não cria, edita nem bloqueia TES.
 - Bloqueada (`F4_MSBLQL`) = não pode ser usada em nota nova. Nota antiga pode ter TES hoje bloqueada: isso é normal e não é erro.
 - Configuração estranha no cadastro é ponto a verificar com o fiscal, nunca erro confirmado (ficha TES-02).
-- Atualização: gerar CSV novo da SF4, rodar `fonte/gerar_catalogo_tes.py`, revisar o diff e republicar o corpus.
+- Atualização: nova extração da SF4 e republicação do catálogo (manutenção na ficha TES-05).

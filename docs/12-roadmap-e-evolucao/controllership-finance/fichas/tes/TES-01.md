@@ -6,7 +6,7 @@ Versão da ficha: 1.0 · 14/11/2026.
 
 - Código: **TES-01** — onde e como cada relatório do fechamento usa a TES.
 - Implementação: **IMPLEMENTED** (consolida regras já implementadas; não cria regra nova).
-- Fontes: código da api-delpi (`stock_kardex_sql.py`, `stock_movements_sql.py`, `cpv_query_repository.py`, `billing_mod_breakdown_sql.py`, `billing_exclusion_roster_sql.py`, `entry_audit_sql.py`) e fichas R05, R06, R07, R09, R10, R11 e AE-*. A regra de cada relatório continua sendo da ficha dele; esta ficha é o índice transversal.
+- Fontes: regras já publicadas nas fichas R05, R06, R07, R09, R10, R11 e AE-*. A regra de cada relatório continua sendo da ficha dele; esta ficha é o índice transversal.
 - Evidência: PROVEN quando a regra está no código e na ficha do relatório; pendências marcadas como TO_INVENTORY.
 
 ## Dois jeitos de usar a TES
@@ -66,7 +66,7 @@ Versão da ficha: 1.0 · 14/11/2026.
 
 - CFOP 5101 sem estoque: 505, 594, 619 (sucatas), 716. Com estoque: 501, 609, 614, 663, 706, 707, 708.
 - CFOP 5124 sem estoque: 511, 671, 756. Com estoque: 510, 622, 661, 673, 757.
-- Item nas TES sem estoque entra no CPV com custo zero. Para a 594 isso é PROVEN (R11); para as demais é a mesma configuração, e confirmar nos dados é TO_INVENTORY.
+- Item nas TES sem estoque entra no CPV com custo zero. Reconsulta de 14/11/2026, filiais 01 e 02, emissão de 14/11/2025 a 14/11/2026: 505 (3/3 linhas), 619 (26/26) e 756 (4/4) saíram com custo zero — PROVEN. 716, 511 e 671 não tiveram saída no período. A 594 segue PROVEN pelo R11 (150/150 linhas com custo zero nessa mesma leitura).
 
 ## Perguntas que esta ficha responde
 
@@ -74,6 +74,24 @@ Versão da ficha: 1.0 · 14/11/2026.
 - «Por que o item da 594 tem custo zero?» → a 594 não movimenta estoque (`F4_ESTOQUE='N'`); custo zero é estrutural.
 - «Por que essa nota não aparece no kardex?» → a TES não movimenta estoque.
 - «Quais TES ficam fora do R10?» → as 13 da tabela, mais a 046 na parcela de benefícios; lista oficial pendente.
+- TES 001 — em qual relatório pesa: fora do R10; é compra de matéria-prima (COMPRAS MP).
+- TES 003 — em qual relatório pesa: fora do R10; é compra de matéria-prima sem IPI.
+- TES 004 — em qual relatório pesa: na auditoria de entradas, como crédito presumido de 7% de SC.
+- TES 016 — em qual relatório pesa: fora do R10 (compra por conta e ordem).
+- TES 020 — em qual relatório pesa: fora do R10 (energia elétrica).
+- TES 030 — em qual relatório pesa: fora do R10 (comunicação).
+- TES 036 — em qual relatório pesa: na auditoria de entradas; é frete sobre vendas, credita ICMS com livro Outros (S/S/O) e está bloqueada no cadastro de 09/11/2026.
+- TES 040 — em qual relatório pesa: fora do R10 (frete, aquisição de serviço de transporte).
+- TES 046 — em qual relatório pesa: fora do R10 na coparticipação de plano de saúde, na parcela sem centro de custo.
+- TES 080 — em qual relatório pesa: fora do R10 (entrada de industrialização por encomenda).
+- TES 083 — em qual relatório pesa: fora do R10 (entrada de vasilhame).
+- TES 085 — em qual relatório pesa: fora do R10 (entrada de industrialização por encomenda).
+- TES 120 — em qual relatório pesa: fora do R10; no kardex (R06) e no R05, como devolução de venda.
+- TES 159 — em qual relatório pesa: fora do R10 (remessa para industrialização).
+- TES 204 — em qual relatório pesa: fora do R10 (transferência de matéria-prima).
+- TES 318 — em qual relatório pesa: fora do R10 (importação, outras entradas).
+- TES 510 — em qual relatório pesa: no R11, como item-irmão da 594; movimenta estoque e carrega o custo.
+- TES 594 — em qual relatório pesa: no R11 e no CPV. O que faz: vende a produção sem baixa de estoque, então o custo do item sai zero.
 
 ## Governança
 

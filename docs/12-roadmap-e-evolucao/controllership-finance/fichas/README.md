@@ -46,7 +46,7 @@ Legenda de implementação: `IMPLEMENTED` (contrato em runtime),
 
 Capabilities transversais além do `read` por relatório:
 `analyze(report_comparison)` (stage-03 — matriz de compatibilidade nas
-fichas §comparação), `knowledge` (somente as 17 fichas operacionais),
+fichas §comparação), `knowledge` (somente as fichas operacionais: R01–R15, índice, processo, AE-00 a AE-14 e TES-00 a TES-05),
 `get_context` (catálogo e schemas). Superfície MCP permanece com seis
 tools — nenhuma tool plana por relatório.
 

@@ -286,6 +286,8 @@ Decisão funcional `DEC-12` encerrada; o desenho abaixo é proposta documental �
 
 **Glossário canônico:** P7 = Registro de Inventário Modelo P7 (MATR460); H02 = Material/Saldo em Processo (MATR989); E/S = Resumo Entradas e Saídas (MATR320); sacramentação/virada = `MATA330`→`MATA280`→`SB9`+`SC2`+`MV_ULMES`; CM = custo médio (`B9_CM1`/`B9_VINI1`); poder3 = `F4_PODER3` (material de terceiros); loc99 = `MV_LOCPROC` (armazém de processo); TES = `F4_*`/`D1_TES`/`D2_TES` (não confundir com CFOP `D*_CF`); MOD = mão de obra direta (`MOD`+`H1_CCUSTO`, rate `SBZ.BZ_CUSTD`); OP = ordem de produção (`SC2`/`SD3 D3_OP`); EDAPP = consulta genérica que exporta SD1/SD2; competência = `YYYY-MM`; filial = dimensão de dado, não permission.
 
+Errata (14/11/2026): 499/999 do R07 são tipos de movimento da SD3 (D3_TM), não TES.
+
 **Regras que a CLARA pode citar:** DR-01–DR-16 com proveniência (sempre citar fonte: TÉO 06.2, docs 83/84/85/90/113/118); dependências OPS-*; exceções conhecidas (poder3, benefícios, `PA` sem título, decomposições MT/JR/DC, MOD* sem SB9).
 
 **Perguntas que pode responder:** "o que é o P7?", "por que EM PROCESSO ≠ armazém 99?", "o que bloqueia a paridade?", "qual relatório sustenta cada número?", "quais etapas do fechamento existem?".

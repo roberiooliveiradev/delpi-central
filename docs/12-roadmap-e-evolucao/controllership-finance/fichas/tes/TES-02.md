@@ -74,7 +74,55 @@ Fatos da extração de 09/11/2026. São pontos a verificar com o fiscal, não er
 | A5 | Campo de bloqueio vazio | 33 TES (001, 003, 004, 020, 030, 040, 120, 501…) | Vazio = não bloqueada |
 | A6 | Código alfanumérico | 3A8 (ENT.IMPORTACAO DIRET, CFOP 3101) | Filtro numérico por faixa pode deixá-la de fora |
 
+## TES em uso no último ano (14/11/2025 a 14/11/2026)
+
+Reconsulta somente leitura em 14/11/2026, filiais 01 e 02. Entrada pela data de digitação; saída pela data de emissão. PROVEN (levantamento em dados, 14/11/2026).
+
+- Entrada: **85 TES** em **17.721 linhas**, mais **10 linhas** com a TES em branco.
+- Saída: **50 TES** em **21.611 linhas**.
+
+### As 10 mais usadas na entrada
+
+| TES | Descrição | Linhas |
+|---|---|---|
+| 040 | AQUIS. SERV.TRANSP. | 2.724 |
+| 019 | CONSUMO SIMPLES NACIONAL DENTRO ESTADO | 2.694 |
+| 031 | CONS ADM S EST S IPI | 2.075 |
+| 001 | COMPRAS MP | 1.867 |
+| 003 | COMPRAS MP S/IPI | 1.319 |
+| 018 | INSUMO C EST S IPI | 1.219 |
+| 046 | SERVICOS ADM/CONSUMO | 1.095 |
+| 042 | TRANSP. CONSUMO | 735 |
+| 028 | SERV. 3º PROD. IR | 582 |
+| 085 | ENTRADA IND.P/ENCOM. | 448 |
+
+### As 10 mais usadas na saída
+
+| TES | Descrição | Linhas |
+|---|---|---|
+| 614 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 8.452 |
+| 706 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 5.910 |
+| 525 | RETORNO DE MERC. UTILIZADA NA IND. | 3.229 |
+| 501 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 1.505 |
+| 622 | INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA | 629 |
+| 590 | TRANSFERENCIA DE PRODUCAO DO ESTAB. | 355 |
+| 550 | DEVOL. VASILHAME OU SACARIA | 223 |
+| 510 | INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA | 156 |
+| 594 | VENDA DE PRODUCAO DO ESTABELECIMENTO | 150 |
+| 534 | RETORNO MERC. RECEB. P/ IND. NAO APLICAD | 136 |
+
+### TES ativas sem movimento no período
+
+- Entrada: **57** das 141 TES ativas. Códigos: 002, 011, 014, 015, 025, 026, 045, 048, 056, 058, 073, 079, 081, 088, 100, 105, 108, 109, 111, 115, 117, 124, 125, 126, 127, 130, 139, 144, 155, 172, 178, 182, 184, 185, 186, 188, 191, 197, 198, 199, 248, 262, 301, 303, 305, 309, 310, 312, 317, 320, 322, 3A8, 406, 408, 412, 413, 414.
+- Saída: **43** das 93 TES ativas. Códigos: 506, 511, 515, 528, 535, 536, 538, 554, 558, 564, 567, 568, 572, 576, 580, 583, 588, 589, 595, 600, 602, 613, 617, 628, 633, 649, 658, 659, 661, 666, 667, 671, 672, 701, 704, 716, 719, 720, 721, 724, 755, 757, 764.
+- TES ativa sem movimento não é erro; é candidata a revisão do cadastro pelo fiscal.
+
+### TES usadas no período que hoje estão bloqueadas
+
+- Entrada: **071** (CONSUMO ADM COM ESTOQUE), 38 linhas. Bloqueada no cadastro de 09/11/2026.
+- Saída: nenhuma.
+
 ## Governança
 
 - Owner: Controladoria e equipe fiscal. Correção de cadastro é feita no Protheus por quem tem acesso; a CLARA só aponta.
-- Contagens valem para a extração de 09/11/2026. Ao atualizar a extração, refazer as contagens (`fonte/gerar_catalogo_tes.py --resumo`).
+- Contagens do cadastro valem para a extração de 09/11/2026. Ao atualizar a extração, refazer as contagens (manutenção na ficha TES-05).

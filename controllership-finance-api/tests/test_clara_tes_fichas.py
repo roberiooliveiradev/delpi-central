@@ -71,7 +71,7 @@ def test_catalog_lists_every_tes_of_the_extraction():
     entry, exit_ = _text(3), _text(4)
     for row in rows:
         target = entry if row["tipo"] == "Entrada" else exit_
-        assert re.search(rf"^\| {re.escape(row['codigo'])} \|", target, re.M), row["codigo"]
+        assert re.search(rf"^\| TES {re.escape(row['codigo'])} \|", target, re.M), row["codigo"]
     assert sum(r["bloqueado"] != "Sim" for r in rows) == 234
 
 

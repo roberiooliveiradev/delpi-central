@@ -655,6 +655,7 @@ testados do comportamento observado são compatíveis com o fonte.
   movimentos efetivos) = mesmo layout kardex filtrado a
   `D3_DOC='INVENT'` — TES **999/RE0** (saída) e **499/DE0** (entrada);
   cobre loc 01 e loc 99 da filial 02.
+- Errata (14/11/2026): 499/999 do R07 são tipos de movimento da SD3 (D3_TM), não TES.
 - `BR-R07-002` (semântica — `PROVEN`): ajuste de inventário = SD3 com doc
   `INVENT`; entrada DE0 soma qtd/valor ao saldo; saída RE0 subtrai; custo
   = `D3_CUSTO1` as_of emissão; saldo resultante impresso na linha —

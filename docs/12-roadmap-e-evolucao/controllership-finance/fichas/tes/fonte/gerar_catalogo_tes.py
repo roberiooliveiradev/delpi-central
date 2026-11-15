@@ -173,7 +173,7 @@ HEADER = ("| TES | Descrição | CFOP | Estoque | Duplicata | ICMS calc/créd/li
 def row_md(row: dict) -> str:
     icms = f"{_yn(row['calcula_icms'])}/{_yn(row['credita_icms'])}/{_book(row['livro_icms'])}"
     ipi = f"{_yn(row['calcula_ipi'])}/{_yn(row['credita_ipi'])}/{_book(row['livro_ipi'])}"
-    return (f"| {row['codigo']} | {_description(row)} | {row['cfop']} | {_yn(row['estoque'])} "
+    return (f"| TES {row['codigo']} | {_description(row)} | {row['cfop']} | {_yn(row['estoque'])} "
             f"| {_yn(row['duplicata'])} | {icms} | {ipi} | {_pis(row)} | {_poder3(row['poder_terceiros'])} "
             f"| {_yn(row['material_consumo'])} | {row['tes_devolucao'] or '—'} |")
 
@@ -212,7 +212,7 @@ def render(rows: list[dict], *, side: str, code: str, data_extracao: str) -> str
     out = [
         f"# {code} — Catálogo das TES de {title}",
         "",
-        f"Versão da ficha: 1.0 · 14/11/2026 · gerada de `fonte/sf4-{_iso(data_extracao)}.csv` por `fonte/gerar_catalogo_tes.py`.",
+        f"Versão da ficha: 1.0 · gerada da extração da SF4 de {data_extracao}.",
         "",
         "## Identificação",
         "",
@@ -260,7 +260,7 @@ def render(rows: list[dict], *, side: str, code: str, data_extracao: str) -> str
         "- Owner do cadastro: Controladoria e equipe fiscal. A CLARA não cria, edita nem bloqueia TES.",
         "- Bloqueada (`F4_MSBLQL`) = não pode ser usada em nota nova. Nota antiga pode ter TES hoje bloqueada: isso é normal e não é erro.",
         "- Configuração estranha no cadastro é ponto a verificar com o fiscal, nunca erro confirmado (ficha TES-02).",
-        "- Atualização: gerar CSV novo da SF4, rodar `fonte/gerar_catalogo_tes.py`, revisar o diff e republicar o corpus.",
+        "- Atualização: nova extração da SF4 e republicação do catálogo (manutenção na ficha TES-05).",
         "",
     ]
     return "\n".join(out)

@@ -60,8 +60,8 @@ Versão da ficha: 1.0 · 14/11/2026.
 
 - Movimentos internos de estoque (requisição, devolução, produção, inventário) ficam na **SD3** e usam o **tipo de movimento** `D3_TM`, não TES. PROVEN (código do kardex e do R05: `D3_TM <= '500'` entrada, `> '500'` saída).
 - A convenção é a mesma das TES: até 500 entra, acima de 500 sai.
-- **499 e 999 do R07 (ajustes de inventário) são tipos de movimento da SD3**, não TES: não existem na SF4 extraída em 09/11/2026. PROVEN. A ficha R07 os chama de «TES 499/DE0» e «TES 999/RE0» por herança do relatório; leia como tipo de movimento 499 (entrada, `D3_CF` DE0) e 999 (saída, `D3_CF` RE0).
-- O cadastro dos tipos de movimento no Protheus é a SF5 (padrão TOTVS). A descrição de 499 e 999 na Delpi é TO_INVENTORY.
+- **499 e 999 do R07 (ajustes de inventário) são tipos de movimento da SD3**, não TES: não existem na SF4 extraída em 09/11/2026. PROVEN. Leia como tipo de movimento 499 (entrada, `D3_CF` DE0) e 999 (saída, `D3_CF` RE0).
+- O cadastro dos tipos de movimento no Protheus é a SF5. Consulta somente leitura em 14/11/2026: 15 tipos, sem campo de bloqueio no dicionário, e 499 e 999 não constam. A descrição e a filial seguem em aberto (P-TES-04).
 
 ## TES por filial
 

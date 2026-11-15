@@ -21,8 +21,11 @@ Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
 
 - Artefato: `Invent.xlsb` (50 linhas, 45 movimentos efetivos — f02,
   loc 01+99).
-- Seleção física: `SD3` com `D3_DOC='INVENT'`; TES **999/RE0** (saída)
-  e **499/DE0** (entrada) — `PROVEN` (doc 85 §7).
+- Seleção física: `SD3` com `D3_DOC='INVENT'`; tipo de movimento
+  **999** (`D3_CF` RE0, saída) e **499** (`D3_CF` DE0, entrada) —
+  não são TES (ficha TES-00). `PROVEN` (doc 85 §7). Consulta do
+  cadastro de tipos de movimento em 14/11/2026: 499 e 999 não
+  constam (15 tipos); a descrição segue em aberto.
 - Grão: linha de movimento SD3. Eixo: `D3_EMISSAO`. Custo: `D3_CUSTO1`
   as_of.
 - Capability CLARA: `read(report.inventory_adjustments)`.

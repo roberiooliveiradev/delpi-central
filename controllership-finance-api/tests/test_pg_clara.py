@@ -100,6 +100,8 @@ from pg_test_isolation import (  # noqa: E402
     drop_owned_test_database,
     require_test_environment,
 )
+from migration_head import latest_product_migration, product_migration_names  # noqa: E402
+
 
 
 def _test_connect(dbname: str) -> psycopg.Connection:
@@ -157,7 +159,7 @@ def _configure_db():
 def env(_configure_db):
     applied = mr.run_migrations()
     assert "V019__clara_direct_execution_idempotency.sql" in applied
-    assert applied[-1] == "V021__closing_audit_competence_set_null.sql"
+    assert applied[-1] == latest_product_migration()
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])
     checklist.submit_version_for_review(template_id, 1, actor=ADMIN)
