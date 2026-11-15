@@ -197,3 +197,54 @@ docker ps --format 'table {{.Names}}\t{{.Status}}'
 | 2026-11-14 | MCP, conexão ChatGPT, alteração de produção, autorização Keycloak, CI e deploy | `NOT_DONE` | Não afirmar implementação |
 
 **Regra de manutenção:** cada etapa futura deve atualizar este documento (ou registro de evidências ligado) com versão, arquivos, testes executados/não executados, decisão, riscos residuais e read-back real. Não confundir `DOC_PROPOSED`, `CODE_IMPLEMENTED`, `TEST_PASSED` e `PRODUCTION_VERIFIED`.
+
+
+## 11. Inventário operacional recebido do operador (2026-11-14)
+
+> **Proveniência:** saída de comandos fornecida pelo operador humano no terminal do `srv-api`. **Não houve conexão SSH/MCP do assistente nem execução remota.** Este registro evita dados identificadores e não expõe credenciais no GitHub público.
+
+| Categoria | Evidência sanitizada | Interpretação |
+|---|---|---|
+| Kernel / runtime | Linux `6.8.0-147-generic`, Docker `29.2.1`, Compose `v5.0.2`, Python `3.12.3` | Base apta a um pequeno processo MCP; distribuição Linux exata ainda `TO_VERIFY` |
+| Capacidade | RAM total ~47 GiB, disponível ~25 GiB; espaço livre ~210 GiB (ocupação ~45%) | Não indica necessidade imediata de novo host; considerar concorrência com os serviços em produção |
+| Serviços | Docker, SSH e Tailscale `active` | Canal de manutenção existente; não presumir que o canal MCP já está disponível |
+| Infra existente | Vários contêineres de produção e `delpi-hml-*` em execução no **mesmo host** | Homologação não possui isolamento físico. Limitar CPU/RAM/IO de testes; não executar builds massivos |
+| Saúde dos contêineres | Diversos contêineres reportaram `healthy`; outros `Up` sem indicação de healthcheck | Ausência de `unhealthy` na listagem não prova saúde funcional de todos os serviços |
+| Identidade atual | Operador humano membro dos grupos `sudo` e `docker` | **Bloqueio de privilégio:** não executar MCP nem túnel como usuário humano; criar identidade restrita sem `sudo`/`docker` |
+| Repositório local | `main`, SHA `aeba1d71314747a05cc13f11e95ec9054f7ebe5b`; arquivo `shared/delpi_auth.egg-info/SOURCES.txt` modificado | **Checkout não limpo.** Não executar pull/checkout/reset/restore/deploy; investigar origem da alteração e comparar remoto |
+| Comando de SO | `hostnamectl --no-pager` não aceito pela versão instalada | Usar `grep '^PRETTY_NAME=' /etc/os-release` para identificar distribuição, sem elevar privilégios |
+
+### Diagnóstico complementar permitido, somente leitura
+
+```bash
+grep '^PRETTY_NAME=' /etc/os-release
+nproc
+docker ps -q | wc -l
+docker ps --filter 'health=unhealthy' --format '{{.Names}}:{{.Status}}'
+docker ps --filter 'health=starting' --format '{{.Names}}:{{.Status}}'
+cd /home/operador/projetos/delpi-central
+git diff --numstat -- shared/delpi_auth.egg-info/SOURCES.txt
+git status --porcelain=v1 -uno
+git rev-parse HEAD
+git rev-parse origin/main
+command -v tunnel-client || true
+```
+
+**Importante:** `origin/main` é uma *referência local* e pode estar desatualizada. Comparar com GitHub remoto usando ferramenta GitHub autorizada antes de promover qualquer revisão. Os comandos acima não incluem `git fetch`, pull, stop, restart, build ou alterações em arquivos.
+
+### Decisões confirmadas depois do inventário
+
+1. `P0-HOST-CAPACITY`: **PASS parcial** para hospedagem de MCP leve, sem benchmark de latência ou cgroup e sem reserva formal de recursos.
+2. `P0-HOST-IDENTITY`: **REQUIRES_SEPARATE_UNPRIVILEGED_SERVICE_ACCOUNT**.
+3. `P0-PRODUCTION-GIT`: **BLOCKED_DIRTY_WORKTREE** para qualquer procedimento que presuma checkout limpo e commit fixo.
+4. `P0-HML`: **RUNTIME_PRESENT / ISOLATION_PARTIAL**. Testes limitados e agendados, com no-op na produção.
+5. `P0-TUNNEL`: **NOT_CONFIGURED / TO_VERIFY**. Nenhuma API key, tunnel ID ou cliente foi instalado; verificar permissões e vínculo de workspace antes de habilitar.
+6. `P1-READ_ONLY`: **NOT_STARTED**; só prosseguir com identidade, autenticação, isolamento e saída sanitizada.
+
+### Registro de atualização
+
+| Data | Tipo | Estado |
+|---|---|---|
+| 2026-11-14 | Inventário real recebido do operador, analisado e sanitizado para o GitHub público | `HOST_BASELINE_PARTIAL` |
+| 2026-11-14 | Precondições para P1: conta isolada, nenhuma permissão Docker, sem shell genérico | `SECURITY_DESIGN_REQUIRED` |
+| 2026-11-14 | Acesso remoto MCP, instalação do túnel, deploy e testes autenticados | `NOT_DONE` |
