@@ -421,3 +421,90 @@ test("G4 — seletor de versões do kit: painel ancorado, teclado e Escape", asy
 
   await expectNoFailures(pageErrors, forbidden);
 });
+
+test("G5 — breadcrumb reflete a área: raiz, solicitações, produtos e detalhes", async ({
+  page,
+}, testInfo) => {
+  const forbidden = trackForbiddenApiCalls(page);
+  const pageErrors = trackPageErrors(page);
+  const shot = (name: string) =>
+    page.screenshot({
+      path: `e2e/artifacts/prc-refine-g5-${name}-${testInfo.project.name}.png`,
+      fullPage: true,
+    });
+  const crumbs = () => page.getByRole("navigation", { name: "Caminho da página" });
+
+  /* 1) Fila: Início / C&CP / Solicitações. */
+  await page.goto(QUEUE_PATH);
+  await ensureAuthenticated(page);
+  const navQueue = crumbs();
+  await expect(
+    navQueue.getByRole("link", { name: "Início" }),
+  ).toBeVisible({ timeout: 20_000 });
+  await expect(
+    navQueue.getByRole("link", { name: "Controle e Cadastro de Produtos" }),
+  ).toBeVisible();
+  await expect(
+    navQueue.locator('[aria-current="page"]'),
+  ).toHaveText("Solicitações");
+
+  /* 2) Área produtos: mesma raiz, segmento corrente troca. */
+  await page.goto(`${QUEUE_PATH}?area=products`);
+  await ensureAuthenticated(page);
+  const navProducts = crumbs();
+  await expect(
+    navProducts.getByRole("link", { name: "Controle e Cadastro de Produtos" }),
+  ).toBeVisible({ timeout: 20_000 });
+  await expect(
+    navProducts.locator('[aria-current="page"]'),
+  ).toHaveText("Produtos acompanhados");
+  await shot("breadcrumb-products");
+
+  /* 3) Detalhe de produto: raiz + Produtos acompanhados + código. */
+  await openProductDetail(page, "30190123");
+  const navDetail = crumbs();
+  await expect(
+    navDetail.getByRole("link", { name: "Controle e Cadastro de Produtos" }),
+  ).toBeVisible({ timeout: 20_000 });
+  await expect(
+    navDetail.getByRole("link", { name: "Produtos acompanhados" }),
+  ).toBeVisible();
+  await expect(
+    navDetail.locator('[aria-current="page"]'),
+  ).toHaveText("30190123");
+
+  /* 4) Link intermediário retorna à área correta (?area=products). */
+  await navDetail.getByRole("link", { name: "Produtos acompanhados" }).click();
+  await page.waitForURL(/area=products/, { timeout: 15_000 });
+  await expect(
+    crumbs().locator('[aria-current="page"]'),
+  ).toHaveText("Produtos acompanhados", { timeout: 20_000 });
+  await shot("breadcrumb-back-to-products");
+
+  /* 5) Detalhe de solicitação: raiz + Solicitações + #id. */
+  await page.goto(QUEUE_PATH);
+  await ensureAuthenticated(page);
+  const firstRow = page
+    .getByRole("table")
+    .locator("tbody tr")
+    .first();
+  await expect(firstRow).toBeVisible({ timeout: 20_000 });
+  await firstRow.click();
+  await page.waitForURL(/product-registration\/[0-9a-f-]{36}/, {
+    timeout: 15_000,
+  });
+  const navReq = crumbs();
+  await expect(
+    navReq.getByRole("link", { name: "Solicitações" }),
+  ).toBeVisible({ timeout: 20_000 });
+  await expect(navReq.locator('[aria-current="page"]')).toHaveText(/^#/);
+
+  /* 6) «Solicitações» volta à fila sem parâmetro de área (padrão). */
+  await navReq.getByRole("link", { name: "Solicitações" }).click();
+  await page.waitForURL(/product-registration(\?|$)/, { timeout: 15_000 });
+  await expect(
+    crumbs().locator('[aria-current="page"]'),
+  ).toHaveText("Solicitações", { timeout: 20_000 });
+
+  await expectNoFailures(pageErrors, forbidden);
+});
