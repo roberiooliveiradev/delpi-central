@@ -36,9 +36,15 @@ describe("EntryAuditHomePage", () => {
       <EntryAuditHomePage basePath="/apps/controllership-finance" />,
     );
 
-    expect(await screen.findByText("Auditoria de Entradas")).toBeTruthy();
-    expect(screen.getByLabelText("Data inicial")).toBeTruthy();
+    expect(
+      await screen.findByRole("heading", { name: /Auditoria de Entradas/i }),
+    ).toBeTruthy();
+    expect(screen.getByLabelText("De")).toBeTruthy();
+    expect(screen.getByLabelText("Até")).toBeTruthy();
     expect(screen.getByLabelText("Filiais")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /Executar auditoria/i }),
+    ).toBeTruthy();
     expect(screen.getByText(/Nenhuma análise anterior/)).toBeTruthy();
     expect(screen.queryByText("%")).toBeNull();
   });
