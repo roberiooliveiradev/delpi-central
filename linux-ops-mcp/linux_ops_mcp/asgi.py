@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+from urllib.parse import urlparse
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -29,13 +30,22 @@ DEFAULT_RESOURCE = "https://minhadelpi.com.br/apps/linux-ops-mcp/mcp"
 
 def resource_url() -> str:
     resource = (os.getenv("LINUX_OPS_MCP_RESOURCE_URL") or "").strip().rstrip("/")
-    if not resource:
-        # No implicit production deployment URL when auth config is missing.
-        raise ValueError("LINUX_OPS_MCP_RESOURCE_URL missing")
-    if not resource.startswith("https://") or not resource.endswith("/mcp"):
-        raise ValueError("invalid resource URL")
+    base = (os.getenv("PUBLIC_BASE_URL") or "").strip().rstrip("/")
+    resource_parsed, base_parsed = urlparse(resource), urlparse(base)
+    # Exact canonical path, no query/userinfo, bound to the approved public
+    # origin. Missing or mismatched deployment env fails startup.
+    if (
+        resource_parsed.scheme != "https"
+        or base_parsed.scheme != "https"
+        or not base_parsed.netloc
+        or resource_parsed.netloc != base_parsed.netloc
+        or base_parsed.path not in {"", "/"}
+        or resource_parsed.path != APP_PATH + "/mcp"
+        or any((resource_parsed.username, resource_parsed.password,
+                resource_parsed.query, resource_parsed.fragment))
+    ):
+        raise ValueError("LINUX_OPS_MCP_RESOURCE_URL invalid")
     return resource
-
 
 def issuer_url() -> str:
     issuer = (os.getenv("KEYCLOAK_ISSUER") or "").strip()
