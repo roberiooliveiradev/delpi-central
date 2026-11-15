@@ -60,7 +60,8 @@ class GithubReleaseReader:
         # Internal fixed paths only. All variable path segments are 40-hex SHA.
         try:
             async with client.stream("GET", f"{_API}{_PREFIX}{path}", params=params) as response:
-                if response.status_code != 200 or not response.headers.get("content-type", "").lower().startswith("application/json"):
+                mime = response.headers.get("content-type", "").lower().split(";", 1)[0].strip()
+                if response.status_code != 200 or mime not in ("application/json", "application/vnd.github+json"):
                     raise EvidenceReadError("GITHUB_UNAVAILABLE")
                 data = bytearray()
                 async for chunk in response.aiter_bytes():
