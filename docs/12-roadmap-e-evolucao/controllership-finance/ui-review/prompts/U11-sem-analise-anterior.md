@@ -1,5 +1,7 @@
 # Prompt para o Cursor — UI review, U11 («sem análise anterior» não é zero)
 
+> **Incluída na U12 (15/11/2026).** Não executar sozinha: o conteúdo é o item W1a de [U12-cursor.md](./U12-cursor.md).
+
 ```text
 PROMPT CURSOR — UI REVIEW · U11 — comparação com período anterior inexistente aparece como zero
 

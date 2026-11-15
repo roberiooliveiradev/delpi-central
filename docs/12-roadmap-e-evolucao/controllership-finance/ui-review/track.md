@@ -36,6 +36,10 @@ Fonte: [review.md](./review.md). Autoridade: instruções oficiais do arquiteto 
 | U6 Demais páginas do Portal (desvios do padrão) | DONE | `f16cec684a` |
 | U7 HML (usuários de teste por perfil, Playwright, axe, screenshots) | DONE | `cc2aec7849` |
 | U8 PROD | DONE | `4785e7aa3e` |
+| U9 Rework (G9, perfis, axe, página do usuário) | DONE | `1a1b8749bb` |
+| U10 Desempenho BFF e perfis | DONE | `aefd74682d` |
+| U11 Sem análise anterior | INCLUÍDA NA U12 | — |
+| U12 Revisão 2 do owner (W0–W8) | READY | — |
 
 ## 3.1 Matriz de conformidade (U0) — evidência no código HEAD `1970a2bb4a`
 
@@ -174,3 +178,31 @@ SHA BFF: `aefd74682d`. Report: [reports/U10-desempenho-e-perfis.md](./reports/U1
 | Data | Etapa | SHA | Status | Nota |
 |---|---|---|---|---|
 | 2026-11-15 | U10 | `aefd74682d` / `f71d6006f9` | DONE | G9 BFF; e2e LGPD+perfis+axe; PROD BFF publicada |
+
+## 10. U12 — revisão 2 do owner (15/11): tabelas, hero com filtros, gráficos e abas
+
+Fonte: [review-2.md](./review-2.md) (T1–T9, E1–E4, A1–A10). **Inclui a U11** (prompt [U11](./prompts/U11-sem-analise-anterior.md) não foi executado e passa a ser o item W1a). Prompt: [prompts/U12-cursor.md](./prompts/U12-cursor.md). Regras e paradas: §1 e §2 desta trilha.
+
+### Etapas
+
+| Etapa | O que entrega | Itens |
+|---|---|---|
+| W0 Inventário | Matriz de **todas** as tabelas do MFE: página, tabela, paginação (cliente/servidor), colunas ordenáveis hoje, `columnPreferencesKey`, cards no celular, coluna «Abrir», tabela HTML local. Medição de requisições ao trocar de aba na análise 01–15/11 (antes) | T1–T8, A1 |
+| W1 BFF (aditivo) | **a)** sem análise anterior → `previous: null`; regra do anterior = mesmo nº de dias, imediatamente anterior, mesmas filiais e tipos (U11 + A5). **b)** ordenação no servidor: `sort=<coluna>&order=asc\|desc` em análises, ocorrências, notas casadas, sem par, CT-e, lançadas fora do período e TES; lista branca por recurso, padrão igual ao de hoje, coluna desconhecida → 422; contrato `entry-audit/backend/README.md §6`. Testes | A5, T1, E4 |
+| W2 Padrão de tabela | No adaptador `cfDataTableUi`: paginação sem `hints` (T4). Em todas as tabelas: colunas ordenáveis (servidor quando paginada no servidor), `columnPreferencesKey` + `fontSizePreferencesKey`, Tabela/Cards no celular em listas de registros, linha clicável sem coluna «Abrir», rótulo dos filtros (T9). Tabelas HTML locais de registros → `DataTableSection`; matriz fica com motivo registrado. Teste estrutural que falha se uma `DataTableSection` do MFE não tiver coluna ordenável ou `columnPreferencesKey` (exceções listadas no teste) | T1–T4, T7–T9 |
+| W3 Formatação | Formatador por tipo de campo (R$, %, data, texto) e rótulo de todos os campos das regras; teste que cobre o catálogo de regras | T5, T6 |
+| W4 Entrada da auditoria | Filtros + «Executar auditoria» dentro do hero (`FilterBarShell`, referência Comercial `CustomersPage`); card «Nova análise» removido; progresso logo abaixo do hero; histórico com paginação/ordenação no servidor e sem coluna «Ação»; rótulo de filial pelo código | E1–E4 |
+| W5 Resultado — layout | Layout alvo do review-2 §3: card «Panorama» (Conformidade + Severidade, legendas abaixo), «Evolução por dia» com 7/12, «Onde estão as ocorrências» (tema, fornecedor, TES em três colunas, barras `stacked`); evolução alinhada por dia com eixo `dd/mm`; «Lançadas fora do período» fora da Conformidade; «Filtros aplicados» só com detalhamento; CLARA sem marcadores; responsivo 1440/1024/390 | A2, A4, A7–A9 |
+| W6 Resultado — abas e tabelas | Troca de aba sem remontar (filtros memorizados pela chave só dos filtros; aba busca só a aba; atualizar mantém os dados na tela); `mode="tabs"`; contadores exatos e neutros; colunas por aba com o que a BFF entrega (falta → V4); ordenação no servidor e escolha de colunas em todas as abas | A1, A3, A6, A10 |
+| W7 HML | Playwright: ordenar cada coluna (asc/desc, página 2 coerente), menu Colunas persiste após F5, troca de aba = 1 requisição da aba e 0 de summary/breakdowns/daily, layout 1440/1024/390 claro/escuro, axe sem violação nova; perfis cf-access/cf-manage; análise sem anterior mostra «Sem análise do período anterior para comparar» | todos |
+| W8 PROD | Tags `rollback-ui-review-u12-controllership-finance-api` e `-controllership-finance` (e `-plugin-ui` se tocado); BFF primeiro, depois MFE; parar e pedir os prints ao owner | — |
+
+### Critérios de aceite
+
+1. Nenhuma tabela do MFE sem ordenação ou sem menu de colunas, salvo exceção listada no teste estrutural com motivo.
+2. Tabela paginada no servidor ordena o conjunto inteiro (página 2 continua a ordem da página 1).
+3. Trocar de aba não remonta hero, KPIs e gráficos (prova por contagem de requisições e por teste de render).
+4. Entrada da auditoria sem o card «Nova análise»: filtros e botão no hero; a tabela de análises começa na primeira dobra em 1440×900.
+5. Nenhum valor cru (`408.00`) nem termo técnico (`field`, `cte`, `item`) na tela.
+6. Comparação com período anterior só quando a regra do anterior casa; senão nenhuma variação aparece.
+7. Ajuda (`CF_HELP` e página Ajuda) atualizada no mesmo commit da tela.
