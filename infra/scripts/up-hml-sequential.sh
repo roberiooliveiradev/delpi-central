@@ -26,6 +26,8 @@ REPO_ROOT="$(cd "$COMPOSE_DIR/.." && pwd)"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=compose-filter-services.sh
 source "$SCRIPT_DIR/compose-filter-services.sh"
+# ATLAS Public Hub: compute full Git SHA only for an actual image build.
+source "$SCRIPT_DIR/public-hub-provenance.sh"
 
 PROJECT="delpi-hml"
 COMPOSE_FILE="docker-compose.hml.yml"
@@ -354,6 +356,11 @@ run_compose_up() {
   local -a cmd=("${base[@]}")
 
   pre_up_hooks "$svc"
+
+  if [[ "$BUILD" == true && "$svc" == "public-hub" ]]; then
+    export PUBLIC_HUB_SOURCE_REVISION
+    PUBLIC_HUB_SOURCE_REVISION="$(atlas_public_hub_revision "$REPO_ROOT")" || exit 1
+  fi
 
   if [[ "$BUILD" == true ]]; then
     local -a build_cmd=("${cmd[@]}" build "$svc")
