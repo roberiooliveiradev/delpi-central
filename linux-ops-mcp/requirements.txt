@@ -1,0 +1,6 @@
+# Deployed only after a separate operator-reviewed change.
+fastapi>=0.110,<1.0
+uvicorn[standard]>=0.29,<1.0
+httpx>=0.27,<1.0
+mcp>=2,<3
+# Shared delpi_auth and delpi_mcp are installed from canonical repo packages.
