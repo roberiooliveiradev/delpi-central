@@ -67,22 +67,22 @@ describe("SelectControl", () => {
     return screen.getByRole("button", { name: "Status" });
   }
 
-  it("ArrowDown no trigger abre o painel e foca a primeira opção", () => {
+  it("ArrowDown no trigger abre o painel e foca a primeira opção", async () => {
     const trigger = renderControl();
     trigger.focus();
     fireEvent.keyDown(trigger, { key: "ArrowDown" });
     const listbox = screen.getByRole("listbox");
     const first = within(listbox).getByRole("button", { name: "Opção A" });
-    expect(document.activeElement).toBe(first);
+    await vi.waitFor(() => expect(document.activeElement).toBe(first));
   });
 
-  it("ArrowUp no trigger abre o painel e foca a última opção", () => {
+  it("ArrowUp no trigger abre o painel e foca a última opção", async () => {
     const trigger = renderControl();
     trigger.focus();
     fireEvent.keyDown(trigger, { key: "ArrowUp" });
     const listbox = screen.getByRole("listbox");
     const last = within(listbox).getByRole("button", { name: "Opção C" });
-    expect(document.activeElement).toBe(last);
+    await vi.waitFor(() => expect(document.activeElement).toBe(last));
   });
 
   it("setas/Home/End navegam entre as opções do painel", () => {

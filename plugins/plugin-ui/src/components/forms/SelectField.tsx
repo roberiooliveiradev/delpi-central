@@ -168,11 +168,18 @@ export function SelectControl({
 
   /* Foco na 1ª/última opção quando o painel abre por teclado
    * (ArrowDown/ArrowUp no trigger) — o painel é portal no body,
-   * logo Tab a partir do trigger não alcança as opções. */
+   * logo Tab a partir do trigger não alcança as opções. O painel
+   * monta visibility:hidden até o layout de posicionamento pintar;
+   * focus() antes disso é ignorado pelo browser — por isso o foco
+   * é adiado para após o próximo frame. */
   useEffect(() => {
     if (!open || !focusOnOpenRef.current) return;
-    focusOption(focusOnOpenRef.current === "first" ? 0 : Infinity);
+    const target = focusOnOpenRef.current;
     focusOnOpenRef.current = null;
+    const raf = requestAnimationFrame(() => {
+      focusOption(target === "first" ? 0 : Infinity);
+    });
+    return () => cancelAnimationFrame(raf);
   }, [open]);
 
   const onTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
