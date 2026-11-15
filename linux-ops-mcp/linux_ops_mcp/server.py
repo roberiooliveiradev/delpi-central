@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import os
 from typing import Any, Literal
+from types import SimpleNamespace
 
 from delpi_auth.authz_core import has_permission
+from delpi_auth.middleware.fastapi_auth import load_user_rbac
 from delpi_mcp.identity import require_mcp_context
 from delpi_mcp.transport import mcp_transport_security_settings
 from delpi_mcp.resource_contract import mcp_allowed_hosts_and_origins
@@ -29,17 +31,33 @@ def _tool_annotations(title: str) -> ToolAnnotations:
     )
 
 
-def _context_authorization() -> str:
+async def _context_authorization() -> str:
+    """Require a fresh Core decision, not stale cached RBAC from an earlier call."""
     context = require_mcp_context()
     user = context.user
     if getattr(user, "principal_type", None) != "user" or getattr(user, "rbac_unavailable", True):
         raise ReadError("forbidden")
-    if not all(has_permission(user, permission) for permission in REQUIRED_PERMISSIONS):
-        raise ReadError("forbidden")
     if not context.authorization.startswith("Bearer "):
         raise ReadError("unauthorized")
+    token = context.authorization.removeprefix("Bearer ").strip()
+    if not token:
+        raise ReadError("unauthorized")
+    # Canonical Core authority, with stale-cache fallback DISABLED.
+    # Any exception is handled by _read as a fail-closed error.
+    rbac = await load_user_rbac(token, force_refresh=True)
+    if (
+        not isinstance(rbac, dict)
+        or not rbac.get("id")
+        or str(rbac["id"]) != str(getattr(user, "id", ""))
+    ):
+        raise ReadError("forbidden")
+    fresh_user = SimpleNamespace(
+        permissions=list(rbac.get("permissions") or ()),
+        is_superadmin=rbac.get("is_superadmin") is True,
+    )
+    if not all(has_permission(fresh_user, permission) for permission in REQUIRED_PERMISSIONS):
+        raise ReadError("forbidden")
     return context.authorization
-
 
 def _safe_error(exc: Exception) -> dict[str, Any]:
     if isinstance(exc, (ReadError, PermissionError)):
@@ -50,7 +68,7 @@ def _safe_error(exc: Exception) -> dict[str, Any]:
 
 async def _read(projector, *, name: str | None = None) -> dict[str, Any]:
     try:
-        bearer = _context_authorization()
+        bearer = await _context_authorization()
         snapshot = await ItPortalReader().latest(bearer)
         if name is not None:
             return {"ok": True, "data": projector(snapshot, name)}
