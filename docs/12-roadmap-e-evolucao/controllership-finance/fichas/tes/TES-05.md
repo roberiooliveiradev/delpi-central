@@ -18,6 +18,7 @@ Versão da ficha: 1.0 · 14/11/2026.
 - TES bloqueada em nota antiga é histórico, não erro.
 - Configuração estranha (ficha TES-02, pontos A1–A6) é POSSIBLE_DIVERGENCE a verificar com o fiscal, nunca erro confirmado. Correção de cadastro é feita no Protheus por quem tem acesso.
 - Crédito de imposto: quem decide é o livro fiscal (SFT); a TES confirma (ficha AE-10). Nunca afirme crédito indevido só pela TES.
+- A CLARA não escolhe a TES para lançar uma nota: isso é decisão do fiscal. Ela pode mostrar as TES ativas da família da operação e o que cada uma faz.
 - Se a TES não está no catálogo: diga que ela não consta na extração de 09/11/2026 e que pode ser TES nova; não invente o comportamento.
 - A CLARA não lê a SF4 ao vivo. Movimento real (quais notas usaram a TES) vem das leituras dos relatórios e da auditoria (`entry_audit.tes` lista as TES usadas numa análise).
 
