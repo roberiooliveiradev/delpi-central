@@ -258,3 +258,35 @@ command -v tunnel-client || true
 - Novo reuse gate: `it-portal-api/collectors/linux_host` e a API autenticada GET `/servers/{server_id}/observations/latest` já implementam coleta/consulta de observações com RBAC. Reusar; não duplicar coletor e não conceder Docker socket ao MCP. Instalação/execução automática do coletor e presença de observações no banco ainda exigem read-back de produção.
 - Candidato P1: PR #185, 4 ferramentas MCP somente leitura e testes estáticos propostos. Estado **CODE_CANDIDATE / TEST_NOT_RUN / NOT_DEPLOYED**; revisão Git implantada permanece **not_available**, nunca inferida do GitHub HEAD.
 - Gate P1 pendente: checkout+testes com dependências, revisão de segurança, observação real, escolha de transporte, Keycloak/Core permissions, smoke autenticado ChatGPT. Nenhum deploy autorizado nesta etapa.
+
+
+## 13. Gate do coletor Linux em producao (evidencia recebida em 2026-11-14)
+
+**Fonte:** saida enviada pelo operador humano da sessao no `srv-api`; nenhuma chamada SSH/MCP do assistente executada.
+
+| Verificacao | Resultado observado | Conclusao |
+|---|---|---|
+| `systemctl is-enabled it-portal-linux-collector.timer` | `enabled` | Agendamento configurado para iniciar automaticamente |
+| `systemctl is-active it-portal-linux-collector.timer` | `active` | Timer carregado e em execucao no systemd |
+| `systemctl is-active it-portal-linux-collector.service` | `inactive` | **Esperado entre disparos para unit Type=oneshot**; nao prova que houve ultimo `submit` bem sucedido |
+| Diretorio instalado | `/opt/delpi/it-portal-collector` propriedade `root:root` | Raiz da arvore protegida; ownership dos arquivos/venv e hardening ainda exigem verificacao especifica |
+| Usuario tecnico | `delpi-collector` com somente grupo homonimo, sem `sudo`/`docker` na evidencia | Limite de privilegios do coletor preservado na conta verificada; consulta Docker pode vir `partial` ou `unavailable` |
+
+**Confirmacao de configuracao por leitura do codigo:** `it-portal-api/collectors/linux_host/deploy/it-portal-linux-collector.service` declara `Type=oneshot` e executa `run-collector submit` sob `User=delpi-collector`; `it-portal-linux-collector.timer` declara `OnCalendar=hourly`, `RandomizedDelaySec=5m`, `Persistent=true`. Isso nao confirma que o arquivo unit em disco e identico ao versionado, nem confirma ultimo resultado.
+
+### Proximo gate, sem modificacao de producao
+
+```bash
+systemctl list-timers --all it-portal-linux-collector.timer --no-pager
+systemctl show it-portal-linux-collector.service \
+  -p Type -p Result -p ExecMainCode -p ExecMainStatus \
+  -p ExecMainStartTimestamp -p ExecMainExitTimestamp --no-pager
+systemctl show it-portal-linux-collector.timer \
+  -p ActiveState -p LastTriggerUSec -p NextElapseUSecRealtime --no-pager
+```
+
+Na interface autenticada do Portal de TI, verificar em **Servidores > srv-api > Observacoes** se existe ultima amostra com `observed_at` recente, `status` e `sections_status` esperados. A consulta no MCP so sera util se a API possuir uma amostra persistida e o token do usuario tiver permissoes `it-portal.access` e `it-portal.servers.view`.
+
+**Pendencias:** data/hora da ultima disparo, `Result`/`ExecMainStatus`, sucesso do POST S2S, observacao confirmada em banco/UI, integridade da arvore root-owned, testes unitarios funcionais do candidato MCP, Keycloak/resource audience e transporte MCP autenticado. **Nao alterar timer, nao forcar start, nao conceder grupo Docker, nao fazer pull/deploy.**
+
+**Codigo P1:** PR #185 integrado a `main` com commit `3fce4744104f404f0ab75b58434cb8a06e4cfecd`; estado `CODE_MERGED / NOT_DEPLOYED / MCP_RUNTIME_NOT_VERIFIED`. O PR #184 mantem a documentacao separada ate merge.
