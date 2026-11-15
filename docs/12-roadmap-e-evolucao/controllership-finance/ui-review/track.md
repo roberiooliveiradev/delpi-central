@@ -39,7 +39,7 @@ Fonte: [review.md](./review.md). Autoridade: instruções oficiais do arquiteto 
 | U9 Rework (G9, perfis, axe, página do usuário) | DONE | `1a1b8749bb` |
 | U10 Desempenho BFF e perfis | DONE | `aefd74682d` |
 | U11 Sem análise anterior | INCLUÍDA NA U12 | — |
-| U12 Revisão 2 do owner (W0–W8) | READY | — |
+| U12 Revisão 2 do owner (W0–W8) | DONE (W2–W8) | `ba53e55a2a` + tags rollback-ui-review-u12-* |
 
 ## 3.1 Matriz de conformidade (U0) — evidência no código HEAD `1970a2bb4a`
 
@@ -250,6 +250,20 @@ Confirmado A1: cada troca remonta `analysis+summary+breakdowns+daily` (+ resourc
 |---|---|---|---|---|
 | 2026-11-15 | U12 W0 | `0222fbaa9c` | DONE | Matriz + medição A1 antes |
 | 2026-11-15 | U12 W1 | (este commit) | DONE | previous null + sort/order whitelist; 12 pytest PASS |
+
+
+
+### Continuação W2→W8 (15/11)
+
+| Etapa | SHA | Status | Nota |
+|---|---|---|---|
+| W2 DataTable | `012f396a89` | DONE | estrutural + cards; ACCEPT_WITH_RESIDUAL verifier |
+| W3 Formatação | herdado W2 | DONE | catálogo FIELD_CODES + testes |
+| W4 Hero/histórico | `222468469b` | DONE | FilterBarShell; server page/sort |
+| W5 Layout | `a0139ecf11` | DONE | Panorama / Evolução / Onde estão |
+| W6 Abas | `238bb63d86` | DONE | detailFiltersKey; mode=tabs; colunas/whitelist |
+| W7 HML | `ba53e55a2a` | DONE | Playwright: 3 PASS + 2 perfis PASS; 1 skip previous; evidências `/tmp/ui-review-u12` |
+| W8 PROD | tags `rollback-ui-review-u12-controllership-finance{-api}` | DONE | BFF→MFE em srv-api; pedir prints ao owner |
 
 ### Revisão do Claude sobre W0–W1 (15/11)
 
