@@ -60,3 +60,14 @@ Os seis arquivos de codigo, testes e SQL (exceto teste estatico novo) foram comp
 **Objetivo:** homologar as tres fontes reais (GitHub/CI, Core, release do container) e o journal PostgreSQL com concorrencia, **em ambiente HML**, num unico alvo aprovado. Depois podera existir uma ferramenta \`preview_deployment\` de PREPARE **sem ACT**, sujeito a novo code review de autorizacao. Ainda nao ha permissao para execucao real de deploy via ChatGPT.
 
 **Estado final desta entrega:** \`P2.2D_CODE_MAIN_OFFLINE_PASS\`, \`HOST_SIGNER_RUNTIME_NOT_INSTALLED\`, \`JOURNAL_DB_NOT_APPLIED\`, \`MCP_TOOLS_FOUR_READ_ONLY\`, \`HML_NOT_EXECUTED\`, \`PROD_UNCHANGED\`.
+
+
+## 6. Validacao local real no srv-api - P2.2d (2026-11-15)
+
+**Evidencia informada pelo operador:** apos `git pull` e criacao de ambiente virtual temporario, executou a suite seletiva em `srv-api` com `PYTHONPATH="$PWD/linux-ops-mcp:$PWD/it-portal-api" PYTHONDONTWRITEBYTECODE=1 "$VENV/bin/python" -m pytest -q -p no:cacheprovider linux-ops-mcp/tests/test_deploy_host_source_signer.py it-portal-api/tests/test_atlas_deploy_journal.py it-portal-api/tests/test_atlas_schema_draft.py`. A primeira tentativa falhou ainda na coleta de testes por `ModuleNotFoundError: No module named 'fastapi'` importado pelo `it-portal-api/tests/conftest.py`; o usuario instalou as dependencias de `it-portal-api/requirements.txt` e o pacote `./shared` **somente no venv**. Nova execucao resultou em **35 testes aprovados, 100%, nenhuma falha**, usando Python **3.12** (evidenciado pelo caminho de `site-packages`).
+
+**Warnings nao bloqueantes:** `StarletteDeprecationWarning` sobre `httpx` / `starlette.testclient`; `FastAPIDeprecationWarning` sobre argumento `root_path` de `it_portal_app.main`. Nao fazer mudanca de dependencia produtiva apenas para suprimir warnings.
+
+**Classificacao:** `P22D_SRV_API_TESTS_LOCAL_PASSED`. Isto demonstra testes **mockados em ambiente isolado rodando sobre a maquina srv-api**, nao validacao do Docker real, PostgreSQL real, release signer instalado, API PREPARE publicada, migration aplicada ou deploy. `P22D_HML_REAL_SOURCES=NOT_VERIFIED`, `P22D_PROD_MUTATIONS=NONE_REPORTED`.
+
+**Proximo passo seguro para o operador:** validar `docker ps --format '{{.Names}} {{.Status}}'` limitado a `linux-ops-mcp`/`it-portal-api` e chamadas HTTP sem credenciais para metadata OAuth (200) e recurso MCP sem bearer (401); nao executar `up-prod-sequential.sh`, migration, `docker exec` de escrita ou montar docker.sock no MCP nesta fase.
