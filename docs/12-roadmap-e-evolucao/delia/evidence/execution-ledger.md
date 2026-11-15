@@ -7061,3 +7061,13 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **SAFETY:** 0 auth_failed, 0 AUTHZ_DENIED, 0 bypass, 0 writes, 0 secrets, 0 FALSE_COMPLETE/SATISFIED em 24 cenários (2 amostras); prod intocado.
 - **RESTRIÇÕES:** 2 Agents experimentais flag-off prod-blocked; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`; sem Agent 3/4.
 - **NEXT:** `COORDINATION_C3_T2_VOCABULARY_RELIABILITY_AND_PARALLEL_GATE_INDEPENDENT_REVIEW`.
+
+
+### 2026-11-15 — COORDINATION: revisão independente vocabulário C3/T2 + gate de experimento MCP paralelo
+
+- **REVIEW:** `COORDINATION_C3_T2_VOCABULARY_RELIABILITY_AND_PARALLEL_GATE_INDEPENDENT_REVIEW`; reviewed SHA `7df9118a8e`. Evidência de revisão: `evidence/c3-t2-parallel-mcp-discovery-decision/coordination-independent-review-2026-11-15.md`.
+- **VERDICT=`ACCEPT_WITH_RESIDUAL`**: separação tipada de `invocation_surface`, `selector_args`, `operation_classes`, `goal_classes`, `expected_delivery` aceita com residual. Duas evals reportadas (SHA `e24e6526e6` e `40320fc5f3`) tiveram first-accept 10/12; um dotted anchor residual na segunda. Teste independente de runtime nesta revisão: `TEST_NOT_RUN`; redução de mediana 135,6→83,7 s é observação entre amostras, causalidade não demonstrada.
+- **R2/R5/INT3:** walk de paginação já provado em amostra anterior; `R5_MULTIPAGE_UNION=OPEN`, `INT3_OBLIGATION_DEMONSTRATION_DEPTH=OPEN_LOW`; não concluir por consequência.
+- **GATE DE DISCOVERY:** autorização **somente para experimento isolado bounded**, flag OFF por default, sem deploy: fan-out por especialista dentro de `McpCapabilityProvider.list_groups` (caminho síncrono), não `asyncio.gather` por provider. Pré-gates: reconciliar documento contraditório; bearer por worker via bind/unbind existentes; prova de timeout total/lifetime e descarte de late results; cancelamento e cleanup; falhas isoladas e ordem estável; substituir assertion de teste inerte; regressão serial e comparação real de latência/auth.
+- **STOP:** se total deadline/isolamento de identidade não puder ser comprovado, `ARCHITECTURE_DECISION_REQUIRED`, nenhum fan-out habilitado. `TWO_AGENTS=EXPERIMENTAL_PRESERVED`; terceiro/quarto Agent não autorizados; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.
+- **NEXT:** `DELIA-C3-T2-PARALLEL-MCP-DISCOVERY-GUARDED-EXPERIMENT-01` → revisão independente de segurança, comportamento e performance.
