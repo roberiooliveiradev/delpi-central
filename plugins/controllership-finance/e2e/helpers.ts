@@ -69,25 +69,20 @@ export async function openEntryAuditHome(page: Page): Promise<void> {
 
 type Envelope<T> = { success: boolean; data: T };
 
-export async function fetchSummaryViaBrowser(
+/** Captura o summary da própria chamada Bearer do MFE (não re-fetch anônimo). */
+export async function waitForSummaryKpis(
   page: Page,
-  analysisId: string,
-): Promise<{
-  documents: number;
-  high: number;
-  occurrences: number;
-}> {
-  return page.evaluate(async (id) => {
-    const response = await fetch(
-      `/apps/controllership-finance-api/entry-audit/analyses/${encodeURIComponent(id)}/summary`,
-      { credentials: "include" },
-    );
-    if (!response.ok) {
-      throw new Error(`summary HTTP ${response.status}`);
-    }
-    const payload = (await response.json()) as Envelope<{
-      kpis: { documents: number; high: number; occurrences: number };
-    }>;
-    return payload.data.kpis;
-  }, analysisId);
+): Promise<{ documents: number; high: number; occurrences: number }> {
+  const response = await page.waitForResponse(
+    (res) =>
+      res.url().includes("/entry-audit/analyses/") &&
+      res.url().includes("/summary") &&
+      res.request().method() === "GET" &&
+      res.ok(),
+    { timeout: 45_000 },
+  );
+  const payload = (await response.json()) as Envelope<{
+    kpis: { documents: number; high: number; occurrences: number };
+  }>;
+  return payload.data.kpis;
 }

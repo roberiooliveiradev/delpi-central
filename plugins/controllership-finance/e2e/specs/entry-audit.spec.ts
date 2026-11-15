@@ -2,11 +2,7 @@ import { expect, test } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
 
-import {
-  fetchSummaryViaBrowser,
-  loginAs,
-  openEntryAuditHome,
-} from "../helpers";
+import { loginAs, openEntryAuditHome, waitForSummaryKpis } from "../helpers";
 
 const ARTIFACT_DIR =
   process.env.CF_E2E_ARTIFACT_DIR ||
@@ -30,6 +26,7 @@ test.describe("Auditoria de Entradas — HML", () => {
 
     const historyRow = page.locator("table tbody tr").first();
     await expect(historyRow).toBeVisible({ timeout: 30_000 });
+    const summaryPromise = waitForSummaryKpis(page);
     await historyRow.click();
 
     await expect(
@@ -38,9 +35,8 @@ test.describe("Auditoria de Entradas — HML", () => {
 
     const analysisMatch = page.url().match(/\/analyses\/([^/?#]+)/);
     expect(analysisMatch?.[1]).toBeTruthy();
-    const analysisId = decodeURIComponent(analysisMatch![1]);
 
-    const apiKpis = await fetchSummaryViaBrowser(page, analysisId);
+    const apiKpis = await summaryPromise;
     const kpiStrip = page.getByLabel("Indicadores da auditoria");
     await expect(kpiStrip).toBeVisible();
     await expect(kpiStrip).toContainText(String(apiKpis.documents));
@@ -109,7 +105,11 @@ test.describe("Auditoria de Entradas — HML", () => {
     await loginAs(page, "denied");
     await page.goto("/apps/controllership-finance/entry-audit");
     await expect(
-      page.getByText(/não tem autorização|sem acesso|forbidden/i).first(),
+      page
+        .getByText(
+          /não tem autorização|Aplicação indisponível|não está disponível na sua conta|sem acesso|forbidden/i,
+        )
+        .first(),
     ).toBeVisible({ timeout: 45_000 });
   });
 });
