@@ -5237,3 +5237,67 @@ cadastral; significado da LMP impressa `16726`; marco histórico
 de OV nos desenhos; homologação Engenharia; typo documental
 `B1_CODITE`×`B1_CODANT` na matriz DAVI; migrations órfãs
 `quality` V003–V021 (stream owner).
+
+### 94.18 G16 — Reconciliação do conhecimento v1.6 com a rastreabilidade produtiva
+
+**Task:** `EVA-G16-LIFECYCLE-KNOWLEDGE-RECONCILIATION-AND-RUNTIME-VALIDATION-01`.
+Motivo: `EXECUTION_DRIFT` — o tópico
+`product.lifecycle_traceability` v1.5 mantinha a regra
+`LIF-REVERSE-LINEAGE-GAP` afirmando que
+`product.search(previous_code)` não existia, enquanto o G15
+provou o contrato em produção e pela conexão oficial ChatGPT
+(`previous_code=80015472 → 90264302`, total 1).
+
+#### Mudança (commit `55494c01a3`, knowledge v1.5 → v1.6)
+
+- `LIF-REVERSE-LINEAGE-GAP` →
+  `LIF-REVERSE-LINEAGE-PREVIOUS-CODE`: critério aponta
+  `read(product.search, filters={previous_code})` como contrato
+  oficial (SB1.B1_CODANT, exato, trim externo, zeros à esquerda);
+  limitações: sem cardinalidade 1:1, sem restrição automática a
+  9026 (usar `group_code` só a pedido), vínculo cadastral ≠
+  liberação técnica, zero resultados ≠ inexistência histórica,
+  descrição nunca comprova vínculo. Compatibilidade: o ID antigo
+  não tinha referências fora do JSON e do teste G11 — migração
+  explícita, sem regra contraditória residual.
+- `query_playbooks.lineage_reverse_quotation_to_9026`: GAP
+  substituído pelo fluxo real `detail → search(previous_code)
+  → detail(sucessor)`; OV só quando houver contexto, nunca
+  obrigatória.
+- `contract_inventory.read_product_search`: `previous_code`
+  registrado como filtro PROVEN (G13/G15); "SEM filtro" removido.
+- `contract_gaps`: `reverse_lineage` removido; preservados
+  `lmp_printed_lookup` e `family_semantics` (OWNER_PENDING).
+- `negative_cases`: +5 — zero resultados não é inexistência
+  histórica; sucessor fora de 9026 declarado com família real;
+  código vazio/filtro inválido → estado honesto; OV sem vínculo
+  → sem consistência; customer_reference divergente → sem
+  presunção.
+- `verified_case.proven`: linhagem reversa G15 acrescentada.
+- Regras históricas preservadas: `LIF-OV-ABSENT-NOT-ERROR`,
+  `LIF-LMP-PRINTED-NOT-SALE`, `LIF-BOM-ORDER`,
+  `LIF-REV-DOMAINS`, `LIF-TYPE-FAMILY-STAGE`,
+  `LIF-OV-DIVERGENT-NO-FIX` — diff localizado, 12 regras.
+
+#### Testes
+
+- `test_eva_mcp.py`: asserções G16 — nova regra aponta o
+  contrato e recusa 1:1; `reverse_lineage`/`previous_code`
+  ausentes dos gaps; inventário e playbook sem GAP residual;
+  `verified_case.proven` inclui `product.search`.
+- `pytest tests/test_eva_mcp.py tests/test_eva_mcp_semantic.py`
+  na imagem prod `infra-engineering-api:latest` + código
+  candidato montado: **122 passed**.
+- Suite completa `tests/` (mesmo runner): **1287 passed,
+  21 skipped, 2 failed** — ambas pré-existentes na imagem prod
+  sem montagem (`test_d16_attendance_flags` isolamento de
+  requests; `test_lmp_domain` FileNotFound), fora do escopo G16.
+
+#### Estado e handoff
+
+`G16_KNOWLEDGE_PASS` + `G16_NO_STALE_GAP_PASS` +
+`G16_REGRESSION_PASS` (escopo) → **`G16_PASS_WITH_RESIDUAL`**:
+deploy produtivo NÃO autorizado pela task — submetido à
+Coordination/owner operacional. Runtime prod segue v1.5 até o
+gate de deploy da engineering-api (imagem rollback
+`rollback-pre-g15b` = `83692f3d6a39` disponível).
