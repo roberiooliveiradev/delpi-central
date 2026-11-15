@@ -169,6 +169,8 @@ class HookProcessTests(unittest.TestCase):
         self.env = {**os.environ, "DELPI_AGENT_KIT_HOME": str(self.kit_home)}
         self.env.pop("DEVIN_PROJECT_DIR", None)
         self.env.pop("CLAUDE_PROJECT_DIR", None)
+        # Hermetic to verify.py sessions: the launcher exports DELPI_VERIFIER_ACTIVE=1.
+        self.env.pop("DELPI_VERIFIER_ACTIVE", None)
 
     def tearDown(self):
         self.tmp.cleanup()

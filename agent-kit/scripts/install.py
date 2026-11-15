@@ -367,27 +367,26 @@ def install(args: argparse.Namespace, loc: Dict[str, Path]) -> Plan:
             remove_kit_agent(plan, loc[f"{platform}_agent"])
 
     if not args.no_hooks:
-        if "cursor" in args.platforms or True:
-            # Cursor IDE hooks always (executor surface)
-            data, problem = load_json_object(loc["cursor_hooks"])
-            ours = build.cursor_hooks(python, kit_home, with_subagents=args.with_subagents)
-            if problem:
-                snippet = kit_home / "cursor-hooks.snippet.json"
-                plan.write_text(snippet, json.dumps({"version": 1, "hooks": ours}, indent=2) + "\n")
-                plan.manual.append(f"{loc['cursor_hooks']}: {problem}. Mescle à mão o conteúdo de {snippet}.")
-            else:
-                write_json(plan, loc["cursor_hooks"], merge_cursor_hooks(data or {}, ours))
-        if "devin" in args.platforms or True:
-            data, problem = load_json_object(loc["devin_config"])
-            ours = build.devin_hooks(python, kit_home, with_subagents=args.with_subagents)
-            if problem:
-                snippet = kit_home / "devin-hooks.snippet.json"
-                plan.write_text(snippet, json.dumps({"hooks": ours}, indent=2) + "\n")
-                plan.manual.append(
-                    f"{loc['devin_config']}: {problem}. Mescle à mão a chave \"hooks\" de {snippet}."
-                )
-            else:
-                write_json(plan, loc["devin_config"], merge_devin_hooks(data or {}, ours))
+        # Always install Cursor + Devin executor hooks (stop gate / track-edit / guard),
+        # even when --platforms lists only claude, because verify.py sessions depend on them.
+        data, problem = load_json_object(loc["cursor_hooks"])
+        ours = build.cursor_hooks(python, kit_home, with_subagents=args.with_subagents)
+        if problem:
+            snippet = kit_home / "cursor-hooks.snippet.json"
+            plan.write_text(snippet, json.dumps({"version": 1, "hooks": ours}, indent=2) + "\n")
+            plan.manual.append(f"{loc['cursor_hooks']}: {problem}. Mescle à mão o conteúdo de {snippet}.")
+        else:
+            write_json(plan, loc["cursor_hooks"], merge_cursor_hooks(data or {}, ours))
+        data, problem = load_json_object(loc["devin_config"])
+        ours = build.devin_hooks(python, kit_home, with_subagents=args.with_subagents)
+        if problem:
+            snippet = kit_home / "devin-hooks.snippet.json"
+            plan.write_text(snippet, json.dumps({"hooks": ours}, indent=2) + "\n")
+            plan.manual.append(
+                f"{loc['devin_config']}: {problem}. Mescle à mão a chave \"hooks\" de {snippet}."
+            )
+        else:
+            write_json(plan, loc["devin_config"], merge_devin_hooks(data or {}, ours))
         if "claude" in args.platforms and args.with_subagents:
             plan.add("INFO", "claude: o guard vai no frontmatter do agente; o stop gate não é instalado no Claude Code")
 
