@@ -8,7 +8,7 @@ Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
 - Código/nome: **R01 — Baixas a pagar** (contas a pagar baixadas).
 - Finalidade: conferir títulos pagos na competência por data e por
   natureza — base documental enviada à contabilidade no fechamento.
-- Processo: PROC-0072, etapa P2/P3 (documental) — `PROVEN` (doc 118 §6).
+- Processo: Fechamento mensal da Controladoria, etapa P2/P3 (documental) — `PROVEN` (doc 118 §6).
 - Owner funcional: Controladoria interna (análise/preparo) /
   Contabilidade externa (consumo documental — doc 156).
 - Forma de entrega ao pacote: relatório financeiro **consolidado

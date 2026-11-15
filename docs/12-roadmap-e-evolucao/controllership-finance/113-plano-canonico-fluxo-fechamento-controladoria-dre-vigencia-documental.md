@@ -4,7 +4,7 @@
 
 **Data:** 2026-10-26  
 **Produto:** Portal Controladoria & Finanças / Central de Fechamento  
-**Processo:** PROC-0072  
+**Processo:** Fechamento mensal da Controladoria  
 **Authority:** decisões funcionais expressas pelo Product Owner nesta continuidade; precedência subordinada às instruções oficiais, regras .cursor, ADRs e contratos aprovados para IMPLEMENTAÇÃO.  
 **Estado:** `PRODUCT_FLOW_APPROVED / TARGET`; `RUNTIME_RECONCILIATION_PENDING`; **não é GO de runtime, migração ou deploy.**  
 **Baseline documental observado:** `121fd93e026e456eb3a5f9b0e99584e8a59da2e7` antes deste plano (revalidar HEAD em cada execução).
@@ -182,7 +182,7 @@ Fluxo canônico de delivery: local → testes → revisão → commit → push �
 
 ## 11. REDESIGN VISUAL — PROPOSTA V0.1: ABA VISÃO GERAL (PO REVIEW PENDING, 26/10/2026)
 
-**Estado:** `TARGET / DESIGN_PROPOSED / PENDING_PO_VISUAL_APPROVAL / NO_RUNTIME_GO`. Escopo exclusivo: Fechamento Mensal / PROC-0072. A captura de setembro/2026 mostra blocos P1–P5 em sequência, códigos `p3_source_unavailable`, listas técnicas, KPIs sem semântica evidente e muitas áreas vazias. O redesign **não apaga** domínio, backend, audit, rotas legadas ou contratos; substitui gradualmente apenas a composição de UX, após aprovação componente a componente.
+**Estado:** `TARGET / DESIGN_PROPOSED / PENDING_PO_VISUAL_APPROVAL / NO_RUNTIME_GO`. Escopo exclusivo: Fechamento Mensal / Fechamento mensal da Controladoria. A captura de setembro/2026 mostra blocos P1–P5 em sequência, códigos `p3_source_unavailable`, listas técnicas, KPIs sem semântica evidente e muitas áreas vazias. O redesign **não apaga** domínio, backend, audit, rotas legadas ou contratos; substitui gradualmente apenas a composição de UX, após aprovação componente a componente.
 
 ### 11.1 Objetivo e hierarquia visual
 O analista deve responder sem rolar extensivamente: **qual mês estou vendo? qual é o estado do fechamento? o que me impede de avançar? qual é o próximo trabalho?** A Visão geral é um **painel de decisão e acompanhamento**, não a repetição integral das telas técnicas P2/P3/P4/P5.
@@ -412,7 +412,7 @@ Documento (nome e breve orientação), exigência aplicável à competência (si
 
 ## 17. Documentos e interações V0.2 — decisões PO aprovadas e wireframe detalhado (26/10/2026)
 
-**Decisões expressamente aprovadas pelo PO (PROVEN / PRODUCT_DESIGN_APPROVED):** `apresentação=cards`, `upload=detail`, `solicitações=summary`, `documentos sem exigência=optional`. Esta seção **prevalece sobre alternativas da seção 16.7**. **Estado do detalhamento:** `TARGET / DETAILED_WIREFRAME / PENDING_FINAL_VISUAL_APPROVAL`; não concede GO de runtime, migrations ou integração. Somente Fechamento Mensal (PROC-0072).
+**Decisões expressamente aprovadas pelo PO (PROVEN / PRODUCT_DESIGN_APPROVED):** `apresentação=cards`, `upload=detail`, `solicitações=summary`, `documentos sem exigência=optional`. Esta seção **prevalece sobre alternativas da seção 16.7**. **Estado do detalhamento:** `TARGET / DETAILED_WIREFRAME / PENDING_FINAL_VISUAL_APPROVAL`; não concede GO de runtime, migrations ou integração. Somente Fechamento Mensal.
 
 ### 17.1 Aba Documentos e interações — composição
 
@@ -1409,7 +1409,7 @@ Contratos existentes (verificados na fonte):
 
 | Papel | Valor |
 |---|---|
-| Owner funcional | Controladoria (produtor das entregas) + PO PROC-0072 |
+| Owner funcional | Controladoria (produtor das entregas) + PO Fechamento mensal da Controladoria |
 | Owner técnico do contrato | `controllership-finance-api` (BFF) + Core (effective permissions/grants) |
 | Boundary | Área restrita de **consulta** dentro da Central de Fechamento — sem upload, sem validação P2, sem aceite/revisão P5, sem relatórios TOTVS/divergências/estoque/admin (doc 91 §1, doc 112 §16.1) |
 | Producers | `closing_package`/`closing_package_version` (snapshot de composição), `closing_document`/`document_version` (arquivos), `document_message`, `audit_event`, `closing_notification_event`, `closing_review_assignment` |

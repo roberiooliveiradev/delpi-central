@@ -5,7 +5,7 @@
 **Finalidade:** preservar, em forma verificável e versionada, as regras de
 negócio **atualmente descobertas** para reproduzir os resultados oficiais
 observados e para subsidiar a futura implementação das rotas do Portal
-Controladoria & Finanças (PROC-0072). O catálogo consolida o conhecimento
+Controladoria & Finanças. O catálogo consolida o conhecimento
 desta investigação — **não pretende conter todas as regras necessárias para
 concluir os 15 relatórios** (itens com binding/pendência declarada seguem em
 `PENDING`/`TO_INVENTORY`). Nenhuma regra descoberta fica apenas em script
@@ -60,7 +60,7 @@ Artefatos: `Pagos por dt.pdf` (33p), `Pagos por nat.pdf` (35p),
 
 - **Descrição:** relação dos títulos pagos (baixas) da competência, eixo de
   data = data da baixa.
-- **Finalidade PROC-0072:** alimentar a visão "baixas a pagar" do fechamento.
+- **Finalidade Fechamento mensal da Controladoria:** alimentar a visão "baixas a pagar" do fechamento.
 - **Tabelas:** `SE5010` (movimentos), eixo principal.
 - **Condições de inclusão:** `E5_RECPAG='P'`; `E5_DATA` dentro do período
   informado (parâmetros `MV_PAR` de datas — 01/09–30/09/2026 na emissão);
@@ -632,7 +632,7 @@ testados do comportamento observado são compatíveis com o fonte.
   delimita vendas); (c) branch único opcional — sem consolidado multi-
   unidade explícito nem recorte produto/tipo; (d) cobertura de testes
   limitada a contrato/registro de rota (sem teste unitário do SQL, ao
-  contrário de outros repositórios SD2). Para PROC-0072 o contrato
+  contrário de outros repositórios SD2). Para Fechamento mensal da Controladoria o contrato
   existente atende a medida "CPV de vendas por emissão"; a cadeia de
   evidência `as_of` de fechamento exige decisão do owner sobre custo
   histórico (TTAT) ou snapshot — `DECISION_REQUIRED` se a medida de

@@ -1,8 +1,8 @@
-# Documento 118 — Base canônica do processo de Fechamento Mensal (PROC-0072)
+# Documento 118 — Base canônica do processo de Fechamento Mensal
 
 **Execução:** `CF-PROC0072-ANALYSIS-CONSOLIDATION-002` · **Data:** 2026-10-29
 **Produto:** Portal Controladoria & Finanças — Minha DELPI · **Funcionalidade:** Central de Fechamento
-**Processo:** `PROC-0072 — Gestão do Fechamento Mensal da Controladoria` (process_id `21f70cd0-d513-46f5-bfcf-29ae5573f2f6`, [doc 19](./19-rastreabilidade-teo.md))
+**Processo:** `Fechamento mensal da Controladoria` (process_id `21f70cd0-d513-46f5-bfcf-29ae5573f2f6`, [doc 19](./19-rastreabilidade-teo.md))
 **Natureza:** consolidação documental canônica. `DOCUMENTATION_ONLY` — **nenhuma alteração de runtime, contrato, migration ou deploy foi feita nesta execução.**
 **Baseline:** HEAD `0e39cbc9a8` (revalidar em cada nova execução).
 
@@ -60,7 +60,7 @@ O processo tem execução paralela com **dependências duras**: a virada de sald
 
 ## 3. Matriz mestra de evidências
 
-Origens: TÉO/Transformômetro (43 documentos PROC-0072, última revisão 2026-10-05 — dump integral confirmado nesta execução); gravação 54:44 (transcrição integral de 583 segmentos produzida no ANALYSIS-001); pasta `fechamento` do PO (20 arquivos — inventário doc 83 §1); acervo `docs/13-fontes-totvs-protheus`; corpus GitHub docs 44–115; código HEAD.
+Origens: TÉO/Transformômetro (43 documentos Fechamento mensal da Controladoria, última revisão 2026-10-05 — dump integral confirmado nesta execução); gravação 54:44 (transcrição integral de 583 segmentos produzida no ANALYSIS-001); pasta `fechamento` do PO (20 arquivos — inventário doc 83 §1); acervo `docs/13-fontes-totvs-protheus`; corpus GitHub docs 44–115; código HEAD.
 
 | ID | Afirmação | Fonte primária | Estado | Contrato/decisão |
 |---|---|---|---|---|
@@ -420,7 +420,7 @@ Reabrir a consolidação **somente** quando: (a) nova revisão do processo no T�
 
 ## 18. Referências bidirecionais
 
-- **AS-IS e evidências:** TÉO PROC-0072 (43 docs — [doc 19](./19-rastreabilidade-teo.md)); [doc 117](./117-analysis-001-inventario-processo-real-joyce.md) (inventário Joyce); [doc 83](./83-ciclo2-crosswalk-evidencias-r01-r15.md) (crosswalk R01–R15); [doc 84](./84-ciclo2-matriz-paridade-monetaria.md) (paridade); [doc 80](./80-ciclo2-registro-vivo-investigacao-devin.md) (rodadas); [doc 57](./57-ciclo1-matriz-verificacao-video.md)/[46](./46-ciclo1-investigacao-fontes.md)/[47](./47-t01-report-column-audit-tracker-v1.md).
+- **AS-IS e evidências:** TÉO Fechamento mensal da Controladoria (43 docs — [doc 19](./19-rastreabilidade-teo.md)); [doc 117](./117-analysis-001-inventario-processo-real-joyce.md) (inventário Joyce); [doc 83](./83-ciclo2-crosswalk-evidencias-r01-r15.md) (crosswalk R01–R15); [doc 84](./84-ciclo2-matriz-paridade-monetaria.md) (paridade); [doc 80](./80-ciclo2-registro-vivo-investigacao-devin.md) (rodadas); [doc 57](./57-ciclo1-matriz-verificacao-video.md)/[46](./46-ciclo1-investigacao-fontes.md)/[47](./47-t01-report-column-audit-tracker-v1.md).
 - **Regras:** [doc 85](./85-ciclo2-catalogo-regras-negocio-r01-r15.md) (BR-Rxx-NNN); [doc 15.1](./15.1-p3-criterios-paridade-monetaria.md); TÉO 06/06.1/06.2.
 - **Decisões/contratos TARGET:** TÉO 31/31.1–31.19/33/34; docs [09](./09-p2-checklist-e-documentos.md), [10](./10-p3-estoque-cutoff-e-conciliacao.md), [11](./11-p4-classificacoes-e-pendencias.md), [12](./12-p5-pacote-finalizacao-e-envio.md), [13](./13-p6-administracao-e-configuracao.md), [37](./37-p5-submissao-e-revisao-no-portal.md), [48](./48-r01-r02-design-baixas-financeiras.md)/[49](./49-r03-p7-design-estoque-inventario.md), [91](./91-ciclo3-contabilidade-acesso-documentos-historicos-gate.md), [112](./112-design-visual-fechamento-mensal-wireframes.md), [113](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md), [114](./114-contrato-proposto-document-config-dr1-dr2-gate013.md), [115](./115-dre-access-019-documentos-recebidos-gate-91-implementacao.md), [23](./23-ledger-rq-ac-testes.md), [90](./90-ciclo3-crosswalk-end-to-end-proc0072-teo-rq-ac-portal.md), [93](./93-roadmap-executivo-central-fechamento-end-to-end-checkpoints.md).
 - **CLARA:** [doc 94](./94-clara-especialista-mcp-controladoria-financas.md), [doc 111](./111-clara-chatgpt-smoke-autenticado-retomada-central-2026-10-26.md).
@@ -439,5 +439,5 @@ O conhecimento operacional para a CLARA foi consolidado em
 ## Adendo — Estado produtivo (30/10/2026)
 
 Central de Fechamento publicada: release stage-05 (30/10/2026, host `srv-api`, checkout `297068f1b7` — inclui `9f66f8b8e0`) publicado por `up-prod-sequential.sh`: api-delpi `sha256:d46e307ad3e6`, BFF `sha256:7f0e7db69114`, MFE `sha256:8530bbc8f797`; corpus produtivo `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00` (88 fontes / 2.186 itens, 17 fichas, 100% `PORTAL_ACCESS`). R10 e R11 operacionais em
-producao com paridade reproduzida; processo PROC-0072 coberto por ficha
+producao com paridade reproduzida; macroprocesso Fechamento mensal da Controladoria coberto por ficha
 operacional no corpus. Sem alteracao no Protheus.

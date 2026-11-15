@@ -22,7 +22,7 @@ Comportamento desejado:
 
 ## 1. Authority e baseline (G0)
 1. `git fetch`, registrar HEAD, origin/main, branch, `git status`, alterações alheias, SHA e produção atual.
-2. Ler instruções oficiais `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`, Project Instructions, .cursor aplicável, ADRs, segurança, `docs/12-roadmap-e-evolucao/controllership-finance/README.md` e doc 118 (base canônica PROC-0072); documentos 94, 113 e 14 conforme aplicável.
+2. Ler instruções oficiais `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`, Project Instructions, .cursor aplicável, ADRs, segurança, `docs/12-roadmap-e-evolucao/controllership-finance/README.md` e doc 118 (base canônica Fechamento mensal da Controladoria); documentos 94, 113 e 14 conforme aplicável.
 3. Inspecionar `controllership_finance_app/interface/mcp/{server.py,tool_bridge.py,constants.py,branding.py,oauth_contract.py}`, camada application, BFF routes/use cases, `ClaraGovernedWrites`, `ClaraBatchOrchestrator`, proposals/consentimento, testes de wire, tools, AuthZ e consumers.
 4. Inventariar contratos atuais dos MCPs TÉO, VISTA, DAVI e o plano EVA 54 apenas como referência; não importar código nem assumir que os planos TARGET são runtime.
 5. Localizar deployment runbook oficial, `operador`, rollback e processo de atualização do plugin do ChatGPT. Não presumir paths, nomes de containers ou hosts.
@@ -36,7 +36,7 @@ Taxonomia `shared/delpi_mcp` permanece DISCOVERY/READ/ANALYSIS/PREPARE/ACT; anno
 | `get_context` | DISCOVERY | `{topic?, entity?, action?, scope?, selected_ref?}` | Contexto do ator, persona/AVATAR, catálogo versionado de capabilities, schemas sob demanda, provenance |
 | `read` | READ | `{entity, action, ref?, period?, filters?, page?, page_size?, projection?}` | Consultas autorizadas, sem mutação |
 | `analyze` | ANALYSIS | `{analysis_type, period?, refs?, filters?, question?, parameters?}` | Cálculos/achados de owner, FACT vs RECOMMENDATION, fontes, estado de paridade |
-| `knowledge` | READ | `{action, query?, topic?, report_id?, business_step?, knowledge_id?, limit?}` | Busca, detalhe e fontes do corpus PROC-0072, citações e versão |
+| `knowledge` | READ | `{action, query?, topic?, report_id?, business_step?, knowledge_id?, limit?}` | Busca, detalhe e fontes do corpus Fechamento mensal da Controladoria, citações e versão |
 | `execute` | ACT | `{entity, action, params, phase?, proposal_handle?, idempotency_key?, expected_revision?, batch?}` | CREATE/UPDATE/workflow; direto só quando policy allow; alto risco via proposal/consent/ACT |
 | `delete` | ACT | `{entity, action, target_ref?, params?, phase?, proposal_handle?, expected_revision?}` | CANCEL/DELETE explicitamente mapeados; sempre confirmação verificável |
 

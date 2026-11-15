@@ -1,4 +1,4 @@
-# 79 — PROC-0072 | Aceite formal do PO para o Ciclo 1
+# 79 — Aceite formal do PO para o Ciclo 1
 
 **Data:** 23/10/2026. **Decisão:** o PO declarou expressamente neste chat: «eu aceito», em resposta ao pedido de aceite formal do inventário documental do Ciclo 1 após o cruzamento da narração com os materiais. **Escopo do aceite:** encerramento da etapa de inventário e documentação conceitual, com residuais conhecidos e rastreados.
 

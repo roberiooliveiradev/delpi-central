@@ -1,4 +1,4 @@
-# 78 — PROC-0072 | Cruzamento da narração do PO com as fontes do Ciclo 1
+# 78 — Cruzamento da narração do PO com as fontes do Ciclo 1
 
 **Data:** 23/10/2026. **Escopo:** revisão documental sanitizada. **AS-IS:** relato guiado do PO sobre <GESTORA-PROC> registrado nos docs 56 e 57; doc 55 é recorte específico. **TARGET:** contratos e ADRs vigentes, sem alterações. Esta análise não reproduz vídeo, valores, pessoas, títulos, notas ou planilhas privadas. Narração documentada não equivale a homologação ERP.
 

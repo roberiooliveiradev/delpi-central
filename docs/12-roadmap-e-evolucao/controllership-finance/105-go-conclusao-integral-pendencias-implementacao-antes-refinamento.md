@@ -2,7 +2,7 @@
 
 **Diretriz do PO:** 25/10/2026 — "vamos implementar tudo que falta, ao final fazemos o refinamento".  
 **ID:** CF-PROC0072-REMAINDER-BUILD-GO-001  
-**Produto/processo:** Portal Controladoria & Finanças / PROC-0072.  
+**Produto/processo:** Portal Controladoria & Finanças / Fechamento mensal da Controladoria.  
 **Natureza:** GO de implementação **para capacidades com autoridade/contrato suficientes** e plano de fechamento de lacunas; não constitui aceite de negócio, autorização de produção nem aprovação tácita de decisões materiais pendentes.  
 **Referências:** [104 — plano mestre](./104-plano-mestre-execucao-e2e-fechamento-aceite-deploy.md), [93 — CP00–CP12](./93-roadmap-executivo-central-fechamento-end-to-end-checkpoints.md), [23 — RQ/AC](./23-ledger-rq-ac-testes.md), [37 — P5-H/C2/T05](./37-p5-submissao-e-revisao-no-portal.md), [17 — pendências](./17-backlog-de-confirmacoes-e-inventarios.md), [100 — evidências](./100-ciclo3-p6-min-p2-read-runtime-evidencia-de-execucao.md), [14 — segurança](./14-seguranca-rbac-auditoria-e-ia.md), [41 — validação](./41-estrategia-validacao-e-gates-implementacao-v1.md) e instruções oficiais do GPT Arquiteto. O Documento 105 **complementa, não substitui** essas autoridades.
 

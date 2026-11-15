@@ -2,7 +2,7 @@
 
 **Data:** 2026-10-24  
 **Origem:** decisão expressa do PO na conversa, escolhendo **Opção B — nova permission específica** para a audiência Contabilidade/DRE, com página própria dentro da Central de Fechamento.  
-**Produto:** Portal Controladoria & Finanças → Central de Fechamento → PROC-0072.  
+**Produto:** Portal Controladoria & Finanças → Central de Fechamento.  
 **Natureza:** decisão de produto documentada + solicitação de exceção ao contrato de permissões congelado; NÃO é contrato runtime aprovado.  
 **Estado:** PRODUCT_DIRECTION_APPROVED / TRANSVERSAL_PERMISSION_CONTRACT_GATE_PENDING.  
 **IMPLEMENTATION_AUTHORIZED=NO** nesta rodada.

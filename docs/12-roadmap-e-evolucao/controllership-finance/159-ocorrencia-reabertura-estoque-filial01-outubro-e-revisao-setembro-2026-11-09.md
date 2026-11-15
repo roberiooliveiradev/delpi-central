@@ -1,6 +1,6 @@
 # 159 — Ocorrência operacional Filial 01 em outubro/2026 e continuidade da revisão com setembro/2026
 
-**Data:** 09/11/2026 · **Processo:** PROC-0072 · **Produto:** Portal Controladoria & Finanças · **Estado:** EVIDÊNCIA OPERACIONAL RECEBIDA / REVALIDAÇÃO PENDING / AUDITORIA CONTINUA. **Sem alteração de ERP, API, CLARA ou Portal.**
+**Data:** 09/11/2026 · **Processo:** **Produto:** Portal Controladoria & Finanças · **Estado:** EVIDÊNCIA OPERACIONAL RECEBIDA / REVALIDAÇÃO PENDING / AUDITORIA CONTINUA. **Sem alteração de ERP, API, CLARA ou Portal.**
 
 ## 1. Resposta recebida por e-mail — origem e alcance
 

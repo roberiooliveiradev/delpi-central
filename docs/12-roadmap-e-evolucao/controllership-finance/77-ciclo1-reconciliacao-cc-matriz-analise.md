@@ -1,6 +1,6 @@
 # 77 — Reconciliação de identificadores históricos do Ciclo 1
 
-**Data:** 23/10/2026. **Processo:** PROC-0072. **Escopo:** documentação conceitual, sem anexar arquivos privados, sem alterar contrato ou autorizar implementação.
+**Data:** 23/10/2026. **Processo:** Fechamento mensal da Controladoria. **Escopo:** documentação conceitual, sem anexar arquivos privados, sem alterar contrato ou autorizar implementação.
 
 ## Identificação e resolução de colisões
 

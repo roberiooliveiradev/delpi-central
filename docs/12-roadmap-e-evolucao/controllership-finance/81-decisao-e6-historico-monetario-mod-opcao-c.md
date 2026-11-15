@@ -1,6 +1,6 @@
 # E6 — Decisão de produto: duas leituras do histórico monetário MOD
 
-> **Data:** 2026-10-23 · **Processo:** PROC-0072 — Gestão do Fechamento Mensal da Controladoria · **Produto:** Portal Controladoria & Finanças · **Natureza:** registro documental de decisão, sem autorização de implementação.
+> **Data:** 2026-10-23 · **Processo:** Fechamento mensal da Controladoria · **Produto:** Portal Controladoria & Finanças · **Natureza:** registro documental de decisão, sem autorização de implementação.
 
 ## 1. Decisão expressa
 

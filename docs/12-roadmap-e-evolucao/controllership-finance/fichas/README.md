@@ -7,7 +7,7 @@ Versão 1.1 · 31/10/2026 · Execução
 Vigência: versão operacional do corpus determinada pela publicação governada do ambiente, não por identificador fixado na ficha.
 
 Conjunto canônico e versionado de fichas técnicas dos relatórios do
-processo de fechamento mensal (PROC-0072). Cada ficha consolida —
+processo de fechamento mensal. Cada ficha consolida —
 com classificação de evidência por afirmação
 (`PROVEN | TO_INVENTORY | PLANNED | TARGET`) — identificação, fontes,
 regras de seleção, interpretação, operação, limites de comparação e
@@ -70,7 +70,7 @@ tools — nenhuma tool plana por relatório.
 
 ## Processo (conhecimento operacional)
 
-- [PROC-0072 — ficha do processo de fechamento](processo-fechamento-ficha.md)
+- [Ficha do Fechamento mensal da Controladoria](processo-fechamento-ficha.md)
 
 ## TES — Tipo de Entrada e Saída (cadastro SF4)
 

@@ -13,7 +13,7 @@ atenção especial).
 - Finalidade: apurar despesas do mês por centro de custo para rateio/
   classificação contábil e investigar lançamentos que merecem
   conferência — **dois universos estritos, nunca somados**.
-- Processo: PROC-0072 — `PROVEN` (docs 85 §10, 126).
+- Processo: `PROVEN` (docs 85 §10, 126).
 - Owner funcional: Controladoria (operadora do artefato EDAPP).
 - Owner técnico: `api-delpi` (`financeiro_cost_center_expenses`) +
   `controllership-finance-api` (BFF + CLARA).

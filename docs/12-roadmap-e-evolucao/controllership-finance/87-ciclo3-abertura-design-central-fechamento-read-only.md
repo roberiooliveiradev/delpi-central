@@ -2,7 +2,7 @@
 
 **Produto:** Portal Controladoria & Finanças — Minha DELPI  
 **Funcionalidade:** Central de Fechamento  
-**Processo:** PROC-0072  
+**Processo:** Fechamento mensal da Controladoria  
 **Origem:** aceite do PO ao encerramento documental do Ciclo 2 (doc 86), com direção de iniciar o Ciclo 3 pelo design **read-only**.  
 **Natureza:** abertura documental / inventário / decisões / contratos candidatos.  
 **Estado:** `DESIGN_INTAKE_OPEN` (marco administrativo, não gate G1–G6). `IMPLEMENTATION_AUTHORIZED=NO`.

@@ -1,6 +1,6 @@
 # Ciclo 1 — CC matriz: inventario conceitual sanitizado
 
-Status: TO_INVENTORY. Escopo: PROC-0072, Central de Fechamento. Documento conceitual; nao contem dados fiscais, linhas, valores, IDs de produtos, fornecedores ou documentos privados.
+Status: TO_INVENTORY. Escopo: Fechamento mensal da Controladoria, Central de Fechamento. Documento conceitual; nao contem dados fiscais, linhas, valores, IDs de produtos, fornecedores ou documentos privados.
 
 ## Evidencia de processo
 - Na demonstracao AS-IS, a responsavel usa extracao de itens de notas fiscais de entrada, com origem declarada SD1 no TOTVS/Protheus.

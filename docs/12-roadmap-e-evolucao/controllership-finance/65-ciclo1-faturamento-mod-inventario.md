@@ -1,6 +1,6 @@
 # 65 - Ciclo 1 | Faturamento x MOD - inventario conceitual
 
-Data 22/10/2026. Processo PROC-0072. Fonte privada: Fat x MOD.xlsb. **Nao publicar valores, codigos de produtos, estruturas reais, dados de clientes ou arquivo original**.
+Data 22/10/2026. Processo Fechamento mensal da Controladoria. Fonte privada: Fat x MOD.xlsb. **Nao publicar valores, codigos de produtos, estruturas reais, dados de clientes ou arquivo original**.
 
 ## Estrutura observada
 A planilha possui duas abas `1-Fl01` e `2-Fl02`, identificadas como estrutura das filiais 01 e 02. Cabecalhos iguais: `PA`, `Seq Comp`, `Cod Produto`, `Desc Produto`, `Qtd Fat.`, `UM`, `Quantidade`, `Custo Unitario`, `Custo Total`, `Custo Produto`, `Horas`.

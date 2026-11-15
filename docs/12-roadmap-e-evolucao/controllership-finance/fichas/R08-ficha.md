@@ -10,7 +10,7 @@ Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
 - Finalidade: saldo de material em processo por produto/OP na data de
   referência — físico do armazém de processo + material alocado a OPs
   abertas.
-- Processo: PROC-0072, P3 — `PROVEN` (doc 118 §6).
+- Processo: Fechamento mensal da Controladoria, P3 — `PROVEN` (doc 118 §6).
 - Owner funcional: Controladoria (conciliação tripla + P7).
 - Owner técnico: `api-delpi` + `controllership-finance-api`.
 - Produtor oficial: `MATR989` variante analítica — **fonte ausente**

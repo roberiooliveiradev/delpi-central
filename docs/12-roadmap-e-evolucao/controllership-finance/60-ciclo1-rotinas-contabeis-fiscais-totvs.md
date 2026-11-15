@@ -1,6 +1,6 @@
 # 60 - Ciclo 1 | Rotinas fiscais e contabeis TOTVS: inventario documental
 
-Data: 2026-10-22. Processo: PROC-0072. Fonte privada: planilha de levantamento de rotinas e niveis de privilegio. Este registro **nao inclui nomes de usuarios, identificadores pessoais, dados fiscais transacionais, valores ou extratos**, nem anexa a planilha.
+Data: 2026-10-22. Processo: Fechamento mensal da Controladoria. Fonte privada: planilha de levantamento de rotinas e niveis de privilegio. Este registro **nao inclui nomes de usuarios, identificadores pessoais, dados fiscais transacionais, valores ou extratos**, nem anexa a planilha.
 
 ## Descoberta documental
 O arquivo possui **duas abas de trabalho**: uma de rotinas fiscais com 14 linhas de rotina e outra de rotinas contabeis com 7 linhas de rotina; nesta segunda, existe ainda anotacao isolada sobre criacao de acesso sem codigo de rotina, que nao deve ser interpretada como procedimento aprovado. O texto transcrito enviado no chat continha apenas o conjunto fiscal; a planilha complementa esse texto com rotinas contabeis. Cada linha descreve nome da rotina, modulo TOTVS, codigo/programa, nivel de privilegio registrado e finalidade informada.

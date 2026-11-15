@@ -58,7 +58,7 @@ Semântica do stock-inventory (lida em `get_stock_inventory_use_case.py`):
 presença do snapshot **antes** dos filtros → `source_missing` nunca se
 disfarça de total zero; `branchesAvailable`/`branchesMissing` por filial;
 status `available|incomplete|no_matching_items|source_missing`. Isso já
-materializa a distinção "snapshot ausente ≠ valor zero" do PROC-0072.
+materializa a distinção "snapshot ausente ≠ valor zero" do fechamento mensal.
 
 **MFE `plugins/controllership-finance`** (`src/`):
 - `PluginShell` + `SHELL_NAV_ITEMS` (hoje: apenas **Início**; ordem

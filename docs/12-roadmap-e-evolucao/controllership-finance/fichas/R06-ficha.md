@@ -11,7 +11,7 @@ Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
   elegível do mês com quantidade, custo e cadeia de saldo desde o
   fechamento anterior; o CPV mede o custo das saídas de venda (CFOP
   5101/5124/6101/6124) com regra própria de API.
-- Processo: PROC-0072, P3 — `PROVEN` (doc 118 §6).
+- Processo: Fechamento mensal da Controladoria, P3 — `PROVEN` (doc 118 §6).
 - Owner funcional: Controladoria (conferência interna).
 - Owner técnico: `api-delpi` + `controllership-finance-api`.
 - Produtor oficial: `MATR910` — fonte `matr910_dlp.prx` **no acervo**

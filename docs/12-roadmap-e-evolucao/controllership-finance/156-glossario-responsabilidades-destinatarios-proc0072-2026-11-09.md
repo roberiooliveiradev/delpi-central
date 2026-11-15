@@ -1,8 +1,8 @@
-# PROC-0072 — Glossário funcional e vínculo de destinatário documental (decisão PO 2026-11-09)
+# Glossário funcional e vínculo de destinatário documental (decisão PO 2026-11-09)
 
 **Natureza:** decisão funcional/documental; **DOCUMENTATION_ONLY** para GitHub. Não altera aplicação, manifesto, grants, contratos, migrations, deploy nem base curada CLARA por si só.
 **Estado:** decisão PO aprovada para os 14 itens do rascunho V2; aplicação no checklist é evidência operacional separada (read-back CLARA). Antes de publicar requer revisão da versão e testes dos caminhos de entrega.
-**Autoridade de contexto:** docs 118 (base canônica PROC-0072), 83/85 (produtores), 113/115 (destinatários, acesso e pacote), 09 (P2 checklist); fichas R01/R02/R03/R13 e processo-fechamento.
+**Autoridade de contexto:** docs 118 (base canônica Fechamento mensal da Controladoria), 83/85 (produtores), 113/115 (destinatários, acesso e pacote), 09 (P2 checklist); fichas R01/R02/R03/R13 e processo-fechamento.
 
 ## 1. Vocabulário controlado (não misturar dimensões)
 
@@ -11,7 +11,7 @@
 | **Financeiro** | Origem operacional dos relatórios de títulos pagos/recebidos e dados financeiros. Módulo 06 Protheus `02.9.0006`; relatórios de envio à Contabilidade em visão **consolidada filiais 01+02**. | Área/fonte de dados; não é automaticamente destinatário. |
 | **Estoque/Custos** | Origem operacional de Registro de Inventário P7/Bloco H (MATR460) e demais controles de estoque. Módulo 04 `02.9.0004`; evidência P7/Resumo **individual por filial 01 e 02**. | Área/fonte de dados; não é permission code. |
 | **Controladoria (interna)** | Responsável pela coleta, conferência, conciliação, preparação e acompanhamento do fechamento da competência; efetua a entrega. | Responsável funcional/emitente, não público destinatário. |
-| **Contabilidade externa** | Equipe/prestador externo que **recebe e trata** documentos de fechamento disponibilizados pela Controladoria para análises contábeis e providências conforme contratação. | No PROC-0072, **destinatário funcional** dos 14 documentos atuais. Responsabilidades legais/tributárias específicas do prestador não inferidas. |
+| **Contabilidade externa** | Equipe/prestador externo que **recebe e trata** documentos de fechamento disponibilizados pela Controladoria para análises contábeis e providências conforme contratação. | no fechamento mensal, **destinatário funcional** dos 14 documentos atuais. Responsabilidades legais/tributárias específicas do prestador não inferidas. |
 | **Fiscal/Tributário** | Finalidade/especialidade de obrigações e tratamento fiscal. | Pode atuar no mesmo prestador, mas entrega `FISCAL` somente quando houver destinatário e fluxo fiscal específico confirmado; não classificar como fiscal apenas pela origem/documento. |
 | **DRE** | Em contabilidade, Demonstração do Resultado do Exercício. No vocabulário operacional do Portal, **apelido do público externo consumidor de documentos** que apoia esse tratamento contábil. | Não é módulo ERP, permission por documento nem nova área `recipient_area`. |
 | **Área destinatária** | `recipient_area` do item e do pacote, com enum atual `CONTABIL`/`FISCAL`. | Define agrupamento e seleção dos documentos por pacote, não a identidade da pessoa. |
@@ -45,7 +45,7 @@
 
 ## 5. Conhecimento recomendado para CLARA (curadoria futura)
 
-Quando questionada “Quem é a DRE?” ou “Quem é o Contábil?” no PROC-0072, responder **com contexto e fonte**, sem equiparar nomes:
+Quando questionada “Quem é a DRE?” ou “Quem é o Contábil?” no fechamento mensal, responder **com contexto e fonte**, sem equiparar nomes:
 - “DRE” pode significar a demonstração contábil, mas **neste fluxo de documentos** identifica o público externo que recebe a entrega.
 - A **Controladoria interna** prepara/valida; a **Contabilidade externa** consome; `CONTABIL` classifica o pacote; `access.dre` determina capability, sem acesso irrestrito.
 - `FISCAL` é outra **finalidade destinatária**, não automática mesmo se o P7 tenha função fiscal.

@@ -1,6 +1,6 @@
 # 154 — R09: auditoria dos resíduos do redesign master/detail, plano de correção e critérios de aceite
 
-**Produto:** Portal Controladoria & Finanças · **Processo:** PROC-0072 · **Relatório:** R09 — Faturamento × MOD · **Data:** 2026-11-04.
+**Produto:** Portal Controladoria & Finanças · **Processo:** **Relatório:** R09 — Faturamento × MOD · **Data:** 2026-11-04.
 **Tipo:** review técnico-documental, sem alterações de runtime. **Estado:** `REWORK_REQUIRED / DECISION_REQUIRED / NO_DEPLOY`.
 **Base do review:** `main` em `3496551f30a57af0d5d82d516bf5e8480375abf7`, implementação `b3435e7ec10d7541f3eed77f832bd6e3a0a19428` e [plano/wireframes 153](./153-design-r09-faturamento-mod-wireframes-frontend-2026-11-04.md). Revalidar HEAD, git status, regras `.cursor` e contrato antes de executar.
 **Escopo:** exclusivamente R09 e suas superfícies de Ajuda/teste/reuso. Não abrir uma nova reforma dos outros dez relatórios.

@@ -8,7 +8,7 @@ Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
 - Código/nome: **R07 — Ajustes de inventário** (recorte MATR910).
 - Finalidade: listar os ajustes de estoque da competência — quantidade
   e custo, entrada/saída — para conferência de divergências físicas.
-- Processo: PROC-0072, P3 — `PROVEN` (doc 118 §6).
+- Processo: Fechamento mensal da Controladoria, P3 — `PROVEN` (doc 118 §6).
 - Owner funcional: Controladoria.
 - Owner técnico: `api-delpi` + `controllership-finance-api`.
 - Produtor oficial: `MATR910` filtrado — mesmo produtor do R06.

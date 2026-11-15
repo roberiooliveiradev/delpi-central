@@ -1,4 +1,4 @@
-# 76 — Revisão documental do Ciclo 1 (PROC-0072)
+# 76 — Revisão documental do Ciclo 1
 
 Data: 23/10/2026. Natureza: inventário conceitual sanitizado. Materiais privados não são versionados. Sem autorização de runtime.
 

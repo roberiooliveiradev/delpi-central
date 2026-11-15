@@ -2,7 +2,7 @@
 
 **Sessão:** `CF-PROC0072-G2G3-GUIDED-ACCEPTANCE-20261026-001`  
 **Data de abertura:** 2026-10-26 (America/Sao_Paulo)  
-**Produto:** Portal Controladoria & Finanças · Central de Fechamento · `PROC-0072`  
+**Produto:** Portal Controladoria & Finanças · Central de Fechamento · Fechamento mensal da Controladoria  
 **Condutor:** GPT Arquiteto; **usuário testador/PO:** participante da conversa de homologação; **G2 sign-off:** Controladoria/PO; **G3 sign-off:** Operador SSH autorizado.  
 **Baseline GitHub ao abrir:** `4e64c2f571fa897641d6263eed132aa2fd9527e8`. **Código implantado:** `2eeb5fb943` *reportado pelo operador, não readback independente desta sessão*.  
 **Autoridades:** instruções oficiais, regras .cursor aplicáveis, [ledger 23](./23-ledger-rq-ac-testes.md), [roadmap 93](./93-roadmap-executivo-central-fechamento-end-to-end-checkpoints.md), [plano 104](./104-plano-mestre-execucao-e2e-fechamento-aceite-deploy.md), [CLARA 106](./106-clara-batch-ssh-keycloak-chatgpt-go-e-gates.md), [release 107](./107-clara-validacao-antecipada-chatgpt-release-hoje.md), mapa UI 30, contratos P1–P6.

@@ -1,6 +1,6 @@
 # 53 — Roadmap executivo: Table UX final em no maximo 3 interacoes
 
-Data: 2026-10-21. Produto: Portal Controladoria & Financas, Central de Fechamento, PROC-0072. Owner de aceite: PO. Executor: Devin. Estado inicial: TARGET / EXECUTION_PENDING.
+Data: 2026-10-21. Produto: Portal Controladoria & Financas, Central de Fechamento, Fechamento mensal da Controladoria. Owner de aceite: PO. Executor: Devin. Estado inicial: TARGET / EXECUTION_PENDING.
 
 ## 0. Resultado contratado
 Fechar os gaps reais entre as duas imagens de mockup aprovadas e o runtime das paginas R01/R02 (closing/financial-settlements) e R03 (closing/stock-inventory), evitando novas iteracoes de ajustes isolados. O commit V7 3771f83095 acrescentou somente participacao percentual nos resumos R03; nao constitui aceite visual da V7. Preservar os fixes V3-V6, inclusive o P isolado removido, e o calculo percentual V7. Imagens ilustram posicionamento, nao autorizam numeros, series, moedas ou links inventados.

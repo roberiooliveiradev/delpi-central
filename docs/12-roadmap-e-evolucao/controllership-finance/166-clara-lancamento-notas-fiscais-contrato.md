@@ -16,7 +16,7 @@
 | Catálogo | Gate `access` = CF efetiva; `lnf_*` = famílias LNF; `clara_entry` = knowledge visível a quem passou na porta |
 | Negação por ação | `Você não tem permissão para <entity.action>.` — `gate=catalog` |
 | BFF | Continua autoridade: CLARA chama a rota com o JWT do usuário |
-| Knowledge `controllership` | Corpus PROC-0072 (itens com `domain_scope=controllership`, default V022) — liberado a quem tem CF* |
+| Knowledge `controllership` | Corpus Fechamento mensal da Controladoria (itens com `domain_scope=controllership`, default V022) — liberado a quem tem CF* |
 | Knowledge `lancamento-notas-fiscais` | Corpus LNF (`corpus_manifest_lnf.py`) — liberado a quem tem qualquer LNF* |
 | Ambos | União dos escopos; get de item fora do escopo → **403** `forbidden`/`authz` (mensagem `Você não tem permissão para knowledge.get.`; sem vazar título/trecho) |
 

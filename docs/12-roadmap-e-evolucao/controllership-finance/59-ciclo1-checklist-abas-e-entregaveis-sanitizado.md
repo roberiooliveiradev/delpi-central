@@ -1,6 +1,6 @@
 # 59 - Ciclo 1: checklist de entregaveis - leitura das tres abas
 
-**Processo:** PROC-0072. **Data:** 22/10/2026. **Fonte:** documento privado do PO (planilha de entregas); este resumo preserva somente conceitos, sem linhas ou valores operacionais, dados fiscais, bancos/contas, identificadores de documentos, anexos ou imagens originais.
+**Processo:** Fechamento mensal da Controladoria. **Data:** 22/10/2026. **Fonte:** documento privado do PO (planilha de entregas); este resumo preserva somente conceitos, sem linhas ou valores operacionais, dados fiscais, bancos/contas, identificadores de documentos, anexos ou imagens originais.
 
 ## Proposito confirmado pelo PO
 

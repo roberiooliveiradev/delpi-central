@@ -74,7 +74,7 @@ Exemplo de reunião não vira regra universal. Preservar origem e classificaçã
 
 ## R03 — P7/MATR460: proveniência consolidada após Fases A e B1 (20/10/2026)
 
-**Autoridades segregadas:** TÉO/PROC-0072 sustenta a existência dos passos P7 padrão, P7 Bloco H e conferência tripla. NotebookLM é análise **derivada fornecida pelo PO**, não auditoria independente do vídeo. DAVI comprova somente dados físicos/consultas SQL efetivamente executadas. GitHub é authority do TARGET e guarda resultados auditáveis nos [docs 46 §§10–11](./46-t01-report-source-inventory-v1.md).
+**Autoridades segregadas:** TÉO, no Fechamento mensal da Controladoria sustenta a existência dos passos P7 padrão, P7 Bloco H e conferência tripla. NotebookLM é análise **derivada fornecida pelo PO**, não auditoria independente do vídeo. DAVI comprova somente dados físicos/consultas SQL efetivamente executadas. GitHub é authority do TARGET e guarda resultados auditáveis nos [docs 46 §§10–11](./46-t01-report-source-inventory-v1.md).
 
 ### Relato derivado do NotebookLM — não observado diretamente nesta rodada
 

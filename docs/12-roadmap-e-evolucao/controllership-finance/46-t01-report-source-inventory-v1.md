@@ -1,10 +1,10 @@
-# 46 — T01 REPORT-SOURCE-INVENTORY V1 — PROC-0072
+# 46 — T01 REPORT-SOURCE-INVENTORY V1 — Fechamento mensal da Controladoria
 
 > **Data da captura:** 20/10/2026. **Estado:** DOCUMENTED / PARTIAL / TO_INVENTORY. Inventário documental de sources; não autoriza runtime, SQL write, grants, migration nem endpoint novo. Evidência TÉO = AS-IS; GitHub = TARGET/runtime. Um search miss não prova ausência física.
 
 ## 1. Proveniência consultada
 
-- TÉO `record_read(process=PROC-0072)`: processo `21f70cd0-d513-46f5-bfcf-29ae5573f2f6`; instância `fa3074bd-c852-44d1-b145-72a2f17043d6`; baseline `85358475-3fbf-4bec-9f48-56ec15706b34`.
+- TÉO `record_read do macroprocesso Fechamento mensal da Controladoria`: processo `21f70cd0-d513-46f5-bfcf-29ae5573f2f6`; instância `fa3074bd-c852-44d1-b145-72a2f17043d6`; baseline `85358475-3fbf-4bec-9f48-56ec15706b34`.
 - TÉO `record_read(decomposition_tree, get)`: tarefas/subtarefas da decomposição; `record_read(process_diagram, get)`: cinco raias de execução e os caminhos de revalidação.
 - TÉO `record_read(process_document, search)`: 43 registros documentais catalogados (inclui 06, 06.2, 31.14, 31.18, 33 e 34); catálogo não substitui conteúdo binário.
 - GitHub: `02-proc-0072-as-is-e-baseline.md`, `03-evidencias-proveniencia-e-rastreabilidade.md`, `17-backlog-de-confirmacoes-e-inventarios.md`, `21-boundaries-produtos-e-owners.md`, `45-g0-excecao-fastapi-e-fechamento-gates.md` §15, inventário CF-CLOSING-PREDECESSORS-01 entregue pelo executor.
@@ -109,7 +109,7 @@ Não implementar endpoint api-delpi/BFF até existir: `report_id → owner → r
 
 ### 10.1 Proveniência do procedimento (TÉO vs derivado NotebookLM)
 
-- TÉO PROC-0072 identifica emissão **P7 padrão** para conferência de estoque e **P7 Bloco H** quando requerido; confronto de Entradas/Saídas − P7 − Material em Processo com divergência **R$ 0,00**, até centavos, sem tolerância. <GESTORA-PROC> é a gestora do processo.
+- TÉO Fechamento mensal da Controladoria identifica emissão **P7 padrão** para conferência de estoque e **P7 Bloco H** quando requerido; confronto de Entradas/Saídas − P7 − Material em Processo com divergência **R$ 0,00**, até centavos, sem tolerância. <GESTORA-PROC> é a gestora do processo.
 - Resposta do NotebookLM **fornecida pelo PO** (DERIVED, não revisão direta do vídeo): apresenta emissão P7 padrão e layout H, data 30/09/2026, filiais 01/02, relatório padrão supostamente 91 páginas, total de R$ 3.776.994,69, Insumos R$ 266.321,45, impressão/PDF e conciliação preliminar. Os timecodes derivados chegam após 01:00, mas o MP4 cadastrado no doc 03 dura 00:54:44: **STALE_EVIDENCE / TIMECODE_RECONCILIATION_PENDING**. O código MATR460 está associado à documentação, mas não foi visualizado na gravação conforme a resposta. PDF original/params/export não fornecidos; `EXPORT_PARITY=TEST_NOT_RUN`.
 - A diferença aritmética entre Entradas/Saídas R$ 3.890.247,18, P7 R$ 3.776.994,69 e H02 R$ 64.591,71 é R$ 48.660,78 (ainda **derivada**, não homologada). A divergência entre R$ 266.321,46 e R$ 266.321,45 é R$ 0,01, não R$ 0,25 como afirmado no texto derivado. Nunca promover aceitação de arredondamento sem decisão de owner.
 
@@ -223,7 +223,7 @@ Usar índice como **roteiro de busca**, não `OBSERVED_VISUAL` em nosso reposit�
 
 ## 14. Transcrição integral NotebookLM anexada pelo PO — auditoria textual inicial (21/10/2026)
 
-**Artefato recebido nesta conversa:** `PROC-0072_Transcricao_Integral_Video.md` (372 linhas, identificação de arquivo `Acompanhamento do Processo do Fechamento Mensal de Estoques e Custos-20260930_143151-Gravação de Reunião (1) (1).mp4`). **Origem derivada NotebookLM, não reprodução direta do MP4 verificada nesta rodada.** Não tratar o rótulo "transcrição integral" ou `[AÇÃO VISUAL]` gerados por IA como evidência visual independente. Conteúdo de falas tem valor investigativo de primeira ordem, mas requer checagem contra vídeo para mudar classificação.
+**Artefato recebido nesta conversa:** a transcrição integral do vídeo enviada pelo PO (arquivo local, não versionado) (372 linhas, identificação de arquivo `Acompanhamento do Processo do Fechamento Mensal de Estoques e Custos-20260930_143151-Gravação de Reunião (1) (1).mp4`). **Origem derivada NotebookLM, não reprodução direta do MP4 verificada nesta rodada.** Não tratar o rótulo "transcrição integral" ou `[AÇÃO VISUAL]` gerados por IA como evidência visual independente. Conteúdo de falas tem valor investigativo de primeira ordem, mas requer checagem contra vídeo para mudar classificação.
 
 ### 14.1 Divergência interna comprovada NO PRÓPRIO ARQUIVO DERIVADO
 

@@ -8,7 +8,7 @@ Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
 - Código/nome: **R02 — Baixas a receber** (contas a receber baixadas).
 - Finalidade: conferir recebimentos da competência — contraparte de R01
   no pacote documental do fechamento.
-- Processo: PROC-0072 — `PROVEN` (doc 118 §6).
+- Processo: `PROVEN` (doc 118 §6).
 - Owner funcional: Controladoria interna (análise/preparo) /
   Contabilidade externa (consumo documental — doc 156).
 - Forma de entrega ao pacote: relatório financeiro **consolidado

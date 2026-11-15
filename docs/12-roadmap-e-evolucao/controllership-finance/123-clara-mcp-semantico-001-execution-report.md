@@ -17,7 +17,7 @@ por-capacidade para **exatamente seis tools semânticas estáveis**:
 | `get_context` | DISCOVERY | ator + capacidades efetivas, catálogo versionado de `(entity, action)`, schema sob demanda (`topic=schema`), persona/`agent_directives` |
 | `read` | READ | as 32 consultas do Portal por `entity`+`action`+`filters` — cada uma invoca a mesma função `tool_*` que chama a rota BFF canônica (`_call_route`) |
 | `analyze` | ANALYSIS | `closing_blockers` (FACT vs RECOMMENDATION) |
-| `knowledge` | READ | `search`/`get`/`sources` sobre o corpus PROC-0072, com citações |
+| `knowledge` | READ | `search`/`get`/`sources` sobre o corpus Fechamento mensal da Controladoria, com citações |
 | `execute` | ACT | toda operação governada não-destrutiva: `phase=prepare` → `confirmation_url` no Portal → `phase=commit` com `proposal_handle`; `batch` cobre o fluxo multi-ação (`prepare`/`confirm`/`execute`) |
 | `delete` | ACT | apenas capabilities marcadas `destructive`, mesmo fluxo governado |
 

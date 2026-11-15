@@ -11,7 +11,7 @@ atenção especial).
 - Finalidade: listar notas de saída selecionadas pelo critério
   histórico observado para conferência da Controladoria —
   **investigativo, nunca exclusão automática** de CPV/faturamento/DRE.
-- Processo: PROC-0072 — `PROVEN` (docs 85 §10, 126).
+- Processo: `PROVEN` (docs 85 §10, 126).
 - Owner funcional: Controladoria.
 - Owner técnico: `api-delpi` (`financeiro_billing_exclusion_roster`) +
   `controllership-finance-api` (BFF + CLARA).

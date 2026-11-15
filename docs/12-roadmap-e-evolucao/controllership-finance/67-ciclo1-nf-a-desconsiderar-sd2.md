@@ -1,6 +1,6 @@
 # 67 - Ciclo 1 | NF a desconsiderar: inventario SD2
 
-Data: 2026-10-22. Processo PROC-0072. Fonte: planilha privada de itens de notas fiscais de saida. Somente entendimento conceitual, sem linhas, produtos, numeros fiscais, parceiros, valores, hashes ou anexo.
+Data: 2026-10-22. Processo Fechamento mensal da Controladoria. Fonte: planilha privada de itens de notas fiscais de saida. Somente entendimento conceitual, sem linhas, produtos, numeros fiscais, parceiros, valores, hashes ou anexo.
 
 ## Identidade do arquivo
 Uma aba Planilha2. Primeira linha identifica `SD2`, com titulo/cabecalhos de itens de documentos de saida. Exportacao larga, com **184 colunas** e **11 linhas de dados** na amostra recebida. As familias de campos incluem filial, item, produto, unidade e quantidade, local/armazem, preco e valor, tributos, TES (`Tipo Saida`), `Cod. Fiscal`, contas e centro de custo, documento, serie e vinculos de devolucao/origem. Esse conjunto de colunas tem a forma de uma **extracao de itens SD2**, e nao um relatorio que explique por si mesmo o motivo da exclusao.

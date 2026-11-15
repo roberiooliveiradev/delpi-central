@@ -11,7 +11,7 @@ Estado operacional: visão de acompanhamento read-only implementada; execução 
 - Finalidade: executar e acompanhar as rotinas ERP que produzem o
   custo de reposição, o custo médio e os saldos da virada — é
   **execução no ERP com estado consultável**, não relatório de medida.
-- Processo: PROC-0072 — `PROVEN` (doc 118 §6).
+- Processo: `PROVEN` (doc 118 §6).
 - Owner funcional: Controladoria (executa no Protheus).
 - Owner técnico: rotinas TOTVS/Delpi — `MATA320`, `MATA300`, wizard
   `MATA330`; estado de fechamento via owner canônico do Portal.

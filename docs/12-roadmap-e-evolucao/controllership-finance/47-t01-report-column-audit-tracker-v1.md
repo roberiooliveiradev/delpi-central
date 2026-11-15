@@ -1,4 +1,4 @@
-# 47 — T01 | Tracker de coleta, tabelas, colunas e paridade — PROC-0072
+# 47 — T01 | Tracker de coleta, tabelas, colunas e paridade — Fechamento mensal da Controladoria
 
 > **Criado em 20/10/2026.** Este documento é o **controle de execução do inventário**, derivado do [46 — catálogo de fontes](./46-t01-report-source-inventory-v1.md). **Não é prova de que os bindings físicos foram encontrados** e não autoriza código runtime, deploy, SQL write, migration ou consulta arbitrária. TÉO é autoridade AS-IS; GitHub é autoridade TARGET/runtime; DAVI disponibiliza apenas capabilities READ descobertas/autorizadas.
 
@@ -145,7 +145,7 @@ SCOPE_CHANGE / SUPERSEDES:
 
 ## 7. Rodada L1.2 — Evidência audiovisual indireta sobre `_F190C` (20/10/2026)
 
-**Fonte desta rodada:** resposta do NotebookLM encaminhada pelo usuário, baseada em vídeo/transcrição PROC-0072. O vídeo binário e o timestamp **não foram verificados diretamente pelo GPT**; a divergência preexistente de duration/timecode no doc 03 continua `STALE_EVIDENCE / TO_RECONCILE`. Diferenciar `NOTEBOOKLM_REPORTED` de `DIRECT_VIDEO_PROVEN` e de `TÉO_AS_IS_DOCUMENTED`.
+**Fonte desta rodada:** resposta do NotebookLM encaminhada pelo usuário, baseada em vídeo/transcrição Fechamento mensal da Controladoria. O vídeo binário e o timestamp **não foram verificados diretamente pelo GPT**; a divergência preexistente de duration/timecode no doc 03 continua `STALE_EVIDENCE / TO_RECONCILE`. Diferenciar `NOTEBOOKLM_REPORTED` de `DIRECT_VIDEO_PROVEN` e de `TÉO_AS_IS_DOCUMENTED`.
 
 ### Achados reportados pelo NotebookLM — sem promover a prova direta
 

@@ -2,7 +2,7 @@
 
 **Documento:** `82-ciclo2-handoff-pacote-evidencias-owners.md` (renumerado de `81-` em 2026-10-23 para resolver colisão com o documento de decisão)
 **Origem:** `80-ciclo2-registro-vivo-investigacao-devin.md` §25 (Rodada 13, `4577c8c5e4`)
-**Escopo:** PROC-0072 — estoque histórico, MOD, baixas financeiras, fechamento SB9
+**Escopo:** estoque histórico, MOD, baixas financeiras, fechamento SB9
 **Estado:** E6 `APPROVED / PRODUCT_DIRECTION_ONLY` (opção C — `81-decisao-e6-historico-monetario-mod-opcao-c.md`, `e68ae2d63129`) · `IMPLEMENTATION_AUTHORIZED = NO` · `NO_GATE_CHANGE` (Doc 47)
 
 > Nenhum item deste pacote pede permissões amplas ou acesso privilegiado genérico.
@@ -36,7 +36,7 @@ Referência vigente das reconstruções DEL100: **3.058 chaves / 421 valor / 242
 | Evidência atual | `Pagos por dt.pdf`/`Recebidos.pdf` trazem `SIGA/DLP06R01.prt/v.12` — **layout compartilhado, não produtor**. **Pagar:** produtor = FINR190 provado — fonte `FINR190_DLP.PRX` (commit `0df96daafe`) com TRCell→`E5_*` e WHERE que reproduz população oficial 948+motivo 5/5 (doc 80 §17.B/C; G4 PASS doc 47 §11.1). **Receber:** WHERE do FINR190 gera 649/690 ≠ 657 oficial (§17.D, PROVEN) — produtor = `DLP06R01` **custom, fonte ausente do acervo**; `DLP06P01/F01/F02/F03` verificados = utilitários não relacionados |
 | Lacuna objetiva | (a) **fonte do `DLP06R01` custom** (receber) — nome da rotina, mapeamento coluna→campo e filtros (incl. regra de inclusão/exclusão dos movimentos sem título e do VO `FINA750`); (b) confirmar versão RPO do `FINR190_DLP.PRX`; (c) identidade do subconjunto do "log de inconsistências" de ambos os relatórios; ~~paridade monetária integral~~ **respondida 23/10 — G5 PASS ambos (doc 84)** |
 | Fonte esperada | fonte AdvPL/PRX do `DLP06R01` (ou nome da rotina efetiva do relatório de recebidos) + confirmação de compilação no RPO + o arquivo de log de inconsistências emitido junto ao relatório |
-| Impacto PROC-0072 | fecha G4 de R02 e a trilha receber; sem o fonte, G4 segue PENDING (paridade do artefato já provada em G5) |
+| Impacto fecha G4 de R02 e a trilha receber; sem o fonte, G4 segue PENDING (paridade do artefato já provada em G5) |
 | Critério de aceite | `SOURCE_AVAILABLE` + `CODE_DEPLOYED`; idealmente `EXECUTION_OBSERVED` |
 
 #### E2 — Produtor e parâmetros do P7 / MATR460 — **solicitação conclusiva (rodada 18)**
@@ -45,7 +45,7 @@ Referência vigente das reconstruções DEL100: **3.058 chaves / 421 valor / 242
 |---|---|
 | Evidência atual | **Resolvido em 23/10:** rotina **"Registro de Inventário Modelo P7"** observada em preview no vídeo (35:00/37:00, MATRIZ, 30/09/2026); artefatos `Estoque.pdf` (completo, TOTAL 3.946.431,87, folha 101) e `Resumo Estoque.pdf` (escopo MP/PA/PI, 2.976.967,56, folha 74 — **emissão distinta, mesma data-base 30/09**); roster vincula "Estoque P7"→**MATR460**; SPEDFISCAL gera Bloco H. **Rodada 15 (doc 80 §33.D):** binding de totalização **provado** — `EM ESTOQUE` = saldo físico ex-`MV_LOCPROC='99'` no `as_of` da emissão e `EM PROCESSO` = MATR989. **Rodada 17 (doc 80 §35):** grupo SX1 **`MTR460` (25 perguntas) catalogado**; resumo = mesmo estado de custo (PA/PI bit a bit) + **escopo MP/PA/PI + divergência exclusiva em MP**; hipótese `QTNP@emissão` explica 99,987 % do estoque (Δ76,43) e ~97,5 % do processo (Δ+1.942,62) — **não é regra oficial** (doc 80 §36, doc 85 BR-R03-007) |
 | Lacuna objetiva | exatamente três evidências abaixo (E2.1/E2.2/E2.3) |
-| Impacto PROC-0072 | é a base do gate R03 e da distinção "consulta operacional × relatório oficial" |
+| Impacto é a base do gate R03 e da distinção "consulta operacional × relatório oficial" |
 
 **E2.1 — Parâmetros da emissão resumida**
 
@@ -100,7 +100,7 @@ população; G6 exige homologação funcional da Controladoria.
 | Evidência atual | **Cadeia identificada (rodada 28, doc 80 §47):** `MATA330` (JOICI+serviço) → `MATA280` (virada; serviço) → rajada SB9. `I_N_S_D_T_` é **UTC** (prova SD3×TTAT Δ+3h) — a "divergência" era fuso. Rajadas SB9 caem dentro das janelas MATA280 em 5/5 execuções (10/08, 18/09, 01/10, 02/10, 21/10; ±4s). MATA280 escreve saldos iniciais de OP (`C2_VINI1`, `C2_VINIRP1`, `C2_APRINI1/2/3`); SX1 `MTA280` declara "Gera Saldo Inicial". SB9/SB2/SX6 sem auditoria TTAT — insert SB9 não auditável por log |
 | Lacuna objetiva | confirmação formal de que a **função interna do MATA280** (RPO vigente) é a que insere SB9 e avança `MV_ULMES`; papel das SPs pós-fechamento (`MA330OK`/`STP_DELPI_*`) |
 | Fonte esperada | `sp_helptext`/RPO do MATA280 ou log de execução do wizard (Event Viewer/appserver) vinculando a virada à competência 09/2026 |
-| Impacto PROC-0072 | converte o binding temporal ±4s em prova de linha de código — encerra E5 e a atribuição do writer |
+| Impacto converte o binding temporal ±4s em prova de linha de código — encerra E5 e a atribuição do writer |
 | Critério de aceite | `CODE_DEPLOYED` (fonte/RPO MATA280 com write SB9/`MV_ULMES`) ou `EXECUTION_OBSERVED` (log datado do passo) |
 
 #### E7 — Versão implantada do MATR910 + parâmetros efetivos do kardex
@@ -110,7 +110,7 @@ população; G6 exige homologação funcional da Controladoria.
 | Evidência atual | **Rodada 19:** fonte `matr910_dlp.prx` no acervo (`SOURCE_AVAILABLE`) e modelo físico `PROVEN` — UNION SD1/SD2/SD3, `F4_ESTOQUE='S'`, `D3_ESTORNO<>'S'`, `D*_ORIGLAN<>'LF'`, datas por tabela, ordem NUMSEQ, custos `as_of`. Paridade linha-a-linha: 9.357/9.357 (R06) e 45/45 (R07) — doc 80 §37, doc 85 §6/§7 |
 | Lacuna objetiva | (a) confirmação de que a versão compilada no RPO de produção corresponde ao fonte `matr910_dlp.prx` disponível (`CODE_DEPLOYED`); (b) parâmetros efetivos das emissões de 01/10 — especialmente mv_par10 `Saldo a considerar` (Atual/Fechamento), mv_par09, mv_par22 poder3 e o armazém usado na emissão de `Invent.xlsb` (loc 01+99 observados) |
 | Fonte esperada | identificação da build/RPO da rotina MATR910 + print/registro de parametrização vinculado às emissões (aceita evidência equivalente com vínculo demonstrável) |
-| Impacto PROC-0072 | converte `SOURCE_AVAILABLE` em `CODE_DEPLOYED`; encerra o residual de parâmetros de R06/R07 (G4/G5 já PASS com base na reconstrução; E7 fecha a cadeia produtor→versão) |
+| Impacto converte `SOURCE_AVAILABLE` em `CODE_DEPLOYED`; encerra o residual de parâmetros de R06/R07 (G4/G5 já PASS com base na reconstrução; E7 fecha a cadeia produtor→versão) |
 | Critério de aceite | `CODE_DEPLOYED` (versão RPO comprovada) + `EXECUTION_OBSERVED` (parâmetros vinculados) |
 
 #### E8 — Fonte e versão implantada do MATR989 (Material em Processo)
@@ -120,7 +120,7 @@ população; G6 exige homologação funcional da Controladoria.
 | Evidência atual | **Rodada 22:** `Material em processo.xlsb` (aba `01-01 - Saldo em Processo (Ana`) reconciliado linha-a-linha — bloco com OP = 1.501 linhas `SD3010` `RE0/RE1/RE2/RE9` de OPs abertas na emissão (sem `PR0`, sem `C2_DATRF`); bloco sem OP = `SB9010`@20260930 loc99; total = EM PROCESSO P7 exato (doc 80 §41, doc 85 §8). `matr989.prx` **ausente do acervo** (`SOURCE_MISSING`, classe DLP06R01) |
 | Lacuna objetiva | (a) fonte ADVPL/PRX do MATR989 (standard ou custom) — confirma a semântica intra-dia do corte de OP (Dt.Ref vs timestamp 16:15) e o neteo `DE*` dentro de par impresso (não exercido nesta competência); (b) versão compilada no RPO de produção (`CODE_DEPLOYED`); (c) parâmetros efetivos da emissão de 01/10 16:15 (variante analítica, Dt.Ref, armazém de processo, tipos de CF) |
 | Fonte esperada | `matr989.prx`/customização + build/RPO da rotina + registro de parametrização vinculado à emissão (aceita evidência equivalente com vínculo demonstrável) |
-| Impacto PROC-0072 | fecha a cadeia produtor→versão de R08 (G4/G5 já PASS por reconstrução física; E8 remove o residual de fonte e prova os dois pontos não exercidos empiricamente) |
+| Impacto fecha a cadeia produtor→versão de R08 (G4/G5 já PASS por reconstrução física; E8 remove o residual de fonte e prova os dois pontos não exercidos empiricamente) |
 | Critério de aceite | `SOURCE_AVAILABLE` (fonte) + `CODE_DEPLOYED` (RPO) + `EXECUTION_OBSERVED` (parâmetros vinculados) |
 
 **Residual de confidencialidade (owner segurança):** os códigos reais dos
@@ -138,7 +138,7 @@ exposição residual exige ação adicional.
 | Evidência atual | **Rodada 24:** `DLP204.prw` no acervo (`SOURCE_AVAILABLE`); modelo físico reconstruído a 99,4% — seleção SD2 TES `F4_DUPLIC='S'` (4.476/4.476 `Qtd Fat.`), expansão via `SHY010`/`SG2010` + `SH1010.H1_CCUSTO` (4.449/4.476), rate `SBZ010.BZ_CUSTD` `as_of` emissão (4.469/4.469 com SBZ) — doc 80 §43, doc 85 §9 |
 | Lacuna objetiva | (a) fonte/RPO da `STP_DELPI_FORMA_PRECO_<empresa>` — ausente de todos os bancos acessíveis (legado 2019): contém a regra de seleção de OP por PA, a semântica do divisor `÷2` em itens de desdobramento e o cálculo de `CUSTOPROD`; (b) versão compilada do DLP204 no RPO (`CODE_DEPLOYED`); (c) parâmetros efetivos da emissão (par03..11 — artefato indica par11=Não); (d) 27 linhas com tempo não localizado e 7 MODs sem registro `SBZ` na filial (cadastro ausente ou exceção intencional); (e) tratamento de NF `D2_TIPO='D'` com TES duplic-S (ramo não exercido nesta competência) |
 | Fonte esperada | DDL/source da stored procedure + identificação da build/RPO do DLP204 + registro de parametrização vinculado à emissão (aceita evidência equivalente com vínculo demonstrável) |
-| Impacto PROC-0072 | fecha a cadeia produtor→versão de R09 e os únicos pontos que impedem G5 PASS (paridade linha integral); sem a SP, a semântica interna permanece `PRODUCER_INFERRED_BY_ARTIFACT` |
+| Impacto fecha a cadeia produtor→versão de R09 e os únicos pontos que impedem G5 PASS (paridade linha integral); sem a SP, a semântica interna permanece `PRODUCER_INFERRED_BY_ARTIFACT` |
 | Critério de aceite | `SOURCE_AVAILABLE` (SP) + `CODE_DEPLOYED` (RPO) + `EXECUTION_OBSERVED` (parâmetros vinculados) |
 
 ### 2.2 — Owner DBA (objetos de banco)
@@ -150,7 +150,7 @@ exposição residual exige ação adicional.
 | Evidência atual | `vw_Apontamentos_Eficiencia` homologada empiricamente: `RESULTADO_MOD = (TEMPO_PREVISTO − TEMPO_REAL) × SBZ010.BZ_CUSTD` (85.904/85.904); `OBJECT_DEFINITION` retorna `NULL` (WITH ENCRYPTION) |
 | Lacuna objetiva | definição interna: joins exatos, origem de `TEMPO_PREVISTO_HORAS`/`PRODUTO_MOD`, semântica de `STATUS_MOD`, e se há filtro temporal de rate |
 | Fonte esperada | DDL das views `vw_Apontamentos_Eficiencia`, `VW_PROTHEUS_CUSTO_ANALITIC_01/_05`, `VW_PROTHEUS_CUSTO_SINT_01/_05`, `vw_fin_despesas_centro_custo` (script ou `sp_helptext`) |
-| Impacto PROC-0072 | confirma bindings físicos (G4) e a proveniência do rate; elimina dependência de inferência |
+| Impacto confirma bindings físicos (G4) e a proveniência do rate; elimina dependência de inferência |
 | Critério de aceite | `SOURCE_AVAILABLE`; confrontado com o contrato empírico já provado |
 
 #### E4 — Jobs SQL Agent e SPs DELPI
@@ -160,7 +160,7 @@ exposição residual exige ação adicional.
 | Evidência atual | `SELECT` em `msdb.dbo.sysjobs` **negado**; `STP_DELPI_OP_TERCEIRO_*`/`STP_PROTHEUS_DELPI_AJUSTA_OP` ausentes das bases acessíveis (`DELPI`, `DELPI_TST01`, `DELPI_TST_WS`, `IntranetDelpiDev`) |
 | Lacuna objetiva | existência e agendamento de jobs de fechamento; código e localização real das SPs chamadas pelo `MA330OK` |
 | Fonte esperada | extrato sanitizado de `msdb.dbo.sysjobs`/`sysjobschedules` (nomes, schedule, última execução) + `sp_helptext` das duas SPs na base onde residem |
-| Impacto PROC-0072 | prova/elimina a hipótese do job mensal SB9 e revela o pós-processamento do fechamento |
+| Impacto prova/elimina a hipótese do job mensal SB9 e revela o pós-processamento do fechamento |
 | Critério de aceite | `EXECUTION_OBSERVED` (job + histórico) ou `SOURCE_AVAILABLE` (código SP) |
 
 ---
@@ -191,7 +191,7 @@ Mais:
 
 | Campo | Conteúdo |
 |---|---|
-| Impacto PROC-0072 | transforma a direção aprovada (duas leituras) em semântica homologada de indicadores MOD |
+| Impacto transforma a direção aprovada (duas leituras) em semântica homologada de indicadores MOD |
 | Critério de aceite | `FUNCTIONAL_ACCEPTANCE` registrado com versão e data + `DECISION_REQUIRED` de E6-D1..D6 respondidos pelos owners |
 
 > **Bloqueio deliberado:** a direção está aprovada, mas `IMPLEMENTATION_AUTHORIZED = NO` — nada será implementado antes dos detalhamentos e das homologações acima.
@@ -216,7 +216,7 @@ confirmação documental, não uma nova investigação.
 | Campo | Conteúdo |
 |---|---|
 | Owner | Controladoria / operadora que emitiu o arquivo |
-| Impacto PROC-0072 | fixa a lista de exclusão como regra versionável e o owner da taxonomia Direto/Ind/Adm; G5 já PASS — E10 documenta, não desbloqueia gate |
+| Impacto fixa a lista de exclusão como regra versionável e o owner da taxonomia Direto/Ind/Adm; G5 já PASS — E10 documenta, não desbloqueia gate |
 | Critério de aceite | lista de TES confirmada por escrito + filtro EDAPP preservado + regra benefícios + taxonomia de classe confirmada |
 
 #### E11 — R11 `NF a desconsiderar.xlsb`: finalidade funcional da exclusão
@@ -237,7 +237,7 @@ Abaixo só a confirmação funcional, não nova investigação.
 | Campo | Conteúdo |
 |---|---|
 | Owner | Controladoria / gestora do processo (doc 67 NFEX-01/NFEX-05) |
-| Impacto PROC-0072 | fixa a finalidade da lista de exceção e o contrato da apuração afetada; G5 já PASS — E11 documenta, não desbloqueia gate |
+| Impacto fixa a finalidade da lista de exceção e o contrato da apuração afetada; G5 já PASS — E11 documenta, não desbloqueia gate |
 | Critério de aceite | apuração destino confirmada + critério regra×exceção confirmado + filtro EDAPP preservado |
 
 #### E12 — R12 sequência de fechamento: rotinas, checkpoints e efeitos do MATA300
@@ -263,7 +263,7 @@ investigação.
 | Campo | Conteúdo |
 |---|---|
 | Owner | Controladoria (sequência/checkpoints/homologação) + TI/ERP (E12.2/E12.3) |
-| Impacto PROC-0072 | fixa o AS-IS operacional da Central de Fechamento e os critérios de sucesso/falha por etapa; G4 já PASS — E12 documenta, não desbloqueia gate |
+| Impacto fixa o AS-IS operacional da Central de Fechamento e os critérios de sucesso/falha por etapa; G4 já PASS — E12 documenta, não desbloqueia gate |
 | Critério de aceite | sequência oficial confirmada + rotina DIT nomeada + efeitos MATA300 descritos + papel de `MV_ULMES` confirmado |
 
 ---

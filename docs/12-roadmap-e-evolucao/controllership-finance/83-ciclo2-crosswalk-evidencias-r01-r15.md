@@ -3,7 +3,7 @@
 **Documento:** `83-ciclo2-crosswalk-evidencias-r01-r15.md`
 **Execução:** CF-C2-FULL-EVIDENCE-RECONCILIATION-001 · 2026-10-23 · Devin
 **Origem das evidências:** pasta `fechamento` fornecida pelo PO (20 arquivos: 1 vídeo, 6 PDFs, 10 XLSB, 3 XLSX — metadados sanitizados aqui), documentos 03/46/47/55–57/71–82, acervo `docs/13-fontes-totvs-protheus/`, Rodadas 1–13 (doc 80).
-**Escopo:** PROC-0072 · competência 09/2026 · empresa DELPI (Matriz + Filial) · ambiente Protheus `02.9.0004` (Estoque/Custos) / `02.9.0006` (Financeiro) · usuário observado JOICI.
+**Escopo:** competência 09/2026 · empresa DELPI (Matriz + Filial) · ambiente Protheus `02.9.0004` (Estoque/Custos) / `02.9.0006` (Financeiro) · usuário observado JOICI.
 **Restrições cumpridas:** somente leitura/local; nenhum SQL novo necessário para as promoções documentadas aqui; nenhum dado sensível versionado (apenas metadados, totais e estruturas).
 
 ---

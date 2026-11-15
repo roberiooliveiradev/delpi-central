@@ -1,4 +1,4 @@
-# 75 — Ciclo 1: relação tabular de recebimentos (PROC-0072)
+# 75 — Ciclo 1: relação tabular de recebimentos
 
 > Análise documental: 23/10/2026. Fonte: exportação XLSB privada fornecida pelo PO. Este documento é **sanitizado**: não contém arquivo original, valores, identificadores, dados de terceiros, linhas de transação nem evidências privadas. **Sem GO de runtime.**
 

@@ -1,8 +1,7 @@
-# 02 — PROC-0072 — AS-IS e Baseline
+# 02 — AS-IS e Baseline
 
 ## Identidade
 
-- Código: PROC-0072
 - Processo: Gestão do Fechamento Mensal da Controladoria
 - Responsável mapeada: <GESTORA-PROC>
 - Setor: Controladoria

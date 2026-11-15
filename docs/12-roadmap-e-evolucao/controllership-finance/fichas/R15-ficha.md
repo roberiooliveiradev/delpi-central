@@ -11,7 +11,7 @@ Estado operacional: visão de acompanhamento read-only implementada; execução 
 - Finalidade: garantir que a competência foi "sacramentada" — snapshot
   `SB9010` gravado e `MV_ULMES` avançado — antes de tratar valores como
   fechados.
-- Processo: PROC-0072, P3/cutoff — `PROVEN` (doc 118 §6).
+- Processo: Fechamento mensal da Controladoria, P3/cutoff — `PROVEN` (doc 118 §6).
 - Owner funcional: Controladoria.
 - Owner técnico: rotinas TOTVS (`MATA330`, `MATA280`) + leitura de
   estado na api-delpi/BFF.

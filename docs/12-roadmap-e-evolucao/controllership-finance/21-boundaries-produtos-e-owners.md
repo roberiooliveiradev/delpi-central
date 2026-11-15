@@ -59,7 +59,7 @@ Expansão para classificação corporativa fora do fechamento exige decisão esp
 
 ## Importações / custos de importação
 
-O fechamento pode consumir entregáveis de importação quando necessários ao PROC-0072.
+O fechamento pode consumir entregáveis de importação quando necessários ao fechamento mensal.
 
 Isso não autoriza o Portal a criar uma segunda fonte de custos de importação.
 

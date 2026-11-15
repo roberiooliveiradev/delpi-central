@@ -2,7 +2,7 @@
 
 **Data:** 2026-10-27
 **Execução:** `CF-PROC0072-DRE-ACCESS-019` (continuação do inventário `CF-PROC0072-DRE-ACCESS-018`)
-**Produto:** Portal Controladoria & Finanças — Central de Fechamento — PROC-0072
+**Produto:** Portal Controladoria & Finanças — Central de Fechamento — Fechamento mensal da Controladoria
 **Autoridade de origem:** [doc 91](./91-ciclo3-contabilidade-acesso-documentos-historicos-gate.md) (Opção B aprovada pelo PO), [doc 113](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md) §2 itens 7–8, checkpoint 6
 **Estado:** IMPLEMENTED — gate transversal resolvido pela execução governada autorizada (DOCUMENTAÇÃO → CORE/RBAC → CONTRATOS → BFF → FRONTEND → TESTES → DEPLOY GOVERNADO).
 

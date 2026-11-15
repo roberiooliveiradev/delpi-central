@@ -1,6 +1,6 @@
-# 48 — DESIGN TARGET | Rotas de Baixas R01/R02 — PROC-0072
+# 48 — DESIGN TARGET | Rotas de Baixas R01/R02 — Fechamento mensal da Controladoria
 
-> 20/10/2026 — DOCUMENTATION / PROPOSED / DECISION_REQUIRED. **Sem GO de runtime**. Fonte: TÉO PROC-0072, docs 03/21/45/46/47, resultados DAVI em 20/10/2026; vídeo analisado indiretamente pelo NotebookLM, não homologado. FINSV010/FINR190 padrão TOTVS não prova equivalência da customização DELPI `_F190C`.
+> 20/10/2026 — DOCUMENTATION / PROPOSED / DECISION_REQUIRED. **Sem GO de runtime**. Fonte: TÉO Fechamento mensal da Controladoria, docs 03/21/45/46/47, resultados DAVI em 20/10/2026; vídeo analisado indiretamente pelo NotebookLM, não homologado. FINSV010/FINR190 padrão TOTVS não prova equivalência da customização DELPI `_F190C`.
 
 ## 1. Objetivo e arquitetura
 
@@ -462,7 +462,7 @@ Com evidência hoje (implementáveis sem decisão): contagem de eventos, valor b
 
 ## 17. Encerramento da primeira consulta e protocolo de replicação para os demais relatórios (PO, 20/10/2026)
 
-**Decisão expressa do PO:** R01/R02 representam a primeira entrega funcional do fluxo de levantamento → fonte/coluna/chaves → contratos api-delpi/BFF → consulta visual. Essa entrega **NÃO equivale à homologação de paridade com os relatórios exportados TOTVS** nem ao fechamento mensal completo. O objetivo agora é repetir o mesmo método para os próximos relatórios do PROC-0072.
+**Decisão expressa do PO:** R01/R02 representam a primeira entrega funcional do fluxo de levantamento → fonte/coluna/chaves → contratos api-delpi/BFF → consulta visual. Essa entrega **NÃO equivale à homologação de paridade com os relatórios exportados TOTVS** nem ao fechamento mensal completo. O objetivo agora é repetir o mesmo método para os próximos relatórios do fechamento mensal.
 
 **Evidência indisponível / dívida de comparação:** até o encerramento desta rodada, não foi disponibilizado arquivo real exportado do FINR190, da customização `_F190C` ou da eventual alternativa FINSV010 correspondente à competência/params testados. Os cinco arquivos relatados para pagar/receber são descrição oral/derivada, não artefatos recebidos e conferidos. Portanto `REPORT_EXPORT_EVIDENCE=NOT_PROVIDED`, `PARITY_WITH_TOTVS_EXPORT=TEST_NOT_RUN`, `OFFICIAL_NET_TOTALS=PENDING_OWNER`. Ausência de arquivo neste projeto não prova ausência no ERP. Não marcar paridade PASS por SQL reconciliado com a API (mesma origem lógica).
 

@@ -9,7 +9,7 @@ Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
   de importação, SWIFT, ACSI).
 - Finalidade: compor o pacote de fechamento quando houver operações de
   importação/câmbio na competência.
-- Processo: PROC-0072 — registro no catálogo canônico (doc 118 §6).
+- Processo: registro no catálogo canônico (doc 118 §6).
 - Owner funcional: Controladoria.
 - Owner técnico: nenhum — fonte externa/sem evidência.
 - Implementação: **`SOURCE_UNAVAILABLE` — `BLOQUEADO`** (doc 85 §13);

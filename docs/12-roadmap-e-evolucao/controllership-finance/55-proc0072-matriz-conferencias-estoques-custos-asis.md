@@ -1,10 +1,10 @@
-# 55 — PROC-0072 | Levantamento consolidado de conferencias de estoques e custos (AS-IS)
+# 55 — Levantamento consolidado de conferencias de estoques e custos (AS-IS)
 
 **Data de registro:** 21/10/2026. **Estado:** DOCUMENTED_PARTIAL / TO_INVENTORY; reconciliacao numerica = INCONCLUSIVE; paridade ERP/API = TEST_NOT_RUN; design de ferramenta consolidada = TARGET / DECISION_REQUIRED. **Sem autorizacao para implementar runtime.**
 
 ## 1. Objetivo, metodo e evidencias
 Objetivo: capturar as regras e dependencias demonstradas no recorte audiovisual fornecido pelo PO, em vez de copiar cada relatorio TOTVS para uma pagina. Autoridade AS-IS: TEO e responsavel humana do processo; este documento e um **levantamento observacional**, nao confirmacao formal. Autoridade TARGET: GitHub HEAD/ADRs. Fontes:
-- Video de acompanhamento PROC-0072, segmento recortado com 14 minutos, correspondente aproximadamente a 19:00–33:00 da reuniao original; capturas e transcricao de trabalho anteriormente examinadas. Marcacoes temporais abaixo aproximadas, conferiveis no material primario. **Nao afirmar que os audios foram transcritos/verificados literalmente nesta revisao.**
+- Video de acompanhamento Fechamento mensal da Controladoria, segmento recortado com 14 minutos, correspondente aproximadamente a 19:00–33:00 da reuniao original; capturas e transcricao de trabalho anteriormente examinadas. Marcacoes temporais abaixo aproximadas, conferiveis no material primario. **Nao afirmar que os audios foram transcritos/verificados literalmente nesta revisao.**
 - Screenshots do TOTVS com abas `Movimentacoes Kardex Diario - Padrao`, `Saldo Em Processo`, `Em Processo`, `Entradas e Saidas`; parametros do MATR320.
 - PDF original `Entradas e saidas.pdf`: `SIGA/MATR320.prt/v.12`, uma pagina, periodo 01/09/2026–30/09/2026, filial MATRIZ, emissao 01/10/2026. Documento original disponivel na conversa, nao reproduzido no repo.
 - Inventario de relatorios doc 46 (especialmente R03 a R10 e secao R05 original) e doc 54 (primeira leitura cruzada do recorte). Na divergencia entre anotacoes/transcricao e documento original, preservar ambos e sinalizar divergencia, nunca conciliar por suposicao.

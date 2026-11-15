@@ -147,7 +147,7 @@ SHA desta etapa: `FINAL_HEAD` do commit desta entrega em `main`
 
 ## Adendo 2 — revisão independente ecf765 e encerramento da trilha técnica
 
-**Data:** 2026-10-25 · **SHA de código revisado:** `ecf765139d77fabcf5ab28ab04cfb71f9cde41b0`. **Veredito:** `ACCEPT_WITH_RESIDUAL` para correções de concorrência e apresentação; `INCONCLUSIVE` para integração runtime/Keycloak/ChatGPT e para aceite integral do PROC-0072. **Não** declarar produção aprovada ou implantação feita.
+**Data:** 2026-10-25 · **SHA de código revisado:** `ecf765139d77fabcf5ab28ab04cfb71f9cde41b0`. **Veredito:** `ACCEPT_WITH_RESIDUAL` para correções de concorrência e apresentação; `INCONCLUSIVE` para integração runtime/Keycloak/ChatGPT e para aceite integral do fechamento mensal. **Não** declarar produção aprovada ou implantação feita.
 
 ### Evidências inspecionadas no GitHub
 

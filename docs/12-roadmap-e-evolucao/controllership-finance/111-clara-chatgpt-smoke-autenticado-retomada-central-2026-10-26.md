@@ -1,6 +1,6 @@
 # Documento 111 — CLARA: smoke MCP autenticado no ChatGPT e retomada da Central de Fechamento
 
-**Data:** 2026-10-26 (America/Sao_Paulo). **Processo:** PROC-0072 — Gestão do Fechamento Mensal da Controladoria. **Produto:** Portal Controladoria & Finanças / Central de Fechamento. **Execução:** `CF-PROC0072-CLARA-CHATGPT-AUTH-READ-SMOKE-20261026-001`. **Natureza:** registro de evidência de integração e handoff; **não é novo GO de implementação nem aceite global P1–P6**.
+**Data:** 2026-10-26 (America/Sao_Paulo). **Processo:** Fechamento mensal da Controladoria. **Produto:** Portal Controladoria & Finanças / Central de Fechamento. **Execução:** `CF-PROC0072-CLARA-CHATGPT-AUTH-READ-SMOKE-20261026-001`. **Natureza:** registro de evidência de integração e handoff; **não é novo GO de implementação nem aceite global P1–P6**.
 
 **Authority e antecedentes:** [README do produto](./README.md), [ledger RQ/AC 23](./23-ledger-rq-ac-testes.md), [roadmap 93](./93-roadmap-executivo-central-fechamento-end-to-end-checkpoints.md), [CLARA 94](./94-clara-especialista-mcp-controladoria-financas.md), [plano 104](./104-plano-mestre-execucao-e2e-fechamento-aceite-deploy.md), [release/ChatGPT 107](./107-clara-validacao-antecipada-chatgpt-release-hoje.md), [G2 108](./108-homologacao-guiada-g2-g3-2026-10-26.md) e [handoff IAM 110](./110-g3-handoff-operator-iam-clara-chatgpt-2026-10-26.md). Target de código conciliado: [`f0abb8f0341a75cbcffed80ded893010f3c2ac41`](https://github.com/roberiooliveiradev/delpi-central/commit/f0abb8f0341a75cbcffed80ded893010f3c2ac41). Investigação IAM read-only registrada no Doc 107, Adendo 11, commit documental `38c000c969` reportado pelo executor.
 
@@ -21,7 +21,7 @@
 | CLARA-MCP-01 | Discovery de ferramentas no host | 18 tools CLARA expostas ao assistente, incluindo READ, DISCOVERY, ANALYSIS, PREPARE e ACT | **PASS** (visibilidade das definições de tools na sessão) |
 | CLARA-MCP-02 | `get_catalog` | `success=true`; `capabilities.access=true`, `manage=true`; 14 entradas no catálogo retornado, lista distinta das 18 definições expostas pelo host | **PASS**; discrepância **18 versus 14 = TO_INVENTORY**, sem presumir defeito |
 | CLARA-MCP-03 | `get_my_context` | `success=true`; identidade contextual e duas capabilities efetivas `access/manage=true` | **PASS** (READ autenticado); JWT não é autoridade final de permissão |
-| CLARA-MCP-04 | `search_closing_knowledge` | `success=true`; 3 itens relativos ao PROC-0072 com locator, documento, linhas, versão, `APPROVED_RULE` e autoridade `OWNER` | **PASS** (READ knowledge e proveniência) |
+| CLARA-MCP-04 | `search_closing_knowledge` | `success=true`; 3 itens relativos ao fechamento mensal com locator, documento, linhas, versão, `APPROVED_RULE` e autoridade `OWNER` | **PASS** (READ knowledge e proveniência) |
 | CLARA-MCP-05 | Corpus | `corpus_version_id=5541097a-8608-4470-b971-7c28b3ae6c40`, `source_count=52`, `item_count=1298`, publicação 2026-10-26 07:07:09 -03 | **PASS** (metadados retornados em chamada MCP, não auditoria de conteúdo integral) |
 | CLARA-MCP-06 | Estado de competência `get_competence_state` e regras P1–P6 | Não chamado | **TEST_NOT_RUN** |
 | CLARA-MCP-07 | PREPARE/ACT/batch, consentimento V014, read-back/auditoria de efeitos | Não chamados | **TEST_NOT_RUN** |

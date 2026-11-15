@@ -4,7 +4,7 @@ Estado: a exclusão administrativa foi implantada em produção no commit `03d19
 
 ## Escopo e owner
 
-Bounded context `controllership-finance`. A BFF é a autoridade da exclusão. O Portal e a CLARA chamam o mesmo caso de uso. Processo `PROC-0072`. Nenhuma permission code nova foi criada.
+Bounded context `controllership-finance`. A BFF é a autoridade da exclusão. O Portal e a CLARA chamam o mesmo caso de uso. Processo Fechamento mensal da Controladoria. Nenhuma permission code nova foi criada.
 
 ## Decisão do PO
 

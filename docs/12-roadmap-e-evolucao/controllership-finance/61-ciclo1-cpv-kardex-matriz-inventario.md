@@ -1,6 +1,6 @@
 # 61 - Ciclo 1 - CPV: arquivo de Kardex fisico-financeiro
 
-Data do inventario: 22/10/2026. PROC-0072. Fonte privada: planilha binaria de CPV da matriz, identificada pelo PO como referente a setembro/2026. **O arquivo original e seus dados comerciais/fiscais nao sao publicados neste repositorio.**
+Data do inventario: 22/10/2026. Fechamento mensal da Controladoria. Fonte privada: planilha binaria de CPV da matriz, identificada pelo PO como referente a setembro/2026. **O arquivo original e seus dados comerciais/fiscais nao sao publicados neste repositorio.**
 
 ## 1. Natureza do artefato
 

@@ -1,4 +1,4 @@
-# 80 — PROC-0072 | Registro vivo de investigação técnica do Ciclo 2 — Devin
+# 80 — Registro vivo de investigação técnica do Ciclo 2 — Devin
 
 > **Criado:** 23/10/2026. **Produto:** Portal Controladoria & Finanças / Central de Fechamento. **Natureza:** template operacional **DOCUMENTATION_ONLY**, destinado a preenchimento progressivo pelo Devin após GO de investigação específico. **Não é ordem de execução, nem aprovação de SQL, nem autorização de runtime.**
 
@@ -1708,7 +1708,7 @@ SP MAT056). Evidências indiretas encontradas:
 ## §32 — ERRATA DE SANITIZAÇÃO (CF-C2-HISTORICAL-SANITIZATION-001, 2026-10-23 — corrigida; data original registrada por engano como 05/11/2026)
 
 Auditoria de confidencialidade retroativa sobre os docs do processo
-PROC-0072 (Ciclo 1 e Ciclo 2 nesta pasta). Substituição de identificadores
+Fechamento mensal da Controladoria (Ciclo 1 e Ciclo 2 nesta pasta). Substituição de identificadores
 operacionais por **aliases estáveis**; nenhuma regra, total, fórmula,
 conclusão ou classificação foi alterada. O mapeamento original↔alias fica
 sob custódia do owner, **fora do repositório**.

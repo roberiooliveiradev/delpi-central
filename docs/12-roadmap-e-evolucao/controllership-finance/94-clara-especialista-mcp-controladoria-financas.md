@@ -27,7 +27,7 @@ Acrônimo oficial: **C**ontroladoria, **L**eitura, **A**nálise,
 |---|---|
 | Produto atendido | Portal Controladoria & Finanças (`controllership-finance`) |
 | Primeira funcionalidade | Central de Fechamento |
-| Primeiro processo | PROC-0072 — Gestão do Fechamento Mensal da Controladoria |
+| Primeiro processo | Fechamento mensal da Controladoria |
 | Família | especialistas MCP da Minha DELPI (TÉO, DAVI, VISTA) |
 
 A identidade não está sujeita a renomeação ou reinterpretação.
@@ -205,7 +205,7 @@ MANAGE_APPROVAL != EVIDENCE_VALIDATION
 
 | Especialista | Domínio | Relação com a CLARA |
 |---|---|---|
-| TÉO | processos, AS-IS, diagnóstico, evidências do Transformômetro | fonte de proveniência do PROC-0072; a CLARA não replica tools do TÉO |
+| TÉO | processos, AS-IS, diagnóstico, evidências do Transformômetro | fonte de proveniência do fechamento mensal; a CLARA não replica tools do TÉO |
 | DAVI | descoberta/consulta governada de dados DELPI (api-delpi) | a CLARA não consulta TOTVS por fora da BFF nem reexpõe tools do DAVI |
 | VISTA | painéis operacionais | sem sobreposição |
 | CLARA | processos, recursos, operações e informações do Portal C&F | — |

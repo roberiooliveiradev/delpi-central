@@ -1,6 +1,6 @@
 # 54 - Analise transversal do recorte de video: Kardex, inventarios, CPV e MOD
 
-Data 2026-10-21. Escopo de evidencia: video recortado de 14 minutos enviado pelo PO, aproximadamente trecho 19-33 minutos da gravacao do PROC-0072; imagens observadas em quadros a cada 30s e transcricao de trabalho `PROC-0072_Transcricao_Integral_Video.md` recebida no projeto. AS-IS a confirmar formalmente com TEO/<GESTORA-PROC>, pois transcricao pode conter erros; codigos e valores citados sao relacoes observadas/ditas, NAO formulas canônicas verificadas contra SQL. Sem implementacao de runtime nem alteracao de contratos. Status: DOCUMENTED_PARTIAL, produto TARGET_ONLY.
+Data 2026-10-21. Escopo de evidencia: video recortado de 14 minutos enviado pelo PO, aproximadamente trecho 19-33 minutos da gravacao do fechamento mensal; imagens observadas em quadros a cada 30s e transcricao de trabalho a transcrição integral do vídeo enviada pelo PO (arquivo local, não versionado) recebida no projeto. AS-IS a confirmar formalmente com TEO/<GESTORA-PROC>, pois transcricao pode conter erros; codigos e valores citados sao relacoes observadas/ditas, NAO formulas canônicas verificadas contra SQL. Sem implementacao de runtime nem alteracao de contratos. Status: DOCUMENTED_PARTIAL, produto TARGET_ONLY.
 
 ## Sequencia e distincao de relatorios
 - P7 padrao (estoque valorizado por data), layout Bloco H separado para contabilidade, com selecao de terceiros mencionada na transcricao. R03 nao e equivalente oficial ao MATR460 por deducao.
@@ -40,4 +40,4 @@ Exibir origem, filtros, competencia, status, evidencias, divergencias e responsa
 6. Abrir DECISION_REQUIRED antes de novo produto/pagina/contrato; nenhuma permissao adicional nem acesso direto a api-delpi do browser.
 
 ## Evidencia e resultado
-Video recortado entregue pelo PO neste dialogo (14 min); transcricao auxiliar local `PROC-0072_Transcricao_Integral_Video.md`, nao registrada como texto canonico. R05 PDF original: `SIGA/MATR320.prt/v.12`, 01-30/09/2026, emitido 01/10, e registrado em doc 46. Este documento e de processo/descoberta, nao de codigo. Verdict: INCONCLUSIVE para calculo e reconciliacao automatizada, DOCUMENTED_PARTIAL para operacoes humanas observadas.
+Video recortado entregue pelo PO neste dialogo (14 min); transcricao auxiliar local a transcrição integral do vídeo enviada pelo PO (arquivo local, não versionado), nao registrada como texto canonico. R05 PDF original: `SIGA/MATR320.prt/v.12`, 01-30/09/2026, emitido 01/10, e registrado em doc 46. Este documento e de processo/descoberta, nao de codigo. Verdict: INCONCLUSIVE para calculo e reconciliacao automatizada, DOCUMENTED_PARTIAL para operacoes humanas observadas.

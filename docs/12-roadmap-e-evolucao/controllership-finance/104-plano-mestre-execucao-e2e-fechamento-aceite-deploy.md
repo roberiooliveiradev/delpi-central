@@ -2,7 +2,7 @@
 
 **Data da diretriz do PO:** 24/10/2026  
 **Produto:** Portal Controladoria & Finanças / Minha DELPI  
-**Processo:** PROC-0072 — Gestão do Fechamento Mensal da Controladoria  
+**Processo:** Fechamento mensal da Controladoria  
 **Natureza:** PLANO DE EXECUÇÃO CONSOLIDADO, não relato de código nem evidência de deploy  
 **Owner de execução:** Devin, coordenado pelo GPT Arquiteto; negócio/aceite por Controladoria e PO; deploy por Operador SSH habilitado  
 **Referências normativas:** [93 — roadmap E2E](./93-roadmap-executivo-central-fechamento-end-to-end-checkpoints.md), [23 — ledger RQ/AC](./23-ledger-rq-ac-testes.md), [37 — P5 C2](./37-p5-submissao-e-revisao-no-portal.md), [41 — validação](./41-estrategia-validacao-e-gates-implementacao-v1.md), [14 — segurança](./14-seguranca-rbac-auditoria-e-ia.md), [17 — inventários](./17-backlog-de-confirmacoes-e-inventarios.md), [100 — evidências](./100-ciclo3-p6-min-p2-read-runtime-evidencia-de-execucao.md), [103 — P2-Upload](./103-ciclo3-p2-upload-contract-gate.md), [94 — CLARA](./94-clara-especialista-mcp-controladoria-financas.md) e [infra/README-ambiente](../../../infra/README-ambiente.md).

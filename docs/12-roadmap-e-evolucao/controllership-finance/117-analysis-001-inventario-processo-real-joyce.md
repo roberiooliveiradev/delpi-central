@@ -2,7 +2,7 @@
 
 **EXECUTION_ID:** `CF-PROC0072-ANALYSIS-INVENTORY-001`
 **Produto:** Portal Controladoria & Finanças — Minha DELPI
-**Processo:** PROC-0072 — Gestão do Fechamento Mensal da Controladoria
+**Processo:** Fechamento mensal da Controladoria
 **Etapa:** ANALYSIS-001 — Reconstrução AS-IS (documentação e inventário somente; nenhuma alteração de runtime)
 **Data de execução:** 2026-10-28
 **Executor:** Joyce = **Joici Motta** (Controladoria; usuário Protheus `JOICI`, gestora do processo no TÉO). A grafia "Joyce" do pedido e "Joici" dos registros referem-se à mesma pessoa, confirmado pela tela de login e pelos participantes da gravação.
@@ -11,7 +11,7 @@
 
 ## 1. Resumo executivo
 
-O fechamento mensal executado por Joyce foi reconstruído com evidência primária verificada: gravação de 54:44 (transcrição integral própria + 18 quadros inspecionados), 19 arquivos operacionais da competência 09/2026 e o corpus documental do PROC-0072 no TÉO/Transformômetro (43 documentos, R01–R42, C01–C10, CH01–CH04).
+O fechamento mensal executado por Joyce foi reconstruído com evidência primária verificada: gravação de 54:44 (transcrição integral própria + 18 quadros inspecionados), 19 arquivos operacionais da competência 09/2026 e o corpus documental do fechamento mensal no TÉO/Transformômetro (43 documentos, R01–R42, C01–C10, CH01–CH04).
 
 O processo é uma **orquestração manual de processamentos ERP, relatórios e planilhas**, conduzida em paralelo para otimizar tempo, com uma **conciliação tripla central** (`Entradas/Saídas − P7 − Saldo em Processo = R$ 0,00`, paridade exata conforme doc TÉO 06.2), investigação de divergências por grupo de material, classificação manual de centros de custo na SD1, consolidação de um pacote por destinatário (Fiscal/Contábil/Contabilidade/DRE) e tratamento de dúvidas até o encerramento do ciclo.
 
@@ -45,7 +45,7 @@ Limite de produto já decidido no TÉO e respeitado aqui: **o Portal/CLARA é RE
 
 19 arquivos primários inspecionados estruturalmente (abas, dimensões, cabeçalhos, amostras) — inventário em §9/§10. Artefatos derivados pré-existentes na mesma pasta (`analise_cm.json`, `kardex_cods.txt`, `kardex_headers.json`, `kardex_final.json`, `_parity_rows.json`) são **produto de análise anterior**, não evidência primária do processo de Joyce — classificados `DERIVED_ANALYSIS`.
 
-### 3.3 TÉO/Transformômetro (43 documentos do PROC-0072)
+### 3.3 TÉO/Transformômetro (43 documentos do fechamento mensal)
 
 Consultados: 01 (AS-IS reconciliado), 02 (decomposition tree 70 nós / diagrama 20 nós VERIFIED), 03 (entrevista Q22–Q30+), 04/04.1 (evidências e addendum), 05 (inventário de sistemas/rotinas/relatórios), 06/06.1/06.2 (regras R01–R42 + paridade monetária), 07 (responsabilidades/handoffs), 08 (gaps), 09 (exceções C01–C10), 10/10.1/10.2 (diagnóstico/Ishikawa/5-Whys), 20 (procedimento CC), 31.14–31.19 (TARGET P3–P6), 32.x/33 (decisões), 34 (backlog E01–E06/T01–T03).
 
@@ -357,7 +357,7 @@ Critérios: importância ao fechamento, dependência, disponibilidade de fonte, 
 
 - Vídeo: SHA-256 `bfa4ec3d…f32628ff15b1227a`; quadros verificados 00:03/08/12/15/18/22/25/27/30/33/35/38/42/45/48/50/52/54; transcrição `/tmp/transcript_proc0072.txt` (artefato local, não versionado).
 - Arquivos: `C:\Users\analistaptd\Downloads\fechamento\` (19 primários + derivados).
-- TÉO: documentos 01–34 do PROC-0072 (IDs internos nos cabeçalhos); processo `21f70cd0…`, revisão `85358475…`, baseline 960 min INFORMED.
+- TÉO: documentos 01–34 do fechamento mensal (IDs internos nos cabeçalhos); processo `21f70cd0…`, revisão `85358475…`, baseline 960 min INFORMED.
 - Repo: `controllership-finance-api/.../p3_routes.py`, `reports_routes.py`, `closing_routes.py`; `api-delpi/app/interface/http/routes/financeiro/*`; `api-delpi/docs/roadmaps/evidencias/matr460-investigacao-totvs.md`; docs 112–116; BASE_HEAD no início desta execução `1f34403767` (worktree incluía alterações concorrentes de `delia-api` e untracked pré-existentes, não tocados).
 
 ## 22. Conclusão do inventário

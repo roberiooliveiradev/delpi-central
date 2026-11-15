@@ -22,7 +22,7 @@ Produto multi-macroprocesso na Minha DELPI para:
 
 **Central de Fechamento**.
 
-Primeiro processo: **PROC-0072 — Gestão do Fechamento Mensal da Controladoria**.
+Primeiro processo: **Fechamento mensal da Controladoria**.
 
 ## Arquitetura de informação
 

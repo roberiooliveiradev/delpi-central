@@ -1,6 +1,6 @@
 # 69 - Ciclo 1 | Contas a pagar - posicao de titulos
 
-Data 22/10/2026. Processo PROC-0072. Fonte privada: planilha binaria A pagar.xlsb. **Somente informacoes conceituais e esquema funcional; nao publicar credores, titulos, valores, IDs, linhas ou original.**
+Data 22/10/2026. Processo Fechamento mensal da Controladoria. Fonte privada: planilha binaria A pagar.xlsb. **Somente informacoes conceituais e esquema funcional; nao publicar credores, titulos, valores, IDs, linhas ou original.**
 
 ## Identificacao e estrutura
 Uma aba `01-01 - Posicao dos Titulos a ` com referencia **30/09/2026** e emissao **01/10/2026**. Foram identificadas **648 linhas de titulos**, **12 ocorrencias de cabecalho repetido** e **15 colunas**. Os dados sao uma posicao de **obrigacoes em aberto**, nao uma lista de pagamentos/baixas.

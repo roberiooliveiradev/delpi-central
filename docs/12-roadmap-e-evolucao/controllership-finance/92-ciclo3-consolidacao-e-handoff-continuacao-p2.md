@@ -1,7 +1,7 @@
 # Documento 92 — Ciclo 3 · Estado consolidado e handoff para continuidade da Central de Fechamento
 
 **Data:** 2026-10-24  
-**Produto:** Portal Controladoria & Finanças · Central de Fechamento · PROC-0072  
+**Produto:** Portal Controladoria & Finanças · Central de Fechamento  
 **Natureza:** consolidação do estado documental e preparação de próximo gate, não execução de runtime  
 **Baseline remoto consultado:** main `ae2e82a4fbf2f7f1c44a8426d4ddec0d73c43143` antes desta publicação; **HEAD e git status de worktree devem ser reavaliados pelo executor**. O conector GitHub não demonstra worktree local.  
 **Estado:** `DOCUMENTATION_CONSOLIDATED_WITH_RESIDUAL` · `NEXT_GATE_PREPARATION` · `IMPLEMENTATION_AUTHORIZED=NO`.
@@ -12,7 +12,7 @@ A consolidação E2E foi realizada, **em nível de etapas, capacidades P1–P6, 
 
 | Ciclo/fonte | Material consolidado | Estado e autoridade |
 |---|---|---|
-| **1 — processo e checklist** | [03 — Evidências e checklist](./03-evidencias-proveniencia-e-rastreabilidade.md); TÉO PROC-0072 docs 04/05/06/07/30/31 etc.; bancos/extratos, baixas, estoque, custos, CC, importação, destinatários e handoffs | Fonte do inventário operacional; cada entregável requer responsável, origem, obrigatoriedade, competência, destinatário e regra de validação. **Não** assumir equivalência 1:1 com grupo Rxx |
+| **1 — processo e checklist** | [03 — Evidências e checklist](./03-evidencias-proveniencia-e-rastreabilidade.md); TÉO Fechamento mensal da Controladoria docs 04/05/06/07/30/31 etc.; bancos/extratos, baixas, estoque, custos, CC, importação, destinatários e handoffs | Fonte do inventário operacional; cada entregável requer responsável, origem, obrigatoriedade, competência, destinatário e regra de validação. **Não** assumir equivalência 1:1 com grupo Rxx |
 | **2 — dados e relatórios** | [47 — gates R01–R15](./47-t01-report-column-audit-tracker-v1.md), [80 — evidências](./80-ciclo2-registro-vivo-investigacao-devin.md), [82 — owners E1–E12](./82-ciclo2-handoff-pacote-evidencias-owners.md), [85 — BR/testes](./85-ciclo2-catalogo-regras-negocio-r01-r15.md), [86 — encerramento](./86-ciclo2-relatorio-final-consolidado-e-handoff.md) | Coleta 47/60; auditoria 55/90; **G6 0/15**; sem promoção de readiness/homologação |
 | **3 — alinhamento da funcionalidade** | [87 — abertura](./87-ciclo3-abertura-design-central-fechamento-read-only.md), [88 — inventário real](./88-ciclo3-r01-inventario-contratos-e-pacote-decisoes.md), [89 — D01..D06](./89-ciclo3-decisoes-aprovadas-e-gate-documental-r02.md), [90 — crosswalk completo](./90-ciclo3-crosswalk-end-to-end-proc0072-teo-rq-ac-portal.md), [91 — destinatários Contabilidade](./91-ciclo3-contabilidade-acesso-documentos-historicos-gate.md) | E2E funcional documentado e decisões registradas. **Não** implica gate transversal de runtime |
 
@@ -74,7 +74,7 @@ P2 é a primeira superfície operacional que materializa o checklist de document
 **Modo:** READ+VERIFY+INVENTORY+DOCUMENT+REPORT, sem runtime, sem criar permission/página da Contabilidade.
 
 1. Capturar `HEAD`, branch e **git status local**; ler Project Instructions, instrução oficial pelo caminho canônico `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`, apenas .cursor aplicáveis, README e docs 03/09/17/18/19/22/23/37/86/90/91/92.
-2. Consultar TÉO/PROC-0072 (AS-IS/checklist e TO-BE P2 31.1–31.13, 33) e recuperar os textos completos ou atestar precisamente trechos truncados. Não reinterpretar decisões fechadas.
+2. Consultar TÉO, no Fechamento mensal da Controladoria (AS-IS/checklist e TO-BE P2 31.1–31.13, 33) e recuperar os textos completos ou atestar precisamente trechos truncados. Não reinterpretar decisões fechadas.
 3. Inspecionar código/manifest/core/rotas MFE/BFF/api-delpi/storage, producers/consumers e testes; documentar `CODE_PRESENT` versus `TARGET` e nunca converter search miss em ausência.
 4. Produzir crosswalk **por item oficial do checklist**: item e identificador, competência, filial, responsável pela produção/upload, fonte, possibilidade de automação, arquivos/evidências, regra de satisfação/validador, destinatário, versão/histórico, RQ/AC, contracts, owner, prioridade/risco.
 5. Produzir crosswalk dos RQ/AC detalhados TÉO→GitHub e matriz de negative tests de autoaceite, replacement, multi-anexo, scope, permission e Core/storage indisponíveis.
@@ -86,6 +86,6 @@ P2 é a primeira superfície operacional que materializa o checklist de document
 
 ## 7. Veredito e próximo passo
 
-**Situação:** `ACCEPT_WITH_RESIDUAL` para consolidação documental do PROC-0072 e decisões vigentes; `PENDING` para contratos P2/P5, `TEST_NOT_RUN` para runtime novo, `IMPLEMENTATION_AUTHORIZED=NO`.
+**Situação:** `ACCEPT_WITH_RESIDUAL` para consolidação documental do fechamento mensal e decisões vigentes; `PENDING` para contratos P2/P5, `TEST_NOT_RUN` para runtime novo, `IMPLEMENTATION_AUTHORIZED=NO`.
 
 **Próxima ação recomendada:** executar `CF-C3-P2-DOCUMENTS-CHECKLIST-READINESS-001` com executor (Devin/Cursor), revisar evidências e aprovar gate P2 específico antes de implementar. A permission e página da Contabilidade **não** entram nesta rodada, ficando registradas para o estágio próprio P5/documentos históricos.

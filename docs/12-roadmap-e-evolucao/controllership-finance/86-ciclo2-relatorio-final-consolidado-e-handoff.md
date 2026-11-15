@@ -1,7 +1,7 @@
 # Documento 86 — Ciclo 2 · Relatório Final Consolidado e Handoff
 
 **Rodada:** `CF-C2-FINAL-CONSOLIDATION-AND-HANDOFF-001` (rodada 29 — 2026-10-24)
-**Escopo:** consolidação documental R01–R15 · PROC-0072 · Central de Fechamento.
+**Escopo:** consolidação documental R01–R15 · Central de Fechamento.
 **Natureza:** documental. Nenhuma implementação, runtime, contrato, job ou
 alteração Protheus autorizada ou realizada nesta rodada.
 

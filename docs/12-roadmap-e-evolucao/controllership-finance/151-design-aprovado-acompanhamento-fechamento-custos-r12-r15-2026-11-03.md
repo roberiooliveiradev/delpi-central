@@ -1,6 +1,6 @@
 # 151 — Design aprovado pelo PO: Acompanhamento do fechamento de custos (R12/R15)
 
-**Produto:** Portal Controladoria & Finanças | **Processo:** PROC-0072 | **Data da aprovação visual:** 03/11/2026
+**Produto:** Portal Controladoria & Finanças | **Processo:** **Data da aprovação visual:** 03/11/2026
 **Status:** `TARGET / VISUAL_APPROVED_BY_PO`; **runtime:** `NOT_IMPLEMENTED_UNTIL_GATE`; **paridade/homologação humana:** não comprovada.
 **Fonte visual:** mockup aprovado expressamente pelo PO na conversa em 03/11/2026 (“é exatamente esse visual que quero”), gerado a partir da captura da tela atual R12/R15. **Este documento é a especificação textual fiel do mockup aprovado.** O arquivo bitmap não foi anexado ao repositório neste commit; não presumir que exista asset de imagem versionado.
 **Arquivo vigente:** `plugins/controllership-finance/src/features/closing/CostClosingStatePage.tsx`.

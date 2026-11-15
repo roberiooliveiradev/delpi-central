@@ -1,6 +1,6 @@
 # Documento 101 — Handoff de arquitetura pós-runtime: P6-MIN + P2-READ
 
-**Data:** 2026-10-24 · **Produto:** Portal Controladoria & Finanças · **Processo:** PROC-0072.  
+**Data:** 2026-10-24 · **Produto:** Portal Controladoria & Finanças · **Processo:** Fechamento mensal da Controladoria.  
 **Natureza:** HANDOFF / ARCHITECTURE_REVIEW_PENDING / DOCUMENTATION_ONLY.  
 **Autoridade da implementação:** GO específico [doc 99](./99-ciclo3-go-runtime-p6-min-p2-read-e-handoff-devin.md); **relatório do executor** [doc 100](./100-ciclo3-p6-min-p2-read-runtime-evidencia-de-execucao.md); **roadmap** [93](./93-roadmap-executivo-central-fechamento-end-to-end-checkpoints.md).  
 **Commit de runtime reportado:** `f27dc307a48a5c9b37e6469e1c12d5f56ddbd896` (`main`); GitHub contém os documentos posteriores, por isso revalidar **HEAD atual e git status** no próximo chat.  

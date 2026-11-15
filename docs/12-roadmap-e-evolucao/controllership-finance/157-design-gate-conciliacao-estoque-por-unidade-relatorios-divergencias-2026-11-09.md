@@ -1,7 +1,7 @@
 # 157 — Gate documental: conciliação analítica de estoque por unidade na aba Relatórios e divergências
 
 **Data:** 2026-11-09  
-**Processo:** PROC-0072 — Fechamento Mensal da Controladoria  
+**Processo:** Fechamento Mensal da Controladoria  
 **Tipo:** PO-approved UX/behavior design; **DOCUMENTATION_ONLY**. Sem runtime, migration, rotas, deploy, alteração de V2 ou alteração na CLARA por este documento.  
 **HEAD de baseline consultado:** `3a2da6021bd6e71d84c3e61954209882b396579c` em `main`. `git status` de checkout local não disponível neste canal — validar no Cursor.  
 **Autoridade:** instruções oficiais GPT Arquiteto + .cursor aplicáveis + docs 118, 113, 15.1, 84, 119/152, 156 e testes/código no HEAD.  

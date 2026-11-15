@@ -10,7 +10,7 @@ Estado operacional: `IMPLEMENTED` (`billing-mod-breakdown`); paridade oficial DL
   acabado faturado em mão de obra direta por estrutura).
 - Finalidade: relacionar o faturamento de PA à MOD consumida
   (roteiro/estrutura) — apoio a custos e margem.
-- Processo: PROC-0072 — `PROVEN` no catálogo (doc 118 §6).
+- Processo: `PROVEN` no catálogo (doc 118 §6).
 - Owner funcional: Custos/Controladoria.
 - Owner técnico: **api-delpi** (contexto financeiro) — produtor
   `billing-mod-breakdown`.

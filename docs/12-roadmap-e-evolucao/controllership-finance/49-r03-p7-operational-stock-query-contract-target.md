@@ -4,7 +4,7 @@
 
 ## 1. Objetivo e autoridade
 
-PROC-0072, R03 — Registro de Inventário Modelo P7 (MATR460). TÉO é authority AS-IS; PDF/prints originais comprovam seus próprios valores e parâmetros; DAVI comprova somente campos/linhas consultados no Protheus; GitHub HEAD é authority TARGET. Ver docs 03, 46 §§10–22 e 48 (padrão R01/R02).
+Fechamento mensal da Controladoria, R03 — Registro de Inventário Modelo P7 (MATR460). TÉO é authority AS-IS; PDF/prints originais comprovam seus próprios valores e parâmetros; DAVI comprova somente campos/linhas consultados no Protheus; GitHub HEAD é authority TARGET. Ver docs 03, 46 §§10–22 e 48 (padrão R01/R02).
 
 **Entregar agora, após gate:** leitura histórica por competência, filial, produto, tipo, grupo e armazém, com totais **rotulados como históricos exploratórios, nunca total oficial P7**. O usuário pode alternar o recorte abrangente e MP/PI/PA. **Fora da v1**: emitir PDF idêntico ao P7, tratar Bloco H como exportação fiscal oficial, reconstruir WIP/SC2 por suposição, executar Acompanha Custos ou alterar Protheus, homologar reconciliação Entradas/Saídas − P7 − H02.
 

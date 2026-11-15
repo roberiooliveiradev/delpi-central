@@ -1,6 +1,6 @@
 # 63 - Ciclo 1 | Registro de Inventario: resumo de estoque e em processo
 
-Data de analise: 2026-10-22. Processo: PROC-0072. Fonte: PDF privado "Estoque" recebido do PO. **Nao versionar PDF original, identificadores fiscais/empresariais, valores, exemplos de movimentos ou imagem.**
+Data de analise: 2026-10-22. Processo: Fechamento mensal da Controladoria. Fonte: PDF privado "Estoque" recebido do PO. **Nao versionar PDF original, identificadores fiscais/empresariais, valores, exemplos de movimentos ou imagem.**
 
 ## 1. Evidencia do documento
 

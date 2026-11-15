@@ -1,6 +1,6 @@
 # 64 - Ciclo 1 | Material em processo, saldo analitico
 
-**Data:** 22/10/2026. **PROC-0072.** Fonte: planilha binaria privada de material em processo enviada pelo PO. **Somente metadados conceituais:** nao versionar linhas de materiais/OP, valores, identificadores, planilha ou imagens.
+**Data:** 22/10/2026. **Fechamento mensal da Controladoria.** Fonte: planilha binaria privada de material em processo enviada pelo PO. **Somente metadados conceituais:** nao versionar linhas de materiais/OP, valores, identificadores, planilha ou imagens.
 
 ## Identidade e estrutura
 

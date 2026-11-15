@@ -1,6 +1,6 @@
 # 68 - Ciclo 1 | Registro de Inventario: variante reduzida e divergencia de abrangencia
 
-**Data:** 22/10/2026. **Processo:** PROC-0072. Fonte: PDF privado de uma pagina, comparado com outro Registro de Inventario de uma pagina recebido anteriormente e inventariado no doc 63. Apenas conceitos/regras/gaps; os PDFs originais, nomes/identificadores fiscais, valores monetarios e screenshots **nao** sao versionados.
+**Data:** 22/10/2026. **Processo:** Fechamento mensal da Controladoria. Fonte: PDF privado de uma pagina, comparado com outro Registro de Inventario de uma pagina recebido anteriormente e inventariado no doc 63. Apenas conceitos/regras/gaps; os PDFs originais, nomes/identificadores fiscais, valores monetarios e screenshots **nao** sao versionados.
 
 ## Estrutura observada
 

@@ -1,6 +1,6 @@
 # 150 — Plano único de auditoria e correção integral do Portal Controladoria & Finanças
 
-**Data-base:** 2026-11-02 · **Processo:** PROC-0072 · **Estado:** BACKLOG DE EVIDÊNCIAS + PLANO DE EXECUÇÃO · **Autoridade:** instruções oficiais > .cursor > ADR/contratos > HEAD > testes > docs.
+**Data-base:** 2026-11-02 · **Processo:** **Estado:** BACKLOG DE EVIDÊNCIAS + PLANO DE EXECUÇÃO · **Autoridade:** instruções oficiais > .cursor > ADR/contratos > HEAD > testes > docs.
 **Objetivo:** inventariar, reproduzir, corrigir e verificar **todas as páginas e estados** do Portal numa execução coordenada, sem redesign de arquitetura nem duplicação de produtores. Este documento é o **registro central** de achados e verificações; não substitui os contratos nem a matriz canônica R01–R15.
 
 ## 0. Fontes e critérios de honestidade
@@ -814,7 +814,7 @@ Implementação, deploy, publicação/inativação/exclusão reais, alteração 
 |---|---|---|
 | UX / produto | PO Controladoria & Finanças | Já registrada: fluxo final no ChatGPT (padrão TÉO) |
 | Segurança / Plataforma (R-CLARA-01) | Guardião Segurança & Governança da plataforma Minha DELPI (SSO/RBAC/MCP) | Aceitar ou rejeitar nível de garantia TÉO (`confirmation=true` + proposta selada) vs V014; ou exigir HOST_ATTESTED / 2FA |
-| Risco operacional | Controladoria (owner PROC-0072) | Aceitar risco residual de impersonação de consentimento pelo modelo / prompt injection |
+| Risco operacional | Controladoria (owner Fechamento mensal da Controladoria) | Aceitar risco residual de impersonação de consentimento pelo modelo / prompt injection |
 
 **Diferença de garantia (obrigatória no aceite):**
 

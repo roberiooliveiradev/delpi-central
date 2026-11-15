@@ -10,7 +10,7 @@ Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
 - Finalidade: documento fiscal/estoque oficial do fechamento —
   sustenta o valor de estoque reportado à contabilidade e o bloco
   "EM PROCESSO" conciliado com o R08.
-- Processo: PROC-0072, P3 (estoque/cutoff) — `PROVEN` (doc 118 §6).
+- Processo: Fechamento mensal da Controladoria, P3 (estoque/cutoff) — `PROVEN` (doc 118 §6).
 - Owner funcional: Controladoria interna; consumidor documental:
   Contabilidade externa (doc 156). Natureza fiscal do P7 **não**
   implica `recipient_area=FISCAL`.

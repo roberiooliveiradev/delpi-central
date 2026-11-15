@@ -1,6 +1,6 @@
 # 74 - Ciclo 1: recebimentos por data
 
-Revisao documental de 23/10/2026. PROC-0072. Fonte PDF privado, nao versionado.
+Revisao documental de 23/10/2026. Fechamento mensal da Controladoria. Fonte PDF privado, nao versionado.
 
 Relatorio `DLP06R01`, 36 paginas, com eventos de recebimento agrupados por data de baixa, subtotais diarios e total geral. Referencia setembro/2026. Campos funcionais: titulo/parcela, contraparte, natureza, vencimento, baixa, digitacao, valor original, componentes de juros e descontos, total liquidado, banco, motivo, origem e historico.
 

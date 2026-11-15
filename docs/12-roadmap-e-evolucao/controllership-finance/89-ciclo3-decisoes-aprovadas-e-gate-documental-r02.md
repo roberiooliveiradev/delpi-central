@@ -2,7 +2,7 @@
 
 **Data:** 2026-10-24  
 **Origem:** decisão expressa do PO após inventário C3-R01 (doc 88).  
-**Produto:** Portal Controladoria & Finanças / Central de Fechamento / PROC-0072.  
+**Produto:** Portal Controladoria & Finanças / Central de Fechamento / Fechamento mensal da Controladoria.  
 **Estado:** `PRODUCT_SCOPE_DECIDED / DESIGN_AUTHORIZED_ONLY` (marcador documental, não gate de runtime).  
 **Implementação:** `IMPLEMENTATION_AUTHORIZED=NO`.
 
@@ -71,9 +71,9 @@ A redação de estados deverá ser testável, PT-BR, sem reduzir todo o fluxo à
 **Próximo resultado esperado:** `GPT REVIEW → decisão sobre gate de design/contratos → eventual autorização de implementação específica`, nunca execução automática.
 
 
-## 6. Esclarecimento de alcance — crosswalk PROC-0072 E2E (2026-10-24)
+## 6. Esclarecimento de alcance — crosswalk Fechamento mensal da Controladoria E2E (2026-10-24)
 
-Após consulta direta ao TÉO/Transformômetro PROC-0072 (docs 31, 31.1–31.19 e 33), confrontada com o ledger [23](./23-ledger-rq-ac-testes.md) e o contrato P5 [37](./37-p5-submissao-e-revisao-no-portal.md), registra-se o alcance **sem alterar as seis decisões C3-D01..D06**:
+Após consulta direta ao TÉO/Transformômetro Fechamento mensal da Controladoria (docs 31, 31.1–31.19 e 33), confrontada com o ledger [23](./23-ledger-rq-ac-testes.md) e o contrato P5 [37](./37-p5-submissao-e-revisao-no-portal.md), registra-se o alcance **sem alterar as seis decisões C3-D01..D06**:
 
 - A escolha C3-D01=A e as demais opções delimitam **apenas a primeira fatia read-only de design**; não reduzem a funcionalidade inteira à consulta de SB9/SE5.
 - O **TARGET funcional da Central de Fechamento permanece P1–P6**: cockpit, checklist/evidências e aceites de PDFs, cutoff/conciliação, classificações/pendências, versão/submissão/review humano dos pacotes, administração/notificações.

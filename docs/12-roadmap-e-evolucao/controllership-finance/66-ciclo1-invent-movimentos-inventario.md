@@ -1,6 +1,6 @@
 # 66 - Ciclo 1 | Invent: movimentos de ajuste de inventario
 
-**Data de analise:** 22/10/2026. **Processo:** PROC-0072. **Fonte privada:** arquivo XLSB de inventario do PO. Documento de GitHub armazena apenas conceitos; sem datas pontuais de transacao, quantidades, valores, codigos de produtos, documentos particulares, fornecedores ou planilha.
+**Data de analise:** 22/10/2026. **Processo:** Fechamento mensal da Controladoria. **Fonte privada:** arquivo XLSB de inventario do PO. Documento de GitHub armazena apenas conceitos; sem datas pontuais de transacao, quantidades, valores, codigos de produtos, documentos particulares, fornecedores ou planilha.
 
 ## Estrutura e achados documentais
 

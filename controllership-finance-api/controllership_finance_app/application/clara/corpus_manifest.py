@@ -1,4 +1,4 @@
-"""Manifest de fontes autorizadas do corpus CLARA (PROC-0072).
+"""Manifest de fontes autorizadas do corpus CLARA.
 
 Cada entrada foi declarada explicitamente — o pipeline nunca varre o
 repositório. A classificação de evidência reflete a proveniência real:
@@ -52,7 +52,7 @@ def _s(
 AUTHORIZED_SOURCES: list[SourceSpec] = [
     # -- Processo AS-IS e evidências do vídeo --------------------------
     _s("doc-02", "02-proc-0072-as-is-e-baseline.md", "DOCUMENT",
-       "PROC-0072 AS-IS e baseline", "OWNER_REPORTED_VIA_PO",
+       "AS-IS e baseline do Fechamento mensal da Controladoria", "OWNER_REPORTED_VIA_PO",
        "processo-as-is"),
     _s("doc-54", "54-video-19-33-cross-report-business-rules.md",
        "VIDEO_OBSERVATION", "Regras de negócio cruzadas do vídeo",
@@ -165,7 +165,7 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
        "APPROVED_RULE", "aceites-decisoes", report_ids=("R02",)),
     _s("doc-90",
        "90-ciclo3-crosswalk-end-to-end-proc0072-teo-rq-ac-portal.md",
-       "MATRIX", "Crosswalk E2E PROC-0072 ↔ TÉO ↔ RQ/AC",
+       "MATRIX", "Crosswalk E2E Fechamento mensal da Controladoria ↔ TÉO ↔ RQ/AC",
        "OWNER_REPORTED_VIA_PO", "rastreabilidade-processo"),
     # -- Regras, decisões e arquitetura (TARGET / aprovadas) -----------
     _s("doc-04", "04-regras-de-negocio-consolidadas.md", "DOCUMENT",
@@ -258,7 +258,7 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
        "TO_INVENTORY", "processo-as-is"),
     _s("doc-118",
        "118-base-canonica-processo-fechamento-mensal-proc0072.md",
-       "DOCUMENT", "Base canônica do processo PROC-0072",
+       "DOCUMENT", "Base canônica do Fechamento mensal da Controladoria",
        "APPROVED_RULE", "processo-fechamento"),
     _s("doc-119",
        "119-contratos-p7-implementacao-readiness.md",
@@ -302,7 +302,7 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
     _s("doc-156",
        "156-glossario-responsabilidades-destinatarios-proc0072-2026-11-09.md",
        "DOCUMENT",
-       "Glossário de responsabilidades e destinatários PROC-0072 (PO 2026-11-09)",
+       "Glossário de responsabilidades e destinatários do Fechamento mensal da Controladoria (PO 2026-11-09)",
        "APPROVED_RULE", "processo-fechamento",
        authority="PO"),
     # -- Fichas técnicas R01–R15 (stage-04, D-06 do doc 126) -----------
@@ -310,7 +310,7 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
        "MATRIX", "Fichas R01–R15 — índice e matriz de inventário",
        "APPROVED_RULE", "relatorios-r01-r15", report_ids=ALL_RIDS),
     _s("ficha-processo", "fichas/processo-fechamento-ficha.md",
-       "DOCUMENT", "PROC-0072 — ficha do processo de fechamento",
+       "DOCUMENT", "Ficha do Fechamento mensal da Controladoria",
        "APPROVED_RULE", "processo-fechamento"),
     _s("ficha-r01", "fichas/R01-ficha.md",
        "DOCUMENT", "Ficha R01 — Baixas a pagar",

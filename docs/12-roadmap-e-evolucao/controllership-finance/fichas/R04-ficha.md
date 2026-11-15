@@ -8,7 +8,7 @@ Estado operacional: `IMPLEMENTED` (visão read-only `consumption-audit`); parida
 
 - Código/nome: **R04 — Consumo por OP** (visão operacional de consumo
   de materiais por ordem de produção).
-- Processo: PROC-0072 — registro no catálogo canônico (doc 118 §6).
+- Processo: registro no catálogo canônico (doc 118 §6).
 - Owner técnico: produtor `consumption-audit` da api-delpi
   (contexto Suprimentos, GLPI #1353; reuso aprovado pela Controladoria).
 - Produtor oficial candidato: `MATR860` — equivalência **não

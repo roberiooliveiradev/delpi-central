@@ -33,7 +33,7 @@ Nenhum estado `READY_FOR_IMPLEMENTATION_*` isolado autoriza código.
 Produto:
 - Portal Controladoria & Finanças;
 - primeira funcionalidade: Central de Fechamento;
-- primeiro processo: PROC-0072 — Gestão do Fechamento Mensal da Controladoria.
+- primeiro processo: Fechamento mensal da Controladoria.
 
 Authority:
 1. instruções oficiais do arquiteto;
@@ -49,7 +49,7 @@ Divisão de authority:
 - TÉO / Transformômetro: AS-IS, proveniência e evidência de processo;
 - GitHub: TARGET, contratos, ADRs, código, testes e SHAs.
 
-AS-IS autoritativo do PROC-0072 confirma a cadeia macro:
+AS-IS autoritativo do fechamento mensal confirma a cadeia macro:
 
 ```text
 abertura da competência / checklist

@@ -6,7 +6,7 @@
 
 ## 1. Escopo aprovado
 
-- **PRIORIDADE:** fechamento mensal PROC-0072 (P1–P6, R01–R15, P3/T03/T05, evidências, pacotes/revisões), CLARA MCP com conhecimento próprio, consulta/análise e execução múltipla governada.
+- **PRIORIDADE:** fechamento mensal Fechamento mensal da Controladoria (P1–P6, R01–R15, P3/T03/T05, evidências, pacotes/revisões), CLARA MCP com conhecimento próprio, consulta/análise e execução múltipla governada.
 - **ADIADOS:** Sala de interação, expansão de Minhas tarefas e Contabilidade/DRE como página/fluxo próprio. Preservar código de Minhas tarefas sem expor na release. Não inferir que `submeter pacote para review` seja `enviar anexos para DRE/Contabilidade`: E04/T04 permaneceram NOT_REQUIRED na V1.
 - **CONTEÚDO CLARA:** corpus governado com docs e evidências originais quando acessíveis por canal autorizado; vídeo, PDFs, XLSB/XLSX não foram comprovados como ingeridos na execução anterior. Proveniência por fonte/hash/localizador/timecode e restrição de acesso; não publicar dados brutos confidenciais no GitHub.
 - **GO de trabalho:** executar correções e funcionalidades que tenham contrato/owner aprovado; interromper somente o subgrafo material dependente de `DECISION_REQUIRED`, G2 ou G3. Nenhuma autorização tácita de proprietário externo.

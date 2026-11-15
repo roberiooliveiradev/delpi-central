@@ -1,6 +1,6 @@
 # 72 - Ciclo 1 | Pagamentos por natureza
 
-Data de revisao: 2026-10-22. PROC-0072. Inventario documental conceitual de fonte privada; sem valores, titulos, terceiros, documentos fiscais ou anexos.
+Data de revisao: 2026-10-22. Fechamento mensal da Controladoria. Inventario documental conceitual de fonte privada; sem valores, titulos, terceiros, documentos fiscais ou anexos.
 
 ## Estrutura comprovada
 O layout do relatorio `SIGA/nat.prt/v.12` apresenta eventos de baixa ordenados por natureza financeira, com subtotais por codigo e descricao de natureza e fechamento geral. Referencia 30/09/2026; emissao 01/10/2026; 35 paginas. Campos funcionais: identificacao do titulo/parcela e contraparte; natureza, vencimento, historico, baixa, digitacao; valor original, acrescimos, descontos, abatimentos, impostos, total baixado; banco, motivo e origem.

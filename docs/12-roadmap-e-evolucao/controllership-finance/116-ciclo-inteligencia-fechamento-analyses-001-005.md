@@ -1,6 +1,6 @@
 # Ciclo de Inteligencia do Fechamento — ANALYSIS-001 a ANALYSIS-005
 
-**Produto:** Portal Controladoria & Financas; **processo:** PROC-0072; **data de planejamento:** 2026-10-28.
+**Produto:** Portal Controladoria & Financas; **processo:** Fechamento mensal da Controladoria; **data de planejamento:** 2026-10-28.
 **Estado:** PRODUCT_DIRECTION_APPROVED / PLANNED. **ANALYSIS-001:** autorizado como inventario documental, sem alteracao de runtime. **ANALYSIS-002 a 005:** sequencia proposta, sujeita a gates de contrato, fonte, owner e evidencia. Nenhuma formula, tolerancia ou conciliacao foi homologada por este plano.
 
 ## 1. Objetivo e principios
@@ -15,7 +15,7 @@ Invariantes: MFE so chama sua BFF; Core resolve effective permissions; `api-delp
 
 | Etapa | Escopo | Entregaveis obrigatorios | Gate de saida |
 | --- | --- | --- | --- |
-| **ANALYSIS-001 — Reconstrucao AS-IS Joyce** | Examinar reuniao, documentos/evidencias PROC-0072, arquivos operacionais e registros existentes. Reconstruir sequencia observavel: extracao, filtros, calculos, reconciliacoes, excecoes, decisao, destinatarios e aprovacao. | Matriz de operacoes e artefatos; roteiro cronologico com timestamps; catalogo de regras **com proveniencia**; mapa de duvidas com owner; relacao de relatorios usados; inventario de arquivos; glossario; matriz de lacunas. | Evidencias localizaveis, separacao PROVEN/TO_INVENTORY; pontos criticos pendentes de validacao Joyce. **Sem codigo runtime.** |
+| **ANALYSIS-001 — Reconstrucao AS-IS Joyce** | Examinar reuniao, documentos/evidencias Fechamento mensal da Controladoria, arquivos operacionais e registros existentes. Reconstruir sequencia observavel: extracao, filtros, calculos, reconciliacoes, excecoes, decisao, destinatarios e aprovacao. | Matriz de operacoes e artefatos; roteiro cronologico com timestamps; catalogo de regras **com proveniencia**; mapa de duvidas com owner; relacao de relatorios usados; inventario de arquivos; glossario; matriz de lacunas. | Evidencias localizaveis, separacao PROVEN/TO_INVENTORY; pontos criticos pendentes de validacao Joyce. **Sem codigo runtime.** |
 | **ANALYSIS-002 — Fontes e contratos** | Mapear cada relatorio do AS-IS aos produtores oficiais, filtros period-keyed, tabelas/APIs, ownership e consumers no HEAD. Investigar `ENTRADAS_SAIDAS`, P7/MATR460, H02 e demais fontes que a evidencia confirmar. | Inventario report-by-report com campos, lineage, joins, granularidade, competencia, divergencia entre fontes, readiness, RQ/AC e testes propostos. | Contratos e owners definidos; `DECISION_REQUIRED` para fonte/boundary real nao decidido. |
 | **ANALYSIS-003 — Motor de reconciliacao** | Regras deterministicas, auditaveis, versao de regra, criterio de tolerancia validado, estados de cobertura/indisponibilidade; separar calculo do texto interpretativo. | Design tecnico e contratos; testes de fixtures reais sanitizadas; resultado com fontes, parametros, competencia, timestamp e evidencias. | Gate transversal explicitamente aprovado antes de runtime; testes de regras/PG/integracao e verificacao de outcome. |
 | **ANALYSIS-004 — Relatorios e divergencias na UI** | Priorizar e conectar relatorios oficiais; navegacao por competencia; comparacoes, drill-down, divergencias e acoes sem falsos zeros. | Paginacao/filtros, estados carregando/indisponivel, tabelas e detalhes `@delpi/plugin-ui`, Ajuda, QA responsivo/teclado/claro-escuro; provas de fonte. | Implementar page-by-page; smoke autenticado e visibilidade apenas do escopo autorizado. |
@@ -27,7 +27,7 @@ Invariantes: MFE so chama sua BFF; Core resolve effective permissions; `api-delp
 
 **Escopo de leitura inicial** (verificar existencia e versoes, sem inferir conteudo): gravacao 'Acompanhamento do Processo do Fechamento Mensal de Estoques e Custos' de 2026-09-30; `Analise.xlsx`, `Arquivos de envio - contabil para fechamento mensal.xlsx`, `Contabilidade liberacoes.xlsx`, `Entradas e saidas.pdf`, `Estoque.pdf`, `Resumo Estoque.pdf`, `A pagar.xlsb`, `A Receber.xlsb`, `CC matriz.xlsb`, `cpv 09 26 matriz.xlsb`, `Fat x MOD.xlsb`, `Invent.xlsb`, `Material em processo.xlsb`, `NF a desconsiderar.xlsb`, `pagos 09 26.xlsb`, `Pagos por dt.pdf`, `Pagos por nat.pdf`, `Recebidos.pdf`, `Recebidos.xlsb`. Nomes sao pontos de partida, NAO prova de uso, significado ou calculo.
 
-Verificar no Transformometro revisoes, tarefas, evidencias, autoria, temporalidade e processo PROC-0072; verificar no GitHub doc oficial e especialmente Plano 113 §27 (fontes P3, P7, H02 pendentes), ledger 23 e contratos efetivos. Nao confundir documento de design com runtime.
+Verificar no Transformometro revisoes, tarefas, evidencias, autoria, temporalidade e macroprocesso Fechamento mensal da Controladoria; verificar no GitHub doc oficial e especialmente Plano 113 §27 (fontes P3, P7, H02 pendentes), ledger 23 e contratos efetivos. Nao confundir documento de design com runtime.
 
 ### Matriz minima — uma linha por verificacao real
 

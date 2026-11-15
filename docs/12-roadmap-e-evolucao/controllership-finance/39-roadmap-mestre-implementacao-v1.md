@@ -1,6 +1,6 @@
 # 39 — Roadmap Mestre de Implementação V1 — Portal Controladoria & Finanças
 
-> **REBASELINE 24/10/2026:** O roadmap antigo existe e suas regras/deliverables continuam referência histórica do Portal. Para **sequenciamento executivo vigente da Central de Fechamento PROC-0072, CAPABILITIES P1–P6, integração do Ciclo 1/Ciclo 2 e checkpoints verificáveis**, usar prioritariamente o [Documento 93 — Roadmap executivo E2E com checkpoints reais](./93-roadmap-executivo-central-fechamento-end-to-end-checkpoints.md). A antiga ordem rígida "páginas comuns → P1–P6" não é GO nem precedência automática diante dos contratos reais. Há código existente Home + consultas de baixas e estoque; isso não prova entrega total. A permission/página Contabilidade/DRE estão aprovadas como direção mas adiadas (doc 91). `IMPLEMENTATION_AUTHORIZED=NO` para slices novos.
+> **REBASELINE 24/10/2026:** O roadmap antigo existe e suas regras/deliverables continuam referência histórica do Portal. Para **sequenciamento executivo vigente da Central de Fechamento Fechamento mensal da Controladoria, CAPABILITIES P1–P6, integração do Ciclo 1/Ciclo 2 e checkpoints verificáveis**, usar prioritariamente o [Documento 93 — Roadmap executivo E2E com checkpoints reais](./93-roadmap-executivo-central-fechamento-end-to-end-checkpoints.md). A antiga ordem rígida "páginas comuns → P1–P6" não é GO nem precedência automática diante dos contratos reais. Há código existente Home + consultas de baixas e estoque; isso não prova entrega total. A permission/página Contabilidade/DRE estão aprovadas como direção mas adiadas (doc 91). `IMPLEMENTATION_AUTHORIZED=NO` para slices novos.
 > **Estado vigente:** [README](./README.md). Os relatórios A16 (ex.: [44](./44-a16-revalidacao-final-transversal-2026-10-16.md)) são evidências datadas. O roadmap está PLANNED; A12/A14/A15/A16 seguem INCONCLUSIVE até prova e gate explícito. Sem autorização de runtime.
 
 > **Estado:** TARGET / PLANNED / DOCUMENTATION_ONLY — 16/10/2026. Plano executivo para futura execução incremental, não é ordem para desenvolver nem prova de runtime.
@@ -9,7 +9,7 @@
 
 ## 1. Objetivo e fontes de verdade
 
-Converter a especificação da primeira funcionalidade, **Central de Fechamento**, do processo **PROC-0072 — Gestão do Fechamento Mensal da Controladoria**, em sequência de entregas pequenas, verificáveis, com owners, dependências, contratos, aceites e evidência por slice. Não transformar PLANNED em PROVEN.
+Converter a especificação da primeira funcionalidade, **Central de Fechamento**, do processo **Fechamento mensal da Controladoria**, em sequência de entregas pequenas, verificáveis, com owners, dependências, contratos, aceites e evidência por slice. Não transformar PLANNED em PROVEN.
 
 A ordem de authority segue: [instruções oficiais do GPT Arquiteto](../../11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md) → regras .cursor aplicáveis → ADRs/contratos canônicos → HEAD (schemas/manifests/migrations/código) → testes → docs técnicas vigentes → este roadmap → histórico. O TÉO/Transformômetro é authority de AS-IS e proveniência; GitHub é authority do TARGET, contratos, testes e SHA. Na divergência, **não criar uma terceira regra neste plano**: retornar à authority superior e classificar `EXECUTION_DRIFT` quando a premissa necessária cair.
 
@@ -33,7 +33,7 @@ Documentos operacionais associados: [40 — slices/dependências](./40-matriz-de
 | Rota base da BFF | `/apps/controllership-finance-api` |
 | CSS root | `.portal-controllership-finance` |
 | Permission codes, e somente estes | `controllership-finance.access` e `controllership-finance.manage` |
-| Primeira capability | Central de Fechamento / PROC-0072 |
+| Primeira capability | Central de Fechamento / Fechamento mensal da Controladoria |
 
 **Fronteira:** MFE → BFF do Portal → adapters/contratos dos owners, nunca browser → `api-delpi` diretamente. Core é owner de identidade, effective permissions, usuários e notificações; `api-delpi` de regras SQL/TOTVS/Protheus canônicas; `strategic-indicators-api` de metas/indicadores; BFF de estado operacional P5 e regras que pertencem a este produto. Sem import de domain/application vizinho nem usar banco do vizinho como API. Seguir Clean Architecture com domain isolado de HTTP, DB, framework e SDK.
 

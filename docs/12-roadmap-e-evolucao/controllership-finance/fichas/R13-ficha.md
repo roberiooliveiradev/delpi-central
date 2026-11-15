@@ -10,7 +10,7 @@ Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
 - Finalidade: compor o pacote documental enviado à Contabilidade
   externa (público operacionalmente chamado “DRE”) — extratos,
   aplicações (XP, BB) e comprovantes.
-- Processo: PROC-0072 — `PROVEN` no checklist de entregáveis
+- Processo: `PROVEN` no checklist de entregáveis
   (doc 85 §12; doc 118 §6; doc 156).
 - Owner funcional: Controladoria interna (coleta); Contabilidade
   externa (consumo documental — doc 156).

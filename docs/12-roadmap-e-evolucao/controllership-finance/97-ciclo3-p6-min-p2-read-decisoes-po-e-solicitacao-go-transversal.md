@@ -1,7 +1,7 @@
 # Documento 97 — Decisões do PO e solicitação de GO transversal — P6-MIN + P2-READ
 
 **Data:** 2026-10-24. **Referência de base GitHub:** `3039f729c89d8111ea4a8b120e34b529c5d75020` (HEAD antes da publicação; revalidar HEAD e worktree no executor).  
-**Produto:** Portal Controladoria & Finanças · Central de Fechamento · PROC-0072.  
+**Produto:** Portal Controladoria & Finanças · Central de Fechamento · Fechamento mensal da Controladoria.  
 **Estado:** **PO_DECISIONS_APPROVED / TRANSVERSAL_GO_REQUEST_PREPARED / IMPLEMENTATION_AUTHORIZED=NO**.  
 **Escopo da aprovação:** somente decisões de **produto, arquitetura e desenho contratual** abaixo. **Nenhum GO para código, migration, manifesto, banco, API ou UI.**
 

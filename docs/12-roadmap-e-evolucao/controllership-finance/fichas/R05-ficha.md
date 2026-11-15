@@ -9,7 +9,7 @@ Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
 - Finalidade: fluxo monetário do estoque na competência por produto —
   entradas, saídas, saldo inicial/final; peça da conciliação tripla
   (com R03 e R08).
-- Processo: PROC-0072, P3 — `PROVEN` (doc 118 §6).
+- Processo: Fechamento mensal da Controladoria, P3 — `PROVEN` (doc 118 §6).
 - Owner funcional: Controladoria (conciliação).
 - Owner técnico: `api-delpi` + `controllership-finance-api`.
 - Produtor oficial: `MATR320.prt` padrão via SP `MAT056` —

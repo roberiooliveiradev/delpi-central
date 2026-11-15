@@ -1,6 +1,6 @@
 # 70 - Ciclo 1 | Contas a receber - posicao de titulos
 
-Data: 2026-10-22. Processo PROC-0072. Fonte privada: A Receber.xlsb. Somente metadados estruturais e conceitos; **nao publicar clientes, lojas, titulos, valores, codigos bancarios, dados fiscais ou arquivo original**.
+Data: 2026-10-22. Processo Fechamento mensal da Controladoria. Fonte privada: A Receber.xlsb. Somente metadados estruturais e conceitos; **nao publicar clientes, lojas, titulos, valores, codigos bancarios, dados fiscais ou arquivo original**.
 
 ## Evidencia documental
 

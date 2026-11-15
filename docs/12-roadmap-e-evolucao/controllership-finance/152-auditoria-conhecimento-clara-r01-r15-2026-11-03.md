@@ -5,7 +5,7 @@
 
 ## Perguntas padronizadas da auditoria
 
-Para cada relatório: (1) que problema resolve, momento do PROC-0072 e classificação REPORT/ERP_ROUTINE/DOCUMENT; (2) produtor oficial e origem canônica; (3) tabelas/joins/campos e grão; (4) filtros, datas, exclusões e parâmetros; (5) fórmulas, agregações e custo histórico; (6) exemplos reais, reconciliabilidade e divergências; (7) limitações/paridade/status; (8) citações verificáveis e versão da ficha comparada ao HEAD e contratos; (9) decisões/owners pendentes.
+Para cada relatório: (1) que problema resolve, momento do fechamento mensal e classificação REPORT/ERP_ROUTINE/DOCUMENT; (2) produtor oficial e origem canônica; (3) tabelas/joins/campos e grão; (4) filtros, datas, exclusões e parâmetros; (5) fórmulas, agregações e custo histórico; (6) exemplos reais, reconciliabilidade e divergências; (7) limitações/paridade/status; (8) citações verificáveis e versão da ficha comparada ao HEAD e contratos; (9) decisões/owners pendentes.
 
 ## Matriz por relatório: o que a CLARA efetivamente recuperou e o que melhorar
 

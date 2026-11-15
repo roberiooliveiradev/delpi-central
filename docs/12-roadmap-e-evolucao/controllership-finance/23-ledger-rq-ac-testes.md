@@ -1056,7 +1056,7 @@ Execução `CF-PROC0072-R10-R11-DECISION-EVIDENCE-GATE-020` — gate documental 
 | RQ-CTR-02 | Contrato R11 revisado com `affectedCalculation` honesto | doc 126 §17 — `TO_INVENTORY` até owner | TARGET |
 | RQ-CTR-03 | Comparação owner=`controllership-finance-api`, `analyze(report_comparison)` | D-03/D-04 `APPROVED` | TARGET |
 | RQ-FIC-01 | Esquema de ficha R01–R15 definido | doc 126 §18 yaml-schema + plano de ingestão | TARGET |
-| RQ-TÉO | AS-IS no TÉO/Transformômetro | sem dados PROC-0072 no repo; docs absorvem o conhecimento | TO_INVENTORY |
+| RQ-TÉO | AS-IS no TÉO/Transformômetro | sem dados Fechamento mensal da Controladoria no repo; docs absorvem o conhecimento | TO_INVENTORY |
 | RQ-TEST-02 | Testes R10-01/02, R11-01/02, CLARA-01..03 | especificados; nenhum executado | TEST_NOT_RUN |
 
 ### IMPLEMENTATION-STAGE-01 — R10 despesas por centro de custo (2026-10-31)
@@ -1168,7 +1168,7 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | G021-C | tools MCP via transporte | read/analyze/knowledge | sem sessão conectora ChatGPT autorizada; 401 fail-closed correto | TEST_NOT_RUN |
 | G021-D | Playwright prod autenticado | R10/R11 navegáveis | 15/17 checks PASS; 2 flags = falsos positivos de regex sobre negações legais; mobile ok | PASS |
 | G021-E | negativos de autorização | 401/403 sem vazamento | 401 anônimo/inválido/S2S; persona negativa R10/R11 inexistente | PASS parcial — 403 específico INCONCLUSIVE |
-| G021-F/G | retrieval R01–R15/PROC-0072/temas | citações válidas | 15 fichas + ficha-processo com `citation_locator`; TARGET/TO_INVENTORY classificados | PASS |
+| G021-F/G | retrieval R01–R15/Fechamento mensal da Controladoria/temas | citações válidas | 15 fichas + ficha-processo com `citation_locator`; TARGET/TO_INVENTORY classificados | PASS |
 | G021-H | regressão relatórios | fluxos preservados | todos 200; 1×503 timeout frio R10 (recupera; reliability) | PASS c/ observação |
 
 ## Gate 022 — padronização de loading UX (CF-PROC0072-UX-LOADING-PROGRESS-STANDARDIZATION-022, 30/10/2026)
@@ -1499,7 +1499,7 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 
 ---
 
-## PROC-0072 / Documento 157 — Conciliação analítica por unidade (2026-11-09)
+## Documento 157 — Conciliação analítica por unidade (2026-11-09)
 
 | Req / AC | Estado | Evidência |
 |---|---|---|
@@ -1514,7 +1514,7 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 
 ---
 
-## PROC-0072 / Documento 157 — REWORK Filial 01 SOURCE_MISSING 2026-10 (2026-11-09)
+## Documento 157 — REWORK Filial 01 SOURCE_MISSING 2026-10 (2026-11-09)
 
 | Item | Estado | Evidência |
 |---|---|---|

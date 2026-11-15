@@ -1,4 +1,4 @@
-# 56 - PROC-0072 | Observacoes guiadas pelo PO: fechamento de custos
+# 56 - Observacoes guiadas pelo PO: fechamento de custos
 
 Data de registro: 2026-10-21. Fonte: relato direto do PO enquanto acompanha a gravacao, associado ao screenshot TOTVS `Acompanha Custo > Novo fechamento de custo`. Registro incremental: acrescentar proximos trechos em ordem sem recontar o audiovisual por inferencia.
 

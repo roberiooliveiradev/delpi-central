@@ -1,6 +1,6 @@
 # Doc 161 — CF-UX-053: decisão PO sobre fronteira Core/CLARA e execução conversacional
 
-**Data:** 09/11/2026 · **Processo:** PROC-0072 · **Tipo:** decisão PO de produto/arquitetura alvo + handoff executável · **Estado:** `PO_DECISION_PROVEN / TARGET / SECURITY_POLICY_PENDING / NO_RUNTIME`.
+**Data:** 09/11/2026 · **Processo:** **Tipo:** decisão PO de produto/arquitetura alvo + handoff executável · **Estado:** `PO_DECISION_PROVEN / TARGET / SECURITY_POLICY_PENDING / NO_RUNTIME`.
 
 ## 1. Declaração do PO (autoridade de produto)
 

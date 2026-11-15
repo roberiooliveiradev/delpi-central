@@ -1,14 +1,14 @@
-# Documento 90 — Crosswalk E2E PROC-0072 · TÉO → RQ/AC → capacidades → páginas Portal
+# Documento 90 — Crosswalk E2E TÉO → RQ/AC → capacidades → páginas Portal
 
 **Data:** 2026-10-24. **Rodada:** CF-C3-PROC0072-ENDTOEND-CROSSWALK-001.  
-**Produto:** Portal Controladoria & Finanças. **Primeira funcionalidade:** Central de Fechamento. **Processo:** PROC-0072.  
+**Produto:** Portal Controladoria & Finanças. **Primeira funcionalidade:** Central de Fechamento. **Processo:** Fechamento mensal da Controladoria.  
 **Base GitHub inspecionada:** main 7237b92a5d5a00f473672b7f03a6b4bcf85386b0 (revalidar HEAD para novos gates).  
 **TÉO:** consulta READ ao processo, contexto/decomposição, 43 documentos catalogados e excerpts disponibilizados de 05/06.1/06.2/07/30/31/31.1–31.19/33/34. O TÉO retorna textos truncados nos documentos longos; este crosswalk indica esse limite e usa [doc 19](./19-rastreabilidade-teo.md) para IDs e proveniência.  
 **Natureza:** DOCUMENTATION_ONLY. Não houve leitura/escrita operacional Protheus, execução de testes ou alteração de runtime. **IMPLEMENTATION_AUTHORIZED=NO nesta rodada.**
 
 ## 0. Resultado e interpretação correta de escopo
 
-O PROC-0072 não é somente consulta de SB9/SE5. Seu AS-IS é **abertura da competência e checklist → produção/coleta dos entregáveis → conferência/conciliação e tratamento de divergências → cutoff/sacramentação Protheus → consolidação e encaminhamento → esclarecimentos e conclusão mensal**. O TO-BE aprovado é um **workflow completo** com automações progressivas, documentos externos e PDFs, validação humana, versionamento, pendências, pacotes/revisão humana, auditoria, administração e integração com a Minha DELPI.
+o fechamento mensal não é somente consulta de SB9/SE5. Seu AS-IS é **abertura da competência e checklist → produção/coleta dos entregáveis → conferência/conciliação e tratamento de divergências → cutoff/sacramentação Protheus → consolidação e encaminhamento → esclarecimentos e conclusão mensal**. O TO-BE aprovado é um **workflow completo** com automações progressivas, documentos externos e PDFs, validação humana, versionamento, pendências, pacotes/revisão humana, auditoria, administração e integração com a Minha DELPI.
 
 **P1–P6 são a funcionalidade completa, não apenas telas opcionais.** As decisões C3-D01=A, D02=A, D03=B, D04=B, D05=A, D06=A ([88](./88-ciclo3-r01-inventario-contratos-e-pacote-decisoes.md), [89](./89-ciclo3-decisoes-aprovadas-e-gate-documental-r02.md)) delimitam **somente a primeira fatia read-only de escopo/design**, e não revogam as decisões anteriores do TÉO 31/33 ou do [contrato canônico P5, doc 37](./37-p5-submissao-e-revisao-no-portal.md). Diferenciar “V1 funcional P1–P6” de “primeira fatia C3 read-only”; interpretar um como substituto do outro configura EXECUTION_DRIFT documental.
 
@@ -18,7 +18,7 @@ O PROC-0072 não é somente consulta de SB9/SE5. Seu AS-IS é **abertura da comp
 
 | Tema | Fonte verificável | Uso correto |
 |---|---|---|
-| Processo, evidências e handoffs | TÉO PROC-0072: docs 04/05/06/06.1/06.2/07/30 + contexto do processo; [GitHub 02](./02-proc-0072-as-is-e-baseline.md) | Authority de AS-IS, proveniência e objetivo da melhoria |
+| Processo, evidências e handoffs | TÉO Fechamento mensal da Controladoria: docs 04/05/06/06.1/06.2/07/30 + contexto do processo; [GitHub 02](./02-proc-0072-as-is-e-baseline.md) | Authority de AS-IS, proveniência e objetivo da melhoria |
 | TO-BE, decisões e readiness | TÉO docs 31, 31.1–31.19, 33 e 34 (identificadores em [doc 19](./19-rastreabilidade-teo.md)) | TO-BE funcional aprovado; pendências de binding técnico não reabrem decisão por preferência |
 | P1–P6 e RQ/AC | [GitHub 08](./08-p1-cockpit-da-competencia.md), [09](./09-p2-checklist-e-documentos.md), [10](./10-p3-estoque-cutoff-e-conciliacao.md), [11](./11-p4-classificacoes-e-pendencias.md), [12](./12-p5-pacote-finalizacao-e-envio.md), [13](./13-p6-administracao-e-configuracao.md), [23](./23-ledger-rq-ac-testes.md), [37](./37-p5-submissao-e-revisao-no-portal.md) | Contratos funcionais TARGET; RQ/AC detalhados no ledger; documentado não é implementado |
 | Relatórios e produtores | [47](./47-t01-report-column-audit-tracker-v1.md), [80](./80-ciclo2-registro-vivo-investigacao-devin.md), [82](./82-ciclo2-handoff-pacote-evidencias-owners.md), [85](./85-ciclo2-catalogo-regras-negocio-r01-r15.md), [86](./86-ciclo2-relatorio-final-consolidado-e-handoff.md) | Paridade e residual C2, não aceites P2/P5 |
@@ -27,7 +27,7 @@ O PROC-0072 não é somente consulta de SB9/SE5. Seu AS-IS é **abertura da comp
 
 ## 2. Crosswalk AS-IS → capacidades TO-BE → outcome
 
-| Etapa do PROC-0072 | Capacidade do Portal | Authority | Aceite/outcome esperado |
+| Etapa do fechamento mensal | Capacidade do Portal | Authority | Aceite/outcome esperado |
 |---|---|---|---|
 | Abertura e checklist | P1 contexto e três eixos; P2 checklist por competência, originado da versão publicada por P6 | TÉO 31/31.1/31.17; GitHub 08/09/13/23 | Snapshot da versão vigente, itens aplicáveis, responsáveis, sem alterar competência aberta ao publicar template novo |
 | Geração, coleta e automação | P2 itens, resultados de APIs autorizadas e documentos externos; P4 exceções | TÉO 05/07/30/31.1–31.13; GitHub 09/11/47/85 | Dados estruturados com proveniência; PDF/anexo ATTACHED != ACCEPTED quando exige validação |
@@ -157,7 +157,7 @@ Topbar canônica [24](./24-inicio-e-navegacao-principal.md): Início, Visão ger
 
 Este crosswalk cobre **produto completo, P1–P6, páginas comuns, R01–R15, principais RQ/AC e cadeia AS-IS→TO-BE→implementação**; não recria todos os 100 BRs/75 testes: estes permanecem vinculados pelos docs 85/23. Resíduos de RQ detalhado TÉO e contratos físicos estão identificados com owner.
 
-Para briefs futuros, exigir matriz por página: **etapa PROC-0072 → autoridade TÉO → RQ/AC GitHub → fonte/produtor e contexto owner → contrato real ou TARGET → AuthZ → teste/erro → Help → gate**.
+Para briefs futuros, exigir matriz por página: **etapa Fechamento mensal da Controladoria → autoridade TÉO → RQ/AC GitHub → fonte/produtor e contexto owner → contrato real ou TARGET → AuthZ → teste/erro → Help → gate**.
 
 **Recomendação de encaminhamento:** manter a fatia read-only C3-D01..D06 como incremento inicial já aprovado para design; recolocar P2 (documentos e aceites) e P5 (pacote/submissão/review) como capacidades essenciais do backlog da Central de Fechamento, não como backlog de produto futuro indeterminado. Definir ordenação e autorização de runtime dos slices por decisão/gate explícitos. Nenhuma mudança de escopo original ou decisão de framework/persistência/endpoints foi feita aqui.
 

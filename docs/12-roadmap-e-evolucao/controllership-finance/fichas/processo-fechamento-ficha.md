@@ -1,4 +1,4 @@
-# PROC-0072 — Ficha do processo de fechamento mensal
+# Ficha do Fechamento mensal da Controladoria
 
 Versão da ficha: 1.1 · 09/11/2026 · doc 127 Etapa 4 (GATE E) +
 glossário de destinatários aprovado pelo PO (doc 156).
@@ -9,8 +9,9 @@ commit `be75e5048cbaf600bfc131424d7aa0f965767565`).
 
 ## Identificação
 
-- Processo: **PROC-0072 — Gestão do Fechamento Mensal da
-  Controladoria** — `APPROVED_RULE` (doc 118 base canônica).
+- Código no Transformômetro (TÉO): PROC-0072
+- Processo: **Fechamento mensal da Controladoria** — `APPROVED_RULE`
+  (doc 118 base canônica).
 - Responsável pelo fechamento mensal da DELPI: **Controladoria
   interna** — prepara, analisa, confere e encaminha as evidências.
 - Produto: Central de Fechamento — Portal Controladoria & Finanças.

@@ -1,6 +1,6 @@
 # 73 — Ciclo 1: relação tabular de baixas (setembro/2026)
 
-**Processo:** PROC-0072. **Data de análise:** 23/10/2026. **Proveniência:** arquivo XLSB privado fornecido pelo PO. Este registro contém somente estrutura, conceitos e estatísticas não monetárias. Não inclui títulos, contrapartes, valores, identificadores bancários ou arquivo original.
+**Processo:** Fechamento mensal da Controladoria. **Data de análise:** 23/10/2026. **Proveniência:** arquivo XLSB privado fornecido pelo PO. Este registro contém somente estrutura, conceitos e estatísticas não monetárias. Não inclui títulos, contrapartes, valores, identificadores bancários ou arquivo original.
 
 ## Evidência observada
 Uma aba denominada `01-01 - Relacao de Baixas`, com 22 colunas, 948 registros de baixa, 18 cabeçalhos repetidos e 60 naturezas distintas na amostra. Campos funcionais: identificação e parcela do título, tipo, contraparte, natureza, vencimento, histórico, data da baixa, data da digitação, valor original, encargos, descontos, abatimentos, impostos, total baixado, banco, motivo e origem.

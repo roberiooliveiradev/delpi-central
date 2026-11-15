@@ -1,4 +1,4 @@
-"""CLARA — pipeline governado de ingestão do corpus PROC-0072.
+"""CLARA — pipeline governado de ingestão do corpus do Fechamento mensal da Controladoria.
 
 Somente fontes explicitamente autorizadas no manifest são ingeridas —
 nunca varredura indiscriminada do repositório. Cada item carrega
@@ -308,7 +308,7 @@ def main() -> None:
         "--manifest",
         choices=("controllership", "lnf", "all"),
         default="controllership",
-        help="Fontes: controllership (PROC-0072), lnf, ou ambos.",
+        help="Fontes: controllership, lnf, ou ambos.",
     )
     args = parser.parse_args()
     from controllership_finance_app.application.clara.corpus_manifest import (  # noqa: E501

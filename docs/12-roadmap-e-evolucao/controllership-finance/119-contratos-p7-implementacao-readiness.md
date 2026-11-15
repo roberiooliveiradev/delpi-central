@@ -1,4 +1,4 @@
-# 119 — Contratos definitivos P7 e readiness de implementação (PROC-0072)
+# 119 — Contratos definitivos P7 e readiness de implementação
 
 **EXECUTION_ID:** `CF-PROC0072-P7-IMPLEMENTATION-READINESS-005`
 **Natureza:** `DOCUMENTATION_ONLY + DEFINITIVE_TECHNICAL_DISCOVERY + CONTRACT_CLOSURE`
