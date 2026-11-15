@@ -174,7 +174,7 @@ class VerifyTests(unittest.TestCase):
         reports = list((self.repo / ".git" / "delpi-verifier" / "reports").glob("*.md"))
         self.assertTrue(any("relatório fora do formato" in r.read_text(encoding="utf-8") for r in reports))
 
-    def test_marker_active_during_run_and_cleared(self):
+    def test_env_active_during_run_without_global_marker(self):
         """AK-3: marker with PIDs + DELPI_VERIFIER_ACTIVE during run; cleared in finally."""
         self.write_install()
         marker_log = self.root / "marker-log.txt"
@@ -206,10 +206,8 @@ PY
         )
         self.assertEqual(code, 0)
         data = json.loads(marker_log.read_text(encoding="utf-8"))
-        self.assertTrue(data["marker"])
+        self.assertFalse(data["marker"])
         self.assertEqual(data["env"], "1")
-        self.assertTrue(isinstance(data["pids"], list) and len(data["pids"]) >= 1)
-        self.assertIn(data["self_pid"], data["pids"])
         self.assertFalse((self.kit / "state" / "verifier-active.json").exists())
 
     def test_marker_cleared_on_timeout(self):
@@ -231,7 +229,7 @@ PY
         self.assertFalse((self.kit / "state" / "verifier-active.json").exists())
 
     def test_sibling_session_allowed_while_verify_runs(self):
-        """AK-3: marker may exist during verify; sibling without env/lineage still writes."""
+        """OC-1: no global marker during verify; sibling without env may write; env blocks."""
         self.write_install()
         ready = self.root / "ready"
         done = self.root / "done"
@@ -268,8 +266,8 @@ printf "%s\\n" "# Relatório" "veredito: ACCEPT"
                 break
             time.sleep(0.05)
         self.assertTrue(ready.exists(), "motor falso não sinalizou ready")
-        # AK-3: marker present with PIDs; sibling without env/lineage still allowed
-        self.assertTrue((self.kit / "state" / "verifier-active.json").exists())
+        # OC-1: no global marker file during headless verify
+        self.assertFalse((self.kit / "state" / "verifier-active.json").exists())
 
         hooks = KIT / "hooks" / "verifier_hooks.py"
         base_env = {

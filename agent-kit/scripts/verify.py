@@ -275,107 +275,6 @@ def model_for(engine: str, install: dict) -> str:
     return str(models.get(engine) or DEFAULT_MODELS.get(engine) or "")
 
 
-
-def _write_marker_fallback(pids: List[int]) -> None:
-    state = kit_home() / "state"
-    state.mkdir(parents=True, exist_ok=True)
-    (state / "verifier-active.json").write_text(
-        json.dumps(
-            {
-                "started_at": time.time(),
-                "host": "verify",
-                "session": "verify.py",
-                "pids": [int(p) for p in pids if int(p) > 0],
-            }
-        ),
-        encoding="utf-8",
-    )
-
-
-def activate_marker(pids: Optional[List[int]] = None) -> None:
-    """Mark the headless verifier session; record PIDs for lineage-scoped guard."""
-    pid_list = list(pids) if pids else [os.getpid()]
-    if os.getpid() not in pid_list:
-        pid_list = [os.getpid(), *pid_list]
-    hooks = kit_home() / "verifier_hooks.py"
-    if hooks.exists():
-        subprocess.run(
-            [
-                sys.executable,
-                str(hooks),
-                "activate",
-                "--host",
-                "verify",
-                "--pids",
-                ",".join(str(p) for p in pid_list),
-            ],
-            check=False,
-            capture_output=True,
-            timeout=30,
-        )
-        return
-    _write_marker_fallback(pid_list)
-
-
-def refresh_marker_pids(pids: List[int]) -> None:
-    """Update marker PIDs after the engine subprocess starts (verify + engine)."""
-    pid_list = [os.getpid(), *[int(p) for p in pids if int(p) > 0]]
-    seen = set()
-    ordered: List[int] = []
-    for pid in pid_list:
-        if pid not in seen:
-            seen.add(pid)
-            ordered.append(pid)
-    hooks = kit_home() / "verifier_hooks.py"
-    if hooks.exists():
-        subprocess.run(
-            [
-                sys.executable,
-                str(hooks),
-                "activate",
-                "--host",
-                "verify",
-                "--pids",
-                ",".join(str(p) for p in ordered),
-            ],
-            check=False,
-            capture_output=True,
-            timeout=30,
-        )
-        return
-    data_path = kit_home() / "state" / "verifier-active.json"
-    if data_path.exists():
-        try:
-            data = json.loads(data_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            data = {}
-        if not isinstance(data, dict):
-            data = {}
-        data["pids"] = ordered
-        data["started_at"] = data.get("started_at") or time.time()
-        data["host"] = data.get("host") or "verify"
-        data["session"] = data.get("session") or "verify.py"
-        data_path.write_text(json.dumps(data), encoding="utf-8")
-        return
-    _write_marker_fallback(ordered)
-
-
-def deactivate_marker() -> None:
-    hooks = kit_home() / "verifier_hooks.py"
-    if hooks.exists():
-        subprocess.run(
-            [sys.executable, str(hooks), "clear"],
-            check=False,
-            capture_output=True,
-            timeout=30,
-        )
-        return
-    try:
-        (kit_home() / "state" / "verifier-active.json").unlink()
-    except OSError:
-        pass
-
-
 def build_prompt(fields: Dict[str, str], repo: Path, request_text: str) -> str:
     contract = find_contract(repo)
     escopo = fields.get("escopo", "").strip()
@@ -442,32 +341,27 @@ def launch_cursor(binary: str, repo: Path, prompt_file: Path, model: str, timeou
 def run_engine(cmd: List[str], repo: Path, timeout: int) -> Tuple[int, str]:
     env = os.environ.copy()
     env["DELPI_VERIFIER_ACTIVE"] = "1"
-    proc: Optional[subprocess.Popen] = None
     try:
-        proc = subprocess.Popen(
+        result = subprocess.run(
             cmd,
             cwd=str(repo),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
+            timeout=timeout,
+            check=False,
             env=env,
         )
-        refresh_marker_pids([proc.pid])
-        try:
-            stdout_b, stderr_b = proc.communicate(timeout=timeout)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            stdout_b, stderr_b = proc.communicate()
-            out = (stdout_b or b"").decode("utf-8", errors="replace")
-            err = (stderr_b or b"").decode("utf-8", errors="replace")
-            return 124, out + (("\n" + err) if err else "") + "\n\n[verify.py] timeout\n"
+    except subprocess.TimeoutExpired as exc:
+        out = (exc.stdout or b"").decode("utf-8", errors="replace")
+        err = (exc.stderr or b"").decode("utf-8", errors="replace")
+        return 124, out + (("\n" + err) if err else "") + "\n\n[verify.py] timeout\n"
     except OSError as exc:
         return 1, f"[verify.py] falha ao lançar motor ({type(exc).__name__}: {exc})"
-    out = (stdout_b or b"").decode("utf-8", errors="replace")
-    err = (stderr_b or b"").decode("utf-8", errors="replace")
+    out = result.stdout.decode("utf-8", errors="replace")
+    err = result.stderr.decode("utf-8", errors="replace")
     combined = out
     if err.strip():
         combined = out + (("\n" if out and not out.endswith("\n") else "") + err)
-    return int(proc.returncode or 0), combined
+    return result.returncode, combined
 
 
 def extract_verdict(report: str) -> Optional[str]:
@@ -556,7 +450,7 @@ def save_report(repo: Path, text: str, engine: str, model: str, rodada: int) -> 
 
 def run_verify(args: argparse.Namespace) -> int:
     install = load_install()
-    # Isolation: DELPI_VERIFIER_ACTIVE in child env + marker PIDs for lineage-scoped guard.
+    # Isolation is DELPI_VERIFIER_ACTIVE in the child env only — no global marker file.
     repo = normalize_agent_path(args.repo).resolve() if args.repo else Path.cwd().resolve()
     root = repo_root(repo)
     if root is None:
@@ -611,14 +505,12 @@ def run_verify(args: argparse.Namespace) -> int:
     prompt_file = Path(tempfile.mkstemp(prefix="delpi-verify-", suffix=".md")[1])
     prompt_file.write_text(prompt, encoding="utf-8")
 
-    activate_marker([os.getpid()])
     try:
         if engine == "devin":
             code, raw = launch_devin(binary, repo, prompt_file, model, install, timeout)
         else:
             code, raw = launch_cursor(binary, repo, prompt_file, model, timeout)
     finally:
-        deactivate_marker()
         try:
             prompt_file.unlink()
         except OSError:
