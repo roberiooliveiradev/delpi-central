@@ -3945,6 +3945,50 @@ services:
     networks:
       - delpi-network
 
+  # Linux Ops MCP (READ-only pilot). Opt-in profile: NOT started with default compose.
+  # Never give this process the Docker socket, sudo, host folders or a shell executor.
+  linux-ops-mcp:
+    profiles: [linux-ops]
+    build:
+      context: ..
+      dockerfile: linux-ops-mcp/Dockerfile
+    container_name: delpi-linux-ops-mcp
+    restart: "no"
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER:-}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL:-}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE:-}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS:-RS256}
+      DELPI_AUTH_CORE_API_URL: http://core-api:8000
+      LINUX_OPS_SERVER_ID: ${LINUX_OPS_SERVER_ID:-}
+      LINUX_OPS_MCP_RESOURCE_URL: ${LINUX_OPS_MCP_RESOURCE_URL:-}
+      LINUX_OPS_IT_PORTAL_URL: http://it-portal-api:8000
+    user: "10001:10001"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 256m
+    cpus: 0.25
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=8m
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "2m"
+        max-file: "2"
+    networks:
+      - delpi-network
+
   gateway:
     build:
       context: ../gateway

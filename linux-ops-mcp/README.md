@@ -24,7 +24,7 @@ Required runtime env, in approved canonical env storage:
 - `KEYCLOAK_ISSUER=https://.../auth/realms/delpi`: real trusted issuer.
 - `PUBLIC_BASE_URL=https://...`: transport host/Origin allowlist derivation.
 
-**Do not create arbitrary new compose/env files**: `.cursor/rules/platform-delivery-runtime-operations.mdc` requires use of existing canonical sources. This candidate **does not modify** `infra/docker-compose.yml`, `.env.prod.example` or gateway yet. Runtime deployment must be a separate, reviewed and authorized change.
+**Do not create arbitrary new compose/env files**: `.cursor/rules/platform-delivery-runtime-operations.mdc` requires use of existing canonical sources. This follow-up introduces an opt-in `linux-ops` profile in the canonical `infra/docker-compose.yml`, but **does not activate** it or modify gateway/Keycloak. Runtime deployment must be a separate, reviewed and authorized change.
 
 ## Preflight before ANY runtime deployment
 
@@ -59,3 +59,35 @@ The package is intentionally not wired into Docker or the public gateway until s
 | 2026-11-14 | Agent installed, token connected, tunnel created, host touched | NOT_DONE |
 
 Next step is evidence of `it-portal-api` Linux observation ingested + authenticated smoke in a non-production environment.
+
+
+## P1-R2: runtime opcional e testes (2026-11-14)
+
+- **Decisao do operador:** coleta Linux ja funcional, aceita como evidencia operacional do owner. Nao solicitar nova prova de ingestao para continuar o desenvolvimento. Isso **nao** representa smoke OAuth/MCP concluido.
+- **Imagem isolada:** `linux-ops-mcp/Dockerfile` (usuario numerico 10001, codigo na imagem, sem dados host, sem SSH ou Docker CLI).
+- **Compose produtivo canonico:** servico `linux-ops-mcp` sob profile `linux-ops`, **nao iniciado por padrao**. Sem `ports`, `volumes` ou `docker.sock`; FS read-only, todas capabilities removidas, no-new-privileges, 0.25 CPU, 256 MiB, log limitado e health local.
+- **CI proprio:** `.github/workflows/linux-ops-mcp-readonly.yml` executa testes isolados, contratacao de 4 tools, compilacao e Docker build no runner GitHub. Nao executa deploy.
+- **RBAC fortalecido:** cada chamada MCP faz refresh Core `/me` `force_refresh=True`, sem fallback stale; subject do response deve coincidir com o JWT autenticado. A API do Portal TI tambem aplica RBAC a leitura.
+- **Protecao de ativo:** a observacao retornada deve ter `server_id` igual ao UUID configurado; nao aceita amostra de outro servidor.
+- **OAuth:** `LINUX_OPS_MCP_RESOURCE_URL` deve usar origem HTTPS de `PUBLIC_BASE_URL` e path exato `/apps/linux-ops-mcp/mcp`. CORS/Host allowlist dependem da origem.
+
+### Sequencia operacional futura (NAO EXECUTAR AGORA)
+
+1. Aguardar PR aprovado e CI verde. Inspecionar `docker compose config` somente com saida sanitizada para evitar vazar `.env`.
+2. Tratar o checkout produtivo sujo por estrategia conservadora, sem alterar o arquivo modificado automaticamente.
+3. Configurar o Keycloak dedicado com client OAuth PKCE e audience URL MCP exata, conforme `docs/10-guias-operacionais/mcp-chatgpt-plugin-onboarding-runbook.md`. Nunca usar service token no MCP conversacional.
+4. Escolher o transporte (**Secure MCP Tunnel** isolado ou rota HTTPS com revisao separada); esta PR nao abre rota externa nem instala tunnel-client.
+5. Somente apos teste do SDK e do contrato, acionar a imagem opcional via compose com `--profile linux-ops --no-deps`, sem iniciar/stopping outros containers; confirmar health e permissoes.
+6. Testar 401 sem token, 401 com audience errada, revogacao de RBAC, metadata, initialize, tools/list e tools/call autenticado no ChatGPT. Sem esses testes `RUNTIME_NOT_VERIFIED`.
+
+### Status de evidencia
+
+```text
+HOST_COLLECTOR: OPERATOR_CONFIRMED_WORKING
+MCP_CODE: IMPLEMENTED_IN_PR (NOT_MERGED at creation time)
+MCP_CI: PENDING_GITHUB_ACTIONS
+MCP_RUNTIME: NOT_DEPLOYED
+MCP_OAUTH: NOT_CONFIGURED
+MCP_PUBLIC_CONNECTION: NOT_CONNECTED
+DEPLOY_WRITE: NOT_IMPLEMENTED
+```
