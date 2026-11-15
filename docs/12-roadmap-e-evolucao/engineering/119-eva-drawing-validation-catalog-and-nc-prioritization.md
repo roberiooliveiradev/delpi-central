@@ -4945,3 +4945,110 @@ semântica da LMP impressa e distinção 8000×8001 aguardam
 ratificação da Engenharia; validação documental de desenhos
 antigos sem OV planejada (lote autorizado futuro);
 `ENGINEERING_HOMOLOGATION=PENDING_OWNER`.
+
+### 94.15 G12 — Descoberta de linhagem reversa, runtime G10/G11 e preparação de implantação
+
+`TASK_ID: EVA-G12-PRODUCT-REVERSE-LINEAGE-AND-KNOWLEDGE-RUNTIME-ACTIVATION-01`
+(2026-11-15 — Devin, CONTRACT_DISCOVERY/READ_ONLY/NO_UNAUTHORIZED_DEPLOY)
+
+#### A — Inventário da consulta reversa (lacuna confirmada)
+
+Verificação em código (api-delpi): `GET /products/search`
+(`product_routes.py:217`) aceita `code, group_code, subgroup,
+product_type, description, customer_reference, view, page,
+page_size, sort, direction` — **sem `previous_code`**.
+`product_repository.py` só projeta `SB1.B1_CODANT AS
+previous_code` no SELECT de detalhe (linha 165); nenhum
+WHERE/uso de `B1_CODANT` como filtro em nenhum use case.
+`lookup_products_sb1_identity` resolve por
+`customer_reference`, não por código anterior.
+`GET /products/{code}/parents` (where_used) é BOM reversa
+SG1 — conceito distinto de linhagem cadastral.
+
+**Lacuna confirmada:** não existe contrato para "quais
+produtos têm `previous_code = X`". A direção direta
+(9026→cotação) já funciona via `product.detail.previous_code`.
+
+**Proposta de extensão mínima (NÃO implementada — gate
+arquitetural):**
+
+| Item | Proposta |
+|---|---|
+| Owner | api-delpi (produto / SB1) |
+| Consumer | engineering-api `read(product.search)` → EVA/ChatGPT |
+| Contrato | **aditivo**: query param `previous_code` no existente `GET /products/search` (evolução backward-compatible — não justifica rota nova) |
+| Request | `previous_code: str` — match exato, `LTRIM(RTRIM(SB1.B1_CODANT)) = ?`, preserva zeros à esquerda, param SQL (sem SQL arbitrário) |
+| Response | `ProductSearchResponse` vigente — items já carregam `code, description, group_code, type, previous_code` (suporta múltiplos sucessores, sem cardinalidade 1:1) |
+| Filial | sem filtro novo — reutiliza regra vigente do search |
+| Paginação | `page`/`page_size` existentes (max 500) |
+| AuthZ | `@require_any_permission(ENGINEERING_LMP_ACCESS)` — inalterado |
+| Restrição | filtro por grupo NÃO no repositório — o consumidor filtra `group_code` se quiser só 9026 |
+| Erros | mesmos códigos do search (400 validação, 403 AuthZ, fonte indisponível honesta) |
+| Observabilidade | log existente do search + `previous_code` no campo de filtro (sem secret) |
+| Desempenho | `B1_CODANT` sem índice conhecido — cardinalidade baixa esperada; medir antes de ampliar; index candidato `(B1_CODANT, D_E_L_E_T_)` se necessário — decisão do owner |
+| Cascata MCP | expor `previous_code` no `read(product.search)` da engineering-api quando o contrato existir |
+
+`ARCHITECTURE_DECISION_REQUIRED=YES` — implementação aguarda
+aprovação da Coordination; não atravessada pelo executor.
+
+#### B — Estado do runtime produtivo (read-only, srv-api)
+
+| Fato | Evidência |
+|---|---|
+| Imagem rodando | `infra-engineering-api:latest` = `ba239a36c4d3` |
+| G10 no runtime | **SIM** — `x_left`/`x_right`/poda mediana presentes em `understanding.py` (deploy canônico pós-push G10) |
+| G11 no runtime | **NÃO** — `eva_engineering_knowledge.json` no container = **v1.4**, 5 tópicos (sem `product.lifecycle_traceability`) |
+| Enum `knowledge.topic` | derivado de `knowledge_topics()` no startup do processo (`server.py:93`) — deploy publica o tópico automaticamente |
+| Conector ChatGPT | cacheia `tools/list` — exige refresh de discovery na conexão EVA (ação Coordination, pós-deploy) |
+
+Correção do baseline: G10 já está implantado; G11 é o
+pendente. `KNOWLEDGE_CODE=PROVEN`,
+`KNOWLEDGE_CHATGPT_RUNTIME=PENDING_DEPLOY+PENDING_CONNECTOR_REFRESH`.
+
+#### C — Plano de implantação G11 (preparado, não autorizado)
+
+1. **Pré-requisito:** HEAD `origin/main` contendo `69a223fea8`
+   (já presente) — imagem atual já tem G10, só falta G11.
+2. **Backup:** `docker tag infra-engineering-api:latest
+   infra-engineering-api:rollback-pre-g11` no srv-api.
+3. **Deploy canônico:** `git pull --ff-only` +
+   `./infra/scripts/up-prod-sequential.sh --build engineering-api`
+   (build isolado, `up -d --no-deps`).
+4. **Smoke (sem OCR):** container healthy; `knowledge.version=1.5`;
+   `tools/list` enum contém `product.lifecycle_traceability`;
+   `get_context(drawing)` + `read(drawing.runtime_status)` +
+   `read(drawing.job_list)` + `analyze(existing_only)` intactos;
+   `read(product.detail, 90264302)` → `previous_code=80015472`.
+5. **Conector:** Coordination força refresh de discovery na
+   conexão EVA do ChatGPT (reconectar/nova sessão); validar
+   `knowledge(topic=product.lifecycle_traceability)` na sessão real.
+6. **Rollback:** re-tag `rollback-pre-g11` → `latest` +
+   restart isolado do serviço (mesma receita usada em G7/G8).
+7. **Critérios de interrupção:** smoke falha, health vermelho,
+   enum ausente após rebuild, ou regressão em tools existentes.
+8. **Monitoramento:** logs `engineering_api_request`, runtime
+   admission `AVAILABLE`, zero worker OCR órfão.
+9. **Sem OCR adicional** em nenhuma etapa.
+
+#### D — Matriz de homologação (Engenharia DELPI)
+
+| # | Conceito | Estado |
+|---|---|---|
+| 1 | Distinção oficial 8000 × 8001 | OWNER_PENDING |
+| 2 | Fluxo 8000/8001→9026 e exceções | OWNER_PENDING (fluxo informado; exceções documentadas) |
+| 3 | Semântica/cardinalidade de B1_CODANT | PROVEN no contrato (`previous_code` exposto); cardinalidade 1:N presumida → OWNER_PENDING |
+| 4 | Quando um 9026 é criado | OWNER_PENDING |
+| 5 | Relação OV × LMP | PROVEN parcial (lmp.detail por sale_number; listing_kind LMP) |
+| 6 | Significado da LMP impressa (ex.: 16726) | UNKNOWN — sem contrato; aguarda owner |
+| 7 | Referências históricas do cliente | OWNER_PENDING (B1_REFEREN/B1_REFCANT existem no contrato) |
+| 8 | Marco temporal de inclusão de OV | UNKNOWN — hipótese owner, validação documental pendente |
+| 9 | Critérios de liberação da estrutura | OWNER_PENDING |
+| 10 | Homologação documental | OWNER_PENDING |
+
+#### E — Testes (sem mudança de código nesta task)
+
+Reexecutados no container: `test_eva_mcp.py` +
+`test_eva_mcp_semantic.py` = **120 passed** (inclui os 2
+testes G11); `test_drawing_titleblock_fields.py` = 14 passed
+(inclui os 2 testes G10). Nenhum código alterado → demais
+suites não reexecutadas nesta rodada.
