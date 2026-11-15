@@ -604,3 +604,19 @@ Finalizar com Client Secret no formulario do ChatGPT, metodo `client_secret_post
 4. Somente apos POST MCP autenticado passar de 401 e `tools/list` responder, validar as 4 ferramentas READ e Core RBAC em `tools/call`.
 
 **Estado:** `OAUTH_LOGIN_PASS`, `JWT_PLATFORM_VALID_PASS`, `MCP_RESOURCE_AUDIENCE_FAIL`, `ACTION_DISCOVERY_BLOCKED_PRE_TOOLS`, `NO_FIX_DEPLOYED`.
+
+
+## 37. JWT Evaluate: audiencia ATLAS ausente no token de mcp-linux-ops (2026-11-15)
+
+**Evidencia fornecida pelo operador:** em Keycloak Admin Console `Clients > mcp-linux-ops > Client scopes > Evaluate > Generated access token` a carga **decodificada** do access token mostra:
+- `iss = https://minhadelpi.com.br/auth/realms/delpi`, `azp = mcp-linux-ops`;
+- `aud` contem `delpi-central` e `account`, mas **nao contem** a URL exata de recurso MCP `https://minhadelpi.com.br/apps/linux-ops-mcp/mcp`;
+- `scope` contem `openid email mcp:tools profile`.
+
+**Nao registrar** valores do token completo, nomes, emails, UUID de usuario ou identificadores JWT/sessao divulgados na captura. A carga decodificada nao e uma prova da assinatura do token, mas o log real `RESOURCE_AUDIENCE_MISMATCH` no MCP corrobora que a falha de integracao ocorre na audiencia de recurso.
+
+**Causa tecnicamente isolada:** o client `mcp-linux-ops` emite token com audiencia compartilhada correta, mas o mapper exclusivo `linux-ops-resource-audience` nao se reflete em `aud`. Causa administrativa especifica pendente de verificar: `mcp-audience-linux-ops` deve estar **Default** no client, o mapper precisa estar dentro desse escopo e emitir URL exata no access token. Nao e necessario alterar o SDK MCP, o gateway nem `audience-delpi`.
+
+**Acao planejada UI:** `Clients > mcp-linux-ops > Client scopes > Setup`, conferir `mcp-audience-linux-ops` como Default; clicar no scope, `Mappers > linux-ops-resource-audience`, confirmar Included Custom Audience URL exata e Add to access token ON; caso divergente, corrigir **somente** esse escopo. Em seguida `Evaluate > Generated access token` para retestar. Se aud permanecer sem URL, `Evaluate > Effective protocol mappers` para confirmar presenca e configuracao efetiva do mapper. Reautorizar plugin ChatGPT somente apos `aud` correto em novo token.
+
+**Estado:** `PLATFORM_AUDIENCE_OK`, `MCP_RESOURCE_AUDIENCE_MISSING_PROVEN`, `MCP_DISCOVERY_FAIL_DUE_TO_AUDIENCE`, `FIX_NOT_APPLIED`.
