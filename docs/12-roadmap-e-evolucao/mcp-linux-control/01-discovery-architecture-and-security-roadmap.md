@@ -620,3 +620,12 @@ Finalizar com Client Secret no formulario do ChatGPT, metodo `client_secret_post
 **Acao planejada UI:** `Clients > mcp-linux-ops > Client scopes > Setup`, conferir `mcp-audience-linux-ops` como Default; clicar no scope, `Mappers > linux-ops-resource-audience`, confirmar Included Custom Audience URL exata e Add to access token ON; caso divergente, corrigir **somente** esse escopo. Em seguida `Evaluate > Generated access token` para retestar. Se aud permanecer sem URL, `Evaluate > Effective protocol mappers` para confirmar presenca e configuracao efetiva do mapper. Reautorizar plugin ChatGPT somente apos `aud` correto em novo token.
 
 **Estado:** `PLATFORM_AUDIENCE_OK`, `MCP_RESOURCE_AUDIENCE_MISSING_PROVEN`, `MCP_DISCOVERY_FAIL_DUE_TO_AUDIENCE`, `FIX_NOT_APPLIED`.
+
+
+## 38. Confirmada ausencia do mapper no scope dedicado (2026-11-15)
+
+O operador inspecionou o scope Keycloak `mcp-audience-linux-ops` e informou que **nao ha mappers cadastrados nele**. Isso explica diretamente por que o token de `mcp-linux-ops` tem `aud=[delpi-central, account]` e nao contem `https://minhadelpi.com.br/apps/linux-ops-mcp/mcp`. A tela de Add mapper tinha sido revisada, mas nao havia evidencia de persistencia em Keycloak.
+
+**Correcao restrita, pendente:** em `delpi > Client scopes > mcp-audience-linux-ops > Mappers`, criar um unico mapper `Audience`, nome `linux-ops-resource-audience`, Included Client Audience vazio, Included Custom Audience `https://minhadelpi.com.br/apps/linux-ops-mcp/mcp`, Add to access token ON, Add to ID token OFF, Add to lightweight access token OFF. Salvar e **verificar que aparece listado** no scope. Confirmar scope `mcp-audience-linux-ops` como Default no cliente `mcp-linux-ops`, avaliar novo access token e conferir `aud` incluindo a URL sem publicar JWT/token. Somente apos isso reautorizar o plugin ChatGPT para token novo e confirmar `tools/list`. Sem tocar em `audience-delpi`, Core RBAC, codigo ou gateway.
+
+**Estado:** `ROOT_CAUSE_CONFIRMED_SCOPE_HAS_NO_MAPPER`, `FIX_NOT_YET_CONFIRMED`.
