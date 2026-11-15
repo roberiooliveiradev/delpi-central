@@ -444,3 +444,12 @@ Fonte oficial verificada: https://developers.openai.com/api/docs/guides/secure-m
 - Runbook detalhado de rollout/rollback: `linux-ops-mcp/docs/05-keycloak-dedicated-client-onboarding.md`.
 
 **Status atual:** `KEYCLOAK_SCRIPT_PR_OPEN`, `PRODUCTION_APPLY_NOT_DONE`, `GATEWAY_NOT_REDEPLOYED`, `CHATGPT_CONNECTION_NOT_DONE`.
+
+
+## 24. Evidencia da rota publica ainda nao ativa (2026-11-15)
+
+- Operador tentou abrir o PRMD publico `https://minhadelpi.com.br/apps/linux-ops-mcp/.well-known/oauth-protected-resource` no navegador e recebeu **HTML da SPA do Portal**: `Aplicacao indisponivel / Esta rota nao esta disponivel na sua conta ou o plugin ainda nao foi liberado`.
+- **Inferencia forte (nao prova definitiva):** o caminho trafega pelo Cloudflare/gateway antigo e alcanca o fallback `location /` do Portal. PR #188 (snippet Nginx) foi merged, mas ainda nao havia evidencia de build/recreate do container `delpi-gateway` na producao. Verificar via `docker exec delpi-gateway test -f /etc/nginx/snippets/linux-ops-mcp-locations.conf` e `grep` do `nginx.conf` vigente, sem imprimir config completa.
+- Nao atribuir esta tela ao Keycloak nem alterar os scopes OAuth ate que a rota publica retorne **JSON** PRMD HTTP 200 em lugar de HTML. A URL do navegador incluiu parametro `utm_source=chatgpt.com`; esse parametro nao altera a necessidade de roteamento por path.
+- Sequencia a seguir: inspecionar Nginx runtime e checkout; preparar backup/tag da imagem gateway em execucao; construir somente gateway no codigo atualizado, `nginx -t` antes de publicar; depois, em janela autorizada, substituir somente gateway com `up -d --no-deps --no-build gateway`; testar landing/Keycloak/rotas e PRMD publico, e manter rollback por imagem anterior. Nao executar `up -d` global nem sobrepor alteracoes locais no checkout.
+- **Estado:** `PUBLIC_PRMD_FAIL_HTML_FALLBACK`, `LOCAL_MCP_HEALTHY`, `KEYCLOAK_DEDICATED_CLIENT_PENDING`, `PUBLIC_GATEWAY_DEPLOY_NOT_PROVEN`.
