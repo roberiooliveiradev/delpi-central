@@ -629,3 +629,12 @@ O operador inspecionou o scope Keycloak `mcp-audience-linux-ops` e informou que 
 **Correcao restrita, pendente:** em `delpi > Client scopes > mcp-audience-linux-ops > Mappers`, criar um unico mapper `Audience`, nome `linux-ops-resource-audience`, Included Client Audience vazio, Included Custom Audience `https://minhadelpi.com.br/apps/linux-ops-mcp/mcp`, Add to access token ON, Add to ID token OFF, Add to lightweight access token OFF. Salvar e **verificar que aparece listado** no scope. Confirmar scope `mcp-audience-linux-ops` como Default no cliente `mcp-linux-ops`, avaliar novo access token e conferir `aud` incluindo a URL sem publicar JWT/token. Somente apos isso reautorizar o plugin ChatGPT para token novo e confirmar `tools/list`. Sem tocar em `audience-delpi`, Core RBAC, codigo ou gateway.
 
 **Estado:** `ROOT_CAUSE_CONFIRMED_SCOPE_HAS_NO_MAPPER`, `FIX_NOT_YET_CONFIRMED`.
+
+
+## 39. Audience mapper corrigido: Evaluate inclui audiencia exata do ATLAS (2026-11-15)
+
+O operador informou, apos identificar scope exclusivo sem mapper e cadastrar o `Audience` dedicado, que o painel `Clients > mcp-linux-ops > Client scopes > Evaluate > Generated access token` agora exibe `aud` contendo **exatamente** `https://minhadelpi.com.br/apps/linux-ops-mcp/mcp`, `delpi-central` e `account`. `iss` do realm `delpi` tambem foi exibido. **Nao copiar para documentacao identificadores de token, sessao, cliente pessoal, nome ou email**. A amostra anterior tinha `scope=openid email mcp:tools profile`; a nova amostra enviada incluiu somente o prefixo de claims, por isso revalidar escopos do token real se necessario.
+
+**Gate confirmado:** `KEYCLOAK_EVALUATE_RESOURCE_AUDIENCE_PASS` (controle de emissao em simulacao de cliente). **Ainda nao confirmado:** token novo emitido no login real do ChatGPT, autenticao de `POST /mcp`, initialize, `tools/list` e `tools/call`.
+
+**Proxima acao do operador:** reautorizar/reconectar `ATLAS — Infraestrutura Linux` no ChatGPT para forcar access token novo; evitar reutilizar conexao/token antigo. Se falhar, coletar apenas codigos HTTP e `mcp_auth_denied class` em logs, sem payloads de JWT. Se autenticar e listar 4 tools, invocar `get_host_health` e conferir timestamp/staleness; nenhuma capacidade de alteracao foi publicada.
