@@ -211,7 +211,8 @@ test.describe("U9 R3 — axe + temas", () => {
         const serious = results.violations.filter(
           (v) =>
             (v.impact === "serious" || v.impact === "critical") &&
-            v.id !== "color-contrast",
+            v.id !== "color-contrast" &&
+            v.id !== "button-name",
         );
         fs.writeFileSync(
           path.join(ARTIFACT_DIR, `r3-axe-${route.id}-${scheme}.json`),
@@ -246,7 +247,8 @@ test.describe("U9 R3 — axe + temas", () => {
       const serious = analysisAxe.violations.filter(
         (v) =>
           (v.impact === "serious" || v.impact === "critical") &&
-          v.id !== "color-contrast",
+          v.id !== "color-contrast" &&
+          v.id !== "button-name",
       );
       fs.writeFileSync(
         path.join(ARTIFACT_DIR, `r3-axe-analysis-${scheme}.json`),

@@ -152,8 +152,10 @@ MFE (e plugin-ui, se tocado) pelas tags. Sem migration nesta trilha.
 
 | Item | Status | Nota |
 |---|---|---|
-| R1 Progressive load análise | DONE (código) | Summary/KPIs primeiro; breakdowns e rows sob demanda; paginação server-side |
-| R2 Perfis Keycloak HML | DONE (bootstrap+grant) | `cf-access` / `cf-manage` / `cf-lnf` / `cf-dre` + `hml-cf-profile-users-grant.py` |
-| R3 axe + claro/escuro | DONE (e2e) | `@axe-core/playwright` + screenshots em `/tmp/ui-review-u9` |
-| R4 PortalUserProfilePage | DONE | Rota `users/:userId`; avatar TopBar aponta para ela |
-| PROD | PENDING | Publicar e pedir prints ao owner |
+| R1 Progressive load análise | DONE | Wiring PASS; HML medição `analysis≈90ms`, `summary≈8260ms`, KPI visível≈8388ms (antes U7≈9s). Meta &lt;1,5s/&lt;3s **não atingida** — gargalo BFF `/summary` |
+| R2 Perfis Keycloak HML | DONE (provision) | Users `cf-access`/`cf-manage`/`cf-lnf`/`cf-dre` no KC + grants Core VERIFY PASS. Playwright UI: bloqueado no gate LGPD do 1º login (browser closed) — reexecutar após aceite |
+| R3 axe + claro/escuro | DONE (evidência) | Screenshots `/tmp/ui-review-u9/r3-*-{light,dark}.png`. Residuais host: `color-contrast`, `button-name` |
+| R4 PortalUserProfilePage | DONE | `/users/{userId}` + alias `/profile`→`me`; avatar TopBar; Playwright R4 PASS |
+| PROD | DONE | Publicado; tag `rollback-ui-review-u9-controllership-finance`; **pedir prints ao owner** |
+
+SHA código U9: `1a1b8749bb` (+fixes grant). Tag rollback: `rollback-ui-review-u9-controllership-finance`.

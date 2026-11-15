@@ -99,28 +99,47 @@ export async function dismissPrivacyGate(page: Page): Promise<void> {
     name: /Política de Privacidade/i,
   });
   const shown = await privacyHeading
-    .waitFor({ state: "visible", timeout: 5_000 })
+    .waitFor({ state: "visible", timeout: 8_000 })
     .then(() => true)
     .catch(() => false);
   if (!shown) return;
 
-  // Role até o fim para habilitar o aceite (fluxo LGPD do Portal).
-  for (let i = 0; i < 12; i += 1) {
-    await page.keyboard.press("PageDown");
-    await page.waitForTimeout(200);
+  const scrollBox = page
+    .locator('[class*="privacy"], [class*="consent"], dialog, [role="dialog"]')
+    .first();
+  if (await scrollBox.isVisible().catch(() => false)) {
+    for (let i = 0; i < 20; i += 1) {
+      await scrollBox.evaluate((el) => {
+        el.scrollTop = el.scrollHeight;
+      }).catch(() => undefined);
+      await page.waitForTimeout(150);
+    }
+  } else {
+    for (let i = 0; i < 20; i += 1) {
+      await page.keyboard.press("End");
+      await page.waitForTimeout(100);
+    }
   }
+
   const accept = page
     .getByRole("button", {
-      name: /Aceitar|Concordo|Continuar|Li e aceito|Confirmar/i,
+      name: /Aceitar|Concordo|Continuar|Li e aceito|Confirmar|Prosseguir/i,
     })
-    .first();
-  if (await accept.isEnabled().catch(() => false)) {
-    await accept.click();
-  } else if (await accept.isVisible().catch(() => false)) {
+    .filter({ hasNotText: /Consentimentos/i })
+    .last();
+  await accept.waitFor({ state: "visible", timeout: 15_000 }).catch(() => undefined);
+  if (await accept.isVisible().catch(() => false)) {
     await accept.click({ force: true }).catch(() => undefined);
   }
+  // Segundo passo (consentimentos) se existir
+  const consentAccept = page
+    .getByRole("button", { name: /Aceitar|Confirmar|Salvar|Continuar/i })
+    .last();
+  if (await consentAccept.isEnabled().catch(() => false)) {
+    await consentAccept.click({ force: true }).catch(() => undefined);
+  }
   await privacyHeading
-    .waitFor({ state: "hidden", timeout: 30_000 })
+    .waitFor({ state: "hidden", timeout: 45_000 })
     .catch(() => undefined);
 }
 
