@@ -3041,3 +3041,11 @@ Positivos/negativos/holdouts separados; nenhuma resposta programada conta como g
 | Boundary | — | Investigador sem `declare` (8 tools owner apenas, trace `model_visible_toolset`); Compreensão sem owner tools |
 
 **Leitura honesta:** a separação de superfície **cumpre seu propósito declarado** — qualidade de proposta 100% first-accept (elimina o retry de âncora inválida que custou 5 declarações no baseline) — e as fronteiras/imutabilidade/gate R1 estão provadas em trace real e testes. **Porém** a métrica primária (custo por objetivo concluído) é desfavorável a B na amostra e o outcome é dominado pelo flake `mcp_authentication_failed` (R3). `A_B_VERDICT=INCONCLUSIVE`: não há base factual para PROMOTE (outcome não superior, custo maior) nem para REWORK do mecanismo (fronteira correta, defeito único remediado); reavaliar outcome após saneamento R3 e cobertura de token do run de Investigação (`T2-INVESTIGATION-TOKEN-CAPTURE`). Flag permanece OFF por default.
+
+### 2026-11-14 — INDEPENDENT_REVIEW_TWO_AGENT_AB_2026_11_14_BUDGET_EXCEPTION: revisão de prova e matriz complementar
+
+`EXPERIMENT_BOUNDARY=ACCEPT_WITH_RESIDUAL`; `PROMOTION=INCONCLUSIVE`; `INDEPENDENT_PYTEST=TEST_NOT_RUN`. Resultado reportado A vs B: `GOAL_ACCEPTED=11/16 vs 12/12`, `COMPLETE=2 vs 1`, `MODEL_CALLS=12 vs 41`, `LATENCY=~797s vs ~943s`, `CATALOG_AUTH_FAILURES=16 vs 19`. Não demonstrado custo por objetivo concluído: preços/usage do Investigador incompletos. Apenas 12 cenários INT2 avaliados; corpus completo C01–C18 e AuthZ deny oracle ainda pendentes.
+
+**Novo teste obrigatorio:** Compreensão com plano aceito, gasto real de requests e exceção subsequente: verificar que `artifact_kept` não silencia falha material, não perde usage e nunca recompõe limite acima do orçamento total. Distinguir output/observability-only, provider error, cancellation/deadline, retry-budget e erro inesperado. `max(1,...)` não pode conceder uma requisição extra quando saldo for zero. Só usar `PASS` com comportamento verificado. Saneamento R3 deve distinguir ambiente sem capabilities de AuthZ legítima, sem modificar permissões para forçar sucesso.
+
+**NEXT=`COORDINATION_C3_T2_TWO_AGENT_BUDGET_EXCEPTION_BOUNDARY_AND_R3_AUTH_EVAL_READINESS`.**
