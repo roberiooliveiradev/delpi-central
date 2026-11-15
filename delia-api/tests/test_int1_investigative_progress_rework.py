@@ -413,3 +413,150 @@ def test_metamorphic_progress_independent_of_tool_names():
             )
             == fp_a
         )
+
+
+# ------ G2: aggregation SATISFIED must not die on spurious REF05 ------
+
+
+def test_g2_aggregation_satisfied_despite_spurious_filter_target():
+    """Filter adjective mis-emitted as ``target_identities`` must not
+    veto an owner-attested aggregate total (G2 / ativos)."""
+    from tests.test_int2_typed_objective_obligation_contract import (
+        _anchored_attempt,
+    )
+
+    gates = _gates()
+    plan = gates._accept_semantic_investigation_plan(
+        goal_class="analyze",
+        comparison_requested=False,
+        target_identities=["ativos"],
+        evidence_needed=[
+            {
+                "description": "Contagem de processos ativos",
+                "evidence_source": "process",
+                "operation": "read",
+            }
+        ],
+        business_subject="processos de transformação",
+        expected_delivery="aggregation",
+        correlation="g2",
+    )
+    assert plan is not None
+    assert plan.target_identities == ("ativos",)
+    hit = _anchored_attempt(
+        root="PROC-0001",
+        entity=None,
+        capability=None,
+        vocabulary=("process", "search"),
+        structured={
+            "success": True,
+            "data": {
+                "total": 109,
+                "items": [{"codigo_processo": "PROC-0001"}],
+                "is_complete": True,
+            },
+        },
+    )
+    result = _finalize_agent_collected_attempts(
+        gates,
+        input_text="Quantos processos de transformação estão ativos?",
+        collected=(hit,),
+        correlation="g2",
+        workspace_context=None,
+        deadline=TurnDeadline.start(30.0),
+        unbound_outcome=OWNER_PATH_UNBOUND,
+        plan=plan,
+    )
+    assert result.status is GovernedCapabilityStatus.SUCCESS
+    assert "ref05_target_unbound_nonblocking" in result.limitations
+    assert "related_observations_insufficient" not in result.limitations
+    assert result.error_code != "investigation_target_binding_failed"
+
+
+def test_g2_unbound_target_still_runs_partial_identifier_coverage():
+    """Sibling: spurious target must not skip uncovered named ids."""
+    from tests.test_int2_typed_objective_obligation_contract import (
+        _anchored_attempt,
+    )
+
+    gates = _gates()
+    plan = gates._accept_semantic_investigation_plan(
+        goal_class="analyze",
+        comparison_requested=False,
+        target_identities=["ativos"],
+        evidence_needed=[
+            {
+                "description": "Contagem de processos ativos",
+                "evidence_source": "process",
+                "operation": "read",
+            }
+        ],
+        expected_delivery="aggregation",
+        correlation="g2-id",
+    )
+    assert plan is not None
+    hit = _anchored_attempt(
+        root="PROC-0001",
+        vocabulary=("process", "search"),
+        structured={
+            "success": True,
+            "data": {
+                "total": 109,
+                "items": [{"codigo_processo": "PROC-0001"}],
+                "is_complete": True,
+            },
+        },
+    )
+    result = _finalize_agent_collected_attempts(
+        gates,
+        input_text="Quantos processos ativos tem o PROC-0002?",
+        collected=(hit,),
+        correlation="g2-id",
+        workspace_context=None,
+        deadline=TurnDeadline.start(30.0),
+        unbound_outcome=OWNER_PATH_UNBOUND,
+        plan=plan,
+    )
+    assert result.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert result.error_code == "investigation_partial_coverage"
+    assert "uncovered_identifier:PROC-0002" in result.limitations
+    assert "identifier_coverage_incomplete" in result.limitations
+
+
+def test_g2_unbound_target_still_fails_when_obligation_unsatisfied():
+    """Negative: unbound target + unmet obligation keeps fail-closed."""
+    gates = _gates()
+    plan = gates._accept_semantic_investigation_plan(
+        goal_class="analyze",
+        comparison_requested=False,
+        target_identities=["ativos"],
+        evidence_needed=[
+            {
+                "description": "Contagem de processos ativos",
+                "evidence_source": "process",
+                "operation": "read",
+            }
+        ],
+        expected_delivery="aggregation",
+        correlation="g2-neg",
+    )
+    assert plan is not None
+    # KPI blob without authoritative aggregate / process vocabulary.
+    miss = _success_attempt(
+        content="aggregate KPIs",
+        root="TEO-AGG-01",
+        structured={"data": {"root": {"code": "TEO-AGG-01"}, "kpis": [1]}},
+    )
+    result = _finalize_agent_collected_attempts(
+        gates,
+        input_text="Quantos processos de transformação estão ativos?",
+        collected=(miss,),
+        correlation="g2-neg",
+        workspace_context=None,
+        deadline=TurnDeadline.start(30.0),
+        unbound_outcome=OWNER_PATH_UNBOUND,
+        plan=plan,
+    )
+    assert result.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert result.error_code == "investigation_target_binding_failed"
+    assert "ref05_target_unbound" in result.limitations

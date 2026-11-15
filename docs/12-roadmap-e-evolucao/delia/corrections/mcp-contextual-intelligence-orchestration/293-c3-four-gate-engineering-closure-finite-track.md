@@ -723,3 +723,8 @@ O registro histórico acima (baseline de **um único Agent Pydantic AI** e neces
 
 **TASK:** `DELIA-C3-T2-TWO-AGENT-R1-R6-FUNCTIONAL-REWORK-AND-OUTCOME-REPROOF-01`.
 **RESULT:** admission timeout mismatch REMEDIATED (clamp to `MAX_TIMEOUT_SECONDS`, ceiling unchanged); R1 REVALIDATED_NO_DIFF; R2/R5/R6 partial revalidated; R3 MCP probe PASS; R4 PENDING (no deny identity); E8 real sample ENV_BLOCKED. Two-agent remains experimental. **NEXT:** `COORDINATION_C3_T2_R1_R6_FUNCTIONAL_REWORK_INDEPENDENT_REVIEW`. PRODUCTION_DEPLOY / PHASE_ADVANCEMENT / Agents 3–4: NOT_AUTHORIZED.
+
+### Stamp — Outcome G2 + MCP AuthN harness recovery (2026-11-15)
+
+**TASK:** `DELIA-C3-T2-TWO-AGENT-OUTCOME-MCP-AUTH-AND-FUNCTIONAL-RECOVERY-01`.
+**RESULT:** AuthN E2E recovered (issuer mismatch fail-closed; gateway exchange); G2 publica 109 com obrigação SATISFIED; REF05 spurious filter target nonblocking quando obrigações SATISFIED. Two-agent experimental. **NEXT:** `COORDINATION_C3_T2_OUTCOME_MCP_AUTH_FUNCTIONAL_RECOVERY_INDEPENDENT_REVIEW`. PRODUCTION_DEPLOY / PHASE_ADVANCEMENT / Agents 3–4: NOT_AUTHORIZED.

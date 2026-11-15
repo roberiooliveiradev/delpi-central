@@ -4413,26 +4413,66 @@ def _finalize_agent_collected_attempts(
     # Non-compare: optional single-target REF05 via authoritative root.
     if len(business) == 1:
         if targets:
-            if len(targets) != 1 or not _bind_attempt_to_target(
+            target_bound = len(targets) == 1 and _bind_attempt_to_target(
                 business[0], targets[0]
-            ):
-                return GovernedCapabilityAttempt(
-                    status=GovernedCapabilityStatus.NOT_APPLICABLE,
-                    correlation_id=correlation,
-                    admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
-                    limitations=(
-                        LIMITATION_INSUFFICIENT_EVIDENCE,
-                        "related_observations_insufficient",
-                        "ref05_target_unbound",
-                        *(
-                            f"ref05_missing_target:{token}"
-                            for token in targets[:8]
+            )
+            if not target_bound:
+                # Material obligations are the coverage contract when
+                # declared. An unbound target token (e.g. a filter
+                # adjective mis-emitted as ``target_identities``) must
+                # not veto an observation that already satisfies every
+                # material obligation — otherwise aggregation totals
+                # grounded in owner ``total_count`` are marked
+                # NON_GROUNDED despite SATISFIED coverage (G2).
+                # Fall through to the same ``_partial_coverage`` tail as
+                # the bound-target path so named user identifiers still
+                # fail closed (identifier_coverage_incomplete).
+                obligations_satisfied = False
+                if obligations and obligations != targets:
+                    coverage = _evaluate_material_obligations(
+                        obligations=obligations,
+                        business=business,
+                        delivery=_plan_delivery_mode(plan),
+                    )
+                    obligations_satisfied = all(
+                        state == OBLIGATION_SATISFIED
+                        for _, state in coverage
+                    )
+                if not obligations_satisfied:
+                    return GovernedCapabilityAttempt(
+                        status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                        correlation_id=correlation,
+                        admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+                        limitations=(
+                            LIMITATION_INSUFFICIENT_EVIDENCE,
+                            "related_observations_insufficient",
+                            "ref05_target_unbound",
+                            *(
+                                f"ref05_missing_target:{token}"
+                                for token in targets[:8]
+                            ),
                         ),
+                        error_code="investigation_target_binding_failed",
+                        content=business[0].content,
+                        provenance=business[0].provenance,
+                        outcome=business[0].outcome,
+                    )
+                business = (
+                    dataclasses.replace(
+                        business[0],
+                        limitations=tuple(
+                            dict.fromkeys(
+                                list(business[0].limitations)
+                                + [
+                                    "ref05_target_unbound_nonblocking",
+                                    *(
+                                        f"ref05_missing_target:{token}"
+                                        for token in targets[:8]
+                                    ),
+                                ]
+                            )
+                        )[:24],
                     ),
-                    error_code="investigation_target_binding_failed",
-                    content=business[0].content,
-                    provenance=business[0].provenance,
-                    outcome=business[0].outcome,
                 )
         if obligations and obligations != targets:
             coverage = _evaluate_material_obligations(

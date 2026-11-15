@@ -109,3 +109,57 @@ def test_missing_expires_in_treated_as_fresh(auth, monkeypatch):
     session = auth.acquire_subject_access_session(http_post=fake_post, now=1.0)
     assert session.expires_at_epoch is None
     assert auth.subject_session_is_fresh(session, now=10_000.0)
+
+
+def _jwt_with_iss(iss: str) -> str:
+    import base64
+    import json
+
+    def b64(obj: dict) -> str:
+        raw = json.dumps(obj, separators=(",", ":")).encode()
+        return base64.urlsafe_b64encode(raw).decode().rstrip("=")
+
+    return f"{b64({'alg': 'none'})}.{b64({'iss': iss, 'sub': 'u'})}.sig"
+
+
+def test_mint_request_headers_default_localhost(auth, monkeypatch):
+    monkeypatch.delenv("DELIA_EVAL_TOKEN_HOST", raising=False)
+    assert auth.mint_request_headers() == {"Host": "localhost"}
+    monkeypatch.setenv("DELIA_EVAL_TOKEN_HOST", "")
+    assert auth.mint_request_headers() == {}
+    monkeypatch.setenv("DELIA_EVAL_TOKEN_HOST", "gateway.local")
+    assert auth.mint_request_headers() == {"Host": "gateway.local"}
+
+
+def test_subject_issuer_mismatch_fails_closed(auth, monkeypatch):
+    monkeypatch.setenv("DEV_PORTAL_USERNAME", "u")
+    monkeypatch.setenv("DEV_PORTAL_PASSWORD", "p")
+    monkeypatch.setenv(
+        "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
+    )
+    token = _jwt_with_iss("http://localhost/auth/realms/delpi")
+
+    def fake_post(_url, _form):
+        return {"access_token": token, "expires_in": 300}
+
+    with pytest.raises(RuntimeError, match="subject_issuer_mismatch"):
+        auth.acquire_subject_access_session(http_post=fake_post)
+
+
+def test_subject_issuer_aligned_passes(auth, monkeypatch):
+    monkeypatch.setenv("DEV_PORTAL_USERNAME", "u")
+    monkeypatch.setenv("DEV_PORTAL_PASSWORD", "p")
+    monkeypatch.setenv(
+        "KEYCLOAK_ISSUER", "http://localhost/auth/realms/delpi"
+    )
+    token = _jwt_with_iss("http://localhost/auth/realms/delpi")
+
+    def fake_post(_url, _form):
+        return {"access_token": token, "expires_in": 300}
+
+    session = auth.acquire_subject_access_session(http_post=fake_post)
+    assert session.access_token == token
+    assert (
+        auth.subject_token_issuer(token)
+        == "http://localhost/auth/realms/delpi"
+    )

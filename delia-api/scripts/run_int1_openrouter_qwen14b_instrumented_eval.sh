@@ -66,13 +66,18 @@ chmod 600 "${EVAL_ENV}"
   echo "DELIA_LLM_BASE_URL=https://openrouter.ai/api/v1"
   echo "KEYCLOAK_URL=http://keycloak:8080/auth"
   echo "KEYCLOAK_REALM=delpi"
-  # Issuer must match gateway-minted subject tokens (Portal path).
-  # Isolated evals against a productive realm must override via
-  # DELIA_EVAL_KEYCLOAK_ISSUER — the realm's public issuer claim.
+  # Issuer MUST equal the ``iss`` stamped on the gateway-minted subject
+  # token (Portal path → typically http://localhost/auth/realms/delpi).
+  # Overriding DELIA_EVAL_KEYCLOAK_ISSUER to a public host while minting
+  # via the internal gateway produces exchange_host_header mismatch and
+  # catalog_failure:mcp_authentication_failed ×N (proven 2026-11-15).
+  # The Python harness fail-closes on subject_issuer_mismatch.
   echo "KEYCLOAK_ISSUER=${DELIA_EVAL_KEYCLOAK_ISSUER:-http://localhost/auth/realms/delpi}"
   echo "KEYCLOAK_JWKS_URL=http://keycloak:8080/auth/realms/delpi/protocol/openid-connect/certs"
   echo "KEYCLOAK_AUDIENCE=delpi-central"
   echo "KC_GATEWAY_TOKEN_BASE=${DELIA_EVAL_KC_GATEWAY_TOKEN_BASE:-http://delpi-gateway/auth}"
+  # Align mint Host with c3r_mint_bearer / healthy MCP probe.
+  echo "DELIA_EVAL_TOKEN_HOST=${DELIA_EVAL_TOKEN_HOST:-localhost}"
   echo "CORE_API_URL=http://core-api:8000"
   echo "DELPI_AUTH_CORE_API_URL=http://core-api:8000"
   # INT-1 evals may point each owner at an isolated patched container
@@ -96,17 +101,34 @@ chmod 600 "${EVAL_ENV}"
   echo "DELIA_MCP_DAVI_BASE_URL=${_DAVI_URL}"
   _add_trusted_host "${_DAVI_URL}" "delpi-api-delpi"
   echo "DELIA_MCP_DAVI_ENABLED=true"
-  echo "DELIA_MCP_DAVI_HOST_HEADER=${DELIA_EVAL_DAVI_HOST_HEADER:-localhost:8000}"
+  # Internal MCP URLs require the specialist's container Host, not a
+  # public site. Inherited DELIA_EVAL_*_HOST_HEADER=minhadelpi.com.br
+  # from a polluted shell yields mcp_protocol_error while AuthN is fine.
+  # Assignment (not echo-arg substitution) so a refused override aborts
+  # the script under ``set -e`` instead of writing an empty header.
+  _mcp_host_or_default() {
+    local override="$1"
+    local default="$2"
+    if [[ -n "${override}" && "${override}" == *"."* && "${override}" != localhost* && "${override}" != 127.0.0.1* ]]; then
+      echo "refused: public MCP Host header '${override}' with internal MCP URL — unset DELIA_EVAL_*_HOST_HEADER" >&2
+      return 3
+    fi
+    printf '%s' "${override:-${default}}"
+  }
+  _DAVI_HOST="$(_mcp_host_or_default "${DELIA_EVAL_DAVI_HOST_HEADER:-}" "localhost:8000")"
+  echo "DELIA_MCP_DAVI_HOST_HEADER=${_DAVI_HOST}"
   _TEO_URL="${DELIA_EVAL_TEO_BASE_URL:-http://transformometro-api:8000/mcp}"
   echo "DELIA_MCP_TEO_BASE_URL=${_TEO_URL}"
   _add_trusted_host "${_TEO_URL}" "transformometro-api"
   echo "DELIA_MCP_TEO_ENABLED=true"
-  echo "DELIA_MCP_TEO_HOST_HEADER=${DELIA_EVAL_TEO_HOST_HEADER:-localhost:8000}"
+  _TEO_HOST="$(_mcp_host_or_default "${DELIA_EVAL_TEO_HOST_HEADER:-}" "localhost:8000")"
+  echo "DELIA_MCP_TEO_HOST_HEADER=${_TEO_HOST}"
   _VISTA_URL="${DELIA_EVAL_VISTA_BASE_URL:-http://tv-dashboard-api:8000/mcp}"
   echo "DELIA_MCP_VISTA_BASE_URL=${_VISTA_URL}"
   _add_trusted_host "${_VISTA_URL}" "tv-dashboard-api"
   echo "DELIA_MCP_VISTA_ENABLED=true"
-  echo "DELIA_MCP_VISTA_HOST_HEADER=${DELIA_EVAL_VISTA_HOST_HEADER:-localhost:8000}"
+  _VISTA_HOST="$(_mcp_host_or_default "${DELIA_EVAL_VISTA_HOST_HEADER:-}" "localhost:8000")"
+  echo "DELIA_MCP_VISTA_HOST_HEADER=${_VISTA_HOST}"
   if [[ -n "${_TRUSTED_HOSTS}" ]]; then
     echo "DELIA_MCP_TRUSTED_ENDPOINT_HOSTS=${_TRUSTED_HOSTS}"
   fi
@@ -114,7 +136,10 @@ chmod 600 "${EVAL_ENV}"
   echo "DELIA_C4_DAVI_PRODUCT_READ_ENABLED=1"
   echo "DELIA_C4_TEO_DASHBOARD_ANALYZE_ENABLED=1"
   echo "DELIA_EXCHANGE_CLIENT_ID=delia-api"
-  echo "DELIA_TOKEN_EXCHANGE_URL=http://keycloak:8080/auth/realms/delpi/protocol/openid-connect/token"
+  # Exchange MUST go through the gateway public path (compose.dev
+  # contract): direct keycloak:8080 stamps an internal ``iss`` that MCP
+  # resource servers reject when KEYCLOAK_ISSUER is the front-channel.
+  echo "DELIA_TOKEN_EXCHANGE_URL=${DELIA_EVAL_TOKEN_EXCHANGE_URL:-http://delpi-gateway/auth/realms/delpi/protocol/openid-connect/token}"
   echo "VITE_KC_CLIENT_ID=delpi-central"
   echo "DELIA_APP_ROOT=/app"
 } >>"${EVAL_ENV}"

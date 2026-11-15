@@ -7129,3 +7129,12 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **E8 real pós-fix:** `or-qwen14b-003efeba25ca` (5 cenários, two_agent=1) — planos aceitos; **ENV_BLOCKED** (`catalog_failure:mcp_authentication_failed` ×3); 0 MCP invokes; PROD_CONTAINER_UNTOUCHED=YES. Outcome empresarial desta amostra = INCONCLUSIVE.
 - **RESTRIÇÕES:** `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`; Agents 3/4 NOT_AUTHORIZED.
 - **NEXT:** `COORDINATION_C3_T2_R1_R6_FUNCTIONAL_REWORK_INDEPENDENT_REVIEW`.
+
+### 2026-11-15 — C3/T2: Outcome G2 + MCP AuthN + functional recovery
+
+- **TASK:** `DELIA-C3-T2-TWO-AGENT-OUTCOME-MCP-AUTH-AND-FUNCTIONAL-RECOVERY-01`; BASE `26c35d2ab5` (= origin/main no reanchor); REFERENCE_IMPL `daeaa7ae78` ancestral.
+- **A G2:** Parte A `fe75c65c9a13` — COMPLETE+200 declarado, publicação clarificação (H-A7); pós-Auth `69a616422687`/`f07f1be1c14a` — `teo.read`, total 109, obrigação SATISFIED, conteúdo «109 ativos». Fix REF05: finalize não veta agregação SATISFIED por `target_identities` espúrio (`ativos`).
+- **B AuthN:** primeira fronteira divergente = `KEYCLOAK_ISSUER` configurado ≠ `iss` do subject mint; harness EXTEND fail-closed + gateway exchange + Host mint. E2E pós-fix: `mcp_authentication_failed=0`, READ real.
+- **C:** R5 unitários PASS; R2 sem novo diff contratual; R6 D2 clarificação; multi-turno formal OPEN.
+- **RESTRIÇÕES:** deploy/promo/fase/Agents 3–4 NOT_AUTHORIZED.
+- **NEXT:** `COORDINATION_C3_T2_OUTCOME_MCP_AUTH_FUNCTIONAL_RECOVERY_INDEPENDENT_REVIEW`.

@@ -2094,3 +2094,16 @@ Review verdict persisted verbatim: `evidence/c3-t2-parallel-mcp-discovery-decisi
 | `T2-INTERACTIVE-TURN-CALL-TIMEOUT-CEILING-SIBLING` | `OPEN_LOW (pré-existente; fora do clamp admission)` | Sibling observável: `HandleInteractiveConversationTurn._invoke_model_call` monta `timeout_seconds=min(configured, remaining)` sem clamp a `InvokeModel.MAX_TIMEOUT_SECONDS`. Config atual 30s (seguro); contrato admite até 300s — config >60 reproduziria `invalid_request`. Não introduzido por este rework; owner interaction/runtime. |
 
 **NEXT:** `COORDINATION_C3_T2_R1_R6_FUNCTIONAL_REWORK_INDEPENDENT_REVIEW`. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`; Agents 3/4 NOT_AUTHORIZED. Verifier R1: `ACCEPT_WITH_RESIDUAL` (execução pytest no container `TEST_NOT_RUN` para o verificador; prova estática RED→GREEN confirmada).
+
+### 2026-11-15 — Outcome/MCP Auth functional recovery (`DELIA-C3-T2-TWO-AGENT-OUTCOME-MCP-AUTH-AND-FUNCTIONAL-RECOVERY-01`)
+
+| ID | Estado | Evidência |
+|---|---|---|
+| `T2-E2E-SUBJECT-ISSUER-MISMATCH` | `REMEDIATED (harness fail-closed)` | Causa: `KEYCLOAK_ISSUER=https://minhadelpi.com.br/...` com mint gateway `iss=http://localhost/auth/realms/delpi` → `exchange_host_header` público → `mcp_authentication_failed`×3 (matriz A/B no container). Fix: `assert_subject_issuer_matches_configured` + Host mint localhost + scope `openid profile email` + `DELIA_TOKEN_EXCHANGE_URL` via gateway + recusa Host MCP público herdado. Guard live: exit 1 com `subject_issuer_mismatch`. |
+| `T2-G2-REF05-SPURIOUS-FILTER-TARGET` | `REMEDIATED (bounded EXTEND)` | Finalize: se obrigações materiais SATISFIED e `target_identities` não faz bind REF05, não vetoar com `related_observations_insufficient` — `ref05_target_unbound_nonblocking`. RED→GREEN unitários; live G2 publica 109 (não 200) com SATISFIED (`or-qwen14b-f07f1be1c14a`). |
+| `T2-G2-GROUNDING-CLARIFICATION-FLAG` | `OPEN_LOW` | G2 pós-fix ainda pode carregar `agent_requested_clarification`/`NON_GROUNDED` enquanto o conteúdo publicado é a contagem 109 SATISFIED — residual de classificação grounding vs publicação. |
+| `R3-MCP-AUTH-E2E` | `RECOVERED_IN_SAMPLE` | Pós-fix: `mcp_authentication_failed=0` em `69a616422687`/`f07f1be1c14a`; READ autoritativa (`MCP:read`) com total 109. |
+| `R4` | `PENDING` | Identidade deny ainda ausente. |
+| `R6-MULTI-TURN-RECOVERY` | `PARTIAL` | Clarificação real D2 observada; recovery turno seguinte formal ainda `TEST_NOT_RUN` (corpus prior vazio). |
+
+**NEXT:** `COORDINATION_C3_T2_OUTCOME_MCP_AUTH_FUNCTIONAL_RECOVERY_INDEPENDENT_REVIEW`. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.

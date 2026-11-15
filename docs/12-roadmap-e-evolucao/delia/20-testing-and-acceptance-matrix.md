@@ -3117,3 +3117,17 @@ Positivos/negativos/holdouts separados; nenhuma resposta programada conta como g
 | E8 A/B outcome | `INCONCLUSIVE` / `ENV_BLOCKED` | `or-qwen14b-003efeba25ca` — MCP auth harness isolado; 0 invokes |
 
 **Restrições:** `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`; Agents 3/4 NOT_AUTHORIZED. **NEXT=`COORDINATION_C3_T2_R1_R6_FUNCTIONAL_REWORK_INDEPENDENT_REVIEW`.**
+
+### 2026-11-15 — Outcome G2 + MCP AuthN recovery (two Agents)
+
+**TASK:** `DELIA-C3-T2-TWO-AGENT-OUTCOME-MCP-AUTH-AND-FUNCTIONAL-RECOVERY-01`.
+
+| Gate | Oráculo | Evidência |
+|---|---|---|
+| G2 200 vs 109 | `PASS` (publicação) / residual grounding OPEN_LOW | Parte A: 200 declarado não publicado; pós-fix `f07f1be1c14a`: conteúdo 109 + SATISFIED; REF05 nonblocking unitário GREEN |
+| MCP AuthN probe×E2E | `PASS` (causa + remediação) | Matriz issuer: público FAIL×3; localhost PASS 16 caps; harness `subject_issuer_mismatch` fail-closed; E2E `mcp_authentication_failed=0` |
+| R5 paginação | `PASS` unitário | `test_r45_pagination_integrity_rework` GREEN |
+| R6 clarificação | `PARTIAL` | D2 `needs_clarification` real; multi-turno `TEST_NOT_RUN` |
+| R4 AuthZ deny | `PENDING` | Sem identidade restrita |
+
+**NEXT=`COORDINATION_C3_T2_OUTCOME_MCP_AUTH_FUNCTIONAL_RECOVERY_INDEPENDENT_REVIEW`.**
