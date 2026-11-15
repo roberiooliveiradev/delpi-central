@@ -192,10 +192,9 @@ RISKS: |
   - N concurrent Keycloak exchanges (small N, monitor)
   - Determinism drift in failures ordering (submission-order emit)
 
-DECISION: READY_FOR_COORDINATION_AUTHORIZATION
-  All blockers inventoried with code references; the design is
-  bounded and preserves every governed invariant (deadline, cancel,
-  partial failure, deterministic order, per-owner credentials,
-  discovery≠approval). Implementation NOT authorized/executed —
-  awaiting explicit coordination authorization.
+DECISION: SUPERSEDED_BY_COORDINATION_REVIEW
+  This historical inventory proposed the experiment. The current decision
+  appears at the top of this document: bounded isolated experiment only,
+  subject to effective total timeout, identity isolation, and test gates.
+  No production implementation is authorized.
 ```
