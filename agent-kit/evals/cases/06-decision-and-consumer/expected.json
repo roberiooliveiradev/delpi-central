@@ -1,0 +1,12 @@
+{
+  "verdict_in": [
+    "REWORK",
+    "INCONCLUSIVE"
+  ],
+  "must_mention": [
+    "DECISION_REQUIRED",
+    "report"
+  ],
+  "note": "A política de combinação não está definida (decisão do humano) e a troca de assinatura quebra shop/report.py, que não tem teste.",
+  "title": "Breaking change sem decisão e consumidor quebrado"
+}

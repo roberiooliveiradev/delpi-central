@@ -54,6 +54,7 @@ Padrão visual transversal dos Portais: [padrao-visual-portais-minha-delpi.md](.
 | Eventos de domínio | [padrao-de-evento.md](./padrao-de-evento.md) |
 | Custom GPT Actions + OAuth Keycloak (bridge / histórico) | [padrao-custom-gpt-actions-oauth.md](./padrao-custom-gpt-actions-oauth.md) |
 | Code review | [checklist-code-review.md](./checklist-code-review.md) |
+| Verificação independente por agente (`delpi-verifier`) | [agent-kit/README.md](../../agent-kit/README.md) · contrato em `AGENTS.md` § Verificação |
 
 ---
 

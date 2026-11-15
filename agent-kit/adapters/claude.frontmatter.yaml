@@ -1,0 +1,13 @@
+name: delpi-verifier
+description: >-
+  Verificador independente de entregas. Use PROACTIVELY, em primeiro plano, depois de implementar ou
+  alterar código, configuração, migration, contrato ou teste, e antes de declarar a tarefa concluída.
+  Roda testes e checagens sem alterar nada e devolve veredito com ordens de correção.
+tools: Read, Grep, Glob, Bash
+model: {{MODEL}}
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: '{{GUARD_ALWAYS_CMD}}'

@@ -1,0 +1,119 @@
+diff --git a/shop/checkout.py b/shop/checkout.py
+index a2ceb73..332ca82 100644
+--- a/shop/checkout.py
++++ b/shop/checkout.py
+@@ -1,9 +1,13 @@
+-"""Total do pedido: subtotal, cupom e frete."""
++"""Total do pedido: subtotal, cupons e frete."""
+ 
+-from shop.pricing import apply_coupon, subtotal
++from shop.pricing import SHIPPING_COUPONS, apply_coupon, subtotal
+ from shop.shipping import shipping_cost
+ 
+ 
+-def checkout_total(items, region, coupon=None):
+-    discounted = apply_coupon(subtotal(items), coupon)
+-    return round(discounted + shipping_cost(discounted, region), 2)
++def checkout_total(items, region, coupons=None):
++    coupons = coupons or []
++    discounted = apply_coupon(subtotal(items), coupons)
++    shipping = shipping_cost(discounted, region)
++    if SHIPPING_COUPONS.intersection(coupons):
++        shipping = 0.0
++    return round(discounted + shipping, 2)
+diff --git a/shop/pricing.py b/shop/pricing.py
+index cbd2d8d..83d2836 100644
+--- a/shop/pricing.py
++++ b/shop/pricing.py
+@@ -1,6 +1,7 @@
+ """Preço dos itens e cupons de desconto."""
+ 
+ COUPONS = {"DESC10": 0.10}
++SHIPPING_COUPONS = {"FRETEGRATIS"}
+ 
+ 
+ def subtotal(items):
+@@ -8,10 +9,12 @@ def subtotal(items):
+     return round(sum(item["price"] * item["qty"] for item in items), 2)
+ 
+ 
+-def apply_coupon(total, coupon):
+-    """Aplica um cupom de desconto. Cupom desconhecido é erro."""
+-    if coupon is None:
+-        return total
+-    if coupon not in COUPONS:
+-        raise ValueError(f"cupom inválido: {coupon}")
+-    return round(total * (1 - COUPONS[coupon]), 2)
++def apply_coupon(total, coupons):
++    """Aplica uma lista de cupons, acumulando descontos."""
++    for coupon in coupons or []:
++        if coupon in SHIPPING_COUPONS:
++            continue
++        if coupon not in COUPONS:
++            raise ValueError(f"cupom inválido: {coupon}")
++        total = round(total * (1 - COUPONS[coupon]), 2)
++    return total
+diff --git a/tests/test_checkout.py b/tests/test_checkout.py
+index 88900f3..b83055c 100644
+--- a/tests/test_checkout.py
++++ b/tests/test_checkout.py
+@@ -11,7 +11,7 @@ class CheckoutTests(unittest.TestCase):
+         self.assertEqual(checkout_total([{"price": 100.0, "qty": 2}], "N"), 200.0)
+ 
+     def test_coupon_before_shipping(self):
+-        self.assertEqual(checkout_total([{"price": 100.0, "qty": 2}], "S", "DESC10"), 205.0)
++        self.assertEqual(checkout_total([{"price": 100.0, "qty": 2}], "S", ["DESC10"]), 205.0)
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/tests/test_free_shipping.py b/tests/test_free_shipping.py
+new file mode 100644
+index 0000000..51fd5e5
+--- /dev/null
++++ b/tests/test_free_shipping.py
+@@ -0,0 +1,23 @@
++import unittest
++
++from shop.checkout import checkout_total
++from shop.pricing import subtotal
++
++
++class FreeShippingCouponTests(unittest.TestCase):
++    ITEMS = [{"price": 50.0, "qty": 2}]
++
++    def test_free_shipping_two_regions(self):
++        for region in ("SE", "N"):
++            self.assertEqual(checkout_total(self.ITEMS, region, ["FRETEGRATIS"]), subtotal(self.ITEMS))
++
++    def test_stacking_with_desc10(self):
++        self.assertEqual(checkout_total(self.ITEMS, "SE", ["FRETEGRATIS", "DESC10"]), 90.0)
++
++    def test_unknown_coupon(self):
++        with self.assertRaises(ValueError):
++            checkout_total(self.ITEMS, "SE", ["NAOEXISTE"])
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/tests/test_pricing.py b/tests/test_pricing.py
+index c045e20..8e2b818 100644
+--- a/tests/test_pricing.py
++++ b/tests/test_pricing.py
+@@ -8,14 +8,14 @@ class PricingTests(unittest.TestCase):
+         self.assertEqual(subtotal([{"price": 10.0, "qty": 2}, {"price": 5.5, "qty": 1}]), 25.5)
+ 
+     def test_coupon_desc10(self):
+-        self.assertEqual(apply_coupon(100.0, "DESC10"), 90.0)
++        self.assertEqual(apply_coupon(100.0, ["DESC10"]), 90.0)
+ 
+     def test_no_coupon(self):
+-        self.assertEqual(apply_coupon(100.0, None), 100.0)
++        self.assertEqual(apply_coupon(100.0, []), 100.0)
+ 
+     def test_invalid_coupon(self):
+         with self.assertRaises(ValueError):
+-            apply_coupon(100.0, "NAOEXISTE")
++            apply_coupon(100.0, ["NAOEXISTE"])
+ 
+ 
+ if __name__ == "__main__":

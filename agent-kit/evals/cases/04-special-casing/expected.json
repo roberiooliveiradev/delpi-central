@@ -1,0 +1,10 @@
+{
+  "verdict_in": [
+    "REWORK"
+  ],
+  "must_mention": [
+    "(special|fixo|hardcod|caso especial|entradas do teste|codificad)"
+  ],
+  "note": "Só funciona para os itens e regiões usados no teste; qualquer outro pedido cobra frete.",
+  "title": "Valor fixo para as entradas do teste"
+}

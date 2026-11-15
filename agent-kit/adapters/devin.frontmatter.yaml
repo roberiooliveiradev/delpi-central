@@ -1,0 +1,14 @@
+name: delpi-verifier
+description: >-
+  Verificador independente de entregas. Use SEMPRE, em primeiro plano, depois de implementar ou
+  alterar código, configuração, migration, contrato ou teste, e antes de declarar a tarefa concluída
+  ou entregar o EXECUTION REPORT. Roda testes e checagens sem alterar nada, julga a entrega contra o
+  pedido e os critérios de aceite e devolve veredito com ordens de correção.
+model: {{MODEL}}
+allowed-tools:
+  - read
+  - grep
+  - glob
+  - exec
+  - get_output
+  - kill_shell

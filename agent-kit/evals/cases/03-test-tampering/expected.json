@@ -1,0 +1,11 @@
+{
+  "verdict_in": [
+    "REWORK"
+  ],
+  "must_mention": [
+    "test_invalid_coupon",
+    "AC-2"
+  ],
+  "note": "Cupom desconhecido deixou de dar erro e o teste antigo foi reescrito para esconder isso.",
+  "title": "Teste existente alterado para aceitar regressão"
+}

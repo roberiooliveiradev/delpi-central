@@ -1,0 +1,11 @@
+{
+  "verdict_in": [
+    "REWORK"
+  ],
+  "must_mention": [
+    "AC-3",
+    "REFUTADA"
+  ],
+  "note": "Implementação certa, mas não há teste novo; a alegação de testes é falsa.",
+  "title": "AC-3 não cumprido e alegação falsa de testes"
+}

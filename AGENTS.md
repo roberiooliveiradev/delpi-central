@@ -44,6 +44,56 @@
   `env.<x>.example` ou `.env.<variante>` — variação vai em env var ou
   profile (`platform-delivery-runtime-operations.mdc`).
 
+## Verificação (delpi-verifier)
+
+<!-- delpi-verifier:contract v1 -->
+
+Verificação independente da entrega por outro agente, com outro modelo. Kit, protocolo e
+instalação: `agent-kit/README.md`.
+
+### A. Ciclo do executor
+
+Obrigatório antes de declarar a tarefa concluída e **antes do commit/push e do deploy
+canônico** acima. Fonte canônica do ciclo: parte A de
+`agent-kit/verifier/project-contract.md`. Em resumo:
+
+1. Depois de alterar código, configuração, migration, contrato ou teste, chamar o subagent
+   `delpi-verifier` em primeiro plano, com o `PEDIDO DE VERIFICAÇÃO` (objetivo com RQ/AC,
+   escopo `working tree` ou `base..head`, alegações, modelo do executor, rodada).
+2. Corrigir cada ordem de correção (OC) no código de produção, ou contestar com evidência.
+   Nunca alterar teste, runner ou limites de cobertura para a reconferência passar.
+3. Repetir com instância nova (rodada + 1), no máximo 3 rodadas.
+4. `DECISION_REQUIRED` ou `EXECUTION_DRIFT` encerram o ciclo: devolver a decisão ao usuário.
+5. EXECUTION REPORT com o veredito do verificador sem edição e a tabela de rodadas.
+
+### B. Específico deste repositório
+
+- **Fontes de autoridade:** a hierarquia de `.cursor/rules/evidence-driven-execution.mdc`
+  (§ Hierarquia de fontes de verdade), começando por
+  `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`.
+- **Definition of Done e evidência:** `.cursor/rules/test-and-commit.mdc`,
+  `.cursor/rules/platform-quality-testing.mdc` e
+  `docs/11-padroes-de-desenvolvimento/checklist-code-review.md` (declarar quais das oito
+  responsabilidades foram materiais).
+- **Comandos de verificação:**
+  - testes do serviço/plugin afetado, conforme o workflow em `.github/workflows/` ou o
+    `scripts/ci-*.sh` correspondente;
+  - gates transversais: § "Comandos de enforcement transversal" de `test-and-commit.mdc`;
+  - regras `.cursor` alteradas: `python scripts/audit_cursor_rules.py`;
+  - documentação: `python scripts/audit_documentation_structure.py`;
+  - `agent-kit/` alterado: `cd agent-kit && python -m unittest discover -s tests`.
+- **Regras que não podem ser quebradas:** mapa canônico de
+  `.cursor/rules/centralized-rules-first.mdc` (owners transversais) e as regras `.cursor`
+  aplicáveis aos arquivos do diff.
+- **Áreas sensíveis:** autenticação/autorização (fail-closed, teste negado), escrita no
+  Protheus e feature gates produtivos, migrations, e a exceção da Pesquisa de Satisfação
+  (seção Entrega): nada no diff pode expor a funcionalidade em PROD.
+- **Comandos proibidos ao verificador (além dos padrões do kit):** deploy em `srv-api`
+  (`ssh`, `up-prod-sequential.sh`), subir/derrubar containers, migrations, chamadas de
+  escrita a APIs ou bancos de HML/PROD.
+- **Vocabulário extra:** classificações de evidência de `evidence-driven-execution.mdc`
+  (`CONFIRMADO_NO_CODIGO`, `INFERENCIA`, …) e estados de ledger `RQ-*`.
+
 ## Git Branch and Worktree Governance — User Approval Required
 
 Regra 1 — Branch canônica. `main` é a branch canônica de integração

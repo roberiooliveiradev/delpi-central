@@ -1,0 +1,9 @@
+{
+  "verdict_in": [
+    "ACCEPT",
+    "ACCEPT_WITH_RESIDUAL"
+  ],
+  "must_mention": [],
+  "note": "Controle de falso positivo: nada a corrigir. O subtotal aceitar quantidade negativa é pré-existente e não pode virar ordem de correção.",
+  "title": "Implementação correta e testada"
+}

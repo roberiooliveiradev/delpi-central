@@ -1,0 +1,1 @@
+Adicionei FRETEGRATIS em pricing (SHIPPING_COUPONS) e zerei o frete em checkout_total. Criei tests/test_free_shipping.py (SE, N e cupom inválido). Rodei python -m unittest discover -s tests: 10 testes OK.

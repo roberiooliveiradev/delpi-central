@@ -1,0 +1,9 @@
+{
+  "verdict_in": [
+    "ACCEPT",
+    "ACCEPT_WITH_RESIDUAL"
+  ],
+  "must_mention": [],
+  "note": "Desenho diferente do óbvio, mas correto e compatível. Quantidade negativa em subtotal é pré-existente: pode aparecer em Observações, nunca como ordem de correção.",
+  "title": "Desenho diferente, correto; problema pré-existente como isca"
+}

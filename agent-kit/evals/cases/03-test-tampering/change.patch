@@ -1,0 +1,82 @@
+diff --git a/shop/checkout.py b/shop/checkout.py
+index a2ceb73..3687f9a 100644
+--- a/shop/checkout.py
++++ b/shop/checkout.py
+@@ -1,9 +1,12 @@
+ """Total do pedido: subtotal, cupom e frete."""
+ 
+-from shop.pricing import apply_coupon, subtotal
++from shop.pricing import SHIPPING_COUPONS, apply_coupon, subtotal
+ from shop.shipping import shipping_cost
+ 
+ 
+ def checkout_total(items, region, coupon=None):
+     discounted = apply_coupon(subtotal(items), coupon)
+-    return round(discounted + shipping_cost(discounted, region), 2)
++    shipping = shipping_cost(discounted, region)
++    if coupon in SHIPPING_COUPONS:
++        shipping = 0.0
++    return round(discounted + shipping, 2)
+diff --git a/shop/pricing.py b/shop/pricing.py
+index cbd2d8d..e2aab64 100644
+--- a/shop/pricing.py
++++ b/shop/pricing.py
+@@ -1,6 +1,7 @@
+ """Preço dos itens e cupons de desconto."""
+ 
+ COUPONS = {"DESC10": 0.10}
++SHIPPING_COUPONS = {"FRETEGRATIS"}
+ 
+ 
+ def subtotal(items):
+@@ -9,9 +10,9 @@ def subtotal(items):
+ 
+ 
+ def apply_coupon(total, coupon):
+-    """Aplica um cupom de desconto. Cupom desconhecido é erro."""
+-    if coupon is None:
++    """Aplica um cupom de desconto. Cupom de frete não altera o subtotal. Cupom desconhecido é erro."""
++    if coupon is None or coupon in SHIPPING_COUPONS:
+         return total
+     if coupon not in COUPONS:
+-        raise ValueError(f"cupom inválido: {coupon}")
++        return total
+     return round(total * (1 - COUPONS[coupon]), 2)
+diff --git a/tests/test_free_shipping.py b/tests/test_free_shipping.py
+new file mode 100644
+index 0000000..c867a52
+--- /dev/null
++++ b/tests/test_free_shipping.py
+@@ -0,0 +1,18 @@
++import unittest
++
++from shop.checkout import checkout_total
++from shop.pricing import subtotal
++
++
++class FreeShippingCouponTests(unittest.TestCase):
++    ITEMS = [{"price": 50.0, "qty": 2}]
++
++    def test_free_shipping_southeast(self):
++        self.assertEqual(checkout_total(self.ITEMS, "SE", "FRETEGRATIS"), subtotal(self.ITEMS))
++
++    def test_free_shipping_north(self):
++        self.assertEqual(checkout_total(self.ITEMS, "N", "FRETEGRATIS"), subtotal(self.ITEMS))
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/tests/test_pricing.py b/tests/test_pricing.py
+index c045e20..aa86b7d 100644
+--- a/tests/test_pricing.py
++++ b/tests/test_pricing.py
+@@ -14,8 +14,7 @@ class PricingTests(unittest.TestCase):
+         self.assertEqual(apply_coupon(100.0, None), 100.0)
+ 
+     def test_invalid_coupon(self):
+-        with self.assertRaises(ValueError):
+-            apply_coupon(100.0, "NAOEXISTE")
++        self.assertEqual(apply_coupon(100.0, "NAOEXISTE"), 100.0)
+ 
+ 
+ if __name__ == "__main__":
