@@ -1333,11 +1333,39 @@ def extract_pagination_envelope(
         normalized_items = tuple(
             item for item in items if isinstance(item, Mapping)
         )
+        # Owners may nest the declared page contract in a ``pagination``
+        # block next to ``items`` (e.g. transformometro record_read):
+        # {items, total, pagination: {page, page_size, has_more}}.
+        # Flat fields still win when both exist — read, never invent.
+        nested = node.get("pagination")
+        meta = nested if isinstance(nested, Mapping) else {}
+        has_more = _as_bool(node.get("has_more"))
+        if has_more is None:
+            has_more = _as_bool(meta.get("has_more"))
+        if (
+            has_more is None
+            and _as_bool(node.get("truncated")) is True
+            and normalized_items
+        ):
+            # Owner-declared truncation beside an authoritative total
+            # proves rows exist beyond the delivered slice — faithful
+            # incompleteness, not an invented cursor.
+            total = _read_total(node)
+            if total is None or total > len(normalized_items):
+                has_more = True
         return PaginationEnvelope(
             items=normalized_items,
-            page=_as_int(node.get("page")),
-            page_size=_as_int(node.get("page_size")),
-            has_more=_as_bool(node.get("has_more")),
+            page=(
+                _as_int(node.get("page"))
+                if _as_int(node.get("page")) is not None
+                else _as_int(meta.get("page"))
+            ),
+            page_size=(
+                _as_int(node.get("page_size"))
+                if _as_int(node.get("page_size")) is not None
+                else _as_int(meta.get("page_size"))
+            ),
+            has_more=has_more,
             total_count=_read_total(node),
         )
     return None

@@ -217,3 +217,73 @@ def test_r45r_t15_concurrent_mutation_via_duplicate_overlap():
 
 def test_r45r_t18_no_material_act():
     assert "ACT" not in UNKNOWN_TOTAL_MESSAGE
+
+
+def test_r45r_t19_nested_pagination_block_owner_contract():
+    # Owner wire shape (transformometro record_read paginated path):
+    # page metadata lives inside a nested ``pagination`` block next to
+    # ``items`` — the extractor must surface the declared envelope, not
+    # drop it as unsigned.
+    structured = {
+        "data": {
+            "total": 109,
+            "items": [{"id": f"proc-{i}"} for i in range(40)],
+            "pagination": {"page": 1, "page_size": 40, "has_more": True},
+            "filters_applied": {"action": "search"},
+        }
+    }
+    envelope = extract_pagination_envelope(structured)
+    assert envelope is not None
+    assert envelope.page == 1
+    assert envelope.page_size == 40
+    assert envelope.has_more is True
+    assert envelope.total_count == 109
+    assert len(envelope.items) == 40
+
+
+def test_r45r_t20_owner_declared_truncated_marks_incomplete():
+    # Owner-declared truncation (``truncated: true`` next to a capped
+    # ``items`` list) plus an authoritative total proves more rows
+    # exist — ``has_more`` must not stay unsigned while the contract
+    # offers page params.
+    structured = {
+        "data": {
+            "total": 109,
+            "items": [{"id": f"proc-{i}"} for i in range(40)],
+            "truncated": True,
+            "returned": 40,
+        }
+    }
+    envelope = extract_pagination_envelope(structured)
+    assert envelope is not None
+    assert envelope.has_more is True
+    assert envelope.total_count == 109
+
+
+def test_r45r_t21_nested_last_page_signed_complete():
+    structured = {
+        "data": {
+            "total": 109,
+            "items": [{"id": f"proc-{i}"} for i in range(29)],
+            "pagination": {"page": 3, "page_size": 40, "has_more": False},
+        }
+    }
+    envelope = extract_pagination_envelope(structured)
+    assert envelope is not None
+    assert envelope.page == 3
+    assert envelope.has_more is False
+
+
+def test_r45r_t22_truncated_false_stays_unsigned_or_complete():
+    # Owner declaring ``truncated: false`` with total == items must
+    # never be promoted to has_more=True — faithful, no invention.
+    structured = {
+        "data": {
+            "total": 5,
+            "items": [{"id": f"i-{i}"} for i in range(5)],
+            "truncated": False,
+        }
+    }
+    envelope = extract_pagination_envelope(structured)
+    assert envelope is not None
+    assert envelope.has_more is not True

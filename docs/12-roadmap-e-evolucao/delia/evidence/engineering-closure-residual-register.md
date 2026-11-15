@@ -1989,3 +1989,14 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | `T2-TWO-AGENT-OUTCOME-COST-GENERALIZATION` | `NO_BENEFIT_DEMONSTRATED_IN_SAMPLE` | B: +37% in-tokens, +67% out-tokens, ~2,07× latência, +13 MCP calls; outcome não superior (GROUNDED 1 vs 3; complete 3 vs 5); goal-accept 11/11 vs 10/18 — único ganho comprovado |
 
 **VERDICT=`B_DO_NOT_PROMOTE (evidência de custo sem benefício)`; `R3=STABLE_IN_SAMPLE`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.** **NEXT=`COORDINATION_C3_T2_TWO_AGENT_POST_R3_AB_REPROOF_INDEPENDENT_REVIEW`.**
+
+### 2026-11-15 — R2_CONTINUITY_HANDOFF_DIAGNOSTIC: estados atualizados
+
+| ID | Estado | Evidência |
+|---|---|---|
+| `R2-CONTINUITY-PAGINATION` | `PARTIAL_REMEDIATED / OPEN_LOW residual` | primeira fronteira PROVEN+fix: `extract_pagination_envelope` ignorava `pagination:{}` aninhado e `truncated` declarado → `has_more` nunca surfava; corrigido (RED×3→GREEN, 1743 PASS, live `has_more:true`). Residual: convergência de continuação do loop do modelo não provada |
+| `T2-COMPREHENSION-BLIND-ANCHORS` | `OPEN_LOW (novo)` | Compreensão declara `evidence_needed` sem ver `live_catalog` — 2–4 req/run em correções; candidato bounded: ecoar catálogo bounded nas instruções (mesma fronteira, sem mecanismo novo) |
+| `T2-SEQUENTIAL-CATALOG-LIST` | `OPEN_LOW (novo)` | `_groups` serializa credential+tools/list ×N especialistas (~15s fixos/turno); paralelismo governado = proposta ARCHITECTURE_DECISION_REQUIRED |
+| `T2-MODEL-CONTINUATION-CONVERGENCE` | `OPEN_LOW (novo)` | com contrato correto ao vivo, modelo ainda não demonstrou caminhar páginas; sobre-filtro observado (q param sobre enumeração) — comportamental, não boundary |
+| `R3-INTRA-SCENARIO-TOKEN-VALIDITY` | `OPEN_LOW` | sem mudança |
+| `DAVI-OWNER-AVAILABILITY` | `OPEN_ENV` | sem mudança |

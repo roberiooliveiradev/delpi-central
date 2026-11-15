@@ -3092,3 +3092,11 @@ Positivos/negativos/holdouts separados; nenhuma resposta programada conta como g
 **Leitura:** ganho cognitivo real e único de B = proposição de objetivo de primeira (11/11 vs 10/18, ecoa o achado anterior). Custo: ~+37% tokens entrada, +67% saída, ~2,07× latência, +13 invokes MCP. Outcome empresarial **não superior** (GROUNDED 1 vs 3; ±2 em n=12 é ruído, mas o ônus da prova de benefício não foi atendido). `T2-INVESTIGATION-TOKEN-CAPTURE` REAL_REPROOF=PROVEN — tokens medidos nos dois braços, interrompidos honestos (incl. B `INT2_E` 360s/0 tokens registrado como interrupted). `R3` sem recorrência na amostra (0 auth failures, 10 re-mints). Residual novo observado em B: `ref05_target_unbound`/`evidence_ref_unbound` (obrigação aceita não demonstrada — `INT3-OBLIGATION-DEMONSTRATION-DEPTH`).
 
 **Veredito executor:** `B_NO_BUSINESS_GAIN_DEMONSTRATED` → `DO_NOT_PROMOTE`; variante permanece flag-gated experimental; decisão final sob revisão independente.
+
+### 2026-11-15 — C3/T2: evidência do diagnóstico R2 + correção do envelope de paginação
+
+**RED→GREEN (`test_r45_pagination_integrity_rework` t19–t22):** payload owner-shape `{data:{total, items[40], pagination:{page,page_size,has_more}}}` — antes: envelope com page/has_more `null`; depois: valores declarados reais. `truncated:true` + total>items → `has_more=True` (owner-declared incompleteness); `truncated:false` jamais promove (negativo preservado). Suite completa **1743 PASS**.
+
+**Live reproof (smoke isolado, prod intocada):** `or-qwen14b-53bcadf6678e` — `tool_observation.pagination = {page:null,page_size:null,has_more:true,total_count:109,items_in_page:40}` + continuation_note — antes `has_more:null`; agregação correta via `total`. `or-qwen14b-b9e8153459c3` (arm B INT2_A) — envelope correto em resultado vazio (`has_more:null,total:0`); comportamento do modelo (sobre-filtro) registrado como residual comportamental, não de fronteira.
+
+**Latência por estágio (traces pareados, s):** catálogo+session+toolset ≈15,2 fixo (ambos braços); Compreensão B: 9–116 (mediana ~21); Investigação+tools: ~20–160/cenário; MCP invoke ~0,3s/owner-call (teo).
