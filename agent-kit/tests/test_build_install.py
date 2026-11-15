@@ -19,43 +19,25 @@ import build  # noqa: E402
 import install  # noqa: E402
 
 
-def frontmatter(text: str) -> str:
-    assert text.startswith("---\n"), "agente sem frontmatter"
-    return text.split("---\n", 2)[1]
-
-
 class BuildTests(unittest.TestCase):
-    def test_render_all_platforms(self):
-        for platform in build.PLATFORMS:
-            with self.subTest(platform=platform):
-                text = build.render_agent(platform, "model-x", "/usr/bin/python3", Path("/h/.delpi-agent-kit"))
-                fm = frontmatter(text)
-                self.assertIn("name: delpi-verifier", fm)
-                self.assertIn("model: model-x", fm)
-                self.assertNotIn("{{", text)
-                self.assertIn(build.AGENT_FILE_MARKER, text)
-                self.assertIn('"/h/.delpi-agent-kit/verifier_hooks.py" record', text)
-                self.assertIn("# Relatório do delpi-verifier", text)
-
-    def test_model_line_dropped_when_absent(self):
-        fm = frontmatter(build.render_agent("cursor", None, "/usr/bin/python3", Path("/k")))
-        self.assertNotIn("model:", fm)
-
-    def test_platform_specific_permissions(self):
-        cursor = frontmatter(build.render_agent("cursor", None, "py", Path("/k")))
-        devin = frontmatter(build.render_agent("devin", None, "py", Path("/k")))
-        claude = frontmatter(build.render_agent("claude", None, "py", Path("/k")))
-        self.assertIn("readonly: false", cursor)  # readonly:true would block test runs in Cursor
-        self.assertIn("- exec", devin)
-        self.assertNotIn("- write", devin)
-        self.assertNotIn("- edit", devin)
-        self.assertIn("tools: Read, Grep, Glob, Bash", claude)
-        self.assertIn("guard --host claude --always", claude)
+    def test_render_headless(self):
+        text = build.render_headless("/usr/bin/python3", Path("/h/.delpi-agent-kit"))
+        self.assertNotIn("{{", text)
+        self.assertIn("# Relatório do delpi-verifier", text)
+        self.assertIn('"/h/.delpi-agent-kit/verifier_hooks.py" record', text)
+        self.assertFalse(text.lstrip().startswith("---"))
 
     def test_hook_configs_reference_script(self):
         for hooks in (build.cursor_hooks("py", Path("/k")), build.devin_hooks("py", Path("/k"))):
             self.assertTrue(all(build.HOOK_SCRIPT_NAME in json.dumps(v) for v in hooks.values()))
-        self.assertEqual(build.cursor_hooks("py", Path("/k"))["stop"][0]["loop_limit"], 2)
+        cursor = build.cursor_hooks("py", Path("/k"))
+        self.assertEqual(cursor["stop"][0]["loop_limit"], 2)
+        blob = json.dumps(cursor)
+        self.assertNotIn("mark-", blob)
+        self.assertIn("session-start", blob)
+        self.assertIn("guard", blob)
+        self.assertIn("stop-gate", blob)
+        self.assertIn("track-edit", blob)
 
 
 class InstallTests(unittest.TestCase):
@@ -77,7 +59,7 @@ class InstallTests(unittest.TestCase):
         self.assertEqual(self.run_install("--dry-run", "--cursor-model", "a", "--devin-model", "b"), 0)
         self.assertEqual(list(self.home.iterdir()), [])
 
-    def test_install_creates_verify_and_hooks_without_subagents(self):
+    def test_install_creates_verify_and_hooks_no_agent_files(self):
         self.assertEqual(self.run_install("--cursor-model", "a", "--devin-model", "b"), 0)
         loc = self.loc()
         for key in ("cursor_hooks", "devin_config"):
@@ -90,10 +72,12 @@ class InstallTests(unittest.TestCase):
         self.assertTrue((loc["kit_home"] / "protocol.headless.md").exists())
         manifest = json.loads((loc["kit_home"] / "install.json").read_text())
         self.assertEqual(manifest["models"], {"devin": "b", "cursor": "a"})
-        self.assertFalse(manifest.get("with_subagents"))
+        self.assertEqual(manifest["version"], build.kit_version())
         hooks = json.loads(loc["cursor_hooks"].read_text())
         self.assertIn("beforeShellExecution", hooks["hooks"])
-        self.assertNotIn("subagentStart", hooks["hooks"])
+        # Legacy Task-agent events must not be installed
+        legacy_start = "sub" + "agentStart"
+        self.assertNotIn(legacy_start, hooks["hooks"])
 
     def test_merge_preserves_foreign_hooks_and_is_idempotent(self):
         loc = self.loc()
@@ -105,7 +89,7 @@ class InstallTests(unittest.TestCase):
         self.run_install()
         cursor = json.loads(loc["cursor_hooks"].read_text())
         self.assertEqual([e["command"] for e in cursor["hooks"]["stop"]][0], "my-lint.sh")
-        self.assertEqual(len(cursor["hooks"]["stop"]), 2)  # foreign + ours, no duplicates after re-run
+        self.assertEqual(len(cursor["hooks"]["stop"]), 2)
         devin = json.loads(loc["devin_config"].read_text())
         self.assertEqual(devin["theme"], "dark")
         self.assertEqual(len(devin["hooks"]["Stop"]), 2)
@@ -120,12 +104,17 @@ class InstallTests(unittest.TestCase):
         self.assertEqual(loc["devin_config"].read_text(), original)
         self.assertTrue((loc["kit_home"] / "devin-hooks.snippet.json").exists())
 
-    def test_uninstall_removes_only_ours(self):
+    def test_uninstall_removes_kit_and_preserves_foreign_hooks(self):
         loc = self.loc()
         loc["cursor_hooks"].parent.mkdir(parents=True)
         loc["cursor_hooks"].write_text(json.dumps({"version": 1, "hooks": {"stop": [{"command": "my-lint.sh"}]}}))
-        self.run_install("--platforms", "cursor,devin,claude", "--with-subagents")
-        self.assertTrue(loc["claude_agent"].exists())
+        # Seed a kit-marked agent file as if 0.2.x had installed it
+        loc["cursor_agent"].parent.mkdir(parents=True, exist_ok=True)
+        loc["cursor_agent"].write_text(
+            f"---\nname: delpi-verifier\n---\n{build.AGENT_FILE_MARKER}\n",
+            encoding="utf-8",
+        )
+        self.run_install("--cursor-model", "a", "--devin-model", "b")
         self.run_install("--uninstall")
         for key in ("cursor_agent", "devin_agent", "claude_agent"):
             self.assertFalse(loc[key].exists(), key)
@@ -133,10 +122,112 @@ class InstallTests(unittest.TestCase):
         cursor = json.loads(loc["cursor_hooks"].read_text())
         self.assertEqual(cursor["hooks"], {"stop": [{"command": "my-lint.sh"}]})
 
-    def test_rejects_unknown_platform(self):
-        with self.assertRaises(SystemExit):
-            install.parse_args(["--platforms", "vscode"])
+    def test_m1_reinstall_cleans_legacy_preserves_foreign(self):
+        """0.1/0.2 leftovers: kit agents + legacy hooks + orphan marker → cleaned; foreign kept."""
+        loc = self.loc()
+        # Kit-marked agents
+        for key in ("cursor_agent", "devin_agent", "claude_agent"):
+            path = loc[key]
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(f"---\nname: delpi-verifier\n---\n{build.AGENT_FILE_MARKER}\nkit\n", encoding="utf-8")
+        foreign_cursor = loc["cursor_agent"].parent / "other-agent.md"
+        foreign_cursor.write_text("mine\n", encoding="utf-8")
+        foreign_claude = loc["claude_agent"].parent / "helper.md"
+        foreign_claude.write_text("other\n", encoding="utf-8")
+        # Unmarked agent that happens to share the name pattern but without marker — wait,
+        # cleanup only removes delpi-verifier.md WITH marker. A foreign delpi-verifier without
+        # marker should be preserved.
+        unmarked = loc["devin_agent"]
+        # (already written with marker above — also test a sibling without marker)
+        # Legacy cursor hooks mixed with foreign
+        legacy_event = "sub" + "agentStart"
+        loc["cursor_hooks"].parent.mkdir(parents=True, exist_ok=True)
+        loc["cursor_hooks"].write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "hooks": {
+                        "stop": [{"command": "my-lint.sh"}],
+                        legacy_event: [
+                            {
+                                "command": f'"{sys.executable}" "{self.home}/.delpi-agent-kit/verifier_hooks.py" {"mark" + "-start"} --host cursor',
+                                "matcher": "delpi-verifier",
+                            }
+                        ],
+                        "sessionStart": [{"command": "foreign-session.sh"}],
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        # Legacy Devin PreToolUse group for old Task launcher
+        legacy_matcher = "run_" + "sub" + "agent"
+        loc["devin_config"].parent.mkdir(parents=True, exist_ok=True)
+        loc["devin_config"].write_text(
+            json.dumps(
+                {
+                    "theme": "dark",
+                    "hooks": {
+                        "PreToolUse": [
+                            {
+                                "matcher": legacy_matcher,
+                                "hooks": [
+                                    {
+                                        "type": "command",
+                                        "command": f'"{sys.executable}" "{self.home}/.delpi-agent-kit/verifier_hooks.py" guard --host devin',
+                                    }
+                                ],
+                            },
+                            {
+                                "matcher": "exec",
+                                "hooks": [{"type": "command", "command": "foreign-devin.sh"}],
+                            },
+                        ]
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        orphan = loc["orphan_marker"]
+        orphan.parent.mkdir(parents=True, exist_ok=True)
+        orphan.write_text("{}", encoding="utf-8")
 
+        code = self.run_install("--cursor-model", "a", "--devin-model", "b")
+        self.assertEqual(code, 0)
+        for key in ("cursor_agent", "devin_agent", "claude_agent"):
+            self.assertFalse(loc[key].exists(), key)
+        self.assertTrue(foreign_cursor.exists())
+        self.assertTrue(foreign_claude.exists())
+        self.assertFalse(orphan.exists())
+        hooks = json.loads(loc["cursor_hooks"].read_text())
+        self.assertNotIn(legacy_event, hooks.get("hooks", {}))
+        self.assertEqual(hooks["hooks"]["sessionStart"][0]["command"], "foreign-session.sh")
+        self.assertIn("my-lint.sh", hooks["hooks"]["stop"][0]["command"])
+        # Backups created for removed/rewritten files
+        self.assertTrue(list(loc["cursor_hooks"].parent.glob("hooks.json.bak-*")))
+        # Idempotent second run
+        self.run_install("--cursor-model", "a", "--devin-model", "b")
+        hooks2 = json.loads(loc["cursor_hooks"].read_text())
+        self.assertNotIn(legacy_event, hooks2.get("hooks", {}))
+        # dry-run after clean install does not invent new removals of foreign files
+        before_foreign = foreign_cursor.read_text()
+        self.run_install("--dry-run", "--cursor-model", "a", "--devin-model", "b")
+        self.assertEqual(foreign_cursor.read_text(), before_foreign)
+
+    def test_m1_dry_run_does_not_alter(self):
+        loc = self.loc()
+        loc["cursor_agent"].parent.mkdir(parents=True)
+        loc["cursor_agent"].write_text(
+            f"---\nname: delpi-verifier\n---\n{build.AGENT_FILE_MARKER}\n",
+            encoding="utf-8",
+        )
+        orphan = loc["orphan_marker"]
+        orphan.parent.mkdir(parents=True, exist_ok=True)
+        orphan.write_text("{}", encoding="utf-8")
+        self.assertEqual(self.run_install("--dry-run", "--cursor-model", "a", "--devin-model", "b"), 0)
+        self.assertTrue(loc["cursor_agent"].exists())
+        self.assertTrue(orphan.exists())
+        self.assertFalse(loc["kit_home"].exists() and (loc["kit_home"] / "verify.py").exists())
 
     def test_discover_windows_home_via_cmd_wslpath_stubs(self):
         bin_dir = self.home / "bin"

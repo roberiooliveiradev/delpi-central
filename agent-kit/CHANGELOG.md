@@ -1,5 +1,28 @@
 # Changelog — agent-kit
 
+## 0.3.0 — 2026-11-15
+
+**BREAKING**
+
+- Removidos o modo legado `--with-subagents`, a plataforma `claude` no instalador e os arquivos
+  gerados em `adapters/` (Cursor/Devin/Claude frontmatter).
+- Removidos dos hooks: `mark-start`, `mark-stop`, `activate`, `clear`, marcador em disco
+  (`verifier-active.json`), write-lock por linhagem de PIDs e a flag `--always` do guard.
+- Isolamento único: `verify.py` → sessão headless com `DELPI_VERIFIER_ACTIVE=1` no processo filho.
+  O guard bloqueia escrita só quando essa variável está definida; arquivos de marcador órfãos
+  não têm efeito.
+
+**Migração (0.1.x / 0.2.x → 0.3.0)**
+
+1. Rode `python agent-kit/scripts/install.py --dry-run …` e confira as remoções.
+2. Reinstale com os mesmos modelos de `~/.delpi-agent-kit/install.json`.
+3. A reinstalação remove: `delpi-verifier.md` com o marcador do kit em
+   `~/.cursor/agents`, `~/.config/devin/agents`, `%APPDATA%\devin\agents` e `~/.claude/agents`;
+   entradas de hook legadas que citam `verifier_hooks.py`; estado
+   `~/.delpi-agent-kit/state/verifier-active.json` órfão. Arquivos e hooks alheios são
+   preservados; backups `*.bak-*`.
+4. `--uninstall` continua removendo tudo o que qualquer versão do kit instalou.
+
 ## 0.2.1 — 2026-11-15
 
 - **Nota pós-AK-3:** um commit concorrente (`9bf93a67`) reintroduziu marcador+PIDs no

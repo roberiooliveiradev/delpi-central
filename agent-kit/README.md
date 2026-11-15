@@ -8,24 +8,26 @@ rodadas. O executor **nunca** se autoverifica.
 Esta pasta é autocontida: tem versão (`VERSION`), changelog, testes e instalador próprios. Ela mora no
 `delpi-central`, mas não depende de nada do monorepo.
 
-Versão atual: **0.2.1**.
+Versão atual: **0.3.0**.
 
 ---
 
-## Arquitetura 0.2.1
+## Arquitetura 0.3.0
 
 ```
 executor (Cursor IDE ou Devin Desktop)
   → grava PEDIDO em <git-dir>/delpi-verifier/requests/
   → python ~/.delpi-agent-kit/verify.py --request-file <arquivo>
        → valida pedido (sem gastar token)
-       → NÃO cria marcador global
        → motor headless com DELPI_VERIFIER_ACTIVE=1 no ambiente do filho:
             1º Devin CLI  --model swe-2-high  (--permission-mode smart)
             2º fallback Cursor CLI --model composer-2.5
        → relatório em <git-dir>/delpi-verifier/reports/
        → ledger de vereditos
 ```
+
+Único caminho de verificação: `verify.py` → sessão headless. Não há instalação de agentes Task
+nem marcador em disco.
 
 ### Custo
 
@@ -38,13 +40,12 @@ executor (Cursor IDE ou Devin Desktop)
 Se o executor também for SWE, o relatório deve marcar `independencia: DEGRADADA` (contexto limpo ainda
 ajuda).
 
-### Isolamento (0.2.1)
+### Isolamento
 
 | Sessão | Como o guard bloqueia escrita |
 |---|---|
 | Headless `verify.py` (Devin/Cursor CLI) | só `DELPI_VERIFIER_ACTIVE=1` no ambiente do processo filho |
-| Outros agentes na mesma máquina | **não** bloqueados (sem marcador global) |
-| Legado `--with-subagents` | `mark-start` / `mark-stop` / `activate` ainda usam `verifier-active.json` |
+| Outros agentes / conversas na mesma máquina | **não** bloqueados |
 
 Caminhos Windows/UNC (`\\wsl.localhost\…`, `C:\…`) são normalizados para Linux em `verify.py` e nos hooks
 (`normalize_agent_path`), sem chamar processo externo.
@@ -69,13 +70,12 @@ python agent-kit/scripts/install.py \
 #   --windows-home /mnt/c/Users/<user>
 ```
 
-- Subagents **não** são instalados por padrão (evita o Cursor acionar o verificador fora do SWE).
-  Use `--with-subagents` só se precisar do comportamento 0.1.x.
-- Reinstalar remove agentes antigos **do kit** e preserva arquivos alheios.
+- Reinstalar a 0.3.0 remove restos de 0.1.x/0.2.x do kit (arquivos de agente com o marcador do kit,
+  entradas de hook legadas que citam `verifier_hooks.py`, estado órfão) e preserva arquivos/hooks alheios.
+  Backups `*.bak-*`; visível no `--dry-run`.
 - No Windows, `verify.cmd` em `%USERPROFILE%\.delpi-agent-kit\` repassa para o WSL
   (perfil descoberto via `cmd.exe` + `wslpath`, ou `--windows-home`).
-- Hooks: guard nos configs do Devin CLI / Cursor CLI (WSL) e stop gate + track-edit nos executores
-  (Cursor IDE + Devin Desktop Windows).
+- Hooks: session-start, track-edit, guard e stop-gate (Cursor IDE + Devin Desktop / CLI).
 
 ---
 

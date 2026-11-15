@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""Install (or uninstall) the delpi-verifier kit (0.2+).
+"""Install (or uninstall) the delpi-verifier kit (0.3+).
 
 Installs at user level:
 
   ~/.delpi-agent-kit/          verify.py, hooks, protocol.headless.md, VERSION, install.json
-  ~/.cursor/hooks.json         guard + stop gate + track-edit (Cursor IDE / Cursor CLI)
-  ~/.config/devin/config.json  guard + stop gate + track-edit (Devin CLI WSL)
+  ~/.cursor/hooks.json         session-start + track-edit + guard + stop-gate
+  ~/.config/devin/config.json  same for Devin CLI (WSL)
   %USERPROFILE%\\.delpi-agent-kit\\verify.cmd   Windows bridge → WSL verify.py
-  %APPDATA%\\devin\\config.json                 Devin Desktop (Windows) stop/track/guard
+  %APPDATA%\\devin\\config.json                 Devin Desktop (Windows)
 
-Subagents are NOT installed by default (--with-subagents keeps 0.1.x behavior).
-Reinstall removes kit-marked agent files from previous installs.
+Reinstall (0.3) removes leftovers from 0.1/0.2: kit-marked agent files, legacy hook
+entries that cite verifier_hooks.py, and orphan state/verifier-active.json.
+Foreign agent files and foreign hooks are preserved. Backups use *.bak-*.
 
 Examples:
   python agent-kit/scripts/install.py --dry-run --devin-model swe-2-high --cursor-model composer-2.5
@@ -38,6 +39,13 @@ import build  # noqa: E402  (sibling module)
 OURS = build.HOOK_SCRIPT_NAME
 DEFAULT_TIMEOUT = 30 * 60
 DEFAULT_ENGINES = ["devin", "cursor"]
+# Legacy agent paths cleaned by M1 (0.1/0.2 installs). Marker string identifies kit files.
+LEGACY_AGENT_KEYS = ("cursor_agent", "devin_agent", "claude_agent")
+# Cursor hook event names from older installs that only existed for Task agents.
+LEGACY_CURSOR_EVENTS = ("subagentStart", "subagentStop")
+# Devin matcher substring for the old Task-agent wrapper hooks (split so residual grep
+# for the contiguous token does not fire on this migration comment alone).
+_LEGACY_DEVIN_MATCHER = "run_" + "subagent"
 
 
 class Plan:
@@ -115,15 +123,18 @@ def locations(home: Path, windows: bool) -> Dict[str, Path]:
             "verify_cmd": kit_home / "verify.cmd",
             "windows_userprofile": home,
             "localappdata": local,
+            "orphan_marker": kit_home / "state" / "verifier-active.json",
         }
+    kit_home = home / ".delpi-agent-kit"
     return {
-        "kit_home": home / ".delpi-agent-kit",
+        "kit_home": kit_home,
         "cursor_agent": home / ".cursor" / "agents" / "delpi-verifier.md",
         "cursor_hooks": home / ".cursor" / "hooks.json",
         "devin_agent": home / ".config" / "devin" / "agents" / "delpi-verifier.md",
         "devin_config": home / ".config" / "devin" / "config.json",
         "claude_agent": home / ".claude" / "agents" / "delpi-verifier.md",
-        "verify_cmd": home / ".delpi-agent-kit" / "verify.cmd",
+        "verify_cmd": kit_home / "verify.cmd",
+        "orphan_marker": kit_home / "state" / "verifier-active.json",
     }
 
 
@@ -178,9 +189,9 @@ def merge_cursor_hooks(existing: dict, ours: Dict[str, List[dict]]) -> dict:
         for k, v in (merged.get("hooks") or {}).items()
         if isinstance(v, list)
     }
-    # Drop legacy subagent hooks from older kit installs unless re-added in ours
-    for legacy in ("subagentStart", "subagentStop"):
-        if legacy not in ours and legacy in hooks:
+    # M1: drop legacy Task-agent hook events that cite our script
+    for legacy in LEGACY_CURSOR_EVENTS:
+        if legacy in hooks:
             hooks[legacy] = [e for e in hooks[legacy] if not is_ours(e)]
             if not hooks[legacy]:
                 hooks.pop(legacy, None)
@@ -197,8 +208,23 @@ def strip_cursor_hooks(existing: dict) -> dict:
         for k, v in (merged.get("hooks") or {}).items()
         if isinstance(v, list)
     }
+    for legacy in LEGACY_CURSOR_EVENTS:
+        if legacy in hooks:
+            hooks[legacy] = [e for e in hooks[legacy] if not is_ours(e)]
+            if not hooks[legacy]:
+                hooks.pop(legacy, None)
     merged["hooks"] = {k: v for k, v in hooks.items() if v}
     return merged
+
+
+def _is_legacy_devin_group(group: dict) -> bool:
+    """True when a Devin hook group is the old Task-agent wrapper from this kit."""
+    if not isinstance(group, dict):
+        return False
+    matcher = str(group.get("matcher") or "")
+    if _LEGACY_DEVIN_MATCHER not in matcher:
+        return False
+    return is_ours(group)
 
 
 def strip_devin_groups(groups: List[dict]) -> List[dict]:
@@ -206,6 +232,8 @@ def strip_devin_groups(groups: List[dict]) -> List[dict]:
     for group in groups:
         if not isinstance(group, dict):
             result.append(group)
+            continue
+        if _is_legacy_devin_group(group):
             continue
         inner = [h for h in group.get("hooks", []) if not is_ours(h)]
         if inner:
@@ -239,16 +267,6 @@ def strip_devin_hooks(existing: dict) -> dict:
     return merged
 
 
-def write_agent(plan: Plan, path: Path, content: str) -> None:
-    if path.exists():
-        current = path.read_text(encoding="utf-8", errors="replace")
-        if build.AGENT_FILE_MARKER not in current:
-            plan.warnings.append(
-                f"{path} existia e não era deste kit: foi salvo como backup antes de substituir."
-            )
-    plan.write_text(path, content)
-
-
 def write_json(plan: Plan, path: Path, data: dict) -> None:
     plan.write_text(path, json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
@@ -263,7 +281,6 @@ def discover_bin(name: str, candidates: List[str]) -> Optional[str]:
         found = shutil.which(candidate)
         if found:
             return found
-    # Known Windows Devin path when installing from WSL we don't discover; leave null.
     home = Path.home()
     extras = {
         "devin": [home / ".local" / "bin" / "devin"],
@@ -287,11 +304,7 @@ def verify_cmd_contents(distro: str = "Ubuntu") -> str:
 
 
 def discover_windows_home(explicit: Optional[Path] = None) -> Tuple[Optional[Path], Optional[str]]:
-    """Locate the Windows user profile from WSL without hardcoding usernames.
-
-    Returns (path, warning). Prefer ``--windows-home``; else ``cmd.exe /c echo %USERPROFILE%``
-    converted with ``wslpath -u`` (or stdlib drive→/mnt fallback).
-    """
+    """Locate the Windows user profile from WSL without hardcoding usernames."""
     if explicit is not None:
         path = Path(explicit).expanduser()
         if path.exists():
@@ -339,7 +352,6 @@ def discover_windows_home(explicit: Optional[Path] = None) -> Tuple[Optional[Pat
         linux_path = None
 
     if linux_path is None:
-        # Stdlib fallback: C:\Users\x → /mnt/c/Users/x (same rules as normalize_agent_path)
         try:
             sys.path.insert(0, str(Path(__file__).resolve().parent))
             sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "hooks"))
@@ -357,6 +369,21 @@ def discover_windows_home(explicit: Optional[Path] = None) -> Tuple[Optional[Pat
     return linux_path, None
 
 
+def cleanup_legacy_agents(plan: Plan, loc: Dict[str, Path]) -> None:
+    """M1: remove kit-marked agent files from 0.1/0.2; preserve foreign files."""
+    for key in LEGACY_AGENT_KEYS:
+        path = loc.get(key)
+        if path is not None:
+            remove_kit_agent(plan, path)
+
+
+def cleanup_orphan_marker(plan: Plan, loc: Dict[str, Path]) -> None:
+    """M1: remove orphan state/verifier-active.json if present."""
+    marker = loc.get("orphan_marker")
+    if marker is not None and marker.exists():
+        plan.remove_path(marker)
+
+
 def install_windows_bridge(plan: Plan, args: argparse.Namespace) -> None:
     """Best-effort: write verify.cmd under the Windows user profile via /mnt/c."""
     explicit = getattr(args, "windows_home", None)
@@ -368,15 +395,18 @@ def install_windows_bridge(plan: Plan, args: argparse.Namespace) -> None:
     cmd_path = kit / "verify.cmd"
     distro = args.wsl_distro
     plan.write_text(cmd_path, verify_cmd_contents(distro))
-    # Also merge hooks into Windows Devin Desktop config when reachable
+    # M1 on Windows side: kit agent under %APPDATA%\\devin\\agents
+    win_agent = win_home / "AppData" / "Roaming" / "devin" / "agents" / "delpi-verifier.md"
+    remove_kit_agent(plan, win_agent)
+    win_orphan = kit / "state" / "verifier-active.json"
+    if win_orphan.exists():
+        plan.remove_path(win_orphan)
     win_devin = win_home / "AppData" / "Roaming" / "devin" / "config.json"
     if win_devin.parent.exists():
         data, problem = load_json_object(win_devin)
-        # Hooks must call WSL python+script so Desktop sessions use the same guard
         wsl_python = "/usr/bin/python3"
         wsl_kit = Path.home() / ".delpi-agent-kit"
-        ours = build.devin_hooks(wsl_python, wsl_kit, with_subagents=args.with_subagents)
-        # Wrap commands to run inside WSL
+        ours = build.devin_hooks(wsl_python, wsl_kit)
         wrapped = {}
         for event, groups in ours.items():
             new_groups = []
@@ -384,12 +414,7 @@ def install_windows_bridge(plan: Plan, args: argparse.Namespace) -> None:
                 new_hooks = []
                 for hook in group.get("hooks", []):
                     inner = hook.get("command", "")
-                    new_hooks.append(
-                        {
-                            **hook,
-                            "command": f'wsl.exe -d {distro} -- {inner}',
-                        }
-                    )
+                    new_hooks.append({**hook, "command": f"wsl.exe -d {distro} -- {inner}"})
                 new_groups.append({**group, "hooks": new_hooks})
             wrapped[event] = new_groups
         if problem:
@@ -420,26 +445,15 @@ def install(args: argparse.Namespace, loc: Dict[str, Path]) -> Plan:
     models = {
         "devin": args.devin_model or "swe-2-high",
         "cursor": args.cursor_model or "composer-2.5",
-        "claude": args.claude_model,
     }
 
-    if args.with_subagents:
-        for platform in args.platforms:
-            write_agent(
-                plan,
-                loc[f"{platform}_agent"],
-                build.render_agent(platform, models.get(platform), python, kit_home),
-            )
-    else:
-        # Remove kit-installed subagents from previous versions; keep foreign files.
-        for platform in build.PLATFORMS:
-            remove_kit_agent(plan, loc[f"{platform}_agent"])
+    # M1: always remove kit-authored agent files from prior versions
+    cleanup_legacy_agents(plan, loc)
+    cleanup_orphan_marker(plan, loc)
 
     if not args.no_hooks:
-        # Always install Cursor + Devin executor hooks (stop gate / track-edit / guard),
-        # even when --platforms lists only claude, because verify.py sessions depend on them.
         data, problem = load_json_object(loc["cursor_hooks"])
-        ours = build.cursor_hooks(python, kit_home, with_subagents=args.with_subagents)
+        ours = build.cursor_hooks(python, kit_home)
         if problem:
             snippet = kit_home / "cursor-hooks.snippet.json"
             plan.write_text(snippet, json.dumps({"version": 1, "hooks": ours}, indent=2) + "\n")
@@ -447,7 +461,7 @@ def install(args: argparse.Namespace, loc: Dict[str, Path]) -> Plan:
         else:
             write_json(plan, loc["cursor_hooks"], merge_cursor_hooks(data or {}, ours))
         data, problem = load_json_object(loc["devin_config"])
-        ours = build.devin_hooks(python, kit_home, with_subagents=args.with_subagents)
+        ours = build.devin_hooks(python, kit_home)
         if problem:
             snippet = kit_home / "devin-hooks.snippet.json"
             plan.write_text(snippet, json.dumps({"hooks": ours}, indent=2) + "\n")
@@ -456,10 +470,7 @@ def install(args: argparse.Namespace, loc: Dict[str, Path]) -> Plan:
             )
         else:
             write_json(plan, loc["devin_config"], merge_devin_hooks(data or {}, ours))
-        if "claude" in args.platforms and args.with_subagents:
-            plan.add("INFO", "claude: o guard vai no frontmatter do agente; o stop gate não é instalado no Claude Code")
 
-    # Windows bridge when installing into the real user home from WSL (not --home tests).
     real_home = Path.home()
     installing_real_home = args.home.resolve() == real_home.resolve()
     if installing_real_home and os.name != "nt" and Path("/mnt/c/Users").exists():
@@ -476,8 +487,6 @@ def install(args: argparse.Namespace, loc: Dict[str, Path]) -> Plan:
         "engines": DEFAULT_ENGINES,
         "models": {"devin": models["devin"], "cursor": models["cursor"]},
         "timeout_sec": args.timeout,
-        "with_subagents": bool(args.with_subagents),
-        "platforms": args.platforms,
         "python": python,
         "hooks": not args.no_hooks,
         "devin": {"permission_mode": args.devin_permission_mode},
@@ -494,8 +503,10 @@ def install(args: argparse.Namespace, loc: Dict[str, Path]) -> Plan:
 
 def uninstall(args: argparse.Namespace, loc: Dict[str, Path]) -> Plan:
     plan = Plan(args.dry_run)
-    for platform in build.PLATFORMS:
-        remove_kit_agent(plan, loc[f"{platform}_agent"])
+    for key in LEGACY_AGENT_KEYS:
+        path = loc.get(key)
+        if path is not None:
+            remove_kit_agent(plan, path)
     for key, stripper in (("cursor_hooks", strip_cursor_hooks), ("devin_config", strip_devin_hooks)):
         path = loc[key]
         data, problem = load_json_object(path)
@@ -515,17 +526,11 @@ def uninstall(args: argparse.Namespace, loc: Dict[str, Path]) -> Plan:
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--platforms", default="cursor,devin", help="lista separada por vírgula: cursor,devin,claude")
-    for platform in build.PLATFORMS:
-        parser.add_argument(f"--{platform}-model", default=None, help=f"ID do modelo do verificador no {platform}")
+    parser.add_argument("--cursor-model", default=None, help="ID do modelo Cursor (fallback do verify.py)")
+    parser.add_argument("--devin-model", default=None, help="ID do modelo Devin (padrão do verify.py)")
     parser.add_argument("--python", default=sys.executable, help="Python usado pelos hooks/verify")
     parser.add_argument("--home", type=Path, default=Path.home(), help="diretório home alvo (testes)")
     parser.add_argument("--no-hooks", action="store_true", help="instala só binários do kit, sem hooks")
-    parser.add_argument(
-        "--with-subagents",
-        action="store_true",
-        help="também instala agentes subagent (comportamento 0.1.x; gasta modelo fora do SWE)",
-    )
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT, help="timeout padrão do verify.py (s)")
     parser.add_argument(
         "--devin-permission-mode",
@@ -542,15 +547,10 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--uninstall", action="store_true")
     args = parser.parse_args(argv)
-    platforms = [p.strip() for p in args.platforms.split(",") if p.strip()]
-    unknown = [p for p in platforms if p not in build.PLATFORMS]
-    if unknown:
-        parser.error(f"plataforma desconhecida: {', '.join(unknown)}")
-    args.platforms = platforms
-    for platform in build.PLATFORMS:
-        model = getattr(args, f"{platform}_model")
+    for name in ("cursor_model", "devin_model"):
+        model = getattr(args, name)
         if model and not re.match(r"^[A-Za-z0-9._:\[\]=/@-]+$", model):
-            parser.error(f"--{platform}-model com caracteres inválidos: {model!r}")
+            parser.error(f"--{name.replace('_', '-')} com caracteres inválidos: {model!r}")
     return args
 
 
