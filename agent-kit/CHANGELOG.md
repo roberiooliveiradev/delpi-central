@@ -2,10 +2,11 @@
 
 ## 0.2.1 — 2026-11-15
 
-- **OC-1 concorrência:** `verify.py` deixa de gravar `verifier-active.json`. O isolamento da
-  sessão headless vem só de `DELPI_VERIFIER_ACTIVE=1` no ambiente do processo filho. O marcador
-  global permanece apenas para o legado `--with-subagents` (`mark-start` / `mark-stop` /
-  `activate`).
+- **AK-3 guard por sessão:** o guard bloqueia só o processo do verificador — `(a)`
+  `DELPI_VERIFIER_ACTIVE=1` no ambiente do hook **ou** `(b)` ancestralidade de PID vivo no
+  marcador (`/proc` no Linux/WSL). Marcador sozinho não trava executores irmãos; PID morto
+  remove o marcador na hora. `verify.py` grava PIDs (launcher + motor) e limpa no `finally`.
+  `verifier_hooks.py status` mostra se **esta** sessão seria bloqueada.
 - **OC-2 portabilidade:** descoberta do perfil Windows via `cmd.exe /c echo %USERPROFILE%` +
   `wslpath -u` (fallback stdlib drive→`/mnt`); opção `--windows-home`; sem nome de usuário
   literal no código.

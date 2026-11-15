@@ -19,8 +19,8 @@ executor (Cursor IDE ou Devin Desktop)
   → grava PEDIDO em <git-dir>/delpi-verifier/requests/
   → python ~/.delpi-agent-kit/verify.py --request-file <arquivo>
        → valida pedido (sem gastar token)
-       → NÃO cria marcador global
-       → motor headless com DELPI_VERIFIER_ACTIVE=1 no ambiente do filho:
+       → ativa marcador (PIDs) + DELPI_VERIFIER_ACTIVE=1 no motor
+       → motor headless:
             1º Devin CLI  --model swe-2-high  (--permission-mode smart)
             2º fallback Cursor CLI --model composer-2.5
        → relatório em <git-dir>/delpi-verifier/reports/
@@ -38,13 +38,27 @@ executor (Cursor IDE ou Devin Desktop)
 Se o executor também for SWE, o relatório deve marcar `independencia: DEGRADADA` (contexto limpo ainda
 ajuda).
 
-### Isolamento (0.2.1)
+### Guard por sessão (AK-3)
 
-| Sessão | Como o guard bloqueia escrita |
-|---|---|
-| Headless `verify.py` (Devin/Cursor CLI) | só `DELPI_VERIFIER_ACTIVE=1` no ambiente do processo filho |
-| Outros agentes na mesma máquina | **não** bloqueados (sem marcador global) |
-| Legado `--with-subagents` | `mark-start` / `mark-stop` / `activate` ainda usam `verifier-active.json` |
+O guard **não** bloqueia a máquina inteira. Decisão por processo:
+
+| Caminho | Condição | Efeito |
+|---|---|---|
+| **(a)** variável | `DELPI_VERIFIER_ACTIVE=1` no ambiente do hook | bloqueia escritas nesta sessão |
+| **(b)** ancestralidade | marcador com PID vivo **e** o processo do hook descende desse PID (`/proc` no Linux/WSL) | bloqueia só a árvore do `verify.py`/motor |
+| marcador sozinho | presente, sem (a) e sem (b) | **não** bloqueia (executores irmãos liberados) |
+| PID morto | PIDs do marcador sem processo vivo | marcador removido na hora; liberado |
+
+Proteção por motor:
+
+| Superfície | Caminho que protege | Notas |
+|---|---|---|
+| Devin CLI headless (`verify.py`) | **(a)** | `run_engine` exporta `DELPI_VERIFIER_ACTIVE=1`; **(b)** reforça via PIDs no marcador |
+| Cursor CLI headless (`verify.py`) | **(a)** | idem; fallback do launcher |
+| Claude Code (agente com `--always`) | **(a) equivalente** | hook `guard --always` (escopo do subagent) |
+| Cursor IDE / Devin Desktop (executor) | nenhum, por design | marcador de um eval **não** trava o executor |
+
+Diagnóstico: `python ~/.delpi-agent-kit/verifier_hooks.py status`
 
 Caminhos Windows/UNC (`\\wsl.localhost\…`, `C:\…`) são normalizados para Linux em `verify.py` e nos hooks
 (`normalize_agent_path`), sem chamar processo externo.
@@ -52,7 +66,8 @@ Caminhos Windows/UNC (`\\wsl.localhost\…`, `C:\…`) são normalizados para Li
 ### Limites
 
 - `permission-mode auto` do Devin **não** roda testes; o kit usa `smart` + guard.
-- Guard + `DELPI_VERIFIER_ACTIVE` bloqueiam escrita na sessão headless; não é sandbox perfeito.
+- Guard + `DELPI_VERIFIER_ACTIVE` / ancestralidade bloqueiam escrita **só** na sessão headless; não é sandbox perfeito.
+- Em hosts sem `/proc` (ex.: Windows nativo), o marcador sozinho **não** bloqueia; a proteção do motor headless depende de (a).
 - Timeout padrão: 30 min (configurável em `install.json`).
 - Sem Devin CLI autenticado e sem Cursor CLI: verificação não roda — não há autoverificação.
 
