@@ -1995,8 +1995,8 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | ID | Estado | Evidência |
 |---|---|---|
 | `R2-CONTINUITY-PAGINATION` | `PARTIAL_REMEDIATED / OPEN_LOW residual` | primeira fronteira PROVEN+fix: `extract_pagination_envelope` ignorava `pagination:{}` aninhado e `truncated` declarado → `has_more` nunca surfava; corrigido (RED×3→GREEN, 1743 PASS, live `has_more:true`). Residual: convergência de continuação do loop do modelo não provada |
-| `T2-COMPREHENSION-BLIND-ANCHORS` | `OPEN_LOW (novo)` | Compreensão declara `evidence_needed` sem ver `live_catalog` — 2–4 req/run em correções; candidato bounded: ecoar catálogo bounded nas instruções (mesma fronteira, sem mecanismo novo) |
+| `T2-COMPREHENSION-BLIND-ANCHORS` | `REMEDIATED (real eval 2026-11-15)` | bloco JSON advisory bounded do `live_catalog` nas instruções da Compreensão (sem 2º discovery, sem autorização); real eval INT2: **12/12 first-accept**, declarações=12 (antes 2–4 req/run em correções) |
 | `T2-SEQUENTIAL-CATALOG-LIST` | `OPEN_LOW (novo)` | `_groups` serializa credential+tools/list ×N especialistas (~15s fixos/turno); paralelismo governado = proposta ARCHITECTURE_DECISION_REQUIRED |
-| `T2-MODEL-CONTINUATION-CONVERGENCE` | `OPEN_LOW (novo)` | com contrato correto ao vivo, modelo ainda não demonstrou caminhar páginas; sobre-filtro observado (q param sobre enumeração) — comportamental, não boundary |
+| `T2-MODEL-CONTINUATION-CONVERGENCE` | `PROVEN_IN_REAL_EVAL (monitor)` | INT2_A2: walk real `params:{page:1..3}` até `has_more:false` (total 109) via `pagination_args`/`next_page` + instrução v2-7; residual: sobre-filtro comportamental possível (A2 escolheu `qualidade` → insufficient honesto, não boundary) |
 | `R3-INTRA-SCENARIO-TOKEN-VALIDITY` | `OPEN_LOW` | sem mudança |
 | `DAVI-OWNER-AVAILABILITY` | `OPEN_ENV` | sem mudança |
