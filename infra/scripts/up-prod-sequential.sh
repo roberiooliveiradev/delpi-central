@@ -26,6 +26,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/compose-filter-services.sh"
 # shellcheck source=gateway-static-upstreams.sh
 source "$SCRIPT_DIR/gateway-static-upstreams.sh"
+# ATLAS Public Hub: source an unmodified full Git revision only when building.
+source "$SCRIPT_DIR/public-hub-provenance.sh"
 cd "$COMPOSE_DIR"
 
 BUILD=false
@@ -347,6 +349,11 @@ run_compose_up() {
   profile="$(compose_profiles_for "$svc")"
   if [[ -n "$profile" ]]; then
     cmd+=(--profile "$profile")
+  fi
+
+  if [[ "$BUILD" == true && "$svc" == "public-hub" ]]; then
+    export PUBLIC_HUB_SOURCE_REVISION
+    PUBLIC_HUB_SOURCE_REVISION="$(atlas_public_hub_revision "$REPO_ROOT")" || exit 1
   fi
 
   # Build só deste serviço — nunca `up --build` (gateway depends_on dispara bake de 30+ MFEs).
