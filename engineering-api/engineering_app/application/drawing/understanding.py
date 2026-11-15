@@ -1155,6 +1155,18 @@ def _detect_embedded_revision_history(
         ),
         default=[],
     )
+    # O cluster por média móvel pode admitir token de corpo que
+    # parece rótulo (ex.: resumo iniciando com 'ALTERAÇÃO...' logo
+    # abaixo do cabeçalho): poda outliers pelo desvio à mediana
+    # da linha — cabeçalhos impressos compartilham a mesma base y.
+    if header_row:
+        cys = sorted(_tok_center(t)[1] for t in header_row)
+        med = cys[len(cys) // 2]
+        header_row = [
+            t
+            for t in header_row
+            if abs(_tok_center(t)[1] - med) <= h * 0.012
+        ]
     distinct = {_label_key(_text_of(t)) for t in header_row}
     if len(distinct) < 3 or not any(
         _EMBEDDED_SUMMARY_RE.search(k) for k in distinct
@@ -1185,11 +1197,25 @@ def _detect_embedded_revision_history(
             )
     if not columns:
         return None
+    # Extensão real de cada cabeçalho (bboxes), não só o centro:
+    # rótulos largos ou fundidos ('RESUMO DAS MODIFICAÇÕES' num
+    # token só) deslocam o centro sem deslocar a coluna de valores,
+    # o que fazia a fronteira por ponto médio de centros absorver
+    # valores da coluna vizinha (G10, job aj-29efddde4736424f).
+    for col in columns:
+        xs = [
+            t["bounding_box_px"][i]
+            for t in col["tokens"]
+            if len(t.get("bounding_box_px") or ()) >= 8
+            for i in (0, 2, 4, 6)
+        ]
+        col["x_left"] = min(xs) if xs else col["x"]
+        col["x_right"] = max(xs) if xs else col["x_max"]
     anchors = [c["x"] for c in columns]
     x_min, x_max = min(anchors), max(anchors)
     bounds = [0.0] + [
-        (anchors[i] + anchors[i + 1]) / 2
-        for i in range(len(anchors) - 1)
+        (columns[i]["x_right"] + columns[i + 1]["x_left"]) / 2
+        for i in range(len(columns) - 1)
     ] + [float("inf")]
     # Corpo: qualquer token da página sob o cabeçalho, no span-x das
     # colunas — o box do carimbo corta linhas do histórico quando o

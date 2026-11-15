@@ -4767,3 +4767,101 @@ especialistas no realm prod (autorizado, contrato canônico);
 senha `user@local.com` alterada por pedido do owner (Doc 121 §8);
 admin Keycloak local divergente (débito Infra); gate process-local
 e enforcement cross-container pendentes de decisão Infra.
+
+### 94.13 G10 — Correção da associação OV × RESUMO DAS MODIFICAÇÕES no histórico embutido
+
+`TASK_ID: EVA-VAL02-G10-REVHIST-OV-SUMMARY-TARGETED-FIX-AND-ENGINEERING-HOMOLOGATION-01`
+(2026-11-15 — Devin, desenvolvimento isolado, zero OCR em produção)
+
+**Defeito (G9, produção — job `aj-29efddde4736424f`, produto
+`90264302`, PDF `f33447b271a3518643559582d79cf54527b85778537cfb1e20a5ccf5d989f0ef`):**
+carimbo correto (`cod=18702881`, `des=10013396831`,
+`cliente=weg industria s.a - linhares`, `rev=00` — todos
+`FIELD_IDENTIFIED`) e histórico encontrado, mas a entrada
+retornou `ov="003086 criaçäodedesenho"`, `summary=null`.
+O esperado por evidência geométrica: `ov="003086"`,
+`summary="criaçäodedesenho"`.
+
+**Causa-raiz comprovada (`_detect_embedded_revision_history`):**
+as fronteiras entre colunas eram calculadas pelo **ponto médio
+entre os centros** dos cabeçalhos. No desenho real o OCR fundiu
+`RESUMO DAS MODIFICAÇÕES` num único token largo
+(bbox x 1620–1979, centro ≈ 1799,5), o que deslocou a fronteira
+OV→RESUMO para ≈ 1638. O valor do resumo
+(`CRIAÇÃO DE DESENHO`, bbox 1533–1721, centro ≈ 1627) caiu do
+lado OV da fronteira e foi concatenado ao valor `003086`.
+
+**Causa-raiz secundária encontrada no corpus negativo:** o
+clustering de rótulos por média móvel admitia token de **corpo**
+que parece rótulo (resumo iniciando com `ALTERAÇÃO…` logo abaixo
+do cabeçalho), fundindo-o à coluna `summary` e corrompendo as
+âncoras — o valor `16726` (LMP) era absorvido como resumo.
+
+**Correção (menor diff, regra geométrica genérica — sem exceção
+por produto/código/texto):**
+
+1. **Fronteiras pelo ponto médio do GAP entre extensões reais
+   dos cabeçalhos** (`x_right` do cabeçalho i ↔ `x_left` do
+   cabeçalho i+1), em vez de centros. No caso G9 a fronteira
+   OV→RESUMO passa de 1638 para (1499+1620)/2 = 1559,5 — OV e
+   resumo voltam às colunas corretas. Sem bbox o fallback mantém
+   o comportamento anterior por centros.
+2. **Poda de outliers do cabeçalho pelo desvio à mediana de cy**
+   (`h*0.012`): cabeçalhos impressos compartilham a linha base;
+   token de corpo que parece rótulo é excluído antes de formar
+   coluna. Se a poda deixar <3 rótulos distintos, a função
+   retorna `None` (não-candidato) — abstém-se em vez de fabricar
+   associação.
+
+**Antes × depois (mesma geometria real do job G9):**
+
+| Campo | Antes | Depois |
+|---|---|---|
+| `ov` | `003086 criaçäodedesenho` | `003086` |
+| `summary` | `null` | `criaçäodedesenho` |
+| `revision_value` | `00` | `00` (inalterado) |
+| `lmp` | `16726` | `16726` (inalterado) |
+| `executado`/`liberado` | `william`/`gabriella` | inalterados |
+
+**Testes (`tests/test_drawing_titleblock_fields.py`):**
+
+- `test_embedded_history_wide_header_ov_summary_boundary` —
+  coordenadas reais do job G9; **falha no código anterior**
+  (`ov='003086 criaçäodedesenho'`), passa após a correção.
+- `test_embedded_history_no_ov_column_summary_intact` —
+  histórico sem coluna OV: `ov=None`, resumo íntegro; **falhava**
+  com `summary='16726'` antes da poda por mediana.
+- Regressão: 357 testes do escopo drawing (title block,
+  understanding, perception, investigation, admission, MCP,
+  benchmark, OCR pipelines) — **todos passam**; suíte completa
+  1278 pass / 21 skip / 3 falhas **pré-existentes ortogonais**
+  (`test_d16_attendance_flags` intake 422, `test_lmp_domain`
+  FileNotFoundError, `test_rbac_lookup_success_caches` — última
+  reproduzida no arquivo original de HEAD).
+- Contrato público inalterado: mesmos campos de `entries`,
+  nenhuma ferramenta MCP nova, texto OCR preservado conforme
+  contrato vigente (sem normalização em conteúdo oficial).
+
+**Residuais:**
+
+- Linhas de histórico com cabeçalho parcialmente reconhecido
+  podem tornar-se não-candidatas (retorno `None`) em vez de
+  associação incorreta — comportamento conservador intencional.
+- Cabeçalhos empilhados em duas linhas (se existirem em algum
+  layout) podem perder um rótulo na poda por mediana — também
+  leva a abstenção, não a erro de associação.
+- Fixture G9 sintética: usa `render_size_px=(2300,1680)` porque
+  `page_size` derivado dos tokens distorce `y_tol` de cluster
+  (limitação já documentada de `_page_size`).
+
+**Status:** `ENGINEERING_REVIEW_PREPARED` —
+`ENGINEERING_HOMOLOGATION=PENDING_OWNER`. Comparação e proposta
+de aceite preparadas; itens para o owner técnico: OV contém
+somente `003086`; `CRIAÇÃO DE DESENHO` pertence ao resumo;
+revisão `00`, LMP `16726`, data `26/10/26`, executado
+`william`, liberado `gabriella`; carimbo com COD/DES/CLIENTE
+corretos e REV no domínio `ENGINEERING_DRAWING`; histórico
+segregado da tabela de componentes; `association_conflict`
+permanece não-homologado. **Deploy não autorizado nesta
+task** — candidato preparado para revisão; implantação exige
+decisão posterior da Coordination.

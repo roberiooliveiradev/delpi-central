@@ -248,6 +248,62 @@ def test_embedded_history_merged_summary_header():
     assert (e["executado"] or "").upper() == "WILLIAM"
 
 
+def test_embedded_history_wide_header_ov_summary_boundary():
+    """G9 — cabeçalho RESUMO DAS MODIFICAÇÕES largo fundido
+    (bbox 1620–1979) não pode absorver o resumo na coluna OV.
+
+    Geometria real do job aj-29efddde4736424f (PDF f33447b2…):
+    o centro do valor do resumo (1627) fica À ESQUERDA do centro
+    do próprio cabeçalho (~1799) — a fronteira por ponto médio
+    entre centros de cabeçalho classificava o resumo como OV.
+    """
+    tokens = [
+        _tok("cod:", 1211, 102), _tok("18702881", 1325, 104, 80),
+        _tok("rev:", 1880, 102), _tok("00", 1949, 104, 25),
+        _tok("rev", 1214, 218), _tok("data", 1304, 219),
+        _tok("lmp", 1390, 218), _tok("ov", 1454, 205, 45, 29),
+        _tok("resumo das modificações", 1620, 206, 359, 26),
+        _tok("executado", 2106, 219, 90), _tok("liberado", 2229, 219, 70),
+        _tok("00", 1214, 248, 25), _tok("26/10/26", 1304, 248, 60),
+        _tok("16726", 1391, 249, 50), _tok("003086", 1447, 238, 60, 22),
+        _tok("criaçäodedesenho", 1533, 237, 188, 24),
+        _tok("william", 2108, 250, 70), _tok("gabriella", 2232, 248, 80),
+    ]
+    out = build_understanding(
+        tokens, document_hash="x", render_size_px=(2300, 1680)
+    )
+    rh = out["revision_history"]
+    assert rh["candidate"] is True
+    e = (rh.get("entries") or [None])[0]
+    assert e and e["revision_value"] == "00"
+    assert e["ov"] == "003086"
+    assert e["summary"] == "criaçäodedesenho"
+    assert e["lmp"] == "16726"
+    assert (e["executado"] or "").upper() == "WILLIAM"
+
+
+def test_embedded_history_no_ov_column_summary_intact():
+    """Histórico sem coluna OV: resumo ainda associa à própria
+    coluna e ov fica ausente (nunca reatribuído)."""
+    tokens = [
+        _tok("rev", 1214, 218), _tok("data", 1304, 219),
+        _tok("lmp", 1390, 218),
+        _tok("resumo das modificações", 1500, 206, 400, 26),
+        _tok("executado", 2106, 219, 90), _tok("liberado", 2229, 219, 70),
+        _tok("00", 1214, 248, 25), _tok("26/10/26", 1304, 248, 60),
+        _tok("16726", 1391, 249, 50),
+        _tok("alteração de material", 1400, 249, 300),
+        _tok("william", 2108, 250, 70), _tok("gabriella", 2232, 248, 80),
+    ]
+    out = build_understanding(
+        tokens, document_hash="x", render_size_px=(2300, 1680)
+    )
+    e = (out["revision_history"].get("entries") or [None])[0]
+    assert e and e["revision_value"] == "00"
+    assert e["ov"] is None
+    assert "ALTERA" in (e["summary"] or "").upper()
+
+
 def test_label_without_value_is_text_only():
     tokens = [
         _tok("COD:", 1300, 100), _tok("DES.:", 1440, 100),
