@@ -34,8 +34,9 @@ CLIENT_FLAGS = {
 }
 MAPPER_NAME = "linux-ops-resource-audience"
 RESOURCE_SUFFIX = "/apps/linux-ops-mcp/mcp"
-CALLBACK_STABLE = "https://chatgpt.com/connector_platform_oauth_redirect"
-CALLBACK_PREFIX = "https://chatgpt.com/connector/oauth/"
+# ChatGPT supplies the exact redirect URI in its connector registration UI.
+# Only allow a strongly constrained HTTPS callback host, without wildcard.
+ALLOWED_CALLBACK_HOSTS = frozenset({"chatgpt.com", "chat.openai.com"})
 
 
 class ContractError(Exception):
@@ -60,13 +61,19 @@ def _value(name: str, envfile: dict[str, str]) -> str:
 
 
 def valid_callback(raw: str) -> bool:
-    if raw == CALLBACK_STABLE:
-        return True
-    if not raw.startswith(CALLBACK_PREFIX):
+    if not isinstance(raw, str) or not raw or len(raw) > 500:
         return False
-    ident = raw.removeprefix(CALLBACK_PREFIX)
-    return 8 <= len(ident) <= 200 and all(
-        c.isascii() and (c.isalnum() or c in "_-") for c in ident
+    p = urlparse(raw)
+    return bool(
+        p.scheme == "https"
+        and p.hostname in ALLOWED_CALLBACK_HOSTS
+        and p.port is None
+        and not p.username and not p.password
+        and p.path.startswith("/")
+        and p.path not in ("/", "")
+        and not p.query and not p.fragment
+        and "*" not in raw
+        and raw == p.geturl()
     )
 
 
@@ -159,7 +166,7 @@ class Provisioner:
     def audit(self) -> list[str]:
         """Read-only drift; never returns raw client repr, tokens or credentials."""
         issues = []
-        realm = self.a.call("GET", self._p(""), tolerate=(404,))[0]
+        realm = self.a.call("GET", f"/realms/{self.c.realm}", tolerate=(404,))[0]
         if realm == 404:
             raise ContractError("realm delpi absent")
         scopes = self._scopes()
