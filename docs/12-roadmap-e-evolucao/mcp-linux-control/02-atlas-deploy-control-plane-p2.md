@@ -2,7 +2,7 @@
 
 > **Atualizado:** 2026-11-15
 > **Owner:** TI DELPI / Minha DELPI
-> **Estado atualizado 2026-11-15:** contrato P2 documentado; codigo P2.1 offline integrado na main por [PR #191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (CI verde); P2.2a-P2.2d (leitores GitHub/Core, recibo do host, signer offline e journal PostgreSQL inerte) na main, testes locais PASS, CI/verificador independente/HML pendentes; **nenhum PREPARE/ACT implantado, nenhuma tool nova no MCP**.
+> **Estado atualizado 2026-11-15:** contrato P2 documentado; codigo P2.1 offline integrado na main por [PR #191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (CI verde); P2.2a-P2.2e (leitores GitHub/Core, recibo host, signer e journal em CI isolado) na main; CI real de P2.2e, verificador independente e HML pendentes; **nenhum PREPARE/ACT implantado, nenhuma tool nova no MCP**.
 > **Fontes relacionadas:** [roadmap e evidências](./01-discovery-architecture-and-security-roadmap.md), `linux-ops-mcp/`, `infra/scripts/up-prod-sequential.sh`, `infra/scripts/up-hml-sequential.sh`, `.cursor/rules/local-first-deploy.mdc`, `.cursor/rules/platform-delivery-runtime-operations.mdc`.
 > **Restrição de custo:** priorizar GitHub/Keycloak/Core/IT Portal, host, containers e homologação existentes. Não pressupor túnel ou runner pago.
 > **Congelado por decisão do operador:** ampliação de telemetria CPU, contagem Docker e outros observáveis Linux; não é pré-requisito desta entrega. Atestação de revisão/health **de deploy** é requisito novo e separado.
@@ -203,3 +203,14 @@ Na camada do owner `it-portal-api`, o `atlas_deploy_journal.py` contem as operac
 [Runbook da P2.2d e gates para P2.2e](./06-atlas-p22d-runtime-attestation-and-journal.md).
 
 **Fase seguinte P2.2e:** review de privilegio da fonte Docker em proxy read-only, um piloto HML com imagem e release record reais, testes DB descartavel de concorrencia e nonce one-shot, aprovação da migration pelo Portal TI/Delpi Remote e Core grants antes de qualquer PREPARE externo. ACT segue bloqueado ate P3.
+
+
+## 16. A2.2e: integração isolada PostgreSQL/Docker e lock PREPARE (2026-11-15)
+
+**Correcao aplicada ao journal:** `store_prepared` adquire lock transacional indexado por requester/request antes de ler proposta; replays iguais nao duplicam evento nem consomem challenge, payload divergente bloqueia, e nova insercao consome challenge **antes** de inserir o registro FK, com rollback em erro. `UNIQUE(requester_subject, request_id)` continua garantido pelo banco. A API/approval/ACT seguem inexistentes; o modulo continua inerte.
+
+**CI novo (codigo na main):** [`atlas-p22e-integration.yml`](../../../.github/workflows/atlas-p22e-integration.yml) executa sete testes Postgres reais em banco `atlas_ci_disposable` (GitHub-hosted runner com service `postgres:16-alpine`) e dois testes Docker reais no proprio runner com container Alpine identificado; jamais se conecta ao Postgres ou Docker de srv-api. Ambos exigem flags de CI e skip fora desse contexto. A chave HMAC e o manifest do job Docker sao **sinteticos de teste**, nao prova de build de servico DELPI.
+
+**Evidencias efetivas:** 16 testes FakePg com a mudanca PASS local no ambiente isolado; testes Postgres/Docker reais ainda nao foram observados concluidos no GitHub Actions, pois as ferramentas de plugin disponiveis nao retornaram runs de evento push. CI, analise `delpi-verifier` e HML real ficam **pendentes**. Usuario confirmou os 35 testes P2.2d no srv-api e observacao OAuth/RBAC READ funcionando, sem logs reproduzidos aqui.
+
+**Detalhes, gates e operacao HML futura:** [07-atlas-p22e-disposable-ci-and-hml-gates.md](./07-atlas-p22e-disposable-ci-and-hml-gates.md). NAO aplicar `05-atlas-p22d-candidate-schema.sql` no postgres produtivo, NAO montar socket Docker no ATLAS, NAO publicar `preview_deployment` e NAO ativar executor de deploy. Para concluir P2.2e: CI e review independente + escolha de um servico HML seguro, release provenance real e canal read-only com ACL, banco de HML sob owner e permissão nominativa Core.
