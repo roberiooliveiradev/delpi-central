@@ -1168,3 +1168,20 @@ E01 sete campos no card **PASS** (subchecks id/type/requester/officialCode/creat
 **TEST_NOT_RUN honestos:** 403 real (sem identidade negada autorizada). **Incidente de ambiente resolvido:** a 1ª tentativa de E2E usou credenciais DEV locais contra o Keycloak HML (`ti_delpi` não existe no realm) — falha de autenticação, não de produto; corrigido com `hml-tester` do `.env.hml`. **Residuais:** `diffSummary` recomputa a cada leitura (custo desprezível); «fornecedor vinculado» descreve diferença registrada, não intenção. `TOTVS_WRITES: 0`, `PRD_DEPLOY: NOT_EXECUTED`. **Rollback:** imagens anteriores + `git revert 0d489aaa98`.
 
 **Nota de concorrência:** durante esta execução outro executor mutava `main` no mesmo worktree (commits T10–T12, resets e stash-push transitórios observados no reflog). O escopo PRC foi revalidado na árvore antes do push atômico; nenhuma alteração alheia foi incluída nem perdida. Detalhe e matriz completa: `PRC-TRACK-UX-REFINEMENT-POST-HML-2026-11-14.md` §7.
+
+
+## 63. Execução — Seletor de versões migrado ao select rico do Plugin UI e homologado em HML (14/11/2026)
+
+**Escopo:** `EVA-PRC-TRACK-VERSION-SELECT-PLUGIN-UI-UX-HML-01` — seletores «Versão de origem/destino» de «Comparar versões» (Produtos Acompanhados). `main`, sem branch. Commits `bf03396d48` (swap MFE + teclado no kit + specs) e `e0eafe0dbf` (fix de foco pós-paint no kit).
+
+**Diagnóstico:** os seletores usavam `EngineeringSelectField` (`<select>` nativo) — o popup do SO abria sobre o título «Comparar versões». Não era z-index/CSS: popup nativo não é posicionável pela aplicação.
+
+**Solução (Plugin UI-first, zero primitivo novo):** migração para `EngineeringSearchableSelect` — `SelectControl` + `AnchoredPanelPortal`, componente canônico já usado no `PrcRequestInformationModal`. `placeholder`/`allowEmpty` substituem a pseudo-opção «Selecione». Extensão aditiva **no owner kit**: teclado completo no `SelectControl` (ArrowDown/Up abre focando 1ª/última opção; setas/Home/End navegam; Escape/Tab fecham devolvendo foco; seleção devolve foco ao trigger) — beneficia todos os consumers (engineering, transformometro, pac, dashboard).
+
+**Defeito real da homologação:** `focus()` no `useEffect` era ignorado pelo browser real — o painel ancorado monta `visibility:hidden` até o layout de posicionamento (jsdom não aplica a regra). Corrigido deferindo o foco para `requestAnimationFrame` — `e0eafe0dbf`.
+
+**Posicionamento verificado (medido em HML):** abre abaixo quando `anchor.bottom + panelHeight` cabe na viewport; inverte para cima quando necessário (flip especificado — trigger no fim da página: painel 501–613 acima do campo, ancorado, dentro da viewport, sem clip por card). Com espaço abaixo, abre para baixo sem cobrir o título — ambos os ramos cobertos por E2E.
+
+**Validação:** kit 2636/2636 (+6 testes de teclado no `SelectField`); MFE 238/238 PRC; typecheck kit(erros pré-existentes em charts/realtime não relacionados)+MFE PASS; builds PASS. Deploy `up-hml-sequential.sh --build` (plugin-ui, engineering): MFE 5d931acf10d2, kit 3532cc3001a0 — 23/23 healthy; `ul[role="listbox"] button` confirmado no bundle servido. E2E Chromium real (`hml-tester`): **40/40 PASS** — incl. novo `G4` (abertura, ancorado, viewport, não-cobertura do título com espaço, Escape, teclado ArrowDown→foco→Enter→seleção, comparação V1×V2 server-side) + regressão U1/U2/U3/P0/G1/G2. Specs adaptadas via helper `selectKitOption`. `TOTVS_WRITES: 0`, `PRD_DEPLOY: NOT_EXECUTED`.
+
+**TEST_NOT_RUN/limitações:** seletor permanece não-searchable (≤3 opções); `EngineeringSelectField` nativo mantido para opções triviais em outros formulários; 403 segue sem identidade negada autorizada. Rollback: imagens anteriores + `git revert bf03396d48 e0eafe0dbf`.

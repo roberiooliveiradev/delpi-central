@@ -116,3 +116,36 @@ Reutilizados, sem novo primitivo: `EngineeringPageHero`, `SegmentToggle`, `Scope
 ### Resultado e limitações
 
 `PASS` — linguagem da timeline passa a distinguir alteração confirmada de expansão de cobertura em todos os estados (legado×schema-2, comparáveis normais, baseline, incomparável). Limitações: `diffSummary` é recomputado na leitura (custo desprezível por registro); fornecedor «vinculado» descreve diferença registrada, não intenção do usuário; 403 permanece `TEST_NOT_RUN` (sem identidade negada autorizada em HML); E2E usou credencial `hml-tester` (`HML_TEST_*` do `.env.hml`) — a credencial `ti_delpi` não existe no realm HML.
+
+## 8. UX-P1-08 — Refinamento do seletor de versões (14/11/2026 — implementado e homologado em HML)
+
+**TASK_ID:** `EVA-PRC-TRACK-VERSION-SELECT-PLUGIN-UI-UX-HML-01` — commits `bf03396d48` (MFE+kit+specs) e `e0eafe0dbf` (fix de foco no kit). Deploy HML: `engineering` 5d931acf10d2, `plugin-ui` 3532cc3001a0 — 23/23 healthy. E2E: **40/40 PASS** (4 viewports × 10 testes).
+
+### Causa identificada
+
+Os seletores «Versão de origem/destino» usavam `EngineeringSelectField` — `<select>` nativo cujo popup é controlado pelo SO/navegador e podia abrir sobre o título «Comparar versões». Não era defeito de z-index; era o popup nativo.
+
+### Escolha técnica (Abstraction Gate)
+
+O kit já expõe o componente canônico para campos com opções reais: `EngineeringSearchableSelect` (`SelectControl` + `AnchoredPanelPortal` — painel ancorado com flip/clamp de viewport, tema via `useDelpiUiPortalTheme`, escopo MFE auto-resolvido), já consumido pelo `PrcRequestInformationModal`. **Nenhum primitivo novo** — substituição direta no `PrcProductVersionsTab`, com `placeholder`/`allowEmpty` substituindo a pseudo-opção «Selecione». A extensão necessária foi feita **no owner** (plugin-ui): navegação por teclado do `SelectControl` — ArrowDown/ArrowUp no trigger abre focando 1ª/última opção, setas/Home/End navegam, Escape/Tab fecham devolvendo foco ao trigger, seleção devolve foco. Beneficia todos os consumers do select rico.
+
+### Defeito real encontrado e corrigido
+
+`focus()` imediato no `useEffect` era ignorado pelo browser: o painel ancorado monta `visibility:hidden` até o layout de posicionamento — jsdom não aplica a regra, então o defeito só apareceu no Chromium real de HML. Fix: foco da 1ª/última opção deferido para `requestAnimationFrame` (commit `e0eafe0dbf`).
+
+### Posicionamento (comportamento verificado)
+
+`resolveAnchoredPanelCoords` abre abaixo quando `anchor.bottom + panelHeight` cabe; inverte para cima quando necessário. Medido em HML: trigger no fim da página (viewport 720) → panel 501–613 acima do campo (flip necessário, especificado); com espaço abaixo → abre abaixo sem cobrir o título. Sempre dentro da viewport, sem clipping por card (portal no body).
+
+### Testes
+
+- Kit: `SelectField.test.tsx` 9/9 (+6 de teclado: abertura por seta, navegação, clique/Escape/Tab com retorno de foco); suíte completa 2636/2636.
+- MFE: 238/238 PRC; typecheck PASS; builds kit+MFE PASS.
+- E2E novo `G4`: abre/clica, ancorado±flip, dentro da viewport, não cobre título quando há espaço, Escape, teclado completo (ArrowDown→opção focada→Enter→seleção V1), comparação server-side V1×V2 preservada — 4 viewports.
+- Specs U1–U3 adaptadas ao seletor rico via helper `selectKitOption` (trigger+listbox).
+
+### Limitações
+
+- Flip acima do campo continua possível — e correto — quando não há espaço abaixo (comportamento especificado, não defeito).
+- `EngineeringSelectField` (nativo) permanece para opções triviais sem busca em outros formulários — sem substituição indiscriminada, conforme escopo.
+- `searchable` não habilitado nos seletores de versão (≤3 opções); disponível no componente quando fizer sentido.

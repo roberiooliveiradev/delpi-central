@@ -300,12 +300,18 @@ test("G4 — seletor de versões do kit: painel ancorado, teclado e Escape", asy
   const heading = page.getByRole("heading", { name: "Comparar versões" });
   await expect(heading).toBeVisible({ timeout: 20_000 });
 
-  /* Abertura por mouse — painel ancorado ao campo, sem cobrir o
-   * título da seção e dentro da viewport (posicionamento do kit). */
+  /* Abertura por mouse — o trigger está no fim da página e não
+   * sobe com scroll: sem espaço abaixo o kit inverte para cima
+   * (comportamento especificado); com espaço abre abaixo. Ambos
+   * os ramos são verificados. */
   const fromTrigger = page.getByLabel("Versão de origem", {
     exact: true,
   });
   await expect(fromTrigger).toBeVisible();
+  await fromTrigger.evaluate((el) =>
+    el.scrollIntoView({ block: "nearest" }),
+  );
+  await page.waitForTimeout(400);
   await fromTrigger.click();
   const listbox = page.getByRole("listbox").last();
   await expect(listbox).toBeVisible();
@@ -319,31 +325,85 @@ test("G4 — seletor de versões do kit: painel ancorado, teclado e Escape", asy
   expect(panelBox).not.toBeNull();
   expect(headingBox).not.toBeNull();
   expect(triggerBox).not.toBeNull();
-  const overlapsHeading =
-    panelBox!.x < headingBox!.x + headingBox!.width &&
-    panelBox!.x + panelBox!.width > headingBox!.x &&
-    panelBox!.y < headingBox!.y + headingBox!.height &&
-    panelBox!.y + panelBox!.height > headingBox!.y;
-  expect(overlapsHeading, "painel cobre o título da seção").toBe(false);
   const vw = await page.evaluate(() => window.innerWidth);
+  const vh = await page.evaluate(() => window.innerHeight);
+  /* Painel sempre dentro da viewport e ancorado ao campo — abaixo
+   * quando há espaço, invertido acima quando não há (§6 do pacote). */
   expect(panelBox!.x).toBeGreaterThanOrEqual(0);
   expect(panelBox!.x + panelBox!.width).toBeLessThanOrEqual(vw + 1);
+  expect(panelBox!.y).toBeGreaterThanOrEqual(0);
+  expect(panelBox!.y + panelBox!.height).toBeLessThanOrEqual(vh + 1);
+  const fitsBelow =
+    triggerBox!.y + triggerBox!.height + panelBox!.height <= vh - 8;
   const anchored =
     Math.abs(panelBox!.y - (triggerBox!.y + triggerBox!.height)) < 24 ||
     Math.abs(triggerBox!.y - (panelBox!.y + panelBox!.height)) < 24;
   expect(anchored, "painel desconectado do campo").toBe(true);
+  if (fitsBelow) {
+    expect(
+      panelBox!.y,
+      "painel deveria abrir abaixo quando há espaço",
+    ).toBeGreaterThanOrEqual(triggerBox!.y + triggerBox!.height - 24);
+    const overlapsHeading =
+      panelBox!.x < headingBox!.x + headingBox!.width &&
+      panelBox!.x + panelBox!.width > headingBox!.x &&
+      panelBox!.y < headingBox!.y + headingBox!.height &&
+      panelBox!.y + panelBox!.height > headingBox!.y;
+    expect(overlapsHeading, "painel cobre o título da seção").toBe(false);
+  }
 
   /* Escape fecha o painel. */
   await page.keyboard.press("Escape");
   await expect(page.getByRole("listbox")).toHaveCount(0);
   await expect(fromTrigger).toBeVisible();
 
-  /* Teclado: ArrowDown abre focando a 1ª opção; Enter seleciona e
-   * devolve o foco ao trigger. */
+  /* Com espaço real abaixo (viewport mais alta), o painel abre
+   * para baixo sem cobrir o título — ramo preferencial do §6. */
+  if (!fitsBelow) {
+    await page.setViewportSize({ width: vw, height: vh + 400 });
+    await fromTrigger.evaluate((el) =>
+      el.scrollIntoView({ block: "nearest" }),
+    );
+    await page.waitForTimeout(400);
+    await fromTrigger.click();
+    const list2 = page.getByRole("listbox").last();
+    await expect(list2).toBeVisible();
+    const [panel2, head2, trig2] = await Promise.all([
+      list2.boundingBox(),
+      heading.boundingBox(),
+      fromTrigger.boundingBox(),
+    ]);
+    expect(
+      panel2!.y,
+      "com espaço, painel deve abrir abaixo do campo",
+    ).toBeGreaterThanOrEqual(trig2!.y + trig2!.height - 24);
+    const overlaps2 =
+      panel2!.x < head2!.x + head2!.width &&
+      panel2!.x + panel2!.width > head2!.x &&
+      panel2!.y < head2!.y + head2!.height &&
+      panel2!.y + panel2!.height > head2!.y;
+    expect(
+      overlaps2,
+      "painel cobre o título mesmo com espaço abaixo",
+    ).toBe(false);
+    await shot("open-below");
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("listbox")).toHaveCount(0);
+    await page.setViewportSize({ width: vw, height: vh });
+  }
+
+  /* Teclado: ArrowDown abre focando a 1ª opção («Selecione» —
+   * allowEmpty); ArrowDown navega; Enter seleciona e devolve o
+   * foco ao trigger. */
   await fromTrigger.focus();
   await page.keyboard.press("ArrowDown");
   const kbList = page.getByRole("listbox").last();
   await expect(kbList).toBeVisible();
+  await expect(
+    kbList.getByRole("button", { name: "Selecione", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
   await expect(
     kbList.getByRole("button", { name: "V1", exact: true }),
   ).toBeFocused();
