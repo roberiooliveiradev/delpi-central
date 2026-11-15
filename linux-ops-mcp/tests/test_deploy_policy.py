@@ -86,6 +86,15 @@ def test_production_is_locked_independently_of_allowlist():
     assert "PRODUCTION_LOCKED" in block(environment="prod", policy=prod)
 
 
+def test_malformed_catalog_and_rollback_policy_fail_closed():
+    p = replace(inputs()["policy"], targets=None)
+    assert "TARGET_CATALOG_INVALID" in block(policy=p)
+    prod = DeploymentPolicy(enabled=True, allow_prod=True, targets=(
+        DeploymentTarget("it-portal-api", "prod", True, requires_rollback=False),
+    ))
+    assert "PRODUCTION_REQUIRES_ROLLBACK" in block(environment="prod", policy=prod)
+
+
 def test_stale_or_future_evidence_rejected():
     ev = inputs()["evidence"]
     assert "ATTESTATION_STALE" in block(evidence=replace(ev, checked_at=NOW - timedelta(seconds=121)))
