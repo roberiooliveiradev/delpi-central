@@ -27,7 +27,7 @@ Fonte: [review.md](./review.md). Autoridade: instruções oficiais do arquiteto 
 
 | Etapa | Status | SHA |
 |---|---|---|
-| U0 Inventário visual e matriz de conformidade | TODO | |
+| U0 Inventário visual e matriz de conformidade | DONE | (este commit) |
 | U1 Base comum (vocabulário, formatação, badges, ícones, estados) | TODO | |
 | U2 Início | TODO | |
 | U3 Auditoria — entrada e execução | TODO | |
@@ -36,6 +36,36 @@ Fonte: [review.md](./review.md). Autoridade: instruções oficiais do arquiteto 
 | U6 Demais páginas do Portal (desvios do padrão) | TODO | |
 | U7 HML (usuários de teste por perfil, Playwright, axe, screenshots) | TODO | |
 | U8 PROD | TODO | |
+
+## 3.1 Matriz de conformidade (U0) — evidência no código HEAD `1970a2bb4a`
+
+Classificação: `CONFIRMADO_NO_CODIGO` | `CONFIRMADO_EM_HML` | `INCONCLUSIVO` | `OK`.
+
+| Item | Página | Achado | Classificação |
+|---|---|---|---|
+| G1 PagePath | entry-audit home/analysis/occurrence | Sem `CfPagePath`; TopBar só «Início» | CONFIRMADO_NO_CODIGO |
+| G2 Eyebrow | entry-audit | Home «Fiscal»; análise/ocorrência «Auditoria de Entradas» — deveria ser «Notas fiscais» | CONFIRMADO_NO_CODIGO |
+| G3 Vocabulário | analysis/home | Temas/tipos/filiais técnicos (`cte`, `CTE`, `Filial 01`); `displayValue` só faz toLocaleString | CONFIRMADO_NO_CODIGO |
+| G4 R$ | analysis/occurrence | KPI usa `currency` local; coluna Diferença usa `displayValue` → `170.00` | CONFIRMADO_NO_CODIGO |
+| G5 Severidade | analysis | Texto puro; donut sem `tone` de status | CONFIRMADO_NO_CODIGO |
+| G6 Ícones/ajuda | analysis/home | Ações sem Lucide; KPIs via MetricStrip sem ícone/ajuda | CONFIRMADO_NO_CODIGO |
+| G7 Loading | analysis/occurrence | `<p>Carregando…</p>` sem hero/esqueleto | CONFIRMADO_NO_CODIGO |
+| G8 Grid | home create + charts | `cf-filters-grid` / `cf-charts-grid` **sem CSS**; 7 KPIs no MetricStrip | CONFIRMADO_NO_CODIGO |
+| G9 Perf | analysis | Summary+breakdowns+rows no mount; tempo abertura 01/11–15/11 | INCONCLUSIVO (medir U7) |
+| H1 Highlights | PluginShell home | `highlightsUnavailable: "—"` hardcoded | CONFIRMADO_NO_CODIGO |
+| H2 Recents icons | HomePage | Todos usam `SECTION_ICONS.closing` (calendário) | CONFIRMADO_NO_CODIGO |
+| H3 LNF externo | catalog/HomePage | Link externo existe; sem `ExternalLink`/tooltip dedicado no card | CONFIRMADO_NO_CODIGO |
+| E1 Form | EntryAuditHomePage | Campos empilhados; botão «Criar análise» | CONFIRMADO_NO_CODIGO |
+| E2 Progresso | EntryAuditHomePage | Texto por filial; sem `CfProgressTracker` | CONFIRMADO_NO_CODIGO |
+| E3 Histórico | EntryAuditHomePage | Tipos uppercased; status texto; sem badge/ação Abrir | CONFIRMADO_NO_CODIGO |
+| A1–A9 | EntryAuditAnalysisPage | Hero/KPIs/donut solto/abas SegmentToggle/tabela/CLARA — alinhado ao review | CONFIRMADO_NO_CODIGO |
+| O Detalhe | EntryAuditOccurrencePage | Sem PagePath; sem badge severidade; history em `<ol>` não `CfTimeline` | CONFIRMADO_NO_CODIGO |
+| F Demais | closing/* | PagePath+Hero presentes em Received/DocumentsAdmin/Checklist* | OK parcial |
+| F Meu perfil / DRE | shell | Perfil via TopBar→`/profile`; DRE projeta Home | OK / INCONCLUSIVO visual HML |
+
+Screenshots HML (não commitados): `/tmp/ui-review-u0/` via `e2e/specs/u0-inventory.spec.ts` (home + entry-audit 1440/1024/390). Demais páginas e temas claro/escuro: evidência completa na U7.
+
+**G9:** medição de abertura da análise 01/11–15/11 adiada à U7 (precisa sessão autenticada + análise existente); sem token seguro no inventário U0.
 
 ## 4. Etapas
 
@@ -83,3 +113,4 @@ MFE (e plugin-ui, se tocado) pelas tags. Sem migration nesta trilha.
 | Data | Etapa | SHA | Status | Nota |
 |---|---|---|---|---|
 | 2026-11-14 | plano | — | READY | Doc 171. Revisão pedida pelo owner sobre os prints de PROD. |
+| 2026-11-14 | U0 | (este commit) | DONE | Matriz G/H/E/A/O/F no código HEAD≥2ce2d29c; G9 INCONCLUSIVO até U7; screenshots HML via u0-inventory.spec (não commitados). |
