@@ -11,7 +11,10 @@ from delpi_mcp.identity import require_mcp_context
 from delpi_mcp.transport import mcp_transport_security_settings
 from delpi_mcp.resource_contract import mcp_allowed_hosts_and_origins
 from mcp.server.mcpserver import MCPServer
-from mcp.types import ToolAnnotations
+from mcp.types import ToolAnnotations, Tool as MCPTool
+from pydantic import ConfigDict
+from delpi_mcp.tool_metadata import security_schemes_meta, DELPI_META_TOOL_CLASS
+from delpi_mcp.resource_contract import MCP_TRANSPORT_SCOPES
 
 from .reader import (
     ItPortalReader, ReadError, deployment_revision, host_health,
@@ -19,6 +22,42 @@ from .reader import (
 )
 
 REQUIRED_PERMISSIONS = ("it-portal.access", "it-portal.servers.view")
+
+READ_TOOLS = frozenset((
+    "get_host_health",
+    "list_managed_services",
+    "get_service_health",
+    "get_deployment_revision",
+))
+OAUTH_SECURITY_SCHEMES = [{"type": "oauth2", "scopes": list(MCP_TRANSPORT_SCOPES)}]
+
+
+class _LinuxOpsWireTool(MCPTool):
+    """Preserve the provider-visible top-level OAuth securitySchemes."""
+    model_config = ConfigDict(extra="allow")
+
+
+class LinuxOpsMCPServer(MCPServer):
+    async def list_tools(self) -> list[MCPTool]:
+        result: list[MCPTool] = []
+        for info in self._tool_manager.list_tools():
+            if info.name not in READ_TOOLS:
+                raise RuntimeError("Unapproved MCP tool registered")
+            meta = dict(info.meta or {})
+            meta[DELPI_META_TOOL_CLASS] = "READ"
+            meta.update(security_schemes_meta(OAUTH_SECURITY_SCHEMES))
+            result.append(_LinuxOpsWireTool.model_validate({
+                "name": info.name,
+                "title": info.title,
+                "description": info.description or "",
+                "inputSchema": info.parameters,
+                "outputSchema": info.output_schema,
+                "annotations": info.annotations,
+                "icons": info.icons,
+                "_meta": meta,
+                "securitySchemes": OAUTH_SECURITY_SCHEMES,
+            }))
+        return result
 
 
 def _tool_annotations(title: str) -> ToolAnnotations:
@@ -86,7 +125,7 @@ def security_settings():
 
 
 def create_mcp_server() -> MCPServer:
-    mcp = MCPServer(
+    mcp = LinuxOpsMCPServer(
         "delpi-linux-ops",
         instructions=(
             "Read-only host observations from IT Portal. Data can be stale or absent. "
