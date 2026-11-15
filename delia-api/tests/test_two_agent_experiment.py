@@ -539,3 +539,218 @@ def test_flag_off_baseline_single_toolset_unchanged():
     assert "declare_investigation_goal" in seen_tools
     assert "alpha.search_items" in seen_tools
     assert owner_calls == ["alpha.search_items"]
+
+
+# -------------------------------------------------------------------
+# Shared turn budget — measured consumption and zero-balance
+# -------------------------------------------------------------------
+
+
+def test_variant_b_post_acceptance_exception_accounts_consumed_requests():
+    """A02/A05/A12: comprehension accepts the plan, keeps consuming real
+    provider requests on the observability echo, and then fails — the
+    investigation request share MUST subtract the measured consumption.
+
+    agent_retries=1 caps the comprehension share at
+    min(retries+2, tool_calls_limit)=3 tool calls: after the accepted
+    declaration, repeated declarations raise ``already_declared``; the
+    run dies on its 4th request when that request's tool call is
+    blocked — 4 real provider requests consumed.  The investigation leg
+    must therefore inherit 12 - 4 = 8 requests — never the
+    unaccounted 12.
+    """
+    import pydantic_ai.agent as _agent_mod
+
+    gates = _gates()
+    usage_limits_seen = []
+    original = _agent_mod.Agent.run_sync
+
+    def _spy(self, *args, **kwargs):
+        usage_limits_seen.append(kwargs.get("usage_limits"))
+        return original(self, *args, **kwargs)
+
+    def _fn(messages, info):
+        if _is_comprehension(info):
+            return ModelResponse(parts=[_valid_goal_call()])
+        return _final_answer()
+
+    _agent_mod.Agent.run_sync = _spy
+    try:
+        engine = PydanticAiInvestigationOrchestrator(
+            gates,
+            model=FunctionModel(_fn),
+            tool_calls_limit=8,
+            request_limit=12,
+            agent_retries=1,
+            two_agent_experiment=True,
+        )
+        with native_toolset_stub(alpha_beta_servers()):
+            engine.attempt("liste os processos")
+    finally:
+        _agent_mod.Agent.run_sync = original
+
+    assert len(usage_limits_seen) == 2
+    comp_limits, inv_limits = usage_limits_seen
+    consumed_requests = 4  # 4th request's tool call blocked at share 3
+    assert comp_limits.tool_calls_limit == 3
+    assert inv_limits.request_limit == 12 - consumed_requests
+    assert inv_limits.tool_calls_limit == 8 - 3
+
+
+def test_variant_b_zero_remaining_request_budget_skips_investigation():
+    """A10/A11: with a global request budget of 1, the comprehension
+    share consumes it entirely; ``max(1, remaining)`` must not regrant
+    a request — the investigation leg cannot start, and zero owner
+    calls happen.
+    """
+    gates = _gates()
+    inv_calls = {"n": 0}
+    owner_calls = _spy_owner_calls(gates)
+
+    def _fn(messages, info):
+        if _is_comprehension(info):
+            return ModelResponse(parts=[_valid_goal_call()])
+        inv_calls["n"] += 1
+        return _final_answer()
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates,
+        model=FunctionModel(_fn),
+        tool_calls_limit=8,
+        request_limit=1,
+        agent_retries=1,
+        two_agent_experiment=True,
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        attempt = engine.attempt("liste os processos")
+
+    assert inv_calls["n"] == 0
+    assert owner_calls == []
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS
+
+
+def test_variant_b_zero_remaining_tool_budget_skips_investigation():
+    """A11/A12: tool_calls_limit=1 is fully consumed by the accepted
+    comprehension declaration — the shared counter reaches the global
+    cap, so the investigation leg receives no tool-call regrant.
+    """
+    gates = _gates()
+    inv_calls = {"n": 0}
+    owner_calls = _spy_owner_calls(gates)
+
+    def _fn(messages, info):
+        if _is_comprehension(info):
+            prior = sum(1 for m in messages if isinstance(m, ModelResponse))
+            if prior == 0:
+                return ModelResponse(parts=[_valid_goal_call()])
+            return _comp_outcome()
+        inv_calls["n"] += 1
+        return _final_answer()
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates,
+        model=FunctionModel(_fn),
+        tool_calls_limit=1,
+        request_limit=12,
+        agent_retries=1,
+        two_agent_experiment=True,
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        attempt = engine.attempt("liste os processos")
+
+    assert inv_calls["n"] == 0
+    assert owner_calls == []
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS
+
+
+def test_variant_b_post_acceptance_exception_class_neutral_accounting():
+    """A05/A08/A09: whatever non-terminal class kills the observability
+    echo AFTER the plan was accepted — UnexpectedModelBehavior, provider
+    or generic errors — the artifact is kept, the measured consumption
+    is subtracted, and no extra budget is granted.
+    """
+    import pydantic_ai.agent as _agent_mod
+    from pydantic_ai.exceptions import UnexpectedModelBehavior
+
+    for exc_type in (UnexpectedModelBehavior, RuntimeError):
+        gates = _gates()
+        usage_limits_seen = []
+        original = _agent_mod.Agent.run_sync
+
+        def _spy(self, *args, **kwargs):
+            usage_limits_seen.append(kwargs.get("usage_limits"))
+            return original(self, *args, **kwargs)
+
+        raised = {"done": False}
+
+        def _fn(messages, info):
+            if _is_comprehension(info):
+                prior = sum(
+                    1 for m in messages if isinstance(m, ModelResponse)
+                )
+                if prior == 0:
+                    return ModelResponse(parts=[_valid_goal_call()])
+                if not raised["done"]:
+                    raised["done"] = True
+                    raise exc_type("echo failed")
+                return _comp_outcome()
+            return _final_answer()
+
+        _agent_mod.Agent.run_sync = _spy
+        try:
+            engine = PydanticAiInvestigationOrchestrator(
+                gates,
+                model=FunctionModel(_fn),
+                tool_calls_limit=8,
+                request_limit=12,
+                agent_retries=1,
+                two_agent_experiment=True,
+            )
+            with native_toolset_stub(alpha_beta_servers()):
+                attempt = engine.attempt("liste os processos")
+        finally:
+            _agent_mod.Agent.run_sync = original
+
+        assert len(usage_limits_seen) == 2, exc_type
+        _, inv_limits = usage_limits_seen
+        # One completed provider request (the accepted declaration)
+        # was consumed before the echo request failed mid-flight —
+        # matching the framework's own usage.requests semantics, the
+        # failed request is unmeasured but the completed one must be
+        # subtracted, never presumed zero.
+        assert inv_limits.request_limit == 11, exc_type
+        assert inv_limits.tool_calls_limit == 7, exc_type
+
+
+def test_variant_b_terminal_exception_propagates_from_comprehension():
+    """A06/A07: deadline/cancel/turn-budget failures are terminal —
+    they propagate out of the comprehension pass to the owning
+    turn-budget boundary (PROCESSING_TIMEOUT), never swallowed into a
+    kept artifact or an honest insufficient.
+    """
+    from app.application.capability_provision.semantic_capability_support import (
+        _StageDeadlineExceeded,
+    )
+
+    gates = _gates()
+    inv_calls = {"n": 0}
+
+    def _fn(messages, info):
+        if _is_comprehension(info):
+            raise _StageDeadlineExceeded("stage deadline")
+        inv_calls["n"] += 1
+        return _final_answer()
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates,
+        model=FunctionModel(_fn),
+        tool_calls_limit=8,
+        request_limit=12,
+        agent_retries=1,
+        two_agent_experiment=True,
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        attempt = engine.attempt("liste os processos")
+
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
+    assert inv_calls["n"] == 0

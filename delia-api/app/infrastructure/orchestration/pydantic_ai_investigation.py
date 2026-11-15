@@ -31,6 +31,7 @@ import json
 import logging
 import os
 import time
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import (
@@ -106,7 +107,9 @@ from app.application.specialist_interop.errors import (
     OWNER_ARGUMENT_REJECTED,
     SpecialistInteropError,
 )
+from pydantic_ai.models.wrapper import WrapperModel
 from pydantic_ai.toolsets import WrapperToolset
+from pydantic_ai.usage import RunUsage
 
 _logger = logging.getLogger(__name__)
 
@@ -414,6 +417,67 @@ class InvestigationDeps:
     # while user identifiers remain uncovered — never forces an owner
     # or capability; asks the model to re-select from live contracts.
     no_progress_continuity_retry_used: bool = False
+    # Measured provider usage for the whole turn (both legs in variant
+    # B) — populated by the counting model wrapper so consumption is
+    # accounted even when a run ends on an exception.
+    turn_usage: RunUsage | None = None
+
+
+class _TurnUsageCountingModel(WrapperModel):
+    """Per-turn provider-usage meter for the shared turn budget.
+
+    The native ``UsageLimits`` enforcement lives inside each Agent run;
+    usage measured by ``result.usage`` only exists on successful runs.
+    Counting every completed provider request here — including runs that
+    die on exceptions — lets the coordination layer subtract real
+    consumption instead of presuming zero when a specialist run fails
+    after accepting its artifact. Observability only: never alters the
+    model contract or the per-run limit enforcement.
+    """
+
+    def __init__(self, wrapped: Any, turn_usage: RunUsage):
+        super().__init__(wrapped)
+        self._turn_usage = turn_usage
+
+    def _accumulate(self, usage: Any | None) -> None:
+        self._turn_usage.requests += 1
+        if usage is not None:
+            self._turn_usage.incr(usage)
+
+    async def request(
+        self,
+        messages: Any,
+        model_settings: Any,
+        model_request_parameters: Any,
+    ) -> Any:
+        response = await super().request(
+            messages, model_settings, model_request_parameters
+        )
+        self._accumulate(getattr(response, "usage", None))
+        return response
+
+    @asynccontextmanager
+    async def request_stream(
+        self,
+        messages: Any,
+        model_settings: Any,
+        model_request_parameters: Any,
+        run_context: Any = None,
+    ) -> Any:
+        async with super().request_stream(
+            messages,
+            model_settings,
+            model_request_parameters,
+            run_context=run_context,
+        ) as stream:
+            try:
+                yield stream
+            finally:
+                try:
+                    usage = stream.usage()
+                except Exception:
+                    usage = None
+                self._accumulate(usage)
 
 
 def _is_authorization_denial(attempt: GovernedCapabilityAttempt) -> bool:
@@ -2289,6 +2353,12 @@ class PydanticAiInvestigationOrchestrator:
             if self._model_factory is not None
             else self._model
         )
+        # Measured per-turn usage: request-granularity accounting that
+        # survives run exceptions — the variant-B handoff subtracts
+        # real comprehension consumption, never a presumed zero.
+        turn_usage = RunUsage()
+        deps.turn_usage = turn_usage
+        run_model = _TurnUsageCountingModel(model, turn_usage)
         agent_capabilities = ()
         if self._context_window_tokens:
             from pydantic_ai.capabilities import ProcessHistory
@@ -2308,7 +2378,7 @@ class PydanticAiInvestigationOrchestrator:
                 ProcessHistory(processor=_trim_overflow),
             )
         agent = Agent(
-            model,
+            run_model,
             deps_type=InvestigationDeps,
             toolsets=[agent_toolset],
             instructions=instructions,
@@ -2509,7 +2579,8 @@ class PydanticAiInvestigationOrchestrator:
         if self._two_agent_experiment:
             comp_usage, handoff_error = self._run_comprehension_pass(
                 deps=deps,
-                model=model,
+                model=run_model,
+                turn_usage=turn_usage,
                 toolset=comprehension_toolset,
                 prompt=prompt,
                 message_history=message_history,
@@ -2526,14 +2597,27 @@ class PydanticAiInvestigationOrchestrator:
                 # nor a clarification — conservative insufficient, zero
                 # owner calls.
                 handoff_error = "comprehension_no_accepted_plan"
-            investigation_request_limit = max(
-                1,
-                self._request_limit
-                - (comp_usage["requests"] if comp_usage else 0),
+            # Shared turn budget — strictly subtractive. An unknown
+            # consumption is conservatively treated as fully consumed
+            # (never presumed zero), and a remaining balance <= 0 can
+            # never be regranted by a max(1, ...) floor.
+            investigation_request_limit = self._request_limit - (
+                comp_usage["requests"]
+                if comp_usage
+                else self._request_limit
             )
-            investigation_tool_limit = max(
-                1, self._tool_calls_limit - deps.tool_calls
+            investigation_tool_limit = (
+                self._tool_calls_limit - deps.tool_calls
             )
+            if (
+                handoff_error is None
+                and deps.investigation_plan is not None
+                and (
+                    investigation_request_limit <= 0
+                    or investigation_tool_limit <= 0
+                )
+            ):
+                handoff_error = "investigation_budget_exhausted"
             if handoff_error is None and (
                 deps.investigation_plan is not None
             ):
@@ -2904,6 +2988,7 @@ class PydanticAiInvestigationOrchestrator:
         agent_capabilities: Sequence[Any],
         deadline: TurnDeadline,
         correlation: str,
+        turn_usage: RunUsage,
     ) -> tuple[dict[str, int] | None, str | None]:
         """Experimental INT-2 comprehension run (variant B only).
 
@@ -2914,6 +2999,11 @@ class PydanticAiInvestigationOrchestrator:
         handoff failure and the investigation run must not start.
         Deadline/cancel exceptions propagate like the investigation run
         — they are never swallowed into an honest-attempt path.
+
+        Usage is measured through the shared ``turn_usage`` counter, so
+        every return path — including exceptions after real provider
+        requests — reports the true comprehension consumption to the
+        shared turn budget instead of a presumed zero.
         """
         from pydantic_ai import Agent, UsageLimits
 
@@ -2948,6 +3038,23 @@ class PydanticAiInvestigationOrchestrator:
         tool_calls_limit = max(
             1, min(self._agent_retries + 2, self._tool_calls_limit)
         )
+        requests_before = turn_usage.requests
+        input_before = int(turn_usage.input_tokens or 0)
+        output_before = int(turn_usage.output_tokens or 0)
+        tool_calls_before = deps.tool_calls
+
+        def _consumed() -> dict[str, int]:
+            return {
+                "requests": turn_usage.requests - requests_before,
+                "tool_calls": deps.tool_calls - tool_calls_before,
+                "input_tokens": (
+                    int(turn_usage.input_tokens or 0) - input_before
+                ),
+                "output_tokens": (
+                    int(turn_usage.output_tokens or 0) - output_before
+                ),
+            }
+
         try:
             result = agent.run_sync(
                 prompt,
@@ -2995,7 +3102,7 @@ class PydanticAiInvestigationOrchestrator:
                     type(exc).__name__,
                     correlation,
                 )
-                return None, None
+                return _consumed(), None
             if type(exc).__name__ == "UsageLimitExceeded":
                 _logger.info(
                     "orchestration engine=pydantic_ai "
@@ -3004,7 +3111,7 @@ class PydanticAiInvestigationOrchestrator:
                     deps.tool_calls,
                     correlation,
                 )
-                return None, "comprehension_budget_exhausted"
+                return _consumed(), "comprehension_budget_exhausted"
             exc_name = type(exc).__name__
             error_class = (
                 "comprehension_output_retries_exhausted"
@@ -3018,18 +3125,8 @@ class PydanticAiInvestigationOrchestrator:
                 exc_name,
                 correlation,
             )
-            return None, error_class
-        usage = result.usage
-        snapshot = {
-            "requests": int(getattr(usage, "requests", 0) or 0),
-            "tool_calls": int(getattr(usage, "tool_calls", 0) or 0),
-            "input_tokens": int(
-                getattr(usage, "input_tokens", None) or 0
-            ),
-            "output_tokens": int(
-                getattr(usage, "output_tokens", None) or 0
-            ),
-        }
+            return _consumed(), error_class
+        snapshot = _consumed()
         _logger.info(
             "orchestration engine=pydantic_ai stage=comprehension "
             "decision=completed requests=%d tool_calls=%d plan=%s "

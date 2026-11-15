@@ -28,13 +28,36 @@ Fonte: [plan.md](./plan.md). Autoridade: instruções oficiais do arquiteto e `.
 
 | Etapa | Status | SHA |
 |---|---|---|
-| H0 Inventário do padrão Comercial × CF | TODO | |
+| H0 Inventário do padrão Comercial × CF | DONE | (este commit) |
 | H1 BFF: `lnfAccess` no viewer-context | TODO | |
 | H2 BFF: favoritos (V030 + rotas) | TODO | |
 | H3 MFE: cards (Portal sai, Notas fiscais, Administração) | TODO | |
 | H4 MFE: favoritos (estrela, store, barra do topo) e Ajuda | TODO | |
 | H5 HML | TODO | |
 | H6 PROD | TODO | |
+
+### H0 — inventário Comercial → CF
+
+| Peça Comercial | Peça CF | Ação |
+|---|---|---|
+| `pluginRouteCatalog.ts` (`HUB_SECTIONS`, caps, busca) | `plugins/controllership-finance/src/content/pluginRouteCatalog.ts` | **adaptar** — remover `portal`; cards `notas-fiscais` + `administration`; cap `lnfAccess`; kind `external` + `href` |
+| `hubRouteIcons.tsx` | ícones embutidos em `HomePage.tsx` (`SECTION_ICONS`) | **criar** `hubRouteIcons.tsx` (ou estender SECTION_ICONS) — `FileText`/`Receipt`/`Settings` |
+| `HomePage.tsx` (estrela, recents, busca) | `features/home/HomePage.tsx` | **adaptar** — `onPinClick`, store favoritos; parar de empurrar Início nos recents |
+| `homeFavoritesApi.ts` | — | **criar** → BFF CF `/me/home-favorites` |
+| `homeFavoritesStore.ts` (+ test) | — | **criar** (mesmo comportamento otimista) |
+| `ShellFavoritesStrip.tsx` | — | **criar**; ligar no `PluginShell` secondary |
+| `commercialUi` `TopBarFavoritesStrip` | `controllershipFinanceUi.ts` | **adaptar** — exportar `CfTopBarFavoritesStrip` via `createDashboardTopBarFavoritesStrip` (já no kit) |
+| `ShellTopBarSecondary` (busca + favoritos) | secondary inline no `PluginShell.tsx` | **adaptar** — inserir strip ao lado do search |
+| `V006__home_favorites.sql` | — | **criar** `V030__home_favorites.sql` em `controllership_finance` |
+| `home_favorites_routes.py` + repo + testes | — | **criar** espelho; auth `access` **ou** `accessDre` |
+| `GET` capabilities no viewer Comercial (caps no shell) | `viewer_context_routes.py` + `viewerContextApi.ts` | **adaptar** — `capabilities.lnfAccess` aditivo |
+| `has_lnf_clara_entry` / `LANCAMENTO_NOTAS_FISCAIS_ANY_PERMISSIONS` | `authz.py` + `invoice_posting/permissions.py` | **existe** — reutilizar no viewer (D6; sem permission nova) |
+| Ajuda `CM_HELP.home.favorites` | `CF_HELP.home` | **adaptar** — Notas fiscais, Administração, favoritos |
+| Testes estruturais hub / catálogo | `pluginRouteCatalog.test.ts`, `HomePage.test.tsx` | **adaptar** |
+
+**D7 (Comercial):** Início e Meu perfil **não** estão em `HUB_SECTIONS`; busca/Ctrl+K só indexam o catálogo. Recents só aceitam viewIds do catálogo (`isKnownView`) — Início não entra. CF hoje tem card Portal + `pushRecentView(home)` no mount → alinhar: tirar Portal do catálogo; não empurrar Início; perfil continua no avatar (`/profile`).
+
+**D8 (Comercial):** favoritos só `viewId` (+ `search`) do portal; sem link externo / `href`. LNF externo **sem estrela** nesta etapa.
 
 ## 4. Etapas
 
@@ -61,3 +84,4 @@ MFE e BFF pelas tags. V030 só cria tabela nova: rollback da BFF não precisa de
 | Data | Etapa | SHA | Status | Nota |
 |---|---|---|---|---|
 | 2026-11-14 | plano | — | READY | Doc 170. D1–D4 do owner; D5 regra do produto; D6–D8 propostas pelo Claude. |
+| 2026-11-14 | H0 | (este commit) | DONE | Inventário Comercial×CF; D7/D8 confirmados no código. HEAD base `59855c61`. |
