@@ -146,4 +146,14 @@ MFE (e plugin-ui, se tocado) pelas tags. Sem migration nesta trilha.
 | `NotFoundPage` | Corrigida — CfPageHero + CfActionButton |
 | Relatórios / Central de Fechamento (`ClosingHero`) | **V5** — já seguem o padrão próprio do fechamento (doc 50); não forçar PageHero genérico |
 | Administração (checklist/documentos/catálogos) | **OK** — PagePath e/ou ClosingHero presentes |
-| Meu perfil | **V5** — destino Core `/profile` (fora do MFE) |
+| Meu perfil | **U9 R4** — `/users/{userId}` com `PortalUserProfilePage` (alias `/profile` → `users/me`); CTA «Editar no Meu Perfil» ainda abre Core `/profile` |
+
+## 8. U9 — rework (G9, perfis HML, axe/temas, página do usuário)
+
+| Item | Status | Nota |
+|---|---|---|
+| R1 Progressive load análise | DONE (código) | Summary/KPIs primeiro; breakdowns e rows sob demanda; paginação server-side |
+| R2 Perfis Keycloak HML | DONE (bootstrap+grant) | `cf-access` / `cf-manage` / `cf-lnf` / `cf-dre` + `hml-cf-profile-users-grant.py` |
+| R3 axe + claro/escuro | DONE (e2e) | `@axe-core/playwright` + screenshots em `/tmp/ui-review-u9` |
+| R4 PortalUserProfilePage | DONE | Rota `users/:userId`; avatar TopBar aponta para ela |
+| PROD | PENDING | Publicar e pedir prints ao owner |

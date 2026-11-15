@@ -36,7 +36,7 @@ import { EntryAuditHomePage } from "./features/entry-audit/EntryAuditHomePage";
 import { EntryAuditOccurrencePage } from "./features/entry-audit/EntryAuditOccurrencePage";
 import { HomePage } from "./features/home/HomePage";
 import { MyTasksPage } from "./features/me/MyTasksPage";
-import { ProfilePage } from "./features/me/ProfilePage";
+import { UserProfilePage } from "./features/users/UserProfilePage";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -49,7 +49,13 @@ export type AppProps = {
   isSuperadmin?: boolean;
 };
 
-const DRE_SURFACES = new Set(["home", "received_documents", "not_found"]);
+const DRE_SURFACES = new Set([
+  "home",
+  "received_documents",
+  "user_profile",
+  "profile",
+  "not_found",
+]);
 
 function AppRoutes({
   basePath,
@@ -138,8 +144,12 @@ function AppRoutes({
           />
         ) : resolved.view === "my_tasks" ? (
           <MyTasksPage />
-        ) : resolved.view === "profile" ? (
-          <ProfilePage />
+        ) : resolved.view === "user_profile" ||
+          resolved.view === "profile" ? (
+          <UserProfilePage
+            basePath={basePath}
+            userId={resolved.userId ?? "me"}
+          />
         ) : resolved.view === "clara_consent" ? (
           <ClaraConsentPage />
         ) : resolved.view === "pendencies" ? (

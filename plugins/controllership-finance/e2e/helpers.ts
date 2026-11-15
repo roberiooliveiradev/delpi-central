@@ -1,8 +1,16 @@
 import { expect, type Page } from "@playwright/test";
 
+export type PortalCredentialKind =
+  | "allowed"
+  | "denied"
+  | "cf_access"
+  | "cf_manage"
+  | "cf_lnf"
+  | "cf_dre";
+
 /** Credenciais HML (preferidas) ou DEV local. Nunca logar valores. */
 export function portalCredentials(
-  kind: "allowed" | "denied" = "allowed",
+  kind: PortalCredentialKind = "allowed",
 ): { user: string; pass: string } {
   if (kind === "denied") {
     const user =
@@ -14,6 +22,30 @@ export function portalCredentials(
         "HML_DENIED_TEST_USERNAME/PASSWORD (ou DEV_DENIED_*) ausentes.",
       );
     }
+    return { user, pass };
+  }
+  if (kind === "cf_access") {
+    const user = process.env.HML_CF_ACCESS_USERNAME || "cf-access";
+    const pass = process.env.HML_CF_ACCESS_PASSWORD;
+    if (!pass) throw new Error("HML_CF_ACCESS_PASSWORD ausente.");
+    return { user, pass };
+  }
+  if (kind === "cf_manage") {
+    const user = process.env.HML_CF_MANAGE_USERNAME || "cf-manage";
+    const pass = process.env.HML_CF_MANAGE_PASSWORD;
+    if (!pass) throw new Error("HML_CF_MANAGE_PASSWORD ausente.");
+    return { user, pass };
+  }
+  if (kind === "cf_lnf") {
+    const user = process.env.HML_CF_LNF_USERNAME || "cf-lnf";
+    const pass = process.env.HML_CF_LNF_PASSWORD;
+    if (!pass) throw new Error("HML_CF_LNF_PASSWORD ausente.");
+    return { user, pass };
+  }
+  if (kind === "cf_dre") {
+    const user = process.env.HML_CF_DRE_USERNAME || "cf-dre";
+    const pass = process.env.HML_CF_DRE_PASSWORD;
+    if (!pass) throw new Error("HML_CF_DRE_PASSWORD ausente.");
     return { user, pass };
   }
   const user =
@@ -30,7 +62,7 @@ export function portalCredentials(
 
 export async function loginAs(
   page: Page,
-  kind: "allowed" | "denied" = "allowed",
+  kind: PortalCredentialKind = "allowed",
 ): Promise<void> {
   const creds = portalCredentials(kind);
   await page.goto("/");

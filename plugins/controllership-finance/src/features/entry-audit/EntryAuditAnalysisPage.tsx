@@ -34,6 +34,7 @@ import {
   CfComparativeAreaChart,
   CfDistributionDonut,
   CfHorizontalValueBars,
+  CfLoadingCard,
   CfMetricKpiCard,
   CfMetricStrip,
   CfPageHero,
@@ -75,12 +76,6 @@ import {
   severityToUrl,
   type EntryAuditTab,
 } from "./entryAuditPresentation";
-
-type AnalysisData = {
-  analysis: EntryAuditAnalysis;
-  summary: EntryAuditSummary;
-  breakdowns: EntryAuditBreakdowns;
-};
 
 const kpiIcon = (node: ReactNode) => node;
 
@@ -125,13 +120,18 @@ export function EntryAuditAnalysisPage({
   analysisId: string;
 }) {
   const [routeEpoch, setRouteEpoch] = useState(0);
-  const [data, setData] = useState<AnalysisData | null>(null);
+  const [analysis, setAnalysis] = useState<EntryAuditAnalysis | null>(null);
+  const [summary, setSummary] = useState<EntryAuditSummary | null>(null);
+  const [breakdowns, setBreakdowns] = useState<EntryAuditBreakdowns | null>(
+    null,
+  );
   const [daily, setDaily] = useState<EntryAuditDaily | null>(null);
   const [branchOptions, setBranchOptions] = useState<EntryAuditOption[]>([]);
   const [rows, setRows] = useState<
     Array<EntryAuditOccurrence | EntryAuditDocument | EntryAuditTes>
   >([]);
   const [page, setPage] = useState<EntryAuditPage<unknown> | null>(null);
+  const [rowsLoading, setRowsLoading] = useState(false);
   const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
   const [exporting, setExporting] = useState(false);
@@ -139,6 +139,11 @@ export function EntryAuditAnalysisPage({
   const params = useMemo(() => currentSearch(), [routeEpoch]);
   const tab = parseEntryAuditTab(params.get("tab"));
   const filters = useMemo(() => filtersFromUrl(params), [params]);
+  const tablePage = Math.max(1, Number(params.get("page") || "1") || 1);
+  const tablePageSize = Math.min(
+    200,
+    Math.max(10, Number(params.get("page_size") || "50") || 50),
+  );
 
   useEffect(() => {
     const sync = () => setRouteEpoch((value) => value + 1);
@@ -156,16 +161,18 @@ export function EntryAuditAnalysisPage({
     return () => controller.abort();
   }, []);
 
+  /** R1 — análise + summary primeiro (KPIs); não esperar breakdowns/rows. */
   useEffect(() => {
     const controller = new AbortController();
     setError("");
-    Promise.all([
-      getEntryAuditAnalysis(analysisId, controller.signal),
-      getEntryAuditSummary(analysisId, filters, controller.signal),
-      getEntryAuditBreakdowns(analysisId, filters, controller.signal),
-    ])
-      .then(([analysis, summary, breakdowns]) => {
-        if (!controller.signal.aborted) setData({ analysis, summary, breakdowns });
+    setSummary(null);
+    setBreakdowns(null);
+    setDaily(null);
+    setRows([]);
+    setPage(null);
+    void getEntryAuditAnalysis(analysisId, controller.signal)
+      .then((payload) => {
+        if (!controller.signal.aborted) setAnalysis(payload);
       })
       .catch((reason: unknown) => {
         if (!controller.signal.aborted) {
@@ -174,12 +181,36 @@ export function EntryAuditAnalysisPage({
           );
         }
       });
+    void getEntryAuditSummary(analysisId, filters, controller.signal)
+      .then((payload) => {
+        if (!controller.signal.aborted) setSummary(payload);
+      })
+      .catch((reason: unknown) => {
+        if (!controller.signal.aborted) {
+          setError(
+            reason instanceof Error ? reason.message : "Falha ao carregar resumo.",
+          );
+        }
+      });
     return () => controller.abort();
   }, [analysisId, filters, refresh]);
 
   useEffect(() => {
-    if (!data) return;
-    const multiDay = data.analysis.date_from !== data.analysis.date_to;
+    if (!analysis || !summary) return;
+    const controller = new AbortController();
+    void getEntryAuditBreakdowns(analysisId, filters, controller.signal)
+      .then((payload) => {
+        if (!controller.signal.aborted) setBreakdowns(payload);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setBreakdowns(null);
+      });
+    return () => controller.abort();
+  }, [analysisId, analysis, summary, filters, refresh]);
+
+  useEffect(() => {
+    if (!analysis || !summary) return;
+    const multiDay = analysis.date_from !== analysis.date_to;
     if (!multiDay) {
       setDaily(null);
       return;
@@ -193,10 +224,12 @@ export function EntryAuditAnalysisPage({
         if (!controller.signal.aborted) setDaily(null);
       });
     return () => controller.abort();
-  }, [analysisId, data, filters]);
+  }, [analysisId, analysis, summary, filters, refresh]);
 
   useEffect(() => {
+    if (!summary) return;
     const controller = new AbortController();
+    setRowsLoading(true);
     const resource = entryAuditTabResource(tab);
     const tabFilters: EntryAuditFilters =
       tab === "posted_outside"
@@ -217,8 +250,8 @@ export function EntryAuditAnalysisPage({
             analysisId,
             resource,
             tabFilters,
-            1,
-            50,
+            tablePage,
+            tablePageSize,
             controller.signal,
           );
     request
@@ -235,16 +268,33 @@ export function EntryAuditAnalysisPage({
               : "Falha ao carregar registros.",
           );
         }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setRowsLoading(false);
       });
     return () => controller.abort();
-  }, [analysisId, tab, filters, refresh]);
+  }, [
+    analysisId,
+    tab,
+    filters,
+    refresh,
+    summary,
+    tablePage,
+    tablePageSize,
+  ]);
 
   const navigateWith = (changes: Record<string, string>) => {
     const next = currentSearch();
+    const touchesPagingOnly =
+      Object.keys(changes).length > 0 &&
+      Object.keys(changes).every((key) => key === "page" || key === "page_size");
     Object.entries(changes).forEach(([key, value]) => {
       if (value) next.set(key, value);
       else next.delete(key);
     });
+    if (!touchesPagingOnly && !("page" in changes)) {
+      next.delete("page");
+    }
     const query = next.toString();
     navigatePluginPath(
       `${basePath}/entry-audit/analyses/${encodeURIComponent(analysisId)}${query ? `?${query}` : ""}`,
@@ -404,7 +454,7 @@ export function EntryAuditAnalysisPage({
     return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
   }, [daily]);
 
-  if (error && !data) {
+  if (error && !analysis && !summary) {
     return (
       <section className="cf-page-stack">
         <CfStateBanner variant="error">
@@ -417,7 +467,7 @@ export function EntryAuditAnalysisPage({
     );
   }
 
-  if (!data) {
+  if (!analysis || !summary) {
     return (
       <EntryAuditLoadingState
         back={{ label: "Início", href: basePath, onNavigate: goHome }}
@@ -437,28 +487,28 @@ export function EntryAuditAnalysisPage({
   }
 
   const periodLabel = formatPeriodLabel(
-    data.analysis.date_from,
-    data.analysis.date_to,
+    analysis.date_from,
+    analysis.date_to,
   );
   const claraSuggestions = entryAuditClaraSuggestions(
-    data.analysis.date_from,
-    data.analysis.date_to,
+    analysis.date_from,
+    analysis.date_to,
   );
   const cleanShare = conformityRatio(
-    data.summary.conformity.clean,
-    data.summary.conformity.divergent,
+    summary.conformity.clean,
+    summary.conformity.divergent,
   );
-  const { kpis, previous } = data.summary;
+  const { kpis, previous } = summary;
 
   const chips = [
-    ...data.analysis.branches.map((branch) => ({
+    ...analysis.branches.map((branch) => ({
       id: `branch-${branch}`,
       label: formatBranchLabel(branch, branchOptions),
       active: filters.branch === branch,
       onSelect: () =>
         navigateWith({ branch: filters.branch === branch ? "" : branch }),
     })),
-    ...data.analysis.document_types.map((type) => ({
+    ...analysis.document_types.map((type) => ({
       id: `type-${type}`,
       label: formatDocumentType(type),
       active: filters.document_type === type,
@@ -521,8 +571,8 @@ export function EntryAuditAnalysisPage({
 
   const tabCounts: Partial<Record<EntryAuditTab, number>> = {
     occurrences: kpis.occurrences,
-    unmatched: data.summary.conformity.unmatched_open,
-    posted_outside: data.summary.conformity.posted_outside_period.count,
+    unmatched: summary.conformity.unmatched_open,
+    posted_outside: summary.conformity.posted_outside_period.count,
   };
 
   const navItems = ENTRY_AUDIT_TABS.map((item) => {
@@ -548,10 +598,10 @@ export function EntryAuditAnalysisPage({
   };
 
   const metaParts = [
-    data.analysis.branches
+    analysis.branches
       .map((code) => formatBranchLabel(code, branchOptions))
       .join(" · "),
-    data.analysis.document_types.map(formatDocumentType).join(" · "),
+    analysis.document_types.map(formatDocumentType).join(" · "),
   ].filter(Boolean);
 
   return (
@@ -604,8 +654,8 @@ export function EntryAuditAnalysisPage({
         description={metaParts.join(" · ")}
         badge={
           <CfStatusBadge
-            label={formatAuditStatus(data.analysis.status)}
-            variant={auditStatusBadgeVariant(data.analysis.status)}
+            label={formatAuditStatus(analysis.status)}
+            variant={auditStatusBadgeVariant(analysis.status)}
           />
         }
         actions={
@@ -654,10 +704,10 @@ export function EntryAuditAnalysisPage({
           </CfActionButton>
         </CfStateBanner>
       ) : null}
-      {data.summary.branches_unavailable?.length ? (
+      {summary.branches_unavailable?.length ? (
         <CfStateBanner variant="default">
           Dados indisponíveis para:{" "}
-          {data.summary.branches_unavailable
+          {summary.branches_unavailable
             .map((code) => formatBranchLabel(code, branchOptions))
             .join(", ")}
           .
@@ -725,7 +775,7 @@ export function EntryAuditAnalysisPage({
         <CfMetricKpiCard
           label="Sem par em aberto"
           titleHint={CF_HELP.entryAudit.kpiUnmatched}
-          value={String(data.summary.conformity.unmatched_open)}
+          value={String(summary.conformity.unmatched_open)}
           icon={kpiIcon(<Link2Off size={22} strokeWidth={1.75} aria-hidden />)}
           onSelect={() => navigateWith({ tab: "unmatched" })}
         />
@@ -741,13 +791,13 @@ export function EntryAuditAnalysisPage({
               {
                 id: "clean",
                 label: "Limpas",
-                count: data.summary.conformity.clean,
+                count: summary.conformity.clean,
                 tone: "success",
               },
               {
                 id: "divergent",
                 label: "Divergentes",
-                count: data.summary.conformity.divergent,
+                count: summary.conformity.divergent,
                 tone: "danger",
               },
             ]}
@@ -758,77 +808,88 @@ export function EntryAuditAnalysisPage({
               {
                 id: "unmatched-open",
                 label: "Sem par em aberto",
-                value: data.summary.conformity.unmatched_open,
+                value: summary.conformity.unmatched_open,
               },
               {
                 id: "explained",
                 label: "Explicadas",
-                value: data.summary.conformity.unmatched_explained,
+                value: summary.conformity.unmatched_explained,
               },
               {
                 id: "posted-outside",
                 label: "Lançadas fora do período",
-                value: data.summary.conformity.posted_outside_period.count,
+                value: summary.conformity.posted_outside_period.count,
                 tone: "neutral",
               },
             ]}
           />
         </CfSectionCard>
 
-        <CfSectionCard title="Severidade" hint={CF_HELP.entryAudit.severity}>
-          <CfDistributionDonut
-            ariaLabel="Distribuição por severidade"
-            items={data.breakdowns.by_severity.map((item) => ({
-              id: item.name,
-              label: item.name,
-              value: item.count,
-              tone: severityTone(item.name),
-            }))}
-            onSelect={(item) => {
-              if (item) navigateWith({ severity: severityToUrl(item.id) });
-            }}
-            selectedId={filters.severity || undefined}
-          />
-        </CfSectionCard>
+        {breakdowns ? (
+          <>
+            <CfSectionCard title="Severidade" hint={CF_HELP.entryAudit.severity}>
+              <CfDistributionDonut
+                ariaLabel="Distribuição por severidade"
+                items={breakdowns.by_severity.map((item) => ({
+                  id: item.name,
+                  label: item.name,
+                  value: item.count,
+                  tone: severityTone(item.name),
+                }))}
+                onSelect={(item) => {
+                  if (item) navigateWith({ severity: severityToUrl(item.id) });
+                }}
+                selectedId={filters.severity || undefined}
+              />
+            </CfSectionCard>
 
-        <CfSectionCard title="Por tema" hint={CF_HELP.entryAudit.occurrences}>
-          <CfHorizontalValueBars
-            aria-label="Ocorrências por tema"
-            items={data.breakdowns.by_theme.map((item) => ({
-              id: item.name,
-              label: formatTheme(item.name),
-              value: item.count,
-            }))}
-            onItemClick={(item) => navigateWith({ theme: item.id })}
-            selectedId={filters.theme || undefined}
-          />
-        </CfSectionCard>
+            <CfSectionCard title="Por tema" hint={CF_HELP.entryAudit.occurrences}>
+              <CfHorizontalValueBars
+                aria-label="Ocorrências por tema"
+                items={breakdowns.by_theme.map((item) => ({
+                  id: item.name,
+                  label: formatTheme(item.name),
+                  value: item.count,
+                }))}
+                onItemClick={(item) => navigateWith({ theme: item.id })}
+                selectedId={filters.theme || undefined}
+              />
+            </CfSectionCard>
 
-        <CfSectionCard title="Por fornecedor">
-          <CfHorizontalValueBars
-            aria-label="Ocorrências por fornecedor"
-            items={data.breakdowns.suppliers.slice(0, 10).map((item) => ({
-              id: item.name,
-              label: item.name,
-              value: item.count,
-            }))}
-            onItemClick={(item) => navigateWith({ supplier: item.id })}
-            selectedId={filters.supplier || undefined}
-          />
-        </CfSectionCard>
+            <CfSectionCard title="Por fornecedor">
+              <CfHorizontalValueBars
+                aria-label="Ocorrências por fornecedor"
+                items={breakdowns.suppliers.slice(0, 10).map((item) => ({
+                  id: item.name,
+                  label: item.name,
+                  value: item.count,
+                }))}
+                onItemClick={(item) => navigateWith({ supplier: item.id })}
+                selectedId={filters.supplier || undefined}
+              />
+            </CfSectionCard>
 
-        <CfSectionCard title="Por TES">
-          <CfHorizontalValueBars
-            aria-label="Ocorrências por TES"
-            items={data.breakdowns.tes.slice(0, 10).map((item) => ({
-              id: item.name,
-              label: item.name,
-              value: item.count,
-            }))}
-            onItemClick={(item) => navigateWith({ tes: item.id })}
-            selectedId={filters.tes || undefined}
-          />
-        </CfSectionCard>
+            <CfSectionCard title="Por TES">
+              <CfHorizontalValueBars
+                aria-label="Ocorrências por TES"
+                items={breakdowns.tes.slice(0, 10).map((item) => ({
+                  id: item.name,
+                  label: item.name,
+                  value: item.count,
+                }))}
+                onItemClick={(item) => navigateWith({ tes: item.id })}
+                selectedId={filters.tes || undefined}
+              />
+            </CfSectionCard>
+          </>
+        ) : (
+          <>
+            <CfLoadingCard title="Carregando severidade…" />
+            <CfLoadingCard title="Carregando temas…" />
+            <CfLoadingCard title="Carregando fornecedores…" />
+            <CfLoadingCard title="Carregando TES…" />
+          </>
+        )}
 
         {dailyPoints.length > 1 ? (
           <CfSectionCard title="Evolução por dia">
@@ -853,6 +914,8 @@ export function EntryAuditAnalysisPage({
               selectedName={filters.day || null}
             />
           </CfSectionCard>
+        ) : multiDay && !daily ? (
+          <CfLoadingCard title="Carregando evolução diária…" />
         ) : null}
       </div>
 
@@ -882,7 +945,9 @@ export function EntryAuditAnalysisPage({
         aria-label="Visões da auditoria"
       />
 
-      {tab === "occurrences" ? (
+      {rowsLoading && !rows.length ? (
+        <CfLoadingCard title="Carregando registros da aba…" />
+      ) : tab === "occurrences" ? (
         <DataTableSection<EntryAuditOccurrence>
           title={`Ocorrências (${page?.total ?? 0})`}
           titleHint={CF_HELP.entryAudit.occurrences}
@@ -891,6 +956,13 @@ export function EntryAuditAnalysisPage({
           rowKey={(row) => row.stable_key}
           onRowClick={openOccurrence}
           hidePaginationWhenSinglePage
+          serverPagination={{
+            page: page?.page ?? tablePage,
+            pageSize: page?.page_size ?? tablePageSize,
+            total: page?.total ?? 0,
+            onPageChange: (nextPage) =>
+              navigateWith({ page: String(nextPage) }),
+          }}
         />
       ) : (
         <DataTableSection<EntryAuditDocument | EntryAuditTes>
@@ -906,6 +978,17 @@ export function EntryAuditAnalysisPage({
             )
           }
           hidePaginationWhenSinglePage
+          serverPagination={
+            entryAuditTabResource(tab) === "tes"
+              ? undefined
+              : {
+                  page: page?.page ?? tablePage,
+                  pageSize: page?.page_size ?? tablePageSize,
+                  total: page?.total ?? 0,
+                  onPageChange: (nextPage) =>
+                    navigateWith({ page: String(nextPage) }),
+                }
+          }
         />
       )}
 

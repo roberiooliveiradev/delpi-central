@@ -11,7 +11,8 @@ export const CONTROLLERSHIP_FINANCE_BASE_PATH = "/apps/controllership-finance";
  * - `cockpit` — estado consolidado P2/P3/P4/P5 da competência.
  * - `monthly_closing` — workspace «Fechamento mensal» (3 abas, doc 112).
  * - `my_tasks` — projeção self-only de pendências/revisões (P4/P5).
- * - `profile` — dados corporativos do próprio usuário (Core).
+ * - `profile` — alias legado; canonicaliza em `users/{userId}`.
+ * - `user_profile` — perfil do portal (`PortalUserProfilePage`).
  * - `catalogs_admin` — catálogos governados P6 (MANAGE).
  * - `documents_admin` — catálogo mestre de documentos do fechamento
  *   (UX-012, MANAGE): listagem + cadastro/edição em páginas completas.
@@ -52,6 +53,7 @@ export type PluginView =
   | "received_documents"
   | "my_tasks"
   | "profile"
+  | "user_profile"
   | "clara_consent"
   | "not_found";
 
@@ -160,6 +162,7 @@ const RECEIVED_DOCUMENT_PATTERN =
 const ENTRY_AUDIT_OCCURRENCE_PATTERN =
   /^entry-audit\/analyses\/([^/]+)\/occurrences\/([^/]+)$/;
 const ENTRY_AUDIT_ANALYSIS_PATTERN = /^entry-audit\/analyses\/([^/]+)$/;
+const USER_PROFILE_PATTERN = /^users\/([^/]+)$/;
 
 export type ResolvedPluginRoute = {
   view: PluginView;
@@ -177,6 +180,8 @@ export type ResolvedPluginRoute = {
   adminVersion?: string;
   analysisId?: string;
   occurrenceKey?: string;
+  /** Id do usuário na rota `/users/{userId}` (`me` = próprio). */
+  userId?: string;
 };
 
 export function normalizePathname(pathname: string): string {
@@ -206,6 +211,23 @@ export function resolvePluginRoute(
   const relativePath = path.startsWith(`${base}/`)
     ? path.slice(base.length + 1)
     : path.slice(base.length);
+  const userProfileMatch = USER_PROFILE_PATTERN.exec(relativePath);
+  if (userProfileMatch) {
+    return {
+      view: "user_profile",
+      pathname: path,
+      relativePath,
+      userId: decodeURIComponent(userProfileMatch[1] ?? ""),
+    };
+  }
+  if (relativePath === "profile") {
+    return {
+      view: "user_profile",
+      pathname: path,
+      relativePath,
+      userId: "me",
+    };
+  }
   const entryAuditOccurrenceMatch =
     ENTRY_AUDIT_OCCURRENCE_PATTERN.exec(relativePath);
   if (entryAuditOccurrenceMatch) {
@@ -342,6 +364,21 @@ export function buildPluginPath(
       ? `?${search}`
       : "";
   return `${base}${suffix}${normalizedSearch}`;
+}
+
+/** Path canônico do perfil de usuário do portal. */
+export function buildUserProfileHref(
+  userId: string,
+  basePath?: string,
+  search?: string,
+): string {
+  const base = normalizeBasePath(basePath);
+  const id = (userId || "").trim() || "me";
+  const path = `${base}/users/${encodeURIComponent(id)}`;
+  if (!search) return path;
+  const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
+  if (normalizedSearch === "?") return path;
+  return `${path}${normalizedSearch}`;
 }
 
 /** Path da página contextual de uma versão do checklist (UX-015). */

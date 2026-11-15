@@ -350,6 +350,66 @@ PY
 )" >/dev/null
 echo "[hml-kc] senha de $TEST_USER sincronizada."
 
+# --- perfis de teste CF (U9 R2): só Keycloak; grants Core via script separado ---
+# Senhas exclusivas em .env.hml — nunca impressas.
+ensure_hml_cf_profile_user() {
+  local username="$1"
+  local password="$2"
+  local first_name="$3"
+  local last_name="$4"
+  if [ -z "$password" ] || [[ "$password" == CHANGE_ME_* ]]; then
+    echo "[ERRO] senha inválida para $username em .env.hml (defina secret forte exclusivo)." >&2
+    exit 1
+  fi
+  local uid
+  uid="$(admin_api GET "/realms/$REALM/users?username=$username&exact=true" \
+    | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["id"] if d else "")')"
+  local user_json
+  user_json="$(python3 - "$username" "$first_name" "$last_name" <<'PY'
+import json, sys
+print(json.dumps({
+  "username": sys.argv[1],
+  "enabled": True,
+  "emailVerified": True,
+  "email": f"{sys.argv[1]}@hml.invalid",
+  "firstName": sys.argv[2],
+  "lastName": sys.argv[3],
+  "requiredActions": [],
+}))
+PY
+)"
+  if [ -z "$uid" ]; then
+    admin_api POST "/realms/$REALM/users" "$user_json" >/dev/null
+    uid="$(admin_api GET "/realms/$REALM/users?username=$username&exact=true" \
+      | python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["id"])')"
+    echo "[hml-kc] user $username criado."
+  else
+    admin_api PUT "/realms/$REALM/users/$uid" "$user_json" >/dev/null
+    echo "[hml-kc] user $username já existe — perfil sincronizado."
+  fi
+  admin_api PUT "/realms/$REALM/users/$uid/reset-password" \
+    "$(python3 - "$password" <<'PY'
+import json,sys
+print(json.dumps({"type":"password","value":sys.argv[1],"temporary":False}))
+PY
+)" >/dev/null
+  echo "[hml-kc] senha de $username sincronizada."
+}
+
+CF_ACCESS_USER="$(env_val HML_CF_ACCESS_USERNAME "$ENV_FILE")"; CF_ACCESS_USER="${CF_ACCESS_USER:-cf-access}"
+CF_ACCESS_PASS="$(env_val HML_CF_ACCESS_PASSWORD "$ENV_FILE")"
+CF_MANAGE_USER="$(env_val HML_CF_MANAGE_USERNAME "$ENV_FILE")"; CF_MANAGE_USER="${CF_MANAGE_USER:-cf-manage}"
+CF_MANAGE_PASS="$(env_val HML_CF_MANAGE_PASSWORD "$ENV_FILE")"
+CF_LNF_USER="$(env_val HML_CF_LNF_USERNAME "$ENV_FILE")"; CF_LNF_USER="${CF_LNF_USER:-cf-lnf}"
+CF_LNF_PASS="$(env_val HML_CF_LNF_PASSWORD "$ENV_FILE")"
+CF_DRE_USER="$(env_val HML_CF_DRE_USERNAME "$ENV_FILE")"; CF_DRE_USER="${CF_DRE_USER:-cf-dre}"
+CF_DRE_PASS="$(env_val HML_CF_DRE_PASSWORD "$ENV_FILE")"
+
+ensure_hml_cf_profile_user "$CF_ACCESS_USER" "$CF_ACCESS_PASS" "Cf" "Access"
+ensure_hml_cf_profile_user "$CF_MANAGE_USER" "$CF_MANAGE_PASS" "Cf" "Manage"
+ensure_hml_cf_profile_user "$CF_LNF_USER" "$CF_LNF_PASS" "Cf" "Lnf"
+ensure_hml_cf_profile_user "$CF_DRE_USER" "$CF_DRE_PASS" "Cf" "Dre"
+
 # --- cliente confidencial da BFF (espelho de PROD, segredo novo só de HML) ---
 # PROD (leitura 2026-11-14): publicClient=false, serviceAccountsEnabled=true,
 # standard/direct/implicit desligados, fullScopeAllowed=true.

@@ -9,6 +9,7 @@ import {
 import { Home, ListChecks } from "lucide-react";
 import { formatPortalGreeting } from "@delpi/plugin-ui/index";
 import { cfApiUrl, httpGetImageBlob } from "../api/httpClient";
+import { getMyProfile } from "../api/meApi";
 
 import {
   collectSearchHits,
@@ -20,7 +21,12 @@ import { CF_HELP } from "../content/helpTooltips";
 import { resolveShellNavItems, SHELL_NAV_CONTENT } from "../content/shellNav";
 import { loadHomeHeroHighlights } from "../features/home/homeHeroHighlights";
 import { navigatePluginView } from "./pluginNavigation";
-import { resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
+import {
+  buildUserProfileHref,
+  resolveActiveNavId,
+  type PluginNavId,
+  type PluginView,
+} from "./pluginRoutes";
 import { useViewerContext } from "./ViewerContext";
 import { ShellFavoritesStrip } from "./ShellFavoritesStrip";
 import {
@@ -62,9 +68,16 @@ function isEditableTarget(target: EventTarget | null): boolean {
 export function PluginShell({ view, basePath, children }: PluginShellProps) {
   const { viewer } = useViewerContext();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarHref, setAvatarHref] = useState(
+    () => buildUserProfileHref("me", basePath),
+  );
 
   useEffect(() => {
-    if (!viewer?.capabilities.access) {
+    setAvatarHref(buildUserProfileHref("me", basePath));
+  }, [basePath]);
+
+  useEffect(() => {
+    if (!viewer?.capabilities.access && !viewer?.capabilities.accessDre) {
       setAvatarUrl(null);
       return;
     }
@@ -79,11 +92,23 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
       .catch(() => {
         if (!controller.signal.aborted) setAvatarUrl(null);
       });
+    void getMyProfile({ signal: controller.signal })
+      .then((profile) => {
+        if (controller.signal.aborted) return;
+        const id = (profile.id || "").trim();
+        if (id) setAvatarHref(buildUserProfileHref(id, basePath));
+      })
+      .catch(() => undefined);
     return () => {
       controller.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [viewer?.capabilities.access, viewer?.displayName]);
+  }, [
+    basePath,
+    viewer?.capabilities.access,
+    viewer?.capabilities.accessDre,
+    viewer?.displayName,
+  ]);
 
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState("");
@@ -268,8 +293,8 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
             <CfTopBarUserIdentity
               displayName={viewer?.displayName ?? viewer?.firstName ?? null}
               avatarUrl={avatarUrl}
-              avatarHref="/profile"
-              avatarTitle="Abrir Meu Perfil na Minha DELPI"
+              avatarHref={avatarHref}
+              avatarTitle="Abrir meu perfil neste portal"
               fallbackLabel={SHELL_NAV_CONTENT.userMenu.nameFallback}
               portalScopeClassName={CF_PORTAL_SCOPE}
             />
