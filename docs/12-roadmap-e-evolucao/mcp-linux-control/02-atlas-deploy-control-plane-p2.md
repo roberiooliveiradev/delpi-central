@@ -2,7 +2,7 @@
 
 > **Atualizado:** 2026-11-15
 > **Owner:** TI DELPI / Minha DELPI
-> **Estado atualizado 2026-11-15:** contrato P2 documentado; codigo P2.1 offline integrado na main por [PR #191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (CI verde); P2.2a contrato estruturado de atestacao de CI, host e Core versionado na main, testes locais PASS, CI e verificador independente pendentes; **nenhum PREPARE/ACT implantado, nenhuma tool nova no MCP**.
+> **Estado atualizado 2026-11-15:** contrato P2 documentado; codigo P2.1 offline integrado na main por [PR #191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (CI verde); P2.2a atestacao estruturada e P2.2b leitores GitHub/CI e Core fresh versionados na main, testes locais PASS, CI e verificador independente pendentes; **nenhum PREPARE/ACT implantado, nenhuma tool nova no MCP**.
 > **Fontes relacionadas:** [roadmap e evidências](./01-discovery-architecture-and-security-roadmap.md), `linux-ops-mcp/`, `infra/scripts/up-prod-sequential.sh`, `infra/scripts/up-hml-sequential.sh`, `.cursor/rules/local-first-deploy.mdc`, `.cursor/rules/platform-delivery-runtime-operations.mdc`.
 > **Restrição de custo:** priorizar GitHub/Keycloak/Core/IT Portal, host, containers e homologação existentes. Não pressupor túnel ou runner pago.
 > **Congelado por decisão do operador:** ampliação de telemetria CPU, contagem Docker e outros observáveis Linux; não é pré-requisito desta entrega. Atestação de revisão/health **de deploy** é requisito novo e separado.
@@ -166,3 +166,16 @@ Qualquer revogação de permissão, divergência de SHA, alteração do plano, d
 **Testes efetivos:** 76 cenarios locais de P2.1+P2.2a PASS em Python 3.13, pytest 9.0.2; incluem CI falsificado, ausente, em PR, falho, workflow duplicado, SHA divergente, repo alterado, prova vencida, host nao saudavel, revisao ausente, Core sem grant, service principal, tentativa de prod com policy desativada. GitHub CI e `delpi-verifier` ainda PENDING neste corte; nenhum HML/PROD foi executado.
 
 **Proximos gates P2.2b/P2.2c:** (1) leitor GitHub REST com app/token estritamente de leitura e repositorio allowlisted, sem aceitar URL arbitraria; (2) leitor local de SHA atestado e estado de checkout/health, canal restrito, sem Docker no MCP; (3) verificacao de Core `force_refresh=True` e permissoes cadastradas; (4) journal transacional em Postgres com UNIQUE por idempotency key e transicoes atomicas e auditadas, sem escrever em producao antecipadamente; (5) API PREPARE deny-by-default + testes negativos de replay/concorrencia; (6) so depois UI de aprovacao e executor HML. Nenhuma rota MCP nova neste corte.
+
+
+## 13. A2.2b: leitores confiaveis de evidencias e projeto do journal (2026-11-15)
+
+**Entrega em codigo:** `linux-ops-mcp/linux_ops_mcp/deploy_evidence_readers.py` e `tests/test_deploy_evidence_readers.py`. Leitor GitHub usa apenas o repositorio canonico, SHA 40 hex, ref `main`, API compare ancestralidade e CI Actions `push` por SHA; Core usa `force_refresh=True` para nao herdar permissao revogada. As respostas ignoram campos nao necessarios e removem corpo upstream, token e exception text dos erros. Permissao de superadmin **nao** substitui `linux_ops.deploy.view` e `linux_ops.deploy.prepare` explicitamente concedidas. Leitores nao estao ligados ao servidor MCP e nao expuseram ferramentas novas.
+
+**Evidencia:** 32 testes locais (MockTransport HTTP sem rede; Core fake) PASS, compilacao local PASS; bytes do codigo e testes versionados na main conferidos contra os testados. GitHub CI do push e auditoria `delpi-verifier` independente **PENDING**. Nenhuma consulta de GitHub/Core em producao foi executada pelos leitores.
+
+**Dependencias nao entregues:** provador de revisao efetivamente em execucao por servico (`HostProof`), catalogo backend de workflow IDs exigidos, concessoes reais no Core, journal persistente, API PREPARE e UI nominativa. **A2.2b e um incremento parcial seguro, nao o aceite completo de A2.2.** Ausencia de qualquer elemento segue bloqueando o deploy.
+
+**Rastreabilidade e proposta de persistencia:** [03-atlas-deploy-journal-p2b.md](./03-atlas-deploy-journal-p2b.md) detalha uso candidato do PostgreSQL `it_portal`, constraints para `requester_subject/idempotency_key`, status transacionais e log append-only de eventos, sem migration aplicada. Nao escolher numero de migration antes de coordernar com o roadmap paralelo Delpi Remote.
+
+**Proximo passo A2.2c:** autoridade de release no host e testes com evidencias reais controladas; migration e repository SQL com UNIQUE/transacoes/replay; API backend fail-closed com Core fresh e catalogo CI, mantendo toda escrita ACT e execucao do host OFF.
