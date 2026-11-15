@@ -22,6 +22,13 @@ class MockAdmin:
         self.client = None
         self.scope = None
         self.mapper = None
+        self.shared_audience_mapper = {
+            "protocolMapper": "oidc-audience-mapper",
+            "config": {
+                "included.custom.audience": "delpi-central",
+                "access.token.claim": "true",
+            },
+        }
         self.defaults = []
         self.base_scopes = [
             {"name": name, "id": "id-" + name}
@@ -47,6 +54,8 @@ class MockAdmin:
                 return 200, [{"id": v} for v in self.defaults]
             if path == "/realms/delpi/client-scopes/scope-linux/protocol-mappers/models":
                 return 200, [self.mapper] if self.mapper else []
+            if path == "/realms/delpi/client-scopes/id-audience-delpi/protocol-mappers/models":
+                return 200, [self.shared_audience_mapper] if self.shared_audience_mapper else []
             raise AssertionError(path)
         if method == "POST":
             if path == "/realms/delpi/clients":
@@ -133,3 +142,30 @@ def test_resource_requires_expected_origin_and_path():
     with pytest.raises(m.ContractError):
         m.strict_resource("https://minhadelpi.com.br",
                           "https://evil.example/apps/linux-ops-mcp/mcp")
+
+
+def test_shared_platform_audience_wrong_prevents_all_writes():
+    a = MockAdmin()
+    a.shared_audience_mapper["config"]["included.custom.audience"] = "wrong-audience"
+    assert "shared platform audience mapper missing or invalid" in m.Provisioner(a, config()).audit()
+    with pytest.raises(m.ContractError, match="shared platform audience mapper"):
+        m.Provisioner(a, config()).apply()
+    assert all(method == "GET" for method, _ in a.calls)
+    assert a.client is None
+
+
+def test_existing_dedicated_scope_mismatch_blocks_client_creation():
+    a = MockAdmin()
+    a.scope = True
+    a.mapper = {
+        "protocolMapper": "oidc-audience-mapper",
+        "config": {
+            "included.custom.audience": "https://evil.example/mcp",
+            "access.token.claim": "true",
+        },
+    }
+    assert "dedicated scope audience mapper differs" in m.Provisioner(a, config()).audit()
+    with pytest.raises(m.ContractError, match="unexpected mapper in dedicated scope"):
+        m.Provisioner(a, config()).apply()
+    assert all(method == "GET" for method, _ in a.calls)
+    assert a.client is None
