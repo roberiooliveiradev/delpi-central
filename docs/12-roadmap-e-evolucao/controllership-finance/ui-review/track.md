@@ -300,3 +300,15 @@ Prompt: [prompts/U13-residuais.md](./prompts/U13-residuais.md). Report: [reports
 | PROD tag/deploy MFE | tag `rollback-ui-review-u13-controllership-finance` | DONE | só MFE; remoteEntry 200 |
 
 Report: [reports/report-u13.md](./reports/report-u13.md). Verifier ACCEPT_WITH_RESIDUAL.
+
+### Revisão do Claude sobre U13 (15/11) — ACCEPT
+
+- **X1 (`a5f5bc57ff`):** exceções de contraste decididas por `closest` no componente do kit/host, lista única com dono e cores. Exportar passou a `primary` (como nos heros do Comercial). PASS.
+- **X2 (`329790bd78`):** conferido teste a teste — os textos a mais vêm de ajuda e de explicações legítimas (ex.: P3 «Fonte indisponível permanece explícita…»; ajuda dos relatórios «Sessão expirada ou falta de autorização…»); nenhum defeito de produto escondido. Suíte do MFE no ambiente do Claude: **505/505 + realKit 13/13** (com as dependências do plugin-ui instaladas). PASS.
+- **X3 (`f546acd388`):** só troca de análise zera o quadro; filtro mantém hero/KPIs com `aria-busy`; teste novo. PASS.
+
+Observações (sem bloqueio):
+1. O teste do 403 agora nega só a frase «Sessão expirada — autentique-se novamente»; não cobre o título «Sessão expirada» do cartão de 401 (`cfFeedbackUi`). A prova principal (o texto do 403 aparece) continua. Fortalecer quando mexer no arquivo: negar o título do cartão de 401 por papel/heading.
+2. As suítes `realKit` dependem de `plugins/plugin-ui/node_modules` (alias do `recharts`). Sem CI do MFE, registrar no README do MFE: instalar as dependências do plugin-ui antes de `npm test`.
+3. Contraste do `primary` do kit (branco sobre `#089bdb`, ≈3,1:1) segue com o dono do plugin-ui.
+4. Prints de PROD pelo owner seguem pendentes.
