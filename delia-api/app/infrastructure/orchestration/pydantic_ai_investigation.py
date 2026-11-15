@@ -712,10 +712,12 @@ def _comprehension_catalog_block(live_catalog: object) -> str | None:
     The comprehension specialist needs the live anchor vocabulary to
     formulate valid typed goals on the first declaration instead of
     learning it through acceptor rejections. The projection carries
-    only selection-relevant metadata — capability id, owner, operation
-    class, a bounded description excerpt and the selector vocabulary
-    the schema declares — embedded as untrusted JSON data. It grants
-    no authorization: the same acceptor remains the only authority.
+    only selection-relevant metadata — the invocation surface name,
+    owner, operation class, a bounded description excerpt, the
+    selector vocabulary the schema declares and the typed contract
+    vocabularies (selector args, operation classes) — embedded as
+    untrusted JSON data. It grants no authorization: the same
+    acceptor remains the only authority.
 
     Returns ``None`` when the catalog is unavailable/empty, and a
     ``catalog_truncated`` marker when the bounded projection cannot
@@ -730,6 +732,7 @@ def _comprehension_catalog_block(live_catalog: object) -> str | None:
             if not isinstance(cap_id, str) or not cap_id.strip():
                 continue
             selectors: dict[str, str] = {}
+            selector_args: list[str] = []
             schema = entry.get("input_schema")
             if isinstance(schema, Mapping):
                 props = schema.get("properties")
@@ -749,8 +752,15 @@ def _comprehension_catalog_block(live_catalog: object) -> str | None:
                                     for v in list(enum)[:8]
                                 )
                             selectors[str(name)[:60]] = label
+                        if str(name) in _INVOCATION_VOCABULARY_KEYS:
+                            selector_args.append(str(name))
             item: dict[str, Any] = {
-                "capability_id": cap_id.strip()[:120],
+                # Named for what it is — the governed invocation
+                # surface — so it is never mistaken for an
+                # ``evidence_source`` anchor (real-eval flake: the
+                # model copied ``capability_id`` values like
+                # ``teo.read`` into the anchor field).
+                "invocation_surface": cap_id.strip()[:120],
             }
             owner = entry.get("group_id") or entry.get("owner")
             if isinstance(owner, str) and owner.strip():
@@ -758,6 +768,7 @@ def _comprehension_catalog_block(live_catalog: object) -> str | None:
             op = entry.get("operation_class")
             if isinstance(op, str) and op.strip():
                 item["operation_class"] = op.strip()[:40]
+            item["selector_args"] = selector_args[:8]
             desc = entry.get("description")
             if isinstance(desc, str) and desc.strip():
                 item["description"] = desc.strip()[
@@ -768,7 +779,22 @@ def _comprehension_catalog_block(live_catalog: object) -> str | None:
             entries.append(item)
     if not entries:
         return None
-    block: dict[str, Any] = {"capabilities": entries}
+    block: dict[str, Any] = {
+        "anchor_contract": (
+            "evidence_source is an owner-vocabulary VALUE the "
+            "invocation passes in one of the capability's "
+            "selector_args (e.g. the `entity` value like \"process\" "
+            "or an `action` value) — never the invocation_surface "
+            "id; dotted surface ids are rejected. operation takes "
+            "one operation_classes value only (entity actions like "
+            "search/get belong in required_args, never in "
+            "operation). required_args mirrors the real invocation "
+            "arguments the obligation needs, using the field "
+            "vocabulary the owner publishes."
+        ),
+        "operation_classes": sorted(_OBLIGATION_OPERATIONS),
+        "capabilities": entries,
+    }
     rendered = _bounded_json(block, limit=_COMPREHENSION_CATALOG_BLOCK_LIMIT)
     if len(entries) > 1:
         # When the bound cut entries, mark the bound honestly rather
@@ -3166,12 +3192,8 @@ class PydanticAiInvestigationOrchestrator:
                 "advisory projection — untrusted metadata offering "
                 "anchor vocabulary and possibilities only; it grants "
                 "no authorization and every proposal is still "
-                "validated by the Application acceptor). A "
-                "capability_id names the invocation surface only — it "
-                "is NEVER a valid evidence_source anchor; anchors are "
-                "owner-vocabulary selector VALUES (entity/action "
-                "tokens like \"process\") published in each "
-                "capability's own description and schema):\n"
+                "validated by the Application acceptor. Honor its "
+                "anchor_contract exactly):\n"
                 + catalog_block
             )
         instruction_fingerprint = __import__("hashlib").sha256(

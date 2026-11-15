@@ -145,7 +145,7 @@ def _catalog_entry(**overrides):
 
 
 def test_comprehension_catalog_block_bounded_projection():
-    """FRONT-A-P1: capability id, owner, operation class, bounded
+    """FRONT-A-P1: invocation surface, owner, operation class, bounded
     description and the schema-declared selector vocabulary reach the
     comprehension projection — nothing else (no endpoints, headers,
     credentials, remote mechanics)."""
@@ -155,7 +155,11 @@ def test_comprehension_catalog_block_bounded_projection():
     caps = payload["capabilities"]
     assert len(caps) == 1
     cap = caps[0]
-    assert cap["capability_id"] == "alpha.search_items"
+    assert cap["invocation_surface"] == "alpha.search_items"
+    # The surface id is deliberately NOT named ``capability_id`` —
+    # evidence shows the model copied that salient identifier into
+    # ``evidence_source`` (rejected dotted anchor). Its role is named.
+    assert "capability_id" not in cap
     assert cap["owner"] == "alpha"
     assert cap["operation_class"] == "read"
     assert "alpha owner" in cap["description"]
@@ -167,6 +171,42 @@ def test_comprehension_catalog_block_bounded_projection():
     serialized = json.dumps(payload)
     assert "endpoint" not in serialized
     assert "authorization" not in serialized.lower() or True
+
+
+def test_comprehension_catalog_block_typed_vocabularies():
+    """FRONT-A-R6: the projection separates the three concepts the
+    model confused — surface id (``invocation_surface``), anchor
+    values (``selector_args`` = owner-vocabulary argument names from
+    the capability's own schema) and operation classes (top-level
+    enum). Non-vocabulary args like ``query``/``page`` are never
+    offered as anchor names."""
+    block = _comprehension_catalog_block([_catalog_entry()])
+    payload = json.loads(block.splitlines()[0])
+    # Top-level contract vocabularies, declared once.
+    assert payload["operation_classes"] == [
+        "act",
+        "analysis",
+        "discovery",
+        "prepare",
+        "read",
+    ]
+    assert "anchor_contract" in payload
+    cap = payload["capabilities"][0]
+    # Schema props are query/page/view — only ``view`` is an
+    # invocation-vocabulary key (entity/action/view/...).
+    assert cap["selector_args"] == ["view"]
+    # A schema without vocabulary keys declares no selector args.
+    bare = _catalog_entry(
+        input_schema={
+            "type": "object",
+            "properties": {"limit": {"type": "integer"}},
+        }
+    )
+    bare_block = _comprehension_catalog_block([bare])
+    bare_cap = json.loads(bare_block.splitlines()[0])[
+        "capabilities"
+    ][0]
+    assert bare_cap["selector_args"] == []
 
 
 def test_comprehension_catalog_block_empty_returns_none():
@@ -248,6 +288,8 @@ def test_two_agent_comprehension_receives_catalog_vocabulary():
     first = captured["first_request"]
     assert first is not None
     assert "alpha.search_items" in first
+    assert "invocation_surface" in first
+    assert "anchor_contract" in first
 
 
 # -------------------------------------------------------------------
