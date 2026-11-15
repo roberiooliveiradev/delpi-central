@@ -1,15 +1,6 @@
 # Shell público (/p/) — splash/styles via MF; assinatura bundled do kit (fatia signature).
 # Doc: plugins/plugin-ui/docs/module-federation.md · public-hub/README.md
 
-# ATLAS P2.2f: lightweight, independently testable image metadata gate.
-# This is traceability metadata, not cryptographically verified build provenance.
-FROM nginx:alpine AS provenance-contract
-ARG SOURCE_REVISION
-RUN printf '%s' "$SOURCE_REVISION" | grep -Eq '^[0-9a-f]{40}$' || \
-    { echo 'Public Hub requires a full lowercase Git SHA (40 hex)'; exit 1; }
-LABEL org.opencontainers.image.revision="${SOURCE_REVISION}" \
-      org.opencontainers.image.source="https://github.com/roberiooliveiradev/delpi-central"
-
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -50,6 +41,23 @@ WORKDIR /app/public-hub
 # tsc roda no CI/local; Docker bundla signature-kit + MF styles/splash.
 RUN npx vite build
 
+# Non-attested local development target. This bypasses the OCI revision
+# gate by design: dirty local WIP must never claim an approved release SHA.
+FROM nginx:alpine AS development
+COPY --from=builder /app/public-hub/dist /usr/share/nginx/html
+COPY public-hub/nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+
+# ATLAS P2.2f: lightweight, independently testable image metadata gate.
+# This is traceability metadata, not cryptographically verified build provenance.
+FROM nginx:alpine AS provenance-contract
+ARG SOURCE_REVISION
+RUN printf '%s' "$SOURCE_REVISION" | grep -Eq '^[0-9a-f]{40}$' || \
+    { echo 'Public Hub requires a full lowercase Git SHA (40 hex)'; exit 1; }
+LABEL org.opencontainers.image.revision="${SOURCE_REVISION}" \
+      org.opencontainers.image.source="https://github.com/roberiooliveiradev/delpi-central"
+
 FROM provenance-contract AS production
 
 COPY --from=builder /app/public-hub/dist /usr/share/nginx/html
@@ -59,10 +67,3 @@ EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
 
-# Non-attested local development target. This bypasses the OCI revision
-# gate by design: dirty local WIP must never claim an approved release SHA.
-FROM nginx:alpine AS development
-COPY --from=builder /app/public-hub/dist /usr/share/nginx/html
-COPY public-hub/nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
