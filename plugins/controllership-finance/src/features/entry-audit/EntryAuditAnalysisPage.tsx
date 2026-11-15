@@ -912,7 +912,11 @@ export function EntryAuditAnalysisPage({
                       tone: severityTone(item.name),
                     }))}
                     onSelect={(item) => {
-                      if (item) navigateWith({ severity: severityToUrl(item.id) });
+                      if (!item) {
+                        navigateWith({ severity: "" });
+                        return;
+                      }
+                      navigateWith({ severity: severityToUrl(item.id) });
                     }}
                     selectedId={filters.severity || undefined}
                   />
@@ -961,7 +965,10 @@ export function EntryAuditAnalysisPage({
                     typeof point.day === "string" && point.day
                       ? point.day
                       : "";
-                  if (day) navigateWith({ day });
+                  if (!day) return;
+                  navigateWith({
+                    day: filters.day === day ? "" : day,
+                  });
                 }}
                 pointAriaLabel={(point) =>
                   entryAuditDailyPointAriaLabel(
@@ -996,7 +1003,11 @@ export function EntryAuditAnalysisPage({
                     label: formatTheme(item.name),
                     value: item.count,
                   }))}
-                  onItemClick={(item) => navigateWith({ theme: item.id })}
+                  onItemClick={(item) =>
+                    navigateWith({
+                      theme: filters.theme === item.id ? "" : item.id,
+                    })
+                  }
                   selectedId={filters.theme || undefined}
                 />
               </div>
@@ -1012,7 +1023,11 @@ export function EntryAuditAnalysisPage({
                     label: item.name,
                     value: item.count,
                   }))}
-                  onItemClick={(item) => navigateWith({ supplier: item.id })}
+                  onItemClick={(item) =>
+                    navigateWith({
+                      supplier: filters.supplier === item.id ? "" : item.id,
+                    })
+                  }
                   selectedId={filters.supplier || undefined}
                 />
               </div>
@@ -1026,7 +1041,11 @@ export function EntryAuditAnalysisPage({
                     label: item.name,
                     value: item.count,
                   }))}
-                  onItemClick={(item) => navigateWith({ tes: item.id })}
+                  onItemClick={(item) =>
+                    navigateWith({
+                      tes: filters.tes === item.id ? "" : item.id,
+                    })
+                  }
                   selectedId={filters.tes || undefined}
                 />
               </div>
@@ -1051,6 +1070,17 @@ export function EntryAuditAnalysisPage({
           label="Filtros aplicados"
           chips={chips}
           aria-label="Filtros de detalhamento da auditoria"
+          clearAllLabel="Limpar filtros"
+          onClearAll={() =>
+            navigateWith({
+              severity: "",
+              theme: "",
+              supplier: "",
+              tes: "",
+              day: "",
+              situation: "",
+            })
+          }
         />
       ) : null}
 

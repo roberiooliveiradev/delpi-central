@@ -1506,11 +1506,26 @@ export function ChartCard(props: AnyProps) {
 }
 
 export function HorizontalValueBars(props: AnyProps) {
+  const items =
+    (props.items as Array<{ id: string; label: string; value: number }>) ?? [];
+  const onItemClick = props.onItemClick as
+    | ((item: { id: string; label: string; value: number }) => void)
+    | undefined;
+  const selectedId = props.selectedId as string | undefined;
   return el(
     "div",
     { "aria-label": props["aria-label"] },
-    ...((props.items as Array<{ id: string; label: string; value: number }>) ?? []).map(
-      (item) => el("span", { key: item.id }, `${item.label}: ${item.value}`),
+    ...items.map((item) =>
+      el(
+        "button",
+        {
+          key: item.id,
+          type: "button",
+          "aria-pressed": selectedId === item.id ? "true" : "false",
+          onClick: () => onItemClick?.(item),
+        },
+        `${item.label}: ${item.value}`,
+      ),
     ),
   );
 }
@@ -1531,9 +1546,80 @@ function passthroughFactory() {
   };
 }
 
-export const createDashboardScopeChipBar = passthroughFactory;
+export function createDashboardScopeChipBar() {
+  return function ScopeChipBar(props: {
+    label?: ReactNode;
+    chips?: Array<{ id: string; label: ReactNode; onSelect?: () => void }>;
+    "aria-label"?: string;
+    clearAllLabel?: string;
+    onClearAll?: () => void;
+  }) {
+    const chips = props.chips ?? [];
+    if (!chips.length) return null;
+    return el(
+      "div",
+      { role: "group", "aria-label": props["aria-label"] },
+      props.label ? el("span", null, props.label) : null,
+      ...chips.map((chip) =>
+        el(
+          "button",
+          {
+            key: chip.id,
+            type: "button",
+            onClick: chip.onSelect,
+          },
+          chip.label,
+        ),
+      ),
+      props.onClearAll
+        ? el(
+            "button",
+            { type: "button", onClick: props.onClearAll },
+            props.clearAllLabel ?? "Limpar tudo",
+          )
+        : null,
+    );
+  };
+}
 export const createSemicircleProgressGauge = passthroughFactory;
-export const createDashboardDistributionDonut = passthroughFactory;
+export function createDashboardDistributionDonut() {
+  return function DistributionDonut(props: {
+    ariaLabel?: string;
+    items?: Array<{ id: string; label: string; value: number }>;
+    selectedId?: string;
+    onSelect?: (item: { id: string; label: string; value: number } | null) => void;
+    labels?: { clearSelection?: string };
+  }) {
+    const items = props.items ?? [];
+    const clearLabel = props.labels?.clearSelection ?? "Limpar seleção";
+    return el(
+      "div",
+      { "aria-label": props.ariaLabel },
+      ...items.map((item) =>
+        el(
+          "button",
+          {
+            key: item.id,
+            type: "button",
+            "aria-pressed": props.selectedId === item.id ? "true" : "false",
+            onClick: () => {
+              if (!props.onSelect) return;
+              props.onSelect(props.selectedId === item.id ? null : item);
+            },
+          },
+          item.label,
+        ),
+      ),
+      props.selectedId && props.onSelect
+        ? el(
+            "button",
+            { type: "button", onClick: () => props.onSelect?.(null) },
+            clearLabel,
+          )
+        : null,
+    );
+  };
+}
 export const createDashboardResolutionStatusCell = passthroughFactory;
 export function createDashboardUnderlineNav() {
   return function DashboardUnderlineNav(props: AnyProps) {
