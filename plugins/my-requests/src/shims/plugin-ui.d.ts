@@ -670,6 +670,13 @@ declare module "@delpi/plugin-ui/index" {
 
   export function HintAction(props: HintActionProps): ReactNode;
 
+  export type SectionHintLabelProps = {
+    label: string;
+    hint: string;
+    className?: string;
+  };
+  export function SectionHintLabel(props: SectionHintLabelProps): ReactElement;
+
   export type HelpTooltipPlacement = "top" | "bottom";
   export type HelpTooltipTrigger = "label" | "icon";
   export type HelpTooltipProps = {

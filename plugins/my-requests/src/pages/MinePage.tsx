@@ -494,8 +494,9 @@ export function MinePage() {
       : "Você ainda não criou solicitações.";
 
   return (
-    <AppShell title="Minhas solicitações">
+    <AppShell>
       <RequestListShell
+        eyebrow="Início / Minhas solicitações"
         title="Minhas solicitações"
         description="Acompanhe as solicitações que você abriu — serviços gerais e casos de cadastro de produto (PRC) no mesmo lugar."
         count={`${total} ${total === 1 ? "solicitação" : "solicitações"}`}

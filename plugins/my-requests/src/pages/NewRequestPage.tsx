@@ -139,8 +139,9 @@ export function NewRequestPage() {
   }
 
   return (
-    <AppShell title="Nova solicitação">
+    <AppShell>
       <MyRequestsPageHero
+        eyebrow="Início / Minhas solicitações"
         title="Nova solicitação"
         description="Escolha o tipo de solicitação para abrir o formulário guiado."
         badge={

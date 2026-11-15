@@ -72,8 +72,9 @@ export function AdminTypesPage() {
   );
 
   return (
-    <AppShell title="Tipos de solicitação">
+    <AppShell>
       <MyRequestsPageHero
+        eyebrow="Início / Minhas solicitações"
         title="Administração"
         description="Catálogo de tipos de solicitação e suas configurações (somente leitura)."
         badge={

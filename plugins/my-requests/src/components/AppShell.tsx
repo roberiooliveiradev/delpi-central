@@ -15,7 +15,9 @@ import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import { MR_PORTAL_SCOPE, MyRequestsPageHeader, MyRequestsTopBar } from "../ui/mrUi";
 
 type AppShellProps = {
-  title: string;
+  /** Páginas com PageHero próprio não passam title — evita título
+   *  duplicado (nav → caminho → hero conforme UX V2). */
+  title?: string;
   subtitle?: string;
   children: ReactNode;
 };
@@ -80,7 +82,7 @@ export function AppShell({ title, subtitle, children }: AppShellProps) {
         items={items}
       />
       <div className="my-requests-content-column">
-        <MyRequestsPageHeader title={title} subtitle={subtitle} />
+        {title ? <MyRequestsPageHeader title={title} subtitle={subtitle} /> : null}
         <div className="my-requests-page-stack">{children}</div>
       </div>
     </div>

@@ -14,6 +14,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ActionButton,
   HintAction,
+  SectionHintLabel,
   type DashboardFilterFieldDescriptor,
   type DashboardFilterRule,
   type DashboardSortFieldOption,
@@ -172,7 +173,13 @@ export function RequestListShell<Row extends object>({
     <>
       <MyRequestsPageHero
         eyebrow={eyebrow}
-        title={title}
+        title={
+          sectionHint ? (
+            <SectionHintLabel label={title} hint={sectionHint} />
+          ) : (
+            title
+          )
+        }
         description={description}
         badge={count}
         actions={
@@ -201,8 +208,7 @@ export function RequestListShell<Row extends object>({
       ) : null}
 
       <MyRequestsDataTableSection
-        title={title}
-        hint={sectionHint}
+        title=""
         hideRecordsCount
         columns={columns}
         rows={rows}

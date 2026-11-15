@@ -411,8 +411,9 @@ export function WorkQueuePage() {
       : "Fila vazia no momento.";
 
   return (
-    <AppShell title="Fila de trabalho">
+    <AppShell>
       <RequestListShell
+        eyebrow="Início / Minhas solicitações"
         title="Fila de trabalho"
         description="Solicitações abertas aos processadores — filtre por escopo, tipo, status e filial."
         count={`${total} ${total === 1 ? "pendência" : "pendências"}`}
