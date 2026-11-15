@@ -116,3 +116,26 @@ docker compose -f infra/docker-compose.hml.yml up -d --no-deps <svc>
 
 Sem migrations, sem writes de negócio, sem TOTVS, sem grants RBAC.
 `PRD_DEPLOY=NOT_EXECUTED`.
+
+## 8. delpi-verifier (verificação independente)
+
+Motor `cursor` (Composer), executor `swe-2-high` — independência OK.
+
+| Rodada | Escopo | Veredito |
+|---|---|---|
+| 1 | `working tree` | ordens de correção (OC-1: shim Helpdesk sem tipos do kit) |
+| 2 | `working tree` | `ACCEPT_WITH_RESIDUAL` — OC-1 corrigida |
+| 3 | `fb81da0a96..f0da9a0666` | `ACCEPT_WITH_RESIDUAL` |
+
+Rodada 3 confirma: typecheck/build `my-requests` exit 0; structural
+`MyRequestsListUx` 13/13; `DashboardListTools` 6/6 no plugin-ui; shim
+Helpdesk `typecheck` exit 0 (OC-1 mantida corrigida); sort whitelisted
+com desempate `r.id ASC` confirmado em código. Não verificável pelo
+verificador: E2E HML (contrato proíbe SSH/deploy) e pytest `requests-api`
+(ambiente sem `delpi_auth` no PYTHONPATH) — ambos executados pelo executor
+com evidência nas seções 3 e 5.
+
+Residual da rodada 3: `audit_platform_guardrails --base fb81da0a96` falha
+com 27 findings em `controllership-finance/src/index.css` — commit
+concorrente `88f10f1e0b` de outro executor, fora deste escopo (DR-1
+registrado; arquivos `my-requests` do executor sem findings novos).
