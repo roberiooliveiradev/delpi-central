@@ -10,7 +10,7 @@ O Claude abriu em PROD (15/11/2026, navegador do owner) a entrada da Auditoria e
 decidiu: a CLARA é um MCP usado no ChatGPT/Claude, não um assistente dentro do Portal — sai o card
 «Pergunte à CLARA» e tudo que convida a usar a CLARA de dentro da tela.
 
-MISSÃO — executar Y1 → Y5, um commit por item, push a cada commit, track.md atualizado.
+MISSÃO — executar Y1 → Y6, um commit por item, push a cada commit, track.md atualizado.
 
 Y1 · Entrada da Auditoria (EntryAuditHomePage)
  a) Cabeçalhos misturados: «Período/Situação/Criada em» em caixa normal (botão de ordenar) e
@@ -69,12 +69,34 @@ Y5 · Sai o «Pergunte à CLARA» (decisão do owner)
     página de consentimento (ClaraConsentPage) nem no MCP, que seguem existindo.
  d) Teste: a análise e o detalhe não renderizam nada com «CLARA».
 
+Y6 · Seleção nos gráficos (defeito achado pelo owner em PROD, 15/11)
+ Reprodução: análise 07–13/11 → clicar «Alta» na rosca de Severidade → URL ganha severity=high,
+ KPIs e gráficos filtram → clicar «Limpar seleção» abaixo da rosca: nada acontece (URL continua com
+ severity=high; nenhuma navegação — conferido com history instrumentado).
+ Causa: EntryAuditAnalysisPage, CfDistributionDonut
+   onSelect={(item) => { if (item) navigateWith({ severity: severityToUrl(item.id) }); }}
+ O kit chama onSelect(null) tanto em «Limpar seleção» quanto ao clicar de novo na fatia selecionada;
+ o `if (item)` descarta o null. O chip «Severidade: Alta» em «Filtros aplicados» funciona.
+ a) onSelect(null) → navigateWith({ severity: "" }). Clicar de novo na fatia selecionada limpa.
+ b) Barras (tema, fornecedor, TES): clicar de novo na barra selecionada limpa o filtro (hoje só
+    reaplica o mesmo valor) — mesmo comportamento da rosca.
+ c) Gráfico que seleciona não filtra a si mesmo: com «Alta» selecionada a rosca virou uma fatia só
+    (100%) e o usuário perde o contexto para trocar de severidade. Cada gráfico de seleção (rosca de
+    severidade; barras de tema, fornecedor e TES) é calculado com todos os filtros de detalhamento
+    MENOS o da própria dimensão; a fatia/barra selecionada fica destacada e as outras esmaecidas
+    (o kit já faz isso com selectedId). KPIs, Conformidade, Evolução e tabela seguem com todos os
+    filtros. Na BFF (breakdowns), aditivo e documentado no contrato §6; teste por dimensão.
+ d) «Filtros aplicados» ganha «Limpar filtros» (remove todos os filtros de detalhamento de uma vez).
+ e) Testes: selecionar Alta mantém as 3 fatias com Alta destacada; «Limpar seleção» e novo clique na
+    fatia removem severity da URL e voltam os números; o mesmo para uma barra; «Limpar filtros» zera
+    todos. Playwright em HML com a mesma reprodução.
+
 DoD (cada item)
 1440/1024/390, claro e escuro, teclado e foco, axe sem violação nova (exceções da U13 inalteradas),
 ajuda no mesmo commit. Screenshots antes/depois no report (não commitar).
 
 ENTREGA
-HML → PROD. Tags rollback-ui-review-u14-controllership-finance (e -api se a BFF mudar em Y1a/Y3c).
+HML → PROD. Tags rollback-ui-review-u14-controllership-finance (e -api se a BFF mudar em Y1a/Y3c/Y6c).
 BFF primeiro, depois MFE. Parar ao concluir.
 
 REGRAS
