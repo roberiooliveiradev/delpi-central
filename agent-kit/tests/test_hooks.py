@@ -194,47 +194,174 @@ class HookProcessTests(unittest.TestCase):
         self.assertEqual(r.returncode, 0)
         self.assertEqual(json.loads(r.stdout), {})
 
-    def test_mark_start_without_pids_does_not_block_other_session(self):
-        """AK-3: global marker without lineage must not lock sibling executors."""
-        start = self.run_hook("mark-start", "--host", "cursor", payload={"subagent_type": "delpi-verifier"})
+    def test_mark_start_records_parent_pid(self):
+        """Legacy mark-start must record a durable host PID (getppid), not an empty list."""
+        start = self.run_hook(
+            "mark-start", "--host", "cursor", payload={"subagent_type": "delpi-verifier"}
+        )
         self.assertEqual(start.returncode, 0)
         marker = self.kit_home / "state" / "verifier-active.json"
         self.assertTrue(marker.exists())
-        write = self.run_hook(
-            "guard",
-            "--host",
-            "cursor",
-            payload={"hook_event_name": "beforeShellExecution", "command": "touch probe"},
-        )
-        self.assertEqual(write.returncode, 0, write.stdout + write.stderr)
-        shell_w = self.run_hook(
-            "guard",
-            "--host",
-            "cursor",
-            payload={"hook_event_name": "beforeShellExecution", "command": "echo x > out.txt"},
-        )
-        self.assertEqual(shell_w.returncode, 0)
+        data = json.loads(marker.read_text(encoding="utf-8"))
+        # run_hook is a child of this test process → parent pid == test pid
+        self.assertEqual(data.get("pids"), [os.getpid()])
         self.run_hook("mark-stop", "--host", "cursor", payload={"subagent_type": "delpi-verifier"})
+
+    def test_mark_start_locks_lineage_frees_sibling(self):
+        """OC R1: subagent lineage blocked by mark-start; unrelated session stays free."""
+        if not vh.ancestry_check_available():
+            self.skipTest("/proc ancestry unavailable")
+        payload = json.dumps({"subagent_type": "delpi-verifier"})
+        guard_payload = json.dumps(
+            {"hook_event_name": "beforeShellExecution", "command": "touch probe"}
+        )
+        ready = self.repo / "mark-ready"
+        done = self.repo / "mark-done"
+        result = self.repo / "mark-guard-rc"
+        for path in (ready, done, result):
+            if path.exists():
+                path.unlink()
+        host_code = f"""
+import json, os, subprocess, sys, time
+from pathlib import Path
+script = {str(SCRIPT)!r}
+kit = {str(self.kit_home)!r}
+ready, done, result = Path({str(ready)!r}), Path({str(done)!r}), Path({str(result)!r})
+env = dict(os.environ)
+env["DELPI_AGENT_KIT_HOME"] = kit
+env.pop("DELPI_VERIFIER_ACTIVE", None)
+r = subprocess.run(
+    [sys.executable, script, "mark-start", "--host", "cursor"],
+    input={payload!r},
+    capture_output=True,
+    text=True,
+    env=env,
+)
+assert r.returncode == 0, r.stderr
+ready.write_text(str(os.getpid()), encoding="utf-8")
+for _ in range(400):
+    if done.exists():
+        break
+    time.sleep(0.05)
+g = subprocess.run(
+    [sys.executable, script, "guard", "--host", "cursor"],
+    input={guard_payload!r},
+    capture_output=True,
+    text=True,
+    env=env,
+)
+result.write_text(str(g.returncode), encoding="utf-8")
+"""
+        host = subprocess.Popen([sys.executable, "-c", host_code], env=self.env)
+        try:
+            for _ in range(400):
+                if ready.exists():
+                    break
+                time.sleep(0.05)
+            self.assertTrue(ready.exists(), "host não sinalizou mark-start")
+            host_pid = int(ready.read_text(encoding="utf-8").strip())
+            marker = json.loads(
+                (self.kit_home / "state" / "verifier-active.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(marker.get("pids"), [host_pid])
+            # Sibling (this test process): not a descendant of host → allow
+            sibling = self.run_hook(
+                "guard",
+                "--host",
+                "cursor",
+                payload={"hook_event_name": "beforeShellExecution", "command": "touch probe"},
+            )
+            self.assertEqual(sibling.returncode, 0, sibling.stdout + sibling.stderr)
+            done.write_text("1", encoding="utf-8")
+            host.wait(timeout=20)
+            self.assertEqual(host.returncode, 0)
+            self.assertEqual(result.read_text(encoding="utf-8").strip(), "2")
+        finally:
+            if host.poll() is None:
+                host.kill()
+                host.wait(timeout=5)
+            self.run_hook("mark-stop", "--host", "cursor", payload={"subagent_type": "delpi-verifier"})
 
     def test_other_subagent_does_not_set_marker(self):
         self.run_hook("mark-start", "--host", "cursor", payload={"subagent_type": "explore"})
         r = self.run_hook("guard", "--host", "cursor", payload={"hook_event_name": "beforeShellExecution", "command": "touch probe"})
         self.assertEqual(r.returncode, 0)
 
-    def test_mark_start_devin_without_pids_does_not_block(self):
-        self.run_hook(
-            "mark-start",
-            "--host",
-            "devin",
-            payload={"tool_name": "run_subagent", "tool_input": {"profile": "delpi-verifier"}},
+    def test_mark_start_devin_locks_lineage_frees_sibling(self):
+        """Same scoped lock for Devin host mark-start (legacy --with-subagents)."""
+        if not vh.ancestry_check_available():
+            self.skipTest("/proc ancestry unavailable")
+        payload = json.dumps(
+            {"tool_name": "run_subagent", "tool_input": {"profile": "delpi-verifier"}}
         )
-        r = self.run_hook(
-            "guard",
-            "--host",
-            "devin",
-            payload={"tool_name": "exec", "tool_input": {"command": "git commit -m x"}},
+        guard_payload = json.dumps(
+            {"tool_name": "exec", "tool_input": {"command": "git commit -m x"}}
         )
-        self.assertEqual(r.returncode, 0)
+        ready = self.repo / "devin-mark-ready"
+        done = self.repo / "devin-mark-done"
+        result = self.repo / "devin-mark-guard-rc"
+        for path in (ready, done, result):
+            if path.exists():
+                path.unlink()
+        host_code = f"""
+import json, os, subprocess, sys, time
+from pathlib import Path
+script = {str(SCRIPT)!r}
+kit = {str(self.kit_home)!r}
+ready, done, result = Path({str(ready)!r}), Path({str(done)!r}), Path({str(result)!r})
+env = dict(os.environ)
+env["DELPI_AGENT_KIT_HOME"] = kit
+env.pop("DELPI_VERIFIER_ACTIVE", None)
+r = subprocess.run(
+    [sys.executable, script, "mark-start", "--host", "devin"],
+    input={payload!r},
+    capture_output=True,
+    text=True,
+    env=env,
+)
+assert r.returncode == 0, r.stderr
+ready.write_text(str(os.getpid()), encoding="utf-8")
+for _ in range(400):
+    if done.exists():
+        break
+    time.sleep(0.05)
+g = subprocess.run(
+    [sys.executable, script, "guard", "--host", "devin"],
+    input={guard_payload!r},
+    capture_output=True,
+    text=True,
+    env=env,
+)
+result.write_text(str(g.returncode), encoding="utf-8")
+"""
+        host = subprocess.Popen([sys.executable, "-c", host_code], env=self.env)
+        try:
+            for _ in range(400):
+                if ready.exists():
+                    break
+                time.sleep(0.05)
+            self.assertTrue(ready.exists())
+            sibling = self.run_hook(
+                "guard",
+                "--host",
+                "devin",
+                payload={"tool_name": "exec", "tool_input": {"command": "git commit -m x"}},
+            )
+            self.assertEqual(sibling.returncode, 0, sibling.stdout + sibling.stderr)
+            done.write_text("1", encoding="utf-8")
+            host.wait(timeout=20)
+            self.assertEqual(host.returncode, 0)
+            self.assertEqual(result.read_text(encoding="utf-8").strip(), "2")
+        finally:
+            if host.poll() is None:
+                host.kill()
+                host.wait(timeout=5)
+            self.run_hook(
+                "mark-stop",
+                "--host",
+                "devin",
+                payload={"tool_name": "run_subagent", "tool_input": {"profile": "delpi-verifier"}},
+            )
 
     def test_stale_marker_expires(self):
         (self.kit_home / "state").mkdir(parents=True)

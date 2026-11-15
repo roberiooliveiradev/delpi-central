@@ -3,8 +3,10 @@
 ## 0.2.1 — 2026-11-15
 
 - **Nota pós-AK-3:** um commit concorrente (`9bf93a67`) reintroduziu marcador+PIDs no
-  `verify.py`; este estado restaura OC-1 (sem marcador no launcher headless). Ancestry
-  nos hooks permanece só para legado `mark-start` sem PID (não trava irmãos).
+  `verify.py`; `dfbf4b11` restaurou OC-1 (sem marcador no launcher headless).
+- **OC R1 (legado `--with-subagents`):** `mark-start` grava o PID do host (`getppid`) para
+  write-lock por linhagem — o subagent verificador volta a ser bloqueado; sessões irmãs
+  fora da linhagem continuam livres. `verify.py` headless segue sem marcador global.
 - **OC-1 concorrência:** `verify.py` deixa de gravar `verifier-active.json`. O isolamento da
   sessão headless vem só de `DELPI_VERIFIER_ACTIVE=1` no ambiente do processo filho. O marcador
   global permanece apenas para o legado `--with-subagents` (`mark-start` / `mark-stop` /

@@ -5,9 +5,10 @@ One stdlib-only script serves Cursor, Devin and Claude Code hooks. Every hook
 reads the host's JSON payload from stdin and answers in the host's format.
 
 Subcommands
-  mark-start     legacy --with-subagents: subagent starting -> create marker
+  mark-start     legacy --with-subagents: subagent starting -> marker with host PID
   mark-stop      legacy --with-subagents: subagent finished -> remove marker
-  activate       verify.py headless session -> set marker with PIDs
+  activate       legacy only (manual/mark-start equivalent); headless verify.py
+                 uses DELPI_VERIFIER_ACTIVE — no global marker
   guard          before a tool call    -> block writes in THIS verifier session only
 
   session-start  session began         -> store the repository baseline fingerprint
@@ -374,6 +375,19 @@ def marker_fresh(data: dict, now: Optional[float] = None) -> bool:
 
 def live_marker_pids(data: dict) -> List[int]:
     return [pid for pid in _normalize_pids(data.get("pids")) if pid_alive(pid)]
+
+
+def durable_hook_pids() -> List[int]:
+    """PIDs that outlive this ephemeral hook process.
+
+    ``mark-start`` exits immediately; recording ``os.getpid()`` leaves a dead PID
+    that ``guard_decision`` clears. The parent (IDE / agent / subagent host) is the
+    durable lineage root for a scoped write-lock that does not freeze sibling sessions.
+    """
+    parent = os.getppid()
+    if parent > 1 and pid_alive(parent):
+        return [parent]
+    return []
 
 
 def set_marker(
@@ -866,7 +880,8 @@ def targets_verifier(payload: dict) -> bool:
 
 def cmd_mark_start(host: str, payload: dict) -> int:
     if targets_verifier(payload):
-        set_marker(host, payload)
+        # Scoped lock: parent host PID so the subagent tree is gated; siblings stay free.
+        set_marker(host, payload, pids=durable_hook_pids())
     return respond_allow(host)
 
 
