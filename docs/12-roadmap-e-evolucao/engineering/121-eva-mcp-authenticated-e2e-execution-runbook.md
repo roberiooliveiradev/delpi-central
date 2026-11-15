@@ -146,3 +146,20 @@ eval user (engineering.access, senha em cofre)
 - **Observação operacional:** atualização de credencial via DB
   Keycloak exige restart do serviço (user cache) — feito com
   autorização do owner; serviço recuperou em ~15s.
+
+## 9. Atualização 2026-11-15 (G8) — provisionamento DÉLIA MCP aplicado em prod
+
+- `delia_mcp_keycloak_state.py --check` apontou DRIFT em prod:
+  permissão `token-exchange` desabilitada e scope `mcp-audience-*`
+  ausente para `mcp-controllership-finance`, `mcp-commercial`,
+  `mcp-supplies` e `mcp-engineering` (os 3 primeiros specialists
+  estavam OK).
+- `--apply` executado com autorização do owner: contrato convergido
+  (`mcp-audience-eva` criado, exchange permission bound a
+  `delia-api`, `delia-api` `standardFlowEnabled` reparado).
+- Resultado: password grant `delpi-central` → token-exchange
+  `delia-api` (audience `mcp-engineering`) → MCP público
+  `read(drawing.*)`/`analyze` E2E PASS, incl. 1 job OCR real
+  `aj-b78d8f356f844dbf` em `90264302` (23,7s, COMPLETED).
+- O fluxo interativo do conector ChatGPT (`standardFlow` em
+  `mcp-engineering`) não depende desse exchange.

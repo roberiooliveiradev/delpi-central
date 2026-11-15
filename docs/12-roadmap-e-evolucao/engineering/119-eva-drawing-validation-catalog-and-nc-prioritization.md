@@ -4705,3 +4705,65 @@ projetado — esta é a prova operacional de que a admissão
 
 **Estado final:** `CODE_DEPLOYED + MCP_AUTHENTICATED_READS_PASS +
 OCR_TEST_BLOCKED_RESOURCE_LIMIT`. Homologação: pendente.
+
+### 94.12 G8 — Causa-raiz da divergência MCP no ChatGPT e E2E completo em produção
+
+`TASK_ID: EVA-G8-CHATGPT-MCP-CONTRACT-DRIFT-AND-RESOURCE-SAFE-E2E-01`
+(2026-11-15 — Devin, com autorizações explícitas do owner)
+
+**Causa-raiz (`OLD_RUNTIME_INSTANCE`):** a conexão EVA do ChatGPT
+resolve `https://minhadelpi.com.br` (Cloudflare) → **srv-api**
+(`192.168.1.237`), que executava imagem `e17ea1dc1f6c` **pré-G6**
+— registry sem `drawing`, daí `unknown entity` e
+`not_implemented`. O deploy G7 havia sido feito no host local,
+que **não** é o upstream público. Não era cache nem configuração
+do conector.
+
+**Correção:** deploy canônico em srv-api — `git pull --ff-only`
+(→ `0cbe6c3d`) + `up-prod-sequential.sh --build engineering-api`
+(INSTALL_VISION_EXTRAS=true, `up -d --no-deps`, zero efeito
+colateral em dependências). Imagem nova com `visual_admission.py`,
+`resource_monitor.py` e `drawing.*` no registry carregado em
+processo (verificado no container).
+
+**Correção colateral de IAM (autorizada):** `delia_mcp_keycloak_state.py
+--apply` convergiu o contrato DÉLIA MCP no realm prod —
+`mcp-engineering` (e cf/commercial/supplies) tinham permissão
+`token-exchange` desabilitada e scope `mcp-audience-*` ausente;
+agora todos bound a `delia-api`. Nota: o ChatGPT usa
+`standardFlow` OAuth e **não** depende desse exchange — o apply
+desbloqueou o caminho delegado da DÉLIA e a validação não
+interativa.
+
+**Evidências no endpoint público (o mesmo do ChatGPT):**
+
+| Chamada | Resultado |
+|---|---|
+| `get_context(entity="drawing")` | `runtime_status`, `job_list` — entidade reconhecida |
+| `read(drawing.runtime_status)` | `AVAILABLE`, host avail ~28,7GB, budget 27709/2560MB |
+| `read(drawing.job_list)` | `[]` owner-scoped |
+| `analyze(existing_only)` | `no_existing_result` tipado, zero OCR |
+
+**Fase F — OCR real em produção (1 PDF, job único, autorizado):**
+
+- `analyze(product.drawing_understanding, product_code=90264302)`
+  → `job_id aj-b78d8f356f844dbf`, RUNNING→COMPLETED em 23,7s.
+- Campos: `cod: 18702881` ✓, `des: 10013396831` ✓,
+  `cliente: weg industria s.a - linhares` ✓, `rev: 00` ✓ —
+  todos `FIELD_IDENTIFIED`.
+- `document_hash_sha256 = f33447b271a35186…` — casa com o SHA
+  registrado no VAL-02.
+- `quality_gate: EVAL_PENDING`.
+- Pós-job: container healthy, 1,4GB residente, 0 workers OCR
+  ativos, host ~27GB disponível, zero degradação.
+
+**Validação ChatGPT (AC-D):** handoff à Coordination para
+confirmar na sessão EVA que `get_context(entity="drawing")` agora
+resolve — o servidor público responde corretamente a todas as
+chamadas; a fronteira anterior (runtime antigo) foi eliminada.
+
+**Residuais:** provisioner criou scopes `mcp-audience-*` para 7
+especialistas no realm prod (autorizado, contrato canônico);
+senha `user@local.com` alterada por pedido do owner (Doc 121 §8);
+admin Keycloak local divergente (débito Infra); gate process-local
+e enforcement cross-container pendentes de decisão Infra.
