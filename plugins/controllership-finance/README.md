@@ -238,3 +238,9 @@ npm install
 npm test        # vitest + structural (tsx --test src/**/*.test.mjs)
 npm run build   # tsc -b && vite build
 ```
+
+Suítes `*.realKit.test.tsx` (e equivalentes que importam o barrel real do
+`@delpi/plugin-ui`) precisam das dependências do `plugin-ui` instaladas no
+workspace local (o mock de vitest cobre o restante). Sem `npm install` no
+`plugins/plugin-ui` (ou hoisting equivalente), esses arquivos falham ao
+resolver transitive deps como `recharts` — observação da U13 / AC-DOD-5.

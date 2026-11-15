@@ -150,7 +150,6 @@ export type EntryAuditOccurrence = {
   status: "pending" | "resolved";
   history?: Array<{ event: string; at: string | null; actor: string }>;
   links?: EntryAuditLinks;
-  clara_suggestion?: string | null;
 };
 
 export type EntryAuditDocument = Record<string, unknown> & {

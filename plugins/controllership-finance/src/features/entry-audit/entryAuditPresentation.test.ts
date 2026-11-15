@@ -4,9 +4,7 @@ import {
   alignEntryAuditDailySeries,
   auditStatusBadgeVariant,
   conformityRatio,
-  entryAuditClaraSuggestions,
   entryAuditDailyPointAriaLabel,
-  entryAuditOccurrenceClaraPrompt,
   entryAuditPreviousPeriodLabel,
   entryAuditPreviousPeriodRange,
   entryAuditTabResource,
@@ -168,16 +166,8 @@ describe("entryAuditPresentation", () => {
     );
   });
 
-  it("monta sugestões e prompt da CLARA", () => {
+  it("formata nota/série e razão de conformidade", () => {
     expect(formatPeriodLabel("2026-11-12", "2026-11-12")).toContain("2026");
-    expect(entryAuditClaraSuggestions("2026-11-12", "2026-11-12")).toEqual([
-      "Explique as Altas",
-      "O que fazer com as notas sem par?",
-      "Compare com o período anterior",
-    ]);
-    expect(
-      entryAuditOccurrenceClaraPrompt("01|key", "2026-11-12", "2026-11-12"),
-    ).toContain("01|key");
     expect(formatNoteSeries("123", "1")).toBe("123/1");
     expect(conformityRatio(8, 2)).toBe(80);
     expect(conformityRatio(0, 0)).toBe(100);

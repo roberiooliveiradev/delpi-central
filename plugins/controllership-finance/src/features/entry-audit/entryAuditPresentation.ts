@@ -753,27 +753,6 @@ export function formatNoteSeries(
   return `${n}/${s}`;
 }
 
-export function entryAuditClaraSuggestions(
-  dateFrom: string,
-  dateTo: string,
-): string[] {
-  void dateFrom;
-  void dateTo;
-  return [
-    "Explique as Altas",
-    "O que fazer com as notas sem par?",
-    "Compare com o período anterior",
-  ];
-}
-
-export function entryAuditOccurrenceClaraPrompt(
-  occurrenceKey: string,
-  dateFrom: string,
-  dateTo: string,
-): string {
-  return `Explique a ocorrência ${occurrenceKey} da auditoria de ${formatPeriodLabel(dateFrom, dateTo)} e o que devo corrigir`;
-}
-
 export function conformityRatio(clean: number, divergent: number): number {
   const total = clean + divergent;
   if (total <= 0) return 100;

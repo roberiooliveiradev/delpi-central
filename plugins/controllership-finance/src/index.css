@@ -789,13 +789,6 @@
   color: var(--cf-text-muted, var(--text-muted, #64748b));
 }
 
-.dashboard-controllership-finance .cf-analysis-clara-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-}
-
 @media (max-width: 1024px) {
   .dashboard-controllership-finance .cf-analysis-panorama-row {
     grid-template-columns: 1fr;

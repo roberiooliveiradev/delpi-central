@@ -64,7 +64,6 @@ import {
   alignEntryAuditDailySeries,
   conformityRatio,
   displayValue,
-  entryAuditClaraSuggestions,
   entryAuditDailyPointAriaLabel,
   entryAuditPreviousPeriodLabel,
   entryAuditTabResource,
@@ -133,7 +132,6 @@ export function EntryAuditAnalysisPage({
   const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
   const [exporting, setExporting] = useState(false);
-  const [copiedHint, setCopiedHint] = useState("");
   const [tabTotals, setTabTotals] = useState<Partial<Record<EntryAuditTab, number>>>(
     {},
   );
@@ -569,10 +567,6 @@ export function EntryAuditAnalysisPage({
     analysis.date_from,
     analysis.date_to,
   );
-  const claraSuggestions = entryAuditClaraSuggestions(
-    analysis.date_from,
-    analysis.date_to,
-  );
   const cleanShare = conformityRatio(
     summary.conformity.clean,
     summary.conformity.divergent,
@@ -672,17 +666,6 @@ export function EntryAuditAnalysisPage({
         }),
     };
   });
-
-  const copySuggestion = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedHint("Copiado");
-      window.setTimeout(() => setCopiedHint(""), 2000);
-    } catch {
-      setCopiedHint("Não foi possível copiar");
-      window.setTimeout(() => setCopiedHint(""), 2000);
-    }
-  };
 
   const scopeLabel = formatAnalysisScope(
     analysis.branches,
@@ -1261,29 +1244,6 @@ export function EntryAuditAnalysisPage({
         />
       )}
 
-      <CfSectionCard
-        title="Pergunte à CLARA"
-        subtitle="A CLARA lê esta mesma análise"
-        hint={CF_HELP.entryAudit.clara}
-      >
-        <div
-          className="cf-analysis-clara-actions"
-          role="group"
-          aria-label="Sugestões para o chat"
-        >
-          {claraSuggestions.map((suggestion) => (
-            <CfActionButton
-              key={suggestion}
-              type="button"
-              variant="ghost"
-              onClick={() => copySuggestion(suggestion)}
-            >
-              {suggestion}
-            </CfActionButton>
-          ))}
-        </div>
-        <p aria-live="polite">{copiedHint}</p>
-      </CfSectionCard>
     </section>
   );
 }

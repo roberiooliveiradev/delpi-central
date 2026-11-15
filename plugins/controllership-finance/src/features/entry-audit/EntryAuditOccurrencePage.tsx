@@ -24,7 +24,6 @@ import { EntryAuditSeverityBadge } from "./EntryAuditSeverityBadge";
 import {
   ENTRY_AUDIT_ACTION_ICONS,
   displayValue,
-  entryAuditOccurrenceClaraPrompt,
   entryAuditFieldLabel,
   formatDifference,
   formatOccurrenceValue,
@@ -46,7 +45,6 @@ export function EntryAuditOccurrencePage({
   const [period, setPeriod] = useState<{ from: string; to: string } | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [copiedHint, setCopiedHint] = useState("");
   const [confirmAction, setConfirmAction] = useState<"resolve" | "reopen" | null>(
     null,
   );
@@ -98,23 +96,6 @@ export function EntryAuditOccurrencePage({
       );
     } finally {
       setBusy(false);
-    }
-  };
-
-  const copyForClara = async () => {
-    if (!occurrence || !period) return;
-    const text = entryAuditOccurrenceClaraPrompt(
-      occurrence.stable_key,
-      period.from,
-      period.to,
-    );
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedHint("Copiado");
-      window.setTimeout(() => setCopiedHint(""), 2000);
-    } catch {
-      setCopiedHint("Não foi possível copiar");
-      window.setTimeout(() => setCopiedHint(""), 2000);
     }
   };
 
@@ -216,17 +197,11 @@ export function EntryAuditOccurrencePage({
         description={`Documento ${formatNoteSeries(occurrence.document_number, occurrence.series)} · ${displayValue(occurrence.supplier_name)}`}
         badge={<EntryAuditSeverityBadge severity={occurrence.severity} />}
         actions={
-          <>
-            <CfActionButton variant="ghost" onClick={copyForClara}>
-              Copiar pergunta para a CLARA
-            </CfActionButton>
-            <CfActionButton variant="ghost" onClick={back}>
-              Voltar para a análise
-            </CfActionButton>
-          </>
+          <CfActionButton variant="ghost" onClick={back}>
+            Voltar para a análise
+          </CfActionButton>
         }
       />
-      <p aria-live="polite">{copiedHint}</p>
 
       {error ? <CfStateBanner variant="error">{error}</CfStateBanner> : null}
 
@@ -283,12 +258,6 @@ export function EntryAuditOccurrencePage({
           <dd>{displayValue(occurrence.why)}</dd>
           <dt>O que fazer</dt>
           <dd>{displayValue(occurrence.action)}</dd>
-          {occurrence.clara_suggestion ? (
-            <>
-              <dt>Sugestão da CLARA</dt>
-              <dd>{occurrence.clara_suggestion}</dd>
-            </>
-          ) : null}
         </dl>
       </CfDetailCard>
 

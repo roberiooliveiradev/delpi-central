@@ -644,8 +644,6 @@ export const CF_HELP = {
       "Ocorrências são diferenças ou condições encontradas pela regra de auditoria. Resolver registra o tratamento humano; reabrir devolve o item à fila sem apagar o histórico.",
     detail:
       "O detalhe explica por que a ocorrência foi criada, a ação sugerida, os valores comparados e a trilha de tratamento. «—» significa dado não aplicável ou indisponível.",
-    clara:
-      "A CLARA lê a mesma análise pelas rotas da BFF. Copie uma sugestão e cole no chat para pedir explicação, foco no que pede ação ou comparação com a análise anterior — sem alterar o ERP.",
     panorama:
       "Visão resumida da análise: percentual de notas limpas e distribuição por severidade. «Explicadas» aparece na legenda da Conformidade; o KPI «Sem par em aberto» permanece na faixa de indicadores.",
     conformity:
