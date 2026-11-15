@@ -1,5 +1,21 @@
 # Changelog — agent-kit
 
+## 0.2.0 — 2026-11-15
+
+- Verificação deixa de rodar como subagent e passa a ser lançada pelo `verify.py` em sessão
+  headless: Devin CLI com `swe-2-high` (grátis no plano atual) por padrão; fallback Cursor CLI
+  com modelo do pacote próprio (`composer-2.5`). Sem motor → `INCONCLUSIVE` "verificador
+  indisponível"; o executor nunca se autoverifica.
+- `scripts/verify.py`: valida o pedido antes de gastar tokens; ativa marcador +
+  `DELPI_VERIFIER_ACTIVE=1`; timeout configurável; salva relatório em
+  `<git-dir>/delpi-verifier/reports/`; preenche o ledger se o motor não registrou.
+- Instalador: subagents fora do padrão (`--with-subagents` restaura 0.1.x); remove agentes
+  antigos do kit; grava engines/modelos/timeout em `install.json`; `verify.cmd` no Windows
+  repassa para o WSL.
+- Hooks: guard reconhece `DELPI_VERIFIER_ACTIVE`; stop gate aponta para `verify.py`; comando
+  `activate` para o launcher.
+- Protocolo headless (sem frontmatter); contrato/AGENTS.md parte A atualizados.
+
 ## 0.1.1 — 2026-11-15
 
 - Pedido de verificação aceita `repositorio:` (subprojeto ou repositório de avaliação fora da raiz do

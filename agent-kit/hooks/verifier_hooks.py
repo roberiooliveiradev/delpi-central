@@ -7,6 +7,7 @@ reads the host's JSON payload from stdin and answers in the host's format.
 Subcommands
   mark-start     subagent is starting  -> create the "verifier active" marker
   mark-stop      subagent finished     -> remove the marker
+  activate       verify.py is launching a headless verifier session -> set marker
   guard          before a tool call    -> block writes while the verifier runs
   session-start  session began         -> store the repository baseline fingerprint
   track-edit     file edited by a tool -> mark that this session changed files
@@ -256,7 +257,13 @@ def clear_command_hint() -> str:
 # --------------------------------------------------------------------------- #
 
 
+def env_verifier_active() -> bool:
+    return os.environ.get("DELPI_VERIFIER_ACTIVE", "").strip() in {"1", "true", "TRUE", "yes", "YES"}
+
+
 def marker_active(now: Optional[float] = None) -> bool:
+    if env_verifier_active():
+        return True
     data = read_json(marker_path())
     if not data:
         return False
@@ -266,9 +273,16 @@ def marker_active(now: Optional[float] = None) -> bool:
     return ((now or time.time()) - started) < marker_ttl()
 
 
-def set_marker(host: str, payload: dict) -> None:
+def set_marker(host: str, payload: Optional[dict] = None) -> None:
+    payload = payload or {}
     marker_path().write_text(
-        json.dumps({"started_at": time.time(), "host": host, "session": session_key(payload)}),
+        json.dumps(
+            {
+                "started_at": time.time(),
+                "host": host,
+                "session": session_key(payload) if payload else "verify.py",
+            }
+        ),
         encoding="utf-8",
     )
 
@@ -404,7 +418,18 @@ def is_record_command(segment: List[str]) -> bool:
         return False
     if not re.match(r"^python[0-9.]*(\.exe)?$", Path(segment[0]).name, re.IGNORECASE):
         return False
-    return Path(segment[1]).name == "verifier_hooks.py" and len(segment) > 2 and segment[2] in {"record", "status", "clear"}
+    return Path(segment[1]).name == "verifier_hooks.py" and len(segment) > 2 and segment[2] in {"record", "status", "clear", "activate"}
+
+
+def is_verify_command(segment: List[str]) -> bool:
+    """Allow the executor to launch verify.py while other writes stay blocked."""
+    if not segment:
+        return False
+    names = [Path(tok).name.lower() for tok in segment]
+    if "verify.py" not in names:
+        return False
+    # Reject obvious write redirects already handled elsewhere; here we only whitelist the launcher.
+    return True
 
 
 def classify_git(args: List[str]) -> Optional[str]:
@@ -573,7 +598,7 @@ def classify_command(command: str, depth: int = 0) -> Optional[str]:
     if "`" in command or "$(" in command or "<(" in command or ">(" in command:
         return "substituição de comando (`...`, $(...), <(...)) não é inspecionável"
     segments = split_segments(tokens)
-    if len(segments) == 1 and is_record_command(segments[0]):
+    if len(segments) == 1 and (is_record_command(segments[0]) or is_verify_command(segments[0])):
         return None
     problem = find_redirect_problem(tokens)
     if problem:
@@ -734,13 +759,20 @@ def cmd_track_edit(host: str, payload: dict) -> int:
     return 0
 
 
+def verify_command_hint() -> str:
+    script = kit_home() / "verify.py"
+    return f'"{sys.executable}" "{script}" --request-file <git-dir>/delpi-verifier/requests/<pedido>.md'
+
+
 def gate_message(repo: Path, last: Optional[dict]) -> Optional[str]:
     hint = record_command_hint()
+    verify_hint = verify_command_hint()
     if last is None:
         return (
             "[delpi-verifier] Há alterações neste repositório desde o início da sessão e nenhum veredito "
-            "registrado para o estado atual. Antes de encerrar, chame o subagent delpi-verifier seguindo a "
-            "seção 'Verificação (delpi-verifier)' do AGENTS.md. Se esta alteração dispensa verificação "
+            "registrado para o estado atual. Antes de encerrar, grave o PEDIDO DE VERIFICAÇÃO em "
+            f"<git-dir>/delpi-verifier/requests/ e rode: {verify_hint} "
+            "(seção 'Verificação (delpi-verifier)' do AGENTS.md). Se esta alteração dispensa verificação "
             f"(ex.: só texto de documentação), registre a dispensa com: {hint} --verdict SKIPPED --round 0 "
             '--summary "<motivo>" e cite a dispensa no relatório final.'
         )
@@ -752,8 +784,8 @@ def gate_message(repo: Path, last: Optional[dict]) -> Optional[str]:
         return None
     return (
         f"[delpi-verifier] Último veredito para o estado atual: {verdict} (rodada {rnd}). Aplique as ordens de "
-        f"correção no código de produção (ou conteste com evidência) e chame o delpi-verifier para a rodada "
-        f"{rnd + 1}. Se houver DECISION_REQUIRED, pare e devolva a decisão ao usuário."
+        f"correção no código de produção (ou conteste com evidência) e rode de novo o verify.py para a rodada "
+        f"{rnd + 1}: {verify_hint}. Se houver DECISION_REQUIRED, pare e devolva a decisão ao usuário."
     )
 
 
@@ -816,6 +848,7 @@ def cmd_record(args: argparse.Namespace) -> int:
         "summary": args.summary or "",
         "fingerprint": fp,
         "head": (run_git(repo, ["rev-parse", "HEAD"]) or "").strip(),
+        "recorded_by": getattr(args, "recorded_by", None) or "verifier_hooks.py",
     }
     with ledger.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
@@ -848,8 +881,11 @@ def build_parser() -> argparse.ArgumentParser:
         p.add_argument("--host", choices=["cursor", "devin", "claude"], required=True)
         if name == "guard":
             p.add_argument("--always", action="store_true", help="guard sem depender do marcador (hook com escopo do subagent)")
+    act = sub.add_parser("activate")
+    act.add_argument("--host", default="verify", help="quem ativa o marcador (padrão: verify)")
     rec = sub.add_parser("record")
     rec.add_argument("--verdict", required=True)
+    rec.add_argument("--recorded-by", default=None, help="origem do registro (ex.: verify.py)")
     rec.add_argument("--round", type=int, default=1)
     rec.add_argument("--summary", default="")
     rec.add_argument("--repo")
@@ -868,6 +904,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if args.command == "clear":
         clear_marker()
         print("marcador removido")
+        return 0
+    if args.command == "activate":
+        set_marker(getattr(args, "host", "verify") or "verify", {"session_id": "verify.py"})
+        print("marcador ativo")
         return 0
     payload, ok = read_payload()
     try:

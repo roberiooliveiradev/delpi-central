@@ -35,6 +35,29 @@ def hook_command(python: str, kit_home: Path, *args: str) -> str:
     return " ".join([quoted(python), quoted(kit_home / HOOK_SCRIPT_NAME), *args])
 
 
+def protocol_body(python: str, kit_home: Path, platform: str) -> str:
+    body = (
+        (KIT_ROOT / "verifier" / "protocol.md").read_text(encoding="utf-8").rstrip()
+        + "\n\n---\n\n"
+        + (KIT_ROOT / "verifier" / "report-format.md").read_text(encoding="utf-8").rstrip()
+        + "\n"
+    )
+    return (
+        body.replace("{{KIT_VERSION}}", kit_version())
+        .replace("{{PLATFORM}}", platform)
+        .replace("{{RECORD_CMD}}", hook_command(python, kit_home, "record"))
+    )
+
+
+def render_headless(python: str, kit_home: Path) -> str:
+    """Protocol for verify.py — no YAML frontmatter."""
+    text = protocol_body(python, kit_home, "headless")
+    leftover = [tok for tok in ("{{MODEL}}", "{{KIT_VERSION}}", "{{PLATFORM}}", "{{RECORD_CMD}}", "{{GUARD_ALWAYS_CMD}}") if tok in text]
+    if leftover:
+        raise RuntimeError(f"placeholders não substituídos: {leftover}")
+    return text
+
+
 def render_agent(platform: str, model: Optional[str], python: str, kit_home: Path) -> str:
     if platform not in PLATFORMS:
         raise ValueError(f"plataforma desconhecida: {platform}")
@@ -46,17 +69,7 @@ def render_agent(platform: str, model: Optional[str], python: str, kit_home: Pat
     frontmatter = frontmatter.replace(
         "{{GUARD_ALWAYS_CMD}}", hook_command(python, kit_home, "guard", "--host", "claude", "--always")
     )
-    body = (
-        (KIT_ROOT / "verifier" / "protocol.md").read_text(encoding="utf-8").rstrip()
-        + "\n\n---\n\n"
-        + (KIT_ROOT / "verifier" / "report-format.md").read_text(encoding="utf-8").rstrip()
-        + "\n"
-    )
-    body = (
-        body.replace("{{KIT_VERSION}}", kit_version())
-        .replace("{{PLATFORM}}", platform)
-        .replace("{{RECORD_CMD}}", hook_command(python, kit_home, "record"))
-    )
+    body = protocol_body(python, kit_home, platform)
     rendered = f"---\n{frontmatter.rstrip()}\n---\n\n{body}"
     leftover = [tok for tok in ("{{MODEL}}", "{{KIT_VERSION}}", "{{PLATFORM}}", "{{RECORD_CMD}}", "{{GUARD_ALWAYS_CMD}}") if tok in rendered]
     if leftover:
@@ -64,38 +77,42 @@ def render_agent(platform: str, model: Optional[str], python: str, kit_home: Pat
     return rendered
 
 
-def cursor_hooks(python: str, kit_home: Path) -> Dict[str, List[dict]]:
+def cursor_hooks(python: str, kit_home: Path, with_subagents: bool = False) -> Dict[str, List[dict]]:
     """Entries for ~/.cursor/hooks.json (merged under the "hooks" key)."""
     cmd = lambda *a: hook_command(python, kit_home, *a)  # noqa: E731
-    return {
+    hooks = {
         "sessionStart": [{"command": cmd("session-start", "--host", "cursor")}],
-        "subagentStart": [{"command": cmd("mark-start", "--host", "cursor"), "matcher": "delpi-verifier"}],
-        "subagentStop": [{"command": cmd("mark-stop", "--host", "cursor"), "matcher": "delpi-verifier"}],
         "afterFileEdit": [{"command": cmd("track-edit", "--host", "cursor")}],
         "beforeShellExecution": [{"command": cmd("guard", "--host", "cursor")}],
         "preToolUse": [{"command": cmd("guard", "--host", "cursor")}],
         "stop": [{"command": cmd("stop-gate", "--host", "cursor"), "loop_limit": 2}],
     }
+    if with_subagents:
+        hooks["subagentStart"] = [{"command": cmd("mark-start", "--host", "cursor"), "matcher": "delpi-verifier"}]
+        hooks["subagentStop"] = [{"command": cmd("mark-stop", "--host", "cursor"), "matcher": "delpi-verifier"}]
+    return hooks
 
 
-def devin_hooks(python: str, kit_home: Path) -> Dict[str, List[dict]]:
-    """Entries for the "hooks" key of ~/.config/devin/config.json."""
+def devin_hooks(python: str, kit_home: Path, with_subagents: bool = False) -> Dict[str, List[dict]]:
+    """Entries for the "hooks" key of ~/.config/devin/config.json (and Windows %APPDATA%)."""
 
     def group(matcher: str, *args: str) -> dict:
         return {"matcher": matcher, "hooks": [{"type": "command", "command": hook_command(python, kit_home, *args)}]}
 
-    return {
+    hooks = {
         "SessionStart": [group("", "session-start", "--host", "devin")],
         "PreToolUse": [
-            group("^run_subagent$", "mark-start", "--host", "devin"),
             group("^(exec|write|edit|apply_patch|notebook_edit)$", "guard", "--host", "devin"),
         ],
         "PostToolUse": [
-            group("^run_subagent$", "mark-stop", "--host", "devin"),
             group("^(write|edit|apply_patch|notebook_edit)$", "track-edit", "--host", "devin"),
         ],
         "Stop": [group("", "stop-gate", "--host", "devin")],
     }
+    if with_subagents:
+        hooks["PreToolUse"].insert(0, group("^run_subagent$", "mark-start", "--host", "devin"))
+        hooks["PostToolUse"].insert(0, group("^run_subagent$", "mark-stop", "--host", "devin"))
+    return hooks
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -111,6 +128,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         target = args.out / platform / "delpi-verifier.md"
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(render_agent(platform, getattr(args, f"{platform}_model"), args.python, args.kit_home), encoding="utf-8")
+    (args.out / "protocol.headless.md").write_text(render_headless(args.python, args.kit_home), encoding="utf-8")
     (args.out / "cursor" / "hooks.json").write_text(
         json.dumps({"version": 1, "hooks": cursor_hooks(args.python, args.kit_home)}, indent=2), encoding="utf-8"
     )

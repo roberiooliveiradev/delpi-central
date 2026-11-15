@@ -57,12 +57,14 @@ Obrigatório antes de declarar a tarefa concluída e **antes do commit/push e do
 canônico** acima. Fonte canônica do ciclo: parte A de
 `agent-kit/verifier/project-contract.md`. Em resumo:
 
-1. Depois de alterar código, configuração, migration, contrato ou teste, chamar o subagent
-   `delpi-verifier` em primeiro plano, com o `PEDIDO DE VERIFICAÇÃO` (objetivo com RQ/AC,
-   escopo `working tree` ou `base..head`, alegações, modelo do executor, rodada).
+1. Depois de alterar código, configuração, migration, contrato ou teste, gravar o
+   `PEDIDO DE VERIFICAÇÃO` em `<git-dir>/delpi-verifier/requests/` (nunca no working tree)
+   e rodar um comando: `python ~/.delpi-agent-kit/verify.py --request-file <arquivo>`
+   (objetivo com RQ/AC, escopo `working tree` ou `base..head`, alegações, modelo do
+   executor, rodada). O executor nunca se autoverifica.
 2. Corrigir cada ordem de correção (OC) no código de produção, ou contestar com evidência.
    Nunca alterar teste, runner ou limites de cobertura para a reconferência passar.
-3. Repetir com instância nova (rodada + 1), no máximo 3 rodadas.
+3. Repetir com `verify.py` (rodada + 1), no máximo 3 rodadas.
 4. `DECISION_REQUIRED` ou `EXECUTION_DRIFT` encerram o ciclo: devolver a decisão ao usuário.
 5. EXECUTION REPORT com o veredito do verificador sem edição e a tabela de rodadas.
 

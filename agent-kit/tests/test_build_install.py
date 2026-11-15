@@ -75,17 +75,23 @@ class InstallTests(unittest.TestCase):
         self.assertEqual(self.run_install("--dry-run", "--cursor-model", "a", "--devin-model", "b"), 0)
         self.assertEqual(list(self.home.iterdir()), [])
 
-    def test_install_creates_agents_and_hooks(self):
+    def test_install_creates_verify_and_hooks_without_subagents(self):
         self.assertEqual(self.run_install("--cursor-model", "a", "--devin-model", "b"), 0)
         loc = self.loc()
-        for key in ("cursor_agent", "devin_agent", "cursor_hooks", "devin_config"):
+        for key in ("cursor_hooks", "devin_config"):
             self.assertTrue(loc[key].exists(), key)
+        self.assertFalse(loc["cursor_agent"].exists())
+        self.assertFalse(loc["devin_agent"].exists())
         self.assertFalse(loc["claude_agent"].exists())
         self.assertTrue((loc["kit_home"] / "verifier_hooks.py").exists())
+        self.assertTrue((loc["kit_home"] / "verify.py").exists())
+        self.assertTrue((loc["kit_home"] / "protocol.headless.md").exists())
         manifest = json.loads((loc["kit_home"] / "install.json").read_text())
-        self.assertEqual(manifest["models"], {"cursor": "a", "devin": "b"})
+        self.assertEqual(manifest["models"], {"devin": "b", "cursor": "a"})
+        self.assertFalse(manifest.get("with_subagents"))
         hooks = json.loads(loc["cursor_hooks"].read_text())
         self.assertIn("beforeShellExecution", hooks["hooks"])
+        self.assertNotIn("subagentStart", hooks["hooks"])
 
     def test_merge_preserves_foreign_hooks_and_is_idempotent(self):
         loc = self.loc()
@@ -116,7 +122,7 @@ class InstallTests(unittest.TestCase):
         loc = self.loc()
         loc["cursor_hooks"].parent.mkdir(parents=True)
         loc["cursor_hooks"].write_text(json.dumps({"version": 1, "hooks": {"stop": [{"command": "my-lint.sh"}]}}))
-        self.run_install("--platforms", "cursor,devin,claude")
+        self.run_install("--platforms", "cursor,devin,claude", "--with-subagents")
         self.assertTrue(loc["claude_agent"].exists())
         self.run_install("--uninstall")
         for key in ("cursor_agent", "devin_agent", "claude_agent"):

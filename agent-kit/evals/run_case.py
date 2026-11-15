@@ -70,7 +70,11 @@ def prepare(case_id: str, dest: Path) -> int:
     brief = (case / "brief.md").read_text(encoding="utf-8").strip()
     claims = (case / "claims.md").read_text(encoding="utf-8").strip()
     print(f"Repositório do caso pronto em: {dest}\nAbra essa pasta no Cursor/Devin e envie ao executor:\n")
-    print("Chame o subagent delpi-verifier com o pedido abaixo e me devolva o relatório dele sem editar.\n")
+    print(
+        "Grave o pedido abaixo em <git-dir>/delpi-verifier/requests/ e rode:\n"
+        "  python ~/.delpi-agent-kit/verify.py --request-file <arquivo>\n"
+        "Devolva o relatório sem editar.\n"
+    )
     print("PEDIDO DE VERIFICAÇÃO")
     print(brief)
     print(f"escopo: {base}..{head}")
