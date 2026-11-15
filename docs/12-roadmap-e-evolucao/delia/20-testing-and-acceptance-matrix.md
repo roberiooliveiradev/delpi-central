@@ -3059,3 +3059,9 @@ Positivos/negativos/holdouts separados; nenhuma resposta programada conta como g
 **WS-C:** `test_eval_usage_meter.py` — meter lê `result.usage` (property), não `result.usage()`; tokens de run individual voltam a ser capturados.
 
 **Amostra válida ainda pendente:** nenhum eval real reexecutado nesta task; prontidão do novo A/B depende de amostra com harness corrigido.
+
+### 2026-11-14 — INDEPENDENT_REVIEW_BUDGET_R3_2026_11_14: aceite independente dos fixes e próximo oráculo real
+
+**CÓDIGO REVISADO:** `6eb9594809` + `9904b4fb46`; `INDEPENDENT_TESTS=TEST_NOT_RUN`, executor reportou 13/13 boundary + 1739 testes ×2. **`BUDGET_SHARED=ACCEPT` na evidência do executor e implementação verificada**, incluindo plano aceito + exceção posterior, uso preservado, zero request/tool budget não re-concedido, terminal deadline/cancel propaga. `R3_DOMINANT_AUTH=REMEDIATED_HARNESS`; `R3_TOTAL=OPEN_ENV`; `TOKEN_METER=TECHNICALLY_FIXED`, ainda sem custo factual de nova avaliação.
+
+**Próxima prova obrigatória:** no mesmo SHA/config/owners, correr A/B após renovação por cenário, validar token fresco na entrada e validade durante todo cenário; preservar dados seguros sem bearer; contar AUTHN pre-wire vs exchange/transient vs owner timeout, incluindo DAVI; separar casos autorizados de AUTHZ_DENIED. Medir tasks corretamente concluídas e custo fim-a-fim (tokens, requests, USD se provider disponibilizar). Repetir negativos/holdouts e não promover com base apenas em 12/12 declarações. Monitorar caminho `artifact_kept` para não silenciar erros materiais além do observability-only. Sem real eval: `OUTCOME=INCONCLUSIVE`. **NEXT=`COORDINATION_C3_T2_TWO_AGENT_POST_R3_REMEDIATION_REAL_AB_REPROOF_READINESS`.**
