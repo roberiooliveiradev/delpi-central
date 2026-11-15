@@ -1,6 +1,6 @@
 # Delpi Linux Operations MCP — P1 READ-ONLY em operacao; P2 PREPARE em desenvolvimento
 
-**Status atualizado em 2026-11-15:** o operador confirmou login Keycloak OAuth, conexao do plugin ATLAS no ChatGPT e chamada real de leitura de observacao Linux via gateway HTTPS. As notas historicas abaixo documentam o periodo de preparacao anterior ao go-live. O MCP segue com **quatro tools READ apenas**, sem PREPARE/ACT. A evolucao P2.1/P2.2a/P2.2b/P2.2c adiciona somente modulos Python de governanca/atestacao **nao importados no `server.py`**. O repositorio publico nao deve conter secrets, tokens ou logs brutos.
+**Status atualizado em 2026-11-15:** o operador confirmou login Keycloak OAuth, conexao do plugin ATLAS no ChatGPT e chamada real de leitura de observacao Linux via gateway HTTPS. As notas historicas abaixo documentam o periodo de preparacao anterior ao go-live. O MCP segue com **quatro tools READ apenas**, sem PREPARE/ACT. A evolucao P2.1-P2.2d adiciona somente modulos Python de governanca/atestacao **nao importados no `server.py`**. O repositorio publico nao deve conter secrets, tokens ou logs brutos.
 
 ## Scope and reuse
 
@@ -122,3 +122,12 @@ O serviço opt-in anuncia apenas `127.0.0.1:${LINUX_OPS_MCP_LOOPBACK_PORT:-18765
 - `linux_ops_mcp/deploy_journal_policy.py`: decisao inerte para candidatos PREPARE, UUID/idempotency key, SHA, hash, TTL de ate dez minutos e replay identico. **Sem Postgres/lock/transacao/API/ACT**. Persistencia e nonce one-shot exigem tabela e repository backend autorizados e coordenacao de migration.
 - `tests/test_deploy_host_receipt.py` **30 PASS** + `tests/test_deploy_journal_policy.py` **17 PASS** (47 PASS local, Python 3.13, sem rede/host/DB); `compileall` local PASS. GitHub CI e revisao independente pendentes de evidencia.
 - [Roadmap mestre](../docs/12-roadmap-e-evolucao/mcp-linux-control/README.md) e [runbook P2.2c](../docs/12-roadmap-e-evolucao/mcp-linux-control/04-atlas-p22c-host-receipt-journal-contract.md) mantem status, riscos e proximo gate. P2.2d: emissor local real em HML, registro imutavel de release, atestacao separada de rollback/migration e journal PostgreSQL com concorrencia. Sem deploy de qualquer componente desta fase em HML/PROD.
+
+
+## P2.2d — Fonte Docker isolada e signer de release (2026-11-15)
+
+- `linux_ops_mcp/deploy_host_source.py`: somente `GET /containers/{nome_static}/json` com transporte HTTP injetado, validacao de labels Compose, nome, IDs da imagem/container e estado; nenhum `docker.sock` ou processo privilegiado no MCP. **O acesso ao Docker e de alto privilegio mesmo para GET; qualquer piloto HML exige proxy de leitura isolado e review.**
+- `linux_ops_mcp/deploy_host_signer.py`: valida manifest HMAC selado pelo futuro executor com chave de release, compara imagem do runtime e emite `SignedHostReceipt` assinado com chave diferente/challenge do backend. Nao ha emissor de manifests, secret store ou signer host instalado; `checkout_clean` permanece False e `migrations_safe/rollback_ready` seguem False para nao conceder falsa autorizacao.
+- `it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_journal.py`: camada **interna ao owner do banco**, com SQL parametrizado para desafio unico e proposta PREPARE idempotente, ainda nao importada por rotas. Seu [DDL review-only](../docs/12-roadmap-e-evolucao/mcp-linux-control/05-atlas-p22d-candidate-schema.sql) esta **fora** de `it-portal-api/migrations/`; nenhuma tabela foi criada em HML/PROD.
+- Suite local cumulativa P2.1-P2.2d: **190 PASS** (Python 3.13, mock Docker e DB FakePg), compilacao PASS. Novos testes: 17 source/signer, 15 SQL fake e 3 guardas estaticas. GitHub CI, verificacao independente e PostgreSQL/Docker real **pendentes**.
+- [Runbook completo da P2.2d](../docs/12-roadmap-e-evolucao/mcp-linux-control/06-atlas-p22d-runtime-attestation-and-journal.md). Proximo P2.2e e homologacao segura do emissor real em um unico alvo HML, testes DB descartavel e aprovacao do owner da migration. `server.py` segue com quatro READ; nenhuma tool PREPARE/ACT foi habilitada.
