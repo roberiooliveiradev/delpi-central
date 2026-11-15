@@ -24,6 +24,9 @@ _SERVICE = re.compile(r"[a-z][a-z0-9-]{1,63}\Z")
 
 # Static, parametrized SQL; never interpolate caller fields into SQL text.
 _SQL_TIME = "SELECT clock_timestamp()"
+# Serialize retries of one requester/request; DB UNIQUE remains the final guard.
+# The transaction lock is released by commit or rollback.
+_SQL_LOCK = "SELECT pg_advisory_xact_lock(hashtextextended(%s, 19026))"
 _SQL_CHALLENGE = """INSERT INTO it_portal.atlas_deploy_challenges
 (id, requester_subject, environment, service_id, challenge_digest, issued_at, expires_at)
 VALUES (%s,%s,%s,%s,%s,%s,%s)"""
@@ -142,36 +145,42 @@ def store_prepared(conn: Any, *, intent: PrepareIntent, signed_receipt_challenge
     digest = _nonce_digest(signed_receipt_challenge)
     try:
         with conn.transaction():
-            now = _db_now(conn)
+            # Lock before looking up idempotency key to serialize concurrent retries.
+            lock_key = f"{intent.requester_subject}:{intent.request_id}"
+            conn.execute(_SQL_LOCK, (lock_key,)).fetchone()
+            now = _db_now(conn)  # DB clock read after waiting for lock
+            existing = conn.execute(_SQL_READ, (intent.requester_subject, intent.request_id)).fetchone()
+            if existing is not None:
+                if len(existing) != 11:
+                    raise JournalRejected('JOURNAL_ROW_INCONSISTENT')
+                (proposal_id, subject, request_id, env, service, sha, base, digest_saved,
+                 challenge_saved, expires_at, status) = existing
+                if (str(subject) != intent.requester_subject or str(request_id) != intent.request_id
+                        or env != intent.environment or service != intent.service_id
+                        or sha != intent.target_sha or base != intent.base_sha
+                        or digest_saved != intent.proposal_hash or challenge_saved != digest):
+                    raise JournalRejected('IDEMPOTENCY_PAYLOAD_CONFLICT')
+                if not isinstance(expires_at, datetime) or expires_at <= now or status != 'pending_approval':
+                    raise JournalRejected('IDEMPOTENCY_ALREADY_CLOSED')
+                return PrepareStored(str(proposal_id), 'replay_pending_approval')
+
+            # Consume before INSERT: the schema requires a valid challenge FK.
+            # Any exception rolls the nonce consumption back with the proposal.
+            if conn.execute(_SQL_CONSUME, (
+                intent.requester_subject, intent.environment, intent.service_id, digest,
+            )).fetchone() is None:
+                raise JournalRejected('CHALLENGE_MISSING_OR_CONSUMED')
             created = conn.execute(_SQL_CREATE, (
                 str(uuid4()), intent.requester_subject, intent.request_id,
                 intent.environment, intent.service_id, intent.target_sha, intent.base_sha,
                 intent.proposal_hash, digest, now, now+timedelta(minutes=10),
             )).fetchone()
-            if created is not None:
-                # If nonce is missing/expired/consumed, roll back the insertion.
-                if conn.execute(_SQL_CONSUME, (
-                    intent.requester_subject, intent.environment, intent.service_id,
-                    digest,
-                )).fetchone() is None:
-                    raise JournalRejected('CHALLENGE_MISSING_OR_CONSUMED')
-                proposal_id = str(created[0])
-                conn.execute(_SQL_EVENT, (str(uuid4()), proposal_id, intent.requester_subject))
-                return PrepareStored(proposal_id, 'created_pending_approval')
-            existing = conn.execute(_SQL_READ, (intent.requester_subject, intent.request_id)).fetchone()
-            if existing is None or len(existing) != 11:
-                raise JournalRejected('JOURNAL_ROW_INCONSISTENT')
-            (proposal_id, subject, request_id, env, service, sha, base, digest_saved,
-             challenge_saved, expires_at, status) = existing
-            if (str(subject) != intent.requester_subject or str(request_id) != intent.request_id
-                    or env != intent.environment or service != intent.service_id
-                    or sha != intent.target_sha or base != intent.base_sha
-                    or digest_saved != intent.proposal_hash or challenge_saved != digest):
-                raise JournalRejected('IDEMPOTENCY_PAYLOAD_CONFLICT')
-            if not isinstance(expires_at, datetime) or expires_at <= now or status != 'pending_approval':
-                raise JournalRejected('IDEMPOTENCY_ALREADY_CLOSED')
-            # A retry must not consume another nonce or insert another event.
-            return PrepareStored(str(proposal_id), 'replay_pending_approval')
+            if created is None:
+                # Unexpected writer outside advisory lock; roll back the nonce.
+                raise JournalRejected('JOURNAL_CONCURRENT_WRITE')
+            proposal_id = str(created[0])
+            conn.execute(_SQL_EVENT, (str(uuid4()), proposal_id, intent.requester_subject))
+            return PrepareStored(proposal_id, 'created_pending_approval')
     except JournalRejected:
         raise
     except Exception:
