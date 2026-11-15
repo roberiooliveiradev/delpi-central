@@ -399,3 +399,19 @@ Evidencia informada pelo operador, do terminal `srv-api`, apos build/pull e conf
 **Atencao OAuth:** o cliente remoto real e a URL do recurso exposta pelo tunel devem ser inspecionados antes de provisionar client OAuth; o codigo aceita URL no formato HTTPS do `PUBLIC_BASE_URL` com path `/apps/linux-ops-mcp/mcp`. Se nao coincidir com o recurso efetivo do Tunnel, preparar PR de compatibilidade, jamais remover validacao `aud`/issuer/scopes. A pagina de login Keycloak deve permanecer acessivel ao navegador; ela nao e publicada pelo tunel automaticamente.
 
 Fonte oficial verificada: https://developers.openai.com/api/docs/guides/secure-mcp-tunnels ; https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt.
+
+
+## 21. Gate OAuth real: health Docker, PRMD e desafio 401 validados (2026-11-14)
+
+**Evidencia operacional fornecida pelo operador (sem execucao remota pelo agente):** em 2026-11-15 01:55:06 UTC:
+
+- `delpi-linux-ops-mcp`: `Up 2 minutes (healthy)`.
+- `GET http://127.0.0.1:18765/.well-known/oauth-protected-resource`: HTTP 200; PRMD `resource=https://minhadelpi.com.br/apps/linux-ops-mcp/mcp`, `authorization_servers=[https://minhadelpi.com.br/auth/realms/delpi]`, `scopes_supported=[openid,profile,email,mcp:tools]`.
+- `POST http://127.0.0.1:18765/mcp` sem Bearer: HTTP 401 com `WWW-Authenticate: Bearer`, `resource_metadata=https://minhadelpi.com.br/apps/linux-ops-mcp/.well-known/oauth-protected-resource` e escopos esperados.
+- Estas evidencias provam **resposta local, metadata e negacao sem auth**, nao provam Keycloak client, access token emitido, tools/list, tools/call nem acesso ChatGPT.
+
+**Novo risco de compatibilidade de OAuth pelo Secure MCP Tunnel, identificado em fonte oficial de 2026:** o túnel reescreve o campo PRMD `resource` e o `WWW-Authenticate.resource_metadata` para URLs hospedadas no serviço Tunnel da OpenAI (https://github.com/openai/tunnel-client/blob/master/docs/architecture.md#oauth-protected-mcp). O middleware do `linux-ops-mcp` exige audiencia **exata** de `LINUX_OPS_MCP_RESOURCE_URL`, e `resource_url()` hoje exige host de `PUBLIC_BASE_URL` e path `/apps/linux-ops-mcp/mcp`. **Nao pressupor** que um token emitido para a URL do tunel sera aceito; pode resultar em 401 de audiencia.
+
+**Proximo gate:** criar o tunel com `tunnel_id`, vincular Platform org ao workspace ChatGPT e obter os detalhes definitivos da URL do recurso atraves da descoberta do tunel; rodar `tunnel-client doctor` com runtime key de Tunnels Read+Use armazenada somente no servidor. Se a URL do recurso divergir, preparar PR revisado para vinculo OAuth unico ao recurso do tunel, sem aceitar audiencias arbitrarias nem desabilitar validacao de `iss`/`aud`/`scope`. O Keycloak dedicado so deve ser finalizado quando a audiencia e o callback reais forem conhecidos. Conforme https://developers.openai.com/api/docs/guides/secure-mcp-tunnels ; https://github.com/openai/tunnel-client/blob/master/docs/onboarding.md.
+
+**Estado:** `LOCAL_HEALTH_PASS`, `PRMD_200_PASS`, `UNAUTHENTICATED_401_PASS`, `TUNNEL_NOT_PROVISIONED`, `RESOURCE_AUDIENCE_COMPATIBILITY_TO_VERIFY`, `KEYCLOAK_CLIENT_NOT_PROVEN`, `CHATGPT_MCP_NOT_CONNECTED`.
