@@ -7,6 +7,8 @@ Deterministic host-local suite. Does not touch the production
 
 from __future__ import annotations
 
+import dataclasses
+
 import pytest
 from tests.support.native_mcp_fixtures import (
     alpha_beta_servers,
@@ -471,6 +473,178 @@ def test_g2_aggregation_satisfied_despite_spurious_filter_target():
     assert "ref05_target_unbound_nonblocking" in result.limitations
     assert "related_observations_insufficient" not in result.limitations
     assert result.error_code != "investigation_target_binding_failed"
+
+
+def test_g2_residual_clarification_does_not_veto_satisfied_aggregation():
+    """Residual clarification_question must not short-circuit SUCCESS
+    evidence that already satisfies material obligations (G2 grounding
+    incoherence: COMPLETE answer under CLARIFICATION_REQUIRED)."""
+    from app.application.capability_provision.semantic_capability_support import (
+        _apply_declared_answer,
+    )
+    from tests.test_int2_typed_objective_obligation_contract import (
+        _anchored_attempt,
+    )
+
+    gates = _gates()
+    plan = gates._accept_semantic_investigation_plan(
+        goal_class="analyze",
+        comparison_requested=False,
+        target_identities=["ativos"],
+        evidence_needed=[
+            {
+                "description": "Contagem de processos ativos",
+                "evidence_source": "process",
+                "operation": "read",
+            }
+        ],
+        business_subject="processos de transformação",
+        expected_delivery="aggregation",
+        correlation="g2-clar",
+    )
+    assert plan is not None
+    hit = _anchored_attempt(
+        root="PROC-0001",
+        vocabulary=("process", "search"),
+        structured={
+            "success": True,
+            "data": {
+                "total": 109,
+                "items": [{"codigo_processo": "PROC-0001"}],
+                "is_complete": True,
+            },
+        },
+    )
+    hit = dataclasses.replace(hit, limitations=("result_truncated",))
+    terminal = _finalize_agent_collected_attempts(
+        gates,
+        input_text="Quantos processos de transformação estão ativos?",
+        collected=(hit,),
+        correlation="g2-clar",
+        workspace_context=None,
+        deadline=TurnDeadline.start(30.0),
+        unbound_outcome=OWNER_PATH_UNBOUND,
+        plan=plan,
+        clarification_question="Qual status deseja filtrar?",
+    )
+    assert terminal.status is GovernedCapabilityStatus.SUCCESS
+    assert "agent_requested_clarification" not in terminal.limitations
+    assert (
+        "agent_clarification_superseded_by_satisfied_evidence"
+        in terminal.limitations
+    )
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.COMPLETE,
+        answer="Existem 109 processos de transformação ativos.",
+        evidence_refs=(0,),
+        limitations=("result_truncated",),
+    )
+    out = _apply_declared_answer(
+        terminal=terminal,
+        declared_answer=declared,
+        collected=(hit,),
+        plan=plan,
+        correlation="g2-clar",
+        unbound_outcome=None,
+    )
+    assert out.status is GovernedCapabilityStatus.SUCCESS
+    assert "109" in (out.content or "")
+    assert "agent_requested_clarification" not in out.limitations
+    assert out.outcome is not None
+    assert out.provenance is not None
+
+
+def test_g2_clarification_still_applies_when_obligations_unmet():
+    """Negative: residual clarification with unmet obligations stays
+    an honest ask-back and preserves verified partial evidence."""
+    from tests.test_int2_typed_objective_obligation_contract import (
+        _anchored_attempt,
+    )
+
+    gates, plan = _read_plan("90260921", evidence=("90260921",))
+    related = _anchored_attempt(
+        root="OTHER",
+        vocabulary=("process", "search"),
+        structured={"success": True, "data": {"total": 1}},
+    )
+    result = _finalize_agent_collected_attempts(
+        gates,
+        input_text="Qual a estrutura do produto 90260921?",
+        collected=(related,),
+        correlation="g2-clar-neg",
+        workspace_context=None,
+        deadline=TurnDeadline.start(30.0),
+        unbound_outcome=OWNER_PATH_UNBOUND,
+        plan=plan,
+        clarification_question="Qual código do produto?",
+    )
+    assert result.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    assert "agent_requested_clarification" in result.limitations
+    assert "verified_evidence_preserved" in result.limitations
+    assert result.outcome is not None
+
+
+def test_g2_complete_declaration_promotes_clarification_terminal():
+    """Defense-in-depth: COMPLETE+consistent must not leave content on
+    a CLARIFICATION_REQUIRED terminal (NON_GROUNDED publish path)."""
+    from app.application.capability_provision.semantic_capability_support import (
+        _apply_declared_answer,
+    )
+    from tests.test_int2_typed_objective_obligation_contract import (
+        _anchored_attempt,
+    )
+
+    gates = _gates()
+    plan = gates._accept_semantic_investigation_plan(
+        goal_class="analyze",
+        comparison_requested=False,
+        target_identities=[],
+        evidence_needed=[
+            {
+                "description": "Contagem de processos ativos",
+                "evidence_source": "process",
+                "operation": "read",
+            }
+        ],
+        expected_delivery="aggregation",
+        correlation="g2-promote",
+    )
+    assert plan is not None
+    hit = _anchored_attempt(
+        root="PROC-0001",
+        vocabulary=("process", "search"),
+        structured={
+            "success": True,
+            "data": {"total": 109, "is_complete": True},
+        },
+    )
+    clarification_terminal = GovernedCapabilityAttempt(
+        status=GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
+        correlation_id="g2-promote",
+        content="Qual filtro?",
+        limitations=("agent_requested_clarification",),
+        error_code="investigation_clarification_required",
+    )
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.COMPLETE,
+        answer="Existem 109 processos de transformação ativos.",
+        evidence_refs=(0,),
+    )
+    out = _apply_declared_answer(
+        terminal=clarification_terminal,
+        declared_answer=declared,
+        collected=(hit,),
+        plan=plan,
+        correlation="g2-promote",
+        unbound_outcome=None,
+    )
+    assert out.status is GovernedCapabilityStatus.SUCCESS
+    assert "109" in (out.content or "")
+    assert "agent_requested_clarification" not in out.limitations
+    assert out.outcome is not None
+    assert out.provenance is not None
 
 
 def test_g2_unbound_target_still_runs_partial_identifier_coverage():

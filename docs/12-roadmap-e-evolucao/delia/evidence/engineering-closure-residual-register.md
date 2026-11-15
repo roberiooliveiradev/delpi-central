@@ -2101,9 +2101,17 @@ Review verdict persisted verbatim: `evidence/c3-t2-parallel-mcp-discovery-decisi
 |---|---|---|
 | `T2-E2E-SUBJECT-ISSUER-MISMATCH` | `REMEDIATED (harness fail-closed)` | Causa: `KEYCLOAK_ISSUER=https://minhadelpi.com.br/...` com mint gateway `iss=http://localhost/auth/realms/delpi` → `exchange_host_header` público → `mcp_authentication_failed`×3 (matriz A/B no container). Fix: `assert_subject_issuer_matches_configured` + Host mint localhost + scope `openid profile email` + `DELIA_TOKEN_EXCHANGE_URL` via gateway + recusa Host MCP público herdado. Guard live: exit 1 com `subject_issuer_mismatch`. |
 | `T2-G2-REF05-SPURIOUS-FILTER-TARGET` | `REMEDIATED (bounded EXTEND)` | Finalize: se obrigações materiais SATISFIED e `target_identities` não faz bind REF05, não vetoar com `related_observations_insufficient` — `ref05_target_unbound_nonblocking`. RED→GREEN unitários; live G2 publica 109 (não 200) com SATISFIED (`or-qwen14b-f07f1be1c14a`). |
-| `T2-G2-GROUNDING-CLARIFICATION-FLAG` | `OPEN_LOW` | G2 pós-fix ainda pode carregar `agent_requested_clarification`/`NON_GROUNDED` enquanto o conteúdo publicado é a contagem 109 SATISFIED — residual de classificação grounding vs publicação. |
+| `T2-G2-GROUNDING-CLARIFICATION-FLAG` | `REMEDIATED` | Causa: `clarification_question` residual da Compreensão após plano aceito → finalize `CLARIFICATION_REQUIRED` + content COMPLETE. Fix: handoff clear + finalize ignore when obligations SATISFIED + COMPLETE promote. Live `90d11af2c834` GROUNDED sem `agent_requested_clarification`; filtro `status=ativo` + total 109. |
 | `R3-MCP-AUTH-E2E` | `RECOVERED_IN_SAMPLE` | Pós-fix: `mcp_authentication_failed=0` em `69a616422687`/`f07f1be1c14a`; READ autoritativa (`MCP:read`) com total 109. |
 | `R4` | `PENDING` | Identidade deny ainda ausente. |
-| `R6-MULTI-TURN-RECOVERY` | `PARTIAL` | Clarificação real D2 observada; recovery turno seguinte formal ainda `TEST_NOT_RUN` (corpus prior vazio). |
+| `R5_MULTIPAGE_UNION` | `PROVEN_IN_SAMPLE` | `e12d13cf3f56` INT2_R5: pages 1→2→3 (40+40+29), total 109, `has_more=false`, GROUNDED+SATISFIED. |
+| `R6-MULTI-TURN-RECOVERY` | `PROVEN_IN_SAMPLE` | Clarificação `90d11af2c834`; recovery `e12d13cf3f56` GROUNDED+SATISFIED 90260921; gate `invented_record_tokens`. Residual OPEN_LOW: variação de âncora `params` vs `arguments` pode marcar INCONCLUSIVE apesar de evidência real (`90d11af2c834` multiturn). |
 
-**NEXT:** `COORDINATION_C3_T2_OUTCOME_MCP_AUTH_FUNCTIONAL_RECOVERY_INDEPENDENT_REVIEW`. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.
+### 2026-11-15 — Grounding/multipage/multiturn closure residuals
+
+| ID | Estado | Evidência |
+|---|---|---|
+| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` | Âncora de escopo (`params.code` vs `arguments.code`) ainda pode deixar INCONCLUSIVE com owner hit real. |
+| `T2-G2-OBLIGATION-ANCHOR-MISMATCH` | `OPEN_LOW` | Plano G2 às vezes ancora `summary/analysis` enquanto a prova vem de `teo.read` filtrado — publicação GROUNDED com filtro comprovado, obrigação INCONCLUSIVE (não FALSE_SATISFIED). |
+
+**NEXT:** `COORDINATION_C3_T2_GROUNDING_MULTIPAGE_MULTITURN_INDEPENDENT_REVIEW`. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.

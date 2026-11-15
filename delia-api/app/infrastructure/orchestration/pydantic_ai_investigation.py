@@ -30,6 +30,7 @@ import dataclasses
 import json
 import logging
 import os
+import re
 import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
@@ -1160,6 +1161,93 @@ def uncovered_user_identifiers(
     return [item for item in found if item.casefold() not in covered]
 
 
+# Alphanumeric record-like codes that slip past ``_IDENTIFIER_LITERAL_RE``
+# (e.g. ``P12345``) — letter/digit mixes with a numeric run, never plain
+# filter adjectives like ``ativos``.
+_RECORD_CODEY_RE = re.compile(
+    r"(?:"
+    r"[A-Za-z]+\d{3,}[A-Za-z\d]*"
+    r"|"
+    r"\d{3,}[A-Za-z]+[A-Za-z\d]*"
+    r")"
+)
+
+
+def _prior_turns_blob(prior_turns: object) -> str:
+    parts: list[str] = []
+    for turn in prior_turns or ():
+        parts.append(
+            str(
+                getattr(turn, "content", None)
+                or getattr(turn, "text", "")
+                or ""
+            )
+        )
+    return " ".join(parts)
+
+
+def invented_record_tokens(
+    candidates: object,
+    *,
+    input_text: str,
+    prior_turns: object = (),
+) -> list[str]:
+    """Record-shaped tokens absent from the authorized user context.
+
+    Used to reject goal declarations that invent product/process codes
+    when the user (and prior turns) never named them — forces
+    clarification instead of a fabricated lookup (R6).
+    """
+    blob = f"{input_text or ''} {_prior_turns_blob(prior_turns)}"
+    present = set(_IDENTIFIER_LITERAL_RE.findall(blob))
+    blob_cf = blob.casefold()
+    invented: list[str] = []
+    seen: set[str] = set()
+    for raw in candidates or ():
+        token = str(raw or "").strip()
+        if not token or token.casefold() in seen:
+            continue
+        # Angle-bracket placeholders (e.g. ``<código_do_produto>``) are
+        # never user-named identifiers — treat as invented.
+        is_placeholder = token.startswith("<") and token.endswith(">")
+        is_literal = bool(_IDENTIFIER_LITERAL_RE.fullmatch(token))
+        is_codey = bool(_RECORD_CODEY_RE.fullmatch(token))
+        if not (is_placeholder or is_literal or is_codey):
+            continue
+        if (
+            not is_placeholder
+            and (token in present or token.casefold() in blob_cf)
+        ):
+            continue
+        seen.add(token.casefold())
+        invented.append(token)
+    return invented
+
+
+def _obligation_scope_tokens(evidence_needed: object) -> list[str]:
+    """Collect nested string leaves from obligation ``required_args``."""
+    tokens: list[str] = []
+
+    def _walk(node: object) -> None:
+        if isinstance(node, Mapping):
+            for value in node.values():
+                _walk(value)
+        elif isinstance(node, (list, tuple)):
+            for item in node:
+                _walk(item)
+        elif isinstance(node, str) and node.strip():
+            tokens.append(node.strip())
+
+    for item in evidence_needed or ():
+        if isinstance(item, Mapping):
+            _walk(item.get("required_args"))
+        else:
+            req = getattr(item, "required_args", None)
+            if req is not None:
+                _walk(req)
+    return tokens
+
+
 def focus_arguments_on_next_identifier(
     arguments: Mapping[str, Any] | None,
     *,
@@ -2129,6 +2217,32 @@ class PydanticAiInvestigationOrchestrator:
             needed = (
                 evidence_needed if isinstance(evidence_needed, list) else []
             )
+            invented = invented_record_tokens(
+                list(targets) + _obligation_scope_tokens(needed),
+                input_text=ctx.deps.input_text,
+                prior_turns=ctx.deps.prior_turns,
+            )
+            if invented:
+                # Record codes absent from the user/prior context are
+                # not material obligations — inventing them skips the
+                # clarification ask-back (R6). Reject so the specialist
+                # can call request_user_clarification instead.
+                return _proj(
+                    {
+                        "status": "INVALID_GOAL",
+                        "error_code": (
+                            "investigation_target_not_in_user_context"
+                        ),
+                        "invented_record_tokens": invented[:8],
+                        "guidance": (
+                            "Do not invent product/process codes. When "
+                            "the user did not name the record, call "
+                            "request_user_clarification for the missing "
+                            "identifier; declare targets only from the "
+                            "user text or prior turns."
+                        ),
+                    }
+                )
             plan = ctx.deps.gates._accept_semantic_investigation_plan(
                 goal_class=str(goal_class or ""),
                 comparison_requested=bool(comparison_requested),
@@ -2805,6 +2919,15 @@ class PydanticAiInvestigationOrchestrator:
             if handoff_error is None and (
                 deps.investigation_plan is not None
             ):
+                # An Application-accepted plan means comprehension
+                # produced a clear-enough objective. A residual
+                # ``request_user_clarification`` from the same pass must
+                # not survive into investigation finalization — that
+                # short-circuited SUCCESS evidence into
+                # CLARIFICATION_REQUIRED + NON_GROUNDED while publishing
+                # the COMPLETE answer (G2 grounding incoherence).
+                if deps.clarification_question is not None:
+                    deps.clarification_question = None
                 # Accepted-plan echo: the Application-validated contract
                 # the investigator consumes — bounded structured
                 # projection, never model-authored text.

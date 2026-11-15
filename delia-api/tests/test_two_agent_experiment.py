@@ -314,6 +314,65 @@ def test_variant_b_second_declaration_blocked_plan_immutable():
 # -------------------------------------------------------------------
 
 
+def test_variant_b_accepted_plan_clears_residual_clarification():
+    """Accepted plan supersedes a residual comprehension clarification.
+
+    Named identifier in the user turn suppresses the investigation
+    auto-ask path, so a surviving residual would be the only source of
+    ``CLARIFICATION_REQUIRED`` / the comprehension question text.
+    """
+    gates = _gates()
+    owner_calls = _spy_owner_calls(gates)
+    finalize_clarification: list[str | None] = []
+    real_finalize = gates._finalize_semantic_investigation
+
+    def _spy_finalize(**kwargs):
+        finalize_clarification.append(kwargs.get("clarification_question"))
+        return real_finalize(**kwargs)
+
+    gates._finalize_semantic_investigation = _spy_finalize  # type: ignore[method-assign]
+
+    def _comp_fn(messages, _info):
+        prior = sum(1 for m in messages if isinstance(m, ModelResponse))
+        if prior == 0:
+            return ModelResponse(
+                parts=[
+                    _valid_goal_call(),
+                    ToolCallPart(
+                        "request_user_clarification",
+                        {"question": "qual status residual?"},
+                    ),
+                ]
+            )
+        return _comp_outcome()
+
+    def _inv_fn(messages, _info):
+        prior = sum(1 for m in messages if isinstance(m, ModelResponse))
+        if prior == 0:
+            return ModelResponse(parts=[_read_call()])
+        return _final_answer()
+
+    def _fn(messages, info):
+        if _is_comprehension(info):
+            return _comp_fn(messages, info)
+        return _inv_fn(messages, info)
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates,
+        model=FunctionModel(_fn),
+        tool_calls_limit=8,
+        two_agent_experiment=True,
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        attempt = engine.attempt("liste os processos PROC-0034")
+
+    assert owner_calls == ["alpha.search_items"]
+    assert finalize_clarification, "investigation must finalize"
+    assert finalize_clarification[-1] in (None, "")
+    assert "qual status residual?" not in (attempt.content or "")
+    assert attempt.status is not GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+
+
 def test_variant_b_clarification_skips_investigation():
     """B-R01: a comprehension clarification with no accepted plan never
     starts the investigation run — zero owner calls and the honest

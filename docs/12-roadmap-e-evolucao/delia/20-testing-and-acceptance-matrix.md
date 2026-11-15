@@ -3131,3 +3131,17 @@ Positivos/negativos/holdouts separados; nenhuma resposta programada conta como g
 | R4 AuthZ deny | `PENDING` | Sem identidade restrita |
 
 **NEXT=`COORDINATION_C3_T2_OUTCOME_MCP_AUTH_FUNCTIONAL_RECOVERY_INDEPENDENT_REVIEW`.**
+
+### 2026-11-15 — Grounding G2 + multipage + multiturn closure (two Agents)
+
+**TASK:** `DELIA-C3-T2-TWO-AGENT-GROUNDING-MULTIPAGE-MULTITURN-FUNCTIONAL-CLOSURE-01`.
+
+| Gate | Oráculo | Evidência |
+|---|---|---|
+| G2 grounding vs publicação | `PASS` (causal + reproof) | Causa: clarificação residual pós-plano → CLARIFICATION_REQUIRED + content COMPLETE; fix handoff/finalize/promote; live `90d11af2c834` GROUNDED, `params.status=ativo`, total 109, sem `agent_requested_clarification` |
+| R5 multipágina 40+40+29 | `PASS` | `e12d13cf3f56` INT2_R5: pages 1→2→3, total 109, `has_more=false`, GROUNDED+SATISFIED; unitários r45 GREEN |
+| R6 clarificação | `PASS_IN_SAMPLE` | `90d11af2c834` pede código; gate `invented_record_tokens` (P12345/placeholders) |
+| R6 multiturn recovery | `PASS_IN_SAMPLE` | `e12d13cf3f56` prior→90260921 GROUNDED+SATISFIED; amostra `90d11af2c834` recovery com INCONCLUSIVE de âncora `params` vs `arguments` (residual INT3 depth) |
+| FALSE_COMPLETE / FALSE_SATISFIED | `0` na bateria válida | Negativos clarification/unmet preservados |
+
+**NEXT=`COORDINATION_C3_T2_GROUNDING_MULTIPAGE_MULTITURN_INDEPENDENT_REVIEW`.**

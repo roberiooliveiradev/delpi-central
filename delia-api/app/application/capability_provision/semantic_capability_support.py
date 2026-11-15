@@ -4041,14 +4041,46 @@ def _apply_declared_answer(
                         synthesized = (
                             synthesized[: max(0, room)] + notice
                         )
+                # COMPLETE+consistent must never remain parked on a
+                # CLARIFICATION_REQUIRED terminal (content swapped onto
+                # an ask-back status → NON_GROUNDED publish of facts).
+                # Promote from the bound business observation.
+                base = terminal
+                merged_extra = list(extra_limitations)
+                if (
+                    terminal.status
+                    is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+                    and business
+                ):
+                    donor = business[0]
+                    for index in declared_answer.evidence_refs:
+                        if (
+                            0 <= index < len(collected)
+                            and _is_business_evidence_attempt(
+                                collected[index]
+                            )
+                        ):
+                            donor = collected[index]
+                            break
+                    base = donor
+                    merged_extra = [
+                        item
+                        for item in (
+                            list(terminal.limitations) + merged_extra
+                        )
+                        if item != "agent_requested_clarification"
+                    ]
+                    merged_extra.append(
+                        "agent_clarification_superseded_by_satisfied_evidence"
+                    )
                 return dataclasses.replace(
-                    terminal,
+                    base,
                     content=synthesized,
                     markdown_content=synthesized,
+                    status=GovernedCapabilityStatus.SUCCESS,
                     limitations=tuple(
                         dict.fromkeys(
-                            tuple(terminal.limitations)
-                            + tuple(extra_limitations)
+                            tuple(base.limitations) + tuple(merged_extra)
                         )
                     )[:24],
                 )
@@ -4115,30 +4147,98 @@ def _finalize_agent_collected_attempts(
     """Goal-coverage finalizer for Pydantic AI tool observations.
 
     Native-first: clarification and optional agent-requested composition
-    take precedence. Typed plan remains optional (not mandatory for
-    simple READ). Never classifies intent via regex or binds REF05 via
-    rendered text mentions.
+    take precedence when they fill a real gap. Typed plan remains
+    optional (not mandatory for simple READ). Never classifies intent
+    via regex or binds REF05 via rendered text mentions.
+
+    Residual ``clarification_question`` must not short-circuit over
+    verified business evidence that already satisfies material
+    obligations — that produced G2 incoherence (COMPLETE answer
+    published under ``CLARIFICATION_REQUIRED`` / ``NON_GROUNDED`` /
+    ``agent_requested_clarification``). Mirrors the declared
+    ``NEEDS_CLARIFICATION`` ignore path when obligations are SATISFIED.
     """
+    clarification_superseded = False
     if clarification_question:
-        missing = _obligation_descriptions(
-            plan.evidence_needed if plan is not None else ()
-        ) or ("clarification",)
-        content = (
-            str(clarification_question).strip()[:MAX_RENDER_CONTENT_CHARS]
-            or _clarification_content(missing)
+        business_early = tuple(
+            item
+            for item in collected
+            if _is_business_evidence_attempt(item)
         )
-        return GovernedCapabilityAttempt(
-            status=GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
-            correlation_id=correlation,
-            content=content,
-            limitations=("agent_requested_clarification",),
-            error_code="investigation_clarification_required",
-            admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+        if not business_early:
+            missing = _obligation_descriptions(
+                plan.evidence_needed if plan is not None else ()
+            ) or ("clarification",)
+            content = (
+                str(clarification_question).strip()[:MAX_RENDER_CONTENT_CHARS]
+                or _clarification_content(missing)
+            )
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
+                correlation_id=correlation,
+                content=content,
+                limitations=("agent_requested_clarification",),
+                error_code="investigation_clarification_required",
+                admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+            )
+        unmet_obligations = False
+        early_obligations = (
+            plan.evidence_needed
+            if plan is not None and plan.evidence_needed
+            else ()
         )
+        if early_obligations:
+            coverage = _evaluate_material_obligations(
+                obligations=early_obligations,
+                business=business_early,
+                delivery=_plan_delivery_mode(plan),
+            )
+            unmet_obligations = any(
+                state != OBLIGATION_SATISFIED for _, state in coverage
+            )
+        if unmet_obligations:
+            content = (
+                str(clarification_question).strip()[:MAX_RENDER_CONTENT_CHARS]
+                or _clarification_content(
+                    _obligation_descriptions(early_obligations)
+                    or ("clarification",)
+                )
+            )
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
+                correlation_id=correlation,
+                content=content,
+                limitations=(
+                    "agent_requested_clarification",
+                    "verified_evidence_preserved",
+                ),
+                error_code="investigation_clarification_required",
+                admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+                outcome=business_early[0].outcome,
+                provenance=business_early[0].provenance,
+            )
+        # Satisfied (or undeclared) obligations: ignore residual
+        # clarification and continue coverage/finalization on evidence.
+        clarification_superseded = True
 
     business = tuple(
         item for item in collected if _is_business_evidence_attempt(item)
     )
+    if clarification_superseded and business:
+        business = tuple(
+            dataclasses.replace(
+                item,
+                limitations=tuple(
+                    dict.fromkeys(
+                        list(item.limitations)
+                        + [
+                            "agent_clarification_superseded_by_satisfied_evidence"
+                        ]
+                    )
+                )[:24],
+            )
+            for item in business
+        )
 
     def _partial_coverage() -> GovernedCapabilityAttempt | None:
         pending = _uncovered_named_identifiers(input_text, business)

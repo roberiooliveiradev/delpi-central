@@ -7138,3 +7138,12 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **C:** R5 unitários PASS; R2 sem novo diff contratual; R6 D2 clarificação; multi-turno formal OPEN.
 - **RESTRIÇÕES:** deploy/promo/fase/Agents 3–4 NOT_AUTHORIZED.
 - **NEXT:** `COORDINATION_C3_T2_OUTCOME_MCP_AUTH_FUNCTIONAL_RECOVERY_INDEPENDENT_REVIEW`.
+
+### 2026-11-15 — C3/T2: Grounding G2 + multipage + multiturn functional closure
+
+- **TASK:** `DELIA-C3-T2-TWO-AGENT-GROUNDING-MULTIPAGE-MULTITURN-FUNCTIONAL-CLOSURE-01`; BASE/HEAD de execução `737308dc3f` (= origin/main); WIP concorrente preservado.
+- **WS-1 G2:** primeira fronteira = residual `clarification_question` da Compreensão após plano aceito → finalize `CLARIFICATION_REQUIRED` enquanto `_apply_declared_answer` publicava COMPLETE «109». Fix EXTEND: handoff clear; finalize supersede when obligations SATISFIED; COMPLETE promote from clarification terminal. Unitários G2 RED→GREEN; live `90d11af2c834` GROUNDED, `teo.read params.status=ativo`, total 109, sem flag de clarificação.
+- **WS-2 R5:** live `e12d13cf3f56` walk 40+40+29 até `has_more=false`, GROUNDED+SATISFIED; r45 unitários GREEN.
+- **WS-3 R6:** invent gate rejeita `P12345`/placeholders (unitário + live pós-gate `or-qwen14b-4136fe9b93c0`: `plan=None`, pergunta «Qual é o código do produto…», sem owner call); clarificação pré-gate `90d11af2c834` também pediu código (após inventar P12345 na amostra `e12d13`); multiturn recovery `e12d13cf3f56` GROUNDED+SATISFIED estrutura 90260921.
+- **RESTRIÇÕES:** `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`; Agents 3/4 NOT_AUTHORIZED.
+- **NEXT:** `COORDINATION_C3_T2_GROUNDING_MULTIPAGE_MULTITURN_INDEPENDENT_REVIEW`.

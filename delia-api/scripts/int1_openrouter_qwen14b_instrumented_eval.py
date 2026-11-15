@@ -401,6 +401,62 @@ INT2_SCENARIOS = [
             ),
         },
     },
+    {
+        # R5 — multipage enumeration: full registered process collection.
+        # Owner historically returns ~109 rows across pages (~40+40+29);
+        # use live authoritative total/pages, never force 109.
+        "id": "INT2_R5_multipage_full_enumeration",
+        "question": (
+            "Liste todos os processos de transformação cadastrados."
+        ),
+        "prior": (),
+        "expected": {
+            "delivery": "enumeration",
+            "plan_declared": True,
+            "coverage": "evaluated",
+            "verdict_rule": (
+                "walk pages while has_more; union without false "
+                "COMPLETE on truncated collection; aggregation-only "
+                "total is not a substitute when enumeration was asked"
+            ),
+        },
+    },
+    {
+        # R6 turn-1 — material ambiguity must ask for the identifier.
+        "id": "INT2_R6_clarification_needed",
+        "question": "Quero ver a estrutura de um produto.",
+        "prior": (),
+        "expected": {
+            "plan_declared": False,
+            "coverage": "clarification_or_honest_gap",
+            "verdict_rule": (
+                "ask only for the missing product code — do not invent"
+            ),
+        },
+    },
+    {
+        # R6 turn-2 — recovery after clarification on the same surface.
+        # Prior turns are correlated conversation context, not a fresh
+        # independent call.
+        "id": "INT2_R6_multiturn_structure_recovery",
+        "question": "90260921",
+        "prior": (
+            ("user", "Quero ver a estrutura de um produto."),
+            (
+                "assistant",
+                "Qual é o código do produto?",
+            ),
+        ),
+        "expected": {
+            "delivery": "structure",
+            "plan_declared": True,
+            "coverage": "evaluated",
+            "verdict_rule": (
+                "recover objective+identifier from prior clarification; "
+                "revalidate authz; grounded structure or honest gap"
+            ),
+        },
+    },
 ]
 
 

@@ -728,3 +728,8 @@ O registro histórico acima (baseline de **um único Agent Pydantic AI** e neces
 
 **TASK:** `DELIA-C3-T2-TWO-AGENT-OUTCOME-MCP-AUTH-AND-FUNCTIONAL-RECOVERY-01`.
 **RESULT:** AuthN E2E recovered (issuer mismatch fail-closed; gateway exchange); G2 publica 109 com obrigação SATISFIED; REF05 spurious filter target nonblocking quando obrigações SATISFIED. Two-agent experimental. **NEXT:** `COORDINATION_C3_T2_OUTCOME_MCP_AUTH_FUNCTIONAL_RECOVERY_INDEPENDENT_REVIEW`. PRODUCTION_DEPLOY / PHASE_ADVANCEMENT / Agents 3–4: NOT_AUTHORIZED.
+
+### Stamp — Grounding G2 + multipage + multiturn functional closure (2026-11-15)
+
+**TASK:** `DELIA-C3-T2-TWO-AGENT-GROUNDING-MULTIPAGE-MULTITURN-FUNCTIONAL-CLOSURE-01`.
+**RESULT:** G2 grounding incoherence remediated (residual comprehension clarification no longer poisons SUCCESS evidence); multipage walk 40+40+29 PROVEN (`e12d13cf3f56`); clarification + multiturn recovery PROVEN_IN_SAMPLE; invented-record gate EXTEND. Two-agent remains experimental. **NEXT:** `COORDINATION_C3_T2_GROUNDING_MULTIPAGE_MULTITURN_INDEPENDENT_REVIEW`. PRODUCTION_DEPLOY / PHASE_ADVANCEMENT / Agents 3–4: NOT_AUTHORIZED.
