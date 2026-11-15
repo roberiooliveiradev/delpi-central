@@ -59,6 +59,22 @@ async function expectInsideRect(
   expect(i!.y + i!.height).toBeLessThanOrEqual(o!.y + o!.height + 1);
 }
 
+/** Mobile ≤768px abre em Cards por padrão (view layout persistido).
+ *  Força o modo Tabela para os asserts de header-sort. */
+async function ensureTableView(page: Page): Promise<void> {
+  const tableBtn = page.getByRole("button", { name: "Tabela", exact: true });
+  const pressed = await tableBtn
+    .getAttribute("aria-pressed")
+    .catch(() => null);
+  if (pressed !== "true") {
+    await tableBtn.click();
+    await page.locator("table thead").first().waitFor({
+      state: "visible",
+      timeout: 10_000,
+    });
+  }
+}
+
 /** Prova de backend: página 1 asc e desc devem trazer conjuntos
  *  diferentes quando há mais de uma página de dados. */
 async function firstColumnTexts(page: Page, columnIndex: number) {
@@ -99,7 +115,8 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
     ).toBeVisible();
     await expect(
       heroToolbar.getByRole("button", {
-        name: /quantidade de itens por página/i,
+        name: "Itens por página",
+        exact: true,
       }),
     ).toBeVisible();
     await expect(
@@ -123,6 +140,7 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
     expect(pathBox!.y + pathBox!.height).toBeLessThanOrEqual(heroBox!.y + 2);
 
     /* AC06 — fonte mesclada: só a coluna Data é ordenável. */
+    await ensureTableView(page);
     await expect(page.locator("th[aria-sort]")).toHaveCount(1);
 
     await page.screenshot({ path: SHOT("mine-hero"), fullPage: true });
@@ -135,6 +153,7 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
     const pageErrors = trackPageErrors(page);
     const forbidden = trackForbiddenApiCalls(page);
     await loginAndGoto(page, BASE);
+    await ensureTableView(page);
 
     const th = page.locator("th[aria-sort]", { hasText: "Data" });
     await expect(th).toBeVisible();
@@ -183,12 +202,14 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
     await loginAndGoto(page, BASE);
 
     const sizeBtn = page.getByRole("button", {
-      name: /quantidade de itens por página/i,
+      name: "Itens por página",
+      exact: true,
     });
     await sizeBtn.click();
     const listbox = page.getByRole("listbox").last();
     await expect(listbox).toBeVisible({ timeout: 5_000 });
-    await listbox.getByRole("option", { name: "10" }).click();
+    /* As opções do SelectControl do kit são <button> no listbox. */
+    await listbox.getByRole("button", { name: "10", exact: true }).click();
 
     await expect.poll(() => page.url()).toContain("page_size=10");
     await expect
@@ -226,6 +247,7 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
 
     /* AC06 — 5 colunas ordenáveis (number/type/status/branch/date);
      * title/requester/completed_by sem affordance. */
+    await ensureTableView(page);
     await expect(page.locator("th[aria-sort]")).toHaveCount(5);
     await expect(
       page.locator("th", { hasText: "Assunto" }).getByRole("button"),
