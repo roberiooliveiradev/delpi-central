@@ -3,8 +3,8 @@
 > **Projeto:** ATLAS — Infraestrutura Linux e Orquestracao de Operacoes DELPI
 > **Owner:** TI / Minha DELPI
 > **Atualizacao:** 2026-11-15
-> **Situacao:** P1 operando para leitura autenticada; P2.1 candidato de politica PREPARE offline na PR #184; **deploy via ATLAS nao existe em producao**.
-> **Repositorio:** `roberiooliveiradev/delpi-central`; **PR de continuidade:** [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184).
+> **Situacao:** P1 operando para leitura autenticada; P2.1 candidato de politica PREPARE offline na PR #191; **deploy via ATLAS nao existe em producao**.
+> **Repositorio:** `roberiooliveiradev/delpi-central`; **PR de continuidade atual:** [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (draft, codigo P2.1); **PR historica P0-P1:** [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184) (merged).
 > **Diretriz de produto:** objetivo principal = deploy controlado sob demanda; melhoria da telemetria geral Linux congelada ate nova prioridade.
 
 ## 1. Visao do produto
@@ -37,7 +37,7 @@ Este indice e a **fonte de continuidade** do ATLAS. Cada detalhamento deve resid
 | A1 | MCP privado/publicado HTTPS + Keycloak OAuth + READ | **OPERADOR_CONFIRMOU_PASS** | Consulta real `get_host_health` pelo ChatGPT com snapshot/timestamp |
 | A1-R | Lacunas CPU %, contagem Docker, `partial` | ADIADO_POR_DECISAO_DO_OWNER | So reabrir conforme nova prioridade, sem condicionar o deploy |
 | A2.0 | Contrato de deploy, boundaries, aprovacao e testes negativos | DOCUMENTADO_EM_PR | Documento P2-P4 revisado, sem runtime |
-| **A2.1** | **Modulo puro de politica de preview: allowlist, SHA, CI/attestation, TTL, hash, tests** | **CODIGO_EM_PR / CI_PENDENTE** | Sem I/O, deny by default, testes negativos locais e CI; nenhuma tool ACT |
+| **A2.1** | **Modulo puro de politica de preview: allowlist, SHA, CI/attestation, TTL, hash, tests** | **CODIGO_EM_PR_DRAFT / CI_PENDENTE** | Sem I/O, deny by default, testes negativos locais e CI; nenhuma tool ACT |
 | A2.2 | Journal transacional, identidade/RBAC fresh, versao implantada atestada, API PREPARE | NAO_INICIADO | Permissoes separadas, CI por SHA, concorrencia/revogacao testadas |
 | A2.3 | Tela de aprovacao nominativa no portal + expirar/revogar/cancelar | NAO_INICIADO | Ator autorizador, plano/hash e replay revalidados fora do ChatGPT |
 | A3.1 | Executor host isolado, catalogo um serviço HML, dry-run real | NAO_INICIADO | Sem shell/SSH/docker.sock no MCP, nenhum efeito em PROD |
@@ -88,4 +88,4 @@ Depois de cada incremento, **na mesma entrega**: atualizar a linha do marco acim
 
 Em 2026-11-15 o operador confirmou autenticacao OAuth e consulta real de estado de `srv-api` via ATLAS: snapshot parcial as 09:03:47 America/Sao_Paulo; RAM e armazenamento medidos, estado systemd fornecido. Esse marco comprova READ, **nao** deploy, aceite de ferramentas restantes, controle de servidor ou autorizacao de escrita.
 
-**Rastreabilidade:** PR [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184) preserva os registros do marco P1 e a trilha P2 em andamento.
+**Rastreabilidade:** PR [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184) ja mesclada preserva o marco P1 e o contrato P2; PR [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) em draft contém o indice mestre e o codigo/testes candidatos P2.1.
