@@ -31,8 +31,8 @@ Fonte: [plan.md](./plan.md). Autoridade: instruções oficiais do arquiteto e `.
 | N1 Superfície MCP e inteligência | DONE | `e2badedc42` |
 | N2 Corpus (texto das fontes e manifesto) | DONE | `d833b46a06` |
 | N3 Citação legível | DONE | `1e8bdfc1f6` |
-| N4 Testes de trava | DONE | (commit N4) |
-| N5 HML → PROD e republicação do corpus | TODO | |
+| N4 Testes de trava | DONE | `ca85263433` |
+| N5 HML → PROD e republicação do corpus | DONE | (commit N5) |
 
 ## 4. Etapas
 
@@ -84,7 +84,8 @@ BFF: imagem anterior pela tag. Corpus: republicar a versão anterior (o pipeline
 | 2026-11-14 | N1 | `e2badedc42` | DONE | Instruções, missão, tool `knowledge`, `ecosystem`/`knowledge_domains` versão `2026.11.14.1` e diretiva de citação (`display_citation`). `get_context(persona)` inalterado no resto. |
 | 2026-11-14 | N2 | `d833b46a06` | DONE | S1–S7 nas fontes e nos docs do eixo. Código só na ficha §Identificação. `source_id` e nomes de arquivo intactos. Índices e docstrings do manifesto/ingestão sem o código. Rebase sobre as fichas TES. |
 | 2026-11-14 | N3 | `1e8bdfc1f6` | DONE | `source_title` e `display_citation` aditivos na busca e no item. `citation_locator` intacto. Contrato na descrição da tool `knowledge`. |
-| 2026-11-14 | N4 | (commit N4) | DONE | Trava do corpus e da superfície MCP. Suíte BFF local: 1370 passed, 199 skipped; PG 79 skipped (sem Postgres local). Nenhuma falha nova. |
+| 2026-11-14 | N4 | `ca85263433` | DONE | Trava do corpus e da superfície MCP. Suíte BFF local: 1370 passed, 199 skipped; PG 79 skipped (sem Postgres local). Nenhuma falha nova. |
+| 2026-11-14 | N5 | (commit N5) | DONE | HML imagem `bb62ceea34c1` e PROD imagem `65b9ab2682f0`, ambas em `ca85263433`, healthy. Tag `rollback-monthly-closing-naming-controllership-finance-api` → `dde564efe3`. Imagem PROD que estava no ar antes do rebuild: `c533f3146afc` (ainda sem N1). Corpus antes: 115 fontes / 2517 publicados. Depois (HML e PROD): 121 / 2637. Versão final PROD `dbbb34ce-7394-454e-8cf0-9f35294d4186`. Delta: +6 fontes TES ainda não publicadas; `lnf-api-doc` de 31 seções obsoletas para 1 (arquivo atual é ponteiro de 360 bytes). `PROC-0072` publicado só no item Identificação de `ficha-processo`. MCP sem o código. |
 
 ## 8. Inventário N0 (HEAD de partida `ab07b642`)
 
