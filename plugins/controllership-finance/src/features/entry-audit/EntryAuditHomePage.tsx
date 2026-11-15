@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   createEntryAuditAnalysis,
@@ -14,6 +14,7 @@ import {
   CfActionButton,
   CfDateField,
   CfEmptyState,
+  CfFilterBarShell,
   CfLoadingCard,
   CfMultiSelectField,
   CfPageHero,
@@ -36,6 +37,7 @@ import {
   ENTRY_AUDIT_ACTION_ICONS,
   auditStatusBadgeVariant,
   formatAuditStatus,
+  formatBranchLabel,
   formatBranches,
   formatDocumentTypes,
   formatDateTimeShort,
@@ -47,11 +49,17 @@ type LoadState =
   | { kind: "loading" }
   | { kind: "forbidden" }
   | { kind: "error"; message: string }
-  | {
-      kind: "ready";
-      options: EntryAuditOptions;
-      analyses: EntryAuditAnalysisListItem[];
-    };
+  | { kind: "ready"; options: EntryAuditOptions };
+
+const ANALYSIS_SORT_WHITELIST = new Set([
+  "created_at",
+  "date_from",
+  "date_to",
+  "status",
+  "finished_at",
+]);
+
+const HISTORY_PAGE_SIZE = 10;
 
 const STAGE_ORDER = [
   "queued",
@@ -84,6 +92,15 @@ function stageState(
   return "locked";
 }
 
+type HistoryState = {
+  items: EntryAuditAnalysisListItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  loading: boolean;
+  error: string | null;
+};
+
 export function EntryAuditHomePage({ basePath }: { basePath: string }) {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [dateFrom, setDateFrom] = useState(monthStart);
@@ -95,15 +112,25 @@ export function EntryAuditHomePage({ basePath }: { basePath: string }) {
   const [activeAnalysis, setActiveAnalysis] =
     useState<EntryAuditAnalysis | null>(null);
 
+  const [tablePage, setTablePage] = useState(1);
+  const [tablePageSize, setTablePageSize] = useState(HISTORY_PAGE_SIZE);
+  const [tableSort, setTableSort] = useState("created_at");
+  const [tableOrder, setTableOrder] = useState<"asc" | "desc">("desc");
+  const [history, setHistory] = useState<HistoryState>({
+    items: [],
+    total: 0,
+    page: 1,
+    page_size: HISTORY_PAGE_SIZE,
+    loading: true,
+    error: null,
+  });
+
   useEffect(() => {
     const controller = new AbortController();
-    Promise.all([
-      listEntryAuditOptions(controller.signal),
-      listEntryAuditAnalyses({ page_size: 50 }, controller.signal),
-    ])
-      .then(([options, analyses]) => {
+    listEntryAuditOptions(controller.signal)
+      .then((options) => {
         if (controller.signal.aborted) return;
-        setState({ kind: "ready", options, analyses: analyses.items });
+        setState({ kind: "ready", options });
         setBranches(options.branches.map((option) => option.code));
         setDocumentTypes(
           options.document_types
@@ -127,6 +154,52 @@ export function EntryAuditHomePage({ basePath }: { basePath: string }) {
       });
     return () => controller.abort();
   }, []);
+
+  const reloadHistory = useCallback(
+    (signal?: AbortSignal) => {
+      if (state.kind !== "ready") return;
+      setHistory((current) => ({ ...current, loading: true, error: null }));
+      void listEntryAuditAnalyses(
+        {
+          page: tablePage,
+          page_size: tablePageSize,
+          sort: tableSort,
+          order: tableOrder,
+        },
+        signal,
+      )
+        .then((page) => {
+          if (signal?.aborted) return;
+          setHistory({
+            items: page.items,
+            total: page.total,
+            page: page.page,
+            page_size: page.page_size,
+            loading: false,
+            error: null,
+          });
+        })
+        .catch((error: unknown) => {
+          if (signal?.aborted) return;
+          setHistory((current) => ({
+            ...current,
+            loading: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Não foi possível carregar as análises anteriores.",
+          }));
+        });
+    },
+    [state.kind, tableOrder, tablePage, tablePageSize, tableSort],
+  );
+
+  useEffect(() => {
+    if (state.kind !== "ready") return;
+    const controller = new AbortController();
+    reloadHistory(controller.signal);
+    return () => controller.abort();
+  }, [reloadHistory, state.kind]);
 
   const openAnalysis = (id: string) =>
     navigatePluginPath(
@@ -172,6 +245,8 @@ export function EntryAuditHomePage({ basePath }: { basePath: string }) {
       });
       const analysis = await getEntryAuditAnalysis(created.id);
       setActiveAnalysis(analysis);
+      setTablePage(1);
+      reloadHistory();
       if (!["queued", "running"].includes(analysis.status)) openAnalysis(analysis.id);
     } catch (error) {
       setCreateError(
@@ -190,28 +265,22 @@ export function EntryAuditHomePage({ basePath }: { basePath: string }) {
         key: "date_from",
         header: "Período",
         sortable: true,
-        sortValue: (row) => row.date_from,
         render: (row) => formatPeriodLabel(row.date_from, row.date_to),
       },
       {
         key: "branches",
         header: "Filiais",
-        sortable: true,
-        sortValue: (row) => row.branches.join(","),
         render: (row) => formatBranches(row.branches, branchOptions),
       },
       {
         key: "types",
         header: "Tipos",
-        sortable: true,
-        sortValue: (row) => row.document_types.join(","),
         render: (row) => formatDocumentTypes(row.document_types),
       },
       {
         key: "status",
         header: "Situação",
         sortable: true,
-        sortValue: (row) => row.status,
         render: (row) => (
           <CfStatusBadge
             label={formatAuditStatus(row.status)}
@@ -223,7 +292,6 @@ export function EntryAuditHomePage({ basePath }: { basePath: string }) {
         key: "created_at",
         header: "Criada em",
         sortable: true,
-        sortValue: (row) => row.created_at,
         render: (row) => formatDateTimeShort(row.created_at),
       },
     ],
@@ -279,69 +347,66 @@ export function EntryAuditHomePage({ basePath }: { basePath: string }) {
           />
         }
         description="Compare documentos do Protheus com os XML fiscais e trate ocorrências."
-      />
-
-      <CfSectionCard
-        title="Nova análise"
-        hint={CF_HELP.entryAudit.create}
-        subtitle={CF_HELP.entryAudit.whatAudits}
       >
-        <div className="cf-filters-grid">
-          <CfDateField
-            id="entry-audit-from"
-            label="De"
-            value={dateFrom}
-            onChange={setDateFrom}
-          />
-          <CfDateField
-            id="entry-audit-to"
-            label="Até"
-            value={dateTo}
-            onChange={setDateTo}
-          />
-          <CfMultiSelectField
-            id="entry-audit-branches"
-            label="Filiais"
-            options={state.options.branches.map((option) => ({
-              value: option.code,
-              label: option.name?.trim()
-                ? option.name
-                : `Filial ${option.code}`,
-            }))}
-            selectedValues={branches}
-            onChange={setBranches}
-            searchable
-          />
-          <CfMultiSelectField
-            id="entry-audit-document-types"
-            label="Tipos"
-            options={state.options.document_types.map((option) => ({
-              value: option.code,
-              label: option.label ?? formatDocumentTypes([option.code]),
-            }))}
-            selectedValues={documentTypes}
-            onChange={setDocumentTypes}
-          />
-        </div>
-        {createError ? (
-          <CfStateBanner variant="error">{createError}</CfStateBanner>
-        ) : null}
-        <div className="cf-filters-grid__actions">
-          <CfActionButton
-            type="button"
-            variant="primary"
-            onClick={create}
-            disabled={creating}
-            softDisabled
-            title={CF_HELP.entryAudit.create}
-          >
-            <span className="cf-action-with-icon">
-              {ENTRY_AUDIT_ACTION_ICONS.play}
-              {creating ? "Executando…" : "Executar auditoria"}
-            </span>
-          </CfActionButton>
-        </div>
-      </CfSectionCard>
+        <CfFilterBarShell
+          embedded
+          ariaLabel="Período, filiais, tipos e execução da auditoria"
+        >
+          <div className="cf-filters-grid">
+            <CfDateField
+              id="entry-audit-from"
+              label="De"
+              value={dateFrom}
+              onChange={setDateFrom}
+            />
+            <CfDateField
+              id="entry-audit-to"
+              label="Até"
+              value={dateTo}
+              onChange={setDateTo}
+            />
+            <CfMultiSelectField
+              id="entry-audit-branches"
+              label="Filiais"
+              options={state.options.branches.map((option) => ({
+                value: option.code,
+                label: formatBranchLabel(option.code, state.options.branches),
+              }))}
+              selectedValues={branches}
+              onChange={setBranches}
+              searchable
+            />
+            <CfMultiSelectField
+              id="entry-audit-document-types"
+              label="Tipos"
+              options={state.options.document_types.map((option) => ({
+                value: option.code,
+                label: option.label ?? formatDocumentTypes([option.code]),
+              }))}
+              selectedValues={documentTypes}
+              onChange={setDocumentTypes}
+            />
+          </div>
+          {createError ? (
+            <CfStateBanner variant="error">{createError}</CfStateBanner>
+          ) : null}
+          <div className="cf-filters-grid__actions">
+            <CfActionButton
+              type="button"
+              variant="primary"
+              onClick={create}
+              disabled={creating}
+              softDisabled
+              title={CF_HELP.entryAudit.create}
+            >
+              <span className="cf-action-with-icon">
+                {ENTRY_AUDIT_ACTION_ICONS.play}
+                {creating ? "Executando…" : "Executar auditoria"}
+              </span>
+            </CfActionButton>
+          </div>
+        </CfFilterBarShell>
+      </CfPageHero>
 
       {activeAnalysis ? (
         <CfSectionCard title="Processamento da análise">
@@ -397,18 +462,59 @@ export function EntryAuditHomePage({ basePath }: { basePath: string }) {
         </CfSectionCard>
       ) : null}
 
-      {state.analyses.length ? (
+      {history.error ? (
+        <CfStateBanner variant="error">
+          <p>{history.error}</p>
+          <CfActionButton
+            type="button"
+            variant="ghost"
+            onClick={() => reloadHistory()}
+          >
+            Tentar novamente
+          </CfActionButton>
+        </CfStateBanner>
+      ) : history.loading && history.total === 0 ? (
+        <CfLoadingCard title="Carregando análises anteriores…" />
+      ) : history.total > 0 ? (
         <DataTableSection
           title="Análises anteriores"
           titleHint={CF_HELP.entryAudit.history}
           columns={columns}
-          rows={state.analyses}
+          rows={history.items}
           rowKey={(row) => row.id}
           hideSearch
+          loading={history.loading}
           onRowClick={(row) => openAnalysis(row.id)}
           columnPreferencesKey="controllership-finance:entry-audit:analyses:columns:v1"
           fontSizePreferencesKey="controllership-finance:entry-audit:analyses:font:v1"
           viewLayoutPreferencesKey="controllership-finance:entry-audit:analyses:layout:v1"
+          hidePaginationWhenSinglePage
+          serverPagination={{
+            page: history.page,
+            pageSize: history.page_size,
+            total: history.total,
+            onPageChange: (nextPage) => setTablePage(nextPage),
+            onPageSizeChange: (size) => {
+              setTablePageSize(size);
+              setTablePage(1);
+            },
+          }}
+          serverSort={{
+            sortKey: tableSort,
+            sortDirection: tableOrder,
+            onSortChange: (key) => {
+              if (!ANALYSIS_SORT_WHITELIST.has(key)) return;
+              if (tableSort === key) {
+                setTableOrder((direction) =>
+                  direction === "asc" ? "desc" : "asc",
+                );
+              } else {
+                setTableSort(key);
+                setTableOrder("asc");
+              }
+              setTablePage(1);
+            },
+          }}
           renderCard={(row) =>
             renderCfRecordCard(columns, row, {
               onActivate: (item) => openAnalysis(item.id),

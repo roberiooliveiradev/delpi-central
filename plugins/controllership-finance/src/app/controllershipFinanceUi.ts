@@ -12,6 +12,7 @@ import {
   createDashboardCatalogSearchBar,
   createDashboardCommandPalette,
   createDashboardDateField,
+  createFilterBarShell,
   createDashboardDetailCard,
   createDashboardDistributionDonut,
   createDashboardEventsSection,
@@ -262,6 +263,10 @@ export const CfTextAreaField = createDashboardTextAreaField({
 });
 export const CfDateField = createDashboardDateField({
   classNames: dateFieldBemClasses(UI_PREFIX),
+});
+export const CfFilterBarShell = createFilterBarShell({
+  prefix: UI_PREFIX,
+  defaultAriaLabel: "Escopo da auditoria",
 });
 const { field: cfSelectFieldClasses, control: cfSelectControlClasses } =
   selectFieldPacClasses(UI_PREFIX);

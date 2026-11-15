@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@delpi/plugin-ui/index", async () => await import("../../test/pluginUiMock"));
 
@@ -14,6 +14,10 @@ vi.mock("../../api/entryAuditApi", () => ({
 }));
 
 import { EntryAuditHomePage } from "./EntryAuditHomePage";
+
+afterEach(() => {
+  cleanup();
+});
 
 beforeEach(() => {
   listOptions.mockReset();
@@ -45,7 +49,36 @@ describe("EntryAuditHomePage", () => {
     expect(
       screen.getByRole("button", { name: /Executar auditoria/i }),
     ).toBeTruthy();
-    expect(screen.getByText(/Nenhuma análise anterior/)).toBeTruthy();
+    expect(
+      await screen.findByText(/Nenhuma análise anterior/),
+    ).toBeTruthy();
     expect(screen.queryByText("%")).toBeNull();
+  });
+
+  it("exibe erro do histórico sem mascarar como lista vazia e permite retry", async () => {
+    listAnalyses.mockRejectedValue(new Error("Falha de rede no histórico"));
+
+    render(
+      <EntryAuditHomePage basePath="/apps/controllership-finance" />,
+    );
+
+    expect(
+      await screen.findByRole("button", { name: /Tentar novamente/i }),
+    ).toBeTruthy();
+    expect(screen.getByText(/Falha de rede no histórico/)).toBeTruthy();
+    expect(screen.queryByTestId("empty-state")).toBeNull();
+
+    listAnalyses.mockReset();
+    listAnalyses.mockResolvedValue({
+      items: [],
+      page: 1,
+      page_size: 10,
+      total: 0,
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Tentar novamente/i }),
+    );
+    expect(await screen.findByTestId("empty-state")).toBeTruthy();
+    expect(screen.queryByText(/Falha de rede no histórico/)).toBeNull();
   });
 });

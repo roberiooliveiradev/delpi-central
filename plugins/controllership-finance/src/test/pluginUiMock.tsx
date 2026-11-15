@@ -111,6 +111,28 @@ export const stateBannerBemClasses = passthroughClasses;
 export const statusBadgeBemClasses = passthroughClasses;
 export const titleWithHelpBemClasses = passthroughClasses;
 
+export function createFilterBarShell() {
+  return function FilterBarShell(props: {
+    children?: ReactNode;
+    embedded?: boolean;
+    ariaLabel?: string;
+    className?: string;
+    layout?: string;
+    leading?: ReactNode;
+  }) {
+    return el(
+      "section",
+      {
+        "data-embedded": props.embedded ? "true" : undefined,
+        "aria-label": props.ariaLabel ?? "Filtros",
+        className: props.className,
+      },
+      props.leading,
+      props.children,
+    );
+  };
+}
+
 export function createDashboardPageHero() {
   return function PageHero(props: {
     eyebrow?: ReactNode;
@@ -637,6 +659,12 @@ export function createDashboardDataTableKit() {
       pageSize: number;
       total: number;
       onPageChange: (page: number) => void;
+      onPageSizeChange?: (size: number) => void;
+    };
+    serverSort?: {
+      sortKey: string | null;
+      sortDirection: "asc" | "desc";
+      onSortChange: (key: string) => void;
     };
   }) {
     const columns = props.columns ?? [];
@@ -661,6 +689,7 @@ export function createDashboardDataTableKit() {
     })();
 
     const sortedRows = (() => {
+      if (props.serverSort) return filteredRows;
       if (!sortKey) return filteredRows;
       const column = columns.find((c) => c.key === sortKey);
       if (!column?.sortValue) return filteredRows;
@@ -740,6 +769,10 @@ export function createDashboardDataTableKit() {
                             type: "button",
                             "aria-label": `Ordenar por ${typeof c.header === "string" ? c.header : c.key}`,
                             onClick: () => {
+                              if (props.serverSort) {
+                                props.serverSort.onSortChange(c.key);
+                                return;
+                              }
                               if (sortKey === c.key) {
                                 setSortDir((d) =>
                                   d === "asc" ? "desc" : "asc",
