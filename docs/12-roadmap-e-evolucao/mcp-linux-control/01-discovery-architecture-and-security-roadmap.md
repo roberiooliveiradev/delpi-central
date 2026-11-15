@@ -290,3 +290,22 @@ Na interface autenticada do Portal de TI, verificar em **Servidores > srv-api > 
 **Pendencias:** data/hora da ultima disparo, `Result`/`ExecMainStatus`, sucesso do POST S2S, observacao confirmada em banco/UI, integridade da arvore root-owned, testes unitarios funcionais do candidato MCP, Keycloak/resource audience e transporte MCP autenticado. **Nao alterar timer, nao forcar start, nao conceder grupo Docker, nao fazer pull/deploy.**
 
 **Codigo P1:** PR #185 integrado a `main` com commit `3fce4744104f404f0ab75b58434cb8a06e4cfecd`; estado `CODE_MERGED / NOT_DEPLOYED / MCP_RUNTIME_NOT_VERIFIED`. O PR #184 mantem a documentacao separada ate merge.
+
+
+## 14. Evidencia do ultimo disparo do coletor (operador, 2026-11-14)
+
+Amostra de saida `systemctl list-timers` e `systemctl show` do `srv-api`, recebida do operador na conversa. Nenhum comando remoto foi executado pelo assistente.
+
+| Verificacao | Evidencia | Classificacao |
+|---|---|---|
+| Timer | `ActiveState=active` | PASS, agendamento ativo |
+| Ultimo disparo | `2026-11-15 01:04:21 UTC` (14/11 22:04:21 America/Sao_Paulo) | PASS, disparou |
+| Proximo evento | `2026-11-15 02:04:59 UTC` (14/11 23:04:59 America/Sao_Paulo) | Programado, nao executado ainda |
+| Servico oneshot | `Type=oneshot`, `Result=success`, `ExecMainCode=1` (process exited), `ExecMainStatus=0` | PASS, ultimo processo terminou sem erro |
+| Ingestao persistida | Ainda nao confirmado pela UI/API nem leitura de `it_portal.server_observations` | PENDING |
+
+**Interpretacao do codigo:** `it-portal-api/collectors/linux_host/submit.py` invoca HTTP POST e retorna exit code zero apos uma resposta HTTP nao tratada como erro e JSON parseavel; HTTPError e URLError saem por `SystemExit`. Portanto o status 0 torna plausivel um POST aceito, mas **nao** substitui consulta independente ao ultimo registro persistido. O wrapper `run-collector.sh` usa `exec` e `set -euo pipefail`.
+
+**Proximo gate seguro:** Portal de TI autenticado > Servidores > srv-api > Observacoes/ultima coleta. Registrar apenas `observed_at`, `presentation_status`, `source`, resumo `sections_status` e `run_id` se apropriado; nao compartilhar payload integral, IPs ou secrets. Exigir status de coleta recente e consistente com disparo do timer. Se houver observacao, validar se status Docker `partial/unavailable` e esperado para conta sem grupo `docker`. Nao conceder privilegios adicionais para artificialmente completar o snapshot.
+
+**Estado:** `COLLECTOR_TIMER_PASS`, `COLLECTOR_PROCESS_EXIT_PASS`, `OBSERVATION_PERSISTENCE_NOT_VERIFIED`, `LINUX_OPS_MCP_NOT_DEPLOYED`.
