@@ -3,8 +3,8 @@
 > **Projeto:** ATLAS — Infraestrutura Linux e Orquestracao de Operacoes DELPI
 > **Owner:** TI / Minha DELPI
 > **Atualizacao:** 2026-11-15
-> **Situacao em 2026-11-15:** P1 READ autenticado e operando; P2.1 politica offline integrada na main com CI verde via PR #191; **P2.2a validador de atestacoes em codigo na main, validacao CI e verificador independente pendentes; nenhuma ferramenta de deploy publicada**.
-> **Repositorio:** `roberiooliveiradev/delpi-central`; **PRs integradas:** [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184) (P0-P1), [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (P2.1); **P2.2a em codigo main, sem executor/endpoint e sem deploy**.
+> **Situacao em 2026-11-15:** P1 READ autenticado e operando; P2.1 politica offline integrada na main com CI verde via PR #191; **P2.2b leitores GitHub/CI e Core fresh adicionados na main, validacao CI e verificador independente pendentes; nenhuma ferramenta de deploy publicada**.
+> **Repositorio:** `roberiooliveiradev/delpi-central`; **PRs integradas:** [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184) (P0-P1), [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (P2.1); **P2.2a/P2.2b em codigo main, sem executor/endpoint e sem deploy**.
 > **Diretriz de produto:** objetivo principal = deploy controlado sob demanda; melhoria da telemetria geral Linux congelada ate nova prioridade.
 
 ## 1. Visao do produto
@@ -38,7 +38,7 @@ Este indice e a **fonte de continuidade** do ATLAS. Cada detalhamento deve resid
 | A1-R | Lacunas CPU %, contagem Docker, `partial` | ADIADO_POR_DECISAO_DO_OWNER | So reabrir conforme nova prioridade, sem condicionar o deploy |
 | A2.0 | Contrato de deploy, boundaries, aprovacao e testes negativos | DOCUMENTADO_EM_PR | Documento P2-P4 revisado, sem runtime |
 | **A2.1** | **Modulo puro de politica de preview: allowlist, SHA, CI/attestation, TTL, hash, tests** | **MERGED_PR_191 / CI_PASS** | Sem I/O, deny by default, testes negativos locais e CI; nenhuma tool ACT |
-| A2.2 | Atestacao de GitHub/CI/host/Core, journal transacional, versao instalada e API PREPARE | **P2.2a CODIGO_MAIN / CI_PENDENTE; restante NAO_INICIADO** | Permissoes separadas, CI por SHA, concorrencia/revogacao testadas |
+| A2.2 | Atestacao GitHub/CI/host/Core, journal transacional, versao instalada e API PREPARE | **P2.2a/P2.2b LEITORES_MAIN / CI_PENDENTE; HostProof, journal persistente e API pendentes** | Permissoes separadas, CI por SHA, concorrencia/revogacao testadas |
 | A2.3 | Tela de aprovacao nominativa no portal + expirar/revogar/cancelar | NAO_INICIADO | Ator autorizador, plano/hash e replay revalidados fora do ChatGPT |
 | A3.1 | Executor host isolado, catalogo um serviço HML, dry-run real | NAO_INICIADO | Sem shell/SSH/docker.sock no MCP, nenhum efeito em PROD |
 | A3.2 | Piloto de deploy HML com health e rollback/roll-forward | NAO_INICIADO | Same approved SHA, estado + smoke reais, negativo de rollback |
@@ -82,7 +82,7 @@ Antes de cada incremento: ler este README, o contrato P2-P4, `AGENTS.md`, as reg
 
 Depois de cada incremento, **na mesma entrega**: atualizar a linha do marco acima e registrar no contrato/diario o commit, escopo, testes efetivos, CI, flags, riscos, rollback, alteracoes realizadas e estado real de HML/PROD. Nao transformar PR em produção sem evidencia.
 
-**Proxima tarefa:** A2.2b: apos confirmar CI/verificacao da P2.2a, implementar leitores backend autorizados de GitHub/CI, revisao local e Core fresh; desenhar journal persistente com unicidade e idempotencia, mantendo API PREPARE e ACT inativos ate atestacao real. A3/A4 permanecem bloqueadas.
+**Proxima tarefa:** A2.2c: obter evidencia real/autorizada de revisao por servico no host (nao confundir checkout HEAD com release em execucao), coordenar owner da migration com Delpi Remote, implementar journal transacional PostgreSQL e definir catalogo de CI/workflows por servico. API PREPARE e ACT continuam inativas ate review e HML; A3/A4 bloqueadas.
 
 ## 7. Marco validado
 
@@ -102,3 +102,16 @@ Em 2026-11-15 o operador confirmou autenticacao OAuth e consulta real de estado 
 A janela de frescor da avaliacao e 120 s, com tolerancia de 5 s para clock futuro. **A validacao estrutural nao autentica por si so a fonte:** apenas backend com acesso proprio a GitHub, leitor local e Core podera construir esses objetos. O MCP nao expoe argumentos para injetar provas e suas quatro tools READ permanecem intocadas.
 
 **Testes:** 76 cenarios em `test_deploy_attestation.py` + `test_deploy_policy.py` passaram localmente sob Python 3.13, pytest 9.0.2, sem rede, banco ou host. A comprovacao de GitHub CI e revisao independente do verificador permanecem pendentes de evidencia. **Nao existem endpoint de PREPARE, API de aprovacao, journal, permissão provisionada, executor host, autorizacao de producao ou deploy efetivo.**
+
+
+## 9. Incremento A2.2b: leitores reais GitHub e Core, sem ferramenta de deploy (15/11/2026)
+
+**Codigo na main:** `linux-ops-mcp/linux_ops_mcp/deploy_evidence_readers.py` e `linux-ops-mcp/tests/test_deploy_evidence_readers.py`. Leitores privados para uma futura API de governanca, **nao registrados no MCP atual**.
+
+- `GithubReleaseReader`: consulta GET somente na API oficial fixa do repo DELPI; valida ref exata `main`, ancestry do SHA, runs `push`/CI, tamanho de resposta, tipo de JSON e erros em fail-closed. Sem rota arbitraria, redirecionamento ou proxy de ambiente. Um workflow CI exigido sera uma escolha do catalogo backend por servico, nao parametro de prompt.
+- `CorePermissionReader`: reusa `load_user_rbac(..., force_refresh=True)` e exige identidade humana autenticada, correspondencia do subject e grants **explicitos** de VIEW/PREPARE; flag superadmin nao concede deploy.
+- **HostProof** nao tem fonte confiavel: a revisao de Git local nao comprova o SHA realmente ativo no container. Falha fechada ate a etapa A2.2c. Aprovacao de usuario, journal, migrations, grant Core e executor nao foram implementados.
+- **Tests locais** 32 PASS com HTTP mockado e Core fake (Python 3.13, pytest 9.0.2); compilacao PASS. GitHub Actions do novo codigo e `delpi-verifier` independente seguem **a verificar**. Nao houve teste autenticado com GitHub/Core/host real nem deploy HML/PROD.
+- [Modelo do journal e runbook dos bloqueios](./03-atlas-deploy-journal-p2b.md) tem candidate schema transacional, chave de idempotencia, transicoes atomicas e eventos append-only de API. **Nao e migration aplicada**.
+
+**Gate seguinte A2.2c:** host attestation real, decisao de ownership DB/migration, catalogo de alvos e workflow IDs, journal PostgreSQL com concorrencia e RBAC, API PREPARE sob flag OFF.
