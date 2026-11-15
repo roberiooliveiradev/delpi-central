@@ -378,3 +378,24 @@ PR #186, head `02dd50ad8c755557b473ab1a78e348696a9fbfc3`:
 **Fonte oficial consultada:** https://developers.openai.com/api/docs/guides/secure-mcp-tunnels e https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt. O tunel exige runtime API key, tunnel_id e associacao ao workspace; Keycloak authorization server nao e automaticamente encaminhado pelo tunel.
 
 **Evidencia restante:** `LINUX_OPS_SERVER_ID` gravado; `LINUX_OPS_MCP_RESOURCE_URL` provisoria/definitiva identificada; `docker ps`, `ss -lnt`, `curl /healthz`, desafio OAuth 401; testes com token humano e ChatGPT permanecem `NOT_DONE`.
+
+
+## 20. Validacao do endpoint local pelo operador (2026-11-14)
+
+Evidencia informada pelo operador, do terminal `srv-api`, apos build/pull e configuracao local das duas variaveis MCP no `infra/.env`. O assistente **nao** executou comandos remotamente. Nenhuma credencial exposta no registro.
+
+- `docker compose ... --profile linux-ops up -d --no-deps --no-build linux-ops-mcp` criou/iniciou somente `delpi-linux-ops-mcp`; primeira listagem `Up Less than a second (health: starting)`, portanto **nao** comprova que o Docker health passou apos start period.
+- `GET http://127.0.0.1:18765/healthz`: HTTP sucesso, JSON `{"status":"ok","mode":"read_only"}`.
+- `ss -lnt`: `LISTEN 127.0.0.1:18765`, sem bind `0.0.0.0:18765` nem `:::18765`. Campo de endpoint remoto `0.0.0.0:*` na linha `ss` nao indica bind publico.
+- `POST http://127.0.0.1:18765/mcp` sem Bearer: `401` (negativa de autenticacao conforme esperado).
+- `LINUX_OPS_SERVER_ID` recuperado do coletor e `LINUX_OPS_MCP_RESOURCE_URL` derivado da origem canonica: confirmacao indireta de configuracao, mas **nao** valida igualdade com audiencia que o Secure MCP Tunnel ira expor.
+
+**Gates aprovados:** `LOCAL_PROCESS_UP`, `READ_ONLY_HEALTH_OK`, `LOCALHOST_BIND_OK`, `UNAUTHENTICATED_401_OK`.
+
+**Gates ainda pendentes:** `DOCKER_HEALTH_HEALTHY_READBACK`, `MCP_OAUTH_METADATA_200`, `KEYCLOAK_DEDICATED_CLIENT`, `TUNNEL_CREATED_AND_RUNNING`, `WORKSPACE_ASSOCIATED`, `OAUTH_FLOW_PROVEN`, `TOOLS_LIST_AND_CALL_PROVEN`.
+
+**Proxima decisao operacional:** configurar Tunnel pela OpenAI Platform [tunnels](https://platform.openai.com/settings/organization/tunnels), selecionar Platform organization correta e vincular ao ChatGPT workspace destinatario; perfil privado do host apontara exclusivamente para `http://127.0.0.1:18765/mcp`. Requer `Tunnels Read + Manage` para criacao e `Tunnels Read + Use` para execucao/uso. Chave runtime so no servidor (gerenciador de segredos / arquivo protegido), nao no chat/repo.
+
+**Atencao OAuth:** o cliente remoto real e a URL do recurso exposta pelo tunel devem ser inspecionados antes de provisionar client OAuth; o codigo aceita URL no formato HTTPS do `PUBLIC_BASE_URL` com path `/apps/linux-ops-mcp/mcp`. Se nao coincidir com o recurso efetivo do Tunnel, preparar PR de compatibilidade, jamais remover validacao `aud`/issuer/scopes. A pagina de login Keycloak deve permanecer acessivel ao navegador; ela nao e publicada pelo tunel automaticamente.
+
+Fonte oficial verificada: https://developers.openai.com/api/docs/guides/secure-mcp-tunnels ; https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt.
