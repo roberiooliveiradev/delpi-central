@@ -59,3 +59,26 @@ def test_meter_reads_usage_property_not_call(monkeypatch):
     assert usage["input_tokens"] == 17
     assert usage["output_tokens"] == 5
     assert usage["requests"] == 2
+
+
+def test_meter_records_interrupted_run_as_error(monkeypatch):
+    import pydantic_ai
+
+    eval_mod = _load_eval()
+
+    def _raise(self, *a, **k):
+        raise RuntimeError("provider boom")
+
+    monkeypatch.setattr(pydantic_ai.Agent, "run_sync", _raise)
+    eval_mod._LLM_USAGE.clear()
+    eval_mod._install_usage_meter()
+    try:
+        with pytest.raises(RuntimeError, match="provider boom"):
+            pydantic_ai.Agent.run_sync(object())
+    finally:
+        monkeypatch.undo()
+    assert len(eval_mod._LLM_USAGE) == 1
+    record = eval_mod._LLM_USAGE[0]
+    assert record["usage"] is None
+    assert record["error"] == "RuntimeError"
+    assert record["elapsed_ms"] >= 0

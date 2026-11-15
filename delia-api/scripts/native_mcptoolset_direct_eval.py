@@ -306,7 +306,20 @@ def _install_usage_meter() -> None:
 
     def _metered(self, *args, **kwargs):
         started = time.monotonic()
-        result = original(self, *args, **kwargs)
+        try:
+            result = original(self, *args, **kwargs)
+        except Exception as exc:
+            # Interrupted runs (UsageLimitExceeded, provider error, cancel)
+            # still consumed provider work — record them as interrupted
+            # instead of silently vanishing from the counts.
+            _LLM_USAGE.append(
+                {
+                    "elapsed_ms": int((time.monotonic() - started) * 1000),
+                    "usage": None,
+                    "error": type(exc).__name__,
+                }
+            )
+            raise
         usage = None
         try:
             # pydantic_ai 2.50: AgentRunResult.usage is a RunUsage property,
@@ -403,6 +416,7 @@ def _run(
                 for u in usage_slice
             ),
             "elapsed_ms": sum(u["elapsed_ms"] for u in usage_slice),
+            "interrupted": sum(1 for u in usage_slice if u.get("error")),
         },
         "content": getattr(result, "content", "") or "",
         "epistemic_class": str(getattr(result, "epistemic_class", "")),

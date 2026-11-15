@@ -1971,3 +1971,21 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | `R4-AUTH-DENY-ORACLE` | `OPEN_LOW` | Identidade real sem permissão ainda não testada |
 
 **VERDICT=`ACCEPT_WITH_RESIDUAL` implementação bounded, `R3_NOT_CLOSED`, `TWO_AGENT_PROMOTION_NOT_AUTHORIZED`. **NEXT=`COORDINATION_C3_T2_TWO_AGENT_POST_R3_REMEDIATION_REAL_AB_REPROOF_READINESS`.**
+
+### 2026-11-15 — POST_R3_REAL_AB_REPROOF: residuais classificados na amostra real pareada
+
+| ID | Estado | Evidência (eval `or-qwen14b-e3dc1ebe4271` A / `or-qwen14b-a464c6fd3fbd` B, SHA `b6767f27f7`) |
+|---|---|---|
+| `R3-MCP-AUTH-FLAKINESS` | `STABLE_IN_SAMPLE / CLOSURE_ELIGIBLE` | 0 `mcp_authentication_failed` em 24 cenários vs 35 na amostra anterior; refresh real (A:4 sessões, B:6); transitório pré-expiração não recorreu e segue não caracterizado — fechamento sob coordenação |
+| `R3-INTRA-SCENARIO-TOKEN-VALIDITY` | `OPEN_LOW` | B `INT2_E` 375,6s > TTL 300s: expiração cruzada sem invoke pós-expiração; risco confirmado existente, não deflagrado; renovação intra-cenário ausente |
+| `DAVI-OWNER-AVAILABILITY` | `OPEN_ENV` | `delpi-api-delpi` unhealthy; 3 `mcp_timeout` braço B (owner/transporte, não auth) |
+| `R2-CONTINUITY-PAGINATION` | `OPEN / NOT_STARTED` | `result_truncated` presente (A:2 cenários, B:1); convergência/paginação não retrabalhada |
+| `R4-AUTH-DENY-ORACLE` | `OPEN_LOW` | não exercido — corpus INT2 sem cenário AUTH_DENY |
+| `R5-REAL-MULTIPAGE-UNION-REPROOF` | `OPEN / PENDING` | nenhuma união multipágina demonstrada na amostra (truncamento presente) |
+| `R6-CLARIFICATION-OWNERSHIP` | `OPEN / POSITIVE_SIGNAL_B` | B exerceu clarificação governada: 3 `agent_requested_clarification` + 1 `needs_clarification`; sem follow-up interativo no harness → não fechável |
+| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` | B: `evidence_ref_unbound`/`ref05_target_unbound` em 3 cenários; zero falso SATISFIED |
+| `T2-INVESTIGATION-TOKEN-CAPTURE` | `CLOSED (REAL_REPROOF=PROVEN)` | usage real provider A=326.864/21.014, B=447.502/35.141; interrompidos registrados (3+3), nunca zero fabricado |
+| `T2-COMPREHENSION-EXCEPTION-USAGE-ACCOUNTING` | `CLOSED_WITH_MONITORING` (confirmado em real) | `comprehension.usage` medido por cenário via `_TurnUsageCountingModel` (35 req / 95.793 in / 16.756 out); shared budget respeitado |
+| `T2-TWO-AGENT-OUTCOME-COST-GENERALIZATION` | `NO_BENEFIT_DEMONSTRATED_IN_SAMPLE` | B: +37% in-tokens, +67% out-tokens, ~2,07× latência, +13 MCP calls; outcome não superior (GROUNDED 1 vs 3; complete 3 vs 5); goal-accept 11/11 vs 10/18 — único ganho comprovado |
+
+**VERDICT=`B_DO_NOT_PROMOTE (evidência de custo sem benefício)`; `R3=STABLE_IN_SAMPLE`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.** **NEXT=`COORDINATION_C3_T2_TWO_AGENT_POST_R3_AB_REPROOF_INDEPENDENT_REVIEW`.**

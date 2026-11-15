@@ -941,6 +941,7 @@ def run_scenario(
                     for u in usage_slice
                 ),
                 "elapsed_ms": sum(u["elapsed_ms"] for u in usage_slice),
+                "interrupted": sum(1 for u in usage_slice if u.get("error")),
             },
             "error": result.get("error"),
             "elapsed_s": result.get("elapsed_s"),

@@ -3065,3 +3065,30 @@ Positivos/negativos/holdouts separados; nenhuma resposta programada conta como g
 **CÓDIGO REVISADO:** `6eb9594809` + `9904b4fb46`; `INDEPENDENT_TESTS=TEST_NOT_RUN`, executor reportou 13/13 boundary + 1739 testes ×2. **`BUDGET_SHARED=ACCEPT` na evidência do executor e implementação verificada**, incluindo plano aceito + exceção posterior, uso preservado, zero request/tool budget não re-concedido, terminal deadline/cancel propaga. `R3_DOMINANT_AUTH=REMEDIATED_HARNESS`; `R3_TOTAL=OPEN_ENV`; `TOKEN_METER=TECHNICALLY_FIXED`, ainda sem custo factual de nova avaliação.
 
 **Próxima prova obrigatória:** no mesmo SHA/config/owners, correr A/B após renovação por cenário, validar token fresco na entrada e validade durante todo cenário; preservar dados seguros sem bearer; contar AUTHN pre-wire vs exchange/transient vs owner timeout, incluindo DAVI; separar casos autorizados de AUTHZ_DENIED. Medir tasks corretamente concluídas e custo fim-a-fim (tokens, requests, USD se provider disponibilizar). Repetir negativos/holdouts e não promover com base apenas em 12/12 declarações. Monitorar caminho `artifact_kept` para não silenciar erros materiais além do observability-only. Sem real eval: `OUTCOME=INCONCLUSIVE`. **NEXT=`COORDINATION_C3_T2_TWO_AGENT_POST_R3_REMEDIATION_REAL_AB_REPROOF_READINESS`.**
+
+### 2026-11-15 — C3/T2: A/B real pós-remediação — matriz pareada INT2 (12 cenários × 2 variantes)
+
+**Configuração congelada:** EVAL_SHA `b6767f27f7`; `qwen/qwen3-14b` OpenRouter; corpus INT2 hash `edfa9faf3f98d739`; identidade eval idêntica; flag `DELIA_EVAL_TWO_AGENT` off (A) / on (B); harness renova subject por cenário (fresh<90s skew → re-mint) e meter captura `result.usage` + runs interrompidos. Produção intocada (`PROD_CONTAINER_UNTOUCHED=YES` ×2).
+
+| Métrica | A — 1 Agent | B — 2 Agents | Δ B−A |
+|---|---|---|---|
+| Runs de modelo (medidos) | 15 | 23 | +8 |
+| Tokens entrada (provider) | 326.864 | 447.502 | +120.638 (+37%) |
+| Tokens saída (provider) | 21.014 | 35.141 | +14.127 (+67%) |
+| Runs interrompidos | 3 | 3 | 0 |
+| MCP invokes | 10 | 23 | +13 |
+| Declarações de objetivo aceitas | 10/18 (55,6%) | 11/11 (100%) | +1 proposta, −7 tentativas |
+| Grounding final GROUNDED | 3 | 1 | −2 |
+| Declared complete | 5 | 3 | −2 |
+| Declared insufficient | 3 | 5 | +2 |
+| Elapsed total | 931,6s | 1.927,6s | ~2,07× |
+| Latência mediana / p95 | 61,6 / 140,7s | 133,8 / 204,9s | +72,2 / +64,2s |
+| `mcp_authentication_failed` | 0 | 0 | 0 (vs 16/19 amostra anterior) |
+| `catalog_failure:mcp_timeout` (DAVI env) | 0 | 3 | env, não auth |
+| Falso COMPLETE | 0 | 0 | 0 |
+| AUTHZ bypass / writes | 0 | 0 | 0 |
+| Custo USD | UNAVAILABLE (provider não ecoa custo no harness instrumentado) | idem | — |
+
+**Leitura:** ganho cognitivo real e único de B = proposição de objetivo de primeira (11/11 vs 10/18, ecoa o achado anterior). Custo: ~+37% tokens entrada, +67% saída, ~2,07× latência, +13 invokes MCP. Outcome empresarial **não superior** (GROUNDED 1 vs 3; ±2 em n=12 é ruído, mas o ônus da prova de benefício não foi atendido). `T2-INVESTIGATION-TOKEN-CAPTURE` REAL_REPROOF=PROVEN — tokens medidos nos dois braços, interrompidos honestos (incl. B `INT2_E` 360s/0 tokens registrado como interrupted). `R3` sem recorrência na amostra (0 auth failures, 10 re-mints). Residual novo observado em B: `ref05_target_unbound`/`evidence_ref_unbound` (obrigação aceita não demonstrada — `INT3-OBLIGATION-DEMONSTRATION-DEPTH`).
+
+**Veredito executor:** `B_NO_BUSINESS_GAIN_DEMONSTRATED` → `DO_NOT_PROMOTE`; variante permanece flag-gated experimental; decisão final sob revisão independente.
