@@ -83,3 +83,25 @@ O operador informou explicitamente que **nao autoriza utilizar `delpi-hml-engine
 **Novo candidato de leitura READ-ONLY:** `delpi-hml-public-hub`, container observado no inventario humano como `Up 24 hours (healthy)`. A configuracao versionada `infra/docker-compose.hml.yml` define `service=public-hub`, `project=delpi-hml`, `container_name=delpi-hml-public-hub`, `ports: !override []`, `depends_on: !override {}`, `volumes: !override []`, rede HML isolada e healthcheck `wget` em `http://127.0.0.1/`.
 
 **Gate de aceite do novo candidato:** proprietario e janela de alteracoes ainda precisam ser confirmados antes de qualquer deploy, restart, build ou atestacao operante; no momento **somente** `docker inspect --type container --format` filtrado para campos Name, labels Compose, ImageID, ContainerID e State/Health. Nao executar comando de escrita no Public Hub e nao presumir que o seu status healthy prove seguranca de implantar. O teste READ pode ser realizado sem intervir nos trabalhos de outros times.
+
+
+## 8. Resultado do piloto READ de Public Hub (2026-11-15)
+
+**Fonte:** saida fornecida pelo operador do comando filtrado `docker inspect --type container --format` em srv-api, nao leitura direta do ChatGPT, contendo somente os identificadores autorizados.
+
+| Campo | Valor informado |
+| --- | --- |
+| Nome | `/delpi-hml-public-hub` |
+| Compose project | `delpi-hml` |
+| Compose service | `public-hub` |
+| Ambiente | `homologation` |
+| ImageID | `sha256:63ad3152e179...` (prefixo exibido; hash completo informado na conversa) |
+| ContainerID | `6d380d466c88...` (prefixo exibido; ID completo informado na conversa) |
+| Running | `true` |
+| Health | `healthy` |
+
+**Resultado:** `PUBLIC_HUB_IDENTITY_AND_HEALTH_READ_PASS`. Nome, labels de Compose, formato de ImageID e ContainerID, ambiente, estado running e saude estao coerentes com o `infra/docker-compose.hml.yml`. Nao houve alteracao do container.
+
+**Nao validado:** existencia de label OCI `org.opencontainers.image.revision`, provenance assinada de imagem->commit GitHub, manifest HMAC de release, transporte Docker isolado para signer, lock/journal em banco HML, permissoes/aprovacao. Nenhum desses dados pode ser inferido de `ImageID`. `preview_deployment` e ACT continuam bloqueados.
+
+**Proxima observacao READ:** consultar apenas as labels OCI de revisao e os metadados da imagem efetivamente apontada pelo contêiner via `docker image inspect --format`; nao imprimir JSON completo, Env, mounts nem secrets. Se label OCI nao estiver presente, registrar como `REVISION_LABEL_UNAVAILABLE` e manter o bloqueio de provenance. Mesmo presente, a label e informativa, nao prova assinatura de build; requer vinculo assinado do pipeline.
