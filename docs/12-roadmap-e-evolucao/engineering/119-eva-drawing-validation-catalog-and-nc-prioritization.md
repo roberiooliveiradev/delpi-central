@@ -4865,3 +4865,83 @@ segregado da tabela de componentes; `association_conflict`
 permanece não-homologado. **Deploy não autorizado nesta
 task** — candidato preparado para revisão; implantação exige
 decisão posterior da Coordination.
+
+### 94.14 G11 — Inteligência de ciclo de vida do produto, rastreabilidade OV/LMP e desenhos históricos
+
+`TASK_ID: EVA-G11-PRODUCT-LIFECYCLE-QUOTATION-LMP-DRAWING-TRACEABILITY-AND-KNOWLEDGE-01`
+(2026-11-15 — Devin, READ_ONLY/CONTRACT_FIRST/NO_DEPLOY, zero OCR)
+
+**Missão:** EVA deve explicar o fluxo padrão DELPI
+(cotação → Engenharia → produção), rastrear a linhagem
+cadastral entre produtos e validar a OV impressa contra as
+fontes oficiais — inteligência ampla, autoridade estreita e
+governada (dados sempre nos owners).
+
+**Conhecimento versionado:** `eva_engineering_knowledge.json`
+v1.4 → **v1.5** — novo tópico
+`product.lifecycle_traceability` (12 regras `LIF-*`,
+vocabulário, playbook de consultas, caso comprovado, casos
+negativos, inventário e lacunas de contrato). Cross-reference
+em `lmp.guide`. Tópico servido pelo contrato existente
+`knowledge(topic)` — entra automaticamente em
+`knowledge_topics()`/enum do servidor, sem ferramenta nova.
+
+**Inventário de contratos oficiais (verificado no código):**
+
+| Necessidade | Contrato existente | Estado |
+|---|---|---|
+| 9026 → produto de cotação | `read(product.detail)` → `previous_code` (`SB1.B1_CODANT`, view=engineering) | OK |
+| OV/demanda → produtos | `read(lmp.detail, sale_number)` → `list_products` | OK |
+| Linha do tempo da demanda | `read(lmp.history_events/history_flow)` | OK |
+| BOM oficial | `read(product.structure)` | OK |
+| BOM reversa | `read(product.where_used)` | OK |
+| Busca por referência do cliente | `read(product.search, customer_reference=)` | OK |
+| Desenho (OCR/carimbo/histórico) | `analyze(product.drawing_understanding)` | OK |
+| **8000/8001 → sucessor(es)** | filtro `previous_code` em search ou rota dedicada | **GAP — decisão arquitetural** |
+| **Significado da "LMP" impressa** (ex.: 16726) | nenhum contrato consulta por esse número | **GAP — ratificação owner** |
+| **Distinção oficial 8000×8001 / marco histórico de OV** | conhecimento de fluxo informado | **GAP — ratificação/validação documental** |
+
+**Caso comprovado (consultas oficiais EVA — G9/G11):**
+`80015472` (CHICOTE DE LIGACAO OV003086, grupo 8001, PA,
+ref. cliente 18702881) → `90264302` (CHICOTE DE LIGACAO,
+grupo 9026, PA, `previous_code=80015472`, ref. cliente
+18702881, desenho 10013396831) → OV/LMP `sale_number=003086`
+(`engineering_status=FINALIZADA`, filial 01, produtos
+[80015472, 90264302]). Histórico do desenho: REV 00,
+26/10/26, LMP 16726, OV 003086, william/gabriella.
+**Provado:** linhagem direta e presença conjunta na demanda.
+**Não provado:** aprovação técnica, correção da BOM,
+significado do número LMP impresso.
+
+**Regras-chave fixadas:**
+
+- `TIPO_CADASTRAL ≠ FAMÍLIA ≠ ETAPA_DO_FLUXO ≠ STATUS_TÉCNICO`
+  (80015472 e 90264302 são ambos PA).
+- Ausência de OV impressa em desenho antigo **não é erro** —
+  prática de imprimir OV é recente (owner); investigar
+  identificadores alternativos antes de concluir.
+- OV impressa divergente: registrar evidências e divergência;
+  nunca corrigir o desenho nem trocar a OV.
+- `previous_code` ≠ `drawing_code` ≠ `customer_reference`;
+  LMP impressa ≠ `sale_number` (sem equivalência automática).
+- Consulta à BOM só após vínculo oficial confirmado; BOM
+  oficial vem do contrato, nunca da tabela OCR.
+- Estados de consistência: CONFIRMED/CONFLICT/UNKNOWN/
+  NOT_APPLICABLE/NOT_VERIFIED/CANDIDATE/FORBIDDEN/
+  SOURCE_UNAVAILABLE + proposta de estados de OV (avaliar
+  Abstraction Gate antes de publicar em payloads).
+- OCR documental independe dos serviços administrativos:
+  fonte indisponível → verificação pendente, não falha.
+
+**Testes:** `test_knowledge_g11_lifecycle_topic_in_catalog_
+and_enum` + `test_knowledge_g11_negative_states_and_no_
+fabrication` (catálogo/enum, regras, gaps explícitos, caso
+comprovado, estados e negativos) — 120 testes
+`test_eva_mcp*`+`test_eva_mcp_semantic` passam.
+
+**Residuais:** consulta reversa por `previous_code` requer
+extensão READ na api-delpi (decisão arquitetural);
+semântica da LMP impressa e distinção 8000×8001 aguardam
+ratificação da Engenharia; validação documental de desenhos
+antigos sem OV planejada (lote autorizado futuro);
+`ENGINEERING_HOMOLOGATION=PENDING_OWNER`.

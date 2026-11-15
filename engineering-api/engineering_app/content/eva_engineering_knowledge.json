@@ -1,7 +1,7 @@
 {
- "version": "1.4",
+ "version": "1.5",
  "owner": "engineering-api",
- "source": "EVA.MCP.SEMANTIC.R1 — conhecimento técnico versionado derivado dos contratos oficiais E-NC-01..11, doc 47/53 e regras de negócio vigentes da Engineering API. Não é fonte de dados operacionais; topic product.drawing_bom_comparison (G6) derivado do contrato do comparador oficial e do conhecimento legado onda-14 (ADAPT, sem dependencia runtime).",
+ "source": "EVA.MCP.SEMANTIC.R1 — conhecimento técnico versionado derivado dos contratos oficiais E-NC-01..11, doc 47/53 e regras de negócio vigentes da Engineering API. Não é fonte de dados operacionais; topic product.drawing_bom_comparison (G6) derivado do contrato do comparador oficial e do conhecimento legado onda-14 (ADAPT, sem dependencia runtime); topic product.lifecycle_traceability (G11) derivado dos contratos api-delpi/engineering vigentes e do fluxo de negócio informado pelo owner — itens pendentes de ratificação estão marcados.",
  "topics": {
   "nonconformity.guide": {
    "title": "Não Conformidades — guia do contrato oficial",
@@ -33,7 +33,8 @@
     "Indicadores oficiais: lmp_on_time (taxa no prazo), lmp_lead_time (tempo médio), lmp_total_proposals (volume); metas/IDD existem apenas em lmp_on_time e transforma_gross_savings — não associe metas a outros indicadores.",
     "Um atraso de LMP é explicado pelo fluxo (history_flow) e pelo contexto de metas — nunca por inferência sobre campos ausentes.",
     "Status indisponível/forbidden significa fonte indisponível ou sem autorização — nunca apresente como 'sem dados'.",
-    "Valores de indicadores são oficiais e já calculados pelo owner — EVA apresenta e compara, nunca recalcula."
+    "Valores de indicadores são oficiais e já calculados pelo owner — EVA apresenta e compara, nunca recalcula.",
+    "Relação OV×LMP×produtos, linhagem 8000/8001↔9026 e verificação de OV impressa em desenho: ver product.lifecycle_traceability."
    ],
    "scope": "Conceitos de domínio LMP — valores sempre vêm das tools read."
   },
@@ -308,6 +309,238 @@
      "limitations": "explicacao nunca adiciona fato fora da evidencia; severidade oficial so vem de regra governada"
     }
    ]
+  },
+  "product.lifecycle_traceability": {
+   "title": "Ciclo de vida do produto — cotação 8000/8001, produção 9026, OV/LMP e rastreabilidade documental",
+   "revision": "1.0",
+   "sources": [
+    "api-delpi GET /products/{code}?view=engineering (SB1: previous_code=B1_CODANT, customer_reference=B1_REFEREN, customer_reference_old=B1_REFCANT, drawing_code, type, group_code, current_revision)",
+    "api-delpi contrato LMP — detail por sale_number com list_products (produtos da demanda)",
+    "engineering-api semantic contract: read(product.detail|search|structure|where_used), read(lmp.detail|history_events|history_flow), analyze(product.drawing_understanding)",
+    "Caso comprovado por consultas oficiais EVA: 80015472 → 90264302 → OV 003086 (doc 119 §94.14)",
+    "Fluxo de negócio informado pelo owner DELPI (cotação → Engenharia/LMP → desenho/estrutura → produção); itens não ratificados marcados OWNER_PENDING",
+    "Doc 119 §94.13-94.14 — G10/G11"
+   ],
+   "vocabulary": {
+    "MP": "Matéria-Prima — insumo do processo produtivo, conforme type cadastral oficial",
+    "PI": "Produto Intermediário — etapa industrial, conforme cadastro",
+    "PA": "Produto Acabado — classificação cadastral; NÃO implica liberação fabril",
+    "familia_8000_8001": "grupos usados em cotação/proposta/desenvolvimento comercial segundo fluxo informado pelo owner; distinção exata 8000×8001 pendente de ratificação (OWNER_PENDING)",
+    "familia_9026": "grupo de chicotes destinados à produção; existência do código não comprova aprovação técnica nem estrutura concluída",
+    "familia_7026": "contexto de montagem com chicotes 9026 associados — fluxo distinto da conversão comercial; não misturar",
+    "sale_number": "identificador da OV/demanda no contrato lmp.* (ex.: 003086) — preservar zeros à esquerda",
+    "previous_code": "campo previous_code do contrato de produto = SB1.B1_CODANT — vínculo cadastral explícito para o código anterior; não é código de desenho nem referência do cliente",
+    "customer_reference": "referência do cliente no cadastro (B1_REFEREN); customer_reference_old = referência anterior (B1_REFCANT)",
+    "drawing_code": "código do desenho no cadastro do produto — distinto de customer_reference e de previous_code",
+    "lmp_impressa": "número impresso na coluna LMP do histórico de revisões do desenho (ex.: 16726) — significado oficial e origem pendentes de ratificação; não presumir equivalência com sale_number"
+   },
+   "rules": [
+    {
+     "rule_id": "LIF-TYPE-FAMILY-STAGE",
+     "owner": "EVA/Engenharia",
+     "source": "contrato produto + fluxo owner",
+     "version": "1.0",
+     "applicability": "toda explicação de produto",
+     "criterion": "TIPO_CADASTRAL (MP/PI/PA) ≠ FAMÍLIA_DE_CÓDIGO (grupo) ≠ ETAPA_DO_FLUXO ≠ STATUS_TÉCNICO — ex.: 80015472 e 90264302 são ambos PA com papéis distintos no processo",
+     "evidence_required": "type e group_code do product.detail",
+     "severity": "info",
+     "limitations": "tipo PA não autoriza concluir liberação fabril"
+    },
+    {
+     "rule_id": "LIF-FLOW-QUOTATION-TO-PRODUCTION",
+     "owner": "Engenharia DELPI",
+     "source": "fluxo informado pelo owner",
+     "version": "1.0",
+     "applicability": "explicação de origem de produtos",
+     "criterion": "fluxo padrão: necessidade do cliente → cotação/proposta (8000/8001) → evolução comercial/OV → Engenharia/LMP → desenho/especificações/estrutura → cadastro 9026 → validação e aprovação pelos owners; cotação e produtivo coexistem sem ser duplicidade",
+     "evidence_required": "explicação de fluxo nunca substitui consulta oficial do registro",
+     "severity": "info",
+     "limitations": "não presumir que todo 8000/8001 vira 9026, que todo 9026 tem código anterior, que vínculo é 1:1 ou que todo processo é igual"
+    },
+    {
+     "rule_id": "LIF-LINEAGE-PREVIOUS-CODE",
+     "owner": "engineering-api",
+     "source": "SB1.B1_CODANT → product.detail.previous_code",
+     "version": "1.0",
+     "applicability": "rastreabilidade 9026→cotação",
+     "criterion": "de qual produto de cotação veio o 9026? ler previous_code do product.detail; preenchido + cadastro do anterior confirmam linhagem direta (ex.: 90264302.previous_code=80015472)",
+     "evidence_required": "previous_code + product.detail do candidato + contexto (grupo/descrição/referência)",
+     "severity": "info",
+     "limitations": "campo vazio = lineage desconhecida, não ausência de vínculo; previous_code ≠ drawing_code ≠ customer_reference"
+    },
+    {
+     "rule_id": "LIF-REVERSE-LINEAGE-GAP",
+     "owner": "api-delpi (produto)",
+     "source": "inventário de contratos G11",
+     "version": "1.0",
+     "applicability": "rastreabilidade 8000/8001→9026",
+     "criterion": "consulta reversa (produtos cujo previous_code = X) NÃO existe nos contratos vigentes — product.search não aceita filtro previous_code; declarar gap e não inferir sucessores por semelhança de código/descrição",
+     "evidence_required": "n/a — lacuna contratual registrada",
+     "severity": "warning",
+     "limitations": "extensão READ no owner produto exige decisão arquitetural"
+    },
+    {
+     "rule_id": "LIF-OV-PRODUCT-VERIFY",
+     "owner": "EVA/Engenharia",
+     "source": "lmp.detail(sale_number) → list_products",
+     "version": "1.0",
+     "applicability": "desenho com OV extraída por OCR",
+     "criterion": "verificar: sale_number existe? produto 9026 consta em list_products? produto de cotação consta na mesma demanda? previous_code confirma vínculo? só então declarar consistência — sempre com filial correta e zeros à esquerda",
+     "evidence_required": "lmp.detail + product.detail dos envolvidos",
+     "severity": "info",
+     "limitations": "consistência OV↔produto não comprova aprovação técnica do desenho nem correção da BOM"
+    },
+    {
+     "rule_id": "LIF-OV-ABSENT-NOT-ERROR",
+     "owner": "Engenharia DELPI",
+     "source": "orientação do owner — desenhos antigos sem OV impressa",
+     "version": "1.0",
+     "applicability": "desenhos históricos sem OV no carimbo/histórico",
+     "criterion": "ausência de OV impressa não é erro/não conformidade — a prática de imprimir OV é mais recente (marco temporal e exceções pendentes de validação documental); investigar identificadores alternativos: product_code, drawing_code, customer_reference, previous_code, histórico de revisões, vínculos oficiais",
+     "evidence_required": "o que foi confirmado × o que permanece desconhecido",
+     "severity": "info",
+     "limitations": "hipótese histórica de owner — validar em PDFs reais antes de qualquer regra temporal"
+    },
+    {
+     "rule_id": "LIF-OV-DIVERGENT-NO-FIX",
+     "owner": "EVA/Engenharia",
+     "source": "contrato EVA",
+     "version": "1.0",
+     "applicability": "OV impressa sem vínculo comprovado com o 9026",
+     "criterion": "nunca corrigir o desenho nem substituir a OV — registrar OV impressa, produto, OV consultada, resultado oficial, divergência, fonte/data, incertezas e necessidade de revisão humana",
+     "evidence_required": "divergência sustentada por fontes oficiais com identidades compatíveis",
+     "severity": "candidate",
+     "limitations": "NOT_VERIFIED ou OV ausente não são conflito"
+    },
+    {
+     "rule_id": "LIF-LMP-PRINTED-NOT-SALE",
+     "owner": "Engenharia DELPI",
+     "source": "desenho G9: LMP impressa 16726 × sale_number 003086",
+     "version": "1.0",
+     "applicability": "identificadores do histórico de revisões",
+     "criterion": "número LMP impresso no desenho não é presumivelmente o sale_number do contrato lmp.* — significado/origem/cardinalidade pendentes de ratificação oficial; não criar consulta nem equivalência não comprovada",
+     "evidence_required": "ratificação do owner ou contrato oficial",
+     "severity": "info",
+     "limitations": "contract gap — sem consulta por número impresso"
+    },
+    {
+     "rule_id": "LIF-CUSTOMER-REF-ROLES",
+     "owner": "EVA/Engenharia",
+     "source": "product.detail (B1_REFEREN/B1_REFCANT/B1_DESENH*)",
+     "version": "1.0",
+     "applicability": "rastreabilidade por referência do cliente",
+     "criterion": "customer_reference pode apoiar rastreio quando não há OV (product.search aceita customer_reference); distinguir referência cadastral × documental × visual; dois produtos com mesma referência não são equivalentes; não inferir cliente pela descrição",
+     "evidence_required": "campo tipado do cadastro ou contrato",
+     "severity": "info",
+     "limitations": "não confundir customer_reference com drawing_reference/drawing_code nem com previous_code"
+    },
+    {
+     "rule_id": "LIF-BOM-ORDER",
+     "owner": "engineering-api",
+     "source": "product.structure + product.drawing_bom_comparison",
+     "version": "1.0",
+     "applicability": "análise de estrutura do produto produtivo",
+     "criterion": "ordem: identificar 9026 relacionado → confirmar vínculo oficial → consultar product.detail → consultar product.structure → comparar com desenho só quando solicitado; BOM oficial vem do contrato — nunca da tabela extraída por OCR",
+     "evidence_required": "vínculo cadastral confirmado antes da consulta estrutural",
+     "severity": "info",
+     "limitations": "consultar BOM ≠ BOM homologada; INCONCLUSIVE/association_conflict permanecem até evidência técnica"
+    },
+    {
+     "rule_id": "LIF-REV-DOMAINS",
+     "owner": "Engenharia",
+     "source": "ENG-REV-001 (drawing_criteria) — ratificado",
+     "version": "1.0",
+     "applicability": "revisões em rastreabilidade",
+     "criterion": "REV impressa do desenho = ENGINEERING_DRAWING; current_revision/B1_REVATU = CLIENT_TOTVS; revisão da biblioteca documental = domínio próprio — nunca comparar numericamente entre domínios nem inferir vigente pela maior revisão histórica",
+     "evidence_required": "ver ENG-REV-001",
+     "severity": "info",
+     "limitations": "regra espelhada — a autoridade é ENG-REV-001"
+    },
+    {
+     "rule_id": "LIF-OCR-INDEPENDENT",
+     "owner": "engineering-api",
+     "source": "pipeline drawing_understanding",
+     "version": "1.0",
+     "applicability": "enriquecimento pós-OCR",
+     "criterion": "análise documental não depende dos serviços de produto/OV — se a fonte oficial estiver indisponível, preservar resultado documental com verificação pendente (SOURCE_UNAVAILABLE/NOT_VERIFIED)",
+     "evidence_required": "estado de verificação declarado",
+     "severity": "info",
+     "limitations": "-"
+    }
+   ],
+   "consistency_states": {
+    "CONFIRMED": "vínculo/valor confirmado em fonte oficial",
+    "CONFLICT": "divergência sustentada entre fontes com identidades compatíveis",
+    "UNKNOWN": "dados insuficientes",
+    "NOT_APPLICABLE": "verificação não aplicável ao contexto",
+    "NOT_VERIFIED": "verificação não executada ou dependente de acesso",
+    "CANDIDATE": "associação sujeita a revisão",
+    "FORBIDDEN": "consulta negada pelo boundary de autorização",
+    "SOURCE_UNAVAILABLE": "fonte oficial indisponível",
+    "OV_states_proposal": "OV_PRINTED_AND_VERIFIED | OV_PRINTED_BUT_NOT_VERIFIED | OV_PRINTED_CONFLICT | OV_NOT_PRINTED | OV_NOT_PRINTED_OFFICIAL_LINK_FOUND | OV_NOT_PRINTED_NO_OFFICIAL_LINK | OV_UNREADABLE — proposta semântica: verificar contrato atual e Abstraction Gate antes de publicar em payloads"
+   },
+   "query_playbooks": {
+    "lineage_forward_9026_to_quotation": [
+     "read(product.detail, product_code=<9026>) → previous_code",
+     "se preenchido: read(product.detail, product_code=<anterior>) → conferir group_code/descrição/referências",
+     "read(lmp.detail, sale_number=<OV>) quando houver identificador sustentado → list_products",
+     "explicar relação com proveniência por etapa"
+    ],
+    "lineage_reverse_quotation_to_9026": [
+     "read(product.detail, product_code=<8000/8001>)",
+     "GAP: sem filtro previous_code — não inferir sucessores; declarar contract_gap",
+     "se OV conhecida: read(lmp.detail) → list_products pode revelar 9026 associado à mesma demanda"
+    ],
+    "drawing_ov_cross_check": [
+     "analyze(product.drawing_understanding) → revision_history.ov",
+     "read(lmp.detail, sale_number=<OV>) → produto 9026 e produto de cotação constam?",
+     "read(product.detail, <9026>) → previous_code confirma vínculo?",
+     "resultado: CONFIRMED | CONFLICT | NOT_VERIFIED | UNKNOWN com evidências"
+    ],
+    "legacy_drawing_without_ov": [
+     "reconhecer ausência — não é defeito",
+     "extrair identificadores alternativos (carimbo COD/DES, histórico)",
+     "read(product.detail/search) por código e/ou customer_reference",
+     "previous_code e vínculos disponíveis → OV/LMP só por fonte oficial",
+     "reportar confirmado × desconhecido"
+    ]
+   },
+   "verified_case": {
+    "reference": "80015472 → 90264302 → OV 003086",
+    "quotation_product": "80015472 | CHICOTE DE LIGACAO OV003086 | group_code 8001 | type PA | customer_reference 18702881",
+    "production_product": "90264302 | CHICOTE DE LIGACAO | group_code 9026 | type PA | previous_code 80015472 | customer_reference 18702881 | drawing_code 10013396831",
+    "demand": "sale_number 003086 | listing_kind LMP | engineering_status FINALIZADA | branch 01 | products [80015472, 90264302]",
+    "drawing_history": "REV 00 | DATA 26/10/26 | LMP 16726 | OV 003086 | EXECUTADO william | LIBERADO gabriella (job aj-29efddde4736424f)",
+    "proven": "linhagem direta previous_code; ambos os produtos na mesma OV/LMP; OV impressa confere com a demanda",
+    "not_proven": "aprovação técnica do desenho; correção da BOM; significado do número LMP impresso 16726"
+   },
+   "negative_cases": [
+    "9026 sem previous_code → lineage UNKNOWN, nunca inventar anterior",
+    "8000/8001 sem 9026 conhecido → não afirmar conversão",
+    "8000/8001 com múltiplos sucessores → preservar todos os vínculos oficiais",
+    "produto sem BOM → não inventar componentes",
+    "BOM oficial ≠ tabela OCR → relatório candidato de divergência",
+    "serviço LMP indisponível → resultado documental preservado, verificação pendente",
+    "acesso negado → FORBIDDEN",
+    "REV técnica ≠ revisão TOTVS → domínios segregados",
+    "LMP impressa ≠ sale_number → sem equivalência automática",
+    "OV ausente em carimbo histórico → sem falso positivo"
+   ],
+   "contract_inventory": {
+    "read_product_detail": "previous_code, customer_reference, customer_reference_old, drawing_code, type, group_code, current_revision — view=engineering",
+    "read_product_search": "code, description, group_code, subgroup, product_type, customer_reference — SEM filtro previous_code",
+    "read_product_structure": "BOM oficial",
+    "read_product_where_used": "BOM reversa",
+    "read_lmp_detail": "sale_number → list_products da demanda",
+    "read_lmp_history_events_flow": "linha do tempo da demanda",
+    "analyze_drawing_understanding": "OCR/carimbo/histórico/componentes — observação visual separada de fonte oficial"
+   },
+   "contract_gaps": [
+    "reverse_lineage: consulta por previous_code (8000/8001→9026) — extensão READ na api-delpi pendente de decisão arquitetural",
+    "lmp_printed_lookup: consulta pelo número LMP impresso do desenho — significado do identificador pendente de ratificação",
+    "family_semantics: distinção oficial 8000×8001 e marco temporal de adoção de OV impressa — pendentes de ratificação/validação documental"
+   ],
+   "scope": "Conhecimento de domínio e fluxo — interpretação e ordem de consulta. Não é fonte de dados: identidades, vínculos e valores vêm dos contratos oficiais; aprovação técnica é da Engenharia DELPI."
   }
  },
  "planned_topics": [

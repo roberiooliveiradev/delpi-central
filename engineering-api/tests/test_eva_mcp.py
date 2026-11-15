@@ -1233,3 +1233,77 @@ def test_knowledge_enum_matches_catalog():
     from engineering_app.interface.mcp import semantic_bridge
     doc = semantic_bridge._knowledge_document()
     assert set(semantic_bridge.knowledge_topics()) == set(doc["topics"].keys())
+
+
+def test_knowledge_g11_lifecycle_topic_in_catalog_and_enum():
+    """G11 — ciclo de vida do produto: famílias, linhagem por
+    previous_code, verificação de OV e desenhos históricos."""
+    from engineering_app.interface.mcp import semantic_bridge
+    doc = semantic_bridge._knowledge_document()
+    topics = doc.get("topics", {})
+    assert "product.lifecycle_traceability" in topics
+    assert "product.lifecycle_traceability" in (
+        semantic_bridge.knowledge_topics()
+    )
+    entry = topics["product.lifecycle_traceability"]
+    rule_ids = {r["rule_id"] for r in entry["rules"]}
+    for required in (
+        "LIF-TYPE-FAMILY-STAGE",
+        "LIF-FLOW-QUOTATION-TO-PRODUCTION",
+        "LIF-LINEAGE-PREVIOUS-CODE",
+        "LIF-REVERSE-LINEAGE-GAP",
+        "LIF-OV-PRODUCT-VERIFY",
+        "LIF-OV-ABSENT-NOT-ERROR",
+        "LIF-OV-DIVERGENT-NO-FIX",
+        "LIF-LMP-PRINTED-NOT-SALE",
+        "LIF-CUSTOMER-REF-ROLES",
+        "LIF-BOM-ORDER",
+        "LIF-REV-DOMAINS",
+        "LIF-OCR-INDEPENDENT",
+    ):
+        assert required in rule_ids
+    # linhagem: previous_code = B1_CODANT, distinto de drawing_code
+    lineage = next(
+        r for r in entry["rules"] if r["rule_id"]
+        == "LIF-LINEAGE-PREVIOUS-CODE"
+    )
+    assert "B1_CODANT" in lineage["source"]
+    assert "previous_code" in lineage["criterion"]
+    # desenho histórico sem OV nunca vira não conformidade
+    absent = next(
+        r for r in entry["rules"] if r["rule_id"]
+        == "LIF-OV-ABSENT-NOT-ERROR"
+    )
+    assert "não é erro" in absent["criterion"]
+    # gaps contratuais explícitos — nunca inferidos
+    gaps = " ".join(entry["contract_gaps"])
+    assert "previous_code" in gaps
+    assert "LMP impresso" in gaps or "lmp_printed" in gaps
+    # caso comprovado documentado
+    case = entry["verified_case"]
+    assert "80015472" in case["quotation_product"]
+    assert "90264302" in case["production_product"]
+    assert "003086" in case["demand"]
+
+
+def test_knowledge_g11_negative_states_and_no_fabrication():
+    """Estados de consistência e casos negativos — sem vínculo
+    inventado nem falso positivo em desenho antigo."""
+    from engineering_app.interface.mcp import semantic_bridge
+    doc = semantic_bridge._knowledge_document()
+    entry = doc["topics"]["product.lifecycle_traceability"]
+    states = entry["consistency_states"]
+    for s in (
+        "CONFIRMED", "CONFLICT", "UNKNOWN", "NOT_APPLICABLE",
+        "NOT_VERIFIED", "CANDIDATE", "FORBIDDEN",
+        "SOURCE_UNAVAILABLE",
+    ):
+        assert s in states
+    negatives = " ".join(entry["negative_cases"])
+    for pattern in (
+        "nunca inventar",
+        "não afirmar conversão",
+        "sem falso positivo",
+        "FORBIDDEN",
+    ):
+        assert pattern in negatives
