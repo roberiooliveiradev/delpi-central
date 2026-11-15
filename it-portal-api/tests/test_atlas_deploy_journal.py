@@ -13,7 +13,7 @@ import pytest
 
 from it_portal_app.infrastructure.persistence.atlas_deploy_journal import (
     PrepareIntent, JournalRejected, issue_challenge, store_prepared,
-    _SQL_CREATE, _SQL_CHALLENGE, _SQL_CONSUME, _SQL_EVENT, _SQL_READ, _SQL_TIME,
+    _SQL_CREATE, _SQL_CHALLENGE, _SQL_CONSUME, _SQL_EVENT, _SQL_READ, _SQL_TIME, _SQL_LOCK,
 )
 
 NOW = datetime(2026, 11, 15, 15, tzinfo=timezone.utc)
@@ -49,6 +49,7 @@ class FakePg:
         self.statements.append((sql, params))
         assert '%s' in sql or params is None
         if self.fault: raise RuntimeError('db password should never appear in errors')
+        if sql == _SQL_LOCK: return CursorResult((None,))
         if sql == _SQL_TIME: return CursorResult((self.now,))
         if sql == _SQL_CHALLENGE:
             rid, subject, env, svc, digest, issued, expiry = params
@@ -184,3 +185,14 @@ def test_replay_closed_proposal_rejected():
     db.proposals[k]=db.proposals[k][:-1]+('approved',)
     with pytest.raises(JournalRejected,match='IDEMPOTENCY_ALREADY_CLOSED'):
         store_prepared(db,intent=intent(),signed_receipt_challenge=nonce)
+
+
+def test_nonce_consumed_before_create_and_lock_first():
+    db=FakePg()
+    nonce=challenge(db)
+    initial=len(db.statements)
+    store_prepared(db,intent=intent(),signed_receipt_challenge=nonce)
+    observed=[sql for sql,_ in db.statements[initial:]]
+    assert observed.index(_SQL_LOCK)<observed.index(_SQL_READ)
+    assert observed.index(_SQL_CONSUME)<observed.index(_SQL_CREATE)
+    assert observed.index(_SQL_CREATE)<observed.index(_SQL_EVENT)
