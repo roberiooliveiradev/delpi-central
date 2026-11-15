@@ -2045,3 +2045,16 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | `T2-CATALOG-SECURITY-ASSERTION` | `OPEN_LOW` | Replace test containing `or True` with effective forbidden-field assertions |
 
 **Coordination review:** `evidence/c3-t2-parallel-mcp-discovery-decision/coordination-independent-review-2026-11-15.md`. **NEXT:** `DELIA-C3-T2-PARALLEL-MCP-DISCOVERY-GUARDED-EXPERIMENT-01`. No production/phase promotion.
+
+### 2026-11-15 — guarded experiment executed (`DELIA-C3-T2-PARALLEL-MCP-DISCOVERY-GUARDED-EXPERIMENT-01`)
+
+| Residual | Status | Evidence |
+|---|---|---|
+| `T2-SEQUENTIAL-CATALOG-LIST` | `EXPERIMENT_IMPLEMENTED_FLAG_GATED / OPEN_FOR_REVIEW` | Bounded per-specialist `ThreadPoolExecutor` inside `McpCapabilityProvider.list_groups` (commit `1b59b6db52`); default OFF, prod fail-closed; real A/B {teo,vista}: seq p50 146ms → par p50 86,5ms (−41%), catalog identical, 0 auth failures |
+| `T2-PARALLEL-MCP-WORKER-LIFETIME` | `PROVEN_BOUNDED` | Absolute socket deadline per worker via `bounded_request`/`deadline_scope` bound inside `bounded_request()` in the executing thread; queued futures cancelled at join deadline, in-flight results discarded as `mcp_timeout`, bearer unbound in `finally`; negative tests cover all cases (11 tests, suite 1765 PASS) |
+| `T2-CATALOG-SECURITY-ASSERTION` | `REMEDIATED` | `or True` assertion replaced by recursive forbidden-key walk (bearer/token/secret/headers/endpoint/url/remote_name/provider_id) preserving legitimate fields (commit `03b1168d26`) |
+| `T2-ENV-API-DELPI-DOWN` | `OPEN_LOW (env)` | `delpi-api-delpi` dev container fails startup on unrelated `V024__prc_record_flags.sql` migration checksum (concurrent stream); davi discovery → truthful `mcp_timeout` in both arms — environmental, not experiment regression |
+| `T2-PARALLEL-LLM-E2E` | `OPEN_LOW` | §11 two-Agent smoke done at composition level (identical surface flag ON/OFF, single discovery); model turn CLARIFICATION_REQUIRED — configured profile `openrouter_qwen` unreachable in dev env; full LLM battery on parallel flag still pending |
+| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` | Unchanged — no new coverage evidence claimed |
+
+**NEXT:** `COORDINATION_C3_T2_PARALLEL_MCP_DISCOVERY_EXPERIMENT_INDEPENDENT_REVIEW`. Flag remains OFF by default; no production/phase promotion.
