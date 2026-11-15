@@ -100,6 +100,12 @@
   min-width: 0;
 }
 
+.dashboard-controllership-finance .cf-home-inline-error {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--cf-danger, #b91c1c);
+}
+
 .dashboard-controllership-finance .cf-home-paths {
   display: flex;
   flex-direction: column;

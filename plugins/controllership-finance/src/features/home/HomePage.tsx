@@ -3,6 +3,14 @@ import { CalendarCheck2, FileText, Settings } from "lucide-react";
 
 import { useViewerContext } from "../../app/ViewerContext";
 import { navigatePluginView } from "../../app/pluginNavigation";
+import type { PluginNavigationTarget } from "../../app/pluginRoutes";
+import { homeFavoriteKey, type HomeFavoriteItem } from "../../api/homeFavoritesApi";
+import {
+  refreshHomeFavorites,
+  replaceHomeFavorites,
+  setHomeFavoritesLocal,
+  subscribeHomeFavorites,
+} from "../../app/homeFavoritesStore";
 import {
   CfActionButton,
   CfCatalogSearchBar,
@@ -60,6 +68,8 @@ export function HomePage({ basePath }: HomePageProps) {
   const [recents, setRecents] = useState<RecentHubView[]>(() =>
     typeof window !== "undefined" ? readRecentViews() : [],
   );
+  const [favorites, setFavorites] = useState<HomeFavoriteItem[]>([]);
+  const [favoritesError, setFavoritesError] = useState<string | null>(null);
 
   const capabilities = useMemo(
     () => ({
@@ -85,6 +95,50 @@ export function HomePage({ basePath }: HomePageProps) {
   useEffect(() => {
     writeHomeSearchQuery(searchQuery);
   }, [searchQuery]);
+
+  useEffect(() => subscribeHomeFavorites(setFavorites), []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void refreshHomeFavorites(controller.signal)
+      .then(() => {
+        if (!controller.signal.aborted) setFavoritesError(null);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setFavoritesError(FEATURES.favoritesLoadError);
+        }
+      });
+    return () => controller.abort();
+  }, []);
+
+  const favoriteKeys = useMemo(
+    () => new Set(favorites.map((item) => homeFavoriteKey(item))),
+    [favorites],
+  );
+
+  const toggleFavorite = useCallback(
+    async (route: { viewId: PluginNavigationTarget; search?: string }) => {
+      const item: HomeFavoriteItem = {
+        viewId: route.viewId,
+        search: route.search,
+      };
+      const key = homeFavoriteKey(item);
+      const previous = favorites;
+      const next = favoriteKeys.has(key)
+        ? favorites.filter((entry) => homeFavoriteKey(entry) !== key)
+        : [...favorites, item].slice(0, 20);
+      setHomeFavoritesLocal(next);
+      try {
+        await replaceHomeFavorites(next);
+        setFavoritesError(null);
+      } catch {
+        setHomeFavoritesLocal(previous);
+        setFavoritesError(FEATURES.favoritesSaveError);
+      }
+    },
+    [favoriteKeys, favorites],
+  );
 
   const recordVisit = useCallback(
     (
@@ -133,13 +187,34 @@ export function HomePage({ basePath }: HomePageProps) {
 
   const mapSectionRoutes = useCallback(
     (section: HubSectionDef) =>
-      section.routes.map((route) => ({
-        id: route.id,
-        label: route.label,
-        kind: route.kind,
-        onClick: () => navigateRoute(route),
-      })),
-    [navigateRoute],
+      section.routes.map((route) => {
+        const canPin = route.kind !== "external" && Boolean(route.viewId);
+        return {
+          id: route.id,
+          label: route.label,
+          kind: route.kind === "external" ? "navigate" : route.kind,
+          pinned: canPin
+            ? favoriteKeys.has(
+                homeFavoriteKey({
+                  viewId: route.viewId as PluginNavigationTarget,
+                  search: route.search,
+                }),
+              )
+            : undefined,
+          pinLabel: FEATURES.pinLabel,
+          unpinLabel: FEATURES.unpinLabel,
+          onPinClick: canPin
+            ? () => {
+                void toggleFavorite({
+                  viewId: route.viewId as PluginNavigationTarget,
+                  search: route.search,
+                });
+              }
+            : undefined,
+          onClick: () => navigateRoute(route),
+        };
+      }),
+    [favoriteKeys, navigateRoute, toggleFavorite],
   );
 
   if (loading) {
@@ -213,6 +288,12 @@ export function HomePage({ basePath }: HomePageProps) {
               emptyHitsLabel={FEATURES.searchEmpty}
               aria-label={FEATURES.searchAriaLabel}
             />
+
+            {favoritesError ? (
+              <p className="cf-home-inline-error" role="status">
+                {favoritesError}
+              </p>
+            ) : null}
 
             <CfRecentAccessStrip
               label={FEATURES.recentsTitle}

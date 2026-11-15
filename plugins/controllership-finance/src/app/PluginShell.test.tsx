@@ -20,6 +20,13 @@ vi.mock("../app/ViewerContext", () => ({
   useViewerContext: () => viewerState,
 }));
 
+vi.mock("./homeFavoritesStore", () => ({
+  subscribeHomeFavorites: () => () => undefined,
+  refreshHomeFavorites: async () => [],
+  replaceHomeFavorites: async (items: unknown) => items,
+  setHomeFavoritesLocal: () => undefined,
+}));
+
 vi.mock("@delpi/plugin-ui/index", async () => await import("../test/pluginUiMock"));
 
 import { PluginShell } from "./PluginShell";

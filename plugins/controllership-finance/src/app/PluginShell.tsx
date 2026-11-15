@@ -21,6 +21,7 @@ import { resolveShellNavItems, SHELL_NAV_CONTENT } from "../content/shellNav";
 import { navigatePluginView } from "./pluginNavigation";
 import { resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
 import { useViewerContext } from "./ViewerContext";
+import { ShellFavoritesStrip } from "./ShellFavoritesStrip";
 import {
   CF_PORTAL_SCOPE,
   CfCommandPalette,
@@ -225,6 +226,7 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
                   aria-label={SHELL_NAV_CONTENT.searchAriaLabel}
                   title={SHELL_NAV_CONTENT.searchTitle}
                 />
+                <ShellFavoritesStrip basePath={basePath} />
               </CfTopBarUtilityCluster>
             ) : undefined
           }

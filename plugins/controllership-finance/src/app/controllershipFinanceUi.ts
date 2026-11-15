@@ -42,6 +42,7 @@ import {
   createDashboardTextField,
   createDashboardTitleWithHelp,
   createDashboardTopBar,
+  createDashboardTopBarFavoritesStrip,
   createDashboardTopBarSearchTrigger,
   createDashboardTopBarUserIdentity,
   createDashboardTopBarUtilityCluster,
@@ -108,6 +109,10 @@ export const CfPagePath = createDashboardPagePath({
 export const CfTopBar = createDashboardTopBar({ prefix: UI_PREFIX });
 export const CfTopBarUtilityCluster = createDashboardTopBarUtilityCluster({
   prefix: UI_PREFIX,
+});
+export const CfTopBarFavoritesStrip = createDashboardTopBarFavoritesStrip({
+  prefix: UI_PREFIX,
+  portalScopeClassName: CF_PORTAL_SCOPE,
 });
 export const CfTopBarSearchTrigger = createDashboardTopBarSearchTrigger({
   prefix: UI_PREFIX,

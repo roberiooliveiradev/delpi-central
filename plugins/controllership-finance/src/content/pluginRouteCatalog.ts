@@ -291,6 +291,15 @@ export const HUB_CONTENT = {
     searchEmpty: "Nenhum caminho encontrado",
     clearSearch: "Limpar busca",
     recentsTitle: "Últimos acessos",
+    favoritesTitle: "Favoritos",
+    favoritesEmpty:
+      "Nenhum favorito ainda. Use a estrela nos caminhos do Início.",
+    favoritesMenuOpenAriaLabel: "Abrir favoritos",
+    favoritesMenuCloseAriaLabel: "Fechar favoritos",
+    pinLabel: "Adicionar aos favoritos",
+    unpinLabel: "Remover dos favoritos",
+    favoritesLoadError: "Não foi possível carregar favoritos.",
+    favoritesSaveError: "Não foi possível salvar favoritos.",
   },
   events: {
     title: "Eventos e interações",

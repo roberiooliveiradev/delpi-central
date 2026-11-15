@@ -442,6 +442,24 @@ export function createDashboardTopBarSearchTrigger() {
   });
 }
 
+export function createDashboardTopBarFavoritesStrip() {
+  return function FavoritesStrip(props: {
+    title?: ReactNode;
+    emptyLabel?: ReactNode;
+    items?: Array<{ id: string; label: ReactNode }>;
+    openAriaLabel?: string;
+  }) {
+    return el(
+      "div",
+      { "aria-label": props.openAriaLabel ?? "Favoritos" },
+      props.title,
+      props.items && props.items.length > 0
+        ? props.items.map((item) => el("button", { key: item.id, type: "button" }, item.label))
+        : props.emptyLabel,
+    );
+  };
+}
+
 export function createDashboardTopBarUserIdentity() {
   return function Identity(props: {
     displayName?: string | null;

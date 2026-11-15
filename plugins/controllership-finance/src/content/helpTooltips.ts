@@ -18,13 +18,19 @@ export const CF_HELP = {
     events:
       "Eventos e interações do seu dia: tarefas e alertas operacionais. Nesta versão ainda não há fontes conectadas — quando existirem, aparecem aqui sem precisar recarregar.",
     shortcuts:
-      "Caminhos por seção do portal. Busque aqui, no botão Buscar da barra superior ou com Ctrl/Cmd+K — o objetivo é chegar à ação em até dois cliques.",
+      "Caminhos por área de trabalho: Central de Fechamento, Notas fiscais e Administração (quando autorizada). Busque aqui, no botão Buscar da barra superior ou com Ctrl/Cmd+K — o objetivo é chegar à ação em até dois cliques.",
+    notasFiscais:
+      "Conferência (Auditoria de Entradas) e atalho para o app Lançamento de Notas Fiscais, visível só para quem já pode abrir esse app.",
+    administration:
+      "Checklist, documentos do fechamento e catálogos governados — somente com permissão de administração do portal.",
+    favorites:
+      "Atalhos fixados por você (persistidos na conta). Clique na estrela em um caminho do portal para adicionar ou remover. Links externos, como o app de lançamento, não entram nos favoritos nesta versão.",
     search:
       "Filtra seções e rotas do catálogo (rótulo e palavras-chave). A URL guarda ?q= para compartilhar o filtro.",
     palette:
       "Busca rápida do portal: botão Buscar na barra superior ou Ctrl/Cmd+K. Mesmo catálogo do Início, em popover ancorado à barra.",
     recents:
-      "Últimos caminhos abertos neste portal — guardados só neste navegador, sem dados sensíveis.",
+      "Últimos caminhos abertos neste portal — guardados só neste navegador, sem dados sensíveis. O Início não aparece nesta lista.",
   },
   claraConsent: {
     page:
