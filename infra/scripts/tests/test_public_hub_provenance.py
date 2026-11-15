@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[3]
 DOCKERFILE = ROOT / "plugins/public-hub/Dockerfile"
 COMPOSE = ROOT / "infra/docker-compose.yml"
 HML = ROOT / "infra/docker-compose.hml.yml"
+DEV = ROOT / "infra/docker-compose.dev.yml"
 HELPER = ROOT / "infra/scripts/public-hub-provenance.sh"
 SCRIPTS = (
     ROOT / "infra/scripts/up-hml-sequential.sh",
@@ -79,6 +80,7 @@ def test_dockerfile_contract_stage_has_sha_gate_and_final_inheritance():
     assert "org.opencontainers.image.source=\"https://github.com/roberiooliveiradev/delpi-central\"" in text
     assert "FROM provenance-contract AS production" in text
     assert "COPY --from=builder" in text
+    assert "FROM nginx:alpine AS development" in text
 
 
 def test_compose_passes_scoped_arg_without_breaking_other_services():
@@ -114,3 +116,9 @@ def test_missing_git_repository_is_refused(tmp_path):
     got = run_helper(tmp_path)
     assert got.returncode != 0
     assert got.stdout == ""
+
+def test_development_compose_stays_usable_without_fake_sha():
+    text = DEV.read_text(encoding="utf-8")
+    section = text.split("\n  public-hub:\n", 1)[1].split("\n  central-agendamento:\n", 1)[0]
+    assert "target: development" in section
+    assert "SOURCE_REVISION" not in section
