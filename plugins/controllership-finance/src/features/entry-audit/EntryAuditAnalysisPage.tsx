@@ -907,6 +907,7 @@ export function EntryAuditAnalysisPage({
                 />
                 <CfSemicircleProgressGauge
                   value={cleanShare}
+                  size={200}
                   centerLabel="Notas limpas"
                   aria-label="Percentual de notas limpas"
                   legend={[
@@ -940,6 +941,7 @@ export function EntryAuditAnalysisPage({
                   <CfDistributionDonut
                     ariaLabel="Distribuição por severidade"
                     legendPlacement="below"
+                    size={200}
                     items={breakdowns.by_severity.map((item) => ({
                       id: item.name,
                       label: item.name,

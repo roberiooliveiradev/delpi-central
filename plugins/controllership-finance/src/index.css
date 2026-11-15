@@ -691,7 +691,8 @@
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: var(--cf-grid-gap, 16px);
-  align-items: stretch;
+  /* U14R H1: não esticar «Evolução» até a altura do Panorama (vazio enorme). */
+  align-items: start;
 }
 
 .dashboard-controllership-finance .cf-analysis-panorama-row > *:first-child {
@@ -717,18 +718,11 @@
   min-width: 0;
 }
 
-/* AC-GRA-2: mesma altura de área de gráfico (meia-lua e rosca). */
-.dashboard-controllership-finance .cf-analysis-panorama__conformity [class*="semicircle"],
-.dashboard-controllership-finance .cf-analysis-panorama__severity [class*="distribution-donut"] {
-  flex: 1 1 auto;
-  min-height: 220px;
-}
-
-.dashboard-controllership-finance .cf-analysis-panorama__conformity [class*="semicircle"] [class*="__chart"],
-.dashboard-controllership-finance .cf-analysis-panorama__severity [class*="distribution-donut"] [class*="__chart"] {
-  min-height: 200px;
-  height: 200px;
-}
+/*
+ * U14R H1: nao usar seletor por substring de classe no kit — casava com
+ * __legend-dot / __center / __value e forçava min-height 220px nos internos.
+ * Altura igual via props size dos Cf* (ver EntryAuditAnalysisPage).
+ */
 
 /* AC-GRA-3: eixo «Ocorrências» ao lado do gráfico diário. */
 .dashboard-controllership-finance .cf-analysis-daily-chart {
