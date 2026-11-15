@@ -216,11 +216,13 @@ test.describe("U12 W7 UI review HML", () => {
         return;
       }
       await openEntryAuditHome(page);
+      // Escopo no portal CF — chrome do host (sidebar/avatar/collapse) é residual U10.
       const results = await new AxeBuilder({ page })
+        .include(".dashboard-controllership-finance, [aria-label='Auditoria de Entradas'], .cf-page-stack")
+        .exclude(".sidebar, .collapse-btn, .avatar, .sidebar-footer__privacy-link")
         .withTags(["wcag2a", "wcag2aa"])
         .analyze();
-      // Residual conhecido do kit (U10): contraste do SegmentToggle ativo
-      // (#089bdb / branco) — não introduzido pela U12; filtrar só o que é novo.
+      // Residual do kit: contraste do SegmentToggle ativo (#089bdb / branco).
       const serious = results.violations.filter((v) => {
         if (v.impact !== "critical" && v.impact !== "serious") return false;
         if (v.id === "color-contrast") {
