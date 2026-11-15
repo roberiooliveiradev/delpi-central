@@ -68,7 +68,7 @@ Constraints adicionais: no maximo **uma** proposta `executing` por `(environment
 ## 6. Evidencia da fatia P2.2b
 
 - Codigo GitHub/Core: `linux-ops-mcp/linux_ops_mcp/deploy_evidence_readers.py`.
-- Testes isolados: `linux-ops-mcp/tests/test_deploy_evidence_readers.py`; **31 PASS locais** (Python 3.13, `httpx.MockTransport`, sem rede, banco ou servidor), e bytes reproduzidos sem divergencia no commit GitHub.
+- Testes isolados: `linux-ops-mcp/tests/test_deploy_evidence_readers.py`; **32 PASS locais** (Python 3.13, `httpx.MockTransport`, sem rede, banco ou servidor), e bytes reproduzidos sem divergencia no commit GitHub.
 - CI GitHub Actions push/main e verificador independente **a confirmar**, nao assumidos a partir dos testes locais. `python -m compileall` local PASS.
 - Nenhum deploy, HTTP endpoint novo, migration, grant, socket Docker, shell ou alteracao em Keycloak/Compose/produção.
 
