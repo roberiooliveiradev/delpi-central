@@ -495,3 +495,19 @@ Fonte oficial verificada: https://developers.openai.com/api/docs/guides/secure-m
 **Proxima acao somente Git, sem alterar container:** `git fetch origin main`, verificar `git rev-list --left-right --count HEAD...origin/main`, `git ls-tree -r --name-only origin/main -- gateway/snippets/linux-ops-mcp-locations.conf` e `git diff --name-only HEAD..origin/main`. Caso remote correto e diff revisado, fazer `git merge --ff-only origin/main` mantendo `shared/delpi_auth.egg-info/SOURCES.txt` (sem reset/restore/descarte), construir/testar imagem de gateway novamente e so depois recriar o container isoladamente com rollback disponivel.
 
 **Nenhuma aplicacao de mudanca no srv-api realizada pelo agente.** `PUBLIC_MCP_ROUTE_NOT_VERIFIED`; Keycloak OAuth dedicado segue pendente.
+
+
+## 28. Publicacao HTTPS validada e bloqueio OAuth isolado (2026-11-15)
+
+**Evidencia aceita do operador:** apos atualizar checkout, construir e implantar isoladamente o gateway, a URL publica do ATLAS apresenta:
+
+- `GET https://minhadelpi.com.br/apps/linux-ops-mcp/.well-known/oauth-protected-resource`: `HTTP 200`, `application/json`.
+- `POST https://minhadelpi.com.br/apps/linux-ops-mcp/mcp` sem token: `HTTP 401`.
+- `GET https://minhadelpi.com.br/apps/linux-ops-mcp/healthz`: `HTTP 404`.
+- Na validacao anterior, o MCP local `delpi-linux-ops-mcp` tinha Docker health `healthy`.
+
+**Conclusao delimitada:** a rota externa HTTPS do MCP agora respeita a separacao PRMD / MCP autenticado / health bloqueado. Isso **nao prova** emissao de token humano, aceite da audiencia, autorizacao Core, `tools/list`, `tools/call` ou plugin conectado ao ChatGPT.
+
+**Proximo gate:** autenticar ChatGPT com cliente Keycloak `mcp-linux-ops` dedicado, callback exata informada pela UI. `infra/scripts/keycloak_linux_ops_client.py` ja consta em `main`, mas a revisao identificou dois contratos a corrigir ANTES de qualquer apply: mapper `audience-delpi` deve emitir `aud=delpi-central`; mapper de scope `mcp-audience-linux-ops` deve ser inspecionado antes do primeiro write para evitar cliente parcial. PR #190 aberto com preflight mais restrito, testes negativos e sem comandos de producao. **Nao executar `--apply` antes de merge aprovado e auditoria.**
+
+**Status:** `PUBLIC_PRMD_200_PASS`, `PUBLIC_UNAUTHENTICATED_401_PASS`, `PUBLIC_HEALTH_404_PASS`, `KEYCLOAK_CLIENT_NOT_VERIFIED`, `CHATGPT_PLUGIN_NOT_CONNECTED`.
