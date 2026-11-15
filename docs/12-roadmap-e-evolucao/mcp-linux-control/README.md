@@ -3,8 +3,8 @@
 > **Projeto:** ATLAS — Infraestrutura Linux e Orquestracao de Operacoes DELPI
 > **Owner:** TI / Minha DELPI
 > **Atualizacao:** 2026-11-15
-> **Situacao em 2026-11-15:** P1 READ autenticado e operando; P2.1 politica offline integrada na main com CI verde via PR #191; **P2.2e: journal PREPARE com lock transacional corrigido + testes reais PostgreSQL/Docker em runners descartaveis GitHub Actions na main; CI real ainda nao confirmado, HML real e aprovacao pendentes; nenhuma ferramenta ACT/PREPARE publicada**.
-> **Repositorio:** `roberiooliveiradev/delpi-central`; **PRs integradas:** [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184) (P0-P1), [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (P2.1); **P2.2a-P2.2e em codigo main, sem executor/endpoint e sem deploy**.
+> **Situacao em 2026-11-15:** P1 READ autenticado e operando; P2.1 politica offline integrada na main com CI verde via PR #191; **P2.2f: rastreabilidade OCI de Public Hub com SHA Git completo, gate de worktree limpo, DEV independente e CI Docker de metadados versionados na main; 11 testes offline PASS; CI/HML assinada pendentes; PREPARE/ACT nao publicados**.
+> **Repositorio:** `roberiooliveiradev/delpi-central`; **PRs integradas:** [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184) (P0-P1), [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (P2.1); **P2.2a-P2.2f em codigo main, sem executor/endpoint e sem deploy**.
 > **Diretriz de produto:** objetivo principal = deploy controlado sob demanda; melhoria da telemetria geral Linux congelada ate nova prioridade.
 
 ## 1. Visao do produto
@@ -38,7 +38,7 @@ Este indice e a **fonte de continuidade** do ATLAS. Cada detalhamento deve resid
 | A1-R | Lacunas CPU %, contagem Docker, `partial` | ADIADO_POR_DECISAO_DO_OWNER | So reabrir conforme nova prioridade, sem condicionar o deploy |
 | A2.0 | Contrato de deploy, boundaries, aprovacao e testes negativos | DOCUMENTADO_EM_PR | Documento P2-P4 revisado, sem runtime |
 | **A2.1** | **Modulo puro de politica de preview: allowlist, SHA, CI/attestation, TTL, hash, tests** | **MERGED_PR_191 / CI_PASS** | Sem I/O, deny by default, testes negativos locais e CI; nenhuma tool ACT |
-| A2.2 | Atestacao GitHub/CI/host/Core, journal transacional, versao instalada e API PREPARE | **P2.2e CI_DESCARTAVEL_CODIGO_MAIN / EXECUCAO_CI_PENDENTE; HML_REAL, migracao e API pendentes** | Permissoes separadas, CI por SHA, concorrencia/revogacao testadas |
+| A2.2 | Atestacao GitHub/CI/host/Core, journal transacional, versao instalada e API PREPARE | **P2.2f OCI_SHA_GATE_CODIGO_MAIN / CI_DOCKER_NAO_CONFIRMADO; HML_RELEASE_PROVENANCE, migracao e API pendentes** | Permissoes separadas, CI por SHA, concorrencia/revogacao testadas |
 | A2.3 | Tela de aprovacao nominativa no portal + expirar/revogar/cancelar | NAO_INICIADO | Ator autorizador, plano/hash e replay revalidados fora do ChatGPT |
 | A3.1 | Executor host isolado, catalogo um serviço HML, dry-run real | NAO_INICIADO | Sem shell/SSH/docker.sock no MCP, nenhum efeito em PROD |
 | A3.2 | Piloto de deploy HML com health e rollback/roll-forward | NAO_INICIADO | Same approved SHA, estado + smoke reais, negativo de rollback |
@@ -157,3 +157,20 @@ A janela de frescor da avaliacao e 120 s, com tolerancia de 5 s para clock futur
 - **Nenhuma migration produtiva, endpoint PREPARE/ACT, alteracao de Compose/Keycloak, segredo ou container da Delpi foi aplicado.** Quatro tools READ do ATLAS preservadas.
 
 **Proximo gate:** verificar o CI PostgreSQL/Docker, review independente e depois definir um unico target HML seguro com provenance da imagem, canal Docker read-only e testes de banco com owner antes de qualquer exposicao PREPARE.
+
+
+## 13. Incremento A2.2f: OCI SHA do Public Hub, sem rebuild no srv-api (15/11/2026)
+
+**Motivo comprovado no piloto READ HML:** o operador coletou `docker inspect` do `delpi-hml-public-hub` (`running=true`, `healthy`, labels Compose `delpi-hml/public-hub`), depois `docker image inspect` da imagem `sha256:63ad3152e179d4a75e3cc1823a4062b300786fe841a635c4bbb8086e38e1112d`. `org.opencontainers.image.revision` e `.source` estavam ausentes. Imagem criada em 14/11/2026, mas isso nao prova SHA do commit.
+
+**Entregas no repositorio:**
+- `plugins/public-hub/Dockerfile` com stage leve `provenance-contract` que exige SHA lowercase de 40 hex e grava labels OCI `revision` + `source`. Stage final/default `production` herda as labels; builder de UI anterior preservado.
+- `infra/docker-compose.yml` fornece `PUBLIC_HUB_SOURCE_REVISION` apenas ao build do Public Hub. `docker-compose.hml.yml` herda o arg por `extends`. `docker-compose.dev.yml` usa `development` sem SHA para nao bloquear desenvolvedores e nao alegar atestacao falsa.
+- Helper `infra/scripts/public-hub-provenance.sh` verifica SHA Git de 40 hex no checkout ativo e recusara builds se inputs do Public Hub estiverem sujos/nao commitados. Scripts sequenciais HML e PROD exportam esse arg **somente** ao construir `public-hub`; o `SOURCE_REVISION` historico dos demais servicos nao mudou.
+- `infra/scripts/tests/test_public_hub_provenance.py` **11 PASS offline** (Python3.13, git repos temporarios, sem Docker, sem HML); shell helper `bash -n` PASS.
+- [Workflow CI OCI dedicado](../../../.github/workflows/atlas-public-hub-oci.yml) constrói **somente stage leve** em runner GitHub temporario, confere labels e rejeita revisoes ausentes/invalidas. **CI Docker nao confirmado como PASS**; nenhuma imagem final com etiqueta foi construida durante esta entrega.
+- Detalhes operacionais, limitacoes e gate futuro: [runbook P2.2f](./08-atlas-p22f-public-hub-oci-revision.md).
+
+**Seguranca:** label OCI e dado informativo, nao prova criptografica; ainda faltam manifest assinado do executor CI, correlacao SHA->ImageID, signer isolado, grants Core e journal real. `preview_deployment`, ACT e as migrations continuam inativas. **Nenhum container, Docker socket, DB, Compose ativo ou serviço HML/PROD foi modificado**. Engenharia de Roberto permanece fora do escopo.
+
+**Proximo passo:** conferir CI OCI e obter aceite do owner antes de rebuild HML de Public Hub; ate la continuar apenas inspecao e aprovar apenas o codigo versionado. Em seguida planejar a atestacao de proveniencia assinada por pipeline para imagem final em execucao.
