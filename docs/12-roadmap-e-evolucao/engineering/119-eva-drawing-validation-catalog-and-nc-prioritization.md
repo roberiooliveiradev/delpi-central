@@ -5301,3 +5301,52 @@ deploy produtivo NÃO autorizado pela task — submetido à
 Coordination/owner operacional. Runtime prod segue v1.5 até o
 gate de deploy da engineering-api (imagem rollback
 `rollback-pre-g15b` = `83692f3d6a39` disponível).
+
+### 94.19 G17 — Deploy produtivo do conhecimento v1.6
+
+**Task:** `EVA-G17-KNOWLEDGE-V16-PRODUCTION-DEPLOY-AND-CHATGPT-E2E-ACCEPTANCE-01`
+(autorização Coordination registrada Issue #131 comentário
+`6902618561` + direção do usuário; escopo engineering-api only).
+
+#### Preflight e delta
+
+- HEAD/origin/main revalidado: `737308dc3f`; delta
+  `3a95d6a3e7..737308dc3f` em `engineering-api/` = **somente G16**
+  (knowledge JSON + test_eva_mcp.py) — escopo isolado.
+- Runtime anterior: imagem `73e0c49f5369`, knowledge **1.5**,
+  healthy, G10+G13 presentes — referência de rollback criada:
+  `infra-engineering-api:rollback-pre-g17` → `73e0c49f5369`.
+- Sem migrations novas, sem mudanças em outros serviços do escopo.
+
+#### Deploy e validação produtiva
+
+- Procedimento canônico `up-prod-sequential.sh --build
+  engineering-api` (srv-api em `737308dc3f`); nova imagem
+  `6117136d3543`, container `delpi-engineering-api` **healthy**
+  em <1min; demais serviços intocados.
+- Runtime provado in-process (service credential):
+  `knowledge_version=1.6`, **6 tópicos**, **12 regras LIF**;
+  `LIF-REVERSE-LINEAGE-PREVIOUS-CODE` presente;
+  `LIF-REVERSE-LINEAGE-GAP` **ausente**; `contract_gaps` =
+  `lmp_printed_lookup` + `family_semantics` (residuais
+  OWNER_PENDING preservados); `contract_inventory.read_product_search`
+  inclui `previous_code`.
+- G10 (`x_left`) e consumer G13 (`previous_code` no registry)
+  presentes; processos: 1 python + 1 sh — **zero workers OCR**;
+  `tool_get_context` sem auth → **401 fail-closed**.
+
+#### ChatGPT E2E — handoff Coordination
+
+`CONNECTOR_REFRESH=PENDING_OWNER_ACTION`: a validação E2E
+autenticada (knowledge v1.6 + consulta reversa pelo conector)
+exige JWT humano da sessão oficial — credencial em cofre,
+impersonation proibida pelo runbook Doc 121. O runtime está
+pronto; o aceite `G17_CHATGPT_E2E_PASS` pertence ao owner do
+conector após refresh/discovery.
+
+#### Vereditos
+
+`G17_RUNTIME_PASS` · `G17_KNOWLEDGE_PASS` · `G17_MCP_PASS`
+(schema/enum/runtime) → **`G17_PASS_WITH_RESIDUAL`** —
+ChatGPT E2E pendente de ação do owner; homologações de domínio
+(LMP impressa, 8000×8001, marco OV) seguem `OWNER_PENDING`.
