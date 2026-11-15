@@ -1,6 +1,6 @@
 # Delpi Linux Operations MCP — P1 READ-ONLY candidate
 
-**Status:** source candidate, **not deployed**. No production connection, tunnel, Keycloak client, CI pass, health smoke, or user authorization has been proven. The public repository must not contain secrets or runtime log outputs.
+**Status:** source candidate, **not deployed**. Code-only CI passed in PR #186; no production connection, tunnel, Keycloak client, health smoke, or end-user OAuth has been proven. The public repository must not contain secrets or runtime log outputs.
 
 ## Scope and reuse
 
@@ -47,7 +47,7 @@ PYTHONPATH=. pytest -q tests/test_reader.py
 python -m compileall -q linux_ops_mcp
 ```
 
-The package is intentionally not wired into Docker or the public gateway until security review. **No pull/deploy recommended at P1 code-delivery time.**
+The package is intentionally not wired into Docker or the public gateway until security review. **Do not deploy this service globally or assume production OAuth is configured. For the opt-in local-only pilot, follow `docs/03-private-tunnel-oauth-go-live.md` and its gates.**
 
 ## Decision and documentation log
 
@@ -65,7 +65,7 @@ Next step is evidence of `it-portal-api` Linux observation ingested + authentica
 
 - **Decisao do operador:** coleta Linux ja funcional, aceita como evidencia operacional do owner. Nao solicitar nova prova de ingestao para continuar o desenvolvimento. Isso **nao** representa smoke OAuth/MCP concluido.
 - **Imagem isolada:** `linux-ops-mcp/Dockerfile` (usuario numerico 10001, codigo na imagem, sem dados host, sem SSH ou Docker CLI).
-- **Compose produtivo canonico:** servico `linux-ops-mcp` sob profile `linux-ops`, **nao iniciado por padrao**. Sem `ports`, `volumes` ou `docker.sock`; FS read-only, todas capabilities removidas, no-new-privileges, 0.25 CPU, 256 MiB, log limitado e health local.
+- **Compose produtivo canonico:** servico `linux-ops-mcp` sob profile `linux-ops`, **nao iniciado por padrao**. Porta publicada **somente em loopback** `127.0.0.1:${LINUX_OPS_MCP_LOOPBACK_PORT:-18765}:8000` (introduzida na PR #187), sem portas LAN/públicas, `volumes` ou `docker.sock`; FS read-only, todas capabilities removidas, no-new-privileges, 0.25 CPU, 256 MiB, log limitado e health local.
 - **CI proprio:** `.github/workflows/linux-ops-mcp-readonly.yml` executa testes isolados, contratacao de 4 tools, compilacao e Docker build no runner GitHub. Nao executa deploy.
 - **RBAC fortalecido:** cada chamada MCP faz refresh Core `/me` `force_refresh=True`, sem fallback stale; subject do response deve coincidir com o JWT autenticado. A API do Portal TI tambem aplica RBAC a leitura.
 - **Protecao de ativo:** a observacao retornada deve ter `server_id` igual ao UUID configurado; nao aceita amostra de outro servidor.
@@ -85,9 +85,14 @@ Next step is evidence of `it-portal-api` Linux observation ingested + authentica
 ```text
 HOST_COLLECTOR: OPERATOR_CONFIRMED_WORKING
 MCP_CODE: IMPLEMENTED_IN_PR (NOT_MERGED at creation time)
-MCP_CI: PENDING_GITHUB_ACTIONS
+MCP_CI: PR_186_PASS / PR_187_TO_VERIFY
 MCP_RUNTIME: NOT_DEPLOYED
 MCP_OAUTH: NOT_CONFIGURED
 MCP_PUBLIC_CONNECTION: NOT_CONNECTED
 DEPLOY_WRITE: NOT_IMPLEMENTED
 ```
+
+
+### P1.3: endpoint privado via loopback (PR #187)
+
+O serviço opt-in anuncia apenas `127.0.0.1:${LINUX_OPS_MCP_LOOPBACK_PORT:-18765}:8000`; não existe acesso público à porta. Confira a porta real com `docker compose --profile linux-ops port linux-ops-mcp 8000`, sempre no contexto canônico do Compose. Não assuma `18765` quando o operador personalizar a configuração. O Secure MCP Tunnel é um serviço separado, ainda não instalado nem cadastrado. OAuth e autorização no Core continuam obrigatórios. O procedimento detalhado e o rollback isolado estão em `linux-ops-mcp/docs/03-private-tunnel-oauth-go-live.md`.

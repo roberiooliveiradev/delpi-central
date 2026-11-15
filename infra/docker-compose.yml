@@ -3954,6 +3954,10 @@ services:
       dockerfile: linux-ops-mcp/Dockerfile
     container_name: delpi-linux-ops-mcp
     restart: "no"
+    # Loopback ONLY: tunnel-client on the host can reach this opt-in MCP.
+    # No LAN/public bind, no container/host Docker access.
+    ports:
+      - "127.0.0.1:${LINUX_OPS_MCP_LOOPBACK_PORT:-18765}:8000"
     environment:
       PYTHONDONTWRITEBYTECODE: "1"
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
