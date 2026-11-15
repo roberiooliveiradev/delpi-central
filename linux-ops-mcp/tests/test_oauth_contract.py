@@ -1,0 +1,19 @@
+"""Contract gates for OpenAI custom MCP discovery; no host or network access."""
+import asyncio
+
+from linux_ops_mcp.server import READ_TOOLS, OAUTH_SECURITY_SCHEMES, create_mcp_server
+
+
+def test_only_approved_four_tools_and_explicit_oauth_security_schemes():
+    async def discover():
+        return await create_mcp_server().list_tools()
+
+    tools = asyncio.run(discover())
+    assert {tool.name for tool in tools} == READ_TOOLS
+    for tool in tools:
+        body = tool.model_dump(by_alias=True)
+        assert body["securitySchemes"] == OAUTH_SECURITY_SCHEMES
+        assert body["_meta"]["delpi/toolClass"] == "READ"
+        assert body["annotations"]["readOnlyHint"] is True
+        assert body["annotations"]["destructiveHint"] is False
+        assert not body["securitySchemes"][0]["type"] == "noauth"
