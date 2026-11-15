@@ -112,7 +112,14 @@ def evaluate_deployment_preview(
         blocks.append("CLOCK_INVALID")
 
     matches = []
-    if isinstance(policy, DeploymentPolicy) and type(service_id) is str and type(environment) is str:
+    if isinstance(policy, DeploymentPolicy) and not isinstance(policy.targets, tuple):
+        blocks.append("TARGET_CATALOG_INVALID")
+    if (
+        isinstance(policy, DeploymentPolicy)
+        and isinstance(policy.targets, tuple)
+        and type(service_id) is str
+        and type(environment) is str
+    ):
         matches = [
             target for target in policy.targets
             if isinstance(target, DeploymentTarget)
@@ -123,6 +130,13 @@ def evaluate_deployment_preview(
         ]
     if len(matches) != 1:
         blocks.append("TARGET_NOT_ALLOWLISTED")
+    if matches and type(matches[0].requires_rollback) is not bool:
+        blocks.append("TARGET_POLICY_INVALID")
+    if environment == "prod" and matches and (
+        type(matches[0].requires_rollback) is not bool
+        or not matches[0].requires_rollback
+    ):
+        blocks.append("PRODUCTION_REQUIRES_ROLLBACK")
     if environment == "prod" and (
         not isinstance(policy, DeploymentPolicy)
         or type(policy.allow_prod) is not bool
