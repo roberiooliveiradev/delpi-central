@@ -30,6 +30,10 @@ import {
   type UnifiedRequestRow,
 } from "../domain/requestListPresentation";
 import {
+  prcListErrorMessage,
+  shouldIncludePrcInList,
+} from "../domain/prcIntegrationGate";
+import {
   myRequestsPath,
   myRequestsPrcPath,
   navigateMyRequestsPath,
@@ -59,8 +63,6 @@ const INITIAL_FILTERS: RequestListFiltersState = {
  * basta a janela page*PAGE_SIZE de cada fonte (ambas paginadas e
  * ordenadas por criação desc). Limitada a 100 por chamada (contrato). */
 const MERGE_WINDOW_MAX = 100;
-/** Tipo requests-api equivalente ao caso PRC da Engineering API. */
-const PRC_TYPE_CODE = "raw-material-creation";
 
 export function MinePage() {
   const access = useRequestsPermissions();
@@ -90,7 +92,8 @@ export function MinePage() {
     listRequestTypes({ signal: ac.signal })
       .then(setTypes)
       .catch((err: Error) => {
-        if (err.name !== "AbortError") setError(err.message);
+        if (err.name !== "AbortError")
+          setError("Falha ao carregar suas solicitações.");
       });
     return () => ac.abort();
   }, []);
@@ -105,12 +108,9 @@ export function MinePage() {
       filters.page * REQUEST_LIST_PAGE_SIZE,
       MERGE_WINDOW_MAX,
     );
-    /* typeCode: `raw-material-creation` é o tipo requests-api equivalente
-     * ao caso PRC; qualquer outro tipo exclui PRC honestamente. Filial:
-     * o PRC não possui filial no contrato — excluído quando filtrada. */
-    const includePrc =
-      (!filters.typeCode || filters.typeCode === PRC_TYPE_CODE) &&
-      !filters.branch;
+    /* ISOLATION-01 — gate canônico: somente o recorte que pode conter
+     * casos do tipo `raw-material-creation` aciona a Engineering API. */
+    const includePrc = shouldIncludePrcInList(filters);
 
     const reqPromise = listMyRequests({
       signal: ac.signal,
@@ -155,10 +155,7 @@ export function MinePage() {
             );
           }
         } else {
-          setError(
-            (reqRes.reason as Error)?.message ||
-              "Falha ao carregar suas solicitações.",
-          );
+          setError("Falha ao carregar suas solicitações.");
         }
 
         const prcRows: UnifiedRequestRow[] = [];
@@ -176,10 +173,9 @@ export function MinePage() {
             );
           }
         } else if (prcRes.status === "rejected") {
-          setPrcError(
-            (prcRes.reason as Error)?.message ||
-              "Falha ao carregar os casos de cadastro de produto.",
-          );
+          /* ISOLATION-01 — falha da integração PRC é contextual e não
+           * vaza internals do backend (ex.: erro de conexão SQL). */
+          setPrcError(prcListErrorMessage());
         }
 
         const merged = mergeUnifiedRows(reqRows, prcRows);

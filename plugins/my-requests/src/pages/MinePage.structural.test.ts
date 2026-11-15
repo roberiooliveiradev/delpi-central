@@ -54,14 +54,19 @@ describe("MinePage — tabela unificada requests-api + PRC", () => {
   it("propaga filtros para as duas fontes e trata typeCode/filial PRC", () => {
     expect(src).toContain("search: filters.q");
     expect(src).toContain("status: filters.status");
-    expect(src).toContain("PRC_TYPE_CODE");
-    expect(src).toContain("!filters.branch");
+    /* ISOLATION-01 — gate canônico único decide a chamada PRC. */
+    expect(src).toContain("shouldIncludePrcInList");
   });
 
   it("distingue erro parcial de requests-api e de Engineering API", () => {
     expect(src).toContain("setError(");
     expect(src).toContain("setPrcError(");
     expect(src).toContain("Promise.allSettled");
+    /* ISOLATION-01 — falhas das integrações não vazam internals do
+     * backend para a UI (mensagem contextual estática). */
+    expect(src).toContain("prcListErrorMessage()");
+    expect(src).not.toContain("prcRes.reason");
+    expect(src).not.toContain("reqRes.reason");
   });
 
   it("cada linha PRC navega para /prc/{id} oficial", () => {

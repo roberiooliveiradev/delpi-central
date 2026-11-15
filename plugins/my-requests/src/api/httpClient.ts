@@ -11,6 +11,13 @@ type RequestOptions = { signal?: AbortSignal; headers?: Record<string, string> }
 
 const DELPI_CALLER_APP = "my-requests";
 
+export const HTTP_REQUEST_TIMEOUT_MS = 30_000;
+
+function withRequestTimeout(signal?: AbortSignal): AbortSignal | undefined {
+  const timeout = AbortSignal.timeout(HTTP_REQUEST_TIMEOUT_MS);
+  return signal ? AbortSignal.any([signal, timeout]) : timeout;
+}
+
 let accessTokenGetter: (() => string | undefined) | null = null;
 
 export function configureHttpClient(getAccessToken: () => string | undefined) {
@@ -177,7 +184,7 @@ export async function httpGet<T>(url: string, options: RequestOptions = {}): Pro
   const response = await fetch(url, {
     method: "GET",
     headers: { ...authHeaders(), ...(options.headers || {}) },
-    signal: options.signal,
+    signal: withRequestTimeout(options.signal),
   });
   if (!response.ok) {
     throw await errorFromResponse(response);
@@ -198,7 +205,7 @@ export async function httpPost<T>(
       ...(options.headers || {}),
     },
     body: JSON.stringify(body),
-    signal: options.signal,
+    signal: withRequestTimeout(options.signal),
   });
   if (!response.ok) {
     throw await errorFromResponse(response);
@@ -219,7 +226,7 @@ export async function httpPatch<T>(
       ...(options.headers || {}),
     },
     body: JSON.stringify(body),
-    signal: options.signal,
+    signal: withRequestTimeout(options.signal),
   });
   if (!response.ok) {
     throw await errorFromResponse(response);
@@ -234,7 +241,7 @@ export async function httpDelete<T>(
   const response = await fetch(url, {
     method: "DELETE",
     headers: { ...authHeaders(), ...(options.headers || {}) },
-    signal: options.signal,
+    signal: withRequestTimeout(options.signal),
   });
   if (!response.ok) {
     throw await errorFromResponse(response);
