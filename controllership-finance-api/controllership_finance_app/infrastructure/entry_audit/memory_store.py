@@ -102,7 +102,15 @@ class MemoryEntryAuditStore:
             rows = [row for row in rows if row["status"] == status]
         reverse = (sort_dir or "desc").lower() == "desc"
         key_name = sort_by or "created_at"
-        rows.sort(key=lambda row: row.get(key_name) or "", reverse=reverse)
+
+        def _sort_key(row: dict):
+            if key_name == "branches":
+                return ",".join(row.get("branches") or [])
+            if key_name == "document_types":
+                return ",".join(row.get("document_types") or [])
+            return row.get(key_name) or ""
+
+        rows.sort(key=_sort_key, reverse=reverse)
         start = (page - 1) * page_size
         return [deepcopy(row) for row in rows[start : start + page_size]], len(rows)
 

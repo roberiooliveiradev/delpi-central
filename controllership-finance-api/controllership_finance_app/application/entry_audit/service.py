@@ -322,12 +322,37 @@ class EntryAuditService:
 
     def breakdowns(self, analysis_id: str, filters: dict) -> dict:
         _analysis, ready = self._ready(analysis_id)
-        rows = self._filtered("occurrences", analysis_id, filters)
+        # AC-SEL-3 / AC-BFF-3: cada dimensão de seleção ignora o próprio filtro.
+        by_severity = _count(
+            self._filtered("occurrences", analysis_id, _filters_without(filters, "severity")),
+            "severity",
+        )
+        by_theme = _count(
+            self._filtered("occurrences", analysis_id, _filters_without(filters, "theme")),
+            "theme",
+        )
+        suppliers = _count(
+            self._filtered("occurrences", analysis_id, _filters_without(filters, "supplier")),
+            "supplier_name",
+        )[:10]
+        tes_counts = _count(
+            self._filtered("occurrences", analysis_id, _filters_without(filters, "tes")),
+            "tes",
+        )[:10]
+        tes_labels = _tes_labels_from_analysis(self._cached_rows("tes", analysis_id))
+        tes = [
+            {
+                "name": item["name"],
+                "count": item["count"],
+                "label": tes_labels.get(item["name"], ""),
+            }
+            for item in tes_counts
+        ]
         return {
-            "by_severity": _count(rows, "severity"),
-            "by_theme": _count(rows, "theme"),
-            "suppliers": _count(rows, "supplier_name")[:10],
-            "tes": _count(rows, "tes")[:10],
+            "by_severity": by_severity,
+            "by_theme": by_theme,
+            "suppliers": suppliers,
+            "tes": tes,
             "branches_unavailable": ready,
         }
 
@@ -1458,7 +1483,34 @@ def _by_day(rows: list[dict]) -> list[dict]:
     return _count([{**row, "day": str(row.get("received_date") or "")[:10]} for row in rows], "day")
 
 
-ANALYSIS_SORT_WHITELIST = frozenset({"created_at", "date_from", "date_to", "status", "finished_at"})
+ANALYSIS_SORT_WHITELIST = frozenset(
+    {"created_at", "date_from", "date_to", "status", "finished_at", "branches", "document_types"}
+)
+
+
+def _filters_without(filters: dict, key: str) -> dict:
+    """Cópia dos filtros sem a chave da dimensão (seleção do gráfico)."""
+    next_filters = dict(filters or {})
+    next_filters.pop(key, None)
+    return next_filters
+
+
+def _tes_labels_from_analysis(tes_rows: list[dict]) -> dict[str, str]:
+    """Descrição SF4 já persistida na análise — sem nova ida ao Protheus."""
+    labels: dict[str, str] = {}
+    for row in tes_rows or []:
+        code = str(row.get("tes_code") or row.get("code") or "").strip()
+        if not code:
+            continue
+        sf4 = row.get("sf4") if isinstance(row.get("sf4"), dict) else {}
+        description = str(
+            (sf4 or {}).get("description")
+            or row.get("description")
+            or ""
+        ).strip()
+        if description and code not in labels:
+            labels[code] = description
+    return labels
 # Colunas da aba Ocorrências (MFE) + chaves legadas (theme/day).
 OCCURRENCE_SORT_WHITELIST = frozenset(
     {

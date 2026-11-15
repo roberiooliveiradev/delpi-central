@@ -1038,7 +1038,9 @@ export function EntryAuditAnalysisPage({
                   aria-label="Ocorrências por TES"
                   items={breakdowns.tes.slice(0, 8).map((item) => ({
                     id: item.name,
-                    label: item.name,
+                    label: item.label
+                      ? `${item.name} · ${item.label}`
+                      : item.name,
                     value: item.count,
                   }))}
                   onItemClick={(item) =>

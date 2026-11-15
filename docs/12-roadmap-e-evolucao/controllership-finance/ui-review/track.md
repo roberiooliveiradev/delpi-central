@@ -340,8 +340,8 @@ Requisitos e critérios: [review-3.md](./review-3.md) (RQ-U14-SEL, -BFF, -ENT, -
 | Fase | SHA | Verifier | Nota |
 |---|---|---|---|
 | F0 | `8553acecab` | n/a (rebaseline) | Defeito reproduzido HML; screenshots `/tmp/ui-review-u14-f0` |
-| F1 | (este commit) | ACCEPT_WITH_RESIDUAL | AC-SEL-1/2/4 + testes; HML→PROD |
-| F2 | — | — | — |
+| F1 | `ea31b4a1e8` | ACCEPT_WITH_RESIDUAL | AC-SEL-1/2/4 + testes; HML→PROD |
+| F2 | (este commit) | ACCEPT_WITH_RESIDUAL | AC-BFF-1..4 + SEL-3; HML |
 | F3 | — | — | — |
 | F4 | — | — | — |
 | F5 | — | — | — |

@@ -418,7 +418,7 @@ Filtros dessas leituras, todos opcionais: `branch`, `severity`, `theme`, `suppli
 
 | Recurso | Default | Whitelist |
 |---|---|---|
-| `GET /analyses` | `created_at` desc | `created_at`, `date_from`, `date_to`, `status`, `finished_at` |
+| `GET /analyses` | `created_at` desc | `created_at`, `date_from`, `date_to`, `status`, `finished_at`, `branches`, `document_types` (U14 AC-BFF-1) |
 | `occurrences` | `severity` asc | `severity`, `supplier`, `document`, `day`, `difference`, `theme`, `status` |
 | `documents` (incl. `posted_outside_period`) | `received_date` asc | `document_number`, `received_date`, `supplier_name`, `amount`, `situation`, `series`, `branch` |
 | `unmatched` | `document_number` asc | `document_number`, `supplier_name`, `situation`, `series`, `branch`, `nature` |
@@ -430,7 +430,7 @@ Filtros dessas leituras, todos opcionais: `branch`, `severity`, `theme`, `suppli
 |---|---|
 | `summary` | KPIs atuais; `previous` = KPIs do período anterior **ou `null`** quando não há análise anterior válida (U11/U12 W1a); conformidade (`clean`, `divergent`, `unmatched_open`, `unmatched_explained`, `posted_outside_period` com `count` e `by_date`) |
 | `daily` | série do período e do período anterior (`previous: []` se não houver anterior): dia → notas com divergência |
-| `breakdowns` | por severidade, por tema, top fornecedores, TES com mais ocorrências |
+| `breakdowns` | por severidade, por tema, top fornecedores, TES com mais ocorrências. **U14:** cada dimensão de seleção é calculada **sem** o filtro da própria dimensão (AC-BFF-3 / AC-SEL-3); `tes[]` inclui `label` aditivo com a descrição SF4 já persistida na análise (AC-BFF-2, sem nova consulta ao Protheus) |
 | `facets` | fornecedores, temas, TES e severidades, com contagem |
 | `GET /entry-audit/trend` | `branch`, `date_from`, `date_to`: pendentes e altas por mês, entre análises |
 | `occurrences` | página de ocorrências; `sort` + `order=asc\|desc` (whitelist abaixo) |

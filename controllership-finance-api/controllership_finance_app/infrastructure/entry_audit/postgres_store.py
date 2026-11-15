@@ -107,6 +107,9 @@ class PostgresEntryAuditStore:
             "date_to": "date_to",
             "status": "status",
             "finished_at": "finished_at",
+            # U14 AC-BFF-1: ordenar arrays pela forma textual estável.
+            "branches": "array_to_string(branches, ',')",
+            "document_types": "array_to_string(document_types, ',')",
         }
         order_col = column_map.get(sort_by or "created_at", "created_at")
         order_dir = "DESC" if (sort_dir or "desc").lower() == "desc" else "ASC"

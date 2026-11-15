@@ -103,12 +103,13 @@ export type EntryAuditSummary = {
   branches_unavailable?: string[];
 };
 
-export type EntryAuditCount = { name: string; count: number };
+export type EntryAuditCount = { name: string; count: number; label?: string };
 
 export type EntryAuditBreakdowns = {
   by_severity: EntryAuditCount[];
   by_theme: EntryAuditCount[];
   suppliers: EntryAuditCount[];
+  /** TES: `label` aditivo (descrição SF4) quando disponível — U14 AC-BFF-2. */
   tes: EntryAuditCount[];
   branches_unavailable?: string[];
 };
