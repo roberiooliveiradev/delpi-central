@@ -3,8 +3,8 @@
 > **Projeto:** ATLAS — Infraestrutura Linux e Orquestracao de Operacoes DELPI
 > **Owner:** TI / Minha DELPI
 > **Atualizacao:** 2026-11-15
-> **Situacao em 2026-11-15:** P1 READ autenticado e operando; P2.1 politica offline integrada na main com CI verde via PR #191; **P2.2d: fonte Docker GET estreita, signer HMAC vinculado ao release, journal PREPARE SQL inerte e DDL candidato publicados na main; 190 testes locais PASS, CI/revisao independente e HML pendentes; nenhuma ferramenta de deploy publicada**.
-> **Repositorio:** `roberiooliveiradev/delpi-central`; **PRs integradas:** [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184) (P0-P1), [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (P2.1); **P2.2a/P2.2b/P2.2c/P2.2d em codigo main, sem executor/endpoint e sem deploy**.
+> **Situacao em 2026-11-15:** P1 READ autenticado e operando; P2.1 politica offline integrada na main com CI verde via PR #191; **P2.2e: journal PREPARE com lock transacional corrigido + testes reais PostgreSQL/Docker em runners descartaveis GitHub Actions na main; CI real ainda nao confirmado, HML real e aprovacao pendentes; nenhuma ferramenta ACT/PREPARE publicada**.
+> **Repositorio:** `roberiooliveiradev/delpi-central`; **PRs integradas:** [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184) (P0-P1), [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (P2.1); **P2.2a-P2.2e em codigo main, sem executor/endpoint e sem deploy**.
 > **Diretriz de produto:** objetivo principal = deploy controlado sob demanda; melhoria da telemetria geral Linux congelada ate nova prioridade.
 
 ## 1. Visao do produto
@@ -38,7 +38,7 @@ Este indice e a **fonte de continuidade** do ATLAS. Cada detalhamento deve resid
 | A1-R | Lacunas CPU %, contagem Docker, `partial` | ADIADO_POR_DECISAO_DO_OWNER | So reabrir conforme nova prioridade, sem condicionar o deploy |
 | A2.0 | Contrato de deploy, boundaries, aprovacao e testes negativos | DOCUMENTADO_EM_PR | Documento P2-P4 revisado, sem runtime |
 | **A2.1** | **Modulo puro de politica de preview: allowlist, SHA, CI/attestation, TTL, hash, tests** | **MERGED_PR_191 / CI_PASS** | Sem I/O, deny by default, testes negativos locais e CI; nenhuma tool ACT |
-| A2.2 | Atestacao GitHub/CI/host/Core, journal transacional, versao instalada e API PREPARE | **P2.2d FONTE_INSPECT + SIGNER + JOURNAL_REPO_MAIN / CI_HML_PENDENTES; sem runner host, migration aplicada ou API** | Permissoes separadas, CI por SHA, concorrencia/revogacao testadas |
+| A2.2 | Atestacao GitHub/CI/host/Core, journal transacional, versao instalada e API PREPARE | **P2.2e CI_DESCARTAVEL_CODIGO_MAIN / EXECUCAO_CI_PENDENTE; HML_REAL, migracao e API pendentes** | Permissoes separadas, CI por SHA, concorrencia/revogacao testadas |
 | A2.3 | Tela de aprovacao nominativa no portal + expirar/revogar/cancelar | NAO_INICIADO | Ator autorizador, plano/hash e replay revalidados fora do ChatGPT |
 | A3.1 | Executor host isolado, catalogo um serviço HML, dry-run real | NAO_INICIADO | Sem shell/SSH/docker.sock no MCP, nenhum efeito em PROD |
 | A3.2 | Piloto de deploy HML com health e rollback/roll-forward | NAO_INICIADO | Same approved SHA, estado + smoke reais, negativo de rollback |
@@ -82,7 +82,7 @@ Antes de cada incremento: ler este README, o contrato P2-P4, `AGENTS.md`, as reg
 
 Depois de cada incremento, **na mesma entrega**: atualizar a linha do marco acima e registrar no contrato/diario o commit, escopo, testes efetivos, CI, flags, riscos, rollback, alteracoes realizadas e estado real de HML/PROD. Nao transformar PR em produção sem evidencia.
 
-**Proxima tarefa:** A2.2e: homologar transport Docker com proxy read-only isolado (sem socket para MCP) em UM serviço HML, estabelecer release record assinado com chaves fora do Git, testar journal/DDL em PostgreSQL descartavel e conciliar migration com Delpi Remote. So depois ligar API PREPARE governada; ACT e PROD continuam bloqueados.
+**Proxima tarefa:** confirmar o resultado dos dois jobs do workflow CI descartavel da P2.2e (PostgreSQL e Docker), solucionar quaisquer falhas e obter review independente; depois escolher UM servico HML real, validar runtime read-only via proxy com ACL, release manifest vinculado ao SHA aprovado e migration de DB com owner. PREPARE/ACT continuam desligados.
 
 ## 7. Marco validado
 
@@ -141,3 +141,19 @@ A janela de frescor da avaliacao e 120 s, com tolerancia de 5 s para clock futur
 - **Nao houve deploy, migration, release assinada real, execucao Docker, novo endpoint MCP nem alteracao de Keycloak/Compose.** Quatro ferramentas READ do ATLAS permanecem intactas.
 
 **Proximo gate A2.2e:** conferir nomes/labels de um alvo HML real (sem supor identidade), revisar isolamento do Docker inspect, adicionar issuer real de release record + challenge vinculados ao backend, testes no PostgreSQL descartavel e proposta de migration com ownership controlado. Somente apos tudo isso considerar PREPARE governado; ACT permanece bloqueado ate P3.
+
+
+## 12. Incremento A2.2e: integracao descartavel de PostgreSQL e Docker (2026-11-15)
+
+**Evidencia do operador:** os 35 testes seletivos P2.2d passaram no venv Python 3.12 dentro de srv-api. O operador tambem confirmou os checks seguintes de containers e rotas OAuth/401 sem fornecer logs; registro de confirmacao humana, nao coleta direta do assistente.
+
+**Codigo na main:**
+- `atlas_deploy_journal.py`: corrigida a ordem de PREPARE para adquirir `pg_advisory_xact_lock`, verificar replay com `SELECT .. FOR UPDATE`, consumir nonce valido ANTES de inserir proposta referenciada por FK e registrar evento na mesma transacao. Impede duplicacao por duas requisicoes concorrentes e transforma falta de challenge em bloqueio seguro. O journal segue sem rota publica.
+- `it-portal-api/tests/integration/test_atlas_postgres_journal.py`: **7 testes reais de transacao Postgres**, protegidos por gate de CI de banco isolado e host loopback; nao rodam em DB produtivo.
+- `linux-ops-mcp/tests/test_atlas_docker_engine_ci.py`: **2 testes com Docker Engine real em runner GitHub descartavel**, container de teste Alpine/labels e manifest sintetico. Nao e evidencia de HML ou provenance de build DELPI.
+- [Workflow de integracao isolada](../../../.github/workflows/atlas-p22e-integration.yml): dois jobs somente em `ubuntu-latest`, `permissions: contents: read`, sem segredos da Delpi nem deploy.
+- [Runbook P2.2e](./07-atlas-p22e-disposable-ci-and-hml-gates.md) com riscos, criterios e proximos passos.
+- **Testes locais efetivamente executados:** 16 PASS no FakePg revisado, 3 SKIP quando PostgreSQL/Docker nao estao presentes; compilacao PASS; workflow parseado. **GitHub Actions do novo workflow ainda sem evidencia de conclusao**; `delpi-verifier` e HML real pendentes.
+- **Nenhuma migration produtiva, endpoint PREPARE/ACT, alteracao de Compose/Keycloak, segredo ou container da Delpi foi aplicado.** Quatro tools READ do ATLAS preservadas.
+
+**Proximo gate:** verificar o CI PostgreSQL/Docker, review independente e depois definir um unico target HML seguro com provenance da imagem, canal Docker read-only e testes de banco com owner antes de qualquer exposicao PREPARE.
