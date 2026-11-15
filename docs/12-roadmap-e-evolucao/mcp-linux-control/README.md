@@ -3,8 +3,8 @@
 > **Projeto:** ATLAS — Infraestrutura Linux e Orquestracao de Operacoes DELPI
 > **Owner:** TI / Minha DELPI
 > **Atualizacao:** 2026-11-15
-> **Situacao em 2026-11-15:** P1 READ autenticado e operando; P2.1 politica offline integrada na main com CI verde via PR #191; **P2.2b leitores GitHub/CI e Core fresh adicionados na main, validacao CI e verificador independente pendentes; nenhuma ferramenta de deploy publicada**.
-> **Repositorio:** `roberiooliveiradev/delpi-central`; **PRs integradas:** [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184) (P0-P1), [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (P2.1); **P2.2a/P2.2b em codigo main, sem executor/endpoint e sem deploy**.
+> **Situacao em 2026-11-15:** P1 READ autenticado e operando; P2.1 politica offline integrada na main com CI verde via PR #191; **P2.2c validacao offline de comprovante assinado do host e politica de idempotencia PREPARE publicadas na main; CI/revisao independente pendentes; nenhuma ferramenta de deploy publicada**.
+> **Repositorio:** `roberiooliveiradev/delpi-central`; **PRs integradas:** [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184) (P0-P1), [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (P2.1); **P2.2a/P2.2b/P2.2c em codigo main, sem executor/endpoint e sem deploy**.
 > **Diretriz de produto:** objetivo principal = deploy controlado sob demanda; melhoria da telemetria geral Linux congelada ate nova prioridade.
 
 ## 1. Visao do produto
@@ -38,7 +38,7 @@ Este indice e a **fonte de continuidade** do ATLAS. Cada detalhamento deve resid
 | A1-R | Lacunas CPU %, contagem Docker, `partial` | ADIADO_POR_DECISAO_DO_OWNER | So reabrir conforme nova prioridade, sem condicionar o deploy |
 | A2.0 | Contrato de deploy, boundaries, aprovacao e testes negativos | DOCUMENTADO_EM_PR | Documento P2-P4 revisado, sem runtime |
 | **A2.1** | **Modulo puro de politica de preview: allowlist, SHA, CI/attestation, TTL, hash, tests** | **MERGED_PR_191 / CI_PASS** | Sem I/O, deny by default, testes negativos locais e CI; nenhuma tool ACT |
-| A2.2 | Atestacao GitHub/CI/host/Core, journal transacional, versao instalada e API PREPARE | **P2.2a/P2.2b LEITORES_MAIN / CI_PENDENTE; HostProof, journal persistente e API pendentes** | Permissoes separadas, CI por SHA, concorrencia/revogacao testadas |
+| A2.2 | Atestacao GitHub/CI/host/Core, journal transacional, versao instalada e API PREPARE | **P2.2c CONTRATO_HOST_ASSINADO + IDEMPOTENCIA_OFFLINE_MAIN / CI_PENDENTE; emissor real, journal SQL e API pendentes** | Permissoes separadas, CI por SHA, concorrencia/revogacao testadas |
 | A2.3 | Tela de aprovacao nominativa no portal + expirar/revogar/cancelar | NAO_INICIADO | Ator autorizador, plano/hash e replay revalidados fora do ChatGPT |
 | A3.1 | Executor host isolado, catalogo um serviço HML, dry-run real | NAO_INICIADO | Sem shell/SSH/docker.sock no MCP, nenhum efeito em PROD |
 | A3.2 | Piloto de deploy HML com health e rollback/roll-forward | NAO_INICIADO | Same approved SHA, estado + smoke reais, negativo de rollback |
@@ -82,7 +82,7 @@ Antes de cada incremento: ler este README, o contrato P2-P4, `AGENTS.md`, as reg
 
 Depois de cada incremento, **na mesma entrega**: atualizar a linha do marco acima e registrar no contrato/diario o commit, escopo, testes efetivos, CI, flags, riscos, rollback, alteracoes realizadas e estado real de HML/PROD. Nao transformar PR em produção sem evidencia.
 
-**Proxima tarefa:** A2.2c: obter evidencia real/autorizada de revisao por servico no host (nao confundir checkout HEAD com release em execucao), coordenar owner da migration com Delpi Remote, implementar journal transacional PostgreSQL e definir catalogo de CI/workflows por servico. API PREPARE e ACT continuam inativas ate review e HML; A3/A4 bloqueadas.
+**Proxima tarefa:** A2.2d: implementar emissor local read-only de provas da imagem realmente ativa para um unico servico HML, estabelecer canal seguro + consumo unico do challenge, coordenar owner/migration com Delpi Remote e construir journal PostgreSQL transacional testado em base descartavel. API PREPARE e ACT continuam inativas ate review e HML; A3/A4 bloqueadas.
 
 ## 7. Marco validado
 
@@ -115,3 +115,15 @@ A janela de frescor da avaliacao e 120 s, com tolerancia de 5 s para clock futur
 - [Modelo do journal e runbook dos bloqueios](./03-atlas-deploy-journal-p2b.md) tem candidate schema transacional, chave de idempotencia, transicoes atomicas e eventos append-only de API. **Nao e migration aplicada**.
 
 **Gate seguinte A2.2c:** host attestation real, decisao de ownership DB/migration, catalogo de alvos e workflow IDs, journal PostgreSQL com concorrencia e RBAC, API PREPARE sob flag OFF.
+
+
+## 10. Incremento A2.2c: comprovante runtime assinado e regra PREPARE (15/11/2026)
+
+**Codigo em main, ainda offline:**
+- `linux-ops-mcp/linux_ops_mcp/deploy_host_receipt.py`: verifica HMAC-SHA256 do comprovante gerado por um **futuro emissor confiavel do host**, challenge de 256 bits, repo/servico/ambiente/host, SHA e `ImageID` de release **igual** ao `ImageID` observado do container, timestamp UTC <=90s e booleanos estritos; recusa campo extra, assinatura invalida ou divergencia. **Nao acessa Docker, SSH, Git, SQL ou qualquer servico real.** `migrations_safe` e `rollback_ready` permanecem obrigatoriamente **False** ate atestacao independente.
+- `linux-ops-mcp/linux_ops_mcp/deploy_journal_policy.py`: helper de decisao PREPARE com idempotency UUIDv4, mesma identidade/payload, SHA/TTL/candidate coerente. **Nao e journal persistente, nao possui transacao/UNIQUE/lock, nao aprova e nao executa.**
+- Testes `test_deploy_host_receipt.py` (30 PASS local) e `test_deploy_journal_policy.py` (17 PASS local): **47 PASS locais**, Python 3.13, sem rede nem host, compilacao PASS. CI GitHub e verificador independente ainda requerem comprovacao. Nao afirmamos smoke real de homologacao.
+
+**Documentacao detalhada:** [04-atlas-p22c-host-receipt-journal-contract.md](./04-atlas-p22c-host-receipt-journal-contract.md). **Bloqueios reais:** nenhum signer instalado/chave provisionada no srv-api; sem registro imutavel de release, anti-replay DB ou produtor real de HostProof; tabelas V016 ainda nao criadas por necessidade de coordenar migration com Delpi Remote; grants Core/CI por servico/rollback/approval/ACT ainda pendentes. As quatro tools MCP READ nao mudaram.
+
+**Proximo lote P2.2d:** emissor HML com allowlist + provenance de container/image, backend challenge one-shot e journal Postgres real sob transacao, mantendo ACT e producao desligados.
