@@ -422,14 +422,12 @@ def is_record_command(segment: List[str]) -> bool:
 
 
 def is_verify_command(segment: List[str]) -> bool:
-    """Allow the executor to launch verify.py while other writes stay blocked."""
-    if not segment:
+    """Allow the executor to launch verify.py (python …/verify.py …) only."""
+    if len(segment) < 2:
         return False
-    names = [Path(tok).name.lower() for tok in segment]
-    if "verify.py" not in names:
+    if not re.match(r"^python[0-9.]*(\.exe)?$", Path(segment[0]).name, re.IGNORECASE):
         return False
-    # Reject obvious write redirects already handled elsewhere; here we only whitelist the launcher.
-    return True
+    return Path(segment[1]).name.lower() == "verify.py"
 
 
 def classify_git(args: List[str]) -> Optional[str]:
@@ -597,12 +595,12 @@ def classify_command(command: str, depth: int = 0) -> Optional[str]:
         return "comando com aspas desbalanceadas (não inspecionável)"
     if "`" in command or "$(" in command or "<(" in command or ">(" in command:
         return "substituição de comando (`...`, $(...), <(...)) não é inspecionável"
-    segments = split_segments(tokens)
-    if len(segments) == 1 and (is_record_command(segments[0]) or is_verify_command(segments[0])):
-        return None
     problem = find_redirect_problem(tokens)
     if problem:
         return problem
+    segments = split_segments(tokens)
+    if len(segments) == 1 and (is_record_command(segments[0]) or is_verify_command(segments[0])):
+        return None
     for segment in segments:
         reason = classify_segment(segment, depth)
         if reason:

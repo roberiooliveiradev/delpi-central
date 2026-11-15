@@ -50,12 +50,15 @@ ALLOWED = [
     "alembic current",
     '"/usr/bin/python3" "/home/u/.delpi-agent-kit/verifier_hooks.py" record --verdict ACCEPT --round 1 --summary "tudo ok"',
     '"/usr/bin/python3" "/home/u/.delpi-agent-kit/verifier_hooks.py" clear',
+    '"/usr/bin/python3" "/home/u/.delpi-agent-kit/verify.py" --request-file /tmp/pedido.md',
 ]
 
 BLOCKED = [
     "rm -rf build",
     "mv a b",
     "touch probe.txt",
+    "python3 verify.py --request-file r.md > /tmp/out.txt",
+    "cp /home/u/.delpi-agent-kit/verify.py /tmp/copy.py",
     "echo hi > f.txt",
     "echo hi >> f.txt",
     "cat <<EOF > f.txt",
