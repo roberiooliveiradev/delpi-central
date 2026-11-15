@@ -1,5 +1,7 @@
 # UX parity — evidência de execução (HML)
 
+> **PO visual review — 15/11/2026:** o pacote acima passou no E2E anterior, mas as screenshots de aceite revelaram **gap visual residual**: controles renderizados fora do Hero e cabeçalhos sem ordenação perceptível/validada. O plano de correção executável está em [UX-V2-HERO-TABLE-HELPDESK-PARITY-CORRECTION-PLAN.md](./UX-V2-HERO-TABLE-HELPDESK-PARITY-CORRECTION-PLAN.md). Portanto o aceite visual final fica **PENDING** até correção, E2E com clique real e verificador independente. O histórico de evidências abaixo permanece válido para o escopo executado, sem reinterpretar PASS como aceite dos novos critérios.
+
 > **TASK_ID:** `MYREQ-HELPDESK-PLUGIN-UI-CROSS-MFE-UX-IMPLEMENTATION-HML-01`
 > **Data:** 15/11/2026 · **Branch:** `main` · **Ambiente:** HML (`delpi-hml`, srv-api)
 > **Documento de intenção:** `UX-PARITY-HELPDESK-PLUGIN-UI-TWO-MFES.md` (este arquivo é evidência, não intenção)
