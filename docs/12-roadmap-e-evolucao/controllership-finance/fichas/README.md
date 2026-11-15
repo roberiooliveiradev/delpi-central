@@ -71,3 +71,15 @@ tools — nenhuma tool plana por relatório.
 ## Processo (conhecimento operacional)
 
 - [PROC-0072 — ficha do processo de fechamento](processo-fechamento-ficha.md)
+
+## TES — Tipo de Entrada e Saída (cadastro SF4)
+
+Família transversal: explica o que cada TES faz e em qual relatório do
+fechamento ela pesa. A regra de cada relatório continua na ficha dele.
+
+- [TES-00 — O que é TES e como ler](tes/TES-00.md)
+- [TES-01 — TES no Fechamento mensal da Controladoria](tes/TES-01.md)
+- [TES-02 — Padrões das TES na Delpi](tes/TES-02.md)
+- [TES-03 — Catálogo das TES de entrada](tes/TES-03.md)
+- [TES-04 — Catálogo das TES de saída](tes/TES-04.md)
+- [TES-05 — Pendências, manutenção e como a CLARA responde](tes/TES-05.md)

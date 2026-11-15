@@ -1,0 +1,459 @@
+codigo;tipo;texto;finalidade;cfop;estoque;duplicata;calcula_icms;credita_icms;livro_icms;calcula_ipi;credita_ipi;livro_ipi;piscofins;credito_piscofins;poder_terceiros;material_consumo;cst_icms;tes_devolucao;bloqueado
+001;Entrada;COMPRAS MP;COMPRA MP COM ICMS E IPI PIS COFINS;1101;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;00;530;
+002;Entrada;COMPRA EMPRESA OPT MEI;;1101;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Tributado;Ambos;Credita;Nao Controla;Não;90;530;Não
+003;Entrada;COMPRAS MP S/IPI;;1101;Sim;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;00;561;
+004;Entrada;COMPRAS MP SIMPLES;COMPRAS MP SIMPLES NACIONAL;1101;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;90;554;
+005;Entrada;EMBALAGEM S/ IPI;;1101;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;90;;Sim
+006;Entrada;COMPRAS;;1101;Nao;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;00;;Sim
+007;Entrada;EMBALAGEM C/ ICM/IPI;;1101;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;00;560;Sim
+008;Entrada;CONS ADM C EST S IPI;;1556;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;90;711;
+009;Entrada;DEV. COMPRAS;;1201;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+010;Entrada;DEVOLVUCÄO DE CLIENT;;1201;Nao;Sim;Nao;Nao;Outros;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+011;Entrada;DEVOLUCAO DE PRODUTO;;1201;Nao;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;00;;
+012;Entrada;DEV. MP S/ IPI E S/;;1201;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+013;Entrada;COMP. MAT PRIMA;;1101;Nao;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;00;;Sim
+014;Entrada;DEV. MERCADORIA;;1202;Sim;Sim;Sim;Sim;Tributado;Sim;Nao;Outros;Ambos;Credita;Nao Controla;Não;00;;
+015;Entrada;COMPRA DE MERCADORIA;;1102;Nao;Sim;Sim;Sim;Tributado;Sim;Nao;Tributado;Ambos;Credita;Nao Controla;Não;00;;
+016;Entrada;COMPRAS CONTA ORDEM;COMPRAS COM CONTA E ORDEM;1101;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;00;560;Não
+017;Entrada;CONSUMO RED 70% BASE CALC ICMS;;1556;Sim;Sim;Sim;Nao;Outros;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Sim;90;;Não
+018;Entrada;INSUMO C EST S IPI;USO PROD INSUMO MATERIAL SEG;1556;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Sim;90;529;Não
+019;Entrada;CONSUMO SIMPLES NACIONAL DENTRO ESTADO;;1556;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;90;547;Não
+020;Entrada;AQUIS. ENER. ELETR.;;1252;Nao;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;00;;
+021;Entrada;ENT IND CONTA E ORDEM ADQ;;1924;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Não
+022;Entrada;MAT SEGURANÇA;;1556;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Sim;90;;Sim
+023;Entrada;FERRAM. PER S/ IPI;;1556;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Sim;90;;Sim
+024;Entrada;INSUMO RED ICMS CONV 5291;;1556;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Sim;90;;Não
+025;Entrada;FRETE S/ MAN. MAQ.;;1352;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Isento;Ambos;Credita;Nao Controla;Sim;90;;Não
+026;Entrada;FRETE ATIVO;;1352;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Isento;Nao Considera;Nao Calcula;Nao Controla;Sim;90;;Não
+027;Entrada;SERV. 3º ADM S/ ISS;;1949;Nao;Sim;Nao;Nao;Nao;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+028;Entrada;SERV. 3º PROD. IR;;1933;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;41;;Não
+029;Entrada;INFORMÁTICA;;1556;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;90;;Sim
+030;Entrada;SERV. COMUNICAÇÃO;;1302;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Ambos;Nao Calcula;Nao Controla;Não;90;;
+031;Entrada;CONS ADM S EST S IPI;CONSUMO ADM SEM ESTOQUE E S IPI (ALIMENTACAO,EDIFICACAO,LIMPEZA,EXPEDIENTE);1556;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;90;650;Não
+032;Entrada;SERV. ADM FATURAS;;1933;Nao;Sim;Nao;Nao;Nao;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Não
+033;Entrada;VALE TRANSPORTES;;1933;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;41;;Sim
+034;Entrada;ALIMENTAÇÃO;;1556;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;90;;Sim
+035;Entrada;NFS S/ DUPLICATA;;1949;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Não
+036;Entrada;FRETE S/ VENDAS;;1352;Nao;Sim;Sim;Sim;Outros;Nao;Nao;Isento;Ambos;Credita;Nao Controla;Não;00;;Sim
+037;Entrada;MAN. VEICULOS;;1556;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;90;;Sim
+038;Entrada;COMBUST. E LUB ADM;;1653;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;60;;Não
+039;Entrada;SAMAE;;1933;Nao;Sim;Nao;Nao;Nao;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Sim
+040;Entrada;AQUIS. SERV.TRANSP.;;1352;Sim;Sim;Sim;Sim;Tributado;Nao;Nao;Isento;Ambos;Credita;Nao Controla;Não;00;;
+041;Entrada;IND. EFET. 3ºC/IPI;;1124;Nao;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+042;Entrada;TRANSP. CONSUMO;FRETE CONSUMO SEM CRED ICMS PIS COF;1352;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;90;;Não
+043;Entrada;SERV. MANUT.;;1933;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Sim
+044;Entrada;CREDITO ICMS ATIVO;;1604;Nao;Nao;Sim;Sim;Outros;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+045;Entrada;COMPRA MP;;1122;Nao;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;00;;Não
+046;Entrada;SERVICOS ADM/CONSUMO;;1933;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Não
+047;Entrada;REMESSA TRIANGULAR;;1925;Sim;Nao;Nao;Nao;Tributado;Nao;Nao;Isento;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Sim
+048;Entrada;INDUST. TRIANGULAR;;1125;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Calcula;Nao Controla;Não;00;;Não
+049;Entrada;MATÉRIA-PRIMA - SIMP;;1101;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;90;;Sim
+050;Entrada;COMPRA MERC. CONS.ST;;1407;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;60;;Sim
+051;Entrada;MP SIMPLES S EST;;1101;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;90;;Sim
+052;Entrada;INSUMO C EST C IPI;;1556;Sim;Sim;Sim;Nao;Outros;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Sim;90;608;Não
+053;Entrada;FRETE VENDAS SIMPLES;;1933;Nao;Sim;Nao;Nao;Nao;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Sim
+054;Entrada;INDUST TERC;;1124;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;51;;Sim
+055;Entrada;INTERMEDIÁRIO;;1101;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;90;;Sim
+056;Entrada;VENDA COM ENTREGA FUTURA;;1922;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Não
+057;Entrada;INDUST. TERC;;1124;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+058;Entrada;INDUST. TERC;;1125;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;00;;Não
+059;Entrada;BONIFICAÇÃO PROD;;1910;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;00;;Não
+060;Entrada;COMPRA DE ATIVO IMOB;;1551;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+061;Entrada;VIGILANCIA;;1933;Nao;Sim;Nao;Nao;Isento;Nao;Nao;Isento;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Sim
+062;Entrada;INTERM SIMPLES;;1101;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;90;;Sim
+063;Entrada;MED TRABALHO;;1933;Nao;Sim;Nao;Nao;Isento;Nao;Nao;Isento;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Sim
+064;Entrada;COMISSAO;;1933;Nao;Sim;Nao;Nao;Nao;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Sim
+065;Entrada;CONTABILIDADE;;1933;Nao;Nao;Nao;Nao;Nao;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Sim
+066;Entrada;PEÇAS INFORMATI;;1556;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;90;;Sim
+067;Entrada;JURIDICO;;1933;Nao;Sim;Nao;Nao;Nao;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Sim
+068;Entrada;DEMONSTRA;;1912;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;543;Sim
+069;Entrada;CONS ADM C EST C IPI BASE;;1556;Sim;Sim;Sim;Nao;Outros;Sim;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;90;;Não
+070;Entrada;CONS ADM SEM IMP C ESTOQUE;;1556;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Sim;90;542;Não
+071;Entrada;CONSUMO ADM COM ESTOQUE;;1556;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;90;;Sim
+072;Entrada;RETORNO REM;;1902;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;50;613;Sim
+073;Entrada;RET. INDUSTRIALIZAÇÃ;;1903;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;;Não
+074;Entrada;REMESSA CONSERTO;;1915;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;518;Sim
+075;Entrada;COMPRA;;1101;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;90;;Sim
+076;Entrada;COMPRA MP;;1101;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;90;;Sim
+077;Entrada;REMESSA P/ CONSERTO;;1915;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Isento;Nao Considera;Nao Calcula;Devolucao;Não;90;;Sim
+078;Entrada;REM. ATIVO;;1554;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;527;Sim
+079;Entrada;RETORNO SEM INDUSRIA;;1903;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;613;Não
+080;Entrada;ENTRADA IND.P/ENCOM.;;1901;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;50;525;
+081;Entrada;RETORNO DE INDUSTRIA;;1902;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;613;
+082;Entrada;OUTRAS ENTRADAS;;1949;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;753;Não
+083;Entrada;ENTRADA DE VASILHAME;;1920;Nao;Nao;Nao;Nao;Isento;Nao;Nao;Nao;Nao Considera;Nao Calcula;Remessa;Não;40;550;
+084;Entrada;ENTRADA DE AMOSTRAS;;1911;Nao;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;00;;Não
+085;Entrada;ENTRADA IND.P/ENCOM.;;1901;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;50;525;Não
+086;Entrada;ENTRADA ATIVO IMOBIL;;1555;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;40;527;Sim
+087;Entrada;REMESSA P/ DEMOSTRAÇ;;1912;Nao;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Remessa;Não;00;535;Sim
+088;Entrada;CONSUMO ADM SEM DUPLICATA;;1556;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;90;;Não
+089;Entrada;AMOSTRA GRATIS;;1911;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;40;;Não
+090;Entrada;ENT. AMOSTRA GRATIS;;1911;Nao;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Não
+091;Entrada;AMOSTRA TRIBUTADA;;1911;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Não
+092;Entrada;ENTRADA DE AMOSTRAS;;1911;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;
+093;Entrada;ENTRADA DE AMOSTRAS IPI NA BASE;;1911;Sim;Nao;Sim;Sim;Outros;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Não
+094;Entrada;RET CONSERTO S/EST C/POD3;;1916;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Nao;Nao Considera;Nao Calcula;Devolucao;Não;50;;Não
+095;Entrada;REM. DE DEMONTRACAO;;1912;Sim;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;00;535;Sim
+096;Entrada;ENTRADA P/ DEMONST.;;1912;Sim;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;00;536;Sim
+097;Entrada;REM P/CONSERTO C/EST C/POD3;;1915;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Nao;Nao Considera;Nao Calcula;Remessa;Não;50;541;Não
+098;Entrada;ENTRADA DE BEM CONS.;;1916;Nao;Nao;Nao;Nao;Nao;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+099;Entrada;REM P/CONSERTO S/EST C/POD3;;1915;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Nao;Nao Considera;Nao Calcula;Remessa;Não;50;541;
+100;Entrada;RET CONSERTO C/EST C/POD3;;1916;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Nao;Nao Considera;Nao Calcula;Devolucao;Não;50;542;
+101;Entrada;RET. REM. CONSIGNACA;;1918;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+102;Entrada;REM ATIVO;;1554;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;90;527;Sim
+103;Entrada;CONSUMO;;1556;Sim;Sim;Sim;Nao;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;90;;Sim
+104;Entrada;REMESSA P/ DEMONSTRA;;1912;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;90;558;Sim
+105;Entrada;RET DEMONST C/EST;;1913;Sim;Nao;Sim;Nao;Outros;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;90;;Não
+106;Entrada;INSUMO IPI NA BASE;1556 COMPRA USO/CONSUMO C/ICMS IPI;1556;Sim;Sim;Sim;Nao;Outros;Sim;Sim;Outros;Ambos;Credita;Nao Controla;Sim;90;617;Não
+107;Entrada;RET.MERC.REM.CONSER.;;1916;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Sim
+108;Entrada;COMBUST. E LUB ADM;;1653;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;60;;Não
+109;Entrada;RET DEMONST S/EST S/POD3;;1913;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Não
+110;Entrada;OUTRAS ENTRADAS;;1949;Nao;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;634;Não
+111;Entrada;OUTRAS ENTRADAS IPI NA BASE;;1949;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;00;600;Não
+112;Entrada;OUTRAS ENT. N/ESPCIF;PEÇAS DE REPOSICAO IMPORTAÇÃO CONTA E ORDEM;1949;Nao;Nao;Sim;Nao;Outros;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;51;618;Não
+113;Entrada;SERV. COM RETENÇ;;1933;Nao;Sim;Nao;Nao;Nao;Nao;Nao;Isento;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Sim
+114;Entrada;OUTRA ENT.NAO ESPEC.;;1949;Nao;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;00;568;Sim
+115;Entrada;SUBST EM GARANTIA;;1949;Nao;Nao;Sim;Sim;Tributado;Nao;Nao;Nao;Nao Considera;Nao Calcula;Devolucao;Não;00;571;
+116;Entrada;OUTRAS ENTRADAS;;1949;Nao;Sim;Nao;Nao;Nao;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;60;;Sim
+117;Entrada;BONIFICACAO ADM;;1910;Nao;Nao;Sim;Nao;Tributado;Sim;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Não
+118;Entrada;ENTRADA DE INDUS.;;1901;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;50;525;Sim
+119;Entrada;ENTRADA DE EMBALAGEM;;1920;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;550;Sim
+120;Entrada;DEVOLUCAO DE VENDAS;;1201;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;00;595;
+121;Entrada;RET. REM. CONSERTO;;1916;Nao;Nao;Nao;Nao;Isento;Nao;Nao;Nao;Nao Considera;Nao Calcula;Devolucao;Não;50;;Sim
+122;Entrada;ESTORNO PODER TERCEIRO;;1949;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;622;Sim
+123;Entrada;RETORNO S/ INDUSTRIA;;1903;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Sim
+124;Entrada;RET. EMBALAGEM;;1921;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;41;668;Não
+125;Entrada;ENTRADA P/ DEMONST.;;1912;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Não
+126;Entrada;TRANSF. MAT. PRIMA;;1151;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Não
+127;Entrada;DEVOLUCAO DE VENDAS;;1201;Nao;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;51;594;Não
+128;Entrada;ENTRADA MERCADORIA COMPRA FUTURA;;1117;Sim;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;00;;Não
+129;Entrada;OUTRAS ENT. N ESPECI;;1949;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;40;;Não
+130;Entrada;INDUSTRI P/OUTRA EMP;;1124;Sim;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;00;;
+131;Entrada;IND. TERCEIROS S/ ES;;1124;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Isento;Ambos;Credita;Nao Controla;Não;51;;Não
+132;Entrada;INDUST. TERCEIROS;;1124;Sim;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+133;Entrada;ATIVO PERM. PRODUCAO;;1551;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Sim;90;547;Não
+134;Entrada;AMOSTRA;;1911;Sim;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Não
+135;Entrada;REM COMODATO;;1908;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;90;;Sim
+136;Entrada;ENTRADA MAT FALTANTE;;1949;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Não
+137;Entrada;REM FAT ANTECIPADO;;1116;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+138;Entrada;ENTRADA MAT PRIMA;;1101;Nao;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;00;;Sim
+139;Entrada;OUTRAS ENT. N ESPECI;;1949;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Não
+140;Entrada;MATERIA PRIMA C/ ST;;1401;Sim;Sim;Nao;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+141;Entrada;COMPRA M.P COM ST;;1401;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;652;Sim
+142;Entrada;CONSUMO ST;;1407;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;60;620;Não
+143;Entrada;COMPRA MP COM ST;;1401;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+144;Entrada;ATIVO COM ST;;1406;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;60;;Não
+145;Entrada;CONSUMO ST;;1407;Sim;Sim;Sim;Nao;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;60;;Sim
+146;Entrada;MAT. PRIMA COM ST;;1401;Sim;Sim;Sim;Sim;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+147;Entrada;RET MERCADORIA IND;;1902;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Sim
+148;Entrada;AQUIS. TRANSP VENDA;;1352;Nao;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;00;;Não
+149;Entrada;AMOSTRA GRATIS MP;;1911;Nao;Nao;Sim;Nao;Outros;Nao;Sim;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Não
+150;Entrada;TRANSF. MAT. PRIMA;;1151;Sim;Nao;Sim;Sim;Tributado;Nao;Nao;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Não
+151;Entrada;TRANS. CONS C EST;;1557;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Não
+152;Entrada;TRANS. ATIVO;;1552;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+153;Entrada;COMPRA ATIVO IMOB;;1551;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;547;Não
+154;Entrada;COMPRA ATIVO IMOB;;1406;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+155;Entrada;TRANS. CONS S EST;;1557;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Não
+156;Entrada;CONSUMO ST;;1407;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;60;;Não
+157;Entrada;TRANSF. ENTRE FILIAI;;1151;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+158;Entrada;AQUISIÇÃO SERV TRANS;;1352;Sim;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;00;;Não
+159;Entrada;REMESSA PARA INDUSTR;;1901;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Não
+160;Entrada;REMESSA PARA INDUSTR;;1901;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Sim
+161;Entrada;OUTRAS ENTRADAS;;1949;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+162;Entrada;MAT.CONS.C/IPI C/ST;COMPRA MAT.CONSUMO C/ST E C/IPI;1407;Sim;Sim;Nao;Nao;Nao;Sim;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;60;559;Sim
+163;Entrada;MAT.CONS.S/IPI C/ST;;1407;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;60;574;Sim
+164;Entrada;OUTRA ENT.NAO ESPEC.;;1949;Nao;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;571;Não
+165;Entrada;FRETE SIMPLES NACION;;1352;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;90;;Não
+166;Entrada;CONS ADM S EST C IPI;1556 COMPRA USO/CONSUMO C/ICMS IPI;1556;Nao;Sim;Sim;Nao;Outros;Sim;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;90;649;Não
+167;Entrada;COMPRA USO/CONSUMO;1556 COMPRA USO/CONSUMO C/ICMS;1556;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Sim;90;650;Sim
+168;Entrada;ESTORNO 5124;1949 DEVOLUCAO INDUSTRIALIZACAO;1949;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;51;622;Não
+169;Entrada;INSUMO C EST C IPI BASE;1556 COMPRA USO/CONSUMO C/ICMS IPI;1556;Sim;Sim;Sim;Nao;Outros;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Sim;90;530;Não
+170;Entrada;DEMONSTRAÇÃO;;1912;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;579;Sim
+171;Entrada;COMPRA ATIVO IMOB;;1551;Nao;Sim;Nao;Sim;Outros;Nao;Sim;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+172;Entrada;OUTRAS ENTRADAS;;1949;Sim;Nao;Sim;Sim;Tributado;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;00;616;Não
+173;Entrada;REMESSA P/ DEMOSTRAÇ;;1912;Nao;Nao;Nao;Nao;Nao;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;41;578;Sim
+174;Entrada;TRANS. ATIVO;;1552;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Não
+175;Entrada;OUTRAS ENTRADAS;;1949;Nao;Sim;Sim;Sim;Tributado;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;00;530;Sim
+176;Entrada;TRANS. ATIVO;;1552;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+177;Entrada;MANT MAQ S/ IPI;;1556;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Sim;90;;Sim
+178;Entrada;REM COMODATO;;1908;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;90;641;Não
+179;Entrada;MATERIAL DE CONSUMO;MATERIAL DE CONSUMO COM DIFA POR DENTRO;1556;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;90;;Sim
+180;Entrada;AQUIS. TRANSPORTE RO;;1352;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;90;;Não
+181;Entrada;DEV VENDA ZONA FRANC;;1203;Sim;Sim;Sim;Nao;Isento;Nao;Nao;Outros;Ambos;Nao Calcula;Nao Controla;Não;40;606;Não
+182;Entrada;COMPRA ATIVO IMOB;;1551;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;90;588;Não
+183;Entrada;RET.MERC.REM.CONSERT;;1916;Nao;Nao;Sim;Sim;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+184;Entrada;COMBUST. E LUB PROD;;1653;Sim;Sim;Sim;Nao;Outros;Sim;Sim;Outros;Ambos;Credita;Nao Controla;Sim;60;;Não
+185;Entrada;COMBUST. E LUB PROD;;1653;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Sim;60;;Não
+186;Entrada;RET. COMODATO;;1909;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;41;;Não
+187;Entrada;ATIVO PERM.PROD;;1551;Nao;Sim;Sim;Nao;Outros;Sim;Nao;Outros;Ambos;Calcula;Nao Controla;Sim;90;;Não
+188;Entrada;RET DEMONST S/EST;;1913;Nao;Nao;Nao;Nao;Outros;Sim;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;576;Não
+189;Entrada;MANT MAQ S/ IPI;;1556;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Sim;90;650;Não
+190;Entrada;DEV. VENDA ZFM;;1203;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Nao Calcula;Nao Controla;Não;40;606;Sim
+191;Entrada;DEV. MP S/ IPI E S/;ESTORNO NF MANAUS;1201;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Credita;Nao Controla;Não;51;;Não
+192;Entrada;BONIFICAÇÃO PROD;;1910;Nao;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;00;;Não
+193;Entrada;COMPRA CONTA E ORDEM;;1122;Nao;Sim;Sim;Sim;Tributado;Sim;Nao;Outros;Ambos;Credita;Nao Controla;Não;00;;Não
+194;Entrada;REMESSA P/ DEMONSTRA;;1912;Sim;Nao;Sim;Nao;Outros;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;51;585;Não
+195;Entrada;CONSUMO ST;;1407;Nao;Sim;Sim;Nao;Outros;Sim;Sim;Outros;Ambos;Calcula;Nao Controla;Não;60;;Sim
+196;Entrada;BONIFICACAO ADM;;1910;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Não
+197;Entrada;TRANSF. MAT. PRIMA;;1151;Nao;Nao;Sim;Sim;Tributado;Nao;Nao;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Não
+198;Entrada;RET. DEMONST S/EST C/POD3;;1913;Nao;Nao;Nao;Nao;Tributado;Nao;Nao;Nao;Nao Considera;Nao Calcula;Devolucao;Não;41;;Não
+199;Entrada;COMPRA ORINADA DE COMPRA FUTURA;;1117;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Não
+200;Entrada;RET DEMONST S/EST S/POD3;;1913;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Não
+201;Entrada;DEVOLUCAO DE VENDA;;1201;Sim;Sim;Sim;Nao;Isento;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;40;;Não
+202;Entrada;TRANS. CONSUMO;;1557;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+203;Entrada;ESTORNO;;2949;Sim;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+204;Entrada;TRANSF. MAT. PRIMA;;1151;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Não
+205;Entrada;ATIVO PERM.PROD;BASE DE CALC. RED. 26,57%;1551;Nao;Sim;Sim;Nao;Outros;Sim;Nao;Outros;Ambos;Calcula;Nao Controla;Sim;90;;Não
+206;Entrada;CONTA E ORDEM ATIVO IMOBILIZADO;;1949;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;51;;Não
+207;Entrada;ENTRADA IND.P/ENCOM. (CUSTO ZERO);;1901;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;50;525;Não
+248;Entrada;OUTRAS ENTRADAS;;1949;Nao;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Não
+249;Entrada;ENTRADA DE EMBALAGEM;;1920;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;90;550;Sim
+250;Entrada;DEMONSTRAÇÃO;;1912;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;51;579;Não
+260;Entrada;CRED. ATIVO IMOBILIZ;;1604;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+261;Entrada;PRESTAÇÃO DE SERVIÇO;;1933;Nao;Sim;Nao;Nao;Isento;Nao;Nao;Isento;Nao Considera;Nao Calcula;Nao Controla;Não;40;;Sim
+262;Entrada;REM P/CONSERTO C/EST C/POD3;;1915;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Não
+300;Entrada;SERV. INFORM. 01;;1949;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+301;Entrada;RETORNO INDUSTRIALIZ;;1902;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;519;Não
+302;Entrada;RET. INDUSTRIALIZAÇÃ;;1902;Nao;Nao;Nao;Nao;Nao;Nao;Nao;Nao;Nao Considera;Nao Calcula;Devolucao;Não;50;613;Sim
+303;Entrada;COMPRA MATERIA PRIMA;;3101;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;00;;Não
+305;Entrada;ENTRADA IMPORTAÇÃO;;3101;Sim;Nao;Nao;Nao;Outros;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;51;;Não
+307;Entrada;AQUISIÇAO CONSUMO ST;;1407;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;60;652;Sim
+308;Entrada;ENT.IMPORTACAO DIRET;3101 - IMPORTACAO P/INDUSTRIALIZACAO C/ICMS DIFERIDO E C/IPI E  C/CRED PIS/COFINS;3101;Sim;Nao;Nao;Nao;Outros;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;51;763;Não
+309;Entrada;IMPORT.OUTRAS ENTRAD;IMPORT.OUTRAS ENTRADAS COURRIER;3949;Sim;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;721;Não
+310;Entrada;COMPRA DE MERCADORIA  S IPI;;1102;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;90;;Não
+311;Entrada;COMPRA USO/CONSUMO;;1556;Sim;Sim;Sim;Nao;Outros;Sim;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;90;;Sim
+312;Entrada;COMPRA MP DRAWBACK;;3127;Sim;Nao;Nao;Sim;Outros;Nao;Sim;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Não
+313;Entrada;OUTRAS ENT. N ESPECI;;2949;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+314;Entrada;CONSUMO COM DIFAL;;1556;Sim;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Calcula;Nao Controla;Sim;00;;Sim
+315;Entrada;CONSUMO S/ IPI;;1556;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Sim;90;;Sim
+316;Entrada;COMPRA MATERIA PRIMA;;3101;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;00;;Não
+317;Entrada;IMPORT.OUTRAS ENTRAD;;3949;Sim;Nao;Nao;Nao;Tributado;Nao;Nao;Outros;Ambos;Calcula;Nao Controla;Não;51;;Não
+318;Entrada;IMPORT.OUTRAS ENTRAD;;3101;Sim;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Não
+319;Entrada;ENT. AMOSTRA GRATIS;;1911;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Calcula;Nao Controla;Não;00;;Sim
+320;Entrada;ENT.IMPORTACAO DIRET;3101 - IMPORTACAO P/INDUSTRIALIZACAO C/ICMS DIFERIDO E C/IPI E  C/CRED PIS/COFINS;3101;Nao;Nao;Nao;Nao;Outros;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;51;;Não
+321;Entrada;ENT.IMPORTACAO DIRET;3101 - IMPORTACAO ATIVO IMOBILIZADO C/ICMS DIFERIDO E C/IPI E  C/CRED PIS/COFINS;3551;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Tributado;Ambos;Credita;Nao Controla;Não;51;;Não
+322;Entrada;ENT.IMPORTACAO DIRET;3101 - IMPORTACAO P/INDUSTRIALIZACAO C/ICMS DIFERIDO E C/IPI E  C/CRED PIS/COFINS;3101;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;00;763;Não
+3A8;Entrada;ENT.IMPORTACAO DIRET;3101 - IMPORTACAO P/INDUSTRIALIZACAO C/ICMS DIFERIDO E C/IPI E  C/CRED PIS/COFINS;3101;Sim;Nao;Nao;Nao;Outros;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;51;;Não
+400;Entrada;DEVOLUCAO COMPRAS;DEVOLUCAO DE VENDAS - FILIAL 02;1201;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+401;Entrada;TICKET ALIMENTAÇÃO;;1933;Nao;Sim;Nao;Nao;Isento;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+402;Entrada;ENERGIA ELETRICA;;1252;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;90;;Não
+403;Entrada;CONSUMO ST;;1407;Nao;Sim;Nao;Nao;Outros;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;60;;Sim
+404;Entrada;ESTORNO;;2949;Sim;Sim;Sim;Nao;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+405;Entrada;COMPRA MP SEM ESTOQU;COMPRA DE MP SEM ESTOQUE;1101;Nao;Sim;Sim;Sim;Tributado;Sim;Sim;Outros;Ambos;Credita;Nao Controla;Não;00;;Sim
+406;Entrada;MANUT MAQUIN COM IPI;;1556;Nao;Sim;Sim;Nao;Outros;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Sim;90;;Não
+407;Entrada;NF SERVIÇO C/ RED.;;1933;Nao;Sim;Nao;Nao;Isento;Nao;Nao;Isento;Ambos;Nao Calcula;Nao Controla;Não;40;;Sim
+408;Entrada;SERV. COMUNICAÇÃO;;1302;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;
+409;Entrada;TRANS. CONSUMO;;1557;Sim;Nao;Nao;Sim;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+410;Entrada;DEVOLUCAO AMOSTRA;;1911;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;40;;Sim
+411;Entrada;DEVOLUCAO DE AMOSTRA;;1911;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;40;;Sim
+412;Entrada;RETORNO DE INDUSTRIALIZACAO;;1902;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;41;;Não
+413;Entrada;DEVOLUCAO;;1949;Sim;Sim;Sim;Sim;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;51;;Não
+414;Entrada;DEVOLUCAO;;1949;Sim;Sim;Sim;Sim;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;51;;Não
+415;Entrada;DEVOLUCAO DE PRODUTO   COMPLEMENTAR  IPI;;1201;Nao;Sim;Nao;Sim;Nao;Sim;Nao;Tributado;Ambos;Credita;Nao Controla;Não;00;;
+416;Entrada;ENERGIA ELETRICA  VALOR ZERADO;;1252;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;90;;Não
+501;Saida;VENDA DE PRODUCAO DO ESTABELECIMENTO;;5101;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;120;
+502;Saida;VENDA DE MERCADORIAS;;5102;Nao;Sim;Nao;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;;Sim
+503;Saida;VENDA S ICMS;;5101;Nao;Sim;Nao;Nao;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;50;010;Sim
+504;Saida;VENDAS;;5101;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;;Sim
+505;Saida;VENDA DE PRODUCAO DO ESTABELECIMENTO;;5101;Nao;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;;Não
+506;Saida;VENDA DE MERC. ADQ. OU RECEBIDA DE TERC.;;5102;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;;
+507;Saida;VENDAS;;5101;Nao;Sim;Sim;Nao;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;120;Sim
+508;Saida;VENDAS;;5101;Sim;Sim;Nao;Nao;Outros;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;51;009;Sim
+509;Saida;VENDA REM.ANT.CONSIG;;6111;Nao;Sim;Nao;Nao;Nao;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Sim
+510;Saida;INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA;;5124;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;51;;Não
+511;Saida;INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA;;5124;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;51;312;Não
+512;Saida;INDUST. P/OUTRA EMPR;;6124;Nao;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;00;164;Sim
+513;Saida;VENDA MERC. S/ ESTOQ;;5102;Nao;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;;Sim
+514;Saida;DEVOLU. S/IPI;;5201;Sim;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;00;;Sim
+515;Saida;VENDA MERC. ADQ. RECEBIDA TERC. S/ IPI;;5102;Sim;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;00;;Não
+516;Saida;COMPLEM. ICMS;;5101;Nao;Nao;Sim;Sim;Tributado;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+517;Saida;VENDA SUBS. TRIB;VENDA SUBS. TRIB;5401;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;;Sim
+518;Saida;RETORNO DE MERCADORIA PARA CONSERTO;;5916;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;074;Sim
+519;Saida;REMESSSA P/ INDUSTRIALIZACAO POR ENCOM.;;5901;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;50;122;
+520;Saida;RET.MERC.INDUSTRIAL.;;5902;Sim;Nao;Nao;Nao;Outros;Sim;Sim;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Sim
+521;Saida;RET.MERC.INDUS.;;5902;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;50;;Sim
+522;Saida;RETORNO DE MERC. UTILIZADA NA IND.;;5902;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;;
+523;Saida;VENDA;;5101;Sim;Sim;Sim;Sim;Outros;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;00;;Sim
+524;Saida;RETORNO MERC. RECEB. P/ IND. NAO APLICAD;;5903;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;085;Não
+525;Saida;RETORNO DE MERC. UTILIZADA NA IND.;;5902;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;085;Não
+526;Saida;REM  BEM ATIVO IMOBI;;5554;Nao;Nao;Sim;Nao;Isento;Nao;Nao;Isento;Nao Considera;Nao Calcula;Nao Controla;Não;40;;Sim
+527;Saida;RET. ATIVO IMOBILIZA;;5555;Nao;Nao;Sim;Nao;Isento;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;40;;Sim
+528;Saida;RETORNO MERC. RECEB. P/ IND. NAO APLICAD;;5903;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Não
+529;Saida;DEVOL. DE COMPRA DE USO OU CONSUMO SN;;5556;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Não
+530;Saida;DEVOL. DE COMPRA PARA INDUSTRIALIZACAO;;5201;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;404;Não
+531;Saida;RETORNO SEM IND.;;5903;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;;Sim
+532;Saida;OUTRAS SAIDAS;;5949;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;90;;Sim
+533;Saida;DEVOLUCAO DE VASILHA;;5921;Nao;Nao;Sim;Nao;Isento;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;40;;Sim
+534;Saida;RETORNO MERC. RECEB. P/ IND. NAO APLICAD;;5903;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;085;Não
+535;Saida;RETORNO DE MERC. REC. DEMONSTRACAO;;6913;Nao;Nao;Sim;Nao;Outros;Sim;Sim;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;095;
+536;Saida;RETORNO DE MERC. REC. DEMONSTRACAO;;5913;Sim;Nao;Sim;Nao;Outros;Sim;Sim;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;;
+537;Saida;DEV. DEMONST.;;6913;Nao;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+538;Saida;VENDA MERC. ADQ. RECEBIDA TERC.;;5102;Sim;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;00;;Não
+539;Saida;RETORNO DE MERC. UTILIZADA NA IND.;;5902;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Não
+540;Saida;REMES. MERC. BEM P/ CONSERTO;;5915;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;50;094;
+541;Saida;RETORNO DE MERCADORIA PARA CONSERTO;;5916;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;;
+542;Saida;REMESS P/CONSERTO;;5915;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;50;100;Sim
+543;Saida;DEV. DEMONST;;5913;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;068;Sim
+544;Saida;DEVOLUÇÃO;;5201;Nao;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;00;;Sim
+545;Saida;VENDA REMETIDA P IND;;5122;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+546;Saida;REM.P/ CONTA ORDEM;;5924;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Sim
+547;Saida;DEVOLUCAO DE ATIVO IMOBILIZADO SN;;6553;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;153;Não
+548;Saida;RETORNO 3º;;5916;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;;Sim
+549;Saida;RET. REM. P/ CONSERT;;5916;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;097;Sim
+550;Saida;DEVOL. VASILHAME OU SACARIA;;5921;Nao;Nao;Sim;Nao;Isento;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;40;083;
+551;Saida;AMOSTRA GRATIS;;5911;Sim;Nao;Sim;Nao;Isento;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;40;;Não
+552;Saida;AMOSTRA;;5911;Nao;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;089;Sim
+553;Saida;AMOSTRA GRATIS;;5911;Sim;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+554;Saida;DEVOL. DE COMPRA PARA IND. SN;;5201;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;90;004;Não
+555;Saida;VENDA DE ATIVO IMOBILIZADO;;5551;Nao;Nao;Sim;Nao;Isento;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;40;;Não
+556;Saida;VENDA MERC. A ORDEM;;5123;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;;Sim
+557;Saida;REMESSA AMOSTRA;;5911;Nao;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+558;Saida;RETORNO DE MERC. REC. DEMONSTRACAO;;5913;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;;Não
+559;Saida;DEV.CONS. C/IPI C/ST;DEV.COMPRA MAT.CONSUMO C/ST E C/IPI;5413;Sim;Sim;Nao;Nao;Nao;Sim;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;60;;Sim
+560;Saida;DEV. DE COMPRA;;6201;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;00;;Sim
+561;Saida;DEVOL. DE COMPRA PARA INDUSTRIALIZACAO;;6201;Sim;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;00;003;Não
+562;Saida;DEVOLUÇÃO COMPRAS;;5201;Nao;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Credita;Nao Controla;Não;00;;Sim
+563;Saida;DEVOL. VENDAS;;5201;Nao;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;;Sim
+564;Saida;OUTRAS SAIDAS;;6949;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Não
+565;Saida;VENDA PROD. PROPRIA;;5401;Sim;Sim;Nao;Nao;Outros;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;10;;Sim
+566;Saida;VENDA PRODUÇÃO;;5101;Nao;Sim;Nao;Nao;Outros;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;90;;Sim
+567;Saida;BONIFICAÇÃO;;6910;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;035;Não
+568;Saida;OUTRAS SAIDAS;;5949;Nao;Nao;Nao;Nao;Outros;Sim;Sim;Outros;Nao Considera;Nao Calcula;Devolucao;Não;90;;Não
+569;Saida;DEV. COMPRA MP;;6201;Sim;Nao;Sim;Nao;Tributado;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;00;;Sim
+570;Saida;RET.MERC.INDUS.;;5902;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;;Sim
+571;Saida;OUTRAS SAIDAS;;5949;Nao;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;164;Não
+572;Saida;REMESSA AMOSTRA ZF;;5911;Nao;Nao;Sim;Nao;Isento;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;40;;Não
+573;Saida;VENDA MERC. ADQ. RECEBIDA TERC.;;5102;Sim;Sim;Sim;Nao;Isento;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;40;201;Sim
+574;Saida;DEV.CONS. S/IPI C/ST;;5413;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;60;;Sim
+575;Saida;OUTRAS SAIDAS;;5949;Nao;Nao;Sim;Nao;Outros;Sim;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;110;Sim
+576;Saida;REMESSA PARA DEMONSTRAÇÃO;;5912;Nao;Nao;Sim;Nao;Outros;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;50;188;Não
+577;Saida;RETORNO DE MERCADORIA PARA CONSERTO;;5916;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;;Não
+578;Saida;RET DEMONSTRACAO;;5913;Nao;Nao;Nao;Nao;Outros;Sim;Sim;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;173;Sim
+579;Saida;RETORNO DE MERC. REC. DEMONSTRACAO;;5913;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Não
+580;Saida;DEVOL. DE COMPRA PARA INDUSTRIALIZACAO;;6201;Nao;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;00;;Não
+581;Saida;REMESSA PARA DEMONSTRAÇÃO;;5912;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;200;Não
+582;Saida;DEV. CARRETEL;;5949;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;90;;Sim
+583;Saida;REMESSA PARA DEMONSTRAÇÃO;;5912;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;188;Não
+584;Saida;TRANSF MERC ADQ;;5152;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Sim
+585;Saida;RET DEMONSTRACAO;;5913;Sim;Nao;Sim;Nao;Outros;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;50;194;Não
+586;Saida;RETORNO DE DEMONSTRA;;5913;Sim;Nao;Sim;Nao;Outros;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;41;578;Sim
+587;Saida;BONIFICAÇÃO PROD;;1910;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+588;Saida;DEVOLUCAO DE ATIVO IMOBILIZADO;;6553;Nao;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;182;Não
+589;Saida;TRANSFERENCIA DE USO OU CONSUMO;;6557;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Não
+590;Saida;TRANSFERENCIA DE PRODUCAO DO ESTAB.;;6151;Sim;Nao;Sim;Nao;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Não
+592;Saida;AMOSTRA GRATIS;;5911;Nao;Nao;Sim;Nao;Isento;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;40;;Não
+593;Saida;DEVOL. DE COMPRAS;;5201;Nao;Sim;Sim;Nao;Tributado;Sim;Nao;Tributado;Ambos;Debita;Nao Controla;Não;00;;Sim
+594;Saida;VENDA DE PRODUCAO DO ESTABELECIMENTO;;5101;Nao;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;51;127;Não
+595;Saida;OUTRA SAIDAS RED BASE CALC;;5949;Nao;Sim;Sim;Sim;Outros;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;20;;Não
+596;Saida;OUTRAS SAIDAS;;5949;Nao;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;51;;Sim
+597;Saida;TRANSFERENCIA DE USO OU CONSUMO;;6557;Nao;Nao;Sim;Nao;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Não
+600;Saida;OUTRAS SAIDAS;;5949;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;110;
+601;Saida;OUTRAS SAIDAS;;5949;Nao;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;110;
+602;Saida;OUTRAS SAIDAS;;6949;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;113;
+603;Saida;REM MERC CONSIGNACAO;;5917;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+604;Saida;REMESSA P/ CONSERTO;;6915;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;50;094;Sim
+605;Saida;RET.MERC.IND.;;5902;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;;Sim
+606;Saida;VENDA DE PRODUCAO DO ESTAB. ZFM;;6109;Sim;Sim;Sim;Nao;Isento;Nao;Nao;Outros;Ambos;Nao Calcula;Nao Controla;Não;40;181;Não
+607;Saida;VENDA ATIVO IMOBILIZ;;5551;Nao;Sim;Sim;Nao;Isento;Nao;Nao;Isento;Nao Considera;Nao Calcula;Nao Controla;Não;40;182;Sim
+608;Saida;DEVOLUÇÃO CONSUMO;;5556;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;052;Sim
+609;Saida;VENDA DE PRODUCAO DO ESTAB. CONSUMO;;5101;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;;Não
+610;Saida;INDUSTRIALIZACAO EFET. INSUMOS;;5124;Nao;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;00;;Sim
+611;Saida;VENDA MERCADORIA;;5102;Sim;Sim;Sim;Nao;Outros;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;90;;Sim
+612;Saida;VENDA PROD. PROPRIA;;5101;Sim;Sim;Sim;Nao;Tributado;Sim;Nao;Tributado;Ambos;Debita;Nao Controla;Não;00;;Sim
+613;Saida;REMESSA INDUSTRIALIZ;;5901;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;50;081;Não
+614;Saida;VENDA DE PRODUCAO DO ESTABELECIMENTO;;5101;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;51;120;Não
+615;Saida;OUTRAS SAIDAS;;5949;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;139;Sim
+616;Saida;OUTRAS SAIDAS ENVIO PARA TESTE;;5949;Sim;Nao;Sim;Sim;Tributado;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;00;172;Não
+617;Saida;DEVOL. DE COMPRA DE USO OU CONSUMO;DEV. CONSUMO IPI NA BASE;6556;Sim;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Credita;Nao Controla;Não;90;;Não
+618;Saida;OUTRA SAIDA;;6949;Nao;Nao;Sim;Nao;Isento;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;40;112;Sim
+619;Saida;VENDA DE PRODUCAO DO ESTAB. SUCATAS;;5101;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;51;;Não
+620;Saida;DEV. CONSUMO ST;;5413;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;60;142;Sim
+621;Saida;VENDA PRODUÇÃO;;5101;Nao;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;120;Sim
+622;Saida;INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA;;5124;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;51;168;Não
+623;Saida;COMPLE. ICMS CONSUMO;;5556;Nao;Nao;Sim;Sim;Tributado;Nao;Nao;Nao;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+624;Saida;REMESSA DE VASILHAME;;5920;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;40;;Não
+625;Saida;VENDA COM ST;;5405;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;60;;Sim
+626;Saida;TRANSFERENCIA DE ATIVO IMOBILIZADO;;6552;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;40;;Não
+627;Saida;TRANSFERENCIA DE PRODUCAO DO ESTAB.;;6151;Sim;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Não
+628;Saida;TRANSFERENCIA DE USO OU CONSUMO;;6557;Sim;Nao;Sim;Nao;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Não
+629;Saida;VENDA DE PRODUCAO DO ESTABELECIMENTO;;5101;Nao;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;;Sim
+630;Saida;DEV. MAT PRIMA ST;;5410;Sim;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;60;;Sim
+631;Saida;RETORNO MERC.INDUSTR;RETORNO MERCADORIA INDUSTRIALIZACAO;5902;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;085;Sim
+632;Saida;DEVOL. DEMOSNTRAÇÃO;DEVOL DEMONSTRAÇÃO  RED BASE ICMS 78,58%;6913;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;20;;Sim
+633;Saida;OUTRAS SAIDAS;OUTRAS SAIDAS;5949;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Não
+634;Saida;OUTRAS SAIDAS;OUTRAS SAIDAS;5949;Nao;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Não
+635;Saida;COMPLEM. ICMS;;5101;Nao;Nao;Sim;Sim;Tributado;Nao;Nao;Nao;Ambos;Debita;Nao Controla;Não;20;;Sim
+636;Saida;VENDA MERC. ADQ. RECEBIDA TERC.;;5102;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;50;;Sim
+637;Saida;RET REM DEMONSTRAÇÃO;;5913;Nao;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;00;;Sim
+638;Saida;TRANSF. MP FILIAIS;;6151;Sim;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+639;Saida;VENDA SUCATA;;5101;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;51;;Sim
+640;Saida;RETORNO DEMONSTRAÇÃO;;5913;Sim;Nao;Sim;Nao;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+641;Saida;RETORNO REM COMODATO;;5909;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;41;178;Sim
+642;Saida;REMESSA INDUSTRIALIZ;;5901;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;159;Sim
+643;Saida;DEV. DEMONST.;;5913;Sim;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;50;;Sim
+644;Saida;DEV. DEMONST.;;6913;Nao;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;00;;Sim
+645;Saida;REMESSA P/ CONSERTO;;6915;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Sim
+646;Saida;REMESSSA P/ INDUSTRI;;5901;Sim;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Sim
+647;Saida;REMESS P/CONSERTO;;5915;Sim;Nao;Nao;Nao;Isento;Nao;Nao;Isento;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Sim
+648;Saida;REMESSA VASILHAME;;5920;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;40;;Sim
+649;Saida;DEVOL. DE COMPRA DE USO OU CONSUMO;5556 DEVOLUCAO USO/CONSUMO C/ICMS REDUCAO;5556;Nao;Sim;Sim;Nao;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;20;166;Não
+650;Saida;DEVOL. DE COMPRA DE USO OU CONSUMO SN;5556 DEVOLUCAO USO/CONSUMO C/ICMS;5556;Nao;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Não
+651;Saida;ESTORNO FRETE;;5206;Nao;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+652;Saida;DEVOL CONSUMO ST;;5413;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;60;;Sim
+653;Saida;DEVOLUÇÃO DE COMPRA;;6201;Nao;Nao;Sim;Nao;Tributado;Sim;Nao;Outros;Ambos;Credita;Nao Controla;Não;00;;Sim
+654;Saida;DEV. COMPRAS COFINS;;6201;Sim;Nao;Sim;Nao;Tributado;Sim;Nao;Tributado;Ambos;Credita;Nao Controla;Não;00;;Sim
+655;Saida;DEVOLUÇÃO DEMONSTRAÇ;;5913;Sim;Nao;Nao;Nao;Isento;Sim;Nao;Tributado;Nao Considera;Nao Calcula;Devolucao;Não;40;087;Sim
+656;Saida;INDUSTRIALIZACAO EFET. INSUMOS;;5124;Sim;Sim;Sim;Sim;Tributado;Nao;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;;Sim
+657;Saida;TRANSF INSUMOS CONSUMO;;5557;Nao;Nao;Sim;Nao;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Não
+658;Saida;REMESSA EM COMODATO;;5908;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;90;;Não
+659;Saida;EXP . DRAWBACK;;7127;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Não
+660;Saida;OUTRAS ENT. N ESPECI;;2949;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+661;Saida;INDUSTRIALIZACAO EFET. INSUMOS;;5124;Sim;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;00;;Não
+662;Saida;VENDA EXPORTACAO;;7101;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Não
+663;Saida;VENDA DE PRODUCAO DO ESTABELECIMENTO;;5101;Sim;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;51;011;Não
+664;Saida;DEVOLUÇÃO DEMONSTRAÇ;;5913;Nao;Nao;Sim;Nao;Outros;Sim;Sim;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;;Sim
+665;Saida;VENDA SUCATA;;5101;Nao;Sim;Sim;Nao;Tributado;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;51;;Sim
+666;Saida;VENDA MERC. ADQ. RECEBIDA TERC.;;5102;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;;Não
+667;Saida;VENDA EXPORTACAO;;7101;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;41;;Não
+668;Saida;REMESSA VASILHAME;;5920;Sim;Nao;Nao;Nao;Isento;Nao;Nao;Nao;Nao Considera;Nao Calcula;Remessa;Não;40;;Sim
+669;Saida;IND.EFET.P/OUTRA EMP;;5124;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;51;;Sim
+670;Saida;VENDA PROD.;;5101;Nao;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;51;120;Sim
+671;Saida;INDUSTRIALIZACAO EFET. INSUMOS;;5124;Nao;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;00;;Não
+672;Saida;OUTRAS SAIDAS ZFM;;6949;Sim;Sim;Sim;Nao;Isento;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;40;181;Não
+673;Saida;INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA;;5124;Sim;Sim;Sim;Sim;Tributado;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;00;;Não
+700;Saida;VENDAS;VENDAS  - FILIAL 02;5101;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;400;Sim
+701;Saida;TRANSFERENCIA BEM AT;TRANSFERENCIA ATIVO IMOBILIZADO;6552;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Não
+702;Saida;REMESSA RESÍDUO;REMESSA RESÍDUO;5949;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+703;Saida;VENDA SUCATA ES;VENDA SUCATA;5101;Nao;Sim;Nao;Nao;Outros;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;51;191;Sim
+704;Saida;TRANSFERENCIA DE PRODUCAO DO ESTAB.;TRANSFERENCIA MP;6151;Nao;Nao;Sim;Sim;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Não
+706;Saida;VENDA DE PRODUCAO DO ESTABELECIMENTO;VENDA;5101;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;20;120;Não
+707;Saida;VENDA DE PRODUCAO DO ESTAB. CONSUMO RED;VENDA;5101;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;20;120;Não
+708;Saida;VENDA DE PRODUCAO DO ESTABELECIMENTO;;5101;Sim;Sim;Sim;Nao;Outros;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;51;120;Não
+710;Saida;BAIXA ESTOQUE PERDA;BAIXA DE ESTOQUE;5927;Sim;Nao;Sim;Nao;Tributado;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+711;Saida;DEVOLUÇÃO CONSUMO;;5556;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Sim
+712;Saida;INDUST.TERCEIRO ES;;5124;Nao;Sim;Sim;Nao;Tributado;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;20;;Sim
+713;Saida;TRANSF. MP;;6151;Nao;Nao;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+714;Saida;BAIXA ESTOQUE PERDA;BAIXA ESTOQUE;5927;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;90;;Não
+715;Saida;VENDA PRODUÇÃO PROPI;;5101;Sim;Sim;Sim;Nao;Tributado;Sim;Nao;Tributado;Ambos;Debita;Nao Controla;Não;00;;Sim
+716;Saida;VENDA DE PRODUCAO DO ESTABELECIMENTO;VENDA;5101;Nao;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;20;009;Não
+717;Saida;BAIXA ESTOQUE PERDA;BAIXA ESTOQUE;5927;Sim;Nao;Nao;Nao;Nao;Sim;Sim;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Sim
+719;Saida;EXPORTAÇÃO MERCADORI;;7102;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;41;;Não
+720;Saida;AMOSTRA EXP;;7949;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Não
+721;Saida;IMPORT.OUTRAS ENTRAD;;7949;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;309;Não
+723;Saida;AMOSTRA EXP;;7949;Sim;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Não
+724;Saida;IMPORT.OUTRAS ENTRAD;;7949;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;41;309;Não
+750;Saida;AMOSTRA GRATIS;AMOSTRA GRATIS;7949;Sim;Nao;Nao;Nao;Isento;Nao;Nao;Isento;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Sim
+751;Saida;TRANSFERENCIA FILIAL;;6551;Sim;Nao;Sim;Nao;Tributado;Sim;Nao;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;00;;Sim
+752;Saida;DEVOLUÇÃO VASILHAME;;5921;Nao;Nao;Nao;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Devolucao;Não;40;;Sim
+753;Saida;DEVOL. DE COMPRA PARA INDUSTRIALIZACAO;;5201;Sim;Sim;Sim;Nao;Outros;Nao;Nao;Outros;Ambos;Debita;Nao Controla;Não;41;004;Sim
+754;Saida;SUBS EM GARANTIA;;6915;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Nao Considera;Nao Calcula;Nao Controla;Não;41;;Sim
+755;Saida;REMESSA PARA CONSERTO;;6915;Sim;Sim;Sim;Nao;Outros;Sim;Nao;Outros;Nao Considera;Nao Calcula;Nao Controla;Não;50;262;Não
+756;Saida;INDUSTRIALIZACAO EFET. INSUMOS;;5124;Nao;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;;Não
+757;Saida;INDUSTRIALIZACAO EFET. INSUMOS;;5124;Sim;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;00;;Não
+758;Saida;VENDA PRODUÇÃO;VENDA;5101;Nao;Sim;Sim;Sim;Tributado;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;20;120;Sim
+759;Saida;OUTRAS SAIDAS;;5949;Nao;Nao;Sim;Sim;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;50;100;Sim
+760;Saida;OUTRAS SAIDAS;;5949;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;50;100;Sim
+761;Saida;OUTRAS SAIDAS;;5949;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;50;;Sim
+762;Saida;OUTRAS SAIDAS;;5949;Nao;Nao;Sim;Nao;Outros;Nao;Nao;Outros;Nao Considera;Nao Calcula;Remessa;Não;50;;Sim
+763;Saida;ENT.IMPORTACAO DIRET;7949 - IMPORTACAO P/INDUSTRIALIZACAO C/ICMS DIFERIDO E C/IPI E  C/CRED PIS/COFINS;7201;Nao;Nao;Sim;Nao;Outros;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;51;308;Não
+764;Saida;ENT.IMPORTACAO DIRET;7949 - IMPORTACAO P/INDUSTRIALIZACAO C/ICMS DIFERIDO E C/IPI E  C/CRED PIS/COFINS;7201;Sim;Nao;Nao;Nao;Outros;Sim;Sim;Tributado;Ambos;Debita;Nao Controla;Não;51;308;Não

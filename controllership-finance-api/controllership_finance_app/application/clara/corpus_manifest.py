@@ -402,6 +402,26 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
     _s("ficha-ae-14", "fichas/auditoria-entradas/AE-14.md",
        "DOCUMENT", "AE-14 — Como a CLARA conduz a auditoria",
        "APPROVED_RULE", "auditoria-entradas"),
+    # -- TES: cadastro SF4 (extração 09/11/2026) e uso no fechamento ------
+    _s("ficha-tes-00", "fichas/tes/TES-00.md",
+       "DOCUMENT", "TES-00 — O que é TES e como ler",
+       "APPROVED_RULE", "tes"),
+    _s("ficha-tes-01", "fichas/tes/TES-01.md",
+       "MATRIX", "TES-01 — TES no Fechamento mensal da Controladoria",
+       "APPROVED_RULE", "tes",
+       report_ids=("R05", "R06", "R07", "R09", "R10", "R11")),
+    _s("ficha-tes-02", "fichas/tes/TES-02.md",
+       "DOCUMENT", "TES-02 — Padrões das TES na Delpi",
+       "OWNER_REPORTED_VIA_PO", "tes"),
+    _s("ficha-tes-03", "fichas/tes/TES-03.md",
+       "INVENTORY", "TES-03 — Catálogo das TES de entrada",
+       "OWNER_REPORTED_VIA_PO", "tes"),
+    _s("ficha-tes-04", "fichas/tes/TES-04.md",
+       "INVENTORY", "TES-04 — Catálogo das TES de saída",
+       "OWNER_REPORTED_VIA_PO", "tes"),
+    _s("ficha-tes-05", "fichas/tes/TES-05.md",
+       "DOCUMENT", "TES-05 — Pendências, manutenção e como a CLARA responde sobre TES",
+       "APPROVED_RULE", "tes"),
 ]
 
 
@@ -414,6 +434,7 @@ OPERATIONAL_SOURCE_IDS = frozenset(
     {"ficha-index", "ficha-processo"}
     | {f"ficha-r{n:02d}" for n in range(1, 16)}
     | {f"ficha-ae-{n:02d}" for n in range(15)}
+    | {f"ficha-tes-{n:02d}" for n in range(6)}
 )
 
 
@@ -436,7 +457,7 @@ def _operational_scope_only(spec: SourceSpec) -> SourceSpec:
 
 
 AUTHORIZED_SOURCES = [_operational_scope_only(spec) for spec in AUTHORIZED_SOURCES]
-assert len(OPERATIONAL_SOURCE_IDS) == 32
+assert len(OPERATIONAL_SOURCE_IDS) == 38
 assert {s.source_id for s in AUTHORIZED_SOURCES if s.access_scope == "PORTAL_ACCESS"} == OPERATIONAL_SOURCE_IDS
 
 
