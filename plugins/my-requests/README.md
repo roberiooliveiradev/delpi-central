@@ -1,5 +1,8 @@
 # Minhas Solicitações (MFE)
 
+> **Paridade visual inter-MFE (TARGET, não implementada):** [UX-PARITY-HELPDESK-PLUGIN-UI-TWO-MFES.md](../../docs/12-roadmap-e-evolucao/my-requests/UX-PARITY-HELPDESK-PLUGIN-UI-TWO-MFES.md) — quatro páginas detalhadas, TopBar acima do hero, filtros avançados, multi-sort, colunas, Tabela/Cards, contratos multi-source e extração de componentes Helpdesk para o Plugin UI. Não importar componentes privados de `plugins/helpdesk`.
+
+
 Microfrontend federado do módulo **Minhas Solicitações**.
 
 - Tile: `/apps/my-requests`
