@@ -34,8 +34,12 @@ Versão da ficha: 1.0 · 14/11/2026.
 | Descrição | `F4_TEXTO` | Txt Padrao | Texto do cadastro; não é único (16 TES de saída se chamam «OUTRAS SAIDAS») |
 | Finalidade | `F4_FINALID` | Finalidade | Texto livre; a Comercial usa «BAIXA ESTOQUE» como critério |
 | Tipo | `F4_TIPO` | Tipo do TES | E = entrada, S = saída |
+| PIS/COFINS | `F4_PISCOF` | PIS/COFINS ? | Se a TES calcula PIS e COFINS |
+| Crédito de PIS/COFINS | `F4_PISCRED` | Cred.PIS/COF | Credita, debita, só calcula ou não calcula |
+| TES de devolução | `F4_TESDV` | Tes Devol. | TES que o Protheus sugere para devolver a operação |
+| Bloqueio | `F4_MSBLQL` | Bloqueado | TES bloqueada não entra em nota nova |
 
-- Os nomes `F4_*` acima são os usados pelo código da api-delpi (PROVEN). PIS/COFINS (`Cred.PIS/COF`), TES de devolução (`Tes Devol.`) e bloqueio (`Bloqueado`) aparecem na extração; o nome técnico desses três campos é TO_INVENTORY no dicionário (SX3) da Delpi.
+- Os nomes `F4_*` acima são os usados pelo código da api-delpi ou confirmados no dicionário SX3 da Delpi em 14/11/2026 (PROVEN): crédito de PIS/COFINS é `F4_PISCRED` (título «Cred.PIS/COF»), a TES de devolução é `F4_TESDV` (título «Tes Devol.») e o bloqueio é `F4_MSBLQL` (título «Bloqueado»). O indicador de PIS/COFINS da extração é `F4_PISCOF` (título «PIS/COFINS ?»).
 - O SPED não lê a TES nem a SD1: lê o livro fiscal (SFT/SF3), gravado na classificação da nota com a TES daquele momento. Por isso `D1_VALICM` preenchido não é crédito (ficha AE-10).
 
 ## Faixas de código
