@@ -256,6 +256,19 @@ class Settings:
                 "DELIA_TWO_AGENT_EXPERIMENT is an isolated-eval flag — "
                 "it must never be enabled in production"
             )
+        # DELIA-C3-T2-PARALLEL-MCP-DISCOVERY-GUARDED-EXPERIMENT-01:
+        # experimental bounded per-specialist discovery fan-out inside
+        # McpCapabilityProvider — OFF by default (sequential canonical);
+        # a production boot with the flag set fails closed, same
+        # isolation contract as the two-agent experiment.
+        self.parallel_mcp_discovery = _env_flag(
+            "DELIA_PARALLEL_MCP_DISCOVERY", default=False
+        )
+        if self.parallel_mcp_discovery and self.environment == "production":
+            raise ValueError(
+                "DELIA_PARALLEL_MCP_DISCOVERY is an isolated-eval flag — "
+                "it must never be enabled in production"
+            )
         self.observability_record_model_id = (
             _profile.observability.record_model_id
         )

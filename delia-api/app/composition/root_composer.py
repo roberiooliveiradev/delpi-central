@@ -34,7 +34,11 @@ from app.infrastructure.config.cri_instruction_resource import (
     load_cri_presentation_vocabulary,
     load_orchestration_instructions,
 )
-from app.infrastructure.auth.subject_bearer import current_subject_bearer
+from app.infrastructure.auth.subject_bearer import (
+    bind_subject_bearer,
+    current_subject_bearer,
+    unbind_subject_bearer,
+)
 from app.infrastructure.interoperability.config import (
     specialist_connections_from_core_eligible,
     specialist_connections_from_settings,
@@ -435,7 +439,19 @@ def _compose_turn_handler(
     providers = []
     if enabled_specialists:
         providers.append(
-            McpCapabilityProvider(interop, enabled_specialists)
+            # DELIA-C3-T2-PARALLEL-MCP-DISCOVERY-GUARDED-EXPERIMENT-01:
+            # flag-gated bounded specialist fan-out — OFF default;
+            # the bearer seam is the same request-scoped accessor +
+            # bind/unbind the NDJSON transport uses (injected, never
+            # imported by the application layer).
+            McpCapabilityProvider(
+                interop,
+                enabled_specialists,
+                parallel_discovery=settings.parallel_mcp_discovery,
+                subject_bearer_getter=current_subject_bearer,
+                bind_bearer=bind_subject_bearer,
+                unbind_bearer=unbind_subject_bearer,
+            )
         )
     # The presentation vocabulary is loaded unconditionally: its
     # ``field_labels`` govern baseline field-name presentation in
