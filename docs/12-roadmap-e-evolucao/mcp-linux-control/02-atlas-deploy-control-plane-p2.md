@@ -2,7 +2,7 @@
 
 > **Atualizado:** 2026-11-15
 > **Owner:** TI DELPI / Minha DELPI
-> **Estado atualizado 2026-11-15:** contrato P2 documentado; codigo P2.1 offline versionado em [PR #191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (DRAFT, testes locais PASS, CI/revisao independentes PENDING); **nenhum PREPARE/ACT implantado, nenhuma tool nova no MCP**.
+> **Estado atualizado 2026-11-15:** contrato P2 documentado; codigo P2.1 offline integrado na main por [PR #191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (CI verde); P2.2a contrato estruturado de atestacao de CI, host e Core versionado na main, testes locais PASS, CI e verificador independente pendentes; **nenhum PREPARE/ACT implantado, nenhuma tool nova no MCP**.
 > **Fontes relacionadas:** [roadmap e evidências](./01-discovery-architecture-and-security-roadmap.md), `linux-ops-mcp/`, `infra/scripts/up-prod-sequential.sh`, `infra/scripts/up-hml-sequential.sh`, `.cursor/rules/local-first-deploy.mdc`, `.cursor/rules/platform-delivery-runtime-operations.mdc`.
 > **Restrição de custo:** priorizar GitHub/Keycloak/Core/IT Portal, host, containers e homologação existentes. Não pressupor túnel ou runner pago.
 > **Congelado por decisão do operador:** ampliação de telemetria CPU, contagem Docker e outros observáveis Linux; não é pré-requisito desta entrega. Atestação de revisão/health **de deploy** é requisito novo e separado.
@@ -151,3 +151,18 @@ Qualquer revogação de permissão, divergência de SHA, alteração do plano, d
 **Proximo lote P2.2 (nao iniciado):** escolher modulo owner de journal e RBAC no backend, ligar atestacao GitHub/CI e revisao efetiva do host, desenhar API PREPARE idempotente/assinada com persistencia, permissionamento separado por ambiente e testes de concorrencia/revogacao. Nao publicar tool ACT nem criar executor antes da governanca.
 
 **Indice mestre atualizado:** [README.md](./README.md). **Integracao futura com Portal do TI:** acompanhar [roadmap owner](../it-portal/README.md) e [Delpi Remote](../it-portal/delpi-remote/README.md), sem antecipar suas habilitacoes/seguranca.
+
+
+## 12. A2.2a: gate de atestacao GitHub, host e Core, sem IO e sem permissao de ACT (2026-11-15)
+
+**Escopo implementado no codigo:** `linux-ops-mcp/linux_ops_mcp/deploy_attestation.py`, com teste `linux-ops-mcp/tests/test_deploy_attestation.py`, apresenta `attest_preview_evidence`. Ele interpreta tres provas tipadas **ja colhidas por leitores backend confiaveis**: GitHub REST/Actions, marcador de revisao + saude do host e autorizacao fresh do Core. Retorna `verified_for_preview_only` apenas quando todas passam; negativa retorna codigos seguros, sem objetos capazes de executar.
+
+**Verificacoes de release:** repo canonico `roberiooliveiradev/delpi-central`, main, SHA completo e presente no ref aprovado (backend provara a ancestralidade), lista nao vazia/sem duplicatas de workflow IDs exigidos por servico, cada workflow `push` em main para o SHA exato, `completed/success` e run identificavel. PR com CI verde em branch diferente **nao equivale** a release em main. O modelo nao pode injetar o conjunto de workflows exigidos; ele pertence ao catalogo backend.
+
+**Verificacoes operacionais:** `HostProof` deve demonstrar ambiente/servico/repo exatos, SHA efetivamente instalado (nao GitHub HEAD), checkout limpo, health, risco de migration e rollback. Atualmente **nao existe leitor local de versao autoritativa**, portanto prova real nao pode ser fornecida. `CoreProof` exige usuario humano e permissoes explicitas `linux_ops.deploy.view` e `linux_ops.deploy.prepare`, mesmo para superadmin; grants ainda precisam ser registrados no Core por fluxo proprio. Provas expiram em 120 s (+ 5 s skew).
+
+**Importantissimo:** estes objetos de entrada sao contratos de dados, nao evidencias autenticas so por terem classes Python. Na fase P2.2b, a API de policy sera responsavel por obter esses dados diretamente de providers confiaveis, sem aceitar `GithubProof`, `HostProof`, `CoreProof`, flags de CI ou `required_workflow_ids` como argumentos de ferramenta MCP. O resultado de `attest_preview_evidence` so alimenta `evaluate_deployment_preview` (P2.1) e nunca gera aprovacao nem permite ACT.
+
+**Testes efetivos:** 76 cenarios locais de P2.1+P2.2a PASS em Python 3.13, pytest 9.0.2; incluem CI falsificado, ausente, em PR, falho, workflow duplicado, SHA divergente, repo alterado, prova vencida, host nao saudavel, revisao ausente, Core sem grant, service principal, tentativa de prod com policy desativada. GitHub CI e `delpi-verifier` ainda PENDING neste corte; nenhum HML/PROD foi executado.
+
+**Proximos gates P2.2b/P2.2c:** (1) leitor GitHub REST com app/token estritamente de leitura e repositorio allowlisted, sem aceitar URL arbitraria; (2) leitor local de SHA atestado e estado de checkout/health, canal restrito, sem Docker no MCP; (3) verificacao de Core `force_refresh=True` e permissoes cadastradas; (4) journal transacional em Postgres com UNIQUE por idempotency key e transicoes atomicas e auditadas, sem escrever em producao antecipadamente; (5) API PREPARE deny-by-default + testes negativos de replay/concorrencia; (6) so depois UI de aprovacao e executor HML. Nenhuma rota MCP nova neste corte.
