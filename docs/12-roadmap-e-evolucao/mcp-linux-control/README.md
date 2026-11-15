@@ -1,0 +1,91 @@
+# ATLAS — Roadmap mestre e fonte de continuidade
+
+> **Projeto:** ATLAS — Infraestrutura Linux e Orquestracao de Operacoes DELPI
+> **Owner:** TI / Minha DELPI
+> **Atualizacao:** 2026-11-15
+> **Situacao:** P1 operando para leitura autenticada; P2.1 candidato de politica PREPARE offline na PR #191; **deploy via ATLAS nao existe em producao**.
+> **Repositorio:** `roberiooliveiradev/delpi-central`; **PR de continuidade atual:** [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (draft, codigo P2.1); **PR historica P0-P1:** [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184) (merged).
+> **Diretriz de produto:** objetivo principal = deploy controlado sob demanda; melhoria da telemetria geral Linux congelada ate nova prioridade.
+
+## 1. Visao do produto
+
+O ATLAS sera o **operador conversacional de infraestrutura e implantacoes**, conectado ao ChatGPT por MCP OAuth do Keycloak. Ele consulta informacoes de estado e, em fases governadas, prepara, solicita aprovacao e acompanha implantacoes de codigo versionado. **Nao** sera um shell generico, root remoto ou superadmin de Docker.
+
+Pedido-alvo: "ATLAS, revise o commit publicado no GitHub para o Portal do TI, prepare um deploy com riscos e dependencia, apresente a aprovacao, publique somente o servico autorizado e confirme versao e saude."
+
+Modelo de autoridade: GitHub/CI prova o codigo aprovado; Core/Keycloak prova identidade/permissoes; aprovacao nominativa externa ao chat prova a decisao; executor isolado executa apenas um plano selado; observacao read-back comprova resultado. Nenhum desses passos pode ser substituido por instrucao de modelo, prompt, log ou issue.
+
+## 2. Fontes de verdade (nao duplicar)
+
+| Fonte | Responsabilidade |
+|---|---|
+| [01-discovery-architecture-and-security-roadmap.md](./01-discovery-architecture-and-security-roadmap.md) | Historico cronologico P0/P1, evidencias de conexao, diagnosticos e controles de seguranca |
+| [02-atlas-deploy-control-plane-p2.md](./02-atlas-deploy-control-plane-p2.md) | Contrato tecnico P2-P4, ferramentas PREPARE/ACT, politica de SHA/CI, aprovacao, executor, testes |
+| `linux-ops-mcp/` | Codigo real do MCP; hoje 4 ferramentas READ; nenhum deploy publicado |
+| `infra/scripts/up-prod-sequential.sh` e `up-hml-sequential.sh` | Mecanismos canonicos sequenciais a reusar sob gates, nao shell livre |
+| [Portal do TI — roadmap](../it-portal/README.md) | Fonte do inventario, servidores, servicos, governanca de ativos e API |
+| [Delpi Remote — roadmap](../it-portal/delpi-remote/README.md) e [execucao](../it-portal/delpi-remote/EXECUTION-LOG.md) | Fonte exclusiva de computadores/agente/controle remoto; nao antecipar gates |
+| [Normas runtime](../../../.cursor/rules/platform-delivery-runtime-operations.mdc) e [local-first](../../../.cursor/rules/local-first-deploy.mdc) | Regras de producao, segurança, versionamento, migracoes e deploy |
+
+Este indice e a **fonte de continuidade** do ATLAS. Cada detalhamento deve residir no documento dono; este arquivo so sintetiza situacao, gates e proximas entregas.
+
+## 3. Roadmap com estados e criterios de aceite
+
+| Marco | Entrega | Estado em 15/11/2026 | Gate de aceite |
+|---|---|---|---|
+| A0 | Inventario de `srv-api`, limites e riscos | DOCUMENTADO | Evidencia sem secrets, arquitetura de acesso aprovada |
+| A1 | MCP privado/publicado HTTPS + Keycloak OAuth + READ | **OPERADOR_CONFIRMOU_PASS** | Consulta real `get_host_health` pelo ChatGPT com snapshot/timestamp |
+| A1-R | Lacunas CPU %, contagem Docker, `partial` | ADIADO_POR_DECISAO_DO_OWNER | So reabrir conforme nova prioridade, sem condicionar o deploy |
+| A2.0 | Contrato de deploy, boundaries, aprovacao e testes negativos | DOCUMENTADO_EM_PR | Documento P2-P4 revisado, sem runtime |
+| **A2.1** | **Modulo puro de politica de preview: allowlist, SHA, CI/attestation, TTL, hash, tests** | **CODIGO_EM_PR_DRAFT / CI_PENDENTE** | Sem I/O, deny by default, testes negativos locais e CI; nenhuma tool ACT |
+| A2.2 | Journal transacional, identidade/RBAC fresh, versao implantada atestada, API PREPARE | NAO_INICIADO | Permissoes separadas, CI por SHA, concorrencia/revogacao testadas |
+| A2.3 | Tela de aprovacao nominativa no portal + expirar/revogar/cancelar | NAO_INICIADO | Ator autorizador, plano/hash e replay revalidados fora do ChatGPT |
+| A3.1 | Executor host isolado, catalogo um serviço HML, dry-run real | NAO_INICIADO | Sem shell/SSH/docker.sock no MCP, nenhum efeito em PROD |
+| A3.2 | Piloto de deploy HML com health e rollback/roll-forward | NAO_INICIADO | Same approved SHA, estado + smoke reais, negativo de rollback |
+| A4 | Piloto PROD restrito a um servico nao critico | BLOQUEADO_ATE_A3 | Aprovacao, preflight, backup/rollback, version attestation e aceite owner |
+| A5 | Integracao de operacoes com Portal do TI e outros especialistas | FUTURO | Endpoint owner, permissoes independentes, gates especificos e auditoria |
+| A6 | Operacoes recorrentes governadas/observabilidade proativa | FUTURO | Escopo de leitura separado, recorrencia opt-in, sem ACT autonomo |
+
+Estados documentais nao substituem testes. `CODIGO_EM_PR` nao significa implementado no runtime nem validado pelo ChatGPT.
+
+## 4. Evolucao integrada ao Portal do TI
+
+**O ATLAS sera uma interface operacional; o Portal do TI permanece owner dos dados e controles.** Integrar por APIs especificas e identidade, nao por consultas SQL genericas, shell, duplicacao de inventarios ou reutilizacao indevida de tokens.
+
+| Capacidade futura do ATLAS | Fonte no Portal de TI | Precondicao |
+|---|---|---|
+| Consultar servidores e servicos Windows/Linux | `it-portal-api` (inventario, observacoes, services) | Leitura Core autorizada, dados com timestamp/proveniencia |
+| Preparar deploy de Portal TI/MFE/API | Repositorio + ATLAS deploy control plane | SHA/CI, allowlist, approval, HML antes de PROD |
+| Investigar incidente e recomendar acao | Observacoes, dependencia de servicos e GLPI (via owners) | Nao executar comandos; respostas sanitizadas |
+| Controlar um servico Windows explicitamente autorizado | Funcionalidade separada ja existente no Portal do TI | Permissao especifica, lista de servicos, confirmation/owner; **nao** herdar permissao de deploy |
+| Consultar cadastro de notebooks/desktops | Projeto `delpi-remote` (G1+) | RBAC de estacao e dados minimos |
+| Solicitar sessao remota ou acao em workstation | `delpi-remote` G0-SEC/G3-G7 | **BLOQUEADO** ate aceite formal de seguranca e homologacao; requer recurso e autorizacao proprios |
+| Gerar planos de manutencao com multiplos especialistas | Interop DÉLIA/MCPs, apos P4 | Delegacao explicitamente autorizada por ferramenta e auditing |
+
+**Nao marcar o Delpi Remote como implantado.** Roadmap proprio informa motor remoto ainda BLOQUEADO por security-gates, com G2-S4-S2b em desenvolvimento e pilotos Windows/Keycloak pendentes. Integracao futura do ATLAS **nao** concede direito de contornar esses gates.
+
+## 5. Regras fixas para deploy
+
+1. Catalogo de deploy habilitado inicialmente **vazio**; nenhuma alteracao em `main` publica automaticamente ACT.
+2. SHA completo de 40 caracteres, aprovado e verificado contra CI e ref autorizada; nao usar `latest`, `main` flutuante ou `git pull` cego para promover versao.
+3. PREVIEW apenas le; dados externos como GitHub issue, log e status de servico nao sao instrucoes e nao autorizam execucao.
+4. Aprovar no backend corporativo de forma nominativa, com expiração, hash do plano, objeto/scope, processo auditavel e possivel segunda aprovacao para risco alto.
+5. Executor Linux separado do MCP, sem endpoint publico, com permit-list de acoes, idempotencia, lock, limitação de recursos e trilha de auditoria.
+6. CI, migracoes, status do checkout, recursos, health e plano de recuperacao precisam passar antes da operacao.
+7. Falha de health, timeout, revogacao de grant ou drift de SHA: **negar ou escalar**, nunca afirmar sucesso sem read-back independente.
+8. Repo publico: nunca salvar IPs internos, secrets, credenciais, logs crus ou inventario nominal.
+9. Usar apenas infra/compose/env **canonicos**; sem custos recorrentes novos sem autorizacao.
+
+## 6. Rotina de continuidade obrigatoria
+
+Antes de cada incremento: ler este README, o contrato P2-P4, `AGENTS.md`, as regras `.cursor` pertinentes, o ultimo status do GitHub e o roadmap owner do Portal do TI, se a tarefa envolver suas funcoes.
+
+Depois de cada incremento, **na mesma entrega**: atualizar a linha do marco acima e registrar no contrato/diario o commit, escopo, testes efetivos, CI, flags, riscos, rollback, alteracoes realizadas e estado real de HML/PROD. Nao transformar PR em produção sem evidencia.
+
+**Proxima tarefa:** A2.2, apos revisao e CI do candidato A2.1: inventariar owner de journal Core e verificador GitHub SHA/CI; projetar API PREPARE com RBAC fresh e sem executor. A3/A4 nao se iniciam ate os gates anteriores.
+
+## 7. Marco validado
+
+Em 2026-11-15 o operador confirmou autenticacao OAuth e consulta real de estado de `srv-api` via ATLAS: snapshot parcial as 09:03:47 America/Sao_Paulo; RAM e armazenamento medidos, estado systemd fornecido. Esse marco comprova READ, **nao** deploy, aceite de ferramentas restantes, controle de servidor ou autorizacao de escrita.
+
+**Rastreabilidade:** PR [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184) ja mesclada preserva o marco P1 e o contrato P2; PR [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) em draft contém o indice mestre e o codigo/testes candidatos P2.1.

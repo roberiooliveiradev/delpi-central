@@ -2,7 +2,7 @@
 
 > **Atualizado:** 2026-11-15
 > **Owner:** TI DELPI / Minha DELPI
-> **Estado:** `P2_CONTRACT_PROPOSED`; **nenhum PREPARE/ACT implantado**.
+> **Estado atualizado 2026-11-15:** contrato P2 documentado; codigo P2.1 offline versionado em [PR #191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (DRAFT, testes locais PASS, CI/revisao independentes PENDING); **nenhum PREPARE/ACT implantado, nenhuma tool nova no MCP**.
 > **Fontes relacionadas:** [roadmap e evidências](./01-discovery-architecture-and-security-roadmap.md), `linux-ops-mcp/`, `infra/scripts/up-prod-sequential.sh`, `infra/scripts/up-hml-sequential.sh`, `.cursor/rules/local-first-deploy.mdc`, `.cursor/rules/platform-delivery-runtime-operations.mdc`.
 > **Restrição de custo:** priorizar GitHub/Keycloak/Core/IT Portal, host, containers e homologação existentes. Não pressupor túnel ou runner pago.
 > **Congelado por decisão do operador:** ampliação de telemetria CPU, contagem Docker e outros observáveis Linux; não é pré-requisito desta entrega. Atestação de revisão/health **de deploy** é requisito novo e separado.
@@ -137,3 +137,17 @@ Qualquer revogação de permissão, divergência de SHA, alteração do plano, d
 | 2026-11-15 | Tool ACT ATLAS, deploy HML/PROD e testes adversariais | `NOT_EXECUTED` |
 
 **Não confundir documento, código, CI, homologação e produção.** Nenhuma mudança deste documento autoriza efetuar um deploy agora.
+
+
+## 11. P2.1 implementado como candidato offline em PR #191 (2026-11-15)
+
+**Evidencia real de desenvolvimento, nao de release:**
+- `linux-ops-mcp/linux_ops_mcp/deploy_policy.py` implementa somente `evaluate_deployment_preview` com `DeploymentPolicy` default deny, allowlist de alvos, SHA estrito 40-hex, IDs canonicos, atestacao estruturada e fresca (120s), bloqueios CI/ref, checkout sujo, revisao ausente, saude, migrations e rollback. Em producao, preview so pode ser elegivel com gates explicitos e rollback; isso **nao** concede autorizacao nem execucao.
+- Preview elegivel em cenario sintetico HML recebe somente `proposal_hash` SHA-256 e `expires_at` de 10 min. Digest e idempotency request ID **nao** substituem ledger transacional, assinatura de aprovacao, backend Core RBAC ou validacao GitHub real. Atencao: `TrustedDeployEvidence` e um contrato de entrada **exclusivamente backend**; nao deve ser aceito como argumento MCP livre.
+- `linux-ops-mcp/tests/test_deploy_policy.py` com **31 testes locais PASS** (Python 3.13, pytest 9.0.2, 2026-11-15). Testados deny-by-default, cancelamento de alvo desconhecido/metacaracter, SHA inadequado, reuso de IDs, evidencias ausentes/falsas/envelhecidas, incompatibilidade de revisao, falta de CI, saude e rollback, politica de producao e imutabilidade. Bytes do codigo/testes testados localmente foram conferidos contra arquivos publicados via GitHub por hash independente.
+- O codigo **nao e importado** por `linux_ops_mcp/server.py` e portanto `tools/list` continua com quatro ferramentas READ. Nenhum endpoint, usuario de host, Keycloak, Core, migration, compose ou Docker foi alterado nesta etapa.
+- `AGENTS.md` define verificador independente antes de merge; o subagente `delpi-verifier` nao esta disponivel nas ferramentas desta sessao, portanto **VERIFIER_PENDING**. GitHub CI da PR #191 precisa concluir; merge e deploy estao pendentes. O modulo so existe na branch de trabalho da PR, nao na `main` ate integracao autorizada.
+
+**Proximo lote P2.2 (nao iniciado):** escolher modulo owner de journal e RBAC no backend, ligar atestacao GitHub/CI e revisao efetiva do host, desenhar API PREPARE idempotente/assinada com persistencia, permissionamento separado por ambiente e testes de concorrencia/revogacao. Nao publicar tool ACT nem criar executor antes da governanca.
+
+**Indice mestre atualizado:** [README.md](./README.md). **Integracao futura com Portal do TI:** acompanhar [roadmap owner](../it-portal/README.md) e [Delpi Remote](../it-portal/delpi-remote/README.md), sem antecipar suas habilitacoes/seguranca.
