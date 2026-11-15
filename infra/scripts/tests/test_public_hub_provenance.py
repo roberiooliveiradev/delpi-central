@@ -81,6 +81,8 @@ def test_dockerfile_contract_stage_has_sha_gate_and_final_inheritance():
     assert "FROM provenance-contract AS production" in text
     assert "COPY --from=builder" in text
     assert "FROM nginx:alpine AS development" in text
+    assert text.index("FROM nginx:alpine AS development") < text.index("FROM nginx:alpine AS provenance-contract")
+    assert text.rsplit("\nFROM ", 1)[1].startswith("provenance-contract AS production")
 
 
 def test_compose_passes_scoped_arg_without_breaking_other_services():
