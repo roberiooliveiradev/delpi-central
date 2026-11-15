@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import io
 import json
+import os
+import stat
 import sys
 import tempfile
 import unittest
@@ -134,6 +136,66 @@ class InstallTests(unittest.TestCase):
     def test_rejects_unknown_platform(self):
         with self.assertRaises(SystemExit):
             install.parse_args(["--platforms", "vscode"])
+
+
+    def test_discover_windows_home_via_cmd_wslpath_stubs(self):
+        bin_dir = self.home / "bin"
+        bin_dir.mkdir()
+        target = self.home / "win-profile"
+        target.mkdir()
+        (bin_dir / "cmd.exe").write_text(
+            "#!/bin/sh\necho 'C:\\Users\\Alice'\n", encoding="utf-8"
+        )
+        (bin_dir / "wslpath").write_text(
+            f"#!/bin/sh\necho '{target}'\n", encoding="utf-8"
+        )
+        for name in ("cmd.exe", "wslpath"):
+            path = bin_dir / name
+            path.chmod(path.stat().st_mode | stat.S_IEXEC)
+        old_path = os.environ.get("PATH", "")
+        os.environ["PATH"] = f"{bin_dir}{os.pathsep}{old_path}"
+        try:
+            found, warning = install.discover_windows_home()
+            self.assertIsNone(warning)
+            self.assertEqual(found, target)
+        finally:
+            os.environ["PATH"] = old_path
+
+    def test_windows_home_flag_and_missing(self):
+        target = self.home / "forced-win"
+        target.mkdir()
+        found, warning = install.discover_windows_home(explicit=target)
+        self.assertEqual(found, target)
+        self.assertIsNone(warning)
+        missing, warning2 = install.discover_windows_home(explicit=self.home / "nope")
+        self.assertIsNone(missing)
+        self.assertIn("--windows-home", warning2 or "")
+
+    def test_install_windows_bridge_with_windows_home(self):
+        win = self.home / "Users" / "Bob"
+        (win / "AppData" / "Roaming" / "devin").mkdir(parents=True)
+        (win / "AppData" / "Roaming" / "devin" / "config.json").write_text(
+            json.dumps({"theme": "dark"}), encoding="utf-8"
+        )
+        plan = install.Plan(dry_run=False)
+        args = install.parse_args(
+            [
+                "--home",
+                str(self.home),
+                "--python",
+                "/usr/bin/python3",
+                "--windows-home",
+                str(win),
+                "--devin-model",
+                "a",
+                "--cursor-model",
+                "b",
+            ]
+        )
+        install.install_windows_bridge(plan, args)
+        cmd = win / ".delpi-agent-kit" / "verify.cmd"
+        self.assertTrue(cmd.exists())
+        self.assertIn("wsl.exe", cmd.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

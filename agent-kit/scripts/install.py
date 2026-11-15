@@ -25,6 +25,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -285,15 +286,83 @@ def verify_cmd_contents(distro: str = "Ubuntu") -> str:
     )
 
 
+def discover_windows_home(explicit: Optional[Path] = None) -> Tuple[Optional[Path], Optional[str]]:
+    """Locate the Windows user profile from WSL without hardcoding usernames.
+
+    Returns (path, warning). Prefer ``--windows-home``; else ``cmd.exe /c echo %USERPROFILE%``
+    converted with ``wslpath -u`` (or stdlib drive→/mnt fallback).
+    """
+    if explicit is not None:
+        path = Path(explicit).expanduser()
+        if path.exists():
+            return path, None
+        return None, f"--windows-home não existe: {path}"
+
+    try:
+        result = subprocess.run(
+            ["cmd.exe", "/c", "echo %USERPROFILE%"],
+            capture_output=True,
+            timeout=15,
+            check=False,
+            text=True,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return None, (
+            f"Interop WSL indisponível ({type(exc).__name__}); "
+            "use --windows-home <caminho> (ex.: /mnt/c/Users/<user>) — verify.cmd não instalado."
+        )
+    if result.returncode != 0:
+        return None, (
+            "cmd.exe falhou ao ler %USERPROFILE%; "
+            "use --windows-home <caminho> — verify.cmd não instalado."
+        )
+    win_profile = (result.stdout or "").strip().splitlines()
+    win_profile = win_profile[0].strip() if win_profile else ""
+    if not win_profile or "%" in win_profile:
+        return None, (
+            "%USERPROFILE% não resolvido pelo interop; "
+            "use --windows-home <caminho> — verify.cmd não instalado."
+        )
+
+    linux_path: Optional[Path] = None
+    try:
+        converted = subprocess.run(
+            ["wslpath", "-u", win_profile],
+            capture_output=True,
+            timeout=15,
+            check=False,
+            text=True,
+        )
+        if converted.returncode == 0 and (converted.stdout or "").strip():
+            linux_path = Path(converted.stdout.strip())
+    except (OSError, subprocess.SubprocessError):
+        linux_path = None
+
+    if linux_path is None:
+        # Stdlib fallback: C:\Users\x → /mnt/c/Users/x (same rules as normalize_agent_path)
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "hooks"))
+            from verifier_hooks import normalize_agent_path  # noqa: WPS433
+
+            linux_path = normalize_agent_path(win_profile)
+        except Exception:  # noqa: BLE001
+            linux_path = None
+
+    if linux_path is None or not linux_path.exists():
+        return None, (
+            f"Perfil Windows '{win_profile}' não mapeado em WSL; "
+            "use --windows-home <caminho> — verify.cmd não instalado."
+        )
+    return linux_path, None
+
+
 def install_windows_bridge(plan: Plan, args: argparse.Namespace) -> None:
     """Best-effort: write verify.cmd under the Windows user profile via /mnt/c."""
-    win_home = Path("/mnt/c/Users") / (os.environ.get("USER") or Path.home().name)
-    # Prefer analistaptd if present
-    candidate = Path("/mnt/c/Users/analistaptd")
-    if candidate.exists():
-        win_home = candidate
-    if not win_home.exists():
-        plan.warnings.append("Windows home não encontrado em /mnt/c/Users — verify.cmd não instalado.")
+    explicit = getattr(args, "windows_home", None)
+    win_home, warning = discover_windows_home(Path(explicit) if explicit else None)
+    if win_home is None:
+        plan.warnings.append(warning or "Windows home não encontrado — verify.cmd não instalado.")
         return
     kit = win_home / ".delpi-agent-kit"
     cmd_path = kit / "verify.cmd"
@@ -465,6 +534,11 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         help="permission-mode do Devin CLI headless (nunca dangerous)",
     )
     parser.add_argument("--wsl-distro", default="Ubuntu", help="distro WSL para verify.cmd no Windows")
+    parser.add_argument(
+        "--windows-home",
+        default=None,
+        help="perfil Windows forçado (ex.: /mnt/c/Users/<user>); sem interop WSL é obrigatório",
+    )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--uninstall", action="store_true")
     args = parser.parse_args(argv)

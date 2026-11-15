@@ -174,7 +174,8 @@ class VerifyTests(unittest.TestCase):
         reports = list((self.repo / ".git" / "delpi-verifier" / "reports").glob("*.md"))
         self.assertTrue(any("relatório fora do formato" in r.read_text(encoding="utf-8") for r in reports))
 
-    def test_marker_active_during_run_and_cleared(self):
+    def test_env_active_during_run_without_global_marker(self):
+        """AK-3: marker with PIDs + DELPI_VERIFIER_ACTIVE during run; cleared in finally."""
         self.write_install()
         marker_log = self.root / "marker-log.txt"
         self.stub(
@@ -186,9 +187,14 @@ from pathlib import Path
 home = Path(os.environ["DELPI_AGENT_KIT_HOME"])
 marker = home / "state" / "verifier-active.json"
 env = os.environ.get("DELPI_VERIFIER_ACTIVE")
+payload = {{}}
+if marker.exists():
+    payload = json.loads(marker.read_text(encoding="utf-8"))
 Path("{marker_log}").write_text(json.dumps({{
   "marker": marker.exists(),
   "env": env,
+  "pids": payload.get("pids") or [],
+  "self_pid": os.getpid(),
 }}))
 print("# Relatório")
 print("veredito: ACCEPT")
@@ -200,7 +206,7 @@ PY
         )
         self.assertEqual(code, 0)
         data = json.loads(marker_log.read_text(encoding="utf-8"))
-        self.assertTrue(data["marker"])
+        self.assertFalse(data["marker"])
         self.assertEqual(data["env"], "1")
         self.assertFalse((self.kit / "state" / "verifier-active.json").exists())
 
@@ -222,11 +228,122 @@ PY
         self.assertIn(code, (0, 1))
         self.assertFalse((self.kit / "state" / "verifier-active.json").exists())
 
+    def test_sibling_session_allowed_while_verify_runs(self):
+        """OC-1: no global marker during verify; sibling without env may write; env blocks."""
+        self.write_install()
+        ready = self.root / "ready"
+        done = self.root / "done"
+        self.stub(
+            "devin",
+            f'''
+touch "{ready}"
+while [ ! -f "{done}" ]; do sleep 0.05; done
+printf "%s\\n" "# Relatório" "veredito: ACCEPT"
+''',
+        )
+        import threading
+
+        result: dict = {}
+
+        def run():
+            result["code"] = verify.main(
+                [
+                    "--request-file",
+                    str(self.request_file()),
+                    "--repo",
+                    str(self.repo),
+                    "--engine",
+                    "devin",
+                    "--timeout",
+                    "15",
+                ]
+            )
+
+        thread = threading.Thread(target=run)
+        thread.start()
+        for _ in range(200):
+            if ready.exists():
+                break
+            time.sleep(0.05)
+        self.assertTrue(ready.exists(), "motor falso não sinalizou ready")
+        # OC-1: no global marker file during headless verify
+        self.assertFalse((self.kit / "state" / "verifier-active.json").exists())
+
+        hooks = KIT / "hooks" / "verifier_hooks.py"
+        base_env = {
+            k: v
+            for k, v in os.environ.items()
+            if k not in {"DELPI_VERIFIER_ACTIVE"}
+        }
+        base_env["DELPI_AGENT_KIT_HOME"] = str(self.kit)
+        base_env["PATH"] = self._safe_path
+        payload = json.dumps(
+            {"hook_event_name": "beforeShellExecution", "command": "touch x"}
+        )
+        other = subprocess.run(
+            [sys.executable, str(hooks), "guard", "--host", "cursor"],
+            input=payload,
+            capture_output=True,
+            text=True,
+            env=base_env,
+            check=False,
+        )
+        self.assertEqual(other.returncode, 0, other.stdout + other.stderr)
+
+        blocked_env = {**base_env, "DELPI_VERIFIER_ACTIVE": "1"}
+        blocked = subprocess.run(
+            [sys.executable, str(hooks), "guard", "--host", "cursor"],
+            input=payload,
+            capture_output=True,
+            text=True,
+            env=blocked_env,
+            check=False,
+        )
+        self.assertEqual(blocked.returncode, 2, blocked.stdout + blocked.stderr)
+
+        done.write_text("1", encoding="utf-8")
+        thread.join(timeout=20)
+        self.assertEqual(result.get("code"), 0)
+        self.assertFalse((self.kit / "state" / "verifier-active.json").exists())
+
     def test_env_active_makes_guard_block(self):
         os.environ["DELPI_VERIFIER_ACTIVE"] = "1"
         self.assertTrue(vh.marker_active())
         reason = vh.classify_command("touch probe.txt")
         self.assertIsNotNone(reason)
+
+    def test_normalize_agent_path_unc_and_drive(self):
+        cases = [
+            (r"\\wsl.localhost\Ubuntu\home\u\proj", "/home/u/proj"),
+            (r"\\wsl$\Ubuntu\home\u\proj", "/home/u/proj"),
+            ("//wsl.localhost/Ubuntu/home/u/proj", "/home/u/proj"),
+            (r"C:\Users\u\proj", "/mnt/c/Users/u/proj"),
+            ("C:/Users/u/proj", "/mnt/c/Users/u/proj"),
+            ("/home/u/proj", "/home/u/proj"),
+            ("D:\\data\\x", "/mnt/d/data/x"),
+        ]
+        for raw, expected in cases:
+            with self.subTest(raw=raw):
+                self.assertEqual(vh.normalize_agent_path(raw).as_posix(), expected)
+
+    def test_request_file_unc_path(self):
+        """OC-3: --request-file in UNC form that maps to a real Linux path under /home."""
+        self.write_install()
+        self.stub(
+            "devin",
+            'printf "%s\\n" "# Relatório" "veredito: ACCEPT" "resumo: unc"',
+        )
+        pedido = self.request_file()
+        # Build a synthetic UNC that normalize_agent_path turns into the real pedido path.
+        # \\wsl.localhost\Ubuntu + absolute linux path without leading slash in rest.
+        rel = str(pedido.resolve()).lstrip("/")
+        unc = f"\\\\wsl.localhost\\Ubuntu\\{rel.replace('/', chr(92))}"
+        normalized = vh.normalize_agent_path(unc)
+        self.assertEqual(normalized, pedido.resolve())
+        code = verify.main(
+            ["--request-file", unc, "--repo", str(self.repo), "--engine", "devin"]
+        )
+        self.assertEqual(code, 0)
 
 
 class InstallSubagentTests(unittest.TestCase):

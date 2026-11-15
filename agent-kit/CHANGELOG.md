@@ -1,5 +1,20 @@
 # Changelog — agent-kit
 
+## 0.2.1 — 2026-11-15
+
+- **OC-1 concorrência:** `verify.py` deixa de gravar `verifier-active.json`. O isolamento da
+  sessão headless vem só de `DELPI_VERIFIER_ACTIVE=1` no ambiente do processo filho. O marcador
+  global permanece apenas para o legado `--with-subagents` (`mark-start` / `mark-stop` /
+  `activate`).
+- **OC-2 portabilidade:** descoberta do perfil Windows via `cmd.exe /c echo %USERPROFILE%` +
+  `wslpath -u` (fallback stdlib drive→`/mnt`); opção `--windows-home`; sem nome de usuário
+  literal no código.
+- **OC-3 caminhos:** `normalize_agent_path` (stdlib) em `verifier_hooks.py`, usada por
+  `verify.py` (`--request-file`, `--repo`, `repositorio:`) e pelos hooks (`payload_repo`):
+  UNC `\\wsl.localhost\` / `\\wsl$\` → Linux; `C:\` → `/mnt/c/...`.
+- Prompt: `git diff --stat` limitado a 200 linhas; `OSError` ao lançar o motor →
+  `INCONCLUSIVE` com motivo (sem exceção não tratada).
+
 ## 0.2.0 — 2026-11-15
 
 - Verificação deixa de rodar como subagent e passa a ser lançada pelo `verify.py` em sessão

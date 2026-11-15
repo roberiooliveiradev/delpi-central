@@ -5,10 +5,11 @@ One stdlib-only script serves Cursor, Devin and Claude Code hooks. Every hook
 reads the host's JSON payload from stdin and answers in the host's format.
 
 Subcommands
-  mark-start     subagent is starting  -> create the "verifier active" marker
-  mark-stop      subagent finished     -> remove the marker
-  activate       verify.py is launching a headless verifier session -> set marker
-  guard          before a tool call    -> block writes while the verifier runs
+  mark-start     legacy --with-subagents: subagent starting -> create marker
+  mark-stop      legacy --with-subagents: subagent finished -> remove marker
+  activate       verify.py headless session -> set marker with PIDs
+  guard          before a tool call    -> block writes in THIS verifier session only
+
   session-start  session began         -> store the repository baseline fingerprint
   track-edit     file edited by a tool -> mark that this session changed files
   stop-gate      agent wants to stop   -> require a recorded verdict for changes
@@ -185,6 +186,37 @@ def session_key(payload: dict) -> str:
     return "unknown-session"
 
 
+# UNC \\wsl.localhost\<distro>\... and \\wsl$\<distro>\... (also with /)
+_UNC_WSL_RE = re.compile(
+    r"^[/\\]{2}wsl(?:\.localhost|\$)[/\\][^/\\]+[/\\](.*)$",
+    re.IGNORECASE,
+)
+_DRIVE_RE = re.compile(r"^([A-Za-z]):[/\\](.*)$")
+
+
+def normalize_agent_path(raw: object) -> Path:
+    """Convert Windows/UNC paths from Desktop/hooks to a Linux Path (stdlib only).
+
+    - ``\\\\wsl.localhost\\Distro\\home\\u\\x`` / ``\\\\wsl$\\...`` → ``/home/u/x``
+    - ``C:\\Users\\u\\x`` / ``C:/Users/u/x`` → ``/mnt/c/Users/u/x``
+    - Linux paths unchanged
+    """
+    text = str(raw if raw is not None else "").strip().strip('"').strip("'")
+    if not text:
+        return Path("")
+    unc = _UNC_WSL_RE.match(text)
+    if unc:
+        rest = unc.group(1).replace("\\", "/")
+        return Path("/") / rest if rest else Path("/")
+    drive = _DRIVE_RE.match(text)
+    if drive:
+        letter = drive.group(1).lower()
+        rest = drive.group(2).replace("\\", "/")
+        base = Path(f"/mnt/{letter}")
+        return base / rest if rest else base
+    return Path(text)
+
+
 def payload_repo(payload: dict, host: str) -> Optional[Path]:
     candidates: List[str] = []
     roots = payload.get("workspace_roots")
@@ -199,7 +231,7 @@ def payload_repo(payload: dict, host: str) -> Optional[Path]:
         candidates.append(os.environ["CLAUDE_PROJECT_DIR"])
     candidates.append(os.getcwd())
     for candidate in candidates:
-        root = repo_root(Path(candidate))
+        root = repo_root(normalize_agent_path(candidate))
         if root is not None:
             return root
     return None
@@ -261,19 +293,94 @@ def env_verifier_active() -> bool:
     return os.environ.get("DELPI_VERIFIER_ACTIVE", "").strip() in {"1", "true", "TRUE", "yes", "YES"}
 
 
-def marker_active(now: Optional[float] = None) -> bool:
-    if env_verifier_active():
-        return True
-    data = read_json(marker_path())
-    if not data:
+def ancestry_check_available() -> bool:
+    """Linux/WSL expose /proc/<pid>/status; elsewhere marker alone must not block."""
+    return Path("/proc/self/status").is_file()
+
+
+def pid_alive(pid: int) -> bool:
+    if pid <= 0:
         return False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+    return True
+
+
+def process_ancestor_chain(pid: Optional[int] = None) -> List[int]:
+    """Return [pid, parent, ..., 1] via /proc. Empty when ancestry is unavailable."""
+    if not ancestry_check_available():
+        return []
+    current = os.getpid() if pid is None else int(pid)
+    chain: List[int] = []
+    seen = set()
+    while current > 0 and current not in seen:
+        seen.add(current)
+        chain.append(current)
+        status = Path(f"/proc/{current}/status")
+        try:
+            status_text = status.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            break
+        parent = 0
+        for line in status_text.splitlines():
+            if line.startswith("PPid:"):
+                try:
+                    parent = int(line.split(":", 1)[1].strip())
+                except ValueError:
+                    parent = 0
+                break
+        if parent <= 0 or parent == current:
+            break
+        current = parent
+    return chain
+
+
+def process_in_lineage(target_pids: Iterable[int], pid: Optional[int] = None) -> bool:
+    targets = {int(p) for p in target_pids if isinstance(p, int) and int(p) > 0}
+    if not targets:
+        return False
+    chain = process_ancestor_chain(pid)
+    if not chain:
+        return False
+    return bool(targets.intersection(chain))
+
+
+def _normalize_pids(raw: object) -> List[int]:
+    if not isinstance(raw, (list, tuple)):
+        return []
+    out: List[int] = []
+    for item in raw:
+        try:
+            pid = int(item)
+        except (TypeError, ValueError):
+            continue
+        if pid > 0 and pid not in out:
+            out.append(pid)
+    return out
+
+
+def marker_fresh(data: dict, now: Optional[float] = None) -> bool:
     started = data.get("started_at")
     if not isinstance(started, (int, float)):
         return False
     return ((now or time.time()) - started) < marker_ttl()
 
 
-def set_marker(host: str, payload: Optional[dict] = None) -> None:
+def live_marker_pids(data: dict) -> List[int]:
+    return [pid for pid in _normalize_pids(data.get("pids")) if pid_alive(pid)]
+
+
+def set_marker(
+    host: str,
+    payload: Optional[dict] = None,
+    pids: Optional[Sequence[int]] = None,
+) -> None:
     payload = payload or {}
     marker_path().write_text(
         json.dumps(
@@ -281,6 +388,7 @@ def set_marker(host: str, payload: Optional[dict] = None) -> None:
                 "started_at": time.time(),
                 "host": host,
                 "session": session_key(payload) if payload else "verify.py",
+                "pids": _normalize_pids(pids),
             }
         ),
         encoding="utf-8",
@@ -292,6 +400,55 @@ def clear_marker() -> None:
         marker_path().unlink()
     except FileNotFoundError:
         pass
+    except OSError:
+        pass
+
+
+def refresh_marker_pids(pids: Sequence[int]) -> None:
+    """Update pids on an existing marker (e.g. after the engine subprocess starts)."""
+    data = read_json(marker_path()) or {}
+    if not data:
+        set_marker("verify", {"session_id": "verify.py"}, pids=pids)
+        return
+    data["pids"] = _normalize_pids(pids)
+    data["started_at"] = data.get("started_at") or time.time()
+    marker_path().write_text(json.dumps(data), encoding="utf-8")
+
+
+def guard_decision(now: Optional[float] = None) -> Tuple[bool, str]:
+    """Whether THIS process should be treated as the verifier session.
+
+    (a) DELPI_VERIFIER_ACTIVE in the hook environment → block.
+    (b) Marker with a live PID that is an ancestor of this process → block.
+    Marker alone (no env, no lineage) never blocks another session on the machine.
+    Dead marker PIDs are cleared immediately (no TTL wait).
+    """
+    if env_verifier_active():
+        return True, "variável DELPI_VERIFIER_ACTIVE=1"
+    data = read_json(marker_path())
+    if not data:
+        return False, ""
+    if not marker_fresh(data, now=now):
+        clear_marker()
+        return False, ""
+    pids = _normalize_pids(data.get("pids"))
+    live = [pid for pid in pids if pid_alive(pid)]
+    if pids and not live:
+        clear_marker()
+        return False, ""
+    if not live:
+        # Legacy mark-start without PIDs: must not lock other IDE sessions.
+        return False, ""
+    if not ancestry_check_available():
+        return False, ""
+    if process_in_lineage(live):
+        return True, f"ancestralidade PID {','.join(str(p) for p in live)}"
+    return False, ""
+
+
+def marker_active(now: Optional[float] = None) -> bool:
+    """True when the current process is under verifier write-lock."""
+    return guard_decision(now=now)[0]
 
 
 # --------------------------------------------------------------------------- #
@@ -654,12 +811,18 @@ def respond_allow(host: str) -> int:
     return 0
 
 
-def respond_block(host: str, reason: str) -> int:
+def status_command_hint() -> str:
+    script = kit_home() / "verifier_hooks.py"
+    return f'"{sys.executable}" "{script}" status'
+
+
+def respond_block(host: str, reason: str, *, why: str = "") -> int:
+    why_bit = f" Motivo do guard: {why}." if why else ""
     message = (
-        f"[delpi-verifier] Bloqueado: {reason}. O verificador não altera estado. "
+        f"[delpi-verifier] Bloqueado: {reason}.{why_bit} O verificador não altera estado. "
         "Se este comando era necessário para verificar, marque o item como TEST_NOT_RUN "
-        "e explique no relatório; não tente contornar. Se você é o executor e o verificador já "
-        f"terminou, o marcador ficou preso: rode {clear_command_hint()}."
+        "e explique no relatório; não tente contornar. Diagnóstico: "
+        f"{status_command_hint()}. Se o marcador ficou preso após o verify: {clear_command_hint()}."
     )
     if host == "cursor":
         print(json.dumps({"permission": "deny", "agent_message": message, "user_message": message}))
@@ -716,13 +879,21 @@ def cmd_mark_stop(host: str, payload: dict) -> int:
 
 
 def cmd_guard(host: str, payload: dict, ok: bool, always: bool) -> int:
-    active = always or marker_active()
+    if always:
+        why = "flag --always (hook com escopo do subagent)"
+        active = True
+    else:
+        active, why = guard_decision()
     if not active:
         return respond_allow(host)
     if not ok:
-        return respond_block(host, "payload do hook ilegível enquanto o verificador roda")
+        return respond_block(
+            host,
+            "payload do hook ilegível enquanto o verificador roda",
+            why=why,
+        )
     reason = classify_tool_call(payload)
-    return respond_block(host, reason) if reason else respond_allow(host)
+    return respond_block(host, reason, why=why) if reason else respond_allow(host)
 
 
 def prune_old_sessions(max_age_days: int = 7) -> None:
@@ -830,7 +1001,7 @@ def cmd_record(args: argparse.Namespace) -> int:
     if verdict not in ALL_VERDICTS:
         sys.stderr.write(f"veredito inválido: {verdict}. Use um de: {', '.join(sorted(ALL_VERDICTS))}\n")
         return 1
-    repo = repo_root(Path(args.repo or os.getcwd()))
+    repo = repo_root(normalize_agent_path(args.repo or os.getcwd()))
     if repo is None:
         sys.stderr.write("não encontrei um repositório git a partir do diretório atual\n")
         return 1
@@ -855,11 +1026,22 @@ def cmd_record(args: argparse.Namespace) -> int:
 
 
 def cmd_status(args: argparse.Namespace) -> int:
-    repo = repo_root(Path(args.repo or os.getcwd()))
+    repo = repo_root(normalize_agent_path(args.repo or os.getcwd()))
+    marker = read_json(marker_path())
+    pids = _normalize_pids((marker or {}).get("pids")) if marker else []
+    pid_states = [{"pid": pid, "alive": pid_alive(pid)} for pid in pids]
+    this_blocked, why = guard_decision()
     info = {
         "kit_home": str(kit_home()),
-        "marker_active": marker_active(),
-        "marker": read_json(marker_path()),
+        "env_DELPI_VERIFIER_ACTIVE": env_verifier_active(),
+        "ancestry_check_available": ancestry_check_available(),
+        "marker_file": str(marker_path()),
+        "marker_present": marker is not None,
+        "marker": marker,
+        "marker_pids": pid_states,
+        "this_session_blocked": this_blocked,
+        "this_session_reason": why or None,
+        "marker_active": this_blocked,  # backward-compatible alias
         "repo": str(repo) if repo else None,
         "contract": has_contract(repo) if repo else False,
     }
@@ -879,8 +1061,16 @@ def build_parser() -> argparse.ArgumentParser:
         p.add_argument("--host", choices=["cursor", "devin", "claude"], required=True)
         if name == "guard":
             p.add_argument("--always", action="store_true", help="guard sem depender do marcador (hook com escopo do subagent)")
-    act = sub.add_parser("activate")
+    act = sub.add_parser(
+        "activate",
+        help="verify.py headless: grava marcador com PIDs da sessão",
+    )
     act.add_argument("--host", default="verify", help="quem ativa o marcador (padrão: verify)")
+    act.add_argument(
+        "--pids",
+        default="",
+        help="PIDs da sessão headless (verify.py e motor), separados por vírgula",
+    )
     rec = sub.add_parser("record")
     rec.add_argument("--verdict", required=True)
     rec.add_argument("--recorded-by", default=None, help="origem do registro (ex.: verify.py)")
@@ -904,7 +1094,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print("marcador removido")
         return 0
     if args.command == "activate":
-        set_marker(getattr(args, "host", "verify") or "verify", {"session_id": "verify.py"})
+        raw_pids = getattr(args, "pids", "") or ""
+        pids = [int(p) for p in re.split(r"[,\s]+", raw_pids) if p.strip().isdigit()]
+        if not pids:
+            pids = [os.getpid()]
+        set_marker(
+            getattr(args, "host", "verify") or "verify",
+            {"session_id": "verify.py"},
+            pids=pids,
+        )
         print("marcador ativo")
         return 0
     payload, ok = read_payload()
@@ -922,8 +1120,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if args.command == "stop-gate":
             return cmd_stop_gate(args.host, payload)
     except Exception as exc:  # noqa: BLE001 — a crashing hook must not wedge the agent
-        if args.command == "guard" and (args.always or marker_active()):
-            return respond_block(args.host, f"erro interno do guard ({type(exc).__name__})")
+        if args.command == "guard" and (args.always or guard_decision()[0]):
+            why = "flag --always" if args.always else (guard_decision()[1] or "guard ativo")
+            return respond_block(
+                args.host,
+                f"erro interno do guard ({type(exc).__name__})",
+                why=why,
+            )
         sys.stderr.write(f"[delpi-verifier] hook {args.command} falhou: {exc}\n")
         if args.host == "cursor":
             print("{}")

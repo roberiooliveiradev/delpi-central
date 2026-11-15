@@ -194,35 +194,53 @@ class HookProcessTests(unittest.TestCase):
         self.assertEqual(r.returncode, 0)
         self.assertEqual(json.loads(r.stdout), {})
 
-    def test_marker_lifecycle_cursor(self):
+    def test_mark_start_without_pids_does_not_block_other_session(self):
+        """AK-3: global marker without lineage must not lock sibling executors."""
         start = self.run_hook("mark-start", "--host", "cursor", payload={"subagent_type": "delpi-verifier"})
         self.assertEqual(start.returncode, 0)
-        blocked = self.run_hook("guard", "--host", "cursor", payload={"hook_event_name": "beforeShellExecution", "command": "touch probe"})
-        self.assertEqual(blocked.returncode, 2)
-        self.assertEqual(json.loads(blocked.stdout)["permission"], "deny")
-        allowed = self.run_hook("guard", "--host", "cursor", payload={"hook_event_name": "beforeShellExecution", "command": "pytest -q"})
-        self.assertEqual(allowed.returncode, 0)
+        marker = self.kit_home / "state" / "verifier-active.json"
+        self.assertTrue(marker.exists())
+        write = self.run_hook(
+            "guard",
+            "--host",
+            "cursor",
+            payload={"hook_event_name": "beforeShellExecution", "command": "touch probe"},
+        )
+        self.assertEqual(write.returncode, 0, write.stdout + write.stderr)
+        shell_w = self.run_hook(
+            "guard",
+            "--host",
+            "cursor",
+            payload={"hook_event_name": "beforeShellExecution", "command": "echo x > out.txt"},
+        )
+        self.assertEqual(shell_w.returncode, 0)
         self.run_hook("mark-stop", "--host", "cursor", payload={"subagent_type": "delpi-verifier"})
-        after = self.run_hook("guard", "--host", "cursor", payload={"hook_event_name": "beforeShellExecution", "command": "touch probe"})
-        self.assertEqual(after.returncode, 0)
 
     def test_other_subagent_does_not_set_marker(self):
         self.run_hook("mark-start", "--host", "cursor", payload={"subagent_type": "explore"})
         r = self.run_hook("guard", "--host", "cursor", payload={"hook_event_name": "beforeShellExecution", "command": "touch probe"})
         self.assertEqual(r.returncode, 0)
 
-    def test_marker_lifecycle_devin(self):
-        self.run_hook("mark-start", "--host", "devin", payload={"tool_name": "run_subagent", "tool_input": {"profile": "delpi-verifier"}})
-        r = self.run_hook("guard", "--host", "devin", payload={"tool_name": "exec", "tool_input": {"command": "git commit -m x"}})
-        self.assertEqual(r.returncode, 2)
-        self.assertEqual(json.loads(r.stdout)["decision"], "block")
-        self.run_hook("mark-stop", "--host", "devin", payload={"tool_name": "run_subagent", "tool_input": {"profile": "delpi-verifier"}})
-        r = self.run_hook("guard", "--host", "devin", payload={"tool_name": "exec", "tool_input": {"command": "git commit -m x"}})
+    def test_mark_start_devin_without_pids_does_not_block(self):
+        self.run_hook(
+            "mark-start",
+            "--host",
+            "devin",
+            payload={"tool_name": "run_subagent", "tool_input": {"profile": "delpi-verifier"}},
+        )
+        r = self.run_hook(
+            "guard",
+            "--host",
+            "devin",
+            payload={"tool_name": "exec", "tool_input": {"command": "git commit -m x"}},
+        )
         self.assertEqual(r.returncode, 0)
 
     def test_stale_marker_expires(self):
         (self.kit_home / "state").mkdir(parents=True)
-        (self.kit_home / "state" / "verifier-active.json").write_text(json.dumps({"started_at": time.time() - 99999}))
+        (self.kit_home / "state" / "verifier-active.json").write_text(
+            json.dumps({"started_at": time.time() - 99999, "pids": [os.getpid()]})
+        )
         r = self.run_hook("guard", "--host", "cursor", payload={"hook_event_name": "beforeShellExecution", "command": "touch x"})
         self.assertEqual(r.returncode, 0)
 
@@ -235,6 +253,110 @@ class HookProcessTests(unittest.TestCase):
         r = subprocess.run([sys.executable, str(SCRIPT), "guard", "--host", "claude", "--always"], input="not json",
                            capture_output=True, text=True, env=self.env)
         self.assertEqual(r.returncode, 2)
+
+    def test_env_active_blocks_with_or_without_marker(self):
+        env = {**self.env, "DELPI_VERIFIER_ACTIVE": "1"}
+        r = subprocess.run(
+            [sys.executable, str(SCRIPT), "guard", "--host", "cursor"],
+            input=json.dumps({"hook_event_name": "beforeShellExecution", "command": "touch probe"}),
+            capture_output=True,
+            text=True,
+            env=env,
+            cwd=str(self.repo),
+        )
+        self.assertEqual(r.returncode, 2)
+        out = json.loads(r.stdout)
+        self.assertEqual(out["permission"], "deny")
+        self.assertIn("DELPI_VERIFIER_ACTIVE", out["agent_message"])
+
+    def test_lineage_pid_blocks_descendant_sibling_free(self):
+        """Marker with live PID: descendants blocked; non-descendants free."""
+        if not vh.ancestry_check_available():
+            self.skipTest("/proc ancestry unavailable")
+        parent_pid = os.getpid()
+        vh_env = {**self.env}
+        act = subprocess.run(
+            [sys.executable, str(SCRIPT), "activate", "--host", "verify", "--pids", str(parent_pid)],
+            capture_output=True,
+            text=True,
+            env=vh_env,
+        )
+        self.assertEqual(act.returncode, 0, act.stderr)
+        child_script = (
+            "import json, os, sys\n"
+            f"sys.path.insert(0, {str(SCRIPT.parent)!r})\n"
+            "import verifier_hooks as vh\n"
+            "blocked, why = vh.guard_decision()\n"
+            "print(json.dumps({'blocked': blocked, 'why': why}))\n"
+        )
+        child = subprocess.run(
+            [sys.executable, "-c", child_script],
+            capture_output=True,
+            text=True,
+            env=vh_env,
+        )
+        self.assertEqual(child.returncode, 0, child.stderr)
+        data = json.loads(child.stdout.strip().splitlines()[-1])
+        self.assertTrue(data["blocked"], data)
+        self.assertIn("ancestralidade", data["why"])
+        sleeper = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"], env=vh_env)
+        try:
+            subprocess.run(
+                [sys.executable, str(SCRIPT), "activate", "--host", "verify", "--pids", str(sleeper.pid)],
+                capture_output=True,
+                text=True,
+                env=vh_env,
+                check=False,
+            )
+            sibling_guard = self.run_hook(
+                "guard",
+                "--host",
+                "cursor",
+                payload={"hook_event_name": "beforeShellExecution", "command": "touch probe"},
+            )
+            self.assertEqual(sibling_guard.returncode, 0, sibling_guard.stdout + sibling_guard.stderr)
+        finally:
+            sleeper.kill()
+            sleeper.wait(timeout=5)
+            subprocess.run([sys.executable, str(SCRIPT), "clear"], capture_output=True, env=vh_env)
+
+    def test_dead_pid_clears_marker_and_allows(self):
+        (self.kit_home / "state").mkdir(parents=True, exist_ok=True)
+        dead_pid = 2_000_000_001
+        (self.kit_home / "state" / "verifier-active.json").write_text(
+            json.dumps(
+                {
+                    "started_at": time.time(),
+                    "host": "verify",
+                    "session": "verify.py",
+                    "pids": [dead_pid],
+                }
+            ),
+            encoding="utf-8",
+        )
+        r = self.run_hook(
+            "guard",
+            "--host",
+            "cursor",
+            payload={"hook_event_name": "beforeShellExecution", "command": "touch probe"},
+        )
+        self.assertEqual(r.returncode, 0)
+        self.assertFalse((self.kit_home / "state" / "verifier-active.json").exists())
+
+    def test_status_reports_session_block_state(self):
+        env = {**self.env, "DELPI_VERIFIER_ACTIVE": "1"}
+        r = subprocess.run(
+            [sys.executable, str(SCRIPT), "status", "--repo", str(self.repo)],
+            capture_output=True,
+            text=True,
+            env=env,
+            cwd=str(self.repo),
+        )
+        self.assertEqual(r.returncode, 0)
+        info = json.loads(r.stdout)
+        self.assertTrue(info["env_DELPI_VERIFIER_ACTIVE"])
+        self.assertTrue(info["this_session_blocked"])
+        self.assertIn("DELPI_VERIFIER_ACTIVE", info["this_session_reason"] or "")
 
     def session(self, host: str):
         key = "conversation_id" if host == "cursor" else "session_id"

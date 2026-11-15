@@ -33,6 +33,14 @@ DEFAULT_TIMEOUT_SEC = 30 * 60
 DEFAULT_ENGINE_ORDER = ["devin", "cursor"]
 DEFAULT_MODELS = {"devin": "swe-2-high", "cursor": "composer-2.5"}
 DEFAULT_DEVIN_PERMISSION_MODE = "smart"
+DIFF_STAT_MAX_LINES = 200
+
+# normalize_agent_path lives in verifier_hooks (installed beside this file; source in hooks/).
+_SCRIPT_DIR = Path(__file__).resolve().parent
+for _candidate in (_SCRIPT_DIR, _SCRIPT_DIR.parent / "hooks"):
+    if _candidate.is_dir() and str(_candidate) not in sys.path:
+        sys.path.insert(0, str(_candidate))
+from verifier_hooks import normalize_agent_path  # noqa: E402
 
 
 def kit_home() -> Path:
@@ -170,14 +178,24 @@ def find_contract(repo: Path) -> Optional[Path]:
     return None
 
 
+def truncate_diff_stat(text: str, max_lines: int = DIFF_STAT_MAX_LINES) -> str:
+    lines = text.splitlines()
+    if len(lines) <= max_lines:
+        return text
+    omitted = len(lines) - max_lines
+    return "\n".join(lines[:max_lines]) + f"\n… {omitted} arquivos omitidos"
+
+
 def diff_stat(repo: Path, escopo: str) -> str:
     if escopo.lower() == "working tree":
         out = run_git(repo, ["diff", "--stat", "HEAD"])
         untracked = run_git(repo, ["status", "--short"])
         parts = [p for p in (out, untracked) if p and p.strip()]
-        return "\n".join(parts) if parts else "(sem diff)"
-    out = run_git(repo, ["diff", "--stat", escopo])
-    return out.strip() if out else "(sem diff)"
+        raw = "\n".join(parts) if parts else "(sem diff)"
+    else:
+        out = run_git(repo, ["diff", "--stat", escopo])
+        raw = out.strip() if out else "(sem diff)"
+    return truncate_diff_stat(raw)
 
 
 def render_headless_protocol() -> str:
@@ -255,41 +273,6 @@ def choose_engine(forced: str, install: dict) -> Optional[str]:
 def model_for(engine: str, install: dict) -> str:
     models = install.get("models") if isinstance(install.get("models"), dict) else {}
     return str(models.get(engine) or DEFAULT_MODELS.get(engine) or "")
-
-
-def activate_marker() -> None:
-    hooks = kit_home() / "verifier_hooks.py"
-    if hooks.exists():
-        subprocess.run(
-            [sys.executable, str(hooks), "activate", "--host", "verify"],
-            check=False,
-            capture_output=True,
-            timeout=30,
-        )
-        return
-    # Fallback: write marker directly
-    state = kit_home() / "state"
-    state.mkdir(parents=True, exist_ok=True)
-    (state / "verifier-active.json").write_text(
-        json.dumps({"started_at": time.time(), "host": "verify", "session": "verify.py"}),
-        encoding="utf-8",
-    )
-
-
-def deactivate_marker() -> None:
-    hooks = kit_home() / "verifier_hooks.py"
-    if hooks.exists():
-        subprocess.run(
-            [sys.executable, str(hooks), "clear"],
-            check=False,
-            capture_output=True,
-            timeout=30,
-        )
-        return
-    try:
-        (kit_home() / "state" / "verifier-active.json").unlink()
-    except OSError:
-        pass
 
 
 def build_prompt(fields: Dict[str, str], repo: Path, request_text: str) -> str:
@@ -370,12 +353,14 @@ def run_engine(cmd: List[str], repo: Path, timeout: int) -> Tuple[int, str]:
     except subprocess.TimeoutExpired as exc:
         out = (exc.stdout or b"").decode("utf-8", errors="replace")
         err = (exc.stderr or b"").decode("utf-8", errors="replace")
-        return 124, out + ("\n" + err if err else "") + "\n\n[verify.py] timeout\n"
+        return 124, out + (("\n" + err) if err else "") + "\n\n[verify.py] timeout\n"
+    except OSError as exc:
+        return 1, f"[verify.py] falha ao lançar motor ({type(exc).__name__}: {exc})"
     out = result.stdout.decode("utf-8", errors="replace")
     err = result.stderr.decode("utf-8", errors="replace")
     combined = out
     if err.strip():
-        combined = out + ("\n" if out and not out.endswith("\n") else "") + err
+        combined = out + (("\n" if out and not out.endswith("\n") else "") + err)
     return result.returncode, combined
 
 
@@ -465,14 +450,15 @@ def save_report(repo: Path, text: str, engine: str, model: str, rodada: int) -> 
 
 def run_verify(args: argparse.Namespace) -> int:
     install = load_install()
-    repo = Path(args.repo).resolve() if args.repo else Path.cwd().resolve()
+    # Isolation is DELPI_VERIFIER_ACTIVE in the child env only — no global marker file.
+    repo = normalize_agent_path(args.repo).resolve() if args.repo else Path.cwd().resolve()
     root = repo_root(repo)
     if root is None:
         sys.stderr.write(f"não encontrei repositório git em {repo}\n")
         return 2
     repo = root
 
-    request_path = Path(args.request_file).resolve()
+    request_path = normalize_agent_path(args.request_file).resolve()
     if not request_path.exists():
         sys.stderr.write(f"pedido não encontrado: {request_path}\n")
         return 2
@@ -480,7 +466,7 @@ def run_verify(args: argparse.Namespace) -> int:
     fields = parse_request(request_text)
     # Optional repositorio field overrides
     if fields.get("repositorio"):
-        alt = Path(fields["repositorio"]).expanduser().resolve()
+        alt = normalize_agent_path(fields["repositorio"]).expanduser().resolve()
         alt_root = repo_root(alt)
         if alt_root is None:
             sys.stderr.write(f"repositorio do pedido inválido: {fields['repositorio']}\n")
@@ -519,18 +505,22 @@ def run_verify(args: argparse.Namespace) -> int:
     prompt_file = Path(tempfile.mkstemp(prefix="delpi-verify-", suffix=".md")[1])
     prompt_file.write_text(prompt, encoding="utf-8")
 
-    activate_marker()
     try:
         if engine == "devin":
             code, raw = launch_devin(binary, repo, prompt_file, model, install, timeout)
         else:
             code, raw = launch_cursor(binary, repo, prompt_file, model, timeout)
     finally:
-        deactivate_marker()
         try:
             prompt_file.unlink()
         except OSError:
             pass
+
+    if raw.startswith("[verify.py] falha ao lançar motor"):
+        report_path = write_inconclusive(repo, "falha ao lançar motor", raw, engine, model, rodada)
+        ensure_ledger(repo, "INCONCLUSIVE", rodada, "falha ao lançar motor")
+        sys.stdout.write(report_path.read_text(encoding="utf-8"))
+        return 1
 
     verdict = extract_verdict(raw)
     if verdict is None:

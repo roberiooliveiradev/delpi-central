@@ -8,19 +8,19 @@ rodadas. O executor **nunca** se autoverifica.
 Esta pasta é autocontida: tem versão (`VERSION`), changelog, testes e instalador próprios. Ela mora no
 `delpi-central`, mas não depende de nada do monorepo.
 
-Versão atual: **0.2.0**.
+Versão atual: **0.2.1**.
 
 ---
 
-## Arquitetura 0.2.0
+## Arquitetura 0.2.1
 
 ```
 executor (Cursor IDE ou Devin Desktop)
   → grava PEDIDO em <git-dir>/delpi-verifier/requests/
   → python ~/.delpi-agent-kit/verify.py --request-file <arquivo>
        → valida pedido (sem gastar token)
-       → ativa marcador + DELPI_VERIFIER_ACTIVE=1
-       → motor headless:
+       → NÃO cria marcador global
+       → motor headless com DELPI_VERIFIER_ACTIVE=1 no ambiente do filho:
             1º Devin CLI  --model swe-2-high  (--permission-mode smart)
             2º fallback Cursor CLI --model composer-2.5
        → relatório em <git-dir>/delpi-verifier/reports/
@@ -38,6 +38,17 @@ executor (Cursor IDE ou Devin Desktop)
 Se o executor também for SWE, o relatório deve marcar `independencia: DEGRADADA` (contexto limpo ainda
 ajuda).
 
+### Isolamento (0.2.1)
+
+| Sessão | Como o guard bloqueia escrita |
+|---|---|
+| Headless `verify.py` (Devin/Cursor CLI) | só `DELPI_VERIFIER_ACTIVE=1` no ambiente do processo filho |
+| Outros agentes na mesma máquina | **não** bloqueados (sem marcador global) |
+| Legado `--with-subagents` | `mark-start` / `mark-stop` / `activate` ainda usam `verifier-active.json` |
+
+Caminhos Windows/UNC (`\\wsl.localhost\…`, `C:\…`) são normalizados para Linux em `verify.py` e nos hooks
+(`normalize_agent_path`), sem chamar processo externo.
+
 ### Limites
 
 - `permission-mode auto` do Devin **não** roda testes; o kit usa `smart` + guard.
@@ -54,12 +65,15 @@ python agent-kit/scripts/install.py --dry-run \
   --devin-model swe-2-high --cursor-model composer-2.5
 python agent-kit/scripts/install.py \
   --devin-model swe-2-high --cursor-model composer-2.5
+# se o interop WSL não achar o perfil Windows:
+#   --windows-home /mnt/c/Users/<user>
 ```
 
 - Subagents **não** são instalados por padrão (evita o Cursor acionar o verificador fora do SWE).
   Use `--with-subagents` só se precisar do comportamento 0.1.x.
 - Reinstalar remove agentes antigos **do kit** e preserva arquivos alheios.
-- No Windows, `verify.cmd` em `%USERPROFILE%\.delpi-agent-kit\` repassa para o WSL.
+- No Windows, `verify.cmd` em `%USERPROFILE%\.delpi-agent-kit\` repassa para o WSL
+  (perfil descoberto via `cmd.exe` + `wslpath`, ou `--windows-home`).
 - Hooks: guard nos configs do Devin CLI / Cursor CLI (WSL) e stop gate + track-edit nos executores
   (Cursor IDE + Devin Desktop Windows).
 
