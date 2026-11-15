@@ -148,3 +148,9 @@ def test_reader_rejects_other_server_observation():
         with pytest.raises(ReadError, match="unexpected_observation_server"):
             await reader.latest("Bearer test-user-token")
     asyncio.run(scenario())
+
+
+def test_settings_normalize_uppercase_uuid(monkeypatch):
+    monkeypatch.setenv("LINUX_OPS_SERVER_ID", SERVER_ID.upper())
+    monkeypatch.setenv("LINUX_OPS_IT_PORTAL_URL", "http://it-portal-api:8000")
+    assert Settings.from_environment().server_id == SERVER_ID
